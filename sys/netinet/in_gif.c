@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_gif.c,v 1.9 2000/05/25 01:22:00 itojun Exp $	*/
+/*	$OpenBSD: in_gif.c,v 1.10 2000/12/30 19:03:38 angelos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,6 +65,7 @@
 #include <net/if_gif.h>	
 
 #include "gif.h"
+#include "bridge.h"
 
 #include <machine/stdarg.h>
 
@@ -141,6 +142,20 @@ in_gif_output(ifp, family, m, rt)
 		return EAFNOSUPPORT;
 	}
 
+#if NBRIDGE > 0
+	if (family == AF_LINK) {
+	        mp = NULL;
+		error = etherip_output(m, &tdb, &mp, 0, 0);
+		if (error)
+		        return error;
+		else if (mp == NULL)
+		        return EFAULT;
+
+		m = mp;
+		goto sendit;
+	}
+#endif /* NBRIDGE */
+
 	/* encapsulate into IPv4 packet */
 	mp = NULL;
 	error = ipip_output(m, &tdb, &mp, hlen, poff);
@@ -151,6 +166,7 @@ in_gif_output(ifp, family, m, rt)
 
 	m = mp;
 
+ sendit:
 	/* ip_output needs host-order length.  it should be nuked */
 	m_copydata(m, offsetof(struct ip, ip_len), sizeof(u_int16_t),
 		   (caddr_t) &plen);
