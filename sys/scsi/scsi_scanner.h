@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_scanner.h,v 1.4 1996/12/11 16:32:04 kstailey Exp $	*/
+/*	$OpenBSD: scsi_scanner.h,v 1.5 1997/03/08 05:39:00 kstailey Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -77,13 +77,10 @@ struct scsi_set_window {
 	u_int8_t control;
 };
 
-struct scsi_window_header {
-	u_int8_t reserved[6];
-	u_int8_t len[2];
-};
-
 struct scsi_window_data {
-	u_int8_t window_id;	    /* must be zero */
+	u_int8_t reserved[6];	     /* window header */
+	u_int8_t window_desc_len[2]; /* ditto */
+	u_int8_t window_id;	     /* must be zero */
 	u_int8_t res1:7;
 	u_int8_t auto_bit:1;
 	u_int8_t x_res[2];

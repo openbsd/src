@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.13 1997/03/08 02:15:05 kstailey Exp $	*/
+/*	$OpenBSD: ss.c,v 1.14 1997/03/08 05:39:00 kstailey Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -64,6 +64,57 @@
 #define MODE_NONREWIND	1
 #define MODE_CONTROL	3
 
+struct quirkdata {
+	u_int quirks;
+#define SS_Q_NEEDS_WINDOW_DESC_LEN	0x0001 /* needs special WDL */
+#define SS_Q_USES_HALFTONE		0x0002 /* uses non-zero halftone */
+#define SS_Q_NEEDS_RIF_SET		0x0004
+#define SS_Q_NEEDS_PADDING_TYPE		0x0008 /* needs special padding type */
+#define SS_Q_USES_BIT_ORDERING		0x0010 /* uses non-zero bit ordering */
+#define SS_Q_GET_BUFFER_SIZE		0x0020 /* use GET_BUFFER_SIZE while reading */
+
+	long window_descriptor_length;
+	u_int8_t halftone_pattern[2];
+	int pad_type;
+	long bit_ordering;
+};
+
+struct ss_quirk_inquiry_pattern {
+	struct scsi_inquiry_pattern pattern;
+	struct quirkdata quirkdata;
+};
+
+/*
+ * WDL:
+ *
+ *  Ricoh IS-50 & IS-410 insist on 320 (even it transfer len is less.)
+ *  Ricoh FS-1 accepts 256 (I haven't tested other values.)
+ *  UMAX UC-630 accepts 46 (I haven't tested other values.)
+ *  Fujitsu M3096G wants 40 <= x <= 248 (tested OK at 40 & 64.)
+ */
+
+struct ss_quirk_inquiry_pattern ss_quirk_patterns[] = {
+	{{T_SCANNER, T_FIXED,
+	 "RICOH   ", "IS410           ", "    "}, {
+		 SS_Q_NEEDS_WINDOW_DESC_LEN |
+		 SS_Q_USES_HALFTONE |
+		 SS_Q_USES_BIT_ORDERING,
+		 320, { 2, 0x0a }, 0, 7
+	 }},
+#ifdef NOTYET
+	{{T_SCANNER, T_FIXED,
+	 "FUJITSU ", "M3096Gm         ", "    "}, {
+		 SS_Q_
+	 }},
+	{{T_SCANNER, T_FIXED,
+	 "UMAX    ", "UC630           ", "    "}, {
+	{{T_SCANNER, T_FIXED,
+	 "UMAX    ", "UG630           ", "    "}, {
+	 }},
+#endif
+};
+       
+
 int ssmatch __P((struct device *, void *, void *));
 void ssattach __P((struct device *, struct device *, void *));
 
@@ -79,9 +130,8 @@ void    ssstrategy __P((struct buf *));
 void    ssstart __P((void *));
 void	ssminphys __P((struct buf *));
 
-#ifdef NOTYET
-static int ss_set_window __P((struct ss_softc *, struct scan_io *));
-#endif
+void	ss_identify_scanner __P((struct ss_softc *, struct scsi_inquiry_data *));
+int	ss_set_window __P((struct ss_softc *, struct scan_io *));
 
 struct scsi_device ss_switch = {
 	NULL,
@@ -142,20 +192,12 @@ ssattach(parent, self, aux)
 	sc_link->device_softc = ss;
 	sc_link->openings = 1;
 
-	/*
-	 * look for non-standard scanners with help of the quirk table
-	 * and install functions for special handling
-	 */
-	SC_DEBUG(sc_link, SDEV_DB2, ("ssattach:\n"));
 	if (!bcmp(sa->sa_inqbuf->vendor, "MUSTEK", 6))
 		mustek_attach(ss, sa);
 	else if (!bcmp(sa->sa_inqbuf->vendor, "HP      ", 8))
 		scanjet_attach(ss, sa);
 	else
-		printf("\n");
-	if (ss->special == NULL) {
-		/* XXX add code to restart a SCSI2 scanner, if any */
-	}
+		ss_identify_scanner(ss, sa->sa_inqbuf);
 
 	/*
 	 * Set up the buf queue for this device
@@ -461,12 +503,8 @@ ssioctl(dev, cmd, addr, flag, p)
 			if (error)
 				return (error);
 		} else {
-#ifdef NOTYET
 			/* add routine to validate paramters */
 			ss_set_window(ss, sio);
-#else
-			return (EOPNOTSUPP);
-#endif
 		}
 		break;
 	case SCIOCRESTART:
@@ -493,15 +531,14 @@ ssioctl(dev, cmd, addr, flag, p)
 	return (error);
 }
 
-#ifdef NOTYET
-static int
+int
 ss_set_window(sc, sio)
-	struct ss_softc *;
-	struct scan_io *;
+	struct ss_softc *sc;
+	struct scan_io *sio;
 {
-	struct scsi_set_window		window_cmd;
-	struct scsi_window_header	window_header;
-	struct scsi_window_data		window_data;
+	struct scsi_set_window	window_cmd;
+	struct scsi_window_data	window_data;
+	struct scsi_link	*sc_link;
 
 	/*
 	 * The CDB for SET WINDOW goes in here.
@@ -509,41 +546,75 @@ ss_set_window(sc, sio)
 	 */
 	bzero(&window_cmd, sizeof(window_cmd));
 	window_cmd.opcode = SET_WINDOW;
-	_lto3l(sizeof(window_data), window_cmd.length);
+	_lto3l(sizeof(window_data), window_cmd.len);
 
-	/*
-	 * XXX Window Descriptor Length needs a quirk.
-	 * Some scanners have peculiar notions about what the value
-	 * should be.
-	 *
-	 *  In general 40 <= WDL <= sizeof(vendor unique window data)
-	 *
-	 *  Ricoh IS-50 & IS-410 insist on 320 (even it transfer len is less.)
-	 *  Ricoh FS-1 insists on 256.
-	 *  UMAX UC-630 accepts 46 (I haven't tested other values.)
-	 *  Fujitsu M3096G wants 40 <= x <= 248 (tested OK at 40 & 64.)
-	 */
-	bzero(&window_header, sizeof(window_header));
-	_lto2l(, window_header.len);
-
-	/*
-	 * The first 40 bytes of the window descriptor block are defined
-	 * in the standard.  After that "venor unique" data is limited
-	 * only by 16-bit xfer len value.
-	 */
 	bzero(&window_data, sizeof(window_data));
+	if (sc->quirkdata->quirks & SS_Q_NEEDS_WINDOW_DESC_LEN)
+		_lto2l(sc->quirkdata->window_descriptor_length,
+		       window_data.window_desc_len);
+	else
+		_lto2l(40L, window_data.window_desc_len);
 	/* leave window id at zero */
 	/* leave auto bit at zero */
-	_lto2l(sio->sio.scan_x_resolution, window_data.x_res);
-	_lto2l(sio->sio.scan_y_resolution, window_data.y_res);
-	_lto4l(sio->sio.scan_x_origin, window_data.x_org);
-	_lto4l(sio->sio.scan_y_origin, window_data.y_org);
-	_lto4l(sio->sio.scan_width,  window_data.width);
-	_lto4l(sio->sio.scan_height, window_data.length);
-	window_data.brightness     = sio->sio.scan_brightness;
-	window_data.threshold      = sio->sio.
-	window_data.contrast       = sio->sio.scan_contrast;
-	window_data.image_comp     = sio->sio.
-	window_data.bits_per_pixel = sio->sio.scan_bits_per_pixel;
+	_lto2l(sio->scan_x_resolution, window_data.x_res);
+	_lto2l(sio->scan_y_resolution, window_data.y_res);
+	_lto4l(sio->scan_x_origin, window_data.x_org);
+	_lto4l(sio->scan_y_origin, window_data.y_org);
+	_lto4l(sio->scan_width,  window_data.width);
+	_lto4l(sio->scan_height, window_data.length);
+	window_data.brightness     = sio->scan_brightness;
+	window_data.threshold      = sio->scan_brightness;
+	window_data.contrast       = sio->scan_contrast;
+	switch (sio->scan_image_mode) {
+	case SIM_RED:
+	case SIM_GREEN:
+	case SIM_BLUE:
+		window_data.image_comp = SIM_GRAYSCALE;
+		break;
+	default:
+		window_data.image_comp = sio->scan_image_mode;
+	}
+	window_data.bits_per_pixel = sio->scan_bits_per_pixel;
+	if (sc->quirkdata->quirks & SS_Q_USES_HALFTONE) {
+		window_data.halftone_pattern[0] =
+			sc->quirkdata->halftone_pattern[0];
+		window_data.halftone_pattern[1] = 
+			sc->quirkdata->halftone_pattern[1];
+	} /* else leave halftone set to zero. */
+	/* leave rif set to zero. */
+	if (sc->quirkdata->quirks & SS_Q_NEEDS_PADDING_TYPE)
+		window_data.pad_type = sc->quirkdata->pad_type;
+	else
+		window_data.pad_type = 3; /* 3 = pad to byte boundary */
+	if (sc->quirkdata->quirks & SS_Q_USES_BIT_ORDERING)
+		_lto2l(sc->quirkdata->bit_ordering, window_data.bit_ordering);
+	/* else leave bit_ordering set to zero. */
+	/* leave compression type & argument set to zero. */
+
+	/* XXX many scanners require a vendor-specific portion */
+
+	/* send the command to the scanner */
+	return (scsi_scsi_cmd(sc_link, (struct scsi_generic *) &window_cmd,
+	    sizeof(window_cmd), (u_char *) &window_data, sizeof(window_data),
+	    4, 5000, NULL, SCSI_DATA_OUT));
 }
-#endif
+
+void
+ss_identify_scanner(ss, inqbuf)
+	struct ss_softc *ss;
+	struct scsi_inquiry_data *inqbuf;
+{
+	struct ss_quirk_inquiry_pattern *finger;
+	int priority;
+	/*
+	 * look for non-standard scanners with help of the quirk table
+	 * and install functions for special handling
+	 */
+	finger = (struct ss_quirk_inquiry_pattern *)scsi_inqmatch(inqbuf,
+	    (caddr_t)ss_quirk_patterns,
+	    sizeof(ss_quirk_patterns)/sizeof(ss_quirk_patterns[0]),
+	    sizeof(ss_quirk_patterns[0]), &priority);
+	if (priority != 0)
+		ss->quirkdata = &finger->quirkdata;
+}
+
