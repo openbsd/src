@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.21 2004/01/19 16:12:04 otto Exp $	*/
+/*	$OpenBSD: util.c,v 1.22 2004/01/25 21:36:00 millert Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -178,25 +178,17 @@ procline(str_t *l, int nottext)
 	}
 
 	for (c = i = 0; i < patterns; i++) {
-		pmatch.rm_so = 0;
-		pmatch.rm_eo = l->len;
-		if (fg_pattern[i].pattern)
+		if (fg_pattern[i].pattern) {
 			r = grep_search(&fg_pattern[i], (unsigned char *)l->dat,
 			    l->len, &pmatch);
-		else
+		} else {
+			pmatch.rm_so = 0;
+			pmatch.rm_eo = l->len;
 			r = regexec(&r_pattern[i], l->dat, 1, &pmatch, eflags);
-		if (r == 0) {
-			if (wflag) {
-				if ((pmatch.rm_so != 0 &&
-				    isword(l->dat[pmatch.rm_so - 1])) ||
-				    (pmatch.rm_eo != l->len &&
-				    isword(l->dat[pmatch.rm_eo])))
-					r = REG_NOMATCH;
-			}
-			if (xflag) {
-				if (pmatch.rm_so != 0 || pmatch.rm_eo != l->len)
-					r = REG_NOMATCH;
-			}
+		}
+		if (r == 0 && xflag) {
+			if (pmatch.rm_so != 0 || pmatch.rm_eo != l->len)
+				r = REG_NOMATCH;
 		}
 		if (r == 0) {
 			c++;
@@ -254,6 +246,7 @@ fastcomp(fastgrep_t *fg, const char *pattern)
 	origPatternLen = fg->patternLen = strlen(pattern);
 	fg->bol = 0;
 	fg->eol = 0;
+	fg->wmatch = 0;
 	fg->reversedSearch = 0;
 
 	/* Remove end-of-line character ('$'). */
@@ -272,11 +265,22 @@ fastcomp(fastgrep_t *fg, const char *pattern)
 		boleol = 1;
 	}
 
+	/* Remove enclosing [[:<:]] and [[:>:]] (word match). */
+	if (fg->patternLen > 14 + fg->bol + fg->eol &&
+	    strncmp(pattern + fg->bol, "[[:<:]]", 7) == 0 &&
+	    strncmp(pattern + fg->patternLen - (7 + fg->eol), "[[:>:]]", 7) == 0) {
+		fg->patternLen -= 14;
+		fg->wmatch = 7;
+	}
+
 	/*
-	 * Copy pattern minus '^' and '$' characters at the beginning and
-	 * ending of the string respectively.
+	 * Copy pattern minus '^' and '$' characters as well as word
+	 * match character classes at the beginning and ending of the
+	 * string respectively.
 	 */
-	fg->pattern = grep_strdup(pattern + bol);
+	fg->pattern = grep_malloc(fg->patternLen + 1);
+	memcpy(fg->pattern, pattern + bol + fg->wmatch, fg->patternLen);
+	fg->pattern[fg->patternLen] = '\0';
 
 	/* Look for ways to cheat...er...avoid the full regex engine. */
 	for (i = 0; i < fg->patternLen; i++)
@@ -369,6 +373,9 @@ fastcomp(fastgrep_t *fg, const char *pattern)
 	return (0);
 }
 
+#define wmatch(d, l, s, e)	\
+	((s == 0 || !isword(d[s-1])) && (e == l || !isword(d[e])))
+
 static int
 grep_search(fastgrep_t *fg, unsigned char *data, int dataLen, regmatch_t *pmatch)
 {
@@ -393,10 +400,13 @@ grep_search(fastgrep_t *fg, unsigned char *data, int dataLen, regmatch_t *pmatch
 			else
 				j = 0;
 			if (!((fg->bol && fg->eol) && (dataLen != fg->patternLen)))
-				if (grep_cmp(fg->pattern, data + j, fg->patternLen) == -1) {
-					rtrnVal = 0;
+				if (grep_cmp(fg->pattern, data + j,
+				    fg->patternLen) == -1) {
 					pmatch->rm_so = j;
 					pmatch->rm_eo = j + fg->patternLen;
+					if (!fg->wmatch || wmatch(data, dataLen,
+					    pmatch->rm_so, pmatch->rm_eo))
+						rtrnVal = 0;
 				}
 		}
 	} else if (fg->reversedSearch) {
@@ -405,10 +415,13 @@ grep_search(fastgrep_t *fg, unsigned char *data, int dataLen, regmatch_t *pmatch
 		do {
 			if (grep_cmp(fg->pattern, data + j - fg->patternLen,
 			    fg->patternLen) == -1) {
-				rtrnVal = 0;
 				pmatch->rm_so = j - fg->patternLen;
 				pmatch->rm_eo = j;
-				break;
+				if (!fg->wmatch || wmatch(data, dataLen,
+				    pmatch->rm_so, pmatch->rm_eo)) {
+					rtrnVal = 0;
+					break;
+				}
 			}
 			/* Shift if within bounds, otherwise, we are done. */
 			if (j == fg->patternLen)
@@ -420,10 +433,13 @@ grep_search(fastgrep_t *fg, unsigned char *data, int dataLen, regmatch_t *pmatch
 		j = 0;
 		do {
 			if (grep_cmp(fg->pattern, data + j, fg->patternLen) == -1) {
-				rtrnVal = 0;
 				pmatch->rm_so = j;
 				pmatch->rm_eo = j + fg->patternLen;
-				break;
+				if (!fg->wmatch || wmatch(data, dataLen,
+				    pmatch->rm_so, pmatch->rm_eo)) {
+					rtrnVal = 0;
+					break;
+				}
 			}
 
 			/* Shift if within bounds, otherwise, we are done. */
@@ -453,16 +469,6 @@ grep_realloc(void *ptr, size_t size)
 {
 	if ((ptr = realloc(ptr, size)) == NULL)
 		err(2, "realloc");
-	return ptr;
-}
-
-unsigned char *
-grep_strdup(const char *str)
-{
-	unsigned char *ptr;
-
-	if ((ptr = (unsigned char *)strdup(str)) == NULL)
-		err(2, "strdup");
 	return ptr;
 }
 
