@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.669 2003/09/22 21:02:45 grange Exp 
+ *		OpenBSD: pcidevs,v 1.670 2003/09/23 03:37:23 jason Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2485,6 +2485,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_8154,
 	    "8154",
+	},
+	{
+	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_7955,
+	    "7955",
 	},
 	{
 	    PCI_VENDOR_HINT, PCI_PRODUCT_HINT_VXPRO_II_HOST,
