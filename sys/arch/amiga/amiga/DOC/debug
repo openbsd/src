@@ -1,3 +1,4 @@
+$OpenBSD: debug,v 1.2 1996/06/04 12:49:16 niklas Exp $
 $NetBSD: debug,v 1.2 1994/10/26 02:02:16 cgd Exp $
 
 NOTE: this description applies to the hp300 system with the old BSD

@@ -1,3 +1,4 @@
+/*	$OpenBSD: kdassert.h,v 1.2 1996/06/04 12:49:14 niklas Exp $	*/
 /*	$NetBSD: kdassert.h,v 1.4 1995/04/17 11:50:36 chopps Exp $	*/
 
 /*
