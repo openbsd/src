@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.14 1998/12/05 00:06:28 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.15 1999/01/09 16:45:02 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.14 1998/12/05 00:06:28 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.15 1999/01/09 16:45:02 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -196,11 +196,20 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 			compatMake = TRUE;
 			break;
 #ifdef REMOTE
-		case 'L':
-			maxLocal = atoi(optarg);
+		case 'L': {
+		   char *endptr;
+
+			maxLocal = strtol(optarg, &endptr, 0);
+			if (endptr == optarg) {
+				fprintf(stderr,
+					"make: illegal argument to -L option -- %s -- not a number\n",
+					optarg);
+				usage();
+			}
 			Var_Append(MAKEFLAGS, "-L", VAR_GLOBAL);
 			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
 			break;
+		}
 #endif
 		case 'P':
 			usePipes = FALSE;
@@ -276,8 +285,17 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 			ignoreErrors = TRUE;
 			Var_Append(MAKEFLAGS, "-i", VAR_GLOBAL);
 			break;
-		case 'j':
+		case 'j': {
+		   char *endptr;
+
 			forceJobs = TRUE;
+			maxJobs = strtol(optarg, &endptr, 0);
+			if (endptr == optarg) {
+				fprintf(stderr,
+					"make: illegal argument to -j option -- %s -- not a number\n",
+					optarg);
+				usage();
+			}
 			maxJobs = atoi(optarg);
 #ifndef REMOTE
 			maxLocal = maxJobs;
@@ -285,6 +303,7 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 			Var_Append(MAKEFLAGS, "-j", VAR_GLOBAL);
 			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
 			break;
+		}
 		case 'k':
 			keepgoing = TRUE;
 			Var_Append(MAKEFLAGS, "-k", VAR_GLOBAL);
