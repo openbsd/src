@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.7 2001/03/09 05:44:38 smurph Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.8 2001/03/16 00:10:55 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -25,6 +25,17 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/param.h>
+#include <sys/systm.h>
+
+#include <machine/db_machdep.h> /* lots of stuff                  */
+#include <machine/locore.h>
+
+#include <ddb/db_variables.h>	/* db_variable, DB_VAR_GET, etc.  */
+#include <ddb/db_output.h>	/* db_printf                      */
+#include <ddb/db_sym.h>		/* DB_STGY_PROC, etc.             */
+#include <ddb/db_command.h>	/* db_recover                     */
 
 union instruction {
     unsigned rawbits;
@@ -84,17 +95,13 @@ static inline unsigned br_dest(unsigned addr, union instruction inst)
 
 #define TRACE_DEBUG	/* undefine to disable debugging */
 
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <machine/db_machdep.h> /* lots of stuff                  */
-#include <ddb/db_variables.h>	/* db_variable, DB_VAR_GET, etc.  */
-#include <ddb/db_output.h>	/* db_printf                      */
-#include <ddb/db_sym.h>		/* DB_STGY_PROC, etc.             */
-#include <ddb/db_command.h>	/* db_recover                     */
+extern void db_read_bytes __P((vm_offset_t addr, int size, char *data));
+int frame_is_sane __P((db_regs_t *regs));
+char *m88k_exception_name __P((unsigned vector));
+unsigned db_trace_get_val __P((vm_offset_t addr, unsigned *ptr));
+void db_stack_trace_cmd __P((db_regs_t *addr, int have_addr,
+    db_expr_t count, char *modif));
 
-extern int badwordaddr();
-extern int m88k_print_instruction __P((unsigned iadr, long inst));
-extern void db_read_bytes();
 /*
  * Some macros to tell if the given text is the instruction.
  */
@@ -321,8 +328,8 @@ frame_is_sane(db_regs_t *regs)
     return 0;
 }
 
-char
-*m88k_exception_name(unsigned vector)
+char *
+m88k_exception_name(unsigned vector)
 {
     switch  (vector)
     {
@@ -365,7 +372,7 @@ db_trace_get_val(vm_offset_t addr, unsigned *ptr)
         quiet_db_read_bytes = old_quiet_db_read_bytes;
 	return 0;
     } else {
-	db_read_bytes((char*)addr, 4, (char*)ptr);
+	db_read_bytes(addr, 4, (char*)ptr);
 	db_recover = prev;
         quiet_db_read_bytes = old_quiet_db_read_bytes;
 	return 1;
@@ -928,7 +935,7 @@ db_stack_trace_cmd2(db_regs_t *regs)
 	    badwordaddr((vm_offset_t)(stack+4)))
 		    break;
 
-	db_read_bytes((char*)stack, 2*sizeof(int), (char*)pair);
+	db_read_bytes((vm_offset_t)stack, 2*sizeof(int), (char*)pair);
 
 	/* the pairs should match and equal stack+8 */
 	if (pair[0] == pair[1])
@@ -980,7 +987,7 @@ db_stack_trace_cmd2(db_regs_t *regs)
 	    badwordaddr((vm_offset_t)stack))
 		    return;
 
-	db_read_bytes((char*)stack, 2*sizeof(int), (char*)pair);
+	db_read_bytes((vm_offset_t)stack, 2*sizeof(int), (char*)pair);
 	if (pair[0] != pair[1])
 	    return;
 
