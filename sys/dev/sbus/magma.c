@@ -1,4 +1,4 @@
-/*	$OpenBSD: magma.c,v 1.8 2003/06/24 21:54:38 henric Exp $	*/
+/*	$OpenBSD: magma.c,v 1.9 2003/06/27 01:36:53 jason Exp $	*/
 /*
  * magma.c
  *
@@ -356,7 +356,7 @@ magma_attach(parent, dev, aux)
 
 	if (sbus_bus_map(sa->sa_bustag, sa->sa_reg[0].sbr_slot,
 	    sa->sa_reg[0].sbr_offset, sa->sa_reg[0].sbr_size,
-	    BUS_SPACE_MAP_LINEAR, 0, &sc->sc_iohandle) != 0) {
+	    0, 0, &sc->sc_iohandle) != 0) {
 		printf(": can't map registers\n");
 		return;
 	}

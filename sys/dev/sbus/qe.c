@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.13 2003/06/24 21:54:38 henric Exp $	*/
+/*	$OpenBSD: qe.c,v 1.14 2003/06/27 01:36:53 jason Exp $	*/
 /*	$NetBSD: qe.c,v 1.16 2001/03/30 17:30:18 christos Exp $	*/
 
 /*-
@@ -216,20 +216,16 @@ qeattach(parent, self, aux)
 		return;
 	}
 
-	if (sbus_bus_map(sa->sa_bustag,
-	    sa->sa_reg[0].sbr_slot,
+	if (sbus_bus_map(sa->sa_bustag, sa->sa_reg[0].sbr_slot,
 	    (bus_addr_t)sa->sa_reg[0].sbr_offset,
-	    (bus_size_t)sa->sa_reg[0].sbr_size,
-	    BUS_SPACE_MAP_LINEAR, 0, &sc->sc_cr) != 0) {
+	    (bus_size_t)sa->sa_reg[0].sbr_size, 0, 0, &sc->sc_cr) != 0) {
 		printf("%s: cannot map registers\n", self->dv_xname);
 		return;
 	}
 
-	if (sbus_bus_map(sa->sa_bustag,
-	    sa->sa_reg[1].sbr_slot,
+	if (sbus_bus_map(sa->sa_bustag, sa->sa_reg[1].sbr_slot,
 	    (bus_addr_t)sa->sa_reg[1].sbr_offset,
-	    (bus_size_t)sa->sa_reg[1].sbr_size,
-	    BUS_SPACE_MAP_LINEAR, 0, &sc->sc_mr) != 0) {
+	    (bus_size_t)sa->sa_reg[1].sbr_size, 0, 0, &sc->sc_mr) != 0) {
 		printf("%s: cannot map registers\n", self->dv_xname);
 		return;
 	}

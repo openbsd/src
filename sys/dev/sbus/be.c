@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.12 2003/06/24 21:54:38 henric Exp $	*/
+/*	$OpenBSD: be.c,v 1.13 2003/06/27 01:36:53 jason Exp $	*/
 /*	$NetBSD: be.c,v 1.26 2001/03/20 15:39:20 pk Exp $	*/
 
 /*-
@@ -249,29 +249,23 @@ beattach(parent, self, aux)
 		return;
 	}
 
-	if (sbus_bus_map(sa->sa_bustag,
-	    sa->sa_reg[0].sbr_slot,
+	if (sbus_bus_map(sa->sa_bustag, sa->sa_reg[0].sbr_slot,
 	    (bus_addr_t)sa->sa_reg[0].sbr_offset,
-	    (bus_size_t)sa->sa_reg[0].sbr_size,
-	    BUS_SPACE_MAP_LINEAR, 0, &sc->sc_cr) != 0) {
+	    (bus_size_t)sa->sa_reg[0].sbr_size, 0, 0, &sc->sc_cr) != 0) {
 		printf("beattach: cannot map registers\n");
 		return;
 	}
 
-	if (sbus_bus_map(sa->sa_bustag,
-	    sa->sa_reg[1].sbr_slot,
+	if (sbus_bus_map(sa->sa_bustag, sa->sa_reg[1].sbr_slot,
 	    (bus_addr_t)sa->sa_reg[1].sbr_offset,
-	    (bus_size_t)sa->sa_reg[1].sbr_size,
-	    BUS_SPACE_MAP_LINEAR, 0, &sc->sc_br) != 0) {
+	    (bus_size_t)sa->sa_reg[1].sbr_size, 0, 0, &sc->sc_br) != 0) {
 		printf("beattach: cannot map registers\n");
 		return;
 	}
 
-	if (sbus_bus_map(sa->sa_bustag,
-	    sa->sa_reg[2].sbr_slot,
+	if (sbus_bus_map(sa->sa_bustag, sa->sa_reg[2].sbr_slot,
 	    (bus_addr_t)sa->sa_reg[2].sbr_offset,
-	    (bus_size_t)sa->sa_reg[2].sbr_size,
-	    BUS_SPACE_MAP_LINEAR, 0, &sc->sc_tr) != 0) {
+	    (bus_size_t)sa->sa_reg[2].sbr_size, 0, 0, &sc->sc_tr) != 0) {
 		printf("beattach: cannot map registers\n");
 		return;
 	}

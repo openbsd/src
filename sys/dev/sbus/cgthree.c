@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.32 2003/06/18 17:35:30 miod Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.33 2003/06/27 01:36:53 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -246,8 +246,7 @@ cgthreeattach(parent, self, aux)
 	 */
 	if (sbus_bus_map(sa->sa_bustag, sa->sa_reg[0].sbr_slot,
 	    sa->sa_reg[0].sbr_offset + CGTHREE_CTRL_OFFSET,
-	    CGTHREE_CTRL_SIZE, BUS_SPACE_MAP_LINEAR,
-	    0, &sc->sc_ctrl_regs) != 0) {
+	    CGTHREE_CTRL_SIZE, 0, 0, &sc->sc_ctrl_regs) != 0) {
 		printf(": cannot map ctrl registers\n");
 		goto fail_ctrl;
 	}

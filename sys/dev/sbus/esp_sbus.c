@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp_sbus.c,v 1.13 2003/06/24 21:54:38 henric Exp $	*/
+/*	$OpenBSD: esp_sbus.c,v 1.14 2003/06/27 01:36:53 jason Exp $	*/
 /*	$NetBSD: esp_sbus.c,v 1.14 2001/04/25 17:53:37 bouyer Exp $	*/
 
 /*-
@@ -401,7 +401,7 @@ espattach_dma(parent, self, aux)
 		}
 	} else {
 		if (sbus_bus_map(sa->sa_bustag, sa->sa_slot, sa->sa_offset,
-		    sa->sa_size, BUS_SPACE_MAP_LINEAR, 0, &esc->sc_reg) != 0) {
+		    sa->sa_size, 0, 0, &esc->sc_reg) != 0) {
 			printf("%s @ dma: cannot map registers\n",
 				self->dv_xname);
 			return;
