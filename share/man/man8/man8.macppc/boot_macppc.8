@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_macppc.8,v 1.13 2004/05/24 13:43:01 drahn Exp $
+.\"	$OpenBSD: boot_macppc.8,v 1.14 2004/05/24 13:44:37 drahn Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -152,6 +152,16 @@ To enter Open Firmware, press and hold
 .Dq o
 .Dq f
 as the machine resets until it enters the Open Firmware debugger.
+.Pp
+On an Xserve using serial console the System Identifier button is used to
+enter Open Firmware instead of the keyboard.
+To enter Open Firmware, hold down the System Identifier button while pressing
+the Power button.
+When the upper LED bank begins lighting up in sequence, repeatedly press
+the System Identifier button until the seventh LED from the right is
+highlighted in the lower bank. 
+Now hold the System Identifier button for two seconds, until all the top
+row LEDs light up.
 .Sh FILES
 .Bl -tag -width /usr/mdec/ofwboot -compact
 .It Pa /bsd
