@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.11 1999/04/19 04:48:02 downsj Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.12 1999/07/17 23:12:08 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.22 1997/11/26 04:18:20 briggs Exp $	*/
 
 /*
@@ -491,9 +491,8 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
 
-	if (lp->d_secpercyl == 0) {
-		return msg = "Zero secpercyl";
-	}
+	if (lp->d_secpercyl == 0)
+		return (msg = "Zero secpercyl");
 
 	/* don't read the on-disk label if we are in spoofed-only mode */
 	if (spoofonly)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.3 1999/06/12 17:52:29 mickey Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.4 1999/07/17 23:12:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -243,7 +243,7 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 	struct cpu_disklabel *osdep;
 	int spoofonly;
 {
-	struct buf *bp;
+	struct buf *bp = NULL;
 	char *msg = "no disk label";
 	enum disklabel_tag *tp;
 	int i;
@@ -325,8 +325,10 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 		*lp = fallbacklabel;
 
 done:
-	bp->b_flags |= B_INVAL;
-	brelse(bp);
+	if (bp) {
+		bp->b_flags |= B_INVAL;
+		brelse(bp);
+	}
 	return (msg);
 }
 
