@@ -14,13 +14,18 @@ Missing commands:
 	- annotate
 	- commit (jfb)
 	- history?
-	- log
+	- log (jfb)
 	- release
 	- remove
 	- status
 	- tag
-	- the 'r' commands (rtag, 
+	- the 'r' commands (rdiff, rlog, rtag)
 
+Merging the common code
+=======================
+It is becoming quite clear that almost all of the functions share about 90%
+of the code that is in cvs_<command>_file(), so we should probably look at
+a way to simplify the function by automating certain parts.
 
 Multiple server support
 =======================
