@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: bundle.c,v 1.13 1999/03/25 11:37:16 brian Exp $
+ *	$Id: bundle.c,v 1.14 1999/04/26 08:55:00 brian Exp $
  */
 
 #include <sys/param.h>
@@ -50,10 +50,10 @@
 #include <unistd.h>
 
 #ifndef NOALIAS
-#ifdef __OpenBSD__
-#include "alias.h"
-#else
+#ifdef __FreeBSD__
 #include <alias.h>
+#else
+#include "alias.h"
 #endif
 #endif
 #include "defs.h"
