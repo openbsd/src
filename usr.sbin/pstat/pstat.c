@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.10 1997/05/31 08:48:20 deraadt Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.11 1997/08/07 20:58:30 millert Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.10 1997/05/31 08:48:20 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.11 1997/08/07 20:58:30 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -76,6 +76,7 @@ static char *rcsid = "$OpenBSD: pstat.c,v 1.10 1997/05/31 08:48:20 deraadt Exp $
 #include <kvm.h>
 #include <limits.h>
 #include <nlist.h>
+#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -804,7 +805,7 @@ ttyprt(tp)
 	char *name, state[20];
 
 	if (usenumflag || (name = devname(tp->t_dev, S_IFCHR)) == NULL)
-		(void)printf("0x%3x:%1x ", major(tp->t_dev), minor(tp->t_dev)); 
+		(void)printf("%2d,%-2d   ", major(tp->t_dev), minor(tp->t_dev));
 	else
 		(void)printf("%-7s ", name);
 	(void)printf("%3d %4d ", tp->t_rawq.c_cc, tp->t_canq.c_cc);
@@ -1057,10 +1058,16 @@ swapmode()
 		if (!(sw[i].sw_flags & SW_FREED))
 			continue;
 
-		if (!totalflag)
-			(void)printf("/dev/%-6s %*d ",
-			    devname(sw[i].sw_dev, S_IFBLK),
-			    hlen, sw[i].sw_nblks / div);
+		if (!totalflag) {
+			if (usenumflag)
+				(void)printf("%2d,%-2d       %*d ",
+				    major(sw[i].sw_dev), minor(sw[i].sw_dev),
+				    hlen, sw[i].sw_nblks / div);
+			else
+				(void)printf("%s%-6s %*d ", _PATH_DEV,
+				    devname(sw[i].sw_dev, S_IFBLK),
+				    hlen, sw[i].sw_nblks / div);
+		}
 
 		xsize = sw[i].sw_nblks;
 		xfree = perdev[i];
