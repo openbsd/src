@@ -121,8 +121,14 @@ main(argc, argv)
 	}
 #endif
 #define	isoptstring(s)	(((s)[0] == '-' || (s)[0] == '+') && (s)[1] != '\0')
-	while (--argc > 0 && (isoptstring(argv[0]) || isoptpending()))
+	while (--argc > 0 && (isoptstring(argv[0]) || isoptpending())) {
+		if (strcmp(argv[0], "--") == 0) {
+			argv++;
+			argc--;
+			break;
+		}
 		scan_option(*argv++);
+	}
 #undef isoptstring
 
 	if (isoptpending())
