@@ -1486,10 +1486,6 @@ Defines a character set.
 Selects a predefined character set.
 .IP LESSCLOSE
 Command line to invoke the (optional) input-postprocessor.
-.IP LESSECHO
-Name of the lessecho program (default "lessecho").
-The lessecho program is needed to expand metacharacters, such as * and ?,
-in filenames on Unix systems.
 .IP LESSEDIT
 Editor prototype string (used for the v command).
 See discussion under PROMPTS.
