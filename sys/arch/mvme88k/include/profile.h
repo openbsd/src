@@ -1,4 +1,4 @@
-/*	$OpenBSD: profile.h,v 1.12 2003/06/02 23:27:52 millert Exp $ */
+/*	$OpenBSD: profile.h,v 1.13 2003/10/05 20:25:08 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)profile.h	8.1 (Berkeley) 6/11/93
- *	$Id: profile.h,v 1.12 2003/06/02 23:27:52 millert Exp $
+ *	$Id: profile.h,v 1.13 2003/10/05 20:25:08 miod Exp $
  */
 #ifndef __MACHINE_PROFILE_H__
 #define __MACHINE_PROFILE_H__
@@ -40,8 +40,8 @@ extern void mcount() __asm__ ("mcount");					\
 void									\
 mcount()								\
 {									\
-	register int selfret;						\
-	register int callerret;						\
+	int selfret;							\
+	int callerret;							\
 	/*								\
 	 * find the return address for mcount,				\
 	 * and the return address for mcount's caller.			\

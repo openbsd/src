@@ -1,8 +1,8 @@
-/*	$OpenBSD: nvram.c,v 1.21 2003/09/28 22:10:41 miod Exp $ */
+/*	$OpenBSD: nvram.c,v 1.22 2003/10/05 20:25:08 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 
-/* 
+/*
  * 8/22/2000 BH Cleaned up year 2000 problems with calendar hardware.
  * This code will break again in 2068 or so - come dance on my grave.
  */
@@ -63,9 +63,9 @@ struct nvramsoftc {
 void    nvramattach(struct device *, struct device *, void *);
 int     nvrammatch(struct device *, void *, void *);
 
-struct cfattach nvram_ca = { 
+struct cfattach nvram_ca = {
 	sizeof(struct nvramsoftc), nvrammatch, nvramattach
-}; 
+};
 
 struct cfdriver nvram_cd = {
 	NULL, "nvram", DV_DULL, 0
@@ -145,7 +145,7 @@ nvramattach(parent, self, args)
  */
 void
 microtime(tvp)
-	register struct timeval *tvp;
+	struct timeval *tvp;
 {
 	int s = splhigh();
 	static struct timeval lasttime;
@@ -184,9 +184,9 @@ const short dayyr[12] =
 
 u_long
 chiptotime(sec, min, hour, day, mon, year)
-	register int sec, min, hour, day, mon, year;
+	int sec, min, hour, day, mon, year;
 {
-	register int days, yr;
+	int days, yr;
 
 	sec = FROMBCD(sec);
 	min = FROMBCD(min);
@@ -233,9 +233,9 @@ void timetochip(struct chiptime *c);
 
 void
 timetochip(c)
-	register struct chiptime *c;
+	struct chiptime *c;
 {
-	register int t, t2, t3, now = time.tv_sec;
+	int t, t2, t3, now = time.tv_sec;
 
 	/* January 1 1970 was a Thursday (4 in unix wdays) */
 	/* compute the days since the epoch */
@@ -284,7 +284,7 @@ timetochip(c)
  * Set up the system's time, given a `reasonable' time value.
  */
 
-void 
+void
 inittodr(base)
 	time_t base;
 {
@@ -304,7 +304,7 @@ inittodr(base)
 		badbase = 1;
 	}
 	if (brdtyp != BRD_188) {
-		register struct clockreg *cl = (struct clockreg *)sc->sc_regs;
+		struct clockreg *cl = (struct clockreg *)sc->sc_regs;
 		cl->cl_csr |= CLK_READ;		/* enable read (stop time) */
 		sec = cl->cl_sec;
 		min = cl->cl_min;
@@ -314,7 +314,7 @@ inittodr(base)
 		year = cl->cl_year;
 		cl->cl_csr &= ~CLK_READ;	/* time wears on... */
 	} else { /* CPU_188 */
-		register struct m188_clockreg *cl = (struct m188_clockreg *)sc->sc_regs;
+		struct m188_clockreg *cl = (struct m188_clockreg *)sc->sc_regs;
 		cl->cl_csr |= CLK_READ;		/* enable read (stop time) */
 		sec = cl->cl_sec & 0xff;
 		min = cl->cl_min & 0xff;
@@ -363,7 +363,7 @@ resettodr()
 	struct nvramsoftc *sc = (struct nvramsoftc *) nvram_cd.cd_devs[0];
 	struct chiptime c;
 	if (brdtyp != BRD_188) {
-		register struct clockreg *cl = (struct clockreg *)sc->sc_regs;
+		struct clockreg *cl = (struct clockreg *)sc->sc_regs;
 
 		if (!time.tv_sec || cl == NULL)
 			return;
@@ -378,7 +378,7 @@ resettodr()
 		cl->cl_year = c.year;
 		cl->cl_csr &= ~CLK_WRITE;	/* load them up */
 	} else { /* CPU_188 */
-		register struct m188_clockreg *cl = (struct m188_clockreg *)sc->sc_regs;
+		struct m188_clockreg *cl = (struct m188_clockreg *)sc->sc_regs;
 
 		if (!time.tv_sec || cl == NULL)
 			return;

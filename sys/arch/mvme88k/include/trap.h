@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.19 2003/09/17 22:22:30 miod Exp $ */
+/*	$OpenBSD: trap.h,v 1.20 2003/10/05 20:25:08 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -80,7 +80,7 @@ unsigned ss_getreg_val(unsigned, struct trapframe *);
 int ss_inst_branch(unsigned);
 int ss_inst_delayed(unsigned);
 unsigned ss_next_instr_address(struct proc *, unsigned, unsigned);
-int cpu_singlestep(register struct proc *);
+int cpu_singlestep(struct proc *);
 
 void m88100_trap(unsigned, struct m88100_saved_state *);
 void m88100_syscall(register_t, struct m88100_saved_state *);

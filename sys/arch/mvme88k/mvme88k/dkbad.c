@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkbad.c,v 1.7 2003/06/02 23:27:52 millert Exp $	*/
+/*	$OpenBSD: dkbad.c,v 1.8 2003/10/05 20:25:08 miod Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -46,11 +46,11 @@ int isbad(struct dkbad *, int, int, int);
 
 int
 isbad(bt, cyl, trk, sec)
-	register struct dkbad *bt;
+	struct dkbad *bt;
 	int cyl, trk, sec;
 {
-	register int i;
-	register long blk, bblk;
+	int i;
+	long blk, bblk;
 
 	blk = ((long)cyl << 16) + (trk << 8) + sec;
 	for (i = 0; i < NBT_BAD; i++) {

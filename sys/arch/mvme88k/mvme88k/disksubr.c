@@ -1,9 +1,9 @@
-/*	$OpenBSD: disksubr.c,v 1.22 2003/08/21 20:40:33 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.23 2003/10/05 20:25:08 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
  * All rights reserved.
- *   
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -56,7 +56,7 @@ static void printlp(struct disklabel *lp, char *str);
 static void printclp(struct cpu_disklabel *clp, char *str);
 #endif
 
-/* 
+/*
  * Returns the ID of the SCSI disk based on Motorola's CLUN/DLUN stuff
  * bootdev == CLUN << 8 | DLUN.
  * This handles SBC SCSI and MVME32[78].
@@ -108,7 +108,7 @@ dk_establish(dk, dev)
 		sbsc = (struct scsibus_softc *)dev->dv_parent;
 		target = get_target(); /* Work the Motorola Magic */
 		lun = 0;
-    		
+    
 		if (sbsc->sc_link[target][lun] != NULL &&
 		    sbsc->sc_link[target][lun]->device_softc == (void *)dev) {
 			bootdv = dev;
@@ -272,7 +272,7 @@ int
 writedisklabel(dev, strat, lp, clp)
 	dev_t dev;
 	void (*strat)(struct buf *);
-	register struct disklabel *lp;
+	struct disklabel *lp;
 	struct cpu_disklabel *clp;
 {
 	struct buf *bp;
@@ -336,7 +336,7 @@ writedisklabel(dev, strat, lp, clp)
 		bp->b_flags = B_INVAL | B_AGE | B_READ;
 		brelse(bp);
 	}
-	return (error); 
+	return (error);
 }
 
 
@@ -707,7 +707,7 @@ printlp(lp, str)
 	for (i = 0; i < lp->d_npartitions; i++) {
 		struct partition *part = &lp->d_partitions[i];
 		char *fstyp = fstypenames[part->p_fstype];
-		
+
 		printf("%c: size %10x offset %10x type %7s frag %5x cpg %3x\n",
 		    'a' + i, part->p_size, part->p_offset, fstyp,
 		    part->p_frag, part->p_cpg);
@@ -742,7 +742,7 @@ printclp(clp, str)
 		}
 
 		fstyp = fstypenames[part->p_fstype];
-		
+
 		printf("%c: size %10x offset %10x type %7s frag %5x cpg %3x\n",
 		    'a' + i, part->p_size, part->p_offset, fstyp,
 		    part->p_frag, part->p_cpg);

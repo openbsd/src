@@ -1,7 +1,7 @@
-/*	$OpenBSD: sclock.c,v 1.14 2003/06/02 23:27:51 millert Exp $ */
+/*	$OpenBSD: sclock.c,v 1.15 2003/10/05 20:25:08 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -65,7 +65,7 @@
  */
 
 /*
- * Statistics clock driver. 
+ * Statistics clock driver.
  */
 
 #include <sys/param.h>
@@ -82,12 +82,12 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include "pcctwo.h"
-#if NPCCTWO > 0 
+#if NPCCTWO > 0
 #include <mvme88k/dev/pcctwofunc.h>
 #include <mvme88k/dev/pcctworeg.h>
 #endif
 #include "syscon.h"
-#if NSYSCON > 0 
+#if NSYSCON > 0
 #include <mvme88k/dev/sysconfunc.h>
 #include <mvme88k/dev/sysconreg.h>
 #endif
@@ -122,11 +122,11 @@ struct sclocksoftc {
 
 struct cfattach sclock_ca = {
         sizeof(struct sclocksoftc), sclockmatch, sclockattach
-}; 
- 
-struct cfdriver sclock_cd = { 
+};
+
+struct cfdriver sclock_cd = {
         NULL, "sclock", DV_DULL, 0
-}; 
+};
 
 int	sbc_statintr(void *);
 int	m188_statintr(void *);
@@ -135,7 +135,7 @@ int	sclockbus;
 u_char	stat_reset;
 
 /*
- * Every machine needs, but doesn't have to have, a statistics clock. 
+ * Every machine needs, but doesn't have to have, a statistics clock.
  * For this platform, this file manages it, no matter what form it takes.
  */
 int
@@ -143,8 +143,8 @@ sclockmatch(parent, vcf, args)
 	struct device *parent;
 	void *vcf, *args;
 {
-	register struct confargs *ca = args;
-	register struct cfdata *cf = vcf;
+	struct confargs *ca = args;
+	struct cfdata *cf = vcf;
 
 	if (strcmp(cf->cf_driver->cd_name, "sclock")) {
 		return (0);
@@ -172,7 +172,7 @@ sclockattach(parent, self, args)
 	sclockbus = ca->ca_bustype;
 
 	switch (sclockbus) {
-#if NPCCTWO > 0 
+#if NPCCTWO > 0
 	case BUS_PCCTWO:
 		sc->sc_statih.ih_fn = sbc_statintr;
 		sc->sc_statih.ih_arg = 0;
@@ -184,7 +184,7 @@ sclockattach(parent, self, args)
 		printf(": VME1x7");
 		break;
 #endif /* NPCCTWO */
-#if NSYSCON > 0 
+#if NSYSCON > 0
 	case BUS_SYSCON:
 		sc->sc_statih.ih_fn = m188_statintr;
 		sc->sc_statih.ih_arg = 0;
@@ -195,19 +195,19 @@ sclockattach(parent, self, args)
 		printf(": VME188");
 		break;
 #endif /* NSYSCON */
-	}         
+	}
 	printf("\n");
 }
 
-#if NPCCTWO > 0 
+#if NPCCTWO > 0
 void
 sbc_initstatclock(void)
 {
-	register int statint, minint;
+	int statint, minint;
 
 #ifdef CLOCK_DEBUG
 	printf("SBC statclock init\n");
-#endif 
+#endif
 	if (stathz == 0)
 		stathz = hz;
 	if (1000000 % stathz) {
@@ -236,13 +236,13 @@ int
 sbc_statintr(eframe)
 	void *eframe;
 {
-	register u_long newint, r, var;
+	u_long newint, r, var;
 
 	sys_pcc2->pcc2_t2irq = stat_reset;
 
 	/* increment intr counter */
-	intrcnt[M88K_SCLK_IRQ]++; 
-	
+	intrcnt[M88K_SCLK_IRQ]++;
+
 	statclock((struct clockframe *)eframe);
 
 	/*
@@ -265,7 +265,7 @@ sbc_statintr(eframe)
 }
 #endif /* NPCCTWO */
 
-#if NSYSCON > 0 
+#if NSYSCON > 0
 #define CIO_LOCK simple_lock(&cio_lock)
 #define CIO_UNLOCK simple_unlock(&cio_lock)
 
@@ -273,12 +273,12 @@ int
 m188_statintr(eframe)
 	void *eframe;
 {
-	register u_long newint, r, var;
+	u_long newint, r, var;
 
 	CIO_LOCK;
-	
+
 	/* increment intr counter */
-	intrcnt[M88K_SCLK_IRQ]++; 
+	intrcnt[M88K_SCLK_IRQ]++;
 
 	statclock((struct clockframe *)eframe);
 	write_cio(CIO_CSR1, CIO_GCB|CIO_CIP);  /* Ack the interrupt */
@@ -298,13 +298,13 @@ m188_statintr(eframe)
 	*/
 	write_cio(CIO_CT1MSB, (newint & 0xFF00) >> 8);	/* Load time constant CTC #1 */
 	write_cio(CIO_CT1LSB, newint & 0xFF);
-	
+
 	write_cio(CIO_CSR1, CIO_GCB|CIO_CIP);  /* Start CTC #1 running */
 #if 0
 	if (*ist & CIOI_BIT) {
 		printf("CIOI not clearing!\n");
 	}
-#endif 
+#endif
 	CIO_UNLOCK;
 	return (1);
 }
@@ -312,7 +312,7 @@ m188_statintr(eframe)
 void
 m188_initstatclock(void)
 {
-	register int statint, minint;
+	int statint, minint;
 
 #ifdef CLOCK_DEBUG
 	printf("VME188 clock init\n");
@@ -330,8 +330,8 @@ m188_initstatclock(void)
 	minint = statint / 2 + 100;
 	while (statvar > minint)
 		statvar >>= 1;
-	m188_cio_init(statint);  
-	statmin = statint - (statvar >> 1);  
+	m188_cio_init(statint);
+	statmin = statint - (statvar >> 1);
 }
 
 #define CIO_CNTRL 0xFFF8300C
@@ -343,17 +343,17 @@ write_cio(reg, val)
 {
 	int s, i;
 	int *volatile cio_ctrl = (int *volatile)CIO_CNTRL;
-	
+
 	s = splclock();
 	CIO_LOCK;
-	
+
 	i = *cio_ctrl;				/* goto state 1 */
 	*cio_ctrl = 0;				/* take CIO out of RESET */
 	i = *cio_ctrl;				/* reset CIO state machine */
 
 	*cio_ctrl = (reg & 0xFF);		/* Select register */
 	*cio_ctrl = (val & 0xFF);		/* Write the value */
-	
+
 	CIO_UNLOCK;
 	splx(s);
 }
@@ -369,7 +369,7 @@ read_cio(reg)
 
 	s = splclock();
 	CIO_LOCK;
-	
+
 	/* Select register */
 	*cio_ctrl = (char)(reg&0xFF);
 	/* Delay for a short time to allow 8536 to settle */
@@ -421,7 +421,7 @@ m188_cio_init(p)
 	write_cio(CIO_CT1LSB, period & 0xFF);
 
 	/* enable counter 1 */
-	write_cio(CIO_MCCR, CIO_MCCR_CT1E | CIO_MCCR_PBE);   
+	write_cio(CIO_MCCR, CIO_MCCR_CT1E | CIO_MCCR_PBE);
 
 	/* enable interrupts and start */
 	/*write_cio(CIO_IVR, SYSCV_TIMER2);*/
