@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.4 1996/07/04 05:41:54 tholo Exp $ */
+/*	$OpenBSD: lpd.c,v 1.5 1996/07/04 05:46:54 tholo Exp $ */
 /*	$NetBSD: lpd.c,v 1.7 1996/04/24 14:54:06 mrg Exp $	*/
 
 /*
@@ -178,15 +178,14 @@ main(argc, argv)
 	 */
 	startup();
 	(void) unlink(_PATH_SOCKETNAME);
-	(void) umask(07);
 	funix = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (funix < 0) {
 		syslog(LOG_ERR, "socket: %m");
 		exit(1);
 	}
-	(void) umask(0);
 #define	mask(s)	(1 << ((s) - 1))
 	omask = sigblock(mask(SIGHUP)|mask(SIGINT)|mask(SIGQUIT)|mask(SIGTERM));
+	(void) umask(07);
 	signal(SIGHUP, mcleanup);
 	signal(SIGINT, mcleanup);
 	signal(SIGQUIT, mcleanup);
@@ -201,6 +200,7 @@ main(argc, argv)
 		syslog(LOG_ERR, "ubind: %m");
 		exit(1);
 	}
+	(void) umask(0);
 	sigsetmask(omask);
 	FD_ZERO(&defreadfds);
 	FD_SET(funix, &defreadfds);
