@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.7 2001/06/09 20:17:22 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.8 2001/06/10 05:35:59 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -120,7 +120,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.7 2001/06/09 20:17:22 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.8 2001/06/10 05:35:59 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -528,7 +528,16 @@ wi_cmd(sc, cmd, val)
 {
 	int			i, s = 0;
 
+	/* Wait for the busy bit to clear. */
+	for (i = 0; i < WI_TIMEOUT; i++) {
+		if (!(CSR_READ_2(sc, WI_COMMAND) & WI_CMD_BUSY))
+			break;
+		DELAY(1);
+	}
+
 	CSR_WRITE_2(sc, WI_PARAM0, val);
+	CSR_WRITE_2(sc, WI_PARAM1, 0);
+	CSR_WRITE_2(sc, WI_PARAM2, 0);
 	CSR_WRITE_2(sc, WI_COMMAND, cmd);
 
 	for (i = WI_TIMEOUT; i--; DELAY(1)) {
