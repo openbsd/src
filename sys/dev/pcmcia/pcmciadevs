@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.101 2003/05/12 22:19:03 henning Exp $
+	$OpenBSD: pcmciadevs,v 1.102 2003/05/24 19:01:03 henning Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -433,6 +433,7 @@ product PROXIM SYMPHONY		{ "PROXIM", "LAN&spPC&spCARD", "SYMPHONY", NULL }
 product EDIMAX NE2000		{ "PCMCIA", "Ethernet", NULL, NULL }
 product CNET NE2000		{ "CNet", "CN40BC&spEthernet", "D", "NE2000" }
 product CNET CNF301		{ "PCMCIA", "FastEthernet", "V", "1.0" }
+product ADDTRON W89C926		{ "PCMCIA", "ETHERNET", "W89C926", NULL }
 product SHUTTLE IDE_ATAPI	{ "SHUTTLE&spTECHNOLOGY&spLTD.", "PCCARD-IDE/ATAPI&spAdapter", NULL, NULL }
 product ZOOM AIR4000		{ "Zoom", "Air-4000", NULL, NULL }
 product TAMARACK NE2000		{ "TAMARACK", "Ethernet", NULL, NULL }
