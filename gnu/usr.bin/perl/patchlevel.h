@@ -71,6 +71,7 @@
 static	char	*local_patches[] = {
         NULL
 	,"SUIDMAIL - fixes for suidperl security"
+	,"CHANGE6214 - fixes a coredump in @DB::args"
 	,NULL
 };
 

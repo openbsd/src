@@ -349,3 +349,18 @@ A 1
 bar
 B 2
 bar
+########
+sub n { 0 }
+sub f { my $x = shift; d(); }
+f(n());
+f();
+
+sub d {
+    my $i = 0; my @a;
+    while (do { { package DB; @a = caller($i++) } } ) {
+        @a = @DB::args;
+        for (@a) { print "$_\n"; $_ = '' }
+    }
+}
+EXPECT
+0

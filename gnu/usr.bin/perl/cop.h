@@ -105,13 +105,9 @@ struct block_sub {
     } STMT_END
 #endif /* USE_THREADS */
 
-#ifdef USE_ITHREADS
-   /* junk in @_ spells trouble when cloning CVs, so don't leave any */
-#  define CLEAR_ARGARRAY()	av_clear(cx->blk_sub.argarray)
-#else
-#  define CLEAR_ARGARRAY()	NOOP
-#endif /* USE_ITHREADS */
-
+/* junk in @_ spells trouble when cloning CVs and in pp_caller(), so don't
+ * leave any */
+#define CLEAR_ARGARRAY()	av_clear(cx->blk_sub.argarray)
 
 #define POPSUB(cx,sv)							\
     STMT_START {							\
