@@ -1,4 +1,4 @@
-/*	$OpenBSD: connect.c,v 1.4 1999/02/01 06:53:55 d Exp $	*/
+/*	$OpenBSD: connect.c,v 1.5 1999/12/12 14:53:59 d Exp $	*/
 /*	$NetBSD: connect.c,v 1.3 1997/10/11 08:13:40 lukem Exp $	*/
 /*
  *  Hunt
@@ -33,6 +33,7 @@ do_connect(name, team, enter_status)
 	Ttyname = ttyname(STDOUT_FILENO);
 	if (Ttyname == NULL)
 		Ttyname = "not a tty";
+	memset(buf, '\0', sizeof buf);
 	(void) strlcpy(buf, Ttyname, sizeof buf);
 
 	uid = htonl(getuid());
