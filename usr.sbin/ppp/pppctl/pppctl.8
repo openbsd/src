@@ -1,4 +1,4 @@
-.\" $Id: pppctl.8,v 1.2 1998/12/15 01:20:48 aaron Exp $
+.\" $Id: pppctl.8,v 1.3 1999/03/11 19:09:53 aaron Exp $
 .Dd 26 June 1997
 .Os FreeBSD
 .Dt PPPCTL 8
@@ -11,26 +11,30 @@ PPP control program
 .Op Fl v
 .Op Fl t Ar n
 .Op Fl p Ar passwd
-.Ar [host:]Port | LocalSocket
-.Op command[;command]...
+.Xo
+.Oo Ar host Ns : Oc Ar port No \&|
+.Ar LocalSocket
+.Xc
+.Op Ar command Op ; Ns Ar command ...
 .Sh DESCRIPTION
 This program provides command line control of the
 .Xr ppp 8
 daemon.  Its primary use is to facilitate simple scripts that
 control a running daemon.
 .Pp
-.Nm Pppctl
+.Nm
 is passed at least one argument, specifying the socket on which
 .Nm ppp
 is listening.  Refer to the
-.Sq set server
+.Ic set server
 command of
 .Nm ppp
-for details.  If the socket contains a leading '/', it
-is taken as an
+for details.  If the socket contains a leading
+.Sq / ,
+it is taken as an
 .Dv AF_LOCAL
 socket.  If it contains a colon, it is treated as a
-.Ar host:port
+.Ar host : Ns Ar port
 pair, otherwise it is treated as a TCP port specification on the
 local machine (127.0.0.1).  Both the
 .Ar host
@@ -40,8 +44,7 @@ may be specified numerically if you wish to avoid a DNS lookup
 or don't have an entry for the given port in
 .Pa /etc/services .
 .Pp
-All remaining arguments are concatenated to form the
-.Ar command(s)
+All remaining arguments are concatenated to form the command(s)
 that will be sent to the
 .Nm ppp
 daemon.  If any semi-colon characters are found, they are treated as
@@ -49,14 +52,15 @@ daemon.  If any semi-colon characters are found, they are treated as
 delimiters, allowing more than one
 .Ar command
 in a given
-.Sq session .
+.Dq session .
 For example:
 .Bd -literal -offset indent
 pppctl 3000 set timeout 300\\; show timeout
 .Ed
 .Pp
-Don't forget to escape or quote the ';' as it is a special character
-for most shells.
+Don't forget to escape or quote the
+.Sq \&;
+as it is a special character for most shells.
 .Pp
 If no
 .Ar command
@@ -68,8 +72,7 @@ When reading commands, the
 library is used, allowing command-line editing (with
 .Xr editrc 5
 defining editing behaviour).  The history size
-defaults to
-.Em 20 lines .
+defaults to 20 lines.
 .Pp
 The following command line options are available:
 .Bl -tag -width Ds
@@ -163,24 +166,28 @@ The following environment variables are understood by
 .Nm
 when in interactive mode:
 .Bl -tag -width XXXXXXXXXX
-.It Dv EL_SIZE
+.It Ev EL_SIZE
 The number of history lines.  The default is 20.
-.It Dv EL_EDITOR
-The edit mode.  Only values of "emacs" and "vi" are accepted.  Other values
-are silently ignored.  This environment variable will override the
-.Ar bind -v
+.It Ev EL_EDITOR
+The edit mode.  Only values of
+.Dq emacs
 and
-.Ar bind -e
+.Dq vi
+are accepted.  Other values
+are silently ignored.  This environment variable will override the
+.Nm bind -v
+and
+.Nm bind -e
 commands in
 .Pa ~/.editrc .
 .El
 .Pp
 .Sh SEE ALSO
+.Xr ps 1 ,
 .Xr editline 3 ,
 .Xr editrc 5 ,
-.Xr ppp 8 ,
-.Xr ps 1 ,
-.Xr services 5
+.Xr services 5 ,
+.Xr ppp 8
 .Sh HISTORY
 The
 .Nm
