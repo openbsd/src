@@ -1,4 +1,4 @@
-/*	$OpenBSD: lkm.h,v 1.6 1996/10/14 13:01:32 mickey Exp $	*/
+/*	$OpenBSD: lkm.h,v 1.7 1997/05/29 22:01:25 mickey Exp $	*/
 /*	$NetBSD: lkm.h,v 1.12 1996/02/09 18:25:13 christos Exp $	*/
 
 /*
@@ -200,6 +200,7 @@ struct lkm_table {
 	u_long	sym_offset;	/* ? offset */
 	u_long	sym_symsize;	/* ? symsize */
 	char	*sym_addr;	/* ? addr */
+	int	sym_id;		/* ? symtab id from ddb */
 };
 
 
