@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd-setup.8,v 1.1 2003/02/14 05:32:02 jason Exp $
+.\"	$OpenBSD: spamd-setup.8,v 1.2 2003/02/14 05:51:57 jason Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -39,30 +39,41 @@
 .Op Fl 1
 .Op Fl 2
 .Op Fl f Ar file
+.Op Fl w Ar file
 .Sh DESCRIPTION
 The
 .Nm
-utility loads the
+utility adds or deletes address from the
 .Xr pf 4
 table
-.Aq spamd
-with IP addresses to be redirected to
-.Xr spamd 8
-from one of several sources:
+.Aq spamd .
+This table combined with
+.Xr spamd 8 
+and a
+.Xr pf 4
+redirection rule can be used to selectively send spammers
+.Xr spamd 8 .
+Sources and actions are as follows:
 .Bl -tag -width XXXXXXXXXX
 .It Fl 1
 The SPEWS level 1 database is fetched via
-.Xr ftp 1 .
+.Xr ftp 1
+and used in the black-list.
 .It Fl 2
 The SPEWS level 2 database is fetched via
-.Xr ftp 1 .
+.Xr ftp 1
+and used in the black-list.
 .It Fl f Ar file
-The local file specified is used.
+The local file specified is added to the black-list.
+.It Fl w Ar file
+The local file specified is added to the white-list.
 .El
 .Pp
 The arguments are processed in the order they are given and the resulting
-output is concatenated to build up a single large table for
+output is concatenated to build up a table for
 .Xr pf 4 .
+First, all of the addresses from the black-list are added.
+Then, all of the addresses from the white-list are removed.
 The input file is expected to consist of one IP address per line (optionally
 followed by a space and text that is ignored).
 Comment lines beginning with

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#	$OpenBSD: spamd-setup.sh,v 1.6 2003/02/14 00:34:14 jason Exp $
+#	$OpenBSD: spamd-setup.sh,v 1.7 2003/02/14 05:51:57 jason Exp $
 #
 # Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 #
@@ -25,7 +25,7 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 usage() {
-	echo "usage: spamd-setup [-s12] [-f file]";
+	echo "usage: spamd-setup [-s12] [-f file] [-w file]";
 	exit 1
 }
 
@@ -43,7 +43,10 @@ fetch() {
 }
 
 R=`mktemp /tmp/_spamdXXXXXX` || exit 1
-
+W=`mktemp /tmp/_spamwXXXXXX` || {
+	rm -f ${R}
+	exit 1
+}
 trap "rm -f $R; exit 0" 0
 trap "rm -f $R; exit 1" 1 2 3 13 15
 
@@ -57,6 +60,10 @@ while :
 		;;
 	-f)
 		cat $2 | filter >> $R
+		shift
+		;;
+	-w)
+		cat $2 | filter >> $W
 		shift
 		;;
 	*)
@@ -73,5 +80,6 @@ fi
 # knock out whitelist here
 
 pfctl -t spamd -T replace -f $R
+pfctl -t spamd -T delete -f $W
 
 exit 0
