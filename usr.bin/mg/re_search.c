@@ -8,67 +8,13 @@
  * non-regular expression search functions.  Hence some of them date back
  * in essential structure to the original MicroEMACS; others are modifications
  * of Rich Ellison's code.  I, Peter Newton, wrote about half from scratch.
- *
- * Although I have nothing to do with the GNU project, these functions
- * require the GNU project's regular expression package (files regex.c and
- * regex.h).  Hence, this file comes under the same copyright notice
- * as the GNU project's code.  As far as I know, the rest of MicroGnuEmacs
- * need not since it may be used independently of any GNU project code.	 In
- * any case, I certainly do not warrant either the correctness or utility
- * of this code.  The GNU project copyright notice follows.  Don't you
- * wish they would make it a bit shorter!
  */
 
-/*
-GNU Emacs copying permission notice Copyright (C) 1985 Richard M. Stallman
-     Verbatim copies of this document, including its copyright notice,
-     may be distributed by anyone in any manner.
-     Distribution with modifications is not permitted.
-
-GNU Emacs is distributed in the hope that it will be useful,
-but without any warranty.  No author or distributor
-accepts responsibility to anyone for the consequences of using it
-or for whether it serves any particular purpose or works at all,
-unless he says so in writing.
-
-Everyone is granted permission to copy, modify and redistribute
-GNU Emacs under the following conditions:
-
-   Permission is granted to anyone to make or distribute verbatim copies
-   of GNU Emacs source code as received, in any medium, provided that all
-   copyright notices and permission and nonwarranty notices are preserved,
-   and that the distributor grants the recipient permission
-   for further redistribution as permitted by this document,
-   and gives him and points out to him an exact copy of this document
-   to inform him of his rights.
-
-   Permission is granted to distribute modified versions
-   of GNU Emacs source code, or of portions of it,
-   under the above conditions, provided also that all
-   changed files carry prominent notices stating who last changed them
-   and that all the GNU-Emacs-derived material, including everything
-   packaged together with it and not independently usable, is
-   distributed under the conditions stated in this document.
-
-   Permission is granted to distribute GNU Emacs in
-   compiled or executable form under the same conditions applying
-   for source code, provided that either
-    A.	it is accompanied by the corresponding machine-readable
-      source code, or
-    B.	it is accompanied by a written offer, with no time limit,
-      to give anyone a machine-readable copy of the corresponding
-      source code in return for reimbursement of the cost of distribution.
-      This written offer must permit verbatim duplication by anyone.
-    C.	it is distributed by someone who received only the
-      executable form, and is accompanied by a copy of the
-      written offer of source code which he received along with it.
-
-In other words, you are welcome to use, share and improve GNU Emacs
-You are forbidden to forbid anyone else to use, share and improve
-what you give them.   Help stamp out software-hoarding!
-*/
 
 #ifdef	REGEX
+#include <sys/types.h>
+#include <regex.h>
+
 #include	"def.h"
 #include	"macro.h"
 
@@ -78,6 +24,8 @@ what you give them.   Help stamp out software-hoarding!
 #define SRCH_NOPR	(-3)
 #define SRCH_ACCM	(-4)
 #define SRCH_MARK	(-5)
+
+#define RE_NMATCH	10		/* max number of matches */
 
 char	re_pat[NPAT];			/* Regex pattern		*/
 int	re_srch_lastdir = SRCH_NOPR;	 /* Last search flags. */
@@ -198,15 +146,9 @@ re_searchagain(f, n) {
 }
 
 
-#include "regex.h"
-#define BYTEWIDTH 8
-
 /* Compiled regex goes here-- changed only when new pattern read */
-static struct re_pattern_buffer re_buff;
-static char fastmap[(1 << BYTEWIDTH)];
-
-/* regs holds boundaries of matched text */
-static struct re_registers regs;
+static regex_t re_buff;
+static regmatch_t re_match[RE_NMATCH];
 
 /*
  * Re-Query Replace.
@@ -241,14 +183,14 @@ re_queryrepl(f, n) {
 		update();
 		switch (getkey(FALSE)) {
 		case ' ':
-			plen = regs.end[0] - regs.start[0];
+			plen = re_match[0].rm_eo - re_match[0].rm_so;
 			if (re_doreplace((RSIZE) plen, news, f) == FALSE)
 				return (FALSE);
 			rcnt++;
 			break;
 
 		case '.':
-			plen = regs.end[0] - regs.start[0];
+			plen = re_match[0].rm_eo - re_match[0].rm_so;
 			if (re_doreplace((RSIZE) plen, news, f) == FALSE)
 				return (FALSE);
 			rcnt++;
@@ -262,7 +204,7 @@ re_queryrepl(f, n) {
 
 		case '!':
 			do {
-				plen = regs.end[0] - regs.start[0];
+				plen = re_match[0].rm_eo - re_match[0].rm_so;
 				if (re_doreplace((RSIZE) plen, news, f) == FALSE)
 					return (FALSE);
 				rcnt++;
@@ -353,10 +295,10 @@ re_doreplace(plen, st, f)
 	      st++;
 	    }
 	    else {
-	      if (num >= RE_NREGS) return(FALSE);
-	      k = regs.end[num] - regs.start[num];
+	      if (num >= RE_NMATCH) return(FALSE);
+	      k = re_match[num].rm_eo - re_match[num].rm_so;
 	      if (j+k >= REPLEN) return(FALSE);
-	      bcopy(&(clp->l_text[regs.start[num]]), &repstr[j], k);
+	      bcopy(&(clp->l_text[re_match[num].rm_so]), &repstr[j], k);
 	      j += k;
 	      if (*st == '\0')
 		more = FALSE;
@@ -395,8 +337,7 @@ re_forwsrch() {
 
   register LINE *clp;
   register int tbo;
-  int ntries;
-  int i, plen;
+  int error, plen;
 
   clp = curwp->w_dotp;
   tbo = curwp->w_doto;
@@ -417,15 +358,15 @@ re_forwsrch() {
 
   while (clp != (curbp->b_linep)) {
 
-     ntries = llength(clp) - tbo;
-     i = re_search (&re_buff, ltext(clp), llength(clp), tbo, ntries, &regs);
+     re_match[0].rm_so = tbo;
+     re_match[0].rm_eo = llength(clp);
+     error = regexec(&re_buff, ltext(clp), RE_NMATCH, re_match, REG_STARTEND);
 
-     if (i == -1) {
+     if (error) {
        clp = lforw(clp);
        tbo = 0;
-     }
-     else {
-       curwp->w_doto = regs.end[0];
+     } else {
+       curwp->w_doto = re_match[0].rm_eo;
        curwp->w_dotp = clp;
        curwp->w_flag |= WFMOVE;
        return (TRUE);
@@ -449,9 +390,8 @@ re_backsrch() {
 
   register LINE *clp;
   register int tbo;
-  int ntries;
-  int i, startpos;
-char m[1];
+  int error, startpos;
+  char m[1];
 
   clp = curwp->w_dotp;
   tbo = curwp->w_doto;
@@ -470,15 +410,16 @@ char m[1];
 
   while (clp != (curbp->b_linep)) {
 
-     ntries = tbo;
-     i = re_search (&re_buff, ltext(clp), llength(clp), tbo, -ntries, &regs);
+     re_match[0].rm_so = tbo;
+     re_match[0].rm_eo = llength(clp);
+     /* XXX - does not search backwards! */
+     error = regexec(&re_buff, ltext(clp), RE_NMATCH, re_match, REG_STARTEND);
 
-     if (i == -1) {
+     if (error) {
        clp = lback(clp);
        tbo = llength(clp);
-     }
-     else {
-       curwp->w_doto = regs.start[0];
+     } else {
+       curwp->w_doto = re_match[0].rm_so;
        curwp->w_dotp = clp;
        curwp->w_flag |= WFMOVE;
        return (TRUE);
@@ -500,9 +441,11 @@ char m[1];
  * some do-it-yourself control expansion.
  */
 re_readpattern(prompt) char *prompt; {
-	register int s;
+	int s;
+	int flags;
+	int error;
 	char tpat[NPAT];
-	char *message;
+	static int dofree = 0;
 
 	if (re_pat[0] == '\0') s = ereply("%s: ", tpat, NPAT, prompt);
 	else s = ereply("%s: (default %s) ", tpat, NPAT, prompt, re_pat);
@@ -510,20 +453,21 @@ re_readpattern(prompt) char *prompt; {
 	if (s == TRUE) {
 	  /* New pattern given */
 	  (VOID) strcpy(re_pat, tpat);
-	  re_buff.allocated = 40;
-	  re_buff.buffer = (char *) malloc (re_buff.allocated);
-	  re_buff.fastmap = fastmap;
 	  if (casefoldsearch)
-	    re_buff.translate = upcase;
+	    flags = REG_EXTENDED|REG_ICASE;
 	  else
-	    re_buff.translate = '\0';
-	  message = re_compile_pattern (re_pat, strlen(re_pat), &re_buff);
-	  if (message != '\0') {
+	    flags = REG_EXTENDED;
+	  if (dofree)
+	      regfree(&re_buff);
+	  error = regcomp(&re_buff, re_pat, flags);
+	  if (error) {
+	    char message[256];
+	    regerror(error, &re_buff, message, sizeof(message));
 	    ewprintf("Regex Error: %s", message);
 	    re_pat[0] = '\0';
 	    return(FALSE);
 	  }
-	  re_compile_fastmap (&re_buff);
+	  dofree = 1;
 	}
 	else if (s==FALSE && re_pat[0]!='\0')
 	  /* Just using old pattern */
@@ -593,7 +537,7 @@ delnonmatchlines(f, n) {
 killmatches(cond)
    int cond;
 {
-  int s, i;
+  int s, error;
   int count = 0;
   LINE	*clp;
 
@@ -605,10 +549,12 @@ killmatches(cond)
   while (clp != (curbp->b_linep)) {
 
      /* see if line matches */
-     i = re_search (&re_buff, ltext(clp), llength(clp), 0, llength(clp),
-		    &regs);
+     re_match[0].rm_so = 0;
+     re_match[0].rm_eo = llength(clp);
+     error = regexec(&re_buff, ltext(clp), RE_NMATCH, re_match, REG_STARTEND);
+
      /* Delete line when appropriate */
-     if ((cond == FALSE && i == -1) || (cond == TRUE && i != -1)) {
+     if ((cond == FALSE && error) || (cond == TRUE && !error)) {
        curwp->w_doto = 0;
        curwp->w_dotp = clp;
        count++;
@@ -677,7 +623,7 @@ cntnonmatchlines(f, n) {
 countmatches(cond)
    int cond;
 {
-  int s, i;
+  int s, error;
   int count = 0;
   LINE	*clp;
 
@@ -689,10 +635,12 @@ countmatches(cond)
   while (clp != (curbp->b_linep)) {
 
      /* see if line matches */
-     i = re_search (&re_buff, ltext(clp), llength(clp), 0, llength(clp),
-		    &regs);
+     re_match[0].rm_so = 0;
+     re_match[0].rm_eo = llength(clp);
+     error = regexec(&re_buff, ltext(clp), RE_NMATCH, re_match, REG_STARTEND);
+
      /*	 Count line when appropriate */
-     if ((cond == FALSE && i == -1) || (cond == TRUE && i != -1)) count++;
+     if ((cond == FALSE && error) || (cond == TRUE && !error)) count++;
      clp = lforw(clp);
    }
 
