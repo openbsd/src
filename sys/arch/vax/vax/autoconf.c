@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.16 2002/03/14 01:26:48 millert Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.17 2002/04/04 23:47:33 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.45 1999/10/23 14:56:05 ragge Exp $	*/
 
 /*
@@ -90,9 +90,11 @@ cpu_configure()
 	cold = 0;
 
 	if (mountroot == NULL) {
-		if (B_TYPE(bootdev) >= BDEV_NET) 
+		if (B_TYPE(bootdev) >= BDEV_NET) {
+#ifdef NFSCLIENT
 			mountroot = nfs_mountroot;
-		else
+#endif
+		} else
 			mountroot = dk_mountroot;
 	}
 
