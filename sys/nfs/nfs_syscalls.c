@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.30 2002/03/14 01:27:13 millert Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.31 2002/06/11 15:45:44 hin Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -146,9 +146,6 @@ nfs_clientd(struct nfsmount *nmp, struct ucred *cred, struct nfsd_cargs *ncd,
 		    nmp->nm_authtype = ncd->ncd_authtype;
 		    nmp->nm_authlen = ncd->ncd_authlen;
 		    nmp->nm_verflen = ncd->ncd_verflen;
-#ifdef NFSKERB
-		    nmp->nm_key = ncd->ncd_key;
-#endif
 		} else
 		    nmp->nm_flag |= NFSMNT_AUTHERR;
 	    } else
@@ -1153,14 +1150,6 @@ nfs_getnickauth(nmp, cred, auth_str, auth_len, verf_str, verf_len)
 	ktvin.tv_sec = txdr_unsigned(nuidp->nu_timestamp.tv_sec);
 	ktvin.tv_usec = txdr_unsigned(nuidp->nu_timestamp.tv_usec);
 
-	/*
-	 * Now encrypt the timestamp verifier in ecb mode using the session
-	 * key.
-	 */
-#ifdef NFSKERB
-	XXX
-#endif
-
 	*verfp++ = ktvout.tv_sec;
 	*verfp++ = ktvout.tv_usec;
 	*verfp = 0;
@@ -1195,12 +1184,6 @@ nfs_savenickauth(nmp, cred, len, key, mdp, dposp, mrep)
 		ktvin.tv_usec = *tl++;
 		nick = fxdr_unsigned(u_int32_t, *tl);
 
-		/*
-		 * Decrypt the timestamp in ecb mode.
-		 */
-#ifdef NFSKERB
-		XXX
-#endif
 		ktvout.tv_sec = fxdr_unsigned(long, ktvout.tv_sec);
 		ktvout.tv_usec = fxdr_unsigned(long, ktvout.tv_usec);
 		deltasec = time.tv_sec - ktvout.tv_sec;

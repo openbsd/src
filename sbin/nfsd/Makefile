@@ -1,14 +1,8 @@
-#	$OpenBSD: Makefile,v 1.6 2000/09/03 18:41:16 espie Exp $
+#	$OpenBSD: Makefile,v 1.7 2002/06/11 15:45:44 hin Exp $
 
 PROG=	nfsd
 MAN=	nfsd.8
 
 .include <bsd.own.mk>	# For KERBEROS
-
-.if (${KERBEROS:L} == "yes")
-CFLAGS+=-DKERBEROS
-LDADD+=	-lkrb -ldes
-DPADD+=	${LIBKRB} ${LIBDES}
-.endif
 
 .include <bsd.prog.mk>

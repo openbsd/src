@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsd.c,v 1.17 2002/05/22 08:21:02 deraadt Exp $	*/
+/*	$OpenBSD: nfsd.c,v 1.18 2002/06/11 15:45:44 hin Exp $	*/
 /*	$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $	*/
 
 /*
@@ -72,11 +72,6 @@ static char rcsid[] = "$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $"
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
 
-#ifdef NFSKERB
-#include <des.h>
-#include <kerberosIV/krb.h>
-#endif
-
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -98,18 +93,6 @@ int	debug = 0;
 #endif
 
 struct	nfsd_srvargs nsd;
-
-#ifdef NFSKERB
-char		lnam[ANAME_SZ];
-KTEXT_ST	kt;
-AUTH_DAT	kauth;
-char		inst[INST_SZ];
-struct nfsrpc_fullblock kin, kout;
-struct nfsrpc_fullverf kverf;
-NFSKERBKEY_T	kivec;
-struct timeval	ktv;
-NFSKERBKEYSCHED_T kerb_keysched;
-#endif
 
 void	nonfs(int);
 void	reapchild(int);
@@ -148,14 +131,6 @@ main(argc, argv, envp)
 	int ch, cltpflag, connect_type_cnt, i, len, maxsock = 0, msgsock;
 	int nfsdcnt, nfssvc_flag, on, reregister, sock, tcpflag, tcpsock;
 	int tp4cnt, tpipcnt, udpflag;
-#ifdef NFSKERB
-	struct ucred *cr;
-	char *cp, **cpp;
-	int tpipflag = 0, tp4flag = 0, tpipsock = 0, tp4sock;
-	struct timeval ktv;
-	struct passwd *pwd;
-	struct group *grp;
-#endif
 
 #define	MAXNFSDCNT	20
 #define	DEFNFSDCNT	 4
@@ -259,91 +234,12 @@ main(argc, argv, envp)
 		setproctitle("server");
 		nfssvc_flag = NFSSVC_NFSD;
 		nsd.nsd_nfsd = NULL;
-#ifdef NFSKERB
-		if (sizeof (struct nfsrpc_fullverf) != RPCX_FULLVERF ||
-		    sizeof (struct nfsrpc_fullblock) != RPCX_FULLBLOCK)
-		    syslog(LOG_ERR, "Yikes NFSKERB structs not packed!");
-		nsd.nsd_authstr = (u_char *)&kt;
-		nsd.nsd_authlen = sizeof (kt);
-		nsd.nsd_verfstr = (u_char *)&kverf;
-		nsd.nsd_verflen = sizeof (kverf);
-#endif
 		while (nfssvc(nfssvc_flag, &nsd) < 0) {
 			if (errno != ENEEDAUTH) {
 				syslog(LOG_ERR, "nfssvc: %m");
 				return (1);
 			}
 			nfssvc_flag = NFSSVC_NFSD | NFSSVC_AUTHINFAIL;
-#ifdef NFSKERB
-			/*
-			 * Get the Kerberos ticket out of the authenticator
-			 * verify it and convert the principal name to a user
-			 * name. The user name is then converted to a set of
-			 * user credentials via the password and group file.
-			 * Finally, decrypt the timestamp and validate it.
-			 * For more info see the IETF Draft "Authentication
-			 * in ONC RPC".
-			 */
-			kt.length = ntohl(kt.length);
-			if (gettimeofday(&ktv, NULL) == 0 &&
-			    kt.length > 0 && kt.length <=
-			    (RPCAUTH_MAXSIZ - 3 * NFSX_UNSIGNED)) {
-			    kin.w1 = NFS_KERBW1(kt);
-			    kt.mbz = 0;
-			    (void)strlcpy(inst, "*", sizeof inst);
-			    if (krb_rd_req(&kt, NFS_KERBSRV,
-				inst, nsd.nsd_haddr, &kauth, "") == RD_AP_OK &&
-				krb_kntoln(&kauth, lnam) == KSUCCESS &&
-				(pwd = getpwnam(lnam)) != NULL) {
-				cr = &nsd.nsd_cr;
-				cr->cr_uid = pwd->pw_uid;
-				cr->cr_groups[0] = pwd->pw_gid;
-				cr->cr_ngroups = 1;
-				setgrent();
-				while ((grp = getgrent()) != NULL) {
-					if (grp->gr_gid == cr->cr_groups[0])
-						continue;
-					for (cpp = grp->gr_mem;
-					    *cpp != NULL; ++cpp)
-						if (!strcmp(*cpp, lnam))
-							break;
-					if (*cpp == NULL)
-						continue;
-					cr->cr_groups[cr->cr_ngroups++]
-					    = grp->gr_gid;
-					if (cr->cr_ngroups == NGROUPS)
-						break;
-				}
-				endgrent();
-
-				/*
-				 * Get the timestamp verifier out of the
-				 * authenticator and verifier strings.
-				 */
-				kin.t1 = kverf.t1;
-				kin.t2 = kverf.t2;
-				kin.w2 = kverf.w2;
-				memset((caddr_t)kivec, 0, sizeof (kivec));
-				memmove((caddr_t)nsd.nsd_key,
-				    (caddr_t)kauth.session,
-				    sizeof(kauth.session));
-
-				/*
-				 * Decrypt the timestamp verifier in CBC mode.
-				 */
-				XXX
-
-				/*
-				 * Validate the timestamp verifier, to
-				 * check that the session key is ok.
-				 */
-				nsd.nsd_timestamp.tv_sec = ntohl(kout.t1);
-				nsd.nsd_timestamp.tv_usec = ntohl(kout.t2);
-				nsd.nsd_ttl = ntohl(kout.w1);
-				if ((nsd.nsd_ttl - 1) == ntohl(kout.w2))
-				    nfssvc_flag = NFSSVC_NFSD | NFSSVC_AUTHIN;
-			}
-#endif /* NFSKERB */
 		}
 		return (0);
 	}

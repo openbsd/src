@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpcv2.h,v 1.4 1996/04/17 04:50:42 mickey Exp $	*/
+/*	$OpenBSD: rpcv2.h,v 1.5 2002/06/11 15:45:44 hin Exp $	*/
 /*	$NetBSD: rpcv2.h,v 1.8 1996/02/18 11:54:11 fvdl Exp $	*/
 
 /*
@@ -138,13 +138,8 @@ struct nfsrpc_nickverf {
 #define RPCX_FULLBLOCK	16
 #define RPCX_NICKVERF	16
 
-#ifdef NFSKERB
-XXX
-#else
 typedef u_char			NFSKERBKEY_T[2];
 typedef u_char			NFSKERBKEYSCHED_T[2];
-#endif
-#define NFS_KERBSRV	"rcmd"		/* Kerberos Service for NFS */
 #define NFS_KERBTTL	(30 * 60)	/* Credential ttl (sec) */
 #define NFS_KERBCLOCKSKEW (5 * 60)	/* Clock skew (sec) */
 #define NFS_KERBW1(t)	(*((u_long *)(&((t).dat[((t).length + 3) & ~0x3]))))

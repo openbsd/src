@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.27 2002/05/17 18:41:01 csapuntz Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.28 2002/06/11 15:45:44 hin Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -1139,14 +1139,6 @@ nfs_rephead(siz, nd, slp, err, cache, frev, mrq, mbp, bposp)
 			ktvin.tv_usec =
 			    txdr_unsigned(nuidp->nu_timestamp.tv_usec);
 
-			/*
-			 * Encrypt the timestamp in ecb mode using the
-			 * session key.
-			 */
-#ifdef NFSKERB
-			XXX
-#endif
-
 			*tl++ = rpc_auth_kerb;
 			*tl++ = txdr_unsigned(3 * NFSX_UNSIGNED);
 			*tl = ktvout.tv_sec;
@@ -1670,14 +1662,6 @@ nfs_getreq(nd, nfsd, has_header)
 				nd->nd_procnum = NFSPROC_NOOP;
 				return (0);
 			}
-
-			/*
-			 * Now, decrypt the timestamp using the session key
-			 * and validate it.
-			 */
-#ifdef NFSKERB
-			XXX
-#endif
 
 			tvout.tv_sec = fxdr_unsigned(long, tvout.tv_sec);
 			tvout.tv_usec = fxdr_unsigned(long, tvout.tv_usec);
