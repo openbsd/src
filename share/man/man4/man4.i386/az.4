@@ -1,0 +1,55 @@
+.\"	$OpenBSD: az.4,v 1.1 2001/10/04 22:33:49 gluk Exp $
+.\"
+.\" Copyright (c) 2001 Vladimir Popov
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+.\" BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+.\" USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+.\" ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd September 27, 2001
+.Dt AZ 4
+.Os
+.Sh NAME
+.Nm az 
+.Nd Aztech/PackardBell radio card device driver
+.Sh SYNOPSIS
+.Cd "az0   at isa? port 0x358"
+.Cd "az0   at isa? port 0x350"
+.Cd "radio* at az0"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for the Aztech/PackardBell radio cards.
+.Pp
+The Aztech/PackardBell cards are stereo FM tuners that allow to tune
+in the 87.5-108.0 MHz range. It is capable to report signal status
+(tuned/not tuned, stereo/mono signal) and force audio output to mono.
+.Pp
+The Aztech cards use only one I/O port. The I/O port is set by the driver to
+the value specified in the configuration file. The I/O port must be one of
+0x350 and 0x358.
+.Sh BUGS
+It is impossible to determine which frequency the card is tuned to. Thus,
+the driver will report an internally stored value even if it is not correct
+(changed by some program that uses direct port access).
+.Sh SEE ALSO
+.Xr radio 4 ,
+.Xr isa 4 .
+
