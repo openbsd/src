@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.14 2002/05/30 19:09:05 deraadt Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.15 2002/08/04 00:51:01 deraadt Exp $	*/
 /*	$NetBSD: iostat.c,v 1.10 1996/10/25 18:21:58 scottr Exp $	*/
 
 /*
@@ -91,6 +91,7 @@ static char *rcsid = "$NetBSD: iostat.c,v 1.10 1996/10/25 18:21:58 scottr Exp $"
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <kvm.h>
 
 #include "dkstats.h"
 
@@ -99,6 +100,7 @@ extern struct _disk cur;
 extern int	dk_ndrive;
 
 /* Namelist and memory files. */
+kvm_t *kd;
 char	*nlistf, *memf;
 
 int		hz, reps, interval;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkstats.c,v 1.19 2002/06/28 22:40:53 deraadt Exp $	*/
+/*	$OpenBSD: dkstats.c,v 1.20 2002/08/04 00:51:01 deraadt Exp $	*/
 /*	$NetBSD: dkstats.c,v 1.1 1996/05/10 23:19:27 thorpej Exp $	*/
 
 /*
@@ -87,7 +87,7 @@ struct _disk	cur, last;
 
 /* Kernel pointers: nlistf and memf defined in calling program. */
 #if !defined(NOKVM)
-static kvm_t	*kd = NULL;
+extern kvm_t	*kd;
 #endif
 extern char	*nlistf;
 extern char	*memf;
@@ -250,10 +250,19 @@ int	select;
 
 	if (nlistf != NULL || memf != NULL) {
 #if !defined(NOKVM)
+		if (memf != NULL) {
+			setegid(getgid());
+			setgid(getgid());
+		}
+
 		/* Open the kernel. */
-		if ((kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY,
+		if (kd == NULL &&
+		    (kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY,
 		    errbuf)) == NULL)
 			errx(1, "kvm_openfiles: %s", errbuf);
+
+		setegid(getgid());
+		setgid(getgid());
 
 		/* Obtain the namelist symbols from the kernel. */
 		if (kvm_nlist(kd, namelist))
