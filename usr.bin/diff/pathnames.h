@@ -32,5 +32,5 @@
 #include <paths.h>
 
 #define	_PATH_DIFF	"/usr/bin/diff"
-#define	_PATH_DIFFH	"/usr/bin/diffh"
+#define	_PATH_DIFFH	"/usr/libexec/diffh"
 #define	_PATH_PR	"/usr/bin/pr"
