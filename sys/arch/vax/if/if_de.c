@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.11 1995/12/24 02:30:52 mycroft Exp $	*/
+/*	$NetBSD: if_de.c,v 1.12 1995/12/30 19:42:16 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -34,8 +34,6 @@
  *
  *	@(#)if_de.c	7.12 (Berkeley) 12/16/90
  */
-
-#include "de.h"
 
 /*
  * DEC DEUNA interface
