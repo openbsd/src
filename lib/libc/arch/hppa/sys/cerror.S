@@ -1,7 +1,7 @@
-/*	$OpenBSD: Ovfork.S,v 1.11 2004/05/25 20:44:50 mickey Exp $	*/
+/*	$OpenBSD: cerror.S,v 1.3 2004/05/25 20:44:50 mickey Exp $	*/
 
 /*
- * Copyright (c) 1999,2002 Michael Shalayeff
+ * Copyright (c) 2004 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,26 +26,21 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "SYS.h"
+#include <machine/asm.h>
 
-#ifdef SYSLIBC_SCCS
-	.text
-	.asciz "$OpenBSD: Ovfork.S,v 1.11 2004/05/25 20:44:50 mickey Exp $"
-	.align	4
-#endif
-
-SYSENTRY(vfork,0)
 	.import errno, data
-	copy	rp, t4
-	ldil	L%SYSCALLGATE, r1
-	ble	4(sr7, r1)
-	ldi	__CONCAT(SYS_,vfork), t1
-	.import	__cerror, code
-	comb,<>	r0, t1, __cerror
-	copy	t4, rp
-	addi	-1, ret1, ret1
+ENTRY(__cerror,0)
+#ifdef PIC
+	addil	LT%errno, r19
+	ldw	RT%errno(r1), r1
+	stw	t1, 0(r1)
+#else
+	ldil	L%errno, r1
+	stw	t1, R%errno(r1)
+#endif
+	ldi	-1, ret0
 	bv	r0(rp)
-	and	ret1, ret0, ret0
-SYSEXIT(vfork)
+	ldi	-1, ret1
+EXIT(__cerror)
 
 	.end

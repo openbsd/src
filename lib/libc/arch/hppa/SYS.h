@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.13 2003/06/02 20:28:04 mickey Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.14 2004/05/25 20:44:50 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -44,15 +44,9 @@ EXIT(__CONCAT(_thread_sys_,x))
 	ldil	L%SYSCALLGATE, r1		!\
 	ble	4(sr7, r1)			!\
 	ldi	__CONCAT(SYS_,x), t1		!\
-	ldw	HPPA_FRAME_ERP(sr0,sp), rp	!\
-	comb,=,n r0, t1, __CONCAT(x,$noerr)	!\
-	.import	errno, data			!\
-	ldil	L%errno, r1			!\
-	stw	t1, R%errno(r1)			!\
-	ldi	-1, ret0			!\
-	bv	r0(rp)				!\
-	ldi	-1, ret1			!\
-	.label	__CONCAT(x,$noerr)
+	.import	__cerror, code			!\
+	comb,<>	r0, t1, __cerror		!\
+	ldw	HPPA_FRAME_ERP(sr0,sp), rp
 
 #define	PSEUDO(x,y)				!\
 SYSENTRY(x,0)					!\
