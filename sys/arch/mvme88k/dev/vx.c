@@ -1,4 +1,4 @@
-/*	$OpenBSD: vx.c,v 1.27 2003/12/27 21:58:20 miod Exp $ */
+/*	$OpenBSD: vx.c,v 1.28 2004/04/16 23:36:27 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -74,7 +74,6 @@ struct vxsoftc {
 	struct intrhand   sc_ih_s;
 	int               sc_ipl;
 	int               sc_vec;
-	int               sc_flags;
 	struct envelope   *elist_head, *elist_tail;
 	struct packet     *plist_head, *plist_tail;
 };
@@ -168,12 +167,19 @@ vxattach(struct device *parent, struct device *self, void *aux)
 	struct vxsoftc *sc = (struct vxsoftc *)self;
 	struct confargs *ca = aux;
 
+	if (ca->ca_vec < 0) {
+		printf(": no more interrupts!\n");
+		return;
+	}
+	if (ca->ca_ipl < 0)
+		ca->ca_ipl = IPL_TTY;
+
 	/* set up dual port memory and registers and init */
-	sc->vx_reg = (struct vxreg *)ca->ca_vaddr;
-	sc->channel = (struct channel *)(ca->ca_vaddr + 0x0100);
+	sc->board_addr = (unsigned int)ca->ca_vaddr;
+	sc->vx_reg = (struct vxreg *)sc->board_addr;
+	sc->channel = (struct channel *)(sc->board_addr + 0x0100);
 	sc->sc_ipl = ca->ca_ipl;
 	sc->sc_vec = ca->ca_vec;
-	sc->board_addr = (unsigned int)ca->ca_vaddr;
 
 	printf("\n");
 
