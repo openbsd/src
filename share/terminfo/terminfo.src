@@ -1,4 +1,4 @@
-#	$OpenBSD: terminfo.src,v 1.1 1996/07/22 04:46:02 tholo Exp $
+#	$OpenBSD: terminfo.src,v 1.2 1996/10/25 06:35:18 etheisen Exp $
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
 #	Version 9.13.8
@@ -1562,6 +1562,49 @@ vt510pc|DEC VT510 w/PC keyboard,
 	use=vt420pc, 
 vt510pcdos|DEC VT510 w/PC for DOS Merge, 
 	use=vt420pcdos, 
+
+#       
+######
+#       CDE Terminal Emulator                                              
+# 
+######
+
+#	Reconstructed via infocmp from file: /usr/share/lib/terminfo/d/dtterm
+dtterm,
+	am, mir, msgr, xenl, xon,
+	colors#8, cols#80, it#8, lines#24, lm#0, pairs#8,
+	acsc=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~,
+	batt1=f1, batt2=f1md, bel=^G, blink=\E[5m, bold=\E[1m,
+	box1=lqkxjmwuvtn, box2=lqkxjmwuvtn, civis=\E[?25l,
+	clear=\E[H\E[J, cnorm=\E[?25h, colb0=\E[40m,
+	colb1=\E[41m, colb2=\E[42m, colb3=\E[43m,
+	colb4=\E[44m, colb5=\E[45m, colb6=\E[46m,
+	colb7=\E[47m, colf0=\E[30m, colf1=\E[31m,
+	colf2=\E[32m, colf3=\E[33m, colf4=\E[34m,
+	colf5=\E[35m, colf6=\E[36m, colf7=\E[37m, cr=\r,
+	csr=\E[%i%p1%d;%p2%dr, cub=\E[%p1%dD, cub1=\b,
+	cud=\E[%p1%dB, cud1=\n, cuf=\E[%p1%dC, cuf1=\E[C,
+	cup=\E[%i%p1%d;%p2%dH, cuu=\E[%p1%dA, cuu1=\E[A,
+	dch=\E[%p1%dP, dch1=\E[P, dim=\E[2m, dl=\E[%p1%dM,
+	dl1=\E[M, ech=\E[%p1%dX, ed=\E[J, el=\E[K, el1=\E[1K,
+	flash=\E[?5h$<200>\E[?5l, font0=\E(B, font1=\E(0,
+	home=\E[H, ht=\t, hts=\EH, ich=\E[%p1%d@,
+	il=\E[%p1%dL, il1=\E[L, ind=\ED, invis=\E[8m,
+	is2=\E\sF\E>\E[?1l\E[?7h\E[?45l, kbs=\b, kcub1=\E[D,
+	kcud1=\E[B, kcuf1=\E[C, kcuu1=\E[A, kdch1=\E[3~,
+	kf1=\E[11~, kf10=\E[21~, kf11=\E[23~, kf12=\E[24~,
+	kf13=\E[25~, kf14=\E[26~, kf15=\E[28~, kf16=\E[29~,
+	kf17=\E[31~, kf18=\E[32~, kf19=\E[33~, kf2=\E[12~,
+	kf20=\E[34~, kf3=\E[13~, kf4=\E[14~, kf5=\E[15~,
+	kf6=\E[17~, kf7=\E[18~, kf8=\E[19~, kf9=\E[20~,
+	kfnd=\E[1~, khlp=\E[28~, kich1=\E[2~, knp=\E[6~,
+	kpp=\E[5~, nel=\EE, op=\E[39;49m, rc=\E8, rev=\E[7m,
+	ri=\EM, rmacs=^O, rmam=\E[?7l, rmir=\E[4l,
+	rmso=\E[22;27m, rmul=\E[24m, sc=\E7,
+	setab=\E[%p1%{40}%+%dm, setaf=\E[%p1%{30}%+%dm,
+	sgr=\E[0%?%p1%t;2;7%;%?%p2%t;4%;%?%p3%t;7%;%?%p4%t;5%;%?%p5%t;2%;%?%p6%t;1%;%?%p7%t;8%;m%?%p9%t^N%e^O%;,
+	sgr0=\E[0m, smacs=^N, smam=\E[?7h, smir=\E[4h,
+	smso=\E[2;7m, smul=\E[4m, tbc=\E[3g,
 
 # VT520/VT525
 #
