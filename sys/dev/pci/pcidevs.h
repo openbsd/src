@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.474 2001/12/11 22:39:17 todd Exp 
+ *		OpenBSD: pcidevs,v 1.475 2001/12/18 17:31:14 drahn Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -814,10 +814,10 @@
 #define	PCI_PRODUCT_APPLE_OHARE	0x0007		/* OHare */
 #define	PCI_PRODUCT_APPLE_HEATHROW	0x0010		/* Heathrow */
 #define	PCI_PRODUCT_APPLE_PADDINGTON	0x0017		/* Paddington */
-#define	PCI_PRODUCT_APPLE_UNINORTHETH	0x001e		/* Uni-North Eth */
-#define	PCI_PRODUCT_APPLE_UNINORTH	0x001f		/* Uni-North */
+#define	PCI_PRODUCT_APPLE_UNINORTHETH	0x001e		/* Uni-N Eth */
+#define	PCI_PRODUCT_APPLE_UNINORTH	0x001f		/* Uni-N */
 #define	PCI_PRODUCT_APPLE_USB	0x0019		/* USB */
-#define	PCI_PRODUCT_APPLE_UNINORTHAGP	0x0020		/* Uni-North AGP */
+#define	PCI_PRODUCT_APPLE_UNINORTHAGP	0x0020		/* Uni-N AGP */
 #define	PCI_PRODUCT_APPLE_GMAC	0x0021		/* GMAC */
 #define	PCI_PRODUCT_APPLE_KEYLARGO	0x0022		/* Keylargo */
 #define	PCI_PRODUCT_APPLE_GMAC2	0x0024		/* GMAC */
@@ -826,6 +826,9 @@
 #define	PCI_PRODUCT_APPLE_PANGEA_AGP	0x0027		/* Pangea AGP */
 #define	PCI_PRODUCT_APPLE_PANGEA_PCI1	0x0028		/* Pangea Host-PCI */
 #define	PCI_PRODUCT_APPLE_PANGEA_PCI2	0x0029		/* Pangea Host-PCI */
+#define	PCI_PRODUCT_APPLE_UNINORTH2AGP	0x002d		/* Uni-N2 AGP */
+#define	PCI_PRODUCT_APPLE_UNINORTH2	0x002e		/* Uni-N2 Host */
+#define	PCI_PRODUCT_APPLE_UNINORTH2ETH	0x002f		/* Uni-N2 Host */
 #define	PCI_PRODUCT_APPLE_PANGEA_FW	0x0030		/* Pangea FireWire */
 
 /* ARC Logic products */
@@ -1443,6 +1446,7 @@
 #define	PCI_PRODUCT_LUCENT_VENUSMODEM	0x0480		/* Venus Modem */
 #define	PCI_PRODUCT_LUCENT_USBHC	0x5801		/* USB */
 #define	PCI_PRODUCT_LUCENT_USBQBUS	0x5803		/* USB QuadraBus */
+#define	PCI_PRODUCT_LUCENT_FW322	0x5811		/* FW322 1394 */
 
 /* LuxSonor */
 #define	PCI_PRODUCT_LUXSONOR_LS242	0x0020		/* LS242 DVD Decoder */

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.474 2001/12/11 22:39:17 todd Exp 
+ *		OpenBSD: pcidevs,v 1.475 2001/12/18 17:31:14 drahn Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -768,11 +768,11 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTHETH,
-	    "Uni-North Eth",
+	    "Uni-N Eth",
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH,
-	    "Uni-North",
+	    "Uni-N",
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_USB,
@@ -780,7 +780,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTHAGP,
-	    "Uni-North AGP",
+	    "Uni-N AGP",
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_GMAC,
@@ -813,6 +813,18 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PANGEA_PCI2,
 	    "Pangea Host-PCI",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH2AGP,
+	    "Uni-N2 AGP",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH2,
+	    "Uni-N2 Host",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH2ETH,
+	    "Uni-N2 Host",
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PANGEA_FW,
@@ -2709,6 +2721,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_USBQBUS,
 	    "USB QuadraBus",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_FW322,
+	    "FW322 1394",
 	},
 	{
 	    PCI_VENDOR_LUXSONOR, PCI_PRODUCT_LUXSONOR_LS242,
