@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.31 2004/11/09 10:30:26 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.32 2004/11/10 09:55:43 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -114,6 +114,20 @@ sub DependOnly
 			return;
 		}
 		next unless m/^\@(?:pkgdep|newdepend|libdepend)\b/;
+		&$cont($_);
+	}
+}
+
+sub ExtraInfoOnly
+{
+	my ($fh, $cont) = @_;
+	local $_;
+	while (<$fh>) {
+		# XXX optimization
+		if (m/^\@arch\b/) {
+			return;
+		}
+		next unless m/^\@(?:name\b|comment\s+subdir\=)/;
 		&$cont($_);
 	}
 }
