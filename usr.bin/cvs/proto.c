@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.5 2004/07/26 16:00:10 jfb Exp $	*/
+/*	$OpenBSD: proto.c,v 1.6 2004/07/26 17:28:59 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -516,19 +516,18 @@ cvs_resp_m(int type, char *line)
 				    "MT scope stack has reached max depth");
 				return (-1);
 			}
-			cvs_mt_stack[cvs_mtstk_depth++] = strdup(line + 1);
-			if (cvs_mt_stack[cvs_mtstk_depth] == NULL) {
-				cvs_mtstk_depth--;
+			cvs_mt_stack[cvs_mtstk_depth] = strdup(line + 1);
+			if (cvs_mt_stack[cvs_mtstk_depth] == NULL)
 				return (-1);
-			}
+			cvs_mtstk_depth++;
 		}
 		else if (*line == '-') {
 			if (cvs_mtstk_depth == 0) {
 				cvs_log(LP_ERR, "MT scope stack underflow");
 				return (-1);
 			}
-			else if (strcmp(line,
-			    cvs_mt_stack[cvs_mtstk_depth]) != 0) {
+			else if (strcmp(line + 1,
+			    cvs_mt_stack[cvs_mtstk_depth - 1]) != 0) {
 				cvs_log(LP_ERR, "mismatch in MT scope stack");
 				return (-1);
 			}
@@ -547,7 +546,7 @@ cvs_resp_m(int type, char *line)
 			}
 		}
 
-		break;
+		return (0);
 	case CVS_RESP_MBINARY:
 		cvs_log(LP_WARN, "Mbinary not supported in client yet");
 		break;
@@ -597,7 +596,9 @@ static int
 cvs_resp_statdir(int type, char *line)
 {
 	int fd;
-	char statpath[MAXPATHLEN];
+	char rpath[MAXPATHLEN], statpath[MAXPATHLEN];
+
+	cvs_client_getln(rpath, sizeof(rpath));
 
 	snprintf(statpath, sizeof(statpath), "%s/%s", line,
 	    CVS_PATH_STATICENTRIES);
@@ -631,6 +632,23 @@ cvs_resp_statdir(int type, char *line)
 static int
 cvs_resp_sticky(int type, char *line)
 {
+	char rpath[MAXPATHLEN];
+	struct stat st;
+
+	/* get the remote path */
+	cvs_client_getln(rpath, sizeof(rpath));
+
+	/* if the directory doesn't exist, create it */
+	if (stat(line, &st) == -1) {
+		if (errno != ENOENT) {
+			cvs_log(LP_ERRNO, "failed to stat %s", line);
+		}
+		else if (mkdir(line, 0755) == -1) {
+			cvs_log(LP_ERRNO, "failed to create %s", line);
+			return (-1);
+		}
+	}
+
 	if (type == CVS_RESP_CLRSTICKY) {
 	}
 	else if (type == CVS_RESP_SETSTICKY) {
@@ -718,36 +736,48 @@ cvs_resp_modtime(int type, char *line)
 /*
  * cvs_resp_updated()
  *
- * Handler for the `Updated' response.
+ * Handler for the `Updated' and `Created' responses.
  */
 
 static int
 cvs_resp_updated(int type, char *line)
 {
-	char cksum_buf[CVS_CKSUM_LEN];
+	char path[MAXPATHLEN], cksum_buf[CVS_CKSUM_LEN];
+	struct cvs_ent *ep;
 
 	if (type == CVS_RESP_CREATED) {
+		/* read the remote path of the file */
+		cvs_client_getln(path, sizeof(path));
+
+		/* read the new entry */
+		cvs_client_getln(path, sizeof(path));
+		ep = cvs_ent_parse(path);
+		if (ep == NULL)
+			return (-1);
 	}
 	else if (type == CVS_RESP_UPDEXIST) {
 	}
 	else if (type == CVS_RESP_UPDATED) {
 	}
 
-	if (cvs_recvfile(line) < 0) {
+	snprintf(path, sizeof(path), "%s%s", line, ep->ce_name);
+	if (cvs_recvfile(path) < 0) {
 		return (-1);
 	}
 
 	/* now see if there is a checksum */
-	if (cvs_cksum(line, cksum_buf, sizeof(cksum_buf)) < 0) {
-	}
+	if (cvs_fcksum != NULL) {
+		if (cvs_cksum(line, cksum_buf, sizeof(cksum_buf)) < 0) {
+		}
 
-	if (strcmp(cksum_buf, cvs_fcksum) != 0) {
-		cvs_log(LP_ERR, "checksum error on received file");
-		(void)unlink(line);
-	}
+		if (strcmp(cksum_buf, cvs_fcksum) != 0) {
+			cvs_log(LP_ERR, "checksum error on received file");
+			(void)unlink(line);
+		}
 
-	free(cvs_fcksum);
-	cvs_fcksum = NULL;
+		free(cvs_fcksum);
+		cvs_fcksum = NULL;
+	}
 
 	return (0);
 }
@@ -874,7 +904,7 @@ cvs_recvfile(const char *path)
 		return (-1);
 	}
 
-	fd = open(path, O_RDONLY, mode);
+	fd = open(path, O_WRONLY|O_CREAT, mode);
 	if (fd == -1) {
 		cvs_log(LP_ERRNO, "failed to open `%s'", path);
 		return (-1);
@@ -883,6 +913,8 @@ cvs_recvfile(const char *path)
 	cnt = 0;
 	do {
 		len = MIN(sizeof(buf), (size_t)(fsz - cnt));
+		if (len == 0)
+			break;
 		ret = cvs_client_recvraw(buf, len);
 		if (ret == -1) {
 			(void)close(fd);
