@@ -32,11 +32,11 @@ sitelibexp="${sitelib}"
 man1dir=''
 man1direxp=''
 installman1dir=''
-man1ext='cat1'
+man1ext='1'
 man3dir=''
 man3direxp=''
 installman3dir=''
-man3ext='cat3p'
+man3ext='3p'
 
 # Never hardcode developer info into a distribution
 cf_by='root'
