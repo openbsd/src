@@ -1,4 +1,4 @@
-/*	$OpenBSD: qv.c,v 1.9 2004/01/01 01:11:12 miod Exp $	*/
+/*	$OpenBSD: qv.c,v 1.10 2004/01/29 21:34:17 deraadt Exp $	*/
 /*	$NetBSD: qv.c,v 1.2 1996/09/02 06:44:28 mycroft Exp $	*/
 
 /*-
@@ -580,7 +580,7 @@ qvkint(qv)
 		default:
 		/*
 		 * Test for control characters. If set, see if the character
-		 * is elligible to become a control character.
+		 * is eligible to become a control character.
 		 */
 			if( qv_keyboard.cntrl ) {
 				c = q_key[ key ];
@@ -980,7 +980,7 @@ char c;
 
 /*
  * Routine to display a character on the screen.  The model used is a 
- * glass tty.  It is assummed that the user will only use this emulation
+ * glass tty.  It is assumed that the user will only use this emulation
  * during system boot and that the screen will be eventually controlled
  * by a window manager.
  *

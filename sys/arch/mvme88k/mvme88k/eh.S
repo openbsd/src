@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh.S,v 1.49 2004/01/29 00:41:23 miod Exp $   */
+/*   $OpenBSD: eh.S,v 1.50 2004/01/29 21:39:05 deraadt Exp $   */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -791,7 +791,7 @@ ASLOCAL(ignore_data_exception)
 	 * We just want to jump to "badaddr__return_nonzero" below.
 	 *
 	 * We don't worry about trashing R2 here because we're
-	 * jumping back to the function badaddr() where we're allowd
+	 * jumping back to the function badaddr() where we're allowed
 	 * to blast r2..r9 as we see fit.
 	 */
 
@@ -838,15 +838,15 @@ ASLOCAL(m88110_ignore_data_exception)
  * extern boolean_t badaddr(unsigned addr, unsigned len)
  *
  * Returns true (non-zero) if the given LEN bytes starting at ADDR are
- * not all currently accessable by the kernel.
+ * not all currently accessible by the kernel.
  *
- * If all LEN bytes starting at ADDR are accessable, zero is returned.
+ * If all LEN bytes starting at ADDR are accessible, zero is returned.
  *
  * Len may be be 1, 2, or 4.
  *
- * This is implementd by setting a special flag in SR1 before trying to access
+ * This is implemented by setting a special flag in SR1 before trying to access
  * the given address. If a data access exception is raised, the address
- * is inaccessable. The exception handler will notice the special CPU flag
+ * is inaccessible. The exception handler will notice the special CPU flag
  * and not try to swap the address in. Rather, it will return to
  * "badaddr__return_nonzero" in this routine so that we may return non-zero
  * to the calling routine.
@@ -1024,7 +1024,7 @@ ASLOCAL(use_SR3_pcb)
 	 * FLAGS: CPU status flags
 	 *
 	 * immediate goal:
-	 *   An exception occured while enabling the FPU. Since r31
+	 *   An exception occurred while enabling the FPU. Since r31
 	 *   is the user's r31 while enabling the FPU, we had put
 	 *   our pcb pointer into SR3, so make room from
 	 *   there for our stack pointer.
@@ -1301,7 +1301,7 @@ ASLOCAL(pfsr_done)
 
 ASLOCAL(clear_FPi_ssbr_bit)
 	/*
-	 * Clear floatingpont-imprecise ssbr bits.
+	 * Clear floatingpoint-imprecise ssbr bits.
 	 * Also, save appropriate FPU control registers to the E.F.
 	 *
 	 * r1:  return address to calling exception handler
@@ -1546,7 +1546,7 @@ ASLOCAL(setup_phase_two)
 	 *   FPU control registers, if appropriate.
 	 *   Exception SR3, if appropriate.
 	 *   Held temporarly in the exception frame:
-	 *   Return address to the calling excption handler.
+	 *   Return address to the calling exception handler.
 	 *
 	 * immediate goal:
 	 *   Do an RTE to restart the fpu and jump to "fpu_enable"
@@ -2369,7 +2369,7 @@ ASLOCAL(m88110_use_SR3_pcb)
 	 * FLAGS: CPU status flags
 	 *
 	 * immediate goal:
-	 *   An exception occured while enabling the FPU. Since r31 is the
+	 *   An exception occurred while enabling the FPU. Since r31 is the
 	 *   user's r31 while enabling the FPU, we had put our pcb pointer
 	 *   into SR3, so make room from there for our stack pointer.
 	 *   We need to check if SR3 is the old stack pointer or the pointer
@@ -2572,8 +2572,8 @@ ASLOCAL(m88110_setup_phase_two)
 	 *   Other data pipeline control registers, if appropriate.
 	 *   FPU control registers, if appropriate.
 	 *   Exception SR3, if appropriate.
-	 * Held temporarly in the exception frame:
-	 *   Return address to the calling excption handler.
+	 * Held temporarily in the exception frame:
+	 *   Return address to the calling exception handler.
 	 *
 	 * immediate goal:
 	 *   Do an RTE to restart the fpu and jump to "m88110_fpu_enable"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.26 2004/01/13 18:40:47 miod Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.27 2004/01/29 21:39:05 deraadt Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -799,7 +799,7 @@ db_stack_trace_cmd2(db_regs_t *regs, int (*pr)(const char *, ...))
 	 *   0 if this looks like neither.
 	 */
 	if ((ft = frame_is_sane(regs, 1)) == 0) {
-		(*pr)("Register frame 0x%x is suspicous; skipping trace\n", regs);
+		(*pr)("Register frame 0x%x is suspicious; skipping trace\n", regs);
 		return;
 	}
 

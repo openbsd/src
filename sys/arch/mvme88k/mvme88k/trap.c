@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.71 2004/01/29 00:41:23 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.72 2004/01/29 21:39:05 deraadt Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1167,7 +1167,7 @@ error_fatal(struct trapframe *frame)
 		db_printf("\n[ERROR EXCEPTION (Bad News[tm]) frame %p]\n", frame);
 		db_printf("This is usually an exception within an exception.  The trap\n");
 		db_printf("frame shadow registers you are about to see are invalid.\n");
-		db_printf("(read totaly useless)  But R1 to R31 might be interesting.\n");
+		db_printf("(read totally useless)  But R1 to R31 might be interesting.\n");
 		break;
 	}
 	regdump((struct trapframe*)frame);
