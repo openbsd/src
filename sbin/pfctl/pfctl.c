@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.168 2003/04/30 12:30:27 cedric Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.169 2003/04/30 13:22:26 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -58,24 +58,25 @@ void	 usage(void);
 int	 pfctl_enable(int, int);
 int	 pfctl_disable(int, int);
 int	 pfctl_clear_stats(int, int);
-int	 pfctl_clear_rules(int, int);
-int	 pfctl_clear_nat(int, int);
+int	 pfctl_clear_rules(int, int, char *, char *);
+int	 pfctl_clear_nat(int, int, char *, char *);
 int	 pfctl_clear_altq(int, int);
 int	 pfctl_clear_states(int, int);
 int	 pfctl_kill_states(int, int);
-int	 pfctl_get_pool(int, struct pf_pool *, u_int32_t, u_int32_t, int);
+int	 pfctl_get_pool(int, struct pf_pool *, u_int32_t, u_int32_t, int,
+	     char *, char *);
 void	 pfctl_print_rule_counters(struct pf_rule *, int);
-int	 pfctl_show_rules(int, int, int);
-int	 pfctl_show_nat(int, int);
+int	 pfctl_show_rules(int, int, int, char *, char *);
+int	 pfctl_show_nat(int, int, char *, char *);
 int	 pfctl_show_states(int, u_int8_t, int);
 int	 pfctl_show_status(int);
 int	 pfctl_show_timeouts(int);
 int	 pfctl_show_limits(int);
-int	 pfctl_rules(int, char *, int);
+int	 pfctl_rules(int, char *, int, char *, char *);
 int	 pfctl_debug(int, u_int32_t, int);
 int	 pfctl_clear_rule_counters(int, int);
 int	 pfctl_test_altqsupport(int, int);
-int	 pfctl_show_anchors(int, int);
+int	 pfctl_show_anchors(int, int, char *);
 const char	*pfctl_lookup_option(char *, const char **);
 
 const char	*clearopt;
@@ -89,8 +90,6 @@ int	 state_killers;
 char	*state_kill[2];
 int	 loadopt = PFCTL_FLAG_ALL;
 int	 altqsupport;
-char	 anchorname[PF_ANCHOR_NAME_SIZE];
-char	 rulesetname[PF_RULESET_NAME_SIZE];
 
 int dev = -1;
 
@@ -254,7 +253,7 @@ pfctl_clear_stats(int dev, int opts)
 }
 
 int
-pfctl_clear_rules(int dev, int opts)
+pfctl_clear_rules(int dev, int opts, char *anchorname, char *rulesetname)
 {
 	struct pfioc_rule pr;
 
@@ -277,9 +276,8 @@ pfctl_clear_rules(int dev, int opts)
 			pr.nr = nr;
 			if (ioctl(dev, DIOCGETRULESET, &pr))
 				err(1, "DIOCGETRULESET");
-			memcpy(rulesetname, pr.name, sizeof(rulesetname));
-			r = pfctl_clear_rules(dev, opts | PF_OPT_QUIET);
-			memset(rulesetname, 0, sizeof(rulesetname));
+			r = pfctl_clear_rules(dev, opts | PF_OPT_QUIET,
+			    anchorname, pr.name);
 			if (r)
 				return (r);
 		}
@@ -306,7 +304,7 @@ pfctl_clear_rules(int dev, int opts)
 }
 
 int
-pfctl_clear_nat(int dev, int opts)
+pfctl_clear_nat(int dev, int opts, char *anchorname, char *rulesetname)
 {
 	struct pfioc_rule pr;
 
@@ -329,9 +327,8 @@ pfctl_clear_nat(int dev, int opts)
 			pr.nr = nr;
 			if (ioctl(dev, DIOCGETRULESET, &pr))
 				err(1, "DIOCGETRULESET");
-			memcpy(rulesetname, pr.name, sizeof(rulesetname));
-			r = pfctl_clear_nat(dev, opts | PF_OPT_QUIET);
-			memset(rulesetname, 0, sizeof(rulesetname));
+			r = pfctl_clear_nat(dev, opts | PF_OPT_QUIET,
+			    anchorname, pr.name);
 			if (r)
 				return (r);
 		}
@@ -493,7 +490,7 @@ pfctl_kill_states(int dev, int opts)
 
 int
 pfctl_get_pool(int dev, struct pf_pool *pool, u_int32_t nr,
-    u_int32_t ticket, int r_action)
+    u_int32_t ticket, int r_action, char *anchorname, char *rulesetname)
 {
 	struct pfioc_pooladdr pp;
 	struct pf_pooladdr *pa;
@@ -569,7 +566,8 @@ pfctl_print_rule_counters(struct pf_rule *rule, int opts)
 }
 
 int
-pfctl_show_rules(int dev, int opts, int format)
+pfctl_show_rules(int dev, int opts, int format, char *anchorname,
+    char *rulesetname)
 {
 	struct pfioc_rule pr;
 	u_int32_t nr, mnr;
@@ -594,9 +592,8 @@ pfctl_show_rules(int dev, int opts, int format)
 			pr.nr = nr;
 			if (ioctl(dev, DIOCGETRULESET, &pr))
 				err(1, "DIOCGETRULESET");
-			memcpy(rulesetname, pr.name, sizeof(rulesetname));
-			r = pfctl_show_rules(dev, opts, format);
-			memset(rulesetname, 0, sizeof(rulesetname));
+			r = pfctl_show_rules(dev, opts, format, anchorname,
+			    pr.name);
 			if (r)
 				return (r);
 		}
@@ -620,7 +617,7 @@ pfctl_show_rules(int dev, int opts, int format)
 		}
 
 		if (pfctl_get_pool(dev, &pr.rule.rpool,
-		    nr, pr.ticket, PF_SCRUB) != 0)
+		    nr, pr.ticket, PF_SCRUB, anchorname, rulesetname) != 0)
 			return (-1);
 
 		switch (format) {
@@ -652,7 +649,7 @@ pfctl_show_rules(int dev, int opts, int format)
 		}
 
 		if (pfctl_get_pool(dev, &pr.rule.rpool,
-		    nr, pr.ticket, PF_PASS) != 0)
+		    nr, pr.ticket, PF_PASS, anchorname, rulesetname) != 0)
 			return (-1);
 
 		switch (format) {
@@ -674,7 +671,7 @@ pfctl_show_rules(int dev, int opts, int format)
 }
 
 int
-pfctl_show_nat(int dev, int opts)
+pfctl_show_nat(int dev, int opts, char *anchorname, char *rulesetname)
 {
 	struct pfioc_rule pr;
 	u_int32_t mnr, nr;
@@ -700,9 +697,7 @@ pfctl_show_nat(int dev, int opts)
 			pr.nr = nr;
 			if (ioctl(dev, DIOCGETRULESET, &pr))
 				err(1, "DIOCGETRULESET");
-			memcpy(rulesetname, pr.name, sizeof(rulesetname));
-			r = pfctl_show_nat(dev, opts);
-			memset(rulesetname, 0, sizeof(rulesetname));
+			r = pfctl_show_nat(dev, opts, anchorname, pr.name);
 			if (r)
 				return (r);
 		}
@@ -726,7 +721,8 @@ pfctl_show_nat(int dev, int opts)
 				return (-1);
 			}
 			if (pfctl_get_pool(dev, &pr.rule.rpool, nr,
-			    pr.ticket, nattype[i]) != 0)
+			    pr.ticket, nattype[i], anchorname,
+			    rulesetname) != 0)
 				return (-1);
 			print_rule(&pr.rule, opts & PF_OPT_VERBOSE2);
 			pfctl_print_rule_counters(&pr.rule, opts);
@@ -926,7 +922,8 @@ pfctl_add_altq(struct pfctl *pf, struct pf_altq *a)
 }
 
 int
-pfctl_rules(int dev, char *filename, int opts)
+pfctl_rules(int dev, char *filename, int opts, char *anchorname,
+    char *rulesetname)
 {
 	FILE *fin;
 	struct pfioc_rule	pr[PF_RULESET_MAX];
@@ -1216,7 +1213,7 @@ pfctl_test_altqsupport(int dev, int opts)
 }
 
 int
-pfctl_show_anchors(int dev, int opts)
+pfctl_show_anchors(int dev, int opts, char *anchorname)
 {
 	u_int32_t nr, mnr;
 
@@ -1276,10 +1273,12 @@ pfctl_lookup_option(char *cmd, const char **list)
 int
 main(int argc, char *argv[])
 {
-	int error = 0;
-	int ch;
-	int mode = O_RDONLY;
-	int opts = 0;
+	int	error = 0;
+	int	ch;
+	int	mode = O_RDONLY;
+	int	opts = 0;
+	char	anchorname[PF_ANCHOR_NAME_SIZE];
+	char	rulesetname[PF_RULESET_NAME_SIZE];
 
 	if (argc < 2)
 		usage();
@@ -1468,10 +1467,10 @@ main(int argc, char *argv[])
 	if (clearopt != NULL) {
 		switch (*clearopt) {
 		case 'r':
-			pfctl_clear_rules(dev, opts);
+			pfctl_clear_rules(dev, opts, anchorname, rulesetname);
 			break;
 		case 'n':
-			pfctl_clear_nat(dev, opts);
+			pfctl_clear_nat(dev, opts, anchorname, rulesetname);
 			break;
 		case 'q':
 			pfctl_clear_altq(dev, opts);
@@ -1483,8 +1482,8 @@ main(int argc, char *argv[])
 			pfctl_clear_stats(dev, opts);
 			break;
 		case 'a':
-			pfctl_clear_rules(dev, opts);
-			pfctl_clear_nat(dev, opts);
+			pfctl_clear_rules(dev, opts, anchorname, rulesetname);
+			pfctl_clear_nat(dev, opts, anchorname, rulesetname);
 			pfctl_clear_altq(dev, opts);
 			pfctl_clear_states(dev, opts);
 			pfctl_clear_stats(dev, opts);
@@ -1507,22 +1506,24 @@ main(int argc, char *argv[])
 	}
 
 	if (rulesopt != NULL)
-		if (pfctl_rules(dev, rulesopt, opts))
+		if (pfctl_rules(dev, rulesopt, opts, anchorname, rulesetname))
 			error = 1;
 
 	if (showopt != NULL) {
 		switch (*showopt) {
 		case 'A':
-			pfctl_show_anchors(dev, opts);
+			pfctl_show_anchors(dev, opts, anchorname);
 			break;
 		case 'r':
-			pfctl_show_rules(dev, opts, 0);
+			pfctl_show_rules(dev, opts, 0, anchorname,
+			    rulesetname);
 			break;
 		case 'l':
-			pfctl_show_rules(dev, opts, 1);
+			pfctl_show_rules(dev, opts, 1, anchorname,
+			    rulesetname);
 			break;
 		case 'n':
-			pfctl_show_nat(dev, opts);
+			pfctl_show_nat(dev, opts, anchorname, rulesetname);
 			break;
 		case 'q':
 			pfctl_show_altq(dev, opts, opts & PF_OPT_VERBOSE2);
@@ -1540,12 +1541,13 @@ main(int argc, char *argv[])
 			pfctl_show_limits(dev);
 			break;
 		case 'a':
-			pfctl_show_rules(dev, opts, 0);
-			pfctl_show_nat(dev, opts);
+			pfctl_show_rules(dev, opts, 0, anchorname,
+			    rulesetname);
+			pfctl_show_nat(dev, opts, anchorname, rulesetname);
 			pfctl_show_altq(dev, opts, 0);
 			pfctl_show_states(dev, 0, opts);
 			pfctl_show_status(dev);
-			pfctl_show_rules(dev, opts, 1);
+			pfctl_show_rules(dev, opts, 1, anchorname, rulesetname);
 			pfctl_show_timeouts(dev);
 			pfctl_show_limits(dev);
 			pfctl_show_tables(anchorname, rulesetname, opts);
