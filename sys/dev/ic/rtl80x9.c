@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl80x9.c,v 1.2 1998/11/28 05:02:04 fgsch Exp $	*/
+/*	$OpenBSD: rtl80x9.c,v 1.3 1999/08/15 22:49:09 deraadt Exp $	*/
 /*	$NetBSD: rtl80x9.c,v 1.1 1998/10/31 00:44:33 thorpej Exp $	*/
 
 /*-
@@ -181,9 +181,6 @@ rtl80x9_init_media(sc, mediap, nmediap, defmediap)
 		IFM_ETHER|IFM_10_T|IFM_FDX,
 		IFM_ETHER|IFM_10_2,
 	};
-
-	printf("%s: 10base2, 10baseT, 10baseT-FDX, auto, default auto\n",
-	    sc->sc_dev.dv_xname);
 
 	*mediap = rtl80x9_media;
 	*nmediap = sizeof(rtl80x9_media) / sizeof(rtl80x9_media[0]);
