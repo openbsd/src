@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pci.c,v 1.36 2003/10/26 15:34:15 drahn Exp $	*/
+/*	$OpenBSD: if_wi_pci.c,v 1.37 2004/10/20 12:53:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -135,6 +135,7 @@ wi_pci_attach(struct device *parent, struct device *self, void *aux)
 	pp = wi_pci_lookup(pa);
 	if (pp->pp_attach(pa, sc) != 0)
 		return;
+	printf("\n");
 	wi_attach(sc, &wi_func_io);
 }
 
