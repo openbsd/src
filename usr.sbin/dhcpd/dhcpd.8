@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.8,v 1.4 2004/04/20 03:46:19 henning Exp $
+.\"	$OpenBSD: dhcpd.8,v 1.5 2004/04/20 03:58:14 henning Exp $
 .\"
 .\" Copyright (c) 1995, 1996 The Internet Software Consortium.
 .\" All rights reserved.
@@ -119,14 +119,6 @@ Whenever changes are made to the
 file,
 .Nm
 must be restarted.
-To restart
-.Nm dhcpd ,
-send a
-.Dv SIGTERM
-(signal 15) to the process ID contained in
-.Pa /var/run/dhcpd.pid ,
-and then re-invoke
-.Nm dhcpd .
 Because the DHCP server database is not as lightweight as a BOOTP database,
 .Nm
 does not automatically restart itself when it sees a change to the
@@ -327,8 +319,6 @@ file syntax is provided in
 DHCPD configuration file.
 .It /var/db/dhcpd.leases
 DHCPD lease file.
-.It /var/run/dhcpd.pid
-DHCPD PID.
 .El
 .Sh SEE ALSO
 .Xr dhcpd.conf 5 ,
