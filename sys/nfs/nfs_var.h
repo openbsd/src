@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_var.h,v 1.19 2002/04/10 18:16:46 csapuntz Exp $	*/
+/*	$OpenBSD: nfs_var.h,v 1.20 2002/07/02 04:23:25 ericj Exp $	*/
 /*	$NetBSD: nfs_var.h,v 1.3 1996/02/18 11:53:54 fvdl Exp $	*/
 
 /*
@@ -75,7 +75,6 @@ int nfs_boot_init(struct nfs_diskless *, struct proc *);
 
 /* nfs_node.c */
 void nfs_nhinit(void);
-u_long nfs_hash(nfsfh_t *, int);
 int nfs_nget(struct mount *, nfsfh_t *, int, struct nfsnode **);
 int nfs_inactive(void *);
 int nfs_reclaim(void *);

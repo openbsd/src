@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.24 2002/03/14 01:27:13 millert Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.25 2002/07/02 04:23:25 ericj Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -49,6 +49,7 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
+#include <sys/hash.h>
 
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
@@ -68,6 +69,8 @@ extern int prtactive;
 #define TRUE	1
 #define	FALSE	0
 
+#define	nfs_hash(x,y)	hash32_buf((x), (y), HASHINIT)
+
 /*
  * Initialize hash links for nfsnodes
  * and build nfsnode free list.
@@ -80,25 +83,6 @@ nfs_nhinit()
 
 	pool_init(&nfs_node_pool, sizeof(struct nfsnode), 0, 0, 0, "nfsnodepl",
 	    &pool_allocator_nointr);
-}
-
-/*
- * Compute an entry in the NFS hash table structure
- */
-u_long
-nfs_hash(fhp, fhsize)
-	nfsfh_t *fhp;
-	int fhsize;
-{
-	u_char *fhpp;
-	u_long fhsum;
-	int i;
-
-	fhpp = &fhp->fh_bytes[0];
-	fhsum = 0;
-	for (i = 0; i < fhsize; i++)
-		fhsum += *fhpp++;
-	return (fhsum);
 }
 
 /*

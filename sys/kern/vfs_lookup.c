@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.19 2001/06/22 14:14:10 deraadt Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.20 2002/07/02 04:23:25 ericj Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -52,6 +52,7 @@
 #include <sys/malloc.h>
 #include <sys/filedesc.h>
 #include <sys/proc.h>
+#include <sys/hash.h>
 
 #ifdef KTRACE
 #include <sys/ktrace.h>
@@ -280,8 +281,8 @@ int
 lookup(ndp)
 	register struct nameidata *ndp;
 {
-	register char *cp;		/* pointer into pathname argument */
-	register struct vnode *dp = 0;	/* the directory we are searching */
+	char *cp;			/* pointer into pathname argument */
+	struct vnode *dp = 0;		/* the directory we are searching */
 	struct vnode *tdp;		/* saved dp */
 	struct mount *mp;		/* mount table entry */
 	int docache;			/* == 0 do not cache last component */
@@ -350,10 +351,9 @@ dirloop:
 	 * the name set the SAVENAME flag. When done, they assume
 	 * responsibility for freeing the pathname buffer.
 	 */
+	cp = NULL;
 	cnp->cn_consume = 0;
-	cnp->cn_hash = 0;
-	for (cp = cnp->cn_nameptr; *cp != '\0' && *cp != '/'; cp++)
-		cnp->cn_hash += (unsigned char)*cp;
+	cnp->cn_hash = hash32_stre(cnp->cn_nameptr, '/', &cp, HASHINIT);
 	cnp->cn_namelen = cp - cnp->cn_nameptr;
 	if (cnp->cn_namelen > NAME_MAX) {
 		error = ENAMETOOLONG;
@@ -637,8 +637,8 @@ relookup(dvp, vpp, cnp)
 	 * responsibility for freeing the pathname buffer.
 	 */
 #ifdef NAMEI_DIAGNOSTIC
-	for (newhash = 0, cp = cnp->cn_nameptr; *cp != 0 && *cp != '/'; cp++)
-		newhash += (unsigned char)*cp;
+	cp = NULL;
+	newhash = hash32_stre(cnp->cn_nameptr, '/', &cp, HASHINIT);
 	if (newhash != cnp->cn_hash)
 		panic("relookup: bad hash");
 	if (cnp->cn_namelen != cp - cnp->cn_nameptr)
