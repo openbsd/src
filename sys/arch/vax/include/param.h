@@ -99,7 +99,7 @@
 #endif	/* MSIZE */
 
 #ifndef	MCLSHIFT
-#define	MCLSHIFT	10		/* convert bytes to m_buf clusters */
+#define	MCLSHIFT	11		/* convert bytes to m_buf clusters */
 #endif	/* MCLSHIFT */
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of an m_buf cluster */
 #define	MCLOFSET	(MCLBYTES - 1)	/* offset within an m_buf cluster */

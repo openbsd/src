@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.7 1996/12/08 00:20:25 niklas Exp $	*/
+/*	$OpenBSD: param.h,v 1.8 1996/12/11 11:12:51 deraadt Exp $	*/
 /*	$NetBSD: param.h,v 1.14 1996/10/25 20:48:59 cgd Exp $	*/
 
 /*
@@ -97,8 +97,8 @@
  * of the hardware page size.
  */
 #define	MSIZE		256		/* size of an mbuf */
-#define	MCLBYTES	2048		/* large enough for ether MTU */
 #define	MCLSHIFT	11
+#define	MCLBYTES	(1 << MCLSHIFT)	/* large enough for ether MTU */
 #define	MCLOFSET	(MCLBYTES - 1)
 #ifndef NMBCLUSTERS
 #ifdef GATEWAY

@@ -97,8 +97,8 @@
  * of the hardware page size.
  */
 #define	MSIZE		128		/* size of an mbuf */
-#define	MCLBYTES	2048		/* large enough for ether MTU */
 #define	MCLSHIFT	11
+#define	MCLBYTES	(1 << MCLSHIFT)	/* large enough for ether MTU */
 #define	MCLOFSET	(MCLBYTES - 1)
 #ifndef NMBCLUSTERS
 #ifdef GATEWAY
