@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_gpio.c,v 1.12 2005/01/21 16:22:34 miod Exp $ */
+/*	$OpenBSD: pxa2x0_gpio.c,v 1.13 2005/01/24 13:32:14 dlg Exp $ */
 /*	$NetBSD: pxa2x0_gpio.c,v 1.2 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -579,7 +579,7 @@ pxa2x0_gpio_set_bit(u_int gpio)
 }
 
 /* 
- * Quick function to set pin to 1
+ * Quick function to set pin to 0
  */
 void
 pxa2x0_gpio_clear_bit(u_int gpio)
@@ -613,7 +613,7 @@ pxa2x0_gpio_set_dir(u_int gpio, int dir)
  * Quick function to clear interrupt status on a pin
  * GPIO pins may be toggle in an interrupt and we dont want
  * extra spurious interrupts to occur.
- * suppose this causes a slight race if a key is pressed while
+ * Suppose this causes a slight race if a key is pressed while
  * the interrupt handler is running. (yes this is for the keyboard driver)
  */
 void
