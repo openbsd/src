@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bc,v 1.1 2003/09/25 19:37:47 otto Exp $
+.\"	$OpenBSD: bc,v 1.2 2003/10/19 18:16:51 otto Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -634,12 +634,12 @@ C manuals [2] for their exact workings.
 .ft B
 .ta 2i
 x=y=z  is the same as	x=(y=z)
-x =+ y	x = x+y
-x =\- y	x = x\-y
-x =* y	x = x*y
-x =/ y	x = x/y
-x =% y	x = x%y
-x =^ y	x = x^y
+x += y	x = x+y
+x \-= y	x = x\-y
+x *= y	x = x*y
+x /= y	x = x/y
+x %= y	x = x%y
+x ^= y	x = x^y
 x++	(x=x+1)\-1
 x\-\-	(x=x\-1)+1
 ++x	x = x+1
@@ -649,14 +649,6 @@ x\-\-	(x=x\-1)+1
 Even if you don't intend to use the constructs,
 if you type one inadvertently, something correct but unexpected
 may happen.
-.PP
-WARNING!  In some of these constructions, spaces are
-significant.
-There is a real difference between
-.ft B
-x =\-  y and x= \-y.
-.ft P
-The first replaces x by x\-y and the second by \-y.
 .SH
 Three Important Things
 .PP
@@ -1001,17 +993,17 @@ This expression results in assigning the value of the expression
 on the right
 to the named expression on the left.
 .NH 3
-\fInamed-expression\fP =+ \fIexpression\fP
+\fInamed-expression\fP += \fIexpression\fP
 .NH 3
-\fInamed-expression\fP =\- \fIexpression\fP
+\fInamed-expression\fP \-= \fIexpression\fP
 .NH 3
-\fInamed-expression\fP =* \fIexpression\fP
+\fInamed-expression\fP *= \fIexpression\fP
 .NH 3
-\fInamed-expression\fP =/ \fIexpression\fP
+\fInamed-expression\fP /= \fIexpression\fP
 .NH 3
-\fInamed-expression\fP =% \fIexpression\fP
+\fInamed-expression\fP %= \fIexpression\fP
 .NH 3
-\fInamed-expression\fP =^ \fIexpression\fP
+\fInamed-expression\fP ^= \fIexpression\fP
 .PP
 The result of the above expressions is equivalent
 to ``named expression = named expression OP expression'',
