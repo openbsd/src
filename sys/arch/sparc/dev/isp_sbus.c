@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_sbus.c,v 1.14 2000/10/16 22:45:02 mjacob Exp $	*/
+/*	$OpenBSD: isp_sbus.c,v 1.15 2001/02/12 23:22:02 mjacob Exp $	*/
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -227,9 +227,11 @@ isp_sbus_attach(parent, self, aux)
 	isp->isp_dblev |= ISP_LOGDEBUG0|ISP_LOGCONFIG|ISP_LOGINFO;
 #endif
 #endif
+	isp->isp_confopts = self->dv_cfdata->cf_flags;
+	isp->isp_role = ISP_DEFAULT_ROLES;
 
-	isp->isp_osinfo.no_mbox_ints = 1;
 	ISP_LOCK(isp);
+	isp->isp_osinfo.no_mbox_ints = 1;
 	isp_reset(isp);
 	if (isp->isp_state != ISP_RESETSTATE) {
 		ISP_UNLOCK(isp);
