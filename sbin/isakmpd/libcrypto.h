@@ -1,5 +1,5 @@
-/*	$OpenBSD: libcrypto.h,v 1.1 1999/08/28 11:54:55 niklas Exp $	*/
-/*	$EOM: libcrypto.h,v 1.3 1999/08/18 00:44:56 angelos Exp $	*/
+/*	$OpenBSD: libcrypto.h,v 1.2 1999/10/01 14:09:45 niklas Exp $	*/
+/*	$EOM: libcrypto.h,v 1.7 1999/09/30 13:40:38 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -39,6 +39,7 @@
 
 #include <stdio.h>
 /* XXX I want #include <ssl/cryptall.h> but we appear to not install meth.h  */
+#include <ssl/ssl.h>
 #include <ssl/bio.h>
 #include <ssl/pem.h>
 #include <ssl/x509_vfy.h>
@@ -60,9 +61,9 @@ extern void *libcrypto;
 
 #ifdef HAVE_DLOPEN
 
-/*
- * These prototypes matches SSLeay version 0.9.0b, if you try to load
- * a different version than that, you are on your own.
+/* 
+ * These prototypes matches SSLeay version 0.9.0b or OpenSSL 0.9.4, if you
+ * try to load a different version than that, you are on your own.
  */
 extern char *(*lc_ASN1_d2i_bio) (char *(*) (), char *(*) (), BIO *bp,
 				 unsigned char **);
@@ -87,12 +88,21 @@ extern int (*lc_RSA_size) (RSA *);
 extern void (*lc_SSLeay_add_all_algorithms) (void);
 extern int (*lc_X509_NAME_cmp) (X509_NAME *, X509_NAME *);
 extern void (*lc_X509_STORE_CTX_cleanup) (X509_STORE_CTX *);
+#if SSLEAY_VERSION_NUMBER >= 0x00904100L
+extern void (*lc_X509_STORE_CTX_init) (X509_STORE_CTX *, X509_STORE *, X509 *,
+				       STACK_OF (X509) *);
+#else
 extern void (*lc_X509_STORE_CTX_init) (X509_STORE_CTX *, X509_STORE *, X509 *,
 				       STACK *);
+#endif
 extern int (*lc_X509_STORE_add_cert) (X509_STORE *, X509 *);
 extern X509_STORE *(*lc_X509_STORE_new) (void);
 extern X509 *(*lc_X509_dup) (X509 *);
+#if SSLEAY_VERSION_NUMBER >= 0x00904100L
+extern X509 *(*lc_X509_find_by_subject) (STACK_OF (X509) *, X509_NAME *);
+#else
 extern X509 *(*lc_X509_find_by_subject) (STACK *, X509_NAME *);
+#endif
 extern void (*lc_X509_free) (X509 *);
 extern X509_EXTENSION *(*lc_X509_get_ext) (X509 *, int);
 extern int (*lc_X509_get_ext_by_NID) (X509 *, int, int);
@@ -108,17 +118,36 @@ extern X509 *(*lc_d2i_X509) (X509 **, unsigned char **, long);
 extern int (*lc_i2d_RSAPublicKey) (RSA *, unsigned char **);
 extern int (*lc_i2d_RSAPrivateKey) (RSA *, unsigned char **);
 extern int (*lc_i2d_X509) (X509 *, unsigned char **);
+#if SSLEAY_VERSION_NUMBER >= 0x00904100L
+extern void (*lc_sk_X509_free) (STACK_OF (X509) *);
+extern STACK_OF (X509) *(*lc_sk_X509_new_null) (void);
+#else
+extern void (*lc_sk_free) (STACK *);
+extern STACK *(*lc_sk_new) (int (*) ());
+#endif
 
 #define lc_BIO_read_filename(b, name) \
   lc_BIO_ctrl (b, BIO_C_SET_FILENAME, BIO_CLOSE | BIO_FP_READ, name)
 
+#if SSLEAY_VERSION_NUMBER >= 0x00904100L
+#define	lc_PEM_read_bio_RSAPrivateKey(bp, x, cb, u) \
+  (RSA *)lc_PEM_ASN1_read_bio ((char *(*) ())lc_d2i_RSAPrivateKey, \
+			       PEM_STRING_RSA, bp, (char **)x, cb)
+#define	lc_PEM_read_bio_X509(bp, x, cb, u) \
+  (X509 *)lc_PEM_ASN1_read_bio ((char *(*) ())lc_d2i_X509, PEM_STRING_X509, \
+				bp, (char **)x, cb)
+#else
 #define	lc_PEM_read_bio_RSAPrivateKey(bp, x, cb) \
   (RSA *)lc_PEM_ASN1_read_bio ((char *(*) ())lc_d2i_RSAPrivateKey, \
 			       PEM_STRING_RSA, bp, (char **)x, cb)
-
 #define	lc_PEM_read_bio_X509(bp, x, cb) \
   (X509 *)lc_PEM_ASN1_read_bio ((char *(*) ())lc_d2i_X509, PEM_STRING_X509, \
 				bp, (char **)x, cb)
+#endif
+
+#define lc_RSAPublicKey_dup(rsa) \
+  (RSA *)lc_ASN1_dup ((int (*) ())lc_i2d_RSAPublicKey, \
+		      (char *(*) ())lc_d2i_RSAPublicKey, (char *)rsa)
 
 #define lc_X509_name_cmp(a, b) lc_X509_NAME_cmp ((a), (b))
 
@@ -127,9 +156,10 @@ extern int (*lc_i2d_X509) (X509 *, unsigned char **);
 			   (char *(*) ())lc_d2i_X509, (bp), \
 			   (unsigned char **)(x509))
 
-#define lc_RSAPublicKey_dup(rsa) \
-  (RSA *)lc_ASN1_dup ((int (*) ())lc_i2d_RSAPublicKey, \
-		      (char *(*) ())lc_d2i_RSAPublicKey, (char *)rsa)
+#if SSLEAY_VERSION_NUMBER < 0x00904100L
+#define lc_sk_new_null() lc_sk_new (NULL)
+#endif
+
 #endif
 
 extern void libcrypto_init (void);
