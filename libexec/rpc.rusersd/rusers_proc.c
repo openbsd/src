@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: rusers_proc.c,v 1.4 1997/02/13 06:22:42 millert Exp $";
+static char rcsid[] = "$Id: rusers_proc.c,v 1.5 1997/07/09 15:56:19 kstailey Exp $";
 #endif /* not lint */
 
 #include <signal.h>
@@ -205,7 +205,7 @@ rusers_num_svc(arg, rqstp)
 		if (*usr.ut_name && *usr.ut_line &&
 		    strncmp(usr.ut_name, IGNOREUSER,
 			    sizeof(usr.ut_name))
-#ifdef OSF
+#ifdef USER_PROCESS
 		    && usr.ut_type == USER_PROCESS
 #endif
 		    ) {
@@ -238,7 +238,7 @@ do_names_3(int all)
 		if (*usr.ut_name && *usr.ut_line &&
 		    strncmp(usr.ut_name, IGNOREUSER,
 			    sizeof(usr.ut_name))
-#ifdef OSF
+#ifdef USER_PROCESS
 		    && usr.ut_type == USER_PROCESS
 #endif
 		    ) {
@@ -300,7 +300,7 @@ do_names_2(int all)
 		if (*usr.ut_name && *usr.ut_line &&
 		    strncmp(usr.ut_name, IGNOREUSER,
 			    sizeof(usr.ut_name))
-#ifdef OSF
+#ifdef USER_PROCESS
 		    && usr.ut_type == USER_PROCESS
 #endif
 		    ) {
@@ -362,7 +362,7 @@ do_names_1(int all)
 		if (*usr.ut_name && *usr.ut_line &&
 		    strncmp(usr.ut_name, IGNOREUSER,
 			    sizeof(usr.ut_name))
-#ifdef OSF
+#ifdef USER_PROCESS
 		    && usr.ut_type == USER_PROCESS
 #endif
 		    ) {
@@ -502,7 +502,7 @@ rusers_service(rqstp, transp)
 		svcerr_systemerr(transp);
 	}
 	if (!svc_freeargs(transp, xdr_argument, (caddr_t)&argument)) {
-		(void)fprintf(stderr, "unable to free arguments\n");
+		syslog(LOG_ERR, "unable to free arguments");
 		exit(1);
 	}
 leave:
