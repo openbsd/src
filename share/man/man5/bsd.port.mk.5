@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.65 2002/04/02 16:03:47 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.66 2002/04/17 17:12:59 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -86,10 +86,12 @@ main archive site.
 Clean ports contents. 
 By default, it will clean the work directory.
 It can be invoked as 
-make clean='[depends work fake flavors dist install sub package packages]'.
+make clean='[depends bulk work fake flavors dist install sub package packages]'.
 .Bl -tag -width packages
 .It Va work
 Clean work directory.
+.It Va bulk
+Clean bulk cookie.
 .It Va depends
 Recurse into dependencies.
 .It Va flavors
@@ -280,6 +282,16 @@ Defaults to ${WRKSRC}.
 .It Ev BSD_INSTALL_{PROGRAM,SCRIPT,DATA,MAN}[_DIR]
 Macros passed to make and configure invocations.
 Set based on corresponding INSTALL_* variables.
+.It Ev BIN_PACKAGES
+If set to
+.Sq Yes ,
+the 
+.Ar package
+target will trust a package built in the repository to be up-to-date,
+and will not rebuild it if the work directory is absent.
+See also
+.Ev BULK ,
+.Ev TRUST_PACKAGES .
 .It Ev BUILD_DEPENDS
 List of other ports the current port needs to build correctly.
 Each item has the form
@@ -302,6 +314,29 @@ package name.
 is a comma separated list of flavors.
 By default, the dependency will build the default flavor.
 Build dependencies are checked at the beginning of the extract stage.
+.It Ev BULK
+If set to 
+.Sq Yes ,
+succesful package builds and installations will clean
+their working directories, after invoking 
+.Ar ftp-packages ,
+.Ar cdrom-packages ,
+and any other targets mentioned in BULK_TARGETS.
+See
+.Ev BULK_COOKIES_DIR ,
+.Ev BIN_PACKAGES ,
+.Ev TRUST_PACKAGES .
+.It Ev BULK_COOKIES_DIR
+Used to store cookies for succesful bulk-package builds, defaults to
+.Pa ${PORTSDIR}/bulk/${MACHINE_ARCH} .
+.It Ev BULK_FLAGS
+Flags to pass to build each target in
+.Ev BULK_TARGETS .
+.It Ev BULK_TARGETS
+Targets to run after each bulk package build before cleaning up the 
+working directory. Defaults to
+.Ar ftp-packages ,
+.Ar cdrom-packages .
 .It Ev BZIP2
 Name of the bzip2 binary.
 .It Ev CATEGORIES
@@ -985,6 +1020,14 @@ Name of the tar binary.
 Base location for the templates used in the
 .Ar readme
 target.
+.It Ev TRUST_PACKAGES
+If set to
+.Sq Yes ,
+dependency mechanisms will assume the database of installed packages is
+correct.
+See also
+.Ev BIN_PACKAGES ,
+.Ev BULK .
 .It Ev UNZIP
 Name of the unzip binary.
 .It Ev WRKBUILD
@@ -1515,7 +1558,7 @@ Having a separate directory is enough to trick
 into grabbing the right version.
 Note that libraries used only for 
 .Xr dlopen 3
-do not need NEWDYNLIDIR.
+do not need NEWDYNLIBDIR.
 .Pp
 The special
 .Ar plist

@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.23 2002/04/04 20:54:08 espie Exp $
+.\" $OpenBSD: ports.7,v 1.24 2002/04/17 17:12:59 espie Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
 .Dd January 25, 1998
@@ -261,6 +261,32 @@ belongs to.
 Remove the symbolic links created by
 .Ar link-categories .
 .El
+.Sh BULK PACKAGE BUILDING
+The ports tree contains some mechanisms to save space when building
+large collection of packages.
+If
+.Ev BIN_PACKAGES ,
+.Ev TRUST_PACKAGES ,
+and
+.Ev BULK
+are set to
+.Sq Yes 
+for a package build, some shortcuts are taken to allow cleaning up working
+directories on the fly.
+.Pp
+Some important caveats apply:
+the packages already built in the package repository are assumed to be 
+up-to-date (BIN_PACKAGES), the database of installed packages is assumed 
+to be accurate (TRUST_PACKAGES), and the bulk cookies are assumed to be 
+up-to-date (BULK).
+.Pp
+This means that newer iterations of package buildings should make sure
+those conditions are met, which entails erasing old package repository,
+removing packages that need to be rebuilt from the base of installed
+packages, and cleaning up old bulk cookies.
+.Pp
+If any of these conditions is not met, the package build may run into weird
+problems.
 .Sh NETWORK CONFIGURATION
 The variables pertaining to network access have been marshalled into
 .Pa ${PORTSDIR}/infrastructure/template/network.conf.template .
