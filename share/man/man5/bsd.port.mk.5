@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.156 2004/12/02 21:55:23 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.157 2005/03/11 23:03:58 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -628,7 +628,7 @@ if
 is set.
 .It Ev CDROM_PACKAGES
 User settings.
-Base location where packages suitable for a CDROM (see
+Base location where packages suitable for a CD-ROM (see
 PERMIT_PACKAGE_CDROM) will be placed
 (default: ${PKGREPOSITORYBASE}/cdrom)
 .It Ev CDROM_SITE
@@ -1917,7 +1917,7 @@ MASTER_SITES0=ftp://ftp.zoinx.org/pub/
 .It Ev PERMIT_{DISTFILES,PACKAGE}_{CDROM,FTP}
 Set to
 .Sq Yes
-if package or distribution files can be allowed on ftp sites or cdrom without
+if package or distribution files can be allowed on ftp sites or CD-ROM without
 legal issues.
 Set to reason not to otherwise.
 PERMIT_* lines in the Makefile should be preceded with a comment explaining
