@@ -164,9 +164,11 @@ rtag (argc, argv)
     {
 	/* We're the client side.  Fire up the remote server.  */
 	start_server ();
-	
+
 	ign_setup ();
 
+	if (!force_tag_match)
+	    send_arg ("-f");
 	if (local)
 	    send_arg("-l");
 	if (delete_flag)
@@ -175,7 +177,7 @@ rtag (argc, argv)
 	    send_arg("-b");
 	if (force_tag_move)
 	    send_arg("-F");
-	if (run_module_prog)
+	if (!run_module_prog)
 	    send_arg("-n");
 	if (attic_too)
 	    send_arg("-a");
@@ -229,19 +231,25 @@ rtag_proc (pargc, argv, xwhere, mwhere, mfile, shorten, local_specified,
     char *mname;
     char *msg;
 {
+    /* Begin section which is identical to patch_proc--should this
+       be abstracted out somehow?  */
     int err = 0;
     int which;
-    char repository[PATH_MAX];
-    char where[PATH_MAX];
+    char *repository;
+    char *where;
 
+    repository = xmalloc (strlen (CVSroot_directory) + strlen (argv[0])
+			  + (mfile == NULL ? 0 : strlen (mfile)) + 30);
     (void) sprintf (repository, "%s/%s", CVSroot_directory, argv[0]);
+    where = xmalloc (strlen (argv[0]) + (mfile == NULL ? 0 : strlen (mfile))
+		     + 10);
     (void) strcpy (where, argv[0]);
 
     /* if mfile isn't null, we need to set up to do only part of the module */
     if (mfile != NULL)
     {
 	char *cp;
-	char path[PATH_MAX];
+	char *path;
 
 	/* if the portion of the module is a path, put the dir part on repos */
 	if ((cp = strrchr (mfile, '/')) != NULL)
@@ -255,6 +263,7 @@ rtag_proc (pargc, argv, xwhere, mwhere, mfile, shorten, local_specified,
 	}
 
 	/* take care of the rest */
+	path = xmalloc (strlen (repository) + strlen (mfile) + 5);
 	(void) sprintf (path, "%s/%s", repository, mfile);
 	if (isdir (path))
 	{
@@ -273,14 +282,18 @@ rtag_proc (pargc, argv, xwhere, mwhere, mfile, shorten, local_specified,
 	    argv[1] = xstrdup (mfile);
 	    (*pargc) = 2;
 	}
+	free (path);
     }
 
-    /* chdir to the starting directory */
+    /* cd to the starting repository */
     if ( CVS_CHDIR (repository) < 0)
     {
 	error (0, errno, "cannot chdir to %s", repository);
+	free (repository);
 	return (1);
     }
+    free (repository);
+    /* End section which is identical to patch_proc.  */
 
     if (delete_flag || attic_too || (force_tag_match && numtag))
 	which = W_REPOS | W_ATTIC;
@@ -312,7 +325,7 @@ rtag_proc (pargc, argv, xwhere, mwhere, mfile, shorten, local_specified,
 			   (DIRLEAVEPROC) NULL, NULL,
 			   *pargc - 1, argv + 1, local,
 			   which, 0, 0, where, 1);
-
+    free (where);
     dellist(&mtlist);
 
     return (err);

@@ -1,3 +1,144 @@
+13 Mar 1997  Jim Kingdon
+
+	* cvsnt.mak: Recent changes have added a number of getline.h
+	dependencies.
+
+Thu Mar 13 08:43:04 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* configure.in (AC_C_CROSS): Add comment about obsolescence
+	thereof.
+	* config.h.in, configure: Regenerated with autoconf 2.10.
+
+Thu Mar 13 05:50:29 1997  Philippe De Muyter  <phdm@info.ucl.ac.be>
+
+	Here are the fixes I needed to make to cvs-1.9 to get it to
+	compile and successfully pass 'make check' on m68k-motorola-sysv.
+	* lib/getwd.c (getwd): Added declaration for getcwd().
+	* lib/wait.h (WIFSTOPPED et al.): Macro defined if not defined.
+	* lib/waitpid.c (waitpid): Use wait, not wait3, if !HAVE_WAIT3.
+	* src/admin.c (admin): Added declaration for getgrnam().
+	* src/server.c (fcntl.h): Do not include file twice.  Already included
+	from system.h from cvs.h.
+	* src/sanity.sh (imported-f*): Renamed from imported-file*, that were
+	too long for sysv.
+	* configure.in (wait3): Added to AC_CHECK_FUNCS list.
+
+Wed Mar 12 14:32:50 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* BUGS: Add "failed assertion `rev == NULL || isdigit (*rev)'" bug.
+
+	* TODO: Remove item 135; this is solved by %v and %V in loginfo.
+
+	* configure.in (AC_CHECK_FUNCS): Don't check for setvbuf;
+	HAVE_SETVBUF is no longer used.
+	* config.h, configure: Regenerated with autoconf 2.10.
+
+	* TODO: Add item 184, concerning MD5-based password hash.
+	Remove item 14, concerning "pathname stripper".  I think that was
+	a reference to the late unlamented strip_path.
+
+Sat Mar  8 21:22:54 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* INSTALL: NT 4.0 is client and local (like other NT 3.51 & Win95).
+
+Fri Mar  7 16:51:13 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* INSTALL: Just talked to a NT 4.0 user; add it to the list.
+
+Sun Mar  2 22:01:23 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* NEWS: Add item about "cvs admin" vs. "cvs admin .".
+
+	* TODO: Remove item #169.  It doesn't really explain what an
+	"archive library" is or in general what the feature they discuss is
+	supposed to do--I mean, CVS _can_ be used to store .o's, if
+	that is what they are talking about.
+
+	* TODO: Add item #183, about greater documentation/visiblity for
+	Entries.Static and CVS/Tag.
+
+	* INSTALL (footnote 5): Add note about how /usr/tmp vs. /var/tmp
+	shouldn't be an issue anymore
+
+Thu Feb 20 13:53:19 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* INSTALL: Update Cray entry per mail from John Bowman
+	<bowman@ipp-garching.mpg.de>
+
+	* configure.in: Add comments about autoconf version.
+
+Mon Feb 17 09:55:35 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* configure: Regenerated.
+
+Sat Feb 15 15:37:39 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* configure.in (AC_OUTPUT): Add windows-NT/SCC/Makefile.
+
+Sun Dec 15 13:12:30 1996  Michael Douglass <mikedoug@texas.net>
+			  and Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* NEWS: Mention "cvs logout".
+
+1997-02-12  Jim Kingdon
+
+	* cvsnt.mak: Visual C++ seems to want to make some cosmetic
+	changes (reordering *.obj files), perhaps prodded by "Save
+	All".  I hope that putting in these changes will make it
+	happy...
+
+1997-02-11  Jim Kingdon  <kingdon@cyclic.com>
+
+	* cvsnt.mak: Replace with version from Visual C++ 4.0.  If someone
+	wants the 2.x one back, I suppose we can put them side by side,
+	but I won't be able to update the 2.x one any more as I won't be
+	having access to 2.x.
+
+Tue Feb 11 16:43:43 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* .cvsignore: Add cvsnt.mdp and cvsnt.ncb.  They seem to be files
+	created by Visual C++ 4.x which were not created by Visual C++ 2.x.
+
+Tue Feb  4 11:42:30 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* INSTALL: OS/2 port is client only.
+
+	* Rename devel-cvs (which had only been in the repository, not the
+	distribution) to DEVEL-CVS.  Add "Charter for the devel-cvs
+	mailing list:" heading, "CVS Development Policies" title, and
+	one-sentence introduction (editorial changes, not run by
+	devel-cvs).  Revise paragraph concerning membership in the list to
+	reflect policy change to make read-only membership different from
+	the ability to send to the list (the new wording was approved by
+	devel-cvs, as was the rename and including it in the
+	distribution).
+	* Makefile.in (DISTFILES): Add DEVEL-CVS.
+	* HACKING: Add "Mailing lists" section.
+
+Tue Jan 28 10:41:05 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* configure.in: Remove AC_CHECK_SIZEOF; no longer needed with
+	lib/md5.c changes.
+	* acconfig.h: Add HAVE_CONNECT.  This is needed so that autoheader
+	2.10 works; I think this has been broken since 2 Dec 1996.
+	* config.h.in: Regenerated with autoheader 2.10.
+	* configure: Regenerated with autoconf 2.10.
+
+	* HACKING: Revise criterion for whether something goes in NEWS
+	again (now "user-visible change worth mentioning"--the language
+	from the GNU coding standards).
+
+Mon Jan 27 23:05:24 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* HACKING: Criterion for whether something goes in NEWS is not
+	whether it is user-visible; it is whether it is a bugfix or a
+	feature.
+
+Tue Jan 21 10:21:53 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* INSTALL: Warn people against pre-5.x RCS; describe how to find
+	out what version of RCS you have.
+
 Wed Jan  8 14:50:47 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* Makefile.in, NEWS, README, TODO, configure.in: Remove CVSid; we

@@ -288,7 +288,8 @@ find_dirs (dir, list, checkadm, entries)
     List *entries;
 {
     Node *p;
-    char tmp[PATH_MAX];
+    char *tmp = NULL;
+    size_t tmp_size = 0;
     struct dirent *dp;
     DIR *dirp;
 
@@ -322,6 +323,9 @@ find_dirs (dir, list, checkadm, entries)
 	    if (fnmatch (RCSPAT, dp->d_name, 0) == 0)
 		continue;
 
+	    expand_string (&tmp,
+			   &tmp_size,
+			   strlen (dir) + strlen (dp->d_name) + 10);
 	    sprintf (tmp, "%s/%s", dir, dp->d_name);
 	    if (!isdir (tmp))
 		continue;
@@ -341,9 +345,8 @@ find_dirs (dir, list, checkadm, entries)
 		if (dp->d_type == DT_LNK)
 		    continue;
 #endif
-		/* FIXME: tmp is not set here, or doesn't seem to be.
-		   This would appear to just be a mistake...  Needs more
-		   investigation to be sure...  */
+		/* Note that we only get here if we already set tmp
+		   above.  */
 		if (islink (tmp))
 		    continue;
 #ifdef DT_DIR
@@ -351,6 +354,10 @@ find_dirs (dir, list, checkadm, entries)
 #endif
 
 	    /* check for new style */
+	    expand_string (&tmp,
+			   &tmp_size,
+			   (strlen (dir) + strlen (dp->d_name)
+			    + sizeof (CVSADM) + 10));
 	    (void) sprintf (tmp, "%s/%s/%s", dir, dp->d_name, CVSADM);
 	    if (!isdir (tmp))
 		continue;
@@ -364,5 +371,7 @@ find_dirs (dir, list, checkadm, entries)
 	    freenode (p);
     }
     (void) closedir (dirp);
+    if (tmp != NULL)
+	free (tmp);
     return (0);
 }

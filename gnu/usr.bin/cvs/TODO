@@ -1,9 +1,3 @@
-14. Pathname stripper, for checkout, as well as for writing the
-    Repository file.
-    [[ I have a simple one, but need to make sure to call it at all the
-       appropriate points ]]
-    (I'm not sure what this means -kingdon, Jun 1995).
-
 22. Catch signals for cleanup when "add"ing files.
 
 24. Insist on a log message.
@@ -179,10 +173,6 @@
      see if an error had occurred.  (we should be checking for errors, quite
      aside from NFS issues -kingdon, June 1996).
 
-135. The email CVS sends with each checkin, should include the version
-     number of each file it is checking in.
-     [[ Sort of solved by contrib/log.pl, which does a good job of this ]]
-
 137. Some sites might want CVS to fsync() the RCS ,v file to protect
      against nasty hardware errors.  There is a slight performance hit with
      doing so, though, so it should be configurable in the .cvsrc file.
@@ -329,13 +319,6 @@
 		- What all the tags mean in an "import" command
 		- Tags are important; revision numbers are not
 
-169. We are using CVS as the configuration control for a software reuse library.
-     What we do is do system calls passing the needed arguments. In the next
-     release, it would be nice to see an option to put cvs .o files into a
-     archive library with an API. This enhancement would go nicely with the
-     notion of being able to integrate tools into a large software engineering
-     environment.
-
 170. Is there an "info" file that can be invoked when a file is checked out, or
      updated ?  What I want to do is to advise users, particularly novices, of
      the state of their working source whenever they check something out, as
@@ -404,3 +387,13 @@ cut it, because it is inclusive on the bar end.  I'm not sure that is
 ever a useful or logical behavior ("cvs diff -r foo -r bar" is not
 similarly inclusive), but is compatibility an issue?
 
+183.  "cvs status" should report on Entries.Static flag and CVS/Tag (how?
+maybe a "cvs status -d" to give directory status?).  There should also
+be more documentation of how these get set and how/when to re-set them.
+
+184.  Would be nice to implement the FreeBSD MD5-based password hash
+algorithm in pserver.  For more info see "6.1. DES, MD5, and Crypt" in
+the FreeBSD Handbook, and src/lib/libcrypt/crypt.c in the FreeBSD
+sources.  Certainly in the context of non-unix servers this algorithm
+makes more sense than the traditional unix crypt() algorithm, which
+suffers from export control problems.

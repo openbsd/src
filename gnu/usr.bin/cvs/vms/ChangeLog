@@ -1,3 +1,16 @@
+Wed Mar 12 16:10:01 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* config.h (HAVE_SETVBUF): Removed; no longer used.
+
+Wed Jan 29 18:27:41 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* options.h (GREP): Remove; no longer used.
+
+Tue Jan 28 18:29:03 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* config.h: Remove SIZEOF_INT and SIZEOF_LONG; no longer needed
+	with lib/md5.c changes.
+
 Thu Jan  2 13:30:56 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* dir.h, filesubr.c, filutils.c, filutils.h, misc.c, misc.h,

@@ -79,7 +79,7 @@ status (argc, argv)
       send_file_names (argc, argv, SEND_EXPAND_WILD);
       /* XXX This should only need to send file info; the file
 	 contents themselves will not be examined.  */
-      send_files (argc, argv, local, 0, 0);
+      send_files (argc, argv, local, 0, 0, 0);
 
       send_to_server ("status\012", 0);
       err = get_responses_and_close ();
@@ -127,6 +127,9 @@ status_fileproc (callerdat, finfo)
 	    break;
 #endif
 	case T_CONFLICT:
+	    /* I _think_ that "unresolved" is correct; that if it has
+	       been resolved then the status will change.  But I'm not
+	       sure about that.  */
 	    sstat = "Unresolved Conflict";
 	    break;
 	case T_ADDED:
@@ -137,7 +140,7 @@ status_fileproc (callerdat, finfo)
 	    break;
 	case T_MODIFIED:
 	    if (vers->ts_conflict)
-		sstat = "Unresolved Conflict";
+		sstat = "File had conflicts on merge";
 	    else
 		sstat = "Locally Modified";
 	    break;

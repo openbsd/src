@@ -8,6 +8,8 @@ config.status
 cvs-*.spec
 cvs-*.tar.gz
 cvsinit
+cvsnt.mdp
+cvsnt.ncb
 cvsnt.vcp
 cvsnt4.mak
 cvsnt4.mdp

@@ -12,9 +12,6 @@
 # Especially if they regularly beat on the same directory. Anyway if you 
 # think anyone would be interested here it is. 
 #
-#      $Id: mfpipe.pl,v 1.1.1.1 1995/12/19 09:21:40 deraadt Exp $
-#
-#
 #	File:		mfpipe
 #
 #	Author:		John Clyne

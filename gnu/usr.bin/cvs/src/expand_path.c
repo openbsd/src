@@ -95,40 +95,82 @@ expand_path (name, file, line)
 {
     char *s;
     char *d;
-    /* FIXME: arbitrary limit.  */
-    char  mybuf[PATH_MAX];
-    char  buf[PATH_MAX];
+
+    char *mybuf = NULL;
+    size_t mybuf_size = 0;
+    char *buf = NULL;
+    size_t buf_size = 0;
+
+    size_t doff;
+
     char *result;
+
+    /* Sorry this routine is so ugly; it is a head-on collision
+       between the `traditional' unix *d++ style and the need to
+       dynamically allocate.  It would be much cleaner (and probably
+       faster, not that this is a bottleneck for CVS) with more use of
+       strcpy & friends, but I haven't taken the effort to rewrite it
+       thusly.  */
+
+    /* First copy from NAME to MYBUF, expanding $<foo> as we go.  */
     s = name;
     d = mybuf;
+    doff = d - mybuf;
+    expand_string (&mybuf, &mybuf_size, doff + 1);
+    d = mybuf + doff;
     while ((*d++ = *s))
+    {
 	if (*s++ == '$')
 	{
 	    char *p = d;
 	    char *e;
 	    int flag = (*s == '{');
 
+	    doff = d - mybuf;
+	    expand_string (&mybuf, &mybuf_size, doff + 1);
+	    d = mybuf + doff;
 	    for (; (*d++ = *s); s++)
+	    {
 		if (flag
 		    ? *s =='}'
 		    : isalnum (*s) == 0 && *s != '_')
 		    break;
-	    *--d = 0;
+		doff = d - mybuf;
+		expand_string (&mybuf, &mybuf_size, doff + 1);
+		d = mybuf + doff;
+	    }
+	    *--d = '\0';
 	    e = expand_variable (&p[flag], file, line);
 
 	    if (e)
 	    {
+		doff = d - mybuf;
+		expand_string (&mybuf, &mybuf_size, doff + 1);
+		d = mybuf + doff;
 		for (d = &p[-1]; (*d++ = *e++);)
-		    ;
+		{
+		    doff = d - mybuf;
+		    expand_string (&mybuf, &mybuf_size, doff + 1);
+		    d = mybuf + doff;
+		}
 		--d;
 		if (flag && *s)
 		    s++;
 	    }
 	    else
 		/* expand_variable has already printed an error message.  */
-		return NULL;
+		goto error_exit;
 	}
-    *d = 0;
+	doff = d - mybuf;
+	expand_string (&mybuf, &mybuf_size, doff + 1);
+	d = mybuf + doff;
+    }
+    doff = d - mybuf;
+    expand_string (&mybuf, &mybuf_size, doff + 1);
+    d = mybuf + doff;
+    *d = '\0';
+
+    /* Then copy from MYBUF to BUF, expanding ~.  */
     s = mybuf;
     d = buf;
     /* If you don't want ~username ~/ to be expanded simply remove
@@ -158,8 +200,15 @@ expand_path (name, file, line)
 	    }
 	    t = ps->pw_dir;
 	}
+	doff = d - buf;
+	expand_string (&buf, &buf_size, doff + 1);
+	d = buf + doff;
 	while ((*d++ = *t++))
-	    ;
+	{
+	    doff = d - buf;
+	    expand_string (&buf, &buf_size, doff + 1);
+	    d = buf + doff;
+	}
 	--d;
 	if (*p == 0)
 	    *p = '/';	       /* always add / */
@@ -168,12 +217,35 @@ expand_path (name, file, line)
     else
 	--s;
 	/* Kill up to here */
+    doff = d - buf;
+    expand_string (&buf, &buf_size, doff + 1);
+    d = buf + doff;
     while ((*d++ = *s++))
-	;
-    *d=0;
-    result = xmalloc (sizeof(char) * strlen(buf)+1);
-    strcpy (result, buf);
+    {
+	doff = d - buf;
+	expand_string (&buf, &buf_size, doff + 1);
+	d = buf + doff;
+    }
+    doff = d - buf;
+    expand_string (&buf, &buf_size, doff + 1);
+    d = buf + doff;
+    *d = '\0';
+
+    /* OK, buf contains the value we want to return.  Clean up and return
+       it.  */
+    free (mybuf);
+    /* Save a little memory with xstrdup; buf will tend to allocate
+       more than it needs to.  */
+    result = xstrdup (buf);
+    free (buf);
     return result;
+
+ error_exit:
+    if (mybuf != NULL)
+	free (mybuf);
+    if (buf != NULL)
+	free (buf);
+    return NULL;
 }
 
 static char *

@@ -28,6 +28,7 @@ INSTALL_DATA = @INSTALL_DATA@
 
 DISTFILES = \
 	.cvsignore ChangeLog ChangeLog.fsf Makefile.in \
+	RCSFILES \
 	cvs-paper.ms cvs-paper.ps \
 	cvs.texinfo \
 	cvsclient.texi

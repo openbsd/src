@@ -1,4 +1,15 @@
+/* This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2, or (at your option)
+   any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.  */
+
 #include "cvs.h"
+#include "getline.h"
 
 /*
   Original Author:  athan@morgan.com <Andrew C. Athan> 2/1/94
@@ -68,13 +79,18 @@ void wrap_restore_saved PROTO((void));
 
 void wrap_setup()
 {
-    char file[PATH_MAX];
     struct passwd *pw;
 
 #ifdef CLIENT_SUPPORT
     if (!client_active)
 #endif
     {
+	char *file;
+
+	file = xmalloc (strlen (CVSroot_directory)
+			+ sizeof (CVSROOTADM)
+			+ sizeof (CVSROOTADM_WRAPPER)
+			+ 10);
 	/* Then add entries found in repository, if it exists.  */
 	(void) sprintf (file, "%s/%s/%s", CVSroot_directory, CVSROOTADM,
 			CVSROOTADM_WRAPPER);
@@ -82,6 +98,7 @@ void wrap_setup()
 	{
 	    wrap_add_file(file,0);
 	}
+	free (file);
     }
 
     /* Then add entries found in home dir, (if user has one) and file
@@ -89,11 +106,15 @@ void wrap_setup()
        get_homedir, i.e. $HOME).  */
     if ((pw = (struct passwd *) getpwuid (getuid ())) && pw->pw_dir)
     {
+	char *file;
+
+	file = xmalloc (strlen (pw->pw_dir) + sizeof (CVSDOTWRAPPER) + 10);
 	(void) sprintf (file, "%s/%s", pw->pw_dir, CVSDOTWRAPPER);
 	if (isfile (file))
 	{
 	    wrap_add_file (file, 0);
 	}
+	free (file);
     }
 
     /* Then add entries found in CVSWRAPPERS environment variable. */
@@ -144,17 +165,26 @@ wrap_add_file (file, temp)
     int temp;
 {
     FILE *fp;
-    char line[1024];
+    char *line = NULL;
+    size_t line_allocated = 0;
 
-    wrap_restore_saved();
-    wrap_kill_temp();
+    wrap_restore_saved ();
+    wrap_kill_temp ();
 
-	/* load the file */
-    if (!(fp = CVS_FOPEN (file, "r")))
+    /* Load the file.  */
+    fp = CVS_FOPEN (file, "r");
+    if (fp == NULL)
+    {
+	if (!existence_error (errno))
+	    error (0, errno, "cannot open %s", file);
 	return;
-    while (fgets (line, sizeof (line), fp))
+    }
+    while (getline (&line, &line_allocated, fp) >= 0)
 	wrap_add (line, temp);
-    (void) fclose (fp);
+    if (ferror (fp))
+	error (0, errno, "cannot read %s", file);
+    if (fclose (fp) == EOF)
+	error (0, errno, "cannot close %s", file);
 }
 
 void
@@ -449,17 +479,16 @@ wrap_merge_is_copy (fileName)
     return 1;
 }
 
-char *
+void
 wrap_fromcvs_process_file(fileName)
     const char *fileName;
 {
     WrapperEntry *e=wrap_matching_entry(fileName);
-    static char buf[PATH_MAX];
 
     if(e==NULL || e->fromcvsFilter==NULL)
-	return NULL;
+	return;
 
     run_setup(e->fromcvsFilter,fileName);
     run_exec(RUN_TTY, RUN_TTY, RUN_TTY, RUN_NORMAL );
-    return buf;
+    return;
 }

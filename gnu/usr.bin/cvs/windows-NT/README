@@ -77,17 +77,19 @@ Here are some other things which may be of interest for unix junkies:
 	http://www.halcyon.com/gvr/vim/       (VI clone)
 	ftp://wuarchive.wustl.edu/systems/ibmpc/gnuish/less177.zip
 
+If you want to browse/edit the sources using Visual C++, we recommend
+setting tab stops to 8 spaces, since that is what the CVS sources
+expect.  The tab stop setting is in the "Editor" or "Tabs" section of
+the "Options..."  dialog which is in the "Tools..." menu.
+
 The following harmless warnings are known:
 
-- regex.c: These are signed/unsigned comparison conflicts.  I am not
-  going to *touch* this code. :-) I got my fill of it when I was
+- regex.c: 103 warnings, mostly signed/unsigned comparison conflicts.
+  I am not going to *touch* this code. :-) I got my fill of it when I was
   hacking GNU Emacs.
+
 .\lib\getdate.c(760) : warning C4013: 'getdate_yyparse' undefined; assuming extern returning int
 .\lib\getdate.c(1612) : warning C4102: 'yyerrlab' : unreferenced label
 .\lib\getdate.c(1612) : warning C4102: 'yynewstate' : unreferenced label
 
-If you want to browse/edit the sources using Visual C++, we recommend
-setting tab stops to 8 spaces, since that is what the CVS sources
-expect.  The tab stop setting is in the "Editor" section of the "Options..."
-dialog which is in the "Tools..." menu.
 

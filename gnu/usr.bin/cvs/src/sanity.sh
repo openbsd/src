@@ -41,7 +41,7 @@ if test x"$1" = x"-r"; then
 	remote=yes
 	# If we're going to do remote testing, make sure 'rsh' works first.
         host="`hostname`"
-	if test "x`${CVS_RSH-rsh} $host 'echo hi'`" != "xhi"; then
+	if test "x`${CVS_RSH-rsh} $host -n 'echo hi'`" != "xhi"; then
 	    echo "ERROR: cannot test remote CVS, because \`rsh $host' fails." >&2
 	    exit 1
 	fi
@@ -79,6 +79,11 @@ shift
 # just spuriously match a few things; if the name contains other regexp
 # special characters we are probably in big trouble.
 PROG=`basename ${testcvs}`
+
+# Regexp to match an author name.  I'm not really sure what characters
+# should be here.  a-zA-Z obviously.  People complained when 0-9 were
+# not allowed in usernames.  Other than that I'm not sure.
+username="[a-zA-Z0-9][a-zA-Z0-9]*"
 
 # FIXME: try things (what things? checkins?) without -m.
 #
@@ -451,7 +456,7 @@ HOME=${TESTDIR}/home; export HOME
 # tests.
 
 if test x"$*" = x; then
-	tests="basica basicb basic1 deep basic2 rdiff death death2 branches multibranch import join new newb conflicts conflicts2 modules modules2 mflag errmsg1 devcom devcom2 ignore binfiles binwrap info serverpatch log log2 crerepos rcs"
+	tests="basica basicb basic1 deep basic2 rdiff death death2 branches multibranch import join new newb conflicts conflicts2 modules modules2 modules3 mflag errmsg1 devcom devcom2 devcom3 ignore binfiles binwrap info serverpatch log log2 crerepos rcs big modes"
 else
 	tests="$*"
 fi
@@ -526,7 +531,7 @@ for what in $tests; do
 	  dotest basica-0a "${testcvs} -q co -l ." ''
 	  mkdir first-dir
 	  dotest basica-0b "${testcvs} add first-dir" \
-"Directory /tmp/cvs-sanity/cvsroot/\./first-dir added to the repository"
+"Directory /tmp/cvs-sanity/cvsroot/first-dir added to the repository"
 	  cd ..
 	  rm -rf 1
 
@@ -626,6 +631,22 @@ done'
 '"${PROG}"' \[[a-z]* aborted\]: correct above errors first!'
 	  dotest basica-8 "${testcvs} -q update" ''
 
+	  # Test the -f option to ci
+	  cd sdir/ssdir
+	  dotest basica-8a "${testcvs} -q ci -f -m force-it" \
+'Checking in ssfile;
+/tmp/cvs-sanity/cvsroot/first-dir/sdir/ssdir/ssfile,v  <--  ssfile
+new revision: 1\.3; previous revision: 1\.2
+done'
+	  cd ../..
+	  dotest basica-8b "${testcvs} -q diff -r1.2 -r1.3" \
+'Index: sdir/ssdir/ssfile
+===================================================================
+RCS file: /tmp/cvs-sanity/cvsroot/first-dir/sdir/ssdir/ssfile,v
+retrieving revision 1\.2
+retrieving revision 1\.3
+diff -r1\.2 -r1\.3'
+
 	  # The .* here will normally be "No such file or directory",
 	  # but if memory serves some systems (AIX?) have a different message.
 :	  dotest_fail basica-9 \
@@ -638,8 +659,8 @@ done'
 	  dotest basica-10 "${testcvs} annotate" \
 'Annotations for sdir/ssdir/ssfile
 \*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
-1\.1          .[a-z0-9@][a-z0-9@ ]* [0-9a-zA-Z-]*.: ssfile
-1\.2          .[a-z0-9@][a-z0-9@ ]* [0-9a-zA-Z-]*.: ssfile line 2'
+1\.1          .'"${username}"' *[0-9a-zA-Z-]*.: ssfile
+1\.2          .'"${username}"' *[0-9a-zA-Z-]*.: ssfile line 2'
 	  cd ..
 
 	  rm -rf ${CVSROOT_DIRNAME}/first-dir
@@ -648,7 +669,30 @@ done'
 
 	basicb)
 	  # More basic tests, including non-branch tags and co -d.
-	  mkdir ${CVSROOT_DIRNAME}/first-dir
+	  mkdir 1; cd 1
+	  dotest basicb-0a "${testcvs} -q co -l ." ''
+	  touch topfile
+	  dotest basicb-0b "${testcvs} add topfile" \
+"${PROG} [a-z]*: scheduling file .topfile. for addition
+${PROG} [a-z]*: use .cvs commit. to add this file permanently"
+	  dotest basicb-0c "${testcvs} -q ci -m add-it topfile" \
+'RCS file: /tmp/cvs-sanity/cvsroot/./topfile,v
+done
+Checking in topfile;
+/tmp/cvs-sanity/cvsroot/./topfile,v  <--  topfile
+initial revision: 1\.1
+done'
+	  cd ..
+	  rm -rf 1
+	  mkdir 2; cd 2
+	  dotest basicb-0d "${testcvs} -q co -l ." "U topfile"
+	  mkdir first-dir
+	  dotest basicb-0e "${testcvs} add first-dir" \
+"Directory /tmp/cvs-sanity/cvsroot/first-dir added to the repository"
+	  cd ..
+	  rm -rf 2
+
+:	  mkdir ${CVSROOT_DIRNAME}/first-dir
 	  dotest basicb-1 "${testcvs} -q co first-dir" ''
 	  dotest basicb-1a "test -d CVS" ''
 	  cd first-dir
@@ -714,6 +758,10 @@ T sdir2/sfile2'
 /tmp/cvs-sanity/cvsroot/first-dir/sdir2/sfile2,v  <--  sfile2
 new revision: 1\.2; previous revision: 1\.1
 done'
+	  # See if CVS can correctly notice when an invalid numeric
+	  # revision is specified.
+	  # Commented out until we get around to fixing CVS
+:	  dotest basicb-8a0 "${testcvs} diff -r 1.5 -r 1.7 sfile2" 'error msg'
 	  cd ..
 
 	  # Test that we recurse into the correct directory when checking
@@ -737,6 +785,7 @@ sfile2 starts"
 	  rm -rf newdir
 
 	  rm -rf ${CVSROOT_DIRNAME}/first-dir
+	  rm -f ${CVSROOT_DIRNAME}/topfile,v
 	  ;;
 
 	basic1) # first dive - add a files, first singly, then in a group.
@@ -965,7 +1014,27 @@ done'
 	  dotest deep-rm5 "${testcvs} -q update -d -P" ''
 	  dotest_fail deep-rm6 "test -d dir7" ''
 
-	  cd ../../../../../../..
+	  # Test rm -f -R.
+	  cd ../..
+	  dotest deep-rm7 "${testcvs} rm -f -R dir5" \
+"${PROG} [a-z]*: Removing dir5
+${PROG} [a-z]*: scheduling .dir5/file1. for removal
+${PROG} [a-z]*: Removing dir5/dir6
+${PROG} [a-z]*: scheduling .dir5/dir6/file1. for removal
+${PROG} [a-z]*: use .${PROG} commit. to remove these files permanently"
+	  dotest deep-rm8 "${testcvs} -q ci -m rm-it" \
+'Removing dir5/file1;
+/tmp/cvs-sanity/cvsroot/first-dir/dir1/dir2/dir3/dir4/dir5/file1,v  <--  file1
+new revision: delete; previous revision: 1\.1
+done
+Removing dir5/dir6/file1;
+/tmp/cvs-sanity/cvsroot/first-dir/dir1/dir2/dir3/dir4/dir5/dir6/file1,v  <--  file1
+new revision: delete; previous revision: 1\.1
+done'
+	  dotest deep-rm9 "${testcvs} -q update -d -P" ''
+	  dotest_fail deep-rm10 "test -d dir5"
+
+	  cd ../../../../..
 
 	  if echo "yes" | ${testcvs} release -d first-dir >>${LOGFILE}; then
 	    pass deep-5
@@ -1429,10 +1498,10 @@ diff -c trdiff/foo:1\.1\.1\.1 trdiff/foo:1\.2
 --- trdiff/foo	.*
 \*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
 \*\*\* 1,2 \*\*\*\*
-! \$''Id: foo,v 1\.1\.1\.1 [0-9/]* [0-9:]* [a-zA-Z0-9][a-zA-Z0-9]* Exp \$
+! \$''Id: foo,v 1\.1\.1\.1 [0-9/]* [0-9:]* '"${username}"' Exp \$
 ! \$''Name: T1 \$
 --- 1,3 ----
-! \$''Id: foo,v 1\.2 [0-9/]* [0-9:]* [a-zA-Z0-9][a-zA-Z0-9]* Exp \$
+! \$''Id: foo,v 1\.2 [0-9/]* [0-9:]* '"${username}"' Exp \$
 ! \$''Name: local-v0 \$
 ! something
 Index: trdiff/new
@@ -1442,7 +1511,7 @@ diff -c /dev/null trdiff/new:1\.1
 \*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
 \*\*\* 0 \*\*\*\*
 --- 1,2 ----
-'"${PLUS}"' #ident	"@(#)trdiff:\$''Name: local-v0 \$:\$''Id: new,v 1\.1 [0-9/]* [0-9:]* [a-zA-Z0-9][a-zA-Z0-9]* Exp \$"
+'"${PLUS}"' #ident	"@(#)trdiff:\$''Name: local-v0 \$:\$''Id: new,v 1\.1 [0-9/]* [0-9:]* '"${username}"' Exp \$"
 '"${PLUS}"' new file'
 
 # FIXME: will this work here?
@@ -1621,10 +1690,7 @@ T file2'
 			echo "FAIL: test 76" | tee -a ${LOGFILE} ; exit 1
 		fi
 
-		# Remote CVS outputs nothing for 76a0 and 76a1; until
-		# this bug is fixed just skip those tests for remote.
-		if test "x$remote" = xno; then
-		  dotest death-76a0 \
+		dotest death-76a0 \
 "${testcvs} -q rdiff -r bp_branch1 -r branch1 first-dir" \
 "Index: first-dir/file3
 diff -c /dev/null first-dir/file3:1\.1\.2\.1
@@ -1634,7 +1700,7 @@ diff -c /dev/null first-dir/file3:1\.1\.2\.1
 \*\*\* 0 \*\*\*\*
 --- 1 ----
 ${PLUS} line1 from branch1"
-		  dotest death-76a1 \
+		dotest death-76a1 \
 "${testcvs} -q rdiff -r branch1 -r bp_branch1 first-dir" \
 'Index: first-dir/file3
 diff -c first-dir/file3:1\.1\.2\.1 first-dir/file3:removed
@@ -1644,7 +1710,6 @@ diff -c first-dir/file3:1\.1\.2\.1 first-dir/file3:removed
 \*\*\* 1 \*\*\*\*
 - line1 from branch1
 --- 0 ----'
-		fi
 
 		# remove
 		rm file3
@@ -2395,16 +2460,16 @@ total revisions: 3;	selected revisions: 3
 description:
 ----------------------------
 revision 1\.1
-date: [0-9/]* [0-9:]*;  author: [0-9a-zA-Z-]*;  state: Exp;
+date: [0-9/]* [0-9:]*;  author: ${username};  state: Exp;
 branches:  1\.1\.2;  1\.1\.4;
 add-it
 ----------------------------
 revision 1\.1\.4\.1
-date: [0-9/]* [0-9:]*;  author: [0-9a-zA-Z-]*;  state: Exp;  lines: ${PLUS}1 -0
+date: [0-9/]* [0-9:]*;  author: ${username};  state: Exp;  lines: ${PLUS}1 -0
 modify-on-br2
 ----------------------------
 revision 1\.1\.2\.1
-date: [0-9/]* [0-9:]*;  author: [0-9a-zA-Z-]*;  state: Exp;  lines: ${PLUS}1 -1
+date: [0-9/]* [0-9:]*;  author: ${username};  state: Exp;  lines: ${PLUS}1 -1
 modify-on-br1
 ============================================================================="
 	  cd ..
@@ -2423,7 +2488,7 @@ modify-on-br1
 		mkdir import-dir ; cd import-dir
 
 		for i in 1 2 3 4 ; do
-			echo imported file"$i" > imported-file"$i"
+			echo imported file"$i" > imported-f"$i"
 		done
 
 		# This directory should be on the default ignore list,
@@ -2431,8 +2496,8 @@ modify-on-br1
 		mkdir RCS
 		echo ignore.me >RCS/ignore.me
 
-		echo 'import should not expand $''Id$' >>imported-file2
-		cp imported-file2 ../imported-file2-orig.tmp
+		echo 'import should not expand $''Id$' >>imported-f2
+		cp imported-f2 ../imported-f2-orig.tmp
 
 		if ${CVS} import -m first-import first-dir vendor-branch junk-1_0  ; then
 			echo "PASS: test 96" >>${LOGFILE}
@@ -2440,7 +2505,7 @@ modify-on-br1
 			echo "FAIL: test 96" | tee -a ${LOGFILE} ; exit 1
 		fi
 
-		if cmp ../imported-file2-orig.tmp imported-file2; then
+		if cmp ../imported-f2-orig.tmp imported-f2; then
 		  pass 96.5
 		else
 		  fail 96.5
@@ -2456,7 +2521,7 @@ modify-on-br1
 
 		cd first-dir
 		for i in 1 2 3 4 ; do
-			if test -f imported-file"$i" ; then
+			if test -f imported-f"$i" ; then
 				echo "PASS: test 98-$i" >>${LOGFILE}
 			else
 				echo "FAIL: test 98-$i" | tee -a ${LOGFILE} ; exit 1
@@ -2469,15 +2534,15 @@ modify-on-br1
 		fi
 
 		# remove
-		rm imported-file1
-		if ${CVS} rm imported-file1  2>> ${LOGFILE}; then
+		rm imported-f1
+		if ${CVS} rm imported-f1  2>> ${LOGFILE}; then
 			echo "PASS: test 99" >>${LOGFILE}
 		else
 			echo "FAIL: test 99" | tee -a ${LOGFILE} ; exit 1
 		fi
 
 		# change
-		echo local-change >> imported-file2
+		echo local-change >> imported-f2
 
 		# commit
 		if ${CVS} ci -m local-changes  >> ${LOGFILE} 2>&1; then
@@ -2487,7 +2552,7 @@ modify-on-br1
 		fi
 
 		# log
-		if ${CVS} log imported-file1 | grep '1.1.1.2 (dead)'  ; then
+		if ${CVS} log imported-f1 | grep '1.1.1.2 (dead)'  ; then
 			echo "FAIL: test 101" | tee -a ${LOGFILE} ; exit 1
 		else
 			echo "PASS: test 101" >>${LOGFILE}
@@ -2501,16 +2566,16 @@ modify-on-br1
 		fi
 
 		# remove file4 on the vendor branch
-		rm imported-file4
+		rm imported-f4
 
-		if ${CVS} rm imported-file4  2>> ${LOGFILE}; then
+		if ${CVS} rm imported-f4  2>> ${LOGFILE}; then
 			echo "PASS: test 103" >>${LOGFILE}
 		else
 			echo "FAIL: test 103" | tee -a ${LOGFILE} ; exit 1
 		fi
 
 		# commit
-		if ${CVS} ci -m vendor-removed imported-file4 >>${LOGFILE}; then
+		if ${CVS} ci -m vendor-removed imported-f4 >>${LOGFILE}; then
 			echo "PASS: test 104" >>${LOGFILE}
 		else
 			echo "FAIL: test 104" | tee -a ${LOGFILE} ; exit 1
@@ -2526,16 +2591,16 @@ modify-on-br1
 		# second import - file4 deliberately unchanged
 		cd ../import-dir
 		for i in 1 2 3 ; do
-			echo rev 2 of file $i >> imported-file"$i"
+			echo rev 2 of file $i >> imported-f"$i"
 		done
-		cp imported-file2 ../imported-file2-orig.tmp
+		cp imported-f2 ../imported-f2-orig.tmp
 
 		if ${CVS} import -m second-import first-dir vendor-branch junk-2_0  ; then
 			echo "PASS: test 106" >>${LOGFILE}
 		else
 			echo "FAIL: test 106" | tee -a ${LOGFILE} ; exit 1
 		fi
-		if cmp ../imported-file2-orig.tmp imported-file2; then
+		if cmp ../imported-f2-orig.tmp imported-f2; then
 		  pass 106.5
 		else
 		  fail 106.5
@@ -2551,14 +2616,14 @@ modify-on-br1
 
 		cd first-dir
 
-		if test -f imported-file1 ; then
+		if test -f imported-f1 ; then
 			echo "FAIL: test 108" | tee -a ${LOGFILE} ; exit 1
 		else
 			echo "PASS: test 108" >>${LOGFILE}
 		fi
 
 		for i in 2 3 ; do
-			if test -f imported-file"$i" ; then
+			if test -f imported-f"$i" ; then
 				echo "PASS: test 109-$i" >>${LOGFILE}
 			else
 				echo "FAIL: test 109-$i" | tee -a ${LOGFILE} ; exit 1
@@ -2572,7 +2637,7 @@ modify-on-br1
 			echo "FAIL: test 110" | tee -a ${LOGFILE} ; exit 1
 		fi
 
-		if test -f imported-file4 ; then
+		if test -f imported-f4 ; then
 			echo "PASS: test 111" >>${LOGFILE}
 		else
 			echo "FAIL: test 111" | tee -a ${LOGFILE} ; exit 1
@@ -2589,36 +2654,36 @@ modify-on-br1
 
 		dotest import-113 \
 "${testcvs} -q co -jjunk-1_0 -jjunk-2_0 first-dir" \
-"${PROG}"' [a-z]*: file first-dir/imported-file1 is present in revision junk-2_0
-RCS file: /tmp/cvs-sanity/cvsroot/first-dir/imported-file2,v
+"${PROG}"' [a-z]*: file first-dir/imported-f1 is present in revision junk-2_0
+RCS file: /tmp/cvs-sanity/cvsroot/first-dir/imported-f2,v
 retrieving revision 1\.1\.1\.1
 retrieving revision 1\.1\.1\.2
-Merging differences between 1\.1\.1\.1 and 1\.1\.1\.2 into imported-file2
+Merging differences between 1\.1\.1\.1 and 1\.1\.1\.2 into imported-f2
 rcsmerge: warning: conflicts during merge'
 
 		cd first-dir
 
-		if test -f imported-file1 ; then
+		if test -f imported-f1 ; then
 			echo "FAIL: test 114" | tee -a ${LOGFILE} ; exit 1
 		else
 			echo "PASS: test 114" >>${LOGFILE}
 		fi
 
 		for i in 2 3 ; do
-			if test -f imported-file"$i" ; then
+			if test -f imported-f"$i" ; then
 				echo "PASS: test 115-$i" >>${LOGFILE}
 			else
 				echo "FAIL: test 115-$i" | tee -a ${LOGFILE} ; exit 1
 			fi
 		done
 
-		dotest import-116 'cat imported-file2' \
+		dotest import-116 'cat imported-f2' \
 'imported file2
-[<]<<<<<< imported-file2
-import should not expand \$''Id: imported-file2,v 1\.2 [0-9/]* [0-9:]* [a-z0-9@][a-z0-9@]* Exp \$
+[<]<<<<<< imported-f2
+import should not expand \$''Id: imported-f2,v 1\.2 [0-9/]* [0-9:]* [a-z0-9@][a-z0-9@]* Exp \$
 local-change
 [=]======
-import should not expand \$''Id: imported-file2,v 1\.1\.1\.2 [0-9/]* [0-9:]* [a-z0-9@][a-z0-9@]* Exp \$
+import should not expand \$''Id: imported-f2,v 1\.1\.1\.2 [0-9/]* [0-9:]* [a-z0-9@][a-z0-9@]* Exp \$
 rev 2 of file 2
 [>]>>>>>> 1\.1\.1\.2'
 
@@ -3189,6 +3254,15 @@ add a line'
 '"${PROG}"' \[[a-z]* aborted\]: correct above errors first!'
 		mkdir dir1
 		mkdir sdir
+		dotest conflicts-status-0 "${testcvs} status a" \
+"===================================================================
+File: a                	Status: Needs Merge
+
+   Working revision:	1\.1.*
+   Repository revision:	1\.2	/tmp/cvs-sanity/cvsroot/first-dir/a,v
+   Sticky Tag:		(none)
+   Sticky Date:		(none)
+   Sticky Options:	(none)"
 		dotest conflicts-130 "${testcvs} -q update" \
 'RCS file: /tmp/cvs-sanity/cvsroot/first-dir/a,v
 retrieving revision 1\.1
@@ -3210,22 +3284,58 @@ rcsmerge: warning: conflicts during merge
 C a'
 		rmdir dir1 sdir
 
+		dotest conflicts-status-1 "${testcvs} status a" \
+"===================================================================
+File: a                	Status: File had conflicts on merge
+
+   Working revision:	1\.2.*
+   Repository revision:	1\.2	/tmp/cvs-sanity/cvsroot/first-dir/a,v
+   Sticky Tag:		(none)
+   Sticky Date:		(none)
+   Sticky Options:	(none)"
 		dotest_fail conflicts-131 "${testcvs} -q ci -m try" \
 "${PROG} [a-z]*: file .a. had a conflict and has not been modified
 ${PROG} \[[a-z]* aborted\]: correct above errors first!"
 
 		echo lame attempt at resolving it >>a
 		# Try to check in the file with the conflict markers in it.
+		dotest conflicts-status-2 "${testcvs} status a" \
+"===================================================================
+File: a                	Status: File had conflicts on merge
+
+   Working revision:	1\.2.*
+   Repository revision:	1\.2	/tmp/cvs-sanity/cvsroot/first-dir/a,v
+   Sticky Tag:		(none)
+   Sticky Date:		(none)
+   Sticky Options:	(none)"
 		dotest_fail conflicts-132 "${testcvs} -q ci -m try" \
 "${PROG} [a-z]*: file .a. still contains conflict indicators
 ${PROG} \[[a-z]* aborted\]: correct above errors first!"
 
 		echo resolve conflict >a
+		dotest conflicts-status-3 "${testcvs} status a" \
+"===================================================================
+File: a                	Status: File had conflicts on merge
+
+   Working revision:	1\.2.*
+   Repository revision:	1\.2	/tmp/cvs-sanity/cvsroot/first-dir/a,v
+   Sticky Tag:		(none)
+   Sticky Date:		(none)
+   Sticky Options:	(none)"
 		dotest conflicts-133 "${testcvs} -q ci -m resolved" \
 "Checking in a;
 /tmp/cvs-sanity/cvsroot/first-dir/a,v  <--  a
 new revision: 1\.3; previous revision: 1\.2
 done"
+		dotest conflicts-status-4 "${testcvs} status a" \
+"===================================================================
+File: a                	Status: Up-to-date
+
+   Working revision:	1\.3.*
+   Repository revision:	1\.3	/tmp/cvs-sanity/cvsroot/first-dir/a,v
+   Sticky Tag:		(none)
+   Sticky Date:		(none)
+   Sticky Options:	(none)"
 
 		# Now test that we can add a file in one working directory
 		# and have an update in another get it.
@@ -3777,6 +3887,56 @@ ${PROG} \[[a-z]* aborted\]: cannot expand modules"
 	  rm -rf ${CVSROOT_DIRNAME}/second-dir
 	  ;;
 
+	modules3)
+	  # More tests of modules, in particular what happens if several
+	  # modules point to the same file.
+
+	  # First just set up a directory first-dir and a file file1 in it.
+	  mkdir 1; cd 1
+
+	  dotest modules3-0 "${testcvs} -q co -l ." ''
+	  mkdir first-dir
+	  dotest modules3-1 "${testcvs} add first-dir" \
+"Directory /tmp/cvs-sanity/cvsroot/first-dir added to the repository"
+
+	  cd first-dir
+	  echo file1 >file1
+	  dotest modules3-2 "${testcvs} add file1" \
+"${PROG}"' [a-z]*: scheduling file `file1'\'' for addition
+'"${PROG}"' [a-z]*: use '\''cvs commit'\'' to add this file permanently'
+	  dotest modules3-3 "${testcvs} -q ci -m add-it" \
+'RCS file: /tmp/cvs-sanity/cvsroot/first-dir/file1,v
+done
+Checking in file1;
+/tmp/cvs-sanity/cvsroot/first-dir/file1,v  <--  file1
+initial revision: 1\.1
+done'
+	  cd ..
+
+	  dotest modules3-4 "${testcvs} -q co CVSROOT/modules" \
+'U CVSROOT/modules'
+	  cd CVSROOT
+	  cat >modules <<EOF
+mod1 -a first-dir/file1
+bigmod -a mod1 first-dir/file1
+EOF
+	  dotest modules3-5 "${testcvs} -q ci -m add-modules" \
+"Checking in modules;
+/tmp/cvs-sanity/cvsroot/CVSROOT/modules,v  <--  modules
+new revision: 1\.[0-9]*; previous revision: 1\.[0-9]*
+done
+${PROG} [a-z]*: Rebuilding administrative file database"
+	  cd ..
+
+	  dotest modules3-6 "${testcvs} -q co bigmod" ''
+	  rm -rf first-dir
+	  dotest modules3-7 "${testcvs} -q co bigmod" 'U first-dir/file1'
+	  cd ..
+
+	  rm -r 1
+	  rm -rf ${CVSROOT_DIRNAME}/first-dir
+	  ;;
+
 	mflag)
 	  for message in '' ' ' '	
            ' '    	  	test' ; do
@@ -4179,6 +4339,61 @@ U first-dir/w3'
 	  rm -rf 1 2 ${CVSROOT_DIRNAME}/first-dir
 	  ;;
 
+	devcom3)
+	  # More watch tests, most notably handling of features designed
+	  # for future expansion.
+	  mkdir ${CVSROOT_DIRNAME}/first-dir
+	  mkdir 1
+	  cd 1
+	  dotest devcom3-1 "${testcvs} -q co first-dir" ''
+	  cd first-dir
+
+	  touch w1 w2
+	  dotest devcom3-2 "${testcvs} add w1 w2" "${DOTSTAR}"
+	  dotest devcom3-3 "${testcvs} watch on w1 w2" ''
+	  dotest devcom3-4 "${testcvs} -q ci -m add-them" "${DOTSTAR}"
+
+	  # OK, since we are about to delve into CVS's internals, make
+	  # sure that we seem to be correct about how they work.
+	  dotest devcom3-5 "cat ${CVSROOT_DIRNAME}/first-dir/CVS/fileattr" \
+"Fw1	_watched=
+Fw2	_watched="
+	  # Now write a few more lines, just as if we were a newer version
+	  # of CVS implementing some new feature.
+	  cat <<EOF >>${CVSROOT_DIRNAME}/first-dir/CVS/fileattr
+Enew	line	here
+G@#$^!@#=&
+EOF
+	  # Now get CVS to write to the fileattr file....
+	  dotest devcom3-6 "${testcvs} watch off w1" ''
+	  # ...and make sure that it hasn't clobbered our new lines.
+	  # Note that writing these lines in another order would be OK
+	  # too.
+	  dotest devcom3-7 "cat ${CVSROOT_DIRNAME}/first-dir/CVS/fileattr" \
+"Fw2	_watched=
+G@#..!@#=&
+Enew	line	here"
+
+	  # See what CVS does when a file name is duplicated.  The
+	  # behavior of all versions of CVS since file attributes were
+	  # implemented is that it nukes the duplications.  This seems
+	  # reasonable enough, although it means it isn't clear how
+	  # useful duplicates would be for purposes of future
+	  # expansion.  But in the interests of keeping behaviors
+	  # predictable, might as well test for it, I guess.
+	  echo 'Fw2	duplicate=' >>${CVSROOT_DIRNAME}/first-dir/CVS/fileattr
+	  dotest devcom3-8 "${testcvs} watch on w1" ''
+	  dotest devcom3-9 "cat ${CVSROOT_DIRNAME}/first-dir/CVS/fileattr" \
+"Fw2	_watched=
+Fw1	_watched=
+Enew	line	here
+G@#..!@#=&"
+
+	  cd ../..
+
+	  rm -rf 1 ${CVSROOT_DIRNAME}/first-dir
+	  ;;
+
 	ignore)
 	  dotest 187a1 "${testcvs} -q co CVSROOT" "U CVSROOT/${DOTSTAR}"
 	  cd CVSROOT
@@ -4547,6 +4762,12 @@ File: nibfile          	Status: Up-to-date
 	  mkdir dir-to-import
 	  cd dir-to-import
 	  touch foo.c foo.exe
+
+	  # While we're here, test for rejection of duplicate tag names.
+	  dotest_fail binwrap-0 \
+	    "${testcvs} import -m msg -I ! first-dir dup dup" \
+"${PROG} \[[a-z]* aborted\]: tag .dup. was specified more than once"
+
 	  if ${testcvs} import -m message -I ! -W "*.exe -k 'b'" \
 	      first-dir tag1 tag2 >>${LOGFILE}; then
 	    pass binwrap-1
@@ -4854,7 +5075,7 @@ access list:'
 	  log_header2='keyword substitution: kv'
 	  log_dash='----------------------------
 revision'
-	  log_date='date: [0-9/]* [0-9:]*;  author: [a-zA-Z0-9@]*;  state: Exp;'
+	  log_date="date: [0-9/]* [0-9:]*;  author: ${username};  state: Exp;"
 	  log_lines="  lines: ${PLUS}1 -1"
 	  log_rev1="${log_dash} 1\.1
 ${log_date}
@@ -5041,7 +5262,7 @@ description:
 file1-is-for-testing
 ----------------------------
 revision 1\.1
-date: [0-9/]* [0-9:]*;  author: [a-zA-Z0-9@]*;  state: Exp;
+date: [0-9/]* [0-9:]*;  author: '"${username}"';  state: Exp;
 1
 ============================================================================='
 
@@ -5055,7 +5276,9 @@ date: [0-9/]* [0-9:]*;  author: [a-zA-Z0-9@]*;  state: Exp;
 	  # Various tests relating to creating repositories, operating
 	  # on repositories created with old versions of CVS, etc.
 
-	  # At the moment local only but that should be changed.
+	  # Because this test is all about -d options and such, it
+	  # at least to some extent needs to be different for remote vs.
+	  # local.
 	  if test "x$remote" = "xno"; then
 
 	    # First, if the repository doesn't exist at all...
@@ -5092,17 +5315,53 @@ ${testcvs} -d ${TESTDIR}/crerepos release -d CVSROOT >>${LOGFILE}; then
 	    fi
 	    rm -rf CVS
 	    cd ..
-
 	    # The directory tmp should be empty
 	    dotest crerepos-6 "rmdir tmp" ''
 
-	    # CVS better not create a history file--if the administrator 
-	    # doesn't need it and wants to save on disk space, they just
-	    # delete it.
-	    dotest_fail crerepos-7 \
+	  else
+	    # For remote, just create the repository.  We don't yet do
+	    # the various other tests above for remote but that should be
+	    # changed.
+	    mkdir crerepos
+	    mkdir crerepos/CVSROOT
+	  fi
+
+	  if test "x$remote" = "xno"; then
+	    # Test that CVS rejects a relative path in CVSROOT.
+	    mkdir 1; cd 1
+	    dotest_fail crerepos-6a "${testcvs} -q -d ../crerepos get ." \
+"${PROG} \[[a-z]* aborted\]: CVSROOT ../crerepos must be an absolute pathname"
+	    cd ..
+	    rm -rf 1
+
+	    mkdir 1; cd 1
+	    dotest_fail crerepos-6b "${testcvs} -d crerepos init" \
+"${PROG} \[[a-z]* aborted\]: CVSROOT crerepos must be an absolute pathname"
+	    cd ..
+	    rm -rf 1
+	  else # remote
+	    # Test that CVS rejects a relative path in CVSROOT.
+	    mkdir 1; cd 1
+	    dotest_fail crerepos-6a \
+"${testcvs} -q -d :ext:`hostname`:../crerepos get ." \
+"Root ../crerepos must be an absolute pathname"
+	    cd ..
+	    rm -rf 1
+
+	    mkdir 1; cd 1
+	    dotest_fail crerepos-6b \
+"${testcvs} -d :ext:`hostname`:crerepos init" \
+"Root crerepos must be an absolute pathname"
+	    cd ..
+	    rm -rf 1
+	  fi # end of tests to be skipped for remote
+
+	  # CVS better not create a history file--if the administrator 
+	  # doesn't need it and wants to save on disk space, they just
+	  # delete it.
+	  dotest_fail crerepos-7 \
 "test -f ${TESTDIR}/crerepos/CVSROOT/history" ''
 
-	  fi # end of tests to be skipped for remote
 	  ;;
 
 	rcs)
@@ -5278,6 +5537,171 @@ add file1
 	  fi
 
 	  rm -rf first-dir ${CVSROOT_DIRNAME}/first-dir ${TESTDIR}/rcs4.tmp
+	  ;;
+
+	big)
+
+	  # Test ability to operate on big files.  Intention is to
+	  # test various realloc'ing code in RCS_deltas, rcsgetkey,
+	  # etc.  "big" is currently defined to be 1000 lines (64000
+	  # bytes), which in terms of files that users will use is not
+	  # large, merely average, but my reasoning is that this
+	  # should be big enough to make sure realloc'ing is going on
+	  # and that raising it a lot would start to stress resources
+	  # on machines which run the tests, without any significant
+	  # benefit.
+
+	  mkdir ${CVSROOT_DIRNAME}/first-dir
+	  dotest big-1 "${testcvs} -q co first-dir" ''
+	  cd first-dir
+	  for i in 0 1 2 3 4 5 6 7 8 9; do
+	    for j in 0 1 2 3 4 5 6 7 8 9; do
+	      for k in 0 1 2 3 4 5 6 7 8 9; do
+		echo \
+"This is line ($i,$j,$k) which goes into the file file1 for testing" >>file1
+	      done
+	    done
+	  done
+	  dotest big-2 "${testcvs} add file1" \
+"${PROG} [a-z]*: scheduling file .file1. for addition
+${PROG} [a-z]*: use .cvs commit. to add this file permanently"
+	  dotest big-3 "${testcvs} -q ci -m add" \
+'RCS file: /tmp/cvs-sanity/cvsroot/first-dir/file1,v
+done
+Checking in file1;
+/tmp/cvs-sanity/cvsroot/first-dir/file1,v  <--  file1
+initial revision: 1\.1
+done'
+	  cd ..
+	  rm -rf first-dir
+	  dotest big-4 "${testcvs} -q get first-dir" "U first-dir/file1"
+
+	  if test "$keep" = yes; then
+	    echo Keeping /tmp/cvs-sanity and exiting due to --keep
+	    exit 0
+	  fi
+
+	  rm -rf first-dir
+	  rm -rf ${CVSROOT_DIRNAME}/first-dir
+	  ;;
+
+	modes)
+	  # Test repository permissions (CVSUMASK and so on).
+	  # Although the tests in this section "cheat" by testing
+	  # repository permissions, which are sort of not a user-visible
+	  # sort of thing, the modes do have user-visible consequences,
+	  # such as whether a second user can check out the files.  But
+	  # it would be awkward to test the consequences, so we don't.
+
+	  export -n CVSUMASK # if unset, defaults to 002
+	  umask 077
+	  mkdir 1; cd 1
+	  dotest modes-1 "${testcvs} -q co -l ." ''
+	  mkdir first-dir
+	  dotest modes-2 "${testcvs} add first-dir" \
+"Directory /tmp/cvs-sanity/cvsroot/first-dir added to the repository"
+	  cd first-dir
+	  touch aa
+	  dotest modes-3 "${testcvs} add aa" \
+"${PROG} [a-z]*: scheduling file .aa. for addition
+${PROG} [a-z]*: use .cvs commit. to add this file permanently"
+	  dotest modes-4 "${testcvs} -q ci -m add" \
+'RCS file: /tmp/cvs-sanity/cvsroot/first-dir/aa,v
+done
+Checking in aa;
+/tmp/cvs-sanity/cvsroot/first-dir/aa,v  <--  aa
+initial revision: 1\.1
+done'
+	  dotest modes-5 "ls -l /tmp/cvs-sanity/cvsroot/first-dir/aa,v" \
+"-r--r--r-- .*"
+
+	  # Test for whether we can set the execute bit.
+	  chmod +x aa
+	  echo change it >>aa
+	  dotest modes-6 "${testcvs} -q ci -m set-execute-bit" \
+'Checking in aa;
+/tmp/cvs-sanity/cvsroot/first-dir/aa,v  <--  aa
+new revision: 1\.2; previous revision: 1\.1
+done'
+	  # If CVS let us update the execute bit, it would be set here.
+	  # But it doesn't, and as far as I know that is longstanding
+	  # CVS behavior.
+	  dotest modes-7 "ls -l /tmp/cvs-sanity/cvsroot/first-dir/aa,v" \
+"-r--r--r-- .*"
+
+	  # OK, now manually change the modes and see what happens.
+	  chmod g=r,o= /tmp/cvs-sanity/cvsroot/first-dir/aa,v
+	  echo second line >>aa
+	  dotest modes-7a "${testcvs} -q ci -m set-execute-bit" \
+"Checking in aa;
+${TESTDIR}/cvsroot/first-dir/aa,v  <--  aa
+new revision: 1\.3; previous revision: 1\.2
+done"
+	  dotest modes-7b "ls -l /tmp/cvs-sanity/cvsroot/first-dir/aa,v" \
+"-r--r----- .*"
+
+	  CVSUMASK=007
+	  export CVSUMASK
+	  touch ab
+	  # Might as well test the execute bit too.
+	  chmod +x ab
+	  dotest modes-8 "${testcvs} add ab" \
+"${PROG} [a-z]*: scheduling file .ab. for addition
+${PROG} [a-z]*: use .cvs commit. to add this file permanently"
+	  dotest modes-9 "${testcvs} -q ci -m add" \
+'RCS file: /tmp/cvs-sanity/cvsroot/first-dir/ab,v
+done
+Checking in ab;
+/tmp/cvs-sanity/cvsroot/first-dir/ab,v  <--  ab
+initial revision: 1\.1
+done'
+	  if test "x$remote" = xyes; then
+	    # The problem here is that the CVSUMASK environment variable
+	    # needs to be set on the server (e.g. .bashrc).  This is, of
+	    # course, bogus, but that is the way it is currently.
+	    dotest modes-10 "ls -l /tmp/cvs-sanity/cvsroot/first-dir/ab,v" \
+"-r-xr-x---.*" "-r-xr-xr-x.*"
+	  else
+	    dotest modes-10 "ls -l /tmp/cvs-sanity/cvsroot/first-dir/ab,v" \
+"-r-xr-x---.*"
+	  fi
+
+	  # OK, now add a file on a branch.  Check that the mode gets
+	  # set the same way (it is a different code path in CVS).
+	  dotest modes-11 "${testcvs} -q tag -b br" 'T aa
+T ab'
+	  dotest modes-12 "${testcvs} -q update -r br" ''
+	  touch ac
+	  dotest modes-13 "${testcvs} add ac" \
+"${PROG} [a-z]*: scheduling file .ac. for addition on branch .br.
+${PROG} [a-z]*: use .cvs commit. to add this file permanently"
+	  # Not sure it really makes sense to refer to a "previous revision"
+	  # when we are just now adding the file; as far as I know
+	  # that is longstanding CVS behavior, for what it's worth.
+	  dotest modes-14 "${testcvs} -q ci -m add" \
+'RCS file: /tmp/cvs-sanity/cvsroot/first-dir/Attic/ac,v
+done
+Checking in ac;
+/tmp/cvs-sanity/cvsroot/first-dir/Attic/ac,v  <--  ac
+new revision: 1\.1\.2\.1; previous revision: 1\.1
+done'
+	  if test "x$remote" = xyes; then
+	    # The problem here is that the CVSUMASK environment variable
+	    # needs to be set on the server (e.g. .bashrc).  This is, of
+	    # course, bogus, but that is the way it is currently.
+	    dotest modes-15 \
+"ls -l /tmp/cvs-sanity/cvsroot/first-dir/Attic/ac,v" \
+"-r--r--r--.*"
+	  else
+	    dotest modes-15 \
+"ls -l /tmp/cvs-sanity/cvsroot/first-dir/Attic/ac,v" \
+"-r--r-----.*"
+	  fi
+
+	  cd ../..
+	  rm -rf 1 ${TESTDIR}/first-dir
+	  # Perhaps should restore the umask and CVSUMASK.  But the other
+	  # tests "should" not care about them...
 	  ;;
 
 	*)

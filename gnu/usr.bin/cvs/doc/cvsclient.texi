@@ -177,8 +177,8 @@ implementation, by having inetd call "cvs pserver") which defaults to
 connects, sends the string @samp{BEGIN AUTH REQUEST}, a linefeed, the
 cvs root, a linefeed, the username, a linefeed, the password trivially
 encoded (see scramble.c in the cvs sources), a linefeed, the string
-@samp{END AUTH REQUEST}, and a linefeed.  The client must sent the
-identical string for cvs root here, as it sends later, in the
+@samp{END AUTH REQUEST}, and a linefeed.  The client must send the
+identical string for cvs root both here and later in the
 @code{Root} request of the cvs
 protocol itself.  Servers are encouraged to enforce this restriction.
 The server responds with

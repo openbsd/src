@@ -69,7 +69,6 @@ dist-dir:
 	for i in ${DISTFILES}; do \
 		ln $(srcdir)/$${i} ${DISTDIR}; \
 	done
-	ln Makefile ${DISTDIR}
 
 clean:
 	@echo make clean does nothing in macintosh subdir

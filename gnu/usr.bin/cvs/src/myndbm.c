@@ -199,10 +199,13 @@ mydbm_load_file (fp, list)
 {
     char *line = NULL;
     size_t line_len;
-    /* FIXME: arbitrary limit.  */
-    char value[MAXLINELEN];
+    char *value;
+    size_t value_allocated;
     char *cp, *vp;
     int len, cont;
+
+    value_allocated = 1;
+    value = xmalloc (value_allocated);
 
     for (cont = 0; getline (&line, &line_len, fp) >= 0;)
     {
@@ -221,9 +224,8 @@ mydbm_load_file (fp, list)
 	 * line; otherwise at the beginning, but only after any trailing
 	 * backslash is removed.
 	 */
-	vp = value;
-	if (cont)
-	    vp += strlen (value);
+	if (!cont)
+	    value[0] = '\0';
 
 	/*
 	 * See if the line we read is a continuation line, and strip the
@@ -243,7 +245,11 @@ mydbm_load_file (fp, list)
 	{
 	    cont = 0;
 	}
-	(void) strcpy (vp, line);
+	expand_string (&value,
+		       &value_allocated,
+		       strlen (value) + strlen (line) + 5);
+	strcat (value, line);
+
 	if (value[0] == '#')
 	    continue;			/* comment line */
 	vp = value;
@@ -283,6 +289,7 @@ mydbm_load_file (fp, list)
 	}
     }
     free (line);
+    free (value);
 }
 
 #endif				/* MY_NDBM */

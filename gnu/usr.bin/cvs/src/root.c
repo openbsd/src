@@ -12,6 +12,7 @@
  */
 
 #include "cvs.h"
+#include "getline.h"
 
 /* Printable names for things in the CVSroot_method enum variable.
    Watch out if the enum is changed in cvs.h! */
@@ -29,9 +30,10 @@ Name_Root(dir, update_dir)
 {
     FILE *fpin;
     char *ret, *xupdate_dir;
-    char root[PATH_MAX];
-    char tmp[PATH_MAX];
-    char cvsadm[PATH_MAX];
+    char *root = NULL;
+    size_t root_allocated = 0;
+    char *tmp;
+    char *cvsadm;
     char *cp;
 
     if (update_dir && *update_dir)
@@ -41,13 +43,15 @@ Name_Root(dir, update_dir)
 
     if (dir != NULL)
     {
+	cvsadm = xmalloc (strlen (dir) + sizeof (CVSADM) + 10);
 	(void) sprintf (cvsadm, "%s/%s", dir, CVSADM);
+	tmp = xmalloc (strlen (dir) + sizeof (CVSADM_ROOT) + 10);
 	(void) sprintf (tmp, "%s/%s", dir, CVSADM_ROOT);
     }
     else
     {
-	(void) strcpy (cvsadm, CVSADM);
-	(void) strcpy (tmp, CVSADM_ROOT);
+	cvsadm = xstrdup (CVSADM);
+	tmp = xstrdup (CVSADM_ROOT);
     }
 
     /*
@@ -59,7 +63,10 @@ Name_Root(dir, update_dir)
      * /path/name or have the environment variable CVSROOT set in
      * order to continue.  */
     if ((!isdir (cvsadm)) || (!isreadable (tmp)))
-        return (NULL);
+    {
+	ret = NULL;
+	goto out;
+    }
 
     /*
      * The assumption here is that the CVS Root is always contained in the
@@ -67,12 +74,15 @@ Name_Root(dir, update_dir)
      */
     fpin = open_file (tmp, "r");
 
-    if (fgets (root, PATH_MAX, fpin) == NULL)
+    if (getline (&root, &root_allocated, fpin) < 0)
     {
+	/* FIXME: should be checking for end of file separately; errno
+	   is not set in that case.  */
 	error (0, 0, "in directory %s:", xupdate_dir);
 	error (0, errno, "cannot read %s", CVSADM_ROOT);
 	error (0, 0, "please correct this problem");
-	return (NULL);
+	ret = NULL;
+	goto out;
     }
     (void) fclose (fpin);
     if ((cp = strrchr (root, '\n')) != NULL)
@@ -93,7 +103,8 @@ Name_Root(dir, update_dir)
 	error (0, 0,
 	       "ignoring %s because it does not contain an absolute pathname.",
 	       CVSADM_ROOT);
-	return (NULL);
+	ret = NULL;
+	goto out;
     }
 
 #ifdef CLIENT_SUPPORT
@@ -106,12 +117,18 @@ Name_Root(dir, update_dir)
 	error (0, 0,
 	       "ignoring %s because it specifies a non-existent repository %s",
 	       CVSADM_ROOT, root);
-	return (NULL);
+	ret = NULL;
+	goto out;
     }
 
     /* allocate space to return and fill it in */
     strip_trailing_slashes (root);
     ret = xstrdup (root);
+ out:
+    free (cvsadm);
+    free (tmp);
+    if (root != NULL)
+	free (root);
     return (ret);
 }
 
@@ -153,7 +170,7 @@ Create_Root (dir, rootdir)
      char *rootdir;
 {
     FILE *fout;
-    char tmp[PATH_MAX];
+    char *tmp;
 
     if (noexec)
 	return;
@@ -163,14 +180,19 @@ Create_Root (dir, rootdir)
     if (rootdir != NULL)
     {
         if (dir != NULL)
+	{
+	    tmp = xmalloc (strlen (dir) + sizeof (CVSADM_ROOT) + 10);
 	    (void) sprintf (tmp, "%s/%s", dir, CVSADM_ROOT);
+	}
         else
-	    (void) strcpy (tmp, CVSADM_ROOT);
+	    tmp = xstrdup (CVSADM_ROOT);
+
         fout = open_file (tmp, "w+");
         if (fprintf (fout, "%s\n", rootdir) < 0)
 	    error (1, errno, "write to %s failed", tmp);
         if (fclose (fout) == EOF)
 	    error (1, errno, "cannot close %s", tmp);
+	free (tmp);
     }
 }
 
@@ -349,6 +371,14 @@ parse_cvsroot (CVSroot)
 	    error (0, 0, "(%s)", CVSroot);
 	    return 1;
 	}
+	/* cvs.texinfo has always told people that CVSROOT must be an
+	   absolute pathname.  Furthermore, attempts to use a relative
+	   pathname produced various errors (I couldn't get it to work),
+	   so there would seem to be little risk in making this a fatal
+	   error.  */
+	if (!isabsolute (CVSroot_directory))
+	    error (1, 0, "CVSROOT %s must be an absolute pathname",
+		   CVSroot_directory);
 	break;
     case kserver_method:
 #ifndef HAVE_KERBEROS

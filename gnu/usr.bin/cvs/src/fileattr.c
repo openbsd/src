@@ -31,6 +31,14 @@ static int attr_read_attempted;
 /* Have the in-memory attributes been modified since we read them?  */
 static int attrs_modified;
 
+/* More in-memory attributes: linked list of unrecognized
+   fileattr lines.  We pass these on unchanged.  */
+struct unrecog {
+    char *line;
+    struct unrecog *next;
+};
+static struct unrecog *unrecog_head;
+
 /* Note that if noone calls fileattr_get, this is very cheap.  No stat(),
    no open(), no nothing.  */
 void
@@ -41,6 +49,7 @@ fileattr_startdir (repos)
     fileattr_stored_repos = xstrdup (repos);
     assert (attrlist == NULL);
     attr_read_attempted = 0;
+    assert (unrecog_head == NULL);
 }
 
 static void
@@ -108,7 +117,12 @@ fileattr_read ()
 	    newnode->delproc = fileattr_delproc;
 	    newnode->key = xstrdup (line + 1);
 	    newnode->data = xstrdup (p);
-	    addnode (attrlist, newnode);
+	    if (addnode (attrlist, newnode) != 0)
+		/* If the same filename appears twice in the file, discard
+		   any line other than the first for that filename.  This
+		   is the way that CVS has behaved since file attributes
+		   were first introduced.  */
+		free (newnode);
 	}
 	else if (line[0] == 'D')
 	{
@@ -119,7 +133,17 @@ fileattr_read ()
 	    ++p;
 	    fileattr_default_attrs = xstrdup (p);
 	}
-	/* else just ignore the line, for future expansion.  */
+	else
+	{
+	    /* Unrecognized type, we want to just preserve the line without
+	       changing it, for future expansion.  */
+	    struct unrecog *new;
+
+	    new = (struct unrecog *) xmalloc (sizeof (struct unrecog));
+	    new->line = xstrdup (line);
+	    new->next = unrecog_head;
+	    unrecog_head = new;
+	}
     }
     if (ferror (fp))
 	error (0, errno, "cannot read %s", fname);
@@ -421,7 +445,9 @@ fileattr_write ()
     strcat (fname, "/");
     strcat (fname, CVSREP_FILEATTR);
 
-    if (list_isempty (attrlist) && fileattr_default_attrs == NULL)
+    if (list_isempty (attrlist)
+	&& fileattr_default_attrs == NULL
+	&& unrecog_head == NULL)
     {
 	/* There are no attributes.  */
 	if (unlink_file (fname) < 0)
@@ -489,13 +515,32 @@ fileattr_write ()
 	}
     }
     (void) umask (omask);
+
+    /* First write the "F" attributes.  */
     walklist (attrlist, writeattr_proc, fp);
+
+    /* Then the "D" attribute.  */
     if (fileattr_default_attrs != NULL)
     {
 	fputs ("D\t", fp);
 	fputs (fileattr_default_attrs, fp);
 	fputs ("\012", fp);
     }
+
+    /* Then any other attributes.  */
+    while (unrecog_head != NULL)
+    {
+	struct unrecog *p;
+
+	p = unrecog_head;
+	fputs (p->line, fp);
+	fputs ("\012", fp);
+
+	unrecog_head = p->next;
+	free (p->line);
+	free (p);
+    }
+
     if (fclose (fp) < 0)
 	error (0, errno, "cannot close %s", fname);
     attrs_modified = 0;

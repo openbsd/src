@@ -238,13 +238,24 @@ static char *tz_name = "+0000";
 static char tz_name[] = "LT";
 #endif
 
+/* -r, -t, or -b options, malloc'd.  These are "" if the option in
+   question is not specified or is overridden by another option.  The
+   main reason for using "" rather than NULL is historical.  Together
+   with since_date, these are a mutually exclusive set; one overrides the
+   others.  */
+static char *since_rev;
+static char *since_tag;
+static char *backto;
+/* -D option, or 0 if not specified.  */
 static time_t since_date;
-static char since_rev[20];	/* Maxrev ~= 99.99.99.999 */
-static char since_tag[64];
+
 static struct hrec *last_since_tag;
-static char backto[128];
 static struct hrec *last_backto;
-static char rec_types[20];
+
+/* Record types to look for, malloc'd.  Probably could be statically
+   allocated, but only if we wanted to check for duplicates more than
+   we do.  */
+static char *rec_types;
 
 static int hrec_count;
 static int hrec_max;
@@ -374,6 +385,10 @@ history (argc, argv)
     if (argc == -1)
 	usage (history_usg);
 
+    since_rev = xstrdup ("");
+    since_tag = xstrdup ("");
+    backto = xstrdup ("");
+    rec_types = xstrdup ("");
     optind = 1;
     while ((c = getopt (argc, argv, "Tacelow?D:b:f:m:n:p:r:t:u:x:X:z:")) != -1)
     {
@@ -393,7 +408,8 @@ history (argc, argv)
 	    case 'e':
 		report_count++;
 		extract++;
-		(void) strcpy (rec_types, ALL_REC_TYPES);
+		free (rec_types);
+		rec_types = xstrdup (ALL_REC_TYPES);
 		break;
 	    case 'l':			/* Find Last file record */
 		last_entry = 1;
@@ -423,13 +439,8 @@ history (argc, argv)
 		    *since_rev = *since_tag = '\0';
 		    since_date = 0;
 		}
-		if (strlen (optarg) >= sizeof (backto))
-		{
-		    error (0, 0, "backto truncated to %d bytes",
-			   (int) sizeof (backto) - 1);
-		    optarg[sizeof (backto) - 1] = '\0';
-		}
-		(void) strcpy (backto, optarg);
+		free (backto);
+		backto = xstrdup (optarg);
 		break;
 	    case 'f':			/* For specified file */
 		save_file ("", optarg, (char *) NULL);
@@ -450,7 +461,8 @@ history (argc, argv)
 		    *since_tag = *backto = '\0';
 		    since_date = 0;
 		}
-		(void) strcpy (since_rev, optarg);
+		free (since_rev);
+		since_rev = xstrdup (optarg);
 		break;
 	    case 't':			/* Since specified Tag/Rev */
 		if (since_date || *since_rev || *backto)
@@ -459,7 +471,8 @@ history (argc, argv)
 		    *since_rev = *backto = '\0';
 		    since_date = 0;
 		}
-		(void) strcpy (since_tag, optarg);	/* tag */
+		free (since_tag);
+		since_tag = xstrdup (optarg);
 		break;
 	    case 'u':			/* For specified username */
 		save_user (optarg);
@@ -474,7 +487,8 @@ history (argc, argv)
 			if (!strchr (ALL_REC_TYPES, *cp))
 			    error (1, 0, "%c is not a valid report type", *cp);
 		}
-		(void) strcpy (rec_types, optarg);
+		free (rec_types);
+		rec_types = xstrdup (optarg);
 		break;
 	    case 'z':
 #ifndef HAVE_RCS5
@@ -590,7 +604,10 @@ history (argc, argv)
     if (tag_report)
     {
 	if (!strchr (rec_types, 'T'))
+	{
+	    rec_types = xrealloc (rec_types, strlen (rec_types) + 5);
 	    (void) strcat (rec_types, "T");
+	}
     }
     else if (extract)
     {
@@ -599,7 +616,8 @@ history (argc, argv)
     }
     else if (modified)
     {
-	(void) strcpy (rec_types, "MAR");
+	free (rec_types);
+	rec_types = xstrdup ("MAR");
 	/*
 	 * If the user has not specified a date oriented flag ("Since"), sort
 	 * by Repository/file before date.  Default is "just" date.
@@ -618,7 +636,8 @@ history (argc, argv)
     }
     else if (module_report)
     {
-	(void) strcpy (rec_types, last_entry ? "OMAR" : ALL_REC_TYPES);
+	free (rec_types);
+	rec_types = xstrdup (last_entry ? "OMAR" : ALL_REC_TYPES);
 	module_sort++;
 	repos_sort++;
 	file_sort++;
@@ -627,7 +646,8 @@ history (argc, argv)
     else
 	/* Must be "checkout" or default */
     {
-	(void) strcpy (rec_types, "OF");
+	free (rec_types);
+	rec_types = xstrdup ("OF");
 	/* See comments in "modified" above */
 	if (!last_entry && user_list)
 	    user_sort++;
@@ -641,7 +661,10 @@ history (argc, argv)
 
     /* If we're looking back to a Tag value, must consider "Tag" records */
     if (*since_tag && !strchr (rec_types, 'T'))
+    {
+	rec_types = xrealloc (rec_types, strlen (rec_types) + 5);
 	(void) strcat (rec_types, "T");
+    }
 
     argc -= c;
     argv += c;
@@ -662,6 +685,10 @@ history (argc, argv)
     qsort ((PTR) hrec_head, hrec_count, sizeof (struct hrec), sort_order);
     report_hrecs ();
     free (fname);
+    free (since_rev);
+    free (since_tag);
+    free (backto);
+    free (rec_types);
 
     return (0);
 }

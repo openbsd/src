@@ -72,12 +72,6 @@
 /* Define if you want encryption support.  */
 #undef ENCRYPTION
 
-/* The number of bytes in a int.  */
-#undef SIZEOF_INT
-
-/* The number of bytes in a long.  */
-#undef SIZEOF_LONG
-
 /* Define if you have the connect function.  */
 #undef HAVE_CONNECT
 
@@ -120,9 +114,6 @@
 /* Define if you have the readlink function.  */
 #undef HAVE_READLINK
 
-/* Define if you have the setvbuf function.  */
-#undef HAVE_SETVBUF
-
 /* Define if you have the sigaction function.  */
 #undef HAVE_SIGACTION
 
@@ -149,6 +140,9 @@
 
 /* Define if you have the vprintf function.  */
 #undef HAVE_VPRINTF
+
+/* Define if you have the wait3 function.  */
+#undef HAVE_WAIT3
 
 /* Define if you have the <direct.h> header file.  */
 #undef HAVE_DIRECT_H

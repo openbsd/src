@@ -149,7 +149,7 @@ error (status, errnum, message, va_alist)
 		free (mess);
 	    }
 	}
-	cvs_outerr (entire ? entire : "out of memory", 0);
+	cvs_outerr (entire ? entire : "out of memory\n", 0);
 	if (entire != NULL)
 	    free (entire);
     }

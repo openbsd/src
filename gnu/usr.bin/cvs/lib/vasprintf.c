@@ -124,7 +124,13 @@ vasprintf (result, format, args)
      const char *format;
      va_list args;
 {
+#ifdef VA_LIST_IS_ARRAY
+  /* If va_list is an array, we do not need the additional indirection */
+  return int_vasprintf (result, format, args);
+#else
+  /* va_list is some sort of pointer */
   return int_vasprintf (result, format, &args);
+#endif
 }
 
 #ifdef TEST

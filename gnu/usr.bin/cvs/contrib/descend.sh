@@ -1,5 +1,4 @@
 #! /bin/sh
-# $Id: descend.sh,v 1.1.1.1 1995/12/19 09:21:40 deraadt Exp $
 #
 # descend - walk down a directory tree and execute a command at each node
 

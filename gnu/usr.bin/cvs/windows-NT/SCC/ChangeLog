@@ -1,0 +1,52 @@
+14 Mar 1997  Jim Kingdon
+
+	* scc.c: Go back to using debuglog not outproc for
+	most debugging messages.  Developer Studio tends to
+	erase the outproc messages on an error.
+	More playing around with projects.
+	* README.txt: Describe results of this.  I am making
+	grey (source controlled) file icons appear, which is
+	exciting.
+
+4 Mar 1997  Jim Kingdon
+
+	Still some distance from being able to open a
+	project, but that's what I'm playing with:
+	* scc.c (SccOpenProject): Use outproc not debuglog
+	for debugging messages.
+	(SccGet): Add debugging messages.
+	(SccAddFromScc): Implemented.
+	(SccInitialize): Return AddFromScc in capabilities.
+	* scc.c: Change out_proc to outproc for consistency.
+
+2 Mar 1997  Jim Kingdon
+
+	* scc.c: Add a bunch of things, to SccOpenProject,
+	SccGetProjPath, and perhaps elsewhere.  The project
+	stuff doesn't really work yet, but the outproc does.
+
+27 Feb 1997  Jim Kingdon
+
+	* scc.c (SCC_max_init_path, SCC_max_name): Added.
+	(SccInitialize): Set and use more arguments.
+	(SccUninitialize): Might want to check ferror here.
+	(SccOpenProject): Print to debug log if we get here.
+
+Thu Feb 27 19:02:50 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README.txt (TOOLS IMPLEMENTING THE SCC): New section.
+
+Wed Feb 26 22:55:43 1997  David H. Hovemeyer <Hovemeyer_D@mediasoft.net>
+			  and Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* scc.c (SccGetVersion): Return the version number of the SCC
+	spec; we don't get to pick what to return here.
+	* README.txt: Update with current status.
+
+Sat Feb 15 15:19:41 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* Makefile.in: New file.
+
+	* README.txt: Clarify a little more what this stuff does (and more
+	the point, does not) do.
+

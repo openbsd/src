@@ -1,7 +1,6 @@
 #! xPERL_PATHx
 # -*-Perl-*-
 #
-# $Id: cln_hist.pl,v 1.1.1.1 1995/12/19 09:21:39 deraadt Exp $
 # Contributed by David G. Grubbs <dgg@ksr.com>
 #
 # Clean up the history file.  10 Record types: MAR OFT WUCG

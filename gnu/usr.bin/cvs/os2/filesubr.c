@@ -915,3 +915,52 @@ expand_wild (argc, argv, pargc, pargv)
     *pargc = new_argc;
     *pargv = new_argv;
 }
+
+int
+os2_chdir (const char *Dir)
+/* Change drive and directory to the path given in Dir */
+{
+    /* If the path includes a drive, change the current drive to the one given */
+    if (strlen (Dir) >= 2 && Dir [1] == ':')
+    {
+	/* A drive is given in Dir. Extract the drive from the string, then
+	 * remove the drive from Dir by incrementing it.
+	 */
+	int Drive = Dir [0];
+	Dir += 2;
+
+	/* Check if the given drive is valid, convert to a drive number
+	 * (A: == 1, B: == 2, etc.). The compare below assumes ascii, but
+	 * that is not a problem with OS/2.
+	 */
+	if (Drive >= 'a' && Drive <= 'z')
+	{
+	    Drive -= 'a' - 1;
+	}
+	else if (Drive >= 'A' && Drive <= 'Z')
+	{
+	    Drive -= 'A' - 1;
+	}
+	else
+	{
+	    /* An invalid drive letter. Set errno and return an error */
+	    errno = EACCES;
+	    return -1;
+	}
+
+	/* We have a valid drive given, so change the drive now */
+	if (DosSetDefaultDisk (Drive) != 0)
+	{
+	    /* We had an error. Assume that the drive does not exist */
+	    errno = ENODEV;
+	    return -1;
+	}
+
+    }
+
+    /* Now we have a path without a drive left. Make it the current dir */
+    return chdir (Dir);
+}
+
+
+

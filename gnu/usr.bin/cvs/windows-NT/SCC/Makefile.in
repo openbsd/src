@@ -1,0 +1,39 @@
+# Makefile for distributing files.  Note that it only has a dist-dir
+# target, so other targets should not recurse into this directory.
+# This makefile is in the public domain.
+
+#### Start of system configuration section. ####
+
+srcdir = @srcdir@
+top_srcdir = @top_srcdir@
+VPATH = @srcdir@
+
+# Just in case...
+SHELL = /bin/sh
+@SET_MAKE@
+
+DISTFILES = \
+	.cvsignore ChangeLog Makefile.in README.txt \
+	SCC.mak scc.c scc.def
+
+all:
+.PHONY:	all
+
+dist-dir: ${DISTFILES}
+	mkdir ${DISTDIR}
+	for i in ${DISTFILES}; do \
+	  ln $(srcdir)/$${i} ${DISTDIR}; \
+	done
+.PHONY: dist-dir
+
+subdir = windows-NT/SCC
+Makefile: ../../config.status Makefile.in
+	cd ../.. && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= ./config.status
+
+# CYGNUS LOCAL: don't depend on auto-re-config
+#../config.status: ../configure
+#	cd .. ; $(SHELL) config.status --recheck
+
+# CYGNUS LOCAL: don't depend on auto-re-config
+#../configure: ../configure.in
+#	cd $(top_srcdir) ; autoconf

@@ -34,7 +34,14 @@ Checkin (type, finfo, rcs, rev, tag, options, message)
     int set_time;
     char *tocvsPath = NULL;
 
-    (void) printf ("Checking in %s;\n", finfo->fullname);
+    /* Hmm.  This message goes to stdout and the "foo,v  <--  foo"
+       message from "ci" goes to stderr.  This doesn't make a whole
+       lot of sense, but making everything go to stdout can only be
+       gracefully achieved once RCS_checkin is librarified.  */
+    cvs_output ("Checking in ", 0);
+    cvs_output (finfo->fullname, 0);
+    cvs_output (";\n", 0);
+
     fname = xmalloc (strlen (finfo->file) + 80);
     (void) sprintf (fname, "%s/%s%s", CVSADM, CVSPREFIX, finfo->file);
 

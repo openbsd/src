@@ -409,9 +409,10 @@ do_verify (message, repository)
 
     fname = cvs_temp_name ();
 
-    if ((fp = fopen (fname, "w")) < 0)
+    fp = fopen (fname, "w");
+    if (fp == NULL)
     {
-	error (1, 0, "cannot create temporary file %s", fname);
+	error (1, errno, "cannot create temporary file %s", fname);
 	return;
     }
     else
@@ -552,10 +553,13 @@ title_proc (p, closure)
 	   You can verify that this assumption is safe by checking the
 	   code in add.c (add_directory) and import.c (import). */
 
+	str_list = xrealloc (str_list, strlen (str_list) + 5);
 	(void) strcat (str_list, " ");
 
 	if (li->type == T_TITLE)
 	{
+	    str_list = xrealloc (str_list,
+				 strlen (str_list) + strlen (p->key) + 5);
 	    (void) strcat (str_list, p->key);
 	}
 	else
@@ -567,13 +571,28 @@ title_proc (p, closure)
 		switch (*c)
 		{
 		case 's':
+		    str_list =
+			xrealloc (str_list,
+				  strlen (str_list) + strlen (p->key) + 5);
 		    (void) strcat (str_list, p->key);
 		    break;
 		case 'V':
+		    str_list =
+			xrealloc (str_list,
+				  (strlen (str_list)
+				   + (li->rev_old ? strlen (li->rev_old) : 0)
+				   + 10)
+				  );
 		    (void) strcat (str_list, (li->rev_old
 					      ? li->rev_old : "NONE"));
 		    break;
 		case 'v':
+		    str_list =
+			xrealloc (str_list,
+				  (strlen (str_list)
+				   + (li->rev_new ? strlen (li->rev_new) : 0)
+				   + 10)
+				  );
 		    (void) strcat (str_list, (li->rev_new
 					      ? li->rev_new : "NONE"));
 		    break;
@@ -584,18 +603,15 @@ title_proc (p, closure)
 		   won't blow up on an old CVS.  */
 		}
 		if (*(c + 1) != '\0')
+		{
+		    str_list = xrealloc (str_list, strlen (str_list) + 5);
 		    (void) strcat (str_list, ",");
+		}
 	    }
 	}
     }
     return (0);
 }
-
-/*
- * Since some systems don't define this...  */
-#ifndef MAXHOSTNAMELEN
-#define	MAXHOSTNAMELEN	256
-#endif
 
 /*
  * Writes some stuff to the logfile "filter" and returns the status of the
@@ -609,7 +625,6 @@ logfile_write (repository, filter, message, logfp, changes)
     FILE *logfp;
     List *changes;
 {
-    char cwd[PATH_MAX];
     FILE *pipefp;
     char *prog;
     char *cp;
@@ -618,8 +633,6 @@ logfile_write (repository, filter, message, logfp, changes)
     char *fmt_percent;		/* the location of the percent sign
 				   that starts the format string. */
 
-    prog = xmalloc (MAXPROGLEN);
-      
     /* The user may specify a format string as part of the filter.
        Originally, `%s' was the only valid string.  The string that
        was substituted for it was:
@@ -736,11 +749,11 @@ logfile_write (repository, filter, message, logfp, changes)
 	str_list_format = xmalloc (sizeof (char) * (len + 1));
 	strncpy (str_list_format, fmt_begin, len);
 	str_list_format[len] = '\0';
-	
-	/* Allocate a chunk of memory to hold the string. */
 
+	/* Allocate an initial chunk of memory.  As we build up the string
+	   we will realloc it.  */
 	if (!str_list)
-	    str_list = xmalloc (MAXLISTLEN);
+	    str_list = xmalloc (1);
 	str_list[0] = '\0';
 
 	/* Add entries to the string.  Don't bother looking for
@@ -762,6 +775,9 @@ logfile_write (repository, filter, message, logfp, changes)
 
 	srepos = Short_Repository (repository);
 
+	prog = xmalloc ((fmt_percent - filter) + strlen (srepos)
+			+ strlen (str_list) + strlen (fmt_continue)
+			+ 10);
 	(void) strncpy (prog, filter, fmt_percent - filter);
 	prog[fmt_percent - filter] = '\0';
 	(void) strcat (prog, "'");
@@ -778,7 +794,7 @@ logfile_write (repository, filter, message, logfp, changes)
     else
     {
 	/* There's no format string. */
-	strcpy (prog, filter);
+	prog = xstrdup (filter);
     }
 
     if ((pipefp = run_popen (prog, "w")) == NULL)
@@ -789,8 +805,17 @@ logfile_write (repository, filter, message, logfp, changes)
 	return (1);
     }
     (void) fprintf (pipefp, "Update of %s\n", repository);
-    (void) fprintf (pipefp, "In directory %s:%s\n\n", hostname,
-		    ((cp = getwd (cwd)) != NULL) ? cp : cwd);
+    (void) fprintf (pipefp, "In directory %s:", hostname);
+    cp = xgetwd ();
+    if (cp == NULL)
+	fprintf (pipefp, "<cannot get working directory: %s>\n\n",
+		 strerror (errno));
+    else
+    {
+	fprintf (pipefp, "%s\n\n", cp);
+	free (cp);
+    }
+
     setup_tmpfile (pipefp, "", changes);
     (void) fprintf (pipefp, "Log Message:\n%s\n", message);
     if (logfp != (FILE *) 0)

@@ -83,7 +83,7 @@ send_file_names PROTO((int argc, char **argv, unsigned int flags));
  */
 void
 send_files PROTO((int argc, char **argv, int local, int aflag,
-		  int build_dirs));
+		  int build_dirs, int force));
 
 /* Send an argument to the remote server.  */
 void

@@ -63,6 +63,25 @@ file's description.
   however.
 
 
+* The following bug was reported against CVS 1.9:
+
+    Create a module named test with a file named test in it.
+
+      cactus:sfavor> cvs get test
+      cvs checkout: Updating test
+      U test/test
+      cactus:sfavor> cd test
+      cactus:sfavor> cvs get test
+      cvs checkout: cannot chdir to test: Not a directory
+      cvs checkout: ignoring module test
+      Exit 1
+      cactus:sfavor> cvs update
+      cvs update: Updating .
+      rcs.c:2139: failed assertion `rev == NULL || isdigit (*rev)'
+      Abort (core dumped)
+      Exit 134
+
+
 * pcl-cvs doesn't like it when you try to check in a file which isn't
   up-to-date.  The messages produced by the server perhaps don't match
   what pcl-cvs is looking for.

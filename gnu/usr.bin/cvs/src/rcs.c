@@ -778,8 +778,6 @@ static char *value = NULL;
 static size_t keysize = 0;
 static size_t valsize = 0;
 
-#define ALLOCINCR 1024
-
 static int
 getrcskey (fp, keyp, valp, lenp)
     FILE *fp;
@@ -813,9 +811,9 @@ getrcskey (fp, keyp, valp, lenp)
     {
 	if (cur >= max)
 	{
-	    key = xrealloc (key, keysize + ALLOCINCR);
-	    cur = key + keysize;
-	    keysize += ALLOCINCR;
+	    size_t curoff = cur - key;
+	    expand_string (&key, &keysize, keysize + 1);
+	    cur = key + curoff;
 	    max = key + keysize;
 	}
 	*cur++ = c;
@@ -830,9 +828,9 @@ getrcskey (fp, keyp, valp, lenp)
     }
     if (cur >= max)
     {
-	key = xrealloc (key, keysize + ALLOCINCR);
-	cur = key + keysize;
-	keysize += ALLOCINCR;
+	size_t curoff = cur - key;
+	expand_string (&key, &keysize, keysize + 1);
+	cur = key + curoff;
 	max = key + keysize;
     }
     *cur = '\0';
@@ -897,9 +895,9 @@ getrcskey (fp, keyp, valp, lenp)
 
 		if (cur >= max)
 		{
-		    value = xrealloc (value, valsize + ALLOCINCR);
-		    cur = value + valsize;
-		    valsize += ALLOCINCR;
+		    size_t curoff = cur - value;
+		    expand_string (&value, &valsize, valsize + 1);
+		    cur = value + curoff;
 		    max = value + valsize;
 		}
 		*cur++ = c;
@@ -926,9 +924,9 @@ getrcskey (fp, keyp, valp, lenp)
 
 	    if (cur >= max)
 	    {
-		value = xrealloc (value, valsize + ALLOCINCR);
-		cur = value + valsize;
-		valsize += ALLOCINCR;
+		size_t curoff = cur - value;
+		expand_string (&value, &valsize, valsize + 1);
+		cur = value + curoff;
 		max = value + valsize;
 	    }
 	    *cur++ = ' ';
@@ -940,9 +938,9 @@ getrcskey (fp, keyp, valp, lenp)
 
 	if (cur >= max)
 	{
-	    value = xrealloc (value, valsize + ALLOCINCR);
-	    cur = value + valsize;
-	    valsize += ALLOCINCR;
+	    size_t curoff = cur - value;
+	    expand_string (&value, &valsize, valsize + 1);
+	    cur = value + curoff;
 	    max = value + valsize;
 	}
 	*cur++ = c;
@@ -959,9 +957,9 @@ getrcskey (fp, keyp, valp, lenp)
     /* terminate the string */
     if (cur >= max)
     {
-	value = xrealloc (value, valsize + ALLOCINCR);
-	cur = value + valsize;
-	valsize += ALLOCINCR;
+	size_t curoff = cur - value;
+	expand_string (&value, &valsize, valsize + 1);
+	cur = value + curoff;
 	max = value + valsize;
     }
     *cur = '\0';
@@ -1008,9 +1006,9 @@ getrcsrev (fp, revp)
     {
 	if (cur >= max)
 	{
-	    key = xrealloc (key, keysize + ALLOCINCR);
-	    cur = key + keysize;
-	    keysize += ALLOCINCR;
+	    size_t curoff = cur - key;
+	    expand_string (&key, &keysize, keysize + 1);
+	    cur = key + curoff;
 	    max = key + keysize;
 	}
 	*cur++ = c;
@@ -1025,9 +1023,9 @@ getrcsrev (fp, revp)
 
     if (cur >= max)
     {
-	key = xrealloc (key, keysize + ALLOCINCR);
-	cur = key + keysize;
-	keysize += ALLOCINCR;
+	size_t curoff = cur - key;
+	expand_string (&key, &keysize, keysize + 1);
+	cur = key + curoff;
 	max = key + keysize;
     }
     *cur = '\0';
@@ -1821,13 +1819,17 @@ RCS_datecmp (date1, date2)
     return (length_diff ? length_diff : strcmp (date1, date2));
 }
 
-/*
- * Lookup the specified revision in the ,v file and return, in the date
- * argument, the date specified for the revision *minus one second*, so that
- * the logically previous revision will be found later.
- * 
- * Returns zero on failure, RCS revision time as a Unix "time_t" on success.
- */
+/* Look up revision REV in RCS and return the date specified for the
+   revision minus FUDGE seconds (FUDGE will generally be one, so that the
+   logically previous revision will be found later, or zero, if we want
+   the exact date).
+
+   The return value is the date being returned as a time_t, or (time_t)-1
+   on error (previously was documented as zero on error; I haven't checked
+   the callers to make sure that they really check for (time_t)-1, but
+   the latter is what this function really returns).  If DATE is non-NULL,
+   then it must point to MAXDATELEN characters, and we store the same
+   return value there in DATEFORM format.  */
 time_t
 RCS_getrevtime (rcs, rev, date, fudge)
     RCSNode *rcs;
@@ -2005,6 +2007,7 @@ RCS_check_kflag (arg)
       "   -kb\tGenerate binary file unmodified (merges not allowed) (RCS 5.7).\n",
       NULL,
     };
+    /* Big enough to hold any of the strings from kflags.  */
     char karg[10];
     char const *const *cpp = NULL;
 
@@ -3364,7 +3367,7 @@ annotate (argc, argv)
 	/* FIXME:  We shouldn't have to send current files, but I'm not sure
 	   whether it works.  So send the files --
 	   it's slower but it works.  */
-	send_files (argc, argv, local, 0, 0);
+	send_files (argc, argv, local, 0, 0, 0);
 	send_to_server ("annotate\012", 0);
 	return get_responses_and_close ();
     }

@@ -10,7 +10,10 @@
 #include "cvs.h"
 #include <assert.h>
 
-/* global caches */
+/* Global caches.  The idea is that we maintain a linked list of "free"d
+   nodes or lists, and get new items from there.  It has been suggested
+   to use an obstack instead, but off the top of my head, I'm not sure
+   that would gain enough to be worth worrying about.  */
 static List *listcache = NULL;
 static Node *nodecache = NULL;
 

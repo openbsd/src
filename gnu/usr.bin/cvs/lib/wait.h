@@ -17,12 +17,23 @@
 #include <sys/resource.h>	/* for rusage */
 #endif
 #include <sys/wait.h>
-#else
+#endif
+#ifndef WIFSTOPPED
 #define WIFSTOPPED(w) (((w) & 0xff) == 0x7f)
+#endif
+#ifndef WIFSIGNALED
 #define WIFSIGNALED(w) (((w) & 0xff) != 0x7f && ((w) & 0xff) != 0)
+#endif
+#ifndef WIFEXITED
 #define WIFEXITED(w) (((w) & 0xff) == 0)
+#endif
 
+#ifndef WSTOPSIG
 #define WSTOPSIG(w) (((w) >> 8) & 0xff)
+#endif
+#ifndef WTERMSIG
 #define WTERMSIG(w) ((w) & 0x7f)
+#endif
+#ifndef WEXITSTATUS
 #define WEXITSTATUS(w) (((w) >> 8) & 0xff)
 #endif

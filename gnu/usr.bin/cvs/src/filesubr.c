@@ -463,7 +463,6 @@ deep_remove_dir (path)
 {
     DIR		  *dirp;
     struct dirent *dp;
-    char	   buf[PATH_MAX];
 
     if (rmdir (path) != 0)
     {
@@ -482,10 +481,13 @@ deep_remove_dir (path)
 
 	    while ((dp = readdir (dirp)) != NULL)
 	    {
+		char *buf;
+
 		if (strcmp (dp->d_name, ".") == 0 ||
 			    strcmp (dp->d_name, "..") == 0)
 		    continue;
 
+		buf = xmalloc (strlen (path) + strlen (dp->d_name) + 5);
 		sprintf (buf, "%s/%s", path, dp->d_name);
 
 		/* See comment in unlink_file_dir explanation of why we use
@@ -496,6 +498,7 @@ deep_remove_dir (path)
 		    if (deep_remove_dir(buf))
 		    {
 			closedir(dirp);
+			free (buf);
 			return -1;
 		    }
 		}
@@ -504,9 +507,11 @@ deep_remove_dir (path)
 		    if (unlink (buf) != 0)
 		    {
 			closedir(dirp);
+			free (buf);
 			return -1;
 		    }
 		}
+		free (buf);
 	    }
 	    closedir (dirp);
 	    return rmdir (path);

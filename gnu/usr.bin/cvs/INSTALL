@@ -17,7 +17,8 @@ Alpha:
 	DEC Alpha running OSF/1 version 3.2 (1.9)
 	DEC Alpha running VMS 6.2 (1.8.85 client-only)
 Cray:
-	J90 running unicos 9 (CVS version unknown; Oct 1996) (footnote 10)
+	J90 (CVS 970215 snapshot)
+	T3E (CVS 970215 snapshot)
 HPPA:
 	HP 9000/710 running HP-UX 8.07A using gcc (about 1.4A2)
 	HPPA running HP-UX 9 (1.8)
@@ -39,9 +40,10 @@ i386 family:
 	SCO OpenServer 5 (1.8.86)
 	Lynx 2.3.0 080695 (1.6.86) (footnote 9)
 	Windows NT 3.51 (1.8.86 client; 1.8.3 local)
+	Windows NT 4.0 (1.9 client and local)
 	Windows 95 (1.8.86 client and local)
 	QNX 4 (1.7 + obvious patches)
-	OS/2 Version 3 using IBM C/C++ Tools 2.01 (1.8.86 + patches)
+	OS/2 Version 3 using IBM C/C++ Tools 2.01 (1.8.86 + patches, client)
 m68k:
 	Sun 3 running SunOS 4.1.1_U1 w/ bundled K&R /usr/5bin/cc (1.8.86+)
 	NextSTEP 3.3p1 (1.8.87)
@@ -92,6 +94,9 @@ VAX:
 	You also may have to make sure TIME_WITH_SYS_TIME is undef'ed.
 
 (footnote 5) Change /usr/tmp to /var/tmp in src/server.c (2 places) (1.4.93).
+	(This should no longer be needed; CVS doesn't have /usr/tmp in
+	src/server.c any more.  Has anyone tried a more recent version
+	on BSDI?  If so, please report it so we can update this file).
 
 (footnote 6) Build in ucb universe with COFF compiler tools.  Put
 	/usr/local/bin first in PATH while doing a configure, make
@@ -115,11 +120,6 @@ VAX:
     You want to use <sys/dir.h> instead.
     So after running configure I had to undef HAVE_DIRENT_H and
     define HAVE_SYS_DIR_H.
-
-(footnote 10)
-    remove CLIENT_SUPPORT and SERVER_SUPPORT from config.h
-    remove md5.o from lib/Makefile
-    remove "#include "regex.h" from cvs.h
 
 -------------------------------------------------------------------------------
 
@@ -157,7 +157,11 @@ distribution, then skip to step 5):
     or a path specified with the -b option).  If you don't have RCS,
     you will need to get it from GNU as well.  It is best to get the
     version 5.7 (or later) version of RCS, available from
-    prep.ai.mit.edu in the file pub/gnu/rcs-5.7.tar.gz.
+    prep.ai.mit.edu in the file pub/gnu/rcs-5.7.tar.gz.  If you do not
+    have RCS version 5.x (for example, if you are using the old RCS
+    shipped with some versions of HPUX), CVS will probably fail to work
+    entirely.  To find out what version of RCS you have, invoke "co -V".
+    If it fails to print a version number, it is an old version.
 
     If you want version control of files with binary data, make sure
     that the RCS configure script finds GNU diff 1.15 or later and

@@ -6,6 +6,7 @@
  */
 
 #include "cvs.h"
+#include "getline.h"
 
 static void release_delete PROTO((char *dir));
 
@@ -64,7 +65,9 @@ release (argc, argv)
     FILE *fp;
     int i, c;
     char *repository;
-    char line[PATH_MAX], update_cmd[PATH_MAX];
+    char *line = NULL;
+    size_t line_allocated = 0;
+    char *update_cmd;
     char *thisarg;
     int arg_start_idx;
     int err = 0;
@@ -106,6 +109,9 @@ release (argc, argv)
      * questions asked.  Else we prompt, then maybe release.
      */
     /* Construct the update command. */
+    update_cmd = xmalloc (strlen (program_path)
+			  + strlen (CVSroot_original)
+			  + 20);
     sprintf (update_cmd, "%s -n -q -d %s update",
              program_path, CVSroot_original);
 
@@ -159,7 +165,7 @@ release (argc, argv)
 	    fp = run_popen (update_cmd, "r");
 	    c = 0;
 
-	    while (fgets (line, sizeof (line), fp))
+	    while (getline (&line, &line_allocated, fp) >= 0)
 	    {
 		if (strchr ("MARCZ", *line))
 		    c++;
@@ -242,6 +248,9 @@ release (argc, argv)
     }
 #endif /* CLIENT_SUPPORT */
 
+    free (update_cmd);
+    if (line != NULL)
+	free (line);
     return err;
 }
 

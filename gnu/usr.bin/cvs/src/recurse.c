@@ -19,7 +19,7 @@ static void addlist PROTO((List ** listp, char *key));
 static int unroll_files_proc PROTO((Node *p, void *closure));
 static void addfile PROTO((List **listp, char *dir, char *file));
 
-static char update_dir[PATH_MAX];
+static char *update_dir;
 static char *repository = NULL;
 static List *filelist = NULL; /* holds list of files on which to operate */
 static List *dirlist = NULL; /* holds list of directories on which to operate */
@@ -123,9 +123,9 @@ start_recursion (fileproc, filesdoneproc, direntproc, dirleaveproc, callerdat,
     expand_wild (argc, argv, &argc, &argv);
 
     if (update_preload == NULL)
-	update_dir[0] = '\0';
+	update_dir = xstrdup ("");
     else
-	(void) strcpy (update_dir, update_preload);
+	update_dir = xstrdup (update_preload);
 
     /* clean up from any previous calls to start_recursion */
     if (repository)
@@ -155,7 +155,7 @@ start_recursion (fileproc, filesdoneproc, direntproc, dirleaveproc, callerdat,
 	    addlist (&dirlist, ".");
 
 	err += do_recursion (&frame);
-	return(err);
+	goto out;
     }
 
 
@@ -183,7 +183,6 @@ start_recursion (fileproc, filesdoneproc, direntproc, dirleaveproc, callerdat,
 	    /* otherwise, split argument into directory and component names. */
 	    char *dir;
 	    char *comp;
-	    char tmp[PATH_MAX];
 	    char *file_to_try;
 
 	    /* Now break out argv[i] into directory part (DIR) and file part (COMP).
@@ -209,42 +208,47 @@ start_recursion (fileproc, filesdoneproc, direntproc, dirleaveproc, callerdat,
 	    if (!(which & W_LOCAL))
 	    {
 		/* If doing rtag, we've done a chdir to the repository. */
-		sprintf (tmp, "%s%s", argv[i], RCSEXT);
-		file_to_try = tmp;
+		file_to_try = xmalloc (strlen (argv[i]) + sizeof (RCSEXT) + 5);
+		sprintf (file_to_try, "%s%s", argv[i], RCSEXT);
 	    }
 	    else
-		file_to_try = argv[i];
+		file_to_try = xstrdup (argv[i]);
 
-	    if(isfile(file_to_try))
+	    if (isfile (file_to_try))
 		addfile (&files_by_dir, dir, comp);
 	    else if (isdir (dir))
 	    {
 		if ((which & W_LOCAL) && isdir (CVSADM))
 		{
 		    /* otherwise, look for it in the repository. */
-		    char *save_update_dir;
+		    char *tmp_update_dir;
 		    char *repos;
-		
-		    /* save & set (aka push) update_dir */
-		    save_update_dir = xstrdup (update_dir);
+		    char *reposfile;
 
-		    if (*update_dir != '\0')
-			(void) strcat (update_dir, "/");
+		    tmp_update_dir = xmalloc (strlen (update_dir)
+					      + strlen (dir)
+					      + 5);
+		    strcpy (tmp_update_dir, update_dir);
 
-		    (void) strcat (update_dir, dir);
-		
+		    if (*tmp_update_dir != '\0')
+			(void) strcat (tmp_update_dir, "/");
+
+		    (void) strcat (tmp_update_dir, dir);
+
 		    /* look for it in the repository. */
-		    repos = Name_Repository (dir, update_dir);
-		    (void) sprintf (tmp, "%s/%s", repos, comp);
+		    repos = Name_Repository (dir, tmp_update_dir);
+		    reposfile = xmalloc (strlen (repos)
+					 + strlen (comp)
+					 + 5);
+		    (void) sprintf (reposfile, "%s/%s", repos, comp);
 		    free (repos);
 
-		    if (!wrap_name_has (comp, WRAP_TOCVS) && isdir(tmp))
+		    if (!wrap_name_has (comp, WRAP_TOCVS) && isdir (reposfile))
 			addlist (&dirlist, argv[i]);
 		    else
 			addfile (&files_by_dir, dir, comp);
 
-		    (void) sprintf (update_dir, "%s", save_update_dir);
-		    free (save_update_dir);
+		    free (tmp_update_dir);
 		}
 		else
 		    addfile (&files_by_dir, dir, comp);
@@ -252,6 +256,7 @@ start_recursion (fileproc, filesdoneproc, direntproc, dirleaveproc, callerdat,
 	    else
 		error (1, 0, "no such directory `%s'", dir);
 
+	    free (file_to_try);
 	    free (dir);
 	    free (comp);
 	}
@@ -272,6 +277,9 @@ start_recursion (fileproc, filesdoneproc, direntproc, dirleaveproc, callerdat,
 	free (argv[i]);
     free (argv);
 
+ out:
+    free (update_dir);
+    update_dir = NULL;
     return (err);
 }
 
@@ -351,8 +359,9 @@ do_recursion (frame)
     }
     else
     {
-	repository = xmalloc (PATH_MAX);
-	(void) getwd (repository);
+	repository = xgetwd ();
+	if (repository == NULL)
+	    error (1, errno, "could not get working directory");
     }
     srepository = repository;		/* remember what to free */
 
@@ -545,7 +554,7 @@ do_dir_proc (p, closure)
     struct recursion_frame *frame = frent->frame;
     struct recursion_frame xframe;
     char *dir = p->key;
-    char newrepos[PATH_MAX];
+    char *newrepos;
     List *sdirlist;
     char *srepository;
     char *cp;
@@ -553,6 +562,13 @@ do_dir_proc (p, closure)
     int stripped_dot = 0;
     int err = 0;
     struct saved_cwd cwd;
+    char *saved_update_dir;
+
+    saved_update_dir = update_dir;
+    update_dir = xmalloc (strlen (saved_update_dir)
+			  + strlen (dir)
+			  + 5);
+    strcpy (update_dir, saved_update_dir);
 
     /* set up update_dir - skip dots if not at start */
     if (strcmp (dir, ".") != 0)
@@ -573,9 +589,12 @@ do_dir_proc (p, closure)
 	 * update -d and in that case the generated name will be correct.
 	 */
 	if (repository == NULL)
-	    newrepos[0] = '\0';
+	    newrepos = xstrdup ("");
 	else
+	{
+	    newrepos = xmalloc (strlen (repository) + strlen (dir) + 5);
 	    (void) sprintf (newrepos, "%s/%s", repository, dir);
+	}
     }
     else
     {
@@ -583,15 +602,16 @@ do_dir_proc (p, closure)
 	    (void) strcpy (update_dir, dir);
 
 	if (repository == NULL)
-	    newrepos[0] = '\0';
+	    newrepos = xstrdup ("");
 	else
-	    (void) strcpy (newrepos, repository);
+	    newrepos = xstrdup (repository);
     }
 
     /* call-back dir entry proc (if any) */
     if (frame->direntproc != NULL)
 	dir_return = frame->direntproc (frame->callerdat, dir, newrepos,
 					update_dir, frent->entries);
+    free (newrepos);
 
     /* only process the dir if the return code was 0 */
     if (dir_return != R_SKIP_ALL)
@@ -640,12 +660,16 @@ do_dir_proc (p, closure)
 	repository = srepository;
     }
 
-    /* put back update_dir */
+    /* Put back update_dir.  I think this is the same as just setting
+       update_dir back to saved_update_dir, but there are a few cases I'm
+       not sure about (in particular, if DIR is "." and update_dir is
+       not ""), so for conservatism I'm leaving this here.  */
     cp = last_component (update_dir);
     if (cp > update_dir)
 	cp[-1] = '\0';
     else
 	update_dir[0] = '\0';
+    free (saved_update_dir);
 
     return (err);
 }
@@ -722,7 +746,11 @@ unroll_files_proc (p, closure)
 	if ( CVS_CHDIR (p->key) < 0)
 	    error (1, errno, "could not chdir to %s", p->key);
 
-	save_update_dir = xstrdup (update_dir);
+	save_update_dir = update_dir;
+	update_dir = xmalloc (strlen (save_update_dir)
+				  + strlen (p->key)
+				  + 5);
+	strcpy (update_dir, save_update_dir);
 
 	if (*update_dir != '\0')
 	    (void) strcat (update_dir, "/");
@@ -734,8 +762,8 @@ unroll_files_proc (p, closure)
 
     if (save_update_dir != NULL)
     {
-	(void) strcpy (update_dir, save_update_dir);
-	free (save_update_dir);
+	free (update_dir);
+	update_dir = save_update_dir;
 
 	if (restore_cwd (&cwd, NULL))
 	    error_exit ();

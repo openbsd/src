@@ -62,12 +62,6 @@
 /* Define if you want CVS to be able to be a remote repository client.  */
 #define CLIENT_SUPPORT 1
 
-/* The number of bytes in a int.  */
-#define SIZEOF_INT 4
-
-/* The number of bytes in a long.  */
-#define SIZEOF_LONG 4
-
 /* Define if you have the connect function.  */
 #define HAVE_CONNECT
 
@@ -76,9 +70,6 @@
 
 /* Define if you have the ftruncate function.  */
 #undef HAVE_FTRUNCATE
-
-/* Define if you have the setvbuf function.  */
-//#define HAVE_SETVBUF 1
 
 /* Define if you have the vprintf function.  */
 #define HAVE_VPRINTF 1

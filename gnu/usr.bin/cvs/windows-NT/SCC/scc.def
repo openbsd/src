@@ -1,0 +1,25 @@
+LIBRARY SCC
+EXPORTS
+  SccInitialize @1
+  SccUninitialize @2
+  SccOpenProject @3
+  SccCloseProject @4
+  SccGet @5
+  SccCheckout @6
+  SccUncheckout @7
+  SccCheckin @8
+  SccAdd @9
+  SccRemove @10
+  SccRename @11
+  SccDiff @12
+  SccHistory @13
+  SccProperties @14
+  SccRunScc @15
+  SccGetCommandOptions @16
+  SccQueryInfo @17
+  SccGetEvents @18
+  SccGetProjPath @19
+  SccPopulateList @20
+  SccAddFromScc @21
+  SccSetOption @22
+  SccGetVersion @23

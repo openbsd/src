@@ -28,9 +28,10 @@
 #endif
 
 static void run_add_arg PROTO((const char *s));
-static void run_init_prog PROTO((void));
 
 extern char *strtok ();
+
+extern int vasprintf ();
 
 /*
  * To exec a program under CVS, first call run_setup() to setup any initial
@@ -45,7 +46,6 @@ extern char *strtok ();
  * The execvp() syscall will be used, so that the PATH is searched correctly.
  * File redirections can be performed in the call to run_exec().
  */
-static char *run_prog;
 static char **run_argv;
 static int run_argc;
 static int run_argc_allocated;
@@ -66,8 +66,7 @@ run_setup (fmt, va_alist)
 #endif
     char *cp;
     int i;
-
-    run_init_prog ();
+    char *run_prog;
 
     /* clean out any malloc'ed values from run_argv */
     for (i = 0; i < run_argc; i++)
@@ -83,15 +82,18 @@ run_setup (fmt, va_alist)
     /* process the varargs into run_prog */
 #ifdef HAVE_VPRINTF
     VA_START (args, fmt);
-    (void) vsprintf (run_prog, fmt, args);
+    (void) vasprintf (&run_prog, fmt, args);
     va_end (args);
 #else
-    (void) sprintf (run_prog, fmt, a1, a2, a3, a4, a5, a6, a7, a8);
+    you lose
 #endif
+    if (run_prog == NULL)
+	error (1, 0, "out of memory");
 
     /* put each word into run_argv, allocating it as we go */
     for (cp = strtok (run_prog, " \t"); cp; cp = strtok ((char *) NULL, " \t"))
 	run_add_arg (cp);
+    free (run_prog);
 }
 
 void
@@ -115,20 +117,22 @@ run_args (fmt, va_alist)
 #ifdef HAVE_VPRINTF
     va_list args;
 #endif
-
-    run_init_prog ();
+    char *run_prog;
 
     /* process the varargs into run_prog */
 #ifdef HAVE_VPRINTF
     VA_START (args, fmt);
-    (void) vsprintf (run_prog, fmt, args);
+    (void) vasprintf (&run_prog, fmt, args);
     va_end (args);
 #else
-    (void) sprintf (run_prog, fmt, a1, a2, a3, a4, a5, a6, a7, a8);
+    you lose
 #endif
+    if (run_prog == NULL)
+	error (1, 0, "out of memory");
 
     /* and add the (single) argument to the run_argv list */
     run_add_arg (run_prog);
+    free (run_prog);
 }
 
 static void
@@ -147,14 +151,6 @@ run_add_arg (s)
 	run_argv[run_argc++] = xstrdup (s);
     else
 	run_argv[run_argc] = (char *) 0;	/* not post-incremented on purpose! */
-}
-
-static void
-run_init_prog ()
-{
-    /* make sure that run_prog is allocated once */
-    if (run_prog == (char *) 0)
-	run_prog = xmalloc (10 * 1024);	/* 10K of args for _setup and _arg */
 }
 
 int

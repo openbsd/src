@@ -105,3 +105,7 @@ An attempt at a table of Contents for this directory:
 			by hostname, then runs a subprocess whose input/output
 			is redirected through the port.
 			Contributed by Benjamin J. Lee <benjamin@cyclic.com>
+	cvs2vendor	A shell script to move changes from a repository
+			that was started without a vendor branch to one
+			that has a vendor branch.
+			Contributed by Greg A. Woods <woods@planix.com>

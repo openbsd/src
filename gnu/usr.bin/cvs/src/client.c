@@ -1421,6 +1421,24 @@ update_entries (data_arg, ent_list, short_pathname, filename)
 
 	    char buf[8192];
 
+	    /* This error might be confusing; it isn't really clear to
+	       the user what to do about it.  Keep in mind that it has
+	       several causes: (1) something/someone creates the file
+	       during the time that CVS is running, (2) the repository
+	       has two files whose names clash for the client because
+	       of case-insensitivity or similar causes, (3) a special
+	       case of this is that a file gets renamed for example
+	       from a.c to A.C.  A "cvs update" on a case-insensitive
+	       client will get this error.  Repeating the update takes
+	       care of the problem, but is it clear to the user what
+	       is going on and what to do about it?, (4) the client
+	       has a file which the server doesn't know about (e.g. "?
+	       foo" file), and that name clashes with a file the
+	       server does know about, (5) classify.c will print the same
+	       message for other reasons.
+
+	       I hope the above paragraph makes it clear that making this
+	       clearer is not a one-line fix.  */
 	    error (0, 0, "move away %s; it is in the way", short_pathname);
 
 	discard_file_and_return:
@@ -2160,7 +2178,9 @@ add_prune_candidate (dir)
 {
     struct save_dir *p;
 
-    if (dir[0] == '.' && dir[1] == '\0')
+    if ((dir[0] == '.' && dir[1] == '\0')
+	|| (prune_candidates != NULL
+	    && strcmp (dir, prune_candidates->dir) == 0))
 	return;
     p = (struct save_dir *) xmalloc (sizeof (struct save_dir));
     p->dir = xstrdup (dir);
@@ -2554,7 +2574,7 @@ client_send_expansions (local, where, build_dirs)
     {
 	argv[0] = where ? where : modules_vector[i];
 	if (isfile (argv[0]))
-	    send_files (1, argv, local, 0, build_dirs);
+	    send_files (1, argv, local, 0, build_dirs, 0);
     }
     send_a_repository ("", CVSroot_directory, "");
 }
@@ -3668,14 +3688,29 @@ start_rsh_server (tofdp, fromfdp)
     char *rsh_argv[10];
 
     if (!cvs_rsh)
+	/* People sometimes suggest or assume that this should default
+	   to "remsh" on systems like HPUX in which that is the
+	   system-supplied name for the rsh program.  However, that
+	   causes various problems (keep in mind that systems such as
+	   HPUX might have non-system-supplied versions of "rsh", like
+	   a Kerberized one, which one might want to use).  If we
+	   based the name on what is found in the PATH of the person
+	   who runs configure, that would make it harder to
+	   consistently produce the same result in the face of
+	   different people producing binary distributions.  If we
+	   based it on "remsh" always being the default for HPUX
+	   (e.g. based on uname), that might be slightly better but
+	   would require us to keep track of what the defaults are for
+	   each system type, and probably would cope poorly if the
+	   existence of remsh or rsh varies from OS version to OS
+	   version.  Therefore, it seems best to have the default
+	   remain "rsh", and tell HPUX users to specify remsh, for
+	   example in CVS_RSH or other such mechanisms to be devised,
+	   if that is what they want (the manual already tells them
+	   that).  */
 	cvs_rsh = "rsh";
     if (!cvs_server)
 	cvs_server = "cvs";
-
-    /* If you are running a very old (Nov 3, 1994, before 1.5)
-     * version of the server, you need to make sure that your .bashrc
-     * on the server machine does not set CVSROOT to something
-     * containing a colon (or better yet, upgrade the server).  */
 
     /* The command line starts out with rsh. */
     rsh_argv[i++] = cvs_rsh;
@@ -4048,6 +4083,16 @@ send_modified (file, short_pathname, vers)
     free (mode_string);
 }
 
+/* The address of an instance of this structure is passed to
+   send_fileproc, send_filesdoneproc, and send_direntproc, as the
+   callerdat parameter.  */
+
+struct send_data
+{
+    int build_dirs;
+    int force;
+};
+
 static int send_fileproc PROTO ((void *callerdat, struct file_info *finfo));
 
 /* Deal with one file.  */
@@ -4056,6 +4101,7 @@ send_fileproc (callerdat, finfo)
     void *callerdat;
     struct file_info *finfo;
 {
+    struct send_data *args = (struct send_data *) callerdat;
     Vers_TS *vers;
     struct file_info xfinfo;
     /* File name to actually use.  Might differ in case from
@@ -4117,6 +4163,7 @@ send_fileproc (callerdat, finfo)
 	   just happen.  */
     }
     else if (vers->ts_rcs == NULL
+	     || args->force
 	     || strcmp (vers->ts_user, vers->ts_rcs) != 0)
     {
 	send_modified (filename, finfo->fullname, vers);
@@ -4203,7 +4250,7 @@ send_dirent_proc (callerdat, dir, repository, update_dir, entries)
     char *update_dir;
     List *entries;
 {
-    int build_dirs = *(int *) callerdat;
+    struct send_data *args = (struct send_data *) callerdat;
     int dir_exists;
     char *cvsadm_name;
     char *cvsadm_repos_name;
@@ -4256,7 +4303,7 @@ send_dirent_proc (callerdat, dir, repository, update_dir, entries)
            new directories (build_dirs is true).  Otherwise, CVS may
            see a D line in an Entries file, and recreate a directory
            which the user removed by hand.  */
-	if (dir_exists || build_dirs)
+	if (dir_exists || args->build_dirs)
 	    send_a_repository (dir, repository, update_dir);
     }
     free (cvsadm_repos_name);
@@ -4442,18 +4489,21 @@ send_file_names (argc, argv, flags)
  * Send Repository, Modified and Entry.  argc and argv contain only
  * the files to operate on (or empty for everything), not options.
  * local is nonzero if we should not recurse (-l option).  build_dirs
- * is nonzero if nonexistent directories should be sent.  Also sends
- * Argument lines for argc and argv, so should be called after options
- * are sent.
+ * is nonzero if nonexistent directories should be sent.  force is
+ * nonzero if we should send unmodified files to the server as though
+ * they were modified.  Also sends Argument lines for argc and argv,
+ * so should be called after options are sent.
  */
 void
-send_files (argc, argv, local, aflag, build_dirs)
+send_files (argc, argv, local, aflag, build_dirs, force)
     int argc;
     char **argv;
     int local;
     int aflag;
     int build_dirs;
+    int force;
 {
+    struct send_data args;
     int err;
 
     /*
@@ -4461,9 +4511,11 @@ send_files (argc, argv, local, aflag, build_dirs)
      * But we don't actually use it, so I don't think it matters what we pass
      * for aflag here.
      */
+    args.build_dirs = build_dirs;
+    args.force = force;
     err = start_recursion
 	(send_fileproc, send_filesdoneproc,
-	 send_dirent_proc, (DIRLEAVEPROC)NULL, (void *) &build_dirs,
+	 send_dirent_proc, (DIRLEAVEPROC)NULL, (void *) &args,
 	 argc, argv, local, W_LOCAL, aflag, 0, (char *)NULL, 0);
     if (err)
 	error_exit ();
@@ -4499,28 +4551,34 @@ client_process_import_file (message, vfile, vtag, targc, targv, repository)
     char *targv[];
     char *repository;
 {
-    char *short_pathname;
-    int first_time;
+    char *update_dir;
+    char *fullname;
 
-    /* FIXME: I think this is always false now that we call
-       client_import_setup at the start.  */
-
-    first_time = toplevel_repos == NULL;
-
-    if (first_time)
-	send_a_repository ("", repository, "");
+    assert (toplevel_repos != NULL);
 
     if (strncmp (repository, toplevel_repos, strlen (toplevel_repos)) != 0)
 	error (1, 0,
 	       "internal error: pathname `%s' doesn't specify file in `%s'",
 	       repository, toplevel_repos);
-    short_pathname = repository + strlen (toplevel_repos) + 1;
 
-    if (!first_time)
+    if (strcmp (repository, toplevel_repos) == 0)
     {
-	send_a_repository ("", repository, short_pathname);
+	update_dir = "";
+	fullname = xstrdup (vfile);
     }
-    send_modified (vfile, short_pathname, NULL);
+    else
+    {
+	update_dir = repository + strlen (toplevel_repos) + 1;
+
+	fullname = xmalloc (strlen (vfile) + strlen (update_dir) + 10);
+	strcpy (fullname, update_dir);
+	strcat (fullname, "/");
+	strcat (fullname, vfile);
+    }
+
+    send_a_repository ("", repository, update_dir);
+    send_modified (vfile, fullname, NULL);
+    free (fullname);
     return 0;
 }
 

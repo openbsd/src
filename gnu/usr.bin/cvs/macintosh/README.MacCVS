@@ -77,7 +77,10 @@ and make the changes you want.
 
 3. Building MacCVS
 
-I have included the MacCVS CW project files as a binhex stuffit archive ('maccvs.projects.sit.hqx').
+The files MacCVS68k.sit.hqx and MacCVSPPC.sit.hqx are CodeWarrior
+project files for building the 68k and powerpc versions of CVS,
+respectively.  As the filename implies, they are binhex'd stuffit
+archives.
 
 I have a "Projects" folder, where I keep the cvs folder and the CWGUSI folder. If
 you have a different arrangement, you will need to modify the access paths in

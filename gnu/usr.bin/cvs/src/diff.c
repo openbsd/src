@@ -69,6 +69,9 @@ static const char *const diff_usage[] =
     "\t-N\tinclude diffs for added and removed files.\n",
     "\t-r rev1\tDiff revision for rev1 against working file.\n",
     "\t-r rev2\tDiff rev1/date1 against rev2.\n",
+    "\t--ifdef=arg\tOutput diffs in ifdef format.\n",
+    "(consult the documentation for your diff program for rcsdiff-options.\n",
+    "The most popular is -c for context diffs but there are many more).\n",
     NULL
 };
 
@@ -294,6 +297,8 @@ diff (argc, argv)
 	if (empty_files)
 	    send_arg("-N");
 	send_option_string (opts);
+	if (options[0] != '\0')
+	    send_arg (options);
 	if (diff_rev1)
 	    option_with_arg ("-r", diff_rev1);
 	if (diff_date1)
@@ -312,7 +317,7 @@ diff (argc, argv)
 	/* Send the current files unless diffing two revs from the archive */
 	if (diff_rev2 == NULL && diff_date2 == NULL)
 #endif
-	send_files (argc, argv, local, 0, 0);
+	send_files (argc, argv, local, 0, 0, 0);
 
 	send_to_server ("diff\012", 0);
         err = get_responses_and_close ();
@@ -776,6 +781,10 @@ diff_file_nodiff (finfo, vers, empty_file)
                true, treat this as an added file.  Otherwise, warn
                about the missing tag.  */
 	    if (use_rev2 == NULL)
+		/* At least in the case where DIFF_REV1 and DIFF_REV2
+		   are both numeric, we should be returning some kind
+		   of error (see basicb-8a0 in testsuite).  The symbolic
+		   case may be more complicated.  */
 		return DIFF_SAME;
 	    else if (empty_files)
 		return DIFF_ADDED;

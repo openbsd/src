@@ -42,8 +42,6 @@
 # ...!harvard!cg-atla!viewlog!kenstir
 #
 # Various hacks made by Brian Berliner before inclusion in CVS contrib area.
-#
-# $Id: sccs2rcs.csh,v 1.1.1.1 1995/12/19 09:21:40 deraadt Exp $
 
 
 #we'll assume the user set up the path correctly

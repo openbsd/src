@@ -61,7 +61,6 @@ TAGFILES = $(HEADERS) options.h.in $(SOURCES)
 
 DISTFILES = .cvsignore Makefile.in \
 	    ChangeLog ChangeLog-96 ChangeLog-9395 ChangeLog-9194 \
-	    NOTES \
             sanity.sh cvsbug.sh $(TAGFILES) build_src.com
 
 PROGS = cvs cvsbug

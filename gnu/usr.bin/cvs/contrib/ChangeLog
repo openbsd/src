@@ -1,3 +1,45 @@
+Thu Feb 20 22:43:45 1997  David J MacKenzie  <djm@va.pubnix.com>
+
+	* rcs-to-cvs.sh: Put temporary files in /var/tmp or /usr/tmp
+	whichever one exists.  Just call "vi" not "/usr/ucb/vi".
+
+Mon Feb 17 08:51:37 1997  Greg A. Woods  <woods@most.weird.com>
+
+	* .cvsignore: added 'cvs2vendor' target from Feb. 12 changes.
+
+	* log_accum.pl (build_header): added "Repository:" to the report
+	header to show the first argument supplied to the script by CVS.
+	[[this value seems spuriously to be wrong when client is used]]
+	($hostdomain): correct order of initialization from the Feb. 12
+	changes.
+	($modulename): add more commentary about using '-M' to to get a
+	meaningful string here.
+	Tweak a few other comments from the Feb. 12 changes.
+
+Wed Feb 12 10:27:48 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cln_hist.pl, commit_prep.pl, cvs2vendor.sh, cvs_acls.pl,
+	cvscheck.man, cvscheck.sh, cvshelp.man, descend.man, descend.sh,
+	log_accum.pl, mfpipe.pl, rcs-to-cvs.sh, rcs2log.sh, rcs2sccs.sh,
+	sccs2rcs.csh: Remove $Id; we decided to get rid of these some
+	time ago.
+
+Wed Feb 12 00:24:33 1997  Greg A. Woods  <woods@most.weird.com>
+
+	* cvs2vendor.sh: new script.
+	* README: noted new cvs2vendor script.
+	* Makefile.in (DISTFILES): added cvs2vendor.sh.
+	(CONTRIB_PROGS): added cvs2vendor.
+
+	* log_accum.pl (show_wd): new variable, initialized to 0.
+	- set $show_wd if '-w' option found while parsing @ARGV.
+	- don't add 'In directory' line to report header unless $show_wd
+	is set.
+	(domainname): prepend a leading '.' if none there so that
+	concatenation with $hostname works (those with a FQDN hostname
+	*and* a domainname still lose).
+	(mail_notification): don't set a "From:" header -- the mailer will.
+
 Wed Jan  8 14:48:58 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* Makefile.in, README, log.pl: Remove CVSid; we decided to get rid

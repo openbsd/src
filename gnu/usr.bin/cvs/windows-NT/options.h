@@ -55,17 +55,6 @@
 #endif
 
 /*
- * The "grep" program to execute when checking to see if a merged file had
- * any conflicts.  This "grep" must support the "-s" option and a standard
- * regular expression as an argument.  Specify a full pathname if your site
- * wants to use a particular grep.
- */
-
-#ifndef GREP
-#define GREP "grep"
-#endif
-
-/*
  * The "patch" program to run when using the CVS server and accepting
  * patches across the network.  Specify a full pathname if your site
  * wants to use a particular patch.

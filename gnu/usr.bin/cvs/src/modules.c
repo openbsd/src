@@ -54,16 +54,21 @@ static void save_d PROTO((char *k, int ks, char *d, int ds));
 DBM *
 open_module ()
 {
-    char mfile[PATH_MAX];
+    char *mfile;
+    DBM *retval;
 
     if (CVSroot_original == NULL)
     {
 	error (0, 0, "must set the CVSROOT environment variable");
 	error (1, 0, "or specify the '-d' global option");
     }
+    mfile = xmalloc (strlen (CVSroot_directory) + sizeof (CVSROOTADM)
+		     + sizeof (CVSROOTADM_MODULES) + 20);
     (void) sprintf (mfile, "%s/%s/%s", CVSroot_directory,
 		    CVSROOTADM, CVSROOTADM_MODULES);
-    return (dbm_open (mfile, O_RDONLY, 0666));
+    retval = dbm_open (mfile, O_RDONLY, 0666);
+    free (mfile);
+    return retval;
 }
 
 /*
@@ -102,17 +107,18 @@ do_module (db, mname, m_type, msg, callback_proc, where,
     char *tag_prog = NULL;
     char *update_prog = NULL;
     struct saved_cwd cwd;
+    int cwd_saved = 0;
     char *line;
     int modargc;
     int xmodargc;
     char **modargv;
-    char *xmodargv[MAXFILEPERDIR];
+    char **xmodargv;
     char *value;
-    char *zvalue;
+    char *zvalue = NULL;
     char *mwhere = NULL;
     char *mfile = NULL;
     char *spec_opt = NULL;
-    char xvalue[PATH_MAX];
+    char *xvalue = NULL;
     int alias = 0;
     datum key, val;
     char *cp;
@@ -147,7 +153,7 @@ do_module (db, mname, m_type, msg, callback_proc, where,
     if (mname[0] == '!' && mname[1] != '\0')
     {
 	ign_dir_add (mname+1);
-	return(err);
+	goto do_module_return;
     }
 
     /* strip extra stuff from the module name */
@@ -195,13 +201,16 @@ do_module (db, mname, m_type, msg, callback_proc, where,
     }
     else
     {
-	char file[PATH_MAX];
-	char attic_file[PATH_MAX];
+	char *file;
+	char *attic_file;
 	char *acp;
+	int is_found = 0;
 
 	/* check to see if mname is a directory or file */
-
+	file = xmalloc (strlen (CVSroot_directory) + strlen (mname) + 10);
 	(void) sprintf (file, "%s/%s", CVSroot_directory, mname);
+	attic_file = xmalloc (strlen (CVSroot_directory) + strlen (mname)
+			      + sizeof (CVSATTIC) + sizeof (RCSEXT) + 15);
 	if ((acp = strrchr (mname, '/')) != NULL)
 	{
 	    *acp = '\0';
@@ -216,7 +225,7 @@ do_module (db, mname, m_type, msg, callback_proc, where,
 	if (isdir (file))
 	{
 	    value = mname;
-	    goto found;
+	    is_found = 1;
 	}
 	else
 	{
@@ -228,7 +237,9 @@ do_module (db, mname, m_type, msg, callback_proc, where,
 		{
 		    char *slashp;
 
-		    /* put the ' ' in a copy so we don't mess up the original */
+		    /* put the ' ' in a copy so we don't mess up the
+		       original */
+		    xvalue = xmalloc (strlen (mname) + 2);
 		    value = strcpy (xvalue, mname);
 		    slashp = strrchr (value, '/');
 		    *slashp = ' ';
@@ -243,19 +254,26 @@ do_module (db, mname, m_type, msg, callback_proc, where,
 		    if (cp == mname)
 		    {
 			/* drop the leading / if specified */
+			xvalue = xmalloc (strlen (mname) + 10);
 			value = strcpy (xvalue, ". ");
 			(void) strcat (xvalue, mname + 1);
 		    }
 		    else
 		    {
 			/* otherwise just copy it */
+			xvalue = xmalloc (strlen (mname) + 10);
 			value = strcpy (xvalue, ". ");
 			(void) strcat (xvalue, mname);
 		    }
 		}
-		goto found;
+		is_found = 1;
 	    }
 	}
+	free (attic_file);
+	free (file);
+
+	if (is_found)
+	    goto found;
     }
 
     /* look up everything to the first / as a module */
@@ -306,9 +324,7 @@ do_module (db, mname, m_type, msg, callback_proc, where,
     /* if we got here, we couldn't find it using our search, so give up */
     error (0, 0, "cannot find module `%s' - ignored", mname);
     err++;
-    if (mwhere)
-	free (mwhere);
-    return (err);
+    goto do_module_return;
 
 
     /*
@@ -320,6 +336,7 @@ do_module (db, mname, m_type, msg, callback_proc, where,
     /* remember where we start */
     if (save_cwd (&cwd))
 	error_exit ();
+    cwd_saved = 1;
 
     /* copy value to our own string since if we go recursive we'll be
        really screwed if we do another dbm lookup */
@@ -365,8 +382,12 @@ do_module (db, mname, m_type, msg, callback_proc, where,
 	    }
 	    if (!isfile (CVSADM))
 	    {
-		char nullrepos[PATH_MAX];
+		char *nullrepos;
 
+		nullrepos = xmalloc (strlen (CVSroot_directory)
+				     + sizeof (CVSROOTADM)
+				     + sizeof (CVSNULLREPOS)
+				     + 10);
 		(void) sprintf (nullrepos, "%s/%s/%s", CVSroot_directory,
 				CVSROOTADM, CVSNULLREPOS);
 		if (!isfile (nullrepos))
@@ -393,6 +414,7 @@ do_module (db, mname, m_type, msg, callback_proc, where,
 			server_set_entstat (dir, nullrepos);
 #endif
 		}
+		free (nullrepos);
 	    }
 	  out:
 	    goto do_special;
@@ -417,7 +439,7 @@ do_module (db, mname, m_type, msg, callback_proc, where,
     (void) sprintf (line, "%s %s", "XXX", value);
 
     /* turn the line into an argv[] array */
-    line2argv (&xmodargc, xmodargv, line);
+    line2argv (&xmodargc, &xmodargv, line);
     free (line);
     modargc = xmodargc;
     modargv = xmodargv;
@@ -466,11 +488,7 @@ do_module (db, mname, m_type, msg, callback_proc, where,
 		       "modules file has invalid option for key %s value %s",
 		       key.dptr, val.dptr);
 		err++;
-		if (mwhere)
-		    free (mwhere);
-		free (zvalue);
-		free_cwd (&cwd);
-		return (err);
+		goto do_module_return;
 	}
     }
     modargc -= optind;
@@ -478,11 +496,8 @@ do_module (db, mname, m_type, msg, callback_proc, where,
     if (modargc == 0)
     {
 	error (0, 0, "modules file missing directory for module %s", mname);
-	if (mwhere)
-	    free (mwhere);
-	free (zvalue);
-	free_cwd (&cwd);
-	return (++err);
+	++err;
+	goto do_module_return;
     }
 
     if (alias && nonalias_opt)
@@ -493,7 +508,8 @@ do_module (db, mname, m_type, msg, callback_proc, where,
 	   situation.  */
 	error (0, 0, "\
 -a cannot be specified in the modules file along with other options");
-	return ++err;
+	++err;
+	goto do_module_return;
     }
 
     /* if this was an alias, call ourselves recursively for each module */
@@ -512,11 +528,7 @@ do_module (db, mname, m_type, msg, callback_proc, where,
 				  where, shorten, local_specified,
 				  run_module_prog, extra_arg);
 	}
-	if (mwhere)
-	    free (mwhere);
-	free (zvalue);
-	free_cwd (&cwd);
-	return (err);
+	goto do_module_return;
     }
 
     /* otherwise, process this module */
@@ -647,6 +659,7 @@ do_module (db, mname, m_type, msg, callback_proc, where,
     if (restore_cwd (&cwd, NULL))
 	error_exit ();
     free_cwd (&cwd);
+    cwd_saved = 0;
 
     /* run checkout or tag prog if appropriate */
     if (err == 0 && run_module_prog)
@@ -661,7 +674,7 @@ do_module (db, mname, m_type, msg, callback_proc, where,
 	     * if we can't find a matching program, just punt and use
 	     * whatever is specified in the modules file.
 	     */
-	    char real_prog[PATH_MAX];
+	    char *real_prog = NULL;
 	    char *prog = (m_type == TAG ? tag_prog :
 			  (m_type == CHECKOUT ? checkout_prog : export_prog));
 	    char *real_where = (where != NULL ? where : mwhere);
@@ -669,6 +682,8 @@ do_module (db, mname, m_type, msg, callback_proc, where,
 
 	    if ((*prog != '/') && (*prog != '.'))
 	    {
+		real_prog = xmalloc (strlen (real_where) + strlen (prog)
+				     + 10);
 		(void) sprintf (real_prog, "%s/%s", real_where, prog);
 		if (isfile (real_prog))
 		    prog = real_prog;
@@ -695,14 +710,21 @@ do_module (db, mname, m_type, msg, callback_proc, where,
 		err += run_exec (RUN_TTY, RUN_TTY, RUN_TTY, RUN_NORMAL);
 		free (expanded_path);
 	    }
+	    free (real_prog);
 	}
     }
 
+ do_module_return:
     /* clean up */
     if (mwhere)
 	free (mwhere);
-    free (zvalue);
+    if (cwd_saved)
+	free_cwd (&cwd);
+    if (zvalue != NULL)
+	free (zvalue);
 
+    if (xvalue != NULL)
+	free (xvalue);
     return (err);
 }
 
@@ -857,8 +879,7 @@ cat_module (status)
     int moduleargc;
     struct sortrec *s_h;
     char *cp, *cp2, **argv;
-    char *line;
-    char *moduleargv[MAXFILEPERDIR];
+    char **moduleargv;
 
     Status = status;
 
@@ -884,23 +905,27 @@ cat_module (status)
     fill = cols - (indent + 2);
     for (s_h = s_head, i = 0; i < s_count; i++, s_h++)
     {
-	line = xmalloc (strlen (s_h->modname) + strlen (s_h->rest)
-			+ strlen (status ? s_h->status : "") + 15);
+	char *line;
 
 	/* Print module name (and status, if wanted) */
+	line = xmalloc (strlen (s_h->modname) + 15);
 	sprintf (line, "%-12s", s_h->modname);
 	cvs_output (line, 0);
+	free (line);
 	if (status)
 	{
+	    line = xmalloc (strlen (s_h->status) + 15);
 	    sprintf (line, " %-11s", s_h->status);
 	    cvs_output (line, 0);
 	    if (s_h->status != def_status)
 		*(s_h->status + strlen (s_h->status)) = ' ';
+	    free (line);
 	}
 
+	line = xmalloc (strlen (s_h->modname) + strlen (s_h->rest) + 15);
 	/* Parse module file entry as command line and print options */
 	(void) sprintf (line, "%s %s", s_h->modname, s_h->rest);
-	line2argv (&moduleargc, moduleargv, line);
+	line2argv (&moduleargc, &moduleargv, line);
 	free (line);
 	argc = moduleargc;
 	argv = moduleargv;

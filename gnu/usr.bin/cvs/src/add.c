@@ -39,6 +39,47 @@ static const char *const add_usage[] =
     NULL
 };
 
+static char *combine_dir PROTO ((char *, char *));
+
+/* Given a directory DIR and a subdirectory within it, SUBDIR, combine
+   the two into a new directory name.  Returns a newly malloc'd string.
+   For now this is a fairly simple affair, but perhaps it will want
+   to have grander ambitions in the context of VMS or others (or perhaps
+   not, perhaps that should all be hidden inside CVS_FOPEN and libc and so
+   on, and CVS should just see foo/bar/baz style pathnames).  */
+static char *
+combine_dir (dir, subdir)
+    char *dir;
+    char *subdir;
+{
+    char *retval;
+    size_t dir_len;
+
+    dir_len = strlen (dir);
+    retval = xmalloc (dir_len + strlen (subdir) + 10);
+    if (dir_len >= 2
+	&& dir[dir_len - 1] == '.'
+	&& ISDIRSEP (dir[dir_len - 2]))
+    {
+	/* The dir name has an extraneous "." at the end.
+	   I'm not completely sure that this is the best place
+	   to strip it off--it is possible that Name_Repository
+	   should do so, or it shouldn't be in the CVS/Repository
+	   file in the first place.  Fixing it here seems like
+	   a safe, small change, but I'm not sure it catches
+	   all the cases.  */
+	strncpy (retval, dir, dir_len - 2);
+	retval[dir_len - 2] = '\0';
+    }
+    else
+    {
+	strcpy (retval, dir);
+    }
+    strcat (retval, "/");
+    strcat (retval, subdir);
+    return retval;
+}
+
 int
 add (argc, argv)
     int argc;
@@ -106,14 +147,13 @@ add (argc, argv)
 	    {
 		char *tag;
 		char *date;
-		char *rcsdir = xmalloc (strlen (repository)
-					+ strlen (argv[i]) + 10);
+		char *rcsdir;
 
 		/* before we do anything else, see if we have any
 		   per-directory tags */
 		ParseTag (&tag, &date);
 
-		sprintf (rcsdir, "%s/%s", repository, argv[i]);
+		rcsdir = combine_dir (repository, argv[i]);
 
 		strip_trailing_slashes (argv[i]);
 
@@ -139,7 +179,7 @@ add (argc, argv)
 		}
 	    }
 	send_file_names (argc, argv, SEND_EXPAND_WILD);
-	send_files (argc, argv, 0, 0, 1);
+	send_files (argc, argv, 0, 0, 1, 0);
 	send_to_server ("add\012", 0);
 	return get_responses_and_close ();
     }
@@ -440,8 +480,7 @@ add_directory (repository, entries, dir)
 	goto out;
     }
 
-    rcsdir = xmalloc (strlen (repository) + strlen (dir) + 10);
-    (void) sprintf (rcsdir, "%s/%s", repository, dir);
+    rcsdir = combine_dir (repository, dir);
     if (isfile (rcsdir) && !isdir (rcsdir))
     {
 	error (0, 0, "%s is not a directory; %s not added", rcsdir, dir);
@@ -471,20 +510,13 @@ add_directory (repository, entries, dir)
 	List *ulist;
 	struct logfile_info *li;
 
-#if 0
-	char line[MAXLINELEN];
-
-	(void) printf ("Add directory %s to the repository (y/n) [n] ? ",
-		       rcsdir);
-	(void) fflush (stdout);
-	clearerr (stdin);
-	if (fgets (line, sizeof (line), stdin) == NULL ||
-	    (line[0] != 'y' && line[0] != 'Y'))
-	{
-	    error (0, 0, "directory %s not added", rcsdir);
-	    goto out;
-	}
-#endif
+	/* There used to be some code here which would prompt for
+	   whether to add the directory.  The details of that code had
+	   bitrotted, but more to the point it can't work
+	   client/server, doesn't ask in the right way for GUIs, etc.
+	   A better way of making it harder to accidentally add
+	   directories would be to have to add and commit directories
+	   like for files.  The code was #if 0'd at least since CVS 1.5.  */
 
 	if (!noexec)
 	{
@@ -562,7 +594,7 @@ build_entry (repository, user, options, message, entries, tag)
     char *tag;
 {
     char *fname;
-    char line[MAXLINELEN];
+    char *line;
     FILE *fp;
 
     if (noexec)
@@ -587,7 +619,9 @@ build_entry (repository, user, options, message, entries, tag)
      * without needing to clean anything up (well, we could clean up the
      * ,t file, but who cares).
      */
+    line = xmalloc (strlen (user) + 20);
     (void) sprintf (line, "Initial %s", user);
     Register (entries, user, "0", line, options, tag, (char *) 0, (char *) 0);
+    free (line);
     return (0);
 }

@@ -17,6 +17,10 @@
 
 #include "cvs.h"
 
+#ifdef CLIENT_SUPPORT
+static int remove_force_fileproc PROTO ((void *callerdat,
+					 struct file_info *finfo));
+#endif
 static int remove_fileproc PROTO ((void *callerdat, struct file_info *finfo));
 static Dtype remove_dirproc PROTO ((void *callerdat, char *dir,
 				    char *repos, char *update_dir,
@@ -82,15 +86,10 @@ cvsremove (argc, argv)
 	{
 	    if (!noexec)
 	    {
-		int i;
-
-		for (i = 0; i < argc; i++)
-		{
-		    if ( CVS_UNLINK (argv[i]) < 0 && ! existence_error (errno))
-		    {
-			error (0, errno, "unable to remove %s", argv[i]);
-		    }
-		}
+		start_recursion (remove_force_fileproc, (FILESDONEPROC) NULL,
+				 (DIRENTPROC) NULL, (DIRLEAVEPROC) NULL,
+				 (void *) NULL, argc, argv, local, W_LOCAL,
+				 0, 0, (char *) NULL, 0);
 	    }
 	    /* else FIXME should probably act as if the file doesn't exist
 	       in doing the following checks.  */
@@ -101,7 +100,7 @@ cvsremove (argc, argv)
 	if (local)
 	    send_arg("-l");
 	send_file_names (argc, argv, 0);
-	send_files (argc, argv, local, 0, 0);
+	send_files (argc, argv, local, 0, 0, 0);
 	send_to_server ("remove\012", 0);
         return get_responses_and_close ();
     }
@@ -127,6 +126,26 @@ cvsremove (argc, argv)
     return (err);
 }
 
+#ifdef CLIENT_SUPPORT
+
+/*
+ * This is called via start_recursion if we are running as the client
+ * and the -f option was used.  We just physically remove the file.
+ */
+
+/*ARGSUSED*/
+static int
+remove_force_fileproc (callerdat, finfo)
+     void *callerdat;
+     struct file_info *finfo;
+{
+    if (CVS_UNLINK (finfo->file) < 0 && ! existence_error (errno))
+	error (0, errno, "unable to remove %s", finfo->fullname);
+    return 0;
+}
+
+#endif
+
 /*
  * remove the file, only if it has already been physically removed
  */
@@ -136,7 +155,6 @@ remove_fileproc (callerdat, finfo)
     void *callerdat;
     struct file_info *finfo;
 {
-    char fname[PATH_MAX];
     Vers_TS *vers;
 
     if (force)
@@ -168,11 +186,17 @@ remove_fileproc (callerdat, finfo)
     }
     else if (vers->vn_user[0] == '0' && vers->vn_user[1] == '\0')
     {
+	char *fname;
+
 	/*
 	 * It's a file that has been added, but not commited yet. So,
 	 * remove the ,t file for it and scratch it from the
 	 * entries file.  */
 	Scratch_Entry (finfo->entries, finfo->file);
+	fname = xmalloc (strlen (finfo->file)
+			 + sizeof (CVSADM)
+			 + sizeof (CVSEXT_LOG)
+			 + 10);
 	(void) sprintf (fname, "%s/%s%s", CVSADM, finfo->file, CVSEXT_LOG);
 	(void) unlink_file (fname);
 	if (!quiet)
@@ -182,6 +206,7 @@ remove_fileproc (callerdat, finfo)
 	if (server_active)
 	    server_checked_in (finfo->file, finfo->update_dir, finfo->repository);
 #endif
+	free (fname);
     }
     else if (vers->vn_user[0] == '-')
     {
@@ -191,7 +216,10 @@ remove_fileproc (callerdat, finfo)
     }
     else
     {
+	char *fname;
+
 	/* Re-register it with a negative version number.  */
+	fname = xmalloc (strlen (vers->vn_user) + 5);
 	(void) strcpy (fname, "-");
 	(void) strcat (fname, vers->vn_user);
 	Register (finfo->entries, finfo->file, fname, vers->ts_rcs, vers->options,
@@ -204,6 +232,7 @@ remove_fileproc (callerdat, finfo)
 	if (server_active)
 	    server_checked_in (finfo->file, finfo->update_dir, finfo->repository);
 #endif
+	free (fname);
     }
 
     freevers_ts (&vers);

@@ -7,6 +7,7 @@
  */
 
 #include "cvs.h"
+#include "getline.h"
 
 /* Determine the name of the RCS repository for directory DIR in the
    current working directory, or for the current working directory
@@ -23,10 +24,10 @@ Name_Repository (dir, update_dir)
     char *update_dir;
 {
     FILE *fpin;
-    char *ret, *xupdate_dir;
-    char repos[PATH_MAX];
-    char path[PATH_MAX];
-    char tmp[PATH_MAX];
+    char *xupdate_dir;
+    char *repos = NULL;
+    size_t repos_allocated = 0;
+    char *tmp;
     char *cp;
 
     if (update_dir && *update_dir)
@@ -35,9 +36,12 @@ Name_Repository (dir, update_dir)
 	xupdate_dir = ".";
 
     if (dir != NULL)
+    {
+	tmp = xmalloc (strlen (dir) + sizeof (CVSADM_REP) + 10);
 	(void) sprintf (tmp, "%s/%s", dir, CVSADM_REP);
+    }
     else
-	(void) strcpy (tmp, CVSADM_REP);
+	tmp = xstrdup (CVSADM_REP);
 
     /*
      * The assumption here is that the repository is always contained in the
@@ -48,12 +52,15 @@ Name_Repository (dir, update_dir)
     if (fpin == NULL)
     {
 	int save_errno = errno;
-	char cvsadm[PATH_MAX];
+	char *cvsadm;
 
 	if (dir != NULL)
+	{
+	    cvsadm = xmalloc (strlen (dir) + sizeof (CVSADM) + 10);
 	    (void) sprintf (cvsadm, "%s/%s", dir, CVSADM);
+	}
 	else
-	    (void) strcpy (cvsadm, CVSADM);
+	    cvsadm = xstrdup (CVSADM);
 
 	if (!isdir (cvsadm))
 	{
@@ -61,6 +68,7 @@ Name_Repository (dir, update_dir)
 	    error (1, 0, "there is no version here; do '%s checkout' first",
 		   program_name);
 	}
+	free (cvsadm);
 
 	if (existence_error (save_errno))
 	{
@@ -78,9 +86,11 @@ Name_Repository (dir, update_dir)
 
 	error (1, save_errno, "cannot open %s", tmp);
     }
+    free (tmp);
 
-    if (fgets (repos, PATH_MAX, fpin) == NULL)
+    if (getline (&repos, &repos_allocated, fpin) < 0)
     {
+	/* FIXME: should be checking for end of file separately.  */
 	error (0, 0, "in directory %s:", xupdate_dir);
 	error (1, errno, "cannot read %s", CVSADM_REP);
     }
@@ -101,6 +111,8 @@ Name_Repository (dir, update_dir)
     }
     if (! isabsolute(repos))
     {
+	char *newrepos;
+
 	if (CVSroot_original == NULL)
 	{
 	    error (0, 0, "in directory %s:", xupdate_dir);
@@ -108,14 +120,14 @@ Name_Repository (dir, update_dir)
 	    error (0, 0, "or specify the '-d' option to %s.", program_name);
 	    error (1, 0, "illegal repository setting");
 	}
-	(void) strcpy (path, repos);
-	(void) sprintf (repos, "%s/%s", CVSroot_directory, path);
+	newrepos = xmalloc (strlen (CVSroot_directory) + strlen (repos) + 10);
+	(void) sprintf (newrepos, "%s/%s", CVSroot_directory, repos);
+	free (repos);
+	repos = newrepos;
     }
 
-    /* allocate space to return and fill it in */
     strip_trailing_slashes (repos);
-    ret = xstrdup (repos);
-    return (ret);
+    return repos;
 }
 
 /*

@@ -1,3 +1,36 @@
+13 Mar 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* filesubr.c (get_homedir): Allocate pathbuf; removes arbitrary
+	limit.
+
+Wed Mar 12 16:10:01 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* filesubr.c (get_homedir): Expand comment about HOME
+	vs. HOMEDRIVE/HOMEPATH.
+
+	* config.h (HAVE_SETVBUF): Removed; no longer used.
+
+Thu Mar  6 19:46:53 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README: tab stop setting apparently was under "Editor" in Visual
+	C++ 2.x but it is under "Tabs" in Visual C++ 4.x.
+	List number of warnings for regex.c (103, which is actually down
+	from 121 prior to the change I just made to regex.c).
+
+Sat Feb 15 15:27:39 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* Makefile.in (dist-dir): Also handle SUBDIRS.
+	(SUBDIRS): New variable.
+
+Wed Jan 29 18:28:17 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* config.h, options.h (GREP): Remove; no longer used.
+
+Tue Jan 28 18:29:03 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* config.h: Remove SIZEOF_INT and SIZEOF_LONG; no longer needed
+	with lib/md5.c changes.
+
 1997-01-08  Jim Kingdon
 
 	* filesubr.c (expand_wild): If we just find a file (that

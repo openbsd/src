@@ -1,3 +1,133 @@
+Sun Mar 16 12:37:12 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (File permissions): CVSUMASK now works for RCS
+	files; but it is (still) awkward for client/server CVS.
+
+Sat Mar 15 17:41:12 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Magic branch numbers): Add comment about where this
+	should go.
+
+Thu Mar 13 09:11:36 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Credits): Fix grammatical mistake ("manual about"
+	-> "manual is about").  Reported by Philippe De Muyter.
+
+Sun Mar  9 09:06:40 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (File permissions): Add comment about val-tags and
+	CVSUMASK.
+
+Sun Mar  2 12:33:26 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (From scratch): Add comment about creating
+	directories with add rather than import.
+
+	* cvs.texinfo (Creating a repository): Add comment about how this
+	somewhat duplicates Server requirements.
+
+	* cvs.texinfo (Connecting via rsh): Add comment about rsh
+	vs. remsh.  Also wording fix ("incorrect" -> "inapplicable").
+
+	* cvs.texinfo (Outside): Add comment about renames and annotate.
+
+	* cvs.texinfo (Server requirements): New node.
+
+Thu Feb 27 15:20:49 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Multiple developers): Reword section on "cvs admin
+	-l".  As nearly as I can tell based on when it came up on info-cvs
+	and other contexts, people who are into reserved checkouts
+	generally find that cvs admin -l is OK.  Add a bunch more notes
+	(inside @ignore) about reserved checkout implementation ideas.
+
+Sun Feb 23 16:12:03 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Common options): Add various additional comments
+	about date formats.
+
+	* RCSFILES: Remove diff for Id and explain it in words instead.
+	The previous values for Id had been clobbered by keyword expansion
+	on the RCSFILES file itself.
+
+Sat Feb 22 14:16:28 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* Makefile.in (DISTFILES): Fix typo (missing backslash).
+
+Fri Feb 21 23:08:38 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* RCSFILES: New file.
+	* Makefile.in (DISTFILES): Add RCSFILES.
+
+20 Feb 1997  Lenny Foner  <foner@media.mit.edu>
+
+	* cvs.texinfo (Checklist): Fix typo ("keword" -> "keyword").
+
+Thu Feb 20 21:57:05 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Keeping a checked out copy): Add "web" to index.
+
+Wed Feb 12 18:44:16 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Password authentication client, Invoking CVS):
+	Document "cvs logout" command.
+
+Tue Feb 11 20:42:45 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	* cvs.texinfo (commit options): Document that the -f option to
+	commit disables recursion.
+
+Sun Feb  9 13:58:59 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (diff options): Document all the options we pass
+	through to diff.  Remove paragraph about -D sometimes meaning
+	--ifdef since that is no longer true.
+
+	* cvs.texinfo (Multiple developers): Add lengthy comment about
+	reserved checkout design issues.
+
+	* cvs.texinfo (Wrappers): Add paragraph about timestamps.
+
+	* cvs.texinfo (commit options): Don't try to document what CVS 1.3
+	does with -f and how recent versions differ: 1.3 is pretty old
+	anyway, we generally only try to document the current version, and
+	the way it was described here was pretty confusing.
+	(Environment variables): Likewise for CVSEDITOR.
+
+	* cvs.texinfo (import output): Add index entries for symbolic
+	links.  Add brief mention of whether behavior should be
+	different.  Add comments on other symbolic link issues.
+
+Wed Feb  5 13:02:37 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Concurrency): Add comment about commit/commit
+	atomicity.
+
+Mon Feb  3 10:55:41 1997  joel boutros <nihilis@moral.addiction.com>
+
+	* cvs.texinfo (Connecting via rsh): Fix typo (programs -> problems).
+
+Fri Jan 31 12:18:47 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	* cvsclient.texi (Connection and Authentication): Correct typo
+	(``sent'' for ``send''), and rewrite sentence for clarity.
+
+Fri Jan 24 10:31:57 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (File status): Change "Unresolved Conflict" to "File
+	had conflicts on merge" per change to CVS.
+
+Sun Jan 19 16:21:17 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (admin): Add comments about "group" and "compiled in
+	value".  At least one info-cvs poster was confused by this.
+
+Thu Jan 16 17:54:51 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Wrappers): It is just -t/-f which doesn't work
+	client/server.  -k *does* (well, except for the problem with
+	import noted in BUGS).  -m I don't know and I doubt anyone cares.
+
 Mon Jan 13 15:41:02 1997  Karl Fogel  <kfogel@ynu38.ynu.edu.cn>
 
 	* cvs.texinfo (Read-only access): rephrase to imply that there may

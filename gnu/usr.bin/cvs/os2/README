@@ -16,7 +16,9 @@ differently.  This is (IMHO) a bizarre behavior, but you need to
 convert the linefeeds to CRLF pairs (editing the file with an editor
 such as emacs will generally do this).
 
-        You will get warnings during the compilation; ignore them.
+        There are two compiler warnings in os2/popen.c which we haven't
+figured out the cause of.  Other than that there probably aren't a whole
+lot of warnings (but there might be a few).
 Report bugs to <bug-cvs@prep.ai.mit.edu>.
 
 

@@ -263,7 +263,7 @@ flag (release 1.15 and later are OK).  You must also
 configure both @sc{rcs} and @sc{cvs} to handle binary
 files when you install them.
 
-Keword substitution can be a source of trouble with
+Keyword substitution can be a source of trouble with
 binary files. @xref{Keyword substitution}, for
 solutions.
 
@@ -296,7 +296,7 @@ Some text has been extracted from the man pages for
 
 The @sc{cvs} @sc{faq} by David G. Grubbs has provided
 useful material.  The @sc{faq} is no longer maintained,
-however, and this manual about the closest thing there
+however, and this manual is about the closest thing there
 is to a successor (with respect to documenting how to
 use @sc{cvs}, at least).
 
@@ -1214,6 +1214,10 @@ Note that users must also have write access to check
 out files, because @sc{cvs} needs to create lock files
 (@pxref{Concurrency}).
 
+@c CVS seems to use CVSUMASK in picking permissions for
+@c val-tags, but maybe we should say more about this.
+@c Like val-tags gets created by someone who doesn't
+@c have CVSUMASK set right?
 Also note that users must have write access to the
 @file{CVSROOT/val-tags} file.  @sc{Cvs} uses it to keep
 track of what tags are valid tag names (it is sometimes
@@ -1236,21 +1240,22 @@ typical for newly created files, except that sometimes
 @sc{cvs} creates them read-only (see the sections on
 watches, @ref{Setting a watch}; -r, @ref{Global
 options}; or CVSREAD, @ref{Environment variables}).
+
+Note that using the client/server @sc{cvs}
+(@pxref{Remote repositories}), there is no good way to
+set @code{CVSUMASK}; the setting on the client machine
+has no effect.  If you are connecting with @code{rsh}, you
+can set @code{CVSUMASK} in @file{.bashrc} or @file{.cshrc}, as
+described in the documentation for your operating
+system.  This behavior might change in future versions
+of @sc{cvs}; do not rely on the setting of
+@code{CVSUMASK} on the client having no effect.
 @c FIXME: need to explain what a umask is or cite
 @c someplace which does.
 @c FIXME: Need one place which discusses this
 @c read-only files thing.  Why would one use -r or
 @c CVSREAD?  Why would one use watches?  How do they interact?
-@c FIXCVS: Currently CVSUMASK does not control the mode
-@c of the history files (e.g. if CVSUMASK is 002 and the
-@c user's umask is 077, then the history files get created with
-@c mode 0400 or 0500, which means other users cannot check
-@c them out.  This is a bug; the user's umask should
-@c only control the mode used in working directories).
-@c The wording above tries to waffle because
-@c we don't want to mislead people, yet it is not clear
-@c we should document this (broken) behavior instead of fixing it.
-@c We need to state
+@c FIXME: We need to state
 @c whether using CVSUMASK removes the need for manually
 @c fixing permissions (in fact, if we are going to mention
 @c manually fixing permission, we better document a lot
@@ -1400,6 +1405,11 @@ on what each developer uses).  Don't worry about CPU
 and memory requirements for the clients---any machine
 with enough capacity to run the operating system in
 question should have little trouble.
+@c Stuff about memory duplicates Server requirements
+@c to some extent.  I'm not sure this is a bad thing,
+@c though (one is aimed at people who are looking into
+@c this carefully, the other is aimed at people who
+@c want a rule of thumb).
 
 The repository should be accessable
 (directly or via a networked file system) from all
@@ -1475,10 +1485,62 @@ described in @ref{Connecting via rsh}.
 @c that you need an @code{rsh} binary on the client to use
 @c :server:.
 @menu
+* Server requirements::         Memory and other resources for servers
 * Connecting via rsh::          Using the @code{rsh} program to connect
 * Password authenticated::      Direct connections using passwords
 * Kerberos authenticated::      Direct connections with kerberos
 @end menu
+
+@node Server requirements
+@subsection Server requirements
+
+The quick answer to what sort of machine is suitable as
+a server is that requirements are modest---a server
+with 32M of memory or even less can handle a fairly
+large source tree with a fair amount of activity.
+@c Say something about CPU speed too?  I'm even less sure
+@c what to say on that subject...
+
+The real answer, of course, is more complicated.  The
+@sc{cvs} server consists of two processes for each
+client that it is serving.  Memory consumption on the
+child process should remain fairly small.  Memory
+consumption on the parent process, particularly if the
+network connection to the client is slow, can be
+expected to grow to slightly more than the size of the
+sources in a single directory, or two megabytes,
+whichever is larger.
+@c "two megabytes" of course is SERVER_HI_WATER.  But
+@c we don't mention that here because we are
+@c documenting the default configuration of CVS.  If it
+@c is a "standard" thing to change that value, it
+@c should be some kind of run-time configuration.
+@c 
+@c See cvsclient.texi for more on the design decision
+@c to not have locks in place while waiting for the
+@c client, which is what results in memory consumption
+@c as high as this.
+
+Multiplying the size of each @sc{cvs} server by the
+number of servers which you expect to have active at
+one time should give an idea of memory requirements for
+the server.  For the most part, the memory consumed by
+the parent process probably can be swap space rather
+than physical memory.
+@c Has anyone verified that notion about swap space?
+@c I say it based pretty much on guessing that the
+@c ->text of the struct buffer_data only gets accessed
+@c in a first in, first out fashion, but I haven't
+@c looked very closely.
+
+Resource consumption for the client or the
+non-client/server @sc{cvs} is even more modest---any
+machine with enough capacity to run the operating system
+in question should have little trouble.
+@c Probably we could be saying more about this.
+@c I would guess for non-client/server CVS in an NFS
+@c environment the biggest issues is the network and
+@c the NFS server.
 
 @node Connecting via rsh
 @subsection Connecting with rsh
@@ -1540,17 +1602,20 @@ it; for example the Windows NT @code{rsh} is not
 suitable since it by default translates between CRLF
 and LF.  The OS/2 CVS port has a hack to pass @samp{-b}
 to @code{rsh} to get around this, but since this could
-potentially cause programs for programs other than the
+potentially cause problems for programs other than the
 standard @code{rsh}, it may change in the future.  If
 you set @code{CVS_RSH} to @code{SSH} or some other rsh
 replacement, the instructions in the rest of this
 section concerning @file{.rhosts} and so on are likely
-to be incorrect; consult the documentation for your rsh
+to be inapplicable; consult the documentation for your rsh
 replacement.
 @c FIXME: there should be a way to specify the
 @c program in CVSROOT, not CVS_RSH, so that one can use
 @c different ones for different roots.  e.g. ":ext;rsh=remsh:"
 @c instead of ":ext:".
+@c See also the comment in src/client.c for rationale
+@c concerning "rsh" being the default and never
+@c "remsh".
 
 Continuing our example, supposing you want to access
 the module @file{foo} in the repository
@@ -1721,6 +1786,11 @@ Right now, the only way to put a password in the
 @sc{cvs} @file{passwd} file is to paste it there from
 somewhere else.  Someday, there may be a @code{cvs
 passwd} command.
+@c We might also suggest using the @code{htpasswd} command
+@c from freely available web servers as well, but that
+@c would open up a can of worms in that the users next
+@c questions are likely to be "where do I get it?" and
+@c "how do I use it?"
 
 @node Password authentication client
 @subsubsection Using the client with password authentication
@@ -1774,6 +1844,13 @@ The passwords are not stored in cleartext, but are
 trivially encoded to protect them from "innocent"
 compromise (i.e., inadvertently being seen by a system
 administrator who happens to look at that file).
+
+@c FIXME: seems to me this needs somewhat more
+@c explanation.
+@cindex Logout (subcommand)
+The password for the currently choosen remote repository
+can be removed from the CVS_PASSFILE by using the
+@code{cvs logout} command.
 
 The @code{CVS_PASSFILE} environment variable overrides
 this default.  If you use this variable, make sure you
@@ -2112,6 +2189,16 @@ vary).
 @node From scratch
 @subsection Creating a directory tree from scratch
 
+@c Also/instead should be documenting 
+@c $ cvs co -l .
+@c $ mkdir tc
+@c $ cvs add tc
+@c $ cd tc
+@c $ mkdir man
+@c $ cvs add man
+@c etc.
+@c Using import to create the directories only is
+@c probably a somewhat confusing concept.
 For a new project, the easiest thing to do is probably
 to create an empty directory structure, like this:
 
@@ -2204,14 +2291,19 @@ edit the same file simultaneously.  One solution, known
 as @dfn{file locking} or @dfn{reserved checkouts}, is
 to allow only one person to edit each file at a time.
 This is the only solution with some version control
-systems, including @sc{rcs} and @sc{sccs}.  @sc{Cvs}
-doesn't have a very nice implementation of reserved
-checkouts (yet) but there are ways to get it working
-(for example, see the @code{cvs admin -l} command in
-@ref{admin options}).  It also may be possible to use
-the watches features described below, together with
-suitable procedures (not enforced by software), to
-avoid having two people edit at the same time.
+systems, including @sc{rcs} and @sc{sccs}.  Currently
+the usual way to get reserved checkouts with @sc{cvs}
+is the @code{cvs admin -l} command (@pxref{admin
+options}).  This is not as nicely integrated into
+@sc{cvs} as the watch features, described below, but it
+seems that most people with a need for reserved
+checkouts find it adequate.
+@c Or "find it better than worrying about implementing
+@c nicely integrated reserved checkouts" or ...?
+It also may be possible to use the watches
+features described below, together with suitable
+procedures (not enforced by software), to avoid having
+two people edit at the same time.
 
 @c Our unreserved checkout model might not
 @c be quite the same as others.  For example, I
@@ -2231,6 +2323,8 @@ then use @sc{cvs} commands to bring their working copy
 up to date with the repository revision.  This process
 is almost automatic.
 
+@c FIXME? should probably use the word "watch" here, to
+@c tie this into the text below and above.
 @sc{Cvs} also supports mechanisms which facilitate
 various kinds of communcation, without actually
 enforcing rules like reserved checkouts do.
@@ -2238,6 +2332,77 @@ enforcing rules like reserved checkouts do.
 The rest of this chapter describes how these various
 models work, and some of the issues involved in
 choosing between them.
+
+@ignore
+Here is a draft reserved checkout design or discussion
+of the issues.  This seems like as good a place as any
+for this.
+
+Might want a cvs lock/cvs unlock--in which the names
+differ from edit/unedit because the network must be up
+for these to work.  unedit gives an error if there is a
+reserved checkout in place (so that people don't
+accidentally leave locks around); unlock gives an error
+if one is not in place (this is more arguable; perhaps
+it should act like unedit in that case).
+
+On the other hand, might want it so that emacs,
+scripts, etc., can get ready to edit a file without
+having to know which model is in use.  In that case we
+would have a "cvs watch lock" (or .cvsrc?) (that is,
+three settings, "on", "off", and "lock").  Having cvs
+watch lock set would cause a get to record in the CVS
+directory which model is in use, and cause "cvs edit"
+to change behaviors.  We'd want a way to query which
+setting is in effect (this would be handy even if it is
+only "on" or "off" as presently).  If lock is in
+effect, then commit would require a lock before
+allowing a checkin; chmod wouldn't suffice (might be
+debatable--see chmod comment below, in watches--but it
+is the way people expect RCS to work and I can't think
+of any significant downside.  On the other hand, maybe
+it isn't worth bothering, because people who are used
+to RCS wouldn't think to use chmod anyway).
+
+Implementation: use file attributes or use RCS
+locking.  The former avoids more dependence on RCS
+behaviors we will need to reimplement as we librarify
+RCS, and makes it easier to import/export RCS files (in
+that context, want to ignore the locker field).  But
+note that RCS locks are per-branch, which is the
+correct behavior (this is also an issue for the "watch
+on" features; they should be per-branch too).
+
+Here are a few more random notes about implementation
+details, assuming "cvs watch lock" and
+
+CVS/Watched file?  Or try to fit this into CVS/Entries somehow?
+Cases: (1) file is checked out (unreserved or with watch on) by old
+version of CVS, now we do something with new one, (2) file is checked
+out by new version, now we do something with old one.
+
+Remote protocol would have a "Watched" analogous to "Mode".  Of course
+it would apply to all Updated-like requests.  How do we keep this
+setting up to date?  I guess that there wants to be a Watched request,
+and the server would send a new one if it isn't up to date? (Ugh--hard
+to implement and slows down "cvs -q update"--is there an easier way?)
+
+"cvs edit"--checks CVS/Watched, and if watch lock, then sends
+"edit-lock" request.  Which comes back with a Checked-in with
+appropriate Watched (off, on, lock, locked, or some such?), or error
+message if already locked.
+
+"cvs commit"--only will commit if off/on/locked.  lock is not OK.
+
+Doc:
+note that "cvs edit" must be connected to network if watch lock is in
+effect.
+
+Talk about what to do if someone has locked a file and you want to
+edit that file.  (breaking locks, or lack thereof).
+
+
+@end ignore
 
 @menu
 * File status::                 A file can be in several states
@@ -2316,10 +2481,14 @@ sending an entire file accomplishes the same thing.
 Someone else has committed a newer revision to the repository, and you
 have also made modifications to the file.
 
-@item Unresolved Conflict
-@cindex Unresolved Conflict
+@item File had conflicts on merge
+@cindex File had conflicts on merge
+@c is it worth saying that this message was "Unresolved
+@c Conflict" in CVS 1.9 and earlier?  I'm inclined to
+@c think that is unnecessarily confusing to new users.
 This is like Locally Modified, except that a previous
-@code{update} command gave a conflict.  You need to
+@code{update} command gave a conflict.  If you have not
+already done so, you need to
 resolve the conflict as described in @ref{Conflicts example}.
 
 @item Unknown
@@ -2643,6 +2812,17 @@ the locks prevent other people from reading or writing.
 
 @cindex Atomic transactions, lack of
 @cindex Transactions, atomic, lack of
+@c the following talks about what one might call commit/update
+@c atomicity.
+@c Probably also should say something about
+@c commit/commit atomicity, that is, "An update will
+@c not get partial versions of more than one commit".
+@c CVS currently has this property and I guess we can
+@c make it a documented feature.
+@c For example one person commits
+@c a/one.c and b/four.c and another commits a/two.c and
+@c b/three.c.  Then an update cannot get the new a/one.c
+@c and a/two.c and the old b/four.c and b/three.c.
 One might hope for the following property
 
 @example
@@ -4171,6 +4351,19 @@ The examples below assume that the file @var{old} is renamed to
 @node Outside
 @section The Normal way to Rename
 
+@c More rename issues.  Not sure whether these are
+@c worth documenting; I'm putting them here because
+@c it seems to be as good a place as any to try to
+@c set down the issues.
+@c * "cvs annotate" will annotate either the new
+@c file or the old file; it cannot annotate _each
+@c line_ based on whether it was last changed in the
+@c new or old file.  Unlike "cvs log", where the
+@c consequences of having to select either the new
+@c or old name seem fairly benign, this may be a
+@c real advantage to having CVS know about renames
+@c other than as a deletion and an addition.
+
 The normal way to move a file is to copy @var{old} to
 @var{new}, and then issue the normal @sc{cvs} commands
 to remove @var{old} from the repository, and add
@@ -5452,6 +5645,44 @@ slightly different way; @pxref{history options}).
 @c getdate.y (just for our info; we don't want to
 @c attempt to document all the formats accepted by
 @c getdate.y).
+@c 
+@c One more note: In output, CVS should consistently
+@c use one date format, and that format should be one that
+@c it accepts in input as well.  The former isn't
+@c really true (see survey below), and I'm not
+@c sure that either of those formats is accepted in
+@c input. 
+@c 
+@c cvs log
+@c   current 1996/01/02 13:45:31
+@c   Internet 02 Jan 1996 13:45:31 UT
+@c   ISO 1996-01-02 13:45:31
+@c cvs ann
+@c   current 02-Jan-96
+@c   Internet-like 02 Jan 96
+@c   ISO 96-01-02
+@c cvs status
+@c   current Tue Jun 11 02:54:53 1996
+@c   Internet [Tue,] 11 Jun 1996 02:54:53
+@c   ISO 1996-06-11 02:54:53
+@c   note: date possibly should be omitted entirely for
+@c   other reasons.
+@c any others?
+@c There is a good chance the proper solution has to
+@c involve at least some level of letting the user
+@c decide which format (with the default being the
+@c formats CVS has always used; changing these might be
+@c _very_ disruptive since scripts may very well be
+@c parsing them).
+@c
+@c Another random bit of prior art concerning dates is
+@c the strptime function which takes templates such as
+@c "%m/%d/%y", and apparent a variant of getdate()
+@c which also honors them.  See
+@c X/Open CAE Specification, System Interfaces and
+@c Headers Issue 4, Version 2 (September 1994), in the
+@c entry for getdate() on page 231
+
 @cindex timezone, in input
 @cindex zone, time, in input
 A wide variety of date formats are supported by
@@ -5690,6 +5921,9 @@ all its options and arguments to the @code{rcs} command; it does
 no filtering or other processing.  This command @emph{does} work
 recursively, however, so extreme care should be used.
 
+@c "group" should probably read "unix group" (but what
+@c does NT local do?).  "compiled in value" is
+@c unclear--compiled in to what?
 If there is a group whose name matches a compiled in
 value which defaults to @code{cvsadmin}, only members
 of that group can use @code{cvs admin}.  To disallow
@@ -6270,14 +6504,11 @@ cannot commit to a specific revision on a branch.
 
 @table @code
 @item -F @var{file}
-This option is present in @sc{cvs} releases 1.3-s3 and
-later.  Read the log message from @var{file}, instead
+Read the log message from @var{file}, instead
 of invoking an editor.
 
 @item -f
-@c -- rename-f-F--
-This option is present in @sc{cvs} 1.3-s3 and later releases
-of @sc{cvs}.  Note that this is not the standard behavior of
+Note that this is not the standard behavior of
 the @samp{-f} option as defined in @xref{Common options}.
 
 Force @sc{cvs} to commit a new revision even if you haven't
@@ -6290,14 +6521,12 @@ $ cvs commit -f @var{file}
 $ cvs commit -r 1.8 @var{file}
 @end example
 
-@item -f @var{file}
-@c -- rename-f-F--
-This option is present in @sc{cvs} releases 1.3, 1.3-s1 and
-1.3-s2.  Note that this is not the standard behavior of
-the @samp{-f} option as defined in @xref{Common options}.
-
-Read the log message from @var{file}, instead
-of invoking an editor.
+@c This is odd, but it's how CVS has worked for some
+@c time.
+The @samp{-f} option disables recursion (i.e., it
+implies @samp{-l}).  To force @sc{cvs} to commit a new
+revision for all files in all subdirectories, you must
+use @samp{-f -R}.
 
 @item -m @var{message}
 Use @var{message} as the log message, instead of
@@ -6460,14 +6689,6 @@ them):
 Use the most recent revision no later than @var{date}.
 See @samp{-r} for how this affects the comparison.
 
-@sc{cvs} can be configured to pass the @samp{-D} option
-through to @code{rcsdiff} (which in turn passes it on
-to @code{diff}.  @sc{Gnu} diff uses @samp{-D} as a way to
-put @code{cpp}-style @samp{#define} statements around the output
-differences.  There is no way short of testing to
-figure out how @sc{cvs} was configured.  In the default
-configuration @sc{cvs} will use the @samp{-D @var{date}} option.
-
 @item -k @var{kflag}
 Process @sc{rcs} keywords according to @var{kflag}.  See
 co(1).
@@ -6491,18 +6712,72 @@ outcome in any way).
 
 One or both @samp{-r} options can be replaced by a
 @samp{-D @var{date}} option, described above.
+
+@item --ifdef=@var{arg}
+Output in ifdef format.  Consult the documentation of
+your underlying diff program concerning the @samp{-D}
+option to diff, for more information on this format.
 @end table
 
-Any other options that are found are passed through to
+@c FIXME?  Probably should document -c here, and
+@c perhaps arrange for CVS to support it via a diff library or
+@c some such.  Or perhaps figure that "all" diff
+@c programs support -c?  Ideas is to preserve the
+@c ability to pass the buck to diff on all the hairy
+@c stuff, while still providing at least one, and
+@c perhaps several popular standard formats.  But this
+@c is all in the idea stage, and probably needs more
+@c thought and refinement.  -u might be similar, in
+@c terms of being something that it might make sense to
+@c document here.
+@c FIXME: also should be a way to pass through
+@c arbitrary options, so that the user can do
+@c "--pass=-Z --pass=foo" or something even if CVS
+@c doesn't know about the -Z option to diff.
+@c Note on -N: The current CVS implementation does require that the
+@c underlying diff supports -N so we can document it as
+@c a pass-through even if the implementation details
+@c are more complicated.
+@c
+@c FIXME? Reference to discussion of which diff CVS
+@c uses (one in path, or....).
+The following options are passed through to
 @code{rcsdiff}, which in turn passes them to
 @code{diff}.  The exact meaning of the options depends
-on which @code{diff} you are using.  The long options
-introduced in @sc{gnu} diff 2.0 are not yet supported in
-@sc{cvs}.  See the documentation for your @code{diff} to see
-which options are supported.
+on which @code{diff} you are using.  See the
+documentation for your @code{diff} for details.
 
-@c -- Document some common useful diff options, such as
-@c -u and -c.
+@code{-a} @code{-b} @code{-B} @code{-c} @w{@code{-C}
+@var{nlines}} @code{-d} @code{-e} @code{-f} @code{-h}
+@code{-H} @code{-i} @code{-n} @code{-N} @code{-p}
+@code{-s} @code{-t} @code{-u} @code{-U} @var{nlines}
+@w{@code{-F} @var{regexp}} @w{@code{-I} @var{regexp}}
+@w{@code{-L} @var{label}} @code{-T} @w{@code{-V}
+@var{arg}} @w{@code{-W} @var{columns}} @code{-w}
+@code{-y} @code{-0} @code{-1} @code{-2} @code{-3}
+@code{-4} @code{-5} @code{-6} @code{-7} @code{-8}
+@code{-9} @code{--binary} @code{--brief}
+@code{--changed-group-format=@var{arg}}
+@code{--context[=@var{lines}]} @code{--ed}
+@code{--expand-tabs} @code{--forward-ed}
+@code{--horizon-lines=@var{arg}}
+@code{--ignore-all-space} @code{--ignore-blank-lines}
+@code{--ignore-case}
+@code{--ignore-matching-lines=@var{regexp}}
+@code{--ignore-space-change} @code{--initial-tab}
+@code{--label=@var{label}} @code{--left-column}
+@code{--minimal} @code{--new-file}
+@code{--new-line-format=@var{arg}}
+@code{--old-line-format=@var{arg}} @code{--paginate}
+@code{--rcs} @code{--report-identical-files}
+@code{--code-c-function} @code{--side-by-side}
+@code{--show-function-line=@var{regexp}}
+@code{--speed-large-files}
+@code{--suppress-common-lines} @code{--text}
+@code{--unchanged-group-format=@var{arg}}
+@code{--unified[=@var{lines}]}
+@code{--width=@var{columns}}
+
 @c . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 @node diff examples
 @appendixsubsec diff examples
@@ -6954,12 +7229,22 @@ you will have to merge the changes.
 @item I @var{file}
 The file is being ignored (@pxref{cvsignore}).
 
+@cindex symbolic link, importing
+@cindex link, symbolic, importing
+@c FIXME: also (somewhere else) probably
+@c should be documenting what happens if you "cvs add"
+@c a symbolic link.  Also maybe what happens if
+@c you manually create symbolic links within the
+@c repository (? - not sure why we'd want to suggest
+@c doing that).
 @item L @var{file}
-The file is a symbolic link; at the moment (and for the forseeable
-future), symbolic links are ignored.
+The file is a symbolic link; @code{cvs import} ignores symbolic links.
+People periodically suggest that this behavior should
+be changed, but if there is a consensus on what it
+should be changed to, it doesn't seem to be apparent.
 (Various options in the @file{modules} file can be used
 to recreate symbolic links on checkout, update, etc.;
-@pxref{modules}.)
+@pxref{modules}.)  
 @end table
 
 @c . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
@@ -8333,6 +8618,10 @@ Only list revisions checked in by specified logins.  See @ref{log options}.
 Prompt for password for authenticating server.  See
 @ref{Password authentication client}.
 
+@item logout
+Remove stored password for authenticating server.  See
+@ref{Password authentication client}.
+
 @item rdiff [@var{options}] @var{modules}@dots{}
 Show differences between releases.  See @ref{rdiff}.
 
@@ -8785,8 +9074,7 @@ this module.
 @c problems, then explain how the feature solves it).
 
 Wrappers allow you to set a hook which transforms files on
-their way in and out of @sc{cvs}.  Most or all of the
-wrappers features do not work with client/server @sc{cvs}.
+their way in and out of @sc{cvs}.
 
 The file @file{cvswrappers} defines the script that will be
 run on a file when its name matches a regular
@@ -8795,7 +9083,8 @@ file or directory. One script is executed on the file/directory
 before being checked into the repository (this is denoted
 with the @code{-t} flag) and the other when the file is
 checked out of the repository (this is denoted with the
-@code{-f} flag)
+@code{-f} flag).  The @samp{-t}/@samp{-f} feature does
+not work with client/server @sc{cvs}.
 
 The @file{cvswrappers} also has a @samp{-m} option to
 specify the merge methodology that should be used when
@@ -8865,6 +9154,21 @@ The @code{-f} filter is called with one argument,
 which is the name of the file to filter from. The end
 result of this filter will be a file in the users directory
 that they can work on as they normally would.
+
+Note that the @samp{-t}/@samp{-f} features do not
+conveniently handle one portion of CVS's operation:
+determining when files are modified.  CVS will still
+want a file (or directory) to exist, and it will use
+its modification time to determine whether a file is
+modified.  If CVS erroneously thinks a file is
+unmodified (for example, a directory is unchanged but
+one of the files within it is changed), you can force
+it to check in the file anyway by specifying the
+@samp{-f} option to @code{cvs commit} (@pxref{commit
+options}).
+@c This is, of course, a serious design flaw in -t/-f.
+@c Probably the whole functionality needs to be
+@c redesigned (starting from requirements) to fix this.
 
 For another example, the following command imports a
 directory, treating files whose name ends in
@@ -9405,6 +9709,7 @@ like this:
 @c words for this functionality.
 @cindex keeping a checked out copy
 @cindex checked out copy, keeping
+@cindex web pages, maintaining with CVS
 
 It is often useful to maintain a directory tree which
 contains files which correspond to the latest version
@@ -9725,9 +10030,7 @@ directory.
 Specifies the program to use for recording log messages
 during commit.  If not set, the default is
 @samp{/usr/ucb/vi}.  @code{$CVSEDITOR} overrides
-@code{$EDITOR}.  @code{$CVSEDITOR} does not exist in
-@sc{cvs} 1.3, but the next release will probably
-include it.
+@code{$EDITOR}.
 
 @cindex PATH
 @item $PATH
@@ -9877,6 +10180,10 @@ argument lists of most @sc{rcs} commands.
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 @node Magic branch numbers
 @appendixsec Magic branch numbers
+
+@c Where does this go?  I think probably in with
+@c the details of where things are stored in the
+@c repository (plus an xref from "log" and "admin").
 
 Externally, branch numbers consist of an odd number of
 dot-separated decimal integers.  @xref{Revision

@@ -36,6 +36,14 @@
 #define _cwait          cwait
 #endif
 
+/* Some more WATCOM stuff: The watcom compiler defines va_list as an array,
+ * not as a pointer, which will make the vasprintf code break without the
+ * following define:
+ */
+#ifdef  __WATCOMC__
+#define VA_LIST_IS_ARRAY
+#endif
+
 /* Define if on AIX 3.
    System headers sometimes define this.
    We just want to avoid a redefinition error message.  */
@@ -132,16 +140,6 @@
 /* We don't need this for CLIENT side.  */
 #undef DIFF
 
-/* the path to the gnu grep program on your system  */
-/* We don't need this for CLIENT side.  */
-#undef GREP
-
-/* The number of bytes in a int.  */
-#define SIZEOF_INT 4
-
-/* The number of bytes in a long.  */
-#define SIZEOF_LONG 4
-
 /* Define if you have the connect function.  */
 /* Not used?  */
 /* It appears to be used in client.c now... don't know yet it OS/2 has it. */
@@ -173,9 +171,6 @@
 
 /* Define if you have the putenv function.  */
 #define HAVE_PUTENV 1
-
-/* Define if you have the setvbuf function.  */
-#define HAVE_SETVBUF 1
 
 /* Define if you have the sigaction function.  */
 #undef HAVE_SIGACTION
@@ -288,6 +283,10 @@
 /* Under OS/2, mkdir only takes one argument.  */
 #define CVS_MKDIR os2_mkdir
 extern int os2_mkdir (const char *PATH, int MODE);
+
+/* OS/2 needs a special chdir functions that handles drives */
+#define CVS_CHDIR os2_chdir
+extern int os2_chdir (const char *Dir);
 
 /* This function doesn't exist under OS/2; we provide a stub. */
 extern int readlink (char *path, char *buf, int buf_size);

@@ -13,3 +13,6 @@
 
 /* Define if you want encryption support.  */
 #undef ENCRYPTION
+
+/* Define if you have the connect function.  */
+#undef HAVE_CONNECT

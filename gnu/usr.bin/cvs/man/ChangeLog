@@ -1,3 +1,7 @@
+Wed Feb 12 14:20:43 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* Makefile.in (install): Depend on installdirs.
+
 Thu Jan  2 13:30:56 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* Makefile.in, cvsbug.8: Remove "675" paragraph;

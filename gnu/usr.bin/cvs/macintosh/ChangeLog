@@ -1,3 +1,29 @@
+Wed Mar 12 16:10:01 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* config.h (HAVE_SETVBUF): Removed; no longer used.
+
+Mon Mar 10 15:28:07 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* Makefile.in (dist-dir): Don't distribute Makefile.  I don't know
+	why we were distributing it in the first place (aping the OS/2
+	port?  If so the two _are_ different; that OS/2 port uses Makefile
+	for builds).
+
+Sun Mar  2 21:56:28 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README.MacCVS: Be a little more explicit about what
+	MacCVS68k.sit.hqx and MacCVSPPC.sit.hqx are; at least one user got
+	confused and throught they were CVS executables.
+
+Wed Jan 29 18:26:09 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* options.h (GREP): Removed; no longer used.
+
+Tue Jan 28 18:29:03 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* config.h: Remove SIZEOF_INT and SIZEOF_LONG; no longer needed
+	with lib/md5.c changes.
+
 Thu Jan  2 13:42:14 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* filesubr.c, pwd.c: Remove "675" paragraph;

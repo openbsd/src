@@ -33,6 +33,8 @@ SOURCES = \
 DISTFILES = ${HEADERS} ${SOURCES} \
   README ChangeLog Makefile.in .cvsignore
 
+SUBDIRS=SCC
+
 all:
 
 .PHONY: all install uninstall
@@ -62,6 +64,9 @@ dist-dir:
 	mkdir ${DISTDIR}
 	for i in ${DISTFILES}; do \
 	  ln $(srcdir)/$${i} ${DISTDIR}; \
+	done
+	for i in ${SUBDIRS}; do \
+	  cd $${i}; ${MAKE} dist-dir DISTDIR="../${DISTDIR}/$${i}"; \
 	done
 
 clean:

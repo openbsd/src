@@ -56,6 +56,43 @@ xrealloc (ptr, bytes)
     return (cp);
 }
 
+/* Two constants which tune expand_string.  Having MIN_INCR as large
+   as 1024 might waste a bit of memory, but it shouldn't be too bad
+   (CVS used to allocate arrays of, say, 3000, PATH_MAX (8192, often),
+   or other such sizes).  Probably anything which is going to allocate
+   memory which is likely to get as big as MAX_INCR shouldn't be doing
+   it in one block which must be contiguous, but since getrcskey does
+   so, we might as well limit the wasted memory to MAX_INCR or so
+   bytes.  */
+
+#define MIN_INCR 1024
+#define MAX_INCR (2*1024*1024)
+
+/* *STRPTR is a pointer returned from malloc (or NULL), pointing to *N
+   characters of space.  Reallocate it so that points to at least
+   NEWSIZE bytes of space.  Gives a fatal error if out of memory;
+   if it returns it was successful.  */
+void
+expand_string (strptr, n, newsize)
+    char **strptr;
+    size_t *n;
+    size_t newsize;
+{
+    if (*n < newsize)
+    {
+	while (*n < newsize)
+	{
+	    if (*n < MIN_INCR)
+		*n += MIN_INCR;
+	    else if (*n > MAX_INCR)
+		*n += MAX_INCR;
+	    else
+		*n *= 2;
+	}
+	*strptr = xrealloc (*strptr, *n);
+    }
+}
+
 /*
  * Duplicate a string, calling xmalloc to allocate some dynamic space
  */
@@ -85,7 +122,7 @@ strip_trailing_newlines (str)
 }
 
 /*
- * Recover the space allocated by Find_Names() and line2argv()
+ * Recover the space allocated by line2argv()
  */
 void
 free_names (pargc, argv)
@@ -98,26 +135,40 @@ free_names (pargc, argv)
     {					/* only do through *pargc */
 	free (argv[i]);
     }
+    free (argv);
     *pargc = 0;				/* and set it to zero when done */
 }
 
-/*
- * Convert a line into argc/argv components and return the result in the
- * arguments as passed.  Use free_names() to return the memory allocated here
- * back to the free pool.
- */
+/* Convert LINE into arguments separated by space and tab.  Set *ARGC
+   to the number of arguments found, and (*ARGV)[0] to the first argument,
+   (*ARGV)[1] to the second, etc.  *ARGV is malloc'd and so are each of
+   (*ARGV)[0], (*ARGV)[1], ...  Use free_names() to return the memory
+   allocated here back to the free pool.  */
 void
 line2argv (pargc, argv, line)
     int *pargc;
-    char **argv;
+    char ***argv;
     char *line;
 {
     char *cp;
+    /* Could make a case for size_t or some other unsigned type, but
+       we'll stick with int to avoid signed/unsigned warnings when
+       comparing with *pargc.  */
+    int argv_allocated;
+
+    /* Small for testing.  */
+    argv_allocated = 1;
+    *argv = (char **) xmalloc (argv_allocated * sizeof (**argv));
 
     *pargc = 0;
     for (cp = strtok (line, " \t"); cp; cp = strtok ((char *) NULL, " \t"))
     {
-	argv[*pargc] = xstrdup (cp);
+	if (*pargc == argv_allocated)
+	{
+	    argv_allocated *= 2;
+	    *argv = xrealloc (*argv, argv_allocated * sizeof (**argv));
+	}
+	(*argv)[*pargc] = xstrdup (cp);
 	(*pargc)++;
     }
 }
@@ -193,15 +244,21 @@ gca (rev1, rev2)
     char *rev2;
 {
     int dots;
-    char gca[PATH_MAX];
+    char *gca;
     char *p[2];
     int j[2];
+    char *retval;
 
     if (rev1 == NULL || rev2 == NULL)
     {
 	error (0, 0, "sanity failure in gca");
 	abort();
     }
+
+    /* The greatest common ancestor will have no more dots, and numbers
+       of digits for each component no greater than the arguments.  Therefore
+       this string will be big enough.  */
+    gca = xmalloc (strlen (rev1) + strlen (rev2) + 100);
 
     /* walk the strings, reading the common parts. */
     gca[0] = '\0';
@@ -290,7 +347,9 @@ gca (rev1, rev2)
 	*s = '\0';
     }
 
-    return (xstrdup (gca));
+    retval = xstrdup (gca);
+    free (gca);
+    return retval;
 }
 
 /*

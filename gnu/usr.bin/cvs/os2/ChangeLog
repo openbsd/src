@@ -1,3 +1,37 @@
+Wed Mar 12 16:10:01 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* config.h (HAVE_SETVBUF): Removed; no longer used.
+
+Mon Feb 10 20:01:20 1997  Ullrich von Bassewitz <uz@musoftware.com>
+
+	* filesubr.c: Add an OS/2 specific chdir function that will not
+        only change the path but will also make the drive current that
+        is given in the argument string.
+        config.h: #define the macro CVS_CHDIR to os2_chdir so cvs will
+        use the os2_chdir function instead of chdir.
+
+Mon Feb 10 18:29:04 1997  Ullrich von Bassewitz <uz@musoftware.com>
+
+	* config.h: Define VA_LIST_IS_ARRAY so that vasprintf will work
+	correctly with the watcom compiler.
+
+Sun Feb  9 20:17:41 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README: Most of the compiler warnings are gone.
+
+1997-02-09  Jim Kingdon  <kingdon@cyclic.com>
+
+	* popen.h: Arguments to popen are const char * not char *.
+
+Wed Jan 29 18:27:11 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* options.h, config.h (GREP): Remove; no longer used.
+
+Tue Jan 28 18:29:03 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* config.h: Remove SIZEOF_INT and SIZEOF_LONG; no longer needed
+	with lib/md5.c changes.
+
 Wed Jan 15 23:56:12 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* watcom.mak (OS2_OBJECTS): Remove strippath.

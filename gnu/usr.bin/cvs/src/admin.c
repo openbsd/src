@@ -38,6 +38,7 @@ admin (argc, argv)
     int err;
 #ifdef CVS_ADMIN_GROUP
     struct group *grp;
+    struct group *getgrnam();
 #endif
     if (argc <= 1)
 	usage (admin_usage);
@@ -77,8 +78,6 @@ admin (argc, argv)
     av = argv + 1;
     argv += ac;
     ac--;
-    if (ac == 0 || argc == 0)
-	usage (admin_usage);
 
 #ifdef CLIENT_SUPPORT
     if (client_active)
@@ -97,7 +96,7 @@ admin (argc, argv)
 	/* FIXME:  We shouldn't have to send current files, but I'm not sure
 	   whether it works.  So send the files --
 	   it's slower but it works.  */
-	send_files (argc, argv, 0, 0, 0);
+	send_files (argc, argv, 0, 0, 0, 0);
 	send_to_server ("admin\012", 0);
         return get_responses_and_close ();
     }

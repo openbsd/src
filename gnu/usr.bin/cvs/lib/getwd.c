@@ -27,5 +27,7 @@ char *
 getwd (pathname)
      char *pathname;
 {
+  char *getcwd();
+
   return (getcwd(pathname, PATH_MAX));
 }
