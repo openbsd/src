@@ -157,7 +157,7 @@ uvm_useracc(addr, len, rw)
 	boolean_t rv;
 	vm_prot_t prot = rw == B_READ ? VM_PROT_READ : VM_PROT_WRITE;
 
-#if defined(i386) || defined(pc532)
+#if (defined(i386) || defined(pc532)) && !defined(PMAP_NEW)
 	/*
 	 * XXX - specially disallow access to user page tables - they are
 	 * in the map.  This is here until i386 & pc532 pmaps are fixed...
