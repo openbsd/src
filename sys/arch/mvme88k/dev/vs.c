@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.46 2004/07/19 20:34:59 miod Exp $	*/
+/*	$OpenBSD: vs.c,v 1.47 2004/07/19 20:35:37 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -483,7 +483,7 @@ vs_getiopb(struct vs_softc *sc)
 int
 vs_initialize(struct vs_softc *sc)
 {
-	int i, msr;
+	int i, msr, dbid;
 
 	/*
 	 * Reset the board, and wait for it to get ready.
@@ -511,7 +511,22 @@ vs_initialize(struct vs_softc *sc)
 
 	/* initialize channels id */
 	sc->sc_pid = csb_read(1, CSB_PID);
-	sc->sc_sid = csb_read(1, CSB_SID);
+	sc->sc_sid = -1;
+	switch (dbid = csb_read(1, CSB_DBID)) {
+	case DBID_SCSI2:
+	case DBID_SCSI:
+		printf("daughter board, ");
+		sc->sc_sid = csb_read(1, CSB_SID);
+		break;
+	case DBID_PRINTER:
+		printf("printer port, ");
+		break;
+	case DBID_NONE:
+		break;
+	default:
+		printf("unknown daughterboard id %x, ", dbid);
+		break;
+	}
 
 	CRB_CLR_DONE;
 	mcsb_write(2, MCSB_QHDP, 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsreg.h,v 1.10 2004/07/19 20:31:51 miod Exp $	*/
+/*	$OpenBSD: vsreg.h,v 1.11 2004/07/19 20:35:37 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -202,7 +202,11 @@
 #define	CSB_LSDS		0x000025	/* last secondary device selected */
 #define	CSB_PPS			0x000026	/* primary phase sense */
 #define	CSB_SPS			0x000027	/* secondary phase sense */
-#define	CSB_DBIB		0x000029	/* daughter board id */
+#define	CSB_DBID		0x000029	/* daughter board id */
+#define	DBID_SCSI2	0x02			/* modern SCSI ??? */
+#define	DBID_PRINTER	0x04			/* printer daughter board */
+#define	DBID_SCSI	0x06			/* SCSI daugter board */
+#define	DBID_NONE	0x07			/* no daughter board */
 #define	CSB_SDS			0x00002b	/* software DIP switch */
 #define	CSB_FWQR		0x00002e	/* frozen work queues register */
 #define	CSB_SIZE		0x000078
