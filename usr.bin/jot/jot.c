@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.10 2002/05/29 18:33:38 deraadt Exp $	*/
+/*	$OpenBSD: jot.c,v 1.11 2003/01/12 02:45:28 beck Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)jot.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: jot.c,v 1.10 2002/05/29 18:33:38 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: jot.c,v 1.11 2003/01/12 02:45:28 beck Exp $";
 #endif /* not lint */
 
 /*
@@ -281,7 +281,7 @@ main(argc, argv)
 	if (randomize) {
 		*x = (ender - begin) * (ender > begin ? 1 : -1);
 		for (*i = 1; *i <= reps || infinity; (*i)++) {
-			*y = (double) arc4random() / ULONG_MAX;
+			*y = (double) arc4random() / UINT_MAX;
 			putdata(*y * *x + begin, reps - *i);
 		}
 	}
