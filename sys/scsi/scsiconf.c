@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.35 1998/03/18 21:56:46 deraadt Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.36 1998/04/25 00:25:26 deraadt Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -357,7 +357,9 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
 	 "TOSHIBA ", "XM-4101TASUNSLCD", "1755"}, SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,  
-	 "ShinaKen", "CD-ROM DM-3x1S", "1.04"}, SDEV_NOLUNS},  
+	 "ShinaKen", "CD-ROM DM-3x1S", "1.04"},   SDEV_NOLUNS},
+	{{T_CDROM, T_REMOV,
+	 "JVC     ", "R2626           ", "1.55"}, SDEV_NOLUNS},
 
  	{{T_OPTICAL, T_REMOV,
  	 "EPSON   ", "OMD-5010        ", "3.08"}, SDEV_NOLUNS},
@@ -438,6 +440,10 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_DIRECT, T_FIXED,
 	 "SEAGATE ", "ST296N          ", ""},     SDEV_NOLUNS},
 	{{T_DIRECT, T_FIXED,
+	 "SEAGATE ", "ST19171FC", ""},            SDEV_NOMODESENSE},
+	{{T_DIRECT, T_FIXED,
+	 "SEAGATE ", "ST34501FC       ", ""},     SDEV_NOMODESENSE},
+        {{T_DIRECT, T_FIXED,
 	 "TOSHIBA ", "MK538FB         ", "6027"}, SDEV_NOLUNS},
 	{{T_DIRECT, T_REMOV,
 	 "iomega", "jaz 1GB",		 ""},	  SDEV_NOMODESENSE|SDEV_NOTAGS},
