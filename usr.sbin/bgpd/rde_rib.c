@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.57 2004/08/12 10:24:16 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.58 2004/08/13 14:03:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -487,6 +487,24 @@ prefix_remove(struct rde_peer *peer, struct bgpd_addr *prefix, int prefixlen)
 		pt_remove(pte);
 	if (path_empty(asp))
 		path_destroy(asp);
+}
+
+/* dump a prefix into specified buffer */
+int
+prefix_write(u_char *buf, int len, struct bgpd_addr *prefix, u_int8_t plen)
+{
+	int	totlen;
+
+	if (prefix->af != AF_INET)
+		return (-1);
+
+	totlen = PREFIX_SIZE(plen);
+
+	if (totlen > len)
+		return (-1);
+	*buf++ = plen;
+	memcpy(buf, &prefix->ba, totlen - 1);
+	return (totlen);
 }
 
 /*

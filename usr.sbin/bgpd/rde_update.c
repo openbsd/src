@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.28 2004/08/10 12:57:18 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.29 2004/08/13 14:03:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -26,8 +26,6 @@
 
 int	up_generate_attr(struct rde_peer *, struct update_attr *,
 	    struct rde_aspath *);
-int	up_set_prefix(u_char *, int, struct bgpd_addr *, u_int8_t);
-
 
 /* update stuff. */
 struct update_prefix {
@@ -707,23 +705,6 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 	return (wlen);
 }
 
-int
-up_set_prefix(u_char *buf, int len, struct bgpd_addr *prefix, u_int8_t plen)
-{
-	int	totlen;
-
-	if (prefix->af != AF_INET)
-		return (-1);
-
-	totlen = (plen + 7) / 8 + 1;
-
-	if (totlen > len)
-		return (-1);
-	*buf++ = plen;
-	memcpy(buf, &prefix->v4.s_addr, totlen - 1);
-	return (totlen);
-}
-
 #define MIN_PREFIX_LEN	5	/* 1 byte prefix length + 4 bytes addr */
 int
 up_dump_prefix(u_char *buf, int len, struct uplist_prefix *prefix_head,
@@ -733,7 +714,7 @@ up_dump_prefix(u_char *buf, int len, struct uplist_prefix *prefix_head,
 	int			 r, wpos = 0;
 
 	while ((upp = TAILQ_FIRST(prefix_head)) != NULL) {
-		if ((r = up_set_prefix(buf + wpos, len - wpos,
+		if ((r = prefix_write(buf + wpos, len - wpos,
 		    &upp->prefix, upp->prefixlen)) == -1)
 			break;
 		wpos += r;

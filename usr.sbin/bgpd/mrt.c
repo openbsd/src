@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.43 2004/08/11 16:48:45 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.44 2004/08/13 14:03:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -32,11 +32,13 @@
 
 #include "mrt.h"
 
-static u_int16_t	mrt_attr_length(struct rde_aspath *);
+static u_int16_t	mrt_attr_length(struct rde_aspath *, int);
 static int		mrt_attr_dump(void *, u_int16_t, struct rde_aspath *,
 			    struct bgpd_addr *);
+static int		mrt_dump_entry_mp(struct mrt *, struct prefix *,
+			    u_int16_t, struct rde_peer*);
 static int		mrt_dump_entry(struct mrt *, struct prefix *,
-			    u_int16_t, struct peer_config *);
+			    u_int16_t, struct rde_peer*);
 static int		mrt_dump_header(struct buf *, u_int16_t, u_int16_t,
 			    u_int32_t);
 static int		mrt_open(struct mrt *, time_t);
@@ -90,7 +92,16 @@ mrt_dump_bgp_msg(struct mrt *mrt, void *pkg, u_int16_t pkglen,
 	struct buf	*buf;
 	u_int16_t	 len;
 
-	len = pkglen + MRT_BGP4MP_HEADER_SIZE;
+	switch (peer->sa_local.ss_family) {
+	case AF_INET:
+		len = pkglen + MRT_BGP4MP_IPv4_HEADER_SIZE;
+		break;
+	case AF_INET6:
+		len = pkglen + MRT_BGP4MP_IPv6_HEADER_SIZE;
+		break;
+	default:
+		return (-1);
+	}
 
 	if ((buf = buf_open(len + MRT_HEADER_SIZE)) == NULL) {
 		log_warnx("mrt_dump_bgp_msg: buf_open error");
@@ -148,7 +159,16 @@ mrt_dump_state(struct mrt *mrt, u_int16_t old_state, u_int16_t new_state,
 	struct buf	*buf;
 	u_int16_t	 len;
 
-	len = 4 + MRT_BGP4MP_HEADER_SIZE;
+	switch (peer->sa_local.ss_family) {
+	case AF_INET:
+		len = 4 + MRT_BGP4MP_IPv4_HEADER_SIZE;
+		break;
+	case AF_INET6:
+		len = 4 + MRT_BGP4MP_IPv6_HEADER_SIZE;
+		break;
+	default:
+		return (-1);
+	}
 
 	if ((buf = buf_open(len + MRT_HEADER_SIZE)) == NULL) {
 		log_warnx("mrt_dump_bgp_state: buf_open error");
@@ -197,12 +217,14 @@ mrt_dump_state(struct mrt *mrt, u_int16_t old_state, u_int16_t new_state,
 }
 
 static u_int16_t
-mrt_attr_length(struct rde_aspath *a)
+mrt_attr_length(struct rde_aspath *a, int oldform)
 {
 	struct attr	*oa;
 	u_int16_t	 alen, plen;
 
-	alen = 4 /* origin */ + 7 /* nexthop */ + 7 /* lpref */;
+	alen = 4 /* origin */ + 7 /* lpref */;
+	if (oldform)
+		alen += 7 /* nexthop */;
 	plen = aspath_length(a->aspath);
 	alen += 2 + plen + (plen > 255 ? 2 : 1);
 	if (a->med != 0)
@@ -237,11 +259,13 @@ mrt_attr_dump(void *p, u_int16_t len, struct rde_aspath *a,
 		return (-1);
 	wlen += r; len -= r;
 
-	/* nexthop, already network byte order */
-	if ((r = attr_write(buf + wlen, len, ATTR_WELL_KNOWN, ATTR_NEXTHOP,
-	    &nexthop->v4.s_addr, 4)) ==	-1)
-		return (-1);
-	wlen += r; len -= r;
+	if (nexthop) {
+		/* nexthop, already network byte order */
+		if ((r = attr_write(buf + wlen, len, ATTR_WELL_KNOWN,
+		    ATTR_NEXTHOP, &nexthop->v4.s_addr, 4)) ==	-1)
+			return (-1);
+		wlen += r; len -= r;
+	}
 
 	/* MED, non transitive */
 	if (a->med != 0) {
@@ -271,15 +295,151 @@ mrt_attr_dump(void *p, u_int16_t len, struct rde_aspath *a,
 }
 
 static int
+mrt_dump_entry_mp(struct mrt *mrt, struct prefix *p, u_int16_t snum,
+    struct rde_peer *peer)
+{
+	struct buf	*buf;
+	void		*bptr;
+	struct bgpd_addr addr, nexthop, *nh;
+	u_int16_t	 len, attr_len;
+	u_int8_t	 p_len;
+	sa_family_t	 af;
+
+	attr_len = mrt_attr_length(p->aspath, 0);
+	p_len = PREFIX_SIZE(p->prefix->prefixlen);
+	pt_getaddr(p->prefix, &addr);
+	
+	af = peer->remote_addr.af == 0 ? addr.af : peer->remote_addr.af;
+	switch (af) {
+	case AF_INET:
+		len = MRT_BGP4MP_IPv4_HEADER_SIZE;
+		break;
+	case AF_INET6:
+		len = MRT_BGP4MP_IPv6_HEADER_SIZE;
+		break;
+	default:
+		return (-1);
+	}
+
+	switch (addr.af) {
+	case AF_INET:
+		len += MRT_BGP4MP_IPv4_ENTRY_SIZE + p_len + attr_len;
+		break;
+	case AF_INET6:
+		len += MRT_BGP4MP_IPv4_ENTRY_SIZE + p_len + attr_len;
+		break;
+	default:
+		return (-1);
+	}
+
+	if ((buf = buf_open(len + MRT_HEADER_SIZE)) == NULL) {
+		log_warnx("mrt_dump_entry_mp: buf_open error");
+		return (-1);
+	}
+
+	if (mrt_dump_header(buf, MSG_PROTOCOL_BGP4MP, BGP4MP_ENTRY,
+	    len) == -1) {
+		log_warnx("mrt_dump_entry_mp: buf_add error");
+		return (-1);
+	}
+
+	DUMP_SHORT(buf, rde_local_as());
+	DUMP_SHORT(buf, peer->conf.remote_as);
+	DUMP_SHORT(buf, /* ifindex */ 0);
+
+	switch (af) {
+	case AF_INET:
+		DUMP_SHORT(buf, AFI_IPv4);
+		DUMP_NLONG(buf, peer->local_addr.v4.s_addr);
+		DUMP_NLONG(buf, peer->remote_addr.v4.s_addr);
+		break;
+	case AF_INET6:
+		DUMP_SHORT(buf, AFI_IPv6);
+		if (buf_add(buf, &peer->local_addr.v6,
+		    sizeof(struct in6_addr)) == -1 ||
+		    buf_add(buf, &peer->remote_addr.v6,
+		    sizeof(struct in6_addr)) == -1) {
+			log_warnx("mrt_dump_entry_mp: buf_add error");
+			buf_free(buf);
+			return (-1);
+		}
+		break;
+	}
+
+	DUMP_SHORT(buf, 0);		/* view */
+	DUMP_SHORT(buf, 1);		/* status */
+	DUMP_LONG(buf, p->lastchange);	/* originated */
+
+	if (p->aspath->nexthop == NULL) {
+		bzero(&nexthop, sizeof(struct bgpd_addr));
+		nexthop.af = addr.af;
+		nh = &nexthop;
+	} else
+		nh = &p->aspath->nexthop->exit_nexthop;
+
+	switch (addr.af) {
+	case AF_INET:
+		DUMP_SHORT(buf, AFI_IPv4);	/* afi */
+		DUMP_BYTE(buf, SAFI_UNICAST);	/* safi */
+		DUMP_BYTE(buf, 4);		/* nhlen */
+		DUMP_NLONG(buf, nh->v4.s_addr);	/* nexthop */
+		break;
+	case AF_INET6:
+		DUMP_SHORT(buf, AFI_IPv6);	/* afi */
+		DUMP_BYTE(buf, SAFI_UNICAST);	/* safi */
+		DUMP_BYTE(buf, 16);		/* nhlen */
+		if (buf_add(buf, &nh->v6, sizeof(struct in6_addr)) == -1) {
+			log_warnx("mrt_dump_entry_mp: buf_add error");
+			buf_free(buf);
+			return (-1);
+		}
+		break;
+	}
+
+	if ((bptr = buf_reserve(buf, p_len)) == NULL) {
+		log_warnx("mrt_dump_entry_mpbuf_reserve error");
+		buf_free(buf);
+		return (-1);
+	}
+	if (prefix_write(bptr, p_len, &addr, p->prefix->prefixlen) == -1) {
+		log_warnx("mrt_dump_entry_mpprefix_write error");
+		buf_free(buf);
+		return (-1);
+	}
+
+	DUMP_SHORT(buf, attr_len);
+	if ((bptr = buf_reserve(buf, attr_len)) == NULL) {
+		log_warnx("mrt_dump_entry_mpbuf_reserve error");
+		buf_free(buf);
+		return (-1);
+	}
+
+	if (mrt_attr_dump(bptr, attr_len, p->aspath, NULL) == -1) {
+		log_warnx("mrt_dump_entry_mpmrt_attr_dump error");
+		buf_free(buf);
+		return (-1);
+	}
+
+	TAILQ_INSERT_TAIL(&mrt->bufs, buf, entry);
+	mrt->queued++;
+
+	return (len + MRT_HEADER_SIZE);
+}
+
+static int
 mrt_dump_entry(struct mrt *mrt, struct prefix *p, u_int16_t snum,
-    struct peer_config *peer)
+    struct rde_peer *peer)
 {
 	struct buf	*buf;
 	void		*bptr;
 	struct bgpd_addr addr, *nh;
 	u_int16_t	 len, attr_len;
 
-	attr_len = mrt_attr_length(p->aspath);
+	if (p->prefix->af != AF_INET && peer->remote_addr.af == AF_INET)
+		/* only for true IPv4 */
+		return (0);
+
+	attr_len = mrt_attr_length(p->aspath, 1);
 	len = MRT_DUMP_HEADER_SIZE + attr_len;
 	pt_getaddr(p->prefix, &addr);
 
@@ -289,7 +449,7 @@ mrt_dump_entry(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 	}
 
 	if (mrt_dump_header(buf, MSG_TABLE_DUMP, AFI_IPv4, len) == -1) {
-		log_warnx("mrt_dump_bgp_msg: buf_add error");
+		log_warnx("mrt_dump_entry: buf_add error");
 		return (-1);
 	}
 
@@ -300,9 +460,9 @@ mrt_dump_entry(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 	DUMP_BYTE(buf, 1);		/* state */
 	DUMP_LONG(buf, p->lastchange);	/* originated */
 	DUMP_NLONG(buf, peer->remote_addr.v4.s_addr);
-	DUMP_SHORT(buf, peer->remote_as);
-	DUMP_SHORT(buf, attr_len);
+	DUMP_SHORT(buf, peer->conf.remote_as);
 
+	DUMP_SHORT(buf, attr_len);
 	if ((bptr = buf_reserve(buf, attr_len)) == NULL) {
 		log_warnx("mrt_dump_entry: buf_reserve error");
 		buf_free(buf);
@@ -347,8 +507,10 @@ mrt_dump_upcall(struct pt_entry *pt, void *ptr)
 	 * be dumped p should be set to p = pt->active.
 	 */
 	LIST_FOREACH(p, &pt->prefix_h, prefix_l)
-		mrt_dump_entry(mrtbuf, p, sequencenum++,
-		    &p->peer->conf);
+		if (mrtbuf->type == MRT_TABLE_DUMP)
+			mrt_dump_entry(mrtbuf, p, sequencenum++, p->peer);
+		else
+			mrt_dump_entry_mp(mrtbuf, p, sequencenum++, p->peer);
 }
 
 static int

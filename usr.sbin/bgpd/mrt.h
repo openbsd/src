@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.h,v 1.14 2004/08/11 16:48:45 claudio Exp $ */
+/*	$OpenBSD: mrt.h,v 1.15 2004/08/13 14:03:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -40,7 +40,7 @@
  * +--------+--------+--------+--------+
  * |      type       |     subtype     |
  * +--------+--------+--------+--------+
- * |               length              | length of packet including header
+ * |               length              | length of packet excluding this header
  * +--------+--------+--------+--------+
  */
 #define MRT_HEADER_SIZE		12
@@ -75,7 +75,8 @@ enum MRT_BGP4MP_TYPES {
 };
 
 /* size of the BGP4MP headers without payload */
-#define MRT_BGP4MP_HEADER_SIZE	16
+#define MRT_BGP4MP_IPv4_HEADER_SIZE	16
+#define MRT_BGP4MP_IPv6_HEADER_SIZE	40
 
 /* If the type is PROTOCOL_BGP4MP and the subtype is either BGP4MP_STATE_CHANGE
  * or BGP4MP_MESSAGE the message consists of a common header plus the payload.
@@ -107,6 +108,12 @@ enum MRT_BGP4MP_TYPES {
  * The payload of a BGP4MP_MESSAGE is the full bgp message with header.
  */
 
+/*
+ * size of the BGP4MP entries without variable stuff.
+ * All until nexthop plus attr_len, not included plen, prefix and bgp attrs.
+ */
+#define MRT_BGP4MP_IPv4_ENTRY_SIZE	18
+#define MRT_BGP4MP_IPv6_ENTRY_SIZE	30
 /*
  * The "new" table dump format consists of messages of type PROTOCOL_BGP4MP
  * and subtype BGP4MP_ENTRY.
@@ -237,6 +244,7 @@ enum MRT_BGP_TYPES {
 enum mrt_type {
 	MRT_NONE,
 	MRT_TABLE_DUMP,
+	MRT_TABLE_DUMP_MP,
 	MRT_ALL_IN,
 	MRT_ALL_OUT,
 	MRT_UPDATE_IN,

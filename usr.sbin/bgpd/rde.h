@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.54 2004/08/12 10:24:16 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.55 2004/08/13 14:03:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -295,12 +295,14 @@ struct rde_aspath *path_copy(struct rde_aspath *);
 struct rde_aspath *path_get(void);
 void		 path_put(struct rde_aspath *);
 
+#define	PREFIX_SIZE(x)	(((x) + 7) / 8 + 1)
 int		 prefix_compare(const struct bgpd_addr *,
 		    const struct bgpd_addr *, int);
 struct prefix	*prefix_get(struct rde_peer *, struct bgpd_addr *, int);
 struct pt_entry	*prefix_add(struct rde_aspath *, struct bgpd_addr *, int);
 struct pt_entry	*prefix_move(struct rde_aspath *, struct prefix *);
 void		 prefix_remove(struct rde_peer *, struct bgpd_addr *, int);
+int		 prefix_write(u_char *, int, struct bgpd_addr *, u_int8_t);
 struct prefix	*prefix_bypeer(struct pt_entry *, struct rde_peer *);
 void		 prefix_updateall(struct rde_aspath *, enum nexthop_state);
 void		 prefix_destroy(struct prefix *);

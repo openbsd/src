@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.132 2004/08/10 13:02:08 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.133 2004/08/13 14:03:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -139,7 +139,7 @@ typedef struct {
 %token	GROUP NEIGHBOR NETWORK
 %token	REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX ANNOUNCE
 %token	ENFORCE NEIGHBORAS CAPABILITIES REFLECTOR
-%token	DUMP TABLE IN OUT
+%token	DUMP IN OUT
 %token	LOG ROUTECOLL
 %token	TCP MD5SIG PASSWORD KEY
 %token	ALLOW DENY MATCH
@@ -326,8 +326,21 @@ conf_main	: AS asnumber		{
 
 			TAILQ_INSERT_TAIL(netconf, n, entry);
 		}
-		| DUMP TABLE STRING optnumber		{
-			if (add_mrtconfig(MRT_TABLE_DUMP, $3, $4, NULL) == -1) {
+		| DUMP STRING STRING optnumber		{
+			int action;
+
+			if (!strcmp($2, "table"))
+				action = MRT_TABLE_DUMP;
+			else if (!strcmp($2, "table-mp"))
+				action = MRT_TABLE_DUMP_MP;
+			else {
+				yyerror("unknown mrt dump type");
+				free($2);
+				free($3);
+				YYERROR;
+			}
+			free($2);
+			if (add_mrtconfig(action, $3, $4, NULL) == -1) {
 				free($3);
 				YYERROR;
 			}
@@ -1252,7 +1265,6 @@ lookup(char *s)
 		{ "set",		SET},
 		{ "source-AS",		SOURCEAS},
 		{ "spi",		SPI},
-		{ "table",		TABLE},
 		{ "tcp",		TCP},
 		{ "to",			TO},
 		{ "transit-AS",		TRANSITAS}
