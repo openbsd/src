@@ -1,4 +1,4 @@
-/*	$OpenBSD: isabr.c,v 1.2 2003/11/18 01:25:58 drahn Exp $	*/
+/*	$OpenBSD: isabr.c,v 1.3 2004/01/30 22:38:30 miod Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -194,8 +194,6 @@ isabrattach(struct device *parent, struct device *self, void *aux)
 	intr_establish_func = isabr_intr_establish;
 	intr_disestablish_func = isabr_intr_disestablish;
 	install_extint(isabr_iointr);
-
-	pending_int_f = isa_do_pending_int;
 
 	printf("\n");
 
