@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.48 2002/04/18 19:11:18 jason Exp $	*/
+/*	$OpenBSD: dc.c,v 1.49 2002/06/09 00:07:10 nordin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1476,6 +1476,8 @@ void dc_decode_leaf_sia(sc, l)
 	struct dc_mediainfo	*m;
 
 	m = malloc(sizeof(struct dc_mediainfo), M_DEVBUF, M_NOWAIT);
+	if (m == NULL)
+		return;
 	bzero(m, sizeof(struct dc_mediainfo));
 	if (l->dc_sia_code == DC_SIA_CODE_10BT)
 		m->dc_media = IFM_10_T;
@@ -1507,6 +1509,8 @@ void dc_decode_leaf_sym(sc, l)
 	struct dc_mediainfo	*m;
 
 	m = malloc(sizeof(struct dc_mediainfo), M_DEVBUF, M_NOWAIT);
+	if (m == NULL)
+		return;
 	bzero(m, sizeof(struct dc_mediainfo));
 	if (l->dc_sym_code == DC_SYM_CODE_100BT)
 		m->dc_media = IFM_100_TX;
@@ -1533,6 +1537,8 @@ void dc_decode_leaf_mii(sc, l)
 	struct dc_mediainfo	*m;
 
 	m = malloc(sizeof(struct dc_mediainfo), M_DEVBUF, M_NOWAIT);
+	if (m == NULL)
+		return;
 	bzero(m, sizeof(struct dc_mediainfo));
 	/* We abuse IFM_AUTO to represent MII. */
 	m->dc_media = IFM_AUTO;
@@ -1560,6 +1566,8 @@ void dc_read_srom(sc, bits)
 
 	size = 2 << bits;
 	sc->dc_srom = malloc(size, M_DEVBUF, M_NOWAIT);
+	if (sc->dc_srom == NULL)
+		return;
 	dc_read_eeprom(sc, (caddr_t)sc->dc_srom, 0, (size / 2), 0);
 }
 
