@@ -78,8 +78,8 @@ extern "C" {
 
 #ifndef DEVRANDOM
 /* set this to your 'random' device if you have one.
- * My default, we will try to read this file */
-#define DEVRANDOM "/dev/urandom"
+ * By default, we will try to read this file */
+#define DEVRANDOM "/dev/arandom"
 #endif
 
 /********************************************************************
