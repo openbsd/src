@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.6 2000/10/18 20:35:21 chris Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.7 2000/11/17 04:16:19 angelos Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -278,7 +278,8 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
     {
 #ifdef INET
 	case AF_INET:
-	    if (ipo->ipo_dst.sin.sin_addr.s_addr != INADDR_ANY)
+	    if ((ipo->ipo_dst.sin.sin_addr.s_addr != INADDR_ANY) &&
+		(ipo->ipo_dst.sin.sin_addr.s_addr != INADDR_BROADCAST))
 	    {
 		if (direction == IPSP_DIRECTION_OUT)
 		  bcopy(&ipo->ipo_dst, &sdst, sizeof(union sockaddr_union));
@@ -292,7 +293,9 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 
 #ifdef INET6
 	case AF_INET6:
-	    if (!IN6_IS_ADDR_UNSPECIFIED(&ipo->ipo_dst.sin6.sin6_addr))
+	    if ((!IN6_IS_ADDR_UNSPECIFIED(&ipo->ipo_dst.sin6.sin6_addr)) &&
+		(!bcmp(&ipo->ipo_dst.sin6.sin6_addr, &in6mask128,
+		       sizeof(in6mask128))))
 	    {
 		if (direction == IPSP_DIRECTION_OUT)
 		  bcopy(&ipo->ipo_dst, &sdst, sizeof(union sockaddr_union));
@@ -367,7 +370,8 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 	    {
 #ifdef INET
 		case AF_INET:
-		    if (ipo->ipo_dst.sin.sin_addr.s_addr == INADDR_ANY)
+		    if ((ipo->ipo_dst.sin.sin_addr.s_addr == INADDR_ANY) ||
+			(ipo->ipo_dst.sin.sin_addr.s_addr == INADDR_BROADCAST))
 		    {
 			*error = 0;
 			return NULL;
@@ -377,7 +381,9 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 
 #ifdef INET6
 		case AF_INET6:
-		    if (IN6_IS_ADDR_UNSPECIFIED(&ipo->ipo_dst.sin6.sin6_addr))
+		    if (IN6_IS_ADDR_UNSPECIFIED(&ipo->ipo_dst.sin6.sin6_addr) ||
+			!bcmp(&ipo->ipo_dst.sin6.sin6_addr, &in6mask128,
+			      sizeof(in6mask128)))
 		    {
 			*error = 0;
 			return NULL;
@@ -608,13 +614,20 @@ ipsp_match_policy(struct tdb *tdb, struct ipsec_policy *ipo,
 	case AF_INET:
 	    if (ipo->ipo_dst.sin.sin_addr.s_addr == INADDR_ANY)
 	      pflag = 1;
+	    else
+	      if (ipo->ipo_dst.sin.sin_addr.s_addr == INADDR_BROADCAST)
+		pflag = 2;
 	    break;
 #endif /* INET */
 
 #ifdef INET6
 	case AF_INET6:
 	    if (IN6_IS_ADDR_UNSPECIFIED(&ipo->ipo_dst.sin6.sin6_addr))
-	      pflag = 1;
+		pflag = 1;
+	    else
+	      if (!bcmp(&ipo->ipo_dst.sin6.sin6_addr, &in6mask128,
+			sizeof(in6mask128)))
+		pflag = 2;
 	    break;
 #endif /* INET6 */
 
@@ -631,36 +644,37 @@ ipsp_match_policy(struct tdb *tdb, struct ipsec_policy *ipo,
         bcopy(&ipo->ipo_dst, &peer, sizeof(union sockaddr_union));
     }
     else
-    {
-	bzero(&peer, sizeof(union sockaddr_union));
+      if (pflag == 1)
+      {
+	  bzero(&peer, sizeof(union sockaddr_union));
 
-	/* Need to copy the source address from the packet */
-	switch (af)
-	{
+	  /* Need to copy the source address from the packet */
+	  switch (af)
+	  {
 #ifdef INET
-	    case AF_INET:
-		peer.sin.sin_family = AF_INET;
-		peer.sin.sin_len = sizeof(struct sockaddr_in);
-		m_copydata(m, offsetof(struct ip, ip_src),
-			   sizeof(struct in_addr),
-			   (caddr_t) &peer.sin.sin_addr);
-		break;
+	      case AF_INET:
+		  peer.sin.sin_family = AF_INET;
+		  peer.sin.sin_len = sizeof(struct sockaddr_in);
+		  m_copydata(m, offsetof(struct ip, ip_src),
+			     sizeof(struct in_addr),
+			     (caddr_t) &peer.sin.sin_addr);
+		  break;
 #endif /* INET */
 
 #ifdef INET6
-	    case AF_INET6:
-		peer.sin6.sin6_family = AF_INET6;
-		peer.sin6.sin6_len = sizeof(struct sockaddr_in6);
-		m_copydata(m, offsetof(struct ip6_hdr, ip6_src),
-			   sizeof(struct in6_addr),
-			   (caddr_t) &peer.sin6.sin6_addr);
-		break;
+	      case AF_INET6:
+		  peer.sin6.sin6_family = AF_INET6;
+		  peer.sin6.sin6_len = sizeof(struct sockaddr_in6);
+		  m_copydata(m, offsetof(struct ip6_hdr, ip6_src),
+			     sizeof(struct in6_addr),
+			     (caddr_t) &peer.sin6.sin6_addr);
+		  break;
 #endif /* INET6 */
 
-	    default:
-	        return 0; /* Unknown/unsupported network protocol */
-	}
-    }
+	      default:
+		  return 0; /* Unknown/unsupported network protocol */
+	  }
+      }
 
     /*
      * Does the packet use the right security protocol and is coming from
@@ -668,6 +682,14 @@ ipsp_match_policy(struct tdb *tdb, struct ipsec_policy *ipo,
      */
     if (tdb->tdb_sproto == ipo->ipo_sproto)
     {
+	/*
+	 * We accept any peer that has a valid SA with us -- this means
+	 * we depend on the higher-level (key mgmt.) protocol to enforce
+	 * policy.
+	 */
+	if (pflag == 2)
+	  return 1;
+
 	if (bcmp(&tdb->tdb_src, &peer, tdb->tdb_src.sa.sa_len))
 	{
 	    switch (tdb->tdb_src.sa.sa_family)
