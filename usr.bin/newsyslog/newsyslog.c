@@ -29,7 +29,7 @@ provided "as is" without express or implied warranty.
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: newsyslog.c,v 1.1.1.1 1995/10/18 08:45:51 deraadt Exp $";
+static char rcsid[] = "$Id: newsyslog.c,v 1.2 1996/01/07 07:36:11 deraadt Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -180,7 +180,7 @@ PRS(argc,argv)
         progname = argv[0];
         timenow = time((time_t *) 0);
         daytime = ctime(&timenow) + 4;
-        daytime[16] = '\0';
+        daytime[15] = '\0';
 
         /* Let's find the pid of syslogd */
         syslog_pid = 0;
