@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.18 2004/06/15 23:59:11 deraadt Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.19 2004/09/21 12:04:39 mpf Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -199,7 +199,9 @@ load_config(void)
 		logit(IFSD_LOG_NORMAL,
 		    "initial state: %s", conf->curstate->name);
 		conf->curstate->entered = time(NULL);
-		eval_state(conf->curstate);
+		conf->nextstate = conf->curstate;
+		conf->curstate = NULL;
+		eval_state(conf->nextstate);
 	}
 	external_evtimer_setup(&conf->always, IFSD_EVTIMER_ADD);
 	return (0);
@@ -267,8 +269,8 @@ external_async_exec(struct ifsd_external *external)
 
 	if (external->pid > 0) {
 		logit(IFSD_LOG_NORMAL,
-		    "previous command %s still running, killing it",
-		    external->command);
+		    "previous command %s [%d] still running, killing it",
+		    external->command, external->pid);
 		kill(external->pid, SIGKILL);
 		external->pid = 0;
 	}
@@ -486,7 +488,8 @@ void
 eval_state(struct ifsd_state *state)
 {
 	struct ifsd_external *external = TAILQ_FIRST(&state->external_tests);
-	if (external == NULL || external->lastexec >= state->entered) {
+	if (external == NULL || external->lastexec >= state->entered ||
+	    external->lastexec == 0) {
 		do_action(state->always);
 		state_change();
 	}
@@ -501,10 +504,11 @@ state_change(void)
 	if (conf->nextstate != NULL && conf->curstate != conf->nextstate) {
 		logit(IFSD_LOG_NORMAL, "changing state to %s",
 		    conf->nextstate->name);
-		evtimer_del(&conf->curstate->ev);
-		if (conf->curstate != NULL)
+		if (conf->curstate != NULL) {
+			evtimer_del(&conf->curstate->ev);
 			external_evtimer_setup(conf->curstate,
 			    IFSD_EVTIMER_DEL);
+		}
 		conf->curstate = conf->nextstate;
 		conf->nextstate = NULL;
 		conf->curstate->entered = time(NULL);
