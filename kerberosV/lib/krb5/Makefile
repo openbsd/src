@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.11 2001/06/27 09:27:37 deraadt Exp $
+# $OpenBSD: Makefile,v 1.12 2001/07/01 22:27:37 drahn Exp $
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
@@ -233,6 +233,8 @@ SRCS+=	base64.c		\
 	bswap.c			\
 	issuid.c		\
 	getaddrinfo_hostspec.c	\
+	getarg.c		\
+	get_window_size.c	\
 	parse_time.c		\
 	parse_units.c		\
 	resolve.c		\
