@@ -33,7 +33,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.164 2003/09/18 08:49:45 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.165 2003/09/23 20:17:11 markus Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -66,7 +66,7 @@ RCSID("$OpenBSD: session.c,v 1.164 2003/09/18 08:49:45 markus Exp $");
 
 Session *session_new(void);
 void	session_set_fds(Session *, int, int, int);
-void	session_pty_cleanup(void *);
+void	session_pty_cleanup(Session *);
 void	session_proctitle(Session *);
 int	session_setup_x11fwd(Session *);
 void	do_exec_pty(Session *, const char *);
@@ -102,6 +102,8 @@ Session	sessions[MAX_SESSIONS];
 login_cap_t *lc;
 #endif
 
+static int is_child = 0;
+
 /* Name and directory of socket for authentication agent forwarding. */
 static char *auth_sock_name = NULL;
 static char *auth_sock_dir = NULL;
@@ -109,10 +111,8 @@ static char *auth_sock_dir = NULL;
 /* removes the agent forwarding socket */
 
 static void
-auth_sock_cleanup_proc(void *_pw)
+auth_sock_cleanup_proc(struct passwd *pw)
 {
-	struct passwd *pw = _pw;
-
 	if (auth_sock_name != NULL) {
 		temporarily_use_uid(pw);
 		unlink(auth_sock_name);
@@ -155,9 +155,6 @@ auth_input_request_forwarding(struct passwd * pw)
 	}
 	snprintf(auth_sock_name, MAXPATHLEN, "%s/agent.%ld",
 		 auth_sock_dir, (long) getpid());
-
-	/* delete agent socket on fatal() */
-	fatal_add_cleanup(auth_sock_cleanup_proc, pw);
 
 	/* Create the socket. */
 	sock = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -212,13 +209,7 @@ do_authenticated(Authctxt *authctxt)
 	else
 		do_authenticated1(authctxt);
 
-	/* remove agent socket */
-	if (auth_sock_name != NULL)
-		auth_sock_cleanup_proc(authctxt->pw);
-#ifdef KRB5
-	if (options.kerberos_ticket_cleanup)
-		krb5_cleanup_proc(authctxt);
-#endif
+	do_cleanup(authctxt);
 }
 
 /*
@@ -391,7 +382,7 @@ do_exec_no_pty(Session *s, const char *command)
 
 	/* Fork the child. */
 	if ((pid = fork()) == 0) {
-		fatal_remove_all_cleanups();
+		is_child = 1;
 
 		/* Child.  Reinitialize the log since the pid has changed. */
 		log_init(__progname, options.log_level, options.log_facility, log_stderr);
@@ -499,7 +490,7 @@ do_exec_pty(Session *s, const char *command)
 
 	/* Fork the child. */
 	if ((pid = fork()) == 0) {
-		fatal_remove_all_cleanups();
+		is_child = 1;
 
 		/* Child.  Reinitialize the log because the pid has changed. */
 		log_init(__progname, options.log_level, options.log_facility, log_stderr);
@@ -610,7 +601,7 @@ do_login(Session *s, const char *command)
 		if (getpeername(packet_get_connection_in(),
 		    (struct sockaddr *) & from, &fromlen) < 0) {
 			debug("getpeername: %.100s", strerror(errno));
-			fatal_cleanup();
+			cleanup_exit(255);
 		}
 	}
 
@@ -930,7 +921,7 @@ do_rc_files(Session *s, const char *shell)
 		if (debug_flag) {
 			fprintf(stderr,
 			    "Running %.500s remove %.100s\n",
-  			    options.xauth_location, s->auth_display);
+			    options.xauth_location, s->auth_display);
 			fprintf(stderr,
 			    "%.500s add %.100s %.100s %.100s\n",
 			    options.xauth_location, s->auth_display,
@@ -1360,11 +1351,6 @@ session_pty_req(Session *s)
 		n_bytes = packet_remaining();
 	tty_parse_modes(s->ttyfd, &n_bytes);
 
-	/*
-	 * Add a cleanup function to clear the utmp entry and record logout
-	 * time in case we call fatal() (e.g., the connection gets closed).
-	 */
-	fatal_add_cleanup(session_pty_cleanup, (void *)s);
 	if (!use_privsep)
 		pty_setowner(s->pw, s->tty);
 
@@ -1546,10 +1532,8 @@ session_set_fds(Session *s, int fdin, int fdout, int fderr)
  * (e.g., due to a dropped connection).
  */
 void
-session_pty_cleanup2(void *session)
+session_pty_cleanup2(Session *s)
 {
-	Session *s = session;
-
 	if (s == NULL) {
 		error("session_pty_cleanup: no session");
 		return;
@@ -1580,9 +1564,9 @@ session_pty_cleanup2(void *session)
 }
 
 void
-session_pty_cleanup(void *session)
+session_pty_cleanup(Session *s)
 {
-	PRIVSEP(session_pty_cleanup2(session));
+	PRIVSEP(session_pty_cleanup2(s));
 }
 
 static char *
@@ -1651,10 +1635,8 @@ void
 session_close(Session *s)
 {
 	debug("session_close: session %d pid %ld", s->self, (long)s->pid);
-	if (s->ttyfd != -1) {
-		fatal_remove_cleanup(session_pty_cleanup, (void *)s);
+	if (s->ttyfd != -1)
 		session_pty_cleanup(s);
-	}
 	if (s->term)
 		xfree(s->term);
 	if (s->display)
@@ -1703,10 +1685,8 @@ session_close_by_channel(int id, void *arg)
 		 * delay detach of session, but release pty, since
 		 * the fd's to the child are already closed
 		 */
-		if (s->ttyfd != -1) {
-			fatal_remove_cleanup(session_pty_cleanup, (void *)s);
+		if (s->ttyfd != -1)
 			session_pty_cleanup(s);
-		}
 		return;
 	}
 	/* detach by removing callback */
@@ -1823,8 +1803,44 @@ static void
 do_authenticated2(Authctxt *authctxt)
 {
 	server_loop2(authctxt);
-#if defined(GSSAPI)
-	if (options.gss_cleanup_creds)
-		ssh_gssapi_cleanup_creds(NULL);
+}
+
+void
+do_cleanup(Authctxt *authctxt)
+{
+	static int called = 0;
+
+	debug("do_cleanup");
+
+	/* no cleanup if we're in the child for login shell */
+	if (is_child)
+		return;
+
+	/* avoid double cleanup */
+	if (called)
+		return;
+	called = 1;
+
+	if (authctxt == NULL)
+		return;
+#ifdef KRB5
+	if (options.kerberos_ticket_cleanup &&
+	    authctxt->krb5_ctx)
+		krb5_cleanup_proc(authctxt);
 #endif
+
+#ifdef GSSAPI
+	if (compat20 && options.gss_cleanup_creds)
+		ssh_gssapi_cleanup_creds();
+#endif
+
+	/* remove agent socket */
+	auth_sock_cleanup_proc(authctxt->pw);
+
+	/*
+	 * Cleanup ptys/utmp only if privsep is disabled,
+	 * or if running in monitor.
+	 */
+	if (!use_privsep || mm_is_monitor())
+		session_destroy_all(session_pty_cleanup2);
 }

@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth.c,v 1.49 2003/08/26 09:58:43 markus Exp $");
+RCSID("$OpenBSD: auth.c,v 1.50 2003/09/23 20:17:11 markus Exp $");
 
 #include <libgen.h>
 
@@ -151,14 +151,6 @@ allowed_user(struct passwd * pw)
 	}
 	/* We found no reason not to let this user try to log on... */
 	return 1;
-}
-
-Authctxt *
-authctxt_new(void)
-{
-	Authctxt *authctxt = xmalloc(sizeof(*authctxt));
-	memset(authctxt, 0, sizeof(*authctxt));
-	return authctxt;
 }
 
 void
