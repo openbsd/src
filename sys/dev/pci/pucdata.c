@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.18 2002/02/17 19:24:56 deraadt Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.19 2002/03/22 23:29:50 deraadt Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -905,6 +905,22 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_LPT, 0x18, 0x00, 0x00 },
+	    },
+	},
+
+	/* Sunix 4065A : 8-port */
+	{   /* "Sunix 4065A : 8-port" */
+	    {   PCI_VENDOR_SUNIX, PCI_PRODUCT_SUNIX_4065A,		0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x08, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1A, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1A, 0x00, COM_FREQ },
 	    },
 	},
 
