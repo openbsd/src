@@ -96,7 +96,8 @@ main(argc, argv)
 		pw_edit(0, NULL);
 		if (stat(_PATH_MASTERPASSWD_LOCK, &end))
 			pw_error(_PATH_MASTERPASSWD_LOCK, 1, 1);
-		if (begin.st_mtime == end.st_mtime) {
+		if (begin.st_mtime == end.st_mtime &&
+		    begin.st_size == end.st_size) {
 			warnx("no changes made");
 			pw_error((char *)NULL, 0, 0);
 		}

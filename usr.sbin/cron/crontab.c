@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: crontab.c,v 1.13 1999/05/23 17:19:23 aaron Exp $";
+static char rcsid[] = "$Id: crontab.c,v 1.14 1999/05/29 18:51:12 millert Exp $";
 #endif
 
 /* crontab - install and manage per-user crontab files
@@ -310,6 +310,7 @@ edit_cmd() {
 	int		ch, t, x;
 	struct stat	statbuf;
 	time_t		mtime;
+	off_t		size;
 	WAIT_T		waiter;
 	PID_T		pid, xpid;
 
@@ -388,6 +389,7 @@ edit_cmd() {
 		goto fatal;
 	}
 	mtime = statbuf.st_mtime;
+	size = statbuf.st_size;
 
 	if ((!(editor = getenv("VISUAL")))
 	 && (!(editor = getenv("EDITOR")))
@@ -468,7 +470,7 @@ edit_cmd() {
 		perror("fstat");
 		goto fatal;
 	}
-	if (mtime == statbuf.st_mtime) {
+	if (mtime == statbuf.st_mtime && size == statbuf.st_size) {
 		fprintf(stderr, "%s: no changes made to crontab\n",
 			ProgramName);
 		goto remove;
