@@ -1,5 +1,4 @@
 PROG	= vos
-MAN	=
 BINDIR	= /usr/sbin
 SRCS	= vos.c arlalib.c fs_lib.c vos_common.c vos_createentry.c \
 	  vos_createvolume.c vos_dump.c vos_endtrans.c vos_examine.c \

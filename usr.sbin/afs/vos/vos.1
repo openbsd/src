@@ -1,0 +1,386 @@
+.Dd March 26, 2000
+.Dt VOS 1
+.Os
+.Sh NAME
+.Nm vos
+.Nd Manage AFS volumes and the VLDB.
+.Sh SYNOPSIS
+.Nm vos
+.Op Ar command
+.Op Ar args
+.Sh DESCRIPTION
+The
+.Nm
+utility is used to manage AFS volumes and the volume location database (VLDB).
+.Pp
+.Nm
+provides several commands:
+.Pp
+.Bl -tag -width Fl -compact
+.It Cm addsite
+not yet implemented
+.It Cm apropos
+apropos
+.It Cm backup
+not yet implemented
+.It Cm backupsys
+not yet implemented
+.It Cm changeaddr
+not yet implemented
+.It Cm create
+create a volume
+.It Cm createentry
+create a vldb entry
+.It Cm delentry
+not yet implemented
+.It Cm dump
+dump a volume
+.It Cm endtrans
+end a transaction
+.It Cm examine
+print information about a volume
+.It Cm volinfo
+print information about a volume
+.It Cm help
+print help
+.It Cm ?
+print help
+.It Cm listpart
+list partitions on a server
+.It Cm listvldb
+list volumes in volume-location-database
+.It Cm listvol
+list volumes on a server
+.It Cm lock
+not yet implemented
+.It Cm move
+not yet implemented
+.It Cm partinfo
+print partition information on a server
+.It Cm release
+not yet implemented
+.It Cm remove
+not yet implemented
+.It Cm remsite
+not yet implemented
+.It Cm rename
+not yet implemented
+.It Cm restore
+not yet implemented
+.It Cm status
+Show volume server transactions
+.It Cm syncserv
+not yet implemented
+.It Cm syncvldb
+not yet implemented
+.It Cm syncsite
+print the syncsite
+.It Cm unlock
+not yet implemented
+.It Cm unlockvldb
+not yet implemented
+.It Cm zap
+not yet implemented
+.It Cm quit
+exit interactive mode
+.El
+.Pp
+Most
+.Nm
+commands accept the following general arguments:
+.Pp
+.Bd -filled -offset indent -compact
+.Op Fl cell Ar cellname
+Specifies which AFS cell to use, if the default cell is not to be used.
+.Pp
+.Op Fl noauth
+Specifies that
+.Nm
+should not try to authenticate the connection to the server. This may be
+useful with shell scripts, or if there is a problem with the AFS cell.
+Note that the server will reject many commands if
+.Fl noauth
+is specified.
+.Pp
+.Op Fl localauth
+Create a ticket using the AFS server key, that is, you don't need a token.
+This will generally only work on AFS servers, and is very useful for
+performing automatic tasks.
+.Ed
+.Pp
+The syntax of the
+.Nm
+commands:
+.Pp
+.Nm vos addsite
+.Bd -filled -offset indent -compact
+not yet implemented
+.Ed
+.Pp
+.Nm vos apropos
+.Bd -filled -offset indent -compact
+apropos
+.Ed
+.Pp
+.Nm vos backup
+.Bd -filled -offset indent -compact
+not yet implemented
+.Ed
+.Pp
+.Nm vos backupsys
+.Bd -filled -offset indent -compact
+not yet implemented
+.Ed
+.Pp
+.Nm vos changeaddr
+.Bd -filled -offset indent -compact
+not yet implemented
+.Ed
+.Pp
+.Nm vos create
+.Op Fl server
+.Ar fileserver
+.Op Fl part
+.Ar partition
+.Op Fl volume
+.Ar "volume name"
+.Op Fl cell Ar cellname
+.Op Fl noauth
+.Op Fl localauth
+.Op Fl verbose
+.Bd -filled -offset indent -compact
+Create a new volume named
+.Ar "volume name"
+on server
+.Ar fileserver
+partition
+.Ar partition.
+.Ed
+.Pp
+.Nm vos createentry
+.Op Fl id
+.Ar "id of volume"
+.Op Fl host
+.Ar "host to use"
+.Op Fl fsserver
+.Ar fileserver
+.Op Fl rw
+.Ar "volume RW number"
+.Op Fl ro
+.Ar "volume RO number"
+.Op Fl bk
+.Ar "volume BK number"
+.Op Fl noauth
+.Op Fl localauth
+.Bd -filled -offset indent -compact
+Create a vldb entry manually. This command should
+.Em not
+be used unless you know
+.Em exactly
+what you are doing.
+.Ed
+.Pp
+.Nm vos delentry
+.Bd -filled -offset indent -compact
+not yet implemented
+.Ed
+.Pp
+.Nm vos dump
+.Op Fl id
+.Ar volume
+.Op Fl server Ar fileserver
+.Op Fl partition Ar partition
+.Op Fl cell Ar cellname
+.Op Fl file Ar filename
+.Op Fl noauth
+.Op Fl localauth
+.Op Fl verbose
+.Bd -filled -offset indent -compact
+Dump a volume to a file.
+.Ed
+.Pp
+.Nm vos endtrans
+.Op Fl server
+.Ar server
+.Op Fl trans
+.Ar transaction
+.Op Fl cell Ar cellname
+.Op Fl noauth
+.Op Fl verbose 
+.Bd -filled -offset indent -compact
+End a transaction. XXX what is this?
+.Ed
+.Pp
+.Nm vos examine
+.Op Fl id
+.Ar volume
+.Op Fl host
+.Ar server
+.Op Fl cell Ar cellname
+.Op Fl noauth
+.Op Fl localauth
+.Op Fl verbose
+.Op Fl extended
+.Bd -filled -offset indent -compact
+Print information about a volume.
+.Ed
+.Pp
+.Nm vos volinfo
+.Bd -filled -offset indent -compact
+.Nm vos volinfo
+is an alias for the
+.Nm vos examine
+command.
+.Ed
+.Pp
+.Nm vos help
+.Bd -filled -offset indent -compact
+print help
+.Ed
+.Pp
+.Nm vos ?
+.Bd -filled -offset indent -compact
+.Nm vos ?
+is an alias for the
+.Nm vos help
+command.
+.Ed
+.Pp
+.Nm vos listpart
+.Op Fl server
+.Ar fileserver
+.Op Fl cell Ar cellname
+.Op Fl noauth
+.Op Fl localauth
+.Op Fl verbose
+.Bd -filled -offset indent -compact
+List partitions on a fileserver.
+.Ed
+.Pp
+.Nm vos listvldb
+.Op Fl server
+.Ar fileserver
+.Op Fl cell Ar cellname
+.Op Fl noauth
+.Op Fl localauth
+.Op Fl verbose
+.Bd -filled -offset indent -compact
+List volumes in the volume location database without reading them on the
+fileserver.
+.Ed
+.Pp
+.Nm vos listvol
+.Op Fl server
+.Ar fileserver
+.Op Fl partition
+.Ar partition
+.Op Fl cell Ar cellname
+.Op Fl noauth
+.Op Fl localauth
+.Op Fl verbose
+.Bd -filled -offset indent -compact
+List volumes on a fileserver, without consulting the volume location database.
+.Ed
+.Pp
+.Nm vos lock
+.Bd -filled -offset indent -compact
+not yet implemented
+.Ed
+.Pp
+.Nm vos move
+.Bd -filled -offset indent -compact
+not yet implemented
+.Ed
+.Pp
+.Nm vos partinfo
+.Op Fl server
+.Ar fileserver
+.Op Fl partition
+.Ar partition
+.Op Fl cell Ar cellname
+.Op Fl noauth
+.Op Fl localauth
+.Op Fl verbose
+.Bd -filled -offset indent -compact
+Print the total and remaining diskspace on a fileserver.
+.Ed
+.Pp
+.Nm vos release
+.Bd -filled -offset indent -compact
+not yet implemented
+.Ed
+.Pp
+.Nm vos remove
+.Bd -filled -offset indent -compact
+not yet implemented
+.Ed
+.Pp
+.Nm vos remsite
+.Bd -filled -offset indent -compact
+not yet implemented
+.Ed
+.Pp
+.Nm vos rename
+.Bd -filled -offset indent -compact
+not yet implemented
+.Ed
+.Pp
+.Nm vos restore
+.Bd -filled -offset indent -compact
+not yet implemented
+.Ed
+.Pp
+.Nm vos status
+.Op Fl server
+.Ar fileserver
+.Op Fl cell Ar cellname
+.Op Fl noauth
+.Op Fl verbose
+.Bd -filled -offset indent -compact
+Show volume server transactions.
+.Ed
+.Pp
+.Nm vos syncserv
+.Bd -filled -offset indent -compact
+not yet implemented
+.Ed
+.Pp
+.Nm vos syncvldb
+.Bd -filled -offset indent -compact
+not yet implemented
+.Ed
+.Pp
+.Nm vos syncsite
+.Bd -filled -offset indent -compact
+print the syncsite
+.Ed
+.Pp
+.Nm vos unlock
+.Bd -filled -offset indent -compact
+not yet implemented
+.Ed
+.Pp
+.Nm vos unlockvldb
+.Bd -filled -offset indent -compact
+not yet implemented
+.Ed
+.Pp
+.Nm vos zap
+.Bd -filled -offset indent -compact
+not yet implemented
+.Ed
+.Pp
+.Nm vos quit
+.Bd -filled -offset indent -compact
+Exit interactive mode.
+.Ed
+.Sh SEE ALSO
+.Xr pts 1 ,
+.Xr vos 1
+.Sh STANDARDS
+The Arla authors are trying to mimic the behaviour of the original AFS
+utilities.
+.Sh AUTHORS
+The Arla project <http://www.stacken.kth.se/project/arla/>.
+.Sh BUGS
+Quite a lot of commands are not implemented yet.
