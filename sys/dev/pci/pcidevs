@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.61 1998/06/29 20:51:29 deraadt Exp $
+$OpenBSD: pcidevs,v 1.62 1998/07/07 02:26:38 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -448,7 +448,7 @@ vendor INNOSYS		0x11a9	InnoSys
 vendor ACTEL		0x11aa	Actel
 vendor GALILEO		0x11ab	Galileo Technology
 vendor CANNON		0x11ac	Cannon IS
-vendor LITEON		0x11ad	Lite-On Communications
+vendor LITEON		0x11ad	Lite-On
 vendor SCITEX		0x11ae	Scitex
 vendor PROLOG		0x11af	Pro-Log
 vendor V3		0x11b0	V3 Semiconductor
@@ -820,6 +820,9 @@ product KTI KTIE		0x3000	KTI Ethernet
 
 /* LeadTek Research */
 product LEADTEK S3_805		0x0000	S3 805
+
+/* Lite-On Communications */
+product LITEON	PNIC		0x0002	PNIC
 
 /* Macronix */
 product MACRONIX MX98713	0x0512	PMAC 100/10base PCI MAC controller
