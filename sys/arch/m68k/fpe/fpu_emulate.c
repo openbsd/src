@@ -1,5 +1,5 @@
-/*	$OpenBSD: fpu_emulate.c,v 1.3 1996/05/09 22:20:43 niklas Exp $	*/
-/*	$NetBSD: fpu_emulate.c,v 1.5 1996/04/30 11:52:13 briggs Exp $	*/
+/*	$OpenBSD: fpu_emulate.c,v 1.4 1996/05/29 11:29:30 niklas Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.6 1996/05/15 07:31:55 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -713,6 +713,7 @@ fpu_emul_arith(fe, insn)
      * pointer to the result.
      
      */
+    res = 0;
     switch (word1 & 0x3f) {
     case 0x00:			/* fmove */
 	res = &fe->fe_f2;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: fpu_fscale.c,v 1.2 1996/05/09 22:20:46 niklas Exp $	*/
-/*	$NetBSD: fpu_fscale.c,v 1.3 1996/04/30 11:52:25 briggs Exp $	*/
+/*	$OpenBSD: fpu_fscale.c,v 1.3 1996/05/29 11:29:32 niklas Exp $	*/
+/*	$NetBSD: fpu_fscale.c,v 1.4 1996/05/15 07:31:57 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Ken Nakata
@@ -60,7 +60,7 @@ fpu_emul_fscale(fe, insn)
     int flags;
     char regname;
 
-    sig = 0;
+    scale = sig = 0;
     frame = fe->fe_frame;
     fpregs = &(fe->fe_fpframe->fpf_regs[0]);
     /* clear all exceptions and conditions */
