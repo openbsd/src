@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.51 2002/02/08 18:43:54 art Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.52 2002/02/09 00:27:49 art Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -313,6 +313,7 @@ sys_fcntl(p, v, retval)
 restart:
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
+	FREF(fp);
 	switch (SCARG(uap, cmd)) {
 
 	case F_DUPFD:
@@ -322,14 +323,15 @@ restart:
 			error = EINVAL;
 			break;
 		}
-		FREF(fp);
 		if ((error = fdalloc(p, newmin, &i)) != 0) {
 			if (error == ENOSPC) {
 				fdexpand(p);
+				FRELE(fp);
 				goto restart;
 			}
 			break;
 		}
+		/* finishdup will FRELE for us. */
 		return (finishdup(p, fp, fd, i, retval));
 
 	case F_GETFD:
@@ -487,6 +489,7 @@ restart:
 		break;
 	}
 out:
+	FRELE(fp);
 	return (error);	
 }
 
