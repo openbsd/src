@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.49 2004/01/07 01:58:56 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.50 2004/01/07 12:38:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -578,21 +578,19 @@ rde_send_kroute(struct prefix *new, struct prefix *old)
 	enum imsg_type	 type;
 
 	if ((old == NULL || old->aspath->nexthop == NULL ||
-	    old->aspath->nexthop->state == NEXTHOP_UNREACH) &&
+	    old->aspath->nexthop->state != NEXTHOP_REACH) &&
 	    (new == NULL || new->aspath->nexthop == NULL ||
-	    new->aspath->nexthop->state == NEXTHOP_UNREACH))
+	    new->aspath->nexthop->state != NEXTHOP_REACH))
 		return;
 
 	if (new == NULL || new->aspath->nexthop == NULL ||
-	    new->aspath->nexthop->state == NEXTHOP_UNREACH) {
+	    new->aspath->nexthop->state != NEXTHOP_REACH) {
 		type = IMSG_KROUTE_DELETE;
 		p = old;
 		kr.nexthop = 0;
 	} else {
 		type = IMSG_KROUTE_CHANGE;
 		p = new;
-		if (new->aspath->nexthop->state != NEXTHOP_REACH)
-			return;
 		kr.nexthop = p->aspath->nexthop->true_nexthop.s_addr;
 	}
 
