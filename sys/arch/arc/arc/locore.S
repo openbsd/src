@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.13 1998/01/28 13:45:54 pefo Exp $	*/
+/*	$OpenBSD: locore.S,v 1.14 1998/01/29 14:54:48 pefo Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -50,7 +50,7 @@
  *	v 1.1 89/07/10 14:27:41 nelson Exp  SPRITE (DECWRL)
  *
  *	from: @(#)locore.s	8.5 (Berkeley) 1/4/94
- *	$Id: locore.S,v 1.13 1998/01/28 13:45:54 pefo Exp $
+ *	$Id: locore.S,v 1.14 1998/01/29 14:54:48 pefo Exp $
  */
 
 /*
@@ -658,13 +658,20 @@ LEAF(idle)
 	li	t0, (INT_MASK | SR_INT_ENAB)
 	mtc0	t0, COP_0_STATUS_REG	# enable all interrupts
 	sw	zero, curproc			# set curproc NULL for stats
+	li	t1,1
 1:
+	beq	t1, zero, 2f
+	addu	t1, t1, 1
 	lw	t0, whichqs			# look for non-empty queue
 	nop
 	beq	t0, zero, 1b
 	nop
 	b	sw1
 	mtc0	zero, COP_0_STATUS_REG	# Disable all interrupts
+2:
+	break   BREAK_SOVER_VAL
+	b	1b
+	nop
 END(idle)
 
 /*
@@ -2268,6 +2275,46 @@ LEAF(R4K_TLBGetPID)
 	and	v0, v0, VMTLB_PID	# mask off PID
 END(R4K_TLBGetPID)
 
+/*--------------------------------------------------------------------------
+ *
+ * R4K_GetCOUNT --
+ *
+ *	R4K_GetCOUNT()
+ *
+ * Results:
+ *	Returns the current COUNT reg.
+ *
+ * Side effects:
+ *	None.
+ *
+ *--------------------------------------------------------------------------
+ */
+LEAF(R4K_GetCOUNT)
+	mfc0	v0, COP_0_COUNT
+	nop	#???
+	nop	#???
+	j	ra
+	nop
+END(R4K_GetCOUNT)
+
+/*--------------------------------------------------------------------------
+ *
+ * R4K_SetCOMPARE --
+ *
+ *	R4K_SetCOMPARE()
+ *
+ * Results:
+ *	Sets a new value to the COMPARE register.
+ *
+ * Side effects:
+ *	The COMPARE equal interrupt is acknowledged.
+ *
+ *--------------------------------------------------------------------------
+ */
+LEAF(R4K_SetCOMPARE)
+	j	ra
+	mtc0	a0, COP_0_COMPARE
+END(R4K_SetCOMPARE)
 
 /*----------------------------------------------------------------------------
  *

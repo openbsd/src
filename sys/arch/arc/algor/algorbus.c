@@ -1,4 +1,4 @@
-/*	$OpenBSD: algorbus.c,v 1.3 1997/04/19 17:19:37 pefo Exp $ */
+/*	$OpenBSD: algorbus.c,v 1.4 1998/01/29 14:54:45 pefo Exp $ */
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -74,8 +74,6 @@ int	algor_matchname __P((struct confargs *, char *));
 int	algor_iointr __P((unsigned, struct clockframe *));
 int	algor_clkintr __P((unsigned, struct clockframe *));
 int	algor_errintr __P((unsigned, struct clockframe *));
-
-extern int cputype;
 
 int p4032_imask = 0;
 int p4032_ixr = 0;
@@ -161,8 +159,8 @@ algormatch(parent, cfdata, aux)
                 return (0);
 
         /* Make sure that unit exists. */
-	if (cf->cf_unit != 0 ||
-	    cputype > nalgor_cpu_devs || algor_cpu_devs[cputype] == NULL)
+	if (cf->cf_unit != 0 || system_type > nalgor_cpu_devs
+	    || algor_cpu_devs[system_type] == NULL)
 		return (0);
 
 	return (1);
@@ -181,7 +179,7 @@ algorattach(parent, self, aux)
 	printf("\n");
 
 	/* keep our CPU device description handy */
-	sc->sc_devs = algor_cpu_devs[cputype];
+	sc->sc_devs = algor_cpu_devs[system_type];
 
 	/* set up interrupt handlers */
 	set_intr(INT_MASK_1, algor_iointr, 2);

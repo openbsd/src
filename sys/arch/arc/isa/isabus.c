@@ -1,4 +1,4 @@
-/*	$OpenBSD: isabus.c,v 1.12 1998/01/28 13:46:37 pefo Exp $	*/
+/*	$OpenBSD: isabus.c,v 1.13 1998/01/29 14:54:54 pefo Exp $	*/
 /*	$NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp $	*/
 
 /*-
@@ -140,8 +140,6 @@ void	isabr_intr_disestablish __P((isa_chipset_tag_t, void*));
 int	isabr_iointr __P((unsigned int, struct clockframe *));
 void	isabr_initicu __P((void));
 void	intr_calculatemasks __P((void));
-
-extern int system_type;
 
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pbcpcibus.c,v 1.4 1997/04/19 17:20:02 pefo Exp $ */
+/*	$OpenBSD: pbcpcibus.c,v 1.5 1998/01/29 14:54:55 pefo Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -57,7 +57,6 @@
 #include <arc/pci/v962pcbreg.h>
 
 extern vm_map_t phys_map;
-extern int cputype;
 extern char eth_hw_addr[];	/* Hardware ethernet address stored elsewhere */
 
 int	 pbcpcibrmatch __P((struct device *, void *, void *));
@@ -113,7 +112,7 @@ pbcpcibrattach(parent, self, aux)
 	struct pcibr_config *lcp;
 	struct pcibus_attach_args pba;
 
-	switch(cputype) {
+	switch(system_type) {
 	case ALGOR_P4032:
 		V96X_PCI_BASE0 = V96X_PCI_BASE0 & 0xffff0000;
 
@@ -326,7 +325,7 @@ int
 pbc_ether_hw_addr(cp)
 	u_int8_t *cp;
 {
-	if(cputype == ALGOR_P4032) {
+	if(system_type == ALGOR_P4032) {
 		bcopy(eth_hw_addr, cp, 6);
 		return(0);
 	}

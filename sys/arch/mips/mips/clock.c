@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.1 1998/01/28 12:12:06 pefo Exp $	*/
+/*	$OpenBSD: clock.c,v 1.2 1998/01/29 14:55:54 pefo Exp $	*/
 /*
  * Copyright (c) 1997 Per Fogelstrom.
  * Copyright (c) 1988 University of Utah.
@@ -40,7 +40,7 @@
  * from: Utah Hdr: clock.c 1.18 91/01/21
  *
  *	from: @(#)clock.c	8.1 (Berkeley) 6/10/93
- *      $Id: clock.c,v 1.1 1998/01/28 12:12:06 pefo Exp $
+ *      $Id: clock.c,v 1.2 1998/01/29 14:55:54 pefo Exp $
  */
 
 #include <sys/param.h>
@@ -50,7 +50,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
-#include <arc/arc/clockvar.h>
+#include <mips/dev/clockvar.h>
 #include <mips/archtype.h>
 
 #ifdef arc
@@ -82,6 +82,7 @@ struct cfattach clock_pica_ca = {
 struct cfattach clock_algor_ca = {
 	sizeof(struct clock_softc), clockmatch, clockattach
 };
+static int int5_dummy __P((unsigned mask, struct clockframe *cf));
 #endif
 
 #ifdef sgi
@@ -161,12 +162,14 @@ clockattach(parent, self, aux)
 	case ALGOR_P4032:
 		BUS_INTR_ESTABLISH((struct confargs *)aux,
 			(intr_handler_t)hardclock, self);
+		set_intr(SOFT_INT_MASK_0 << 7, int5_dummy, 1);
 		break;
 
 	case DESKSTATION_RPC44:
 	case DESKSTATION_TYNE:
 		(void)isa_intr_establish(ia->ia_ic,
 				0, 1, 3, clockintr, 0, "clock");
+		set_intr(SOFT_INT_MASK_0 << 7, int5_dummy, 1);
 		break;
 #endif
 
@@ -183,6 +186,21 @@ clockattach(parent, self, aux)
 
 	printf("\n");
 }
+
+#ifdef arc
+/*
+ *   This code is a stub to take care of the unused int 5 in arc's.
+ *   We may in the future use this for high precision timing...
+ */
+static int
+int5_dummy(mask, cf)
+	unsigned mask;
+	struct clockframe *cf;
+{
+	R4K_SetCOMPARE(0);	/* Shut up counter int's for a while */
+	return(~0);
+}
+#endif
 
 /*
  * Wait "n" microseconds.  This doesn't belong here.  XXX.

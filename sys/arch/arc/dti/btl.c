@@ -100,8 +100,6 @@ struct bt_mbx {
 	struct bt_mbx_in *tmbi;		/* Target Mail Box in */
 };
 
-extern int system_type;  /* XXX */
-
 #define KVTOPHYS(x)	((system_type == DESKSTATION_TYNE) ? \
 	(((int)(x) & 0x7fffff) | 0x800000) : ((int)(x)))
 #define PHYSTOKV(x)	((system_type == DESKSTATION_TYNE) ? \
