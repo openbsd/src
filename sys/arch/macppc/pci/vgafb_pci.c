@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb_pci.c,v 1.3 2002/03/14 01:26:37 millert Exp $	*/
+/*	$OpenBSD: vgafb_pci.c,v 1.4 2002/03/26 16:51:43 drahn Exp $	*/
 /*	$NetBSD: vga_pci.c,v 1.4 1996/12/05 01:39:38 cgd Exp $	*/
 
 /*
@@ -104,7 +104,7 @@ vgafb_pci_probe(pa, id, ioaddr, iosize, memaddr, memsize, cacheable, mmioaddr, m
 	*iosize   = 0x0;
 	*memsize  = 0x0;
 	*mmiosize = 0x0;
-	for (i = 0x10; i < 0x18; i += 4) {
+	for (i = 0x10; i <= 0x18; i += 4) {
 #ifdef DEBUG_VGAFB
 		printf("vgafb confread %x %x\n",
 			i, pci_conf_read(pc, pa->pa_tag, i));
@@ -135,7 +135,7 @@ vgafb_pci_probe(pa, id, ioaddr, iosize, memaddr, memsize, cacheable, mmioaddr, m
 			}
 			if (size == 0) {
 				/* ignore this entry */
-			}else if (size <= (64 * 1024)) {
+			}else if (size <= (1024 * 1024)) {
 #ifdef DEBUG_VGAFB
 	printf("vgafb_pci_probe: mem %x addr %x size %x iosize %x\n",
 		i, addr, size, *iosize);
@@ -143,6 +143,10 @@ vgafb_pci_probe(pa, id, ioaddr, iosize, memaddr, memsize, cacheable, mmioaddr, m
 				if (*mmiosize == 0) {
 					/* this is mmio, not memory */
 					*mmioaddr = addr;
+					if (size < 0x80000) {
+						/* ATI driver maps 0x80000, grr */
+						size = 0x80000;
+					}
 					*mmiosize = size;
 					/* need skew in here for io memspace */
 				}
@@ -305,6 +309,7 @@ vgafb_pci_attach(parent, self, aux)
 	vgafb_pci_probe(pa, myid, &ioaddr, &iosize,
 		&memaddr, &memsize, &cacheable, &mmioaddr, &mmiosize);
 
+
 	console = (!bcmp(&pa->pa_tag, &vgafb_pci_console_tag, sizeof(pa->pa_tag)));
 	if (console)
 		vc = sc->sc_vc = &vgafb_pci_console_vc;
@@ -318,6 +323,12 @@ vgafb_pci_attach(parent, self, aux)
 	}
 	vc->vc_mmap = vgafbpcimmap;
 	vc->vc_ioctl = vgafbpciioctl;
+	vc->iobase = ioaddr;
+	vc->iosize = iosize;
+	vc->membase = memaddr;
+	vc->memsize = memsize;
+	vc->mmiobase = mmioaddr;
+	vc->mmiosize = mmiosize;
 
 	sc->sc_pcitag = pa->pa_tag;
 

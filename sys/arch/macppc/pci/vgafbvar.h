@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafbvar.h,v 1.4 2002/03/14 03:15:56 millert Exp $	*/
+/*	$OpenBSD: vgafbvar.h,v 1.5 2002/03/26 16:51:43 drahn Exp $	*/
 /*	$NetBSD: vgavar.h,v 1.2 1996/11/23 06:06:43 cgd Exp $	*/
 
 /*
@@ -59,7 +59,14 @@ struct vgafb_config {
 	#endif
 	struct rcons    dc_rcons;       /* raster blitter control info */
 
-	
+	bus_addr_t	iobase;
+	bus_size_t	iosize;
+
+	bus_addr_t	membase;
+	bus_size_t	memsize;
+
+	bus_addr_t	mmiobase;
+	bus_size_t	mmiosize;
 };
 
 int	vgafb_common_probe(bus_space_tag_t, bus_space_tag_t,

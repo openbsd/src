@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.6 2002/03/14 01:26:37 millert Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.7 2002/03/26 16:51:43 drahn Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -381,7 +381,7 @@ vgafb_mmap(v, offset, prot)
 	bus_space_handle_t h;
 
 	/* memsize... */
-	if (offset >= 0x00000 && offset < 0x800000)	/* 8MB of mem??? */
+	if (offset >= 0x00000 && offset < vc->memsize)
 		h = vc->vc_paddr + offset;
 	/* XXX the following are probably wrong. we want physical addresses 
 	   here, not virtual ones */
@@ -394,18 +394,18 @@ vgafb_mmap(v, offset, prot)
 	else if (offset >= 0x18880000 && offset < 0x100c0000)
 		/* 256KB of iohd */
 		h = vc->vc_ioh_d;
-	else if (offset >= 0x20000000 && offset < 0x30000000)
+	else if (offset >= 0x20000000 && offset < 0x20000000+vc->mmiosize)
 		/* mmiosize... */
 		h = vc->vc_mmioh + (offset - 0x20000000);
-	else {
-		/* XXX - allow mapping of the actual physical
-		 * device address, if the address is read from
-		 * pci bus config space
-		 */
-
-		/* NEEDS TO BE RESTRICTED to valid addresses for this device */
-		 
+	else if (offset >= vc->membase && (offset < vc->membase+vc->memsize)) {
+		/* allow mmapping of memory */
 		h = offset;
+	} else if (offset >= vc->mmiobase &&
+	    (offset < vc->mmiobase+vc->mmiosize)) {
+		/* allow mmapping of mmio space */
+		h = offset;
+	} else {
+		h = -1;
 	}
 
 #ifdef alpha
