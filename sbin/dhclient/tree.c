@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.9 2004/02/24 17:02:40 henning Exp $	*/
+/*	$OpenBSD: tree.c,v 1.10 2004/04/14 20:22:27 henning Exp $	*/
 
 /* Routines for manipulating parse trees... */
 
@@ -54,7 +54,7 @@ static void	do_data_copy(int *, unsigned char **, int *, unsigned char *,
 pair
 cons(caddr_t car, pair cdr)
 {
-	pair foo = dmalloc(sizeof(*foo), "cons");
+	pair foo = calloc(1, sizeof(*foo));
 	if (!foo)
 		error("no memory for cons.");
 	foo->car = car;
@@ -68,14 +68,10 @@ enter_dns_host(char *name)
 	struct dns_host_entry *dh;
 	int len = strlen(name) + 1;
 
-	if (!(dh = dmalloc(sizeof(struct dns_host_entry), "enter_dns_host"))
-	    || !(dh->hostname = dmalloc(len, "enter_dns_host")))
+	if (!(dh = calloc(1, sizeof(struct dns_host_entry)))
+	    || !(dh->hostname = calloc(1, len)))
 		error("Can't allocate space for new host.");
 	strlcpy(dh->hostname, name, len);
-	dh->data = NULL;
-	dh->data_len = 0;
-	dh->buf_len = 0;
-	dh->timeout = 0;
 	return (dh);
 }
 
@@ -107,7 +103,7 @@ tree_evaluate(struct tree_cache *tree_cache)
 	 * If we can't allocate more memory, return with what we have
 	 * (maybe nothing).
 	 */
-	if (!(bp = dmalloc(bufix, "tree_evaluate")))
+	if (!(bp = calloc(1, bufix)))
 		return (0);
 
 	/* Record the change in conditions... */
@@ -125,8 +121,7 @@ tree_evaluate(struct tree_cache *tree_cache)
 	 * Free the old buffer if needed, then store the new buffer
 	 * location and size and return.
 	 */
-	if (tree_cache->value)
-		dfree(tree_cache->value, "tree_evaluate");
+	free(tree_cache->value);
 	tree_cache->value = bp;
 	tree_cache->len = bufix;
 	tree_cache->buf_size = bc;
@@ -219,7 +214,7 @@ do_host_lookup(int *bufix, unsigned char **bufp, int *bufcount,
 	/* Do we need to allocate more memory? */
 	new_len = i * h->h_length;
 	if (dns->buf_len < i) {
-		unsigned char *buf = dmalloc(new_len, "do_host_lookup");
+		unsigned char *buf = calloc(1, new_len);
 		/* If we didn't get more memory, use what we have. */
 		if (!buf) {
 			new_len = dns->buf_len;
@@ -229,7 +224,7 @@ do_host_lookup(int *bufix, unsigned char **bufp, int *bufcount,
 			}
 		} else {
 			if (dns->data)
-				dfree(dns->data, "do_host_lookup");
+				free(dns->data);
 			dns->data = buf;
 			dns->buf_len = new_len;
 		}

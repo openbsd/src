@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.7 2004/03/02 18:49:21 deraadt Exp $	*/
+/*	$OpenBSD: options.c,v 1.8 2004/04/14 20:22:27 henning Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -157,7 +157,7 @@ parse_option_buffer(struct packet *packet,
 		 * space for it and copy it there.
 		 */
 		if (!packet->options[code].data) {
-			if (!(t = dmalloc(len + 1, "parse_option_buffer")))
+			if (!(t = calloc(1, len + 1)))
 				error("Can't allocate storage for option %s.",
 				    dhcp_options[code].name);
 			/*
@@ -174,8 +174,7 @@ parse_option_buffer(struct packet *packet,
 			 * we last saw.   This is really only required
 			 * for clients, but what the heck...
 			 */
-			t = dmalloc(len + packet->options[code].len + 1,
-			    "parse_option_buffer");
+			t = calloc(1, len + packet->options[code].len + 1);
 			if (!t)
 				error("Can't expand storage for option %s.",
 				    dhcp_options[code].name);
@@ -185,8 +184,7 @@ parse_option_buffer(struct packet *packet,
 				&s[2], len);
 			packet->options[code].len += len;
 			t[packet->options[code].len] = 0;
-			dfree(packet->options[code].data,
-			    "parse_option_buffer");
+			free(packet->options[code].data);
 			packet->options[code].data = t;
 		}
 		s += len + 2;
@@ -734,5 +732,5 @@ do_packet(struct interface_info *interface, struct dhcp_packet *packet,
 	/* Free the data associated with the options. */
 	for (i = 0; i < 256; i++)
 		if (tp.options[i].len && tp.options[i].data)
-			dfree(tp.options[i].data, "do_packet");
+			free(tp.options[i].data);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.6 2004/04/14 20:15:47 henning Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.7 2004/04/14 20:22:27 henning Exp $	*/
 
 /* Memory allocation... */
 
@@ -42,35 +42,12 @@
 
 #include "dhcpd.h"
 
-struct dhcp_packet *dhcp_free_list;
-struct packet *packet_free_list;
-
-void *
-dmalloc(int size, char *name)
-{
-	void *foo = calloc(size, sizeof(char));
-
-	if (!foo)
-		warn("No memory for %s.", name);
-	return (foo);
-}
-
-void
-dfree(void *ptr, char *name)
-{
-	if (!ptr) {
-		warn("dfree %s: free on null pointer.", name);
-		return;
-	}
-	free(ptr);
-}
-
 struct string_list *
 new_string_list(size_t size, char * name)
 {
 	struct string_list *rval;
 
-	rval = dmalloc(sizeof(struct string_list) + size, name);
+	rval = calloc(1, sizeof(struct string_list) + size);
 	if (rval != NULL)
 		rval->string = ((char *)rval) + sizeof(struct string_list);
 	return (rval);
@@ -81,9 +58,9 @@ new_hash_table(int count, char *name)
 {
 	struct hash_table *rval;
 
-	rval = dmalloc(sizeof(struct hash_table) -
+	rval = calloc(1, sizeof(struct hash_table) -
 	    (DEFAULT_HASH_SIZE * sizeof(struct hash_bucket *)) +
-	    (count * sizeof(struct hash_bucket *)), name);
+	    (count * sizeof(struct hash_bucket *)));
 	if (rval == NULL)
 		return (NULL);
 	rval->hash_count = count;
@@ -93,7 +70,7 @@ new_hash_table(int count, char *name)
 struct hash_bucket *
 new_hash_bucket(char *name)
 {
-	struct hash_bucket *rval = dmalloc(sizeof(struct hash_bucket), name);
+	struct hash_bucket *rval = calloc(1, sizeof(struct hash_bucket));
 
 	return (rval);
 }
@@ -101,5 +78,5 @@ new_hash_bucket(char *name)
 void
 free_hash_bucket(struct hash_bucket *ptr, char *name)
 {
-	dfree(ptr, name);
+	free(ptr);
 }
