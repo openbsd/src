@@ -1,9 +1,9 @@
-/*      $OpenBSD: isp_openbsd.h,v 1.12 2001/02/12 23:47:49 mjacob Exp $ */
+/*      $OpenBSD: isp_openbsd.h,v 1.13 2001/04/04 22:08:08 mjacob Exp $ */
 /*
  * OpenBSD Specific definitions for the Qlogic ISP Host Adapter
  */
 /*
- * Copyright (C) 1999, 2000 by Matthew Jacob
+ * Copyright (C) 1999, 2000, 2001 by Matthew Jacob
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -53,20 +53,23 @@
 #include <vm/pmap.h>
 
 
-#define	ISP_PLATFORM_VERSION_MAJOR	1
-#define	ISP_PLATFORM_VERSION_MINOR	1
+#define	ISP_PLATFORM_VERSION_MAJOR	2
+#define	ISP_PLATFORM_VERSION_MINOR	0
 
 struct isposinfo {
 	struct device		_dev;
 	struct scsi_link	_link[2];
 	struct scsi_adapter	_adapter;
+	int			hiwater;
 	int			splsaved;
 	int			mboxwaiting;
 	u_int32_t		islocked;
 	u_int32_t		onintstack;
-	unsigned int		: 30,
+	unsigned int		: 28,
+		
+		rtpend		: 1,
 		no_mbox_ints	: 1,
-		blocked		: 1;
+		blocked		: 2;
 	union {
 		u_int64_t 	_wwn;
 		u_int16_t	_discovered[2];
@@ -178,6 +181,9 @@ struct isposinfo {
 #define	XS_INITERR(xs)		(xs)->error = 0, XS_CMD_S_CLEAR(xs)
 
 #define	XS_SAVE_SENSE(xs, sp)				\
+	if (xs->error == XS_NOERROR) {			\
+		xs->error = XS_SENSE;			\
+	}						\
 	bcopy(sp->req_sense_data, &(xs)->sense,		\
 	    imin(XS_SNSLEN(xs), sp->req_sense_len))
 
@@ -233,15 +239,15 @@ struct isposinfo {
 /*
  * Driver prototypes..
  */
-void isp_attach __P((struct ispsoftc *));
-void isp_uninit __P((struct ispsoftc *));
+void isp_attach(struct ispsoftc *);
+void isp_uninit(struct ispsoftc *);
 
-static inline void isp_lock __P((struct ispsoftc *));
-static inline void isp_unlock __P((struct ispsoftc *));
-static inline char *strncat __P((char *, const char *, size_t));
+static inline void isp_lock(struct ispsoftc *);
+static inline void isp_unlock(struct ispsoftc *);
+static inline char *strncat(char *, const char *, size_t);
 static inline u_int64_t
-isp_microtime_sub __P((struct timeval *, struct timeval *));
-static void isp_wait_complete __P((struct ispsoftc *));
+isp_microtime_sub(struct timeval *, struct timeval *);
+static void isp_wait_complete(struct ispsoftc *);
 
 /*
  * Driver wide data...
@@ -253,11 +259,16 @@ static void isp_wait_complete __P((struct ispsoftc *));
 
 #define	XS_PSTS_INWDOG		0x10000
 #define	XS_PSTS_GRACE		0x20000
+#define	XS_PSTS_TIMED		0x40000
 #define	XS_PSTS_ALL		SCSI_PRIVATE
 
 #define	XS_CMD_S_WDOG(xs)	(xs)->flags |= XS_PSTS_INWDOG
 #define	XS_CMD_C_WDOG(xs)	(xs)->flags &= ~XS_PSTS_INWDOG
 #define	XS_CMD_WDOG_P(xs)	(((xs)->flags & XS_PSTS_INWDOG) != 0)
+
+#define	XS_CMD_S_TIMER(xs)	(xs)->flags |= XS_PSTS_TIMED
+#define	XS_CMD_C_TIMER(xs)	(xs)->flags &= ~XS_PSTS_TIMED
+#define	XS_CMD_TIMER_P(xs)	(((xs)->flags & XS_PSTS_TIMED) != 0)
 
 #define	XS_CMD_S_GRACE(xs)	(xs)->flags |= XS_PSTS_GRACE
 #define	XS_CMD_C_GRACE(xs)	(xs)->flags &= ~XS_PSTS_GRACE
@@ -273,8 +284,7 @@ static void isp_wait_complete __P((struct ispsoftc *));
  * Platform specific 'inline' or support functions
  */
 static inline void
-isp_lock(isp)
-	struct ispsoftc *isp;
+isp_lock(struct ispsoftc *isp)
 {
 	int s = splbio();
 	if (isp->isp_osinfo.islocked++ == 0) {
@@ -285,8 +295,7 @@ isp_lock(isp)
 }
 
 static inline void
-isp_unlock(isp)
-	struct ispsoftc *isp;
+isp_unlock(struct ispsoftc *isp)
 {
 	if (isp->isp_osinfo.islocked-- <= 1) {
 		isp->isp_osinfo.islocked = 0;
@@ -295,10 +304,7 @@ isp_unlock(isp)
 }
 
 static inline char *
-strncat(d, s, c)
-	char *d;
-	const char *s;
-	size_t c;
+strncat(char *d, const char *s, size_t c)
 {
         char *t = d;
 
@@ -316,9 +322,7 @@ strncat(d, s, c)
 }
 
 static inline u_int64_t
-isp_microtime_sub(b, a)
-	struct timeval *b;
-	struct timeval *a;
+isp_microtime_sub(struct timeval *b, struct timeval *a)
 {
 	struct timeval x;
 	u_int64_t elapsed;
@@ -330,8 +334,7 @@ isp_microtime_sub(b, a)
 }
 
 static inline void
-isp_wait_complete(isp)
-	struct ispsoftc *isp;
+isp_wait_complete(struct ispsoftc *isp)
 {
 	if (MUST_POLL(isp)) {
 		int usecs = 0;
