@@ -1,4 +1,4 @@
-/*	$NetBSD: qvss.h,v 1.2 1995/10/05 01:52:54 jonathan Exp $	*/
+/*	$NetBSD: qvss.h,v 1.3 1995/12/14 16:27:33 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@
 /*
  * QVSS font table of displayable characters.
  */
-static u_long qvss_32_pixels [] = {
+static u_int32_t qvss_32_pixels [] = {
 	0x00, /* 0x00000000	   */
 	0x00, /* 0x00000000	   */
 	0x00, /* 0x00000000	   */
@@ -72,7 +72,7 @@ static u_long qvss_32_pixels [] = {
       };
 static struct raster qvss_32 = { 8, 15, 1, 1, qvss_32_pixels, 0 };
 
-static u_long qvss_33_pixels [] = {
+static u_int32_t qvss_33_pixels [] = {
 	0x00, /* 0x00000000	  ! */
 	0x00, /* 0x00000000	  ! */
 	0x08, /* 0x00001000	  ! */
@@ -91,7 +91,7 @@ static u_long qvss_33_pixels [] = {
       };
 static struct raster qvss_33 = { 8, 15, 1, 1, qvss_33_pixels, 0 };
 
-static u_long qvss_34_pixels [] = {
+static u_int32_t qvss_34_pixels [] = {
 	0x00, /* 0x00000000	  " */
 	0x00, /* 0x00000000	  " */
 	0x24, /* 0x00100100	  " */
@@ -110,7 +110,7 @@ static u_long qvss_34_pixels [] = {
       };
 static struct raster qvss_34 = { 8, 15, 1, 1, qvss_34_pixels, 0 };
 
-static u_long qvss_35_pixels [] = {
+static u_int32_t qvss_35_pixels [] = {
 	0x00, /* 0x00000000	  # */
 	0x00, /* 0x00000000	  # */
 	0x00, /* 0x00000000	  # */
@@ -129,7 +129,7 @@ static u_long qvss_35_pixels [] = {
       };
 static struct raster qvss_35 = { 8, 15, 1, 1, qvss_35_pixels, 0 };
 
-static u_long qvss_36_pixels [] = {
+static u_int32_t qvss_36_pixels [] = {
 	0x00, /* 0x00000000	  $ */
 	0x00, /* 0x00000000	  $ */
 	0x00, /* 0x00000000	  $ */
@@ -148,7 +148,7 @@ static u_long qvss_36_pixels [] = {
       };
 static struct raster qvss_36 = { 8, 15, 1, 1, qvss_36_pixels, 0 };
 
-static u_long qvss_37_pixels [] = {
+static u_int32_t qvss_37_pixels [] = {
 	0x00, /* 0x00000000	  % */
 	0x00, /* 0x00000000	  % */
 	0x42, /* 0x01000010	  % */
@@ -167,7 +167,7 @@ static u_long qvss_37_pixels [] = {
       };
 static struct raster qvss_37 = { 8, 15, 1, 1, qvss_37_pixels, 0 };
 
-static u_long qvss_38_pixels [] = {
+static u_int32_t qvss_38_pixels [] = {
 	0x00, /* 0x00000000	  & */
 	0x00, /* 0x00000000	  & */
 	0x0e, /* 0x00001110	  & */
@@ -186,7 +186,7 @@ static u_long qvss_38_pixels [] = {
       };
 static struct raster qvss_38 = { 8, 15, 1, 1, qvss_38_pixels, 0 };
 
-static u_long qvss_39_pixels [] = {
+static u_int32_t qvss_39_pixels [] = {
 	0x00, /* 0x00000000	  ' */
 	0x00, /* 0x00000000	  ' */
 	0x38, /* 0x00111000	  ' */
@@ -205,7 +205,7 @@ static u_long qvss_39_pixels [] = {
       };
 static struct raster qvss_39 = { 8, 15, 1, 1, qvss_39_pixels, 0 };
 
-static u_long qvss_40_pixels [] = {
+static u_int32_t qvss_40_pixels [] = {
 	0x00, /* 0x00000000	  ( */
 	0x00, /* 0x00000000	  ( */
 	0x10, /* 0x00010000	  ( */
@@ -224,7 +224,7 @@ static u_long qvss_40_pixels [] = {
       };
 static struct raster qvss_40 = { 8, 15, 1, 1, qvss_40_pixels, 0 };
 
-static u_long qvss_41_pixels [] = {
+static u_int32_t qvss_41_pixels [] = {
 	0x00, /* 0x00000000	  ) */
 	0x00, /* 0x00000000	  ) */
 	0x04, /* 0x00000100	  ) */
@@ -243,7 +243,7 @@ static u_long qvss_41_pixels [] = {
       };
 static struct raster qvss_41 = { 8, 15, 1, 1, qvss_41_pixels, 0 };
 
-static u_long qvss_42_pixels [] = {
+static u_int32_t qvss_42_pixels [] = {
 	0x00, /* 0x00000000	  * */
 	0x00, /* 0x00000000	  * */
 	0x00, /* 0x00000000	  * */
@@ -262,7 +262,7 @@ static u_long qvss_42_pixels [] = {
       };
 static struct raster qvss_42 = { 8, 15, 1, 1, qvss_42_pixels, 0 };
 
-static u_long qvss_43_pixels [] = {
+static u_int32_t qvss_43_pixels [] = {
 	0x00, /* 0x00000000	  + */
 	0x00, /* 0x00000000	  + */
 	0x00, /* 0x00000000	  + */
@@ -281,7 +281,7 @@ static u_long qvss_43_pixels [] = {
       };
 static struct raster qvss_43 = { 8, 15, 1, 1, qvss_43_pixels, 0 };
 
-static u_long qvss_44_pixels [] = {
+static u_int32_t qvss_44_pixels [] = {
 	0x00, /* 0x00000000	  , */
 	0x00, /* 0x00000000	  , */
 	0x00, /* 0x00000000	  , */
@@ -300,7 +300,7 @@ static u_long qvss_44_pixels [] = {
       };
 static struct raster qvss_44 = { 8, 15, 1, 1, qvss_44_pixels, 0 };
 
-static u_long qvss_45_pixels [] = {
+static u_int32_t qvss_45_pixels [] = {
 	0x00, /* 0x00000000	  - */
 	0x00, /* 0x00000000	  - */
 	0x00, /* 0x00000000	  - */
@@ -319,7 +319,7 @@ static u_long qvss_45_pixels [] = {
       };
 static struct raster qvss_45 = { 8, 15, 1, 1, qvss_45_pixels, 0 };
 
-static u_long qvss_46_pixels [] = {
+static u_int32_t qvss_46_pixels [] = {
 	0x00, /* 0x00000000	  . */
 	0x00, /* 0x00000000	  . */
 	0x00, /* 0x00000000	  . */
@@ -338,7 +338,7 @@ static u_long qvss_46_pixels [] = {
       };
 static struct raster qvss_46 = { 8, 15, 1, 1, qvss_46_pixels, 0 };
 
-static u_long qvss_47_pixels [] = {
+static u_int32_t qvss_47_pixels [] = {
 	0x00, /* 0x00000000	  / */
 	0x00, /* 0x00000000	  / */
 	0x40, /* 0x01000000	  / */
@@ -357,7 +357,7 @@ static u_long qvss_47_pixels [] = {
       };
 static struct raster qvss_47 = { 8, 15, 1, 1, qvss_47_pixels, 0 };
 
-static u_long qvss_48_pixels [] = {
+static u_int32_t qvss_48_pixels [] = {
 	0x00, /* 0x00000000	  0 */
 	0x00, /* 0x00000000	  0 */
 	0x0c, /* 0x00001100	  0 */
@@ -376,7 +376,7 @@ static u_long qvss_48_pixels [] = {
       };
 static struct raster qvss_48 = { 8, 15, 1, 1, qvss_48_pixels, 0 };
 
-static u_long qvss_49_pixels [] = {
+static u_int32_t qvss_49_pixels [] = {
 	0x00, /* 0x00000000	  1 */
 	0x00, /* 0x00000000	  1 */
 	0x08, /* 0x00001000	  1 */
@@ -395,7 +395,7 @@ static u_long qvss_49_pixels [] = {
       };
 static struct raster qvss_49 = { 8, 15, 1, 1, qvss_49_pixels, 0 };
 
-static u_long qvss_50_pixels [] = {
+static u_int32_t qvss_50_pixels [] = {
 	0x00, /* 0x00000000	  2 */
 	0x00, /* 0x00000000	  2 */
 	0x3e, /* 0x00111110	  2 */
@@ -414,7 +414,7 @@ static u_long qvss_50_pixels [] = {
       };
 static struct raster qvss_50 = { 8, 15, 1, 1, qvss_50_pixels, 0 };
 
-static u_long qvss_51_pixels [] = {
+static u_int32_t qvss_51_pixels [] = {
 	0x00, /* 0x00000000	  3 */
 	0x00, /* 0x00000000	  3 */
 	0x7f, /* 0x01111111	  3 */
@@ -433,7 +433,7 @@ static u_long qvss_51_pixels [] = {
       };
 static struct raster qvss_51 = { 8, 15, 1, 1, qvss_51_pixels, 0 };
 
-static u_long qvss_52_pixels [] = {
+static u_int32_t qvss_52_pixels [] = {
 	0x00, /* 0x00000000	  4 */
 	0x00, /* 0x00000000	  4 */
 	0x20, /* 0x00100000	  4 */
@@ -452,7 +452,7 @@ static u_long qvss_52_pixels [] = {
       };
 static struct raster qvss_52 = { 8, 15, 1, 1, qvss_52_pixels, 0 };
 
-static u_long qvss_53_pixels [] = {
+static u_int32_t qvss_53_pixels [] = {
 	0x00, /* 0x00000000	  5 */
 	0x00, /* 0x00000000	  5 */
 	0x7f, /* 0x01111111	  5 */
@@ -471,7 +471,7 @@ static u_long qvss_53_pixels [] = {
       };
 static struct raster qvss_53 = { 8, 15, 1, 1, qvss_53_pixels, 0 };
 
-static u_long qvss_54_pixels [] = {
+static u_int32_t qvss_54_pixels [] = {
 	0x00, /* 0x00000000	  6 */
 	0x00, /* 0x00000000	  6 */
 	0x3c, /* 0x00111100	  6 */
@@ -490,7 +490,7 @@ static u_long qvss_54_pixels [] = {
       };
 static struct raster qvss_54 = { 8, 15, 1, 1, qvss_54_pixels, 0 };
 
-static u_long qvss_55_pixels [] = {
+static u_int32_t qvss_55_pixels [] = {
 	0x00, /* 0x00000000	  7 */
 	0x00, /* 0x00000000	  7 */
 	0x7f, /* 0x01111111	  7 */
@@ -509,7 +509,7 @@ static u_long qvss_55_pixels [] = {
       };
 static struct raster qvss_55 = { 8, 15, 1, 1, qvss_55_pixels, 0 };
 
-static u_long qvss_56_pixels [] = {
+static u_int32_t qvss_56_pixels [] = {
 	0x00, /* 0x00000000	  8 */
 	0x00, /* 0x00000000	  8 */
 	0x3e, /* 0x00111110	  8 */
@@ -528,7 +528,7 @@ static u_long qvss_56_pixels [] = {
       };
 static struct raster qvss_56 = { 8, 15, 1, 1, qvss_56_pixels, 0 };
 
-static u_long qvss_57_pixels [] = {
+static u_int32_t qvss_57_pixels [] = {
 	0x00, /* 0x00000000	  9 */
 	0x00, /* 0x00000000	  9 */
 	0x3e, /* 0x00111110	  9 */
@@ -547,7 +547,7 @@ static u_long qvss_57_pixels [] = {
       };
 static struct raster qvss_57 = { 8, 15, 1, 1, qvss_57_pixels, 0 };
 
-static u_long qvss_58_pixels [] = {
+static u_int32_t qvss_58_pixels [] = {
 	0x00, /* 0x00000000	  : */
 	0x00, /* 0x00000000	  : */
 	0x00, /* 0x00000000	  : */
@@ -566,7 +566,7 @@ static u_long qvss_58_pixels [] = {
       };
 static struct raster qvss_58 = { 8, 15, 1, 1, qvss_58_pixels, 0 };
 
-static u_long qvss_59_pixels [] = {
+static u_int32_t qvss_59_pixels [] = {
 	0x00, /* 0x00000000	  /* */
 	0x00, /* 0x00000000	  /* */
 	0x00, /* 0x00000000	  /* */
@@ -585,7 +585,7 @@ static u_long qvss_59_pixels [] = {
       };
 static struct raster qvss_59 = { 8, 15, 1, 1, qvss_59_pixels, 0 };
 
-static u_long qvss_60_pixels [] = {
+static u_int32_t qvss_60_pixels [] = {
 	0x00, /* 0x00000000	  < */
 	0x00, /* 0x00000000	  < */
 	0x20, /* 0x00100000	  < */
@@ -604,7 +604,7 @@ static u_long qvss_60_pixels [] = {
       };
 static struct raster qvss_60 = { 8, 15, 1, 1, qvss_60_pixels, 0 };
 
-static u_long qvss_61_pixels [] = {
+static u_int32_t qvss_61_pixels [] = {
 	0x00, /* 0x00000000	  = */
 	0x00, /* 0x00000000	  = */
 	0x00, /* 0x00000000	  = */
@@ -623,7 +623,7 @@ static u_long qvss_61_pixels [] = {
       };
 static struct raster qvss_61 = { 8, 15, 1, 1, qvss_61_pixels, 0 };
 
-static u_long qvss_62_pixels [] = {
+static u_int32_t qvss_62_pixels [] = {
 	0x00, /* 0x00000000	  > */
 	0x00, /* 0x00000000	  > */
 	0x02, /* 0x00000010	  > */
@@ -642,7 +642,7 @@ static u_long qvss_62_pixels [] = {
       };
 static struct raster qvss_62 = { 8, 15, 1, 1, qvss_62_pixels, 0 };
 
-static u_long qvss_63_pixels [] = {
+static u_int32_t qvss_63_pixels [] = {
 	0x00, /* 0x00000000	  ? */
 	0x00, /* 0x00000000	  ? */
 	0x3e, /* 0x00111110	  ? */
@@ -661,7 +661,7 @@ static u_long qvss_63_pixels [] = {
       };
 static struct raster qvss_63 = { 8, 15, 1, 1, qvss_63_pixels, 0 };
 
-static u_long qvss_64_pixels [] = {
+static u_int32_t qvss_64_pixels [] = {
 	0x00, /* 0x00000000	  @ */
 	0x00, /* 0x00000000	  @ */
 	0x3e, /* 0x00111110	  @ */
@@ -680,7 +680,7 @@ static u_long qvss_64_pixels [] = {
       };
 static struct raster qvss_64 = { 8, 15, 1, 1, qvss_64_pixels, 0 };
 
-static u_long qvss_65_pixels [] = {
+static u_int32_t qvss_65_pixels [] = {
 	0x00, /* 0x00000000	  A */
 	0x00, /* 0x00000000	  A */
 	0x08, /* 0x00001000	  A */
@@ -699,7 +699,7 @@ static u_long qvss_65_pixels [] = {
       };
 static struct raster qvss_65 = { 8, 15, 1, 1, qvss_65_pixels, 0 };
 
-static u_long qvss_66_pixels [] = {
+static u_int32_t qvss_66_pixels [] = {
 	0x00, /* 0x00000000	  B */
 	0x00, /* 0x00000000	  B */
 	0x3f, /* 0x00111111	  B */
@@ -718,7 +718,7 @@ static u_long qvss_66_pixels [] = {
       };
 static struct raster qvss_66 = { 8, 15, 1, 1, qvss_66_pixels, 0 };
 
-static u_long qvss_67_pixels [] = {
+static u_int32_t qvss_67_pixels [] = {
 	0x00, /* 0x00000000	  C */
 	0x00, /* 0x00000000	  C */
 	0x3e, /* 0x00111110	  C */
@@ -737,7 +737,7 @@ static u_long qvss_67_pixels [] = {
       };
 static struct raster qvss_67 = { 8, 15, 1, 1, qvss_67_pixels, 0 };
 
-static u_long qvss_68_pixels [] = {
+static u_int32_t qvss_68_pixels [] = {
 	0x00, /* 0x00000000	  D */
 	0x00, /* 0x00000000	  D */
 	0x3f, /* 0x00111111	  D */
@@ -756,7 +756,7 @@ static u_long qvss_68_pixels [] = {
       };
 static struct raster qvss_68 = { 8, 15, 1, 1, qvss_68_pixels, 0 };
 
-static u_long qvss_69_pixels [] = {
+static u_int32_t qvss_69_pixels [] = {
 	0x00, /* 0x00000000	  E */
 	0x00, /* 0x00000000	  E */
 	0x7e, /* 0x01111110	  E */
@@ -775,7 +775,7 @@ static u_long qvss_69_pixels [] = {
       };
 static struct raster qvss_69 = { 8, 15, 1, 1, qvss_69_pixels, 0 };
 
-static u_long qvss_70_pixels [] = {
+static u_int32_t qvss_70_pixels [] = {
 	0x00, /* 0x00000000	  F */
 	0x00, /* 0x00000000	  F */
 	0x7e, /* 0x01111110	  F */
@@ -794,7 +794,7 @@ static u_long qvss_70_pixels [] = {
       };
 static struct raster qvss_70 = { 8, 15, 1, 1, qvss_70_pixels, 0 };
 
-static u_long qvss_71_pixels [] = {
+static u_int32_t qvss_71_pixels [] = {
 	0x00, /* 0x00000000	  G */
 	0x00, /* 0x00000000	  G */
 	0x3e, /* 0x00111110	  G */
@@ -813,7 +813,7 @@ static u_long qvss_71_pixels [] = {
       };
 static struct raster qvss_71 = { 8, 15, 1, 1, qvss_71_pixels, 0 };
 
-static u_long qvss_72_pixels [] = {
+static u_int32_t qvss_72_pixels [] = {
 	0x00, /* 0x00000000	  H */
 	0x00, /* 0x00000000	  H */
 	0x41, /* 0x01000001	  H */
@@ -832,7 +832,7 @@ static u_long qvss_72_pixels [] = {
       };
 static struct raster qvss_72 = { 8, 15, 1, 1, qvss_72_pixels, 0 };
 
-static u_long qvss_73_pixels [] = {
+static u_int32_t qvss_73_pixels [] = {
 	0x00, /* 0x00000000	  I */
 	0x00, /* 0x00000000	  I */
 	0x3e, /* 0x00111110	  I */
@@ -851,7 +851,7 @@ static u_long qvss_73_pixels [] = {
       };
 static struct raster qvss_73 = { 8, 15, 1, 1, qvss_73_pixels, 0 };
 
-static u_long qvss_74_pixels [] = {
+static u_int32_t qvss_74_pixels [] = {
 	0x00, /* 0x00000000	  J */
 	0x00, /* 0x00000000	  J */
 	0x78, /* 0x01111000	  J */
@@ -870,7 +870,7 @@ static u_long qvss_74_pixels [] = {
       };
 static struct raster qvss_74 = { 8, 15, 1, 1, qvss_74_pixels, 0 };
 
-static u_long qvss_75_pixels [] = {
+static u_int32_t qvss_75_pixels [] = {
 	0x00, /* 0x00000000	  K */
 	0x00, /* 0x00000000	  K */
 	0x41, /* 0x01000001	  K */
@@ -889,7 +889,7 @@ static u_long qvss_75_pixels [] = {
       };
 static struct raster qvss_75 = { 8, 15, 1, 1, qvss_75_pixels, 0 };
 
-static u_long qvss_76_pixels [] = {
+static u_int32_t qvss_76_pixels [] = {
 	0x00, /* 0x00000000	  L */
 	0x00, /* 0x00000000	  L */
 	0x01, /* 0x00000001	  L */
@@ -908,7 +908,7 @@ static u_long qvss_76_pixels [] = {
       };
 static struct raster qvss_76 = { 8, 15, 1, 1, qvss_76_pixels, 0 };
 
-static u_long qvss_77_pixels [] = {
+static u_int32_t qvss_77_pixels [] = {
 	0x00, /* 0x00000000	  M */
 	0x00, /* 0x00000000	  M */
 	0x41, /* 0x01000001	  M */
@@ -927,7 +927,7 @@ static u_long qvss_77_pixels [] = {
       };
 static struct raster qvss_77 = { 8, 15, 1, 1, qvss_77_pixels, 0 };
 
-static u_long qvss_78_pixels [] = {
+static u_int32_t qvss_78_pixels [] = {
 	0x00, /* 0x00000000	  N */
 	0x00, /* 0x00000000	  N */
 	0x41, /* 0x01000001	  N */
@@ -946,7 +946,7 @@ static u_long qvss_78_pixels [] = {
       };
 static struct raster qvss_78 = { 8, 15, 1, 1, qvss_78_pixels, 0 };
 
-static u_long qvss_79_pixels [] = {
+static u_int32_t qvss_79_pixels [] = {
 	0x00, /* 0x00000000	  O */
 	0x00, /* 0x00000000	  O */
 	0x3e, /* 0x00111110	  O */
@@ -965,7 +965,7 @@ static u_long qvss_79_pixels [] = {
       };
 static struct raster qvss_79 = { 8, 15, 1, 1, qvss_79_pixels, 0 };
 
-static u_long qvss_80_pixels [] = {
+static u_int32_t qvss_80_pixels [] = {
 	0x00, /* 0x00000000	  P */
 	0x00, /* 0x00000000	  P */
 	0x3f, /* 0x00111111	  P */
@@ -984,7 +984,7 @@ static u_long qvss_80_pixels [] = {
       };
 static struct raster qvss_80 = { 8, 15, 1, 1, qvss_80_pixels, 0 };
 
-static u_long qvss_81_pixels [] = {
+static u_int32_t qvss_81_pixels [] = {
 	0x00, /* 0x00000000	  Q */
 	0x00, /* 0x00000000	  Q */
 	0x3e, /* 0x00111110	  Q */
@@ -1003,7 +1003,7 @@ static u_long qvss_81_pixels [] = {
       };
 static struct raster qvss_81 = { 8, 15, 1, 1, qvss_81_pixels, 0 };
 
-static u_long qvss_82_pixels [] = {
+static u_int32_t qvss_82_pixels [] = {
 	0x00, /* 0x00000000	  R */
 	0x00, /* 0x00000000	  R */
 	0x3f, /* 0x00111111	  R */
@@ -1022,7 +1022,7 @@ static u_long qvss_82_pixels [] = {
       };
 static struct raster qvss_82 = { 8, 15, 1, 1, qvss_82_pixels, 0 };
 
-static u_long qvss_83_pixels [] = {
+static u_int32_t qvss_83_pixels [] = {
 	0x00, /* 0x00000000	  S */
 	0x00, /* 0x00000000	  S */
 	0x3e, /* 0x00111110	  S */
@@ -1041,7 +1041,7 @@ static u_long qvss_83_pixels [] = {
       };
 static struct raster qvss_83 = { 8, 15, 1, 1, qvss_83_pixels, 0 };
 
-static u_long qvss_84_pixels [] = {
+static u_int32_t qvss_84_pixels [] = {
 	0x00, /* 0x00000000	  T */
 	0x00, /* 0x00000000	  T */
 	0x7f, /* 0x01111111	  T */
@@ -1060,7 +1060,7 @@ static u_long qvss_84_pixels [] = {
       };
 static struct raster qvss_84 = { 8, 15, 1, 1, qvss_84_pixels, 0 };
 
-static u_long qvss_85_pixels [] = {
+static u_int32_t qvss_85_pixels [] = {
 	0x00, /* 0x00000000	  U */
 	0x00, /* 0x00000000	  U */
 	0x41, /* 0x01000001	  U */
@@ -1079,7 +1079,7 @@ static u_long qvss_85_pixels [] = {
       };
 static struct raster qvss_85 = { 8, 15, 1, 1, qvss_85_pixels, 0 };
 
-static u_long qvss_86_pixels [] = {
+static u_int32_t qvss_86_pixels [] = {
 	0x00, /* 0x00000000	  V */
 	0x00, /* 0x00000000	  V */
 	0x41, /* 0x01000001	  V */
@@ -1098,7 +1098,7 @@ static u_long qvss_86_pixels [] = {
       };
 static struct raster qvss_86 = { 8, 15, 1, 1, qvss_86_pixels, 0 };
 
-static u_long qvss_87_pixels [] = {
+static u_int32_t qvss_87_pixels [] = {
 	0x00, /* 0x00000000	  W */
 	0x00, /* 0x00000000	  W */
 	0x41, /* 0x01000001	  W */
@@ -1117,7 +1117,7 @@ static u_long qvss_87_pixels [] = {
       };
 static struct raster qvss_87 = { 8, 15, 1, 1, qvss_87_pixels, 0 };
 
-static u_long qvss_88_pixels [] = {
+static u_int32_t qvss_88_pixels [] = {
 	0x00, /* 0x00000000	  X */
 	0x00, /* 0x00000000	  X */
 	0x41, /* 0x01000001	  X */
@@ -1136,7 +1136,7 @@ static u_long qvss_88_pixels [] = {
       };
 static struct raster qvss_88 = { 8, 15, 1, 1, qvss_88_pixels, 0 };
 
-static u_long qvss_89_pixels [] = {
+static u_int32_t qvss_89_pixels [] = {
 	0x00, /* 0x00000000	  Y */
 	0x00, /* 0x00000000	  Y */
 	0x41, /* 0x01000001	  Y */
@@ -1155,7 +1155,7 @@ static u_long qvss_89_pixels [] = {
       };
 static struct raster qvss_89 = { 8, 15, 1, 1, qvss_89_pixels, 0 };
 
-static u_long qvss_90_pixels [] = {
+static u_int32_t qvss_90_pixels [] = {
 	0x00, /* 0x00000000	  Z */
 	0x00, /* 0x00000000	  Z */
 	0x7f, /* 0x01111111	  Z */
@@ -1174,7 +1174,7 @@ static u_long qvss_90_pixels [] = {
       };
 static struct raster qvss_90 = { 8, 15, 1, 1, qvss_90_pixels, 0 };
 
-static u_long qvss_91_pixels [] = {
+static u_int32_t qvss_91_pixels [] = {
 	0x00, /* 0x00000000	  [ */
 	0x00, /* 0x00000000	  [ */
 	0x3c, /* 0x00111100	  [ */
@@ -1193,7 +1193,7 @@ static u_long qvss_91_pixels [] = {
       };
 static struct raster qvss_91 = { 8, 15, 1, 1, qvss_91_pixels, 0 };
 
-static u_long qvss_92_pixels [] = {
+static u_int32_t qvss_92_pixels [] = {
 	0x00, /* 0x00000000	  \ */
 	0x00, /* 0x00000000	  \ */
 	0x01, /* 0x00000001	  \ */
@@ -1212,7 +1212,7 @@ static u_long qvss_92_pixels [] = {
       };
 static struct raster qvss_92 = { 8, 15, 1, 1, qvss_92_pixels, 0 };
 
-static u_long qvss_93_pixels [] = {
+static u_int32_t qvss_93_pixels [] = {
 	0x00, /* 0x00000000	  ] */
 	0x00, /* 0x00000000	  ] */
 	0x1e, /* 0x00011110	  ] */
@@ -1231,7 +1231,7 @@ static u_long qvss_93_pixels [] = {
       };
 static struct raster qvss_93 = { 8, 15, 1, 1, qvss_93_pixels, 0 };
 
-static u_long qvss_94_pixels [] = {
+static u_int32_t qvss_94_pixels [] = {
 	0x00, /* 0x00000000	  ^ */
 	0x00, /* 0x00000000	  ^ */
 	0x08, /* 0x00001000	  ^ */
@@ -1250,7 +1250,7 @@ static u_long qvss_94_pixels [] = {
       };
 static struct raster qvss_94 = { 8, 15, 1, 1, qvss_94_pixels, 0 };
 
-static u_long qvss_95_pixels [] = {
+static u_int32_t qvss_95_pixels [] = {
 	0x00, /* 0x00000000	  _ */
 	0x00, /* 0x00000000	  _ */
 	0x00, /* 0x00000000	  _ */
@@ -1269,7 +1269,7 @@ static u_long qvss_95_pixels [] = {
       };
 static struct raster qvss_95 = { 8, 15, 1, 1, qvss_95_pixels, 0 };
 
-static u_long qvss_96_pixels [] = {
+static u_int32_t qvss_96_pixels [] = {
 	0x00, /* 0x00000000	  ` */
 	0x00, /* 0x00000000	  ` */
 	0x0e, /* 0x00001110	  ` */
@@ -1288,7 +1288,7 @@ static u_long qvss_96_pixels [] = {
       };
 static struct raster qvss_96 = { 8, 15, 1, 1, qvss_96_pixels, 0 };
 
-static u_long qvss_97_pixels [] = {
+static u_int32_t qvss_97_pixels [] = {
 	0x00, /* 0x00000000	  a */
 	0x00, /* 0x00000000	  a */
 	0x00, /* 0x00000000	  a */
@@ -1307,7 +1307,7 @@ static u_long qvss_97_pixels [] = {
       };
 static struct raster qvss_97 = { 8, 15, 1, 1, qvss_97_pixels, 0 };
 
-static u_long qvss_98_pixels [] = {
+static u_int32_t qvss_98_pixels [] = {
 	0x00, /* 0x00000000	  b */
 	0x00, /* 0x00000000	  b */
 	0x01, /* 0x00000001	  b */
@@ -1326,7 +1326,7 @@ static u_long qvss_98_pixels [] = {
       };
 static struct raster qvss_98 = { 8, 15, 1, 1, qvss_98_pixels, 0 };
 
-static u_long qvss_99_pixels [] = {
+static u_int32_t qvss_99_pixels [] = {
 	0x00, /* 0x00000000	  c */
 	0x00, /* 0x00000000	  c */
 	0x00, /* 0x00000000	  c */
@@ -1345,7 +1345,7 @@ static u_long qvss_99_pixels [] = {
       };
 static struct raster qvss_99 = { 8, 15, 1, 1, qvss_99_pixels, 0 };
 
-static u_long qvss_100_pixels [] = {
+static u_int32_t qvss_100_pixels [] = {
 	0x00, /* 0x00000000	  d */
 	0x00, /* 0x00000000	  d */
 	0x40, /* 0x01000000	  d */
@@ -1364,7 +1364,7 @@ static u_long qvss_100_pixels [] = {
       };
 static struct raster qvss_100 = { 8, 15, 1, 1, qvss_100_pixels, 0 };
 
-static u_long qvss_101_pixels [] = {
+static u_int32_t qvss_101_pixels [] = {
 	0x00, /* 0x00000000	  e */
 	0x00, /* 0x00000000	  e */
 	0x00, /* 0x00000000	  e */
@@ -1383,7 +1383,7 @@ static u_long qvss_101_pixels [] = {
       };
 static struct raster qvss_101 = { 8, 15, 1, 1, qvss_101_pixels, 0 };
 
-static u_long qvss_102_pixels [] = {
+static u_int32_t qvss_102_pixels [] = {
 	0x00, /* 0x00000000	  f */
 	0x00, /* 0x00000000	  f */
 	0x38, /* 0x00111000	  f */
@@ -1402,7 +1402,7 @@ static u_long qvss_102_pixels [] = {
       };
 static struct raster qvss_102 = { 8, 15, 1, 1, qvss_102_pixels, 0 };
 
-static u_long qvss_103_pixels [] = {
+static u_int32_t qvss_103_pixels [] = {
 	0x00, /* 0x00000000	  g */
 	0x00, /* 0x00000000	  g */
 	0x00, /* 0x00000000	  g */
@@ -1421,7 +1421,7 @@ static u_long qvss_103_pixels [] = {
       };
 static struct raster qvss_103 = { 8, 15, 1, 1, qvss_103_pixels, 0 };
 
-static u_long qvss_104_pixels [] = {
+static u_int32_t qvss_104_pixels [] = {
 	0x00, /* 0x00000000	  h */
 	0x00, /* 0x00000000	  h */
 	0x01, /* 0x00000001	  h */
@@ -1440,7 +1440,7 @@ static u_long qvss_104_pixels [] = {
       };
 static struct raster qvss_104 = { 8, 15, 1, 1, qvss_104_pixels, 0 };
 
-static u_long qvss_105_pixels [] = {
+static u_int32_t qvss_105_pixels [] = {
 	0x00, /* 0x00000000	  i */
 	0x00, /* 0x00000000	  i */
 	0x00, /* 0x00000000	  i */
@@ -1459,7 +1459,7 @@ static u_long qvss_105_pixels [] = {
       };
 static struct raster qvss_105 = { 8, 15, 1, 1, qvss_105_pixels, 0 };
 
-static u_long qvss_106_pixels [] = {
+static u_int32_t qvss_106_pixels [] = {
 	0x00, /* 0x00000000	  j */
 	0x00, /* 0x00000000	  j */
 	0x00, /* 0x00000000	  j */
@@ -1478,7 +1478,7 @@ static u_long qvss_106_pixels [] = {
       };
 static struct raster qvss_106 = { 8, 15, 1, 1, qvss_106_pixels, 0 };
 
-static u_long qvss_107_pixels [] = {
+static u_int32_t qvss_107_pixels [] = {
 	0x00, /* 0x00000000	  k */
 	0x00, /* 0x00000000	  k */
 	0x01, /* 0x00000001	  k */
@@ -1497,7 +1497,7 @@ static u_long qvss_107_pixels [] = {
       };
 static struct raster qvss_107 = { 8, 15, 1, 1, qvss_107_pixels, 0 };
 
-static u_long qvss_108_pixels [] = {
+static u_int32_t qvss_108_pixels [] = {
 	0x00, /* 0x00000000	  l */
 	0x00, /* 0x00000000	  l */
 	0x0c, /* 0x00001100	  l */
@@ -1516,7 +1516,7 @@ static u_long qvss_108_pixels [] = {
       };
 static struct raster qvss_108 = { 8, 15, 1, 1, qvss_108_pixels, 0 };
 
-static u_long qvss_109_pixels [] = {
+static u_int32_t qvss_109_pixels [] = {
 	0x00, /* 0x00000000	  m */
 	0x00, /* 0x00000000	  m */
 	0x00, /* 0x00000000	  m */
@@ -1535,7 +1535,7 @@ static u_long qvss_109_pixels [] = {
       };
 static struct raster qvss_109 = { 8, 15, 1, 1, qvss_109_pixels, 0 };
 
-static u_long qvss_110_pixels [] = {
+static u_int32_t qvss_110_pixels [] = {
 	0x00, /* 0x00000000	  n */
 	0x00, /* 0x00000000	  n */
 	0x00, /* 0x00000000	  n */
@@ -1554,7 +1554,7 @@ static u_long qvss_110_pixels [] = {
       };
 static struct raster qvss_110 = { 8, 15, 1, 1, qvss_110_pixels, 0 };
 
-static u_long qvss_111_pixels [] = {
+static u_int32_t qvss_111_pixels [] = {
 	0x00, /* 0x00000000	  o */
 	0x00, /* 0x00000000	  o */
 	0x00, /* 0x00000000	  o */
@@ -1573,7 +1573,7 @@ static u_long qvss_111_pixels [] = {
       };
 static struct raster qvss_111 = { 8, 15, 1, 1, qvss_111_pixels, 0 };
 
-static u_long qvss_112_pixels [] = {
+static u_int32_t qvss_112_pixels [] = {
 	0x00, /* 0x00000000	  p */
 	0x00, /* 0x00000000	  p */
 	0x00, /* 0x00000000	  p */
@@ -1592,7 +1592,7 @@ static u_long qvss_112_pixels [] = {
       };
 static struct raster qvss_112 = { 8, 15, 1, 1, qvss_112_pixels, 0 };
 
-static u_long qvss_113_pixels [] = {
+static u_int32_t qvss_113_pixels [] = {
 	0x00, /* 0x00000000	  q */
 	0x00, /* 0x00000000	  q */
 	0x00, /* 0x00000000	  q */
@@ -1611,7 +1611,7 @@ static u_long qvss_113_pixels [] = {
       };
 static struct raster qvss_113 = { 8, 15, 1, 1, qvss_113_pixels, 0 };
 
-static u_long qvss_114_pixels [] = {
+static u_int32_t qvss_114_pixels [] = {
 	0x00, /* 0x00000000	  r */
 	0x00, /* 0x00000000	  r */
 	0x00, /* 0x00000000	  r */
@@ -1630,7 +1630,7 @@ static u_long qvss_114_pixels [] = {
       };
 static struct raster qvss_114 = { 8, 15, 1, 1, qvss_114_pixels, 0 };
 
-static u_long qvss_115_pixels [] = {
+static u_int32_t qvss_115_pixels [] = {
 	0x00, /* 0x00000000	  s */
 	0x00, /* 0x00000000	  s */
 	0x00, /* 0x00000000	  s */
@@ -1649,7 +1649,7 @@ static u_long qvss_115_pixels [] = {
       };
 static struct raster qvss_115 = { 8, 15, 1, 1, qvss_115_pixels, 0 };
 
-static u_long qvss_116_pixels [] = {
+static u_int32_t qvss_116_pixels [] = {
 	0x00, /* 0x00000000	  t */
 	0x00, /* 0x00000000	  t */
 	0x00, /* 0x00000000	  t */
@@ -1668,7 +1668,7 @@ static u_long qvss_116_pixels [] = {
       };
 static struct raster qvss_116 = { 8, 15, 1, 1, qvss_116_pixels, 0 };
 
-static u_long qvss_117_pixels [] = {
+static u_int32_t qvss_117_pixels [] = {
 	0x00, /* 0x00000000	  u */
 	0x00, /* 0x00000000	  u */
 	0x00, /* 0x00000000	  u */
@@ -1687,7 +1687,7 @@ static u_long qvss_117_pixels [] = {
       };
 static struct raster qvss_117 = { 8, 15, 1, 1, qvss_117_pixels, 0 };
 
-static u_long qvss_118_pixels [] = {
+static u_int32_t qvss_118_pixels [] = {
 	0x00, /* 0x00000000	  v */
 	0x00, /* 0x00000000	  v */
 	0x00, /* 0x00000000	  v */
@@ -1706,7 +1706,7 @@ static u_long qvss_118_pixels [] = {
       };
 static struct raster qvss_118 = { 8, 15, 1, 1, qvss_118_pixels, 0 };
 
-static u_long qvss_119_pixels [] = {
+static u_int32_t qvss_119_pixels [] = {
 	0x00, /* 0x00000000	  w */
 	0x00, /* 0x00000000	  w */
 	0x00, /* 0x00000000	  w */
@@ -1725,7 +1725,7 @@ static u_long qvss_119_pixels [] = {
       };
 static struct raster qvss_119 = { 8, 15, 1, 1, qvss_119_pixels, 0 };
 
-static u_long qvss_120_pixels [] = {
+static u_int32_t qvss_120_pixels [] = {
 	0x00, /* 0x00000000	  x */
 	0x00, /* 0x00000000	  x */
 	0x00, /* 0x00000000	  x */
@@ -1744,7 +1744,7 @@ static u_long qvss_120_pixels [] = {
       };
 static struct raster qvss_120 = { 8, 15, 1, 1, qvss_120_pixels, 0 };
 
-static u_long qvss_121_pixels [] = {
+static u_int32_t qvss_121_pixels [] = {
 	0x00, /* 0x00000000	  y */
 	0x00, /* 0x00000000	  y */
 	0x00, /* 0x00000000	  y */
@@ -1763,7 +1763,7 @@ static u_long qvss_121_pixels [] = {
       };
 static struct raster qvss_121 = { 8, 15, 1, 1, qvss_121_pixels, 0 };
 
-static u_long qvss_122_pixels [] = {
+static u_int32_t qvss_122_pixels [] = {
 	0x00, /* 0x00000000	  z */
 	0x00, /* 0x00000000	  z */
 	0x00, /* 0x00000000	  z */
@@ -1782,7 +1782,7 @@ static u_long qvss_122_pixels [] = {
       };
 static struct raster qvss_122 = { 8, 15, 1, 1, qvss_122_pixels, 0 };
 
-static u_long qvss_123_pixels [] = {
+static u_int32_t qvss_123_pixels [] = {
 	0x00, /* 0x00000000	  { */
 	0x00, /* 0x00000000	  { */
 	0x70, /* 0x01110000	  { */
@@ -1801,7 +1801,7 @@ static u_long qvss_123_pixels [] = {
       };
 static struct raster qvss_123 = { 8, 15, 1, 1, qvss_123_pixels, 0 };
 
-static u_long qvss_124_pixels [] = {
+static u_int32_t qvss_124_pixels [] = {
 	0x00, /* 0x00000000	  | */
 	0x00, /* 0x00000000	  | */
 	0x08, /* 0x00001000	  | */
@@ -1820,7 +1820,7 @@ static u_long qvss_124_pixels [] = {
       };
 static struct raster qvss_124 = { 8, 15, 1, 1, qvss_124_pixels, 0 };
 
-static u_long qvss_125_pixels [] = {
+static u_int32_t qvss_125_pixels [] = {
 	0x00, /* 0x00000000	  } */
 	0x00, /* 0x00000000	  } */
 	0x07, /* 0x00000111	  } */
@@ -1839,7 +1839,7 @@ static u_long qvss_125_pixels [] = {
       };
 static struct raster qvss_125 = { 8, 15, 1, 1, qvss_125_pixels, 0 };
 
-static u_long qvss_126_pixels [] = {
+static u_int32_t qvss_126_pixels [] = {
 	0x00, /* 0x00000000	  ~ */
 	0x00, /* 0x00000000	  ~ */
 	0x46, /* 0x01000110	  ~ */
