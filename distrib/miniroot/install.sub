@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.227 2002/06/09 05:53:54 todd Exp $
+#	$OpenBSD: install.sub,v 1.228 2002/06/10 19:50:16 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1078,16 +1078,11 @@ encode_for_url() {
 
 # Get several parameters from the user, and xfer
 # files from the server.
+# $1 = url type (ftp or http)
 # Note:	_ftp_server_ip, _ftp_server_dir, _ftp_server_login,
 #	_ftp_server_password, and _ftp_active must be global.
 install_url() {
-	local _f _file_list _url_type _url_base _url_login _url_pass _oifs
-
-	# Parse arguments, shell style
-	case $1 in
-	-ftp)	_url_type=ftp ;;
-	-http)	_url_type=http ;;
-	esac
+	local _f _file_list _url_type=$1 _url_base _url_login _url_pass _oifs
 
 	cat << __EOT
 
@@ -1789,11 +1784,11 @@ __EOT
 				resp=d
 				;;
 			f*|F*)	[ "$_didnet" ] || donetconfig
-				install_url -ftp
+				install_url ftp
 				resp=f
 				;;
 			h*|H*)	[ "$_didnet" ] || donetconfig
-				install_url -http
+				install_url http
 				resp=h
 				;;
 			t*|T*)	install_tape
