@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.130 2001/06/27 03:49:53 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.131 2001/06/28 21:53:42 provos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -107,7 +107,7 @@ ip_output(m0, va_alist)
 {
 	register struct ip *ip, *mhip;
 	register struct ifnet *ifp;
-	register struct mbuf *m = m0;
+	struct mbuf *m = m0;
 	register int hlen = sizeof (struct ip);
 	int len, off, error = 0;
 	struct route iproute;
@@ -555,12 +555,14 @@ sendit:
 		 * Packet filter
 		 */
 #if NPF > 0
-		if (pf_test(PF_OUT, &encif[0].sc_if, m) != PF_PASS) {
+
+		if (pf_test(PF_OUT, &encif[0].sc_if, &m) != PF_PASS) {
 			error = EHOSTUNREACH;
 			splx(s);
 			m_freem(m);
 			goto done;
 		}
+		ip = mtod(m, struct ip *);
 		hlen = ip->ip_hl << 2;
 #endif
 
@@ -640,11 +642,13 @@ sendit:
 	 * Packet filter
 	 */
 #if NPF > 0
-	if (pf_test(PF_OUT, ifp, m) != PF_PASS) {
+	if (pf_test(PF_OUT, ifp, &m) != PF_PASS) {
 		error = EHOSTUNREACH;
 		m_freem(m);
 		goto done;
 	}
+	ip = mtod(m, struct ip *);
+	hlen = ip->ip_hl << 2;
 #endif
 	/* Catch routing changes wrt. hardware checksumming for TCP or UDP. */
 	if (m->m_pkthdr.csum & M_TCPV4_CSUM_OUT) {

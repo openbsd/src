@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.88 2001/06/27 05:50:07 kjc Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.89 2001/06/28 21:53:42 provos Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -392,8 +392,13 @@ ipv4_input(m)
 	 * Packet filter
 	 */
 #if NPF > 0
-	if (pf_test(PF_IN, m->m_pkthdr.rcvif, m) != PF_PASS)
-		goto bad;
+	{
+		if (pf_test(PF_IN, m->m_pkthdr.rcvif, &m) != PF_PASS)
+			goto bad;
+
+		ip = mtod(m, struct ip *);
+		hlen = ip->ip_hl << 2;
+	}
 #endif
 	/*
 	 * Process options and, if not destined for us,

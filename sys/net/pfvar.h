@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.23 2001/06/27 10:31:51 kjell Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.24 2001/06/28 21:53:42 provos Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -37,7 +37,7 @@
 #include <sys/queue.h>
 
 enum	{ PF_IN=0, PF_OUT=1 };
-enum	{ PF_PASS=0, PF_DROP=1, PF_DROP_RST=2 };
+enum	{ PF_PASS=0, PF_DROP=1, PF_DROP_RST=2, PF_SCRUB };
 enum	{ PF_OP_GL=1, PF_OP_EQ=2, PF_OP_NE=3, PF_OP_LT=4,
 	  PF_OP_LE=5, PF_OP_GT=6, PF_OP_GE=7 };
 
@@ -129,13 +129,17 @@ struct pf_rdr {
 #define PFRES_BADOFF	1		/* Bad offset for pull_hdr */
 #define PFRES_FRAG	2		/* Dropping following fragment */
 #define PFRES_SHORT	3		/* Dropping short packet */
-#define PFRES_MAX	4		/* total+1 */
+#define PFRES_NORM	4		/* Dropping by normalizer */
+#define PFRES_MEMORY	5		/* Dropped due to lacking mem */
+#define PFRES_MAX	6		/* total+1 */
 
 #define PFRES_NAMES { \
 	"match", \
 	"bad-offset", \
 	"fragment", \
 	"short", \
+	"normalize", \
+	"memory", \
 	NULL \
 }
 
@@ -221,7 +225,7 @@ struct pfioc_if {
 
 #ifdef _KERNEL
 
-int	pf_test(int, struct ifnet *, struct mbuf *);
+int	pf_test(int, struct ifnet *, struct mbuf **);
 
 #endif /* _KERNEL */
 
