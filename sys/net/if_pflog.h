@@ -1,36 +1,27 @@
-/* $OpenBSD: if_pflog.h,v 1.4 2001/06/26 19:01:54 provos Exp $ */
+/* $OpenBSD: if_pflog.h,v 1.5 2001/06/26 21:03:28 provos Exp $ */
 /*
- * The authors of this code are John Ioannidis (ji@tla.org),
- * Angelos D. Keromytis (kermit@csd.uch.gr) and 
- * Niels Provos (provos@physnet.uni-hamburg.de).
+ * Copyright 2001 Niels Provos <provos@citi.umich.edu>
+ * All rights reserved.
  *
- * This code was written by John Ioannidis for BSD/OS in Athens, Greece, 
- * in November 1995.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
  *
- * Ported to OpenBSD and NetBSD, with additional transforms, in December 1996,
- * by Angelos D. Keromytis.
- *
- * Additional transforms and features in 1997 and 1998 by Angelos D. Keromytis
- * and Niels Provos.
- *
- * Copyright (C) 1995, 1996, 1997, 1998 by John Ioannidis, Angelos D. Keromytis
- * and Niels Provos.
- * Copyright (c) 2001, Angelos D. Keromytis.
- *
- * Permission to use, copy, and modify this software with or without fee
- * is hereby granted, provided that this entire notice is included in
- * all copies of any software which is or includes a copy or
- * modification of this software. 
- * You may use this code under the GNU public license if you so wish. Please
- * contribute changes back to the authors under this freer than GPL license
- * so that we may further the use of strong encryption without limitations to
- * all.
- *
- * THIS SOFTWARE IS BEING PROVIDED "AS IS", WITHOUT ANY EXPRESS OR
- * IMPLIED WARRANTY. IN PARTICULAR, NONE OF THE AUTHORS MAKES ANY
- * REPRESENTATION OR WARRANTY OF ANY KIND CONCERNING THE
- * MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
- * PURPOSE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #ifndef _NET_IF_PFLOG_H_
