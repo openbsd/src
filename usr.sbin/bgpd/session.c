@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.46 2003/12/26 18:33:11 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.47 2003/12/27 14:28:41 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -161,7 +161,7 @@ session_main(struct bgpd_config *config, int pipe_m2s[2], int pipe_s2r[2])
 	bgpd_process = PROC_SE;
 
 	if ((sock = setup_listener()) == -1)
-		fatal("listener setup failed");
+		fatalx("listener setup failed");
 
 	if (setgroups(1, &pw->pw_gid) ||
 	    setegid(pw->pw_gid) || setgid(pw->pw_gid) ||
@@ -1246,7 +1246,7 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 		switch (imsg.hdr.type) {
 		case IMSG_RECONF_CONF:
 			if (idx != PFD_PIPE_MAIN)
-				fatal("reconf request not from parent");
+				fatalx("reconf request not from parent");
 			if ((nconf = malloc(sizeof(struct bgpd_config))) ==
 			    NULL)
 				fatal(NULL);
@@ -1257,7 +1257,7 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 			break;
 		case IMSG_RECONF_PEER:
 			if (idx != PFD_PIPE_MAIN)
-				fatal("reconf request not from parent");
+				fatalx("reconf request not from parent");
 			pconf = imsg.data;
 			p = getpeerbyip(pconf->remote_addr.sin_addr.s_addr);
 			if (p == NULL) {
@@ -1304,9 +1304,9 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 			break;
 		case IMSG_RECONF_DONE:
 			if (idx != PFD_PIPE_MAIN)
-				fatal("reconf request not from parent");
+				fatalx("reconf request not from parent");
 			if (nconf == NULL)
-				fatal("got IMSG_RECONF_DONE but no config");
+				fatalx("got IMSG_RECONF_DONE but no config");
 			conf->as = nconf->as;
 			conf->holdtime = nconf->holdtime;
 			conf->bgpid = nconf->bgpid;
