@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.11 2003/02/26 19:12:08 drahn Exp $ */
+/*	$OpenBSD: cpu.c,v 1.12 2003/06/23 01:38:05 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -61,6 +61,11 @@
 #define HID0_NAP	(1 << (31-9))
 #define HID0_SLEEP	(1 << (31-10))
 #define HID0_DPM	(1 << (31-11))
+#define HID0_SGE	(1 << (31-24))
+#define HID0_BTIC	(1 << (31-26))
+#define HID0_LRSTK	(1 << (31-27))
+#define HID0_FOLD	(1 << (31-28))
+#define HID0_BHT	(1 << (31-29))
 
 char cpu_model[80];
 char machine[] = MACHINE;	/* cpu architecture */
@@ -190,13 +195,23 @@ cpuattach(parent, dev, aux)
 	case MPC7400:
 	case IBM750FX:
 	case MPC7410:
-	case MPC7450:
-	case MPC7455:
 		/* select DOZE mode */
 		hid0 &= ~(HID0_NAP | HID0_SLEEP);
 		hid0 |= HID0_DOZE | HID0_DPM; 
+		break;
+	case MPC7450:
+	case MPC7455:
+		/* select NAP mode */
+		hid0 &= ~(HID0_DOZE | HID0_SLEEP);
+		hid0 |= HID0_NAP | HID0_DPM; 
+		/* try some other flags */
+		hid0 |= HID0_SGE | HID0_BTIC;
+		hid0 |= HID0_LRSTK | HID0_FOLD | HID0_BHT;
+		/* Disable BTIC on 7450 Rev 2.0 or earlier */
+		if (cpu == MPC7450 && (pvr & 0xffff) < 0x0200)
+			hid0 &= ~HID0_BTIC;
 	}
-	__asm __volatile ("mtspr 1008,%0" : "=r" (hid0));
+	__asm __volatile ("mtspr 1008,%0" :: "r" (hid0));
 
 	/* if processor is G3 or G4, configure l2 cache */ 
 	if ( (cpu == MPC750) || (cpu == MPC7400) || (cpu == IBM750FX)
