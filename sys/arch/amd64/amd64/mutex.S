@@ -58,7 +58,6 @@ ENTRY(mtx_enter)
 	lock
 #endif
 	cmpxchgq	%rcx, MTX_OWNER(%rdi)	# test_and_set(mtx->mtx_owner)
-	cmpq	$0, %rax
 	jne	3f
 	movl	%edx, MTX_OLDIPL(%rdi)
 	ret
