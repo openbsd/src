@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.3 1998/05/27 02:26:07 downsj Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.4 1998/08/30 22:35:37 downsj Exp $	*/
 
 /*
  * Pentium performance counter control program for OpenBSD.
@@ -13,20 +13,35 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/sysctl.h>
 #include <sys/ioctl.h>
+#include <err.h>
 #include <fcntl.h>
 #include <machine/cpu.h>
 #include <machine/pctr.h>
-
-char *progname;
-int cpufamily;
+#include <machine/specialreg.h>
 
 #define CFL_MESI 0x1   /* Unit mask accepts MESI encoding */
 #define CFL_SA   0x2   /* Unit mask accepts Self/Any bit */
 #define CFL_C0   0x4   /* Counter 0 only */
 #define CFL_C1   0x8   /* Counter 1 only */
+
+/* Kernel cpuid values. */
+int cpu_id, cpu_feature;
+char cpu_vendor[16];
+
+int pctr_isintel;
+
+#define usetsc		(cpu_feature & CPUID_TSC)
+#define usep5ctr	(pctr_isintel && (((cpu_id >> 8) & 15) == 5) && \
+				(((cpu_id >> 4) & 15) > 0))
+#define usep6ctr	(pctr_isintel && ((cpu_id >> 8) & 15) == 6)
+#define cpufamily	((cpu_id >> 8) & 15)
+
+extern char *__progname;
 
 struct ctrfn {
   u_int fn;
@@ -226,37 +241,6 @@ struct ctrfn p6fn[] = {
   {0x0, 0, NULL, NULL},
 };
 
-#define __cpuid()				\
-({						\
-  pctrval id;					\
-  __asm __volatile ("pushfl\n"			\
-		    "\tpopl %%eax\n"		\
-		    "\tmovl %%eax,%%ecx\n"	\
-		    "\txorl %1,%%eax\n"		\
-		    "\tpushl %%eax\n"		\
-		    "\tpopfl\n"			\
-		    "\tpushfl\n"		\
-		    "\tpopl %%eax\n"		\
-		    "\tpushl %%ecx\n"		\
-		    "\tpopfl\n"			\
-		    "\tcmpl %%eax,%%ecx\n"	\
-		    "\tmovl $0,%%eax\n"		\
-		    "\tje 1f\n"			\
-		    "\tcpuid\n"			\
-		    "\ttestl %%eax,%%eax\n"	\
-		    "\tje 1f\n"			\
-		    "\tmovl $1,%%eax\n"		\
-		    "\tcpuid\n"			\
-		    "\tjmp 2f\n"		\
-		    "1:\t"			\
-		    "\txorl %%eax,%%eax\n"	\
-		    "\txorl %%edx,%%edx\n"	\
-		    "2:\t"			\
-		    : "=A" (id) : "i" (PSL_ID)	\
-		    : "edx", "ecx", "ebx");	\
-  id;						\
-})
-
 static void
 printdesc (char *desc)
 {
@@ -395,9 +379,11 @@ readst (void)
   }
   close (fd);
 
-  for (i = 0; i < PCTR_NUM; i++)
-    printf (" ctr%d = %16qd  [%s]\n", i, st.pctr_hwc[i],
-	    fn2str (cpufamily, st.pctr_fn[i]));
+  if (usep5ctr || usep6ctr) {
+    for (i = 0; i < PCTR_NUM; i++)
+      printf (" ctr%d = %16qd  [%s]\n", i, st.pctr_hwc[i],
+	      fn2str (cpufamily, st.pctr_fn[i]));
+  }
   printf ("  tsc = %16qd\n  idl = %16qd\n", st.pctr_tsc, st.pctr_idl);
 }
 
@@ -427,8 +413,8 @@ usage (void)
 	   "    Read the counters.\n"
 	   "  %s -l [5|6]\n"
 	   "    List all possible counter functions for P5/P6.\n",
-	   progname, progname);
-  if (cpufamily == 5)
+	   __progname, __progname);
+  if (usep5ctr)
     fprintf (stderr,
 	     "  %s -s {0|1} [-[c][u][k]] function\n"
 	     "    Configure counter.\n"
@@ -436,8 +422,8 @@ usage (void)
 	     "        c - count cycles not events\n"
 	     "        u - count events in user mode (ring 3)\n"
 	     "        k - count events in kernel mode (rings 0-2)\n",
-	     progname);
-  else if (cpufamily == 6)
+	     __progname);
+  else if (usep6ctr)
     fprintf (stderr,
 	     "  %s -s {0|1} [-[i][e][k][u]] "
 	     "function[+cm][/{[m][e][s][i]|[a]}]\n"
@@ -449,7 +435,7 @@ usage (void)
 	     "         u - count events in user mode (ring 3)\n"
 	     "        cm - # events/cycle required to bump ctr\n"
 	     "      mesi - Modified/Exclusive/Shared/Invalid in cache\n"
-	     "       s/a - self generated/all events\n", progname);
+	     "       s/a - self generated/all events\n", __progname);
   exit (1);
 }
 
@@ -461,17 +447,33 @@ main (int argc, char **argv)
   u_int ctr;
   char *cp;
   u_int fn, fl = 0;
-  pctrval id = __cpuid ();
   char **ap;
   int ac;
   struct ctrfn *cfnp;
+  int mib[2];
+  size_t len;
 
-  cpufamily = (id >> 8) & 0xf;
+  /* Get the kernel cpuid return values. */
+  mib[0] = CTL_MACHDEP;
+  mib[1] = CPU_CPUVENDOR;
+  if (sysctl(mib, 2, NULL, &len, NULL, 0) == -1)
+    err(1, "sysctl CPU_CPUVENDOR");
+  if (len > sizeof(cpu_vendor))		/* Shouldn't ever happen. */
+    err(1, "sysctl CPU_CPUVENDOR too big");
+  if (sysctl(mib, 2, cpu_vendor, &len, NULL, 0) == -1)
+    err(1, "sysctl CPU_CPUVENDOR");
 
-  if (progname = strrchr (argv[0], '/'))
-    progname++;
-  else
-    progname = argv[0];
+  mib[1] = CPU_CPUID;
+  len = sizeof(cpu_id);
+  if (sysctl(mib, 2, &cpu_id, &len, NULL, 0) == -1)
+    err(1, "sysctl CPU_CPUID");
+
+  mib[1] = CPU_CPUFEATURE;
+  len = sizeof(cpu_feature);
+  if (sysctl(mib, 2, &cpu_feature, &len, NULL, 0) == -1)
+    err(1, "sysctl CPU_CPUFEATURE");
+
+  pctr_isintel = (strcmp(cpu_vendor, "GenuineIntel") == 0);
 
   if (argc <= 1)
     readst ();
@@ -486,11 +488,11 @@ main (int argc, char **argv)
     ap = &argv[3];
     ac = argc - 3;
 
-    if (cpufamily == 6)
+    if (usep6ctr)
       fl |= P6CTR_EN;
     if (**ap == '-') {
       cp = *ap;
-      if (cpufamily == 6)
+      if (usep6ctr)
 	while (*++cp)
 	  switch (*cp) {
 	  case 'i':
@@ -508,7 +510,7 @@ main (int argc, char **argv)
 	  default:
 	    usage ();
 	  }
-      else
+      else if(usep5ctr)
 	while (*++cp)
 	  switch (*cp) {
 	  case 'c':
@@ -527,9 +529,9 @@ main (int argc, char **argv)
       ac--;
     }
     else {
-      if (cpufamily == 6)
+      if (usep6ctr)
 	fl |= P6CTR_U|P6CTR_K;
-      else
+      else if (usep5ctr)
 	fl |= P5CTR_U|P5CTR_K;
     }
 
@@ -537,10 +539,10 @@ main (int argc, char **argv)
       usage ();
 
     fn = strtoul (*ap, NULL, 16);
-    if (cpufamily == 6 && (fn & ~0xff) || cpufamily != 6 && (fn & ~0x3f))
+    if ((usep6ctr && (fn & ~0xff)) || (!usep6ctr && (fn & ~0x3f)))
       usage ();
     fl |= fn;
-    if (cpufamily == 6 && (cp = strchr (*ap, '+'))) {
+    if (usep6ctr && (cp = strchr (*ap, '+'))) {
       cp++;
       fn = strtol (cp, NULL, 0);
       if (fn & ~0xff)
@@ -548,7 +550,7 @@ main (int argc, char **argv)
       fl |= (fn << 24);
     }
     cfnp = fn2cfnp (6, fl);
-    if (cpufamily == 6 && cfnp && (cp = strchr (*ap, '/'))) {
+    if (usep6ctr && cfnp && (cp = strchr (*ap, '/'))) {
       if (cfnp->flags & CFL_MESI)
 	while (*++cp)
 	  switch (*cp) {
@@ -587,7 +589,7 @@ main (int argc, char **argv)
     if (ac)
       usage ();
 
-    if (cpufamily == 6 && ! (fl & 0xff))
+    if (usep6ctr && ! (fl & 0xff))
       fl = 0;
     setctr (ctr, fl);
   }
