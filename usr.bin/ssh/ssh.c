@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh.c,v 1.143 2001/09/20 13:50:40 markus Exp $");
+RCSID("$OpenBSD: ssh.c,v 1.144 2001/09/24 03:38:58 stevesk Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -256,6 +256,8 @@ main(int ac, char **av)
 	struct passwd *pw;
 	int dummy;
 	uid_t original_effective_uid;
+	extern int optind, optreset;
+	extern char *optarg;
 
 	/*
 	 * Save the original real uid.  It will be needed later (uid-swapping
