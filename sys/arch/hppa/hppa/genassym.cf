@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.1 1998/09/12 03:12:55 mickey Exp $
+#	$OpenBSD: genassym.cf,v 1.2 1998/09/14 18:59:50 mickey Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -53,7 +53,6 @@ include <machine/reg.h>
 include <machine/pte.h>
 include <machine/frame.h>
 include <machine/pmap.h>
-include <machine/iodc.h>
 include <machine/iomod.h>
 
 

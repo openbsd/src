@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.1 1998/09/12 02:51:34 mickey Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.2 1998/09/14 18:59:49 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -45,7 +45,6 @@
 #include <machine/autoconf.h>
 #include <machine/conf.h>
 #include <machine/pdc.h>
-#include <machine/iodc.h>
 #include <machine/iomod.h>
 
 typedef
