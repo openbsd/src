@@ -1,7 +1,7 @@
 #
-#	SPARE-PARTS: spare-parts.teeny.org
+#	SPARE-PARTS: spare-parts.teeny.org, the teeny gateway to the world.
 #
-#	$OpenBSD: SPARE-PARTS,v 1.4 1996/08/31 02:09:17 deraadt Exp $
+#	$OpenBSD: SPARE-PARTS,v 1.5 1996/09/16 10:10:46 downsj Exp $
 #
 
 machine		i386
@@ -20,26 +20,26 @@ option		DEVPAGER
 #option		DDB
 #makeoptions	DEBUG="-g"
 #option		DIAGNOSTIC
-option		KTRACE
+#option		KTRACE
 
-option		SYSVMSG
-option		SYSVSEM
-option		SYSVSHM
+#option		SYSVMSG
+#option		SYSVSEM
+#option		SYSVSHM
 #option		SHMMAXPGS=1024
 
-option		COMPAT_NOMID
-option		COMPAT_09
+#option		COMPAT_NOMID
+#option		COMPAT_09
 option		COMPAT_10
 option		COMPAT_11
-option		COMPAT_43
+#option		COMPAT_43
 #option		TCP_COMPAT_42
 
-option		COMPAT_SVR4
-option		COMPAT_IBCS2
-option		COMPAT_LINUX
-option		COMPAT_FREEBSD
+#option		COMPAT_SVR4
+#option		COMPAT_IBCS2
+#option		COMPAT_LINUX
+#option		COMPAT_FREEBSD
 
-option		LKM
+#option		LKM
 
 option		FFS
 option		QUOTA
@@ -51,7 +51,7 @@ option		IPFILTER
 option		NFSCLIENT
 option		NFSSERVER
 
-option		CD9660
+#option		CD9660
 option		MSDOSFS
 option		FDESC
 option		FIFO
@@ -65,6 +65,7 @@ option		GATEWAY
 option		INET
 
 config		bsd root on wd0 swap on wd0
+#config		bsd swap generic
 
 mainbus0 at root
 
@@ -85,13 +86,14 @@ pccom2	at isa? port 0x3e8 irq 2
 lpt0	at isa? port 0x3BC irq 7
 lpt1	at isa? port 0x278 irq 5
 
-ed0	at isa? port 0x320 irq 11 iomem 0xcc000
+ed0	at isa? port 0x320 irq 11 iomem 0xd0000
 ed1	at isa? port 0x300 irq 10
 
 fdc0	at isa? port 0x3f0 irq 6 drq 2
 fd*	at fdc? drive ?
 
 wdc0	at isa? port 0x1f0 irq 14
+wdc1	at isa? port 0x170 irq 15
 wd*	at wdc? drive ?
 
 pseudo-device	loop	1
