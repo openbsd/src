@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.19 2004/01/22 09:25:25 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.20 2004/02/07 05:26:21 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -294,7 +294,7 @@ pfsync_input(struct mbuf *m, ...)
 		}
 
 		s = splsoftnet();
-		cp = (void *)((char *)mp->m_data + iplen + PFSYNC_HDRLEN);
+		cp = (struct pfsync_state_clr *)(mp->m_data + offp);
 		creatorid = cp->creatorid;
 
 		RB_FOREACH(st, pf_state_tree_id, &tree_id) {
@@ -313,8 +313,8 @@ pfsync_input(struct mbuf *m, ...)
 		}
 
 		s = splsoftnet();
-		for (i = 0, sp = (void *)((char *)mp->m_data +
-		    iplen + PFSYNC_HDRLEN); i < count; i++, sp++) {
+		for (i = 0, sp = (struct pfsync_state *)(mp->m_data + offp);
+		    i < count; i++, sp++) {
 			if ((error = pfsync_insert_net_state(sp))) {
 				if (error == ENOMEM) {
 					splx(s);
@@ -333,8 +333,8 @@ pfsync_input(struct mbuf *m, ...)
 		}
 
 		s = splsoftnet();
-		for (i = 0, sp = (void *)((char *)mp->m_data +
-		    iplen + PFSYNC_HDRLEN); i < count; i++, sp++) {
+		for (i = 0, sp = (struct pfsync_state *)(mp->m_data + offp);
+		    i < count; i++, sp++) {
 			key.id = sp->id;
 			key.creatorid = sp->creatorid;
 
@@ -365,8 +365,8 @@ pfsync_input(struct mbuf *m, ...)
 		}
 
 		s = splsoftnet();
-		for (i = 0, sp = (void *)((char *)mp->m_data +
-		    iplen + PFSYNC_HDRLEN); i < count; i++, sp++) {
+		for (i = 0, sp = (struct pfsync_state *)(mp->m_data + offp);
+		    i < count; i++, sp++) {
 			key.id = sp->id;
 			key.creatorid = sp->creatorid;
 
@@ -396,8 +396,8 @@ pfsync_input(struct mbuf *m, ...)
 		}
 
 		s = splsoftnet();
-		for (i = 0, up = (void *)((char *)mp->m_data +
-		    iplen + PFSYNC_HDRLEN); i < count; i++, up++) {
+		for (i = 0, up = (struct pfsync_state_upd *)(mp->m_data + offp);
+		    i < count; i++, up++) {
 			key.id = up->id;
 			key.creatorid = up->creatorid;
 
@@ -427,8 +427,8 @@ pfsync_input(struct mbuf *m, ...)
 		}
 
 		s = splsoftnet();
-		for (i = 0, dp = (void *)((char *)mp->m_data +
-		    iplen + PFSYNC_HDRLEN); i < count; i++, dp++) {
+		for (i = 0, dp = (struct pfsync_state_del *)(mp->m_data + offp);
+		    i < count; i++, dp++) {
 			key.id = dp->id;
 			key.creatorid = dp->creatorid;
 
@@ -464,8 +464,9 @@ pfsync_input(struct mbuf *m, ...)
 		/* XXX send existing. pfsync_pack_state should handle this. */
 		if (sc->sc_mbuf != NULL)
 			pfsync_sendout(sc);
-		for (i = 0, rup = (void *)((char *)mp->m_data +
-		    iplen + PFSYNC_HDRLEN); i < count; i++, rup++) {
+		for (i = 0,
+		    rup = (struct pfsync_state_upd_req *)(mp->m_data + offp);
+		    i < count; i++, rup++) {
 			key.id = rup->id;
 			key.creatorid = rup->creatorid;
 
