@@ -1,4 +1,4 @@
-/*	$Id: kerberos.c,v 1.2 1996/09/16 18:48:54 millert Exp $	*/
+/*	$Id: kerberos.c,v 1.3 1996/09/17 23:29:37 deraadt Exp $	*/
 
 /*-
  * Copyright 1987, 1988 by the Student Information Processing Board
@@ -124,6 +124,7 @@ kerb_err_reply(struct sockaddr_in *client, KTEXT pkt, long int err, char *string
     KTEXT   e_pkt = &e_pkt_st;
     static char e_msg[128];
 
+    bzero(e_msg, sizeof e_msg);
     strcpy(e_msg, "\nKerberos error -- ");
     strcat(e_msg, string);
     cr_err_reply(e_pkt, req_name_ptr, req_inst_ptr, req_realm_ptr,
