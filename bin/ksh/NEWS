@@ -1,6 +1,7 @@
 Version 5.2.14pre
 
 * bug fixes
+    * trap: exit traps now executed in subshells (without explicit exit call).
     * eval: if given empty command, exist status is that of last command
       substitution (if any).
     * trap: if first argument is "exit", it is taken as a command not a signal.
@@ -44,7 +45,7 @@ Version 5.2.13
     * editing: completion after "cmd " now completes files (was command).
 
 
-$OpenBSD: NEWS,v 1.8 1999/01/08 20:24:56 millert Exp $
+$OpenBSD: NEWS,v 1.9 1999/01/19 20:41:51 millert Exp $
 
 Version 5.2.12
 

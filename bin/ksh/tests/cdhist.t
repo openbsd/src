@@ -1,6 +1,8 @@
 name: cd-history
 description:
 	Test someone's CD history package (uses arrays)
+# Fails on OS/2, since directory names are prepended with drive letter.
+category: !os:os2
 stdin:
 	# go to known place before doing anything
 	cd /

@@ -58,6 +58,8 @@ name: xxx-exec-environment-2
 description:
 	Check to make sure exec doesn't change environment if a program
 	isn't exec-ed
+# Under os/2, _emx_sig environment variable changes.
+category: !os:os2
 stdin:
 	env > bar1
 	FOO=bar exec; env > bar2

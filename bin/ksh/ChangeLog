@@ -1,3 +1,34 @@
+Fri Jan 15 12:51:53 NST 1999 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* expr.c: pass es as first param to all functions; deleted
+	  es global variable.
+
+Tue Jan 12 12:28:41 NST 1999 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* emacs.c(x_defbindings[]): removed #else part of ifdef OS2.
+
+	* shf.c(shf_getse): added code to strip \r for OS2.
+	* lex.c(getsc_line): removed OS2 ifdefs
+
+	* os2/misc.c(ksh_execve),sh.h: added flags argument; changed all calls.
+	* exec.c(scriptexec): OS2: make copy of a0 before calling
+	  search_access(X_OK).
+	* sh.h: OS2: changed EXECSHELL, EXECSHELL_STR.
+	* jobs.c(exchild): set XINTACT.
+	* os2/config.h: added HAVE_TERMIOS_H.
+	* os2/configure.cmd: changed test for existance of sed & gcc.
+
+	Fixes from Ilya Zakharevich.
+
+	* tests/th: added -C option, added "category" field.
+	* tests/th(category_check): new function.
+	* tests/*.t: added "category: !os:os2" to a few tests.
+
+Tue Jan 12 11:17:52 NST 1999 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* exec.c(execute): changed exit(rv) to unwind(LEXIT) to
+	  allow exit traps to be done.
+
 Tue Jan  5 16:45:00 NST 1999 Michael Rendell (michael@panda.cs.mun.ca)
 
 	* aclocal.m4(KSH_CHECK_H_TYPE): remove extra [] from egrep pattern.
@@ -302,7 +333,7 @@ Wed Oct 30 11:23:17 NST 1996 Michael Rendell (michael@panda.cs.mun.ca)
 	* exec.c(comexec): case CFUNC: set $0 to kshname if non-function
 	  function.
 
-$OpenBSD: ChangeLog,v 1.9 1999/01/10 17:55:01 millert Exp $
+$OpenBSD: ChangeLog,v 1.10 1999/01/19 20:41:51 millert Exp $
 
 Tue Oct 29 11:34:58 NST 1996 Michael Rendell (michael@panda.cs.mun.ca)
 

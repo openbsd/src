@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.7 1999/01/10 17:55:02 millert Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.8 1999/01/19 20:41:52 millert Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -310,7 +310,7 @@ static	struct x_defbindings const x_defbindings[] = {
 	{ XFUNC_mv_forw,		3,	'M'  },
 	{ XFUNC_next_com,		3,	'P'  },
 	{ XFUNC_prev_com,		3,	'H'  },
-#else /* OS2 */
+#endif /* OS2 */
 	/* These for ansi arrow keys: arguablely shouldn't be here by
 	 * default, but its simpler/faster/smaller than using termcap
 	 * entries.
@@ -320,7 +320,6 @@ static	struct x_defbindings const x_defbindings[] = {
 	{ XFUNC_next_com,		2,	'B'  },
 	{ XFUNC_mv_forw,		2,	'C'  },
 	{ XFUNC_mv_back,		2,	'D'  },
-#endif /* OS2 */
 };
 
 int

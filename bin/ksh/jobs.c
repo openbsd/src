@@ -1,4 +1,4 @@
-/*	$OpenBSD: jobs.c,v 1.12 1999/01/10 17:55:02 millert Exp $	*/
+/*	$OpenBSD: jobs.c,v 1.13 1999/01/19 20:41:53 millert Exp $	*/
 
 /*
  * Process and job control
@@ -634,6 +634,10 @@ exchild(t, flags, close_fd)
 		Flag(FMONITOR) = 0;
 #endif /* JOBS */
 		Flag(FTALKING) = 0;
+#ifdef OS2
+		if (tty_fd >= 0)
+			flags |= XINTACT;
+#endif /* OS2 */
 		tty_close();
 		cleartraps();
 		execute(t, (flags & XERROK) | XEXEC); /* no return */

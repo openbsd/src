@@ -411,7 +411,7 @@ script:
 	while [ "$a" != xxx ] ; do
 	    last=$x
 	    read x
-	    /bin/cat /dev/null | sed 's/x/y/'
+	    cat /dev/null | sed 's/x/y/'
 	    a=x$a
 	done
 	echo $last
@@ -729,11 +729,13 @@ stdin:
 			E_O_F
 			echo "done ($?)"
 		}
-		exec /bin/echo subtest-1 hi
+		echo=echo; [ -x /bin/echo ] && echo=/bin/echo
+		exec $echo subtest-1 hi
 	EOF
 	echo subtest-1 foo/*
 	TMPDIR=$PWD/foo $0 <<- 'EOF'
-		sed 's/^/X /' << E_O_F; exec /bin/echo subtest-2 hi
+		echo=echo; [ -x /bin/echo ] && echo=/bin/echo
+		sed 's/^/X /' << E_O_F; exec $echo subtest-2 hi
 		a
 		few
 		lines
@@ -1051,4 +1053,26 @@ expected-stdout:
 	A 0
 	B 1
 	C 103
+---
+
+name: regression-61
+description:
+	Check if EXIT trap is executed for sub shells.
+stdin:
+	trap 'echo parent exit' EXIT
+	echo start
+	(echo A; echo A last)
+	echo B
+	(echo C; trap 'echo sub exit' EXIT; echo C last)
+	echo parent last
+expected-stdout: 
+	start
+	A
+	A last
+	B
+	C
+	C last
+	sub exit
+	parent last
+	parent exit
 ---

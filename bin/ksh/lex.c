@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.12 1999/01/10 17:55:03 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.13 1999/01/19 20:41:55 millert Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -1053,9 +1053,6 @@ getsc_line(s)
 	{
 		if (interactive) {
 			pprompt(prompt, 0);
-#ifdef OS2
-			setmode (0, O_TEXT);
-#endif /* OS2 */
 		} else
 			s->line++;
 
@@ -1077,9 +1074,6 @@ getsc_line(s)
 			XcheckN(s->xs, xp, Xlength(s->xs, xp));
 			xp--; /* ...and move back again */
 		}
-#ifdef OS2
-		setmode(0, O_BINARY);
-#endif /* OS2 */
 		/* flush any unwanted input so other programs/builtins
 		 * can read it.  Not very optimal, but less error prone
 		 * than flushing else where, dealing with redirections,

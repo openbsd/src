@@ -472,6 +472,8 @@ name: history-ed-1
 description:
 	Basic (ed) editing works (assumes you have generic ed editor
 	that prints no prompts).
+# No ed on os/2 (yet?).
+category: !os:os2
 arguments: !-i!
 env-setup: !ENV=./Env!HISTFILE=hist.file!
 file-setup: file 644 "Env"
@@ -494,6 +496,7 @@ expected-stderr-pattern:
 name: history-ed-2
 description:
 	Correct command is edited when number given
+category: !os:os2
 arguments: !-i!
 env-setup: !ENV=./Env!HISTFILE=hist.file!
 file-setup: file 644 "Env"
@@ -525,6 +528,7 @@ description:
 	in history.
 	(NOTE: will fail if using COMPLEX HISTORY compile time option)
 	(ksh88 fails 'cause it lists the fc command)
+category: !os:os2
 arguments: !-i!
 env-setup: !ENV=./Env!HISTFILE=hist.file!
 file-setup: file 644 "Env"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh.h,v 1.7 1999/01/08 20:25:02 millert Exp $	*/
+/*	$OpenBSD: sh.h,v 1.8 1999/01/19 20:41:56 millert Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
@@ -206,17 +206,18 @@ typedef	RETSIGTYPE (*handler_t) ARGS((int));	/* signal handler */
 
 /* Special cases for execve(2) */
 #ifdef OS2
-extern int ksh_execve(char *cmd, char **args, char **env);
+extern int ksh_execve(char *cmd, char **args, char **env, int flags);
 #else /* OS2 */
 # if defined(OS_ISC) && defined(_POSIX_SOURCE)
 /* Kludge for ISC 3.2 (and other versions?) so programs will run correctly.  */
-#  define ksh_execve(p, av, ev) do { \
+#  define ksh_execve(p, av, ev, flags) \
+				do { \
 					__setostype(0); \
 					execve(p, av, ev); \
 					__setostype(1); \
 				} while (0)
 # else /* OS_ISC && _POSIX */
-#  define ksh_execve(p, av, ev)	execve(p, av, ev)
+#  define ksh_execve(p, av, ev, flags)	execve(p, av, ev)
 # endif /* OS_ISC && _POSIX */
 #endif /* OS2 */
 
@@ -270,11 +271,15 @@ extern int ksh_execve(char *cmd, char **args, char **env);
 # define EXTERN_DEFINED
 #endif
 
+#ifdef OS2
+# define inDOS() (!(_emx_env & 0x200))
+#endif
+
 #ifndef EXECSHELL
 /* shell to exec scripts (see also $SHELL initialization in main.c) */
 # ifdef OS2
-#  define EXECSHELL	"c:\\os2\\cmd.exe"
-#  define EXECSHELL_STR	"OS2_SHELL"
+#  define EXECSHELL	(inDOS() ? "c:\\command.com" : "c:\\os2\\cmd.exe")
+#  define EXECSHELL_STR	(inDOS() ? "COMSPEC" : "OS2_SHELL")
 # else /* OS2 */
 #  define EXECSHELL	"/bin/sh"
 #  define EXECSHELL_STR	"EXECSHELL"

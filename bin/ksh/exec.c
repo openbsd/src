@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.15 1999/01/10 17:55:02 millert Exp $	*/
+/*	$OpenBSD: exec.c,v 1.16 1999/01/19 20:41:52 millert Exp $	*/
 
 /*
  * execute command tree
@@ -424,7 +424,8 @@ execute(t, flags)
 #endif
 		restoresigs();
 		cleanup_proc_env();
-		ksh_execve(t->str, t->args, ap);
+		/* XINTACT bit is for OS2 */
+		ksh_execve(t->str, t->args, ap, (flags & XINTACT) ? 1 : 0);
 		if (errno == ENOEXEC)
 			scriptexec(t, ap);
 		else
@@ -435,7 +436,7 @@ execute(t, flags)
 
 	quitenv();		/* restores IO */
 	if ((flags&XEXEC))
-		exit(rv);	/* exit child */
+		unwind(LEXIT);	/* exit child */
 	if (rv != 0 && !(flags & XERROK)) {
 		if (Flag(FERREXIT))
 			unwind(LERROR);
@@ -824,8 +825,14 @@ scriptexec(tp, ap)
 					if (a1)
 						*tp->args-- = a1;
 # ifdef OS2
-					if (a0 != a2 && search_access(a0, X_OK, (int *) 0))
-						a0 = a2;
+					if (a0 != a2) {
+						char *tmp_a0 = str_nsave(a0,
+							strlen(a0) + 5, ATEMP);
+						if (search_access(tmp_a0, X_OK,
+								(int *) 0))
+							a0 = a2;
+						afree(tmp_a0, ATEMP);
+					}
 # endif /* OS2 */
 					shell = a0;
 				}
@@ -854,7 +861,7 @@ scriptexec(tp, ap)
 #endif	/* SHARPBANG */
 	*tp->args = shell;
 
-	ksh_execve(tp->args[0], tp->args, ap);
+	ksh_execve(tp->args[0], tp->args, ap, 0);
 
 	/* report both the program that was run and the bogus shell */
 	errorf("%s: %s: %s", tp->str, shell, strerror(errno));

@@ -83,6 +83,19 @@
 #					default is to expect no output.
 #	expected-stderr-pattern	    m	A perl pattern which matches the
 #					expected standard error.
+#	category		    m	Specify a comma separated list of
+#					`categories' of program that the test
+#					is to be run for.  A category can be
+#					negated by prefixing the name with a !.
+#					The idea is that some tests in a
+#					test suite may apply to a particular
+#					program version and shouldn't be run
+#					on other versions.  The category(s) of
+#					the program being tested can be
+#					specified on the command line.
+#					One category os:XXX is predefined
+#					(XXX is the operating system name,
+#					eg, linux, dec_osf).
 # Flag meanings:
 #	r	tag is required (eg, a test must have a name tag).
 #	m	value can be multiple lines.  Lines must be prefixed with
@@ -96,15 +109,19 @@
 #	s	tag can be used several times.
 #
 
-require 'signal.ph';
-require 'errno.ph';
+$os = defined $^O ? $^O : 'unknown';
+
+require 'signal.ph' unless $os eq 'os2';
+require 'errno.ph' unless $os eq 'os2';
 require 'getopts.pl';
 
 ($prog = $0) =~ s#.*/##;
 
 $Usage = <<EOF ;
-Usage: $prog [-s test-set] [-p prog] [-v] [-e e=v] test-name ...
+Usage: $prog [-s test-set] [-C category] [-p prog] [-v] [-e e=v] test-name ...
 	-p p	Use p as the program to test
+	-C c	Specify the comma separated list of categories the program
+		belongs to (see category field).
 	-s s	Read tests from file s; if s is a directory, it is recursively
 		scaned for test files (which end in .t).
 	-t t	Use t as default time limit for tests (default is unlimited)
@@ -137,11 +154,19 @@ EOF
 	    'expected-stdout-pattern',	'm',
 	    'expected-stderr',		'm',
 	    'expected-stderr-pattern',	'm',
+	    'category',			'm',
 	);
 # Filled in by read_test()
 %internal_test_fields = (
 	    ':full-name', 1,		# file:name
 	    ':long-name', 1,		# dir/file:lineno:name
+	);
+
+# Categories of the program under test.  Provide the current
+# os by default.
+%categories = (
+#	(defined $^O ? "os:$^O" : "os:unknown"), '1'
+	"os:$os", '1'
 	);
 
 $temps = "/tmp/rts$$";
@@ -157,7 +182,7 @@ $nxpassed = 0;
 
 %known_tests = ();
 
-if (!&Getopts('p:Ps:t:ve:')) {
+if (!&Getopts('C:p:Ps:t:ve:')) {
     print STDERR $Usage;
     exit 1;
 }
@@ -173,6 +198,15 @@ if (defined $opt_t) {
     $default_time_limit = $opt_t;
 }
 $program_kludge = defined $opt_P ? $opt_P : 0;
+
+if (defined $opt_C) {
+    foreach $c (split(',', $opt_C)) {
+	$c =~ s/\s+//;
+	die "$prog: categories can't be negated on the command line\n"
+	    if ($c =~ /^!/);
+	$categories{$c} = 1;
+    }
+}
 
 # Note which tests are to be run.
 %do_test = ();
@@ -209,7 +243,8 @@ die "$prog: couldn't cd to $pwd - $!\n" if !chdir($pwd);
 
 if (!$program_kludge) {
     $test_prog = "$pwd/$test_prog" if substr($test_prog, 0, 1) ne '/';
-    die "$prog: $test_prog is not executable - bye\n" if ! -x $test_prog;
+    die "$prog: $test_prog is not executable - bye\n"
+    	if (! -x $test_prog && $os ne 'os2');
 }
 
 @trap_sigs = ('TERM', 'QUIT', 'INT', 'PIPE', 'HUP');
@@ -283,7 +318,7 @@ process_test_dir
 	print STDERR "$prog: can't open directory $dir - $!\n";
 	return undef;
     }
-    while ($file = readdir(DIR)) {
+    while (defined ($file = readdir(DIR))) {
 	push(@todo, $file) if $file =~ /^[^.].*\.t$/;
     }
     closedir(DIR);
@@ -315,6 +350,7 @@ process_test_file
 	$ret = &read_test($file, IN, *test);
 	last if !defined $ret || !$ret;
 	next if !$all_tests && !$do_test{$test{'name'}};
+	next if !&category_check(*test);
 	$ret = &run_test(*test);
 	last if !defined $ret;
     }
@@ -544,6 +580,26 @@ run_test
 }
 
 sub
+category_check
+{
+    local(*test) = @_;
+    local($c);
+
+    return 1 if (!defined $test{'category'});
+    local($ok) = 0;
+    foreach $c (split(',', $test{'category'})) {
+	$c =~ s/\s+//;
+	if ($c =~ /^!/) {
+	    $c = $';
+	    return 0 if (defined $categories{$c});
+	} else {
+	    $ok = 1 if (defined $categories{$c});
+	}
+    }
+    return $ok;
+}
+
+sub
 scrub_dir
 {
     local($dir) = @_;
@@ -554,7 +610,7 @@ scrub_dir
 	print STDERR "$prog: couldn't open directory $dir - $!\n";
 	return undef;
     }
-    while ($file = readdir(DIR)) {
+    while (defined ($file = readdir(DIR))) {
 	push(@todo, $file) if $file ne '.' && $file ne '..';
     }
     closedir(DIR);

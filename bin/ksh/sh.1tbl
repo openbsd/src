@@ -1,5 +1,5 @@
 '\" t
-.\"	$OpenBSD: sh.1tbl,v 1.7 1998/10/29 04:09:21 millert Exp $
+.\"	$OpenBSD: sh.1tbl,v 1.8 1999/01/19 20:41:55 millert Exp $
 .\"{{{}}}
 .\"{{{  Notes about man page
 .\"     - use the pseudo-macros .sh( and .sh) to begin and end sh-specific
@@ -927,8 +927,8 @@ In any of the above redirections, the file descriptor that is redirected
 (\fIi.e.\fP, standard input or standard output) can be explicitly given by
 preceding the redirection with a single digit.
 Parameter, command and arithmetic substitutions, tilde substitutions and
-file name generation are all performed on the \fIfile\fP, \fImarker\fP and
-\fIfd\fP arguments of redirections.
+(if the shell is interactive) file name generation are all performed
+on the \fIfile\fP, \fImarker\fP and \fIfd\fP arguments of redirections.
 Note however, that the results of any file name generation are only used
 if a single file is matched; if multiple files match, the word with the
 unexpanded file name generation characters is used.

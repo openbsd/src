@@ -16,6 +16,7 @@ expected-stdout:
 name: glob-bad-2
 description:
 	Check that symbolic links aren't stat()'d
+category: !os:os2
 file-setup: dir 755 "dir"
 file-setup: symlink 644 "dir/abc"
 	non-existant-file
