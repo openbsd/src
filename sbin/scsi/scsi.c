@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.c,v 1.14 2003/07/23 23:10:23 deraadt Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.15 2004/01/14 19:39:59 otto Exp $	*/
 /*	$FreeBSD: scsi.c,v 1.11 1996/04/06 11:00:28 joerg Exp $	*/
 
 /*
@@ -404,7 +404,7 @@ do_cmd(int fd, char *fmt, int argc, char **argv)
 			if (amount < 0)
 				err(errno, "write");
 			else if (amount == 0)
-				fprintf(stderr, "Warning: wrote only %u bytes out of %u.\n",
+				fprintf(stderr, "Warning: wrote only %lu bytes out of %lu.\n",
 					scsireq->datalen - count,
 					scsireq->datalen);
 
