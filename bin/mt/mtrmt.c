@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtrmt.c,v 1.5 1996/09/15 20:14:18 millert Exp $	*/
+/*	$OpenBSD: mtrmt.c,v 1.6 1997/06/18 19:23:29 kstailey Exp $	*/
 /*	$NetBSD: mtrmt.c,v 1.2 1996/03/06 06:22:07 scottr Exp $	*/
 
 /*-
@@ -144,7 +144,7 @@ rmtgetconn()
 		tuser = pwd->pw_name;
 
 	rmtape = rcmd(&rmtpeer, (u_short)sp->s_port, pwd->pw_name, tuser,
-	    _PATH_RMT, (int *)0);
+	    _PATH_RMT, NULL);
 	if (rmtape == -1)
 		exit(1);		/* rcmd already printed error message */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: netdate.c,v 1.7 1997/06/11 17:15:25 deraadt Exp $	*/
+/*	$OpenBSD: netdate.c,v 1.8 1997/06/18 19:21:39 kstailey Exp $	*/
 /*	$NetBSD: netdate.c,v 1.10 1995/09/07 06:21:06 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netdate.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: netdate.c,v 1.7 1997/06/11 17:15:25 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: netdate.c,v 1.8 1997/06/18 19:21:39 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -144,7 +144,7 @@ loop:
 
 	memset(fdsp, 0, fdsn);
 	FD_SET(s, fdsp);
-	found = select(s+1, fdsp, (fd_set *)0, (fd_set *)0, &tout);
+	found = select(s+1, fdsp, NULL, NULL, &tout);
 
 	length = sizeof(error);
 	if (!getsockopt(s,
