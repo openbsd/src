@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.68 2000/04/04 13:44:51 millert Exp $
+#	$OpenBSD: netstart,v 1.69 2000/04/21 21:27:34 deraadt Exp $
 
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
@@ -26,6 +26,9 @@ fi
 
 # pick up option configuration
 . /etc/rc.conf
+if [ -f $local_rcconf ]; then
+	. $local_rcconf
+fi
 
 # Configure the IP filter before configuring network interfaces
 if [ X"${ipfilter}" = X"YES" -a -f "${ipfilter_rules}" ]; then

@@ -41,6 +41,14 @@ in the
 series in order to set shell variables used therein
 to control the behaviour of the scripts.
 .Pp
+As an alternative, it is also possible to leave the
+.Pa /etc/rc.conf
+file untouched, and instead create and edit a new
+.Pa /etc/rc.conf.local
+file.
+Variables set in this file will override variables previously set in
+.Pa /etc/rc.conf .
+.Pp
 There are three sections in this file. The first is used to turn features
 on or off. For example, whether the system runs the
 .Nm sendmail
