@@ -1,4 +1,4 @@
-/*	$OpenBSD: reboot.c,v 1.15 1999/07/19 00:10:00 deraadt Exp $	*/
+/*	$OpenBSD: reboot.c,v 1.16 1999/08/16 18:43:11 art Exp $	*/
 /*	$NetBSD: reboot.c,v 1.8 1995/10/05 05:36:22 mycroft Exp $	*/
 
 /*
@@ -44,13 +44,14 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: reboot.c,v 1.15 1999/07/19 00:10:00 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: reboot.c,v 1.16 1999/08/16 18:43:11 art Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/reboot.h>
 #include <sys/fcntl.h>
+#include <sys/wait.h>
 #include <signal.h>
 #include <pwd.h>
 #include <errno.h>
