@@ -1,4 +1,4 @@
-$OpenBSD: README,v 1.3 1997/07/23 20:36:34 kstailey Exp $
+$OpenBSD: README,v 1.4 2003/03/18 13:05:24 david Exp $
 @(#) README 1.30 97/03/21 19:27:21
 
 This is the 7.6 version of the TCP/IP daemon wrapper package.
@@ -469,7 +469,7 @@ exploited that trusts the client host name or address.
 A long-term solution is to stop using network services that trust the
 client host name or address, and to use data encryption instead.
 
-A short-term solution, as outlined in in CERT advisory CA-95:01, is to
+A short-term solution, as outlined in CERT advisory CA-95:01, is to
 configure network routers so that they discard datagrams from "outside"
 with an "inside" source address. This approach is most fruitful when
 you do not trust any hosts outside your local network.
