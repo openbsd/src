@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.17 1997/10/25 08:45:53 mickey Exp $	*/
+/*	$OpenBSD: bios.c,v 1.18 1997/10/25 19:50:08 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -82,7 +82,7 @@ struct cfdriver bios_cd = {
 extern u_int bootapiver; /* locore.s */
 extern dev_t bootdev;
 
-bios_diskinfo_t *bios_diskinfo;
+bios_diskinfo_t *bios_diskinfo = NULL;
 u_int32_t	bios_cksumlen;
 
 bios_diskinfo_t *bios_getdiskinfo __P((dev_t));
@@ -348,6 +348,9 @@ bios_getdiskinfo(dev)
 	dev_t dev;
 {
 	bios_diskinfo_t *pdi;
+
+	if (bios_diskinfo == NULL)
+		return NULL;
 
 	for (pdi = bios_diskinfo; pdi->bios_number != -1; pdi++) {
 		if ((dev & B_MAGICMASK) == B_DEVMAGIC) { /* search by bootdev */
