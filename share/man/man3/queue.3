@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.17 2001/05/18 17:23:46 aaron Exp $
+.\"	$OpenBSD: queue.3,v 1.18 2001/05/24 19:08:21 aaron Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -568,7 +568,7 @@ struct entry {
 	...
 } *n1, *n2, *np;
 
-LIST_INIT(&head);			/* Initialize the list. */
+LIST_INIT(&head);			/* Initialize list. */
 
 n1 = malloc(sizeof(struct entry));	/* Insert at the head. */
 LIST_INSERT_HEAD(&head, n1, entries);
@@ -811,7 +811,7 @@ struct entry {
 	...
 } *n1, *n2, *np;
 
-TAILQ_INIT(&head);			/* Initialize the queue. */
+TAILQ_INIT(&head);			/* Initialize queue. */
 
 n1 = malloc(sizeof(struct entry));	/* Insert at the head. */
 TAILQ_INSERT_HEAD(&head, n1, entries);
@@ -945,7 +945,7 @@ struct entry {
 	...
 } *n1, *n2, *np;
 
-CIRCLEQ_INIT(&head);			/* Initialize the circular queue. */
+CIRCLEQ_INIT(&head);			/* Initialize circular queue. */
 
 n1 = malloc(sizeof(struct entry));	/* Insert at the head. */
 CIRCLEQ_INSERT_HEAD(&head, n1, entries);
