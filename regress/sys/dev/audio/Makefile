@@ -1,3 +1,4 @@
+#	$OpenBSD: Makefile,v 1.2 2003/02/01 18:18:06 jason Exp $
 
 PROG=autest
 SRCS=autest.c adpcm.c law.c
