@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_script.c,v 1.3 1996/06/12 07:35:06 deraadt Exp $	*/
+/*	$OpenBSD: exec_script.c,v 1.4 1996/10/20 15:30:07 dm Exp $	*/
 /*	$NetBSD: exec_script.c,v 1.13 1996/02/04 02:15:06 christos Exp $	*/
 
 /*
@@ -173,7 +173,7 @@ check_shell:
 			panic("exec_script_makecmds: epp already has a fd");
 #endif
 
-		if (error = falloc(p, &fp, &epp->ep_fd))
+		if ((error = falloc(p, &fp, &epp->ep_fd)))
 			goto fail;
 
 		epp->ep_flags |= EXEC_HASFD;
