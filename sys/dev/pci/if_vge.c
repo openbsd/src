@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.2 2004/12/12 06:13:32 pvalchev Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.3 2004/12/26 05:54:30 pvalchev Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -138,7 +138,6 @@ void vge_rxeof		(struct vge_softc *);
 void vge_txeof		(struct vge_softc *);
 int vge_intr		(void *);
 void vge_tick		(void *);
-void vge_tx_task		(void *, int);
 void vge_start		(struct ifnet *);
 int vge_ioctl		(struct ifnet *, u_long, caddr_t);
 int vge_init		(struct ifnet *);
@@ -884,8 +883,8 @@ vge_newbuf(struct vge_softc *sc, int idx, struct mbuf *m)
 	r->vge_buflen = htole16(VGE_BUFLEN(rxmap->dm_segs[0].ds_len) | VGE_RXDESC_I);
 	r->vge_addrlo = htole32(VGE_ADDR_LO(rxmap->dm_segs[0].ds_addr));
 	r->vge_addrhi = htole16(VGE_ADDR_HI(rxmap->dm_segs[0].ds_addr) & 0xFFFF);
-	r->vge_sts = 0;
-	r->vge_ctl = 0;
+	r->vge_sts = htole32(0);
+	r->vge_ctl = htole32(0);
 
 	/*
 	 * Note: the manual fails to document the fact that for
@@ -1151,7 +1150,6 @@ vge_rxeof(struct vge_softc *sc)
 		lim++;
 		if (lim == VGE_RX_DESC_CNT)
 			break;
-
 	}
 
 	/* Flush the RX DMA ring */
@@ -1395,11 +1393,11 @@ repack:
 	bus_dmamap_sync(sc->sc_dmat, txmap, 0, txmap->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
 
-	d->vge_sts = m_head->m_pkthdr.len << 16;
-	d->vge_ctl = (frag << 28) | VGE_TD_LS_NORM;
+	d->vge_sts = htole32(m_head->m_pkthdr.len << 16);
+	d->vge_ctl = htole32((frag << 28) | VGE_TD_LS_NORM);
 
 	if (m_head->m_pkthdr.len > ETHERMTU + ETHER_HDR_LEN)
-		d->vge_ctl |= VGE_TDCTL_JUMBO;
+		d->vge_ctl |= htole32(VGE_TDCTL_JUMBO);
 
 	sc->vge_ldata.vge_tx_dmamap[idx] = txmap;
 	sc->vge_ldata.vge_tx_mbuf[idx] = m_head;
