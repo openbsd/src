@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.7 1998/12/13 18:05:52 millert Exp $
+#	$OpenBSD: Makefile,v 1.8 2000/04/25 21:12:53 jakob Exp $
 
-SUBDIR=	dict doc ipf ipsec lkm man misc mk skel tabset termtypes \
+SUBDIR=	dict doc ipf ipsec lkm man misc mk tabset termtypes \
 	tmac zoneinfo smtpd
 
 .include <bsd.subdir.mk>
