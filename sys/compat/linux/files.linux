@@ -1,4 +1,4 @@
-#	$NetBSD: files.linux,v 1.3 1995/08/14 01:34:11 mycroft Exp $
+#	$NetBSD: files.linux,v 1.4 1996/03/08 04:55:59 mycroft Exp $
 #
 # Config.new file description for machine-independent Linux compat code.
 # Included by ports that need it.
@@ -6,6 +6,7 @@
 # ports should define any machine-specific files they need in their
 # own file lists.
 
+file	compat/linux/linux_audio.c		compat_linux
 file	compat/linux/linux_error.c		compat_linux
 file	compat/linux/linux_exec.c		compat_linux
 file	compat/linux/linux_file.c		compat_linux
@@ -16,3 +17,4 @@ file	compat/linux/linux_signal.c		compat_linux
 file	compat/linux/linux_socket.c		compat_linux
 file	compat/linux/linux_syscalls.c		compat_linux
 file	compat/linux/linux_sysent.c		compat_linux
+file	compat/linux/linux_termios.c		compat_linux

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.12 1995/10/07 06:27:13 mycroft Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.13 1996/03/08 04:56:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -701,4 +701,54 @@ linux_sys_socketcall(p, v, retval)
 	default:
 		return ENOSYS;
 	}
+}
+
+int
+linux_ioctl_socket(p, uap, retval)
+	register struct proc *p;
+	register struct linux_sys_ioctl_args /* {
+		syscallarg(int) fd;
+		syscallarg(u_long) com;
+		syscallarg(caddr_t) data;
+	} */ *uap;
+	register_t *retval;
+{
+	u_long com;
+	struct sys_ioctl_args ia;
+
+	com = SCARG(uap, com);
+	retval[0] = 0;
+
+	switch (com) {
+	case LINUX_SIOCGIFCONF:
+		SCARG(&ia, com) = OSIOCGIFCONF;
+		break;
+	case LINUX_SIOCGIFFLAGS:
+		SCARG(&ia, com) = SIOCGIFFLAGS;
+		break;
+	case LINUX_SIOCGIFADDR:
+		SCARG(&ia, com) = OSIOCGIFADDR;
+		break;
+	case LINUX_SIOCGIFDSTADDR:
+		SCARG(&ia, com) = OSIOCGIFDSTADDR;
+		break;
+	case LINUX_SIOCGIFBRDADDR:
+		SCARG(&ia, com) = OSIOCGIFBRDADDR;
+		break;
+	case LINUX_SIOCGIFNETMASK:
+		SCARG(&ia, com) = OSIOCGIFNETMASK;
+		break;
+	case LINUX_SIOCADDMULTI:
+		SCARG(&ia, com) = SIOCADDMULTI;
+		break;
+	case LINUX_SIOCDELMULTI:
+		SCARG(&ia, com) = SIOCDELMULTI;
+		break;
+	default:
+		return EINVAL;
+	}
+
+	SCARG(&ia, fd) = SCARG(uap, fd);
+	SCARG(&ia, data) = SCARG(uap, data);
+	return sys_ioctl(p, &ia, retval);
 }
