@@ -1,3 +1,5 @@
+/*	$OpenBSD: exect.S,v 1.2 2000/03/01 17:31:21 todd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -38,7 +40,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.data
 	/*.asciz "from: @(#)exect.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: exect.S,v 1.1 1998/12/15 07:10:33 smurph Exp $"
+	.asciz "$OpenBSD: exect.S,v 1.2 2000/03/01 17:31:21 todd Exp $"
 	.text
 #endif /* LIBC_SCCS and not lint */
 

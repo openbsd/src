@@ -1,3 +1,4 @@
+/*	$OpenBSD: isnan.c,v 1.2 2000/03/01 17:31:20 todd Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +36,6 @@
  * SUCH DAMAGE.
  *
  * from: Header: isnan.c,v 1.1 91/07/08 19:03:34 torek Exp
- * $Id: isnan.c,v 1.1 1998/12/15 07:10:31 smurph Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)

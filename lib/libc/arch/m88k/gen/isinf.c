@@ -1,3 +1,5 @@
+/*	$OpenBSD: isinf.c,v 1.2 2000/03/01 17:31:20 todd Exp $	*/
+
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
@@ -33,7 +35,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)isinf.c	5.1 (Berkeley) 3/18/91";*/
-static char rcsid[] = "$Id: isinf.c,v 1.1 1998/12/15 07:10:30 smurph Exp $";
+static char rcsid[] = "$OpenBSD: isinf.c,v 1.2 2000/03/01 17:31:20 todd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
