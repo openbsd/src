@@ -1,4 +1,4 @@
-	$OpenBSD: na.phone,v 1.24 2001/07/13 21:31:18 krw Exp $
+	$OpenBSD: na.phone,v 1.25 2001/08/15 18:09:46 aaron Exp $
 #	@(#)na.phone	8.1 (Berkeley) 6/8/93
 #
 # Area Code : City : State/Province : State/Province Abbrev.
@@ -196,7 +196,7 @@
 347:Queens:New York:NY
 347:Staten Island:New York:NY
 347:The Bronx:New York:NY
-352:Gainsville:Florida:FL
+352:Gainesville:Florida:FL
 352:Leesburg:Florida:FL
 352:Ocala:Florida:FL
 360:Bellingham:Washington:WA
@@ -241,7 +241,7 @@
 408:Milpitas:California:CA
 408:San Jose:California:CA
 408:Sunnyvale:California:CA
-409:Baeumont:Texas:TX
+409:Beaumont:Texas:TX
 409:Bryan:Texas:TX
 409:Galveston:Texas:TX
 409:Port Arthur:Texas:TX
@@ -475,7 +475,7 @@
 562:Norwalk:California:CA
 570:Camp Hill:Pennsylvania:PA
 570:Scranton:Pennsylvania:PA
-570:Wikes-Barre:Pennsylvania:PA
+570:Wilkes-Barre:Pennsylvania:PA
 571:Annandale:Virginia:VA
 571:Arlington:Virginia:VA
 571:McLean:Virginia:VA
@@ -885,7 +885,7 @@
 860:Bristol:Connecticut:CT
 860:Hartford:Connecticut:CT
 860:Manchester:Connecticut:CT
-864:Greeville:South Carolina:SC
+864:Greenville:South Carolina:SC
 864:Spartanburg:South Carolina:SC
 865:Knoxville:Tennessee:TN
 865:Maryville:Tennessee:TN
@@ -989,7 +989,7 @@
 908:Somerville:New Jersey:NJ
 908:Union:New Jersey:NJ
 909:Riverside:California:CA
-909:San Bernardio:California:CA
+909:San Bernardino:California:CA
 910:Fayetteville:North Carolina:NC
 910:Greensboro:North Carolina:NC
 910:Winston-Salem:North Carolina:NC
