@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.49 2004/05/13 05:49:06 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.50 2004/05/13 08:21:18 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -519,7 +519,10 @@ carp_input_c(struct mbuf *m, struct carp_header *ch, sa_family_t af)
 
 
 	sc_tv.tv_sec = sc->sc_advbase;
-	sc_tv.tv_usec = sc->sc_advskew * 1000000 / 256;
+	if (carp_suppress_preempt && sc->sc_advskew <  240)
+		sc_tv.tv_usec = 240 * 1000000 / 256;
+	else
+		sc_tv.tv_usec = sc->sc_advskew * 1000000 / 256;
 	ch_tv.tv_sec = ch->carp_advbase;
 	ch_tv.tv_usec = ch->carp_advskew * 1000000 / 256;
 
@@ -544,8 +547,7 @@ carp_input_c(struct mbuf *m, struct carp_header *ch, sa_family_t af)
 		 * If we're pre-empting masters who advertise slower than us,
 		 * and this one claims to be slower, treat him as down.
 		 */
-		if (carp_opts[CARPCTL_PREEMPT] && !carp_suppress_preempt
-		    && timercmp(&sc_tv, &ch_tv, <)) {
+		if (carp_opts[CARPCTL_PREEMPT] && timercmp(&sc_tv, &ch_tv, <)) {
 			carp_master_down(sc);
 			break;
 		}
