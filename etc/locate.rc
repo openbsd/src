@@ -1,10 +1,10 @@
-#	$OpenBSD: locate.rc,v 1.4 1998/04/10 22:42:19 todd Exp $
+#	$OpenBSD: locate.rc,v 1.5 2003/02/27 16:26:41 millert Exp $
 #
 # /etc/locate.rc -  command script for updatedb(8)
 #
 
 # temp directory
-TMPDIR="/tmp"
+TMPDIR="/var/tmp"
 
 # the actual database
 FCODES="/var/db/locate.database"
@@ -13,11 +13,11 @@ FCODES="/var/db/locate.database"
 SEARCHPATHS="/"
 
 # directories unwanted in output
-PRUNEPATHS="/tmp /usr/tmp /var/tmp"
+PRUNEPATHS="/tmp /var/tmp /usr/tmp"
 
 # filesystems allowed. Beware: a non-listed filesystem will be pruned
 # and is the SEARCHPATHS starts in such a filesystem locate will build
 # an empty database
 #
 # be careful if you add 'nfs'
-FILESYSTEMS="ffs ufs"
+FILESYSTEMS="ffs ufs ext2fs"
