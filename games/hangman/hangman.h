@@ -1,4 +1,4 @@
-/*	$OpenBSD: hangman.h,v 1.2 1998/08/19 07:40:36 pjanzen Exp $	*/
+/*	$OpenBSD: hangman.h,v 1.3 1999/04/20 22:54:55 pjanzen Exp $	*/
 /*	$NetBSD: hangman.h,v 1.5 1995/04/24 12:23:44 cgd Exp $	*/
 
 /*
@@ -40,6 +40,7 @@
 #include	<sys/stat.h>
 #include	<ctype.h>
 #include	<curses.h>
+#include	<err.h>
 #include	<signal.h>
 #include	<stdlib.h>
 #include	<string.h>
@@ -56,11 +57,11 @@
 #define	KNOWNY	10
 #define	KNOWNX	1
 #define	NUMBERY	4
-#define	NUMBERX	(COLS - 1 - 26)
+#define	NUMBERX	(COLS - 11 - 26)
 #define	AVGY	5
-#define	AVGX	(COLS - 1 - 26)
+#define	AVGX	(COLS - 11 - 26)
 #define	GUESSY	2
-#define	GUESSX	(COLS - 1 - 26)
+#define	GUESSX	(COLS - 11 - 26)
 
 
 typedef struct {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.4 1998/08/19 07:40:37 pjanzen Exp $	*/
+/*	$OpenBSD: main.c,v 1.5 1999/04/20 22:54:56 pjanzen Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/23 08:32:50 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.4 1998/08/19 07:40:37 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.5 1999/04/20 22:54:56 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,6 +63,10 @@ main(argc, argv)
 	setgid(getgid());
 
 	initscr();
+	if (COLS < 50 || LINES < 14) {
+		endwin();
+		errx(1, "screen too small (must be at least 50x14)");
+	}
 	signal(SIGINT, die);
 	setup();
 	for (;;) {
