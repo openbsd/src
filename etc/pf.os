@@ -1,4 +1,4 @@
-# $OpenBSD: pf.os,v 1.14 2004/01/17 14:49:03 frantzen Exp $
+# $OpenBSD: pf.os,v 1.15 2004/03/10 00:39:25 frantzen Exp $
 # passive OS fingerprinting
 # -------------------------
 #
@@ -296,12 +296,12 @@ S22:64:1:52:M*,N,N,S,N,W0:	Linux:2.2:ts:Linux 2.2 w/o timestamps
 # ----------------- OpenBSD -----------------
 
 16384:64:0:60:M*,N,W0,N,N,T:		OpenBSD:2.6::NetBSD 1.3 (or OpenBSD 2.6)
-16384:64:1:64:M*,N,N,S,N,W0,N,N,T:	OpenBSD:3.0-3.4::OpenBSD 3.0-3.4
-16384:64:0:64:M*,N,N,S,N,W0,N,N,T:	OpenBSD:3.0-3.4:no-df:OpenBSD 3.0-3.4 (scrub no-df)
-57344:64:1:64:M*,N,N,S,N,W0,N,N,T:	OpenBSD:3.3-3.4::OpenBSD 3.3-3.4
-57344:64:0:64:M*,N,N,S,N,W0,N,N,T:	OpenBSD:3.3-3.4:no-df:OpenBSD 3.3-3.4 (scrub no-df)
+16384:64:1:64:M*,N,N,S,N,W0,N,N,T:	OpenBSD:3.0-3.5::OpenBSD 3.0-3.4
+16384:64:0:64:M*,N,N,S,N,W0,N,N,T:	OpenBSD:3.0-3.5:no-df:OpenBSD 3.0-3.4 (scrub no-df)
+57344:64:1:64:M*,N,N,S,N,W0,N,N,T:	OpenBSD:3.3-3.5::OpenBSD 3.3-3.4
+57344:64:0:64:M*,N,N,S,N,W0,N,N,T:	OpenBSD:3.3-3.5:no-df:OpenBSD 3.3-3.4 (scrub no-df)
 
-65535:64:1:64:M*,N,N,S,N,W0,N,N,T:	OpenBSD:3.0-3.4:opera:OpenBSD 3.0-3.4 (Opera)
+65535:64:1:64:M*,N,N,S,N,W0,N,N,T:	OpenBSD:3.0-3.5:opera:OpenBSD 3.0-3.4 (Opera)
 
 # ----------------- Solaris -----------------
 
