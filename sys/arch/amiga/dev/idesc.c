@@ -1,4 +1,4 @@
-/*	$OpenBSD: idesc.c,v 1.9 1997/01/18 12:26:30 niklas Exp $	*/
+/*	$OpenBSD: idesc.c,v 1.10 1999/07/27 08:49:46 niklas Exp $	*/
 /*	$NetBSD: idesc.c,v 1.29 1996/12/23 09:10:12 veego Exp $	*/
 
 /*
@@ -825,7 +825,7 @@ ideicmd(dev, target, cbuf, clen, buf, len)
 	struct {
 		struct scsi_mode_header header;
 		struct scsi_blk_desc blk_desc;
-		union disk_pages pages;
+		union scsi_disk_pages pages;
 	} *mdsnbuf;
 
 #ifdef DEBUG
