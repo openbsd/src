@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl.c,v 1.20 2000/02/15 02:28:14 jason Exp $	*/
+/*	$OpenBSD: if_rl.c,v 1.21 2000/02/21 20:56:07 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/pci/if_rl.c,v 1.36 1999/11/16 15:34:52 wpaul Exp $
+ * $FreeBSD: src/sys/pci/if_rl.c,v 1.38 1999/12/28 06:04:29 billf Exp $
  */
 
 /*
@@ -200,7 +200,7 @@ void rl_eeprom_putbyte(sc, addr)
 	d = addr | RL_EECMD_READ;
 
 	/*
-	 * Feed in each bit and stobe the clock.
+	 * Feed in each bit and strobe the clock.
 	 */
 	for (i = 0x400; i; i >>= 1) {
 		if (d & i) {
@@ -721,7 +721,9 @@ void rl_rxeof(sc)
 				m_adj(m, RL_ETHER_ALIGN);
 				m_copyback(m, wrap, total_len - wrap,
 					sc->rl_cdata.rl_rx_buf);
-				m = m_pullup(m, MHLEN - RL_ETHER_ALIGN);
+				m = m_pullup(m, sizeof(struct ether_header));
+				if (m == NULL)
+					ifp->if_ierrors++;
 			}
 			cur_rx = (total_len - wrap + ETHER_CRC_LEN);
 		} else {
@@ -900,6 +902,14 @@ int rl_encap(sc, m_head)
 
 	/* Pad frames to at least 60 bytes. */
 	if (m_head->m_pkthdr.len < RL_MIN_FRAMELEN) {
+		/*
+		 * Make security concious people happy: zero out the
+		 * bytes in the pad area, since we don't know what
+		 * this mbuf cluster buffer's previous user might
+		 * have left in it.
+		 */
+		bzero(mtod(m_head, char *) + m_head->m_pkthdr.len,
+		    RL_MIN_FRAMELEN - m_head->m_pkthdr.len);
 		m_head->m_pkthdr.len +=
 		    (RL_MIN_FRAMELEN - m_head->m_pkthdr.len);
 		m_head->m_len = m_head->m_pkthdr.len;
