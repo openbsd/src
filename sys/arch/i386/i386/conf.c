@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.19 1996/07/15 14:57:02 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.20 1996/07/28 05:07:05 downsj Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -139,6 +139,7 @@ cdev_decl(pts);
 cdev_decl(ptc);
 cdev_decl(log);
 #include "com.h"
+#include "pccom.h"
 cdev_decl(com);
 cdev_decl(fd);
 cdev_decl(wt);
@@ -186,14 +187,17 @@ cdev_decl(joy);
 cdev_decl(apm);
 #include "rnd.h"
 cdev_decl(rnd);
-#include "pccom.h"
-cdev_decl(pccom);
 
 cdev_decl(ipl);
 #ifdef IPFILTER
 #define NIPF 1
 #else
 #define NIPF 0
+#endif
+
+/* XXX -- this needs to be supported by config(8)! */
+#if (NCOM > 0) && (NPCCOM > 0)
+#error com and pccom are mutually exclusive.  Sorry.
 #endif
 
 struct cdevsw	cdevsw[] =
@@ -206,7 +210,11 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NPTY,pts),	/* 5: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 6: pseudo-tty master */
 	cdev_log_init(1,log),		/* 7: /dev/klog */
+#if NPCCOM > 0
+	cdev_tty_init(NPCCOM,com),	/* 8: serial port */
+#else
 	cdev_tty_init(NCOM,com),	/* 8: serial port */
+#endif
 	cdev_disk_init(NFDC,fd),	/* 9: floppy disk */
 	cdev_tape_init(NWT,wt),		/* 10: QIC-02/QIC-36 tape */
 	cdev_disk_init(NSCD,scd),	/* 11: Sony CD-ROM */
@@ -248,7 +256,6 @@ struct cdevsw	cdevsw[] =
 #endif
 	cdev_gen_ipf(NIPF,ipl),         /* 44 ip filtering */
 	cdev_rnd_init(NRND,rnd),	/* 45 random data source */
-	cdev_tty_init(NPCCOM,pccom),	/* 46: serial port */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -369,17 +376,13 @@ chrtoblk(dev)
 
 cons_decl(pc);
 cons_decl(com);
-cons_decl(pccom);
 
 struct	consdev constab[] = {
 #if NPC + NVT > 0
 	cons_init(pc),
 #endif
-#if NCOM > 0
+#if NCOM + NPCCOM > 0
 	cons_init(com),
-#endif
-#if NPCCOM > 0
-	cons_init(pccom),
 #endif
 	{ 0 },
 };

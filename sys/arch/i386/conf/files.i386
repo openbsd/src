@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.21 1996/07/07 00:11:49 downsj Exp $
+#	$OpenBSD: files.i386,v 1.22 1996/07/28 05:07:04 downsj Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -111,10 +111,9 @@ define pckbd { [irq = -1], [port = -1] }
 # 8250/16[45]50-based "com" ports, optimized for the i386 interrupt system
 device	pccom: tty
 attach	pccom at isa with pccom_isa
-#attach pccom at pccommulti with pccom_commulti
+attach	pccom at commulti with pccom_commulti
 attach	pccom at pcmcia with pccom_pcmcia
-#file	arch/i386/isa/pccom.c		pccom & (pccom_isa | pccom_commulti | pccom_pcmcia) needs-flag
-file	arch/i386/isa/pccom.c		pccom & (pccom_isa | pccom_pcmcia) needs-flag
+file	arch/i386/isa/pccom.c		pccom & (pccom_isa | pccom_commulti | pccom_pcmcia) needs-flag
 
 # PC console support a la "pccons"
 device	pc: tty, pckbd

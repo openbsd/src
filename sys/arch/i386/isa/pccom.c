@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.1 1996/07/07 00:05:49 downsj Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.2 1996/07/28 05:07:06 downsj Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*-
@@ -61,16 +61,16 @@
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/comreg.h>
-#include <arch/i386/isa/pccomvar.h>
+#include <dev/isa/comvar.h>
 #include <dev/ic/ns16550reg.h>
-#ifdef PCCOM_HAYESP
+#ifdef COM_HAYESP
 #include <dev/ic/hayespreg.h>
 #endif
 #define	com_lcr	com_cfcr
 
 #include "pccom.h"
 
-struct pccom_softc {
+struct com_softc {
 	struct device sc_dev;
 	void *sc_ih;
 	bus_chipset_tag_t sc_bc;
@@ -83,7 +83,7 @@ struct pccom_softc {
 	int sc_halt;
 
 	int sc_iobase;
-#ifdef PCCOM_HAYESP
+#ifdef COM_HAYESP
 	int sc_hayespbase;
 #endif
 
@@ -116,26 +116,26 @@ struct pccom_softc {
  	int sc_tbc;
 };
 
-#ifdef PCCOM_HAYESP
-int pccomprobeHAYESP __P((bus_io_handle_t hayespioh, struct pccom_softc *sc));
+#ifdef COM_HAYESP
+int comprobeHAYESP __P((bus_io_handle_t hayespioh, struct com_softc *sc));
 #endif
-void	pccomdiag	__P((void *));
-int	pccomspeed	__P((long));
-int	pccomparam	__P((struct tty *, struct termios *));
-void	pccomstart	__P((struct tty *));
-void 	pccomsoft	__P((void));
-int	pccomhwiflow	__P((struct tty *, int));
+void	comdiag	__P((void *));
+int	comspeed	__P((long));
+int	comparam	__P((struct tty *, struct termios *));
+void	comstart	__P((struct tty *));
+void 	comsoft		__P((void));
+int	comhwiflow	__P((struct tty *, int));
 
 /* XXX: These belong elsewhere */
-cdev_decl(pccom);
-bdev_decl(pccom);
+cdev_decl(com);
+bdev_decl(com);
 
 struct consdev;
-void	pccomcnprobe	__P((struct consdev *));
-void	pccomcninit	__P((struct consdev *));
-int	pccomcngetc	__P((dev_t));
-void	pccomcnputc	__P((dev_t, int));
-void	pccomcnpollc	__P((dev_t, int));
+void	comcnprobe	__P((struct consdev *));
+void	comcninit	__P((struct consdev *));
+int	comcngetc	__P((dev_t));
+void	comcnputc	__P((dev_t, int));
+void	comcnpollc	__P((dev_t, int));
 
 static u_char tiocm_xxx2mcr __P((int));
 
@@ -143,20 +143,20 @@ static u_char tiocm_xxx2mcr __P((int));
  * XXX the following two cfattach structs should be different, and possibly
  * XXX elsewhere.
  */
-int	pccomprobe __P((struct device *, void *, void *));
-void	pccomattach __P((struct device *, struct device *, void *));
-void	pccom_absent_notify __P((struct pccom_softc *sc));
-void	pccomstart_pending __P((void *));
+int	comprobe __P((struct device *, void *, void *));
+void	comattach __P((struct device *, struct device *, void *));
+void	com_absent_notify __P((struct com_softc *sc));
+void	comstart_pending __P((void *));
 
 #if NPCCOM_ISA
 struct cfattach pccom_isa_ca = {
-	sizeof(struct pccom_softc), pccomprobe, pccomattach
+	sizeof(struct com_softc), comprobe, comattach
 };
 #endif
 
 #if NPCCOM_COMMULTI
 struct cfattach pccom_commulti_ca = {
-	sizeof(struct pccom_softc), pccomprobe, pccomattach
+	sizeof(struct com_softc), comprobe, comattach
 };
 #endif
 
@@ -164,27 +164,27 @@ struct cfdriver pccom_cd = {
 	NULL, "pccom", DV_TTY
 };
 
-void pccominit __P((bus_chipset_tag_t, bus_io_handle_t, int));
+void cominit __P((bus_chipset_tag_t, bus_io_handle_t, int));
 
 #ifndef CONSPEED
 #define	CONSPEED B9600
 #endif
 
-#ifdef PCCOMCONSOLE
-int	pccomdefaultrate = CONSPEED;		/* XXX why set default? */
+#if defined(COMCONSOLE) || defined(PCCOMCONSOLE)
+int	comdefaultrate = CONSPEED;		/* XXX why set default? */
 #else
-int	pccomdefaultrate = TTYDEF_SPEED;
+int	comdefaultrate = TTYDEF_SPEED;
 #endif
-int	pccomconsaddr;
-int	pccomconsinit;
-int	pccomconsattached;
-bus_chipset_tag_t pccomconsbc;
-bus_io_handle_t pccomconsioh;
-tcflag_t pccomconscflag = TTYDEF_CFLAG;
+int	comconsaddr;
+int	comconsinit;
+int	comconsattached;
+bus_chipset_tag_t comconsbc;
+bus_io_handle_t comconsioh;
+tcflag_t comconscflag = TTYDEF_CFLAG;
 
-int	pccommajor;
-int	pccomsopen = 0;
-int	pccomevents = 0;
+int	commajor;
+int	comsopen = 0;
+int	comevents = 0;
 
 #ifdef KGDB
 #include <machine/remote-sl.h>
@@ -203,22 +203,22 @@ extern int kgdb_debug_init;
 #if NPCCOM_PCMCIA
 #include <dev/pcmcia/pcmciavar.h>
 
-int	pccom_pcmcia_match __P((struct device *, void *, void *));
-void	pccom_pcmcia_attach __P((struct device *, struct device *, void *));
-int	pccom_pcmcia_detach __P((struct device *));
+int	com_pcmcia_match __P((struct device *, void *, void *));
+void	com_pcmcia_attach __P((struct device *, struct device *, void *));
+int	com_pcmcia_detach __P((struct device *));
 
 struct cfattach pccom_pcmcia_ca = {
-	sizeof(struct pccom_softc), pccom_pcmcia_match, pccomattach,
-	pccom_pcmcia_detach
+	sizeof(struct com_softc), com_pcmcia_match, comattach,
+	com_pcmcia_detach
 };
 
-int	pccom_pcmcia_mod __P((struct pcmcia_link *pc_link, struct device *self,
+int	com_pcmcia_mod __P((struct pcmcia_link *pc_link, struct device *self,
 	    struct pcmcia_conf *pc_cf, struct cfdata *cf));
 
 /* additional setup needed for pcmcia devices */
 /* modify config entry */
 int 
-pccom_pcmcia_mod(pc_link, self, pc_cf, cf)
+com_pcmcia_mod(pc_link, self, pc_cf, cf)
     struct pcmcia_link *pc_link;
     struct device *self;
     struct pcmcia_conf *pc_cf; 
@@ -236,59 +236,59 @@ pccom_pcmcia_mod(pc_link, self, pc_cf, cf)
     return err;
 }
 
-int pccom_pcmcia_isa_attach __P((struct device *, void *, void *,
+int com_pcmcia_isa_attach __P((struct device *, void *, void *,
 			       struct pcmcia_link *));
-int pccom_pcmcia_remove __P((struct pcmcia_link *, struct device *));
+int com_pcmcia_remove __P((struct pcmcia_link *, struct device *));
 
-static struct pcmcia_pccom {
+static struct pcmcia_com {
     struct pcmcia_device pcd;
-} pcmcia_pccom =  {
-    {"PCMCIA Modem card", pccom_pcmcia_mod, pccom_pcmcia_isa_attach,
-     NULL, pccom_pcmcia_remove}
+} pcmcia_com =  {
+    {"PCMCIA Modem card", com_pcmcia_mod, com_pcmcia_isa_attach,
+     NULL, com_pcmcia_remove}
 };          
 
 
-struct pcmciadevs pcmcia_pccom_devs[] = {
+struct pcmciadevs pcmcia_com_devs[] = {
   { "pccom", 0,
   NULL, "*MODEM*", NULL, NULL,
-  NULL, (void *)&pcmcia_pccom 
+  NULL, (void *)&pcmcia_com 
   },
   { "pccom", 0,
   NULL, NULL, "*MODEM*", NULL,
-  NULL, (void *)&pcmcia_pccom 
+  NULL, (void *)&pcmcia_com 
   },
   { "pccom", 0,
   NULL, NULL, NULL, "*MODEM*",
-  NULL, (void *)&pcmcia_pccom 
+  NULL, (void *)&pcmcia_com 
   },
   {NULL}
 };
-#define npccom_pcmcia_devs sizeof(pcmcia_pccom_devs)/sizeof(pcmcia_pccom_devs[0])
+#define ncom_pcmcia_devs sizeof(pcmcia_com_devs)/sizeof(pcmcia_com_devs[0])
 
 int
-pccom_pcmcia_match(parent, match, aux)
+com_pcmcia_match(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	return pcmcia_slave_match(parent, match, aux, pcmcia_pccom_devs,
-				  npccom_pcmcia_devs);
+	return pcmcia_slave_match(parent, match, aux, pcmcia_com_devs,
+				  ncom_pcmcia_devs);
 }
 
 int
-pccom_pcmcia_isa_attach(parent, match, aux, pc_link)
+com_pcmcia_isa_attach(parent, match, aux, pc_link)
 	struct device *parent;
 	void *match;
 	void *aux;
 	struct pcmcia_link *pc_link;
 {
 	struct isa_attach_args *ia = aux;
-	struct pccom_softc *sc = match;
+	struct com_softc *sc = match;
 
 	int rval;
-	if (rval = pccomprobe(parent, sc->sc_dev.dv_cfdata, ia)) {
+	if (rval = comprobe(parent, sc->sc_dev.dv_cfdata, ia)) {
 		if (ISSET(pc_link->flags, PCMCIA_REATTACH)) {
 #ifdef PCCOM_DEBUG
-			printf("pccomreattach, hwflags=%x\n", sc->sc_hwflags);
+			printf("comreattach, hwflags=%x\n", sc->sc_hwflags);
 #endif
 			sc->sc_hwflags = COM_HW_REATTACH |
 				(sc->sc_hwflags & (COM_HW_ABSENT_PENDING|COM_HW_CONSOLE));
@@ -300,14 +300,14 @@ pccom_pcmcia_isa_attach(parent, match, aux, pc_link)
 
 
 /*
- * Called by config_detach attempts, shortly after pccom_pcmcia_remove
+ * Called by config_detach attempts, shortly after com_pcmcia_remove
  * was called.
  */
 int
-pccom_pcmcia_detach(self)
+com_pcmcia_detach(self)
 	struct device *self;
 {
-	struct pccom_softc *sc = (void *)self;
+	struct com_softc *sc = (void *)self;
 
 	if (ISSET(sc->sc_hwflags, COM_HW_ABSENT_PENDING)) {
 		/* don't let it really be detached, it is still open */
@@ -321,11 +321,11 @@ pccom_pcmcia_detach(self)
  * If we return 0, then the detach will proceed.
  */
 int
-pccom_pcmcia_remove(pc_link, self)
+com_pcmcia_remove(pc_link, self)
 	struct pcmcia_link *pc_link;
 	struct device *self;
 {
-	struct pccom_softc *sc = (void *)self;
+	struct com_softc *sc = (void *)self;
 	struct tty *tp;
 	int s;
 
@@ -354,7 +354,7 @@ pccom_pcmcia_remove(pc_link, self)
 #endif
 
 	s = spltty();
-	pccom_absent_notify(sc);
+	com_absent_notify(sc);
 	splx(s);
 
 	return 0;
@@ -362,16 +362,16 @@ pccom_pcmcia_remove(pc_link, self)
 
 #if 0
 void
-pccom_pcmcia_attach(parent, self, aux)
+com_pcmcia_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
 	struct pcmcia_attach_args *paa = aux;
 	
-	printf("pccom_pcmcia_attach %p %p %p\n", parent, self, aux);
+	printf("com_pcmcia_attach %p %p %p\n", parent, self, aux);
 	delay(2000000);
 	if (!pcmcia_configure(parent, self, paa->paa_link)) {
-		struct pccom_softc *sc = (void *)self;
+		struct com_softc *sc = (void *)self;
 		sc->sc_hwflags |= COM_HW_ABSENT;
 		printf(": not attached\n");
 	}
@@ -383,8 +383,8 @@ pccom_pcmcia_attach(parent, self, aux)
  * must be called at spltty() or higher.
  */
 void
-pccom_absent_notify(sc)
-	struct pccom_softc *sc;
+com_absent_notify(sc)
+	struct com_softc *sc;
 {
 	struct tty *tp = sc->sc_tty;
 
@@ -395,7 +395,7 @@ pccom_absent_notify(sc)
 }
 
 int
-pccomspeed(speed)
+comspeed(speed)
 	long speed;
 {
 #define	divrnd(n, q)	(((n)*2/(q)+1)/2)	/* divide and round off */
@@ -420,7 +420,7 @@ pccomspeed(speed)
 }
 
 int
-pccomprobe1(bc, ioh, iobase)
+comprobe1(bc, ioh, iobase)
 	bus_chipset_tag_t bc;
 	bus_io_handle_t ioh;
 	int iobase;
@@ -443,11 +443,11 @@ pccomprobe1(bc, ioh, iobase)
 	return 1;
 }
 
-#ifdef PCCOM_HAYESP
+#ifdef COM_HAYESP
 int
-pccomprobeHAYESP(hayespioh, sc)
+comprobeHAYESP(hayespioh, sc)
 	bus_io_handle_t hayespioh;
-	struct pccom_softc *sc;
+	struct com_softc *sc;
 {
 	char	val, dips;
 	int	combaselist[] = { 0x3f8, 0x2f8, 0x3e8, 0x2e8 };
@@ -509,7 +509,7 @@ pccomprobeHAYESP(hayespioh, sc)
 #endif
 
 int
-pccomprobe(parent, match, aux)
+comprobe(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
@@ -543,7 +543,7 @@ pccomprobe(parent, match, aux)
 #if NPCCOM_COMMULTI
 	if (1) {
 		struct cfdata *cf = match;
-		struct pccommulti_attach_args *ca = aux;
+		struct commulti_attach_args *ca = aux;
  
 		if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != ca->ca_slave)
 			return (0);
@@ -557,14 +557,14 @@ pccomprobe(parent, match, aux)
 		return(0);			/* This cannot happen */
 
 	/* if it's in use as console, it's there. */
-	if (iobase == pccomconsaddr && !pccomconsattached)
+	if (iobase == comconsaddr && !comconsattached)
 		goto out;
 
 	if (needioh && bus_io_map(bc, iobase, COM_NPORTS, &ioh)) {
 		rv = 0;
 		goto out;
 	}
-	rv = pccomprobe1(bc, ioh, iobase);
+	rv = comprobe1(bc, ioh, iobase);
 	if (needioh)
 		bus_io_unmap(bc, ioh, COM_NPORTS);
 
@@ -581,15 +581,15 @@ out:
 }
 
 void
-pccomattach(parent, self, aux)
+comattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct pccom_softc *sc = (void *)self;
+	struct com_softc *sc = (void *)self;
 	int iobase, irq;
 	bus_chipset_tag_t bc;
 	bus_io_handle_t ioh;
-#ifdef PCCOM_HAYESP
+#ifdef COM_HAYESP
 	int	hayesp_ports[] = { 0x140, 0x180, 0x280, 0x300, 0 };
 	int	*hayespp;
 #endif
@@ -602,7 +602,7 @@ pccomattach(parent, self, aux)
 	if (ISSET(sc->sc_hwflags, COM_HW_REATTACH)) {
 		int s;
 		s = spltty();
-		pccom_absent_notify(sc);
+		com_absent_notify(sc);
 		splx(s);
 	} else
 	    sc->sc_hwflags = 0;
@@ -616,20 +616,20 @@ pccomattach(parent, self, aux)
 		 */
 		iobase = ia->ia_iobase;
 		bc = ia->ia_bc;
-	        if (iobase != pccomconsaddr) {
+	        if (iobase != comconsaddr) {
 	                if (bus_io_map(bc, iobase, COM_NPORTS, &ioh))
-				panic("pccomattach: io mapping failed");
+				panic("comattach: io mapping failed");
 		} else
-	                ioh = pccomconsioh;
+	                ioh = comconsioh;
 		irq = ia->ia_irq;
 	} else
 #endif
 #if NPCCOM_COMMULTI
 	if (1) {
-		struct pccommulti_attach_args *ca = aux;
+		struct commulti_attach_args *ca = aux;
 
 		/*
-		 * We're living on a pccommulti.
+		 * We're living on a commulti.
 		 */
 		iobase = ca->ca_iobase;
 		bc = ca->ca_bc;
@@ -640,26 +640,26 @@ pccomattach(parent, self, aux)
 			SET(sc->sc_hwflags, COM_HW_NOIEN);
 	} else
 #endif
-		panic("pccomattach: impossible");
+		panic("comattach: impossible");
 
 	sc->sc_bc = bc;
 	sc->sc_ioh = ioh;
 	sc->sc_iobase = iobase;
 
-	if (iobase == pccomconsaddr) {
-		pccomconsattached = 1;
+	if (iobase == comconsaddr) {
+		comconsattached = 1;
 
 		/* 
 		 * Need to reset baud rate, etc. of next print so reset
-		 * pccomconsinit.  Also make sure console is always "hardwired".
+		 * comconsinit.  Also make sure console is always "hardwired".
 		 */
 		delay(1000);			/* wait for output to finish */
-		pccomconsinit = 0;
+		comconsinit = 0;
 		SET(sc->sc_hwflags, COM_HW_CONSOLE);
 		SET(sc->sc_swflags, COM_SW_SOFTCAR);
 	}
 
-#ifdef PCCOM_HAYESP
+#ifdef COM_HAYESP
 	/* Look for a Hayes ESP board. */
 	for (hayespp = hayesp_ports; *hayespp != 0; hayespp++) {
 		bus_io_handle_t hayespioh;
@@ -667,7 +667,7 @@ pccomattach(parent, self, aux)
 #define	HAYESP_NPORTS	8			/* XXX XXX XXX ??? ??? ??? */
 		if (bus_io_map(bc, *hayespp, HAYESP_NPORTS, &hayespioh))
 			continue;
-		if (pccomprobeHAYESP(hayespioh, sc)) {
+		if (comprobeHAYESP(hayespioh, sc)) {
 			sc->sc_hayespbase = *hayespp;
 			sc->sc_hayespioh = hayespioh;
 			sc->sc_fifolen = 1024;
@@ -696,7 +696,7 @@ pccomattach(parent, self, aux)
 	else
 		printf(": ns8250 or ns16450, no fifo\n");
 	bus_io_write_1(bc, ioh, com_fifo, 0);
-#ifdef PCCOM_HAYESP
+#ifdef COM_HAYESP
 	}
 #endif
 
@@ -710,19 +710,19 @@ pccomattach(parent, self, aux)
 			struct isa_attach_args *ia = aux;
 
 			sc->sc_ih = isa_intr_establish(ia->ia_ic, irq,
-			    IST_EDGE, IPL_HIGH, pccomintr, sc,
+			    IST_EDGE, IPL_HIGH, comintr, sc,
 			    sc->sc_dev.dv_xname);
 		} else
 #endif
-			panic("pccomattach: IRQ but can't have one");
+			panic("comattach: IRQ but can't have one");
 	}
 
 #ifdef KGDB
-	if (kgdb_dev == makedev(pccommajor, unit)) {
+	if (kgdb_dev == makedev(commajor, unit)) {
 		if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
 			kgdb_dev = -1;	/* can't debug over console port */
 		else {
-			pccominit(bc, ioh, kgdb_rate);
+			cominit(bc, ioh, kgdb_rate);
 			if (kgdb_debug_init) {
 				/*
 				 * Print prefix of device name,
@@ -743,13 +743,13 @@ pccomattach(parent, self, aux)
 }
 
 int
-pccomopen(dev, flag, mode, p)
+comopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
 	struct proc *p;
 {
 	int unit = PCCOMUNIT(dev);
-	struct pccom_softc *sc;
+	struct com_softc *sc;
 	bus_chipset_tag_t bc;
 	bus_io_handle_t ioh;
 	struct tty *tp;
@@ -768,9 +768,9 @@ pccomopen(dev, flag, mode, p)
 	} else
 		tp = sc->sc_tty;
 
-	tp->t_oproc = pccomstart;
-	tp->t_param = pccomparam;
-	tp->t_hwiflow = pccomhwiflow;
+	tp->t_oproc = comstart;
+	tp->t_param = comparam;
+	tp->t_hwiflow = comhwiflow;
 	tp->t_dev = dev;
 	if (!ISSET(tp->t_state, TS_ISOPEN)) {
 		SET(tp->t_state, TS_WOPEN);
@@ -778,7 +778,7 @@ pccomopen(dev, flag, mode, p)
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
 		if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
-			tp->t_cflag = pccomconscflag;
+			tp->t_cflag = comconscflag;
 		else
 			tp->t_cflag = TTYDEF_CFLAG;
 		if (ISSET(sc->sc_swflags, COM_SW_CLOCAL))
@@ -788,18 +788,18 @@ pccomopen(dev, flag, mode, p)
 		if (ISSET(sc->sc_swflags, COM_SW_MDMBUF))
 			SET(tp->t_cflag, MDMBUF);
 		tp->t_lflag = TTYDEF_LFLAG;
-		tp->t_ispeed = tp->t_ospeed = pccomdefaultrate;
+		tp->t_ispeed = tp->t_ospeed = comdefaultrate;
 
 		s = spltty();
 
-		pccomparam(tp, &tp->t_termios);
+		comparam(tp, &tp->t_termios);
 		ttsetwater(tp);
 
 		sc->sc_rxput = sc->sc_rxget = sc->sc_tbc = 0;
 
 		bc = sc->sc_bc;
 		ioh = sc->sc_ioh;
-#ifdef PCCOM_HAYESP
+#ifdef COM_HAYESP
 		/* Setup the ESP board */
 		if (ISSET(sc->sc_hwflags, COM_HW_HAYESP)) {
 			bus_io_handle_t hayespioh = sc->sc_hayespioh;
@@ -900,13 +900,13 @@ pccomopen(dev, flag, mode, p)
 }
  
 int
-pccomclose(dev, flag, mode, p)
+comclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
 	struct proc *p;
 {
 	int unit = PCCOMUNIT(dev);
-	struct pccom_softc *sc = pccom_cd.cd_devs[unit];
+	struct com_softc *sc = pccom_cd.cd_devs[unit];
 	struct tty *tp = sc->sc_tty;
 	bus_chipset_tag_t bc = sc->sc_bc;
 	bus_io_handle_t ioh = sc->sc_ioh;
@@ -939,7 +939,7 @@ pccomclose(dev, flag, mode, p)
 #ifdef PCCOM_DEBUG
 	/* mark it ready for more use if reattached earlier */
 	if (ISSET(sc->sc_hwflags, COM_HW_ABSENT_PENDING)) {
-	    printf("pccomclose pending cleared\n");
+	    printf("comclose pending cleared\n");
 	}
 #endif
 	CLR(sc->sc_hwflags, COM_HW_ABSENT_PENDING);
@@ -954,17 +954,17 @@ pccomclose(dev, flag, mode, p)
 }
  
 int
-pccomread(dev, uio, flag)
+comread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 	int flag;
 {
-	struct pccom_softc *sc = pccom_cd.cd_devs[PCCOMUNIT(dev)];
+	struct com_softc *sc = pccom_cd.cd_devs[PCCOMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
  
 	if (ISSET(sc->sc_hwflags, COM_HW_ABSENT|COM_HW_ABSENT_PENDING)) {
 		int s = spltty();
-		pccom_absent_notify(sc);
+		com_absent_notify(sc);
 		splx(s);
 		return EIO;
 	}
@@ -973,17 +973,17 @@ pccomread(dev, uio, flag)
 }
  
 int
-pccomwrite(dev, uio, flag)
+comwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 	int flag;
 {
-	struct pccom_softc *sc = pccom_cd.cd_devs[PCCOMUNIT(dev)];
+	struct com_softc *sc = pccom_cd.cd_devs[PCCOMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
  
 	if (ISSET(sc->sc_hwflags, COM_HW_ABSENT|COM_HW_ABSENT_PENDING)) {
 		int s = spltty();
-		pccom_absent_notify(sc);
+		com_absent_notify(sc);
 		splx(s);
 		return EIO;
 	}
@@ -992,10 +992,10 @@ pccomwrite(dev, uio, flag)
 }
 
 struct tty *
-pccomtty(dev)
+comtty(dev)
 	dev_t dev;
 {
-	struct pccom_softc *sc = pccom_cd.cd_devs[PCCOMUNIT(dev)];
+	struct com_softc *sc = pccom_cd.cd_devs[PCCOMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 
 	return (tp);
@@ -1015,7 +1015,7 @@ tiocm_xxx2mcr(data)
 }
 
 int
-pccomioctl(dev, cmd, data, flag, p)
+comioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
@@ -1023,7 +1023,7 @@ pccomioctl(dev, cmd, data, flag, p)
 	struct proc *p;
 {
 	int unit = PCCOMUNIT(dev);
-	struct pccom_softc *sc = pccom_cd.cd_devs[unit];
+	struct com_softc *sc = pccom_cd.cd_devs[unit];
 	struct tty *tp = sc->sc_tty;
 	bus_chipset_tag_t bc = sc->sc_bc;
 	bus_io_handle_t ioh = sc->sc_ioh;
@@ -1031,7 +1031,7 @@ pccomioctl(dev, cmd, data, flag, p)
 
 	if (ISSET(sc->sc_hwflags, COM_HW_ABSENT|COM_HW_ABSENT_PENDING)) {
 		int s = spltty();
-		pccom_absent_notify(sc);
+		com_absent_notify(sc);
 		splx(s);
 		return EIO;
 	}
@@ -1138,21 +1138,21 @@ pccomioctl(dev, cmd, data, flag, p)
 }
 
 int
-pccomparam(tp, t)
+comparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	struct pccom_softc *sc = pccom_cd.cd_devs[PCCOMUNIT(tp->t_dev)];
+	struct com_softc *sc = pccom_cd.cd_devs[PCCOMUNIT(tp->t_dev)];
 	bus_chipset_tag_t bc = sc->sc_bc;
 	bus_io_handle_t ioh = sc->sc_ioh;
-	int ospeed = pccomspeed(t->c_ospeed);
+	int ospeed = comspeed(t->c_ospeed);
 	u_char lcr;
 	tcflag_t oldcflag;
 	int s;
 
 	if (ISSET(sc->sc_hwflags, COM_HW_ABSENT|COM_HW_ABSENT_PENDING)) {
 		int s = spltty();
-		pccom_absent_notify(sc);
+		com_absent_notify(sc);
 		splx(s);
 		return EIO;
 	}
@@ -1217,11 +1217,11 @@ pccomparam(tp, t)
 
 				++sc->sc_halt;
 				error = ttysleep(tp, &tp->t_outq,
-				    TTOPRI | PCATCH, "pccomprm", 0);
+				    TTOPRI | PCATCH, "comprm", 0);
 				--sc->sc_halt;
 				if (error) {
 					splx(s);
-					pccomstart(tp);
+					comstart(tp);
 					return (error);
 				}
 			}
@@ -1280,19 +1280,19 @@ pccomparam(tp, t)
 
 	/* Just to be sure... */
 	splx(s);
-	pccomstart(tp);
+	comstart(tp);
 	return 0;
 }
 
 void
-pccomstart_pending(arg)
+comstart_pending(arg)
 	void *arg;
 {
-	struct pccom_softc *sc = arg;
+	struct com_softc *sc = arg;
 	int s;
 
 	s = spltty();
-	pccom_absent_notify(sc);
+	com_absent_notify(sc);
 	splx(s);
 }
 
@@ -1300,18 +1300,18 @@ pccomstart_pending(arg)
  * (un)block input via hw flowcontrol
  */
 int
-pccomhwiflow(tp, block)
+comhwiflow(tp, block)
 	struct tty *tp;
 	int block;
 {
-	struct pccom_softc *sc = pccom_cd.cd_devs[PCCOMUNIT(tp->t_dev)];
+	struct com_softc *sc = pccom_cd.cd_devs[PCCOMUNIT(tp->t_dev)];
 	bus_chipset_tag_t bc = sc->sc_bc;
 	bus_io_handle_t ioh = sc->sc_ioh;
 	int	s;
 
 /*
  * XXX
- * Is spltty needed at all ? sc->sc_mcr is only in pccomsoft() not pccomintr()
+ * Is spltty needed at all ? sc->sc_mcr is only in comsoft() not comintr()
  */
 	s = spltty();
 	if (block) {
@@ -1342,10 +1342,10 @@ pccomhwiflow(tp, block)
 
 
 void
-pccomstart(tp)
+comstart(tp)
 	struct tty *tp;
 {
-	struct pccom_softc *sc = pccom_cd.cd_devs[PCCOMUNIT(tp->t_dev)];
+	struct com_softc *sc = pccom_cd.cd_devs[PCCOMUNIT(tp->t_dev)];
 	bus_chipset_tag_t bc = sc->sc_bc;
 	bus_io_handle_t ioh = sc->sc_ioh;
 	int s, count;
@@ -1357,8 +1357,8 @@ pccomstart(tp)
 		 * go to sleep immediately, so hang out a bit and then
 		 * prod caller again.
 		 */
-		pccom_absent_notify(sc);
-		timeout(pccomstart_pending, sc, 1);
+		com_absent_notify(sc);
+		timeout(comstart_pending, sc, 1);
 		goto out;
 	}
 	if (ISSET(tp->t_state, TS_BUSY))
@@ -1409,12 +1409,12 @@ out:
  * Stop output on a line.
  */
 int
-pccomstop(tp, flag)
+comstop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
 	int s;
-	struct pccom_softc *sc = pccom_cd.cd_devs[PCCOMUNIT(tp->t_dev)];
+	struct com_softc *sc = pccom_cd.cd_devs[PCCOMUNIT(tp->t_dev)];
 
 	s = splhigh();
 	if (ISSET(tp->t_state, TS_BUSY)) {
@@ -1427,10 +1427,10 @@ pccomstop(tp, flag)
 }
 
 void
-pccomdiag(arg)
+comdiag(arg)
 	void *arg;
 {
-	struct pccom_softc *sc = arg;
+	struct com_softc *sc = arg;
 	int overflows;
 	int s;
 
@@ -1449,9 +1449,9 @@ int	maxcc = 0;
 #endif
 
 void
-pccomsoft()
+comsoft()
 {
-	struct pccom_softc	*sc;
+	struct com_softc	*sc;
 	struct tty *tp;
 	struct linesw	*line;
 	int	unit, s, c;
@@ -1496,7 +1496,7 @@ pccomsoft()
 				if (ISSET(lsr, LSR_OE)) {
 					sc->sc_overflows++;
 					if (sc->sc_errors++ == 0)
-						timeout(pccomdiag, sc, 60 * hz);
+						timeout(comdiag, sc, 60 * hz);
 				}
 				c = sc->sc_rxbuf[rxget];
 				rxget = (rxget + 1) & RBUFMASK;
@@ -1546,10 +1546,10 @@ pccomsoft()
 }
 
 int
-pccomintr(arg)
+comintr(arg)
 	void	*arg;
 {
-	struct pccom_softc *sc = arg;
+	struct com_softc *sc = arg;
 	struct tty *tp = sc->sc_tty;
 	bus_chipset_tag_t bc = sc->sc_bc;
 	bus_io_handle_t ioh = sc->sc_ioh;
@@ -1636,7 +1636,7 @@ pccomintr(arg)
 #include <dev/cons.h>
 
 void
-pccomcnprobe(cp)
+comcnprobe(cp)
 	struct consdev *cp;
 {
 	/* XXX NEEDS TO BE FIXED XXX */
@@ -1648,7 +1648,7 @@ pccomcnprobe(cp)
 		cp->cn_pri = CN_DEAD;
 		return;
 	}
-	found = pccomprobe1(bc, ioh, CONADDR);
+	found = comprobe1(bc, ioh, CONADDR);
 	bus_io_unmap(bc, ioh, COM_NPORTS);
 	if (!found) {
 		cp->cn_pri = CN_DEAD;
@@ -1656,13 +1656,13 @@ pccomcnprobe(cp)
 	}
 
 	/* locate the major number */
-	for (pccommajor = 0; pccommajor < nchrdev; pccommajor++)
-		if (cdevsw[pccommajor].d_open == pccomopen)
+	for (commajor = 0; commajor < nchrdev; commajor++)
+		if (cdevsw[commajor].d_open == comopen)
 			break;
 
 	/* initialize required fields */
-	cp->cn_dev = makedev(pccommajor, CONUNIT);
-#ifdef	PCCOMCONSOLE
+	cp->cn_dev = makedev(commajor, CONUNIT);
+#if defined(COMCONSOLE) || defined(PCCOMSONSOLE)
 	cp->cn_pri = CN_REMOTE;		/* Force a serial port console */
 #else
 	cp->cn_pri = CN_NORMAL;
@@ -1670,24 +1670,24 @@ pccomcnprobe(cp)
 }
 
 void
-pccomcninit(cp)
+comcninit(cp)
 	struct consdev *cp;
 {
 
 #if 0
 	XXX NEEDS TO BE FIXED XXX
-	pccomconsbc = ???;
+	comconsbc = ???;
 #endif
-	if (bus_io_map(pccomconsbc, CONADDR, COM_NPORTS, &pccomconsioh))
-		panic("pccomcninit: mapping failed");
+	if (bus_io_map(comconsbc, CONADDR, COM_NPORTS, &comconsioh))
+		panic("comcninit: mapping failed");
 
-	pccominit(pccomconsbc, pccomconsioh, pccomdefaultrate);
-	pccomconsaddr = CONADDR;
-	pccomconsinit = 0;
+	cominit(comconsbc, comconsioh, comdefaultrate);
+	comconsaddr = CONADDR;
+	comconsinit = 0;
 }
 
 void
-pccominit(bc, ioh, rate)
+cominit(bc, ioh, rate)
 	bus_chipset_tag_t bc;
 	bus_io_handle_t ioh;
 	int rate;
@@ -1696,7 +1696,7 @@ pccominit(bc, ioh, rate)
 	u_char stat;
 
 	bus_io_write_1(bc, ioh, com_lcr, LCR_DLAB);
-	rate = pccomspeed(pccomdefaultrate);
+	rate = comspeed(comdefaultrate);
 	bus_io_write_1(bc, ioh, com_dlbl, rate);
 	bus_io_write_1(bc, ioh, com_dlbh, rate >> 8);
 	bus_io_write_1(bc, ioh, com_lcr, LCR_8BITS);
@@ -1707,12 +1707,12 @@ pccominit(bc, ioh, rate)
 }
 
 int
-pccomcngetc(dev)
+comcngetc(dev)
 	dev_t dev;
 {
 	int s = splhigh();
-	bus_chipset_tag_t bc = pccomconsbc;
-	bus_io_handle_t ioh = pccomconsioh;
+	bus_chipset_tag_t bc = comconsbc;
+	bus_io_handle_t ioh = comconsioh;
 	u_char stat, c;
 
 	while (!ISSET(stat = bus_io_read_1(bc, ioh, com_lsr), LSR_RXRDY))
@@ -1727,22 +1727,22 @@ pccomcngetc(dev)
  * Console kernel output character routine.
  */
 void
-pccomcnputc(dev, c)
+comcnputc(dev, c)
 	dev_t dev;
 	int c;
 {
 	int s = splhigh();
-	bus_chipset_tag_t bc = pccomconsbc;
-	bus_io_handle_t ioh = pccomconsioh;
+	bus_chipset_tag_t bc = comconsbc;
+	bus_io_handle_t ioh = comconsioh;
 	u_char stat;
 	register int timo;
 
 #ifdef KGDB
 	if (dev != kgdb_dev)
 #endif
-	if (pccomconsinit == 0) {
-		pccominit(bc, ioh, pccomdefaultrate);
-		pccomconsinit = 1;
+	if (comconsinit == 0) {
+		cominit(bc, ioh, comdefaultrate);
+		comconsinit = 1;
 	}
 	/* wait for any pending transmission to finish */
 	timo = 50000;
@@ -1759,7 +1759,7 @@ pccomcnputc(dev, c)
 }
 
 void
-pccomcnpollc(dev, on)
+comcnpollc(dev, on)
 	dev_t dev;
 	int on;
 {

@@ -1,7 +1,7 @@
 #
 #	THREADWAY: threadway.teeny.org
 #
-#	$OpenBSD: THREADWAY,v 1.7 1996/07/13 22:18:42 downsj Exp $
+#	$OpenBSD: THREADWAY,v 1.8 1996/07/28 05:07:03 downsj Exp $
 #
 
 machine		i386
@@ -89,8 +89,10 @@ isadma0 at isa?
 #pc0	at isa? port 0x60 irq 1
 vt0	at isa? port 0x60 irq 1
 
-com0	at isa? port 0x3f8 irq 4
-com1	at isa? port 0x2f8 irq 3
+pccom0	at isa? port 0x3f8 irq 4
+pccom1	at isa? port 0x2f8 irq 3
+#com0	at isa? port 0x3f8 irq 4
+#com1	at isa? port 0x2f8 irq 3
 
 lpt0	at isa? port 0x378 irq 7
 
