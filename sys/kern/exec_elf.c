@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.20 1998/02/22 01:13:12 niklas Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.21 1998/03/06 21:49:50 niklas Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -67,25 +67,21 @@
 #include <compat/svr4/svr4_exec.h>
 #endif
 
-int (*elf_probe_funcs[]) __P((struct proc *, struct exec_package *, char *,
-    u_long *, u_int8_t *)) = {
+struct elf_probe_entry {
+	int (*func) __P((struct proc *, struct exec_package *, char *,
+	    u_long *, u_int8_t *));
+	int os_mask;
+} elf_probes[] = {
 #ifdef COMPAT_SVR4
-	svr4_elf_probe,
+	{ svr4_elf_probe,
+	    1 << OOS_SVR4 | 1 << OOS_ESIX | 1 << OOS_SOLARIS | 1 << OOS_SCO |
+	    1 << OOS_DELL | 1 << OOS_NCR },
 #endif
 #ifdef COMPAT_LINUX
-	linux_elf_probe
+	{ linux_elf_probe, OOS_LINUX },
 #endif
+	{ 0, OOS_OPENBSD }
 };
-
-static int olf_os_accepted = 1 << OOS_OPENBSD |
-#ifdef COMPAT_SVR4
-    1 << OOS_SVR4 | 1 << OOS_ESIX | 1 << OOS_SOLARIS | 1 << OOS_SCO |
-    1 << OOS_DELL | 1 << OOS_NCR |
-#endif
-#ifdef COMPAT_LINUX
-    1 << OOS_LINUX |
-#endif
-    0;
 
 int elf_load_file __P((struct proc *, char *, struct exec_package *,
     struct elf_args *, u_long *));
@@ -201,6 +197,8 @@ olf_check_header(ehdr, type, os)
 	int type;
 	u_int8_t *os;
 {
+	int i;
+
         /*
 	 * We need to check magic, class size, endianess, version, and OS
 	 * before we look at the rest of the Elf32_Ehdr structure. These few
@@ -209,10 +207,15 @@ olf_check_header(ehdr, type, os)
 	if (!IS_OLF(*ehdr) ||
 	    ehdr->e_ident[OI_CLASS] != ELF_TARG_CLASS ||
 	    ehdr->e_ident[OI_DATA] != ELF_TARG_DATA ||
-	    ehdr->e_ident[OI_VERSION] != ELF_TARG_VER ||
-	    !(ehdr->e_ident[OI_OS] & olf_os_accepted))
+	    ehdr->e_ident[OI_VERSION] != ELF_TARG_VER)
                 return (ENOEXEC);
-        
+
+	for (i = 0; i < sizeof elf_probes / sizeof elf_probes[0]; i++)
+		if ((1 << ehdr->e_ident[OI_OS]) & elf_probes[i].os_mask)
+                	goto os_ok;
+	return (ENOEXEC);
+
+os_ok:        
         /* Now check the machine dependant header */
 	if (ehdr->e_machine != ELF_TARG_MACH ||
 	    ehdr->e_version != ELF_TARG_VER)
@@ -449,7 +452,7 @@ exec_elf_makecmds(p, epp)
 	Elf32_Ehdr *eh = epp->ep_hdr;
 	Elf32_Phdr *ph, *pp;
 	Elf32_Addr phdr = 0;
-	int error, i, n, nload;
+	int error, i, nload;
 	char interp[MAXPATHLEN];
 	u_long pos = 0, phsize;
 	u_int8_t os = OOS_NULL;
@@ -517,16 +520,19 @@ exec_elf_makecmds(p, epp)
 	 * interp[] with a changed path (/emul/xxx/<path>), and also
 	 * set the ep_emul field in the exec package structure.
 	 */
-	if (os == OOS_NULL &&
-	    (n = sizeof elf_probe_funcs / sizeof elf_probe_funcs[0])) {
-		error = ENOEXEC;
-		for (i = 0; i < n && error; i++)
-			error = elf_probe_funcs[i](p, epp, interp, &pos, &os);
-
-		if (error)
-			goto bad;
-	}
-	p->p_os = os;
+	error = ENOEXEC;
+	p->p_os = OOS_OPENBSD;
+	for (i = 0; i < sizeof elf_probes / sizeof elf_probes[0] && error; i++)
+		if (os == OOS_NULL || ((1 << os) & elf_probes[i].os_mask))
+			error = elf_probes[i].func ?
+			    (*elf_probes[i].func)(p, epp, interp, &pos, &os) :
+			    0;
+	if (!error)
+		p->p_os = os;
+#ifndef NATIVE_ELF
+	else
+		goto bad;
+#endif /* NATIVE_ELF */
 
 	/*
 	 * Load all the necessary sections
@@ -625,10 +631,13 @@ exec_elf_makecmds(p, epp)
 		epp->ep_entry = eh->e_entry;
 	}
 
-#ifdef ELF_MAP_PAGE_ZERO
+#if defined(COMPAT_SVR4) && defined(i386)
+#ifndef ELF_MAP_PAGE_ZERO
 	/* Dell SVR4 maps page zero, yeuch! */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn, NBPG, 0, epp->ep_vp, 0,
-	    VM_PROT_READ);
+	if (p->p_os == OOS_DELL)
+#endif
+		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn, NBPG, 0,
+		    epp->ep_vp, 0, VM_PROT_READ);
 #endif
 
 	free((char *)ph, M_TEMP);
