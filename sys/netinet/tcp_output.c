@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.18 1999/07/02 21:22:13 cmetz Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.19 1999/07/03 02:16:51 deraadt Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -434,9 +434,9 @@ send:
 	optlen = 0;
 
 #if defined(INET) && defined(INET6)
-	switch(tp->pf) {
+	switch (tp->pf) {
 #else /* defined(INET) && defined(INET6) */
-	switch(0) {
+	switch (0) {
 #endif /* defined(INET) && defined(INET6) */
 	case 0:		/* If tp->pf is 0, then assume IPv4 unless not avail */
 #ifdef INET
@@ -725,9 +725,9 @@ send:
 
 	/* Put TCP length in pseudo-header */
 #if defined(INET) && defined(INET6)
-	switch(tp->pf) {
+	switch (tp->pf) {
 #else /* defined(INET) && defined(INET6) */
-	switch(0) {
+	switch (0) {
 #endif /* defined(INET) && defined(INET6) */
 	case 0:
 #ifdef INET
@@ -853,9 +853,9 @@ send:
 	m->m_pkthdr.len = hdrlen + len;
 
 #if defined(INET) && defined(INET6)
-	switch(tp->pf) {
+	switch (tp->pf) {
 #else /* defined(INET) && defined(INET6) */
-	switch(0) {
+	switch (0) {
 #endif /* defined(INET) && defined(INET6) */
 	case 0:
 #ifdef INET

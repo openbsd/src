@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.37 1999/07/02 20:39:07 cmetz Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.38 1999/07/03 02:16:51 deraadt Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -371,9 +371,9 @@ tcp_input(m, va_alist)
 	 * and therefore are stripped off.
  	 */
 #if defined(INET) && defined(INET6)
-	switch(mtod(m, struct ip *)->ip_v) {
+	switch (mtod(m, struct ip *)->ip_v) {
 #else /* defined(INET) && defined(INET6) */
-	switch(-1) {
+	switch (-1) {
 	case -1:
 #endif /* defined(INET) && defined(INET6) */
 #ifdef INET
@@ -432,9 +432,9 @@ tcp_input(m, va_alist)
 	 * Checksum extended TCP header and data.
 	 */
 #if defined(INET) && defined(INET6)
-	switch(pf) {
+	switch (pf) {
 #else /* defined(INET) && defined(INET6) */
-	switch(-1) {
+	switch (-1) {
 	case -1:
 #endif /* defined(INET) && defined(INET6) */
 #ifdef INET
@@ -524,9 +524,9 @@ tcp_input(m, va_alist)
 	 */
 findpcb:
 #if defined(INET) && defined(INET6)
-	switch(pf) {
+	switch (pf) {
 #else /* defined(INET) && defined(INET6) */
-	switch(-1) {
+	switch (-1) {
 	case -1:
 #endif /* defined(INET) && defined(INET6) */
 #ifdef INET
@@ -546,9 +546,9 @@ findpcb:
 	if (inp == 0) {
 		++tcpstat.tcps_pcbhashmiss;
 #if defined(INET) && defined(INET6)
-		switch(pf) {
+		switch (pf) {
 #else /* defined(INET) && defined(INET6) */
-		switch(-1) {
+		switch (-1) {
 		case -1:
 #endif /* defined(INET) && defined(INET6) */
 #ifdef INET
@@ -667,9 +667,9 @@ findpcb:
 #endif /* INET6 */
 			inp->inp_lport = th->th_dport;
 #if defined(INET) && defined(INET6)
-			switch(pf) {
+			switch (pf) {
 #else /* defined(INET) && defined(INET6) */
-			switch(-1) {
+			switch (-1) {
 			case -1:
 #endif /* defined(INET) && defined(INET6) */
 #ifdef INET
@@ -717,9 +717,9 @@ findpcb:
 	     !(m->m_flags & M_CONF))) {
 #ifdef notyet
 #if defined(INET) && defined(INET6)
-		switch(pf) {
+		switch (pf) {
 #else /* defined(INET) && defined(INET6) */
-		switch(-1) {
+		switch (-1) {
 		case -1:
 #endif /* defined(INET) && defined(INET6) */
 #ifdef INET
@@ -933,9 +933,9 @@ findpcb:
 			goto drop;
 		if (th->th_dport == th->th_sport) {
 #if defined(INET) && defined(INET6)
-			switch(pf) {
+			switch (pf) {
 #else /* defined(INET) && defined(INET6) */
-			switch(-1) {
+			switch (-1) {
 			case -1:
 #endif /* defined(INET) && defined(INET6) */
 #ifdef INET
@@ -963,9 +963,9 @@ findpcb:
 		if (m->m_flags & (M_BCAST|M_MCAST))
 		  goto drop;
 #if defined(INET) && defined(INET6)
-		switch(pf) {
+		switch (pf) {
 #else /* defined(INET) && defined(INET6) */
-		switch(-1) {
+		switch (-1) {
 		case -1:
 #endif /* defined(INET) && defined(INET6) */
 #ifdef INET
@@ -989,9 +989,9 @@ findpcb:
 			goto drop;
 
 #if defined(INET) && defined(INET6)
-		switch(pf) {
+		switch (pf) {
 #else /* defined(INET) && defined(INET6) */
-		switch(-1) {
+		switch (-1) {
 		case -1:
 #endif /* defined(INET) && defined(INET6) */
 #ifdef INET
@@ -2085,9 +2085,9 @@ dropwithreset:
 	if ((tiflags & TH_RST) || m->m_flags & (M_BCAST|M_MCAST))
 	  goto drop;
 #if defined(INET) && defined(INET6)
-	switch(pf) {
+	switch (pf) {
 #else /* defined(INET) && defined(INET6) */
-	switch(-1) {
+	switch (-1) {
 	case -1:
 #endif /* defined(INET) && defined(INET6) */
 #ifdef INET
