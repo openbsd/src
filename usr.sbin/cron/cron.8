@@ -17,7 +17,7 @@
 .\" ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 .\" SOFTWARE.
 .\"
-.\" $OpenBSD: cron.8,v 1.11 2001/08/02 18:37:34 mpech Exp $
+.\" $OpenBSD: cron.8,v 1.12 2001/12/13 19:38:42 millert Exp $
 .\"
 .Dd June 6, 1999
 .Dt CRON 8
@@ -35,6 +35,10 @@ or
 .Pa /etc/rc.local .
 It will return immediately, so you don't need to start it with
 .Ql \&& .
+Because it can execute commands on a user's behalf,
+.Nm
+should be run late in the startup sequence,
+as close to the time when logins are accepted as possible.
 .Pp
 .Nm
 searches its spool directory
