@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee1212.c,v 1.1 2002/06/25 17:11:49 itojun Exp $	*/
+/*	$OpenBSD: ieee1212.c,v 1.2 2002/06/26 13:50:56 tdeval Exp $	*/
 /*	$NetBSD: ieee1212.c,v 1.3 2002/05/23 00:10:46 jmc Exp $	*/
 
 /*
@@ -49,16 +49,16 @@
 static const char * const p1212_keytype_strings[] = P1212_KEYTYPE_STRINGS ;
 static const char * const p1212_keyvalue_strings[] = P1212_KEYVALUE_STRINGS ;   
 
-static u_int16_t p1212_calc_crc(u_int32_t, u_int32_t *, int, int);
-static int p1212_parse_directory(struct p1212_dir *, u_int32_t *, u_int32_t);
-static struct p1212_leafdata *p1212_parse_leaf(u_int32_t *);
-static int p1212_parse_textdir(struct p1212_com *, u_int32_t *);
-static struct p1212_textdata *p1212_parse_text_desc(u_int32_t *);
-static void p1212_print_node(struct p1212_key *, void *);
-static int p1212_validate_offset(u_int16_t, u_int32_t);
-static int p1212_validate_immed(u_int16_t, u_int32_t);
-static int p1212_validate_leaf(u_int16_t, u_int32_t);
-static int p1212_validate_dir(u_int16_t, u_int32_t);
+u_int16_t p1212_calc_crc(u_int32_t, u_int32_t *, int, int);
+int p1212_parse_directory(struct p1212_dir *, u_int32_t *, u_int32_t);
+struct p1212_leafdata *p1212_parse_leaf(u_int32_t *);
+int p1212_parse_textdir(struct p1212_com *, u_int32_t *);
+struct p1212_textdata *p1212_parse_text_desc(u_int32_t *);
+void p1212_print_node(struct p1212_key *, void *);
+int p1212_validate_offset(u_int16_t, u_int32_t);
+int p1212_validate_immed(u_int16_t, u_int32_t);
+int p1212_validate_leaf(u_int16_t, u_int32_t);
+int p1212_validate_dir(u_int16_t, u_int32_t);
 
 #ifdef P1212_DEBUG
 #define DPRINTF(x)      if (p1212debug) printf x
@@ -231,14 +231,17 @@ p1212_iscomplete(u_int32_t *t, u_int32_t *size)
 				 */
                 
 				test--;
-#ifdef __NetBSD__
+#ifdef	__NetBSD__
 				dirs = realloc(dirs,
 				    sizeof(int) * (numdirs + 1), M_DEVBUF,
 				    M_WAITOK);
 #else
 				p = malloc(sizeof(int) * (numdirs + 1),
 				    M_DEVBUF, M_WAITOK);
-				bcopy(dirs, p, sizeof(int) * numdirs);
+				if (dirs != NULL) {
+					bcopy(dirs, p, sizeof(int) * numdirs);
+					free(dirs, M_DEVBUF);
+				}
 				dirs = p;
 #endif
 				dirs[numdirs++] = test;
@@ -256,17 +259,23 @@ p1212_iscomplete(u_int32_t *t, u_int32_t *size)
 				free(dirs, M_DEVBUF);
 			break;
 		}
-		if (dirs) {
+		if (dirs != NULL) {
 			offset = dirs[--numdirs];
-#ifdef __NetBSD__
-			dirs = realloc(dirs, sizeof(int) * numdirs, M_DEVBUF,
-			    M_WAITOK);
+			if (numdirs) {
+#ifdef	__NetBSD__
+				dirs = realloc(dirs, sizeof(int) * numdirs,
+				    M_DEVBUF, M_WAITOK);
 #else
-			p = malloc(sizeof(int) * numdirs, M_DEVBUF,
-			    M_WAITOK);
-			bcopy(dirs, p, sizeof(int) * numdirs);
-			dirs = p;
+				p = malloc(sizeof(int) * numdirs,
+				    M_DEVBUF, M_WAITOK);
+				bcopy(dirs, p, sizeof(int) * numdirs);
+				free(dirs, M_DEVBUF);
+				dirs = p;
 #endif
+			} else {
+				free(dirs, M_DEVBUF);
+				dirs = NULL;
+			}
 		} else
 			complete = 1;
 	}
@@ -372,7 +381,7 @@ p1212_parse(u_int32_t *t, u_int32_t size, u_int32_t mask)
 	return rom;
 }
 
-static int
+int
 p1212_parse_directory(struct p1212_dir *root, u_int32_t *addr, u_int32_t mask)
 {
 	struct p1212_dir *dir, *sdir;
@@ -385,6 +394,10 @@ p1212_parse_directory(struct p1212_dir *root, u_int32_t *addr, u_int32_t mask)
 	int i, module_vendor_flag, module_sw_flag, node_sw_flag, unit_sw_flag;
 	int node_capabilities_flag, offset, unit_location_flag, unitdir_cnt;
 	int leafoff;
+	int textcnt;
+#ifdef	__OpenBSD__
+	struct p1212_textdata **p;
+#endif
 	
 	t = addr;
 	dir = root;
@@ -395,6 +408,7 @@ p1212_parse_directory(struct p1212_dir *root, u_int32_t *addr, u_int32_t mask)
 	node_capabilities_flag = 0;
 	unitdir_cnt = 0;
 	offset = 0;
+	textcnt = 0;
 
 	while (dir) {	    
 		dir->match = 0;
@@ -603,7 +617,7 @@ p1212_parse_directory(struct p1212_dir *root, u_int32_t *addr, u_int32_t mask)
 					return 1;
 				}
 
-				if (com->textcnt != 0) {
+				if (textcnt++ != 0) {
 					DPRINTF(("Text descriptors can't "
 					    "follow each other in a "
 					    "directory\n"));
@@ -611,11 +625,23 @@ p1212_parse_directory(struct p1212_dir *root, u_int32_t *addr, u_int32_t mask)
 				}
 
 				if (type == P1212_KEYTYPE_Leaf) {
-					com->text =
-					    malloc(size, M_DEVBUF, M_WAITOK);
-					com->text[0] =
+#ifdef	__NetBSD__
+					com->text = realloc(com->text,
+					    size * (com->textcnt + 1),
+					    M_DEVBUF, M_WAITOK);
+#else
+					p = malloc(size * (com->textcnt + 1),
+					    M_DEVBUF, M_WAITOK);
+					if (com->text != NULL) {
+						bcopy(com->text, p,
+						    size * com->textcnt);
+						free(com->text, M_DEVBUF);
+					}
+					com->text = p;
+#endif
+					com->text[com->textcnt] =
 					    p1212_parse_text_desc(&t[leafoff]);
-					if (com->text[0] == NULL) {
+					if (com->text[com->textcnt] == NULL) {
 						DPRINTF(("Got an error parsing"
 						    " text descriptor at "
 						    "offset 0x%0x\n",
@@ -623,14 +649,16 @@ p1212_parse_directory(struct p1212_dir *root, u_int32_t *addr, u_int32_t mask)
 						free(com->text, M_DEVBUF);
 						return 1;
 					}
-					com->textcnt = 1;
+					com->textcnt++;
 				} else {
 					i = p1212_parse_textdir(com, 
 						&t[leafoff]);
 					if (i)
 						return 1;
+					textcnt = 0;
 				}
-			}
+			} else
+				textcnt = 0;
 
 			if ((type != P1212_KEYTYPE_Directory) &&
 			    (val != P1212_KEYVALUE_Textual_Descriptor)) {
@@ -749,7 +777,7 @@ p1212_parse_directory(struct p1212_dir *root, u_int32_t *addr, u_int32_t mask)
 	return 0;
 }
 
-static struct p1212_leafdata *
+struct p1212_leafdata *
 p1212_parse_leaf(u_int32_t *t)
 {
 	u_int16_t crclen, crc, crc1, romcrc;
@@ -782,7 +810,7 @@ p1212_parse_leaf(u_int32_t *t)
 	return leafdata;
 }
 
-static int
+int
 p1212_parse_textdir(struct p1212_com *com, u_int32_t *addr)
 {
 	u_int32_t *t, entry, new;
@@ -827,14 +855,18 @@ p1212_parse_textdir(struct p1212_com *com, u_int32_t *addr)
 			    p1212_keyvalue_strings[val], &t[i]-&addr[0]));
 			return 1;
 		}
-		
+
 		new = P1212_DIRENT_GET_VALUE(entry);
 #ifdef __NetBSD__
 		com->text = realloc(com->text, size * (com->textcnt + 1),
 		    M_DEVBUF, M_WAITOK);
 #else
 		p = malloc(size * (com->textcnt + 1), M_DEVBUF, M_WAITOK);
-		bcopy(com->text, p, sizeof(com->textcnt));
+		bzero(&p[com->textcnt], size);
+		if (com->text != NULL) {
+			bcopy(com->text, p, size * (com->textcnt));
+			free(com->text, M_DEVBUF);
+		}
 		com->text = p;
 #endif
 		if ((com->text[i] = p1212_parse_text_desc(&t[i+new])) == NULL) {
@@ -848,7 +880,7 @@ p1212_parse_textdir(struct p1212_com *com, u_int32_t *addr)
 	return 0;
 }
 
-static struct p1212_textdata *
+struct p1212_textdata *
 p1212_parse_text_desc(u_int32_t *addr)
 {
 	u_int32_t *t;
@@ -955,16 +987,18 @@ p1212_find(struct p1212_dir *root, int type, int value, int flags)
 				if ((sdir->com.key.key_value == value) ||
 				    (value == -1)) {
 					numkeys++;
-#ifdef __NetBSD__
+#ifdef	__NetBSD__
 					retkeys = realloc(retkeys,
 					    sizeof(struct p1212_key *) *
-					    (numkeys + 1), M_WAITOK, M_DEVBUF);
+					    (numkeys + 1), M_DEVBUF, M_WAITOK);
 #else
 					p = malloc(sizeof(struct p1212_key *) *
-					    (numkeys + 1), M_WAITOK, M_DEVBUF);
-					bcopy(retkeys, p,
-					    sizeof(struct p1212_key *) *
-					    numkeys);
+					    (numkeys + 1), M_DEVBUF, M_WAITOK);
+					if (retkeys != NULL) {
+						bcopy(retkeys, p, numkeys *
+						    sizeof(struct p1212_key *));
+						free(retkeys, M_DEVBUF);
+					}
 					retkeys = p;
 #endif
 					retkeys[numkeys - 1] = &sdir->com.key;
@@ -983,16 +1017,18 @@ p1212_find(struct p1212_dir *root, int type, int value, int flags)
 				    ((data->com.key.key_type == type) &&
 				     (value == -1))) {
 					numkeys++;
-#ifdef __NetBSD__
+#ifdef	__NetBSD__
 					retkeys = realloc(retkeys,
 					    sizeof(struct p1212_key *) *
-					    (numkeys + 1), M_WAITOK, M_DEVBUF);
+					    (numkeys + 1), M_DEVBUF, M_WAITOK);
 #else
 					p = malloc(sizeof(struct p1212_key *) *
-					    (numkeys + 1), M_WAITOK, M_DEVBUF);
-					bcopy(retkeys, p,
-					    sizeof(struct p1212_key *) *
-					    numkeys);
+					    (numkeys + 1), M_DEVBUF, M_WAITOK);
+					if (retkeys != NULL) {
+						bcopy(retkeys, p, numkeys *
+						    sizeof(struct p1212_key *));
+						free(retkeys, M_DEVBUF);
+					}
 					retkeys = p;
 #endif
 					retkeys[numkeys - 1] = &data->com.key;
@@ -1088,7 +1124,7 @@ p1212_print(struct p1212_dir *dir)
 	printf("\n");
 }
 	
-static void
+void
 p1212_print_node(struct p1212_key *key, void *arg)
 {
 	
@@ -1252,7 +1288,7 @@ p1212_free(struct p1212_rom *rom)
  * len is the number of u_int32_t entries, not bytes.
  */
 
-static u_int16_t
+u_int16_t
 p1212_calc_crc(u_int32_t crc, u_int32_t *data, int len, int broke)
 {
 	int shift;
@@ -1299,7 +1335,7 @@ p1212_match_units(struct device *sc, struct p1212_dir *dir,
 
 	numdev = 0;
 	devret = malloc(sizeof(struct device *) * 2, M_DEVBUF, M_WAITOK);
-	devret[1] = NULL;
+	devret[0] = devret[1] = NULL;
 
 	udirs = (struct p1212_dir **)p1212_find(dir, P1212_KEYTYPE_Directory,
 	    P1212_KEYVALUE_Unit_Directory, 
@@ -1309,7 +1345,7 @@ p1212_match_units(struct device *sc, struct p1212_dir *dir,
 		do {
 			dev = config_found_sm(sc, udirs, print, NULL);
 			if (dev && numdev) {
-#ifdef __NetBSD__
+#ifdef	__NetBSD__
 				devret = realloc(devret,
 				    sizeof(struct device *) *
 				    (numdev + 2), M_DEVBUF, M_WAITOK);
@@ -1317,7 +1353,8 @@ p1212_match_units(struct device *sc, struct p1212_dir *dir,
 				p = malloc(sizeof(struct device *) *
 				    (numdev + 2), M_DEVBUF, M_WAITOK);
 				bcopy(devret, p,
-				    sizeof(struct device *) * (numdev + 1));
+				    numdev * sizeof(struct device *));
+				free(devret, M_DEVBUF);
 				devret = p;
 #endif
 				devret[numdev++] = dev;
@@ -1348,7 +1385,7 @@ p1212_match_units(struct device *sc, struct p1212_dir *dir,
  * parsing. The same thing applies to immediate types.
  */
 
-static int
+int
 p1212_validate_offset(u_int16_t val, u_int32_t mask)
 {
         if ((val == P1212_KEYVALUE_Node_Units_Extent) ||
@@ -1361,7 +1398,7 @@ p1212_validate_offset(u_int16_t val, u_int32_t mask)
         return 1;
 }
 
-static int      
+int      
 p1212_validate_immed(u_int16_t val, u_int32_t mask)
 {
 	switch (val) {
@@ -1386,7 +1423,7 @@ p1212_validate_immed(u_int16_t val, u_int32_t mask)
 	return 0;
 }
 
-static int
+int
 p1212_validate_leaf(u_int16_t val, u_int32_t mask)
 {
 	switch(val) {
@@ -1405,7 +1442,7 @@ p1212_validate_leaf(u_int16_t val, u_int32_t mask)
 	return 0;
 }
 
-static int
+int
 p1212_validate_dir(u_int16_t val, u_int32_t mask)
 {
 	switch(val) {
