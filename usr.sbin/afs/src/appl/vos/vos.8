@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vos.8,v 1.3 2002/06/07 15:53:02 hin Exp $
+.\"     $OpenBSD: vos.8,v 1.4 2002/06/09 04:22:23 hin Exp $
 .\"	$KTH: vos.8,v 1.1 2000/08/07 12:10:49 lha Exp $
 .Dd March 26, 2000
 .Dt VOS 8
@@ -117,63 +117,67 @@ commands:
 .Pp
 .Ic vos addsite
 .Bd -filled -offset indent -compact
-not yet implemented
+Not yet implemented.
 .Ed
 .Pp
 .Ic vos apropos
+.Ar string
 .Bd -filled -offset indent -compact
-apropos
+Search for a command matching
+.Ar string Ns .
 .Ed
 .Pp
 .Ic vos backup
 .Bd -filled -offset indent -compact
-not yet implemented
+Not yet implemented.
 .Ed
 .Pp
 .Ic vos backupsys
 .Bd -filled -offset indent -compact
-not yet implemented
+Not yet implemented.
 .Ed
 .Pp
 .Ic vos changeaddr
 .Bd -filled -offset indent -compact
-not yet implemented
+Not yet implemented.
 .Ed
 .Pp
 .Ic vos create
 .Op Fl server
-.Ar fileserver
+.Ar servername
 .Op Fl part
 .Ar partition
 .Op Fl volume
-.Ar "volume name"
+.Ar volumename
 .Op Fl cell Ar cellname
 .Op Fl noauth
 .Op Fl localauth
 .Op Fl verbose
 .Bd -filled -offset indent -compact
 Create a new volume named
-.Ar "volume name"
+.Ar volumename
 on server
-.Ar fileserver
+.Ar servername
 partition
 .Ar partition .
-Note that a volume name can be no longer than 22 characters.
+Note that
+.Ar volumename
+can be no longer than 22 characters.
 .Ed
 .Pp
 .Ic vos createentry
 .Op Fl id
-.Ar "id of volume"
+.Ar volumeid
 .Op Fl host
-.Ar "host to use"
+.Ar host
 .Op Fl fsserver
 .Ar fileserver
 .Op Fl rw
-.Ar "volume RW number"
+.Ar rwvolumeid
 .Op Fl ro
-.Ar "volume RO number"
+.Ar rovolumeid
 .Op Fl bk
-.Ar "volume BK number"
+.Ar bkvolumeid
 .Op Fl noauth
 .Op Fl localauth
 .Bd -filled -offset indent -compact
@@ -187,7 +191,7 @@ what you are doing.
 .Pp
 .Ic vos delentry
 .Bd -filled -offset indent -compact
-not yet implemented
+Not yet implemented.
 .Ed
 .Pp
 .Ic vos dump
@@ -201,7 +205,12 @@ not yet implemented
 .Op Fl localauth
 .Op Fl verbose
 .Bd -filled -offset indent -compact
-Dump a volume to a file.
+Dump
+.Ar volume
+on
+.Ar fileserver
+to a
+.Ar filename Ns .
 .Ed
 .Pp
 .Ic vos endtrans
@@ -214,7 +223,6 @@ Dump a volume to a file.
 .Op Fl verbose
 .Bd -filled -offset indent -compact
 End a transaction.
-XXX what is this?
 .Ed
 .Pp
 .Ic vos examine
@@ -228,7 +236,10 @@ XXX what is this?
 .Op Fl verbose
 .Op Fl extended
 .Bd -filled -offset indent -compact
-Print information about a volume.
+Print detailed information about
+.Ar volume
+on
+.Ar server Ns .
 .Ed
 .Pp
 .Ic vos volinfo
@@ -241,15 +252,13 @@ command.
 .Pp
 .Ic vos help
 .Bd -filled -offset indent -compact
-print help
+Print help.
 .Ed
 .Pp
 .Ic vos ?
 .Bd -filled -offset indent -compact
-.Ic vos ?
-is an alias for the
-.Ic vos help
-command.
+Shorthand for
+.Nm help Ns .
 .Ed
 .Pp
 .Ic vos listpart
@@ -265,14 +274,16 @@ List partitions on a fileserver.
 .Pp
 .Ic vos listvldb
 .Op Fl server
-.Ar fileserver
+.Op Ar fileserver
 .Op Fl cell Ar cellname
 .Op Fl noauth
 .Op Fl localauth
 .Op Fl verbose
 .Bd -filled -offset indent -compact
 List volumes in the volume location database without reading them on the
-fileserver.
+fileserver, optionally restricting the list to the volumes located on a
+specific
+.Ar fileserver Ns .
 .Ed
 .Pp
 .Ic vos listvol
@@ -285,17 +296,21 @@ fileserver.
 .Op Fl localauth
 .Op Fl verbose
 .Bd -filled -offset indent -compact
-List volumes on a fileserver, without consulting the volume location database.
+List volumes on
+.Ar fileserver Ns ,
+without consulting the volume location database, optionally restricting
+the list to the volumes located on a specific
+.Ar partition Ns .
 .Ed
 .Pp
 .Ic vos lock
 .Bd -filled -offset indent -compact
-not yet implemented
+Not yet implemented.
 .Ed
 .Pp
 .Ic vos move
 .Bd -filled -offset indent -compact
-not yet implemented
+Not yet implemented.
 .Ed
 .Pp
 .Ic vos partinfo
@@ -308,37 +323,35 @@ not yet implemented
 .Op Fl localauth
 .Op Fl verbose
 .Bd -filled -offset indent -compact
-Print the total and remaining diskspace on a fileserver.
-Unless a
-.Ar partition
-is specified, information about all the partitions on the
-.Ar server
-will be printed.
+List the total and remaining diskspace on 
+.Ar fileserver Ns ,
+optionally restricting the list to a specific
+.Ar partition Ns .
 .Ed
 .Pp
 .Ic vos release
 .Bd -filled -offset indent -compact
-not yet implemented
+Not yet implemented.
 .Ed
 .Pp
 .Ic vos remove
 .Bd -filled -offset indent -compact
-not yet implemented
+Not yet implemented.
 .Ed
 .Pp
 .Ic vos remsite
 .Bd -filled -offset indent -compact
-not yet implemented
+Not yet implemented.
 .Ed
 .Pp
 .Ic vos rename
 .Bd -filled -offset indent -compact
-not yet implemented
+Not yet implemented.
 .Ed
 .Pp
 .Ic vos restore
 .Bd -filled -offset indent -compact
-not yet implemented
+Not yet implemented.
 .Ed
 .Pp
 .Ic vos status
@@ -353,12 +366,12 @@ Show volume server transactions.
 .Pp
 .Ic vos syncserv
 .Bd -filled -offset indent -compact
-not yet implemented
+Not yet implemented.
 .Ed
 .Pp
 .Ic vos syncvldb
 .Bd -filled -offset indent -compact
-not yet implemented
+Not yet implemented.
 .Ed
 .Pp
 .Ic vos syncsite
@@ -368,17 +381,17 @@ print the syncsite
 .Pp
 .Ic vos unlock
 .Bd -filled -offset indent -compact
-not yet implemented
+Not yet implemented.
 .Ed
 .Pp
 .Ic vos unlockvldb
 .Bd -filled -offset indent -compact
-not yet implemented
+Not yet implemented.
 .Ed
 .Pp
 .Ic vos zap
 .Bd -filled -offset indent -compact
-not yet implemented
+Not yet implemented.
 .Ed
 .Pp
 .Ic vos quit
@@ -386,6 +399,7 @@ not yet implemented
 Exit interactive mode.
 .Ed
 .Sh SEE ALSO
+.Xr bos 8 ,
 .Xr fs 1 ,
 .Xr pts 1 ,
 .Xr afsd 8
