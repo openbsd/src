@@ -1,4 +1,4 @@
-.\"	$OpenBSD: config.8,v 1.11 1999/10/12 00:25:30 maja Exp $
+.\"	$OpenBSD: config.8,v 1.12 1999/10/16 04:48:22 aaron Exp $
 .\"	$NetBSD: config.8,v 1.10 1996/08/31 20:58:16 mycroft Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -34,155 +34,247 @@
 .\"
 .\"     from: @(#)config.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd April 19, 1994
+.Dd October 15, 1999
 .Dt CONFIG 8
 .Os
 .Sh NAME
 .Nm config
-.Nd build kernel compilation directories or modify a kernel
+.Nd "build kernel compilation directories or modify a kernel"
 .Sh SYNOPSIS
 .Nm config
 .Op Fl b Ar builddir
 .Op Fl s Ar srcdir
 .Op Fl p
-.Op Ar config-file
+.Ar config-file
 .Nm config
-.Fl e 
-.Op Fl f | o Ar outfile
+.Op Fl e
+.Op Fl f | Fl o Ar outfile
 .Op Fl u
 .Ar infile
 .Sh DESCRIPTION
-.Nm config
-creates a kernel build directory from the file
-.Ar config-file ,
-which describes the system to configure.
-.Nm config
-can also be used to modify a compiled kernel when using the
-.Fl e
-option, see section modifying kernel.
-.Pp
-There are several different ways to run the
-.Nm config
-program.  The traditional way is to run
-.Nm config
-from the
-.Pa conf
-subdirectory of the machine-specific directory of the system source
-(usually
-.Pa /sys/arch/MACHINE/conf ,
-where
-.Pa MACHINE
-is one of
-.Pa i386 ,
-.Pa sparc ,
-.Pa hp300 ,
-and so forth), and to specify as the
-.Ar config-file
-the name of a file located in that directory.
-.Nm config
-will by default create files in the directory
-.Pa ../compile/SYSTEMNAME ,
-where
-.Pa SYSTEMNAME
-is the last path component of
+In the first synopsis form, the
+.Nm
+program creates a kernel build directory from the kernel configuration file
+specified by
 .Ar config-file .
-.Nm config
-will assume that the top-level kernel source directory is located four
-directories above the build directory.
+In the second synopsis form,
+.Nm
+allows editing of the kernel binary specified by
+.Ar infile .
+Devices may be enabled, disabled, or modified without recompiling (see
+.Xr boot_config 8 ) .
 .Pp
-Another way is to create the build directory yourself, place the
-configuration file in the build directory with the name
-.Pa CONFIG ,
-and run
-.Nm config
-from within the build directory without specifying a
-.Ar config-file .
-.Nm config
-will then by default create files in the current directory.  If you
-run
-.Nm config
-this way, you must specify the location of the top-level kernel source
-directory using the
-.Fl s
-option or by using the
-.Dq Li source
-directive at the beginning of the system configuration file.
+.Nm
+is most commonly invoked from the directory containing
+.Ox
+kernel configuration files (i.e.,
+.Pa /sys/arch/i386/conf
+for i386 machines).
+For instance, the following steps would be followed to configure and compile
+a new GENERIC kernel (assuming a complete kernel source tree is available in
+.Pa /sys ) :
+.Bd -literal -offset indent
+# cd /sys/arch/i386/conf
+# config ./GENERIC
+# cd ../compile/GENERIC
+# make depend && make
+.Ed
 .Pp
-Finally, you can specify the build directory for
-.Nm config
-and run it from anywhere.  You can specify a build directory with the
-.Fl b
-option or by using the
-.Dq Li build
-directive at the beginning of the system configuration file.  You must
-specify the location of the top-level kernel source directory if you
-specify a build directory.
+Replace
+.Dq i386
+with the appropriate architecture name.
 .Pp
-If the
-.Fl p
-option is supplied,
-.Pa .PROF
-is appended to the default compilation directory name, and
-.Nm config
-acts as if the lines
-.Dq Li makeoptions PROF="-pg"
-and
-.Dq Li options GPROF
-appeared in the configuration file.
-This will build a system that includes profiling code; see
+The options are as follows:
+.Pp
+.Bl -tag -width Ds
+.It Fl e
+Allows the modification of kernel device configuration (see
+.Xr boot_config 8 ) .
+Temporary changes can be made to the running kernel's configuration or a new
+kernel binary may be written for permanent changes between system reboots.
+See the section
+.Sx Kernel modification
+below for more details.
+.It Fl f
+Overwrite the
+.Ar infile
+kernel binary with the modified kernel. Otherwise,
+.Fl o
+should be given to specify an alternate output file.
+.It Fl o Ar outfile
+Write the modified kernel to
+.Ar outfile .
+.It Fl u
+Check to see if the kernel configuration was modified at boot-time
+(i.e.,
+.Cm boot -c
+was used).
+If so, compare the running kernel with the kernel to be edited
+.Pq Ar infile .
+If they seem to be the same, apply all configuration changes performed at
+boot.
+.It Fl b Ar builddir
+Create the build directory in the path specified by
+.Ar builddir
+instead of the default
+.Pa ../compile/SYSTEMNAME .
+.It Fl s Ar srcdir
+Use
+.Ar srcdir
+as the top-level kernel source directory instead of the default (four
+directories above the build directory).
+.It Fl p
+Configure for a system that includes profiling code; see
 .Xr kgmon 8
 and
 .Xr gprof 1 .
+When this option is specified,
+.Nm
+acts as if the lines
+.Dq makeoptions PROF="-pg"
+and
+.Dq options GPROF
+appeared in the specified kernel configuration file.
+In addition,
+.Dq .PROF
+is appended to the default compliation directory name.
+.Pp
 The
 .Fl p
 flag is expected to be used for
 .Dq one-shot
-profiles of existing systems;
-for regular profiling,
-it is probably wiser to make a separate configuration
-containing the
-.Li makeoptions
-line.
+profiles of existing systems; for regular profiling, it is probably wiser to
+make a separate configuration containing the makeoptions line.
+.El
 .Pp
-The old undocumented
+The old
 .Fl g
-flag is no longer supported.
-Instead, use
-.Dq Li makeoptions DEBUG="-g"
-and (typically)
-.Dq Li options KGDB .
+flag is deprecated and no longer supported.
+Instead, add
+.Dq makeoptions DEBUG="-g"
+to the kernel configuration file, along with (typically)
+.Dq options KGDB .
 .Pp
 The output of
-.Nm config
+.Nm
 consists of a number of files, principally
-.Pa ioconf.c ,
-a description of I/O devices that may be attached to the system; and a
+.Pa ioconf.c
+(a description of I/O devices that may be attached to the system)
+and a
 .Pa Makefile ,
 used by
 .Xr make 1
-in building the kernel.
+when building the kernel.
 .Pp
 After running
-.Nm config ,
+.Nm
 it is wise to run
-.Dq Li make depend
-in the directory where the new makefile
-was created.
-.Nm config
+.Dq make depend
+in the new build directory.
+.Nm
 prints a reminder of this when it completes.
 .Pp
 If
-.Nm config
+.Nm
 stops due to errors, the problems reported should be corrected and
-.Nm config
+.Nm
 should be run again.
-.Nm config
-attempts to avoid changing the compilation directory
-if there are configuration errors,
-but this code is not well-tested,
-and some problems (such as running out of disk space)
-are unrecoverable.
-.Sh EXAMPLE
+.Nm
+attempts to avoid changing the compilation directory if there are
+configuration errors, but this code is not well-tested and some problems
+(such as running out of disk space) are unrecoverable.
+.Ss Kernel modification
+When
+.Fl e
+is specified, device parameters that are normally hard-coded into the kernel
+may be changed.
+This is useful to avoid the need for kernel recompilation or rebooting.
+Modifications are made to the currently running kernel and can be written to
+a new kernel binary so changes are preserved during subsequent system restarts.
+.Pp
+When invoked, the kernel identification is first shown.
+.Pp
+.Bd -literal
+.Li #\  Ic config Fl e o Ar bsd.new /bsd
+OpenBSD 2.6-beta (GENERIC.rz0) #0: Mon Oct  4 03:57:22 MEST 1999
+    root@winona:/usr/src/sys/arch/pmax/compile/GENERIC.rz0
+Enter 'help' for information
+ukc>
+.Ed
+.Pp
+One or more warnings may be printed before the
+.Li ukc>
+prompt.
+.Bd -literal -offset indent
+warning: no output file specified
+.Ed
+.Pp
+Neither the
+.Fl f
+nor
+.Fl o
+option has been specified.
+Changes will be ignored.
+.Pp
+.Bd -literal -offset indent
+WARNING this kernel doesn't contain all information needed!
+WARNING the commands add and change might not work.
+.Ed
+.Pp
+The kernel is too old (pre
+.Ox 2.6 )
+and cannot support all of the functionality needed by the
+.Fl e
+option.
+.Pp
+.Bd -literal -offset indent
+WARNING kernel mismatch. -u ignored.
+WARNING the running kernel version:
+.Ed
+.Pp
+.Nm
+does not believe the running kernel is the same as the
+.Ar infile
+specified.
+Since the log of changes (from
+.Cm boot -c )
+in the running kernel is kernel-specific, the
+.Fl u
+option is ignored.
+.Pp
+The commands are as follows:
+.Pp
+.Bl -tag -width "disable attr val | devno | dev" indent
+.It Ic add Ar dev
+Add a device through copying another.
+.It Ic base Ar 8 | 10 | 16
+Change the base of numbers displayed and entered,
+e.g., I/O addresses in a VAXen are octal.
+.It Ic change Ar devno | dev
+Modify one or more devices.
+.It Ic disable Ar attr val | devno | dev
+Disable one or more devices.
+.It Ic enable Ar attr val | devno | dev
+Enable one or more devices.
+.It Ic exit
+Exit without saving changes.
+.It Ic find Ar devno | dev
+Find one or more devices.
+.It Ic help
+Give a short summary of all commands and their arguments.
+.It Ic list
+Show all known devices, a screen at a time.
+.It Ic lines Op Ar count
+Set the number of rows per page.
+.It Ic quit
+Exit and save changes.
+.It Ic show Op Ar attr Op Ar val
+Show all devices for which attribute
+.Ar attr
+has the value
+.Ar val .
+.El
+.Sh EXAMPLES (First synopsis)
 A custom kernel is built in the following way.
 .Pp
 To compile your own kernel from a non-writeable media (such as a CDROM)
@@ -248,7 +340,7 @@ where
 .Ar somedir
 is a writable directory,
 .Ar somearch
-is the architecture (e.g.
+is the architecture (e.g.,
 .Ic i386 ) ,
 and
 .Ar SOMEFILE
@@ -273,111 +365,11 @@ Most people save their backup kernels as
 .Pa /bsd.1 ,
 .Pa /bsd.2 ,
 etc.
-.Sh MODIFYING KERNEL
-.Nm config
-.Fl e
-has the same functionalty as
-.Xr boot_config 8
-, to modify the device configuration of a kernel. One problem with
-.Xr boot_config 8
-has been that modifications has to be done on every boot.
-.Nm config
-.Fl e
-makes it possible to do permanent changes to a kernel.
-.Pp
-The options are as follows:
-.Bl -tag -width indent
-.It Fl f
-If
-.Fl o Ar outfile
-hasn't be given use
-.Ar infile
-as output file. 
-.It Fl o Ar outfile
-Save any changes to
-.Ar outfile .
-.It Fl u
-If
-.Ar infile
-seems to be the same kernel as the current kernel, apply all changes done at
-boot.
-.El
-.Pp
-When invoked the kernel identification of the input file will be showed
-.Pp
-.Bd -literal 
-.Li #\  Ic config Fl e o Ar bsd.new /bsd
-OpenBSD 2.6-beta (GENERIC.rz0) #0: Mon Oct  4 03:57:22 MEST 1999
-    root@winona:/usr/src/sys/arch/pmax/compile/GENERIC.rz0
-Enter 'help' for information
-ukc>
-.Ed
-.Pp
-Some warnings might be printed before the ukc prompt.
-.Bd -literal
-warning: not output file specified
-.Ed
-.Pp
-Niether 
-.Fl f
-or
-.Fl o
-has been specifed. Changes will be ignored.
-.Bd -literal
-WARNING this kernel doesn't contain all information needed!
-WARNING the commands add and change might not work.
-.Ed
-.Pp
-The kernel is too old (pre
-.Ox 2.6 )
-and can't support all functionality of
-.Ic config Fl e .
-.Bd -literal
-WARNING kernel mismatch. -u ignored.
-WARNING the running kernel version:
-.Ed
-.Pp
-.Nm config
-doesn't think that the running kernel is the same as the file specified.
-Since the log of changes in the running kernel is kernel specific the 
-.Fl u
-option is ignored.
-.Sh COMMANDS
-.Bl -tag -width "disable attr val | devno | dev" indent
-.It Ic add Ar dev
-Add a device through copying another.
-.It Ic base Ar 8 | 10 | 16
-Change the base of numbers displayed and entered,
-e.g. I/O addresses in a VAXen are octal.
-.It Ic change Ar devno | dev
-Modify one or more devices.
-.It Ic disable Ar attr val | devno | dev
-Disable one or more devices.
-.It Ic enable Ar attr val | devno | dev
-Enable one or more devices.
-.It Ic exit
-Exit without saving changes.
-.It Ic find Ar devno | dev
-Find one or more devices.
-.It Ic help
-Give a short summary of all commands and their arguments.
-.It Ic list
-Show all known devices, a screen at a time.
-.It Ic lines Op Ar count
-Set the number of rows per page.
-.It Ic quit
-Exit and save changes.
-.It Ic show Op Ar attr Op Ar val
-Show all devices for which attribute
-.Ar attr
-has the value
-.Ar val .
-.El
-.Sh MORE EXAMPLES
-The ethernet card is not detected at boot because the kernel configuration
+.Sh EXAMPLES (Second synopsis)
+The Ethernet card is not detected at boot because the kernel configuration
 does not match the physical hardware configuration,
-e.g. wrong IRQ in OpenBSD/i386.
-The ethernet card is supposed to use the
+e.g., wrong IRQ in OpenBSD/i386.
+The Ethernet card is supposed to use the
 .Xr ne 4
 driver.
 .Pp
@@ -393,7 +385,7 @@ ukc>
 .Pp
 ne1 seems to match the configuration except it uses IRQ 5 instead of IRQ 10. So
 the irq on ne1 should be changed via the
-.Fa change
+.Ic change
 command. The device can be specified by either name or number.
 .Pp
 .Bd -literal
@@ -438,7 +430,9 @@ It's also possible to disable all devices with a common attribute. e.g.
  77 ie1 disabled
 .Ed
 .Pp
-The show command is useful for finding which devices have a certain attribute.
+The
+.Cm show
+command is useful for finding which devices have a certain attribute.
 It can also be used to find those devices with a particular value for
 an attribute.
 .Bd -literal
@@ -484,7 +478,7 @@ kernel. If a new device is added, following devices will be renumbered.
 ukc>
 .Ed
 .Pp
-When done exit the program with the
+When done, exit the program with the
 .Ic quit
 or
 .Ic exit
@@ -492,7 +486,7 @@ commands.
 .Ic exit
 will ignore any changes while
 .Ic quit
-writes the changes in
+writes the changes to
 .Ar outfile
 (if
 .Fl o
@@ -503,24 +497,22 @@ was given, else ignore changes).
 .Bd -literal
 .No ukc> Ic quit
 .Ed
-.Pp
 .Sh SEE ALSO
-.Xr options 4
+.Xr options 4 ,
+.Xr boot_config 8
 .Pp
-The SYNOPSIS portion of each device in section 4.
+The SYNOPSIS portion of each device in section 4 of the manual.
+.Pp
 .Rs
 .%T "Building 4.4 BSD Systems with Config"
-.\" .%T "Device Support in 4.4BSD"
 .Re
-.Pp
 .Sh HISTORY
 The
-.Nm config
-command appeared in
-.Bx 4.1 .
-It was completely revised in
-.Bx 4.4 .
+.Nm
+program appeared in 4.1BSD.
+It was completely revised in 4.4BSD.
 The
-.Nm config Fl e
-command appeared in
+.Fl e
+option appeared in
 .Ox 2.6 .
+
