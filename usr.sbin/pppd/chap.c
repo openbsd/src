@@ -1,4 +1,4 @@
-/*	$OpenBSD: chap.c,v 1.7 1998/01/17 20:30:19 millert Exp $	*/
+/*	$OpenBSD: chap.c,v 1.8 2001/06/23 15:34:02 lebel Exp $	*/
 
 /*
  * chap.c - Challenge Handshake Authentication Protocol.
@@ -39,7 +39,7 @@
 #if 0
 static char rcsid[] = "Id: chap.c,v 1.15 1997/11/27 06:07:48 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: chap.c,v 1.7 1998/01/17 20:30:19 millert Exp $";
+static char rcsid[] = "$OpenBSD: chap.c,v 1.8 2001/06/23 15:34:02 lebel Exp $";
 #endif
 #endif
 
@@ -431,8 +431,7 @@ ChapReceiveChallenge(cstate, inp, id, len)
 
     /* Microsoft doesn't send their name back in the PPP packet */
     if (remote_name[0] != 0 && (explicit_remote || rhostname[0] == 0)) {
-	strncpy(rhostname, remote_name, sizeof(rhostname) - 1);
-	rhostname[sizeof(rhostname) - 1] = 0;
+	strlcpy(rhostname, remote_name, sizeof(rhostname));
 	CHAPDEBUG((LOG_INFO, "ChapReceiveChallenge: using '%s' as remote name",
 		  rhostname));
     }
