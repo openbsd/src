@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: ELBERETH,v 1.7 1997/06/05 13:47:24 kstailey Exp $
+#	$OpenBSD: ELBERETH,v 1.8 1997/06/20 13:56:02 kstailey Exp $
 #
 #
 #	ELBERETH -- 166MHz Pentium PCI
@@ -62,7 +62,7 @@ option		FIFO		# FIFOs; multiuser fails without this
 option		KERNFS		# /kern
 option		MSDOSFS		# MS-DOS file system
 #option		NULLFS		# loopback file system
-#option		PORTAL		# run programs by accessing files
+option		PORTAL		# dynamically created filesystem objects
 option		PROCFS		# /proc
 #option		UMAPFS		# NULLFS + uid and gid remapping
 #option		UNION		# union file system
