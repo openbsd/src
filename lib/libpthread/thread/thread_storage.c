@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <pthread.h>
+#include <string.h>
 #include "pthread_private.h"
 
 void
