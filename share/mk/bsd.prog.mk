@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.8 1997/01/15 00:36:56 niklas Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.9 1997/02/09 16:11:15 mickey Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -42,6 +42,7 @@ LIBTERMCAP?=	${DESTDIR}/usr/lib/libtermcap.a
 LIBTERMLIB?=	${DESTDIR}/usr/lib/libtermlib.a
 LIBUTIL?=	${DESTDIR}/usr/lib/libutil.a
 LIBY?=		${DESTDIR}/usr/lib/liby.a
+LIBZ?=		${DESTDIR}/usr/lib/libz.a
 
 .if defined(SHAREDSTRINGS)
 CLEANFILES+=strings
