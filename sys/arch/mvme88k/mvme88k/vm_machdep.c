@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.52 2003/06/02 23:27:52 millert Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.53 2003/08/08 13:47:36 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -101,22 +101,22 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	extern void proc_trampoline(void);
         extern void save_u_area(struct proc *, vm_offset_t);
 
-/*	
-	savectx(p1->p_addr->u_pcb);
-*/
-	savectx(curpcb);
+	/* Copy pcb from p1 to p2. */
+	if (p1 == curproc) {
+		/* Sync the PCB before we copy it. */
+		savectx(curpcb);
+	}
+#ifdef DIAGNOSTIC
+	else if (p1 != &proc0)
+		panic("cpu_fork: curproc");
+#endif
 	
-	/* copy p1 pcb to p2 */
-	bcopy((void *)&p1->p_addr->u_pcb, (void *)&p2->p_addr->u_pcb, sizeof(struct pcb));
-	p2->p_addr->u_pcb.kernel_state.pcb_ipl = 0;
-
+	bcopy(&p1->p_addr->u_pcb, &p2->p_addr->u_pcb, sizeof(struct pcb));
+	p2->p_addr->u_pcb.kernel_state.pcb_ipl = IPL_NONE;	/* XXX */
 	p2->p_md.md_tf = USER_REGS(p2);
 
 	/*XXX these may not be necessary nivas */
 	save_u_area(p2, (vm_offset_t)p2->p_addr);
-#ifdef notneeded 
-	pmap_activate(p2);
-#endif /* notneeded */
 
 	/*
 	 * Create a switch frame for proc 2
