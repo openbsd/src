@@ -1,5 +1,5 @@
-.\"	$OpenBSD: faithd.8,v 1.6 2000/05/31 03:09:22 itojun Exp $
-.\"	$KAME: faithd.8,v 1.9 2000/05/31 03:06:07 itojun Exp $
+.\"	$OpenBSD: faithd.8,v 1.7 2000/07/03 06:44:46 itojun Exp $
+.\"	$KAME: faithd.8,v 1.11 2000/07/03 06:35:25 jinmei Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -218,10 +218,15 @@ If you would like to pass extra arguments to the local daemon:
 .Pp
 Here are some other examples:
 .Bd -literal -offset
+# faithd sshd
 # faithd login /usr/libexec/rlogin rlogind
 # faithd shell /usr/libexec/rshd rshd
-# faithd sshd
 .Ed
+.Pp
+However, you should be careful when translating rlogin or rsh
+connections. See
+.Sx SECURITY NOTICE
+for more details.
 .Sh RETURN VALUES
 .Nm
 exits with
