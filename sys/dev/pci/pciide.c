@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.68 2001/09/27 16:35:03 gluk Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.69 2001/09/29 02:41:31 jason Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -112,7 +112,7 @@ int wdcdebug_pciide_mask = 0;
 #include <dev/pci/pciide_opti_reg.h>
 #include <dev/pci/pciide_hpt_reg.h>
 #include <dev/pci/pciide_acard_reg.h>
-
+#include <dev/pci/pciide_natsemi_reg.h>
 #include <dev/pci/cy82c693var.h>
 
 #include <dev/ata/atavar.h>
@@ -217,6 +217,10 @@ void cy693_setup_channel __P((struct channel_softc*));
 
 void sis_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
 void sis_setup_channel __P((struct channel_softc*));
+
+void natsemi_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
+void natsemi_setup_channel __P((struct channel_softc*));
+int  natsemi_pci_intr __P((void *));
 
 void acer_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
 void acer_setup_channel __P((struct channel_softc*));
@@ -381,6 +385,13 @@ const struct pciide_product_desc pciide_sis_products[] =  {
 	}
 };
 
+const struct pciide_product_desc pciide_natsemi_products[] =  {
+	{ PCI_PRODUCT_NS_PC87415,	/* National Semi PC87415 IDE */
+	  0,
+	  natsemi_chip_map
+	}
+};
+
 const struct pciide_product_desc pciide_acer_products[] =  {
 	{ PCI_PRODUCT_ALI_M5229,	/* Acer Labs M5229 UDMA IDE */
 	  0,
@@ -452,6 +463,8 @@ const struct pciide_vendor_desc pciide_vendors[] = {
 	  sizeof(pciide_cypress_products)/sizeof(pciide_cypress_products[0]) },
 	{ PCI_VENDOR_SIS, pciide_sis_products,
 	  sizeof(pciide_sis_products)/sizeof(pciide_sis_products[0]) },
+	{ PCI_VENDOR_NS, pciide_natsemi_products,
+	  sizeof(pciide_natsemi_products)/sizeof(pciide_natsemi_products[0]) },
 	{ PCI_VENDOR_ALI, pciide_acer_products,
 	  sizeof(pciide_acer_products)/sizeof(pciide_acer_products[0]) },
 	{ PCI_VENDOR_TRIONES, pciide_triones_products,
@@ -2992,6 +3005,173 @@ pio:		sis_tim |= sis_pio_act[drvp->PIO_mode] <<
 		    IDEDMA_CTL, idedma_ctl);
 	}
 	pciide_print_modes(cp);
+}
+
+void
+natsemi_chip_map(sc, pa)
+	struct pciide_softc *sc;
+	struct pci_attach_args *pa;
+{
+	struct pciide_channel *cp;
+	int channel;
+	pcireg_t interface;
+	bus_size_t cmdsize, ctlsize;
+
+	if (pciide_chipen(sc, pa) == 0)
+		return;
+
+	printf(": DMA");
+	pciide_mapreg_dma(sc, pa);
+	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
+	    WDC_CAPABILITY_MODE;
+
+	if (sc->sc_dma_ok) {
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_IRQACK;
+		sc->sc_wdcdev.irqack = pciide_irqack;
+	}
+
+	pciide_pci_write(sc->sc_pc, sc->sc_tag, NATSEMI_CCBT, 0xb7);
+	pciide_pci_write(sc->sc_pc, sc->sc_tag, NATSEMI_CTRL1,
+	    NATSEMI_CTRL1_CH1INTMAP | NATSEMI_CTRL1_CH2INTMAP);
+
+	/*
+	 * Mask off interrupts from both channels, appropriate channel(s)
+	 * will be unmasked later.
+	 */
+	pciide_pci_write(sc->sc_pc, sc->sc_tag, NATSEMI_CTRL2,
+	    pciide_pci_read(sc->sc_pc, sc->sc_tag, NATSEMI_CTRL2) |
+	    NATSEMI_CHMASK(0) | NATSEMI_CHMASK(1));
+
+	sc->sc_wdcdev.PIO_cap = 4;
+	sc->sc_wdcdev.DMA_cap = 2;
+	sc->sc_wdcdev.set_modes = natsemi_setup_channel;
+	sc->sc_wdcdev.channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
+
+	interface = PCI_INTERFACE(pci_conf_read(sc->sc_pc, sc->sc_tag,
+	    PCI_CLASS_REG));
+	interface &= ~PCIIDE_CHANSTATUS_EN;	/* Reserved on PC87415 */
+	pciide_print_channels(sc->sc_wdcdev.nchannels, interface);
+
+	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
+		cp = &sc->pciide_channels[channel];
+		if (pciide_chansetup(sc, channel, interface) == 0)
+			continue;
+
+		pciide_map_compat_intr(pa, cp, channel, interface);
+		if (cp->hw_ok == 0)
+			continue;
+
+		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
+		    natsemi_pci_intr);
+		if (cp->hw_ok == 0) {
+			pciide_unmap_compat_intr(pa, cp, channel, interface);
+			continue;
+		}
+		natsemi_setup_channel(&cp->wdc_channel);
+	}
+
+}
+
+void
+natsemi_setup_channel(chp)
+	struct channel_softc *chp;
+{
+	struct ata_drive_datas *drvp;
+	int drive, ndrives = 0;
+	u_int32_t idedma_ctl = 0;
+	struct pciide_channel *cp = (struct pciide_channel*)chp;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+
+	/* setup DMA if needed */
+	pciide_channel_dma_setup(cp);
+
+	for (drive = 0; drive < 2; drive++) {
+		drvp = &chp->ch_drive[drive];
+		/* If no drive, skip */
+		if ((drvp->drive_flags & DRIVE) == 0)
+			continue;
+
+		ndrives++;
+		/* add timing values, setup DMA if needed */
+		if ((drvp->drive_flags & DRIVE_DMA) == 0)
+			goto pio;
+
+		/*
+		 * use Multiword DMA
+		 * Timings will be used for both PIO and DMA,
+		 * so adjust DMA mode if needed
+		 */
+		if (drvp->PIO_mode >= 3 &&
+		    (drvp->DMA_mode + 2) > drvp->PIO_mode) {
+			drvp->DMA_mode = drvp->PIO_mode - 2;
+		}
+		idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
+pio:
+		pciide_pci_write(sc->sc_pc, sc->sc_tag,
+		    NATSEMI_RTREG(chp->channel, drive), 0x85);
+		pciide_pci_write(sc->sc_pc, sc->sc_tag,
+		    NATSEMI_WTREG(chp->channel, drive), 0x85);
+	}
+	if (idedma_ctl != 0) {
+		/* Add software bits in status register */
+		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
+		    IDEDMA_CTL, idedma_ctl);
+	}
+	if (ndrives > 0) {
+		/* Unmask the channel if at least one drive is found */
+		pciide_pci_write(sc->sc_pc, sc->sc_tag, NATSEMI_CTRL2,
+		    pciide_pci_read(sc->sc_pc, sc->sc_tag, NATSEMI_CTRL2) &
+		    ~(NATSEMI_CHMASK(chp->channel)));
+	}
+	pciide_print_modes(cp);
+
+	/* Go ahead and ack interrupts generated during probe. */
+	bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
+	    (chp->channel * IDEDMA_SCH_OFFSET) + IDEDMA_CTL,
+	    bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
+		(chp->channel * IDEDMA_SCH_OFFSET) + IDEDMA_CTL));
+}
+
+int
+natsemi_pci_intr(arg)
+	void *arg;
+{
+	struct pciide_softc *sc = arg;
+	struct pciide_channel *cp;
+	struct channel_softc *wdc_cp;
+	int i, rv, crv;
+	u_int8_t ide_dmactl, msk;
+
+	rv = 0;
+	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
+		cp = &sc->pciide_channels[i];
+		wdc_cp = &cp->wdc_channel;
+		/* If a compat channel skip. */
+		if (cp->compat)
+			continue;
+
+		/* If this channel is masked, skip it. */
+		msk = pciide_pci_read(sc->sc_pc, sc->sc_tag, NATSEMI_CTRL2);
+		if (msk & NATSEMI_CHMASK(i))
+			continue;
+
+		/* Get intr status */
+		ide_dmactl = bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
+		    (i * IDEDMA_SCH_OFFSET) + IDEDMA_CTL);
+		if (ide_dmactl & IDEDMA_CTL_ERR)
+			printf("%s:%d: error intr\n",
+			    sc->sc_wdcdev.sc_dev.dv_xname, i);
+		if (ide_dmactl & IDEDMA_CTL_INTR) {
+			crv = wdcintr(wdc_cp);
+			if (crv == 0)
+				printf("%s:%d: bogus intr\n",
+				    sc->sc_wdcdev.sc_dev.dv_xname, i);
+			else
+				rv = 1;
+		}
+	}
+	return rv;
 }
 
 void
