@@ -1,4 +1,4 @@
-/*	$OpenBSD: vga.c,v 1.11 1997/11/06 12:26:54 niklas Exp $	*/
+/*	$OpenBSD: vga.c,v 1.12 1998/09/28 01:07:34 rahnds Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -252,6 +252,8 @@ vgammap(v, offset, prot)
 	return alpha_btop(port);		/* XXX */
 #elif defined(i386)
 	return i386_btop(port);
+#elif defined(powerpc)
+	return powerpc_btop(port);
 #endif
 }
 
