@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.13 2001/02/08 14:51:23 itojun Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.14 2001/02/16 08:47:12 itojun Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.58 2001/02/08 10:57:00 itojun Exp $	*/
 
 /*
@@ -649,6 +649,7 @@ nd6_na_input(m, off, icmp6len)
 		bcopy(lladdr, LLADDR(sdl), ifp->if_addrlen);
 		if (is_solicited) {
 			ln->ln_state = ND6_LLINFO_REACHABLE;
+			ln->ln_byhint = 0;
 			if (ln->ln_expire)
 				ln->ln_expire = time.tv_sec +
 					nd_ifinfo[rt->rt_ifp->if_index].reachable;
@@ -718,6 +719,7 @@ nd6_na_input(m, off, icmp6len)
 			 */
 			if (is_solicited) {
 				ln->ln_state = ND6_LLINFO_REACHABLE;
+				ln->ln_byhint = 0;
 				if (ln->ln_expire) {
 					ln->ln_expire = time.tv_sec +
 						nd_ifinfo[ifp->if_index].reachable;
