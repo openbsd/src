@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.1 1999/07/11 16:25:36 niklas Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.2 1999/08/08 01:17:23 niklas Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -176,9 +176,9 @@ u_int32_t	widebug = WIDEBUG;
 #if !defined(lint)
 static const char rcsid[] =
 #ifdef __FreeBSD__
-	"$Id: if_wi.c,v 1.1 1999/07/11 16:25:36 niklas Exp $";
+	"$Id: if_wi.c,v 1.2 1999/08/08 01:17:23 niklas Exp $";
 #else	/* !__FreeBSD__ */
-	"$OpenBSD: if_wi.c,v 1.1 1999/07/11 16:25:36 niklas Exp $";
+	"$OpenBSD: if_wi.c,v 1.2 1999/08/08 01:17:23 niklas Exp $";
 #endif	/* __FreeBSD__ */
 #endif	/* lint */
 
@@ -448,6 +448,8 @@ STATIC int wi_attach(isa_dev)
 
 int	wi_pcmcia_match __P((struct device *, void *, void *));
 void	wi_pcmcia_attach __P((struct device *, struct device *, void *));
+int	wi_pcmcia_detach __P((struct device *, int));
+int	wi_pcmcia_activate __P((struct device *, enum devact));
 int	wi_intr __P((void *));
 
 /* Autoconfig definition of driver back-end */
@@ -456,7 +458,8 @@ struct cfdriver wi_cd = {
 };
 
 struct cfattach wi_ca = {
-	sizeof (struct wi_softc), wi_pcmcia_match, wi_pcmcia_attach
+	sizeof (struct wi_softc), wi_pcmcia_match, wi_pcmcia_attach,
+	wi_pcmcia_detach, wi_pcmcia_activate
 };
 
 int
@@ -488,12 +491,12 @@ wi_pcmcia_attach(parent, self, aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_function	*pf = pa->pf;
 	struct pcmcia_config_entry *cfe = pf->cfe_head.sqh_first;
-	struct pcmcia_io_handle	pcioh;
 	struct wi_ltv_macaddr	mac;
 	struct wi_ltv_gen	gen;
 	struct ifnet		*ifp;
 	int			state = 0;
-	int			io_window;
+
+	sc->sc_pf = pf;
 
 	/* Enable the card. */
 	pcmcia_function_init(pf, cfe);
@@ -503,22 +506,22 @@ wi_pcmcia_attach(parent, self, aux)
 	}
 	state++;
 
-	if (pcmcia_io_alloc(pf, 0, WI_IOSIZ, WI_IOSIZ, &pcioh)) {
+	if (pcmcia_io_alloc(pf, 0, WI_IOSIZ, WI_IOSIZ, &sc->sc_pcioh)) {
 		printf(": can't alloc i/o space\n");
 		goto bad;
 	}
 	state++;
 
-	if (pcmcia_io_map(pf, PCMCIA_WIDTH_IO16, 0, WI_IOSIZ, &pcioh,
-	    &io_window)) {
+	if (pcmcia_io_map(pf, PCMCIA_WIDTH_IO16, 0, WI_IOSIZ, &sc->sc_pcioh,
+	    &sc->sc_io_window)) {
 		printf(": can't map io space\n");
 		goto bad;
 	}
 	state++;
 
 	sc->wi_gone = 0;
-	sc->wi_btag = pcioh.iot;
-	sc->wi_bhandle = pcioh.ioh;
+	sc->wi_btag = sc->sc_pcioh.iot;
+	sc->wi_bhandle = sc->sc_pcioh.ioh;
 
 	/* Make sure interrupts are disabled. */
 	CSR_WRITE_2(sc, WI_INT_EN, 0);
@@ -617,13 +620,56 @@ wi_pcmcia_attach(parent, self, aux)
 
 bad:
 	if (state > 2)
-		pcmcia_chip_io_unmap(pf->sc->pct, pf->sc->pch, io_window);
+		pcmcia_chip_io_unmap(pf->sc->pct, pf->sc->pch,
+		    sc->sc_io_window);
 	if (state > 1)
-		pcmcia_chip_io_free(pf->sc->pct, pf->sc->pch, &pcioh);
+		pcmcia_chip_io_free(pf->sc->pct, pf->sc->pch, &sc->sc_pcioh);
 	if (state > 0)
 		pcmcia_function_disable(pf);
 }
 
+int
+wi_pcmcia_detach(dev, flags)
+	struct device *dev;
+	int flags;
+{
+	struct wi_softc *sc = (struct wi_softc *)dev;
+	struct ifnet *ifp = &sc->arpcom.ac_if;
+	int rv = 0;
+
+	pcmcia_io_unmap(sc->sc_pf, sc->sc_io_window);
+	pcmcia_io_free(sc->sc_pf, &sc->sc_pcioh);
+
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+
+	return (rv);
+}
+
+int
+wi_pcmcia_activate(dev, act)
+	struct device *dev;
+	enum devact act;
+{
+	struct wi_softc *sc = (struct wi_softc *)dev;
+	int s;
+
+	s = splnet();
+	switch (act) {
+	case DVACT_ACTIVATE:
+		pcmcia_function_enable(sc->sc_pf);
+		sc->sc_ih =
+		    pcmcia_intr_establish(sc->sc_pf, IPL_NET, wi_intr, sc);
+		break;
+
+	case DVACT_DEACTIVATE:
+		pcmcia_function_disable(sc->sc_pf);
+		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+		break;
+	}
+	splx(s);
+	return (0);
+}
 #endif	/* __FreeBSD__ */
 
 #ifdef __FreeBSD__

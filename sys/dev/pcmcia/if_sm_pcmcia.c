@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sm_pcmcia.c,v 1.4 1999/07/26 05:43:16 deraadt Exp $	*/
+/*	$OpenBSD: if_sm_pcmcia.c,v 1.5 1999/08/08 01:17:23 niklas Exp $	*/
 /*	$NetBSD: if_sm_pcmcia.c,v 1.11 1998/08/15 20:47:32 thorpej Exp $  */
 
 /*-
@@ -91,6 +91,8 @@
 
 int	sm_pcmcia_match __P((struct device *, void *, void *));
 void	sm_pcmcia_attach __P((struct device *, struct device *, void *));
+int	sm_pcmcia_detach __P((struct device *, int));
+int	sm_pcmcia_activate __P((struct device *, enum devact));
 
 struct sm_pcmcia_softc {
 	struct	smc91cxx_softc sc_smc;		/* real "smc" softc */
@@ -103,7 +105,8 @@ struct sm_pcmcia_softc {
 };
 
 struct cfattach sm_pcmcia_ca = {
-	sizeof(struct sm_pcmcia_softc), sm_pcmcia_match, sm_pcmcia_attach
+	sizeof(struct sm_pcmcia_softc), sm_pcmcia_match, sm_pcmcia_attach,
+	sm_pcmcia_detach, sm_pcmcia_activate
 };
 
 int	sm_pcmcia_enable __P((struct smc91cxx_softc *));
@@ -246,6 +249,49 @@ sm_pcmcia_attach(parent, self, aux)
 	smc91cxx_attach(sc, enaddr);
 
 	pcmcia_function_disable(pa->pf);
+}
+
+int
+sm_pcmcia_detach(dev, flags)
+	struct device *dev;
+	int flags;
+{
+	struct sm_pcmcia_softc *psc = (struct sm_pcmcia_softc *)dev;
+	struct ifnet *ifp = &psc->sc_smc.sc_arpcom.ac_if;
+	int rv = 0;
+
+	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
+	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
+
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+
+	return (rv);
+}
+
+int
+sm_pcmcia_activate(dev, act)
+	struct device *dev;
+	enum devact act;
+{
+	struct sm_pcmcia_softc *sc = (struct sm_pcmcia_softc *)dev;
+	int s;
+
+	s = splnet();
+	switch (act) {
+	case DVACT_ACTIVATE:
+		pcmcia_function_enable(sc->sc_pf);
+		sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_NET,
+		    smc91cxx_intr, sc);
+		break;
+
+	case DVACT_DEACTIVATE:
+		pcmcia_function_disable(sc->sc_pf);
+		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+		break;
+	}
+	splx(s);
+	return (0);
 }
 
 int

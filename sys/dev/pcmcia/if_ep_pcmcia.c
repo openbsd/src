@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_pcmcia.c,v 1.15 1999/07/26 05:43:15 deraadt Exp $	*/
+/*	$OpenBSD: if_ep_pcmcia.c,v 1.16 1999/08/08 01:17:23 niklas Exp $	*/
 /*	$NetBSD: if_ep_pcmcia.c,v 1.16 1998/08/17 23:20:40 thorpej Exp $  */
 
 /*-
@@ -116,6 +116,8 @@
 
 int	ep_pcmcia_match __P((struct device *, void *, void *));
 void	ep_pcmcia_attach __P((struct device *, struct device *, void *));
+int	ep_pcmcia_detach __P((struct device *, int));
+int	ep_pcmcia_activate __P((struct device *, enum devact));
 
 int	ep_pcmcia_get_enaddr __P((struct pcmcia_tuple *, void *));
 int	ep_pcmcia_enable __P((struct ep_softc *));
@@ -134,7 +136,8 @@ struct ep_pcmcia_softc {
 };
 
 struct cfattach ep_pcmcia_ca = {
-	sizeof(struct ep_pcmcia_softc), ep_pcmcia_match, ep_pcmcia_attach
+	sizeof(struct ep_pcmcia_softc), ep_pcmcia_match, ep_pcmcia_attach,
+	ep_pcmcia_detach, ep_pcmcia_activate
 };
 
 struct ep_pcmcia_product {
@@ -279,7 +282,7 @@ ep_pcmcia_attach(parent, self, aux)
 	int i;
 
 	psc->sc_pf = pa->pf;
-	cfe = pa->pf->cfe_head.sqh_first;
+	cfe = SIMPLEQ_FIRST(&pa->pf->cfe_head);
 
 	/* Enable the card. */
 	pcmcia_function_init(pa->pf, cfe);
@@ -375,6 +378,50 @@ ep_pcmcia_attach(parent, self, aux)
 
 	ep_pcmcia_disable1(sc);
 #endif
+}
+
+int
+ep_pcmcia_detach(dev, flags)
+	struct device *dev;
+	int flags;
+{
+	struct ep_pcmcia_softc *psc = (struct ep_pcmcia_softc *)dev;
+	struct ep_softc *sc = &psc->sc_ep;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	int rv = 0;
+
+	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
+	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
+
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+
+	return (rv);
+}
+
+int
+ep_pcmcia_activate(dev, act)
+	struct device *dev;
+	enum devact act;
+{
+	struct ep_pcmcia_softc *sc = (struct ep_pcmcia_softc *)dev;
+	int s;
+
+	s = splnet();
+	switch (act) {
+	case DVACT_ACTIVATE:
+		pcmcia_function_enable(sc->sc_pf);
+		sc->sc_ep.sc_ih =
+		    pcmcia_intr_establish(sc->sc_pf, IPL_NET, epintr, sc);
+		break;
+
+	case DVACT_DEACTIVATE:
+		pcmcia_function_disable(sc->sc_pf);
+		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ep.sc_ih);
+		break;
+	}
+	splx(s);
+	return (0);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.11 1999/07/26 05:43:16 deraadt Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.12 1999/08/08 01:17:23 niklas Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -62,8 +62,10 @@
 #include <dev/ic/rtl80x9reg.h>
 #include <dev/ic/rtl80x9var.h>
 
-int ne_pcmcia_match __P((struct device *, void *, void *));
-void ne_pcmcia_attach __P((struct device *, struct device *, void *));
+int	ne_pcmcia_match __P((struct device *, void *, void *));
+void	ne_pcmcia_attach __P((struct device *, struct device *, void *));
+int	ne_pcmcia_detach __P((struct device *, int));
+int	ne_pcmcia_activate __P((struct device *, enum devact));
 
 int	ne_pcmcia_enable __P((struct dp8390_softc *));
 void	ne_pcmcia_disable __P((struct dp8390_softc *));
@@ -80,7 +82,8 @@ struct ne_pcmcia_softc {
 };
 
 struct cfattach ne_pcmcia_ca = {
-	sizeof(struct ne_pcmcia_softc), ne_pcmcia_match, ne_pcmcia_attach
+	sizeof(struct ne_pcmcia_softc), ne_pcmcia_match, ne_pcmcia_attach,
+	ne_pcmcia_detach, ne_pcmcia_activate
 };
 
 struct ne2000dev {
@@ -543,7 +546,51 @@ ne_pcmcia_attach(parent, self, aux)
 #if 0
 	pcmcia_function_disable(pa->pf);
 #endif
+}
 
+int
+ne_pcmcia_detach(dev, flags)
+	struct device *dev;
+	int flags;
+{
+	struct ne_pcmcia_softc *psc = (struct ne_pcmcia_softc *)dev;
+	struct dp8390_softc *dsc = &psc->sc_ne2000.sc_dp8390;
+	struct ifnet *ifp = &dsc->sc_arpcom.ac_if;
+	int rv = 0;
+
+	pcmcia_io_unmap(psc->sc_pf, psc->sc_asic_io_window);
+	pcmcia_io_unmap(psc->sc_pf, psc->sc_nic_io_window);
+	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
+
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+
+	return (rv);
+}
+
+int
+ne_pcmcia_activate(dev, act)
+	struct device *dev;
+	enum devact act;
+{
+	struct ne_pcmcia_softc *sc = (struct ne_pcmcia_softc *)dev;
+	int s;
+
+	s = splnet();
+	switch (act) {
+	case DVACT_ACTIVATE:
+		pcmcia_function_enable(sc->sc_pf);
+		sc->sc_ih =
+		    pcmcia_intr_establish(sc->sc_pf, IPL_NET, dp8390_intr, sc);
+		break;
+
+	case DVACT_DEACTIVATE:
+		pcmcia_function_disable(sc->sc_pf);
+		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+		break;
+	}
+	splx(s);
+	return (0);
 }
 
 int

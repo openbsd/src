@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.4 1999/07/26 05:43:16 deraadt Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.5 1999/08/08 01:17:23 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, C Stone, Job de Haas
@@ -127,6 +127,8 @@ int xedebug = XEDEBUG_DEF;
 
 int	xe_pcmcia_match __P((struct device *, void *, void *));
 void	xe_pcmcia_attach __P((struct device *, struct device *, void *));
+int	xe_pcmcia_detach __P((struct device *, int));
+int	xe_pcmcia_activate __P((struct device *, enum devact));
 
 /*
  * In case this chipset ever turns up out of pcmcia attachments (very
@@ -171,7 +173,8 @@ struct cfdriver xe_cd = {
 };
 
 struct cfattach xe_pcmcia_ca = {
-	sizeof (struct xe_pcmcia_softc), xe_pcmcia_match, xe_pcmcia_attach
+	sizeof (struct xe_pcmcia_softc), xe_pcmcia_match, xe_pcmcia_attach,
+	xe_pcmcia_detach, xe_pcmcia_activate
 };
 
 void	xe_cycle_power __P((struct xe_softc *));
@@ -382,7 +385,14 @@ xe_pcmcia_attach(parent, self, aux)
 	ifp->if_start = xe_start;
 	ifp->if_watchdog = xe_watchdog;
 
-	printf(": address %s", ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	/* Establish the interrupt. */
+	sc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_NET, xe_intr, sc);
+	if (sc->sc_ih == NULL) {
+		printf(", couldn't establish interrupt\n");
+		goto bad;
+	}
+
+	printf(": address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	/* Reset and initialize the card. */
 	xe_full_reset(sc);
@@ -412,15 +422,6 @@ xe_pcmcia_attach(parent, self, aux)
 	    sizeof(struct ether_header));
 #endif	/* NBPFILTER > 0 */
 
-	/* Establish the interrupt. */
-	sc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_NET, xe_intr, sc);
-	if (sc->sc_ih == NULL) {
-		printf(", couldn't establish interrupt\n");
-		goto bad;
-	}
-
-	printf("\n");
-
 	/*
 	 * Reset and initialize the card again for DINGO (as found in Linux
 	 * driver).  Without this Dingo will get a watchdog timeout the first
@@ -435,11 +436,7 @@ xe_pcmcia_attach(parent, self, aux)
 		xe_stop(sc);
 	}
 
-
 #ifdef notyet
-	/*
-	 * XXX This should be done once the framework has enable/disable hooks.
-	 */
 	pcmcia_function_disable(pa->pf);
 #endif	/* notyet */
 
@@ -454,6 +451,57 @@ bad:
 	if (state > 0)
 		pcmcia_function_disable(pa->pf);
 	free(cfe, M_DEVBUF);
+}
+
+int
+xe_pcmcia_detach(dev, flags)
+	struct device *dev;
+	int flags;
+{
+	struct xe_pcmcia_softc *psc = (struct xe_pcmcia_softc *)dev;
+	struct xe_softc *sc = &psc->sc_xe;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct mii_softc *msc;
+	int rv = 0;
+
+	for (msc = LIST_FIRST(&sc->sc_mii.mii_phys); msc;
+	    msc = LIST_FIRST(&sc->sc_mii.mii_phys)) {
+		LIST_REMOVE(msc, mii_list);
+		rv |= config_detach(&msc->mii_dev, flags);
+	}
+
+	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
+	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
+
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+
+	return (rv);
+}
+
+int
+xe_pcmcia_activate(dev, act)
+	struct device *dev;
+	enum devact act;
+{
+	struct xe_pcmcia_softc *sc = (struct xe_pcmcia_softc *)dev;
+	int s;
+
+	s = splnet();
+	switch (act) {
+	case DVACT_ACTIVATE:
+		pcmcia_function_enable(sc->sc_pf);
+		sc->sc_xe.sc_ih =
+		    pcmcia_intr_establish(sc->sc_pf, IPL_NET, xe_intr, sc);
+		break;
+
+	case DVACT_DEACTIVATE:
+		pcmcia_function_disable(sc->sc_pf);
+		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_xe.sc_ih);
+		break;
+	}
+	splx(s);
+	return (0);
 }
 
 /*
