@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.123 2002/07/19 11:12:42 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.124 2002/07/19 12:36:48 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2234,7 +2234,12 @@ lgetc(FILE *fin)
 		return (pushback_buffer[--pushback_index]);
 
 	while ((c = getc(fin)) == '\\') {
-		next = getc(fin);
+		while ((next = getc(fin)) == ' ')
+			;
+		if (next == '#')
+			do
+				next = getc(fin);
+			while (next != '\n' && next != EOF);
 		if (next != '\n') {
 			ungetc(next, fin);
 			break;
@@ -2334,6 +2339,10 @@ top:
 				*p = '\0';
 				break;
 			}
+			if (c == '#')
+				do
+					c = lgetc(fin);
+				while (c != '\n' && c != EOF);
 			if (c == '\n')
 				continue;
 			if (p + 1 >= buf + sizeof(buf) - 1) {
@@ -2716,7 +2725,7 @@ ifa_pick_ip(struct node_host *nh, u_int8_t af)
 		    "expands to multiple IPs");
 		return(NULL);
 	}
-	for(h = nh; h; h = h->next) {
+	for (h = nh; h; h = h->next) {
 		if (h->af == af || h->af == 0 || af == 0) {
 			if (n != NULL) {
 				yyerror("translation address expands to "
@@ -2726,10 +2735,8 @@ ifa_pick_ip(struct node_host *nh, u_int8_t af)
 			n = h;
 		}
 	}
-
 	if (n == NULL)
 		yyerror("no translation address with matching address family "
 		    "found.");
-	return n;
+	return (n);
 }
-
