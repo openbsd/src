@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.36 2002/02/04 20:42:25 fgsch Exp $	*/
+/*	$OpenBSD: audio.c,v 1.37 2002/02/06 14:25:09 fgsch Exp $	*/
 /*	$NetBSD: audio.c,v 1.105 1998/09/27 16:43:56 christos Exp $	*/
 
 /*
@@ -317,7 +317,7 @@ audioattach(parent, self, aux)
 		au_check_ports(sc, &sc->sc_outports, &mi, oclass, 
 			       AudioNoutput, AudioNmaster, otable);
 		if (mi.mixer_class == oclass && 
-		    strcmp(mi.label.name, AudioNmonitor))
+		    strcmp(mi.label.name, AudioNmonitor) == 0)
 			sc->sc_monitor_port = mi.index;
 	}
 	DPRINTF(("audio_attach: inputs ports=0x%x, output ports=0x%x\n",
