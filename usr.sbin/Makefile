@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.63 2000/04/26 06:21:07 jakob Exp $
+#	$OpenBSD: Makefile,v 1.64 2000/05/18 17:01:37 espie Exp $
 
 # not yet done: catman
 
@@ -19,8 +19,10 @@ SUBDIR=	ac accton adduser amd arp bootpd bootpgw bootpef bootptest \
 # IPv6
 SUBDIR+=faithd ifmcstat ndp rip6query route6d rtadvd rtsold traceroute6
 
-# Amiga manpages
+# Arch dependent tools, with manpages
 SUBDIR+=iteconfig grfconfig videomode
+SUBDIR+=bad144 apm apmd fdformat memconfig
+SUBDIR+=eeprom screenblank grfinfo hilinfo
 
 .if (${AFS} == "yes")
 SUBDIR+=afs
@@ -28,21 +30,6 @@ SUBDIR+=afs
 
 .if (${YP} == "yes")
 SUBDIR+=ypbind yppoll ypset ypserv
-.endif
-
-.if   make(clean) || make(cleandir) || make(obj)
-SUBDIR+=apm apmd bad144 eeprom fdformat grfconfig grfinfo \
-	hilinfo screenblank videomode memconfig
-.elif ${MACHINE} == "hp300"
-SUBDIR+=grfinfo hilinfo
-.elif ${MACHINE} == "i386"
-SUBDIR+=bad144 apm apmd fdformat memconfig
-.elif ${MACHINE} == "pmax"
-SUBDIR+=
-.elif ${MACHINE} == "sun3"
-SUBDIR+=eeprom screenblank
-.elif ${MACHINE} == "sparc"
-SUBDIR+=eeprom fdformat screenblank
 .endif
 
 .include <bsd.subdir.mk>
