@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.41 2004/12/08 19:44:28 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.42 2004/12/08 19:54:11 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -946,6 +946,12 @@ cvs_file_getname(const char *name)
 		}
 
 		fnp->cf_name = strdup(name);
+		if (fnp->cf_name == NULL) {
+			cvs_log(LP_ERRNO, "failed to duplicate name");
+			free(fnp);
+			return (NULL);
+		}
+
 		fnp->cf_ref = 1;
 		SLIST_INSERT_HEAD(&(cvs_fnht[h]), fnp, cf_list);
 	}
