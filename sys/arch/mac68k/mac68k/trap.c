@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.10 1997/04/08 02:53:27 gene Exp $	*/
+/*	$OpenBSD: trap.c,v 1.11 1997/04/08 13:55:59 briggs Exp $	*/
 /*	$NetBSD: trap.c,v 1.46 1997/04/07 22:54:44 scottr Exp $	*/
 
 /*
@@ -464,13 +464,13 @@ copyfault:
 		/*
 		 * SunOS uses Trap #2 for a "CPU cache flush"
 		 * Just flush the on-chip caches and return.
-		 * XXX - Too bad NetBSD uses trap 2...
+		 * XXX - Too bad m68k BSD uses trap 2...
 		 */
 		if (p->p_emul == &emul_sunos) {
 			ICIA();
 			DCIU();
 			/* get out fast */
-			goto done;
+			return;
 		}
 #endif
 		frame.f_sr &= ~PSL_T;

@@ -617,13 +617,12 @@ trap(type, code, v, frame)
 		/*
 		 * SunOS uses Trap #2 for a "CPU cache flush"
 		 * Just flush the on-chip caches and return.
-		 * XXX - Too bad OpenBSD uses trap 2...
+		 * XXX - Too bad m68k BSD uses trap 2...
 		 */
 		if (p->p_emul == &emul_sunos) {
 			ICIA();
 			DCIU();
 			/* get out fast */
-			userret(p, frame.f_pc, sticks); 
 			return;
 #endif
 		frame.f_sr &= ~PSL_T;
