@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.16 2000/08/13 22:05:47 brian Exp $
+#	$OpenBSD: Makefile,v 1.17 2000/08/18 00:06:25 brian Exp $
 
 PROG=	ppp
 SRCS=	alias.c alias_cuseeme.c alias_db.c alias_ftp.c alias_irc.c \
 	alias_nbt.c alias_pptp.c alias_proxy.c alias_smedia.c alias_util.c \
 	acf.c arp.c async.c auth.c bundle.c cbcp.c ccp.c chap.c chap_ms.c \
 	chat.c command.c datalink.c deflate.c defs.c exec.c filter.c fsm.c \
-	hdlc.c id.c iface.c ip.c ipcp.c iplist.c lcp.c link.c log.c lqr.c \
+	hdlc.c iface.c ip.c ipcp.c iplist.c lcp.c link.c log.c lqr.c \
 	main.c mbuf.c mp.c nat_cmd.c pap.c physical.c pred.c probe.c prompt.c \
 	proto.c radius.c radlib.c route.c server.c sig.c slcompress.c \
 	systems.c sync.c tcp.c throughput.c timer.c tty.c tun.c udp.c vjcomp.c
@@ -13,9 +13,19 @@ CFLAGS+=-Wall -DHAVE_DES -DNO_FW_PUNCH -DNOI4B -DNONETGRAPH
 CFLAGS+=-DLOCALNAT -DLOCALRAD
 LDADD+= -ldes -lutil -lz
 DPADD+=	${LIBDES} ${LIBUTIL} ${LIBZ}
+.if defined(NOSUID) || defined(PPP_NOSUID)
+BINMODE=554
+.else
 BINMODE=4554
 BINOWN=	root
+.endif
 BINGRP=	network
 MAN=	ppp.8
+
+.if defined(NOSUID) || defined(PPP_NOSUID)
+CFLAGS+=-DNOSUID
+.else
+SRCS+=	id.c
+.endif
 
 .include <bsd.prog.mk>

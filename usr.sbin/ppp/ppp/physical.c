@@ -16,7 +16,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- *  $OpenBSD: physical.c,v 1.24 2000/08/15 10:26:37 brian Exp $
+ *  $OpenBSD: physical.c,v 1.25 2000/08/18 00:02:11 brian Exp $
  *
  */
 
@@ -29,6 +29,9 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
+#ifdef NOSUID
+#include <signal.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

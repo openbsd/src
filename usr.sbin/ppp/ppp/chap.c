@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: chap.c,v 1.22 2000/08/09 19:31:25 brian Exp $
+ * $OpenBSD: chap.c,v 1.23 2000/08/18 00:02:10 brian Exp $
  *
  *	TODO:
  */
@@ -254,7 +254,9 @@ chap_StartChild(struct chap *chap, char *prog, const char *name)
       }
       for (fd = getdtablesize(); fd > STDERR_FILENO; fd--)
         fcntl(fd, F_SETFD, 1);
+#ifndef NOSUID
       setuid(ID0realuid());
+#endif
       command_Expand(nargv, argc, (char const *const *)argv,
                      chap->auth.physical->dl->bundle, 0, pid);
       execvp(nargv[0], nargv);

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: bundle.c,v 1.45 2000/08/16 09:07:26 brian Exp $
+ *	$OpenBSD: bundle.c,v 1.46 2000/08/18 00:02:10 brian Exp $
  */
 
 #include <sys/param.h>
@@ -51,6 +51,9 @@
 #include <sys/uio.h>
 #include <sys/wait.h>
 #if defined(__FreeBSD__) && !defined(NOKLDLOAD)
+#ifdef NOSUID
+#include <sys/linker.h>
+#endif
 #include <sys/module.h>
 #endif
 #include <termios.h>
@@ -1852,7 +1855,9 @@ bundle_setsid(struct bundle *bundle, int holdsession)
         waitpid(pid, &status, 0);
         /* Tweak our process arguments.... */
         SetTitle("session owner");
+#ifndef NOSUID
         setuid(ID0realuid());
+#endif
         /*
          * Hang around for a HUP.  This should happen as soon as the
          * ppp that we passed our ctty descriptor to closes it.
