@@ -1,3 +1,4 @@
+/*	$OpenBSD: pathnames.h,v 1.2 1998/11/29 19:57:00 pjanzen Exp $	*/
 /*	$NetBSD: pathnames.h,v 1.2 1995/03/24 03:59:17 cgd Exp $	*/
 
 /*-

@@ -1,3 +1,4 @@
+/*	$OpenBSD: fight.c,v 1.3 1998/11/29 19:56:55 pjanzen Exp $	*/
 /*	$NetBSD: fight.c,v 1.2 1995/03/24 03:58:39 cgd Exp $	*/
 
 /*
@@ -36,153 +37,153 @@
 /
 *************************************************************************/
 
+void
 encounter(particular)
-int	particular;
+	int     particular;
 {
-bool	firsthit = Player.p_blessing;	/* set if player gets the first hit */
-int	flockcnt = 1;			/* how many time flocked */
+	bool    firsthit = Player.p_blessing;	/* set if player gets the
+						 * first hit */
+	int     flockcnt = 1;	/* how many time flocked */
 
-    /* let others know what we are doing */
-    Player.p_status = S_MONSTER;
-    writerecord(&Player, Fileloc);
+	/* let others know what we are doing */
+	Player.p_status = S_MONSTER;
+	writerecord(&Player, Fileloc);
 
-#ifdef SYS5
-    flushinp();
+#if __GNUC__
+	(void)&firsthit;	/* XXX shut up gcc */
 #endif
 
-    Shield = 0.0;		/* no shield up yet */
+#ifdef SYS5
+	flushinp();
+#endif
 
-    if (particular >= 0)
-	/* monster is specified */
-	Whichmonster = particular;
-    else
-	/* pick random monster */
-	Whichmonster = pickmonster();
+	Shield = 0.0;		/* no shield up yet */
 
-    setjmp(Fightenv);		/* this is to enable changing fight state */
-
-    move(6, 0);
-    clrtobot();			/* clear bottom area of screen */
-
-    Lines = 9;
-    callmonster(Whichmonster);	/* set up monster to fight */
-
-    Luckout = FALSE;		/* haven't tried to luckout yet */
-
-    if (Curmonster.m_type == SM_MORGOTH)
-	mvprintw(4, 0, "You've encountered %s, Bane of the Council and Valar.\n",
-	    Enemyname);
-
-    if (Curmonster.m_type == SM_UNICORN)
-	{
-	if (Player.p_virgin)
-	    {
-	    printw("You just subdued %s, thanks to the virgin.\n", Enemyname);
-	    Player.p_virgin = FALSE;
-	    }
+	if (particular >= 0)
+		/* monster is specified */
+		Whichmonster = particular;
 	else
-	    {
-	    printw("You just saw %s running away!\n", Enemyname);
-	    Curmonster.m_experience = 0.0;
-	    Curmonster.m_treasuretype = 0;
-	    }
-	}
-    else
-	/* not a special monster */
-	for (;;)
-	    /* print header, and arbitrate between player and monster */
-	    {
-	    mvprintw(6, 0, "You are being attacked by %s,   EXP: %.0f   (Size: %.0f)\n",
-		Enemyname, Curmonster.m_experience, Circle);
+		/* pick random monster */
+		Whichmonster = pickmonster();
 
-	    displaystats();
-	    mvprintw(1, 26, "%20.0f", Player.p_energy + Shield);	/* overprint energy */
-	    readmessage();
+	setjmp(Fightenv);	/* this is to enable changing fight state */
 
-	    if (Curmonster.m_type == SM_DARKLORD
-		&& Player.p_blessing
-		&& Player.p_charms > 0)
-		/* overpower Dark Lord with blessing and charm */
+	move(6, 0);
+	clrtobot();		/* clear bottom area of screen */
+
+	Lines = 9;
+	callmonster(Whichmonster);	/* set up monster to fight */
+
+	Luckout = FALSE;	/* haven't tried to luckout yet */
+
+	if (Curmonster.m_type == SM_MORGOTH)
+		mvprintw(4, 0, "You've encountered %s, Bane of the Council and Valar.\n",
+		    Enemyname);
+
+	if (Curmonster.m_type == SM_UNICORN) {
+		if (Player.p_virgin) {
+			printw("You just subdued %s, thanks to the virgin.\n", Enemyname);
+			Player.p_virgin = FALSE;
+		} else {
+			printw("You just saw %s running away!\n", Enemyname);
+			Curmonster.m_experience = 0.0;
+			Curmonster.m_treasuretype = 0;
+		}
+	} else
+		/* not a special monster */
+		for (;;)
+			/* print header, and arbitrate between player and
+			 * monster */
 		{
-		mvprintw(7, 0, "You just overpowered %s!", Enemyname);
-		Lines = 8;
-		Player.p_blessing = FALSE;
-		--Player.p_charms;
-		break;
+			mvprintw(6, 0, "You are being attacked by %s,   EXP: %.0f   (Size: %.0f)\n",
+			    Enemyname, Curmonster.m_experience, Circle);
+
+			displaystats();
+			mvprintw(1, 26, "%20.0f", Player.p_energy + Shield);	/* overprint energy */
+			readmessage();
+
+			if (Curmonster.m_type == SM_DARKLORD
+			    && Player.p_blessing
+			    && Player.p_charms > 0)
+				/* overpower Dark Lord with blessing and charm */
+			{
+				mvprintw(7, 0, "You just overpowered %s!", Enemyname);
+				Lines = 8;
+				Player.p_blessing = FALSE;
+				--Player.p_charms;
+				break;
+			}
+			/* allow paralyzed monster to wake up */
+			Curmonster.m_speed = MIN(Curmonster.m_speed + 1.0, Curmonster.m_maxspeed);
+
+			if (drandom() * Curmonster.m_speed > drandom() * Player.p_speed
+			/* monster is faster */
+			    && Curmonster.m_type != SM_DARKLORD
+			/* not D. L. */
+			    && Curmonster.m_type != SM_SHRIEKER
+			/* not mimic */
+			    && !firsthit)
+				/* monster gets a hit */
+				monsthits();
+			else
+				/* player gets a hit */
+			{
+				firsthit = FALSE;
+				playerhits();
+			}
+
+			refresh();
+
+			if (Lines > LINES - 2)
+				/* near bottom of screen - pause */
+			{
+				more(Lines);
+				move(Lines = 8, 0);
+				clrtobot();
+			}
+			if (Player.p_energy <= 0.0)
+				/* player died */
+			{
+				more(Lines);
+				death(Enemyname);
+				cancelmonster();
+				break;	/* fight ends if the player is saved
+					 * from death */
+			}
+			if (Curmonster.m_energy <= 0.0)
+				/* monster died */
+				break;
 		}
 
-	    /* allow paralyzed monster to wake up */
-	    Curmonster.m_speed = MIN(Curmonster.m_speed + 1.0, Curmonster.m_maxspeed);
+	/* give player credit for killing monster */
+	Player.p_experience += Curmonster.m_experience;
 
-	    if (drandom() * Curmonster.m_speed > drandom() * Player.p_speed
-		/* monster is faster */
-		&& Curmonster.m_type != SM_DARKLORD
-		/* not D. L. */
-		&& Curmonster.m_type != SM_SHRIEKER
-		/* not mimic */
-		&& !firsthit)
-		/* monster gets a hit */
-		monsthits();
-	    else
-		/* player gets a hit */
-		{
-		firsthit = FALSE;
-		playerhits();
-		}
-
-	    refresh();
-
-	    if (Lines > LINES - 2)
-		/* near bottom of screen - pause */
-		{
-		more(Lines);
-		move(Lines = 8, 0);
-		clrtobot();
-		}
-
-	    if (Player.p_energy <= 0.0)
-		/* player died */
-		{
-		more(Lines);
-		death(Enemyname);
-		cancelmonster();
-		break;		/* fight ends if the player is saved from death */
-		}
-
-	    if (Curmonster.m_energy <= 0.0)
-		/* monster died */
-		break;
-	    }
-
-    /* give player credit for killing monster */
-    Player.p_experience += Curmonster.m_experience;
-
-    if (drandom() < Curmonster.m_flock / 100.0)
-	/* monster flocks */
+	if (drandom() < Curmonster.m_flock / 100.0)
+		/* monster flocks */
 	{
-	more(Lines);
-	++flockcnt;
-	longjmp(Fightenv, 0);
-	/*NOTREACHED*/
-	}
-    else if (Circle > 1.0
-	&& Curmonster.m_treasuretype > 0
-	&& drandom() > 0.2 + pow(0.4, (double) (flockcnt / 3 + Circle / 3.0)))
-	/* monster has treasure; this takes # of flocks and size into account */
-	{
-	more(Lines);
-	awardtreasure();
-	}
+		more(Lines);
+		++flockcnt;
+		longjmp(Fightenv, 0);
+		/* NOTREACHED */
+	} else
+		if (Circle > 1.0
+		    && Curmonster.m_treasuretype > 0
+		    && drandom() > 0.2 + pow(0.4, (double) (flockcnt / 3 + Circle / 3.0)))
+			/* monster has treasure; this takes # of flocks and
+			 * size into account */
+		{
+			more(Lines);
+			awardtreasure();
+		}
+	/* pause before returning */
+	getyx(stdscr, Lines, flockcnt);
+	more(Lines + 1);
 
-    /* pause before returning */
-    getyx(stdscr, Lines, flockcnt);
-    more(Lines + 1);
+	Player.p_ring.ring_inuse = FALSE;	/* not using ring */
 
-    Player.p_ring.ring_inuse = FALSE;	/* not using ring */
-
-    /* clean up the screen */
-    move(4, 0);
-    clrtobot();
+	/* clean up the screen */
+	move(4, 0);
+	clrtobot();
 }
 /**/
 /************************************************************************
@@ -213,35 +214,36 @@ int	flockcnt = 1;			/* how many time flocked */
 /
 *************************************************************************/
 
+int
 pickmonster()
 {
-    if (Player.p_specialtype == SC_VALAR)
-	/* even chance of any monster */
-	return((int) ROLL(0.0, 100.0));
+	if (Player.p_specialtype == SC_VALAR)
+		/* even chance of any monster */
+		return ((int) ROLL(0.0, 100.0));
 
-    if (Marsh)
-	/* water monsters */
-	return((int) ROLL(0.0, 15.0));
+	if (Marsh)
+		/* water monsters */
+		return ((int) ROLL(0.0, 15.0));
 
-    else if (Circle > 24)
-	/* even chance of all non-water monsters */
-	return((int) ROLL(14.0, 86.0));
+	else if (Circle > 24)
+		/* even chance of all non-water monsters */
+		return ((int) ROLL(14.0, 86.0));
 
-    else if (Circle > 15)
-	/* chance of all non-water monsters, weighted toward middle */
-	return((int) (ROLL(0.0, 50.0) + ROLL(14.0, 37.0)));
+	else if (Circle > 15)
+		/* chance of all non-water monsters, weighted toward middle */
+		return ((int) (ROLL(0.0, 50.0) + ROLL(14.0, 37.0)));
 
-    else if (Circle > 8)
-	/* not all non-water monsters, weighted toward middle */
-	return((int) (ROLL(0.0, 50.0) + ROLL(14.0, 26.0)));
+	else if (Circle > 8)
+		/* not all non-water monsters, weighted toward middle */
+		return ((int) (ROLL(0.0, 50.0) + ROLL(14.0, 26.0)));
 
-    else if (Circle > 3)
-	/* even chance of some tamer non-water monsters */
-	return((int) ROLL(14.0, 50.0));
+	else if (Circle > 3)
+		/* even chance of some tamer non-water monsters */
+		return ((int) ROLL(14.0, 50.0));
 
-    else 
-	/* even chance of some of the tamest non-water monsters */
-	return((int) ROLL(14.0, 25.0));
+	else
+		/* even chance of some of the tamest non-water monsters */
+		return ((int) ROLL(14.0, 25.0));
 }
 /**/
 /************************************************************************
@@ -269,152 +271,145 @@ pickmonster()
 /
 *************************************************************************/
 
+void
 playerhits()
 {
-double	inflict;	/* damage inflicted */
-int	ch;		/* input */
+	double  inflict;	/* damage inflicted */
+	int     ch;		/* input */
 
-    mvaddstr(7, 0, "1:Melee  2:Skirmish  3:Evade  4:Spell  5:Nick  ");
+	mvaddstr(7, 0, "1:Melee  2:Skirmish  3:Evade  4:Spell  5:Nick  ");
 
-    if (!Luckout)
-	/* haven't tried to luckout yet */
-	if (Curmonster.m_type == SM_MORGOTH)
-	    /* cannot luckout against Morgoth */
-	    addstr("6:Ally  ");
+	if (!Luckout) {
+		/* haven't tried to luckout yet */
+		if (Curmonster.m_type == SM_MORGOTH)
+			/* cannot luckout against Morgoth */
+			addstr("6:Ally  ");
+		else
+			addstr("6:Luckout  ");
+	}
+
+	if (Player.p_ring.ring_type != R_NONE)
+		/* player has a ring */
+		addstr("7:Use Ring  ");
 	else
-	    addstr("6:Luckout  ");
+		clrtoeol();
 
-    if (Player.p_ring.ring_type != R_NONE)
-	/* player has a ring */
-	addstr("7:Use Ring  ");
-    else
-	clrtoeol();
+	ch = inputoption();
 
-    ch = inputoption();
+	move(8, 0);
+	clrtobot();		/* clear any messages from before */
+	Lines = 9;
+	mvaddstr(4, 0, "\n\n");	/* clear status area */
 
-    move(8, 0);
-    clrtobot();			/* clear any messages from before */
-    Lines = 9;
-    mvaddstr(4, 0, "\n\n");	/* clear status area */
-
-    switch (ch)
-	{
+	switch (ch) {
 	case 'T':		/* timeout; lose turn */
-	    break;
+		break;
 
 	case ' ':
 	case '1':		/* melee */
-	    /* melee affects monster's energy and strength */
-	    inflict = ROLL(Player.p_might / 2.0 + 5.0, 1.3 * Player.p_might)
-		+ (Player.p_ring.ring_inuse ? Player.p_might : 0.0);
+		/* melee affects monster's energy and strength */
+		inflict = ROLL(Player.p_might / 2.0 + 5.0, 1.3 * Player.p_might)
+		    + (Player.p_ring.ring_inuse ? Player.p_might : 0.0);
 
-	    Curmonster.m_melee += inflict;
-	    Curmonster.m_strength = Curmonster.m_o_strength
-		- Curmonster.m_melee / Curmonster.m_o_energy
-		* Curmonster.m_o_strength / 4.0;
-	    hitmonster(inflict);
-	    break;
+		Curmonster.m_melee += inflict;
+		Curmonster.m_strength = Curmonster.m_o_strength
+		    - Curmonster.m_melee / Curmonster.m_o_energy
+		    * Curmonster.m_o_strength / 4.0;
+		hitmonster(inflict);
+		break;
 
 	case '2':		/* skirmish */
-	    /* skirmish affects monter's energy and speed */
-	    inflict = ROLL(Player.p_might / 3.0 + 3.0, 1.1 * Player.p_might)
-		+ (Player.p_ring.ring_inuse ? Player.p_might : 0.0);
+		/* skirmish affects monter's energy and speed */
+		inflict = ROLL(Player.p_might / 3.0 + 3.0, 1.1 * Player.p_might)
+		    + (Player.p_ring.ring_inuse ? Player.p_might : 0.0);
 
-	    Curmonster.m_skirmish += inflict;
-	    Curmonster.m_maxspeed = Curmonster.m_o_speed
-		- Curmonster.m_skirmish / Curmonster.m_o_energy
-		* Curmonster.m_o_speed / 4.0;
-	    hitmonster(inflict);
-	    break;
+		Curmonster.m_skirmish += inflict;
+		Curmonster.m_maxspeed = Curmonster.m_o_speed
+		    - Curmonster.m_skirmish / Curmonster.m_o_energy
+		    * Curmonster.m_o_speed / 4.0;
+		hitmonster(inflict);
+		break;
 
 	case '3':		/* evade */
-	    /* use brains and speed to try to evade */
-	    if ((Curmonster.m_type == SM_DARKLORD
-		|| Curmonster.m_type == SM_SHRIEKER
+		/* use brains and speed to try to evade */
+		if ((Curmonster.m_type == SM_DARKLORD
+			|| Curmonster.m_type == SM_SHRIEKER
 		/* can always run from D. L. and shrieker */
-		|| drandom() * Player.p_speed * Player.p_brains
-		    > drandom() * Curmonster.m_speed * Curmonster.m_brains)
-		&& (Curmonster.m_type != SM_MIMIC))
-		/* cannot run from mimic */
+			|| drandom() * Player.p_speed * Player.p_brains
+			> drandom() * Curmonster.m_speed * Curmonster.m_brains)
+		    && (Curmonster.m_type != SM_MIMIC))
+			/* cannot run from mimic */
 		{
-		mvaddstr(Lines++, 0, "You got away!");
-		cancelmonster();
-		altercoordinates(0.0, 0.0, A_NEAR);
-		}
-	    else
-		mvprintw(Lines++, 0, "%s is still after you!", Enemyname);
+			mvaddstr(Lines++, 0, "You got away!");
+			cancelmonster();
+			altercoordinates(0.0, 0.0, A_NEAR);
+		} else
+			mvprintw(Lines++, 0, "%s is still after you!", Enemyname);
 
-	    break;
+		break;
 
 	case 'M':
 	case '4':		/* magic spell */
-	    throwspell();
-	    break;
+		throwspell();
+		break;
 
 	case '5':		/* nick */
-	    /* hit 1 plus sword; give some experience */
-	    inflict = 1.0 + Player.p_sword;
-	    Player.p_experience += floor(Curmonster.m_experience / 10.0);
-	    Curmonster.m_experience *= 0.92;
-	    /* monster gets meaner */
-	    Curmonster.m_maxspeed += 2.0;
-	    Curmonster.m_speed = (Curmonster.m_speed < 0.0) ? 0.0 : Curmonster.m_speed + 2.0;
-	    if (Curmonster.m_type == SM_DARKLORD)
-		/* Dark Lord; doesn't like to be nicked */
+		/* hit 1 plus sword; give some experience */
+		inflict = 1.0 + Player.p_sword;
+		Player.p_experience += floor(Curmonster.m_experience / 10.0);
+		Curmonster.m_experience *= 0.92;
+		/* monster gets meaner */
+		Curmonster.m_maxspeed += 2.0;
+		Curmonster.m_speed = (Curmonster.m_speed < 0.0) ? 0.0 : Curmonster.m_speed + 2.0;
+		if (Curmonster.m_type == SM_DARKLORD)
+			/* Dark Lord; doesn't like to be nicked */
 		{
-		mvprintw(Lines++, 0,
-		    "You hit %s %.0f times, and made him mad!", Enemyname, inflict);
-		Player.p_quickness /= 2.0;
-		altercoordinates(0.0, 0.0, A_FAR);
-		cancelmonster();
-		}
-	    else
-		hitmonster(inflict);
-	    break;
+			mvprintw(Lines++, 0,
+			    "You hit %s %.0f times, and made him mad!", Enemyname, inflict);
+			Player.p_quickness /= 2.0;
+			altercoordinates(0.0, 0.0, A_FAR);
+			cancelmonster();
+		} else
+			hitmonster(inflict);
+		break;
 
 	case 'B':
-	case '6':	/* luckout */
-	    if (Luckout)
-		mvaddstr(Lines++, 0, "You already tried that.");
-	    else
-		{
-		Luckout = TRUE;
-		if (Curmonster.m_type == SM_MORGOTH)
-		    /* Morgoth; ally */
-		    {
-		    if (drandom() < Player.p_sin / 100.0)
+	case '6':		/* luckout */
+		if (Luckout)
+			mvaddstr(Lines++, 0, "You already tried that.");
+		else {
+			Luckout = TRUE;
+			if (Curmonster.m_type == SM_MORGOTH)
+				/* Morgoth; ally */
 			{
-			mvprintw(Lines++, 0, "%s accepted!", Enemyname);
-			cancelmonster();
-			}
-		    else
-			mvaddstr(Lines++, 0, "Nope, he's not interested.");
-		    }
-		else
-		    /* normal monster; use brains for success */
-		    {
-		    if ((drandom() + 0.333) * Player.p_brains
-			< (drandom() + 0.333) * Curmonster.m_brains)
-			mvprintw(Lines++, 0, "You blew it, %s.", Player.p_name);
-		    else
+				if (drandom() < Player.p_sin / 100.0) {
+					mvprintw(Lines++, 0, "%s accepted!", Enemyname);
+					cancelmonster();
+				} else
+					mvaddstr(Lines++, 0, "Nope, he's not interested.");
+			} else
+				/* normal monster; use brains for success */
 			{
-			mvaddstr(Lines++, 0, "You made it!");
-			Curmonster.m_energy = 0.0;
+				if ((drandom() + 0.333) * Player.p_brains
+				    < (drandom() + 0.333) * Curmonster.m_brains)
+					mvprintw(Lines++, 0, "You blew it, %s.", Player.p_name);
+				else {
+					mvaddstr(Lines++, 0, "You made it!");
+					Curmonster.m_energy = 0.0;
+				}
 			}
-		    }
 		}
-	    break;
+		break;
 
 	case '7':		/* use ring */
-	    if (Player.p_ring.ring_type != R_NONE)
-		{
-		mvaddstr(Lines++, 0, "Now using ring.");
-		Player.p_ring.ring_inuse = TRUE;
-		if (Player.p_ring.ring_type != R_DLREG)
-		    /* age ring */
-		    --Player.p_ring.ring_duration;
+		if (Player.p_ring.ring_type != R_NONE) {
+			mvaddstr(Lines++, 0, "Now using ring.");
+			Player.p_ring.ring_inuse = TRUE;
+			if (Player.p_ring.ring_type != R_DLREG)
+				/* age ring */
+				--Player.p_ring.ring_duration;
 		}
-	    break;
+		break;
 	}
 
 }
@@ -447,256 +442,253 @@ int	ch;		/* input */
 /
 *************************************************************************/
 
+void
 monsthits()
 {
-double	inflict;		/* damage inflicted */
-int	ch;			/* input */
+	double  inflict;	/* damage inflicted */
+	int     ch;		/* input */
 
-    switch (Curmonster.m_type)
-	/* may be a special monster */
+	switch (Curmonster.m_type)
+		/* may be a special monster */
 	{
 	case SM_DARKLORD:
-	    /* hits just enough to kill player */
-	    inflict = (Player.p_energy + Shield) * 1.02;
-	    goto SPECIALHIT;
+		/* hits just enough to kill player */
+		inflict = (Player.p_energy + Shield) * 1.02;
+		goto SPECIALHIT;
 
 	case SM_SHRIEKER:
-	    /* call a big monster */
-	    mvaddstr(Lines++, 0,
-		"Shrieeeek!!  You scared it, and it called one of its friends.");
-	    more(Lines);
-	    Whichmonster = (int) ROLL(70.0, 30.0);
-	    longjmp(Fightenv, 0);
-	    /*NOTREACHED*/
+		/* call a big monster */
+		mvaddstr(Lines++, 0,
+		    "Shrieeeek!!  You scared it, and it called one of its friends.");
+		more(Lines);
+		Whichmonster = (int) ROLL(70.0, 30.0);
+		longjmp(Fightenv, 0);
+		/* NOTREACHED */
 
 	case SM_BALROG:
-	    /* take experience away */
-	    inflict = ROLL(10.0, Curmonster.m_strength);
-	    inflict = MIN(Player.p_experience, inflict);
-	    mvprintw(Lines++, 0, 
-		"%s took away %.0f experience points.", Enemyname, inflict);
-	    Player.p_experience -= inflict;
-	    return;
+		/* take experience away */
+		inflict = ROLL(10.0, Curmonster.m_strength);
+		inflict = MIN(Player.p_experience, inflict);
+		mvprintw(Lines++, 0,
+		    "%s took away %.0f experience points.", Enemyname, inflict);
+		Player.p_experience -= inflict;
+		return;
 
 	case SM_FAERIES:
-	    if (Player.p_holywater > 0)
-		/* holy water kills when monster tries to hit */
+		if (Player.p_holywater > 0)
+			/* holy water kills when monster tries to hit */
 		{
-		mvprintw(Lines++, 0, "Your holy water killed it!");
-		--Player.p_holywater;
-		Curmonster.m_energy = 0.0;
-		return;
+			mvprintw(Lines++, 0, "Your holy water killed it!");
+			--Player.p_holywater;
+			Curmonster.m_energy = 0.0;
+			return;
 		}
-	    break;
+		break;
 
 	case SM_NONE:
-	    /* normal hit */
-	    break;
-
-	default:
-	    if (drandom() > 0.2)
 		/* normal hit */
 		break;
 
-	    /* else special things */
-	    switch (Curmonster.m_type)
-		{
+	default:
+		if (drandom() > 0.2)
+			/* normal hit */
+			break;
+
+		/* else special things */
+		switch (Curmonster.m_type) {
 		case SM_LEANAN:
-		    /* takes some of the player's strength */
-		    inflict = ROLL(1.0, (Circle - 1.0) / 2.0);
-		    inflict = MIN(Player.p_strength, inflict);
-		    mvprintw(Lines++, 0, "%s sapped %0.f of your strength!",
-			Enemyname, inflict);
-		    Player.p_strength -= inflict;
-		    Player.p_might -= inflict;
-		    break;
+			/* takes some of the player's strength */
+			inflict = ROLL(1.0, (Circle - 1.0) / 2.0);
+			inflict = MIN(Player.p_strength, inflict);
+			mvprintw(Lines++, 0, "%s sapped %0.f of your strength!",
+			    Enemyname, inflict);
+			Player.p_strength -= inflict;
+			Player.p_might -= inflict;
+			break;
 
 		case SM_SARUMAN:
-		    if (Player.p_palantir)
-			/* take away palantir */
+			if (Player.p_palantir)
+				/* take away palantir */
 			{
-			mvprintw(Lines++, 0, "Wormtongue stole your palantir!");
-			Player.p_palantir = FALSE;
-			}
-		    else if (drandom() > 0.5)
-			/* gems turn to gold */
-			{
-			mvprintw(Lines++, 0,
-			    "%s transformed your gems into gold!", Enemyname);
-			Player.p_gold += Player.p_gems;
-			Player.p_gems = 0.0;
-			}
-		    else
-			/* scramble some stats */
-			{
-			mvprintw(Lines++, 0, "%s scrambled your stats!", Enemyname);
-			scramblestats();
-			}
-		    break;
+				mvprintw(Lines++, 0, "Wormtongue stole your palantir!");
+				Player.p_palantir = FALSE;
+			} else
+				if (drandom() > 0.5)
+					/* gems turn to gold */
+				{
+					mvprintw(Lines++, 0,
+					    "%s transformed your gems into gold!", Enemyname);
+					Player.p_gold += Player.p_gems;
+					Player.p_gems = 0.0;
+				} else
+					/* scramble some stats */
+				{
+					mvprintw(Lines++, 0, "%s scrambled your stats!", Enemyname);
+					scramblestats();
+				}
+			break;
 
 		case SM_THAUMATURG:
-		    /* transport player */
-		    mvprintw(Lines++, 0, "%s transported you!", Enemyname);
-		    altercoordinates(0.0, 0.0, A_FAR);
-		    cancelmonster();
-		    break;
+			/* transport player */
+			mvprintw(Lines++, 0, "%s transported you!", Enemyname);
+			altercoordinates(0.0, 0.0, A_FAR);
+			cancelmonster();
+			break;
 
 		case SM_VORTEX:
-		    /* suck up some mana */
-		    inflict = ROLL(0, 7.5 * Circle);
-		    inflict = MIN(Player.p_mana, floor(inflict));
-		    mvprintw(Lines++, 0,
-			"%s sucked up %.0f of your mana!", Enemyname, inflict);
-		    Player.p_mana -= inflict;
-		    break;
+			/* suck up some mana */
+			inflict = ROLL(0, 7.5 * Circle);
+			inflict = MIN(Player.p_mana, floor(inflict));
+			mvprintw(Lines++, 0,
+			    "%s sucked up %.0f of your mana!", Enemyname, inflict);
+			Player.p_mana -= inflict;
+			break;
 
 		case SM_NAZGUL:
-		    /* try to take ring if player has one */
-		    if (Player.p_ring.ring_type != R_NONE)
-			/* player has a ring */
+			/* try to take ring if player has one */
+			if (Player.p_ring.ring_type != R_NONE)
+				/* player has a ring */
 			{
-			mvaddstr(Lines++, 0, "Will you relinguish your ring ? ");
-			ch = getanswer("YN", FALSE);
-			if (ch == 'Y')
-			    /* take ring away */
-			    {
-			    Player.p_ring.ring_type = R_NONE;
-			    Player.p_ring.ring_inuse = FALSE;
-			    cancelmonster();
-			    break;
-			    }
+				mvaddstr(Lines++, 0, "Will you relinguish your ring ? ");
+				ch = getanswer("YN", FALSE);
+				if (ch == 'Y')
+					/* take ring away */
+				{
+					Player.p_ring.ring_type = R_NONE;
+					Player.p_ring.ring_inuse = FALSE;
+					cancelmonster();
+					break;
+				}
 			}
-
-		    /* otherwise, take some brains */
-		    mvprintw(Lines++, 0,
-			"%s neutralized 1/5 of your brain!", Enemyname);
-		    Player.p_brains *= 0.8;
-		    break;
+			/* otherwise, take some brains */
+			mvprintw(Lines++, 0,
+			    "%s neutralized 1/5 of your brain!", Enemyname);
+			Player.p_brains *= 0.8;
+			break;
 
 		case SM_TIAMAT:
-		    /* take some gold and gems */
-		    mvprintw(Lines++, 0,
-			"%s took half your gold and gems and flew off.", Enemyname);
-		    Player.p_gold /= 2.0;
-		    Player.p_gems /= 2.0;
-		    cancelmonster();
-		    break;
+			/* take some gold and gems */
+			mvprintw(Lines++, 0,
+			    "%s took half your gold and gems and flew off.", Enemyname);
+			Player.p_gold /= 2.0;
+			Player.p_gems /= 2.0;
+			cancelmonster();
+			break;
 
 		case SM_KOBOLD:
-		    /* steal a gold piece and run */
-		    mvprintw(Lines++, 0,
-			"%s stole one gold piece and ran away.", Enemyname);
-		    Player.p_gold = MAX(0.0, Player.p_gold - 1.0);
-		    cancelmonster();
-		    break;
+			/* steal a gold piece and run */
+			mvprintw(Lines++, 0,
+			    "%s stole one gold piece and ran away.", Enemyname);
+			Player.p_gold = MAX(0.0, Player.p_gold - 1.0);
+			cancelmonster();
+			break;
 
 		case SM_SHELOB:
-		    /* bite and (medium) poison */
-		    mvprintw(Lines++, 0,
-			"%s has bitten and poisoned you!", Enemyname);
-		    Player.p_poison -= 1.0;
-		    break;
+			/* bite and (medium) poison */
+			mvprintw(Lines++, 0,
+			    "%s has bitten and poisoned you!", Enemyname);
+			Player.p_poison -= 1.0;
+			break;
 
 		case SM_LAMPREY:
-		    /*  bite and (small) poison */
-		    mvprintw(Lines++, 0, "%s bit and poisoned you!", Enemyname);
-		    Player.p_poison += 0.25;
-		    break;
+			/* bite and (small) poison */
+			mvprintw(Lines++, 0, "%s bit and poisoned you!", Enemyname);
+			Player.p_poison += 0.25;
+			break;
 
 		case SM_BONNACON:
-		    /* fart and run */
-		    mvprintw(Lines++, 0, "%s farted and scampered off.", Enemyname);
-		    Player.p_energy /= 2.0;		/* damage from fumes */
-		    cancelmonster();
-		    break;
+			/* fart and run */
+			mvprintw(Lines++, 0, "%s farted and scampered off.", Enemyname);
+			Player.p_energy /= 2.0;	/* damage from fumes */
+			cancelmonster();
+			break;
 
 		case SM_SMEAGOL:
-		    if (Player.p_ring.ring_type != R_NONE)
-			/* try to steal ring */
+			if (Player.p_ring.ring_type != R_NONE)
+				/* try to steal ring */
 			{
-			mvprintw(Lines++, 0,
-			    "%s tried to steal your ring, ", Enemyname);
-			if (drandom() > 0.1)
-			    addstr("but was unsuccessful.");
-			else
-			    {
-			    addstr("and ran away with it!");
-			    Player.p_ring.ring_type = R_NONE;
-			    cancelmonster();
-			    }
+				mvprintw(Lines++, 0,
+				    "%s tried to steal your ring, ", Enemyname);
+				if (drandom() > 0.1)
+					addstr("but was unsuccessful.");
+				else {
+					addstr("and ran away with it!");
+					Player.p_ring.ring_type = R_NONE;
+					cancelmonster();
+				}
 			}
-		    break;
+			break;
 
 		case SM_SUCCUBUS:
-		    /* inflict damage through shield */
-		    inflict = ROLL(15.0, Circle * 10.0);
-		    inflict = MIN(inflict, Player.p_energy);
-		    mvprintw(Lines++, 0, "%s sapped %.0f of your energy.",
-			Enemyname, inflict);
-		    Player.p_energy -= inflict;
-		    break;
+			/* inflict damage through shield */
+			inflict = ROLL(15.0, Circle * 10.0);
+			inflict = MIN(inflict, Player.p_energy);
+			mvprintw(Lines++, 0, "%s sapped %.0f of your energy.",
+			    Enemyname, inflict);
+			Player.p_energy -= inflict;
+			break;
 
 		case SM_CERBERUS:
-		    /* take all metal treasures */
-		    mvprintw(Lines++, 0,
-			"%s took all your metal treasures!", Enemyname);
-		    Player.p_crowns = 0;
-		    Player.p_sword =
-		    Player.p_shield =
-		    Player.p_gold = 0.0;
-		    cancelmonster();
-		    break;
+			/* take all metal treasures */
+			mvprintw(Lines++, 0,
+			    "%s took all your metal treasures!", Enemyname);
+			Player.p_crowns = 0;
+			Player.p_sword =
+			    Player.p_shield =
+			    Player.p_gold = 0.0;
+			cancelmonster();
+			break;
 
 		case SM_UNGOLIANT:
-		    /* (large) poison and take a quickness */
-		    mvprintw(Lines++, 0,
-			"%s poisoned you, and took one quik.", Enemyname);
-		    Player.p_poison += 5.0;
-		    Player.p_quickness -= 1.0;
-		    break;
+			/* (large) poison and take a quickness */
+			mvprintw(Lines++, 0,
+			    "%s poisoned you, and took one quik.", Enemyname);
+			Player.p_poison += 5.0;
+			Player.p_quickness -= 1.0;
+			break;
 
 		case SM_JABBERWOCK:
-		    /* fly away, and leave either a Jubjub bird or Bonnacon */
-		    mvprintw(Lines++, 0,
-			"%s flew away, and left you to contend with one of its friends.",
-			Enemyname);
-		    Whichmonster = 55 + (drandom() > 0.5) ? 22 : 0;
-		    longjmp(Fightenv, 0);
-		    /*NOTREACHED*/
+			/* fly away, and leave either a Jubjub bird or
+			 * Bonnacon */
+			mvprintw(Lines++, 0,
+			    "%s flew away, and left you to contend with one of its friends.",
+			    Enemyname);
+			Whichmonster = 55 + (drandom() > 0.5) ? 22 : 0;
+			longjmp(Fightenv, 0);
+			/* NOTREACHED */
 
 		case SM_TROLL:
-		    /* partially regenerate monster */
-		    mvprintw(Lines++, 0,
-			"%s partially regenerated his energy.!", Enemyname);
-		    Curmonster.m_energy +=
-			floor((Curmonster.m_o_energy - Curmonster.m_energy) / 2.0);
-		    Curmonster.m_strength = Curmonster.m_o_strength;
-		    Curmonster.m_melee = Curmonster.m_skirmish = 0.0;
-		    Curmonster.m_maxspeed = Curmonster.m_o_speed;
-		    break;
+			/* partially regenerate monster */
+			mvprintw(Lines++, 0,
+			    "%s partially regenerated his energy.!", Enemyname);
+			Curmonster.m_energy +=
+			    floor((Curmonster.m_o_energy - Curmonster.m_energy) / 2.0);
+			Curmonster.m_strength = Curmonster.m_o_strength;
+			Curmonster.m_melee = Curmonster.m_skirmish = 0.0;
+			Curmonster.m_maxspeed = Curmonster.m_o_speed;
+			break;
 
 		case SM_WRAITH:
-		    if (!Player.p_blindness)
-			/* make blind */
+			if (!Player.p_blindness)
+				/* make blind */
 			{
-			mvprintw(Lines++, 0, "%s blinded you!", Enemyname);
-			Player.p_blindness = TRUE;
-			Enemyname = "A monster";
+				mvprintw(Lines++, 0, "%s blinded you!", Enemyname);
+				Player.p_blindness = TRUE;
+				Enemyname = "A monster";
 			}
-		    break;
+			break;
 		}
-	    return;
+		return;
 	}
 
-    /* fall through to here if monster inflicts a normal hit */
-    inflict = drandom() * Curmonster.m_strength + 0.5;
+	/* fall through to here if monster inflicts a normal hit */
+	inflict = drandom() * Curmonster.m_strength + 0.5;
 SPECIALHIT:
-    mvprintw(Lines++, 0, "%s hit you %.0f times!", Enemyname, inflict);
+	mvprintw(Lines++, 0, "%s hit you %.0f times!", Enemyname, inflict);
 
-    if ((Shield -= inflict) < 0)
-	{
-	Player.p_energy += Shield;
-	Shield = 0.0;
+	if ((Shield -= inflict) < 0) {
+		Player.p_energy += Shield;
+		Shield = 0.0;
 	}
 }
 /**/
@@ -724,6 +716,7 @@ SPECIALHIT:
 /
 *************************************************************************/
 
+void
 cancelmonster()
 {
     Curmonster.m_energy = 0.0;
@@ -757,32 +750,31 @@ cancelmonster()
 /
 *************************************************************************/
 
+void
 hitmonster(inflict)
-double	inflict;
+	double  inflict;
 {
-    mvprintw(Lines++, 0, "You hit %s %.0f times!", Enemyname, inflict);
-    Curmonster.m_energy -= inflict;
-    if (Curmonster.m_energy > 0.0)
+	mvprintw(Lines++, 0, "You hit %s %.0f times!", Enemyname, inflict);
+	Curmonster.m_energy -= inflict;
+	if (Curmonster.m_energy > 0.0) {
+		if (Curmonster.m_type == SM_DARKLORD || Curmonster.m_type == SM_SHRIEKER)
+			/* special monster didn't die */
+			monsthits();
+	} else
+		/* monster died.  print message. */
 	{
-	if (Curmonster.m_type == SM_DARKLORD || Curmonster.m_type == SM_SHRIEKER)
-	    /* special monster didn't die */
-	    monsthits();
-	}
-    else
-	/* monster died.  print message. */
-	{
-	if (Curmonster.m_type == SM_MORGOTH)
-	    mvaddstr(Lines++, 0, "You have defeated Morgoth, but he may return. . .");
-	else
-	    /* all other types of monsters */
-	    {
-	    mvprintw(Lines++, 0, "You killed it.  Good work, %s.", Player.p_name);
+		if (Curmonster.m_type == SM_MORGOTH)
+			mvaddstr(Lines++, 0, "You have defeated Morgoth, but he may return. . .");
+		else
+			/* all other types of monsters */
+		{
+			mvprintw(Lines++, 0, "You killed it.  Good work, %s.", Player.p_name);
 
-	    if (Curmonster.m_type == SM_MIMIC
-		&& strcmp(Curmonster.m_name, "A Mimic") != 0
-		&& !Player.p_blindness)
-		mvaddstr(Lines++, 0, "The body slowly changes into the form of a mimic.");
-	    }
+			if (Curmonster.m_type == SM_MIMIC
+			    && strcmp(Curmonster.m_name, "A Mimic") != 0
+			    && !Player.p_blindness)
+				mvaddstr(Lines++, 0, "The body slowly changes into the form of a mimic.");
+		}
 	}
 }
 /**/
@@ -812,216 +804,207 @@ double	inflict;
 /
 *************************************************************************/
 
+void
 throwspell()
 {
-double	inflict;	/* damage inflicted */
-double	dtemp;		/* for dtemporary calculations */
-int	ch;		/* input */
+	double  inflict;	/* damage inflicted */
+	double  dtemp;		/* for dtemporary calculations */
+	int     ch;		/* input */
 
-    mvaddstr(7, 0, "\n\n");		/* clear menu area */
+	inflict = 0;
+	mvaddstr(7, 0, "\n\n");	/* clear menu area */
 
-    if (Player.p_magiclvl >= ML_ALLORNOTHING)
-	mvaddstr(7, 0, "1:All or Nothing  ");
-    if (Player.p_magiclvl >= ML_MAGICBOLT)
-	addstr("2:Magic Bolt  ");
-    if (Player.p_magiclvl >= ML_FORCEFIELD)
-	addstr("3:Force Field  ");
-    if (Player.p_magiclvl >= ML_XFORM)
-	addstr("4:Transform  ");
-    if (Player.p_magiclvl >= ML_INCRMIGHT)
-	addstr("5:Increase Might\n");
-    if (Player.p_magiclvl >= ML_INVISIBLE)
-	mvaddstr(8, 0, "6:Invisibility  ");
-    if (Player.p_magiclvl >= ML_XPORT)
-	addstr("7:Transport  ");
-    if (Player.p_magiclvl >= ML_PARALYZE)
-	addstr("8:Paralyze  ");
-    if (Player.p_specialtype >= SC_COUNCIL)
-	addstr("9:Specify");
-    mvaddstr(4, 0, "Spell ? ");
+	if (Player.p_magiclvl >= ML_ALLORNOTHING)
+		mvaddstr(7, 0, "1:All or Nothing  ");
+	if (Player.p_magiclvl >= ML_MAGICBOLT)
+		addstr("2:Magic Bolt  ");
+	if (Player.p_magiclvl >= ML_FORCEFIELD)
+		addstr("3:Force Field  ");
+	if (Player.p_magiclvl >= ML_XFORM)
+		addstr("4:Transform  ");
+	if (Player.p_magiclvl >= ML_INCRMIGHT)
+		addstr("5:Increase Might\n");
+	if (Player.p_magiclvl >= ML_INVISIBLE)
+		mvaddstr(8, 0, "6:Invisibility  ");
+	if (Player.p_magiclvl >= ML_XPORT)
+		addstr("7:Transport  ");
+	if (Player.p_magiclvl >= ML_PARALYZE)
+		addstr("8:Paralyze  ");
+	if (Player.p_specialtype >= SC_COUNCIL)
+		addstr("9:Specify");
+	mvaddstr(4, 0, "Spell ? ");
 
-    ch = getanswer(" ", TRUE);
+	ch = getanswer(" ", TRUE);
 
-    mvaddstr(7, 0, "\n\n");		/* clear menu area */
+	mvaddstr(7, 0, "\n\n");	/* clear menu area */
 
-    if (Curmonster.m_type == SM_MORGOTH && ch != '3')
-	/* can only throw force field against Morgoth */
-	ILLSPELL();
-    else
-	switch (ch)
-	    {
-	    case '1':   /* all or nothing */
-		if (drandom() < 0.25)
-		    /* success */
-		    {
-		    inflict = Curmonster.m_energy * 1.01 + 1.0;
-
-		    if (Curmonster.m_type == SM_DARKLORD)
-			/* all or nothing doesn't quite work against D. L. */
-			inflict *= 0.9;
-		    }
-		else
-		    /* failure -- monster gets stronger and quicker */
-		    {
-		    Curmonster.m_o_strength = Curmonster.m_strength *= 2.0;
-		    Curmonster.m_maxspeed *= 2.0;
-		    Curmonster.m_o_speed *= 2.0;
-
-		    /* paralyzed monsters wake up a bit */
-		    Curmonster.m_speed = MAX(1.0, Curmonster.m_speed * 2.0);
-		    }
-
-		if (Player.p_mana >= MM_ALLORNOTHING)
-		    /* take a mana if player has one */
-		    Player.p_mana -= MM_ALLORNOTHING;
-
-		hitmonster(inflict);
-		break;
-
-	    case '2':   /* magic bolt */
-		if (Player.p_magiclvl < ML_MAGICBOLT)
-		    ILLSPELL();
-		else
-		    {
-		    do
-			/* prompt for amount to expend */
+	if (Curmonster.m_type == SM_MORGOTH && ch != '3')
+		/* can only throw force field against Morgoth */
+		ILLSPELL();
+	else
+		switch (ch) {
+		case '1':	/* all or nothing */
+			if (drandom() < 0.25)
+				/* success */
 			{
-			mvaddstr(4, 0, "How much mana for bolt? ");
-			dtemp = floor(infloat());
-			}
-		    while (dtemp < 0.0 || dtemp > Player.p_mana);
+				inflict = Curmonster.m_energy * 1.01 + 1.0;
 
-		    Player.p_mana -= dtemp;
-
-		    if (Curmonster.m_type == SM_DARKLORD)
-			/* magic bolts don't work against D. L. */
-			inflict = 0.0;
-		    else
-			inflict = dtemp * ROLL(15.0, sqrt(Player.p_magiclvl / 3.0 + 1.0));
-		    mvaddstr(5, 0, "Magic Bolt fired!\n");
-		    hitmonster(inflict);
-		    }
-		break;
-
-	    case '3':   /* force field */
-		if (Player.p_magiclvl < ML_FORCEFIELD)
-		    ILLSPELL();
-		else if (Player.p_mana < MM_FORCEFIELD)
-		    NOMANA();
-		else
-		    {
-		    Player.p_mana -= MM_FORCEFIELD;
-		    Shield = (Player.p_maxenergy + Player.p_shield) * 4.2 + 45.0;
-		    mvaddstr(5, 0, "Force Field up.\n");
-		    }
-		break;
-
-	    case '4':   /* transform */
-		if (Player.p_magiclvl < ML_XFORM)
-		    ILLSPELL();
-		else if (Player.p_mana < MM_XFORM)
-		    NOMANA();
-		else
-		    {
-		    Player.p_mana -= MM_XFORM;
-		    Whichmonster = (int) ROLL(0.0, 100.0);
-		    longjmp(Fightenv, 0);
-		    /*NOTREACHED*/
-		    }
-		break;
-
-	    case '5':   /* increase might */
-		if (Player.p_magiclvl < ML_INCRMIGHT)
-		    ILLSPELL();
-		else if (Player.p_mana < MM_INCRMIGHT)
-		    NOMANA();
-		else
-		    {
-		    Player.p_mana -= MM_INCRMIGHT;
-		    Player.p_might +=
-			(1.2 * (Player.p_strength + Player.p_sword)
-			+ 5.0 - Player.p_might) / 2.0;
-		    mvprintw(5, 0, "New strength:  %.0f\n", Player.p_might);
-		    }
-		break;
-
-	    case '6':   /* invisible */
-		if (Player.p_magiclvl < ML_INVISIBLE)
-		    ILLSPELL();
-		else if (Player.p_mana < MM_INVISIBLE)
-		    NOMANA();
-		else
-		    {
-		    Player.p_mana -= MM_INVISIBLE;
-		    Player.p_speed +=
-			(1.2 * (Player.p_quickness + Player.p_quksilver)
-			+ 5.0 - Player.p_speed) / 2.0;
-		    mvprintw(5, 0, "New quickness:  %.0f\n", Player.p_speed);
-		    }
-		break;
-
-	    case '7':   /* transport */
-		if (Player.p_magiclvl < ML_XPORT)
-		    ILLSPELL();
-		else if (Player.p_mana < MM_XPORT)
-		    NOMANA();
-		else
-		    {
-		    Player.p_mana -= MM_XPORT;
-		    if (Player.p_brains + Player.p_magiclvl
-			< Curmonster.m_experience / 200.0 * drandom())
+				if (Curmonster.m_type == SM_DARKLORD)
+					/* all or nothing doesn't quite work
+					 * against D. L. */
+					inflict *= 0.9;
+			} else
+				/* failure -- monster gets stronger and
+				 * quicker */
 			{
-			mvaddstr(5, 0, "Transport backfired!\n");
-			altercoordinates(0.0, 0.0, A_FAR);
-			cancelmonster();
-			}
-		    else
-			{
-			mvprintw(5, 0, "%s is transported.\n", Enemyname);
-			if (drandom() < 0.3)
-			    /* monster didn't drop its treasure */
-			    Curmonster.m_treasuretype = 0;
+				Curmonster.m_o_strength = Curmonster.m_strength *= 2.0;
+				Curmonster.m_maxspeed *= 2.0;
+				Curmonster.m_o_speed *= 2.0;
 
-			Curmonster.m_energy = 0.0;
+				/* paralyzed monsters wake up a bit */
+				Curmonster.m_speed = MAX(1.0, Curmonster.m_speed * 2.0);
 			}
-		    }
-		break;
 
-	    case '8':   /* paralyze */
-		if (Player.p_magiclvl < ML_PARALYZE)
-		    ILLSPELL();
-		else if (Player.p_mana < MM_PARALYZE)
-		    NOMANA();
-		else
-		    {
-		    Player.p_mana -= MM_PARALYZE;
-		    if (Player.p_magiclvl >
-			Curmonster.m_experience / 1000.0 * drandom())
-			{
-			mvprintw(5, 0, "%s is held.\n", Enemyname);
-			Curmonster.m_speed = -2.0;
+			if (Player.p_mana >= MM_ALLORNOTHING)
+				/* take a mana if player has one */
+				Player.p_mana -= MM_ALLORNOTHING;
+
+			hitmonster(inflict);
+			break;
+
+		case '2':	/* magic bolt */
+			if (Player.p_magiclvl < ML_MAGICBOLT)
+				ILLSPELL();
+			else {
+				do
+					/* prompt for amount to expend */
+				{
+					mvaddstr(4, 0, "How much mana for bolt? ");
+					dtemp = floor(infloat());
+				}
+				while (dtemp < 0.0 || dtemp > Player.p_mana);
+
+				Player.p_mana -= dtemp;
+
+				if (Curmonster.m_type == SM_DARKLORD)
+					/* magic bolts don't work against D.
+					 * L. */
+					inflict = 0.0;
+				else
+					inflict = dtemp * ROLL(15.0, sqrt(Player.p_magiclvl / 3.0 + 1.0));
+				mvaddstr(5, 0, "Magic Bolt fired!\n");
+				hitmonster(inflict);
 			}
-		    else
-			mvaddstr(5, 0, "Monster unaffected.\n");
-		    }
-		break;
+			break;
 
-	    case '9':   /* specify */
-		if (Player.p_specialtype < SC_COUNCIL)
-		    ILLSPELL();
-		else if (Player.p_mana < MM_SPECIFY)
-		    NOMANA();
-		else
-		    {
-		    Player.p_mana -= MM_SPECIFY;
-		    mvaddstr(5, 0, "Which monster do you want [0-99] ? ");
-		    Whichmonster = (int) infloat();
-		    Whichmonster = MAX(0, MIN(99, Whichmonster));
-		    longjmp(Fightenv, 0);
-		    /*NOTREACHED*/
-		    }
-		break;
-	    }
+		case '3':	/* force field */
+			if (Player.p_magiclvl < ML_FORCEFIELD)
+				ILLSPELL();
+			else if (Player.p_mana < MM_FORCEFIELD)
+				NOMANA();
+			else {
+				Player.p_mana -= MM_FORCEFIELD;
+				Shield = (Player.p_maxenergy + Player.p_shield) * 4.2 + 45.0;
+				mvaddstr(5, 0, "Force Field up.\n");
+			}
+			break;
+
+		case '4':	/* transform */
+			if (Player.p_magiclvl < ML_XFORM)
+				ILLSPELL();
+			else if (Player.p_mana < MM_XFORM)
+				NOMANA();
+			else {
+				Player.p_mana -= MM_XFORM;
+				Whichmonster = (int) ROLL(0.0, 100.0);
+				longjmp(Fightenv, 0);
+				/* NOTREACHED */
+				}
+			break;
+
+		case '5':	/* increase might */
+			if (Player.p_magiclvl < ML_INCRMIGHT)
+				ILLSPELL();
+			else if (Player.p_mana < MM_INCRMIGHT)
+				NOMANA();
+			else {
+				Player.p_mana -= MM_INCRMIGHT;
+				Player.p_might +=
+				    (1.2 * (Player.p_strength + Player.p_sword)
+				    + 5.0 - Player.p_might) / 2.0;
+				mvprintw(5, 0, "New strength:  %.0f\n", Player.p_might);
+			}
+			break;
+
+		case '6':	/* invisible */
+			if (Player.p_magiclvl < ML_INVISIBLE)
+				ILLSPELL();
+			else if (Player.p_mana < MM_INVISIBLE)
+				NOMANA();
+			else {
+				Player.p_mana -= MM_INVISIBLE;
+				Player.p_speed +=
+				    (1.2 * (Player.p_quickness + Player.p_quksilver)
+				    + 5.0 - Player.p_speed) / 2.0;
+				mvprintw(5, 0, "New quickness:  %.0f\n", Player.p_speed);
+			}
+			break;
+
+		case '7':	/* transport */
+			if (Player.p_magiclvl < ML_XPORT)
+				ILLSPELL();
+			else if (Player.p_mana < MM_XPORT)
+				NOMANA();
+			else {
+				Player.p_mana -= MM_XPORT;
+				if (Player.p_brains + Player.p_magiclvl
+				    < Curmonster.m_experience / 200.0 * drandom()) {
+					mvaddstr(5, 0, "Transport backfired!\n");
+					altercoordinates(0.0, 0.0, A_FAR);
+					cancelmonster();
+				} else {
+					mvprintw(5, 0, "%s is transported.\n", Enemyname);
+					if (drandom() < 0.3)
+						/* monster didn't drop
+						 * its treasure */
+						Curmonster.m_treasuretype = 0;
+
+					Curmonster.m_energy = 0.0;
+				}
+			}
+			break;
+
+		case '8':	/* paralyze */
+			if (Player.p_magiclvl < ML_PARALYZE)
+				ILLSPELL();
+			else if (Player.p_mana < MM_PARALYZE)
+				NOMANA();
+			else {
+				Player.p_mana -= MM_PARALYZE;
+				if (Player.p_magiclvl >
+				    Curmonster.m_experience / 1000.0 * drandom()) {
+					mvprintw(5, 0, "%s is held.\n", Enemyname);
+					Curmonster.m_speed = -2.0;
+				} else
+					mvaddstr(5, 0, "Monster unaffected.\n");
+			}
+			break;
+
+		case '9':	/* specify */
+			if (Player.p_specialtype < SC_COUNCIL)
+				ILLSPELL();
+			else if (Player.p_mana < MM_SPECIFY)
+				NOMANA();
+			else {
+				Player.p_mana -= MM_SPECIFY;
+				mvaddstr(5, 0, "Which monster do you want [0-99] ? ");
+				Whichmonster = (int) infloat();
+				Whichmonster = MAX(0, MIN(99, Whichmonster));
+				longjmp(Fightenv, 0);
+				/* NOTREACHED */
+			}
+			break;
+		}
 }
 /**/
 /************************************************************************
@@ -1052,86 +1035,82 @@ int	ch;		/* input */
 /
 *************************************************************************/
 
+void
 callmonster(which)
-int	which;
+	int     which;
 {
-struct monster	Othermonster;		/* to find a name for mimics */
+	struct monster Othermonster;	/* to find a name for mimics */
 
-    which = MIN(which, 99);		/* make sure within range */
+	which = MIN(which, 99);	/* make sure within range */
 
-    /* fill structure */
-    fseek(Monstfp, (long) which * (long) SZ_MONSTERSTRUCT, 0);
-    fread((char *) &Curmonster, SZ_MONSTERSTRUCT, 1, Monstfp);
-
-    /* handle some special monsters */
-    if (Curmonster.m_type == SM_MODNAR)
-	{
-	if (Player.p_specialtype < SC_COUNCIL)
-	    /* randomize some stats */
-	    {
-	    Curmonster.m_strength *= drandom() + 0.5;
-	    Curmonster.m_brains *= drandom() + 0.5;
-	    Curmonster.m_speed *= drandom() + 0.5;
-	    Curmonster.m_energy *= drandom() + 0.5;
-	    Curmonster.m_experience *= drandom() + 0.5;
-	    Curmonster.m_treasuretype =
-		(int) ROLL(0.0, (double) Curmonster.m_treasuretype);
-	    }
-	else
-	    /* make Modnar into Morgoth */
-	    {
-	    strcpy(Curmonster.m_name, "Morgoth");
-	    Curmonster.m_strength = drandom() * (Player.p_maxenergy + Player.p_shield) / 1.4
-		+ drandom() * (Player.p_maxenergy + Player.p_shield) / 1.5;
-	    Curmonster.m_brains = Player.p_brains;
-	    Curmonster.m_energy = Player.p_might * 30.0;
-	    Curmonster.m_type = SM_MORGOTH;
-	    Curmonster.m_speed = Player.p_speed * 1.1
-		+ (Player.p_specialtype == SC_EXVALAR) ? Player.p_speed : 0.0;
-	    Curmonster.m_flock = 0.0;
-	    Curmonster.m_treasuretype = 0;
-	    Curmonster.m_experience = 0.0;
-	    }
-	}
-    else if (Curmonster.m_type == SM_MIMIC)
-	/* pick another name */
-	{
-	which = (int) ROLL(0.0, 100.0);
+	/* fill structure */
 	fseek(Monstfp, (long) which * (long) SZ_MONSTERSTRUCT, 0);
-	fread(&Othermonster, SZ_MONSTERSTRUCT, 1, Monstfp);
-	strcpy(Curmonster.m_name, Othermonster.m_name);
-	}
+	fread((char *) &Curmonster, SZ_MONSTERSTRUCT, 1, Monstfp);
 
-    truncstring(Curmonster.m_name);
+	/* handle some special monsters */
+	if (Curmonster.m_type == SM_MODNAR) {
+		if (Player.p_specialtype < SC_COUNCIL)
+			/* randomize some stats */
+		{
+			Curmonster.m_strength *= drandom() + 0.5;
+			Curmonster.m_brains *= drandom() + 0.5;
+			Curmonster.m_speed *= drandom() + 0.5;
+			Curmonster.m_energy *= drandom() + 0.5;
+			Curmonster.m_experience *= drandom() + 0.5;
+			Curmonster.m_treasuretype =
+			    (int) ROLL(0.0, (double) Curmonster.m_treasuretype);
+		} else
+			/* make Modnar into Morgoth */
+		{
+			strcpy(Curmonster.m_name, "Morgoth");
+			Curmonster.m_strength = drandom() * (Player.p_maxenergy + Player.p_shield) / 1.4
+			    + drandom() * (Player.p_maxenergy + Player.p_shield) / 1.5;
+			Curmonster.m_brains = Player.p_brains;
+			Curmonster.m_energy = Player.p_might * 30.0;
+			Curmonster.m_type = SM_MORGOTH;
+			Curmonster.m_speed = Player.p_speed * 1.1
+			    + (Player.p_specialtype == SC_EXVALAR) ? Player.p_speed : 0.0;
+			Curmonster.m_flock = 0.0;
+			Curmonster.m_treasuretype = 0;
+			Curmonster.m_experience = 0.0;
+		}
+	} else
+		if (Curmonster.m_type == SM_MIMIC)
+			/* pick another name */
+		{
+			which = (int) ROLL(0.0, 100.0);
+			fseek(Monstfp, (long) which * (long) SZ_MONSTERSTRUCT, 0);
+			fread(&Othermonster, SZ_MONSTERSTRUCT, 1, Monstfp);
+			strcpy(Curmonster.m_name, Othermonster.m_name);
+		}
+	truncstring(Curmonster.m_name);
 
-    if (Curmonster.m_type != SM_MORGOTH)
-	/* adjust stats based on which circle player is in */
+	if (Curmonster.m_type != SM_MORGOTH)
+		/* adjust stats based on which circle player is in */
 	{
-	Curmonster.m_strength *= (1.0 + Circle / 2.0);
-	Curmonster.m_brains *= Circle;
-	Curmonster.m_speed += Circle * 1.e-9;
-	Curmonster.m_energy *= Circle;
-	Curmonster.m_experience *= Circle;
+		Curmonster.m_strength *= (1.0 + Circle / 2.0);
+		Curmonster.m_brains *= Circle;
+		Curmonster.m_speed += Circle * 1.e-9;
+		Curmonster.m_energy *= Circle;
+		Curmonster.m_experience *= Circle;
 	}
+	if (Player.p_blindness)
+		/* cannot see monster if blind */
+		Enemyname = "A monster";
+	else
+		Enemyname = Curmonster.m_name;
 
-    if (Player.p_blindness)
-	/* cannot see monster if blind */
-	Enemyname = "A monster";
-    else
-	Enemyname = Curmonster.m_name;
-
-    if (Player.p_speed <= 0.0)
-	/* make Player.p_speed positive */
+	if (Player.p_speed <= 0.0)
+		/* make Player.p_speed positive */
 	{
-	Curmonster.m_speed += -Player.p_speed;
-	Player.p_speed = 1.0;
+		Curmonster.m_speed += -Player.p_speed;
+		Player.p_speed = 1.0;
 	}
-
-    /* fill up the rest of the structure */
-    Curmonster.m_o_strength = Curmonster.m_strength;
-    Curmonster.m_o_speed = Curmonster.m_maxspeed = Curmonster.m_speed;
-    Curmonster.m_o_energy = Curmonster.m_energy;
-    Curmonster.m_melee = Curmonster.m_skirmish = 0.0;
+	/* fill up the rest of the structure */
+	Curmonster.m_o_strength = Curmonster.m_strength;
+	Curmonster.m_o_speed = Curmonster.m_maxspeed = Curmonster.m_speed;
+	Curmonster.m_o_energy = Curmonster.m_energy;
+	Curmonster.m_melee = Curmonster.m_skirmish = 0.0;
 }
 /**/
 /************************************************************************
@@ -1162,15 +1141,16 @@ struct monster	Othermonster;		/* to find a name for mimics */
 /
 *************************************************************************/
 
+void
 awardtreasure()
 {
-register int	whichtreasure;		/* calculated treasure to grant */
-int	temp;				/* temporary */
-int	ch;				/* input */
-double	treasuretype;			/* monster's treasure type */
-double	gold = 0.0;			/* gold awarded */
-double	gems = 0.0;			/* gems awarded */
-double	dtemp;				/* for temporary calculations */
+	int	whichtreasure;	/* calculated treasure to grant */
+	int	temp;		/* temporary */
+	int	ch;		/* input */
+	double	treasuretype;	/* monster's treasure type */
+	double	gold = 0.0;	/* gold awarded */
+	double	gems = 0.0;	/* gems awarded */
+	double	dtemp;		/* for temporary calculations */
 
     whichtreasure = (int) ROLL(1.0, 3.0);	/* pick a treasure */
     treasuretype = (double) Curmonster.m_treasuretype;
@@ -1188,8 +1168,7 @@ double	dtemp;				/* for temporary calculations */
 	    gems = ROLL(1.0, (treasuretype - 7.0)
 		* (treasuretype - 7.0) * (Circle - 1.0) / 4.0);
 	    printw("You have discovered %.0f gems!", gems);
-	    }
-	else
+	} else
 	    /* gold */
 	    {
 	    gold = ROLL(treasuretype * 10.0, treasuretype
@@ -1201,7 +1180,7 @@ double	dtemp;				/* for temporary calculations */
 	ch = getanswer("NY", FALSE);
 	addstr("\n\n");
 
-	if (ch == 'Y')
+	if (ch == 'Y') {
 	    if (drandom() < treasuretype / 35.0 + 0.04)
 		/* cursed */
 		{
@@ -1210,6 +1189,7 @@ double	dtemp;				/* for temporary calculations */
 		}
 	    else
 		collecttaxes(gold, gems);
+	}
 
 	return;
 	}
@@ -1230,11 +1210,9 @@ double	dtemp;				/* for temporary calculations */
 		return;
 		}
 	    else
-		switch (Curmonster.m_treasuretype)
-		    {
+		switch (Curmonster.m_treasuretype) {
 		    case 1:	/* treasure type 1 */
-			switch (whichtreasure)
-			    {
+			switch (whichtreasure) {
 			    case 1:
 				addstr("You've discovered a power booster!\n");
 				Player.p_mana += ROLL(Circle * 4.0, Circle * 30.0);
@@ -1255,8 +1233,7 @@ double	dtemp;				/* for temporary calculations */
 		    /* end treasure type 1 */
 
 		    case 2:	/* treasure type 2 */
-			switch (whichtreasure)
-			    {
+			switch (whichtreasure) {
 			    case 1:
 				addstr("You have found an amulet.\n");
 				++Player.p_amulets;
@@ -1277,8 +1254,7 @@ double	dtemp;				/* for temporary calculations */
 		    /* end treasure type 2 */
 
 		    case 3:	/* treasure type 3 */
-			switch (whichtreasure)
-			    {
+			switch (whichtreasure) {
 			    case 1:
 				dtemp = ROLL(7.0, 30.0 + Circle / 10.0);
 				printw("You've found a +%.0f shield!\n", dtemp);
@@ -1315,8 +1291,7 @@ double	dtemp;				/* for temporary calculations */
 			addstr("\n\n");
 
 			if (ch == 'Y')
-			    switch ((int) ROLL(1, 6))
-				{
+			    switch ((int) ROLL(1, 6)) {
 				case 1:
 				    addstr("It throws up a shield for you next monster.\n");
 				    getyx(stdscr, whichtreasure, ch);
@@ -1325,7 +1300,7 @@ double	dtemp;				/* for temporary calculations */
 					(Player.p_maxenergy + Player.p_energy) * 5.5 + Circle * 50.0;
 				    Whichmonster = pickmonster();
 				    longjmp(Fightenv, 0);
-				    /*NOTREACHED*/
+				    /* NOTREACHED */
 
 				case 2:
 				    addstr("It makes you invisible for you next monster.\n");
@@ -1334,7 +1309,7 @@ double	dtemp;				/* for temporary calculations */
 				    Player.p_speed = 1e6;
 				    Whichmonster = pickmonster();
 				    longjmp(Fightenv, 0);
-				    /*NOTREACHED*/
+				    /* NOTREACHED */
 
 				case 3:
 				    addstr("It increases your strength ten fold to fight your next monster.\n");
@@ -1343,7 +1318,7 @@ double	dtemp;				/* for temporary calculations */
 				    Player.p_might *= 10.0;
 				    Whichmonster = pickmonster();
 				    longjmp(Fightenv, 0);
-				    /*NOTREACHED*/
+				    /* NOTREACHED */
 
 				case 4:
 				    addstr("It is a general knowledge scroll.\n");
@@ -1367,8 +1342,7 @@ double	dtemp;				/* for temporary calculations */
 		    /* end treasure type 4 */
 
 		    case 5:	/* treasure type 5 */
-			switch (whichtreasure)
-			    {
+			switch (whichtreasure) {
 			    case 1:
 				dtemp = ROLL(Circle / 4.0 + 5.0, Circle / 2.0 + 9.0);
 				printw("You've discovered a +%.0f dagger.\n", dtemp);
@@ -1396,8 +1370,7 @@ double	dtemp;				/* for temporary calculations */
 		    /* end treasure type 5 */
 
 		    case 6:	/* treasure type 6 */
-			switch (whichtreasure)
-			    {
+			switch (whichtreasure) {
 			    case 1:
 				addstr("You've found a priest.\n");
 				Player.p_energy = Player.p_maxenergy + Player.p_shield;
@@ -1425,8 +1398,7 @@ double	dtemp;				/* for temporary calculations */
 		    /* end treasure type 6 */
 
 		    case 7:	/* treasure type 7 */
-			switch (whichtreasure)
-			    {
+			switch (whichtreasure) {
 			    case 1:
 				addstr("You've discovered a charm!\n");
 				++Player.p_charms;
@@ -1452,8 +1424,7 @@ double	dtemp;				/* for temporary calculations */
 		    /* end treasure type 7 */
 
 		    case 8:	/* treasure type 8 */
-			switch (whichtreasure)
-			    {
+			switch (whichtreasure) {
 			    case 1:
 				addstr("You have found a healing potion.\n");
 				Player.p_poison = MIN(-2.0, Player.p_poison - 2.0);
@@ -1463,8 +1434,7 @@ double	dtemp;				/* for temporary calculations */
 				addstr("You have discovered a transporter.  Do you wish to go anywhere ? ");
 				ch = getanswer("NY", FALSE);
 				addstr("\n\n");
-				if (ch == 'Y')
-				    {
+				if (ch == 'Y') {
 				    double x, y;
 
 				    addstr("X Y Coordinates ? ");
@@ -1490,10 +1460,8 @@ double	dtemp;				/* for temporary calculations */
 		    case 11:
 		    case 12:
 		    case 13:	/* treasure types 10 - 13 */
-			if (drandom() < 0.33)
-			    {
-			    if (Curmonster.m_treasuretype == 10)
-				{
+			if (drandom() < 0.33) {
+			    if (Curmonster.m_treasuretype == 10) {
 				addstr("You've found a pair of elven boots!\n");
 				Player.p_quickness += 2.0;
 				break;
@@ -1610,23 +1578,21 @@ double	dtemp;				/* for temporary calculations */
 /
 *************************************************************************/
 
+void
 cursedtreasure()
 {
-    if (Player.p_charms > 0)
-	{
-	addstr("But your charm saved you!\n");
-	--Player.p_charms;
-	}
-    else if (Player.p_amulets > 0)
-	{
-	addstr("But your amulet saved you!\n");
-	--Player.p_amulets;
-	}
-    else
-	{
-	Player.p_energy = (Player.p_maxenergy + Player.p_shield) / 10.0;
-	Player.p_poison += 0.25;
-	}
+	if (Player.p_charms > 0) {
+		addstr("But your charm saved you!\n");
+		--Player.p_charms;
+	} else
+		if (Player.p_amulets > 0) {
+			addstr("But your amulet saved you!\n");
+			--Player.p_amulets;
+		} else {
+			Player.p_energy =
+			    (Player.p_maxenergy + Player.p_shield) / 10.0;
+			Player.p_poison += 0.25;
+		}
 }
 /**/
 /************************************************************************
@@ -1652,39 +1618,41 @@ cursedtreasure()
 /
 *************************************************************************/
 
+void
 scramblestats()
 {
-double	dbuf[6];		/* to put statistic in */
-double	dtemp1, dtemp2;		/* for swapping values */
-register int	first, second;	/* indices for swapping */
-register double  *dptr;		/* pointer for filling and emptying buf[] */
+	double  dbuf[6];	/* to put statistic in */
+	double  dtemp1, dtemp2;	/* for swapping values */
+	int first, second;	/* indices for swapping */
+	double *dptr;		/* pointer for filling and emptying buf[] */
 
-    /* fill buffer */
-    dptr = &dbuf[0];
-    *dptr++ = Player.p_strength;
-    *dptr++ = Player.p_mana;
-    *dptr++ = Player.p_brains;
-    *dptr++ = Player.p_magiclvl;
-    *dptr++ = Player.p_energy;
-    *dptr = Player.p_sin;
+	/* fill buffer */
+	dptr = &dbuf[0];
+	*dptr++ = Player.p_strength;
+	*dptr++ = Player.p_mana;
+	*dptr++ = Player.p_brains;
+	*dptr++ = Player.p_magiclvl;
+	*dptr++ = Player.p_energy;
+	*dptr = Player.p_sin;
 
-    /* pick values to swap */
-    first = (int) ROLL(0, 5);
-    second = (int) ROLL(0, 5);
+	/* pick values to swap */
+	first = (int) ROLL(0, 5);
+	second = (int) ROLL(0, 5);
 
-    /* swap values */
-    dptr = &dbuf[0];
-    dtemp1 = dptr[first];
-    /* this expression is split to prevent a compiler loop on some compilers */
-    dtemp2 = dptr[second];
-    dptr[first] = dtemp2;
-    dptr[second] = dtemp1;
+	/* swap values */
+	dptr = &dbuf[0];
+	dtemp1 = dptr[first];
+	/* this expression is split to prevent a compiler loop on some
+	 * compilers */
+	dtemp2 = dptr[second];
+	dptr[first] = dtemp2;
+	dptr[second] = dtemp1;
 
-    /* empty buffer */
-    Player.p_strength = *dptr++;
-    Player.p_mana = *dptr++;
-    Player.p_brains = *dptr++;
-    Player.p_magiclvl = *dptr++;
-    Player.p_energy = *dptr++;
-    Player.p_sin = *dptr;
+	/* empty buffer */
+	Player.p_strength = *dptr++;
+	Player.p_mana = *dptr++;
+	Player.p_brains = *dptr++;
+	Player.p_magiclvl = *dptr++;
+	Player.p_energy = *dptr++;
+	Player.p_sin = *dptr;
 }

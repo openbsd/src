@@ -1,3 +1,4 @@
+/*	$OpenBSD: phantstruct.h,v 1.2 1998/11/29 19:57:02 pjanzen Exp $	*/
 /*	$NetBSD: phantstruct.h,v 1.2 1995/03/24 04:00:11 cgd Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: include.h,v 1.2 1998/11/29 19:56:56 pjanzen Exp $	*/
 /*	$NetBSD: include.h,v 1.3 1995/04/24 12:24:31 cgd Exp $	*/
 
 /*
@@ -6,12 +7,14 @@
 
 #include <ctype.h>
 #include <curses.h>
+#include <errno.h>
 #include <math.h>
 #include <setjmp.h>
 #include <signal.h>
-#include <time.h>
-#include <errno.h>
+#include <stdlib.h>
 #include <string.h>
+#include <time.h>
+#include <unistd.h>
 
 #include "macros.h"
 #include "phantdefs.h"

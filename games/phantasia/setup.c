@@ -1,3 +1,4 @@
+/*	$OpenBSD: setup.c,v 1.4 1998/11/29 19:57:02 pjanzen Exp $	*/
 /*	$NetBSD: setup.c,v 1.4 1995/04/24 12:24:41 cgd Exp $	*/
 
 /*
@@ -5,8 +6,12 @@
  */
 #include <sys/param.h>
 #include <sys/stat.h>
-#include <stdlib.h>
+#include <sys/types.h>
 #include "include.h"
+#include <fcntl.h>
+
+void Error __P((char *, char *));
+
 /**/
 /************************************************************************
 /
@@ -20,8 +25,8 @@
 /
 / RETURN VALUE: none
 /
-/ MODULES CALLED: time(), exit(), stat(), Error(), creat(), close(), fopen(), 
-/	fgets(), floor(), srandom(), umask(), drandom(), strcpy(), getuid(), 
+/ MODULES CALLED: time(), exit(), stat(), Error(), open(), close(), fopen(), 
+/	fgets(), floor(), srandom(), umask(), strcpy(),
 /	unlink(), fwrite(), fclose(), sscanf(), printf(), strlen(), fprintf()
 /
 / GLOBAL INPUTS: Curmonster, _iob[], Databuf[], *Monstfp, Enrgyvoid
@@ -99,12 +104,19 @@ main(argc, argv)
 		continue;
 		}
 
+	    if (!strcmp(*filename, _PATH_SCORE))
+		/* do not reset score file if it already exists */
+		{
+		++filename;
+		continue;
+		}
+
 	    if (unlink(path) < 0)
 		Error("Cannot unlink %s.\n", path);
 		/*NOTREACHED*/
 	    }
 
-	if ((fd = creat(path, 0660)) < 0)
+	if ((fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, 0660)) < 0)
 	    Error("Cannot create %s.\n", path);
 	    /*NOTREACHED*/
 
@@ -228,14 +240,15 @@ main(argc, argv)
 /
 *************************************************************************/
 
+void
 Error(str, file)
-char	*str, *file;
+	char	*str, *file;
 {
-    fprintf(stderr, "Error: ");
-    fprintf(stderr, str, file);
-    perror(file);
-    exit(1);
-    /*NOTREACHED*/
+	fprintf(stderr, "Error: ");
+	fprintf(stderr, str, file);
+	perror(file);
+	exit(1);
+	/* NOTREACHED */
 }
 /**/
 /************************************************************************
