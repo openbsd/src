@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 1998/11/30 16:12:25 millert Exp $
+#	$OpenBSD: Makefile,v 1.7 1998/12/02 15:45:43 espie Exp $
 
 CFLAGS+=#-DTFILE=\"/dev/ttyp0\"
 CFLAGS+=-D_CURSES_PRIVATE -I${.CURDIR}
@@ -22,7 +22,8 @@ includes:
 	    ${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 \
 	    curses.h ${DESTDIR}/usr/include/ocurses.h
 
-# Link libtermcap to libocurses so we don't break people's Makefiles
+# Link libotermcap to libocurses for programs that need full compatibility
+# with the old termcap behavior
 afterinstall:
 	-cd ${DESTDIR}/usr/lib; \
 	for i in ${_LIBS}; do \
