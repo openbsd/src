@@ -371,6 +371,9 @@
 ./usr/lib/perl5/site_perl/powerpc-openbsd/vis.ph
 ./usr/lib/perl5/site_perl/powerpc-openbsd/zconf.ph
 ./usr/lib/perl5/site_perl/powerpc-openbsd/zlib.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/keynote.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/swap.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/termcap.ph
 ./usr/mdec/boot.mac
 ./usr/mdec/mbr
 ./usr/mdec/msdos1mb.gz
@@ -379,6 +382,3 @@
 ./usr/powerpc-unknown-openbsd2.5/bin
 ./usr/powerpc-unknown-openbsd2.5/lib
 ./usr/powerpc-unknown-openbsd2.5/lib/ldscripts
-./usr/libdata/perl5/site_perl/powerpc-openbsd/termcap.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/swap.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/keynote.ph

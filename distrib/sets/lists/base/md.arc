@@ -13,6 +13,7 @@
 ./usr/lib/libacl.so.4.1
 ./usr/lib/libc.so.23.0
 ./usr/lib/libcrypto.so.1.0
+./usr/lib/libcurses++.so.1.0
 ./usr/lib/libcurses.so.5.0
 ./usr/lib/libdes.so.6.0
 ./usr/lib/libedit.so.0.0
@@ -110,6 +111,7 @@
 ./usr/lib/perl5/site_perl/mips-openbsd/ctype.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/curses.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/db.ph
+./usr/lib/perl5/site_perl/mips-openbsd/dbm.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/des.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/dirent.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/disktab.ph
@@ -207,6 +209,7 @@
 ./usr/lib/perl5/site_perl/mips-openbsd/net/if.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/net/if_arp.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/net/if_atm.ph
+./usr/lib/perl5/site_perl/mips-openbsd/net/if_bridge.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/net/if_dl.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/net/if_enc.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/net/if_fddi.ph
@@ -260,6 +263,7 @@
 ./usr/lib/perl5/site_perl/mips-openbsd/sha1.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/signal.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/skey.ph
+./usr/lib/perl5/site_perl/mips-openbsd/skipjack.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/soundcard.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/stab.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/stdarg.ph
@@ -329,6 +333,7 @@
 ./usr/lib/perl5/site_perl/mips-openbsd/sys/param.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/sys/pipe.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/sys/poll.ph
+./usr/lib/perl5/site_perl/mips-openbsd/sys/pool.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/sys/proc.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/sys/protosw.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/sys/ptrace.ph
@@ -403,6 +408,9 @@
 ./usr/lib/perl5/site_perl/mips-openbsd/zconf.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/zlib.ph
 ./usr/lib/scrt0.o
+./usr/libdata/perl5/site_perl/mips-openbsd/keynote.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/sys/swap.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/termcap.ph
 ./usr/libexec/ld.so
 ./usr/mdec/mbr
 ./usr/mdec/msdos5mb.gz
@@ -410,11 +418,3 @@
 ./usr/mipsel-unknown-openbsd2.5/bin
 ./usr/mipsel-unknown-openbsd2.5/lib
 ./usr/mipsel-unknown-openbsd2.5/lib/ldscripts
-./usr/lib/perl5/site_perl/mips-openbsd/dbm.ph
-./usr/lib/perl5/site_perl/mips-openbsd/net/if_bridge.ph
-./usr/lib/perl5/site_perl/mips-openbsd/skipjack.ph
-./usr/lib/perl5/site_perl/mips-openbsd/sys/pool.ph
-./usr/lib/libcurses++.so.1.0
-./usr/libdata/perl5/site_perl/mips-openbsd/termcap.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/sys/swap.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/keynote.ph

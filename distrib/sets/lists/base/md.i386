@@ -2,7 +2,9 @@
 ./dev/scan1
 ./sbin/fdisk
 ./sbin/ldconfig
+./usr/bin/c++filt
 ./usr/bin/ldd
+./usr/bin/objdump
 ./usr/bin/pctr
 ./usr/include/i386
 ./usr/lib/gcc-lib/i386-unknown-openbsd2.5
@@ -385,6 +387,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/ieeefp.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/inttypes.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/iso646.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/keynote.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/kvm.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/langinfo.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/libgen.ph
@@ -703,6 +706,3 @@
 ./usr/share/misc/pcvtfonts/vt220l.810
 ./usr/share/misc/pcvtfonts/vt220l.814
 ./usr/share/misc/pcvtfonts/vt220l.816
-./usr/libdata/perl5/site_perl/i386-openbsd/keynote.ph
-./usr/bin/objdump
-./usr/bin/c++filt

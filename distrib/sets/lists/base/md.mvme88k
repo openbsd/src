@@ -83,6 +83,7 @@
 ./usr/lib/perl5/site_perl/m88k-openbsd/ctype.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/curses.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/db.ph
+./usr/lib/perl5/site_perl/m88k-openbsd/dbm.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/des.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/dirent.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/disktab.ph
@@ -132,8 +133,8 @@
 ./usr/lib/perl5/site_perl/m88k-openbsd/machine/db_machdep.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/machine/disklabel.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/machine/endian.ph
-./usr/lib/perl5/site_perl/m88k-openbsd/machine/exec.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/machine/exception_vectors.ph
+./usr/lib/perl5/site_perl/m88k-openbsd/machine/exec.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/machine/float.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/machine/frame.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/machine/freebsd_machdep.ph
@@ -168,8 +169,8 @@
 ./usr/lib/perl5/site_perl/m88k-openbsd/machine/stdarg.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/machine/trap.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/machine/types.ph
-./usr/lib/perl5/site_perl/m88k-openbsd/machine/varargs.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/machine/va-m88k.ph
+./usr/lib/perl5/site_perl/m88k-openbsd/machine/varargs.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/machine/vid.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/machine/vmparam.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/malloc.ph
@@ -179,6 +180,7 @@
 ./usr/lib/perl5/site_perl/m88k-openbsd/memory.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/menu.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/mpool.ph
+./usr/lib/perl5/site_perl/m88k-openbsd/ncurses.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/ndbm.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/net
 ./usr/lib/perl5/site_perl/m88k-openbsd/net/bpf.ph
@@ -187,6 +189,7 @@
 ./usr/lib/perl5/site_perl/m88k-openbsd/net/if.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/net/if_arp.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/net/if_atm.ph
+./usr/lib/perl5/site_perl/m88k-openbsd/net/if_bridge.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/net/if_dl.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/net/if_enc.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/net/if_fddi.ph
@@ -208,7 +211,6 @@
 ./usr/lib/perl5/site_perl/m88k-openbsd/net/slcompress.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/net/slip.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/net/zlib.ph
-./usr/lib/perl5/site_perl/m88k-openbsd/ncurses.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/netdb.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/netgroup.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/nl_types.ph
@@ -244,6 +246,7 @@
 ./usr/lib/perl5/site_perl/m88k-openbsd/sha1.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/signal.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/skey.ph
+./usr/lib/perl5/site_perl/m88k-openbsd/skipjack.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/soundcard.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/spinlock.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/stab.ph
@@ -315,6 +318,7 @@
 ./usr/lib/perl5/site_perl/m88k-openbsd/sys/param.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/sys/pipe.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/sys/poll.ph
+./usr/lib/perl5/site_perl/m88k-openbsd/sys/pool.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/sys/proc.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/sys/protosw.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/sys/ptrace.ph
@@ -388,10 +392,9 @@
 ./usr/lib/perl5/site_perl/m88k-openbsd/vis.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/zconf.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/zlib.ph
-./usr/share/man/cat3/kvm_dump.0
-./usr/share/man/cat3/kvm_dump_inval.0
-./usr/share/man/cat3/kvm_dump_mkheader.0
-./usr/share/man/cat3/kvm_dump_wrtheader.0
+./usr/libdata/perl5/site_perl/m88k-openbsd/keynote.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/sys/swap.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/termcap.ph
 ./usr/m88k-unknown-openbsd2.5
 ./usr/m88k-unknown-openbsd2.5/bin
 ./usr/m88k-unknown-openbsd2.5/lib
@@ -402,10 +405,7 @@
 ./usr/mdec/installboot
 ./usr/mdec/netboot
 ./usr/mdec/stboot
-./usr/lib/perl5/site_perl/m88k-openbsd/dbm.ph
-./usr/lib/perl5/site_perl/m88k-openbsd/net/if_bridge.ph
-./usr/lib/perl5/site_perl/m88k-openbsd/skipjack.ph
-./usr/lib/perl5/site_perl/m88k-openbsd/sys/pool.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/termcap.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/sys/swap.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/keynote.ph
+./usr/share/man/cat3/kvm_dump.0
+./usr/share/man/cat3/kvm_dump_inval.0
+./usr/share/man/cat3/kvm_dump_mkheader.0
+./usr/share/man/cat3/kvm_dump_wrtheader.0

@@ -12,6 +12,7 @@
 ./usr/lib/libacl.so.4.1
 ./usr/lib/libc.so.23.0
 ./usr/lib/libcrypto.so.1.0
+./usr/lib/libcurses++.so.1.0
 ./usr/lib/libcurses.so.5.1
 ./usr/lib/libdes.so.6.0
 ./usr/lib/libedit.so.0.0
@@ -307,6 +308,7 @@
 ./usr/lib/perl5/site_perl/m68k-openbsd/ctype.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/curses.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/db.ph
+./usr/lib/perl5/site_perl/m68k-openbsd/dbm.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/des.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/dirent.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/disktab.ph
@@ -387,6 +389,7 @@
 ./usr/lib/perl5/site_perl/m68k-openbsd/net/if.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/net/if_arp.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/net/if_atm.ph
+./usr/lib/perl5/site_perl/m68k-openbsd/net/if_bridge.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/net/if_dl.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/net/if_enc.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/net/if_fddi.ph
@@ -440,6 +443,7 @@
 ./usr/lib/perl5/site_perl/m68k-openbsd/sha1.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/signal.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/skey.ph
+./usr/lib/perl5/site_perl/m68k-openbsd/skipjack.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/soundcard.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/stab.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/stdarg.ph
@@ -509,6 +513,7 @@
 ./usr/lib/perl5/site_perl/m68k-openbsd/sys/param.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/sys/pipe.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/sys/poll.ph
+./usr/lib/perl5/site_perl/m68k-openbsd/sys/pool.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/sys/proc.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/sys/protosw.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/sys/ptrace.ph
@@ -582,6 +587,9 @@
 ./usr/lib/perl5/site_perl/m68k-openbsd/vis.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/zconf.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/zlib.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/keynote.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/sys/swap.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/termcap.ph
 ./usr/libexec/ld.so
 ./usr/sbin/grfconfig
 ./usr/sbin/iteconfig
@@ -594,11 +602,3 @@
 ./usr/share/keymaps/amiga/fr.map
 ./usr/share/keymaps/amiga/sw.map
 ./usr/share/keymaps/amiga/us.map
-./usr/lib/perl5/site_perl/m68k-openbsd/dbm.ph
-./usr/lib/perl5/site_perl/m68k-openbsd/net/if_bridge.ph
-./usr/lib/perl5/site_perl/m68k-openbsd/skipjack.ph
-./usr/lib/perl5/site_perl/m68k-openbsd/sys/pool.ph
-./usr/lib/libcurses++.so.1.0
-./usr/libdata/perl5/site_perl/m68k-openbsd/termcap.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/sys/swap.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/keynote.ph

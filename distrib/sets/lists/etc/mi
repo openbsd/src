@@ -1,10 +1,10 @@
-./etc/afs/SuidCells
 ./.cshrc
 ./.profile
 ./dev/MAKEDEV.local
 ./etc/afs
 ./etc/afs/CellServDB
 ./etc/afs/README
+./etc/afs/SuidCells
 ./etc/afs/ThisCell
 ./etc/afs/afsd.conf
 ./etc/aliases
@@ -98,9 +98,9 @@
 ./etc/sliphome/slip.login
 ./etc/spwd.db
 ./etc/ssl
-./etc/ssl/private
 ./etc/ssl/lib
 ./etc/ssl/lib/ssleay.cnf
+./etc/ssl/private
 ./etc/sysctl.conf
 ./etc/syslog.conf
 ./etc/ttys

@@ -28,6 +28,7 @@
 ./usr/include/m68k/reg.h
 ./usr/include/m68k/setjmp.h
 ./usr/include/m68k/signal.h
+./usr/include/m68k/spinlock.h
 ./usr/include/m68k/stdarg.h
 ./usr/include/m68k/sysctl.h
 ./usr/include/m68k/trap.h
@@ -107,8 +108,10 @@
 ./usr/lib/libacl_pic.a
 ./usr/lib/libbfd.a
 ./usr/lib/libc_pic.a
+./usr/lib/libc_r_pic.a
 ./usr/lib/libcom_err_pic.a
 ./usr/lib/libcrypto_pic.a
+./usr/lib/libcurses++_pic.a
 ./usr/lib/libcurses_pic.a
 ./usr/lib/libdes_pic.a
 ./usr/lib/libedit_pic.a
@@ -118,6 +121,7 @@
 ./usr/lib/libkadm_pic.a
 ./usr/lib/libkafs_pic.a
 ./usr/lib/libkdb_pic.a
+./usr/lib/libkeynote_pic.a
 ./usr/lib/libkrb_pic.a
 ./usr/lib/libkvm_pic.a
 ./usr/lib/libm_pic.a
@@ -149,7 +153,3 @@
 ./usr/share/man/cat3/dlfcn.0
 ./usr/share/man/cat3/dlopen.0
 ./usr/share/man/cat3/dlsym.0
-./usr/lib/libc_r_pic.a
-./usr/include/m68k/spinlock.h
-./usr/lib/libcurses++_pic.a
-./usr/lib/libkeynote_pic.a

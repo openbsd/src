@@ -125,6 +125,7 @@
 ./sbin/shutdown
 ./sbin/slattach
 ./sbin/startkey
+./sbin/swapctl
 ./sbin/swapon
 ./sbin/ttyflags
 ./sbin/tunefs
@@ -249,6 +250,7 @@
 ./usr/bin/kauth
 ./usr/bin/kdestroy
 ./usr/bin/kdump
+./usr/bin/keynote
 ./usr/bin/kinit
 ./usr/bin/klist
 ./usr/bin/ksrvtgt
@@ -989,6 +991,7 @@
 ./usr/share/calendar/calendar.christian
 ./usr/share/calendar/calendar.computer
 ./usr/share/calendar/calendar.croatian
+./usr/share/calendar/calendar.fictional
 ./usr/share/calendar/calendar.german
 ./usr/share/calendar/calendar.history
 ./usr/share/calendar/calendar.holiday
@@ -997,7 +1000,6 @@
 ./usr/share/calendar/calendar.pagan
 ./usr/share/calendar/calendar.russian
 ./usr/share/calendar/calendar.usholiday
-./usr/share/calendar/calendar.fictional
 ./usr/share/calendar/calendar.world
 ./usr/share/calendar/de_DE.ISO_8859-1
 ./usr/share/calendar/de_DE.ISO_8859-1/calendar.all
@@ -2614,5 +2616,3 @@
 ./var/yp/Makefile.yp
 ./var/yp/Makefile.yp.dist
 ./var/yp/README
-./sbin/swapctl
-./usr/bin/keynote

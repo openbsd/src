@@ -126,6 +126,7 @@
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.5/2.8.1/libobjc.a
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.5/2.8.1/specs
 ./usr/lib/libbfd.a
+./usr/lib/libc_r_pic.a
 ./usr/lib/libcrypto_pic.a
 ./usr/lib/libmmalloc.a
 ./usr/lib/libopcodes.a
@@ -153,4 +154,3 @@
 ./usr/share/man/cat3/dlfcn.0
 ./usr/share/man/cat3/dlopen.0
 ./usr/share/man/cat3/dlsym.0
-./usr/lib/libc_r_pic.a

@@ -103,8 +103,10 @@
 ./usr/lib/libacl_pic.a
 ./usr/lib/libbfd.a
 ./usr/lib/libc_pic.a
+./usr/lib/libc_r_pic.a
 ./usr/lib/libcom_err_pic.a
 ./usr/lib/libcrypto_pic.a
+./usr/lib/libcurses++_pic.a
 ./usr/lib/libcurses_pic.a
 ./usr/lib/libdes_pic.a
 ./usr/lib/libedit_pic.a
@@ -145,5 +147,3 @@
 ./usr/share/man/cat3/dlfcn.0
 ./usr/share/man/cat3/dlopen.0
 ./usr/share/man/cat3/dlsym.0
-./usr/lib/libc_r_pic.a
-./usr/lib/libcurses++_pic.a

@@ -338,6 +338,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/err.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/errno.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/eti.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/f2c.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/fcntl.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/float.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/fnmatch.ph
@@ -352,6 +353,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/ieeefp.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/inttypes.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/iso646.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/keynote.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/kvm.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/langinfo.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/libgen.ph
@@ -574,6 +576,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/socketvar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/sockio.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/stat.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/sys/swap.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/syscall.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/syscallargs.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/sysctl.ph
@@ -614,6 +617,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/tar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/tcpd.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/term.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/termcap.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/termios.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/time.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/ttyent.ph
@@ -649,7 +653,3 @@
 ./usr/share/info/ld.info-1
 ./usr/share/info/ld.info-2
 ./usr/share/info/ld.info-3
-./usr/libdata/perl5/site_perl/alpha-openbsd/termcap.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/sys/swap.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/keynote.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/f2c.ph
