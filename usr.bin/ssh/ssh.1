@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: ssh.1,v 1.10 1999/10/02 21:19:42 provos Exp $
+.\" $Id: ssh.1,v 1.11 1999/10/02 21:35:47 deraadt Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSH 1
@@ -76,10 +76,8 @@ means that if the login would be permitted by
 .Pa /etc/hosts.equiv ,
 or
 .Pa /etc/shosts.equiv ,
-and additionally it can verify the client's
+and if additionally the server can verify the client's
 host key (see 
-.Pa $HOME/.ssh/known_hosts
-and
 .Pa /etc/ssh_known_hosts
 in the
 .Sx FILES
