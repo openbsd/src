@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: testrsa.sh,v 1.5 2002/01/02 15:12:14 art Exp $
+#	$OpenBSD: testrsa.sh,v 1.6 2002/01/02 15:13:18 art Exp $
 
 
 #Test RSA certificate generation of openssl
@@ -13,7 +13,7 @@ if [ $? != 0 ]; then
 fi
 
 
-# Denerate an RSA certificate
+# Generate an RSA certificate
 openssl req -config $2/openssl.cnf -key rsakey.pem -new -x509 -days 365 -out rsacert.pem
 if [ $? != 0 ]; then
         exit 1;
