@@ -1459,7 +1459,6 @@
 ./usr/libexec/kadmind
 ./usr/libexec/kauthd
 ./usr/libexec/kdc
-./usr/libexec/kerberos
 ./usr/libexec/kpasswdd
 ./usr/libexec/kpropd
 ./usr/libexec/locate.bigram
