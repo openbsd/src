@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.104 2003/09/23 16:51:11 millert Exp $	*/
+/*	$OpenBSD: conf.c,v 1.105 2003/11/03 03:35:40 tedu Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -58,8 +58,6 @@ bdev_decl(wt);
 #include "mcd.h"
 bdev_decl(mcd);
 #include "vnd.h"
-#include "scd.h"
-bdev_decl(scd);
 #include "ccd.h"
 #include "raid.h"
 #include "rd.h"
@@ -81,7 +79,7 @@ struct bdevsw	bdevsw[] =
 	bdev_lkm_dummy(),		/* 12 */
 	bdev_lkm_dummy(),		/* 13 */
 	bdev_disk_init(NVND,vnd),	/* 14: vnode disk driver */
-	bdev_disk_init(NSCD,scd),	/* 15: Sony CD-ROM */
+	bdev_notdef(),			/* 15 */
 	bdev_disk_init(NCCD,ccd),	/* 16: concatenated disk driver */
 	bdev_disk_init(NRD,rd),		/* 17: ram disk driver */
 	bdev_notdef(),			/* 18 */
@@ -135,7 +133,6 @@ cdev_decl(wd);
 cdev_decl(com);
 cdev_decl(fd);
 cdev_decl(wt);
-cdev_decl(scd);
 #include "ss.h"
 #include "lpt.h"
 cdev_decl(lpt);
@@ -222,7 +219,7 @@ struct cdevsw	cdevsw[] =
 #endif
 	cdev_disk_init(NFD,fd),		/* 9: floppy disk */
 	cdev_tape_init(NWT,wt),		/* 10: QIC-02/QIC-36 tape */
-	cdev_disk_init(NSCD,scd),	/* 11: Sony CD-ROM */
+	cdev_notdef(),			/* 11 */
 	cdev_wsdisplay_init(NWSDISPLAY,	/* 12: frame buffers, etc. */
 	    wsdisplay),
 	cdev_disk_init(NSD,sd),		/* 13: SCSI disk */

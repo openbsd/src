@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.84 2003/05/20 20:26:27 grange Exp $
+#	$OpenBSD: files.isa,v 1.85 2003/11/03 03:35:40 tedu Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -131,16 +131,6 @@ file	dev/isa/opti.c			opti
 device	mcd: disk, opti
 attach	mcd at isa
 file	dev/isa/mcd.c			mcd needs-flag
-
-# Sony CDU-3[13]A CD-ROM controllers
-device	scd: disk, opti
-attach	scd at isa
-file	dev/isa/scd.c			scd needs-flag
-
-# Panasonic/Creative CD-ROM controllers
-device	pcd: disk, opti
-attach	pcd at isa
-file	dev/isa/pcd.c			pcd needs-flag
 
 # ISA "wd" (ESDI/IDE/etc.) controllers, ATAPI bus
 attach wdc at isa with wdc_isa: isa_dma

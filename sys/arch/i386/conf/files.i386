@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.108 2003/08/07 08:32:56 markus Exp $
+#	$OpenBSD: files.i386,v 1.109 2003/11/03 03:35:40 tedu Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -130,7 +130,6 @@ file	dev/pci/if_hme_pci.c		hme_pci
 #
 
 major	{mcd = 7}
-#major	{scd = 15}
 major	{wd = 0}
 major	{wt = 3}
 
