@@ -1,4 +1,4 @@
-/*	$OpenBSD: finger.c,v 1.7 1997/05/30 23:35:51 kstailey Exp $	*/
+/*	$OpenBSD: finger.c,v 1.8 1998/07/10 15:45:15 mickey Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -54,7 +54,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)finger.c	5.22 (Berkeley) 6/29/90";*/
-static char rcsid[] = "$OpenBSD: finger.c,v 1.7 1997/05/30 23:35:51 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: finger.c,v 1.8 1998/07/10 15:45:15 mickey Exp $";
 #endif /* not lint */
 
 /*
@@ -77,6 +77,7 @@ static char rcsid[] = "$OpenBSD: finger.c,v 1.7 1997/05/30 23:35:51 kstailey Exp
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <err.h>
 #include "finger.h"
 #include "extern.h"
 
@@ -90,6 +91,7 @@ main(argc, argv)
 	char **argv;
 {
 	extern int optind;
+	extern char *__progname;
 	int ch;
 	char domain[256];
 
@@ -121,7 +123,7 @@ main(argc, argv)
 		case '?':
 		default:
 			(void)fprintf(stderr,
-			    "usage: finger [-lmMpsho] [login ...]\n");
+			    "usage: %s [-lmMpsho] [login ...]\n", __progname);
 			exit(1);
 		}
 	argc -= optind;
@@ -171,10 +173,8 @@ loginlist()
 	struct utmp user;
 	char name[UT_NAMESIZE + 1];
 
-	if (!freopen(_PATH_UTMP, "r", stdin)) {
-		(void)fprintf(stderr, "finger: can't read %s.\n", _PATH_UTMP);
-		exit(2);
-	}
+	if (!freopen(_PATH_UTMP, "r", stdin))
+		err(2, _PATH_UTMP);
 	name[UT_NAMESIZE] = '\0';
 	while (fread((char *)&user, sizeof(user), 1, stdin) == 1) {
 		if (!user.ut_name[0])
@@ -203,10 +203,8 @@ userlist(argc, argv)
 	struct passwd *pw;
 	int dolocal, *used;
 
-	if (!(used = (int *)calloc((u_int)argc, (u_int)sizeof(int)))) {
-		(void)fprintf(stderr, "finger: out of space.\n");
-		exit(1);
-	}
+	if (!(used = (int *)calloc((u_int)argc, (u_int)sizeof(int))))
+		err(2, "malloc");
 
 	/* pull out all network requests */
 	for (i = 0, dolocal = 0, nettail = &nethead; i < argc; i++) {
@@ -247,8 +245,7 @@ userlist(argc, argv)
 	/* list errors */
 	for (i = 0; i < argc; i++)
 		if (!used[i])
-			(void)fprintf(stderr,
-			    "finger: %s: no such user.\n", argv[i]);
+			warnx("%s: no such user.", argv[i]);
 
 	/* handle network requests */
 net:	for (pn = nethead; pn; pn = pn->next) {
@@ -264,10 +261,8 @@ net:	for (pn = nethead; pn; pn = pn->next) {
 	 * Scan thru the list of users currently logged in, saving
 	 * appropriate data whenever a match occurs.
 	 */
-	if (!freopen(_PATH_UTMP, "r", stdin)) {
-		(void)fprintf( stderr, "finger: can't read %s.\n", _PATH_UTMP);
-		exit(1);
-	}
+	if (!freopen(_PATH_UTMP, "r", stdin))
+		err(1, _PATH_UTMP);
 	while (fread((char *)&user, sizeof(user), 1, stdin) == 1) {
 		if (!user.ut_name[0])
 			continue;

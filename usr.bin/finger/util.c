@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.9 1998/01/09 17:17:39 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.10 1998/07/10 15:45:19 mickey Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)util.c	5.14 (Berkeley) 1/17/91";*/
-static char rcsid[] = "$OpenBSD: util.c,v 1.9 1998/01/09 17:17:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.10 1998/07/10 15:45:19 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -56,6 +56,7 @@ static char rcsid[] = "$OpenBSD: util.c,v 1.9 1998/01/09 17:17:39 millert Exp $"
 #include <errno.h>
 #include <unistd.h>
 #include <vis.h>
+#include <err.h>
 #include "finger.h"
 #include "extern.h"
 
@@ -113,8 +114,7 @@ userinfo(pn, pw)
 	pn->mailrecv = -1;		/* -1 == not_valid */
 	if (stat(tbuf, &sb) < 0) {
 		if (errno != ENOENT) {
-			(void)fprintf(stderr,
-			    "finger: %s: %s\n", tbuf, strerror(errno));
+			warn(tbuf);
 			return;
 		}
 	} else if (sb.st_size != 0) {
@@ -304,10 +304,8 @@ palloc()
 {
 	PERSON *p;
 
-	if ((p = (PERSON *)malloc((u_int) sizeof(PERSON))) == NULL) {
-		(void)fprintf(stderr, "finger: out of space.\n");
-		exit(1);
-	}
+	if ((p = (PERSON *)malloc((u_int) sizeof(PERSON))) == NULL)
+		err(1, "malloc");
 	return(p);
 }
 
@@ -317,10 +315,8 @@ walloc(pn)
 {
 	WHERE *w;
 
-	if ((w = (WHERE *)malloc((u_int) sizeof(WHERE))) == NULL) {
-		(void)fprintf(stderr, "finger: out of space.\n");
-		exit(1);
-	}
+	if ((w = (WHERE *)malloc((u_int) sizeof(WHERE))) == NULL)
+		err(1, "malloc");
 	if (pn->whead == NULL)
 		pn->whead = pn->wtail = w;
 	else {

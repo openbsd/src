@@ -1,4 +1,4 @@
-/*	$OpenBSD: sprint.c,v 1.4 1997/06/02 21:33:27 kstailey Exp $	*/
+/*	$OpenBSD: sprint.c,v 1.5 1998/07/10 15:45:18 mickey Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sprint.c	5.8 (Berkeley) 12/4/90";*/
-static char rcsid[] = "$OpenBSD: sprint.c,v 1.4 1997/06/02 21:33:27 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: sprint.c,v 1.5 1998/07/10 15:45:18 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -46,6 +46,7 @@ static char rcsid[] = "$OpenBSD: sprint.c,v 1.4 1997/06/02 21:33:27 kstailey Exp
 #include <tzfile.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <err.h>
 #include "finger.h"
 #include "extern.h"
 
@@ -137,10 +138,8 @@ sort()
 	PERSON *pn, **lp;
 	PERSON **list;
 
-	if (!(list = (PERSON **)malloc((u_int)(entries * sizeof(PERSON *))))) {
-		(void)fprintf(stderr, "finger: out of space.\n");
-		exit(1);
-	}
+	if (!(list = (PERSON **)malloc((u_int)(entries * sizeof(PERSON *)))))
+		err(1, "malloc");
 	for (lp = list, pn = phead; pn != NULL; pn = pn->next)
 		*lp++ = pn;
 	(void)qsort(list, entries, sizeof(PERSON *), psort);
