@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.17 1997/11/04 20:43:26 chuck Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.18 1997/12/28 23:39:28 niklas Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -310,11 +310,10 @@ putchar(c, flags, tp)
 		if (mbp->msg_magic != MSG_MAGIC) {
 			bzero((caddr_t) mbp, sizeof(*mbp));
 			mbp->msg_magic = MSG_MAGIC;
-		} else {
-			mbp->msg_bufc[mbp->msg_bufx++] = c;
-			if (mbp->msg_bufx < 0 || mbp->msg_bufx >= MSG_BSIZE)
-				mbp->msg_bufx = 0;
 		}
+		mbp->msg_bufc[mbp->msg_bufx++] = c;
+		if (mbp->msg_bufx < 0 || mbp->msg_bufx >= MSG_BSIZE)
+			mbp->msg_bufx = 0;
 	}
 	if ((flags & TOCONS) && constty == NULL && c != '\0')
 		(*v_putc)(c);
