@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.59 2004/05/21 11:52:32 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.60 2004/08/06 11:53:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -278,7 +278,7 @@ void
 show_summary_head(void)
 {
 	printf("%-20s %-5s %-10s %-10s %-5s %-8s %s\n", "Neighbor", "AS",
-	    "MsgRcvd", "MsgSent", "OutQ", "Up/Down", "State");
+	    "MsgRcvd", "MsgSent", "OutQ", "Up/Down", "State/PrefixRcvd");
 }
 
 int
@@ -303,7 +303,7 @@ show_summary_msg(struct imsg *imsg)
 			    NULL)
 				err(1, NULL);
 
-		printf("%-20s %5u %10llu %10llu %5u %-8s %s\n",
+		printf("%-20s %5u %10llu %10llu %5u %-8s ",
 		    s, p->conf.remote_as,
 		    p->stats.msg_rcvd_open + p->stats.msg_rcvd_notification +
 		    p->stats.msg_rcvd_update + p->stats.msg_rcvd_keepalive +
@@ -312,8 +312,14 @@ show_summary_msg(struct imsg *imsg)
 		    p->stats.msg_sent_update + p->stats.msg_sent_keepalive +
 		    p->stats.msg_sent_rrefresh,
 		    p->wbuf.queued,
-		    fmt_timeframe(p->stats.last_updown),
-		    statenames[p->state]);
+		    fmt_timeframe(p->stats.last_updown));
+		if (p->state == STATE_ESTABLISHED) {
+			printf("%u", p->stats.prefix_cnt);
+			if (p->conf.max_prefix != 0)
+				printf("/%u", p->conf.max_prefix);
+		} else
+			printf("%s", statenames[p->state]);
+		printf("\n");
 		free(s);
 		break;
 	case IMSG_CTL_END:
