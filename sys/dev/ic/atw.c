@@ -1,5 +1,5 @@
-/*	$OpenBSD: atw.c,v 1.22 2004/07/19 21:14:17 millert Exp $	*/
-/*	$NetBSD: atw.c,v 1.65 2004/07/15 07:31:05 dyoung Exp $	*/
+/*	$OpenBSD: atw.c,v 1.23 2004/07/25 00:03:52 millert Exp $	*/
+/*	$NetBSD: atw.c,v 1.66 2004/07/16 23:13:27 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.65 2004/07/15 07:31:05 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.66 2004/07/16 23:13:27 dyoung Exp $");
 #endif
 
 #include "bpfilter.h"
@@ -3002,7 +3002,7 @@ atw_rxintr(struct atw_softc *sc)
 	struct mbuf *m;
 	u_int32_t rxstat;
 	int i, len, rate, rate0;
-	u_int32_t rssi;
+	u_int32_t rssi, rssi0;
 
 	for (i = sc->sc_rxptr;; i = ATW_NEXTRX(i)) {
 		rxs = &sc->sc_rxsoft[i];
@@ -3010,17 +3010,16 @@ atw_rxintr(struct atw_softc *sc)
 		ATW_CDRXSYNC(sc, i, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 		rxstat = letoh32(sc->sc_rxdescs[i].ar_stat);
-		rssi = letoh32(sc->sc_rxdescs[i].ar_rssi);
+		rssi0 = letoh32(sc->sc_rxdescs[i].ar_rssi);
 		rate0 = MASK_AND_RSHIFT(rxstat, ATW_RXSTAT_RXDR_MASK);
 
 		if (rxstat & ATW_RXSTAT_OWN)
 			break; /* We have processed all receive buffers. */
 
 		DPRINTF3(sc,
-		    ("%s: rx stat %08x rssi %08x buf1 %08x buf2 %08x\n",
+		    ("%s: rx stat %08x rssi0 %08x buf1 %08x buf2 %08x\n",
 		    sc->sc_dev.dv_xname,
-		    letoh32(sc->sc_rxdescs[i].ar_stat),
-		    letoh32(sc->sc_rxdescs[i].ar_rssi),
+		    rxstat, rssi0,
 		    letoh32(sc->sc_rxdescs[i].ar_buf1),
 		    letoh32(sc->sc_rxdescs[i].ar_buf2)));
 
@@ -3104,6 +3103,18 @@ atw_rxintr(struct atw_softc *sc)
 			rate = 0;
 		else
 			rate = rate_tbl[rate0];
+
+		/* The RSSI comes straight from a register in the
+		 * baseband processor.  I know that for the RF3000,
+		 * the RSSI register also contains the antenna-selection
+		 * bits.  Mask those off.
+		 *
+		 * TBD Treat other basebands.
+		 */
+		if (sc->sc_bbptype == ATW_BBPTYPE_RFMD)
+			rssi = rssi0 & RF3000_RSSI_MASK;
+		else
+			rssi = rssi0;
 
 #if NBPFILTER > 0
 		/* Pass this up to any BPF listeners. */
