@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.16 2003/06/02 23:27:45 millert Exp $	*/
+/*	$OpenBSD: st.c,v 1.17 2003/12/20 20:08:13 miod Exp $	*/
 /*	$NetBSD: st.c,v 1.22 1997/04/02 22:37:38 scottr Exp $	*/
 
 /*
@@ -960,7 +960,7 @@ stintr(arg, stat)
 			 */
 			if (sc->sc_blklen) {
 				tprintf(sc->sc_ctty,
-					"%s: Incorrect Length Indicator, blkcnt diff %ld\n",
+					"%s: Incorrect Length Indicator, blkcnt diff %d\n",
 					sc->sc_dev.dv_xname,
 					sc->sc_blklen - bp->b_resid);
 				bp->b_flags |= B_ERROR;

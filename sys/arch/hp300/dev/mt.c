@@ -1,4 +1,4 @@
-/*	$OpenBSD: mt.c,v 1.11 2002/05/30 11:03:52 art Exp $	*/
+/*	$OpenBSD: mt.c,v 1.12 2003/12/20 20:08:13 miod Exp $	*/
 /*	$NetBSD: mt.c,v 1.8 1997/03/31 07:37:29 scottr Exp $	*/
 
 /* 
@@ -884,7 +884,7 @@ mtintr(arg)
 			if (i == 0)
 				sc->sc_flags |= MTF_HITEOF;
 			bp->b_resid = bp->b_bcount - i;
-			dlog(LOG_DEBUG, "%s intr: bcount %ld, resid %ld",
+			dlog(LOG_DEBUG, "%s intr: bcount %ld, resid %d",
 			    sc->sc_dev.dv_xname, bp->b_bcount, bp->b_resid);
 		} else {
 			tprintf(sc->sc_ttyp,

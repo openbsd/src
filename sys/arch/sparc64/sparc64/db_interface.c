@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.17 2003/07/09 18:08:01 jason Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.18 2003/12/20 20:08:17 miod Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -517,9 +517,9 @@ db_dump_dtlb(addr, have_addr, count, modif)
 		dump_dtlb(buf);
 		p = buf;
 		for (i=0; i<64;) {
-			db_printf("%2d:%16.16lx %16.16lx ", i++, p[0], p[1]);
+			db_printf("%2d:%16.16llx %16.16llx ", i++, p[0], p[1]);
 			p += 2;
-			db_printf("%2d:%16.16lx %16.16lx\n", i++, p[0], p[1]);
+			db_printf("%2d:%16.16llx %16.16llx\n", i++, p[0], p[1]);
 			p += 2;
 		}
 	}

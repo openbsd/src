@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.37 2003/06/24 21:54:39 henric Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.38 2003/12/20 20:08:17 miod Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -693,7 +693,7 @@ psycho_ue(void *arg)
 	/*
 	 * It's uncorrectable.  Dump the regs and panic.
 	 */
-	panic("%s: uncorrectable DMA error AFAR %llx (pa=%llx tte=%llx/%llx) "
+	panic("%s: uncorrectable DMA error AFAR %llx (pa=%lx tte=%llx/%llx) "
 	    "AFSR %llx", sc->sc_dev.dv_xname, afar,
 	    iommu_extract(sc->sc_is, (vaddr_t)afar),
 	    iommu_lookup_tte(sc->sc_is, (vaddr_t)afar),

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.87 2003/06/02 23:27:45 millert Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.88 2003/12/20 20:08:16 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -342,8 +342,8 @@ cpu_startup()
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail mem = %lu (%uK)\n", ptoa(uvmexp.free),
-	    ptoa(uvmexp.free)/1024);
+	printf("avail mem = %lu (%luK)\n", ptoa(uvmexp.free),
+	    ptoa(uvmexp.free) / 1024);
 	printf("using %d buffers containing %u bytes (%uK) of memory\n",
 		nbuf, bufpages * PAGE_SIZE, bufpages * PAGE_SIZE / 1024);
 

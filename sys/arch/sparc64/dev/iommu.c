@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.33 2003/12/04 21:13:37 miod Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.34 2003/12/20 20:08:17 miod Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -1488,7 +1488,7 @@ _iommu_dvmamap_sync(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 	}
 
 	if (i == map->dm_nsegs)
-		panic("iommu_dvmamap_sync: too short %lu", offset);
+		panic("iommu_dvmamap_sync: too short %llu", offset);
 
 	for (; len > 0 && i < map->dm_nsegs; i++) {
 		count = MIN(map->dm_segs[i].ds_len - offset, len);
@@ -1500,7 +1500,7 @@ _iommu_dvmamap_sync(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 
 #ifdef DIAGNOSTIC
 	if (i == map->dm_nsegs && len > 0)
-		panic("iommu_dvmamap_sync: leftover %lu", len);
+		panic("iommu_dvmamap_sync: leftover %llu", len);
 #endif
 
 	if (needsflush)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.42 2003/06/02 23:27:45 millert Exp $	*/
+/*	$OpenBSD: trap.c,v 1.43 2003/12/20 20:08:16 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.57 1998/02/16 20:58:31 thorpej Exp $	*/
 
 /*
@@ -689,9 +689,9 @@ dopanic:
 	}
 	sv.sival_ptr = (caddr_t)v;
 	trapsignal(p, i, ucode, typ, sv);
+out:
 	if ((type & T_USER) == 0)
 		return;
-out:
 	userret(p, &frame, sticks, v, 1);
 }
 
