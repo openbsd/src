@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.27 2002/04/01 17:53:53 millert Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.28 2002/04/01 19:50:44 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -69,7 +69,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $OpenBSD: wicontrol.c,v 1.27 2002/04/01 17:53:53 millert Exp $";
+	"@(#) $OpenBSD: wicontrol.c,v 1.28 2002/04/01 19:50:44 millert Exp $";
 #endif
 
 void wi_getval(char *, struct wi_req *);
@@ -620,45 +620,45 @@ wi_dumpstats(iface)
 	c = (struct wi_counters *)&wreq.wi_val;
 
 	/* XXX native byte order */
-	printf("Transmitted unicast frames:\t\t%d\n",
+	printf("Transmitted unicast frames:\t\t%u\n",
 	    c->wi_tx_unicast_frames);
-	printf("Transmitted multicast frames:\t\t%d\n",
+	printf("Transmitted multicast frames:\t\t%u\n",
 	    c->wi_tx_multicast_frames);
-	printf("Transmitted fragments:\t\t\t%d\n",
+	printf("Transmitted fragments:\t\t\t%u\n",
 	    c->wi_tx_fragments);
-	printf("Transmitted unicast octets:\t\t%d\n",
+	printf("Transmitted unicast octets:\t\t%u\n",
 	    c->wi_tx_unicast_octets);
-	printf("Transmitted multicast octets:\t\t%d\n",
+	printf("Transmitted multicast octets:\t\t%u\n",
 	    c->wi_tx_multicast_octets);
-	printf("Single transmit retries:\t\t%d\n",
+	printf("Single transmit retries:\t\t%u\n",
 	    c->wi_tx_single_retries);
-	printf("Multiple transmit retries:\t\t%d\n",
+	printf("Multiple transmit retries:\t\t%u\n",
 	    c->wi_tx_multi_retries);
-	printf("Transmit retry limit exceeded:\t\t%d\n",
+	printf("Transmit retry limit exceeded:\t\t%u\n",
 	    c->wi_tx_retry_limit);
-	printf("Transmit discards:\t\t\t%d\n",
+	printf("Transmit discards:\t\t\t%u\n",
 	    c->wi_tx_discards);
-	printf("Transmit discards due to wrong SA:\t%d\n",
+	printf("Transmit discards due to wrong SA:\t%u\n",
 	    c->wi_tx_discards_wrong_sa);
-	printf("Received unicast frames:\t\t%d\n",
+	printf("Received unicast frames:\t\t%u\n",
 	    c->wi_rx_unicast_frames);
-	printf("Received multicast frames:\t\t%d\n",
+	printf("Received multicast frames:\t\t%u\n",
 	    c->wi_rx_multicast_frames);
-	printf("Received fragments:\t\t\t%d\n",
+	printf("Received fragments:\t\t\t%u\n",
 	    c->wi_rx_fragments);
-	printf("Received unicast octets:\t\t%d\n",
+	printf("Received unicast octets:\t\t%u\n",
 	    c->wi_rx_unicast_octets);
-	printf("Received multicast octets:\t\t%d\n",
+	printf("Received multicast octets:\t\t%u\n",
 	    c->wi_rx_multicast_octets);
-	printf("Receive FCS errors:\t\t\t%d\n",
+	printf("Receive FCS errors:\t\t\t%u\n",
 	    c->wi_rx_fcs_errors);
-	printf("Receive discards due to no buffer:\t%d\n",
+	printf("Receive discards due to no buffer:\t%u\n",
 	    c->wi_rx_discards_nobuf);
-	printf("Can't decrypt WEP frame:\t\t%d\n",
+	printf("Can't decrypt WEP frame:\t\t%u\n",
 	    c->wi_rx_WEP_cant_decrypt);
-	printf("Received message fragments:\t\t%d\n",
+	printf("Received message fragments:\t\t%u\n",
 	    c->wi_rx_msg_in_msg_frags);
-	printf("Received message bad fragments:\t\t%d\n",
+	printf("Received message bad fragments:\t\t%u\n",
 	    c->wi_rx_msg_in_bad_msg_frags);
 }
 
