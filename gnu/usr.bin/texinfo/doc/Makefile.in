@@ -14,7 +14,7 @@
 
 @SET_MAKE@
 
-# $Id: Makefile.in,v 1.5 2002/06/11 10:01:13 espie Exp $
+# $Id: Makefile.in,v 1.6 2002/06/15 23:36:40 espie Exp $
 # Makefile.am for texinfo/doc.
 # Run automake in .. to produce Makefile.in from this.
 #
@@ -164,7 +164,7 @@ $(srcdir)/Makefile.in:  Makefile.am  $(top_srcdir)/configure.ac $(ACLOCAL_M4)
 Makefile:  $(srcdir)/Makefile.in  $(top_builddir)/config.status
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__depfiles_maybe)
 
-$(srcdir)/version.texi:  $(srcdir)/stamp-vti
+$(srcdir)/version.texi:  #$(srcdir)/stamp-vti
 	@:
 $(srcdir)/stamp-vti: texinfo.txi $(top_srcdir)/configure.ac
 	@(set `$(SHELL) $(srcdir)/mdate-sh $(srcdir)/texinfo.txi`; \
@@ -187,7 +187,7 @@ maintainer-clean-vti:
 texinfo: texinfo.txi $(srcdir)/version.texi
 texinfo.dvi: texinfo.txi $(srcdir)/version.texi
 
-$(srcdir)/version-stnd.texi:  $(srcdir)/stamp-1
+$(srcdir)/version-stnd.texi:  #$(srcdir)/stamp-1
 	@:
 $(srcdir)/stamp-1: info-stnd.texi $(top_srcdir)/configure.ac
 	@(set `$(SHELL) $(srcdir)/mdate-sh $(srcdir)/info-stnd.texi`; \
