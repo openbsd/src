@@ -49,5 +49,13 @@ systems will have different needs; most will need to reformat the
 partition, and if it was their "main" partition, will probably need
 to be reinstalled.
 
+Once you've backed all your data up, there is a tool called fips 2.0
+that can shrink your DOS/Windows/Windows95 partition to make room for
+OpenBSD.  It is included in the i386 tools area of this distribution as
+a convenience.  It is strongly advised that you read its documentation
+and understand the consequences of your actions before using it.  In some
+cases, defragmenting your disk and running fips may be much faster than
+reinstalling your DOS partitition from the backup.
+
 Your hard disk is now prepared to have OpenBSD installed on it, and
 you should proceed with the installation instructions.
