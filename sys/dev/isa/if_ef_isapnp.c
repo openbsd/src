@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ef_isapnp.c,v 1.8 2000/10/16 17:08:07 aaron Exp $	*/
+/*	$OpenBSD: if_ef_isapnp.c,v 1.9 2000/11/11 23:49:20 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -44,6 +44,7 @@
 #include <sys/device.h>
 #include <sys/queue.h>
 #include <sys/kernel.h>
+#include <sys/timeout.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -82,6 +83,7 @@ struct ef_softc {
 	bus_space_handle_t	sc_ioh;
 	struct arpcom		sc_arpcom;
 	struct mii_data		sc_mii;
+	struct timeout		sc_tick_tmo;
 	void *			sc_ih;
 	int			sc_tx_start_thresh;
 	int			sc_tx_succ_ok;
@@ -206,6 +208,8 @@ ef_isapnp_attach(parent, self, aux)
 
 	if (ia->ia_drq != DRQUNK)
 		isadma_cascade(ia->ia_drq);
+
+	timeout_set(&sc->sc_tick_tmo, ef_tick, sc);
 
 	bcopy(sc->sc_dv.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
@@ -479,7 +483,7 @@ efinit(sc)
 
 	splx(s);
 
-	timeout(ef_tick, sc, hz);
+	timeout_add(&sc->sc_tick_tmo, hz);
 
 	efstart(ifp);
 }
@@ -507,7 +511,7 @@ efstop(sc)
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
-	untimeout(ef_tick, sc);
+	timeout_del(&sc->sc_tick_tmo);
 
 	bus_space_write_2(iot, ioh, EP_COMMAND, RX_DISABLE);
 	efcompletecmd(sc, EP_COMMAND, RX_DISCARD_TOP_PACK);
@@ -1021,5 +1025,5 @@ ef_tick(v)
 	s = splimp();
 	mii_tick(&sc->sc_mii);
 	splx(s);
-	timeout(ef_tick, sc, hz);
+	timeout_add(&sc->sc_tick_tmo, hz);
 }
