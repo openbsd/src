@@ -1,8 +1,9 @@
-/*	$OpenBSD: uthread_machdep_asm.S,v 1.2 2002/01/02 19:11:28 art Exp $	*/
+/*	$OpenBSD: uthread_machdep_asm.S,v 1.3 2002/01/02 23:05:53 art Exp $	*/
 /* David Leonard <d@csee.uq.edu.au>. Public domain. */
 
 #include <machine/asm.h>
 #include <machine/trap.h>
+#include <machine/frame.h>
 
 /*
  * Switch stacks.
@@ -15,14 +16,11 @@
 #define flushw		t T_FLUSHWIN
 #endif
 
-#define SA(x)	(((x)+15)&(~0x1f))
-#define MINFRAME ((16+1+6)*8)	
-
 /* void _thread_switch(long newstate[2], long savestate[2], int flags); */
 ENTRY(_thread_machdep_switch)
 
 	/* new window */
-	save	%sp, -SA(MINFRAME), %sp
+	save	%sp, -CC64FSZ, %sp
 
 	/* flush all windows (except current one) into memory frames */
 	flushw
