@@ -1041,6 +1041,8 @@ u24_find(uha, ia)
 		uha_id = config2 & U24_HOSTID_MASK;
 
 		uha->sc_drq = DRQUNK;
+		uha->sc_iobase = iobase;
+		ia->ia_iobase = iobase;
 
 		switch (irq_ch) {
 		case U24_IRQ10:
@@ -1100,8 +1102,8 @@ u14_init(uha)
 	printf("u14_init: lmask=%02x, smask=%02x\n",
 	    inb(iobase + U14_LMASK), inb(iobase + U14_SMASK));
 #endif
-	outb(0xd1, iobase + U14_LMASK);	/* XXX */
-	outb(0x91, iobase + U14_SMASK);	/* XXX */
+	outb(iobase + U14_LMASK, 0xd1);	/* XXX */
+	outb(iobase + U14_SMASK, 0x91);	/* XXX */
 }
 
 void
@@ -1118,8 +1120,8 @@ u24_init(uha)
 	printf("u24_init: lmask=%02x, smask=%02x\n",
 	    inb(iobase + U24_LMASK), inb(iobase + U24_SMASK));
 #endif
-	outb(0xd2, iobase + U24_LMASK);	/* XXX */
-	outb(0x92, iobase + U24_SMASK);	/* XXX */
+	outb(iobase + U24_LMASK, 0xd2);	/* XXX */
+	outb(iobase + U24_SMASK, 0x92);	/* XXX */
 }
 
 void
