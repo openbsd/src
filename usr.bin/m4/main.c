@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.15 1999/09/14 08:21:37 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.16 1999/09/14 08:30:20 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.15 1999/09/14 08:21:37 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.16 1999/09/14 08:30:20 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -140,7 +140,6 @@ extern char *optarg;
 
 void macro();
 void initkwds();
-extern int getopt();
 
 int
 main(argc,argv)
@@ -158,7 +157,7 @@ main(argc,argv)
 	initkwds();
 	initspaces();
 
-	while ((c = getopt(argc, argv, "tD:U:o:")) != -1)
+	while ((c = getopt(argc, argv, "tD:U:o:I:")) != -1)
 		switch(c) {
 
 		case 'D':               /* define something..*/
@@ -168,6 +167,9 @@ main(argc,argv)
 			if (*p)
 				*p++ = EOS;
 			dodefine(optarg, p);
+			break;
+		case 'I':
+			addtoincludepath(optarg);
 			break;
 		case 'U':               /* undefine...       */
 			remhash(optarg, TOP);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.5 1999/09/14 08:26:10 espie Exp $	*/
+/*	$OpenBSD: expr.c,v 1.6 1999/09/14 08:30:20 espie Exp $	*/
 /*	$NetBSD: expr.c,v 1.7 1995/09/28 05:37:31 tls Exp $	*/
 
 /*
@@ -41,12 +41,13 @@
 #if 0
 static char sccsid[] = "@(#)expr.c	8.2 (Berkeley) 4/29/95";
 #else
-static char rcsid[] = "$OpenBSD: expr.c,v 1.5 1999/09/14 08:26:10 espie Exp $";
+static char rcsid[] = "$OpenBSD: expr.c,v 1.6 1999/09/14 08:30:20 espie Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/cdefs.h>
 #include <stdio.h>
+#include <ctype.h>
 #include "mdef.h"
 
 /*
