@@ -1,3 +1,4 @@
+/*	$OpenBSD: power.c,v 1.2 1997/06/22 22:32:38 downsj Exp $	*/
 /*	$NetBSD: power.c,v 1.2 1996/05/16 15:56:56 abrown Exp $ */
 
 /*
@@ -38,7 +39,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: power.c,v 1.1 1996/08/11 05:34:25 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -60,6 +60,8 @@ struct cfattach power_ca = {
 struct cfdriver power_cd = {
 	NULL, "power", DV_DULL
 };
+
+static char power_attached = 0;
 
 /*
  * This is the driver for the "power" register available on some Sun4m
@@ -93,11 +95,14 @@ powerattach(parent, self, aux)
 
 	power_reg = mapdev(ra->ra_reg, 0, 0, sizeof(long), ca->ca_bustype);
 
+	power_attached = 1;
+
 	printf("\n");
 }
 
 void
 powerdown()
 {
-	*POWER_REG |= POWER_OFF;
+	if (power_attached)
+		*POWER_REG |= POWER_OFF;
 }
