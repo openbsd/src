@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.32 2005/03/05 05:58:39 jfb Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.33 2005/03/05 18:25:30 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -109,6 +109,7 @@ struct rcs_foo {
 #define RCS_TOKLEN(rfp)   ((struct rcs_pdata *)rfp->rf_pdata)->rp_blen
 
 
+#ifdef notyet
 static struct rcs_kfl {
 	char  rk_char;
 	int   rk_val;
@@ -119,6 +120,7 @@ static struct rcs_kfl {
 	{ 'o',   RCS_KWEXP_OLD  },
 	{ 'b',   RCS_KWEXP_NONE },
 };
+#endif
 
 static struct rcs_key {
 	char  rk_str[16];
@@ -145,6 +147,26 @@ static struct rcs_key {
 };
 
 #define RCS_NKEYS   (sizeof(rcs_keys)/sizeof(rcs_keys[0]))
+
+#ifdef notyet
+/*
+ * Keyword expansion table
+ */
+static struct rcs_kw {
+	char  kw_str[16];
+} rcs_expkw[] = {
+	{ "Author"    },
+	{ "Date"      },
+	{ "Header"    },
+	{ "Id"        },
+	{ "Log"       },
+	{ "Name"      },
+	{ "RCSfile"   },
+	{ "Revision"  },
+	{ "Source"    },
+	{ "State"     }
+};
+#endif
 
 static const char *rcs_errstrs[] = {
 	"No error",
@@ -677,6 +699,38 @@ rcs_desc_set(RCSFILE *file, const char *desc)
 	return (0);
 }
 
+/*
+ * rcs_comment_get()
+ *
+ * Retrieve the comment leader for the RCS file <file>.
+ */
+const char*
+rcs_comment_get(RCSFILE *file)
+{
+	return (file->rf_comment);
+}
+
+/*
+ * rcs_comment_set()
+ *
+ * Set the comment leader for the RCS file <file>.
+ * Returns 0 on success, or -1 on failure.
+ */
+int
+rcs_comment_set(RCSFILE *file, const char *comment)
+{
+	char *tmp;
+
+	if ((tmp = strdup(comment)) == NULL)
+		return (-1);
+
+	if (file->rf_comment != NULL)
+		free(file->rf_comment);
+	file->rf_comment = tmp;
+	file->rf_flags &= ~RCS_SYNCED;
+
+	return (0);
+}
 
 /*
  * rcs_patch()
