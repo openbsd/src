@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.1 2004/02/10 14:18:14 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.2 2004/02/10 14:30:43 drahn Exp $ */
 
 /*
  * Copyright (c) 2002,2004 Dale Rahn
@@ -178,8 +178,6 @@ static long reloc_target_bitmask[] = {
 #define RELOC_VALUE_BITMASK(t)	(reloc_target_bitmask[t])
 
 void _dl_reloc_plt(Elf_Addr *where, Elf_Addr value);
-
-#define R_TYPE(x) R_X86_64_ ## x
 
 int
 _dl_md_reloc(elf_object_t *object, int rel, int relsz)
