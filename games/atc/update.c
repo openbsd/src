@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.6 2003/04/06 18:50:36 deraadt Exp $	*/
+/*	$OpenBSD: update.c,v 1.7 2003/04/08 18:09:28 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -49,7 +49,7 @@
 #if 0
 static char sccsid[] = "@(#)update.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: update.c,v 1.6 2003/04/06 18:50:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: update.c,v 1.7 2003/04/08 18:09:28 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -240,7 +240,7 @@ command(pp)
 		(void)snprintf(bp, buf + sizeof buf - bp,
 			"Holding @ A%d", pp->orig_no);
 	else if (pp->new_dir >= MAXDIR || pp->new_dir < 0)
-		strcpy(bp, "Circle");
+		strlcpy(bp, "Circle", buf + sizeof buf - bp);
 	else if (pp->new_dir != pp->dir)
 		(void)snprintf(bp, buf + sizeof buf - bp,
 			"%d", dir_deg(pp->new_dir));
@@ -253,7 +253,7 @@ command(pp)
 	bp = strchr(buf, '\0');
 	if (*comm_start == '\0' && 
 	    (pp->status == S_UNMARKED || pp->status == S_IGNORED))
-		strcpy(bp, "---------");
+		strlcpy(bp, "---------", buf + sizeof buf - bp);
 	return (buf);
 }
 

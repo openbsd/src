@@ -1,4 +1,4 @@
-/*	$OpenBSD: tetris.c,v 1.16 2003/04/06 18:50:38 deraadt Exp $	*/
+/*	$OpenBSD: tetris.c,v 1.17 2003/04/08 18:09:28 deraadt Exp $	*/
 /*	$NetBSD: tetris.c,v 1.2 1995/04/22 07:42:47 cgd Exp $	*/
 
 /*-
@@ -203,7 +203,7 @@ main(argc, argv)
 				errx(1, "duplicate command keys specified.");
 		}
 		if (keys[i] == ' ')
-			strcpy(key_write[i], "<space>");
+			strlcpy(key_write[i], "<space>", sizeof key_write[i]);
 		else {
 			key_write[i][0] = keys[i];
 			key_write[i][1] = '\0';
