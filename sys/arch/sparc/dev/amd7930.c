@@ -1,4 +1,4 @@
-/*	$OpenBSD: amd7930.c,v 1.23 2003/05/11 19:41:12 deraadt Exp $	*/
+/*	$OpenBSD: amd7930.c,v 1.24 2003/06/28 18:12:31 jason Exp $	*/
 /*	$NetBSD: amd7930.c,v 1.37 1998/03/30 14:23:40 pk Exp $	*/
 
 /*
@@ -46,6 +46,7 @@
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
+#include <dev/mulaw.h>
 
 #include <dev/ic/am7930reg.h>
 #include <sparc/dev/amd7930var.h>
@@ -387,12 +388,25 @@ amd7930_set_params(addr, setmode, usemode, p, r)
 	struct audio_params *p, *r;
 {
 	if (p->sample_rate < 7500 || p->sample_rate > 8500 ||
-	    p->encoding != AUDIO_ENCODING_ULAW ||
-	    p->precision != 8 ||
-	    p->channels != 1) 
+	    p->precision != 8 || p->channels != 1) 
 		return (EINVAL);
-	p->sample_rate = 8000;	/* no other rates supported by amd chip */     
 
+	switch (p->encoding) {
+	case AUDIO_ENCODING_ULAW:
+		break;
+	case AUDIO_ENCODING_SLINEAR:
+		p->sw_code = slinear8_to_mulaw;
+		r->sw_code = mulaw_to_slinear8;
+		break;
+	case AUDIO_ENCODING_ULINEAR:
+		p->sw_code = ulinear8_to_mulaw;
+		r->sw_code = mulaw_to_ulinear8;
+		break;
+	default:
+		return (EINVAL);
+	}
+
+	p->sample_rate = 8000;	/* no other rates supported by amd chip */     
 	return (0);
 }  
 
@@ -407,6 +421,18 @@ amd7930_query_encoding(addr, fp)
 		fp->encoding = AUDIO_ENCODING_ULAW;
 		fp->precision = 8;
 		fp->flags = 0;
+		break;
+	case 1:
+		strlcpy(fp->name, AudioEslinear, sizeof fp->name);
+		fp->encoding = AUDIO_ENCODING_SLINEAR;
+		fp->precision = 8;
+		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
+		break;
+	case 2:
+		strlcpy(fp->name, AudioEulinear, sizeof fp->name);
+		fp->encoding = AUDIO_ENCODING_ULINEAR;
+		fp->precision = 8;
+		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	default:
 		return (EINVAL);
