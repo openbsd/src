@@ -1290,7 +1290,9 @@
 ./usr/share/man/cat4/sparc/audioamd.0
 ./usr/share/man/cat4/sparc/audiocs.0
 ./usr/share/man/cat4/sparc/autoconf.0
+./usr/share/man/cat4/sparc/auxreg.0
 ./usr/share/man/cat4/sparc/be.0
+./usr/share/man/cat4/sparc/bpp.0
 ./usr/share/man/cat4/sparc/btcham.0
 ./usr/share/man/cat4/sparc/bwtwo.0
 ./usr/share/man/cat4/sparc/cgeight.0
@@ -1343,6 +1345,7 @@
 ./usr/share/man/cat4/sparc64/audioce.0
 ./usr/share/man/cat4/sparc64/audiocs.0
 ./usr/share/man/cat4/sparc64/autoconf.0
+./usr/share/man/cat4/sparc64/auxio.0
 ./usr/share/man/cat4/sparc64/be.0
 ./usr/share/man/cat4/sparc64/beeper.0
 ./usr/share/man/cat4/sparc64/bwtwo.0
