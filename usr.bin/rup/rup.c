@@ -1,4 +1,4 @@
-/*	$OpenBSD: rup.c,v 1.10 1999/02/09 13:32:03 deraadt Exp $	*/
+/*	$OpenBSD: rup.c,v 1.11 1999/08/16 23:48:57 aaron Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rup.c,v 1.10 1999/02/09 13:32:03 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rup.c,v 1.11 1999/08/16 23:48:57 aaron Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -53,7 +53,7 @@ static char rcsid[] = "$OpenBSD: rup.c,v 1.10 1999/02/09 13:32:03 deraadt Exp $"
 #undef FSCALE
 #include <rpcsvc/rstat.h>
 
-#define HOST_WIDTH 24
+#define HOST_WIDTH 27
 
 int printtime;			/* print the remote host(s)'s time */
 
@@ -197,7 +197,7 @@ print_rup_data(host, host_stat)
 	char hours_buf[16];
 
 	if (printtime)
-		printf("%-*.*s", HOST_WIDTH-3, HOST_WIDTH-3, host);
+		printf("%-*.*s", HOST_WIDTH-8, HOST_WIDTH-8, host);
 	else
 		printf("%-*.*s", HOST_WIDTH, HOST_WIDTH, host);
 
