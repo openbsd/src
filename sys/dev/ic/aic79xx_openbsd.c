@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.1 2004/05/20 03:11:45 marco Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.2 2004/05/20 04:35:47 marco Exp $	*/
 /*
  * Bus independent OpenBSD shim for the aic79xx based Adaptec SCSI controllers
  *
@@ -29,8 +29,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id: aic79xx_openbsd.c,v 1.1 2004/05/20 03:11:45 marco Exp $
  *
  * Additional copyrights by:
  * Milos Urbanek

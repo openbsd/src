@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahd_pci.c,v 1.1 2004/05/20 03:09:34 marco Exp $	*/
+/*	$OpenBSD: ahd_pci.c,v 1.2 2004/05/20 04:36:19 marco Exp $	*/
 /*
  * Product specific probe and attach routines for:
  *	aic7901 and aic7902 SCSI controllers
@@ -38,8 +38,6 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
- *
- * $Id: ahd_pci.c,v 1.1 2004/05/20 03:09:34 marco Exp $
  *
  * Additional copyrights by:
  * Milos Urbanek

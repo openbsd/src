@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.h,v 1.1 2004/05/20 03:11:45 marco Exp $	*/
+/*	$OpenBSD: aic79xx.h,v 1.2 2004/05/20 04:35:47 marco Exp $	*/
 /*
  * Core definitions and data structures shareable across OS platforms.
  *
@@ -37,8 +37,6 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
- *
- * $Id: aic79xx.h,v 1.1 2004/05/20 03:11:45 marco Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic79xx.h,v 1.18 2004/02/04 16:38:38 gibbs Exp $
  *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.h,v 1.1 2004/05/20 03:11:45 marco Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.h,v 1.2 2004/05/20 04:35:47 marco Exp $	*/
 /*
  * FreeBSD platform specific driver option settings, data structures,
  * function declarations and includes.
@@ -30,8 +30,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id: aic79xx_openbsd.h,v 1.1 2004/05/20 03:11:45 marco Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic79xx_osm.h,v 1.13 2003/12/17 00:02:09 gibbs Exp $
  *
