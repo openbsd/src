@@ -1,4 +1,4 @@
-/*	$OpenBSD: makedbm.c,v 1.6 1997/01/17 07:14:32 millert Exp $ */
+/*	$OpenBSD: makedbm.c,v 1.7 1997/04/04 18:41:46 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: makedbm.c,v 1.6 1997/01/17 07:14:32 millert Exp $";
+static char rcsid[] = "$OpenBSD: makedbm.c,v 1.7 1997/04/04 18:41:46 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -185,7 +185,7 @@ create_database(infile,database,
 	char	*p,*k,*v;
 	char	*slash;
 	DBM	*new_db;
-	static	char mapname[] = "ypdbXXXXXX";
+	static	char mapname[] = "ypdbXXXXXXXXXX";
 	char	db_mapname[MAXPATHLEN],db_outfile[MAXPATHLEN],
 		db_tempname[MAXPATHLEN];
 	char	empty_str[] = "";

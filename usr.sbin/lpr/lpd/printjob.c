@@ -1,4 +1,4 @@
-/*	$OpenBSD: printjob.c,v 1.10 1996/11/03 23:24:10 millert Exp $ */
+/*	$OpenBSD: printjob.c,v 1.11 1997/04/04 18:41:44 deraadt Exp $ */
 /*	$NetBSD: printjob.c,v 1.9.4.3 1996/07/12 22:31:39 jtc Exp $	*/
 
 /*
@@ -111,7 +111,7 @@ static char	length[10] = "-l";	/* page length in lines */
 static char	logname[32];		/* user's login name */
 static char	pxlength[10] = "-y";	/* page length in pixels */
 static char	pxwidth[10] = "-x";	/* page width in pixels */
-static char	tempfile[] = "errsXXXXXX"; /* file name for filter output */
+static char	tempfile[] = "errsXXXXXXXXXX"; /* file name for filter output */
 static char	width[10] = "-w";	/* page width in static characters */
 
 static void       abortpr __P((int));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.6 1997/01/14 04:47:08 tholo Exp $	*/
+/*	$OpenBSD: main.c,v 1.7 1997/04/04 18:41:38 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/03/19 03:21:38 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	5.5 (Berkeley) 5/24/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.6 1997/01/14 04:47:08 tholo Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.7 1997/04/04 18:41:38 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -66,7 +66,7 @@ char vflag;
 char *symbol_prefix;
 char *file_prefix = "y";
 char *myname = "yacc";
-char *temp_form = "yacc.XXXXXXX";
+char *temp_form = "yacc.XXXXXXXXXX";
 
 int lineno;
 int outline;
