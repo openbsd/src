@@ -2029,6 +2029,7 @@
 ./usr/share/man/cat8/kadmin.0
 ./usr/share/man/cat8/kadmind.0
 ./usr/share/man/cat8/kdc.0
+./usr/share/man/cat8/kerberos.0
 ./usr/share/man/cat8/kgmon.0
 ./usr/share/man/cat8/kpasswdd.0
 ./usr/share/man/cat8/ktutil.0
