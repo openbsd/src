@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.h,v 1.3 1999/05/30 02:47:13 pjanzen Exp $	*/
+/*	$OpenBSD: server.h,v 1.4 1999/08/30 23:38:11 d Exp $	*/
 /*	$NetBSD: hunt.h,v 1.5 1998/09/13 15:27:28 hubertf Exp $	*/
 
 /*
@@ -167,7 +167,7 @@ struct spawn {
 	int		fd;
 	int		state;
 	struct sockaddr source;
-	int 		sourcelen;
+	socklen_t	sourcelen;
 	u_int32_t	uid;
 	char		name[NAMELEN+1];
 	u_int8_t	team;
