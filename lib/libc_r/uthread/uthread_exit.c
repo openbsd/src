@@ -77,8 +77,8 @@ void _exit(int status)
 }
 
 /*
- * avoid using sprintf and append a small integer
- * onto a string.
+ * Append a small number onto the end of a string.
+ * This avoids the need to use sprintf, which is unsafe sometimes.
  */
 static void
 numlcat(char *s, int num, size_t size)

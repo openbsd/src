@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
  *
- * $OpenBSD: pthread.h,v 1.2 1998/11/09 03:13:14 d Exp $
+ * $OpenBSD: pthread.h,v 1.3 1998/12/10 00:40:19 d Exp $
  *
  */
 #ifndef _PTHREAD_H_
@@ -169,10 +169,15 @@ struct pthread_once {
 #endif
 
 enum pthread_mutextype {
-	MUTEX_TYPE_FAST			= 1,
-	MUTEX_TYPE_COUNTING_FAST	= 2,	/* Recursive */
+	PTHREAD_MUTEX_DEFAULT		= 1,
+	PTHREAD_MUTEX_RECURSIVE		= 2,
+	PTHREAD_MUTEX_NORMAL		= 3,
+	PTHREAD_MUTEX_ERRORCHECK	= 4,
 	MUTEX_TYPE_MAX
 };
+
+#define MUTEX_TYPE_FAST			PTHREAD_MUTEX_DEFAULT
+#define MUTEX_TYPE_COUNTING_FAST	PTHREAD_MUTEX_RECURSIVE
 
 /*
  * Thread function prototype definitions:
@@ -238,6 +243,7 @@ int		pthread_mutexattr_setprotocol __P((pthread_mutexattr_t *,
 			int protocol));
 int		pthread_mutexattr_setpshared __P((pthread_mutexattr_t *,
 			int pshared));
+int		pthread_mutexattr_settype __P((pthread_mutexattr_t *, int));
 int		pthread_mutex_destroy __P((pthread_mutex_t *));
 int		pthread_mutex_getprioceiling __P((pthread_mutex_t *));
 int		pthread_mutex_init __P((pthread_mutex_t *,
@@ -310,8 +316,6 @@ int		pthread_attr_setguardsize __P((const pthread_attr_t *,
 int		pthread_getconcurrency __P((void));
 int		pthread_mutexattr_gettype __P((const pthread_mutexattr_t *,
 			int *));
-int		pthread_mutexattr_settype __P((const pthread_mutexattr_t *,
-			int));
 int		pthread_setconcurrency __P((int));
 
 #endif	/* susv2 */
