@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.17 1997/07/14 00:34:27 angelos Exp $	*/
+/*	$OpenBSD: route.c,v 1.18 1997/07/23 04:38:34 denny Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.17 1997/07/14 00:34:27 angelos Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.18 1997/07/23 04:38:34 denny Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,8 @@ static char *rcsid = "$OpenBSD: route.c,v 1.17 1997/07/14 00:34:27 angelos Exp $
 #include <netns/ns.h>
 
 #include <netipx/ipx.h>
+
+#include <netatalk/at.h>
 
 #include <sys/sysctl.h>
 
@@ -194,6 +196,9 @@ pr_family(af)
 		break;
 	case AF_ENCAP:
 		afname = "Encap";
+		break;
+	case AF_APPLETALK:
+		afname = "AppleTalk";
 		break;
 	default:
 		afname = NULL;
@@ -451,6 +456,12 @@ p_sockaddr(sa, flags, width)
 		break;
 	    }
 
+	case AF_APPLETALK:
+	    {
+		/* XXX could do better */
+		cp = atalk_print(sa,11);
+		break;
+	    }
 	default:
 	    {
 		register u_char *s = (u_char *)sa->sa_data, *slim;

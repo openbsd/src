@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.14 1997/06/30 03:11:53 millert Exp $	*/
+/*	$OpenBSD: if.c,v 1.15 1997/07/23 04:38:33 denny Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-static char *rcsid = "$OpenBSD: if.c,v 1.14 1997/06/30 03:11:53 millert Exp $";
+static char *rcsid = "$OpenBSD: if.c,v 1.15 1997/07/23 04:38:33 denny Exp $";
 #endif
 #endif /* not lint */
 
@@ -207,6 +207,10 @@ intpr(interval, ifnetaddr)
 				printf("%-17s ",
 				    ipx_phost((struct sockaddr *)sipx));
 				}
+				break;
+			case AF_APPLETALK:
+				printf("atlk:%-12s",atalk_print(sa,0x10) );
+				printf("%-12s ",atalk_print(sa,0x0b) );
 				break;
 			case AF_NS:
 				{
