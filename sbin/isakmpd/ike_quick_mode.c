@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.24 2000/01/26 15:22:02 niklas Exp $	*/
-/*	$EOM: ike_quick_mode.c,v 1.106 2000/01/24 22:55:46 angelos Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.25 2000/01/30 20:52:20 niklas Exp $	*/
+/*	$EOM: ike_quick_mode.c,v 1.107 2000/01/30 20:17:47 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -107,8 +107,8 @@ static int
 check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 {
   char *return_values[RETVALUES_NUM];
+  char *principal = NULL, *princ2;
   struct keynote_deckey dc;
-  char *principal = NULL;
   int result;
   RSA *key;
 
@@ -156,8 +156,26 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
       if (LKV (keynote_errno) == ERROR_MEMORY)
 	log_fatal ("check_policy: failed to get memory for public key");
       if (principal == NULL)
-	return 0;
+	{
+	  log_print ("check_policy: failed to allocate memory for principal");
+	  LC (RSA_free, (key));
+	  return 0;
+	}
+      princ2 = calloc(strlen(principal) + strlen("rsa-hex:") + 1, sizeof(char));
+      if (princ2 == NULL)
+	{
+	  log_print ("check_policy: failed to allocate memory for principal");
+	  free(principal);
+	  LC (RSA_free, (key));
+	  return 0;
+	}
+
+      strcpy(princ2, "rsa-hex:");
+      strcpy(princ2 + strlen("rsa-hex:"), principal);
+      free(principal);
       LC (RSA_free, (key));
+      principal = princ2;
+      princ2 = NULL;
       break;
 	
     /* XXX Eventually handle these.  */
