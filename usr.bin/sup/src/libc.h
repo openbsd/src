@@ -1,4 +1,4 @@
-/*	$OpenBSD: libc.h,v 1.3 1997/04/01 07:35:06 todd Exp $	*/
+/*	$OpenBSD: libc.h,v 1.4 2001/04/29 21:42:41 millert Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -61,9 +61,9 @@
 #include <stdio.h>
 #endif	/* FILE */
 
-#ifndef	_STRINGS_H_
-#include <strings.h>
-#endif	/* _STRINGS_H_ */
+#ifndef	_STRING_H_
+#include <string.h>
+#endif	/* _STRING_H_ */
 
 #ifndef	_TIME_H_
 #include <time.h>
