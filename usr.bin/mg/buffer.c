@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.5 2001/01/29 01:58:06 niklas Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.6 2001/05/04 21:47:41 art Exp $	*/
 
 /*
  *		Buffer handling.
@@ -214,7 +214,7 @@ makelist()
 	RSIZE   nbytes;
 	BUFFER *blp;
 	char    b[6 + 1];
-	char    line[128];
+	char    line[NBUFN+128];
 
 	if ((blp = bfind("*Buffer List*", TRUE)) == NULL)
 		return NULL;
