@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_subr.c,v 1.26 2004/01/23 03:48:42 deraadt Exp $	*/
+/*	$OpenBSD: auth_subr.c,v 1.27 2004/08/03 19:43:31 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996,1997 Berkeley Software Design, Inc.
@@ -92,6 +92,8 @@ struct auth_session_t {
 	char	spool[MAXSPOOLSIZE];	/* data returned from login script */
 	int	index;			/* how much returned thus far */
 
+	int	fd;			/* connection to authenticator */
+
 	va_list	ap0;			/* argument list to auth_call */
 	va_list	ap;			/* additional arguments to auth_call */
 };
@@ -111,6 +113,7 @@ struct auth_session_t {
  */
 static void _add_rmlist(auth_session_t *, char *);
 static void _auth_spool(auth_session_t *, int);
+static void _recv_fd(auth_session_t *, int);
 static char *_auth_next_arg(auth_session_t *);
 /*
  * Set up a known environment for all authentication scripts.
@@ -151,6 +154,7 @@ auth_open(void)
 	if ((as = malloc(sizeof(auth_session_t))) != NULL) {
 		memset(as, 0, sizeof(*as));
 		as->service = defservice;
+		as->fd = -1;
 	}
 
 	return (as);
@@ -163,7 +167,6 @@ void
 auth_clean(auth_session_t *as)
 {
 	struct rmfiles *rm;
-	struct authopts *opt;
 	struct authdata *data;
 
 	as->state = 0;
@@ -195,6 +198,11 @@ auth_clean(auth_session_t *as)
 		memset(as->pwd->pw_passwd, 0, strlen(as->pwd->pw_passwd));
 		free(as->pwd);
 		as->pwd = NULL;
+	}
+
+	if (as->fd != -1) {
+		close(as->fd);
+		as->fd = -1;
 	}
 }
 
@@ -772,6 +780,10 @@ auth_call(auth_session_t *as, char *path, ...)
 	if ((argv[argc] = _auth_next_arg(as)) != NULL)
 		++argc;
 
+	if (as->fd != -1) {
+		argv[argc++] = "-v";
+		argv[argc++] = "fd=4";		/* AUTH_FD, see below */
+	}
 	for (opt = as->optlist; opt != NULL; opt = opt->next) {
 		if (argc < Nargc - 2) {
 			argv[argc++] = "-v";
@@ -820,19 +832,24 @@ auth_call(auth_session_t *as, char *path, ...)
 		goto fail;
 	case 0:
 #define	COMM_FD	3
-		close(pfd[0]);
-		if (pfd[1] != COMM_FD) {
-			if (dup2(pfd[1], COMM_FD) < 0)
-				err(1, "dup of backchannel");
-			close(pfd[1]);
-		}
-
-		closefrom(COMM_FD + 1);
+#define	AUTH_FD	4
+		if (dup2(pfd[1], COMM_FD) < 0)
+			err(1, "dup of backchannel");
+		if (as->fd != -1) {
+			if (dup2(as->fd, AUTH_FD) < 0)
+				err(1, "dup of auth fd");
+			closefrom(AUTH_FD + 1);
+		} else
+			closefrom(COMM_FD + 1);
 		execve(path, argv, auth_environ);
 		syslog(LOG_ERR, "%s: %m", path);
 		err(1, "%s", path);
 	default:
 		close(pfd[1]);
+		if (as->fd != -1) {
+			close(as->fd);		/* so child has only ref */
+			as->fd = -1;
+		}
 		while ((data = as->data) != NULL) {
 			as->data = data->next;
 			if (data->len > 0) {
@@ -940,12 +957,48 @@ fail:
 }
 
 static void
+_recv_fd(auth_session_t *as, int fd)
+{
+	struct msghdr msg;
+	struct cmsghdr *cmp;
+	char cmsgbuf[CMSG_LEN(sizeof(int))];
+
+	memset(&msg, 0, sizeof(msg));
+	msg.msg_control = cmsgbuf;
+	msg.msg_controllen = sizeof(cmsgbuf);
+	if (recvmsg(fd, &msg, 0) < 0)
+		syslog(LOG_ERR, "recvmsg: %m");
+	else if (msg.msg_flags & MSG_TRUNC)
+		syslog(LOG_ERR, "message truncated");
+	else if (msg.msg_flags & MSG_CTRUNC)
+		syslog(LOG_ERR, "control message truncated");
+	else if ((cmp = CMSG_FIRSTHDR(&msg)) == NULL)
+		syslog(LOG_ERR, "missing control message");
+	else {
+		if (cmp->cmsg_level != SOL_SOCKET)
+			syslog(LOG_ERR, "unexpected cmsg_level %d",
+			    cmp->cmsg_level);
+		else if (cmp->cmsg_type != SCM_RIGHTS)
+			syslog(LOG_ERR, "unexpected cmsg_type %d",
+			    cmp->cmsg_type);
+		else if (cmp->cmsg_len != sizeof(cmsgbuf))
+			syslog(LOG_ERR, "bad cmsg_len %d",
+			    cmp->cmsg_len);
+		else {
+			if (as->fd != -1)
+				close(as->fd);
+			as->fd = *(int *)CMSG_DATA(cmp);
+		}
+	}
+}
+
+static void
 _auth_spool(auth_session_t *as, int fd)
 {
-	int r;
-	char *b;
+	ssize_t r;
+	char *b, *s;
 
-	while (as->index < sizeof(as->spool) - 1) {
+	for (s = as->spool + as->index; as->index < sizeof(as->spool) - 1; ) {
 		r = read(fd, as->spool + as->index,
 		    sizeof(as->spool) - as->index);
 		if (r <= 0) {
@@ -955,12 +1008,19 @@ _auth_spool(auth_session_t *as, int fd)
 		b = as->spool + as->index;
 		as->index += r;
 		/*
-		 * Go ahead and convert newlines into NULs to allow
-		 * easy scanning of the file.
+		 * Convert newlines into NULs to allow easy scanning of the
+		 * file and receive an fd if there is a BI_FDPASS message.
+		 * XXX - checking for BI_FDPASS here is annoying but
+		 *       we need to avoid the read() slurping in control data.
 		 */
-		while (r-- > 0)
-			if (*b++ == '\n')
+		while (r-- > 0) {
+			if (*b++ == '\n') {
 				b[-1] = '\0';
+				if (strcasecmp(s, BI_FDPASS) == 0)
+					_recv_fd(as, fd);
+				s = b;
+			}
+		}
 	}
 
 	syslog(LOG_ERR, "Overflowed backchannel spool buffer");

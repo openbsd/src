@@ -1,4 +1,4 @@
-.\"	$OpenBSD: auth_subr.3,v 1.14 2004/01/10 23:31:32 millert Exp $
+.\"	$OpenBSD: auth_subr.3,v 1.15 2004/08/03 19:43:31 millert Exp $
 .\"
 .\" Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -241,6 +241,24 @@ If the login script exits with a 0 and does not specify any return state
 on the back channel, the state prior to the call to
 .Fn auth_call
 is retained.
+.Pp
+The back channel data may also contain a file descriptor passed back
+from the login script.
+If this is the case, the login script will first send back the string
+.Dq fd
+to indidate that a file descriptor will be the next data item.
+The file descriptor will be passed back to the next invocation of
+the login script with a number specified by the
+.Fl v Ar fd
+option.
+This is used to implement stateful challenge/response schemes that require
+a persistent connection during the challenge and response.
+The copy of the descriptor in the parent process is closed when the
+child is running to prevent deadlock when file locking is used.
+The descriptor is also closed by a call to
+.Fn auth_close
+or
+.Fn auth_clean .
 .Pp
 The data read from the back channel is also used by the
 .Fn auth_getvalue
