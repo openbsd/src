@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_isasubr.c,v 1.9 1999/07/26 05:43:16 deraadt Exp $	*/
+/*	$OpenBSD: i82365_isasubr.c,v 1.10 1999/08/11 12:02:07 niklas Exp $	*/
 /*	$NetBSD: i82365_isasubr.c,v 1.1 1998/06/07 18:28:31 sommerfe Exp $  */
 
 /*
@@ -76,6 +76,15 @@
 int	pcic_isa_alloc_iobase = PCIC_ISA_ALLOC_IOBASE;
 int	pcic_isa_alloc_iosize = PCIC_ISA_ALLOC_IOSIZE;
 
+/*
+ * I am well aware that some of later irqs below are not for real, but there
+ * is a way to deal with that in the search loop.  For beauty's sake I want
+ * this list to be a permutation of 0..15.
+ */
+char	pcic_isa_intr_list[] = {
+	3, 4, 14, 9, 5, 12, 10, 11, 15, 13, 7, 1, 6, 2, 0, 8
+};
+
 struct pcic_ranges pcic_isa_addr[] = {
 	{ 0x340, 0x040 },
 	{ 0x300, 0x030 },
@@ -84,17 +93,6 @@ struct pcic_ranges pcic_isa_addr[] = {
 	{ 0, 0 },		/* terminator */
 };
 
-/*
- * Default IRQ allocation bitmask.  This defines the range of allowable
- * IRQs for PCMCIA slots.  Useful if order of probing would screw up other
- * devices, or if PCIC hardware/cards have trouble with certain interrupt
- * lines.
- */
-char	pcic_isa_intr_list[] = {
-	3, 4, 14, 9, 5, 12, 10, 11, 15, 13, 7
-};
-int	npcic_isa_intr_list =
-	sizeof(pcic_isa_intr_list) / sizeof(pcic_isa_intr_list[0]);
 
 /*****************************************************************************
  * End of configurable parameters.
@@ -107,7 +105,10 @@ int	pcicsubr_debug = 1 /* XXX */ ;
 #define	DPRINTF(arg)
 #endif
 
-void pcic_isa_bus_width_probe (sc, iot, ioh, base, length)
+static int pcic_intr_seen;
+
+void
+pcic_isa_bus_width_probe(sc, iot, ioh, base, length)
 	struct pcic_softc *sc;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
@@ -190,11 +191,10 @@ pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
 	int (*fct) __P((void *));
 	void *arg;
 {
-	struct pcic_handle *h = (struct pcic_handle *) pch;
+	struct pcic_handle *h = (struct pcic_handle *)pch;
 	isa_chipset_tag_t ic = h->sc->intr_est;
 	int irq, ist;
 	void *ih;
-	int i, reg;
 
 	if (pf->cfe->flags & PCMCIA_CFE_IRQLEVEL)
 		ist = IST_LEVEL;
@@ -203,26 +203,19 @@ pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
 	else
 		ist = IST_LEVEL;
 
-	for (i = 0; i < npcic_isa_intr_list; i++)
-		if (isa_intr_check(ic, pcic_isa_intr_list[i], ist) == 2)
-			goto found;
-	for (i = 0; i < npcic_isa_intr_list; i++)
-		if (isa_intr_check(ic, pcic_isa_intr_list[i], ist) == 1)
-			goto found;
-	return (NULL);
-
-found:
-	irq = pcic_isa_intr_list[i];
-	if ((ih = isa_intr_establish(ic, irq, ist, ipl,
-	    fct, arg, h->pcmcia->dv_xname)) == NULL)
+	irq = pcic_intr_find(h->sc, ist);
+	if (!irq)
 		return (NULL);
 
-	reg = pcic_read(h, PCIC_INTR);
-	reg &= ~PCIC_INTR_IRQ_MASK;
-	reg |= irq;
-	pcic_write(h, PCIC_INTR, reg);
+	ih = isa_intr_establish(ic, irq, ist, ipl, fct, arg,
+	    h->pcmcia->dv_xname);
+	if (!ih)
+		return (NULL);
 
 	h->ih_irq = irq;
+	pcic_write(h, PCIC_INTR,
+	    (pcic_read(h, PCIC_INTR) & ~PCIC_INTR_IRQ_MASK) | irq);
+
 	printf(" irq %d", irq);
 	return (ih);
 }
@@ -243,4 +236,111 @@ pcic_isa_chip_intr_disestablish(pch, ih)
 	pcic_write(h, PCIC_INTR, reg);
 
 	isa_intr_disestablish(ic, ih);
+}
+
+int
+pcic_intr_probe(v)
+	void *v;
+{
+	pcic_intr_seen = 1;
+	return (1);
+}
+
+/*
+ * Try to find a working interrupt, first by searching for a unique
+ * irq that is known to work, verified by tickling the pcic, then
+ * by searching for a shareable irq known to work.  If the pcic does
+ * not allow tickling we then fallback to the same strategy but without
+ * tickling just assuming the first usable irq found works.
+ */
+int
+pcic_intr_find(sc, ist)
+	struct pcic_softc *sc;
+	int ist;
+{
+	struct pcic_handle *ph = &sc->handle[0];
+	isa_chipset_tag_t ic = sc->intr_est;
+	int i, tickle, check, irq, chosen_irq = 0;
+	void *ih;
+	u_int8_t saved_csc_intr;
+
+	/*
+	 * First time, look for entirely free interrupts, last
+	 * time accept shareable ones.
+	 */
+	for (tickle = 1; tickle >= 0; tickle--) {
+		if (tickle)
+			/*
+			 * Remember card status change interrupt
+			 * configuration.
+			 */
+			saved_csc_intr = pcic_read(ph, PCIC_CSC_INTR);
+
+		for (check = 2; check; check--) {
+
+			/* Walk over all possible interrupts. */
+			for (i = 0; i < 16; i++) {
+				irq = pcic_isa_intr_list[i];
+
+				if (((1 << irq) &
+				     PCIC_CSC_INTR_IRQ_VALIDMASK) == 0)
+					continue;
+
+				if (isa_intr_check(ic, irq, ist) < check)
+					continue;
+
+				if (!tickle) {
+					chosen_irq = irq;
+					goto out;
+				}
+
+				/*
+				 * Prepare for an interrupt tickle.
+				 * As this can be called from an
+				 * IPL_TTY context (the card status
+				 * change interrupt) we need to do
+				 * higher.
+				 */
+				ih = isa_intr_establish(ic, irq, ist, IPL_IMP,
+				    pcic_intr_probe, 0, NULL);
+				if (ih == NULL)
+					continue;
+				pcic_intr_seen = 0;
+				pcic_write(ph, PCIC_CSC_INTR,
+				    (saved_csc_intr & ~PCIC_CSC_INTR_IRQ_MASK)
+				    | PCIC_CSC_INTR_CD_ENABLE
+				    | (irq << PCIC_CSC_INTR_IRQ_SHIFT));
+
+				/* Teehee, you tickle me! ;-) */
+				pcic_write(ph, PCIC_CARD_DETECT,
+				    pcic_read(ph, PCIC_CARD_DETECT) |
+				    PCIC_CARD_DETECT_SW_INTR);
+
+				/*
+				 * Delay for 10 ms and then shut the
+				 * probe off.  That should be plenty
+				 * of time for the interrupt to be
+				 * handled.
+				 */
+				delay(10000);
+
+				/* Acknowledge the interrupt. */
+				pcic_read(ph, PCIC_CSC);
+
+				isa_intr_disestablish(ic, ih);
+
+				if (pcic_intr_seen) {
+					chosen_irq = irq;
+					goto out;
+				}
+			}
+
+			if (tickle)
+				/* Restore card detection bit. */
+				pcic_write(ph, PCIC_CSC_INTR, saved_csc_intr);
+		}
+	}
+
+out:
+	return (chosen_irq);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_isavar.h,v 1.2 1998/12/27 00:27:19 deraadt Exp $	*/
+/*	$OpenBSD: i82365_isavar.h,v 1.3 1999/08/11 12:02:07 niklas Exp $	*/
 /*	$NetBSD: i82365_isavar.h,v 1.1 1998/06/07 18:28:31 sommerfe Exp $  */
 
 /*
@@ -46,6 +46,8 @@ void	pcic_isa_chip_intr_disestablish __P((pcmcia_chipset_handle_t, void *));
  * Figure out how wide the ISA bus is...
  */
 
-void pcic_isa_bus_width_probe __P((struct pcic_softc *, bus_space_tag_t,
-				   bus_space_handle_t, bus_addr_t, u_int32_t));
+void	pcic_isa_bus_width_probe __P((struct pcic_softc *, bus_space_tag_t,
+	    bus_space_handle_t, bus_addr_t, u_int32_t));
 
+int	pcic_intr_probe __P((void *));
+int	pcic_intr_find __P((struct pcic_softc *, int));

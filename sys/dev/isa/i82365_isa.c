@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_isa.c,v 1.8 1999/07/26 05:43:16 deraadt Exp $	*/
+/*	$OpenBSD: i82365_isa.c,v 1.9 1999/08/11 12:02:07 niklas Exp $	*/
 /*	$NetBSD: i82365_isa.c,v 1.11 1998/06/09 07:25:00 thorpej Exp $	*/
 
 /*
@@ -151,14 +151,15 @@ pcic_isa_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct pcic_softc *sc = (void *) self;
+	struct pcic_softc *sc = (void *)self;
+	struct pcic_handle *h;
 	struct isa_attach_args *ia = aux;
 	isa_chipset_tag_t ic = ia->ia_ic;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_tag_t memt = ia->ia_memt;
 	bus_space_handle_t ioh;
 	bus_space_handle_t memh;
-	int i;
+	int irq, i;
 
 	/* Map i/o space. */
 	if (bus_space_map(iot, ia->ia_iobase, ia->ia_iosize, 0, &ioh)) {
@@ -176,7 +177,7 @@ pcic_isa_attach(parent, self, aux)
 	sc->subregionmask = (1 << (ia->ia_msize / PCIC_MEM_PAGESIZE)) - 1;
 
 	sc->intr_est = ic;
-	sc->pct = (pcmcia_chipset_tag_t) & pcic_isa_functions;
+	sc->pct = (pcmcia_chipset_tag_t)&pcic_isa_functions;
 
 	sc->iot = iot;
 	sc->ioh = ioh;
@@ -186,38 +187,38 @@ pcic_isa_attach(parent, self, aux)
 	printf("\n");
 
 	pcic_attach(sc);
-	pcic_isa_bus_width_probe (sc, iot, ioh, ia->ia_iobase, ia->ia_iosize);
+	pcic_isa_bus_width_probe(sc, iot, ioh, ia->ia_iobase, ia->ia_iosize);
 	pcic_attach_sockets(sc);
 
 	/*
-	 * We allocate the card event IRQ late because it is more important
-	 * that the cards will get their interrupt than that we get a
-	 * card event interrupt vector that works.
-	 *
 	 * Allocate an irq.  It will be used by both controllers.  I could
 	 * use two different interrupts, but interrupts are relatively
 	 * scarce, shareable, and for PCIC controllers, very infrequent.
 	 */
+	irq = ia->ia_irq;
+	if (irq == IRQUNK)
+		irq = pcic_intr_find(sc, IST_EDGE);
 
-	if ((sc->irq = ia->ia_irq) == IRQUNK) {
-		for (i = 0; i < npcic_isa_intr_list; i++)
-			if (isa_intr_check(ic, pcic_isa_intr_list[i],
-			    IST_EDGE) == 2)
-				goto found;
-		for (i = 0; i < npcic_isa_intr_list; i++)
-			if (isa_intr_check(ic, pcic_isa_intr_list[i],
-			    IST_EDGE) == 1)
-				goto found;
-		printf("%s: no irq\n", sc->dev.dv_xname);
-		return;
-found:
-		sc->irq = pcic_isa_intr_list[i];
+	if (irq) {
+		sc->ih = isa_intr_establish(ic, irq, IST_EDGE, IPL_TTY,
+		    pcic_intr, sc, sc->dev.dv_xname);
+		if (!sc->ih)
+			irq = 0;
 	}
+	sc->irq = irq;
 
-	sc->ih = isa_intr_establish(ic, sc->irq, IST_EDGE, IPL_TTY,
-	    pcic_intr, sc, sc->dev.dv_xname);
-	if (sc->ih)
-		printf("%s: irq %d\n", sc->dev.dv_xname, sc->irq);
-	else
+	if (irq) {
+		printf("%s: irq %d\n", sc->dev.dv_xname, irq);
+
+		/* Set up the pcic to interrupt on card detect. */
+		for (i = 0; i < PCIC_NSLOTS; i++) {
+			h = &sc->handle[i];
+			if (h->flags & PCIC_FLAG_SOCKETP) {
+				pcic_write(h, PCIC_CSC_INTR,
+				    (sc->irq << PCIC_CSC_INTR_IRQ_SHIFT) |
+				    PCIC_CSC_INTR_CD_ENABLE);
+			}
+		}
+	} else
 		printf("%s: no irq\n", sc->dev.dv_xname);
 }
