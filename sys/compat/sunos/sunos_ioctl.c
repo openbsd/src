@@ -429,7 +429,7 @@ sunos_sys_ioctl(p, v, retval)
 
 		return copyin((caddr_t)&x, SCARG(uap, data), sizeof x);
 	    }
-	case _IOR('t', 100, int):	/* sun SUNOS_TIOCSSOFTCAR */
+	case _IOR('t', 100, int):	/* sun SUNOS_TIOCGSOFTCAR */
 	    {
 		int x = 0;
 
