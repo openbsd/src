@@ -954,8 +954,7 @@ parseopts(root)
 	    } else if (!strncmp(buf, "umask=", 6)) {
 		mode_t mode;
 
-		mode = (mode_t)strtol(buf+6, NULL, 8);
-		(void) umask(mode);
+		cvsumask = (mode_t)(strtol(buf+6, NULL, 8) & 0777);
 	    }
 	    else if (!strncmp(buf, "dlimit=", 7)) {
 #ifdef BSD
