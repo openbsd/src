@@ -1,4 +1,4 @@
-$OpenBSD: cpudevs,v 1.22 2002/12/23 21:54:53 mickey Exp $
+$OpenBSD: cpudevs,v 1.23 2003/02/01 00:31:59 miod Exp $
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -269,7 +269,7 @@ board	HP712_120	0x605	712/120 (King Gecko)
 board	HP715_80	0x609	715/80 (Scorpio-L)
 board	HP715_64	0x60A	715/64 (Mirage Jr.)
 board	HP715_100	0x60B	715/100 (Mirage Sr.)
-board	HP715_100XC	0x60C	715/100XC (Mirage Sr.)
+board	HP715_100XC	0x60C	715/100XC (Turnip)
 board	HP725_100	0x60D	725/100 (Electra)
 board	HP725_120	0x60E	725/120 (Electra)
 board	HP715_100L	0x610	715/100L (Scorpio-L)
