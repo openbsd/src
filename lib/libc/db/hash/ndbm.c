@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ndbm.c,v 1.3 1996/08/19 08:20:42 tholo Exp $";
+static char rcsid[] = "$OpenBSD: ndbm.c,v 1.4 1997/02/15 23:44:31 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -64,6 +64,10 @@ dbm_open(file, flags, mode)
 	HASHINFO info;
 	char path[MAXPATHLEN];
 
+	if (strlen(file) + strlen(DBM_SUFFIX) > sizeof(path)-1) {
+		errno = ENAMETOOLONG;
+		return (NULL);
+	}
 	info.bsize = 4096;
 	info.ffactor = 40;
 	info.nelem = 1;
