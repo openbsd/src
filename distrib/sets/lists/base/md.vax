@@ -2065,3 +2065,6 @@
 ./usr/mdec/raboot
 ./usr/mdec/sdboot
 ./usr/mdec/xxboot
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/mpt.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/mpt_mpilib.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/mpt_openbsd.ph

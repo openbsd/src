@@ -2065,3 +2065,6 @@
 ./usr/mdec/netboot
 ./usr/mdec/stboot
 ./usr/mdec/tftpboot
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/mpt.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/mpt_mpilib.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/mpt_openbsd.ph

@@ -2147,3 +2147,6 @@
 ./usr/mdec/ofwboot.net
 ./usr/sbin/eeprom
 ./usr/sbin/wsconscfg
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/mpt.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/ic/mpt_mpilib.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/ic/mpt_openbsd.ph

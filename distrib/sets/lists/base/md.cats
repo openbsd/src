@@ -2192,3 +2192,6 @@
 ./usr/local/libdata/perl5/site_perl/arm-openbsd
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/mpt.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/mpt_mpilib.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/mpt_openbsd.ph

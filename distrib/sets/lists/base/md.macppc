@@ -2180,3 +2180,6 @@
 ./usr/sbin/apmd
 ./usr/sbin/wsconscfg
 ./usr/sbin/zzz
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/mpt.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/mpt_mpilib.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/mpt_openbsd.ph

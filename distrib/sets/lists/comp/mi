@@ -5119,3 +5119,6 @@
 ./usr/share/misc/gprof.flat
 ./usr/share/misc/operator
 ./var/db/libc.tags
+./usr/include/dev/ic/mpt.h
+./usr/include/dev/ic/mpt_mpilib.h
+./usr/include/dev/ic/mpt_openbsd.h

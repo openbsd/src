@@ -1303,6 +1303,7 @@
 ./usr/share/man/cat4/maestro.0
 ./usr/share/man/cat4/midi.0
 ./usr/share/man/cat4/mii.0
+./usr/share/man/cat4/mpt.0
 ./usr/share/man/cat4/mpu.0
 ./usr/share/man/cat4/mtd.0
 ./usr/share/man/cat4/mtdphy.0

@@ -2158,3 +2158,6 @@
 ./usr/mdec/rboot
 ./usr/mdec/sboot
 ./usr/mdec/stboot
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/mpt.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/mpt_mpilib.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/mpt_openbsd.ph
