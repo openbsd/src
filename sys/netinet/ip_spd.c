@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.2 2000/09/20 19:13:18 angelos Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.3 2000/09/27 07:28:24 angelos Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -338,7 +338,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 	    (inp->inp_seclevel[SL_AUTH] == IPSEC_LEVEL_BYPASS))
 	{
 	    /* Direct match */
-	    if (bcmp(&sdst, &ipo->ipo_dst, sizeof(union sockaddr_union)) == 0)
+	    if (bcmp(&sdst, &ipo->ipo_dst, sdst.sa.sa_len) == 0)
 	    {
 		*error = 0;
 		return NULL;
@@ -372,8 +372,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 	/* Check that the cached TDB (if present), is appropriate */
 	if (ipo->ipo_tdb)
 	{
-	    if (bcmp(&sdst, &ipo->ipo_tdb->tdb_dst,
-		     sizeof(union sockaddr_union)))
+	    if (bcmp(&sdst, &ipo->ipo_tdb->tdb_dst, sdst.sa.sa_len))
 	    {
 		TAILQ_REMOVE(&ipo->ipo_tdb->tdb_policy_head, ipo,
 			     ipo_tdb_next);
@@ -440,8 +439,8 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
     else /* IPSP_DIRECTION_IN */
     {
 	/* Check the cached entry */
-	if ((ipo->ipo_tdb) &&
-	    bcmp(&ssrc, &ipo->ipo_tdb->tdb_src, sizeof(union sockaddr_union)))
+	if ((ipo->ipo_tdb) && (ipo->ipo_tdb->tdb_src.sa.sa_family != 0) &&
+	    bcmp(&ssrc, &ipo->ipo_tdb->tdb_src, ssrc.sa.sa_len))
 	{
 	    TAILQ_REMOVE(&ipo->ipo_tdb->tdb_policy_head, ipo, ipo_tdb_next);
 	    ipo->ipo_tdb = NULL;
@@ -606,7 +605,9 @@ ipsp_match_policy(struct tdb *tdb, struct ipsec_policy *ipo,
     }
 
     if (pflag == 0)
-      bcopy(&ipo->ipo_dst, &peer, sizeof(union sockaddr_union));
+    {
+        bcopy(&ipo->ipo_dst, &peer, sizeof(union sockaddr_union));
+    }
     else
     {
 	bzero(&peer, sizeof(union sockaddr_union));
@@ -643,9 +644,38 @@ ipsp_match_policy(struct tdb *tdb, struct ipsec_policy *ipo,
      * Does the packet use the right security protocol and is coming from
      * the right peer ?
      */
-    if ((tdb->tdb_sproto == ipo->ipo_sproto) &&
-	(!bcmp(&tdb->tdb_src, &peer, sizeof(union sockaddr_union))))
-      return 1;
+    if (tdb->tdb_sproto == ipo->ipo_sproto)
+    {
+	if (bcmp(&tdb->tdb_src, &peer, tdb->tdb_src.sa.sa_len))
+	{
+	    switch (tdb->tdb_src.sa.sa_family)
+	    {
+#ifdef INET
+		case AF_INET:
+		    if (tdb->tdb_src.sin.sin_addr.s_addr == INADDR_ANY)
+		      return 1;
+		    else
+		      return 0;
+#endif /* INET */
+
+#ifdef INET6
+		case AF_INET6:
+		    if (IN6_IS_ADDR_UNSPECIFIED(&tdb->tdb_src.sin6.sin6_addr))
+		      return 1;
+		    else
+		      return 0;
+#endif /* INET6 */
+
+		case 0:
+		    return 1;
+
+		default:
+		    return 0;
+	    }
+	}
+	else
+	  return 1;
+    }
 
     return 0;
 }
@@ -773,7 +803,7 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 	 ipa = TAILQ_NEXT(ipa, ipa_next))
     {
 	/* Already in process */
-	if (!bcmp(gw, &ipa->ipa_addr, sizeof(union sockaddr_union)))
+	if (!bcmp(gw, &ipa->ipa_addr, gw->sa.sa_len))
 	  return 0;
     }
 
