@@ -1,4 +1,4 @@
-/*	$OpenBSD: inchr.c,v 1.1 1998/08/22 07:39:55 smurph Exp $ */
+/*	$OpenBSD: inchr.c,v 1.2 2003/09/07 21:35:35 miod Exp $ */
 
 /*
  * bug routines -- assumes that the necessary sections of memory
@@ -8,7 +8,7 @@
 #include <machine/prom.h>
 
 #include "stand.h"
-#include "libbug.h"
+#include "prom.h"
 
 /* returns 0 if no characters ready to read */
 int

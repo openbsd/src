@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskwr.c,v 1.2 2001/07/04 08:09:28 niklas Exp $	*/
+/*	$OpenBSD: diskwr.c,v 1.3 2003/09/07 21:35:35 miod Exp $	*/
 
 /*
  * bug routines -- assumes that the necessary sections of memory
@@ -6,6 +6,7 @@
  */
 #include <sys/types.h>
 #include <machine/prom.h>
+#include "prom.h"
 
 /* returns 0: success, nonzero: error */
 int
