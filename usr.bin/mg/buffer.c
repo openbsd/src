@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.29 2002/06/19 22:05:58 vincent Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.30 2002/07/25 16:40:57 vincent Exp $	*/
 
 /*
  *		Buffer handling.
@@ -357,24 +357,16 @@ addlinef(BUFFER *bp, char *fmt, ...)
 {
 	va_list ap;
 	LINE  *lp;
-	int    ntext;
-	char   dummy[1];
 
+	if ((lp = lalloc(0)) == NULL)
+		return (FALSE);
 	va_start(ap, fmt);
-	ntext = vsnprintf(dummy, 1, fmt, ap);
-	if (ntext == -1) {
+	if (vasprintf(&lp->l_text, fmt, ap) == -1) {
+		lfree(lp);
 		va_end(ap);
-		return FALSE;
+		return (FALSE);
 	}
-	ntext++;
-	if ((lp = lalloc(ntext)) == NULL) {
-		va_end(ap);
-		return FALSE;
-	}
-	va_end(ap);
-	va_start(ap, fmt);
-	vsnprintf(lp->l_text, ntext, fmt, ap);
-	lp->l_used--;
+	lp->l_used = strlen(lp->l_text);
 	va_end(ap);
 
 	bp->b_linep->l_bp->l_fp = lp;		/* Hook onto the end	 */
