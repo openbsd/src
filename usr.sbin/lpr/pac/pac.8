@@ -33,7 +33,7 @@
 .\"
 .Dd June 6, 1993
 .Dt PAC 8
-.Os BSD 4.2
+.Os
 .Sh NAME
 .Nm pac
 .Nd printer/plotter accounting information
@@ -47,7 +47,7 @@
 .Op Fl r
 .Op Ar name ...
 .Sh DESCRIPTION
-.Nm Pac
+.Nm pac
 reads the printer/plotter accounting files, accumulating the number
 of pages (the usual case) or feet (for raster devices)
 of paper consumed by each user, and printing out
@@ -62,10 +62,10 @@ the value of the environment variable
 .Ev PRINTER
 is used.
 .It Fl c
-flag causes the output to be sorted by cost; usually the
+Causes the output to be sorted by cost; usually the
 output is sorted alphabetically by name.
 .It Fl m
-flag causes the host name to be ignored in the accounting file.  This
+Causes the host name to be ignored in the accounting file.  This
 allows for a user on multiple machines to have all of his printing
 charges grouped together.
 .It Fl p Ns Ar price
@@ -92,7 +92,7 @@ raw accounting files
 .It Pa /var/account/?_sum
 summary accounting files
 .It Pa /etc/printcap
-printer capability data base
+printer capability database
 .El
 .Sh SEE ALSO
 .Xr printcap 5

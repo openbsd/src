@@ -28,7 +28,7 @@
 .\"
 .Dd July 8, 1993
 .Dt RDCONFIG 8
-.Os BSD 4
+.Os
 .Sh NAME
 .Nm rdconfig
 .Nd configure RAM disks
@@ -60,7 +60,6 @@ process started earlier.
 .It Pa /dev/rd??
 .El
 .Sh EXAMPLES
-.Pp
 .Dl rdconfig /dev/rd0a 2048 &
 .Pp
 Configures the RAM disk

@@ -31,11 +31,11 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)portmap.8	5.3 (Berkeley) 3/16/91
-.\"	$Id: portmap.8,v 1.2 1999/05/16 19:58:15 alex Exp $
+.\"	$Id: portmap.8,v 1.3 1999/05/23 14:11:34 aaron Exp $
 .\"
 .Dd March 16, 1991
 .Dt PORTMAP 8
-.Os BSD 4.3
+.Os
 .Sh NAME
 .Nm portmap
 .Nd
@@ -47,7 +47,7 @@ program number mapper
 .Nm portmap
 .Op Fl d
 .Sh DESCRIPTION
-.Nm Portmap
+.Nm portmap
 is a server that converts
 .Tn RPC
 program numbers into
@@ -74,7 +74,7 @@ the port number where
 .Tn RPC
 packets should be sent.
 .Pp
-.Nm Portmap
+.Nm portmap
 must be started before any
 .Tn RPC
 servers are invoked.
@@ -83,7 +83,7 @@ Normally
 .Nm portmap
 forks and dissociates itself from the terminal
 like any other daemon.
-.Nm Portmap
+.Nm portmap
 then logs errors using
 .Xr syslog 3 .
 .Pp

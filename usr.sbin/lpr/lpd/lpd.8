@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lpd.8,v 1.6 1999/05/16 19:58:10 alex Exp $
+.\"	$OpenBSD: lpd.8,v 1.7 1999/05/23 14:11:34 aaron Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
 .\"
 .Dd April 19, 1994
 .Dt LPD 8
-.Os BSD 4.4
+.Os
 .Sh NAME
 .Nm lpd
 .Nd line printer spooler daemon
@@ -43,7 +43,7 @@
 .Nm lpd
 .Op Fl l
 .Sh DESCRIPTION
-.Nm Lpd
+.Nm lpd
 is the line printer daemon (spool area handler) and is normally invoked
 at boot time from the
 .Xr rc 8
@@ -76,7 +76,7 @@ one of the machines listed in the file
 or
 .Pa /etc/hosts.lpd .
 Second, if the
-.Li rs
+.Dq rs
 capability is specified in the
 .Xr printcap
 entry for the printer being accessed,
@@ -117,19 +117,21 @@ Title.  String to be used as the title for
 .Xr pr 1 .
 .It H
 Host Name.  Name of the machine where
-.Xr lpr
+.Xr lpr 1
 was invoked.
 .It P
 Person.  Login name of the person who invoked
-.Xr lpr .
+.Xr lpr 1 .
 This is used to verify ownership by
-.Xr lprm .
+.Xr lprm 1 .
 .It M
 Send mail to the specified user when the current print job completes.
 .It f
 Formatted File.  Name of a file to print which is already formatted.
 .It l
-Like ``f'' but passes control characters and does not make page breaks.
+Like
+.Dq f
+but passes control characters and does not make page breaks.
 .It p
 Name of a file to print using
 .Xr pr 1
@@ -176,7 +178,7 @@ Unlink.  Name of file to remove upon completion of printing.
 .It N
 File name.  The name of the file which is being printed, or a blank
 for the standard input (when 
-.Xr lpr
+.Xr lpr 1
 is invoked in a pipeline).
 .El
 .Pp
@@ -185,12 +187,12 @@ If a file cannot be opened, a message will be logged via
 using the
 .Em LOG_LPR
 facility.
-.Nm Lpd
+.Nm lpd
 will try up to 20 times
 to reopen a file it expects to be there, after which it will
 skip the file to be printed.
 .Pp
-.Nm Lpd
+.Nm lpd
 uses
 .Xr flock 2
 to provide exclusive access to the lock file and to prevent multiple
@@ -200,7 +202,7 @@ The lock file is kept in a readable
 .Tn ASCII
 form
 and contains two lines.
-The first is the process id of the daemon and the second is the control
+The first is the process ID of the daemon and the second is the control
 file name of the current job being printed.  The second line is updated to
 reflect the current status of
 .Nm lpd
@@ -224,7 +226,7 @@ socket for local requests
 lists machine names allowed printer access
 .It Pa /etc/hosts.lpd
 lists machine names allowed printer access,
-but not under same administrative control.
+but not under same administrative control
 .El
 .Sh SEE ALSO
 .Xr lpq 1 ,

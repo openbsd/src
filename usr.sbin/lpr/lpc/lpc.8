@@ -33,7 +33,7 @@
 .\"
 .Dd April 28, 1995
 .Dt LPC 8
-.Os BSD 4.2
+.Os
 .Sh NAME
 .Nm lpc
 .Nd line printer control program
@@ -44,7 +44,7 @@
 .Op Ar argument ...
 .Oc
 .Sh DESCRIPTION
-.Nm Lpc
+.Nm lpc
 is used by the system administrator to control the
 operation of the line printer system.  
 For each line printer configured in
@@ -77,8 +77,8 @@ Commands may be abbreviated;
 the following is the list of recognized commands.
 .Pp
 .Bl -tag -width Ds -compact
-.It Ic \&? No [ command ... ]
-.It Ic help No [ command ... ]
+.It Ic \&? No [ Ar command Ar ... ]
+.It Ic help No [ Ar command Ar ... ]
 Print a short description of each command specified in the argument list,
 or, if no argument is given, a list of the recognized commands.
 .Pp
@@ -98,7 +98,9 @@ Turn the specified printer queues off.  This prevents new
 printer jobs from being entered into the queue by
 .Xr lpr .
 .Pp
-.It Ic down No {\ all\ |\ printer\ } message ...
+.It Xo Ic down No {\ all\ |\ printer\ } Ar message
+.Op Ar ...
+.Xc
 Turn the specified printer queue off, disable printing and put
 .Em message
 in the printer status file. The message doesn't need to be quoted, the
@@ -106,7 +108,7 @@ remaining arguments are treated like
 .Xr echo 1 .
 This is normally used to take a printer down and let others know why
 .Xr lpq 1
-will indicate the printer is down and print the status message).
+will indicate the printer is down and print the status message.
 .Pp
 .It Ic enable  No {\ all\ |\ printer\ }
 Enable spooling on the local queue for the listed printers. 
@@ -162,11 +164,15 @@ lock file for queue control
 .Sh DIAGNOSTICS
 .Bl -tag -width Ds
 .It Sy "?Ambiguous command"
-abbreviation matches more than one command
+Abbreviation matches more than one command.
 .It Sy "?Invalid command"
-no match was found
+No match was found.
 .It Sy "?Privileged command"
-you must be a member of group "operator" or root to execute this command
+You must be a member of group
+.Dq operator
+or user
+.Dq root
+to execute this command.
 .El
 .Sh HISTORY
 The
