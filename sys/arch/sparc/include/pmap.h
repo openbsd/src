@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.26 2001/12/04 23:22:42 art Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.27 2001/12/07 10:35:33 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.30 1997/08/04 20:00:47 pk Exp $ */
 
 /*
@@ -320,7 +320,6 @@ boolean_t	pmap_extract4_4c __P((pmap_t, vaddr_t, paddr_t *));
 boolean_t	pmap_is_modified4_4c __P((struct vm_page *));
 boolean_t	pmap_is_referenced4_4c __P((struct vm_page *));
 void		pmap_kenter_pa4_4c __P((vaddr_t, paddr_t, vm_prot_t));
-void		pmap_kenter_pgs4_4c __P((vaddr_t, struct vm_page **, int));
 void		pmap_kremove4_4c __P((vaddr_t, vsize_t));
 void		pmap_page_protect4_4c __P((struct vm_page *, vm_prot_t));
 void		pmap_protect4_4c __P((pmap_t, vaddr_t, vaddr_t, vm_prot_t));
@@ -339,7 +338,6 @@ boolean_t	pmap_extract4m __P((pmap_t, vaddr_t, paddr_t *));
 boolean_t	pmap_is_modified4m __P((struct vm_page *));
 boolean_t	pmap_is_referenced4m __P((struct vm_page *));
 void		pmap_kenter_pa4m __P((vaddr_t, paddr_t, vm_prot_t));
-void		pmap_kenter_pgs4m __P((vaddr_t, struct vm_page **, int));
 void		pmap_kremove4m __P((vaddr_t, vsize_t));
 void		pmap_page_protect4m __P((struct vm_page *, vm_prot_t));
 void		pmap_protect4m __P((pmap_t, vaddr_t, vaddr_t, vm_prot_t));
@@ -390,8 +388,6 @@ extern boolean_t	(*pmap_extract_p) __P((pmap_t, vaddr_t, paddr_t *));
 extern boolean_t	(*pmap_is_modified_p) __P((struct vm_page *));
 extern boolean_t	(*pmap_is_referenced_p) __P((struct vm_page *));
 extern void		(*pmap_kenter_pa_p) __P((vaddr_t, paddr_t, vm_prot_t));
-extern void		(*pmap_kenter_pgs_p) __P((vaddr_t, struct vm_page **,
-						  int));
 extern void		(*pmap_kremove_p) __P((vaddr_t, vsize_t));
 extern void		(*pmap_page_protect_p) __P((struct vm_page *, 
 						    vm_prot_t));
