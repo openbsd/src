@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.40 2002/07/12 14:02:23 art Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.41 2002/07/16 22:54:42 millert Exp $	*/
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
  *
@@ -94,12 +94,13 @@ const char *softdep_typenames[] = {
 	"allocindir",
 	"freefrag",
 	"freeblks",
+	"freefile",
 	"diradd",
 	"mkdir",
 	"dirrem",
 };
 #define	TYPENAME(type) \
-	((unsigned)(type) < D_LAST ? softdep_typenames[type] : "???")
+	((unsigned)(type) <= D_LAST ? softdep_typenames[type] : "???")
 /*
  * Finding the current process.
  */
@@ -2254,7 +2255,7 @@ handle_workitem_freeblocks(freeblks)
 		if ((bn = freeblks->fb_iblks[level]) == 0)
 			continue;
 		if ((error = indir_trunc(&tip, fsbtodb(fs, bn), level,
-		    baselbns[level], &blocksreleased)) == 0)
+		    baselbns[level], &blocksreleased)) != 0)
 			allerror = error;
 		ffs_blkfree(&tip, bn, fs->fs_bsize);
 		blocksreleased += nblocks;
