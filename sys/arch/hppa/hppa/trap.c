@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.68 2003/08/07 05:19:57 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.69 2003/10/23 18:33:52 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -566,7 +566,7 @@ syscall(struct trapframe *frame)
 		 * of the arguments on the stack.
 		 * this assumes that none of 'em are called
 		 * by their normal syscall number, maybe a regress
-		 * test should be used, to whatch the behaviour.
+		 * test should be used, to watch the behaviour.
 		 */
 		if (!error && argoff < 4) {
 			int t;
