@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbrdisksubr.c,v 1.1 2003/11/13 23:00:55 drahn Exp $	*/
+/*	$OpenBSD: mbrdisksubr.c,v 1.2 2003/12/20 22:40:15 miod Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -57,7 +57,7 @@ try_mbr_label(dev_t dev, void (*strat)(struct buf *), struct buf *bp,
 {
 	struct dos_partition *dp = osdep->dosparts, *dp2;
 	char *cp;
-	int cyl, n, i, ourpart = -1;
+	int cyl, n = 0, i, ourpart = -1;
 	int dospartoff = -1;
 
 	/* MBR type disklabel */
@@ -67,7 +67,6 @@ try_mbr_label(dev_t dev, void (*strat)(struct buf *), struct buf *bp,
 	        daddr_t part_blkno = DOSBBSECTOR;
 		unsigned long extoff = 0;
 		int wander = 1, loop = 0;
-		n = 0;
 
 		/*
 		 * Read dos partition table, follow extended partitions.
