@@ -1,4 +1,4 @@
-.\" $OpenBSD: sigwait.3,v 1.8 1999/09/23 04:12:00 alex Exp $
+.\" $OpenBSD: sigwait.3,v 1.9 2000/03/07 19:58:22 alex Exp $
 .\" David Leonard <d@openbsd.org>, 1998. Public domain.
 .Dd August 20, 1998
 .Dt SIGWAIT 3
@@ -9,7 +9,7 @@
 .Sh SYNOPSIS
 .Fd #include <signal.h>
 .Ft int
-.Fn sigwait "sont sigset_t *set" "int *sig"
+.Fn sigwait "const sigset_t *set" "int *sig"
 .Sh DESCRIPTION
 The
 .Fn sigwait
