@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.10 2003/04/26 16:23:44 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.11 2003/08/08 19:39:25 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -35,6 +35,7 @@ ${FS}:	bsd.gz
 	mount ${VND_DEV} ${MOUNT_POINT}
 	cp ${BOOT} ${.OBJDIR}/boot
 	strip ${.OBJDIR}/boot
+	strip -R .comment ${.OBJDIR}/boot
 	dd if=${.OBJDIR}/boot of=${MOUNT_POINT}/boot bs=512
 	dd if=bsd.gz of=${MOUNT_POINT}/bsd bs=512
 	/usr/mdec/installboot -v -s ${FLOPPYSECS} -h 2 ${MOUNT_POINT}/boot \
@@ -55,6 +56,7 @@ NEWFSARGS= -m 0 -o space -c 16 -i 4096
 bsd.gz: bsd.rd
 	cp bsd.rd bsd.strip
 	strip bsd.strip
+	strip -R .comment bsd.strip
 	gzip -c9 bsd.strip > bsd.gz
 
 bsd.rd:	${IMAGE} bsd rdsetroot
@@ -106,6 +108,7 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	make -f ${CBIN}.mk all
+	strip -R .comment ${CBIN}
 
 ${CRUNCHCONF}: ${LISTS}
 	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CRUNCHCONF}
