@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.8,v 1.15 2003/04/14 06:51:49 jmc Exp $
+.\"	$OpenBSD: httpd.8,v 1.16 2003/07/14 15:38:51 jmc Exp $
 .\" Copyright (c) 1995-1997 David Robinson. All rights reserved.
 .\" Copyright (c) 1997-1999 The Apache Group. All rights reserved.
 .\" Copyright (c) 1998-1999 Bob Beck. All rights reserved.
@@ -58,6 +58,7 @@
 .Nd Apache Hypertext Transfer Protocol Server
 .Sh SYNOPSIS
 .Nm httpd
+.Bk -words
 .Op Fl FhlLStTuvVX
 .Op Fl d Ar serverroot
 .Op Fl f Ar config
@@ -65,13 +66,18 @@
 .Op Fl C Ar directive
 .Op Fl D Ar parameter
 .Op Fl R Ar libexecdir
+.Ek
 .Sh DESCRIPTION
 .Nm
-is the Apache HyperText Transfer Protocol (HTTP) server program. It is
-designed to be run as a stand-alone daemon process. When used like this
-it will create a pool of child processes to handle requests. To stop
-it, send a TERM signal to the initial (parent) process. The PID of
-this process is written to a file as given in the configuration file.
+is the Apache HyperText Transfer Protocol (HTTP) server program.
+It is designed to be run as a stand-alone daemon process.
+When used like this it will create a pool of child processes to
+handle requests.
+To stop it, send a
+.Dv TERM
+signal to the initial (parent) process.
+The PID of this process is written to a file as given in the
+configuration file.
 Alternatively
 .Nm
 may be invoked by the Internet daemon
@@ -79,15 +85,16 @@ may be invoked by the Internet daemon
 each
 time a connection to the HTTP service is made.
 .Pp
-Normally this service can be enabled for startup on OpenBSD
+Normally this service can be enabled for startup on
+.Ox
 by editing
 .Pa /etc/rc.conf .
 The
 .Fl u
 option is of particular importance.
 .Pp
-This manual page only lists the command line arguments. For details
-of the directives necessary to configure
+This manual page only lists the command line arguments.
+For details of the directives necessary to configure
 .Nm
 see the Apache manual,
 which is part of the Apache distribution or can be found at
@@ -97,7 +104,8 @@ or in
 Paths in this manual page reflect those
 compiled into
 .Nm
-by default with OpenBSD.
+by default with
+.Ox .
 .Sh OPTIONS
 .Bl -tag -width Ds
 .It Fl u
@@ -118,7 +126,7 @@ As a result of the default secure behaviour,
 .Nm
 cannot access any objects outside
 .Va ServerRoot
--- this security measure is taken in case
+\- this security measure is taken in case
 .Nm
 is compromised.
 This is not without drawbacks, though:
@@ -147,14 +155,13 @@ was built with the
 .Dv SHARED_CORE
 rule enabled which forces the
 .Nm
-core code to be placed into a dynamic shared object (DSO) file. This file
-is searched in a hardcoded path under ServerRoot per default. Use this
-option to override.
+core code to be placed into a dynamic shared object (DSO) file.
+This file is searched in a hardcoded path under ServerRoot per default.
+Use this option to override.
 .It Fl d Ar serverroot
 Set the initial value for the ServerRoot directive to
 .Va serverroot .
-This can be overridden by the ServerRoot command in the configuration
-file.
+This can be overridden by the ServerRoot command in the configuration file.
 The default is
 .Pa /var/www .
 .It Fl f Ar config
@@ -164,24 +171,26 @@ on startup.
 If
 .Va config
 does not begin with a /, then it is taken to be a path relative to
-the ServerRoot. The default is
+the ServerRoot.
+The default is
 .Pa conf/httpd.conf .
 .It Fl C Ar directive
-Process the configuration 
+Process the configuration
 .Va directive
 before reading config files.
 .It Fl c Ar directive
-Process the configuration 
+Process the configuration
 .Va directive
 after reading config files.
 .It Fl D Ar parameter
-Sets a configuration 
+Sets a configuration
 .Va parameter
 which can be used with
 <IfDefine>...</IfDefine> sections in the configuration files
 to conditionally skip or process commands.
 .It Fl F
-Run the main process in foreground. For process supervisors.
+Run the main process in foreground.
+For process supervisors.
 .It Fl h
 Output a short summary of available command line options.
 .It Fl l
@@ -194,34 +203,34 @@ Show the settings as parsed from the config file (currently only shows the
 virtualhost settings).
 .It Fl t
 Run syntax tests for configuration files only, including DocumentRoot checks.
-The program immediately exits after this syntax parsing with either a return 
+The program immediately exits after this syntax parsing with either a return
 code of 0 (Syntax OK) or return code not equal to 0 (Syntax Error).
 .It Fl T
 Run syntax tests for configuration files only, without DocumentRoot checks.
-The program immediately exits after this syntax parsing with either a return 
+The program immediately exits after this syntax parsing with either a return
 code of 0 (Syntax OK) or return code not equal to 0 (Syntax Error).
 .It Fl X
 Run in single-process mode, for internal debugging purposes only; the daemon
-does not detach from the terminal or fork any children. Do NOT use this mode
-to provide ordinary web service.
+does not detach from the terminal or fork any children.
+Do NOT use this mode to provide ordinary web service.
 .It Fl v
 Print the version of
-.Nm Ns ,
+.Nm httpd ,
 and then exit.
 .It Fl V
 Print the version and build parameters of
-.Nm Ns ,
+.Nm httpd ,
 and then exit.
 .El
 .Pp
-The documents served by 
+The documents served by
 .Nm
-should not be owned by the user which 
+should not be owned by the user which
 .Nm
 is running as (usually user
 .Va www
 and group
-.Va www Ns ).
+.Va www ) .
 They must, however, be readable by this user.
 .Sh FILES
 .Bl -tag -width /etc/passwd -compact
@@ -241,4 +250,3 @@ They must, however, be readable by this user.
 .Xr chroot 2 ,
 .Xr inetd 8 ,
 .Xr rc 8
-
