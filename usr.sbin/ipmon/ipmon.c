@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmon.c,v 1.26 2001/01/17 07:26:59 fgsch Exp $	*/
+/*	$OpenBSD: ipmon.c,v 1.27 2001/01/30 04:29:53 kjell Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -65,7 +65,7 @@ static const char rcsid[] = "@(#)$IPFilter: ipmon.c,v 2.12.2.8 2001/01/10 06:18:
 #include <ctype.h>
 #include <syslog.h>
 
-#include <netinet/ip_compat.h>
+#include <netinet/ip_fil_compat.h>
 #include <netinet/tcpip.h>
 #include <netinet/ip_fil.h>
 #include <netinet/ip_proxy.h>
@@ -1012,6 +1012,7 @@ char *argv[];
 			openlog(s, LOG_NDELAY|LOG_PID, LOGFAC);
 			s = NULL;
 			opts |= OPT_SYSLOG;
+			log = NULL;
 			break;
 		case 'S' :
 			opts |= OPT_STATE;
