@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.27 2005/03/27 17:50:55 otto Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.28 2005/03/28 17:39:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bcode.c,v 1.27 2005/03/27 17:50:55 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bcode.c,v 1.28 2005/03/28 17:39:20 deraadt Exp $";
 #endif /* not lint */
 
 #include <ssl/ssl.h>
@@ -307,7 +307,7 @@ src_free(void)
 
 #ifdef DEBUGGING
 void
-pn(const char * str, const struct number *n)
+pn(const char *str, const struct number *n)
 {
 	char *p = BN_bn2dec(n->number);
 	if (p == NULL)
@@ -318,7 +318,7 @@ pn(const char * str, const struct number *n)
 }
 
 void
-pbn(const char * str, const BIGNUM *n)
+pbn(const char *str, const BIGNUM *n)
 {
 	char *p = BN_bn2dec(n);
 	if (p == NULL)
@@ -1190,7 +1190,7 @@ bexp(void)
 		negate(p);
 		scale = bmachine.scale;
 	} else {
-		/* Posix bc says min(a.scale * b, max(a.scale, scale) */
+		/* Posix bc says min(a.scale *b, max(a.scale, scale) */
 		u_long	b;
 		u_int	m;
 
