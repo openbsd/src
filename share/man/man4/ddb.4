@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.23 2000/07/09 20:56:29 aaron Exp $
+.\"	$OpenBSD: ddb.4,v 1.24 2000/07/29 00:58:24 marc Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -37,7 +37,7 @@ but with a more rational
 .Pf ( Xr gdb 1 No Ns \&-like )
 syntax.
 .Pp
-.Nm ddb
+.Nm
 prompts for commands on the console with:
 .Pp
 .Bd -literal -offset indent
@@ -45,7 +45,7 @@ ddb>
 .Ed
 .Pp
 The general syntax of a
-.Nm ddb
+.Nm
 command is:
 .Pp
 .Bd -ragged -offset indent
@@ -56,7 +56,7 @@ command is:
 .Ed
 .Pp
 To save typing,
-.Nm ddb
+.Nm
 makes use of a context inferred from previous commands.
 In this context,
 the current location is called
@@ -110,7 +110,7 @@ a
 .Ar count
 of 1, and no modifiers.
 .Pp
-.Nm ddb
+.Nm
 has a feature like
 .Xr more 1
 for the output.
@@ -173,8 +173,22 @@ redraw line
 .\" abort command (even if paused)
 .\" .El
 .Pp
-.Nm ddb
+.Nm
 is only available if the kernel was configured with the DDB option.
+.Nm
+will be invoked upon a kernel panic when the
+.Xr sysctl 8
+name
+.Va ddb.panic
+is set to 1.
+.Nm
+may be invoked from the console by the key sequence
+.Li Ctl-Alt-Esc
+when the
+.Xr sysctl 8
+name
+.Va ddb.console
+is set to 1.
 .Sh COMMANDS
 The following commands may be typed at the
 .Ql ddb>
@@ -370,7 +384,7 @@ Set a break point at
 If
 .Ar count
 is supplied,
-.Nm ddb
+.Nm
 allows the breakpoint to be silently hit
 .Ar ( count No \&- 1 )
 times before stopping at the
@@ -459,7 +473,7 @@ Some machines (e.g., pmax) also count loads and stores.
 .Sy Warning:
 when counting with
 .Cm /c ,
-.Nm ddb
+.Nm
 is really silently single-stepping.
 This means that single-stepping on low-level code may cause strange
 behavior.
@@ -472,7 +486,7 @@ behavior.
 Set a watchpoint for the region starting at
 .Ar addr .
 Execution stops and control returns to
-.Nm ddb
+.Nm
 when an attempt is made to modify a watched region.
 The
 .Ar size
@@ -523,7 +537,7 @@ instruction.
 If
 .Cm /p
 modifier is specified,
-.Nm ddb
+.Nm
 prints the call nesting depth and the
 cumulative instruction count at each call or return.
 Otherwise, it stays silent until the matching return is hit.
@@ -533,7 +547,7 @@ Stop at the next matching return instruction.
 If the
 .Cm /p
 modifier is specified,
-.Nm ddb
+.Nm
 prints the call nesting depth and the
 cumulative instruction count at each call or return.
 Otherwise, it remains mostly quiet.
@@ -579,7 +593,7 @@ Search memory for a value beginning at
 This command might fail in interesting
 ways if it doesn't find the searched-for value.
 This is because
-.Nm ddb
+.Nm
 doesn't always recover from touching bad memory.
 The optional
 .Ar count
@@ -705,7 +719,7 @@ A synonym for
 .\" --------------------
 .El
 .Sh VARIABLES
-.Nm ddb
+.Nm
 denotes registers and variables by
 .Ic $ Ns Va name .
 Register names can be found with the
@@ -753,7 +767,7 @@ Almost all expression operators in C are supported except for
 and unary
 .Ql \&& .
 Special rules for expressions in
-.Nm ddb
+.Nm
 are:
 .Bl -tag -width 15n -compact -offset indent
 .It Ar identifier
@@ -827,7 +841,9 @@ It may be followed by a ':' and  modifiers as described above.
 .Sh SEE ALSO
 .Xr gdb 1 ,
 .Xr nm 1 ,
+.Xr sysctl.conf 5 ,
 .Xr hangman 6 ,
+.Xr sysctl 8 ,
 .Xr extent 9
 .Sh HISTORY
 This kernel facility first appeared in MACH 2 operating system
