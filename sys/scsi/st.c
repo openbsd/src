@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.33 2002/12/30 21:50:29 grange Exp $	*/
+/*	$OpenBSD: st.c,v 1.34 2003/03/11 01:12:09 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -86,9 +86,9 @@
 #define	ST_SPC_TIME	(4 * 60 * 60 * 1000)	/* 4 hours */
 
 /*
- * Maximum density code known.
+ * Maximum density code allowed in SCSI spec (SSC2R08f, Section 8.3).
  */
-#define SCSI_2_MAX_DENSITY_CODE		0x45
+#define SCSI_MAX_DENSITY_CODE		0xff
 
 /*
  * Define various devices that we know mis-behave in some way,
@@ -299,14 +299,14 @@ int	st_read(struct st_softc *, char *, int, int);
 int	st_read_block_limits(struct st_softc *, int);
 int	st_mode_sense(struct st_softc *, int);
 int	st_mode_select(struct st_softc *, int);
-int	st_space(struct st_softc *, int, u_int, int);
-int	st_write_filemarks(struct st_softc *, int, int);
+int	st_space(struct st_softc *, daddr_t, u_int, int);
+int	st_write_filemarks(struct st_softc *, daddr_t, int);
 int	st_check_eod(struct st_softc *, boolean, int *, int);
 int	st_load(struct st_softc *, u_int, int);
 int	st_rewind(struct st_softc *, u_int, int);
 int	st_interpret_sense(struct scsi_xfer *);
 int	st_touch_tape(struct st_softc *);
-int	st_erase(struct st_softc *, int full, int flags);
+int	st_erase(struct st_softc *, daddr_t, int);
 
 struct cfattach st_ca = {
 	sizeof(struct st_softc), stmatch, stattach
@@ -1120,12 +1120,13 @@ stioctl(dev, cmd, arg, flag, p)
 {
 	int error = 0;
 	int unit;
-	int number, nmarks, dsty;
+	int nmarks, dsty;
 	int flags;
 	struct st_softc *st;
 	int hold_blksize;
 	u_int8_t hold_density;
 	struct mtop *mt = (struct mtop *) arg;
+	daddr_t number;
 
 	/*
 	 * Find the device that the user is talking about
@@ -1180,9 +1181,8 @@ stioctl(dev, cmd, arg, flag, p)
 		SC_DEBUG(st->sc_link, SDEV_DB1,
 		    ("[ioctl: op=0x%x count=0x%x]\n", mt->mt_op, mt->mt_count));
 
-		/* compat: in U*x it is a short */
 		number = mt->mt_count;
-		switch ((short) (mt->mt_op)) {
+		switch (mt->mt_op) {
 		case MTWEOF:	/* write an end-of-file record */
 			error = st_write_filemarks(st, number, flags);
 			break;
@@ -1252,7 +1252,7 @@ stioctl(dev, cmd, arg, flag, p)
 			goto try_new_value;
 
 		case MTSETDNSTY:	/* Set density for device and mode */
-			if (number > SCSI_2_MAX_DENSITY_CODE) {
+			if (number < 0 || number > SCSI_MAX_DENSITY_CODE) {
 				error = EINVAL;
 				break;
 			} else
@@ -1541,7 +1541,8 @@ st_mode_select(st, flags)
 int
 st_erase(st, full, flags)
 	struct st_softc *st;
-	int full, flags;
+	daddr_t full;
+	int flags;
 {
 	struct scsi_erase cmd;
 	int tmo;
@@ -1577,7 +1578,7 @@ st_space(st, number, what, flags)
 	struct st_softc *st;
 	u_int what;
 	int flags;
-	int number;
+	daddr_t number;
 {
 	struct scsi_space cmd;
 	int error;
@@ -1658,7 +1659,7 @@ int
 st_write_filemarks(st, number, flags)
 	struct st_softc *st;
 	int flags;
-	int number;
+	daddr_t number;
 {
 	struct scsi_write_filemarks cmd;
 
