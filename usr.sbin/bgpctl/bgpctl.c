@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.50 2004/04/16 04:41:49 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.51 2004/04/25 18:53:09 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -22,7 +22,9 @@
 #include <net/if.h>
 #include <net/if_media.h>
 #include <net/if_types.h>
+
 #include <err.h>
+#include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -282,7 +284,7 @@ show_neighbor_msg(struct imsg *imsg, enum neighbor_views nv)
 {
 	struct peer		*p;
 	struct in_addr		 ina;
-	char			 buf[48];
+	char			 buf[NI_MAXHOST], pbuf[NI_MAXSERV];
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_NEIGHBOR:
@@ -325,30 +327,23 @@ show_neighbor_msg(struct imsg *imsg, enum neighbor_views nv)
 			break;
 		}
 		printf("\n");
-		if (inet_ntop(p->sa_local.ss_family, &p->sa_local,
-		    buf, sizeof(buf)) == NULL)
-			strlcpy(buf, "????????", sizeof(buf));
-		if (p->sa_local.ss_family == AF_INET)
-			printf("  Local host:   %20s, Local port:   %5u\n",
-			    buf, ntohs(((struct sockaddr_in *)
-			    &p->sa_local)->sin_port));
-		if (p->sa_local.ss_family == AF_INET6)
-			printf("  Local host:   %20s, Local port:   %5u\n",
-			    buf, ntohs(((struct sockaddr_in6 *)
-			    &p->sa_local)->sin6_port));
+		if (getnameinfo((struct sockaddr *)&p->sa_local,
+		    p->sa_local.ss_len,
+		    buf, sizeof(buf), pbuf, sizeof(pbuf),
+		    NI_NUMERICHOST | NI_NUMERICSERV)) {
+			strlcpy(buf, "(unknown)", sizeof(buf));
+			strlcpy(pbuf, "", sizeof(pbuf));
+		}
+		printf("  Local host:  %20s, Local port:  %5s\n", buf, pbuf);
 
-		if (inet_ntop(p->sa_remote.ss_family, &p->sa_remote,
-		    buf, sizeof(buf)) == NULL)
-			strlcpy(buf, "????????", sizeof(buf));
-		if (p->sa_remote.ss_family == AF_INET)
-			printf("  Remote host: %20s, Remote port: %5u\n",
-			    buf, ntohs(((struct sockaddr_in *)
-			    &p->sa_remote)->sin_port));
-		if (p->sa_remote.ss_family == AF_INET6)
-			printf("  Remote host: %20s, Remote port: %5u\n",
-			    buf, ntohs(((struct sockaddr_in6 *)
-			    &p->sa_remote)->sin6_port));
-
+		if (getnameinfo((struct sockaddr *)&p->sa_local,
+		    p->sa_local.ss_len,
+		    buf, sizeof(buf), pbuf, sizeof(pbuf),
+		    NI_NUMERICHOST | NI_NUMERICSERV)) {
+			strlcpy(buf, "(unknown)", sizeof(buf));
+			strlcpy(pbuf, "", sizeof(pbuf));
+		}
+		printf("  Remote host: %20s, Remote port: %5s\n", buf, pbuf);
 		printf("\n");
 		break;
 	case IMSG_CTL_END:
