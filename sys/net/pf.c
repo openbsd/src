@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.45 2001/06/26 04:57:34 itojun Exp $ */
+/*	$OpenBSD: pf.c,v 1.46 2001/06/26 05:02:11 itojun Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -2080,7 +2080,7 @@ int
 pf_test(int direction, struct ifnet *ifp, struct mbuf **m)
 {
 	int action;
-	struct ip *h = mtod(*m, struct ip *);
+	struct ip h;
 	int off;
 
 	if (!pf_status.running)
@@ -2098,51 +2098,53 @@ pf_test(int direction, struct ifnet *ifp, struct mbuf **m)
 		pf_last_purge = pftv.tv_sec;
 	}
 
-	off = h->ip_hl << 2;
+	if ((*m)->m_pkthdr.len < sizeof(h)) {
+		printf("pf: ip header too short\n");
+		action = PF_DROP;
+		goto done;
+	}
+	m_copydata((*m), 0, sizeof(h), (caddr_t)&h);
 
-	/* ensure we have at least the complete ip header pulled up */
-	if ((*m)->m_len < off)
-		if ((*m = m_pullup(*m, off)) == NULL) {
-			printf("pf: pullup ip header failed\n");
-			action = PF_DROP;
-			goto done;
-		}
+	off = h.ip_hl << 2;
 
-	switch (h->ip_p) {
+	switch (h.ip_p) {
 
 	case IPPROTO_TCP: {
 		struct tcphdr th;
 
-		if (!pull_hdr(ifp, m, 0, off, &th, sizeof(th), h, &action))
+		if (!pull_hdr(ifp, m, 0, off, &th, sizeof(th), &h, &action))
 			goto done;
-		if (pf_test_state_tcp(direction, ifp, m, 0, off, h, &th))
+		if (pf_test_state_tcp(direction, ifp, m, 0, off, &h, &th))
 			action = PF_PASS;
 		else
-			action = pf_test_tcp(direction, ifp, m, 0, off, h, &th);
+			action = pf_test_tcp(direction, ifp, m, 0, off, &h,
+			    &th);
 		break;
 	}
 
 	case IPPROTO_UDP: {
 		struct udphdr uh;
 
-		if (!pull_hdr(ifp, m, 0, off, &uh, sizeof(uh), h, &action))
+		if (!pull_hdr(ifp, m, 0, off, &uh, sizeof(uh), &h, &action))
 			goto done;
-		if (pf_test_state_udp(direction, ifp, m, 0, off, h, &uh))
+		if (pf_test_state_udp(direction, ifp, m, 0, off, &h, &uh))
 			action = PF_PASS;
 		else
-			action = pf_test_udp(direction, ifp, m, 0, off, h, &uh);
+			action = pf_test_udp(direction, ifp, m, 0, off, &h,
+			    &uh);
 		break;
 	}
 
 	case IPPROTO_ICMP: {
 		struct icmp ih;
 
-		if (!pull_hdr(ifp, m, 0, off, &ih, sizeof(ih), h, &action))
+		if (!pull_hdr(ifp, m, 0, off, &ih, sizeof(ih), &h, &action))
 			goto done;
-		if (pf_test_state_icmp(direction, ifp, m, 0, off, h, &ih))
+		if (pf_test_state_icmp(direction, ifp, m, 0, off, &h, &ih))
 			action = PF_PASS;
 		else
-			action = pf_test_icmp(direction, ifp, m, 0, off, h, &ih);
+			action = pf_test_icmp(direction, ifp, m, 0, off, &h,
+			    &ih);
 		break;
 	}
 
@@ -2153,7 +2155,7 @@ pf_test(int direction, struct ifnet *ifp, struct mbuf **m)
 
 done:
 	if (ifp == status_ifp) {
-		pf_status.bytes[direction] += h->ip_len;
+		pf_status.bytes[direction] += h.ip_len;
 		pf_status.packets[direction][action]++;
 	}
 	return (action);
