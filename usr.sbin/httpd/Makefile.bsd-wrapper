@@ -1,5 +1,5 @@
 # Build wrapper for Apache 
-# $OpenBSD: Makefile.bsd-wrapper,v 1.24 2001/10/03 01:24:22 millert Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.25 2002/02/15 22:49:15 beck Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -225,12 +225,9 @@ HTDOCS= \
 CGIFILES=	cgi-bin/printenv cgi-bin/test-cgi	
 
 MANUALFILES= \
-	manual/mod/core.html  \
 	manual/mod/directive-dict.html \
-	manual/mod/directives.html \
 	manual/mod/footer.html \
 	manual/mod/header.html \
-	manual/mod/index.html \
 	manual/mod/mod_access.html \
 	manual/mod/mod_actions.html \
 	manual/mod/mod_alias.html \
@@ -247,10 +244,8 @@ MANUALFILES= \
 	manual/mod/mod_cgi.html \
 	manual/mod/mod_cookies.html \
 	manual/mod/mod_digest.html \
-	manual/mod/mod_dir.html \
 	manual/mod/mod_dld.html \
 	manual/mod/mod_dll.html \
-	manual/mod/mod_env.html \
 	manual/mod/mod_example.html \
 	manual/mod/mod_expires.html \
 	manual/mod/mod_headers.html \
@@ -262,7 +257,6 @@ MANUALFILES= \
 	manual/mod/mod_log_common.html \
 	manual/mod/mod_log_config.html \
 	manual/mod/mod_log_referer.html \
-	manual/mod/mod_mime.html \
 	manual/mod/mod_ssl/index.html \
 	manual/mod/mod_ssl/ssl_compat.gfont000.gif \
 	manual/mod/mod_ssl/ssl_compat.html \
@@ -322,7 +316,6 @@ MANUALFILES= \
 	manual/mod/mod_negotiation.html \
 	manual/mod/mod_proxy.html \
 	manual/mod/mod_rewrite.html \
-	manual/mod/mod_setenvif.html \
 	manual/mod/mod_speling.html \
 	manual/mod/mod_status.html \
 	manual/mod/mod_unique_id.html \
@@ -331,22 +324,16 @@ MANUALFILES= \
 	manual/mod/mod_vhost_alias.html \
 	manual/mod/mod_define.html \
 	manual/LICENSE \
-	manual/bind.html \
-	manual/cgi_path.html \
 	manual/content-negotiation.html \
 	manual/custom-error.html \
-	manual/dns-caveats.html \
 	manual/dso.html \
 	manual/ebcdic.html \
-	manual/env.html \
 	manual/footer.html \
 	manual/handler.html \
 	manual/header.html \
 	manual/index.html \
 	manual/install-tpf.html \
 	manual/install.html \
-	manual/invoking.html \
-	manual/keepalive.html \
 	manual/location.html \
 	manual/man-template.html \
 	manual/multilogs.html \
@@ -359,8 +346,6 @@ MANUALFILES= \
 	manual/readme-tpf.html \
 	manual/sections.html \
 	manual/sourcereorg.html \
-	manual/stopping.html \
-	manual/suexec.html \
 	manual/suexec_1_2.html \
 	manual/unixware.html \
 	manual/upgrading_to_1_3.html \
@@ -411,20 +396,17 @@ MANUALFILES= \
 	manual/vhosts/index.html \
 	manual/vhosts/ip-based.html \
 	manual/vhosts/mass.html \
-	manual/vhosts/name-based.html \
 	manual/vhosts/vhosts-in-depth.html \
 	manual/vhosts/virtual-host.html \
 	manual/configuring.html \
 	manual/mpeix.html \
 	manual/new_features_2_0.html \
 	manual/win_compiling.html \
-	manual/win_service.html \
 	manual/misc/tutorials.html \
-	manual/mod/index-bytype.html \
 	manual/mod/module-dict.html \
-	manual/vhosts/index.html.ja.jis  \
-	manual/vhosts/index.html.html \
+	manual/vhosts/index.html.ja.jis \
 	manual/vhosts/index.html.en \
+	manual/vhosts/index.html.html \
 	manual/mod/module-dict.html.ja.jis \
 	manual/mod/module-dict.html.html \
 	manual/mod/module-dict.html.en \
@@ -471,7 +453,6 @@ MANUALFILES= \
 	manual/programs/htdigest.html \
 	manual/programs/htpasswd.html \
 	manual/programs/httpd.html \
-	manual/programs/index.html \
 	manual/programs/logresolve.html \
 	manual/programs/other.html \
 	manual/programs/rotatelogs.html \
@@ -483,8 +464,48 @@ MANUALFILES= \
 	manual/howto/header.html \
 	manual/howto/ssi.html.en \
 	manual/howto/ssi.html.html \
-	manual/howto/ssi.html.ja.jis
-
+	manual/howto/ssi.html.ja.jis \
+	manual/vhosts/index.html.ja.jis \
+	manual/vhosts/index.html.html \
+	manual/vhosts/index.html.en \
+	manual/mod/module-dict.html.ja.jis \
+	manual/mod/module-dict.html.html \
+	manual/mod/module-dict.html.en \
+	manual/mod/mod_negotiation.html.ja.jis \
+	manual/mod/mod_negotiation.html.html \
+	manual/mod/mod_negotiation.html.en \
+	manual/mod/directive-dict.html.ja.jis \
+	manual/mod/directive-dict.html.html \
+	manual/mod/directive-dict.html.en \
+	manual/images/apache_header.gif \
+	manual/images/pixel.gif \
+	manual/urlmapping.html \
+	manual/configuring.html.en \
+	manual/configuring.html.html \
+	manual/configuring.html.ja.jis \
+	manual/custom-error.html.en \
+	manual/custom-error.html.html \
+	manual/custom-error.html.ja.jis \
+	manual/handler.html.en \
+	manual/handler.html.html \
+	manual/handler.html.ja.jis \
+	manual/index.html.en \
+	manual/index.html.fr \
+	manual/index.html.html \
+	manual/index.html.ja.jis \
+	manual/install.html.en \
+	manual/install.html.fr \
+	manual/install.html.html \
+	manual/install.html.ja.jis \
+	manual/invoking.html.fr \
+	manual/new_features_1_3.html.en \
+	manual/new_features_1_3.html.html \
+	manual/new_features_1_3.html.ja.jis \
+	manual/server-wide.html.en \
+	manual/server-wide.html.fr \
+	manual/server-wide.html.html \
+	manual/server-wide.html.ja.jis 
+	
 ICONFILES= \
 	icons/README icons/a.gif icons/alert.black.gif \
 	icons/alert.red.gif icons/apache_pb.gif icons/back.gif \
