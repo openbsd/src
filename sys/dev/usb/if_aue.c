@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_aue.c,v 1.16 2001/07/15 03:03:35 mickey Exp $ */
-/*	$NetBSD: if_aue.c,v 1.55 2001/03/25 22:59:43 augustss Exp $	*/
+/*	$OpenBSD: if_aue.c,v 1.17 2001/10/31 04:24:44 nate Exp $ */
+/*	$NetBSD: if_aue.c,v 1.67 2001/10/10 02:14:16 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -35,8 +35,8 @@
  */
 
 /*
- * ADMtek AN986 Pegasus USB to ethernet driver. Datasheet is available
- * from http://www.admtek.com.tw.
+ * ADMtek AN986 Pegasus and AN8511 Pegasus II USB to ethernet driver.
+ * Datasheet is available from http://www.admtek.com.tw.
  *
  * Written by Bill Paul <wpaul@ee.columbia.edu>
  * Electrical Engineering Department
@@ -162,30 +162,65 @@ int	auedebug = 0;
 struct aue_type {
 	u_int16_t		aue_vid;
 	u_int16_t		aue_did;
-	char			aue_linksys;
+	u_int16_t		aue_flags;
+#define LSYS	0x0001		/* use Linksys reset */
+#define PNA	0x0002		/* has Home PNA */
+#define PII	0x0004		/* Pegasus II chip */
 };
 
 Static const struct aue_type aue_devs[] = {
-  { USB_VENDOR_BILLIONTON,	USB_PRODUCT_BILLIONTON_USB100,	0 },
-  { USB_VENDOR_MELCO, 		USB_PRODUCT_MELCO_LUATX1, 	0 },
-  { USB_VENDOR_MELCO, 		USB_PRODUCT_MELCO_LUATX5, 	0 },
-  { USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_USB100TX,	1 },
-  { USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_USB100H1,	1 },
-  { USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_USB10TA,	1 },
-  { USB_VENDOR_ADMTEK,		USB_PRODUCT_ADMTEK_PEGASUS,	0 },
-  { USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DSB650,	1 },
-  { USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DSB650TX,	1 },
-  { USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DSB650TX_PNA,	0 },
-  { USB_VENDOR_SOHOWARE,	USB_PRODUCT_SOHOWARE_NUB100,	0 },
-  { USB_VENDOR_SMC,		USB_PRODUCT_SMC_2202USB,	0 },
+  { USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_XX1,		  PNA|PII },
+  { USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_XX2,		  PII },
+  { USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_XX3,		  0 },
+  { USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_XX4,		  PNA },
+  { USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_XX5,		  PNA },
+  { USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_XX6,		  PII },
+  { USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_XX7,		  PII },
+  { USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_XX8,		  PII },
+  { USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_XX9,		  PNA },
+  { USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_XX10,	  0 },
+  { USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_DSB650TX_PNA,  0 },
+  { USB_VENDOR_ACCTON,		USB_PRODUCT_ACCTON_USB320_EC,	  0 },
+  { USB_VENDOR_ADMTEK,		USB_PRODUCT_ADMTEK_PEGASUS,	  PNA },
+  { USB_VENDOR_ADMTEK,		USB_PRODUCT_ADMTEK_PEGASUSII,	  PII },
+  { USB_VENDOR_BILLIONTON,	USB_PRODUCT_BILLIONTON_USB100,	  0 },
+  { USB_VENDOR_BILLIONTON,	USB_PRODUCT_BILLIONTON_USBLP100,  PNA },
+  { USB_VENDOR_BILLIONTON,	USB_PRODUCT_BILLIONTON_USBEL100,  0 },
+  { USB_VENDOR_BILLIONTON,	USB_PRODUCT_BILLIONTON_USBE100,	  PII },
   { USB_VENDOR_COREGA,		USB_PRODUCT_COREGA_FETHER_USB_TX, 0 },
-  { USB_VENDOR_IODATA,		USB_PRODUCT_IODATA_USBETTX,	0 },
-  { USB_VENDOR_KINGSTON,	USB_PRODUCT_KINGSTON_KNU101TX,	0 },
+  { USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DSB650TX4,	  LSYS|PII },
+  { USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DSB650TX1,	  LSYS },
+  { USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DSB650TX,	  LSYS },
+  { USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DSB650TX_PNA,	  PNA },
+  { USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DSB650TX3,	  LSYS|PII },
+  { USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DSB650TX2,	  LSYS|PII },
+  { USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DSB650,	  0 },
+  { USB_VENDOR_ELECOM,		USB_PRODUCT_ELECOM_LDUSBTX0,	  0 },
+  { USB_VENDOR_ELECOM,		USB_PRODUCT_ELECOM_LDUSBTX1,	  0 },
+  { USB_VENDOR_ELECOM,		USB_PRODUCT_ELECOM_LDUSBTX2,	  0 },
+  { USB_VENDOR_ELECOM,		USB_PRODUCT_ELECOM_LDUSBTX3,	  PII },
+  { USB_VENDOR_ELSA,		USB_PRODUCT_ELSA_USB2ETHERNET,	  0 },
+  { USB_VENDOR_IODATA,		USB_PRODUCT_IODATA_USBETTX,	  0 },
+  { USB_VENDOR_IODATA,		USB_PRODUCT_IODATA_USBETTXS,	  PII },
+  { USB_VENDOR_KINGSTON,	USB_PRODUCT_KINGSTON_KNU101TX,    0 },
+  { USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_USB10TX1,	  LSYS|PII },
+  { USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_USB10T,	  LSYS },
+  { USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_USB100TX,	  LSYS },
+  { USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_USB100H1,	  LSYS|PNA },
+  { USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_USB10TA,	  LSYS },
+  { USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_USB10TX2,	  LSYS|PII },
+  { USB_VENDOR_MELCO, 		USB_PRODUCT_MELCO_LUATX1, 	  0 },
+  { USB_VENDOR_MELCO, 		USB_PRODUCT_MELCO_LUATX5, 	  0 },
+  { USB_VENDOR_MELCO, 		USB_PRODUCT_MELCO_LUA2TX5, 	  PII },
+  { USB_VENDOR_SMARTBRIDGES,	USB_PRODUCT_SMARTBRIDGES_SMARTNIC,PII },
+  { USB_VENDOR_SMC,		USB_PRODUCT_SMC_2202USB,	  0 },
+  { USB_VENDOR_SOHOWARE,	USB_PRODUCT_SOHOWARE_NUB100,	  0 },
   { 0, 0, 0 }
 };
 
 USB_DECLARE_DRIVER(aue);
 
+Static void aue_reset_pegasus_II(struct aue_softc *sc);
 Static const struct aue_type *aue_lookup(u_int16_t vendor, u_int16_t product);
 Static int aue_tx_list_init(struct aue_softc *);
 Static int aue_rx_list_init(struct aue_softc *);
@@ -506,7 +541,7 @@ aue_miibus_statchg(device_ptr_t dev)
 	 * This turns on the 'dual link LED' bin in the auxmode
 	 * register of the Broadcom PHY.
 	 */
-	if (sc->aue_linksys) {
+	if (sc->aue_flags & LSYS) {
 		u_int16_t auxmode;
 		auxmode = aue_miibus_readreg(dev, 0, 0x1b);
 		aue_miibus_writereg(dev, 0, 0x1b, auxmode | 0x04);
@@ -577,6 +612,20 @@ allmulti:
 }
 
 Static void
+aue_reset_pegasus_II(struct aue_softc *sc)
+{
+	/* Magic constants taken from Linux driver. */
+	aue_csr_write_1(sc, AUE_REG_1D, 0);
+	aue_csr_write_1(sc, AUE_REG_7B, 2);
+#if 0
+	if ((sc->aue_flags & HAS_HOME_PNA) && mii_mode)
+		aue_csr_write_1(sc, AUE_REG_81, 6);
+	else
+#endif
+		aue_csr_write_1(sc, AUE_REG_81, 2);
+}
+
+Static void
 aue_reset(struct aue_softc *sc)
 {
 	int		i;
@@ -607,13 +656,24 @@ aue_reset(struct aue_softc *sc)
   	aue_csr_write_1(sc, AUE_GPIO0,
 	    AUE_GPIO_OUT0 | AUE_GPIO_SEL0 | AUE_GPIO_SEL1);
   
+#if 0
+	/* XXX what is mii_mode supposed to be */
+	if (sc->aue_mii_mode && (sc->aue_flags & PNA))
+		aue_csr_write_1(sc, AUE_GPIO1, 0x34);
+	else
+		aue_csr_write_1(sc, AUE_GPIO1, 0x26);
+#endif
+
 	/* Grrr. LinkSys has to be different from everyone else. */
-	if (sc->aue_linksys) {
+	if (sc->aue_flags & LSYS) {
 		aue_csr_write_1(sc, AUE_GPIO0, 
 		    AUE_GPIO_SEL0 | AUE_GPIO_SEL1);
 		aue_csr_write_1(sc, AUE_GPIO0,
 		    AUE_GPIO_SEL0 | AUE_GPIO_SEL1 | AUE_GPIO_OUT0);
 	}
+
+	if (sc->aue_flags & PII)
+		aue_reset_pegasus_II(sc);
 
 	/* Wait a little while for the chip to get its brains in order. */
 	delay(10000);		/* XXX */
@@ -687,7 +747,7 @@ USB_ATTACH(aue)
 		USB_ATTACH_ERROR_RETURN;
 	}
 
-	sc->aue_linksys = aue_lookup(uaa->vendor, uaa->product)->aue_linksys;
+	sc->aue_flags = aue_lookup(uaa->vendor, uaa->product)->aue_flags;
 
 	sc->aue_udev = dev;
 	sc->aue_iface = iface;
@@ -751,8 +811,9 @@ USB_ATTACH(aue)
 	ifp->if_ioctl = aue_ioctl;
 	ifp->if_start = aue_start;
 	ifp->if_watchdog = aue_watchdog;
-	IFQ_SET_READY(&ifp->if_snd);
 	strncpy(ifp->if_xname, USBDEVNAME(sc->aue_dev), IFNAMSIZ);
+
+	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Initialize MII/media info. */
 	mii = &sc->aue_mii;
@@ -796,6 +857,11 @@ USB_DETACH(aue)
 
 	DPRINTFN(2,("%s: %s: enter\n", USBDEVNAME(sc->aue_dev), __FUNCTION__));
 
+	if (!sc->aue_attached) {
+		/* Detached before attached finished, so just bail out. */
+		return (0);
+	}
+
 	usb_uncallout(sc->aue_stat_ch, aue_tick, sc);
 	/*
 	 * Remove any pending tasks.  They cannot be executing because they run
@@ -805,12 +871,6 @@ USB_DETACH(aue)
 	usb_rem_task(sc->aue_udev, &sc->aue_stop_task);
 
 	s = splusb();
-
-	if (!sc->aue_attached) {
-		/* Detached before attached finished, so just bail out. */
-		splx(s);
-		return (0);
-	}
 
 	if (ifp->if_flags & IFF_RUNNING)
 		aue_stop(sc);
@@ -987,7 +1047,7 @@ aue_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		sc->aue_intr_errs++;
 		if (usbd_ratecheck(&sc->aue_rx_notice)) {
 			printf("%s: %u usb errors on intr: %s\n",
-			    USBDEVNAME(sc->aue_dev), sc->aue_rx_errs,
+			    USBDEVNAME(sc->aue_dev), sc->aue_intr_errs,
 			    usbd_errstr(status));
 			sc->aue_intr_errs = 0;
 		}
@@ -1193,7 +1253,7 @@ aue_tick_task(void *xsc)
 
 	mii_tick(mii);
 	if (!sc->aue_link) {
-		mii_pollstat(mii);
+		mii_pollstat(mii); /* XXX FreeBSD has removed this call */
 		if (mii->mii_media_status & IFM_ACTIVE &&
 		    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
 			DPRINTFN(2,("%s: %s: got link\n",

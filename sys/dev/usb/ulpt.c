@@ -1,5 +1,5 @@
-/*	$OpenBSD: ulpt.c,v 1.8 2001/10/04 22:55:56 gluk Exp $ */
-/*	$NetBSD: ulpt.c,v 1.42 2001/04/16 00:18:06 augustss Exp $	*/
+/*	$OpenBSD: ulpt.c,v 1.9 2001/10/31 04:24:44 nate Exp $ */
+/*	$NetBSD: ulpt.c,v 1.43 2001/10/19 15:30:25 nathanw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -98,7 +98,7 @@ struct ulpt_softc {
 	int sc_ifaceno;
 
 	int sc_out;
-	usbd_pipe_handle sc_out_pipe;   /* bulk out pipe */
+	usbd_pipe_handle sc_out_pipe;	/* bulk out pipe */
 
 	int sc_in;
 	usbd_pipe_handle sc_in_pipe;	/* bulk in pipe */
@@ -182,7 +182,7 @@ USB_MATCH(ulpt)
 	    id->bInterfaceSubClass == UISUBCLASS_PRINTER &&
 	    ((id->bInterfaceProtocol == UIPROTO_PRINTER_UNI) ||
 	     (id->bInterfaceProtocol == UIPROTO_PRINTER_BI) ||
-	     (id->bInterfaceProtocol == UIPROTO_PRINTER_IEEE_1284_4)))
+	     (id->bInterfaceProtocol == UIPROTO_PRINTER_1284)))
 		return (UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO);
 	return (UMATCH_NONE);
 }
@@ -231,12 +231,13 @@ USB_ATTACH(ulpt)
 		    id->bInterfaceNumber == ifcd->bInterfaceNumber) {
 			if (id->bInterfaceClass == UICLASS_PRINTER &&
 			    id->bInterfaceSubClass == UISUBCLASS_PRINTER &&
-			    id->bInterfaceProtocol == UIPROTO_PRINTER_BI)
+			    (id->bInterfaceProtocol == UIPROTO_PRINTER_BI ||
+			     id->bInterfaceProtocol == UIPROTO_PRINTER_1284))
 				goto found;
 			altno++;
 		}
 	}
-	id = ifcd;              /* not found, use original */
+	id = ifcd;		/* not found, use original */
  found:
 	if (id != ifcd) {
 		/* Found a new bidir setting */

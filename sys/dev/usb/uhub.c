@@ -1,5 +1,5 @@
-/*	$OpenBSD: uhub.c,v 1.13 2001/05/03 02:20:33 aaron Exp $ */
-/*	$NetBSD: uhub.c,v 1.49 2001/01/21 19:00:06 augustss Exp $	*/
+/*	$OpenBSD: uhub.c,v 1.14 2001/10/31 04:24:44 nate Exp $ */
+/*	$NetBSD: uhub.c,v 1.52 2001/10/26 17:53:59 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -345,8 +345,8 @@ uhub_explore(usbd_device_handle dev)
 		}
 		status = UGETW(up->status.wPortStatus);
 		change = UGETW(up->status.wPortChange);
-		DPRINTFN(3,("uhub_explore: port %d status 0x%04x 0x%04x\n",
-			    port, status, change));
+		DPRINTFN(3,("uhub_explore: %s port %d status 0x%04x 0x%04x\n",
+			    USBDEVNAME(sc->sc_dev), port, status, change));
 		if (change & UPS_C_PORT_ENABLED) {
 			DPRINTF(("uhub_explore: C_PORT_ENABLED\n"));
 			usbd_clear_port_feature(dev, port, UHF_C_PORT_ENABLE);
@@ -372,8 +372,14 @@ uhub_explore(usbd_device_handle dev)
 			DPRINTFN(3,("uhub_explore: port=%d !C_CONNECT_"
 				    "STATUS\n", port));
 			/* No status change, just do recursive explore. */
-			if (up->device && up->device->hub)
+			if (up->device != NULL && up->device->hub != NULL)
 				up->device->hub->explore(up->device);
+#if 0 && defined(DIAGNOSTIC)
+			if (up->device == NULL && 
+			    (status & UPS_CURRENT_CONNECT_STATUS))
+				printf("%s: connected, no device\n",
+				       USBDEVNAME(sc->sc_dev));
+#endif
 			continue;
 		}
 
@@ -566,10 +572,10 @@ uhub_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 	struct uhub_softc *sc = addr;
 
 	DPRINTFN(5,("uhub_intr: sc=%p\n", sc));
-	if (status != USBD_NORMAL_COMPLETION)
+	if (status == USBD_STALLED)
 		usbd_clear_endpoint_stall_async(sc->sc_ipipe);
-
-	usb_needs_explore(sc->sc_hub);
+	else if (status == USBD_NORMAL_COMPLETION)
+		usb_needs_explore(sc->sc_hub);
 }
 
 #if defined(__FreeBSD__)

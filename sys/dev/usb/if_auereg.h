@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_auereg.h,v 1.4 2001/05/03 02:20:32 aaron Exp $ */
-/*	$NetBSD: if_auereg.h,v 1.12 2000/04/04 20:16:19 augustss Exp $	*/
+/*	$OpenBSD: if_auereg.h,v 1.5 2001/10/31 04:24:44 nate Exp $ */
+/*	$NetBSD: if_auereg.h,v 1.16 2001/10/10 02:14:17 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -94,6 +94,7 @@
 #define AUE_PAUSE		AUE_PAUSE0
 #define AUE_RX_FLOWCTL_CNT	0x1A
 #define AUE_RX_FLOWCTL_FIFO	0x1B
+#define AUE_REG_1D		0x1D
 #define AUE_EE_REG		0x20
 #define AUE_EE_DATA0		0x21
 #define AUE_EE_DATA1		0x22
@@ -113,8 +114,10 @@
 #define AUE_PKTLOST1		0x2F
 #define AUE_PKTLOST		AUE_PKTLOST0
 
+#define AUE_REG_7B		0x7B
 #define AUE_GPIO0		0x7E
 #define AUE_GPIO1		0x7F
+#define AUE_REG_81		0x81
 
 #define AUE_CTL0_INCLUDE_RXCRC	0x01
 #define AUE_CTL0_ALLMULTI	0x02
@@ -259,7 +262,7 @@ struct aue_softc {
 	int			aue_if_flags;
 	struct aue_cdata	aue_cdata;
 
-	char			aue_linksys;
+	u_int16_t			aue_flags;
 
 	char			aue_dying;
 	char			aue_attached;
@@ -271,6 +274,7 @@ struct aue_softc {
 	struct usb_task		aue_stop_task;
 
 	struct lock		aue_mii_lock;
+
 };
 
 #define AUE_TIMEOUT		1000

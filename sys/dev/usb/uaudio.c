@@ -1,5 +1,5 @@
-/*	$OpenBSD: uaudio.c,v 1.10 2001/09/17 20:30:25 drahn Exp $ */
-/*	$NetBSD: uaudio.c,v 1.41 2001/01/23 14:04:13 augustss Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.11 2001/10/31 04:24:44 nate Exp $ */
+/*	$NetBSD: uaudio.c,v 1.43 2001/10/03 00:04:53 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/file.h>
-#include <sys/reboot.h>
+#include <sys/reboot.h>				/* for bootverbose */
 #include <sys/select.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
@@ -540,17 +540,16 @@ void
 uaudio_mixer_add_ctl(struct uaudio_softc *sc, struct mixerctl *mc)
 {
 	int res;
-
-	if (sc->sc_nctls == 0)
-		sc->sc_ctls = malloc(sizeof *mc, M_USBDEV, M_NOWAIT);
-	else
-		sc->sc_ctls = realloc(sc->sc_ctls, 
-				      (sc->sc_nctls+1) * sizeof *mc,
-				      M_USBDEV, M_NOWAIT);
-	if (sc->sc_ctls == NULL) {
+	size_t len = sizeof(*mc) * (sc->sc_nctls + 1);
+	struct mixerctl *nmc = sc->sc_nctls == 0 ?
+	    malloc(len, M_USBDEV, M_NOWAIT) :
+	    realloc(sc->sc_ctls, len, M_USBDEV, M_NOWAIT);
+ 
+	if (nmc == NULL) {
 		printf("uaudio_mixer_add_ctl: no memory\n");
 		return;
 	}
+	sc->sc_ctls = nmc;
 
 	mc->delta = 0;
 	if (mc->type != MIX_ON_OFF) {
@@ -1021,16 +1020,17 @@ uaudio_identify(struct uaudio_softc *sc, usb_config_descriptor_t *cdesc)
 void
 uaudio_add_alt(struct uaudio_softc *sc, struct as_info *ai)
 {
-	if (sc->sc_nalts == 0)
-		sc->sc_alts = malloc(sizeof *ai, M_USBDEV, M_NOWAIT);
-	else
-		sc->sc_alts = realloc(sc->sc_alts,
-				      (sc->sc_nalts+1) * sizeof *ai,
-				      M_USBDEV, M_NOWAIT);
-	if (sc->sc_alts == NULL) {
+	size_t len = sizeof(*ai) * (sc->sc_nalts + 1);
+	struct as_info *nai = sc->sc_nalts == 0 ?
+	    malloc(len, M_USBDEV, M_NOWAIT) :
+	    realloc(sc->sc_alts, len, M_USBDEV, M_NOWAIT);
+
+	if (nai == NULL) {
 		printf("uaudio_add_alt: no memory\n");
 		return;
 	}
+
+	sc->sc_alts = nai;
 	DPRINTFN(2,("uaudio_add_alt: adding alt=%d, enc=%d\n",
 		    ai->alt, ai->encoding));
 	sc->sc_alts[sc->sc_nalts++] = *ai;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: usb_subr.c,v 1.17 2001/03/22 02:10:22 mickey Exp $ */
-/*	$NetBSD: usb_subr.c,v 1.72 2000/04/14 14:13:56 augustss Exp $	*/
+/*	$OpenBSD: usb_subr.c,v 1.18 2001/10/31 04:24:44 nate Exp $ */
+/*	$NetBSD: usb_subr.c,v 1.87 2001/08/15 00:04:59 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -101,16 +101,13 @@ typedef u_int16_t usb_product_id_t;
 /*
  * Descriptions of of known vendors and devices ("products").
  */
-struct usb_known_vendor {
-	usb_vendor_id_t		vendor;
-	const char		*vendorname;
-};
-
-struct usb_known_product {
+struct usb_knowndev {
 	usb_vendor_id_t		vendor;
 	usb_product_id_t	product;
-	const char		*productname;
+	int			flags;
+	char			*vendorname, *productname;
 };
+#define	USB_KNOWNDEV_NOPROD	0x01		/* match on vendor only */
 
 #include <dev/usb/usbdevs_data.h>
 #endif /* USBVERBOSE */
@@ -213,28 +210,29 @@ usbd_get_string(usbd_device_handle dev, int si, char *buf)
 	return (buf);
 }
 
-static char *
-usbd_trim_trailings_spaces(char *p)
+static void
+usbd_trim_spaces(char *p)
 {
-	char *q, *r;
+	char *q, *e;
 
 	if (p == NULL)
-		return NULL;
-	r = p;
-	q = p + strlen(p);
-	while (--q >= p && *q == ' ')
-		*q = 0;
-	return r;
+		return;
+	q = e = p;
+	while (*q == ' ')	/* skip leading spaces */
+		q++;
+	while ((*p = *q++))	/* copy string */
+		if (*p++ != ' ') /* remember last non-space */
+			e = p;
+	*e = 0;			/* kill trailing spaces */
 }
 
 void
 usbd_devinfo_vp(usbd_device_handle dev, char *v, char *p, int usedev)
 {
 	usb_device_descriptor_t *udd = &dev->ddesc;
-	const char *vendor = NULL, *product = NULL;
+	char *vendor = 0, *product = 0;
 #ifdef USBVERBOSE
-	const struct usb_known_vendor *ukv;
-	const struct usb_known_product *ukp;
+	const struct usb_knowndev *kdp;
 #endif
 
 	if (dev == NULL) {
@@ -243,34 +241,30 @@ usbd_devinfo_vp(usbd_device_handle dev, char *v, char *p, int usedev)
 	}
 
 	if (usedev) {
-		vendor = usbd_trim_trailings_spaces(
-		    usbd_get_string(dev, udd->iManufacturer, v));
-		product = usbd_trim_trailings_spaces(
-		    usbd_get_string(dev, udd->iProduct, p));
+		vendor = usbd_get_string(dev, udd->iManufacturer, v);
+		usbd_trim_spaces(vendor);
+		product = usbd_get_string(dev, udd->iProduct, p);
+		usbd_trim_spaces(product);
 	} else {
 		vendor = NULL;
 		product = NULL;
 	}
 #ifdef USBVERBOSE
 	if (vendor == NULL || product == NULL) {
-		for(ukv = usb_known_vendors;
-		    ukv->vendorname != NULL;
-		    ukv++) {
-			if (ukv->vendor == UGETW(udd->idVendor)) {
-				vendor = ukv->vendorname;
+		for(kdp = usb_knowndevs;
+		    kdp->vendorname != NULL;
+		    kdp++) {
+			if (kdp->vendor == UGETW(udd->idVendor) && 
+			    (kdp->product == UGETW(udd->idProduct) ||
+			     (kdp->flags & USB_KNOWNDEV_NOPROD) != 0))
 				break;
-			}
 		}
-		if (vendor != NULL) {
-			for(ukp = usb_known_products;
-			    ukp->productname != NULL;
-			    ukp++) {
-				if (ukp->vendor == UGETW(udd->idVendor) &&
-				    (ukp->product == UGETW(udd->idProduct))) {
-					product = ukp->productname;
-					break;
-				}
-			}
+		if (kdp->vendorname != NULL) {
+			if (vendor == NULL)
+			    vendor = kdp->vendorname;
+			if (product == NULL)
+			    product = (kdp->flags & USB_KNOWNDEV_NOPROD) == 0 ?
+				kdp->productname : NULL;
 		}
 	}
 #endif
@@ -299,7 +293,7 @@ usbd_devinfo(usbd_device_handle dev, int showclass, char *cp)
 	int bcdDevice, bcdUSB;
 
 	usbd_devinfo_vp(dev, vendor, product, 1);
-	cp += sprintf(cp, "%s%s%s", vendor, *vendor ? " " : "", product);
+	cp += sprintf(cp, "%s %s", vendor, product);
 	if (showclass)
 		cp += sprintf(cp, ", class %d/%d",
 			      udd->bDeviceClass, udd->bDeviceSubClass);
@@ -470,7 +464,6 @@ usbd_fill_iface_data(usbd_device_handle dev, int ifaceidx, int altidx)
 	for (endpt = 0; endpt < nendpt; endpt++) {
 		DPRINTFN(10,("usbd_fill_iface_data: endpt=%d\n", endpt));
 		for (; p < end; p += ed->bLength) {
-			ed = (usb_endpoint_descriptor_t *)p;
 			DPRINTFN(10,("usbd_fill_iface_data: p=%p end=%p "
 				     "len=%d type=%d\n",
 				 p, end, ed->bLength, ed->bDescriptorType));
@@ -1173,6 +1166,18 @@ usbd_submatch(struct device *parent, void *match, void *aux)
 	     )
 	   )
 		return 0;
+	if (cf->uhubcf_vendor != UHUB_UNK_VENDOR &&
+	    cf->uhubcf_vendor == uaa->vendor &&
+	    cf->uhubcf_product != UHUB_UNK_PRODUCT &&
+	    cf->uhubcf_product == uaa->product) {
+		/* We have a vendor&product locator match */
+		if (cf->uhubcf_release != UHUB_UNK_RELEASE &&
+		    cf->uhubcf_release == uaa->release)
+			uaa->matchlvl = UMATCH_VENDOR_PRODUCT_REV;
+		else
+			uaa->matchlvl = UMATCH_VENDOR_PRODUCT;
+	} else
+		uaa->matchlvl = 0;
 	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
 }
 

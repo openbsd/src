@@ -1,5 +1,5 @@
-/*	$OpenBSD: usbdi.h,v 1.12 2001/05/03 02:20:34 aaron Exp $ */
-/*	$NetBSD: usbdi.h,v 1.52 2001/05/01 16:43:44 lukem Exp $	*/
+/*	$OpenBSD: usbdi.h,v 1.13 2001/10/31 04:24:45 nate Exp $ */
+/*	$NetBSD: usbdi.h,v 1.53 2001/08/15 00:04:59 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -203,6 +203,7 @@ struct usb_attach_arg {
 	int			vendor;
 	int			product;
 	int			release;
+	int			matchlvl;
 	usbd_device_handle	device;	/* current device */
 	usbd_interface_handle	iface; /* current interface */
 	int			usegeneric;

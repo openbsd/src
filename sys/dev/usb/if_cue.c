@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_cue.c,v 1.10 2001/07/08 23:38:08 fgsch Exp $ */
-/*	$NetBSD: if_cue.c,v 1.34 2001/04/12 23:54:56 augustss Exp $	*/
+/*	$OpenBSD: if_cue.c,v 1.11 2001/10/31 04:24:44 nate Exp $ */
+/*	$NetBSD: if_cue.c,v 1.35 2001/04/13 23:30:09 thorpej Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -577,8 +577,9 @@ USB_ATTACH(cue)
 	ifp->if_ioctl = cue_ioctl;
 	ifp->if_start = cue_start;
 	ifp->if_watchdog = cue_watchdog;
-	IFQ_SET_READY(&ifp->if_snd);
 	strncpy(ifp->if_xname, USBDEVNAME(sc->cue_dev), IFNAMSIZ);
+
+	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Attach the interface. */
 	if_attach(ifp);

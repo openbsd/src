@@ -1,5 +1,5 @@
-/*	$OpenBSD: uyap_firmware.h,v 1.1 2001/01/29 00:43:40 aaron Exp $ */
-/*	$NetBSD:  $	*/
+/*	$OpenBSD: uyap_firmware.h,v 1.2 2001/10/31 04:24:45 nate Exp $ */
+/*	$NetBSD: uyap_firmware.h,v 1.2 2001/01/16 03:10:09 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.

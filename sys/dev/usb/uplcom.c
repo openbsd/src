@@ -1,6 +1,5 @@
-/*	$OpenBSD: uplcom.c,v 1.1 2001/10/02 01:37:36 millert Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.2 2001/10/31 04:24:44 nate Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.20 2001/07/31 12:33:11 ichiro Exp $	*/
-
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.

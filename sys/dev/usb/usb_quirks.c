@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_quirks.c,v 1.9 2001/05/03 02:20:34 aaron Exp $ */
+/*	$OpenBSD: usb_quirks.c,v 1.10 2001/10/31 04:24:44 nate Exp $ */
 /*	$NetBSD: usb_quirks.c,v 1.38 2001/04/15 10:26:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.13 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -74,6 +74,8 @@ Static const struct usbd_quirk_entry {
  { USB_VENDOR_ALCOR2, USB_PRODUCT_ALCOR2_KBD_HUB,   0x001, { UQ_SPUR_BUT_UP }},
  { USB_VENDOR_MCT, USB_PRODUCT_MCT_HUB0100,         0x102, { UQ_BUS_POWERED }},
  { USB_VENDOR_MCT, USB_PRODUCT_MCT_USB232,          0x102, { UQ_BUS_POWERED }},
+ { USB_VENDOR_MCT, USB_PRODUCT_MCT_SITECOM_USB232,  0x102, { UQ_BUS_POWERED }},
+ { USB_VENDOR_MCT, USB_PRODUCT_MCT_DU_H3SP_USB232,  0x102, { UQ_BUS_POWERED }},
  { USB_VENDOR_METRICOM, USB_PRODUCT_METRICOM_RICOCHET_GS,
  	0x100, { UQ_ASSUME_CM_OVER_DATA | UQ_NO_STRINGS }},
  { USB_VENDOR_TI, USB_PRODUCT_TI_UTUSB41,	    0x110, { UQ_POWER_CLAIM }},
@@ -83,13 +85,11 @@ Static const struct usbd_quirk_entry {
  { USB_VENDOR_SILICONPORTALS, USB_PRODUCT_SILICONPORTALS_YAPPHONE,
    						    0x100, { UQ_AU_INP_ASYNC }},
  /* XXX These should have a revision number, but I don't know what they are. */
-#ifdef notyet
- { USB_VENDOR_HP, USB_PRODUCT_HP_895C,		    ANY,  { UQ_BROKEN_BIDIR }},
- { USB_VENDOR_HP, USB_PRODUCT_HP_880C,		    ANY,  { UQ_BROKEN_BIDIR }},
- { USB_VENDOR_HP, USB_PRODUCT_HP_815C,		    ANY,  { UQ_BROKEN_BIDIR }},
- { USB_VENDOR_HP, USB_PRODUCT_HP_810C,		    ANY,  { UQ_BROKEN_BIDIR }},
- { USB_VENDOR_HP, USB_PRODUCT_HP_830C,		    ANY,  { UQ_BROKEN_BIDIR }},
-#endif
+ { USB_VENDOR_HP, USB_PRODUCT_HP_895C,		    ANY,   { UQ_BROKEN_BIDIR }},
+ { USB_VENDOR_HP, USB_PRODUCT_HP_880C,		    ANY,   { UQ_BROKEN_BIDIR }},
+ { USB_VENDOR_HP, USB_PRODUCT_HP_815C,		    ANY,   { UQ_BROKEN_BIDIR }},
+ { USB_VENDOR_HP, USB_PRODUCT_HP_810C,		    ANY,   { UQ_BROKEN_BIDIR }},
+ { USB_VENDOR_HP, USB_PRODUCT_HP_830C,		    ANY,   { UQ_BROKEN_BIDIR }},
 
  { 0, 0, 0, { 0 } }
 };

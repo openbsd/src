@@ -1,5 +1,5 @@
-/*	$OpenBSD: ohci.c,v 1.23 2001/09/15 20:57:33 drahn Exp $ */
-/*	$NetBSD: ohci.c,v 1.102 2001/04/01 15:00:29 augustss Exp $	*/
+/*	$OpenBSD: ohci.c,v 1.24 2001/10/31 04:24:44 nate Exp $ */
+/*	$NetBSD: ohci.c,v 1.104 2001/09/28 23:57:21 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -138,7 +138,7 @@ Static void		ohci_shutdown(void *v);
 Static void		ohci_power(int, void *);
 Static usbd_status	ohci_open(usbd_pipe_handle);
 Static void		ohci_poll(struct usbd_bus *);
-Static void		ohci_softintr(struct usbd_bus *);
+Static void		ohci_softintr(void *);
 Static void		ohci_waitintr(ohci_softc_t *, usbd_xfer_handle);
 Static void		ohci_add_done(ohci_softc_t *, ohci_physaddr_t);
 Static void		ohci_rhsc(ohci_softc_t *, usbd_xfer_handle);
@@ -651,9 +651,8 @@ ohci_init(ohci_softc_t *sc)
 	printf("%s:", USBDEVNAME(sc->sc_bus.bdev));
 #endif
 	rev = OREAD4(sc, OHCI_REVISION);
-	printf(" OHCI version %d.%d%s", OHCI_REV_HI(rev), OHCI_REV_LO(rev),
+	printf(" OHCI version %d.%d%s\n", OHCI_REV_HI(rev), OHCI_REV_LO(rev),
 	       OHCI_REV_LEGACY(rev) ? ", legacy support" : "");
-	printf("\n");
 
 	if (OHCI_REV_HI(rev) != 1 || OHCI_REV_LO(rev) != 0) {
 		printf("%s: unsupported OHCI revision\n", 
@@ -760,6 +759,8 @@ ohci_init(ohci_softc_t *sc)
 			OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_RESET);
 			goto reset;
 		}
+#if 0
+/* Don't bother trying to reuse the BIOS init, we'll reset it anyway. */
 	} else if ((ctl & OHCI_HCFS_MASK) != OHCI_HCFS_RESET) {
 		/* BIOS started controller. */
 		DPRINTF(("ohci_init: BIOS active\n"));
@@ -767,6 +768,7 @@ ohci_init(ohci_softc_t *sc)
 			OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_OPERATIONAL);
 			usb_delay_ms(&sc->sc_bus, USB_RESUME_DELAY);
 		}
+#endif
 	} else {
 		DPRINTF(("ohci_init: cold started\n"));
 	reset:
@@ -1151,13 +1153,6 @@ ohci_intr1(ohci_softc_t *sc)
 }
 
 void
-ohci_rhsc_enable(void *v_sc)
-{
-	ohci_softc_t *sc = v_sc;
-	ohci_rhsc_able(sc, 1);
-}
-
-void
 ohci_rhsc_able(ohci_softc_t *sc, int on)
 {
 	DPRINTFN(4, ("ohci_rhsc_able: on=%d\n", on));
@@ -1168,6 +1163,14 @@ ohci_rhsc_able(ohci_softc_t *sc, int on)
 		sc->sc_eintrs &= ~OHCI_RHSC;
 		OWRITE4(sc, OHCI_INTERRUPT_DISABLE, OHCI_RHSC);
 	}
+}
+
+void
+ohci_rhsc_enable(void *v_sc)
+{
+	ohci_softc_t *sc = v_sc;
+
+	ohci_rhsc_able(sc, 1);
 }
 
 #ifdef OHCI_DEBUG
@@ -1229,9 +1232,9 @@ ohci_add_done(ohci_softc_t *sc, ohci_physaddr_t done)
 }
 
 void
-ohci_softintr(struct usbd_bus *bus)
+ohci_softintr(void *v)
 {
-	ohci_softc_t *sc = (ohci_softc_t *)bus;
+	ohci_softc_t *sc = v;
 	ohci_soft_itd_t *sitd, *sidone, *sitdnext;
 	ohci_soft_td_t  *std,  *sdone,  *stdnext;
 	usbd_xfer_handle xfer;
@@ -2078,8 +2081,8 @@ ohci_abort_xfer_end(void *v)
 	p = xfer->hcpriv;
 #ifdef DIAGNOSTIC
 	if (p == NULL) {
-		printf("ohci_abort_xfer: hcpriv==0\n");
 		splx(s);
+		printf("ohci_abort_xfer: hcpriv==0\n");
 		return;
 	}
 #endif

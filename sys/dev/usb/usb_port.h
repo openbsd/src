@@ -1,5 +1,5 @@
-/*	$OpenBSD: usb_port.h,v 1.29 2001/10/02 19:30:22 provos Exp $ */
-/*	$NetBSD: usb_port.h,v 1.42 2001/03/28 19:00:39 ichiro Exp $	*/
+/*	$OpenBSD: usb_port.h,v 1.30 2001/10/31 04:24:44 nate Exp $ */
+/*	$NetBSD: usb_port.h,v 1.44 2001/05/14 20:35:29 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -39,6 +39,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _USB_PORT_H
+#define _USB_PORT_H
 
 /* 
  * Macro's to cope with the differences between operating systems.
@@ -51,6 +53,8 @@
 
 #include "opt_usbverbose.h"
 
+#define USB_USE_SOFTINTR
+
 #ifdef USB_DEBUG
 #define UKBD_DEBUG 1
 #define UHID_DEBUG 1
@@ -61,7 +65,6 @@
 #define ULPT_DEBUG 1
 #define UCOM_DEBUG 1
 #define UPLCOM_DEBUG 1
-#define UMCT_DEBUG 1
 #define UMODEM_DEBUG 1
 #define UAUDIO_DEBUG 1
 #define AUE_DEBUG 1
@@ -73,12 +76,15 @@
 #define UZCOM_DEBUG 1
 #define URIO_DEBUG 1
 #define UFTDI_DEBUG 1
+#define UMCT_DEBUG 1
 #define USCANNER_DEBUG 1
 #define USSCANNER_DEBUG 1
 #define Static
 #else
 #define Static static
 #endif
+
+#define SCSI_MODE_SENSE			MODE_SENSE
 
 typedef struct device *device_ptr_t;
 #define USBBASEDEVICE struct device
@@ -182,6 +188,7 @@ __CONCAT(dname,_detach)(self, flags) \
 /*
  * OpenBSD
  */
+#define USB_DEBUG
 #ifdef USB_DEBUG
 #define UKBD_DEBUG 1
 #define UHID_DEBUG 1
@@ -202,6 +209,7 @@ __CONCAT(dname,_detach)(self, flags) \
 #define UZCOM_DEBUG 1
 #define URIO_DEBUG 1
 #define UFTDI_DEBUG 1
+#define UMCT_DEBUG 1
 #define USCANNER_DEBUG 1
 #define USSCANNER_DEBUG 1
 #endif
@@ -494,3 +502,6 @@ __CONCAT(dname,_detach)(device_t self)
 #define logprintf		printf
 
 #endif /* __FreeBSD__ */
+
+#endif /* _USB_PORT_H */
+

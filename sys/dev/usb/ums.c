@@ -1,5 +1,5 @@
-/*	$OpenBSD: ums.c,v 1.5 2001/05/03 02:20:34 aaron Exp $ */
-/*	$NetBSD: ums.c,v 1.47 2001/01/23 14:04:14 augustss Exp $	*/
+/*	$OpenBSD: ums.c,v 1.6 2001/10/31 04:24:44 nate Exp $ */
+/*	$NetBSD: ums.c,v 1.49 2001/10/26 17:58:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -147,7 +147,7 @@ USB_MATCH(ums)
 	if (id == NULL || id->bInterfaceClass != UICLASS_HID)
 		return (UMATCH_NONE);
 
-	err = usbd_alloc_report_desc(uaa->iface, &desc, &size, M_TEMP);
+	err = usbd_read_report_desc(uaa->iface, &desc, &size, M_TEMP);
 	if (err)
 		return (UMATCH_NONE);
 
@@ -212,7 +212,7 @@ USB_ATTACH(ums)
 	if (quirks & UQ_SPUR_BUT_UP)
 		sc->flags |= UMS_SPUR_BUT_UP;
 
-	err = usbd_alloc_report_desc(uaa->iface, &desc, &size, M_TEMP);
+	err = usbd_read_report_desc(uaa->iface, &desc, &size, M_TEMP);
 	if (err)
 		USB_ATTACH_ERROR_RETURN;
 
@@ -292,7 +292,7 @@ USB_ATTACH(ums)
 	DPRINTF(("ums_attach: X\t%d/%d\n", 
 		 sc->sc_loc_x.pos, sc->sc_loc_x.size));
 	DPRINTF(("ums_attach: Y\t%d/%d\n", 
-		 sc->sc_loc_x.pos, sc->sc_loc_x.size));
+		 sc->sc_loc_y.pos, sc->sc_loc_y.size));
 	if (sc->flags & UMS_Z)
 		DPRINTF(("ums_attach: Z\t%d/%d\n", 
 			 sc->sc_loc_z.pos, sc->sc_loc_z.size));

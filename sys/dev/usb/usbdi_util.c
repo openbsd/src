@@ -1,5 +1,5 @@
-/*	$OpenBSD: usbdi_util.c,v 1.10 2000/11/08 18:10:39 aaron Exp $ */
-/*	$NetBSD: usbdi_util.c,v 1.33 2000/06/01 15:51:27 augustss Exp $	*/
+/*	$OpenBSD: usbdi_util.c,v 1.11 2001/10/31 04:24:45 nate Exp $ */
+/*	$NetBSD: usbdi_util.c,v 1.35 2001/10/26 17:58:21 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi_util.c,v 1.14 1999/11/17 22:33:50 n_hibma Exp $	*/
 
 /*
@@ -336,14 +336,14 @@ usbd_set_idle(usbd_interface_handle iface, int duration, int id)
 }
 
 usbd_status
-usbd_get_report_descriptor(usbd_device_handle dev, int ifcno, int repid,
+usbd_get_report_descriptor(usbd_device_handle dev, int ifcno,
 			   int size, void *d)
 {
 	usb_device_request_t req;
 
 	req.bmRequestType = UT_READ_INTERFACE;
 	req.bRequest = UR_GET_DESCRIPTOR;
-	USETW2(req.wValue, UDESC_REPORT, repid);
+	USETW2(req.wValue, UDESC_REPORT, 0); /* report id should be 0 */
 	USETW(req.wIndex, ifcno);
 	USETW(req.wLength, size);
 	return (usbd_do_request(dev, &req, d));
@@ -380,7 +380,7 @@ usbd_get_hid_descriptor(usbd_interface_handle ifc)
 }
 
 usbd_status
-usbd_alloc_report_desc(usbd_interface_handle ifc, void **descp, int *sizep,
+usbd_read_report_desc(usbd_interface_handle ifc, void **descp, int *sizep,
 		       usb_malloc_type mem)
 {
 	usb_interface_descriptor_t *id;
@@ -401,11 +401,11 @@ usbd_alloc_report_desc(usbd_interface_handle ifc, void **descp, int *sizep,
 	*descp = malloc(*sizep, mem, M_NOWAIT);
 	if (*descp == NULL)
 		return (USBD_NOMEM);
-	/* XXX should not use 0 Report ID */
-	err = usbd_get_report_descriptor(dev, id->bInterfaceNumber, 0, 
-				       *sizep, *descp);
+	err = usbd_get_report_descriptor(dev, id->bInterfaceNumber,
+					 *sizep, *descp);
 	if (err) {
 		free(*descp, mem);
+		*descp = NULL;
 		return (err);
 	}
 	return (USBD_NORMAL_COMPLETION);

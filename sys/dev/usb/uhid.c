@@ -1,5 +1,5 @@
-/*	$OpenBSD: uhid.c,v 1.14 2001/05/03 02:20:33 aaron Exp $ */
-/*	$NetBSD: uhid.c,v 1.42 2000/12/29 01:47:49 augustss Exp $	*/
+/*	$OpenBSD: uhid.c,v 1.15 2001/10/31 04:24:44 nate Exp $ */
+/*	$NetBSD: uhid.c,v 1.45 2001/10/26 17:58:21 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhid.c,v 1.22 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -172,6 +172,8 @@ USB_MATCH(uhid)
 	id = usbd_get_interface_descriptor(uaa->iface);
 	if (id == NULL || id->bInterfaceClass != UICLASS_HID)
 		return (UMATCH_NONE);
+	if (uaa->matchlvl)
+		return (uaa->matchlvl);
 	return (UMATCH_IFACECLASS_GENERIC);
 }
 
@@ -234,7 +236,7 @@ USB_ATTACH(uhid)
 		}
 	} else {
 		desc = NULL;
-		err = usbd_alloc_report_desc(uaa->iface, &desc, &size,M_USBDEV);
+		err = usbd_read_report_desc(uaa->iface, &desc, &size,M_USBDEV);
 	}
 	if (err) {
 		printf("%s: no report descriptor\n", USBDEVNAME(sc->sc_dev));
@@ -367,7 +369,7 @@ uhid_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 		
 	if (sc->sc_state & UHID_ASLP) {
 		sc->sc_state &= ~UHID_ASLP;
-		DPRINTFN(5, ("uhid_intr: waking %p\n", sc));
+		DPRINTFN(5, ("uhid_intr: waking %p\n", &sc->sc_q));
 		wakeup(&sc->sc_q);
 	}
 	selwakeup(&sc->sc_rsel);
@@ -475,7 +477,7 @@ uhid_do_read(struct uhid_softc *sc, struct uio *uio, int flag)
 			return (EWOULDBLOCK);
 		}
 		sc->sc_state |= UHID_ASLP;
-		DPRINTFN(5, ("uhidread: sleep on %p\n", sc));
+		DPRINTFN(5, ("uhidread: sleep on %p\n", &sc->sc_q));
 		error = tsleep(&sc->sc_q, PZERO | PCATCH, "uhidrea", 0);
 		DPRINTFN(5, ("uhidread: woke, error=%d\n", error));
 		if (sc->sc_dying)

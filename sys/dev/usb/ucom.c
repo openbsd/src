@@ -1,5 +1,5 @@
-/*	$OpenBSD: ucom.c,v 1.8 2001/05/03 02:20:33 aaron Exp $ */
-/*	$NetBSD: ucom.c,v 1.37 2001/04/02 13:18:31 augustss Exp $	*/
+/*	$OpenBSD: ucom.c,v 1.9 2001/10/31 04:24:44 nate Exp $ */
+/*	$NetBSD: ucom.c,v 1.39 2001/08/16 22:31:24 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -53,6 +53,12 @@
 #include <sys/vnode.h>
 #include <sys/device.h>
 #include <sys/poll.h>
+#if defined(__NetBSD__)
+#include "rnd.h"
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
+#endif
 
 #include <dev/usb/usb.h>
 
@@ -127,6 +133,10 @@ struct ucom_softc {
 	u_char			sc_opening;	/* lock during open */
 	int			sc_refcnt;
 	u_char			sc_dying;	/* disconnecting */
+
+#if defined(__NetBSD__) && NRND > 0
+	rndsource_element_t	sc_rndsource;	/* random source */
+#endif
 };
 
 cdev_decl(ucom);
@@ -186,6 +196,11 @@ USB_ATTACH(ucom)
 	DPRINTF(("ucom_attach: tty_attach %p\n", tp));
 	tty_attach(tp);
 
+#if defined(__NetBSD__) && NRND > 0
+	rnd_attach_source(&sc->sc_rndsource, USBDEVNAME(sc->sc_dev),
+			  RND_TYPE_TTY, 0);
+#endif
+
 	USB_ATTACH_SUCCESS_RETURN;
 }
 
@@ -237,6 +252,11 @@ USB_DETACH(ucom)
 		ttyfree(tp);
 		sc->sc_tty = NULL;
 	}
+
+	/* Detach the random source */
+#if defined(__NetBSD__) && NRND > 0
+	rnd_detach_source(&sc->sc_rndsource);
+#endif
 
 	return (0);
 }
@@ -553,6 +573,28 @@ ucomwrite(dev_t dev, struct uio *uio, int flag)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
 	return (error);
 }
+
+#if 0
+int
+ucompoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
+	struct tty *tp = sc->sc_tty;
+	int error;
+
+	if (sc->sc_dying)
+		return (EIO);
+ 
+	sc->sc_refcnt++;
+	error = ((*linesw[tp->t_line].l_poll)(tp, events, p));
+	if (--sc->sc_refcnt < 0)
+		usb_detach_wakeup(USBDEV(sc->sc_dev));
+	return (error);
+}
+#endif
 
 struct tty *
 ucomtty(dev_t dev)
@@ -968,13 +1010,13 @@ ucomwritecb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
 	DPRINTFN(5,("ucomwritecb: status=%d\n", status));
 
 	if (status == USBD_CANCELLED || sc->sc_dying)
-		return;
+		goto error;
 
 	if (status) {
 		DPRINTF(("ucomwritecb: status=%d\n", status));
 		usbd_clear_endpoint_stall_async(sc->sc_bulkin_pipe);
 		/* XXX we should restart after some delay. */
-		return;
+		goto error;
 	}
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &cc, NULL);
@@ -992,6 +1034,12 @@ ucomwritecb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
 	else
 		ndflush(&tp->t_outq, cc);
 	(*linesw[tp->t_line].l_start)(tp);
+	splx(s);
+	return;
+
+error:
+	s = spltty();
+	CLR(tp->t_state, TS_BUSY);
 	splx(s);
 }
 
@@ -1035,7 +1083,7 @@ ucomreadcb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
 		(*rint)('\n', tp);
 		ttwakeup(tp);
 		splx(s);
-                return;
+		return;
 	}
 
 	if (status) {

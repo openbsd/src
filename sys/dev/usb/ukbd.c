@@ -1,5 +1,5 @@
-/*	$OpenBSD: ukbd.c,v 1.9 2001/10/25 15:20:07 drahn Exp $	*/
-/*      $NetBSD: ukbd.c,v 1.66 2001/04/06 22:54:15 augustss Exp $        */
+/*	$OpenBSD: ukbd.c,v 1.10 2001/10/31 04:24:44 nate Exp $	*/
+/*      $NetBSD: ukbd.c,v 1.69 2001/10/24 21:02:18 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@
 
 #if defined(__NetBSD__)
 #include "opt_wsdisplay_compat.h"
+#include "opt_ddb.h"
 #endif
 
 #ifdef UKBD_DEBUG
@@ -543,7 +544,8 @@ ukbd_intr(xfer, addr, status)
 
 	if (status) {
 		DPRINTF(("ukbd_intr: status=%d\n", status));
-		usbd_clear_endpoint_stall_async(sc->sc_intrpipe);
+		if (status == USBD_STALLED)
+			usbd_clear_endpoint_stall_async(sc->sc_intrpipe);
 		return;
 	}
 
@@ -560,11 +562,12 @@ ukbd_intr(xfer, addr, status)
 #else
 		callout_reset(&sc->sc_delay, hz / 50, ukbd_delayed_decode, sc);
 #endif
+#if DDB
 	} else if (sc->sc_console_keyboard && !sc->sc_polling) {
-		/* 
+		/*
 		 * For the console keyboard we can't deliver CTL-ALT-ESC
-		 * from the interrupt routine. Doing so would start
-		 * polling from iside the interrupt routine and that
+		 * from the interrupt routine.  Doing so would start
+		 * polling from inside the interrupt routine and that
 		 * loses bigtime.
 		 */
 		sc->sc_data = *ud;
@@ -573,7 +576,7 @@ ukbd_intr(xfer, addr, status)
 #else
 		callout_reset(&sc->sc_delay, 0, ukbd_delayed_decode, sc);
 #endif
-
+#endif
 	} else {
 		ukbd_decode(sc, ud);
 	}
