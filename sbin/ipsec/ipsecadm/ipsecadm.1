@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.1,v 1.8 1998/04/25 06:58:20 niklas Exp $
+.\" $OpenBSD: ipsecadm.1,v 1.9 1998/05/19 13:33:19 provos Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -171,8 +171,14 @@ old or new ah the key material for authentication is passed with the
 option.
 .It iv
 The initialization vector used for encryption. In old esp mode you need
-to specify it as either four or eight byte long value, in new esp mode
-a derived iv will be used when none is specified.
+to specify it as either four or eight byte long value. In new esp mode
+the iv has to be eight bytes for
+.Nm cast
+and
+.Nm blf .
+The other transforms can either use an eight byte iv or will derive one 
+when none is specified with
+.Xr ipsecadm 1 .
 .It proto
 The security protocol needed by
 .Nm delspi
