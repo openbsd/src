@@ -1,4 +1,4 @@
-# $OpenBSD: PackingList.pm,v 1.6 2004/02/23 21:47:48 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.7 2004/04/28 06:50:21 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -48,31 +48,73 @@ sub read
 	} else {
 		$plist = new $a;
 	}
-	while (<$fh>) {
-		next if m/^\s*$/;
-		next if defined $code and !&$code;
-		chomp;
-		OpenBSD::PackingElement::Factory($_, $plist);
-	}
+	$code = \&defaultCode if !defined $code;
+	&$code($fh,
+		sub {
+			local $_ = shift;
+			next if m/^\s*$/;
+			chomp;
+			OpenBSD::PackingElement::Factory($_, $plist);
+		});
 	return $plist;
 }
 
-# XXX Please don't define other selectors yourself, as this is a hack
-# XXX that is bound to change in the future.
-
-sub OpenBSD::PackingList::DirrmOnly
+sub defaultCode
 {
-	m/^\@cwd/ || m/^\@dirrm/ || m/^\@name/;
+	my ($fh, $cont) = @_;
+	local $_;
+	while (<$fh>) {
+		&$cont($_);
+	}
 }
 
-sub OpenBSD::PackingList::FilesOnly
+sub DirrmOnly
 {
-	m/^\@cwd/ || m/^\@name/ || !m/^\@/;
+	my ($fh, $cont) = @_;
+	local $_;
+	while (<$fh>) {
+		next unless m/^\@cwd/ || m/^\@dirrm/ || m/^\@name/;
+		&$cont($_);
+	}
 }
 
-sub OpenBSD::PackingList::ConflictOnly
+sub FilesOnly
 {
-	m/^\@pkgcfl/ || m/^\@option/ || m/^\@name/;
+	my ($fh, $cont) = @_;
+	local $_;
+	while (<$fh>) {
+	    	next unless m/^\@cwd/ || m/^\@name/ || !m/^\@/;
+		&$cont($_);
+	}
+}
+
+sub ConflictOnly
+{
+	my ($fh, $cont) = @_;
+	local $_;
+	while (<$fh>) {
+	    	next unless m/^\@pkgcfl/ || m/^\@option/ || m/^\@name/;
+		&$cont($_);
+	}
+}
+
+sub SharedStuffOnly
+{
+	my ($fh, $cont) = @_;
+	local $_;
+MAINLOOP:
+	while (<$fh>) {
+		if (m/^\@shared/) {
+			&$cont($_);
+			while(<$fh>) {
+				redo MAINLOOP unless m/^\@md5/ || m/^\@size/;
+				&$cont($_);
+			}
+		} else {
+			next unless m/^\@cwd/ || m/^\@dirrm/ || m/^\@name/;
+		}
+		&$cont($_);
+	}
 }
 
 sub write
