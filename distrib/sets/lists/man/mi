@@ -1343,6 +1343,7 @@
 ./usr/share/man/cat4/sparc/le.0
 ./usr/share/man/cat4/sparc/lebuffer.0
 ./usr/share/man/cat4/sparc/led.0
+./usr/share/man/cat4/sparc/ledma.0
 ./usr/share/man/cat4/sparc/magma.0
 ./usr/share/man/cat4/sparc/mem.0
 ./usr/share/man/cat4/sparc/openprom.0
@@ -1382,6 +1383,7 @@
 ./usr/share/man/cat4/sparc64/kmem.0
 ./usr/share/man/cat4/sparc64/le.0
 ./usr/share/man/cat4/sparc64/lebuffer.0
+./usr/share/man/cat4/sparc64/ledma.0
 ./usr/share/man/cat4/sparc64/magma.0
 ./usr/share/man/cat4/sparc64/mem.0
 ./usr/share/man/cat4/sparc64/openprom.0
