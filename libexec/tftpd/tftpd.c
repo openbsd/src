@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.15 2001/01/17 19:24:49 deraadt Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.16 2001/03/08 02:23:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: tftpd.c,v 1.15 2001/01/17 19:24:49 deraadt Exp $: tftpd.c,v 1.6 1997/02/16 23:49:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tftpd.c,v 1.16 2001/03/08 02:23:56 deraadt Exp $: tftpd.c,v 1.6 1997/02/16 23:49:21 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -54,6 +54,8 @@ static char rcsid[] = "$OpenBSD: tftpd.c,v 1.15 2001/01/17 19:24:49 deraadt Exp 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <signal.h>
+#include <unistd.h>
+#include <stdlib.h>
 #include <fcntl.h>
 
 #include <sys/socket.h>
@@ -87,8 +89,35 @@ int	fromlen;
 int	ndirs;
 char	**dirs;
 
-int	secure = 0;
-int	cancreate = 0;
+int	secure;
+int	cancreate;
+
+struct	formats;
+int	validate_access(char *filename, int mode);
+int	recvfile(struct formats *pf);
+int	sendfile(struct formats *pf);
+
+struct formats {
+	char	*f_mode;
+	int	(*f_validate)();
+	int	(*f_send)();
+	int	(*f_recv)();
+	int	f_convert;
+} formats[] = {
+	{ "netascii",	validate_access,	sendfile,	recvfile, 1 },
+	{ "octet",	validate_access,	sendfile,	recvfile, 0 },
+	{ 0 }
+};
+
+int	validate_access(char *filename, int mode);
+void	tftp(struct tftphdr *tp, int size);
+void	nak(int error);
+
+int	readit(FILE *file, struct tftphdr **dpp, int convert);
+void	read_ahead(FILE *file, int convert);
+int	writeit(FILE *file, struct tftphdr **dpp, int ct, int convert);
+int	write_behind(FILE *file, int convert);
+int	synchnet(int f);
 
 static void
 usage()
@@ -102,12 +131,12 @@ main(argc, argv)
 	int    argc;
 	char **argv;
 {
-	register struct tftphdr *tp;
+	struct tftphdr *tp;
 	struct passwd *pw;
-	register int n = 0;
+	int n = 0;
 	int on = 1;
 	int fd = 0;
-	int pid;
+	pid_t pid = 0;
 	int i, j;
 	int c;
 
@@ -252,32 +281,18 @@ main(argc, argv)
 	exit(1);
 }
 
-int	validate_access();
-int	sendfile(), recvfile();
-
-struct formats {
-	char	*f_mode;
-	int	(*f_validate)();
-	int	(*f_send)();
-	int	(*f_recv)();
-	int	f_convert;
-} formats[] = {
-	{ "netascii",	validate_access,	sendfile,	recvfile, 1 },
-	{ "octet",	validate_access,	sendfile,	recvfile, 0 },
-	{ 0 }
-};
-
 /*
  * Handle initial connection protocol.
  */
+void
 tftp(tp, size)
 	struct tftphdr *tp;
 	int size;
 {
-	register char *cp;
+	char *cp;
 	int first = 1, ecode;
-	register struct formats *pf;
-	char *filename, *mode;
+	struct formats *pf;
+	char *filename, *mode = NULL;
 
 	filename = cp = tp->th_stuff;
 again:
@@ -331,6 +346,7 @@ FILE *file;
  * Note also, full path name must be
  * given as we have no login directory.
  */
+int
 validate_access(filename, mode)
 	char *filename;
 	int mode;
@@ -415,12 +431,14 @@ timer()
 /*
  * Send the requested file.
  */
+int
 sendfile(pf)
 	struct formats *pf;
 {
 	struct tftphdr *dp, *r_init();
-	register struct tftphdr *ap;    /* ack packet */
-	register int block = 1, size, n;
+	struct tftphdr *ap;    /* ack packet */
+	volatile unsigned short block = 1;
+	int size, n;
 
 	signal(SIGALRM, timer);
 	dp = r_init();
@@ -472,6 +490,7 @@ send_data:
 	} while (size == SEGSIZE);
 abort:
 	(void) fclose(file);
+	return (1);
 }
 
 void
@@ -484,12 +503,14 @@ justquit()
 /*
  * Receive a file.
  */
+int
 recvfile(pf)
 	struct formats *pf;
 {
 	struct tftphdr *dp, *w_init();
-	register struct tftphdr *ap;    /* ack buffer */
-	register int block = 0, n, size;
+	struct tftphdr *ap;    /* ack buffer */
+	volatile unsigned short block = 0;
+	int n, size;
 
 	signal(SIGALRM, timer);
 	dp = w_init();
@@ -531,7 +552,8 @@ send_ack:
 		/*  size = write(file, dp->th_data, n - 4); */
 		size = writeit(file, &dp, n - 4, pf->f_convert);
 		if (size != (n-4)) {			/* ahem */
-			if (size < 0) nak(errno + 100);
+			if (size < 0)
+				nak(errno + 100);
 			else nak(ENOSPACE);
 			goto abort;
 		}
@@ -553,7 +575,7 @@ send_ack:
 		(void) send(peer, ackbuf, 4, 0);     /* resend final ack */
 	}
 abort:
-	return;
+	return (1);
 }
 
 struct errmsg {
@@ -577,12 +599,13 @@ struct errmsg {
  * standard TFTP codes, or a UNIX errno
  * offset by 100.
  */
+void
 nak(error)
 	int error;
 {
-	register struct tftphdr *tp;
+	struct tftphdr *tp;
 	int length;
-	register struct errmsg *pe;
+	struct errmsg *pe;
 
 	tp = (struct tftphdr *)buf;
 	tp->th_opcode = htons((u_short)ERROR);
