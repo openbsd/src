@@ -33,7 +33,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getpwent.c,v 1.26 2002/07/06 00:10:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: getpwent.c,v 1.27 2002/07/06 03:10:23 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -68,8 +68,8 @@ static int __initdb(void);
 enum _ypmode { YPMODE_NONE, YPMODE_FULL, YPMODE_USER, YPMODE_NETGRP };
 static enum _ypmode __ypmode;
 
-static char     *__ypcurrent, *__ypdomain;
-static int      __ypcurrentlen;
+static char	*__ypcurrent, *__ypdomain;
+static int	__ypcurrentlen;
 static struct passwd *__ypproto = (struct passwd *)NULL;
 static int	__ypflags;
 static char	__ypline[1024];
@@ -109,7 +109,7 @@ __ypexclude_add(name)
 		return (0);
 
 	new = (struct _ypexclude *)malloc(sizeof(struct _ypexclude));
-	if (new == (struct _ypexclude *)NULL)
+	if (new == NULL)
 		return (1);
 	new->name = strdup(name);
 	if (new->name == (char *)NULL) {
@@ -130,7 +130,7 @@ __ypexclude_is(name)
 	struct _ypexclude *curr;
 
 	for (curr = __ypexclude; curr != (struct _ypexclude *)NULL;
-	     curr = curr->next) {
+	    curr = curr->next) {
 		if (strcmp(curr->name, name) == 0)
 			return (1);	/* excluded */
 	}
@@ -143,7 +143,7 @@ __ypexclude_free()
 	struct _ypexclude *curr, *next;
 
 	for (curr = __ypexclude; curr != (struct _ypexclude *)NULL;
-	     curr = next) {
+	    curr = next) {
 		next = curr->next;
 
 		free((void *)curr->name);
@@ -173,7 +173,7 @@ __ypproto_set()
 		ptr += (strlen(pw->pw_name) + 1);
 	} else
 		__ypproto->pw_name = (char *)NULL;
-	
+
 	/* password */
 	if (pw->pw_passwd && (pw->pw_passwd)[0]) {
 		ptr = (char *)ALIGN(ptr);
@@ -203,7 +203,7 @@ __ypproto_set()
 		ptr += (strlen(pw->pw_gecos) + 1);
 	} else
 		__ypproto->pw_gecos = (char *)NULL;
-	
+
 	/* dir */
 	if (pw->pw_dir && (pw->pw_dir)[0]) {
 		ptr = (char *)ALIGN(ptr);
@@ -263,7 +263,7 @@ char *s;
 	pw->pw_gid = (gid_t)ul;
 	if (count == 9) {
 		long l;
-			
+
 		/* If the ypserv gave us all the fields, use them. */
 		pw->pw_class = strsep(&bp, ":\n");
 		if (!(cp = strsep(&bp, ":\n")))
@@ -344,8 +344,8 @@ again:
 		case YPMODE_FULL:
 			if (__ypcurrent) {
 				r = yp_next(__ypdomain, (PASSWD_BYNAME),
-					__ypcurrent, __ypcurrentlen,
-					&key, &keylen, &data, &datalen);
+				    __ypcurrent, __ypcurrentlen,
+				    &key, &keylen, &data, &datalen);
 				free(__ypcurrent);
 				if (r != 0) {
 					__ypcurrent = NULL;
@@ -362,8 +362,8 @@ again:
 				data = NULL;
 			} else {
 				r = yp_first(__ypdomain, (PASSWD_BYNAME),
-					&__ypcurrent, &__ypcurrentlen,
-					&data, &datalen);
+				    &__ypcurrent, &__ypcurrentlen,
+				    &data, &datalen);
 				if (r != 0) {
 					__ypmode = YPMODE_NONE;
 					if (data)
@@ -384,8 +384,8 @@ again:
 			}
 			if (user && *user) {
 				r = yp_match(__ypdomain, (PASSWD_BYNAME),
-					user, strlen(user),
-					&data, &datalen);
+				    user, strlen(user),
+				    &data, &datalen);
 			} else
 				goto again;
 			if (r != 0) {
@@ -404,8 +404,8 @@ again:
 		case YPMODE_USER:
 			if (name != (char *)NULL) {
 				r = yp_match(__ypdomain, (PASSWD_BYNAME),
-					name, strlen(name),
-					&data, &datalen);
+				    name, strlen(name),
+				    &data, &datalen);
 				__ypmode = YPMODE_NONE;
 				free(name);
 				name = (char *)NULL;
@@ -509,8 +509,8 @@ __has_yppw()
 	pkey.data = (u_char *)bf;
 	pkey.size = MIN(len, _PW_NAME_LEN) + 1;
 
-	if ((_pw_db->get)(_pw_db, &key, &data, 0)
-	    && (_pw_db->get)(_pw_db, &pkey, &pdata, 0))
+	if ((_pw_db->get)(_pw_db, &key, &data, 0) &&
+	    (_pw_db->get)(_pw_db, &pkey, &pdata, 0))
 		return (0);	/* No YP. */
 	return (1);
 }
@@ -555,7 +555,7 @@ __has_ypmaster()
 	    &key, &keylen, &result, &resultlen)) {
 		saved_uid = uid;
 		saved_euid = euid;
-	    	checked = 0;
+		checked = 0;
 		return (checked);
 	}
 	free (result);

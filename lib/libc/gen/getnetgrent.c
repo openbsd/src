@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetgrent.c,v 1.12 2002/02/17 19:42:22 millert Exp $	*/
+/*	$OpenBSD: getnetgrent.c,v 1.13 2002/07/06 03:07:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: getnetgrent.c,v 1.12 2002/02/17 19:42:22 millert Exp $";
+static char *rcsid = "$OpenBSD: getnetgrent.c,v 1.13 2002/07/06 03:07:41 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -262,8 +262,8 @@ lookup(ypdom, name, line, bywhat)
 	int		  bywhat;
 {
 #ifdef YP
-	int		i;
-	char	       *map = NULL;
+	int	i;
+	char	*map = NULL;
 #endif
 
 	if (_ng_db) {
@@ -324,7 +324,7 @@ lookup(ypdom, name, line, bywhat)
  * _ng_parse(): Parse a line and return: _NG_ERROR: Syntax Error _NG_NONE:
  * line was empty or a comment _NG_GROUP: line had a netgroup definition,
  * returned in ng _NG_NAME:  line had a netgroup name, returned in name
- * 
+ *
  * Public since used by netgroup_mkdb
  */
 int
@@ -349,8 +349,8 @@ _ng_parse(p, name, ng)
 			}
 			return _NG_GROUP;
 		} else {
-			char	       *np;
-			int		i;
+			char	*np;
+			int	i;
 
 			for (np = *p; **p && !_NG_ISSPACE(**p); (*p)++)
 				continue;
@@ -435,16 +435,16 @@ in_check(host, user, domain, ng)
 	const char	*domain;
 	struct netgroup	*ng;
 {
-	if ((host != NULL) && (ng->ng_host != NULL)
-	    && strcmp(ng->ng_host, host) != 0)
+	if ((host != NULL) && (ng->ng_host != NULL) &&
+	    strcmp(ng->ng_host, host) != 0)
 		return 0;
 
-	if ((user != NULL) && (ng->ng_user != NULL)
-	    && strcmp(ng->ng_user, user) != 0)
+	if ((user != NULL) && (ng->ng_user != NULL) &&
+	    strcmp(ng->ng_user, user) != 0)
 		return 0;
 
-	if ((domain != NULL) && (ng->ng_domain != NULL)
-	    && strcmp(ng->ng_domain, domain) != 0)
+	if ((domain != NULL) && (ng->ng_domain != NULL) &&
+	    strcmp(ng->ng_domain, domain) != 0)
 		return 0;
 
 	return 1;
@@ -592,11 +592,11 @@ in_lookup(ypdom, group, key, domain, map)
 		/* Domain specified; look in "group.domain" and "*.domain" */
 		if ((line = in_lookup1(ypdom, key, domain, map)) == NULL)
 			line = in_lookup1(ypdom, NULL, domain, map);
-	} else 
+	} else
 		line = NULL;
 
 	if (line == NULL) {
-		/* 
+		/*
 		 * domain not specified or domain lookup failed; look in
 		 * "group.*" and "*.*"
 		 */

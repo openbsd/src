@@ -33,7 +33,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getgrent.c,v 1.16 2002/05/24 21:22:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: getgrent.c,v 1.17 2002/07/06 03:08:13 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -86,8 +86,9 @@ static int	__ypcurrentlen;
 struct group *
 getgrent()
 {
-	struct group *p_gr = (struct group*)_THREAD_PRIVATE(gr,_gr_group,NULL);
-	struct group_storage *gs = (struct group_storage *)_THREAD_PRIVATE(gr_storage,gr_storage,NULL);
+	struct group *p_gr = (struct group*)_THREAD_PRIVATE(gr, _gr_group, NULL);
+	struct group_storage *gs = (struct group_storage *)_THREAD_PRIVATE(gr_storage,
+	    gr_storage, NULL);
 
 	_THREAD_PRIVATE_MUTEX_LOCK(gr);
 	if ((!_gr_fp && !start_gr()) || !grscan(0, 0, NULL, p_gr, gs))
@@ -121,7 +122,8 @@ getgrnam(name)
 	const char *name;
 {
 	struct group *p_gr = (struct group*)_THREAD_PRIVATE(gr,_gr_group,NULL);
-	struct group_storage *gs = (struct group_storage *)_THREAD_PRIVATE(gr_storage,gr_storage,NULL);
+	struct group_storage *gs = (struct group_storage *)_THREAD_PRIVATE(gr_storage,
+	    gr_storage, NULL);
 
 	return getgrnam_gs(name, p_gr, gs);
 }
@@ -173,8 +175,9 @@ struct group *
 getgrgid(gid)
 	gid_t gid;
 {
-	struct group *p_gr = (struct group*)_THREAD_PRIVATE(gr,_gr_group,NULL);
-	struct group_storage *gs = (struct group_storage *)_THREAD_PRIVATE(gr_storage,gr_storage,NULL);
+	struct group *p_gr = (struct group*)_THREAD_PRIVATE(gr, _gr_group, NULL);
+	struct group_storage *gs = (struct group_storage *)_THREAD_PRIVATE(gr_storage,
+	    gr_storage, NULL);
 
 	return getgrgid_gs(gid, p_gr, gs);
 }
@@ -209,7 +212,7 @@ start_gr()
 		rewind(_gr_fp);
 #ifdef YP
 		__ypmode = YPMODE_NONE;
-		if(__ypcurrent)
+		if (__ypcurrent)
 			free(__ypcurrent);
 		__ypcurrent = NULL;
 #endif
@@ -250,7 +253,7 @@ endgrent_basic()
 		_gr_fp = NULL;
 #ifdef YP
 		__ypmode = YPMODE_NONE;
-		if(__ypcurrent)
+		if (__ypcurrent)
 			free(__ypcurrent);
 		__ypcurrent = NULL;
 #endif
@@ -292,26 +295,26 @@ grscan(search, gid, name, p_gr, gs)
 
 	for (;;) {
 #ifdef YP
-		if(__ypmode != YPMODE_NONE) {
+		if (__ypmode != YPMODE_NONE) {
 
-			if(!__ypdomain) {
-				if(yp_get_default_domain(&__ypdomain)) {
+			if (!__ypdomain) {
+				if (yp_get_default_domain(&__ypdomain)) {
 					__ypmode = YPMODE_NONE;
-					if(grname != (char *)NULL) {
+					if (grname != (char *)NULL) {
 						free(grname);
 						grname = (char *)NULL;
 					}
 					continue;
 				}
 			}
-			switch(__ypmode) {
+			switch (__ypmode) {
 			case YPMODE_FULL:
-				if(__ypcurrent) {
+				if (__ypcurrent) {
 					r = yp_next(__ypdomain, "group.byname",
-						__ypcurrent, __ypcurrentlen,
-						&key, &keylen, &data, &datalen);
+					    __ypcurrent, __ypcurrentlen,
+					    &key, &keylen, &data, &datalen);
 					free(__ypcurrent);
-					if(r != 0) {
+					if (r != 0) {
 						__ypcurrent = NULL;
 						__ypmode = YPMODE_NONE;
 						free(data);
@@ -323,9 +326,9 @@ grscan(search, gid, name, p_gr, gs)
 					free(data);
 				} else {
 					r = yp_first(__ypdomain, "group.byname",
-						&__ypcurrent, &__ypcurrentlen,
-						&data, &datalen);
-					if(r != 0) {
+					    &__ypcurrent, &__ypcurrentlen,
+					    &data, &datalen);
+					if (r != 0) {
 						__ypmode = YPMODE_NONE;
 						free(data);
 						continue;
@@ -335,14 +338,14 @@ grscan(search, gid, name, p_gr, gs)
 				}
 				break;
 			case YPMODE_NAME:
-				if(grname != (char *)NULL) {
+				if (grname != (char *)NULL) {
 					r = yp_match(__ypdomain, "group.byname",
-						grname, strlen(grname),
-						&data, &datalen);
+					    grname, strlen(grname),
+					    &data, &datalen);
 					__ypmode = YPMODE_NONE;
 					free(grname);
 					grname = (char *)NULL;
-					if(r != 0) {
+					if (r != 0) {
 						free(data);
 						continue;
 					}
@@ -372,17 +375,17 @@ grscan(search, gid, name, p_gr, gs)
 		}
 #ifdef YP
 		if (line[0] == '+') {
-			switch(line[1]) {
+			switch (line[1]) {
 			case ':':
 			case '\0':
 			case '\n':
-				if(_yp_check(NULL)) {
+				if (_yp_check(NULL)) {
 					if (!search) {
 						__ypmode = YPMODE_FULL;
 						continue;
 					}
-					if(!__ypdomain &&
-					   yp_get_default_domain(&__ypdomain))
+					if (!__ypdomain &&
+					    yp_get_default_domain(&__ypdomain))
 						continue;
 					if (name) {
 						r = yp_match(__ypdomain,
@@ -422,7 +425,7 @@ grscan(search, gid, name, p_gr, gs)
 				}
 				break;
 			default:
-				if(_yp_check(NULL)) {
+				if (_yp_check(NULL)) {
 					register char *tptr;
 
 					tptr = strsep(&bp, ":\n");
