@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_kbd.c,v 1.15 1998/06/25 00:40:29 millert Exp $	*/
+/*	$OpenBSD: pcvt_kbd.c,v 1.16 1998/06/30 20:51:12 millert Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -78,6 +78,8 @@
 
 #include "pcvt_hdr.h"		/* global include */
 
+#define LEDSTATE_UPDATE_PENDING (1 << 3)
+
 static void fkey1(void), fkey2(void),  fkey3(void),  fkey4(void);
 static void fkey5(void), fkey6(void),  fkey7(void),  fkey8(void);
 static void fkey9(void), fkey10(void), fkey11(void), fkey12(void);
@@ -106,7 +108,9 @@ static int	rmkeydef ( int key );
 static int	setkeydef ( struct kbd_ovlkey *data );
 static u_char *	xlatkey2ascii( U_short key );
 
-static int	ledstate  = 0;	/* keyboard led's */
+#if !PCVT_NO_LED_UPDATE
+static int	ledstate  = LEDSTATE_UPDATE_PENDING;	/* keyboard led's */
+#endif
 static int	tpmrate   = KBD_TPD500|KBD_TPM100;
 static u_char	altkpflag = 0;
 static u_short	altkpval  = 0;
@@ -165,7 +169,7 @@ do_vgapage(int page)
 
 /*
  * This code from Lon Willett enclosed in #if PCVT_UPDLED_LOSES_INTR is
- * abled because it crashes FreeBSD 1.1.5.1 at boot time.
+ * disabled because it crashes FreeBSD 1.1.5.1 at boot time.
  * The cause is obviously that the timeout queue is not yet initialized
  * timeout is called from here the first time.
  * Anyway it is a pointer in the right direction so it is included for
@@ -224,24 +228,60 @@ update_led(void)
 
 	/* Don't update LED's unless necessary. */
 
-	int new_ledstate = ((vsp->scroll_lock) |
-			    (vsp->num_lock * 2) |
-			    (vsp->caps_lock * 4));
+	int opri, new_ledstate, response1, response2;
+
+	opri = spltty();
+	new_ledstate = ((vsp->scroll_lock) |
+			(vsp->num_lock * 2) |
+			(vsp->caps_lock * 4));
 
 	if (new_ledstate != ledstate)
 	{
-		if(kbd_cmd(KEYB_C_LEDS) != 0)
+		ledstate = LEDSTATE_UPDATE_PENDING;
+
+		if (kbd_cmd(KEYB_C_LEDS) != 0)
 		{
 			printf("Keyboard LED command timeout\n");
+			splx(opri);
 			return;
 		}
 
-		if(kbd_cmd(new_ledstate) != 0) {
+		/*
+		 * For some keyboards or keyboard controllers, it is an
+		 * error to issue a command without waiting long enough
+		 * for an ACK for the previous command.  The keyboard
+		 * gets confused, and responds with KEYB_R_RESEND, but
+		 * we ignore that.  Wait for the ACK here.  The busy
+		 * waiting doesn't matter much, since we lose anyway by
+		 * busy waiting to send the command.
+		 *
+		 * XXX actually wait for any response, since we can't
+		 * handle normal scancodes here.
+		 *
+		 * XXX all this should be interrupt driven.  Issue only
+		 * one command at a time wait for a ACK before proceeding.
+		 * Retry after a timeout or on receipt of a KEYB_R_RESEND.
+		 * KEYB_R_RESENDs seem to be guaranteed by working
+		 * keyboard controllers with broken (or disconnected)
+		 * keyboards.  There is another code for keyboard
+		 * reconnects.  The keyboard hardware is very simple and
+		 * well designed :-).
+		 */
+		response1 = kbd_response();
+
+		if (kbd_cmd(new_ledstate) != 0) {
 			printf("Keyboard LED data timeout\n");
+			splx(opri);
 			return;
 		}
+		response2 = kbd_response();
 
-		ledstate = new_ledstate;
+		if (response1 == KEYB_R_ACK && response2 == KEYB_R_ACK)
+			ledstate = new_ledstate;
+		else
+			printf(
+			"Keyboard LED command not ACKed (responses %#x %#x)\n",
+				response1, response2);
 
 #if PCVT_UPDLED_LOSES_INTR
 		if (lost_intr_timeout_queued)
@@ -252,6 +292,7 @@ update_led(void)
 #endif /* PCVT_UPDLED_LOSES_INTR */
 
 	}
+	splx(opri);
 #endif /* !PCVT_NO_LED_UPDATE */
 }
 
@@ -432,7 +473,6 @@ void doreset(void)
 		printf("pcvt: doreset() - timeout for keyboard reset command\n");
 
 	/* Wait for the first response to reset and handle retries */
-
 	while((response = kbd_response()) != KEYB_R_ACK)
 	{
 		if(response < 0)
@@ -533,12 +573,8 @@ query_kbd_id:
 r_entry:
 		if((response = kbd_response()) == KEYB_R_MF2ID1)
 		{
-			if((response = kbd_response()) == KEYB_R_MF2ID2)
-			{
-				keyboard_type = KB_MFII;
-			}
-			else if(response == KEYB_R_RESEND)
-			{
+			switch ((response = kbd_response())) {
+			case KEYB_R_RESEND:
 				/*
 				 *  Let's give other priority levels
 				 *  a chance instead of blocking at
@@ -546,24 +582,17 @@ r_entry:
 				 */
 				splx(opri);
 				goto query_kbd_id;
-			}
-			else if(response == KEYB_R_MF2ID2HP)
-			{
+					
+			case KEYB_R_MF2ID2:
+			case KEYB_R_MF2ID2HP:
+			case KEYB_R_MF2ID2TP:
+			case KEYB_R_MF2ID2TP2:
 				keyboard_type = KB_MFII;
-			}
-			else if(response == KEYB_R_MF2ID2TP)
-			{
-				keyboard_type = KB_MFII;
-			}
-			else if(response == KEYB_R_MF2ID2TP2)
-			{
-				keyboard_type = KB_MFII;
-			}
-			else
-			{
-				printf("\npcvt: doreset() - kbdid, response 2 = [%d]\n",
-				       response);
+				break;
+			default:
+				printf("\npcvt: doreset() - kbdid, response 2 = [%d]\n", response);
 				keyboard_type = KB_UNKNOWN;
+				break;
 			}
 		}
 		else if(response == KEYB_R_ACK)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_conf.h,v 1.12 1998/06/25 00:40:24 millert Exp $	*/
+/*	$OpenBSD: pcvt_conf.h,v 1.13 1998/06/30 20:51:07 millert Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -204,10 +204,10 @@
 /*     it is unlikely that anybody wants to change anything below       */
 
 #if !defined PCVT_NO_LED_UPDATE	/* ---------- DEFAULT: OFF ------------ */
-# define PCVT_NO_LED_UPDATE 0	/* On some (Notebook?) keyboards it is	*/
+# define PCVT_NO_LED_UPDATE 0	/* On some keyboard controllers it is	*/
 #elif PCVT_NO_LED_UPDATE != 0	/* not possible to update the LED's	*/
 # undef PCVT_NO_LED_UPDATE	/* without hanging the keyboard after-	*/
-# define PCVT_NO_LED_UPDATE 1	/* wards. If you experience Problems	*/
+# define PCVT_NO_LED_UPDATE 1	/* wards. If you experience problems	*/
 #endif				/* like this, try to enable this option	*/
 
 #if !defined PCVT_PORTIO_DELAY  /* ---------- DEFAULT: ON ------------- */

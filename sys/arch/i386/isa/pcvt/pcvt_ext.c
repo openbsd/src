@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_ext.c,v 1.14 1998/06/25 00:40:26 millert Exp $	*/
+/*	$OpenBSD: pcvt_ext.c,v 1.15 1998/06/30 20:51:09 millert Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -2773,14 +2773,19 @@ usl_vt_ioctl(Dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 		return (error == ERESTART) ? PCVT_ERESTART : error;
 
 	case KDENABIO:
-		/* grant the process IO access; only allowed if euid == 0 */
+		/*
+		 * grant the process IO access; only allowed if euid == 0
+		 * and securelevel <= 1.  XXX -- this is a fairly serious
+		 * hole, but if closed at securelevel 1, would require
+		 * options INSECURE in order to use X at all.
+		 */
 	{
 
 #if defined(COMPAT_10) || defined(COMPAT_11)
 		struct trapframe *fp = (struct trapframe *)p->p_md.md_regs;
 #endif
 
-		if (suser(p->p_ucred, &p->p_acflag) != 0)
+		if (suser(p->p_ucred, &p->p_acflag) || securelevel > 1)
 			return (EPERM);
 
 #if defined(COMPAT_10) || defined(COMPAT_11)

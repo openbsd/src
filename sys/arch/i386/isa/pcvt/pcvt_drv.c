@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_drv.c,v 1.20 1998/06/25 00:40:25 millert Exp $	*/
+/*	$OpenBSD: pcvt_drv.c,v 1.21 1998/06/30 20:51:08 millert Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -800,7 +800,7 @@ pccngetc(Dev_t dev)
 	register u_char *cp;
 
 #ifdef XSERVER
- 	if (vs[minor(dev)].kbd_state == K_RAW)
+ 	if (dev != NODEV && vs[minor(dev)].kbd_state == K_RAW)
 		return 0;
 #endif /* XSERVER */
 

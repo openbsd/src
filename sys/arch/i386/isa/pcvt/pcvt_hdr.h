@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_hdr.h,v 1.19 1998/06/25 00:40:28 millert Exp $	*/
+/*	$OpenBSD: pcvt_hdr.h,v 1.20 1998/06/30 20:51:11 millert Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -862,11 +862,8 @@ int	switch_page		= -1;		/* which page to switch to */
 #if PCVT_SCREENSAVER
 u_char	reset_screen_saver	= 1;		/* reset the saver next time */
 u_char	scrnsv_active		= 0;		/* active flag */
-#endif /* PCVT_SCREENSAVER */
-
-#if XSERVER || PCVT_SCREENSAVER
 unsigned scrnsv_timeout		= 0;		/* initially off */
-#endif /* XSERVER || PCVT_SCREENSAVER */
+#endif /* PCVT_SCREENSAVER */
 
 #if PCVT_BACKUP_FONTS
 u_char *saved_charsets[NVGAFONTS] = {0};	/* backup copy of fonts */
@@ -999,9 +996,9 @@ extern u_char		sgr_tab_color[];
 extern u_char		sgr_tab_mono[];
 extern u_char		sgr_tab_imono[];
 
-#if defined(XSERVER) || PCVT_SCREENSAVER
+#if PCVT_SCREENSAVER
 extern unsigned		scrnsv_timeout;
-#endif /* XSERVER || PCVT_SCREENSAVER */
+#endif /* PCVT_SCREENSAVER */
 
 #if PCVT_BACKUP_FONTS
 extern u_char		*saved_charsets[NVGAFONTS];
