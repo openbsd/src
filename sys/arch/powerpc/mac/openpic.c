@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.2 2000/03/31 04:20:20 rahnds Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.3 2000/06/15 03:11:01 rahnds Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -46,6 +46,11 @@
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
+#ifdef UVM
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+#include <uvm/uvm.h>
+#endif
 
 #include <machine/autoconf.h>
 #include <machine/intr.h>

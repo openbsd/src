@@ -1,4 +1,4 @@
-/*	$OpenBSD: macintr.c,v 1.3 2000/03/31 05:14:37 rahnds Exp $	*/
+/*	$OpenBSD: macintr.c,v 1.4 2000/06/15 03:11:01 rahnds Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -46,6 +46,11 @@
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
+#ifdef UVM
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+#include <uvm/uvm.h>
+#endif
 
 #include <machine/autoconf.h>
 #include <machine/intr.h>
