@@ -18,19 +18,28 @@ Unlike SunOS and the OpenBOOT ROM, a generic OpenBSD kernel numbers
 scsi drives sequentially as it finds them.  The drive with the
 lowest scsi-id will be called sd0, the next one sd1, etc.
 
-To ease the installation process, the default OpenBSD kernel in the
-distribution is setup to match the Sun mapping above by hard-wiring
-scsi-id#3 to sd0 and scsi-id#0 to sd3. The remaining drives will be
-dynamically mapped to other sd* numbers.
+To ease the installation process, two OpenBSD kernels are provide in
+the installation sets.  The default OpenBSD kernel (bsd) is set up
+to use the OpenBSD mapping, while a special kernel (bsd.scsi3) is
+set up to match the Sun mapping above by hard-wiring scsi-id#3 to sd0
+and scsi-id#0 to sd3. The remaining drives will be dynamically mapped
+to other sd* numbers.
 
-A truely generic OpenBSD kernel is also provided as `/bsd.GENERIC',
-which will do the standard OpenBSD probe ordering. If your configuration
-differs from the default Sun setup, you can try to use this kernel to
-complete the installation.
+This is mostly a non-issue if you have only one drive on your system,
+but can get really confusing if you have multiple drives.  If you plan
+to eliminate SunOS altogether it may be best to correct the scsi-id's
+of your drives, while if you plan to leave SunOS installed, it may
+be better to install OpenBSD on an external drive with scsi-id 1 or 0.
 
-NOTE: this is also a concern when you start building your own customised
-kernels.
+Some OpenBoot proms provide and environment variable that controls
+the drive<->scsi-id mapping, you can change this to reflect the natural
+ordering or just set the boot related variables to boot from the
+correct drive, whatever the numbering.
 
+NOTE: if you elect to build a custom kernel you may want to "hardwire"
+the scsi-id's to sd0->scsi-id 0 or your desired scheme, this helps
+prevent accidents if you change the SCSI bus configuration or a drive
+is down.
 
 Your OpenBOOT ROM may need some setup.  make sure you boot from `new
 command mode'.  If your machine comes up and gives you a `>' prompt
@@ -46,4 +55,42 @@ firework on you.
 Also, you cannot use the security modes of the sparc OpenBOOT ROM.
 
     ok setenv security-mode none
+
+
+Please note that while OpenBSD and SunOS have a reasonable degree of
+compatibility between filesystems and OpenBSD can even run SunOS
+binaries (when built with COMPAT_SUNOS), there are some problems to
+watch out for.
+
+    If the OpenBSD fsck(8) utility is used on a SunOS filesystem, it will
+    set OpenBSD "clean flags" and BSD4.4 summary fields in the Superblock.
+    SunOS will *not* like this, you will have to do a fsck -b 32 under
+    SunOS to access an alternate superblock to fix the filesystem.  You
+    should always specify SunOS filesystem with "0" in the "fsck passno"
+    field in /etc/fstab to prevent this, and preferably mount them "RO".
+
+    If SunOS fsck is used on an OpenBSD filesystem in the default OpenBSD
+    new format (4.4BSD) it will first complain about the superblock and
+    then about missing . and .. entries.  Do *not* try to "correct" these
+    problems, as attempting to do so will completely trash the filesystem.
+
+
+OpenBSD supports both OpenBSD "native" disklabels and "Sun compatible"
+disklabels.  Unless you have some really good reason, you should stick
+with the Sun compatible labels.  The disklabel(8) "-r" says to use
+OpenBSD labels, which is a bit counter-intuitive and contrary to the
+reasons why you'd use "-r" on other OpenBSD ports.  Don't use "-r"...
+
+The OpenBSD "Sun Compatible" disklabel are extended to support 16 partitions,
+which may be compatible with Solaris, but older SunOS format(8) programs
+only see the first 8 parititions and may "lose" information on the extended
+paritions.  Use SunOS format(8) only with *extreme* caution on drives that
+contain OpenBSD partitions.
+
+
+OpenBSD and Sun BSD bootblocks are similar, though differnt.  You can use
+Sun bootblocks, but the OpenBSD bootblock are architecture independent
+and understand the extended disklabels.  To install OpenBSD bootblocks,
+you must use the OpenBSD installboot and vice versa.
+
 
