@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.158 2003/11/03 07:58:36 cedric Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.159 2003/11/06 16:57:41 dhartmei Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -624,30 +624,7 @@ sendit:
 		splx(s);
 		return error;  /* Nothing more to be done */
 	}
-#endif /* IPSEC */
 
-	/*
-	 * Packet filter
-	 *
-	 * This should be called before checking NIC capabilities,
-	 * because pf_test() can:
-	 *  - drop the packet.
-	 *  - route the packet through another NIC.
-	 */
-#if NPF > 0
-	if (pf_test(PF_OUT, ifp, &m) != PF_PASS) {
-		error = EHOSTUNREACH;
-		m_freem(m);
-		goto done;
-	}
-	if (m == NULL)
-		goto done;
-
-	ip = mtod(m, struct ip *);
-	hlen = ip->ip_hl << 2;
-#endif
-
-#ifdef IPSEC
 	/*
 	 * If deferred crypto processing is needed, check that the
 	 * interface supports it.
@@ -676,6 +653,22 @@ sendit:
 			m->m_pkthdr.csum &= ~M_UDPV4_CSUM_OUT; /* Clear */
 		}
 	}
+
+	/*
+	 * Packet filter
+	 */
+#if NPF > 0
+	if (pf_test(PF_OUT, ifp, &m) != PF_PASS) {
+		error = EHOSTUNREACH;
+		m_freem(m);
+		goto done;
+	}
+	if (m == NULL)
+		goto done;
+
+	ip = mtod(m, struct ip *);
+	hlen = ip->ip_hl << 2;
+#endif
 
 	/*
 	 * If small enough for interface, can just send directly.
