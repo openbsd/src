@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmeter.h,v 1.7 2000/02/21 19:22:52 art Exp $	*/
+/*	$OpenBSD: vmmeter.h,v 1.8 2000/02/21 20:00:08 art Exp $	*/
 /*	$NetBSD: vmmeter.h,v 1.9 1995/03/26 20:25:04 jtc Exp $	*/
 
 /*-
@@ -126,47 +126,5 @@ struct  forkstat
 	int	sizvfork;	/* VM pages affected by vfork() */
 	int	sizrfork;	/* VM pages affected by rfork() */
 };
-
-#ifdef _KERNEL
-struct forkstat forkstat;
-#endif
-
-/*
- * Optional instrumentation.
- */
-#ifdef PGINPROF
-
-#define	NDMON	128
-#define	NSMON	128
-
-#define	DRES	20
-#define	SRES	5
-
-#define	PMONMIN	20
-#define	PRES	50
-#define	NPMON	64
-
-#define	RMONMIN	130
-#define	RRES	5
-#define	NRMON	64
-
-/* data and stack size distribution counters */
-u_int	dmon[NDMON+1];
-u_int	smon[NSMON+1];
-
-/* page in time distribution counters */
-u_int	pmon[NPMON+2];
-
-/* reclaim time distribution counters */
-u_int	rmon[NRMON+2];
-
-int	pmonmin;
-int	pres;
-int	rmonmin;
-int	rres;
-
-u_int rectime;		/* accumulator for reclaim times */
-u_int pgintime;		/* accumulator for page in times */
-#endif
 
 #endif /* __VMMETER_H__ */
