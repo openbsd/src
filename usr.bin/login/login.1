@@ -1,4 +1,4 @@
-.\"	$OpenBSD: login.1,v 1.2 1996/06/26 05:36:01 deraadt Exp $
+.\"	$OpenBSD: login.1,v 1.3 1996/07/31 12:21:43 deraadt Exp $
 .\"	$NetBSD: login.1,v 1.7 1995/08/31 22:52:33 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -95,6 +95,13 @@ This is used by
 .Xr shutdown  8
 to prevent users from logging in when the system is about to go down.
 .Pp
+If the file
+.Pa /etc/fbtab
+exists,
+.Nm login
+changes the protection and ownership of certain devices specified in this
+file.
+.Pp
 Immediately after logging a user in,
 .Nm login
 displays the system copyright notice, the date and time the user last
@@ -126,6 +133,8 @@ do not fork before executing the
 utility.
 .Sh FILES
 .Bl -tag -width /var/mail/userXXX -compact
+.It Pa /etc/fbtab
+changes device protections
 .It Pa /etc/motd
 message-of-the-day
 .It Pa /etc/nologin

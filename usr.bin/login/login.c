@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.5 1996/07/20 09:10:59 deraadt Exp $	*/
+/*	$OpenBSD: login.c,v 1.6 1996/07/31 12:21:43 deraadt Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: login.c,v 1.5 1996/07/20 09:10:59 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: login.c,v 1.6 1996/07/31 12:21:43 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -383,6 +383,8 @@ main(argc, argv)
 	login(&utmp);
 
 	dolastlog(quietlog);
+
+	login_fbtab(tty, pwd->pw_uid, pwd->pw_gid);
 
 	(void)chown(ttyn, pwd->pw_uid,
 	    (gr = getgrnam(TTYGRPNAME)) ? gr->gr_gid : pwd->pw_gid);
