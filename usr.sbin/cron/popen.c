@@ -24,16 +24,20 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: popen.c,v 1.6 2000/08/20 18:42:42 millert Exp $";
+static char rcsid[] = "$Id: popen.c,v 1.7 2000/08/21 21:01:21 deraadt Exp $";
 static char sccsid[] = "@(#)popen.c	5.7 (Berkeley) 2/14/89";
 #endif /* not lint */
 
 #include "cron.h"
+
 #include <signal.h>
+#include <syslog.h>
+#include <unistd.h>
+#include <grp.h>
+
 #if defined(LOGIN_CAP)
 # include <login_cap.h>
 #endif
-
 
 #define MAX_ARGS 100
 #define WANT_GLOBBING 0
@@ -110,6 +114,7 @@ cron_popen(program, type, e)
 		goto pfree;
 		/* NOTREACHED */
 	case 0:				/* child */
+		closelog();
 		if (*type == 'r') {
 			if (pdes[1] != 1) {
 				dup2(pdes[1], 1);
@@ -138,12 +143,13 @@ cron_popen(program, type, e)
 				_exit(ERROR_EXIT);
 			}
 #else
-			setgid(e->gid);
-# if defined(BSD)
-			initgroups(env_get("LOGNAME", e->envp), e->gid);
-# endif
+			if (setgid(e->gid) ||
+			    setgroups(0, NULL) ||
+			    initgroups(env_get("LOGNAME", e->envp), e->gid))
+				_exit(1);
 			setlogin(env_get("LOGNAME", e->envp));
-			setuid(e->uid);
+			if (setuid(e->uid))
+				_exit(1);
 			chdir(env_get("HOME", e->envp));
 #endif
 		}
