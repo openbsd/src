@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.23 2001/10/24 03:52:40 mickey Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.24 2001/10/24 16:30:05 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -163,15 +163,18 @@ const struct ac97_source_info {
 		WRAP(ac97_volume_stereo),
 		AC97_REG_HEADPHONE_VOLUME, 6, 0, 1, 0, 0x8000
 	}, {
-		/* Tone */
-		AudioCoutputs,	"tone",		NULL,	AUDIO_MIXER_VALUE,
-		WRAP(ac97_volume_stereo),
+		AudioCoutputs,	AudioNbass,	NULL,	AUDIO_MIXER_VALUE,
+		WRAP(ac97_volume_mono),
+		AC97_REG_MASTER_TONE, 4, 8, 0, 0, 0x0f0f
+	}, {
+		AudioCoutputs,	AudioNtreble,	NULL,	AUDIO_MIXER_VALUE,
+		WRAP(ac97_volume_mono),
 		AC97_REG_MASTER_TONE, 4, 0, 0, 0, 0x0f0f
 	}, {
 		/* PC Beep Volume */
 		AudioCinputs,	AudioNspeaker,	NULL,	AUDIO_MIXER_VALUE,
 		WRAP(ac97_volume_mono),
-		AC97_REG_PCBEEP_VOLUME, 4, 1, 1, 0x0000
+		AC97_REG_PCBEEP_VOLUME, 4, 1, 1, 0, 0x0000
 	}, {
 		/* Phone */
 		AudioCinputs,	"phone",	NULL,	AUDIO_MIXER_VALUE,
@@ -240,26 +243,26 @@ const struct ac97_source_info {
 		WRAP(ac97_on_off),
 		AC97_REG_GP, 1, 13, 0, 0, 0x0000
 	}, {
-		AudioCoutputs,	AudioNspatial,	"center", AUDIO_MIXER_VALUE,
+		AudioCoutputs,	AudioNspatial,	AudioNcenter,AUDIO_MIXER_VALUE,
 		WRAP(ac97_volume_mono),
 		AC97_REG_3D_CONTROL, 4, 8, 0, 1, 0x0000
 	}, {
-		AudioCoutputs,	AudioNspatial,	"depth", AUDIO_MIXER_VALUE,
+		AudioCoutputs,	AudioNspatial,	AudioNdepth, AUDIO_MIXER_VALUE,
 		WRAP(ac97_volume_mono),
 		AC97_REG_3D_CONTROL, 4, 0, 0, 1, 0x0000
 	}, {
 		/* Surround volume */
-		AudioCoutputs,	"surround",	NULL,	AUDIO_MIXER_VALUE,
+		AudioCoutputs,	AudioNsurround,	NULL,	AUDIO_MIXER_VALUE,
 		WRAP(ac97_volume_stereo),
 		AC97_REG_SURROUND_VOLUME, 6, 0, 1, 0, 0x8080
 	}, {
 		/* Center volume */
-		AudioCoutputs,	"center",	NULL,	AUDIO_MIXER_VALUE,
+		AudioCoutputs,	AudioNcenter,	NULL,	AUDIO_MIXER_VALUE,
 		WRAP(ac97_volume_mono),
 		AC97_REG_CENTER_LFE_VOLUME, 6, 0, 1, 0, 0x8080
 	}, {
 		/* LFE volume */
-		AudioCoutputs,	"lfe",		NULL,	AUDIO_MIXER_VALUE,
+		AudioCoutputs,	AudioNlfe,	NULL,	AUDIO_MIXER_VALUE,
 		WRAP(ac97_volume_mono),
 		AC97_REG_CENTER_LFE_VOLUME, 6, 8, 1, 0, 0x8080
 	}
