@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.49 2004/08/10 12:04:53 espie Exp $
+# $OpenBSD: pkg_add,v 1.50 2004/08/12 19:18:03 brad Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -110,7 +110,7 @@ sub install
 			if ($md5 eq $orig->{md5}) {
 				print "\t(but it seems to match the sample file $origname)\n";
 			} else {
-				print "\tIt does not match the sample file origname\n";
+				print "\tIt does not match the sample file $origname\n";
 				print "You may wish to update it manually\n";
 			}
 		}
