@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sym.h,v 1.6 1996/05/10 13:58:44 mickey Exp $	*/
+/*	$OpenBSD: db_sym.h,v 1.7 1996/05/11 07:44:43 niklas Exp $	*/
 /*	$NetBSD: db_sym.h,v 1.7 1996/02/05 01:57:16 christos Exp $	*/
 
 /* 
@@ -30,9 +30,15 @@
  *	Date:	8/90
  */
 
+#ifndef _DDB_DB_SYM_
+#define _DDB_DB_SYM_
+
 /*
  * This module can handle multiple symbol tables
  */
+
+#include <sys/queue.h>
+
 typedef struct db_symtab {
 	TAILQ_ENTRY(db_symtab)	list;	/* all the tabs */
 	char		*name;		/* symtab name */
@@ -115,3 +121,5 @@ int db_sym_numargs __P((db_sym_t, int *, char **));
 
 /* db_hangman.c */
 void db_hangman __P((db_expr_t, int, db_expr_t, char *));
+
+#endif /* _DDB_DB_SYM_H_ */
