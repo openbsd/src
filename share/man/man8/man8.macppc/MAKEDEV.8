@@ -1,4 +1,4 @@
-.\"	$OpenBSD: MAKEDEV.8,v 1.8 2003/07/10 08:30:36 jmc Exp $
+.\"	$OpenBSD: MAKEDEV.8,v 1.9 2004/01/13 19:27:19 jmc Exp $
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -124,6 +124,8 @@ SCSI tape drives.
 Serial ports.
 .It Ar ttyC#
 Wscons console screens.
+.It Ar ttyU#
+USB serial ports.
 .It Ar tun#
 Network tunnel devices.
 .It Ar uk#
@@ -139,8 +141,6 @@ USB printer devices.
 USB Diamond Multimedia Rio 500.
 .It Ar ugen#
 USB generic devices.
-.It Ar utty#
-USB serial ports.
 .It Ar vnd#
 .Dq File
 pseudo-disks.
