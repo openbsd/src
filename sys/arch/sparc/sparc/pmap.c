@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.71 2000/02/01 10:17:08 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.72 2000/02/01 10:34:32 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -2161,6 +2161,8 @@ pv_unlink4_4c(pv, pm, va)
 			 * the REF and MOD flags. since pmap_is_modified()
 			 * can still be called for this page.
 			 */
+			if (pv->pv_flags & PV_ANC)
+				pmap_stats.ps_alias_recache++;
 			pv->pv_pmap = NULL;
 			pv->pv_flags &= ~(PV_NC|PV_ANC);
 			return;
@@ -2464,6 +2466,8 @@ pv_unlink4m(pv, pm, va)
 			 * the REF and MOD flags. since pmap_is_modified()
 			 * can still be called for this page.
 			 */
+			if (pv->pv_flags & PV_ANC)
+				pmap_stats.ps_alias_recache++;
 			pv->pv_pmap = NULL;
 			pv->pv_flags &= ~(PV_C4M|PV_ANC);
 			return;
