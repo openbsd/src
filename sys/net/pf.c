@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.5 2001/06/24 21:10:24 itojun Exp $ */
+/*	$OpenBSD: pf.c,v 1.6 2001/06/24 21:16:02 itojun Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -1613,9 +1613,9 @@ pull_hdr(struct ifnet *ifp, struct mbuf **m, struct ip *h, int off, int *action,
 		}
 		return NULL;
 	}
-	if ((h->ip_len - off) < len) {
+	if ((*m)->m_pkthdr.len < off + len || h->ip_len < off + len) {
 		*action = PF_DROP;
-		printf("packetfilter: dropping first fragment");
+		printf("packetfilter: dropping short packet");
 		print_ip(ifp, h);
 		return NULL;
 	}
