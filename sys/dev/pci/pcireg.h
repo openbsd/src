@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcireg.h,v 1.6 1998/02/03 19:42:05 deraadt Exp $	*/
+/*	$OpenBSD: pcireg.h,v 1.7 1998/02/03 19:47:13 deraadt Exp $	*/
 /*	$NetBSD: pcireg.h,v 1.11 1996/08/10 15:42:33 mycroft Exp $	*/
 
 /*
@@ -124,6 +124,12 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_CLASS_MULTIMEDIA			0x04
 #define	PCI_CLASS_MEMORY			0x05
 #define	PCI_CLASS_BRIDGE			0x06
+#define	PCI_CLASS_COMMUNICATIONS		0x07
+#define	PCI_CLASS_SYSTEM			0x08
+#define	PCI_CLASS_INPUT				0x09
+#define	PCI_CLASS_DOCK				0x0a
+#define	PCI_CLASS_PROCESSOR			0x0b
+#define	PCI_CLASS_SERIALBUS			0x0c
 #define	PCI_CLASS_UNDEFINED			0xff
 
 /* 0x00 prehistoric subclasses */
@@ -135,6 +141,7 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_MASS_STORAGE_IDE		0x01
 #define	PCI_SUBCLASS_MASS_STORAGE_FLOPPY	0x02
 #define	PCI_SUBCLASS_MASS_STORAGE_IPI		0x03
+#define	PCI_SUBCLASS_MASS_STORAGE_RAID		0x04
 #define	PCI_SUBCLASS_MASS_STORAGE_MISC		0x80
 
 /* 0x02 network subclasses */
@@ -169,6 +176,43 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_BRIDGE_NUBUS		0x06
 #define	PCI_SUBCLASS_BRIDGE_CARDBUS		0x07
 #define	PCI_SUBCLASS_BRIDGE_MISC		0x80
+
+/* 0x07 communications subclasses */
+#define	PCI_SUBCLASS_COMMUNICATIONS_SERIAL	0x00
+#define	PCI_SUBCLASS_COMMUNICATIONS_PARALLEL	0x01
+#define	PCI_SUBCLASS_COMMUNICATIONS_MISC	0x80
+
+/* 0x08 system subclasses */
+#define	PCI_SUBCLASS_SYSTEM_PIC			0x00
+#define	PCI_SUBCLASS_SYSTEM_DMA			0x01
+#define	PCI_SUBCLASS_SYSTEM_TIMER		0x02
+#define	PCI_SUBCLASS_SYSTEM_RTC			0x03
+#define	PCI_SUBCLASS_SYSTEM_MISC		0x80
+
+/* 0x09 input subclasses */
+#define	PCI_SUBCLASS_INPUT_KEYBOARD		0x00
+#define	PCI_SUBCLASS_INPUT_DIGITIZER		0x01
+#define	PCI_SUBCLASS_INPUT_MOUSE		0x02
+#define	PCI_SUBCLASS_INPUT_MISC			0x80
+
+/* 0x0a dock subclasses */
+#define	PCI_SUBCLASS_DOCK_GENERIC		0x00
+#define	PCI_SUBCLASS_DOCK_MISC			0x80
+
+/* 0x0b processor subclasses */
+#define	PCI_SUBCLASS_PROCESSOR_386		0x00
+#define	PCI_SUBCLASS_PROCESSOR_486		0x01
+#define	PCI_SUBCLASS_PROCESSOR_PENTIUM		0x02
+#define	PCI_SUBCLASS_PROCESSOR_ALPHA		0x10
+#define	PCI_SUBCLASS_PROCESSOR_POWERPC		0x20
+#define	PCI_SUBCLASS_PROCESSOR_COPROC		0x40
+
+/* 0x0c serial bus subclasses */
+#define	PCI_SUBCLASS_SERIALBUS_FIREWIRE		0x00
+#define	PCI_SUBCLASS_SERIALBUS_ACCESS		0x01
+#define	PCI_SUBCLASS_SERIALBUS_SSA		0x02
+#define	PCI_SUBCLASS_SERIALBUS_USB		0x03
+#define	PCI_SUBCLASS_SERIALBUS_FIBER		0x04
 
 /*
  * PCI BIST/Header Type/Latency Timer/Cache Line Size Register.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_subr.c,v 1.7 1998/02/03 19:42:04 deraadt Exp $	*/
+/*	$OpenBSD: pci_subr.c,v 1.8 1998/02/03 19:47:13 deraadt Exp $	*/
 /*	$NetBSD: pci_subr.c,v 1.19 1996/10/13 01:38:29 christos Exp $	*/
 
 /*
@@ -68,6 +68,7 @@ struct pci_class pci_subclass_mass_storage[] = {
 	{ "IDE",		PCI_SUBCLASS_MASS_STORAGE_IDE,		},
 	{ "floppy",		PCI_SUBCLASS_MASS_STORAGE_FLOPPY,	},
 	{ "IPI",		PCI_SUBCLASS_MASS_STORAGE_IPI,		},
+	{ "RAID",		PCI_SUBCLASS_MASS_STORAGE_RAID,		},
 	{ "miscellaneous",	PCI_SUBCLASS_MASS_STORAGE_MISC,		},
 	{ 0 },
 };
@@ -115,6 +116,55 @@ struct pci_class pci_subclass_bridge[] = {
 	{ 0 },
 };
 
+struct pci_class pci_subclass_communications[] = {
+	{ "serial",		PCI_SUBCLASS_COMMUNICATIONS_SERIAL,	},
+	{ "parallel",		PCI_SUBCLASS_COMMUNICATIONS_PARALLEL,	},
+	{ "miscellaneous",	PCI_SUBCLASS_COMMUNICATIONS_MISC,	},
+	{ 0 },
+};
+
+struct pci_class pci_subclass_system[] = {
+	{ "8259 PIC",		PCI_SUBCLASS_SYSTEM_PIC,		},
+	{ "8237 DMA",		PCI_SUBCLASS_SYSTEM_DMA,		},
+	{ "8254 timer",		PCI_SUBCLASS_SYSTEM_TIMER,		},
+	{ "RTC",		PCI_SUBCLASS_SYSTEM_RTC,		},
+	{ "miscellaneous",	PCI_SUBCLASS_SYSTEM_MISC,		},
+	{ 0 },
+};
+
+struct pci_class pci_subclass_input[] = {
+	{ "keyboard",		PCI_SUBCLASS_INPUT_KEYBOARD,		},
+	{ "digitizer",		PCI_SUBCLASS_INPUT_DIGITIZER,		},
+	{ "mouse",		PCI_SUBCLASS_INPUT_MOUSE,		},
+	{ "miscellaneous",	PCI_SUBCLASS_INPUT_MISC,		},
+	{ 0 },
+};
+
+struct pci_class pci_subclass_dock[] = {
+	{ "generic",		PCI_SUBCLASS_DOCK_GENERIC,		},
+	{ "miscellaneous",	PCI_SUBCLASS_DOCK_MISC,			},
+	{ 0 },
+};
+
+struct pci_class pci_subclass_processor[] = {
+	{ "386",		PCI_SUBCLASS_PROCESSOR_386,		},
+	{ "486",		PCI_SUBCLASS_PROCESSOR_486,		},
+	{ "Pentium",		PCI_SUBCLASS_PROCESSOR_PENTIUM,		},
+	{ "Alpha",		PCI_SUBCLASS_PROCESSOR_ALPHA,		},
+	{ "PowerPC",		PCI_SUBCLASS_PROCESSOR_POWERPC,		},
+	{ "Co-processor",	PCI_SUBCLASS_PROCESSOR_COPROC,		},
+	{ 0 },
+};
+
+struct pci_class pci_subclass_serialbus[] = {
+	{ "Firewire",		PCI_SUBCLASS_SERIALBUS_FIREWIRE,	},
+	{ "ACCESS.bus",		PCI_SUBCLASS_SERIALBUS_ACCESS,		},
+	{ "SSA",		PCI_SUBCLASS_SERIALBUS_SSA,		},
+	{ "USB",		PCI_SUBCLASS_SERIALBUS_USB,		},
+	{ "Fiber Channel",	PCI_SUBCLASS_SERIALBUS_FIBER,		},
+	{ 0 },
+};
+
 struct pci_class pci_class[] = {
 	{ "prehistoric",	PCI_CLASS_PREHISTORIC,
 	    pci_subclass_prehistoric,				},
@@ -130,6 +180,18 @@ struct pci_class pci_class[] = {
 	    pci_subclass_memory,				},
 	{ "bridge",		PCI_CLASS_BRIDGE,
 	    pci_subclass_bridge,				},
+	{ "communications",	PCI_CLASS_COMMUNICATIONS,
+	    pci_subclass_communications,			},
+	{ "system",		PCI_CLASS_SYSTEM,
+	    pci_subclass_system,				},
+	{ "input",		PCI_CLASS_INPUT,
+	    pci_subclass_input,					},
+	{ "dock",		PCI_CLASS_DOCK,
+	    pci_subclass_dock,					},
+	{ "processor",		PCI_CLASS_PROCESSOR,
+	    pci_subclass_processor,				},
+	{ "serial bus",		PCI_CLASS_SERIALBUS,
+	    pci_subclass_serialbus,				},
 	{ "undefined",		PCI_CLASS_UNDEFINED,
 	    0,							},
 	{ 0 },
