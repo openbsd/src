@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.15 2001/11/09 00:12:21 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.16 2001/11/20 23:55:39 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -69,7 +69,7 @@ int cold = 1;   /* 1 if still booting */
 
 void *bootaddr;
 int bootpart;
-struct device *bootdev;	/* set by device drivers (if found) */
+struct device *bootdv;	/* set by device drivers (if found) */
 
 /*
  * called at boot time, configure all devices on the system.
