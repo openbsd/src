@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.63 1999/04/07 22:57:25 millert Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.64 1999/06/16 10:12:38 espie Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.63 1999/04/07 22:57:25 millert Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.64 1999/06/16 10:12:38 espie Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -536,7 +536,7 @@ writelabel(f, boot, lp)
 			}
 		}
 	}
-#ifdef vax
+#ifdef __vax__
 	if (lp->d_type == DTYPE_SMD && lp->d_flags & D_BADSECT) {
 		daddr_t alt;
 		int i;
@@ -777,7 +777,7 @@ makebootarea(boot, dp, f)
 	 * clobber the existing boot.
 	 */
 	if (!installboot) {
-#ifndef i386
+#ifndef __i386__
 		if (rflag) {
 			if (read(f, boot, BBSIZE) < BBSIZE)
 				err(4, "%s", specname);
