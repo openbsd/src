@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$Id: ypinit.sh,v 1.7 1998/01/18 20:48:48 maja Exp $
+#	$Id: ypinit.sh,v 1.8 2000/08/18 18:50:45 deraadt Exp $
 #
 # ypinit.sh - setup an master or slave server.
 #
@@ -250,7 +250,7 @@ then
 
 	for MAP in `${YPWHICH} -d ${DOMAIN} -h ${MASTER} -m | cut -d\  -f1`
 	do
-		echo "Transfering ${MAP}..."
+		echo "Transferring ${MAP}..."
 		if ! ${YPXFR} -h ${MASTER} -c -d ${DOMAIN} ${MAP}; then
 			echo "Can't transfer map ${MAP}." 1>&2
 			ERROR_EXISTS="YES"
