@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.9 2004/04/07 18:24:19 mickey Exp $	*/
+/*	$OpenBSD: psl.h,v 1.10 2004/09/14 22:41:20 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -41,6 +41,7 @@
 #define	PSL_Y_POS	(0)
 #define	PSL_Z_POS	(1)
 #define	PSL_SS_POS	(3)	/* Reserved, Software-defined */
+#define	PSL_W_POS	(4)
 #define	PSL_E_POS	(5)
 #define	PSL_S_POS	(6)
 #define	PSL_T_POS	(7)
@@ -53,6 +54,7 @@
 #define	PSL_V_POS	(14)
 #define	PSL_M_POS	(15)
 #define	PSL_CB_POS	(16)
+#define	PSL_O_POS	(24)
 #define	PSL_G_POS	(25)
 #define	PSL_F_POS	(26)
 #define	PSL_R_POS	(27)
@@ -61,9 +63,9 @@
 #define	PSL_D_POS	(30)
 #define	PSL_I_POS	(31)
 
-#define	PSL_BITS	"\020\001I\002D\003P\004Q\005R\006F\007G"  \
+#define	PSL_BITS	"\020\001I\002D\003P\004Q\005R\006F\007G\010O"  \
 			"\021M\022V\023C\024B\025X\026N\027L\030H" \
-			"\031T\032S\033E\037Z\040Y"
+			"\031T\032S\033E\034W\037Z\040Y"
 
 /*
  * Processor Status Word Bit Values
@@ -71,6 +73,7 @@
 #define	PSL_Y	(1 << (31-PSL_Y_POS))	/* Data Debug Trap Disable */
 #define	PSL_Z	(1 << (31-PSL_Z_POS))	/* Instruction Debug Trap Disable */
 #define	PSL_SS	(1 << (31-PSL_SS_POS))	/* Reserved; Software Single-Step */
+#define	PSL_W	(1 << (31-PSL_W_POS))	/* 64bit address decode enable */
 #define	PSL_E	(1 << (31-PSL_E_POS))	/* Little Endian Memory Access Enable */
 #define	PSL_S	(1 << (31-PSL_S_POS))	/* Secure Interval Timer */
 #define	PSL_T	(1 << (31-PSL_T_POS))	/* Taken Branch Trap Enable */
@@ -83,6 +86,7 @@
 #define	PSL_V	(1 << (31-PSL_V_POS))	/* Divide Step Correction */
 #define	PSL_M	(1 << (31-PSL_M_POS))	/* High-priority Machine Check Mask */
 #define	PSL_CB	(1 << (31-PSL_CB_POS))	/* Carry/Borrow Bits */
+#define	PSL_O	(1 << (31-PSL_O_POS))	/* Force strong ordering (2.0) */
 #define	PSL_G	(1 << (31-PSL_G_POS))	/* Debug Trap Enable */
 #define	PSL_F	(1 << (31-PSL_F_POS))	/* Perfomance Monitor Interrupt Unmask */
 #define	PSL_R	(1 << (31-PSL_R_POS))	/* Recover Counter Enable */
