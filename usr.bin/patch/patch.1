@@ -1,4 +1,4 @@
-.\"	$OpenBSD: patch.1,v 1.9 2003/07/24 04:41:19 jmc Exp $
+.\"	$OpenBSD: patch.1,v 1.10 2003/07/24 14:29:16 millert Exp $
 .\" Copyright 1986, Larry Wall
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -40,12 +40,7 @@ program and apply those differences to an original file,
 producing a patched version.
 By default, the patched version is put in place of the original, with
 the original file backed up to the same name with the extension
-.Qq .orig
-.Po
-or
-.Qq ~
-on systems that do not support long filenames
-.Pc ,
+.Qq .orig ,
 or as specified by the
 .Fl b ,
 .Fl B ,
@@ -125,12 +120,7 @@ If
 .Nm
 cannot find a place to install that hunk of the patch, it will put the hunk
 out to a reject file, which normally is the name of the output file plus
-.Qq .rej
-.Po
-or
-.Qq #
-on systems that do not support long filenames
-.Pc .
+.Qq .rej .
 (Note that the rejected hunk will come out in context diff form whether the
 input patch was a context diff or a normal diff.
 If the input was a normal diff, many of the contexts will simply be null.)
@@ -206,9 +196,7 @@ recognizes the following switches:
 .It Fl b , Fl Fl suffix
 Causes the next argument to be interpreted as the backup extension, to be
 used in place of
-.Qq .orig
-or
-.Qq ~ .
+.Qq .orig .
 .It Fl B , Fl Fl prefix
 Causes the next argument to be interpreted as a prefix to the backup file
 name.
@@ -466,9 +454,7 @@ Directory to put temporary files in; default is
 .Pa /tmp .
 .It Ev SIMPLE_BACKUP_SUFFIX
 Extension to use for backup file names instead of
-.Qq .orig
-or
-.Qq ~ .
+.Qq .orig .
 .It Ev VERSION_CONTROL
 Selects when numbered backup files are made.
 .El
