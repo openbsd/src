@@ -54,6 +54,7 @@ static char rcsid[] = "$NetBSD: popen.c,v 1.5 1995/04/11 02:45:00 cgd Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <unistd.h>
 
 #include "extern.h"
@@ -131,6 +132,8 @@ ftpd_popen(program, type)
 			}
 			(void)close(pdes[1]);
 		}
+		closelog();
+
 		execv(gargv[0], gargv);
 		_exit(1);
 	}
