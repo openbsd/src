@@ -43,7 +43,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)join.c	5.1 (Berkeley) 11/18/91";*/
-static char rcsid[] = "$Id: join.c,v 1.1.1.1 1995/10/18 08:45:26 deraadt Exp $";
+static char rcsid[] = "$Id: join.c,v 1.2 1995/12/22 19:02:55 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -356,9 +356,9 @@ cmp(lp1, fieldno1, lp2, fieldno2)
 	LINE *lp1, *lp2;
 	u_long fieldno1, fieldno2;
 {
-	if (lp1->fieldcnt < fieldno1)
+	if (fieldno1 >= lp1->fieldcnt)
 		return (lp2->fieldcnt < fieldno2 ? 0 : 1);
-	if (lp2->fieldcnt < fieldno2)
+	if (fieldno2 >= lp2->fieldcnt)
 		return (-1);
 	return (strcmp(lp1->fields[fieldno1], lp2->fields[fieldno2]));
 }
