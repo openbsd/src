@@ -1,4 +1,5 @@
-/*	$OpenBSD: frexp.c,v 1.1 2001/08/29 01:41:29 art Exp $	*/
+/*	$OpenBSD: frexp.c,v 1.2 2001/09/10 22:37:06 millert Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +37,9 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+static char rcsid[] = "$OpenBSD: frexp.c,v 1.2 2001/09/10 22:37:06 millert Exp $";
+#endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <machine/ieee.h>
