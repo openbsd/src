@@ -1,0 +1,4 @@
+stdin:1: dynamic addresses require address family (inet/inet6)
+stdin:1: skipping rule due to errors
+stdin:1: rule expands to no valid combination
+pfctl: Syntax error in file: pf rules not loaded

@@ -1,0 +1,4 @@
+stdin:5: Rules must be in order: options, scrub, queue, NAT, filter
+pfctl: Syntax error in file: pf rules not loaded
+scrub in on lo0 all fragment reassemble 
+pass in on lo1 all 

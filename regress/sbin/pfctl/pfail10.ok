@@ -1,0 +1,4 @@
+stdin:4: Rules must be in order: options, scrub, queue, NAT, filter
+pfctl: Syntax error in file: pf rules not loaded
+nat on lo0 inet all -> 127.0.0.1
+pass in on lo1 all 

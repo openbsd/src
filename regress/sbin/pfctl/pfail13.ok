@@ -1,0 +1,3 @@
+stdin:1: syntax error
+stdin:2: syntax error
+pfctl: Syntax error in file: pf rules not loaded
