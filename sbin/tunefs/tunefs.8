@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tunefs.8,v 1.5 1997/11/20 08:21:30 millert Exp $
+.\"	$OpenBSD: tunefs.8,v 1.6 1998/07/20 22:47:11 deraadt Exp $
 .\"	$NetBSD: tunefs.8,v 1.8 1995/03/18 15:01:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -96,9 +96,9 @@ this parameter should be set higher.
 .It Fl m Ar minfree
 This value specifies the percentage of space held back
 from normal users; the minimum free space threshold.
-The default value used is 10%.
+The default value used is 5%.
 This value can be set to zero, however up to a factor of three
-in throughput will be lost over the performance obtained at a 10%
+in throughput will be lost over the performance obtained at a 5%
 threshold.
 Note that if the value is raised above the current usage level,
 users will be unable to allocate files until enough files have
@@ -107,10 +107,10 @@ been deleted to get under the higher threshold.
 The file system can either try to minimize the time spent
 allocating blocks, or it can attempt to minimize the space
 fragmentation on the disk.
-If the value of minfree (see above) is less than 10%,
+If the value of minfree (see above) is less than 5%,
 then the file system should optimize for space to avoid
 running out of full sized blocks.
-For values of minfree greater than or equal to 10%,
+For values of minfree greater than or equal to 5%,
 fragmentation is unlikely to be problematical, and
 the file system can be optimized for time.
 .It Fl p
