@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.8 1997/07/11 23:37:54 provos Exp $	*/
+/*	$OpenBSD: ip_ah.c,v 1.9 1997/07/18 18:09:51 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -109,7 +109,7 @@ ah_input(register struct mbuf *m, int iphlen)
     tdbp = gettdb(ahp->ah_spi, ipo->ip_dst, IPPROTO_AH);
     if (tdbp == NULL)
     {
-	log(LOG_ERR, "ah_input(): could not find SA for AH packet from %x to %x, spi %08x", ipo->ip_src, ipo->ip_dst, ahp->ah_spi);
+	log(LOG_ERR, "ah_input(): could not find SA for AH packet from %x to %x, spi %08x", ipo->ip_src, ipo->ip_dst, ntohl(ahp->ah_spi));
 	m_freem(m);
 	ahstat.ahs_notdb++;
 	return;
@@ -119,7 +119,7 @@ ah_input(register struct mbuf *m, int iphlen)
     {
 	log(LOG_ALERT,
 	    "ah_input(): attempted to use invalid AH SA %08x, packet %x->%x",
-	    ahp->ah_spi, ipo->ip_src, ipo->ip_dst);
+	    ntohl(ahp->ah_spi), ipo->ip_src, ipo->ip_dst);
 	m_freem(m);
 	ahstat.ahs_invalid++;
 	return;
@@ -127,7 +127,7 @@ ah_input(register struct mbuf *m, int iphlen)
 
     if (tdbp->tdb_xform == NULL)
     {
-	log(LOG_ALERT, "ah_input(): attempted to use uninitialized AH SA %08x, packet from %x to %x", ahp->ah_spi, ipo->ip_src, ipo->ip_dst);
+	log(LOG_ALERT, "ah_input(): attempted to use uninitialized AH SA %08x, packet from %x to %x", ntohl(ahp->ah_spi), ipo->ip_src, ipo->ip_dst);
 	m_freem(m);
 	ahstat.ahs_noxform++;
 	return;
@@ -145,7 +145,7 @@ ah_input(register struct mbuf *m, int iphlen)
     m = (*(tdbp->tdb_xform->xf_input))(m, tdbp);
     if (m == NULL)
     {
-	log(LOG_ALERT, "ah_input(): authentication failed for AH packet from %x to %x, spi %08x", ipn.ip_src, ipn.ip_dst, ahn.ah_spi);
+	log(LOG_ALERT, "ah_input(): authentication failed for AH packet from %x to %x, spi %08x", ipn.ip_src, ipn.ip_dst, ntohl(ahn.ah_spi));
 	ahstat.ahs_badkcr++;
 	return;
     }

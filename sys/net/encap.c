@@ -1,4 +1,4 @@
-/*	$OpenBSD: encap.c,v 1.10 1997/07/15 23:11:08 provos Exp $	*/
+/*	$OpenBSD: encap.c,v 1.11 1997/07/18 18:09:48 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -60,9 +60,9 @@ extern int tdb_init(struct tdb *, struct mbuf *);
 
 extern struct domain encapdomain;
 
-struct	sockaddr encap_dst = { 2, PF_ENCAP, };
-struct	sockaddr encap_src = { 2, PF_ENCAP, };
-struct	sockproto encap_proto = { PF_ENCAP, };
+struct sockaddr encap_dst = { 2, PF_ENCAP, };
+struct sockaddr encap_src = { 2, PF_ENCAP, };
+struct sockproto encap_proto = { PF_ENCAP, };
 
 struct protosw encapsw[] = { 
     { SOCK_RAW,	&encapdomain,	0,		PR_ATOMIC|PR_ADDR,
@@ -77,7 +77,6 @@ struct domain encapdomain =
 { AF_ENCAP, "encapsulation", 0, 0, 0, 
   encapsw, &encapsw[sizeof(encapsw) / sizeof(encapsw[0])], 0,
   rn_inithead, 16, sizeof(struct sockaddr_encap)};
-
 
 /*
  * Sysctl for encap variables
@@ -164,8 +163,8 @@ va_dcl
 {
 #define SENDERR(e) do { error = e; goto flush;} while (0)
     struct sockaddr_encap encapdst, encapgw, encapnetmask;
+    int fl, fl2, len, emlen, error = 0;
     struct in_addr alts, altm;
-    int len, emlen, error = 0;
     struct flow *flow, *flow2;
     struct encap_msghdr *emp;
     struct tdb *tdbp, *tdbp2;
@@ -206,6 +205,10 @@ va_dcl
 	
     if (emp->em_version != PFENCAP_VERSION_1)
       SENDERR(EINVAL);
+
+    bzero((caddr_t) &encapdst, sizeof(struct sockaddr_encap));
+    bzero((caddr_t) &encapnetmask, sizeof(struct sockaddr_encap));
+    bzero((caddr_t) &encapgw, sizeof(struct sockaddr_encap));
 
     switch (emp->em_type)
     {
@@ -448,11 +451,17 @@ va_dcl
             if (tdbp == NULL)
               SENDERR(ENOENT);
 
+	    fl = fl2 = 0;
+
+	    emp->em_ena_isrc.s_addr &= emp->em_ena_ismask.s_addr;
+	    emp->em_ena_idst.s_addr &= emp->em_ena_idmask.s_addr;
+
 	    flow = find_flow(emp->em_ena_isrc, emp->em_ena_ismask,
 			     emp->em_ena_idst, emp->em_ena_idmask,
 			     emp->em_ena_protocol, emp->em_ena_sport,
 			     emp->em_ena_dport, tdbp);
-	    if (flow != (struct flow *) NULL)
+	    if ((flow != (struct flow *) NULL) &&
+		!(emp->em_ena_flags & ENABLE_FLAG_REPLACE))
 	      SENDERR(EEXIST);
 
 	    /* Check for 0.0.0.0/255.255.255.255 if the flow is local */
@@ -463,15 +472,30 @@ va_dcl
 		flow2 = find_flow(alts, altm, emp->em_ena_idst,
 				  emp->em_ena_idmask, emp->em_ena_protocol,
 				  emp->em_ena_sport, emp->em_ena_dport, tdbp);
-		if (flow2 != (struct flow *) NULL)
+		if ((flow2 != (struct flow *) NULL) &&
+		    !(emp->em_ena_flags & ENABLE_FLAG_REPLACE))
 		  SENDERR(EEXIST);
 	    }
 
-	    flow = get_flow();
 	    if (flow == (struct flow *) NULL)
-	      SENDERR(ENOBUFS);
+	    {
+	    	flow = get_flow();
+	    	if (flow == (struct flow *) NULL)
+	      	  SENDERR(ENOBUFS);
 
-	    if (emp->em_ena_flags & ENABLE_FLAG_LOCAL)
+	    	flow->flow_src.s_addr = emp->em_ena_isrc.s_addr;
+	    	flow->flow_dst.s_addr = emp->em_ena_idst.s_addr;
+	    	flow->flow_srcmask.s_addr = emp->em_ena_ismask.s_addr;
+	    	flow->flow_dstmask.s_addr = emp->em_ena_idmask.s_addr;
+	    	flow->flow_proto = emp->em_ena_protocol;
+	    	flow->flow_sport = emp->em_ena_sport;
+	    	flow->flow_dport = emp->em_ena_dport;
+
+		fl = 1;
+	    }
+
+	    if ((emp->em_ena_flags & ENABLE_FLAG_LOCAL) &&
+		(flow2 == (struct flow *) NULL))
 	    {
 	    	flow2 = get_flow();
 	    	if (flow2 == (struct flow *) NULL)
@@ -488,18 +512,13 @@ va_dcl
 	    	flow2->flow_sport = emp->em_ena_sport;
 	    	flow2->flow_dport = emp->em_ena_dport;
 
+		fl2 = 1;
+
 	    	put_flow(flow2, tdbp);
 	    }
 
-	    flow->flow_src.s_addr = emp->em_ena_isrc.s_addr;
-	    flow->flow_dst.s_addr = emp->em_ena_idst.s_addr;
-	    flow->flow_srcmask.s_addr = emp->em_ena_ismask.s_addr;
-	    flow->flow_dstmask.s_addr = emp->em_ena_idmask.s_addr;
-	    flow->flow_proto = emp->em_ena_protocol;
-	    flow->flow_sport = emp->em_ena_sport;
-	    flow->flow_dport = emp->em_ena_dport;
-
-	    put_flow(flow, tdbp);
+	    if (fl == 1)
+	      put_flow(flow, tdbp);
 
 	    /* Setup the encap fields */
 	    encapdst.sen_len = SENT_IP4_LEN;
@@ -516,6 +535,7 @@ va_dcl
 	    encapgw.sen_type = SENT_IPSP;
 	    encapgw.sen_ipsp_dst.s_addr = tdbp->tdb_dst.s_addr;
 	    encapgw.sen_ipsp_spi = tdbp->tdb_spi;
+	    encapgw.sen_ipsp_sproto = tdbp->tdb_sproto;
 
 	    encapnetmask.sen_len = SENT_IP4_LEN;
 	    encapnetmask.sen_family = AF_ENCAP;
@@ -537,10 +557,9 @@ va_dcl
 	    /* If this is set, delete any old route for this flow */
 	    if (emp->em_ena_flags & ENABLE_FLAG_REPLACE)
 	      rtrequest(RTM_DELETE, (struct sockaddr *) &encapdst,
-			(struct sockaddr *) &encapgw,
-			(struct sockaddr *) &encapnetmask,
-			RTF_UP | RTF_GATEWAY | RTF_STATIC,
-			(struct rtentry **) 0);
+                        (struct sockaddr *) 0,
+                        (struct sockaddr *) &encapnetmask, 0,
+                        (struct rtentry **) 0);
 
 	    /* Add the entry in the routing table */
 	    error = rtrequest(RTM_ADD, (struct sockaddr *) &encapdst,
@@ -551,8 +570,9 @@ va_dcl
 	    
 	    if (error)
 	    {
-		delete_flow(flow, tdbp);
-		if (emp->em_ena_flags & ENABLE_FLAG_LOCAL)
+		if (fl)
+		  delete_flow(flow, tdbp);
+		if ((emp->em_ena_flags & ENABLE_FLAG_LOCAL) && (fl2))
 		  delete_flow(flow2, tdbp);
 		SENDERR(error);
 	    }
@@ -565,9 +585,8 @@ va_dcl
 
 		if (emp->em_ena_flags & ENABLE_FLAG_REPLACE)
 		  rtrequest(RTM_DELETE, (struct sockaddr *) &encapdst,
-			    (struct sockaddr *) &encapgw,
-			    (struct sockaddr *) &encapnetmask,
-			    RTF_UP | RTF_GATEWAY | RTF_STATIC,
+			    (struct sockaddr *) 0,
+			    (struct sockaddr *) &encapnetmask, 0,
 			    (struct rtentry **) 0);
 
 		error = rtrequest(RTM_ADD, (struct sockaddr *) &encapdst,
@@ -582,13 +601,15 @@ va_dcl
 		    encapnetmask.sen_ip_src.s_addr = emp->em_ena_ismask.s_addr;
 
 		    rtrequest(RTM_DELETE, (struct sockaddr *) &encapdst,
-			      (struct sockaddr *) &encapgw,
-			      (struct sockaddr *) &encapnetmask,
-			      RTF_UP | RTF_GATEWAY | RTF_STATIC,
+			      (struct sockaddr *) 0,
+			      (struct sockaddr *) &encapnetmask, 0,
 			      (struct rtentry **) 0);
 
-		    delete_flow(flow, tdbp);
-		    delete_flow(flow2, tdbp);
+		    if (fl)
+		      delete_flow(flow, tdbp);
+
+		    if (fl2)
+		      delete_flow(flow2, tdbp);
 		    SENDERR(error);
 	    	}
 	    }
@@ -601,9 +622,12 @@ va_dcl
 	    if (emlen != EMT_DISABLESPI_FLEN)
 	      SENDERR(EINVAL);
 
-            tdbp = gettdb(emp->em_gen_spi, emp->em_gen_dst, emp->em_gen_sproto);
+            tdbp = gettdb(emp->em_ena_spi, emp->em_ena_dst, emp->em_ena_sproto);
             if (tdbp == NULL)
               SENDERR(ENOENT);
+
+	    emp->em_ena_isrc.s_addr &= emp->em_ena_ismask.s_addr;
+	    emp->em_ena_idst.s_addr &= emp->em_ena_idmask.s_addr;
 
 	    flow = find_flow(emp->em_ena_isrc, emp->em_ena_ismask,
 			     emp->em_ena_idst, emp->em_ena_idmask,
@@ -634,12 +658,6 @@ va_dcl
             encapdst.sen_sport = flow->flow_sport;
             encapdst.sen_dport = flow->flow_dport;
 
-            encapgw.sen_len = SENT_IPSP_LEN;
-            encapgw.sen_family = AF_ENCAP;
-            encapgw.sen_type = SENT_IPSP;
-            encapgw.sen_ipsp_dst.s_addr = tdbp->tdb_dst.s_addr;
-            encapgw.sen_ipsp_spi = tdbp->tdb_spi;
-
             encapnetmask.sen_len = SENT_IP4_LEN;
             encapnetmask.sen_family = AF_ENCAP;
             encapnetmask.sen_type = SENT_IP4;
@@ -659,10 +677,9 @@ va_dcl
 
             /* Delete the entry */
             error = rtrequest(RTM_DELETE, (struct sockaddr *) &encapdst,
-			      (struct sockaddr *) &encapgw,
-			      (struct sockaddr *) &encapnetmask,
-                              RTF_UP | RTF_GATEWAY | RTF_STATIC,
-                              (struct rtentry **) 0);
+			      (struct sockaddr *) 0,
+			      (struct sockaddr *) &encapnetmask, 0,
+			      (struct rtentry **) 0);
 
 	    delete_flow(flow, tdbp);
 
@@ -676,9 +693,8 @@ va_dcl
 		encapnetmask.sen_ip_src.s_addr = INADDR_BROADCAST;
 
 		error = rtrequest(RTM_DELETE, (struct sockaddr *) &encapdst,
-				  (struct sockaddr *) &encapgw,
-				  (struct sockaddr *) &encapnetmask,
-				  RTF_UP | RTF_GATEWAY | RTF_STATIC,
+				  (struct sockaddr *) 0,
+				  (struct sockaddr *) &encapnetmask, 0,
 				  (struct rtentry **) 0);
 
 		delete_flow(flow2, tdbp);

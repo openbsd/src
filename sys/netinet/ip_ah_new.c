@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah_new.c,v 1.3 1997/07/14 08:48:45 provos Exp $	*/
+/*	$OpenBSD: ip_ah_new.c,v 1.4 1997/07/18 18:09:52 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -285,7 +285,7 @@ ah_new_input(struct mbuf *m, struct tdb *tdb)
         default:
             log(LOG_ALERT,
                 "ah_new_input(): unsupported algorithm %d in SA %x/%08x",
-                xd->amx_hash_algorithm, tdb->tdb_dst, tdb->tdb_spi);
+                xd->amx_hash_algorithm, tdb->tdb_dst, ntohl(tdb->tdb_spi));
             m_freem(m);
             return NULL;
     }
@@ -342,7 +342,7 @@ ah_new_input(struct mbuf *m, struct tdb *tdb)
     {
 #ifdef ENCDEBUG
 	if (encdebug)
-	  printf("ah_new_input(): bad authenticator length for packet from %x to %x, spi %08x\n", ip->ip_src, ip->ip_dst, ah->ah_spi);
+	  printf("ah_new_input(): bad authenticator length for packet from %x to %x, spi %08x\n", ip->ip_src, ip->ip_dst, ntohl(ah->ah_spi));
 #endif /* ENCDEBUG */
 	ahstat.ahs_badauthl++;
 	m_freem(m);
@@ -359,13 +359,13 @@ ah_new_input(struct mbuf *m, struct tdb *tdb)
 	    switch(errc)
 	    {
 		case 1:
-		    log(LOG_ERR, "ah_new_input(): replay counter wrapped for packets from %x to %x, spi %08x\n", ip->ip_src, ip->ip_dst, ah->ah_spi);
+		    log(LOG_ERR, "ah_new_input(): replay counter wrapped for packets from %x to %x, spi %08x\n", ip->ip_src, ip->ip_dst, ntohl(ah->ah_spi));
 		    ahstat.ahs_wrap++;
 		    break;
 
 		case 2:
 	        case 3:
-		    log(LOG_WARNING, "ahhmachmd5_input(): duplicate packet received, %x->%x spi %08x", ip->ip_src, ip->ip_dst, ah->ah_spi);
+		    log(LOG_WARNING, "ahhmachmd5_input(): duplicate packet received, %x->%x spi %08x", ip->ip_src, ip->ip_dst, ntohl(ah->ah_spi));
 		    ahstat.ahs_replay++;
 		    break;
 	    }
@@ -553,7 +553,7 @@ ah_new_input(struct mbuf *m, struct tdb *tdb)
     if (bcmp(aho->ah_data, ah->ah_data, AH_HMAC_HASHLEN))
     {
 	log(LOG_ALERT,
-	    "ah_new_input(): authentication failed for packet from %x to %x, spi %08x", ip->ip_src, ip->ip_dst, ah->ah_spi);
+	    "ah_new_input(): authentication failed for packet from %x to %x, spi %08x", ip->ip_src, ip->ip_dst, ntohl(ah->ah_spi));
 	ahstat.ahs_badauth++;
 	m_freem(m);
 	return NULL;
@@ -614,7 +614,7 @@ ah_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 #ifdef ENCDEBUG
 	if (encdebug)
 	  printf("ah_new_output(): m_pullup() failed, SA %x/%08x\n",
-		 tdb->tdb_dst, tdb->tdb_spi);
+		 tdb->tdb_dst, ntohl(tdb->tdb_spi));
 #endif /* ENCDEBUG */
       	return ENOBUFS;
     }
@@ -630,7 +630,7 @@ ah_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 #ifdef ENCDEBUG
             if (encdebug)
               printf("ah_new_output(): m_pullup() failed, SA &x/%08x\n",
-                     tdb->tdb_dst, tdb->tdb_spi);
+                     tdb->tdb_dst, ntohl(tdb->tdb_spi));
 #endif /* ENCDEBUG */
             ahstat.ahs_hdrops++;
             return NULL;
@@ -657,7 +657,7 @@ ah_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 	default:
             log(LOG_ALERT,
                 "ah_new_output(): unsupported algorithm %d in SA %x/%08x",
-                xd->amx_hash_algorithm, tdb->tdb_dst, tdb->tdb_spi);
+                xd->amx_hash_algorithm, tdb->tdb_dst, ntohl(tdb->tdb_spi));
             m_freem(m);
             return NULL;
     }
@@ -688,7 +688,7 @@ ah_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     if (xd->amx_rpl == 0)
     {
         log(LOG_ALERT, "ah_new_output(): SA %x/%0x8 should have expired",
-	    tdb->tdb_dst, tdb->tdb_spi);
+	    tdb->tdb_dst, ntohl(tdb->tdb_spi));
 	m_freem(m);
 	ahstat.ahs_wrap++;
 	return NULL;
@@ -837,7 +837,7 @@ ah_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     {
 #ifdef ENCDEBUG
 	if (encdebug)
-	  printf("ah_new_output(): M_PREPEND() failed for packet from %x to %x, spi %08x\n", ipo.ip_src, ipo.ip_dst, tdb->tdb_spi);
+	  printf("ah_new_output(): M_PREPEND() failed for packet from %x to %x, spi %08x\n", ipo.ip_src, ipo.ip_dst, ntohl(tdb->tdb_spi));
 #endif /* ENCDEBUG */
         return ENOBUFS;
     }
@@ -847,7 +847,7 @@ ah_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     {
 #ifdef ENCDEBUG
 	if (encdebug)
-	  printf("ah_new_output(): m_pullup() failed for packet from %x to %x, spi %08x\n", ipo.ip_src, ipo.ip_dst, tdb->tdb_spi);
+	  printf("ah_new_output(): m_pullup() failed for packet from %x to %x, spi %08x\n", ipo.ip_src, ipo.ip_dst, ntohl(tdb->tdb_spi));
 #endif /* ENCDEBUG */
         return ENOBUFS;
     }

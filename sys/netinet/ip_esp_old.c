@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_old.c,v 1.2 1997/07/14 08:48:46 provos Exp $	*/
+/*	$OpenBSD: ip_esp_old.c,v 1.3 1997/07/18 18:09:55 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -263,7 +263,7 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
 	default:
             log(LOG_ALERT,
                 "esp_old_input(): unsupported algorithm %d in SA %x/%08x",
-                xd->edx_enc_algorithm, tdb->tdb_dst, tdb->tdb_spi);
+                xd->edx_enc_algorithm, tdb->tdb_dst, ntohl(tdb->tdb_spi));
             m_freem(m);
             return NULL;
     }
@@ -322,7 +322,7 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
     {
 #ifdef ENCDEBUG
 	if (encdebug)
-	  printf("esp_old_input(): payload not a multiple of %d octets for packet from %x to %x, spi %08x\n", blks, ipo.ip_src, ipo.ip_dst, tdb->tdb_spi);
+	  printf("esp_old_input(): payload not a multiple of %d octets for packet from %x to %x, spi %08x\n", blks, ipo.ip_src, ipo.ip_dst, ntohl(tdb->tdb_spi));
 #endif /* ENCDEBUG */
 	espstat.esps_badilen++;
 	m_freem(m);
@@ -455,7 +455,7 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
 	{
 #ifdef ENCDEBUG
 	    if (encdebug)
-	      printf("esp_old_input(): m_pullup() failed for packet from %x to %x, SA %x/%08x\n", ipo.ip_src, ipo.ip_dst, tdb->tdb_dst, tdb->tdb_spi);
+	      printf("esp_old_input(): m_pullup() failed for packet from %x to %x, SA %x/%08x\n", ipo.ip_src, ipo.ip_dst, tdb->tdb_dst, ntohl(tdb->tdb_spi));
 #endif /* ENCDEBUG */
 	    return NULL;
 	}
@@ -513,7 +513,7 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
         default:
             log(LOG_ALERT,
                 "esp_old_output(): unsupported algorithm %d in SA %x/%08x",
-                xd->edx_enc_algorithm, tdb->tdb_dst, tdb->tdb_spi);
+                xd->edx_enc_algorithm, tdb->tdb_dst, ntohl(tdb->tdb_spi));
             m_freem(m);
             return NULL;
     }
@@ -526,7 +526,7 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 #ifdef ENCDEBUG
 	if (encdebug)
 	  printf("esp_old_output(): m_pullup() failed for SA %x/%08x\n",
-		 tdb->tdb_dst, tdb->tdb_spi);
+		 tdb->tdb_dst, ntohl(tdb->tdb_spi));
 #endif /* ENCDEBUG */
         return ENOBUFS;
     }
@@ -546,7 +546,7 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 #ifdef ENCDEBUG
 	    if (encdebug)
 	      printf("esp_old_output(): m_pullup() failed for SA %x/%08x\n",
-		     tdb->tdb_dst, tdb->tdb_spi);
+		     tdb->tdb_dst, ntohl(tdb->tdb_spi));
 #endif /* ENCDEBUG */
 	    return ENOBUFS;
 	}
@@ -573,7 +573,7 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 #ifdef ENCDEBUG
 	if (encdebug)
 	  printf("esp_old_output(): m_pad() failed for SA %x/%08x\n",
-		 tdb->tdb_dst, tdb->tdb_spi);
+		 tdb->tdb_dst, ntohl(tdb->tdb_spi));
 #endif /* ENCDEBUG */
       	return ENOBUFS;
     }
@@ -677,7 +677,7 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 #ifdef ENCDEBUG
 	if (encdebug)
 	  printf("esp_old_output(): M_PREPEND failed, SA %x/%08x\n",
-		 tdb->tdb_dst, tdb->tdb_spi);
+		 tdb->tdb_dst, ntohl(tdb->tdb_spi));
 #endif /* ENCDEBUG */
         return ENOBUFS;
     }
@@ -688,7 +688,7 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 #ifdef ENCDEBUG
 	if (encdebug)
 	  printf("esp_old_output(): m_pullup() failed, SA %x/%08x\n",
-		 tdb->tdb_dst, tdb->tdb_spi);
+		 tdb->tdb_dst, ntohl(tdb->tdb_spi));
 #endif /* ENCDEBUG */
         return ENOBUFS;
     }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.17 1997/07/14 08:45:55 provos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.18 1997/07/18 18:09:57 provos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -227,6 +227,13 @@ ip_output(m0, va_alist)
 		tdb = (struct tdb *) gettdb(gw->sen_ipsp_spi, gw->sen_ipsp_dst,
 					    gw->sen_ipsp_sproto);
 
+#ifdef ENCDEBUG
+		if (encdebug && (tdb == NULL))
+		  printf("ip_output(): non-existant TDB for SA %08x/%x/%d\n",
+			 ntohl(gw->sen_ipsp_spi), gw->sen_ipsp_dst,
+			 gw->sen_ipsp_sproto);
+#endif ENCDEBUG
+
 		/* Fix the ip_src field if necessary */
 		if ((ip->ip_src.s_addr == INADDR_ANY) && tdb)
 		 	ip->ip_src = tdb->tdb_src;
@@ -244,7 +251,7 @@ ip_output(m0, va_alist)
 
 			/* Check if the SPI is invalid */
 			if (tdb->tdb_flags & TDBF_INVALID) {
-				log(LOG_ALERT, "ip_output(): attempt to use invalid SA %x/%08x/%x", tdb->tdb_dst, tdb->tdb_spi, tdb->tdb_sproto);
+				log(LOG_ALERT, "ip_output(): attempt to use invalid SA %08x/%x/%x", ntohl(tdb->tdb_spi), tdb->tdb_dst, tdb->tdb_sproto);
 				m_freem(m);
 				RTFREE(re->re_rt);
 				return ENXIO;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.14 1997/07/15 23:11:10 provos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.15 1997/07/18 18:09:56 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -324,7 +324,7 @@ tdb_init(struct tdb *tdbp, struct mbuf *m)
 	return (*(xsp->xf_init))(tdbp, xsp, m);
 
     log(LOG_ERR, "tdb_init(): no alg %d for spi %08x, addr %x, proto %d", alg,
-	tdbp->tdb_spi, tdbp->tdb_dst.s_addr, tdbp->tdb_sproto);
+	ntohl(tdbp->tdb_spi), tdbp->tdb_dst.s_addr, tdbp->tdb_sproto);
 
     /* Record establishment time */
     tdbp->tdb_established = time.tv_sec;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.8 1997/07/11 23:37:56 provos Exp $	*/
+/*	$OpenBSD: ip_esp.c,v 1.9 1997/07/18 18:09:54 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -108,7 +108,7 @@ esp_input(register struct mbuf *m, int iphlen)
     tdbp = gettdb(spi, ipo->ip_dst, IPPROTO_ESP);
     if (tdbp == NULL)
     {
-	log(LOG_ERR, "esp_input(): could not find SA for ESP packet from %x to %x, spi %08x", ipo->ip_src, ipo->ip_dst, spi);
+	log(LOG_ERR, "esp_input(): could not find SA for ESP packet from %x to %x, spi %08x", ipo->ip_src, ipo->ip_dst, ntohl(spi));
 	m_freem(m);
 	espstat.esps_notdb++;
 	return;
@@ -118,7 +118,7 @@ esp_input(register struct mbuf *m, int iphlen)
     {
         log(LOG_ALERT,
             "esp_input(): attempted to use invalid ESP SA %08x, packet %x->%x",
-            spi, ipo->ip_src, ipo->ip_dst);
+            ntohl(spi), ipo->ip_src, ipo->ip_dst);
 	m_freem(m);
 	espstat.esps_invalid++;
 	return;
@@ -126,7 +126,7 @@ esp_input(register struct mbuf *m, int iphlen)
 
     if (tdbp->tdb_xform == NULL)
     {
-        log(LOG_ALERT, "esp_input(): attempted to use uninitialized ESP SA %08x, packet from %x to %x", spi, ipo->ip_src, ipo->ip_dst);
+        log(LOG_ALERT, "esp_input(): attempted to use uninitialized ESP SA %08x, packet from %x to %x", ntohl(spi), ipo->ip_src, ipo->ip_dst);
 	m_freem(m);
 	espstat.esps_noxform++;
 	return;
@@ -144,7 +144,7 @@ esp_input(register struct mbuf *m, int iphlen)
 
     if (m == NULL)
     {
-	log(LOG_ALERT, "esp_input(): processing failed for ESP packet from %x to %x, spi %08x", ipn.ip_src, ipn.ip_dst, spi);
+	log(LOG_ALERT, "esp_input(): processing failed for ESP packet from %x to %x, spi %08x", ipn.ip_src, ipn.ip_dst, ntohl(spi));
 	espstat.esps_badkcr++;
 	return;
     }
