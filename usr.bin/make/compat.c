@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat.c,v 1.10 1998/05/12 07:10:01 deraadt Exp $	*/
+/*	$OpenBSD: compat.c,v 1.11 1998/05/13 06:54:58 deraadt Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: compat.c,v 1.10 1998/05/12 07:10:01 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: compat.c,v 1.11 1998/05/13 06:54:58 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -150,12 +150,21 @@ static int
 shellneed (cmd)
 	char *cmd;
 {
-	char **av;
+	char *runsh[] = { 
+		"alias", "cd", "eval", "exec", "exit", "read", "set", "ulimit",
+		"unalias", "unset", "wait", ":",
+		NULL
+	};
+
+	char **av, **p;
 	int ac;
 
 	av = brk_string(cmd, &ac, TRUE);
-	if (strcmp(av[1], "exit") == 0)
-		return (1);
+
+	for (p = runsh; *p; p++)
+		if (strcmp(av[1], *p) == 0)
+			return (1);
+
 	if (strcmp(av[1], "umask") == 0) {
 		long umi;
 		char *ep = NULL;
