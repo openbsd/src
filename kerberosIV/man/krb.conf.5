@@ -3,7 +3,7 @@
 .\" For copying and distribution information,
 .\" please see the file <mit-copyright.h>.
 .\"
-.\"	$OpenBSD: krb.conf.5,v 1.2 1997/05/30 03:11:35 gene Exp $
+.\"	$OpenBSD: krb.conf.5,v 1.3 1998/01/05 21:52:58 art Exp $
 .TH KRB.CONF 5 "Kerberos Version 4.0" "MIT Project Athena"
 .SH NAME
 /etc/kerberosIV/krb.conf \- Kerberos configuration file
@@ -19,6 +19,10 @@ entries.  The first token is a realm name, and the second is the hostname
 of a host running a KDC for that realm.
 The words "admin server" following the hostname indicate that 
 the host also provides an administrative database server.
+
+A hash sign (#) as a first character of the krb.conf file disables kerberos
+authentication on the system.
+
 For example:
 .nf
 .in +1i
@@ -29,3 +33,4 @@ LCS.MIT.EDU kerberos.lcs.mit.edu admin server
 .in -1i
 .SH SEE ALSO
 krb.realms(5), krb_get_krbhst(3), krb_get_lrealm(3)
+
