@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mt.1,v 1.16 2002/01/24 20:33:45 mickey Exp $
+.\"	$OpenBSD: mt.1,v 1.17 2003/02/26 18:33:18 tedu Exp $
 .\"	$NetBSD: mt.1,v 1.8 1996/05/21 10:23:55 mrg Exp $
 .\"
 .\" Copyright (c) 1981, 1990, 1993
@@ -48,7 +48,7 @@
 .Op Ar count
 .Nm eject
 .Op Fl f
-.Ar tapename
+.Ar device
 .Sh DESCRIPTION
 The
 .Nm
@@ -130,6 +130,8 @@ is simply an alias for
 with the
 .Cm offline
 command specified.
+.Nm eject
+may also be used to eject other types of removable media.
 .Pp
 If a tape name is not specified, and the environment variable
 .Ev TAPE
