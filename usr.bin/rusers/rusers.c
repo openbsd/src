@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusers.c,v 1.16 2001/11/06 02:22:25 millert Exp $	*/
+/*	$OpenBSD: rusers.c,v 1.17 2001/11/06 02:46:29 millert Exp $	*/
 
 /*
  * Copyright (c) 2001 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -55,7 +55,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: rusers.c,v 1.16 2001/11/06 02:22:25 millert Exp $";
+static const char rcsid[] = "$OpenBSD: rusers.c,v 1.17 2001/11/06 02:46:29 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -516,6 +516,7 @@ allhosts(void)
 	memset(&baddr, 0, sizeof(baddr));
 	memset(&res, 0, sizeof(res));
 	memset(&msg, 0, sizeof(msg));
+	memset(&timeout, 0, sizeof(timeout));
 
 	args.prog = RUSERSPROG;
 	args.vers = RUSERSVERS_IDLE;
@@ -594,7 +595,6 @@ allhosts(void)
 		/*
 		 * We stay in the select loop for ~5 seconds
 		 */
-		timerclear(&timeout.it_value);
 		timeout.it_value.tv_sec = 5;
 		timeout.it_value.tv_usec = 0;
 		for (;;) {
