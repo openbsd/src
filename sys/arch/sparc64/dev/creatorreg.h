@@ -1,4 +1,4 @@
-/*	$OpenBSD: creatorreg.h,v 1.3 2002/07/28 06:25:14 fgsch Exp $	*/
+/*	$OpenBSD: creatorreg.h,v 1.4 2002/07/28 17:07:33 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -215,5 +215,5 @@
 #define	FBC_DRAWOP_POLYGON	0x07
 #define	FBC_DRAWOP_RECTANGLE	0x08
 #define	FBC_DRAWOP_FASTFILL	0x09
-#define	FBC_DRAWOP_BCOPY	0x0a
-#define	FBC_DRAWOP_VSCROLL	0x0b
+#define	FBC_DRAWOP_BCOPY	0x0a	/* block copy: not implemented */
+#define	FBC_DRAWOP_VSCROLL	0x0b	/* vertical scroll */
