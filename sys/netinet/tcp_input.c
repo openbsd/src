@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.26 1999/01/15 12:01:06 niklas Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.27 1999/01/27 10:04:57 niklas Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -1936,7 +1936,7 @@ dodata:							/* XXX */
 	    sbappend(&so->so_rcv, m);
 	    sorwakeup(so);
 	  } else {
-	    tcp_reass(tp, th, m, &tlen);
+	    tiflags = tcp_reass(tp, th, m, &tlen);
 	    tp->t_flags |= TF_ACKNOW;
 	  }
 #ifdef TCP_SACK
