@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.25 2000/06/26 17:51:16 chris Exp $     */
+/*      $OpenBSD: pciide.c,v 1.26 2000/06/26 18:09:11 chris Exp $     */
 /*	$NetBSD: pciide.c,v 1.48 1999/11/28 20:05:18 bouyer Exp $	*/
 
 /*
@@ -2068,6 +2068,8 @@ cmd_channel_map(pa, sc, channel)
 		return;
 	}
 
+	pciide_print_channels(1, interface);
+
 	/*
 	 * with a CMD PCI64x, if we get here, the first channel is enabled:
 	 * there's no way to disable the first channel without disabling
@@ -2131,8 +2133,6 @@ cmd_chip_map(sc, pa)
 	struct pci_attach_args *pa;
 {
 	int channel;
-	pcireg_t interface =
-	    PCI_INTERFACE(pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_CLASS_REG));
 
 	/*
  	 * For a CMD PCI064x, the use of PCI_COMMAND_IO_ENABLE
@@ -2156,8 +2156,6 @@ cmd_chip_map(sc, pa)
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
 
-	pciide_print_channels(sc->sc_wdcdev.nchannels, interface);
-
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
 		cmd_channel_map(pa, sc, channel);
 	}
@@ -2170,7 +2168,6 @@ cmd0643_9_chip_map(sc, pa)
 {
 	struct pciide_channel *cp;
 	int channel;
-	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
 
 	/*
 	 * For a CMD PCI064x, the use of PCI_COMMAND_IO_ENABLE
@@ -2205,8 +2202,6 @@ cmd0643_9_chip_map(sc, pa)
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
 	sc->sc_wdcdev.set_modes = cmd0643_9_setup_channel;
-
-	pciide_print_channels(sc->sc_wdcdev.nchannels, interface);
 
 	WDCDEBUG_PRINT(("cmd0643_9_chip_map: old timings reg 0x%x 0x%x\n",
 		pci_conf_read(sc->sc_pc, sc->sc_tag, 0x54),
