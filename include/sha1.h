@@ -7,6 +7,9 @@
    
    Comments to pgut1@cs.aukuni.ac.nz */
 
+#ifndef _SHA1_H
+#define _SHA1_H
+
 /* Useful defines/typedefs */
 
 typedef unsigned char   BYTE;
@@ -48,5 +51,11 @@ typedef struct {
  *	     S1(X) = (X<<1) OR (X>>31).
  *
  */
-
 #define NEW_SHA1
+
+void sha1Init (SHA1_INFO *);
+void sha1Transform (SHA1_INFO *);
+void sha1Final (SHA1_INFO *);
+void sha1Update (SHA1_INFO *, BYTE *, int);
+
+#endif /* _SHA1_H */
