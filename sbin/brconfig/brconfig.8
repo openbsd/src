@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.33 2001/12/21 19:55:09 angelos Exp $
+.\"	$OpenBSD: brconfig.8,v 1.34 2002/01/17 15:55:30 espie Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -188,7 +188,7 @@ flag on the bridge interface.
 .It Cm rule Op Ar rulespec
 Add a filtering rule to an interface.
 Rules have a similiar syntax to
-.Xr ipf 4 .
+.Xr pf 4 .
 Rules can be used to selectively block or pass frames based on Ethernet
 MAC address.
 Rules are processed in the order in which they were added
