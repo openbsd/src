@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lkm.c,v 1.40 2003/08/23 20:27:30 tedu Exp $	*/
+/*	$OpenBSD: kern_lkm.c,v 1.41 2004/03/03 06:26:22 tedu Exp $	*/
 /*	$NetBSD: kern_lkm.c,v 1.31 1996/03/31 21:40:27 christos Exp $	*/
 
 /*
@@ -69,6 +69,7 @@
 /* flags */
 #define	LKM_ALLOC		0x01
 #define	LKM_WANT		0x02
+#define	LKM_INIT		0x04
 
 #define	LKMS_IDLE		0x00
 #define	LKMS_RESERVED		0x01
@@ -80,9 +81,8 @@
 static int lkm_v = 0;
 static int lkm_state = LKMS_IDLE;
 
-static TAILQ_HEAD(, lkm_table) lkmods;	/* table of loaded modules */
+static TAILQ_HEAD(lkmods, lkm_table) lkmods;	/* table of loaded modules */
 static struct lkm_table	*curp;		/* global for in-progress ops */
-static size_t nlkms = 0;		/* number of loaded lkms */
 
 static struct lkm_table *lkmalloc(void);
 static void lkmfree(struct lkm_table *);
@@ -103,6 +103,7 @@ lkminit()
 {
 
 	TAILQ_INIT(&lkmods);
+	lkm_v |= LKM_INIT;
 }
 
 /*ARGSUSED*/
@@ -113,6 +114,9 @@ lkmopen(dev_t dev, int flag, int devtype, struct proc *p)
 
 	if (minor(dev) != 0)
 		return (ENXIO);
+
+	if (!(lkm_v & LKM_INIT))
+		lkminit();
 
 	/*
 	 * Use of the loadable kernel module device must be exclusive; we
@@ -133,9 +137,6 @@ lkmopen(dev_t dev, int flag, int devtype, struct proc *p)
 	}
 	lkm_v |= LKM_ALLOC;
 
-	if (nlkms == 0)
-		lkminit();	/* XXX */
-
 	return (0);		/* pseudo-device open */
 }
 
@@ -147,13 +148,28 @@ lkmopen(dev_t dev, int flag, int devtype, struct proc *p)
 static struct lkm_table *
 lkmalloc()
 {
-	struct lkm_table *ret = NULL;
+	struct lkm_table *p, *ret = NULL;
+	int id = 0;
 
 	MALLOC(ret, struct lkm_table *, sizeof(*ret), M_DEVBUF, M_WAITOK);
 	ret->refcnt = ret->depcnt = 0;
-	ret->id = nlkms++;
 	ret->sym_id = -1;
-	TAILQ_INSERT_TAIL(&lkmods, ret, list);
+	/* 
+	 * walk the list finding the first free id. as long as the list is
+	 * kept sorted this is not too ineffcient, which is why we insert in
+	 * order below.
+ 	 */
+	TAILQ_FOREACH(p, &lkmods, list) {
+		if (id == p->id)
+			id++;
+		else
+			break;
+	}
+	ret->id = id;
+	if (p == NULL) /* either first or last entry */
+		TAILQ_INSERT_TAIL(&lkmods, ret, list);
+	else 
+		TAILQ_INSERT_BEFORE(p, ret, list);
 
 	return ret;
 }
@@ -168,7 +184,6 @@ lkmfree(struct lkm_table *p)
 	TAILQ_REMOVE(&lkmods, p, list);
 	free(p, M_DEVBUF);
 	curp = NULL;
-	nlkms--;
 }
 
 struct lkm_table *
@@ -188,6 +203,18 @@ lkmlookup(int i, char *name, int *error)
 {
 	struct lkm_table *p = NULL;
 	char istr[MAXLKMNAME];
+	
+	/* 
+ 	 * p being NULL here implies the list is empty, so any lookup is
+ 	 * invalid (name based or otherwise). Since the list of modules is
+ 	 * kept sorted by id, lowest to highest, the id of the last entry 
+ 	 * will be the highest in use. 
+	 */ 
+	p = TAILQ_LAST(&lkmods, lkmods);
+	if (p == NULL || i > p->id) {
+		*error = EINVAL;
+		return NULL;
+	}
 
 	if (i < 0) {		/* unload by name */
 		/*
@@ -203,14 +230,11 @@ lkmlookup(int i, char *name, int *error)
 			if (!strcmp(istr, p->private.lkm_any->lkm_name))
 				break;
 		}
-	} else if (i >= nlkms) {
-		*error = EINVAL;
-		return NULL;
-	} else
-		for (p = TAILQ_FIRST(&lkmods); p != NULL && i--;
-		     p = TAILQ_NEXT(p, list))
-			;
-
+	} else 
+		TAILQ_FOREACH(p, &lkmods, list) 
+			if (i == p->id)
+				break;
+		
 	if (p == NULL)
 		*error = ENOENT;
 
