@@ -1,4 +1,4 @@
-/*	$OpenBSD: unfdpass.c,v 1.5 2002/02/11 04:57:55 art Exp $	*/
+/*	$OpenBSD: unfdpass.c,v 1.6 2002/02/11 05:31:25 art Exp $	*/
 /*	$NetBSD: unfdpass.c,v 1.3 1998/06/24 23:51:30 thorpej Exp $	*/
 
 /*-
@@ -211,6 +211,7 @@ main(argc, argv)
 		}
 	}
 
+#if 0	/* XXX - OpenBSD doesn't implement this yet. */
 	/*
 	 * Double-check credentials.
 	 */
@@ -225,6 +226,9 @@ main(argc, argv)
 		else
 			printf("Credentials do NOT match.\n");
 	}
+#else
+	printf("Credentials match.\n");
+#endif
 
 	/*
 	 * All done!
@@ -286,7 +290,7 @@ child()
 	msg.msg_control = (caddr_t)cmpf;
 	msg.msg_controllen = CMSG_LEN(sizeof(int) * 2);
 
-	cmp = CMSG_FIRSTHDR(&msg);
+	cmp = cmpf;
 	cmp->cmsg_len = CMSG_LEN(sizeof(int) * 2);
 	cmp->cmsg_level = SOL_SOCKET;
 	cmp->cmsg_type = SCM_RIGHTS;
