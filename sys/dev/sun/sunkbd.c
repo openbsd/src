@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunkbd.c,v 1.14 2003/01/22 19:02:31 miod Exp $	*/
+/*	$OpenBSD: sunkbd.c,v 1.15 2003/01/28 21:17:07 miod Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Miodrag Vallat.
@@ -844,6 +844,25 @@ const keysym_t sunkbd5_keydesc_uk[] = {
     KC(0x7c),		KS_backslash,	KS_bar,
 };
 
+/* 031 Japan type 5 keyboard */
+const keysym_t sunkbd5_keydesc_jp[] = {
+    KC(0x1f),		KS_2,		KS_quotedbl,
+    KC(0x23),		KS_6,		KS_ampersand,
+    KC(0x24),		KS_7,		KS_apostrophe,
+    KC(0x25),		KS_8,		KS_parenleft,
+    KC(0x26),		KS_9,		KS_parenright,
+    KC(0x27),		KS_0,
+    KC(0x28),		KS_minus,	KS_equal,
+    KC(0x29),		KS_asciicircum,	KS_asciitilde,
+    KC(0x2a),		KS_yen,		KS_bar,
+    KC(0x40),		KS_at,		KS_grave,
+    KC(0x41),		KS_bracketleft,	KS_braceleft,
+    KC(0x56),		KS_semicolon,	KS_plus,
+    KC(0x57),		KS_colon,	KS_asterisk,
+    KC(0x58),		KS_bracketright,KS_braceright,
+    KC(0x7c),		KS_backslash,	KS_underscore,
+};
+
 #define KBD_MAP(name, base, map) \
     { name, base, sizeof(map)/sizeof(keysym_t), map }
 
@@ -875,6 +894,7 @@ const struct wscons_keydesc sunkbd5_keydesctab[] = {
 	KBD_MAP(KB_ES,			KB_US,	sunkbd5_keydesc_es),
 	KBD_MAP(KB_FR,			KB_US,	sunkbd5_keydesc_fr),
 	KBD_MAP(KB_IT,			KB_US,	sunkbd5_keydesc_it),
+	KBD_MAP(KB_JP,			KB_US,	sunkbd5_keydesc_jp),
 	KBD_MAP(KB_NL,			KB_US,	sunkbd5_keydesc_nl),
 	KBD_MAP(KB_NO,			KB_US,	sunkbd5_keydesc_no),
 	KBD_MAP(KB_PT,			KB_US,	sunkbd5_keydesc_pt),
@@ -946,7 +966,7 @@ const int sunkbd_layouts[MAXSUNLAYOUT] = {
 	KB_UK,	/* 02e Great Britain */
 	-1,	/* 02f Korea */
 	-1,	/* 030 Taiwan */
-	-1,	/* 031 Japan */
+	KB_JP,	/* 031 Japan */
 	-1,	/* 032 Canada/French */
 	-1,	/* 033 Hungary */
 	-1,	/* 034 Poland */
@@ -997,7 +1017,7 @@ const int sunkbd_layouts[MAXSUNLAYOUT] = {
 	KB_UK,	/* 05d Great Britain */
 	-1,	/* 05e Korea */
 	-1,	/* 05f Taiwan */
-	-1,	/* 060 Japan */
+	KB_JP,	/* 060 Japan */
 	-1,	/* 061 Canada/French */
 };
 
