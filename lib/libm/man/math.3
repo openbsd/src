@@ -1,4 +1,4 @@
-.\"	$OpenBSD: math.3,v 1.12 2003/02/28 20:38:09 jason Exp $
+.\"	$OpenBSD: math.3,v 1.13 2003/03/01 21:10:53 millert Exp $
 .\" Copyright (c) 1985 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -128,7 +128,7 @@ the following had been reported:
 .Bd -unfilled -compact -offset indent
 sqrt(-1.0) = 0.0 and log(-1.0) = -1.7e38.
 cos(1.0e-11) > cos(0.0) > 1.0.
-pow(x,1.0) != x when x = 2.0, 3.0, 4.0, ..., 9.0.
+pow(x,1.0) \*(Ne x when x = 2.0, 3.0, 4.0, ..., 9.0.
 pow(-1.0,1.0e10) trapped on Integer Overflow.
 sqrt(1.0e30) and sqrt(1.0e-30) were very slow.
 .Ed
@@ -163,7 +163,7 @@ Binary.
 .Bd -offset indent
 If x and x' are consecutive positive D_floating-point
 numbers (they differ by 1 \fIulp\fR), then
-.Li 1.3e-17 < 0.5**56 < (x'-x)/x \(<= 0.5**55 < 2.8e-17.
+.Li 1.3e-17 < 0.5**56 < (x'-x)/x \*(Le 0.5**55 < 2.8e-17.
 .It Range:
 Overflow threshold = 2.0**127 = 1.7e38.
 .br
@@ -177,7 +177,7 @@ Underflow is customarily flushed quietly to zero.
 .br
 CAUTION:
 .Bd -filled -offset indent -compact
-It is possible to have x != y and yet x-y = 0 because of underflow.
+It is possible to have x \*(Ne y and yet x-y = 0 because of underflow.
 Similarly x > y > 0 cannot prevent either x\(**y = 0
 or y/x = 0 from happening without warning.
 .Ed
@@ -349,7 +349,7 @@ Binary.
 If x and x' are consecutive positive Double-Precision
 numbers (they differ by 1 \fIulp\fR, then
 .br
-.Li 1.1e-16 < 0.5**53 < (x'-x)/x \(<= 0.5**52 < 2.3e-16.
+.Li 1.1e-16 < 0.5**53 < (x'-x)/x \*(Le 0.5**52 < 2.3e-16.
 .It Range:
 Overflow threshold = 2.0**1024 = 1.8e308
 .br
@@ -365,14 +365,14 @@ Its sign transforms correctly through multiplication or
 division, and is preserved by addition of zeros
 with like signs; but x-x yields +0 for every
 finite x.  The only operations that reveal zero's
-sign are division by zero and copysign(x,\(+-0).
-In particular, comparison (x > y, x \(>= y, etc.)
+sign are division by zero and copysign(x,\*(Pm0).
+In particular, comparison (x > y, x \*(Ge y, etc.)
 cannot be affected by the sign of zero; but if
 finite x = y then \*(If \&= 1/(x-y) \*(Ne -1/(y-x) = -\*(If.
 .It \*(If is signed.
 It persists when added to itself or to any finite number.
 Its sign transforms correctly through multiplication and division, and
-(finite)/\(+-\*(If \0=\0\(+-0 (nonzero)/0 = \(+- \*(If.
+(finite)/\*(Pm\*(If \0=\0\*(Pm0 (nonzero)/0 = \*(Pm\*(If.
 But \*(If-\*(If, \*(If\(**0 and \*(If/\*(If are, like 0/0 and sqrt(-3),
 invalid operations that produce \*(Na.
 .It Reserved operands:
@@ -427,8 +427,8 @@ listed below in declining order of probable importance.
 .Bl -column -offset indent -compact "Invalid Operation" "Gradual Underflow"
 .It Em Exception Ta Em Default Result
 .It "Invalid Operation" Ta "\*(Na, or FALSE"
-.It "Overflow" Ta "\(+-\*(If"
-.It "Divide by Zero" Ta "\(+-\*(If"
+.It "Overflow" Ta "\*(Pm\*(If"
+.It "Divide by Zero" Ta "\*(Pm\*(If"
 .It "Underflow" Ta "Gradual Underflow"
 .It "Inexact" Ta "Rounded value"
 .El
