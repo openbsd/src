@@ -21,7 +21,7 @@ Supported devices {:-include-:}:
 	AGP/SVGA/VGA Display Adapters: Primary Openfirmware display only.
 
 	Serial ports:
-		None.
+		Built-in Zilog 8530-based serial ports.
 
 	Ethernet adapters:
 		Digital DC21x4x-based PCI Ethernet adapters, including:
@@ -44,12 +44,18 @@ Supported devices {:-include-:}:
 		Atapi DVD-RAM drives (read-only)
 		Atapi CD-RW drives.
 
+	Keyboard:
+		ADB and USB keyboards.
+
 	Mice:
 		USB Mice.
 
 	Sound Cards:
-		AWACS supported, but not enabled due to performance issue.
+		AWACS.
 
 	Miscellaneous:
 		USB Hubs.
 		USB printers.
+
+The built-in modem and firewire (IEEE1394) ports in some machines are not
+currently supported.

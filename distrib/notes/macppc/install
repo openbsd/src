@@ -20,8 +20,9 @@ OpenBSDInstallPart2
 
 	At this time, the system can be installed from the supplied
 	CD boot image, by network loading the bootloader or loading
-	the bootloader and kernel from a HFS partition.  Once
-	the bootloader is installed on the local hard drive, the
+	the bootloader and kernel from a HFS partition.
+
+	Once the bootloader is installed on the local hard drive, the
 	system can boot from it. OpenBSD may share a drive with MacOS
 	if the process is followed carefully. Currently it is
 	necessary to use OpenFirmware commands to dual boot between
@@ -29,8 +30,8 @@ OpenBSDInstallPart2
 	Note that on many of the systems is it not possible to
 	automatically boot OpenBSD at this time.
 
-	(Refer to "OpenBSD OSREV Release Contents" above for information
-	on how to access and boot from Open Firmware)
+	(Refer to "Preparing your System for OpenBSD Installation" above
+	 for information on how to access and boot from Open Firmware)
 
 OpenBSDBootMsgs
 
