@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.73 2002/07/20 19:24:55 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.74 2002/07/25 04:45:31 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -1086,13 +1086,7 @@ kcopy(from, to, size)
 	void *to;
 	size_t size;
 {
-	register u_int oldh = curproc->p_addr->u_pcb.pcb_onfault;
-
-	curproc->p_addr->u_pcb.pcb_onfault = (u_int)&copy_on_fault;
-	bcopy(from, to, size);
-	curproc->p_addr->u_pcb.pcb_onfault = oldh;
-
-	return 0;
+	return spcopy(HPPA_SID_KERNEL, from, HPPA_SID_KERNEL, to, size);
 }
 
 int
