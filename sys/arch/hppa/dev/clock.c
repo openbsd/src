@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.5 1999/08/14 03:56:12 mickey Exp $	*/
+/*	$OpenBSD: clock.c,v 1.6 1999/09/07 20:50:24 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -107,7 +107,15 @@ void
 inittodr(t)
 	time_t t;
 {
-	static struct pdc_tod tod;
+	struct pdc_tod tod PDC_ALIGNMENT;
+	int 	tbad = 0;
+	long	dt;
+
+	if (t < 5*SECYR) {
+		printf ("WARNING: preposterous time in file system");
+		t = 6*SECYR + 186*SECDAY + SECDAY/2;
+		tbad = 1;
+	}
 
 	pdc_call((iodcio_t)PAGE0->mem_pdc, 1, PDC_TOD, PDC_TOD_READ,
 		&tod, 0, 0, 0, 0, 0);
@@ -115,10 +123,19 @@ inittodr(t)
 	time.tv_sec = tod.sec;
 	time.tv_usec = tod.usec;
 
-	if ((long)time.tv_sec < 0) {
-		time.tv_sec = SECYR * (1990 - 1970);
-		printf("WARNING: clock not initialized -- check and reset\n");
+	if (!tbad) {
+		dt = time.tv_sec - t;
+
+		if (dt < 0)
+			dt = -dt;
+
+		if (dt < 2 * SECDAY)
+			return;
+		printf ("WARNING: clock %s %d days",
+			time.tv_sec < t? "lost" : "gained", dt / SECDAY);
 	}
+
+	printf (" -- CHECK AND RESET THE DATE!\n");
 }
 
 /*
