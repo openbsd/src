@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsirand.c,v 1.11 1998/01/22 05:13:18 millert Exp $	*/
+/*	$OpenBSD: fsirand.c,v 1.12 1998/01/22 05:36:10 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint                                                              
-static char rcsid[] = "$OpenBSD: fsirand.c,v 1.11 1998/01/22 05:13:18 millert Exp $";
+static char rcsid[] = "$OpenBSD: fsirand.c,v 1.12 1998/01/22 05:36:10 millert Exp $";
 #endif /* not lint */                                                        
 
 #include <sys/types.h>
@@ -112,7 +112,7 @@ fsirand(device)
 	static struct dinode *inodebuf;
 	static size_t oldibufsize;
 	size_t ibufsize;
-	struct fs *sblock;
+	struct fs *sblock, *tmpsblock;
 	ino_t inumber, maxino;
 	daddr_t dblk;
 	char sbuf[SBSIZE], sbuftmp[SBSIZE];
@@ -169,30 +169,29 @@ fsirand(device)
 	}
 
 	/* Make sure backup superblocks are sane. */
-	sblock = (struct fs *)&sbuftmp;
+	tmpsblock = (struct fs *)&sbuftmp;
 	for (cg = 0; cg < sblock->fs_ncg; cg++) {
 		dblk = fsbtodb(sblock, cgsblock(sblock, cg));
 		if (lseek(devfd, (off_t)dblk * (off_t)bsize, SEEK_SET) < 0) {
 			warn("Can't seek to %qd", (off_t)dblk * bsize);
 			return (1);
-		} else if ((n = read(devfd, (void *)sblock, SBSIZE)) != SBSIZE) {
+		} else if ((n = read(devfd, (void *)tmpsblock, SBSIZE)) != SBSIZE) {
 			warn("Can't read backup superblock %d on %s: %s",
 			    cg + 1, devpath, (n < SBSIZE) ? "short read"
 			    : strerror(errno));
 			return (1);
 		}
-		if (sblock->fs_magic != FS_MAGIC) {
+		if (tmpsblock->fs_magic != FS_MAGIC) {
 			warnx("Bad magic number in backup superblock %d on %s",
 			    cg + 1, devpath);
 			return (1);
 		}
-		if (sblock->fs_sbsize > SBSIZE) {
+		if (tmpsblock->fs_sbsize > SBSIZE) {
 			warnx("Size of backup superblock %d on %s is preposterous",
 			    cg + 1, devpath);
 			return (1);
 		}
 	}
-	sblock = (struct fs *)&sbuf;
 
 	/* XXX - should really cap buffer at 512kb or so */
 	ibufsize = sizeof(struct dinode) * sblock->fs_ipg;
