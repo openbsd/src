@@ -1,31 +1,42 @@
+/* $KTH: create_ticket.c,v 1.12 1997/04/01 08:18:21 joda Exp $ */
+
 /*
- * This software may now be redistributed outside the US.
- *
- * $Source: /home/cvs/src/kerberosIV/krb/Attic/create_ticket.c,v $
- *
- * $Locker:  $
+ * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * (Royal Institute of Technology, Stockholm, Sweden).
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by the Kungliga Tekniska
+ *      Högskolan and its contributors.
+ * 
+ * 4. Neither the name of the Institute nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
-
-/* 
-  Copyright (C) 1989 by the Massachusetts Institute of Technology
-
-   Export of this software from the United States of America is assumed
-   to require a specific license from the United States Government.
-   It is the responsibility of any person or organization contemplating
-   export to obtain such a license before exporting.
-
-WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
-distribute this software and its documentation for any purpose and
-without fee is hereby granted, provided that the above copyright
-notice appear in all copies and that both that copyright notice and
-this permission notice appear in supporting documentation, and that
-the name of M.I.T. not be used in advertising or publicity pertaining
-to distribution of the software without specific, written prior
-permission.  M.I.T. makes no representations about the suitability of
-this software for any purpose.  It is provided "as is" without express
-or implied warranty.
-
-  */
 
 #include "krb_locl.h"
 
@@ -38,7 +49,6 @@ or implied warranty.
  * eight bytes and is in tkt->length.
  *
  * If the ticket is too long, the ticket will contain nulls.
- * The return value of the routine is undefined.
  *
  * The corresponding routine to extract information from a ticket it
  * decomp_ticket.  When changes are made to this routine, the
@@ -79,63 +89,46 @@ or implied warranty.
  */
 
 int
-krb_create_ticket(tkt, flags, pname, pinstance, prealm, paddress,
-		  session, life, time_sec, sname, sinstance, key)
-	KTEXT tkt;		/* Gets filled in by the ticket */
-	unsigned char flags;	/* Various Kerberos flags */
-	char *pname;		/* Principal's name */
-	char *pinstance;	/* Principal's instance */
-	char *prealm;		/* Principal's authentication domain */
-	int32_t paddress;	/* Net address of requesting entity */
-	char *session;		/* Session key inserted in ticket */
-	int16_t life;		/* Lifetime of the ticket */
-	int32_t time_sec;	/* Issue time and date */
-	char *sname;		/* Service Name */
-	char *sinstance;	/* Instance Name */
-	des_cblock *key;	/* Service's secret key */
+krb_create_ticket(KTEXT tkt,	/* Gets filled in by the ticket */
+		  unsigned char flags, /* Various Kerberos flags */
+		  char *pname,	/* Principal's name */
+		  char *pinstance, /* Principal's instance */
+		  char *prealm, /* Principal's authentication domain */
+		  int32_t paddress, /* Net address of requesting entity */
+		  void *session, /* Session key inserted in ticket */
+		  int16_t life,	/* Lifetime of the ticket */
+		  int32_t time_sec, /* Issue time and date */
+		  char *sname,	/* Service Name */
+		  char *sinstance, /* Instance Name */
+		  des_cblock *key) /* Service's secret key */
 {
-    des_key_schedule key_s;
-    register char *data;        /* running index into ticket */
+    unsigned char *p = tkt->dat;
 
-    tkt->length = 0;            /* Clear previous data  */
-    flags |= HOST_BYTE_ORDER;   /* ticket byte order   */
-    bcopy((char *) &flags,(char *) (tkt->dat),sizeof(flags));
-    data = ((char *)tkt->dat) + sizeof(flags);
-    (void) strcpy(data, pname);
-    data += 1 + strlen(pname);
-    (void) strcpy(data, pinstance);
-    data += 1 + strlen(pinstance);
-    (void) strcpy(data, prealm);
-    data += 1 + strlen(prealm);
-    bcopy((char *) &paddress, data, 4);
-    data += 4;
+    memset(tkt, 0, sizeof(KTEXT_ST));
 
-    bcopy((char *) session, data, 8);
-    data += 8;
-    *(data++) = (char) life;
-    /* issue time */
-    bcopy((char *) &time_sec, data, 4);
-    data += 4;
-    (void) strcpy(data, sname);
-    data += 1 + strlen(sname);
-    (void) strcpy(data, sinstance);
-    data += 1 + strlen(sinstance);
+    p += krb_put_int(flags, p, 1);
+    p += krb_put_nir(pname, pinstance, prealm, p);
+    
+    p += krb_put_address(paddress, p);
+    
+    memcpy(p, session, 8);
+    p += 8;
 
-    /* guarantee null padded ticket to multiple of 8 bytes */
-    bzero(data, 7);
-    tkt->length = ((data - ((char *)tkt->dat) + 7)/8)*8;
+    p += krb_put_int(life, p, 1);
+    p += krb_put_int(time_sec, p, 4);
+
+    p += krb_put_nir(sname, sinstance, NULL, p);
+
+    /* multiple of eight bytes */
+    tkt->length = (p - tkt->dat + 7) & ~7;
 
     /* Check length of ticket */
     if (tkt->length > (sizeof(KTEXT_ST) - 7)) {
-        bzero(tkt->dat, tkt->length);
+        memset(tkt->dat, 0, tkt->length);
         tkt->length = 0;
         return KFAILURE /* XXX */;
     }
 
-#ifndef NOENCRYPTION
-    des_key_sched(key,key_s);
-    des_pcbc_encrypt((des_cblock *)tkt->dat,(des_cblock *)tkt->dat,(long)tkt->length,
-	key_s,key, DES_ENCRYPT);
-#endif
-    return 0;
+    encrypt_ktext(tkt, key, DES_ENCRYPT);
+    return KSUCCESS;
 }

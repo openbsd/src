@@ -1,10 +1,4 @@
-/*
- * This software may now be redistributed outside the US.
- *
- * $Source: /home/cvs/src/kerberosIV/krb/Attic/get_tf_fullname.c,v $
- *
- * $Locker:  $
- */
+/* $KTH: get_tf_fullname.c,v 1.6 1997/03/23 03:53:10 joda Exp $ */
 
 /* 
   Copyright (C) 1989 by the Massachusetts Institute of Technology
@@ -38,17 +32,13 @@ or implied warranty.
  * krb_get_tf_fullname() takes four arguments: the name of the 
  * ticket file, and variables for name, instance, and realm to be
  * returned in.  Since the realm of a ticket file is not really fully 
- * supported, the realm used will be that of the first ticket in the
- * file as this is the one that was obtained with a password by
+ * supported, the realm used will be that of the the first ticket in 
+ * the file as this is the one that was obtained with a password by
  * krb_get_in_tkt().
  */
 
 int
-krb_get_tf_fullname(ticket_file, name, instance, realm)
-	char *ticket_file;
-	char *name;
-	char *instance;
-	char *realm;
+krb_get_tf_fullname(char *ticket_file, char *name, char *instance, char *realm)
 {
     int tf_status;
     CREDENTIALS c;
@@ -74,7 +64,7 @@ krb_get_tf_fullname(ticket_file, name, instance, realm)
 	else
 	    return(tf_status);
     }    
-    (void) tf_close();
+    tf_close();
     
     return(tf_status);
 }

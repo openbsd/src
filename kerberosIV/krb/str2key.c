@@ -1,13 +1,6 @@
-/*
- * This software may now be redistributed outside the US.
- *
- * $Source: /home/cvs/src/kerberosIV/krb/Attic/str2key.c,v $
- *
- * $Locker:  $
- */
+/* $KTH: str2key.c,v 1.10 1997/03/23 03:53:19 joda Exp $ */
 
-/*
- * This defines the Andrew string_to_key function.  It accepts a password
+/* This defines the Andrew string_to_key function.  It accepts a password
  * string as input and converts its via a one-way encryption algorithm to a DES
  * encryption key.  It is compatible with the original Andrew authentication
  * service password database.
@@ -15,13 +8,8 @@
 
 #include "krb_locl.h"
 
-/*
-EXPORT void afs_string_to_key(char *passwd, char *cell, des_cblock *key);
-*/
-
 static void
-mklower(s)
-	char *s;
+mklower(char *s)
 {
     for (; *s; s++)
         if ('A' <= *s && *s <= 'Z')
@@ -32,17 +20,14 @@ mklower(s)
  * Short passwords, i.e 8 characters or less.
  */
 static void
-afs_cmu_StringToKey (str, cell, key)
-	char *str;
-	char *cell;
-	des_cblock *key;
+afs_cmu_StringToKey (char *str, char *cell, des_cblock *key)
 {
     char  password[8+1];	/* crypt is limited to 8 chars anyway */
     int   i;
     int   passlen;
 
-    bzero (key, sizeof(key));
-    bzero(password, sizeof(password));
+    memset (key, 0, sizeof(key));
+    memset(password, 0, sizeof(password));
 
     strncpy (password, cell, 8);
     passlen = strlen (str);
@@ -56,7 +41,7 @@ afs_cmu_StringToKey (str, cell, key)
 
     /* crypt only considers the first 8 characters of password but for some
        reason returns eleven characters of result (plus the two salt chars). */
-    strncpy((void *)key, (char *)des_crypt(password, "#~") + 2, sizeof(des_cblock));
+    strncpy((char *)key, (char *)crypt(password, "#~") + 2, sizeof(des_cblock));
 
     /* parity is inserted into the LSB so leftshift each byte up one bit.  This
        allows ascii characters with a zero MSB to retain as much significance
@@ -72,38 +57,30 @@ afs_cmu_StringToKey (str, cell, key)
     des_fixup_key_parity (key);
 }
 
-#undef  BUFSIZ
-#define	BUFSIZ		512
-
 /*
  * Long passwords, i.e 9 characters or more.
-*/
+ */
 static void
-afs_transarc_StringToKey (str, cell, key)
-	char *str;
-	char *cell;
-	des_cblock *key;
+afs_transarc_StringToKey (char *str, char *cell, des_cblock *key)
 {
     des_key_schedule schedule;
     des_cblock temp_key;
     des_cblock ivec;
-    char password[BUFSIZ];
+    char password[512];
     int  passlen;
 
-    strncpy (password, str, sizeof(password)-1);
-    password[sizeof(password)-1] = '\0';
+    strncpy (password, str, sizeof(password));
     if ((passlen = strlen (password)) < sizeof(password)-1)
         strncat (password, cell, sizeof(password)-passlen);
-    if ((passlen = strlen(password)) > sizeof(password))
-	passlen = sizeof(password);
+    if ((passlen = strlen(password)) > sizeof(password)) passlen = sizeof(password);
 
-    bcopy ("kerberos", &ivec, 8);
-    bcopy ("kerberos", &temp_key, 8);
+    memcpy(&ivec, "kerberos", 8);
+    memcpy(&temp_key, "kerberos", 8);
     des_fixup_key_parity (&temp_key);
     des_key_sched (&temp_key, schedule);
     des_cbc_cksum ((des_cblock *)password, &ivec, passlen, schedule, &ivec);
 
-    bcopy (&ivec, &temp_key, 8);
+    memcpy(&temp_key, &ivec, 8);
     des_fixup_key_parity (&temp_key);
     des_key_sched (&temp_key, schedule);
     des_cbc_cksum ((des_cblock *)password, key, passlen, schedule, &ivec);
@@ -111,18 +88,13 @@ afs_transarc_StringToKey (str, cell, key)
     des_fixup_key_parity (key);
 }
 
-#undef  REALM_SZ
-#define	REALM_SZ	41
-
 void
-afs_string_to_key(str, cell, key)
-	char *str;
-	char *cell;
-	des_cblock *key;
+afs_string_to_key(char *str, char *cell, des_cblock *key)
 {
-    char  realm[REALM_SZ];
-    (void)strcpy(realm, cell);
-    (void)mklower(realm);
+    char realm[REALM_SZ+1];
+    strncpy(realm, cell, REALM_SZ);
+    realm[REALM_SZ] = 0;
+    mklower(realm);
 
     if (strlen(str) > 8)
         afs_transarc_StringToKey (str, realm, key);

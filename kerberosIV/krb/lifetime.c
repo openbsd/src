@@ -1,25 +1,4 @@
-/*
- * This software may now be redistributed outside the US.
- *
- * $Source: /home/cvs/src/kerberosIV/krb/Attic/lifetime.c,v $
- *
- * $Locker:  $
- */
-
-/***************************************************************************
- * PRE-HISTORY
- *
- * Revision 2.1.2.2  91/11/08  00:35:25  mja
- * 	Lower NEVERDATE to a positive value since time values are not
- * 	handled properly by most of the rest of the system when
- * 	negative;  add krb_life_to_atime() and krb_atime_to_life().
- * 	[91/11/07  22:52:50  mja]
- * 
- * Revision 2.1.2.1  91/07/09  22:50:42  mja
- * 	Created.
- * 	[91/01/30            jm36@ANDREW.CMU.EDU]
- * 
- ***************************************************************************/
+/* $KTH: lifetime.c,v 1.9 1997/05/02 14:29:18 assar Exp $ */
 
 /*
  * Ticket lifetime.  This defines the table used to lookup lifetime
@@ -35,6 +14,9 @@
  */
 
 #include "krb_locl.h"
+
+/* If you want to disable this feature */
+int krb_no_long_lifetimes = 0;
 
 #define TKTLIFENUMFIXED 64
 #define TKTLIFEMINFIXED 0x80
@@ -125,11 +107,12 @@ static const int tkt_lifetimes[TKTLIFENUMFIXED] = {
  * in seconds, which is added to start to produce the end time.
  */
 u_int32_t
-krb_life_to_time(start, life)
-	u_int32_t start;
-	int life;
+krb_life_to_time(u_int32_t start, int life_)
 {
-    life = (unsigned char) life;
+    unsigned char life = (unsigned char) life_;
+
+    if (krb_no_long_lifetimes) return start + life*5*60;
+
     if (life == TKTLIFENOEXPIRE) return NEVERDATE;
     if (life < TKTLIFEMINFIXED) return start + life*5*60;
     if (life > TKTLIFEMAXFIXED) return start + MAXTKTLIFETIME;
@@ -148,16 +131,14 @@ krb_life_to_time(start, life)
  * the table for the smallest entry *greater than or equal* to the
  * requested entry.
  */
-int
-krb_time_to_life(start, end)
-	u_int32_t start;
-	u_int32_t end;
+int krb_time_to_life(u_int32_t start, u_int32_t end)
 {
-    long lifetime;
     int i;
+    long lifetime = end - start;
+
+    if (krb_no_long_lifetimes) return (lifetime + 5*60 - 1)/(5*60);
 
     if (end >= NEVERDATE) return TKTLIFENOEXPIRE;
-    lifetime = end - start;
     if (lifetime > MAXTKTLIFETIME || lifetime <= 0) return 0;
     if (lifetime < tkt_lifetimes[0]) return (lifetime + 5*60 - 1)/(5*60);
     for (i=0; i<TKTLIFENUMFIXED; i++) {
@@ -169,14 +150,13 @@ krb_time_to_life(start, end)
 }
 
 char *
-krb_life_to_atime(life)
-	int life;
+krb_life_to_atime(int life)
 {
     static char atime[11+1+2+1+2+1+2+1];
     unsigned long when;
     int secs, mins, hours;
 
-    if (life == TKTLIFENOEXPIRE)
+    if (life == TKTLIFENOEXPIRE && !krb_no_long_lifetimes)
 	return("Forever");
     when = krb_life_to_time(0, life);
     secs = when%60;
@@ -185,17 +165,15 @@ krb_life_to_atime(life)
     when /= 60;
     hours = when%24;
     when /= 24;
-    snprintf(atime, sizeof(atime), "%d+%02d:%02d:%02d", (int)when, hours,
-	     mins, secs);
+    snprintf(atime, sizeof(atime), "%d+%02d:%02d:%02d", (int)when, hours, mins, secs);
     return(atime);
 }
 
 int
-krb_atime_to_life(atime)
-	char *atime;
+krb_atime_to_life(char *atime)
 {
     unsigned long when = 0;
-    register char *cp;
+    char *cp;
     int colon = 0, plus = 0;
     int n = 0;
 

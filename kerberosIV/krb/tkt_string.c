@@ -1,10 +1,4 @@
-/*
- * This software may now be redistributed outside the US.
- *
- * $Source: /home/cvs/src/kerberosIV/krb/Attic/tkt_string.c,v $
- *
- * $Locker:  $
- */
+/* $KTH: tkt_string.c,v 1.11 1997/10/24 10:18:07 assar Exp $ */
 
 /* 
   Copyright (C) 1989 by the Massachusetts Institute of Technology
@@ -29,9 +23,6 @@ or implied warranty.
 
 #include "krb_locl.h"
 
-#include <sys/param.h>
-#include <sys/types.h>
-
 /*
  * This routine is used to generate the name of the file that holds
  * the user's cache of server tickets and associated session keys.
@@ -49,21 +40,18 @@ or implied warranty.
 static char krb_ticket_string[MAXPATHLEN] = "";
 
 char *
-tkt_string()
+tkt_string(void)
 {
     char *env;
-    uid_t getuid(void);
 
     if (!*krb_ticket_string) {
         if ((env = getenv("KRBTKFILE"))) {
-	    (void) strncpy(krb_ticket_string, env,
+	    strncpy(krb_ticket_string, env,
 			   sizeof(krb_ticket_string)-1);
 	    krb_ticket_string[sizeof(krb_ticket_string)-1] = '\0';
 	} else {
-	    /* 32 bits of signed integer will always fit in 11 characters
-	     (including the sign), so no need to worry about overflow */
-	    (void) snprintf(krb_ticket_string, sizeof(krb_ticket_string),
-	    		    "%s%u", TKT_ROOT, getuid());
+	    snprintf(krb_ticket_string, sizeof(krb_ticket_string),
+		     "%s%u",TKT_ROOT,(unsigned)getuid());
         }
     }
     return krb_ticket_string;
@@ -81,11 +69,10 @@ tkt_string()
  */
 
 void
-krb_set_tkt_string(val)
-	char *val;
+krb_set_tkt_string(const char *val)
 {
 
-    (void) strncpy(krb_ticket_string, val, sizeof(krb_ticket_string)-1);
+    strncpy(krb_ticket_string, val, sizeof(krb_ticket_string)-1);
     krb_ticket_string[sizeof(krb_ticket_string)-1] = '\0';
 
     return;

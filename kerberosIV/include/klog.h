@@ -1,6 +1,6 @@
-/*	$Id: klog.h,v 1.1.1.1 1995/12/14 06:52:34 tholo Exp $	*/
+/* $KTH: klog.h,v 1.5 1997/05/11 11:05:28 assar Exp $ */
 
-/*-
+/*
  * Copyright 1988 by the Massachusetts Institute of Technology.
  *
  * For copying and distribution information, please see the file
@@ -13,6 +13,12 @@
 #ifndef KLOG_DEFS
 #define KLOG_DEFS
 
+#ifndef KRBLOG
+#define KRBLOG 		"/var/log/kerberos.log"  /* master server  */
+#endif
+#ifndef KRBSLAVELOG
+#define KRBSLAVELOG	"/var/log/kerberos_slave.log"  /* slave server  */
+#endif
 #define	NLOGTYPE	100	/* Maximum number of log msg types  */
 
 #define L_NET_ERR	  1	/* Error in network code	    */
@@ -32,6 +38,10 @@
 #define L_APPL_REQ	 15	/* Application requests (using tgt) */
 #define L_KRB_PWARN      16	/* Protocol warning messages	    */
 
-char   *klog();
+char * klog __P((int type, const char *format, ...))
+#ifdef __GNUC__
+__attribute__ ((format (printf, 2, 3)))
+#endif
+;
 
 #endif /* KLOG_DEFS */

@@ -1,10 +1,4 @@
-/*
- * This software may now be redistributed outside the US.
- *
- * $Source: /home/cvs/src/kerberosIV/krb/Attic/mk_err.c,v $
- *
- * $Locker:  $
- */
+/* $KTH: mk_err.c,v 1.6 1997/03/23 03:53:14 joda Exp $ */
 
 /* 
   Copyright (C) 1989 by the Massachusetts Institute of Technology
@@ -29,8 +23,6 @@ or implied warranty.
 
 #include "krb_locl.h"
 
-#include <sys/types.h>
-
 /*
  * This routine creates a general purpose error reply message.  It
  * doesn't use KTEXT because application protocol may have long
@@ -52,26 +44,13 @@ or implied warranty.
  */
 
 int32_t
-krb_mk_err(p, e, e_string)
-	u_char *p;		/* Where to build error packet */
-	int32_t e;		/* Error code */
-	char *e_string;		/* Text of error */
+krb_mk_err(u_char *p, int32_t e, char *e_string)
 {
-    u_char      *start;
-
-    start = p;
-
-    /* Create fixed part of packet */
-    *p++ = (unsigned char) KRB_PROT_VERSION;
-    *p = (unsigned char) AUTH_MSG_APPL_ERR;
-    *p++ |= HOST_BYTE_ORDER;
-
-    /* Add the basic info */
-    bcopy((char *)&e,(char *)p,4); /* err code */
-    p += sizeof(e);
-    (void) strcpy((char *)p,e_string); /* err text */
-    p += strlen(e_string);
-
-    /* And return the length */
-    return p-start;
+    unsigned char *start = p;
+    p += krb_put_int(KRB_PROT_VERSION, p, 1);
+    p += krb_put_int(AUTH_MSG_APPL_ERR, p, 1);
+    
+    p += krb_put_int(e, p, 4);
+    p += krb_put_string(e_string, p);
+    return p - start;
 }

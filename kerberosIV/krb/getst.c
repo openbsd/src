@@ -1,10 +1,4 @@
-/*
- * This software may now be redistributed outside the US.
- *
- * $Source: /home/cvs/src/kerberosIV/krb/Attic/getst.c,v $
- *
- * $Locker:  $
- */
+/* $KTH: getst.c,v 1.6 1997/03/23 03:53:11 joda Exp $ */
 
 /* 
   Copyright (C) 1989 by the Massachusetts Institute of Technology
@@ -40,12 +34,9 @@ or implied warranty.
  */
 
 int
-getst(fd, s, n)
-	int fd;
-	register char *s;
-	int n;
+getst(int fd, char *s, int n)
 {
-    register count = n;
+    int count = n;
     while (read(fd, s, 1) > 0 && --count)
         if (*s++ == '\0')
             return (n - count);

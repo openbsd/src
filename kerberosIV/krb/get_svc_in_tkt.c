@@ -1,10 +1,4 @@
-/*
- * This software may now be redistributed outside the US.
- *
- * $Source: /home/cvs/src/kerberosIV/krb/Attic/get_svc_in_tkt.c,v $
- *
- * $Locker:  $
- */
+/* $KTH: get_svc_in_tkt.c,v 1.8 1997/03/23 03:53:09 joda Exp $ */
 
 /* 
   Copyright (C) 1989 by the Massachusetts Institute of Technology
@@ -52,18 +46,14 @@ or implied warranty.
  * The service key is placed in "key".
  */
 
-static int 
-srvtab_to_key(user, instance, realm, srvtab, key)
-	char *user;
-	char *instance;
-	char *realm;
-	char *srvtab;
-	unsigned char *key;
+int 
+srvtab_to_key(char *user, char *instance, char *realm, void *srvtab,
+	      des_cblock *key)
 {
     if (!srvtab)
         srvtab = KEYFILE;
 
-    return(read_service_key(user, instance, realm, 0, srvtab,
+    return(read_service_key(user, instance, realm, 0, (char *)srvtab,
                             (char *)key));
 }
 
@@ -78,14 +68,8 @@ srvtab_to_key(user, instance, realm, srvtab, key)
  */
 
 int
-krb_get_svc_in_tkt(user, instance, realm, service, sinstance, life, srvtab)
-	char *user;
-	char *instance;
-	char *realm;
-	char *service;
-	char *sinstance;
-	int life;
-	char *srvtab;
+krb_get_svc_in_tkt(char *user, char *instance, char *realm, char *service,
+		   char *sinstance, int life, char *srvtab)
 {
     return(krb_get_in_tkt(user, instance, realm, service, sinstance,
                           life, srvtab_to_key, NULL, srvtab));

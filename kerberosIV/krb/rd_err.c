@@ -1,48 +1,44 @@
-/*
- * This software may now be redistributed outside the US.
- *
- * $Source: /home/cvs/src/kerberosIV/krb/Attic/rd_err.c,v $
- *
- * $Locker:  $
- */
-
-/* 
-  Copyright (C) 1989 by the Massachusetts Institute of Technology
-
-   Export of this software from the United States of America is assumed
-   to require a specific license from the United States Government.
-   It is the responsibility of any person or organization contemplating
-   export to obtain such a license before exporting.
-
-WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
-distribute this software and its documentation for any purpose and
-without fee is hereby granted, provided that the above copyright
-notice appear in all copies and that both that copyright notice and
-this permission notice appear in supporting documentation, and that
-the name of M.I.T. not be used in advertising or publicity pertaining
-to distribution of the software without specific, written prior
-permission.  M.I.T. makes no representations about the suitability of
-this software for any purpose.  It is provided "as is" without express
-or implied warranty.
-
-  */
+/* $KTH: rd_err.c,v 1.8 1997/04/01 08:18:40 joda Exp $ */
 
 /*
- * This routine dissects a a Kerberos 'safe msg',
- * checking its integrity, and returning a pointer to the application
- * data contained and its length.
- *
- * Returns 0 (RD_AP_OK) for success or an error code (RD_AP_...)
- *
- * Steve Miller    Project Athena  MIT/DEC
+ * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * (Royal Institute of Technology, Stockholm, Sweden).
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by the Kungliga Tekniska
+ *      Högskolan and its contributors.
+ * 
+ * 4. Neither the name of the Institute nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
 #include "krb_locl.h"
-
-/* system include files */
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <sys/time.h>
 
 /*
  * Given an AUTH_MSG_APPL_ERR message, "in" and its length "in_length",
@@ -60,32 +56,27 @@ or implied warranty.
  */
 
 int
-krb_rd_err(in, in_length, code, m_data)
-	u_char *in;		/* pointer to the msg received */
-	u_int32_t in_length;	/* of in msg */
-	int32_t *code;		/* received error code */
-	MSG_DAT *m_data;
+krb_rd_err(u_char *in, u_int32_t in_length, int32_t *code, MSG_DAT *m_data)
 {
-    register u_char *p;
-    int swap_bytes = 0;
-    p = in;                     /* beginning of message */
+    unsigned char *p = (unsigned char*)in;
+    
+    unsigned char pvno, type;
+    int little_endian;
 
-    if (*p++ != KRB_PROT_VERSION)
-        return(RD_AP_VERSION);
-    if (((*p) & ~1) != AUTH_MSG_APPL_ERR)
-        return(RD_AP_MSG_TYPE);
-    if ((*p++ & 1) != HOST_BYTE_ORDER)
-        swap_bytes++;
-
-    /* safely get code */
-    bcopy((char *)p,(char *)code,sizeof(*code));
-    if (swap_bytes)
-        swap_u_long(*code);
-    p += sizeof(*code);         /* skip over */
-
-    m_data->app_data = p;       /* we're now at the error text
-                                 * message */
-    m_data->app_length = in_length;
-
-    return(RD_AP_OK);           /* OK == 0 */
+    pvno = *p++;
+    if(pvno != KRB_PROT_VERSION)
+	return RD_AP_VERSION;
+    
+    type = *p++;
+    little_endian = type & 1;
+    type &= ~1;
+    
+    if(type != AUTH_MSG_APPL_ERR)
+	return RD_AP_MSG_TYPE;
+    
+    p += krb_get_int(p, (u_int32_t *)&code, 4, little_endian);
+    
+    m_data->app_data = p;
+    m_data->app_length = in_length; /* XXX is this correct? */
+    return KSUCCESS;
 }

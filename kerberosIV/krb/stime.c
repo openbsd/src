@@ -1,14 +1,8 @@
+/* $KTH: stime.c,v 1.6 1997/05/02 14:29:20 assar Exp $ */
+
 /*
- * This software may now be redistributed outside the US.
- *
- * $Source: /home/cvs/src/kerberosIV/krb/Attic/pkt_cipher.c,v $
- *
- * $Locker:  $
- */
-
-/* 
-  Copyright (C) 1989 by the Massachusetts Institute of Technology
-
+  Copyright 1985, 1986, 1987, 1988 by the Massachusetts Institute of Technology.
+ 
    Export of this software from the United States of America is assumed
    to require a specific license from the United States Government.
    It is the responsibility of any person or organization contemplating
@@ -25,26 +19,28 @@ permission.  M.I.T. makes no representations about the suitability of
 this software for any purpose.  It is provided "as is" without express
 or implied warranty.
 
-  */
+ */
 
 #include "krb_locl.h"
 
 /*
- * This routine takes a reply packet from the Kerberos ticket-granting
- * service and returns a pointer to the beginning of the ciphertext in it.
+ * Given a pointer to a long containing the number of seconds
+ * since the beginning of time (midnight 1 Jan 1970 GMT), return
+ * a string containing the local time in the form:
  *
- * See "prot.h" for packet format.
+ * "25-Jan-1988 10:17:56"
  */
 
-char *
-pkt_cipher(packet)
-	KTEXT packet;
+const char *
+krb_stime(time_t *t)
 {
-    unsigned char *ptr = pkt_a_realm(packet) + 6
-	+ strlen((char *)pkt_a_realm(packet));
-    /* Skip a few more fields */
-    ptr += 3 + 4;		/* add 4 for exp_date */
+    static char st[40];
+    struct tm *tm;
 
-    /* And return the pointer */
-    return((char*)ptr);
+    tm = localtime(t);
+    snprintf(st, sizeof(st),
+	     "%2d-%s-%04d %02d:%02d:%02d",tm->tm_mday,
+	     month_sname(tm->tm_mon + 1),tm->tm_year + 1900,
+	     tm->tm_hour, tm->tm_min, tm->tm_sec);
+    return st;
 }

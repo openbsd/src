@@ -1,31 +1,42 @@
+/* $KTH: decomp_ticket.c,v 1.16 1997/04/01 08:18:22 joda Exp $ */
+
 /*
- * This software may now be redistributed outside the US.
- *
- * $Source: /home/cvs/src/kerberosIV/krb/Attic/decomp_ticket.c,v $
- *
- * $Locker:  $
+ * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * (Royal Institute of Technology, Stockholm, Sweden).
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by the Kungliga Tekniska
+ *      Högskolan and its contributors.
+ * 
+ * 4. Neither the name of the Institute nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
-
-/* 
-  Copyright (C) 1989 by the Massachusetts Institute of Technology
-
-   Export of this software from the United States of America is assumed
-   to require a specific license from the United States Government.
-   It is the responsibility of any person or organization contemplating
-   export to obtain such a license before exporting.
-
-WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
-distribute this software and its documentation for any purpose and
-without fee is hereby granted, provided that the above copyright
-notice appear in all copies and that both that copyright notice and
-this permission notice appear in supporting documentation, and that
-the name of M.I.T. not be used in advertising or publicity pertaining
-to distribution of the software without specific, written prior
-permission.  M.I.T. makes no representations about the suitability of
-this software for any purpose.  It is provided "as is" without express
-or implied warranty.
-
-  */
 
 #include "krb_locl.h"
 
@@ -33,15 +44,6 @@ or implied warranty.
  * This routine takes a ticket and pointers to the variables that
  * should be filled in based on the information in the ticket.  It
  * fills in values for its arguments.
- *
- * Note: if the client realm field in the ticket is the null string,
- * then the "prealm" variable is filled in with the local realm.
- *
- * If the ticket byte order is different than the host's byte order
- * (as indicated by the byte order bit of the "flags" field), then
- * the KDC timestamp "time_sec" is byte-swapped.  The other fields
- * potentially affected by byte order, "paddress" and "session" are
- * not byte-swapped.
  *
  * The routine returns KFAILURE if any of the "pname", "pinstance",
  * or "prealm" fields is too big, otherwise it returns KSUCCESS.
@@ -54,80 +56,64 @@ or implied warranty.
  */
 
 int
-decomp_ticket(tkt, flags, pname, pinstance, prealm, paddress, session,
-	      life, time_sec, sname, sinstance, key, key_s)
-	KTEXT tkt;		/* The ticket to be decoded */
-	unsigned char *flags;	/* Kerberos ticket flags */
-	char *pname;		/* Authentication name */
-	char *pinstance;	/* Principal's instance */
-	char *prealm;		/* Principal's authentication domain */
-	u_int32_t *paddress;	/* Net address of entity
-                                 * requesting ticket */
-	unsigned char *session;	/* Session key inserted in ticket */
-	int *life;		/* Lifetime of the ticket */
-	u_int32_t *time_sec;	/* Issue time and date */
-	char *sname;		/* Service name */
-	char *sinstance;	/* Service instance */
-	des_cblock *key;	/* Service's secret key
-                                 * (to decrypt the ticket) */
-	struct des_ks_struct *key_s; /* The precomputed key schedule */
+decomp_ticket(KTEXT tkt,	/* The ticket to be decoded */
+	      unsigned char *flags, /* Kerberos ticket flags */
+	      char *pname,	/* Authentication name */
+	      char *pinstance,	/* Principal's instance */
+	      char *prealm,	/* Principal's authentication domain */
+	      u_int32_t *paddress,/* Net address of entity requesting ticket */
+	      unsigned char *session, /* Session key inserted in ticket */
+	      int *life,	/* Lifetime of the ticket */
+	      u_int32_t *time_sec, /* Issue time and date */
+	      char *sname,	/* Service name */
+	      char *sinstance,	/* Service instance */
+	      des_cblock *key,	/* Service's secret key (to decrypt the ticket) */
+	      des_key_schedule schedule) /* The precomputed key schedule */
+
 {
-    static int tkt_swap_bytes;
-    unsigned char *uptr;
-    char *ptr = (char *)tkt->dat;
+    unsigned char *p = tkt->dat;
+    
+    int little_endian;
 
-#ifndef NOENCRYPTION
-    des_pcbc_encrypt((des_cblock *)tkt->dat,(des_cblock *)tkt->dat,(long)tkt->length,
-	key_s,key, DES_DECRYPT);
-#endif /* ! NOENCRYPTION */
+    des_pcbc_encrypt((des_cblock *)tkt->dat, (des_cblock *)tkt->dat,
+		     tkt->length, schedule, key, DES_DECRYPT);
 
-    *flags = *ptr;              /* get flags byte */
-    ptr += sizeof(*flags);
-    tkt_swap_bytes = 0;
-    if (HOST_BYTE_ORDER != ((*flags >> K_FLAG_ORDER)& 1))
-        tkt_swap_bytes++;
+    tkt->mbz = 0;
 
-    if (strlen(ptr) > ANAME_SZ)
-        return(KFAILURE);
-    (void) strcpy(pname,ptr);   /* pname */
-    ptr += strlen(pname) + 1;
+    *flags = *p++;
 
-    if (strlen(ptr) > INST_SZ)
-        return(KFAILURE);
-    (void) strcpy(pinstance,ptr); /* instance */
-    ptr += strlen(pinstance) + 1;
+    little_endian = (*flags >> K_FLAG_ORDER) & 1;
 
-    if (strlen(ptr) > REALM_SZ)
-        return(KFAILURE);
-    (void) strcpy(prealm,ptr);  /* realm */
-    ptr += strlen(prealm) + 1;
-    /* temporary hack until realms are dealt with properly */
-    if (*prealm == 0 && krb_get_lrealm(prealm, 1) != KSUCCESS)
-	return(KFAILURE);
+    if(strlen((char*)p) > ANAME_SZ)
+	return KFAILURE;
+    p += krb_get_string(p, pname);
 
-    bcopy(ptr,(char *)paddress,4); /* net address */
-    ptr += 4;
+    if(strlen((char*)p) > INST_SZ)
+	return KFAILURE;
+    p += krb_get_string(p, pinstance);
 
-    bcopy(ptr,(char *)session,8); /* session key */
-    ptr+= 8;
-#ifdef notdef /* DONT SWAP SESSION KEY spm 10/22/86 */
-    if (tkt_swap_bytes)
-        swap_C_Block(session);
-#endif
+    if(strlen((char*)p) > REALM_SZ)
+	return KFAILURE;
+    p += krb_get_string(p, prealm);
 
-    /* get lifetime, being certain we don't get negative lifetimes */
-    uptr = (unsigned char *) ptr++;
-    *life = (int) *uptr;
+    if(tkt->length - (p - tkt->dat) < 8 + 1 + 4)
+	return KFAILURE;
+    p += krb_get_address(p, paddress);
 
-    bcopy(ptr,(char *) time_sec,4); /* issue time */
-    ptr += 4;
-    if (tkt_swap_bytes)
-        swap_u_long(*time_sec);
+    memcpy(session, p, 8);
+    p += 8;
 
-    (void) strcpy(sname,ptr);   /* service name */
-    ptr += 1 + strlen(sname);
+    *life = *p++;
+    
+    p += krb_get_int(p, time_sec, 4, little_endian);
 
-    (void) strcpy(sinstance,ptr); /* instance */
-    ptr += 1 + strlen(sinstance);
-    return(KSUCCESS);
+    if(strlen((char*)p) > SNAME_SZ)
+	return KFAILURE;
+    p += krb_get_string(p, sname);
+
+    if(strlen((char*)p) > INST_SZ)
+	return KFAILURE;
+    p += krb_get_string(p, sinstance);
+
+    return KSUCCESS;
 }

@@ -1,6 +1,6 @@
-/*	$Id: prot.h,v 1.1.1.1 1995/12/14 06:52:33 tholo Exp $	*/
+/* $KTH: prot.h,v 1.7 1997/03/23 03:52:27 joda Exp $ */
 
-/*-
+/*
  * Copyright 1985, 1986, 1987, 1988 by the Massachusetts Institute
  * of Technology.
  *
@@ -13,12 +13,12 @@
 #ifndef PROT_DEFS
 #define PROT_DEFS
 
+#define		KRB_SERVICE		"kerberos-iv"
 #define		KRB_PORT		750	/* PC's don't have
 						 * /etc/services */
 #define		KRB_PROT_VERSION 	4
 #define 	MAX_PKT_LEN		1000
 #define		MAX_TXT_LEN		1000
-#define		TICKET_GRANTING_TICKET	"krbtgt"
 
 /* Macro's to obtain various fields from a packet */
 
@@ -57,8 +57,12 @@
 
 /* Routines to create and read packets may be found in prot.c */
 
-KTEXT create_auth_reply();
-KTEXT create_death_packet();
+KTEXT create_auth_reply(char *pname, char *pinst, char *prealm, 
+			int32_t time_ws, int n, u_int32_t x_date, 
+			int kvno, KTEXT cipher);
+#ifdef DEBUG
+KTEXT krb_create_death_packet(char *a_name);
+#endif
 
 /* Message types , always leave lsb for byte order */
 
@@ -70,6 +74,8 @@ KTEXT create_death_packet();
 #define		AUTH_MSG_PRIVATE			 6<<1
 #define		AUTH_MSG_SAFE				 7<<1
 #define		AUTH_MSG_APPL_ERR			 8<<1
+#define		AUTH_MSG_KDC_FORWARD			 9<<1
+#define		AUTH_MSG_KDC_RENEW			10<<1
 #define 	AUTH_MSG_DIE				63<<1
 
 /* values for kerb error codes */
@@ -85,5 +91,15 @@ KTEXT create_death_packet();
 #define		KERB_ERR_PRINCIPAL_UNKNOWN		 8
 #define		KERB_ERR_PRINCIPAL_NOT_UNIQUE		 9
 #define		KERB_ERR_NULL_KEY			10
+#define		KERB_ERR_TIMEOUT			11
+
+/* sendauth - recvauth */
+
+/*
+ * If the protocol changes, you will need to change the version string
+ * be sure to support old versions of krb_sendauth!
+ */
+
+#define	KRB_SENDAUTH_VERS "AUTHV0.1" /* MUST be KRB_SENDAUTH_VLEN chars */
 
 #endif /* PROT_DEFS */

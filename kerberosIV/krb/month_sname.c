@@ -1,10 +1,4 @@
-/*
- * This software may now be redistributed outside the US.
- *
- * $Source: /home/cvs/src/kerberosIV/krb/Attic/month_sname.c,v $
- *
- * $Locker:  $
- */
+/* $KTH: month_sname.c,v 1.5 1997/03/23 03:53:14 joda Exp $ */
 
 /* 
   Copyright (C) 1989 by the Massachusetts Institute of Technology
@@ -35,11 +29,9 @@ or implied warranty.
  * month.  Returns 0 if the argument is out of range.
  */
 
-char *
-month_sname(n)
-	int n;
+const char *month_sname(int n)
 {
-    static char *name[] = {
+    static const char *name[] = {
         "Jan","Feb","Mar","Apr","May","Jun",
         "Jul","Aug","Sep","Oct","Nov","Dec"
     };

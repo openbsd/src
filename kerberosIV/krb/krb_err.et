@@ -3,9 +3,7 @@
 #	For copying and distribution information, see the file
 #	"mit-copyright.h".
 # 
-#	$Source: /home/cvs/src/kerberosIV/krb/Attic/krb_err.et,v $
-#	$Author: tholo $
-#	$Header: /home/cvs/src/kerberosIV/krb/Attic/krb_err.et,v 1.1.1.1 1995/12/14 06:52:37 tholo Exp $
+#	$KTH: krb_err.et,v 1.4 1996/10/27 13:30:28 bg Exp $
 #
 	error_table	krb
 
@@ -226,7 +224,7 @@
 			"Don't have Kerberos ticket-granting ticket"
 
 	ec		KRBET_KRB_RES72,
-			"Reserved 72"
+			"Can't get Kerberos inter-realm ticket-granting ticket"
 
 	ec		KRBET_KRB_RES73,
 			"Reserved 73"

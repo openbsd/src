@@ -1,10 +1,4 @@
-/*
- * This software may now be redistributed outside the US.
- *
- * $Source: /home/cvs/src/kerberosIV/krb/Attic/recvauth.c,v $
- *
- * $Locker:  $
- */
+/* $KTH: recvauth.c,v 1.18 1997/07/05 01:35:15 assar Exp $ */
 
 /* 
   Copyright (C) 1989 by the Massachusetts Institute of Technology
@@ -28,18 +22,6 @@ or implied warranty.
   */
 
 #include "krb_locl.h"
-
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <syslog.h>
-
-/*
- * If the protocol changes, you will need to change the version string
- * and make appropriate changes in krb_sendauth.c
- * be sure to support old versions of krb_sendauth!
- */
-#define	KRB_SENDAUTH_VERS	"AUTHV0.1" /* MUST be KRB_SENDAUTH_VLEN
-					      chars */
 
 /*
  * krb_recvauth() reads (and optionally responds to) a message sent
@@ -72,21 +54,6 @@ or implied warranty.
  * should be large enough to hold a KRB_SENDAUTH_VLEN-character string.
  *
  * See krb_sendauth() for the format of the received client message.
- *
- * This routine supports another client format, for backward
- * compatibility, consisting of:
- *
- * Size			Variable		Field
- * ----			--------		-----
- *
- * string		tmp_buf, tkt_len	length of ticket, in
- * 						ascii
- *
- * char			' ' (space char)	separator
- *
- * tkt_len		ticket->dat		the ticket
- *
- * This old-style version does not support mutual authentication.
  *
  * krb_recvauth() first reads the protocol version string from the
  * given file descriptor.  If it doesn't match the current protocol
@@ -122,174 +89,104 @@ or implied warranty.
  * other error code is returned.
  */
 
-#ifndef max
-#define	max(a,b) (((a) > (b)) ? (a) : (b))
-#endif /* max */
+static int
+send_error_reply(int fd)
+{
+    unsigned char tmp[4] = { 255, 255, 255, 255 };
+    if(krb_net_write(fd, tmp, sizeof(tmp)) != sizeof(tmp))
+	return -1;
+    return 0;
+}
 
 int
-krb_recvauth(options, fd, ticket, service, instance, faddr, laddr, kdata,
-	     filename, schedule, version)
-	int32_t options;	/* bit-pattern of options */
-	int fd;			/* file descr. to read from */
-	KTEXT ticket;		/* storage for client's ticket */
-	char *service;		/* service expected */
-	char *instance;		/* inst expected (may be filled in) */
-	struct sockaddr_in *faddr; /* address of foreign host on fd */
-	struct sockaddr_in *laddr; /* local address */
-	AUTH_DAT *kdata;	/* kerberos data (returned) */
-	char *filename;		/* name of file with service keys */
-	struct des_ks_struct *schedule;	/* key schedule (return) */
-	char *version;		/* version string (filled in) */
+krb_recvauth(int32_t options,	/* bit-pattern of options */
+	     int fd,		/* file descr. to read from */
+	     KTEXT ticket,	/* storage for client's ticket */
+	     char *service,	/* service expected */
+	     char *instance,	/* inst expected (may be filled in) */
+	     struct sockaddr_in *faddr,	/* address of foreign host on fd */
+	     struct sockaddr_in *laddr,	/* local address */
+	     AUTH_DAT *kdata,	/* kerberos data (returned) */
+	     char *filename,	/* name of file with service keys */
+	     struct des_ks_struct *schedule, /* key schedule (return) */
+	     char *version)	/* version string (filled in) */
 {
-
-    int i, cc, old_vers = 0;
+    int cc;
     char krb_vers[KRB_SENDAUTH_VLEN + 1]; /* + 1 for the null terminator */
-    char *cp;
     int rem;
-    long tkt_len, priv_len;
-    u_int32_t cksum;
+    int32_t priv_len;
     u_char tmp_buf[MAX_KTXT_LEN+max(KRB_SENDAUTH_VLEN+1,21)];
 
-    /* read the protocol version number */
-    if (krb_net_read(fd, krb_vers, KRB_SENDAUTH_VLEN) !=
-	KRB_SENDAUTH_VLEN)
+    if (!(options & KOPT_IGNORE_PROTOCOL)) {
+	/* read the protocol version number */
+	if (krb_net_read(fd, krb_vers, KRB_SENDAUTH_VLEN) != KRB_SENDAUTH_VLEN)
 	    return(errno);
-    krb_vers[KRB_SENDAUTH_VLEN] = '\0';
-
-    /* check version string */
-    if (strcmp(krb_vers,KRB_SENDAUTH_VERS)) {
-	/* Assume the old version of sendkerberosdata: send ascii
-	   length, ' ', and ticket. */
-	if (options & KOPT_DO_MUTUAL)
-	    return(KFAILURE);	 /* XXX can't do old style with mutual auth */
-	old_vers = 1;
-
-	/* copy what we have read into tmp_buf */
-	(void) bcopy(krb_vers, (char *) tmp_buf, KRB_SENDAUTH_VLEN);
-
-	/* search for space, and make it a null */
-	for (i = 0; i < KRB_SENDAUTH_VLEN; i++)
-	    if (tmp_buf[i]== ' ') {
-		tmp_buf[i] = '\0';
-		/* point cp to the beginning of the real ticket */
-		cp = (char *) &tmp_buf[i+1];
-		break;
-	    }
-
-	if (i == KRB_SENDAUTH_VLEN)
-	    /* didn't find the space, keep reading to find it */
-	    for (; i<20; i++) {
-		if (read(fd, (char *)&tmp_buf[i], 1) != 1) {
-		    return(KFAILURE);
-		}
-		if (tmp_buf[i] == ' ') {
-		    tmp_buf[i] = '\0';
-		    /* point cp to the beginning of the real ticket */
-		    cp = (char *) &tmp_buf[i+1];
-		    break;
-		}
-	    }
-
-	tkt_len = (long) atoi((char *) tmp_buf);
-
-	/* sanity check the length */
-	if ((i==20)||(tkt_len<=0)||(tkt_len>MAX_KTXT_LEN))
-	    return(KFAILURE);
-
-	if (i < KRB_SENDAUTH_VLEN) {
-	    /* since we already got the space, and part of the ticket,
-	       we read fewer bytes to get the rest of the ticket */
-	    if (krb_net_read(fd, (char *)(tmp_buf+KRB_SENDAUTH_VLEN),
-			     (int) (tkt_len - KRB_SENDAUTH_VLEN + 1 + i))
-		!= (int)(tkt_len - KRB_SENDAUTH_VLEN + 1 + i))
-		return(errno);
-	} else {
-	    if (krb_net_read(fd, (char *)(tmp_buf+i), (int)tkt_len) !=
-		(int) tkt_len)
-		return(errno);
-	}
-	ticket->length = tkt_len;
-	/* copy the ticket into the struct */
-	(void) bcopy(cp, (char *) ticket->dat, ticket->length);
-
-    } else {
-	/* read the application version string */
-	if (krb_net_read(fd, version, KRB_SENDAUTH_VLEN) !=
-	    KRB_SENDAUTH_VLEN)
-	    return(errno);
-	version[KRB_SENDAUTH_VLEN] = '\0';
-
-	/* get the length of the ticket */
-	if (krb_net_read(fd, (char *)&tkt_len, sizeof(tkt_len)) !=
-	    sizeof(tkt_len))
-	    return(errno);
-    
-	/* sanity check */
-	ticket->length = ntohl((unsigned long)tkt_len);
-	if ((ticket->length <= 0) || (ticket->length > MAX_KTXT_LEN)) {
-	    if (options & KOPT_DO_MUTUAL) {
-		rem = KFAILURE;
-		goto mutual_fail;
-	    } else
-		return(KFAILURE); /* XXX there may still be junk on the fd? */
-	}
-
-	/* read the ticket */
-	if (krb_net_read(fd, (char *) ticket->dat, ticket->length)
-	    != ticket->length)
-	    return(errno);
+	krb_vers[KRB_SENDAUTH_VLEN] = '\0';
     }
+
+    /* read the application version string */
+    if (krb_net_read(fd, version, KRB_SENDAUTH_VLEN) != KRB_SENDAUTH_VLEN)
+	return(errno);
+    version[KRB_SENDAUTH_VLEN] = '\0';
+
+    /* get the length of the ticket */
+    {
+	char tmp[4];
+	if (krb_net_read(fd, tmp, 4) != 4)
+	    return -1;
+	krb_get_int(tmp, &ticket->length, 4, 0);
+    }
+    
+    /* sanity check */
+    if (ticket->length <= 0 || ticket->length > MAX_KTXT_LEN) {
+	if (options & KOPT_DO_MUTUAL) {
+	    if(send_error_reply(fd))
+		return -1;
+	    return KFAILURE;
+	} else
+	    return KFAILURE; /* XXX there may still be junk on the fd? */
+    }
+
+    /* read the ticket */
+    if (krb_net_read(fd, ticket->dat, ticket->length) != ticket->length)
+	return -1;
     /*
      * now have the ticket.  decrypt it to get the authenticated
      * data.
      */
-    rem = krb_rd_req(ticket,service,instance,faddr->sin_addr.s_addr,
-		     kdata,filename);
-
-    if (old_vers) return(rem);	 /* XXX can't do mutual with old client */
+    rem = krb_rd_req(ticket, service, instance, faddr->sin_addr.s_addr,
+		     kdata, filename);
 
     /* if we are doing mutual auth, compose a response */
     if (options & KOPT_DO_MUTUAL) {
-	if (rem != KSUCCESS)
+	if (rem != KSUCCESS){
 	    /* the krb_rd_req failed */
-	    goto mutual_fail;
-
+	    if(send_error_reply(fd))
+		return -1;
+	    return rem;
+	}
+	
 	/* add one to the (formerly) sealed checksum, and re-seal it
 	   for return to the client */
-	cksum = kdata->checksum + 1;
-	cksum = htonl(cksum);
+	{ 
+	    unsigned char cs[4];
+	    krb_put_int(kdata->checksum + 1, cs, 4);
 #ifndef NOENCRYPTION
-	des_key_sched(&kdata->session,schedule);
+	    des_key_sched(&kdata->session,schedule);
 #endif
-	priv_len = krb_mk_priv((unsigned char *)&cksum,
-			       tmp_buf,
-			       (unsigned long) sizeof(cksum),
-			       schedule,
-			       &kdata->session,
-			       laddr,
-			       faddr);
-	if (priv_len < 0) {
-	    /* re-sealing failed; notify the client */
-	    rem = KFAILURE;	 /* XXX */
-mutual_fail:
-	    priv_len = -1;
-	    tkt_len = htonl((unsigned long) priv_len);
-	    /* a length of -1 is interpreted as an authentication
-	       failure by the client */
-	    if ((cc = krb_net_write(fd, (char *)&tkt_len, sizeof(tkt_len)))
-		!= sizeof(tkt_len))
-		return(cc);
-	    return(rem);
-	} else {
-	    /* re-sealing succeeded, send the private message */
-	    tkt_len = htonl((unsigned long)priv_len);
-	    if ((cc = krb_net_write(fd, (char *)&tkt_len, sizeof(tkt_len)))
-		 != sizeof(tkt_len))
-		return(cc);
-	    if ((cc = krb_net_write(fd, (char *)tmp_buf, (int) priv_len))
-		!= (int) priv_len)
-		return(cc);
+	    priv_len = krb_mk_priv(cs, 
+				   tmp_buf+4, 
+				   4,
+				   schedule,
+				   &kdata->session,
+				   laddr,
+				   faddr);
 	}
+	/* mk_priv will never fail */
+	priv_len += krb_put_int(priv_len, tmp_buf, 4);
+	
+	if((cc = krb_net_write(fd, tmp_buf, priv_len)) != priv_len)
+	    return -1;
     }
-    return(rem);
+    return rem;
 }

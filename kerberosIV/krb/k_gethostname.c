@@ -1,10 +1,4 @@
-/*
- * This software may now be redistributed outside the US.
- *
- * $Source: /home/cvs/src/kerberosIV/krb/Attic/fgetst.c,v $
- *
- * $Locker:  $
- */
+/* $KTH: k_gethostname.c,v 1.10 1997/03/23 03:53:12 joda Exp $ */
 
 /* 
   Copyright (C) 1989 by the Massachusetts Institute of Technology
@@ -29,27 +23,18 @@ or implied warranty.
 
 #include "krb_locl.h"
 
+#include <sys/utsname.h>
+
 /*
- * fgetst takes a file descriptor, a character pointer, and a count.
- * It reads from the file it has either read "count" characters, or
- * until it reads a null byte.  When finished, what has been read exists
- * in "s". If "count" characters were actually read, the last is changed
- * to a null, so the returned string is always null-terminated.  fgetst
- * returns the number of characters read, including the null terminator. 
+ * Return the local host's name in "name", up to "namelen" characters.
+ * "name" will be null-terminated if "namelen" is big enough.
+ * The return code is 0 on success, -1 on failure.  (The calling
+ * interface is identical to gethostname(2).)
  */
 
 int
-fgetst(f, s, n)
-	FILE *f;
-	register char *s;
-	int n;
+k_gethostname(char *name, int namelen)
 {
-    register count = n;
-    int     ch;		/* NOT char; otherwise you don't see EOF */
+    return gethostname(name, namelen);
 
-    while ((ch = getc(f)) != EOF && ch && --count) {
-	*s++ = ch;
-    }
-    *s = '\0';
-    return (n - count);
 }

@@ -1,31 +1,42 @@
+/* $KTH: create_auth_reply.c,v 1.11 1997/04/01 08:18:20 joda Exp $ */
+
 /*
- * This software may now be redistributed outside the US.
- *
- * $Source: /home/cvs/src/kerberosIV/krb/Attic/create_auth_reply.c,v $
- *
- * $Locker:  $
+ * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * (Royal Institute of Technology, Stockholm, Sweden).
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by the Kungliga Tekniska
+ *      Högskolan and its contributors.
+ * 
+ * 4. Neither the name of the Institute nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
-
-/* 
-  Copyright (C) 1989 by the Massachusetts Institute of Technology
-
-   Export of this software from the United States of America is assumed
-   to require a specific license from the United States Government.
-   It is the responsibility of any person or organization contemplating
-   export to obtain such a license before exporting.
-
-WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
-distribute this software and its documentation for any purpose and
-without fee is hereby granted, provided that the above copyright
-notice appear in all copies and that both that copyright notice and
-this permission notice appear in supporting documentation, and that
-the name of M.I.T. not be used in advertising or publicity pertaining
-to distribution of the software without specific, written prior
-permission.  M.I.T. makes no representations about the suitability of
-this software for any purpose.  It is provided "as is" without express
-or implied warranty.
-
-  */
 
 #include "krb_locl.h"
 
@@ -74,55 +85,47 @@ or implied warranty.
  */
 
 KTEXT
-create_auth_reply(pname, pinst, prealm, time_ws, n, x_date, kvno, cipher)
-	char *pname;		/* Principal's name */
-	char *pinst;		/* Principal's instance */
-	char *prealm;		/* Principal's authentication domain */
-	int32_t time_ws;	/* Workstation time */
-	int n;			/* Number of tickets */
-	u_int32_t x_date;	/* Principal's expiration date */
-	int kvno;		/* Principal's key version number */
-	KTEXT cipher;		/* Cipher text with tickets and
-				 * session keys */
+create_auth_reply(char *pname,	/* Principal's name */
+		  char *pinst,	/* Principal's instance */
+		  char *prealm,	/* Principal's authentication domain */
+		  int32_t time_ws, /* Workstation time */
+		  int n,	/* Number of tickets */
+		  u_int32_t x_date, /* Principal's expiration date */
+		  int kvno,	/* Principal's key version number */
+		  KTEXT cipher)	/* Cipher text with tickets and session keys */
 {
     static  KTEXT_ST pkt_st;
     KTEXT pkt = &pkt_st;
-    unsigned char *v =  pkt->dat; /* Prot vers number */
-    unsigned char *t = (pkt->dat+1); /* Prot message type */
-    short w_l;			/* Cipher length */
+    
+    unsigned char *p = pkt->dat;
 
-    /* Create fixed part of packet */
-    *v = (unsigned char) KRB_PROT_VERSION;
-    *t = (unsigned char) AUTH_MSG_KDC_REPLY;
-    *t |= HOST_BYTE_ORDER;
+    p += krb_put_int(KRB_PROT_VERSION, p, 1);
+    p += krb_put_int(AUTH_MSG_KDC_REPLY, p, 1);
 
-    if (n != 0)
-	*v = 3;
+    if(n != 0){
+	/* barf on old code */
+	krb_warning("create_auth_reply: don't give me no krb3 crap!"
+		    " (n == %d)\n", n);
+	return NULL;
+    }
 
-    /* Add the basic info */
-    (void) strcpy((char *) (pkt->dat+2), pname);
-    pkt->length = 3 + strlen(pname);
-    (void) strcpy((char *) (pkt->dat+pkt->length),pinst);
-    pkt->length += 1 + strlen(pinst);
-    (void) strcpy((char *) (pkt->dat+pkt->length),prealm);
-    pkt->length += 1 + strlen(prealm);
-    /* Workstation timestamp */
-    bcopy((char *) &time_ws, (char *) (pkt->dat+pkt->length), 4);
-    pkt->length += 4;
-    *(pkt->dat+(pkt->length)++) = (unsigned char) n;
-    /* Expiration date */
-    bcopy((char *) &x_date, (char *) (pkt->dat+pkt->length),4);
-    pkt->length += 4;
 
-    /* Now send the ciphertext and info to help decode it */
-    *(pkt->dat+(pkt->length)++) = (unsigned char) kvno;
-    w_l = (short) cipher->length;
-    bcopy((char *) &w_l,(char *) (pkt->dat+pkt->length),2);
-    pkt->length += 2;
-    bcopy((char *) (cipher->dat), (char *) (pkt->dat+pkt->length),
-	  cipher->length);
-    pkt->length += cipher->length;
+    p += krb_put_nir(pname, pinst, prealm, p);
 
-    /* And return the packet */
+    p += krb_put_int(time_ws, p, 4);
+    
+    p += krb_put_int(n, p, 1);
+    
+    p += krb_put_int(x_date, p, 4);
+    
+    p += krb_put_int(kvno, p, 1);
+    
+    p += krb_put_int(cipher->length, p, 2);
+    
+    memcpy(p, cipher->dat, cipher->length);
+    p += cipher->length;
+
+    pkt->length = p - pkt->dat;
+
     return pkt;
 }

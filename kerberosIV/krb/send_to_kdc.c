@@ -1,10 +1,4 @@
-/*
- * This software may now be redistributed outside the US.
- *
- * $Source: /home/cvs/src/kerberosIV/krb/Attic/send_to_kdc.c,v $
- *
- * $Locker:  $
- */
+/* $KTH: send_to_kdc.c,v 1.47 1997/11/07 17:31:38 bg Exp $ */
 
 /* 
   Copyright (C) 1989 by the Massachusetts Institute of Technology
@@ -29,28 +23,15 @@ or implied warranty.
 
 #include "krb_locl.h"
 
-#include <sys/time.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
+struct host {
+    struct sockaddr_in addr;
+    enum krb_host_proto proto;
+};
 
-#define S_AD_SZ sizeof(struct sockaddr_in)
-
-static int krb_udp_port = 0;
-
-/* CLIENT_KRB_TIMEOUT indicates the time to wait before
- * retrying a server.  It's defined in "krb.h".
- */
-static struct timeval timeout = { CLIENT_KRB_TIMEOUT, 0};
-static char *prog = "send_to_kdc";
-static send_recv(KTEXT pkt, KTEXT rpkt, int f, struct sockaddr_in *_to, struct hostent *addrs);
-
-/*
- * This file contains two routines, send_to_kdc() and send_recv().
- * send_recv() is a static routine used by send_to_kdc().
- */
+static const char *prog = "send_to_kdc";
+static send_recv(KTEXT pkt, KTEXT rpkt, int f,
+		 struct sockaddr_in *adr, struct host *addrs,
+		 int h_hosts);
 
 /*
  * send_to_kdc() sends a message to the Kerberos authentication
@@ -79,246 +60,300 @@ static send_recv(KTEXT pkt, KTEXT rpkt, int f, struct sockaddr_in *_to, struct h
  *		  after several retries
  */
 
+/* always use the admin server */
+static int krb_use_admin_server_flag = 0;
+
 int
-send_to_kdc(pkt, rpkt, realm)
-	KTEXT pkt;
-	KTEXT rpkt;
-	char *realm;
+krb_use_admin_server(int flag)
 {
-    int i, f;
+    int old = krb_use_admin_server_flag;
+    krb_use_admin_server_flag = flag;
+    return old;
+}
+
+int
+send_to_kdc(KTEXT pkt, KTEXT rpkt, char *realm)
+{
+    int i;
     int no_host; /* was a kerberos host found? */
     int retry;
     int n_hosts;
     int retval;
-    struct sockaddr_in to;
-    struct hostent *host, *hostlist;
-    char *cp;
-    char krbhst[MAX_HSTNM];
+    struct hostent *host;
     char lrealm[REALM_SZ];
+    struct krb_host *k_host;
+    struct host *hosts = malloc(sizeof(*hosts));
+
+    if (hosts == NULL)
+	return SKDC_CANT;
 
     /*
      * If "realm" is non-null, use that, otherwise get the
      * local realm.
      */
     if (realm)
-	(void) strcpy(lrealm, realm);
+	strcpy(lrealm, realm);
     else
 	if (krb_get_lrealm(lrealm,1)) {
 	    if (krb_debug)
-		fprintf(stderr, "%s: can't get local realm\n", prog);
+		krb_warning("%s: can't get local realm\n", prog);
 	    return(SKDC_CANT);
 	}
     if (krb_debug)
-        printf("lrealm is %s\n", lrealm);
-    if (krb_udp_port == 0) {
-        register struct servent *sp;
-        if ((sp = getservbyname("kerberos","udp")) == 0) {
-            if (krb_debug)
-                fprintf(stderr, "%s: Can't get kerberos/udp service\n",
-                        prog);
-            krb_udp_port = 750; /* Was return(SKDC_CANT); */
-        }
-        else
-	    krb_udp_port = sp->s_port;
-        if (krb_debug)
-            printf("krb_udp_port is %d\n", krb_udp_port);
-    }
-    bzero((char *)&to, S_AD_SZ);
-    hostlist = (struct hostent *) malloc(sizeof(struct hostent));
-    if (!hostlist)
-        return (/*errno */SKDC_CANT);
-    if ((f = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-        if (krb_debug)
-            fprintf(stderr,"%s: Can't open socket\n", prog);
-        return(SKDC_CANT);
-    }
-    /* from now on, exit through rtn label for cleanup */
+	krb_warning("lrealm is %s\n", lrealm);
 
     no_host = 1;
     /* get an initial allocation */
     n_hosts = 0;
-    bzero((char *)&hostlist[n_hosts], sizeof(struct hostent));
-    for (i = 1; krb_get_krbhst(krbhst, lrealm, i) == KSUCCESS; ++i) {
+    for (i = 1; (k_host = krb_get_host(i, lrealm, krb_use_admin_server_flag)); 
+	 ++i) {
+	char *p;
+
+        if (krb_debug)
+	    krb_warning("Getting host entry for %s...", k_host->host);
+        host = gethostbyname(k_host->host);
         if (krb_debug) {
-            printf("Getting host entry for %s...",krbhst);
-            (void) fflush(stdout);
-        }
-        host = gethostbyname(krbhst);
-        if (krb_debug) {
-            printf("%s.\n",
-                   host ? "Got it" : "Didn't get it");
-            (void) fflush(stdout);
+	    krb_warning("%s.\n",
+			host ? "Got it" : "Didn't get it");
         }
         if (!host)
             continue;
         no_host = 0;    /* found at least one */
-        n_hosts++;
-        /* preserve host network address to check later
-         * (would be better to preserve *all* addresses,
-         * take care of that later)
-         */
-        hostlist = (struct hostent *)
-            realloc((char *)hostlist,
-                    (unsigned)
-                    sizeof(struct hostent)*(n_hosts+1));
-        if (!hostlist)
-            return /*errno */SKDC_CANT;
-        bcopy((char *)host, (char *)&hostlist[n_hosts-1],
-              sizeof(struct hostent));
-        host = &hostlist[n_hosts-1];
-        cp = malloc((unsigned)host->h_length);
-        if (!cp) {
-            retval = /*errno */SKDC_CANT;
-            goto rtn;
-        }
-        bcopy((char *)host->h_addr, cp, host->h_length);
-/* At least Sun OS version 3.2 (or worse) and Ultrix version 2.2
-   (or worse) only return one name ... */
-#if defined(h_addr)
-        host->h_addr_list = (char **)malloc(2*sizeof(char *));
-        if (!host->h_addr_list) {
-            retval = /*errno */SKDC_CANT;
-            goto rtn;
-        }
-        host->h_addr_list[1] = NULL;
-#endif /* defined(h_addr) */
-        host->h_addr = cp;
-        bzero((char *)&hostlist[n_hosts],
-              sizeof(struct hostent));
-        to.sin_family = host->h_addrtype;
-        bcopy(host->h_addr, (char *)&to.sin_addr,
-              host->h_length);
-        to.sin_port = krb_udp_port;
-        if (send_recv(pkt, rpkt, f, &to, hostlist)) {
-            retval = KSUCCESS;
-            goto rtn;
-        }
-        if (krb_debug) {
-            printf("Timeout, error, or wrong descriptor\n");
-            (void) fflush(stdout);
-        }
+	while ((p = *(host->h_addr_list)++)) {
+	    hosts = realloc(hosts, sizeof(*hosts) * (n_hosts + 1));
+	    if (hosts == NULL)
+		return SKDC_CANT;
+	    memset (&hosts[n_hosts].addr, 0, sizeof(hosts[n_hosts].addr));
+	    hosts[n_hosts].addr.sin_family = host->h_addrtype;
+	    hosts[n_hosts].addr.sin_port = htons(k_host->port);
+	    hosts[n_hosts].proto = k_host->proto;
+	    memcpy(&hosts[n_hosts].addr.sin_addr, p,
+		   sizeof(hosts[n_hosts].addr.sin_addr));
+	    ++n_hosts;
+	    if (send_recv(pkt, rpkt, hosts[n_hosts-1].proto,
+			  &hosts[n_hosts-1].addr, hosts, n_hosts)) {
+		retval = KSUCCESS;
+		goto rtn;
+	    }
+	    if (krb_debug) {
+		krb_warning("Timeout, error, or wrong descriptor\n");
+	    }
+	}
     }
     if (no_host) {
 	if (krb_debug)
-	    fprintf(stderr, "%s: can't find any Kerberos host.\n",
-		    prog);
+	    krb_warning("%s: can't find any Kerberos host.\n",
+			prog);
         retval = SKDC_CANT;
         goto rtn;
     }
     /* retry each host in sequence */
     for (retry = 0; retry < CLIENT_KRB_RETRY; ++retry) {
-        for (host = hostlist; host->h_name != (char *)NULL; host++) {
-            to.sin_family = host->h_addrtype;
-            bcopy(host->h_addr, (char *)&to.sin_addr,
-                  host->h_length);
-            if (send_recv(pkt, rpkt, f, &to, hostlist)) {
-                retval = KSUCCESS;
-                goto rtn;
-            }
+	for (i = 0; i < n_hosts; ++i) {
+	    if (send_recv(pkt, rpkt,
+			  hosts[i].proto,
+			  &hosts[i].addr,
+			  hosts,
+			  n_hosts)) {
+		retval = KSUCCESS;
+		goto rtn;
+	    }
         }
     }
     retval = SKDC_RETRY;
 rtn:
-    (void) close(f);
-    if (hostlist) {
-        register struct hostent *hp;
-        for (hp = hostlist; hp->h_name; hp++)
-#if defined(h_addr)
-            if (hp->h_addr_list) {
-#endif /* defined(h_addr) */
-                if (hp->h_addr)
-                    free(hp->h_addr);
-#if defined(h_addr)
-                free((char *)hp->h_addr_list);
-            }
-#endif /* defined(h_addr) */
-        free((char *)hostlist);
-    }
+    free(hosts);
     return(retval);
 }
 
-/*
- * try to send out and receive message.
- * return 1 on success, 0 on failure
- */
+static int udp_socket(void)
+{
+    return socket(AF_INET, SOCK_DGRAM, 0);
+}
+
+static int udp_connect(int s, struct sockaddr_in *adr)
+{
+    return connect(s, (struct sockaddr*)adr, sizeof(*adr));
+}
+
+static int udp_send(int s, struct sockaddr_in* adr, KTEXT pkt)
+{
+    return send(s, pkt->dat, pkt->length, 0);
+}
+
+static int tcp_socket(void)
+{
+    return socket(AF_INET, SOCK_STREAM, 0);
+}
+
+static int tcp_connect(int s, struct sockaddr_in *adr)
+{
+    return connect(s, (struct sockaddr*)adr, sizeof(*adr));
+}
+
+static int tcp_send(int s, struct sockaddr_in* adr, KTEXT pkt)
+{
+    unsigned char len[4];
+    krb_put_int(pkt->length, len, 4);
+    if(send(s, len, sizeof(len), 0) != sizeof(len))
+	return -1;
+    return send(s, pkt->dat, pkt->length, 0);
+}
+
+static int udptcp_recv(void *buf, size_t len, KTEXT rpkt)
+{
+    memcpy(rpkt->dat, buf, len);
+    rpkt->length = len;
+    return 0;
+}
+
+static int url_parse(const char *url, char *host, size_t len, short *port)
+{
+    const char *p;
+    if(strncmp(url, "http://", 7))
+	return -1;
+    url += 7;
+    strncpy(host, url, len);
+    p = strchr(url, ':');
+    if(p){
+	*port = atoi(p+1);
+	if(p - url >= len)
+	    return -1;
+	host[p - url] = 0;
+    }else{
+	*port = 80;
+	host[len - 1] = 0;
+    }
+    return 0;
+}
+
+#define PROXY_VAR "krb4_proxy"
+
+static int http_connect(int s, struct sockaddr_in *adr)
+{
+    char *proxy = getenv(PROXY_VAR);
+    char host[MAXHOSTNAMELEN + 1];
+    short port;
+    struct hostent *hp;
+    struct sockaddr_in sin;
+    if(proxy == NULL)
+	return tcp_connect(s, adr);
+    if(url_parse(proxy, host, sizeof(host), &port) < 0)
+	return -1;
+    hp = gethostbyname(host);
+    if(hp == NULL)
+	return -1;
+    memset(&sin, 0, sizeof(sin));
+    sin.sin_family = AF_INET;
+    memcpy(&sin.sin_addr, hp->h_addr, sizeof(sin.sin_addr));
+    sin.sin_port = htons(port);
+    return connect(s, (struct sockaddr*)&sin, sizeof(sin));
+}
+
+static int http_send(int s, struct sockaddr_in* adr, KTEXT pkt)
+{
+    char *str;
+    char *msg;
+
+    base64_encode(pkt->dat, pkt->length, &str);
+    if(getenv(PROXY_VAR)){
+	asprintf(&msg, "GET http://%s:%d/%s HTTP/1.0\r\n\r\n",
+		 inet_ntoa(adr->sin_addr),
+		 ntohs(adr->sin_port),
+		 str);
+    }else
+	asprintf(&msg, "GET %s HTTP/1.0\r\n\r\n", str);
+    free(str);
+	
+    if(send(s, msg, strlen(msg), 0) != strlen(msg)){
+	free(msg);
+	return -1;
+    }
+    free(msg);
+    return 0;
+}
+
+static int http_recv(void *buf, size_t len, KTEXT rpkt)
+{
+    char *p;
+    char *tmp = malloc(len + 1);
+    memcpy(tmp, buf, len);
+    tmp[len] = 0;
+    p = strstr(tmp, "\r\n\r\n");
+    if(p == NULL){
+	free(tmp);
+	return -1;
+    }
+    p += 4;
+    memcpy(rpkt->dat, p, (tmp + len) - p);
+    rpkt->length = (tmp + len) - p;
+    free(tmp);
+    return 0;
+}
+
+static struct proto_descr {
+    int proto;
+    int stream_flag;
+    int (*socket)(void);
+    int (*connect)(int, struct sockaddr_in*);
+    int (*send)(int, struct sockaddr_in*, KTEXT);
+    int (*recv)(void*, size_t, KTEXT);
+} protos[] = {
+    { PROTO_UDP, 0, udp_socket, udp_connect, udp_send, udptcp_recv },
+    { PROTO_TCP, 1, tcp_socket, tcp_connect, tcp_send, udptcp_recv },
+    { PROTO_HTTP, 1, tcp_socket, http_connect, http_send, http_recv }
+};
 
 static int
-send_recv(pkt, rpkt, f, _to, addrs)
-	KTEXT pkt;
-	KTEXT rpkt;
-	int f;
-	struct sockaddr_in *_to;
-	struct hostent *addrs;
+send_recv(KTEXT pkt, KTEXT rpkt, int proto, struct sockaddr_in *adr,
+	  struct host *addrs, int n_hosts)
 {
-    fd_set readfds;
-    register struct hostent *hp;
-    struct sockaddr_in from;
-    int sin_size;
-    int numsent;
-
-    if (krb_debug) {
-        if (_to->sin_family == AF_INET)
-            printf("Sending message to %s...",
-                   inet_ntoa(_to->sin_addr));
-        else
-            printf("Sending message...");
-        (void) fflush(stdout);
+    int i;
+    int s;
+    unsigned char buf[2048];
+    int offset = 0;
+    
+    for(i = 0; i < sizeof(protos) / sizeof(protos[0]); i++){
+	if(protos[i].proto == proto)
+	    break;
     }
-    if ((numsent = sendto(f,(char *)(pkt->dat), pkt->length, 0, 
-			  (struct sockaddr *)_to,
-                          S_AD_SZ)) != pkt->length) {
-        if (krb_debug)
-            printf("sent only %d/%d\n",numsent, pkt->length);
-        return 0;
+    if(i == sizeof(protos) / sizeof(protos[0]))
+	return FALSE;
+    if((s = (*protos[i].socket)()) < 0)
+	return FALSE;
+    if((*protos[i].connect)(s, adr) < 0){
+	close(s);
+	return FALSE;
     }
-    if (krb_debug) {
-        printf("Sent\nWaiting for reply...");
-        (void) fflush(stdout);
+    if((*protos[i].send)(s, adr, pkt) < 0){
+	close(s);
+	return FALSE;
     }
-    FD_ZERO(&readfds);
-    FD_SET(f, &readfds);
-    errno = 0;
-    /* select - either recv is ready, or timeout */
-    /* see if timeout or error or wrong descriptor */
-    if (select(f + 1, &readfds, (fd_set *)0, (fd_set *)0, &timeout) < 1
-        || !FD_ISSET(f, &readfds)) {
-        if (krb_debug) {
-	    long rfds;
-	    bcopy(&readfds, &rfds, sizeof(rfds));
-            fprintf(stderr, "select failed: readfds=%lx",
-                    rfds);
-            perror("");
-        }
-        return 0;
-    }
-    sin_size = sizeof(from);
-    if (recvfrom(f, (char *)(rpkt->dat), sizeof(rpkt->dat), 0,
-		 (struct sockaddr *)&from, &sin_size)
-        < 0) {
-        if (krb_debug)
-            perror("recvfrom");
-        return 0;
-    }
-    if (krb_debug) {
-        printf("received packet from %s\n", inet_ntoa(from.sin_addr));
-        fflush(stdout);
-    }
-    for (hp = addrs; hp->h_name != (char *)NULL; hp++) {
-        if (!bcmp(hp->h_addr, (char *)&from.sin_addr.s_addr,
-                  hp->h_length)) {
-            if (krb_debug) {
-                printf("Received it\n");
-                (void) fflush(stdout);
-            }
-            return 1;
-        }
-        if (krb_debug)
-            fprintf(stderr,
-                    "packet not from %lx\n",
-                    from.sin_addr.s_addr);
-    }
-    if (krb_debug)
-        fprintf(stderr, "%s: received packet from wrong host! (%x)\n",
-                "send_to_kdc(send_rcv)", (int)from.sin_addr.s_addr);
-    return 0;
+    do{
+	fd_set readfds;
+	struct timeval timeout;
+	int len;
+	timeout.tv_sec = CLIENT_KRB_TIMEOUT;
+	timeout.tv_usec = 0;
+	FD_ZERO(&readfds);
+	FD_SET(s, &readfds);
+	
+	/* select - either recv is ready, or timeout */
+	/* see if timeout or error or wrong descriptor */
+	if(select(s + 1, &readfds, 0, 0, &timeout) < 1 
+	   || !FD_ISSET(s, &readfds)) {
+	    if (krb_debug)
+		krb_warning("select failed: errno = %d\n", errno);
+	    close(s);
+	    return FALSE;
+	}
+	len = recv(s, buf + offset, sizeof(buf) - offset, 0);
+	if(len <= 0)
+	    break;
+	offset += len;
+    }while(protos[i].stream_flag);
+    close(s);
+    if((*protos[i].recv)(buf, offset, rpkt) < 0)
+	return FALSE;
+    return TRUE;
 }

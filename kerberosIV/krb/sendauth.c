@@ -1,10 +1,4 @@
-/*
- * This software may now be redistributed outside the US.
- *
- * $Source: /home/cvs/src/kerberosIV/krb/Attic/sendauth.c,v $
- *
- * $Locker:  $
- */
+/* $KTH: sendauth.c,v 1.15 1997/04/18 14:11:36 joda Exp $ */
 
 /* 
   Copyright (C) 1989 by the Massachusetts Institute of Technology
@@ -29,25 +23,10 @@ or implied warranty.
 
 #include "krb_locl.h"
 
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <syslog.h>
-
 /*
- * If the protocol changes, you will need to change the version string
- * and make appropriate changes in krb_recvauth.c
- */
-#define	KRB_SENDAUTH_VERS "AUTHV0.1" /* MUST be KRB_SENDAUTH_VLEN chars */
-
-
-/*
- * This file contains two routines: krb_sendauth() and krb_sendsrv().
- *
  * krb_sendauth() transmits a ticket over a file descriptor for a
  * desired service, instance, and realm, doing mutual authentication
  * with the server if desired.
- *
- * krb_sendsvc() sends a service name to a remote knetd server.
  */
 
 /*
@@ -113,157 +92,72 @@ or implied warranty.
  * ticket->length	ticket->dat		ticket itself
  */
 
-/*
- * XXX: Note that krb_rd_priv() is coded in such a way that
- * "msg_data->app_data" will be pointing into "priv_buf", which
- * will disappear when krb_sendauth() returns.
- */
-
 int
-krb_sendauth(options, fd, ticket, service, inst, realm, checksum,
-	     msg_data, cred, schedule, laddr, faddr, version)
-	int32_t options;	/* bit-pattern of options */
-	int fd;			/* file descriptor to write onto */
-	KTEXT ticket;		/* where to put ticket (return); or
+krb_sendauth(int32_t options,	/* bit-pattern of options */
+	     int fd,		/* file descriptor to write onto */
+	     KTEXT ticket,	/* where to put ticket (return); or
 				 * supplied in case of KOPT_DONT_MK_REQ */
-	char *service;		/* service name, instance, realm */
-	char *inst;		/* checksum to include in request */
-	char *realm;		/* mutual auth MSG_DAT (return) */
-	u_int32_t checksum;	/* credentials (return) */
-	MSG_DAT *msg_data;	/* key schedule (return) */
-	CREDENTIALS *cred;	/* local address */
-	struct des_ks_struct *schedule;
-	struct sockaddr_in *faddr; /* address of foreign host on fd */
-	struct sockaddr_in *laddr;
-	char *version;		/* version string */
+	     char *service,	/* service name, instance, realm */
+	     char *instance,
+	     char *realm,
+	     u_int32_t checksum, /* checksum to include in request */
+	     MSG_DAT *msg_data,	/* mutual auth MSG_DAT (return) */
+	     CREDENTIALS *cred,	/* credentials (return) */
+	     struct des_ks_struct *schedule, /* key schedule (return) */
+	     struct sockaddr_in *laddr, /* local address */
+	     struct sockaddr_in *faddr,	/* address of foreign host on fd */
+	     char *version)	/* version string */
 {
-    int rem, i, cc;
-    char srv_inst[INST_SZ];
-    char krb_realm[REALM_SZ];
-    char buf[BUFSIZ];
-    u_int32_t tkt_len;
-    u_char priv_buf[1024];
-    u_int32_t cksum;
+    int ret;
+    KTEXT_ST buf;
+    char realrealm[REALM_SZ];
 
-    rem=KSUCCESS;
-
-    /* get current realm if not passed in */
-    if (!realm) {
-	rem = krb_get_lrealm(krb_realm,1);
-	if (rem != KSUCCESS)
-	    return(rem);
-	realm = krb_realm;
+    if (realm == NULL) {
+	ret = krb_get_lrealm (realrealm, 1);
+	if (ret != KSUCCESS)
+	    return ret;
+	realm = realrealm;
     }
-
-    /* copy instance into local storage, canonicalizing if desired */
-    if (options & KOPT_DONT_CANON)
-	(void) strncpy(srv_inst, inst, INST_SZ);
-    else
-	(void) strncpy(srv_inst, krb_get_phost(inst), INST_SZ);
-
-    /* get the ticket if desired */
-    if (!(options & KOPT_DONT_MK_REQ)) {
-	rem = krb_mk_req(ticket, service, srv_inst, realm, checksum);
-	if (rem != KSUCCESS)
-	    return(rem);
-    }
-
-#ifdef ATHENA_COMPAT
-    /* this is only for compatibility with old servers */
-    if (options & KOPT_DO_OLDSTYLE) {
-	(void) snprintf(buf, sizeof(buf), "%d ", ticket->length);
-	(void) write(fd, buf, strlen(buf));
-	(void) write(fd, (char *) ticket->dat, ticket->length);
-	return(rem);
-    }
-#endif /* ATHENA_COMPAT */
-    /* if mutual auth, get credentials so we have service session
-       keys for decryption below */
-    if (options & KOPT_DO_MUTUAL)
-	if ((cc = krb_get_cred(service, srv_inst, realm, cred)))
-	    return(cc);
-
-    /* zero the buffer */
-    (void) bzero(buf, BUFSIZ);
-
-    /* insert version strings */
-    (void) strncpy(buf, KRB_SENDAUTH_VERS, KRB_SENDAUTH_VLEN);
-    (void) strncpy(buf+KRB_SENDAUTH_VLEN, version, KRB_SENDAUTH_VLEN);
-
-    /* increment past vers strings */
-    i = 2*KRB_SENDAUTH_VLEN;
-
-    /* put ticket length into buffer */
-    tkt_len = htonl(ticket->length);
-    (void) bcopy((char *) &tkt_len, buf+i, sizeof(tkt_len));
-    i += sizeof(tkt_len);
-
-    /* put ticket into buffer */
-    (void) bcopy((char *) ticket->dat, buf+i, ticket->length);
-    i += ticket->length;
-
-    /* write the request to the server */
-    if ((cc = krb_net_write(fd, buf, i)) != i)
-	return(cc);
-
-    /* mutual authentication, if desired */
+    ret = krb_mk_auth (options, ticket, service, instance, realm, checksum,
+		       version, &buf);
+    if (ret != KSUCCESS)
+	return ret;
+    ret = krb_net_write(fd, buf.dat, buf.length);
+    if(ret < 0)
+	return -1;
+      
     if (options & KOPT_DO_MUTUAL) {
-	/* get the length of the reply */
-	if (krb_net_read(fd, (char *) &tkt_len, sizeof(tkt_len)) !=
-	    sizeof(tkt_len))
-	    return(errno);
-	tkt_len = ntohl(tkt_len);
+	char tmp[4];
+	u_int32_t len;
+	char inst[INST_SZ];
 
-	/* if the length is negative, the server failed to recognize us. */
-	if ((tkt_len < 0) || (tkt_len > sizeof(priv_buf)))
-	    return(KFAILURE);	 /* XXX */
-	/* read the reply... */
-	if (krb_net_read(fd, (char *)priv_buf, (int) tkt_len) != (int) tkt_len)
-	    return(errno);
+	ret = krb_net_read (fd, tmp, 4);
+	if (ret < 0)
+	    return -1;
 
-	/* ...and decrypt it */
-#ifndef NOENCRYPTION
-	des_key_sched(&cred->session,schedule);
-#endif
-	if ((cc = krb_rd_priv(priv_buf, tkt_len, schedule,
-			     &cred->session, faddr, laddr, msg_data)))
-	    return(cc);
+	krb_get_int (tmp, &len, 4, 0);
+	if (len == 0xFFFFFFFF || len > sizeof(buf.dat))
+	    return KFAILURE;
+	buf.length = len;
+	ret = krb_net_read (fd, buf.dat, len);
+	if (ret < 0)
+	    return -1;
 
-	/* fetch the (modified) checksum */
-	(void) bcopy((char *)msg_data->app_data, (char *)&cksum,
-		     sizeof(cksum));
-	cksum = ntohl(cksum);
+	if (options & KOPT_DONT_CANON)
+	    strncpy (inst, instance, sizeof(inst));
+	else
+	    strncpy (inst, krb_get_phost(instance), sizeof(inst));
 
-	/* if it doesn't match, fail */
-	if (cksum != checksum + 1)
-	    return(KFAILURE);	 /* XXX */
+	ret = krb_get_cred (service, inst, realm, cred);
+	if (ret != KSUCCESS)
+	    return ret;
+
+	des_key_sched(&cred->session, schedule);
+
+	ret = krb_check_auth (&buf, checksum, msg_data, &cred->session, 
+			      schedule, laddr, faddr);
+	if (ret != KSUCCESS)
+	    return ret;
     }
-    return(KSUCCESS);
+    return KSUCCESS;
 }
-
-#ifdef ATHENA_COMPAT
-/*
- * krb_sendsvc
- */
-
-int
-krb_sendsvc(fd, service)
-	int fd;
-	char *service;
-{
-    /* write the service name length and then the service name to
-       the fd */
-    u_int32_t serv_length;
-    int cc;
-
-    serv_length = htonl(strlen(service));
-    if ((cc = krb_net_write(fd, (char *) &serv_length,
-	sizeof(serv_length)))
-	!= sizeof(serv_length))
-	return(cc);
-    if ((cc = krb_net_write(fd, service, strlen(service)))
-	!= strlen(service))
-	return(cc);
-    return(KSUCCESS);
-}
-#endif /* ATHENA_COMPAT */

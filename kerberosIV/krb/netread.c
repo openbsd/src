@@ -1,10 +1,4 @@
-/*
- * This software may now be redistributed outside the US.
- *
- * $Source: /home/cvs/src/kerberosIV/krb/Attic/netread.c,v $
- *
- * $Locker:  $
- */
+/* $KTH: netread.c,v 1.7 1997/06/19 23:56:44 assar Exp $ */
 
 /* 
   Copyright (C) 1989 by the Massachusetts Institute of Technology
@@ -40,12 +34,10 @@ or implied warranty.
  */
 
 int
-krb_net_read(fd, buf, len)
-	int fd;
-	register char *buf;
-	register int len;
+krb_net_read (int fd, void *v, size_t len)
 {
     int cc, len2 = 0;
+    char *buf = v;
 
     do {
 	cc = read(fd, buf, len);

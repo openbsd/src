@@ -1,10 +1,4 @@
-/*
- * This software may now be redistributed outside the US.
- *
- * $Source: /home/cvs/src/kerberosIV/krb/Attic/read_service_key.c,v $
- *
- * $Locker:  $
- */
+/* $KTH: read_service_key.c,v 1.8 1997/03/23 03:53:16 joda Exp $ */
 
 /* 
   Copyright (C) 1989 by the Massachusetts Institute of Technology
@@ -62,15 +56,13 @@ or implied warranty.
  */
 
 
-/*ARGSUSED */
 int
-read_service_key(service, instance, realm, kvno, file, key)
-	char *service;		/* Service Name */
-	char *instance;		/* Instance name or "*" */
-	char *realm;		/* Realm */
-	int kvno;		/* Key version number */
-	char *file;		/* Filename */
-	char *key;		/* Pointer to key to be filled in */
+read_service_key(char *service,	/* Service Name */
+		 char *instance, /* Instance name or "*" */
+		 char *realm,	/* Realm */
+		 int kvno,	/* Key version number */
+		 char *file,	/* Filename */
+		 char *key)	/* Pointer to key to be filled in */
 {
     char serv[SNAME_SZ];
     char inst[INST_SZ];
@@ -78,18 +70,18 @@ read_service_key(service, instance, realm, kvno, file, key)
     unsigned char vno;          /* Key version number */
     int wcard;
 
-    int stab, open(const char *, int, ...);
+    int stab;
 
-    if ((stab = open(file, 0, 0)) < 0)
+    if ((stab = open(file, O_RDONLY, 0)) < 0)
         return(KFAILURE);
 
     wcard = (instance[0] == '*') && (instance[1] == '\0');
 
     while (getst(stab,serv,SNAME_SZ) > 0) { /* Read sname */
-        (void) getst(stab,inst,INST_SZ); /* Instance */
-        (void) getst(stab,rlm,REALM_SZ); /* Realm */
+        getst(stab,inst,INST_SZ); /* Instance */
+        getst(stab,rlm,REALM_SZ); /* Realm */
         /* Vers number */
-        if (read(stab,(char *)&vno,1) != 1) {
+        if (read(stab, &vno, 1) != 1) {
 	    close(stab);
             return(KFAILURE);
 	}
@@ -105,29 +97,20 @@ read_service_key(service, instance, realm, kvno, file, key)
         if (!wcard && strcmp(inst,instance))
             continue;
         if (wcard)
-            (void) strncpy(instance,inst,INST_SZ);
+            strncpy(instance,inst,INST_SZ);
         /* Is this the right realm */
-#ifdef ATHENA_COMPAT
-	/* XXX For backward compatibility:  if keyfile says "Athena"
-	   and caller wants "ATHENA.MIT.EDU", call it a match */
-        if (strcmp(rlm,realm) &&
-	    (strcmp(rlm,"Athena") ||
-	     strcmp(realm,"ATHENA.MIT.EDU")))
-	    continue;
-#else /* ! ATHENA_COMPAT */
         if (strcmp(rlm,realm)) 
 	    continue;
-#endif /* ATHENA_COMPAT */
 
         /* How about the key version number */
         if (kvno && kvno != (int) vno)
             continue;
 
-        (void) close(stab);
+        close(stab);
         return(KSUCCESS);
     }
 
     /* Can't find the requested service */
-    (void) close(stab);
+    close(stab);
     return(KFAILURE);
 }

@@ -1,10 +1,4 @@
-/*
- * This software may now be redistributed outside the US.
- *
- * $Source: /home/cvs/src/kerberosIV/krb/Attic/krb_err_txt.c,v $
- *
- * $Locker:  $
- */
+/*     $KTH: krb_err_txt.c,v 1.12 1997/04/02 05:37:10 joda Exp $    */
 
 /* 
   Copyright (C) 1989 by the Massachusetts Institute of Technology
@@ -29,6 +23,7 @@ or implied warranty.
 
 #include "krb_locl.h"
 
+
 /*
  * This file contains an array of error text strings.
  * The associated error codes (which are defined in "krb.h")
@@ -47,7 +42,7 @@ const char *krb_err_txt[256] = {
   "Principal unknown (kerberos)",			/* 008 */
   "Principal not unique (kerberos)",			/* 009 */
   "Principal has null key (kerberos)",			/* 010 */
-  "Reserved error message 11 (kerberos)",		/* 011 */
+  "Timeout in request (kerberos)",			/* 011 */
   "Reserved error message 12 (kerberos)",		/* 012 */
   "Reserved error message 13 (kerberos)",		/* 013 */
   "Reserved error message 14 (kerberos)",		/* 014 */
@@ -99,16 +94,16 @@ const char *krb_err_txt[256] = {
   "Reserved error message 60 (send_to_kdc)",		/* 060 */
   "Warning: Not ALL tickets returned",			/* 061 */
   "Password incorrect",					/* 062 */
-  "Protocol error (get_intkt)",				/* 063 */
+  "Protocol error (get_in_tkt)",			/* 063 */
   "Reserved error message 64 (get_in_tkt)",		/* 064 */
   "Reserved error message 65 (get_in_tkt)",		/* 065 */
   "Reserved error message 66 (get_in_tkt)",		/* 066 */
   "Reserved error message 67 (get_in_tkt)",		/* 067 */
   "Reserved error message 68 (get_in_tkt)",		/* 068 */
   "Reserved error message 69 (get_in_tkt)",		/* 069 */
-  "Generic error (get_intkt)",				/* 070 */
+  "Generic error (get_in_tkt)(can't write ticket file)", /* 070 */
   "Don't have ticket granting ticket (get_ad_tkt)",	/* 071 */
-  "Reserved error message 72 (get_ad_tkt)",		/* 072 */
+  "Can't get inter-realm ticket granting ticket (get_ad_tkt)",	/* 072 */
   "Reserved error message 73 (get_ad_tkt)",		/* 073 */
   "Reserved error message 74 (get_ad_tkt)",		/* 074 */
   "Reserved error message 75 (get_ad_tkt)",		/* 075 */
@@ -293,3 +288,13 @@ const char *krb_err_txt[256] = {
   "(reserved)",
   "Generic kerberos error (kfailure)",			/* 255 */
 };
+
+static const char err_failure[] = "Illegal error code passed (krb_get_err_text)";
+
+const char *
+krb_get_err_text(int code)
+{
+  if(code < 0 || code >= MAX_KRB_ERRORS)
+    return err_failure;
+  return krb_err_txt[code];
+}

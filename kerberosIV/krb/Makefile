@@ -1,19 +1,83 @@
 #	@(#)Makefile	8.1 (Berkeley) 6/1/93
 
 LIB=	krb
-CFLAGS+=-I${.CURDIR}
-SRCS=	cr_err_reply.c create_auth_reply.c create_ciph.c \
-	create_death_packet.c create_ticket.c debug_decl.c decomp_ticket.c \
-	dest_tkt.c extract_ticket.c fgetst.c get_ad_tkt.c get_admhst.c \
-	get_cred.c get_in_tkt.c get_krbhst.c get_krbrlm.c get_phost.c \
-	get_pw_tkt.c get_request.c get_svc_in_tkt.c get_tf_fullname.c \
-	get_tf_realm.c getrealm.c getst.c in_tkt.c k_localtime.c klog.c \
-	kname_parse.c kntoln.c kparse.c krb_err.c krb_err_txt.c \
-	krb_get_in_tkt.c kuserok.c lifetime.c log.c mk_err.c mk_priv.c \
-	mk_req.c mk_safe.c month_sname.c netread.c netwrite.c one.c \
-	pkt_cipher.c pkt_clen.c rd_err.c rd_priv.c rd_req.c rd_safe.c \
-	read_service_key.c recvauth.c save_credentials.c send_to_kdc.c \
-	sendauth.c str2key.c tf_util.c tkt_string.c
+CFLAGS+=-I${.CURDIR} -DPARANOIA
+SRCS=	cr_err_reply.c \
+          create_auth_reply.c \
+          create_ciph.c \
+          create_death_packet.c \
+          create_ticket.c \
+          dest_tkt.c \
+          get_in_tkt.c \
+          get_svc_in_tkt.c \
+          getrealm.c \
+          k_localtime.c \
+          krb_err_txt.c \
+          krb_get_in_tkt.c \
+          kuserok.c \
+          parse_name.c \
+          kntoln.c \
+          mk_auth.c \
+          krb_check_auth.c \
+          mk_err.c \
+          mk_safe.c \
+          rd_err.c \
+          rd_safe.c \
+          recvauth.c \
+          mk_priv.c \
+          rd_req.c \
+          decomp_ticket.c \
+          lifetime.c \
+          month_sname.c \
+          stime.c \
+          read_service_key.c \
+          getst.c \
+          sendauth.c \
+          netread.c \
+          netwrite.c \
+          rd_priv.c \
+          krb_equiv.c \
+          str2key.c \
+          get_ad_tkt.c \
+          mk_req.c \
+          get_cred.c \
+          get_tf_realm.c \
+          get_tf_fullname.c \
+          one.c \
+          save_credentials.c \
+          send_to_kdc.c \
+          get_host.c \
+          get_krbrlm.c \
+          k_gethostname.c \
+          tf_util.c \
+          debug_decl.c \
+          k_flock.c \
+          tkt_string.c \
+          getaddrs.c \
+          k_getsockinst.c \
+          k_getport.c \
+          lsb_addr_comp.c \
+          name2name.c \
+          get_default_principal.c \
+          realm_parse.c \
+          verify_user.c \
+          rw.c \
+          kdc_reply.c \
+          encrypt_ktext.c \
+          check_time.c \
+          krb_err.c \
+          et_list.c \
+          resolve.c \
+          unparse_name.c \
+          logging.c \
+          k_concat.c \
+	  strtok_r.c \
+	  asprintf.c \
+	  base64.c 
+
+# XXX base64.c, strtok_r.c and asprintf.c should really be somewhere else. 
+# (or replaced) (they are from libroken)
+
 MAN=	kerberos.3 krb_realmofhost.3 krb_sendauth.3 krb_set_tkt_string.3 \
 	kuserok.3 tf_util.3
 MLINKS+=kerberos.3 krb_mk_req.3 kerberos.3 krb_rd_req.3 kerberos.3 krb_kntoln.3 \

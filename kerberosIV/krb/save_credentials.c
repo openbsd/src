@@ -1,10 +1,4 @@
-/*
- * This software may now be redistributed outside the US.
- *
- * $Source: /home/cvs/src/kerberosIV/krb/Attic/save_credentials.c,v $
- *
- * $Locker:  $
- */
+/* $KTH: save_credentials.c,v 1.5 1997/03/23 03:53:17 joda Exp $ */
 
 /* 
   Copyright (C) 1989 by the Massachusetts Institute of Technology
@@ -42,16 +36,14 @@ or implied warranty.
  */
 
 int
-save_credentials(service, instance, realm, session, lifetime, kvno,
-		 ticket, issue_date)
-	char *service;		/* Service name */
-	char *instance;		/* Instance */
-	char *realm;		/* Auth domain */
-	unsigned char *session;	/* Session key */
-	int lifetime;		/* Lifetime */
-	int kvno;		/* Key version number */
-	KTEXT ticket;		/* The ticket itself */
-	int32_t issue_date;	/* The issue time */
+save_credentials(char *service,	/* Service name */
+		 char *instance, /* Instance */
+		 char *realm,	/* Auth domain */
+		 unsigned char *session, /* Session key */
+		 int lifetime,	/* Lifetime */
+		 int kvno,	/* Key version number */
+		 KTEXT ticket,	/* The ticket itself */
+		 int32_t issue_date) /* The issue time */
 {
     int tf_status;   /* return values of the tf_util calls */
 
@@ -62,6 +54,6 @@ save_credentials(service, instance, realm, session, lifetime, kvno,
     /* Save credentials by appending to the ticket file */
     tf_status = tf_save_cred(service, instance, realm, session,
 			     lifetime, kvno, ticket, issue_date);
-    (void) tf_close();
+    tf_close();
     return (tf_status);
 }

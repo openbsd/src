@@ -1,10 +1,4 @@
-/*
- * This software may now be redistributed outside the US.
- *
- * $Source: /home/cvs/src/kerberosIV/krb/Attic/get_cred.c,v $
- *
- * $Locker:  $
- */
+/* $KTH: get_cred.c,v 1.6 1997/05/30 17:38:29 bg Exp $ */
 
 /* 
   Copyright (C) 1989 by the Massachusetts Institute of Technology
@@ -39,13 +33,16 @@ or implied warranty.
  */
 
 int
-krb_get_cred(service, instance, realm, c)
-	char *service;		/* Service name */
-	char *instance;		/* Instance */
-	char *realm;		/* Auth domain */
-	CREDENTIALS *c;		/* Credentials struct */
+krb_get_cred(char *service,	/* Service name */
+	     char *instance,	/* Instance */
+	     char *realm,	/* Auth domain */
+	     CREDENTIALS *c)	/* Credentials struct */
 {
     int tf_status;              /* return value of tf function calls */
+    CREDENTIALS cr;
+
+    if (c == 0)
+        c = &cr;
 
     /* Open ticket file and lock it for shared reading */
     if ((tf_status = tf_init(TKT_FILE, R_TKT_FIL)) != KSUCCESS)
@@ -60,13 +57,12 @@ krb_get_cred(service, instance, realm, c)
     /* Search for requested service credentials and copy into c */
        
     while ((tf_status = tf_get_cred(c)) == KSUCCESS) {
-        /* Is this the right ticket? */
 	if ((strcmp(c->service,service) == 0) &&
            (strcmp(c->instance,instance) == 0) &&
            (strcmp(c->realm,realm) == 0))
 		   break;
     }
-    (void) tf_close();
+    tf_close();
 
     if (tf_status == EOF)
 	return (GC_NOTKT);

@@ -1,10 +1,4 @@
-/*
- * This software may now be redistributed outside the US.
- *
- * $Source: /home/cvs/src/kerberosIV/krb/Attic/netwrite.c,v $
- *
- * $Locker:  $
- */
+/* $KTH: netwrite.c,v 1.8 1997/06/19 23:56:25 assar Exp $ */
 
 /* 
   Copyright (C) 1989 by the Massachusetts Institute of Technology
@@ -39,13 +33,12 @@ or implied warranty.
  */
 
 int
-krb_net_write(fd, buf, len)
-	int fd;
-	register char *buf;
-	int len;
+krb_net_write(int fd, const void *v, size_t len)
 {
     int cc;
-    register int wrlen = len;
+    int wrlen = len;
+    const char *buf = (const char*)v;
+
     do {
 	cc = write(fd, buf, wrlen);
 	if (cc < 0)

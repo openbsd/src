@@ -1,10 +1,4 @@
-/*
- * This software may now be redistributed outside the US.
- *
- * $Source: /home/cvs/src/kerberosIV/krb/Attic/dest_tkt.c,v $
- *
- * $Locker:  $
- */
+/* $KTH: dest_tkt.c,v 1.11 1997/05/19 03:03:40 assar Exp $ */
 
 /* 
   Copyright (C) 1989 by the Massachusetts Institute of Technology
@@ -29,13 +23,6 @@ or implied warranty.
 
 #include "krb_locl.h"
 
-#include <sys/file.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#ifdef TKT_SHMEM
-#include <sys/param.h>
-#endif
-
 /*
  * dest_tkt() is used to destroy the ticket store upon logout.
  * If the ticket file does not exist, dest_tkt() returns RET_TKFIL.
@@ -46,18 +33,15 @@ or implied warranty.
  */
 
 int
-dest_tkt()
+dest_tkt(void)
 {
     char *file = TKT_FILE;
     int i,fd;
     struct stat statb;
     char buf[BUFSIZ];
-#ifdef TKT_SHMEM
-    char shmidname[MaxPathLen];
-#endif /* TKT_SHMEM */
 
     errno = 0;
-    if (lstat(file,&statb) < 0)
+    if (lstat(file, &statb) < 0)      
 	goto out;
 
     if (!(statb.st_mode & S_IFREG)
@@ -70,31 +54,23 @@ dest_tkt()
     if ((fd = open(file, O_RDWR, 0)) < 0)
 	goto out;
 
-    bzero(buf, BUFSIZ);
+    memset(buf, 0, BUFSIZ);
 
-    for (i = 0; i < statb.st_size; i += BUFSIZ)
-	if (write(fd, buf, BUFSIZ) != BUFSIZ) {
-	    (void) fsync(fd);
-	    (void) close(fd);
+    for (i = 0; i < statb.st_size; i += sizeof(buf))
+	if (write(fd, buf, sizeof(buf)) != sizeof(buf)) {
+	    fsync(fd);
+	    close(fd);
 	    goto out;
 	}
+	
 
-    (void) fsync(fd);
-    (void) close(fd);
-
-    (void) unlink(file);
+    fsync(fd);
+    close(fd);
+    
+    unlink(file);
 
 out:
     if (errno == ENOENT) return RET_TKFIL;
     else if (errno != 0) return KFAILURE;
-#ifdef TKT_SHMEM
-    /* 
-     * handle the shared memory case 
-     */
-    (void) strcpy(shmidname, file);
-    (void) strcat(shmidname, ".shm");
-    if ((i = krb_shm_dest(shmidname)) != KSUCCESS)
-	return(i);
-#endif /* TKT_SHMEM */
     return(KSUCCESS);
 }

@@ -1,55 +1,68 @@
-/*
- * This software may now be redistributed outside the US.
- *
- * $Source: /home/cvs/src/kerberosIV/krb/Attic/kuserok.c,v $
- *
- * $Locker:  $
- */
-
-/* 
-  Copyright (C) 1989 by the Massachusetts Institute of Technology
-
-   Export of this software from the United States of America is assumed
-   to require a specific license from the United States Government.
-   It is the responsibility of any person or organization contemplating
-   export to obtain such a license before exporting.
-
-WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
-distribute this software and its documentation for any purpose and
-without fee is hereby granted, provided that the above copyright
-notice appear in all copies and that both that copyright notice and
-this permission notice appear in supporting documentation, and that
-the name of M.I.T. not be used in advertising or publicity pertaining
-to distribution of the software without specific, written prior
-permission.  M.I.T. makes no representations about the suitability of
-this software for any purpose.  It is provided "as is" without express
-or implied warranty.
-
-  */
+/* $KTH: kuserok.c,v 1.21 1997/04/01 08:18:35 joda Exp $ */
 
 /*
- * kuserok: check if a kerberos principal has
- * access to a local account
+ * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * (Royal Institute of Technology, Stockholm, Sweden).
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by the Kungliga Tekniska
+ *      Högskolan and its contributors.
+ * 
+ * 4. Neither the name of the Institute nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
 #include "krb_locl.h"
-
-#include <pwd.h>
-#include <sys/param.h>
-#include <sys/socket.h>
-#include <sys/stat.h>
-#include <sys/file.h>
 
 #define OK 0
 #define NOTOK 1
 #define MAX_USERNAME 10
 
-/*
- * Given a Kerberos principal "kdata", and a local username "luser",
- * determine whether user is authorized to login according to the
- * authorization file ("~luser/.klogin" by default).  Returns OK
- * if authorized, NOTOK if not authorized.
+/* 
+ * Given a Kerberos principal and a local username, determine whether
+ * user is authorized to login according to the authorization file
+ * ("~luser/.klogin" by default).  Returns OK if authorized, NOTOK if
+ * not authorized.
  *
+ * IMPORTANT CHANGE: To eliminate the need of making a distinction
+ * between the 3 cases:
+ *
+ * 1. We can't verify that a .klogin file doesn't exist (no home dir).
+ * 2. It's there but we aren't allowed to read it.
+ * 3. We can read it and ~luser@LOCALREALM is (not) included.
+ *
+ * We instead make the assumption that luser@LOCALREALM is *always*
+ * included. Thus it is impossible to have an empty .klogin file and
+ * also to exclude luser@LOCALREALM from it. Root is treated differently
+ * since it's home should always be available.
+ *
+ * OLD STRATEGY:
  * If there is no account for "luser" on the local machine, returns
  * NOTOK.  If there is no authorization file, and the given Kerberos
  * name "kdata" translates to the same name as "luser" (using
@@ -64,148 +77,80 @@ or implied warranty.
  *
  * one entry per line.
  *
- * The ATHENA_COMPAT code supports old-style Athena ~luser/.klogin
- * file entries.  See the file "kparse.c".
  */
-
-#ifdef ATHENA_COMPAT
-
-#include <kparse.h>
-
-/*
- * The parmtable defines the keywords we will recognize with their
- * default values, and keeps a pointer to the found value.  The found
- * value should be filled in with strsave(), since FreeParameterSet()
- * will release memory for all non-NULL found strings. 
- *
-*** NOTE WELL! *** 
- *
- * The table below is very nice, but we cannot hard-code a default for the
- * realm: we have to get the realm via krb_get_lrealm().  Even though the
- * default shows as "from krb_get_lrealm, below", it gets changed in
- * kuserok to whatever krb_get_lrealm() tells us.  That code assumes that
- * the realm will be the entry number in the table below, so if you
- * change the order of the entries below, you have to change the
- * #definition of REALM_SCRIPT to reflect it. 
- */
-#define REALM_SUBSCRIPT 1
-parmtable kparm[] = {
-
-/* keyword	default 			found value     */
-{"user",	"", 				(char *) NULL},
-{"realm",	"see krb_get_lrealm, below",	(char *) NULL},
-{"instance",	 "",				(char *) NULL},
-};
-#define KPARMS kparm,PARMCOUNT(kparm)
-#endif /* ATHENA_COMPAT */
 
 int
-kuserok(kdata, luser)
-	AUTH_DAT *kdata;
-	char *luser;
+krb_kuserok(char *name, char *instance, char *realm, char *luser)
 {
-    struct stat sbuf;
     struct passwd *pwd;
-    char pbuf[MAXPATHLEN];
-    int isok = NOTOK, rc;
-    FILE *fp;
-    char kuser[MAX_USERNAME];
-    char principal[ANAME_SZ], inst[INST_SZ], realm[REALM_SZ];
-    char linebuf[BUFSIZ];
-    char *newline;
-    int gobble;
-#ifdef ATHENA_COMPAT
-    char local_realm[REALM_SZ];
-#endif /* ATHENA_COMPAT */
+    char lrealm[REALM_SZ];
+    FILE *f;
+    char line[1024];
+    char file[MAXPATHLEN];
+    struct stat st;
 
-    /* no account => no access */
-    if ((pwd = getpwnam(luser)) == NULL) {
-	return(NOTOK);
+    pwd = getpwnam(luser);
+    if(pwd == NULL)
+	return NOTOK;
+    if(krb_get_lrealm(lrealm, 1))
+	return NOTOK;
+    if(pwd->pw_uid != 0 &&
+       strcmp(name, luser) == 0 &&
+       strcmp(instance, "") == 0 &&
+       strcmp(realm, lrealm) == 0)
+	return OK;
+    strcpy(file, pwd->pw_dir);
+    strcat(file, "/.klogin");
+
+    f = fopen(file, "r");
+    if(f == NULL)
+	return NOTOK;
+    
+    /* this is not a working test in filesystems like AFS and DFS */
+    if(fstat(fileno(f), &st) < 0){
+	fclose(f);
+	return NOTOK;
     }
-    snprintf(pbuf, sizeof pbuf, "%s/.klogin", pwd->pw_dir);
-
-    if (access(pbuf, F_OK)) {	 /* not accessible */
-	/*
-	 * if he's trying to log in as himself, and there is no .klogin file,
-	 * let him.  To find out, call
-	 * krb_kntoln to convert the triple in kdata to a name which we can
-	 * string compare. 
-	 */
-	if (!krb_kntoln(kdata, kuser) && (strcmp(kuser, luser) == 0)) {
-	    return(OK);
-	}
+    
+    if(st.st_uid != pwd->pw_uid){
+	fclose(f);
+	return NOTOK;
     }
-    /* open ~/.klogin */
-    if ((fp = fopen(pbuf, "r")) == NULL) {
-	return(NOTOK);
+    
+    while(fgets(line, sizeof(line), f)){
+	char fname[ANAME_SZ], finst[INST_SZ], frealm[REALM_SZ];
+	if(line[strlen(line) - 1] != '\n')
+	    /* read till end of line */
+	    while(1){
+		int c = fgetc(f);
+		if(c == '\n' || c == EOF)
+		    break;
+	    }
+	else
+	    line[strlen(line) - 1] = 0;
+	
+	if(kname_parse(fname, finst, frealm, line))
+	    continue;
+	if(strcmp(name, fname))
+	    continue;
+	if(strcmp(instance, finst))
+	    continue;
+	if(frealm[0] == 0)
+	    strcpy(frealm, lrealm);
+	if(strcmp(realm, frealm))
+	    continue;
+	fclose(f);
+	return OK;
     }
-    /*
-     * security:  if the user does not own his own .klogin file,
-     * do not grant access
-     */
-    if (fstat(fileno(fp), &sbuf)) {
-	fclose(fp);
-	return(NOTOK);
-    }
-    if (sbuf.st_uid != pwd->pw_uid) {
-	fclose(fp);
-	return(NOTOK);
-    }
-
-#ifdef ATHENA_COMPAT
-    /* Accept old-style .klogin files */
-
-    /*
-     * change the default realm from the hard-coded value to the
-     * accepted realm that Kerberos specifies. 
-     */
-    rc = krb_get_lrealm(local_realm, 1);
-    if (rc == KSUCCESS)
-	kparm[REALM_SUBSCRIPT].defvalue = local_realm;
-    else
-	return (rc);
-
-    /* check each line */
-    while ((isok != OK) && (rc = fGetParameterSet(fp, KPARMS)) != PS_EOF) {
-	switch (rc) {
-	case PS_BAD_KEYWORD:
-	case PS_SYNTAX:
-	    while (((gobble = fGetChar(fp)) != EOF) && (gobble != '\n'));
-	    break;
-
-	case PS_OKAY:
-	    isok = (ParmCompare(KPARMS, "user", kdata->pname) ||
-		    ParmCompare(KPARMS, "instance", kdata->pinst) ||
-		    ParmCompare(KPARMS, "realm", kdata->prealm));
-	    break;
-
-	default:
-	    break;
-	}
-	FreeParameterSet(kparm, PARMCOUNT(kparm));
-    }
-    /* reset the stream for parsing new-style names, if necessary */
-    rewind(fp);
-#endif /* ATHENA_COMPAT */
-
-    /* check each line */
-    while ((isok != OK) && (fgets(linebuf, BUFSIZ, fp) != NULL)) {
-	/* null-terminate the input string */
-	linebuf[BUFSIZ-1] = '\0';
-	newline = NULL;
-	/* nuke the newline if it exists */
-	if ((newline = strchr(linebuf, '\n')))
-	    *newline = '\0';
-	rc = kname_parse(principal, inst, realm, linebuf);
-	if (rc == KSUCCESS) {
-	    isok = (strncmp(kdata->pname, principal, ANAME_SZ) ||
-		    strncmp(kdata->pinst, inst, INST_SZ) ||
-		    strncmp(kdata->prealm, realm, REALM_SZ));
-	}
-	/* clean up the rest of the line if necessary */
-	if (!newline)
-	    while (((gobble = getc(fp)) != EOF) && gobble != '\n');
-    }
-    fclose(fp);
-    return(isok);
+    fclose(f);
+    return NOTOK;
 }
+
+/* compatibility interface */
+
+int
+kuserok(AUTH_DAT *auth, char *luser)
+{
+    return krb_kuserok(auth->pname, auth->pinst, auth->prealm, luser);
+}
+

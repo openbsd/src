@@ -1,31 +1,43 @@
+
+/* $KTH: create_ciph.c,v 1.9 1997/04/01 08:18:20 joda Exp $ */
+
 /*
- * This software may now be redistributed outside the US.
- *
- * $Source: /home/cvs/src/kerberosIV/krb/Attic/create_ciph.c,v $
- *
- * $Locker:  $
+ * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * (Royal Institute of Technology, Stockholm, Sweden).
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by the Kungliga Tekniska
+ *      Högskolan and its contributors.
+ * 
+ * 4. Neither the name of the Institute nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
-
-/* 
-  Copyright (C) 1989 by the Massachusetts Institute of Technology
-
-   Export of this software from the United States of America is assumed
-   to require a specific license from the United States Government.
-   It is the responsibility of any person or organization contemplating
-   export to obtain such a license before exporting.
-
-WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
-distribute this software and its documentation for any purpose and
-without fee is hereby granted, provided that the above copyright
-notice appear in all copies and that both that copyright notice and
-this permission notice appear in supporting documentation, and that
-the name of M.I.T. not be used in advertising or publicity pertaining
-to distribution of the software without specific, written prior
-permission.  M.I.T. makes no representations about the suitability of
-this software for any purpose.  It is provided "as is" without express
-or implied warranty.
-
-  */
 
 #include "krb_locl.h"
 
@@ -67,56 +79,40 @@ or implied warranty.
  */
 
 int
-create_ciph(c, session, service, instance, realm,
-	    life, kvno, tkt, kdc_time, key)
-	KTEXT c;		/* Text block to hold ciphertext */
-	unsigned char *session;	/* Session key to send to user */
-	char *service;		/* Service name on ticket */
-	char *instance;		/* Instance name on ticket */
-	char *realm;		/* Realm of this KDC */
-	u_int32_t life;		/* Lifetime of the ticket */
-	int kvno;		/* Key version number for service */
-	KTEXT tkt;		/* The ticket for the service */
-	u_int32_t kdc_time;	/* KDC time */
-	des_cblock *key;	/* Key to encrypt ciphertext with */
+create_ciph(KTEXT c,		/* Text block to hold ciphertext */
+	    unsigned char *session, /* Session key to send to user */
+	    char *service,	/* Service name on ticket */
+	    char *instance,	/* Instance name on ticket */
+	    char *realm,	/* Realm of this KDC */
+	    u_int32_t life,	/* Lifetime of the ticket */
+	    int kvno,		/* Key version number for service */
+	    KTEXT tkt,		/* The ticket for the service */
+	    u_int32_t kdc_time,	/* KDC time */
+	    des_cblock *key)	/* Key to encrypt ciphertext with */
+
 {
-    char            *ptr;
-    des_key_schedule    key_s;
+    unsigned char *p = c->dat;
 
-    ptr = (char *) c->dat;
+    memset(c, 0, sizeof(KTEXT_ST));
 
-    bcopy((char *) session, ptr, 8);
-    ptr += 8;
+    memcpy(p, session, 8);
+    p += 8;
+    
+    p += krb_put_nir(service, instance, realm, p);
+    
+    p += krb_put_int(life, p, 1);
+    p += krb_put_int(kvno, p, 1);
 
-    (void) strcpy(ptr,service);
-    ptr += strlen(service) + 1;
+    p += krb_put_int(tkt->length, p, 1);
 
-    (void) strcpy(ptr,instance);
-    ptr += strlen(instance) + 1;
+    memcpy(p, tkt->dat, tkt->length);
+    p += tkt->length;
 
-    (void) strcpy(ptr,realm);
-    ptr += strlen(realm) + 1;
+    p += krb_put_int(kdc_time, p, 4);
 
-    *(ptr++) = (unsigned char) life;
-    *(ptr++) = (unsigned char) kvno;
-    *(ptr++) = (unsigned char) tkt->length;
+    /* multiple of eight bytes */
+    c->length = (p - c->dat + 7) & ~7;
 
-    bcopy((char *)(tkt->dat),ptr,tkt->length);
-    ptr += tkt->length;
-
-    bcopy((char *) &kdc_time,ptr,4);
-    ptr += 4;
-
-    /* guarantee null padded encrypted data to multiple of 8 bytes */
-    bzero(ptr, 7);
-
-    c->length = (((ptr - (char *) c->dat) + 7) / 8) * 8;
-
-#ifndef NOENCRYPTION
-    des_key_sched(key,key_s);
-    des_pcbc_encrypt((des_cblock *)c->dat,(des_cblock *)c->dat,(long) c->length,key_s,
-	key, DES_ENCRYPT);
-#endif /* NOENCRYPTION */
-
-    return(KSUCCESS);
+    encrypt_ktext(c, key, DES_ENCRYPT);
+    return KSUCCESS;
 }

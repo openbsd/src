@@ -1,60 +1,52 @@
-/*
- * This software may now be redistributed outside the US.
- *
- * $Source: /home/cvs/src/kerberosIV/krb/Attic/mk_safe.c,v $
- *
- * $Locker:  $
- */
-
-/* 
-  Copyright (C) 1989 by the Massachusetts Institute of Technology
-
-   Export of this software from the United States of America is assumed
-   to require a specific license from the United States Government.
-   It is the responsibility of any person or organization contemplating
-   export to obtain such a license before exporting.
-
-WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
-distribute this software and its documentation for any purpose and
-without fee is hereby granted, provided that the above copyright
-notice appear in all copies and that both that copyright notice and
-this permission notice appear in supporting documentation, and that
-the name of M.I.T. not be used in advertising or publicity pertaining
-to distribution of the software without specific, written prior
-permission.  M.I.T. makes no representations about the suitability of
-this software for any purpose.  It is provided "as is" without express
-or implied warranty.
-
-  */
+/* $KTH: mk_safe.c,v 1.21 1997/04/19 23:18:03 joda Exp $ */
 
 /*
- * This routine constructs a Kerberos 'safe msg', i.e. authenticated
- * using a private session key to seed a checksum. Msg is NOT
- * encrypted.
- *
- *      Note-- bcopy is used to avoid alignment problems on IBM RT
- *
- *      Returns either <0 ===> error, or resulting size of message
- *
- * Steve Miller    Project Athena  MIT/DEC
+ * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * (Royal Institute of Technology, Stockholm, Sweden).
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by the Kungliga Tekniska
+ *      Högskolan and its contributors.
+ * 
+ * 4. Neither the name of the Institute nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
 #include "krb_locl.h"
 
-/* system include files */
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <sys/time.h>
-
 /* application include files */
 #include "lsb_addr_comp.h"
 
-/* static storage */
-static u_int32_t cksum;
-static des_cblock big_cksum[2];
-static struct timeval msg_time;
-static u_char msg_time_5ms;
-static int32_t msg_time_sec;
+
+/* from rd_safe.c */
+extern int dqc_type;
+void fixup_quad_cksum(void*, size_t, des_cblock*, void*, void*, int);
 
 /*
  * krb_mk_safe() constructs an AUTH_MSG_SAFE message.  It takes some
@@ -89,89 +81,51 @@ static int32_t msg_time_sec;
  */
 
 int32_t
-krb_mk_safe(in, out, length, key, sender, receiver)
-	u_char *in;		/* application data */
-	u_char *out;		/*
-				 * put msg here, leave room for header!
-				 * breaks if in and out (header stuff)
-				 * overlap
-				 */
-	u_int32_t length;	/* of in data */
-	des_cblock *key;	/* encryption key for seed and ivec */
-	struct sockaddr_in *sender; /* sender address */
-	struct sockaddr_in *receiver; /* receiver address */
+krb_mk_safe(void *in, void *out, u_int32_t length, des_cblock *key, 
+	    struct sockaddr_in *sender, struct sockaddr_in *receiver)
 {
-    register u_char     *p,*q;
+    unsigned char * p = (unsigned char*)out;
+    struct timeval tv;
+    unsigned char *start;
+    u_int32_t src_addr;
 
-    /*
-     * get the current time to use instead of a sequence #, since
-     * process lifetime may be shorter than the lifetime of a session
-     * key.
-     */
-    if (gettimeofday(&msg_time,(struct timezone *)0)) {
-        return  -1;
-    }
-    msg_time_sec = (int32_t) msg_time.tv_sec;
-    msg_time_5ms = msg_time.tv_usec/5000; /* 5ms quanta */
+    p += krb_put_int(KRB_PROT_VERSION, p, 1);
+    p += krb_put_int(AUTH_MSG_SAFE, p, 1);
+    
+    start = p;
 
-    p = out;
+    p += krb_put_int(length, p, 4);
 
-    *p++ = KRB_PROT_VERSION;
-    *p++ = AUTH_MSG_SAFE | HOST_BYTE_ORDER;
-
-    q = p;			/* start for checksum stuff */
-    /* stuff input length */
-    bcopy((char *)&length,(char *)p,sizeof(length));
-    p += sizeof(length);
-
-    /* make all the stuff contiguous for checksum */
-    bcopy((char *)in,(char *)p,(int) length);
+    memcpy(p, in, length);
     p += length;
+    
+    gettimeofday(&tv, NULL);
 
-    /* stuff time 5ms */
-    bcopy((char *)&msg_time_5ms,(char *)p,sizeof(msg_time_5ms));
-    p += sizeof(msg_time_5ms);
+    *p++ = tv.tv_usec/5000; /* 5ms */
+    
+    src_addr = sender->sin_addr.s_addr;
+    p += krb_put_address(src_addr, p);
 
-    /* stuff source address */
-    bcopy((char *) &sender->sin_addr.s_addr,(char *)p,
-          sizeof(sender->sin_addr.s_addr));
-    p += sizeof(sender->sin_addr.s_addr);
+    p += krb_put_int(lsb_time(tv.tv_sec, sender, receiver), p, 4);
 
-    /*
-     * direction bit is the sign bit of the timestamp.  Ok until
-     * 2038??
-     */
-    /* For compatibility with broken old code, compares are done in VAX 
-       byte order (LSBFIRST) */ 
-    if (lsb_net_ulong_less(sender->sin_addr.s_addr, /* src < recv */ 
-			  receiver->sin_addr.s_addr)==-1) 
-        msg_time_sec =  -msg_time_sec; 
-    else if (lsb_net_ulong_less(sender->sin_addr.s_addr, 
-				receiver->sin_addr.s_addr)==0) 
-        if (lsb_net_ushort_less(sender->sin_port,receiver->sin_port) == -1) 
-            msg_time_sec = -msg_time_sec; 
-    /*
-     * all that for one tiny bit!  Heaven help those that talk to
-     * themselves.
-     */
+    {
+	/* We are faking big endian mode, so we need to fix the
+	 * checksum (that is byte order dependent). We always send a
+	 * checksum of the new type, unless we know that we are
+	 * talking to an old client (this requires a call to
+	 * krb_rd_safe first).  
+	 */
+	unsigned char new_checksum[16];
+	unsigned char old_checksum[16];
+	fixup_quad_cksum(start, p - start, key, new_checksum, old_checksum, 0);
+	
+	if((dqc_type == DES_QUAD_GUESS && DES_QUAD_DEFAULT == DES_QUAD_OLD) || 
+	   dqc_type == DES_QUAD_OLD)
+	    memcpy(p, old_checksum, 16);
+	else
+	    memcpy(p, new_checksum, 16);
+    }
+    p += 16;
 
-    /* stuff time sec */
-    bcopy((char *)&msg_time_sec,(char *)p,sizeof(msg_time_sec));
-    p += sizeof(msg_time_sec);
-
-#ifdef NOENCRYPTION
-    cksum = 0;
-    bzero(big_cksum, sizeof(big_cksum));
-#else
-    cksum = des_quad_cksum((des_cblock *)q,big_cksum,p-q,2,key);
-#endif
-    if (krb_debug)
-        printf("\ncksum = %u",(u_int) cksum);
-
-    /* stuff checksum */
-    bcopy((char *)big_cksum,(char *)p,sizeof(big_cksum));
-    p += sizeof(big_cksum);
-
-    return ((int32_t)(p - out));	/* resulting size */
-
+    return p - (unsigned char*)out;
 }

@@ -1,63 +1,44 @@
+/* $KTH: krb_get_in_tkt.c,v 1.22 1997/08/23 15:49:11 joda Exp $ */
+
 /*
- * This software may now be redistributed outside the US.
- *
- * $Source: /home/cvs/src/kerberosIV/krb/Attic/krb_get_in_tkt.c,v $
- *
- * $Locker:  $
+ * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * (Royal Institute of Technology, Stockholm, Sweden).
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by the Kungliga Tekniska
+ *      Högskolan and its contributors.
+ * 
+ * 4. Neither the name of the Institute nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
-/* 
-  Copyright (C) 1989 by the Massachusetts Institute of Technology
-
-   Export of this software from the United States of America is assumed
-   to require a specific license from the United States Government.
-   It is the responsibility of any person or organization contemplating
-   export to obtain such a license before exporting.
-
-WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
-distribute this software and its documentation for any purpose and
-without fee is hereby granted, provided that the above copyright
-notice appear in all copies and that both that copyright notice and
-this permission notice appear in supporting documentation, and that
-the name of M.I.T. not be used in advertising or publicity pertaining
-to distribution of the software without specific, written prior
-permission.  M.I.T. makes no representations about the suitability of
-this software for any purpose.  It is provided "as is" without express
-or implied warranty.
-
-  */
-
 #include "krb_locl.h"
-
-#include <sys/time.h>
-
-int     swap_bytes;
-
-static int
-pkt_clen(pkt)
-	KTEXT pkt;
-{
-    static unsigned short temp,temp2;
-    int clen = 0;
-
-    /* Start of ticket list */
-    unsigned char *ptr = pkt_a_realm(pkt) + 10
-	+ strlen((char *)pkt_a_realm(pkt));
-
-    /* Finally the length */
-    bcopy((char *)(++ptr),(char *)&temp,2); /* alignment */
-    if (swap_bytes) {
-        /* assume a short is 2 bytes?? */
-        swab((char *)&temp,(char *)&temp2,2);
-        temp = temp2;
-    }
-
-    clen = (int) temp;
-
-    if (krb_debug)
-	printf("Clen is %d\n",clen);
-    return(clen);
-}
 
 /*
  * decrypt_tkt(): Given user, instance, realm, passwd, key_proc
@@ -66,41 +47,20 @@ pkt_clen(pkt)
  */
 
 static int
-decrypt_tkt(user, instance, realm, arg, key_proc, cipp)
-  char *user;
-  char *instance;
-  char *realm;
-  char *arg;
-  int (*key_proc)();
-  KTEXT *cipp;
+decrypt_tkt(char *user, char *instance, char *realm,
+	    void *arg, key_proc_t key_proc, KTEXT *cip)
 {
-    KTEXT cip = *cipp;
     des_cblock key;		/* Key for decrypting cipher */
-    des_key_schedule key_s;
+    int ret;
 
-#ifndef NOENCRYPTION
-    /* Attempt to decrypt it */
-#endif
+    ret = key_proc(user, instance, realm, arg, &key);
+    if (ret != 0)
+	return ret;
     
-    /* generate a key */
-    
-    {
-	register int rc;
-	rc = (*key_proc)(user,instance,realm,arg,key);
-	if (rc)
-	    return(rc);
-    }
-    
-#ifndef NOENCRYPTION
-    des_key_sched(&key,key_s);
-    des_pcbc_encrypt((des_cblock *)cip->dat,(des_cblock *)cip->dat,
-		 (long) cip->length,key_s,&key,DES_DECRYPT);
-#endif /* !NOENCRYPTION */
-    /* Get rid of all traces of key */
-    bzero((char *)key,sizeof(key));
-    bzero((char *)key_s,sizeof(key_s));
+    encrypt_ktext(*cip, &key, DES_DECRYPT);
 
-    return(0);
+    memset(&key, 0, sizeof(key));
+    return 0;
 }
 
 /*
@@ -145,187 +105,92 @@ decrypt_tkt(user, instance, realm, arg, key_proc, cipp)
  */
 
 int
-krb_get_in_tkt(user, instance, realm, service, sinstance, life,
-	       key_proc, decrypt_proc, arg)
-    char *user;
-    char *instance;
-    char *realm;
-    char *service;
-    char *sinstance;
-    int life;
-    int (*key_proc)();
-    int (*decrypt_proc)();
-    char *arg;
+krb_mk_as_req(char *user, char *instance, char *realm, 
+	      char *service, char *sinstance, int life, KTEXT cip)
 {
     KTEXT_ST pkt_st;
     KTEXT pkt = &pkt_st;	/* Packet to KDC */
     KTEXT_ST rpkt_st;
-    KTEXT rpkt = &rpkt_st;	/* Returned packet */
-    KTEXT_ST cip_st;
-    KTEXT cip = &cip_st;	/* Returned Ciphertext */
-    KTEXT_ST tkt_st;
-    KTEXT tkt = &tkt_st;	/* Current ticket */
-    des_cblock ses;                /* Session key for tkt */
-    int kvno;			/* Kvno for session key */
-    unsigned char *v = pkt->dat; /* Prot vers no */
-    unsigned char *t = (pkt->dat+1); /* Prot msg type */
-
-    char s_name[SNAME_SZ];
-    char s_instance[INST_SZ];
-    char rlm[REALM_SZ];
-    int lifetime;
-    int msg_byte_order;
+    KTEXT rpkt = &rpkt_st;	/* Reply from KDC */
+    
     int kerror;
-    unsigned long exp_date;
-    char *ptr;
-
-    struct timeval t_local;
-
-    unsigned long rep_err_code;
-
-    unsigned long kdc_time;   /* KDC time */
+    struct timeval tv;
 
     /* BUILD REQUEST PACKET */
 
-    /* Set up the fixed part of the packet */
-    *v = (unsigned char) KRB_PROT_VERSION;
-    *t = (unsigned char) AUTH_MSG_KDC_REQUEST;
-    *t |= HOST_BYTE_ORDER;
+    unsigned char *p = pkt->dat;
+    
+    p += krb_put_int(KRB_PROT_VERSION, p, 1);
+    p += krb_put_int(AUTH_MSG_KDC_REQUEST, p, 1);
 
-    /* Now for the variable info */
-    (void) strcpy((char *)(pkt->dat+2),user); /* aname */
-    pkt->length = 3 + strlen(user);
-    (void) strcpy((char *)(pkt->dat+pkt->length),
-		  instance);	/* instance */
-    pkt->length += 1 + strlen(instance);
-    (void) strcpy((char *)(pkt->dat+pkt->length),realm); /* realm */
-    pkt->length += 1 + strlen(realm);
+    p += krb_put_nir(user, instance, realm, p);
 
-    (void) gettimeofday(&t_local,(struct timezone *) 0);
-    /* timestamp */
-    bcopy((char *)&(t_local.tv_sec),(char *)(pkt->dat+pkt->length), 4);
-    pkt->length += 4;
+    gettimeofday(&tv, NULL);
+    p += krb_put_int(tv.tv_sec, p, 4);
+    p += krb_put_int(life, p, 1);
 
-    *(pkt->dat+(pkt->length)++) = (char) life;
-    (void) strcpy((char *)(pkt->dat+pkt->length),service);
-    pkt->length += 1 + strlen(service);
-    (void) strcpy((char *)(pkt->dat+pkt->length),sinstance);
-    pkt->length += 1 + strlen(sinstance);
+    p += krb_put_nir(service, sinstance, NULL, p);
+
+    pkt->length = p - pkt->dat;
 
     rpkt->length = 0;
 
     /* SEND THE REQUEST AND RECEIVE THE RETURN PACKET */
 
-    if ((kerror = send_to_kdc(pkt, rpkt, realm))) return(kerror);
+    kerror = send_to_kdc(pkt, rpkt, realm);
+    if(kerror) return kerror;
+    kerror = kdc_reply_cipher(rpkt, cip);
+    return kerror;
+}
 
-    /* check packet version of the returned packet */
-    if (pkt_version(rpkt) != KRB_PROT_VERSION)
-        return(INTK_PROT);
-
-    /* Check byte order */
-    msg_byte_order = pkt_msg_type(rpkt) & 1;
-    swap_bytes = 0;
-    if (msg_byte_order != HOST_BYTE_ORDER) {
-        swap_bytes++;
-    }
-
-    switch (pkt_msg_type(rpkt) & ~1) {
-    case AUTH_MSG_KDC_REPLY:
-        break;
-    case AUTH_MSG_ERR_REPLY:
-        bcopy(pkt_err_code(rpkt),(char *) &rep_err_code,4);
-        if (swap_bytes) swap_u_long(rep_err_code);
-        return((int)rep_err_code);
-    default:
-        return(INTK_PROT);
-    }
-
-    /* EXTRACT INFORMATION FROM RETURN PACKET */
-
-    /* get the principal's expiration date */
-    bcopy(pkt_x_date(rpkt),(char *) &exp_date,sizeof(exp_date));
-    if (swap_bytes) swap_u_long(exp_date);
-
-    /* Extract the ciphertext */
-    cip->length = pkt_clen(rpkt);       /* let clen do the swap */
-
-    if ((cip->length < 0) || (cip->length > sizeof(cip->dat)))
-	return(INTK_ERR);		/* no appropriate error code
-					 currently defined for INTK_ */
-    /* copy information from return packet into "cip" */
-    bcopy((char *) pkt_cipher(rpkt),(char *)(cip->dat),cip->length);
-
-    /* Attempt to decrypt the reply. */
+int
+krb_decode_as_rep(char *user, char *instance, char *realm,
+		  char *service, char *sinstance, 
+		  key_proc_t key_proc, decrypt_proc_t decrypt_proc, void *arg,
+		  KTEXT as_rep, CREDENTIALS *cred)
+{
+    int kerror;
+    unsigned char *p;
+    time_t now;
+    
     if (decrypt_proc == NULL)
 	decrypt_proc = decrypt_tkt;
-    (*decrypt_proc)(user, instance, realm, arg, key_proc, &cip);
+    (*decrypt_proc)(user, instance, realm, arg, key_proc, &as_rep);
 
-    ptr = (char *) cip->dat;
+    kerror = kdc_reply_cred(as_rep, cred);
+    if(kerror != KSUCCESS)
+	return kerror;
+	
+    if (strcmp(cred->service, service) || 
+	strcmp(cred->instance, sinstance) ||
+	strcmp(cred->realm, realm))	/* not what we asked for */
+	return INTK_ERR;	/* we need a better code here XXX */
 
-    /* extract session key */
-    bcopy(ptr,(char *)ses,8);
-    ptr += 8;
-
-    if ((strlen(ptr) + (ptr - (char *) cip->dat)) > cip->length)
-	return(INTK_BADPW);
-
-    /* extract server's name */
-    (void) strcpy(s_name,ptr);
-    ptr += strlen(s_name) + 1;
-
-    if ((strlen(ptr) + (ptr - (char *) cip->dat)) > cip->length)
-	return(INTK_BADPW);
-
-    /* extract server's instance */
-    (void) strcpy(s_instance,ptr);
-    ptr += strlen(s_instance) + 1;
-
-    if ((strlen(ptr) + (ptr - (char *) cip->dat)) > cip->length)
-	return(INTK_BADPW);
-
-    /* extract server's realm */
-    (void) strcpy(rlm,ptr);
-    ptr += strlen(rlm) + 1;
-
-    /* extract ticket lifetime, server key version, ticket length */
-    /* be sure to avoid sign extension on lifetime! */
-    lifetime = (unsigned char) ptr[0];
-    kvno = (unsigned char) ptr[1];
-    tkt->length = (unsigned char) ptr[2];
-    ptr += 3;
-    
-    if ((tkt->length < 0) ||
-	((tkt->length + (ptr - (char *) cip->dat)) > cip->length))
-	return(INTK_BADPW);
-
-    /* extract ticket itself */
-    bcopy(ptr,(char *)(tkt->dat),tkt->length);
-    ptr += tkt->length;
-
-    if (strcmp(s_name, service) || strcmp(s_instance, sinstance) ||
-        strcmp(rlm, realm))	/* not what we asked for */
-	return(INTK_ERR);	/* we need a better code here XXX */
-
-    /* check KDC time stamp */
-    bcopy(ptr,(char *)&kdc_time,4); /* Time (coarse) */
-    if (swap_bytes) swap_u_long(kdc_time);
-
-    ptr += 4;
-
-    (void) gettimeofday(&t_local,(struct timezone *) 0);
-    if (abs((int)(t_local.tv_sec - kdc_time)) > CLOCK_SKEW) {
-        return(RD_AP_TIME);		/* XXX should probably be better
-					   code */
+    now = time(NULL);
+    if (abs((int)(now - cred->issue_date)) > CLOCK_SKEW) {
+	return RD_AP_TIME; /* XXX should probably be better code */
     }
 
-    /* initialize ticket cache */
-    if (in_tkt(user,instance) != KSUCCESS)
-	return(INTK_ERR);
+    return 0;
+}
 
-    /* stash ticket, session key, etc. for future use */
-    if ((kerror = save_credentials(s_name, s_instance, rlm, ses,
-				  lifetime, kvno, tkt, t_local.tv_sec)))
-	return(kerror);
+int
+krb_get_in_tkt(char *user, char *instance, char *realm, 
+	       char *service, char *sinstance, int life,
+	       key_proc_t key_proc, decrypt_proc_t decrypt_proc, void *arg)
+{
+    KTEXT_ST as_rep;
+    CREDENTIALS cred;
+    int ret;
 
-    return(INTK_OK);
+    ret = krb_mk_as_req(user, instance, realm, 
+			service, sinstance, life, &as_rep);
+    if(ret)
+	return ret;
+    ret = krb_decode_as_rep(user, instance, realm, service, sinstance, 
+			    key_proc, decrypt_proc, arg, &as_rep, &cred);
+    if(ret)
+	return ret;
+
+    return tf_setup(&cred, user, instance);
 }

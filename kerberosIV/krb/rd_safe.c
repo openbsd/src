@@ -1,58 +1,91 @@
-/*
- * This software may now be redistributed outside the US.
- *
- * $Source: /home/cvs/src/kerberosIV/krb/Attic/rd_safe.c,v $
- *
- * $Locker:  $
- */
-
-/* 
-  Copyright (C) 1989 by the Massachusetts Institute of Technology
-
-   Export of this software from the United States of America is assumed
-   to require a specific license from the United States Government.
-   It is the responsibility of any person or organization contemplating
-   export to obtain such a license before exporting.
-
-WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
-distribute this software and its documentation for any purpose and
-without fee is hereby granted, provided that the above copyright
-notice appear in all copies and that both that copyright notice and
-this permission notice appear in supporting documentation, and that
-the name of M.I.T. not be used in advertising or publicity pertaining
-to distribution of the software without specific, written prior
-permission.  M.I.T. makes no representations about the suitability of
-this software for any purpose.  It is provided "as is" without express
-or implied warranty.
-
-  */
+/* $KTH: rd_safe.c,v 1.24 1997/04/19 23:18:20 joda Exp $ */
 
 /*
- * This routine dissects a a Kerberos 'safe msg', checking its
- * integrity, and returning a pointer to the application data
- * contained and its length.
- *
- * Returns 0 (RD_AP_OK) for success or an error code (RD_AP_...)
- *
- * Steve Miller    Project Athena  MIT/DEC
+ * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * (Royal Institute of Technology, Stockholm, Sweden).
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by the Kungliga Tekniska
+ *      Högskolan and its contributors.
+ * 
+ * 4. Neither the name of the Institute nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
 #include "krb_locl.h"
 
-/* system include files */
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <sys/time.h>
-
 /* application include files */
 #include "lsb_addr_comp.h"
 
-/* static storage */
-static des_cblock calc_cksum[2];
-static des_cblock big_cksum[2];
-static int swap_bytes;
-static struct timeval local_time;
-static u_int32_t delta_t;
+/* Generate two checksums in the given byteorder of the data, one
+ * new-form and one old-form. It has to be done this way to be
+ * compatible with the old version of des_quad_cksum.
+ */
+
+/* des_quad_chsum-type; 0 == unknown, 1 == new PL10++, 2 == old */
+int dqc_type = DES_QUAD_DEFAULT;
+
+void
+fixup_quad_cksum(void *start, size_t len, des_cblock *key, 
+		 void *new_checksum, void *old_checksum, int little)
+{
+    des_quad_cksum((des_cblock*)start, (des_cblock*)new_checksum, len, 2, key);
+    if(HOST_BYTE_ORDER){
+	if(little){
+	    memcpy(old_checksum, new_checksum, 16);
+	}else{
+	    u_int32_t *tmp = (u_int32_t*)new_checksum;
+	    memcpy(old_checksum, new_checksum, 16);
+	    swap_u_16(old_checksum);
+	    swap_u_long(tmp[0]);
+	    swap_u_long(tmp[1]);
+	    swap_u_long(tmp[2]);
+	    swap_u_long(tmp[3]);
+	}
+    }else{
+	if(little){
+	    u_int32_t *tmp = (u_int32_t*)new_checksum;
+	    swap_u_long(tmp[0]);
+	    swap_u_long(tmp[1]);
+	    swap_u_long(tmp[2]);
+	    swap_u_long(tmp[3]);
+	    memcpy(old_checksum, new_checksum, 16);
+	}else{
+	    u_int32_t tmp[4];
+	    tmp[0] = ((u_int32_t*)new_checksum)[3];
+	    tmp[1] = ((u_int32_t*)new_checksum)[2];
+	    tmp[2] = ((u_int32_t*)new_checksum)[1];
+	    tmp[3] = ((u_int32_t*)new_checksum)[0];
+	    memcpy(old_checksum, tmp, 16);
+	}
+    }
+}
 
 /*
  * krb_rd_safe() checks the integrity of an AUTH_MSG_SAFE message.
@@ -72,93 +105,53 @@ static u_int32_t delta_t;
  */
 
 int32_t
-krb_rd_safe(in, in_length, key, sender, receiver, m_data)
-	u_char *in;		/* pointer to the msg received */
-	u_int32_t in_length;	/* length of "in" msg */
-	des_cblock *key;	/* encryption key for seed and ivec */
-	struct sockaddr_in *sender; /* sender's address */
-	struct sockaddr_in *receiver; /* receiver's address -- me */
-	MSG_DAT *m_data;	/* where to put message information */
+krb_rd_safe(void *in, u_int32_t in_length, des_cblock *key, 
+	    struct sockaddr_in *sender, struct sockaddr_in *receiver, 
+	    MSG_DAT *m_data)
 {
-    register u_char     *p,*q;
-    static      u_int32_t  src_addr; /* Can't send structs since no
-                                   * guarantees on size */
-    /* Be very conservative */
-    if (sizeof(src_addr) != sizeof(struct in_addr)) {
-        fprintf(stderr,"\n\
-krb_rd_safe protocol err sizeof(src_addr) != sizeof(struct in_addr)");
-        exit(-1);
-    }
+    unsigned char *p = (unsigned char*)in, *start;
 
-    if (gettimeofday(&local_time,(struct timezone *)0))
-        return  -1;
+    unsigned char pvno, type;
+    int little_endian;
+    struct timeval tv;
+    u_int32_t src_addr;
+    int delta_t;
+    
 
-    p = in;                     /* beginning of message */
-    swap_bytes = 0;
+    pvno = *p++;
+    if(pvno != KRB_PROT_VERSION)
+	return RD_AP_VERSION;
+    
+    type = *p++;
+    little_endian = type & 1;
+    type &= ~1;
+    if(type != AUTH_MSG_SAFE)
+	return RD_AP_MSG_TYPE;
 
-    if (*p++ != KRB_PROT_VERSION)       return RD_AP_VERSION;
-    if (((*p) & ~1) != AUTH_MSG_SAFE) return RD_AP_MSG_TYPE;
-    if ((*p++ & 1) != HOST_BYTE_ORDER) swap_bytes++;
+    start = p;
+    
+    p += krb_get_int(p, &m_data->app_length, 4, little_endian);
+    
+    if(m_data->app_length + 31 > in_length)
+	return RD_AP_MODIFIED;
+    
+    m_data->app_data = p;
 
-    q = p;                      /* mark start of cksum stuff */
-
-    /* safely get length */
-    bcopy((char *)p,(char *)&(m_data->app_length),
-          sizeof(m_data->app_length));
-    if (swap_bytes) swap_u_long(m_data->app_length);
-    p += sizeof(m_data->app_length); /* skip over */
-
-    if (m_data->app_length + sizeof(in_length)
-        + sizeof(m_data->time_sec) + sizeof(m_data->time_5ms)
-        + sizeof(big_cksum) + sizeof(src_addr)
-        + VERSION_SZ + MSG_TYPE_SZ > in_length)
-        return(RD_AP_MODIFIED);
-
-    m_data->app_data = p;       /* we're now at the application data */
-
-    /* skip app data */
     p += m_data->app_length;
 
-    /* safely get time_5ms */
-    bcopy((char *)p, (char *)&(m_data->time_5ms),
-          sizeof(m_data->time_5ms));
+    m_data->time_5ms = *p++;
 
-    /* don't need to swap-- one byte for now */
-    p += sizeof(m_data->time_5ms);
+    p += krb_get_address(p, &src_addr);
 
-    /* safely get src address */
-    bcopy((char *)p,(char *)&src_addr,sizeof(src_addr));
+    if (!krb_equiv(src_addr, sender->sin_addr.s_addr))
+        return RD_AP_BADD;
 
-    /* don't swap, net order always */
-    p += sizeof(src_addr);
+    p += krb_get_int(p, (u_int32_t *)&m_data->time_sec, 4, little_endian);
+    m_data->time_sec = lsb_time(m_data->time_sec, sender, receiver);
+    
+    gettimeofday(&tv, NULL);
 
-    /* safely get time_sec */
-    bcopy((char *)p, (char *)&(m_data->time_sec),
-          sizeof(m_data->time_sec));
-    if (swap_bytes)
-        swap_u_long(m_data->time_sec);
-    p += sizeof(m_data->time_sec);
-
-    /* check direction bit is the sign bit */
-    /* For compatibility with broken old code, compares are done in VAX 
-       byte order (LSBFIRST) */ 
-    if (lsb_net_ulong_less(sender->sin_addr.s_addr,
-			   receiver->sin_addr.s_addr)==-1) 
-	/* src < recv */ 
-	m_data->time_sec =  - m_data->time_sec; 
-    else if (lsb_net_ulong_less(sender->sin_addr.s_addr, 
-				receiver->sin_addr.s_addr)==0) 
-	if (lsb_net_ushort_less(sender->sin_port,receiver->sin_port)==-1)
-	    /* src < recv */
-	    m_data->time_sec =  - m_data->time_sec; 
-
-    /*
-     * All that for one tiny bit!  Heaven help those that talk to
-     * themselves.
-     */
-
-    /* check the time integrity of the msg */
-    delta_t = abs((int)((long) local_time.tv_sec - m_data->time_sec));
+    delta_t = abs((int)((long) tv.tv_sec - m_data->time_sec));
     if (delta_t > CLOCK_SKEW) return RD_AP_TIME;
 
     /*
@@ -167,20 +160,19 @@ krb_rd_safe protocol err sizeof(src_addr) != sizeof(struct in_addr)");
      * and we don't assume tightly synchronized clocks.
      */
 
-    bcopy((char *)p,(char *)big_cksum,sizeof(big_cksum));
-    if (swap_bytes) swap_u_16(big_cksum);
-
-#ifdef NOENCRYPTION
-    bzero(calc_cksum, sizeof(calc_cksum));
-#else
-    des_quad_cksum((des_cblock *)q,calc_cksum,p-q,2,key);
-#endif
-
-    if (krb_debug)
-        printf("\ncalc_cksum = %u, received cksum = %u",
-               (u_int) calc_cksum[0], (u_int) big_cksum[0]);
-    if (bcmp((char *)big_cksum,(char *)calc_cksum,sizeof(big_cksum)))
-        return(RD_AP_MODIFIED);
-
-    return(RD_AP_OK);           /* OK == 0 */
+    {
+	unsigned char new_checksum[16];
+	unsigned char old_checksum[16];
+	fixup_quad_cksum(start, p - start, key, 
+			 new_checksum, old_checksum, little_endian);
+	if((dqc_type == DES_QUAD_GUESS || dqc_type == DES_QUAD_NEW) && 
+	   memcmp(new_checksum, p, 16) == 0)
+	    dqc_type = DES_QUAD_NEW;
+	else if((dqc_type == DES_QUAD_GUESS || dqc_type == DES_QUAD_OLD) && 
+		memcmp(old_checksum, p, 16) == 0)
+	    dqc_type = DES_QUAD_OLD;
+	else
+	    return RD_AP_MODIFIED;
+    }
+    return KSUCCESS;
 }

@@ -1,10 +1,4 @@
-/*
- * This software may now be redistributed outside the US.
- *
- * $Source: /home/cvs/src/kerberosIV/krb/Attic/get_krbrlm.c,v $
- *
- * $Locker:  $
- */
+/* $KTH: get_krbrlm.c,v 1.16 1997/05/02 01:26:22 assar Exp $ */
 
 /* 
   Copyright (C) 1989 by the Massachusetts Institute of Technology
@@ -33,7 +27,9 @@ or implied warranty.
  * krb_get_lrealm takes a pointer to a string, and a number, n.  It fills
  * in the string, r, with the name of the nth realm specified on the
  * first line of the kerberos config file (KRB_CONF, defined in "krb.h").
- * It returns 0 (KSUCCESS) on success, and KFAILURE on failure.
+ * It returns 0 (KSUCCESS) on success, and KFAILURE on failure.  If the
+ * config file does not exist, and if n=1, a successful return will occur
+ * with r = KRB_REALM (also defined in "krb.h").
  *
  * NOTE: for archaic & compatibility reasons, this routine will only return
  * valid results when n = 1.
@@ -42,32 +38,79 @@ or implied warranty.
  * krb_get_krbhst().
  */
 
-int
-krb_get_lrealm(r, n)
-	char *r;
-	int n;
+static int
+krb_get_lrealm_f(char *r, int n, const char *fname)
 {
-    FILE *cnffile;
-
-    if (n > 1)
-	return(KFAILURE);  /* Temporary restriction */
-
-    if ((cnffile = fopen(KRB_CONF, "r")) == NULL) {
-        char tbuf[128];
-        char *tdir = NULL;
-	if (issetugid() == 0) 
-	   tdir = (char *) getenv("KRBCONFDIR");
-        strncpy(tbuf, tdir ? tdir : "/etc", sizeof(tbuf)-1);
-        tbuf[sizeof(tbuf)-1] = 0;
-        strncat(tbuf, "/krb.conf", sizeof(tbuf)-strlen(tbuf));
-        if ((cnffile = fopen(tbuf,"r")) == NULL)
-            return(KFAILURE);
+    FILE *f;
+    int ret = KFAILURE;
+    f = fopen(fname, "r");
+    if(f){
+	char buf[REALM_SZ];
+	if(fgets(buf, sizeof(buf), f)){
+	    char *p = buf + strspn(buf, " \t");
+	    p[strcspn(p, " \t\r\n")] = 0;
+	    p[REALM_SZ - 1] = 0;
+	    strcpy(r, p);
+	    ret = KSUCCESS;
+	}
+	fclose(f);
     }
+    return ret;
+}
 
-    if (fscanf(cnffile,"%s",r) != 1) {
-        (void) fclose(cnffile);
-        return(KFAILURE);
+int
+krb_get_lrealm(char *r, int n)
+{
+  static const char *const files[] = KRB_CNF_FILES;
+  int i;
+  
+  const char *dir = getenv("KRBCONFDIR");
+
+  if (n > 1)
+    return(KFAILURE);		/* Temporary restriction */
+
+  /* First try user specified file */
+  if (dir != 0) {
+    char fname[MAXPATHLEN];
+    if(k_concat(fname, sizeof(fname), dir, "/krb.conf", NULL) == 0)
+	if (krb_get_lrealm_f(r, n, fname) == KSUCCESS)
+	    return KSUCCESS;
+  }
+
+  for (i = 0; files[i] != 0; i++)
+    if (krb_get_lrealm_f(r, n, files[i]) == KSUCCESS)
+      return KSUCCESS;
+
+  /* If nothing else works try LOCALDOMAIN, if it exists */
+  if (n == 1)
+    {
+      char *t, hostname[MAXHOSTNAMELEN];
+      k_gethostname(hostname, sizeof(hostname));
+      t = krb_realmofhost(hostname);
+      if (t) {
+	strcpy (r, t);
+	return KSUCCESS;
+      }
+      t = strchr(hostname, '.');
+      if (t == 0)
+	return KFAILURE;	/* No domain part, you loose */
+
+      t++;			/* Skip leading dot and upcase the rest */
+      for (; *t; t++, r++)
+	*r = toupper(*t);
+      *r = 0;
+      return(KSUCCESS);
     }
-    (void) fclose(cnffile);
-    return(*r == '#' ? KFAILURE : KSUCCESS);
+  else
+    return(KFAILURE);
+}
+
+/* For SunOS5 compat. */
+char *
+krb_get_default_realm(void)
+{
+  static char local_realm[REALM_SZ]; /* local kerberos realm */
+  if (krb_get_lrealm(local_realm, 1) != KSUCCESS)
+    strcpy(local_realm, "NO.DEFAULT.REALM");
+  return local_realm;
 }

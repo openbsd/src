@@ -1,10 +1,4 @@
-/*
- * This software may now be redistributed outside the US.
- *
- * $Source: /home/cvs/src/kerberosIV/krb/Attic/kntoln.c,v $
- *
- * $Locker:  $
- */
+/* $KTH: kntoln.c,v 1.7 1997/03/23 03:53:12 joda Exp $ */
 
 /* 
   Copyright (C) 1989 by the Massachusetts Institute of Technology
@@ -56,19 +50,131 @@ or implied warranty.
 #include "krb_locl.h"
 
 int
-krb_kntoln(ad, lname)
-	AUTH_DAT *ad;
-	char *lname;
+krb_kntoln(AUTH_DAT *ad, char *lname)
 {
     static char lrealm[REALM_SZ] = "";
 
     if (!(*lrealm) && (krb_get_lrealm(lrealm,1) == KFAILURE))
         return(KFAILURE);
 
-    if (strcmp(ad->pinst,""))
+    if (strcmp(ad->pinst, ""))
         return(KFAILURE);
-    if (strcmp(ad->prealm,lrealm))
+    if (strcmp(ad->prealm, lrealm))
         return(KFAILURE);
-    (void) strcpy(lname,ad->pname);
+    strcpy(lname, ad->pname);
     return(KSUCCESS);
 }
+
+#if 0
+/* Posted to usenet by "Derrick J. Brashear" <shadow+@andrew.cmu.edu> */
+
+#include <krb.h>
+#include <ndbm.h>
+#include <stdio.h>
+#include <sys/file.h>
+#include <strings.h>
+#include <sys/syslog.h>
+#include <sys/errno.h>
+
+extern int errno;
+/*
+ * antoln converts an authentication name into a local name by looking up
+ * the authentication name in the /etc/aname dbm database.
+ * 
+ * If the /etc/aname file can not be opened it will set the 
+ * local name to the principal name.  Thus, in this case it performs as 
+ * the identity function.
+ * 
+ * The name instance and realm are passed to antoln through
+ * the AUTH_DAT structure (ad).
+ */
+
+static char     lrealm[REALM_SZ] = "";
+
+an_to_ln(ad,lname)
+AUTH_DAT        *ad;
+char            *lname;
+{
+        static DBM *aname = NULL;
+        char keyname[ANAME_SZ+INST_SZ+REALM_SZ+2];
+
+        if(!(*lrealm) && (krb_get_lrealm(lrealm,1) == KFAILURE))
+                return(KFAILURE);
+
+        if((strcmp(ad->pinst,"") && strcmp(ad->pinst,"root")) ||
+strcmp(ad->prealm,lrealm)) {
+                datum val;
+                datum key;
+                /*
+                 * Non-local name (or) non-null and non-root instance.
+                 * Look up in dbm file.
+                 */
+                if (!aname) {
+                        if ((aname = dbm_open("/etc/aname", O_RDONLY, 0))
+                            == NULL) return (KFAILURE);
+                }
+                /* Construct dbm lookup key. */
+                an_to_a(ad, keyname);
+                key.dptr = keyname;
+                key.dsize = strlen(keyname)+1;
+                flock(dbm_dirfno(aname), LOCK_SH);
+                val = dbm_fetch(aname, key);
+                flock(dbm_dirfno(aname), LOCK_UN);
+                if (!val.dptr) {
+                  dbm_close(aname);
+                  return(KFAILURE);
+                }
+                /* Got it! */
+                strcpy(lname,val.dptr);
+                return(KSUCCESS);
+        } else strcpy(lname,ad->pname);
+        return(KSUCCESS);
+}
+
+an_to_a(ad, str)
+        AUTH_DAT *ad;
+        char *str;
+{
+        strcpy(str, ad->pname);
+        if(*ad->pinst) {
+                strcat(str, ".");
+                strcat(str, ad->pinst);
+        }
+        strcat(str, "@");
+        strcat(str, ad->prealm);
+}
+
+/*
+ * Parse a string of the form "user[.instance][@realm]" 
+ * into a struct AUTH_DAT.
+ */
+
+a_to_an(str, ad)
+        AUTH_DAT *ad;
+        char *str;
+{
+        char *buf = (char *)malloc(strlen(str)+1);
+        char *rlm, *inst, *princ;
+
+        if(!(*lrealm) && (krb_get_lrealm(lrealm,1) == KFAILURE)) {
+                free(buf);
+                return(KFAILURE);
+        }
+        /* destructive string hacking is more fun.. */
+        strcpy(buf, str);
+
+        if (rlm = index(buf, '@')) {
+                *rlm++ = '\0';
+        }
+        if (inst = index(buf, '.')) {
+                *inst++ = '\0';
+        }
+        strcpy(ad->pname, buf);
+        if(inst) strcpy(ad->pinst, inst);
+        else *ad->pinst = '\0';
+        if (rlm) strcpy(ad->prealm, rlm);
+        else strcpy(ad->prealm, lrealm);
+        free(buf);
+        return(KSUCCESS);
+}
+#endif

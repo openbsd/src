@@ -1,69 +1,50 @@
-/*
- * This software may now be redistributed outside the US.
- *
- * $Source: /home/cvs/src/kerberosIV/krb/Attic/rd_priv.c,v $
- *
- * $Locker:  $
- */
-
-/* 
-  Copyright (C) 1989 by the Massachusetts Institute of Technology
-
-   Export of this software from the United States of America is assumed
-   to require a specific license from the United States Government.
-   It is the responsibility of any person or organization contemplating
-   export to obtain such a license before exporting.
-
-WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
-distribute this software and its documentation for any purpose and
-without fee is hereby granted, provided that the above copyright
-notice appear in all copies and that both that copyright notice and
-this permission notice appear in supporting documentation, and that
-the name of M.I.T. not be used in advertising or publicity pertaining
-to distribution of the software without specific, written prior
-permission.  M.I.T. makes no representations about the suitability of
-this software for any purpose.  It is provided "as is" without express
-or implied warranty.
-
-  */
+/* $KTH: rd_priv.c,v 1.24 1997/05/14 17:53:29 joda Exp $ */
 
 /*
- * This routine dissects a a Kerberos 'private msg', decrypting it,
- * checking its integrity, and returning a pointer to the application
- * data contained and its length.
- *
- * Returns 0 (RD_AP_OK) for success or an error code (RD_AP_...).  If
- * the return value is RD_AP_TIME, then either the times are too far
- * out of synch, OR the packet was modified.
- *
- * Steve Miller    Project Athena  MIT/DEC
+ * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * (Royal Institute of Technology, Stockholm, Sweden).
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by the Kungliga Tekniska
+ *      Högskolan and its contributors.
+ * 
+ * 4. Neither the name of the Institute nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
 #include "krb_locl.h"
 
-/* system include files */
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <sys/time.h>
-
 /* application include files */
 #include "lsb_addr_comp.h"
 
-/* static storage */
-static u_int32_t c_length;
-static int swap_bytes;
-static struct timeval local_time;
-static long delta_t;
-
-/* Global! */
-int private_msg_ver = KRB_PROT_VERSION;
-
 /*
-#ifdef NOENCRPYTION
- * krb_rd_priv() checks the integrity of an
-#else
  * krb_rd_priv() decrypts and checks the integrity of an
-#endif
  * AUTH_MSG_PRIVATE message.  Given the message received, "in",
  * the length of that message, "in_length", the key "schedule"
  * and "key", and the network addresses of the
@@ -80,111 +61,62 @@ int private_msg_ver = KRB_PROT_VERSION;
  */
 
 int32_t
-krb_rd_priv(in, in_length, schedule, key, sender, receiver, m_data)
-	u_char *in;		/* pointer to the msg received */
-	u_int32_t in_length;	/* length of "in" msg */
-	struct des_ks_struct *schedule;	/* precomputed key schedule */
-	des_cblock *key;	/* encryption key for seed and ivec */
-	struct sockaddr_in *sender;
-	struct sockaddr_in *receiver;
-	MSG_DAT *m_data;	/*various input/output data from msg */
+krb_rd_priv(void *in, u_int32_t in_length, 
+	    struct des_ks_struct *schedule, des_cblock *key, 
+	    struct sockaddr_in *sender, struct sockaddr_in *receiver, 
+	    MSG_DAT *m_data)
 {
-    register u_char *p,*q;
-    static u_int32_t src_addr;	/* Can't send structs since no
-				 * guarantees on size */
+    unsigned char *p = (unsigned char*)in;
+    int little_endian;
+    u_int32_t clen;
+    struct timeval tv;
+    u_int32_t src_addr;
+    int delta_t;
 
-    if (gettimeofday(&local_time,(struct timezone *)0))
-        return  -1;
+    unsigned char pvno, type;
 
-    p = in;			/* beginning of message */
-    swap_bytes = 0;
+    pvno = *p++;
+    if(pvno != KRB_PROT_VERSION)
+	return RD_AP_VERSION;
+    
+    type = *p++;
+    little_endian = type & 1;
+    type &= ~1;
 
-    if (*p++ != KRB_PROT_VERSION && *(p-1) != 3)
-        return RD_AP_VERSION;
-    private_msg_ver = *(p-1);
-    if (((*p) & ~1) != AUTH_MSG_PRIVATE)
-        return RD_AP_MSG_TYPE;
-    if ((*p++ & 1) != HOST_BYTE_ORDER)
-        swap_bytes++;
+    p += krb_get_int(p, &clen, 4, little_endian);
+    
+    if(clen + 2 > in_length)
+	return RD_AP_MODIFIED;
 
-    /* get cipher length */
-    bcopy((char *)p,(char *)&c_length,sizeof(c_length));
-    if (swap_bytes)
-        swap_u_long(c_length);
-    p += sizeof(c_length);
-    /* check for rational length so we don't go comatose */
-    if (VERSION_SZ + MSG_TYPE_SZ + c_length > in_length)
-        return RD_AP_MODIFIED;
+    des_pcbc_encrypt((des_cblock*)p, (des_cblock*)p, clen, 
+		     schedule, key, DES_DECRYPT);
+    
+    p += krb_get_int(p, &m_data->app_length, 4, little_endian);
+    if(m_data->app_length + 17 > in_length)
+	return RD_AP_MODIFIED;
 
-
-    q = p;			/* mark start of encrypted stuff */
-
-#ifndef NOENCRYPTION
-    des_pcbc_encrypt((des_cblock *)q,(des_cblock *)q,(long)c_length,schedule,key,DES_DECRYPT);
-#endif
-
-    /* safely get application data length */
-    bcopy((char *) p,(char *)&(m_data->app_length),
-          sizeof(m_data->app_length));
-    if (swap_bytes)
-        swap_u_long(m_data->app_length);
-    p += sizeof(m_data->app_length);    /* skip over */
-
-    if (m_data->app_length + sizeof(c_length) + sizeof(in_length) +
-        sizeof(m_data->time_sec) + sizeof(m_data->time_5ms) +
-        sizeof(src_addr) + VERSION_SZ + MSG_TYPE_SZ
-        > in_length)
-        return RD_AP_MODIFIED;
-
-#ifndef NOENCRYPTION
-    /* we're now at the decrypted application data */
-#endif
     m_data->app_data = p;
-
     p += m_data->app_length;
+    
+    m_data->time_5ms = *p++;
 
-    /* safely get time_5ms */
-    bcopy((char *) p, (char *)&(m_data->time_5ms),
-	  sizeof(m_data->time_5ms));
-    /*  don't need to swap-- one byte for now */
-    p += sizeof(m_data->time_5ms);
+    p += krb_get_address(p, &src_addr);
 
-    /* safely get src address */
-    bcopy((char *) p,(char *)&src_addr,sizeof(src_addr));
-    /* don't swap, net order always */
-    p += sizeof(src_addr);
+    if (!krb_equiv(src_addr, sender->sin_addr.s_addr))
+	return RD_AP_BADD;
 
-    /* safely get time_sec */
-    bcopy((char *) p, (char *)&(m_data->time_sec),
-	  sizeof(m_data->time_sec));
-    if (swap_bytes) swap_u_long(m_data->time_sec);
+    p += krb_get_int(p, (u_int32_t *)&m_data->time_sec, 4, little_endian);
 
-    p += sizeof(m_data->time_sec);
-
-    /* check direction bit is the sign bit */
-    /* For compatibility with broken old code, compares are done in VAX 
-       byte order (LSBFIRST) */ 
-    if (lsb_net_ulong_less(sender->sin_addr.s_addr,
-			   receiver->sin_addr.s_addr)==-1) 
-	/* src < recv */ 
-	m_data->time_sec =  - m_data->time_sec; 
-    else if (lsb_net_ulong_less(sender->sin_addr.s_addr, 
-				receiver->sin_addr.s_addr)==0) 
-	if (lsb_net_ushort_less(sender->sin_port,receiver->sin_port)==-1)
-	    /* src < recv */
-	    m_data->time_sec =  - m_data->time_sec; 
-    /*
-     * all that for one tiny bit!
-     * Heaven help those that talk to themselves.
-     */
+    m_data->time_sec = lsb_time(m_data->time_sec, sender, receiver);
+    
+    gettimeofday(&tv, NULL);
 
     /* check the time integrity of the msg */
-    delta_t = abs((int)((long) local_time.tv_sec
-			- m_data->time_sec));
+    delta_t = abs((int)((long) tv.tv_sec - m_data->time_sec));
     if (delta_t > CLOCK_SKEW)
 	return RD_AP_TIME;
     if (krb_debug)
-	printf("\ndelta_t = %d", (int) delta_t);
+      krb_warning("\ndelta_t = %d", (int) delta_t);
 
     /*
      * caller must check timestamps for proper order and
@@ -193,20 +125,5 @@ krb_rd_priv(in, in_length, schedule, key, sender, receiver, m_data)
      * tightly synchronized clocks.
      */
 
-#ifdef notdef
-    bcopy((char *) p,(char *)&cksum,sizeof(cksum));
-    if (swap_bytes) swap_u_long(cksum)
-    /*
-     * calculate the checksum of the length, sequence,
-     * and input data, on the sending byte order!!
-     */
-    calc_cksum = des_quad_cksum(q,NULL,p-q,0,key);
-
-    if (krb_debug)
-	printf("\ncalc_cksum = %u, received cksum = %u",
-	       calc_cksum, cksum);
-    if (cksum != calc_cksum)
-	return RD_AP_MODIFIED;
-#endif
-    return RD_AP_OK;        /* OK == 0 */
+    return KSUCCESS;
 }

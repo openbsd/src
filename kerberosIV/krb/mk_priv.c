@@ -1,76 +1,61 @@
-/*
- * This software may now be redistributed outside the US.
- *
- * $Source: /home/cvs/src/kerberosIV/krb/Attic/mk_priv.c,v $
- *
- * $Locker:  $
- */
-
-/* 
-  Copyright (C) 1989 by the Massachusetts Institute of Technology
-
-   Export of this software from the United States of America is assumed
-   to require a specific license from the United States Government.
-   It is the responsibility of any person or organization contemplating
-   export to obtain such a license before exporting.
-
-WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
-distribute this software and its documentation for any purpose and
-without fee is hereby granted, provided that the above copyright
-notice appear in all copies and that both that copyright notice and
-this permission notice appear in supporting documentation, and that
-the name of M.I.T. not be used in advertising or publicity pertaining
-to distribution of the software without specific, written prior
-permission.  M.I.T. makes no representations about the suitability of
-this software for any purpose.  It is provided "as is" without express
-or implied warranty.
-
-  */
+/* $KTH: mk_priv.c,v 1.18 1997/04/01 08:18:37 joda Exp $ */
 
 /*
- * This routine constructs a Kerberos 'private msg', i.e.
- * cryptographically sealed with a private session key.
- *
- * Note-- bcopy is used to avoid alignment problems on IBM RT.
- *
- * Note-- It's too bad that it did a long int compare on the RT before.
- *
- * Returns either < 0 ===> error, or resulting size of message
- *
- * Steve Miller    Project Athena  MIT/DEC
+ * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * (Royal Institute of Technology, Stockholm, Sweden).
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by the Kungliga Tekniska
+ *      Högskolan and its contributors.
+ * 
+ * 4. Neither the name of the Institute nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
 #include "krb_locl.h"
 
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <sys/time.h>
-
 /* application include files */
 #include "lsb_addr_comp.h"
-
-/* static storage */
-static u_int32_t c_length;
-static struct timeval msg_time;
-static u_char msg_time_5ms;
-static int32_t msg_time_sec;
 
 /*
  * krb_mk_priv() constructs an AUTH_MSG_PRIVATE message.  It takes
  * some user data "in" of "length" bytes and creates a packet in "out"
  * consisting of the user data, a timestamp, and the sender's network
  * address.
-#ifndef NOENCRYTION
  * The packet is encrypted by pcbc_encrypt(), using the given
  * "key" and "schedule".
-#endif
  * The length of the resulting packet "out" is
  * returned.
  *
  * It is similar to krb_mk_safe() except for the additional key
  * schedule argument "schedule" and the fact that the data is encrypted
- * rather than appended with a checksum.  Also, the protocol version
- * number is "private_msg_ver", defined in krb_rd_priv.c, rather than
+ * rather than appended with a checksum.  The protocol version is
  * KRB_PROT_VERSION, defined in "krb.h".
  *
  * The "out" packet consists of:
@@ -78,14 +63,12 @@ static int32_t msg_time_sec;
  * Size			Variable		Field
  * ----			--------		-----
  *
- * 1 byte		private_msg_ver		protocol version number
+ * 1 byte		KRB_PROT_VERSION	protocol version number
  * 1 byte		AUTH_MSG_PRIVATE |	message type plus local
  *			HOST_BYTE_ORDER		byte order in low bit
  *
  * 4 bytes		c_length		length of data
-#ifndef NOENCRYPT
  * we encrypt from here with pcbc_encrypt
-#endif
  * 
  * 4 bytes		length			length of user data
  * length		in			user data
@@ -99,111 +82,44 @@ static int32_t msg_time_sec;
  */
 
 int32_t
-krb_mk_priv(in, out, length, schedule, key, sender, receiver)
-	u_char *in;		/* application data */
-	u_char *out;		/* put msg here, leave room for
-                                 * header! breaks if in and out
-                                 * (header stuff) overlap */
-	u_int32_t length;	/* of in data */
-	struct des_ks_struct *schedule;	/* precomputed key schedule */
-	des_cblock *key;	/* encryption key for seed and ivec */
-	struct sockaddr_in *sender; /* sender address */
-	struct sockaddr_in *receiver; /* receiver address */
+krb_mk_priv(void *in, void *out, u_int32_t length, 
+	    struct des_ks_struct *schedule, des_cblock *key, 
+	    struct sockaddr_in *sender, struct sockaddr_in *receiver)
 {
-    register u_char     *p,*q;
-    static       u_char *c_length_ptr;
+    unsigned char *p = (unsigned char*)out;
+    unsigned char *cipher;
 
-    /*
-     * get the current time to use instead of a sequence #, since
-     * process lifetime may be shorter than the lifetime of a session
-     * key.
-     */
-    if (gettimeofday(&msg_time,(struct timezone *)0)) {
-        return -1;
-    }
-    msg_time_sec = (int32_t) msg_time.tv_sec;
-    msg_time_5ms = msg_time.tv_usec/5000; /* 5ms quanta */
+    struct timeval tv;
+    u_int32_t src_addr;
+    u_int32_t len;
 
-    p = out;
+    p += krb_put_int(KRB_PROT_VERSION, p, 1);
+    p += krb_put_int(AUTH_MSG_PRIVATE, p, 1);
 
-    *p++ = private_msg_ver;
-    *p++ = AUTH_MSG_PRIVATE | HOST_BYTE_ORDER;
+    len = 4 + length + 1 + 4 + 4;
+    len = (len + 7) & ~7;
+    p += krb_put_int(len, p, 4);
+    
+    cipher = p;
 
-    /* calculate cipher length */
-    c_length_ptr = p;
-    p += sizeof(c_length);
-
-    q = p;
-
-    /* stuff input length */
-    bcopy((char *)&length,(char *)p,sizeof(length));
-    p += sizeof(length);
-
-#ifdef NOENCRYPTION
-    /* make all the stuff contiguous for checksum */
-#else
-    /* make all the stuff contiguous for checksum and encryption */
-#endif
-    bcopy((char *)in,(char *)p,(int) length);
+    p += krb_put_int(length, p, 4);
+    
+    memcpy(p, in, length);
     p += length;
+    
+    gettimeofday(&tv, NULL);
 
-    /* stuff time 5ms */
-    bcopy((char *)&msg_time_5ms,(char *)p,sizeof(msg_time_5ms));
-    p += sizeof(msg_time_5ms);
+    *p++ =tv.tv_usec / 5000;
+    
+    src_addr = sender->sin_addr.s_addr;
+    p += krb_put_address(src_addr, p);
 
-    /* stuff source address */
-    bcopy((char *)&sender->sin_addr.s_addr,(char *)p,
-          sizeof(sender->sin_addr.s_addr));
-    p += sizeof(sender->sin_addr.s_addr);
+    p += krb_put_int(lsb_time(tv.tv_sec, sender, receiver), p, 4);
+    
+    memset(p, 0, 7);
 
-    /*
-     * direction bit is the sign bit of the timestamp.  Ok
-     * until 2038??
-     */
-    /* For compatibility with broken old code, compares are done in VAX 
-       byte order (LSBFIRST) */ 
-    if (lsb_net_ulong_less(sender->sin_addr.s_addr, /* src < recv */ 
-			  receiver->sin_addr.s_addr)==-1) 
-        msg_time_sec =  -msg_time_sec; 
-    else if (lsb_net_ulong_less(sender->sin_addr.s_addr, 
-				receiver->sin_addr.s_addr)==0) 
-        if (lsb_net_ushort_less(sender->sin_port,receiver->sin_port) == -1) 
-            msg_time_sec = -msg_time_sec; 
-    /* stuff time sec */
-    bcopy((char *)&msg_time_sec,(char *)p,sizeof(msg_time_sec));
-    p += sizeof(msg_time_sec);
+    des_pcbc_encrypt((des_cblock *)cipher, (des_cblock *)cipher,
+		     len, schedule, key, DES_ENCRYPT);
 
-    /*
-     * All that for one tiny bit!  Heaven help those that talk to
-     * themselves.
-     */
-
-#ifdef notdef
-    /*
-     * calculate the checksum of the length, address, sequence, and
-     * inp data
-     */
-    cksum =  des_quad_cksum(q,NULL,p-q,0,key);
-    if (krb_debug)
-        printf("\ncksum = %u",cksum);
-    /* stuff checksum */
-    bcopy((char *) &cksum,(char *) p,sizeof(cksum));
-    p += sizeof(cksum);
-#endif
-
-    /*
-     * All the data have been assembled, compute length
-     */
-
-    c_length = p - q;
-    c_length = ((c_length + sizeof(des_cblock) -1)/sizeof(des_cblock)) *
-        sizeof(des_cblock);
-    /* stuff the length */
-    bcopy((char *) &c_length,(char *)c_length_ptr,sizeof(c_length));
-
-#ifndef NOENCRYPTION
-    des_pcbc_encrypt((des_cblock *)q,(des_cblock *)q,(long)(p-q),schedule,key, DES_ENCRYPT);
-#endif /* NOENCRYPTION */
-
-    return (q - out + c_length);        /* resulting size */
+    return  (cipher - (unsigned char*)out) + len;
 }

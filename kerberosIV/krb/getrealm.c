@@ -1,10 +1,4 @@
-/*
- * This software may now be redistributed outside the US.
- *
- * $Source: /home/cvs/src/kerberosIV/krb/Attic/getrealm.c,v $
- *
- * $Locker:  $
- */
+/* $KTH: getrealm.c,v 1.26 1997/10/08 22:51:13 joda Exp $ */
 
 /* 
   Copyright (C) 1989 by the Massachusetts Institute of Technology
@@ -28,14 +22,8 @@ or implied warranty.
   */
 
 #include "krb_locl.h"
-#include <netdb.h>
 
 #define MATCH_SUBDOMAINS        0
-
-/* for Ultrix and friends ... */
-#ifndef MAXHOSTNAMELEN
-#define MAXHOSTNAMELEN 64
-#endif
 
 /*
  * krb_realmofhost.
@@ -55,78 +43,152 @@ or implied warranty.
  * host names should be in the usual form (e.g. FOO.BAR.BAZ)
  */
 
-static char ret_realm[REALM_SZ+1];
+/* To automagically find the correct realm of a host (without
+ * krb.realms) add a text record for your domain with the name of your
+ * realm, like this:
+ *
+ * krb4-realm	IN	TXT	FOO.SE
+ *
+ * The search is recursive, so you can also add entries for specific
+ * hosts. To find the realm of host a.b.c, it first tries
+ * krb4-realm.a.b.c, then krb4-realm.b.c and so on.
+ */
+
+static int
+dns_find_realm(char *hostname, char *realm)
+{
+    char domain[MAXHOSTNAMELEN + sizeof("krb4-realm..")];
+    char *p;
+    int level = 0;
+    struct dns_reply *r;
+    
+    p = hostname;
+
+    while(1){
+	snprintf(domain, sizeof(domain), "krb4-realm.%s.", p);
+	p = strchr(p, '.');
+	if(p == NULL)
+	    break;
+	p++;
+	r = dns_lookup(domain, "TXT");
+	if(r){
+	    struct resource_record *rr = r->head;
+	    while(rr){
+		if(rr->type == T_TXT){
+		    strncpy(realm, rr->u.txt, REALM_SZ);
+		    realm[REALM_SZ - 1] = 0;
+		    dns_free_data(r);
+		    return level;
+		}
+		rr = rr->next;
+	    }
+	    dns_free_data(r);
+	}
+	level++;
+    }
+    return -1;
+}
+
+
+static FILE *
+open_krb_realms(void)
+{
+  static const char *const files[] = KRB_RLM_FILES;
+  FILE *res;
+  int i;
+  
+  const char *dir = getenv("KRBCONFDIR");
+
+  /* First try user specified file */
+  if (dir != 0) {
+    char fname[MAXPATHLEN];
+
+    if(k_concat(fname, sizeof(fname), dir, "/krb.realms", NULL) == 0)
+	if ((res = fopen(fname, "r")) != NULL)
+	    return res;
+  }
+
+  for (i = 0; files[i] != 0; i++)
+    if ((res = fopen(files[i], "r")) != NULL)
+      return res;
+
+  return NULL;
+}
+
+static int
+file_find_realm(const char *phost, const char *domain, char *ret_realm)
+{
+    FILE *trans_file;
+    char buf[1024];
+    char trans_host[MAXHOSTNAMELEN];
+    char trans_realm[REALM_SZ];
+    int ret = -1;
+    
+    if ((trans_file = open_krb_realms()) == NULL)
+	return -1;
+
+    while (fgets(buf, sizeof(buf), trans_file)) {
+	char *save = NULL;
+	char *tok = strtok_r(buf, " \t\r\n", &save);
+	if(tok == NULL)
+	    continue;
+	strncpy(trans_host, tok, MAXHOSTNAMELEN);
+	trans_host[MAXHOSTNAMELEN - 1] = 0;
+	tok = strtok_r(NULL, " \t\r\n", &save);
+	if(tok == NULL)
+	    continue;
+	strcpy(trans_realm, tok);
+	trans_realm[REALM_SZ - 1] = 0;
+	if (!strcasecmp(trans_host, phost)) {
+	    /* exact match of hostname, so return the realm */
+	    strcpy(ret_realm, trans_realm);
+	    ret = 0;
+	    break;
+	}
+	if ((trans_host[0] == '.') && domain) { 
+	    const char *cp = domain;
+	    do {
+		if(strcasecmp(trans_host, domain) == 0){
+		    /* domain match, save for later */ 
+		    strcpy(ret_realm, trans_realm);
+		    ret = 0;
+		    break;
+		}
+		cp = strchr(cp + 1, '.');
+	    } while(MATCH_SUBDOMAINS && cp);
+	}
+    }
+    fclose(trans_file);
+    return ret;
+}
 
 char *
-krb_realmofhost(host)
-	char *host;
+krb_realmofhost(const char *host)
 {
-	char *domain;
-	FILE *trans_file;
-	char trans_host[MAXHOSTNAMELEN+1];
-	char trans_realm[REALM_SZ+1];
-	struct hostent *hp;
-	int retval;
+    static char ret_realm[REALM_SZ];
+    char *domain;
+    char phost[MAXHOSTNAMELEN];
+	
+    krb_name_to_name(host, phost, sizeof(phost));
+	
+    domain = strchr(phost, '.');
 
-	if ((hp = gethostbyname(host)) != NULL)
-		host = hp->h_name;
+    if(file_find_realm(phost, domain, ret_realm) == 0)
+	return ret_realm;
 
-	domain = strchr(host, '.');
-
-	/* prepare default */
-	if (domain) {
-		ret_realm[0] = '\0';
-	} else {
-		krb_get_lrealm(ret_realm, 1);
-	}
-
-	if ((trans_file = fopen(KRB_RLM_TRANS, "r")) == (FILE *) 0) {
-	        char tbuf[128];
-		char *tdir = NULL;
-		if (issetugid() == 0) 
-			tdir = (char *) getenv("KRBCONFDIR");
-		strncpy(tbuf, tdir ? tdir : "/etc", sizeof(tbuf)-1);
-		tbuf[sizeof(tbuf)-1] = '\0';
-		strncat(tbuf, "/krb.realms", sizeof(tbuf) - strlen(tbuf));
-		if ((trans_file = fopen(tbuf,"r")) == NULL)
-                        return(ret_realm[0] ? ret_realm : NULL); /* krb_errno = KRB_NO_TRANS */
-	}
-	while (1) {
-		if ((retval = fscanf(trans_file, "%s %s",
-				     trans_host, trans_realm)) != 2) {
-			if (retval == EOF) {
-				fclose(trans_file);
-				return(ret_realm[0] ? ret_realm : NULL);
-			}
-			continue;	/* ignore broken lines */
-		}
-		trans_host[MAXHOSTNAMELEN] = '\0';
-		trans_realm[REALM_SZ] = '\0';
-		if (!strcasecmp(trans_host, host)) {
-			/* exact match of hostname, so return the realm */
-			(void) strcpy(ret_realm, trans_realm);
-			fclose(trans_file);
-			return(ret_realm[0] ? ret_realm : NULL);
-		}
-		if ((trans_host[0] == '.') && domain) { 
-#if     MATCH_SUBDOMAINS
-                        char *cp;
-                        for (cp = domain; cp != NULL; cp = strchr(cp+1, '.')) {
-                                /* this is a domain match */
-                                if (!strcasecmp(trans_host, cp)) {
-                                        /* domain match, save for later */
-                                        (void) strcpy(ret_realm, trans_realm);
-                                        continue;
-                                }
-                        }
-#else /* MATCH_SUBDOMAINS */
-			/* this is a domain match */ 
-			if (!strcasecmp(trans_host, domain)) { 
-				/* domain match, save for later */ 
-				(void) strcpy(ret_realm, trans_realm); 
-				continue; 
-			} 
-#endif /* MATCH_SUBDOMAINS */
-		}
-	}
+    if(dns_find_realm(phost, ret_realm) >= 0)
+	return ret_realm;
+  
+    if (domain) {
+	char *cp;
+	  
+	strncpy(ret_realm, &domain[1], REALM_SZ);
+	ret_realm[REALM_SZ - 1] = 0;
+	/* Upper-case realm */
+	for (cp = ret_realm; *cp; cp++)
+	    *cp = toupper(*cp);
+    } else {
+	krb_get_lrealm(ret_realm, 1);
+    }
+    return ret_realm;
 }

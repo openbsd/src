@@ -1,10 +1,4 @@
-/*
- * This software may now be redistributed outside the US.
- *
- * $Source: /home/cvs/src/kerberosIV/krb/Attic/tf_util.c,v $
- *
- * $Locker:  $
- */
+/* $KTH: tf_util.c,v 1.25 1997/11/04 09:44:28 bg Exp $ */
 
 /* 
   Copyright (C) 1989 by the Massachusetts Institute of Technology
@@ -26,29 +20,18 @@ this software for any purpose.  It is provided "as is" without express
 or implied warranty.
 
   */
-
+        
 #include "krb_locl.h"
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/file.h>
-
-#ifdef TKT_SHMEM
-#include <sys/param.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
-#endif /* TKT_SHMEM */
 
 #define TOO_BIG -1
 #define TF_LCK_RETRY ((unsigned)2)	/* seconds to sleep before
 					 * retry if ticket file is
 					 * locked */
+#define	TF_LCK_RETRY_COUNT	(50)	/* number of retries	*/
 
-#ifdef TKT_SHMEM
-static char *krb_shm_addr = 0;
-static char *tmp_shm_addr = 0;
-static char krb_dummy_skey[8] = {0,0,0,0,0,0,0,0};
-#endif /* TKT_SHMEM */
+#ifndef O_BINARY
+#define O_BINARY 0
+#endif
 
 /*
  * fd must be initialized to something that won't ever occur as a real
@@ -63,12 +46,13 @@ static char krb_dummy_skey[8] = {0,0,0,0,0,0,0,0};
  *	c. In tf_close, be sure it gets reinitialized to a negative
  *	   number. 
  */
-static  fd = -1;
-static	curpos;				/* Position in tfbfr */
-static	lastpos;			/* End of tfbfr */
+static  int fd = -1;
+static	int curpos;				/* Position in tfbfr */
+static	int lastpos;			/* End of tfbfr */
 static	char tfbfr[BUFSIZ];		/* Buffer for ticket data */
 
-static tf_gets(register char *s, int n), tf_read(register char *s, register int n);
+static int tf_gets(char *s, int n);
+static int tf_read(void *s, int n);
 
 /*
  * This file contains routines for manipulating the ticket cache file.
@@ -101,7 +85,11 @@ static tf_gets(register char *s, int n), tf_read(register char *s, register int 
  *
  * tf_get_pname() returns the principal's name.
  *
+ * tf_put_pname() writes the principal's name to the ticket file.
+ *
  * tf_get_pinst() returns the principal's instance (may be null).
+ *
+ * tf_put_pinst() writes the instance.
  *
  * tf_get_cred() returns the next CREDENTIALS record.
  *
@@ -133,133 +121,148 @@ static tf_gets(register char *s, int n), tf_read(register char *s, register int 
  */
 
 int
-tf_init(tf_name, rw)
-	char *tf_name;
-	int rw;
+tf_init(char *tf_name, int rw)
 {
-    int     wflag;
-    uid_t   me, getuid(void);
-    struct stat stat_buf;
-#ifdef TKT_SHMEM
-    char shmidname[MaxPathLen]; 
-    FILE *sfp;
-    int shmid;
-#endif
+  /* Unix implementation */
+  int wflag;
+  struct stat stat_buf;
+  int i_retry;
 
-    switch (rw) {
-    case R_TKT_FIL:
-	wflag = 0;
-	break;
-    case W_TKT_FIL:
-	wflag = 1;
-	break;
+  switch (rw) {
+  case R_TKT_FIL:
+    wflag = 0;
+    break;
+  case W_TKT_FIL:
+    wflag = 1;
+    break;
+  default:
+    if (krb_debug)
+      krb_warning("tf_init: illegal parameter\n");
+    return TKT_FIL_ACC;
+  }
+  if (lstat(tf_name, &stat_buf) < 0)
+    switch (errno) {
+    case ENOENT:
+      return NO_TKT_FIL;
     default:
-	if (krb_debug) fprintf(stderr, "tf_init: illegal parameter\n");
-	return TKT_FIL_ACC;
+      return TKT_FIL_ACC;
     }
-    if (lstat(tf_name, &stat_buf) < 0)
-	switch (errno) {
-	case ENOENT:
-	    return NO_TKT_FIL;
-	default:
-	    return TKT_FIL_ACC;
-	}
-    me = getuid();
-    if ((stat_buf.st_uid != me && me != 0) ||
-	((stat_buf.st_mode & S_IFMT) != S_IFREG))
-	return TKT_FIL_ACC;
-#ifdef TKT_SHMEM
-    (void) strcpy(shmidname, tf_name);
-    (void) strcat(shmidname, ".shm");
-    if (stat(shmidname,&stat_buf) < 0)
-	return(TKT_FIL_ACC);
-    if ((stat_buf.st_uid != me && me != 0) ||
-	((stat_buf.st_mode & S_IFMT) != S_IFREG))
-	return TKT_FIL_ACC;
-#endif /* TKT_SHMEM */
+  if (!S_ISREG(stat_buf.st_mode))
+    return TKT_FIL_ACC;
 
-    /*
-     * If "wflag" is set, open the ticket file in append-writeonly mode
-     * and lock the ticket file in exclusive mode.  If unable to lock
-     * the file, sleep and try again.  If we fail again, return with the
-     * proper error message. 
-     */
+  /* The code tries to guess when the calling program is running
+   * set-uid and prevent unauthorized access.
+   *
+   * All library functions now assume that the right set of userids
+   * are set upon entry, therefore it's not strictly necessary to
+   * perform these test for programs adhering to these assumptions.
+   */
+  {
+    uid_t me = getuid();
+    if (stat_buf.st_uid != me && me != 0)
+      return TKT_FIL_ACC;
+  }
 
-    curpos = sizeof(tfbfr);
+  /*
+   * If "wflag" is set, open the ticket file in append-writeonly mode
+   * and lock the ticket file in exclusive mode.  If unable to lock
+   * the file, sleep and try again.  If we fail again, return with the
+   * proper error message. 
+   */
 
-#ifdef TKT_SHMEM
-    sfp = fopen(shmidname, "r");	/* only need read/write on the
-					   actual tickets */
-    if (sfp == 0)
-    	return TKT_FIL_ACC;
-    shmid = -1;
-    {
-	char buf[BUFSIZ];
-	int val;			/* useful for debugging fscanf */
-	/* We provide our own buffer here since some STDIO libraries
-	   barf on unbuffered input with fscanf() */
+  curpos = sizeof(tfbfr);
 
-	setbuf(sfp, buf);
-	if ((val = fscanf(sfp,"%d",&shmid)) != 1) {
-	    (void) fclose(sfp);
-	    return TKT_FIL_ACC;
-	}
-	if (shmid < 0) {
-	    (void) fclose(sfp);
-	    return TKT_FIL_ACC;
-	}
-	(void) fclose(sfp);
-    }
-    /*
-    * global krb_shm_addr is initialized to 0.  Ultrix bombs when you try and
-    * attach the same segment twice so we need this check.
-    */
-    if (!krb_shm_addr) {
-    	if ((krb_shm_addr = shmat(shmid,0,0)) == -1){
-		if (krb_debug)
-		    fprintf(stderr,
-			    "cannot attach shared memory for segment %d\n",
-			    shmid);
-		krb_shm_addr = 0;	/* reset so we catch further errors */
-		return TKT_FIL_ACC;
-	    }
-    }
-    tmp_shm_addr = krb_shm_addr;
-#endif /* TKT_SHMEM */
     
-    if (wflag) {
-	fd = open(tf_name, O_RDWR, 0600);
-	if (fd < 0) {
-	    return TKT_FIL_ACC;
-	}
-	if (flock(fd, LOCK_EX | LOCK_NB) < 0) {
-	    sleep(TF_LCK_RETRY);
-	    if (flock(fd, LOCK_EX | LOCK_NB) < 0) {
-		(void) close(fd);
-		fd = -1;
-		return TKT_FIL_LCK;
-	    }
-	}
-	return KSUCCESS;
-    }
-    /*
-     * Otherwise "wflag" is not set and the ticket file should be opened
-     * for read-only operations and locked for shared access. 
-     */
-
-    fd = open(tf_name, O_RDONLY, 0600);
+  if (wflag) {
+    fd = open(tf_name, O_RDWR | O_BINARY, 0600);
     if (fd < 0) {
-	return TKT_FIL_ACC;
+      return TKT_FIL_ACC;
     }
-    if (flock(fd, LOCK_SH | LOCK_NB) < 0) {
-	sleep(TF_LCK_RETRY);
-	if (flock(fd, LOCK_SH | LOCK_NB) < 0) {
-	    (void) close(fd);
-	    fd = -1;
-	    return TKT_FIL_LCK;
-	}
+    for (i_retry = 0; i_retry < TF_LCK_RETRY_COUNT; i_retry++) {
+      if (k_flock(fd, K_LOCK_EX | K_LOCK_NB) < 0) {
+	if (krb_debug)
+	  krb_warning("tf_init: retry %d of write lock of `%s'.\n",
+		      i_retry, tf_name);
+	sleep (TF_LCK_RETRY);
+      } else {
+	return KSUCCESS;		/* all done */
+      }
     }
-    return KSUCCESS;
+    close (fd);
+    fd = -1;
+    return TKT_FIL_LCK;
+  }
+  /*
+   * Otherwise "wflag" is not set and the ticket file should be opened
+   * for read-only operations and locked for shared access. 
+   */
+
+  fd = open(tf_name, O_RDONLY | O_BINARY, 0600);
+  if (fd < 0) {
+    return TKT_FIL_ACC;
+  }
+
+  for (i_retry = 0; i_retry < TF_LCK_RETRY_COUNT; i_retry++) {
+    if (k_flock(fd, K_LOCK_SH | K_LOCK_NB) < 0) {
+      if (krb_debug)
+	krb_warning("tf_init: retry %d of read lock of `%s'.\n",
+		    i_retry, tf_name);
+      sleep (TF_LCK_RETRY);
+    } else {
+      return KSUCCESS;		/* all done */
+    }
+  }
+  /* failure */
+  close(fd);
+  fd = -1;
+  return TKT_FIL_LCK;
+}
+
+/*
+ * tf_create() should be called when creating a new ticket file.
+ * The only argument is the name of the ticket file.
+ * After calling this, it should be possible to use other tf_* functions.
+ *
+ * New algoritm for creating ticket file:
+ * 1. try to erase contents of existing file.
+ * 2. try to remove old file.
+ * 3. try to open with O_CREAT and O_EXCL
+ * 4. if this fails, someone has created a file in between 1 and 2 and
+ *    we should fail.  Otherwise, all is wonderful.
+ */
+
+int
+tf_create(char *tf_name)
+{
+  struct stat statbuf;
+  char garbage[BUFSIZ];
+
+  fd = open(tf_name, O_RDWR | O_BINARY, 0);
+  if (fd >= 0) {
+    if (fstat (fd, &statbuf) == 0) {
+      int i;
+
+      for (i = 0; i < statbuf.st_size; i += sizeof(garbage))
+	write (fd, garbage, sizeof(garbage));
+    }
+    close (fd);
+  }
+
+  if (unlink (tf_name) && errno != ENOENT)
+    return TKT_FIL_ACC;
+
+  fd = open(tf_name, O_RDWR | O_CREAT | O_EXCL | O_BINARY, 0600);
+  if (fd < 0)
+    return TKT_FIL_ACC;
+  if (k_flock(fd, K_LOCK_EX | K_LOCK_NB) < 0) {
+    sleep(TF_LCK_RETRY);
+    if (k_flock(fd, K_LOCK_EX | K_LOCK_NB) < 0) {
+      close(fd);
+      fd = -1;
+      return TKT_FIL_LCK;
+    }
+  }
+  return KSUCCESS;
 }
 
 /*
@@ -272,17 +275,41 @@ tf_init(tf_name, rw)
  */
 
 int
-tf_get_pname(p)
-	char *p;
+tf_get_pname(char *p)
 {
-    if (fd < 0) {
-	if (krb_debug)
-	    fprintf(stderr, "tf_get_pname called before tf_init.\n");
-	return TKT_FIL_INI;
+  if (fd < 0) {
+    if (krb_debug)
+      krb_warning("tf_get_pname called before tf_init.\n");
+    return TKT_FIL_INI;
+  }
+  if (tf_gets(p, ANAME_SZ) < 2)	/* can't be just a null */
+    {
+      if (krb_debug) 
+	krb_warning ("tf_get_pname: pname < 2.\n");
+      return TKT_FIL_FMT;
     }
-    if (tf_gets(p, ANAME_SZ) < 2)	/* can't be just a null */
-	return TKT_FIL_FMT;
-    return KSUCCESS;
+  return KSUCCESS;
+}
+
+/*
+ * tf_put_pname() sets the principal's name in the ticket file. Call
+ * after tf_create().
+ */
+
+int
+tf_put_pname(char *p)
+{
+  unsigned count;
+
+  if (fd < 0) {
+    if (krb_debug)
+      krb_warning("tf_put_pname called before tf_create.\n");
+    return TKT_FIL_INI;
+  }
+  count = strlen(p)+1;
+  if (write(fd,p,count) != count)
+    return(KFAILURE);
+  return KSUCCESS;
 }
 
 /*
@@ -296,17 +323,41 @@ tf_get_pname(p)
  */
 
 int
-tf_get_pinst(inst)
-	char *inst;
+tf_get_pinst(char *inst)
 {
-    if (fd < 0) {
-	if (krb_debug)
-	    fprintf(stderr, "tf_get_pinst called before tf_init.\n");
-	return TKT_FIL_INI;
+  if (fd < 0) {
+    if (krb_debug)
+      krb_warning("tf_get_pinst called before tf_init.\n");
+    return TKT_FIL_INI;
+  }
+  if (tf_gets(inst, INST_SZ) < 1)
+    {
+      if (krb_debug)
+	krb_warning("tf_get_pinst: inst_sz < 1.\n");
+      return TKT_FIL_FMT;
     }
-    if (tf_gets(inst, INST_SZ) < 1)
-	return TKT_FIL_FMT;
-    return KSUCCESS;
+  return KSUCCESS;
+}
+
+/*
+ * tf_put_pinst writes the principal's instance to the ticket file.
+ * Call after tf_create.
+ */
+
+int
+tf_put_pinst(char *inst)
+{
+  unsigned count;
+
+  if (fd < 0) {
+    if (krb_debug)
+      krb_warning("tf_put_pinst called before tf_create.\n");
+    return TKT_FIL_INI;
+  }
+  count = strlen(inst)+1;
+  if (write(fd,inst,count) != count)
+    return(KFAILURE);
+  return KSUCCESS;
 }
 
 /*
@@ -321,61 +372,68 @@ tf_get_pinst(inst)
  */
 
 int
-tf_get_cred(c)
-	CREDENTIALS *c;
+tf_get_cred(CREDENTIALS *c)
 {
-    KTEXT   ticket = &c->ticket_st;	/* pointer to ticket */
-    int     k_errno;
+  KTEXT   ticket = &c->ticket_st;	/* pointer to ticket */
+  int     k_errno;
 
-    if (fd < 0) {
-	if (krb_debug)
-	    fprintf(stderr, "tf_get_cred called before tf_init.\n");
-	return TKT_FIL_INI;
+  if (fd < 0) {
+    if (krb_debug)
+      krb_warning ("tf_get_cred called before tf_init.\n");
+    return TKT_FIL_INI;
+  }
+  if ((k_errno = tf_gets(c->service, SNAME_SZ)) < 2)
+    switch (k_errno) {
+    case TOO_BIG:
+      if (krb_debug)
+	krb_warning("tf_get_cred: too big service cred.\n");
+    case 1:		/* can't be just a null */
+      tf_close();
+      if (krb_debug)
+	krb_warning("tf_get_cred: null service cred.\n");
+      return TKT_FIL_FMT;
+    case 0:
+      return EOF;
     }
-    if ((k_errno = tf_gets(c->service, SNAME_SZ)) < 2)
-	switch (k_errno) {
-	case TOO_BIG:
-	case 1:		/* can't be just a null */
-	    tf_close();
-	    return TKT_FIL_FMT;
-	case 0:
-	    return EOF;
-	}
-    if ((k_errno = tf_gets(c->instance, INST_SZ)) < 1)
-	switch (k_errno) {
-	case TOO_BIG:
-	    return TKT_FIL_FMT;
-	case 0:
-	    return EOF;
-	}
-    if ((k_errno = tf_gets(c->realm, REALM_SZ)) < 2)
-	switch (k_errno) {
-	case TOO_BIG:
-	case 1:		/* can't be just a null */
-	    tf_close();
-	    return TKT_FIL_FMT;
-	case 0:
-	    return EOF;
-	}
-    if (
-	tf_read((char *) (c->session), DES_KEY_SZ) < 1 ||
-	tf_read((char *) &(c->lifetime), sizeof(c->lifetime)) < 1 ||
-	tf_read((char *) &(c->kvno), sizeof(c->kvno)) < 1 ||
-	tf_read((char *) &(ticket->length), sizeof(ticket->length))
-	< 1 ||
-    /* don't try to read a silly amount into ticket->dat */
-	ticket->length > MAX_KTXT_LEN ||
-	tf_read((char *) (ticket->dat), ticket->length) < 1 ||
-	tf_read((char *) &(c->issue_date), sizeof(c->issue_date)) < 1
-	) {
-	tf_close();
-	return TKT_FIL_FMT;
+  if ((k_errno = tf_gets(c->instance, INST_SZ)) < 1)
+    switch (k_errno) {
+    case TOO_BIG:
+      if (krb_debug)
+	krb_warning ("tf_get_cred: too big instance cred.\n");
+      return TKT_FIL_FMT;
+    case 0:
+      return EOF;
     }
-#ifdef TKT_SHMEM
-    bcopy(tmp_shm_addr,c->session,KEY_SZ);
-    tmp_shm_addr += KEY_SZ;
-#endif /* TKT_SHMEM */
-    return KSUCCESS;
+  if ((k_errno = tf_gets(c->realm, REALM_SZ)) < 2)
+    switch (k_errno) {
+    case TOO_BIG:
+      if (krb_debug)
+	krb_warning ("tf_get_cred: too big realm cred.\n");
+    case 1:		/* can't be just a null */
+      tf_close();
+      if (krb_debug)
+	krb_warning ("tf_get_cred: null realm cred.\n");
+      return TKT_FIL_FMT;
+    case 0:
+      return EOF;
+    }
+  if (
+      tf_read((c->session), DES_KEY_SZ) < 1 ||
+      tf_read(&(c->lifetime), sizeof(c->lifetime)) < 1 ||
+      tf_read(&(c->kvno), sizeof(c->kvno)) < 1 ||
+      tf_read(&(ticket->length), sizeof(ticket->length))
+      < 1 ||
+      /* don't try to read a silly amount into ticket->dat */
+      ticket->length > MAX_KTXT_LEN ||
+      tf_read((ticket->dat), ticket->length) < 1 ||
+      tf_read(&(c->issue_date), sizeof(c->issue_date)) < 1
+      ) {
+    tf_close();
+    if (krb_debug)
+      krb_warning ("tf_get_cred: failed tf_read.\n");
+    return TKT_FIL_FMT;
+  }
+  return KSUCCESS;
 }
 
 /*
@@ -387,23 +445,14 @@ tf_get_cred(c)
  */
 
 void
-tf_close()
+tf_close(void)
 {
-    if (!(fd < 0)) {
-#ifdef TKT_SHMEM
-	if (shmdt(krb_shm_addr)) {
-	    /* what kind of error? */
-	    if (krb_debug)
-		fprintf(stderr, "shmdt 0x%x: errno %d",krb_shm_addr, errno);
-	} else {
-	    krb_shm_addr = 0;
-	}
-#endif /* TKT_SHMEM */
-	(void) flock(fd, LOCK_UN);
-	(void) close(fd);
-	fd = -1;		/* see declaration of fd above */
-    }
-    bzero(tfbfr, sizeof(tfbfr));
+  if (!(fd < 0)) {
+    k_flock(fd, K_LOCK_UN);
+    close(fd);
+    fd = -1;		/* see declaration of fd above */
+  }
+  memset(tfbfr, 0, sizeof(tfbfr));
 }
 
 /*
@@ -425,32 +474,30 @@ tf_close()
  */
 
 static int
-tf_gets(s, n)
-	register char *s;
-	int n;
+tf_gets(char *s, int n)
 {
-    register count;
+  int count;
 
-    if (fd < 0) {
-	if (krb_debug)
-	    fprintf(stderr, "tf_gets called before tf_init.\n");
-	return TKT_FIL_INI;
+  if (fd < 0) {
+    if (krb_debug)
+      krb_warning ("tf_gets called before tf_init.\n");
+    return TKT_FIL_INI;
+  }
+  for (count = n - 1; count > 0; --count) {
+    if (curpos >= sizeof(tfbfr)) {
+      lastpos = read(fd, tfbfr, sizeof(tfbfr));
+      curpos = 0;
     }
-    for (count = n - 1; count > 0; --count) {
-	if (curpos >= sizeof(tfbfr)) {
-	    lastpos = read(fd, tfbfr, sizeof(tfbfr));
-	    curpos = 0;
-	}
-	if (curpos == lastpos) {
-	    tf_close();
-	    return 0;
-	}
-	*s = tfbfr[curpos++];
-	if (*s++ == '\0')
-	    return (n - count);
+    if (curpos == lastpos) {
+      tf_close();
+      return 0;
     }
-    tf_close();
-    return TOO_BIG;
+    *s = tfbfr[curpos++];
+    if (*s++ == '\0')
+      return (n - count);
+  }
+  tf_close();
+  return TOO_BIG;
 }
 
 /*
@@ -467,28 +514,25 @@ tf_gets(s, n)
  */
 
 static int
-tf_read(s, n)
-	register char *s;
-	register int n;
+tf_read(void *v, int n)
 {
-    register count;
+  char *s = (char *)v;
+  int count;
     
-    for (count = n; count > 0; --count) {
-	if (curpos >= sizeof(tfbfr)) {
-	    lastpos = read(fd, tfbfr, sizeof(tfbfr));
-	    curpos = 0;
-	}
-	if (curpos == lastpos) {
-	    tf_close();
-	    return 0;
-	}
-	*s++ = tfbfr[curpos++];
+  for (count = n; count > 0; --count) {
+    if (curpos >= sizeof(tfbfr)) {
+      lastpos = read(fd, tfbfr, sizeof(tfbfr));
+      curpos = 0;
     }
-    return n;
+    if (curpos == lastpos) {
+      tf_close();
+      return 0;
+    }
+    *s++ = tfbfr[curpos++];
+  }
+  return n;
 }
      
-char   *tkt_string(void);
-
 /*
  * tf_save_cred() appends an incoming ticket to the end of the ticket
  * file.  You must call tf_init() before calling tf_save_cred().
@@ -502,89 +546,102 @@ char   *tkt_string(void);
  * Returns KSUCCESS if all goes well, TKT_FIL_INI if tf_init() wasn't
  * called previously, and KFAILURE for anything else that went wrong.
  */
+ 
+int
+tf_save_cred(char *service,	/* Service name */
+	     char *instance,	/* Instance */
+	     char *realm,	/* Auth domain */
+	     unsigned char *session, /* Session key */
+	     int lifetime,	/* Lifetime */
+	     int kvno,		/* Key version number */
+	     KTEXT ticket,	/* The ticket itself */
+	     u_int32_t issue_date) /* The issue time */
+{
+  int count;			/* count for write */
+
+  if (fd < 0) {			/* fd is ticket file as set by tf_init */
+    if (krb_debug)
+      krb_warning ("tf_save_cred called before tf_init.\n");
+    return TKT_FIL_INI;
+  }
+  /* Find the end of the ticket file */
+  lseek(fd, 0L, SEEK_END);
+
+  /* Write the ticket and associated data */
+  /* Service */
+  count = strlen(service) + 1;
+  if (write(fd, service, count) != count)
+    goto bad;
+  /* Instance */
+  count = strlen(instance) + 1;
+  if (write(fd, instance, count) != count)
+    goto bad;
+  /* Realm */
+  count = strlen(realm) + 1;
+  if (write(fd, realm, count) != count)
+    goto bad;
+  /* Session key */
+  if (write(fd, session, 8) != 8)
+    goto bad;
+  /* Lifetime */
+  if (write(fd, &lifetime, sizeof(int)) != sizeof(int))
+    goto bad;
+  /* Key vno */
+  if (write(fd, &kvno, sizeof(int)) != sizeof(int))
+    goto bad;
+  /* Tkt length */
+  if (write(fd, &(ticket->length), sizeof(int)) !=
+      sizeof(int))
+    goto bad;
+  /* Ticket */
+  count = ticket->length;
+  if (write(fd, ticket->dat, count) != count)
+    goto bad;
+  /* Issue date */
+  if (write(fd, &issue_date, sizeof(issue_date)) != sizeof(issue_date))
+    goto bad;
+
+  return (KSUCCESS);
+bad:
+  return (KFAILURE);
+}
+	  
+int
+tf_setup(CREDENTIALS *cred, char *pname, char *pinst)
+{
+    int ret;
+    ret = tf_create(tkt_string());
+    if (ret != KSUCCESS)
+	return ret;
+
+    if (tf_put_pname(pname) != KSUCCESS ||
+	tf_put_pinst(pinst) != KSUCCESS) {
+	tf_close();
+	return INTK_ERR;
+    }
+
+    ret = tf_save_cred(cred->service, cred->instance, cred->realm, 
+		       cred->session, cred->lifetime, cred->kvno,
+		       &cred->ticket_st, cred->issue_date);
+    tf_close();
+    return ret;
+}
 
 int
-tf_save_cred(service, instance, realm, session,
-	     lifetime, kvno, ticket, issue_date)
-	char *service;		/* Service name */
-	char *instance;		/* Instance */
-	char *realm;		/* Auth domain */
-	unsigned char *session;	/* Session key */
-	int lifetime;		/* Lifetime */
-	int kvno;		/* Key version number */
-	KTEXT ticket;		/* The ticket itself */
-	u_int32_t issue_date;	/* The issue time */
+in_tkt(char *pname, char *pinst)
 {
+  int ret;
+  
+  ret = tf_create (tkt_string());
+  if (ret != KSUCCESS)
+    return ret;
 
-    off_t   lseek(int, off_t, int);
-    int     count;		/* count for write */
-#ifdef TKT_SHMEM
-    int	    *skey_check;
-#endif /* TKT_SHMEM */
-
-    if (fd < 0) {		/* fd is ticket file as set by tf_init */
-	  if (krb_debug)
-	      fprintf(stderr, "tf_save_cred called before tf_init.\n");
-	  return TKT_FIL_INI;
+    if (tf_put_pname(pname) != KSUCCESS ||
+	tf_put_pinst(pinst) != KSUCCESS) {
+	tf_close();
+	return INTK_ERR;
     }
-    /* Find the end of the ticket file */
-    (void) lseek(fd, 0L, 2);
-#ifdef TKT_SHMEM
-    /* scan to end of existing keys: pick first 'empty' slot.
-       we assume that no real keys will be completely zero (it's a weak
-       key under DES) */
 
-    skey_check = (int *) krb_shm_addr;
-
-    while (*skey_check && *(skey_check+1))
-	skey_check += 2;
-    tmp_shm_addr = (char *)skey_check;
-#endif /* TKT_SHMEM */
-
-    /* Write the ticket and associated data */
-    /* Service */
-    count = strlen(service) + 1;
-    if (write(fd, service, count) != count)
-	goto bad;
-    /* Instance */
-    count = strlen(instance) + 1;
-    if (write(fd, instance, count) != count)
-	goto bad;
-    /* Realm */
-    count = strlen(realm) + 1;
-    if (write(fd, realm, count) != count)
-	goto bad;
-    /* Session key */
-#ifdef TKT_SHMEM
-    bcopy(session,tmp_shm_addr,8);
-    tmp_shm_addr+=8;
-    if (write(fd,krb_dummy_skey,8) != 8)
-	goto bad;
-#else /* ! TKT_SHMEM */
-    if (write(fd, (char *) session, 8) != 8)
-	goto bad;
-#endif /* TKT_SHMEM */
-    /* Lifetime */
-    if (write(fd, (char *) &lifetime, sizeof(int)) != sizeof(int))
-	goto bad;
-    /* Key vno */
-    if (write(fd, (char *) &kvno, sizeof(int)) != sizeof(int))
-	goto bad;
-    /* Tkt length */
-    if (write(fd, (char *) &(ticket->length), sizeof(int)) !=
-	sizeof(int))
-	goto bad;
-    /* Ticket */
-    count = ticket->length;
-    if (write(fd, (char *) (ticket->dat), count) != count)
-	goto bad;
-    /* Issue date */
-    if (write(fd, (char *) &issue_date, sizeof(issue_date))
-	!= sizeof(issue_date))
-	goto bad;
-
-    /* Actually, we should check each write for success */
-    return (KSUCCESS);
-bad:
-    return (KFAILURE);
+    tf_close();
+    return KSUCCESS;
 }

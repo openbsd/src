@@ -1,35 +1,44 @@
+/* $KTH: rd_req.c,v 1.24 1997/05/11 11:05:28 assar Exp $ */
+
 /*
- * This software may now be redistributed outside the US.
- *
- * $Source: /home/cvs/src/kerberosIV/krb/Attic/rd_req.c,v $
- *
- * $Locker:  $
+ * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * (Royal Institute of Technology, Stockholm, Sweden).
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by the Kungliga Tekniska
+ *      Högskolan and its contributors.
+ * 
+ * 4. Neither the name of the Institute nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
-/* 
-  Copyright (C) 1989 by the Massachusetts Institute of Technology
-
-   Export of this software from the United States of America is assumed
-   to require a specific license from the United States Government.
-   It is the responsibility of any person or organization contemplating
-   export to obtain such a license before exporting.
-
-WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
-distribute this software and its documentation for any purpose and
-without fee is hereby granted, provided that the above copyright
-notice appear in all copies and that both that copyright notice and
-this permission notice appear in supporting documentation, and that
-the name of M.I.T. not be used in advertising or publicity pertaining
-to distribution of the software without specific, written prior
-permission.  M.I.T. makes no representations about the suitability of
-this software for any purpose.  It is provided "as is" without express
-or implied warranty.
-
-  */
-
 #include "krb_locl.h"
-
-#include <sys/time.h>
 
 static struct timeval t_local = { 0, 0 };
 
@@ -75,19 +84,17 @@ static char st_inst[INST_SZ];	/* server's instance */
  */
 
 int
-krb_set_key(key, cvt)
-	char *key;
-	int cvt;
+krb_set_key(void *key, int cvt)
 {
 #ifdef NOENCRYPTION
-    bzero(ky, sizeof(ky));
+    memset(ky, 0, sizeof(ky));
     return KSUCCESS;
 #else /* Encrypt */
     if (cvt)
-        des_string_to_key(key,&ky);
+        des_string_to_key((char*)key, &ky);
     else
-        bcopy(key,(char *)ky,8);
-    return(des_key_sched(&ky,serv_key));
+        memcpy((char*)ky, key, 8);
+    return(des_key_sched(&ky, serv_key));
 #endif /* NOENCRYPTION */
 }
 
@@ -134,75 +141,64 @@ krb_set_key(key, cvt)
  */
 
 int
-krb_rd_req(authent, service, instance, from_addr, ad, fn)
-	register KTEXT authent;	/* The received message */
-	char *service;		/* Service name */
-	char *instance;		/* Service instance */
-	int32_t from_addr;	/* Net address of originating host */
-	AUTH_DAT *ad;		/* Structure to be filled in */
-	char *fn;		/* Filename to get keys from */
+krb_rd_req(KTEXT authent,	/* The received message */
+	   char *service,	/* Service name */
+	   char *instance,	/* Service instance */
+	   int32_t from_addr,	/* Net address of originating host */
+	   AUTH_DAT *ad,	/* Structure to be filled in */
+	   char *fn)		/* Filename to get keys from */
 {
     static KTEXT_ST ticket;     /* Temp storage for ticket */
     static KTEXT tkt = &ticket;
     static KTEXT_ST req_id_st;  /* Temp storage for authenticator */
-    register KTEXT req_id = &req_id_st;
+    KTEXT req_id = &req_id_st;
 
     char realm[REALM_SZ];	/* Realm of issuing kerberos */
-    static des_key_schedule seskey_sched; /* Key sched for session key */
+
     unsigned char skey[KKEY_SZ]; /* Session key from ticket */
     char sname[SNAME_SZ];	/* Service name from ticket */
     char iname[INST_SZ];	/* Instance name from ticket */
     char r_aname[ANAME_SZ];	/* Client name from authenticator */
     char r_inst[INST_SZ];	/* Client instance from authenticator */
     char r_realm[REALM_SZ];	/* Client realm from authenticator */
-    unsigned int r_time_ms;     /* Fine time from authenticator */
-    unsigned long r_time_sec;   /* Coarse time from authenticator */
-    register char *ptr;		/* For stepping through */
+    u_int32_t r_time_sec;	/* Coarse time from authenticator */
     unsigned long delta_t;      /* Time in authenticator - local time */
     long tkt_age;		/* Age of ticket */
-    static int swap_bytes;	/* Need to swap bytes? */
-    static int mutual;		/* Mutual authentication requested? */
     static unsigned char s_kvno;/* Version number of the server's key
 				 * Kerberos used to encrypt ticket */
+
+    struct timeval tv;
     int status;
+
+    int pvno;
+    int type;
+    int little_endian;
+
+    unsigned char *p;
 
     if (authent->length <= 0)
 	return(RD_AP_MODIFIED);
 
-    ptr = (char *) authent->dat;
+    p = authent->dat;
 
     /* get msg version, type and byte order, and server key version */
 
-    /* check version */
-    if (KRB_PROT_VERSION != (unsigned int) *ptr++)
-        return(RD_AP_VERSION);
+    pvno = *p++;
 
-    /* byte order */
-    swap_bytes = 0;
-    if ((*ptr & 1) != HOST_BYTE_ORDER)
-        swap_bytes++;
+    if(pvno != KRB_PROT_VERSION)
+	return RD_AP_VERSION;
+    
+    type = *p++;
+    
+    little_endian = type & 1;
+    type &= ~1;
+    
+    if(type != AUTH_MSG_APPL_REQUEST && type != AUTH_MSG_APPL_REQUEST_MUTUAL)
+	return RD_AP_MSG_TYPE;
 
-    /* check msg type */
-    mutual = 0;
-    switch (*ptr++ & ~1) {
-    case AUTH_MSG_APPL_REQUEST:
-        break;
-    case AUTH_MSG_APPL_REQUEST_MUTUAL:
-        mutual++;
-        break;
-    default:
-        return(RD_AP_MSG_TYPE);
-    }
+    s_kvno = *p++;
 
-#ifdef lint
-    /* XXX mutual is set but not used; why??? */
-    /* this is a crock to get lint to shut up */
-    if (mutual)
-        mutual = 0;
-#endif /* lint */
-    s_kvno = *ptr++;		/* get server key version */
-    (void) strncpy(realm,ptr, REALM_SZ);   /* And the realm of the issuing KDC */
-    ptr += strlen(ptr) + 1;     /* skip the realm "hint" */
+    p += krb_get_string(p, realm);
 
     /*
      * If "fn" is NULL, key info should already be set; don't
@@ -216,124 +212,110 @@ krb_rd_req(authent, service, instance, from_addr, ad, fn)
                strcmp(st_rlm,realm) || (st_kvno != s_kvno))) {
         if (*fn == 0) fn = KEYFILE;
         st_kvno = s_kvno;
-#ifndef NOENCRYPTION
-        if (read_service_key(service,instance,realm,(int) s_kvno,
-                            fn,(char *)skey))
+        if (read_service_key(service, instance, realm, s_kvno,
+			     fn, (char *)skey))
             return(RD_AP_UNDEC);
-        if ((status = krb_set_key((char *)skey,0)))
+        if ((status = krb_set_key((char*)skey, 0)))
 	    return(status);
-#endif /* !NOENCRYPTION */
-        (void) strcpy(st_rlm,realm);
-        (void) strcpy(st_nam,service);
-        (void) strcpy(st_inst,instance);
+        strcpy(st_rlm, realm);
+        strcpy(st_nam, service);
+        strcpy(st_inst, instance);
     }
 
-    /* Get ticket from authenticator */
-    tkt->length = (int) *ptr++;
-    if ((tkt->length + (ptr+1 - (char *) authent->dat)) > authent->length)
-	return(RD_AP_MODIFIED);
-    bcopy(ptr+1,(char *)(tkt->dat),tkt->length);
+    tkt->length = *p++;
+
+    req_id->length = *p++;
+
+    if(tkt->length + (p - authent->dat) > authent->length)
+	return RD_AP_MODIFIED;
+
+    memcpy(tkt->dat, p, tkt->length);
+    p += tkt->length;
 
     if (krb_ap_req_debug)
-        log("ticket->length: %d",tkt->length);
+        krb_log("ticket->length: %d",tkt->length);
 
-#ifndef NOENCRYPTION
     /* Decrypt and take apart ticket */
-#endif
-
-    if (decomp_ticket(tkt,&ad->k_flags,ad->pname,ad->pinst,ad->prealm,
-                      &(ad->address),ad->session, &(ad->life),
-                      &(ad->time_sec),sname,iname,&ky,serv_key))
-        return(RD_AP_UNDEC);
-
+    if (decomp_ticket(tkt, &ad->k_flags, ad->pname, ad->pinst, ad->prealm,
+                      &ad->address, ad->session, &ad->life,
+                      &ad->time_sec, sname, iname, &ky, serv_key))
+        return RD_AP_UNDEC;
+    
     if (krb_ap_req_debug) {
-        log("Ticket Contents.");
-        log(" Aname:   %s.%s",ad->pname,
-            ((int)*(ad->prealm) ? ad->prealm : "Athena"));
-        log(" Service: %s%s%s",sname,((int)*iname ? "." : ""),iname);
+        krb_log("Ticket Contents.");
+        krb_log(" Aname:   %s.%s",ad->pname, ad->prealm);
+        krb_log(" Service: %s", krb_unparse_name_long(sname, iname, NULL));
     }
 
     /* Extract the authenticator */
-    req_id->length = (int) *(ptr++);
-    if ((req_id->length + (ptr + tkt->length - (char *) authent->dat)) >
-	authent->length)
-	return(RD_AP_MODIFIED);
-    bcopy(ptr + tkt->length, (char *)(req_id->dat),req_id->length);
+    
+    if(req_id->length + (p - authent->dat) > authent->length)
+	return RD_AP_MODIFIED;
 
+    memcpy(req_id->dat, p, req_id->length);
+    p = req_id->dat;
+    
 #ifndef NOENCRYPTION
     /* And decrypt it with the session key from the ticket */
-    if (krb_ap_req_debug) log("About to decrypt authenticator");
-    des_key_sched(&ad->session,seskey_sched);
-    des_pcbc_encrypt((des_cblock *)req_id->dat,(des_cblock *)req_id->dat,
-                 (long) req_id->length, seskey_sched,&ad->session,DES_DECRYPT);
-    if (krb_ap_req_debug) log("Done.");
+    if (krb_ap_req_debug) krb_log("About to decrypt authenticator");
+
+    encrypt_ktext(req_id, &ad->session, DES_DECRYPT);
+
+    if (krb_ap_req_debug) krb_log("Done.");
 #endif /* NOENCRYPTION */
 
+    /* cast req_id->length to int? */
 #define check_ptr() if ((ptr - (char *) req_id->dat) > req_id->length) return(RD_AP_MODIFIED);
 
-    ptr = (char *) req_id->dat;
-    (void) strcpy(r_aname,ptr);	/* Authentication name */
-    ptr += strlen(r_aname)+1;
-    check_ptr();
-    (void) strcpy(r_inst,ptr);	/* Authentication instance */
-    ptr += strlen(r_inst)+1;
-    check_ptr();
-    (void) strcpy(r_realm,ptr);	/* Authentication name */
-    ptr += strlen(r_realm)+1;
-    check_ptr();
-    bcopy(ptr,(char *)&ad->checksum,4);	/* Checksum */
-    ptr += 4;
-    check_ptr();
-    if (swap_bytes) swap_u_long(ad->checksum);
-    r_time_ms = *(ptr++);	/* Time (fine) */
-#ifdef lint
-    /* XXX r_time_ms is set but not used.  why??? */
-    /* this is a crock to get lint to shut up */
-    if (r_time_ms)
-        r_time_ms = 0;
-#endif /* lint */
-    check_ptr();
-    /* assume sizeof(r_time_sec) == 4 ?? */
-    bcopy(ptr,(char *)&r_time_sec,4); /* Time (coarse) */
-    if (swap_bytes) swap_u_long(r_time_sec);
+    p += krb_get_nir(p, r_aname, r_inst, r_realm); /* XXX no rangecheck */
+
+    p += krb_get_int(p, &ad->checksum, 4, little_endian);
+
+    p++; /* time_5ms is not used */
+
+    p += krb_get_int(p, &r_time_sec, 4, little_endian);
 
     /* Check for authenticity of the request */
     if (krb_ap_req_debug)
-        log("Pname:   %s %s",ad->pname,r_aname);
-    if (strcmp(ad->pname,r_aname) != 0)
-        return(RD_AP_INCON);
-    if (strcmp(ad->pinst,r_inst) != 0)
-        return(RD_AP_INCON);
+        krb_log("Principal: %s.%s@%s / %s.%s@%s",ad->pname,ad->pinst, ad->prealm, 
+	      r_aname, r_inst, r_realm);
+    if (strcmp(ad->pname, r_aname) != 0 ||
+	strcmp(ad->pinst, r_inst) != 0 ||
+	strcmp(ad->prealm, r_realm) != 0)
+	return RD_AP_INCON;
+    
     if (krb_ap_req_debug)
-        log("Realm:   %s %s",ad->prealm,r_realm);
-    if ((strcmp(ad->prealm,r_realm) != 0))
-        return(RD_AP_INCON);
+        krb_log("Address: %x %x", ad->address, from_addr);
 
-    if (krb_ap_req_debug)
-        log("Address: %d %d",ad->address,from_addr);
+    if (from_addr && (!krb_equiv(ad->address, from_addr)))
+        return RD_AP_BADD;
 
-    (void) gettimeofday(&t_local,(struct timezone *) 0);
-    delta_t = abs((int)(t_local.tv_sec - r_time_sec));
+    gettimeofday(&tv, NULL);
+    delta_t = abs((int)(tv.tv_sec - r_time_sec));
     if (delta_t > CLOCK_SKEW) {
         if (krb_ap_req_debug)
-            log("Time out of range: %d - %d = %d",
-                t_local.tv_sec,r_time_sec,delta_t);
-        return(RD_AP_TIME);
+            krb_log("Time out of range: %lu - %lu = %lu",
+		    (unsigned long)t_local.tv_sec,
+		    (unsigned long)r_time_sec,
+		    (unsigned long)delta_t);
+        return RD_AP_TIME;
     }
 
     /* Now check for expiration of ticket */
 
-    tkt_age = t_local.tv_sec - ad->time_sec;
+    tkt_age = tv.tv_sec - ad->time_sec;
     if (krb_ap_req_debug)
-        log("Time: %d Issue Date: %d Diff: %d Life %x",
-            t_local.tv_sec,ad->time_sec,tkt_age,ad->life);
+        krb_log("Time: %ld Issue Date: %lu Diff: %ld Life %x",
+		(long)tv.tv_sec,
+		(unsigned long)ad->time_sec,
+		tkt_age,
+		ad->life);
+    
+    if ((tkt_age < 0) && (-tkt_age > CLOCK_SKEW))
+	return RD_AP_NYV;
 
-    if (t_local.tv_sec < ad->time_sec) {
-        if ((ad->time_sec - t_local.tv_sec) > CLOCK_SKEW)
-            return(RD_AP_NYV);
-    }
-    else if (t_local.tv_sec > krb_life_to_time(ad->time_sec, ad->life))
-        return(RD_AP_EXP);
+    if (tv.tv_sec > krb_life_to_time(ad->time_sec, ad->life))
+        return RD_AP_EXP;
 
     /* All seems OK */
     ad->reply.length = 0;

@@ -1,10 +1,4 @@
-/*
- * This software may now be redistributed outside the US.
- *
- * $Source: /home/cvs/src/kerberosIV/krb/Attic/get_in_tkt.c,v $
- *
- * $Locker:  $
- */
+/* $KTH: get_in_tkt.c,v 1.19 1997/10/03 21:51:42 joda Exp $ */ 
 
 /* 
   Copyright (C) 1989 by the Massachusetts Institute of Technology
@@ -30,67 +24,49 @@ or implied warranty.
 #include "krb_locl.h"
 
 /*
- * This file contains two routines: passwd_to_key() converts
- * a password into a DES key (prompting for the password if
- * not supplied), and krb_get_pw_in_tkt() gets an initial ticket for
- * a user.
+ * This file contains three routines: passwd_to_key() and
+ * passwd_to_afskey() converts a password into a DES key, using the
+ * normal strinttokey and the AFS one, respectively, and
+ * krb_get_pw_in_tkt() gets an initial ticket for a user.  
  */
 
 /*
- * passwd_to_key(): given a password, return a DES key.
- * There are extra arguments here which (used to be?)
- * used by srvtab_to_key().
- *
- * If the "passwd" argument is not null, generate a DES
- * key from it, using string_to_key().
- *
- * If the "passwd" argument is null, call des_read_password()
- * to prompt for a password and then convert it into a DES key.
- *
- * In either case, the resulting key is put in the "key" argument,
- * and 0 is returned.
+ * passwd_to_key() and passwd_to_afskey: given a password, return a DES key.
  */
 
-/*ARGSUSED */
-static int
-passwd_to_key(user, instance, realm, passwd, key)
-	char *user;
-	char *instance;
-	char *realm;
-	char *passwd;
-	des_cblock *key;
+int
+passwd_to_key(char *user, char *instance, char *realm, void *passwd,
+	      des_cblock *key)
 {
-#ifdef NOENCRYPTION
-    if (!passwd)
-	placebo_read_password(key, "Kerberos Password: ", 0);
-#else
-    if (passwd)
-	des_string_to_key(passwd,key);
-    else
-	des_read_password(key,"Kerberos Password: ",0);
+#ifndef NOENCRYPTION
+    des_string_to_key((char *)passwd, key);
 #endif
-    return (0);
+    return 0;
 }
 
-/*ARGSUSED */
-static int
-afs_passwd_to_key(user, instance, realm, passwd, key)
-	char *user;
-	char *instance;
-	char *realm;
-	char *passwd;
-	des_cblock *key;
+int
+passwd_to_5key(char *user, char *instance, char *realm, void *passwd, 
+	       des_cblock *key)
 {
-#ifdef NOENCRYPTION
-    if (!passwd)
-        placebo_read_password(key, "Kerberos Password: ", 0);
-#else /* Do encyryption */
-    if (passwd)
-        afs_string_to_key(passwd, realm, key);
-    else {
-        des_read_password(key, "Kerberos Password: ", 0);
-    }
-#endif /* NOENCRYPTION */
+    char *p;
+    size_t len;
+    len = k_mconcat (&p, 512, passwd, realm, user, instance, NULL);
+    if(len == 0)
+	return  -1;
+    des_string_to_key(p, key);
+    memset(p, 0, len);
+    free(p);
+    return 0;
+}
+
+
+int
+passwd_to_afskey(char *user, char *instance, char *realm, void *passwd,
+		  des_cblock *key)
+{
+#ifndef NOENCRYPTION
+    afs_string_to_key((char *)passwd, realm, key);
+#endif
     return (0);
 }
 
@@ -112,208 +88,50 @@ afs_passwd_to_key(user, instance, realm, passwd, key)
  */
 
 int
-krb_get_pw_in_tkt(user, instance, realm, service, sinstance, life, password)
-	char *user;
-	char *instance;
-	char *realm;
-	char *service;
-	char *sinstance;
-	int life;
-	char *password;
+krb_get_pw_in_tkt(char *user, char *instance, char *realm, char *service,
+		  char *sinstance, int life, char *password)
 {
     char pword[100];		/* storage for the password */
     int code;
 
     /* Only request password once! */
     if (!password) {
-        if (des_read_pw_string(pword, sizeof(pword)-1, "Kerberos Password: ", 0))
-            pword[0] = '\0'; /* something wrong */
+        if (des_read_pw_string(pword, sizeof(pword)-1, "Password: ", 0)){
+	    memset(pword, 0, sizeof(pword));
+	    return INTK_BADPW;
+	}
         password = pword;
     }
 
-    code = krb_get_in_tkt(user,instance,realm,service,sinstance,life,
-                          passwd_to_key, NULL, password);
-    if (code != INTK_BADPW)
-      goto done;
+    {
+	KTEXT_ST as_rep;
+	CREDENTIALS cred;
+	int ret = 0;
+	key_proc_t key_procs[] = { passwd_to_key, passwd_to_afskey, 
+				   passwd_to_5key, NULL };
+	key_proc_t *kp;
+	
+	code = krb_mk_as_req(user, instance, realm,
+			     service, sinstance, life, &as_rep);
+	if(code)
+	    return code;
+	for(kp = key_procs; *kp; kp++){
+	    KTEXT_ST tmp;
+	    memcpy(&tmp, &as_rep, sizeof(as_rep));
+	    code = krb_decode_as_rep(user, instance, realm, service, sinstance, 
+				     *kp, NULL, password, &tmp, &cred);
+	    if(code == 0)
+		break;
+	    if(code != INTK_BADPW)
+		ret = code; /* this is probably a better code than
+			       what code gets after this loop */
+	}
+	if(code)
+	    return ret ? ret : code;
 
-    code = krb_get_in_tkt(user,instance,realm,service,sinstance,life,
-                          afs_passwd_to_key, NULL, password);
-    if (code != INTK_BADPW)
-      goto done;
-
-  done:
+	code = tf_setup(&cred, user, instance);
+    }
     if (password == pword)
-        bzero(pword, sizeof(pword));
+        memset(pword, 0, sizeof(pword));
     return(code);
 }
-
-#ifdef NOENCRYPTION
-/*
- * $Source: /home/cvs/src/kerberosIV/krb/Attic/get_in_tkt.c,v $
- * $Author: millert $
- *
- * Copyright 1985, 1986, 1987, 1988 by the Massachusetts Institute
- * of Technology.
- *
- * For copying and distribution information, please see the file
- * <mit-copyright.h>.
- *
- * This routine prints the supplied string to standard
- * output as a prompt, and reads a password string without
- * echoing.
- */
-
-#ifndef	lint
-static char rcsid_read_password_c[] =
-"Bones$Header: /home/cvs/src/kerberosIV/krb/Attic/get_in_tkt.c,v 1.4 1997/08/18 03:11:21 millert Exp $";
-#endif /* lint */
-
-#include <des.h>
-#include "conf.h"
-
-#include <stdio.h>
-#include <string.h>
-#include <sys/ioctl.h>
-#include <signal.h>
-#include <setjmp.h>
-
-static jmp_buf env;
-
-static void sig_restore();
-static push_signals(), pop_signals();
-int placebo_read_pw_string();
-
-/*** Routines ****************************************************** */
-int
-placebo_read_password(k,prompt,verify)
-    des_cblock *k;
-    char *prompt;
-    int	verify;
-{
-    int ok;
-    char key_string[BUFSIZ];
-
-    if (setjmp(env)) {
-	ok = -1;
-	goto lose;
-    }
-
-    ok = placebo_read_pw_string(key_string, BUFSIZ, prompt, verify);
-    if (ok == 0)
-	bzero(k, sizeof(C_Block));
-
-lose:
-    bzero(key_string, sizeof (key_string));
-    return ok;
-}
-
-/*
- * This version just returns the string, doesn't map to key.
- *
- * Returns 0 on success, non-zero on failure.
- */
-
-int
-placebo_read_pw_string(s,max,prompt,verify)
-    char *s;
-    int	max;
-    char *prompt;
-    int	verify;
-{
-    int ok = 0;
-    char *ptr;
-    
-    jmp_buf old_env;
-    struct sgttyb tty_state;
-    char key_string[BUFSIZ];
-
-    if (max > BUFSIZ) {
-	return -1;
-    }
-
-    bcopy(old_env, env, sizeof(env));
-    if (setjmp(env))
-	goto lose;
-
-    /* save terminal state*/
-    if (ioctl(0,TIOCGETP,&tty_state) == -1) 
-	return -1;
-
-    push_signals();
-    /* Turn off echo */
-    tty_state.sg_flags &= ~ECHO;
-    if (ioctl(0,TIOCSETP,&tty_state) == -1)
-	return -1;
-    while (!ok) {
-	printf(prompt);
-	fflush(stdout);
-	if (!fgets(s, max, stdin)) {
-	    clearerr(stdin);
-	    continue;
-	}
-	if ((ptr = strchr(s, '\n')))
-	    *ptr = '\0';
-	if (verify) {
-	    printf("\nVerifying, please re-enter %s",prompt);
-	    fflush(stdout);
-	    if (!fgets(key_string, sizeof(key_string), stdin)) {
-		clearerr(stdin);
-		continue;
-	    }
-            if ((ptr = strchr(key_string, '\n')))
-	    *ptr = '\0';
-	    if (strcmp(s,key_string)) {
-		printf("\n\07\07Mismatch - try again\n");
-		fflush(stdout);
-		continue;
-	    }
-	}
-	ok = 1;
-    }
-
-lose:
-    if (!ok)
-	bzero(s, max);
-    printf("\n");
-    /* turn echo back on */
-    tty_state.sg_flags |= ECHO;
-    if (ioctl(0,TIOCSETP,&tty_state))
-	ok = 0;
-    pop_signals();
-    bcopy(env, old_env, sizeof(env));
-    if (verify)
-	bzero(key_string, sizeof (key_string));
-    s[max-1] = 0;		/* force termination */
-    return !ok;			/* return nonzero if not okay */
-}
-
-/*
- * this can be static since we should never have more than
- * one set saved....
- */
-static RETSIGTYPE (*old_sigfunc[NSIG])();
-
-static
-push_signals()
-{
-    register i;
-    for (i = 0; i < NSIG; i++)
-	old_sigfunc[i] = signal(i,sig_restore);
-}
-
-static
-pop_signals()
-{
-    register i;
-    for (i = 0; i < NSIG; i++)
-	signal(i,old_sigfunc[i]);
-}
-
-static void
-sig_restore(sig,code,scp)
-    int sig,code;
-    struct sigcontext *scp;
-{
-    longjmp(env,1);
-}
-#endif /* NOENCRYPTION */

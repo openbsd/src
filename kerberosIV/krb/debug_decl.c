@@ -1,10 +1,4 @@
-/*
- * This software may now be redistributed outside the US.
- *
- * $Source: /home/cvs/src/kerberosIV/krb/Attic/debug_decl.c,v $
- *
- * $Locker:  $
- */
+/* $KTH: debug_decl.c,v 1.7 1997/10/28 15:44:00 bg Exp $ */
 
 /* 
   Copyright (C) 1989 by the Massachusetts Institute of Technology
@@ -27,7 +21,10 @@ or implied warranty.
 
   */
 
+#include "krb_locl.h"
+
 /* Declare global debugging variables. */
 
 int krb_ap_req_debug = 0;
 int krb_debug = 0;
+int krb_dns_debug = 0;

@@ -1,40 +1,128 @@
-/* $Id: krb_locl.h,v 1.1.1.1 1995/12/14 06:52:38 tholo Exp $ */
+/* $KTH: krb_locl.h,v 1.44 1997/10/28 15:37:40 bg Exp $ */
+
+/*
+ * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * (Royal Institute of Technology, Stockholm, Sweden).
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by the Kungliga Tekniska
+ *      Högskolan and its contributors.
+ * 
+ * 4. Neither the name of the Institute nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 
 #ifndef __krb_locl_h
 #define __krb_locl_h
 
 #include <sys/cdefs.h>
-#include "kerberosIV/site.h"
+#include <kerberosIV/site.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <assert.h>
+#include <stdarg.h>
 
+#include <errno.h>
+
+#include <pwd.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/time.h>
 #include <time.h>
+#include <sys/time.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/file.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <arpa/nameser.h>
+#include <resolv.h>
 #include <errno.h>
 
 #include <kerberosIV/krb.h>
 #include <prot.h>
+
+#include "resolve.h"
+#include "krb_log.h"
 
 /* --- */
 
 /* Globals! */
 extern int krb_debug;
 extern int krb_ap_req_debug;
+extern int krb_dns_debug;
+
+/* Temporary fixes for krb_{rd,mk}_safe */
+#define DES_QUAD_GUESS 0
+#define DES_QUAD_NEW 1
+#define DES_QUAD_OLD 2
+
+/* Set this to one of the constants above to specify default checksum
+   type to emit */
+#define DES_QUAD_DEFAULT DES_QUAD_GUESS
 
 /* Utils */
-char *pkt_cipher __P((KTEXT));
+int krb_name_to_name(const char *, char *, size_t);
 
-int new_log __P((time_t, char *));
-char *klog ();
+void encrypt_ktext(KTEXT cip, des_cblock *key, int encrypt);
+int kdc_reply_cred(KTEXT cip, CREDENTIALS *cred);
+int kdc_reply_cipher(KTEXT reply, KTEXT cip);
 
-char *month_sname __P((int));
-int fgetst __P((FILE *, char *, int));
+void k_ricercar(char*);
+
+/* safe multiple strcat */
+int k_concat(char*, size_t, ...);
+int k_vconcat(char*, size_t, va_list);
+
+/* mallocing versions of the above */
+size_t k_vmconcat (char**, size_t, va_list); 
+size_t k_mconcat (char**, size_t, ...);
+
+/* used in rd_safe.c and mk_safe.c */
+
+void fixup_quad_cksum(void *start, size_t len, des_cblock *key, 
+		      void *new_checksum, void *old_checksum, int little);
+
+/* stuff from libroken*/
+
+#ifndef TRUE
+#define TRUE 1
+#endif
+
+#ifndef FALSE
+#define FALSE 0
+#endif
 
 #endif /*  __krb_locl_h */

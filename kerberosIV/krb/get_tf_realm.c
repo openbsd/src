@@ -1,10 +1,4 @@
-/*
- * This software may now be redistributed outside the US.
- *
- * $Source: /home/cvs/src/kerberosIV/krb/Attic/get_tf_realm.c,v $
- *
- * $Locker:  $
- */
+/* $KTH: get_tf_realm.c,v 1.5 1997/03/23 03:53:10 joda Exp $ */
 
 /* 
   Copyright (C) 1989 by the Massachusetts Institute of Technology
@@ -41,9 +35,7 @@ or implied warranty.
  */
 
 int
-krb_get_tf_realm(ticket_file, realm)
-	char *ticket_file;
-	char *realm;
+krb_get_tf_realm(char *ticket_file, char *realm)
 {
     return(krb_get_tf_fullname(ticket_file, 0, 0, realm));
 }
