@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnusers.x,v 1.7 1998/02/11 04:32:28 gene Exp $	*/
+/*	$OpenBSD: rnusers.x,v 1.8 1998/02/11 04:40:40 deraadt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -34,11 +34,10 @@
  */
 
 #ifndef RPC_HDR
-%#include <sys/cdefs.h>
 %#ifndef lint
 %/*static char sccsid[] = "from: @(#)rnusers.x 1.2 87/09/20 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: @(#)rnusers.x	2.1 88/08/01 4.0 RPCSRC";*/
-% static char rcsid[] = "$OpenBSD: rnusers.x,v 1.7 1998/02/11 04:32:28 gene Exp $";
+%static char rcsid[] = "$OpenBSD: rnusers.x,v 1.8 1998/02/11 04:40:40 deraadt Exp $";
 %#endif /* not lint */
 #endif
 
@@ -57,19 +56,25 @@
 % * This is the structure used in version 2 of the rusersd RPC service.
 % * It corresponds to the utmp structure for BSD sytems.
 % */
+%
+%#define RNUSERS_MAXUSERLEN 8
+%#define RNUSERS_MAXLINELEN 8
+%#define RNUSERS_MAXHOSTLEN 16
+%
 %struct ru_utmp {
-%	char	ut_line[8];		/* tty name */
-%	char	ut_name[8];		/* user id */
-%	char	ut_host[16];		/* host name, if remote */
-%	time_t	ut_time;		/* time on */
+%	char	*ut_line;		/* tty name */
+%	char	*ut_name;		/* user id */
+%	char	*ut_host;		/* host name, if remote */
+%	int	ut_time;		/* time on */
 %};
 %typedef struct ru_utmp rutmp;
 %
 %struct utmparr {
-%	struct utmp **uta_arr;
+%	struct ru_utmp **uta_arr;
 %	int uta_cnt;
 %};
 %typedef struct utmparr utmparr;
+%int xdr_utmparr();
 %
 %struct utmpidle {
 %	struct ru_utmp ui_utmp;
@@ -81,30 +86,21 @@
 %	int uia_cnt;
 %};
 %typedef struct utmpidlearr utmpidlearr;
+%int xdr_utmpidlearr();
 %
-%#include <sys/cdefs.h>
-%__BEGIN_DECLS
-%bool_t xdr_utmp __P((XDR *, struct ru_utmp *));
-%bool_t xdr_utmpptr __P((XDR *, struct ru_utmp **));
-%bool_t xdr_utmparr __P((XDR *, struct utmparr *));
-%bool_t xdr_utmpidle __P((XDR *, struct utmpidle *));
-%bool_t xdr_utmpidleptr __P((XDR *, struct utmpidle **));
-%bool_t xdr_utmpidlearr __P((XDR *, struct utmpidlearr *));
-%__END_DECLS
-%
-%#define RUSERSVERS_1 ((u_int32_t)1)
-%#define RUSERSVERS_2 ((u_int32_t)2)
+%#define RUSERSVERS_1 ((u_long)1)
+%#define RUSERSVERS_2 ((u_long)2)
 %#ifndef RUSERSPROG
-%#define RUSERSPROG ((u_int32_t)100002)
+%#define RUSERSPROG ((u_long)100002)
 %#endif
 %#ifndef RUSERSPROC_NUM
-%#define RUSERSPROC_NUM ((u_int32_t)1)
+%#define RUSERSPROC_NUM ((u_long)1)
 %#endif
 %#ifndef RUSERSPROC_NAMES
-%#define RUSERSPROC_NAMES ((u_int32_t)2)
+%#define RUSERSPROC_NAMES ((u_long)2)
 %#endif
 %#ifndef RUSERSPROC_ALLNAMES
-%#define RUSERSPROC_ALLNAMES ((u_int32_t)3)
+%#define RUSERSPROC_ALLNAMES ((u_long)3)
 %#endif
 %
 #endif	/* RPC_HDR */
@@ -115,29 +111,23 @@
 %	XDR *xdrs;
 %	struct ru_utmp *objp;
 %{
-%	char *ptr;
 %	int size;
 %
-%	/*
-%	 * We are using a non-malloc allocated array,
-%	 * so we are not supposed to call xdr_free with it.
-%	 */
-%	if (xdrs->x_op == XDR_FREE)
-%		return (TRUE);
-%	ptr  = objp->ut_line;
-%	size = sizeof(objp->ut_line);
-%	if (!xdr_bytes(xdrs, &ptr, &size, size))
+%	size = RNUSERS_MAXLINELEN;
+%	if (!xdr_bytes(xdrs, &objp->ut_line, &size, RNUSERS_MAXLINELEN)) {
 %		return (FALSE);
-%	ptr  = objp->ut_name;
-%	size = sizeof(objp->ut_name);
-%	if (!xdr_bytes(xdrs, &ptr, &size, size))
+%	}
+%	size = RNUSERS_MAXUSERLEN;
+%	if (!xdr_bytes(xdrs, &objp->ut_name, &size, RNUSERS_MAXUSERLEN)) {
 %		return (FALSE);
-%	ptr  = objp->ut_host;
-%	size = sizeof(objp->ut_host);
-%	if (!xdr_bytes(xdrs, &ptr, &size, size))
+%	}
+%	size = RNUSERS_MAXHOSTLEN;
+%	if (!xdr_bytes(xdrs, &objp->ut_host, &size, RNUSERS_MAXHOSTLEN)) {
 %		return (FALSE);
-%	if (!xdr_long(xdrs, &objp->ut_time))
+%	}
+%	if (!xdr_int(xdrs, &objp->ut_time)) {
 %		return (FALSE);
+%	}
 %	return (TRUE);
 %}
 %
@@ -146,10 +136,10 @@
 %	XDR *xdrs;
 %	struct ru_utmp **objpp;
 %{
-%
 %	if (!xdr_reference(xdrs, (char **) objpp, sizeof (struct ru_utmp), 
-%			   xdr_utmp))
+%			   xdr_utmp)) {
 %		return (FALSE);
+%	}
 %	return (TRUE);
 %}
 %
@@ -158,10 +148,10 @@
 %	XDR *xdrs;
 %	struct utmparr *objp;
 %{
-%
 %	if (!xdr_array(xdrs, (char **)&objp->uta_arr, (u_int *)&objp->uta_cnt,
-%		       MAXUSERS, sizeof(struct utmp *), xdr_utmpptr))
+%		       MAXUSERS, sizeof(struct ru_utmp *), xdr_utmpptr)) {
 %		return (FALSE);
+%	}
 %	return (TRUE);
 %}
 %
@@ -170,11 +160,12 @@
 %	XDR *xdrs;
 %	struct utmpidle *objp;
 %{
-%
-%	if (!xdr_utmp(xdrs, &objp->ui_utmp))
+%	if (!xdr_utmp(xdrs, &objp->ui_utmp)) {
 %		return (FALSE);
-%	if (!xdr_u_int(xdrs, &objp->ui_idle))
+%	}
+%	if (!xdr_u_int(xdrs, &objp->ui_idle)) {
 %		return (FALSE);
+%	}
 %	return (TRUE);
 %}
 %
@@ -183,10 +174,10 @@
 %	XDR *xdrs;
 %	struct utmpidle **objpp;
 %{
-%
 %	if (!xdr_reference(xdrs, (char **) objpp, sizeof (struct utmpidle), 
-%			   xdr_utmpidle))
+%			   xdr_utmpidle)) {
 %		return (FALSE);
+%	}
 %	return (TRUE);
 %}
 %
@@ -195,10 +186,10 @@
 %	XDR *xdrs;
 %	struct utmpidlearr *objp;
 %{
-%
 %	if (!xdr_array(xdrs, (char **)&objp->uia_arr, (u_int *)&objp->uia_cnt,
-%		       MAXUSERS, sizeof(struct utmpidle *), xdr_utmpidleptr))
+%		       MAXUSERS, sizeof(struct utmpidle *), xdr_utmpidleptr)) {
 %		return (FALSE);
+%	}
 %	return (TRUE);
 %}
 #endif
