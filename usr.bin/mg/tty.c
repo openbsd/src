@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.16 2002/02/21 04:16:23 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.17 2002/07/01 18:01:40 vincent Exp $	*/
 
 /*
  * Terminfo display driver
@@ -421,10 +421,8 @@ ttresize()
 		newrow = 24;
 		newcol = 80;
 	}
-	if (vtresize(1, newrow, newcol))
+	if (vtresize(1, newrow, newcol) != TRUE)
 		panic("vtresize failed");
-	nrow = newrow;
-	ncol = newcol;
 }
 
 /*

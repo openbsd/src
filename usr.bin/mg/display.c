@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.14 2002/06/25 14:24:53 vincent Exp $	*/
+/*	$OpenBSD: display.c,v 1.15 2002/07/01 18:01:40 vincent Exp $	*/
 
 /*
  * The functions in this file handle redisplay. The
@@ -118,9 +118,8 @@ vtresize(int force, int newrow, int newcol)
 	static int first_run = 1;
 	VIDEO *vp;
 
-	if (newrow < 1 || newcol < 1) {
-		return -1;
-	}
+	if (newrow < 1 || newcol < 1)
+		return (FALSE);
 
 	rowchanged = (newrow != nrow);
 	colchanged = (newcol != ncol);
@@ -129,13 +128,13 @@ vtresize(int force, int newrow, int newcol)
 		void *tmp;					\
 		if ((tmp = realloc((a), (n))) == NULL) {	\
 			panic("out of memory in display code");	\
-		}	\
+		}						\
 		(a) = tmp;					\
 	} while (0)
 
 	/* No update needed */
 	if (!first_run && !force && !rowchanged && !colchanged) {
-		return 0;
+		return (TRUE);
 	}
 
 	if (first_run) {
@@ -173,9 +172,8 @@ vtresize(int force, int newrow, int newcol)
 		/*
 		 * Zero-out the entries we just allocated
 		 */
-		for (i = vidstart; i < 2 * (newrow - 1); i++) {
+		for (i = vidstart; i < 2 * (newrow - 1); i++)
 			memset(&video[i], 0, sizeof(VIDEO));
-		}
 
 		/*
 		 * Reinitialize vscreen and pscreen arrays completely.
@@ -189,9 +187,8 @@ vtresize(int force, int newrow, int newcol)
 		}
 	}
 	if (rowchanged || colchanged || first_run) {
-		for (i = 0; i < 2 * (newrow - 1); i++) {
+		for (i = 0; i < 2 * (newrow - 1); i++)
 			TRYREALLOC(video[i].v_text, newcol * sizeof(char));
-		}
 		TRYREALLOC(blanks.v_text, newcol * sizeof(char));
 	}
 
@@ -204,7 +201,7 @@ vtresize(int force, int newrow, int newcol)
 		ttcol = ncol;
 
 	first_run = 0;
-	return 0;
+	return (TRUE);
 }
 
 #undef TRYREALLOC
