@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.246 2002/12/08 17:00:19 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.247 2002/12/09 03:59:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -178,6 +178,11 @@ struct node_queue_bw {
 };
 
 struct filter_opts {
+	int			marker;
+#define FOM_FLAGS	0x01
+#define FOM_ICMP	0x02
+#define FOM_TOS		0x04
+#define FOM_KEEP	0x08
 	struct node_uid *uid;
 	struct node_gid *gid;
 	struct {
@@ -199,9 +204,14 @@ struct filter_opts {
 } filter_opts;
 
 struct queue_opts {
+	int			marker;
+#define QOM_BWSPEC	0x01
+#define QOM_SCHEDULER	0x02
+#define QOM_PRIORITY	0x04
+#define QOM_TBRSIZE	0x08
+#define QOM_QLIMIT	0x10
 	struct node_queue_bw	queue_bwspec;
 	struct node_queue_opt	scheduler;
-	int			bandwidth;
 	int			priority;
 	int			tbrsize;
 	int			qlimit;
@@ -381,7 +391,7 @@ typedef struct {
 %type	<v.number>	priority qlimit tbrsize
 %type	<v.string>	qname
 %type	<v.queue>	qassign qassign_list qassign_item
-%type	<v.queue_options>	schedtype
+%type	<v.queue_options>	scheduler
 %type	<v.number>	cbqflags_list cbqflags_item
 %type	<v.queue_bwspec>	bandwidth
 %type	<v.filter_opts>		filter_opts filter_opt filter_opts_l
@@ -718,11 +728,46 @@ queue_opts_l	: queue_opts_l queue_opt
 		| queue_opt
 		;
 
-queue_opt	: bandwidth	{ queue_opts.queue_bwspec = $1; }
-		| priority	{ queue_opts.priority = $1; }
-		| qlimit	{ queue_opts.qlimit = $1; }
-		| schedtype	{ queue_opts.scheduler = $1; }
-		| tbrsize	{ queue_opts.tbrsize = $1; }
+queue_opt	: bandwidth	{
+			if (queue_opts.marker & QOM_BWSPEC) {
+				yyerror("bandwith cannot be respecified");
+				YYERROR;
+			}
+			queue_opts.marker |= QOM_BWSPEC;
+			queue_opts.queue_bwspec = $1;
+		}
+		| priority	{
+			if (queue_opts.marker & QOM_PRIORITY) {
+				yyerror("priority cannot be respecified");
+				YYERROR;
+			}
+			queue_opts.marker |= QOM_PRIORITY;
+			queue_opts.priority = $1;
+		}
+		| qlimit	{
+			if (queue_opts.marker & QOM_QLIMIT) {
+				yyerror("qlimit cannot be respecified");
+				YYERROR;
+			}
+			queue_opts.marker |= QOM_QLIMIT;
+			queue_opts.qlimit = $1;
+		}
+		| scheduler	{
+			if (queue_opts.marker & QOM_SCHEDULER) {
+				yyerror("scheduler cannot be respecified");
+				YYERROR;
+			}
+			queue_opts.marker |= QOM_SCHEDULER;
+			queue_opts.scheduler = $1;
+		}
+		| tbrsize	{
+			if (queue_opts.marker & QOM_TBRSIZE) {
+				yyerror("tbrsize cannot be respecified");
+				YYERROR;
+			}
+			queue_opts.marker |= QOM_TBRSIZE;
+			queue_opts.tbrsize = $1;
+		}
 		;
 
 bandwidth	: BANDWIDTH STRING {
@@ -766,7 +811,7 @@ priority	: PRIORITY number	{
 		}
 		;
 
-schedtype	: CBQ				{
+scheduler	: CBQ				{
 			$$.qtype = ALTQT_CBQ;
 			$$.data.cbq_opts.flags = 0;
 		}
@@ -987,34 +1032,38 @@ filter_opt	: USER uids {
 			filter_opts.gid = $2;
 		}
 		| flags {
-			if (filter_opts.flags.b1 || filter_opts.flags.b2) {
-				yyerror("redefining flags");
+			if (filter_opts.marker & FOM_FLAGS) {
+				yyerror("flags cannot be redefined");
 				YYERROR;
 			}
+			filter_opts.marker |= FOM_FLAGS;
 			filter_opts.flags.b1 |= $1.b1;
 			filter_opts.flags.b2 |= $1.b2;
 			filter_opts.flags.w |= $1.w;
 			filter_opts.flags.w2 |= $1.w2;
 		}
 		| icmpspec {
-			if (filter_opts.icmpspec) {
-				yyerror("redefining icmpspec");
+			if (filter_opts.marker & FOM_ICMP) {
+				yyerror("icmp-type cannot be redefined");
 				YYERROR;
 			}
+			filter_opts.marker |= FOM_ICMP;
 			filter_opts.icmpspec = $1;
 		}
 		| tos {
-			if (filter_opts.tos) {
-				yyerror("redefining tos");
+			if (filter_opts.marker & FOM_TOS) {
+				yyerror("tos cannot be redefined");
 				YYERROR;
 			}
+			filter_opts.marker |= FOM_TOS;
 			filter_opts.tos = $1;
 		}
 		| keep {
-			if (filter_opts.keep.options) {
-				yyerror("redefining keep");
+			if (filter_opts.marker & FOM_KEEP) {
+				yyerror("modulate or keep cannot be redefined");
 				YYERROR;
 			}
+			filter_opts.marker |= FOM_KEEP;
 			filter_opts.keep.action = $1.action;
 			filter_opts.keep.options = $1.options;
 		}
@@ -1026,14 +1075,14 @@ filter_opt	: USER uids {
 		}
 		| label	{
 			if (filter_opts.label) {
-				yyerror("redefining label");
+				yyerror("label cannot be redefined");
 				YYERROR;
 			}
 			filter_opts.label = $1;
 		}
 		| qname	{
 			if (filter_opts.qname) {
-				yyerror("redefining queue");
+				yyerror("queue cannot be redefined");
 				YYERROR;
 			}
 			filter_opts.qname = $1;
