@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.3 2002/04/17 22:53:37 miod Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.4 2002/04/28 14:49:25 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2002, Miodrag Vallat.
@@ -37,7 +37,11 @@ _mkdev(mvme_tzs, {-tty[a-z]-}, {-u=${i#tty*}
 	d) n=3 ;;
 	*) echo unknown tty device $i ;;
 	esac
-	M tty$u c major_mvme_tzs_c $n 660 dialer uucp-})dnl
+	case $u in
+	a|b|c|d)
+		M tty$u c major_mvme_tzs_c $n 660 dialer uucp
+		;;
+	esac-})dnl
 _mkdev(mvme_czs, cua[a-z], {-u=${i#cua*}
 	case $u in
 	a) n=0 ;;
@@ -46,7 +50,11 @@ _mkdev(mvme_czs, cua[a-z], {-u=${i#cua*}
 	d) n=3 ;;
 	*) echo unknown cua device $i ;;
 	esac
-	M cua$u c major_mvme_czs_c Add($n, 128) 660 dialer uucp-})dnl
+	case $u in
+	a|b|c|d)
+		M cua$u c major_mvme_czs_c Add($n, 128) 660 dialer uucp
+		;;
+	esac-})dnl
 dnl tty00 not tty0 to prevent description conflict
 __devitem(tty00, tty0*, CL-CD2400 serial ports)dnl
 _mkdev(tty00, {-tty0*-}, {-u=${i#tty0*}
@@ -105,7 +113,6 @@ target(all, tun, 0, 1, 2, 3)dnl
 target(all, rd, 0)dnl
 target(all, cd, 0, 1)dnl
 target(all, sd, 0, 1, 2, 3, 4)dnl
-target(all, ss, 0, 1)dnl
 target(all, uk, 0)dnl
 target(all, vnd, 0, 1, 2, 3)dnl
 target(all, ccd, 0, 1, 2, 3)dnl
@@ -134,7 +141,7 @@ _DEV(st, 20, 7)
 _TITLE(dis)
 _DEV(sd, 8, 4)
 _DEV(cd, 9, 8)
-_DEV(ccd, 7, 5)
+_DEV(ccd, 17, 5)
 _DEV(vnd, 19, 6)
 _DEV(rd, 18, 9)
 _TITLE(term)
