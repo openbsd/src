@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_macppc.8,v 1.1 2002/09/23 00:23:59 drahn Exp $
+.\"	$OpenBSD: boot_macppc.8,v 1.2 2002/09/23 00:34:09 miod Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -49,8 +49,8 @@ An automatic consistency check of the file systems will be performed
 .Xr fsck 8 ) ,
 and unless this fails, the system will resume multi-user operations.
 .Ss Cold starts
-System boot blocks are installed either in a HFS parition or in a
-MSDOS partition on the disk. If MBR parititioning is chosen for
+System boot blocks are installed either in a HFS partition or in a
+MSDOS partition on the disk. If MBR partitioning is chosen for
 the disk, the boot block will be installed automatically, for
 HFS shared disks, the
 .Dq ofwboot
