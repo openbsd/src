@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.55 1998/05/30 06:55:46 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.56 1998/06/02 09:33:58 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -578,6 +578,9 @@
 
 /* Alliance products */
 #define	PCI_PRODUCT_ALLIANCE_AT24	0x6424		/* AT24 */
+
+/* Apple products */
+#define	PCI_PRODUCT_APPLE_BANDIT	0x0001		/* PCI Controller */
 
 /* AMD products */
 #define	PCI_PRODUCT_AMD_PCNET_PCI	0x2000		/* 79c970 PCnet-PCI LANCE Ethernet */

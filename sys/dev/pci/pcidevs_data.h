@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.55 1998/05/30 06:55:46 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.56 1998/06/02 09:33:58 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -259,6 +259,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Alliance Semiconductor",
 	    "AT24",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_BANDIT,
+	    0,
+	    "Apple Computer",
+	    "PCI Controller",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNET_PCI,
