@@ -268,10 +268,16 @@ arpa            type=dir mode=0755
 /set type=file gname=wheel uname=root mode=0444
 g++             type=dir mode=0755
 
-# ./include/g++/sys
+# ./include/g++/gen
 /set type=file gname=wheel uname=root mode=0444
-sys             type=dir mode=0755
-# ./include/g++/sys
+gen             type=dir mode=0755
+# ./include/g++/gen
+..
+
+# ./include/g++/std
+/set type=file gname=wheel uname=root mode=0444
+std             type=dir mode=0755
+# ./include/g++/std
 ..
 
 # ./include/g++

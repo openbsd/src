@@ -1,5 +1,5 @@
 #	from: @(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
-#	$Id: 4.4BSD.dist,v 1.10 1996/02/25 21:21:26 mickey Exp $
+#	$Id: 4.4BSD.dist,v 1.11 1996/03/25 23:59:13 niklas Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -130,6 +130,11 @@ g++		gname=bin uname=bin mode=0555
 # ./usr/include/g++/gen
 gen		gname=bin uname=bin mode=0555
 # ./usr/include/g++/gen
+..
+
+# ./include/g++/std
+std             gname=bin uname=bin mode=0555
+# ./include/g++/std
 ..
 
 # ./usr/include/g++
