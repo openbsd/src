@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx.c,v 1.4 2000/01/11 01:26:20 fgsch Exp $	*/
+/*	$OpenBSD: ipx.c,v 1.5 2000/01/11 02:15:37 fgsch Exp $	*/
 
 /*-
  *
@@ -55,8 +55,6 @@
 
 #include <netipx/ipx.h>
 #include <netipx/ipx_if.h>
-
-int ipx_interfaces;
 
 /*
  * Generic internet control operations (ioctl's).
@@ -124,7 +122,6 @@ ipx_control(so, cmd, data, ifp)
 				ia->ia_broadaddr.sipx_len = sizeof(ia->ia_addr);
 				ia->ia_broadaddr.sipx_addr.ipx_host = ipx_broadhost;
 			}
-			ipx_interfaces++;
 		}
 		break;
 
@@ -183,12 +180,6 @@ ipx_control(so, cmd, data, ifp)
 		TAILQ_REMOVE(&ifp->if_addrlist, (struct ifaddr *)ia, ifa_list);
 		TAILQ_REMOVE(&ipx_ifaddr, ia, ia_list);
 		IFAFREE((&ia->ia_ifa));
-		if (0 == --ipx_interfaces) {
-			/*
-			 * We reset to virginity and start all over again
-			 */
-			ipx_thishost = ipx_zerohost;
-		}
 		return (0);
 	
 	case SIOCAIFADDR:
