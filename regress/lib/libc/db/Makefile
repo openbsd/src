@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2002/01/03 00:22:47 art Exp $
+#	$OpenBSD: Makefile,v 1.8 2002/01/03 01:19:17 art Exp $
 #	$NetBSD: Makefile,v 1.11 1995/12/12 01:54:15 cgd Exp $
 
 PROG=	dbtest
@@ -16,5 +16,7 @@ db-${DT}: ${PROG}
 REGRESSTARGETS+=db-${DT}
 .PHONY: db-${DT}
 .endfor
+
+REGRESSSLOWTARGETS+=db-3 db-12 db-20
 
 .include <bsd.regress.mk>
