@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.18 1999/11/26 17:04:07 mickey Exp $
+#	$OpenBSD: files.hppa,v 1.19 1999/12/05 02:34:53 mickey Exp $
 #
 # hppa-specific configuration info
 
@@ -85,11 +85,11 @@ attach	asp at mainbus
 file	arch/hppa/dev/asp.c		asp
 
 # 1FT4-0001, ASIC used on gecko cards
-device	wax: gscbus, eisabus
+device	wax: gscbus, isabus, eisabus
 attach	wax at mainbus
 file	arch/hppa/dev/wax.c		wax
 
-device	mongoose: eisabus
+device	mongoose: isabus, eisabus
 attach	mongoose at mainbus
 file	arch/hppa/dev/mongoose.c	mongoose
 
