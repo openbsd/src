@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace-translate.c,v 1.2 2002/06/04 19:09:45 provos Exp $	*/
+/*	$OpenBSD: systrace-translate.c,v 1.3 2002/07/09 15:22:27 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -55,11 +55,13 @@ print_oflags(char *buf, size_t buflen, struct intercept_translate *tl)
 {
 	char str[32], *p;
 	int flags = (int)tl->trans_addr;
+	int isread = 0;
 
 	p = str;
 	switch (flags & O_ACCMODE) {
 	case O_RDONLY:
 		strcpy(p, "ro");
+		isread = 1;
 		break;
 	case O_WRONLY:
 		strcpy(p, "wo");
@@ -71,6 +73,12 @@ print_oflags(char *buf, size_t buflen, struct intercept_translate *tl)
 		strcpy(p, "--");
 		break;
 	}
+
+	/* XXX - Open handling of alias */
+	if (isread)
+		systrace_switch_alias("native", "open", "native", "fsread");
+	else
+		systrace_switch_alias("native", "open", "native", "fswrite");
 
 	p += 2;
 
@@ -91,11 +99,13 @@ linux_print_oflags(char *buf, size_t buflen, struct intercept_translate *tl)
 {
 	char str[32], *p;
 	int flags = (int)tl->trans_addr;
+	int isread = 0;
 
 	p = str;
 	switch (flags & LINUX_O_ACCMODE) {
 	case LINUX_O_RDONLY:
 		strcpy(p, "ro");
+		isread = 1;
 		break;
 	case LINUX_O_WRONLY:
 		strcpy(p, "wo");
@@ -107,6 +117,12 @@ linux_print_oflags(char *buf, size_t buflen, struct intercept_translate *tl)
 		strcpy(p, "--");
 		break;
 	}
+
+	/* XXX - Open handling of alias */
+	if (isread)
+		systrace_switch_alias("linux", "open", "linux", "fsread");
+	else
+		systrace_switch_alias("linux", "open", "linux", "fswrite");
 
 	p += 2;
 

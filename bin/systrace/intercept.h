@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.h,v 1.3 2002/06/21 15:26:06 provos Exp $	*/
+/*	$OpenBSD: intercept.h,v 1.4 2002/07/09 15:22:27 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -133,8 +133,8 @@ void *intercept_sccb_cbarg(char *, char *);
 int intercept_register_gencb(short (*)(int, pid_t, int, char *, int, char *, void *, int, void *), void *);
 int intercept_register_execcb(void (*)(int, pid_t, int, char *, char *, void *), void *);
 
-int intercept_register_translation(char *, char *, int,
-    struct intercept_translate *);
+struct intercept_translate *intercept_register_translation(char *, char *,
+    int, struct intercept_translate *);
 int intercept_translate(struct intercept_translate *, int, pid_t, int, void *, int);
 char *intercept_translate_print(struct intercept_translate *);
 

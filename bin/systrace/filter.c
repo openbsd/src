@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.13 2002/06/19 16:31:07 provos Exp $	*/
+/*	$OpenBSD: filter.c,v 1.14 2002/07/09 15:22:27 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -46,6 +46,7 @@
 #include "systrace.h"
 
 extern int allow;
+extern int noalias;
 extern int connected;
 extern char cwd[];
 
@@ -256,6 +257,34 @@ filter_parse_simple(char *rule, short *paction, short *pfuture)
 	return (NULL);
 }
 
+void
+filter_modifypolicy(int fd, int policynr, char *emulation, char *name,
+    short future)
+{
+	struct systrace_revalias *reverse = NULL;
+
+	if (!noalias)
+		reverse = systrace_find_reverse(emulation, name);
+	if (reverse == NULL) {
+		if (systrace_modifypolicy(fd, policynr, name, future) == -1)
+			errx(1, "%s:%d: modify policy for %s-%s",
+			    __func__, __LINE__, emulation, name);
+	} else {
+		struct systrace_alias *alias; 
+
+		/* For every system call associated with this alias
+		 * set the permanent in-kernel policy.
+		 */
+		TAILQ_FOREACH(alias, &reverse->revl, next) {
+			if(systrace_modifypolicy(fd, policynr,
+			       alias->name, future) == -1)
+				errx(1, "%s:%d: modify policy for %s-%s",
+				    __func__, __LINE__,
+				    emulation, alias->name);
+		}
+	}
+}
+
 int
 filter_prepolicy(int fd, struct policy *policy)
 {
@@ -285,11 +314,8 @@ filter_prepolicy(int fd, struct policy *policy)
 			    filter->name);
 			TAILQ_INSERT_TAIL(fls, parsed, next);
 		} else {
-			res = systrace_modifypolicy(fd, policy->policynr,
-			    filter->name, future);
-			if (res == -1)
-				errx(1, "%s:%d: modify policy for \"%s\"",
-				    __func__, __LINE__, filter->rule);
+			filter_modifypolicy(fd, policy->policynr,
+			    policy->emulation, filter->name, future);
 		}
 		filter_policyrecord(policy, parsed, policy->emulation,
 		    filter->name, filter->rule);

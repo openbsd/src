@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.1,v 1.20 2002/06/21 15:37:56 provos Exp $
+.\"	$OpenBSD: systrace.1,v 1.21 2002/07/09 15:22:27 provos Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .Nd generates and enforces system call policies
 .Sh SYNOPSIS
 .Nm systrace
-.Op Fl aAitU
+.Op Fl aAituU
 .Op Fl g Ar gui
 .Op Fl f Ar file
 .Op Fl p Ar pid
@@ -62,6 +62,8 @@ An operation not covered by policy is denied and logged via
 Automatically generate a policy that allows every operation the
 application executes.
 The created policy functions as a base that can be refined.
+.It Fl u
+Do not perform aliasing on system call names.
 .It Fl i
 Inherits the policy of the first executed binary to all children.
 .It Fl t

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.10 2002/07/09 13:07:42 dhartmei Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.11 2002/07/09 15:22:27 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -122,7 +122,7 @@ intercept_sccb_find(char *emulation, char *name)
 	return (SPLAY_FIND(sctree, &scroot, &tmp));
 }
 
-int
+struct intercept_translate *
 intercept_register_translation(char *emulation, char *name, int offset,
     struct intercept_translate *tl)
 {
@@ -130,22 +130,25 @@ intercept_register_translation(char *emulation, char *name, int offset,
 	struct intercept_translate *tlnew;
 
 	if (offset >= INTERCEPT_MAXSYSCALLARGS)
-		return (-1);
+		errx(1, "%s: %s-%s: offset too large",
+		    __func__, emulation, name);
 
 	tmp = intercept_sccb_find(emulation, name);
 	if (tmp == NULL)
-		return (-1);
+		errx(1, "%s: %s-%s: can't find call back",
+		    __func__, emulation, name);
 
 	tlnew = malloc(sizeof(struct intercept_translate));
 	if (tlnew == NULL)
-		return (-1);
+		err(1, "%s: %s-%s: malloc",
+		    __func__, emulation, name);
 
 	memcpy(tlnew, tl, sizeof(struct intercept_translate));
 	tlnew->off = offset;
 
 	TAILQ_INSERT_TAIL(&tmp->tls, tlnew, next);
 
-	return (0);
+	return (tlnew);
 }
 
 void *

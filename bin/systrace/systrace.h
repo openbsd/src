@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.h,v 1.5 2002/06/07 18:05:20 provos Exp $	*/
+/*	$OpenBSD: systrace.h,v 1.6 2002/07/09 15:22:27 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -111,10 +111,48 @@ struct filterq *systrace_policyflq(struct policy *, char *, char *);
 
 int systrace_error_translate(char *);
 
+#define SYSTRACE_MAXALIAS	5
+
+struct systrace_alias {
+	SPLAY_ENTRY(systrace_alias) node;
+	TAILQ_ENTRY(systrace_alias) next;
+
+	char name[64];
+	char emulation[16];
+
+	char aname[64];
+	char aemul[16];
+
+	struct intercept_translate *arguments[SYSTRACE_MAXALIAS];
+	int nargs;
+
+	struct systrace_revalias *reverse;
+};
+
+int systrace_initalias(void);
+struct systrace_alias *systrace_new_alias(char *, char *, char *, char *);
+void systrace_switch_alias(char *, char *, char *, char *);
+struct systrace_alias *systrace_find_alias(char *, char *);
+void systrace_alias_add_trans(struct systrace_alias *,
+    struct intercept_translate *);
+
+struct systrace_revalias {
+	SPLAY_ENTRY(systrace_revalias) node;
+
+	char name[64];
+	char emulation[16];
+
+	TAILQ_HEAD(revaliasq, systrace_alias) revl;
+};
+
+struct systrace_revalias *systrace_reverse(char *, char *);
+struct systrace_revalias *systrace_find_reverse(char *, char *);
+
 short filter_evaluate(struct intercept_tlq *, struct filterq *, int *);
 short filter_ask(struct intercept_tlq *, struct filterq *, int, char *,
     char *, char *, short *, int *);
 void filter_free(struct filter *);
+void filter_modifypolicy(int, int, char *, char *, short);
 
 int filter_parse_simple(char *, short *, short *);
 int filter_parse(char *, struct filter **);
