@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.38 2004/12/05 12:25:59 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.39 2004/12/06 09:05:51 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -945,11 +945,13 @@ atu_upload_external_firmware(struct atu_softc *sc)
 	 * channel number. If we succeed, external firmware must have been
 	 * already uploaded...
 	 */
-	err = atu_get_mib(sc, MIB_PHY__CHANNEL, &channel);
-	if (! err) {
-		DPRINTF(("%s: external firmware has already been "
-		    "downloaded\n", USBDEVNAME(sc->atu_dev)));
-		return 0;
+	if (sc->atu_radio != RadioIntersil) {
+		err = atu_get_mib(sc, MIB_PHY__CHANNEL, &channel);
+		if (! err) {
+			DPRINTF(("%s: external firmware has already been "
+			    "downloaded\n", USBDEVNAME(sc->atu_dev)));
+			return (0);
+		}
 	}
 
 	switch (sc->atu_radio) {
