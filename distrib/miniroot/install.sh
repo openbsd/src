@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.111 2002/08/18 21:05:47 krw Exp $
+#	$OpenBSD: install.sh,v 1.112 2002/08/25 02:13:09 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -113,7 +113,8 @@ __EOT
 		# and labeling additional disks. This is machine-dependent since
 		# some platforms may not be able to provide this functionality.
 		# /tmp/fstab.$DISK is created here with 'disklabel -f'.
-		md_prep_disklabel ${DISK}
+		rm -f /tmp/fstab.$DISK
+		md_prep_disklabel $DISK
 
 		# Assume $ROOTDEV is the root filesystem, but loop to get the rest.
 		# XXX ASSUMES THAT THE USER DOESN'T PROVIDE BOGUS INPUT.
@@ -123,11 +124,11 @@ You will now have the opportunity to enter filesystem information for ${DISK}.
 You will be prompted for the mount point (full path, including the prepending
 '/' character) for each BSD partition on ${DISK}. Enter "none" to skip a
 partition or "done" when you are finished.
+
 __EOT
 
 		if [ "$DISK" = "$ROOTDISK" ]; then
 			cat << __EOT
-
 The following partitions will be used for the root filesystem and swap:
 	${ROOTDEV}	/
 	${ROOTDISK}b	swap
@@ -155,19 +156,26 @@ __EOT
 
 			_partitions[$_i]=$_pp
 			_psizes[$_i]=$_ps
-			# If the user assigned a mount point, use it.
+			# If the user assigned a mount point, use it if possible.
 			if [ -f /tmp/fstab.$DISK ]; then
-				_mount_points[$_i]=`sed -n "s:^/dev/${_pp}[ 	]*\([^ 	]*\).*:\1:p" < /tmp/fstab.$DISK`
+				while read _pp _mp _rest; do
+					[[ $_pp == "/dev/${_partitions[$_i]}" ]] || continue
+					[[ $_mp == "/" ]] && break
+					[[ -n $(grep " $_mp\$" $FILESYSTEMS) ]] && break
+					isin $_mp ${_mount_points[*]} && break
+					# If not '/', and not already used on another disk, and
+					# not already used on this disk, then the user specified
+					# mount point is ok. 
+					_mount_points[$_i]=$_mp
+				done < /tmp/fstab.$DISK
 			fi
 			: $(( _i += 1 ))
 		done
-		rm -f /tmp/fstab.$DISK
 
 		# If there are no partitions, go on to next disk.
 		[ $_i -gt 0 ] || continue
 		
 		# Now prompt the user for the mount points. Loop until "done" entered.
-		echo
 		_i=0
 		while : ; do
 			_pp=${_partitions[$_i]}
@@ -178,53 +186,44 @@ __EOT
 			ask "Mount point for ${_pp} (size=${_ps}k), RET, none or done?" "$_mp"
 			case $resp in
 			"")	;;
-			none)	_mount_points[$_i]=
+			none)	_mp=
 				;;
 			done)	break
 				;;
-			/*)	if [ "$resp" != "$_mp" ]; then	
-					# Try to ensure we don't mount something already mounted
-					_pp=`grep " $resp\$" $FILESYSTEMS | cutword 1`
+			/*)	_pp=`grep " $resp\$" $FILESYSTEMS | cutword 1`
+				if [ -z "$_pp" ]; then
+					# Mount point wasn't specified on a previous disk. Has it
+					# been specified on this one?
 					_j=0
-					for _mp in ${_mount_points[*]}; do
-						[ "$_mp" = "$resp" ] && \
-							_pp=${_partitions[$_j]}
+					for _pp in ${_partitions[*]} ""; do
+						if [ $_i -ne $_j ]; then	
+							[ "$resp" = "${_mount_points[$_j]}" ] && break
+						fi	
 						: $(( _j += 1 ))
 					done
-					if [ "$_pp" ]; then
-						echo "Invalid response: $_pp is already being mounted at $resp."
-						continue
-					fi
-					_mount_points[$_i]=$resp
 				fi
+				if [ "$_pp" ]; then
+					echo "Invalid response: $_pp is already being mounted at $resp."
+					continue
+				fi
+				_mp=$resp
 				;;
 			*)	echo "Invalid response: mount point must be an absolute path!"
 				continue
 				;;
 			esac
 
-			: $(( _i += 1 ))
+			_mount_points[$_i]=$_mp
+
+			: $(( _i += 1))
 			[ $_i -ge ${#_partitions[*]} ] && _i=0
 		done
 
 		# Append mount information to $FILESYSTEMS
 		_i=0
 		for _pp in ${_partitions[*]}; do
-			_mnt=${_mount_points[$_i]}
-			[ "$_mnt" ] && echo "$_pp $_mnt" >> $FILESYSTEMS
-			: $(( _i += 1 ))
-		done
-	done
-
-	# Sort $FILESYSTEMS to try and force a rational mount order.
-	_pps=`cat $FILESYSTEMS | cutword 1`
-	_mps=`cat $FILESYSTEMS | cutword 2`
-	rm -f $FILESYSTEMS
-	for _mp in `bsort $_mps`; do
-		_i=1
-		for _pp in $_pps; do
-			[ "$_mp" = "$(echo $_mps | cutword $_i)" ] && \
-				echo "$_pp $_mp" >> $FILESYSTEMS
+			_mp=${_mount_points[$_i]}
+			[ "$_mp" ] && echo "$_pp $_mp" >> $FILESYSTEMS
 			: $(( _i += 1 ))
 		done
 	done
@@ -232,11 +231,11 @@ __EOT
 	cat << __EOT
 
 
-You have configured the following devices and mount points:
+You have configured the following partitions and mount points:
 
 $(<$FILESYSTEMS)
 
-The next step will destroy all existing data on these devices by
+The next step will destroy all existing data on these partitions by
 creating a new filesystem on each of them.
 
 __EOT
@@ -249,10 +248,33 @@ __EOT
 		;;
 	esac
 
-	# Create a new filesystem on each device.
-	for _pp in $_pps; do
+	# Read $FILESYSTEMS, creating a new filesystem on each listed
+	# partition and saving the partition and mount point information
+	# for subsequent sorting by mount point.
+	_i=0
+	unset _partitions _mount_points
+	while read _pp _mp; do
 		newfs -q /dev/r$_pp
+
+		_partitions[$_i]=$_pp
+		_mount_points[$_i]=$_mp
+		: $(( _i += 1 ))
+	done < $FILESYSTEMS
+
+	# Sort entries from $FILESYSTEMS by mount point to try and
+	# enforce a rational mount order in the /etc/fstab that will
+	# be created.
+	rm -f $FILESYSTEMS
+	for _mp in `bsort ${_mount_points[*]}`; do
+		_i=0
+		for _pp in ${_partitions[*]}; do
+			if [ "$_mp" = "${_mount_points[$_i]}" ]; then
+				echo "$_pp $_mp" >> $FILESYSTEMS
+			fi
+			: $(( _i += 1 ))
+		done
 	done
+
 fi
 
 # Get network configuration information, and store it for placement in the
