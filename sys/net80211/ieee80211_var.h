@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.2 2004/11/02 02:15:49 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.3 2004/12/06 11:15:14 dlg Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -282,6 +282,7 @@ struct ieee80211com {
 #define	IEEE80211_C_SHSLOT	0x00000080	/* CAPABILITY: short slottime */
 #define	IEEE80211_C_SHPREAMBLE	0x00000100	/* CAPABILITY: short preamble */
 #define	IEEE80211_C_MONITOR	0x00000200	/* CAPABILITY: monitor mode */
+#define IEEE80211_C_SCANALL	0x00000400	/* CAPABILITY: scan all chan */
 
 /* flags for ieee80211_fix_rate() */
 #define	IEEE80211_F_DOSORT	0x00000001	/* sort rate list */

@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.2 2004/11/02 02:15:49 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.3 2004/12/06 11:15:14 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -1042,7 +1042,8 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 			ic->ic_stats.is_rx_badchan++;
 			return;
 		}
-		if (chan != bchan && ic->ic_phytype != IEEE80211_T_FH) {
+		if (!(ic->ic_caps & IEEE80211_C_SCANALL) && 
+		    (chan != bchan && ic->ic_phytype != IEEE80211_T_FH)) {
 			/*
 			 * Frame was received on a channel different from the
 			 * one indicated in the DS params element id;
