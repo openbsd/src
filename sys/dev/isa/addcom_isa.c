@@ -1,4 +1,4 @@
-/*	$OpenBSD: addcom_isa.c,v 1.1 2001/07/17 01:32:18 jason Exp $	*/
+/*	$OpenBSD: addcom_isa.c,v 1.2 2001/07/17 18:27:52 jason Exp $	*/
 /*	$NetBSD: addcom_isa.c,v 1.2 2000/04/21 20:13:41 explorer Exp $	*/
 
 /*
@@ -45,6 +45,10 @@
  * io base address, so only one of these cards can ever be used at
  * a time.
  *
+ * NOTE: the status register does not appear to work as advertised,
+ * so instead we depend on the slave devices being intelligent enough
+ * to determine whether they interrupted or not.
+ *
  * This card is different from the boca or other cards in that ports
  * 0..5 are from addresses 0x108..0x137, and 6..7 are from 0x200..0x20f,
  * making a gap that the other cards do not have.
@@ -87,7 +91,6 @@ struct addcom_softc {
 	int sc_alive;			/* mask of slave units attached */
 	void *sc_slaves[NSLAVES];	/* com device unit numbers */
 	bus_space_handle_t sc_slaveioh[NSLAVES];
-	bus_space_handle_t sc_statusioh;
 };
 
 #define SLAVE_IOBASE_OFFSET 0x108
@@ -198,12 +201,6 @@ addcomattach(parent, self, aux)
 
 	sc->sc_iot = ia->ia_iot;
 	sc->sc_iobase = ia->ia_iobase;
-
-	if (bus_space_map(iot, STATUS_IOADDR, STATUS_SIZE,
-	    0, &sc->sc_statusioh)) {
-		printf("%s: can't map status space\n", sc->sc_dev.dv_xname);
-		return;
-	}
 
 	for (i = 0; i < NSLAVES; i++) {
 		iobase = sc->sc_iobase
