@@ -1,4 +1,4 @@
-/*	$OpenBSD: pack.c,v 1.5 2001/08/10 18:32:46 pjanzen Exp $	*/
+/*	$OpenBSD: pack.c,v 1.6 2001/08/12 19:52:56 pjanzen Exp $	*/
 /*	$NetBSD: pack.c,v 1.3 1995/04/22 10:27:54 cgd Exp $	*/
 
 /*
@@ -470,7 +470,8 @@ call_it()
 	}
 	id_table = get_id_table(obj);
 
-	if (get_input_line("call it:","",buf,id_table[obj->which_kind].title,1,1)) {
+	if (get_input_line("call it:", "", buf, sizeof(buf),
+	    id_table[obj->which_kind].title, 1, 1)) {
 		id_table[obj->which_kind].id_status = CALLED;
 		(void) strcpy(id_table[obj->which_kind].title, buf);
 	}

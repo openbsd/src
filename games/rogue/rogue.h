@@ -1,4 +1,4 @@
-/*	$OpenBSD: rogue.h,v 1.5 2001/08/10 18:32:46 pjanzen Exp $	*/
+/*	$OpenBSD: rogue.h,v 1.6 2001/08/12 19:52:56 pjanzen Exp $	*/
 /*	$NetBSD: rogue.h,v 1.4 1995/04/24 12:25:04 cgd Exp $	*/
 
 /*
@@ -525,7 +525,7 @@ char	get_dungeon_char __P((short, short));
 int	get_exp_level __P((long));
 void	get_food __P((object *, boolean));
 int	get_hit_chance __P((object *));
-int	get_input_line __P((char *, char *, char *, char *, boolean, boolean));
+int	get_input_line __P((char *, char *, char *, int, char *, boolean, boolean));
 char	get_mask_char __P((unsigned short));
 int	get_number __P((char *));
 boolean	get_oth_room __P((short, short *, short *));
@@ -587,11 +587,9 @@ void	make_room __P((short, short, short, short));
 void	make_scroll_titles __P((void));
 boolean	mask_pack __P((object *, unsigned short));
 boolean	mask_room __P((short, short *, short *, unsigned short));
-void	md_cbreak_no_echo_nonl __P((boolean));
 boolean	md_df __P((char *));
 void	md_exit __P((int));
 void	md_gct __P((struct rogue_time *));
-char   *md_gdtcf __P((void));
 int	md_get_file_id __P((char *));
 void	md_gfmt __P((char *, struct rogue_time *));
 int	md_gseed __P((void));
@@ -602,7 +600,6 @@ void	md_lock __P((boolean));
 void	md_shell __P((char *));
 void	md_sleep __P((int));
 void	md_slurp __P((void));
-void	md_tstp __P((void));
 void	message __P((char *, boolean));
 void	mix_colors __P((void));
 void	mix_colors __P((void));

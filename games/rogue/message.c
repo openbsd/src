@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.6 2000/07/24 00:56:05 pjanzen Exp $	*/
+/*	$OpenBSD: message.c,v 1.7 2001/08/12 19:52:56 pjanzen Exp $	*/
 /*	$NetBSD: message.c,v 1.5 1995/04/22 10:27:43 cgd Exp $	*/
 
 /*
@@ -136,8 +136,9 @@ check_message()
 }
 
 int
-get_input_line(prompt, insert, buf, if_cancelled, add_blank, do_echo)
-	char *prompt, *buf, *insert;
+get_input_line(prompt, insert, buf, buf_size, if_cancelled, add_blank, do_echo)
+	char *prompt, *insert, *buf;
+	int buf_size;
 	char *if_cancelled;
 	boolean add_blank;
 	boolean do_echo;
@@ -157,7 +158,7 @@ get_input_line(prompt, insert, buf, if_cancelled, add_blank, do_echo)
 	}
 
 	while (((ch = rgetchar()) != '\r') && (ch != '\n') && (ch != CANCEL)) {
-		if ((ch >= ' ') && (ch <= '~') && (i < MAX_TITLE_LENGTH-2)) {
+		if ((ch >= ' ') && (ch <= '~') && (i < buf_size - 2)) {
 			if ((ch != ' ') || (i > 0)) {
 				buf[i++] = ch;
 				if (do_echo) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_hit.c,v 1.3 1998/08/22 08:55:48 pjanzen Exp $	*/
+/*	$OpenBSD: spec_hit.c,v 1.4 2001/08/12 19:52:56 pjanzen Exp $	*/
 /*	$NetBSD: spec_hit.c,v 1.3 1995/04/22 10:28:29 cgd Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)spec_hit.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: spec_hit.c,v 1.3 1998/08/22 08:55:48 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: spec_hit.c,v 1.4 2001/08/12 19:52:56 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -66,32 +66,26 @@ void
 special_hit(monster)
 	object *monster;
 {
-	if ((monster->m_flags & CONFUSED) && rand_percent(66)) {
+	if ((monster->m_flags & CONFUSED) && rand_percent(66))
 		return;
-	}
-	if (monster->m_flags & RUSTS) {
+	if (wizard && rand_percent(50))
+		return;
+	if (monster->m_flags & RUSTS)
 		rust(monster);
-	}
-	if ((monster->m_flags & HOLDS) && !levitate) {
+	if ((monster->m_flags & HOLDS) && !levitate)
 		being_held = 1;
-	}
-	if (monster->m_flags & FREEZES) {
+	if (monster->m_flags & FREEZES)
 		freeze(monster);
-	}
-	if (monster->m_flags & STINGS) {
+	if (monster->m_flags & STINGS)
 		sting(monster);
-	}
-	if (monster->m_flags & DRAINS_LIFE) {
+	if (monster->m_flags & DRAINS_LIFE)
 		drain_life();
-	}
-	if (monster->m_flags & DROPS_LEVEL) {
+	if (monster->m_flags & DROPS_LEVEL)
 		drop_level();
-	}
-	if (monster->m_flags & STEALS_GOLD) {
+	if (monster->m_flags & STEALS_GOLD)
 		steal_gold(monster);
-	} else if (monster->m_flags & STEALS_ITEM) {
+	else if (monster->m_flags & STEALS_ITEM) 
 		steal_item(monster);
-	}
 }
 
 void

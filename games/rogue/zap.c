@@ -1,4 +1,4 @@
-/*	$OpenBSD: zap.c,v 1.3 1998/08/22 08:55:53 pjanzen Exp $	*/
+/*	$OpenBSD: zap.c,v 1.4 2001/08/12 19:52:56 pjanzen Exp $	*/
 /*	$NetBSD: zap.c,v 1.3 1995/04/22 10:28:41 cgd Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)zap.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: zap.c,v 1.3 1998/08/22 08:55:53 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: zap.c,v 1.4 2001/08/12 19:52:56 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -230,13 +230,14 @@ tele_away(monster)
 void
 wizardize()
 {
-	char buf[100];
+	char buf[10];
 
 	if (wizard) {
 		wizard = 0;
 		message("not wizard anymore", 0);
 	} else {
-		if (get_input_line("wizard's password:", "", buf, "", 0, 0)) {
+		if (get_input_line("wizard's password:", "", buf, sizeof(buf),
+		    "", 0, 0)) {
 			(void) xxx(1);
 			xxxx(buf, strlen(buf));
 			if (!strncmp(buf, "\247\104\126\272\115\243\027", 7)) {
