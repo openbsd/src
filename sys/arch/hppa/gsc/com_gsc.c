@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_gsc.c,v 1.19 2004/04/07 18:24:19 mickey Exp $	*/
+/*	$OpenBSD: com_gsc.c,v 1.20 2004/09/19 17:50:30 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -88,7 +88,7 @@ com_gsc_attach(parent, self, aux)
 	else
 		rj16++;
 
-	if (sc->sc_iobase == CONADDR)
+	if (sc->sc_iobase == CONADDR && comconsioh)
 		sc->sc_ioh = comconsioh;
 	else if (bus_space_map(sc->sc_iot, sc->sc_iobase, COM_NPORTS,
 	    0, &sc->sc_ioh)) {
