@@ -105,7 +105,7 @@
 
     See HISTORY file for additional revisions.
 
-    $OpenBSD: alias_db.c,v 1.9 2000/06/11 14:40:26 brian Exp $
+    $OpenBSD: alias_db.c,v 1.10 2000/06/15 09:37:08 brian Exp $
 */
 
 
@@ -274,6 +274,7 @@ struct alias_link                /* Main data structure */
 #define LINK_PERMANENT             0x04
 #define LINK_PARTIALLY_SPECIFIED   0x03 /* logical-or of first two bits */
 #define LINK_UNFIREWALLED          0x08
+#define LINK_LAST_LINE_CRLF_TERMED 0x10
 
     int timestamp;               /* Time link was last accessed         */
     int expire_time;             /* Expire time for link                */
@@ -1596,6 +1597,7 @@ FindAliasAddress(struct in_addr original_addr)
     GetOriginalPort(), GetAliasPort()
     SetAckModified(), GetAckModified()
     GetDeltaAckIn(), GetDeltaSeqOut(), AddSeq()
+    SetLastLineCrlfTermed(), GetLastLineCrlfTermed()
 */
 
 
@@ -1959,6 +1961,23 @@ void
 ClearCheckNewLink(void)
 {
     newDefaultLink = 0;
+}
+
+void
+SetLastLineCrlfTermed(struct alias_link *link, int yes)
+{
+
+    if (yes)
+	link->flags |= LINK_LAST_LINE_CRLF_TERMED;
+    else
+	link->flags &= ~LINK_LAST_LINE_CRLF_TERMED;
+}
+
+int
+GetLastLineCrlfTermed(struct alias_link *link)
+{
+
+    return (link->flags & LINK_LAST_LINE_CRLF_TERMED);
 }
 
 

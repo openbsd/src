@@ -14,7 +14,7 @@
     
      <updated several times by original author and Eivind Eklund>
 
-    $OpenBSD: alias_local.h,v 1.6 2000/06/11 14:40:26 brian Exp $
+    $OpenBSD: alias_local.h,v 1.7 2000/06/15 09:37:08 brian Exp $
 */
 #ifndef ALIAS_LOCAL_H
 #define ALIAS_LOCAL_H
@@ -140,6 +140,8 @@ int GetDeltaSeqOut(struct ip *, struct alias_link *);
 void AddSeq(struct ip *, struct alias_link *, int);
 void SetExpire(struct alias_link *, int);
 void ClearCheckNewLink(void);
+void SetLastLineCrlfTermed(struct alias_link *, int);
+int GetLastLineCrlfTermed(struct alias_link *);
 #ifndef NO_FW_PUNCH
 void PunchFWHole(struct alias_link *);
 #endif
