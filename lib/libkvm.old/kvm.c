@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.7 1998/06/29 22:44:57 deraadt Exp $	*/
+/*	$OpenBSD: kvm.c,v 1.8 1998/06/29 23:25:44 angelos Exp $	*/
 /*	$NetBSD: kvm.c,v 1.2 1996/05/13 02:30:22 thorpej Exp $	*/
 
 /*-
@@ -286,7 +286,7 @@ kvm_openfiles(uf, mf, sf, flag, errout)
 
 	if ((kd = malloc(sizeof(*kd))) == NULL) {
 		(void)strcpy(errout, strerror(errno));
-		return (-1);
+		return (0);
 	}
 	kd->program = 0;
 	return (_kvm_open(kd, uf, mf, sf, flag, errout));
@@ -304,7 +304,7 @@ kvm_open(uf, mf, sf, flag, program)
 
 	if ((kd = malloc(sizeof(*kd))) == NULL && program != NULL) {
 		(void)fprintf(stderr, "%s: %s\n", strerror(errno));
-		return (-1);
+		return (0);
 	}
 	kd->program = program;
 	return (_kvm_open(kd, uf, mf, sf, flag, NULL));
@@ -368,7 +368,28 @@ kvm_dbopen(kd, uf)
 	(void)snprintf(dbname, sizeof(dbname), "%skvm_%s.db", _PATH_VARDB, uf);
 	kd->db = dbopen(dbname, O_RDONLY, 0, DB_HASH, NULL);
 	if (kd->db == 0)
+	{
+		switch (errno)
+		{
+			case EFTYPE:
+				_kvm_err(kd, kd->program,
+					 "file %s is incorrectly formatted",
+					 dbname);
+				break;
+			case EINVAL:
+				_kvm_err(kd, kd->program,
+					 "invalid argument to dbopen()");
+				break;
+
+			default:
+				_kvm_err(kd, kd->program,
+					 "unknown dbopen() error");
+				break;
+		}
+
 		return (-1);
+	}
+
 	/*
 	 * read version out of database
 	 */
@@ -493,6 +514,7 @@ kvm_read(kd, kva, buf, len)
 		while (len > 0) {
 			u_long pa;
 		
+			/* In case of error, _kvm_kvatop sets the err string */
 			cc = _kvm_kvatop(kd, kva, &pa);
 			if (cc == 0)
 				return (-1);
