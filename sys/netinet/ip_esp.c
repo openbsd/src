@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.19 1999/03/27 21:04:19 provos Exp $	*/
+/*	$OpenBSD: ip_esp.c,v 1.20 1999/04/09 22:27:53 niklas Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -247,9 +247,8 @@ esp_input(register struct mbuf *m, int iphlen)
 	    {
 		DPRINTF(("esp_input(): mbuf is not a packet header!\n"));
 	    }
-	    if (!tdbi || !(m->m_flags & (M_CONF|M_AUTH)))
-	      MALLOC(tdbi, struct tdb_ident *, sizeof(struct tdb_ident),
-		     M_TEMP, M_NOWAIT);
+	    MALLOC(tdbi, struct tdb_ident *, sizeof(struct tdb_ident),
+	           M_TEMP, M_NOWAIT);
 
 	    if (!tdbi)
 	      goto no_mem;
@@ -259,9 +258,10 @@ esp_input(register struct mbuf *m, int iphlen)
 	    tdbi->proto = tdbp->tdb_bind_out->tdb_sproto;
 	}
 
-	m->m_pkthdr.tdbi = tdbi;
     no_mem:
-    }
+	m->m_pkthdr.tdbi = tdbi;
+    } else
+        m->m_pkthdr.tdbi = NULL;
 
     /* Packet is confidental */
     m->m_flags |= M_CONF;
