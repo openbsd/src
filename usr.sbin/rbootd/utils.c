@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.5 2002/03/14 16:44:25 mpech Exp $	*/
+/*	$OpenBSD: utils.c,v 1.6 2002/05/29 18:39:00 deraadt Exp $	*/
 /*	$NetBSD: utils.c,v 1.5.2.1 1995/11/14 08:45:46 thorpej Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)utils.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: utils.c,v 1.5 2002/03/14 16:44:25 mpech Exp $";
+static char rcsid[] = "$OpenBSD: utils.c,v 1.6 2002/05/29 18:39:00 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -338,12 +338,11 @@ NewStr(str)
 {
 	char *stmp;
 
-	if ((stmp = (char *)malloc((unsigned) (strlen(str)+1))) == NULL) {
+	stmp = strdup(str);
+	if (stmp == NULL) {
 		syslog(LOG_ERR, "NewStr: out of memory (%s)", str);
 		return(NULL);
 	}
-
-	(void) strcpy(stmp, str);
 	return(stmp);
 }
 

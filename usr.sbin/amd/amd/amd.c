@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amd.c	8.1 (Berkeley) 6/6/93
- *	$Id: amd.c,v 1.5 2002/05/26 02:49:50 deraadt Exp $
+ *	$Id: amd.c,v 1.6 2002/05/29 18:39:00 deraadt Exp $
  */
 
 #ifndef lint
@@ -245,7 +245,7 @@ char *argv[];
 		*domdot++ = '\0';
 		hostdomain = domdot;
 	}
-	strcpy(hostd, hostname);
+	strlcpy(hostd, hostname, sizeof hostd);
 
 	/*
 	 * Trap interrupts for shutdowns.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_mkdb.c,v 1.28 2002/05/22 09:09:32 deraadt Exp $	*/
+/*	$OpenBSD: pwd_mkdb.c,v 1.29 2002/05/29 18:39:00 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -45,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.28 2002/05/22 09:09:32 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.29 2002/05/29 18:39:00 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -481,8 +481,8 @@ changedir(path, dir)
 	p = strrchr(path, '/');
 	strlcpy(fixed, dir, sizeof fixed);
 	if (p) {
-		strcat(fixed, "/");
-		strcat(fixed, p + 1);
+		strlcat(fixed, "/", sizeof fixed);
+		strlcat(fixed, p + 1, sizeof fixed);
 	}
 	return (fixed);
 }

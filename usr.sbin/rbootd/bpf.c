@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.9 2002/05/29 09:45:08 deraadt Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.10 2002/05/29 18:39:00 deraadt Exp $	*/
 /*	$NetBSD: bpf.c,v 1.5.2.1 1995/11/14 08:45:42 thorpej Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)bpf.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: bpf.c,v 1.9 2002/05/29 09:45:08 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: bpf.c,v 1.10 2002/05/29 18:39:00 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -297,7 +297,7 @@ BpfGetIntfName(errmsg)
 		return(NULL);
 	}
 
-	(void) strcpy(device, mp->ifr_name);
+	(void) strlcpy(device, mp->ifr_name, sizeof device);
 	return(device);
 }
 

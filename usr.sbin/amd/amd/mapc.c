@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mapc.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: mapc.c,v 1.2 2001/03/02 06:22:03 deraadt Exp $";
+static char *rcsid = "$Id: mapc.c,v 1.3 2002/05/29 18:39:00 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -705,7 +705,7 @@ int recurse;
 			 * For example:
 			 * "src/gnu/gcc" -> "src / gnu / *" -> "src / *"
 			 */
-			strcpy(wildname, key);
+			strlcpy(wildname, key, sizeof wildname);
 			while (error && (subp = strrchr(wildname, '/'))) {
 				strcpy(subp, "/*");
 #ifdef DEBUG
