@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.42 1998/03/28 18:36:41 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.43 1998/04/02 20:13:30 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -531,6 +531,7 @@
 #define	PCI_PRODUCT_3COM_3C900COMBO	0x9001		/* 3c900 10Mbps-Combo */
 #define	PCI_PRODUCT_3COM_3C905TX	0x9050		/* 3c905 100Base-TX */
 #define	PCI_PRODUCT_3COM_3C905T4	0x9051		/* 3c905 100Base-T4 */
+#define	PCI_PRODUCT_3COM_3C905B	0x9055		/* 3c905B 100Base-T4 */
 
 /* 3D Labs products */
 #define	PCI_PRODUCT_3DLABS_300SX	0x0001		/* 300SX (Glint) */
