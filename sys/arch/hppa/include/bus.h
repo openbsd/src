@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.15 2002/02/16 02:21:56 mickey Exp $	*/
+/*	$OpenBSD: bus.h,v 1.16 2002/02/16 02:40:12 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -167,7 +167,6 @@ typedef const struct hppa_bus_space_tag *bus_space_tag_t;
 extern const struct hppa_bus_space_tag hppa_bustag;
 
 /* bus access routines */
-#define DCIAS(pa)	((void)(pa))
 
 #define	bus_space_map(t,a,c,ca,hp) \
 	(((t)->hbt_map)((t)->hbt_cookie,(a),(c),(ca),(hp)))
