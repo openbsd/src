@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.4 2003/10/22 12:26:43 otto Exp $
+# $OpenBSD: Makefile,v 1.5 2003/11/11 09:18:21 otto Exp $
 
 BC=bc
 
-REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11
+REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12
 
 # .in: input file
 # .out: desired result
@@ -18,6 +18,7 @@ REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11
 # t9: more continue
 # t10: for with empty E's
 # t11: if else
+# t12: print
 
 all: clean ${REGRESS_TARGET}
 
