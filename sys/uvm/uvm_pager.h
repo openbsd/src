@@ -1,10 +1,5 @@
-/*	$OpenBSD: uvm_pager.h,v 1.2 1999/02/26 05:32:08 art Exp $	*/
-/*	$NetBSD: uvm_pager.h,v 1.7 1998/08/13 02:11:03 eeh Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.8 1999/03/24 03:45:28 cgd Exp $	*/
 
-/*
- * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
- *	   >>>USE AT YOUR OWN RISK, WORK IS NOT FINISHED<<<
- */
 /*
  *
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,8 +62,6 @@ struct uvm_aiodesc {
 
 struct uvm_pagerops {
 	void		(*pgo_init) __P((void));/* init pager */
-	struct uvm_object * (*pgo_attach)	/* get uvm_object */
-			__P((void *, vm_prot_t));
 	void		(*pgo_reference)	/* add reference to obj */
 			 __P((struct uvm_object *));		
 	void			(*pgo_detach)	/* drop reference to obj */

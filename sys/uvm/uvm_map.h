@@ -1,10 +1,5 @@
-/*	$OpenBSD: uvm_map.h,v 1.2 1999/02/26 05:32:07 art Exp $	*/
-/*	$NetBSD: uvm_map.h,v 1.10 1998/10/11 23:14:48 chuck Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.11 1999/03/25 18:48:52 mrg Exp $	*/
 
-/*
- * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
- *         >>>USE AT YOUR OWN RISK, WORK IS NOT FINISHED<<<
- */
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
  * Copyright (c) 1991, 1993, The Regents of the University of California.  
@@ -120,6 +115,14 @@
 #else 
 #define MAP_INLINE /* nothing */
 #endif /* UVM_MAP_INLINE */
+
+/*
+ * globals:
+ */
+
+#ifdef PMAP_GROWKERNEL
+extern vaddr_t	uvm_maxkaddr;
+#endif
 
 /*
  * protos: the following prototypes define the interface to vm_map

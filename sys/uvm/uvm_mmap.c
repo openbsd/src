@@ -1,10 +1,5 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.3 1999/06/04 00:17:29 art Exp $	*/
-/*	$NetBSD: uvm_mmap.c,v 1.15 1998/10/11 23:18:20 chuck Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.19 1999/03/25 18:48:53 mrg Exp $	*/
 
-/*
- * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
- *         >>>USE AT YOUR OWN RISK, WORK IS NOT FINISHED<<<
- */
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
  * Copyright (c) 1991, 1993 The Regents of the University of California.  
@@ -97,11 +92,11 @@ sys_sbrk(p, v, retval)
 {
 #if 0
 	struct sys_sbrk_args /* {
-			  syscallarg(int) incr;
-			  } */ *uap = v;
+		syscallarg(int) incr;
+	} */ *uap = v;
 #endif
 
-	return (EOPNOTSUPP);
+	return (ENOSYS);
 }
 
 /*
@@ -117,11 +112,11 @@ sys_sstk(p, v, retval)
 {
 #if 0
 	struct sys_sstk_args /* {
-			  syscallarg(int) incr;
-			  } */ *uap = v;
+		syscallarg(int) incr;
+	} */ *uap = v;
 #endif
 
-	return (EOPNOTSUPP);
+	return (ENOSYS);
 }
 
 /*
@@ -137,13 +132,13 @@ sys_madvise(p, v, retval)
 {
 #if 0
 	struct sys_madvise_args /* {
-			     syscallarg(caddr_t) addr;
-			     syscallarg(size_t) len;
-			     syscallarg(int) behav;
-			     } */ *uap = v;
+		syscallarg(caddr_t) addr;
+		syscallarg(size_t) len;
+		syscallarg(int) behav;
+	} */ *uap = v;
 #endif
 
-	return (EOPNOTSUPP);
+	return (ENOSYS);
 }
 
 /*
@@ -159,13 +154,13 @@ sys_mincore(p, v, retval)
 {
 #if 0
 	struct sys_mincore_args /* {
-			     syscallarg(caddr_t) addr;
-			     syscallarg(size_t) len;
-			     syscallarg(char *) vec;
-			     } */ *uap = v;
+		syscallarg(caddr_t) addr;
+		syscallarg(size_t) len;
+		syscallarg(char *) vec;
+	} */ *uap = v;
 #endif
 
-	return (EOPNOTSUPP);
+	return (ENOSYS);
 }
 
 #if 0
@@ -242,7 +237,8 @@ sys_mmap(p, v, retval)
 	 */
 	if (pos + size > (vaddr_t)-PAGE_SIZE) {
 #ifdef DEBUG
-		printf("mmap: pos=%qx, size=%x too big\n", pos, (int)size);
+		printf("mmap: pos=%qx, size=%lx too big\n", (long long)pos,
+		       (long)size);
 #endif
 		return (EINVAL);
 	}
@@ -418,7 +414,7 @@ is_anon:		/* label for SunOS style /dev/zero */
  */
 
 int
-sys_msync(p, v, retval)		/* ART_UVM_XXX - is this correct msync? */
+sys_msync(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
@@ -904,7 +900,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff)
 		} else {
 			uobj = udv_attach((void *) &vp->v_rdev,
 			    (flags & MAP_SHARED) ?
-			    maxprot : (maxprot & ~VM_PROT_WRITE));
+			    maxprot : (maxprot & ~VM_PROT_WRITE), foff, size);
 			advice = UVM_ADV_RANDOM;
 		}
 		

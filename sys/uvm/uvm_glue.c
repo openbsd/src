@@ -1,10 +1,5 @@
-/*	$OpenBSD: uvm_glue.c,v 1.3 1999/08/17 10:32:19 niklas Exp $	*/
-/*	$NetBSD: uvm_glue.c,v 1.15 1998/10/19 22:21:19 tron Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.19 1999/04/30 21:23:50 thorpej Exp $	*/
 
-/*
- * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
- *         >>>USE AT YOUR OWN RISK, WORK IS NOT FINISHED<<<
- */
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
  * Copyright (c) 1991, 1993, The Regents of the University of California.  
@@ -258,6 +253,8 @@ uvm_vsunlock(p, addr, len)
  * - the address space is copied as per parent map's inherit values
  * - a new "user" structure is allocated for the child process
  *	[filled in by MD layer...]
+ * - if specified, the child gets a new user stack described by
+ *	stack and stacksize
  * - NOTE: the kernel stack may be at a different location in the child
  *	process, and thus addresses of automatic variables may be invalid
  *	after cpu_fork returns in the child process.  We do nothing here
@@ -466,8 +463,6 @@ loop:
 		printf("scheduler: no room for pid %d(%s), free %d\n",
 	   p->p_pid, p->p_comm, uvmexp.free);
 #endif
-	printf("scheduler: no room for pid %d(%s), free %d\n",
-	   p->p_pid, p->p_comm, uvmexp.free);/*XXXCDC: HIGHLY BOGUS */
 	(void) splhigh();
 	uvm_wait("schedpwait");
 	(void) spl0();

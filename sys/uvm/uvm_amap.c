@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.2 1999/02/26 05:32:06 art Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.3 1999/08/23 08:13:22 art Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.19 1999/01/28 14:46:27 chuck Exp $	*/
 
 /*
@@ -795,7 +795,7 @@ ReStart:
 			 */
 			nanon = uvm_analloc();
 			if (nanon)
-				npg = uvm_pagealloc(NULL, 0, nanon);
+				npg = uvm_pagealloc(NULL, 0, nanon, 0);
 			else
 				npg = NULL;	/* XXX: quiet gcc warning */
 

@@ -1,10 +1,4 @@
-/*	$OpenBSD: uvm_device.c,v 1.2 1999/02/26 05:32:06 art Exp $	*/
-/*	$NetBSD: uvm_device.c,v 1.11 1998/11/19 05:23:26 mrg Exp $	*/
-
-/*
- * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
- *	   >>>USE AT YOUR OWN RISK, WORK IS NOT FINISHED<<<
- */
+/*	$NetBSD: uvm_device.c,v 1.15 1999/03/26 21:58:39 mycroft Exp $	*/
 
 /*
  *
@@ -73,7 +67,7 @@ static simple_lock_data_t udv_lock;
  */
 
 static void		udv_init __P((void));
-struct uvm_object 	*udv_attach __P((void *, vm_prot_t));
+struct uvm_object 	*udv_attach __P((void *, vm_prot_t, vaddr_t, vsize_t));
 static void             udv_reference __P((struct uvm_object *));
 static void             udv_detach __P((struct uvm_object *));
 static int		udv_fault __P((struct uvm_faultinfo *, vaddr_t,
@@ -92,7 +86,6 @@ static int		udv_put __P((struct uvm_object *, vm_page_t *,
 
 struct uvm_pagerops uvm_deviceops = {
 	udv_init,
-	udv_attach,
 	udv_reference,
 	udv_detach,
 	udv_fault,
@@ -135,9 +128,11 @@ udv_init()
  * => in fact, nothing should be locked so that we can sleep here.
  */
 struct uvm_object *
-udv_attach(arg, accessprot)
+udv_attach(arg, accessprot, off, size)
 	void *arg;
 	vm_prot_t accessprot;
+	vaddr_t off;			/* used only for access check */
+	vsize_t size;			/* used only for access check */
 {
 	dev_t device = *((dev_t *) arg);
 	struct uvm_device *udv, *lcv;
@@ -155,6 +150,20 @@ udv_attach(arg, accessprot)
 			mapfn == (int (*) __P((dev_t, int, int))) enodev ||
 			mapfn == (int (*) __P((dev_t, int, int))) nullop)
 		return(NULL);
+
+	/*
+	 * Check that the specified range of the device allows the
+	 * desired protection.
+	 * 
+	 * XXX assumes VM_PROT_* == PROT_*
+	 * XXX clobbers off and size, but nothing else here needs them.
+	 */
+
+	while (size != 0) {
+		if ((*mapfn)(device, off, accessprot) == -1)
+			return (NULL);
+		off += PAGE_SIZE; size -= PAGE_SIZE;
+	}
 
 	/*
 	 * keep looping until we get it

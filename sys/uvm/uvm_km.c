@@ -1,10 +1,5 @@
-/*	$OpenBSD: uvm_km.c,v 1.2 1999/02/26 05:32:07 art Exp $	*/
-/*	$NetBSD: uvm_km.c,v 1.18 1998/10/18 23:49:59 chs Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.22 1999/03/26 21:58:39 mycroft Exp $	*/
 
-/*
- * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
- *         >>>USE AT YOUR OWN RISK, WORK IS NOT FINISHED<<<
- */
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
  * Copyright (c) 1991, 1993, The Regents of the University of California.  
@@ -177,7 +172,6 @@ static struct uvm_object	mb_object_store;
 
 static struct uvm_pagerops km_pager = {
 	NULL,	/* init */
-	NULL, /* attach */
 	NULL, /* reference */
 	NULL, /* detach */
 	NULL, /* fault */
@@ -247,7 +241,7 @@ uvm_km_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 			/* null?  attempt to allocate the page */
 			if (ptmp == NULL) {
 				ptmp = uvm_pagealloc(uobj, current_offset,
-				    NULL);
+				    NULL, 0);
 				if (ptmp) {
 					/* new page */
 					ptmp->flags &= ~(PG_BUSY|PG_FAKE);
@@ -337,7 +331,7 @@ uvm_km_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 			if (ptmp == NULL) {
 
 				ptmp = uvm_pagealloc(uobj, current_offset,
-				    NULL);	/* alloc */
+				    NULL, 0);
 
 				/* out of RAM? */
 				if (ptmp == NULL) {
@@ -578,12 +572,7 @@ uvm_km_pgremove(uobj, start, end)
 			 * if this kernel object is an aobj, free the swap slot.
 			 */
 			if (is_aobj) {
-				int slot = uao_set_swslot(uobj,
-							  curoff >> PAGE_SHIFT,
-							  0);
-
-				if (slot)
-					uvm_swap_free(slot, 1);
+				uao_dropswap(uobj, curoff >> PAGE_SHIFT);
 			}
 
 			uvm_lock_pageq();
@@ -618,11 +607,7 @@ loop_by_list:
 			 * if this kernel object is an aobj, free the swap slot.
 			 */
 			if (is_aobj) {
-				int slot = uao_set_swslot(uobj,
-						pp->offset >> PAGE_SHIFT, 0);
-
-				if (slot)
-					uvm_swap_free(slot, 1);
+				uao_dropswap(uobj, pp->offset >> PAGE_SHIFT);
 			}
 
 			uvm_lock_pageq();
@@ -712,7 +697,7 @@ uvm_km_kmemalloc(map, obj, size, flags)
 	loopva = kva;
 	while (size) {
 		simple_lock(&obj->vmobjlock);
-		pg = uvm_pagealloc(obj, offset, NULL);
+		pg = uvm_pagealloc(obj, offset, NULL, 0);
 		if (pg) {
 			pg->flags &= ~PG_BUSY;	/* new page */
 			UVM_PAGE_OWN(pg, NULL);
@@ -861,7 +846,7 @@ uvm_km_alloc1(map, size, zeroit)
 		}
 		
 		/* allocate ram */
-		pg = uvm_pagealloc(uvm.kernel_object, offset, NULL);
+		pg = uvm_pagealloc(uvm.kernel_object, offset, NULL, 0);
 		if (pg) {
 			pg->flags &= ~PG_BUSY;	/* new page */
 			UVM_PAGE_OWN(pg, NULL);
@@ -1012,7 +997,7 @@ uvm_km_alloc_poolpage1(map, obj, waitok)
 	vaddr_t va;
 
  again:
-	pg = uvm_pagealloc(NULL, 0, NULL);
+	pg = uvm_pagealloc(NULL, 0, NULL, 0);
 	if (pg == NULL) {
 		if (waitok) {
 			uvm_wait("plpg");

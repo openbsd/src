@@ -1,10 +1,5 @@
-/*	$OpenBSD: uvm_aobj.h,v 1.2 1999/02/26 05:32:06 art Exp $	*/
-/*	$NetBSD: uvm_aobj.h,v 1.6 1998/02/12 07:36:45 chs Exp $	*/
+/*	$NetBSD: uvm_aobj.h,v 1.7 1999/03/25 18:48:50 mrg Exp $	*/
 
-/*
- * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
- *	   >>>USE AT YOUR OWN RISK, WORK IS NOT FINISHED<<<
- */
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
  *                    Washington University.
@@ -68,6 +63,7 @@
  */
 
 int uao_set_swslot __P((struct uvm_object *, int, int));
+void uao_dropswap __P((struct uvm_object *, int));
 
 /*
  * globals

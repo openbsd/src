@@ -1,10 +1,5 @@
-/*	$OpenBSD: uvm_loan.c,v 1.2 1999/02/26 05:32:07 art Exp $	*/
-/*	$NetBSD: uvm_loan.c,v 1.13 1999/01/24 23:53:15 chuck Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.14 1999/03/25 18:48:52 mrg Exp $	*/
 
-/*
- * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
- *	   >>>USE AT YOUR OWN RISK, WORK IS NOT FINISHED<<<
- */
 /*
  *
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -615,7 +610,7 @@ uvm_loanzero(ufi, output, flags)
 
 	if ((flags & UVM_LOAN_TOANON) == 0) {	/* loaning to kernel-page */
 
-		while ((pg = uvm_pagealloc(NULL, 0, NULL)) == NULL) {
+		while ((pg = uvm_pagealloc(NULL, 0, NULL, 0)) == NULL) {
 			uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, 
 			    ufi->entry->object.uvm_obj, NULL);
 			uvm_wait("loanzero1");
@@ -645,7 +640,7 @@ uvm_loanzero(ufi, output, flags)
 
 	/* loaning to an anon */
 	while ((anon = uvm_analloc()) == NULL || 
-	    (pg = uvm_pagealloc(NULL, 0, anon)) == NULL) {
+	    (pg = uvm_pagealloc(NULL, 0, anon, 0)) == NULL) {
 		
 		/* unlock everything */
 		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap,

@@ -1,10 +1,5 @@
-/*	$OpenBSD: uvm_page.c,v 1.3 1999/07/23 14:47:06 ho Exp $	*/
-/*	$NetBSD: uvm_page.c,v 1.15 1998/10/18 23:50:00 chs Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.19 1999/05/20 20:07:55 thorpej Exp $	*/
 
-/*
- * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
- *         >>>USE AT YOUR OWN RISK, WORK IS NOT FINISHED<<<
- */
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
  * Copyright (c) 1991, 1993, The Regents of the University of California.  
@@ -388,6 +383,7 @@ uvm_pageboot_alloc(size)
 
 #else /* !PMAP_STEAL_MEMORY */
 
+	static boolean_t initialized = FALSE;
 	vaddr_t addr, vaddr;
 	paddr_t paddr;
 
@@ -395,23 +391,39 @@ uvm_pageboot_alloc(size)
 	size = round_page(size);
 
 	/*
-	 * on first call to this function init ourselves.   we detect this
-	 * by checking virtual_space_start/end which are in the zero'd BSS area.
+	 * on first call to this function, initialize ourselves.
 	 */
-
-	if (virtual_space_start == virtual_space_end) {
+	if (initialized == FALSE) {
 		pmap_virtual_space(&virtual_space_start, &virtual_space_end);
 
 		/* round it the way we like it */
 		virtual_space_start = round_page(virtual_space_start);
 		virtual_space_end = trunc_page(virtual_space_end);
+
+		initialized = TRUE;
 	}
 
 	/*
 	 * allocate virtual memory for this request
 	 */
+	if (virtual_space_start == virtual_space_end ||
+	    (virtual_space_end - virtual_space_start) < size)
+		panic("uvm_pageboot_alloc: out of virtual space");
 
 	addr = virtual_space_start;
+
+#ifdef PMAP_GROWKERNEL
+	/*
+	 * If the kernel pmap can't map the requested space,
+	 * then allocate more resources for it.
+	 */
+	if (uvm_maxkaddr < (addr + size)) {
+		uvm_maxkaddr = pmap_growkernel(addr + size);
+		if (uvm_maxkaddr < (addr + size))
+			panic("uvm_pageboot_alloc: pmap_growkernel() failed");
+	}
+#endif
+
 	virtual_space_start += size;
 
 	/*
@@ -812,15 +824,17 @@ uvm_page_physdump()
  */
 
 struct vm_page *
-uvm_pagealloc_strat(obj, off, anon, strat, free_list)
+uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 	struct uvm_object *obj;
 	vaddr_t off;
+	int flags;
 	struct vm_anon *anon;
 	int strat, free_list;
 {
 	int lcv, s;
 	struct vm_page *pg;
 	struct pglist *freeq;
+	boolean_t use_reserve;
 
 #ifdef DIAGNOSTIC
 	/* sanity check */
@@ -850,10 +864,11 @@ uvm_pagealloc_strat(obj, off, anon, strat, free_list)
 	 *        the requestor isn't the pagedaemon.
 	 */
 
-	if ((uvmexp.free <= uvmexp.reserve_kernel &&
-	     !(obj && obj->uo_refs == UVM_OBJ_KERN)) ||
+	use_reserve = (flags & UVM_PGA_USERESERVE) ||
+		(obj && obj->uo_refs == UVM_OBJ_KERN);
+	if ((uvmexp.free <= uvmexp.reserve_kernel && !use_reserve) ||
 	    (uvmexp.free <= uvmexp.reserve_pagedaemon &&
-	     !(obj == uvmexp.kmem_object && curproc == uvm.pagedaemon_proc)))
+	     !(use_reserve && curproc == uvm.pagedaemon_proc)))
 		goto fail;
 
  again:

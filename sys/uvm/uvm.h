@@ -1,10 +1,4 @@
-/*	$OpenBSD: uvm.h,v 1.2 1999/02/26 05:32:05 art Exp $	*/
-/*	$NetBSD: uvm.h,v 1.13 1998/10/11 22:59:53 chuck Exp $	*/
-
-/*
- * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
- *	   >>>USE AT YOUR OWN RISK, WORK IS NOT FINISHED<<<
- */
+/*	$NetBSD: uvm.h,v 1.14 1999/03/25 18:48:49 mrg Exp $	*/
 
 /*
  *
@@ -92,6 +86,7 @@ struct uvm {
 	int page_nhash;			/* number of buckets */
 	int page_hashmask;		/* hash mask */
 	simple_lock_data_t hashlock;	/* lock on page_hash array */
+
 	/* anon stuff */
 	struct vm_anon *afree;		/* anon free list */
 	simple_lock_data_t afreelock; 	/* lock on anon free list */
@@ -106,6 +101,9 @@ struct uvm {
 	/* pager VM area bounds */
 	vaddr_t pager_sva;		/* start of pager VA area */
 	vaddr_t pager_eva;		/* end of pager VA area */
+
+	/* swap-related items */
+	simple_lock_data_t swap_data_lock;
 
 	/* kernel object: to support anonymous pageable kernel memory */
 	struct uvm_object *kernel_object;

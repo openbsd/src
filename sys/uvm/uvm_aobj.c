@@ -1,10 +1,5 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.3 1999/04/28 09:28:18 art Exp $	*/
-/*	$NetBSD: uvm_aobj.c,v 1.15 1998/10/18 23:49:59 chs Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.18 1999/03/26 17:34:15 chs Exp $	*/
 
-/*
- * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
- *	   >>>USE AT YOUR OWN RISK, WORK IS NOT FINISHED<<<
- */
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
  *                    Washington University.
@@ -198,7 +193,6 @@ static boolean_t		 uao_releasepg __P((struct vm_page *,
 
 struct uvm_pagerops aobj_pager = {
 	uao_init,		/* init */
-	NULL,			/* attach */
 	uao_reference,		/* reference */
 	uao_detach,		/* detach */
 	NULL,			/* fault */
@@ -425,8 +419,17 @@ uao_free(aobj)
 				{
 					int slot = elt->slots[j];
 
-					if (slot)
+					if (slot) {
 						uvm_swap_free(slot, 1);
+
+						/*
+						 * this page is no longer
+						 * only in swap.
+						 */
+						simple_lock(&uvm.swap_data_lock);
+						uvmexp.swpgonly--;
+						simple_unlock(&uvm.swap_data_lock);
+					}
 				}
 
 				next = elt->list.le_next;
@@ -445,8 +448,14 @@ uao_free(aobj)
 		{
 			int slot = aobj->u_swslots[i];
 
-			if (slot)
+			if (slot) {
 				uvm_swap_free(slot, 1);
+
+				/* this page is no longer only in swap. */
+				simple_lock(&uvm.swap_data_lock);
+				uvmexp.swpgonly--;
+				simple_unlock(&uvm.swap_data_lock);
+			}
 		}
 		FREE(aobj->u_swslots, M_UVMAOBJ);
 	}
@@ -663,7 +672,6 @@ uao_detach(uobj)
 
 	busybody = FALSE;
 	for (pg = uobj->memq.tqh_first ; pg != NULL ; pg = pg->listq.tqe_next) {
-		int swslot;
 
 		if (pg->flags & PG_BUSY) {
 			pg->flags |= PG_RELEASED;
@@ -671,16 +679,9 @@ uao_detach(uobj)
 			continue;
 		}
 
-
 		/* zap the mappings, free the swap slot, free the page */
 		pmap_page_protect(PMAP_PGARG(pg), VM_PROT_NONE);
-
-		swslot = uao_set_swslot(&aobj->u_obj,
-					pg->offset >> PAGE_SHIFT, 0);
-		if (swslot) {
-			uvm_swap_free(swslot, 1);
-		}
-
+		uao_dropswap(&aobj->u_obj, pg->offset >> PAGE_SHIFT);
 		uvm_lock_pageq();
 		uvm_pagefree(pg);
 		uvm_unlock_pageq();
@@ -796,7 +797,7 @@ uao_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 			if (ptmp == NULL && uao_find_swslot(aobj,
 			    current_offset >> PAGE_SHIFT) == 0) {
 				ptmp = uvm_pagealloc(uobj, current_offset,
-				    NULL);
+				    NULL, 0);
 				if (ptmp) {
 					/* new page */
 					ptmp->flags &= ~(PG_BUSY|PG_FAKE);
@@ -886,7 +887,7 @@ uao_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 			if (ptmp == NULL) {
 
 				ptmp = uvm_pagealloc(uobj, current_offset,
-				    NULL);	/* alloc */
+				    NULL, 0);
 
 				/* out of RAM? */
 				if (ptmp == NULL) {
@@ -1039,7 +1040,6 @@ static boolean_t uao_releasepg(pg, nextpgp)
 	struct vm_page **nextpgp;	/* OUT */
 {
 	struct uvm_aobj *aobj = (struct uvm_aobj *) pg->uobject;
-	int slot;
 
 #ifdef DIAGNOSTIC
 	if ((pg->flags & PG_RELEASED) == 0)
@@ -1050,9 +1050,7 @@ static boolean_t uao_releasepg(pg, nextpgp)
  	 * dispose of the page [caller handles PG_WANTED] and swap slot.
  	 */
 	pmap_page_protect(PMAP_PGARG(pg), VM_PROT_NONE);
-	slot = uao_set_swslot(&aobj->u_obj, pg->offset >> PAGE_SHIFT, 0);
-	if (slot)
-		uvm_swap_free(slot, 1);
+	uao_dropswap(&aobj->u_obj, pg->offset >> PAGE_SHIFT);
 	uvm_lock_pageq();
 	if (nextpgp)
 		*nextpgp = pg->pageq.tqe_next;	/* next page for daemon */
@@ -1088,4 +1086,23 @@ static boolean_t uao_releasepg(pg, nextpgp)
 	uao_free(aobj);
 
 	return FALSE;
+}
+
+/*
+ * uao_dropswap:  release any swap resources from this aobj page.
+ * 
+ * => aobj must be locked or have a reference count of 0.
+ */
+
+void
+uao_dropswap(uobj, pageidx)
+	struct uvm_object *uobj;
+	int pageidx;
+{
+	int slot;
+
+	slot = uao_set_swslot(uobj, pageidx, 0);
+	if (slot) {
+		uvm_swap_free(slot, 1);
+	}
 }

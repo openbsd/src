@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_anon.c,v 1.2 1999/02/26 05:32:06 art Exp $	*/
+/*	$OpenBSD: uvm_anon.c,v 1.3 1999/08/23 08:13:22 art Exp $	*/
 /*	$NetBSD: uvm_anon.c,v 1.1 1999/01/24 23:53:15 chuck Exp $	*/
 
 /*
@@ -204,7 +204,6 @@ uvm_anfree(anon)
 			if ((pg->flags & PG_BUSY) != 0) {
 				/* tell them to dump it when done */
 				pg->flags |= PG_RELEASED;
-				simple_unlock(&anon->an_lock);
 				UVMHIST_LOG(maphist,
 				    "  anon 0x%x, page 0x%x: BUSY (released!)", 
 				    anon, pg, 0, 0);
@@ -222,19 +221,9 @@ uvm_anfree(anon)
 	}
 
 	/*
-	 * are we using any backing store resources?   if so, free them.
+	 * free any swap resources.
 	 */
-	if (anon->an_swslot) {
-		/*
-		 * on backing store: no I/O in progress.  sole amap reference
-		 * is ours and we've got it locked down.   thus we can free,
-		 * and be done.
-		 */
-		UVMHIST_LOG(maphist,"  freeing anon 0x%x, paged to swslot 0x%x",
-		    anon, anon->an_swslot, 0, 0);
-		uvm_swap_free(anon->an_swslot, 1);
-		anon->an_swslot = 0;
-	} 
+	uvm_anon_dropswap(anon);
 
 	/*
 	 * now that we've stripped the data areas from the anon, free the anon
@@ -246,6 +235,33 @@ uvm_anfree(anon)
 	uvmexp.nfreeanon++;
 	simple_unlock(&uvm.afreelock);
 	UVMHIST_LOG(maphist,"<- done!",0,0,0,0);
+}
+
+/*
+ * uvm_anon_dropswap:  release any swap resources from this anon.
+ * 
+ * => anon must be locked or have a reference count of 0.
+ */
+void
+uvm_anon_dropswap(anon)
+	struct vm_anon *anon;
+{
+	UVMHIST_FUNC("uvm_anon_dropswap"); UVMHIST_CALLED(maphist);
+	if (anon->an_swslot == 0) {
+		return;
+	}
+
+	UVMHIST_LOG(maphist,"freeing swap for anon %p, paged to swslot 0x%x",
+		    anon, anon->an_swslot, 0, 0);
+	uvm_swap_free(anon->an_swslot, 1);
+	anon->an_swslot = 0;
+
+	if (anon->u.an_page == NULL) {
+		/* this page is no longer only in swap. */
+		simple_lock(&uvm.swap_data_lock);
+		uvmexp.swpgonly--;
+		simple_unlock(&uvm.swap_data_lock);
+	} 
 }
 
 /*

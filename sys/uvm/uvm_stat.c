@@ -1,10 +1,5 @@
-/*	$OpenBSD: uvm_stat.c,v 1.2 1999/02/26 05:32:08 art Exp $	*/
-/*	$NetBSD: uvm_stat.c,v 1.10 1998/06/20 13:19:00 mrg Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.11 1999/03/25 18:48:56 mrg Exp $	 */
 
-/*
- * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
- *	   >>>USE AT YOUR OWN RISK, WORK IS NOT FINISHED<<<
- */
 /*
  *
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -247,6 +242,8 @@ uvm_dump()
 	    uvmexp.pdpending, uvmexp.nswget);
 	printf("    nswapdev=%d, nanon=%d, nfreeanon=%d\n", uvmexp.nswapdev,
 	    uvmexp.nanon, uvmexp.nfreeanon);
+	printf("    swpages=%d, swpginuse=%d, swpgonly=%d paging=%d\n",
+	    uvmexp.swpages, uvmexp.swpginuse, uvmexp.swpgonly, uvmexp.paging);
 
 	printf("  kernel pointers:\n");
 	printf("    objs(kern/kmem/mb)=%p/%p/%p\n", uvm.kernel_object,

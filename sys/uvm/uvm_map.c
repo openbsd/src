@@ -1,10 +1,5 @@
-/*	$OpenBSD: uvm_map.c,v 1.2 1999/02/26 05:32:07 art Exp $	*/
-/*	$NetBSD: uvm_map.c,v 1.34 1999/01/24 23:53:15 chuck Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.39 1999/05/12 19:11:23 thorpej Exp $	*/
 
-/*
- * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
- *         >>>USE AT YOUR OWN RISK, WORK IS NOT FINISHED<<<
- */
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
  * Copyright (c) 1991, 1993, The Regents of the University of California.  
@@ -82,9 +77,6 @@
 #include <sys/malloc.h>
 #include <sys/pool.h>
 
-#include <sys/user.h>
-#include <machine/pcb.h>
-
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
@@ -115,6 +107,17 @@ struct pool uvm_vmspace_pool;
  */
 
 struct pool uvm_map_entry_pool;
+
+#ifdef PMAP_GROWKERNEL
+/*
+ * This global represents the end of the kernel virtual address
+ * space.  If we want to exceed this, we must grow the kernel
+ * virtual address space dynamically.
+ *
+ * Note, this variable is locked by kernel_map's lock.
+ */
+vaddr_t uvm_maxkaddr;
+#endif
 
 /*
  * macros
@@ -183,21 +186,13 @@ static void		uvm_map_entry_unwire __P((vm_map_t, vm_map_entry_t));
  * local inlines
  */
 
-#undef UVM_MAP_INLINES
-
-#ifdef UVM_MAP_INLINES
-#define UVM_INLINE __inline
-#else
-#define UVM_INLINE
-#endif
-
 /*
  * uvm_mapent_alloc: allocate a map entry
  *
  * => XXX: static pool for kernel map?
  */
 
-static UVM_INLINE vm_map_entry_t
+static __inline vm_map_entry_t
 uvm_mapent_alloc(map)
 	vm_map_t map;
 {
@@ -235,7 +230,7 @@ uvm_mapent_alloc(map)
  * => XXX: static pool for kernel map?
  */
 
-static UVM_INLINE void
+static __inline void
 uvm_mapent_free(me)
 	vm_map_entry_t me;
 {
@@ -260,7 +255,7 @@ uvm_mapent_free(me)
  * uvm_mapent_copy: copy a map entry, preserving flags
  */
 
-static UVM_INLINE void
+static __inline void
 uvm_mapent_copy(src, dst)
 	vm_map_entry_t src;
 	vm_map_entry_t dst;
@@ -275,7 +270,7 @@ uvm_mapent_copy(src, dst)
  * => map should be locked by caller
  */
 
-static UVM_INLINE void
+static __inline void
 uvm_map_entry_unwire(map, entry)
 	vm_map_t map;
 	vm_map_entry_t entry;
@@ -514,18 +509,14 @@ uvm_map(map, startp, size, uobj, uoffset, flags)
 		return (KERN_NO_SPACE);
 	}
 
-#if defined(PMAP_GROWKERNEL)	/* hack */
+#ifdef PMAP_GROWKERNEL
 	{
-		/* locked by kernel_map lock */
-		static vaddr_t maxkaddr = 0;
-		
 		/*
-		 * hack: grow kernel PTPs in advance.
+		 * If the kernel pmap can't map the requested space,
+		 * then allocate more resources for it.
 		 */
-		if (map == kernel_map && maxkaddr < (*startp + size)) {
-			pmap_growkernel(*startp + size);
-			maxkaddr = *startp + size;
-		}
+		if (map == kernel_map && uvm_maxkaddr < (*startp + size))
+			uvm_maxkaddr = pmap_growkernel(*startp + size);
 	}
 #endif
 
@@ -1466,7 +1457,7 @@ uvm_map_extract(srcmap, start, len, dstmap, dstaddrp, flags)
 		newentry->start = dstaddr + oldoffset;
 		newentry->end =
 		    newentry->start + (entry->end - (entry->start + fudge));
-		if (newentry->end > newend)
+		if (newentry->end > newend || newentry->end < newentry->start)
 			newentry->end = newend;
 		newentry->object.uvm_obj = entry->object.uvm_obj;
 		if (newentry->object.uvm_obj) {
@@ -1715,11 +1706,10 @@ uvm_map_submap(map, start, end, submap)
  *
  * => set_max means set max_protection.
  * => map must be unlocked.
- * => XXXCDC: does not work properly with share maps.  rethink.
  */
 
-#define MASK(entry)     ( UVM_ET_ISCOPYONWRITE(entry) ? \
-	~VM_PROT_WRITE : VM_PROT_ALL)
+#define MASK(entry)     (UVM_ET_ISCOPYONWRITE(entry) ? \
+			 ~VM_PROT_WRITE : VM_PROT_ALL)
 #define max(a,b)        ((a) > (b) ? (a) : (b))
 
 int
@@ -1751,10 +1741,10 @@ uvm_map_protect(map, start, end, new_prot, set_max)
 	current = entry;
 	while ((current != &map->header) && (current->start < end)) {
 		if (UVM_ET_ISSUBMAP(current))
-			return(KERN_INVALID_ARGUMENT);
+			return (KERN_INVALID_ARGUMENT);
 		if ((new_prot & current->max_protection) != new_prot) {
 			vm_map_unlock(map);
-			return(KERN_PROTECTION_FAILURE);
+			return (KERN_PROTECTION_FAILURE);
 		}
 			current = current->next;
 	}
@@ -1804,7 +1794,6 @@ uvm_map_protect(map, start, end, new_prot, set_max)
  * => map must be unlocked
  * => note that the inherit code is used during a "fork".  see fork
  *	code for details.
- * => XXXCDC: currently only works in main map.  what about share map?
  */
 
 int
@@ -1826,7 +1815,7 @@ uvm_map_inherit(map, start, end, new_inheritance)
 		break;
 	default:
 		UVMHIST_LOG(maphist,"<- done (INVALID ARG)",0,0,0,0);
-		return(KERN_INVALID_ARGUMENT);
+		return (KERN_INVALID_ARGUMENT);
 	}
 
 	vm_map_lock(map);
@@ -2018,7 +2007,7 @@ uvm_map_pageable(map, start, end, new_pageable)
 			}
 			vm_map_unlock(map);
 			UVMHIST_LOG(maphist,"<- done (INVALID WIRE)",0,0,0,0);
-			return(KERN_INVALID_ARGUMENT);
+			return (KERN_INVALID_ARGUMENT);
 		}
 		entry = entry->next;
 	}
@@ -2100,7 +2089,6 @@ uvm_map_pageable(map, start, end, new_pageable)
  * => called from sys_msync()
  * => caller must not write-lock map (read OK).
  * => we may sleep while cleaning if SYNCIO [with map read-locked]
- * => XXX: does this handle share maps properly?
  */
 
 int
@@ -2131,12 +2119,12 @@ uvm_map_clean(map, start, end, flags)
 	for (current = entry; current->start < end; current = current->next) {
 		if (UVM_ET_ISSUBMAP(current)) {
 			vm_map_unlock_read(map);
-			return(KERN_INVALID_ARGUMENT);
+			return (KERN_INVALID_ARGUMENT);
 		}
 		if (end > current->end && (current->next == &map->header ||
 		    current->end != current->next->start)) {
 			vm_map_unlock_read(map);
-			return(KERN_INVALID_ADDRESS);
+			return (KERN_INVALID_ADDRESS);
 		}
 	}
 
@@ -2319,11 +2307,9 @@ uvmspace_unshare(p)
 	nvm = uvmspace_fork(ovm);
 
 	s = splhigh();			/* make this `atomic' */
-	pmap_deactivate(p);
-					/* unbind old vmspace */
+	pmap_deactivate(p);		/* unbind old vmspace */
 	p->p_vmspace = nvm; 
-	pmap_activate(p);
-					/* switch to new vmspace */
+	pmap_activate(p);		/* switch to new vmspace */
 	splx(s);			/* end of critical section */
 
 	uvmspace_free(ovm);		/* drop reference to old vmspace */
@@ -2772,6 +2758,10 @@ uvmspace_fork(vm1)
 #ifdef SYSVSHM
 	if (vm1->vm_shm)
 		shmfork(vm1, vm2);
+#endif
+
+#ifdef PMAP_FORK
+	pmap_fork(vm1->vm_map.pmap, vm2->vm_map.pmap);
 #endif
 
 	UVMHIST_LOG(maphist,"<- done",0,0,0,0);

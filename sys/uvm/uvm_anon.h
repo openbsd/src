@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_anon.h,v 1.2 1999/02/26 05:32:06 art Exp $	*/
+/*	$OpenBSD: uvm_anon.h,v 1.3 1999/08/23 08:13:23 art Exp $	*/
 /*	$NetBSD: uvm_anon.h,v 1.9 1999/01/24 23:53:15 chuck Exp $	*/
 
 /*
@@ -102,5 +102,6 @@ void uvm_anfree __P((struct vm_anon *));
 void uvm_anon_init __P((void));
 void uvm_anon_add __P((int));
 struct vm_page *uvm_anon_lockloanpg __P((struct vm_anon *));
+void uvm_anon_dropswap __P((struct vm_anon *));
 
 #endif /* _UVM_UVM_ANON_H_ */
