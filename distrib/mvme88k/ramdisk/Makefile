@@ -67,16 +67,6 @@ rd_setup: ${CBIN}
 	disklabel -w ${VND} ${DISKTYPE}
 	newfs ${NEWFSARGS} ${VND_RDEV}
 	fsck -f -y ${VND_RDEV} > /dev/null
-	fsck -f -y ${VND_RDEV} > /dev/null
-	fsck -f -y ${VND_RDEV} > /dev/null
-	fsck -f -y ${VND_RDEV} > /dev/null
-	fsck -f -y ${VND_RDEV} > /dev/null
-	fsck -f -y ${VND_RDEV} > /dev/null
-	fsck -f -y ${VND_RDEV} > /dev/null
-	fsck -f -y ${VND_RDEV} > /dev/null
-	fsck -f -y ${VND_RDEV} > /dev/null
-	fsck -f -y ${VND_RDEV} > /dev/null
-	fsck -f -y ${VND_RDEV} > /dev/null
 	mount ${VND_DEV} ${MOUNT_POINT}
 
 rd_teardown:
