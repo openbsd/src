@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: aliases,v 1.2 1996/05/26 10:25:17 deraadt Exp $
+#	$OpenBSD: aliases,v 1.3 1996/12/07 09:00:46 deraadt Exp $
 #
 #  Aliases in this file will NOT be expanded in the header from
 #  Mail, but WILL be visible over networks or from /bin/mail.
@@ -22,6 +22,7 @@ nobody:	root
 system:	root
 toor:	root
 uucp:	root
+ftp-bugs: root
 
 # Well-known aliases -- these should be filled in!
 # root:
