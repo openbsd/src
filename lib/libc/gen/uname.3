@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uname.3,v 1.4 1998/06/15 17:55:01 mickey Exp $
+.\"	$OpenBSD: uname.3,v 1.5 1999/05/29 22:38:36 aaron Exp $
 .\"
 .\" Copyright (c) 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,16 +44,17 @@
 .Sh DESCRIPTION
 The
 .Fn uname
-function stores nul-terminated strings of information identifying
+function stores NUL-terminated strings of information identifying
 the current system into the structure referenced by
 .Fa name .
 .Pp
 The
-.Li utsname
+.Em utsname
 structure is defined in the
-.Li <sys/utsname.h>
+.Aq Pa sys/utsname.h
 header file, and contains the following members:
-.Bl -tag -width nodenameXXXX -offset indent
+.Pp
+.Bl -tag -width nodenameXXXX -offset indent -compact
 .It sysname
 Name of the operating system implementation.
 .It nodename
@@ -67,8 +68,8 @@ Machine hardware platform.
 .El
 .Sh RETURN VALUES
 If
-.Nm uname
-is successful, 0 is returned, otherwise, -1 is returned and
+.Fn uname
+is successful, 0 is returned; otherwise, -1 is returned and
 .Va errno
 is set appropriately.
 .Sh ERRORS
@@ -76,7 +77,7 @@ The
 .Fn uname
 function may fail and set
 .Va errno
-for any of the errors specified for the library functions
+for any of the errors specified for the library function
 .Xr sysctl 3 .
 .Sh SEE ALSO
 .Xr uname 1 ,
@@ -88,6 +89,6 @@ function conforms to
 .St -p1003.1-88 .
 .Sh HISTORY
 The
-.Nm uname
+.Fn uname
 function first appeared in
 .Bx 4.4 .

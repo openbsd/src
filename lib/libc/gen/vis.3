@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vis.3,v 1.5 1999/05/16 19:55:03 alex Exp $
+.\"	$OpenBSD: vis.3,v 1.6 1999/05/29 22:38:37 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,9 @@
 .Dt VIS 3
 .Os
 .Sh NAME
-.Nm vis
+.Nm vis ,
+.Nm strvis ,
+.Nm strvisx
 .Nd visually encode characters
 .Sh SYNOPSIS
 .Fd #include <vis.h>
@@ -56,14 +58,13 @@ a string which represents the character
 If
 .Fa c
 needs no encoding, it is copied in unaltered.  The string is
-null terminated, and a pointer to the end of the string is
+NUL-terminated and a pointer to the end of the string is
 returned.  The maximum length of any encoding is four
-characters (not including the trailing
-.Dv NUL ) ; 
+characters (not including the trailing NUL);
 thus, when
 encoding a set of characters into a buffer, the size of the buffer should
 be four times the number of characters encoded, plus one for the trailing
-.Dv NUL . 
+NUL.
 The flag parameter is used for altering the default range of
 characters considered for encoding and for altering the visual
 representation.
@@ -86,9 +87,7 @@ The
 .Fn strvis
 function encodes characters from
 .Fa src
-up to the
-first
-.Dv NUL . 
+up to the first NUL.
 The
 .Fn strvisx
 function encodes exactly
@@ -96,23 +95,18 @@ function encodes exactly
 characters from
 .Fa src
 (this
-is useful for encoding a block of data that may contain
-.Dv NUL Ns 's).
-Both forms
-.Dv NUL
-terminate
+is useful for encoding a block of data that may contain NUls).
+Both forms NUL-terminate
 .Fa dst .
 The size of
 .Fa dst
 must be four times the number
 of characters encoded from
 .Fa src
-(plus one for the
-.Dv NUL ) . 
+(plus one for the NUL).
 Both
 forms return the number of characters in dst (not including
-the trailing
-.Dv NUL ) . 
+the trailing NUL.
 .Pp
 The encoding is a unique, invertible representation composed entirely of
 graphic characters; it can be decoded back into the original form using 
@@ -126,9 +120,9 @@ There are two parameters that can be controlled: the range of
 characters that are encoded, and the type
 of representation used.  
 By default, all non-graphic characters.
-except space, tab, and newline are encoded.
-(See
-.Xr isgraph 3 . )
+except space, tab, and newline are encoded
+(see
+.Xr isgraph 3 ) .
 The following flags
 alter this:
 .Bl -tag -width VIS_WHITEX
@@ -146,17 +140,19 @@ Synonym for
 \&|
 .Dv VIS_NL .
 .It Dv VIS_SAFE	
-Only encode "unsafe" characters.  Unsafe means control
+Only encode
+.Dq unsafe
+characters.  These are control
 characters which may cause common terminals to perform
 unexpected functions.  Currently this form allows space,
-tab, newline, backspace, bell, and return - in addition
-to all graphic characters - unencoded. 
+tab, newline, backspace, bell, and return -- in addition
+to all graphic characters -- unencoded. 
 .El
 .Pp
 There are three forms of encoding.
-All forms use the backslash character
+All forms use the backslash
 .Ql \e
-to introduce a special
+character to introduce a special
 sequence; two backslashes are used to represent a real backslash.
 These are the visual formats:
 .Bl -tag -width VIS_CSTYLE
@@ -164,10 +160,10 @@ These are the visual formats:
 Use an
 .Ql M
 to represent meta characters (characters with the 8th
-bit set), and use caret
+bit set), and use a caret
 .Ql ^
-to represent control characters see
-.Pf ( Xr iscntrl 3 ) .
+to represent control characters (see
+.Xr iscntrl 3 ) .
 The following formats are used:
 .Bl -tag -width xxxxx
 .It Dv \e^C
@@ -225,9 +221,7 @@ The following sequences are used to represent the indicated characters:
 .Ed
 .Pp
 When using this format, the nextc parameter is looked at to determine
-if a
-.Dv NUL
-character can be encoded as
+if a NUL character can be encoded as
 .Ql \e0
 instead of
 .Ql \e000 .

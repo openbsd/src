@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unvis.3,v 1.5 1999/05/16 19:55:02 alex Exp $
+.\"	$OpenBSD: unvis.3,v 1.6 1999/05/29 22:38:36 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -54,36 +54,38 @@ are used to decode a visual representation of characters, as produced
 by the
 .Xr vis 3
 function, back into
-the original form.  Unvis is called with successive characters in
-.Ar c 
+the original form.
+.Fn unvis
+is called with successive characters in
+.Fa c 
 until a valid
 sequence is recognized, at which time the decoded character is
 available at the character pointed to by
-.Ar cp .
-Strunvis decodes the
-characters pointed to by
-.Ar src
+.Fa cp .
+.Pp
+.Fn strunvis
+decodes the characters pointed to by
+.Fa src
 into the buffer pointed to by
-.Ar dst .
+.Fa dst .
 .Pp
 The
 .Fn strunvis
 function
 simply copies
-.Ar src
+.Fa src
 to
-.Ar dst ,
+.Fa dst ,
 decoding any escape sequences along the way,
 and returns the number of characters placed into
-.Ar dst ,
-or \-1 if an
+.Fa dst ,
+or -1 if an
 invalid escape sequence was detected.  The size of
-.Ar dst
+.Fa dst
 should be
 equal to the size of
-.Ar src
-(that is, no expansion takes place during
-decoding).
+.Fa src
+(that is, no expansion takes place during decoding).
 .Pp
 The
 .Fn unvis
@@ -100,23 +102,25 @@ to zero.  Call
 with each successive byte, along with a pointer
 to this integer, and a pointer to a destination character.
 The
-.Xr unvis
+.Fn unvis
 function
 has several return codes that must be handled properly.  They are:
 .Bl -tag -width UNVIS_VALIDPUSH
 .It Li \&0 (zero)
 Another character is necessary; nothing has been recognized yet.
-.It Dv  UNVIS_VALID	
+.It Dv UNVIS_VALID	
 A valid character has been recognized and is available at the location
-pointed to by cp.
-.It Dv  UNVIS_VALIDPUSH
+pointed to by
+.Fa cp .
+.It Dv UNVIS_VALIDPUSH
 A valid character has been recognized and is available at the location
-pointed to by cp; however, the character currently passed in should
-be passed in again.
-.It Dv  UNVIS_NOCHAR
+pointed to by
+.Fa cp ;
+however, the character currently passed in should be passed in again.
+.It Dv UNVIS_NOCHAR
 A valid sequence was detected, but no character was produced.  This
 return code is necessary to indicate a logical break between characters.
-.It Dv  UNVIS_SYNBAD
+.It Dv UNVIS_SYNBAD
 An invalid escape sequence was detected, or the decoder is in an
 unknown state.  The decoder is placed into the starting state.
 .El
@@ -127,6 +131,7 @@ one more time with flag set to
 .Dv UNVIS_END
 to extract any remaining character (the character passed in is ignored).
 .Pp
+.Sh EXAMPLES
 The following code fragment illustrates a proper use of
 .Fn unvis .
 .Bd -literal -offset indent
@@ -159,6 +164,6 @@ if (unvis(&out, (char)0, &state, UNVIS_END) == UNVIS_VALID)
 .Xr vis 3
 .Sh HISTORY
 The
-.Nm unvis
+.Fn unvis
 function first appeared in
 .Bx 4.4 .

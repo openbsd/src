@@ -1,4 +1,4 @@
-.\"	$OpenBSD: time.3,v 1.4 1999/05/27 20:49:35 aaron Exp $
+.\"	$OpenBSD: time.3,v 1.5 1999/05/29 22:38:35 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -50,21 +50,23 @@ The
 .Fn time
 function
 returns the value of time in seconds since 0 hours, 0 minutes,
-0 seconds, January 1, 1970, Coordinated Universal Time.
+0 seconds, January 1, 1970, Coordinated Universal Time (UTC).
 .Pp
 A copy of the time value may be saved to the area indicated by the
 pointer
 .Fa tloc .
 If
 .Fa tloc
-is a NULL pointer, no value is stored.
+is a
+.Dv NULL
+pointer, no value is stored.
 .Pp
 Upon successful completion,
 .Fn time
 returns the value of time.
 Otherwise a value of
 .Po
-.Po Fa time_t Pc \-1
+.Fa time_t No - 1
 .Pc
 is returned and the global variable
 .Va errno

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usleep.3,v 1.7 1999/05/23 14:11:01 aaron Exp $
+.\"	$OpenBSD: usleep.3,v 1.8 1999/05/29 22:38:36 aaron Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,7 +48,7 @@ function
 suspends execution of the calling process
 for
 .Fa microseconds
-of time.
+microseconds of time.
 System activity or time spent in processing the
 call may lengthen the sleep slightly.
 .Pp
@@ -59,10 +59,10 @@ A similar but less compatible function can be obtained with a single
 .Xr select 2 ;
 such a function would not restart after signals, and also does not interfere
 with other uses of
-.Xr setitimer
+.Xr setitimer 2
 (not that
 .Fn usleep
-interferes with interval timers anymore.)
+interferes with interval timers anymore).
 .Sh RETURN VALUE
 If the 
 .Fn usleep
@@ -77,18 +77,20 @@ will be the -1, and the global variable
 will be set to indicate the interruption.
 .Sh ERRORS
 If any of the following conditions occur, the
-.Nm 
+.Fn usleep
 function shall return -1 and set
 .Va errno
 to the corresponding value.
 .Bl -tag -width Er
 .It Bq Er EINTR
-.Nm
+.Fn usleep
 was interrupted by the delivery of a signal.
 .It Bq Er EINVAL
 .Fa useconds
 specified a value of 1,000,000 or more microseconds.
 .El
+.Sh NOTES
+A microsecond is 0.000001 seconds.
 .Sh SEE ALSO
 .Xr getitimer 2 ,
 .Xr nanosleep 2 ,

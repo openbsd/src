@@ -1,4 +1,4 @@
-.\"	$OpenBSD: popen.3,v 1.4 1999/05/29 20:07:14 aaron Exp $
+.\"	$OpenBSD: popen.3,v 1.5 1999/05/29 22:38:35 aaron Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -60,8 +60,7 @@ the resulting stream is correspondingly read-only or write-only.
 .Pp
 The
 .Fa command
-argument is a pointer to a
-.Dv NULL Ns -terminated
+argument is a pointer to a NUL-terminated
 string containing a shell command line.
 This command is passed to
 .Pa /bin/sh
@@ -70,8 +69,7 @@ using the
 flag; interpretation, if any, is performed by the shell.
 The
 .Fa mode
-argument is a pointer to a
-.Dv NULL Ns -terminated
+argument is a pointer to a NUL-terminated
 string which must be either
 .Qq r
 for reading

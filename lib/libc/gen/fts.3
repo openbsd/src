@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fts.3,v 1.8 1999/05/29 19:11:10 aaron Exp $
+.\"	$OpenBSD: fts.3,v 1.9 1999/05/29 22:38:34 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -324,8 +324,7 @@ Therefore, the
 .Fa fts_path
 and
 .Fa fts_accpath
-fields are guaranteed to be
-.Dv NULL Ns -terminated
+fields are guaranteed to be NUL-terminated
 .Em only
 for the file most recently returned by
 .Fn fts_read .
@@ -342,8 +341,7 @@ Any such modifications should be undone before further calls to
 are attempted.
 The
 .Fa fts_name
-field is always
-.Dv NULL Ns -terminated.
+field is always NUL-terminated.
 .Ss FTS_OPEN
 The
 .Fn fts_open
@@ -562,7 +560,9 @@ The
 .Fn fts_children
 function returns a pointer to an
 .Em FTSENT
-structure describing the first entry in a NULL-terminated linked list of
+structure describing the first entry in a
+.Dv NULL Ns -terminatedu
+linked list of
 the files in the directory represented by the
 .Em FTSENT
 structure most recently returned by

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: valloc.3,v 1.5 1999/05/23 14:11:01 aaron Exp $
+.\"	$OpenBSD: valloc.3,v 1.6 1999/05/29 22:38:37 aaron Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,15 +43,16 @@
 .Fn valloc "size_t size"
 .Sh DESCRIPTION
 .Bf -symbolic
-Valloc is obsoleted by the current version of
+The
+.Fn valloc
+function is obsoleted by the current version of
 .Xr malloc 3 ,
 which aligns page-sized and larger allocations.
 .Ef
 .Pp
 The
 .Fn valloc
-function
-allocates
+function allocates
 .Fa size
 bytes aligned on a page boundary.
 It is implemented by calling
@@ -62,8 +63,9 @@ allocated, and returning a properly aligned pointer.
 The
 .Fn valloc
 function returns
-a pointer to the allocated space if successful; otherwise
-a null pointer is returned
+a pointer to the allocated space if successful; otherwise a
+.Dv NULL
+pointer is returned
 .Sh HISTORY
 The
 .Fn valloc
@@ -71,6 +73,6 @@ function appeared in
 .Bx 3.0 .
 .Sh BUGS
 A
-.Em vfree
+.Fn vfree
 function
 has not been implemented.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: glob.3,v 1.8 1999/05/29 19:11:11 aaron Exp $
+.\"	$OpenBSD: glob.3,v 1.9 1999/05/29 22:38:35 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -359,8 +359,7 @@ or
 .Ql [ ,
 cleared if not.
 .It Fa gl_pathv
-Contains a pointer to a
-.Dv NULL Ns -terminated 
+Contains a pointer to a NUL-terminated
 list of matched pathnames.
 However, if
 .Fa gl_pathc

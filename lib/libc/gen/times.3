@@ -1,4 +1,4 @@
-.\"	$OpenBSD: times.3,v 1.4 1999/05/23 14:11:00 aaron Exp $
+.\"	$OpenBSD: times.3,v 1.5 1999/05/29 22:38:35 aaron Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -52,17 +52,17 @@ and
 The
 .Fn times
 function returns the value of time in
-.Dv CLK_TCK Ns 's
+.Dv CLK_TCK Ns s
 of a second since
 0 hours, 0 minutes, 0 seconds, January 1, 1970, Coordinated Universal
-Time.
+Time (UTC).
 .Pp
 It also fills in the structure pointed to by
 .Fa tp
 with time-accounting information.
 .Pp
 The
-.Fa tms
+.Em tms
 structure is defined as follows:
 .Bd -literal -offset indent
 typedef struct {
@@ -86,9 +86,9 @@ time charged for execution by the system on behalf of
 the process.
 .It Fa tms_cutime
 The sum of the
-.Fa tms_utime  s
+.Fa tms_utime Ns 's
 and
-.Fa tms_cutime  s
+.Fa tms_cutime Ns 's
 of the child processes.
 .It Fa tms_cstime
 The sum of the
@@ -99,7 +99,7 @@ of the child processes.
 .El
 .Pp
 All times are in
-.Dv CLK_TCK Ns 's
+.Dv CLK_TCK Ns s
 of a second.
 .Pp
 The times of a terminated child process are included in the
@@ -112,7 +112,7 @@ functions returns the process ID of the terminated child to the parent.
 If an error occurs,
 .Fn times
 returns the value
-.Pq (clock_t)\-1 ,
+.Pq Em clock_t No - 1 ,
 and sets 
 .Va errno
 to indicate the error.
