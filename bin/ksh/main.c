@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.35 2004/12/22 18:57:28 otto Exp $	*/
+/*	$OpenBSD: main.c,v 1.36 2005/02/21 16:01:58 otto Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -8,6 +8,7 @@
 
 #include "sh.h"
 #include <sys/stat.h>
+#include <pwd.h>
 
 extern char **environ;
 
@@ -18,6 +19,7 @@ extern char **environ;
 static void	reclaim(void);
 static void	remove_temps(struct temp *tp);
 static int	is_restricted(char *name);
+static void	init_username(void);
 
 /*
  * shell initialization
@@ -60,6 +62,8 @@ static const char *initcoms [] = {
 	  NULL,
 	NULL
 };
+
+char username[_PW_NAME_LEN + 1];
 
 #define version_param  (initcoms[2])
 
@@ -235,6 +239,7 @@ main(int argc, char *argv[])
 
 
 	ksheuid = geteuid();
+	init_username();
 	safe_prompt = ksheuid ? "$ " : "# ";
 	{
 		struct tbl *vp = global("PS1");
@@ -372,6 +377,20 @@ main(int argc, char *argv[])
 
 	shell(s, true);	/* doesn't return */
 	return 0;
+}
+
+static void
+init_username(void)
+{
+	char *p;
+	struct tbl *vp = global("USER");
+
+	if (vp->flag & ISSET)
+		p = ksheuid == 0 ? "root" : str_val(vp);
+	else
+		p = getlogin();
+
+	strlcpy(username, p != NULL ? p : "?", sizeof username);
 }
 
 int

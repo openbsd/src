@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh.h,v 1.25 2004/12/22 17:14:34 millert Exp $	*/
+/*	$OpenBSD: sh.h,v 1.26 2005/02/21 16:01:58 otto Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
@@ -77,6 +77,7 @@ EXTERN	uid_t	ksheuid;	/* effective uid of shell */
 EXTERN	int	exstat;		/* exit status */
 EXTERN	int	subst_exstat;	/* exit status of last $(..)/`..` */
 EXTERN	const char *safe_prompt; /* safe prompt if PS1 substitution fails */
+EXTERN	char	username[];	/* username for \u prompt expansion */
 
 /*
  * Area-based allocation built on malloc/free
