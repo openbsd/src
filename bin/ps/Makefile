@@ -3,7 +3,7 @@
 
 PROG=	ps
 SRCS=	fmt.c keyword.c nlist.c print.c ps.c
-DPADD=	${LIBMATH} ${LIBKVM}
+DPADD=	${LIBM} ${LIBKVM}
 LDADD=	-lm -lkvm
 BINGRP=	kmem
 BINMODE=2555
