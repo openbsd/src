@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_isapnp.c,v 1.2 1998/03/23 03:06:07 deraadt Exp $	*/
+/*	$OpenBSD: if_ep_isapnp.c,v 1.3 1998/09/11 12:06:57 fgsch Exp $	*/
 /*	$NetBSD: if_ep_isapnp.c,v 1.5 1996/05/12 23:52:36 mycroft Exp $	*/
 
 /*
@@ -115,7 +115,7 @@ ep_isapnp_attach(parent, self, aux)
 	sc->bustype = EP_BUS_ISA;
 
 	/* Should look at ia->ia_devident... */
-	epconfig(sc, EP_CHIPSET_3C509);
+	epconfig(sc, EP_CHIPSET_3C509, NULL);
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_NET, epintr, sc, sc->sc_dev.dv_xname);

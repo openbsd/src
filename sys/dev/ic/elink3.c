@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.25 1998/04/28 07:39:53 deraadt Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.26 1998/09/11 12:06:54 fgsch Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -197,9 +197,10 @@ ep_complete_cmd(sc, cmd, arg)
  * Back-end attach and configure.
  */
 void
-epconfig(sc, chipset)
+epconfig(sc, chipset, enaddr)
 	struct ep_softc *sc;
 	u_short chipset;
+	u_int8_t *enaddr;
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -215,20 +216,24 @@ epconfig(sc, chipset)
 	 */
 	GO_WINDOW(0);
 
-	/*
-	 * Read the station address from the eeprom
-	 */
-	for (i = 0; i < 3; i++) {
-		u_int16_t x;
-		if (epbusyeeprom(sc))
-			return;		/* XXX why is eeprom busy? */
-		bus_space_write_2(iot, ioh, EP_W0_EEPROM_COMMAND,
-		    READ_EEPROM | i);
-		if (epbusyeeprom(sc))
-			return;		/* XXX why is eeprom busy? */
-		x = bus_space_read_2(iot, ioh, EP_W0_EEPROM_DATA);
-		sc->sc_arpcom.ac_enaddr[(i << 1)] = x >> 8;
-		sc->sc_arpcom.ac_enaddr[(i << 1) + 1] = x;
+	if (enaddr == NULL) {
+		/*
+		 * Read the station address from the eeprom
+		 */
+		for (i = 0; i < 3; i++) {
+			u_int16_t x;
+			if (epbusyeeprom(sc))
+				return;		/* XXX why is eeprom busy? */
+			bus_space_write_2(iot, ioh, EP_W0_EEPROM_COMMAND,
+			    READ_EEPROM | i);
+			if (epbusyeeprom(sc))
+				return;		/* XXX why is eeprom busy? */
+			x = bus_space_read_2(iot, ioh, EP_W0_EEPROM_DATA);
+			sc->sc_arpcom.ac_enaddr[(i << 1)] = x >> 8;
+			sc->sc_arpcom.ac_enaddr[(i << 1) + 1] = x;
+		}
+	} else {
+		bcopy(enaddr, sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
 	}
 
 	printf(": address %s, ", ether_sprintf(sc->sc_arpcom.ac_enaddr));

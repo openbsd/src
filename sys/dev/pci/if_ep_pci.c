@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_pci.c,v 1.15 1998/09/02 03:01:05 jason Exp $	*/
+/*	$OpenBSD: if_ep_pci.c,v 1.16 1998/09/11 12:06:58 fgsch Exp $	*/
 /*	$NetBSD: if_ep_pci.c,v 1.13 1996/10/21 22:56:38 thorpej Exp $	*/
 
 /*
@@ -140,7 +140,7 @@ ep_pci_attach(parent, self, aux)
 
 	GO_WINDOW(0);
 
-	epconfig(sc, EP_CHIPSET_VORTEX);
+	epconfig(sc, EP_CHIPSET_VORTEX, NULL);
 
 	/* Enable the card. */
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
