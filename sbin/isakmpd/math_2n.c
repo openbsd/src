@@ -1,5 +1,5 @@
-/*	$OpenBSD: math_2n.c,v 1.5 1999/04/05 21:01:23 niklas Exp $	*/
-/*	$EOM: math_2n.c,v 1.13 1999/04/05 08:04:25 niklas Exp $	*/
+/*	$OpenBSD: math_2n.c,v 1.6 1999/04/19 20:54:01 niklas Exp $	*/
+/*	$EOM: math_2n.c,v 1.14 1999/04/17 23:20:31 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -50,10 +50,10 @@
 
 #include "sysdep.h"
 
-#include "util.h"
 #include "math_2n.h"
+#include "util.h"
 
-u_int8_t hex2int (char);
+static u_int8_t hex2int (char);
 
 static char int2hex[] = "0123456789abcdef";
 CHUNK_TYPE b2n_mask[CHUNK_BITS] = {
@@ -69,8 +69,8 @@ CHUNK_TYPE b2n_mask[CHUNK_BITS] = {
 #endif
 };
 
-/* Misc */
-u_int8_t
+/* Convert a hex character to its integer value.  */
+static u_int8_t
 hex2int (char c)
 {
   if (c <= '9')
@@ -81,11 +81,11 @@ hex2int (char c)
   return 0;
 }
 
-
-void
+int
 b2n_random (b2n_ptr n, u_int32_t bits)
 {
-  b2n_resize (n, (CHUNK_MASK + bits) >> CHUNK_SHIFTS);
+  if (b2n_resize (n, (CHUNK_MASK + bits) >> CHUNK_SHIFTS))
+    return -1;
 
   getrandom ((u_int8_t *)n->limp, CHUNK_BYTES * n->chunks);
 
@@ -97,6 +97,7 @@ b2n_random (b2n_ptr n, u_int32_t bits)
     }
 
   n->dirty = 1;
+  return 0;
 }
 
 /* b2n management functions */
@@ -105,7 +106,7 @@ void
 b2n_init (b2n_ptr n)
 {
   n->chunks = 0;
-  n->limp = NULL;
+  n->limp = 0;
 }
 
 void
@@ -115,7 +116,7 @@ b2n_clear (b2n_ptr n)
     free (n->limp);
 }
 
-void
+int
 b2n_resize (b2n_ptr n, unsigned int chunks)
 {
   int old = n->chunks;
@@ -126,14 +127,13 @@ b2n_resize (b2n_ptr n, unsigned int chunks)
     chunks = 1;
 
   if (chunks == old)
-    return;
+    return 0;
   
   size = CHUNK_BYTES * chunks;
 
-  /* XXX - is there anything I can do here? */
   new = realloc (n->limp, size);
-  if (new == NULL)
-    return;
+  if (!new)
+    return -1;
 
   n->limp = new;
   n->chunks = chunks;
@@ -141,32 +141,38 @@ b2n_resize (b2n_ptr n, unsigned int chunks)
   n->dirty = 1;
 
   if (chunks > old)
-      memset (n->limp + old, 0, size - CHUNK_BYTES*old);
+    memset (n->limp + old, 0, size - CHUNK_BYTES * old);
+
+  return 0;
 }
 
-/* Simple assignment functions */
+/* Simple assignment functions.  */
 
-void
+int
 b2n_set (b2n_ptr d, b2n_ptr s)
 {
   if (d == s)
-    return;
+    return 0;
 
   b2n_sigbit (s);
-  b2n_resize (d, (CHUNK_MASK + s->bits) >> CHUNK_SHIFTS);
-  memcpy (d->limp, s->limp, CHUNK_BYTES*d->chunks);
+  if (b2n_resize (d, (CHUNK_MASK + s->bits) >> CHUNK_SHIFTS))
+    return -1;
+  memcpy (d->limp, s->limp, CHUNK_BYTES * d->chunks);
   d->bits = s->bits;
   d->dirty = s->dirty;
+  return 0;
 }
 
-void
+int
 b2n_set_null (b2n_ptr n)
 {
-  b2n_resize (n, 1);
+  if (b2n_resize (n, 1))
+    return -1;
   n->limp[0] = n->bits = n->dirty = 0;
+  return 0;
 }
 
-void
+int
 b2n_set_ui (b2n_ptr n, unsigned int val)
 {
 #if CHUNK_BITS < 32
@@ -174,7 +180,8 @@ b2n_set_ui (b2n_ptr n, unsigned int val)
 
   chunks = (CHUNK_BYTES - 1 + sizeof (val)) / CHUNK_BYTES;
 
-  b2n_resize (n, chunks);
+  if (b2n_resize (n, chunks))
+      return -1;
 
   for (i = 0; i < chunks; i++)
     {
@@ -182,22 +189,23 @@ b2n_set_ui (b2n_ptr n, unsigned int val)
       val >>= CHUNK_BITS;
     }
 #else
-  b2n_resize (n, 1);
+  if (b2n_resize (n, 1))
+    return -1;
   n->limp[0] = val;
 #endif
   n->dirty = 1;
+  return 0;
 }
 
-/* Only takes hex at the moment */
-
-void
+/* XXX This one only takes hex at the moment.  */
+int
 b2n_set_str (b2n_ptr n, char *str)
 {
   int i, j, w, len, chunks;
   CHUNK_TYPE tmp;
 
   if (strncasecmp (str, "0x", 2))
-    return;
+    return -1;
 
   /* Make the hex string even lengthed */
   len = strlen (str) - 2;
@@ -211,54 +219,56 @@ b2n_set_str (b2n_ptr n, char *str)
 
   len /= 2;
 
-  chunks = (CHUNK_BYTES - 1 + len)/CHUNK_BYTES;
-  b2n_resize (n, chunks);
+  chunks = (CHUNK_BYTES - 1 + len) / CHUNK_BYTES;
+  if (b2n_resize (n, chunks))
+    return -1;
   memset (n->limp, 0, CHUNK_BYTES * n->chunks);
 
   for (w = 0, i = 0; i < chunks; i++)
     {
       tmp = 0;
-      for (j = (i == 0 ? ((len-1) % CHUNK_BYTES)+1 : CHUNK_BYTES); j > 0; j--)
+      for (j = (i == 0 ? ((len - 1) % CHUNK_BYTES) + 1 : CHUNK_BYTES); j > 0;
+	   j--)
 	{
 	  tmp <<= 8;
-	  tmp |= (hex2int(str[w]) << 4) | hex2int(str[w+1]);
+	  tmp |= (hex2int (str[w]) << 4) | hex2int (str[w + 1]);
 	  w += 2;
 	}
-      n->limp[chunks-1-i] = tmp;
+      n->limp[chunks - 1 - i] = tmp;
     }
 
   n->dirty = 1;
+  return 0;
 }
 
-/* Output function, mainly for debugging perpurses */
-
+/* Output function, mainly for debugging purposes.  */
 void
 b2n_print (b2n_ptr n)
 {
   int i, j, w, flag = 0;
   int left;
-  char buffer[2*CHUNK_BYTES];
+  char buffer[2 * CHUNK_BYTES];
   CHUNK_TYPE tmp;
 
   left = ((((7 + b2n_sigbit (n)) >> 3) - 1) % CHUNK_BYTES) + 1;
-  printf("0x");
+  printf ("0x");
   for (i = 0; i < n->chunks; i++)
     {
-      tmp = n->limp[n->chunks-1-i];
+      tmp = n->limp[n->chunks - 1 - i];
       memset (buffer, '0', sizeof (buffer));
       for (w = 0, j = (i == 0 ? left : CHUNK_BYTES); j > 0; j--)
 	{
-	  buffer[w++] = int2hex[(tmp >> 4) & 0xF];
-	  buffer[w++] = int2hex[tmp & 0xF];
+	  buffer[w++] = int2hex[(tmp >> 4) & 0xf];
+	  buffer[w++] = int2hex[tmp & 0xf];
 	  tmp >>= 8;
 	}
 
       for (j = (i == 0 ? left - 1: CHUNK_BYTES - 1); j >= 0; j--)
 	if (flag || (i == n->chunks - 1 && j == 0) ||
-	    buffer[2*j] != '0' || buffer[2*j+1] != '0')
+	    buffer[2 * j] != '0' || buffer[2 * j + 1] != '0')
 	  {
-	    putchar (buffer[2*j]);
-	    putchar (buffer[2*j+1]);
+	    putchar (buffer[2 * j]);
+	    putchar (buffer[2 * j + 1]);
 	    flag = 1;
 	  }
     }
@@ -270,7 +280,7 @@ b2n_sprint (char *buf, b2n_ptr n)
 {
   int i, k, j, w, flag = 0;
   int left;
-  char buffer[2*CHUNK_BYTES];
+  char buffer[2 * CHUNK_BYTES];
   CHUNK_TYPE tmp;
 
   left = ((((7 + b2n_sigbit (n)) >> 3) - 1) % CHUNK_BYTES) + 1;
@@ -278,30 +288,30 @@ b2n_sprint (char *buf, b2n_ptr n)
   strcpy (buf, "0x"); k = 2;
   for (i = 0; i < n->chunks; i++)
     {
-      tmp = n->limp[n->chunks-1-i];
+      tmp = n->limp[n->chunks - 1 - i];
       memset (buffer, '0', sizeof (buffer));
       for (w = 0, j = (i == 0 ? left : CHUNK_BYTES); j > 0; j--)
 	{
-	  buffer[w++] = int2hex[(tmp >> 4) & 0xF];
-	  buffer[w++] = int2hex[tmp & 0xF];
+	  buffer[w++] = int2hex[(tmp >> 4) & 0xf];
+	  buffer[w++] = int2hex[tmp & 0xf];
 	  tmp >>= 8;
 	}
 
       for (j = (i == 0 ? left - 1: CHUNK_BYTES - 1); j >= 0; j--)
 	if (flag || (i == n->chunks - 1 && j == 0) ||
-	    buffer[2*j] != '0' || buffer[2*j+1] != '0')
+	    buffer[2 * j] != '0' || buffer[2 * j + 1] != '0')
 	  {
-	    buf[k++] = buffer[2*j];
-	    buf[k++] = buffer[2*j+1];
+	    buf[k++] = buffer[2 * j];
+	    buf[k++] = buffer[2 * j + 1];
 	    flag = 1;
 	  }
     }
 
-  buf [k++] = 0;
+  buf[k++] = 0;
   return k;
 }
 
-/* Arithmetic functions */
+/* Arithmetic functions.  */
 
 u_int32_t
 b2n_sigbit (b2n_ptr n)
@@ -311,7 +321,7 @@ b2n_sigbit (b2n_ptr n)
   if (!n->dirty)
     return n->bits;
 
-  for (i = n->chunks-1; i > 0; i--)
+  for (i = n->chunks - 1; i > 0; i--)
     if (n->limp[i])
       break;
 
@@ -327,33 +337,24 @@ b2n_sigbit (b2n_ptr n)
   return n->bits;
 }
 
-
-/*
- * Addition on GF(2)[x] is nice, its just an XOR.
- */
-
-void
+/* Addition on GF(2)[x] is nice, its just an XOR.  */
+int
 b2n_add (b2n_ptr d, b2n_ptr a, b2n_ptr b)
 {
   int i;
   b2n_ptr bmin, bmax;
 
   if (!b2n_cmp_null (a))
-    {
-      b2n_set (d, b);
-      return;
-    }
+    return b2n_set (d, b);
 
   if (!b2n_cmp_null (b))
-    {
-      b2n_set (d, a);
-      return;
-    }
+    return b2n_set (d, a);
 
   bmin = B2N_MIN (a,b);
   bmax = B2N_MAX (a,b);
     
-  b2n_resize (d, bmax->chunks);
+  if (b2n_resize (d, bmax->chunks))
+    return -1;
 
   for (i = 0; i < bmin->chunks; i++)
       d->limp[i] = bmax->limp[i] ^ bmin->limp[i];
@@ -375,16 +376,13 @@ b2n_add (b2n_ptr d, b2n_ptr a, b2n_ptr b)
    * truncate the used amount of memory.
    */
   if (d != bmax && !b2n_cmp_null (d)) 
-      b2n_set_null (d);
+    return b2n_set_null (d);
   else
     d->dirty = 1;
+  return 0;
 }
 
-
-/*
- * Compare two polynomials.
- */
-
+/* Compare two polynomials.  */
 int
 b2n_cmp (b2n_ptr n, b2n_ptr m)
 {
@@ -417,16 +415,14 @@ b2n_cmp_null (b2n_ptr a)
     {
       if (a->limp[i])
 	return 1;
-    } while (++i < a->chunks);
+    }
+  while (++i < a->chunks);
 
   return 0;
 }
 
-/*
- * Left shift, needed for polynomial multiplication.
- */
-
-void
+/* Left shift, needed for polynomial multiplication.  */
+int
 b2n_lshift (b2n_ptr d, b2n_ptr n, unsigned int s)
 {
   int i, maj, min, chunks;
@@ -434,30 +430,29 @@ b2n_lshift (b2n_ptr d, b2n_ptr n, unsigned int s)
   CHUNK_TYPE *p, *op;
 
   if (!s)
-    {
-      b2n_set (d, n);
-      return;
-    }
+    return b2n_set (d, n);
 
   maj = s >> CHUNK_SHIFTS;
   min = s & CHUNK_MASK;
 
-  add = (!(bits&CHUNK_MASK) || ((bits&CHUNK_MASK) + min) > CHUNK_MASK) ? 1 : 0;
+  add = (!(bits & CHUNK_MASK) || ((bits & CHUNK_MASK) + min) > CHUNK_MASK)
+    ? 1 : 0;
   chunks = n->chunks;
-  b2n_resize (d, chunks + maj + add);
+  if (b2n_resize (d, chunks + maj + add))
+    return -1;
   memmove (d->limp + maj, n->limp, CHUNK_BYTES * chunks);
 
   if (maj)
     memset (d->limp, 0, CHUNK_BYTES * maj);
   if (add) 
-    d->limp[d->chunks-1] = 0;
+    d->limp[d->chunks - 1] = 0;
 
   /* If !min there are no bit shifts, we are done */
   if (!min)
-    return;
+    return 0;
 
-  op = p = &d->limp[d->chunks-1];
-  for (i = d->chunks-2; i >= maj; i--)
+  op = p = &d->limp[d->chunks - 1];
+  for (i = d->chunks - 2; i >= maj; i--)
     {
       op--;
       *p-- = (*p << min) | (*op >> (CHUNK_BITS - min));
@@ -466,33 +461,25 @@ b2n_lshift (b2n_ptr d, b2n_ptr n, unsigned int s)
 
   d->dirty = 0;
   d->bits = bits + (maj << CHUNK_SHIFTS) + min;
+  return 0;
 }
 
-/*
- * Right shift, needed for polynomial division.
- */
-
-void
+/* Right shift, needed for polynomial division.  */
+int
 b2n_rshift (b2n_ptr d, b2n_ptr n, unsigned int s)
 {
   int maj, min, size = n->chunks, newsize;
   b2n_ptr tmp;
 
   if (!s)
-    {
-      b2n_set (d, n);
-      return;
-    }
+    return b2n_set (d, n);
 
   maj = s >> CHUNK_SHIFTS;
 
   newsize = size - maj;
 
   if (size < maj)
-    {
-      b2n_set_null (d);
-      return;
-    }
+    return b2n_set_null (d);
 
   min = (CHUNK_BITS - (s & CHUNK_MASK)) & CHUNK_MASK;
   if (min)
@@ -500,74 +487,78 @@ b2n_rshift (b2n_ptr d, b2n_ptr n, unsigned int s)
       if ((b2n_sigbit (n) & CHUNK_MASK) > min)
 	newsize++;
 
-      b2n_lshift (d, n, min);
+      if (b2n_lshift (d, n, min))
+	return -1;
       tmp = d;
     }
   else
     tmp = n;
 
   memmove (d->limp, tmp->limp + maj + (min ? 1 : 0), CHUNK_BYTES * newsize);
-  b2n_resize (d, newsize);
+  if (b2n_resize (d, newsize))
+    return -1;
 
   d->bits = tmp->bits - ((maj + (min ? 1 : 0)) << CHUNK_SHIFTS);
+  return 0;
 }
 
-/*
- * Normal polynomial multiplication.
- */
-void
+/* Normal polynomial multiplication.  */
+int
 b2n_mul (b2n_ptr d, b2n_ptr n, b2n_ptr m)
 {
   int i, j;
   b2n_t tmp, tmp2;
 
   if (!b2n_cmp_null (m) || !b2n_cmp_null (n))
-    {
-      b2n_set_null (d);
-      return;
-    }
+    return b2n_set_null (d);
 
   if (b2n_sigbit (m) == 1)
-    {
-      b2n_set (d, n);
-      return;
-    }
+    return b2n_set (d, n);
 
   if (b2n_sigbit (n) == 1)
-    {
-      b2n_set (d, m);
-      return;
-    }
+    return b2n_set (d, m);
   
   b2n_init (tmp);
   b2n_init (tmp2);
 
-  b2n_set (tmp, B2N_MAX (n, m));
-  b2n_set (tmp2, B2N_MIN (n, m));
+  if (b2n_set (tmp, B2N_MAX (n, m)))
+    goto fail;
+  if (b2n_set (tmp2, B2N_MIN (n, m)))
+    goto fail;
 
-  b2n_set_null (d);
+  if (b2n_set_null (d))
+    goto fail;
 
   for (i = 0; i < tmp2->chunks; i++)
     if (tmp2->limp[i])
       for (j = 0; j < CHUNK_BITS; j++)
 	{
 	  if (tmp2->limp[i] & b2n_mask[j]) 
-	    b2n_add (d, d, tmp);
+	    if (b2n_add (d, d, tmp))
+	      goto fail;
 	  
-	  b2n_lshift (tmp, tmp, 1);
+	  if (b2n_lshift (tmp, tmp, 1))
+	    goto fail;
 	}
     else
-      b2n_lshift (tmp, tmp, CHUNK_BITS);
+      if (b2n_lshift (tmp, tmp, CHUNK_BITS))
+	goto fail;
 
   b2n_clear (tmp);
   b2n_clear (tmp2);
+  return 0;
+
+ fail:
+  b2n_clear (tmp);
+  b2n_clear (tmp2);
+  return -1;
 }
 
 /*
  * Squaring in this polynomial ring is more efficient than normal
  * multiplication.
  */
-void
+int
 b2n_square (b2n_ptr d, b2n_ptr n)
 {
   int i, j, maj, min, bits, chunk;
@@ -578,7 +569,8 @@ b2n_square (b2n_ptr d, b2n_ptr n)
   maj = (maj + CHUNK_MASK) >> CHUNK_SHIFTS;
 
   b2n_init (t);
-  b2n_resize (t, 2 * maj + ((CHUNK_MASK + 2 * min) >> CHUNK_SHIFTS));
+  if (b2n_resize (t, 2 * maj + ((CHUNK_MASK + 2 * min) >> CHUNK_SHIFTS)))
+    return -1;
 
   chunk = 0;
   bits = 0;
@@ -603,33 +595,38 @@ b2n_square (b2n_ptr d, b2n_ptr n)
   t->dirty = 1;
   B2N_SWAP (d, t);
   b2n_clear (t);
+  return 0;
 }
 
 /*
  * Normal polynomial division.
  * These functions are far from optimal in speed.
  */
-void
+int
 b2n_div_q (b2n_ptr d, b2n_ptr n, b2n_ptr m)
 {
   b2n_t r;
+  int rv;
 
   b2n_init (r);
-  b2n_div (d, r, n, m);
+  rv = b2n_div (d, r, n, m);
   b2n_clear (r);
+  return rv;
 }
 
-void
+int
 b2n_div_r (b2n_ptr r, b2n_ptr n, b2n_ptr m)
 {
   b2n_t q;
+  int rv;
 
   b2n_init (q);
-  b2n_div (q, r, n, m);
+  rv = b2n_div (q, r, n, m);
   b2n_clear (q);
+  return rv;
 }
 
-void
+int
 b2n_div (b2n_ptr q, b2n_ptr r, b2n_ptr n, b2n_ptr m)
 {
   int sn, sm, i, j, len, bits;
@@ -638,20 +635,20 @@ b2n_div (b2n_ptr q, b2n_ptr r, b2n_ptr n, b2n_ptr m)
   /* If Teiler > Zaehler, the result is 0 */
   if ((sm = b2n_sigbit (m)) > (sn = b2n_sigbit (n)))
     {
-      b2n_set_null (q);
-      b2n_set (r, n);
-      return;
+      if (b2n_set_null (q))
+	return -1;
+      return b2n_set (r, n);
     }
 
   if (sm == 0)
     /* Division by Zero */
-    return;
+    return -1;
   else if (sm == 1)
     {
       /* Division by the One-Element */
-      b2n_set (q, n);
-      b2n_set_null (r);
-      return;
+      if (b2n_set (q, n))
+	return -1;
+      return b2n_set_null (r);
     }
 
   b2n_init (nenn);
@@ -659,16 +656,23 @@ b2n_div (b2n_ptr q, b2n_ptr r, b2n_ptr n, b2n_ptr m)
   b2n_init (shift);
   b2n_init (mask);
 
-  b2n_set (nenn, n);
-  b2n_set (div, m);
-  b2n_set (shift, m);
-  b2n_set_ui (mask, 1);
+  if (b2n_set (nenn, n))
+    goto fail;
+  if (b2n_set (div, m))
+    goto fail;
+  if (b2n_set (shift, m))
+    goto fail;
+  if (b2n_set_ui (mask, 1))
+    goto fail;
 
-  b2n_resize (q, (sn - sm + CHUNK_MASK) >> CHUNK_SHIFTS);
+  if (b2n_resize (q, (sn - sm + CHUNK_MASK) >> CHUNK_SHIFTS))
+    goto fail;
   memset (q->limp, 0, CHUNK_BYTES * q->chunks);
 
-  b2n_lshift (shift, shift, sn - sm);
-  b2n_lshift (mask, mask, sn - sm);
+  if (b2n_lshift (shift, shift, sn - sm))
+    goto fail;
+  if (b2n_lshift (mask, mask, sn - sm))
+    goto fail;
   
   /* Number of significant octets */
   len = (sn - 1) >> CHUNK_SHIFTS;
@@ -680,11 +684,15 @@ b2n_div (b2n_ptr q, b2n_ptr r, b2n_ptr n, b2n_ptr m)
       {
 	if (nenn->limp[i] & b2n_mask[j])
 	  {
-	    b2n_sub (nenn, nenn, shift);
-	    b2n_add (q, q, mask);
+	    if (b2n_sub (nenn, nenn, shift))
+	      goto fail;
+	    if (b2n_add (q, q, mask))
+	      goto fail;
 	  }
-	b2n_rshift (shift, shift, 1);
-	b2n_rshift (mask, mask, 1);
+	if (b2n_rshift (shift, shift, 1))
+	  goto fail;
+	if (b2n_rshift (mask, mask, 1))
+	  goto fail;
       }
 
   B2N_SWAP (r, nenn);
@@ -693,41 +701,54 @@ b2n_div (b2n_ptr q, b2n_ptr r, b2n_ptr n, b2n_ptr m)
   b2n_clear (div);
   b2n_clear (shift);
   b2n_clear (mask);
+  return 0;
+
+fail:
+  b2n_clear (nenn);
+  b2n_clear (div);
+  b2n_clear (shift);
+  b2n_clear (mask);
+  return -1;
 }
 
-/*
- * Functions for Operation on GF(2**n) ~= GF(2)[x]/p(x).
- */
-void
+/* Functions for Operation on GF(2**n) ~= GF(2)[x]/p(x).  */
+int
 b2n_mod (b2n_ptr m, b2n_ptr n, b2n_ptr p)
 {
   int bits, size;
-  b2n_div_r (m, n, p);
+
+  if (b2n_div_r (m, n, p))
+    return -1;
 
   bits = b2n_sigbit (m);
   size = ((CHUNK_MASK + bits) >> CHUNK_SHIFTS);
   if (size == 0)
     size = 1;
   if (m->chunks > size)
-      b2n_resize (m, size);
+    if (b2n_resize (m, size))
+      return -1;
 
   m->bits = bits;
   m->dirty = 0;
+  return 0;
 }
 
-void
+int
 b2n_gcd (b2n_ptr e, b2n_ptr go, b2n_ptr ho)
 {
   b2n_t g, h;
 
   b2n_init (g);
-  b2n_set (g, go);
   b2n_init (h);
-  b2n_set (h, ho);
+  if (b2n_set (g, go))
+    goto fail;
+  if (b2n_set (h, ho))
+    goto fail;
   
   while (b2n_cmp_null (h))
     {
-      b2n_mod (g, g, h);
+      if (b2n_mod (g, g, h))
+	goto fail;
       B2N_SWAP (g, h);
     }
 
@@ -735,32 +756,42 @@ b2n_gcd (b2n_ptr e, b2n_ptr go, b2n_ptr ho)
 
   b2n_clear (g);
   b2n_clear (h);
+  return 0;
+
+fail:
+  b2n_clear (g);
+  b2n_clear (h);
+  return -1;
 }
 
-void
+int
 b2n_mul_inv (b2n_ptr ga, b2n_ptr be, b2n_ptr p)
 {
   b2n_t a;
 
   b2n_init (a);
-  b2n_set_ui (a, 1);
+  if (b2n_set_ui (a, 1))
+    goto fail;
 
-  b2n_div_mod (ga, a, be, p);
+  if (b2n_div_mod (ga, a, be, p))
+    goto fail;
 
   b2n_clear (a);
+  return 0;
+
+ fail:
+  b2n_clear (a);
+  return -1;
 }
 
-void
+int
 b2n_div_mod (b2n_ptr ga, b2n_ptr a, b2n_ptr be, b2n_ptr p)
 {
   b2n_t s0, s1, s2, q, r0, r1;
 
   /* There is no multiplicative inverse to Null.  */
-  if (!b2n_cmp_null(be))
-    {
-      b2n_set_null (ga);
-      return;
-    }
+  if (!b2n_cmp_null (be))
+    return b2n_set_null (ga);
 
   b2n_init (s0);
   b2n_init (s1);
@@ -769,20 +800,28 @@ b2n_div_mod (b2n_ptr ga, b2n_ptr a, b2n_ptr be, b2n_ptr p)
   b2n_init (r1);
   b2n_init (q);
 
-  b2n_set (r0, p);
-  b2n_set (r1, be);
+  if (b2n_set (r0, p))
+    goto fail;
+  if (b2n_set (r1, be))
+    goto fail;
 
-  b2n_set_null (s0);
-  b2n_set (s1, a);
+  if (b2n_set_null (s0))
+    goto fail;
+  if (b2n_set (s1, a))
+    goto fail;
 
   while (b2n_cmp_null (r1))
     {
-      b2n_div(q, r0, r0, r1);
+      if (b2n_div (q, r0, r0, r1))
+	goto fail;
       B2N_SWAP (r0, r1);
 
-      b2n_mul (s2, q, s1);
-      b2n_mod (s2, s2, p);
-      b2n_sub (s2, s0, s2);
+      if (b2n_mul (s2, q, s1))
+	goto fail;
+      if (b2n_mod (s2, s2, p))
+	goto fail;
+      if (b2n_sub (s2, s0, s2))
+	goto fail;
 
       B2N_SWAP (s0, s1);
       B2N_SWAP (s1, s2);
@@ -795,6 +834,16 @@ b2n_div_mod (b2n_ptr ga, b2n_ptr a, b2n_ptr be, b2n_ptr p)
   b2n_clear (r0);
   b2n_clear (r1);
   b2n_clear (q);
+  return 0;
+
+fail:
+  b2n_clear (s0);
+  b2n_clear (s1);
+  b2n_clear (s2);
+  b2n_clear (r0);
+  b2n_clear (r1);
+  b2n_clear (q);
+  return -1;
 }
 
 /*
@@ -803,100 +852,129 @@ b2n_div_mod (b2n_ptr ga, b2n_ptr a, b2n_ptr be, b2n_ptr p)
  * 2 - 2*Trace. 
  * If z is a square root, z + 1 is the other.
  */
-void
+int
 b2n_trace (b2n_ptr ho, b2n_ptr a, b2n_ptr p)
 {
   int i, m = b2n_sigbit (p) - 1;
   b2n_t h;
 
   b2n_init (h);
-  b2n_set (h, a);
+  if (b2n_set (h, a))
+    goto fail;
   
   for (i = 0; i < m - 1; i++)
     {
-      b2n_square (h, h);
-      b2n_mod (h, h, p);
+      if (b2n_square (h, h))
+	goto fail;
+      if (b2n_mod (h, h, p))
+	goto fail;
 
-      b2n_add (h, h, a);
+      if (b2n_add (h, h, a))
+	goto fail;
     }
   B2N_SWAP (ho, h);
 
   b2n_clear (h);
+  return 0;
+
+ fail:
+  b2n_clear (h);
+  return -1;
 }
 
 /*
  * The halftrace yields the square root if the degree of the
  * irreduceable polynomial is odd.
  */
-void
+int
 b2n_halftrace (b2n_ptr ho, b2n_ptr a, b2n_ptr p)
 {
   int i, m = b2n_sigbit (p) - 1;
   b2n_t h;
 
   b2n_init (h);
-  b2n_set (h, a);
+  if (b2n_set (h, a))
+    goto fail;
   
   for (i = 0; i < (m - 1) / 2; i++)
     {
-      b2n_square (h, h);
-      b2n_mod (h, h, p);
-      b2n_square (h, h);
-      b2n_mod (h, h, p);
+      if (b2n_square (h, h))
+	goto fail;
+      if (b2n_mod (h, h, p))
+	goto fail;
+      if (b2n_square (h, h))
+	goto fail;
+      if (b2n_mod (h, h, p))
+	goto fail;
 
-      b2n_add (h, h, a);
+      if (b2n_add (h, h, a))
+	goto fail;
     }
 
   B2N_SWAP (ho, h);
 
   b2n_clear (h);
+  return 0;
+
+ fail:
+  b2n_clear (h);
+  return -1;
 }
 
 /*
  * Solving the equation: y**2 + y = b in GF(2**m) where ip is the 
  * irreduceable polynomial. If m is odd, use the half trace.
  */
-void
+int
 b2n_sqrt (b2n_ptr zo, b2n_ptr b, b2n_ptr ip)
 {
   int i, m = b2n_sigbit (ip) - 1;
   b2n_t w, p, temp, z;
 
   if (!b2n_cmp_null (b))
-    {
-      b2n_set_null (z);
-      return;
-    }
+    return b2n_set_null (z);
 
   if (m & 1)
-    {
-      b2n_halftrace (zo, b, ip);
-      return;
-    }
+    return b2n_halftrace (zo, b, ip);
 
   b2n_init (z);
   b2n_init (w);
   b2n_init (p);
   b2n_init (temp);
-  do {
-    b2n_random (p, m);
-    b2n_set_null (z);
-    b2n_set (w, p);
-    for (i = 1; i < m; i++)
-      {
-	b2n_square (z, z);	/* z**2 */
-	b2n_mod (z, z, ip);
 
-	b2n_square (w, w);	/* w**2 */
-	b2n_mod (w, w, ip);
+  do
+    {
+      if (b2n_random (p, m))
+	goto fail;
+      if (b2n_set_null (z))
+	goto fail;
+      if (b2n_set (w, p))
+	goto fail;
 
-	b2n_mul (temp, w, b);   /* w**2 * b */
-	b2n_mod (temp, temp, ip);
-	b2n_add (z, z, temp);   /* z**2 + w**2 + b */
+      for (i = 1; i < m; i++)
+	{
+	  if (b2n_square (z, z))	/* z**2 */
+	    goto fail;
+	  if (b2n_mod (z, z, ip))
+	    goto fail;
 
-	b2n_add (w, w, p);	/* w**2 + p */
-      }
-  } while (!b2n_cmp_null (w));
+	  if (b2n_square (w, w))	/* w**2 */
+	    goto fail;
+	  if (b2n_mod (w, w, ip))
+	    goto fail;
+
+	  if (b2n_mul (temp, w, b))	/* w**2 * b */
+	    goto fail;
+	  if (b2n_mod (temp, temp, ip))
+	    goto fail;
+	  if (b2n_add (z, z, temp))	/* z**2 + w**2 + b */
+	    goto fail;
+
+	  if (b2n_add (w, w, p))	/* w**2 + p */
+	    goto fail;
+	}
+    }
+  while (!b2n_cmp_null (w));
 
   B2N_SWAP (zo, z);
 
@@ -904,36 +982,55 @@ b2n_sqrt (b2n_ptr zo, b2n_ptr b, b2n_ptr ip)
   b2n_clear (p);
   b2n_clear (temp);
   b2n_clear (z);
+  return 0;
+
+ fail:
+  b2n_clear (w);
+  b2n_clear (p);
+  b2n_clear (temp);
+  b2n_clear (z);
+  return -1;
 }
 
-/*
- * Exponentiation modulo a polynomial.
- */
-void
+/* Exponentiation modulo a polynomial.  */
+int
 b2n_exp_mod (b2n_ptr d, b2n_ptr b0, u_int32_t e, b2n_ptr p)
 {
   b2n_t u, b;
 
   b2n_init (u);
-  b2n_set_ui (u, 1);
   b2n_init (b);
-  b2n_mod (b, b0, p);
+  if (b2n_set_ui (u, 1))
+    goto fail;
+  if (b2n_mod (b, b0, p))
+    goto fail;
   
   while (e)
     {
       if (e & 1)
 	{
-	  b2n_mul (u, u, b);
-	  b2n_mod (u, u, p);
+	  if (b2n_mul (u, u, b))
+	    goto fail;
+	  if (b2n_mod (u, u, p))
+	    goto fail;
 	}
-      b2n_square (b, b);
-      b2n_mod (b, b, p);
+      if (b2n_square (b, b))
+	goto fail;
+      if (b2n_mod (b, b, p))
+	goto fail;
       e >>= 1;
     }
 
   B2N_SWAP (d, u);
+
   b2n_clear (u);
   b2n_clear (b);
+  return 0;
+
+ fail:
+  b2n_clear (u);
+  b2n_clear (b);
+  return -1;
 }
 
 /*
@@ -942,10 +1039,8 @@ b2n_exp_mod (b2n_ptr d, b2n_ptr b0, u_int32_t e, b2n_ptr p)
  * Multiplies a normal number by 3.
  */ 
 
-/*
- * Normal addition behaves as Z_{2**n} and not F_{2**n}.
- */
-void
+/* Normal addition behaves as Z_{2**n} and not F_{2**n}.  */
+int
 b2n_nadd (b2n_ptr d0, b2n_ptr a0, b2n_ptr b0)
 {
   int i, carry;
@@ -953,22 +1048,20 @@ b2n_nadd (b2n_ptr d0, b2n_ptr a0, b2n_ptr b0)
   b2n_t d;
 
   if (!b2n_cmp_null (a0))
-    {
-      b2n_set (d0, b0);
-      return;
-    }
+    return b2n_set (d0, b0);
 
   if (!b2n_cmp_null (b0))
-    {
-      b2n_set (d0, a0);
-      return;
-    }
+    return b2n_set (d0, a0);
 
   b2n_init (d);
   a = B2N_MAX (a0, b0);
   b = B2N_MIN (a0, b0);
 
-  b2n_resize (d, a->chunks + 1);
+  if (b2n_resize (d, a->chunks + 1))
+    {
+      b2n_clear (d);
+      return -1;
+    }
 
   for (carry = i = 0; i < b->chunks; i++)
     {
@@ -989,25 +1082,25 @@ b2n_nadd (b2n_ptr d0, b2n_ptr a0, b2n_ptr b0)
   B2N_SWAP (d0, d);
 
   b2n_clear (d);
+  return 0;
 }
 
-/*
- * Very special sub, a > b.
- */
-void
+/* Very special sub, a > b.  */
+int
 b2n_nsub (b2n_ptr d0, b2n_ptr a, b2n_ptr b)
 {
   int i, carry;
   b2n_t d;
 
   if (b2n_cmp (a, b) <= 0)
-    {
-      b2n_set_null (d0);
-      return;
-    }
+    return b2n_set_null (d0);
   
   b2n_init (d);
-  b2n_resize (d, a->chunks);
+  if (b2n_resize (d, a->chunks))
+    {
+      b2n_clear (d);
+      return -1;
+    }
 
   for (carry = i = 0; i < b->chunks; i++)
     {
@@ -1029,17 +1122,25 @@ b2n_nsub (b2n_ptr d0, b2n_ptr a, b2n_ptr b)
   B2N_SWAP (d0, d);
 
   b2n_clear (d);
+  return 0;
 }
 
-void
+int
 b2n_3mul (b2n_ptr d0, b2n_ptr e)
 {
   b2n_t d;
 
   b2n_init (d);
-  b2n_lshift (d, e, 1);
+  if (b2n_lshift (d, e, 1))
+    goto fail;
 
-  b2n_nadd (d0, d, e);
+  if (b2n_nadd (d0, d, e))
+    goto fail;
 
   b2n_clear (d);
+  return 0;
+
+ fail:
+  b2n_clear (d);
+  return -1;
 }
