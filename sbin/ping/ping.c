@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.36 1998/11/18 16:50:05 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.37 1999/02/23 20:04:37 kjell Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.36 1998/11/18 16:50:05 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.37 1999/02/23 20:04:37 kjell Exp $";
 #endif
 #endif /* not lint */
 
@@ -99,7 +99,7 @@ struct tvi {
 #define	DEFDATALEN	(64 - 8)		/* default data length */
 #define	MAXIPLEN	60
 #define	MAXICMPLEN	76
-#define	MAXPACKET	(65536 - 60 - 8)	/* max packet size */
+#define	MAXPAYLOAD	(IP_MAXPACKET - MAXIPLEN - 8) /* max ICMP payload size */
 #define	MAXWAIT_DEFAULT	10			/* secs to wait for response */
 #define	NROUTES		9			/* number of record route slots */
 
@@ -143,7 +143,7 @@ struct sockaddr whereto;	/* who to ping */
 struct sockaddr_in whence;		/* Which interface we come from */
 int datalen = DEFDATALEN;
 int s;				/* socket file descriptor */
-u_char outpackhdr[MAXPACKET];
+u_char outpackhdr[IP_MAXPACKET]; /* Max packet size = 65535 */
 u_char *outpack = outpackhdr+sizeof(struct ip);
 char BSPACE = '\b';		/* characters written for flood */
 char DOT = '.';
@@ -282,7 +282,7 @@ main(argc, argv)
 			datalen = strtol(optarg, NULL, 0);
 			if (datalen <= 0)
 				errx(1, "bad packet size: %s", optarg);
-			if (datalen > MAXPACKET)
+			if (datalen > MAXPAYLOAD)
 				errx(1, "packet size too large: %s", optarg);
 			break;
 		case 'T':
@@ -1227,7 +1227,7 @@ fill(bp, patp)
 
 	if (ii > 0)
 		for (kk = 0;
-		    kk <= MAXPACKET - (8 + sizeof(struct tvi) + ii);
+		    kk <= MAXPAYLOAD - (8 + sizeof(struct tvi) + ii);
 		    kk += ii)
 			for (jj = 0; jj < ii; ++jj)
 				bp[jj + kk] = pat[jj];
