@@ -111,9 +111,6 @@ Boston, MA 02111-1307, USA.  */
 
 /* Assembler format: exception region output.  */
 
-/* our configuration still doesn't handle dwarf2 correctly */
-#define DWARF2_UNWIND_INFO 0
-
 /* Assembler format: alignment output.  */
 
 /* Note that we pick up ASM_OUTPUT_MAX_SKIP_ALIGN from i386/gas.h */
