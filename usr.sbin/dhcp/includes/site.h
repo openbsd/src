@@ -78,7 +78,7 @@
 /* Define this to use the Berkeley Packet Filter API.
 
    The BPF API is available on all 4.4-BSD derivatives, including
-   NetBSD, FreeBSD and BSDI's BSD/OS.   It's also available on
+   OpenBSD, NetBSD, FreeBSD and BSDI's BSD/OS.   It's also available on
    DEC Alpha OSF/1 in a compatibility mode supported by the Alpha OSF/1
    packetfilter interface. */
 
