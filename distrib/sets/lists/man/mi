@@ -1398,6 +1398,7 @@
 ./usr/share/man/cat4/pnp.0
 ./usr/share/man/cat4/ppb.0
 ./usr/share/man/cat4/ppp.0
+./usr/share/man/cat4/pppoe.0
 ./usr/share/man/cat4/prandom.0
 ./usr/share/man/cat4/ptm.0
 ./usr/share/man/cat4/pty.0
