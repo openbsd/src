@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.40 2002/08/03 20:56:42 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.41 2002/09/05 21:37:18 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -135,44 +135,11 @@ void
 cpu_swapout(p)
 	struct proc *p;
 {
-	extern paddr_t fpu_curpcb;
+	extern vaddr_t fpu_curpcb;
 	struct trapframe *tf = p->p_md.md_regs;
 
 	if (tf->tf_cr30 == fpu_curpcb) {
-		__asm __volatile(
-		    "fstds,ma %%fr0 , 8(%0)\n\t"
-		    "fstds,ma %%fr1 , 8(%0)\n\t"
-		    "fstds,ma %%fr2 , 8(%0)\n\t"
-		    "fstds,ma %%fr3 , 8(%0)\n\t"
-		    "fstds,ma %%fr4 , 8(%0)\n\t"
-		    "fstds,ma %%fr5 , 8(%0)\n\t"
-		    "fstds,ma %%fr6 , 8(%0)\n\t"
-		    "fstds,ma %%fr7 , 8(%0)\n\t"
-		    "fstds,ma %%fr8 , 8(%0)\n\t"
-		    "fstds,ma %%fr9 , 8(%0)\n\t"
-		    "fstds,ma %%fr10, 8(%0)\n\t"
-		    "fstds,ma %%fr11, 8(%0)\n\t"
-		    "fstds,ma %%fr12, 8(%0)\n\t"
-		    "fstds,ma %%fr13, 8(%0)\n\t"
-		    "fstds,ma %%fr14, 8(%0)\n\t"
-		    "fstds,ma %%fr15, 8(%0)\n\t"
-		    "fstds,ma %%fr16, 8(%0)\n\t"
-		    "fstds,ma %%fr17, 8(%0)\n\t"
-		    "fstds,ma %%fr18, 8(%0)\n\t"
-		    "fstds,ma %%fr19, 8(%0)\n\t"
-		    "fstds,ma %%fr20, 8(%0)\n\t"
-		    "fstds,ma %%fr21, 8(%0)\n\t"
-		    "fstds,ma %%fr22, 8(%0)\n\t"
-		    "fstds,ma %%fr23, 8(%0)\n\t"
-		    "fstds,ma %%fr24, 8(%0)\n\t"
-		    "fstds,ma %%fr25, 8(%0)\n\t"
-		    "fstds,ma %%fr26, 8(%0)\n\t"
-		    "fstds,ma %%fr27, 8(%0)\n\t"
-		    "fstds,ma %%fr28, 8(%0)\n\t"
-		    "fstds,ma %%fr29, 8(%0)\n\t"
-		    "fstds,ma %%fr30, 8(%0)\n\t"
-		    "fstds    %%fr31, 0(%0)\n\t"
-		    : "+r" (fpu_curpcb) :: "memory");
+		fpu_save(fpu_curpcb);
 		fpu_curpcb = 0;
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.82 2002/09/05 18:15:23 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.83 2002/09/05 21:37:18 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -1995,6 +1995,43 @@ $ibrk_exit
 	rfi
 	nop
 EXIT(TLABEL(ibrk))
+
+LEAF_ENTRY(fpu_save)
+	fstds,ma %fr0 , 8(arg0)
+	fstds,ma %fr1 , 8(arg0)
+	fstds,ma %fr2 , 8(arg0)
+	fstds,ma %fr3 , 8(arg0)
+	fstds,ma %fr4 , 8(arg0)
+	fstds,ma %fr5 , 8(arg0)
+	fstds,ma %fr6 , 8(arg0)
+	fstds,ma %fr7 , 8(arg0)
+	fstds,ma %fr8 , 8(arg0)
+	fstds,ma %fr9 , 8(arg0)
+	fstds,ma %fr10, 8(arg0)
+	fstds,ma %fr11, 8(arg0)
+	fstds,ma %fr12, 8(arg0)
+	fstds,ma %fr13, 8(arg0)
+	fstds,ma %fr14, 8(arg0)
+	fstds,ma %fr15, 8(arg0)
+	fstds,ma %fr16, 8(arg0)
+	fstds,ma %fr17, 8(arg0)
+	fstds,ma %fr18, 8(arg0)
+	fstds,ma %fr19, 8(arg0)
+	fstds,ma %fr20, 8(arg0)
+	fstds,ma %fr21, 8(arg0)
+	fstds,ma %fr22, 8(arg0)
+	fstds,ma %fr23, 8(arg0)
+	fstds,ma %fr24, 8(arg0)
+	fstds,ma %fr25, 8(arg0)
+	fstds,ma %fr26, 8(arg0)
+	fstds,ma %fr27, 8(arg0)
+	fstds,ma %fr28, 8(arg0)
+	fstds,ma %fr29, 8(arg0)
+	fstds,ma %fr30, 8(arg0)
+	fstds    %fr31, 0(arg0)
+	bv	r0(rp)
+	nop
+EXIT(fpu_save)
 
 	.import	dcache_stride, data
 LEAF_ENTRY(fdcache)
