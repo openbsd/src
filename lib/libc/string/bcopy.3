@@ -28,14 +28,14 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: bcopy.3,v 1.7 2003/06/02 20:18:38 millert Exp $
+.\"	$OpenBSD: bcopy.3,v 1.8 2003/06/21 12:04:01 avsm Exp $
 .\"
 .Dd April 19, 1991
 .Dt BCOPY 3
 .Os
 .Sh NAME
 .Nm bcopy
-.Nd copy byte string
+.Nd copy bytes
 .Sh SYNOPSIS
 .Fd #include <string.h>
 .Ft void
@@ -45,11 +45,11 @@ The
 .Fn bcopy
 function copies
 .Fa len
-bytes from string
+bytes from buffer
 .Fa src
-to string
+to buffer
 .Fa dst .
-The two strings may overlap.
+The two buffers may overlap.
 If
 .Fa len
 is zero, no bytes are copied.

@@ -29,14 +29,14 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: memcpy.3,v 1.5 2003/06/02 20:18:38 millert Exp $
+.\"	$OpenBSD: memcpy.3,v 1.6 2003/06/21 12:04:01 avsm Exp $
 .\"
 .Dd June 29, 1991
 .Dt MEMCPY 3
 .Os
 .Sh NAME
 .Nm memcpy
-.Nd copy byte string
+.Nd copy bytes
 .Sh SYNOPSIS
 .Fd #include <string.h>
 .Ft void *
@@ -46,9 +46,9 @@ The
 .Fn memcpy
 function copies
 .Fa len
-bytes from string
+bytes from buffer
 .Fa src
-to string
+to buffer
 .Fa dst .
 .Sh RETURN VALUES
 The
@@ -71,7 +71,7 @@ In this implementation
 .Fn memcpy
 is implemented using
 .Xr bcopy 3 ,
-and therefore the strings may overlap.
-On other systems, copying overlapping strings may produce surprises.
+and therefore the buffers may overlap.
+On other systems, copying overlapping buffers may produce surprises.
 A simpler solution is to not use
 .Fn memcpy .
