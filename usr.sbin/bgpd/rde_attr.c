@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.7 2004/02/18 11:11:06 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.8 2004/02/18 16:36:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -38,6 +38,18 @@
 #define CHECK_FLAGS(s, t)	\
 	(((s) & ~ATTR_EXTLEN) == (t))
 
+#define F_ATTR_ORIGIN		0x01
+#define F_ATTR_ASPATH		0x02
+#define F_ATTR_NEXTHOP		0x04
+#define F_ATTR_LOCALPREF	0x08
+#define F_ATTR_MED		0x10
+
+#define WFLAG(s, t)			\
+	do {				\
+		if ((s) & (t))		\
+			return (-1);	\
+		(s) |= (t);		\
+	} while (0)
 void
 attr_init(struct attr_flags *a)
 {
@@ -88,6 +100,7 @@ attr_parse(u_char *p, u_int16_t len, struct attr_flags *a, int ebgp,
 		UPD_READ(&a->origin, p, plen, 1);
 		if (a->origin > ORIGIN_INCOMPLETE)
 			return (-1);
+		WFLAG(a->wflags, F_ATTR_ORIGIN);
 		break;
 	case ATTR_ASPATH:
 		if (!CHECK_FLAGS(flags, ATTR_WELL_KNOWN))
@@ -100,6 +113,7 @@ attr_parse(u_char *p, u_int16_t len, struct attr_flags *a, int ebgp,
 			log_warnx("XXX aspath_verify failed: error %i", r);
 			return (-1);
 		}
+		WFLAG(a->wflags, F_ATTR_ASPATH);
 		a->aspath = aspath_create(p, attr_len);
 		/* XXX enforce remote-as == left most AS if not disabled */
 		plen += attr_len;
@@ -109,6 +123,7 @@ attr_parse(u_char *p, u_int16_t len, struct attr_flags *a, int ebgp,
 			return (-1);
 		if (!CHECK_FLAGS(flags, ATTR_WELL_KNOWN))
 			return (-1);
+		WFLAG(a->wflags, F_ATTR_NEXTHOP);
 		UPD_READ(&a->nexthop, p, plen, 4);	/* network byte order */
 		/* XXX check if the nexthop is a valid IP address */
 		break;
@@ -117,6 +132,7 @@ attr_parse(u_char *p, u_int16_t len, struct attr_flags *a, int ebgp,
 			return (-1);
 		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL))
 			return (-1);
+		WFLAG(a->wflags, F_ATTR_MED);
 		UPD_READ(&tmp32, p, plen, 4);
 		a->med = ntohl(tmp32);
 		break;
@@ -130,6 +146,7 @@ attr_parse(u_char *p, u_int16_t len, struct attr_flags *a, int ebgp,
 			a->lpref = 0;	/* set a default value */
 			break;
 		}
+		WFLAG(a->wflags, F_ATTR_LOCALPREF);
 		UPD_READ(&tmp32, p, plen, 4);
 		a->lpref = ntohl(tmp32);
 		break;
@@ -157,8 +174,10 @@ optattr:
 }
 
 u_char *
-attr_error(u_char *p, u_int16_t len, u_int8_t *suberr, u_int16_t *size)
+attr_error(u_char *p, u_int16_t len, struct attr_flags *attr,
+    u_int8_t *suberr, u_int16_t *size)
 {
+	struct attr	*a;
 	u_int16_t	 attr_len;
 	u_int16_t	 plen = 0;
 	u_int8_t	 flags;
@@ -195,6 +214,11 @@ attr_error(u_char *p, u_int16_t len, u_int8_t *suberr, u_int16_t *size)
 	case ATTR_ORIGIN:
 		if (attr_len != 1)
 			return (p);
+		if (attr->wflags & F_ATTR_ORIGIN) {
+			*suberr = ERR_UPD_ATTRLIST;
+			*size = 0;
+			return (NULL);
+		}
 		UPD_READ(&tmp8, p, plen, 1);
 		if (tmp8 > ORIGIN_INCOMPLETE) {
 			*suberr = ERR_UPD_ORIGIN;
@@ -202,6 +226,11 @@ attr_error(u_char *p, u_int16_t len, u_int8_t *suberr, u_int16_t *size)
 		}
 		break;
 	case ATTR_ASPATH:
+		if (attr->wflags & F_ATTR_ASPATH) {
+			*suberr = ERR_UPD_ATTRLIST;
+			*size = 0;
+			return (NULL);
+		}
 		if (CHECK_FLAGS(flags, ATTR_WELL_KNOWN)) {
 			/* malformed aspath detected by exclusion method */
 			*size = 0;
@@ -212,6 +241,11 @@ attr_error(u_char *p, u_int16_t len, u_int8_t *suberr, u_int16_t *size)
 	case ATTR_NEXTHOP:
 		if (attr_len != 4)
 			return (p);
+		if (attr->wflags & F_ATTR_NEXTHOP) {
+			*suberr = ERR_UPD_ATTRLIST;
+			*size = 0;
+			return (NULL);
+		}
 		if (CHECK_FLAGS(flags, ATTR_WELL_KNOWN)) {
 			/* malformed nexthop detected by exclusion method */
 			*suberr = ERR_UPD_NETWORK;
@@ -221,10 +255,20 @@ attr_error(u_char *p, u_int16_t len, u_int8_t *suberr, u_int16_t *size)
 	case ATTR_MED:
 		if (attr_len != 4)
 			return (p);
+		if (attr->wflags & F_ATTR_MED) {
+			*suberr = ERR_UPD_ATTRLIST;
+			*size = 0;
+			return (NULL);
+		}
 		break;
 	case ATTR_LOCALPREF:
 		if (attr_len != 4)
 			return (p);
+		if (attr->wflags & F_ATTR_LOCALPREF) {
+			*suberr = ERR_UPD_ATTRLIST;
+			*size = 0;
+			return (NULL);
+		}
 		break;
 	case ATTR_ATOMIC_AGGREGATE:
 		if (attr_len != 0)
@@ -243,6 +287,12 @@ attr_error(u_char *p, u_int16_t len, u_int8_t *suberr, u_int16_t *size)
 			*suberr = ERR_UPD_ATTRFLAGS;
 			return (p);
 		}
+		TAILQ_FOREACH(a, &attr->others, attr_l)
+			if (type == a->type) {
+				*size = NULL;
+				*suberr = ERR_UPD_ATTRLIST;
+				return (NULL);
+			}
 		*suberr = ERR_UPD_OPTATTR;
 		return (p);
 	}
@@ -251,6 +301,22 @@ attr_error(u_char *p, u_int16_t len, u_int8_t *suberr, u_int16_t *size)
 	return (p);
 }
 #undef UPD_READ
+#undef WFLAG
+
+u_int8_t
+attr_missing(struct attr_flags *a, int ebgp)
+{
+	if ((a->wflags & F_ATTR_ORIGIN) == 0)
+		return ATTR_ORIGIN;
+	if ((a->wflags & F_ATTR_ASPATH) == 0)
+		return ATTR_ASPATH;
+	if ((a->wflags & F_ATTR_NEXTHOP) == 0)
+		return ATTR_NEXTHOP;
+	if (!ebgp)
+		if ((a->wflags & F_ATTR_LOCALPREF) == 0)
+			return ATTR_LOCALPREF;
+	return 0;
+}
 
 int
 attr_compare(struct attr_flags *a, struct attr_flags *b)
