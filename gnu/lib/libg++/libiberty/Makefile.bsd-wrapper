@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.1 1996/03/16 05:18:49 etheisen Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.2 1996/03/27 23:00:03 niklas Exp $
 
 LIB=		iberty
 CPPFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/../include -I$(.OBJDIR)
@@ -63,7 +63,7 @@ needed2.awk: functions.def
 	@grep '^DEFFUNC(' < $(.CURDIR)/functions.def \
 		| sed -e '/DEFFUNC/s|DEFFUNC.\([^,]*\).*|/\1/ { printf "#ifndef NEED_\1\\n#define NEED_\1\\n#endif\\n" }|' >>needed2.awk
 
-dummy.o: dummy.c functions.def
+dummy.o: dummy.c alloca-conf.h functions.def
 	@echo Generating $(.TARGET)
 	@$(CC) -c $(CFLAGS) $(CPPFLAGS) $(.IMPSRC) 2>/dev/null
 

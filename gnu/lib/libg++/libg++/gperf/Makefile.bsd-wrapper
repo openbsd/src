@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.2 1996/03/26 00:28:07 niklas Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.3 1996/03/27 23:00:01 niklas Exp $
 
 .PATH:		$(.CURDIR)/src
 
@@ -17,7 +17,7 @@ OBJDIR=	obj.${MACHINE}
 OBJDIR=	obj
 .endif
 
-STD_DIR=	../../libstdc++
+STD_DIR=	$(.CURDIR)/../../libstdc++
 
 STD_OBJDIR!=	if [ -d $(STD_DIR)/$(OBJDIR) ]; then \
 			echo $(STD_DIR)/$(OBJDIR); \
@@ -25,7 +25,7 @@ STD_OBJDIR!=	if [ -d $(STD_DIR)/$(OBJDIR) ]; then \
 			echo $(STD_DIR); \
 		fi
 
-GXX_DIR=	..
+GXX_DIR=	$(.CURDIR)/..
 
 GXX_OBJDIR!=	if [ -d $(GXX_DIR)/$(OBJDIR) ]; then \
 			echo $(GXX_DIR)/$(OBJDIR); \
@@ -34,7 +34,10 @@ GXX_OBJDIR!=	if [ -d $(GXX_DIR)/$(OBJDIR) ]; then \
 		fi
 
 LDFLAGS+=	-L$(STD_OBJDIR) -L$(GXX_OBJDIR)
-LDADD+=		-lg++
+
+# if DESTDIR is set, then -nostdlib will be fed to g++, which will prevent
+# -lg++ to be automatically included.  So add it here, no matter what.
+LDADD+=		-lg++ -lstdc++
 
 all:		$(STD_OBJDIR)/libstdc++.a $(GXX_OBJDIR)/libg++.a
 

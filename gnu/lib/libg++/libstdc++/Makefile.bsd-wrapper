@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.2 1996/03/26 00:29:27 niklas Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.3 1996/03/27 23:00:05 niklas Exp $
 
 LIB=		stdc++
 CXXFLAGS+=	-fno-implicit-templates -nostdinc++
@@ -14,10 +14,10 @@ SPEC_OBJS=	cstrmain.o cstrio.o fcomplex.o fcomio.o dcomplex.o dcomio.o \
 		ldcomplex.o ldcomio.o
 STD_OBJS=	$(STD_SRCS:N*.h:R:S/$/.o/g) $(SPEC_OBJS)
 
-IO_DIR=		../libio
-LIBIBERTY_DIR=	../libiberty
-STL_DIR=	./stl
-STD_DIR=	./std
+IO_DIR=		$(.CURDIR)/../libio
+LIBIBERTY_DIR=	$(.CURDIR)/../libiberty
+STL_DIR=	$(.CURDIR)/stl
+STD_DIR=	$(.CURDIR)/std
 
 .if defined(OBJMACHINE)
 OBJDIR=	obj.${MACHINE}
@@ -31,30 +31,41 @@ IO_OBJDIR!=	if [ -d $(IO_DIR)/$(OBJDIR) ]; then \
 			echo $(IO_DIR); \
 		fi
 
-IO_OBJS!=	if [ -f $(IO_OBJDIR)/iostream.list ]; then \
-			cat $(IO_OBJDIR)/iostream.list; \
-		else \
-			echo ' '; \
-		fi
-
-QIO_OBJS=	$(IO_OBJS:S/^/$(IO_DIR)\//g)
-
 LIBIBERTY_OBJDIR!=if [ -d $(LIBIBERTY_DIR)/$(OBJDIR) ]; then \
 			echo $(LIBIBERTY_DIR)/$(OBJDIR); \
 		else \
 			echo $(LIBIBERTY_DIR); \
 		fi
 
-LIBIBERTY_OBJS!=if [ -f $(LIBIBERTY_OBJDIR)/needed-list ]; then \
-			cat $(LIBIBERTY_OBJDIR)/needed-list; \
+# As we need to fill variables with contents of dynamically created files
+# we must first see to that they are really generated.  This is a hack that
+# ensures this.  The echo at the end is because make doesn't like command
+# substitutions to not generate output.
+PREREQ!=	test ! -f $(IO_OBJDIR)/iostream.list && \
+			(cd $(IO_DIR); \
+			 make -f Makefile.bsd-wrapper iostream.list); \
+		test ! -f $(LIBIBERTY_OBJDIR)/needed-list && \
+			(cd $(LIBIBERTY_DIR); \
+			 make -f Makefile.bsd-wrapper needed-list); \
+		echo 'Prerequistes made'
+
+
+IO_OBJS!=	cat $(IO_OBJDIR)/iostream.list
+QIO_OBJS=	$(IO_OBJS:S/^/$(IO_OBJDIR)\//g)
+
+LIBIBERTY_OBJS!=cat $(LIBIBERTY_OBJDIR)/needed-list
+# XXX why does strerror.o need to be hardwired?
+LIBIBERTY_OBJS+=strerror.o
+QLIBIBERTY_OBJS=$(LIBIBERTY_OBJS:S/^/$(LIBIBERTY_OBJDIR)\//g)
+
+STL_OBJDIR!=	if [ -d $(STL_DIR)/$(OBJDIR) ]; then \
+			echo $(STL_DIR)/$(OBJDIR); \
 		else \
-			echo ' '; \
+			echo $(STL_DIR); \
 		fi
 
-LIBIBERTY_OBJS+=strerror.o
-QLIBIBERTY_OBJS=$(LIBIBERTY_OBJS:S/^/$(LIBIBERTY_DIR)\//g)
-
-STL_OBJS=	$(STL_DIR)/tempbuf.o $(STL_DIR)/tree.o $(STL_DIR)/random.o
+STL_OBJS=	$(STL_OBJDIR)/tempbuf.o $(STL_OBJDIR)/tree.o \
+		$(STL_OBJDIR)/random.o
 
 SRCS=		$(STD_SRCS)
 
@@ -66,6 +77,15 @@ HEADERS=	cassert cctype cerrno cfloat ciso646 climits clocale cmath \
 		stdexcept typeinfo algorithm deque list map queue set stack \
 		vector utility functional iterator memory numeric
 
+G_CFG_H=	$(IO_OBJDIR)/_G_config.h
+
+all:		$(G_CFG_H)
+
+beforedepend:	$(G_CFG_H)
+
+$(G_CFG_H):
+	cd $(IO_DIR); make -f Makefile.bsd-wrapper _G_config.h
+
 clean:	_SUBDIRUSE
 	rm -f a.out [Ee]rrs mklog core *.core ${CLEANFILES}
 	rm -f lib${LIB}.a ${STD_OBJS}
@@ -74,7 +94,8 @@ clean:	_SUBDIRUSE
 	rm -f llib-l${LIB}.ln ${STD_OBJS:.o=.ln}
 
 afterinstall:
-	install -d -m 755 -o $(BINOWN) -g $(BINGRP) /usr/include/g++/std
+	install -d -m 755 -o $(BINOWN) -g $(BINGRP) \
+		$(DESTDIR)/usr/include/g++/std
 	@-cd $(.CURDIR); for i in $(HEADERS) *.h std/*.*; do \
 		cmp -s $$i $(DESTDIR)/usr/include/g++/$$i || \
 	install -c -o $(BINOWN) -g $(BINGRP) -m $(NONBINMODE) \
@@ -84,13 +105,13 @@ afterinstall:
 # Misc GNU overidden targets.
 #
 $(STL_OBJS) $(STL_OBJS:.o=.po) $(STL_OBJS:.o=.so):
-	cd $(.CURDIR)/$(STL_DIR); $(MAKE) -f Makefile.bsd-wrapper
+	cd $(STL_DIR); $(MAKE) -f Makefile.bsd-wrapper
 
 $(QIO_OBJS) $(QIO_OBJS:.o=.po) $(QIO_OBJS:.o=.so):
-	cd $(.CURDIR)/$(IO_DIR); $(MAKE) -f Makefile.bsd-wrapper
+	cd $(IO_DIR); $(MAKE) -f Makefile.bsd-wrapper
 
 $(QLIBIBERTY_OBJS) $(QLIBIBERTY_OBJS:.o=.po) $(QLIBIBERTY_OBJS:.o=.so):
-	cd $(.CURDIR)/$(LIBIBERTY_DIR); $(MAKE) -f Makefile.bsd-wrapper
+	cd $(LIBIBERTY_DIR); $(MAKE) -f Makefile.bsd-wrapper
 
 stdexcepti.o:	stdexcepti.cc $(.CURDIR)/std/stdexcept.h
 	@echo "${COMPILE.cc} -frtti ${.IMPSRC}"
