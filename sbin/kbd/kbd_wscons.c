@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd_wscons.c,v 1.17 2004/09/16 09:53:56 deraadt Exp $ */
+/*	$OpenBSD: kbd_wscons.c,v 1.18 2004/10/08 13:23:41 jaredy Exp $ */
 
 /*
  * Copyright (c) 2001 Mats O Jansson.  All rights reserved.
@@ -252,7 +252,8 @@ kbd_set(char *name, int verbose)
 
 	c = name;
 	b = buf;
-	while ((*c != '.') && (*c != '\0')) {
+	while ((*c != '.') && (*c != '\0') &&
+	    (b < buf + sizeof(buf) - 1)) {
 		*b++ = *c++;
 	}
 	*b = '\0';
@@ -268,7 +269,8 @@ kbd_set(char *name, int verbose)
 	while (*c == '.') {
 		b = buf;
 		c++;
-		while ((*c != '.') && (*c != '\0')) {
+		while ((*c != '.') && (*c != '\0') &&
+		    (b < buf + sizeof(buf) - 1)) {
 			*b++ = *c++;
 		}
 		*b = '\0';
