@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.46 1998/12/20 23:28:36 deraadt Exp $
+#	$OpenBSD: pnpdevs,v 1.47 1998/12/27 02:06:43 deraadt Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -381,6 +381,8 @@ com	MOT15F0 #Motorola VoiceSURFR 56K Modem
 pccom	MOT15F0 #Motorola VoiceSURFR 56K Modem
 com	CIR3000	#Cirrus Logic V43
 pccom	CIR3000	#Cirrus Logic V43
+com	USR2070	#U.S.Robotics Inc. Sportster 560
+pccom	USR2070	#U.S.Robotics Inc. Sportster 560
 
 # Ethernet:
 #le	BRI1001	#BOCALANcard COMBO	(PNP8200)
@@ -396,11 +398,13 @@ we	SMC8416 #SMC EtherEZ
 #	CSC0003 #AW35/pro MPU
 #	CSC0010	#AW35/Pro CTRL
 #	OPT0002	#OPTi Audio 16 MPU401
+#gus	GRV0000	#Advanced Gravis InterWave Audio
 #wdc	AZT0500 #AZT1008 PnP SOUND DEVICE (IDE CDROM DISAB)
 #wdc	YMH002F #OPL3-SA3/X Sound Board
 joy	@P@1001	#ALS100+
 joy	AZT3001	#AZT1008 PnP SOUND DEVICE (GAME PORT)
 joy	CSC0001	#AW35/Pro gameport
+joy	CSC0101	#On Board Audio Chip
 joy	CTL7001	#Creative SB16 PnP joy
 joy	CTL7002	#Creative SB AWE64 PnP
 joy	ESS0001	#ESS ES1869 Plug and Play AudioD
@@ -410,6 +414,7 @@ sb	ADS7150	#AD1815
 sb	ADS7180	#AD1816
 sb	AZT1008	#AZT1008 PnP SOUND DEVICE (AUDIO)
 sb	CSC0000	#AW35/Pro sound emulation (both SB *and* WSS, somewhat weird)
+sb	CSC0100	#On Board Audio Chip
 sb	CTL0001	#Creative ViBRA16C PnP Audio
 sb	CTL0031	#SB AWE32
 sb	CTL0041	#SB16 PnP (CT4131)
@@ -423,4 +428,3 @@ sb	OPT9310	#OPTi Audio 16 (possibly a wss instead of sb)
 ym	@@@1001 #ALS100+
 ym	YMH0021	#OPL3-SA2 Sound Board
 ym	YMH0021 #OPL3-SA2 Sound Board
-#gus	GRV0000	#Advanced Gravis InterWave Audio
