@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmail.c,v 1.15 2003/06/02 23:32:09 millert Exp $	*/
+/*	$OpenBSD: rmail.c,v 1.16 2003/06/10 21:15:18 millert Exp $	*/
 /*	$NetBSD: rmail.c,v 1.8 1995/09/07 06:51:50 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rmail.c	8.3 (Berkeley) 5/15/95";
 #else
-static char rcsid[] = "$OpenBSD: rmail.c,v 1.15 2003/06/02 23:32:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: rmail.c,v 1.16 2003/06/10 21:15:18 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -237,8 +237,9 @@ main(int argc, char *argv[])
 
 	i = 0;
 	args[i++] = _PATH_SENDMAIL;	/* Build sendmail's argument list. */
+	args[i++] = "-G";		/* Relay submission. */
 	args[i++] = "-oee";		/* No errors, just status. */
-	args[i++] = "-odq";		/* Queue it, don't try to deliver. */
+	args[i++] = "-odi";		/* Deliver in foreground. */
 	args[i++] = "-oi";		/* Ignore '.' on a line by itself. */
 
 	/* set from system and protocol used */
