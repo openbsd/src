@@ -1,4 +1,4 @@
-/* $OpenBSD: ncr.c,v 1.8 2001/02/11 06:34:38 hugh Exp $ */
+/* $OpenBSD: ncr.c,v 1.9 2001/02/15 13:15:03 hugh Exp $ */
 /*	$NetBSD: ncr.c,v 1.32 2000/06/25 16:00:43 ragge Exp $	*/
 
 /*-
@@ -389,7 +389,7 @@ si_dma_go(arg)
 	 */
 	if (dh->dh_flags & SIDH_OUT) {
 		vsbus_copyfromproc(dh->dh_proc, dh->dh_addr,
-			    sc->ncr_addr, dh->dh_len);
+		    sc->ncr_addr + sc->ncr_off, dh->dh_len);
 		bus_space_write_1(sc->sc_regt, sc->sc_regh,
 		    sc->ncr_dmadir, 0);
 	} else {
@@ -465,7 +465,8 @@ si_dma_stop(ncr_sc)
 	}
 	if (count == 0) {
 		if (((dh->dh_flags & SIDH_OUT) == 0)) {
-			vsbus_copytoproc(dh->dh_proc, sc->ncr_addr,
+			vsbus_copytoproc(dh->dh_proc,
+			    sc->ncr_addr + sc->ncr_off,
 			    dh->dh_addr, dh->dh_len);
 		}
 		ncr_sc->sc_dataptr += dh->dh_len;
