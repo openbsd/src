@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.9 1996/06/29 21:04:21 tholo Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.10 1996/06/29 21:07:52 tholo Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -205,7 +205,7 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	struct proc *p;
 {
 	int error, level, inthostid;
-	extern char ostype[], osrelease[], version[];
+	extern char ostype[], osrelease[], osversion[], version[];
 
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1 && !(name[0] == KERN_PROC || name[0] == KERN_PROF))
