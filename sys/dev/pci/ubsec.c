@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.127 2003/06/04 14:04:58 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.128 2003/08/01 17:55:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -139,19 +139,14 @@ const struct pci_matchid ubsec_devices[] = {
 };
 
 int
-ubsec_probe(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+ubsec_probe(struct device *parent, void *match, void *aux)
 {
 	return (pci_matchbyid((struct pci_attach_args *)aux, ubsec_devices,
 	    sizeof(ubsec_devices)/sizeof(ubsec_devices[0])));
 }
 
 void
-ubsec_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ubsec_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ubsec_softc *sc = (struct ubsec_softc *)self;
 	struct pci_attach_args *pa = aux;
@@ -347,8 +342,7 @@ skip_rng:
  * UBSEC Interrupt routine
  */
 int
-ubsec_intr(arg)
-	void *arg;
+ubsec_intr(void *arg)
 {
 	struct ubsec_softc *sc = arg;
 	volatile u_int32_t stat;
@@ -457,8 +451,7 @@ ubsec_intr(arg)
  *		  It is assumed that the caller set splnet()
  */
 void
-ubsec_feed(sc)
-	struct ubsec_softc *sc;
+ubsec_feed(struct ubsec_softc *sc)
 {
 #ifdef UBSEC_DEBUG
 	static int max;
@@ -530,7 +523,8 @@ ubsec_feed(sc)
 
 feed1:
 	while (!SIMPLEQ_EMPTY(&sc->sc_queue)) {
-		if ((stat = READ_REG(sc, BS_STAT)) & (BS_STAT_MCR1_FULL | BS_STAT_DMAERR)) {
+		if ((stat = READ_REG(sc, BS_STAT)) &
+		    (BS_STAT_MCR1_FULL | BS_STAT_DMAERR)) {
 			if(stat & BS_STAT_DMAERR) {
 				ubsec_totalreset(sc);
 				ubsecstats.hst_dmaerr++;
@@ -567,9 +561,7 @@ feed1:
  * id on successful allocation.
  */
 int
-ubsec_newsession(sidp, cri)
-	u_int32_t *sidp;
-	struct cryptoini *cri;
+ubsec_newsession(u_int32_t *sidp, struct cryptoini *cri)
 {
 	struct cryptoini *c, *encini = NULL, *macini = NULL;
 	struct ubsec_softc *sc = NULL;
@@ -715,8 +707,7 @@ ubsec_newsession(sidp, cri)
  * Deallocate a session.
  */
 int
-ubsec_freesession(tid)
-	u_int64_t tid;
+ubsec_freesession(u_int64_t tid)
 {
 	struct ubsec_softc *sc;
 	int card, session;
@@ -732,8 +723,7 @@ ubsec_freesession(tid)
 }
 
 int
-ubsec_process(crp)
-	struct cryptop *crp;
+ubsec_process(struct cryptop *crp)
 {
 	struct ubsec_q *q = NULL;
 	int card, err = 0, i, j, s, nicealign;
@@ -1018,7 +1008,8 @@ ubsec_process(crp)
 	if (enccrd == NULL && maccrd != NULL) {
 		dmap->d_dma->d_mcr.mcr_opktbuf.pb_addr = 0;
 		dmap->d_dma->d_mcr.mcr_opktbuf.pb_len = 0;
-		dmap->d_dma->d_mcr.mcr_opktbuf.pb_next = htole32(dmap->d_alloc.dma_paddr +
+		dmap->d_dma->d_mcr.mcr_opktbuf.pb_next =
+		    htole32(dmap->d_alloc.dma_paddr +
 		    offsetof(struct ubsec_dmachunk, d_macbuf[0]));
 #ifdef UBSEC_DEBUG
 		printf("opkt: %x %x %x\n",
@@ -1237,9 +1228,7 @@ errout2:
 }
 
 void
-ubsec_callback(sc, q)
-	struct ubsec_softc *sc;
-	struct ubsec_q *q;
+ubsec_callback(struct ubsec_softc *sc, struct ubsec_q *q)
 {
 	struct cryptop *crp = (struct cryptop *)q->q_crp;
 	struct cryptodesc *crd;
@@ -1304,9 +1293,7 @@ ubsec_callback(sc, q)
 }
 
 void
-ubsec_mcopy(srcm, dstm, hoffset, toffset)
-	struct mbuf *srcm, *dstm;
-	int hoffset, toffset;
+ubsec_mcopy(struct mbuf *srcm, struct mbuf *dstm, int hoffset, int toffset)
 {
 	int i, j, dlen, slen;
 	caddr_t dptr, sptr;
@@ -1346,8 +1333,7 @@ ubsec_mcopy(srcm, dstm, hoffset, toffset)
  * feed the key generator, must be called at splnet() or higher.
  */
 void
-ubsec_feed2(sc)
-	struct ubsec_softc *sc;
+ubsec_feed2(struct ubsec_softc *sc)
 {
 	struct ubsec_q2 *q;
 
@@ -1374,9 +1360,7 @@ ubsec_feed2(sc)
  * Callback for handling random numbers
  */
 void
-ubsec_callback2(sc, q)
-	struct ubsec_softc *sc;
-	struct ubsec_q2 *q;
+ubsec_callback2(struct ubsec_softc *sc, struct ubsec_q2 *q)
 {
 	struct cryptkop *krp;
 	struct ubsec_ctx_keyop *ctx;
@@ -1481,8 +1465,7 @@ ubsec_callback2(sc, q)
 
 #ifndef UBSEC_NO_RNG
 void
-ubsec_rng(vsc)
-	void *vsc;
+ubsec_rng(void *vsc)
 {
 	struct ubsec_softc *sc = vsc;
 	struct ubsec_q2_rng *rng = &sc->sc_rng;
@@ -1538,11 +1521,8 @@ out:
 #endif /* UBSEC_NO_RNG */
 
 int
-ubsec_dma_malloc(sc, size, dma, mapflags)
-	struct ubsec_softc *sc;
-	bus_size_t size;
-	struct ubsec_dma_alloc *dma;
-	int mapflags;
+ubsec_dma_malloc(struct ubsec_softc *sc, bus_size_t size,
+    struct ubsec_dma_alloc *dma, int mapflags)
 {
 	int r;
 
@@ -1578,9 +1558,7 @@ fail_0:
 }
 
 void
-ubsec_dma_free(sc, dma)
-	struct ubsec_softc *sc;
-	struct ubsec_dma_alloc *dma;
+ubsec_dma_free(struct ubsec_softc *sc, struct ubsec_dma_alloc *dma)
 {
 	bus_dmamap_unload(sc->sc_dmat, dma->dma_map);
 	bus_dmamem_unmap(sc->sc_dmat, dma->dma_vaddr, dma->dma_size);
@@ -1593,8 +1571,7 @@ ubsec_dma_free(sc, dma)
  * from the reset (i.e. initial values are assigned elsewhere).
  */
 void
-ubsec_reset_board(sc)
-	struct ubsec_softc *sc;
+ubsec_reset_board(struct ubsec_softc *sc)
 {
     volatile u_int32_t ctrl;
 
@@ -1612,8 +1589,7 @@ ubsec_reset_board(sc)
  * Init Broadcom registers
  */
 void
-ubsec_init_board(sc)
-	struct ubsec_softc *sc;
+ubsec_init_board(struct ubsec_softc *sc)
 {
 	u_int32_t ctrl;
 
@@ -1636,8 +1612,7 @@ ubsec_init_board(sc)
  * Init Broadcom PCI registers
  */
 void
-ubsec_init_pciregs(pa)
-	struct pci_attach_args *pa;
+ubsec_init_pciregs(struct pci_attach_args *pa)
 {
 	pci_chipset_tag_t pc = pa->pa_pc;
 	u_int32_t misc;
@@ -1655,11 +1630,10 @@ ubsec_init_pciregs(pa)
 
 /*
  * Clean up after a chip crash.
- * It is assumed that the caller in splnet()
+ * It is assumed that the caller is in splnet()
  */
 void
-ubsec_cleanchip(sc)
-	struct ubsec_softc *sc;
+ubsec_cleanchip(struct ubsec_softc *sc)
 {
 	struct ubsec_q *q;
 
@@ -1722,8 +1696,7 @@ ubsec_free_q(struct ubsec_softc *sc, struct ubsec_q *q)
  * It is assumed that the caller is in splnet()
  */
 void
-ubsec_totalreset(sc)
-	struct ubsec_softc *sc;
+ubsec_totalreset(struct ubsec_softc *sc)
 {
 	ubsec_reset_board(sc);
 	ubsec_init_board(sc);
@@ -1731,8 +1704,7 @@ ubsec_totalreset(sc)
 }
 
 int
-ubsec_dmamap_aligned(map)
-	bus_dmamap_t map;
+ubsec_dmamap_aligned(bus_dmamap_t map)
 {
 	int i;
 
@@ -1747,8 +1719,7 @@ ubsec_dmamap_aligned(map)
 }
 
 struct ubsec_softc *
-ubsec_kfind(krp)
-	struct cryptkop *krp;
+ubsec_kfind(struct cryptkop *krp)
 {
 	struct ubsec_softc *sc;
 	int i;
@@ -1764,9 +1735,7 @@ ubsec_kfind(krp)
 }
 
 void
-ubsec_kfree(sc, q)
-	struct ubsec_softc *sc;
-	struct ubsec_q2 *q;
+ubsec_kfree(struct ubsec_softc *sc, struct ubsec_q2 *q)
 {
 	switch (q->q_type) {
 	case UBS_CTXOP_MODEXP: {
@@ -1799,8 +1768,7 @@ ubsec_kfree(sc, q)
 }
 
 int
-ubsec_kprocess(krp)
-	struct cryptkop *krp;
+ubsec_kprocess(struct cryptkop *krp)
 {
 	struct ubsec_softc *sc;
 	int r;
@@ -1842,9 +1810,7 @@ ubsec_kprocess(krp)
  * Start computation of cr[C] = (cr[M] ^ cr[E]) mod cr[N] (sw normalization)
  */
 int
-ubsec_kprocess_modexp_sw(sc, krp)
-	struct ubsec_softc *sc;
-	struct cryptkop *krp;
+ubsec_kprocess_modexp_sw(struct ubsec_softc *sc, struct cryptkop *krp)
 {
 	struct ubsec_q2_modexp *me;
 	struct ubsec_mcr *mcr;
@@ -2043,9 +2009,7 @@ errout:
  * Start computation of cr[C] = (cr[M] ^ cr[E]) mod cr[N] (hw normalization)
  */
 int
-ubsec_kprocess_modexp_hw(sc, krp)
-	struct ubsec_softc *sc;
-	struct cryptkop *krp;
+ubsec_kprocess_modexp_hw(struct ubsec_softc *sc, struct cryptkop *krp)
 {
 	struct ubsec_q2_modexp *me;
 	struct ubsec_mcr *mcr;
@@ -2241,9 +2205,7 @@ errout:
 }
 
 int
-ubsec_kprocess_rsapriv(sc, krp)
-	struct ubsec_softc *sc;
-	struct cryptkop *krp;
+ubsec_kprocess_rsapriv(struct ubsec_softc *sc, struct cryptkop *krp)
 {
 	struct ubsec_q2_rsapriv *rp = NULL;
 	struct ubsec_mcr *mcr;
@@ -2488,8 +2450,7 @@ ubsec_dump_mcr(struct ubsec_mcr *mcr)
  * Return the number of significant bits of a big number.
  */
 int
-ubsec_ksigbits(cr)
-	struct crparam *cr;
+ubsec_ksigbits(struct crparam *cr)
 {
 	u_int plen = (cr->crp_nbits + 7) / 8;
 	int i, sig = plen * 8;
@@ -2510,9 +2471,8 @@ ubsec_ksigbits(cr)
 }
 
 void
-ubsec_kshift_r(shiftbits, src, srcbits, dst, dstbits)
-	u_int shiftbits, srcbits, dstbits;
-	u_int8_t *src, *dst;
+ubsec_kshift_r(u_int shiftbits, u_int8_t *src, u_int srcbits,
+    u_int8_t *dst, u_int dstbits)
 {
 	u_int slen, dlen;
 	int i, si, di, n;
@@ -2545,9 +2505,8 @@ ubsec_kshift_r(shiftbits, src, srcbits, dst, dstbits)
 }
 
 void
-ubsec_kshift_l(shiftbits, src, srcbits, dst, dstbits)
-	u_int shiftbits, srcbits, dstbits;
-	u_int8_t *src, *dst;
+ubsec_kshift_l(u_int shiftbits, u_int8_t *src, u_int srcbits,
+    u_int8_t *dst, u_int dstbits)
 {
 	int slen, dlen, i, n;
 
