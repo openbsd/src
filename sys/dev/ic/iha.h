@@ -1,8 +1,8 @@
-/*	$OpenBSD: iha.h,v 1.5 2001/07/13 03:24:20 krw Exp $ */
+/*	$OpenBSD: iha.h,v 1.6 2001/07/13 04:27:09 krw Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
- * Copyright (c) 2000 Ken Westerback
+ * Copyright (c) 2000-2001 Ken Westerback
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -64,7 +64,7 @@ struct iha_sg_element {
 
 /*
  * iha_scsi_req_q - SCSI Request structure used by the
- *		    Tulip (aka inic-950). Note that 32
+ *		    Tulip (aka inic-940/950). Note that 32
  *		    bit pointers and ints are assumed!
  */
 
@@ -208,7 +208,7 @@ struct iha_nvram_scsi {
 };
 
 /*
- * Tulip (aka ini-950) Serial EEPROM Layout
+ * Tulip (aka ini-940/950) Serial EEPROM Layout
  *
  */
 struct iha_nvram {
@@ -245,7 +245,7 @@ struct iha_nvram {
 };
 
 /*
- *  Tulip (aka inic-950) PCI Configuration Space Initio Specific Registers
+ *  Tulip (aka inic-940/950) PCI Configuration Space Initio Specific Registers
  *
  *  Offsets 0x00 through 0x3f are the standard PCI Configuration Header
  *  registers.
@@ -256,7 +256,7 @@ struct iha_nvram {
  *  Registers 0x50 and 0x52 always read as 0.
  *
  *  The register offset names and associated bit field names are taken
- *  from the Init-950 Data Sheet, Version 2.1, March 1997
+ *  from the Inic-950 Data Sheet, Version 2.1, March 1997
  */
 #define TUL_GCTRL0	0x54	       /* R/W Global Control 0		     */
 #define	    EEPRG	    0x04       /*     Enable EEPROM Programming	     */
@@ -277,7 +277,7 @@ struct iha_nvram {
 #define	    NVRDI	    0x01       /*     NVRAM Read  Data		     */
 
 /*
- *   Tulip (aka inic-950) SCSI Registers
+ *   Tulip (aka inic-940/950) SCSI Registers
  */
 #define TUL_STCNT0	0x80	       /* R/W 24 bit SCSI Xfer Count	     */
 #define	    TCNT	    0x00ffffff /*     SCSI Xfer Transfer Count	     */
@@ -381,7 +381,7 @@ struct iha_nvram {
 #define TUL_STEST1	0x93	       /* R/W Test1			     */
 
 /*
- *   Tulip (aka inic-950) DMA Registers
+ *   Tulip (aka inic-940/950) DMA Registers
  */
 #define TUL_DXPA	0xC0	       /* R/W DMA      Xfer Physcl Addr	 0-31*/
 #define TUL_DXPAE	0xC4	       /* R/W DMA      Xfer Physcl Addr 32-63*/

@@ -1,8 +1,8 @@
-/*	$OpenBSD: iha.c,v 1.7 2001/07/13 03:24:20 krw Exp $ */
+/*	$OpenBSD: iha.c,v 1.8 2001/07/13 04:27:09 krw Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
- * Copyright (c) 2000 Ken Westerback
+ * Copyright (c) 2000-2001 Ken Westerback
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -91,14 +91,12 @@ static const u_int8_t iha_rate_tbl[8] = {
 	62	/* 250ns, 4M	  */
 };
 
-static struct iha_nvram iha_nvram;
-
 u_int8_t iha_data_over_run __P((struct iha_scsi_req_q *));
 void iha_push_sense_request __P((struct iha_softc *, struct iha_scsi_req_q *));
 void iha_timeout __P((void *));
 int  iha_alloc_scbs __P((struct iha_softc *));
-void iha_read_eeprom __P((bus_space_tag_t, bus_space_handle_t));
-int  iha_se2_rd_all __P((bus_space_tag_t, bus_space_handle_t));
+void iha_read_eeprom __P((bus_space_tag_t, bus_space_handle_t,
+			     struct iha_nvram *));
 void iha_se2_instr __P((bus_space_tag_t, bus_space_handle_t, u_int8_t));
 u_int16_t iha_se2_rd __P((bus_space_tag_t, bus_space_handle_t, u_int8_t));
 void iha_reset_scsi_bus __P((struct iha_softc *));
@@ -336,23 +334,24 @@ iha_scsi_cmd(xs)
 }
 
 /*
- * iha_init_tulip - initialize the inic-950 card and the rest of the
- *		    IHA_SOFTC structure supplied
+ * iha_init_tulip - initialize the inic-940/950 card and the rest of the
+ *		    iha_softc structure supplied
  */
 int
 iha_init_tulip(sc)
 	struct iha_softc *sc;
 {
 	struct iha_scsi_req_q *pScb;
-	bus_space_handle_t ioh;
 	struct iha_nvram_scsi *pScsi;
+	bus_space_handle_t ioh;
+	struct iha_nvram iha_nvram;
 	bus_space_tag_t iot;
 	int i, error;
 
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 
-	iha_read_eeprom(iot, ioh);
+	iha_read_eeprom(iot, ioh, &iha_nvram);
 
 	pScsi = &iha_nvram.NVM_Scsi[0];
 
@@ -367,7 +366,7 @@ iha_init_tulip(sc)
 	sc->sc_link.adapter_buswidth = pScsi->NVM_SCSI_Targets;
 
 	/*
-	 * fill in the rest of the IHA_SOFTC fields
+	 * fill in the rest of the iha_softc fields
 	 */
 	sc->HCS_Semaph	  = ~SEMAPH_IN_MAIN;
 	sc->HCS_JSStatus0 = 0;
@@ -2595,7 +2594,7 @@ iha_print_info(sc, target)
 
 
 /*
- * iha_alloc_scbs - allocate and map the SCB's for the supplied IHA_SOFTC
+ * iha_alloc_scbs - allocate and map the SCB's for the supplied iha_softc
  */
 int
 iha_alloc_scbs(sc)
@@ -2651,27 +2650,43 @@ iha_alloc_scbs(sc)
 }
 
 /*
- * iha_read_eeprom - read Serial EEPROM value & set to defaults
- *		     if required. XXX - Writing does NOT work!
+ * iha_read_eeprom - read contents of serial EEPROM into iha_nvram pointed at
+ *                                        by parameter nvram.
  */
 void
-iha_read_eeprom(iot, ioh)
+iha_read_eeprom(iot, ioh, nvram)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
+	struct iha_nvram *nvram;
 {
-	u_int8_t gctrl;
+	u_int32_t chksum;
+	u_int16_t *np;
+	u_int8_t gctrl, addr;
+
+	const int chksum_addr = offsetof(struct iha_nvram, NVM_CheckSum) / 2;
 
 	/* Enable EEProm programming */
 	gctrl = bus_space_read_1(iot, ioh, TUL_GCTRL0) | EEPRG;
 	bus_space_write_1(iot, ioh, TUL_GCTRL0, gctrl);
 
 	/* Read EEProm */
-	if (iha_se2_rd_all(iot, ioh) == 0)
-		panic("iha: could not read EEPROM\n");
+	np = (u_int16_t *)nvram;
+	for (addr=0, chksum=0; addr < chksum_addr; addr++, np++) {
+		*np = iha_se2_rd(iot, ioh, addr);
+		chksum += *np;
+	}
+
+	chksum &= 0x0000ffff;
+	nvram->NVM_CheckSum = iha_se2_rd(iot, ioh, chksum_addr);
 
 	/* Disable EEProm programming */
 	gctrl = bus_space_read_1(iot, ioh, TUL_GCTRL0) & ~EEPRG;
 	bus_space_write_1(iot, ioh, TUL_GCTRL0, gctrl);
+
+	if ((nvram->NVM_Signature != SIGNATURE)
+	    ||
+	    (nvram->NVM_CheckSum  != chksum))
+		panic("iha: invalid EEPROM,  bad signature or checksum\n");
 }
 
 /*
@@ -2711,34 +2726,6 @@ iha_se2_rd(iot, ioh, addr)
 	DELAY(5);
 
 	return (readWord);
-}
-
-/*
- * iha_se2_rd_all - Read SCSI H/A config parameters from serial EEPROM
- *		    into iha_nvram variable.
- */
-int
-iha_se2_rd_all(iot, ioh)
-	bus_space_tag_t	   iot;
-	bus_space_handle_t ioh;
-{
-	u_int16_t *np;
-	u_int32_t chksum;
-	u_int8_t i;
-
-	np = (u_int16_t *)&iha_nvram;
-
-	for (i = 0, chksum = 0; i < 31; i++, np++) {
-		*np = iha_se2_rd(iot, ioh, i);
-		chksum += *np;
-	}
-	*np = iha_se2_rd(iot, ioh, 31); /* read checksum from eeprom */
-
-	chksum &= 0x0000ffff; /* calculated checksum is lower 16 bits of sum */
-
-	return (iha_nvram.NVM_Signature == SIGNATURE)
-	       &&
-	       (iha_nvram.NVM_CheckSum	== chksum);
 }
 
 /*
