@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.h,v 1.5 1997/02/14 19:24:04 kstailey Exp $	*/
+/*	$OpenBSD: machdep.h,v 1.6 1997/02/14 23:50:17 kstailey Exp $	*/
 /*
  * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1993 Adam Glass
@@ -45,8 +45,13 @@
 
 #ifdef _KERNEL
 
-#define	FC_CONTROL 3		/* sun control space
+#define	FC_CONTROL	3	/* sun control space
 				   XXX HP uses FC_PURGE instead */
+
+#define	SPL1		(PSL_S | PSL_IPL1); /* used in locore.s
+					     * XXX mvme68k does this in
+					     * genassym.c
+					     */
 
 /* Prototypes... */
 

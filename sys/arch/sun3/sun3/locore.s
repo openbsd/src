@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.13 1997/02/14 18:15:23 kstailey Exp $	*/
+/*	$OpenBSD: locore.s,v 1.14 1997/02/14 23:50:20 kstailey Exp $	*/
 /*	$NetBSD: locore.s,v 1.40 1996/11/06 20:19:54 cgd Exp $	*/
 
 /*
@@ -696,7 +696,6 @@ _intrcnt:
 _eintrcnt:
 	.text
 
-#if 0
 /*
  * Emulation of VAX REI instruction.
  *
@@ -756,95 +755,7 @@ Laststkadj:
 	movl	sp@,sp			| and our SP
 Ldorte:
 	rte				| real return
-#else
-/*
- * Emulation of VAX REI instruction.
- *
- * This code deals with checking for and servicing ASTs
- * (profiling, scheduling) and software interrupts (network, softclock).
- * We check for ASTs first, just like the VAX.  To avoid excess overhead
- * the T_ASTFLT handling code will also check for software interrupts so we
- * do not have to do it here.  After identifing that we need an AST we
- * drop the IPL to allow device interrupts.
- *
- * This code is complicated by the fact that sendsig may have been called
- * necessitating a stack cleanup.
- */
-	.comm	_ssir,1
-	.globl	_astpending
-	.globl	rei
-rei:
-#ifdef	DIAGNOSTIC
-	tstl	_panicstr		| have we paniced?
-	jne	Ldorte			| yes, do not make matters worse
-#endif
-	tstl	_astpending		| AST pending?
-	jeq	Lchksir			| no, go check for SIR
-Lrei1:
-	btst	#5,sp@			| yes, are we returning to user mode?
-	jne	Lchksir			| no, go check for SIR
-	movw	#PSL_LOWIPL,sr		| lower SPL
-	clrl	sp@-			| stack adjust
-	moveml	#0xFFFF,sp@-		| save all registers
-	movl	usp,a1			| including
-	movl	a1,sp@(FR_SP)		|    the users SP
-Lrei2:
-	clrl	sp@-			| VA == none
-	clrl	sp@-			| code == none
-	movl	#T_ASTFLT,sp@-		| type == async system trap
-	jbsr	_trap			| go handle it
-	lea	sp@(12),sp		| pop value args
-	movl	sp@(FR_SP),a0		| restore user SP
-	movl	a0,usp			|   from save area
-	movw	sp@(FR_ADJ),d0		| need to adjust stack?
-	jne	Laststkadj		| yes, go to it
-	moveml	sp@+,#0x7FFF		| no, restore most user regs
-	addql	#8,sp			| toss SP and stack adjust
-	rte				| and do real RTE
-Laststkadj:
-	lea	sp@(FR_HW),a1		| pointer to HW frame
-	addql	#8,a1			| source pointer
-	movl	a1,a0			| source
-	addw	d0,a0			|  + hole size = dest pointer
-	movl	a1@-,a0@-		| copy
-	movl	a1@-,a0@-		|  8 bytes
-	movl	a0,sp@(FR_SP)		| new SSP
-	moveml	sp@+,#0x7FFF		| restore user registers
-	movl	sp@,sp			| and our SP
-	rte				| and do real RTE
-Lchksir:
-	tstb	_ssir			| SIR pending?
-	jeq	Ldorte			| no, all done
-	movl	d0,sp@-			| need a scratch register
-	movw	sp@(4),d0		| get SR
-	andw	#PSL_IPL7,d0		| mask all but IPL
-	jne	Lnosir			| came from interrupt, no can do
-	movl	sp@+,d0			| restore scratch register
-Lgotsir:
-	movw	#SPL1,sr		| prevent others from servicing int
-	tstb	_ssir			| too late?
-	jeq	Ldorte			| yes, oh well...
-	clrl	sp@-			| stack adjust
-	moveml	#0xFFFF,sp@-		| save all registers
-	movl	usp,a1			| including
-	movl	a1,sp@(FR_SP)		|    the users SP
-Lsir1:
-	clrl	sp@-			| VA == none
-	clrl	sp@-			| code == none
-	movl	#T_SSIR,sp@-		| type == software interrupt
-	jbsr	_trap			| go handle it
-	lea	sp@(12),sp		| pop value args
-	movl	sp@(FR_SP),a0		| restore
-	movl	a0,usp			|   user SP
-	moveml	sp@+,#0x7FFF		| and all remaining registers
-	addql	#8,sp			| pop SP and stack adjust
-	rte
-Lnosir:
-	movl	sp@+,d0			| restore scratch register
-Ldorte:
-	rte				| real return
 
-#endif
 /*
  * Initialization is at the beginning of this file, because the
  * kernel entry point needs to be at zero for compatibility with
@@ -1294,26 +1205,6 @@ ENTRY(_spl)
 ENTRY(getsr)
 	moveq	#0, d0
 	movw	sr, d0
-	rts
-
-/*
- * Set processor priority level calls.  Most are implemented with
- * inline asm expansions.  However, spl0 requires special handling
- * as we need to check for our emulated software interrupts.
- */
-
-ENTRY(spl0)
-	moveq	#0,d0
-	movw	sr,d0			| get old SR for return
-	movw	#PSL_LOWIPL,sr		| restore new SR
-	tstb	_ssir			| software interrupt pending?
-	jeq	Lspldone		| no, all done
-	subql	#4,sp			| make room for RTE frame
-	movl	sp@(4),sp@(2)		| position return address
-	clrw	sp@(6)			| set frame type 0
-	movw	#PSL_LOWIPL,sp@		| and new SR
-	jra	Lgotsir			| go handle it
-Lspldone:
 	rts
 
 ENTRY(_insque)

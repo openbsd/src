@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.12 1997/02/14 19:24:05 kstailey Exp $	*/
+/*	$OpenBSD: param.h,v 1.13 1997/02/14 23:50:18 kstailey Exp $	*/
 /*	$NetBSD: param.h,v 1.34 1996/03/04 05:04:40 cgd Exp $	*/
 
 /*
@@ -150,7 +150,7 @@
 #define sun3_ptob(x)		((unsigned)(x) << PGSHIFT)
 
 /*
- * spl functions; all but spl0 are done in-line
+ * spl functions; all are done in-line
  */
 
 #include <machine/psl.h>
@@ -171,6 +171,7 @@
  * have no need to check for any simulated interrupts, etc.
  */
 
+#define spl0()  _spl(PSL_S|PSL_IPL0)
 #define spl1()  _spl(PSL_S|PSL_IPL1)
 #define spl2()  _spl(PSL_S|PSL_IPL2)
 #define spl3()  _spl(PSL_S|PSL_IPL3)
@@ -178,6 +179,7 @@
 #define spl5()  _spl(PSL_S|PSL_IPL5)
 #define spl6()  _spl(PSL_S|PSL_IPL6)
 #define spl7()  _spl(PSL_S|PSL_IPL7)
+#define splx(x)  _spl(x)
 
 /* IPL used by soft interrupts: netintr(), softclock() */
 #define splsoftclock()  spl1()
@@ -205,11 +207,6 @@
 /* Block out all interrupts (except NMI of course). */
 #define splhigh()       spl7()
 #define splsched()      spl7()
-
-void spl0 __P((void));		/* XXX where should this go? */
-
-/* watch out for side effects */
-#define	splx(s)		(s & PSL_IPL ? _spl(s) : spl0())
 
 /* Get current sr value (debug, etc.) */
 extern int getsr __P((void));
