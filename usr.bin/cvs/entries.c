@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.9 2004/08/03 14:48:02 jfb Exp $	*/
+/*	$OpenBSD: entries.c,v 1.10 2004/08/04 15:39:10 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -37,7 +37,7 @@
 #include "cvs.h"
 
 
-#define CVS_ENTRIES_NFIELDS  5
+#define CVS_ENTRIES_NFIELDS  6
 #define CVS_ENTRIES_DELIM   '/'
 
 
@@ -308,48 +308,16 @@ struct cvs_ent*
 cvs_ent_parse(const char *entry)
 {
 	int i;
-	char *fields[CVS_ENTRIES_NFIELDS], *sp, *dp;
+	char *fields[CVS_ENTRIES_NFIELDS], *buf, *sp, *dp;
 	struct cvs_ent *entp;
 
-	entp = (struct cvs_ent *)malloc(sizeof(*entp));
-	if (entp == NULL) {
-		cvs_log(LP_ERRNO, "failed to allocate CVS entry");
-		return (NULL);
-	}
-	memset(entp, 0, sizeof(*entp));
-
-	entp->ce_rev = rcsnum_alloc();
-	if (entp->ce_rev == NULL) {
-		free(entp);
+	buf = strdup(entry);
+	if (buf == NULL) {
+		cvs_log(LP_ERRNO, "failed to allocate entry copy");
 		return (NULL);
 	}
 
-	entp->ce_line = strdup(entry);
-	if (entp->ce_line == NULL) {
-		cvs_ent_free(entp);
-		return (NULL);
-	}
-
-	entp->ce_buf = strdup(entry);
-	if (entp->ce_buf == NULL) {
-		cvs_ent_free(entp);
-		return (NULL);
-	}
-	sp = entp->ce_buf;
-
-	if (*sp == CVS_ENTRIES_DELIM)
-		entp->ce_type = CVS_ENT_FILE;
-	else if (*sp == 'D') {
-		entp->ce_type = CVS_ENT_DIR;
-		sp++;
-	}
-	else {
-		/* unknown entry, ignore for future expansion */
-		entp->ce_type = CVS_ENT_NONE;
-		sp++;
-	}
-
-	sp++;
+	sp = buf;
 	i = 0;
 	do {
 		dp = strchr(sp, CVS_ENTRIES_DELIM);
@@ -359,13 +327,45 @@ cvs_ent_parse(const char *entry)
 		sp = dp;
 	} while ((dp != NULL) && (i < CVS_ENTRIES_NFIELDS));
 
-	entp->ce_name = fields[0];
+	if (i < CVS_ENTRIES_NFIELDS) {
+		cvs_log(LP_ERR, "missing fields in entry line `%s'", entry);
+		return (NULL);
+	}
+
+	entp = (struct cvs_ent *)malloc(sizeof(*entp));
+	if (entp == NULL) {
+		cvs_log(LP_ERRNO, "failed to allocate CVS entry");
+		return (NULL);
+	}
+	memset(entp, 0, sizeof(*entp));
+	entp->ce_buf = buf;
+
+	entp->ce_rev = rcsnum_alloc();
+	if (entp->ce_rev == NULL) {
+		cvs_ent_free(entp);
+		return (NULL);
+	}
+
+	entp->ce_line = strdup(entry);
+	if (entp->ce_line == NULL) {
+		cvs_ent_free(entp);
+		return (NULL);
+	}
+
+	if (*fields[0] == '\0')
+		entp->ce_type = CVS_ENT_FILE;
+	else if (*fields[0] == 'D')
+		entp->ce_type = CVS_ENT_DIR;
+	else
+		entp->ce_type = CVS_ENT_NONE;
+
+	entp->ce_name = fields[1];
 
 	if (entp->ce_type == CVS_ENT_FILE) {
-		rcsnum_aton(fields[1], NULL, entp->ce_rev);
-		entp->ce_timestamp = fields[2];
-		entp->ce_opts = fields[3];
-		entp->ce_tag = fields[4];
+		rcsnum_aton(fields[2], NULL, entp->ce_rev);
+		entp->ce_timestamp = fields[3];
+		entp->ce_opts = fields[4];
+		entp->ce_tag = fields[5];
 	}
 
 	return (entp);
