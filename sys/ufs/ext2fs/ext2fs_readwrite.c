@@ -1,3 +1,4 @@
+/*	$OpenBSD: ext2fs_readwrite.c,v 1.14 2002/03/30 10:37:40 niklas Exp $	*/
 /*	$NetBSD: ext2fs_readwrite.c,v 1.16 2001/02/27 04:37:47 chs Exp $	*/
 
 /*-
