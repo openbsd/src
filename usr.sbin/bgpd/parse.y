@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.104 2004/05/08 17:40:53 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.105 2004/05/08 18:04:14 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -375,7 +375,7 @@ optnumber	: /* empty */		{ $$ = 0; }
 		;
 
 neighbor	: {	curpeer = new_peer(); }
-		    NEIGHBOR addrspec optnl '{' optnl {
+		    NEIGHBOR addrspec {
 			memcpy(&curpeer->conf.remote_addr, &$3.prefix,
 			    sizeof(curpeer->conf.remote_addr));
 			curpeer->conf.remote_masklen = $3.len;
@@ -387,7 +387,7 @@ neighbor	: {	curpeer = new_peer(); }
 				YYERROR;
 			}
 		}
-		    peeropts_l '}' {
+		    peeropts_h {
 			if (curpeer->conf.local_addr.af &&
 			    curpeer->conf.local_addr.af !=
 			    curpeer->conf.remote_addr.af) {
@@ -431,6 +431,10 @@ groupopts_l	: groupopts_l groupoptsl
 groupoptsl	: peeropts nl
 		| neighbor nl
 		| error nl
+		;
+
+peeropts_h	: '{' optnl peeropts_l '}'
+		| /* empty */
 		;
 
 peeropts_l	: peeropts_l peeroptsl
