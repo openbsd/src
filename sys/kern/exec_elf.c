@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.14 1996/08/31 09:24:07 pefo Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.15 1996/09/05 17:31:06 pefo Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -349,6 +349,10 @@ elf_load_file(p, path, epp, ap, last)
 	for (i = 0; i < eh.e_phnum; i++) {
 		u_long size = 0;
 		int prot = 0;
+#ifdef mips
+		if (*last == ELF32_NO_ADDR)
+			addr = ELF32_NO_ADDR;	/* GRRRRR!!!!! */
+#endif
 
 		switch (ph[i].p_type) {
 		case PT_LOAD:
