@@ -6,6 +6,7 @@
 ./usr/games/battlestar
 ./usr/games/bcd
 ./usr/games/boggle
+./usr/games/bs
 ./usr/games/caesar
 ./usr/games/canfield
 ./usr/games/cfscores
@@ -17,6 +18,8 @@
 ./usr/games/grdc
 ./usr/games/hack
 ./usr/games/hangman
+./usr/games/hunt
+./usr/games/huntd
 ./usr/games/mille
 ./usr/games/monop
 ./usr/games/morse
@@ -120,6 +123,7 @@
 ./usr/share/man/cat6/battlestar.0
 ./usr/share/man/cat6/bcd.0
 ./usr/share/man/cat6/boggle.0
+./usr/share/man/cat6/bs.0
 ./usr/share/man/cat6/caesar.0
 ./usr/share/man/cat6/canfield.0
 ./usr/share/man/cat6/cfscores.0
@@ -131,6 +135,8 @@
 ./usr/share/man/cat6/grdc.0
 ./usr/share/man/cat6/hack.0
 ./usr/share/man/cat6/hangman.0
+./usr/share/man/cat6/hunt.0
+./usr/share/man/cat6/huntd.0
 ./usr/share/man/cat6/intro.0
 ./usr/share/man/cat6/mille.0
 ./usr/share/man/cat6/monop.0
