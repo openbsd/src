@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.34 2003/07/22 16:42:58 millert Exp $	*/
+/*	$OpenBSD: diff.c,v 1.35 2003/07/27 07:39:52 otto Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,7 +21,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diff.c,v 1.34 2003/07/22 16:42:58 millert Exp $";
+static const char rcsid[] = "$OpenBSD: diff.c,v 1.35 2003/07/27 07:39:52 otto Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -39,19 +39,20 @@ static const char rcsid[] = "$OpenBSD: diff.c,v 1.34 2003/07/22 16:42:58 millert
 
 #include "diff.h"
 
-int	 aflag, bflag, iflag, lflag, Nflag, Pflag, rflag, sflag, tflag, Tflag,
-	 wflag;
+int	 aflag, bflag, dflag, iflag, lflag, Nflag, Pflag, rflag, sflag, tflag, 
+	 Tflag, wflag;
 int	 format, context, status;
 char	*start, *ifdefname, *diffargs, *label;
 struct stat stb1, stb2;
 struct excludes *excludes_list;
 
-#define	OPTIONS	"abC:cD:efhiL:lnNPqrS:sTtU:uwX:x:"
+#define	OPTIONS	"abC:cdD:efhiL:lnNPqrS:sTtU:uwX:x:"
 static struct option longopts[] = {
 	{ "text",			no_argument,		0,	'a' },
 	{ "ignore-space-change",	no_argument,		0,	'b' },
 	{ "context",			optional_argument,	0,	'C' },
 	{ "ifdef",			required_argument,	0,	'D' },
+	{ "minimal",			no_argument,		0,	'd' },
 	{ "ed",				no_argument,		0,	'e' },
 	{ "forward-ed",			no_argument,		0,	'f' },
 	{ "ignore-case",		no_argument,		0,	'i' },
@@ -106,6 +107,9 @@ main(int argc, char **argv)
 				context = (int)l;
 			} else
 				context = 3;
+			break;
+		case 'd':
+			dflag = 1;
 			break;
 		case 'D':
 			format = D_IFDEF;
@@ -361,11 +365,11 @@ __dead void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: diff [-bilqtTw] [-c | -e | -f | -n | -u] [-L label] file1 file2\n"
-	    "       diff [-bilqtTw] [-L label] -C number file1 file2\n"
-	    "       diff [-bilqtw] -D string file1 file2\n"
-	    "       diff [-bilqtTw] [-L label] -U number file1 file2\n"
-	    "       diff [-bilNPqwtT] [-c | -e | -f | -n | -u ] [-L label] [-r] [-s] [-S name]\n"
+	    "usage: diff [-bdilqtTw] [-c | -e | -f | -n | -u] [-L label] file1 file2\n"
+	    "       diff [-bdilqtTw] [-L label] -C number file1 file2\n"
+	    "       diff [-bdilqtw] -D string file1 file2\n"
+	    "       diff [-bdilqtTw] [-L label] -U number file1 file2\n"
+	    "       diff [-bdilNPqwtT] [-c | -e | -f | -n | -u ] [-L label] [-r] [-s] [-S name]\n"
 	    "            [-X file] [-x pattern] dir1 dir2\n");
 
 	exit(2);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.42 2003/07/23 22:01:36 tedu Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.43 2003/07/27 07:39:52 otto Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -65,7 +65,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.42 2003/07/23 22:01:36 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.43 2003/07/27 07:39:52 otto Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -188,6 +188,7 @@ static int   anychange;
 static long *ixnew;		/* will be overlaid on file[1] */
 static long *ixold;		/* will be overlaid on klist */
 static struct cand *clist;	/* merely a free storage pot for candidates */
+static int   clistlen;		/* the length of clist */
 static struct line *sfile[2];	/* shortened by pruning common prefix/suffix */
 static u_char *chrtran;		/* translation table for case-folding */
 static struct context_vec *context_vec_start;
@@ -213,9 +214,13 @@ static int  fetch(long *, int, int, FILE *, int, int);
 static int  newcand(int, int, int);
 static int  search(int *, int, int);
 static int  skipline(FILE *);
+static int  isqrt(int);
 static int  stone(int *, int, int *, int *);
 static int  readhash(FILE *);
 static int  files_differ(FILE *, FILE *, int);
+static __inline int min(int, int);
+static __inline int max(int, int);
+
 
 /*
  * chrtran points to one of 2 translation tables: cup2low if folding upper to
@@ -413,7 +418,8 @@ notsame:
 	class = erealloc(class, (slen[0] + 2) * sizeof(int));
 
 	klist = emalloc((slen[0] + 2) * sizeof(int));
-	clist = emalloc(sizeof(cand));
+	clistlen = 100;
+	clist = emalloc(clistlen * sizeof(cand));
 	i = stone(class, slen[0], member, klist);
 	free(member);
 	free(class);
@@ -594,11 +600,33 @@ equiv(struct line *a, int n, struct line *b, int m, int *c)
 	c[j] = -1;
 }
 
+/* Code taken from ping.c */
+static int
+isqrt(int n)
+{
+	int y, x = 1;
+
+	if (n == 0)
+		return(0);
+
+	do { /* newton was a stinker */
+		y = x;
+		x = n / x;
+		x += y;
+		x /= 2;
+	} while ((x - y) > 1 || (x - y) < -1);
+
+	return (x);
+}
+
 static int
 stone(int *a, int n, int *b, int *c)
 {
 	int i, k, y, j, l;
 	int oldc, tc, oldl;
+	u_int loopcount;
+	
+	const u_int bound = dflag ? UINT_MAX : max(256, isqrt(n));
 
 	k = 0;
 	c[0] = newcand(0, 0, 0);
@@ -609,7 +637,9 @@ stone(int *a, int n, int *b, int *c)
 		y = -b[j];
 		oldl = 0;
 		oldc = c[0];
+		loopcount = 0;
 		do {
+			loopcount++;
 			if (y <= clist[oldc].y)
 				continue;
 			l = search(c, k, y);
@@ -627,7 +657,7 @@ stone(int *a, int n, int *b, int *c)
 				k++;
 				break;
 			}
-		} while ((y = b[++j]) > 0);
+		} while ((y = b[++j]) > 0 && loopcount < bound);
 	}
 	return (k);
 }
@@ -637,12 +667,15 @@ newcand(int x, int y, int pred)
 {
 	struct cand *q;
 
-	clist = erealloc(clist, ++clen * sizeof(cand));
-	q = clist + clen - 1;
+	if (clen == clistlen) {
+		clistlen = clistlen * 11 / 10;
+		clist = erealloc(clist, clistlen * sizeof(cand));
+	}
+	q = clist + clen;
 	q->x = x;
 	q->y = y;
 	q->pred = pred;
-	return (clen - 1);
+	return (clen++);
 }
 
 static int
