@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.37 2000/04/25 06:03:46 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.38 2000/05/04 02:23:16 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -84,7 +84,7 @@ void	hifn_init_dma __P((struct hifn_softc *));
 void	hifn_init_pci_registers __P((struct hifn_softc *));
 int	hifn_sramsize __P((struct hifn_softc *));
 int	hifn_dramsize __P((struct hifn_softc *));
-int	hifn_checkramaddr __P((struct hifn_softc *, int));
+void	hifn_ramtype __P((struct hifn_softc *));
 void	hifn_sessions __P((struct hifn_softc *));
 int	hifn_intr __P((void *));
 u_int	hifn_write_command __P((struct hifn_command *, u_int8_t *));
@@ -94,6 +94,8 @@ int	hifn_freesession __P((u_int64_t));
 int	hifn_process __P((struct cryptop *));
 void	hifn_callback __P((struct hifn_softc *, struct hifn_command *, u_int8_t *));
 int	hifn_crypto __P((struct hifn_softc *, hifn_command_t *));
+int	hifn_readramaddr __P((struct hifn_softc *, int, u_int8_t *, int));
+int	hifn_writeramaddr __P((struct hifn_softc *, int, u_int8_t *, int));
 
 struct hifn_stats {
 	u_int64_t hst_ibytes;
@@ -215,8 +217,7 @@ hifn_attach(parent, self, aux)
 	hifn_init_dma(sc);
 	hifn_init_pci_registers(sc);
 
-	if (hifn_checkramaddr(sc, 0) != 0)
-		sc->sc_drammodel = 1;
+	hifn_ramtype(sc);
 
 	if (sc->sc_drammodel == 0)
 		hifn_sramsize(sc);
@@ -547,27 +548,94 @@ hifn_sessions(sc)
 		sc->sc_maxses = 2048;
 }
 
+void
+hifn_ramtype(sc)
+	struct hifn_softc *sc;
+{
+	u_int8_t data[8], dataexpect[8];
+	int i;
+
+	hifn_reset_board(sc);
+	hifn_init_dma(sc);
+	hifn_init_pci_registers(sc);
+
+	for (i = 0; i < sizeof(data); i++)
+		data[i] = dataexpect[i] = 0x55;
+	if (hifn_writeramaddr(sc, 0, data, 0) < 0)
+		return;
+	if (hifn_readramaddr(sc, 0, data, 1) < 0)
+		return;
+	if (bcmp(data, dataexpect, sizeof(data)) != 0) {
+		sc->sc_drammodel = 1;
+		return;
+	}
+
+	hifn_reset_board(sc);
+	hifn_init_dma(sc);
+	hifn_init_pci_registers(sc);
+
+	for (i = 0; i < sizeof(data); i++)
+		data[i] = dataexpect[i] = 0xaa;
+	if (hifn_writeramaddr(sc, 0, data, 0) < 0)
+		return;
+	if (hifn_readramaddr(sc, 0, data, 1) < 0)
+		return;
+	if (bcmp(data, dataexpect, sizeof(data)) != 0)
+		sc->sc_drammodel = 1;
+}
+
 /*
- * For sram boards, just write/read memory until it fails.
+ * For sram boards, just write/read memory until it fails, also check for
+ * banking.
  */
 int
 hifn_sramsize(sc)
 	struct hifn_softc *sc;
 {
 	u_int32_t a = 0, end;
+	u_int8_t data[8], dataexpect[8];
+
+	for (a = 0; a < sizeof(data); a++)
+		data[a] = dataexpect[a] = 0x5a;
 
 	hifn_reset_board(sc);
 	hifn_init_dma(sc);
 	hifn_init_pci_registers(sc);
 	end = 1 << 20;	/* 1MB */
 	for (a = 0; a < end; a += 16384) {
-		if (hifn_checkramaddr(sc, a) < 0)
+		if (hifn_writeramaddr(sc, a, data, 0) < 0)
+			return (0);
+		if (hifn_readramaddr(sc, a, data, 1) < 0)
+			return (0);
+		if (bcmp(data, dataexpect, sizeof(data)) != 0)
 			return (0);
 		hifn_reset_board(sc);
 		hifn_init_dma(sc);
 		hifn_init_pci_registers(sc);
 		sc->sc_ramsize = a + 16384;
 	}
+
+	for (a = 0; a < sizeof(data); a++)
+		data[a] = dataexpect[a] = 0xa5;
+	if (hifn_writeramaddr(sc, 0, data, 0) < 0)
+		return (0);
+
+	end = sc->sc_ramsize;
+	for (a = 0; a < end; a += 16384) {
+		hifn_reset_board(sc);
+		hifn_init_dma(sc);
+		hifn_init_pci_registers(sc);
+		if (hifn_readramaddr(sc, a, data, 0) < 0)
+			return (0);
+		if (a != 0 && bcmp(data, dataexpect, sizeof(data)) == 0)
+			return (0);
+		sc->sc_ramsize = a + 16384;
+	}
+
+	hifn_reset_board(sc);
+	hifn_init_dma(sc);
+	hifn_init_pci_registers(sc);
+
 	return (0);
 }
 
@@ -588,80 +656,76 @@ hifn_dramsize(sc)
 	return (0);
 }
 
-
-/*
- * There are both DRAM and SRAM models of the hifn board.
- * A bit in the "ram configuration register" needs to be
- * set according to the model.  The driver will guess one
- * way or the other -- and then call this routine to verify.
- *
- * 0: RAM setting okay,  -1: Current RAM setting in error
- */
-int 
-hifn_checkramaddr(sc, addr)
+int
+hifn_writeramaddr(sc, addr, data, slot)
 	struct hifn_softc *sc;
-	int addr;
+	int addr, slot;
+	u_int8_t *data;
 {
-	hifn_base_command_t write_command,read_command;
-	u_int8_t data[8] = {'1', '2', '3', '4', '5', '6', '7', '8'};
-	u_int8_t *source_buf, *dest_buf;
 	struct hifn_dma *dma = sc->sc_dma;
-	const u_int32_t masks = HIFN_D_VALID | HIFN_D_LAST |
-	    HIFN_D_MASKDONEIRQ;
+	hifn_base_command_t wc;
+	const u_int32_t masks = HIFN_D_VALID | HIFN_D_LAST | HIFN_D_MASKDONEIRQ;
+	u_int64_t src, dst;
 
-	write_command.masks = 3 << 13;
-	write_command.session_num = addr >> 14;
-	write_command.total_source_count = 8;
-	write_command.total_dest_count = addr & 0x3fff;;
-
-	read_command.masks = 2 << 13;
-	read_command.session_num = addr >> 14;
-	read_command.total_source_count = addr & 0x3fff;
-	read_command.total_dest_count = 8;
-
-#if (HIFN_D_CMD_RSIZE < 3)
-#error "descriptor ring size too small DRAM/SRAM check"
-#endif
-
-	/*
-	 * We steal the 8 bytes needed for both the source and dest buffers
-	 * from the 3rd slot that the DRAM/SRAM test won't use.
-	 */
-	source_buf = sc->sc_dma->command_bufs[2];
-	dest_buf = sc->sc_dma->result_bufs[2];
+	wc.masks = 3 << 13;
+	wc.session_num = addr >> 14;
+	wc.total_source_count = 8;
+	wc.total_dest_count = addr & 0x3fff;;
 
 	/* build write command */
-	*(hifn_base_command_t *) sc->sc_dma->command_bufs[0] = write_command;
-	bcopy(data, source_buf, sizeof(data));
+	*(hifn_base_command_t *) sc->sc_dma->command_bufs[slot] = wc;
+	bcopy(data, &src, sizeof(src));
 
-	dma->srcr[0].p = vtophys(source_buf);
-	dma->dstr[0].p = vtophys(dest_buf);
+	dma->srcr[slot].p = vtophys(&src);
+	dma->dstr[slot].p = vtophys(&dst);
 
-	dma->cmdr[0].l = 16 | masks;
-	dma->srcr[0].l = 8 | masks;
-	dma->dstr[0].l = 8 | masks;
-	dma->resr[0].l = HIFN_MAX_RESULT | masks;
+	dma->cmdr[slot].l = 16 | masks;
+	dma->srcr[slot].l = 8 | masks;
+	dma->dstr[slot].l = 8 | masks;
+	dma->resr[slot].l = HIFN_MAX_RESULT | masks;
 
 	DELAY(1000);	/* let write command execute */
-	if (dma->resr[0].l & HIFN_D_VALID)
-		printf("%s: SRAM/DRAM detection error -- result[0] valid still set\n",
-		    sc->sc_dv.dv_xname);
+	if (dma->resr[slot].l & HIFN_D_VALID) {
+		printf("%s: SRAM/DRAM detection error -- "
+		    "result[%d] valid still set\n", sc->sc_dv.dv_xname, slot);
+		return (-1);
+	}
+	return (0);
+}
 
-	/* Build read command */
-	*(hifn_base_command_t *) sc->sc_dma->command_bufs[1] = read_command;
+int
+hifn_readramaddr(sc, addr, data, slot)
+	struct hifn_softc *sc;
+	int addr, slot;
+	u_int8_t *data;
+{
+	struct hifn_dma *dma = sc->sc_dma;
+	hifn_base_command_t rc;
+	const u_int32_t masks = HIFN_D_VALID | HIFN_D_LAST | HIFN_D_MASKDONEIRQ;
+	u_int64_t src, dst;
 
-	dma->srcr[1].p = vtophys(source_buf);
-	dma->dstr[1].p = vtophys(dest_buf);
-	dma->cmdr[1].l = 16 | masks;
-	dma->srcr[1].l = 8 | masks;
-	dma->dstr[1].l = 8 | masks;
-	dma->resr[1].l = HIFN_MAX_RESULT | masks;
+	rc.masks = 2 << 13;
+	rc.session_num = addr >> 14;
+	rc.total_source_count = addr & 0x3fff;
+	rc.total_dest_count = 8;
+
+	*(hifn_base_command_t *) sc->sc_dma->command_bufs[slot] = rc;
+
+	dma->srcr[slot].p = vtophys(&src);
+	dma->dstr[slot].p = vtophys(&dst);
+	dma->cmdr[slot].l = 16 | masks;
+	dma->srcr[slot].l = 8 | masks;
+	dma->dstr[slot].l = 8 | masks;
+	dma->resr[slot].l = HIFN_MAX_RESULT | masks;
 
 	DELAY(1000);	/* let read command execute */
-	if (dma->resr[1].l & HIFN_D_VALID)
-		printf("%s: SRAM/DRAM detection error -- result[1] valid still set\n",
-		    sc->sc_dv.dv_xname);
-	return (memcmp(dest_buf, data, sizeof(data)) == 0) ? 0 : -1;
+	if (dma->resr[slot].l & HIFN_D_VALID) {
+		printf("%s: SRAM/DRAM detection error -- "
+		    "result[%d] valid still set\n", sc->sc_dv.dv_xname, slot);
+		return (-1);
+	}
+	bcopy(&dst, data, sizeof(dst));
+	return (0);
 }
 
 /*
