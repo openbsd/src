@@ -1,0 +1,167 @@
+* $NetBSD: README,v 1.4 1995/11/05 04:23:00 briggs Exp $
+* NetBSD/m68k FPE (floating point emulation) README file
+* Created Oct/??/95 by kenn@remus.rutgers.edu (Ken Nakata)
+* Last updated Nov/04/95 by kenn
+
+1. INSTALLATION AND COMPILATION
+
+To compile a kernel with FPE built-in, do the following:
+
+1) Add a line "options FPU_EMULATE" to your config file.  If you are
+going to use the resulted kernel on a machine with an FPU for
+debugging purpose, add "options DEBUG_WITH_FPU" as well.
+
+2) Follow the usual procedure to build a new kernel.
+
+NOTE:  If you add "options DEBUG_WITH_FPU", FPE will accept cpID=6 as
+emulated FPU.  You will need a modified gas that generates cpID=6 for
+floating point instructions, instead of normal cpID=1.  Mount unionfs
+or copy the gas source directory and apply the following patch:
+
+*** /usr/src/gnu/usr.bin/gas/config/tc-m68k.c   Mon Nov 21 16:30:41 1994
+--- gas/config/tc-m68k.c    Fri Sep 29 07:59:06 1995
+***************
+*** 1275,1281 ****
+                /* memcpy((char *)(&the_ins.operands[1]), (char *)(&the_ins.operands[0]), opsfound*sizeof(the_ins.operands[0])); */
+                memset((char *)(&the_ins.operands[0]), '\0', sizeof(the_ins.operands[0]));
+                the_ins.operands[0].mode=MSCR;
+!               the_ins.operands[0].reg=COPNUM;         /* COP #1 */
+                opsfound++;
+        }
+  
+--- 1275,1281 ----
+                /* memcpy((char *)(&the_ins.operands[1]), (char *)(&the_ins.operands[0]), opsfound*sizeof(the_ins.operands[0])); */
+                memset((char *)(&the_ins.operands[0]), '\0', sizeof(the_ins.operands[0]));
+                the_ins.operands[0].mode=MSCR;
+!               the_ins.operands[0].reg=COP5;           /* COP #6 */
+                opsfound++;
+        }
+  
+
+Also, with the DEBUG_WITH_FPU option, you will be able to run only ONE
+process that uses FPE at once to get correct results.
+
+
+2. MISSING PARTS
+
+For missing instructions, refer to the Section 3.  Other than that,
+there is one thing that is missing from this version of FPE: packed
+BCD support.
+
+I have no plan to support it since it's rarely used.  However, all we
+need to support it is explosion/implosion functions between the
+internal FP representation and the m68k PBCD format, so you are more
+than welcome to write such functions if you wish to.
+
+
+3. IMPLEMENTED INSTRUCTIONS
+
+This is the list of implemented and unimplemented FPU instructions.
+All 040's directly supported type 0 instructions are already
+implemented except FSGLDIV and FSGLMUL.
+
+Type field = bit 8-6 of opcode word
+
+* Implemented Instructions
+
+Type=0: FMOVE (mem->FPr), FINT, FINTRZ, FSQRT, FABS, FNEG, FGETEXP,
+	FGETMAN, FDIV, FADD, FMUL, FSGLDIV(*), FSCALE, FSGLMUL(*), FSUB,
+	FCMP, FTST, FMOVE (FPr->mem), FMOVEM (FPr), FMOVEM (FPcr),
+	FMOVECR, FLOGNP1, FLOGN, FLOG10, FLOG2, FMOD, FREM
+
+Type=1: FDBcc, FScc, FTRAPcc,
+
+Type=2: FBcc (word, incl. FNOP)
+
+Type=3: FBcc (long)
+
+Type=4: none
+
+Type=5: none
+
+	*: currently FSGLMUL and FSGLDIV are just aliases of
+	   FMUL and FDIV, respectively
+
+* Unimplemented Instructions
+
+Type=0: FSINH, FETOXM1, FTANH, FATAN, FASIN, FATANH, FSIN, FTAN,
+	FETOX, FTWOTOX, FTENTOX, FCOSH, FACOS, FCOS, FSINCOS
+
+Type=1: none
+
+Type=2: none
+
+Type=3: none
+
+Type=4: FSAVE
+
+Type=5: FRESTORE
+
+
+4. HOW TO ADD A NEW INSTRUCTION SUPPORT
+
+Since we need not support FSAVE and FRESTORE operations, all
+instructions we have to implement are type 0, all of which are
+arithmetic operations.  It is particularly easy to add a new
+arithmetic instruction to the existing ones (not that it is easy to
+write a "stable" function to perform floating point operation. That's
+entirely another matter).  In "fpu_emulate.c", there's a function
+fpu_emul_arith() which calls emulation functions for all arithmetic
+operations.  In it, there's a large switch() { case ... } which
+dispatches each instruction emulator.  An emulation function of any
+type 0 arithmetic instruction follows this prototype:
+
+	struct fpn *fpu_op(struct fpemu *fe);
+
+Where fe is a pointer to a struct fpemu in which frame, fpframe, and
+fetched operands are accessible.  That's right, you don't have to
+fetch the operands by yourself in your emulation funtion.  For
+instance, the parts calling FSQRT, FSUB, FADD and FTST look like:
+
+	switch(word1 & 0x3F) {
+[...]
+	case 0x04:	/* fsqrt */
+		res = fpu_sqrt(fe);
+		break;
+[...]
+	case 0x28:	/* fsub */
+		fe->fe_f2.fp_sign = !fe->fe_f2.fp_sign; /* f2 = -f2 */
+	case 0x22:	/* fadd */
+		res = fpu_add(fe);
+		break;
+[...]
+	case 0x3A:	/* ftst */
+		res = &fe->fe_f2;
+		no_store = 1;
+		break;
+[...]
+	default:
+		sig = SIGILL;
+	} /* switch */
+
+Here, fe->fe_f1 and fe->fe_f2 are fetched operands.  You can use
+fe->fe_f3 for storing the result, or you can return a pointer to
+either operand if you want to.  At any rate, you have to follow
+the following rules:
+
+	1) A dyadic instruction takes two operands fe->fe_f1 and fe->fe_f2.
+	2) A monadic instruction takes one operands fe->fe_f2 (NOT fe_f1).
+	3) Must return a pointer to struct fpn where the result is stored,
+	and assign the pointer to the variable "res".
+	4) If exceptions are detected, set corresponding bits in fe->fe_fpsr.
+	The rest is taken care of in fpu_emul_arith().
+	5) Condition code need not be calculated.  It's taken care of in
+	fpu_emul_arith().
+
+Actually, after above was written, stubs for the missing functions were
+added to the source, so you do not have to change fpu_emul_arith() at
+all.  Function names and prototypes are in fpu_arith_proto.h, and all
+except fpu_sincos() follow the rules above.  fpu_sincos() is declared
+as
+
+	struct fpn *fpu_sincos(struct fpemu *fe, int cosreg);
+
+where cosreg is the FP register number to which cosine of the argument
+is calculated and assigned.  Sine of the argument is stored into the
+destination register in the same manner as the other arithmetic
+functions.
