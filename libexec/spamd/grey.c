@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.14 2004/06/21 17:07:01 itojun Exp $	*/
+/*	$OpenBSD: grey.c,v 1.15 2004/07/04 22:46:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -164,14 +164,18 @@ addwhiteaddr(char *addr)
 
 			tmp = realloc(whitelist,
 			    (whitealloc + 1024) * sizeof(char *));
-			if (tmp == NULL)
+			if (tmp == NULL) {
+				freeaddrinfo(res);
 				return(-1);
+			}
 			whitelist = tmp;
 			whitealloc += 1024;
 		}
 		whitelist[whitecount] = strdup(addr);
-		if (whitelist[whitecount] == NULL)
+		if (whitelist[whitecount] == NULL) {
+			freeaddrinfo(res);
 			return(-1);
+		}
 		whitecount++;
 		freeaddrinfo(res);
 	} else
