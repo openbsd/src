@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.5 2003/02/28 18:05:51 deraadt Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.6 2004/01/04 03:40:19 pvalchev Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -46,19 +46,17 @@ extern void	_mcleanup(void);
 extern unsigned char _etext, _eprol;
 #endif /* MCRT0 */
 
-__asm__("
-	.text
-	.align 4
-	.global _start			/* NetBSD compat */
-	.global __start
-_start:
-__start:
-	clr	%g4
-	clr	%fp
-	add	%sp, 2175, %o0		/* stack */
-	ba,pt	%icc, ___start
-	 nop
-");
+__asm__(".text\n"
+"	.align 4\n"
+"	.global _start\n"		/* NetBSD compat */
+"	.global __start\n"
+"_start:\n"
+"__start:\n"
+"	clr	%g4\n"
+"	clr	%fp\n"
+"	add	%sp, 2175, %o0\n"	/* stack */
+"	ba,pt	%icc, ___start\n"
+"	nop");
 
 
 void ___start(char **, void (*)(void), const void *);
