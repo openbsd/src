@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.6 2001/07/26 07:09:12 csapuntz Exp $ */
+/*	$OpenBSD: wscons_machdep.c,v 1.7 2001/07/29 23:13:28 csapuntz Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell
@@ -116,6 +116,13 @@ void
 wscninit(cp)
 	struct consdev *cp;
 {
+	static int initted;
+
+	if (initted)
+		return;
+
+	initted = 1;
+
 #if (NVGA > 0) || (NEGA > 0) || (NPCDISPLAY > 0)
 #if (NVGA > 0)
 	if (!vga_cnattach(I386_BUS_SPACE_IO, I386_BUS_SPACE_MEM, -1, 1))
