@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.54 2004/06/06 17:38:10 henning Exp $ */
+/*	$OpenBSD: session.h,v 1.55 2004/06/09 13:01:44 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -33,6 +33,8 @@
 #define	MSGSIZE_UPDATE_MIN		23
 #define	MSGSIZE_KEEPALIVE		MSGSIZE_HEADER
 #define MSGSIZE_RREFRESH		MSGSIZE_HEADER + 4
+#define	PFD_RESERVE			5
+#define	PEER_L_RESERVE			2
 
 enum session_state {
 	STATE_NONE,
@@ -216,9 +218,8 @@ int	 rde_main(struct bgpd_config *, struct network_head *,
 /* control.c */
 int	control_listen(void);
 void	control_shutdown(void);
-int	control_dispatch_msg(struct pollfd *);
-void	control_accept(int);
-void	control_close(int);
+int	control_dispatch_msg(struct pollfd *, u_int *);
+int	control_accept(int);
 
 /* pfkey.c */
 int	pfkey_establish(struct peer *);

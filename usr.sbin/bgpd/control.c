@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.31 2004/05/21 11:48:56 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.32 2004/06/09 13:01:44 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -36,6 +36,7 @@ struct {
 
 struct ctl_conn	*control_connbyfd(int);
 struct ctl_conn	*control_connbypid(pid_t);
+int		 control_close(int);
 
 int
 control_init(void)
@@ -104,7 +105,7 @@ control_cleanup(void)
 	unlink(SOCKET_NAME);
 }
 
-void
+int
 control_accept(int listenfd)
 {
 	int			 connfd;
@@ -117,19 +118,21 @@ control_accept(int listenfd)
 	    (struct sockaddr *)&sun, &len)) == -1) {
 		if (errno != EWOULDBLOCK && errno != EINTR)
 			log_warn("session_control_accept");
-		return;
+		return (0);
 	}
 
 	session_socket_blockmode(connfd, BM_NONBLOCK);
 
 	if ((ctl_conn = malloc(sizeof(struct ctl_conn))) == NULL) {
 		log_warn("session_control_accept");
-		return;
+		return (0);
 	}
 
 	imsg_init(&ctl_conn->ibuf, connfd);
 
 	TAILQ_INSERT_TAIL(&ctl_conns, ctl_conn, entries);
+
+	return (1);
 }
 
 struct ctl_conn *
@@ -156,14 +159,14 @@ control_connbypid(pid_t pid)
 	return (c);
 }
 
-void
+int
 control_close(int fd)
 {
 	struct ctl_conn	*c;
 
 	if ((c = control_connbyfd(fd)) == NULL) {
 		log_warn("control_close: fd %d: not found", fd);
-		return;
+		return (0);
 	}
 
 	msgbuf_clear(&c->ibuf.w);
@@ -171,10 +174,12 @@ control_close(int fd)
 
 	close(c->ibuf.fd);
 	free(c);
+
+	return (1);
 }
 
 int
-control_dispatch_msg(struct pollfd *pfd)
+control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 {
 	struct imsg		 imsg;
 	struct ctl_conn		*c;
@@ -189,7 +194,7 @@ control_dispatch_msg(struct pollfd *pfd)
 
 	if (pfd->revents & POLLOUT)
 		if (msgbuf_write(&c->ibuf.w) < 0) {
-			control_close(pfd->fd);
+			*ctl_cnt -= control_close(pfd->fd);
 			return (1);
 		}
 
@@ -197,13 +202,13 @@ control_dispatch_msg(struct pollfd *pfd)
 		return (0);
 
 	if (imsg_read(&c->ibuf) <= 0) {
-		control_close(pfd->fd);
+		*ctl_cnt -= control_close(pfd->fd);
 		return (1);
 	}
 
 	for (;;) {
 		if ((n = imsg_get(&c->ibuf, &imsg)) == -1) {
-			control_close(pfd->fd);
+			*ctl_cnt -= control_close(pfd->fd);
 			return (1);
 		}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.173 2004/06/06 17:38:10 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.174 2004/06/09 13:01:44 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -50,7 +50,7 @@
 #define PFD_LISTENERS_START	3
 
 void	session_sighdlr(int);
-int	setup_listeners(void);
+int	setup_listeners(u_int *);
 void	init_conf(struct bgpd_config *);
 void	init_peer(struct peer *);
 int	timer_due(time_t);
@@ -75,7 +75,7 @@ int	parse_refresh(struct peer *);
 int	parse_notification(struct peer *);
 int	parse_keepalive(struct peer *);
 int	parse_capabilities(struct peer *, u_char *, u_int16_t);
-void	session_dispatch_imsg(struct imsgbuf *, int);
+void	session_dispatch_imsg(struct imsgbuf *, int, u_int *);
 void	session_up(struct peer *);
 void	session_down(struct peer *);
 
@@ -108,10 +108,11 @@ session_sighdlr(int sig)
 }
 
 int
-setup_listeners(void)
+setup_listeners(u_int *la_cnt)
 {
 	int			 opt;
 	struct listen_addr	*la;
+	u_int			 cnt = 0;
 
 	if (TAILQ_EMPTY(conf->listen_addrs)) {
 		if ((la = calloc(1, sizeof(struct listen_addr))) == NULL)
@@ -137,6 +138,7 @@ setup_listeners(void)
 
 	TAILQ_FOREACH(la, conf->listen_addrs, entry) {
 		la->reconf = RECONF_NONE;
+		cnt++;
 
 		if (la->fd != -1)
 			continue;
@@ -178,6 +180,8 @@ setup_listeners(void)
 		    log_sockaddr((struct sockaddr *)&la->sa));
 	}
 
+	*la_cnt = cnt;
+
 	return (0);
 }
 
@@ -189,15 +193,18 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 	int			 nfds, i, j, timeout, idx_peers, idx_listeners;
 	pid_t			 pid;
 	time_t			 nextaction;
+	u_int			 pfd_elms = 0, peer_l_elms = 0, new_cnt;
+	u_int			 listener_cnt, peer_cnt, ctl_cnt;
 	struct passwd		*pw;
-	struct peer		*p, *peer_l[OPEN_MAX], *last, *next;
+	struct peer		*p, **peer_l = NULL, *last, *next;
 	struct network		*net;
 	struct mrt		*m;
 	struct mrt_config	*mrt;
 	struct filter_rule	*r;
-	struct pollfd		 pfd[OPEN_MAX];
+	struct pollfd		*pfd = NULL;
 	struct ctl_conn		*ctl_conn;
 	struct listen_addr	*la;
+	void			*newp;
 	short			 events;
 
 	conf = config;
@@ -227,7 +234,8 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 	setproctitle("session engine");
 	bgpd_process = PROC_SE;
 
-	setup_listeners();
+	listener_cnt = 0;
+	setup_listeners(&listener_cnt);
 
 	if (pfkey_init(&sysdep) == -1)
 		fatalx("pfkey setup failed");
@@ -251,6 +259,8 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 	TAILQ_INIT(&ctl_conns);
 	csock = control_listen();
 	LIST_INIT(&mrt_l);
+	peer_cnt = 0;
+	ctl_cnt = 0;
 
 	/* filter rules are not used in the SE */
 	while ((r = TAILQ_FIRST(rules)) != NULL) {
@@ -272,7 +282,71 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 	}
 
 	while (session_quit == 0) {
-		bzero(&pfd, sizeof(pfd));
+		/* check for peers to be initialized or deleted */
+		last = NULL;
+		for (p = peers; p != NULL; p = next) {
+			next = p->next;
+			if (!pending_reconf) {
+				/* new peer that needs init? */
+				if (p->state == STATE_NONE) {
+					init_peer(p);
+					peer_cnt++;
+				}
+
+				/* reinit due? */
+				if (p->conf.reconf_action == RECONF_REINIT) {
+					bgp_fsm(p, EVNT_STOP);
+					p->IdleHoldTimer = time(NULL);
+				}
+
+				/* deletion due? */
+				if (p->conf.reconf_action == RECONF_DELETE) {
+					bgp_fsm(p, EVNT_STOP);
+					log_peer_warnx(&p->conf, "removed");
+					if (last != NULL)
+						last->next = next;
+					else
+						peers = next;
+					free(p);
+					peer_cnt--;
+					continue;
+				}
+				p->conf.reconf_action = RECONF_NONE;
+			}
+			last = p;
+		}
+
+		if (peer_cnt > peer_l_elms ||
+		    peer_cnt + PEER_L_RESERVE < peer_l_elms) {
+			if ((newp = realloc(peer_l, sizeof(struct peer *) *
+			    peer_cnt + PEER_L_RESERVE)) == NULL) {
+				/* panic for now  */
+				log_warn("could not resize peer_l from %u -> %u"
+				    " entries", peer_l_elms,
+				    peer_cnt + PEER_L_RESERVE);
+				fatalx("exiting");
+			}
+			peer_l = newp;
+			peer_l_elms = peer_cnt + PEER_L_RESERVE;
+		}
+
+		new_cnt =
+		    PFD_LISTENERS_START + listener_cnt + peer_cnt + ctl_cnt;
+		if (new_cnt > pfd_elms ||
+		    new_cnt + PFD_RESERVE < pfd_elms) {
+			if ((newp = realloc(pfd, sizeof(struct pollfd) *
+			    (new_cnt + PFD_RESERVE))) == NULL) {
+				/* panic for now  */
+				log_warn("could not resize pfd from %u -> %u"
+				    " entries", pfd_elms,
+				    new_cnt + PFD_RESERVE);
+				fatalx("exiting");
+			}
+			pfd = newp;
+			pfd_elms = new_cnt + PFD_RESERVE;
+		}
+
+		bzero(pfd, sizeof(struct pollfd) * pfd_elms);
 		pfd[PFD_PIPE_MAIN].fd = ibuf_main.fd;
 		pfd[PFD_PIPE_MAIN].events = POLLIN;
 		if (ibuf_main.w.queued > 0)
@@ -295,35 +369,7 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 
 		idx_listeners = i;
 
-		last = NULL;
-		for (p = peers; p != NULL; p = next) {
-			next = p->next;
-			if (!pending_reconf) {
-				/* needs init? */
-				if (p->state == STATE_NONE)
-					init_peer(p);
-
-				/* reinit due? */
-				if (p->conf.reconf_action == RECONF_REINIT) {
-					bgp_fsm(p, EVNT_STOP);
-					p->IdleHoldTimer = time(NULL);
-				}
-
-				/* deletion due? */
-				if (p->conf.reconf_action == RECONF_DELETE) {
-					bgp_fsm(p, EVNT_STOP);
-					log_peer_warnx(&p->conf, "removed");
-					if (last != NULL)
-						last->next = next;
-					else
-						peers = next;
-					free(p);
-					continue;
-				}
-				p->conf.reconf_action = RECONF_NONE;
-			}
-			last = p;
-
+		for (p = peers; p != NULL; p = p->next) {
 			/* check timers */
 			if (timer_due(p->HoldTimer))
 				bgp_fsm(p, EVNT_TIMER_HOLDTIME);
@@ -368,7 +414,7 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 			if (p->fd != -1 && events != 0) {
 				pfd[i].fd = p->fd;
 				pfd[i].events = events;
-				peer_l[i] = p;
+				peer_l[i - idx_listeners] = p;
 				i++;
 			}
 		}
@@ -396,7 +442,8 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 
 		if (nfds > 0 && pfd[PFD_PIPE_MAIN].revents & POLLIN) {
 			nfds--;
-			session_dispatch_imsg(&ibuf_main, PFD_PIPE_MAIN);
+			session_dispatch_imsg(&ibuf_main, PFD_PIPE_MAIN,
+			    &listener_cnt);
 		}
 
 		if (nfds > 0 && pfd[PFD_PIPE_ROUTE].revents & POLLOUT)
@@ -405,12 +452,13 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 
 		if (nfds > 0 && pfd[PFD_PIPE_ROUTE].revents & POLLIN) {
 			nfds--;
-			session_dispatch_imsg(&ibuf_rde, PFD_PIPE_ROUTE);
+			session_dispatch_imsg(&ibuf_rde, PFD_PIPE_ROUTE,
+			    &listener_cnt);
 		}
 
 		if (nfds > 0 && pfd[PFD_SOCK_CTL].revents & POLLIN) {
 			nfds--;
-			control_accept(csock);
+			ctl_cnt += control_accept(csock);
 		}
 
 		for (j = PFD_LISTENERS_START; nfds > 0 && j < idx_listeners;
@@ -421,10 +469,11 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 			}
 
 		for (; nfds > 0 && j < idx_peers; j++)
-			nfds -= session_dispatch_msg(&pfd[j], peer_l[j]);
+			nfds -= session_dispatch_msg(&pfd[j],
+			    peer_l[j - idx_listeners]);
 
 		for (; nfds > 0 && j < i; j++)
-			nfds -= control_dispatch_msg(&pfd[j]);
+			nfds -= control_dispatch_msg(&pfd[j], &ctl_cnt);
 	}
 
 	while ((p = peers) != NULL) {
@@ -1947,7 +1996,7 @@ parse_capabilities(struct peer *peer, u_char *d, u_int16_t dlen)
 }
 
 void
-session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
+session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 {
 	struct imsg		 imsg;
 	struct mrt_config	 xmrt;
@@ -2082,7 +2131,7 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 				    entry);
 			}
 
-			setup_listeners();
+			setup_listeners(listener_cnt);
 			free(nconf->listen_addrs);
 			free(nconf);
 			nconf = NULL;
