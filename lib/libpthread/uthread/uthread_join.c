@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_join.c,v 1.10 2002/01/19 23:49:32 fgsch Exp $	*/
+/*	$OpenBSD: uthread_join.c,v 1.11 2003/12/31 21:11:45 marc Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -102,22 +102,16 @@ pthread_join(pthread_t pthread, void **thread_return)
 
 	/* Check if the thread was not found or has been detached: */
 	if (thread == NULL ||
-	    ((pthread->attr.flags & PTHREAD_DETACHED) != 0)) {
-		/* Undefer and handle pending signals, yielding if necessary: */
-		_thread_kern_sig_undefer();
-
+	    ((pthread->attr.flags & PTHREAD_DETACHED) != 0))
 		/* Return an error: */
 		ret = ESRCH;
 
-	} else if (pthread->joiner != NULL) {
-		/* Undefer and handle pending signals, yielding if necessary: */
-		_thread_kern_sig_undefer();
-
+	else if (pthread->joiner != NULL)
 		/* Multiple joiners are not supported. */
 		ret = ENOTSUP;
 
 	/* Check if the thread is not dead: */
-	} else if (pthread->state != PS_DEAD) {
+	else if (pthread->state != PS_DEAD) {
 		/* Set the running thread to be the joiner: */
 		pthread->joiner = curthread;
 
@@ -151,9 +145,9 @@ pthread_join(pthread_t pthread, void **thread_return)
 		/* Make the thread collectable by the garbage collector. */
 		pthread->attr.flags |= PTHREAD_DETACHED;
 
-		/* Undefer and handle pending signals, yielding if necessary: */
-		_thread_kern_sig_undefer();
 	}
+	/* Undefer and handle pending signals, yielding if necessary: */
+	_thread_kern_sig_undefer();
 
 	_thread_leave_cancellation_point();
 
