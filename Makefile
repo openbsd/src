@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.23 1997/12/09 19:45:29 niklas Exp $
+#	$OpenBSD: Makefile,v 1.24 1998/02/15 20:56:40 niklas Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -117,6 +117,20 @@ cross-binutils:
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 755 \
 	    ${.CURDIR}/usr.bin/lorder/lorder.sh.gnm \
 	    ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-lorder
+
+cross-gas:
+	-mkdir -p ${CROSSDIR}/usr/obj
+	-mkdir -p ${CROSSDIR}/usr/bin
+	(cd gnu/usr.bin/gas; \
+	    BSDOBJDIR=${CROSSDIR}/usr/obj \
+	    BSDSRCDIR=${.CURDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    ${MAKE} obj)
+	(cd gnu/usr.bin/gas; \
+	    TARGET_MACHINE_ARCH=${TARGET} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    ${MAKE})
+	(cd gnu/usr.bin/gas; \
+	    DESTDIR=${CROSSDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    ${MAKE} NOMAN= install)
 
 cross-gcc:
 	-mkdir -p ${CROSSDIR}/usr/obj
