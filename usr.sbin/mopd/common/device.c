@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.c,v 1.5 2002/06/10 21:05:25 maja Exp $ */
+/*	$OpenBSD: device.c,v 1.6 2002/09/07 08:09:49 maja Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: device.c,v 1.5 2002/06/10 21:05:25 maja Exp $";
+static char rcsid[] = "$OpenBSD: device.c,v 1.6 2002/09/07 08:09:49 maja Exp $";
 #endif
 
 #include "os.h"
@@ -109,7 +109,7 @@ deviceOpen(ifname, proto, trans)
 	struct if_info *p, tmp;
 
 	strncpy(tmp.if_name,ifname,sizeof(tmp.if_name) - 1);
-	tmp.if_name[sizeof(tmp.if_name)] = 0;
+	tmp.if_name[sizeof(tmp.if_name)-1] = 0;
 	tmp.iopen   = pfInit;
 	
 	switch (proto) {

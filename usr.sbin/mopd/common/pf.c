@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.5 2002/07/13 10:13:27 deraadt Exp $ */
+/*	$OpenBSD: pf.c,v 1.6 2002/09/07 08:09:49 maja Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: pf.c,v 1.5 2002/07/13 10:13:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: pf.c,v 1.6 2002/09/07 08:09:49 maja Exp $";
 #endif
 
 #include <stdio.h>
@@ -177,7 +177,7 @@ pfAddMulti(s, interface, addr)
 	int	fd;
 	
 	strncpy(ifr.ifr_name, interface,sizeof(ifr.ifr_name) - 1);
-	ifr.ifr_name[sizeof(ifr.ifr_name)] = 0;
+	ifr.ifr_name[sizeof(ifr.ifr_name)-1] = 0;
 
 	ifr.ifr_addr.sa_family = AF_UNSPEC;
 	bcopy(addr, ifr.ifr_addr.sa_data, 6);
@@ -213,7 +213,7 @@ pfDelMulti(s, interface, addr)
 	int	fd;
 	
 	strncpy(ifr.ifr_name, interface, sizeof (ifr.ifr_name) - 1);
-	ifr.ifr_name[sizeof(ifr.ifr_name)] = 0;
+	ifr.ifr_name[sizeof(ifr.ifr_name)-1] = 0;
 	
 	ifr.ifr_addr.sa_family = AF_UNSPEC;
 	bcopy(addr, ifr.ifr_addr.sa_data, 6);
