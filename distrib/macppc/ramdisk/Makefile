@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2002/04/30 09:18:20 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.9 2002/04/30 17:59:35 drahn Exp $
 
 REV=	${OSrev}
 
@@ -7,6 +7,8 @@ TOP=		${.CURDIR}/..
 BSD_RD=		bsd.rd
 IMAGE=		mr.fs
 CBIN?=		instbin
+CRUNCHCONF?=	${CBIN}.conf
+CRUNCHCONFS?=	${.CURDIR}/../common/crunch.conf
 LISTS=		${.CURDIR}/list
 UTILS?=		${.CURDIR}/../../miniroot
 
@@ -84,11 +86,14 @@ unconfig:
 install:
 	cp ${BSD_RD} cd${REV}.fs ${DESTDIR}/snapshot/
 
-${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CBIN}.conf
+${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -E -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	make -f ${CBIN}.mk all
+
+${CRUNCHCONF}: ${LISTS}
+	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
 
 do_files:
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
