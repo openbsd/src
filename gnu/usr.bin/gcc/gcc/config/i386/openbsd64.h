@@ -36,7 +36,8 @@ Boston, MA 02111-1307, USA.  */
   do						\
     {						\
     	OPENBSD_OS_CPP_BUILTINS_ELF();		\
-	OPENBSD_OS_CPP_BUILTINS_LP64();		\
+	if (TARGET_64BIT)			\
+		OPENBSD_OS_CPP_BUILTINS_LP64();	\
     }						\
   while (0)
 
