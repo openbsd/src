@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtree.c,v 1.15 2003/06/02 23:36:54 millert Exp $	*/
+/*	$OpenBSD: mtree.c,v 1.16 2003/06/16 17:51:21 millert Exp $	*/
 /*	$NetBSD: mtree.c,v 1.7 1996/09/05 23:29:22 thorpej Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: mtree.c,v 1.15 2003/06/02 23:36:54 millert Exp $";
+static const char rcsid[] = "$OpenBSD: mtree.c,v 1.16 2003/06/16 17:51:21 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -162,7 +162,7 @@ main(argc, argv)
 		exit(0);
 	}
 	status = verify();
-	if (Uflag & (status == MISMATCHEXIT))
+	if (Uflag && (status == MISMATCHEXIT))
 		status = 0;
 	exit(status);
 }
