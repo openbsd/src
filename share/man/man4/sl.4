@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sl.4,v 1.8 2003/06/02 23:30:12 millert Exp $
+.\"	$OpenBSD: sl.4,v 1.9 2003/12/08 10:03:43 markus Exp $
 .\"	$NetBSD: sl.4,v 1.1 1996/08/10 21:26:14 explorer Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -37,14 +37,23 @@
 .Nm sl
 .Nd slip network interface
 .Sh SYNOPSIS
-.Nm pseudo-device sl
-.Op Ar count
+.Cd "pseudo-device sl" Op Ar count
 .Sh DESCRIPTION
 The
 .Nm
 interface allows serial lines to be used as network interfaces using the
 .Em slip
 protocol.
+.Pp
+An
+.Nm
+interface can be created at runtime using the
+.Ic ifconfig slN create
+command or by setting up a
+.Xr hostname.if 5
+configuration file for
+.Xr netstart 8 .
+.Pp
 The
 .Nm sl
 interface can use Van Jacobson TCP header compression and ICMP filtering.

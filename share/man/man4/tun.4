@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tun.4,v 1.26 2003/06/06 10:29:41 jmc Exp $
+.\"	$OpenBSD: tun.4,v 1.27 2003/12/08 10:03:43 markus Exp $
 .\"
 .\" Copyright (c) 2003 Marcus D. Watts  All rights reserved.
 .\"
@@ -33,7 +33,7 @@
 .Nm tun
 .Nd network tunnel pseudo-device
 .Sh SYNOPSIS
-.Cd pseudo-device tun Op Ar count
+.Cd "pseudo-device tun" Op Ar count
 .Pp
 .Fd #include <sys/types.h>
 .Fd #include <net/if_tun.h>
@@ -45,14 +45,14 @@ Packets sent to this interface can be read by a userland process
 and processed as desired.
 Packets written by the userland process are injected back into
 the kernel networking subsystem.
-By default 2 such interfaces are provided.
 .Pp
-The
+A
 .Nm
-driver normally appears as a character special device,
-.Pa /dev/tun0 ,
-.Pa /dev/tun1 ,
-etc.
+interface can be created at runtime using the
+.Ic ifconfig tunN create
+command or by opening the character special device
+.Pa /dev/tunN .
+.Pp
 Each device has the exclusive open property; it cannot be opened
 if it is already open and in use by another process.
 Each read returns at most one packet; if insufficient

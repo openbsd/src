@@ -1,4 +1,4 @@
-.\" $OpenBSD: vlan.4,v 1.19 2003/06/06 10:29:41 jmc Exp $
+.\" $OpenBSD: vlan.4,v 1.20 2003/12/08 10:03:43 markus Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,12 +41,21 @@
 .Nm vlan
 .Nd "IEEE 802.1Q encapsulation/decapsulation pseudo-device"
 .Sh SYNOPSIS
-.Cd pseudo-device vlan Op Ar count
+.Cd "pseudo-device vlan" Op Ar count
 .Sh DESCRIPTION
 The
 .Nm
 Ethernet interface allows construction of virtual LANs when used in
 conjunction with IEEE 802.1Q-compliant Ethernet devices.
+.Pp
+A
+.Nm
+interface can be created at runtime using the
+.Ic ifconfig vlanN create
+command or by setting up a
+.Xr hostname.if 5
+configuration file for
+.Xr netstart 8 .
 .Pp
 This driver currently supports the following modes of operation:
 .Bl -tag -width abc

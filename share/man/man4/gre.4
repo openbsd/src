@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.21 2003/11/21 09:26:54 jmc Exp $
+.\" $OpenBSD: gre.4,v 1.22 2003/12/08 10:03:43 markus Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 .Nm gre
 .Nd encapsulating network device
 .Sh SYNOPSIS
-.Cd pseudo-device gre Op Ar count
+.Cd "pseudo-device gre" Op Ar count
 .Sh NOTE
 .Tn GRE ,
 .Tn WCCPv1 ,
@@ -65,6 +65,15 @@ The
 .Nm
 network interface allows tunnel construction using the Cisco GRE or
 the Mobile-IP (RFC 2004) encapsulation protocols.
+.Pp
+A
+.Nm
+interface can be created at runtime using the
+.Ic ifconfig greN create
+command or by setting up a
+.Xr hostname.if 5
+configuration file for
+.Xr netstart 8 .
 .Pp
 This driver currently supports the following modes of operation:
 .Bl -tag -width abc
@@ -136,6 +145,7 @@ Host X-- Host A  ----------------tunnel---------- Cisco D------Host E
 On Host A (OpenBSD):
 .Bd -literal -offset indent
 # route add default B
+# ifconfig greN create
 # ifconfig greN A D netmask 0xffffffff linkX up
 # ifconfig greN tunnel A D
 # route add E D
@@ -157,6 +167,7 @@ OR
 On Host D (OpenBSD):
 .Bd -literal -offset indent
 # route add default C
+# ifconfig greN create
 # ifconfig greN D A
 # ifconfig greN tunnel D A
 .Ed

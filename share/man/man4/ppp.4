@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ppp.4,v 1.5 2003/08/08 09:51:53 jmc Exp $
+.\"	$OpenBSD: ppp.4,v 1.6 2003/12/08 10:03:43 markus Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -36,14 +36,23 @@
 .Nm ppp
 .Nd point to point protocol network interface
 .Sh SYNOPSIS
-.Nm pseudo-device ppp
-.Op Ar count
+.Cd "pseudo-device ppp" Op Ar count
 .Sh DESCRIPTION
 The
 .Nm
 interface allows serial lines to be used as network interfaces using the
 .Em Point-to-Point Protocol
 (PPP).
+.Pp
+A
+.Nm
+interface can be created at runtime using the
+.Ic ifconfig pppN create
+command or by setting up a
+.Xr hostname.if 5
+configuration file for
+.Xr netstart 8 .
+.Pp
 The
 .Nm
 interface can use various types of compression and has many features

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: carp.4,v 1.4 2003/10/19 03:57:25 david Exp $
+.\"	$OpenBSD: carp.4,v 1.5 2003/12/08 10:03:43 markus Exp $
 .\"
 .\" Copyright (c) 2003, Ryan McBride.  All rights reserved.
 .\"
@@ -43,6 +43,15 @@ addresses are always available, but in some configurations
 .Nm
 can also provide load balancing functionality.
 .Pp
+A
+.Nm
+interface can be created at runtime using the
+.Ic ifconfig carpN create
+command or by setting up a
+.Xr hostname.if 5
+configuration file for
+.Xr netstart 8 .
+.Pp
 To use
 .Nm ,
 the administrator needs to configure at minimum a common virtual host ID and
@@ -79,14 +88,18 @@ The
 of 100 on the second virtual host means that it's advertisements will be sent
 out slightly less frequently.
 .Bd -literal -offset indent
+# ifconfig carp0 create
 # ifconfig carp0 vhid 1 pass mekmitasdigoat 192.168.1.10
+# ifconfig carp1 create
 # ifconfig carp1 vhid 2 advskew 100 pass mekmitasdigoat 192.168.1.10
 .Ed
 .Pp
 Now we configure Host B.
 The configuration is identical, except we skew virtual host 1 instead.
 .Bd -literal -offset indent
+# ifconfig carp0 create
 # ifconfig carp0 vhid 1 advskew 100 pass mekmitasdigoat 192.168.1.10
+# ifconfig carp1 create
 # ifconfig carp1 vhid 2 pass mekmitasdigoat 192.168.1.10
 .Ed
 .Pp

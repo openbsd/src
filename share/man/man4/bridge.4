@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bridge.4,v 1.54 2003/11/09 16:06:07 jmc Exp $
+.\"	$OpenBSD: bridge.4,v 1.55 2003/12/08 10:03:43 markus Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .Nm bridge
 .Nd Ethernet bridge interface
 .Sh SYNOPSIS
-.Cd "pseudo-device bridge 2"
+.Cd "pseudo-device bridge" Op Ar count
 .Sh DESCRIPTION
 The
 .Nm
@@ -46,6 +46,15 @@ available on the wire of another set of machines, and it can act as
 a transparent filter for
 .Xr ip 4
 datagrams.
+.Pp
+A
+.Nm
+interface can be created at runtime using the
+.Ic ifconfig bridgeN create
+command or by setting up a
+.Xr bridgename.if 5
+configuration file for
+.Xr netstart 8 .
 .Pp
 The bridges provided by this interface are learning bridges with
 filtering, see

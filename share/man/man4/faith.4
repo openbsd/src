@@ -1,4 +1,4 @@
-.\"	$OpenBSD: faith.4,v 1.13 2003/08/08 09:51:53 jmc Exp $
+.\"	$OpenBSD: faith.4,v 1.14 2003/12/08 10:03:43 markus Exp $
 .\"	$KAME: faith.4,v 1.10 2001/06/30 00:42:48 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -43,6 +43,15 @@ interface captures IPv6 TCP traffic,
 for implementing userland IPv6-to-IPv4 TCP relay
 similar to
 .Xr faithd 8 .
+.Pp
+A
+.Nm
+interface can be created at runtime using the
+.Ic ifconfig faithN create
+command or by setting up a
+.Xr hostname.if 5
+configuration file for
+.Xr netstart 8 .
 .Pp
 Special action will be taken when IPv6 TCP traffic is seen on a router,
 and the routing table suggests routing it to the
