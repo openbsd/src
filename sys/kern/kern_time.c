@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.38 2003/09/01 18:06:03 henning Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.39 2004/02/15 02:34:14 tedu Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -472,6 +472,7 @@ sys_setitimer(p, v, retval)
 		syscallarg(const struct itimerval *) itv;
 		syscallarg(struct itimerval *) oitv;
 	} */ *uap = v;
+	struct sys_getitimer_args getargs;
 	struct itimerval aitv;
 	register const struct itimerval *itvp;
 	int s, error;
@@ -483,9 +484,12 @@ sys_setitimer(p, v, retval)
 	if (itvp && (error = copyin((void *)itvp, (void *)&aitv,
 	    sizeof(struct itimerval))))
 		return (error);
-	if ((SCARG(uap, itv) = SCARG(uap, oitv)) &&
-	    (error = sys_getitimer(p, uap, retval)))
-		return (error);
+	if (SCARG(uap, oitv) != NULL) {
+		SCARG(&getargs, which) = SCARG(uap, which);
+		SCARG(&getargs, itv) = SCARG(uap, oitv);
+		if ((error = sys_getitimer(p, &getargs, retval)))
+			return (error);
+	}
 	if (itvp == 0)
 		return (0);
 	if (itimerfix(&aitv.it_value) || itimerfix(&aitv.it_interval))
