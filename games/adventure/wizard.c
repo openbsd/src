@@ -50,13 +50,14 @@ static char rcsid[] = "$NetBSD: wizard.c,v 1.3 1995/04/24 12:21:41 cgd Exp $";
 
 # include "hdr.h"
 #include <string.h>
+#include <time.h>
 
 datime(d,t)
 int *d,*t;
 {       int tvec[2],*tptr;
 
 	time(tvec);
-	tptr=localtime(tvec);
+	tptr=(int *)localtime(tvec);
 	*d=tptr[7]+365*(tptr[5]-77);    /* day since 1977  (mod leap)   */
 	/* bug: this will overflow in the year 2066 AD                  */
 	/* it will be attributed to Wm the C's millenial celebration    */
