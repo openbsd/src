@@ -1,4 +1,4 @@
-.\" $OpenBSD: vlan.4,v 1.21 2004/07/26 09:20:14 jmc Exp $
+.\" $OpenBSD: vlan.4,v 1.22 2004/08/12 18:43:08 mcbride Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -82,13 +82,6 @@ the canonical field (always 0), and 12 bits for the vlan identifier.
 Following the vlan header is the actual ether type for the frame and length
 information.
 .Pp
-The network interfaces are named
-.Sy vlan Ns Ar 0 ,
-.Sy vlan Ns Ar 1 ,
-etc.
-The number of interfaces is given by the corresponding
-.Sy pseudo-device
-line in the system config file.
 .Nm
 interfaces support the following unique
 .Xr ioctl 2 Ns s :
