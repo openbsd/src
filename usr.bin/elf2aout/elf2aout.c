@@ -1,4 +1,4 @@
-/* $OpenBSD: elf2aout.c,v 1.3 2003/06/10 22:20:46 deraadt Exp $	 */
+/* $OpenBSD: elf2aout.c,v 1.4 2003/11/27 10:31:52 henning Exp $	 */
 
 /*
  * Copyright (c) 1995
@@ -174,7 +174,8 @@ usage:
 		/* Section types we can't handle... */
 		else if (ph[i].p_type != PT_LOAD) {
 			fprintf(stderr,
-			    "Program header %d type %d can't be converted.\n");
+			    "Program header %d type %d can't be converted.\n",
+			    i, ph[i].p_type);
 			exit(1);
 		}
 		/* Writable (data) segment? */
@@ -341,7 +342,7 @@ translate_syms(int out, int in, off_t symoff, off_t symsize, off_t stroff,
 	/* Initialize the table pointer... */
 	nsp = newstrings;
 
-	/* Go the the start of the ELF symbol table... */
+	/* Go to the start of the ELF symbol table... */
 	if (lseek(in, symoff, SEEK_SET) < 0) {
 		perror("translate_syms: lseek");
 		exit(1);
@@ -418,7 +419,7 @@ copy(int out, int in, off_t offset, off_t size)
 	char ibuf[4096];
 	int  remaining, cur, count;
 
-	/* Go the the start of the ELF symbol table... */
+	/* Go to the start of the ELF symbol table... */
 	if (lseek(in, offset, SEEK_SET) < 0) {
 		perror("copy: lseek");
 		exit(1);
