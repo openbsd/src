@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.5 2004/02/24 02:10:42 deraadt Exp $
+#	$OpenBSD: list,v 1.6 2004/02/24 03:43:51 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS usr.bin bin sbin usr.sbin gnu/usr.bin
@@ -82,4 +82,5 @@ SCRIPT	${CURDIR}/../common/install.md		install.md
 SCRIPT	${CURDIR}/../../miniroot/upgrade.sh	upgrade
 SCRIPT	${CURDIR}/../../miniroot/install.sh	install
 SCRIPT	${CURDIR}/../../miniroot/install.sub	install.sub
-SPECIAL	chmod 755 install upgrade #sbin/dhclient-script
+SPECIAL	chmod 755 install upgrade
+#SPECIAL chmod 755 sbin/dhclient-script
