@@ -171,231 +171,120 @@ should make a new inst floppy or fsck your existing one (if you can).
 	will be used by the finished system, following which the new file
 	systems will be mounted to complete the installation.
 
------------------------------------------------------------------------
-	To install from floppy:
-		The first thing you should do is pick a temporary
-		directory where the distribution files can be stored.
-		To do this, enter the command "Set_tmp_dir", and enter
-		the name of the temporary directory.  (Don't forget
-		that if your disk is still mounted under /mnt; you
-		should probably pick a directory under /mnt/usr.)
+	After these preparatory steps has been completed, you will be
+	able to extract the distribution sets onto your system.  There
+	are several install methods supported; FTP, tape, CD-ROM, NFS
+	or a local disk partition.  To install from a tape, the distrib-
+	ution sets must have been written to tape prior to running the
+	installation program, either as tar images or as gzipped tar
+	images.  Note that installation from floppies are not currently
+	supported.
 
-		After you have picked a temporary directory, enter the
-		"Load_fd" command, to load the distribution sets from
-		your floppies.
+	To install from FTP:
+		To be done.
 
-		You will be asked which floppy drive to use.  Enter
-		"0" (zero) if you're using the first floppy drive
-		(i.e. what DOS would call "A:"), or enter "1" if
-		you're using the second.  (Unlike previous installers,
-		you may use the floppy drive that you booted from.
-		Simply eject the install floppy -- the installation
-		process does not need it like it used to).
-
-		You will be prompted to insert a floppy into the drive,
-		to have its contents copied to your hard disk.  Do so,
-		and hit return to begin copying.  When that is done,
-		read the remainder of the floppies that contain the
-		distribution sets that you want to install, one by
-		one.  When the last is read, and you are being
-		prompted for another, hit Control-C.
-
-		Run the "Extract" command once for each distribution
-		set you wish to install.  For instance, if you wish to
-		install the "base21" distribution set, followed by the
-		"man21" distribution set, and finally the "etc21"
-		distribution set, use the commands:
-			Extract base21
-			Extract man21
-			Extract etc21
-
-		For each extraction, it will ask you if the extraction
-		should be verbose.  If you reply affirmatively, it
-		will print out the name of each file that's being
-		extracted.
-
-		(Note: if you know that you will be running low on
-		disk space when installing OpenBSD, you can load and
-		extract one distribution set at a time.  To do this,
-		load only the floppies which contain the files for the
-		first distribution set, extract them, and then change
-		to the temporary directory and remove them with the
-		command "rm set_name.??".)
-
-		Once you are finished extracting all of the sets that
-		you wish to install, you should proceed to the
-		instructions below (after the last install medium
-		type-specific instructions), that explain how you
-		should configure your system.
+	To install from HTTP:
+		To be done.
 
 	To install from tape:
-		The first thing you should do is pick a temporary
-		directory where the distribution files can be stored.
-		To do this, enter the command "Set_tmp_dir", and enter
-		the name of the temporary directory.  (Don't forget
-		that your disk is mounted under /mnt; you should
-		probably pick a directory under /mnt/usr.)  The
-		default is /mnt/usr/distrib.
+		In order to install from tape, the distribution sets to be
+		installed must have been written to tape previously, either
+		in tar format or gzip-compressed tar format.
 
-		After you have picked a temporary directory, enter the
-		"Load_tape" command, to load the distribution sets from
-		tape.
+		You will also have to identify the tape device where the
+		distribution sets are to be extracted from.  This will
+		typically be "nrst0" (no-rewind, raw interface).
 
-		You will be asked which tape drive to use.  The
-		default is "rst0", which is correct if you're using
-		the SCSI tape drive with the lowest SCSI ID number.
-		(For the SCSI tape drive with the next lowest SCSI ID
-		number, you should use "rst1", and so on.)
+		Next you will have to provide the file number of the set
+		that is to be extracted.  Note that the file number starts
+		at 1, which is the first file written to the tape.
 
-		You will be prompted to hit return when you have
-		inserted the tape into the tape drive.  When you do,
-		the contents of the tape will be extracted into the
-		temporary directory, and the names of the files being
-		extracted will be printed.
+		The install program will not automatically detect whether
+		an image has been compressed, so it will ask for that
+		information before starting the extraction.
 
-		After the tape has been extracted, to go the directory
-		containing the first distribution set you wish to
-		install.  (Depending on how you made the tape, it's
-		probably a subdirectory of the temporary directory you
-		specified above.)  Once there, run the "Set_tmp_dir"
-		command again, and accept its default answer by
-		hitting return at the prompt.
+	To install from CD-ROM:
+		When installing from a CD-ROM, you will be asked which
+		device holds the distribution sets.  This will typically
+		be either "cd0" or "acd0".  Next you will be asked which
+		partition on the CD-ROM the distribution is to be loaded
+		from.  This is normally partition "a".
 
-		Use the "Extract" command to extract the distribution
-		set.  For instance, if you're extracting the "base21"
-		set, use the command:
-			Extract base21
-		You will be asked if you wish the extraction to be
-		verbose.  If you reply affirmatively, the name of each
-		file being extracted will be printed.
+		Next you will have to identift the file system type that
+		has been used to create the distribution on the CD-ROM,
+		this can be either FFS or ISO CD9660.  The OpenBSD CD
+		distribution uses the CD9660 format.
 
-		Repeat the previous two steps for each distribution
-		set you wish to install.  Change to the set's
-		directory, run "Set_tmp_dir", and then run
-		"Extract <set_name>" to extract the set.
+		You will also have to provide the relative path to the
+		directory on the CD which holds the distribution, for the
+		i386 this is "2.1/i386".
 
-		Once you are finished extracting all of the sets that
-		you wish to install, you should proceed to the
-		instructions below (after the last install medium
-		type-specific instructions), that explain how you
-		should configure your system.
+		For instructions on how to complete the installation from
+		the CD-ROM distribution, see the section named "Common
+		file system installations" below.
+		
+	To install from a NFS mounted directory:
+		When installing from a NFS-mounted directory, you must
+		have completed network configuration above, and also
+		set up the exported file system on the NFS server in
+		advance.
 
-	To install via FTP or NFS:
-		The first thing you should do is pick a temporary
-		directory where the distribution files can be stored.
-		To do this, enter the command "Set_tmp_dir", and enter
-		the name of the temporary directory.  (Don't forget
-		that your disk is mounted under /mnt; you should
-		probably pick a directory under /mnt/usr.)  The
-		default is /mnt/usr/distrib.
+		First you must identify the IP address of the NFS server
+		to load the distribution from, and the file system the
+		server expects you to mount.
 
-		Configure the appropriate ethernet interface (e.g.
-		ed0, ep0, etc.) up, with a command like:
+		The install program will also ask whether or not TCP
+		should be used for transport (the default is UDP).  Note
+		that TCP only works with newer NFS servers.
 
-		ifconfig <ifname> <ipaddr> [netmask <netmask>]
+		You will also have to provide the relative path to the
+		directory on the file system where the distribution sets
+		are located.  Note that this path should not be prefixed
+		with a '/'.
 
-		where "<ifname>" is the interface name, like those
-		listed above, and "<ipaddr>" is the numeric IP address
-		of the interface.  If the interface has a special
-		netmask, supply the word "netmask" at and that netmask
-		at the end of the command line.  (The brackets
-		indicate that those arguments are optional.)  For
-		instance, to configure interface ed0 with IP address
-		129.133.10.10, use the command:
+		For instructions on how to complete the installation from
+		the CD-ROM distribution, see the section named "Common
+		file system installations" below.
 
-		ifconfig ed0 129.133.10.10
+	To install from a local disk partition:
+		When installing from a local disk partition, you will
+		first have to identify which disk holds the distribution
+		sets.  This is normally "wdN" or "sdN" where N is a
+		number 0 through 9.  Next you will have to identify the
+		partition within that disk that holds the distribution,
+		this is a single letter between 'a' and 'p'.
 
-		and to configure interface ep0 with IP address
-		128.32.240.167 and a special netmask, 0xffffff00, use
-		the command:
+		You will also have to identify the type of file system
+		residing in the partition identified.  Currently you can
+		install from partitions that has been formatted as fast
+		file system (ffs) or MS-DOS.
 
-		ifconfig ep0 128.32.240.167 netmask 0xffffff00
+		You will also have to provide the relative path to the
+		directory on the file system where the distribution sets
+		are located.  Note that this path should not be prefixed
+		with a '/'.
 
-		If your board selects software selection of the
-		ethernet interface to use, you might have to add
-		special flags to the "ifconfig" command you use.
-		Consult the table below for the appropriate flags:
+		For instructions on how to complete the installation from
+		the a local disk partition, see the next section.
+		
+	Common file system installations:
+		The following instructions are common to installations
+		from local disk partitions, NFS mounted directories and
+		CD-ROMs.
 
-		Interface Type	Connector	Flags
-		--------- ----	---------	-----
-		ed with WD/SMC*	BNC		[none necessary]
-		ed with WD/SMC*	UTP		[none necessary]
-		ed with WD/SMC*	AUI		link0
-		ed with 3c503	BNC		[none necessary]
-		ed with 3c503	AUI		link0
-		ep		BNC		[none necessary]
-		ep		AUI		link0
-		ep		UTP		link0 link1
+		A list of available distribution sets will be listed.  If
+		any sets has already been extracted, those will be marked
+		with an X.  Enter the name of one distribution set at a
+		time, until all desired distribution sets has been
+		installed on your system.
 
-		* Older WD boards do not support software configuration,
-		  and must be configured via jumpers.  These flags
-		  will have no effect on them.
-
-		In other words, if, in the last example, the AUI port
-		of the board were being used, you would use the
-		command:
-
-		ifconfig ep0 128.32.240.167 netmask 0xffffff00 link0
-
-		If the NFS server or FTP server is not on a directly-
-		connected network, you need to set up a route to it
-		using a command like:
-
-		route add default <gate_ipaddr>
-
-		where <gate_ipaddr> is your gateway's numeric IP
-		address.
-
-		If you are NFS-mounting the distribution sets, mount
-		them on the temporary directory with a command like:
-
-		mount -t nfs <serv_ipaddr>:<dist_dir> <tmp_dir>
-
-		where <serv_ipaddr> is the server's numeric IP address,
-		<dist_dir> is the path to the distribution files on
-		the server, and <tmp_dir> is the name of the local
-		temporary directory.
-
-		Once this is done, proceed as if you had loaded the
-		files from tape, changing to the appropriate
-		directories, running "Set_tmp_dir", and running
-		"Extract" as appropriate.
-
-		If you are retrieving the distribution sets using ftp,
-		change into the temporary directory, and execute the
-		command:
-
-		ftp <serv_ipaddr>
-
-		where <serv_ipaddr> is once again the server's numeric
-		IP address.  Get the files with FTP, taking care to
-		use binary mode when transferring the files.
-
-		Once you have all of the files for the distribution
-		sets that you wish to install, you can proceed using
-		the instructions above, as if you had installed from a
-		floppy.  (Note that as with the floppy install, if
-		you're short on disk space, you can transfer only one
-		set at a time, extract it, then delete it, to save
-		space.)
-
-	Once you have finished extracting all of the distribution sets
-	that you wish to install, and are back at the "#" prompt, you
-	are ready to configure your system.  The configuration utility
-	expects that you have installed the "base21" and "etc21"
-	distribution sets.  If you have not, you will not be able to
-	run it successfully (nor will you have a functional system, in
-	any case).  To configure your newly-installed OpenBSD system,
-	run the command "Configure".  It will ask you for the system's
-	host name, domain name, and other network configuration
-	information.  It will set up your configuration files and make
-	the device nodes for the newly-installed system.
------------------------------------------------------------------------
 
 	When all the selected distribution sets has been extracted, you
 	will be allowed to select which time zone your system will be
 	using, all the device nodes needed by the installed system will
-	be created for you and the file systems will be unmounted.
+	be created for you and the file systems will be unmounted.  For
+	this to work properly, it is expected that you have installed
+	at least the "base21" and "etc21" distribution sets.
 
 
 Congratulations, you have successfully installed OpenBSD 2.1. When you
