@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.49 2004/03/14 19:24:26 miod Exp $
+#	$OpenBSD: GENERIC,v 1.50 2004/03/17 00:41:30 miod Exp $
 
 # Machine architecture; required by config(8)
 machine		hppa
@@ -29,7 +29,7 @@ config	bsd swap generic
 
 mainbus0 at root		# root "bus"
 
-mem*	at mainbus0		# /dev/*mem and memory controller
+mem*	at mainbus0 flags 0x0000	# /dev/*mem and memory controller
 pdc0	at mainbus0		# PDC/IODC wrapper for boot console
 power0	at mainbus0		# power/fail manager (iv 2)
 cpu*	at mainbus0 irq 31	# HP PA-RISC cpu
