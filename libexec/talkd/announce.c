@@ -1,4 +1,4 @@
-/*	$OpenBSD: announce.c,v 1.5 1996/07/18 00:05:33 deraadt Exp $	*/
+/*	$OpenBSD: announce.c,v 1.6 1996/07/18 00:18:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,9 +35,10 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)announce.c	5.9 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: announce.c,v 1.5 1996/07/18 00:05:33 deraadt Exp $";
+static char rcsid[] = "$Id: announce.c,v 1.6 1996/07/18 00:18:53 deraadt Exp $";
 #endif /* not lint */
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
