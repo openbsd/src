@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.16 1995/10/07 06:25:28 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.17 1995/12/25 14:09:13 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -117,7 +117,7 @@ extern	u_int lowram;
 /*
  * For the fpu emulation and the fpu driver
  */
-int	fputype;
+int	fputype = 0;
 
 /* the following is used externally (sysctl_hw) */
 char machine[] = "atari";
@@ -784,8 +784,15 @@ boot(howto)
 		savectx(curproc->p_addr);
 
 	boothowto = howto;
-	if((howto&RB_NOSYNC) == 0)
+	if((howto & RB_NOSYNC) == 0)
 		bootsync();
+
+	/*
+	 * Call shutdown hooks. Do this _before_ anything might be
+	 * asked to the user in case nobody is there....
+	 */
+	doshutdownhooks();
+
 	splhigh();			/* extreme priority */
 	if(howto & RB_HALT) {
 		printf("halted\n\n");
@@ -794,6 +801,7 @@ boot(howto)
 	else {
 		if(howto & RB_DUMP)
 			dumpsys();
+
 		doboot();
 		/*NOTREACHED*/
 	}
