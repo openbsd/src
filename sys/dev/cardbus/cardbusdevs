@@ -1,5 +1,5 @@
-$OpenBSD: cardbusdevs,v 1.1 2000/03/02 23:03:26 aaron Exp $
-$NetBSD: cardbusdevs,v 1.7 1999/12/11 22:22:34 explorer Exp $
+$OpenBSD: cardbusdevs,v 1.2 2000/05/15 06:26:58 niklas Exp $
+/*	$NetBSD: cardbusdevs,v 1.7 1999/12/11 22:22:34 explorer Exp $	*/
 
 /*
  * Copyright (C) 1999  Hayakawa Koichi.
@@ -80,3 +80,4 @@ product OPTI 82C861	0xc861	82C861 USB Host Controller (OHCI)
 product XIRCOM X3201_3		0x0002	X3201-3 Fast Ethernet Controller
 /* this is the device id `indicating 21143 driver compatibility' */
 product XIRCOM X3201_3_21143	0x0003	X3201-3 Fast Ethernet Controller (21143)
+product	XIRCOM	MODEM56		0x0103	56k Modem

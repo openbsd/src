@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.65 2000/05/15 04:17:29 jason Exp $
+#	$OpenBSD: files.i386,v 1.66 2000/05/15 06:26:59 niklas Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -138,7 +138,7 @@ define pckbd { [irq = -1], [port = -1] }
 device	pccom: tty
 attach	pccom at isa with pccom_isa
 attach	pccom at commulti with pccom_commulti
-file	arch/i386/isa/pccom.c		pccom & (pccom_isa | pccom_isapnp | pccom_commulti | pccom_pcmcia | pccom_puc) needs-flag
+file	arch/i386/isa/pccom.c		pccom & (pccom_isa | pccom_isapnp | pccom_commulti | pccom_pcmcia | pccom_cardbus | pccom_puc) needs-flag
 
 # PC console support a la "pccons"
 device	pc: tty, pckbd
@@ -311,6 +311,9 @@ include "dev/pcmcia/files.pcmcia"
 
 # i386-specific PCMCIA drivers
 attach	pccom at pcmcia with pccom_pcmcia
+
+# i386-specific Cardbus drivers
+attach	pccom at cardbus with pccom_cardbus
 
 #
 # Machine-independent USB drivers

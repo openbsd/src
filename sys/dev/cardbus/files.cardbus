@@ -1,4 +1,4 @@
-#	$OpenBSD: files.cardbus,v 1.1 2000/04/08 05:50:52 aaron Exp $
+#	$OpenBSD: files.cardbus,v 1.2 2000/05/15 06:26:58 niklas Exp $
 #	$NetBSD: files.cardbus,v 1.8 2000/01/26 06:37:24 thorpej Exp $
 #
 # files.cardbus
@@ -14,6 +14,10 @@ file	dev/cardbus/cardbus.c		cardbus		needs-flag
 file	dev/cardbus/cardbus_map.c	cardbus
 file	dev/cardbus/cardbus_exrom.c	cardbus
 file	dev/cardbus/rbus.c		cardbus
+
+# Com ports
+attach	com at cardbus with com_cardbus
+file	dev/cardbus/com_cardbus.c		com_cardbus | pccom_cardbus
 
 #
 # 3Com 3C575TX, 3C575BTX, and 3C575CTX
