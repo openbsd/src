@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_rwlockattr_setpshared.3,v 1.3 1999/11/24 05:35:33 d Exp $
+.\" $OpenBSD: pthread_rwlockattr_setpshared.3,v 1.4 1999/12/24 00:15:08 alex Exp $
 .\" Copyright (c) 1998 Alex Nash
 .\" All rights reserved.
 .\"
@@ -34,7 +34,7 @@
 .Sh SYNOPSIS
 .Fd #include <pthread.h>
 .Ft int
-.Fn pthread_rwlockattr_setpshared "pthread_rwlockattr_t *attr" "int *pshared"
+.Fn pthread_rwlockattr_setpshared "pthread_rwlockattr_t *attr" "int pshared"
 .Sh DESCRIPTION
 The
 .Fn pthread_rwlockattr_setpshared
