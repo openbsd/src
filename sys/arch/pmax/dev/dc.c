@@ -135,8 +135,6 @@ int dcparam	__P((struct tty *tp, struct termios *t));
 static int cold_dcparam __P((struct tty *tp, struct termios *t, 
 		      dcregs *dcaddr, int allow_19200));
 
-extern void ttrstrt __P((void *));
-
 void	dc_reset __P ((dcregs *dcaddr));
 
 /* console I/O */

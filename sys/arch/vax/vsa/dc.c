@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.2 1997/05/29 00:05:30 niklas Exp $	*/
+/*	$OpenBSD: dc.c,v 1.3 2000/07/19 13:53:30 art Exp $	*/
 /*	$NetBSD: dc.c,v 1.4 1996/10/13 03:36:10 christos Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
@@ -147,7 +147,6 @@ void dcstart	__P((struct tty *));
 void dcxint	__P((struct tty *));
 void dcPutc	__P((dev_t, int));
 void dcscan	__P((void *));
-extern void ttrstrt __P((void *));
 int dcGetc	__P((dev_t));
 int dcparam	__P((struct tty *, struct termios *));
 

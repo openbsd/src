@@ -124,8 +124,6 @@
 
 #include "rasterconsole.h"
 
-extern void ttrstrt	__P((void *));
-
 #ifdef alpha
 #undef	SCCDEV
 #define	SCCDEV		15			/* XXX */

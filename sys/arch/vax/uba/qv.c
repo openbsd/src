@@ -1,4 +1,4 @@
-/*	$OpenBSD: qv.c,v 1.2 1997/05/29 00:05:08 niklas Exp $	*/
+/*	$OpenBSD: qv.c,v 1.3 2000/07/19 13:53:00 art Exp $	*/
 /*	$NetBSD: qv.c,v 1.2 1996/09/02 06:44:28 mycroft Exp $	*/
 
 /*-
@@ -269,7 +269,7 @@ int	qv_ipl_lo = 1;			/* IPL low flag			*/
 int	mouseon = 0;			/* mouse channel is enabled when 1*/
 struct proc *qvrsel;			/* process waiting for select */
 
-int	qvstart(), qvputc(),  ttrstrt();
+int	qvstart(), qvputc();
 
 /*
  * Keyboard translation and font tables
