@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.17 1997/11/12 20:59:44 deraadt Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.18 1998/03/18 02:37:47 angelos Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -740,6 +740,7 @@ findpcb:
 	 * If the state is LISTEN then ignore segment if it contains an RST.
 	 * If the segment contains an ACK then it is bad and send a RST.
 	 * If it does not contain a SYN then it is not interesting; drop it.
+	 * If it is from this socket, drop it, it must be forged.
 	 * Don't bother responding if the destination was a broadcast.
 	 * Otherwise initialize tp->rcv_nxt, and tp->irs, select an initial
 	 * tp->iss, and send a segment:
@@ -759,6 +760,9 @@ findpcb:
 			goto dropwithreset;
 		if ((tiflags & TH_SYN) == 0)
 			goto drop;
+		if ((ti->ti_dport == ti->ti_sport) &&
+		    (ti->ti_dst.s_addr == ti->ti_src.s_addr))
+		 	goto drop;
 
 #ifdef TCPCOOKIE
 		/*
@@ -834,6 +838,24 @@ findpcb:
 		tcpstat.tcps_accepts++;
 		goto trimthenstep6;
 		}
+
+	/*
+	 * If the state is SYN_RECEIVED:
+	 * 	if seg contains SYN/ACK, send an RST.
+	 *	if seg contains an ACK, but not for our SYN/ACK, send an RST
+  	 */
+
+	case TCPS_SYN_RECEIVED:
+		if (tiflags & TH_ACK) {
+			if (tiflags & TH_SYN) {
+				tcpstat.tcps_badsyn++;
+				goto dropwithreset;
+			}
+			if (SEQ_LEQ(ti->ti_ack, tp->snd_una) ||
+			    SEQ_GT(ti->ti_ack, tp->snd_max))
+				goto dropwithreset;
+		}
+		break;
 
 	/*
 	 * If the state is SYN_SENT:
@@ -1108,14 +1130,11 @@ trimthenstep6:
 	switch (tp->t_state) {
 
 	/*
-	 * In SYN_RECEIVED state if the ack ACKs our SYN then enter
-	 * ESTABLISHED state and continue processing, otherwise
-	 * send an RST.
+	 * In SYN_RECEIVED state, the ack ACKs our SYN, so enter
+	 * ESTABLISHED state and continue processing.
+	 * The ACK was checked above.
 	 */
 	case TCPS_SYN_RECEIVED:
-		if (SEQ_GT(tp->snd_una, ti->ti_ack) ||
-		    SEQ_GT(ti->ti_ack, tp->snd_max))
-			goto dropwithreset;
 		tcpstat.tcps_connects++;
 		soisconnected(so);
 		tp->t_state = TCPS_ESTABLISHED;

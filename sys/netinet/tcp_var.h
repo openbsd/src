@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.9 1998/01/24 18:21:39 mickey Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.10 1998/03/18 02:37:49 angelos Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -225,6 +225,7 @@ struct	tcpstat {
 
 	u_long	tcps_pcbhashmiss;	/* input packets missing pcb hash */
 	u_long	tcps_noport;		/* no socket on port */
+	u_long	tcps_badsyn;		/* SYN packet with src==dst rcv'ed */
 };
 
 /*
