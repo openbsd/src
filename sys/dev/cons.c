@@ -1,4 +1,4 @@
-/*	$OpenBSD: cons.c,v 1.7 1996/04/21 22:19:48 deraadt Exp $	*/
+/*	$OpenBSD: cons.c,v 1.8 2001/02/09 20:48:24 mickey Exp $	*/
 /*	$NetBSD: cons.c,v 1.30 1996/04/08 19:57:30 jonathan Exp $	*/
 
 /*
@@ -66,6 +66,7 @@ cnopen(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
+	dev_t cndev;
 
 	if (cn_tab == NULL)
 		return (0);
@@ -75,12 +76,18 @@ cnopen(dev, flag, mode, p)
 	 * later.  This follows normal device semantics; they always get
 	 * open() calls.
 	 */
-	dev = cn_tab->cn_dev;
+	cndev = cn_tab->cn_dev;
+	if (cndev == NODEV)
+		return (ENXIO);
+#ifdef DIAGNOSTIC
+	if (cndev == dev)
+		panic("cnopen: recursive");
+#endif
 	if (cn_devvp == NULLVP) {
 		/* try to get a reference on its vnode, but fail silently */
-		cdevvp(dev, &cn_devvp);
+		cdevvp(cndev, &cn_devvp);
 	}
-	return ((*cdevsw[major(dev)].d_open)(dev, flag, mode, p));
+	return ((*cdevsw[major(cndev)].d_open)(cndev, flag, mode, p));
 }
  
 int
