@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_var.h,v 1.7 2003/06/02 19:27:14 mickey Exp $	*/
+/*	$OpenBSD: db_var.h,v 1.8 2003/06/28 01:52:18 tedu Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff.  All rights reserved.
@@ -41,7 +41,8 @@
 #define DBCTL_TABSTOP	4
 #define DBCTL_PANIC	5
 #define DBCTL_CONSOLE	6
-#define DBCTL_MAXID	7
+#define DBCTL_LOG	7
+#define DBCTL_MAXID	8
 
 #define	CTL_DDB_NAMES { \
 	{ NULL, 0 }, \
@@ -51,6 +52,7 @@
 	{ "tab_stop_width", CTLTYPE_INT },\
 	{ "panic", CTLTYPE_INT }, \
 	{ "console", CTLTYPE_INT }, \
+	{ "log", CTLTYPE_INT }, \
 }
 
 #ifdef	_KERNEL

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_output.h,v 1.12 2002/05/18 18:22:46 art Exp $ */
+/*	$OpenBSD: db_output.h,v 1.13 2003/06/28 01:52:18 tedu Exp $ */
 /*	$NetBSD: db_output.h,v 1.9 1996/04/04 05:13:50 cgd Exp $	*/
 
 /* 
@@ -39,6 +39,8 @@ int db_print_position(void);
 int db_printf(const char *, ...)
     __kprintf_attribute__((__format__(__kprintf__,1,2)));
 void db_end_line(int);
+
+extern int db_log;
 
 /*
  * This is a replacement for the non-standard %z, %n and %r printf formats
