@@ -1597,6 +1597,7 @@ static int ssl3_send_client_key_exchange(SSL *s)
 				SSL_MAX_MASTER_KEY_LENGTH);
 			EVP_EncryptFinal_ex(&ciph_ctx,&(epms[outl]),&padl);
 			outl += padl;
+			die(outl <= sizeof epms);
 			EVP_CIPHER_CTX_cleanup(&ciph_ctx);
 
 			/*  KerberosWrapper.EncryptedPreMasterSecret	*/
