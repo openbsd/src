@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.24 1997/10/25 07:02:36 mickey Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.25 1997/10/27 07:44:20 niklas Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -114,6 +114,7 @@ typedef struct _bios_diskinfo {
 #define BDI_INVALID	0x00000001	/* I/O error during checksumming */
 #define BDI_GOODLABEL	0x00000002	/* Had SCSI or ST506/ESDI disklabel */
 #define BDI_BADLABEL	0x00000004	/* Had another disklabel */
+#define BDI_PICKED	0x80000000	/* kernel-only: cksum matched */
 
 } bios_diskinfo_t;
 
