@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.1.1.2 2000/06/13 03:39:56 rahnds Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.2 2000/09/17 17:50:57 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -266,11 +266,10 @@ static char *otyp[] = {
 
 	object = _dl_objects;
 
-	_dl_printf("Currently loaded modules:\n");
-	_dl_printf("Start    End      Type Ref Name\n");
+	_dl_printf("\tStart    End      Type Ref Name\n");
 
 	while(object) {
-		_dl_printf("%X %X %s  %d  %s\n", object->load_addr,
+		_dl_printf("\t%X %X %s  %d  %s\n", object->load_addr,
 				object->load_size, otyp[object->obj_type],
 				object->refcount, object->load_name);
 		object = object->next;
