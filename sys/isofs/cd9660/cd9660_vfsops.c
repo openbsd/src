@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.12 1997/11/08 17:21:08 niklas Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.13 1998/02/08 22:41:32 tholo Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -131,7 +131,7 @@ cd9660_mountroot()
 int
 cd9660_mount(mp, path, data, ndp, p)
 	register struct mount *mp;
-	char *path;
+	const char *path;
 	caddr_t data;
 	struct nameidata *ndp;
 	struct proc *p;

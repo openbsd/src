@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_extern.h,v 1.5 1997/11/06 05:59:23 csapuntz Exp $	*/
+/*	$OpenBSD: mfs_extern.h,v 1.6 1998/02/08 22:41:52 tholo Exp $	*/
 /*	$NetBSD: mfs_extern.h,v 1.4 1996/02/09 22:31:27 christos Exp $	*/
 
 /*-
@@ -49,7 +49,7 @@ __BEGIN_DECLS
 /* mfs_vfsops.c */
 int	mfs_mountroot	__P((void));
 int	mfs_initminiroot	__P((caddr_t));
-int	mfs_mount	__P((struct mount *, char *, caddr_t,
+int	mfs_mount	__P((struct mount *, const char *, caddr_t,
 			     struct nameidata *, struct proc *));
 int	mfs_start	__P((struct mount *, int, struct proc *));
 int	mfs_statfs	__P((struct mount *, struct statfs *, struct proc *));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: advfsops.c,v 1.12 1997/11/10 23:57:05 niklas Exp $	*/
+/*	$OpenBSD: advfsops.c,v 1.13 1998/02/08 22:41:31 tholo Exp $	*/
 /*	$NetBSD: advfsops.c,v 1.24 1996/12/22 10:10:12 cgd Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
 #include <adosfs/adosfs.h>
 
 int	 adosfs_init __P((struct vfsconf *));
-int	 adosfs_mount __P((struct mount *, char *, caddr_t, struct nameidata *,
+int	 adosfs_mount __P((struct mount *, const char *, caddr_t, struct nameidata *,
     struct proc *));
 int	 adosfs_start __P((struct mount *, int, struct proc *));
 int	 adosfs_unmount __P((struct mount *, int, struct proc *));
@@ -71,7 +71,7 @@ int	 adosfs_loadbitmap __P((struct adosfsmount *));
 int
 adosfs_mount(mp, path, data, ndp, p)
 	struct mount *mp;
-	char *path;
+	const char *path;
 	caddr_t data;
 	struct nameidata *ndp;
 	struct proc *p;

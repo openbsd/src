@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.13 1998/01/11 20:39:10 provos Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.14 1998/02/08 22:41:44 tholo Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -70,7 +70,7 @@
 #include <msdosfs/msdosfsmount.h>
 #include <msdosfs/fat.h>
 
-int msdosfs_mount __P((struct mount *, char *, caddr_t, struct nameidata *,
+int msdosfs_mount __P((struct mount *, const char *, caddr_t, struct nameidata *,
 		       struct proc *));
 int msdosfs_start __P((struct mount *, int, struct proc *));
 int msdosfs_unmount __P((struct mount *, int, struct proc *));
@@ -92,7 +92,7 @@ int msdosfs_mountfs __P((struct vnode *, struct mount *, struct proc *,
 int
 msdosfs_mount(mp, path, data, ndp, p)
 	struct mount *mp;
-	char *path;
+	const char *path;
 	caddr_t data;
 	struct nameidata *ndp;
 	struct proc *p;

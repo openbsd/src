@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vfsops.c,v 1.5 1997/11/06 05:59:23 csapuntz Exp $	*/
+/*	$OpenBSD: mfs_vfsops.c,v 1.6 1998/02/08 22:41:52 tholo Exp $	*/
 /*	$NetBSD: mfs_vfsops.c,v 1.10 1996/02/09 22:31:28 christos Exp $	*/
 
 /*
@@ -164,7 +164,7 @@ mfs_initminiroot(base)
 int
 mfs_mount(mp, path, data, ndp, p)
 	register struct mount *mp;
-	char *path;
+	const char *path;
 	caddr_t data;
 	struct nameidata *ndp;
 	struct proc *p;

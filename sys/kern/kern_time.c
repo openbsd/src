@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.10 1997/10/17 04:41:10 millert Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.11 1998/02/08 22:41:35 tholo Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -445,7 +445,7 @@ sys_setitimer(p, v, retval)
 		syscallarg(struct itimerval *) oitv;
 	} */ *uap = v;
 	struct itimerval aitv;
-	register struct itimerval *itvp;
+	register const struct itimerval *itvp;
 	int s, error;
 
 	if (SCARG(uap, which) > ITIMER_PROF)

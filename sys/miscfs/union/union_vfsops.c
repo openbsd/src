@@ -1,4 +1,4 @@
-/*	$OpenBSD: union_vfsops.c,v 1.7 1997/11/06 05:58:52 csapuntz Exp $	*/
+/*	$OpenBSD: union_vfsops.c,v 1.8 1998/02/08 22:41:42 tholo Exp $	*/
 /*	$NetBSD: union_vfsops.c,v 1.10 1995/06/18 14:47:47 cgd Exp $	*/
 
 /*
@@ -59,7 +59,7 @@
 
 #include <miscfs/union/union.h>
 
-int union_mount __P((struct mount *, char *, caddr_t, struct nameidata *,
+int union_mount __P((struct mount *, const char *, caddr_t, struct nameidata *,
 		     struct proc *));
 int union_start __P((struct mount *, int, struct proc *));
 int union_unmount __P((struct mount *, int, struct proc *));
@@ -72,7 +72,7 @@ int union_statfs __P((struct mount *, struct statfs *, struct proc *));
 int
 union_mount(mp, path, data, ndp, p)
 	struct mount *mp;
-	char *path;
+	const char *path;
 	caddr_t data;
 	struct nameidata *ndp;
 	struct proc *p;

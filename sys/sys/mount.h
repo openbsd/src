@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.21 1997/11/06 05:59:09 csapuntz Exp $	*/
+/*	$OpenBSD: mount.h,v 1.22 1998/02/08 22:41:47 tholo Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -231,7 +231,7 @@ extern int maxvfsconf;		/* highest defined filesystem type */
 extern struct vfsconf *vfsconf;	/* head of list of filesystem types */
 
 struct vfsops {
-	int	(*vfs_mount)	__P((struct mount *mp, char *path, caddr_t data,
+	int	(*vfs_mount)	__P((struct mount *mp, const char *path, caddr_t data,
 				    struct nameidata *ndp, struct proc *p));
 	int	(*vfs_start)	__P((struct mount *mp, int flags,
 				    struct proc *p));

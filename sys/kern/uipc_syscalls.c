@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.6 1997/12/16 22:59:12 provos Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.7 1998/02/08 22:41:36 tholo Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -103,7 +103,7 @@ sys_bind(p, v, retval)
 {
 	register struct sys_bind_args /* {
 		syscallarg(int) s;
-		syscallarg(caddr_t) name;
+		syscallarg(struct sockaddr *) name;
 		syscallarg(int) namelen;
 	} */ *uap = v;
 	struct file *fp;
@@ -112,7 +112,7 @@ sys_bind(p, v, retval)
 
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
 		return (error);
-	error = sockargs(&nam, SCARG(uap, name), SCARG(uap, namelen),
+	error = sockargs(&nam, (caddr_t)SCARG(uap, name), SCARG(uap, namelen),
 			 MT_SONAME);
 	if (error)
 		return (error);
@@ -148,7 +148,7 @@ sys_accept(p, v, retval)
 {
 	register struct sys_accept_args /* {
 		syscallarg(int) s;
-		syscallarg(caddr_t) name;
+		syscallarg(struct sockaddr *) name;
 		syscallarg(int *) anamelen;
 	} */ *uap = v;
 	struct file *fp;
@@ -229,7 +229,7 @@ sys_connect(p, v, retval)
 {
 	register struct sys_connect_args /* {
 		syscallarg(int) s;
-		syscallarg(caddr_t) name;
+		syscallarg(struct sockaddr *) name;
 		syscallarg(int) namelen;
 	} */ *uap = v;
 	struct file *fp;
@@ -242,7 +242,7 @@ sys_connect(p, v, retval)
 	so = (struct socket *)fp->f_data;
 	if ((so->so_state & SS_NBIO) && (so->so_state & SS_ISCONNECTING))
 		return (EALREADY);
-	error = sockargs(&nam, SCARG(uap, name), SCARG(uap, namelen),
+	error = sockargs(&nam, (caddr_t)SCARG(uap, name), SCARG(uap, namelen),
 			 MT_SONAME);
 	if (error)
 		return (error);
@@ -348,13 +348,13 @@ sys_sendto(p, v, retval)
 		syscallarg(caddr_t) buf;
 		syscallarg(size_t) len;
 		syscallarg(int) flags;
-		syscallarg(caddr_t) to;
+		syscallarg(struct sockaddr *) to;
 		syscallarg(int) tolen;
 	} */ *uap = v;
 	struct msghdr msg;
 	struct iovec aiov;
 
-	msg.msg_name = SCARG(uap, to);
+	msg.msg_name = (caddr_t)SCARG(uap, to);
 	msg.msg_namelen = SCARG(uap, tolen);
 	msg.msg_iov = &aiov;
 	msg.msg_iovlen = 1;
@@ -362,7 +362,7 @@ sys_sendto(p, v, retval)
 #ifdef COMPAT_OLDSOCK
 	msg.msg_flags = 0;
 #endif
-	aiov.iov_base = SCARG(uap, buf);
+	aiov.iov_base = (char *)SCARG(uap, buf);
 	aiov.iov_len = SCARG(uap, len);
 	return (sendit(p, SCARG(uap, s), &msg, SCARG(uap, flags), retval));
 }
@@ -523,7 +523,7 @@ sys_recvfrom(p, v, retval)
 		syscallarg(caddr_t) buf;
 		syscallarg(size_t) len;
 		syscallarg(int) flags;
-		syscallarg(caddr_t) from;
+		syscallarg(struct sockaddr *) from;
 		syscallarg(int *) fromlenaddr;
 	} */ *uap = v;
 	struct msghdr msg;
@@ -538,7 +538,7 @@ sys_recvfrom(p, v, retval)
 			return (error);
 	} else
 		msg.msg_namelen = 0;
-	msg.msg_name = SCARG(uap, from);
+	msg.msg_name = (caddr_t)SCARG(uap, from);
 	msg.msg_iov = &aiov;
 	msg.msg_iovlen = 1;
 	aiov.iov_base = SCARG(uap, buf);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.17 1997/12/30 19:07:29 mickey Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.18 1998/02/08 22:41:34 tholo Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -584,7 +584,8 @@ hardclock(frame)
 		 */
 #ifdef PPS_SYNC
 		pps_valid++;
-		if (pps_valid == PPS_VALID) {
+		if (pps_valid >= PPS_VALID) {
+			pps_valid = PPS_VALID;	/* Avoid possible overflow */
 			pps_jitter = MAXTIME;
 			pps_stabil = MAXFREQ;
 			time_status &= ~(STA_PPSSIGNAL | STA_PPSJITTER |
@@ -1019,7 +1020,7 @@ hardupdate(offset)
 		return;
 	ltemp = offset;
 #ifdef PPS_SYNC
-	if (time_status & STA_PPSTIME && time_status & STA_PPSSIGNAL)
+	if ((time_status & STA_PPSTIME) && (time_status & STA_PPSSIGNAL))
 		ltemp = pps_offset;
 #endif /* PPS_SYNC */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.16 1998/01/17 18:20:54 mickey Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.17 1998/02/08 22:41:50 tholo Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -137,7 +137,7 @@ ffs_mountroot()
 int
 ffs_mount(mp, path, data, ndp, p)
 	register struct mount *mp;
-	char *path;
+	const char *path;
 	caddr_t data;
 	struct nameidata *ndp;
 	struct proc *p;

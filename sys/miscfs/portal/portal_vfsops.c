@@ -1,4 +1,4 @@
-/*	$OpenBSD: portal_vfsops.c,v 1.5 1997/11/06 05:58:41 csapuntz Exp $	*/
+/*	$OpenBSD: portal_vfsops.c,v 1.6 1998/02/08 22:41:39 tholo Exp $	*/
 /*	$NetBSD: portal_vfsops.c,v 1.14 1996/02/09 22:40:41 christos Exp $	*/
 
 /*
@@ -65,7 +65,7 @@
 
 #define portal_init ((int (*) __P((struct vfsconf *)))nullop)
 
-int	portal_mount __P((struct mount *, char *, caddr_t,
+int	portal_mount __P((struct mount *, const char *, caddr_t,
 			  struct nameidata *, struct proc *));
 int	portal_start __P((struct mount *, int, struct proc *));
 int	portal_unmount __P((struct mount *, int, struct proc *));
@@ -79,7 +79,7 @@ int	portal_statfs __P((struct mount *, struct statfs *, struct proc *));
 int
 portal_mount(mp, path, data, ndp, p)
 	struct mount *mp;
-	char *path;
+	const char *path;
 	caddr_t data;
 	struct nameidata *ndp;
 	struct proc *p;

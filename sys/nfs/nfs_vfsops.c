@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.23 1997/11/11 11:20:32 niklas Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.24 1998/02/08 22:41:45 tholo Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -576,7 +576,7 @@ nfs_decode_args(nmp, argp)
 int
 nfs_mount(mp, path, data, ndp, p)
 	struct mount *mp;
-	char *path;
+	const char *path;
 	caddr_t data;
 	struct nameidata *ndp;
 	struct proc *p;

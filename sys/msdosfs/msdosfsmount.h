@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfsmount.h,v 1.9 1998/01/11 20:39:11 provos Exp $	*/
+/*	$OpenBSD: msdosfsmount.h,v 1.10 1998/02/08 22:41:44 tholo Exp $	*/
 /*	$NetBSD: msdosfsmount.h,v 1.16 1997/10/17 11:24:24 ws Exp $	*/
 
 /*-
@@ -198,7 +198,7 @@ struct msdosfsmount {
 /*
  * Prototypes for MSDOSFS virtual filesystem operations
  */
-int msdosfs_mount __P((struct mount *, char *, caddr_t, struct nameidata *, struct proc *));
+int msdosfs_mount __P((struct mount *, const char *, caddr_t, struct nameidata *, struct proc *));
 int msdosfs_start __P((struct mount *, int, struct proc *));
 int msdosfs_unmount __P((struct mount *, int, struct proc *));
 int msdosfs_root __P((struct mount *, struct vnode **));

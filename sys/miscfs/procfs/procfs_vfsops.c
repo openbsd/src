@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vfsops.c,v 1.7 1997/11/06 05:58:43 csapuntz Exp $	*/
+/*	$OpenBSD: procfs_vfsops.c,v 1.8 1998/02/08 22:41:40 tholo Exp $	*/
 /*	$NetBSD: procfs_vfsops.c,v 1.25 1996/02/09 22:40:53 christos Exp $	*/
 
 /*
@@ -57,7 +57,7 @@
 #include <miscfs/procfs/procfs.h>
 #include <vm/vm.h>			/* for PAGE_SIZE */
 
-int	procfs_mount __P((struct mount *, char *, caddr_t,
+int	procfs_mount __P((struct mount *, const char *, caddr_t,
 			  struct nameidata *, struct proc *));
 int	procfs_start __P((struct mount *, int, struct proc *));
 int	procfs_unmount __P((struct mount *, int, struct proc *));
@@ -71,7 +71,7 @@ int	procfs_statfs __P((struct mount *, struct statfs *, struct proc *));
 int
 procfs_mount(mp, path, data, ndp, p)
 	struct mount *mp;
-	char *path;
+	const char *path;
 	caddr_t data;
 	struct nameidata *ndp;
 	struct proc *p;

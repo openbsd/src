@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.15 1997/11/06 05:58:15 csapuntz Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.16 1998/02/08 22:41:34 tholo Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -227,7 +227,7 @@ sys_execve(p, v, retval)
 	struct vattr attr;
 	struct ucred *cred = p->p_ucred;
 	char *argp;
-	char **cpp, *dp, *sp;
+	char * const *cpp, *dp, *sp;
 	long argc, envc;
 	size_t len;
 	char *stack;
@@ -255,7 +255,7 @@ sys_execve(p, v, retval)
 	/*
 	 * initialize the fields of the exec package.
 	 */
-	pack.ep_name = SCARG(uap, path);
+	pack.ep_name = (char *)SCARG(uap, path);
 	MALLOC(pack.ep_hdr, void *, exec_maxhdrsz, M_EXEC, M_WAITOK);
 	pack.ep_hdrlen = exec_maxhdrsz;
 	pack.ep_hdrvalid = 0;
