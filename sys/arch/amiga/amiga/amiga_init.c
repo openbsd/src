@@ -1,5 +1,5 @@
-/*	$OpenBSD: amiga_init.c,v 1.8 1996/05/02 06:43:09 niklas Exp $	*/
-/*	$NetBSD: amiga_init.c,v 1.37 1996/04/21 21:06:46 veego Exp $	*/
+/*	$OpenBSD: amiga_init.c,v 1.9 1996/05/04 13:24:48 niklas Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.39 1996/05/02 19:34:27 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -108,7 +108,8 @@ void rollcolor __P((int));
 static int kernel_image_magic_size __P((void));
 static void kernel_image_magic_copy __P((u_char *));
 int kernel_reload_write __P((struct uio *));
-extern void kernel_reload ();
+extern void kernel_reload __P((char *, u_long, u_long, u_long, u_long,
+	u_long, u_long, u_long, u_long, u_long));
 extern void etext __P((void));
 
 void *
@@ -721,7 +722,7 @@ kernel_reload_write(uio)
 		 * in the first write.
 		 */
 		if (iov->iov_len < sizeof(kernel_exec))
-			return EFAULT;		/* XXX */
+			return ENOEXEC;		/* XXX */
 
 		/*
 		 * Pull in the exec header and check it.
@@ -815,7 +816,6 @@ kernel_reload_write(uio)
 		 * Put the finishing touches on the kernel image.
 		 */
 		kernel_image_magic_copy(kernel_image + kernel_load_ofs);
-		bootsync();
 		/*
 		 * Start the new kernel with code in locore.s.
 		 */
@@ -824,13 +824,15 @@ kernel_reload_write(uio)
 		    kernel_exec.a_entry, boot_fphystart, boot_fphysize,
 		    boot_cphysize, kernel_symbol_esym, eclockfreq,
 		    boot_flags, scsi_nosync);
-		/*NOTREACHED*/
 		/*
-		 * XXX - kernel_reload() needs to verify that the
-		 * reload code is at the same location in the new
-		 * kernel.  If it isn't, it will return and we will
-		 * return an error.
+		 * kernel_reload() now checks to see if the reload_code
+		 * is at the same location in the new kernel.
+		 * If it isn't, it will return and we will return
+		 * an error.
 		 */
+		free(kernel_image, M_TEMP);
+		kernel_image = NULL;
+		return (ENODEV);	/* Say operation not supported */
 	case 3:		/* done loading kernel symbol table */
 		c = *((u_long *)(kernel_image + kernel_load_ofs - 4));
 		if (c > 16 * (kernel_exec.a_syms / 12))
