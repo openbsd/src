@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.8 2000/01/09 22:00:19 itojun Exp $
+#	$OpenBSD: GENERIC,v 1.9 2000/11/06 23:44:04 mickey Exp $
 #
 # Generic kernel config (all that is supportted)
 #
@@ -6,9 +6,9 @@
 include	"arch/hppa/conf/generic.hppa"
 maxusers	8
 
-#option  GSCVERBOSE
-#option  EISAVERBOSE
-#option PCIVERBOSE
+#option	GSCVERBOSE
+#option	EISAVERBOSE
+#option	PCIVERBOSE
 
 config	bsd swap generic
 
