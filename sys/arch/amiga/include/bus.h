@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.1 1996/04/27 18:38:52 niklas Exp $	*/
+/*	$OpenBSD: bus.h,v 1.2 1996/08/04 01:34:38 niklas Exp $	*/
 
 /*
  * Copyright (c) 1996 Niklas Hallqvist.
@@ -101,13 +101,19 @@ struct amiga_bus_chipset {
 	void	(*bc_mem_write_8)(bus_mem_handle_t, bus_mem_size_t, u_int64_t);
 
 	/* These are extensions to the general NetBSD bus interface.  */
-	u_int16_t (*bc_to_host_2)(u_int16_t);
-	u_int32_t (*bc_to_host_4)(u_int32_t);
-	u_int64_t (*bc_to_host_8)(u_int64_t);
+	void	(*bc_io_read_raw_multi_2)(bus_io_handle_t, bus_io_size_t,
+		    u_int8_t *, bus_io_size_t);
+	void	(*bc_io_read_raw_multi_4)(bus_io_handle_t, bus_io_size_t,
+		    u_int8_t *, bus_io_size_t);
+	void	(*bc_io_read_raw_multi_8)(bus_io_handle_t, bus_io_size_t,
+		    u_int8_t *, bus_io_size_t);
 
-	u_int16_t (*bc_from_host_2)(u_int16_t);
-	u_int32_t (*bc_from_host_4)(u_int32_t);
-	u_int64_t (*bc_from_host_8)(u_int64_t);
+	void	(*bc_io_write_raw_multi_2)(bus_io_handle_t, bus_io_size_t,
+		    const u_int8_t *, bus_io_size_t);
+	void	(*bc_io_write_raw_multi_4)(bus_io_handle_t, bus_io_size_t,
+		    const u_int8_t *, bus_io_size_t);
+	void	(*bc_io_write_raw_multi_8)(bus_io_handle_t, bus_io_size_t,
+		    const u_int8_t *, bus_io_size_t);
 };
 
 #define bus_io_map(t, port, size, iohp) \
@@ -174,13 +180,19 @@ struct amiga_bus_chipset {
 #define	bus_mem_write_8(t, h, o, v) \
     (*(t)->bc_mem_write_8)((h), (o), (v))
 
-/* These are extensions to the general NetBSD bus interface.  */
-#define bus_to_host_2(t, v) (*(t)->bc_to_host_2)(v)
-#define bus_to_host_4(t, v) (*(t)->bc_to_host_4)(v)
-#define bus_to_host_8(t, v) (*(t)->bc_to_host_8)(v)
+/* OpenBSD extensions */
+#define	bus_io_read_raw_multi_2(t, h, o, a, s) \
+    (*(t)->bc_io_read_raw_multi_2)((h), (o), (a), (s))
+#define	bus_io_read_raw_multi_4(t, h, o, a, s) \
+    (*(t)->bc_io_read_raw_multi_4)((h), (o), (a), (s))
+#define	bus_io_read_raw_multi_8(t, h, o, a, s) \
+    (*(t)->bc_io_read_raw_multi_8)((h), (o), (a), (s))
 
-#define bus_from_host_2(t, v) (*(t)->bc_from_host_2)(v)
-#define bus_from_host_4(t, v) (*(t)->bc_from_host_4)(v)
-#define bus_from_host_8(t, v) (*(t)->bc_from_host_8)(v)
+#define	bus_io_write_raw_multi_2(t, h, o, a, s) \
+    (*(t)->bc_io_write_raw_multi_2)((h), (o), (a), (s))
+#define	bus_io_write_raw_multi_4(t, h, o, a, s) \
+    (*(t)->bc_io_write_raw_multi_4)((h), (o), (a), (s))
+#define	bus_io_write_raw_multi_8(t, h, o, a, s) \
+    (*(t)->bc_io_write_raw_multi_8)((h), (o), (a), (s))
 
 #endif /* _MACHINE_BUS_H_ */
