@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.56 2001/04/06 18:01:56 aaron Exp $
+	$OpenBSD: pcmciadevs,v 1.57 2001/04/08 21:42:04 mickey Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -282,6 +282,7 @@ product XIRCOM XIR_CEM_28	0x110b Xircom CEM-28
 
 /* Cards we know only by their cis */
 vendor ACCTON			-1	ACCTON
+vendor ADDTRON			-1	Addtron
 vendor AMBICOM			-1	AmbiCom
 vendor AMD			-1	AMD
 vendor BILLIONTON		-1	Billionton Systems Inc.
@@ -354,7 +355,7 @@ product SARAMNCOM NS_1100M	{ "NANOSPEED", "HFA384x/IEEE", NULL, NULL }
 product NETGEAR FA410TX		{ "NETGEAR", "FA410TX", "Fast&spEthernet", NULL}
 product COREGA WIRELESS_LAN_PCCA_11	{ "corega&spK.K.", "Wireless&spLAN&spPCCA-11", NULL, NULL }
 product INTERSIL PRISM2		{ "INTERSIL", "HFA384x/IEEE", "Version&sp01.02", NULL }
-product ADDTRON AWP100		{ "Addtron", "AWP-100", "Version&sp01.02", NULL }
+product ADDTRON AWP100		{ "Addtron", "AWP-100&spWireless&spPCMCIA", "Version&sp01.02", NULL }
 product NEC CMZ_RT_WP		{ "NEC", "Wireless&spCard&spCMZ-RT-WP", "Version&sp01.01", NULL }
 product NTT_ME WLAN		{ "NTT-ME", "11Mbps&spWireless&spLAN&spPC&spCard", NULL, NULL }
 product SMC 2632W		{ "SMC", "SMC2632W", "Version&sp01.02", NULL }
