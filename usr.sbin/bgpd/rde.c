@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.68 2004/01/27 16:49:53 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.69 2004/01/27 21:56:21 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -604,14 +604,14 @@ rde_send_kroute(struct prefix *new, struct prefix *old)
 	    new->aspath->nexthop->flags & NEXTHOP_ANNOUNCE) {
 		type = IMSG_KROUTE_DELETE;
 		p = old;
-		kr.nexthop = 0;
+		kr.nexthop.s_addr = 0;
 	} else {
 		type = IMSG_KROUTE_CHANGE;
 		p = new;
-		kr.nexthop = p->aspath->nexthop->true_nexthop.v4.s_addr;
+		kr.nexthop.s_addr = p->aspath->nexthop->true_nexthop.v4.s_addr;
 	}
 
-	kr.prefix = p->prefix->prefix.v4.s_addr;
+	kr.prefix.s_addr = p->prefix->prefix.v4.s_addr;
 	kr.prefixlen = p->prefix->prefixlen;
 
 	if (imsg_compose(&ibuf_main, type, 0, &kr, sizeof(kr)) == -1)

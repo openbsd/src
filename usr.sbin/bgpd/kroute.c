@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.78 2004/01/23 21:18:12 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.79 2004/01/27 21:56:21 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -162,7 +162,7 @@ kr_change(struct kroute *kroute)
 	struct kroute_node	*kr;
 	int			 action = RTM_ADD;
 
-	if ((kr = kroute_find(kroute->prefix, kroute->prefixlen)) !=
+	if ((kr = kroute_find(kroute->prefix.s_addr, kroute->prefixlen)) !=
 	    NULL) {
 		if (kr->r.flags & F_BGPD_INSERTED)
 			action = RTM_CHANGE;
@@ -178,15 +178,15 @@ kr_change(struct kroute *kroute)
 			log_warn("kr_change");
 			return (-1);
 		}
-		kr->r.prefix = kroute->prefix;
+		kr->r.prefix.s_addr = kroute->prefix.s_addr;
 		kr->r.prefixlen = kroute->prefixlen;
-		kr->r.nexthop = kroute->nexthop;
+		kr->r.nexthop.s_addr = kroute->nexthop.s_addr;
 		kr->r.flags = F_BGPD_INSERTED;
 
 		if (kroute_insert(kr) == -1)
 			free(kr);
 	} else
-		kr->r.nexthop = kroute->nexthop;
+		kr->r.nexthop.s_addr = kroute->nexthop.s_addr;
 
 	return (0);
 }
@@ -196,7 +196,8 @@ kr_delete(struct kroute *kroute)
 {
 	struct kroute_node	*kr;
 
-	if ((kr = kroute_find(kroute->prefix, kroute->prefixlen)) == NULL)
+	if ((kr = kroute_find(kroute->prefix.s_addr, kroute->prefixlen)) ==
+	    NULL)
 		return (0);
 
 	if (!(kr->r.flags & F_BGPD_INSERTED))
@@ -271,9 +272,10 @@ kr_nexthop_add(struct bgpd_addr *addr)
 		if (h->kroute != NULL) {
 			nh.valid = 1;
 			nh.connected = h->kroute->r.flags & F_CONNECTED;
-			if (h->kroute->r.nexthop != 0) {
+			if (h->kroute->r.nexthop.s_addr != 0) {
 				nh.gateway.af = AF_INET;
-				nh.gateway.v4.s_addr = h->kroute->r.nexthop;
+				nh.gateway.v4.s_addr =
+				    h->kroute->r.nexthop.s_addr;
 			}
 			memcpy(&nh.kr, &h->kroute->r, sizeof(nh.kr));
 		}
@@ -369,9 +371,9 @@ kr_show_route(struct imsg *imsg)
 int
 kroute_compare(struct kroute_node *a, struct kroute_node *b)
 {
-	if (a->r.prefix < b->r.prefix)
+	if (a->r.prefix.s_addr < b->r.prefix.s_addr)
 		return (-1);
-	if (a->r.prefix > b->r.prefix)
+	if (a->r.prefix.s_addr > b->r.prefix.s_addr)
 		return (1);
 	if (a->r.prefixlen < b->r.prefixlen)
 		return (-1);
@@ -424,7 +426,7 @@ kroute_find(in_addr_t prefix, u_int8_t prefixlen)
 {
 	struct kroute_node	s;
 
-	s.r.prefix = prefix;
+	s.r.prefix.s_addr = prefix;
 	s.r.prefixlen = prefixlen;
 
 	return (RB_FIND(kroute_tree, &krt, &s));
@@ -438,7 +440,7 @@ kroute_insert(struct kroute_node *kr)
 
 	if (RB_INSERT(kroute_tree, &krt, kr) != NULL) {
 		log_warnx("kroute_tree insert failed for %s/%u",
-		    log_ntoa(kr->r.prefix), kr->r.prefixlen);
+		    inet_ntoa(kr->r.prefix), kr->r.prefixlen);
 		free(kr);
 		return (-1);
 	}
@@ -448,7 +450,7 @@ kroute_insert(struct kroute_node *kr)
 			kr->r.flags |= F_STATIC;
 
 		mask = 0xffffffff << (32 - kr->r.prefixlen);
-		ina = ntohl(kr->r.prefix);
+		ina = ntohl(kr->r.prefix.s_addr);
 		RB_FOREACH(h, knexthop_tree, &knt)
 			if (h->nexthop.af == AF_INET &&
 			    (ntohl(h->nexthop.v4.s_addr) & mask) == ina)
@@ -468,7 +470,7 @@ kroute_remove(struct kroute_node *kr)
 
 	if (RB_REMOVE(kroute_tree, &krt, kr) == NULL) {
 		log_warnx("kroute_remove failed for %s/%u",
-		    log_ntoa(kr->r.prefix), kr->r.prefixlen);
+		    inet_ntoa(kr->r.prefix), kr->r.prefixlen);
 		return (-1);
 	}
 
@@ -663,7 +665,7 @@ knexthop_validate(struct knexthop_node *kn)
 					n.valid = 1;
 					n.connected = kr->r.flags & F_CONNECTED;
 					if ((n.gateway.v4.s_addr =
-					    kr->r.nexthop) != 0)
+					    kr->r.nexthop.s_addr) != 0)
 						n.gateway.af = AF_INET;
 					memcpy(&n.kr, &kr->r, sizeof(n.kr));
 					send_nexthop_update(&n);
@@ -742,9 +744,8 @@ protect_lo(void)
 		log_warn("protect_lo");
 		return (-1);
 	}
-	kr->r.prefix = inet_addr("127.0.0.1");
+	kr->r.prefix.s_addr = inet_addr("127.0.0.1");
 	kr->r.prefixlen = 8;
-	kr->r.nexthop = 0;
 	kr->r.flags = F_KERNEL|F_CONNECTED;
 
 	if (RB_INSERT(kroute_tree, &krt, kr) != NULL)
@@ -843,7 +844,7 @@ if_change(u_short ifindex, int flags, struct if_data *ifd)
 					nh.valid = 1;
 					nh.connected = 1;
 					if ((nh.gateway.v4.s_addr =
-					    kkr->kr->r.nexthop) != 0)
+					    kkr->kr->r.nexthop.s_addr) != 0)
 						nh.gateway.af = AF_INET;
 				}
 				memcpy(&nh.kr, &kkr->kr->r, sizeof(nh.kr));
@@ -905,10 +906,10 @@ send_rtmsg(int fd, int action, struct kroute *kroute)
 	r.hdr.rtm_addrs = RTA_DST|RTA_GATEWAY|RTA_NETMASK;
 	r.prefix.sin_len = sizeof(r.prefix);
 	r.prefix.sin_family = AF_INET;
-	r.prefix.sin_addr.s_addr = kroute->prefix;
+	r.prefix.sin_addr.s_addr = kroute->prefix.s_addr;
 	r.nexthop.sin_len = sizeof(r.nexthop);
 	r.nexthop.sin_family = AF_INET;
-	r.nexthop.sin_addr.s_addr = kroute->nexthop;
+	r.nexthop.sin_addr.s_addr = kroute->nexthop.s_addr;
 	r.mask.sin_len = sizeof(r.mask);
 	r.mask.sin_family = AF_INET;
 	r.mask.sin_addr.s_addr = htonl(0xffffffff << (32 - kroute->prefixlen));
@@ -922,20 +923,20 @@ retry:
 				goto retry;
 			} else if (r.hdr.rtm_type == RTM_DELETE) {
 				log_info("route %s/%u vanished before delete",
-				    log_ntoa(kroute->prefix),
+				    inet_ntoa(kroute->prefix),
 				    kroute->prefixlen);
 				return (0);
 			} else {
 				log_warnx("send_rtmsg: action %u, "
 				    "prefix %s/%u: %s", r.hdr.rtm_type,
-				    log_ntoa(kroute->prefix), kroute->prefixlen,
-				    strerror(errno));
+				    inet_ntoa(kroute->prefix),
+				    kroute->prefixlen, strerror(errno));
 				return (0);
 			}
 			break;
 		default:
 			log_warnx("send_rtmsg: action %u, prefix %s/%u: %s",
-			    r.hdr.rtm_type, log_ntoa(kroute->prefix),
+			    r.hdr.rtm_type, inet_ntoa(kroute->prefix),
 			    kroute->prefixlen, strerror(errno));
 			return (0);
 		}
@@ -996,10 +997,10 @@ fetchtable(void)
 
 		switch (sa->sa_family) {
 		case AF_INET:
-			kr->r.prefix =
+			kr->r.prefix.s_addr =
 			    ((struct sockaddr_in *)sa)->sin_addr.s_addr;
 			sa_in = (struct sockaddr_in *)rti_info[RTAX_NETMASK];
-			if (kr->r.prefix == 0)	/* default route */
+			if (kr->r.prefix.s_addr == 0)	/* default route */
 				kr->r.prefixlen = 0;
 			else if (sa_in != NULL)
 				kr->r.prefixlen =
@@ -1008,7 +1009,7 @@ fetchtable(void)
 				kr->r.prefixlen = 32;
 			else
 				kr->r.prefixlen =
-				    prefixlen_classful(kr->r.prefix);
+				    prefixlen_classful(kr->r.prefix.s_addr);
 			break;
 		default:
 			continue;
@@ -1018,7 +1019,7 @@ fetchtable(void)
 		if ((sa = rti_info[RTAX_GATEWAY]) != NULL)
 			switch (sa->sa_family) {
 			case AF_INET:
-				kr->r.nexthop =
+				kr->r.nexthop.s_addr =
 				    ((struct sockaddr_in *)sa)->sin_addr.s_addr;
 				break;
 			case AF_LINK:
@@ -1194,7 +1195,7 @@ dispatch_rtmsg(void)
 			if ((kr = kroute_find(prefix, prefixlen)) !=
 			    NULL) {
 				if (kr->r.flags & F_KERNEL) {
-					kr->r.nexthop = nexthop;
+					kr->r.nexthop.s_addr = nexthop;
 					if (kr->r.flags & F_NEXTHOP)
 						flags |= F_NEXTHOP;
 					if ((kr->r.flags & F_CONNECTED) &&
@@ -1211,9 +1212,9 @@ dispatch_rtmsg(void)
 					log_warn("dispatch_rtmsg");
 					return (-1);
 				}
-				kr->r.prefix = prefix;
+				kr->r.prefix.s_addr = prefix;
 				kr->r.prefixlen = prefixlen;
-				kr->r.nexthop = nexthop;
+				kr->r.nexthop.s_addr = nexthop;
 				kr->r.flags = flags;
 
 				kroute_insert(kr);

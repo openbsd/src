@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.83 2004/01/27 21:23:39 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.84 2004/01/27 21:56:21 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -228,9 +228,9 @@ enum suberr_update {
 };
 
 struct kroute {
-	in_addr_t	prefix;
+	struct in_addr	prefix;
 	u_int8_t	prefixlen;
-	in_addr_t	nexthop;
+	struct in_addr	nexthop;
 	u_int8_t	flags;
 	u_short		ifindex;
 };
