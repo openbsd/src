@@ -27,9 +27,9 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: tar.1,v 1.30 2001/02/07 19:04:15 millert Exp $
+.\"	$OpenBSD: tar.1,v 1.31 2001/02/07 19:43:10 millert Exp $
 .\"
-.Dd June 11, 1996
+.Dd February 7, 2001
 .Dt TAR 1
 .Os
 .Sh NAME
@@ -46,16 +46,16 @@
 .Op Fl C Ar directory
 .Op Fl T Ar file
 .Op Fl s Ar replstr
-.Ar file1
-.Op Ar file2 ...
+.Op Ar file ...
 .Sh DESCRIPTION
 The
 .Nm
 command creates, adds files to, or extracts files from an
-archive file in \*Qtar\*U format.
-A tar archive is often
-stored on a magnetic tape, but can be a floppy or a regular
-disk file.
+archive file in
+.Dq tar
+format.
+A tar archive is often stored on a magnetic tape, but can be
+stored equally well on a floppy, CD-ROM, or in a regular disk file.
 .Pp
 One of the following flags must be present:
 .Bl -tag -width Ar
@@ -197,6 +197,9 @@ following files.
 When extracting, files will be extracted into
 the specified directory; when creating, the specified files will be matched
 from the directory.
+This argument and its parameter may also appear in a file list specified by
+.Fl T ,
+but in this case it should be separated by a newline instead of whitespace.
 .It Fl H
 Follow symlinks given on command line only.
 .It Fl L
@@ -207,8 +210,13 @@ Do not strip leading slashes
 from pathnames.
 The default is to strip leading slashes.
 .It Fl T Ar file
-This is a positional argument which reads the names of files to archive or
-extract from the given file.
+Read the names of files to archive or extract from the given file, one
+per line.
+A line may also specify the positional argument
+.Dq Fl C
+with the
+.Ar directory
+listed on the next line.
 .It Fl X
 Do not cross mount points in the file system.
 .It Fl Z
@@ -277,3 +285,20 @@ Default tape device to use instead of
 .Xr pax 1
 .Sh AUTHORS
 Keith Muller at the University of California, San Diego.
+.Sh HISTORY
+A
+.Nm
+command first appeared in
+.At v7 .
+.Sh CAVEATS
+The
+.Fl L
+flag is not portable to other versions of
+.Nm
+where it may have a different meaning.
+.Pp
+Unlike some versions of
+.Nm tar ,
+when the
+.Fl T
+flag is specified other files may still be listed on the command line.
