@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_userconf.c,v 1.16 1999/04/28 18:01:22 deraadt Exp $	*/
+/*	$OpenBSD: subr_userconf.c,v 1.17 1999/08/17 11:02:40 art Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -135,7 +135,7 @@ int
 userconf_more()
 {
 	int quit = 0;
-	char c;
+	char c = '\0';
 
 	if (userconf_cnt != -1) {
 		if (userconf_cnt == userconf_lines) {
