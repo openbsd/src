@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.42 1998/03/28 18:36:41 deraadt Exp $
+$OpenBSD: pcidevs,v 1.43 1998/04/02 20:13:30 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -526,6 +526,7 @@ product	3COM 3C900TPO		0x9000	3c900 10Base-T
 product	3COM 3C900COMBO		0x9001	3c900 10Mbps-Combo
 product	3COM 3C905TX		0x9050	3c905 100Base-TX
 product	3COM 3C905T4		0x9051	3c905 100Base-T4
+product	3COM 3C905B		0x9055	3c905B 100Base-T4
 
 /* 3D Labs products */
 product 3DLABS 300SX		0x0001	300SX (Glint)
