@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.25 2003/12/21 22:16:53 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.26 2003/12/21 23:26:38 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -72,7 +72,7 @@ int	parse_open(struct peer *);
 int	parse_update(struct peer *);
 int	parse_notification(struct peer *);
 int	parse_keepalive(struct peer *);
-void	session_dispatch_imsg(int, int);
+void	session_dispatch_imsg(struct imsgbuf *, int);
 void	session_up(struct peer *);
 void	session_down(struct peer *);
 
@@ -81,7 +81,8 @@ struct peer	*getpeerbyip(in_addr_t);
 struct bgpd_config	*conf = NULL, *nconf = NULL;
 volatile sig_atomic_t	 session_quit = 0;
 int			 pending_reconf = 0;
-struct msgbuf		 msgbuf_rde;
+struct imsgbuf		 ibuf_rde;
+struct imsgbuf		 ibuf_main;
 
 void
 session_sighdlr(int sig)
@@ -173,20 +174,19 @@ session_main(struct bgpd_config *config, int pipe_m2s[2], int pipe_s2r[2])
 	close(pipe_m2s[0]);
 	close(pipe_s2r[1]);
 	init_conf(conf);
-	msgbuf_init(&msgbuf_rde);
-	msgbuf_rde.sock = pipe_s2r[0];
-	init_imsg_buf();
+	imsg_init(&ibuf_rde, pipe_s2r[0]);
+	imsg_init(&ibuf_main, pipe_m2s[1]);
 	init_peers();
 
 	while (session_quit == 0) {
 		bzero(&pfd, sizeof(pfd));
 		pfd[PFD_LISTEN].fd = sock;
 		pfd[PFD_LISTEN].events = POLLIN;
-		pfd[PFD_PIPE_MAIN].fd = pipe_m2s[1];
+		pfd[PFD_PIPE_MAIN].fd = ibuf_main.sock;
 		pfd[PFD_PIPE_MAIN].events = POLLIN;
-		pfd[PFD_PIPE_ROUTE].fd = pipe_s2r[0];
+		pfd[PFD_PIPE_ROUTE].fd = ibuf_rde.sock;
 		pfd[PFD_PIPE_ROUTE].events = POLLIN;
-		if (msgbuf_rde.queued > 0)
+		if (ibuf_rde.w.queued > 0)
 			pfd[PFD_PIPE_ROUTE].events |= POLLOUT;
 
 		nextaction = time(NULL) + 240;	/* loop every 240s at least */
@@ -269,18 +269,16 @@ session_main(struct bgpd_config *config, int pipe_m2s[2], int pipe_s2r[2])
 
 		if (nfds > 0 && pfd[PFD_PIPE_MAIN].revents & POLLIN) {
 			nfds--;
-			session_dispatch_imsg(pfd[PFD_PIPE_MAIN].fd,
-			    PFD_PIPE_MAIN);
+			session_dispatch_imsg(&ibuf_main, PFD_PIPE_MAIN);
 		}
 
 		if (nfds > 0 && pfd[PFD_PIPE_ROUTE].revents & POLLOUT)
-			if (msgbuf_write(&msgbuf_rde) == -1)
+			if (msgbuf_write(&ibuf_rde.w) == -1)
 				fatal("pipe write error", 0);
 
 		if (nfds > 0 && pfd[PFD_PIPE_ROUTE].revents & POLLIN) {
 			nfds--;
-			session_dispatch_imsg(pfd[PFD_PIPE_ROUTE].fd,
-			    PFD_PIPE_ROUTE);
+			session_dispatch_imsg(&ibuf_rde, PFD_PIPE_ROUTE);
 		}
 
 		for (j = PFD_PEERS_START; nfds > 0 && j < i; j++) {
@@ -1159,7 +1157,7 @@ parse_update(struct peer *peer)
 	p += MSGSIZE_HEADER;	/* header is already checked */
 	datalen -= MSGSIZE_HEADER;
 
-	imsg_compose(&msgbuf_rde, IMSG_UPDATE, peer->conf.id, p, datalen);
+	imsg_compose(&ibuf_rde, IMSG_UPDATE, peer->conf.id, p, datalen);
 
 	return (0);
 }
@@ -1199,14 +1197,14 @@ parse_notification(struct peer *peer)
 }
 
 void
-session_dispatch_imsg(int fd, int idx)
+session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 {
 	struct imsg		 imsg;
 	struct peer_config	*pconf;
 	struct peer		*p, *next;
 	enum reconf_action	 reconf;
 
-	if (get_imsg(fd, &imsg) > 0) {
+	if (get_imsg(ibuf, &imsg) > 0) {
 		switch (imsg.hdr.type) {
 		case IMSG_RECONF_CONF:
 			if (idx != PFD_PIPE_MAIN)
@@ -1309,13 +1307,13 @@ void
 session_down(struct peer *peer)
 {
 	if (!session_quit)
-		imsg_compose(&msgbuf_rde, IMSG_SESSION_DOWN, peer->conf.id,
+		imsg_compose(&ibuf_rde, IMSG_SESSION_DOWN, peer->conf.id,
 		    NULL, 0);
 }
 
 void
 session_up(struct peer *peer)
 {
-	imsg_compose(&msgbuf_rde, IMSG_SESSION_UP, peer->conf.id,
+	imsg_compose(&ibuf_rde, IMSG_SESSION_UP, peer->conf.id,
 	    &peer->remote_bgpid, sizeof(peer->remote_bgpid));
 }

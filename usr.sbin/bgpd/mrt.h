@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.h,v 1.3 2003/12/21 22:16:53 henning Exp $ */
+/*	$OpenBSD: mrt.h,v 1.4 2003/12/21 23:26:37 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <cjeker@diehard.n-r-g.com>
@@ -231,8 +231,8 @@ int	mrt_dump_bgp_msg(struct mrt *, void *, u_int16_t, int,
     struct peer_config *, struct bgpd_config *);
 void	mrt_clear_seq(void);
 void	mrt_dump_upcall(struct pt_entry *, void *);
-int	mrt_state(struct mrtdump_config *, enum imsg_type, struct msgbuf *);
-int	mrt_alrm(struct mrt_config *, struct msgbuf *);
-int	mrt_usr1(struct mrt_config *, struct msgbuf *);
+int	mrt_state(struct mrtdump_config *, enum imsg_type, struct imsgbuf *);
+int	mrt_alrm(struct mrt_config *, struct imsgbuf *);
+int	mrt_usr1(struct mrt_config *, struct imsgbuf *);
 
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.16 2003/12/21 22:16:53 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.17 2003/12/21 23:26:38 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -34,7 +34,7 @@
 #define PFD_PIPE_SESSION	1
 
 void		 rde_sighdlr(int);
-void		 rde_dispatch_imsg(int, int);
+void		 rde_dispatch_imsg(struct imsgbuf *, int);
 int		 rde_update_dispatch(struct imsg *);
 int		 rde_update_get_prefix(u_char *, u_int16_t, struct in_addr *,
 		     u_int8_t *);
@@ -52,8 +52,8 @@ void		 peer_down(u_int32_t);
 volatile sig_atomic_t	 rde_quit = 0;
 struct bgpd_config	*conf, *nconf;
 struct rde_peer_head	 peerlist;
-struct msgbuf		 msgbuf_se;
-struct msgbuf		 msgbuf_main;
+struct imsgbuf		 ibuf_se;
+struct imsgbuf		 ibuf_main;
 
 void
 rde_sighdlr(int sig)
@@ -116,24 +116,21 @@ rde_main(struct bgpd_config *config, int pipe_m2r[2], int pipe_s2r[2])
 	path_init(pathhashsize);
 	nexthop_init(nexthophashsize);
 	pt_init();
-	msgbuf_init(&msgbuf_se);
-	msgbuf_se.sock = pipe_s2r[1];
-	msgbuf_init(&msgbuf_main);
-	msgbuf_main.sock = pipe_m2r[1];
-	init_imsg_buf();
+	imsg_init(&ibuf_se, pipe_s2r[1]);
+	imsg_init(&ibuf_main, pipe_m2r[1]);
 
 	logit(LOG_INFO, "route decision engine ready");
 
 	while (rde_quit == 0) {
 		bzero(&pfd, sizeof(pfd));
-		pfd[PFD_PIPE_MAIN].fd = msgbuf_main.sock;
+		pfd[PFD_PIPE_MAIN].fd = ibuf_main.sock;
 		pfd[PFD_PIPE_MAIN].events = POLLIN;
-		if (msgbuf_main.queued > 0)
+		if (ibuf_main.w.queued > 0)
 			pfd[PFD_PIPE_MAIN].events |= POLLOUT;
 
-		pfd[PFD_PIPE_SESSION].fd = msgbuf_se.sock;
+		pfd[PFD_PIPE_SESSION].fd = ibuf_se.sock;
 		pfd[PFD_PIPE_SESSION].events = POLLIN;
-		if (msgbuf_se.queued  > 0)
+		if (ibuf_se.w.queued  > 0)
 			pfd[PFD_PIPE_SESSION].events |= POLLOUT;
 
 		if ((nfds = poll(pfd, 2, INFTIM)) == -1)
@@ -141,23 +138,22 @@ rde_main(struct bgpd_config *config, int pipe_m2r[2], int pipe_s2r[2])
 				fatal("poll error", errno);
 
 		if (nfds > 0 && pfd[PFD_PIPE_MAIN].revents & POLLIN)
-			rde_dispatch_imsg(pfd[PFD_PIPE_MAIN].fd, PFD_PIPE_MAIN);
+			rde_dispatch_imsg(&ibuf_main, PFD_PIPE_MAIN);
 
 		if (nfds > 0 && pfd[PFD_PIPE_SESSION].revents & POLLIN)
-			rde_dispatch_imsg(pfd[PFD_PIPE_SESSION].fd,
-			    PFD_PIPE_SESSION);
+			rde_dispatch_imsg(&ibuf_se, PFD_PIPE_SESSION);
 
 		if (nfds > 0 && (pfd[PFD_PIPE_MAIN].revents & POLLOUT) &&
-		    msgbuf_main.queued) {
+		    ibuf_main.w.queued) {
 			nfds--;
-			if ((n = msgbuf_write(&msgbuf_main)) == -1)
+			if ((n = msgbuf_write(&ibuf_main.w)) == -1)
 				fatal("pipe write error", errno);
 		}
 
 		if (nfds > 0 && (pfd[PFD_PIPE_SESSION].revents & POLLOUT) &&
-		    msgbuf_se.queued) {
+		    ibuf_se.w.queued) {
 			nfds--;
-			if ((n = msgbuf_write(&msgbuf_se)) ==
+			if ((n = msgbuf_write(&ibuf_se.w)) ==
 			    -1)
 				fatal("pipe write error", errno);
 		}
@@ -168,7 +164,7 @@ rde_main(struct bgpd_config *config, int pipe_m2r[2], int pipe_s2r[2])
 }
 
 void
-rde_dispatch_imsg(int fd, int idx)
+rde_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 {
 	struct imsg		 imsg;
 	struct mrt		 mrtdump;
@@ -176,7 +172,7 @@ rde_dispatch_imsg(int fd, int idx)
 	struct rde_peer		*p, *np;
 	u_int32_t		 rid;
 
-	if (get_imsg(fd, &imsg) > 0) {
+	if (get_imsg(ibuf, &imsg) > 0) {
 		switch (imsg.hdr.type) {
 		case IMSG_RECONF_CONF:
 			if (idx != PFD_PIPE_MAIN)
@@ -247,14 +243,14 @@ rde_dispatch_imsg(int fd, int idx)
 			if (idx != PFD_PIPE_MAIN)
 				fatal("mrt request not from parent", 0);
 			mrtdump.id = imsg.hdr.peerid;
-			mrtdump.msgbuf = &msgbuf_main;
+			mrtdump.msgbuf = &ibuf_main.w;
 			pt_dump(mrt_dump_upcall, &mrtdump);
 			/* FALLTHROUGH */
 		case IMSG_MRT_END:
 			if (idx != PFD_PIPE_MAIN)
 				fatal("mrt request not from parent", 0);
 			/* ignore end message because a dump is atomic */
-			imsg_compose(&msgbuf_main, IMSG_MRT_END,
+			imsg_compose(&ibuf_main, IMSG_MRT_END,
 			    imsg.hdr.peerid, NULL, 0);
 			break;
 		default:
@@ -506,7 +502,7 @@ rde_update_err(u_int32_t peerid, enum suberr_update errorcode)
 	u_int8_t	errcode;
 
 	errcode = errorcode;
-	imsg_compose(&msgbuf_se, IMSG_UPDATE_ERR, peerid,
+	imsg_compose(&ibuf_se, IMSG_UPDATE_ERR, peerid,
 	    &errcode, sizeof(errcode));
 }
 

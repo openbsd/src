@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.10 2003/12/21 22:16:53 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.11 2003/12/21 23:26:37 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -38,14 +38,14 @@ void	sighdlr(int);
 void	usage(void);
 int	main(int, char *[]);
 int	reconfigure(char *, struct bgpd_config *, struct mrt_config *);
-int	dispatch_imsg(int, int, struct mrt_config *, struct msgbuf *);
+int	dispatch_imsg(struct imsgbuf *, int, struct mrt_config *);
 
 int			mrtfd = -1;
 volatile sig_atomic_t	mrtdump = 0;
 volatile sig_atomic_t	quit = 0;
 volatile sig_atomic_t	reconfig = 0;
-struct msgbuf		msgbuf_se;
-struct msgbuf		msgbuf_rde;
+struct imsgbuf		ibuf_se;
+struct imsgbuf		ibuf_rde;
 
 void
 sighdlr(int sig)
@@ -183,20 +183,17 @@ main(int argc, char *argv[])
 	close(pipe_s2r[0]);
 	close(pipe_s2r[1]);
 
-	msgbuf_init(&msgbuf_se);
-	msgbuf_se.sock = pipe_m2s[0];
-	msgbuf_init(&msgbuf_rde);
-	msgbuf_rde.sock = pipe_m2r[0];
-	init_imsg_buf();
+	imsg_init(&ibuf_se, pipe_m2s[0]);
+	imsg_init(&ibuf_rde, pipe_m2r[0]);
 
 	while (quit == 0) {
-		pfd[PFD_PIPE_SESSION].fd = msgbuf_se.sock;
+		pfd[PFD_PIPE_SESSION].fd = ibuf_se.sock;
 		pfd[PFD_PIPE_SESSION].events = POLLIN;
-		if (msgbuf_se.queued)
+		if (ibuf_se.w.queued)
 			pfd[PFD_PIPE_SESSION].events |= POLLOUT;
-		pfd[PFD_PIPE_ROUTE].fd = msgbuf_rde.sock;
+		pfd[PFD_PIPE_ROUTE].fd = ibuf_rde.sock;
 		pfd[PFD_PIPE_ROUTE].events = POLLIN;
-		if (msgbuf_rde.queued)
+		if (ibuf_rde.w.queued)
 			pfd[PFD_PIPE_ROUTE].events |= POLLOUT;
 		i = PFD_MRT_START;
 		LIST_FOREACH(mconf, &mrtconf, list)
@@ -211,23 +208,21 @@ main(int argc, char *argv[])
 				fatal("poll error", errno);
 
 		if (nfds > 0 && (pfd[PFD_PIPE_SESSION].revents & POLLOUT))
-			if ((n = msgbuf_write(&msgbuf_se)) == -1)
+			if ((n = msgbuf_write(&ibuf_se.w)) == -1)
 				fatal("pipe write error", errno);
 
 		if (nfds > 0 && (pfd[PFD_PIPE_ROUTE].revents & POLLOUT))
-			if ((n = msgbuf_write(&msgbuf_rde)) == -1)
+			if ((n = msgbuf_write(&ibuf_rde.w)) == -1)
 				fatal("pipe write error", errno);
 
 		if (nfds > 0 && pfd[PFD_PIPE_SESSION].revents & POLLIN) {
 			nfds--;
-			dispatch_imsg(pfd[PFD_PIPE_SESSION].fd,
-			    PFD_PIPE_SESSION, &mrtconf, &msgbuf_rde);
+			dispatch_imsg(&ibuf_se, PFD_PIPE_SESSION, &mrtconf);
 		}
 
 		if (nfds > 0 && pfd[PFD_PIPE_ROUTE].revents & POLLIN) {
 			nfds--;
-			dispatch_imsg(pfd[PFD_PIPE_ROUTE].fd, PFD_PIPE_ROUTE,
-			    &mrtconf, &msgbuf_rde);
+			dispatch_imsg(&ibuf_rde, PFD_PIPE_ROUTE, &mrtconf);
 		}
 
 		for (j =  PFD_MRT_START; j < i && nfds > 0 ; j++) {
@@ -241,15 +236,15 @@ main(int argc, char *argv[])
 			logit(LOG_CRIT, "rereading config");
 			reconfigure(conffile, &conf, &mrtconf);
 			LIST_FOREACH(mconf, &mrtconf, list)
-				mrt_state(mconf, IMSG_NONE, &msgbuf_rde);
+				mrt_state(mconf, IMSG_NONE, &ibuf_rde);
 			reconfig = 0;
 		}
 
 		if (mrtdump == 1) {
-			mrt_alrm(&mrtconf, &msgbuf_rde);
+			mrt_alrm(&mrtconf, &ibuf_rde);
 			mrtdump = 0;
 		} else if (mrtdump == 2) {
-			mrt_usr1(&mrtconf, &msgbuf_rde);
+			mrt_usr1(&mrtconf, &ibuf_rde);
 			mrtdump = 0;
 		}
 	}
@@ -280,18 +275,18 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_config *mrtc)
 		    conffile);
 		return (-1);
 	}
-	imsg_compose(&msgbuf_se, IMSG_RECONF_CONF, 0,
+	imsg_compose(&ibuf_se, IMSG_RECONF_CONF, 0,
 	    conf, sizeof(struct bgpd_config));
-	imsg_compose(&msgbuf_rde, IMSG_RECONF_CONF, 0,
+	imsg_compose(&ibuf_rde, IMSG_RECONF_CONF, 0,
 	    conf, sizeof(struct bgpd_config));
 	for (p = conf->peers; p != NULL; p = p->next) {
-		imsg_compose(&msgbuf_se, IMSG_RECONF_PEER, p->conf.id,
+		imsg_compose(&ibuf_se, IMSG_RECONF_PEER, p->conf.id,
 		    &p->conf, sizeof(struct peer_config));
-		imsg_compose(&msgbuf_rde, IMSG_RECONF_PEER, p->conf.id,
+		imsg_compose(&ibuf_rde, IMSG_RECONF_PEER, p->conf.id,
 		    &p->conf, sizeof(struct peer_config));
 	}
-	imsg_compose(&msgbuf_se, IMSG_RECONF_DONE, 0, NULL, 0);
-	imsg_compose(&msgbuf_rde, IMSG_RECONF_DONE, 0, NULL, 0);
+	imsg_compose(&ibuf_se, IMSG_RECONF_DONE, 0, NULL, 0);
+	imsg_compose(&ibuf_rde, IMSG_RECONF_DONE, 0, NULL, 0);
 
 	return (0);
 }
@@ -300,7 +295,7 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_config *mrtc)
  * XXX currently messages are only buffered for mrt files.
  */
 int
-dispatch_imsg(int fd, int idx, struct mrt_config *conf, struct msgbuf *rde)
+dispatch_imsg(struct imsgbuf *ibuf, int idx, struct mrt_config *conf)
 {
 	struct imsg		 imsg;
 	struct buf		*wbuf;
@@ -308,14 +303,14 @@ dispatch_imsg(int fd, int idx, struct mrt_config *conf, struct msgbuf *rde)
 	ssize_t			 len;
 	int			 n;
 
-	if (get_imsg(fd, &imsg) > 0) {
+	if (get_imsg(ibuf, &imsg) > 0) {
 		switch (imsg.hdr.type) {
 		case IMSG_MRT_MSG:
 		case IMSG_MRT_END:
 			LIST_FOREACH(m, conf, list) {
 				if (m->id != imsg.hdr.peerid)
 					continue;
-				if (mrt_state(m, imsg.hdr.type, rde) == 0)
+				if (mrt_state(m, imsg.hdr.type, ibuf) == 0)
 					break;
 				if (m->msgbuf.sock == -1)
 					break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.9 2003/12/21 22:16:53 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.10 2003/12/21 23:26:37 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -179,7 +179,7 @@ struct mrtdump_config {
 #define	IMSG_HEADER_SIZE	sizeof(struct imsg_hdr)
 #define MAX_IMSGSIZE		8192
 
-struct imsg_buf_read {
+struct imsg_readbuf {
 	u_char			 buf[MAX_IMSGSIZE];
 	ssize_t			 read_len;
 	u_int32_t		 peerid;
@@ -187,6 +187,12 @@ struct imsg_buf_read {
 	u_int8_t		 type;
 	u_char			*wptr;
 	u_int8_t		 seen_hdr;
+};
+
+struct imsgbuf {
+	int			sock;
+	struct imsg_readbuf	r;
+	struct msgbuf		w;
 };
 
 enum imsg_type {
@@ -266,9 +272,9 @@ int	 parse_config(char *, struct bgpd_config *, struct mrt_config *);
 int	 merge_config(struct bgpd_config *, struct bgpd_config *);
 
 /* imsg.c */
-void	 init_imsg_buf(void);
-int	 get_imsg(int, struct imsg *);
-int	 imsg_compose(struct msgbuf *, int, u_int32_t, void *, u_int16_t);
+void	 imsg_init(struct imsgbuf *, int);
+int	 get_imsg(struct imsgbuf *, struct imsg *);
+int	 imsg_compose(struct imsgbuf *, int, u_int32_t, void *, u_int16_t);
 void	 imsg_free(struct imsg *);
 
 /* rde.c */

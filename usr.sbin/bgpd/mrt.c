@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.7 2003/12/21 22:16:53 henning Exp $ */
+/*	$OpenBSD: mrt.c,v 1.8 2003/12/21 23:26:37 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <claudio@openbsd.org>
@@ -230,7 +230,7 @@ mrt_open(struct mrtdump_config *conf)
 
 int
 mrt_state(struct mrtdump_config *m, enum imsg_type type,
-    struct msgbuf *rde /*, struct msgbuf *se */)
+    struct imsgbuf *buf)
 {
 	switch (m->state) {
 	case MRT_STATE_DONE:
@@ -240,7 +240,7 @@ mrt_state(struct mrtdump_config *m, enum imsg_type type,
 		switch (type) {
 		case IMSG_NONE:
 			if (m->type == MRT_TABLE_DUMP)
-				imsg_compose(rde, IMSG_MRT_END, m->id, NULL, 0);
+				imsg_compose(buf, IMSG_MRT_END, m->id, NULL, 0);
 			return (0);
 		case IMSG_MRT_END:
 			/* dump no longer valid */
@@ -256,14 +256,14 @@ mrt_state(struct mrtdump_config *m, enum imsg_type type,
 		switch (type) {
 		case IMSG_NONE:
 			if (m->type == MRT_TABLE_DUMP)
-				imsg_compose(rde, IMSG_MRT_END, m->id, NULL, 0);
+				imsg_compose(buf, IMSG_MRT_END, m->id, NULL, 0);
 			return (0);
 		case IMSG_MRT_END:
 			if (m->msgbuf.sock != -1)
 				close(m->msgbuf.sock);
 			m->state = MRT_STATE_OPEN;
 			if (m->type == MRT_TABLE_DUMP)
-				imsg_compose(rde, IMSG_MRT_REQ, m->id, NULL, 0);
+				imsg_compose(buf, IMSG_MRT_REQ, m->id, NULL, 0);
 			return (0);
 		default:
 			break;
@@ -273,7 +273,7 @@ mrt_state(struct mrtdump_config *m, enum imsg_type type,
 		switch (type) {
 		case IMSG_NONE:
 			if (m->type == MRT_TABLE_DUMP)
-				imsg_compose(rde, IMSG_MRT_REQ, m->id, NULL, 0);
+				imsg_compose(buf, IMSG_MRT_REQ, m->id, NULL, 0);
 			return (0);
 		case IMSG_MRT_MSG:
 			mrt_open(m);
@@ -290,7 +290,7 @@ mrt_state(struct mrtdump_config *m, enum imsg_type type,
 }
 
 int
-mrt_usr1(struct mrt_config *conf, struct msgbuf *rde /*, struct msgbuf *se */)
+mrt_usr1(struct mrt_config *conf, struct imsgbuf *buf)
 {
 	struct mrtdump_config	*m;
 	time_t			 now;
@@ -305,11 +305,11 @@ mrt_usr1(struct mrt_config *conf, struct msgbuf *rde /*, struct msgbuf *se */)
 				break;
 			case MRT_STATE_DONE:
 				m->state = MRT_STATE_OPEN;
-				imsg_compose(rde, IMSG_MRT_REQ, m->id, NULL, 0);
+				imsg_compose(buf, IMSG_MRT_REQ, m->id, NULL, 0);
 				break;
 			default:
 				m->state = MRT_STATE_REOPEN;
-				imsg_compose(rde, IMSG_MRT_END, m->id, NULL, 0);
+				imsg_compose(buf, IMSG_MRT_END, m->id, NULL, 0);
 				break;
 			}
 
@@ -326,7 +326,7 @@ mrt_usr1(struct mrt_config *conf, struct msgbuf *rde /*, struct msgbuf *se */)
 }
 
 int
-mrt_alrm(struct mrt_config *conf, struct msgbuf *rde /*, struct msgbuf *se */)
+mrt_alrm(struct mrt_config *conf, struct imsgbuf *buf)
 {
 	struct mrtdump_config	*m;
 	time_t			 now;
@@ -344,13 +344,13 @@ mrt_alrm(struct mrt_config *conf, struct msgbuf *rde /*, struct msgbuf *se */)
 			case MRT_STATE_DONE:
 				m->state = MRT_STATE_OPEN;
 				if (m->type == MRT_TABLE_DUMP)
-					imsg_compose(rde, IMSG_MRT_REQ, m->id,
+					imsg_compose(buf, IMSG_MRT_REQ, m->id,
 					    NULL, 0);
 				break;
 			default:
 				m->state = MRT_STATE_REOPEN;
 				if (m->type == MRT_TABLE_DUMP)
-					imsg_compose(rde, IMSG_MRT_END, m->id,
+					imsg_compose(buf, IMSG_MRT_END, m->id,
 					    NULL, 0);
 				break;
 			}
