@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.191 2003/11/06 15:01:30 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.192 2003/11/14 13:51:09 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1155,6 +1155,37 @@ pfctl_set_logif(struct pfctl *pf, char *ifname)
 
 	if (pf->opts & PF_OPT_VERBOSE)
 		printf("set loginterface %s\n", ifname);
+
+	return (0);
+}
+
+int
+pfctl_set_debug(struct pfctl *pf, char *d)
+{
+	u_int32_t	level;
+
+	if ((loadopt & PFCTL_FLAG_OPTION) == 0)
+		return (0);
+
+	if (!strcmp(d, "none"))
+		level = PF_DEBUG_NONE;
+	else if (!strcmp(d, "urgent"))
+		level = PF_DEBUG_URGENT;
+	else if (!strcmp(d, "misc"))
+		level = PF_DEBUG_MISC;
+	else if (!strcmp(d, "loud"))
+		level = PF_DEBUG_NOISY;
+	else {
+		warnx("unknown debug level \"%s\"", d);
+		return (-1);
+	}
+
+	if ((pf->opts & PF_OPT_NOACTION) == 0)
+		if (ioctl(dev, DIOCSETDEBUG, &level))
+			err(1, "DIOCSETDEBUG");
+
+	if (pf->opts & PF_OPT_VERBOSE)
+		printf("set debug %s\n", d);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.421 2003/11/08 00:45:34 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.422 2003/11/14 13:51:09 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -367,7 +367,7 @@ typedef struct {
 %token	NOROUTE FRAGMENT USER GROUP MAXMSS MAXIMUM TTL TOS DROP TABLE
 %token	REASSEMBLE FRAGDROP FRAGCROP ANCHOR NATANCHOR RDRANCHOR BINATANCHOR
 %token	SET OPTIMIZATION TIMEOUT LIMIT LOGINTERFACE BLOCKPOLICY RANDOMID
-%token	REQUIREORDER SYNPROXY FINGERPRINTS NOSYNC
+%token	REQUIREORDER SYNPROXY FINGERPRINTS NOSYNC DEBUG
 %token	ANTISPOOF FOR
 %token	BITMASK RANDOM SOURCEHASH ROUNDROBIN STATICPORT
 %token	ALTQ CBQ PRIQ HFSC BANDWIDTH TBRSIZE LINKSHARE REALTIME UPPERLIMIT
@@ -487,6 +487,14 @@ option		: SET OPTIMIZATION STRING		{
 				YYERROR;
 			if (pfctl_file_fingerprints(pf->dev, pf->opts, $3)) {
 				yyerror("error loading fingerprints %s", $3);
+				YYERROR;
+			}
+		}
+		| SET DEBUG STRING {
+			if (check_rulestate(PFCTL_STATE_OPTION))
+				YYERROR;
+			if (pfctl_set_debug(pf, $3) != 0) {
+				yyerror("error setting debuglevel %s", $3);
 				YYERROR;
 			}
 		}
@@ -3932,6 +3940,7 @@ lookup(char *s)
 		{ "cbq",		CBQ},
 		{ "code",		CODE},
 		{ "crop",		FRAGCROP},
+		{ "debug",		DEBUG},
 		{ "drop",		DROP},
 		{ "drop-ovl",		FRAGDROP},
 		{ "dup-to",		DUPTO},
