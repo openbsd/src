@@ -1,7 +1,7 @@
-/*	$OpenBSD: extract.c,v 1.14 2003/04/05 18:04:00 avsm Exp $	*/
+/*	$OpenBSD: extract.c,v 1.15 2003/07/04 17:23:15 avsm Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: extract.c,v 1.14 2003/04/05 18:04:00 avsm Exp $";
+static const char *rcsid = "$OpenBSD: extract.c,v 1.15 2003/07/04 17:23:15 avsm Exp $";
 #endif
 
 /*
@@ -61,7 +61,7 @@ rollback(char *name, char *home, plist_t *start, plist_t *stop)
     for (q = start; q != stop; q = q->next) {
 	if (q->type == PLIST_FILE) {
 	    snprintf(try, sizeof(try), "%s/%s", dir, q->name);
-	    if (make_preserve_name(bup, FILENAME_MAX, name, try) && fexists(bup)) {
+	    if (make_preserve_name(bup, sizeof(bup), name, try) && fexists(bup)) {
 		(void)chflags(try, 0);
 		(void)unlink(try);
 		if (rename(bup, try))

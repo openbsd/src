@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.12 2003/04/04 08:56:01 avsm Exp $	*/
+/*	$OpenBSD: perform.c,v 1.13 2003/07/04 17:23:15 avsm Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.12 2003/04/04 08:56:01 avsm Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.13 2003/07/04 17:23:15 avsm Exp $";
 #endif
 
 /* This is OpenBSD pkg_install, based on:
@@ -90,25 +90,25 @@ pkg_do(char *pkg)
 	} else if (fexists(pkg) && isfile(pkg)) {
 
 		if (*pkg != '/') {
-			if (!getcwd(fname, FILENAME_MAX)) {
+			if (!getcwd(fname, sizeof(fname))) {
 			    cleanup(0);
 			    err(1, "fatal error during execution: getcwd");
 			}
 			len = strlen(fname);
-			snprintf(&fname[len], FILENAME_MAX - len, "/%s", pkg);
+			snprintf(&fname[len], sizeof(fname) - len, "/%s", pkg);
 		} else
 			strlcpy(fname, pkg, sizeof(fname));
 		cp = fname;
 	} else {
 		if ((cp = fileFindByPath(NULL, pkg)) != NULL) {
-		    strncpy(fname, cp, FILENAME_MAX);
+		    strlcpy(fname, cp, sizeof(fname));
 		    if (*cp != '/') {
-			if (!getcwd(fname, FILENAME_MAX)) {
+			if (!getcwd(fname, sizeof(fname))) {
 			    cleanup(0);
 			    err(1, "fatal error during execution: getcwd");
 			}
 			len = strlen(fname);
-			snprintf(&fname[len], FILENAME_MAX - len, "/%s", cp);
+			snprintf(&fname[len], sizeof(fname) - len, "/%s", cp);
 		    }
 		}
 	}
