@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.14 1996/11/21 12:47:15 mickey Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.15 1997/02/03 03:04:22 downsj Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -56,9 +56,9 @@
 #include <sys/queue.h>
 
 /* Bleh!  Need device_register proto */
-#ifdef __alpha__
+#if defined(__alpha__) || defined(hp300)
 #include <machine/autoconf.h>
-#endif /* __alpha__ */
+#endif /* __alpha__ || hp300 */
 
 /*
  * Autoconfiguration subroutines.
@@ -382,7 +382,7 @@ config_attach(parent, match, aux, print)
 				cf->cf_unit++;
 	    }
 	}
-#ifdef __alpha__
+#if defined(__alpha__) || defined(hp300)
 	device_register(dev, aux);
 #endif
 	(*ca->ca_attach)(parent, dev, aux);
