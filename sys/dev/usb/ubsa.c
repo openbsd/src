@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsa.c,v 1.7 2005/01/03 23:15:50 reyk Exp $ 	*/
+/*	$OpenBSD: ubsa.c,v 1.8 2005/01/12 11:15:10 moritz Exp $ 	*/
 /*	$NetBSD: ubsa.c,v 1.5 2002/11/25 00:51:33 fvdl Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -374,7 +374,7 @@ USB_ATTACH(ubsa)
 			   USBDEV(sc->sc_dev));
 
 	DPRINTF(("ubsa: in = 0x%x, out = 0x%x, intr = 0x%x\n",
-	    uca.bulkin_no, uca.bulkout_no, sc->sc_intr_number));
+	    uca.bulkin, uca.bulkout, sc->sc_intr_number));
 
 	sc->sc_subdev = config_found_sm(self, &uca, ucomprint, ucomsubmatch);
 
@@ -700,8 +700,7 @@ ubsa_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			return;
 
 		DPRINTF(("%s: ubsa_intr: abnormal status: %s\n",
-		    USBDEVNAME(sc->sc_ucom.sc_dev),
-		    usbd_errstr(status)));
+		    USBDEVNAME(sc->sc_dev), usbd_errstr(status)));
 		usbd_clear_endpoint_stall_async(sc->sc_intr_pipe);
 		return;
 	}
@@ -711,7 +710,7 @@ ubsa_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	sc->sc_msr = buf[3];
 
 	DPRINTF(("%s: ubsa lsr = 0x%02x, msr = 0x%02x\n",
-	    USBDEVNAME(sc->sc_ucom.sc_dev), sc->sc_lsr, sc->sc_msr));
+	    USBDEVNAME(sc->sc_dev), sc->sc_lsr, sc->sc_msr));
 
 	ucom_status_change((struct ucom_softc *)sc->sc_subdev);
 }
