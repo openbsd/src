@@ -173,6 +173,10 @@
 ./usr/include/dev/ic/anreg.h
 ./usr/include/dev/ic/anvar.h
 ./usr/include/dev/ic/apcdmareg.h
+./usr/include/dev/ic/ar5210reg.h
+./usr/include/dev/ic/ar5210var.h
+./usr/include/dev/ic/ar5xxx.h
+./usr/include/dev/ic/athvar.h
 ./usr/include/dev/ic/atwreg.h
 ./usr/include/dev/ic/atwvar.h
 ./usr/include/dev/ic/awireg.h
@@ -965,6 +969,7 @@
 ./usr/include/net80211/ieee80211_node.h
 ./usr/include/net80211/ieee80211_proto.h
 ./usr/include/net80211/ieee80211_radiotap.h
+./usr/include/net80211/ieee80211_regdomain.h
 ./usr/include/net80211/ieee80211_rssadapt.h
 ./usr/include/net80211/ieee80211_var.h
 ./usr/include/netatalk

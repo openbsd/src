@@ -827,6 +827,10 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/anreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/anvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/apcdmareg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/ar5210reg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/ar5210var.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/ar5xxx.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/athvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/atwreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/atwvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/awireg.ph
@@ -1693,6 +1697,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/net80211/ieee80211_node.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net80211/ieee80211_proto.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net80211/ieee80211_radiotap.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/net80211/ieee80211_regdomain.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net80211/ieee80211_rssadapt.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net80211/ieee80211_var.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/netatalk
