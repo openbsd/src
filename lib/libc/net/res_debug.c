@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_debug.c,v 1.17 2003/06/02 20:18:36 millert Exp $	*/
+/*	$OpenBSD: res_debug.c,v 1.18 2005/03/06 16:17:23 moritz Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1990, 1993
@@ -78,7 +78,7 @@
 static char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_debug.c,v 8.19 1996/11/26 10:11:23 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_debug.c,v 1.17 2003/06/02 20:18:36 millert Exp $";
+static char rcsid[] = "$OpenBSD: res_debug.c,v 1.18 2005/03/06 16:17:23 moritz Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1075,7 +1075,7 @@ p_time(value)
 	ebuf = nbuf + sizeof(nbuf);
 	if (days) {
 		if ((tmp = snprintf(p, ebuf - p, "%d day%s",
-		    PLURALIZE(days))) >= ebuf - nbuf || tmp < 0)
+		    PLURALIZE(days))) >= ebuf - p || tmp < 0)
 			goto full;
 		p += tmp;
 	}
@@ -1085,7 +1085,7 @@ p_time(value)
 		if (p >= ebuf)
 			goto full;
 		if ((tmp = snprintf(p, ebuf - p, "%d hour%s",
-		    PLURALIZE(hours))) >= ebuf - nbuf || tmp < 0)
+		    PLURALIZE(hours))) >= ebuf - p || tmp < 0)
 			goto full;
 		p += tmp;
 	}
@@ -1095,7 +1095,7 @@ p_time(value)
 		if (p >= ebuf)
 			goto full;
 		if ((tmp = snprintf(p, ebuf - p, "%d min%s",
-		    PLURALIZE(mins))) >= ebuf - nbuf || tmp < 0)
+		    PLURALIZE(mins))) >= ebuf - p || tmp < 0)
 			goto full;
 		p += tmp;
 	}
@@ -1105,7 +1105,7 @@ p_time(value)
 		if (p >= ebuf)
 			goto full;
 		if ((tmp = snprintf(p, ebuf - p, "%d sec%s",
-		    PLURALIZE(secs))) >= ebuf - nbuf || tmp < 0)
+		    PLURALIZE(secs))) >= ebuf - p || tmp < 0)
 			goto full;
 	}
 	return (nbuf);
