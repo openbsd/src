@@ -648,7 +648,6 @@
 ./usr/libexec/registerd
 ./usr/libexec/rexecd
 ./usr/libexec/rlogind
-./usr/libexec/rpc.lockd
 ./usr/libexec/rpc.rquotad
 ./usr/libexec/rpc.rstatd
 ./usr/libexec/rpc.rusersd
@@ -793,6 +792,7 @@
 ./usr/sbin/rmt
 ./usr/sbin/rmuser
 ./usr/sbin/rpc.bootparamd
+./usr/sbin/rpc.lockd
 ./usr/sbin/rpc.pcnfsd
 ./usr/sbin/rpc.yppasswdd
 ./usr/sbin/rwhod

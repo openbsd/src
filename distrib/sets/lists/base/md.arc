@@ -1,5 +1,3 @@
-./usr/lib/perl5/mips-openbsd/5.003/rmd160.ph
-./dev/mouse
 ./dev/pccons
 ./dev/scan0
 ./sbin/fdisk
@@ -29,7 +27,7 @@
 ./usr/lib/libpanel.so.0.0
 ./usr/lib/libpcap.so.0.2
 ./usr/lib/libresolv.so.2.0
-./usr/lib/libskey.so.0.4
+./usr/lib/libskey.so.1.0
 ./usr/lib/libss.so.4.0
 ./usr/lib/libtelnet.so.1.0
 ./usr/lib/libtermcap.so.0.0
@@ -37,6 +35,12 @@
 ./usr/lib/libutil.so.4.0
 ./usr/lib/libwrap.so.1.0
 ./usr/lib/libz.so.1.2
+./usr/lib/perl5/auto/Text
+./usr/lib/perl5/auto/Text/ParseWords
+./usr/lib/perl5/auto/Text/ParseWords/autosplit.ix
+./usr/lib/perl5/auto/Text/ParseWords/old_shellwords.al
+./usr/lib/perl5/auto/Text/ParseWords/quotewords.al
+./usr/lib/perl5/auto/Text/ParseWords/shellwords.al
 ./usr/lib/perl5/mips-openbsd
 ./usr/lib/perl5/mips-openbsd/5.003
 ./usr/lib/perl5/mips-openbsd/5.003/CORE
@@ -92,9 +96,8 @@
 ./usr/lib/perl5/mips-openbsd/5.003/cpio.ph
 ./usr/lib/perl5/mips-openbsd/5.003/ctype.ph
 ./usr/lib/perl5/mips-openbsd/5.003/curses.ph
-./usr/lib/perl5/mips-openbsd/5.003/des.ph
-./usr/lib/perl5/mips-openbsd/5.003/gmp.ph
 ./usr/lib/perl5/mips-openbsd/5.003/db.ph
+./usr/lib/perl5/mips-openbsd/5.003/des.ph
 ./usr/lib/perl5/mips-openbsd/5.003/dirent.ph
 ./usr/lib/perl5/mips-openbsd/5.003/disktab.ph
 ./usr/lib/perl5/mips-openbsd/5.003/dlfcn.ph
@@ -110,8 +113,11 @@
 ./usr/lib/perl5/mips-openbsd/5.003/fstab.ph
 ./usr/lib/perl5/mips-openbsd/5.003/fts.ph
 ./usr/lib/perl5/mips-openbsd/5.003/glob.ph
+./usr/lib/perl5/mips-openbsd/5.003/gmp.ph
 ./usr/lib/perl5/mips-openbsd/5.003/grp.ph
 ./usr/lib/perl5/mips-openbsd/5.003/histedit.ph
+./usr/lib/perl5/mips-openbsd/5.003/inttypes.ph
+./usr/lib/perl5/mips-openbsd/5.003/libgen.ph
 ./usr/lib/perl5/mips-openbsd/5.003/ieeefp.ph
 ./usr/lib/perl5/mips-openbsd/5.003/iso646.ph
 ./usr/lib/perl5/mips-openbsd/5.003/kvm.ph
@@ -223,6 +229,7 @@
 ./usr/lib/perl5/mips-openbsd/5.003/regex.ph
 ./usr/lib/perl5/mips-openbsd/5.003/regexp.ph
 ./usr/lib/perl5/mips-openbsd/5.003/resolv.ph
+./usr/lib/perl5/mips-openbsd/5.003/rmd160.ph
 ./usr/lib/perl5/mips-openbsd/5.003/scsi.ph
 ./usr/lib/perl5/mips-openbsd/5.003/search.ph
 ./usr/lib/perl5/mips-openbsd/5.003/setjmp.ph
@@ -367,12 +374,6 @@
 ./usr/lib/perl5/mips-openbsd/5.003/vis.ph
 ./usr/lib/perl5/mips-openbsd/5.003/zconf.ph
 ./usr/lib/perl5/mips-openbsd/5.003/zlib.ph
-./usr/lib/perl5/auto/Text
-./usr/lib/perl5/auto/Text/ParseWords
-./usr/lib/perl5/auto/Text/ParseWords/autosplit.ix
-./usr/lib/perl5/auto/Text/ParseWords/old_shellwords.al
-./usr/lib/perl5/auto/Text/ParseWords/quotewords.al
-./usr/lib/perl5/auto/Text/ParseWords/shellwords.al
 ./usr/lib/perl5/site_perl/mips-openbsd
 ./usr/lib/scrt0.o
 ./usr/libexec/ld.so
