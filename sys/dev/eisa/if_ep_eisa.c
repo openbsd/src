@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_eisa.c,v 1.13 2000/05/29 18:04:08 aaron Exp $	*/
+/*	$OpenBSD: if_ep_eisa.c,v 1.14 2001/03/09 09:36:31 mickey Exp $	*/
 /*	$NetBSD: if_ep_eisa.c,v 1.13 1997/04/18 00:50:33 cgd Exp $	*/
 
 /*
@@ -199,8 +199,9 @@ ep_eisa_attach(parent, self, aux)
 		printf("\n");
 		return;
 	}
-	if (intrstr != NULL)
-		printf("%s ", intrstr);
 
 	epconfig(sc, chipset, NULL);
+
+	if (intrstr != NULL)
+		printf(" %s\n", intrstr);
 }
