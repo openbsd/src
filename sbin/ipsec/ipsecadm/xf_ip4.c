@@ -1,4 +1,4 @@
-/* $OpenBSD: xf_esp_new.c,v 1.5 1997/11/18 00:13:44 provos Exp $ */
+/* $OpenBSD: xf_ip4.c,v 1.4 1997/11/18 00:13:45 provos Exp $ */
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
  * 	(except when noted otherwise).
@@ -50,7 +50,6 @@
 #include <paths.h>
 #include "net/encap.h"
 #include "netinet/ip_ipsp.h"
-#include "netinet/ip_esp.h"
  
 extern char buf[];
 
@@ -58,28 +57,16 @@ int xf_set __P(( struct encap_msghdr *));
 int x2i __P((char *));
 
 int
-xf_esp_new(src, dst, spi, enc, auth, ivp, keyp, authp, 
-	   osrc, odst, newpadding)
+xf_ip4(src, dst, spi, osrc, odst)
 struct in_addr src, dst;
 u_int32_t spi;
-int enc, auth;
-u_char *ivp, *keyp, *authp;
 struct in_addr osrc, odst;
-int newpadding;
 {
-	int i, klen, alen, ivlen;
-
 	struct encap_msghdr *em;
-	struct esp_new_xencap *xd;
-
-	klen = strlen(keyp)/2;
-	alen = authp == NULL ? 0 : strlen(authp)/2;
-	ivlen = ivp == NULL ? 0 : strlen(ivp)/2;
 
 	em = (struct encap_msghdr *)&buf[0];
 	
-	em->em_msglen = EMT_SETSPI_FLEN + ESP_NEW_XENCAP_LEN + 
-	     ivlen + klen + alen;
+	em->em_msglen = EMT_SETSPI_FLEN + 1;
 
 	em->em_version = PFENCAP_VERSION_1;
 	em->em_type = EMT_SETSPI;
@@ -88,30 +75,7 @@ int newpadding;
 	em->em_dst = dst;
 	em->em_osrc = osrc;
 	em->em_odst = odst;
-	em->em_alg = XF_NEW_ESP;
-	em->em_sproto = IPPROTO_ESP;
-
-	xd = (struct esp_new_xencap *)(em->em_dat);
-
-	xd->edx_enc_algorithm = enc;
-	xd->edx_hash_algorithm = auth;
-	xd->edx_ivlen = ivlen;
-	xd->edx_confkeylen = klen;
-	xd->edx_authkeylen = alen;
-	xd->edx_wnd = -1;	/* Manual keying -- no seq */
-	xd->edx_flags = auth ? ESP_NEW_FLAG_AUTH : 0;
-	
-	if (newpadding)
-	  xd->edx_flags |= ESP_NEW_FLAG_NPADDING;
-
-	for (i = 0; i < ivlen; i++)
-	     xd->edx_data[i] = x2i(ivp+2*i);
-
-	for (i = 0; i < klen; i++)
-	     xd->edx_data[i+ivlen] = x2i(keyp+2*i);
-
-	for (i = 0; i < alen; i++)
-	     xd->edx_data[i+ivlen+klen] = x2i(keyp+2*i);
+	em->em_alg = XF_IP4;
 
 	return xf_set(em);
 }

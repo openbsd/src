@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.11 1997/11/04 09:13:41 provos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.12 1997/11/18 00:13:44 provos Exp $ */
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
  * 	(except when noted otherwise).
@@ -61,6 +61,7 @@
 #define XF_AUTH   0x20
 #define DEL_SPI   0x30
 #define GRP_SPI   0x40
+#define ENC_IP    0x80
 
 #define CMD_MASK  0xf0
 
@@ -84,6 +85,8 @@ int xf_ah_old __P((struct in_addr, struct in_addr, u_int32_t, int, u_char *,
 
 int xf_delspi __P((struct in_addr, u_int32_t, int, int));
 int xf_grp __P((struct in_addr, u_int32_t, int, struct in_addr, u_int32_t, int));
+int xf_ip4 __P((struct in_addr, struct in_addr, u_int32_t, 
+		struct in_addr, struct in_addr));
 
 transform xf[] = {
 	{"des", ALG_ENC_DES,   XF_ENC |ESP_OLD|ESP_NEW},
@@ -126,7 +129,7 @@ void
 usage()
 {
      fprintf( stderr, "usage: ipsecadm [command] <modifier...>\n"
-	      "\tCommands: new esp, old esp, new ah, old ah, group, delspi\n"
+	      "\tCommands: new esp, old esp, new ah, old ah, group, delspi, ip4\n"
 	      "\tPossible modifiers:\n"
 	      "\t\t-enc <alg>\t encryption algorithm\n"
 	      "\t\t-auth <alg>\t authentication algorithm\n"
@@ -139,7 +142,7 @@ usage()
 	      "\t\t-iv <val>\t iv to be used\n"
 	      "\t\t-proto <val>\t security protocol\n"
 	      "\t\t-chain\t\t SPI chain delete\n"
-	      "\t\t-oldpadding\t old style padding for new ESP\n"
+	      "\t\t-newpadding\t new style padding for new ESP\n"
 	      "\talso: dst2, spi2, proto2\n"
 	  );
 }
@@ -150,7 +153,7 @@ main(argc, argv)
 	char  **argv;
 {
 	int i;
-	int mode = ESP_NEW, new = 1, flag = 0, oldpadding = 0;
+	int mode = ESP_NEW, new = 1, flag = 0, newpadding = 0;
 	int auth = 0, enc = 0, ivlen = 0, klen = 0, alen = 0;
 	int proto = IPPROTO_ESP, proto2 = IPPROTO_AH;
 	int chain = 0; 
@@ -184,6 +187,9 @@ main(argc, argv)
 	     } else if (!strcmp(argv[i], "group") && flag < 2) {
 		  flag = 2;
 		  mode = GRP_SPI;
+	     } else if (!strcmp(argv[i], "ip4") && flag < 2) {
+		  flag = 2;
+		  mode = ENC_IP;
 	     } else if (argv[i][0] == '-') {
 		  break;
 	     } else {
@@ -248,8 +254,8 @@ main(argc, argv)
 	     } else if (!strcmp(argv[i]+1, "src") && i+1 < argc) {
 		  src.s_addr = inet_addr(argv[i+1]);
 		  i++;
-	     } else if (!strcmp(argv[i]+1, "oldpadding")) {
-		  oldpadding = 1;
+	     } else if (!strcmp(argv[i]+1, "newpadding")) {
+		  newpadding = 1;
 	     } else if (!strcmp(argv[i]+1, "tunnel") && i+2 < argc) {
 		  osrc.s_addr = inet_addr(argv[i+1]);
 		  i++;
@@ -300,7 +306,8 @@ main(argc, argv)
 	} else if (iscmd(mode, GRP_SPI) && spi2 == 0) {
 	     fprintf(stderr, "%s: No SPI2 specified\n", argv[0]);
 	     exit(1);
-	} else if (isencauth(mode) && src.s_addr == 0) {
+	} else if ((isencauth(mode) || iscmd(mode, ENC_IP)) && 
+		    src.s_addr == 0) {
 	     fprintf(stderr, "%s: No source address specified\n", argv[0]);
 	     exit(1);
 	} else if ((iscmd(mode, DEL_SPI) || iscmd(mode, GRP_SPI)) 
@@ -314,6 +321,11 @@ main(argc, argv)
 	     fprintf(stderr, "%s: No destination address specified\n", 
 		     argv[0]);
 	     exit(1);
+	} else if (iscmd(mode, ENC_IP) && 
+		   (odst.s_addr == 0 || osrc.s_addr == 0)) {
+	     fprintf(stderr, "%s: No tunnel addresses specified\n", 
+		     argv[0]);
+	     exit(1);
 	} else if (iscmd(mode, GRP_SPI) && dst2.s_addr == 0) {
 	     fprintf(stderr, "%s: No destination address2 specified\n", 
 		     argv[0]);
@@ -325,7 +337,7 @@ main(argc, argv)
 	     switch(mode) {
 	     case ESP_NEW:
 		  xf_esp_new(src, dst, spi, enc, auth, ivp, keyp, authp, 
-			     osrc, odst, oldpadding);
+			     osrc, odst, newpadding);
 		  break;
 	     case ESP_OLD:
 		  xf_esp_old(src, dst, spi, enc, ivp, keyp, osrc, odst);
@@ -344,6 +356,9 @@ main(argc, argv)
 		  break;
 	     case DEL_SPI:
 		  xf_delspi(dst, spi, proto, chain);
+		  break;
+	     case ENC_IP:
+		  xf_ip4(src, dst, spi, osrc, odst);
 		  break;
 	     }
 	}
