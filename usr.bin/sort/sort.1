@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sort.1,v 1.20 2003/06/03 02:56:16 millert Exp $
+.\"	$OpenBSD: sort.1,v 1.21 2003/07/14 12:56:07 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,7 +44,7 @@
 .Op Fl t Ar char
 .Op Fl R Ar char
 .Oo
-.Cm Fl k Ar field1[,field2]
+.Fl k Ar field1[,field2]
 .Oc
 .Ar ...
 .Op Fl T Ar dir
@@ -62,7 +62,7 @@ By default, if keys are not given,
 regards each input line as a single field.
 .Pp
 The options are as follows:
-.Bl -tag -width file Ds
+.Bl -tag -width Ds
 .It Fl c
 Check that the single input file is sorted.
 If the file is not sorted,
