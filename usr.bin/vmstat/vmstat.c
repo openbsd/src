@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.68 2002/03/15 19:11:01 art Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.69 2002/05/29 09:23:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -1076,9 +1076,9 @@ print_pool(struct pool *pp, char *name)
 		return;
 
 	if (pp->pr_maxpages == UINT_MAX)
-		sprintf(maxp, "inf");
+		snprintf(maxp, sizeof maxp, "inf");
 	else
-		sprintf(maxp, "%u", pp->pr_maxpages);
+		snprintf(maxp, sizeof maxp, "%u", pp->pr_maxpages);
 /*
  * Print single word.  `ovflow' is number of characters didn't fit
  * on the last word.  `fmt' is a format string to print this word.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pw_yp.c,v 1.13 2001/11/19 19:02:13 mpech Exp $	*/
+/*	$OpenBSD: pw_yp.c,v 1.14 2002/05/29 09:23:25 deraadt Exp $	*/
 /*	$NetBSD: pw_yp.c,v 1.5 1995/03/26 04:55:33 glass Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pw_yp.c	1.0 2/2/93";
 #else
-static char rcsid[] = "$OpenBSD: pw_yp.c,v 1.13 2001/11/19 19:02:13 mpech Exp $";
+static char rcsid[] = "$OpenBSD: pw_yp.c,v 1.14 2002/05/29 09:23:25 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -131,8 +131,8 @@ pw_yp(pw, uid)
 		if (*p == '&')
 			alen = alen + strlen(pw->pw_name) - 1;
 	if (strlen(pw->pw_name) + 1 + strlen(pw->pw_passwd) + 1 +
-	    strlen((sprintf(buf, "%u", pw->pw_uid), buf)) + 1 +
-	    strlen((sprintf(buf, "%u", pw->pw_gid), buf)) + 1 +
+	    strlen((snprintf(buf, sizeof buf, "%u", pw->pw_uid), buf)) + 1 +
+	    strlen((snprintf(buf, sizeof buf, "%u", pw->pw_gid), buf)) + 1 +
 	    strlen(pw->pw_gecos) + alen + 1 + strlen(pw->pw_dir) + 1 +
 	    strlen(pw->pw_shell) >= 1023) {
 		warnx("entries too long");
@@ -280,7 +280,7 @@ ypgetpwuid(uid)
 		exit(1);
 	}
 
-	sprintf(namebuf, "%u", uid);
+	snprintf(namebuf, sizeof namebuf, "%u", uid);
 	reason = yp_match(domain, "passwd.byuid", namebuf, strlen(namebuf),
 	    &val, &vallen);
 	switch(reason) {

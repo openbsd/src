@@ -1,4 +1,4 @@
-/*	$OpenBSD: cal.c,v 1.7 2002/02/16 21:27:44 millert Exp $	*/
+/*	$OpenBSD: cal.c,v 1.8 2002/05/29 09:23:25 deraadt Exp $	*/
 /*	$NetBSD: cal.c,v 1.6 1995/03/26 03:10:24 glass Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cal.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: cal.c,v 1.7 2002/02/16 21:27:44 millert Exp $";
+static char rcsid[] = "$OpenBSD: cal.c,v 1.8 2002/05/29 09:23:25 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -207,7 +207,8 @@ monthly(month, year)
 	char *p, lineout[30];
 
 	day_array(month, year, days);
-	len = sprintf(lineout, "%s %d", month_names[month - 1], year);
+	len = snprintf(lineout, sizeof lineout, "%s %d",
+	    month_names[month - 1], year);
 	(void)printf("%*s%s\n%s\n",
 	    ((julian ? J_WEEK_LEN : WEEK_LEN) - len) / 2, "",
 	    lineout, julian ? j_day_headings : day_headings);
@@ -229,7 +230,7 @@ j_yearly(year)
 	int days[12][MAXDAYS];
 	char *p, lineout[80];
 
-	(void)sprintf(lineout, "%d", year);
+	(void)snprintf(lineout, sizeof lineout, "%d", year);
 	center(lineout, J_WEEK_LEN * 2 + J_HEAD_SEP, 0);
 	(void)printf("\n\n");
 	for (i = 0; i < 12; i++)
@@ -264,7 +265,7 @@ yearly(year)
 	int days[12][MAXDAYS];
 	char *p, lineout[80];
 
-	(void)sprintf(lineout, "%d", year);
+	(void)snprintf(lineout, sizeof lineout, "%d", year);
 	center(lineout, WEEK_LEN * 3 + HEAD_SEP * 2, 0);
 	(void)printf("\n\n");
 	for (i = 0; i < 12; i++)

@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: util.c,v 1.17 2002/02/19 19:39:38 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.18 2002/05/29 09:23:25 deraadt Exp $	*/
 /*	$NetBSD: util.c,v 1.10 1996/12/31 17:56:04 christos Exp $	*/
 
 /*
@@ -46,7 +46,7 @@ strerror(e)
 {
     static char buf[100];
     if (e < 0 || e >= sys_nerr) {
-	sprintf(buf, "Unknown error %d", e);
+	snprintf(buf, sizeof buf, "Unknown error %d", e);
 	return buf;
     }
     else
@@ -208,7 +208,7 @@ getwd(pathname)
     /* find the inode of root */
     if (stat("/", &st_root) == -1) {
 	(void)sprintf(pathname,
-			"getwd: Cannot stat \"/\" (%s)", strerror(errno));
+	    "getwd: Cannot stat \"/\" (%s)", strerror(errno));
 	return NULL;
     }
     pathbuf[MAXPATHLEN - 1] = '\0';
@@ -219,7 +219,7 @@ getwd(pathname)
     /* find the inode of the current directory */
     if (lstat(".", &st_cur) == -1) {
 	(void)sprintf(pathname,
-			"getwd: Cannot stat \".\" (%s)", strerror(errno));
+	    "getwd: Cannot stat \".\" (%s)", strerror(errno));
 	return NULL;
     }
     nextpathptr = strrcpy(nextpathptr, "../");
@@ -237,14 +237,14 @@ getwd(pathname)
 	/* open the parent directory */
 	if (stat(nextpathptr, &st_dotdot) == -1) {
 	    (void)sprintf(pathname,
-			    "getwd: Cannot stat directory \"%s\" (%s)",
-			    nextpathptr, strerror(errno));
+		"getwd: Cannot stat directory \"%s\" (%s)",
+		nextpathptr, strerror(errno));
 	    return NULL;
 	}
 	if ((dp = opendir(nextpathptr)) == NULL) {
 	    (void)sprintf(pathname,
-			    "getwd: Cannot open directory \"%s\" (%s)",
-			    nextpathptr, strerror(errno));
+		"getwd: Cannot open directory \"%s\" (%s)",
+		nextpathptr, strerror(errno));
 	    return NULL;
 	}
 
@@ -265,8 +265,9 @@ getwd(pathname)
 		    continue;
 		(void)strcpy(cur_name_add, d->d_name);
 		if (lstat(nextpathptr, &st_next) == -1) {
-		    (void)sprintf(pathname, "getwd: Cannot stat \"%s\" (%s)",
-				    d->d_name, strerror(errno));
+		    (void)sprintf(pathname,
+			"getwd: Cannot stat \"%s\" (%s)",
+			d->d_name, strerror(errno));
 		    (void)closedir(dp);
 		    return NULL;
 		}
@@ -277,7 +278,8 @@ getwd(pathname)
 	    }
 	}
 	if (d == NULL) {
-	    (void)sprintf(pathname, "getwd: Cannot find \".\" in \"..\"");
+	    (void)sprintf(pathname,
+		"getwd: Cannot find \".\" in \"..\"");
 	    (void)closedir(dp);
 	    return NULL;
 	}

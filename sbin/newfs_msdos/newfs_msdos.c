@@ -634,7 +634,7 @@ main(int argc, char *argv[])
 			  (u_int)tm->tm_min));
 		mk4(bsx->volid, x);
 		mklabel(bsx->label, opt_L ? opt_L : "NO NAME");
-		sprintf(buf, "FAT%u", fat);
+		snprintf(buf, sizeof buf, "FAT%u", fat);
 		setstr(bsx->type, buf, sizeof(bsx->type));
 		if (!opt_B) {
 		    x1 += sizeof(struct bsx);

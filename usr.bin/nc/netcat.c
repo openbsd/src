@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.47 2002/03/10 20:26:09 ericj Exp $ */
+/* $OpenBSD: netcat.c,v 1.48 2002/05/29 09:23:25 deraadt Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -645,7 +645,7 @@ build_ports(char *p)
 		/* Load ports sequentially */
 		for (cp = lo; cp <= hi; cp++) {
 			portlist[x] = calloc(1, PORT_MAX);
-			sprintf(portlist[x], "%d", cp);
+			snprintf(portlist[x], PORT_MAX, "%d", cp);
 			x++;
 		}
 

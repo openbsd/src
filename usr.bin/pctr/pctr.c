@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.7 2001/08/19 19:26:03 mickey Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.8 2002/05/29 09:23:25 deraadt Exp $	*/
 
 /*
  * Pentium performance counter control program for OpenBSD.
@@ -327,7 +327,7 @@ fn2str (int family, u_int sel)
 	if (family == 5) {
 		fn = sel & 0x3f;
 		cfnp = fn2cfnp (family, fn);
-		sprintf(buf, "%c%c%c %02x %s",
+		snprintf(buf, sizeof buf, "%c%c%c %02x %s",
 		    sel & P5CTR_C ? 'c' : '-',
 		    sel & P5CTR_U ? 'u' : '-',
 		    sel & P5CTR_K ? 'k' : '-',
@@ -337,16 +337,17 @@ fn2str (int family, u_int sel)
 		fn = sel & 0xff;
 		cfnp = fn2cfnp (family, fn);
 		if (cfnp && cfnp->flags & CFL_MESI)
-			sprintf(um, "/%c%c%c%c",
+			snprintf(um, sizeof um, "/%c%c%c%c",
 			    sel & P6CTR_UM_M ? 'm' : '-',
 			    sel & P6CTR_UM_E ? 'e' : '-',
 			    sel & P6CTR_UM_S ? 's' : '-',
 			    sel & P6CTR_UM_I ? 'i' : '-');
 		else if (cfnp && cfnp->flags & CFL_SA)
-			sprintf(um, "/%c", sel & P6CTR_UM_A ? 'a' : '-');
+			snprintf(um, sizeof um, "/%c",
+			    sel & P6CTR_UM_A ? 'a' : '-');
 		if (sel >> 24)
-			sprintf(cm, "+%d", sel >> 24);
-		sprintf(buf, "%c%c%c%c %02x%s%s%*s %s",
+			snprintf(cm, sizeof cm, "+%d", sel >> 24);
+		snprintf(buf, sizeof buf, "%c%c%c%c %02x%s%s%*s %s",
 		    sel & P6CTR_I ? 'i' : '-',
 		    sel & P6CTR_E ? 'e' : '-',
 		    sel & P6CTR_K ? 'k' : '-',

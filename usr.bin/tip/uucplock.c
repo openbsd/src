@@ -1,4 +1,4 @@
-/*	$OpenBSD: uucplock.c,v 1.7 2002/05/07 06:56:50 hugh Exp $	*/
+/*	$OpenBSD: uucplock.c,v 1.8 2002/05/29 09:23:25 deraadt Exp $	*/
 /*	$NetBSD: uucplock.c,v 1.7 1997/02/11 09:24:08 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)uucplock.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: uucplock.c,v 1.7 2002/05/07 06:56:50 hugh Exp $";
+static const char rcsid[] = "$OpenBSD: uucplock.c,v 1.8 2002/05/29 09:23:25 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -62,10 +62,10 @@ int
 uu_lock(ttyname)
 	char *ttyname;
 {
-	int fd, pid;
+	int fd, len;
 	char tbuf[sizeof(_PATH_LOCKDIRNAME) + MAXNAMLEN];
 	char text_pid[81];
-	int len;
+	pid_t pid;
 
 	(void)snprintf(tbuf, sizeof tbuf, _PATH_LOCKDIRNAME, ttyname);
 	fd = open(tbuf, O_RDWR|O_CREAT|O_EXCL, 0660);
@@ -109,7 +109,7 @@ uu_lock(ttyname)
 		/* fall out and finish the locking process */
 	}
 	pid = getpid();
-	(void)sprintf(text_pid, "%10d\n", pid);
+	(void)snprintf(text_pid, sizeof text_pid, "%10ld\n", (long)pid);
 	len = strlen(text_pid);
 	if (write(fd, text_pid, len) != len) {
 		(void)close(fd);
