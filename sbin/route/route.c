@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.14 1995/04/20 20:52:46 mycroft Exp $	*/
+/*	$NetBSD: route.c,v 1.15 1996/01/07 00:07:23 pk Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$NetBSD: route.c,v 1.14 1995/04/20 20:52:46 mycroft Exp $";
+static char rcsid[] = "$NetBSD: route.c,v 1.15 1996/01/07 00:07:23 pk Exp $";
 #endif
 #endif /* not lint */
 
@@ -636,7 +636,7 @@ newroute(argc, argv)
 				int ret = atoi(*argv);
 
 				if (ret == 0) {
-				    if (strcmp(*argv, "0") == 0)
+				    if (!qflag && strcmp(*argv, "0") == 0)
 				        printf("%s,%s",
 					    "old usage of trailing 0",
 					    "assuming route to if\n");
@@ -645,8 +645,10 @@ newroute(argc, argv)
 				    iflag = 1;
 				    continue;
 				} else if (ret > 0 && ret < 10) {
-				    printf("old usage of trailing digit, ");
-				    printf("assuming route via gateway\n");
+				    if (!qflag) {
+				        printf("old usage of trailing digit, ");
+				        printf("assuming route via gateway\n");
+				    }
 				    iflag = 0;
 				    continue;
 				}
@@ -679,16 +681,19 @@ newroute(argc, argv)
 	if (*cmd == 'g')
 		exit(0);
 	oerrno = errno;
-	(void) printf("%s %s %s", cmd, ishost? "host" : "net", dest);
-	if (*gateway) {
-		(void) printf(": gateway %s", gateway);
-		if (attempts > 1 && ret == 0 && af == AF_INET)
-		    (void) printf(" (%s)",
-			inet_ntoa(((struct sockaddr_in *)&route.rt_gateway)->sin_addr));
+	if (!qflag) {
+		(void) printf("%s %s %s", cmd, ishost? "host" : "net", dest);
+		if (*gateway) {
+			(void) printf(": gateway %s", gateway);
+			if (attempts > 1 && ret == 0 && af == AF_INET)
+			    (void) printf(" (%s)",
+				inet_ntoa(((struct sockaddr_in *)
+					   &route.rt_gateway)->sin_addr));
+		}
+		if (ret == 0)
+			(void) printf("\n");
 	}
-	if (ret == 0)
-		(void) printf("\n");
-	else {
+	if (ret != 0) {
 		switch (oerrno) {
 		case ESRCH:
 			err = "not in table";
