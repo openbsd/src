@@ -1,4 +1,4 @@
-/*      $OpenBSD: cryptombuf.c,v 1.1 2001/06/08 08:15:50 deraadt Exp $	*/
+/*      $OpenBSD: cryptombuf.c,v 1.2 2001/06/08 10:35:14 art Exp $	*/
 
 /*
  * Copyright (c) 1999 Theo de Raadt
@@ -64,9 +64,8 @@ mbuf2pages(m, np, pp, lp, maxp, nicep)
 		va -= off;
 
 next_page:
-		pa = pmap_extract(pmap_kernel(), va);
-		if (pa == 0)
-			panic("mbuf2pages: pa == 0");
+		if (pmap_extract(pmap_kernel(), va, &pa) == FALSE)
+			panic("mbuf2pages: page not mapped");
 
 		pa += off;
 
