@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.58 2002/06/13 08:02:36 angelos Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.59 2002/06/25 00:20:38 angelos Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -248,16 +248,12 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 	}
 
 	/*
-     * Call appropriate transform and return -- callback takes care of
-     * everything else.
-     */
-	if ((*(tdbp->tdb_xform->xf_input))(m, tdbp, skip, protoff) == NULL) {
-		splx(s);
-		return EINVAL;
-	} else {
-		splx(s);
-		return 0;
-	}
+	 * Call appropriate transform and return -- callback takes care of
+	 * everything else.
+	 */
+	error = (*(tdbp->tdb_xform->xf_input))(m, tdbp, skip, protoff);
+	splx(s);
+	return error;
 }
 
 /*
