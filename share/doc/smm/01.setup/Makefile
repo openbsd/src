@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2001/02/03 08:15:07 niklas Exp $
+#	$OpenBSD: Makefile,v 1.4 2004/02/01 14:22:45 jmc Exp $
 
 
 DIR=	smm/01.setup
@@ -8,6 +8,9 @@ MACROS=	-ms
 
 paper.ps: ${SRCS}
 	${TBL} ${SRCS} | ${ROFF} > ${.TARGET}
+
+paper.txt: ${SRCS}
+	${TBL} ${SRCS} | ${ROFF} -Tascii > ${.TARGET}
 
 install: ${SRCS}
 	install -c -o ${DOCOWN} -g ${DOCGRP} -m ${DOCMODE} \

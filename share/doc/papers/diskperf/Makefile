@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2001/02/03 08:14:56 niklas Exp $
+#	$OpenBSD: Makefile,v 1.3 2004/02/01 14:22:44 jmc Exp $
 
 
 DIR=	papers/diskperf
@@ -8,5 +8,8 @@ MACROS=	-ms
 
 paper.ps: ${SRCS}
 	${TBL} ${SRCS} | ${ROFF} > ${.TARGET}
+
+paper.txt: ${SRCS}
+	${TBL} ${SRCS} | ${ROFF} -Tascii > ${.TARGET}
 
 .include <bsd.doc.mk>

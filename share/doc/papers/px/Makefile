@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2001/02/03 08:14:59 niklas Exp $
+#	$OpenBSD: Makefile,v 1.3 2004/02/01 14:22:45 jmc Exp $
 
 
 DIR=	papers/px
@@ -10,6 +10,9 @@ CLEANFILES+=fig2.3.n
 
 paper.ps: ${SRCS} fig2.3.n
 	${SOELIM} ${SRCS} | ${TBL} | ${ROFF} > ${.TARGET}
+
+paper.txt: ${SRCS} fig2.3.n
+	${SOELIM} ${SRCS} | ${TBL} | ${ROFF} -Tascii > ${.TARGET}
 
 fig2.3.n: fig2.3.raw
 	sort fig2.3.raw >fig2.3.n

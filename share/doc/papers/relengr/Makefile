@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2001/02/03 08:15:01 niklas Exp $
+#	$OpenBSD: Makefile,v 1.3 2004/02/01 14:22:45 jmc Exp $
 
 
 DIR=	papers/relengr
@@ -9,5 +9,8 @@ REFER=	refer -n -e -l -s -p ref.bib
 
 paper.ps: ${SRCS}
 	${REFER} ${SRCS} | ${ROFF} > ${.TARGET}
+
+paper.txt: ${SRCS}
+	${REFER} ${SRCS} | ${ROFF} -Tascii > ${.TARGET}
 
 .include <bsd.doc.mk>

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2001/02/03 08:15:02 niklas Exp $
+#	$OpenBSD: Makefile,v 1.3 2004/02/01 14:22:45 jmc Exp $
 
 
 DIR=	papers/sysperf
@@ -10,6 +10,8 @@ CLEANFILES+=${OBJS}
 
 paper.ps: ${OBJS}
 	${ROFF} ${OBJS} > ${.TARGET}
+paper.txt: ${OBJS}
+	${ROFF} -Tascii ${OBJS} > ${.TARGET}
 
 paper.tmp: ${SRCS}
 	${TBL} ${SRCS} | ${EQN} > paper.tmp
