@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.10 2003/06/23 21:48:24 mickey Exp $	*/
+/*	$OpenBSD: bus.h,v 1.11 2003/10/08 21:52:46 drahn Exp $	*/
 
 /*
  * Copyright (c) 1997 Per Fogelstrom.  All rights reserved.
@@ -405,13 +405,13 @@ bus_space_write_raw_multi_4(bus_space_tag_t bst, bus_space_handle_t bsh,
     !!! bus_space_write_raw_multi_8 not implemented !!!
 
 void
-bus_space_set_region_1(void *v, bus_space_handle_t h, bus_size_t o,
+bus_space_set_region_1(bus_space_tag_t bst, bus_space_handle_t h, bus_size_t o,
     u_int8_t val, bus_size_t c);
 void
-bus_space_set_region_2(void *v, bus_space_handle_t h, bus_size_t o,
+bus_space_set_region_2(bus_space_tag_t bst, bus_space_handle_t h, bus_size_t o,
     u_int16_t val, bus_size_t c);
 void
-bus_space_set_region_4(void *v, bus_space_handle_t h, bus_size_t o,
+bus_space_set_region_4(bus_space_tag_t bst, bus_space_handle_t h, bus_size_t o,
     u_int32_t val, bus_size_t c);
 #define	bus_space_set_region_8 \
     !!! bus_space_set_region_8 not implemented !!!

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.55 2003/09/22 21:39:38 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.56 2003/10/08 21:52:46 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -1329,26 +1329,59 @@ BUS_SPACE_COPY_N(1,u_int8_t)
 BUS_SPACE_COPY_N(2,u_int16_t)
 BUS_SPACE_COPY_N(4,u_int32_t)
 
-#define BUS_SPACE_SET_REGION_N(BYTES,TYPE)				\
-void									\
-__C(bus_space_set_region_,BYTES)(v, h, o, val, c)			\
-	void *v;							\
-	bus_space_handle_t h;						\
-	TYPE val;							\
-	bus_size_t o, c;						\
-{									\
-	TYPE *dst;							\
-	int i;								\
-									\
-	dst = (TYPE *) (h+o);						\
-	for (i = 0; i < c; i++) {					\
-		dst[i] = val;						\
-	}								\
+void
+bus_space_set_region_1(t, h, o, val, c)
+	bus_space_tag_t t;
+	bus_space_handle_t h;
+	u_int8_t val;
+	bus_size_t o, c;
+{
+	u_int8_t *dst;
+	int i;
+	
+	dst = (u_int8_t *) (h+o);
+
+	for (i = 0; i < c; i++) {
+		dst[i] = val;
+	}
 }
 
-BUS_SPACE_SET_REGION_N(1,u_int8_t)
-BUS_SPACE_SET_REGION_N(2,u_int16_t)
-BUS_SPACE_SET_REGION_N(4,u_int32_t)
+void
+bus_space_set_region_2(t, h, o, val, c)
+	bus_space_tag_t t;
+	bus_space_handle_t h;
+	u_int16_t val;
+	bus_size_t o, c;
+{
+	u_int16_t *dst;
+	int i;
+	
+	dst = (u_int16_t *) (h+o);
+	if (t->bus_reverse)
+		val = swap16(val);
+
+	for (i = 0; i < c; i++) {
+		dst[i] = val;
+	}
+}
+void
+bus_space_set_region_4(t, h, o, val, c)
+	bus_space_tag_t t;
+	bus_space_handle_t h;
+	u_int32_t val;
+	bus_size_t o, c;
+{
+	u_int32_t *dst;
+	int i;
+	
+	dst = (u_int32_t *) (h+o);
+	if (t->bus_reverse)
+		val = swap32(val);
+
+	for (i = 0; i < c; i++) {
+		dst[i] = val;
+	}
+}
 
 #define BUS_SPACE_READ_RAW_MULTI_N(BYTES,SHIFT,TYPE)			\
 void									\
