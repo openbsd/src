@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf64.c,v 1.9 2000/12/14 16:54:41 art Exp $	*/
+/*	$OpenBSD: exec_elf64.c,v 1.10 2001/01/16 15:46:20 art Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -384,6 +384,10 @@ elf64_load_file(p, path, epp, ap, last)
 	}
 	if ((error = VOP_GETATTR(vp, epp->ep_vap, p->p_ucred, p)) != 0)
 		goto bad;
+	if (vp->v_mount->mnt_flag & MNT_NOEXEC) {
+		error = EACCES;
+		goto bad;
+	}
 	if ((error = VOP_ACCESS(vp, VREAD, p->p_ucred, p)) != 0)
 		goto bad1;
 	if ((error = elf64_read_from(p, nd.ni_vp, 0,
