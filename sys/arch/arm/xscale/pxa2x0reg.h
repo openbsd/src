@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0reg.h,v 1.9 2005/01/26 06:34:53 uwe Exp $ */
+/*	$OpenBSD: pxa2x0reg.h,v 1.10 2005/02/12 06:20:21 dlg Exp $ */
 /* $NetBSD: pxa2x0reg.h,v 1.4 2003/06/11 20:43:01 scw Exp $ */
 
 /*
@@ -268,7 +268,7 @@ struct pxa2x0_dma_desc {
 #define CKEN_BTUART	(1<<7)
 #define CKEN_I2S	(1<<8)
 #define CKEN_USBHC	(1<<10)
-#define CKEN_USBDC	(2<<11)
+#define CKEN_USBDC	(1<<11)
 #define CKEN_MMC	(1<<12)
 #define CKEN_FICP	(1<<13)
 #define CKEN_I2C	(1<<14)
