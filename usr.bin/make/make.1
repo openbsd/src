@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.17 1999/03/17 17:35:01 espie Exp $
+.\"	$OpenBSD: make.1,v 1.18 1999/05/16 21:53:31 espie Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 .Nm make
 .Nd maintain program dependencies
 .Sh SYNOPSIS
-.Nm make
+.Nm 
 .Op Fl BPSeiknqrst
 .Op Fl D Ar variable
 .Op Fl d Ar flags
@@ -73,7 +73,7 @@ exists, it is read (see
 .Xr mkdep 1) .
 .Pp
 This manual page is intended as a reference document only.
-For a more thorough description of
+For a more thorough introduction to
 .Nm make
 and makefiles, please refer to
 .%T "Make \- A Tutorial" .
@@ -447,28 +447,36 @@ At startup,
 .Nm make
 searches for an alternate directory to place target files -- it
 will attempt to change into this special directory.
+First, if 
+.Ev MAKEOBJDIRPREFIX 
+is defined, 
 .Nm make 
-first tries to change into the prepend the path named by the environment
-variable
-.Ev MAKEOBJDIRPREFIX
-to 
-.Va .CURDIR .
-If that fails, it then
-tries to change into the directory named by the environment
-variable
-.Ev MAKEOBJDIR .
-If that fails, it tries to change into the directory named
-.Pa obj.$MACHINE
-(if the environment variable
-.Ev MACHINE
-is not set,
+prepends its contents to the current directory name and tries for
+the resulting directory. If that fails,
 .Nm make
-calls
-.Xr uname 2
-to determine the type of machine).  If it still has found no special
-directory, it next tries the directory named
+remains in the current directory.
+If 
+.Ev MAKEOBJDIRPREFIX
+is not defined,
+.Nm make 
+checks
+.Ev MAKEOBJDIR 
+and tries to change into that directory.  Should that fail, 
+.Nm make
+remains in the current directory.  If 
+.Ev MAKEOBJDIR
+is not defined, it tries to change into the directory named
+.Pa obj.${MACHINE}
+(see 
+.Va MACHINE 
+variable). If it still has found no special directory, 
+.Nm make 
+next tries the directory named
 .Pa obj .
-Finally, if none of the above directories are available
+If this fails,
+.Nm make
+tries to prepend /usr/obj to the current directory name.
+Finally, if none of these directories are available
 .Nm make
 will settle for and use the current directory.
 .It Va .MAKEFLAGS
@@ -517,15 +525,31 @@ for all programs which
 .Nm make
 executes.
 .It Va .TARGETS
-todo
+List of targets 
+.Nm make 
+is currently building.
 .It Va .INCLUDES
-todo
+See 
+.Ic .INCLUDES
+special target
 .It Va .LIBS
-todo
+See 
+.Ic .LIBS
+special target
 .It Va MACHINE
-todo
+Name of the machine architecture 
+.Nm make 
+is running on, obtained from the
+.Ev MACHINE
+environment variable, or through 
+.Xr uname 2
+if not defined.
 .It Va MACHINE_ARCH
-todo
+Name of the machine architecture
+.Nm make
+was compiled for, obtained from the
+.Ev MACHINE_ARCH 
+environment variable, or defined at compilation time.
 .El
 .Pp
 Variable expansion may be modified to select or modify each word of the
@@ -989,10 +1013,26 @@ attribute.
 If no sources are specified, this is the equivalent of specifying the
 .Fl i
 option.
+.It Ic .INCLUDES
+A list of suffixes that indicate files that can be included in a source
+file. The suffix must have already been declared with
+.Ic .SUFFIXES ,
+any suffix so declared will have the directories on its search path (see
+.Ic .PATH )
+placed in the 
+.Va .INCLUDES
+special variable, each preceded by a 
+.Fl I 
+flag.
 .It Ic .INTERRUPT
 If
 .Nm make
 is interrupted, the commands for this target will be executed.
+.It Ic .LIBS
+This does for libraries what 
+.Ic .INCLUDES 
+does for include files, except that the flag used is
+.Fl L .
 .It Ic .MAIN
 If no target is specified when
 .Nm make
@@ -1028,6 +1068,12 @@ The sources are directories which are to be searched for files not
 found in the current directory.
 If no sources are specified, any previously specified directories are
 deleted.
+.It Ic .PATH\fIsuffix\fR
+The sources are directories which are to be searched for suffixed files
+not found in the current directory.
+.Nm make
+first searches the suffixed search path, before reverting to the default 
+path if the file is not found there.
 .It Ic .PHONY
 Apply the
 .Ic .PHONY
@@ -1066,6 +1112,10 @@ The internal variable
 is set to the same value as
 .Va .MAKE ,
 support for this may be removed in the future.
+.Pp
+Most of the more esoteric features of 
+.Nm make
+should probably be avoided for greater compatibility.
 .Sh ENVIRONMENT
 .Nm make
 uses the following environment variables, if they exist:
@@ -1095,6 +1145,23 @@ default
 .Ev MAKEOBJDIRPREFIX directory.
 .El
 .Sh BUGS
+The determination of
+.Va .OBJDIR
+is contorted to the point of absurdity.  
+.Pp
+In the presence of several
+.Ic .MAIN
+special targets,
+.Nm make
+silently ignores all but the first.
+.Pp
+.Va .TARGETS
+is not set to the default target when
+.Nm make
+is invoked without a target name and no
+.Ic MAIN 
+special target exists.
+.Pp
 The evaluation of
 .Ar expression
 in a test is very simple-minded. Currently, the only form that works is
