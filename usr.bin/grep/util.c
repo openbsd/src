@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.23 2004/01/26 14:50:29 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.24 2004/02/04 18:38:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -266,9 +266,9 @@ fastcomp(fastgrep_t *fg, const char *pattern)
 	}
 
 	/* Remove enclosing [[:<:]] and [[:>:]] (word match). */
-	if (fg->patternLen > 14 + fg->bol + fg->eol &&
+	if (fg->patternLen >= 14 &&
 	    strncmp(pattern + fg->bol, "[[:<:]]", 7) == 0 &&
-	    strncmp(pattern + fg->patternLen - (7 + fg->eol), "[[:>:]]", 7) == 0) {
+	    strncmp(pattern + fg->bol + fg->patternLen - 7, "[[:>:]]", 7) == 0) {
 		fg->patternLen -= 14;
 		fg->wmatch = 7;
 	}
