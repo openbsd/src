@@ -42,7 +42,7 @@ struct cache
        {
        int   cuid;
        int   cgid;
-       char  cpw[32];
+       char  cpw[_PASSWORD_LEN];
        char  cuname[10];	/* keep this even for machines
 				 * with alignment problems */
        }User_cache[CACHE_SIZE];
@@ -94,8 +94,10 @@ add_cache_entry(p)
 		User_cache[i] = User_cache[i - 1];
 	User_cache[0].cuid = p->pw_uid;
 	User_cache[0].cgid = p->pw_gid;
-	(void)strcpy(User_cache[0].cpw, p->pw_passwd);
-	(void)strcpy(User_cache[0].cuname, p->pw_name);
+	(void)strncpy(User_cache[0].cpw, p->pw_passwd, sizeof User_cache[0].cpw-1);
+	User_cache[0].cpw[sizeof User_cache[0].cpw-1] = '\0';
+	(void)strncpy(User_cache[0].cuname, p->pw_name, sizeof User_cache[0].cuname-1);
+	User_cache[0].cuname[sizeof User_cache[0].cuname-1] = '\0';
 }
 
 
