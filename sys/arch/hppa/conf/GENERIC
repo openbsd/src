@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.46 2004/02/13 20:39:31 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.47 2004/02/26 02:29:56 mickey Exp $
 
 # Machine architecture; required by config(8)
 machine		hppa
@@ -113,8 +113,8 @@ pms*	at gsckbc?			# PS/2 mouse
 #ahb*	at eisa? slot ?			# Adaptec 174[024] SCSI controllers
 #scsibus* at aha?
 #ahc*	at eisa? slot ?			# Adaptec 274x, aic7770 SCSI controllers
-ahc*	at pci? dev ? function ?	# Adaptec 2940 SCSI controllers
-scsibus* at ahc?
+#ahc*	at pci? dev ? function ?	# Adaptec 2940 SCSI controllers
+#scsibus* at ahc?
 #option	BHADEBUG
 #bha*	at eisa? slot ?
 #bha*	at pci? dev ? function ?
