@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.25 2002/02/16 02:41:15 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.26 2002/02/21 06:12:30 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -116,10 +116,9 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int cachable,
 				u_int64_t pa;
 				if (len > pdc_btlb.max_size << PGSHIFT)
 					len = pdc_btlb.max_size << PGSHIFT;
-				if (btlb_insert(kernel_pmap->pmap_space, spa,
-						spa, &len,
-						kernel_pmap->pmap_pid |
-					    	pmap_prot(kernel_pmap,
+				if (btlb_insert(HPPA_SID_KERNEL, spa, spa, &len,
+						pmap_sid2pid(HPPA_SID_KERNEL) |
+					    	pmap_prot(pmap_kernel,
 							  VM_PROT_ALL)) < 0)
 					return -1;
 				pa = spa + len - 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.32 2002/02/11 21:16:32 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.33 2002/02/21 06:12:30 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -217,7 +217,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 		p2->p_vmspace->vm_map.pmap->pmap_space;
 	tf->tf_iisq_head = tf->tf_iisq_tail =
 		p2->p_vmspace->vm_map.pmap->pmap_space;
-	tf->tf_pidr1 = tf->tf_pidr2 = p2->p_vmspace->vm_map.pmap->pmap_pid;
+	tf->tf_pidr1 = tf->tf_pidr2 = pmap_sid2pid(tf->tf_sr0);
 
 	/*
 	 * theoretically these could be inherited from the father,

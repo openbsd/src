@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.16 2002/01/10 01:23:08 mickey Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.17 2002/02/21 06:12:31 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -88,7 +88,6 @@ struct pmap {
 	struct simplelock	pmap_lock;	/* lock on map */
 	int			pmap_refcnt;	/* reference count */
 	pa_space_t		pmap_space;	/* space for this pmap */
-	u_int			pmap_pid;	/* protection id for pmap */
 	struct pmap_statistics	pmap_stats;	/* statistics */
 } *pmap_t;
 extern pmap_t	kernel_pmap;			/* The kernel's map */
@@ -140,7 +139,7 @@ struct pv_page {
 	struct pv_entry pvp_pv[NPVPPG];
 };
 
-#define HPPA_MAX_PID	0xfffa
+#define HPPA_SID_MAX	0x7fff
 #define	HPPA_SID_KERNEL	0
 #define	HPPA_PID_KERNEL	2
 
@@ -169,6 +168,7 @@ extern void gateway_page __P((void));
 #define pmap_kernel_va(VA)	\
 	(((VA) >= VM_MIN_KERNEL_ADDRESS) && ((VA) <= VM_MAX_KERNEL_ADDRESS))
 
+#define	pmap_sid2pid(s)			(((s) + 1) << 1)
 #define pmap_kernel()			(kernel_pmap)
 #define	pmap_resident_count(pmap)	((pmap)->pmap_stats.resident_count)
 #define pmap_reference(pmap) \

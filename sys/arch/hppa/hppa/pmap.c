@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.59 2002/02/12 16:28:53 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.60 2002/02/21 06:12:30 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -198,7 +198,7 @@ struct simplelock pmap_lock;	/* XXX this is all broken */
 struct simplelock sid_pid_lock;	/* pids */
 
 u_int	pages_per_vm_page;
-u_int	pid_counter;
+u_int	sid_counter;
 
 TAILQ_HEAD(, pv_page) pv_page_freelist;
 u_int pv_nfree;
@@ -642,7 +642,6 @@ pmap_bootstrap(vstart, vend)
 
 	kernel_pmap->pmap_refcnt = 1;
 	kernel_pmap->pmap_space = HPPA_SID_KERNEL;
-	kernel_pmap->pmap_pid = HPPA_PID_KERNEL;
 
 	/*
 	 * Allocate various tables and structures.
@@ -690,9 +689,9 @@ pmap_bootstrap(vstart, vend)
 	    (sizeof(struct pv_entry) * maxproc / 8 +
 	    sizeof(struct vm_page)));
 	/* XXX PCXS needs two separate inserts in separate btlbs */
-	if (btlb_insert(kernel_pmap->pmap_space, 0, 0, vstart,
-			kernel_pmap->pmap_pid |
-			pmap_prot(kernel_pmap, VM_PROT_ALL)) < 0)
+	if (btlb_insert(HPPA_SID_KERNEL, 0, 0, vstart,
+	    pmap_sid2pid(HPPA_SID_KERNEL) |
+	    pmap_prot(kernel_pmap, VM_PROT_ALL)) < 0)
 		panic("pmap_bootstrap: cannot block map kernel");
 	virtual_avail = *vstart;
 
@@ -797,7 +796,7 @@ pmap_init()
 	pmapdebug = opmapdebug /* | PDB_VA | PDB_PV */;
 #endif
 	TAILQ_INIT(&pmap_freelist);
-	pid_counter = HPPA_PID_KERNEL + 2;
+	sid_counter = HPPA_SID_KERNEL + 1;
 
 	pmap_initialized = TRUE;
 
@@ -821,34 +820,33 @@ void
 pmap_pinit(pmap)
 	pmap_t pmap;
 {
-	register u_int pid;
+	pa_space_t sid;
 	int s;
 
-	DPRINTF(PDB_FOLLOW, ("pmap_pinit(%p), pid=%x\n", pmap, pmap->pmap_pid));
+	DPRINTF(PDB_FOLLOW, ("pmap_pinit(%p)\n", pmap));
 
-	if (!(pid = pmap->pmap_pid)) {
+	if (!(sid = pmap->pmap_space)) {
 
 		/*
 		 * Allocate space and protection IDs for the pmap.
 		 * If all are allocated, there is nothing we can do.
 		 */
 		s = splimp();
-		if (pid_counter < HPPA_MAX_PID) {
-			pid = pid_counter;
-			pid_counter += 2;
+		if (sid_counter < HPPA_SID_MAX) {
+			sid = sid_counter;
+			sid_counter++;
 		} else
-			pid = 0;
+			sid = 0;
 		splx(s);
 
-		if (pid == 0)
-			panic ("no more pmap ids\n");
+		if (sid == 0)
+			panic("no more space ids\n");
 
 		simple_lock_init(&pmap->pmap_lock);
 	}
 
 	s = splimp();
-	pmap->pmap_pid = pid;
-	pmap->pmap_space = (pid >> 1) - 1;
+	pmap->pmap_space = sid;
 	pmap->pmap_refcnt = 1;
 	pmap->pmap_stats.resident_count = 0;
 	pmap->pmap_stats.wired_count = 0;
@@ -967,7 +965,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		panic("pmap_enter: pmap_find_pv failed");
 
 	tlbpage = tlbbtop(pa);
-	tlbprot = TLB_UNCACHEABLE | pmap_prot(pmap, prot) | pmap->pmap_pid;
+	tlbprot = TLB_UNCACHEABLE | pmap_prot(pmap, prot) | pmap_sid2pid(space);
 
 	if (!(ppv = pmap_find_va(space, va))) {
 		/*
