@@ -1,4 +1,4 @@
-/*	$OpenBSD: quotacheck.c,v 1.8 1997/01/03 16:22:10 mickey Exp $	*/
+/*	$OpenBSD: quotacheck.c,v 1.9 1997/01/22 00:37:15 deraadt Exp $	*/
 /*	$NetBSD: quotacheck.c,v 1.12 1996/03/30 22:34:25 mark Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.3 (Berkeley) 1/29/94";
 #else
-static char rcsid[] = "$OpenBSD: quotacheck.c,v 1.8 1997/01/03 16:22:10 mickey Exp $";
+static char rcsid[] = "$OpenBSD: quotacheck.c,v 1.9 1997/01/22 00:37:15 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -277,7 +277,7 @@ chkquota(vfstype, fsname, mntpt, auxarg, pidp)
 		return 1;
 	case 0:		/* child */
 		if ((fi = open(fsname, O_RDONLY, 0)) < 0)
-			err("%s", fsname);
+			err(1, "%s", fsname);
 		sync();
 		dev_bsize = 1;
 		bread(SBOFF, (char *)&sblock, (long)SBSIZE);
