@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_krb5.c,v 1.15 2002/05/22 06:35:44 deraadt Exp $	*/
+/*	$OpenBSD: login_krb5.c,v 1.16 2002/05/30 06:09:21 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 Hans Insulander <hin@openbsd.org>.
@@ -39,19 +39,21 @@ krb5_ccache ccache;
 krb5_principal princ;
 
 void
-krb5_syslog(krb5_context context, int level, krb5_error_code code, char *fmt, ...) 
+krb5_syslog(krb5_context context, int level, krb5_error_code code, char *fmt, ...)
 {
-    va_list ap;
-    char buf[256];
-    va_start(ap, fmt);
-    vsnprintf(buf, sizeof(buf), fmt, ap);
-    va_end(ap);
-    syslog(level, "%s: %s", buf, krb5_get_err_text(context, code));
+	va_list ap;
+	char buf[256];
+
+	va_start(ap, fmt);
+	vsnprintf(buf, sizeof(buf), fmt, ap);
+	va_end(ap);
+	syslog(level, "%s: %s", buf, krb5_get_err_text(context, code));
 }
 
 void
 store_tickets(struct passwd *pwd, int ticket_newfiles, int ticket_store,
-	      int token_install) {
+    int token_install)
+{
 	char cc_file[MAXPATHLEN];
 	krb5_ccache ccache_store;
 #ifdef KRB524
@@ -61,40 +63,35 @@ store_tickets(struct passwd *pwd, int ticket_newfiles, int ticket_store,
 
 	if (ticket_newfiles)
 		snprintf(cc_file, sizeof(cc_file), "FILE:/tmp/krb5cc_%d",
-			 pwd->pw_uid);
+		    pwd->pw_uid);
 	else
-		snprintf(cc_file, sizeof(cc_file),"%s",
-			 krb5_cc_default_name(context));
+		snprintf(cc_file, sizeof(cc_file), "%s",
+		    krb5_cc_default_name(context));
 
 	if (ticket_store) {
 		ret = krb5_cc_resolve(context, cc_file, &ccache_store);
 		if (ret != 0) {
 			krb5_syslog(context, LOG_ERR, ret,
-				    "krb5_cc_gen_new");
+			    "krb5_cc_gen_new");
 			exit(1);
 		}
 		
-		ret = krb5_cc_copy_cache(context, ccache,
-					 ccache_store);
-		if (ret != 0) {
+		ret = krb5_cc_copy_cache(context, ccache, ccache_store);
+		if (ret != 0)
 			krb5_syslog(context, LOG_ERR, ret,
-				    "krb5_cc_copy_cache");
-		}
+			    "krb5_cc_copy_cache");
 	
 		chown(krb5_cc_get_name(context, ccache_store),
-		      pwd->pw_uid, pwd->pw_gid);
+		    pwd->pw_uid, pwd->pw_gid);
 		
 		fprintf(back, BI_SETENV " KRB5CCNAME %s:%s\n",
-			krb5_cc_get_type(context, ccache_store),
-			krb5_cc_get_name(context, ccache_store));
+		    krb5_cc_get_type(context, ccache_store),
+		    krb5_cc_get_name(context, ccache_store));
 
 #ifdef KRB524
-		get_krb4_ticket =
-			krb5_config_get_bool_default (context, NULL,
-						      get_krb4_ticket,
-						      "libdefaults",
-						      "krb4_get_tickets",
-						      NULL);
+		get_krb4_ticket = krb5_config_get_bool_default (context,
+		    NULL, get_krb4_ticket, "libdefaults",
+		    "krb4_get_tickets", NULL);
 		if (get_krb4_ticket) {
 			CREDENTIALS c;
 			krb5_creds cred;
@@ -103,39 +100,39 @@ store_tickets(struct passwd *pwd, int ticket_newfiles, int ticket_store,
 			ret = krb5_cc_start_seq_get(context, ccache, &cursor);
 			if (ret != 0) {
 				krb5_syslog(context, LOG_ERR, ret,
-					    "start seq");
+				    "start seq");
 				exit(1);
 			}
 			
 			ret = krb5_cc_next_cred(context, ccache,
-						&cursor, &cred);
+			    &cursor, &cred);
 			if (ret != 0) {
 				krb5_syslog(context, LOG_ERR, ret,
-					    "next cred");
+				    "next cred");
 				exit(1);
 			}
 			
 			ret = krb5_cc_end_seq_get(context, ccache,
-						  &cursor);
+			    &cursor);
 			if (ret != 0) {
 				krb5_syslog(context, LOG_ERR, ret,
-					    "end seq");
+				    "end seq");
 				exit(1);
 			}
 			
 			ret = krb524_convert_creds_kdc_ccache(context, ccache,
-							      &cred, &c);
+			    &cred, &c);
 			if (ret != 0) {
 				krb5_syslog(context, LOG_ERR, ret,
-					    "convert");
+				    "convert");
 			} else {
 				snprintf(krb4_ticket_file,
-					 sizeof(krb4_ticket_file),
-					 "%s%d", TKT_ROOT, pwd->pw_uid);
+				    sizeof(krb4_ticket_file),
+				    "%s%d", TKT_ROOT, pwd->pw_uid);
 				krb_set_tkt_string(krb4_ticket_file);
 				tf_setup(&c, c.pname, c.pinst);
 				chown(krb4_ticket_file,
-				      pwd->pw_uid, pwd->pw_gid);
+				    pwd->pw_uid, pwd->pw_gid);
 			}
 		}
 #endif
@@ -145,12 +142,13 @@ store_tickets(struct passwd *pwd, int ticket_newfiles, int ticket_store,
 #ifdef KRB524
 	if (get_krb4_ticket)
 		fprintf(back, BI_SETENV " KRBTKFILE %s\n",
-			krb4_ticket_file);
+		    krb4_ticket_file);
 #endif
 }
 
 int
-krb5_login(char *username, char *invokinguser, char *password, int login, int tickets)
+krb5_login(char *username, char *invokinguser, char *password, int login,
+    int tickets)
 {
 	int return_code = AUTH_FAILED;
 
@@ -184,25 +182,21 @@ krb5_login(char *username, char *invokinguser, char *password, int login, int ti
 		exit(1);
 	}
 
-	ret = krb5_verify_user_lrealm(context, princ, ccache, 
-				      password,
-				      1,	/* verify with keytab */
-				      NULL);
+	ret = krb5_verify_user_lrealm(context, princ, ccache,
+	    password, 1, NULL);
 
-	switch(ret) {
+	switch (ret) {
 	case 0: {
 		struct passwd *pwd;
 
 		pwd = getpwnam(username);
 		if (pwd == NULL) {
 			krb5_syslog(context, LOG_ERR, ret,
-				    "%s: no such user", username);
+			    "%s: no such user", username);
 			return (AUTH_FAILED);
 		}
 		fprintf(back, BI_AUTH "\n");
-		
 		store_tickets(pwd, login && tickets, login && tickets, login);
-
 		return_code = AUTH_OK;
 		break;
 	}
