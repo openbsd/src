@@ -21,7 +21,7 @@ SOFTWARE.
 ************************************************************************/
 
 #ifndef lint
-static char rcsid[] = "$Id: bootpd.c,v 1.3 1996/07/11 10:54:50 mickey Exp $";
+static char rcsid[] = "$Id: bootpd.c,v 1.4 1998/06/07 06:04:25 deraadt Exp $";
 #endif
 
 /*
@@ -812,7 +812,8 @@ HW addr type is IEEE 802.  convert to %s and check again\n",
 	 * daemon chroot directory (i.e. /tftpboot).
 	 */
 	if (hp->flags.tftpdir) {
-		strcpy(realpath, hp->tftpdir->string);
+		strncpy(realpath, hp->tftpdir->string, sizeof realpath-1);
+		realpath[sizeof realpath-1] = '\0';
 		clntpath = &realpath[strlen(realpath)];
 	} else {
 		realpath[0] = '\0';
