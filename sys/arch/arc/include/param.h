@@ -1,4 +1,4 @@
-/*      $OpenBSD: param.h,v 1.2 1996/07/16 07:46:17 pefo Exp $ */
+/*      $OpenBSD: param.h,v 1.3 1996/08/24 18:10:37 imp Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,7 +42,11 @@
  */
 
 /*
- * Machine dependent constants for Acer Labs PICA_61.
+ * Machine dependent constants for ARC BIOS MIPS machines:
+ *	Acer Labs PICA_61
+ *	Deskstation rPC44
+ *	Deskstation Tyne
+ *	Etc
  */
 #define	MACHINE	     "arc"
 #define MACHINE_ARCH "mips"
