@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_fd.c,v 1.16 2003/01/19 21:22:31 marc Exp $	*/
+/*	$OpenBSD: uthread_fd.c,v 1.17 2003/02/04 22:14:27 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -45,6 +45,97 @@
 static	spinlock_t	fd_table_lock	= _SPINLOCK_INITIALIZER;
 
 /*
+ * Build a new fd entry and return it.
+ */
+static struct fd_table_entry *
+_thread_fd_entry(void)
+{
+	struct fd_table_entry *entry;
+
+	entry = (struct fd_table_entry *) malloc(sizeof(struct fd_table_entry));
+	if (entry != NULL) {
+		memset(entry, 0, sizeof *entry);
+		_SPINLOCK_INIT(&entry->lock);
+		TAILQ_INIT(&entry->r_queue);
+		TAILQ_INIT(&entry->w_queue);
+	}
+	return entry;
+}
+
+/*
+ * Initialize the thread fd table for dup-ed fds, typically the stdio
+ * fds.
+ */
+
+void
+_thread_fd_init(void)
+{
+	int saved_errno;
+	int fd;
+	int fd2;
+	int flag;
+	int *flags;
+	struct fd_table_entry *entry;
+
+	saved_errno = errno;
+	flags = calloc(_thread_dtablesize, sizeof *flags);
+	if (flags == NULL)
+		PANIC("Cannot allocate memory for flags table");
+
+
+	/* read the current file flags */
+	for (fd = 0; fd < _thread_dtablesize; fd += 1)
+		flags[fd] = _thread_sys_fcntl(fd, F_GETFL, 0);
+
+	/*
+	 * Now toggle the non-block flags and see what other fd's
+	 * change.   Those are the dup-ed fd's.   Dup-ed fd's are
+	 * added to the table, all others are NOT added to the
+	 * table.  They MUST NOT be added as the fds may belong
+	 * to dlopen and dlclose doesn't go through the thread code
+	 * so the entries would never be cleaned.
+	 */
+
+	_SPINLOCK(&fd_table_lock);
+	for (fd = 0; fd < _thread_dtablesize; fd += 1) {
+		if (flags[fd] == -1)
+			continue;
+		entry = _thread_fd_entry();
+		if (entry != NULL) {
+			entry->flags = flags[fd];
+			_thread_sys_fcntl(fd, F_SETFL,
+					  entry->flags ^ O_NONBLOCK);
+			for (fd2 = fd + 1; fd2 < _thread_dtablesize; fd2 += 1) {
+				if (flags[fd2] == -1)
+					continue;
+				flag = _thread_sys_fcntl(fd2, F_GETFL, 0);
+				if (flag != flags[fd2]) {
+					entry->refcnt += 1;
+					_thread_fd_table[fd2] = entry;
+					flags[fd2] = -1;
+				}
+			}
+			if (entry->refcnt) {
+				entry->refcnt += 1;
+				_thread_fd_table[fd] = entry;
+			} else
+				free(entry);
+		}
+	}
+	_SPINUNLOCK(&fd_table_lock);
+
+	/* lastly, set all files to non-blocking, ignoring errors for
+	   those files/devices that don't support such a mode. */
+	for (fd = 0; fd < _thread_dtablesize; fd += 1)
+		if (flags[fd] != -1)
+			_thread_sys_fcntl(fd, F_SETFL,
+					  flags[fd] | O_NONBLOCK);
+
+	free(flags);
+	errno = saved_errno;
+}
+
+/*
  * Initialize the fd_table entry for the given fd.
  *
  * This function *must* return -1 and set the thread specific errno
@@ -68,28 +159,11 @@ _thread_fd_table_init(int fd)
 		ret = -1;
 	} else if (_thread_fd_table[fd] == NULL) {
 		/* First time for this fd, build an entry */
-		entry = (struct fd_table_entry *)
-		        malloc(sizeof(struct fd_table_entry));
+		entry = _thread_fd_entry();
 		if (entry == NULL) {
 			errno = ENOMEM;
 			ret = -1;
 		} else {
-			/* Initialise the file locks: */
-			_SPINLOCK_INIT(&entry->lock);
-			entry->r_owner = NULL;
-			entry->w_owner = NULL;
-			entry->r_fname = NULL;
-			entry->w_fname = NULL;
-			entry->r_lineno = 0;
-			entry->w_lineno = 0;
-			entry->r_lockcount = 0;
-			entry->w_lockcount = 0;
-
-			/* Initialise the read/write queues: */
-			TAILQ_INIT(&entry->r_queue);
-			TAILQ_INIT(&entry->w_queue);
-
-			/* Get the flags for the file: */
 			entry->flags = _thread_sys_fcntl(fd, F_GETFL, 0);
 			if (entry->flags == -1)
 				/* use the errno fcntl returned */
@@ -118,8 +192,8 @@ _thread_fd_table_init(int fd)
 				 */
 				if (_thread_fd_table[fd] == NULL) {
 					/* This thread wins: */
+					entry->refcnt += 1;
 					_thread_fd_table[fd] = entry;
-					entry = NULL;
 				}
 
 				/* Unlock the file descriptor table: */
@@ -131,12 +205,44 @@ _thread_fd_table_init(int fd)
 			 * the file or if another thread initialized the
 			 * table entry throw this entry away.
 			 */
-			if (entry != NULL)
+			if (entry->refcnt == 0)
 				free(entry);
 		}
 	}
 
 	/* Return the completion status: */
+	return (ret);
+}
+
+/*
+ * Dup from_fd -> to_fd.  from_fd is assumed to be locked (which
+ * guarantees that _thread_fd_table[from_fd] exists).
+ */
+int
+_thread_fd_table_dup(int from_fd, int to_fd)
+{
+	struct fd_table_entry	*entry;
+	int ret;
+
+	/* release any existing to_fd table entry */
+	entry = _thread_fd_table[to_fd];
+	if (entry != NULL) {
+		ret = _FD_LOCK(to_fd, FD_RDWR, NULL);
+		if (ret != -1) {
+			if (--entry->refcnt == 0)
+				free(entry);
+		}
+	} else
+		ret = 0;
+
+	/* to_fd is a copy of from_fd */
+	if (ret != -1) {
+		_SPINLOCK(&fd_table_lock);
+		_thread_fd_table[to_fd] = _thread_fd_table[from_fd];
+		_thread_fd_table[to_fd]->refcnt += 1;
+		_SPINUNLOCK(&fd_table_lock);
+	}
+
 	return (ret);
 }
 

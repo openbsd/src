@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.43 2003/01/31 04:46:17 marc Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.44 2003/02/04 22:14:27 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -500,17 +500,18 @@ struct fd_table_entry {
 	 * state of the lock on the file descriptor.
 	 */
 	spinlock_t		lock;
-	_thread_list_t		r_queue;	/* Read queue.                        */
-	_thread_list_t		w_queue;	/* Write queue.                       */
-	struct pthread		*r_owner;	/* Ptr to thread owning read lock.    */
-	struct pthread		*w_owner;	/* Ptr to thread owning write lock.   */
-	const char		*r_fname;	/* Ptr to read lock source file name  */
-	int			r_lineno;	/* Read lock source line number.      */
-	const char		*w_fname;	/* Ptr to write lock source file name */
-	int			w_lineno;	/* Write lock source line number.     */
-	int			r_lockcount;	/* Count for FILE read locks.         */
-	int			w_lockcount;	/* Count for FILE write locks.        */
-	int			flags;		/* Flags used in open.                */
+	_thread_list_t		r_queue;	/* Read queue.                */
+	_thread_list_t		w_queue;	/* Write queue.               */
+	struct pthread		*r_owner;	/* thread owning read lock.   */
+	struct pthread		*w_owner;	/* thread owning write lock.  */
+	const char		*r_fname;	/* read lock source file name */
+	int			r_lineno;	/* Read lock source line no.  */
+	const char		*w_fname;	/* write lock src file name   */
+	int			w_lineno;	/* Write lock src line no.    */
+	int			r_lockcount;	/* Count for FILE read locks. */
+	int			w_lockcount;	/* Count for FILE write locks.*/
+	int			flags;		/* Flags used in open.        */
+	int			refcnt;		/* how many fds use this entry*/
 };
 
 struct pthread_poll_data {
@@ -1108,7 +1109,9 @@ void	_thread_sig_init(void);
 void    _thread_start(void);
 void    _thread_start_sig_handler(void);
 void	_thread_seterrno(pthread_t,int);
-int     _thread_fd_table_init(int fd);
+void	_thread_fd_init(void);
+int     _thread_fd_table_init(int);
+int     _thread_fd_table_dup(int, int);
 void	_thread_fd_unlock_owned(pthread_t);
 void	_thread_fd_unlock_thread(struct pthread	*, int, int, const char *, int);
 pthread_addr_t _thread_gc(pthread_addr_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_init.c,v 1.27 2003/01/31 04:46:17 marc Exp $	*/
+/*	$OpenBSD: uthread_init.c,v 1.28 2003/02/04 22:14:27 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -148,6 +148,7 @@ _thread_init(void)
 {
 	int		fd;
 	int             flags;
+	int		res;
 	int             i;
 	size_t		len;
 	int		mib[2];
@@ -191,219 +192,176 @@ _thread_init(void)
 	 * Create a pipe that is written to by the signal handler to prevent
 	 * signals being missed in calls to _select:
 	 */
-	if (_thread_sys_pipe(_thread_kern_pipe) != 0) {
-		/* Cannot create pipe, so abort: */
+	if (_thread_sys_pipe(_thread_kern_pipe) != 0)
 		PANIC("Cannot create kernel pipe");
-	}
-	/* Get the flags for the read pipe: */
-	else if ((flags = _thread_sys_fcntl(_thread_kern_pipe[0], F_GETFL, NULL)) == -1) {
-		/* Abort this application: */
+
+	flags = _thread_sys_fcntl(_thread_kern_pipe[0], F_GETFL, NULL);
+	if (flags == -1)
 		PANIC("Cannot get kernel read pipe flags");
-	}
-	/* Make the read pipe non-blocking: */
-	else if (_thread_sys_fcntl(_thread_kern_pipe[0], F_SETFL, flags | O_NONBLOCK) == -1) {
-		/* Abort this application: */
+
+	res = _thread_sys_fcntl(_thread_kern_pipe[0], F_SETFL,
+			       flags | O_NONBLOCK);
+	if (res == -1)
 		PANIC("Cannot make kernel read pipe non-blocking");
-	}
-	/* Get the flags for the write pipe: */
-	else if ((flags = _thread_sys_fcntl(_thread_kern_pipe[1], F_GETFL, NULL)) == -1) {
-		/* Abort this application: */
+
+	flags = _thread_sys_fcntl(_thread_kern_pipe[1], F_GETFL, NULL);
+	if (flags == -1)
 		PANIC("Cannot get kernel write pipe flags");
-	}
-	/* Make the write pipe non-blocking: */
-	else if (_thread_sys_fcntl(_thread_kern_pipe[1], F_SETFL, flags | O_NONBLOCK) == -1) {
-		/* Abort this application: */
-		PANIC("Cannot get kernel write pipe flags");
-	}
-	/* Allocate and initialize the ready queue: */
-	else if (_pq_alloc(&_readyq, PTHREAD_MIN_PRIORITY, PTHREAD_LAST_PRIORITY) != 0) {
-		/* Abort this application: */
+
+	res = _thread_sys_fcntl(_thread_kern_pipe[1], F_SETFL,
+				flags | O_NONBLOCK);
+	if (res == -1)
+		PANIC("Cannot make kernel write pipe non-blocking");
+
+	res = _pq_alloc(&_readyq, PTHREAD_MIN_PRIORITY, PTHREAD_LAST_PRIORITY);
+	if (res != 0)
 		PANIC("Cannot allocate priority ready queue.");
-	}
-	/* Allocate memory for the thread structure of the initial thread: */
-	else if ((_thread_initial = (pthread_t) malloc(sizeof(struct pthread))) == NULL) {
-		/*
-		 * Insufficient memory to initialise this application, so
-		 * abort:
-		 */
+
+	_thread_initial = (pthread_t) malloc(sizeof(struct pthread));
+	if (_thread_initial == NULL)
 		PANIC("Cannot allocate memory for initial thread");
-	} else {
-		/* Zero the global kernel thread structure: */
-		memset(&_thread_kern_thread, 0, sizeof(struct pthread));
-		_thread_kern_thread.flags = PTHREAD_FLAGS_PRIVATE;
-		memset(_thread_initial, 0, sizeof(struct pthread));
 
-		/* Initialize the waiting and work queues: */
-		TAILQ_INIT(&_waitingq);
-		TAILQ_INIT(&_workq);
 
-		/* Initialize the scheduling switch hook routine: */
-		_sched_switch_hook = NULL;
+	/* Zero the global kernel thread structure: */
+	memset(&_thread_kern_thread, 0, sizeof(struct pthread));
+	_thread_kern_thread.flags = PTHREAD_FLAGS_PRIVATE;
+	memset(_thread_initial, 0, sizeof(struct pthread));
 
-		/* Initialize the thread stack cache: */
-		SLIST_INIT(&_stackq);
+	/* Initialize the waiting and work queues: */
+	TAILQ_INIT(&_waitingq);
+	TAILQ_INIT(&_workq);
 
-		/*
-		 * Write a magic value to the thread structure
-		 * to help identify valid ones:
-		 */
-		_thread_initial->magic = PTHREAD_MAGIC;
+	/* Initialize the scheduling switch hook routine: */
+	_sched_switch_hook = NULL;
 
-		/* Set the initial cancel state */
-		_thread_initial->cancelflags = PTHREAD_CANCEL_ENABLE |
-		    PTHREAD_CANCEL_DEFERRED;
+	/* Initialize the thread stack cache: */
+	SLIST_INIT(&_stackq);
 
-		/* Default the priority of the initial thread: */
-		_thread_initial->base_priority = PTHREAD_DEFAULT_PRIORITY;
-		_thread_initial->active_priority = PTHREAD_DEFAULT_PRIORITY;
-		_thread_initial->inherited_priority = 0;
+	/*
+	 * Write a magic value to the thread structure
+	 * to help identify valid ones:
+	 */
+	_thread_initial->magic = PTHREAD_MAGIC;
 
-		/* Initialise the state of the initial thread: */
-		_thread_initial->state = PS_RUNNING;
+	/* Set the initial cancel state */
+	_thread_initial->cancelflags = PTHREAD_CANCEL_ENABLE |
+		PTHREAD_CANCEL_DEFERRED;
 
-		/* Initialize joiner to NULL (no joiner): */
-		_thread_initial->joiner = NULL;
+	/* Default the priority of the initial thread: */
+	_thread_initial->base_priority = PTHREAD_DEFAULT_PRIORITY;
+	_thread_initial->active_priority = PTHREAD_DEFAULT_PRIORITY;
+	_thread_initial->inherited_priority = 0;
 
-		/* Initialize the owned mutex queue and count: */
-		TAILQ_INIT(&(_thread_initial->mutexq));
-		_thread_initial->priority_mutex_count = 0;
+	/* Initialise the state of the initial thread: */
+	_thread_initial->state = PS_RUNNING;
 
-		/* Initialize the global scheduling time: */
-		_sched_ticks = 0;
-		gettimeofday((struct timeval *) &_sched_tod, NULL);
+	/* Initialize joiner to NULL (no joiner): */
+	_thread_initial->joiner = NULL;
 
-		/* Initialize last active: */
-		_thread_initial->last_active = (long) _sched_ticks;
+	/* Initialize the owned mutex queue and count: */
+	TAILQ_INIT(&(_thread_initial->mutexq));
+	_thread_initial->priority_mutex_count = 0;
 
-		/* Give it a useful name */
-		pthread_set_name_np(_thread_initial, (char *)"main");
+	/* Initialize the global scheduling time: */
+	_sched_ticks = 0;
+	gettimeofday((struct timeval *) &_sched_tod, NULL);
 
-		/* Initialise the rest of the fields: */
-		_thread_initial->poll_data.nfds = 0;
-		_thread_initial->poll_data.fds = NULL;
-		_thread_initial->sig_defer_count = 0;
-		_thread_initial->slice_usec = -1;
-		_thread_initial->sig_saved = 0;
-		_thread_initial->yield_on_sig_undefer = 0;
-		_thread_initial->specific_data = NULL;
-		_thread_initial->cleanup = NULL;
-		_thread_initial->flags = 0;
-		_thread_initial->error = 0;
-		_SPINLOCK_INIT(&_thread_initial->lock);
-		TAILQ_INIT(&_thread_list);
-		TAILQ_INSERT_HEAD(&_thread_list, _thread_initial, tle);
-		_set_curthread(_thread_initial);
+	/* Initialize last active: */
+	_thread_initial->last_active = (long) _sched_ticks;
 
-		/* Initialise the global signal action structure: */
-		sigfillset(&act.sa_mask);
-		act.sa_handler = (void (*) (int)) _thread_sig_handler;
-		act.sa_flags = SA_SIGINFO;
+	/* Give it a useful name */
+	pthread_set_name_np(_thread_initial, (char *)"main");
 
-		/* Clear pending signals for the process: */
-		sigemptyset(&_process_sigpending);
+	/* Initialise the rest of the fields: */
+	_thread_initial->poll_data.nfds = 0;
+	_thread_initial->poll_data.fds = NULL;
+	_thread_initial->sig_defer_count = 0;
+	_thread_initial->slice_usec = -1;
+	_thread_initial->sig_saved = 0;
+	_thread_initial->yield_on_sig_undefer = 0;
+	_thread_initial->specific_data = NULL;
+	_thread_initial->cleanup = NULL;
+	_thread_initial->flags = 0;
+	_thread_initial->error = 0;
+	_SPINLOCK_INIT(&_thread_initial->lock);
+	TAILQ_INIT(&_thread_list);
+	TAILQ_INSERT_HEAD(&_thread_list, _thread_initial, tle);
+	_set_curthread(_thread_initial);
 
-		/* Initialize signal handling: */
-		_thread_sig_init();
+	/* Initialise the global signal action structure: */
+	sigfillset(&act.sa_mask);
+	act.sa_handler = (void (*) (int)) _thread_sig_handler;
+	act.sa_flags = SA_SIGINFO;
 
-		/* Enter a loop to get the existing signal status: */
-		for (i = 1; i < NSIG; i++) {
-			/* Check for signals which cannot be trapped: */
-			if (i == SIGKILL || i == SIGSTOP) {
-			}
+	/* Clear pending signals for the process: */
+	sigemptyset(&_process_sigpending);
 
-			/* Get the signal handler details: */
-			else if (_thread_sys_sigaction(i, NULL,
-			    &_thread_sigact[i - 1]) != 0) {
-				/*
-				 * Abort this process if signal
-				 * initialisation fails:
-				 */
-				PANIC("Cannot read signal handler info");
-			}
+	/* Initialize signal handling: */
+	_thread_sig_init();
 
-			/* Initialize the SIG_DFL dummy handler count. */
-			_thread_dfl_count[i] = 0;
-		}
+	/* Enter a loop to get the existing signal status: */
+	for (i = 1; i < NSIG; i++) {
+		/* Check for signals which cannot be trapped: */
+		if (i == SIGKILL || i == SIGSTOP)
+			continue;
 
-		/*
-		 * Install the signal handler for the most important
-		 * signals that the user-thread kernel needs. Actually
-		 * SIGINFO isn't really needed, but it is nice to have.
-		 */
-		if (_thread_sys_sigaction(_SCHED_SIGNAL, &act, NULL) != 0 ||
-		    _thread_sys_sigaction(SIGINFO,       &act, NULL) != 0 ||
-		    _thread_sys_sigaction(SIGCHLD,       &act, NULL) != 0) {
-			/*
-			 * Abort this process if signal initialization fails:
-			 */
-			PANIC("Cannot initialize signal handler");
-		}
-		_thread_sigact[_SCHED_SIGNAL - 1].sa_flags = SA_SIGINFO;
-		_thread_sigact[SIGINFO - 1].sa_flags = SA_SIGINFO;
-		_thread_sigact[SIGCHLD - 1].sa_flags = SA_SIGINFO;
+		/* Get the signal handler details: */
+		if (_thread_sys_sigaction(i, NULL, &_thread_sigact[i - 1]) != 0)
+			PANIC("Cannot read signal handler info");
 
-		/* Get the process signal mask: */
-		_thread_sys_sigprocmask(SIG_SETMASK, NULL, &_process_sigmask);
-
-		/* Get the kernel clockrate: */
-		mib[0] = CTL_KERN;
-		mib[1] = KERN_CLOCKRATE;
-		len = sizeof (struct clockinfo);
-		if (sysctl(mib, 2, &clockinfo, &len, NULL, 0) == 0)
-			_clock_res_usec = clockinfo.tick > CLOCK_RES_USEC_MIN ?
-			    clockinfo.tick : CLOCK_RES_USEC_MIN;
-
-		/* Get the table size: */
-		if ((_thread_dtablesize = getdtablesize()) < 0) {
-			/*
-			 * Cannot get the system defined table size, so abort
-			 * this process.
-			 */
-			PANIC("Cannot get dtablesize");
-		}
-		/* Allocate memory for the file descriptor table: */
-		if ((_thread_fd_table = (struct fd_table_entry **) malloc(sizeof(struct fd_table_entry *) * _thread_dtablesize)) == NULL) {
-			/* Avoid accesses to file descriptor table on exit: */
-			_thread_dtablesize = 0;
-
-			/*
-			 * Cannot allocate memory for the file descriptor
-			 * table, so abort this process.
-			 */
-			PANIC("Cannot allocate memory for file descriptor table");
-		}
-		/* Allocate memory for the pollfd table: */
-		if ((_thread_pfd_table = (struct pollfd *) malloc(sizeof(struct pollfd) * _thread_dtablesize)) == NULL) {
-			/*
-			 * Cannot allocate memory for the file descriptor
-			 * table, so abort this process.
-			 */
-			PANIC("Cannot allocate memory for pollfd table");
-		} else {
-			/*
-			 * Enter a loop to initialise the file descriptor
-			 * table:
-			 */
-			for (i = 0; i < _thread_dtablesize; i++) {
-				/* Initialise the file descriptor table: */
-				_thread_fd_table[i] = NULL;
-			}
-
-			/* Initialize stdio file descriptor table entries: */
-			for (i = 0; i < 3; i++) {
-				if ((_thread_fd_table_init(i) != 0) &&
-				    (errno != EBADF))
-					PANIC("Cannot initialize stdio file "
-					    "descriptor table entry");
-			}
-		}
+		/* Initialize the SIG_DFL dummy handler count. */
+		_thread_dfl_count[i] = 0;
 	}
+
+	/*
+	 * Install the signal handler for the most important
+	 * signals that the user-thread kernel needs. Actually
+	 * SIGINFO isn't really needed, but it is nice to have.
+	 */
+	if (_thread_sys_sigaction(_SCHED_SIGNAL, &act, NULL) != 0 ||
+	    _thread_sys_sigaction(SIGINFO,       &act, NULL) != 0 ||
+	    _thread_sys_sigaction(SIGCHLD,       &act, NULL) != 0)
+		PANIC("Cannot initialize signal handler");
+
+	_thread_sigact[_SCHED_SIGNAL - 1].sa_flags = SA_SIGINFO;
+	_thread_sigact[SIGINFO - 1].sa_flags = SA_SIGINFO;
+	_thread_sigact[SIGCHLD - 1].sa_flags = SA_SIGINFO;
+
+	/* Get the process signal mask: */
+	_thread_sys_sigprocmask(SIG_SETMASK, NULL, &_process_sigmask);
+
+	/* Get the kernel clockrate: */
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_CLOCKRATE;
+	len = sizeof (struct clockinfo);
+	if (sysctl(mib, 2, &clockinfo, &len, NULL, 0) == 0)
+		_clock_res_usec = clockinfo.tick > CLOCK_RES_USEC_MIN ?
+			clockinfo.tick : CLOCK_RES_USEC_MIN;
+
+	/* Get the table size: */
+	if ((_thread_dtablesize = getdtablesize()) < 0)
+		PANIC("Cannot get dtablesize");
+
+	/* Allocate memory for the file descriptor table: */
+	_thread_fd_table = calloc(_thread_dtablesize,
+				  sizeof(struct fd_table_entry *));
+	if (_thread_fd_table == NULL) {
+		_thread_dtablesize = 0;
+		PANIC("Cannot allocate memory for file descriptor table");
+	}
+
+	/* Allocate memory for the pollfd table: */
+	_thread_pfd_table = calloc(_thread_dtablesize, sizeof(struct pollfd));
+	if (_thread_pfd_table == NULL)
+		PANIC("Cannot allocate memory for pollfd table");
+
+	/* initialize the fd table */
+	_thread_fd_init();
 
 	/* Initialise the garbage collector mutex and condition variable. */
 	if (pthread_mutex_init(&_gc_mutex,NULL) != 0 ||
 	    pthread_cond_init(&_gc_cond,NULL) != 0)
 		PANIC("Failed to initialise garbage collector mutex or condvar");
-
 	_thread_autoinit_dummy_decl = 0;
 }
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_close.c,v 1.8 2000/10/04 05:52:34 d Exp $	*/
+/*	$OpenBSD: uthread_close.c,v 1.9 2003/02/04 22:14:27 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -102,7 +102,8 @@ close(int fd)
 		/* XXX: Defer real close to avoid race condition */
 		entry = _thread_fd_table[fd];
 		_thread_fd_table[fd] = NULL;
-		free(entry);
+		if (--entry->refcnt == 0)
+			free(entry);
 
 		/* Close the file descriptor: */
 		ret = _thread_sys_close(fd);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_fcntl.c,v 1.6 1999/11/25 07:01:34 d Exp $	*/
+/*	$OpenBSD: uthread_fcntl.c,v 1.7 2003/02/04 22:14:27 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -70,18 +70,12 @@ fcntl(int fd, int cmd,...)
 			if ((ret = _thread_sys_fcntl(fd, cmd, oldfd)) < 0) {
 			}
 			/* Initialise the file descriptor table entry: */
-			else if (_thread_fd_table_init(ret) != 0) {
+			else if (_thread_fd_table_dup(fd, ret) != 0) {
 				/* Quietly close the file: */
 				_thread_sys_close(ret);
 
 				/* Reset the file descriptor: */
 				ret = -1;
-			} else {
-				/*
-				 * Save the file open flags so that they can
-				 * be         checked later: 
-				 */
-				_thread_fd_table[ret]->flags = _thread_fd_table[fd]->flags;
 			}
 			break;
 		case F_SETFD:
