@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.21 2001/03/20 16:58:43 art Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.22 2001/03/20 17:05:38 art Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -813,30 +813,30 @@ ffs_fragextend(ip, cg, bprev, osize, nsize)
 
 	fs = ip->i_fs;
 	if (fs->fs_cs(fs, cg).cs_nffree < numfrags(fs, nsize - osize))
-		return (NULL);
+		return (0);
 	frags = numfrags(fs, nsize);
 	bbase = fragnum(fs, bprev);
 	if (bbase > fragnum(fs, (bprev + frags - 1))) {
 		/* cannot extend across a block boundary */
-		return (NULL);
+		return (0);
 	}
 	error = bread(ip->i_devvp, fsbtodb(fs, cgtod(fs, cg)),
 		(int)fs->fs_cgsize, NOCRED, &bp);
 	if (error) {
 		brelse(bp);
-		return (NULL);
+		return (0);
 	}
 	cgp = (struct cg *)bp->b_data;
 	if (!cg_chkmagic(cgp)) {
 		brelse(bp);
-		return (NULL);
+		return (0);
 	}
 	cgp->cg_time = time.tv_sec;
 	bno = dtogd(fs, bprev);
 	for (i = numfrags(fs, osize); i < frags; i++)
 		if (isclr(cg_blksfree(cgp), bno + i)) {
 			brelse(bp);
-			return (NULL);
+			return (0);
 		}
 	/*
 	 * the current fragment can be extended
@@ -885,18 +885,18 @@ ffs_alloccg(ip, cg, bpref, size)
 
 	fs = ip->i_fs;
 	if (fs->fs_cs(fs, cg).cs_nbfree == 0 && size == fs->fs_bsize)
-		return (NULL);
+		return (0);
 	error = bread(ip->i_devvp, fsbtodb(fs, cgtod(fs, cg)),
 		(int)fs->fs_cgsize, NOCRED, &bp);
 	if (error) {
 		brelse(bp);
-		return (NULL);
+		return (0);
 	}
 	cgp = (struct cg *)bp->b_data;
 	if (!cg_chkmagic(cgp) ||
 	    (cgp->cg_cs.cs_nbfree == 0 && size == fs->fs_bsize)) {
 		brelse(bp);
-		return (NULL);
+		return (0);
 	}
 	cgp->cg_time = time.tv_sec;
 	if (size == fs->fs_bsize) {
@@ -944,7 +944,7 @@ ffs_alloccg(ip, cg, bpref, size)
 	if (bno < 0) {
 		brelse(bp);
 		/* XXX - NULL as a daddr_t ??? */
-		return (NULL);
+		return (0);
 	}
 #endif
 	for (i = 0; i < frags; i++)
@@ -1072,7 +1072,7 @@ norot:
 	 * XXX return NULL as a daddr_t anyway.
 	 */
 	if (bno < 0)
-		return (NULL);	/* XXX - NULL as a daddr_t ?? */
+		return (0);
 #endif
 	cgp->cg_rotor = bno;
 gotit:
@@ -1115,7 +1115,7 @@ ffs_clusteralloc(ip, cg, bpref, len)
 
 	fs = ip->i_fs;
 	if (fs->fs_maxcluster[cg] < len)
-		return (NULL);
+		return (0);
 	if (bread(ip->i_devvp, fsbtodb(fs, cgtod(fs, cg)), (int)fs->fs_cgsize,
 	    NOCRED, &bp))
 		goto fail;
@@ -1229,17 +1229,17 @@ ffs_nodealloccg(ip, cg, ipref, mode)
 
 	fs = ip->i_fs;
 	if (fs->fs_cs(fs, cg).cs_nifree == 0)
-		return (NULL);
+		return (0);
 	error = bread(ip->i_devvp, fsbtodb(fs, cgtod(fs, cg)),
 		(int)fs->fs_cgsize, NOCRED, &bp);
 	if (error) {
 		brelse(bp);
-		return (NULL);
+		return (0);
 	}
 	cgp = (struct cg *)bp->b_data;
 	if (!cg_chkmagic(cgp) || cgp->cg_cs.cs_nifree == 0) {
 		brelse(bp);
-		return (NULL);
+		return (0);
 	}
 	cgp->cg_time = time.tv_sec;
 	if (ipref) {
