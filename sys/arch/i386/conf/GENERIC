@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.242 2001/02/20 23:04:06 jbm Exp $
+#	$OpenBSD: GENERIC,v 1.243 2001/02/21 20:40:02 jbm Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -174,7 +174,6 @@ lms0	at isa? port 0x23c irq 5	# Logitech bus mouse
 lms1	at isa? port 0x238 irq 5
 mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 mms1	at isa? port 0x238 irq 5
-#pms0  at pckbcport? irq 12		# PS/2 auxiliary port mouse
 
 wsmouse*	at lms? mux 0
 wsmouse*	at mms? mux 0

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.74 2001/01/30 00:00:29 aaron Exp $
+#	$OpenBSD: files.i386,v 1.75 2001/02/21 20:40:02 jbm Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -159,10 +159,6 @@ file	arch/i386/isa/lms.c		lms needs-flag
 device	mms: wsmousedev
 attach	mms at isa
 file	arch/i386/isa/mms.c		mms needs-flag
-device	opms
-attach	opms at pckbcport with opms_hack
-attach	opms at pckbc with opms_pckbc
-file	arch/i386/isa/pms.c		opms | opms_hack | opms_pckbc needs-flag
 
 include	"dev/wscons/files.wscons"
 include	"dev/pckbc/files.pckbc"
