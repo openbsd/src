@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_hostap.c,v 1.3 2002/03/28 22:22:33 mickey Exp $	*/
+/*	$OpenBSD: if_wi_hostap.c,v 1.4 2002/03/29 18:57:46 millert Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -619,10 +619,9 @@ wihap_assoc_req(struct wi_softc *sc, struct wi_frame *rxfrm,
 	capinfo = take_hword(&pkt, &len);
 	lstintvl = take_hword(&pkt, &len);
 	if ((ssid_len=take_tlv(&pkt, &len, IEEE80211_ELEMID_SSID,
-			       ssid.i_nwid, sizeof(ssid)-1))<0)
+			       ssid.i_nwid, sizeof(ssid)))<0)
 		return;
 	ssid.i_len = ssid_len;
-	ssid.i_nwid[ssid_len] = '\0';
 	if ((rates_len=take_tlv(&pkt, &len, IEEE80211_ELEMID_RATES,
 				rates, sizeof(rates)))<0)
 		return;
@@ -642,8 +641,9 @@ wihap_assoc_req(struct wi_softc *sc, struct wi_frame *rxfrm,
 	    memcmp(sc->wi_net_name.i_nwid, ssid.i_nwid, ssid.i_len)) {
 
 		if (sc->arpcom.ac_if.if_flags & IFF_DEBUG)
-			printf("wihap_assoc_req: bad ssid: '%s' != '%s'\n",
-			    ssid.i_nwid, sc->wi_net_name.i_nwid);
+			printf("wihap_assoc_req: bad ssid: '%.*s' != '%.*s'\n",
+			    ssid.i_len, ssid.i_nwid, sc->wi_net_name.i_len,
+			    sc->wi_net_name.i_nwid);
 		return;
 	}
 
