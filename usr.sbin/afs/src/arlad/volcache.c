@@ -494,7 +494,7 @@ volcache_recover_entry (struct volcache_store *st, void *ptr)
     struct vstore_context *c = (struct vstore_context *)ptr;
 
     e->cell = cell_name2num (st->cell);
-    if (e->cell != -1) {
+    if (e->cell == -1) {
 	arla_warnx(ADEBWARN, "can't resolve cell name");
 	return(-1);
     }
