@@ -1,29 +1,29 @@
 /* Netcat 1.10 RELEASE 960320
-
-   A damn useful little "backend" utility begun 950915 or thereabouts,
-   as *Hobbit*'s first real stab at some sockets programming.  Something that
-   should have and indeed may have existed ten years ago, but never became a
-   standard Unix utility.  IMHO, "nc" could take its place right next to cat,
-   cp, rm, mv, dd, ls, and all those other cryptic and Unix-like things.
-
-   Read the README for the whole story, doc, applications, etc.
-
-   Layout:
-	conditional includes:
-	includes:
-	handy defines:
-	globals:
-	malloced globals:
-	cmd-flag globals:
-	support routines:
-	readwrite select loop:
-	main:
-
-  bluesky:
-	parse ranges of IP address as well as ports, perhaps
-	RAW mode!
-	backend progs to grab a pty and look like a real telnetd?!
-	backend progs to do various encryption modes??!?!
+ *
+ *   A damn useful little "backend" utility begun 950915 or thereabouts,
+ *   as *Hobbit*'s first real stab at some sockets programming.  Something that
+ *   should have and indeed may have existed ten years ago, but never became a
+ *   standard Unix utility.  IMHO, "nc" could take its place right next to cat,
+ *   cp, rm, mv, dd, ls, and all those other cryptic and Unix-like things.
+ *
+ *   Read the README for the whole story, doc, applications, etc.
+ *
+ *   Layout:
+ *	conditional includes:
+ *	includes:
+ *	handy defines:
+ *	globals:
+ *	malloced globals:
+ *	cmd-flag globals:
+ *	support routines:
+ *	readwrite select loop:
+ *	main:
+ *
+ *  bluesky:
+ *	parse ranges of IP address as well as ports, perhaps
+ *	RAW mode!
+ *	backend progs to grab a pty and look like a real telnetd?!
+ *	backend progs to do various encryption modes??!?!
 */
 
 #include "generic.h"		/* same as with L5, skey, etc */
@@ -32,26 +32,24 @@
    for your own architecture [and please send diffs...]: */
 /* #undef _POSIX_SOURCE		/* might need this for something? */
 #define HAVE_BIND		/* ASSUMPTION -- seems to work everywhere! */
-#define HAVE_HELP		/* undefine if you dont want the help text */
 
-#ifdef HAVE_STDLIB_H
-#include <stdlib.h>
-#else
-#include <malloc.h>
-#endif
-#ifdef HAVE_SELECT_H		/* random SV variants need this */
+#include <sys/types.h>
+#include <sys/time.h>
 #include <sys/select.h>
-#endif
-#ifdef HAVE_UNISTD_H
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>
+#include <arpa/inet.h>
+#include <netdb.h>		/* hostent, gethostby*, getservby* */
+#include <stdio.h>
+#include <string.h>
+#include <errno.h>
+#include <setjmp.h>
+#include <signal.h>
+#include <fcntl.h>
+#include <stdlib.h>
 #include <unistd.h>
-#endif
-
-/* have to do this *before* including types.h. xxx: Linux still has it wrong */
-#ifdef FD_SETSIZE		/* should be in types.h, butcha never know. */
-#undef FD_SETSIZE		/* if we ever need more than 16 active */
-#endif				/* fd's, something is horribly wrong! */
-#define FD_SETSIZE 16		/* <-- this'll give us a long anyways, wtf */
-#include <sys/types.h>		/* *now* do it.  Sigh, this is broken */
 
 #ifdef HAVE_RANDOM		/* aficionados of ?rand48() should realize */
 #define SRAND srandom		/* that this doesn't need *strong* random */
@@ -61,58 +59,28 @@
 #define RAND rand
 #endif				/* HAVE_RANDOM */
 
-/* includes: */
-#include <sys/time.h>		/* timeval, time_t */
-#include <setjmp.h>		/* jmp_buf et al */
-#include <sys/socket.h>		/* basics, SO_ and AF_ defs, sockaddr, ... */
-#include <netinet/in.h>		/* sockaddr_in, htons, in_addr */
-#include <netinet/in_systm.h>	/* misc crud that netinet/ip.h references */
-#include <netinet/ip.h>		/* IPOPT_LSRR, header stuff */
-#include <netdb.h>		/* hostent, gethostby*, getservby* */
-#include <arpa/inet.h>		/* inet_ntoa */
-#include <stdio.h>
-#include <string.h>		/* strcpy, strchr, yadda yadda */
-#include <errno.h>
-#include <signal.h>
-#include <fcntl.h>		/* O_WRONLY et al */
-
-/* handy stuff: */
-#define SA struct sockaddr	/* socket overgeneralization braindeath */
-#define SAI struct sockaddr_in	/* ... whoever came up with this model */
-#define IA struct in_addr	/* ... should be taken out and shot, */
- /* ... not that TLI is any better.  sigh.. */
 #define SLEAZE_PORT 31337	/* for UDP-scan RTT trick, change if ya want */
-#define USHORT unsigned short	/* use these for options an' stuff */
 #define BIGSIZ 8192		/* big buffers */
 
-#ifndef INADDR_NONE
-#define INADDR_NONE 0xffffffff
-#endif
-
-struct host_poop {
+struct host_info {
 	char    name[MAXHOSTNAMELEN];	/* dns name */
 	char    addrs[8][24];	/* ascii-format IP addresses */
 	struct in_addr iaddrs[8];	/* real addresses: in_addr.s_addr:
 					 * ulong */
 };
-#define HINF struct host_poop
 
-struct port_poop {
+struct port_info {
 	char    name[64];	/* name in /etc/services */
 	char    anum[8];	/* ascii-format number */
-	USHORT  num;		/* real host-order number */
+	u_short  num;		/* real host-order number */
 };
-#define PINF struct port_poop
 
 /* globals: */
 jmp_buf jbuf;			/* timer crud */
 int     jval = 0;		/* timer crud */
 int     netfd = -1;
 int     ofd = 0;		/* hexdump output fd */
-static char unknown[] = "(UNKNOWN)";
-static char p_tcp[] = "tcp";	/* for getservby* */
-static char p_udp[] = "udp";
-#ifdef HAVE_BIND
+
 extern int h_errno;
 /* stolen almost wholesale from bsd herror.c */
 static char *h_errs[] = {
@@ -122,12 +90,10 @@ static char *h_errs[] = {
 	"Unknown server error",	/* 3 NO_RECOVERY */
 	"No address associated with name",	/* 4 NO_ADDRESS */
 };
-#else
-int     h_errno;		/* just so we *do* have it available */
-#endif				/* HAVE_BIND */
+
 int     gatesidx = 0;		/* LSRR hop count */
 int     gatesptr = 4;		/* initial LSRR pointer, settable */
-USHORT  Single = 1;		/* zero if scanning */
+u_short  Single = 1;		/* zero if scanning */
 unsigned int insaved = 0;	/* stdin-buffer size for multi-mode */
 unsigned int wrote_out = 0;	/* total stdout bytes */
 unsigned int wrote_net = 0;	/* total net bytes */
@@ -135,30 +101,28 @@ static char wrote_txt[] = " sent %d, rcvd %d";
 static char hexnibs[20] = "0123456789abcdef  ";
 
 /* will malloc up the following globals: */
-struct timeval *timer1 = NULL;
-struct timeval *timer2 = NULL;
-SAI    *lclend = NULL;		/* sockaddr_in structs */
-SAI    *remend = NULL;
-HINF  **gates = NULL;		/* LSRR hop hostpoop */
+struct timeval timer1, timer2;
+struct sockaddr_in    *lclend = NULL;		/* sockaddr_in structs */
+struct sockaddr_in    *remend = NULL;
+struct host_info  **gates = NULL;		/* LSRR hop hostpoop */
 char   *optbuf = NULL;		/* LSRR or sockopts */
 char   *bigbuf_in;		/* data buffers */
 char   *bigbuf_net;
-fd_set *ding1;			/* for select loop */
-fd_set *ding2;
-PINF   *portpoop = NULL;	/* for getportpoop / getservby* */
+fd_set fds1, fds2;
+struct port_info   *portpoop = NULL;	/* for getportpoop / getservby* */
 unsigned char *stage = NULL;	/* hexdump line buffer */
 
 /* global cmd flags: */
-USHORT  o_alla = 0;
+u_short  o_alla = 0;
 unsigned int o_interval = 0;
-USHORT  o_listen = 0;
-USHORT  o_nflag = 0;
-USHORT  o_wfile = 0;
-USHORT  o_random = 0;
-USHORT  o_udpmode = 0;
-USHORT  o_verbose = 0;
+u_short  o_listen = 0;
+u_short  o_nflag = 0;
+u_short  o_wfile = 0;
+u_short  o_random = 0;
+u_short  o_udpmode = 0;
+u_short  o_verbose = 0;
 unsigned int o_wait = 0;
-USHORT  o_zero = 0;
+u_short  o_zero = 0;
 /* o_tn in optional section */
 
 /* Debug macro: squirt whatever message and sleep a bit so we can see it go
@@ -201,7 +165,7 @@ holler(str, p1, p2, p3, p4, p5, p6)
 			fprintf(stderr, "\n");
 		fflush(stderr);
 	}
-}				/* holler */
+}
 
 /* bail :
    error-exit handler, callable from anywhere */
@@ -213,9 +177,8 @@ bail(str, p1, p2, p3, p4, p5, p6)
 	o_verbose = 1;
 	holler(str, p1, p2, p3, p4, p5, p6);
 	close(netfd);
-	sleep(1);
 	exit(1);
-}				/* bail */
+}
 
 /* catch :
    no-brainer interrupt handler */
@@ -255,23 +218,7 @@ arm(num, secs)
 		alarm(secs);
 		jval = num;
 	}			/* if secs */
-}				/* arm */
-
-/* Hmalloc :
-   malloc up what I want, rounded up to *4, and pre-zeroed.  Either succeeds
-   or bails out on its own, so that callers don't have to worry about it. */
-char   *
-Hmalloc(size)
-	unsigned int size;
-{
-	unsigned int s = (size + 4) & 0xfffffffc;	/* 4GB?! */
-	char   *p = malloc(s);
-	if (p != NULL)
-		memset(p, 0, s);
-	else
-		bail("Hmalloc %d failed", s);
-	return (p);
-}				/* Hmalloc */
+}
 
 /* findline :
    find the next newline in a buffer; return inclusive size of that "line",
@@ -300,16 +247,16 @@ findline(buf, siz)
 	}			/* for */
 	Debug(("findline returning whole thing: %d", siz))
 	    return (siz);
-}				/* findline */
+}
 
 /* comparehosts :
-   cross-check the host_poop we have so far against new gethostby*() info,
+   cross-check the host_info we have so far against new gethostby*() info,
    and holler about mismatches.  Perhaps gratuitous, but it can't hurt to
    point out when someone's DNS is fukt.  Returns 1 if mismatch, in case
    someone else wants to do something about it. */
 int 
 comparehosts(poop, hp)
-	HINF   *poop;
+	struct host_info   *poop;
 	struct hostent *hp;
 {
 	errno = 0;
@@ -320,21 +267,21 @@ comparehosts(poop, hp)
 	}
 	return (0);
 /* ... do we need to do anything over and above that?? */
-}				/* comparehosts */
+}
 
 /* gethostpoop :
-   resolve a host 8 ways from sunday; return a new host_poop struct with its
+   resolve a host 8 ways from sunday; return a new host_info struct with its
    info.  The argument can be a name or [ascii] IP address; it will try its
    damndest to deal with it.  "numeric" governs whether we do any DNS at all,
    and we also check o_verbose for what's appropriate work to do. */
-HINF   *
+struct host_info   *
 gethostpoop(name, numeric)
 	char   *name;
-	USHORT  numeric;
+	u_short  numeric;
 {
 	struct hostent *hostent;
 	struct in_addr iaddr;
-	register HINF *poop = NULL;
+	register struct host_info *poop = NULL;
 	register int x;
 
 /* I really want to strangle the twit who dreamed up all these sockaddr and
@@ -359,12 +306,11 @@ gethostpoop(name, numeric)
 	errno = 0;
 	h_errno = 0;
 	if (name)
-		poop = (HINF *) Hmalloc(sizeof(HINF));
+		poop = (struct host_info *) calloc(1, sizeof(struct host_info));
 	if (!poop)
 		bail("gethostpoop fuxored");
-	strlcpy(poop->name, unknown, sizeof(poop->name));	/* preload it */
-	if (inet_aton(name, &iaddr) == 0) {	/* here's the great split:
-						 * names... */
+	strlcpy(poop->name, "(UNKNOWN)", sizeof(poop->name));
+	if (inet_aton(name, &iaddr) == 0) {
 
 		if (numeric)
 			bail("Can't parse %s as an IP address", name);
@@ -372,21 +318,20 @@ gethostpoop(name, numeric)
 		if (!hostent)
 /* failure to look up a name is fatal, since we can't do anything with it */
 			bail("%s: forward host lookup failed: ", name);
-		strncpy(poop->name, hostent->h_name, MAXHOSTNAMELEN - 1);
-		poop->name[MAXHOSTNAMELEN - 1] = '\0';
+		strlcpy(poop->name, hostent->h_name, MAXHOSTNAMELEN);
 		for (x = 0; hostent->h_addr_list[x] && (x < 8); x++) {
-			memcpy(&poop->iaddrs[x], hostent->h_addr_list[x], sizeof(IA));
-			strncpy(poop->addrs[x], inet_ntoa(poop->iaddrs[x]),
-			    sizeof(poop->addrs[0]) - 1);
-			poop->addrs[x][sizeof(poop->addrs[0]) - 1] = '\0';
-		}		/* for x -> addrs, part A */
+			memcpy(&poop->iaddrs[x], hostent->h_addr_list[x],
+			    sizeof(struct in_addr));
+			strlcpy(poop->addrs[x], inet_ntoa(poop->iaddrs[x]),
+			    sizeof(poop->addrs[0]));
+		}
 		if (!o_verbose)	/* if we didn't want to see the */
 			return (poop);	/* inverse stuff, we're done. */
 /* do inverse lookups in separate loop based on our collected forward addrs,
    since gethostby* tends to crap into the same buffer over and over */
 		for (x = 0; poop->iaddrs[x].s_addr && (x < 8); x++) {
 			hostent = gethostbyaddr((char *) &poop->iaddrs[x],
-			    sizeof(IA), AF_INET);
+			    sizeof(struct in_addr), AF_INET);
 			if ((!hostent) || (!hostent->h_name))
 				holler("Warning: inverse host lookup failed for %s: ",
 				    poop->addrs[x]);
@@ -395,20 +340,18 @@ gethostpoop(name, numeric)
 		}		/* for x -> addrs, part B */
 
 	} else {		/* not INADDR_NONE: numeric addresses... */
-		memcpy(poop->iaddrs, &iaddr, sizeof(IA));
-		strncpy(poop->addrs[0], inet_ntoa(iaddr), sizeof(poop->addrs) - 1);
-		poop->addrs[0][sizeof(poop->addrs) - 1] = '\0';
+		memcpy(poop->iaddrs, &iaddr, sizeof(struct in_addr));
+		strlcpy(poop->addrs[0], inet_ntoa(iaddr), sizeof(poop->addrs));
 		if (numeric)	/* if numeric-only, we're done */
 			return (poop);
 		if (!o_verbose)	/* likewise if we don't want */
 			return (poop);	/* the full DNS hair */
-		hostent = gethostbyaddr((char *) &iaddr, sizeof(IA), AF_INET);
+		hostent = gethostbyaddr((char *) &iaddr, sizeof(struct in_addr), AF_INET);
 /* numeric or not, failure to look up a PTR is *not* considered fatal */
 		if (!hostent)
 			holler("%s: inverse host lookup failed: ", name);
 		else {
-			strncpy(poop->name, hostent->h_name, MAXHOSTNAMELEN - 1);
-			poop->name[MAXHOSTNAMELEN - 1] = '\0';
+			strlcpy(poop->name, hostent->h_name, MAXHOSTNAMELEN);
 			hostent = gethostbyname(poop->name);
 			if ((!hostent) || (!hostent->h_addr_list[0]))
 				holler("Warning: forward host lookup failed for %s: ",
@@ -418,20 +361,20 @@ gethostpoop(name, numeric)
 		}		/* if hostent */
 	}			/* INADDR_NONE Great Split */
 
-/* whatever-all went down previously, we should now have a host_poop struct
+/* whatever-all went down previously, we should now have a host_info struct
    with at least one IP address in it. */
 	h_errno = 0;
 	return (poop);
-}				/* gethostpoop */
+}
 
 /* getportpoop :
    Same general idea as gethostpoop -- look up a port in /etc/services, fill
-   in global port_poop, but return the actual port *number*.  Pass ONE of:
+   in global port_info, but return the actual port *number*.  Pass ONE of:
 	pstring to resolve stuff like "23" or "exec";
 	pnum to reverse-resolve something that's already a number.
    If o_nflag is on, fill in what we can but skip the getservby??? stuff.
    Might as well have consistent behavior here, and it *is* faster. */
-USHORT 
+u_short 
 getportpoop(pstring, pnum)
 	char   *pstring;
 	unsigned int pnum;
@@ -439,9 +382,9 @@ getportpoop(pstring, pnum)
 	struct servent *servent;
 	register int x;
 	register int y;
-	char   *whichp = p_tcp;
+	char   *whichp = "tcp";
 	if (o_udpmode)
-		whichp = p_udp;
+		whichp = "udp";
 	portpoop->name[0] = '?';/* fast preload */
 	portpoop->name[1] = '\0';
 
@@ -459,9 +402,9 @@ getportpoop(pstring, pnum)
 			y = ntohs(servent->s_port);
 			if (x != y)	/* "never happen" */
 				holler("Warning: port-bynum mismatch, %d != %d", x, y);
-			strncpy(portpoop->name, servent->s_name, sizeof(portpoop->name) - 1);
-			portpoop->name[sizeof(portpoop->name) - 1] = '\0';
-		}		/* if servent */
+			strlcpy(portpoop->name, servent->s_name,
+			    sizeof(portpoop->name));
+		}
 		goto gp_finish;
 	}			/* if pnum */
 	/* case 2: resolve a string, but we still give preference to numbers
@@ -480,8 +423,8 @@ getportpoop(pstring, pnum)
 			return (0);
 		servent = getservbyname(pstring, whichp);
 		if (servent) {
-			strncpy(portpoop->name, servent->s_name, sizeof(portpoop->name) - 1);
-			portpoop->name[sizeof(portpoop->name) - 1] = '\0';
+			strlcpy(portpoop->name, servent->s_name,
+			    sizeof(portpoop->name));
 			x = ntohs(servent->s_port);
 			goto gp_finish;
 		}		/* if servent */
@@ -504,9 +447,9 @@ gp_finish:
    x containing our [host-order and therefore useful, dammit] port number */
 	sprintf(portpoop->anum, "%d", x);	/* always load any numeric
 						 * specs! */
-	portpoop->num = (x & 0xffff);	/* ushort, remember... */
+	portpoop->num = (x & 0xffff);	/* u_short, remember... */
 	return (portpoop->num);
-}				/* getportpoop */
+}
 
 /* nextport :
    Come up with the next port to try, be it random or whatever.  "block" is
@@ -514,8 +457,8 @@ gp_finish:
 	0	ignore
 	1	to be tested
 	2	tested [which is set as we find them here]
-   returns a USHORT random port, or 0 if all the t-b-t ones are used up. */
-USHORT 
+   returns a u_short random port, or 0 if all the t-b-t ones are used up. */
+u_short 
 nextport(block)
 	char   *block;
 {
@@ -547,7 +490,7 @@ nextport(block)
 		return (y);	/* at least one left */
 
 	return (0);		/* no more left! */
-}				/* nextport */
+}
 
 /* loadports :
    set "to be tested" indications in BLOCK, from LO to HI.  Almost too small
@@ -555,10 +498,10 @@ nextport(block)
 void 
 loadports(block, lo, hi)
 	char   *block;
-	USHORT  lo;
-	USHORT  hi;
+	u_short  lo;
+	u_short  hi;
 {
-	USHORT  x;
+	u_short  x;
 
 	if (!block)
 		bail("loadports: no block?!");
@@ -569,7 +512,8 @@ loadports(block, lo, hi)
 		block[x] = 1;
 		x--;
 	}
-}				/* loadports */
+}
+
 #ifdef GAPING_SECURITY_HOLE
 char   *pr00gie = NULL;		/* global ptr to -e arg */
 
@@ -596,7 +540,7 @@ doexec(fd)
 	Debug(("gonna exec %s as %s...", pr00gie, p))
 	    execl(pr00gie, p, NULL);
 	bail("exec %s failed", pr00gie);	/* this gets sent out.  Hmm... */
-}				/* doexec */
+}
 #endif				/* GAPING_SECURITY_HOLE */
 
 /* doconnect :
@@ -608,10 +552,10 @@ doexec(fd)
    Examines various global o_blah flags to figure out what-all to do. */
 int 
 doconnect(rad, rp, lad, lp)
-	IA     *rad;
-	USHORT  rp;
-	IA     *lad;
-	USHORT  lp;
+	struct in_addr     *rad;
+	u_short  rp;
+	struct in_addr     *lad;
+	u_short  lp;
 {
 	register int nnetfd;
 	register int rr;
@@ -655,7 +599,7 @@ newskt:
 
 /* if lad/lp, do appropriate binding */
 	if (lad)
-		memcpy(&lclend->sin_addr.s_addr, lad, sizeof(IA));
+		memcpy(&lclend->sin_addr.s_addr, lad, sizeof(struct in_addr));
 	if (lp)
 		lclend->sin_port = htons(lp);
 	rr = 0;
@@ -663,7 +607,8 @@ newskt:
 		x = (int) lp;
 /* try a few times for the local bind, a la ftp-data-port... */
 		for (y = 4; y > 0; y--) {
-			rr = bind(nnetfd, (SA *) lclend, sizeof(SA));
+			rr = bind(nnetfd, (struct sockaddr *) lclend,
+			    sizeof(struct sockaddr_in));
 			if (rr == 0)
 				break;
 			if (errno != EADDRINUSE)
@@ -682,7 +627,7 @@ newskt:
 	if (o_listen)
 		return (nnetfd);/* thanks, that's all for today */
 
-	memcpy(&remend->sin_addr.s_addr, rad, sizeof(IA));
+	memcpy(&remend->sin_addr.s_addr, rad, sizeof(struct in_addr));
 	remend->sin_port = htons(rp);
 
 /* rough format of LSRR option and explanation of weirdness.
@@ -727,26 +672,26 @@ Linux is also still a loss at 1.3.x it looks like; the lsrr code is { }...
 #ifdef IP_OPTIONS
 		if (!optbuf) {	/* and don't already *have* a srcrt set */
 			char   *opp;	/* then do all this setup hair */
-			optbuf = Hmalloc(48);
+			optbuf = calloc(1, 48);
 			opp = optbuf;
 			*opp++ = IPOPT_LSRR;	/* option */
 			*opp++ = (char)
-			    (((gatesidx + 1) * sizeof(IA)) + 3) & 0xff;	/* length */
+			    (((gatesidx + 1) * sizeof(struct in_addr)) + 3) & 0xff;	/* length */
 			*opp++ = gatesptr;	/* pointer */
 /* opp now points at first hop addr -- insert the intermediate gateways */
 			for (x = 0; x < gatesidx; x++) {
-				memcpy(opp, gates[x]->iaddrs, sizeof(IA));
-				opp += sizeof(IA);
+				memcpy(opp, gates[x]->iaddrs, sizeof(struct in_addr));
+				opp += sizeof(struct in_addr);
 			}
 /* and tack the final destination on the end [needed!] */
-			memcpy(opp, rad, sizeof(IA));
-			opp += sizeof(IA);
+			memcpy(opp, rad, sizeof(struct in_addr));
+			opp += sizeof(struct in_addr);
 			*opp = IPOPT_NOP;	/* alignment filler */
 		}		/* if empty optbuf */
 		/* calculate length of whole option mess, which is (3 + [hops]
 		 * + [final] + 1), and apply it [have to do this every time
 		 * through, of course] */
-		x = ((gatesidx + 1) * sizeof(IA)) + 4;
+		x = ((gatesidx + 1) * sizeof(struct in_addr)) + 4;
 		rr = setsockopt(nnetfd, IPPROTO_IP, IP_OPTIONS, optbuf, x);
 		if (rr == -1)
 			bail("srcrt setsockopt fuxored");
@@ -757,7 +702,7 @@ Linux is also still a loss at 1.3.x it looks like; the lsrr code is { }...
 	/* wrap connect inside a timer, and hit it */
 	arm(1, o_wait);
 	if (setjmp(jbuf) == 0) {
-		rr = connect(nnetfd, (SA *) remend, sizeof(SA));
+		rr = connect(nnetfd, (struct sockaddr *) remend, sizeof(struct sockaddr));
 	} else {		/* setjmp: connect failed... */
 		rr = -1;
 		errno = ETIMEDOUT;	/* fake it */
@@ -767,7 +712,7 @@ Linux is also still a loss at 1.3.x it looks like; the lsrr code is { }...
 		return (nnetfd);
 	close(nnetfd);		/* clean up junked socket FD!! */
 	return (-1);
-}				/* doconnect */
+}
 
 /* dolisten :
    just like doconnect, and in fact calls a hunk of doconnect, but listens for
@@ -776,17 +721,17 @@ Linux is also still a loss at 1.3.x it looks like; the lsrr code is { }...
    in conjunction with local-address binding should limit things nicely... */
 int 
 dolisten(rad, rp, lad, lp)
-	IA     *rad;
-	USHORT  rp;
-	IA     *lad;
-	USHORT  lp;
+	struct in_addr     *rad;
+	u_short  rp;
+	struct in_addr     *lad;
+	u_short  lp;
 {
 	register int nnetfd;
 	register int rr;
-	HINF   *whozis = NULL;
+	struct host_info   *whozis = NULL;
 	int     x;
 	char   *cp;
-	USHORT  z;
+	u_short  z;
 	errno = 0;
 
 /* Pass everything off to doconnect, who in o_listen mode just gets a socket */
@@ -808,12 +753,12 @@ dolisten(rad, rp, lad, lp)
 /* I can't believe I have to do all this to get my own goddamn bound address
    and port number.  It should just get filled in during bind() or something.
    All this is only useful if we didn't say -p for listening, since if we
-   said -p we *know* what port we're listening on.  At any rate we won't bother
+   struct sockaddr_ind -p we *know* what port we're listening on.  At any rate we won't bother
    with it all unless we wanted to see it, although listening quietly on a
    random unknown port is probably not very useful without "netstat". */
 	if (o_verbose) {
-		x = sizeof(SA);	/* how 'bout getsockNUM instead, pinheads?! */
-		rr = getsockname(nnetfd, (SA *) lclend, &x);
+		x = sizeof(struct sockaddr);	/* how 'bout getsockNUM instead, pinheads?! */
+		rr = getsockname(nnetfd, (struct sockaddr *) lclend, &x);
 		if (rr < 0)
 			holler("local getsockname failed");
 		strcpy(bigbuf_net, "listening on [");	/* buffer reuse... */
@@ -832,12 +777,12 @@ dolisten(rad, rp, lad, lp)
 	 * straight read/write actually does work after all.  Yow.  YMMV on
 	 * strange platforms!  */
 	if (o_udpmode) {
-		x = sizeof(SA);	/* retval for recvfrom */
+		x = sizeof(struct sockaddr);	/* retval for recvfrom */
 		arm(2, o_wait);	/* might as well timeout this, too */
 		if (setjmp(jbuf) == 0) {	/* do timeout for initial
 						 * connect */
 			rr = recvfrom	/* and here we block... */
-			    (nnetfd, bigbuf_net, BIGSIZ, MSG_PEEK, (SA *) remend, &x);
+			    (nnetfd, bigbuf_net, BIGSIZ, MSG_PEEK, (struct sockaddr *) remend, &x);
 			Debug(("dolisten/recvfrom ding, rr = %d, netbuf %s ", rr, bigbuf_net))
 		} else
 			goto dol_tmo;	/* timeout */
@@ -853,14 +798,14 @@ dolisten(rad, rp, lad, lp)
    different port on the other end won't show up and will cause ICMP errors.
    I guess that's what they meant by "connect".
    Let's try to remember what the "U" is *really* for, eh? */
-		rr = connect(nnetfd, (SA *) remend, sizeof(SA));
+		rr = connect(nnetfd, (struct sockaddr *) remend, sizeof(struct sockaddr));
 		goto whoisit;
 	}			/* o_udpmode */
 	/* fall here for TCP */
-	x = sizeof(SA);		/* retval for accept */
+	x = sizeof(struct sockaddr);		/* retval for accept */
 	arm(2, o_wait);		/* wrap this in a timer, too; 0 = forever */
 	if (setjmp(jbuf) == 0) {
-		rr = accept(nnetfd, (SA *) remend, &x);
+		rr = accept(nnetfd, (struct sockaddr *) remend, &x);
 	} else
 		goto dol_tmo;	/* timeout */
 	arm(0, 0);
@@ -879,7 +824,7 @@ whoisit:
 #ifdef IP_OPTIONS
 	if (!o_verbose)		/* if we wont see it, we dont care */
 		goto dol_noop;
-	optbuf = Hmalloc(40);
+	optbuf = calloc(1, 40);
 	x = 40;
 	rr = getsockopt(nnetfd, IPPROTO_IP, IP_OPTIONS, optbuf, &x);
 	if (rr < 0)
@@ -910,8 +855,8 @@ dol_noop:
    "virtual web site" hack. */
 	memset(bigbuf_net, 0, 64);
 	cp = &bigbuf_net[32];
-	x = sizeof(SA);
-	rr = getsockname(nnetfd, (SA *) lclend, &x);
+	x = sizeof(struct sockaddr);
+	rr = getsockname(nnetfd, (struct sockaddr *) lclend, &x);
 	if (rr < 0)
 		holler("post-rcv getsockname failed");
 	strcpy(cp, inet_ntoa(lclend->sin_addr));
@@ -932,7 +877,7 @@ dol_noop:
 	x = 0;			/* use as a flag... */
 	if (rad)		/* xxx: fix to go down the *list* if we have
 				 * one? */
-		if (memcmp(rad, whozis->iaddrs, sizeof(SA)))
+		if (memcmp(rad, whozis->iaddrs, sizeof(struct sockaddr)))
 			x = 1;
 	if (rp)
 		if (z != rp)
@@ -949,7 +894,7 @@ dol_tmo:
 dol_err:
 	close(nnetfd);
 	return (-1);
-}				/* dolisten */
+}
 
 /* udptest :
    fire a couple of packets at a UDP target port, just to see if it's really
@@ -963,7 +908,7 @@ dol_err:
    Return either the original fd, or clean up and return -1. */
 udptest(fd, where)
 	int     fd;
-	IA     *where;
+	struct in_addr     *where;
 {
 	register int rr;
 
@@ -992,7 +937,8 @@ udptest(fd, where)
 		return (fd);
 	close(fd);		/* use it or lose it! */
 	return (-1);
-}				/* udptest */
+}
+
 /* oprint :
    Hexdump bytes shoveled either way to a running logfile, in the format:
 D offset       -  - - - --- 16 bytes --- - - -  -     # .... ascii .....
@@ -1084,9 +1030,10 @@ oprint(which, buf, n)
 		if (x < 0)
 			bail("ofd write err");
 	}			/* while bc */
-}				/* oprint */
+}
+
 #ifdef TELNET
-USHORT  o_tn = 0;		/* global -t option */
+u_short  o_tn = 0;		/* global -t option */
 
 /* atelnet :
    Answer anything that looks like telnet negotiation with don't/won't.
@@ -1129,7 +1076,8 @@ notiac:
 		p++;
 		x--;
 	}			/* while x */
-}				/* atelnet */
+}
+
 #endif				/* TELNET */
 
 /* readwrite :
@@ -1144,17 +1092,17 @@ readwrite(fd)
 	register char *np;	/* net-in buf ptr */
 	unsigned int rzleft;
 	unsigned int rnleft;
-	USHORT  netretry;	/* net-read retry counter */
-	USHORT  wretry;		/* net-write sanity counter */
-	USHORT  wfirst;		/* one-shot flag to skip first net read */
+	u_short  netretry;	/* net-read retry counter */
+	u_short  wretry;		/* net-write sanity counter */
+	u_short  wfirst;		/* one-shot flag to skip first net read */
 
 /* if you don't have all this FD_* macro hair in sys/types.h, you'll have to
-   either find it or do your own bit-bashing: *ding1 |= (1 << fd), etc... */
+   either find it or do your own bit-bashing: *fds1 |= (1 << fd), etc... */
 	if (fd > FD_SETSIZE) {
 		holler("Preposterous fd value %d", fd);
 		return (1);
 	}
-	FD_SET(fd, ding1);	/* global: the net is open */
+	FD_SET(fd, &fds1);	/* global: the net is open */
 	netretry = 2;
 	wfirst = 0;
 	rzleft = rnleft = 0;
@@ -1166,7 +1114,7 @@ readwrite(fd)
 			insaved = 0;	/* buffer left over from argv
 					 * construction, */
 		else {
-			FD_CLR(0, ding1);	/* OR we've already got our
+			FD_CLR(0, &fds1);	/* OR we've already got our
 						 * repeat chunk, */
 			close(0);	/* so we won't need any more stdin */
 		}		/* Single */
@@ -1176,18 +1124,15 @@ readwrite(fd)
 	errno = 0;		/* clear from sleep, close, whatever */
 
 /* and now the big ol' select shoveling loop ... */
-	while (FD_ISSET(fd, ding1)) {	/* i.e. till the *net* closes! */
+	while (FD_ISSET(fd, &fds1)) {	/* i.e. till the *net* closes! */
 		wretry = 8200;	/* more than we'll ever hafta write */
 		if (wfirst) {	/* any saved stdin buffer? */
 			wfirst = 0;	/* clear flag for the duration */
 			goto shovel;	/* and go handle it first */
 		}
-		*ding2 = *ding1;/* FD_COPY ain't portable... */
-/* some systems, notably linux, crap into their select timers on return, so
-   we create a expendable copy and give *that* to select.  *Fuck* me ... */
-		if (timer1)
-			memcpy(timer2, timer1, sizeof(struct timeval));
-		rr = select(16, ding2, 0, 0, timer2);	/* here it is, kiddies */
+		fds2 = fds1;
+		memcpy(&timer2, &timer1, sizeof(struct timeval));
+		rr = select(getdtablesize(), &fds2, 0, 0, &timer2);
 		if (rr < 0) {
 			if (errno != EINTR) {	/* might have gotten ^Zed, etc
 						 * ? */
@@ -1200,7 +1145,7 @@ readwrite(fd)
 		 * heard anything from the net during that time, assume it's
 		 * dead and close it too. */
 		if (rr == 0) {
-			if (!FD_ISSET(0, ding1))
+			if (!FD_ISSET(0, &fds1))
 				netretry--;	/* we actually try a coupla
 						 * times. */
 			if (!netretry) {
@@ -1216,10 +1161,10 @@ readwrite(fd)
 		 * found bothered. */
 		/* Ding!!  Something arrived, go check all the incoming
 		 * hoppers, net first */
-		if (FD_ISSET(fd, ding2)) {	/* net: ding! */
+		if (FD_ISSET(fd, &fds2)) {	/* net: ding! */
 			rr = read(fd, bigbuf_net, BIGSIZ);
 			if (rr <= 0) {
-				FD_CLR(fd, ding1);	/* net closed, we'll
+				FD_CLR(fd, &fds1);	/* net closed, we'll
 							 * finish up... */
 				rzleft = 0;	/* can't write anymore: broken
 						 * pipe */
@@ -1240,12 +1185,12 @@ readwrite(fd)
 			goto shovel;
 
 /* okay, suck more stdin */
-		if (FD_ISSET(0, ding2)) {	/* stdin: ding! */
+		if (FD_ISSET(0, &fds2)) {	/* stdin: ding! */
 			rr = read(0, bigbuf_in, BIGSIZ);
 /* Considered making reads here smaller for UDP mode, but 8192-byte
    mobygrams are kinda fun and exercise the reassembler. */
 			if (rr <= 0) {	/* at end, or fukt, or ... */
-				FD_CLR(0, ding1);	/* disable and close
+				FD_CLR(0, &fds1);	/* disable and close
 							 * stdin */
 				close(0);
 			} else {
@@ -1255,7 +1200,7 @@ readwrite(fd)
    open TCP port or every UDP attempt, so save its size and clean up stdin */
 				if (!Single) {	/* we might be scanning... */
 					insaved = rr;	/* save len */
-					FD_CLR(0, ding1);	/* disable further junk
+					FD_CLR(0, &fds1);	/* disable further junk
 								 * from stdin */
 					close(0);	/* really, I mean it */
 				}	/* Single */
@@ -1314,7 +1259,7 @@ shovel:
 			wretry--;	/* none left, and get another load */
 			goto shovel;
 		}
-	}			/* while ding1:netfd is open */
+	}			/* while fds1:netfd is open */
 
 /* XXX: maybe want a more graceful shutdown() here, or screw around with
    linger times??  I suspect that I don't need to since I'm always doing
@@ -1323,7 +1268,7 @@ shovel:
    not like my test network is particularly busy... */
 	close(fd);
 	return (0);
-}				/* readwrite */
+}
 
 /* main :
    now we pull it all together... */
@@ -1337,16 +1282,16 @@ main(argc, argv)
 #endif
 	register int x;
 	register char *cp;
-	HINF   *gp;
-	HINF   *whereto = NULL;
-	HINF   *wherefrom = NULL;
-	IA     *ouraddr = NULL;
-	IA     *themaddr = NULL;
-	USHORT  o_lport = 0;
-	USHORT  ourport = 0;
-	USHORT  loport = 0;	/* for scanning stuff */
-	USHORT  hiport = 0;
-	USHORT  curport = 0;
+	struct host_info   *gp;
+	struct host_info   *whereto = NULL;
+	struct host_info   *wherefrom = NULL;
+	struct in_addr     *ouraddr = NULL;
+	struct in_addr     *themaddr = NULL;
+	u_short  o_lport = 0;
+	u_short  ourport = 0;
+	u_short  loport = 0;	/* for scanning stuff */
+	u_short  hiport = 0;
+	u_short  curport = 0;
 	char   *randports = NULL;
 
 #ifdef HAVE_BIND
@@ -1355,13 +1300,11 @@ main(argc, argv)
 #endif
 /* I was in this barbershop quartet in Skokie IL ... */
 /* round up the usual suspects, i.e. malloc up all the stuff we need */
-	lclend = (SAI *) Hmalloc(sizeof(SA));
-	remend = (SAI *) Hmalloc(sizeof(SA));
-	bigbuf_in = Hmalloc(BIGSIZ);
-	bigbuf_net = Hmalloc(BIGSIZ);
-	ding1 = (fd_set *) Hmalloc(sizeof(fd_set));
-	ding2 = (fd_set *) Hmalloc(sizeof(fd_set));
-	portpoop = (PINF *) Hmalloc(sizeof(PINF));
+	lclend = (struct sockaddr_in *) calloc(1, sizeof(struct sockaddr));
+	remend = (struct sockaddr_in *) calloc(1, sizeof(struct sockaddr));
+	bigbuf_in = calloc(1, BIGSIZ);
+	bigbuf_net = calloc(1, BIGSIZ);
+	portpoop = (struct port_info *) calloc(1, sizeof(struct port_info));
 
 	errno = 0;
 	gatesptr = 4;
@@ -1383,9 +1326,9 @@ main(argc, argv)
    anything left over to readwrite(). */
 	if (argc == 1) {
 		cp = argv[0];
-		argv = (char **) Hmalloc(128 * sizeof(char *));	/* XXX: 128? */
+		argv = (char **) calloc(1, 128 * sizeof(char *));	/* XXX: 128? */
 		argv[0] = cp;	/* leave old prog name intact */
-		cp = Hmalloc(BIGSIZ);
+		cp = calloc(1, BIGSIZ);
 		argv[1] = cp;	/* head of new arg block */
 		fprintf(stderr, "Cmd line: ");
 		fflush(stderr);	/* I dont care if it's unbuffered or not! */
@@ -1450,7 +1393,7 @@ main(argc, argv)
 			if (gatesidx > 8)
 				bail("too many -g hops");
 			if (gates == NULL)	/* eat this, Billy-boy */
-				gates = (HINF **) Hmalloc(sizeof(HINF *) * 10);
+				gates = (struct host_info **) calloc(1, sizeof(struct host_info *) * 10);
 			gp = gethostpoop(optarg, o_nflag);
 			if (gp)
 				gates[gatesidx] = gp;
@@ -1458,11 +1401,7 @@ main(argc, argv)
 			break;
 		case 'h':
 			errno = 0;
-#ifdef HAVE_HELP
 			helpme();	/* exits by itself */
-#else
-			bail("no help available, dork -- RTFS");
-#endif
 		case 'i':	/* line-interval time */
 			o_interval = atoi(optarg) & 0xffff;
 			if (!o_interval)
@@ -1508,10 +1447,8 @@ main(argc, argv)
 			o_wait = atoi(optarg);
 			if (o_wait <= 0)
 				bail("invalid wait-time %s", optarg);
-			timer1 = (struct timeval *) Hmalloc(sizeof(struct timeval));
-			timer2 = (struct timeval *) Hmalloc(sizeof(struct timeval));
-			timer1->tv_sec = o_wait;	/* we need two.  see
-							 * readwrite()... */
+			timer1.tv_sec = o_wait;
+			timer1.tv_usec = 0;
 			break;
 		case 'z':	/* little or no data xfer */
 			o_zero++;
@@ -1523,11 +1460,11 @@ main(argc, argv)
 	}			/* while getopt */
 
 /* other misc initialization */
-	Debug(("fd_set size %d", sizeof(*ding1)))	/* how big *is* it? */
-	    FD_SET(0, ding1);	/* stdin *is* initially open */
+	Debug(("fd_set size %d", sizeof(*fds1)))	/* how big *is* it? */
+	    FD_SET(0, &fds1);	/* stdin *is* initially open */
 	if (o_random) {
 		SRAND(time(0));
-		randports = Hmalloc(65536);	/* big flag array for ports */
+		randports = calloc(1, 65536);	/* big flag array for ports */
 	}
 #ifdef GAPING_SECURITY_HOLE
 	if (pr00gie) {
@@ -1540,7 +1477,7 @@ main(argc, argv)
 		ofd = open(stage, O_WRONLY | O_CREAT | O_TRUNC, 0664);
 		if (ofd <= 0)	/* must be > extant 0/1/2 */
 			bail("can't open %s", stage);
-		stage = (unsigned char *) Hmalloc(100);
+		stage = (unsigned char *) calloc(1, 100);
 	}
 /* optind is now index of first non -x arg */
 	Debug(("after go: x now %c, optarg %x optind %d", x, optarg, optind))
@@ -1674,9 +1611,8 @@ main(argc, argv)
 	if (Single)
 		exit(x);	/* give us status on one connection */
 	exit(0);		/* otherwise, we're just done */
-}				/* main */
+}
 
-#ifdef HAVE_HELP		/* unless we wanna be *really* cryptic */
 /* helpme :
    the obvious */
 helpme()
@@ -1714,7 +1650,4 @@ options:");
 	-w secs			timeout for connects and final net reads\n\
 	-z			zero-I/O mode [used for scanning]");
 	bail("port numbers can be individual or ranges: lo-hi [inclusive]");
-}				/* helpme */
-#endif				/* HAVE_HELP */
-
-/* None genuine without this seal!  _H*/
+}
