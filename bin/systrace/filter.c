@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.26 2003/05/29 00:39:12 itojun Exp $	*/
+/*	$OpenBSD: filter.c,v 1.27 2003/06/16 06:36:40 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -46,6 +46,7 @@
 #include "intercept.h"
 #include "systrace.h"
 #include "filter.h"
+#include "util.h"
 
 extern int allow;
 extern int noalias;
@@ -171,7 +172,7 @@ filter_evaluate(struct intercept_tlq *tls, struct filterq *fls,
     struct intercept_pid *icpid)
 {
 	struct filter *filter, *last = NULL;
-	short action, laction = 0;
+	short action;
 
 	TAILQ_FOREACH(filter, fls, next) {
 		action = filter->match_action;
@@ -198,7 +199,6 @@ filter_evaluate(struct intercept_tlq *tls, struct filterq *fls,
 
 		/* Keep track of last processed filtered in a group */
 		last = filter;
-		laction = action;
 	}
 
 	return (ICPOLICY_ASK);
@@ -300,13 +300,11 @@ filter_policyrecord(struct policy *policy, struct filter *filter,
     const char *emulation, const char *name, char *rule)
 {
 	/* Record the filter in the policy */
-	if (filter == NULL) {
-		filter = calloc(1, sizeof(struct filter));
-		if (filter == NULL)
-			err(1, "%s:%d: calloc", __func__, __LINE__);
-		if ((filter->rule = strdup(rule)) == NULL)
-			err(1, "%s:%d: strdup", __func__, __LINE__);
-	}
+	filter = calloc(1, sizeof(struct filter));
+	if (filter == NULL)
+		err(1, "%s:%d: calloc", __func__, __LINE__);
+	if ((filter->rule = strdup(rule)) == NULL)
+		err(1, "%s:%d: strdup", __func__, __LINE__);
 
 	strlcpy(filter->name, name, sizeof(filter->name));
 	strlcpy(filter->emulation, emulation, sizeof(filter->emulation));
@@ -526,7 +524,7 @@ filter_ask(int fd, struct intercept_tlq *tls, struct filterq *fls,
 				    "%s%s eq \"%s\"",
 				    tl->name,
 				    lst && !strcmp(tl->name, lst) ? "[1]" : "",
-				    l);
+				    strescape(l));
 
 				lst = tl->name;
 

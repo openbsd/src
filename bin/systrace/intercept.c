@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.39 2003/05/17 03:09:59 sturm Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.40 2003/06/16 06:36:40 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -79,6 +79,8 @@ void (*intercept_newimagecb)(int, pid_t, int, const char *, const char *, void *
 void *intercept_newimagecbarg = NULL;
 short (*intercept_gencb)(int, pid_t, int, const char *, int, const char *, void *, int, void *) = NULL;
 void *intercept_gencbarg = NULL;
+void (*intercept_pfreecb)(int, void*);
+void *intercept_pfreearg = NULL;
 
 int
 sccompare(struct intercept_syscall *a, struct intercept_syscall *b)
@@ -221,6 +223,15 @@ intercept_register_execcb(void (*cb)(int, pid_t, int, const char *, const char *
 {
 	intercept_newimagecb = cb;
 	intercept_newimagecbarg = arg;
+
+	return (0);
+}
+
+int
+intercept_register_pfreecb(void (*cb)(int, void *), void *arg)
+{
+	intercept_pfreecb = cb;
+	intercept_pfreearg = arg;
 
 	return (0);
 }
@@ -902,4 +913,16 @@ intercept_isvalidsystemcall(char *emulation, char *name)
 	res = intercept.getsyscallnumber(emulation, name);
 
 	return (res != -1);
+}
+
+/*
+ * Call back when a user has exhausted the number of allowed policies
+ * in the kernel.  The kernel returns the policy number of a policy
+ * that has been purged.
+ */
+
+void
+intercept_policy_free(int policynr)
+{
+	(*intercept_pfreecb)(policynr, intercept_pfreearg);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.26 2003/06/02 02:03:51 itojun Exp $	*/
+/*	$OpenBSD: policy.c,v 1.27 2003/06/16 06:36:40 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -231,6 +231,47 @@ systrace_newpolicy(const char *emulation, const char *name)
 	TAILQ_INIT(&tmp->prefilters);
 
 	return (tmp);
+}
+
+void
+systrace_freepolicy(struct policy *policy)
+{
+	struct filter *filter;
+	struct policy_syscall *pflq;
+
+	if (policy->flags & POLICY_CHANGED) {
+		if (systrace_writepolicy(policy) == -1)
+			fprintf(stderr, "Failed to write policy for %s\n",
+			    policy->name);
+	}
+
+	while ((filter = TAILQ_FIRST(&policy->prefilters)) != NULL) {
+		TAILQ_REMOVE(&policy->prefilters, filter, policy_next);
+		filter_free(filter);
+	}
+
+	while ((filter = TAILQ_FIRST(&policy->filters)) != NULL) {
+		TAILQ_REMOVE(&policy->filters, filter, policy_next);
+		filter_free(filter);
+	}
+
+	while ((pflq = SPLAY_ROOT(&policy->pflqs)) != NULL) {
+		SPLAY_REMOVE(syscalltree, &policy->pflqs, pflq);
+
+		while ((filter = TAILQ_FIRST(&pflq->flq)) != NULL) {
+			TAILQ_REMOVE(&pflq->flq, filter, next);
+			filter_free(filter);
+		}
+
+		free(pflq);
+	}
+
+	SPLAY_REMOVE(policytree, &policyroot, policy);
+	if (policy->policynr != -1)
+		SPLAY_REMOVE(polnrtree, &polnrroot, policy);
+
+	free((char *)policy->name);
+	free(policy);
 }
 
 struct filterq *

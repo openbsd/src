@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.h,v 1.13 2003/03/28 11:52:05 mickey Exp $	*/
+/*	$OpenBSD: systrace.h,v 1.14 2003/06/16 06:36:40 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -62,14 +62,16 @@ struct str_msg_child {
 	pid_t new_pid;
 };
 
-#define SYSTR_MSG_ASK	1
-#define SYSTR_MSG_RES	2
-#define SYSTR_MSG_EMUL	3
-#define SYSTR_MSG_CHILD	4
-#define SYSTR_MSG_UGID	5
+#define SYSTR_MSG_ASK		1
+#define SYSTR_MSG_RES		2
+#define SYSTR_MSG_EMUL		3
+#define SYSTR_MSG_CHILD		4
+#define SYSTR_MSG_UGID		5
+#define SYSTR_MSG_POLICYFREE	6
 
 #define SYSTR_MSG_NOPROCESS(x) \
-	((x)->msg.msg_type == SYSTR_MSG_CHILD)
+	((x)->msg.msg_type == SYSTR_MSG_CHILD || \
+	 (x)->msg.msg_type == SYSTR_MSG_POLICYFREE)
 
 struct str_message {
 	int msg_type;

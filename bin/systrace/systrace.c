@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.42 2002/12/12 00:39:14 avsm Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.43 2003/06/16 06:36:40 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -124,7 +124,7 @@ make_output(char *output, size_t outlen, const char *binname,
 		if (line == NULL)
 			continue;
 
-		snprintf(p, size, ", %s: %s", tl->name, line);
+		snprintf(p, size, ", %s: %s", tl->name, strescape(line));
 		p = output + strlen(output);
 		size = outlen - strlen(output);
 
@@ -375,6 +375,18 @@ execres_cb(int fd, pid_t pid, int policynr, const char *emulation,
  error:
 	kill(pid, SIGKILL);
 	fprintf(stderr, "Terminating %d: %s\n", pid, name);
+}
+
+void
+policyfree_cb(int policynr, void *arg)
+{
+	struct policy *policy;
+
+	if ((policy = systrace_findpolnr(policynr)) == NULL)
+		errx(1, "%s:%d: find %d", __func__, __LINE__,
+		    policynr);
+
+	systrace_freepolicy(policy);
 }
 
 static void

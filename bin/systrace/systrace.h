@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.h,v 1.21 2003/05/29 00:39:12 itojun Exp $	*/
+/*	$OpenBSD: systrace.h,v 1.22 2003/06/16 06:36:40 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -137,6 +137,7 @@ struct template *systrace_readtemplate(char *, struct policy *,
     struct template *);
 void systrace_initcb(void);
 struct policy *systrace_newpolicy(const char *, const char *);
+void systrace_freepolicy(struct policy *);
 int systrace_newpolicynr(int, struct policy *);
 int systrace_modifypolicy(int, int, const char *, short);
 struct policy *systrace_findpolicy(const char *);
@@ -214,6 +215,7 @@ short trans_cb(int, pid_t, int, const char *, int, const char *, void *,
 short gen_cb(int, pid_t, int, const char *, int, const char *, void *,
     int, void *);
 void execres_cb(int, pid_t, int, const char *, const char *, void *);
+void policyfree_cb(int, void *);
 
 extern struct intercept_translate ic_oflags;
 extern struct intercept_translate ic_modeflags;

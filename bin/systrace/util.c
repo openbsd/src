@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.9 2002/10/09 03:52:10 itojun Exp $	*/
+/*	$OpenBSD: util.c,v 1.10 2003/06/16 06:36:40 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -33,8 +33,40 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdio.h>
+#include <err.h>
 
 #include "util.h"
+
+char *
+strescape(char *str)
+{
+	static char escape[8192];
+	int i, p;
+
+	for (p = i = 0; i < strlen(str) && p < sizeof(escape) - 1; i++) {
+		char a = str[i];
+		switch (a) {
+		case '\r':
+			a = 'r';
+			goto doescape;
+		case '\n':
+			a = 'n';
+			goto doescape;
+		case '\\':
+		case '\"':
+		doescape:
+			escape[p++] = '\\';
+			if (p >= sizeof(escape) - 1)
+				errx(1, "%s: string too long: %s",
+				    __func__, str);
+		default:
+			escape[p++] = a;
+		}
+	}
+
+	escape[p] = '\0';
+	return (escape);
+}
 
 char *
 strrpl(char *str, size_t size, char *match, char *value)

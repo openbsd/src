@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.2 2002/10/09 03:52:10 itojun Exp $	*/
+/*	$OpenBSD: util.h,v 1.3 2003/06/16 06:36:40 itojun Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -34,6 +34,7 @@
 #define _UTIL_H_
 
 void simplify_path(char *);
+char *strescape(char *);
 char *strrpl(char *, size_t, char *, char *);
 
 #endif /* !_UTIL_H_ */
