@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.167 2002/06/17 00:09:44 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.168 2002/07/18 20:37:47 provos Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -170,6 +170,9 @@ distribution-etc-root-var: distrib-dirs
 		    ${DESTDIR}/etc/afs; \
 		${INSTALL} -c -o root -g wheel -m 644 README \
 		    ${DESTDIR}/etc/afs
+	cd systrace; \
+		${INSTALL} -c -o root -g wheel -m 600 usr_sbin_named \
+		    ${DESTDIR}/etc/systrace;
 	cd namedb; \
 	    ${INSTALL} -c -o root -g ${BINGRP} -m 644 named.boot \
 		${DESTDIR}/var/named; \
