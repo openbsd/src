@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.38 1999/04/09 23:30:06 niklas Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.39 1999/04/11 19:41:41 niklas Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.38 1999/04/09 23:30:06 niklas Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.39 1999/04/11 19:41:41 niklas Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,6 +64,8 @@ static char *rcsid = "$OpenBSD: sysctl.c,v 1.38 1999/04/09 23:30:06 niklas Exp $
 #include <netinet/in_pcb.h>
 #include <netinet/ip_icmp.h>
 #include <netinet/ip_ip4.h>
+#include <netinet/ip_ah.h>
+#include <netinet/ip_esp.h>
 #include <netinet/icmp_var.h>
 #include <netinet/ip_var.h>
 #include <netinet/udp.h>
@@ -77,8 +79,6 @@ static char *rcsid = "$OpenBSD: sysctl.c,v 1.38 1999/04/09 23:30:06 niklas Exp $
 #include <netipx/spx_var.h>
 #include <ddb/db_var.h>
 #include <dev/rndvar.h>
-#include <net/pfkeyv2.h>
-#include <netinet/ip_ipsp.h>
 
 #include <err.h>
 #include <errno.h>
@@ -153,7 +153,6 @@ void parse_baddynamic __P((int *, size_t, char *, void **, size_t *, int, int));
 void usage __P((void));
 int findname __P((char *, char *, char **, struct list *));
 int sysctl_inet __P((char *, char **, int *, int, int *));
-int sysctl_ipsec __P((char *, char **, int *, int, int *));
 int sysctl_ipx __P((char *, char **, int *, int, int *));
 int sysctl_fs __P((char *, char **, int *, int, int *));
 int sysctl_bios __P((char *, char **, int *, int, int *));
@@ -388,12 +387,6 @@ parse(string, flags)
 		}
 		if (mib[1] == PF_IPX) {
 			len = sysctl_ipx(string, &bufp, mib, flags, &type);
-			if (len >= 0)
-				break;
-			return;
-		}
-		if (mib[1] == PF_KEY) {
-			len = sysctl_ipsec(string, &bufp, mib, flags, &type);
 			if (len >= 0)
 				break;
 			return;
@@ -886,59 +879,14 @@ sysctl_bios(string, bufpp, mib, flags, typep)
 }
 #endif
 
-struct ctlname encapname[] = PFKEYCTL_NAMES;
-struct ctlname ipsecname[] = CTL_IPSEC_NAMES;
-struct list ipseclist = { ipsecname, IPSECCTL_MAXID };
-struct list ipsecvars[] = {
-	{ encapname, IPSECCTL_MAXID }, 
-};
-
-/*
- * handle ipsec requests
- */
-int
-sysctl_ipsec(string, bufpp, mib, flags, typep)
-	char *string;
-	char **bufpp;
-	int mib[];
-	int flags;
-	int *typep;
-{
-	struct list *lp;
-	int indx;
-
-	if (*bufpp == NULL) {
-		listall(string, &ipseclist);
-		return(-1);
-	}
-	if ((indx = findname(string, "third", bufpp, &ipseclist)) == -1)
-		return(-1);
-	mib[2] = indx;
-	if (indx <= IPSECCTL_MAXID && ipsecvars[indx].list != NULL)
-		lp = &ipsecvars[indx];
-	else if (!flags)
-		return(-1);
-	else {
-		warnx("%s: no variables defined for this protocol", string);
-		return(-1);
-	}
-	if (*bufpp == NULL) {
-		listall(string, lp);
-		return(-1);
-	}
-	if ((indx = findname(string, "fourth", bufpp, lp)) == -1)
-		return(-1);
-	mib[3] = indx;
-	*typep = lp->list[indx].ctl_type;
-	return(4);
-}
-
 struct ctlname inetname[] = CTL_IPPROTO_NAMES;
 struct ctlname ipname[] = IPCTL_NAMES;
 struct ctlname icmpname[] = ICMPCTL_NAMES;
 struct ctlname ip4name[] = IP4CTL_NAMES;
 struct ctlname tcpname[] = TCPCTL_NAMES;
 struct ctlname udpname[] = UDPCTL_NAMES;
+struct ctlname espname[] = ESPCTL_NAMES;
+struct ctlname ahname[] = AHCTL_NAMES;
 struct list inetlist = { inetname, IPPROTO_MAXID };
 struct list inetvars[] = {
 	{ ipname, IPCTL_MAXID },	/* ip */
@@ -959,6 +907,40 @@ struct list inetvars[] = {
 	{ 0, 0 },
 	{ 0, 0 },
 	{ udpname, UDPCTL_MAXID },	/* udp */
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ espname, ESPCTL_MAXID },	/* esp */
+	{ ahname, AHCTL_MAXID },	/* ah */
 };
 
 /*
@@ -982,7 +964,7 @@ sysctl_inet(string, bufpp, mib, flags, typep)
 	if ((indx = findname(string, "third", bufpp, &inetlist)) == -1)
 		return(-1);
 	mib[2] = indx;
-	if (indx <= IPPROTO_UDP && inetvars[indx].list != NULL)
+	if (indx < IPPROTO_MAXID && inetvars[indx].list != NULL)
 		lp = &inetvars[indx];
 	else if (!flags)
 		return(-1);

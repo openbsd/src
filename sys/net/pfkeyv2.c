@@ -29,6 +29,8 @@ you didn't get a copy, you may request one from <license@inner.net>.
 #include <netinet/in.h>
 #include <net/pfkeyv2.h>
 #include <netinet/ip_ipsp.h>
+#include <netinet/ip_ah.h>
+#include <netinet/ip_esp.h>
 
 #define PFKEYV2_PROTOCOL 2
 #define GETSPI_TRIES 10
@@ -746,18 +748,34 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
       switch (((struct sadb_msg *)headers[0])->sadb_msg_satype) {
 	case SADB_SATYPE_AH:
+	    if (!ah_enable) {
+		rval = EOPNOTSUPP;
+		goto ret;
+	    }
 	    sa.tdb_sproto = IPPROTO_AH;
 	    break;
 	    
 	case SADB_SATYPE_ESP:
+	    if (!esp_enable) {
+		rval = EOPNOTSUPP;
+		goto ret;
+	    }
 	    sa.tdb_sproto = IPPROTO_ESP;
 	    break;
 
 	case SADB_SATYPE_X_AH_OLD:
+	    if (!ah_enable) {
+		rval = EOPNOTSUPP;
+		goto ret;
+	    }
 	    sa.tdb_sproto = IPPROTO_AH;
 	    break;
 	    
 	case SADB_SATYPE_X_ESP_OLD:
+	    if (!esp_enable) {
+		rval = EOPNOTSUPP;
+		goto ret;
+	    }
 	    sa.tdb_sproto = IPPROTO_ESP;
 	    break;
 
@@ -813,21 +831,37 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	  bzero(&ii, sizeof(struct ipsecinit));
 	  switch (((struct sadb_msg *)headers[0])->sadb_msg_satype) {
 	      case SADB_SATYPE_AH:
+		  if (!ah_enable) {
+		      rval = EOPNOTSUPP;
+		      goto ret;
+		  }
 		  newsa->tdb_sproto = IPPROTO_AH;
 		  alg = XF_NEW_AH;
 		  break;
 	    
 	      case SADB_SATYPE_ESP:
+		  if (!esp_enable) {
+		      rval = EOPNOTSUPP;
+		      goto ret;
+		  }
 		  newsa->tdb_sproto = IPPROTO_ESP;
 		  alg = XF_NEW_ESP;
 		  break;
 
 	      case SADB_SATYPE_X_AH_OLD:
+		  if (!ah_enable) {
+		      rval = EOPNOTSUPP;
+		      goto ret;
+		  }
 		  newsa->tdb_sproto = IPPROTO_AH;
 		  alg = XF_OLD_AH;
 		  break;
 	    
 	      case SADB_SATYPE_X_ESP_OLD:
+		  if (!esp_enable) {
+		      rval = EOPNOTSUPP;
+		      goto ret;
+		  }
 		  newsa->tdb_sproto = IPPROTO_ESP;
 		  alg = XF_OLD_ESP;
 		  break;
@@ -922,21 +956,37 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	bzero(&ii, sizeof(struct ipsecinit));
 	switch (((struct sadb_msg *)headers[0])->sadb_msg_satype) {
 	    case SADB_SATYPE_AH:
+		if (!ah_enable) {
+		    rval = EOPNOTSUPP;
+		    goto ret;
+		}
 		newsa->tdb_sproto = IPPROTO_AH;
 		alg = XF_NEW_AH;
 		break;
 	    
 	    case SADB_SATYPE_ESP:
+		if (!esp_enable) {
+		    rval = EOPNOTSUPP;
+		    goto ret;
+		}
 		newsa->tdb_sproto = IPPROTO_ESP;
 		alg = XF_NEW_ESP;
 		break;
 		
 	    case SADB_SATYPE_X_AH_OLD:
+		if (!ah_enable) {
+		    rval = EOPNOTSUPP;
+		    goto ret;
+		}
 		newsa->tdb_sproto = IPPROTO_AH;
 		alg = XF_OLD_AH;
 		break;
 	    
 	    case SADB_SATYPE_X_ESP_OLD:
+		if (!esp_enable) {
+		    rval = EOPNOTSUPP;
+		    goto ret;
+		}
 		newsa->tdb_sproto = IPPROTO_ESP;
 		alg = XF_OLD_ESP;
 		break;

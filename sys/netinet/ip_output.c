@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.44 1999/03/27 21:04:20 provos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.45 1999/04/11 19:41:39 niklas Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -64,7 +64,8 @@
 #include <machine/stdarg.h>
 
 #ifdef IPSEC
-#include <netinet/ip_ipsp.h>
+#include <netinet/ip_ah.h>
+#include <netinet/ip_esp.h>
 #include <netinet/udp.h>
 #include <netinet/tcp.h>
 
@@ -167,14 +168,14 @@ ip_output(m0, va_alist)
 	/*
 	 * Check if the packet needs encapsulation
 	 */
-	if (!(flags & IP_ENCAPSULATED) && 
+	if (!(flags & IP_ENCAPSULATED) &&
 	    (inp == NULL || 
-	     (inp->inp_seclevel[SL_AUTH] != IPSEC_LEVEL_BYPASS ||
-	      inp->inp_seclevel[SL_ESP_TRANS] != IPSEC_LEVEL_BYPASS ||
-	      inp->inp_seclevel[SL_ESP_NETWORK] != IPSEC_LEVEL_BYPASS))) {
+	     inp->inp_seclevel[SL_AUTH] != IPSEC_LEVEL_BYPASS ||
+	     inp->inp_seclevel[SL_ESP_TRANS] != IPSEC_LEVEL_BYPASS ||
+	     inp->inp_seclevel[SL_ESP_NETWORK] != IPSEC_LEVEL_BYPASS)) {
 		struct route_enc re0, *re = &re0;
 		struct sockaddr_encap *ddst, *gw;
-		struct tdb *tdb;
+		struct tdb *tdb, *t;
 		u_int8_t sa_require, sa_have = 0;
 
 		if (inp == NULL)
@@ -317,6 +318,18 @@ ip_output(m0, va_alist)
 			m_freem(m);
 			goto done;
 		}
+
+		for (t = tdb; t != NULL; t = t->tdb_onext)
+		    if ((t->tdb_sproto == IPPROTO_ESP && !esp_enable) ||
+			(t->tdb_sproto == IPPROTO_AH && !ah_enable)) {
+		        DPRINTF(("ip_output(): IPSec outbound packet dropped due to policy\n"));
+
+			if (re->re_rt)
+                        	RTFREE(re->re_rt);
+			error = EHOSTUNREACH;
+			m_freem(m);
+			goto done;
+		    }
 
 		/* Fix the ip_src field if necessary */
 		if (ip->ip_src.s_addr == INADDR_ANY) {

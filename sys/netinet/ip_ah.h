@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.h,v 1.15 1999/02/24 23:45:47 angelos Exp $	*/
+/*	$OpenBSD: ip_ah.h,v 1.16 1999/04/11 19:41:37 niklas Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -68,6 +68,7 @@ struct ahstat
     u_int64_t	ahs_ibytes;	/* input bytes */
     u_int64_t   ahs_obytes;	/* output bytes */
     u_int32_t	ahs_toobig;	/* packet got larger than IP_MAXPACKET */
+    u_int32_t	ahs_pdrops;	/* packet blocked due to policy */
 };
 
 struct ah_new
@@ -82,6 +83,23 @@ struct ah_new
 
 #define AH_NEW_FLENGTH		(sizeof(struct ah_new))
 
+/*
+ * Names for AH sysctl objects
+ */
+#define	AHCTL_ENABLE	1		/* Enable AH processing */
+#define AHCTL_MAXID	2
+
+#define AHCTL_NAMES { \
+	{ 0, 0 }, \
+	{ "enable", CTLTYPE_INT }, \
+}
+
 #ifdef _KERNEL
+void	ah_input __P((struct mbuf *, ...));
+int	ah_output __P((struct mbuf *, struct sockaddr_encap *,
+    struct tdb *, struct mbuf **));
+int	ah_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
+
+extern int ah_enable;
 struct ahstat ahstat;
 #endif /* _KERNEL */

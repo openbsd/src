@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.h,v 1.22 1999/02/24 23:45:49 angelos Exp $	*/
+/*	$OpenBSD: ip_esp.h,v 1.23 1999/04/11 19:41:38 niklas Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -76,8 +76,26 @@ struct espstat
     u_int64_t	esps_ibytes;	/* input bytes */
     u_int64_t   esps_obytes;	/* output bytes */
     u_int32_t	esps_toobig;	/* packet got larger than IP_MAXPACKET */
+    u_int32_t	esps_pdrops;	/* packet blocked due to policy */
 };
 
+/*
+ * Names for ESP sysctl objects
+ */
+#define	ESPCTL_ENABLE	1		/* Enable ESP processing */
+#define ESPCTL_MAXID	2
+
+#define ESPCTL_NAMES { \
+	{ 0, 0 }, \
+	{ "enable", CTLTYPE_INT }, \
+}
+
 #ifdef _KERNEL
+void	esp_input __P((struct mbuf *, ...));
+int	esp_output __P((struct mbuf *, struct sockaddr_encap *,
+    struct tdb *, struct mbuf **));
+int	esp_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
+
+extern int esp_enable;
 struct espstat espstat;
 #endif /* _Kernel */

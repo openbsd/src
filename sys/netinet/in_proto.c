@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.12 1999/04/09 23:28:45 niklas Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.13 1999/04/11 19:41:36 niklas Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -112,14 +112,9 @@ void	iplinit __P((void));
 
 #ifdef IPSEC
 #include <netinet/ip_ipsp.h>
+#include <netinet/ip_ah.h>
+#include <netinet/ip_esp.h>
 #include <netinet/ip_ip4.h>
-
-extern void ah_input __P((struct mbuf *, ...));
-extern void esp_input __P((struct mbuf *, ...));
-extern int ah_output __P((struct mbuf *, struct sockaddr_encap *,
-    struct tdb *, struct mbuf **));
-extern int esp_output __P((struct mbuf *, struct sockaddr_encap *,
-    struct tdb *, struct mbuf **));
 #endif
 
 extern	struct domain inetdomain;
@@ -201,12 +196,12 @@ struct protosw inetsw[] = {
 { SOCK_RAW,   &inetdomain,    IPPROTO_AH,     PR_ATOMIC|PR_ADDR,
   ah_input,   rip_output,     0,              rip_ctloutput,
   rip_usrreq,
-  0,          0,              0,              0,
+  0,          0,              0,              0,		ah_sysctl
 },
 { SOCK_RAW,   &inetdomain,    IPPROTO_ESP,    PR_ATOMIC|PR_ADDR,
   esp_input,  rip_output,     0,              rip_ctloutput,
   rip_usrreq,
-  0,          0,              0,              0,
+  0,          0,              0,              0,		esp_sysctl
 },
 #endif
 #ifdef INET6

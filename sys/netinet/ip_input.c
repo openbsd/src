@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.37 1999/02/21 04:01:46 deraadt Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.38 1999/04/11 19:41:38 niklas Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -64,6 +64,7 @@
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
 #include <netinet/ip_icmp.h>
+#include <netinet/ip_ipsp.h>
 
 #ifndef	IPFORWARDING
 #ifdef GATEWAY
@@ -1430,6 +1431,8 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case IPCTL_IPPORT_MAXQUEUE:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &ip_maxqueue));
+	case IPCTL_ENCDEBUG:
+		return (sysctl_int(oldp, oldlenp, newp, newlen, &encdebug));
 	default:
 		return (EOPNOTSUPP);
 	}

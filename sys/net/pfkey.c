@@ -32,11 +32,7 @@ you didn't get a copy, you may request one from <license@inner.net>.
 #include <sys/protosw.h>
 #include <sys/domain.h>
 #include <net/raw_cb.h>
-#include <sys/sysctl.h>
 #include <netinet/ip_ipsp.h>
-
-int pfkey_sysctl(int *, u_int, void *, size_t *, void *, size_t);
-extern int encdebug;
 
 struct pfkey_version {
   int protocol;
@@ -242,28 +238,8 @@ static struct protosw pfkey_protosw_template = {
   NULL, /* fasttimo */
   NULL, /* slowtimo */
   NULL, /* drain */
-  pfkey_sysctl,
+  NULL	/* sysctl */
 };
-
-/* XXX fix this so it's reachable */
-int
-pfkey_sysctl(int *name, u_int namelen, void *oldp, size_t *oldplenp, 
-	     void *newp, size_t newlen)
-{
-    /* All sysctl names at this level are terminal */
-    if (namelen != 1)
-      return ENOTDIR;
-
-    switch (name[0]) 
-    {
-        case PFKEYCTL_ENCDEBUG:
-	    return (sysctl_int(oldp, oldplenp, newp, newlen, &encdebug));
-	    
-	default:
-	    return ENOPROTOOPT;
-    }
-    /* Not reached */
-}
 
 static int
 pfkey_buildprotosw(void)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.22 1999/04/09 23:28:44 niklas Exp $	*/
+/*	$OpenBSD: in.h,v 1.23 1999/04/11 19:41:36 niklas Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -456,7 +456,7 @@ struct in6_pktinfo {
  * Third level is protocol number.
  * Fourth level is desired variable within that protocol.
  */
-#define	IPPROTO_MAXID	(IPPROTO_IDP + 1)	/* don't list to IPPROTO_MAX */
+#define	IPPROTO_MAXID	(IPPROTO_AH + 1)	/* don't list to IPPROTO_MAX */
 
 #define	CTL_IPPROTO_NAMES { \
 	{ "ip", CTLTYPE_NODE }, \
@@ -481,7 +481,36 @@ struct in6_pktinfo {
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, \
-	{ "idp", CTLTYPE_NODE }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ "esp", CTLTYPE_NODE }, \
+	{ "ah", CTLTYPE_NODE }, \
 }
 
 /*
@@ -500,14 +529,15 @@ struct in6_pktinfo {
 #define IPCTL_IPPORT_HIFIRSTAUTO 9
 #define IPCTL_IPPORT_HILASTAUTO	10
 #define	IPCTL_IPPORT_MAXQUEUE	11
-#define	IPCTL_MAXID		12
+#define	IPCTL_ENCDEBUG		12
+#define	IPCTL_MAXID		13
 
 #define	IPCTL_NAMES { \
 	{ 0, 0 }, \
 	{ "forwarding", CTLTYPE_INT }, \
 	{ "redirect", CTLTYPE_INT }, \
 	{ "ttl", CTLTYPE_INT }, \
-	{ "mtu", CTLTYPE_INT }, \
+	/* { "mtu", CTLTYPE_INT }, */ { 0, 0 }, \
 	{ "sourceroute", CTLTYPE_INT }, \
 	{ "directed-broadcast", CTLTYPE_INT }, \
 	{ "portfirst", CTLTYPE_INT }, \
@@ -515,6 +545,7 @@ struct in6_pktinfo {
 	{ "porthifirst", CTLTYPE_INT }, \
 	{ "porthilast", CTLTYPE_INT }, \
 	{ "maxqueue", CTLTYPE_INT }, \
+	{ "encdebug", CTLTYPE_INT }, \
 }
 
 #ifndef _KERNEL

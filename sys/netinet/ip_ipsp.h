@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.28 1999/03/27 21:04:19 provos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.29 1999/04/11 19:41:39 niklas Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -378,24 +378,6 @@ htonq(u_int64_t q)
 #else
 #error  "Please fix <machine/endian.h>"
 #endif                                          
-
-/*
- * Names for IPsec sysctl objects
- */
-#define IPSECCTL_PFKEY  		0
-#define IPSECCTL_MAXID			1
-
-#define CTL_IPSEC_NAMES {\
-	{ "pfkey", CTLTYPE_NODE }, \
-}
-
-#define PFKEYCTL_ENCDEBUG	1
-#define PFKEYCTL_MAXID		2
-
-#define PFKEYCTL_NAMES {\
-	{ 0, 0 }, \
-	{ "encdebug", CTLTYPE_INT }, \
-}
 
 #ifdef _KERNEL
 extern int encdebug;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.32 1999/04/09 23:30:05 niklas Exp $	*/
+/*	$OpenBSD: inet.c,v 1.33 1999/04/11 19:41:40 niklas Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.32 1999/04/09 23:30:05 niklas Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.33 1999/04/11 19:41:40 niklas Exp $";
 #endif
 #endif /* not lint */
 
@@ -624,6 +624,7 @@ ah_stats(off, name)
 	p(ahs_input, "\t%u input AH packets\n");
 	p(ahs_output, "\t%u output AH packets\n");
         p(ahs_hdrops, "\t%u packet%s shorter than header shows\n");
+        p(ahs_pdrops, "\t%u packet%s dropped due to policy\n");
         p(ahs_notdb, "\t%u packet%s for which no TDB was found\n");
         p(ahs_badkcr, "\t%u input packet%s that failed to be processed\n");
         p(ahs_badauth, "\t%u packet%s that failed verification received\n");
@@ -662,6 +663,7 @@ esp_stats(off, name)
 	p(esps_input, "\t%u input ESP packets\n");
 	p(esps_output, "\t%u output ESP packets\n");
         p(esps_hdrops, "\t%u packet%s shorter than header shows\n");
+        p(esps_pdrops, "\t%u packet%s dropped due to policy\n");
         p(esps_notdb, "\t%u packet%s for which no TDB was found\n");
         p(esps_badkcr, "\t%u input packet%s that failed to be processed\n");
         p(esps_badauth, "\t%u packet%s that failed verification received\n");

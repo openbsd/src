@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.20 1999/04/09 22:27:53 niklas Exp $	*/
+/*	$OpenBSD: ip_esp.c,v 1.21 1999/04/11 19:41:37 niklas Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -47,6 +47,7 @@
 #include <sys/domain.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
+#include <sys/sysctl.h>
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
@@ -82,15 +83,21 @@ extern struct ifnet enc_softc;
 #define DPRINTF(x)
 #endif
 
-void esp_input __P((struct mbuf *, int));
+int esp_enable = 0;
 
 /*
  * esp_input gets called when we receive an packet with an ESP.
  */
 
 void
-esp_input(register struct mbuf *m, int iphlen)
+#if __STDC__
+esp_input(struct mbuf *m, ...)
+#else
+esp_input(m, va_alist)
+	register struct mbuf *m;
+#endif
 {
+    int iphlen;
     union sockaddr_union sunion;
     struct ifqueue *ifq = NULL;
     struct expiration *exp;
@@ -98,8 +105,20 @@ esp_input(register struct mbuf *m, int iphlen)
     struct tdb *tdbp;
     u_int32_t spi;
     int s;
+    va_list ap;
 	
+    va_start(ap, m);
+    iphlen = va_arg(ap, int);
+    va_end(ap);
+
     espstat.esps_input++;
+
+    if (!esp_enable)
+    {
+        m_freem(m);
+        espstat.esps_pdrops++;
+        return;
+    }
 
     /*
      * Make sure that at least the SPI is in the same mbuf
@@ -315,4 +334,26 @@ esp_input(register struct mbuf *m, int iphlen)
     schednetisr(NETISR_IP);
     splx(s);
     return;
+}
+
+int
+esp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+{
+	/* All sysctl names at this level are terminal. */
+	if (namelen != 1)
+		return (ENOTDIR);
+
+	switch (name[0]) {
+	case ESPCTL_ENABLE:
+		return (sysctl_int(oldp, oldlenp, newp, newlen, &esp_enable));
+	default:
+		return (ENOPROTOOPT);
+	}
+	/* NOTREACHED */
 }

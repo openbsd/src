@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.20 1999/04/09 22:27:54 niklas Exp $	*/
+/*	$OpenBSD: ip_ah.c,v 1.21 1999/04/11 19:41:36 niklas Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -47,6 +47,7 @@
 #include <sys/domain.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
+#include <sys/sysctl.h>
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
@@ -82,15 +83,21 @@ extern struct ifnet enc_softc;
 #define DPRINTF(x)
 #endif
 
-void ah_input __P((struct mbuf *, int));
+int ah_enable = 0;
 
 /*
  * ah_input gets called when we receive an packet with an AH.
  */
 
 void
-ah_input(register struct mbuf *m, int iphlen)
+#if __STDC__
+ah_input(struct mbuf *m, ...)
+#else
+ah_input(m, va_alist)
+	register struct mbuf *m;
+#endif
 {
+    int iphlen;
     union sockaddr_union sunion;
     struct ifqueue *ifq = NULL;
     struct ah_old *ahp, ahn;
@@ -98,8 +105,20 @@ ah_input(register struct mbuf *m, int iphlen)
     struct ip *ipo, ipn;
     struct tdb *tdbp;
     int s;
+    va_list ap;
 	
+    va_start(ap, m);
+    iphlen = va_arg(ap, int);
+    va_end(ap);
+
     ahstat.ahs_input++;
+
+    if (!ah_enable)
+    {
+        m_freem(m);
+        ahstat.ahs_pdrops++;
+        return;
+    }
 
     /*
      * Make sure that at least the fixed part of the AH header is
@@ -316,4 +335,26 @@ ah_input(register struct mbuf *m, int iphlen)
     schednetisr(NETISR_IP);
     splx(s);
     return;
+}
+
+int
+ah_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+{
+	/* All sysctl names at this level are terminal. */
+	if (namelen != 1)
+		return (ENOTDIR);
+
+	switch (name[0]) {
+	case AHCTL_ENABLE:
+		return (sysctl_int(oldp, oldlenp, newp, newlen, &ah_enable));
+	default:
+		return (ENOPROTOOPT);
+	}
+	/* NOTREACHED */
 }
