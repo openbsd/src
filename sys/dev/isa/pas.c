@@ -1,4 +1,4 @@
-/*	$OpenBSD: pas.c,v 1.16 1998/05/13 10:25:11 provos Exp $	*/
+/*	$OpenBSD: pas.c,v 1.17 1998/11/03 21:15:00 downsj Exp $	*/
 /*	$NetBSD: pas.c,v 1.37 1998/01/12 09:43:43 thorpej Exp $	*/
 
 /*
@@ -113,11 +113,11 @@ void	pasconf __P((int, int, int, int));
 struct audio_hw_if pas_hw_if = {
 	sbdsp_open,
 	sbdsp_close,
-	0,
+	NULL,
 	sbdsp_query_encoding,
 	sbdsp_set_params,
 	sbdsp_round_blocksize,
-	0,
+	NULL,
 	sbdsp_dma_init_output,
 	sbdsp_dma_init_input,
 	sbdsp_dma_output,
@@ -126,7 +126,7 @@ struct audio_hw_if pas_hw_if = {
 	sbdsp_haltdma,
 	sbdsp_speaker_ctl,
 	pas_getdev,
-	0,
+	NULL,
 	sbdsp_mixer_set_port,
 	sbdsp_mixer_get_port,
 	sbdsp_mixer_query_devinfo,
@@ -135,6 +135,8 @@ struct audio_hw_if pas_hw_if = {
 	sb_round,
         sb_mappage,
 	sbdsp_get_props,
+	NULL,
+	NULL
 };
 
 /* The Address Translation code is used to convert I/O register addresses to

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aria.c,v 1.3 1997/07/10 23:06:32 provos Exp $ */
+/*	$OpenBSD: aria.c,v 1.4 1998/11/03 21:14:58 downsj Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Roland C. Dowdeswell.  All rights reserved.
@@ -259,7 +259,9 @@ struct audio_hw_if aria_hw_if = {
 	aria_mixer_get_port,
 	aria_mixer_query_devinfo,
 	1,	/* full-duplex */
-	0
+	0,
+	NULL,
+	NULL
 };
 
 /*

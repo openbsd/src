@@ -1,4 +1,4 @@
-/*	$OpenBSD: sb.c,v 1.15 1998/05/13 10:25:10 provos Exp $	*/
+/*	$OpenBSD: sb.c,v 1.16 1998/11/03 21:15:01 downsj Exp $	*/
 /*	$NetBSD: sb.c,v 1.57 1998/01/12 09:43:46 thorpej Exp $	*/
 
 /*
@@ -77,11 +77,11 @@ int	sb_getdev __P((void *, struct audio_device *));
 struct audio_hw_if sb_hw_if = {
 	sbdsp_open,
 	sbdsp_close,
-	0,
+	NULL,
 	sbdsp_query_encoding,
 	sbdsp_set_params,
 	sbdsp_round_blocksize,
-	0,
+	NULL,
 	sbdsp_dma_init_output,
 	sbdsp_dma_init_input,
 	sbdsp_dma_output,
@@ -90,7 +90,7 @@ struct audio_hw_if sb_hw_if = {
 	sbdsp_haltdma,
 	sbdsp_speaker_ctl,
 	sb_getdev,
-	0,
+	NULL,
 	sbdsp_mixer_set_port,
 	sbdsp_mixer_get_port,
 	sbdsp_mixer_query_devinfo,
@@ -99,6 +99,8 @@ struct audio_hw_if sb_hw_if = {
 	sb_round,
         sb_mappage,
 	sbdsp_get_props,
+	NULL,
+	NULL
 };
 
 #ifdef AUDIO_DEBUG

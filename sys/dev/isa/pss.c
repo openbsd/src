@@ -1,12 +1,12 @@
-/*	$OpenBSD: pss.c,v 1.15 1998/05/13 10:25:07 provos Exp $ */
+/*	$OpenBSD: pss.c,v 1.16 1998/11/03 21:15:01 downsj Exp $ */
 /*	$NetBSD: pss.c,v 1.38 1998/01/12 09:43:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
  * Copyright (c) 1991-1993 Regents of the University of California.
- * All rightOAs reserved.
+ * All rights reserved.
  *
-x * Redistribution and use in source and binary forms, with or without
+ * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
@@ -246,6 +246,8 @@ struct audio_hw_if pss_audio_if = {
 	ad1848_round,
         ad1848_mappage,
 	ad1848_get_props,
+	NULL,
+	NULL
 };
 
 
