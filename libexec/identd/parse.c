@@ -77,7 +77,7 @@ timed_read(fd, buf, siz, timeout)
 		if ((error = select(fd + 1, &readfds, 0, 0, &tv)) <= 0)
 			return error;
 		r = read(fd, p, siz - tot);
-		if (r == -1)
+		if (r == -1 || r == 0)
 			return (r);
 		for (i = 0; i < r; i++)
 			if (p[i] == '\r' || p[i] == '\n') {
