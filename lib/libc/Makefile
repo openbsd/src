@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 1996/09/15 10:09:06 tholo Exp $
+#	$OpenBSD: Makefile,v 1.10 1996/09/30 05:32:42 millert Exp $
 #
 # All library objects contain sccsid strings by default; they may be
 # excluded as a space-saving measure.  To produce a library that does
@@ -38,6 +38,7 @@ CLEANFILES+=tags
 .include "${.CURDIR}/gen/Makefile.inc"
 .include "${.CURDIR}/crypt/Makefile.inc"
 .include "${.CURDIR}/gmon/Makefile.inc"
+.include "${.CURDIR}/hash/Makefile.inc"
 .include "${.CURDIR}/locale/Makefile.inc"
 .include "${.CURDIR}/md/Makefile.inc"
 .include "${.CURDIR}/net/Makefile.inc"
