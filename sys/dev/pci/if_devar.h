@@ -1,3 +1,4 @@
+/*	$OpenBSD: if_devar.h,v 1.2 1997/07/29 19:31:47 downsj Exp $	*/
 /*	$NetBSD: if_devar.h,v 1.13 1997/06/08 18:46:36 thorpej Exp $	*/
 
 /*-
@@ -845,6 +846,9 @@ extern struct cfdriver decd;
 #define	loudprintf			aprint_verbose
 #define	printf				(*sc->tulip_pf)
 #define	MCNT(x) (sizeof(x) / sizeof(struct ifmedia_entry))
+#if (_BSD_VERSION == 199510)
+#define TULIP_ETHER_IFATTACH(sc)	ether_attach(&(sc)->tulip_if)
+#endif
 #elif _BSDI_VERSION <= 199401
 #define	DRQNONE				0
 #define	loudprintf			printf
