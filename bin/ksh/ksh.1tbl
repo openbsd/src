@@ -1,5 +1,5 @@
 '\" t
-.\"	$OpenBSD: ksh.1tbl,v 1.10 1998/09/07 16:44:32 aaron Exp $
+.\"	$OpenBSD: ksh.1tbl,v 1.11 1998/09/27 02:49:24 aaron Exp $
 .\"{{{}}}
 .\"{{{  Notes about man page
 .\"     - use the pseudo-macros .sh( and .sh) to begin and end sh-specific
@@ -1359,7 +1359,7 @@ the \fB()\fP notation:
 the \fB$0\fP parameter is set to the name of the function
 (Bourne-style functions leave \fB$0\fP untouched).
 .IP \ \ \(bu
-parameter assignments preceeding function calls are not kept in
+parameter assignments preceding function calls are not kept in
 the shell environment
 (executing Bourne-style functions will keep assignments).
 .IP \ \ \(bu
