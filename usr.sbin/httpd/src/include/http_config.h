@@ -273,6 +273,55 @@ typedef struct module_struct {
     void (*child_exit) (server_rec *, pool *);
 #endif
     int (*post_read_request) (request_rec *);
+
+#ifdef EAPI
+    /*
+     * ANSI C guarantees us that we can at least _extend_ the module structure
+     * with additional hooks without the need to change all existing modules.
+     * Because: ``If there are fewer initializers in the list than members of
+     * the structure, the trailing members are initialized with 0.'' (The C
+     * Programming Language, 2nd Ed., A8.7 Initialization). So we just
+     * have to put our additional hooks here:
+     *
+     * add_module: 
+     *     Called from within ap_add_module() right after the module structure
+     *     was linked into the Apache internal module list.  It is mainly
+     *     intended to be used to define configuration defines (<IfDefine>)
+     *     which have to be available directly after a LoadModule/AddModule.
+     *     Actually this is the earliest possible hook a module can use.
+     *
+     * remove_module: 
+     *     Called from within ap_remove_module() right before the module
+     *     structure is kicked out from the Apache internal module list.
+     *     Actually this is last possible hook a module can use and exists for
+     *     consistency with the add_module hook.
+     *
+     * rewrite_command:
+     *     Called right after a configuration directive line was read and
+     *     before it is processed. It is mainly intended to be used for
+     *     rewriting directives in order to provide backward compatibility to
+     *     old directive variants.
+     *
+     * new_connection:
+     *     Called from within the internal new_connection() function, right
+     *     after the conn_rec structure for the new established connection was
+     *     created and before Apache starts processing the request with
+     *     ap_read_request().  It is mainly intended to be used to setup/run
+     *     connection dependent things like sending start headers for
+     *     on-the-fly compression, etc.
+     */
+#ifdef ULTRIX_BRAIN_DEATH
+    void  (*add_module) ();
+    void  (*remove_module) ();
+    char *(*rewrite_command) ();
+    void  (*new_connection) ();
+#else
+    void  (*add_module) (struct module_struct *);
+    void  (*remove_module) (struct module_struct *);
+    char *(*rewrite_command) (cmd_parms *, void *config, const char *);
+    void  (*new_connection) (conn_rec *);
+#endif
+#endif /* EAPI */
 } module;
 
 /* Initializer for the first few module slots, which are only

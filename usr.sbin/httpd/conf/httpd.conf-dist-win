@@ -185,6 +185,7 @@ ThreadsPerChild 50
 #LoadModule speling_module modules/ApacheModuleSpeling.dll
 #LoadModule status_module modules/ApacheModuleStatus.dll
 #LoadModule usertrack_module modules/ApacheModuleUserTrack.dll
+#LoadModule ssl_module modules/ApacheModuleSSL.dll
 
 ### Section 2: 'Main' server configuration
 #

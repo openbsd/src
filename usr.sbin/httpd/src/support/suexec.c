@@ -214,7 +214,13 @@ static void clean_env(void)
     cidx++;
 
     for (ep = environ; *ep && cidx < AP_ENVBUF-1; ep++) {
+#ifdef MOD_SSL
+	if (!strncmp(*ep, "HTTP_", 5) || 
+	    !strncmp(*ep, "HTTPS", 5) ||
+	    !strncmp(*ep, "SSL_", 4)) {
+#else
 	if (!strncmp(*ep, "HTTP_", 5)) {
+#endif
 	    cleanenv[cidx] = *ep;
 	    cidx++;
 	}

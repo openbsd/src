@@ -206,6 +206,12 @@ int ap_proxy_http_handler(request_rec *r, cache_req *c, char *url,
 	return HTTP_BAD_REQUEST;
     urlptr += 3;
     destport = DEFAULT_HTTP_PORT;
+#ifdef EAPI
+    ap_hook_use("ap::mod_proxy::http::handler::set_destport", 
+                AP_HOOK_SIG2(int,ptr), 
+                AP_HOOK_TOPMOST,
+                &destport, r);
+#endif /* EAPI */
     strp = strchr(urlptr, '/');
     if (strp == NULL) {
 	desthost = ap_pstrdup(p, urlptr);
@@ -301,13 +307,41 @@ int ap_proxy_http_handler(request_rec *r, cache_req *c, char *url,
     f = ap_bcreate(p, B_RDWR | B_SOCKET);
     ap_bpushfd(f, sock, sock);
 
+#ifdef EAPI
+    {
+        char *errmsg = NULL;
+        ap_hook_use("ap::mod_proxy::http::handler::new_connection", 
+                    AP_HOOK_SIG3(ptr,ptr,ptr), 
+                    AP_HOOK_DECLINE(NULL),
+                    &errmsg, r, f);
+        if (errmsg != NULL)
+            return ap_proxyerror(r, errmsg);
+    }
+#endif /* EAPI */
+
     ap_hard_timeout("proxy send", r);
     ap_bvputs(f, r->method, " ", proxyhost ? url : urlptr, " HTTP/1.0" CRLF,
 	   NULL);
+#ifdef EAPI
+    {
+	int rc = DECLINED;
+	ap_hook_use("ap::mod_proxy::http::handler::write_host_header", 
+		    AP_HOOK_SIG6(int,ptr,ptr,ptr,int,ptr), 
+		    AP_HOOK_DECLINE(DECLINED),
+		    &rc, r, f, desthost, destport, destportstr);
+        if (rc == DECLINED) {
+	    if (destportstr != NULL && destport != DEFAULT_HTTP_PORT)
+		ap_bvputs(f, "Host: ", desthost, ":", destportstr, CRLF, NULL);
+	    else
+		ap_bvputs(f, "Host: ", desthost, CRLF, NULL);
+        }
+    }
+#else /* EAPI */
     if (destportstr != NULL && destport != DEFAULT_HTTP_PORT)
 	ap_bvputs(f, "Host: ", desthost, ":", destportstr, CRLF, NULL);
     else
 	ap_bvputs(f, "Host: ", desthost, CRLF, NULL);
+#endif /* EAPI */
 
     if (conf->viaopt == via_block) {
 	/* Block all outgoing Via: headers */

@@ -178,6 +178,9 @@ suexec_uidmin=100
 suexec_gidmin=100
 suexec_safepath="/usr/local/bin:/usr/bin:/bin"
 
+#   ssl defaults
+ssl=0
+
 #   various other flags
 support=1
 confadjust=1
@@ -858,7 +861,7 @@ echo "##  restoring your configuration. Additional parameters can be supplied." 
 echo "##" >>$configstatus
 echo "" >>$configstatus
 for var in CC CPP OPTIM CFLAGS CFLAGS_SHLIB LDFLAGS LD_SHLIB LDFLAGS_SHLIB \
-           LDFLAGS_SHLIB_EXPORT LIBS INCLUDES RANLIB DEPS TARGET; do
+           LDFLAGS_SHLIB_EXPORT LIBS INCLUDES RANLIB DEPS TARGET SSL_BASE RSA_BASE; do
     eval "val=\"\$$var\""
     if [ ".$val" != . ]; then
         echo "$var=$val" |\
@@ -901,6 +904,13 @@ if [ ".$PERL" = .no-perl-on-this-system ]; then
         echo " + Warning: no Perl interpreter available for support scripts."
         echo " + Perhaps you have to select one with --with-perl=FILE."
     fi
+fi
+
+##
+##  SSL support
+##
+if [ ".$module_ssl" = .yes ]; then
+    ssl=1
 fi
 
 ##
@@ -955,6 +965,7 @@ fi
 ##
 conf_group="#-1"
 conf_port="80"
+conf_port_ssl="443"
 conf_serveradmin="you@your.address"
 conf_servername="new.host.name"
 if [ ".$confadjust" = .1 ]; then
@@ -967,6 +978,7 @@ if [ ".$confadjust" = .1 ]; then
     fi
     if [ ".`id | grep root`" = . ]; then
         conf_port="8080"
+        conf_port_ssl="8443"
     fi
     conf_serveradmin="`$aux/buildinfo.sh -n %u@%h%d`"
     conf_servername="`$aux/buildinfo.sh -n %h%d`"
@@ -1018,6 +1030,7 @@ if [ ".$show_layout" = .1 ]; then
     echo "   SERVER_CONFIG_FILE: ${sysconfdir_relative}${thetarget}.conf"
     echo "   ACCESS_CONFIG_FILE: ${sysconfdir_relative}access.conf"
     echo " RESOURCE_CONFIG_FILE: ${sysconfdir_relative}srm.conf"
+    echo "  SSL_CERTIFCATE_FILE: ${sysconfdir_relative}ssl.crt/server.crt"
     echo ""
     if [ ".$suexec" = .1 ]; then
         echo "suEXEC setup:"
@@ -1068,8 +1081,10 @@ sed <Makefile.tmpl >$mkf \
 -e "s%@suexec_uidmin@%$suexec_uidmin%g" \
 -e "s%@suexec_gidmin@%$suexec_gidmin%g" \
 -e "s%@suexec_safepath@%$suexec_safepath%g" \
+-e "s%@ssl@%$ssl%g" \
 -e "s%@conf_group@%$conf_group%g" \
 -e "s%@conf_port@%$conf_port%g" \
+-e "s%@conf_port_ssl@%$conf_port_ssl%g" \
 -e "s%@conf_serveradmin@%$conf_serveradmin%g" \
 -e "s%@conf_servername@%$conf_servername%g" \
 -e "s%@build_support@%$build_support%g" \
@@ -1097,6 +1112,7 @@ echo "echo '-DTYPES_CONFIG_FILE=\"${sysconfdir_relative}mime.types\"'" >>$src/ap
 echo "echo '-DSERVER_CONFIG_FILE=\"${sysconfdir_relative}${thetarget}.conf\"'" >>$src/apaci
 echo "echo '-DACCESS_CONFIG_FILE=\"${sysconfdir_relative}access.conf\"'" >>$src/apaci
 echo "echo '-DRESOURCE_CONFIG_FILE=\"${sysconfdir_relative}srm.conf\"'" >>$src/apaci
+echo "echo '-DSSL_CERTIFCATE_FILE=\"${sysconfdir_relative}ssl.crt/server.crt\"'" >>$src/apaci
 chmod a+x $src/apaci
 CFLAGS="$CFLAGS \\\`\$(SRCDIR)/apaci\\\`"
 
@@ -1112,7 +1128,7 @@ touch $sedsubst
 #   generate settings from imported environment variables
 OIFS="$IFS" IFS="$DIFS"
 for var in CC CPP OPTIM CFLAGS CFLAGS_SHLIB LDFLAGS LD_SHLIB LDFLAGS_SHLIB \
-           LDFLAGS_SHLIB_EXPORT LIBS INCLUDES RANLIB DEPS TARGET; do
+           LDFLAGS_SHLIB_EXPORT LIBS INCLUDES RANLIB DEPS TARGET SSL_BASE RSA_BASE; do
     eval "val=\"\$$var\"";
     if [ ".$val" != . ]; then
         case $var in 

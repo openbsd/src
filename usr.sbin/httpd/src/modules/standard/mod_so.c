@@ -257,7 +257,12 @@ static const char *load_module(cmd_parms *cmd, void *dummy,
      * Make sure the found module structure is really a module structure
      * 
      */
+#ifdef EAPI
+    if (   modp->magic != MODULE_MAGIC_COOKIE_AP13 
+        && modp->magic != MODULE_MAGIC_COOKIE_EAPI) {
+#else
     if (modp->magic != MODULE_MAGIC_COOKIE) {
+#endif
         return ap_pstrcat(cmd->pool, "API module structure `", modname,
                           "' in file ", szModuleFile, " is garbled -"
                           " perhaps this is not an Apache module DSO?", NULL);

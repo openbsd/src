@@ -1,0 +1,2225 @@
+                       _             _ 
+   _ __ ___   ___   __| |    ___ ___| |  
+  | '_ ` _ \ / _ \ / _` |   / __/ __| |  
+  | | | | | | (_) | (_| |   \__ \__ \ |  mod_ssl - Apache Interface to SSLeay  
+  |_| |_| |_|\___/ \__,_|___|___/___/_|  http://www.engelschall.com/sw/mod_ssl/
+                       |_____|         
+  _____________________________________________________________________________
+
+                               ``The difference between a career 
+                                 and a job is about 20 hours a week.''
+  CHANGES
+
+  This file summarizes *all* types of changes to the mod_ssl package, i.e.
+  changes between each betalevel and patchlevel,  i.e. changes between
+  2.x.y->2.x.(y+1) and 2.x.y->2.(x+1).0.  Take this list as a reference for
+  concrete and detailed information about every single change.
+
+      ____    ____  
+     |___ \  |___ \ 
+       __) |   __) |
+      / __/ _ / __/ 
+  __ |_____(_)_____| _________________________________________
+               
+  Changes with mod_ssl 2.2.3 (05-Feb-1999 to 21-Feb-1999)
+   
+   *) Cleaned up the namespace of mod_ssl structures: 
+      All helper structures are now named ssl_xxxx_t.
+
+   *) Fixed hyperlinks to mod_log_config.html in mod_ssl's User Manual
+
+   *) Let mod_log_config's %{XXXX}x functions (provided by mod_ssl) correctly
+      expand to "-" instead of "" in case XXXX is not available as it's the
+      case for other mod_log_config functions.
+
+   *) Unbreak `SSLOptions +CompatEnvVar' by fixing two nasty bugs
+      and adding a missing variable.
+
+   *) Fixed a confusing "not"-typo in the FAQ.
+
+   *) Another round to get rid of the core dumps under the DSO situation when
+      DSOs are loaded to different memory addresses. We now no longer try to
+      preserve `RSA *' and `X509 *' structures of the SSL library between
+      Apache's init rounds. Because as we discovered, SSLeay/OpenSSL uses
+      various static variables inside these structures which is a big NO-NO
+      for the nasty Apache double-init round situation. Instead we now convert
+      the internal structures to DER/ASN.1 byte-streams allocated inside
+      mod_ssl's global memory pool. This now at least fixed the core dumps
+      under the Solaris/DSO situation for me.
+
+   *) Incorporated a few cleanups for the SDBM code Gred Stein sent me 
+      while he was adding SDBM to his mod_dav package.
+  
+  Changes with mod_ssl 2.2.2 (04-Feb-1999 to 05-Feb-1999)
+
+   *) Fixed `SSLOptions +FakeBasicAuth' and related stuff which
+      was broken because of a typo in a context variable name.
+
+   *) Fixed ToC in chapter 1 of the user manual.
+
+   *) Fixed export lists src/ApacheCore.def (Win32) and 
+      src/support/httpd.exp (AIX).
+
+  Changes with mod_ssl 2.2.1 (27-Jan-1999 to 04-Feb-1999)
+
+   *) Now the configure script uses bold mode to mark some
+      error messages under xterm, vt100 and vt220 terminals.
+   
+   *) Added a new chapter 5 (`HowTo') to the User Manual where solutions for
+      typical situations are presented.
+    
+   *) Now mod_ssl identifies itself to the SCCS `what' and RCS `ident'
+      commands with a string `mod_ssl/2.2.x'.  This allows one for instance to
+      quickly check what version a libssl.so by typing `what libssl.so' or
+      `ident libssl.so'.
+
+   *) Added a new directive `SSLProtocol' which is compatible to Stronghold
+      2.x's directive of the same name. It provides a handy way to control the
+      SSL protocol flavors (SSLv2, SSLv3, TLSv1) mod_ssl should provide on the
+      server side. It's use is a little bit similar to special cases of
+      SSLCipherSuite, but it actually directly affects internal behaviour of
+      the SSL library. So, saying `SSLProtocol all -SSLv3 -TLSv1' to get a
+      SSLv2 only server is not really equal to an `SSLCipherSuite' where just
+      all SSLv3 and TLSv1 ciphers are dropped.
+   
+   *) EAPI functions are now also added to src/ApacheCore.def.
+   
+   *) Output a warning when `SSLVerifyClient require' is used but no CAs are
+      configured for verification.  Additionally the `peer didn't return a
+      certificate' message is annotated with a similar hint.
+
+   *) Updated the README.dsov.{fig,ps} files to reflect the
+      additional internal data structure link from SSL* to request_rec*.
+
+  Changes with mod_ssl 2.2.0 (21-Jan-1999 to 27-Jan-1999)
+
+   *) Commit the long-prepared and long-awaited feature of 
+      per-directory SSL configuration parameters. 
+      
+      The background is this: SSL parameters like the Cipher Suite or the
+      certificate chain verification parameters up to now could only be
+      configured on a per-(virtual)server basis and this way apply to all URLs
+      under https://this-virtual-server/.  The drawback is obvious: You've to
+      find a common denominator for the whole website which isn't usually
+      possible. For instance just because you need client authentication
+      (``SSLVerifyClient require'') for https://this-virtual-server/foo/bar/,
+      this shouldn't mean you have to force client authentication for the
+      whole server. Same for ciphers: Just because a subarea needs to enforce
+      a stronger cipher (e.g. no export, no null cipher, etc.) shouldn't mean
+      that the whole website can only be visited with those requirements.  So
+      the idea is to enforce those (usually stronger) requirements on a
+      per-directory basis.
+
+      The problem is: It's a chicken and egg situation. To decide which
+      parameters should be enforced in the SSL handshake mod_ssl has first to
+      find out the requested directory. For this the HTTP request has to be
+      read. But for this the SSL handshake first has to be performed. Bingo!
+      
+      The nifty solution known from Netscape Commerce servers now is: We
+      simply do the standard SSL handshake, then we read the HTTP response,
+      then we perhaps reconfigure the parameters and enforce a second SSL
+      handshake (this is called "SSL renegotiation") with it. And only when
+      this handshake is also successful, the HTTP response is send.
+
+      How is this configured? You just put additional SSLVerifyClient,
+      SSLVerifyDepth and/or SSLCipherSuite directives in <Directory> or
+      <Location> containers or even .htaccess files. When Apache reaches those
+      directories, those directives reconfigure the SSL parameters and the SSL
+      renegotation is automatically enforced by mod_ssl. The only drawback is
+      that although an optimization is done to reduce unnecessary
+      renegotiations (when the parameters were not actually changed), you
+      usually increase the overhead for a request because a SSL renegotiation
+      is expensive. So, use the per-directory reconfiguration feature
+      economically.
+
+      Under SSL_EXPERIMENTAL additionally the directives SSLCACertificatePath
+      and SSLCACertificateFile can be used in per-directory context for
+      reconfiguration. But it's tagged experimental because SSLeay/OpenSSL
+      still lacks real support for this. So an ugly kludge has to be done to
+      support these two directives, too.
+      
+   *) Give out more information on "Certificate Chain too long" error message.
+
+   *) Moved SSLeay/OpenSSL specific stuff to the new source files
+      ssl_util_ssl.[ch]. !! ATTENTION: NOW SSLeay 0.9.0 or OpenSSL IS NEEDED
+      !!  Because the new internal structures need at least SSL_get_ex_data()
+      and SSL_set_ex_data() and those are not supported in SSLeay 0.8.x.  So
+      we removed all remaining support for SSLeay 0.8.0. OTOH that's no
+      problem, because SSLeay 0.8.x is known to be unstable, so it's
+      reasonable to remove support for it also for other reasons.
+
+   *) Added a second SSL context variable which holds (with a delay) a pointer
+      back to the request_rec structure in Apache.  This is needed to reach
+      the per-directory configuration parameters.
+   
+   *) Updated the User Manual for mod_ssl 2.2
+
+   *) Added SSL_EXPERIMENTAL rule to Configuration.tmpl which
+      can be used to enable (APACI: ``--enable-rule=SSL_EXPERIMENTAL'')
+      experimental code inside mod_ssl. Code is declared experimental unless
+      it is proofed to be stable by the users.
+
+   *) Replaced the GNU Bison generated ssl_expr_parse.[ch] files with variants
+      generated by BSD Yacc. This way we have more portable source because BSD
+      Yacc doesn't used alloca() and other tricks. This especially should
+      solve the problems under HP/UX.
+
+   *) Updated INSTALL file for recent changes and fixed a few typos there.
+
+   *) Add a SSL_SDBM rule to Apache's Configuration.tmpl which can be used
+      (APACI: ``--enable-rule=SSL_SDBM'') to force mod_ssl to built with the
+      built-in SDBM instead of the custom defined (DBM_LIB) or vendor supplied
+      DBM library. This is especially useful when the vendor DBM library is
+      buggy or restricts the data size too dramatically (BTW, Berkeley-DB/1.x,
+      Berkely-DB/2.x and GDBM based DBM libraries are ok, because they allow
+      unlimited data size).
+   
+   *) Enlarge the SDBM pag/dir blocksize from 1KB/4KB to 8KB/32KB to make sure
+      SDBM really can deal with SSL sessions containing long certificate
+      chains. !! ATTENTION: THIS MEANS THAT YOU'VE TO ONCE REMOVE THE FILE YOU
+      CONFIGURED WITH SSLSessioCache WHEN SDBM WAS USED AND YOU UPGRADE TO
+      THIS OR A LATER mod_ssl VERSION, BECAUSE THE INTERNAL LAYOUT CHANGED. SO
+      THE FILE HAS TO BE RECREATED WITH THE NEW LAYOUT !!
+
+   *) Make the DBM based session cache more robust by using additional error
+      situations. This should fix some observed core dumps on Linux boxes
+      where the vendor DBM library returned strange values.
+
+   *) Fixed configuration handling for global directives: Now the correct
+      memory pools are used and after the first configuration round the global
+      configuration structure is locked.
+
+   *) Added a new `SSLRandomSeed' directive for explicit seeding the Pseudo
+      Random Number Generator (PRNG) of the SSL library on server startup
+      and/or connection establishment time. The intent is that this way the
+      PRNG is better initialized and this way the security of the generated
+      SSL protocol ingredients are more secure (because less predictable). For
+      maximum flexibility you can use three seed sources: an internal source,
+      an external file or an an external program. And you can specify one or
+      more such sources, of course. For instance under a FreeBSD box you can
+      now use the following: 
+
+          SSLRandomSeed startup builtin
+          SSLRandomSeed startup exec:bin/truerand 16
+          SSLRandomSeed startup file:/dev/random  512
+          SSLRandomSeed startup file:/dev/urandom 512
+          SSLRandomSeed connect builtin
+          SSLRandomSeed connect file:/dev/random  512
+          SSLRandomSeed connect file:/dev/urandom 512
+
+      This would at server startup-time seed the PRNG first with a few bytes
+      from the internal source, plus 16 bytes read from stdout of the
+      `truerand' utility (which is based on the AT&T truerand library and can
+      be found in the mod_ssl distribution under pkg.contrib/), plus up to 512
+      bytes from the /dev/random device (it usually only returns a maximum
+      number of bits of randomness currently contained in the device entropy
+      pool) plus 512 bytes from the /dev/urandom device (which usually returns
+      as many bytes as requested, but of low random-quality). Additionally
+      before any new SSL connection is established the PRNG is again seed from
+      the internal source plus up to 512 bytes from /dev/random and plus 512
+      bytes from /dev/urandom. This should give an adequate seed for the PRNG
+      used for generating the SSL protocol ingredients.
+
+   *) Removed some unneccessary defines for `index' and `rindex'
+      in etc/patch/config.h which caused problems under AIX.
+   
+   *) Changed a misleading sentence about RSAref in INSTALL
+
+   *) Overtake the idea of Apache-SSL 1.30 to log SSL errors also directly
+      after SSL_read/SSL_write. This way those error messages should no longer
+      be missed.
+
+      ____    _ 
+     |___ \  / |
+       __) | | |
+      / __/ _| |
+  __ |_____(_)_| _____________________________________________
+
+  Changes with mod_ssl 2.1.8 (11-Jan-1999 to 21-Jan-1999)
+   
+   *) Added an additional variable REQUEST_SCHEME which can be used for in
+      SSLRequire, RewriteCond, RewriteRule, etc.  to forward or redirect
+      HTTP/HTTPS requests with the incoming URL scheme.
+
+   *) Surrounded ap_hook_[un]register() calls with wrapper macros to
+      implicitly cast the function pointers to void pointers, because strict
+      ANSI C requires this.
+
+   *) Added AP_HOOK_ALL support which can be used to call all registered
+      callback-functions for a hooks, independent of any decline value.
+      This will be used in the future by forthcoming features.
+
+   *) Fixed a potential security hole: Both the SSLMutex and SSLSessionCache
+      files are now created without read access for the group and others.
+
+   *) Fixed a typo in the SSL logfile hints and in the terminal
+      message displayed for the `make certificate' step.
+
+   *) Under Extended API situations we now replace the module magic cookie
+      "AP13" with "EAPI" to let us later distinguish between the EAPI-aware
+      module structures (which contain additional pointers at the end) and
+      standard module structures (which lack at least NULL's for the pointers
+      at the end of the structure). This is important because standard
+      ("AP13") modules would dump core when we dispatch over the additional
+      hooks because NULL's are missing at the end of the module structure. 
+
+      But we now to the following: We allow _both_ types of modules to be
+      loaded by mod_so, but dispatch over the EAPI hooks only when the module
+      magic cookie indicates "EAPI".  This way an Apache+EAPI server can load
+      module DSOs built with a plain Apache. That's important to allow people
+      for instance use mod_coldfusion (which is available only as a pre-built
+      DSO!) or allow the Debian package maintainers to finally build their
+      Apache package with EAPI without the need to upgrade all other module
+      packages at the same time.
+
+   *) The SSLMutex filename now is internally extended to contain the PID of
+      the Apache parent process to make the file unique across different
+      server instances. That's the same approach Apache already uses for the
+      accept mutex lockfile.
+
+   *) We now replace the MODULE_MAGIC_COOKIE ("AP13") with "EAPI" under -DEAPI
+      to make sure that mod_so only loads modules which were really compiled
+      with -DEAPI. Because else NULL's at the end of the module structure are
+      missing, which always will leads to core dumps when the Apache core
+      dispatches over it.
+
+   *) Removed hints to the test suite in INSTALL.Win32 because under this
+      platform there are more test suite problems before the tests can be
+      really reasonable.
+
+   *) Now mod_rewrite's %{XXXX} construct can also "magically" expand all
+      variables known to mod_ssl, i.e.  especially the SSL_XXXX variables.
+      This way you can use the same variables in a RewriteRule or RewriteCond
+      you're used to use in a SSLRequire directive.
+
+   *) Fixed a few type problems in ca-fix.c which caused strict ANSI C
+      compilers (not GCC) to complain and fail.  This especially fixed the
+      problems under AIX 4.2
+
+   *) Fixed a syntax problem GCC and VC++ never complained about: A trailing
+      comma on the last element of an enumeration declaration is not allowed,
+      of course.
+
+   *) Changed the EAPI usage inside mod_log_config.c to no longer store a
+      foreign function pointer (which belongs to mod_ssl) into internal
+      structures (because when mod_ssl is unloaded during restarts they evolve
+      into dangling references).
+
+   *) Cleaned up the verbose output of configure & configure.bat
+      and added also support for -v to configure.bat.
+
+   *) Make sure mod_ssl's configure script stops with an error
+      when Apache's configure (APACI) script stopped with an error.
+
+   *) Overtake the important idea from Khimenko Victor's EAPI variant to
+      _un_register EAPI hooks for the various modules when the module is
+      unloaded (DSO!). Without this dangling references occur inside the EAPI
+      hook lists which can cause core-dumps.
+
+   *) Fixed the %{errstr}c function provided for mod_log_config
+      and let %{errcode}c always expand to "-".
+
+   *) Fixed the self-referencing hyperlink in ssl_overview.html
+
+  Changes with mod_ssl 2.1.7 (06-Jan-1999 to 11-Jan-1999)
+
+   *) Fixed APXS support for configure script: The --with-apxs was broken when
+      `apxs' wasn't in the PATH.
+
+   *) Added hint for DSO/PIC-situation to the INSTALL file.
+
+   *) Changed the "you're speaking HTTP to the HTTPS port" error message from
+      HTTP_INTERNAL_SERVER_ERROR to BAD_REQUEST, because first BAD_REQUEST is
+      more correct and HTTP_INTERNAL_SERVER_ERROR from Apache 1.3.4 on no
+      longer displayed the "error-note".
+
+   *) Now finally use LIBS_SHLIB for APXS support (because Apache 1.3.4's apxs
+      is fixed) and also query the target name and no longer hard-code
+      "httpd".
+
+   *) Upgraded to Apache 1.3.4
+
+   *) Now the client IP and server virtual host id are displayed
+      in addition to the general handshake failure logfile message to make it
+      more meaningful inside the Apache error_log (where no SSL context is
+      given).
+
+   *) Remove the ca-fix "-pathlen 0" option in mkcert.sh when creating the
+      server cert. It's only useful for the CA certs.
+
+  Changes with mod_ssl 2.1.6 (02-Jan-1999 to 06-Jan-1999)
+
+   *) Be even more conservative and correct when aborting a connection: We now
+      set the conn_rec->aborted flag in addition to blocking the
+      connection/socket buffer.
+   
+   *) Added some sort of downgrading support to the logging function to no
+      longer create messages like "(SSLeay error follows)" although no such
+      message follows (because SSLeay has no one). The same is done for the
+      System/errno related messages.
+
+   *) Removed direct fiddling with the BUFF->flags stuff. Instead we now use
+      the API conforming way via ap_bsetflag().
+
+   *) Added timeout support for the SSL handshake phase. The timeout in
+      seconds is the same as configured with the standard Apache "Timeout"
+      directive for the HTTP request phase. This way one can defend against
+      special DoS attacks (where the attacker just establishes a lot of
+      parallel connections but doesn't send data) to the HTTPS port the same
+      way one can already do it for the HTTP ports.
+
+   *) Fixed a display error in the `debug' dump messages and made
+      the debug dumping more robust by explicitly checking for the case where
+      SSLeay gives us either a NULL memory pointer or a memory length of -1.
+
+   *) Fixed the "Exit: ..." trace messages: They wrote out an (unnecessary)
+      additional newline which optically broke the tracing messages.
+
+   *) Fixed the "you're speaking HTTP to the HTTPS port" error handling.
+      mod_ssl caused a core dump of the Apache child because the request
+      processing functions were not aware that a dynamically downgraded (from
+      HTTPS to HTTP) request can exists for error sitiations.
+
+   *) Added the EAPI functions to src/support/httpd.exp which is needed to
+      compile mod_ssl as a DSO under the most non-smart linker: AIX' ld.
+
+   *) Fixed internal `host:port' based identification of virtual servers which
+      caused problems under specific Listen/<VirtualHost> configuration
+      variants where an implicit port was used. Additionally we now no longer
+      patch the server_rec->port variable of Apache. Instead we leave it as is
+      and on-the-fly make our decisions.
+
+   *) Fixed APXS/EAPI-related error message in the configure script.
+
+   *) More OpenSSL support: Recognize the forthcoming `openssl' program in
+      addition to `ssleay' when searching for the command line tool.
+
+  Changes with mod_ssl 2.1.5 (23-Dec-1998 to 02-Jan-1999)
+
+   *) Fixed virtual host configuration merging by removing 
+      the default value for SSLCertificateFile.
+
+   *) Replaced index() (non-POSIX) with strchr() (POSIX) function
+      because it doesn't exists under the Win32 environment.
+
+   *) Fixed SSLPassPhraseDialog argument processing: exec:/path/to/program
+      argument variant was not parsed correctly.
+
+   *) Let EAPI hooks also be added to the APXS generated
+      sample module (`apxs -g -n foo').
+
+  Changes with mod_ssl 2.1.4 (05-Nov-1998 to 23-Dec-1998)
+
+   *) Added the support for OpenSSL (see http://www.openssl.org/), 
+      the Open Source sucessor of SSLeay. The package name is no longer
+      hard-wired and so both the HTTP Server field and the logfile entries
+      correctly reflect the name OpenSSL, too.
+
+   *) Changed the EAPI hook `rewrite_command' from
+      ``char *(*rewrite_command) (cmd_parms *, const char *)'' to 
+      ``char *(*rewrite_command) (cmd_parms *, void *config, const char *)''
+      to allow modules to also access the config structure.
+
+   *) Added two AddType directives to httpd.conf-dist for
+      loading .crt and .crl files into Netscape Communicator.
+
+   *) Added an entry about the Wassenaar Agreement to the mod_ssl FAQ. In
+      short: both mod_ssl and SSLeay are not affected by the Wassenaar
+      Agreement.
+
+   *) Added a few more backslashes to the INSTALL step-by-step lists
+      to make it more clear which commands are on the same command
+      line and which are separate commands.
+
+   *) Added `Year 2000' and `Netscape Lock Icon' entries to the FAQ and fixed
+      a few layouting bugs in the FAQ.
+
+   *) Lot's of cleanups to make the source more accurate and to remove
+      thread-unsafe stuff. Especially all global mc->rCtx.pConn and
+      mc->rCtx.pServ references are now gone. Additionally the SSLeay app_data
+      facility is used whereever possible to walk from SSLeay data structures
+      to Apache data structures without the need of global variables.
+
+   *) Cleaned up and enhanced the README.GlobalID document with more
+      information about the Global ID stuff with the help of 
+      additional hints from Dr Stephen N. Henson.
+
+  Changes with mod_ssl 2.1.3 (03-Nov-1998 to 05-Dec-1998)
+
+   *) Added APXS support: By using the --with-apxs option you can now easily
+      upgrade the libssl.so file through a stand-alone build process as long
+      as you actually use DSO and EAPI doesn't change. In other words, a
+      simple `./configure --with-apxs=/path/to/apache/sbin/apxs
+      --with-ssleay=/path/to/your/ssleay; make install' can be used to upgrade
+      the /path/to/apache/libexec/libssl.so.
+
+   *) Added support documenation, programs and scripts for the `Global Server
+      ID' facility as README.GlobalID, pkg.contrib/gid-mkcert.sh,
+      pkg.contrib/gid-tagcert.c and pkg.contrib/loadcacert.cgi. This way
+      people can setup their own private `Global Server ID' stuff :)
+
+   *) Allowed SSL renegotiations initiated by the client.
+      This especially adds support for Verisign's `Global Server ID' facility
+      where Netscape Communicator does a renegotiation to upgrade the SSL
+      connection parameters (the cipher) from 40-bit to 128-bit encryption.
+
+   *) Fix typo in httpd.conf-dist: `</Location />' -> `</Location>'
+
+   *) Added new README.dsov.{fig,ps} files: They are intended for those people
+      who want to hack theirself inside the mod_ssl source. The figure
+      provides two diagrams which show the lifetime and chaining of the
+      various Apache, mod_ssl and SSLeay data structures which are used inside
+      mod_ssl.
+
+   *) Cleaned up some documents.
+
+   *) Cleaned up ssl_engine_compat.c a little bit more...
+
+  Changes with mod_ssl 2.1.2 (30-Nov-1998 to 03-Dec-1998)
+ 
+   *) Let `httpd -V' show `-D EAPI', too.
+
+   *) Fixed again the DBM library determination inside libssl.module: A syntax
+      error caused the fallback (SDBM) to be never used which leaded to
+      problems on systems where no DBM library exists.
+
+   *) Added a check to libssl.module: It now complains with
+      a warning when SSLeay 0.8 is used because of the known problems (core
+      dumps on large files, etc.) with these versions.
+
+   *) Slightly changed mod_ssl's configure hints displayed as the last step.
+
+   *) Removed internal OPTIONAL_SSL stuff which was inherited from Apache-SSL.
+      I currently cannot see a good reason for allowing subrequests to disable
+      SSL, so kick out this stuff.
+
+   *) Extended Chapter 5 (FAQ List) of the User Manual.
+
+   *) Added the Website META Language (WML) sources for the User Manual to the
+      distribution: This way all sources are available to the user community.
+     
+   *) Removed one last reference to SSLCACertificateReqFile inside the 
+      httpd.conf-dist file.
+
+  Changes with mod_ssl 2.1.1 (17-Nov-1998 to 30-Nov-1998)
+
+   *) Fixed typos in pass phrase dialog.
+
+   *) Added support to APACI for overriding the conf/ssl.crt/server.crt
+      default certificate path.
+
+   *) Added another logging level `trace' (between `info' and `debug')
+      and converted all existing `debug' messages to this level.  Additionally
+      the internal SSLeay processing is now logged to this level, too.  The
+      `debug' level now consists of deepest-level I/O dumps where you can even
+      see every read/write byte on the BIO (the buffer above the SSL record
+      layer).
+
+   *) Changed buffer I/O: Previously NO_WRITEV was forced
+      because there is no real SSL_writev() available.  But the drawback of
+      this was that writev() (which nevertheless is available on mostly all
+      platforms) wasn't used for non-SSL requests. The result was bad network
+      I/O performance when Apache was built with EAPI/mod_ssl. This is now
+      changed: When writev() is available it is used for non-SSL requests
+      (this way we gain maximum performance) while for SSL requests the output
+      is still done via SSL_write().
+
+   *) Fixed DBM library determination and build. This especially fixed the
+      problems with DSO support under Linux platforms where libdbm was
+      previously not linked against libssl.
+
+   *) Added a README.Patents document to the distribution
+      which tries to explain some RSA patent issues.
+
+   *) Fixed Thawte sxnet stuff to work with recent EAPI changes.
+
+   *) Fixed documentation: X.509 field was incorrect: SP -> ST.
+
+   *) Fixed SSL support for mod_proxy: It was broken because
+      the "ssl_enable" ctx-flag was set too late.
+
+   *) Ported a recent change in Apache-SSL 1.29 to mod_ssl:
+      ``Send CA list to client when SSLCACertificatePath is used (this was
+      only done for SSLCACertificateFile up to now)''. I've implemented it
+      with a new ssl_init_FindCAList() function in ssl_engine_init.c where the
+      main difference is that it _merges_ the list entries from both
+      directives together while in Apache-SSL the SSLCACertificatePath would
+      override the SSLCACertificateFile for this list generation. I use them
+      in parallel for the list generation (by merging their entries) because
+      they are used in parallel by SSLeay under the verification process, too.
+      Additionally I've now removed SSLCACertifiateReqFile because it was
+      oversize.
+
+   *) Added a similar SSL_accept() check as was recently added to Apache-SSL
+      1.29, but in a different way: Under the SSL_ERROR_ZERO_RETURN error
+      don't log it as an error. A "info"-level log entry is enough.
+    
+   *) Extended the Compatibility chapter of the User Manual to now also
+      contain information about environment variable derivation.
+
+   *) Overhauled the SSL part in the http.conf-dist file.
+
+   *) Fixed pkg.sslcfg/ssl.key/server.key: It contained a dummy key 
+      instead of the intended dummy text "THIS FILE SHOULD ...".
+
+   *) Fixed httpd.conf-dist: The SSLRequire is only allowed in
+      <Location> or <Directory> sections there.
+   
+   *) Fixed documentation: sign.sh instead of ca.sign, SSLRequire uses
+      braces and not parenthesis for word groups, etc.
+   
+   *) Use the commonly used .crt extension also in the sign.sh script
+
+   *) Fixed backward compatibility code: half-way matching could occur (Sioux'
+      "RequireSSL" matched the correct "SSLRequireSSL" and leaded to
+      "SSLSSLRequireSSL") and the SSLRequireCipher/SSLBanCipher directives
+      were not matched correctly.
+
+   *) Don't do I/O read-aheads in SSLeay under Win32 because it's not safe
+      for this platform (we use select() there).
+
+   *) Fixed two memory leaks in ssl_engine_var.c by copying over
+      malloc-allocated buffers from X509_NAME_oneline() to Apache
+      pool-allocated buffers.
+
+   *) Fixed RSAref handling: the -L path to the librsaref.a library 
+      file was configured incorrectly (a bogus "/lib" was there)
+
+   *) Fixed some ANSI C portability issues which popped up with IRIX vendor
+      compiler while good-old GCC was happy. This way other compilers should
+      be quiet now, too.
+
+   *) Added notice and workarounds for RSAref portability problem to the
+      INSTALL document. This is especially important to people using platforms
+      with non-Intel CPUs (like the Alpha-boxes of DEC).
+
+  Changes with mod_ssl 2.1.0 (15-Nov-1998 to 17-Nov-1998)
+
+   *) Updated all distribution documents for the final release.
+
+   *) Fixed configure.bat script: It failed for version strings like 2.1.0 (no
+      "b" for beta contained), failed to patch Apache's src/Makefile.nt file
+      correctly and used not necessary options in nmake calls.  Additionally
+      it now creates .orig files for the patched DevStudio Makefiles, too.
+
+  Changes with mod_ssl 2.1b9 (04-Nov-1998 to 15-Nov-1998)
+
+   *) Replaced the pkg.ssldoc/* stuff with the new mod_ssl 2.1 User Manual.
+
+   *) Fixed patching of Makefile.nt under Win32.
+
+   *) Changed test `-e' option to more portable `-r' option.
+
+   *) Fixed again the init round handling: The SSLeay initialization
+      has to be done _every_ time under DSO/DLL situation because
+      there SSLeay is part of the mod_ssl DSO/DLL which is re-loaded.
+
+   *) Under DSO situation the LoadModule directive for libssl.so
+      is now surrounded by <IfDefine SSL>, too. This way when
+      -DSSL is not used not even the module is loaded.
+
+   *) Replaced the last global var (ssl_ModConfig) with an ap_global_ctx
+      based approach. This way thread-safety for Win32 and Apache 2.0 
+      can be made more easily.
+
+   *) Added compile time check for EAPI: 
+      mod_ssl now can only be compiled when EAPI is active.
+
+   *) Forward port from 2.0 branch:
+      Now SSLVerifyDepth defaults to 1 and this means the client certificate
+      has to be signed directly by the root CA. The verify depth now is the
+      max number of CAs which are checked: 0 = self-signed only, 1 =
+      self-signed or signed by root-CA, 2 = signed by root-CA or signed by a
+      CA which is signed by the root-CA, etc.
+
+   *) Forward port from 2.0 branch:
+      Now SSLSessionCacheTime defaults to 300s.
+
+   *) Forward port from 2.0 branch:
+      Fixed RSAref instructions in INSTALL file and added more support for
+      implicitly finding the RSA_BASE to the libssl.module script.
+
+   *) Added a SSL_COMPAT configuration rule which is enabled per
+      default. But when you disable it via --disable-rule=SSL_COMPAT the
+      backward compatibility code is not build into mod_ssl.  This provides a
+      little bit better performance for those people who don't need the compat
+      stuff. 
+
+   *) Removed the patch from mod_auth.c by not spreading the -I option for
+      SSLeay. Because with the EAPI only the mod_ssl needs to include SSLeay
+      headers. So we no longer have a conflict with the vendors
+      crypt.h stuff ;-)
+
+   *) Moved the patch from ap_config.h into libssl.module.
+
+   *) Overhauled the mod_ssl distribution tree: Now four packages exists
+      (eapi, sslmod, ssldoc, sslcfg, sslsup) and each contains the patches and
+      corresponding files. Especially the EAPI stuff is now stand-alone and
+      doesn't contain any crypto-related stuff.
+
+   *) Fixed version parsing in configure.bat script (Win32)
+
+   *) Fixed default value for SSLCertificateFile directive.
+
+   *) Added real contents for the environment variable mapping. Now all
+      Apache-SSL 1.x and mod_ssl 2.0.x and the most important Stronghold 2.0.x
+      variables (the ones corresponding to certificate DN fields) are mapped
+      to mod_ssl 2.1 variables.
+
+   *) Added on-the-fly mapping for the Apache-SSL 1.x and mod_ssl
+      2.0.x SSLRequireCipher and SSLBanCipher directives.
+
+   *) Added a useful SSL_CIPHER_EXPORT variable.
+
+   *) Fixed compatibility on-the-fly directive mapping: Now comment and blank
+      lines are correctly recognized by the mapping mechanism so the user no
+      longer gets confusing warnings about obsolete directives when they still
+      occured in comments.
+
+   *) Fixed complex situation where the SSL logfile cannot be opened but the
+      error message should be still logged: to the Apache general error log.
+
+   *) Forward port from 2.0 branch:
+      Make sure the mkcert.sh can only be used by `make certificate' _inside_
+      the Apache source tree.
+
+  Changes with mod_ssl 2.1b8 (30-Oct-1998 to 04-Nov-1998)
+
+   *) Replaced the per-server context Fake-Basic-Authentication stuff with a
+      per-directory mechanism which can be now enabled on-demand and on a
+      per-directory basis with `SSLOptions +FakeBasicAuth'. This way the
+      `Cert-Subject-DN to Basic-Auth-Username' mapping is more useful to the
+      users. The SSLFakeBasicAuth directive was removed. But the mod_ssl
+      compatibility code automatically maps Apache-SSL's `SSLFakeBasicAuth'
+      directive to `SSLOptions +FakeBasicAuth' on-the-fly.
+
+   *) Added support for exporting the client and server certificates
+      (not the CA chain; currently only the end certificates) via `SSLOptions
+      +ExportCertData' in PEM format through the environment variables
+      SSL_SERVER_CERT and SSL_CLIENT_CERT.  This way we bloat up the
+      environment with certificate stuff only on demand. Additionally the
+      mod_ssl compatibility code automatically maps Apache-SSL's new
+      `SSLExportClientCertificates' directive to `SSLOptions +ExportCertData'
+      on-the-fly.
+
+   *) Added backward compatibility mappings for environment variables
+      of Apache-SSL 1.x, mod_ssl 2.0.x, Sioux 1.0 and Stronghold 2.x (where
+      possible). This can be now enabled by the user on-demand via `SSLOptions
+      +CompatEnvVars' - typically inside the .htaccess context of a CGI
+      script. This way we bloat up the environment with compat stuff only on
+      demand.
+
+   *) Added a generic `SSLOptions [+-]option [...]' directive which can be
+      used in the `Options' context, i.e. _everywhere_. It is intended to
+      control various SSL engine parameters.
+
+   *) Enhanced the `make depend' author Makefile target: Now dependencies are
+      also generated for .lo files (DSO object files). This way Make recogizes
+      the dependencies also under the DSO situation.
+
+   *) Now under `make certificate' an interactive prompt is given which asks
+      whether the private key should be encrypted (the default) or not.  This
+      way it's a little bit easier to setup test servers, at least for me ;-)
+
+   *) Make sure all filenames can be ServerRoot relative _and_ get checked for
+      existence directly inside the directive handlers (and not under
+      request-time).
+
+   *) Changed per-directory directives SSLRequireSSL and SSLRequire from
+      `FileInfo' to `AuthConfig' context (see AllowOverride), because they are
+      really authentication directives.
+
+   *) Replaced hard-coded r->server->is_virtual and similar checks with more
+      API-like ap_check_cmd_context()-based checks. Also added some more
+      configuration checks to make sure directives cannot be placed into the
+      wrong context.
+
+   *) Added a special kludge for the GCC+DSO situation to libssl.module: Under
+      some platforms (like Solaris) libssl.so has to be explicitly linked
+      against the libgcc.a in order to resolve internal symbols.
+
+   *) Made a lot of coding style cleanups in the ssl_expr_*.c sources.
+
+   *) Fixed a nasty bug in ap_hook_use() and ap_hook_call().
+
+   *) Backport from 2.0 branch:
+      Upgraded to included Thawte Strong Extranet sources (ssl.contrib/sxnet/)
+      from version 1.2.2 to the current 1.2.3.
+
+   *) Backport from Apache-SSL:
+      Incorporation of recent Base64 (uuencode) encoding bugfixes.
+
+   *) Added more hints about EAPI and upgrade problems with DSO/DDLs
+      to the INSTALL and INSTALL.W32 files.
+
+   *) Changed the building of mod_ssl under Win32 from static (.LIB)
+      to dynamic (.DLL), i.e. mod_ssl is now build as a stand-alone Win32 DSO
+      (DLL in Windows terms) containing SSLeay instead of statically linked
+      into the apache.exe binary.
+
+  Changes with mod_ssl 2.1b7 (09-Oct-1998 to 30-Oct-1998)
+
+   *) Fixed DBM access stuff: An invalid argument was given by the
+      NDBM emulation layer of DB under FreeBSD 2.2.6.
+
+   *) Moved all Crypto/SSL stuff from mod_log_config.c, mod_proxy.c and
+      proxy_http.c to the new ssl_engine_ext.c file. Now SSLeay is _ONLY_
+      needed for linking the mod_ssl code itself. There is no more any SSLeay
+      symbol reference outside mod_ssl.
+
+   *) Rewrote the ap_hook mechanism to provide support for loosly coupling
+      modules together, too. Also support is now provided for up to 8
+      arguments in function signatures.
+
+   *) Added support for a SSL Product ID. To the mod_ssl/x.x.x-y.y.y 
+      string inside libssl.version you now can append a string <product>/x.x.x
+      and then you get -DSSL_PRODUCT=<hex-value-of-x.x.x>,
+      -DSSL_PRODUCT_NAME="<product>", -DSSL_PRODUCT_VERSION="x.x.x" and a HTTP
+      Server field similar to this one: ``Server: Apache/1.3.3 (Unix)
+      MyStuff/1.0.0 mod_ssl/2.1b7 SSLeay/0.9.0b''. This can be used by RH SWS
+      or the other forthcoming mod_ssl based SSL product to add the version
+      string without patching ;-)
+
+   *) The ca-fix tool is now generated at the `make certificate' step
+      on-demand only because it's only needed here. And when mod_ssl is not
+      enabled this tool cannot be build at all (no SSLeay stuff known).
+
+   *) Created a new ssl_engine_io.c source file which now contains
+      all I/O and buffer related code, i.e. the new EAPI-based stuff plus
+      the Win32/SSLeay functions for buffer I/O.
+
+   *) Because with the help of the EAPI we were now able to add Dynamic Shared
+      Object (DSO) support for mod_ssl. For this the
+      src/modules/ssl/Makefile.tmpl, src/modules/ssl/libssl.module and
+      top-level configure files were adjusted.
+
+   *) Replaced SSL code inside mod_log_config.c with EAPI based
+      code which mainly tries to lookup mod_ssl variables. For this the
+      ssl_engine_vars.c stuff now exports the ssl_var_lookup() function as the
+      "ssl::var::lookup" hook.
+
+   *) Replaced all hard r->connection->client->ssl references with the
+      now loosely based ap_ctx_get(r->connection->client->ctx, "ssl").
+
+   *) SSL patches -> Generic Extended API patches:
+      Completely rewrote the Apache code patches: Instead of patching in SSL
+      specific hooks we now patch in an Extended API which provides mainly the
+      following new features:
+
+      - generic low-level hooks mechanism:
+        ap_hook_{init,kill},
+        ap_hook_{configure,register,unregister},
+        ap_hook_{configured,registered,call}
+
+      - buffer hooks:
+        ap::buff::{read,write,recvwithtimeout,sendwithtimeout}
+
+      - generic context mechanism:
+        ap_ctx_{new,set,get}
+
+      - structure context variables:
+        BUFF->ctx, conn_rec->ctx, request_rec->ctx, server->ctx
+        ap_global_ctx
+
+      - four new high-level module hooks: 
+        add_module, remove_module, 
+        rewrite_command, new_connection
+    
+      - a new function ap_add_config_define() which does what
+        option -D does on the command line.
+
+   *) Added new backward compatibility stuff to ssl_engine_compat.c:
+      We use wildcard configuration directive handlers which are used by us to
+      provide backward compatibility to old obsolete directives via on-the-fly
+      mapping. Those wildcard handlers are an additional (patched in)
+      functionality inside the Apache core, of course ;-)
+
+   *) Renamed snakeoil.{crt,key} to snakeoil-ca.{crt,key} and created a real
+      dummy server certificate/key pair as snakeoil.{crt,key} which is now
+      used under `make certificate TYPE=dummy'. This fixes the recently
+      occured problem where Netscape rejected the dummy certificates because
+      they had the CA flag set.
+
+   *) Fixed CRYPTO_malloc_init() call for Win32 environment.
+
+   *) Added a small stand-alone patch.exe (v2.1) to etc/patch/ for the Win32
+      port. This is now used per default by configure.bat, but the user can
+      override it with --with-patch=FILE as under Unix. This way the patching
+      problems caused by incompatible patch utils should be solved.
+
+   *) Fix pathname seperators (slashes) in Win32's configure.bat script
+      and make configure.bat script accept also Perl 5.003 because 5.004 is
+      not really needed.
+
+   *) Fix `uchar' redefinition problem under AIX.
+
+   *) Now a warning is done when HTTPS is configured on a HTTP port.
+
+   *) Added configuration parameter checks for various the directives.
+
+  Changes with mod_ssl 2.1b6 (01-Oct-1998 to 09-Oct-1998)
+   
+   *) Added a --expert option which disables the user hint messages.
+      This can be used by package maintainers to get rid of the final
+      configure messages.
+
+   *) Forward port from 2.0 branch:
+      Recreated the Snake Oil CA certificate: it's now a X.509 v3
+      certificate with the CA flag set and pathlen 0.
+
+   *) Forward port from 2.0 branch:
+      With special permission from Dr Stephen N. Henson his excellent ca-fix
+      program was now added to src/support/ and is used by
+      src/support/mkcert.sh (`make certificate') to fixup the generated
+      certificates. Especially X.509 v3 certificates can be now generated
+      where nsCertType and CA pathlen is correctly set. Additionally `ssleay
+      verify' and `ssleay ... -modulus' checks are performed to make sure the
+      generated certificates are valid.
+
+   *) Forward port from 2.0 branch:
+      Fixed portability problems with prop.sh aux script.
+
+   *) Fixed SSLeay memory setup for Win32 environment.
+
+   *) Upgraded to Apache 1.3.3.
+
+   *) Added a --force option to mod_ssl's configure script to let developers
+      apply mod_ssl also to different Apache versions (especially 1.3.x-dev
+      versions).
+
+  Changes with mod_ssl 2.1b5 (17-Sep-1998 to 01-Oct-1998)
+
+   *) Created a configure.bat script which tries to resemble the
+      Unix configure script. Enhanced the INSTALL.W32 document.
+
+   *) Incorporated the third feeback for the Win32 port from
+      Trung Tran-Duc <trung.tranduc@prague.ixos.cz>.
+
+   *) Incorporated the second cut of the Win32 port from
+      Trung Tran-Duc <trung.tranduc@prague.ixos.cz>. Now the buffer code is
+      finally SSL-aware and a Makefile.nt is provided to build the mod_ssl
+      sources into a DLL.
+
+   *) Replaced some ugly hacking for SSL_CLIENT_CERT_SERIAL
+      by a more safe and straight-foreward BIO based approach.
+      Additionally replaced BIO_ctrl stuff with BIO_pending.
+
+   *) Use a more graceful shutdown approach when the SSL handshake
+      or re-negotiation fails instead of immediately dropping the socket
+      communication.
+
+   *) Cleaned up the log messages and levels.
+
+   *) Fixed the "SSLVerifyType optional_no_ca" situation: The situation
+      has to be checked against more SSLeay errors, because under SSLv3
+      certificate chain loading leads to the presentation of the client CA
+      certs, too. Here SSLeay gives different errors.
+
+   *) Replaced the first cut of the `Recognize HTTP to HTTPS port' stuff with
+      the real (=clean) variant which doesn't use SSLeay internal hex values,
+      etc.
+
+   *) Upgrade from Apache 1.3.1 to Apache 1.3.2
+
+   *) Forward-port from 2.0 branch:
+      Changed HTTPS support in mod_proxy: the ap_proxy_http_handler() function
+      is (illegally because of DSO, of course) called used by third-party
+      modules (like Apache::Proxy). So make make sure we don't change the
+      signature of this function.
+
+   *) Forward-port from 2.0 branch:
+      Added answer to FAQ `Why is client auth broken after upgrading from
+      SSLeay 0.8 to 0.9'. Because of the changed hash algorithm used for the
+      symlinks.
+
+   *) Forward-port from 2.0 branch:
+      Now when `make certificate TYPE=custom' is used the generated
+      ca.crt/ca.key files are installed, too.
+   
+   *) Forward-port from 2.0 branch:
+      Make sure mkcert.sh removes temporary files after work.
+
+   *) Enhanced the ssl.crt/Makefile: now <hash>.N extensions are
+      created when conflicts occur and not only <hash>.0 
+
+   *) Included a first cut of a port to the Win32 platform by
+      courtesy of Trung Tran-Duc <trung.tranduc@prague.ixos.cz>.  Up to know
+      these are only source changes to make it compile under Win32. No support
+      for the build process itself (Makefiles, etc.). But the port already
+      runs on Trung's Windows NT box.
+
+   *) Forward port from 2.0 branch:
+      Enhanced the INSTALL file: Now an example section describes the
+      installation with mod_perl and PHP3. Beside this some bugs were fixed
+      and some more NOTEs were added.
+
+  Changes with mod_ssl 2.1b4 (08-Sep-1998 to 17-Sep-1998)
+
+   *) Now mod_ssl is more friendly to the typical user error: Using HTTP
+      instead of HTTPS to access an SSL-server. In the past the client has
+      just seen an I/O error which often confused a lot of people (including
+      the author of mod_ssl ;-). Now when the SSL_accept of SSLeay fails
+      mod_ssl recognizes the fact that SSLeay already recognized the HTTP
+      protocol. Then mod_ssl does a trick: It does some sort of a request
+      roll-back: It reads the remaining bytes of the request, fakes it with an
+      own error-request, lets Apache process this error-request and finally
+      puts out a HTML error page with a clear description of the problem plus
+      a hyperlink to the HTTPS URL. Currently this check works only with
+      SSLeay 0.9 until the error code determination can be made more general.
+
+   *) Fixed session cache timeout calculation.
+
+   *) Fixed session cache DBM file initialization.
+   
+   *) Forward port from 2.0 branch:
+      Make the SSL_HOOK_SetupConnection more robust. 
+
+   *) Forward port from 2.0 branch:
+      Added checks to APACI to automatically disable DSO for mod_proxy and
+      mod_log_config when SSL is used (because they have to be built against
+      SSLeay which is not supported in Apache 1.3.1). But we allow the user to
+      explicitly use --enable-shared=.., but then at least he gets a warning.
+      This way we protect the average user but don't hurt the experts.
+      Especially with Apache 1.3.2 the experts want to use
+      --enable-rule=SHARED_CHAIN for linking the DSO's against SSLeay.
+
+   *) Forward port from 2.0 branch:
+      Renamed `aux' directory to `etc' because `aux' is a special name under
+      Windows filesystems (and people at least wanted to extract the stuff
+      under windows).
+
+   *) Forward port from 2.0 branch:
+      Added Thawte's Strong Extranet module (mod_sxnet.c) to
+      the ssl.contrib area. This module can be used together
+      with mod_ssl.
+
+   *) Forward port from 2.0 branch:
+      In order to
+      - reduce the confusion with sslcerts/server.pem and sslkeys/server.pem
+      - provide less-problematic non-self-signed certificates on `make certificate'
+      - prepare for mod_ssl 2.1 and the forthcoming client auth & CA scripts 
+      the following cleanups were done:
+
+      1. The files for the SSL certificate system are now stored in the
+         following thee subdirs of the configuration directory:
+         ssl.crt/ ...... contains the X.509 certificate(s)
+         ssl.csr/ ...... contains the X.509 certificate signing requests(s)
+         ssl.key/ ...... contains the RSA private key(s)
+         Each directory contains a README file which describes the purpose and
+         the contents.
+
+      2. A ssl.crt/snakeoil.crt and ssl.key/snakeoil.key demo CA certificate
+         and key is distributed with mod_ssl which is used to sign the test
+         certificates the `make certificate' target creates.  This avoids the
+         problems with MSIE users because MSIE doesn't like self-signed
+         server-certificates very well.
+
+      3. A ssl.crt/ca-bundle.crt is now installed (but not enabled!) which
+         contains all 33 CA root certificates of known public CAs.  They were
+         extracted from Netscape Communicator 4.06 with my certbundle stuff.
+
+      4. The `make certificate' command now can create four types
+         of certificate setups:
+         $ make certificate TYPE=dummy    (dummy self-signed Snake Oil cert)
+         $ make certificate TYPE=test     (test cert signed by Snake Oil CA)
+         $ make certificate TYPE=custom   (custom cert signed by own CA)
+         $ make certificate TYPE=official (existing official cert)
+                CRT=/path/to/your.crt
+                [KEY=/path/to/your.key]
+         The default is TYPE=test which is equivalent to the old `make
+         certificate' with the exception that now the generated certificate is
+         no longer a self-signed one.  This overview text is also now
+         displayed under built-time.  When KEY is missing it is assumed that
+         it's present in the file from CRT and is extracted from there.
+
+      5. For consistency with 4.) the mod_ssl configure script now
+         uses --with-crt=FILE and --with-key=FILE options. When
+         --with-key is missing it is assumed that it's present in
+         the file from --with-crt and is extracted from there.
+
+   *) Forward port from 2.0 branch:
+      Changed the <VirtualHost> example in the conf/httpd.conf-dist file so it
+      now uses _default_ instead of the server name. This is more portable and
+      totally sufficient for our default configuration where only one virtual
+      host is present.
+
+   *) Fixed INSTALL document: rsaref.a has to be copied to librsaref.a
+
+   *) Totally revised my mod_sslcompat idea because it's not really
+      practical to have the backward compatibility stuff outside the standard
+      mod_ssl code. Another reason is that by including it again into the
+      mod_ssl stuff the code gets easier.
+
+   *) Fixed pass phrase dialog: The server name was always displayed
+      for a new pass phrase. 
+
+   *) Added support for the idea of SSL_CLIENT_CERT_CHAIN<N> variables (Mark
+      Shuttleworth, Thawte Consulting) which enables CGI scripts to verify the
+      client certificate chain up to the root:
+      SSL_CLIENT_CERT_CHAIN_0 = end entity cert
+      SSL_CLIENT_CERT_CHAIN_1 = issuer cert
+      SSL_CLIENT_CERT_CHAIN_2 = issuer's issuer cert ...
+      But because of problems with system resource limits this is currently
+      disabled.
+
+   *) Added support for automatically determining the DBM library. 
+      When a vendor DBM library is available we now use this one (because
+      typically this is a better and faster one than SDBM).  Only when no
+      vendor DBM library could be found we fallback to our built-in SDBM
+      library (which is slow, but portable).
+   
+   *) Splitted the mod_ssl.html document into smaller parts for easier
+      reading and maintaining. Same for the CHANGES file. The entries for
+      mod_ssl 2.0.x are now stores in CHANGES.20 while mod_ssl 2.1bx entries
+      are staying in the CHANGES file.
+
+   *) Fixed some pre-processor and variable declaration inconsitencies 
+      which forced portability problems under some non-GCC compilers.
+
+  Changes with mod_ssl 2.1b3 (06-Sep-1998 to 08-Sep-1998)
+
+   *) Removed a few unneccessary local buffer usages in the mod_ssl-related
+      code in mod_log_config.c.
+
+   *) Updated the documentation for the recent changes, especially for the new
+      SSLRequire directive and the new provided CGI/SSI variables. I've now
+      also added a new FAQ which tries to explain why SSL cannot be used
+      together with name-based virtual hosts (IP-based virtual hosts have to
+      be used).
+
+   *) Fixed ssl_log() (the function which is used produce all kinds of
+      SSL logfile messages): It failed for messages with "%" because
+      it insecurely used fprintf at some points.
+
+   *) Added --quiet|-q, --verbose|-v and --help|-h options to mod_ssl's
+      `configure' script for controlling the verbosity and for more user
+      friendlyness.
+
+   *) Now the mod_ssl `configure' script creates a `config.status' script as
+      APACI does. This can be used for re-configuring mod_ssl the same way one
+      does it for Apache.
+
+   *) The top-level APACI Makefile now gives a hint for `apachectl start-SSL'
+      (which internally uses the `httpd -DSSL' command).
+
+   *) Now on `make certificate' the hash symlinks in conf/sslcerts/ are
+      generated via the provided Makefile instead of directly linking (which
+      fails under some platforms).
+
+   *) Added boolean expression scanning/parsing/evaluation as ssl_expr_*
+      sources and a new SSLRequire directive which now uses this
+      functionality.  This directive can be used in both per-server and
+      per-directory context and has the syntax ``SSLRequire <expr>'' where
+      <expr> is defined as:
+
+        expr     ::= "true" | "false" 
+                   | "!" expr
+                   | expr "&&" expr
+                   | expr "||" expr
+                   | "(" expr ")"
+                   | comp
+        comp     ::= word "==" word | word "eq" word
+                   | word "!=" word | word "ne" word
+                   | word "<"  word | word "lt" word
+                   | word "<=" word | word "le" word
+                   | word ">"  word | word "gt" word
+                   | word ">=" word | word "ge" word
+                   | word "in" "{" wordlist "}"
+                   | word "=~" regex
+                   | word "!~" regex
+        wordlist ::= word 
+                   | wordlist "," word
+        word     ::= digit
+                   | cstring
+                   | variable
+                   | function
+        digit    ::= [0-9]+
+        cstring  ::= "..."
+        variable ::= "%{" [a-zA-Z][a-zA-Z0-9_-]* "}"
+        function ::= funcname "(" funcargs ")"
+
+      Here for %{XXXX} mostly _all_ possible server variables can be looked
+      up: the standard CGI variables, the SSL CGI variables, the internal
+      variables known from mod_rewrite, etc. pp. The intent is the following:
+      With <expr> one can specifiy an arbitrary complex boolean expression
+      which is evaluated under runtime. When it evaluates to "true" access for
+      the current request is granted. If it evaluates to "false" access for
+      the current request is denied. The main use for this is for flexible
+      certificate screening (because one can lookup all certificate X.509
+      fields via %{SSL_CLIENT_xxx}). But it can be used for other
+      authentication schemes, too.
+
+      This is now the general authentication workhorse. With it we were able
+      to remove the too special SSLRequireCipher and SSLBanCipher directives
+      because their functionalities are just special cases of a boolean
+      expressions:
+
+      SSLRequireCipher C1 C2 ... => SSLRequire %{SSL_CIPHER} in ("C1", "C2", ...)
+      SSLBanCipher     C1 C2 ... => SSLRequire not %{SSL_CIPHER} in ("C1", "C2", ...)
+
+      For mod_ssl 2.1.0 (the release version) the above mapping will be done
+      automatically on the fly by the backward-compatibility code.
+
+   *) Removed the __SSLeay prefix inside the source now that the function
+      prefixes are documented in the README file.
+
+  Changes with mod_ssl 2.1b2 (02-Sep-1998 to 06-Sep-1998)
+
+   *) Added the first cut of HTTPS support for the proxy module. This is
+      currently done by making the generic HTTP handler SSL-aware. But it
+      still doesn't provide support for client or server authentication nor
+      does it provide a way to configure it. Later we'll add perhaps
+      SSLProxyXXXXX directives to allow the users to configure the SSL client
+      inside the proxy.  But beside this it's full functional. One can use it
+      for proxying https://xxx URLs and also use `ProxyPass https://xxxx'.
+      (the sources of SSLeay's s_client and cURL were my friends ;-)
+
+   *) Replaced old kludges in mod_log_config.c and mod_ssl sources to
+      determine SSL protocol name with the clean SSL_get_version() which
+      already exists in SSLeay 0.8 and 0.9.
+
+   *) As a of the new ssl_var_lookup() the function ssl_ExpandCert() with the
+      old less-portable and unclean parsing stuff (parsed the DN into the
+      fields on a string basis instead of correctly determining the fields
+      from SSLeay structures) was kicked out and the environment annotation is
+      now done with generic variable lookups. 
+
+   *) Added a new source file named ssl_engine_vars.c which contains
+      a waterfall approach to expanding arbitrary server+SSL variables.  The
+      main function is ssl_var_lookup() which can operate in different
+      contexts. The idea is to resolve information mainly through this
+      function when it's required. Currently the usage is: logfile entries,
+      environment annotation. In the future this will be also used for the
+      SSLRequire directive.
+
+   *) Cleaned up the API command configuration and shortened the code by using
+      #defines. Additionally removed the polymorphic command handling
+      functions with real ones (less pointer arithmetic and preparation for
+      more config-time syntax checks).
+
+  Changes with mod_ssl 2.1b1 (26-Aug-1998 to 02-Sep-1998)
+
+   *) Again completely rewrote the pass phrase handling. This time because the
+      recent dicussions on the sw-mod-ssl mailing lists showed that the direct
+      caching of pass phrases under run-time and the forcing of the
+      administrator to use a single pass phrase for all private key files is
+      not really reasonable. Now the pass phrase handling looks this way:
+
+      1. A directive `SSLPassPhraseDialog builtin|exec:/path/to/program'
+         is used for configuring the pass phrase dialog. The `builtin' is a
+         terminal based dialog while `exec:/path/to/program' runs an external
+         program (which gets `servername:port' as the argument for which the
+         pass phrase has to be given on stdout).
+
+      2. The `builtin' terminal dialog is now a lot different:
+         First it detacts wrong pass phrases and gives reasonable error
+         messages and second it uses Holger Reif's maximum-reuse idea for the
+         pass phrase query:
+
+         When a private key file is encrypted, all known pass phrases (at the
+         beginner there are none, of course) are tried. If one of those known
+         pass phrases succeeds no dialog pops up for this file.  If none
+         succeeded, another pass phrase is queried and remembered for the next
+         round (where it perhaps can be reused).  This scheme allows mod_ssl
+         to be maximum flexible (because for N encrypted private key files you
+         _can_ use N different pass phrases - but then you have to enter all
+         of them, of course) while minimizing the dialog (i.e.  when you use a
+         single pass phrase for all N private key files this pass phrase is
+         queried only once).
+
+      3. After the pass phrase dialog the temporarily remembered pass phrases
+         are immediately wiped out from memory. Instead only the
+         SSLeay-internal representation of the RSA private key and the X.509
+         certificate are stored (as SSLeay already does itself). For this a
+         per-module global configuration pool is used which survives Apache
+         server restarts. This means that Apache will again no longer fall
+         down on restarts.
+
+   *) Beside the per-directory and per-server context configurations 
+      we now use a per-module global configuration pool which survives both
+      the Apache API 2nd init round and server restarts. This is done by using
+      an own permanent memory sub-pool. The idea for this tricky approach
+      which came from Philip Gwyn. This global configuration pool now holds
+      _all_ previous global variables (ssl_g_xxx). This way mod_ssl now uses
+      only a single global variable.
+
+   *) Added ssl_engine_ds.c source which contains new data structures (array
+      and table) which are based on Apache's API arrays but can contain
+      arbitrary data (important especially for the tables).
+
+   *) Removed all explicit ap_clear_pool() calls which are no longer
+      necessary because we already got rid of the gcache stuff
+      which required it.
+
+   *) Moved all pass phrase handling stuff into own file ssl_engine_pphrase.c
+      source file
+
+   *) Now the error messages which are duplicated to the general
+      Apache error logfile are prefixed with "mod_ssl:" there to
+      indicate from where they come.
+
+   *) Forward-port from 2.0.6: Added RSAref support for the US-citizens:
+      mod_ssl now automatically recognizes an SSLeay compiled with -DRSAref,
+      automatically finds libRSAglue and librsaref.a or rsaref.a.
+      Additionally beside SSL_BASE now the variable RSA_BASE can be used to
+      select a particular RSAref source tree (if not installed under system
+      locations).  This way mod_ssl provides out-of-the-box support for
+      SSLeay+RSAref.
+
+   *) Changed SSLSessionCacheDefault from 0 (none) to a reasonable
+      300s default.
+
+   *) The socket connection message in the SSL Engine logfile now
+      also displays the Cipher keysizes for even more information
+      about the connection.
+
+  Changes with mod_ssl 2.1b0 (17-Aug-1998 to 26-Aug-1998)
+
+   *) Added a few files to the distribution: First my PGP public key as
+      ssl.contrib/rse.pgp to the distribution so people can use it on
+      forthcoming releases to verify the tarballs signature. Second the files
+      WISHES and TODO which contain the mod_ssl wishlist and the ToDo-list for
+      2.1.0.
+
+   *) Finally fixed the SSL connection deallocation and removed the old
+      FREE_SESSION stuff.
+
+   *) Added support for annotating SSLeay error messages. Now some
+      of the raw-level SSLeay error messages are automatically annotated with 
+      high-level hints. For instance the unmeaningly message
+      ``error:06065064:digital envelope routines:EVP_DecryptFinal:bad
+      decrypt'' now reads ``...routines:EVP_DecryptFinal:bad decrypt [Hint:
+      wrong pass phrase!?]'' etc.
+
+   *) Removed ERR_load_crypto_strings() call because it's already contained in
+      SSL_load_error_string() from SSLeay 0.8 and 0.9.  Additionally now a
+      ERR_clear_error() is done after each logfile entry was written to make
+      sure no unread SSLeay errors are kept and occur with later messages
+      (where they would confuse people).
+
+   *) Renamed `SSLLogFile' to `SSLLog' because it isn't always a file,
+      it also can have an argument "|/path/to/filter" and act as
+      a reliable pipe to a logging filter program.
+
+   *) Renamed `SSLRequiredCiphers' directive to `SSLCipherSuite'
+      because the Apache-SSL directivename `SSLRequiredCiphers' was a full
+      accident. Because first it always got intermixed with the per-directory
+      context directive `SSLRequireCipher'. And second this sets not Ciphers
+      which are all `required'. It just sets the Ciphers the clients is
+      permitted to negotiate (the client actually chooses only _one_ Cipher).
+
+   *) Added SSLMutex for mutal expclusion of server process operations.
+      This is currently used only for synchronizing access to the new Session
+      Cache stuff. Three variants can be configured: `SSLMutex none' (no mutex
+      at all - works but risky), `SSLMutex file:/path/to/lockfile' (portable)
+      and `SSLMutex ipcsem' (elegant but not portable).
+
+   *) Moved the backward compatibility stuff into its own module:
+      mod_sslcompat. This module now already provides configuration directive
+      compatibility for both Apache-SSL and Sioux.  More (Stronghold?) can be
+      add later, too. Additionally a mod_sslcompat.html document was written
+      which described the provided configuration directive mapping.
+
+   *) Split the mod_ssl sources from its large 70KB file into smaller chunks,
+      which are now mainly named accoring to the logical modules they contain.
+      This way the source inside src/modules/ssl/ is easier to overview.  Just
+      one minor drawback: We lose a lot of nice `static' and have to prefix
+      really _all_ functions with `ssl_' now.
+
+   *) Replaced the gcache stuff from Apache-SSL days and replaced it
+      by a more simple but even more flexible approach. Now the new
+      `SSLSessionCache' directive replaces `SSLCacheServerPath' and
+      `SSLCacheServerPort'.  The SSLSessionCacheTimeout remains and has the
+      old semantics.  So, where is the difference? The old gcache stuff was
+      like this: An extra process (ssl_gcache) was running in parallel to the
+      httpd server processes and listening to a socket. Through SSLeay
+      callbacks the internal SSLeay caches of all server processes were synced
+      with this global cache.  For this socket connections were established.
+      The drawback of this approach were:
+
+      1. The nasty fiddling with the extra child process was totally buggy
+
+      2. The gcache program itself used another local memory cache. This
+         was totally unnecessary because SSLeay already caches the stuff in a
+         local memory cache. So, under Apache-SSL three cache layers were used
+         (1: SSLeay internal, 2: gcache internal, 3: gcache external) while
+         layer 2 is not needed.
+
+      So the intent now was to replace this with a better solution. The idea
+      came from Stronghold: We either cache the information never (the
+      default), in a hashfile on the local disk (the portable variant -
+      already implemented) or even in a hash structure inside a shared memory
+      segment ( (non-portable, but fast and elegant - still not implemented,
+      only stubs were created to plug this in later).
+
+   *) CORRECTLY SOLVE THE PASS PHRASE DIALOG PROBLEM (the problem is that
+      Apache detaches from the terminal before the SSLeay pass phrase dialog
+      pops up). First I got rid of the ugly and unsuccessful filedescriptor
+      hacks Ben added recently to Apache-SSL because they do not work under
+      all platforms as expected. Second I re-ordered the control flow to allow
+      the following processing:
+      
+      Now at the 1st round of the Apache API init cycle the servers are
+      scanned for certificate and key files and the first one which uses an
+      encrypted key forces the pass phrase dialog to pop up. This dialog is
+      either an interactive builtin terminal dialog (`SSLPassPhraseDialog
+      builtin' - which is similar to SSLeay default dialog) or can be driven
+      in batch by a filtering program which is run once and has to provide the
+      pass phrase on stdout (`SSLPassPhraseDialog /path/to/program').  After
+      this the pass phrase is _temporarily_ stored in memory for use later in
+      the 2nd round of the Apache API init cycle. Now additionally this pass
+      phrase can be kept in memory (`SSLPassPhraseCaching on') for forthcoming
+      server restarts (`kill -HUP') or is explicitly wiped out from memory
+      (`SSLPassPhraseCaching off' - for the paranoid users).
+
+      The following combinations are possible:
+
+      1. THE SMART DEFAULT VARIANT:
+         `SSLPassPhraseDialog builtin' + `SSLPassPhraseCaching on':
+         This is the default which is reasonable for most of the users. This
+         way on Apache startup time the pass phrase is requested on the
+         terminal but kept in memory for all forthcoming restarts.
+
+      2. THE THEORY VARIANT:
+         `SSLPassPhraseDialog builtin' + `SSLPassPhraseCaching off':
+         This combination leads to a server fall-down on any occuring restarts
+         because the terminal dialog _cannot_ be done at restart time (Apache
+         is already detached).  So, this combination is only interesting in
+         theory but should be avoided because its not really useful in
+         practice.  
+
+      3. THE BATCH VARIANT:
+         `SSLPassPhraseDialog /path/to/program' + `SSLPassPhraseCaching on':
+         This is for users who want to remote control the Apache startup or
+         make it automatic by controlling the dialog from within a program.
+         This program is run only once at startup. Then the pass phrase is
+         kept in memory for forthcoming restarts.
+
+      4. THE PARANOIA VARIANT: 
+         `SSLPassPhraseDialog /path/to/program' + `SSLPassPhraseCaching off':
+         This is for the really paranoid users who want avoid any pass phrase
+         caching. Instead both on startup and restart time the pass phrase has
+         to be provided by an external program.
+      
+   *) The SSL logfile is now placed in the main server instead of the virtual
+      host because its actually a global logfile, even when it could be used
+      only inside a virtual server.  
+
+   *) The expensive operation of generating the temporary RSA key is now done
+      before Apache forks the server processes. This speeds up the startup
+      phase a little bit.
+
+   *) Added new SSLCACertificateReqFile directive which defaults to the value
+      of SSLCACertificateFile. It sets the all-in-one file where one can
+      assemble the Certificates of Certification Authorities (CA) whose
+      servers you deal with. These are optionally used by the clients for
+      SSLv3 Server Authentication to speedup processing. The file is requested
+      by the client via the "SSLv3 write certificate request A" for loading
+      intermediate CA certificates in the certificate chain (only SSLv3). It
+      is simply the concatenation of the various PEM-encoded certification
+      files, in order of preference.  
+
+   *) Inlined some functions like init_SSLeay() and init_VerifyType() because
+      they were really small functions and only used once in mod_ssl. These
+      were stand-alone functions in Apache-SSL without real need.
+
+   *) Made `SSLEnable'/`SSLDisable' directives obsolete by adding the simpler
+      `SSEngine on|off'. The old directives are now deprecated but still can
+      be used for backward-compatibility with Apache-SSL. Additionally the
+      default is now `SSLEngine off' (formerly `SSLDisable') instead of the
+      Apache-SSL default of `SSLEngine on'. This breaks a little bit with
+      Apache-SSL semantics, but doesn't hurt as much as it sounds.  Because
+      people run SSL inside a virtual hosts and thus already have a SSLDisable
+      in their main (non-SSL) server. The difference is just that with mod_ssl
+      one no longer has to add SSLDisable to all non-SSL virtual hosts (which
+      is nasty).  OTOH SSL is an additional feature, so the logic of "disabled
+      per default and have to be enabled explicity" is more useful and what is
+      expected.
+
+   *) The "SSL rubbish logfile" of Apache-SSL was now replaced by real
+      dedicated SSL logfile which contains no longer "rubbish".  For this the
+      logging mechanism in mod_ssl was completely re-written from scratch and
+      now looks like this:
+
+      1. `SSLogFile <file>' is optional
+      2. `SSLogFile /dev/null' disables the logging _without_ overheads
+      3. `SSLLogLevel <level>' controls the degree of verbosity in SSLLogFile
+      4. `SSLogLevel none' disables the logging _without_ overheads and is the
+         default.
+      5. Log messages of type `error' are _always_ duplicated to 
+         the Apache general error logfile, even under `SSLLogLevel none'.
+      6. The maximum logging can be now achieved by using `SSLLogLevel debug'.
+
+      Additionally obsolete logging stuff from Apache-SSL was removed from the
+      source code.  Finally the logfiles in the provided default config were
+      changed: ssl_log is now the dedicated SSL protocol logfile (SSLLogFile)
+      while the custom logfile (CustomLog) containing only one line per
+      request is now named ssl_req_log.
+  
+       ____    ___  
+      |___ \  / _ \ 
+        __) || | | |
+       / __/ | |_| |
+  ___ |_____(_)___/ __________________________________________
+
+  Changes with mod_ssl 2.0.16 (07-Nov-1998 to 09-Nov-1998)
+
+   *) Fixed documenation: SSLRequireSSL can be used in .htaccess
+      files when the `FileInfo' context is enabled for it.
+
+   *) Revised my recent RSAref fix to INSTALL file a little bit.
+
+   *) Backport of an Apache-SSL bugfix:
+      Fix file-descriptor leak for stderr.
+
+  Changes with mod_ssl 2.0.15 (01-Nov-1998 to 07-Nov-1998)
+
+   *) Fixed some long-standing inconsistencies in mod_ssl.html
+
+   *) Now SSLVerifyDepth defaults to 1 and this means the client certificate
+      has to be signed directly by the root CA. The verify depth now is the
+      max number of CAs which are checked: 0 = self-signed only, 1 =
+      self-signed or signed by root-CA, 2 = signed by root-CA or signed by a
+      CA which is signed by the root-CA, etc.
+
+   *) Now SSLSessionCacheTime defaults to 300s.
+
+   *) Fixed RSAref instructions in INSTALL file and added more support for
+      implicitly finding the RSA_BASE to the libssl.module script.
+
+   *) Backport from 2.1 branch:
+      Now under `make certificate' an interactive prompt is given which asks
+      whether the private key should be encrypted (the default) or not.  This
+      way it's a little bit easier to setup test servers, at least for me ;-)
+
+   *) Fixed SSLRequiredCiphers: The server configuration entry wasn't
+      correctly merged internally which lead to the effect that it got
+      ignored.
+
+  Changes with mod_ssl 2.0.14 (09-Oct-1998 to 01-Nov-1998)
+
+   *) Backport from 2.1 branch:
+      Renamed snakeoil.{crt,key} to snakeoil-ca.{crt,key} and created a real
+      dummy server certificate/key pair as snakeoil.{crt,key} which is now
+      used under `make certificate TYPE=dummy'. This fixes the recently
+      occured problem where Netscape rejected the dummy certificates because
+      they had the CA flag set.
+
+   *) Upgraded to included Thawte Strong Extranet sources (ssl.contrib/sxnet/)
+      from version 1.2.2 to the current 1.2.3.
+
+   *) Backport from Apache-SSL:
+      Incorporation of recent Base64 (uuencode) encoding bugfixes.
+
+   *) Backport from 2.1 branch:
+      Fixed the "SSLVerifyType optional_no_ca" situation: The situation
+      has to be checked against more SSLeay errors, because under SSLv3
+      certificate chain loading leads to the presentation of the client CA
+      certs, too. Here SSLeay gives different errors.
+
+   *) Fixed documentation of SSL_CLIENT_I<x509> and SSL_SERVER_I<x509>
+      environment variables.
+
+   *) Fixed mod_proxy source for the situation where
+      no --enable-module=ssl is used.
+
+   *) Make sure the stand-alone ssl_gcache program compiles
+      correctly even under SunOS where no strerror() exists.
+
+   *) Backport from 2.1 branch:
+      Fix "uchar" redefinition problem under AIX.
+
+  Changes with mod_ssl 2.0.13 (02-Oct-1998 to 09-Oct-1998)
+  
+   *) Fixed some more race conditions in ssl_gcache, cleaned
+      up the error logging and namespace in ssl_gcache.
+
+   *) Overtaken the SIGPIPE handling patch from Apache-SSL 1.27
+
+   *) Recreated the Snake Oil CA certificate: it's now a X.509 v3
+      certificate with the CA flag set and pathlen 0.
+
+   *) With special permission from Dr Stephen N. Henson his excellent ca-fix
+      program was now added to src/support/ and is used by
+      src/support/mkcert.sh (`make certificate') to fixup the generated
+      certificates. Especially X.509 v3 certificates can be now generated
+      where nsCertType and CA pathlen is correctly set. Additionally `ssleay
+      verify' and `ssleay ... -modulus' checks are performed to make sure the
+      generated certificates are valid.
+
+   *) Upgraded to Apache 1.3.3.
+
+   *) Fixed again some RSAref hints in the INSTALL file.
+
+   *) Fixed `SSLLogFile /dev/null' situation: it now works as expected: No
+      logging is done. But not by writing to /dev/null. Instead no logging at
+      all is done, of course.
+
+  Changes with mod_ssl 2.0.12 (23-Sep-1998 to 02-Oct-1998)
+
+   *) Cleaned up gcache stuff again and fixed a few problematic things 
+      by adding extra runtime checks. Now gcache should no longer dump core.
+      At least I've now found no more bug...
+
+   *) Changed gcache communication from TCP-sockets to Unix domain 
+      sockets in default configuration (httpd.conf-dist), because
+      this is more reliable and safe.
+
+   *) Incorporated reasonable change from Apache-SSL 1.25:
+      Allow up to three retries at the pass phrase prompt.  
+     
+      [The other main change in Apache-SSL 1.25 (the client cert export via
+      env variables) is intentionally not overtaken for mod_ssl because of
+      three reasons: 1. it's a too large patch which is not acceptable for the
+      stable mod_ssl 2.0 branch; 2. it still has some flaws Ben is still
+      fixing for 1.26; 3. I'm still not convinced that providing complete
+      Base64 encoded certs (greated than 1KB) via a set of environment
+      variables is really reasonable (because of performance and system
+      resource limits). Instead I'm still seeking for a real on-demand
+      solution, but for mod_ssl 2.1, of course.]
+
+   *) Backport from 2.1 branch: 
+      Added a --force option to mod_ssl's configure script to let developers
+      apply mod_ssl also to different Apache versions (especially 1.3.x-dev
+      versions).
+
+   *) Fixed portability problems with prop.sh aux script.
+
+   *) Fixed gcache expiring: A static variable was not initialized.
+
+   *) Fixed a few inconsistencies in the mod_ssl.html document.
+
+   *) Fixed RSAref installation instructions in INSTALL file and a little big
+      in libssl.module which caused problems for RSAref installations, too.
+
+   *) Fixed mod_perl part in INSTALL file.
+
+   *) Changed some Apache-SSL wordings in mod_ssl.html on request
+      by Ben Laurie.
+
+  Changes with mod_ssl 2.0.11 (17-Sep-1998 to 23-Sep-1998)
+
+   *) Upgrade from Apache 1.3.1 to Apache 1.3.2
+
+   *) Back-port from 2.1: 
+      Enhanced the ssl.crt/Makefile: now <hash>.N extensions are
+      created when conflicts occur and not only <hash>.0 
+
+   *) Changed HTTPS support in mod_proxy: the ap_proxy_http_handler() function
+      is (illegally because of DSO, of course) called used by third-party
+      modules (like Apache::Proxy). So make make sure we don't change the
+      signature of this function.
+
+   *) Added answer to FAQ `Why is client auth broken after upgrading from
+      SSLeay 0.8 to 0.9'. Because of the changed hash algorithm used for the
+      symlinks.
+
+   *) Now when `make certificate TYPE=custom' is used the generated
+      ca.crt/ca.key files are installed, too.
+   
+   *) Make sure mkcert.sh removes temporary files after work.
+
+   *) Enhanced the INSTALL file: Now an example section describes the
+      installation with mod_perl and PHP3. Beside this some bugs were fixed
+      and some more NOTEs were added.
+  
+  Changes with mod_ssl 2.0.10 (13-Sep-1998 to 17-Sep-1998)
+
+   *) Temporarily added a fix from 1.3.2-dev for APACI's configure script to
+      allow the `Group' directive to be adjusted correctly even under Linux
+      boxes. Without this Linux users always have to fix the `Group' directive
+      manually which is nasty.
+
+   *) Added checks to APACI to automatically disable DSO for mod_proxy and
+      mod_log_config when SSL is used (because they have to be built against
+      SSLeay which is not supported in Apache 1.3.1). But we allow the user to
+      explicitly use --enable-shared=.., but then at least he gets a warning.
+      This way we protect the average user but don't hurt the experts.
+      Especially with Apache 1.3.2 the experts want to use
+      --enable-rule=SHARED_CHAIN for linking the DSO's against SSLeay.
+
+   *) Make the SSL_HOOK_SetupConnection a little bit more robust. 
+
+   *) Avoid confusing "unable to load 'random state'" messages
+      from `ssleay genrsa' command.
+
+   *) Renamed `aux' directory to `etc' because `aux' is a special name under
+      Windows filesystems (and people at least wanted to extract the stuff
+      under windows).
+
+   *) Fix top-level Makefile.tmpl: replace `make' with `$(MAKE)'
+      and grep out SSL_PROGRAM variable from src/Makefile.config directly
+      (instead of running a subtarget) to avoid problems with Make output
+      messages. This especially fixed the `make install' problems under Linux
+      platforms (where GNU Make is used which gives nasty messages).
+
+   *) Update INSTALL file: Use apachectl and add hint to 
+      the Apache general error logfile.
+
+   *) Allow ServerRoot relative path for SSLCertificateFile.
+
+  Changes with mod_ssl 2.0.9 (12-Sep-1998 to 13-Sep-1998)
+
+   *) Portability fixes: The ssl.crt/Makefile didn't work on
+      all platforms because of braindead shells and the mkcert.sh script
+      failed to use /dev/random because this device doesn't work as expected
+      on some platforms.
+
+  Changes with mod_ssl 2.0.8 (09-Sep-1998 to 12-Sep-1998)
+
+   *) Make the whole build process (including `make certificate')
+      independent of any installed ssleay.cnf file (some systems have it in
+      non-standard locations and we don't need it any longer at all).
+
+   *) Added Thawte's Strong Extranet module (mod_sxnet.c) to
+      the ssl.contrib area. This module can be used together
+      with mod_ssl.
+
+   *) Fixed hash symlink generation under `make certificate'
+      and `make install' for the cases where `ssleay' is not in $PATH.
+
+   *) Fixed INSTALL document: rsaref.a has to be copied to librsaref.a
+
+   *) Added more information to the mod_ssl.html file about the
+      SSLCACertificateFile: It's also used implicitly for the "SSLv3 write
+      certificate request A" where it's contents is sent to the client to
+      enable him to verify a possible issuer chain on the server certificate.
+
+   *) Fixed a few bugs in the new mkcert.sh script, enhanced it's
+      dialogs and added a lot error checks.
+
+  Changes with mod_ssl 2.0.7 (29-Aug-1998 to 09-Sep-1998)
+   
+   *) Changed the <VirtualHost> example in the conf/httpd.conf-dist
+      file so it now uses _default_ instead of the server name. This is more
+      portable and totally sufficient for our default configuration where
+      only one virtual host is present.
+
+   *) Backport from 2.1b branch: Now the mod_ssl `configure' script creates a
+      `config.status' script as APACI does. This can be used for
+      re-configuring mod_ssl the same way one does it for Apache.
+
+   *) Backport from 2.1b branch: Added the first cut of HTTPS support for the
+      proxy module. This is currently done by making the generic HTTP handler
+      SSL-aware. But it still doesn't provide support for client or server
+      authentication nor does it provide a way to configure it. Later we'll
+      add perhaps SSLProxyXXXXX directives to allow the users to configure the
+      SSL client inside the proxy.  But beside this it's full functional. One
+      can use it for proxying https://xxx URLs and also use `ProxyPass
+      https://xxxx'. (the sources of SSLeay's s_client and cURL were my
+      friends ;-)
+
+   *) In order to
+      - reduce the confusion with sslcerts/server.pem and sslkeys/server.pem
+      - provide less-problematic non-self-signed certificates on `make certificate'
+      - prepare for mod_ssl 2.1 and the forthcoming client auth & CA scripts 
+      the following cleanups were done:
+
+      1. The files for the SSL certificate system are now stored in the
+         following thee subdirs of the configuration directory:
+         ssl.crt/ ...... contains the X.509 certificate(s)
+         ssl.csr/ ...... contains the X.509 certificate signing requests(s)
+         ssl.key/ ...... contains the RSA private key(s)
+         Each directory contains a README file which describes the purpose and
+         the contents.
+
+      2. A ssl.crt/snakeoil.crt and ssl.key/snakeoil.key demo CA certificate
+         and key is distributed with mod_ssl which is used to sign the test
+         certificates the `make certificate' target creates.  This avoids the
+         problems with MSIE users because MSIE doesn't like self-signed
+         server-certificates very well.
+
+      3. A ssl.crt/ca-bundle.crt is now installed (but not enabled!) which
+         contains all 33 CA root certificates of known public CAs.  They were
+         extracted from Netscape Communicator 4.06 with my certbundle stuff.
+
+      4. The `make certificate' command now can create four types
+         of certificate setups:
+         $ make certificate TYPE=dummy    (dummy self-signed Snake Oil cert)
+         $ make certificate TYPE=test     (test cert signed by Snake Oil CA)
+         $ make certificate TYPE=custom   (custom cert signed by own CA)
+         $ make certificate TYPE=official (existing official cert)
+                CRT=/path/to/your.crt
+                [KEY=/path/to/your.key]
+         The default is TYPE=test which is equivalent to the old `make
+         certificate' with the exception that now the generated certificate is
+         no longer a self-signed one.  This overview text is also now
+         displayed under built-time.  When KEY is missing it is assumed that
+         it's present in the file from CRT and is extracted from there.
+
+      5. For consistency with 4.) the mod_ssl configure script now
+         uses --with-crt=FILE and --with-key=FILE options. When
+         --with-key is missing it is assumed that it's present in
+         the file from --with-crt and is extracted from there.
+
+   *) Removed unnecessary DEBUG_XXXX stuff which gets replaced in
+      mod_ssl 2.1b with ssl_log().
+
+   *) Backport from 2.1b branch: Now on `make certificate' the hash symlinks
+      in conf/sslcerts/ are generated via the provided Makefile instead of
+      directly linking (which fails under some platforms).
+
+   *) Backport from 2.1b branch: The top-level APACI Makefile now gives a hint
+      for `apachectl start-SSL' (which internally uses the `httpd -DSSL'
+      command).
+
+   *) Backport from 2.1b branch: Replaced old kludges in mod_log_config.c
+      to determine SSL protocol name with the clean SSL_get_version() which
+      already exists in SSLeay 0.8 and 0.9.  And removed a few unneccessary
+      local buffer usages in the mod_ssl-related code in mod_log_config.c.
+
+   *) Merge in changes from Apache-SSL 1.23 to 1.24: Cache private keys over
+      init rounds and restarts. This means you now can use enrypted private
+      key files (where pass phrases are needed to read them in) and both
+      survive the terminal detachment and the restart rounds of Apache. This
+      is achieved by using an own permanent memory pool which survives server
+      restarts and holds the private key files. Remember that this is _not_ a
+      backported full-featured pass phrase handling from mod_ssl 2.1b.
+      Instead it's exactly the easier handling from Apache-SSL 1.24. Because
+      the mod_ssl 2.1b pass phrase handling is too complex to be backported to
+      the 2.0 branch. At least it could lead to side-effects in 2.0 which I
+      want to avoid.
+
+   *) Fixed some pre-processor and variable declaration inconsitencies 
+      which forced portability problems under some non-GCC compilers.
+
+   *) Minor correction to the README, SUPPORT, etc. files.
+
+  Changes with mod_ssl 2.0.6 (25-Aug-1998 to 29-Aug-1998)
+
+   *) Added RSAref support for the US-citizens: mod_ssl now automatically
+      recognizes an SSLeay compiled with -DRSAref, automatically finds
+      libRSAglue and librsaref.a or rsaref.a.  Additionally beside SSL_BASE
+      now the variable RSA_BASE can be used to select a particular RSAref
+      source tree (if not installed under system locations). This way mod_ssl
+      provides out-of-the-box support for SSLeay+RSAref.
+
+   *) Back-port from 2.1: Replaced assert()ions with non-process-terminating
+      runtime checks and removed some unnecessary debugging stuff. 
+
+   *) Back-port from 2.1: Finally fixed the SSL connection deallocation and
+      removed the old FREE_SESSION stuff by back-porting the change from the
+      2.1 track.
+
+   *) Added PGP public key as ssl.contrib/rse.pgp to the distribution 
+      so people can use it on forthcoming releases to verify the tarballs
+      signature.
+
+   *) Taken over a change between Apache-SSL 1.22 and 1.23: Move the call for
+      launching the gcache program to a later point in processing.
+
+   *) Back-port from 2.1: Removed ERR_load_crypto_strings() call because it's
+      already contained in SSL_load_error_string() from SSLeay 0.8 and 0.9.
+
+  Changes with mod_ssl 2.0.5
+
+   *) Fix per-server configuration structure merging.
+
+   *) Added support for reliable piped logs to SSLLogFile directive which can
+      be used to plug-in a filter program which receives the logfile entries.
+
+   *) Removed per-server check for valid SSLVerifyClient argument because in
+      mod_ssl it's no longer possible that an invalid argument can exit under
+      run-time because the argument is already validated under config-time.
+
+   *) Removed DEBUG_SSLEAY stuff from Apache-SSL because SSL_debug() does no
+      longer exist in SSLeay 0.9.x.
+
+   *) Added one more digit at the MOD_SSL define value to indicate beta or
+      release versions. The scheme now is the following (only important when
+      one has to check against the version of an SSL-aware Apache from within
+      an own module): <version>.<revision><type><level> where <version>,
+      <revision> and <level> are numbers between 0 and 99 while <type> is
+      either `b' (for beta versions) or `.' (for release versions). From
+      this the MOD_SSL define is created similar to this command:
+
+          sprintf("%d%02d%c%02d", <version>, <revision>, 
+                                  <type> == `b' ? 0 : 1, <level>);
+
+      As an example: the beta version 2.1b3 has MOD_SSL=201003 while
+      the release version 2.1.4 has MOD_SSL=201104.
+
+   *) Fixed typos in mod_ssl.html document.
+
+   *) Fixed typos in mod_ssl.c source.
+
+   *) Created two buttons similar to the existing "Includes SSLeay
+      encryption software" button: One for Apache ("Powered by Apache
+      Webserver Software") and one for mod_ssl ("Secured by mod_ssl
+      Interface"). These are now put on the default frontdoor webpage at
+      install time.
+
+   *) Removed half done DSO-related stuff from Apache-SSL because it's
+      useless.  Why? Because mod_ssl currently _cannot_ be build as a DSO,
+      because:
+
+      1. Because SSLeay is directly called from within Apache's buffer code
+         (SSL_write/SSL_read) because the Apache API lacks a hook for this.
+         But direct calls from the core to modules and libraries is tabu under
+         DSO situation.
+
+      2. Because mod_ssl is directly called from within Apache's main loop
+         for setting up the SSL protocol after the socket connection was
+         established because the Apache API lacks a hook for this.  But
+         direct calls from the core to modules and libraries is tabu under
+         DSO situation.
+
+      3. Because the pass-phrase dialog can be done only before Apache
+         detaches from the terminal. But the general order is this:
+
+           a) ap_read_config (where LoadModule is done)
+           b) ap_init_modules (where mod_ssl can do the pass-phrase dialog)
+           c) detaching
+           d) ap_read_config (where DSOs are unloaded and reloaded)
+           e) ap_init_modules (where mod_ssl no longer can do the dialog)
+
+         When mod_ssl is not a DSO it can do the pass-phrase dialog in step
+         b), but when it's a DSO (assuming 1. and 2. are already solved) then
+         it cannot preserve information between b) and e) because it is
+         unloaded in the meantime.
+
+      So, for DSO the Apache kernel has to be bloated up with some more
+      features. Currently I want to avoid this because DSO is still not not
+      really worth the effort (there are other things which can be improved in
+      mod_ssl first). 
+
+  Changes with mod_ssl 2.0.4
+
+   *) Added VERSIONS file to the distribution which contains the
+      release date and version numbers for reference.
+
+   *) Make sure the server.pem certificate files in sysconfdir/sslcerts/ is
+      not overridden on APACI re-installs. Now a message simular to other
+      existing APACI messages informs the user that his certificates are
+      preserved.
+
+   *) Added support for SSL_BASE=SYSTEM which means that SSLeay header files,
+      libraries, configuration and binary files were not searched under a
+      single SSL_BASE root. Instead they are searched inside the common system
+      directories like /etc/, /usr/etc, /lib, /usr/lib, /usr/local/lib,
+      /usr/include, etc. pp.
+
+   *) Replaced even more old Apache-SSL relicts to make mod_ssl really secure,
+      stable and robust: sprintf -> ap_snprinf, srcpy -> ap_cpystrn, fopen ->
+      ap_pfopen. 
+
+   *) Added U.S. export law information to SUPPORT file to make sure
+      mailing list users inside the United States remember the U.S. export law.
+
+  Changes with mod_ssl 2.0.3
+
+   *) Fixed a view ap_log_error() calls where APLOG_NOERRNO was missing.
+
+   *) For better compatibility with Stronghold and because it is really more
+      intuitive we now also provide the CustomLog directives %{subjectdn}c and
+      %{issuerdn}c: The (more intuitive) %{subjectdn}c replaced the (confusing)
+      %{clientcert}c directive (although %{clientcert}c is still accepted as an
+      alias).  And the %{issuerdn}c was added (with the alias %{cacert}c :-( ).
+      This way custom logfiles now can contain the certificate issuer as well.
+
+   *) For better configuration sharing with Stronghold (which uses
+      the name mod_ssl.c for its module, too) mod_ssl now defines not only the
+      C Pre-Processor define MOD_SSL, it now also pre-defines the Apache
+      configuration define MOD_SSL. This now can be used with <IfDefine
+      MOD_SSL>..</IfDefine> sections without the need to startup Apache
+      explicitly with an -DSSL or -DMOD_SSL option. 
+   
+   *) ANSI C doesn't allow one to forward declare an array variable without
+      specifying the actual array size. GCC didn't complain, but other vendor
+      compilers (like /bin/cc under IRIX) do. This is now fixed by re-ordering
+      the definitions in the code to make the forward declaration not
+      necessary. 
+
+   *) Let APACI adjust the port 443 to 8443 when installing under a non-root
+      UID similar to what Apache already does with adjusting port 80 to 8080.
+
+   *) Fix patch tool location for the situation where the user
+      has to compile manually the stuff because of platforms errors.
+
+   *) Incorporated changes from Apache-SSL 1.20 to 1.21:
+      Was only a single register_cleanup -> ap_register_cleanup rename,
+      because all other changes were either already in mod_ssl or will be done
+      totally different with the next mod_ssl changes (for instance the
+      logging stuff which gets replaced by a more improved version the next
+      days - because Ben's idea to now log anything to Apache's error_log
+      sounds not reasonable to me).
+
+   *) Fixed variable arg usage in logging functions: va_end was missing.
+
+  Changes with mod_ssl 2.0.2
+
+   *) Make egrep arguments more safe because they failed under
+      Solaris and other platforms. 
+
+   *) Replaced basename() and dirname() functions in aux/patch/backupfile.c
+      to avoid conflicts with glibc2's versions of these functions.
+
+   *) Removed ssl.contrib/ssleay.diff because it was only needed
+      for the temporary broken SSLeay 0.9.0b which was staying around on the
+      net. 
+
+   *) Now the sslcerts dir is created with permissions 755 and sslkeys 
+      with 700 for security reasons.
+
+   *) Now the FAQ inside the mod_ssl.html document has corresponding ToC
+      entries. Additionally now the question "What is different between mod_ssl
+      and Apache-SSL" is tried to be answered.  And a few hints were added on how
+      to check HTTPS manually.
+
+   *) Make the building of the 'patch' tool more robust by checking for
+      success and providing a log of the failure. Additionally in case of
+      problems the user now can use a --with-patch option to force the usage
+      of a vendor patch program.
+
+   *) Cleaned up the gcache stuff even more: reduced #includes
+      to minimum and moved some stuff to the header file.
+
+   *) Cleaned up the httpd.conf-dist entries for SSL.
+
+   *) Cleanup mod_log_config.c patch and fixed %{version}c construct:
+      It now says "SSLX" even under SSLeay 0.8.0.
+
+   *) Misc. doc ajdustments: Fixed a few comment typos in apache.patch file;
+      Added Announcement text as ANNOUNCE file to distribution; Fixed
+      hyperlinks in mod_ssl.html document and added more useful hyperlinks to
+      the README file.
+
+   *) Replaced a lot of C constructs into shorthand defines to
+      make the code even more readable and reviewable: 
+      o ``strcmp ... == 0'' -> ``strEQ''
+      o ``\0'' -> ``NUL''
+      o ``ap_get_module_config(...)'' -> ``myXXConfig''
+      o ``ap_overlay_tables'' -> ``cfgMergeTable''
+
+   *) Fixed dependencies in src/modules/ssl/Makefile.tmpl
+
+   *) Add Ben Laurie's copyright message to gcache sources, even when Ben
+      missed it here. It's from Ben, so his copyright applies and credit has
+      to be given. 
+
+  Changes with mod_ssl 2.0.1
+
+   *) Minor documentation updates.
+
+   *) Now the ssl.patch/apache.diff file is named ssl.patch/apache.patch
+      and contains descriptive annotations for each patches file. This way
+      even the patches are easier reviewable.
+ 
+   *) The configure patch was not 100% correct: The SSL has not to be
+      disabled for --enable-module=most (where it should be enabled, of
+      course). Instead it has to be disabled automatically for
+      --enable-shared=max.
+  
+  Changes with mod_ssl 2.0.0
+  
+   *) Added "SSL library type" message to the configuration process
+      to inform the user how we recognized the SSLeay location.
+ 
+   *) Added support for conf/sslkeys/ directory both to configure
+      script, Makefile.tmpl and default config files. Additionally now on
+      "make install" the hash symlinks are created and a dummy server cert
+      file is skipped.
+ 
+   *) Fixed prop.sh script.
+ 
+   *) Cleaned up mod_ssl.html document for release.
+ 
+   *) Cleaned up the README file and added a situation report
+      about the author conflict with Ben.
+ 
+   *) Incorporated changes from Apache-SSL 1.19 to 1.20:
+      - Do a cleanup before starting gcache.
+      - Make gcache die when httpd dies. 
+        This failing in previous versions appears to be a bug in Apache. 
+      - Document the biz with passphrases and sleep.
+      - Do Apache-SSL on inetd connections.
+      ALL OTHER CHANGES BETWEEN APACHE-SSL 1.19 AND 1.20 WERE ALREADY DONE
+      FOR MOD_SSL IN THE PAST BY Ralf S. Engelschall. Because it seems Ben
+      just has drawn level Apache-SSL with the mod_ssl pre-release I sent to
+      him last week.  Hmmmm...
+ 
+   *) Minor cleanups to README and mod_ssl.html file.
+ 
+   *) Now create the CHANGES.SSL in <apache>/src/ instead in <apache>/.
+ 
+   *) Moved patch to a subdir aux/patch/ and added prop.sh for
+      a visual process indicator while building the aux tools.
+ 
+   *) Slightly fixed the configure scripts messages
+ 
+   *) Added support for checking the Apache version: Now mod_ssl can
+      only be applied to the correct matching Apache source tree.
+ 
+   *) Added configurable support for mod_ssl version strings: Now
+      a libssl.version file is created inside src/modules/ssl/ which holds
+      the mod_ssl version. From this the libssl.module script creates a
+      MOD_SSL_VERSION define holding the value as a string ("X.Y.Z") and a
+      MOD_SSL define holding the value with a zero-spaced numerical value
+      (XYYZZ). This way the mod_ssl received the string for the Server field
+      and other modules can check against certain mod_ssl versions via #ifdef
+      or more granular via #if MOD_SSL >= 20000 or whatever.
+    
+   *) Added support for named to SSLVerifyClient directive: Now the ogly
+      numerical levels 0-2 are still valid but can be replaced by better
+      readable names: "none", "optional", "require" and "optional_no_ca".
+ 
+   *) Added Makefile for conf/sslcerts/ directory to keep <hash>.0 
+      symlinks up-to-date.
+ 
+   *) Translated the FAQ into HTML format and appended it to mod_ssl.html.
+      Additionally I created a ca.sign script and a Makefile for sslcert/ in
+      relation to the FAQ.
+ 
+   *) Enhanced the logfile support: First I've converted nasty
+      fprintf(stderr,..) to ap_log_error() variants. Second I've moved the
+      fprintf(pConfig->fileLogfile,...) to ssl_log_own(pConfig,...) calls.
+      And third error messages are now consistently prefixed with "mod_ssl:"
+      and "SSLeay:" - dependend from which an error comes. And forth I've
+      added the word "SSL" to a lot of messages to indicate that the
+      SSL-relationship.  Additionally I removed doubled ERR_print_xxx calls.
+  
+   *) Cleanup up namespace by added lots of `static's, so only the
+      module structure and the SSL_HOOK_xxx symbols are now exported.
+ 
+   *) Fixed up Apache API structures for Apache 1.3: added MODULE_VAR_EXPORT
+      for consistency and missing module structure dispatch pointers.
+       
+   *) Completely renamed the functions to use common prefixes which
+      indicate their relationship and ordered the functions according to this
+      relationship. Additionally a complete list of prototypes is now
+      provided in mod_ssl.h. The order of functions now reflects the logical
+      order when one wants to review the module: 1. API structures, 2. config
+      handing, 3.  directive handling, 4. init functions, 5. API hooks, 6.
+      internals, 7.  caching support, 8. logfile support and 9. utility
+      functions.  Additionally I cleanup up the namespace of global data
+      symbols: They now all have the prefix "_g": bFirstTime -> g_bFirstTime,
+      szCacheServerPort -> g_szCacheServerPort, szCacheServerPath ->
+      g_szCacheServerPath, s_pServer -> g_pServer.
+
+   *) Now all stuff for SSLEay < 0.8.0 is removed because an #error was
+      already given and there is now real need to support these versions any
+      longer. As a consequence we now also could remove the CACHE_SESSIONS
+      #ifdef mess because  this was enabled for >= 0.8.0 since a long time.
+
+   *) Cleaned up the mess inside ap_config.h where TRUE, FALSE and BOOL
+      where globally defined even when they were only used my mod_ssl.  Now
+      all stuff mod_ssl needs is inside mod_ssl.h and not spread over the
+      Apache sources without need. I've also cleaned up the "uchar"
+      definition because this was defined only by coincidence. I've also
+      replaced ugly return 0's with return FALSE and -1 by UNSET when the
+      context was the one for UNSET (like for VerifyType). Additionally I
+      replaced some incorrect declarations (extern uid_t ap_user_id) by
+      including the correct header file (http_config_globals.h). In the same
+      spirit for cleaness I've replaced the numerical filedescriptor numbers
+      by the STDXX_FILENO aliases.
+
+   *) Fixed a nasty bug: When a startup error occured an exit() was done.
+      But an already started ssl_gcache program was not terminated because
+      the exit() doesn't give Apache a chance to cleanup the pools (where the
+      program is registered). Fixed by adding a bunch of ap_clear_pool()
+      calls before the exit() calls. Additionally some more missing exit()'s
+      were added to config checks. And last but not least a termination
+      message is now created by ssl_gcache when it is terminated so one now
+      see both the start and the termination of ssl_gcache program in the
+      logfiles.
+ 
+   *) Replaced various sprintf()'s by the more safe and correct ap_snprintf()
+      variants. Same for fopen() and ap_pfopen() and other such functions.
+ 
+   *) Prefixed all SSLeay function calls with __SSLeay to mark them
+      for reviewing. I'm still not happy with this long and ugly reading
+      prefix but need to use an initial one which doesn't conflict.
+      Additionally I've then grep'ed out all __SSLeay prefixed symbols,
+      sorted them by group and inserted them into a README which can help
+      identifiying the used SSLeay API functions. The whole intent is
+      just to make reviewing of the code more easier, because this is
+      really important for security related sources.
+
+   *) A lot of various minor cleanups and fixes: For instance I've corrected the
+      directive descriptions, added some descriptive source comments, etc.
+      Really to much of these minor cleanups to write them down, sorry.
+ 
+   *) Added an FAQ file, assembled from some information found
+      on www.apache-ssl.org
+
+   *) Incorporated the changes between Apache-SSL 1.18-1.19
+ 
+   *) Added back support for the old Apache 1.2 way of configuring and
+      building by placing the SSL_BASE into src/Configuration.tmpl and
+      providing steps in INSTALL, too.
+
+   *) Added a complete Apache-style mod_ssl.html document which describes all
+      mod_ssl directives in detail. I've also painted a nice mod_ssl logo out
+      of the old mod_rewrite logo parts and a safety lock which secures the
+      feather. The SSLeay logo is also part of the document to give credit.
+
+   *) Added a `configure' frontend script for easy applying the mod_ssl
+      source extension and patches to the Apache source tree. It also can
+      replace APACI's configure script by running it in the background.
+      Additionally a slightly changed GNU patch 2.1 tool is distributed under
+      aux/ subdir to make sure the source patching works reliable because
+      newer patches have problems with the apache.diff file and some systems
+      have no "patch" at all.
+
+   *) Split definitions from mod_ssl.c into own mod_ssl.h and converted all
+      source files to the Apache coding styles to be consistent with the
+      officially distributed Apache sources.
+ 
+   *) Generation of a certificate is supported via top-level "make
+      certificate" which correctly finds SSLeay both when SSLeay tree is the
+      source tree or the installed tree.
+ 
+   *) Added SSLNeedsSSL to config files and cleaned up the
+      SSL-related stuff at the end of httpd.conf-dist.
+
+   *) Out-of-the-box installation for a SSL-aware Apache is provided by
+      automatically installing the certificate and the ssl_gcache program.
+      Additionally the SSL-related directives in the extended httpd.conf file
+      is adjusted, so one immediately can fire up an SSL-aware httpd.
+
+   *) The name of the binary is now again "httpd" instead of the "httpsd"
+      because "httpsd" reads ugly and confuses APACI. And there is no real
+      need to distinguish between them, because one still can compile a
+      standard Apache even after mod_ssl was applied to the Apache source
+      tree. Or why isn't everybody using httppd just because mod_perl is
+      built in? Bingo!
+ 
+   *) Added Apache 1.3 Autoconf-style Interface (APACI) support to
+      automatically enable the SSL module via --enable-module=ssl.  This also
+      triggers the MOD_PERL define, so without this APACI option you still
+      can build a standard Apache.
+
+   *) Use the official Apache 1.3 way of adding strings to the
+      HTTP Server header: via ap_add_version_component() instead of patching
+      the defines in httpd.h.  Additionally it now creates a header like
+      ``Server: Apache/1.3.1-dev (Unix) mod_ssl/2.0.0 SSLeay/0.9.0a'' i.e.
+      SSLeay is part of the Server header. Because SSLeay's version is more
+      important than mod_ssl's.
+
+   *) Removed all broken parts in the original Ben-SSL patch, for instance
+      incorrectly added newlines, incorrectly moved SecureWare, etc.
+
+   *) Removed nasty terminal messages like "Skip first time initialization",
+      "Launching ....", etc. These can be enabled in the future by using the
+      ap_log_error stuff.
+
+   *) Fixed incorrect log_ssl_info prototypes in mod_log_config.c from
+      Ben-SSL patch and fixed minor other things.
+
+   *) Cleaned up mod_ssl.c (formerly apache_ssl.c): removed unused variables
+      mod_ssl.c, added prototypes, moved extern prototypes. Actually I've
+      made it run quietly through ``gcc -Wall -Wshadow -Wpointer-arith
+      -Wcast-align -Wmissing-prototypes -Wmissing-declarations
+      -Wnested-externs -Winline'', etc.
+
+   *) Renamed apache_ssl.c to mod_ssl.c for consistency and also
+      to avoid problems inside APACI. Additionally the APACHE_SSL define was
+      renamed to MOD_SSL which is also consistent which the behaviour of
+      mod_perl which uses MOD_PERL.
+
+   *) *GENESIS*: Based the complete code on Ben Laurie's latest Apache-SSL
+      patch (Ben-SSL) version "apache_1.3.0+ssl_1.18". To avoid confusion and
+      to show that its second generation stuff the mod_ssl version starts
+      with 2.0.0. I've merged in all my previous work on Apache-SSL for
+      Apache 1.3b, i.e. especially the APACI stuff.
+

@@ -41,6 +41,12 @@ apxs: apxs.pl
 suexec: suexec.o
 	$(CC) $(CFLAGS) suexec.o -o suexec $(LDFLAGS) $(LIBS)
 
+ca-fix: ca-fix.c
+	$(CC) $(INCLUDES) $(CFLAGS) $(SSL_CFLAGS) \
+	      $(LDFLAGS) $(SSL_LDFLAGS) \
+	      -o ca-fix ca-fix.c \
+	      $(LIBS) $(SSL_LIBS)
+
 clean:
 	rm -f $(TARGETS) *.o
 

@@ -3750,6 +3750,15 @@ static char *lookup_variable(request_rec *r, char *var)
     }
 #endif /* ndef WIN32 */
 
+#ifdef EAPI
+    else {
+        ap_hook_use("ap::mod_rewrite::lookup_variable",
+                    AP_HOOK_SIG3(ptr,ptr,ptr), 
+                    AP_HOOK_DECLINE(NULL),
+                    &result, r, var);
+    }
+#endif
+
     if (result == NULL) {
         return ap_pstrdup(r->pool, "");
     }

@@ -916,6 +916,10 @@ request_rec *ap_read_request(conn_rec *conn)
     r->status          = HTTP_REQUEST_TIME_OUT;  /* Until we get a request */
     r->the_request     = NULL;
 
+#ifdef EAPI
+    r->ctx = ap_ctx_new(r->pool);
+#endif /* EAPI */
+
 #ifdef CHARSET_EBCDIC
     ap_bsetflag(r->connection->client, B_ASCII2EBCDIC|B_EBCDIC2ASCII, 1);
 #endif
@@ -1065,6 +1069,11 @@ void ap_set_sub_req_protocol(request_rec *rnew, const request_rec *r)
     rnew->read_body       = REQUEST_NO_BODY;
 
     rnew->main = (request_rec *) r;
+
+#ifdef EAPI
+    rnew->ctx = r->ctx;
+#endif /* EAPI */
+
 }
 
 void ap_finalize_sub_req_protocol(request_rec *sub)

@@ -228,6 +228,7 @@ RULE_SOCKS5=`./helpers/CutRule SOCKS5 $file`
 RULE_IRIXNIS=`./helpers/CutRule IRIXNIS $file`
 RULE_IRIXN32=`./helpers/CutRule IRIXN32 $file`
 RULE_PARANOID=`./helpers/CutRule PARANOID $file`
+RULE_EAPI=`./helpers/CutRule EAPI $file`
 RULE_SHARED_CORE=`./helpers/CutRule SHARED_CORE $file`
 RULE_SHARED_CHAIN=`./helpers/CutRule SHARED_CHAIN $file`
 
@@ -1535,6 +1536,19 @@ if [ "$RULE_WANTHSREGEX" = "yes" ]; then
     REGLIB="regex/libregex.a"
     SUBDIRS="regex $SUBDIRS"
     CFLAGS="$CFLAGS -DUSE_HSREGEX"
+fi
+
+####################################################################
+# Extended API support:
+if [ "$RULE_EAPI" = "yes" ]; then
+    echo " + enabling Extended API (EAPI)"
+    CFLAGS="$CFLAGS -DEAPI"
+    #   some vendor compilers are too restrictive
+    case "$OS:$CC" in
+        *IRIX-32*:*/cc|*IRIX-32*:cc )
+            CFLAGS="$CFLAGS -woff 1048,1110,1164"
+            ;;
+    esac
 fi
 
 ####################################################################

@@ -26,6 +26,47 @@
 # not enabled).  The AddModule directive can be used to enable such a
 # module.  By default no such modules are defined.
 
+################################################################
+# SSL support:
+#
+# o Set SSL_BASE to either the directory of your SSLeay 
+#   source tree or the installation tree. Alternatively you can
+#   also use the value 'SYSTEM' which then indicates that SSLeay
+#   is installed under various system locations.
+#
+# o If you're a US-citizen you have to compile SSLeay with the
+#   RSAref library (which replaces the RSA code of SSLeay)
+#   because of patent legalities with the RSA algorithm used for
+#   the SSL protocol. For this situation you already have to
+#   compile SSLeay with the -DRSAref define and now you have to
+#   force Apache to link against the RSAglue library (from
+#   SSLeay) and the rsaref library (from RSA). So, set RSA_BASE
+#   to the directory of your RSAref source tree or to 'SYSTEM'
+#   (indicating that librsaref.a is installed under a system
+#   location)
+#
+# o Disable SSL_COMPAT rule to build mod_ssl without backward
+#   compatibility code for Apache-SSL 1.x, mod_ssl 2.0.x Sioux
+#   1.x and Stronghold 2.x.
+#
+# o The SSL_SDBM rule controls whether the built-in SDBM library should be
+#   used instead of a custom defined or vendor supplied DBM library.  Use the
+#   value 'default' for automatic determination or use 'yes' to force the use
+#   of SDBM in case the vendor DBM library is buggy or restricts the data
+#   sizes too dramatically.
+#
+# o The SSL_EXPERIMENTAL rule can be used to enable still experimental code
+#   inside mod_ssl. These are usually new features which need some more
+#   testing before they can be considered stable. So, enabled this on your own
+#   risk and only when you like to see Apache+mod_ssl dump core ;-)
+#   
+
+#SSL_BASE=/usr/local/ssl
+#RSA_BASE=/usr/local/rsa
+SSL_BASE=SYSTEM
+Rule SSL_COMPAT=yes
+Rule SSL_SDBM=default
+Rule SSL_EXPERIMENTAL=no
 
 ################################################################
 # Makefile configuration
@@ -160,12 +201,20 @@ Rule SHARED_CHAIN=default
 #  is performing this function. If PARANOID is set to yes, it will
 #  actually print-out the code that the modules execute
 #
+# EAPI:
+#  Enable the Extended API which provides more module hooks, a generic
+#  low-level hook mechanism and a generic context mechanism. Please notice
+#  that enabling this rule forces you to recompile (with -DEAPI) all existing
+#  modules which are already built and installed as DSOs.  Because under EAPI
+#  the module configuration structure has a different size.
+#
 
 Rule SOCKS4=no
 Rule SOCKS5=no
 Rule IRIXNIS=no
 Rule IRIXN32=yes
 Rule PARANOID=no
+Rule EAPI=no
 
 # The following rules should be set automatically by Configure. However, if
 # they are not set by Configure (because we don't know the correct value for
@@ -328,8 +377,8 @@ AddModule modules/standard/mod_auth.o
 ## "gdbm" package if not and possibly adjust EXTRA_LIBS. (This may be
 ## done by Configure at a later date)
 
-# AddModule modules/standard/mod_auth_dbm.o
-# AddModule modules/standard/mod_auth_db.o
+AddModule modules/standard/mod_auth_dbm.o
+AddModule modules/standard/mod_auth_db.o
 
 ## "digest" implements HTTP Digest Authentication rather than the less 
 ## secure Basic Auth used by the other modules.
@@ -390,4 +439,10 @@ AddModule modules/standard/mod_auth.o
 ## should be the last (highest priority) module.
 
 AddModule modules/standard/mod_setenvif.o
+
+## mod_ssl incorporates SSL into Apache.
+## It must stay last here to be first in execution to 
+## fake basic authorization.
+
+AddModule modules/ssl/libssl.a
 

@@ -70,6 +70,15 @@ extern "C" {
 
 #include "ap_config.h"
 #include "alloc.h"
+/*
+ * Include the Extended API headers.
+ * Don't move the position. It has to be after alloc.h because it uses the
+ * pool stuff but before buff.h because the buffer stuff uses the EAPI, too. 
+ */
+#ifdef EAPI
+#include "ap_hook.h"
+#include "ap_ctx.h"
+#endif /* EAPI */
 #include "buff.h"
 #include "ap.h"
 
@@ -136,8 +145,13 @@ extern "C" {
 #define DEFAULT_HTTP_PORT	80
 #define DEFAULT_HTTPS_PORT	443
 #define ap_is_default_port(port,r)	((port) == ap_default_port(r))
+#ifdef EAPI
+#define ap_http_method(r)   (ap_ctx_get((r)->ctx, "ap::http::method") != NULL ? ((char *)ap_ctx_get((r)->ctx, "ap::http::method")) : "http")
+#define ap_default_port(r)  (ap_ctx_get((r)->ctx, "ap::default::port") != NULL ? atoi((char *)ap_ctx_get((r)->ctx, "ap::default::port")) : DEFAULT_HTTP_PORT)
+#else /* EAPI */
 #define ap_http_method(r)	"http"
 #define ap_default_port(r)	DEFAULT_HTTP_PORT
+#endif /* EAPI */
 
 /* --------- Default user name and group name running standalone ---------- */
 /* --- These may be specified as numbers by placing a # before a number --- */
@@ -426,6 +440,9 @@ enum server_token_type {
 API_EXPORT(const char *) ap_get_server_version(void);
 API_EXPORT(void) ap_add_version_component(const char *component);
 API_EXPORT(const char *) ap_get_server_built(void);
+#ifdef EAPI
+API_EXPORT(void) ap_add_config_define(const char *define);
+#endif /* EAPI */
 
 /* Numeric release version identifier: MMNNFFRBB: major minor fix final beta
  * Always increases along the same track as the source branch.
@@ -780,6 +797,10 @@ struct request_rec {
  * record to improve 64bit alignment the next time we need to break
  * binary compatibility for some other reason.
  */
+
+#ifdef EAPI
+    ap_ctx *ctx;
+#endif /* EAPI */
 };
 
 
@@ -824,6 +845,10 @@ struct conn_rec {
     signed int double_reverse:2;/* have we done double-reverse DNS?
 				 * -1 yes/failure, 0 not yet, 1 yes/success */
     int keepalives;		/* How many times have we used it? */
+
+#ifdef EAPI
+    ap_ctx *ctx;
+#endif /* EAPI */
 };
 
 /* Per-vhost config... */
@@ -896,6 +921,10 @@ struct server_rec {
     int limit_req_line;      /* limit on size of the HTTP request line    */
     int limit_req_fieldsize; /* limit on size of any request header field */
     int limit_req_fields;    /* limit on number of request header fields  */
+
+#ifdef EAPI
+    ap_ctx *ctx;
+#endif /* EAPI */
 };
 
 /* These are more like real hosts than virtual hosts */

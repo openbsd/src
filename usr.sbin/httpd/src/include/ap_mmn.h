@@ -205,7 +205,23 @@
  *                        for a non-binary-compatible release.
  */
 
+/* 
+ * Under Extended API situations we replace the magic cookie "AP13" with
+ * "EAPI" to let us distinguish between the EAPI module structure (which
+ * contain additional pointers at the end) and standard module structures
+ * (which lack at least NULL's for the pointers at the end).  This is
+ * important because standard ("AP13") modules would dump core when we
+ * dispatch over the additional hooks because NULL's are missing at the end of
+ * the module structure. See also the code in mod_so for details on loading
+ * (we accept both "AP13" and "EAPI").
+ */
+#ifdef EAPI
+#define MODULE_MAGIC_COOKIE_AP13 0x41503133UL /* "AP13" */
+#define MODULE_MAGIC_COOKIE_EAPI 0x45415049UL /* "EAPI" */
+#define MODULE_MAGIC_COOKIE      MODULE_MAGIC_COOKIE_EAPI 
+#else
 #define MODULE_MAGIC_COOKIE 0x41503133UL /* "AP13" */
+#endif
 
 #ifndef MODULE_MAGIC_NUMBER_MAJOR
 #define MODULE_MAGIC_NUMBER_MAJOR 19990108

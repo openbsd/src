@@ -1,0 +1,51 @@
+#!wml -oindex.html
+
+#use "ssl_template.inc" title="Title Page" tag=title num=0 
+
+<br>
+<table cellspacing=0 cellpadding=0 border=0>
+<tr>
+    <td>
+        <img 
+           src="ssl_cover_title.gif"
+           alt="User Manual" 
+        >
+    </td>
+</tr>
+<tr>
+    <td>
+        <a 
+           href="http://www.engelschall.com"
+        ><img 
+           src="ssl_cover_logo.jpg"
+           alt="mod_ssl - The Apache Interface to SSLeay" 
+           border=0
+        ></a>
+    </td>
+</tr>
+<tr>
+    <td align=right>
+        <table>
+        <tr>
+            <td>
+                Ralf S. Engelschall<br>
+                <font size=-1>rse@engelschall.com</font><br>
+                <font size=-1>www.engelschall.com</font><br>
+            </td>
+            <td>
+                &nbsp;&nbsp;&nbsp;&nbsp;
+            </td>
+            <td align=right valign=bottom>
+                <rollover
+                    href="ssl_overview.html" 
+                    src="ssl_template.navbut-next-n.gif"
+                    oversrc="ssl_template.navbut-next-s.gif" 
+                    alt="next page"
+                ><br>Overview
+            </td>
+        </tr>
+        </table>
+    </td>
+</tr>
+</table>
+

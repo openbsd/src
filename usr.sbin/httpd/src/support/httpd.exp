@@ -355,3 +355,16 @@ ap_vformatter
 ap_vsnprintf
 core_module
 top_module
+ap_add_config_define
+ap_global_ctx
+ap_ctx_new
+ap_ctx_get
+ap_ctx_set
+ap_hook_init
+ap_hook_kill
+ap_hook_configure
+ap_hook_register_I
+ap_hook_unregister_I
+ap_hook_status
+ap_hook_use
+ap_hook_call

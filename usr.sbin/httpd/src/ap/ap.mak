@@ -48,6 +48,8 @@ ALL : "$(OUTDIR)\ap.lib"
 CLEAN :
 	-@erase "$(INTDIR)\ap_cpystrn.obj"
 	-@erase "$(INTDIR)\ap_fnmatch.obj"
+	-@erase "$(INTDIR)\ap_hook.obj"
+	-@erase "$(INTDIR)\ap_ctx.obj"
 	-@erase "$(INTDIR)\ap_signal.obj"
 	-@erase "$(INTDIR)\ap_slack.obj"
 	-@erase "$(INTDIR)\ap_snprintf.obj"
@@ -70,6 +72,8 @@ LIB32_FLAGS=/nologo /out:"$(OUTDIR)\ap.lib"
 LIB32_OBJS= \
 	"$(INTDIR)\ap_cpystrn.obj" \
 	"$(INTDIR)\ap_fnmatch.obj" \
+	"$(INTDIR)\ap_hook.obj" \
+	"$(INTDIR)\ap_ctx.obj" \
 	"$(INTDIR)\ap_signal.obj" \
 	"$(INTDIR)\ap_slack.obj" \
 	"$(INTDIR)\ap_snprintf.obj"
@@ -100,6 +104,8 @@ ALL : "$(OUTDIR)\ap.lib"
 CLEAN :
 	-@erase "$(INTDIR)\ap_cpystrn.obj"
 	-@erase "$(INTDIR)\ap_fnmatch.obj"
+	-@erase "$(INTDIR)\ap_hook.obj"
+	-@erase "$(INTDIR)\ap_ctx.obj"
 	-@erase "$(INTDIR)\ap_signal.obj"
 	-@erase "$(INTDIR)\ap_slack.obj"
 	-@erase "$(INTDIR)\ap_snprintf.obj"
@@ -122,6 +128,8 @@ LIB32_FLAGS=/nologo /out:"$(OUTDIR)\ap.lib"
 LIB32_OBJS= \
 	"$(INTDIR)\ap_cpystrn.obj" \
 	"$(INTDIR)\ap_fnmatch.obj" \
+	"$(INTDIR)\ap_hook.obj" \
+	"$(INTDIR)\ap_ctx.obj" \
 	"$(INTDIR)\ap_signal.obj" \
 	"$(INTDIR)\ap_slack.obj" \
 	"$(INTDIR)\ap_snprintf.obj"

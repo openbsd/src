@@ -124,6 +124,10 @@ struct buff_struct {
     /* transport handle, for RPC binding handle or some such */
     void *t_handle;
 
+#ifdef EAPI
+    ap_ctx *ctx;
+#endif /* EAPI */
+
 #ifdef B_SFIO
     Sfio_t *sf_in;
     Sfio_t *sf_out;

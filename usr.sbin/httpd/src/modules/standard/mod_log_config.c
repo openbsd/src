@@ -249,6 +249,9 @@ typedef struct {
 typedef const char *(*item_key_func) (request_rec *, char *);
 
 typedef struct {
+#ifdef EAPI
+    char ch;
+#endif
     item_key_func func;
     char *arg;
     int condition_sense;
@@ -491,14 +494,35 @@ static struct log_item_list {
     }
 };
 
+#ifdef EAPI
+static struct log_item_list *find_log_func(pool *p, char k)
+#else /* EAPI */
 static struct log_item_list *find_log_func(char k)
+#endif /* EAPI */
 {
     int i;
+#ifdef EAPI
+    struct log_item_list *lil;
+#endif /* EAPI */
 
     for (i = 0; log_item_keys[i].ch; ++i)
         if (k == log_item_keys[i].ch) {
             return &log_item_keys[i];
         }
+
+#ifdef EAPI
+    if (ap_hook_status(ap_psprintf(p, "ap::mod_log_config::log_%c", k)) 
+        != AP_HOOK_STATE_NOTEXISTANT) {
+        lil = (struct log_item_list *)
+              ap_pcalloc(p, sizeof(struct log_item_list));
+        if (lil == NULL)
+            return NULL;
+        lil->ch = k;
+        lil->func = NULL;
+        lil->want_orig_default = 0;
+        return lil;
+    }
+#endif /* EAPI */
 
     return NULL;
 }
@@ -594,7 +618,11 @@ static char *parse_log_item(pool *p, log_format_item *it, const char **sa)
             break;
 
         default:
+#ifdef EAPI
+            l = find_log_func(p, *s++);
+#else /* EAPI */
             l = find_log_func(*s++);
+#endif /* EAPI */
             if (!l) {
                 char dummy[2];
 
@@ -603,6 +631,9 @@ static char *parse_log_item(pool *p, log_format_item *it, const char **sa)
                 return ap_pstrcat(p, "Unrecognized LogFormat directive %",
                                dummy, NULL);
             }
+#ifdef EAPI
+            it->ch = s[-1];
+#endif
             it->func = l->func;
             if (it->want_orig == -1) {
                 it->want_orig = l->want_orig_default;
@@ -664,6 +695,15 @@ static const char *process_item(request_rec *r, request_rec *orig,
 
     /* We do.  Do it... */
 
+#ifdef EAPI
+    if (item->func == NULL) {
+        cp = NULL;
+        ap_hook_use(ap_psprintf(r->pool, "ap::mod_log_config::log_%c", item->ch),
+                    AP_HOOK_SIG3(ptr,ptr,ptr), AP_HOOK_DECLINE(NULL),
+                    &cp, r, item->arg);
+    }
+    else
+#endif
     cp = (*item->func) (item->want_orig ? orig : r, item->arg);
     return cp ? cp : "-";
 }

@@ -86,6 +86,9 @@ extern MODULE_VAR_EXPORT int ap_suexec_enabled;
 extern int ap_listenbacklog;
 extern int ap_dump_settings;
 extern API_VAR_EXPORT int ap_extended_status;
+#ifdef EAPI
+extern API_VAR_EXPORT ap_ctx *ap_global_ctx;
+#endif /* EAPI */
 
 extern char *ap_pid_fname;
 extern char *ap_scoreboard_fname;

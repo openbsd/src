@@ -75,6 +75,18 @@ do
 	    ERROR=3
 	fi
 	;;
+    startssl|sslstart|start-SSL)
+	if [ $RUNNING -eq 1 ]; then
+	    echo "$0 $ARG: httpd (pid $PID) already running"
+	    continue
+	fi
+	if $HTTPD -DSSL; then
+	    echo "$0 $ARG: httpd started"
+	else
+	    echo "$0 $ARG: httpd could not be started"
+	    ERROR=3
+	fi
+	;;
     stop)
 	if [ $RUNNING -eq 0 ]; then
 	    echo "$0 $ARG: $STATUS"
@@ -153,6 +165,7 @@ do
 	cat <<EOF
 
 start      - start httpd
+startssl   - start httpd with SSL enabled
 stop       - stop httpd
 restart    - restart httpd if running by sending a SIGHUP or start if 
              not running

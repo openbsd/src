@@ -618,5 +618,11 @@ module MODULE_VAR_EXPORT %NAME%_module = {
     NULL,                  /* child_init                          */
     NULL,                  /* child_exit                          */
     NULL                   /* [#0] post read-request              */
+#ifdef EAPI
+   ,NULL,                  /* EAPI: add_module                    */
+    NULL,                  /* EAPI: remove_module                 */
+    NULL,                  /* EAPI: rewrite_command               */
+    NULL                   /* EAPI: new_connection                */
+#endif
 };
 

@@ -249,6 +249,9 @@ int ap_suexec_enabled = 0;
 int ap_listenbacklog;
 int ap_dump_settings = 0;
 API_VAR_EXPORT int ap_extended_status = 0;
+#ifdef EAPI
+API_VAR_EXPORT ap_ctx *ap_global_ctx;
+#endif /* EAPI */
 
 /*
  * The max child slot ever assigned, preserved across restarts.  Necessary
@@ -412,6 +415,16 @@ static void ap_set_version(void)
 	version_locked++;
     }
 }
+
+#ifdef EAPI
+API_EXPORT(void) ap_add_config_define(const char *define)
+{
+    char **var;
+    var = (char **)ap_push_array(ap_server_config_defines);
+    *var = ap_pstrdup(pcommands, define);
+    return;
+}
+#endif /* EAPI */
 
 static APACHE_TLS int volatile exit_after_unblock = 0;
 
@@ -1147,7 +1160,11 @@ static void alrm_handler(int sig)
 }
 #endif
 
+#ifdef EAPI
+API_EXPORT(unsigned int) ap_set_callback_and_alarm(void (*fn) (int), int x)
+#else
 unsigned int ap_set_callback_and_alarm(void (*fn) (int), int x)
+#endif
 {
     unsigned int old;
 
@@ -2971,6 +2988,24 @@ static conn_rec *new_connection(pool *p, server_rec *server, BUFF *inout,
     conn->remote_addr = *remaddr;
     conn->remote_ip = ap_pstrdup(conn->pool,
 			      inet_ntoa(conn->remote_addr.sin_addr));
+#ifdef EAPI
+    conn->ctx = ap_ctx_new(conn->pool);
+#endif /* EAPI */
+
+#ifdef EAPI
+    /*
+     * Invoke the `new_connection' hook of modules to let them do
+     * some connection dependent actions before we go on with
+     * processing the request on this connection.
+     */
+    {
+        module *m;
+        for (m = top_module; m != NULL; m = m->next)
+            if (m->magic == MODULE_MAGIC_COOKIE_EAPI)
+                if (m->new_connection != NULL)
+                    (*m->new_connection)(conn);
+    }
+#endif /* EAPI */
 
     return conn;
 }
@@ -3341,6 +3376,9 @@ static void show_compile_settings(void)
     printf("Server's Module Magic Number: %u:%u\n",
 	   MODULE_MAGIC_NUMBER_MAJOR, MODULE_MAGIC_NUMBER_MINOR);
     printf("Server compiled with....\n");
+#ifdef EAPI
+    printf(" -D EAPI\n");
+#endif
 #ifdef BIG_SECURITY_HOLE
     printf(" -D BIG_SECURITY_HOLE\n");
 #endif
@@ -3486,6 +3524,22 @@ static void common_init(void)
     ap_server_pre_read_config  = ap_make_array(pcommands, 1, sizeof(char *));
     ap_server_post_read_config = ap_make_array(pcommands, 1, sizeof(char *));
     ap_server_config_defines   = ap_make_array(pcommands, 1, sizeof(char *));
+
+#ifdef EAPI
+    ap_hook_init();
+    ap_hook_configure("ap::buff::read", 
+                      AP_HOOK_SIG4(int,ptr,ptr,int), AP_HOOK_TOPMOST);
+    ap_hook_configure("ap::buff::write",  
+                      AP_HOOK_SIG4(int,ptr,ptr,int), AP_HOOK_TOPMOST);
+    ap_hook_configure("ap::buff::writev",  
+                      AP_HOOK_SIG4(int,ptr,ptr,int), AP_HOOK_TOPMOST);
+    ap_hook_configure("ap::buff::sendwithtimeout", 
+                      AP_HOOK_SIG4(int,ptr,ptr,int), AP_HOOK_TOPMOST);
+    ap_hook_configure("ap::buff::recvwithtimeout", 
+                      AP_HOOK_SIG4(int,ptr,ptr,int), AP_HOOK_TOPMOST);
+
+    ap_global_ctx = ap_ctx_new(NULL);
+#endif /* EAPI */
 }
 
 #ifndef MULTITHREAD

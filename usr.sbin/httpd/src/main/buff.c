@@ -125,7 +125,11 @@
   select() sometimes returns 1 even though the write will block. We must work around this.
 */
 
+#ifdef EAPI
+API_EXPORT(int) sendwithtimeout(int sock, const char *buf, int len, int flags)
+#else /* EAPI */
 int sendwithtimeout(int sock, const char *buf, int len, int flags)
+#endif /* EAPI */
 {
     int iostate = 1;
     fd_set fdset;
@@ -183,8 +187,11 @@ int sendwithtimeout(int sock, const char *buf, int len, int flags)
     return (rv);
 }
 
-
+#ifdef EAPI
+API_EXPORT(int) recvwithtimeout(int sock, char *buf, int len, int flags)
+#else /* EAPI */
 int recvwithtimeout(int sock, char *buf, int len, int flags)
+#endif /* EAPI */
 {
     int iostate = 1;
     fd_set fdset;
@@ -242,6 +249,9 @@ static int ap_read(BUFF *fb, void *buf, int nbyte)
     }
     else
 #endif
+#ifdef EAPI
+	if (!ap_hook_call("ap::buff::read", &rv, fb, buf, nbyte))
+#endif /* EAPI */
 	rv = read(fb->fd_in, buf, nbyte);
     
     return rv;
@@ -253,6 +263,9 @@ static ap_inline int buff_read(BUFF *fb, void *buf, int nbyte)
 
 #if defined (WIN32)
     if (fb->flags & B_SOCKET) {
+#ifdef EAPI
+	if (!ap_hook_call("ap::buff::recvwithtimeout", &rv, fb, buf, nbyte))
+#endif /* EAPI */
 	rv = recvwithtimeout(fb->fd_in, buf, nbyte, 0);
 	if (rv == SOCKET_ERROR)
 	    errno = WSAGetLastError();
@@ -295,6 +308,9 @@ static int ap_write(BUFF *fb, const void *buf, int nbyte)
     }
     else
 #endif
+#ifdef EAPI
+	if (!ap_hook_call("ap::buff::write", &rv, fb, buf, nbyte))
+#endif /* EAPI */
 #if defined (B_SFIO)
 	rv = sfwrite(fb->sf_out, buf, nbyte);
 #else
@@ -310,6 +326,9 @@ static ap_inline int buff_write(BUFF *fb, const void *buf, int nbyte)
 
 #if defined(WIN32)
     if (fb->flags & B_SOCKET) {
+#ifdef EAPI
+	if (!ap_hook_call("ap::buff::sendwithtimeout", &rv, fb, buf, nbyte))
+#endif /* EAPI */
 	rv = sendwithtimeout(fb->fd, buf, nbyte, 0);
 	if (rv == SOCKET_ERROR)
 	    errno = WSAGetLastError();
@@ -384,6 +403,10 @@ API_EXPORT(BUFF *) ap_bcreate(pool *p, int flags)
     fb->sf_out = sfnew(fb->sf_out, NIL(Void_t *),
 		       (size_t) SF_UNBOUND, 1, SF_WRITE);
 #endif
+
+#ifdef EAPI
+    fb->ctx = ap_ctx_new(p);
+#endif /* EAPI */
 
     return fb;
 }
@@ -1041,6 +1064,9 @@ static int writev_it_all(BUFF *fb, struct iovec *vec, int nvec)
     i = 0;
     while (i < nvec) {
 	do
+#ifdef EAPI
+	    if (!ap_hook_call("ap::buff::writev", &rv, fb, &vec[i], nvec -i))
+#endif /* EAPI */
 	    rv = writev(fb->fd, &vec[i], nvec - i);
 	while (rv == -1 && (errno == EINTR || errno == EAGAIN)
 	       && !(fb->flags & B_EOUT));
