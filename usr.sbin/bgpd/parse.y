@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.66 2004/03/01 17:04:07 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.67 2004/03/01 22:58:12 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -111,7 +111,7 @@ typedef struct {
 %token	SET LOCALPREF MED NEXTHOP PREPEND
 %token	ERROR
 %token	<v.string>		STRING
-%type	<v.number>		number optnumber yesno inout
+%type	<v.number>		number asnumber optnumber yesno inout
 %type	<v.string>		string
 %type	<v.addr>		address
 %type	<v.u8>			action quick direction
@@ -142,6 +142,13 @@ number		: STRING			{
 		}
 		;
 
+asnumber	: number			{
+			if ($1 > USHRT_MAX) {
+				yyerror("AS too big: max %u", USHRT_MAX);
+				YYERROR;
+			}
+		}
+
 string		: string STRING				{
 			if (asprintf(&$$, "%s %s", $1, $2) == -1)
 				fatal("string: asprintf");
@@ -169,7 +176,7 @@ varset		: STRING '=' string		{
 		}
 		;
 
-conf_main	: AS number		{
+conf_main	: AS asnumber		{
 			conf->as = $2;
 		}
 		| ROUTERID address		{
@@ -345,7 +352,7 @@ peeroptsl	: peeropts nl
 		| error nl
 		;
 
-peeropts	: REMOTEAS number	{
+peeropts	: REMOTEAS asnumber	{
 			curpeer->conf.remote_as = $2;
 		}
 		| DESCR string		{
