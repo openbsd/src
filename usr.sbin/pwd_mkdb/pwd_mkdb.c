@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_mkdb.c,v 1.33 2003/03/28 16:58:39 millert Exp $	*/
+/*	$OpenBSD: pwd_mkdb.c,v 1.34 2003/04/13 18:04:07 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -45,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.33 2003/03/28 16:58:39 millert Exp $";
+static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.34 2003/04/13 18:04:07 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -172,7 +172,7 @@ main(argc, argv)
 	/* We don't care what the user wants. */
 	(void)umask(0);
 
-	if (**argv != '/')
+	if (**argv != '/' && basedir == NULL)
 		errx(1, "%s must be specified as an absolute path", *argv);
 
 	if ((pname = strdup(changedir(*argv, basedir))) == NULL)
@@ -494,12 +494,9 @@ changedir(path, dir)
 	if (!dir)
 		return (path);
 
-	p = strrchr(path, '/');
-	strlcpy(fixed, dir, sizeof fixed);
-	if (p) {
-		strlcat(fixed, "/", sizeof fixed);
-		strlcat(fixed, p + 1, sizeof fixed);
-	}
+	if ((p = strrchr(path, '/')) != NULL)
+		path = p + 1;
+	snprintf(fixed, sizeof(fixed), "%s/%s", dir, path);
 	return (fixed);
 }
 
