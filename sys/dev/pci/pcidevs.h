@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.832 2005/02/07 19:11:54 brad Exp 
+ *	OpenBSD: pcidevs,v 1.833 2005/02/08 02:10:18 krw Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2249,6 +2249,7 @@
 #define	PCI_PRODUCT_S3_SAVAGE3D	0x8a20		/* Savage 3D */
 #define	PCI_PRODUCT_S3_SAVAGE3D_M	0x8a21		/* Savage 3DM */
 #define	PCI_PRODUCT_S3_SAVAGE4	0x8a22		/* Savage 4 */
+#define	PCI_PRODUCT_S3_PROSAVAGE_PM133	0x8a25		/* ProSavage PM133 */
 #define	PCI_PRODUCT_S3_VIRGE_MX	0x8c01		/* ViRGE MX */
 #define	PCI_PRODUCT_S3_VIRGE_MXP	0x8c03		/* ViRGE MXP */
 #define	PCI_PRODUCT_S3_SAVAGE_MXMV	0x8c10		/* Savage/MX-MV */
