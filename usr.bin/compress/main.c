@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.20 2003/01/06 18:09:22 mickey Exp $	*/
+/*	$OpenBSD: main.c,v 1.21 2003/01/07 18:48:06 millert Exp $	*/
 
 static const char copyright[] =
 "@(#) Copyright (c) 1992, 1993\n\
@@ -36,7 +36,7 @@ static const char license[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.20 2003/01/06 18:09:22 mickey Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.21 2003/01/07 18:48:06 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -407,7 +407,7 @@ main(argc, argv)
 			}
 		}
 
-		if (error && oreg && unlink(outfile) && errno != ENOENT &&
+		if (error > 0 && oreg && unlink(outfile) && errno != ENOENT &&
 		    verbose >= 0) {
 			if (force) {
 				warn("output: %s", outfile);
@@ -437,6 +437,12 @@ compress(in, out, method, bits, sb)
 	error = 0;
 	cookie  = NULL;
 
+	if ((ifd = open(in, O_RDONLY)) < 0) {
+		if (verbose >= 0)
+			warn("%s", out);
+		return (-1);
+	}
+
 	if ((ofd = open(out, O_WRONLY|O_CREAT, S_IWUSR)) < 0) {
 		if (verbose >= 0)
 			warn("%s", out);
@@ -447,12 +453,6 @@ compress(in, out, method, bits, sb)
 		if (verbose >= 0)
 			warnx("%s: won't write compressed data to terminal",
 			      out);
-		return (-1);
-	}
-
-	if ((ifd = open(in, O_RDONLY)) < 0) {
-		if (verbose >= 0)
-			warn("%s", out);
 		return (-1);
 	}
 
@@ -486,7 +486,7 @@ compress(in, out, method, bits, sb)
 		error++;
 	}
 
-	return (error ? -1 : 0);
+	return (error);
 }
 
 const struct compressor *
@@ -545,13 +545,13 @@ decompress(in, out, method, bits, sb)
 		return -1;
 	}
 
-	if ((ofd = open(out, O_WRONLY|O_CREAT|O_TRUNC, S_IWUSR)) < 0) {
-		if (verbose >= 0)
-			warn("%s", in);
-		return -1;
-	}
-
 	if ((cookie = (*method->open)(ifd, "r", bits)) != NULL) {
+		if ((ofd = open(out, O_WRONLY|O_CREAT|O_TRUNC, S_IWUSR)) < 0) {
+			if (verbose >= 0)
+				warn("%s", in);
+			(method->close)(cookie);
+			return -1;
+		}
 
 		while ((nr = (method->read)(cookie, buf, sizeof(buf))) > 0)
 			if (write(ofd, buf, nr) != nr) {
@@ -575,7 +575,7 @@ decompress(in, out, method, bits, sb)
 		error++;
 	}
 
-	return error;
+	return (error);
 }
 
 void
