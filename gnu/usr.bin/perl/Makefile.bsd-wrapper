@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.39 2000/11/10 09:58:59 deraadt Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.40 2001/02/04 19:23:22 millert Exp $
 #
 # Build wrapper for Perl 5.6.0
 #
@@ -1461,7 +1461,9 @@ install: install.lib install.perl maninstall
 	-mkdir -p ${DESTDIR}/usr/libdata/perl5/site_perl/${MACHINE_ARCH}-openbsd
 	(cd ${DESTDIR}/usr/include; ${H2PH} \
 		-d ${DESTDIR}/usr/libdata/perl5/site_perl/${MACHINE_ARCH}-openbsd \
-		`find . -name '*.h'`)
+		`find . -name '*.h'`; \
+		pax -rw `find . -type l \! -name '*.h' | sed 's/^..//'` \
+		${DESTDIR}/usr/libdata/perl5/site_perl/${MACHINE_ARCH}-openbsd)
 	-chmod -R a+rX ${DESTDIR}/usr/libdata/perl5
 
 install.perl:
