@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.25 2003/10/02 21:23:20 fgsch Exp $
+dnl	$OpenBSD: hardware,v 1.26 2004/02/07 21:58:14 miod Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, G4 Cube as well
 as PowerBook and iBook machines.
 
@@ -142,7 +142,7 @@ Supported devices {:-include-:}:
 		USB Zip drives (umass)
 		Brooktree 8[47][89] based frame grabber and TV tuner cards,
 		including (bktr):
-			Hauppage Wincast TV
+			Hauppauge Wincast TV
 			STB TV PCI Television Tuner
 			Miro PC TV
 			Intel Smart Video Recorder III

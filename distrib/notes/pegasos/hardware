@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.4 2004/02/07 14:28:32 miod Exp $
+dnl	$OpenBSD: hardware,v 1.5 2004/02/07 21:58:16 miod Exp $
 OpenBSD/MACHINE OSREV runs on Pegasos and Pegasos II PowerPC motherboard
 based machines.
 
@@ -105,7 +105,7 @@ dnl and probably more than that!
 		USB Zip drives
 		Brooktree 8[47][89] based frame grabber and TV tuner cards,
 		including:
-			Hauppage Wincast TV
+			Hauppauge Wincast TV
 			STB TV PCI Television Tuner
 			Miro PC TV
 			Intel Smart Video Recorder III
