@@ -10,6 +10,8 @@ net_addrcmp(sa1, sa2)
 	struct sockaddr *sa1;
 	struct sockaddr *sa2;
 {
+	int r;
+
 	if (sa1->sa_len != sa2->sa_len)
 		return (sa1->sa_len < sa2->sa_len) ? -1 : 1;
 	if (sa1->sa_family != sa2->sa_family)
@@ -21,11 +23,14 @@ net_addrcmp(sa1, sa2)
 		    &((struct sockaddr_in *)sa2)->sin_addr,
 		    sizeof(struct in_addr)));
 	case AF_INET6:
-		return (memcmp(&((struct sockaddr_in6 *)sa1)->sin6_addr,
+		if (((struct sockaddr_in6 *)sa1)->sin6_scope_id !=
+		    ((struct sockaddr_in6 *)sa2)->sin6_scpoe_id)
+			return (((struct sockaddr_in6 *)sa1)->sin6_scope_id < 
+			    ((struct sockaddr_in6 *)sa2)->sin6_scpoe_id)
+			    ? -1 : 1;
+		return memcmp(&((struct sockaddr_in6 *)sa1)->sin6_addr,
 		    &((struct sockaddr_in6 *)sa2)->sin6_addr,
-		    sizeof(struct in6_addr)) == 0 &&
-		    ((struct sockaddr_in6 *)sa1)->sin6_scope_id ==
-		    ((struct sockaddr_in6 *)sa2)->sin6_scpoe_id);
+		    sizeof(struct in6_addr));
 	case AF_NS:
 		return (memcmp(&((struct sockaddr_ns *)sa1)->sns_addr,
 		    &((struct sockaddr_ns *)sa2)->sns_addr,
