@@ -1,4 +1,4 @@
-.\" $OpenBSD: io.4tbl,v 1.5 2003/05/20 02:14:03 mickey Exp $
+.\" $OpenBSD: io.4tbl,v 1.6 2003/05/21 15:18:28 mickey Exp $
 .\"
 .\" Copyright (c) 2003 Paul Weissmann
 .\" All rights reserved.
@@ -80,9 +80,9 @@ A180:DL:NCR53710 SE:DC21142 100:[PCI]
 B1xxL:DLW:NCR53710 SE:i82596CA 10:Visualize-EG
      :   :NCR53720 FWD:
 B1xxL+:DLW:NCR53710 SE:DC21142 100:Visualize-EG
-      :   :NCR53785 UW:
+      :   :NCR53875 UW:
 C1xxL:DLW:NCR53710 SE:DC21142 100:Visualize-EG
-     :   :NCR53785 UW:
+     :   :NCR53875 UW:
 .TE
 .in -\n(dIu
 .Pp
