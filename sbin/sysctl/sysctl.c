@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.51 2000/06/07 00:20:32 itojun Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.52 2000/06/14 16:54:46 provos Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.51 2000/06/07 00:20:32 itojun Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.52 2000/06/14 16:54:46 provos Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,6 +81,10 @@ static char *rcsid = "$OpenBSD: sysctl.c,v 1.51 2000/06/07 00:20:32 itojun Exp $
 #include <netinet/icmp6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/pim6_var.h>
+#endif
+
+#ifdef UVM
+#include <uvm/uvm_swap_encrypt.h>
 #endif
 
 #include <ufs/ufs/quota.h>
@@ -180,6 +184,7 @@ int sysctl_fs __P((char *, char **, int *, int, int *));
 static int sysctl_vfs __P((char *, char **, int[], int, int *));
 static int sysctl_vfsgen __P((char *, char **, int[], int, int *));
 int sysctl_bios __P((char *, char **, int *, int, int *));
+int sysctl_swpenc __P((char *, char **, int *, int, int *));
 void vfsinit __P((void));
 
 int
@@ -389,15 +394,19 @@ parse(string, flags)
 			return;
 		}
 #ifdef UVM
-		if (mib[1] != VM_SWAPENCRYPT) {
+		else if (mib[1] == VM_SWAPENCRYPT) {
+			len = sysctl_swpenc(string, &bufp, mib, flags, &type);
+			if (len < 0)
+				return;
+
+			break;
+		}
 #endif
 		if (flags == 0)
 			return;
 		warnx("use vmstat or systat to view %s information", string);
 		return;
-#ifdef UVM
-		}
-#endif
+
 		break;
 
 	case CTL_NET:
@@ -1056,6 +1065,36 @@ sysctl_bios(string, bufpp, mib, flags, typep)
 		*typep = bioslist.list[indx].ctl_type;
 		return(3);
 	}
+}
+#endif
+
+#ifdef UVM
+struct ctlname swpencname[] = CTL_SWPENC_NAMES;
+struct list swpenclist = { swpencname, SWPENC_MAXID };
+
+/*
+ * handle swap encrypt requests
+ */
+int
+sysctl_swpenc(string, bufpp, mib, flags, typep)
+	char *string;
+	char **bufpp;
+	int mib[];
+	int flags;
+	int *typep;
+{
+	char *name;
+	int indx;
+
+	if (*bufpp == NULL) {
+		listall(string, &swpenclist);
+		return(-1);
+	}
+	if ((indx = findname(string, "third", bufpp, &swpenclist)) == -1)
+		return(-1);
+	mib[2] = indx;
+	*typep = swpenclist.list[indx].ctl_type;
+	return(3);
 }
 #endif
 
