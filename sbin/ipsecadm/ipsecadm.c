@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.9 1999/02/25 22:32:05 angelos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.10 1999/02/26 02:04:52 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -170,22 +170,22 @@ usage()
     fprintf(stderr, "usage: ipsecadm [command] <modifier...>\n"
 	    "\tCommands: new esp, old esp, new ah, old ah, group, delspi, ip4, flow\n"
 	    "\tPossible modifiers:\n"
-	    "\t\t-enc <alg>\t encryption algorithm\n"
-	    "\t\t-auth <alg>\t authentication algorithm\n"
-	    "\t\t-src <ip>\t source address to be used\n"
-	    "\t\t-halfiv\t use 4-byte IV in old ESP\n"
-	    "\t\t-forcetunnel\t force tunneling even when not necessary\n"
-	    "\t\t-dst <ip>\t destination address to be used\n"
-	    "\t\t-proxy <ip>\t proxy address to be used\n"
-	    "\t\t-spi <val>\t SPI to be used\n"
-	    "\t\t-key <val>\t key material to be used\n"
-	    "\t\t-authkey <val>\t key material for auth in new esp\n"
-	    "\t\t-proto <val>\t security protocol\n"
-	    "\t\t-chain\t\t SPI chain delete\n"
-	    "\t\t-transport <val>\t protocol number for flow\n"
-	    "\t\t-addr <ip> <net> <ip> <net>\t subnets for flow\n"
-	    "\t\t-delete\t\t delete specified flow\n"
-	    "\t\t-local\t\t also create a local flow\n"
+	    "\t  -enc <alg>\t\t\t encryption algorithm\n"
+	    "\t  -auth <alg>\t\t\t authentication algorithm\n"
+	    "\t  -src <ip>\t\t\t source address to be used\n"
+	    "\t  -halfiv\t\t\t use 4-byte IV in old ESP\n"
+	    "\t  -forcetunnel\t\t\t force IP-in-IP encapsulation\n"
+	    "\t  -dst <ip>\t\t\t destination address to be used\n"
+	    "\t  -proxy <ip>\t\t\t proxy address to be used\n"
+	    "\t  -spi <val>\t\t\t SPI to be used\n"
+	    "\t  -key <val>\t\t\t key material to be used\n"
+	    "\t  -authkey <val>\t\t key material for auth in new esp\n"
+	    "\t  -proto <val>\t\t\t security protocol\n"
+	    "\t  -chain\t\t\t SPI chain delete\n"
+	    "\t  -transport <val>\t\t protocol number for flow\n"
+	    "\t  -addr <ip> <net> <ip> <net>\t subnets for flow\n"
+	    "\t  -delete\t\t\t delete specified flow\n"
+	    "\t  -local\t\t\t also create a local flow\n"
 	    "\talso: dst2, spi2, proto2\n"
 	);
 }
