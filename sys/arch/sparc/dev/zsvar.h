@@ -65,8 +65,8 @@
  * When the value is a character + RR1 status, the character is in the
  * upper 8 bits of the RR1 status.
  */
-#define ZLRB_RING_SIZE 256		/* ZS line ring buffer size */
-#define	ZLRB_RING_MASK 255		/* mask for same */
+#define ZLRB_RING_SIZE 4096			/* ZS line ring buffer size */
+#define	ZLRB_RING_MASK (ZLRB_RING_SIZE-1)	/* mask for same */
 
 /* 0 is reserved (means "no interrupt") */
 #define	ZRING_RINT	1		/* receive data interrupt */
