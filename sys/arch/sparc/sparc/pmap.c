@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.69 2000/01/27 17:37:15 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.70 2000/01/27 21:11:09 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -2336,7 +2336,6 @@ pv_changepte4m(pv0, bis, bic)
 			 */
 			cache_flush_page(va);
 
-			/* Flush TLB so memory copy is up-to-date */
 			tlb_flush_page(va);
 
 		}
