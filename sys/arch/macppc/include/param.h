@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.2 2001/12/05 01:57:15 provos Exp $	*/
+/*	$OpenBSD: param.h,v 1.3 2001/12/05 17:08:32 drahn Exp $	*/
 /*	$NetBSD: param.h,v 1.1 1996/09/30 16:34:28 ws Exp $	*/
 
 /*-
@@ -55,5 +55,5 @@
  * logical pages.
  */
 #define	NKMEMPAGES_MIN_DEFAULT	((8 * 1024 * 1024) >> PAGE_SHIFT)
-#define	NKMEMPAGES_MAX_DEFAULT	((48 * 1024 * 1024) >> PAGE_SHIFT)
+#define	NKMEMPAGES_MAX_DEFAULT	((16 * 1024 * 1024) >> PAGE_SHIFT)
 
