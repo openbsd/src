@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: channels.c,v 1.86 2001/01/31 19:26:19 markus Exp $");
+RCSID("$OpenBSD: channels.c,v 1.87 2001/01/31 20:37:22 markus Exp $");
 
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
@@ -1531,11 +1531,11 @@ channel_open_message()
  * Initiate forwarding of connections to local port "port" through the secure
  * channel to host:port from remote side.
  */
-void
+int
 channel_request_local_forwarding(u_short listen_port, const char *host_to_connect,
     u_short port_to_connect, int gateway_ports)
 {
-	channel_request_forwarding(
+	return channel_request_forwarding(
 	    NULL, listen_port,
 	    host_to_connect, port_to_connect,
 	    gateway_ports, /*remote_fwd*/ 0);
@@ -1545,7 +1545,7 @@ channel_request_local_forwarding(u_short listen_port, const char *host_to_connec
  * If 'remote_fwd' is true we have a '-R style' listener for protocol 2
  * (SSH_CHANNEL_RPORT_LISTENER).
  */
-void
+int
 channel_request_forwarding(
     const char *listen_address, u_short listen_port,
     const char *host_to_connect, u_short port_to_connect,
@@ -1557,6 +1557,8 @@ channel_request_forwarding(
 	const char *host;
 	struct linger linger;
 
+	success = 0;
+
 	if (remote_fwd) {
 		host = listen_address;
 	    	ctype = SSH_CHANNEL_RPORT_LISTENER;
@@ -1565,8 +1567,10 @@ channel_request_forwarding(
 		ctype  =SSH_CHANNEL_PORT_LISTENER;
 	}
 
-	if (strlen(host) > sizeof(channels[0].path) - 1)
-		packet_disconnect("Forward host name too long.");
+	if (strlen(host) > sizeof(channels[0].path) - 1) {
+		error("Forward host name too long.");
+		return success;
+	}
 
 	/* XXX listen_address is currently ignored */
 	/*
@@ -1581,7 +1585,6 @@ channel_request_forwarding(
 	if (getaddrinfo(NULL, strport, &hints, &aitop) != 0)
 		packet_disconnect("getaddrinfo: fatal error");
 
-	success = 0;
 	for (ai = aitop; ai; ai = ai->ai_next) {
 		if (ai->ai_family != AF_INET && ai->ai_family != AF_INET6)
 			continue;
@@ -1630,8 +1633,10 @@ channel_request_forwarding(
 		success = 1;
 	}
 	if (success == 0)
-		packet_disconnect("cannot listen port: %d", listen_port);	/*XXX ?disconnect? */
+		error("channel_request_forwarding: cannot listen to port: %d",
+		    listen_port);
 	freeaddrinfo(aitop);
+	return success;
 }
 
 /*
