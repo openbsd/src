@@ -1,5 +1,5 @@
-/*	$OpenBSD: policy.c,v 1.16 2000/10/09 23:27:31 niklas Exp $	*/
-/*	$EOM: policy.c,v 1.46 2000/10/09 22:08:29 angelos Exp $ */
+/*	$OpenBSD: policy.c,v 1.17 2000/10/16 23:28:43 niklas Exp $	*/
+/*	$EOM: policy.c,v 1.48 2000/10/14 20:19:51 angelos Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Angelos D. Keromytis.  All rights reserved.
@@ -290,6 +290,10 @@ policy_callback (char *name)
 		  ah_hash_alg = "sha";
 		  break;
 
+		case IPSEC_AH_RIPEMD:
+		  ah_hash_alg = "ripemd";
+		  break;
+
 		case IPSEC_AH_DES:
 		  ah_hash_alg = "des";
 		  break;
@@ -541,6 +545,10 @@ policy_callback (char *name)
 			  ah_auth_alg = "hmac-sha";
 			  break;
 
+			case IPSEC_AUTH_HMAC_RIPEMD:
+			  ah_auth_alg = "hmac-ripemd";
+			  break;
+
 			case IPSEC_AUTH_DES_MAC:
 			  ah_auth_alg = "des-mac";
 			  break;
@@ -560,6 +568,10 @@ policy_callback (char *name)
 
 			case IPSEC_AUTH_HMAC_SHA:
 			  esp_auth_alg = "hmac-sha";
+			  break;
+
+			case IPSEC_AUTH_HMAC_RIPEMD:
+			  esp_auth_alg = "hmac-ripemd";
 			  break;
 
 			case IPSEC_AUTH_DES_MAC:
@@ -1521,9 +1533,8 @@ keynote_cert_get (u_int8_t *data, u_int32_t len)
 }
 
 /*
- * We just verify the signature on the certificates.
- * XXX Is this the right thing to do -- verify the signature on all
- * XXX credentials ?
+ * We just verify the signature on the credentials.
+ * On signature failure, just drop the whole payload.
  */
 int
 keynote_cert_validate (void *scert)
