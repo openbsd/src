@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.securelevel,v 1.2 1997/04/29 07:47:20 dima Exp $
+#	$OpenBSD: rc.securelevel,v 1.3 1997/05/04 20:46:06 millert Exp $
 #
 # site-specific startup actions, daemons, and other things which
 # can be done BEFORE your system goes into securemode.  For actions
@@ -13,11 +13,25 @@
 # XXX
 securelevel=1
 
+echo 'starting pre-securelevel services:'
+
+# Use traditional BSD semantics with chown(2)
+#echo 'Enabling traditional BSD chown(2) semantics.'
+#sysctl -w fs.posix.setuid=0 >/dev/null 2>&1
+
+# To run an accellerated X server when securelevel > 0 we must use /dev/ap.
+# NOTE: modload will panic your kernel if the booted kernel is not /bsd.
+#if [ -x /sbin/modload -a -x /usr/lkm/apinstall -a -r /usr/lkm/ap.o ]; then
+#	echo 'Installing XFree86 aperture driver.'
+#	rm -f /usr/lkm/ap
+#	modload -o /usr/lkm/ap -p /usr/lkm/apinstall -e ap /usr/lkm/ap.o
+#fi
+
 echo -n 'starting pre-securelevel daemons:'
 
-# Alternatively, xdm may be started in /etc/ttys.
-#if [ -x /usr/X11R6/bin/xdm ]; then
-#	echo -n ' xdm';		/usr/X11R6/bin/xdm
-#fi
+#if [ -x /usr/local/sbin/xntpd ]; then
+#       /usr/local/sbin/tickadj -Aq
+#       echo -n ' xntpd';       /usr/local/sbin/xntpd
+#fi                                                                            
 
 echo '.'
