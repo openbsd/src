@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.7 2004/02/24 13:36:13 henning Exp $	*/
+/*	$OpenBSD: packet.c,v 1.8 2004/02/25 14:22:12 henning Exp $	*/
 
 /* Packet assembly code, originally contributed by Archie Cobbs. */
 
@@ -45,10 +45,18 @@
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/udp.h>
+#include <netinet/if_ether.h>
 
-/*
- * Compute the easy part of the checksum on a range of bytes.
- */
+#define ETHER_HEADER_SIZE (ETHER_ADDR_LEN * 2 + sizeof(u_int16_t))
+
+u_int32_t	checksum(unsigned char *, unsigned, u_int32_t);
+u_int32_t	wrapsum(u_int32_t);
+
+void	assemble_ethernet_header(struct interface_info *, unsigned char *,
+	    int *, struct hardware *);
+ssize_t	decode_ethernet_header(struct interface_info *, unsigned char *,
+	    int bufix, struct hardware *);
+
 u_int32_t
 checksum(unsigned char *buf, unsigned nbytes, u_int32_t sum)
 {
@@ -75,9 +83,6 @@ checksum(unsigned char *buf, unsigned nbytes, u_int32_t sum)
 	return (sum);
 }
 
-/*
- * Finish computing the sum, and then put it into network byte order.
- */
 u_int32_t
 wrapsum(u_int32_t sum)
 {
@@ -85,21 +90,28 @@ wrapsum(u_int32_t sum)
 	return (htons(sum));
 }
 
-/*
- * Assemble a hardware header...
- *
- * XXX currently only supports ethernet; doesn't check for other types.
- */
 void
 assemble_hw_header(struct interface_info *interface, unsigned char *buf,
     int *bufix, struct hardware *to)
 {
-	assemble_ethernet_header(interface, buf, bufix, to);
+	struct ether_header eh;
+
+	if (to != NULL && to->hlen == 6) /* XXX */
+		memcpy(eh.ether_dhost, to->haddr, sizeof(eh.ether_dhost));
+	else
+		memset(eh.ether_dhost, 0xff, sizeof(eh.ether_dhost));
+	if (interface->hw_address.hlen == sizeof(eh.ether_shost))
+		memcpy(eh.ether_shost, interface->hw_address.haddr,
+		    sizeof(eh.ether_shost));
+	else
+		memset(eh.ether_shost, 0x00, sizeof(eh.ether_shost));
+
+	eh.ether_type = htons(ETHERTYPE_IP);
+
+	memcpy(&buf[*bufix], &eh, ETHER_HEADER_SIZE);
+	*bufix += ETHER_HEADER_SIZE;
 }
 
-/*
- * UDP header and IP header assembled together for convenience.
- */
 void
 assemble_udp_ip_header(struct interface_info *interface, unsigned char *buf,
     int *bufix, u_int32_t from, u_int32_t to, unsigned int port,
@@ -108,7 +120,6 @@ assemble_udp_ip_header(struct interface_info *interface, unsigned char *buf,
 	struct ip ip;
 	struct udphdr udp;
 
-	/* Fill out the IP header */
 	ip.ip_v = 4;
 	ip.ip_hl = 5;
 	ip.ip_tos = IPTOS_LOWDELAY;
@@ -125,7 +136,6 @@ assemble_udp_ip_header(struct interface_info *interface, unsigned char *buf,
 	memcpy(&buf[*bufix], &ip, sizeof(ip));
 	*bufix += sizeof(ip);
 
-	/* Fill out the UDP header */
 	udp.uh_sport = htons(LOCAL_PORT);	/* XXX */
 	udp.uh_dport = port;			/* XXX */
 	udp.uh_ulen = htons(sizeof(udp) + len);
@@ -140,19 +150,21 @@ assemble_udp_ip_header(struct interface_info *interface, unsigned char *buf,
 	*bufix += sizeof(udp);
 }
 
-/*
- * Decode a hardware header...
- */
 ssize_t
 decode_hw_header(struct interface_info *interface, unsigned char *buf,
     int bufix, struct hardware *from)
 {
-	return (decode_ethernet_header(interface, buf, bufix, from));
+	struct ether_header eh;
+
+	memcpy(&eh, buf + bufix, ETHER_HEADER_SIZE);
+
+	memcpy(from->haddr, eh.ether_shost, sizeof(eh.ether_shost));
+	from->htype = ARPHRD_ETHER;
+	from->hlen = sizeof(eh.ether_shost);
+
+	return (sizeof(eh));
 }
 
-/*
- * UDP header and IP header decoded together for convenience.
- */
 ssize_t
 decode_udp_ip_header(struct interface_info *interface, unsigned char *buf,
     int bufix, struct sockaddr_in *from, unsigned char *data, int buflen)

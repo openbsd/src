@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.18 2004/02/24 17:26:43 henning Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.19 2004/02/25 14:22:12 henning Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -425,8 +425,6 @@ void dhcp(struct packet *);
 void cleanup(void);
 
 /* packet.c */
-u_int32_t checksum(unsigned char *, unsigned, u_int32_t);
-u_int32_t wrapsum(u_int32_t);
 void assemble_hw_header(struct interface_info *, unsigned char *,
     int *, struct hardware *);
 void assemble_udp_ip_header(struct interface_info *, unsigned char *,
