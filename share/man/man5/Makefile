@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.26 2002/06/16 19:38:36 pvalchev Exp $
+#	$OpenBSD: Makefile,v 1.27 2002/06/17 00:17:22 pvalchev Exp $
 #	$NetBSD: Makefile,v 1.14 1995/05/11 23:13:15 cgd Exp $
 
 # missing: dump.5 plot.5
@@ -14,6 +14,5 @@ MLINKS+= hosts.equiv.5 .rhosts.5
 MLINKS+= resolv.conf.5 resolver.5
 MLINKS+= hostname.if.5 bridgename.if.5
 MLINKS+= passwd.5 master.passwd.5
-MLINKS+= pf.conf.5 nat.conf.5
 
 .include <bsd.prog.mk>
