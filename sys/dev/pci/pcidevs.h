@@ -670,6 +670,7 @@
 
 /* ASIX Electronics products */
 #define	PCI_PRODUCT_ASIX_AX88140A	0x1400		/* AX88140A 10/100 */
+#define	PCI_PRODUCT_ASIX_AX88141	0x1400		/* AX88141 10/100 */
 
 /* ATI products */
 #define	PCI_PRODUCT_ATI_MACH32	0x4158		/* Mach32 */
