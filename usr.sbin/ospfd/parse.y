@@ -1,7 +1,7 @@
-/*	$OpenBSD: parse.y,v 1.1 2005/01/28 14:05:40 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.2 2005/01/28 17:53:33 norby Exp $ */
 
 /*
- * Copyright (c) 2004 Esben Norby <esben.norby@ericsson.com>
+ * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
  * Copyright (c) 2004 Ryan McBride <mcbride@openbsd.org>
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.

@@ -1,7 +1,7 @@
-/*	$OpenBSD: config.c,v 1.1 2005/01/28 14:05:40 claudio Exp $ */
+/*	$OpenBSD: config.c,v 1.2 2005/01/28 17:53:33 norby Exp $ */
 
 /*
- * Copyright (c) 2004, 2005 Esben Norby <esben.norby@ericsson.com>
+ * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
