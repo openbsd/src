@@ -1,5 +1,5 @@
-#	$OpenBSD: GENERIC,v 1.18 1997/01/16 09:23:37 niklas Exp $
-#	$NetBSD: GENERIC,v 1.67 1997/01/07 11:35:04 mrg Exp $
+#	$OpenBSD: GENERIC,v 1.19 1997/01/19 13:58:18 niklas Exp $
+#	$NetBSD: GENERIC,v 1.69 1997/01/17 14:29:42 is Exp $
 
 #
 # GENERIC AMIGA
@@ -147,7 +147,7 @@ bah0		at zbus0		# C= arcnet
 gvpbus*		at zbus0
 gtsc0		at gvpbus?		# GVP series II scsi
 ahsc0		at mainbus0		# A3000 scsi
-atzsc0		at zbus0
+atzsc0		at zbus0		# A2091 scsi
 wstsc0		at zbus0		# Wordsync II scsi
 ivsc0		at zbus0		# IVS scsi
 mlhsc0		at zbus0		# Hacker scsi
@@ -159,9 +159,9 @@ idesc0		at mainbus0		# A4000 & A1200 IDE
 afsc0		at zbus0		# A4091 scsi
 aftsc0		at mainbus0		# A4000T scsi
 flsc0		at zbus0		# FastlaneZ3 scsi
-bzsc0		at zbus0		# Blizzard 1230 I,II scsi 
-bztzsc0		at zbus0		# Blizzard 1230 IV / 1260 / 2060
-empsc0		at zbus0		# Emplant
+bzsc0		at zbus0		# Blizzard 1230 I,II scsi
+bztzsc0		at zbus0		# Blizzard 2060 scsi
+empsc0		at zbus0		# Emplant scsi
 drsc0		at mainbus0		# DraCo scsi
 
 scsibus*	at gtsc0
