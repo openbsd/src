@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh.h,v 1.23 2004/12/18 22:11:43 millert Exp $	*/
+/*	$OpenBSD: sh.h,v 1.24 2004/12/18 22:43:58 millert Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
@@ -44,7 +44,7 @@
 # define EXTERN_DEFINED
 #endif
 
-#define EXECSHELL	"/bin/sh"
+#define EXECSHELL	_PATH_BSHELL
 #define EXECSHELL_STR	"EXECSHELL"
 
 typedef int bool_t;
