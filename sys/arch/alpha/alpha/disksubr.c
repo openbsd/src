@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.7 1997/04/06 06:03:44 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.8 1997/04/07 06:21:39 millert Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.9 1996/11/13 21:13:05 cgd Exp $	*/
 
 /*
@@ -170,9 +170,9 @@ setdisklabel(olp, nlp, openmask, clp)
 		if (npp->p_offset != opp->p_offset || npp->p_size < opp->p_size)
 			return (EBUSY);
 		/*
-		* Copy internally-set partition information
-		* if new label doesn't include it.             XXX
-		*/
+		 * Copy internally-set partition information
+		 * if new label doesn't include it.             XXX
+		 */
 		if (npp->p_fstype == FS_UNUSED && opp->p_fstype != FS_UNUSED) {
 			npp->p_fstype = opp->p_fstype;
 			npp->p_fsize = opp->p_fsize;
@@ -200,10 +200,16 @@ writedisklabel(dev, strat, lp, clp)
 {
 	struct buf *bp; 
 	struct disklabel *dlp;
+	int labelpart;
 	int error = 0;
 
+	labelpart = DISKPART(dev);
+	if (lp->d_partitions[labelpart].p_offset != 0) {
+		if (lp->d_partitions[0].p_offset != 0)
+			return (EXDEV);		/* not quite right */
+	}
 	bp = geteblk((int)lp->d_secsize);
-	bp->b_dev = dev;
+	bp->b_dev = MAKEDISKDEV(major(dev), DISKUNIT(dev), labelpart);
 	bp->b_blkno = LABELSECTOR;
 	bp->b_resid = 0;			/* was b_cylin */
 	bp->b_bcount = lp->d_secsize;
