@@ -1,5 +1,5 @@
-/*	$OpenBSD: pmap.c,v 1.54 2001/12/11 16:35:18 art Exp $	*/
-/*	$NetBSD: pmap.c,v 1.99 2000/09/05 21:56:41 thorpej Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.55 2001/12/11 17:24:34 art Exp $	*/
+/*	$NetBSD: pmap.c,v 1.107 2000/09/21 21:43:24 thorpej Exp $	*/
 
 /*
  *
@@ -319,6 +319,15 @@ int nkpde = NKPTP;
 
 int pmap_pg_g = 0;
 
+#ifdef LARGEPAGES
+/*
+ * pmap_largepages: if our processor supports PG_PS and we are
+ * using it, this is set to TRUE.
+ */
+
+int pmap_largepages;
+#endif
+
 /*
  * i386 physical memory comes in a big contig chunk with a small
  * hole toward the front of it...  the following 4 paddr_t's
@@ -421,12 +430,16 @@ static boolean_t	 pmap_is_curpmap __P((struct pmap *));
 static pt_entry_t	*pmap_map_ptes __P((struct pmap *));
 static struct pv_entry	*pmap_remove_pv __P((struct pv_head *, struct pmap *,
 					     vaddr_t));
+static void		 pmap_do_remove __P((struct pmap *, vaddr_t,
+						vaddr_t, int));
 static boolean_t	 pmap_remove_pte __P((struct pmap *, struct vm_page *,
-					      pt_entry_t *, vaddr_t));
+					      pt_entry_t *, vaddr_t, int));
 static void		 pmap_remove_ptes __P((struct pmap *,
 					       struct pmap_remove_record *,
 					       struct vm_page *, vaddr_t,
-					       vaddr_t, vaddr_t));
+					       vaddr_t, vaddr_t, int));
+#define PMAP_REMOVE_ALL		0	/* remove all mappings */
+#define PMAP_REMOVE_SKIPWIRED	1	/* skip wired mappings */
 static struct vm_page	*pmap_steal_ptp __P((struct uvm_object *,
 					     vaddr_t));
 static vaddr_t		 pmap_tmpmap_pa __P((paddr_t));
@@ -628,8 +641,16 @@ pmap_kenter_pa(va, pa, prot)
 {
 	pt_entry_t *pte, opte;
 
-	pte = vtopte(va);
+	if (va < VM_MIN_KERNEL_ADDRESS)
+		pte = vtopte(va);
+	else
+		pte = kvtopte(va);
 	opte = *pte;
+#ifdef LARGEPAGES
+	/* XXX For now... */
+	if (opte & PG_PS)
+		panic("pmap_kenter_pa: PG_PS");
+#endif
 	*pte = pa | ((prot & VM_PROT_WRITE)? PG_RW : PG_RO) |
 		PG_V | pmap_pg_g;	/* zap! */
 	if (pmap_valid_entry(opte))
@@ -656,7 +677,15 @@ pmap_kremove(va, len)
 
 	len >>= PAGE_SHIFT;
 	for ( /* null */ ; len ; len--, va += NBPG) {
-		pte = vtopte(va);
+		if (va < VM_MIN_KERNEL_ADDRESS)
+			pte = vtopte(va);
+		else
+			pte = kvtopte(va);
+#ifdef LARGEPAGES
+		/* XXX For now... */
+		if (*pte & PG_PS)
+			panic("pmap_kremove: PG_PS");
+#endif
 #ifdef DIAGNOSTIC
 		if (*pte & PG_PVLIST)
 			panic("pmap_kremove: PG_PVLIST mapping for 0x%lx\n",
@@ -801,6 +830,44 @@ pmap_bootstrap(kva_start)
 			if (pmap_valid_entry(PTE_BASE[i386_btop(kva)]))
 				PTE_BASE[i386_btop(kva)] |= PG_G;
 	}
+
+#ifdef LARGEPAGES
+	/*
+	 * enable large pages of they are supported.
+	 */
+
+	if (cpu_feature & CPUID_PSE) {
+		paddr_t pa;
+		vaddr_t kva_end;
+		pd_entry_t *pde;
+		extern char _etext;
+
+		lcr4(rcr4() | CR4_PSE);	/* enable hardware (via %cr4) */
+		pmap_largepages = 1;	/* enable software */
+
+		/*
+		 * the TLB must be flushed after enabling large pages
+		 * on Pentium CPUs, according to section 3.6.2.2 of
+		 * "Intel Architecture Software Developer's Manual,
+		 * Volume 3: System Programming".
+		 */
+		tlbflush();
+
+		/*
+		 * now, remap the kernel text using large pages.  we
+		 * assume that the linker has properly aligned the
+		 * .data segment to a 4MB boundary.
+		 */
+		kva_end = roundup((vaddr_t)&_etext, NBPD);
+		for (pa = 0, kva = KERNBASE; kva < kva_end;
+		     kva += NBPD, pa += NBPD) {
+			pde = &kpm->pm_pdir[pdei(kva)];
+			*pde = pa | pmap_pg_g | PG_PS |
+			    PG_KR | PG_V;	/* zap! */
+			tlbflush();
+		}
+	}
+#endif /* LARGEPAGES */
 
 	/*
 	 * now we allocate the "special" VAs which are used for tmp mappings
@@ -1631,7 +1698,8 @@ pmap_steal_ptp(obj, offset)
 					pmap_remove_ptes(pmaps_hand, NULL, ptp,
 							 (vaddr_t)ptes,
 							 ptp_i2v(idx),
-							 ptp_i2v(idx+1));
+							 ptp_i2v(idx+1),
+							 PMAP_REMOVE_ALL);
 				pmap_tmpunmap_pa();
 
 				if (lcv != PTES_PER_PTP)
@@ -2012,11 +2080,13 @@ pmap_extract(pmap, va, pap)
 	pd_entry_t pde;
 
 	if (__predict_true((pde = pmap->pm_pdir[pdei(va)]) != 0)) {
+#ifdef LARGEPAGES
 		if (pde & PG_PS) {
 			if (pap != NULL)
 				*pap = (pde & PG_LGFRAME) | (va & ~PG_LGFRAME);
 			return (TRUE);
 		}
+#endif
 
 		ptes = pmap_map_ptes(pmap);
 		pte = ptes[i386_btop(va)];
@@ -2030,6 +2100,24 @@ pmap_extract(pmap, va, pap)
 	}
 	return (FALSE);
 }
+
+#ifdef LARGEPAGES
+/*
+ * vtophys: virtual address to physical address.  For use by
+ * machine-dependent code only.
+ */
+
+paddr_t
+vtophys(va)
+	vaddr_t va;
+{
+	paddr_t pa;
+
+	if (pmap_extract(pmap_kernel(), va, &pa) == TRUE)
+		return (pa);
+	return (0);
+}
+#endif
 
 /*
  * pmap_virtual_space: used during bootup [pmap_steal_memory] to
@@ -2074,6 +2162,9 @@ boolean_t
 pmap_zero_page_uncached(pa)
 	paddr_t pa;
 {
+	int i, *ptr;
+	boolean_t rv = TRUE;
+
 	simple_lock(&pmap_zero_page_lock);
 #ifdef DIAGNOSTIC
 	if (*zero_pte)
@@ -2082,12 +2173,24 @@ pmap_zero_page_uncached(pa)
 
 	*zero_pte = (pa & PG_FRAME) | PG_V | PG_RW |	/* map in */
 	    ((cpu_class != CPUCLASS_386) ? PG_N : 0);
-	memset(zerop, 0, NBPG);				/* zero */
+	for (i = 0, ptr = (int *) zerop; i < NBPG / sizeof(int); i++) {
+		if (whichqs != 0) {
+			/*
+			 * A process has become ready.  Abort now,
+			 * so we don't keep it waiting while we
+			 * do slow memory access to finish this
+			 * page.
+			 */
+			rv = FALSE;
+			break;
+		}
+		*ptr++ = 0;
+	}
 	*zero_pte = 0;					/* zap! */
 	pmap_update_pg((vaddr_t)zerop);			/* flush TLB */
 	simple_unlock(&pmap_zero_page_lock);
 
-	return (TRUE);
+	return (rv);
 }
 
 /*
@@ -2128,12 +2231,13 @@ pmap_copy_page(srcpa, dstpa)
  */
 
 static void
-pmap_remove_ptes(pmap, pmap_rr, ptp, ptpva, startva, endva)
+pmap_remove_ptes(pmap, pmap_rr, ptp, ptpva, startva, endva, flags)
 	struct pmap *pmap;
 	struct pmap_remove_record *pmap_rr;
 	struct vm_page *ptp;
 	vaddr_t ptpva;
 	vaddr_t startva, endva;
+	int flags;
 {
 	struct pv_entry *pv_tofree = NULL;	/* list of pv_entrys to free */
 	struct pv_entry *pve;
@@ -2154,6 +2258,9 @@ pmap_remove_ptes(pmap, pmap_rr, ptp, ptpva, startva, endva)
 			     ; pte++, startva += NBPG) {
 		if (!pmap_valid_entry(*pte))
 			continue;			/* VA not mapped */
+		if ((flags & PMAP_REMOVE_SKIPWIRED) && (*pte & PG_W)) {
+			continue;
+		}
 
 		opte = *pte;		/* save the old PTE */
 		*pte = 0;			/* zap! */
@@ -2231,11 +2338,12 @@ pmap_remove_ptes(pmap, pmap_rr, ptp, ptpva, startva, endva)
  */
 
 static boolean_t
-pmap_remove_pte(pmap, ptp, pte, va)
+pmap_remove_pte(pmap, ptp, pte, va, flags)
 	struct pmap *pmap;
 	struct vm_page *ptp;
 	pt_entry_t *pte;
 	vaddr_t va;
+	int flags;
 {
 	pt_entry_t opte;
 	int bank, off;
@@ -2243,6 +2351,9 @@ pmap_remove_pte(pmap, ptp, pte, va)
 
 	if (!pmap_valid_entry(*pte))
 		return(FALSE);		/* VA not mapped */
+	if ((flags & PMAP_REMOVE_SKIPWIRED) && (*pte & PG_W)) {
+		return(FALSE);
+	}
 
 	opte = *pte;			/* save the old PTE */
 	*pte = 0;			/* zap! */
@@ -2300,6 +2411,21 @@ pmap_remove(pmap, sva, eva)
 	struct pmap *pmap;
 	vaddr_t sva, eva;
 {
+	pmap_do_remove(pmap, sva, eva, PMAP_REMOVE_ALL);
+}
+
+/*
+ * pmap_do_remove: mapping removal guts
+ *
+ * => caller should not be holding any pmap locks
+ */
+
+static void
+pmap_do_remove(pmap, sva, eva, flags)
+	struct pmap *pmap;
+	vaddr_t sva, eva;
+	int flags;
+{
 	pt_entry_t *ptes;
 	boolean_t result;
 	paddr_t ptppa;
@@ -2347,7 +2473,7 @@ pmap_remove(pmap, sva, eva)
 
 			/* do it! */
 			result = pmap_remove_pte(pmap, ptp,
-						 &ptes[i386_btop(sva)], sva);
+			    &ptes[i386_btop(sva)], sva, flags);
 
 			/*
 			 * if mapping removed and the PTP is no longer
@@ -2442,7 +2568,7 @@ pmap_remove(pmap, sva, eva)
 			}
 		}
 		pmap_remove_ptes(pmap, prr, ptp,
-				 (vaddr_t)&ptes[i386_btop(sva)], sva, blkendva);
+		    (vaddr_t)&ptes[i386_btop(sva)], sva, blkendva, flags);
 
 		/* if PTP is no longer being used, free it! */
 		if (ptp && ptp->wire_count <= 1) {
