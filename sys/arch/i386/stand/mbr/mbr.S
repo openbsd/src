@@ -1,9 +1,36 @@
-/*	$OpenBSD: mbr.S,v 1.9 1997/08/13 00:21:45 niklas Exp $	*/
+/*	$OpenBSD: mbr.S,v 1.10 1997/08/13 02:22:02 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff and Tobias Weingartner
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Michael Shalayeff.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR 
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
  */
-
 /* Copyright (c) 1996 VaX#n8 (vax@linkdead.paranoia.com)
  * last edited 9 July 1996
  * many thanks to Erich Boleyn (erich@uruk.org) for putting up with
@@ -31,7 +58,7 @@
 
 #ifdef DEBUG
 #define CHAR_S		'S'	/* started */
-#define CHAR_R		'R' /* relocated */
+#define CHAR_R		'R'	/* relocated */
 #define CHAR_L		'L'	/* looking for bootable partition */
 #define CHAR_B		'B'	/* loading boot */
 #define CHAR_G		'G'	/* jumping to boot */
@@ -163,7 +190,7 @@ reloc:
 	.byte	0x81, 0xbf
 	.word	signature
 	.word	SIGNATURE
-	je		sigok
+	je	sigok
 	data32
 	movl	$esig, %esi
 	data32
@@ -186,7 +213,7 @@ sigok:
 	# movb	(%si), %al
 	.byte	0x8a, 0x44, 0x00
 	cmpb	$BOOTABLE, %al
-	je		found
+	je	found
 	data32
 	addl	$PARTSZ, %esi
 	loop	1b
@@ -201,7 +228,7 @@ err_stop:
 	cli
 	hlt
 	/* Just to make sure */
-	jmp		err_stop
+	jmp	err_stop
 
 	/* Found bootable partition */
 found:
@@ -210,16 +237,16 @@ found:
 	/* Save drive and partition */
 	movl	%dx, %ax
 	andl	$0x0F, %ax
-	orl		$0x30, %ax
+	orl	$0x30, %ax
 	#movb	%al, adrive
 	.byte	0xA2
 	.word	adrive
 
 	movl	%cx, %ax
 	decl	%ax
-	xor		$0x03, %ax
+	xor	$0x03, %ax
 	andl	$0x0F, %ax
-	orl		$0x30, %ax
+	orl	$0x30, %ax
 	#movb	%al, aprtn
 	.byte	0xA2
 	.word	aprtn
@@ -250,13 +277,12 @@ found:
 	movl	$0x200 | 1, %eax	/* number of blocks */
 	xorl	%bx, %bx		/* put it at %es:0 */
 	int	$0x13
-	jnc		1f
+	jnc	1f
 	data32
 	movl    $eread, %esi
 	data32
 	call	message
-	jmp		err_stop
-
+	jmp	err_stop
 
 1:
 	DBGMSG(CHAR_G)
@@ -270,24 +296,24 @@ found:
 	ljmp	$0, $BOOTBIOS << 4
 	/* not reached */
 
+/*
+ * Display string
+ */
+message:
+	pushl	%eax
+	cld
+1:
+	lodsb			# load a byte into %al
+	testb	%al, %al
+	jz	1f
+	data32
+	call	chr
+	jmp	1b
+
 #
 #	message: write the error message in %ds:%si to console
 #
 chr:
-/*
-#ifndef SERIAL
-# BIOS call "INT 10H Function 0Eh" to write character to console
-#	Call with	%ah = 0x0e
-#			%al = character
-#			%bh = page
-#			%bl = foreground color
-#else
-# BIOS call "INT 14H Function 01h" to write character to console
-#	Call with	%ah = 0x01
-#			%al = character
-#			%dx = port number
-#endif
-*/
 	pushl	%eax
 
 #ifndef SERIAL
@@ -305,33 +331,16 @@ chr:
 	int	$0x14
 	popl	%edx
 #endif
-	popl	%eax
+1:	popl	%eax
 	data32
-	ret
-
-/*
- * Display string
- */
-message:
-	pushl	%ax
-	cld
-1:
-	lodsb			# load a byte into %al
-	testb	%al, %al
-	jz	1f
-	data32
-	call	chr
-	jmp	1b
-1:
-	popl	%ax
 	ret
 
 /* Info messages */
 info:	.ascii		"Using Drive: "
 adrive:	.byte		'X'
-		.ascii		" Partition: "
+	.ascii		" Partition: "
 aprtn:	.byte		'Y'
-		.asciz		"\r\n"
+	.asciz		"\r\n"
 
 /* Error messages */
 fdmbr:	.asciz		"MBR on floppy or old BIOS\r\n"
