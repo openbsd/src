@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata_wdc.c,v 1.13 2002/03/14 01:26:52 millert Exp $	*/
+/*      $OpenBSD: ata_wdc.c,v 1.14 2002/03/16 23:23:42 csapuntz Exp $	*/
 /*	$NetBSD: ata_wdc.c,v 1.21 1999/08/09 09:43:11 bouyer Exp $	*/
 
 /*
@@ -204,7 +204,7 @@ _wdc_ata_bio_start(chp, xfer)
 			panic("_wdc_ata_bio_start: bad state");
 		}
 		xfer->c_intr = wdc_ata_ctrl_intr;
-		CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (xfer->drive << 4));
+		wdc_set_drive(chp, xfer->drive);
 		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, ATA_DELAY) != 0)
 			goto timeout;
 		wdccommandshort(chp, xfer->drive, WDCC_RECAL);
@@ -294,8 +294,7 @@ again:
 				return;
 			}
 			/* Initiate command */
-			CHP_WRITE_REG(chp, wdr_sdh, 
-			    WDSD_IBM | (xfer->drive << 4));
+			wdc_set_drive(chp, xfer->drive);
 			if (wait_for_ready(chp, ata_delay) < 0)
 				goto timeout;
 			wdccommand(chp, xfer->drive, cmd, cyl,
@@ -316,7 +315,7 @@ again:
 			    WDCC_READ : WDCC_WRITE;
 		}
 		/* Initiate command! */
-		CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (xfer->drive << 4));
+		wdc_set_drive(chp, xfer->drive);
 		if (wait_for_ready(chp, ata_delay) < 0)
 			goto timeout;
 		wdccommand(chp, xfer->drive, cmd, cyl,
