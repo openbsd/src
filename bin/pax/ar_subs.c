@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_subs.c,v 1.9 1997/07/23 19:15:54 kstailey Exp $	*/
+/*	$OpenBSD: ar_subs.c,v 1.10 1997/07/24 23:19:17 millert Exp $	*/
 /*	$NetBSD: ar_subs.c,v 1.5 1995/03/21 09:07:06 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ar_subs.c,v 1.9 1997/07/23 19:15:54 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: ar_subs.c,v 1.10 1997/07/24 23:19:17 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -349,8 +349,9 @@ extract()
 		 * if required, chdir around.
 		 */
 		if ((arcn->pat != NULL) && (arcn->pat->chdname != NULL))
-			if (chdir(cwdpt) != 0)
-				syswarn(1, errno, "Can't chdir to %s", cwdpt);
+			if (fchdir(cwdfd) != 0)
+				syswarn(1, errno,
+				    "Can't fchdir to starting directory");
 	}
 
 	/*

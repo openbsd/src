@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.13 1997/06/04 00:15:15 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.14 1997/07/24 23:19:18 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1996/03/26 23:54:16 mrg Exp $	*/
 
 /*-
@@ -210,6 +210,7 @@ int set_dest __P((register ARCHD *, char *, int));
 extern int act;
 extern FSUB *frmt;
 extern int cflag;
+extern int cwdfd;
 extern int dflag;
 extern int iflag;
 extern int kflag;
@@ -237,7 +238,6 @@ extern int docrc;
 extern char *dirptr;
 extern char *ltmfrmt;
 extern char *argv0;
-extern char *cwdpt;
 int main __P((int, char **));
 void sig_cleanup __P((int));
 

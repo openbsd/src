@@ -1,4 +1,4 @@
-/*	$OpenBSD: pax.c,v 1.8 1997/07/23 19:15:58 kstailey Exp $	*/
+/*	$OpenBSD: pax.c,v 1.9 1997/07/24 23:19:21 millert Exp $	*/
 /*	$NetBSD: pax.c,v 1.5 1996/03/26 23:54:20 mrg Exp $	*/
 
 /*-
@@ -48,7 +48,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: pax.c,v 1.8 1997/07/23 19:15:58 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: pax.c,v 1.9 1997/07/24 23:19:21 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,6 +62,7 @@ static char rcsid[] = "$OpenBSD: pax.c,v 1.8 1997/07/23 19:15:58 kstailey Exp $"
 #include <unistd.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <fcntl.h>
 #include "pax.h"
 #include "extern.h"
 static int gen_init __P((void));
@@ -76,6 +77,7 @@ static int gen_init __P((void));
 int	act = DEFOP;		/* read/write/append/copy */
 FSUB	*frmt = NULL;		/* archive format type */
 int	cflag;			/* match all EXCEPT pattern/file */
+int	cwdfd;			/* starting cwd */
 int	dflag;			/* directory member match only  */
 int	iflag;			/* interactive file/archive rename */
 int	kflag;			/* do not overwrite existing files */
@@ -103,7 +105,6 @@ int	docrc;			/* check/create file crc */
 char	*dirptr;		/* destination dir in a copy */
 char	*ltmfrmt;		/* -v locale time format (if any) */
 char	*argv0;			/* root of argv[0] */
-char	*cwdpt;			/* starting cwd */
 sigset_t s_mask;		/* signal mask for cleanup critical sect */
 
 /*
@@ -239,9 +240,9 @@ main(argc, argv)
 	/*
 	 * Keep a reference to cwd, so we can always come back home.
 	 */
-	cwdpt = getcwd(NULL, 0);
-	if (cwdpt == NULL) {
-		syswarn(0, errno, "Can't get current working directory.");
+	cwdfd = open(".", O_RDONLY);
+	if (cwdfd < 0) {
+		syswarn(0, errno, "Can't open current working directory.");
 		return(exit_val);
 	}
 
