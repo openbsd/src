@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.20 2001/06/27 06:34:41 kjc Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.21 2001/07/18 19:32:01 mickey Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -658,7 +658,7 @@ tbdinit:
 				if (segment == FXP_NTXSEG)
 					break;
 				txp->tbd[segment].tb_addr =
-				    vtophys(mtod(m, vm_offset_t));
+				    vtophys(mtod(m, vaddr_t));
 				txp->tbd[segment].tb_size = m->m_len;
 				segment++;
 			}
@@ -873,8 +873,7 @@ rcvloop:
 			if (rnr) {
 				fxp_scb_wait(sc);
 				CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL,
-				    vtophys(sc->rfa_headm->m_ext.ext_buf) +
-					RFA_ALIGNMENT_FUDGE);
+				    vtophys((vaddr_t)sc->rfa_headm->m_ext.ext_buf) + RFA_ALIGNMENT_FUDGE);
 				fxp_scb_cmd(sc, FXP_SCB_COMMAND_RU_START);
 			}
 		}
@@ -1106,7 +1105,7 @@ fxp_init(xsc)
 	 * Initialize base of dump-stats buffer.
 	 */
 	fxp_scb_wait(sc);
-	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL, vtophys(sc->fxp_stats));
+	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL, vtophys((vaddr_t)sc->fxp_stats));
 	fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_DUMP_ADR);
 
 	/*
@@ -1163,7 +1162,7 @@ fxp_init(xsc)
 	 * Start the config command/DMA.
 	 */
 	fxp_scb_wait(sc);
-	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL, vtophys(&cbp->cb_status));
+	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL, vtophys((vaddr_t)&cbp->cb_status));
 	fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_START);
 	/* ...and wait for it to complete. */
 	while (!(cbp->cb_status & FXP_CB_STATUS_C));
@@ -1196,8 +1195,8 @@ fxp_init(xsc)
 	for (i = 0; i < FXP_NTXCB; i++) {
 		txp[i].cb_status = FXP_CB_STATUS_C | FXP_CB_STATUS_OK;
 		txp[i].cb_command = FXP_CB_COMMAND_NOP;
-		txp[i].link_addr = vtophys(&txp[(i + 1) & FXP_TXCB_MASK].cb_status);
-		txp[i].tbd_array_addr = vtophys(&txp[i].tbd[0]);
+		txp[i].link_addr = vtophys((vaddr_t)&txp[(i + 1) & FXP_TXCB_MASK].cb_status);
+		txp[i].tbd_array_addr = vtophys((vaddr_t)&txp[i].tbd[0]);
 		txp[i].next = &txp[(i + 1) & FXP_TXCB_MASK];
 	}
 	/*
@@ -1216,7 +1215,7 @@ fxp_init(xsc)
 	 */
 	fxp_scb_wait(sc);
 	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL,
-	    vtophys(sc->rfa_headm->m_ext.ext_buf) + RFA_ALIGNMENT_FUDGE);
+	    vtophys((vaddr_t)sc->rfa_headm->m_ext.ext_buf) + RFA_ALIGNMENT_FUDGE);
 	fxp_scb_cmd(sc, FXP_SCB_COMMAND_RU_START);
 
 	/*
@@ -1333,7 +1332,7 @@ fxp_add_rfabuf(sc, oldm)
 	 */
 	if (sc->rfa_headm != NULL) {
 		sc->rfa_tailm->m_next = m;
-		v = vtophys(rfap);
+		v = vtophys((vaddr_t)rfap);
 		rfap = sc->rfa_tailm->m_ext.ext_buf + RFA_ALIGNMENT_FUDGE;
 		fxp_lwcopy(&v,
 		    (u_int32_t *)(rfap + offsetof(struct fxp_rfa, link_addr)));
@@ -1597,7 +1596,7 @@ fxp_mc_setup(sc)
 	mcsp->mb_head = NULL;
 	mcsp->cb_status = 0;
 	mcsp->cb_command = FXP_CB_COMMAND_MCAS | FXP_CB_COMMAND_S | FXP_CB_COMMAND_I;
-	mcsp->link_addr = vtophys(&sc->cbl_base->cb_status);
+	mcsp->link_addr = vtophys((vaddr_t)&sc->cbl_base->cb_status);
 
 	nmcasts = 0;
 	if (!sc->all_mcasts) {
@@ -1637,7 +1636,7 @@ fxp_mc_setup(sc)
 	 * Start the multicast setup command.
 	 */
 	fxp_scb_wait(sc);
-	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL, vtophys(&mcsp->cb_status));
+	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL, vtophys((vaddr_t)&mcsp->cb_status));
 	fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_START);
 
 	ifp->if_timer = 2;
