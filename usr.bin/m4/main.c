@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.56 2003/06/10 22:20:48 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.57 2003/06/12 14:36:43 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.56 2003/06/10 22:20:48 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.57 2003/06/12 14:36:43 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -180,6 +180,7 @@ main(int argc, char *argv[])
 	if (signal(SIGINT, SIG_IGN) != SIG_IGN)
 		signal(SIGINT, onintr);
 
+	init_trace();
 	initkwds();
 	initspaces();
 	STACKMAX = INITSTACKMAX;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdef.h,v 1.23 2003/06/03 02:56:10 millert Exp $	*/
+/*	$OpenBSD: mdef.h,v 1.24 2003/06/12 14:36:43 espie Exp $	*/
 /*	$NetBSD: mdef.h,v 1.7 1996/01/13 23:25:27 pk Exp $	*/
 
 /*
@@ -34,6 +34,12 @@
  *
  *	@(#)mdef.h	8.1 (Berkeley) 6/6/93
  */
+
+#ifdef __GNUC__
+# define UNUSED	__attribute__((__unused__))
+#else
+# define UNUSED
+#endif
 
 #define MACRTYPE        1
 #define DEFITYPE        2

@@ -1,4 +1,4 @@
-/* $OpenBSD: trace.c,v 1.6 2002/04/26 16:15:16 espie Exp $ */
+/* $OpenBSD: trace.c,v 1.7 2003/06/12 14:36:43 espie Exp $ */
 /*
  * Copyright (c) 2001 Marc Espie.
  *
@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <err.h>
 #include <stdlib.h>
+#include <ohash.h>
 #include "mdef.h"
 #include "stdd.h"
 #include "extern.h"
@@ -48,35 +49,70 @@ int traced_macros = 0;
 #define TRACE_INPUT	256	/* not implemented yet */
 #define TRACE_ALL	512
 
-static struct t {
-	struct t *next;
-	char 	 *name;
+struct t {
 	int	  on;
-} *l;
+	char 	 name[1];
+};
+
 
 static unsigned int letter_to_flag(int);
 static void print_header(struct input_file *);
 static struct t *find_trace_entry(const char *);
 static int frame_level(void);
+static void *hash_alloc(size_t, void *);
+static void hash_free(void *, size_t, void *);
+static void *element_alloc(size_t, void *);
 
 static unsigned int flags = TRACE_QUOTE | TRACE_EXPANSION;
 
-static struct t *
-find_trace_entry(const char *name)
-{
-	struct t *n;
+static struct ohash_info trace_info = {
+	offsetof(struct t, name),
+	NULL, hash_alloc, hash_free, element_alloc };
 
-	for (n = l; n != NULL; n = n->next)
-		if (STREQ(n->name, name))
-			return n;
-	return NULL;
+static struct ohash trace_hash;
+
+/* Support routines for hash tables.  */
+void *
+hash_alloc(s, u)
+	size_t s;
+	void *u 	UNUSED;
+{
+	void *storage = xalloc(s);
+	if (storage)
+		memset(storage, 0, s);
+	return storage;
+}
+
+void
+hash_free(p, s, u)
+	void *p;
+	size_t s	UNUSED;
+	void *u 	UNUSED;
+{
+	free(p);
+}
+
+void *
+element_alloc(s, u)
+	size_t s;
+	void *u 	UNUSED;
+{
+	return xalloc(s);
 }
 
 
 void
+init_trace()
+{
+	ohash_init(&trace_hash, 5, &trace_info);
+}
+
+void
 mark_traced(const char *name, int on)
 {
-	struct t *n, *n2;
+	struct t *n;
+	unsigned int i;
+	const char *end = NULL;
 
 	traced_macros = 1;
 
@@ -87,19 +123,15 @@ mark_traced(const char *name, int on)
 			flags &= ~TRACE_ALL;
 			traced_macros = 0;
 		}
-		for (n = l; n != NULL; n = n2) {
-			n2 = n->next;
-			free(n->name);
+		for (n = ohash_first(&trace_hash, &i); n != NULL; 
+		    n = ohash_next(&trace_hash, &i))
 			free(n);
-		}
-		l = NULL;
 	} else {
-	    n = find_trace_entry(name);
+	    i = ohash_qlookupi(&trace_hash, name, &end);
+	    n = ohash_find(&trace_hash, i);
 	    if (n == NULL) {
-		    n = xalloc(sizeof(struct t));
-		    n->name = xstrdup(name);
-		    n->next = l;
-		    l = n;
+		    n = ohash_create_entry(&trace_info, name, &end);
+		    ohash_insert(&trace_hash, i, n);
 	    }
 	    n->on = on;
 	}
@@ -110,10 +142,11 @@ is_traced(const char *name)
 {
 	struct t *n;
 
-	for (n = l; n != NULL; n = n->next)
-		if (STREQ(n->name, name))
-			return n->on;
-	return (flags & TRACE_ALL) ? 1 : 0;
+	n = ohash_find(&trace_hash, ohash_qlookup(&trace_hash, name));
+	if (n)
+		return n->on;
+	else
+		return (flags & TRACE_ALL) ? 1 : 0;
 }
 
 void
