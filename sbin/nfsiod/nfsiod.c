@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsiod.c,v 1.2 1996/03/21 00:16:26 niklas Exp $	*/
+/*	$OpenBSD: nfsiod.c,v 1.3 1996/08/02 11:05:09 deraadt Exp $	*/
 /*	$NetBSD: nfsiod.c,v 1.12 1996/02/20 16:06:55 fvdl Exp $	*/
 
 /*
@@ -166,7 +166,8 @@ reapchild(signo)
 	int signo;
 {
 
-	while (wait3(NULL, WNOHANG, NULL) > 0);
+	while (wait3(NULL, WNOHANG, NULL) > 0)
+		;
 }
 
 void
