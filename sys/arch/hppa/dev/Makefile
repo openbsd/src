@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.2 1998/12/04 01:57:18 mickey Exp $
+#	$OpenBSD: Makefile,v 1.3 1999/04/20 20:19:37 mickey Exp $
 
 AWK?=	awk
 
-boards.h boards_data.h cpudevs.h cpudevs_data.h: cpudevs devlist2h.awk
-	/bin/rm -f cpudevs.h cpudevs_data.h boards.h boards_data.h
+cpudevs.h cpudevs_data.h: cpudevs devlist2h.awk
+	/bin/rm -f cpudevs.h cpudevs_data.h
 	${AWK} -f devlist2h.awk cpudevs
 

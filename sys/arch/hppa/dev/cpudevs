@@ -1,7 +1,7 @@
-$OpenBSD: cpudevs,v 1.8 1999/02/17 03:21:43 mickey Exp $
+$OpenBSD: cpudevs,v 1.9 1999/04/20 20:19:36 mickey Exp $
 
 /*
- * Copyright (c) 1998 Michael Shalayeff
+ * Copyright (c) 1998,1999 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,149 +30,399 @@ $OpenBSD: cpudevs,v 1.8 1999/02/17 03:21:43 mickey Exp $
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Board types
- */
+type	nproc	0x00	native processor
+type	memory	0x01	memory
+type	bdma	0x02	Type-B DMA (NIO Transit, Parallel, ... )
+type	bdirect	0x03	Type-B Direct (obsolete)
+type	adma	0x04	Type-A DMA (NIO HPIB, LAN, ... )
+type	adirect	0x05	Type-A Direct (RS232, HIL, ... )
+type	other	0x06	other (obsolete)
+type	bcport	0x07	Bus Converter Port
+type	cio	0x08	CIO adapter
+type	console	0x09	console
+type	fio	0x0a	foreign I/O module
+type	bha	0x0b	bus host adaptor
+type	ioa	0x0c	IO Adapter
+type	bridge	0x0d	Bus Bridge to Foreign Bus
+type	fabric	0x0e	Fabric Components
+#		0x0f	-
+#		0x1e	reserved
+type	faulty	0x1f	broken
+#			pseudo-types
+type	board	0x80	system board
+type	cpu	0x81	CPU chips
+type	fpu	0x82	FPU chips
+type	bus	0x83	Main Busses
 
-#board	HP705		0x302	705 (Bushmaster)
-board	HP710		0x300	710 (Bushmaster)
+
+board	HP840		0x004	840/930 (Indigo)
+board	HP825		0x008	825/925 (FireFox)
+board	HP835		0x00a	83[45]/935 (TopGun)
+board	HP845		0x00b	845/945 (Technical ShoGun)
+board	HP850		0x00C	850/950 (Cheetah)
+board	HP949		0x00f	949 (Commercial ShoGun)
+
+board	HP950S		0x080	950S (Cheetah)
+board	HP855		0x081	855/955 (Jaguar)
+board	HP860		0x082	860/960 (Cougar)
+board	HP870		0x083	865/870/980 (Panther)
+
+board	HP810		0x100	810 (Burgundy)
+board	HP822		0x101	822/922 (SilverFox Low)
+board	HP832		0x102	832/932 (SilverFox High)
+board	HP808		0x103	808/815/920 (Lego, SilverLite)
+board	HP842		0x104	842/948 (SilverBullet Low)
+board	HP852		0x105	852/958 (SilverBullet High)
+#board	HP		0x106	(Oboe)
+
+#board	HP		0x180	(Dragon)
+board	HP890		0x181	890/990/992 (Chimera)
+board	HP891		0x182	891/T500 (TNT 100)
+board	HP892		0x183	892/T520 (TNT 120)
+board	HP893_T540	0x184	893/T540 (Jade 180)
+
+board	HPHXPROC	0x1ff	Hitachi X Processor
+
+board	HP720		0x200	720 (Cobra)
+board	HP750_66	0x201	750/66 (Coral)
+board	HP730_66	0x202	730/66 (King Cobra)
+board	HP735_99	0x203	735/99 (Hardball)
+board	HP755_99	0x204	755/99 (Coral II)
+board	HP755_125	0x205	755/125 (Coral II)
+#board	HP		0x205	(Snake Eagle, opt 91)
+board	HP735_130	0x206	735/130 (Snake Cheetah)
+
+board	HP817		0x280	817/827/957/957LX (Nova Low)
+board	HP837		0x281	837/847/857/967/967LX (Nova High)
+board	HP807		0x282	807/917/917LX/927/927LX/937/937LX/947/947LX (Nova8)
+board	HP867		0x283	867/877/977 (Nova64)
+board	HP887		0x284	887/897/987 (TNova)
+#board	HP		0x285	(TNova64)
+#board	HP		0x286	(Hydra64 (Nova))
+#board	HP		0x287	(Hydra96 (Nova))
+#board	HP		0x288	(TNova96)
+
+board	HP710		0x300	710/50 (Bushmaster)
+board	HP705		0x302	705/35 (Flounder)
+
+board	HP715_50	0x310	715/50 (Scorpio)
+board	HP715_33	0x311	715/33 (Scorpio Jr.)
+board	HP715S_50	0x312	715S/50 (Spider-50)
+board	HP715S_33	0x313	715S/33 (Spider-33)
+board	HP715T_50	0x314	715T/50 (Trailways-50)
+board	HP715T_33	0x315	715T/33 (Trailways-33)
+board	HP715_75	0x316	715/75 (Scorpio Sr.)
+board	HP715_100	0x317	715/100 (Scorpio 100)
+board	HP725_50	0x318	725/50 (Spectra)
+board	HP725_75	0x319	725/75 (Spectra)
+
+#board	HP725_100	0x320	725/100 (Spectra)
+
+board	HP745i_50	0x401	745i/747i/50 (Pace)
+board	HP742i_50	0x402	742i/50 (Sidewinder)
+board	HP747i_100	0x403	745i/747i/100 (Fast Pace)
+
+board	HPE23		0x480	E23 (Orville)
+board	HPE25		0x481	E25 (Wilbur)
+board	HPE35		0x482	816/E35 (Wright Brothers 80)
+board	HPE45		0x483	826/E45 (Wright Brothers 96)
+board	HPD210		0x484	811/D210/D310 (UltraLight Proc L-100)
+board	HPD200		0x485	801/D200/D300 (UltraLight Proc L-75)
+
+board	HP778_B132L	0x501	778/B132L (Merlin L2 132)
+board	HP778_B160L	0x502	778/B160L (Merlin L2 160)
+board	HP778_B132LP	0x503	778/B132L (Merlin L2+ 132)
+board	HP778_B180L	0x504	778/B180L (Merlin L2+ 180)
+board	HP779_C132L	0x505	779/C132L (Raven L2 132)
+board	HP779_C160L	0x506	779/C160L (Raven L2 160)
+board	HP779_C180L	0x507	779/C160L (Raven L2 180)
+board	HP779_C160L1	0x508	779/C160L (Raven L2 160)
+board	HP712_132L2	0x509	712/132 (L2 Upgrade)
+board	HP712_160L2	0x50a	712/160 (L2 Upgrade)
+board	HP712_132L21	0x50b	712/132 (L2 Upgrade)
+board	HP712_160L21	0x50c	712/160 (L2 Upgrade)
+#board	HP		0x50d	(Rocky2 L2 120)
+#board	HP		0x50e	(Rocky2 L2 150)
+board	HP744_132L	0x50f	744/132L (Anole-132L)
+board	HP744_165L	0x510	744/165L (Anole-165L)
+#board	HPKIJI132	0x511	(Kiji L2 132)
+board	HP803		0x512	803/D220/D320 (UltraLight L2 132)
+board	HP813		0x513	813/D220/D320 (UltraLight L2 160)
+#board	HP		0x514	(Merlin Jr. L2 132)
+#board	HP		0x515	(Staccato L2 132)
+#board	HP		0x516	(Staccato L2 180)
+
+board	HP809		0x580	809/K100 (KittyHawk DC2-100)
+board	HP839		0x581	839/K210 (KittyHawk DC3-120)
+board	HP829		0x582	829/K400 (KittyHawk DC3-100)
+board	HP849		0x583	849/K410 (KittyHawk DC3-120)
+board	HPT120		0x584	T120 (LighteningHawk)
+board	HP770_J200	0x585   770/J200 (SkyHawk 100)
+board	HP770_J210	0x586   770/J210 (SkyHawk 120)
+#board	HP		0x587	(UltraLight Proc 1-way T'120)
+#board	HP		0x588	(UltraLight Proc 2-way T'120)
+board	HP821		0x589	821/D250/D350 (UltraLight Proc 1-way T'100)
+board	HP831		0x58a	831/D250/D350 (UltraLight Proc 2-way T'100)
+board	HP819		0x58b	819/K200 (KittyHawk DC2 100)
+board	HP859		0x58c	859/K220 (ThunderHawk DC3- 120 1M)
+board	HP869		0x58d	869/K420 (ThunderHawk DC3 120 1M)
+#board	HP		0x58E   (Raven 120 T')
+board	HP804		0x58f	804/K450 (Mohawk 160 U 1M DC3)
+board	HP889		0x590	889/K460 (Mohawk 180 U 1M DC3)
+#board	HP		0x591	(Mohawk 200 U 1M DC3)
+#board	HP		0x592	(Raven 100 T')
+#board	HP		0x593	(FireHawk 160 U)
+#board	HP		0x594	(FireHawk 180 U)
+#board	HP		0x595	(FireHawk 220 U)
+#board	HP		0x596	(FireHawk 240 U)
+#board			0x597	SPP2000 Processor
+board	HP780_C230	0x598	780/C230 (Raven U 230)
+board	HP780_C240	0x599	780/C240 (Raven U 240)
+#			0x59a
+board	HP780_C160	0x59b	780/C160 (Raven U 160)
+board	HP780_C180	0x59c	780/C180 (Raven U 180)
+board	HP780_C200	0x59d	780/C200 (Raven U 200)
+#board	HP		0x59e	(ThunderHawk T' 120)
+board	HP780_C180P	0x59f	780/C180+ (Raven U 180+)
+board	HP841		0x5a0	841/D260/D360 (UltraLight 1-way T120 1MB)
+board	HP851		0x5a1	851/D260/D360 (UltraLight 2-way T120 1MB)
+board	HP861		0x5a2	861/D270/D370 (UltraLight 1-way U160 512K)
+board	HP871		0x5a3	871/D270/D370 (UltraLight 2-way U160 512K)
+board	HP802		0x5a4	802/K250 (MoHawk U160 1M DC3-)
+board	HP879		0x5a5	879/K260 (MoHawk U180 1M DC3-)
+#board	HP		0x5a6	(MoHawk U200 1M DC3-)
+#board	HP		0x5a7	(UltraLight 1-way U160 1M)
+#board	HP		0x5a8	(UltraLight 2-way U160 1M)
+#board	HP		0x5a9	(UltraLight 1-way U180 1M)
+#board	HP		0x5aa	(UltraLight 2-way U180 1M)
+#			0x5ab	obsolete
+#			0x5ac	obsolete
+#board	HP		0x5ad	(BraveHawk 180 DC3-)
+board	HP898		0x5ae	898/K370 (BraveHawk 200 DC3-)
+#board	HP		0x5af	(BraveHawk 220 DC3-)
+#board	HP		0x5b0	(BraveHawk 180 DC3)
+board	HP899		0x5b1	899/K570 (BraveHawk 200 DC3)
+#board	HP		0x5b2	(BraveHawk 220 DC3)
+#board	HP		0x5b3	(FireHawk 200)
+#board			0x5b4	SPP2500 processor
+#board	HP		0x5b5	(SummitHawk U+)
+#board	HP		0x5b6	(DragonHawk U+ 240 DC3)
+#board	HP		0x5b7	(DragonHawk U+ 240 DC3-)
+#board			0x5b8	SPP2250 240MHz processor
+#board	HP		0x5b9	350/550 (UltraLight 1-way U+/240)
+#board	HP		0x5ba	350/550 (UltraLight 2-way U+/240)
+#board			0x5bb	(AllegroHigh W)
+#board			0x5bc	(AllegroLow W)
+#board			0x5bd	(Forte W 2-way)
+#board			0x5be	(Prelude W)
+#board			0x5bf	(Forte W 4-way)
+#board			0x5c0	(M2250)
+#board			0x5c1	(M2500)
+#board			0x5c2	(Sonata 440)
+#board			0x5c3	(Sonata 360)
+#board			0x5c4	(Rhapsody 440)
+#board			0x5c5	(Rhapsody 360)
+#board	HP780_		0x5c6	780/ (Raven W 360)
+#board			0x5c7	(Halftone W 440)
+#board			0x5c8	(Lego 360)
+#board			0x5c9	(Rhapsody DC- 440)
+#board			0x5ca	(Rhapsody DC- 360)
+#board			0x5cb	(Crescendo 440)
+
+#board			0x5ff	(Hitachi W)
 
 board	HP712_60	0x600	712/60 (Gecko)
-board	HP712_80	0x601	712/80 (Gecko)
-board	HP712_80i	0x602	712/80i (Gecko)
-board	HP712_100	0x605	712/100 (Gecko)
+board	HP712_80	0x601	712/80 (King Gecko)
+board	HP712_100	0x602	712/100 (King Gecko)
+board	HP743i_64	0x603	743i/64 (Anole-64)
+board	HP743i_100	0x604	743i/100 (Anole-100)
+board	HP712_120	0x605	712/120 (King Gecko)
+#board	HP		0x606	(Gila 80)
+#board	HP		0x607	(Gila 100)
+#board	HP		0x608	(Gila 120)
+board	HP715_80	0x609	715/80 (Scorpio-L)
+board	HP715_64	0x60A	715/64 (Mirage Jr.)
+board	HP715_99	0x60B	715/100 (Mirage Sr.)
+board	HP725_99P	0x60C	715/100+ (Mirage Sr.)
+board	HP725_100	0x60D	725/100 (Electra)
+board	HP725_120	0x60E	725/120 (Electra)
+board	HP715_100L	0x610	715/100L (Scorpio-L)
+board	HP715_120L	0x611	715/120L (Scorpio-L)
+board	HP725_80L	0x612	725/80L (Spectra-L)
+board	HP725_100L	0x613	725/100L (Spectra-L)
+board	HP725_120L	0x614	725/120L (Spectra-L)
+#board	HP		0x615	/100 (Piranha)
+#board	HP		0x616	/120 (Piranha)
+board	HP743_50	0x617	743/50 (Jason)
+board	HP743_100	0x618	743/100 (Jason)
+board	HP715_801	0x619	715/80 (Mirage)
+#board			0x61a	(SAIC L-80)
+#board			0x61b	(Rocky1 L-80)
+board	HP743T		0x61c	743T (Anole T)
 
-board	HP715_33	0x311	715/33 (Scorpio)
-board	HP715_50	0x310	715/50 (Scorpio)
-board	HP715T_50	0x312	715T/50 (Scorpio (4XXt up))
-board	HP715S_50	0x314	715S/50 (Scorpio (4XXs up))
-board	HP715_64	0x60A	715/64 (Scorpio)
-board	HP715_75	0x316	715/75 (Scorpio)
-board	HP715_99	0x60B	715/99 (Scorpio)
+#board	HITACHIT80	0x67e	(Hitachi Tiny 80)
+#board	HITACHIT64	0x67f	(Hitachi Tiny 64)
 
-#board	HP720		0x200	720 (Cobra)
-board	HP725_50	0x318	725/50 (Scorpio)
-board	HP725_75	0x319	725/75 (Scorpio)
-board	HP725_100	0x60D	725/100 (Scorpio)
+#board	NEC		0x700	(NEC Aska)
 
-#board	HP730		0x202	730 (King Cobra)
-board	HP735_99	0x203	735/99 (Hardball)
-board	HP735_125	0x206	735/125 (Hardball)
+# IODC_HVERSION[0..4]
+bus	MID_BUS	0	MID_BUS
+bus	SMB	1	SMB
+bus	HPPB	2	HP-PB
+bus	SUMMIT	3	Summit
+bus	VVSC	4	Viper-VSC
+bus	VHPPB	5	Viper-HPPB
+bus	K9KSC	6	K9-KSC
+bus	SPSSC	7	Spider-SSC
+bus	STSSC	8	Stiletto-SSC
+bus	GSCHPPB	9	GSC-HPPB
+bus	GSCHSC	10	GSC+(HSC)
+bus	RUNWAY	11	Runway
+bus	GSC	12	GSC
+bus	GSCP	13	GSC++
+bus	NECSB	14	NEC System Bus
+bus	ROPES	15	Ropes
+bus	MERCED	16	Merced
 
-#board	HP743i_1	0x603	743i1
-#board	HP743i_2	0x604	743i2
-#board	HP743i_3	0x619	743i3
-#board	HP743v_1	0x617	743v1
-#board	HP743v_2	0x618	743v2
+cpu	SOFTEMU	0x01	Software Emulation
+cpu	TORNADO	0x0b	Tornado
+cpu	PCXL	0x0d	PCX-L
+cpu	PCXU	0x0e	PCX-U
+cpu	PCXL2	0x0f	PCX-L2
+cpu	PCXUP	0x10	PCX-U+
+cpu	PCXW	0x11	0cx-W
 
-board	HP750		0x201	750 (Coral)
-#board	HP755		0xFFD	755 (Coral II ?)
+fpu	SOFTEMU	0x01	Software Emulation
+fpu	INDIGO	0x02	Indigo
+fpu	TYCO	0x03	Sterling I MIU (TYCO)
+fpu	ROC	0x04	Sterling I MIU (ROC w/Weitek)
+fpu	FPCW	0x06	FPC (NMOS-III w/Weitek)
+fpu	FPCB	0x07	FPC (NMOS-III w/Bit)
+fpu	PCXS	0x08	PCX-S (Timex-II)
+fpu	PCXT	0x09	PCX-T (Rolex - CMOS-26B)
+fpu	HARP	0x0a	HARP-I
+fpu	TORNADO	0x0b	Tornado
+fpu	PA50	0x0c	PA-50 (Hitachi)
+fpu	PCXL	0x0d	PCX-L (CMOS-26B)
+fpu	PCXU	0x0e	PCX-U/PCX-U+
+fpu	VR	0x0f	VR
+fpu	PCXW	0x10	PCX-W
 
-#board	HP7GL_1		0x606	7GL1
-#board	HP7GL_2		0x607	7GL2
-#board	HP7GL_3		0x608	7GL3
+nproc	HPPA	4	PA-RISC
 
-#board	HP770_100	0x585   770/100 (J-class J200)
-#board	HP770_120	0x586   770/120 (J-class J210)
-#board	HP777_100	0x592   777/100 (C-class C100)
-#board	HP777_120	0x58E   777/120 (C-class C110)
+memory	ARCH	0x008	architected memory module
+memory	PDEP	0x009	pdep memory module
 
-#board	HP806			806 (E25)
-#board	HP807			807 (F10)
-#board	HP815		0x103	808/815
-#board	HP810		0x100	810 (Burgundy)
-#board	HP816			816 (E35)
-#board	HP817			817 (F20)
-#board	HP820		0x101	82[02]
-#board	HP825		0x008	825 (FireFox)
-#board	HP826			826 (E45)
-#board	HP827		0x102	827/832 (H20)
-#board	HP829			829 (K400)
-#board	HP835		0x00a	83[456]
-#board	HP837			837 (F30)
-#board	HP840		0x004	840 (Indigo)
-#board	HP842		0x104	842
-#board	HP845		0x00b	84[456]
-#board	HP847			847 (H30)
-#board	HP850		0x080	850 (Cheetah)
-#board	HP850_OPDC	0x00C	850 (Cheetah)
-#board	HP852		0x105	852
-#board	HP855		0x081	855 (Jaguar)
-#board	HP856			856 (E55)
-#board	HP857			857 (I30)
-#board	HP867			867 (G40/H40)
-#board	HP860		0x082	PN10C
-#board	HP870		0x083	870
-#board	HP877			877 (I40)
-#board	HP887			887 (G50/H50)
-#board	HP887			887 (G60/H60)
-#board	HP887			887 (G70/H70)
-#board	HP891			891 (T500)
-#board	HP897			897 (I50)
-#board	HP897			897 (I60)
-#board	HP897			897 (I70)
+bdma	PARALLEL 0x018	Parallel I/O
+bdma	PRDB	0x019	Parallel RDB
+bdma	MIDBUSPSI 0x020	MID_BUS PSI
+bdma	HPPBTPSI 0x02f	HP-PB Transit PSI
+bdma	EXERCISER 0x094	GSC+ Exerciser
 
-/*
- * CORE devices
- */
-type	cpu	 0	native processor
-type	memory	 1	memory
-type	bdma	 2	Type-B DMA (NIO Transit, Parallel, ... )
-type	bdirect	 3	Type-B Direct
-type	adma	 4	Type-A DMA (NIO HPIB, LAN, ... )
-type	adirect	 5	Type-A Direct (RS232, HIL, ... )
-type	other	 6	other
-type	bcp	 7	Bus Converter Port
-type	cio	 8	CIO adapter
-type	console	 9	console
-type	fio	10	foreign I/O module
-type	bha	11	bus adaptor
-type	multi	12	Multiple-Type I/O
-type	faulty	31	broken
+#bdirect
 
-cpu	HPPA10	0	PA-RISC 1.0
-cpu	HPPA11	4	PA-RISC 1.1
-cpu	HPPA20	8	PA-RISC 2.0
+adma	SCSI	0x039	SCSI
+adma	FWSCSI0	0x03b	Wizard FW SCSI
+adma	HPIB	0x040	HP-IB
+adma	HPPBFL	0x041	HP-PB HP-FL
+adma	HPPBIB	0x042	HP-PB LoQuix HP-IB
+adma	HPPBCL	0x043	HP-PB Crypt LoQuix
+adma	HPPBGPS	0x044	HP-PB Shazam GPIO
+adma	HPPBGPL	0x045	HP-PB LoQuix GPIO
+adma	2X25	0x046	2-Port X.25 NIO_ACC
+adma	4X25	0x047	4-Port X.25 NIO_ACC
+adma	NIMBFB	0x04a	Nimbus Frame Buffer
+adma	NIMBCL	0x04b	Nimbus Control
+adma	MRTI	0x04c	Martian RTI
+adma	ACCMUX	0x04d	ACC Mux
+adma	L8023	0x050	Lanbrusca 802.3
+adma	FWSCSI	0x089	FW SCSI
+adma	NETFC	0x091	Net FC
+adma	YATM	0x092	GSC+ YLIASTER ATM
+adma	MYRI	0x095	Hamlyn GSC+ Network Card
+adma	VATM	0x09a	GSC+ Venus ATM
+adma	HSCPCI	0x09d	HP HSC-PCI Cards
+adma	MASSFC	0x0a7	Add-on mass FC
+adma	IPFC	0x380	Interphase NIO-FC
+adma	IPATM	0x381	Interphase NIO-ATM
+adma	IP100T	0x382	Interphase NIO-100BaseT
+adma	IPNIOVG	0x383	Interphase NIO-100VG
 
-memory	ARCH	0x8	architected memory module
-memory	PDEP	0x9	pdep memory module
+adirect	APMUX	0x00d	AP/MUX
+adirect	RS232	0x00e	RS-232
+adirect	PEACOCK	0x00f	Peacock Graphics
+adirect	HIL	0x014	HIL
+adirect	LEONARDO 0x015	Leonardo
+adirect	HRM	0x016	HP-PB HRM
+adirect	HRC	0x017	HP-PB HRC
+adirect	LPT	0x03a	Centronics interface
+adirect	ATTDK	0x04e	AT&T DataKit
 
-other	SPECFB	0x48	Spectograph frame buffer
-other	SPECCTL	0x49	Spectograph control
+other	MIDBVM	0x030	MID_BUS Verification Master
+other	MIDBVS	0x034	MID_BUS Verification Slave
+other	MIDBEDU	0x038	MID_BUS Verification EDU
+other	SPECFB	0x048	Spectograph frame buffer
+other	SPECCTL	0x049	Spectograph control
 
-bha	DIO	0x03	DIO Bus Adapter
-bha	SGC	0x05	SGC Bus Adapter
-bha	GSC	0x07	GSC Bus Adapter
-bha	ASP	0x70	Core Bus Adapter (ASP)
-bha	EISA	0x76	EISA Bus Adapter
-bha	VME	0x78	VME Bus Adapter
-bha	LASI	0x81	LASI Bus Adapter
-bha	WAX	0x8e	WAX ??? Bus Adapter
-bha	WEISA	0x90	WAX EISA Bus Adapter ???
+#bcport
 
-adma	FWSCSI	0x89	Core FW SCSI
-adma	MYRI	0x95	Hamlyn GSC+ Network Card
+cio	CIO	0x010	CIO
 
-fio	SCSI	0x71	Core SCSI
-fio	LAN	0x72	Core LAN
-fio	HIL	0x73	Core HIL
-fio	CENT	0x74	Core Centronics
-fio	RS232	0x75	Core RS-232C
-fio	SGC	0x77	SGC Graphics
-fio	A1	0x7a	Core audio
-fio	A2NB	0x7b	Advanced audio (no beeper)
-fio	FWSCSI	0x7c	Core FW SCSI
-fio	FDDI	0x7d	Core FDDI
-fio	A1NB	0x7e	Core audio (no beeper)
-fio	A2	0x7f	Advanced audio
-fio	HPIB	0x80	Core HPIB
+console	CHEETAH	0x01c	Cheetah Console
+console	NULL	0x01f	Jason/Anole Null Console
+
+fio	A_X25	0x02e	Armyknife Optional X.25
+fio	8x25	0x04f	8-Port X.25 EISA-ACC
+fio	SCSI	0x071	Core SCSI
+fio	LAN	0x072	Core LAN
+fio	HIL	0x073	Core HIL
+fio	CENT	0x074	Core Centronics
+fio	RS232	0x075	Core RS-232C
+fio	SGC	0x077	SGC Graphics
+fio	A1	0x07a	Core audio
+fio	A2NB	0x07b	Advanced audio (no beeper)
+fio	FWSCSI	0x07c	Core FW SCSI
+fio	FDDI	0x07d	Core FDDI
+fio	A1NB	0x07e	Core audio (no beeper)
+fio	A2	0x07f	Advanced audio
+fio	HPIB	0x080	Core HPIB
+fio	TR9000	0x086	GSC IBM TokenRing
+fio	VMENET	0x088	VME Networking
+fio	BOOTROM	0x08f	BOOT ROM
+fio	DINOPCK	0x096	Dino PC Keyboard
+fio	EISALAN	0x097	Cascade EISA 100VG lan
+fio	WHPIB	0x099	Wax/Clark/Dino HPIB
+fio	PCILAN	0x0a2	PCI Plug-In LAN
+fio	PCIDSK	0x0a3	PCI Plug-In Disk Controller
+fio	SONICET	0x0a6	Sonic Ethernet
+fio	PCIMISC	0x0a9	Miscelaneous PCI Plug-in
 
 # Gecko section
-fio	GSCSI	0x82	Core SCSI
-fio	GPCFD	0x83	floppy controller
-fio	GPCIO	0x84	PS/2 port
-fio	GSGC	0x85	SGC Graphics
-fio	GSCSCSI	0x89	GSC SCSI
-fio	GLAN	0x8a	Core LAN
-fio	GRS232	0x8c	Core RS-232C
+fio	GSCSI	0x082	Core SCSI
+fio	GPCFD	0x083	floppy controller
+fio	GPCIO	0x084	PS/2 port
+fio	GSGC	0x085	GIO Graphics
+fio	GISDN	0x087	Core ISDN
+fio	GSCSCSI	0x089	GSC SCSI
+fio	GLAN	0x08a	Core LAN
+fio	GRS232	0x08c	Core RS-232C
+fio	GRJ16	0x08d	Optional RJ-16
 
+bha	DIO	0x003	DIO Bus Adapter
+bha	SGC	0x005	SGC Bus Adapter
+bha	GSC	0x007	GSC Bus Adapter
+bha	ASP	0x070	Core Bus Adapter (ASP)
+bha	EISA	0x076	EISA Bus Adapter
+bha	VME	0x078	VME Bus Adapter
+bha	LASI	0x081	LASI Bus Adapter
+bha	PCMCIA	0x08b	PCMCIA Bus Adapter
+bha	WAX	0x08e	WAX Bus Adapter
+bha	WEISA	0x090	WAX EISA Bus Adapter
+bha	TIMI	0x093	TIMI Bus Adapter
+bha	EPICPCI	0x0a5	Epic PCI Bridge
+
+#ioa
+
+#bridge
+
+#fabric

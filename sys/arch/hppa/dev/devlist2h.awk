@@ -1,7 +1,7 @@
-#	$OpenBSD: devlist2h.awk,v 1.1 1998/09/29 07:00:46 mickey Exp $
+#	$OpenBSD: devlist2h.awk,v 1.2 1999/04/20 20:19:37 mickey Exp $
 
 #
-# Copyright (c) 1998 Michael Shalayeff
+# Copyright (c) 1998,1999 Michael Shalayeff
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -31,11 +31,9 @@
 #
 
 BEGIN	{
-	ncpu = nboard = 0;
+	ncpu = 0;
 	cpuh="cpudevs.h";
 	cpud="cpudevs_data.h";
-	brdh="boards.h";
-	brdd="boards_data.h";
 	SUBSEP = "_";
 }
 
@@ -47,37 +45,18 @@ NR == 1	{
 	       " * generated from:\n *\t%s\n */\n\n", VERSION) > cpud;
 	printf("/*\n * THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT.\n" \
 	       " * generated from:\n *\t%s\n */\n\n", VERSION) > cpuh;
-	printf("/*\n * THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT.\n" \
-	       " * generated from:\n *\t%s\n */\n\n", VERSION) > brdd;
-	printf("/*\n * THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT.\n" \
-	       " * generated from:\n *\t%s\n */\n\n", VERSION) > brdh;
 
 	printf("static const struct hppa_mod_info hppa_knownmods[] = {\n")\
 		> cpud;
-	printf("static const struct hppa_board_info hppa_knownboards[] = {\n")\
-		> brdd;
-}
-
-$1=="board"	{
-	printf("#define\tHPPA_BOARD_%s\t%s\n", $2, $3) > brdh;
-	printf("\t{ HPPA_BOARD_%s,\t\"%s\",\t\"", $2, $2) > brdd;
-	f = 4;
-	while (f <= NF) {
-		printf ("%s", $f) > brdd;
-		if (f < NF)
-			printf (" ") > brdd;
-		f++;
-	}
-	printf("\" },\n") > brdd;
 }
 
 $1=="type"	{
 	printf("#define\tHPPA_TYPE_%s\t%s\n", toupper($2), $3) > cpuh;
-	types[tolower($2)] = 1;
+	types[tolower($2)] = toupper($2);
 }
 
 {
-	if ($1 in types) {
+	if (tolower($1) in types) {
 		printf("#define\tHPPA_%s_%s\t%s\n", toupper($1),
 		       toupper($2), $3) > cpuh;
 		printf("\t{HPPA_TYPE_%s,\tHPPA_%s_%s,\t\"", toupper($1),
@@ -94,10 +73,6 @@ $1=="type"	{
 }
 
 END	{
-	printf("\t{ -1 }\n};\n") > brdd;
-	for (m in modules) {
-		printf("#define\tHPPA_%s\t%s\n", m, modules[m]) > cpuh;
-	}
 	printf("\t{ -1 }\n};\n") > cpud;
 }
 
