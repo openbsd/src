@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.24 1999/04/11 01:20:06 millert Exp $
+#	$OpenBSD: RAMDISK,v 1.25 1999/06/22 01:28:50 deraadt Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -75,23 +75,23 @@ mainbus0 at	root
 cpu*	at	mainbus0
 
 # TurboChannel host bus adapter support
-tcasic*	at	mainbus0
+#tcasic*	at	mainbus0
 
 # TurboChannel bus support
-tc*	at	tcasic?
+#tc*	at	tcasic?
 
 # TurboChannel devices
-ioasic*	at	tc? slot ? offset ?
-mcclock* at	ioasic? offset ?
-le*	at	ioasic? offset ?
-scc0	at	ioasic? offset ?
-scc1	at	ioasic? offset ?
-tcds0	at	tc? slot ? offset ?
-esp0	at	tcds? slot ?
-esp1	at	tcds? slot ?
-cfb*	at	tc? slot ? offset ?
-sfb*	at	tc? slot ? offset ?
-le*	at	tc? slot ? offset ?
+#ioasic*	at	tc? slot ? offset ?
+#mcclock* at	ioasic? offset ?
+#le*	at	ioasic? offset ?
+#scc0	at	ioasic? offset ?
+#scc1	at	ioasic? offset ?
+#tcds0	at	tc? slot ? offset ?
+#esp0	at	tcds? slot ?
+#esp1	at	tcds? slot ?
+#cfb*	at	tc? slot ? offset ?
+#sfb*	at	tc? slot ? offset ?
+#le*	at	tc? slot ? offset ?
 #fta*	at	tc? slot ? offset ?		# DEC DEFTA FDDI cards
 
 # PCI host bus adapter support
@@ -169,7 +169,7 @@ wd*	at	wdc? drive ?			# ST506/ESDI/IDE disks
 acd*	at	atapibus? drive?		# ATAPI CD-ROM
 
 # SCSI bus support
-scsibus* at	esp?
+#scsibus* at	esp?
 scsibus* at	ncr?
 
 # SCSI devices
@@ -178,9 +178,9 @@ sd*	at	scsibus? target ? lun ?		# SCSI disk drives
 st*	at	scsibus? target ? lun ?		# SCSI tape drives
 
 # Workstation Console attachments
-wscons*	at	cfb?
+#wscons*	at	cfb?
 wscons*	at	vga?
-wscons*	at	sfb?
+#wscons*	at	sfb?
 wscons*	at	tga?
 
 pseudo-device	bpfilter	1
