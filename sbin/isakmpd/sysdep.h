@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysdep.h,v 1.8 2000/12/12 01:46:17 niklas Exp $	*/
+/*	$OpenBSD: sysdep.h,v 1.9 2001/02/24 03:59:56 angelos Exp $	*/
 /*	$EOM: sysdep.h,v 1.17 2000/12/04 04:46:35 angelos Exp $	*/
 
 /*
@@ -52,7 +52,7 @@ extern void sysdep_connection_check (char *);
 extern int sysdep_ipsec_delete_spi (struct sa *, struct proto *, int);
 extern int sysdep_ipsec_enable_sa (struct sa *, struct sa *);
 extern u_int8_t *sysdep_ipsec_get_spi (size_t *, u_int8_t, struct sockaddr *,
-				       int, struct sockaddr *, int);
+				       int, struct sockaddr *, int, u_int32_t);
 extern int sysdep_ipsec_group_spis (struct sa *, struct proto *,
 				    struct proto *, int);
 extern int sysdep_ipsec_set_spi (struct sa *, struct proto *, int);

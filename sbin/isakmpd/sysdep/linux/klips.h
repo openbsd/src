@@ -1,4 +1,4 @@
-/*	$OpenBSD: klips.h,v 1.2 2001/01/28 22:38:48 niklas Exp $	*/
+/*	$OpenBSD: klips.h,v 1.3 2001/02/24 03:59:57 angelos Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -47,7 +47,7 @@ extern void klips_connection_check (char *);
 extern int klips_delete_spi (struct sa *, struct proto *, int);
 extern int klips_enable_sa (struct sa *, struct sa *);
 extern u_int8_t *klips_get_spi (size_t *, u_int8_t, struct sockaddr *, int,
-				struct sockaddr *, int);
+				struct sockaddr *, int, u_int32_t);
 extern int klips_group_spis (struct sa *, struct proto *, struct proto *,
 			     int);
 extern int klips_open (void);

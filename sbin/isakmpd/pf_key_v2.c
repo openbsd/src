@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.45 2001/01/27 12:03:34 niklas Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.46 2001/02/24 03:59:55 angelos Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -587,7 +587,8 @@ pf_key_v2_open ()
  */
 u_int8_t *
 pf_key_v2_get_spi (size_t *sz, u_int8_t proto, struct sockaddr *src,
-		   int srclen, struct sockaddr *dst, int dstlen)
+		   int srclen, struct sockaddr *dst, int dstlen,
+		   u_int32_t seq)
 {
   struct sadb_msg msg;
   struct sadb_sa *sa;
@@ -614,11 +615,9 @@ pf_key_v2_get_spi (size_t *sz, u_int8_t proto, struct sockaddr *src,
       log_print ("pf_key_v2_get_spi: invalid proto %d", proto);
       goto cleanup;
     }
-  /*
-   * XXX When we have acquires working, the sequence number has to be set
-   * from the acquire message.
-   */
-  msg.sadb_msg_seq = 0;
+
+  /* Set the sequence number from the ACQUIRE message */
+  msg.sadb_msg_seq = seq;
   getspi = pf_key_v2_msg_new (&msg, 0);
   if (!getspi)
     goto cleanup;
@@ -2057,7 +2056,6 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
   u_int8_t tproto = 0;
   char tmbuf[sizeof sport * 3 + 1];
 
-  
   msg = (struct sadb_msg *)TAILQ_FIRST (pmsg)->seg;
 
   ext = pf_key_v2_find_ext (pmsg, SADB_EXT_ADDRESS_DST);
@@ -2505,6 +2503,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
    * - Phase
    * - ISAKMP-peer
    * - Local-ID/Remote-ID (if provided)
+   * - Acquire-ID (sequence number of kernel message, e.g., PF_KEYv2)
    *
    * Also set the following section:
    *    [Peer-dstaddr(/srcaddr)(-srcid)(/dstid)]
@@ -2544,6 +2543,14 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
   if (conf_set (af, conn, "Phase", "2", 0, 0)
       || conf_set (af, conn, "Flags", "__ondemand", 0 ,0)
       || conf_set (af, conn, "ISAKMP-peer", peer, 0, 0))
+    {
+      conf_end (af, 0);
+      goto fail;
+    }
+
+  /* Set the sequence number */
+  sprintf (lname, "%u", msg->sadb_msg_seq);
+  if (conf_set (af, conn, "Acquire-ID", lname, 0, 0))
     {
       conf_end (af, 0);
       goto fail;

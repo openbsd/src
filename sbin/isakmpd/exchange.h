@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.h,v 1.17 2001/01/27 12:03:32 niklas Exp $	*/
+/*	$OpenBSD: exchange.h,v 1.18 2001/02/24 03:59:55 angelos Exp $	*/
 /*	$EOM: exchange.h,v 1.28 2000/09/28 12:54:28 niklas Exp $	*/
 
 /*
@@ -161,6 +161,9 @@ struct exchange {
   int recv_certtype, recv_certlen;
   void *recv_cert;
   void *recv_key;
+
+  /* ACQUIRE sequence number */
+  u_int32_t seq;
 
   /* XXX This is no longer necessary, it is covered by policy.  */
 

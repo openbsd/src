@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.40 2001/01/27 12:03:32 niklas Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.41 2001/02/24 03:59:54 angelos Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -838,6 +838,7 @@ exchange_establish_p2 (struct sa *isakmp_sa, u_int8_t type, char *name,
   int i;
   char *tag, *str;
   u_int32_t doi = ISAKMP_DOI_ISAKMP;
+  u_int32_t seq = 0;
 
   if (isakmp_sa)
     doi = isakmp_sa->doi->id;
@@ -852,6 +853,8 @@ exchange_establish_p2 (struct sa *isakmp_sa, u_int8_t type, char *name,
 		     name);
 	  return;
 	}
+
+      seq = (u_int32_t) conf_get_num (name, "Acquire-ID", 0);
 
       /* Figure out the DOI.  */
       str = conf_get_str (tag, "DOI");
@@ -906,6 +909,7 @@ exchange_establish_p2 (struct sa *isakmp_sa, u_int8_t type, char *name,
   exchange->policy = name ? conf_get_str (name, "Configuration") : 0;
   exchange->finalize = finalize;
   exchange->finalize_arg = arg;
+  exchange->seq = seq;
   memcpy (exchange->cookies, isakmp_sa->cookies, ISAKMP_HDR_COOKIES_LEN);
   getrandom (exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN);
   exchange->flags |= EXCHANGE_FLAG_ENCRYPT;
