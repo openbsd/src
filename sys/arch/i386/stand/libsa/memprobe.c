@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.10 1997/08/22 20:13:44 mickey Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.11 1997/09/02 17:00:42 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -47,6 +47,8 @@ memprobe()
 			 :: "%ecx", "%edx", "cc");
 	BIOS_vars.bios_cnvmem &= 0xffff;
 
+	printf("%d Kb conventional memory.\n", BIOS_vars.bios_cnvmem);
+
 	/* probe extended memory
 	 *
 	 * There is no need to do this in assembly language.  This is
@@ -60,7 +62,7 @@ memprobe()
 			break;
 	}
 
-	printf("Found %d KB extended memory.\n", ram-1024);
+	printf("%d Kb extended memory.\n", ram-1024);
 	BIOS_vars.bios_extmem = ram - 1024;
 }
 
