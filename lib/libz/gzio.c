@@ -1,3 +1,4 @@
+/*	$OpenBSD: gzio.c,v 1.5 2000/03/02 00:29:52 todd Exp $	*/
 /* gzio.c -- IO on .gz files
  * Copyright (C) 1995-1998 Jean-loup Gailly.
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -5,7 +6,6 @@
  * Compile this file with -DNO_DEFLATE to avoid the compression code.
  */
 
-/* @(#) $Id: gzio.c,v 1.4 1998/08/08 20:57:14 millert Exp $ */
 
 #include <stdio.h>
 

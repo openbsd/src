@@ -1,3 +1,4 @@
+/*	$OpenBSD: trees.c,v 1.4 2000/03/02 00:29:52 todd Exp $	*/
 /* trees.c -- output deflated data using Huffman coding
  * Copyright (C) 1995-1998 Jean-loup Gailly
  * For conditions of distribution and use, see copyright notice in zlib.h 
@@ -29,7 +30,6 @@
  *          Addison-Wesley, 1983. ISBN 0-201-06672-6.
  */
 
-/* @(#) $Id: trees.c,v 1.3 1998/08/08 20:57:28 millert Exp $ */
 
 /* #define GEN_TREES_H */
 

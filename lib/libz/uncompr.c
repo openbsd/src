@@ -1,9 +1,9 @@
+/*	$OpenBSD: uncompr.c,v 1.3 2000/03/02 00:29:52 todd Exp $	*/
 /* uncompr.c -- decompress a memory buffer
  * Copyright (C) 1995-1998 Jean-loup Gailly.
  * For conditions of distribution and use, see copyright notice in zlib.h 
  */
 
-/* @(#) $Id: uncompr.c,v 1.2 1998/08/08 20:57:30 millert Exp $ */
 
 #include "zlib.h"
 

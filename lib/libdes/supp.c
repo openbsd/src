@@ -1,3 +1,4 @@
+/* $OpenBSD: supp.c,v 1.2 2000/03/02 00:29:48 todd Exp $	*/
 /* crypto/des/supp.c */
 /* Copyright (C) 1995-1997 Eric Young (eay@mincom.oz.au)
  * All rights reserved.
@@ -87,7 +88,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: supp.c,v 1.1.1.1 1997/06/29 10:24:53 provos Exp $
  */
 
 #include <stdio.h>
