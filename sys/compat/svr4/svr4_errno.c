@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_errno.c,v 1.1 2000/08/23 16:30:53 brad Exp $	*/
+/*	$OpenBSD: svr4_errno.c,v 1.2 2000/08/23 16:33:20 brad Exp $	*/
 /*	$NetBSD: svr4_errno.c,v 1.6 1998/10/23 04:02:18 erh Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 #include <compat/svr4/svr4_errno.h>
 
 
-int svr4_error[] = {
+int native_to_svr4_errno[] = {
 	0,
 	SVR4_EPERM,
 	SVR4_ENOENT,

@@ -1,5 +1,5 @@
-/*	$OpenBSD: svr4_errno.h,v 1.2 1996/08/02 20:35:36 niklas Exp $	 */
-/*	$NetBSD: svr4_errno.h,v 1.2 1994/11/18 02:53:37 christos Exp $	 */
+/*	$OpenBSD: svr4_errno.h,v 1.3 2000/08/23 16:36:06 brad Exp $	*/
+/*	$NetBSD: svr4_errno.h,v 1.5 1998/10/24 19:35:36 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -168,5 +168,7 @@
 #define	SVR4_EFTYPE		SVR4_ENOSYS
 #define	SVR4_EAUTH		SVR4_ENOSYS
 #define	SVR4_ENEEDAUTH		SVR4_ENOSYS
+
+extern int native_to_svr4_errno[];
 
 #endif /* !_SVR4_ERRNO_H_ */

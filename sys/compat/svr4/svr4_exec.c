@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_exec.c,v 1.9 1999/11/10 15:55:23 mickey Exp $	 */
+/*	$OpenBSD: svr4_exec.c,v 1.10 2000/08/23 16:33:20 brad Exp $	 */
 /*	$NetBSD: svr4_exec.c,v 1.16 1995/10/14 20:24:20 christos Exp $	 */
 
 /*
@@ -51,12 +51,12 @@
 #include <compat/svr4/svr4_util.h>
 #include <compat/svr4/svr4_syscall.h>
 #include <compat/svr4/svr4_exec.h>
+#include <compat/svr4/svr4_errno.h>
 
 static void *svr4_copyargs __P((struct exec_package *, struct ps_strings *,
 			       void *, void *));
 
 const char svr4_emul_path[] = "/emul/svr4";
-extern int svr4_error[];
 extern char svr4_sigcode[], svr4_esigcode[];
 extern struct sysent svr4_sysent[];
 #ifdef SYSCALL_DEBUG
@@ -65,7 +65,7 @@ extern char *svr4_syscallnames[];
 
 struct emul emul_svr4 = {
 	"svr4",
-	svr4_error,
+	native_to_svr4_errno,
 	svr4_sendsig,
 	SVR4_SYS_syscall,
 	SVR4_SYS_MAXSYSCALL,
