@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc_debug.c,v 1.9 2001/07/18 13:50:40 art Exp $	*/
+/*	$OpenBSD: kern_malloc_debug.c,v 1.10 2001/07/26 13:33:52 art Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Artur Grabowski <art@openbsd.org>
@@ -66,7 +66,12 @@
 
 /*
  * malloc_deb_type and malloc_deb_size define the type and size of
- * memory to be debugged. Use 0 for a wildcard.
+ * memory to be debugged. Use 0 for a wildcard. malloc_deb_size_lo
+ * is the lower limit and malloc_deb_size_hi the upper limit of sizes
+ * being debugged; 0 will not work as a wildcard for the upper limit.
+ * For any debugging to take place, type must be != -1, size must be >= 0,
+ * and if the limits are being used, size must be set to 0.
+ * See /usr/src/sys/sys/malloc.h and malloc(9) for a list of types.
  *
  * Although those are variables, it's a really bad idea to change the type
  * if any memory chunks of this type are used. It's ok to change the size
@@ -122,9 +127,11 @@ debug_malloc(size, type, flags, addr)
 	int s;
 	int wait = flags & M_NOWAIT;
 
+	/* Careful not to compare unsigned long to int -1 */
 	if ((type != malloc_deb_type && malloc_deb_type != 0) ||
 	    (size != malloc_deb_size && malloc_deb_size != 0) ||
-	    (size < malloc_deb_size_lo || size > malloc_deb_size_hi) ||
+	    (malloc_deb_size_lo != -1 && size < malloc_deb_size_lo) ||
+	    (malloc_deb_size_hi != -1 && size > malloc_deb_size_hi) ||
 	    type == M_DEBUG)
 		return 0;
 
