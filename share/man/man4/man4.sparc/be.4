@@ -1,4 +1,4 @@
-.\"     $OpenBSD: be.4,v 1.1 1998/08/26 05:11:56 jason Exp $
+.\"     $OpenBSD: be.4,v 1.2 1998/08/28 19:57:07 jason Exp $
 .\"
 .\" Copyright (c) 1998 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -41,7 +41,8 @@
 .Sh DESCRIPTION
 The 
 .Nm
-interface provides access to the 10Mb/s and 100Mb/s Ethernet networks.
+interface provides access to the 10Mb/s and 100Mb/s (half duplex only)
+Ethernet networks.
 The 
 .Nm 
 is found on the Sun 10/100 Mbit Ethernet boards.
@@ -56,10 +57,11 @@ interface employs the address resolution protocol described in
 .Xr arp 4
 to dynamically map between Internet and Ethernet addresses on the local
 network.
-.Sh BUGS
-The
+.Pp
+When the interface is reset, it begins an autonegotiation procedure.  The
+procedure ends when the
 .Nm
-currently only works in 10Mb/s half duplex mode.
+obtains a link signal from the wire.
 .Sh SEE ALSO
 .Xr qec 4 ,
 .Xr ie 4 ,
@@ -68,7 +70,8 @@ currently only works in 10Mb/s half duplex mode.
 .Xr inet 4 ,
 .Xr arp 4
 .Sh HISTORY
-Support for the
+.Ox
+support for the
 .Nm
 first appeared in
-.Ox 2.4
+.Ox 2.4 .
