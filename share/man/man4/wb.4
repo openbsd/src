@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wb.4,v 1.8 2001/10/05 19:08:14 nate Exp $
+.\"	$OpenBSD: wb.4,v 1.9 2002/09/26 07:55:41 miod Exp $
 .\"
 .\" Copyright (c) 1997, 1998
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -70,7 +70,7 @@ This is only supported if the PHY chip attached to the Winbond controller
 supports NWAY autonegotiation.
 The user can manually override
 the autoselected mode by adding media options to the appropriate
-.Pa /etc/hostname.wb%d
+.Xr hostname.if 5
 file.
 .It 10baseT
 Set 10Mbps operation.

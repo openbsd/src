@@ -1,4 +1,4 @@
-.\" $OpenBSD: pms.4,v 1.5 2002/02/18 18:43:09 jason Exp $
+.\" $OpenBSD: pms.4,v 1.6 2002/09/26 07:55:40 miod Exp $
 .\" $NetBSD: pms.4,v 1.4 2000/07/05 15:45:34 msaitoh Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
@@ -40,12 +40,10 @@
 .Nm pms
 .Nd PS/2 auxiliary port mouse driver
 .Sh SYNOPSIS
-.Cd pckbc* at isa?
-.Cd pckbc* at ebus?
-.Cd pms* at pckbc?
-.Cd pmsi* at pckbc?
-.Cd wsmouse* at pms?
-.Cd wsmouse* at pmsi?
+.Cd "pms* at pckbc?"
+.Cd "pmsi* at pckbc?"
+.Cd "wsmouse* at pms?"
+.Cd "wsmouse* at pmsi?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -66,6 +64,7 @@ Mouse related data are accessed by
 .Xr wsmouse 4
 devices.
 .Sh SEE ALSO
+.Xr intro 4 ,
 .Xr lms 4 ,
 .Xr mms 4 ,
 .Xr pckbc 4 ,

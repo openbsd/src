@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pchb.4,v 1.8 2001/08/03 15:21:16 mpech Exp $
+.\"	$OpenBSD: pchb.4,v 1.9 2002/09/26 07:55:40 miod Exp $
 .\"
 .\" Copyright (c) 2000 Michael Shalayeff. All rights reserved.
 .\"
@@ -10,7 +10,7 @@
 .Nd PCI-Host Bridge
 .Sh SYNOPSIS
 .Cd "pchb* at pci? dev ? function?"
-.Cd "pci* at pchb?
+.Cd "pci* at pchb?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -44,7 +44,7 @@ and sub-class
 .Nm Bridge Host
 are supported just as PCI attachment point.
 .Pp
-The PowerPC port supports several Apple and Motorola bridges.
+The macppc port supports several Apple and Motorola bridges.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr pci 4 ,
@@ -54,7 +54,7 @@ Random number generator support first appeared in
 .Ox 2.7 .
 .Sh AUTHORS
 Support for true RNG present on i82810 chips was added by
-Michael Shalayeff <mickey@openbsd.org>.
+.An Michael Shalayeff Aq mickey@openbsd.org .
 .Sh BUGS
 Real RNG probe should fix the PCI scanning loop so it would find the Firmware
 Hub (i82802) which actually contains the RNG device and

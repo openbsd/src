@@ -1,4 +1,4 @@
-.\" $OpenBSD: opl.4,v 1.5 2001/10/05 14:45:53 mpech Exp $
+.\" $OpenBSD: opl.4,v 1.6 2002/09/26 07:55:40 miod Exp $
 .\" $NetBSD: opl.4,v 1.3 1998/09/08 11:59:48 augustss Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -39,10 +39,11 @@
 .Nm opl
 .Nd Yamaha OPL2 and OPL3 FM synthesizer driver
 .Sh SYNOPSIS
-.Cd "opl*  at ess?"
-.Cd "opl0  at isa? port 0x388"
-.Cd "opl*  at sb?"
-.Cd "opl*  at wss?"
+.Cd "opl* at eso?"
+.Cd "opl* at ess?"
+.Cd "opl0 at isa? port 0x388"
+.Cd "opl* at sb?"
+.Cd "opl* at yds?"
 .Cd "midi* at opl?"
 .Sh DESCRIPTION
 The
@@ -59,11 +60,12 @@ The
 driver usually attaches to a sound card, but it can also sit
 directly on the ISA bus.
 .Sh SEE ALSO
+.Xr eso 4 ,
 .Xr ess 4 ,
 .Xr isa 4 ,
 .Xr midi 4 ,
 .Xr sb 4 ,
-.Xr wss 4
+.Xr yds 4
 .Sh HISTORY
 The
 .Nm

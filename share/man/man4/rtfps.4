@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtfps.4,v 1.5 2001/10/05 14:45:53 mpech Exp $
+.\"	$OpenBSD: rtfps.4,v 1.6 2002/09/26 07:55:40 miod Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -45,7 +45,9 @@
 .Nd multiplexing serial communications interface
 .Sh SYNOPSIS
 .Cd "rtfps0 at isa? port 0x1230 irq 10"
-.Cd "com* at rtfps0 slave 0"
+.Cd "com* at rtfps? slave ?"
+or
+.Cd "pccom* at rtfps? slave ?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -80,7 +82,9 @@ subdevices.
 .It Pa /dev/tty0?
 .El
 .Sh SEE ALSO
-.Xr com 4
+.Xr com 4 ,
+.Xr intro 4 ,
+.Xr isa 4
 .Sh HISTORY
 The
 .Nm

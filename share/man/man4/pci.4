@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.68 2002/09/25 18:01:37 miod Exp $
+.\"	$OpenBSD: pci.4,v 1.69 2002/09/26 07:55:40 miod Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -38,18 +38,26 @@
 .Nm pci
 .Nd introduction to PCI bus support
 .Sh SYNOPSIS
-.Cd "pci* at mainbus? bus ?"
-.Cd "pci* at pchb? bus ?"
-.Cd "pci* at ppb? bus ?"
+.Cd "# alpha"
+.Cd "pci* at apecs?"
+.Cd "pci* at cia?"
+.Cd "pci* at irongate?"
+.Cd "pci* at lca?"
+.Cd "pci* at tsp?"
 .Pp
-Other
-.Nm
-attachments are machine-dependent and depend on the bus topology and
-.Tn PCI
-bus interface of your system.
-See
-.Xr intro 4
-for your system for details.
+.Cd "# i386"
+.Cd "pci* at mainbus0 bus ?"
+.Cd "pci* at pchb? bus ?"
+.Pp
+.Cd "# macppc"
+.Cd "pci* at mpcpcibr?"
+.Pp
+.Cd "# sparc64"
+.Cd "pci* at psycho?"
+.Cd "pci* at schizo?"
+.Pp
+.Cd "# all architectures"
+.Cd "pci* at ppb? bus ?"
 .Sh DESCRIPTION
 The system includes a machine-independent
 .Tn PCI
@@ -80,7 +88,7 @@ The system includes machine-independent
 drivers, sorted by device type and driver name:
 .Ss SCSI host adapters
 .Bl -tag -width 10n -offset ind
-.It Xr adw 4 , Xr adv 4
+.It Xr adv 4 , Xr adw 4
 AdvanSys PCI
 .Tn SCSI
 interfaces.
@@ -92,15 +100,15 @@ interfaces.
 Buslogic BT-9xx
 .Tn SCSI
 interfaces.
+.It Xr iha 4
+Initio INIC-940 and INIC-950 based
+.Tn SCSI
+interfaces.
 .It Xr isp 4
 QLogic ISP-1020, ISP-1040, and ISP-2100
 .Tn SCSI
 and
 .Tn FibreChannel
-interfaces.
-.It Xr iha 4
-Initio INIC-940 and INIC-950 based
-.Tn SCSI
 interfaces.
 .It Xr ncr 4 , Xr siop 4
 LSI/Symbios Logic/NCR 53c8xx and 53c1010-family
@@ -114,6 +122,11 @@ interfaces.
 Tekram DC-3x5U (TRM-S1040 based)
 .Tn SCSI
 interfaces.
+.El
+.Ss IDE disk controllers
+.Bl -tag -width 10n -offset ind
+.It Xr pciide 4
+PCI IDE controller driver.
 .El
 .Ss RAID and cache controllers
 .Bl -tag -width 10n -offset ind
@@ -195,6 +208,8 @@ DEFPA
 interfaces.
 .It Xr fxp 4
 Intel EtherExpress PRO 10+/100B Ethernet interfaces.
+.It Xr gem 4
+Sun GEM and Apple GMAC Gigabit Ethernet interfaces.
 .It Xr le 4
 PCNet-PCI Ethernet interfaces.
 .It Xr lge 4
@@ -213,7 +228,7 @@ RealTek 8129/8139 Ethernet interfaces.
 Adaptec AIC-6915 "Starfire" Ethernet interfaces.
 .It Xr sis 4
 SiS 900, SiS 7016, and NS DP83815 Ethernet interfaces.
-.It Xr sk 4
+.It Xr skc 4
 SysKonnect SK-984x Gigabit Ethernet interfaces.
 .It Xr ste 4
 Sundance Technologies ST201 Ethernet interfaces.
@@ -242,10 +257,16 @@ a PLX 905x-based dumb PCMCIA->PCI bridge.
 .It Xr hifn 4
 Hifn 7751, 7811, and 7951.
 Symmetric Encryption Accelerator.
-.It Xr ubsec 4
-Broadcom Bluesteelnet uBsec 5501, 5601, 5805, 5820, and 5821.
 .It Xr ises 4
 Pijnenburg PCC-ISES hardware crypto accelerator.
+.It Xr lofn 4
+Hifn 6500 crypto accelerator.
+.It Xr noct 4
+NetOctave NSP2000 crypto accelerator.
+.It Xr nofn 4
+Hifn 7814, 7851 and 7854 crypto processor.
+.It Xr ubsec 4
+Broadcom Bluesteelnet uBsec 5501, 5601, 5805, 5820, and 5821.
 .El
 .Ss Serial interfaces
 .Bl -tag -width 10n -offset ind
@@ -298,14 +319,16 @@ Yamaha DS-XG sound devices.
 .El
 .Ss Radio receiver devices
 .Bl -tag -width 10n -offset ind
-.It Xr gtp 4
-Gemtek PCI FM radio device driver.
 .It Xr fms 4
 SoundForte RadioLink SF64-PCR, SoundForte Quad X-treme SF256-PCP-R and
 SoundForte Theatre X-treme 5.1 SF256-PCS-R FM radio devices driver.
+.It Xr gtp 4
+Gemtek PCI FM radio device driver.
 .El
 .Ss Miscellaneous devices
 .Bl -tag -width 10n -offset ind
+.It Xr amdpm 4
+AMD768 Power Management controller.
 .It Xr bktr 4
 Brooktree Bt848
 .Tn PCI
@@ -404,14 +427,100 @@ Character device for the
 driver.
 .El
 .Sh SEE ALSO
+.Xr aac 4 ,
+.Xr adv 4 ,
+.Xr adw 4 ,
+.Xr ahc 4 ,
+.Xr ami 4 ,
+.Xr an 4 ,
+.\" no manpage .Xr apecs 4
+.Xr auich 4 ,
+.Xr autri 4 ,
+.Xr auvia 4 ,
+.Xr bge 4 ,
+.Xr bha 4 ,
+.Xr bktr 4 ,
+.Xr cac 4 ,
 .Xr cardbus 4 ,
+.\" no manpage .Xr cia 4
+.Xr clcs 4 ,
+.Xr clct 4 ,
+.Xr cmpci 4 ,
+.Xr cy 4 ,
+.Xr cz 4 ,
+.Xr dc 4 ,
+.Xr de 4 ,
+.Xr dpt 4 ,
+.Xr eap 4 ,
+.Xr eisa 4 ,
+.Xr em 4 ,
+.Xr emu 4 ,
+.Xr en 4 ,
+.Xr ep 4 ,
+.Xr esa 4 ,
+.Xr eso 4 ,
+.Xr fms 4 ,
+.Xr fpa 4 ,
+.Xr fxp 4 ,
+.Xr gdt 4 ,
+.Xr gtp 4 ,
+.Xr hifn 4 ,
+.Xr iha 4 ,
 .Xr intro 4 ,
+.Xr iop 4 ,
+.\" no manpage .Xr irongate 4
 .Xr isa 4 ,
 .Xr isapnp 4 ,
+.Xr ises 4 ,
+.Xr isp 4 ,
+.\" no manpage .Xr lca 4
+.Xr le 4 ,
+.Xr lge 4 ,
+.Xr lmc 4 ,
+.Xr lofn 4 ,
+.Xr maestro 4 ,
+.\" no manpage .Xr mpcpcibr 4
+.Xr ncr 4 ,
+.Xr ne 4 ,
+.Xr neo 4 ,
+.Xr nge 4 ,
+.Xr noct 4 ,
+.Xr nofn 4 ,
+.Xr ohci 4 ,
 .Xr options 4 ,
 .Xr pchb 4 ,
+.Xr pcic 4 ,
 .Xr pcmcia 4 ,
-.Xr usb 4
+.Xr pcscp 4 ,
+.Xr ppb 4 ,
+.Xr psycho 4 ,
+.Xr puc 4 ,
+.Xr rl 4 ,
+.\" no manpage .Xr tsp 4
+.Xr schizo 4 ,
+.Xr sf 4 ,
+.Xr siop 4 ,
+.Xr sis 4 ,
+.Xr skc 4 ,
+.Xr ste 4 ,
+.Xr stge 4 ,
+.Xr sv 4 ,
+.Xr ti 4 ,
+.Xr tl 4 ,
+.Xr trm 4 ,
+.Xr twe 4 ,
+.Xr tx 4 ,
+.Xr txp 4 ,
+.Xr ubsec 4 ,
+.Xr uhci 4 ,
+.Xr usb 4 ,
+.Xr vga 4 ,
+.Xr vr 4 ,
+.Xr wb 4 ,
+.Xr wdt 4 ,
+.Xr wi 4 ,
+.Xr xl 4 ,
+.Xr yds 4
 .Sh HISTORY
 The machine-independent
 .Tn PCI

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: emu.4,v 1.3 2002/06/30 21:45:25 deraadt Exp $
+.\"	$OpenBSD: emu.4,v 1.4 2002/09/26 07:55:39 miod Exp $
 .\"	$NetBSD: emuxki.4,v 1.1 2001/10/18 18:40:16 jdolecek Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@ The
 device driver supports Creative
 Sound Blaster Live! cards as well as the Sound Blaster PCI 512.
 .Pp
-These Environmental Audio cards are based upon eprogrammable EMU10K1
+These Environmental Audio cards are based upon the programmable EMU10K1
 digital-processing chip.
 .Pp
 Hardware features:
@@ -82,7 +82,9 @@ at 8 standard sample rates
 Allows multiple audio sources playback on the same speaker system
 .El
 .Sh SEE ALSO
+.Xr ac97 4 ,
 .Xr audio 4 ,
+.Xr intro 4 ,
 .Xr joy 4 ,
 .Xr pci 4
 .Sh HISTORY

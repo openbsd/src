@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rln.4,v 1.13 2001/10/05 14:45:53 mpech Exp $
+.\"	$OpenBSD: rln.4,v 1.14 2002/09/26 07:55:40 miod Exp $
 .\"
 .Dd 2 April, 1999
 .Dt RLN 4
@@ -7,9 +7,9 @@
 .Nm rln
 .Nd device driver for RangeLAN2-based wireless network cards
 .Sh SYNOPSIS
-.Cd "rln0 at isa? port 0x270 irq ? flags ?"
-.\" .Cd "rln* at isapnp? flags ?"
-.Cd "rln* at pcmcia? function ? flags ?"
+.Cd "rln0 at isa? port 0x270 irq ? flags 0x00"
+.\" .Cd "rln* at isapnp? flags 0x00"
+.Cd "rln* at pcmcia? function ? flags 0x00"
 .Sh DESCRIPTION
 The
 .Nm
@@ -100,16 +100,13 @@ Check the cpu load.
 An expected response to the command did not appear within a reasonable time.
 .It "rln0: unknown RangeLAN2 wireless network card"
 The card model was not matched in the known-card tables.
-Please send in the output of
-.Xr dmesg 8
-and a description of your card (via
-.Xr sendbug 1 ) .
 .El
 .Sh SEE ALSO
 .Xr cnw 4 ,
 .Xr intro 4 ,
 .Xr isa 4 ,
 .\" .Xr isapnp 4 ,
+.Xr netintro 4 ,
 .Xr pcmcia 4 ,
 .Xr ifconfig 8
 .Pa http://www.proxim.com/

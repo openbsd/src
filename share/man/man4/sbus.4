@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sbus.4,v 1.9 2002/06/20 03:22:51 deraadt Exp $
+.\"	$OpenBSD: sbus.4,v 1.10 2002/09/26 07:55:40 miod Exp $
 .\"	$NetBSD: sbus.4,v 1.5 2002/01/21 17:54:10 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,11 +48,7 @@
 .Pp
 These
 .Nm
-attachments are specific to the
-OpenBSD/sparc
-and
-OpenBSD/sparc64
-ports.
+attachments are specific to the sparc and sparc64 ports.
 .Sh DESCRIPTION
 .Nm
 is a I/O interconnect bus mostly found in
@@ -98,8 +94,6 @@ interfaces.
 .Dq Happy Meal
 .Tn Ethernet
 interfaces.
-.It Xr en 4
-Midway-based Efficient Networks Inc. and Adaptec ATM interfaces.
 .It Xr be 4
 .Dq Big Mac
 .Tn Ethernet
@@ -110,10 +104,6 @@ board.
 .El
 .Ss Bridges
 .Bl -tag -width 12n -offset ind -compact
-.It Xr xbox 4
-an
-.Nm sbus
-expansion box.
 .It Xr stp 4
 .Nm sbus
 .Xr pcmcia 4
@@ -127,11 +117,44 @@ framebuffer device.
 framebuffer device.
 .It Xr cgsix 4
 framebuffer device.
-.It Xr tcx 4
-framebuffer device.
+.El
+.Ss Serial and parallel interfaces
+.Bl -tag -width 12n -offset ind -compact
+.It Xr apio 4 
+Aurora Technologies pio1 parallel port card.
+.It Xr asio 4
+Aurora Technologies pio2 serial port card.
+.It Xr magma 4
+Magma LC series Serial/Parallel Interface cards.
+.It Xr spif 4
+Sun Serial/Parallel Interface card.
+.El
+.Ss Miscellaneous devices
+.Bl -tag -width 12n -offset ind -compact
+.It Xr uperf 4
+Performance counters on the host bridge.
 .El
 .Sh SEE ALSO
-.Xr intro 4
+.Xr apio 4 ,
+.Xr asio 4 ,
+.Xr audioamd 4 ,
+.Xr audiocs 4 ,
+.Xr be 4 ,
+.Xr bwtwo 4 ,
+.Xr cgsix 4 ,
+.Xr cgthree 4 ,
+.Xr esp 4 ,
+.Xr hme 4 ,
+.Xr intro 4 ,
+.Xr isp 4 ,
+.Xr le 4 ,
+.Xr magma 4 ,
+.Xr qe 4 ,
+.Xr qec 4 ,
+.Xr spif 4 ,
+.Xr stp 4 ,
+.Xr uperf 4 ,
+.Xr xbox 4
 .Sh HISTORY
 The machine-independent
 .Nm sbus

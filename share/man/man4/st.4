@@ -1,4 +1,4 @@
-.\"	$OpenBSD: st.4,v 1.6 2001/06/22 12:15:47 mpech Exp $
+.\"	$OpenBSD: st.4,v 1.7 2002/09/26 07:55:40 miod Exp $
 .\"	$NetBSD: st.4,v 1.2 1996/10/20 23:15:24 explorer Exp $
 .\"
 .\" Copyright (c) 1996
@@ -33,8 +33,8 @@
 .Nm st
 .Nd SCSI tape driver
 .Sh SYNOPSIS
-.Cd st* at scsibus? target ? lun ?
-.Cd st1 at scsibus0 target 4 lun 0
+.Cd "st* at scsibus? target ? lun ?"
+.Cd "#st0 at scsibus0 target 4 lun 0" Pq fixed-configuration example
 .Sh DESCRIPTION
 The
 .Nm
@@ -242,7 +242,7 @@ calls apply to
 tapes.
 Some also apply to other tapes.
 They are defined in the header file
-.Aq Pa /sys/mtio.h .
+.Fd <sys/mtio.h> .
 .\"
 .\" Almost all of this discussion belongs in a separate mt(4)
 .\" manual page, since it is common to all magnetic tapes.
@@ -337,8 +337,10 @@ Mode 3, Eject on close (if capable)
 .El
 .Sh SEE ALSO
 .Xr mt 1 ,
+.Xr intro 4 ,
 .Xr mtio 4 ,
-.Xr scsi 4
+.Xr scsi 4 ,
+.Xr wt 4
 .Sh HISTORY
 This
 .Nm

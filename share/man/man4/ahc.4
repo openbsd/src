@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ahc.4,v 1.20 2002/06/29 02:05:03 smurph Exp $
+.\"	$OpenBSD: ahc.4,v 1.21 2002/09/26 07:55:39 miod Exp $
 .\"	$NetBSD: ahc.4,v 1.1.2.1 1996/08/25 17:22:14 thorpej Exp $
 .\"
 .\" Copyright (c) 1995, 1996
@@ -233,11 +233,17 @@ Since the local SCB space serves as a cache for disconnected transactions,
 the more SCB space available, the less host bus traffic consumed saving
 and restoring SCB data.
 .Sh SEE ALSO
-.Xr aha 4 ,
-.Xr ahb 4 ,
+.Xr cd 4 ,
+.Xr ch 4 ,
 .Xr eisa 4 ,
+.Xr intro 4 ,
 .Xr isa 4 ,
-.Xr pci 4
+.Xr pci 4 ,
+.Xr scsi 4 ,
+.Xr sd 4 ,
+.Xr ss 4 ,
+.Xr st 4 ,
+.Xr uk 4
 .Sh AUTHORS
 The core
 .Nm

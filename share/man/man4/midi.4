@@ -1,4 +1,4 @@
-.\" $OpenBSD: midi.4,v 1.10 2002/03/27 18:10:38 millert Exp $
+.\" $OpenBSD: midi.4,v 1.11 2002/09/26 07:55:40 miod Exp $
 .\" $NetBSD: midi.4,v 1.4 1998/08/22 14:45:35 augustss Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,12 +40,21 @@
 .Nm midi
 .Nd device-independent MIDI driver layer
 .Sh SYNOPSIS
+.Cd "# alpha"
 .Cd "midi* at opl?"
 .Cd "midi* at pcppi?"
+.Pp
+.Cd "# i386"
+.Cd "midi* at autri?"
+.Cd "midi* at mpu?"
+.Cd "midi* at opl?"
 .Cd "midi* at sb?"
 .Cd "midi* at wss?"
 .Ct "midi* at ym?"
-.Ct "midi* at mpu?"
+.Pp
+.Cd "# sparc64"
+.Cd "midi* at autri?"
+.Pp
 .Cd "pseudo-device sequencer"
 .Pp
 .Fd #include <sys/types.h>
@@ -105,9 +114,12 @@ interface.
 .Xr ossaudio 3 ,
 .Xr audio 4 ,
 .Xr autri 4 ,
+.Xr mpu 4 ,
 .Xr opl 4 ,
+.Xr pcppi 4 ,
 .Xr sb 4 ,
-.Xr wss 4
+.Xr wss 4 ,
+.Xr ym 4
 .Sh HISTORY
 The
 .Nm

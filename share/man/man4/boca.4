@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boca.4,v 1.5 2001/06/22 12:15:44 mpech Exp $
+.\"	$OpenBSD: boca.4,v 1.6 2002/09/26 07:55:39 miod Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -44,21 +44,20 @@
 .Nm boca
 .Nd multiplexing serial communications interface
 .Sh SYNOPSIS
-For 4-port BB1004 boards:
+For 4-port BB1004 boards and 8-port BB1008 boards:
 .Pp
 .Cd "boca0 at isa? port 0x100 irq 5"
 .Cd "com* at boca? slave ?"
-.Pp
-For 8-port BB1008 boards:
-.Pp
-.Cd "boca0 at isa? port 0x100 irq 5"
-.Cd "com* at boca? slave ?"
+or
+.Cd "pccom* at boca? slave ?"
 .Pp
 For 16-port BB2016 boards:
 .Pp
 .Cd "boca0 at isa? port 0x100 irq 5"
 .Cd "boca1 at isa? port 0x140 irq 5"
 .Cd "com* at boca? slave ?"
+or
+.Cd "pccom* at boca? slave ?"
 .Pp
 (The BB2016 is functionally equivalent to two BB1008 boards,
 and is configured as such.)
@@ -99,7 +98,9 @@ subdevices and the port for the interrupt multiplexing register.
 .It Pa /dev/tty??
 .El
 .Sh SEE ALSO
-.Xr com 4
+.Xr com 4 ,
+.Xr intro 4 ,
+.Xr isa 4
 .Sh HISTORY
 The
 .Nm

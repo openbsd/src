@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.4,v 1.3 2002/07/22 15:18:00 wcobb Exp $
+.\"	$OpenBSD: systrace.4,v 1.4 2002/09/26 07:55:40 miod Exp $
 .\"
 .\" Copyright (c) 2002 CubeSoft Communications, Inc.
 .\" All rights reserved.
@@ -45,7 +45,7 @@ interface.
 .Sh SYSTEM CALL POLICIES
 .Nm
 can assign the following policies to system calls:
-.Bl -tag -enum -width "xxxxxx"
+.Bl -tag -enum -width SYSTR_POLICY_XXXXXX
 .It SYSTR_POLICY_ASK
 Send a message of the type
 .Dv SYSTR_MSG_ASK ,
@@ -111,7 +111,7 @@ operations.
 supports the following
 .Xr ioctl 2
 command:
-.Bl -tag -width "xxxxxx"
+.Bl -tag -width STRIOCXXXXXXXX
 .It Dv STRIOCATTACH Fa "pid_t"
 Attach to a process, unless:
 .Bl -enum -compact -width 2n

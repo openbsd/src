@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hsq.4,v 1.9 2001/10/05 14:45:53 mpech Exp $
+.\"	$OpenBSD: hsq.4,v 1.10 2002/09/26 07:55:40 miod Exp $
 .\"	from: OpenBSD: ast.4,v 1.5 1999/07/09 13:35:43 aaron Exp
 .\"	from: NetBSD: ast.4,v 1.7 1996/03/16 00:07:07 thorpej Exp
 .\"
@@ -47,6 +47,8 @@
 .Nd multiplexing serial communications interface
 .Sh SYNOPSIS
 .Cd "hsq0 at isa? port 0x140 irq 10"
+.Cd "com* at hsq? slave ?"
+or
 .Cd "pccom* at hsq? slave ?"
 .Sh DESCRIPTION
 The
@@ -63,15 +65,15 @@ communications interfaces.
 Each
 .Nm
 device is the master device for up to four
-.Nm pccom
+.Nm com
 devices.
 The kernel configuration specifies these
-.Nm pccom
+.Nm com
 devices as slave devices of the
 .Nm
 device, as shown in the synopsis.
 The slave ID given for each
-.Nm pccom
+.Nm com
 device determines which bit in the interrupt multiplexing register is
 tested to find interrupts for that device.
 The
@@ -79,7 +81,7 @@ The
 specification for the
 .Nm
 device is used to compute the base addresses for the
-.Nm pccom
+.Nm com
 subdevices (they are equal to
 .Tn port
 + ID * 8) and the port for the interrupt multiplexing register
@@ -98,10 +100,12 @@ the driver only with Hostess-compatible cards.
 .It Pa /dev/cua0?
 .El
 .Sh SEE ALSO
-.Xr pccom 4
+.Xr com 4 ,
+.Xr intro 4 ,
+.Xr isa 4
 .Sh HISTORY
 The
 .Nm
-driver was written by Denis A. Doroshenko based on
+driver was written by Denis A. Doroshenko based on the
 .Xr ast 4
 driver.

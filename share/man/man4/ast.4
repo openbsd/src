@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ast.4,v 1.5 2000/10/18 02:38:21 aaron Exp $
+.\"	$OpenBSD: ast.4,v 1.6 2002/09/26 07:55:39 miod Exp $
 .\"	$NetBSD: ast.4,v 1.7 1996/03/16 00:07:07 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -48,6 +48,8 @@
 .Cd "ast0 at isa? port 0x1a0 irq 5"
 .Cd "ast1 at isa? port 0x2a0 irq 6"
 .Cd "com* at ast? slave ?"
+or
+.Cd "pccom* at ast? slave ?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -64,6 +66,7 @@ Each
 .Nm
 device is the master device for up to four
 .Nm com
+or
 devices.
 The kernel configuration specifies these
 .Nm com
@@ -120,7 +123,9 @@ Reserved, must be OFF.
 .It Pa /dev/tty0?
 .El
 .Sh SEE ALSO
-.Xr com 4
+.Xr com 4 ,
+.Xr intro 4 ,
+.Xr isa 4
 .Sh HISTORY
 The
 .Nm

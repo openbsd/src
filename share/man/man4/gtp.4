@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gtp.4,v 1.2 2002/06/13 19:53:34 mickey Exp $
+.\"	$OpenBSD: gtp.4,v 1.3 2002/09/26 07:55:40 miod Exp $
 .\"
 .\" Copyright (c) 2002 Vladimir Popov <jumbo@narod.ru>
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .Nm gtp
 .Nd Gemtek PCI FM radio device driver
 .Sh SYNOPSIS
-.Cd "gtp*   at pci? flags 0x00"
+.Cd "gtp*   at pci? dev ? function ? flags 0x00"
 .Cd "radio* at gtp?"
 .Sh DESCRIPTION
 The
@@ -55,6 +55,7 @@ It is impossible to determine which frequency the card is tuned to.
 Thus, the driver will report an internally stored value even if it is not
 correct (changed by some program that uses direct port access).
 .Sh SEE ALSO
+.Xr intro 4 ,
 .Xr pci 4 ,
 .Xr radio 4 ,
 .Xr radio 9

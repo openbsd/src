@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gem.4,v 1.1 2002/06/08 00:39:59 drahn Exp $
+.\"	$OpenBSD: gem.4,v 1.2 2002/09/26 07:55:40 miod Exp $
 .\"
 .\" Copyright (c) 2001 Miodrag Vallat.
 .\" All rights reserved.
@@ -36,13 +36,13 @@
 .Cd "gem* at pci? dev ? function ?"
 .Cd "bmtphy* at mii? phy ?"
 .Cd "brgphy* at mii? phy ?"
-.Cd "nsphy* at mii? phy ?"
-.Cd "qsphy* at mii? phy ?"
+.Cd "lxtphy* at mii? phy ?"
+.\" .Cd "nsphy* at mii? phy ?"
+.\" .Cd "qsphy* at mii? phy ?"
 .Sh DESCRIPTION
 The
 .Nm
 interface provides access to the 10Mb/s, 100Mb/s and 1Gb/s Ethernet networks.
-.\" ... via the FOO or the BAR chipsets.
 The
 .Nm
 is found on the
@@ -99,9 +99,15 @@ Use 10baseT, half duplex
 .El
 .Sh SEE ALSO
 .Xr arp 4 ,
+.Xr bmtphy 4 ,
+.xr brgphy 4 ,
 .Xr ifmedia 4 ,
 .Xr inet 4 ,
 .Xr intro 4 ,
+.Xr lxtphy 4 ,
+.\" .Xr nsphy 4
+.\" .Xr qsphy 4
+.Xr hostname.if 5 ,
 .Xr ifconfig 8
 .Sh HISTORY
 .Ox

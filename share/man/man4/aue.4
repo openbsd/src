@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aue.4,v 1.12 2002/07/17 22:59:06 deraadt Exp $
+.\"	$OpenBSD: aue.4,v 1.13 2002/09/26 07:55:39 miod Exp $
 .\"	$NetBSD: aue.4,v 1.8 2002/02/07 03:15:08 ross Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
@@ -40,7 +40,7 @@
 .Nm aue
 .Nd ADMtek AN986 Pegasus USB Ethernet driver
 .Sh SYNOPSIS
-.Cd "aue*   at uhub?"
+.Cd "aue*   at uhub? port ?"
 .Cd "ukphy* at mii?"
 .Sh DESCRIPTION
 The
@@ -107,8 +107,8 @@ driver supports the following media types:
 .It autoselect
 Enable autoselection of the media type and options.
 The user can manually override
-the autoselected mode by adding media options to the
-.Pa /etc/rc.conf
+the autoselected mode by adding media options to the appropriate
+.Xr hostname.if 5
 file.
 .It 10baseT
 Set 10Mbps operation.
@@ -161,8 +161,11 @@ The driver failed to allocate an mbuf for the receiver ring.
 .El
 .Sh SEE ALSO
 .Xr arp 4 ,
+.Xr ifmedia 4 ,
+.Xr intro 4 ,
 .Xr netintro 4 ,
 .Xr usb 4 ,
+.Xr hostname.if 5 ,
 .Xr ifconfig 8
 .Rs
 .%T ADMtek AN986 data sheet
@@ -179,6 +182,9 @@ support was added in
 .Sh AUTHORS
 The
 .Nm
-driver was written by Bill Paul <wpaul@ee.columbia.edu> and ported to
+driver was written by
+.An Bill Paul Aq wpaul@ee.columbia.edu
+and ported to
 .Ox
-by Aaron Campbell <aaron@openbsd.org>.
+by
+.An Aaron Campbell Aq aaron@openbsd.org .

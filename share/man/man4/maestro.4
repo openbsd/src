@@ -1,4 +1,4 @@
-.\"   $OpenBSD: maestro.4,v 1.9 2002/04/08 01:51:25 frantzen Exp $
+.\"   $OpenBSD: maestro.4,v 1.10 2002/09/26 07:55:40 miod Exp $
 .\"
 .\" Copyright (c) 2001 Marc Espie.
 .\" All rights reserved.
@@ -55,17 +55,18 @@ does not support it.
 Other functions of maestro cards (modem, joystick) are not supported.
 .Pp
 PCI interrupt sharing works, as long as other devices comply too.
+.Sh SEE ALSO
+.Xr ac97 4 ,
+.Xr audio 4 ,
+.Xr esa 4 ,
+.Xr intro 4 ,
+.Xr pci 4
 .Sh HISTORY
 Maestro hardware information was gleaned from the
 .Fx
 and Linux OSS drivers.
 .Sh AUTHORS
 David Leonard and Marc Espie.
-.Sh SEE ALSO
-.Xr ac97 4 ,
-.Xr audio 4 ,
-.Xr esa 4 ,
-.Xr pci 4
 .Sh BUGS
 Very old cards with a PT101 mixer component should have partial support, e.g.,
 the mixer does not work.

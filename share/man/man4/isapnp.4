@@ -1,4 +1,4 @@
-.\"	$OpenBSD: isapnp.4,v 1.23 2002/08/28 21:24:20 mickey Exp $
+.\"	$OpenBSD: isapnp.4,v 1.24 2002/09/26 07:55:40 miod Exp $
 .\"	$NetBSD: isapnp.4,v 1.8 1998/06/07 09:08:46 enami Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
@@ -39,7 +39,7 @@
 .Cd "isapnp0 at isa?"
 .Pp
 An
-.Nm isapnp
+.Nm
 bus can be configured for each supported ISA bus.
 .Sh DESCRIPTION
 .Ox
@@ -52,10 +52,10 @@ includes machine-independent ISAPNP drivers, sorted by function
 and driver name:
 .Ss Disk controllers
 .Bl -tag -width speakerxx -offset ind -compact
-.It Xr aic 4
-Adaptec AHA-1520B SCSI controller card.
 .It Xr aha 4
 Adaptec AHA-154x SCSI controller card.
+.It Xr aic 4
+Adaptec AHA-1520B SCSI controller card.
 .It Xr wdc 4
 IDE controllers (typically found on sound cards).
 .El
@@ -68,6 +68,8 @@ Winmodems are not supported.
 .El
 .Ss Network interfaces
 .Bl -tag -width speaker -offset ind -compact
+.It Xr ef 4
+3Com 3c515 Fast Etherlink III Ethernet interfaces.
 .It Xr ep 4
 3Com 3c509B EtherLink-III Ethernet interfaces.
 .It Xr le 4
@@ -79,21 +81,26 @@ SMC EtherEZ Ethernet interfaces.
 .El
 .Ss Sound
 .Bl -tag -width speaker -offset ind -compact
-.It Xr sb 4
-SoundBlaster series sound cards (SB16 PnP through AWE64).
+.It Xr ess 4
+ESS Technology AudioDrive 1788-, 1888-, 1887-, and 888-based sound cards.
 .It Xr gus 4
 Gravis Ultrasound PnP sound cards.
-.It Xr ym 4
-Yamaha OPL3-SA3 sound cards.
-.It Xr wss 4
-Windows Sound System cards.
 .It Xr mpu 4
 MIDI interfaces.
+.It Xr sb 4
+SoundBlaster series sound cards (SB16 PnP through AWE64).
+.It Xr wss 4
+Windows Sound System cards.
+.It Xr ym 4
+Yamaha OPL3-SA3 sound cards.
 .El
-.Ss Misc devices
+.Ss Miscellaneous devices
 .Bl -tag -width speaker -offset ind -compact
 .It Xr joy 4
 Joystick driver.
+.It Xr pcic 4
+.Tn ISA
+PCMCIA controllers.
 .It Xr rt 4
 AIMS Lab Radiotrack FM radio tuners.
 .El
@@ -132,12 +139,31 @@ Then the device will probe like this:
 .Pp
 joy0 at isapnp0 <PnP Sound Chip, @P@1001, , > port 0x200/8
 .Sh SEE ALSO
+.Xr aha 4 ,
+.Xr aic 4 ,
 .Xr cardbus 4 ,
+.Xr com 4 ,
+.Xr ef 4 ,
+.Xr eisa 4 ,
+.Xr ep 4 ,
+.Xr ess 4 ,
+.Xr gus 4 ,
 .Xr intro 4 ,
 .Xr isa 4 ,
+.Xr joy 4 ,
+.Xr le 4 ,
+.Xr mpu 4 ,
+.Xr ne 4 ,
 .Xr pci 4 ,
+.Xr pcic 4 ,
 .Xr pcmcia 4 ,
-.Xr usb 4
+.Xr rt 4 ,
+.Xr sb 4 ,
+.Xr usb 4 ,
+.Xr we 4 ,
+.Xr whc 4 ,
+.Xr wss 4 ,
+.Xr ym 4
 .Sh HISTORY
 The
 .Nm

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtii.4,v 1.4 2002/01/07 18:37:45 mickey Exp $
+.\"	$OpenBSD: rtii.4,v 1.5 2002/09/26 07:55:40 miod Exp $
 .\"	$RuOBSD: rtii.4,v 1.3 2001/10/26 05:38:44 form Exp $
 .\"
 .\" Copyright (c) 2001 Vladimir Popov <jumbo@narod.ru>
@@ -31,9 +31,9 @@
 .Nm rtii
 .Nd AIMS Lab Radiotrack II FM radio device driver
 .Sh SYNOPSIS
-.Cd "rtii0   at isa? port 0x20c flags 0x00"
 .Cd "rtii0   at isa? port 0x30c flags 0x00"
-.Cd "radio* at rtii0"
+.Cd "rtii1   at isa? port 0x20c flags 0x00"
+.Cd "radio* at rtii?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -55,6 +55,7 @@ file and must be either 0x20c or 0x30c.
 The flags control the driver behavior. For example, with flags 0x01 the driver
 will assume that there is a TEA5759 chip is used.
 .Sh SEE ALSO
+.Xr intro 4 ,
 .Xr isa 4 ,
 .Xr radio 4 ,
 .Xr radio 9

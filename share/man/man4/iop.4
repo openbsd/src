@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iop.4,v 1.5 2002/03/26 15:15:27 mickey Exp $
+.\"	$OpenBSD: iop.4,v 1.6 2002/09/26 07:55:40 miod Exp $
 .\"	$NetBSD: iop.4,v 1.7 2001/03/20 13:09:19 ad Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 .Cd "ioprbs*" at iop? tid ?
 .Cd "scsibus*" at iopsp?
 .Cd "scsibus*" at ioprbs?
-.Cd options I2OVERBOSE
+.Cd option I2OVERBOSE
 .Sh DESCRIPTION
 The
 .Nm
@@ -144,6 +144,7 @@ control device for IOP unit
 .Xr ioprbs 4 ,
 .Xr iopsp 4 ,
 .Xr scsibus 4 ,
+.Xr pci 4 ,
 .Xr iopctl 8
 .Pp
 http://www.intelligent-io.com/
@@ -158,8 +159,8 @@ support was added in
 .Sh AUTHORS
 The
 .Nm
-driver was written by Andrew Doran
-.Aq ad@netbsd.org
+driver was written by
+.An Andrew Doran Aq ad@netbsd.org
 and ported to
 .Ox 3.0
 by

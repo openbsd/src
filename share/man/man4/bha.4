@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bha.4,v 1.1 2002/01/24 22:43:55 mickey Exp $
+.\"	$OpenBSD: bha.4,v 1.2 2002/09/26 07:55:39 miod Exp $
 .\"	$NetBSD: bha.4,v 1.10 1999/12/17 16:23:21 abs Exp $
 .\"
 .\" Copyright (c) 1994 James A. Jegers
@@ -32,7 +32,8 @@
 .Nd Buslogic SCSI adapter driver
 .Sh SYNOPSIS
 .Cd "bha0 at isa? port 0x330 irq ? drq ?"
-.Cd "bha* at eisa? slot ?"
+.Cd "bha1 at isa? port 0x334 irq ? drq ?"
+.\" .Cd "bha* at eisa? slot ?"
 .Cd "bha* at pci? dev ? function ?"
 .Cd "scsibus* at bha?"
 .Sh HARDWARE
@@ -46,18 +47,21 @@ adapters:
 .Bl -tag -width -offset indent -compact
 .It Tn Buslogic ISA BT-445
 .It Tn Buslogic EISA BT-74x
+(supported in isa compatibility mode only)
 .It Tn Buslogic PCI BT-9[45][68]
 .El
 .Sh SEE ALSO
 .Xr cd 4 ,
 .Xr ch 4 ,
-.Xr eisa 4 ,
+.\" .Xr eisa 4 ,
 .Xr intro 4 ,
 .Xr isa 4 ,
 .Xr pci 4 ,
 .Xr scsi 4 ,
 .Xr sd 4 ,
-.Xr st 4
+.Xr ss 4 ,
+.Xr st 4 ,
+.Xr uk 4
 .Sh HISTORY
 In
 .Ox 3.0

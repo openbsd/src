@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aria.4,v 1.7 2001/03/01 16:11:15 aaron Exp $
+.\"	$OpenBSD: aria.4,v 1.8 2002/09/26 07:55:39 miod Exp $
 .\"
 .\" Copyright (c) 1996 Roland C. Dowdeswell
 .\" All rights reserved.
@@ -37,7 +37,7 @@
 .Nm aria
 .Nd Aria 16 audio device driver
 .Sh SYNOPSIS
-.Cd "aria0 at isa? port 0xPPP irq X drq Y flags Z"
+.Cd "aria0 at isa? port 0x280 irq 10 drq 0 flags 0x1"
 .Sh DESCRIPTION
 The
 .Nm
@@ -66,9 +66,11 @@ This flag tells the driver to initialize the card.
 It is a weird and undocumented piece of horribleness, but the card
 will not respond until you twiddle with the joystick port.
 .Sh SEE ALSO
-.Xr audio 4
+.Xr audio 4 ,
+.Xr intro 4 ,
+.Xr isa 4
 .Sh AUTHORS
-Roland C. Dowdeswell <roland@imrryr.org>
+.An Roland C. Dowdeswell Aq roland@imrryr.org
 .Sh BUGS
 The driver has only been tested on a Prometheus Aria 16.
 .Pp

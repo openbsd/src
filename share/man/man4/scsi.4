@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scsi.4,v 1.11 2001/11/07 19:41:01 jason Exp $
+.\"	$OpenBSD: scsi.4,v 1.12 2002/09/26 07:55:40 miod Exp $
 .\"
 .Dd August 4, 1996
 .Dt SCSI 4
@@ -7,15 +7,39 @@
 .Nm scsi
 .Nd scsi system
 .Sh SYNOPSIS
-.Nm scsibus* at aha?
-.Nm scsibus* at ncr?
-.Nm device cd* at scsibus? target ? lun ?
-.Nm device ch* at scsibus? target ? lun ?
-.Nm device sd* at scsibus? target ? lun ?
-.Nm device st* at scsibus? target ? lun ?
-.Nm device ss* at scsibus? target ? lun ?
-.Nm device su* at scsibus? target ? lun ?
-.Nm device uk* at scsibus? target ? lun ?
+.Cd "scsibus at aac?"
+.Cd "scsibus at adv?"
+.Cd "scsibus at adw?"
+.Cd "scsibus at aha?"
+.Cd "scsibus at ahb?"
+.Cd "scsibus at ahc?"
+.Cd "scsibus at aic?"
+.Cd "scsibus at ami?"
+.Cd "scsibus at atapiscsi?"
+.Cd "scsibus at bha?"
+.Cd "scsibus at cac?"
+.Cd "scsibus at dpt?"
+.Cd "scsibus at gdt?"
+.Cd "scsibus at iha?"
+.Cd "scsibus at ioprbs?"
+.Cd "scsibus at iopsp?"
+.Cd "scsibus at isp?"
+.Cd "scsibus at ncr?"
+.Cd "scsibus at pcscp?"
+.Cd "scsibus at siop?"
+.Cd "scsibus at trm?"
+.Cd "scsibus at twe?"
+.Cd "scsibus at umass?"
+.Cd "scsibus at usscanner?"
+.Pp
+.Cd "cd* at scsibus? target ? lun ?"
+.Cd "ch* at scsibus? target ? lun ?"
+.Cd "sd* at scsibus? target ? lun ?"
+.Cd "st* at scsibus? target ? lun ?"
+.Cd "ss* at scsibus? target ? lun ?"
+.Cd "uk* at scsibus? target ? lun ?"
+.Pp
+.Cd "ses* at scsibus? target ? lun ?"
 .Sh DESCRIPTION
 The
 .Em scsi
@@ -34,7 +58,7 @@ The option SCSIDEBUG enables the debug ioctl.
 .Pp
 All devices and the SCSI busses support boot time allocation so that
 an upper number of devices and controllers does not need to be configured;
-.Em "device sd* at scsibus? target ? lun ?"
+.Cd "sd* at scsibus? target ? lun ?"
 will suffice for any number of disk drivers.
 .Pp
 The devices are either
@@ -45,27 +69,27 @@ so that they appear as the next available unused unit.
 .Pp
 To configure a driver in the kernel without wiring down the device use a
 config line similar to
-.Em "device ch* at scsibus? target ? lun ?"
+.Cd "ch* at scsibus? target ? lun ?"
 to include the changer driver.
 .Pp
 To wire down a unit use a config line similar to
-.Em "device ch1 at scsibus0 target 4 lun 0"
+.Cd "ch1 at scsibus0 target 4 lun 0"
 to assign changer 1 as the changer with SCSI ID 4,
 SCSI logical unit 0 on SCSI bus 0.
 Individual scsibuses can be wired down to specific controllers with
 a config line similar to
-.Em "scsibus0 at ahc0"
+.Cd "scsibus0 at ahc0"
 which assigns scsi bus 0 to the first unit using the ahc driver.
 For controllers supporting more than one bus,
 the particular bus can be specified as in
-.Em "scsibus3 at ahc1 bus 1"
+.Cd "scsibus3 at ahc1 bus 1"
 which assigns scsibus 1 to the second bus probed on the ahc1 device.
 .Pp
 When you have a mixture of wired down and counted devices then the
 counting begins with the first non-wired down unit for a particular
 type.
 That is, if you have a disk wired down as
-.Em "disk sd1 at scsibus? target ? lun ?" ,
+.Cd "disk sd1 at scsibus? target ? lun ?" ,
 then the first non-wired disk shall come on line as
 .Em sd2 .
 .Sh IOCTLS
@@ -73,7 +97,7 @@ There are a number of ioctls that work on any
 .Em SCSI
 device.
 They are defined in
-.Em sys/scsiio.h
+.Fd <sys/scsiio.h>
 and can be applied against any scsi device that permits them.
 For the tape, it must be applied against the control
 device.
@@ -113,14 +137,6 @@ In addition, the device type, ATAPI or SCSI, is returned.
 Ask the device to disappear.
 This may not happen if the device is in use.
 .El
-.Sh NOTES
-The generic scsi part of the system is still being mapped out.
-Watch this space for changes.
-.Pp
-A device by the name of su (scsi_user)
-(e.g. su0-0-0) will map bus, target and lun to minor numbers.
-It has not yet been decided whether this device will be able to open a device
-that is already controlled by an explicit driver.
 .Sh ADAPTERS
 The system allows common device drivers to work through many different
 types of adapters.
@@ -157,12 +173,39 @@ of the return values of functions.
 shows more detailed information including DMA scatter-gather logs.
 .El
 .Sh SEE ALSO
+.Xr aac 4 ,
+.Xr adv 4 ,
+.Xr adw 4 ,
+.Xr aha 4 ,
+.Xr ahb 4 ,
+.Xr ahc 4 ,
+.Xr aic 4 ,
+.Xr ami 4 ,
+.Xr atapiscsi 4 ,
+.Xr bha 4 ,
+.Xr cac 4 ,
 .Xr cd 4 ,
 .Xr ch 4 ,
+.Xr dpt 4 ,
+.Xr gdt 4 ,
+.Xr iha 4 ,
+.Xr intro 4 ,
+.Xr ioprbs 4 ,
+.Xr iopsp 4 ,
+.Xr isp 4 ,
+.Xr ncr 4 ,
+.Xr pcscp 4 ,
 .Xr sd 4 ,
+.Xr ses 4 ,
+.Xr siop 4 ,
 .Xr ss 4 ,
 .Xr st 4 ,
-.Xr uk 4
+.Xr trm 4 ,
+.Xr twe 4 ,
+.Xr uk 4 ,
+.Xr umass 4 ,
+.Xr usscanner 4 ,
+.Xr scsi 8
 .Sh HISTORY
 This
 .Nm

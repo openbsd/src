@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cd.4,v 1.9 2001/06/22 12:15:44 mpech Exp $
+.\"	$OpenBSD: cd.4,v 1.10 2002/09/26 07:55:39 miod Exp $
 .\"	$NetBSD: cd.4,v 1.3 1996/10/20 23:15:21 explorer Exp $
 .\"
 .\" Copyright (c) 1996
@@ -33,8 +33,8 @@
 .Nm cd
 .Nd SCSI CD-ROM driver
 .Sh SYNOPSIS
-.Cd cd* at scsibus? target ? lun ?
-.Cd cd1 at scsibus0 target 4 lun 0
+.Cd "cd* at scsibus? target ? lun ?"
+.Cd "#cd0 at scsibus0 target 6 lun 0" Pq fixed-configuration example
 .Sh DESCRIPTION
 The
 .Nm
@@ -329,15 +329,16 @@ Some work is planned to support some of the more common
 .Dq broken
 CD-ROM drives; however, this is not yet under way.
 .Sh FILES
-.Bl -tag -width /dev/rcd[0-9][a-h] -compact
-.It Pa /dev/cd[0-9][a-h]
+.Bl -tag -width /dev/rcd[0-9][a-p] -compact
+.It Pa /dev/cd[0-9][a-p]
 block mode CD-ROM devices
-.It Pa /dev/rcd[0-9][a-h]
+.It Pa /dev/rcd[0-9][a-p]
 raw mode CD-ROM devices
 .El
 .Sh DIAGNOSTICS
 None.
 .Sh SEE ALSO
+.Xr intro 4 ,
 .Xr scsi 4 ,
 .Xr sd 4 ,
 .Xr disklabel 5 ,

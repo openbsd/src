@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ti.4,v 1.17 2001/10/05 19:08:14 nate Exp $
+.\"	$OpenBSD: ti.4,v 1.18 2002/09/26 07:55:40 miod Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -111,7 +111,7 @@ driver supports the following media types:
 Enable autoselection of the media type and options.
 The user can manually override
 the autoselected mode by adding media options to the appropriate
-.Pa /etc/hostname.tiX
+.Xr hostname.if 5
 file.
 .It 10baseT
 Set 10Mbps operation
@@ -190,7 +190,10 @@ the network connection (cable).
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ifmedia 4 ,
+.Xr intro 4 ,
 .Xr netintro 4 ,
+.Xr pci 4 ,
+.Xr hostname.if 5 ,
 .Xr ifconfig 8
 .Sh HISTORY
 The

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ep.4,v 1.24 2002/05/19 05:25:19 brad Exp $
+.\"	$OpenBSD: ep.4,v 1.25 2002/09/26 07:55:39 miod Exp $
 .\"
 .\" Copyright (c) 1994 Herb Peyerl
 .\" All rights reserved.
@@ -35,10 +35,10 @@
 .Nm ep
 .Nd 3Com EtherLink III and Fast EtherLink III Ethernet driver
 .Sh SYNOPSIS
-.Cd "ep? at eisa? slot ?"
-.Cd "ep? at isa? port ? irq ?"
-.Cd "ep? at pci? dev ? function ?"
-.Cd "ep? at pcmcia? port 0x300 size 0x10 irq 10 slot ?"
+.Cd "ep* at eisa? slot ?"
+.Cd "ep* at isa? port ? irq ?"
+.Cd "ep* at pci? dev ? function ?"
+.Cd "ep* at pcmcia? function ?"
 .Cd "ep* at isapnp?"
 .Sh DESCRIPTION
 The
@@ -143,7 +143,7 @@ This is not fatal.
 .It ep0: eeprom failed to come ready
 The EEPROM failed to come ready.
 This probably means the card is wedged.
-.It ep0: 3c509 in test mode. Erase pencil mark!
+.It ep0: erase pencil mark, or disable PnP mode!
 This means that someone has scribbled with pencil in the test area on the
 card.
 Erase the pencil mark and reboot.
@@ -157,7 +157,11 @@ Erase the pencil mark and reboot.
 .Xr el 4 ,
 .Xr ie 4 ,
 .Xr isa 4 ,
+.Xr isapnp 4 ,
 .Xr ifmedia 4 ,
+.Xr intro 4 ,
 .Xr pci 4 ,
+.Xr pcmcia 4 ,
 .Xr xl 4 ,
+.Xr hostname.if 5 ,
 .Xr ifconfig 8

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcmcia.4,v 1.24 2002/09/25 20:54:01 miod Exp $
+.\"	$OpenBSD: pcmcia.4,v 1.25 2002/09/26 07:55:40 miod Exp $
 .\"	$NetBSD: pcmcia.4,v 1.4 1998/06/07 09:10:30 enami Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -39,15 +39,26 @@
 .Nm pcmcia
 .Nd introduction to PCMCIA (PC Card) support
 .Sh SYNOPSIS
+.Cd "# amiga/i386"
 .Cd "pcic0   at isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000"
 .Cd "pcic1   at isa? port 0x3e2 iomem 0xe0000 iosiz 0x4000"
 .Cd "pcic2   at isa? port 0x3e4 iomem 0xe0000 iosiz 0x4000"
-.Cd "pcic*   at pci? dev? function ?"
 .Cd "pcic*   at isapnp?
+.Cd "pcic*   at pci? dev? function ?"
 .Cd "pcmcia* at pcic? controller ? socket ?"
+.Pp
+.Cd "# i386"
+.Cd "tcic0   at isa? port 0x240 iomem 0xd0000 iosiz 0x10000"
+.Cd "pcmcia* at tcic? controller ? socket ?"
+.Pp
+.Cd "# sparc64"
 .Cd "stp*    at sbus? slot ? offset ?"
 .Cd "pcmcia* at stp? socket ?"
-.Cd "xx*     at pcmcia? function ?"
+.Pp
+.Cd "# all architectures"
+.Cd "cbb*      at pci? dev? function ?"
+.Cd "cardslot* at cbb? flags 0x0000"
+.Cd "pcmcia*   at cardslot?"
 .Sh INTRODUCTION
 The
 .Nm
@@ -121,13 +132,28 @@ drivers will need modification to handle this.
 .Xr wi 4
 is the first driver to have these modifications. 
 .Sh SEE ALSO
+.Xr aic 4 ,
+.Xr an 4 ,
+.Xr awi 4 ,
 .Xr cardbus 4 ,
+.Xr cnw 4 ,
+.Xr com 4 ,
+.Xr eisa 4 ,
+.Xr ep 4 ,
+.Xr gpr 4 ,
 .Xr intro 4 ,
 .Xr isa 4 ,
 .Xr isapnp 4 ,
+.Xr ne 4 ,
 .Xr pci 4 ,
+.Xr ray 4 ,
+.Xr rln 4 ,
 .Xr sbus 4 ,
-.Xr usb 4
+.Xr sm 4 ,
+.Xr usb 4 ,
+.Xr wdc 4 ,
+.Xr wi 4 ,
+.Xr xe 4
 .Sh HISTORY
 The
 .Nm

@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ses.4,v 1.7 2001/10/05 14:45:53 mpech Exp $
+.\" $OpenBSD: ses.4,v 1.8 2002/09/26 07:55:40 miod Exp $
 .\"
 .Dd February 22, 2000
 .Dt SES 4
@@ -61,7 +61,7 @@ calls apply to
 .B SES
 devices.
 They are defined in the header file
-.Aq Pa scsi/ses.h
+.Fd <scsi/ses.h>
 (\fIq.v.\fR).
 .Pp
 .Bl -tag -width SESIOC_GETENCSTAT
@@ -91,7 +91,7 @@ you things like location (e.g., "left power supply").
 Initialize the enclosure.
 .El
 .Sh FILES
-.Bl -tag -width /dev/rsdXXXXX -compact
+.Bl -tag -width /dev/sesNN -compact
 .It Pa /dev/ses Ns Ar N
 The \fINth\fR \fBSES\fR device.
 .Sh DIAGNOSTICS
@@ -101,6 +101,8 @@ enabled, the first open to an SES device will spit out overall enclosure
 parameters to the console.
 .El
 .Sh SEE ALSO
+.Xr intro 4 ,
+.Xr scsi 4 ,
 .Xr getencstat 8 ,
 .Xr sesd 8 ,
 .Xr setencstat 8 ,

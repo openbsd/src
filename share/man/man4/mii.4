@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mii.4,v 1.10 2002/04/05 23:34:09 deraadt Exp $
+.\"	$OpenBSD: mii.4,v 1.11 2002/09/26 07:55:40 miod Exp $
 .\"	$NetBSD: mii.4,v 1.1 1998/11/04 05:21:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 .Cd "amphy* at mii? phy ?"
 .Cd "bmtphy* at mii? phy ?"
 .Cd "brgphy* at mii? phy ?"
+.Cd "dcphy* at mii? phy ?"
 .Cd "eephy* at mii? phy ?"
 .Cd "exphy* at mii? phy ?"
 .Cd "icsphy* at mii? phy ?"
@@ -63,6 +64,7 @@
 .Cd "tqphy* at mii? phy ?"
 .Cd "txphy* at mii? phy ?"
 .Cd "ukphy* at mii? phy ?"
+.Cd "urlphy* at mii? phy ?"
 .Cd "xmphy* at mii? phy ?"
 .Sh DESCRIPTION
 Media Independent Interface is an IEEE standard serial bus for
@@ -98,11 +100,13 @@ program.
 .Xr amphy 4 ,
 .Xr bmtphy 4 ,
 .Xr brgphy 4 ,
+.\" no manpage .Xr dcphy 4 ,
 .Xr eephy 4 ,
 .Xr exphy 4 ,
 .Xr icsphy 4 ,
 .Xr ifmedia 4 ,
 .Xr inphy 4 ,
+.Xr intro 4 ,
 .Xr iophy 4 ,
 .Xr lxtphy 4 ,
 .Xr mtdphy 4 ,
@@ -117,5 +121,6 @@ program.
 .Xr tqphy 4 ,
 .Xr txphy 4 ,
 .Xr ukphy 4 ,
+.Xr urlphy 4 ,
 .Xr xmphy 4 ,
 .Xr ifconfig 8

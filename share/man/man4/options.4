@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.108 2002/09/11 10:27:21 itojun Exp $
+.\"	$OpenBSD: options.4,v 1.109 2002/09/26 07:55:40 miod Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -724,7 +724,7 @@ This option is currently required.
 See
 .Xr inet 4
 for details.
-.It Cd options INET6
+.It Cd option INET6
 Includes support for the
 .Tn IPv6
 protocol stack.
@@ -738,7 +738,7 @@ enables multicast routing code as well.
 This option requires
 .Em INET
 at this moment, but it should not.
-.It Cd options ND6_DEBUG
+.It Cd option ND6_DEBUG
 The option sets the default value of net.inet6.icmp6.nd6_debug to 1,
 for debugging IPv6 neighbor discovery protocol handling.
 See
@@ -1075,7 +1075,6 @@ Doublequote is needed when specifying a negative
 .\" .Sh FILES
 .\" .Sh EXAMPLES
 .Sh SEE ALSO
-.Xr X 7 ,
 .Xr gdb 1 ,
 .Xr ktrace 1 ,
 .Xr quota 1 ,
@@ -1102,6 +1101,7 @@ Doublequote is needed when specifying a negative
 .Xr ns 4 ,
 .Xr pci 4 ,
 .Xr xf86 4 ,
+.Xr X 7 ,
 .Xr apm 8 ,
 .Xr apmd 8 ,
 .Xr config 8 ,

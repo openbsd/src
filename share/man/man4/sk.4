@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sk.4,v 1.15 2002/06/26 19:19:38 jason Exp $
+.\"	$OpenBSD: sk.4,v 1.16 2002/09/26 07:55:40 miod Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -36,14 +36,15 @@
 .Dt SK 4
 .Os
 .Sh NAME
-.Nm sk
+.Nm sk ,
+.Nm skc
 .Nd SysKonnect SK-984x PCI Gigabit Ethernet driver
 .Sh SYNOPSIS
 .Cd "skc* at pci? dev ? function ?"
 .Cd "sk* at skc?"
 .Sh DESCRIPTION
 The
-.Nm
+.Nm sk
 driver provides support for the SysKonnect SK-984x series PCI
 Gigabit Ethernet adapters, including the following:
 .Pp
@@ -102,7 +103,7 @@ are supported:
 Enable autoselection of the media type and options.
 The user can manually override
 the autoselected mode by adding media options to the appropriate
-.Pa /etc/hostname.skX
+.Xr hostname.if 5
 file.
 .It Cm media No 1000baseSX Cm mediaopt No full-duplex
 Set 1000Mbps (Gigabit Ethernet) operation on fiber and force full-duplex mode.
@@ -137,7 +138,12 @@ The device has stopped responding to the network, or there is a problem with
 the network connection (cable).
 .El
 .Sh SEE ALSO
+.Xr arp 4 ,
 .Xr ifmedia 4 ,
+.Xr intro 4 ,
+.Xr netintro 4 ,
+.Xr pci 4 ,
+.Xr hostname.if 5 ,
 .Xr ifconfig 8
 .Rs
 .%T XaQti XMAC II datasheet

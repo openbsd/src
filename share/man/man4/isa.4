@@ -1,4 +1,4 @@
-.\"	$OpenBSD: isa.4,v 1.18 2002/09/25 18:05:00 miod Exp $
+.\"	$OpenBSD: isa.4,v 1.19 2002/09/26 07:55:40 miod Exp $
 .\"	$NetBSD: isa.4,v 1.19 2000/03/18 16:54:37 augustss Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -38,12 +38,21 @@
 .Nm isa
 .Nd introduction to ISA bus support
 .Sh SYNOPSIS
+.Cd "# i386:"
 .Cd "isa0 at mainbus0"
 .Cd "isa0 at pcib?"
 .Pp
+.Cd "# alpha:"
+.Cd "isa* at pceb?"
+.Cd "isa* at sio?"
+.Pp
+.Cd "# amiga:"
+.Cd "isa* at ggbus?"
+.Cd "isa* at cross?"
+.Pp
 Attachments are machine-dependent and depend on the bus topology and
 .Tn ISA
-bus interface of your system, but the above is typical.
+bus interface of your system.
 See
 .Xr intro 4
 for your system for details.
@@ -75,7 +84,7 @@ devices instead.
 .Sh SUPPORTED DEVICES
 At least the following devices are supported:
 .Ss SCSI controllers
-.Bl -tag -width speaker -offset ind
+.Bl -tag -width xxx -offset ind
 .It Xr aha 4
 Adaptec AHA-154x family (154xA, 154xB, 154xC, and 154xCF) and the
 BusLogic BT54x
@@ -109,7 +118,7 @@ WD-7000 family of bus-mastering
 interfaces.
 .El
 .Ss Disk and tape controllers
-.Bl -tag -width speaker -offset ind
+.Bl -tag -width pciide -offset ind
 .It Xr mcd 4
 Mitsumi CD-ROM drives.
 .It Xr wdc 4
@@ -122,7 +131,7 @@ device driver which is used instead on machines with PCI IDE controllers.
 Wangtek and compatible QIC-02 and QIC-36 tape drives.
 .El
 .Ss Serial and parallel interfaces
-.Bl -tag -width speaker -offset ind
+.Bl -tag -width addcom -offset ind
 .It Xr com 4 , Xr pccom 4
 NS8250, NS16450, NS16550, ST16550, and TI16750 serial driver.
 The
@@ -145,7 +154,7 @@ parallel port interface.
 IBM RT four-port serial cards.
 .El
 .Ss Network interfaces
-.Bl -tag -width speaker -offset ind
+.Bl -tag -width xxx -offset ind
 .It Xr ec 4
 3Com Etherlink II (3c503)
 .Tn Ethernet
@@ -192,7 +201,7 @@ Western Digital/SMC 80x3, SMC Elite Ultra, and SMC EtherEZ
 interfaces.
 .El
 .Ss Sound cards
-.Bl -tag -width speaker -offset ind
+.Bl -tag -width aria -offset ind
 .It Xr aria 4
 Sierra's Aria based sound cards.
 .It Xr ess 4
@@ -211,7 +220,7 @@ Windows Sound System-compatible sound cards based on the AD1848 and
 compatible chips.
 .El
 .Ss Radio receiver devices
-.Bl -tag -width sf24xx -offset ind
+.Bl -tag -width sf2r -offset ind
 .It Xr az 4
 Aztech/PackardBell radio card devices.
 .It Xr rt 4
@@ -223,6 +232,12 @@ SoundForte RadioLink SF16-FMR FM radio devices.
 .It Xr sf2r 4
 SoundForte RadioLink SF16-FMR2 FM radio devices.
 .El
+.Ss Miscellaneous devices
+.Bl -tag -width pcic -offset ind
+.It Xr pcic 4
+.Tn ISA
+PCMCIA controllers.
+.El
 .Pp
 Note that some
 .Tn ISA
@@ -232,12 +247,54 @@ Plug-and-Play variants.
 These are listed in
 .Xr isapnp 4 .
 .Sh SEE ALSO
+.Xr addcom 4 ,
+.Xr aha 4 ,
+.Xr aic 4 ,
+.Xr aria 4 ,
+.Xr ast 4 ,
+.Xr az 4 ,
+.Xr bha 4 ,
+.Xr boca 4 ,
 .Xr cardbus 4 ,
+.Xr com 4 ,
+.Xr cy 4 ,
+.Xr dpt 4 ,
+.Xr ec 4 ,
+.Xr ef 4 ,
+.Xr eg 4 ,
+.Xr eisa 4 ,
+.Xr el 4 ,
+.Xr ep 4 ,
+.Xr ess 4 ,
+.Xr gus 4 ,
+.Xr ie 4 ,
 .Xr intro 4 ,
 .Xr isapnp 4 ,
+.Xr lc 4 ,
+.Xr le 4 ,
+.Xr lpt 4 ,
+.Xr mcd 4 ,
+.Xr ne 4 ,
+.\" no manpage .Xr pas 4 ,
 .Xr pci 4 ,
+.Xr pcic 4 ,
 .Xr pcmcia 4 ,
-.Xr usb 4
+.Xr pss 4 ,
+.Xr rt 4 ,
+.Xr rtfps 4 ,
+.Xr rtii 4 ,
+.Xr sb 4 ,
+.Xr sea 4 ,
+.Xr sf2r 4 ,
+.Xr sm 4 ,
+.Xr sfr 4 ,
+.Xr uha 4 ,
+.Xr usb 4 ,
+.Xr wdc 4 ,
+.\" no manpage .Xr wds 4 ,
+.Xr we 4 ,
+.Xr wss 4 ,
+.Xr wt 4
 .Sh HISTORY
 The machine-independent
 .Tn ISA

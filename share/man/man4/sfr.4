@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sfr.4,v 1.2 2002/05/30 18:42:34 mickey Exp $
+.\"	$OpenBSD: sfr.4,v 1.3 2002/09/26 07:55:40 miod Exp $
 .\"
 .\" Copyright (c) 2002 Vladimir Popov
 .\" All rights reserved.
@@ -31,7 +31,8 @@
 .Nd SoundForte RadioLink SF16-FMR FM radio device driver
 .Sh SYNOPSIS
 .Cd "sfr0   at isa? port 0x384"
-.Cd "radio* at sfr0"
+.Cd "sfr1   at isa? port 0x284"
+.Cd "radio* at sfr?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -51,6 +52,7 @@ The SF16-FMR cards take only one I/O port.
 The I/O port is set by the driver to the value specified in the configuration
 file and must be 0x384 or 0x284.
 .Sh SEE ALSO
+.Xr intro 4 ,
 .Xr isa 4 ,
 .Xr radio 4 ,
 .Xr radio 9

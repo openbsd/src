@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aic.4,v 1.2 2002/09/03 16:34:49 mickey Exp $
+.\"	$OpenBSD: aic.4,v 1.3 2002/09/26 07:55:39 miod Exp $
 .\"	$NetBSD: aic.4,v 1.5 1998/06/07 09:08:45 enami Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -32,7 +32,7 @@
 .Nm aic
 .Nd Adaptec AIC-6260 and AIC-6360 SCSI driver
 .Sh SYNOPSIS
-.Cd "aic0 at isa? port 0x340 irq 12"
+.Cd "aic0 at isa? port 0x340 irq 11"
 .Cd "aic* at isapnp?"
 .Cd "aic* at pcmcia? function ?"
 .Cd "scsibus* at aic?"
@@ -84,7 +84,11 @@ to connect the boot device.
 .Xr cd 4 ,
 .Xr ch 4 ,
 .Xr intro 4 ,
+.Xr isa 4 ,
+.Xr isapnp 4 ,
+.Xr pcmcia 4 ,
 .Xr scsi 4 ,
 .Xr sd 4 ,
 .Xr ss 4 ,
-.Xr st 4
+.Xr st 4 ,
+.Xr uk 4

@@ -1,4 +1,4 @@
-.\" $OpenBSD: neo.4,v 1.6 2001/10/05 14:45:53 mpech Exp $
+.\" $OpenBSD: neo.4,v 1.7 2002/09/26 07:55:40 miod Exp $
 .\"
 .\" Copyright (c) 1998 Constantine Paul Sapuntzakis
 .\" All rights reserved
@@ -44,7 +44,10 @@ The
 driver provides support for NeoMagic MagicMedia 256AV and 256ZX
 audio chips found in many laptops, and perhaps on some PCI cards.
 .Sh SEE ALSO
-.Xr audio 4
+.Xr ac97 4 ,
+.Xr audio 4 ,
+.Xr intro 4 ,
+.Xr pci 4
 .Sh BUGS
 This driver has some bugs because Neomagic refuses to provide documentation,
 even though they are discontinuing their products.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xl.4,v 1.23 2002/06/08 23:40:53 aaron Exp $
+.\"	$OpenBSD: xl.4,v 1.24 2002/09/26 07:55:41 miod Exp $
 .\"
 .\" Copyright (c) 1997, 1998
 .\"     Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -115,7 +115,7 @@ adapters that have external PHYs or built-in autonegotiation logic.
 For 3C900 and 3C900B adapters, the driver
 will choose the mode specified in the EEPROM.
 You can change this by adding media options to the appropriate
-.Pa /etc/hostname.xlX
+.Xr hostname.if 5
 file.
 .It Cm media No 100baseFX Cm mediaopt No full-duplex
 For those cards that support it, force full-duplex 100Mbps operation over fiber.
@@ -208,6 +208,7 @@ the author considers it a manufacturing defect.
 .Xr ie 4 ,
 .Xr ti 4 ,
 .Xr ifmedia 4 ,
+.Xr hostname.if 5 ,
 .Xr ifconfig 8
 .Sh HISTORY
 The

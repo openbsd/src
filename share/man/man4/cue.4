@@ -1,4 +1,4 @@
-.\" $OpenBSD: cue.4,v 1.5 2001/06/22 12:15:44 mpech Exp $
+.\" $OpenBSD: cue.4,v 1.6 2002/09/26 07:55:39 miod Exp $
 .\" $NetBSD: cue.4,v 1.2 2000/01/16 13:54:39 augustss Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999, 2000
@@ -40,7 +40,7 @@
 .Nm cue
 .Nd CATC USB-EL1201A USB Ethernet driver
 .Sh SYNOPSIS
-.Cd "cue* at uhub?"
+.Cd "cue* at uhub? port ?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -76,6 +76,7 @@ The driver failed to allocate an mbuf for the receiver ring.
 .El
 .Sh SEE ALSO
 .Xr arp 4 ,
+.Xr intro 4 ,
 .Xr netintro 4 ,
 .Xr usb 4 ,
 .Xr ifconfig 8
@@ -90,6 +91,9 @@ support was added in
 .Sh AUTHORS
 The
 .Nm
-driver was written by Bill Paul <wpaul@ee.columbia.edu> and ported to
+driver was written by
+.An Bill Paul Aq wpaul@ee.columbia.edu
+and ported to
 .Ox
-by Aaron Campbell <aaron@openbsd.org> .
+by
+.An Aaron Campbell Aq aaron@openbsd.org .

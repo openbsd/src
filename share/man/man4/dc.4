@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dc.4,v 1.24 2002/04/18 19:15:09 jason Exp $
+.\"	$OpenBSD: dc.4,v 1.25 2002/09/26 07:55:39 miod Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ee.columbia.edu>. All rights reserved.
@@ -40,6 +40,8 @@
 .Nd DEC/Intel 21140, 21143 and clone 10/100 Ethernet driver
 .Sh SYNOPSIS
 .Cd "dc* at pci? dev ? function ?"
+.Cd "dc* at cardbus? dev ? function ?"
+.Cd "dcphy* at mii? phy ?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -260,7 +262,13 @@ the card should be configured correctly.
 .El
 .Sh SEE ALSO
 .Xr arp 4 ,
+.Xr cardbus 4 ,
+.\" no manpage .Xr dcphy 4 ,
+.Xr ifmedia 4 ,
+.Xr intro 4 ,
 .Xr netintro 4 ,
+.Xr pci 4 ,
+.Xr hostname.if 5 ,
 .Xr ifconfig 8
 .Rs
 .%T ADMtek AL981 and AL983 data sheets
@@ -297,9 +305,12 @@ support was added in
 .Sh AUTHORS
 The
 .Nm
-driver was written by Bill Paul <wpaul@ee.columbia.edu> and ported to
+driver was written by
+.An Bill Paul Aq wpaul@ee.columbia.edu
+and ported to
 .Ox
-by Aaron Campbell <aaron@openbsd.org>.
+by
+.An Aaron Campbell Aq aaron@openbsd.org .
 .Sh BUGS
 The Macronix application notes claim that in order to put the
 chips in normal operation, the driver must write a certain magic

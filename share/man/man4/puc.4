@@ -1,4 +1,4 @@
-.\"	$OpenBSD: puc.4,v 1.11 2002/02/18 23:54:45 deraadt Exp $
+.\"	$OpenBSD: puc.4,v 1.12 2002/09/26 07:55:40 miod Exp $
 .\"	$NetBSD: puc.4,v 1.7 1999/07/03 05:55:23 cgd Exp $
 .\"
 .\" Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -38,7 +38,9 @@
 .Dq universal
 communications card driver
 .Sh SYNOPSIS
-.Cd "puc* at pci?
+.Cd "puc* at pci? dev ? function ?"
+.Cd "com* at puc? port ?"
+or
 .Cd "pccom* at puc? port ?"
 .Cd "lpt* at puc? port ?"
 .Sh DESCRIPTION
@@ -117,6 +119,7 @@ are the same as (or one off from, e.g., the manual uses ports
 numbered starting from 1) those described in the documentation.
 .Sh SEE ALSO
 .Xr com 4 ,
+.Xr intro 4 ,
 .Xr lpt 4 ,
 .Xr pci 4
 .Sh HISTORY

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ray.4,v 1.6 2000/12/21 21:01:18 aaron Exp $
+.\"	$OpenBSD: ray.4,v 1.7 2002/09/26 07:55:40 miod Exp $
 .\"	$NetBSD: ray.4,v 1.5 2000/02/28 13:54:55 enami Exp $
 .\"
 .\" Copyright (c) 2000 Christian E. Hopps
@@ -100,17 +100,25 @@ The transmission range in open air (line of sight)
 is a maximum of 1000 feet (or ~304 meters), and indoors (i.e., with
 obstructions) it is a maximum of 500 feet (152 meters).
 .Pp
-Windows(tm) drivers may use one of two framing modes for wireless packets,
-"translation" and "encapsulation." "Encapsulation" is the only framing
-mode available when using some older Windows drivers.
+.Tn Windows
+drivers may use one of two framing modes for wireless packets,
+"translation" and "encapsulation."
+"Encapsulation" is the only framing
+mode available when using some older
+.Tn Windows
+drivers.
 .Pp
 Setting
 .Em link0
 flag on the interface allows the
 Ethernet2 in 802.11 "encapsulation" framing method used by
-older Windows drivers for the card.
+older
+.Tn Windows
+drivers for the card.
 For all other purposes, link0 should not be used, and "translation"
-should be selected if you are given the option in a newer Windows driver.
+should be selected if you are given the option in a newer
+.Tn Windows
+driver.
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "ray0: card failed self test: status x"
@@ -121,15 +129,21 @@ Indicates the card has failed its initial startup tests.
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
 .Xr pcmcia 4 ,
+.Xr hostname.if 5 ,
 .Xr ifconfig 8
 .Sh AUTHORS
 The
 .Nm
-driver was written by Christian E. Hopps <chopps@netbsd.org> and ported to
+driver was written by
+.An Christian E. Hopps Aq chopps@netbsd.org
+and ported to
 .Ox
-by Michael Shalayeff <mickey@openbsd.org>.
-Support for interoperating with newer Windows driver was added by
-Steve Weiss <srw@alum.mit.edu>.
+by
+.An Michael Shalayeff Aq mickey@openbsd.org .
+Support for interoperating with newer
+.Tn Windows
+driver was added by
+.An Steve Weiss Aq srw@alum.mit.edu .
 .Sh HISTORY
 The
 .Nm

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ncr.4,v 1.8 2001/10/05 14:45:53 mpech Exp $
+.\"	$OpenBSD: ncr.4,v 1.9 2002/09/26 07:55:40 miod Exp $
 .\"
 .\" Copyright (c) 1994 James A. Jegers
 .\" All rights reserved.
@@ -52,7 +52,7 @@ driver provides support for the NCR (now Symbios) 53C810, 53C815, 53C820,
 controller chips.
 .Pp
 .Nm
-has been replaced by the
+is deprecated and has been replaced by the
 .Nm siop
 driver.
 .Pp
@@ -134,8 +134,11 @@ in your kernel configuration file to disable tagged command queuing.
 .Xr cd 4 ,
 .Xr ch 4 ,
 .Xr intro 4 ,
+.Xr pci 4 ,
+.Xr ss 4 ,
 .Xr scsi 4 ,
 .Xr sd 4 ,
 .Xr siop 4 ,
+.Xr ss 4 ,
 .Xr st 4 ,
 .Xr uk 4

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: com.4,v 1.7 2002/04/03 22:27:00 mickey Exp $
+.\"	$OpenBSD: com.4,v 1.8 2002/09/26 07:55:39 miod Exp $
 .\"	$NetBSD: com.4,v 1.5 1996/03/16 00:07:08 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -45,20 +45,33 @@
 .Nm pccom
 .Nd serial communications interface
 .Sh SYNOPSIS
-.Cd "com0 at isa? port" \&"IO_COM1\&" irq 4
-.Cd "com1 at isa? port" \&"IO_COM2\&" irq 3
+.Cd "# i386 - pccom or com attachments"
+.Cd "pccom0 at isa? port 0x3f8 irq 4"
+.Cd "pccom1 at isa? port 0x2f8 irq 3"
+.Cd "pccom2 at isa? port 0x3e8 irq 5"
+.Cd "pccom3 at isa? port 0x2e8 irq 9"
+.Cd "pccom* at isapnp?"
+.Cd "pccom* at pcmcia? function ?"
+.Cd "pccom* at puc? port ?"
 .Pp
-.Cd "# Sparc64"
+.Cd "pccom* at addcom? slave ?"
+.Cd "pccom* at ast? slave ?"
+.Cd "pccom* at boca? slave ?"
+.Cd "pccom* at hsq? slave ?"
+.Cd "pccom* at rtfps? slave ?"
+.Pp
+.Cd "# alpha"
+.Cd "com0 at isa? port 0x3f8 irq 4"
+.Cd "com1 at isa? port 0x2f8 irq 3"
+.Pp
+.Cd "# sparc64"
+.Cd "com* at asio?"
 .Cd "com* at ebus?"
 .Pp
-.Cd "# HPPA
-.Cd "com0 at gsc? irq 5"
-.Cd "com1 at gsc? irq 6"
-.Cd "com2 at gsc? irq 13"
-.Pp
-.Cd "pccom0 at isa? port" \&"IO_COM1\&" irq 4
-.Cd "pccom1 at isa? port" \&"IO_COM2\&" irq 3
-.Cd "pccom* at isapnp?"
+.Cd "# hppa"
+.Cd "com0 at gsc? offset ? irq 5"
+.Cd "com1 at gsc? offset ? irq 6"
+.Cd "com2 at gsc? offset ? irq 13"
 .Sh DESCRIPTION
 The
 .Nm com
@@ -73,7 +86,7 @@ TI16750-based
 communications interfaces.
 The
 .Nm pccom
-driver also supports the XR16850 UART.
+driver (i386-only) also supports the XR16850 UART.
 .Pp
 The NS8250 and NS16450 have single
 character buffers, the NS16550 has a 16 character buffer, while
@@ -111,7 +124,18 @@ The device has generated an unexpected interrupt
 with the code listed.
 .El
 .Sh SEE ALSO
+.Xr addcom 4 ,
+.Xr asio 4 ,
 .Xr ast 4 ,
+.Xr boca 4 ,
+.Xr ebus 4 ,
+.Xr gsc 4 ,
+.Xr hsq 4 ,
+.Xr intro 4 ,
+.Xr isa 4 ,
+.Xr isapnp 4 ,
+.Xr pcmcia 4 ,
+.Xr puc 4 ,
 .Xr rtfps 4 ,
 .Xr tty 4
 .Sh HISTORY

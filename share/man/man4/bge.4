@@ -1,4 +1,4 @@
-.\" $OpenBSD: bge.4,v 1.7 2002/06/30 21:45:25 deraadt Exp $
+.\" $OpenBSD: bge.4,v 1.8 2002/09/26 07:55:39 miod Exp $
 .\" Copyright (c) 2001 Wind River Systems
 .\" Copyright (c) 1997, 1998, 1999, 2000, 2001
 .\"	Bill Paul <wpaul@windriver.com>. All rights reserved.
@@ -97,8 +97,9 @@ driver supports the following media types:
 .It Cm autoselect
 Enable autoselection of the media type and options.
 The user can manually override
-the autoselected mode by adding media options to
-.Xr rc.conf 8 .
+the autoselected mode by adding media options to the appropriate
+.Xr hostname.if 5
+file.
 .It Cm 10baseT
 Set 10Mbps operation.
 The
@@ -197,6 +198,7 @@ the network connection (cable).
 .Xr netintro 4 ,
 .Xr pci 4 ,
 .Xr vlan 4 ,
+.Xr hostname.if 5 ,
 .Xr ifconfig 8
 .Sh HISTORY
 The

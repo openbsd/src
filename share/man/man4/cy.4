@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cy.4,v 1.6 2002/09/09 00:08:58 art Exp $
+.\"	$OpenBSD: cy.4,v 1.7 2002/09/26 07:55:39 miod Exp $
 .\"
 .\" Copyright (c) 1993 Andrew Herbert.
 .\" All rights reserved.
@@ -32,8 +32,8 @@
 .Nm cy
 .Nd Cyclades Cyclom-{4, 8, 16}Y asynchronous comms board device driver
 .Sh SYNOPSIS
-.Cd "cy0 at isa? tty irq 10 iomem 0xdc000 iosiz 8192 vector cyintr"
-.Cd "cy1 at pci?"
+.Cd "cy0 at isa? iomem 0xd4000 irq 12"
+.Cd "cy* at pci?"
 .Sh DESCRIPTION
 This driver provides an interface to Cyclades Cyclom-4Y, Cyclom-8Y and
 Cyclom-16Y asynchronous multiport serial boards.
@@ -71,16 +71,20 @@ defined (the default) in order for this condition to be logged.
 .El
 .Sh SEE ALSO
 .Xr com 4 ,
+.Xr intro 4 ,
 .Xr termios 4 ,
 .Xr tty 4
 .Sh AUTHORS
-The driver was written by Andrew Herbert <andrew@werple.apana.org.au>, and
-is still under development (from time to time :-).
+The driver was written by
+.An Andrew Herbert Aq andrew@werple.apana.org.au ,
+and is still
+.Ud
 .Sh HISTORY
 Some ideas for the architecture of this driver's two-layer processing model
-were derived from the fas 2.10 driver by Uwe Doering
-<gemini@geminix.in-berlin.de> and the high-performance com driver by Bruce
-Evans <bde@kralizec.zeta.org.au>.
+were derived from the fas 2.10 driver by
+.An Uwe Doering Aq gemini@geminix.in-berlin.de
+and the high-performance com driver by
+.An Bruce Evans Aq bde@kralizec.zeta.org.au .
 .Pp
 This work was made possible through the donation of a Cyclom-8Y board by the
 manufacturer, Cyclades Corporation.

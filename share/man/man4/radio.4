@@ -1,5 +1,5 @@
 .\"	$RuOBSD: radio.4,v 1.4 2001/10/26 05:38:43 form Exp $
-.\"	$OpenBSD: radio.4,v 1.13 2002/08/26 15:55:02 mickey Exp $
+.\"	$OpenBSD: radio.4,v 1.14 2002/09/26 07:55:40 miod Exp $
 .\"
 .\" Copyright (c) 2001 Vladimir Popov
 .\" All rights reserved.
@@ -36,10 +36,10 @@
 .Cd "radio* at bktr?"
 .Cd "radio* at fms?"
 .Cd "radio* at gtp?"
-.Cd "radio* at rt0"
-.Cd "radio* at rtii0"
-.Cd "radio* at sfr0"
-.Cd "radio* at sf2r0"
+.Cd "radio* at rt?"
+.Cd "radio* at rtii?"
+.Cd "radio* at sfr?"
+.Cd "radio* at sf2r?"
 .Cd "radio* at udsbr?"
 .Pp
 .Fd #include <sys/types.h>
@@ -205,6 +205,7 @@ cards.
 .Xr bktr 4 ,
 .Xr fms 4 ,
 .Xr gtp 4 ,
+.Xr intro 4 ,
 .Xr rt 4 ,
 .Xr rtii 4 ,
 .Xr sfr 4 ,
