@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.5 1997/03/31 00:24:00 downsj Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.6 2000/04/07 13:39:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Nivas Madhur
@@ -50,8 +50,6 @@
  */
 #define DISKUNIT(dev)	(minor(dev) / MAXPARTITIONS)
 #define DISKPART(dev)	(minor(dev) % MAXPARTITIONS)
-#define MAKEDISKDEV(maj, unit, part) \
-    (makedev((maj), ((unit) * MAXPARTITIONS) + (part)))
 
 /*
  * a cpu_disklabel is a disklabel that the bug (prom) can understand

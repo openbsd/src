@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.4 1999/02/09 06:36:26 smurph Exp $ */
+/*	$OpenBSD: disklabel.h,v 1.5 2000/04/07 13:39:02 deraadt Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1995 Dale Rahn.
@@ -49,8 +49,6 @@
  */
 #define DISKUNIT(dev)	(minor(dev) / MAXPARTITIONS)
 #define DISKPART(dev)	(minor(dev) % MAXPARTITIONS)
-#define MAKEDISKDEV(maj, unit, part) \
-    (makedev((maj), ((unit) * MAXPARTITIONS) + (part)))
 
 /*
  * Note: this structure is exactly 512 bytes in size. If you move fields
