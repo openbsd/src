@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.2 1998/10/30 19:15:29 mickey Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.3 1998/11/23 03:29:50 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -64,6 +64,8 @@ struct device;
 const char *hppa_mod_info __P((int, int));
 void	pdc_scanbus __P((struct device *, struct confargs *, int bus, int));
 int	mbprint __P((void *, const char *));
+int	cpu_intr_establish __P((int pri, int (*handler) __P((void *)),
+				void *arg, const char *name));
 
 void	configure	__P((void));
 void	dumpconf	__P((void));
