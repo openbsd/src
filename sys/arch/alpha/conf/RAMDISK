@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.20 1998/11/11 20:12:54 jason Exp $
+#	$OpenBSD: RAMDISK,v 1.21 1998/12/19 19:05:02 deraadt Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -16,11 +16,11 @@ option		DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
 
 # Enable the hooks used for initializing the ram-disk.
 option		RAMDISK_HOOKS
-option		MINIROOTSIZE=8192	# 4 Megabytes!
+option		MINIROOTSIZE=6144	# 4 Megabytes!
 
 # Needs to be set per system
-option		TIMEZONE="7*60"		# Minutes west of GMT (for param.c)
-option		DST=1			# Daylight savings rules (for param.c)
+#option		TIMEZONE="7*60"		# Minutes west of GMT (for param.c)
+#option		DST=1			# Daylight savings rules (for param.c)
 
 # Standard system options
 maxusers	8			# estimated number of users
@@ -111,7 +111,8 @@ de*	at	pci? dev ? function ?		# 21x4[012]-based Ethernet
 fxp*	at	pci? dev ? function ?		# EtherExpress 10/100B ethernet cards
 ne*	at	pci? dev ? function ?		# NE2000-compat ethernet cards
 #en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
-ep*	at	pci? dev ? function ?		# 3COM 3c59x (untested)
+#ep*	at	pci? dev ? function ?		# 3COM 3c59x (untested)
+#xl*	at	pci? dev ? function ?		# 3COM 3c9xx (untested)
 #fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI cards
 le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
 ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
@@ -124,8 +125,8 @@ tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] graphics
 # Media Independent Interface (mii) drivers
 #exphy*	at mii? phy ?				# 3Com internal PHYs
 inphy*	at mii? phy ?				# Intel 82555 PHYs
-#icsphy*	at mii? phy ?				# ICS 1890 PHYs
-#lxtphy*	at mii? phy ?				# Level1 LXT970 PHYs
+#icsphy*	at mii? phy ?			# ICS 1890 PHYs
+#lxtphy*	at mii? phy ?			# Level1 LXT970 PHYs
 #nsphy*	at mii? phy ?				# NS and compatible PHYs
 #qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
 #sqphy*	at mii? phy ?				# Seeq 8x220 PHYs
@@ -145,11 +146,11 @@ com*	at	isa? port 0x3f8 irq 4		# standard serial ports
 com*	at	isa? port 0x2f8 irq 3
 #lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
 vga*	at	isa?				# ISA (EISA: XXX) VGA
-we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC 80x3 ethernet series
-we1	at isa? port 0x300 iomem 0xcc000 irq 10	#
-ec0	at isa? port 0x250 iomem 0xd8000 irq 9	# 3C503 ethernet cards
-ne0	at isa? port 0x240 iomem 0xd8000 irq 9	# NE[12]000 ethernet cards
-ne1	at isa? port 0x300 irq 10		# NE[12]000 ethernet cards
+we0	at 	isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC 80x3 ethernet series
+we1	at 	isa? port 0x300 iomem 0xcc000 irq 10	#
+ec0	at 	isa? port 0x250 iomem 0xd8000 irq 9	# 3C503 ethernet cards
+ne0	at 	isa? port 0x240 iomem 0xd8000 irq 9	# NE[12]000 ethernet cards
+ne1	at 	isa? port 0x300 irq 10		# NE[12]000 ethernet cards
 #wss*	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
 wdc0	at	isa? port 0x1f0 irq 14		# ST506, ESDI, and IDE
 wdc1	at	isa? port 0x170 irq 15		# controllers
