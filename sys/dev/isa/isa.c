@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa.c,v 1.20 1996/11/29 22:55:01 niklas Exp $	*/
+/*	$OpenBSD: isa.c,v 1.21 1996/12/09 09:27:06 niklas Exp $	*/
 /*	$NetBSD: isa.c,v 1.85 1996/05/14 00:31:04 thorpej Exp $	*/
 
 /*-
@@ -136,15 +136,19 @@ isascan(parent, match)
 	struct device *dev = match;
 	struct cfdata *cf = dev->dv_cfdata;
 	struct isa_attach_args ia;
+#if 0
 	struct emap *io_map, *mem_map, *irq_map, *drq_map;
+#endif
 
 	if (cf->cf_loc[6] != -1)	/* pnp device, scanned later */
 		return;
 
+#if 0
 	io_map = find_emap("io");
 	mem_map = find_emap("mem");
 	irq_map = find_emap("irq");
 	drq_map = find_emap("drq");
+#endif
 
 	ia.ia_iot = sc->sc_iot;
 	ia.ia_memt = sc->sc_memt;
@@ -166,6 +170,7 @@ isascan(parent, match)
 				    sc->sc_dev.dv_xname);
 				ia2.ia_iosize = 0;
 			}
+#if 0
 			if (ia2.ia_iobase != -1 && ia2.ia_iosize > 0)
 				add_extent(io_map, ia2.ia_iobase, ia2.ia_iosize);
 			if (ia.ia_maddr != -1 && ia.ia_msize > 0)
@@ -174,6 +179,7 @@ isascan(parent, match)
 				add_extent(irq_map, ia2.ia_irq, 1);
 			if (ia2.ia_drq != -1)
 				add_extent(drq_map, ia2.ia_drq, 1);
+#endif
 			config_attach(parent, dev, &ia2, isaprint);
 			dev = config_make_softc(parent, cf);
 			ia2 = ia;
@@ -183,6 +189,7 @@ isascan(parent, match)
 	}
 
 	if ((*cf->cf_attach->ca_match)(parent, dev, &ia) > 0) {
+#if 0
 		if (ia.ia_iobase > 0 && ia.ia_iosize > 0)
 			add_extent(io_map, ia.ia_iobase, ia.ia_iosize);
 		if (ia.ia_maddr > 0 && ia.ia_msize > 0)
@@ -191,6 +198,7 @@ isascan(parent, match)
 			add_extent(irq_map, ia.ia_irq, 1);
 		if (ia.ia_drq > 0)
 			add_extent(drq_map, ia.ia_drq, 1);
+#endif
 		config_attach(parent, dev, &ia, isaprint);
 	}
 	else
