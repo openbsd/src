@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.18 2002/02/14 15:32:11 dhartmei Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.19 2002/02/25 00:29:07 dhartmei Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -72,7 +72,7 @@ struct pf_fragment {
 	u_int8_t	fr_flags;	/* status flags */
 	u_int16_t	fr_id;		/* fragment id for reassemble */
 	u_int16_t	fr_max;		/* fragment data max */
-	struct timeval	fr_timeout;
+	u_int32_t	fr_timeout;
 	LIST_HEAD(pf_fragq, pf_frent) fr_queue;
 };
 
@@ -136,16 +136,10 @@ void
 pf_purge_expired_fragments(void)
 {
 	struct pf_fragment *frag;
-	struct timeval now, expire;
-
-	microtime(&now);
-
-	timerclear(&expire);
-	expire.tv_sec = pftm_frag;
-	timersub(&now, &expire, &expire);
+	u_int32_t expire = time.tv_sec - pftm_frag;
 
 	while ((frag = TAILQ_LAST(&pf_fragqueue, pf_fragqueue)) != NULL) {
-		if (timercmp(&frag->fr_timeout, &expire, >))
+		if (frag->fr_timeout > expire)
 			break;
 
 		DPFPRINTF((__FUNCTION__": expiring %p\n", frag));
@@ -216,7 +210,7 @@ pf_find_fragment(struct ip *ip)
 	frag = (struct pf_fragment *)pf_find_state(tree_fragment, &key);
 
 	if (frag != NULL) {
-		microtime(&frag->fr_timeout);
+		frag->fr_timeout = time.tv_sec;
 		TAILQ_REMOVE(&pf_fragqueue, frag, frag_next);
 		TAILQ_INSERT_HEAD(&pf_fragqueue, frag, frag_next);
 	}
@@ -279,6 +273,7 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment *frag,
 		frag->fr_dst = frent->fr_ip->ip_dst;
 		frag->fr_p = frent->fr_ip->ip_p;
 		frag->fr_id = frent->fr_ip->ip_id;
+		frag->fr_timeout = time.tv_sec;
 		LIST_INIT(&frag->fr_queue);
 
 		pf_ip2key(&key, frent->fr_ip);
@@ -429,6 +424,7 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment *frag,
 
  drop_fragment:
 	/* Oops - fail safe - drop packet */
+	pool_put(&pf_frent_pl, frent);
 	m_freem(m);
 	return (NULL);
 }
