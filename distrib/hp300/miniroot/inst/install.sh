@@ -1,8 +1,12 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.6 1995/11/28 23:57:17 jtc Exp $
+#	$OpenBSD: install.sh,v 1.5 1996/03/28 21:48:14 niklas Exp $
+#	$NetBSD: install.sh,v 1.7 1996/02/28 00:44:01 thorpej Exp $
 #
-# Copyright (c) 1995 Jason R. Thorpe.
+# Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
+#
+# This code is derived from software contributed to The NetBSD Foundation
+# by Jason R. Thorpe.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -14,24 +18,26 @@
 #    documentation and/or other materials provided with the distribution.
 # 3. All advertising materials mentioning features or use of this software
 #    must display the following acknowledgement:
-#	This product includes software developed for the NetBSD Project
-#	by Jason R. Thorpe.
-# 4. The name of the author may not be used to endorse or promote products
-#    derived from this software without specific prior written permission
+#        This product includes software developed by the NetBSD
+#        Foundation, Inc. and its contributors.
+# 4. Neither the name of The NetBSD Foundation nor the names of its
+#    contributors may be used to endorse or promote products derived
+#    from this software without specific prior written permission.
 #
-# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
-# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-# IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-# THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
 #
 
-#	NetBSD installation script.
+#	OpenBSD installation script.
 #	In a perfect world, this would be a nice C program, with a reasonable
 #	user interface.
 
@@ -394,10 +400,10 @@ md_labeldisk() {
 md_welcome_banner() {
 (
 	echo	""
-	echo	"Welcome to the NetBSD/hp300 ${VERSION} installation program."
+	echo	"Welcome to the OpenBSD/hp300 ${VERSION} installation program."
 	cat << \__welcome_banner_1
 
-This program is designed to help you install NetBSD on your system in a
+This program is designed to help you install OpenBSD on your system in a
 simple and rational way.  You'll be asked several questions, and it would
 probably be useful to have your disk's hardware manual, the installation
 notes, and a calculator handy.
@@ -437,7 +443,7 @@ __not_going_to_install_1
 md_congrats() {
 	cat << \__congratulations_1
 
-CONGRATULATIONS!  You have successfully installed NetBSD!  To boot the
+CONGRATULATIONS!  You have successfully installed OpenBSD!  To boot the
 installed system, enter halt at the command prompt.  Once the system has
 halted, power-cycle the machine in order to load new boot code.  Make sure
 you boot from the root disk.
@@ -1453,7 +1459,7 @@ get_timezone
 	echo "done."
 
 	echo -n "Copying kernel..."
-	cp /netbsd /mnt/netbsd
+	cp /bsd /mnt/bsd
 	echo "done."
 
 	md_installboot ${ROOTDISK}

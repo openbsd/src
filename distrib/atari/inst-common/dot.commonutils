@@ -1,5 +1,6 @@
 #
-#	$NetBSD: dot.commonutils,v 1.3 1995/11/28 23:57:12 jtc Exp $
+#	$OpenBSD: dot.commonutils,v 1.4 1996/03/28 21:48:12 niklas Exp $
+#	$NetBSD: dot.commonutils,v 1.4 1996/02/28 10:06:40 leo Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -30,9 +31,9 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-# Installation utilites (functions), to get NetBSD installed on
+# Installation utilites (functions), to get OpenBSD installed on
 # the hard disk.  These are meant to be invoked from the shell prompt,
-# by people installing NetBSD.
+# by people installing OpenBSD.
 
 # we know that /etc/fstab is only generated on the hard drive
 dest_dir=/
@@ -128,7 +129,7 @@ Extract()
 	esac
 	if [ $snapshot = n ]
 	then
-		cat "$1".??? | gunzip |
+		cat "$1".?? | gunzip |
 			(cd $dest_dir ; tar --unlink -xp"$tarverbose"f -)
 	else
 		cat "$1".tar.gz | gunzip |
