@@ -1,4 +1,4 @@
-$OpenBSD: README,v 1.1 2003/09/23 21:37:11 millert Exp $
+$OpenBSD: README,v 1.2 2004/08/15 00:24:48 millert Exp $
 
 This directory contains the configuration files for sendmail(8).
 The source for the .cf files lives in /usr/share/sendmail/cf.
@@ -38,6 +38,10 @@ Other files used by sendmail(8) in this directory include:
 			interface or a CNAME that points to one of
 			those names.  This file is read only at startup
 			or when sendmail(8) is sent SIGHUP.
+
+    genericstable	Used to rewrite the From: line to a generic form.
+			Most often used to map login name -> First.Last
+			name in outgoing messages.
 
     mailertable		Used to override routing for particular (non-local)
 			domains.
