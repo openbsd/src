@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.50 1995/10/07 06:26:06 mycroft Exp $ */
+/*	$NetBSD: machdep.c,v 1.45 1995/05/16 21:16:37 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -226,7 +226,7 @@ cpu_startup()
 	 */
 	dvmabase = kmem_alloc_wait(phys_map, (DVMA_END-DVMA_BASE)/2);
 	rminit(dvmamap, btoc((DVMA_END-DVMA_BASE)/2),
-		vtorc(dvmabase), "dvmamap", ndvmamap);
+	    vtorc(dvmabase), "dvmamap", ndvmamap);
 
 	/*
 	 * Finally, allocate mbuf pool.  Since mclrefcnt is an off-size
@@ -374,9 +374,8 @@ setregs(p, pack, stack, retval)
 	bzero((caddr_t)tf, sizeof *tf);
 	tf->tf_psr = psr;
 	tf->tf_pc = pack->ep_entry & ~3;
-	tf->tf_npc = tf->tf_pc + 4;
 	tf->tf_global[1] = (int)PS_STRINGS;
-	tf->tf_global[2] = tf->tf_global[7] = tf->tf_npc;
+	tf->tf_global[2] = tf->tf_global[7] = tf->tf_npc = tf->tf_pc+4;
 	stack -= sizeof(struct rwindow);
 	tf->tf_out[6] = stack;
 	retval[1] = 0;
@@ -824,6 +823,7 @@ int bt2pmt[] = {
 	PMAP_OBIO,
 	PMAP_VME16,
 	PMAP_VME32,
+	PMAP_OBIO,
 	PMAP_OBIO
 };
 
