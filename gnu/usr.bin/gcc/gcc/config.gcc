@@ -834,7 +834,13 @@ hppa*-*-linux* | parisc*-*-linux*)
 		 pa/pa32-regs.h pa/pa32-linux.h"
 	tmake_file="t-slibgcc-elf-ver t-linux pa/t-linux"
 	;;
-hppa*-*-openbsd*)
+hppa64-*-openbsd*)
+	target_cpu_default="(MASK_PA_11 | MASK_PA_20)"
+	tm_file="${openbsd_libspec} pa/pa64-start.h pa/pa.h pa/pa64-regs.h \
+		 pa/pa-64.h pa/pa-openbsd1-64.h openbsd.h pa/pa-openbsd64.h"
+	tmake_file="${tmake_file} pa/t-openbsd64"
+	;;
+hppa-*-openbsd*)
 	target_cpu_default="MASK_PA_11 | MASK_NO_SPACE_REGS"
 	tmake_file="t-libc-ok t-openbsd t-openbsd-thread pa/t-openbsd"
 	;;

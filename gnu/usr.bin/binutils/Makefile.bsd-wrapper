@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.63 2005/01/15 19:54:04 kettenis Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.64 2005/01/25 13:24:51 mickey Exp $
 
-NEW_BINUTILS=amd64 alpha arm hppa i386 mips64 powerpc sparc sparc64
+NEW_BINUTILS=alpha amd64 arm hppa hppa64 i386 mips64 powerpc sparc sparc64
 
 .for _arch in ${MACHINE_ARCH}
 .  if !empty(NEW_BINUTILS:M${_arch})

@@ -360,6 +360,10 @@ case "${targ}" in
     ;;
 
 #ifdef BFD64
+  hppa64*-*-openbsd*)
+    targ_defvec=bfd_elf64_hppa_vec
+    targ_selvecs=bfd_elf64_hppa_linux_vec
+    ;;
   hppa*64*-*-linux-gnu*)
     targ_defvec=bfd_elf64_hppa_linux_vec
     targ_selvecs=bfd_elf64_hppa_vec

@@ -241,7 +241,10 @@ changequote([,])dnl
       hppa-*-*elf*)			fmt=elf em=hppa ;;
       hppa-*-lites*)			fmt=elf em=hppa ;;
       hppa-*-netbsd*)			fmt=elf em=nbsd ;;
-      hppa-*-openbsd*)			fmt=elf em=obsd ;;
+      hppa-*-openbsd*)	case ${cpu} in
+			    hppa64)	fmt=elf em=obsdhppa64 ;;
+			    hppa)	fmt=elf em=obsd ;;
+			esac ;;
       hppa-*-osf*)			fmt=som em=hppa ;;
       hppa-*-rtems*)			fmt=elf em=hppa ;;
       hppa-*-hpux11*)	case ${cpu} in
