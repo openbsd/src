@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3prog.c,v 1.2 2003/07/14 17:43:52 deraadt Exp $	*/
+/*	$OpenBSD: diff3prog.c,v 1.3 2003/10/24 20:32:06 avsm Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -71,7 +71,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diff3prog.c,v 1.2 2003/07/14 17:43:52 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: diff3prog.c,v 1.3 2003/10/24 20:32:06 avsm Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -450,7 +450,7 @@ skip(int i, int from, char *pr)
 	int j, n;
 
 	for (n = 0; cline[i] < from - 1; n += j) {
-		if ((j = getline(fp[i])) == NULL)
+		if ((j = getline(fp[i])) == 0)
 			trouble();
 		if (pr != NULL)
 			printf("%s%s", pr, line);

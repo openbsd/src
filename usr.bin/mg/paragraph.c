@@ -1,4 +1,4 @@
-/*	$OpenBSD: paragraph.c,v 1.8 2003/05/20 03:08:55 cloder Exp $	*/
+/*	$OpenBSD: paragraph.c,v 1.9 2003/10/24 20:32:06 avsm Exp $	*/
 
 /*
  * Code for dealing with paragraphs and filling. Adapted from MicroEMACS 3.6
@@ -26,7 +26,7 @@ gotobop(int f, int n)
 
 	while (n-- > 0) {
 		/* first scan back until we are in a word */
-		while (backchar(FFRAND, 1) && inword() == NULL);
+		while (backchar(FFRAND, 1) && inword() == 0);
 
 		/* and go to the B-O-Line */
 		curwp->w_doto = 0;
@@ -81,7 +81,7 @@ gotoeop(int f, int n)
 	while (n-- > 0) {
 		/* Find the first word on/after the current line */
 		curwp->w_doto = 0;
-		while (forwchar(FFRAND, 1) && inword() == NULL);
+		while (forwchar(FFRAND, 1) && inword() == 0);
 
 		curwp->w_doto = 0;
 		curwp->w_dotp = lforw(curwp->w_dotp);
@@ -140,7 +140,7 @@ fillpara(int f, int n)
 	(void)gotobop(FFRAND, 1);
 
 	/* initialize various info */
-	while (inword() == NULL && forwchar(FFRAND, 1));
+	while (inword() == 0 && forwchar(FFRAND, 1));
 
 	clength = curwp->w_doto;
 	wordlen = 0;

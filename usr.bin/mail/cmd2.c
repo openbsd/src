@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd2.c,v 1.12 2003/06/03 02:56:11 millert Exp $	*/
+/*	$OpenBSD: cmd2.c,v 1.13 2003/10/24 20:32:06 avsm Exp $	*/
 /*	$NetBSD: cmd2.c,v 1.7 1997/05/17 19:55:10 pk Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)cmd2.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: cmd2.c,v 1.12 2003/06/03 02:56:11 millert Exp $";
+static const char rcsid[] = "$OpenBSD: cmd2.c,v 1.13 2003/10/24 20:32:06 avsm Exp $";
 #endif
 #endif /* not lint */
 
@@ -76,7 +76,7 @@ next(void *v)
 		for (ip = msgvec; *ip != NULL; ip++)
 			if (*ip > mdot)
 				break;
-		if (*ip == NULL)
+		if (*ip == 0)
 			ip = msgvec;
 		ip2 = ip;
 		do {
@@ -87,7 +87,7 @@ next(void *v)
 			}
 			if (*ip2 != NULL)
 				ip2++;
-			if (*ip2 == NULL)
+			if (*ip2 == 0)
 				ip2 = msgvec;
 		} while (ip2 != ip);
 		puts("No messages applicable");
@@ -162,7 +162,7 @@ save1(char *str, int mark, char *cmd, struct ignoretab *ignore)
 		return(1);
 	if (!f) {
 		*msgvec = first(0, MMNORM);
-		if (*msgvec == NULL) {
+		if (*msgvec == 0) {
 			printf("No messages to %s.\n", cmd);
 			return(1);
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: collect.c,v 1.25 2003/06/03 02:56:11 millert Exp $	*/
+/*	$OpenBSD: collect.c,v 1.26 2003/10/24 20:32:06 avsm Exp $	*/
 /*	$NetBSD: collect.c,v 1.9 1997/07/09 05:25:45 mikel Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-static const char rcsid[] = "$OpenBSD: collect.c,v 1.25 2003/06/03 02:56:11 millert Exp $";
+static const char rcsid[] = "$OpenBSD: collect.c,v 1.26 2003/10/24 20:32:06 avsm Exp $";
 #endif
 #endif /* not lint */
 
@@ -527,7 +527,7 @@ forward(char *ms, FILE *fp, char *fn, int f)
 		return(0);
 	if (*msgvec == 0) {
 		*msgvec = first(0, MMNORM);
-		if (*msgvec == NULL) {
+		if (*msgvec == 0) {
 			puts("No appropriate messages");
 			return(0);
 		}

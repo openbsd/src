@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.112 2003/10/03 22:43:37 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.113 2003/10/24 20:30:02 avsm Exp $	*/
 
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.112 2003/10/03 22:43:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.113 2003/10/24 20:30:02 avsm Exp $";
 #endif /* not lint */
 
 /*
@@ -348,7 +348,7 @@ main(int argc, char *argv[])
 			int val;
 
 			val = strtoul(optarg, &p, 0);
-			if (val >= 1 && *p == NULL) {
+			if (val >= 1 && *p == '\0') {
 				toomany = val;
 				break;
 			}
