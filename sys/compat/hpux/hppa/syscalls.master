@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.1 2004/07/09 21:48:21 mickey Exp $
+	$OpenBSD: syscalls.master,v 1.2 2004/07/10 22:37:33 mickey Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -84,8 +84,8 @@
 28	UNIMPL		cnx_lw_pmon_read
 29	STD		{ int hpux_sys_pause_6x(void); }
 30	STD		{ int hpux_sys_utime_6x(char *fname, time_t *tptr); }
-31	UNIMPL		stty
-32	UNIMPL		gtty
+31	STD		{ int hpux_sys_stty_6x(int fd, caddr_t arg); }
+32	STD		{ int hpux_sys_gtty_6x(int fd, caddr_t arg); }
 33	STD		{ int hpux_sys_access(char *path, int flags); }
 34	STD		{ int hpux_sys_nice_6x(int nval); }
 35	STD		{ int hpux_sys_ftime_6x(struct hpux_timeb *tp); }
