@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.108 2005/03/29 04:51:21 cloder Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.109 2005/04/04 18:40:45 hshoexer Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -1812,12 +1812,12 @@ ipsec_get_proto_port(char *section, u_int8_t *tproto, u_int16_t *port)
 	pstr = conf_get_str(section, "Port");
 	if (!pstr)
 		return 0;
-	*port = htons((u_int16_t)atoi(pstr));
+	*port = (u_int16_t)atoi(pstr);
 	if (!*port) {
 		se = getservbyname(pstr,
 		    pe ? pe->p_name : (pstr ? pstr : NULL));
 		if (se)
-			*port = se->s_port;
+			*port = ntohs(se->s_port);
 	}
 	if (!*port) {
 		log_print("ipsec_get_proto_port: port \"%s\" unknown",
