@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.18 2001/06/25 03:28:11 csapuntz Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.19 2001/06/26 05:19:35 csapuntz Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -95,7 +95,6 @@ int nuidhash_max = NFS_MAXUIDHASH;
 int nfsd_waiting = 0;
 #ifdef NFSSERVER
 static int nfs_numnfsd = 0;
-static int notstarted = 1;
 static struct nfsdrt nfsdrt;
 #endif
 
@@ -632,9 +631,7 @@ nfssvc_nfsd(nsd, argp, p)
 		    } else
 			cacherep = nfsrv_getcache(nd, slp, &mreq);
 
-		    if (notstarted) {
-			    cacherep = RC_DROPIT;
-		    } else if (nfsd->nfsd_flag & NFSD_AUTHFAIL) {
+		    if (nfsd->nfsd_flag & NFSD_AUTHFAIL) {
 			    nfsd->nfsd_flag &= ~NFSD_AUTHFAIL;
 			    nd->nd_procnum = NFSPROC_NOOP;
 			    nd->nd_repstat = (NFSERR_AUTHERR | AUTH_TOOWEAK);
@@ -650,7 +647,7 @@ nfssvc_nfsd(nsd, argp, p)
 		    switch (cacherep) {
 		    case RC_DOIT:
 			if (writes_todo || (nd->nd_procnum == NFSPROC_WRITE &&
-			    nfsrvw_procrastinate > 0 && !notstarted))
+			    nfsrvw_procrastinate > 0))
 			    error = nfsrv_writegather(&nd, slp,
 				nfsd->nfsd_procp, &mreq);
 			else
