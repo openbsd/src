@@ -1,4 +1,4 @@
-.\" $OpenBSD: re.4,v 1.1 2004/06/05 06:30:23 pvalchev Exp $
+.\" $OpenBSD: re.4,v 1.2 2004/06/05 15:07:06 miod Exp $
 .\" Copyright (c) 2003
 .\"	Bill Paul <wpaul@windriver.com>. All rights reserved.
 .\"
@@ -72,9 +72,10 @@ cable. NICs based on the 8169, 8169S and 8110S are capable of 10, 100 and
 The 8139C+ is a single-chip solution combining both a 10/100 MAC and PHY.
 The 8169 is a 10/100/1000 MAC only, requiring a GMII or TBI external PHY.
 The 8169S and 8110S are single-chip devices containing both a 10/100/1000
-MAC and 10/100/1000 copper PHY. Standalone 10/100/1000 cards are available
-in both 32-bit PCI and 64-bit PCI models. The 8110S is designed for
-embedded LAN-on-motherboard applications.
+MAC and 10/100/1000 copper PHY.
+Standalone 10/100/1000 cards are available in both 32-bit PCI and 64-bit
+PCI models.
+The 8110S is designed for embedded LAN-on-motherboard applications.
 .\" .Pp
 .\" The 8169, 8169S and 8110S also support jumbo frames, which can be configured
 .\" via the interface MTU setting.
@@ -86,42 +87,43 @@ The
 .Nm
 driver supports the following media types:
 .Bl -tag -width 10baseTXUTP
-.It Cm autoselect
+.It autoselect
 Enable autoselection of the media type and options.
-The user can manually override
-the autoselected mode by adding media options to
-.Xr rc.conf 5 .
-.It Cm 10baseT/UTP
+The user can manually override the autoselected mode by adding media options
+to the appropriate
+.Xr hostname.if 5
+file.
+.It 10baseT/UTP
 Set 10Mbps operation.
 The
 .Xr ifconfig 8
 .Ic mediaopt
 option can also be used to select either
-.Cm full-duplex
+.Ar full-duplex
 or
-.Cm half-duplex
+.Ar half-duplex
 modes.
-.It Cm 100baseTX
+.It 100baseTX
 Set 100Mbps (fast ethernet) operation.
 The
 .Xr ifconfig 8
 .Ic mediaopt
 option can also be used to select either
-.Cm full-duplex
+.Ar full-duplex
 or
-.Cm half-duplex
+.Ar half-duplex
 modes.
-.It Cm 1000baseTX
+.It 1000baseTX
 Set 1000baseTX operation over twisted pair.
 The RealTek gigE chips support 1000Mbps in
-.Cm full-duplex
+.Ar full-duplex
 mode only.
-.\" .It Cm 1000baseSX
+.\" .It 1000baseSX
 .\" Set 1000Mbps (gigabit ethernet) operation.
 .\" Both
-.\" .Cm full-duplex
+.\" .Ar full-duplex
 .\" and
-.\" .Cm half-duplex
+.\" .Ar half-duplex
 .\" modes are supported.
 .El
 .Pp
@@ -129,9 +131,9 @@ The
 .Nm
 driver supports the following media options:
 .Bl -tag -width full-duplex
-.It Cm full-duplex
+.It full-duplex
 Force full duplex operation.
-.It Cm half-duplex
+.It half-duplex
 Force half duplex operation.
 .El
 .Pp
@@ -139,33 +141,23 @@ For more information on configuring this device, see
 .Xr ifconfig 8 .
 .Sh DIAGNOSTICS
 .Bl -diag
-.It "re%d: couldn't map memory"
+.It "re%d: can't map mem space"
 A fatal initialization error has occurred.
-.It "re%d: couldn't map ports"
+.It "re%d: can't map i/o space"
 A fatal initialization error has occurred.
 .It "re%d: couldn't map interrupt"
 A fatal initialization error has occurred.
-.It "re%d: no memory for softc struct!"
-The driver failed to allocate memory for per-device instance information
-during initialization.
-.It "re%d: failed to enable memory mapping!"
-The driver failed to initialize PCI shared memory mapping.
-This might
-happen if the card is not in a bus-master slot.
-.It "re%d: no memory for jumbo buffers!"
-The driver failed to allocate memory for jumbo frames during
-initialization.
 .It "re%d: watchdog timeout"
 The device has stopped responding to the network, or there is a problem with
 the network connection (cable).
 .El
 .Sh SEE ALSO
 .Xr arp 4 ,
-.Xr rgephy 4 ,
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
 .Xr netintro 4 ,
 .Xr pci 4 ,
+.Xr rgephy 4 ,
 .Xr vlan 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
@@ -190,23 +182,26 @@ by
 .Sh BUGS
 The Xterasys XN-152 32-bit PCI NIC, which uses the RTL8169 MAC and
 Marvell 88E1000 PHY, has a defect that causes DMA corruption
-if the board is plugged into a 64-bit PCI slot. The defect
-lies in the board design, not the chip itself: the PCI REQ64# and ACK64#
-lines should be pulled high, but they are not. The result is that the
-8169 chip is tricked into performing 64-bit DMA transfers even though
-a 64-bit data path between the NIC and the bus does not actually exist.
+if the board is plugged into a 64-bit PCI slot.
+The defect lies in the board design, not the chip itself: the PCI REQ64#
+and ACK64# lines should be pulled high, but they are not.
+The result is that the 8169 chip is tricked into performing 64-bit DMA
+transfers even though a 64-bit data path between the NIC and the bus does
+not actually exist.
 .Pp
 Unfortunately, it is not possible to correct this problem in software,
-however it is possible to detect it. When the
+however it is possible to detect it.
+When the
 .Nm
 driver is loaded, it will run a diagnostic routine designed to
 validate DMA operation by placing the chip in digital loopback mode
-and initiating a packet transmission. If the card functions properly,
-the transmitted data will
-be echoed back unmodified. If the echoed data is corrupt, the driver
-will print an error message on the console and abort the device attach. The
-user should insure the NIC is installed in a 32-bit PCI slot to
-avoid this problem.
+and initiating a packet transmission.
+If the card functions properly, the transmitted data will be echoed back
+unmodified.
+If the echoed data is corrupt, the driver will print an error message on
+the console and abort the device attach.
+The user should insure the NIC is installed in a 32-bit PCI slot to avoid
+this problem.
 .Pp
 The RealTek 8169, 8169S and 8110S chips appear to only be capable of
 transmitting jumbo frames up to 7.5K in size.
