@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.35 2003/05/06 10:45:07 vincent Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.36 2003/05/08 12:37:13 vincent Exp $	*/
 
 /*
  *	POSIX fileio.c
@@ -106,7 +106,7 @@ ffputbuf(BUFFER *bp)
 	lpend = bp->b_linep;
 	lp = lforw(lpend);
 	do {
-		cp = &ltext(lp)[0];		/* begining of line	 */
+		cp = &ltext(lp)[0];		/* beginning of line	 */
 		cpend = &cp[llength(lp)];	/* end of line		 */
 		while (cp != cpend) {
 			putc(*cp, ffp);
@@ -399,7 +399,7 @@ dired_(char *dirname)
 		return NULL;
 	}
 	if (bclear(bp) != TRUE)
-		return FALSE;
+		return NULL;
 	bp->b_flag |= BFREADONLY;
 	if (snprintf(line, sizeof(line), "ls -al %s", dirname) >= sizeof(line)){
 		ewprintf("Path too long");
@@ -496,7 +496,7 @@ make_file_list(char *buf)
 	} else
 		dir = adjustname(buf);
 	if (dir == NULL)
-		return (FALSE);
+		return (NULL);
 	/*
 	 * If the user typed a trailing / or the empty string
 	 * he wants us to use his file spec as a directory name.
