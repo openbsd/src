@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.18 1999/07/09 21:30:03 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.19 1999/08/17 16:09:21 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.58 1997/09/12 08:55:01 pk Exp $ */
 
 /*
@@ -890,6 +890,8 @@ mem_access_fault4m(type, sfsr, sfva, afsr, afva, tf)
 	if ((sfsr & SFSR_FT) == SFSR_FT_NONE)
 		goto out;	/* No fault. Why were we called? */
 
+	ftype = sfsr & SFSR_AT_STORE ? VM_PROT_WRITE : VM_PROT_READ;
+
 	/*
 	 * NOTE: the per-CPU fault status register readers (in locore)
 	 * may already have decided to pass `pc' in `sfva', so we avoid
@@ -943,7 +945,6 @@ mem_access_fault4m(type, sfsr, sfva, afsr, afva, tf)
 
 	/* Now munch on protections... */
 
-	ftype = sfsr & SFSR_AT_STORE ? VM_PROT_WRITE : VM_PROT_READ;
 	if (psr & PSR_PS) {
 		extern char Lfsbail[];
 		if (sfsr & SFSR_AT_TEXT || type == T_TEXTFAULT) {
