@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.346 2003/03/27 16:11:55 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.347 2003/03/27 16:17:37 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -353,7 +353,7 @@ typedef struct {
 %token	NOROUTE FRAGMENT USER GROUP MAXMSS MAXIMUM TTL TOS DROP TABLE
 %token	FRAGNORM FRAGDROP FRAGCROP ANCHOR NATANCHOR RDRANCHOR BINATANCHOR
 %token	SET OPTIMIZATION TIMEOUT LIMIT LOGINTERFACE BLOCKPOLICY RANDOMID
-%token	REQUIREORDER YES
+%token	REQUIREORDER
 %token	ANTISPOOF FOR
 %token	BITMASK RANDOM SOURCEHASH ROUNDROBIN STATICPORT
 %token	ALTQ CBQ PRIQ BANDWIDTH TBRSIZE
@@ -362,7 +362,7 @@ typedef struct {
 %token	<v.i>			PORTUNARY PORTBINARY
 %type	<v.interface>		interface if_list if_item_not if_item
 %type	<v.number>		number icmptype icmp6type uid gid
-%type	<v.number>		tos not
+%type	<v.number>		tos not yesno
 %type	<v.i>			no dir log af fragcache
 %type	<v.i>			staticport
 %type	<v.b>			action nataction flags flag blockspec
@@ -454,15 +454,11 @@ option		: SET OPTIMIZATION STRING		{
 				YYERROR;
 			blockpolicy = PFRULE_RETURN;
 		}
-		| SET REQUIREORDER YES {
+		| SET REQUIREORDER yesno {
 			if (pf->opts & PF_OPT_VERBOSE)
-				printf("set require-order yes\n");
-			require_order = 1;
-		}
-		| SET REQUIREORDER NO {
-			if (pf->opts & PF_OPT_VERBOSE)
-				printf("set require-order no\n");
-			require_order = 0;
+				printf("set require-order %s\n",
+				    $3 == 1 ? "yes" : "no");
+			require_order = $3;
 		}
 		;
 
@@ -2683,6 +2679,14 @@ comma		: ','
 		| /* empty */
 		;
 
+yesno		: NO			{ $$ = 0; }
+		| STRING		{
+			if (!strcmp($1, "yes"))
+				$$ = 1;
+			else
+				YYERROR;
+		}
+
 %%
 
 int
@@ -3520,7 +3524,6 @@ lookup(char *s)
 		{ "tos",		TOS},
 		{ "ttl",		TTL},
 		{ "user",		USER},
-		{ "yes",		YES},
 	};
 	const struct keywords	*p;
 
