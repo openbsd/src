@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping.8,v 1.28 2003/06/03 13:16:08 jmc Exp $
+.\"	$OpenBSD: ping.8,v 1.29 2003/11/25 12:17:44 jmc Exp $
 .\"	$NetBSD: ping.8,v 1.10 1995/12/31 04:55:35 ghudson Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -128,7 +128,7 @@ mode of behavior.
 Only root may set a preload value.
 .It Fl n
 Numeric output only.
-No attempt will be made to lookup symbolic names for host addresses.
+No attempt will be made to look up symbolic names for host addresses.
 .It Fl p Ar pattern
 You may specify up to 16
 .Dq pad
@@ -209,15 +209,26 @@ for fault isolation, it should first be run on the local host to verify
 that the local network interface is up and running.
 Then, hosts and gateways further and further away should be
 .Dq pinged .
+.Pp
 Round trip times and packet loss statistics are computed.
 If duplicate packets are received, they are not included in the packet
 loss calculation, although the round trip time of these packets is used
 in calculating the minimum/average/maximum round trip time numbers and
 the standard deviation.
+.Pp
 When the specified number of packets have been
 sent (and received), or if the program is terminated with a
 .Dv SIGINT ,
 a brief summary is displayed.
+The summary information can also be displayed while
+.Nm
+is running by sending it a
+.Dv SIGINFO
+signal (see the
+.Cm status
+argument of
+.Xr stty 1
+for more information).
 .Pp
 This program is intended for use in network testing, measurement and
 management.
