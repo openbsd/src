@@ -1,4 +1,4 @@
-.\"	$OpenBSD: zs.4,v 1.1 2001/10/08 22:37:11 miod Exp $
+.\"	$OpenBSD: zs.4,v 1.2 2002/01/24 16:03:49 jason Exp $
 .\"
 .\" Copyright (c) 1998 The OpenBSD Project
 .\" All rights reserved.
@@ -13,6 +13,8 @@
 .Sh SYNOPSIS
 .Cd "zs* at sbus? slot ? offset ?"
 .Cd "zstty* at zs? channel ?"
+.Cd "zskbd* at zs? channel ?
+.Cd "wskbd* at zskbd? console ?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -25,8 +27,12 @@ Most
 workstations include two of these interfaces.
 One of the interfaces is usually hardwired for use by the keyboard and mouse
 attached to the workstation console.
+The
+.Nm zskbd
+devices connect keyboard devices to the generic keyboard driver
+.Nm wskbd .
 The remaining additional
-.Nm
+.Nm zs
 interfaces provide RS-423
 and RS-232 serial ports for general purpose use.
 .Pp
@@ -51,8 +57,7 @@ connections fail, apparently due to a getty hang.
 The hung getty apparently prevents the cua device from being re-opened.
 .Sh SEE ALSO
 .Xr ioctl 2 ,
-.Xr kbd 4 ,
-.Xr ms 4 ,
+.Xr wskbd 4 ,
 .Xr tty 4
 .Sh HISTORY
 The
