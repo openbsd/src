@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.23 1999/01/11 21:20:00 millert Exp $	*/
+/*	$OpenBSD: proc.h,v 1.24 1999/02/26 02:30:33 art Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -270,10 +270,17 @@ struct	pcred {
 		FREE(s, M_SESSION);					\
 }
 
+#if defined(UVM)
+#define	PHOLD(p) {							\
+	if ((p)->p_holdcnt++ == 0 && ((p)->p_flag & P_INMEM) == 0)	\
+		uvm_swapin(p);						\
+}
+#else
 #define	PHOLD(p) {							\
 	if ((p)->p_holdcnt++ == 0 && ((p)->p_flag & P_INMEM) == 0)	\
 		swapin(p);						\
 }
+#endif
 #define	PRELE(p)	(--(p)->p_holdcnt)
 
 #define	PIDHASH(pid)	(&pidhashtbl[(pid) & pidhash])
@@ -317,7 +324,11 @@ void	resetpriority __P((struct proc *));
 void	setrunnable __P((struct proc *));
 void	setrunqueue __P((struct proc *));
 void	sleep __P((void *chan, int pri));
+#if defined(UVM)
+void	uvm_swapin __P((struct proc *));  /* XXX: uvm_extern.h? */
+#else
 void	swapin __P((struct proc *));
+#endif
 int	tsleep __P((void *chan, int pri, char *wmesg, int timo));
 void	unsleep __P((struct proc *));
 void	wakeup __P((void *chan));
