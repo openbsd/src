@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.42 2005/03/30 05:20:18 henning Exp $
+.\"	$OpenBSD: route.8,v 1.43 2005/03/30 08:52:35 henning Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -50,7 +50,8 @@ is a utility used to manually view and manipulate the network routing tables.
 Except for setting up the default route, it normally is not needed to
 manipulate routes, as a
 system routing table management daemon, such as
-.Xr routed 8
+.Xr routed 8 ,
+.Xr ospfd 8 ,
 or
 .Xr bgpd 8 ,
 should tend to this task.
@@ -444,6 +445,7 @@ to create the new entry.
 .Xr mygate 5 ,
 .Xr networks 5 ,
 .Xr bgpd 8 ,
+.Xr ospfd 8 ,
 .Xr routed 8 ,
 .Xr sysctl 8
 .Sh HISTORY
