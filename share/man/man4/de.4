@@ -1,4 +1,4 @@
-.\"	$OpenBSD: de.4,v 1.8 1999/07/09 13:35:48 aaron Exp $
+.\"	$OpenBSD: de.4,v 1.9 1999/10/05 20:23:09 aaron Exp $
 .\"
 .\" Copyright (c) 1997 David E. O'Brien
 .\"
@@ -29,51 +29,64 @@
 .Os
 .Sh NAME
 .Nm de
-.Nd
-DEC DC21x4x Ethernet device driver
+.Nd "DEC DC21x4x Ethernet device driver"
 .Sh SYNOPSIS
 .Cd "de* at pci? dev ? function ?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the Ethernet adapters based on the Digital
+device driver supports Ethernet adapters based on the Digital
 Equipment DC21x4x based self-contained Ethernet chips.
+This includes, among others, the following models:
 .Pp
-It supports the DEC PCI DE435 card, DEC EISA DE425, DEC DE450, DEC DE500,
-SMC 8432, 9332 and 9334, Cogent EM100FX and EM440TX, Asante,
-ZNYX ZX3xx, and others based on the 21040 and 21041 Ethernet controllers
-or
-the 21140[A], 21141, 21142 and 21143 Fast 100Mbps Ethernet controllers.
+.Bl -tag -width -offset indent -compact
+.It DEC PCI DE435, EISA DE425, DE450, DE500
+.It SMC 8432, 9332, 9334
+.It Cogent EM100FX and EM440TX
+.It Asante
+.It ZNYX ZX3xx
+.El
 .Pp
-The
-.Nm
-driver supports the following media types:
+This driver may support other cards based on the 21040 and 21041 Ethernet
+controllers, or the 21140[A], 21141, 21142, and 21143 Fast Ethernet
+controllers.
 .Pp
-.Bl -tag -width xxxxxxxxxxxxxxx
-.It autoselect
-Enable autoselection of the media type and options
-.It 10baseT
-Set 10Mbps operation on the 10baseT port
-.It 10base2
-Set 10Mbps operation on the BNC port
-.It 10base5
-Set 10Mbps operation on the AUI port
-.It 100baseTX
-Set 100Mbps (fast ethernet) operation
-.It 100baseFX
-Set 100Mbps operation
-.It 100baseT4
-Set 100Mbps operation (4-pair cat-3 cable)
+The following media types and options (as given to
+.Xr ifconfig 8 )
+are supported:
+.Pp
+.Bl -tag -width xxx -offset indent
+.It Cm media No autoselect
+Enable autoselection of the media type and options.
+.It Cm media No 10baseT
+Set 10Mbps operation on the 10baseT port.
+.It Cm media No 10base2
+Set 10Mbps operation on the BNC port.
+.It Cm media No 10base5
+Set 10Mbps operation on the AUI port.
+.It Cm media No 100baseTX
+Set 100Mbps (Fast Ethernet) operation.
+.It Cm media No 100baseFX
+Set 100Mbps operation.
+.It Cm media No 100baseT4
+Set 100Mbps operation (4-pair cat-3 cable).
 .El
 .Pp
 The
 .Nm
 driver supports the following media options:
 .Pp
-.Bl -tag -width xxxxxxxxxxxxxxx
+.Bl -tag -width xxx -offset indent -compact
 .It full-duplex
-Set full duplex operation for UTP port
+Set full duplex operation for UTP port.
 .El
+.Pp
+For more information on configuring this device, see
+.Xr ifconfig 8 .
+To view a list of media types and options supported by your card try
+.Ic ifconfig -m <device> .
+For example,
+.Ic ifconfig -m de0 .
 .Pp
 Note that the media types available depend on the particular card in use.
 Some cards are explicitly programmed to a particular media type by a
