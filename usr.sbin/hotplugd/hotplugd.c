@@ -1,4 +1,4 @@
-/*	$OpenBSD: hotplugd.c,v 1.2 2004/05/30 16:29:41 grange Exp $	*/
+/*	$OpenBSD: hotplugd.c,v 1.3 2004/05/30 16:35:22 grange Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -142,7 +142,7 @@ exec_script(const char *file, int class, char *name)
 	if (pid == 0) {
 		/* child process */
 		execl(file, basename(file), strclass, name, (char *)NULL);
-		syslog(LOG_ERR, "execl: %m");
+		syslog(LOG_ERR, "execl %s: %m", file);
 		_exit(1);
 		/* NOTREACHED */
 	} else {
