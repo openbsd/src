@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.17 1999/04/20 23:04:54 niklas Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.18 1999/06/07 07:22:26 deraadt Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -67,6 +67,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet/ip_var.h>
 #include <netinet/in_pcb.h>
 #include <netinet/in_var.h>
+#include <netinet/ip_icmp.h>
 
 #ifdef IPSEC
 extern int     	check_ipsec_policy  __P((struct inpcb *, u_int32_t));
@@ -149,7 +150,10 @@ rip_input(m, va_alist)
 		else
 			sorwakeup(last);
 	} else {
-		m_freem(m);
+		if (ip->ip_p != IPPROTO_ICMP)
+			icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_PROTOCOL, 0, 0);
+		else
+			m_freem(m);
 		/* Perhaps should send an ICMP protocol unreachable here. */
 		ipstat.ips_noproto++;
 		ipstat.ips_delivered--;
