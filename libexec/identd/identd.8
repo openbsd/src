@@ -1,248 +1,284 @@
+.\"	$OpenBSD: identd.8,v 1.3 1997/07/27 20:04:27 downsj Exp $
+.\"
+.\" Copyright (c) 1997, Jason Downs.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by Jason Downs for the
+.\"      OpenBSD system.
+.\" 4. Neither the name(s) of the author(s) nor the name OpenBSD
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) ``AS IS'' AND ANY EXPRESS
+.\" OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+.\" DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY DIRECT,
+.\" INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+.\" (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+.\" SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+.\" CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
 .\" @(#)identd.8 1.9 92/02/11 Lysator
 .\" Copyright (c) 1992 Peter Eriksson, Lysator, Linkoping University.
 .\" This software has been released into the public domain.
 .\"
-.\"	$Id: identd.8,v 1.2 1996/05/22 12:10:38 deraadt Exp $
-.\"
-.TH IDENTD 8 "27 May 1992"
-.SH NAME
-identd \- TCP/IP IDENT protocol server
-.SH SYNOPSIS
-.B identd
-.RB [ \-i | \-w | \-b ]
-.RB [ \-t<seconds> ]
-.RB [ \-u<uid> ]
-.RB [ \-g<gid> ]
-.RB [ \-p<port> ]
-.RB [ \-a<address> ]
-.RB [ \-c<charset> ]
-.RB [ \-n ]
-.RB [ \-o ]
-.RB [ \-e ]
-.RB [ \-l ]
-.RB [ \-V ]
-.RB [ \-v ]
-.RB [ \-m ]
-.RB [ \-N ]
-.RB [ \-d ]
-.RB [ kernelfile [ kmemfile ] ]
-.SH DESCRIPTION
-.IX "identd daemon" "" \fLidentd\fP daemon"
-.B identd
+.Dd July 27, 1997
+.Dt IDENTD 8
+.Os OpenBSD
+.Sh NAME
+.Nm identd
+.Nd TCP/IP IDENT protocol server
+.Sh SYNOPSIS
+.Nm
+.Op Fl i | w | b
+.Op Fl t Ar seconds
+.Op Fl u Ar uid
+.Op Fl g Ar gid
+.Op Fl p Ar port
+.Op Fl a Ar address
+.Op Fl c Ar charset
+.Op Fl noelVvmNd
+.Op Ar kernelfile Op Ar kmemfile
+.Sh DESCRIPTION
+.Nm
 is a server which implements the
-.SM TCP/IP
+.Tn TCP/IP
 proposed standard
-.SM IDENT
+.Tn IDENT
 user identification protocol as specified in the
-.SM RFC\s0 1413
+.Tn RFC 1413
 document.
-.PP
-.B identd
+.Pp
+.Nm
 operates by looking up specific
-.SM TCP/IP
+.Tn TCP/IP
 connections and returning the user name of the
 process owning the connection.
-.SH ARGUMENTS
+.Sh ARGUMENTS
 The
-.B -i
+.Fl i
 flag, which is the default mode, should be used when starting the
 daemon from
-.B inetd
+.Xr inetd 8
 with the "nowait" option in the
-.B /etc/inetd.conf
+.Pa /etc/inetd.conf
 file. Use of this mode will make
-.B inetd
+.Xr inetd 8
 start one
-.B identd
+.Nm
 daemon for each connection request.
-.PP
+.Pp
 The
-.B -w
+.Fl w
 flag should be used when starting the daemon from
-.B inetd
+.Xr inetd 8
 with the "wait" option in the
-.B /etc/inetd.conf
-file . This is the prefered mode of
+.Pa /etc/inetd.conf
+file.  This is the prefered mode of
 operation since that will start a copy of
-.B identd
+.Nm
 at the first connection request and then
-.B identd
+.Nm
 will handle subsequent requests
 without having to do the nlist lookup in the kernel file for
 every request as in the
-.B -i
-mode above. The
-.B identd
+.Fl i
+mode above.  The
+.Nm
 daemon will run either forever, until a bug
 makes it crash or a timeout, as specified by the
-.B -t
+.Fl t
 flag, occurs.
-.PP
+.Pp
 The
-.B -b
+.Fl b
 flag can be used to make the daemon run in standalone mode without
 the assistance from
-.B inetd.
+.Xr inetd 8 .
 This mode is the least prefered mode since
 a bug or any other fatal condition in the server will make it terminate
-and it will then have to be restarted manually. Other than that is has the
+and it will then have to be restarted manually.  Other than that is has the
 same advantage as the
-.B -w
+.Fl w
 mode in that it parses the nlist only once.
-.PP
+.Pp
 The
-.B -t<seconds>
+.Fl t Ar seconds
 option is used to specify the timeout limit. This is the number
 of seconds a server started with the
-.B -w
+.Fl w
 flag will wait for new connections before terminating. The server is
 automatically restarted by
-.B inetd
+.Xr inetd 8
 whenever a new connection is requested
 if it has terminated. A suitable value for this is 120 (2 minutes), if
-used. It defaults to no timeout (ie, will wait forever, or until a
+used.  It defaults to no timeout (ie, will wait forever, or until a
 fatal condition occurs in the server).
-.PP
+.Pp
 The
-.B -u<uid>
+.Fl u Ar uid
 option is used to specify a user id number which the
-.B ident
+.Nm
 server should
 switch to after binding itself to the
-.SM TCP/IP
+.Tn TCP/IP
 port if using the
-.B -b
+.Fl b
 mode of operation.
-.PP
+.Pp
 The
-.B -g<gid>
+.Fl g Ar gid
 option is used to specify a group id number which the
-.B ident
+.Nm
 server should
 switch to after binding itself to the
-.SM TCP/IP
+.Tn TCP/IP
 port if using the
-.B -b
+.Fl b
 mode of operation.
-.PP
+.Pp
 The
-.B -p<port>
+.Fl p Ar port
 option is used to specify an alternative port number to bind to if using
 the
-.B -b
+.Fl b
 mode of operation. It can be specified by name or by number. Defaults to the
-.SM IDENT
+.Tn IDENT
 port (113).
-.PP
+.Pp
 The
-.B -a<address>
+.Fl a Ar address
 option is used to specify the local address to bind the socket to if using
 the
-.B -b
+.Fl b
 mode of operation. Can only be specified by IP address and not by domain
 name. Defaults to the 
-.SM INADDR_ANY
+.Li INADDR_ANY
 address which normally means all local addresses.
-.PP
+.Pp
 The 
-.B -V
+.Fl V
 flag makes
-.B identd
+.Nm
 display the version number and the exit.
-.PP
+.Pp
 The
-.B -l
+.Fl l
 flag tells
-.B identd
-to use the System logging daemon
-.B syslogd
+.Nm
+to use the system logging daemon
+.Xr syslogd 8
 for logging purposes.
-.PP
+.Pp
 The 
-.B -v
+.Fl v
 flag causes
-.B identd
+.Nm
 to log every request made, if the use of
-.B syslogd
+.Xr syslogd 8
 is enabled.
-.PP
+.Pp
 The
-.B -o
+.Fl o
 flag tells
-.B identd
+.Nm
 to not reveal the operating system type it is run on and to instead
-always return "OTHER".
-.PP
+always return
+.Dq OTHER .
+.Pp
 The
-.B -e
+.Fl e
 flag tells
-.B identd
-to always return "UNKNOWN-ERROR" instead of the "NO-USER" or
-"INVALID-PORT" errors.
-.PP
+.Nm
+to always return
+.Dq UNKNOWN-ERROR
+instead of the
+.Dq NO-USER
+or
+.Dq INVALID-PORT
+errors.
+.Pp
 The
-.B -c<charset>
+.Fl c Ar charset
 flags tells
-.B identd
-to add the optional (according to the IDENT protocol) character set
-designator to the reply generated. <charset> should be a valid character
-set as described in the MIME RFC in upper case characters.
-.PP
+.Nm
+to add the optional (according to the
+.Tn IDENT
+protocol) character set designator to the reply generated.
+.Ar charset
+should be a valid character set as described in the
+.Tn MIME RFC
+in upper case characters.
+.Pp
 The
-.B -n
+.Fl n
 flags tells
-.B identd
+.Nm
 to always return user numbers instead of user names if you wish to
 keep the user names a secret.
-.PP
+.Pp
 The
-.B -N
+.Fl N
 flag makes
-.B identd
-check for a file ".noident" in each homedirectory for a user which the
-daemon is about to return the user name for. It that file exists then the
-daemon will give the error
-.B HIDDEN-USER
+.Nm
+check for a file
+.Pa .noident
+in each homedirectory for a user which the daemon is about to return the user
+name for.  It that file exists then the daemon will give the error
+.Dq HIDDEN-USER
 instead of the normal USERID response. 
-.PP
-.B -m
+.Pp
+.Fl m
 flag makes
-.B identd
+.Nm
 use a mode of operation that will allow multiple requests to be
-processed per session. Each request is specified one per line and
-the responses will be returned one per line. The connection will not
+processed per session.  Each request is specified one per line and
+the responses will be returned one per line.  The connection will not
 be closed until the connecting part closes it's end of the line.
 PLEASE NOTE THAT THIS MODE VIOLATES THE PROTOCOL SPECIFICATION AS
 IT CURRENTLY STANDS.
-.PP
+.Pp
 The
-.B -d
+.Fl d
 flag enables some debugging code that normally should NOT
 be enabled since that breaks the protocol and may reveal information
 that should not be available to outsiders.
-.PP
-.B kernelfile
+.Pp
+.Ar kernelfile
 defaults to the normally running kernel file.
-.PP
-.B kmemfile
+.Pp
+.Ar kmemfile
 defaults to the memory space of the normally running kernel.
-.SH SEE ALSO
-.BR inetd.conf (5)
-.SH NOTES
-.B Identd
+.Sh SEE ALSO
+.Xr inetd.conf 5 .
+.Sh NOTES
+.Nm
 uses the 
-.I LOG_DAEMON
+.Li LOG_DAEMON
 syslogd(8) facility to log messages. This is the correct thing to do
 since
-.I LOG_AUTH
+.Li LOG_AUTH
 is supposed to be used by authorization related programs, not authentication
 related ones such as
-.B identd.
-.SH BUGS
+.Nm .
+.Sh BUGS
 The handling of fatal errors could be better.
-.PP
+.Pp
 If the
-.B -N
-flag is specified and a user's ".noident" file is not accessible,
-then ident information regarding that user will be returned
-if requested.
+.Fl N
+flag is specified and a user's
+.Pa .noident
+file is not accessible, then ident information regarding that user will be
+returned if requested.
