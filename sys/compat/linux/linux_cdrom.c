@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_cdrom.c,v 1.2 1997/12/10 00:01:39 provos Exp $	*/
+/*	$OpenBSD: linux_cdrom.c,v 1.3 1997/12/20 22:51:53 deraadt Exp $	*/
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
  * All rights reserved.
@@ -47,7 +47,8 @@
 #include <compat/linux/linux_util.h>
 #include <compat/linux/linux_cdrom.h>
 
-void bsd_addr_to_linux_addr __P((union msf_lba *bsd, union linux_cdrom_addr *linux, int format));
+void bsd_addr_to_linux_addr __P((union msf_lba *bsd,
+    union linux_cdrom_addr *linux, int format));
 
 void 
 bsd_addr_to_linux_addr(bsd, linux, format)
@@ -111,7 +112,8 @@ linux_ioctl_cdrom(p, uap, retval)
                 
 	switch (com) {
 	case LINUX_CDROMREADTOCHDR:
-	        error = (*fp->f_ops->fo_ioctl)(fp, CDIOREADTOCHEADER, (caddr_t)&tmpb.th, p);
+	        error = (*fp->f_ops->fo_ioctl)(fp, CDIOREADTOCHEADER,
+		    (caddr_t)&tmpb.th, p);
 	        if (error)
 		        return error;
 		tmpl.th.cdth_trk0 = tmpb.th.starting_track;
@@ -129,11 +131,13 @@ linux_ioctl_cdrom(p, uap, retval)
 		
 		bzero(&tmpb.tes, sizeof tmpb.tes);
 		tmpb.tes.starting_track = tmpl.te.cdte_track;
-		tmpb.tes.address_format = tmpl.te.cdte_format == LINUX_CDROM_MSF ? CD_MSF_FORMAT : CD_LBA_FORMAT;
+		tmpb.tes.address_format = (tmpl.te.cdte_format == LINUX_CDROM_MSF)
+		    ? CD_MSF_FORMAT : CD_LBA_FORMAT;
 		tmpb.tes.data_len = sizeof(struct cd_toc_entry);
 		tmpb.tes.data = stackgap_alloc(&sg, tmpb.tes.data_len);
 
-	        error = (*fp->f_ops->fo_ioctl)(fp, CDIOREADTOCENTRYS, (caddr_t)&tmpb.tes, p);
+	        error = (*fp->f_ops->fo_ioctl)(fp, CDIOREADTOCENTRYS,
+		    (caddr_t)&tmpb.tes, p);
 	        if (error) 
 		        return error;
 		if ((error = copyin(tmpb.tes.data, &data.te, sizeof data.te)))
@@ -144,7 +148,7 @@ linux_ioctl_cdrom(p, uap, retval)
 		tmpl.te.cdte_track = data.te.track;
 		tmpl.te.cdte_datamode = CD_TRACK_INFO;
 		bsd_addr_to_linux_addr(&data.te.addr, &tmpl.te.cdte_addr, 
-				       tmpb.tes.address_format);
+		    tmpb.tes.address_format);
 		error = copyout(&tmpl, SCARG(uap, data), sizeof tmpl.te);
 		if (error)
 			return error;
@@ -158,11 +162,13 @@ linux_ioctl_cdrom(p, uap, retval)
 		
 		bzero(&tmpb.sc, sizeof tmpb.sc);
 		tmpb.sc.data_format = CD_CURRENT_POSITION;
-		tmpb.sc.address_format = tmpl.sc.cdsc_format == LINUX_CDROM_MSF ? CD_MSF_FORMAT : CD_LBA_FORMAT;
+		tmpb.sc.address_format = (tmpl.sc.cdsc_format == LINUX_CDROM_MSF)
+		    ? CD_MSF_FORMAT : CD_LBA_FORMAT;
 		tmpb.sc.data_len = sizeof(struct cd_sub_channel_info);
 		tmpb.sc.data = stackgap_alloc(&sg, tmpb.sc.data_len);
 
-	        error = (*fp->f_ops->fo_ioctl)(fp, CDIOCREADSUBCHANNEL, (caddr_t)&tmpb.sc, p);
+	        error = (*fp->f_ops->fo_ioctl)(fp, CDIOCREADSUBCHANNEL,
+		    (caddr_t)&tmpb.sc, p);
 	        if (error)
 		        return error;
 		if ((error = copyin(tmpb.sc.data, &data.scinfo, sizeof data.scinfo)))
@@ -174,11 +180,11 @@ linux_ioctl_cdrom(p, uap, retval)
 		tmpl.sc.cdsc_trk = data.scinfo.what.position.track_number;
 		tmpl.sc.cdsc_ind = data.scinfo.what.position.index_number;
 		bsd_addr_to_linux_addr(&data.scinfo.what.position.absaddr, 
-				       &tmpl.sc.cdsc_absaddr, 
-				       tmpb.sc.address_format);
+		    &tmpl.sc.cdsc_absaddr, 
+		    tmpb.sc.address_format);
 		bsd_addr_to_linux_addr(&data.scinfo.what.position.reladdr, 
-				       &tmpl.sc.cdsc_reladdr, 
-				       tmpb.sc.address_format);
+		    &tmpl.sc.cdsc_reladdr, 
+		    tmpb.sc.address_format);
 
 		error = copyout(&tmpl, SCARG(uap, data), sizeof tmpl.sc);
 		if (error)
@@ -193,7 +199,8 @@ linux_ioctl_cdrom(p, uap, retval)
 		tmpb.ti.start_index = tmpl.ti.cdti_ind0;
 		tmpb.ti.end_track = tmpl.ti.cdti_trk1;
 		tmpb.ti.end_index = tmpl.ti.cdti_ind1;
-	        error = (*fp->f_ops->fo_ioctl)(fp, CDIOCPLAYTRACKS, (caddr_t)&tmpb.ti, p);
+	        error = (*fp->f_ops->fo_ioctl)(fp, CDIOCPLAYTRACKS,
+		    (caddr_t)&tmpb.ti, p);
 	        if (error)
 		        return error;
 		return 0;
