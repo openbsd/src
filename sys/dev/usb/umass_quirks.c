@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_quirks.c,v 1.6 2003/05/19 01:02:39 nate Exp $	*/
+/*	$OpenBSD: umass_quirks.c,v 1.7 2003/11/27 12:35:58 henning Exp $	*/
 /*	$NetBSD: umass_quirks.c,v 1.39 2003/05/08 15:19:47 augustss Exp $	*/
 
 /*
@@ -360,13 +360,13 @@ Static const struct umass_quirk umass_quirks[] = {
 	  NULL, NULL
 	},
 
-	{ { USB_VENDOR_SIIG, USB_PRODUCT_SIIG_MULTICARDREADER }, 
+	{ { USB_VENDOR_SIIG, USB_PRODUCT_SIIG_MULTICARDREADER },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  UMASS_QUIRK_NO_START_STOP,
 	  0,
 	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
 	  NULL,NULL
-	}, 
+	},
 
 	{ { USB_VENDOR_SONY, USB_PRODUCT_SONY_DRIVEV2 },
 	  UMASS_WPROTO_BBB, UMASS_CPROTO_ISD_ATA,
@@ -432,6 +432,13 @@ Static const struct umass_quirk umass_quirks[] = {
 	  NULL, umass_fixup_yedata
 	},
 
+       { { USB_VENDOR_SIGMATEL, USB_PRODUCT_SIGMATEL_DNSSF7X},
+         UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+         0,
+         SDEV_NOSYNCCACHE | PQUIRK_NODOORLOCK,
+         UMATCH_VENDOR_PRODUCT,
+         NULL, NULL
+       },
 };
 
 const struct umass_quirk *
