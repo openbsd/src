@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.2 1996/08/19 20:08:45 downsj Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.3 1996/08/25 12:37:55 downsj Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -378,8 +378,8 @@ c_print(wp)
 		Xfree(xs, xp);
 	} else {
 		int n, len = Xlength(xs, xp);
-#ifdef KSH
 		int UNINITIALIZED(opipe);
+#ifdef KSH
 
 		/* Ensure we aren't killed by a SIGPIPE while writing to
 		 * a coprocess.  at&t ksh doesn't seem to do this (seems

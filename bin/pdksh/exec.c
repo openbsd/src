@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.2 1996/08/19 20:08:50 downsj Exp $	*/
+/*	$OpenBSD: exec.c,v 1.3 1996/08/25 12:38:00 downsj Exp $	*/
 
 /*
  * execute command tree
@@ -1459,7 +1459,7 @@ herein(hname, sub)
 	return fd;
 }
 
-#ifdef KSH
+#if defined(KSH) || defined(EDIT)
 /*
  *	ksh special - the select command processing section
  *	print the args in column form - assuming that we can
@@ -1562,7 +1562,7 @@ pr_menu(ap)
 
 	return n;
 }
-#endif /* KSH */
+#endif /* KSH || EDIT */
 #ifdef KSH
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: jobs.c,v 1.2 1996/08/19 20:08:52 downsj Exp $	*/
+/*	$OpenBSD: jobs.c,v 1.3 1996/08/25 12:38:03 downsj Exp $	*/
 
 /*
  * Process and job control
@@ -140,7 +140,9 @@ struct job {
 	clock_t	usrtime;	/* user time used by job */
 	Proc	*proc_list;	/* process list */
 	Proc	*last_proc;	/* last process in list */
+#ifdef KSH
 	Coproc_id coproc_id;	/* 0 or id of coprocess output pipe */
+#endif /* KSH */
 #ifdef TTY_PGRP
 	TTY_state ttystate;	/* saved tty state for stopped jobs */
 #endif /* TTY_PGRP */
@@ -484,7 +486,9 @@ exchild(t, flags, close_fd)
 		j->ppid = procpid;
 		j->age = ++njobs;
 		j->proc_list = p;
+#ifdef KSH
 		j->coproc_id = 0;
+#endif /* KSH */
 		last_job = j;
 		last_proc = p;
 		put_job(j, PJ_PAST_STOPPED);
