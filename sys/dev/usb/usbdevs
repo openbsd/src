@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.110 2004/10/04 21:53:12 dlg Exp $
+$OpenBSD: usbdevs,v 1.111 2004/10/16 01:11:56 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -371,6 +371,7 @@ vendor TSUNAMI		0x1241	Tsunami
 vendor BELKIN2		0x1293	Belkin Components
 vendor MOBILITY		0x1342	Mobility
 vendor SHARK		0x13d2	Shark
+vendor SILICOM		0x1485	Silicom
 vendor SILICONPORTALS	0x1527	Silicon Portals
 vendor SOHOWARE		0x15e8	SOHOware
 vendor UMAX		0x1606	UMAX Data Systems
@@ -383,6 +384,7 @@ vendor NHJ		0x2770  NHJ
 vendor PQI		0x3538	PQI
 vendor DAISY		0x3579	Daisy Technology
 vendor NI		0x3923	National Instruments
+vendor MICRONET		0x3980	Micronet Communications
 vendor IODATA2		0x40bb	I-O Data
 vendor IRIVER		0x4102	iRiver
 vendor ONSPEC2		0x55aa	OnSpec
@@ -1048,6 +1050,9 @@ product LOGITECH RB6		0xc503	Cordless keyboard
 product LOGITECH CDO		0xc504	Cordless Desktop Optical
 product LOGITECH QUICKCAMPRO2	0xd001	QuickCam Pro
 
+/* Longshine products */
+product ABOCOM LCS8138TX	0x401a	LCS-8138TX
+
 /* Lucent products */
 product LUCENT EVALKIT		0x1001	USS-720 evaluation kit
 
@@ -1077,6 +1082,9 @@ product METRICOM RICOCHET_GS	0x0001	Ricochet GS
 
 /* Micro Star International products */
 product MSI BLUETOOTH		0x1967	Bluetooth
+
+/* Micronet Communications products */
+product MICRONET SP128AR	0x0003	SP128AR EtherFast
 
 /* Microsoft products */
 product MICROSOFT SIDEPREC	0x0008	SideWinder Precision Pro
@@ -1403,6 +1411,9 @@ product	SIGMATEL DNSSF7X	0x8020	Datum Networks SSF-7X Multi Players
 product SIIG DIGIFILMREADER	0x0004	DigiFilm-Combo
 product SIIG MULTICARDREADER	0x0201	MULTICARDREADER
 product SIIG2 US2308		0x0421	Serial
+
+/* Silicom products */
+product SILICOM U2E		0x0001	U2E
 
 /* Silicon Portals Inc. */
 product SILICONPORTALS YAPPH_NF	0x0200	YAP Phone (no firmware)
