@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.171 2004/05/31 11:02:11 markus Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.172 2004/06/08 19:47:24 markus Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -108,10 +108,6 @@ struct  tcpipv6hdr tcp_saveti6;
 #define M_V6_LEN(m)      (M_PH_LEN(m) - sizeof(struct ip6_hdr))
 #define M_V4_LEN(m)      (M_PH_LEN(m) - sizeof(struct ip))
 #endif /* INET6 */
-
-#ifdef TCP_SIGNATURE
-#include <crypto/md5.h>
-#endif
 
 int	tcprexmtthresh = 3;
 int	tcptv_keep_init = TCPTV_KEEP_INIT;
@@ -2188,10 +2184,7 @@ tcp_dooptions(tp, cp, cnt, th, m, iphlen, oi)
 	struct tdb *tdb = NULL;
 #endif /* TCP_SIGNATURE */
 
-#ifdef TCP_SIGNATURE
-	if (cp)
-#endif /* TCP_SIGNATURE */
-	for (; cnt > 0; cnt -= optlen, cp += optlen) {
+	for (; cp && cnt > 0; cnt -= optlen, cp += optlen) {
 		opt = cp[0];
 		if (opt == TCPOPT_EOL)
 			break;
@@ -2323,7 +2316,6 @@ tcp_dooptions(tp, cp, cnt, th, m, iphlen, oi)
 	}
 
 	if (sigp) {
-		MD5_CTX ctx;
 		char sig[16];
 
 		if (tdb == NULL) {
@@ -2331,77 +2323,8 @@ tcp_dooptions(tp, cp, cnt, th, m, iphlen, oi)
 			return (-1);
 		}
 
-		MD5Init(&ctx);
-
-		switch(tp->pf) {
-		case 0:
-#ifdef INET
-		case AF_INET:
-			{
-				struct ippseudo ippseudo;
-
-				ippseudo.ippseudo_src =
-				    mtod(m, struct ip *)->ip_src;
-				ippseudo.ippseudo_dst =
-				    mtod(m, struct ip *)->ip_dst;
-				ippseudo.ippseudo_pad = 0;
-				ippseudo.ippseudo_p = IPPROTO_TCP;
-				ippseudo.ippseudo_len = htons(
-				    m->m_pkthdr.len - iphlen);
-
-				MD5Update(&ctx, (char *)&ippseudo,
-				    sizeof(struct ippseudo));
-			}
-			break;
-#endif /* INET */
-#ifdef INET6
-		case AF_INET6:
-			{
-				struct ip6_hdr_pseudo ip6pseudo;
- 
-				bzero(&ip6pseudo, sizeof(ip6pseudo));
-				ip6pseudo.ip6ph_src =
-				    mtod(m, struct ip6_hdr *)->ip6_src;
-				ip6pseudo.ip6ph_dst =
-				    mtod(m, struct ip6_hdr *)->ip6_dst;
-				in6_clearscope(&ip6pseudo.ip6ph_src);
-				in6_clearscope(&ip6pseudo.ip6ph_dst);
-				ip6pseudo.ip6ph_nxt = IPPROTO_TCP;
-				ip6pseudo.ip6ph_len = htonl(m->m_pkthdr.len -
-				    iphlen);
-    
-				MD5Update(&ctx, (char *)&ip6pseudo,
-				    sizeof(ip6pseudo));
-			}
-			break;
-#endif /* INET6 */
-		}
-
-		{
-			struct tcphdr tcphdr;
-
-			tcphdr.th_sport = th->th_sport;
-			tcphdr.th_dport = th->th_dport;
-			tcphdr.th_seq = htonl(th->th_seq);
-			tcphdr.th_ack = htonl(th->th_ack);
-			tcphdr.th_off = th->th_off;
-			tcphdr.th_x2 = th->th_x2;
-			tcphdr.th_flags = th->th_flags;
-			tcphdr.th_win = htons(th->th_win);
-			tcphdr.th_sum = 0;
-			tcphdr.th_urp = htons(th->th_urp);
-
-			MD5Update(&ctx, (char *)&tcphdr,
-			    sizeof(struct tcphdr));
-		}
-
-		if (m_apply(m, iphlen + th->th_off * sizeof(uint32_t),
-		    m->m_pkthdr.len - (iphlen + th->th_off * sizeof(uint32_t)),
-		    tcp_signature_apply, (caddr_t)&ctx))
-			return (-1); 
-
-		MD5Update(&ctx, tdb->tdb_amxkey, tdb->tdb_amxkeylen);
-		MD5Final(sig, &ctx);
+		if (tcp_signature(tdb, tp->pf, m, th, iphlen, 1, sig) < 0)
+			return (-1);
 
 		if (bcmp(sig, sigp, 16)) {
 			tcpstat.tcps_rcvbadsig++;
@@ -4196,7 +4119,6 @@ syn_cache_respond(sc, m)
 
 #ifdef TCP_SIGNATURE
 	if (sc->sc_flags & SCF_SIGNATURE) {
-		MD5_CTX ctx;
 		union sockaddr_union src, dst;
 		struct tdb *tdb;
 
@@ -4230,56 +4152,16 @@ syn_cache_respond(sc, m)
 			return (EPERM);
 		}
 
-		MD5Init(&ctx);
-
-		switch (sc->sc_src.sa.sa_family) {
-		case 0:	/*default to PF_INET*/
-#ifdef INET
-		case AF_INET:
-			{
-				struct ippseudo ippseudo;
-
-				ippseudo.ippseudo_src = ip->ip_src;
-				ippseudo.ippseudo_dst = ip->ip_dst;
-				ippseudo.ippseudo_pad = 0;
-				ippseudo.ippseudo_p   = IPPROTO_TCP;
-				ippseudo.ippseudo_len = htons(tlen - hlen);
-
-				MD5Update(&ctx, (char *)&ippseudo,
-				    sizeof(struct ippseudo));
-
-			}
-			break;
-#endif /* INET */
-#ifdef INET6
-		case AF_INET6:
-			{
-				struct ip6_hdr_pseudo ip6pseudo;
-
-				bzero(&ip6pseudo, sizeof(ip6pseudo));
-				ip6pseudo.ip6ph_src = ip6->ip6_src;
-				ip6pseudo.ip6ph_dst = ip6->ip6_dst;
-				in6_clearscope(&ip6pseudo.ip6ph_src);
-				in6_clearscope(&ip6pseudo.ip6ph_dst);
-				ip6pseudo.ip6ph_nxt = IPPROTO_TCP;
-				ip6pseudo.ip6ph_len = htonl(tlen - hlen);
-
-				MD5Update(&ctx, (char *)&ip6pseudo,
-				    sizeof(ip6pseudo));
-			}
-			break;
-#endif /* INET6 */
-		}
-
-		th->th_sum = 0;
-		MD5Update(&ctx, (char *)th, sizeof(struct tcphdr));
-		MD5Update(&ctx, tdb->tdb_amxkey, tdb->tdb_amxkeylen);
-
 		/* Send signature option */
 		*(optp++) = TCPOPT_SIGNATURE;
 		*(optp++) = TCPOLEN_SIGNATURE;
 
-		MD5Final(optp, &ctx);
+		if (tcp_signature(tdb, sc->sc_src.sa.sa_family, m, th,
+		    hlen, 0, optp) < 0) {
+			if (m)
+				m_freem(m);
+			return (EINVAL);
+		}
 		optp += 16;
 
 		/* Pad options list to the next 32 bit boundary and

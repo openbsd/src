@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.80 2004/05/07 14:42:27 millert Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.81 2004/06/08 19:47:24 markus Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -1021,6 +1021,81 @@ tcp_signature_apply(fstate, data, len)
 {
 	MD5Update((MD5_CTX *)fstate, (char *)data, len);
 	return 0;
+}
+
+int
+tcp_signature(struct tdb *tdb, int af, struct mbuf *m, struct tcphdr *th,
+    int iphlen, int doswap, char *sig)
+{
+	MD5_CTX ctx;
+	int len;
+	struct tcphdr th0;
+
+	MD5Init(&ctx);
+
+	switch(af) {
+	case 0:
+#ifdef INET
+	case AF_INET: {
+		struct ippseudo ippseudo;
+		struct ip *ip;
+
+		ip = mtod(m, struct ip *);
+
+		ippseudo.ippseudo_src = ip->ip_src;
+		ippseudo.ippseudo_dst = ip->ip_dst;
+		ippseudo.ippseudo_pad = 0;
+		ippseudo.ippseudo_p = IPPROTO_TCP;
+		ippseudo.ippseudo_len = htons(m->m_pkthdr.len - iphlen);
+
+		MD5Update(&ctx, (char *)&ippseudo,
+		    sizeof(struct ippseudo));
+		break;
+		}
+#endif
+#ifdef INET6
+	case AF_INET6: {
+		struct ip6_hdr_pseudo ip6pseudo;
+		struct ip6_hdr *ip6;
+
+		ip6 = mtod(m, struct ip6_hdr *);
+		bzero(&ip6pseudo, sizeof(ip6pseudo));
+		ip6pseudo.ip6ph_src = ip6->ip6_src;
+		ip6pseudo.ip6ph_dst = ip6->ip6_dst;
+		in6_clearscope(&ip6pseudo.ip6ph_src);
+		in6_clearscope(&ip6pseudo.ip6ph_dst);
+		ip6pseudo.ip6ph_nxt = IPPROTO_TCP;
+		ip6pseudo.ip6ph_len = htonl(m->m_pkthdr.len - iphlen);
+
+		MD5Update(&ctx, (char *)&ip6pseudo,
+		    sizeof(ip6pseudo));
+		break;
+		}
+#endif
+	}
+
+	th0 = *th;
+	th0.th_sum = 0;
+
+	if (doswap) {
+		HTONL(th0.th_seq);
+		HTONL(th0.th_ack);
+		HTONS(th0.th_win);
+		HTONS(th0.th_urp);
+	}
+	MD5Update(&ctx, (char *)&th0, sizeof(th0));
+
+	len = m->m_pkthdr.len - iphlen - th->th_off * sizeof(uint32_t);
+
+	if (len > 0 &&
+	    m_apply(m, iphlen + th->th_off * sizeof(uint32_t), len,
+	    tcp_signature_apply, (caddr_t)&ctx))
+		return (-1); 
+
+	MD5Update(&ctx, tdb->tdb_amxkey, tdb->tdb_amxkeylen);
+	MD5Final(sig, &ctx);
+
+	return (0);
 }
 #endif /* TCP_SIGNATURE */
 

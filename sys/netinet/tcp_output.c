@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.69 2004/06/05 11:56:50 markus Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.70 2004/06/08 19:47:24 markus Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -102,10 +102,6 @@
 #include <netinet6/tcpipv6.h>
 #include <netinet6/in6_var.h>
 #endif /* INET6 */
-
-#ifdef TCP_SIGNATURE
-#include <crypto/md5.h>
-#endif /* TCP_SIGNATURE */
 
 #ifdef notyet
 extern struct mbuf *m_copypack();
@@ -891,7 +887,7 @@ send:
 
 #ifdef TCP_SIGNATURE
 	if (tp->t_flags & TF_SIGNATURE) {
-		MD5_CTX ctx;
+		int iphlen;
 		union sockaddr_union src, dst;
 		struct tdb *tdb;
 
@@ -902,6 +898,7 @@ send:
 		case 0:	/*default to PF_INET*/
 #ifdef INET
 		case AF_INET:
+			iphlen = sizeof(struct ip);
 			src.sa.sa_len = sizeof(struct sockaddr_in);
 			src.sa.sa_family = AF_INET;
 			src.sin.sin_addr = mtod(m, struct ip *)->ip_src;
@@ -912,6 +909,7 @@ send:
 #endif /* INET */
 #ifdef INET6
 		case AF_INET6:
+			iphlen = sizeof(struct ip6_hdr);
 			src.sa.sa_len = sizeof(struct sockaddr_in6);
 			src.sa.sa_family = AF_INET6;
 			src.sin6.sin6_addr = mtod(m, struct ip6_hdr *)->ip6_src;
@@ -922,74 +920,15 @@ send:
 #endif /* INET6 */
 		}
 
-		/* XXX gettdbbysrcdst() should really be called at spltdb().      */
+		/* XXX gettdbbysrcdst() should really be called at spltdb(). */
 		/* XXX this is splsoftnet(), currently they are the same. */
 		tdb = gettdbbysrcdst(0, &src, &dst, IPPROTO_TCP);
 		if (tdb == NULL)
 			return (EPERM);
 
-		MD5Init(&ctx);
-
-		switch (tp->pf) {
-		case 0:	/*default to PF_INET*/
-#ifdef INET
-		case AF_INET:
-			{
-				struct ippseudo ippseudo;
-				struct ipovly *ipovly;
-
-				ipovly = mtod(m, struct ipovly *);
-
-				ippseudo.ippseudo_src = ipovly->ih_src;
-				ippseudo.ippseudo_dst = ipovly->ih_dst;
-				ippseudo.ippseudo_pad = 0;
-				ippseudo.ippseudo_p   = IPPROTO_TCP;
-				ippseudo.ippseudo_len = ntohs(ipovly->ih_len) + len +
-				    optlen;
-				ippseudo.ippseudo_len = htons(ippseudo.ippseudo_len);
-				MD5Update(&ctx, (char *)&ippseudo,
-				    sizeof(struct ippseudo));
-			}
-			break;
-#endif /* INET */
-#ifdef INET6
-		case AF_INET6:
-			{
-				struct ip6_hdr_pseudo ip6pseudo;
-				struct ip6_hdr *ip6;
-
-				ip6 = mtod(m, struct ip6_hdr *);
-				bzero(&ip6pseudo, sizeof(ip6pseudo));
-				ip6pseudo.ip6ph_src = ip6->ip6_src;
-				ip6pseudo.ip6ph_dst = ip6->ip6_dst;
-				in6_clearscope(&ip6pseudo.ip6ph_src);
-				in6_clearscope(&ip6pseudo.ip6ph_dst);
-				ip6pseudo.ip6ph_nxt = IPPROTO_TCP;
-				ip6pseudo.ip6ph_len =
-				    htonl(sizeof(struct tcphdr) + len + optlen);
- 
-				MD5Update(&ctx, (char *)&ip6pseudo,
-				    sizeof(ip6pseudo));
-			}
-			break;
-#endif /* INET6 */
-		}
-
-		{
-			u_int16_t thsum = th->th_sum;
-
-			/* RFC 2385 requires th_sum == 0 */
-			th->th_sum = 0;
-			MD5Update(&ctx, (char *)th, sizeof(struct tcphdr));
-			th->th_sum = thsum;
-		}
-
-		if (len && m_apply(m, hdrlen, len, tcp_signature_apply,
-		    (caddr_t)&ctx))
+		if (tcp_signature(tdb, tp->pf, m, th, iphlen, 0,
+		    mtod(m, caddr_t) + hdrlen - optlen + sigoff) < 0)
 			return (EINVAL);
-
-		MD5Update(&ctx, tdb->tdb_amxkey, tdb->tdb_amxkeylen);
-		MD5Final(mtod(m, caddr_t) + hdrlen - optlen + sigoff, &ctx);
 	}
 #endif /* TCP_SIGNATURE */
 
