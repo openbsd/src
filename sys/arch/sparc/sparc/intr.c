@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.22 2002/08/12 10:44:04 miod Exp $ */
+/*	$OpenBSD: intr.c,v 1.23 2002/12/10 23:43:48 miod Exp $ */
 /*	$NetBSD: intr.c,v 1.20 1997/07/29 09:42:03 fair Exp $ */
 
 /*
@@ -105,7 +105,7 @@ strayintr(fp)
 }
 
 static struct intrhand level10 = { clockintr, NULL, (IPL_CLOCK << 8) };
-static struct intrhand level14 = { statintr, NULL, (14 << 8) /* XXX - IPL_STATCLOCK */ };
+static struct intrhand level14 = { statintr, NULL, (IPL_STATCLOCK << 8) };
 union sir sir;
 /*
  * Level 1 software interrupt (could also be Sbus level 1 interrupt).
