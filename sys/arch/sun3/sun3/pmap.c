@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.11 1997/02/14 23:01:04 kstailey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.12 1997/02/18 19:56:55 kstailey Exp $	*/
 /*	$NetBSD: pmap.c,v 1.64 1996/11/20 18:57:35 gwr Exp $	*/
 
 /*-
@@ -572,14 +572,15 @@ context_init()
 }
 
 #ifdef	PMAP_DEBUG
-void pmap_print(pmap)
+void
+pmap_print(pmap)
 	pmap_t pmap;
 {
 	printf(" pm_ctxnum=%d\n", pmap->pm_ctxnum);
 	printf(" pm_version=0x%x\n", pmap->pm_version);
 	printf(" pm_segmap=%p\n", pmap->pm_segmap);
 }
-#endif
+#endif /* PMAP_DEBUG */
 
 /*
  * Reserve a pmeg (forever) for use by PROM, etc.
@@ -684,7 +685,7 @@ pmeg_print(pmegp)
 		   pmegp->pmeg_reserved, pmegp->pmeg_vpages,
 		   pmegp->pmeg_qstate);
 }
-#endif
+#endif /* PMAP_DEBUG */
 
 /*
  * Allocate a PMEG by whatever means necessary.
@@ -1868,7 +1869,7 @@ pmap_remove_range_mmu(pmap, sva, eva)
 		if (is_pmeg_wired(pmegp)) {
 #ifdef	PMAP_DEBUG
 			if (pmap_debug & PMD_WIRING) {
-				printf("pmap: removing wired pmeg: 0x%p\n", pmegp);
+				printf("pmap: removing wired pmeg: %p\n", pmegp);
 				Debugger(); /* XXX */
 			}
 #endif	/* PMAP_DEBUG */
@@ -2035,8 +2036,8 @@ pmap_remove(pmap, sva, eva)
 		return;
 
 	if (pmap == kernel_pmap) {
-		if (sva < VM_MIN_KERNEL_ADDRESS)
-			sva = VM_MIN_KERNEL_ADDRESS;
+		if (sva < virtual_avail)
+			sva = virtual_avail;
 		if (eva > DVMA_SPACE_END) {
 #ifdef	PMAP_DEBUG
 			printf("pmap_remove: eva=0x%lx\n", eva);
@@ -2102,7 +2103,7 @@ pmap_enter_kernel(va, pa, prot, wired, new_pte)
 	}
 #endif
 #ifdef	DIAGNOSTIC
-	if ((va < VM_MIN_KERNEL_ADDRESS) || (va >= DVMA_SPACE_END))
+	if ((va < virtual_avail) || (va >= DVMA_SPACE_END))
 		panic("pmap_enter_kernel: bad va=0x%x", va);
 	if ((new_pte & (PG_VALID | PG_SYSTEM)) != (PG_VALID | PG_SYSTEM))
 		panic("pmap_enter_kernel: bad pte");
@@ -3066,8 +3067,8 @@ pmap_protect(pmap, sva, eva, prot)
 	}
 
 	if (pmap == kernel_pmap) {
-		if (sva < VM_MIN_KERNEL_ADDRESS)
-			sva = VM_MIN_KERNEL_ADDRESS;
+		if (sva < virtual_avail)
+			sva = virtual_avail;
 		if (eva > DVMA_SPACE_END) {
 #ifdef	PMAP_DEBUG
 			printf("pmap_protect: eva=0x%lx\n", eva);
