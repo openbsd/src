@@ -1,4 +1,4 @@
-/*	$OpenBSD: t3000.c,v 1.10 2002/05/07 06:56:50 hugh Exp $	*/
+/*	$OpenBSD: t3000.c,v 1.11 2003/04/04 21:50:00 deraadt Exp $	*/
 /*	$NetBSD: t3000.c,v 1.5 1997/02/11 09:24:18 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)t3000.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: t3000.c,v 1.10 2002/05/07 06:56:50 hugh Exp $";
+static const char rcsid[] = "$OpenBSD: t3000.c,v 1.11 2003/04/04 21:50:00 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -109,7 +109,7 @@ badsynch:
 	connected = t3000_connect();
 #ifdef ACULOG
 	if (timeout) {
-		(void)sprintf(line, "%ld second dial timeout",
+		(void)snprintf(line, sizeof line, "%ld second dial timeout",
 			number(value(DIALTIMEOUT)));
 		logent(value(HOST), num, "t3000", line);
 	}

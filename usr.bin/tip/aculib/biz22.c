@@ -1,4 +1,4 @@
-/*	$OpenBSD: biz22.c,v 1.8 2002/05/07 06:56:50 hugh Exp $	*/
+/*	$OpenBSD: biz22.c,v 1.9 2003/04/04 21:50:00 deraadt Exp $	*/
 /*	$NetBSD: biz22.c,v 1.6 1997/02/11 09:24:11 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)biz22.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: biz22.c,v 1.8 2002/05/07 06:56:50 hugh Exp $";
+static const char rcsid[] = "$OpenBSD: biz22.c,v 1.9 2003/04/04 21:50:00 deraadt Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -74,7 +74,7 @@ biz_dialer(num, mod)
 		printf("can't initialize bizcomp...");
 		return (0);
 	}
-	(void)strcpy(cbuf, "\02.\r");
+	(void)strlcpy(cbuf, "\02.\r", sizeof cbuf);
 	cbuf[1] = *mod;
 	if (cmd(cbuf)) {
 		printf("can't set dialing mode...");
@@ -98,7 +98,7 @@ biz_dialer(num, mod)
 	if (timeout) {
 		char line[80];
 
-		(void)sprintf(line, "%ld second dial timeout",
+		(void)snprintf(line, sizeof line, "%ld second dial timeout",
 			number(value(DIALTIMEOUT)));
 		logent(value(HOST), num, "biz1022", line);
 	}
