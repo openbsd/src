@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.37 2000/05/18 01:32:12 itojun Exp $	*/
+/*	$OpenBSD: route.c,v 1.38 2000/09/19 03:18:46 angelos Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.37 2000/05/18 01:32:12 itojun Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.38 2000/09/19 03:18:46 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -268,7 +268,7 @@ pr_encaphdr()
 		printf("%-*s ", PLEN, "Address");
 	printf("%-18s %-5s %-18s %-5s %-5s %-22s\n",
 	    "Source", "Port", "Destination", 
-	    "Port", "Proto", "SA(Address/SPI/Proto)");
+	    "Port", "Proto", "SA(Address/Proto/Type/Direction)");
 }
 
 static struct sockaddr *
@@ -985,6 +985,8 @@ encap_print(rt)
 	register struct rtentry *rt;
 {
 	struct sockaddr_encap sen1, sen2, sen3;
+        struct ipsec_policy ipo;
+
 #ifdef INET6
 	struct sockaddr_in6 s61, s62;
 	char ip6addr[64];
@@ -1031,18 +1033,61 @@ encap_print(rt)
 #endif /* INET6 */
 
 	if (sen3.sen_type == SENT_IPSP)
-	  printf("%s/%08x/%-u\n", inet_ntoa(sen3.sen_ipsp_dst),
-	         ntohl(sen3.sen_ipsp_spi), sen3.sen_ipsp_sproto);
+        {
+            char hostn[NI_MAXHOST];
 
-#ifdef INET6
-	if (sen3.sen_type == SENT_IPSP6)
-	{
-	    inet_ntop(AF_INET6, &sen3.sen_ipsp6_dst,
-		      ip6addr, sizeof(ip6addr));
-	    printf("%s/%08x/%-u\n", ip6addr, ntohl(sen3.sen_ipsp6_spi),
-		   sen3.sen_ipsp6_sproto);
-	}
-#endif /* INET6 */
+	    kget(sen3.sen_ipsp, ipo);
+
+            getnameinfo(&ipo.ipo_dst.sa, ipo.ipo_dst.sa.sa_len,
+                        hostn, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+	    printf("%s", hostn);
+
+            printf("/%-u", ipo.ipo_sproto);
+
+            switch (ipo.ipo_type)
+            {
+                case IPSP_IPSEC_REQUIRE:
+                    printf("/require");
+                    break;
+
+                case IPSP_IPSEC_ACQUIRE:
+                    printf("/acquire");
+                    break;
+
+                case IPSP_IPSEC_USE:
+                    printf("/use");
+                    break;
+
+                case IPSP_IPSEC_DONTACQ:
+                    printf("/dontacq");
+                    break;
+
+                case IPSP_PERMIT:
+                    printf("/permit");
+                    break;
+
+                case IPSP_DENY:
+                    printf("/deny");
+                    break;
+
+                default:
+                    printf("/<unknown type!>");
+            }
+
+            if ((ipo.ipo_addr.sen_type == SENT_IP4 &&
+                 ipo.ipo_addr.sen_direction == IPSP_DIRECTION_IN) ||
+                (ipo.ipo_addr.sen_type == SENT_IP6 &&
+                 ipo.ipo_addr.sen_ip6_direction == IPSP_DIRECTION_IN))
+              printf("/in\n");
+            else
+              if ((ipo.ipo_addr.sen_type == SENT_IP4 &&
+                   ipo.ipo_addr.sen_direction == IPSP_DIRECTION_OUT) ||
+                  (ipo.ipo_addr.sen_type == SENT_IP6 &&
+                   ipo.ipo_addr.sen_ip6_direction == IPSP_DIRECTION_OUT))
+                printf("/out\n");
+              else
+                printf("/<unknown>\n");
+        }
 }
 
 void
