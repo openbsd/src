@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_pci.c,v 1.1 2000/02/07 00:33:03 niklas Exp $	*/
+/*	$OpenBSD: gdt_pci.c,v 1.2 2000/02/13 10:59:06 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -768,7 +768,7 @@ gdt_mpr_intr(gdt, ctx)
 	GDT_DPRINTF(GDT_D_INTR, ("gdt_mpr_intr(%p) ", gdt));
 
 	if (ctx->istatus & 0x80) {		/* error flag */
-		ctx->istatus &= 0x80;
+		ctx->istatus &= ~0x80;
 		ctx->cmd_status = bus_space_read_2(gdt->sc_dpmemt,
 		    gdt->sc_dpmemh, GDT_MPR_STATUS);
 		if (ctx->istatus == GDT_ASYNCINDEX) {
