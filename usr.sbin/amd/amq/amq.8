@@ -36,7 +36,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)amq.8	8.3 (Berkeley) 4/18/94
-.\"	$Id: amq.8,v 1.3 1999/05/28 23:00:04 aaron Exp $
+.\"	$Id: amq.8,v 1.4 1999/08/26 14:35:41 millert Exp $
 .\"
 .Dd March 16, 1991
 .Dt AMQ 8
@@ -48,7 +48,7 @@
 .Nm amq
 .Op Fl f
 .Op Fl h Ar hostname
-.Op Fl M Ar mountmap_entry
+.\".Op Fl M Ar mountmap_entry
 .Op Fl m
 .Op Fl s
 .Op Fl u
@@ -100,9 +100,9 @@ Request the automounter to provide version information.  This is a subset
 of the information provided by
 .Xr amd Ns \'s Fl v
 option.
-.It Fl M
-Request automounter to add the given map entry to the root map and then
-trigger a mount request for it.
+.\".It Fl M
+.\"Request automounter to add the given map entry to the root map and then
+.\"trigger a mount request for it.
 .El
 .Sh FILES
 .Bl -tag -width amq.xxxxx -compact
