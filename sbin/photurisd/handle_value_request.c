@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: handle_value_request.c,v 1.1 1998/11/14 23:37:24 deraadt Exp $";
+static char rcsid[] = "$Id: handle_value_request.c,v 1.2 1999/12/17 18:57:03 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -42,6 +42,7 @@ static char rcsid[] = "$Id: handle_value_request.c,v 1.1 1998/11/14 23:37:24 der
 #include <string.h>
 #include <time.h>
 #include <sys/time.h>
+#include <sys/socket.h>
 #include <netinet/in.h>
 #include "config.h"
 #include "photuris.h"

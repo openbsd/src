@@ -32,7 +32,7 @@
  */
 
 #ifndef lint 
-static char rcsid[] = "$Id: photurisd.c,v 1.3 1999/04/10 00:10:17 provos Exp $";
+static char rcsid[] = "$Id: photurisd.c,v 1.4 1999/12/17 18:57:03 deraadt Exp $";
 #endif 
 
 #define _PHOTURIS_C_
@@ -40,6 +40,7 @@ static char rcsid[] = "$Id: photurisd.c,v 1.3 1999/04/10 00:10:17 provos Exp $";
 #include <stdio.h> 
 #include <stdlib.h>
 #include <sys/types.h> 
+#include <sys/socket.h>
 #include <netinet/in.h>
 #include <signal.h> 
 #include <errno.h> 

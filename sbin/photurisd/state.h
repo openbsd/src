@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* $Id: state.h,v 1.1 1998/11/14 23:37:29 deraadt Exp $ */
+/* $Id: state.h,v 1.2 1999/12/17 18:57:03 deraadt Exp $ */
 /*
  * state.h: 
  * state object
@@ -36,6 +36,7 @@
 #ifndef _STATE_H_
 #define _STATE_H_
 
+#include <sys/socket.h>
 #include <netinet/in.h>
 #include <gmp.h>
 #include <time.h>
