@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.6 2000/07/03 05:23:45 pjanzen Exp $	*/
+/*	$OpenBSD: extern.h,v 1.7 2000/07/24 01:02:44 pjanzen Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1995/04/24 12:22:18 cgd Exp $	*/
 
 /*
@@ -350,7 +350,7 @@ void light __P((void));
 void live __P((void));
 struct wlist *lookup __P((const char *));
 void love __P((void));
-int move __P((int, int));
+int moveplayer __P((int, int));
 void moveenemy __P((int));
 void murder __P((void));
 void news __P((void));

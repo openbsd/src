@@ -1,4 +1,4 @@
-/*	$OpenBSD: com1.c,v 1.8 2000/07/03 05:23:44 pjanzen Exp $	*/
+/*	$OpenBSD: com1.c,v 1.9 2000/07/24 01:02:43 pjanzen Exp $	*/
 /*	$NetBSD: com1.c,v 1.3 1995/03/21 15:06:51 cgd Exp $	*/
 
 /*
@@ -38,14 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)com1.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: com1.c,v 1.8 2000/07/03 05:23:44 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: com1.c,v 1.9 2000/07/24 01:02:43 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
 #include "extern.h"
 
 int
-move(thataway, token)
+moveplayer(thataway, token)
 	int     thataway, token;
 {
 	wordnumber++;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: com7.c,v 1.7 1999/09/25 20:30:45 pjanzen Exp $	*/
+/*	$OpenBSD: com7.c,v 1.8 2000/07/24 01:02:43 pjanzen Exp $	*/
 /*	$NetBSD: com7.c,v 1.3 1995/03/21 15:07:12 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com7.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: com7.c,v 1.7 1999/09/25 20:30:45 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: com7.c,v 1.8 2000/07/24 01:02:43 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -203,15 +203,15 @@ fighton:
 			puts("You escape stunned and disoriented from the fight.");
 			puts("A victorious bellow echoes from the battlescene.");
 			if (back && position != back)
-				move(back, BACK);
+				moveplayer(back, BACK);
 			else if (ahead &&position != ahead)
-				move(ahead, AHEAD);
+				moveplayer(ahead, AHEAD);
 			else if (left && position != left)
-				move(left, LEFT);
+				moveplayer(left, LEFT);
 			else if (right && position != right)
-				move(right, RIGHT);
+				moveplayer(right, RIGHT);
 			else
-				move(location[position].down, AHEAD);
+				moveplayer(location[position].down, AHEAD);
 			return (0);
 		}
 

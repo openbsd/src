@@ -1,4 +1,4 @@
-/*	$OpenBSD: cypher.c,v 1.8 2000/07/03 05:23:45 pjanzen Exp $	*/
+/*	$OpenBSD: cypher.c,v 1.9 2000/07/24 01:02:43 pjanzen Exp $	*/
 /*	$NetBSD: cypher.c,v 1.3 1995/03/21 15:07:15 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cypher.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: cypher.c,v 1.8 2000/07/03 05:23:45 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: cypher.c,v 1.9 2000/07/24 01:02:43 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ cypher()
 			if (location[position].access || wiz || tempwiz) {
 				if (!location[position].access)
 					puts("Zap!  A gust of wind lifts you up.");
-				if (!move(location[position].up, AHEAD))
+				if (!moveplayer(location[position].up, AHEAD))
 					return (-1);
 			} else {
 				puts("There is no way up.");
@@ -74,31 +74,31 @@ cypher()
 			break;
 
 		case DOWN:
-			if (!move(location[position].down, AHEAD))
+			if (!moveplayer(location[position].down, AHEAD))
 				return (-1);
 			lflag = 0;
 			break;
 
 		case LEFT:
-			if (!move(left, LEFT))
+			if (!moveplayer(left, LEFT))
 				return (-1);
 			lflag = 0;
 			break;
 
 		case RIGHT:
-			if (!move(right, RIGHT))
+			if (!moveplayer(right, RIGHT))
 				return (-1);
 			lflag = 0;
 			break;
 
 		case AHEAD:
-			if (!move(ahead, AHEAD))
+			if (!moveplayer(ahead, AHEAD))
 				return (-1);
 			lflag = 0;
 			break;
 
 		case BACK:
-			if (!move(back, BACK))
+			if (!moveplayer(back, BACK))
 				return (-1);
 			lflag = 0;
 			break;
