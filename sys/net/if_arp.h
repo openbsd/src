@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_arp.h,v 1.4 2001/06/09 06:16:37 angelos Exp $	*/
+/*	$OpenBSD: if_arp.h,v 1.5 2002/06/25 17:09:25 itojun Exp $	*/
 /*	$NetBSD: if_arp.h,v 1.8 1995/03/08 02:56:52 cgd Exp $	*/
 
 /*
@@ -53,6 +53,7 @@ struct	arphdr {
 #define ARPHRD_ETHER 	1	/* ethernet hardware format */
 #define ARPHRD_IEEE802 	6	/* IEEE 802 hardware format */
 #define ARPHRD_FRELAY 	15	/* frame relay hardware format */
+#define ARPHRD_IEEE1394	24	/* IEEE 1394 (FireWire) hardware format */
 	u_int16_t ar_pro;	/* format of protocol address */
 	u_int8_t  ar_hln;	/* length of hardware address */
 	u_int8_t  ar_pln;	/* length of protocol address */
