@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.29 2001/12/16 23:49:47 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.30 2001/12/20 06:07:28 smurph Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -59,8 +59,10 @@
 #include <machine/bugio.h>		/* bugreturn() */
 #include <machine/cpu.h>		/* DMT_VALID, etc. */
 #include <machine/locore.h>
+#ifdef M88100
 #include <machine/m88100.h>		/* DMT_VALID, etc. */
-#ifdef MVME197
+#endif
+#ifdef M88110
 #include <machine/m88110.h>		/* DMT_VALID, etc. */
 #endif
 #include <machine/pcb.h>		/* FIP_E, etc. */
@@ -271,7 +273,7 @@ trap18x(unsigned type, struct m88100_saved_state *frame)
 		/* This function pointer is set in machdep.c 
 		   It calls m188_ext_int or sbc_ext_int depending
 		   on the value of cputyp - smurph */
-		(*mdfp.interrupt_func)(T_INT, frame);
+		(*md.interrupt_func)(T_INT, frame);
 		return;
 
 	case T_MISALGNFLT:

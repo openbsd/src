@@ -1,6 +1,4 @@
-
-/*	$OpenBSD: pcctwo.c,v 1.13 2001/12/19 07:04:41 smurph Exp $ */
-
+/*	$OpenBSD: pcctwo.c,v 1.14 2001/12/20 06:07:28 smurph Exp $ */
 /*
  * Copyright (c) 1995 Theo de Raadt
  * All rights reserved.
@@ -190,11 +188,6 @@ void *args;
 	sc->sc_pcc2->pcc2_vecbase = PCC2_VECBASE;
 	sc->sc_pcc2->pcc2_genctl |= PCC2_GENCTL_IEN;	/* global irq enable */
 
-	/*
-	 * Set pcc2intr_mask and pcc2intr_ipl.
-	 */
-	pcc2intr_ipl = (u_char *)&(sc->sc_pcc2->pcc2_ipl);
-	pcc2intr_mask = (u_char *)&(sc->sc_pcc2->pcc2_mask);
 	config_search(pcctwo_scan, self, args);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.15 2001/12/19 07:04:41 smurph Exp $ */
+/*	$OpenBSD: clock.c,v 1.16 2001/12/20 06:07:28 smurph Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -191,7 +191,7 @@ clockattach(parent, self, args)
 		sc->sc_profih.ih_ipl = ca->ca_ipl;
 		prof_reset = ca->ca_ipl | PCC2_IRQ_IEN | PCC2_IRQ_ICLR;
 		pcctwointr_establish(PCC2V_TIMER1, &sc->sc_profih);
-		mdfp.clock_init_func = &sbc_initclock;
+		md.clock_init_func = sbc_initclock;
 		printf(": VME1x7");
 		break;
 #endif /* NPCCTWO */
@@ -202,7 +202,7 @@ clockattach(parent, self, args)
 		sc->sc_profih.ih_wantframe = 1;
 		sc->sc_profih.ih_ipl = ca->ca_ipl;
 		sysconintr_establish(SYSCV_TIMER1, &sc->sc_profih);
-		mdfp.clock_init_func = &m188_initclock;
+		md.clock_init_func = m188_initclock;
 		printf(": VME188");
 		break;
 #endif /* NSYSCON */

@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.76 2001/12/19 07:04:42 smurph Exp $	*/
+/* $OpenBSD: machdep.c,v 1.77 2001/12/20 06:07:28 smurph Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -123,7 +123,7 @@ struct intrhand *intr_handlers[256];
 vm_offset_t interrupt_stack[MAX_CPUS] = {0};
 
 /* machine dependant function pointers. */
-struct funcp mdfp;
+struct md_p md;
 
 /* prototypes */
 void m88100_Xfp_precise __P((void));
@@ -165,18 +165,9 @@ volatile unsigned int *int_mask_reg[MAX_CPUS] = {
 };
 #endif 
 
-#if defined(MVME187) || defined(MVME197)
-u_char *int_mask_level = (u_char *)INT_MASK_LEVEL;
-u_char *int_pri_level = (u_char *)INT_PRI_LEVEL;
-#endif /* defined(MVME187) || defined(MVME197) */
-
-#if defined(MVME187) || defined(MVME197)
-volatile u_char *pcc2intr_mask;
-volatile u_char *pcc2intr_ipl;
 volatile vm_offset_t bugromva;
 volatile vm_offset_t sramva;
 volatile vm_offset_t obiova;
-#endif /* defined(MVME187) || defined(MVME197) */
 #ifdef MVME188
 volatile vm_offset_t utilva;
 #endif
@@ -249,9 +240,9 @@ struct kernel {
 extern char *esym;
 #endif
 
-int boothowto; /* read in locore.S */
-int bootdev;   /* read in locore.S */
-int cputyp;
+int boothowto;	/* set in locore.S */
+int bootdev;	/* set in locore.S */
+int cputyp;	/* set in locore.S */
 int brdtyp;	/* set in locore.S */
 int cpumod = 0; /* set in mvme_bootstrap() */
 int cpuspeed = 25;   /* 25 MHZ XXX should be read from NVRAM */
@@ -443,17 +434,17 @@ cpu_initclocks()
 #ifdef DEBUG
 	printf("cpu_initclocks(): ");
 #endif 
-	if (mdfp.clock_init_func != NULL) {
+	if (md.clock_init_func != NULL) {
 #ifdef DEBUG
 		printf("[interval clock] ");
 #endif 
-		(*mdfp.clock_init_func)();
+		(*md.clock_init_func)();
 	}
-	if (mdfp.statclock_init_func != NULL) {
+	if (md.statclock_init_func != NULL) {
 #ifdef DEBUG
 		printf("[statistics clock]");
 #endif 
-		(*mdfp.statclock_init_func)();
+		(*md.statclock_init_func)();
 	}
 #ifdef DEBUG
 	printf("\n");
@@ -1704,8 +1695,8 @@ sbc_ext_int(u_int v, struct m88100_saved_state *eframe)
 	u_char vec;
 
 	/* get level and mask */
-	asm volatile("ld.b	%0,%1" : "=r" (mask) : "" (*pcc2intr_mask));
-	asm volatile("ld.b	%0,%1" : "=r" (level) : "" (*pcc2intr_ipl));
+	asm volatile("ld.b	%0,%1" : "=r" (mask) : "" (*md.intr_mask));
+	asm volatile("ld.b	%0,%1" : "=r" (level) : "" (*md.intr_ipl));
 
 	/*
 	 * It is really bizarre for the mask and level to the be the same.
@@ -2188,7 +2179,7 @@ mvme_bootstrap()
 	struct bugbrdid brdid;
 
 	/* zreo out the machine dependant function pointers */
-	bzero(&mdfp, sizeof(struct funcp));
+	bzero(&md, sizeof(struct md_p));
 
 	buginit(); /* init the bug routines */
 	bugbrdid(&brdid);
@@ -2205,8 +2196,10 @@ mvme_bootstrap()
 	switch (brdtyp) {
 #ifdef MVME188
 	case BRD_188:
-		mdfp.interrupt_func = &m188_ext_int;
-		mdfp.fp_precise_func = &m88100_Xfp_precise;
+		md.interrupt_func = &m188_ext_int;
+		md.intr_mask = NULL;
+		md.intr_ipl = NULL;
+		md.intr_src = NULL;
 		/* clear and disable all interrupts */
 		*int_mask_reg[0] = 0;
 		*int_mask_reg[1] = 0;
@@ -2216,14 +2209,18 @@ mvme_bootstrap()
 #endif /* MVME188 */
 #ifdef MVME187
 	case BRD_187:
-		mdfp.interrupt_func = &sbc_ext_int;
-		mdfp.fp_precise_func = &m88100_Xfp_precise;
+		md.interrupt_func = &sbc_ext_int;
+		md.intr_mask = (u_char *)M187_IMASK;
+		md.intr_ipl = (u_char *)M187_ILEVEL;
+		md.intr_src = NULL;
 		break;
 #endif /* MVME187 */
 #ifdef MVME197
 	case BRD_197:
-		mdfp.interrupt_func = &sbc_ext_int;
-		mdfp.fp_precise_func = &m88110_Xfp_precise;
+		md.interrupt_func = &sbc_ext_int;
+		md.intr_mask = (u_char *)M197_IMASK;
+		md.intr_ipl = (u_char *)M197_ILEVEL;
+		md.intr_src = (u_char *)M197_ISRC;
 		set_tcfp(); /* Set Time Critical Floating Point Mode */
 		break;
 #endif /* MVME197 */

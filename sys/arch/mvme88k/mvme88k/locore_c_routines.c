@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_c_routines.c,v 1.17 2001/12/19 07:04:41 smurph Exp $	*/
+/* $OpenBSD: locore_c_routines.c,v 1.18 2001/12/20 06:07:28 smurph Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -28,14 +28,16 @@
 
 #include "assym.h"
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/systm.h>
 
+#include <machine/cpu_number.h>		/* cpu_number()		*/
+#include <machine/board.h>		/* m188 bit defines	*/
 #include <machine/asm.h>		/* END_OF_VECTOR_LIST, etc.	*/
 #include <machine/asm_macro.h>		/* enable/disable interrupts	*/
 #include <machine/mmu.h>
-#include <machine/board.h>		/* m188 bit defines	*/
-#include <machine/cmmu.h>
+#include <machine/cmmu.h>		/* DMT_VALID		*/
 #include <machine/cpu_number.h>		/* cpu_number()		*/
 #include <machine/locore.h>
 #include <machine/m88100.h>		/* DMT_VALID		*/
@@ -69,11 +71,6 @@ typedef struct {
 
 extern volatile unsigned int * int_mask_reg[MAX_CPUS]; /* in machdep.c */
 extern unsigned master_cpu;      /* in cmmu.c */
-
-#if defined(MVME187) || defined(MVME197)
-extern u_char *int_mask_level;
-extern u_char *int_pri_level;
-#endif /* defined(MVME187) || defined(MVME197) */
 
 /* FORWARDS */
 void vector_init(m88k_exception_vector_area *vector, unsigned *vector_init_list);
@@ -503,7 +500,7 @@ spl(void)
 #if defined(MVME187) || defined(MVME197)
 	case BRD_187:
 	case BRD_197:
-		curspl = *int_mask_level;
+		curspl = *md.intr_mask;
 		break;
 #endif /* defined(MVME187) || defined(MVME197) */
 	}
@@ -532,7 +529,7 @@ db_spl(void)
 #if defined(MVME187) || defined(MVME197)
 	case BRD_187:
 	case BRD_197:
-		curspl = *int_mask_level;
+		curspl = *md.intr_mask;
 		break;
 #endif /* defined(MVME187) || defined(MVME197) */
 	}
@@ -579,8 +576,8 @@ setipl(unsigned level)
 #if defined(MVME187) || defined(MVME197)
 	case BRD_187:
 	case BRD_197:
-		curspl = *int_mask_level;
-		*int_mask_level = level;
+		curspl = *md.intr_mask;
+		*md.intr_mask = level;
 		break;
 #endif /* defined(MVME187) || defined(MVME197) */
 	}
@@ -617,8 +614,8 @@ db_setipl(unsigned level)
 #if defined(MVME187) || defined(MVME197)
 	case BRD_187:
 	case BRD_197:
-		curspl = *int_mask_level;
-		*int_mask_level = level;
+		curspl = *md.intr_mask;
+		*md.intr_mask = level;
 		break;
 #endif /* defined(MVME187) || defined(MVME197) */
 	}

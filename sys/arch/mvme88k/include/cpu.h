@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.15 2001/12/16 23:49:46 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.16 2001/12/20 06:07:28 smurph Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -184,18 +184,20 @@ struct switchframe {
 	void	*sf_proc;		/* proc pointer */
 };
 
-/* This struct defines the machine dependant function pointers */
-
-struct funcp {
+/* This struct defines the machine dependant pointers */
+struct md_p {
 	void (*clock_init_func) __P((void));      /* interval clock init function */
 	void (*statclock_init_func) __P((void));  /* statistics clock init function */
 	void (*delayclock_init_func) __P((void)); /* delay clock init function */
 	void (*delay_func) __P((void));           /* delay clock function */
-   void (*interrupt_func) __P((u_int, struct m88100_saved_state *));       /* interrupt func */
-   void (*fp_precise_func) __P((void));      /* floating point precise function */
+	void (*interrupt_func) __P((u_int, struct m88100_saved_state *));       /* interrupt func */
+	volatile u_char *intr_mask;
+	volatile u_char *intr_ipl;
+	volatile u_char *intr_src;
 };
 
-extern struct funcp mdfp;
+extern struct md_p md;
+
 
 int badvaddr __P((vm_offset_t va, int size));
 void nmihand __P((void *framep));
