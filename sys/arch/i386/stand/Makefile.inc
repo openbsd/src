@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.26 1999/08/25 00:54:18 mickey Exp $
+#	$OpenBSD: Makefile.inc,v 1.27 2000/02/08 17:48:53 mickey Exp $
 
 CFLAGS=${DEBUG} -Os -Wall -Werror
 CPPFLAGS+=-I${S} -I${SADIR}/libsa -I. -I${.CURDIR}
@@ -17,7 +17,7 @@ LINKADDR=0x40000
 LOADADDR=0x40000
 HEAP_LIMIT=0x90000
 BOOTREL=0x60000
-BOOTMAGIC=0xc00ld00d
+BOOTMAGIC=0xc001d00d
 #ROM_SIZE=32768
 CLEANFILES+=	machine
 
