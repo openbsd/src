@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.25 1999/03/27 21:04:20 provos Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.26 1999/06/06 23:34:20 deraadt Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -513,6 +513,7 @@ udp_input(m, va_alist)
 		else
 #endif /* INET6 */
 		icmp_error(m, ICMP_BLAH, ICMP_BLAH, 0, 0);
+		m = NULL;
 #endif /* notyet */
 		udpstat.udps_nosec++;
 		goto bad;
