@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sgi/MAKEDEV.md,v 1.5 2004/09/21 07:55:48 miod Exp 
+#	OpenBSD: etc.sgi/MAKEDEV.md,v 1.6 2004/09/22 14:40:24 miod Exp 
 #	OpenBSD: MAKEDEV.common,v 1.12 2004/08/19 07:05:20 miod Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.72 2004/02/16 18:58:53 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.12 2004/02/20 19:13:01 miod Exp 
@@ -26,20 +26,19 @@
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices.
 #		Tries to make the ``standard'' number of each type.
-#	std	Standard devices
-#	fd	fd/* nodes for fdescfs
-#	local	Configuration specific devices
 #	ramdisk	Ramdisk kernel devices
-# Tapes:
-#	st*	SCSI tape drives
+#	std	Standard devices
+#	local	Configuration specific devices
 # Disks:
-#	wd*	"winchester" disk drives (ST506, IDE, ESDI, RLL, ...)
-#	sd*	SCSI disks, including flopticals
-#	cd*	ATAPI and SCSI CD-ROM drives
-#	ch*	SCSI media changers
-#	vnd*	"file" pseudo-disk devices
-#	rd*	"rd" pseudo-disks
 #	ccd*	Concatenated disk devices
+#	cd*	ATAPI and SCSI CD-ROM drives
+#	rd*	"rd" pseudo-disks
+#	sd*	SCSI disks, including flopticals
+#	vnd*	"file" pseudo-disk devices
+#	wd*	"winchester" disk drives (ST506, IDE, ESDI, RLL, ...)
+# Tapes:
+#	ch*	SCSI media changers
+#	st*	SCSI tape drives
 # Terminal ports:
 #	tty[0-7][0-9a-f]	NS16x50 serial ports
 # Pseudo terminals:
@@ -55,11 +54,15 @@
 #	wsmouse*	wscons mice
 # Special purpose devices:
 #	bpf*	Berkeley Packet Filter
-#	tun*	Network tunnel driver
-#	*random	In-kernel random data source
-#	uk*	Unknown SCSI devices
-#	ss*	SCSI scanners
+#	fd	fd/* nodes for fdescfs
+#	pci	PCI bus device
 #	pf*	Packet Filter
+#	*random	In-kernel random data source
+#	ss*	SCSI scanners
+#	systrace*	System call tracing device
+#	tun*	Network tunnel driver
+#	uk*	Unknown SCSI devices
+#	xfs*	XFS filesystem node
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -206,8 +209,20 @@ std)
 	M klog		c 6 0 600
 	;;
 
-pf*)
-	M pf c 31 0 600
+xfs*)
+	M xfs$U c 51 $U 600
+	;;
+
+uk*)
+	M uk$U c 32 $U 640 operator
+	;;
+
+tun*)
+	M tun$U c 40 $U 600
+	;;
+
+systrace)
+	M systrace c 50 0 644
 	;;
 
 ss*)
@@ -216,10 +231,6 @@ ss*)
 	M enss$U c 34 $(($(($U*16))+3)) 640 operator
 	RMlist="$RMlist scan$U"
 	MKlist="$MKlist;umask 77;ln -s ss$U scan$U"
-	;;
-
-uk*)
-	M uk$U c 32 $U 640 operator
 	;;
 
 *random)
@@ -231,8 +242,18 @@ uk*)
 	done
 	;;
 
-tun*)
-	M tun$U c 40 $U 600
+pf*)
+	M pf c 31 0 600
+	;;
+
+pci)
+	M pci c 29 0 600
+	;;
+
+fd)
+	RMlist="mkdir -p fd;$RMlist" n=0
+	while [ $n -lt 64 ];do M fd/$n c 7 $n;n=$(($n+1));done
+	MKlist="$MKlist;chmod 555 fd"
 	;;
 
 bpf*)
@@ -306,23 +327,6 @@ tty[0-7][0-9a-f])
 	M cua$U c 17 $(($o+128)) 660 dialer uucp
 	;;
 
-rd*)
-	dodisk2 rd $U 8 22 $U 0
-	;;
-
-vnd*)
-	dodisk vnd $U 2 11 $U 0
-	dodisk svnd $U 2 11 $U 2048
-	;;
-
-ch*)
-	M ch$U c 36 $U 660 operator
-	;;
-
-cd*)
-	dodisk2 cd $U 3 8 $U 0
-	;;
-
 st*)
 	n=$(($U*16))
 	for pre in " " n e en
@@ -333,27 +337,38 @@ st*)
 	done
 	;;
 
-ramdisk)
-	R pty0 rd0 cd0 cd1 st0 st1 wd0 wd1 wd2 wd3 wd4 sd0 sd1 sd2
-	R sd3 sd4 bpf0 std
+ch*)
+	M ch$U c 36 $U 660 operator
+	;;
+
+vnd*)
+	dodisk vnd $U 2 11 $U 0
+	dodisk svnd $U 2 11 $U 2048
+	;;
+
+rd*)
+	dodisk2 rd $U 8 22 $U 0
+	;;
+
+cd*)
+	dodisk2 cd $U 3 8 $U 0
 	;;
 
 local)
 	test -s $T.local && sh $T.local
 	;;
 
-fd)
-	RMlist="mkdir -p fd;$RMlist" n=0
-	while [ $n -lt 64 ];do M fd/$n c 7 $n;n=$(($n+1));done
-	MKlist="$MKlist;chmod 555 fd"
+ramdisk)
+	R pty0 rd0 cd0 cd1 st0 st1 wd0 wd1 wd2 wd3 wd4 sd0 sd1 sd2
+	R sd3 sd4 bpf0 std
 	;;
 
 all)
 	R ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4
 	R cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4
-	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 ss0 ss1 ch0 ptm
-	R local wscons uk0 random tty00 tty01 tty02 tty03 pf wd0 wd1
-	R wd2 wd3 std st0 st1 fd
+	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 xfs0 ss0 ss1 ch0 ptm
+	R local wscons pci uk0 random tty00 tty01 tty02 tty03 pf
+	R systrace wd0 wd1 wd2 wd3 std st0 st1 fd
 	;;
 
 wd*|sd*|ccd*)
