@@ -127,10 +127,11 @@ spllower(ncpl)
 /*
  * Software interrupt masks
  *
- * NOTE: splsoftclock() is used by hardclock() to lower the priority from
+ * NOTE: spllowersoftclock() is used by hardclock() to lower the priority from
  * clock to softclock before it calls softclock().
  */
-#define	splsoftclock()	spllower(SIR_CLOCKMASK)
+#define	spllowersoftclock()	spllower(SIR_CLOCKMASK)
+#define	splsoftclock()	splraise(SIR_CLOCKMASK)
 #define	splsoftnet()	splraise(SIR_NETMASK)
 #define	splsofttty()	splraise(SIR_TTYMASK)
 

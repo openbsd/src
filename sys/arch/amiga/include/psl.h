@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.10 1999/05/10 16:24:55 espie Exp $	*/
+/*	$OpenBSD: psl.h,v 1.11 2000/07/06 15:29:52 ho Exp $	*/
 /*	$NetBSD: psl.h,v 1.11 1996/11/30 00:33:49 is Exp $	*/
 
 #ifndef _MACHINE_PSL_H_
@@ -132,12 +132,13 @@ extern u_int16_t amiga_ttyspl;
 /*
  * Software interrupt masks
  *
- * NOTE: splsoftclock() is used by hardclock() to lower the priority from
+ * NOTE: spllowersoftclock() is used by hardclock() to lower the priority from
  * clock to softclock before it calls softclock().
  */
-#define splsoftclock()	spllower(PSL_S|PSL_IPL1)
-#define splsoftnet()	spl1()
-#define splsofttty()	spl1()
+#define spllowersoftclock()	spllower(PSL_S|PSL_IPL1)
+#define splsoftclock()		spl1()
+#define splsoftnet()		spl1()
+#define splsofttty()		spl1()
 
 /*
  * Miscellaneous
