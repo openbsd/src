@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sgi,v 1.5 2004/09/09 22:11:39 pefo Exp $
+#	$OpenBSD: Makefile.sgi,v 1.6 2004/09/15 16:59:30 matthieu Exp $
 
 # Makefile for OpenBSD
 #
@@ -182,6 +182,18 @@ depend:: .depend
 	mkdep ${AFLAGS} ${CPPFLAGS} ${SGI}/sgi/locore.S
 	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 #	mkdep -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
+
+# The install target can be redefined by putting a
+# install-kernel-${MACHINE_NAME} target into /etc/mk.conf
+MACHINE_NAME!=  uname -n
+install: install-kernel-${MACHINE_NAME}
+.if !target(install-kernel-${MACHINE_NAME}})
+install-kernel-${MACHINE_NAME}:
+	rm -f /obsd
+	ln /bsd /obsd
+	cp bsd /nbsd
+	mv /nbsd /bsd
+.endif
 
 %RULES
 
