@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.17 1999/12/06 06:50:11 art Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.18 2000/01/14 19:23:34 art Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -686,7 +686,7 @@ ffs_blkpref(ip, lbn, indx, bap)
 
 	fs = ip->i_fs;
 	if (indx % fs->fs_maxbpg == 0 || bap[indx - 1] == 0) {
-		if (lbn < NDADDR) {
+		if (lbn < NDADDR + NINDIR(fs)) {
 			cg = ino_to_cg(fs, ip->i_number);
 			return (fs->fs_fpg * cg + fs->fs_frag);
 		}
