@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.73 2003/11/06 21:09:34 mickey Exp $	*/
+/*	$OpenBSD: if.c,v 1.74 2003/12/03 11:01:43 markus Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -154,8 +154,36 @@ if_attachsetup(ifp)
 {
 	struct ifaddr *ifa;
 	static int if_indexlim = 8;
+	int wrapped = 0;
 
-	ifp->if_index = ++if_index;
+	if (ifindex2ifnet == 0)
+		if_index = 1;
+	else {
+		while (if_index < if_indexlim &&
+		    ifindex2ifnet[if_index] != NULL) {
+			if_index++;
+			/*
+			 * If we hit USHRT_MAX, we skip back to 1 since
+			 * there are a number of places where the value
+			 * of ifp->if_index or if_index itself is compared
+			 * to or stored in an unsigned short.  By
+			 * jumping back, we won't botch those assignments
+			 * or comparisons.
+			 */
+			if (if_index == USHRT_MAX) {
+				if_index = 1;
+				/*
+				 * However, if we have to jump back to 1
+				 * *twice* without finding an empty
+				 * slot in ifindex2ifnet[], then there
+				 * there are too many (>65535) interfaces.
+				 */
+				if (wrapped++)
+					panic("too many interfaces");
+			}
+		}
+	}
+	ifp->if_index = if_index;
 
 	/*
 	 * We have some arrays that should be indexed by if_index.
@@ -252,7 +280,7 @@ if_alloc_sadl(ifp)
 	sdl->sdl_alen = ifp->if_addrlen;
 	sdl->sdl_index = ifp->if_index;
 	sdl->sdl_type = ifp->if_type;
-	ifnet_addrs[if_index] = ifa;
+	ifnet_addrs[ifp->if_index] = ifa;
 	ifa->ifa_ifp = ifp;
 	ifa->ifa_rtrequest = link_rtrequest;
 	TAILQ_INSERT_HEAD(&ifp->if_addrlist, ifa, ifa_list);
