@@ -1,4 +1,4 @@
-.\"	$OpenBSD: passwd.1,v 1.6 1998/01/20 19:51:58 art Exp $
+.\"	$OpenBSD: passwd.1,v 1.7 1998/09/27 16:57:49 aaron Exp $
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -50,7 +50,7 @@
 .Op Ar user
 .\" This should really be: passwd [-l] [-y] [-k [-n name] [-i instance] [-r realm] [-u username[.instance][@realm]]] [user]
 .Sh DESCRIPTION
-.Nm Passwd
+.Nm passwd
 changes the user's local, Kerberos, or YP password.  First, the user is prompted
 for their current password.
 If the current password is correctly typed, a new password is
@@ -62,21 +62,21 @@ purely alphabetic.
 Its total length must be less than
 .Dv _PASSWORD_LEN
 (currently 128 characters).
-Numbers, upper case letters and meta characters
+Numbers, upper case letters and meta-characters
 are encouraged.
 .Bl -tag -width flag
 .It Fl l
-This option causes the password to be updated only in the local
+Causes the password to be updated only in the local
 password file.  When changing only the local password,
 .Xr pwd_mkdb  8
 is used to update the password databases.
 .It Fl y
-This forces the YP password database entry to be changed, even if
+Forces the YP password database entry to be changed, even if
 the user has an entry in the local database.  The
 .Xr rpc.yppasswdd 8
 daemon should be running on the YP master server.
 .It Fl k
-This option forces the change to affect the Kerberos database, even
+Forces the change to affect the Kerberos database, even
 if the user has a password in the local database.
 Once the password has been verified,
 .Nm passwd
@@ -86,33 +86,33 @@ the Kerberos authenticating host.
 .Pp
 The following flags are only used when the 
 .Fl k
-flag is specified.
+flag is specified:
 .Bl -tag -width flag
-.It Fl n
-This option lets you specify a 
-.Nm name
+.It Fl n Ar name
+Specifies a 
+.Ar name
 that will be used as the principal name rather  than  the  username
 of the user running
-.Nm passwd.
+.Nm passwd .
 (This is determined from the ticket file  if  it exists;  otherwise,  
-it is determined from the unix user id.)
-.It Fl i
-This option lets you specify an 
-.Nm instance 
+it is determined from the Unix user ID.)
+.It Fl i Ar instance
+Specifies an 
+.Ar instance 
 to use rather than a null instance.
-.It Fl r
-This option lets you use
-.Nm realm
+.It Fl r Ar realm
+Specifies a
+.Ar realm
 instead of the local realm.
-.It Fl u
-This option lets you specify a fully qualified kerberos principal.
+.It Fl u Ar username[.instance][@realm]
+Specifies a fully qualified kerberos principal.
 .El
 .Pp
 This is the behavior if no flags are specified:
 if Kerberos is active then
 .Nm passwd
 will talk to the Kerberos server (even if the user has an entry
-in the local database.)
+in the local database).
 If the password is not in the local password database, then
 an attempt is made to use the YP database.
 .Pp
@@ -131,13 +131,13 @@ It can be different for local and YP passwords.
 .Sh FILES
 .Bl -tag -width /etc/master.passwd -compact
 .It Pa /etc/master.passwd
-The user database
+user database
 .It Pa /etc/passwd 
-A Version 7 format password file
+a Version 7 format password file
 .It Pa /etc/passwd.XXXXXX
-Temporary copy of the password file
+temporary copy of the password file
 .It /etc/passwd.conf
-Configuration options
+configuration options
 .El
 .Sh SEE ALSO
 .Xr chpass 1 ,

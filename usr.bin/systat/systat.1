@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.7 1998/09/01 16:38:25 deraadt Exp $
+.\"	$OpenBSD: systat.1,v 1.8 1998/09/27 16:57:54 aaron Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -48,7 +48,7 @@
 .Op Ar display
 .Op Ar refresh-interval
 .Sh DESCRIPTION
-.Nm Systat
+.Nm systat
 displays various system statistics in a screen oriented fashion
 using the curses screen display library,
 .Xr curses 3 .
@@ -86,7 +86,7 @@ Command line options:
 Extract values associated with the name list from
 .Ar core
 instead of the default
-.Pa /dev/mem .
+.Pa /dev/kmem .
 .It Fl N Ar system
 Extract the name list from
 .Ar system
@@ -180,7 +180,7 @@ on disk throughput show, for each drive, kilobytes of data transferred,
 number of disk transactions performed, and time spent in disk accesses
 (in milliseconds).  This information may be displayed as
 bar graphs or as rows of numbers which scroll downward.  Bar
-graphs are shown by default;
+graphs are shown by default.
 .Pp
 The following commands are specific to the
 .Ic iostat
@@ -209,9 +209,9 @@ The
 .Ar Used
 column indicates the total blocks used so far;
 the graph shows the percentage of space in use on each partition.
-If there are more than one swap partition in use,
+If there is more than one swap partition in use,
 a total line is also shown.
-Areas known to the kernel, but not in use are shown as not available.
+Areas known to the kernel but not in use are shown as not available.
 .It Ic mbufs
 Display, in the lower window, the number of mbufs allocated
 for particular uses, i.e. data, socket structures, etc.
@@ -223,21 +223,21 @@ device interrupts, system name translation cacheing, disk
 etc.
 .Pp
 The upper left quadrant of the screen shows the number
-of users logged in and the load average over the last one, five,
-and fifteen minute intervals.
+of users logged in and the load average over the last 1, 5,
+and 15 minute intervals.
 Below this line are statistics on memory utilization.
 The first row of the table reports memory usage only among
-active processes, that is processes that have run in the previous
+active processes, that is, processes that have run in the previous
 twenty seconds.
 The second row reports on memory usage of all processes.
 The first column reports on the number of physical pages
 claimed by processes.
 The second column reports the number of physical pages that
-are devoted to read only text pages.
+are devoted to read-only text pages.
 The third and fourth columns report the same two figures for
-virtual pages, that is the number of pages that would be
+virtual pages, that is, the number of pages that would be
 needed if all processes had all of their pages.
-Finally the last column shows the number of physical pages
+Finally, the last column shows the number of physical pages
 on the free list.
 .Pp
 Below the memory display is a list of the average number of processes
@@ -276,8 +276,8 @@ The third and fourth columns report the average number of pages
 brought in and out per second over the last refresh interval
 due to swap requests initiated by the scheduler.
 The first row of the display shows the average
-number of disk transfers per second over the last refresh interval;
-the second row of the display shows the average
+number of disk transfers per second over the last refresh interval.
+The second row of the display shows the average
 number of pages transferred per second over the last refresh interval.
 .Pp
 Running down the right hand side of the display is a breakdown
@@ -380,7 +380,7 @@ spaces.
 Display information about the connections associated with the
 specified hosts or ports.  As for
 .Ar ignore  ,
-.Op Ar items
+.Ar items
 may be names or numbers.
 .It Cm show Op Ar ports\&|hosts
 Show, on the command line, the currently selected protocols,
@@ -425,17 +425,17 @@ may be specified, separated by spaces.
 .Sh FILES
 .Bl -tag -width /etc/networks -compact
 .It Pa /bsd
-For the namelist.
+for the namelist
 .It Pa /dev/kmem
-For information in main memory.
+for information in main memory
 .It Pa /dev/drum
-For information about swapped out processes.
+for information about swapped out processes
 .It Pa /etc/hosts
-For host names.
+or host names
 .It Pa /etc/networks
-For network names.
+for network names
 .It Pa /etc/services
-For port names.
+or port names
 .El
 .Sh HISTORY
 The

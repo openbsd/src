@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.1,v 1.4 1998/08/25 13:35:52 deraadt Exp $
+.\"	$OpenBSD: printf.1,v 1.5 1998/09/27 16:57:50 aaron Exp $
 .\" Copyright (c) 1989, 1990 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -46,7 +46,7 @@
 .Ar format
 .Op Ar arguments  ...
 .Sh DESCRIPTION
-.Nm Printf
+.Nm printf
 formats and prints its arguments, after the first, under control
 of the
 .Ar format  .
@@ -129,7 +129,7 @@ For
 .Cm c  ,
 .Cm d ,
 and
-.Cm s  ,
+.Cm s
 formats, this option has no effect.  For the
 .Cm o
 formats the precision of the number is increased to force the first
@@ -145,7 +145,7 @@ prepended to it.  For
 .Cm f  ,
 .Cm g ,
 and
-.Cm G  ,
+.Cm G
 formats, the result will always contain a decimal point, even if no
 digits follow the point (normally, a decimal point only appears in the
 results of those formats if a digit follows the decimal point).  For
@@ -153,20 +153,20 @@ results of those formats if a digit follows the decimal point).  For
 and
 .Cm G
 formats, trailing zeros are not removed from the result as they
-would otherwise be;
+would otherwise be.
 .It Cm \&\-
 A minus sign `\-' which specifies
 .Em left adjustment
-of the output in the indicated field;
+of the output in the indicated field.
 .It Cm \&+
 A `+' character specifying that there should always be
 a sign placed before the number when using signed formats.
 .It Sq \&\ \&
 A space specifying that a blank should be left before a positive number
-for a signed format.  A `+' overrides a space if both are used;
+for a signed format.  A `+' overrides a space if both are used.
 .It Cm \&0
 A zero `0' character indicating that zero-padding should be used
-rather than blank-padding.  A `\-' overrides a `0' if both are used;
+rather than blank-padding.  A `\-' overrides a `0' if both are used.
 .El
 .It "Field Width:"
 An optional digit string specifying a
@@ -174,7 +174,7 @@ An optional digit string specifying a
 if the output string has fewer characters than the field width it will
 be blank-padded on the left (or right, if the left-adjustment indicator
 has been given) to make up the field width (note that a leading zero
-is a flag, but an embedded zero is part of a field width);
+is a flag, but an embedded zero is part of a field width).
 .It Precision:
 An optional period,
 .Sq Cm \&.\& ,
@@ -187,7 +187,7 @@ and
 .Cm f
 formats, or the maximum number of characters to be printed
 from a string; if the digit string is missing, the precision is treated
-as zero;
+as zero.
 .It Format:
 A character which indicates the type of format to use (one of
 .Cm diouxXfEgGbcs ) .
@@ -262,8 +262,8 @@ In no case does a non-existent or small field width cause truncation of
 a field; padding takes place only if the specified field width exceeds
 the actual width.
 .Sh RETURN VALUES
-.Nm Printf
-exits 0 on success, 1 on failure.
+.Nm printf
+exits 0 on success or 1 on failure.
 .Sh SEE ALSO
 .Xr echo 1 ,
 .Xr printf 3

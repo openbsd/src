@@ -1,4 +1,4 @@
-.\"	$OpenBSD: showmount.8,v 1.4 1998/06/15 17:56:07 mickey Exp $
+.\"	$OpenBSD: showmount.8,v 1.5 1998/09/27 16:57:52 aaron Exp $
 .\"	$NetBSD: showmount.8,v 1.5 1995/08/31 22:26:07 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -42,13 +42,13 @@
 .Os BSD 4
 .Sh NAME
 .Nm showmount
-.Nd show remote nfs mounts on host
+.Nd show remote NFS mounts on host
 .Sh SYNOPSIS
 .Nm showmount
 .Op Fl ade3
 .Op Ar host
 .Sh DESCRIPTION
-.Nm Showmount
+.Nm showmount
 shows status information about the
 .Tn NFS
 server on
@@ -68,14 +68,14 @@ for a detailed description of the protocol.
 .It Fl a
 List all mount points in the form:
 .Bd -ragged -offset indent -compact
-.Ar host : Ns Ar dirpath
+.Ar host : Ns Ar dirpath .
 .Ed
 .It Fl d
-List directory paths of mount points instead of hosts
+List directory paths of mount points instead of hosts.
 .It Fl e
 Show the
 .Ar host Ns 's
-exports list
+exports list.
 .It Fl 3
 Use mount protocol Version 3, compatible with NFS Version 3.
 .El
@@ -87,7 +87,7 @@ The mount daemon running on the server only has an idea of the actual mounts,
 since the
 .Tn NFS
 server is stateless.
-.Nm Showmount
+.Nm showmount
 will only display the information
 as accurately as the mount daemon reports it.
 .Sh HISTORY

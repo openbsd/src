@@ -1,4 +1,4 @@
-.\"	$OpenBSD: paste.1,v 1.2 1996/06/26 05:37:50 deraadt Exp $
+.\"	$OpenBSD: paste.1,v 1.3 1998/09/27 16:57:49 aaron Exp $
 .\" Copyright (c) 1989, 1990 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -46,7 +46,7 @@
 .Nm paste
 .Op Fl s
 .Op Fl d Ar list
-.Ar file ...
+.Ar file Op Ar ...
 .Sh DESCRIPTION
 The
 .Nm paste
@@ -70,7 +70,9 @@ is exhausted the first character from
 .Ar list
 is reused.
 This continues until a line from the last input file (in default operation)
-or the last line in each file (using the -s option) is displayed, at which
+or the last line in each file (using the
+.Fl s
+option) is displayed, at which
 time
 .Nm paste
 begins selecting characters from the beginning of
@@ -87,7 +89,7 @@ tab character
 .It Li \e\e
 backslash character
 .It Li \e0
-Empty string (not a null character).
+empty string (not a null character)
 .El
 .Pp
 Any other character preceded by a backslash is equivalent to the
@@ -97,7 +99,9 @@ Concatenate all of the lines of each separate input file in command line
 order.
 The newline character of every line except the last line in each input
 file is replaced with the tab character, unless otherwise specified by
-the -d option.
+the
+.Fl d
+option.
 .El
 .Pp
 If
@@ -109,7 +113,7 @@ for each instance of
 .Pp
 The
 .Nm paste
-utility exits 0 on success, and >0 if an error occurs.
+utility exits 0 on success or >0 if an error occurred.
 .Sh SEE ALSO
 .Xr cut 1
 .Sh STANDARDS

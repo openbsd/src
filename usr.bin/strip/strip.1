@@ -1,4 +1,4 @@
-.\"	$OpenBSD: strip.1,v 1.2 1996/06/26 05:39:32 deraadt Exp $
+.\"	$OpenBSD: strip.1,v 1.3 1998/09/27 16:57:54 aaron Exp $
 .\" Copyright (c) 1989, 1990 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -42,7 +42,7 @@
 .Nm strip
 .Op Fl d
 .Op Fl x
-.Ar file ...
+.Ar file Op Ar ...
 .Sh DESCRIPTION
 The
 .Nm strip
@@ -60,8 +60,8 @@ Delete only debugging and empty symbols.
 Delete only debugging, compiler identification, and local symbols.
 .El
 .Pp
-.Nm Strip
-exits 0 on success and 1 if an error occurred.
+.Nm strip
+exits 0 on success or 1 if an error occurred.
 .Sh SEE ALSO
 .Xr cc 1 ,
 .Xr ld 1 ,

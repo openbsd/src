@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newsyslog.8,v 1.7 1998/09/24 03:36:58 millert Exp $
+.\"	$OpenBSD: newsyslog.8,v 1.8 1998/09/27 16:57:48 aaron Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -59,7 +59,7 @@
 .Op Fl vmnr
 .Op Fl f Ar configuration file
 .Sh DESCRIPTION
-.Nm Newsyslog
+.Nm newsyslog
 is a program that should be scheduled to run periodically by
 .Xr cron 8 .
 When it is executed it archives log files if necessary.  If a log file
@@ -127,7 +127,7 @@ files compressed to save space using
 or
 .Xr compress 1 ,
 depending on compilation options.  The ``B'' flag means that the file is a
-binary file, and so the ascii message which
+binary file, and so the ASCII message which
 .Nm newsyslog
 inserts to indicate the fact that the logs have been turned over
 should not be included.  The ``M'' flag marks this entry as a monitored
@@ -145,24 +145,27 @@ instead of
 .El
 .Pp
 .Sh OPTIONS
-The following options can be used with newsyslog:
+The following options can be used with
+.Nm newsyslog :
 .Bl -tag -width XXX
 .It Fl f Ar config-file
-instructs newsyslog to use 
+Instructs newsyslog to use 
 .Ar config-file
-instead of /etc/newsyslog.conf for its configuration file.
+instead of
+.Pa /etc/newsyslog.conf
+for its configuration file.
 .It Fl v
-places 
+Places 
 .Nm newsyslog
 in verbose mode.  In this mode it will print out each log and its
 reasons for either trimming that log or skipping it.
 .It Fl n
-causes
+Causes
 .Nm newsyslog 
 not to trim the logs, but to print out what it would do if this option
 were not specified.
 .It Fl r
-removes the restriction that
+Removes the restriction that
 .Nm newsyslog 
 must be running as root.  Of course, 
 .Nm newsyslog
@@ -170,7 +173,7 @@ will not be able to send a HUP signal to
 .Xr syslogd 8 ,
 so this option should only be used in debugging.
 .It Fl m
-places
+Places
 .Nm newsyslog
 in monitoring mode; only entries marked with an ``M'' in flags are processed,
 and notifications sent if any have changed.  Without this option, monitored
@@ -180,13 +183,13 @@ entries are not processed.
 .Sh FILES
 .Bl -tag -width /etc/newsyslog.conf
 .It Pa /etc/newsyslog.conf
-Default configuration file.
+efault configuration file
 .El
 .Sh SEE ALSO
-.Xr gzip 1 ,
 .Xr compress 1 ,
+.Xr gzip 1 ,
 .Xr syslog 3 ,
-.Xr syslogd 8 .
+.Xr syslogd 8
 .Sh AUTHOR
 .Bd -unfilled -offset indent
 Theodore Ts'o, MIT Project Athena

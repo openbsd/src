@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nice.1,v 1.3 1997/08/25 17:51:02 deraadt Exp $
+.\"	$OpenBSD: nice.1,v 1.4 1998/09/27 16:57:48 aaron Exp $
 .\"	$NetBSD: nice.1,v 1.6 1995/08/31 23:30:57 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -46,7 +46,7 @@
 .Ar utility
 .Op Ar argument ...
 .Sh DESCRIPTION
-.Nm Nice
+.Nm nice
 runs
 .Ar utility
 at an altered scheduling priority.
@@ -65,7 +65,7 @@ Available options:
 .It Fl n Ar increment
 A positive or negative decimal integer used to modify the system scheduling
 priority of 
-.Ar utility.
+.Ar utility .
 .El
 .Sh DIAGNOSTICS
 The
@@ -110,7 +110,7 @@ A
 utility appeared in
 .At v6 .
 .Sh BUGS
-.Nm Nice
+.Nm nice
 is built into
 .Xr csh  1
 with a slightly different syntax than described here.  The form

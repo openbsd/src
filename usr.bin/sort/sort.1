@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sort.1,v 1.2 1998/07/24 00:32:23 deraadt Exp $
+.\"	$OpenBSD: sort.1,v 1.3 1998/09/27 16:57:54 aaron Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,7 @@ lexicographically. By default, if keys are not given,
 regards each input line as a single field.
 .Pp
 The following options are available:
-.Bl -tag -width indent
+.Bl -tag -width file indent
 .It Fl c
 Check that the single input file is sorted.
 If the file is not sorted,
@@ -76,7 +76,7 @@ produces the appropriate error messages and exits with code 1;
 otherwise,
 .Nm sort
 returns 0.
-.Nm Sort
+.Nm sort
 .Fl c
 produces no output.
 .It Fl m
@@ -151,7 +151,7 @@ Use a merge sort instead of a radix sort.  This option should be
 used for files larger than 60Mb.
 .El
 .Pp
-The treatment of field separators can be altered using the
+The treatment of field separators can be altered using these
 options:
 .Bl -tag -width indent
 .It Fl b
@@ -177,7 +177,7 @@ Note that the
 option
 has no effect unless key fields are specified.
 .It Fl t Ar char
-.Ar Char
+.Ar char
 is used as the field separator character. The initial
 .Ar char
 is not considered to be part of a field when determining
@@ -193,7 +193,7 @@ is not specified,
 blank space characters are used as default field
 separators.
 .It Fl R Ar char
-.Ar Char
+.Ar char
 is used as the record separator character.
 This should be used with discretion;
 .Fl R Ar <alphanumeric>
@@ -215,13 +215,17 @@ and
 .Pp
 The following operands are available:
 .Bl -tag -width indent
-.Ar file
+.It Ar file
 The pathname of a file to be sorted, merged, or checked.
-If no file
+If no
+.Ar file
 operands are specified, or if
-a file operand is
+a
+.Ar file
+operand is
 .Fl ,
 the standard input is used.
+.El
 .Pp
 A field is
 defined as a minimal sequence of characters followed by a
@@ -268,7 +272,7 @@ means
 indicating the first character of the
 .Em m Ns th
 field;
-If the
+if the
 .Fl b
 option is in effect,
 .Em n
@@ -316,20 +320,17 @@ The obsolescent
 .Cm \(pl Ns Ar pos1
 .Fl Ns Ar pos2
 option is still supported, except for
-.Fl Ns Ar w\&.0b,
+.Fl Ns Ar w\&.0b ,
 which has no
 .Fl k
 equivalent.
 .Sh ENVIRONMENT
 If the following environment variable exists, it is utilized by
-.Nm sort .
+.Nm sort :
 .Bl -tag -width Fl
 .It Ev TMPDIR
-.Nm Sort
-uses the contents of the
-.Ev TMPDIR
-environment variable as the path in which to store
-temporary files.  Note that
+Path in which to store temporary files.
+Note that
 .Ev TMPDIR
 may be overridden by the
 .Fl T
@@ -337,29 +338,31 @@ option.
 .Sh FILES
 .Bl -tag -width Pa -compact
 .It Pa /var/tmp/sort.*
-Default temporary directories.
+default temporary directories
 .It Pa Ar output Ns #PID
-Temporary name for
+temporary name for
 .Ar output
 if
 .Ar output
-already exists.
+already exists
 .El
 .Sh SEE ALSO
 .Xr comm 1 ,
-.Xr uniq 1 ,
-.Xr join 1
+.Xr join 1 ,
+.Xr uniq 1
 .Sh RETURN VALUES
-Sort exits with one of the following values:
+.Nm sort
+exits with one of the following values:
+.Pp
 .Bl -tag -width flag -compact
-.It Pa 0:
-normal behavior.
-.It Pa 1:
-on disorder (or non-uniqueness) with the
+.It 0
+Normal behavior.
+.It 1
+On disorder (or non-uniqueness) with the
 .Fl c
-option
-.It Pa 2:
-an error occurred.
+option.
+.It 2
+An error occurred.
 .Sh BUGS
 Lines longer than 65522 characters are discarded and processing continues.
 To sort files larger than 60Mb, use
@@ -378,7 +381,7 @@ command appeared in
 .Sh NOTES
 The current sort command uses lexicographic radix sorting, which requires
 that sort keys be kept in memory (as opposed to previous versions which used quick
-and merge sorts and did not.)
+and merge sorts and did not).
 Thus performance depends highly on efficient choice of sort keys, and the
 .Fl b
 option and the

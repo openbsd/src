@@ -1,4 +1,4 @@
-.\" $OpenBSD: skeyprune.8,v 1.2 1997/09/22 05:15:05 millert Exp $
+.\" $OpenBSD: skeyprune.8,v 1.3 1998/09/27 16:57:53 aaron Exp $
 .\"
 .\"
 .Dd 27 Sep 1996
@@ -14,7 +14,7 @@
 .Nm skeyprune
 searches through the file
 .Dq Pa /etc/skeykeys
-and prunes out users who have zeroed they entries via
+and prunes out users who have zeroed their entries via
 .Xr skeyinit 1
 as well as entries that have not been modified in
 .Ar days
@@ -24,11 +24,11 @@ is not specified only commented out entries are pruned.
 .Sh FILES
 .Bl -tag -width /etc/skeykeys -compact
 .It Pa /etc/skeykeys
-The S/Key key information database
+S/Key key information database
 .El
 .Sh SEE ALSO
-.Xr skeyinit 1 ,
-.Xr skey 1
+.Xr skey 1 ,
+.Xr skeyinit 1
 .Sh BUGS
 Since
 .Nm skeyprune

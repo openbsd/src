@@ -1,4 +1,4 @@
-.\"	$OpenBSD: renice.8,v 1.4 1997/08/25 17:51:03 deraadt Exp $
+.\"	$OpenBSD: renice.8,v 1.5 1998/09/27 16:57:51 aaron Exp $
 .\" Copyright (c) 1983, 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -54,23 +54,23 @@
 .Ar user ...
 .Oc
 .Sh DESCRIPTION
-.Nm Renice
+.Nm renice
 alters the 
 scheduling
 .Ar priority
 (an integer) of one or more running processes.
 The following
 .Ar who
-parameters (pid, pgrp and user) are interpreted as process ID's, process group
-ID's, or user names.
-.Nm Renice Ns 'ing
+parameters (pid, pgrp and user) are interpreted as process IDs, process group
+IDs, or user names.
+.Nm renice Ns ing
 a process group causes all processes in the process group
 to have their scheduling priority altered.  
-.Nm Renice Ns 'ing
+.Nm renice Ns ing
 a user causes all processes owned by the user to have
 their scheduling priority altered.
 By default, the processes to be affected are specified by
-their process ID's.
+their process IDs.
 .Pp
 Options supported by
 .Nm renice :
@@ -78,7 +78,7 @@ Options supported by
 .It Fl g
 Force 
 .Ar who
-parameters to be interpreted as process group ID's.
+parameters to be interpreted as process group IDs.
 .It Fl u
 Force the
 .Ar who
@@ -86,7 +86,7 @@ parameters to be interpreted as user names.
 .It Fl p
 Resets the
 .Ar who
-interpretation to be (the default) process ID's.
+interpretation to be (the default) process IDs.
 .El
 .Pp
 For example,
@@ -94,7 +94,7 @@ For example,
 renice +1 987 -u daemon root -p 32
 .Ed
 .Pp
-would change the priority of process ID's 987 and 32, and
+would change the priority of process IDs 987 and 32, and
 all processes owned by users daemon and root.
 .Pp
 Users other than the super-user may only alter the priority of
@@ -119,14 +119,14 @@ anything negative (to make things go very fast).
 .Sh FILES
 .Bl -tag -width /etc/passwd -compact
 .It Pa /etc/passwd
-to map user names to user ID's
+to map user names to user IDs
 .El
 .Sh SEE ALSO
 .Xr nice 1 ,
 .Xr getpriority 2 ,
 .Xr setpriority 2
 .Sh BUGS
-Non super-users can not increase scheduling priorities of their own processes,
+Non-super-users cannot increase scheduling priorities of their own processes,
 even if they were the ones that decreased the priorities in the first place.
 .Sh HISTORY
 The

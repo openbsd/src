@@ -1,4 +1,4 @@
-.\"	$OpenBSD: strings.1,v 1.2 1996/06/26 05:39:30 deraadt Exp $
+.\"	$OpenBSD: strings.1,v 1.3 1998/09/27 16:57:54 aaron Exp $
 .\"	$NetBSD: strings.1,v 1.4 1994/12/10 11:54:28 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -47,7 +47,7 @@
 .Op Fl t Ar radix
 .Op Ar file ...
 .Sh DESCRIPTION
-.Nm Strings
+.Nm strings
 displays the sequences of printable characters in each of the specified
 files, or in the standard input, by default.
 By default, a sequence must be at least four characters in length
@@ -67,13 +67,13 @@ to search the entire object file.
 .It Fl f
 Each string is preceded by the name of the file
 in which it was found.
-.It Fl n
+.It Fl n Ar number
 Specifies the minimum number of characters in a sequence to be
 .Ar number ,
 instead of four.
 .It Fl o
 Each string is preceded by its octal offset in the file.
-.It Fl t 
+.It Fl t Ar radix
 Each string is preceded by its offset in the file.  The first character of
 .Ar radix
 determines the radix of the offset: 
@@ -85,7 +85,7 @@ for decimal; or
 for hexadecimal.
 .El
 .Pp
-.Nm Strings
+.Nm strings
 is useful for identifying random binaries, among other things.
 .Sh SEE ALSO
 .Xr hexdump 1 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nfsstat.1,v 1.4 1996/12/15 20:57:59 kstailey Exp $
+.\"	$OpenBSD: nfsstat.1,v 1.5 1998/09/27 16:57:48 aaron Exp $
 .\"	$NetBSD: nfsstat.1,v 1.8 1996/03/03 17:21:28 thorpej Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -50,21 +50,21 @@ statistics
 .Op Fl s
 .Op Fl c
 .Sh DESCRIPTION
-.Nm Nfsstat
+.Nm nfsstat
 displays statistics kept about
 .Tn NFS
 client and server activity.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl M
+.It Fl M Ar core
 Extract values associated with the name list from the specified core
 instead of the default
 .Pa /dev/kmem .
-.It Fl N
+.It Fl N Ar system
 Extract the name list from the specified system instead of the default
 .Pa /bsd .
-.It Fl w
+.It Fl w Ar wait
 Display a shorter summary of
 .Tn NFS
 activity for both the client and server at
@@ -93,5 +93,5 @@ default memory file
 .Sh HISTORY
 The
 .Nm nfsstat
-command appears in
+command appeared in
 .Bx 4.4 .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nm.1,v 1.2 1996/06/26 05:37:32 deraadt Exp $
+.\"	$OpenBSD: nm.1,v 1.3 1998/09/27 16:57:48 aaron Exp $
 .\"	$NetBSD: nm.1,v 1.3 1995/08/31 23:41:58 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -43,7 +43,7 @@
 .Sh SYNOPSIS
 .Nm nm
 .Op Fl agnopruw
-.Ar
+.Ar file Op Ar ...
 .Sh DESCRIPTION
 The symbol table (name list) of each object in
 .Ar file(s)
@@ -78,7 +78,9 @@ Reverse order sort.
 Display undefined symbols only.
 .It Fl w
 Warn about non-object archive members.
-Normally, nm will silently ignore all archive members which are not
+Normally,
+.Nm nm
+will silently ignore all archive members which are not
 object files.
 .El
 .Pp
@@ -110,8 +112,8 @@ If the symbol is local (non-external) the type letter is in lower case.
 The output is sorted alphabetically.
 .Sh SEE ALSO
 .Xr ar 1 ,
-.Xr ar 5 ,
 .Xr a.out 5 ,
+.Xr ar 5 ,
 .Xr stab 5
 .Sh HISTORY
 An

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: script.1,v 1.2 1996/06/26 05:39:02 deraadt Exp $
+.\"	$OpenBSD: script.1,v 1.3 1998/09/27 16:57:52 aaron Exp $
 .\"	$NetBSD: script.1,v 1.3 1994/12/21 08:55:41 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -45,7 +45,7 @@
 .Op Fl a
 .Op Ar file
 .Sh DESCRIPTION
-.Nm Script
+.Nm script
 makes a typescript of everything printed on your terminal.
 It is useful for students who need a hardcopy record of an interactive
 session as proof of an assignment, as the typescript file 
@@ -90,7 +90,7 @@ C-shell,
 Certain interactive commands, such as
 .Xr vi 1 ,
 create garbage in the typescript file.
-.Nm Script
+.Nm script
 works best with commands that do not manipulate the
 screen, the results are meant to emulate a hardcopy
 terminal.
@@ -106,21 +106,21 @@ exists, the shell forked by
 will be that shell. If
 .Ev SHELL
 is not set, the Bourne shell
-is assumed. (Most shells set this variable automatically).
+is assumed. (Most shells set this variable automatically.)
 .El
 .Sh SEE ALSO
 .Xr csh 1
 (for the
 .Em history
-mechanism).
+mechanism)
 .Sh HISTORY
 The
 .Nm script
 command appeared in
 .Bx 3.0 .
 .Sh BUGS
-.Nm Script
+.Nm script
 places
-.Sy everything
+.Em everything
 in the log file, including linefeeds and backspaces.
 This is not what the naive user expects.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nc.1,v 1.2 1998/03/11 18:42:23 deraadt Exp $
+.\"	$OpenBSD: nc.1,v 1.3 1998/09/27 16:57:47 aaron Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
 .\" All rights reserved.
@@ -26,12 +26,11 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd August 1, 1996
-.Dt nc 1
+.Dt NC 1
 .Sh NAME
 .Os
 .Nm nc
-.Nd
-Arbitrary tcp and udp connections and listens.
+.Nd arbitrary TCP and UDP connections and listens
 .Pp
 .Sh SYNOPSIS
 .Nm nc
@@ -53,8 +52,8 @@ The
 (or
 .Nm netcat )
 utility is used for just about anything under the sun
-involving TCP or UDP.  It can open tcp connections, send udp packets,
-listen on arbitrary tcp and udp ports, do port scanning, and source
+involving TCP or UDP.  It can open TCP connections, send UDP packets,
+listen on arbitrary TCP and UDP ports, do port scanning, and source
 routing.  Unlike
 .Xr telnet 1 ,
 .Nm nc
@@ -71,9 +70,9 @@ ranges may be specified on the command line.
 Common uses include:
 .Bl -bullet 
 .It
-simple tcp proxies
+simple TCP proxies
 .It
-shell\-script based http clients and servers
+shell\-script based HTTP clients and servers
 .It
 network daemon testing
 .It
@@ -103,7 +102,7 @@ Also causes a delay time between connections to multiple ports.
 Is used to specify that
 .Nm nc
 should listen for an incoming connection, rather than initiate a
-connection to a remote host.  Any hostname/ip address and port arguments
+connection to a remote host.  Any hostname/IP address and port arguments
 restrict the source of inbound connections to only that address and
 source port.
 .It Fl n
@@ -111,20 +110,21 @@ Do not do DNS lookups on any of the specified addresses or hostnames, or
 names of port numbers from /etc/services.
 .It Fl o Ar filename
 Create a hexadecimal log of data transferred in the specified file.
-Each line begins with < or >.  < means "from the net" and > means
-"to the net."
+Each line begins with ``<'' or ``>''.  ``<'' means "from the net" and ``>''
+means "to the net".
 .It Fl p Ar port
 Specifies the source port
 .Nm nc
 should use, subject to privilege restrictions and availability.
 .It Fl r
-Specified that source and/or destination ports should be chosen semi-randomly
+Specifies that source and/or destination ports should be chosen semi-randomly
 instead of sequentially within a range or in the order that the
 system assigns.
 .It Fl s Ar hostname/ip-address
-Specifies the ip of the interface which is used to send the packets.
-On some platforms, this can be used for udp spoofing by using ifconfig
-to bring up a dummy interface with the desired source ip address.
+Specifies the IP of the interface which is used to send the packets.
+On some platforms, this can be used for UDP spoofing by using
+.Xr ifconfig 8
+to bring up a dummy interface with the desired source IP address.
 .It Fl t
 Causes
 .Nm nc
@@ -143,7 +143,8 @@ sends.
 .It Fl v
 Verbose.  Cause
 .Nm nc
-to display connection information.  Using \-v
+to display connection information.  Using
+.Fl v
 more than once will cause
 .Nm nc
 to become even more verbose.
@@ -160,9 +161,10 @@ Specifies that
 should just scan for listening
 daemons, without sending any data to them.  Diagnostic messages about refused
 connections will not be
-displayed unless \-v is specified twice.
+displayed unless
+.Fl v
+is specified twice.
 .Sh EXAMPLES
-.Pp
 .Bl -tag -width x
 .It Li "nc"
 Wait for the user to type what would normally be command-line
@@ -174,27 +176,27 @@ fails, do not display any error messages, but simply exit.
 Open a TCP connection to port 42 of example.host, and use port 31337
 as the source port.
 .It Li "nc -w 5 example.host 42"
-Open a tcp connection to port 42 of example.host, and time out after
+Open a TCP connection to port 42 of example.host, and time out after
 five seconds while attempting to connect.
 .It Li "nc -u example.host 53"
 Send any data from stdin
 to UDP port 53 of example.host, and display any data returned.
 .It Li "nc -s 10.1.2.3 example.host 42"
-Open a tcp connection to port 42 of example.host using 10.1.2.3 as the
-ip for the local end of the connection.
+Open a TCP connection to port 42 of example.host using 10.1.2.3 as the
+IP for the local end of the connection.
 .It Li "nc -v example.host 42"
-Open a tcp connection to port 42 of example.host, displaying some
+Open a TCP connection to port 42 of example.host, displaying some
 diagnostic messages on stderr.
 .It Li "nc -v -v example.host 42"
-Open a tcp connection to port 42 of example.host, displaying all
+Open a TCP connection to port 42 of example.host, displaying all
 diagnostic messages on stderr.
 .It Li "nc -v -z example.host 20-30"
-Attempt to open tcp connections to ports 20 through 30 of
+Attempt to open TCP connections to ports 20 through 30 of
 example.host, and report which ones
 .Nm nc
 was able to connect to.
 .It Li "nc -v -u -z -w 3 example.host 20-30"
-Send udp packets to ports 20-30 of example.host, and report which ones
+Send UDP packets to ports 20-30 of example.host, and report which ones
 did not respond with an ICMP packet after three seconds.
 .It Li "nc -l -p 3000"
 Listen on TCP port 3000, and once there is a connection, send stdin to
@@ -205,10 +207,11 @@ followed by a newline, and move data from port 1000 of example.host to
 stdout until example.host closes the connection.
 .El
 .Sh SEE ALSO
-.Xr telnet 1 ,
 .Xr cat 1 ,
-and the
+.Xr telnet 1
+.Pp
+The
 .Nm netcat
-.Pa README
+.Pa README .
 .Sh AUTHOR
 *Hobbit*  [hobbit@avian.org]

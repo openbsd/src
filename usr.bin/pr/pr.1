@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pr.1,v 1.5 1997/06/26 21:53:04 deraadt Exp $
+.\"	$OpenBSD: pr.1,v 1.6 1998/09/27 16:57:50 aaron Exp $
 .\" Copyright (c) 1991 Keith Muller.
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -118,7 +118,7 @@ can be expanded to input relative
 or
 .Em <space>s
 can contracted to output relative
-.Em <tab>s.
+.Em <tab>s .
 The
 .Nm pr
 utility also interprets
@@ -137,7 +137,6 @@ diagnostic messages are suppressed until the
 .Nm pr
 utility has completed processing.
 .Sh OPTIONS
-.Pp
 In the following option descriptions,
 .Em column ,
 .Em lines ,
@@ -294,7 +293,7 @@ Line numbers longer than
 .Ar width
 columns are truncated.
 .It Fl o Ar offset
-Each line of output is preceeded by
+Each line of output is preceded by
 .Ar offset
 .Em <spaces>s .
 If the
@@ -360,7 +359,6 @@ and
 require that both arguments, if present, not be separated from the option
 letter.
 .Sh ERRORS
-.Pp
 If
 .Nm pr
 receives an interrupt while printing to a terminal, it
@@ -375,7 +373,6 @@ Error messages are written to standard error during the printing
 process (if output is redirected) or after all successful
 file printing is complete (when printing to a terminal).
 .Sh NOTES
-.Pp
 The interpretation of
 .Em <form-feed>s
 in the input stream is that they are special
@@ -387,7 +384,6 @@ common convention of placing a
 on a line by itself is actually interpreted as a blank line, page break,
 blank line.
 .Sh RESTRICTIONS
-.Pp
 The
 .Nm pr
 utility is intended to paginate input containing basic

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: oldrdist.1,v 1.2 1996/06/26 05:37:40 deraadt Exp $
+.\"	$OpenBSD: oldrdist.1,v 1.3 1998/09/27 16:57:49 aaron Exp $
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -51,11 +51,11 @@
 .Ar name ...
 .Oo login@ Oc Ns Ar host Ns Op :dest
 .Sh DESCRIPTION
-.Nm Rdist
+.Nm rdist
 is a program to maintain identical copies of files over multiple hosts.
 It preserves the owner, group, mode, and mtime of files if possible and
 can update programs that are executing.
-.Nm Rdist
+.Nm rdist
 reads commands from
 .Ar distfile
 to direct the updating of files and/or directories.
@@ -63,15 +63,12 @@ to direct the updating of files and/or directories.
 Options specific to the first SYNOPSIS form:
 .Pp
 .Bl -tag -width indent
-.It Fl
-If
-.Ar distfile
-is
-.Sq Fl ,
-the standard input is used.
 .It Fl f Ar distfile
 Use the specified
-.Ar distfile.
+.Ar distfile .
+If
+.Ar distfile
+is `-', the standard input is used.
 .El
 .Pp
 If either the
@@ -139,7 +136,7 @@ Follow symbolic links. Copy the file that the link points to rather than the
 link itself.
 .It Fl i
 Ignore unresolved links.
-.Nm Rdist
+.Nm rdist
 will normally try to maintain the link structure of files being transferred
 and warn the user if all the links cannot be found.
 .It Fl m Ar host
@@ -188,10 +185,10 @@ to prevent newer copies on other hosts from being replaced.
 A warning message is printed for files which are newer than the master copy.
 .El
 .Pp
-.Ar Distfile
+.Ar distfile
 contains a sequence of entries that specify the files
 to be copied, the destination hosts, and what operations to perform
-to do the updating. Each entry has one of the following formats.
+to do the updating. Each entry has one of the following formats:
 .Pp
 .Bd -literal -offset indent -compact
 <variable name> `=' <name list>
@@ -247,7 +244,7 @@ File names which do not begin with `/' or `~' use the destination user's
 home directory as the root directory for the rest of the file name.
 .Pp
 The command list consists of zero or more commands of the following
-format.
+format:
 .Bd -ragged -offset indent -compact
 .Bl -column except_patx pattern\ listx
 .It `install'	<options>	opt_dest_name `;'
@@ -263,7 +260,7 @@ The
 command is used to copy out of date files and/or directories.
 Each source file is copied to each host in the destination list.
 Directories are recursively copied in the same way.
-.Ar Opt_dest_name
+.Ar opt_dest_name
 is an optional parameter to rename files.
 If no
 .Ic install
@@ -283,7 +280,7 @@ and have the same semantics as
 options on the command line except they only apply to the files
 in the source list.
 The login name used on the destination host is the same as the local host
-unless the destination name is of the format ``login@host".
+unless the destination name is of the format ``login@host''.
 .Pp
 The
 .Ic notify
@@ -295,8 +292,7 @@ the name
 .Pp
 The
 .Ic except
-command is used to update all of the files in the source list
-.Ic except
+command is used to update all of the files in the source list except
 for the files listed in
 .Ar name list  .
 This is usually used to copy everything in a directory except certain files.
@@ -330,10 +326,10 @@ is updated or installed.
 If the
 .Ar name list
 is omitted then the shell commands will be executed
-for every file updated or installed.  The shell variable `FILE' is set
+for every file updated or installed.  The shell variable FILE is set
 to the current filename before executing the commands in
 .Ar string  .
-.Ar String
+.Ar string
 starts and ends with `"' and can cross multiple lines in
 .Ar distfile .
 Multiple commands to the shell should be separated by `;'.
@@ -383,8 +379,8 @@ input command file
 temporary file for update lists
 .El
 .Sh SEE ALSO
-.Xr sh 1 ,
 .Xr csh 1 ,
+.Xr sh 1 ,
 .Xr stat 2
 .Sh HISTORY
 The
@@ -392,7 +388,9 @@ The
 command appeared in
 .Bx 4.3 .
 .Sh DIAGNOSTICS
-A complaint about mismatch of rdist version numbers may really stem
+A complaint about mismatch of
+.Nm rdist
+version numbers may really stem
 from some problem with starting your shell, e.g., you are in too many groups.
 .Sh BUGS
 Source files must reside on the local host where
@@ -405,7 +403,7 @@ in a directory have been updated.
 Variable expansion only works for name lists; there should be a general macro
 facility.
 .Pp
-.Nm Rdist
+.Nm rdist
 aborts on files which have a negative mtime (before Jan 1, 1970).
 .Pp
 There should be a `force' option to allow replacement of non-empty directories
