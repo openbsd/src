@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.c,v 1.16 2002/02/19 19:39:35 millert Exp $	*/
+/*	$OpenBSD: csh.c,v 1.17 2002/06/09 05:03:59 deraadt Exp $	*/
 /*	$NetBSD: csh.c,v 1.14 1995/04/29 23:21:28 mycroft Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)csh.c	8.2 (Berkeley) 10/12/93";
 #else
-static char rcsid[] = "$OpenBSD: csh.c,v 1.16 2002/02/19 19:39:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: csh.c,v 1.17 2002/06/09 05:03:59 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1300,7 +1300,7 @@ vis_fputc(ch, fp)
 
 /*
  * Move the initial descriptors to their eventual
- * resting places, closin all other units.
+ * resting places, closing all other units.
  */
 void
 initdesc()
