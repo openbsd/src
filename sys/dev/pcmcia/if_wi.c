@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.31 2001/04/23 20:52:35 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.32 2001/05/14 21:45:25 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -133,7 +133,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.31 2001/04/23 20:52:35 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.32 2001/05/14 21:45:25 mickey Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -412,7 +412,8 @@ wi_pcmcia_attach(parent, self, aux)
 	bcopy((char *)&mac.wi_mac_addr, (char *)&sc->arpcom.ac_enaddr,
 	    ETHER_ADDR_LEN);
 
-	printf(": address %s", ether_sprintf(sc->arpcom.ac_enaddr));
+	printf(": %saddress %s", sc->sc_prism2? "Prism II, " : "",
+	    ether_sprintf(sc->arpcom.ac_enaddr));
 
 	ifp = &sc->arpcom.ac_if;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
