@@ -76,7 +76,7 @@ it an IP address at all.   The interface name is passed in $interface,
 and the media type in $medium.
 .PP
 If an IP alias has been declared in dhclient.conf, its address will be
-passed in $alias_ip_address, and that ip alias should be deleted from
+passed in $alias_ip_address, and that IP alias should be deleted from
 the interface, along with any routes to it.
 .SH ARPSEND
 The DHCP client is requesting that an address that has been offered to
@@ -92,7 +92,7 @@ been requested and should be declined.   $new_ip_address and
 $interface are set as with ARPSEND.
 .SH BOUND
 The DHCP client has done an initial binding to a new address.   The
-new ip address is passed in $new_ip_address, and the interface name is
+new IP address is passed in $new_ip_address, and the interface name is
 passed in $interface.   The media type is passed in $medium.   Any
 options acquired from the server are passed using the option name
 described in \fBdhcp-options\fR, except that dashes ('-') are replaced

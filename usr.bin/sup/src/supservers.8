@@ -1,4 +1,4 @@
-.\"	$OpenBSD: supservers.8,v 1.7 2001/05/02 22:56:54 millert Exp $
+.\"	$OpenBSD: supservers.8,v 1.8 2003/03/18 08:44:09 jmc Exp $
 .\"
 .\" Copyright (c) 1992 Carnegie Mellon University
 .\" All Rights Reserved.
@@ -143,10 +143,10 @@ to increase (or decrease) this number.
 
 The -O lockdir switch is used to make
 .I supfilesrv
-allow only one active connection at a time from any client ip address.
+allow only one active connection at a time from any client IP address.
 This is accomplished by each serving process obtaining exclusive lock,
 and writing its process ID into a file in "lockdir" where the filename
-is the dotted decimal ip address of the connecting host. Any
+is the dotted decimal IP address of the connecting host. Any
 connections from a client where a lock can not be obtained on such a file
 will be rejected, limiting any client host to one connection at a time
 to this sup server. This is useful for preventing problems where
