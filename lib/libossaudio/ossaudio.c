@@ -1,4 +1,4 @@
-/*	$OpenBSD: ossaudio.c,v 1.5 2002/04/24 21:59:53 espie Exp $	*/
+/*	$OpenBSD: ossaudio.c,v 1.6 2003/05/03 19:01:48 avsm Exp $	*/
 /*	$NetBSD: ossaudio.c,v 1.14 2001/05/10 01:53:48 augustss Exp $	*/
 
 /*-
@@ -108,10 +108,12 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 			return retval;
 		break;
 	case SNDCTL_DSP_SYNC:
-	case SNDCTL_DSP_POST:
 		retval = ioctl(fd, AUDIO_DRAIN, 0);
 		if (retval < 0)
 			return retval;
+		break;
+	case SNDCTL_DSP_POST:
+		/* This call is merely advisory, and may be a nop. */
 		break;
 	case SNDCTL_DSP_SPEED:
 		AUDIO_INITINFO(&tmpinfo);
@@ -429,10 +431,15 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		cntinfo.ptr = tmpoffs.offset;
 		*(struct count_info *)argp = cntinfo;
 		break;
+	case SNDCTL_DSP_SETDUPLEX:
+		idat = 1;
+		retval = ioctl(fd, AUDIO_SETFD, &idat);
+		if (retval < 0)
+			return retval;
+		break;
 	case SNDCTL_DSP_MAPINBUF:
 	case SNDCTL_DSP_MAPOUTBUF:
 	case SNDCTL_DSP_SETSYNCRO:
-	case SNDCTL_DSP_SETDUPLEX:
 	case SNDCTL_DSP_PROFILE:
 		errno = EINVAL;
 		return -1; /* XXX unimplemented */
@@ -627,7 +634,7 @@ mixer_ioctl(int fd, unsigned long com, void *argp)
 	struct mixer_info *omi;
 	struct audio_device adev;
 	mixer_ctrl_t mc;
-	int idat;
+	int idat = 0;
 	int i;
 	int retval;
 	int l, r, n, error, e;
