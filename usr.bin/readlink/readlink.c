@@ -1,5 +1,5 @@
 /*
- * $OpenBSD: readlink.c,v 1.9 1997/08/18 20:27:53 kstailey Exp $
+ * $OpenBSD: readlink.c,v 1.10 1997/09/23 20:13:21 niklas Exp $
  *
  * Copyright (c) 1997
  *	Kenneth Stailey (hereinafter referred to as the author)
@@ -28,42 +28,112 @@
  */
 
 #include <limits.h>
+#include <errno.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
+
+void canonicalize __P((const char *, char *));
 
 int
 main(argc, argv)
-int argc;
-char **argv;
+	int argc;
+	char **argv;
 {
 	char buf[PATH_MAX];
-	int n, ch, nflag = 0;
+	int n, ch, nflag = 0, fflag = 0;
 	extern int optind;
 
-	while ((ch = getopt(argc, argv, "n")) != -1)
+	while ((ch = getopt(argc, argv, "fn")) != -1)
 		switch (ch) {
+		case 'f':
+			fflag = 1;
+			break;
 		case 'n':
 			nflag = 1;
 			break;
 		default:
 			(void)fprintf(stderr,
-			    "usage: readlink [-n] symlink\n");
+			    "usage: readlink [-n] [-f] symlink\n");
 			exit(1);
 		}
 	argc -= optind;
 	argv += optind;
 
 	if (argc != 1) {
-		fprintf(stderr, "usage: readlink [-n] symlink\n");
+		fprintf(stderr, "usage: readlink [-n] [-f] symlink\n");
 		exit(1);
 	}
 
-	if ((n = readlink(argv[0], buf, PATH_MAX)) < 0)
+	n = strlen(argv[0]);
+	if (n > PATH_MAX - 1)
+		errx(1, "filename longer than PATH_MAX-1 (%d)\n",
+		    PATH_MAX - 1);
+
+	if (fflag)
+		canonicalize(argv[0], buf);
+	else if ((n = readlink(argv[0], buf, PATH_MAX)) < 0)
 		exit(1);
 
-	buf[n] = '\0';
 	printf("%s", buf);
 	if (!nflag)
 		putchar('\n');
 	exit(0);
+}
+
+void
+canonicalize(path, newpath)
+	const char *path;
+	char *newpath;
+{
+	int n;
+	char *p, *np, *lp, c  ;
+	char target[PATH_MAX];
+
+	strcpy(newpath, path);
+	for (;;) {
+		p = np = newpath;
+
+		/*
+		 * If absolute path, skip the root slash now so we won't
+		 * think of this as a NULL component.
+		 */
+		if (*p == '/')
+			p++;
+
+		/*
+		 * loop through all components of the path until a link is
+		 * found then expand it, if no link is found we are ready.
+		 */
+		for (; *p; lp = ++p) {
+			while (*p && *p != '/')
+				p++;
+			c = *p;
+			*p = '\0';
+			n = readlink(newpath, target, PATH_MAX);
+			*p = c;
+			if (n > 0 || errno != EINVAL)
+				break;
+		}
+		if (!*p && n < 0 && errno == EINVAL)
+			break;
+		if (n < 0)
+			err(1, "%s", newpath);
+		target[n] = '\0';
+#ifdef DEBUG
+		fprintf(stderr, "%.*s -> %s : ", p - newpath, newpath, target);
+#endif
+		if (*target == '/') {
+			bcopy(p, newpath + n, strlen(p) + 1);
+		        bcopy(target, newpath, n);
+		} else {
+			bcopy(p, lp + n, strlen(p) + 1);
+			bcopy(target, lp, n);
+		}
+#ifdef DEBUG
+		fprintf(stderr, "%s\n", newpath);
+#endif
+		strcpy(target, newpath);
+		path = target;
+	}
 }
