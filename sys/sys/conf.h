@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.44 2001/07/05 02:35:34 mickey Exp $	*/
+/*	$OpenBSD: conf.h,v 1.45 2001/08/01 21:18:41 mickey Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -544,6 +544,7 @@ cdev_decl(ipl);
 cdev_decl(wsdisplay);
 cdev_decl(wskbd);
 cdev_decl(wsmouse);
+cdev_decl(wsmux);
 
 #ifdef COMPAT_SVR4
 # define NSVR4_NET	1
