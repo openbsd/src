@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.3 2000/02/02 04:10:37 itojun Exp $	*/
+/*	$OpenBSD: config.c,v 1.4 2000/02/08 05:34:45 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -43,9 +43,9 @@
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
-#include <netinet6/icmp6.h>
+#include <netinet/icmp6.h>
 
 #include <arpa/inet.h>
 
