@@ -1,4 +1,4 @@
-.\" $OpenBSD: deroff.1,v 1.1 2002/02/28 06:58:21 millert Exp $
+.\" $OpenBSD: deroff.1,v 1.2 2002/02/28 18:29:16 millert Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -161,3 +161,7 @@ is not a complete
 .Xr troff 1
 interpreter, so it can be confused by subtle constructs.
 Most errors result in too much rather than too little output.
+.Pp
+The
+.Fl ml
+option does not correctly handle nested lists.
