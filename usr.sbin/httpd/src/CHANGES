@@ -1,3 +1,121 @@
+Changes with Apache 1.3.3
+
+  *) Added a complete implementation of the Expect header field as
+     specified in rev-05 of HTTP/1.1.  Disabled the 100 Continue
+     response when we already know the final status, which is mighty
+     useful for PUT responses that result in 302 or 401. [Roy Fielding]
+
+  *) Remove extra trailing whitespace from the getline results as part
+     of the protocol processing, which is extra nice because it works
+     between continuation lines, is almost no cost in the normal case
+     of no extra whitespace, and saves memory. [Roy Fielding]
+
+  *) Added new HTTP status codes and default response bodies from the
+     revised HTTP/1.1 (307, 416, 417), WebDAV (102, 207, 422, 423), and 
+     HTTP Extension Framework (510) specifications.  Did not add the
+     WebDAV 424 and 425 codes because they are bogus.  We don't use any
+     of these codes yet, but they are now available to 3rd-party modules.
+     [Roy Fielding]
+
+  *) Fix a possible race condition between timed-out requests and the
+     ap_bhalfduplex select that might result in an infinite loop on
+     platforms that do not validate the descriptor. [Roy Fielding]
+
+  *) WIN32: Add "-k shutdown" and "-k restart" options to signal a
+     running Apache server [Paul Sutton]
+
+  *) Fix mod_autoindex bug where directories got a size of "0k" instead
+     of "-".  [Martin Plechsmid <plechsmi@karlin.mff.cuni.cz>, Marc Slemko]
+     PR#3130
+
+  *) PORT: DRS 6000 machine. [Paul Debleecker <pdebleecker@jetair.be>]
+
+  *) Add the server signature text (from the core ServerSignature directive)
+     to the list of envariables available to scripts, SSI, and the like.
+     [Ken Coar]
+
+  *) PORT: Fix sys/resource.h handling for SCO 3.x platform.
+     [M. Laak <maert@proinv.ee>] PR#3108
+ 
+  *) Fallback from sysconf-based to plain HZ-based `ticks per second'
+     calculation in mod_status for all systems which don't have POSIX
+     sysconf() (like UTS 2.1) and not only for the NEXT platform.
+     [Dave Dykstra <dwd@bell-labs.com>] PR#3055
+
+  *) Fix `require ...' directive parsing in mod_auth, mod_auth_dbm and
+     mod_auth_db by using ap_getword_white() (which uses ap_isspace()) 
+     instead of ap_getword(..., ' ') (which parses only according to spaces 
+     but not tabs).  [James Morris <jmorris@intercode.com.au>, 
+     Ralf S. Engelschall] PR#3105
+
+  *) Fix the SERVER_NAME variable under sub-request situations (where
+     `UseCanonicalName off' is used) like CGI's called from SSI pages or
+     RewriteCond variables by adopting r->hostname to sub-requests.
+     [James Grinter <jrg@blodwen.demon.co.uk>] PR#3111
+
+  *) Fix stderr redirection under syslog-based error logging situation.
+     [Youichirou Koga <y-koga@jp.FreeBSD.org>] PR#3095
+
+  *) Document `ErrorLog syslog:facility' variant of error logging.
+     [Youichirou Koga <y-koga@jp.FreeBSD.org>] PR#3096
+
+  *) Fix http://localhost/ hints in top-level INSTALL document.
+     [Rob Jenson <robjen@spotch.com>, Ralf S. Engelschall] PR#3088
+
+  *) Quote paths in default configuration files.  [Wilfredo Sanchez]
+
+  *) PORT: Remove extra HAVE_SYS_RESOURCE_H define for RHAPSODY since
+     it is now taken care of properly by the header file tests.
+     [Wilfredo Sanchez <wsanchez@apple.com>]
+
+  *) Fix problem with scripts and filehandle inheritance on Win32.
+     [Ken Parzygnat <kparz@raleigh.ibm.com>]  PR#2884, 2910
+
+  *) Win32 name canonicalisation could end up using the server's
+     working directory to fill in some blanks.  [Ken Parzygnat
+     <kparz@raleigh.ibm.com>] PR#3001
+
+  *) Correct invalid assumption by ap_sub_req_lookup_file() that all
+     absolute paths begin with "/" -- because they don't on Win32.
+     [Ken Parzygnat <kparz@raleigh.ibm.com>] PR#2976, 3074
+
+  *) Add [REDIRECT_]VARIANTS environment variable to mod_speling
+     so that ErrorDocument 300 processors can reformat the list
+     if desired.  [Ken Coar] PR#2859
+
+  *) Add +/- incremental prefixes to IndexOptions keywords, and
+     enable merging of multiple IndexOptions directives.  [Ken Coar]
+
+  *) PORT: Allow GuessOS to recognize Unixware 7.0.1 [Steve Cameron
+     <steve.cameron@compaq.com>]
+
+  *) Reconstructed the loop through multiple htaccess file names so
+     that missing files are not confused with unreadable files.
+     [Roy Fielding]
+
+  *) The ap_pfopen and ap_pfdopen routines were failing to protect the
+     errno on an error, which leads to one error being mistaken for
+     another when reading non-existent .htaccess files.
+     [Jim Jagielski]
+
+  *) OS/2: The new header tests get things right, need to update
+     ap_config.h.  [Brian Havard]
+
+  *) The Perl %ENV hash will now be setup by default when using the
+     mod_include `perl' command [Doug MacEachern]
+
+  *) PORT: Add Pyramid DC/OSx support to configuration mechanism.
+     [Earle Ake <akee@wpdiss1.wpafb.af.mil>]
+
+  *) PORT: Fix sys/resource.h handling for Amdahl's UTS 2.1
+     [Dave Dykstra <dwd@bell-labs.com>] PR#3054
+
+  *) Correct comment in mod_log_config.c about its internals.
+     [Elf Sternberg <elf@halcyon.com>]
+
+  *) Avoid possible line overflow in Configure: Use an awkfile to
+     handle the creation of modules.c [Jim Jagielski]
+
 Changes with Apache 1.3.2
 
   *) Fix bug in ap_remove_module(), which caused problems for dso's 
@@ -2129,7 +2247,7 @@ Changes with Apache 1.3b4
      [robinton@amtrash.comlink.de (Soeren Ziehe), Martin Kraemer]
 
   *) PORT: Apache now compiles & runs on an EBCDIC mainframe
-     (the Siemens Nixdorf BS2000-OSD family) in the POSIX subsystem
+     (the Siemens BS2000/OSD family) in the POSIX subsystem
      [Martin Kraemer]
 
   *) PORT: Fix problem killing children when terminating.  Allow ^C

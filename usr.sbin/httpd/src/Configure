@@ -618,6 +618,12 @@ case "$PLAT" in
 	DEF_WANTHSREGEX=yes
 	LIBS="$LIBS -lsocket -lnsl -lc"
 	;;
+    pyramid-pyramid-svr4)
+	OS='SVR4'
+	CFLAGS="$CFLAGS -DSVR4 -DNO_LONG_DOUBLE"
+	DEF_WANTHSREGEX=yes
+	LIBS="$LIBS -lsocket -lnsl -lc"
+	;;
     DS/90\ 7000-*-sysv4*)
 	OS='UXP/DS'
 	CFLAGS="$CFLAGS -DUXPDS"
@@ -705,6 +711,12 @@ case "$PLAT" in
     4850-*.*)
         OS='NCR MP/RAS'
         CFLAGS="$CFLAGS -DSVR4 -DMPRAS"
+        DEF_WANTHSREGEX=yes
+        LIBS="$LIBS -lsocket -lnsl -lc -L/usr/ucblib -lucb"
+        ;;
+    drs6000*)
+        OS='DRS6000'
+        CFLAGS="$CFLAGS -DSVR4"
         DEF_WANTHSREGEX=yes
         LIBS="$LIBS -lsocket -lnsl -lc -L/usr/ucblib -lucb"
         ;;
@@ -1499,7 +1511,7 @@ if [ "x$using_shlib" = "x1" ] ; then
         #    select the special subtarget for shared core generation
         SUBTARGET=target_shared
         #    determine additional suffixes for libhttpd.so
-        V=1 R=3 P=2
+        V=1 R=3 P=3
         if [ ".$SHLIB_SUFFIX_DEPTH" = .0 ]; then
             SHLIB_SUFFIX_LIST=""
         fi
@@ -1540,7 +1552,7 @@ fi
 ####################################################################
 ## Now create modules.c
 ##
-cat $tmpfile | sed 's/_module//' | awk >modules.c '
+$CAT > $awkfile <<'EOFM'
     BEGIN {
 	modules[n++] = "core"
 	pmodules[pn++] = "core"
@@ -1588,7 +1600,9 @@ cat $tmpfile | sed 's/_module//' | awk >modules.c '
 	print "  NULL"
 	print "};"
 	print ""
-    }'
+    }
+EOFM
+$CAT $tmpfile | sed 's/_module//' | awk -f $awkfile > modules.c 
 
 ####################################################################
 ## figure out which module dir require use to autocreate a Makefile.

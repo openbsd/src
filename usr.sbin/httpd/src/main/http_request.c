@@ -188,8 +188,10 @@ static int get_path_info(request_rec *r)
     }
 
 #ifdef WIN32
-    /* If the path is x:/, then convert it to x:/., coz that's what stat needs to work properly */
-    if(strlen(path) == 3 && path[1] == ':') {
+    /* If the path is x:/, then convert it to x:/., coz that's what stat
+     * needs to work properly
+     */
+    if (strlen(path) == 3 && path[1] == ':') {
 	strcpy(buf,path);
 	buf[3]='.';
 	buf[4]='\0';
@@ -674,6 +676,7 @@ API_EXPORT(request_rec *) ap_sub_req_lookup_uri(const char *new_file,
     char *udir;
 
     rnew = make_sub_request(r);
+    rnew->hostname       = r->hostname;
     rnew->request_time   = r->request_time;
     rnew->connection     = r->connection;
     rnew->server         = r->server;
@@ -751,6 +754,7 @@ API_EXPORT(request_rec *) ap_sub_req_lookup_file(const char *new_file,
     char *fdir;
 
     rnew = make_sub_request(r);
+    rnew->hostname       = r->hostname;
     rnew->request_time   = r->request_time;
     rnew->connection     = r->connection;
     rnew->server         = r->server;
@@ -826,7 +830,14 @@ API_EXPORT(request_rec *) ap_sub_req_lookup_file(const char *new_file,
          * file may not have a uri associated with it -djg
          */
         rnew->uri = "INTERNALLY GENERATED file-relative req";
+#ifdef WIN32
+        rnew->filename = ((new_file[0] == '/'
+                           || (ap_isalpha(new_file[0])
+                               && new_file[1] == ':'
+                               && new_file[2] == '/')) ?
+#else
         rnew->filename = ((new_file[0] == '/') ?
+#endif
                           ap_pstrdup(rnew->pool, new_file) :
                           ap_make_full_path(rnew->pool, fdir, new_file));
         rnew->per_dir_config = r->server->lookup_defaults;
@@ -1012,39 +1023,6 @@ API_EXPORT(int) ap_some_auth_required(request_rec *r)
 static void process_request_internal(request_rec *r)
 {
     int access_status;
-
-    /*
-     * Kluge to be reading the assbackwards field outside of protocol.c, but
-     * we've got to check for this sort of nonsense somewhere...
-     */
-
-    if (r->assbackwards && r->header_only) {
-        /*
-         * Client asked for headers only with HTTP/0.9, which doesn't send
-         * headers!  Have to dink things even to make sure the error message
-         * comes through...
-         */
-        ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r,
-                    "client sent illegal HTTP/0.9 request: %s", r->uri);
-        r->header_only = 0;
-        ap_die(BAD_REQUEST, r);
-        return;
-    }
-
-    if ((!r->hostname && (r->proto_num >= HTTP_VERSION(1,1))) ||
-        ((r->proto_num == HTTP_VERSION(1,1)) && !ap_table_get(r->headers_in, "Host"))) {
-        /*
-         * Client sent us a HTTP/1.1 or later request without telling us the
-         * hostname, either with a full URL or a Host: header. We therefore
-         * need to (as per the 1.1 spec) send an error.  As a special case,
-	 * HTTP/1.1 mentions twice (S9, S14.23) that a request MUST contain
-	 * a Host: header, and the server MUST respond with 400 if it doesn't.
-         */
-        ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r,
-               "client sent HTTP/1.1 request without hostname (see RFC2068 section 9, and 14.23): %s", r->uri);
-        ap_die(BAD_REQUEST, r);
-        return;
-    }
 
     /* Ignore embedded %2F's in path for proxy requests */
     if (!r->proxyreq && r->parsed_uri.path) {

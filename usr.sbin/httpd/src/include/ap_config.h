@@ -372,7 +372,6 @@ typedef int pid_t;
 #define USE_MMAP_SCOREBOARD
 #define MAP_TMPFILE
 #define HAVE_RESOURCE
-#define HAVE_SYS_RESOURCE_H /* apaci should catch this but doesn't */
 #define HAVE_SNPRINTF
 #define JMP_BUF jmp_buf
 #define USE_LONGJMP
@@ -466,6 +465,7 @@ typedef int rlim_t;
 #define NO_WRITEV
 #include <sys/time.h>
 #define HAVE_SYSLOG 1
+#undef HAVE_SYS_RESOURCE_H
 
 #elif defined(SCO5)
 
@@ -615,6 +615,7 @@ extern char *crypt();
 #define WEXITSTATUS(status)	(int)((status).w_retcode)
 #define WTERMSIG(status)	(int)((status).w_termsig)
 #define strftime(buf,bufsize,fmt,tm)    ascftime(buf,fmt,tm)
+#undef HAVE_SYS_RESOURCE_H /* exists but does not provide *rlimit funcs */
 #include <sys/types.h>
 #include <sys/time.h>     
 
@@ -645,6 +646,7 @@ extern char *crypt();
 typedef quad_t rlim_t;
 #endif
 #define USE_FLOCK_SERIALIZED_ACCEPT
+#define SINGLE_LISTEN_UNSERIALIZED_ACCEPT
 #define HAVE_SYSLOG 1
 #define SYS_SIGLIST sys_siglist
 
@@ -706,8 +708,6 @@ typedef int rlim_t;
 #define NEED_STRNCASECMP
 #define NO_SETSID
 #define NO_TIMES
-/* ap_config_auto.h gets this wrong, force sys/select.h to be included */
-#define HAVE_SYS_SELECT_H
 #define CASE_BLIND_FILESYSTEM
 /* Add some drive name support */
 #define chdir _chdir2

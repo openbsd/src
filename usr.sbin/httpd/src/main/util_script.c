@@ -262,6 +262,7 @@ API_EXPORT(void) ap_add_common_vars(request_rec *r)
 #endif
 
     ap_table_addn(e, "PATH", env_path);
+    ap_table_setn(e, "SERVER_SIGNATURE", ap_psignature("", r));
     ap_table_addn(e, "SERVER_SOFTWARE", ap_get_server_version());
     ap_table_addn(e, "SERVER_NAME", ap_get_server_name(r));
     ap_table_addn(e, "SERVER_PORT",
@@ -458,8 +459,6 @@ API_EXPORT(int) ap_scan_script_header_err_core(request_rec *r, char *buffer,
 	    ap_kill_timeout(r);
 	    ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r,
 			  "Premature end of script headers: %s", r->filename);
-	    ap_table_setn(r->notes, "error-notes",
-			  "Premature end of script headers");
 	    return HTTP_INTERNAL_SERVER_ERROR;
 	}
 
@@ -543,8 +542,6 @@ API_EXPORT(int) ap_scan_script_header_err_core(request_rec *r, char *buffer,
 	    ap_kill_timeout(r);
 	    ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r,
 			  "%s: %s", malformed, r->filename);
-	    ap_table_setn(r->notes, "error-notes",
-			  ap_pstrdup(r->pool, malformed));
 	    return HTTP_INTERNAL_SERVER_ERROR;
 	}
 
