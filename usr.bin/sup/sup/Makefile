@@ -1,13 +1,11 @@
-#	$Id: Makefile,v 1.1 1995/12/16 11:47:05 deraadt Exp $
-
-.PATH:	${.CURDIR}/../src
+#	$Id: Makefile,v 1.2 1995/12/17 12:58:09 deraadt Exp $
 
 PROG=	sup
 MAN=	sup.1
-SRCS=	supcmain.o supcvers.o supcparse.o supcname.o supcmisc.o supcmeat.o \
-	scm.o scmio.o stree.o log.o supmsg.o \
-	atoo.o errmsg.o expand.o ffilecopy.o filecopy.o nxtarg.o \
-	path.o quit.o run.o salloc.o skipto.o vprintf.o netcryptvoid.c
+SRCS=	supcmain.c supcvers.c supcparse.c supcname.c supcmisc.c supcmeat.c \
+	scm.c scmio.c stree.c log.c supmsg.c \
+	atoo.c errmsg.c expand.c ffilecopy.c filecopy.c nxtarg.c \
+	path.c quit.c run.c salloc.c skipto.c vprintf.c netcryptvoid.c
 LDADDR+=-lutil
 DPADD+=	${LIBUTIL}
 BINOWN=	root
@@ -15,5 +13,6 @@ BINGRP=	daemon
 BINMODE=555
 BINDIR=	/usr/bin
 CFLAGS+=-I${.CURDIR}/../src
+.PATH:	${.CURDIR}/../src
 
 .include <bsd.prog.mk>
