@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.4,v 1.16 2004/01/21 19:35:39 jmc Exp $
+.\"	$OpenBSD: route.4,v 1.17 2004/05/04 22:50:18 claudio Exp $
 .\"	$NetBSD: route.4,v 1.3 1994/11/30 16:22:31 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -286,6 +286,11 @@ struct rt_metrics {
 	u_long	rmx_pksent;	/* packets sent using this route */
 };
 .Ed
+Only rmx_mtu, rmx_expire, rmx_pksent, and rmx_locks are used by the kernel
+routing table.
+All other values will be ignored when inserting them into the kernel and are
+set to zero in routing messages sent by the kernel.
+They are left for compatibility reasons with other systems.
 .Pp
 Flags include the values:
 .Bd -literal
@@ -319,6 +324,7 @@ Specifiers for metric values in rmx_locks and rtm_inits are:
 #define RTV_RTT		0x40	/* init or lock _rtt */
 #define RTV_RTTVAR	0x80	/* init or lock _rttvar */
 .Ed
+Only RTV_MTU and RTV_EXPIRE should be used all other flags are ignored.
 .Pp
 Specifiers for which addresses are present in the messages are:
 .Bd -literal

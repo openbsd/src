@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.165 2004/04/26 18:12:25 frantzen Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.166 2004/05/04 22:50:18 claudio Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3131,7 +3131,7 @@ void
 tcp_mss_update(tp)
 	struct tcpcb *tp;
 {
-	int mss, rtt;
+	int mss;
 	u_long bufsize;
 	struct rtentry *rt;
 	struct socket *so;
@@ -3144,45 +3144,7 @@ tcp_mss_update(tp)
 	if (rt == NULL)
 		return;
 
-#ifdef RTV_MTU	/* if route characteristics exist ... */
-	/*
-	 * While we're here, check if there's an initial rtt
-	 * or rttvar.  Convert from the route-table units
-	 * to scaled multiples of the slow timeout timer.
-	 */
-	if (tp->t_srtt == 0 && (rtt = rt->rt_rmx.rmx_rtt)) {
-		/*
-		 * XXX the lock bit for MTU indicates that the value
-		 * is also a minimum value; this is subject to time.
-		 */
-		if (rt->rt_rmx.rmx_locks & RTV_RTT)
-			TCPT_RANGESET(tp->t_rttmin,
-			    rtt / (RTM_RTTUNIT / PR_SLOWHZ),
-			    TCPTV_MIN, TCPTV_REXMTMAX);
-		tp->t_srtt = rtt / (RTM_RTTUNIT / (PR_SLOWHZ * TCP_RTT_SCALE));
-		if (rt->rt_rmx.rmx_rttvar)
-			tp->t_rttvar = rt->rt_rmx.rmx_rttvar /
-			    (RTM_RTTUNIT / (PR_SLOWHZ * TCP_RTTVAR_SCALE));
-		else
-			/* default variation is +- 1 rtt */
-			tp->t_rttvar =
-			    tp->t_srtt * TCP_RTTVAR_SCALE / TCP_RTT_SCALE;
-		TCPT_RANGESET((long) tp->t_rxtcur,
-		    ((tp->t_srtt >> 2) + tp->t_rttvar) >> 1,
-		    tp->t_rttmin, TCPTV_REXMTMAX);
-	}
-#endif
-
-	/*
-	 * If there's a pipesize, change the socket buffer
-	 * to that size.  Make the socket buffers an integral
-	 * number of mss units; if the mss is larger than
-	 * the socket buffer, decrease the mss.
-	 */
-#ifdef RTV_SPIPE
-	if ((bufsize = rt->rt_rmx.rmx_sendpipe) == 0)
-#endif
-		bufsize = so->so_snd.sb_hiwat;
+	bufsize = so->so_snd.sb_hiwat;
 	if (bufsize < mss) {
 		mss = bufsize;
 		/* Update t_maxseg and t_maxopd */
@@ -3194,32 +3156,14 @@ tcp_mss_update(tp)
 		(void)sbreserve(&so->so_snd, bufsize);
 	}
 
-#ifdef RTV_RPIPE
-	if ((bufsize = rt->rt_rmx.rmx_recvpipe) == 0)
-#endif
-		bufsize = so->so_rcv.sb_hiwat;
+	bufsize = so->so_rcv.sb_hiwat;
 	if (bufsize > mss) {
 		bufsize = roundup(bufsize, mss);
 		if (bufsize > sb_max)
 			bufsize = sb_max;
 		(void)sbreserve(&so->so_rcv, bufsize);
-#ifdef RTV_RPIPE
-		if (rt->rt_rmx.rmx_recvpipe > 0)
-			tcp_rscale(tp, so->so_rcv.sb_hiwat);
-#endif
 	}
 
-#ifdef RTV_SSTHRESH
-	if (rt->rt_rmx.rmx_ssthresh) {
-		/*
-		 * There's some sort of gateway or interface
-		 * buffer limit on the path.  Use this to set
-		 * the slow start threshhold, but set the
-		 * threshold to no less than 2*mss.
-		 */
-		tp->snd_ssthresh = max(2 * mss, rt->rt_rmx.rmx_ssthresh);
-	}
-#endif /* RTV_MTU */
 }
 #endif /* TUBA_INCLUDE */
 
