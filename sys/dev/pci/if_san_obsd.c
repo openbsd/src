@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_obsd.c,v 1.6 2004/12/07 06:10:24 mcbride Exp $	*/
+/*	$OpenBSD: if_san_obsd.c,v 1.7 2005/03/01 18:37:07 mcbride Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -32,32 +32,36 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-# include <sys/types.h>
-# include <sys/param.h>
-# include <sys/systm.h>
-# include <sys/syslog.h>
-# include <sys/ioccom.h>
-# include <sys/conf.h>
-# include <sys/malloc.h>
-# include <sys/errno.h>
-# include <sys/exec.h>
-# include <sys/mbuf.h>
-# include <sys/sockio.h>
-# include <sys/socket.h>
-# include <sys/kernel.h>
-# include <sys/device.h>
-# include <sys/time.h>
-# include <sys/timeout.h>
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/syslog.h>
+#include <sys/ioccom.h>
+#include <sys/conf.h>
+#include <sys/malloc.h>
+#include <sys/errno.h>
+#include <sys/exec.h>
+#include <sys/mbuf.h>
+#include <sys/sockio.h>
+#include <sys/socket.h>
+#include <sys/kernel.h>
+#include <sys/device.h>
+#include <sys/time.h>
+#include <sys/timeout.h>
 
-# include <net/if.h>
-# include <net/if_media.h>
-# include <net/netisr.h>
-# include <net/if_sppp.h>
-# include <netinet/in_systm.h>
-# include <netinet/in.h>
+#include "bpfilter.h"
+#if NBPFILTER > 0
+# include <net/bpf.h>
+#endif
+#include <net/if.h>
+#include <net/if_media.h>
+#include <net/netisr.h>
+#include <net/if_sppp.h>
+#include <netinet/in_systm.h>
+#include <netinet/in.h>
 
-# include <netinet/udp.h>
-# include <netinet/ip.h>
+#include <netinet/udp.h>
+#include <netinet/ip.h>
 
 #include <dev/pci/if_san_common.h>
 #include <dev/pci/if_san_obsd.h>
@@ -129,7 +133,6 @@ wanpipe_generic_register(sdla_t *card, struct ifnet *ifp, char *ifname)
 	common->protocol = IF_PROTO_CISCO;
 	((struct sppp *)ifp)->pp_flags |= PP_CISCO;
 	((struct sppp *)ifp)->pp_flags |= PP_KEEPALIVE;
-	((struct sppp *)ifp)->pp_framebytes = 3;
 	ifp->if_ioctl = wanpipe_generic_ioctl;	/* Will set from new_if() */
 	ifp->if_start = wanpipe_generic_start;
 	ifp->if_watchdog = wanpipe_generic_watchdog;
@@ -160,8 +163,10 @@ wanpipe_generic_start(struct ifnet *ifp)
 	struct mbuf	*opkt;
 	int		 err = 0;
 #if NBPFILTER > 0
+#if 0
 	struct mbuf	m0;
 	u_int32_t	af = AF_INET;
+#endif
 #endif /* NBPFILTER > 0 */
 
 	if ((card = wanpipe_generic_getcard(ifp)) == NULL) {
@@ -184,12 +189,20 @@ wanpipe_generic_start(struct ifnet *ifp)
 		/* report the packet to BPF if present and attached */
 #if NBPFILTER > 0
 		if (ifp->if_bpf) {
+#if 0
 			m0.m_next = opkt;
 			m0.m_len = 4;
 			m0.m_data = (char*)&af;
 			bpf_mtap(ifp->if_bpf, &m0);
+#endif
+			bpf_mtap(ifp->if_bpf, opkt);
 		}
 #endif /* NBPFILTER > 0 */
+
+		if (wan_mbuf_to_buffer(&opkt)){
+			m_freem(opkt);
+			break;
+		}
 
 		err = card->iface_send(opkt, ifp);
 		if (err) {
@@ -264,6 +277,9 @@ wanpipe_generic_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			/* bring it down */
 			log(LOG_INFO, "%s: Bringing interface down.\n",
 			    ifp->if_xname);
+			if (!(((struct sppp *)ifp)->pp_flags & PP_CISCO)){
+				((struct sppp*)ifp)->pp_down((struct sppp*)ifp);
+			}
 			if (card->iface_down) {
 				card->iface_down(ifp);
 			}
@@ -273,8 +289,12 @@ wanpipe_generic_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (card->iface_up) {
 				card->iface_up(ifp);
 			}
+			if (!(((struct sppp *)ifp)->pp_flags & PP_CISCO)){
+				((struct sppp*)ifp)->pp_up((struct sppp*)ifp);
+			}
 			wanpipe_generic_start(ifp);
 		}
+		err = 1;
 		break;
 
 	case SIOC_WANPIPE_DEVICE:
@@ -354,8 +374,10 @@ wanpipe_generic_input(struct ifnet *ifp, struct mbuf *m)
 {
 	sdla_t		*card;
 #if NBPFILTER > 0
+#if 0
 	struct mbuf	m0;
 	u_int32_t	af = AF_INET;
+#endif
 #endif /* NBPFILTER > 0 */
 
 	if ((card = wanpipe_generic_getcard(ifp)) == NULL) {
@@ -364,10 +386,13 @@ wanpipe_generic_input(struct ifnet *ifp, struct mbuf *m)
 	m->m_pkthdr.rcvif = ifp;
 #if NBPFILTER > 0
 	if (ifp->if_bpf) {
+#if 0
 		m0.m_next = m;
 		m0.m_len = 4;
 		m0.m_data = (char*)&af;
 		bpf_mtap(ifp->if_bpf, &m0);
+#endif
+		bpf_mtap(ifp->if_bpf, m);
 	}
 #endif /* NBPFILTER > 0 */
 	ifp->if_ipackets ++;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_common.h,v 1.5 2004/12/07 06:10:24 mcbride Exp $	*/
+/*	$OpenBSD: if_san_common.h,v 1.6 2005/03/01 18:37:06 mcbride Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -299,6 +299,14 @@ typedef struct wan_udp_hdr{
 /* clear bit N of bitstring name */
 #define	bit_clear(name, bit) ((name)[_bit_byte(bit)] &= ~_bit_mask(bit))
 
+/* Sangoma assert macro */
+#define SAN_ASSERT(a)						\
+	if (a){							\
+		log(LOG_INFO, "%s:%d: Critical Error!\n",	\
+				__FUNCTION__,__LINE__);		\
+		return (-EINVAL);				\
+	}
+
 /****** Data Structures *****************************************************/
 
 typedef struct wan_udp_pkt {
@@ -410,7 +418,8 @@ typedef struct sdla {
 /****** Public Functions ****************************************************/
 
 void*		wan_xilinx_init(sdla_t*);	/* Xilinx Hardware Support */
-struct mbuf*	wan_mbuf_alloc(void);
+struct mbuf*	wan_mbuf_alloc(int);
+int 		wan_mbuf_to_buffer(struct mbuf**);
 
 #endif	/* __KERNEL__ */
 #endif	/* __IF_SAN_COMMON_H */

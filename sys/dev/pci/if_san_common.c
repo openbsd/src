@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_common.c,v 1.5 2004/12/07 08:44:38 jsg Exp $	*/
+/*	$OpenBSD: if_san_common.c,v 1.6 2005/03/01 18:37:06 mcbride Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -263,17 +263,8 @@ wan_ioctl(struct ifnet *ifp, int cmd, struct ifreq *ifr)
 	wanpipe_common_t	*common = WAN_IFP_TO_COMMON(ifp);
 	int			err = 0;
 
-	if (common == NULL) {
-		log(LOG_INFO, "%s: Invalid softc pointer (%s:%d)!\n",
-		    ifp->if_xname, __FUNCTION__, __LINE__);
-		return (-EINVAL);
-	}
-	card = common->card;
-	if (card == NULL) {
-		log(LOG_INFO, "%s: Card private structure corrupted (%s:%d)!\n",
-		    ifp->if_xname, __FUNCTION__, __LINE__);
-		return (-EINVAL);
-	}
+	SAN_ASSERT(common == NULL);
+	SAN_ASSERT(common->card == NULL);
 	switch (cmd) {
 	case SIOC_WANPIPE_HWPROBE:
 		err = wan_ioctl_hwprobe(ifp, ifr->ifr_data);
@@ -293,14 +284,21 @@ wan_ioctl(struct ifnet *ifp, int cmd, struct ifreq *ifr)
 static int
 wan_ioctl_hwprobe(struct ifnet *ifp, void *u_def)
 {
-	sdla_t		*card = NULL;
-	wanlite_def_t	 def;
-	unsigned char	*str;
-	int		 err;
+	sdla_t			*card = NULL;
+	wanpipe_common_t	*common = WAN_IFP_TO_COMMON(ifp);
+	wanlite_def_t	 	def;
+	unsigned char		*str;
+	int			err;
 
-	card = ((wanpipe_common_t*)ifp->if_softc)->card;
+	SAN_ASSERT(common == NULL);
+	SAN_ASSERT(common->card == NULL);
+	card = common->card;
 	memset(&def, 0, sizeof(wanlite_def_t));
-	sdla_get_hwprobe(card->hw, (void**)&str);
+	/* Get protocol type */
+	def.proto = common->protocol;
+
+	/* Get hardware configuration */
+	err = sdla_get_hwprobe(card->hw, (void**)&str);
 	if (err) {
 		return -EINVAL;
 	}
@@ -385,18 +383,54 @@ sdla_isr(void *pcard)
 	return (1);
 }
 
-struct mbuf *
-wan_mbuf_alloc(void)
+struct mbuf* 
+wan_mbuf_alloc(int len)
 {
 	struct mbuf	*m;
 
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (len) {
+		MGETHDR(m, M_DONTWAIT, MT_DATA);
+	} else {
+		MGET(m, M_DONTWAIT, MT_DATA);
+	}
 	if (m != NULL) {
+		if (m->m_flags & M_PKTHDR) {
+			m->m_pkthdr.len = 0;
+		}
+		m->m_len = 0;
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
 			m_freem(m);
-			m = NULL;
+			return NULL;
 		}
+		m->m_data += 16;
+		return (m);
 	}
-	return (m);
+	return NULL;
 }
+
+int 
+wan_mbuf_to_buffer(struct mbuf **m_org)
+{
+	struct mbuf	*m = *m_org, *new = NULL;
+
+	if (m == NULL){
+		return -EINVAL;
+	}
+	new = wan_mbuf_alloc(0);
+	if (new){
+		struct mbuf	*tmp = m;
+		char	*buffer = new->m_data;
+
+		for( ; tmp; tmp = tmp->m_next) {
+			bcopy(mtod(tmp, caddr_t), buffer, tmp->m_len);
+			buffer += tmp->m_len;
+			new->m_len += tmp->m_len;
+		}
+		m_freem(m);
+		*m_org = new;
+		return 0;
+	}
+	return -EINVAL;
+}
+

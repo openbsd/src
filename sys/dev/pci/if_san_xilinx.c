@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_xilinx.c,v 1.6 2004/12/07 06:10:24 mcbride Exp $	*/
+/*	$OpenBSD: if_san_xilinx.c,v 1.7 2005/03/01 18:37:07 mcbride Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -684,7 +684,7 @@ wan_xilinx_ioctl(struct ifnet *ifp, int cmd, struct ifreq *ifr)
 				return (-EBUSY);
 			}
 
-			m = wan_mbuf_alloc();
+			m = wan_mbuf_alloc(sizeof(wan_udp_pkt_t));
 			if (m == NULL) {
 				return (-ENOMEM);
 			}
@@ -1767,8 +1767,10 @@ xilinx_dma_tx(sdla_t *card, xilinx_softc_t *sc)
 #endif
 
 	if (bit_test((u_int8_t *)&sc->dma_status, TX_BUSY)) {
+#ifdef DEBUG_TX
 		log(LOG_INFO, "%s:  TX_BUSY set (%s:%d)!\n",
 		    sc->if_name, __FUNCTION__, __LINE__);
+#endif
 		return -EBUSY;
 	}
 	bit_set((u_int8_t *)&sc->dma_status, TX_BUSY);
@@ -2315,9 +2317,9 @@ xilinx_rx_post_complete(sdla_t *card, xilinx_softc_t *sc,
 		memset(&skb->cb[0], 0, sizeof(wp_rx_element_t));
 #endif
 		memset(mtod(m, caddr_t), 0, sizeof(wp_rx_element_t));
-		m_adj(m, sizeof(wp_rx_element_t));
 		m->m_len += len;
 		m->m_pkthdr.len = m->m_len;
+		m_adj(m, sizeof(wp_rx_element_t));
 		*new_m = m;
 
 		aft_alloc_rx_dma_buff(card, sc, 1);
@@ -2326,7 +2328,7 @@ xilinx_rx_post_complete(sdla_t *card, xilinx_softc_t *sc,
 		/* The rx packet is very
 		 * small thus, allocate a new
 		 * buffer and pass it up */
-		m0 = wan_mbuf_alloc();
+		m0 = wan_mbuf_alloc(len);
 		if (m0 == NULL) {
 			log(LOG_INFO, "%s: Failed to allocate mbuf!\n",
 			    sc->if_name);
@@ -2471,7 +2473,7 @@ aft_alloc_rx_dma_buff(sdla_t *card, xilinx_softc_t *sc, int num)
 	struct mbuf *m;
 
 	for (i = 0; i < num; i++) {
-		m = wan_mbuf_alloc();
+		m = wan_mbuf_alloc(sc->dma_mtu);
 		if (m == NULL) {
 			log(LOG_INFO, "%s: %s  no memory\n",
 					sc->if_name, __FUNCTION__);
