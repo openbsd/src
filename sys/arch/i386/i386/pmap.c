@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.36 2000/05/04 18:55:06 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.37 2001/03/22 20:44:59 niklas Exp $	*/
 /*	$NetBSD: pmap.c,v 1.36 1996/05/03 19:42:22 christos Exp $	*/
 
 /*
@@ -1120,8 +1120,8 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
-		printf("pmap_enter(%x, %x, %x, %x, %x)",
-		       pmap, va, pa, prot, wired);
+		printf("pmap_enter(%x, %x, %x, %x, %x)", pmap, va, pa, prot,
+		    wired);
 #endif
 
 	if (pmap == NULL)
