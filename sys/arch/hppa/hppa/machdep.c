@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.95 2003/01/13 19:53:34 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.96 2003/01/14 12:17:07 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -179,9 +179,7 @@ void hppa_user2frame(struct trapframe *sf, struct trapframe *tf);
 /*
  * wide used hardware params
  */
-#if defined(HP7100LC_CPU) || defined(HP7300LC_CPU)
 struct pdc_hwtlb pdc_hwtlb PDC_ALIGNMENT;
-#endif
 struct pdc_coproc pdc_coproc PDC_ALIGNMENT;
 struct pdc_coherence pdc_coherence PDC_ALIGNMENT;
 struct pdc_spidb pdc_spidbits PDC_ALIGNMENT;
