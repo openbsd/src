@@ -1,4 +1,4 @@
-/*	$OpenBSD: asio.c,v 1.8 2003/06/24 21:54:38 henric Exp $	*/
+/*	$OpenBSD: asio.c,v 1.9 2003/06/27 00:27:18 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -136,21 +136,17 @@ asio_attach(parent, self, aux)
 		return;
 	}
 
-	if (sbus_bus_map(sa->sa_bustag,
-	    sa->sa_reg[0].sbr_slot,
-	    sa->sa_reg[0].sbr_offset,
-	    sa->sa_reg[0].sbr_size,
-	    BUS_SPACE_MAP_LINEAR, 0, &sc->sc_csr_h)) {
+	if (sbus_bus_map(sa->sa_bustag, sa->sa_reg[0].sbr_slot,
+	    sa->sa_reg[0].sbr_offset, sa->sa_reg[0].sbr_size,
+	    0, 0, &sc->sc_csr_h)) {
 		printf(": couldn't map csr\n");
 		return;
 	}
 
 	for (i = 0; i < sc->sc_nports; i++) {
-		if (sbus_bus_map(sa->sa_bustag,
-		    sa->sa_reg[i + 1].sbr_slot,
-		    sa->sa_reg[i + 1].sbr_offset,
-		    sa->sa_reg[i + 1].sbr_size,
-		    BUS_SPACE_MAP_LINEAR, 0, &sc->sc_ports[i].ap_bh)) {
+		if (sbus_bus_map(sa->sa_bustag, sa->sa_reg[i + 1].sbr_slot,
+		    sa->sa_reg[i + 1].sbr_offset, sa->sa_reg[i + 1].sbr_size,
+		    0, 0, &sc->sc_ports[i].ap_bh)) {
 			printf(": couldn't map uart%d\n", i);
 			return;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: spif.c,v 1.8 2003/06/24 21:54:38 henric Exp $	*/
+/*	$OpenBSD: spif.c,v 1.9 2003/06/27 00:27:17 jason Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Jason L. Wright (jason@thought.net)
@@ -186,7 +186,7 @@ spifattach(parent, self, aux)
 	sc->sc_bustag = sa->sa_bustag;
 	if (sbus_bus_map(sa->sa_bustag, sa->sa_reg[0].sbr_slot,
 	    sa->sa_reg[0].sbr_offset, sa->sa_reg[0].sbr_size,
-	    BUS_SPACE_MAP_LINEAR, 0, &sc->sc_regh) != 0) {
+	    0, 0, &sc->sc_regh) != 0) {
 		printf(": can't map registers\n");
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: apio.c,v 1.5 2003/06/24 21:54:38 henric Exp $	*/
+/*	$OpenBSD: apio.c,v 1.6 2003/06/27 00:27:18 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -127,29 +127,23 @@ apio_attach(parent, self, aux)
 		return;
 	}
 
-	if (sbus_bus_map(sa->sa_bustag,
-	    sa->sa_reg[0].sbr_slot,
-	    sa->sa_reg[0].sbr_offset,
-	    sa->sa_reg[0].sbr_size,
-	    BUS_SPACE_MAP_LINEAR, 0, &sc->sc_csr_h)) {
+	if (sbus_bus_map(sa->sa_bustag, sa->sa_reg[0].sbr_slot,
+	    sa->sa_reg[0].sbr_offset, sa->sa_reg[0].sbr_size,
+	    0, 0, &sc->sc_csr_h)) {
 		printf(": couldn't map csr\n");
 		return;
 	}
 
-	if (sbus_bus_map(sa->sa_bustag,
-	    sa->sa_reg[1].sbr_slot,
-	    sa->sa_reg[1].sbr_offset,
-	    sa->sa_reg[1].sbr_size,
-	    BUS_SPACE_MAP_LINEAR, 0, &sc->sc_clk_h)) {
+	if (sbus_bus_map(sa->sa_bustag, sa->sa_reg[1].sbr_slot,
+	    sa->sa_reg[1].sbr_offset, sa->sa_reg[1].sbr_size,
+	    0, 0, &sc->sc_clk_h)) {
 		printf(": couldn't map clk\n");
 		return;
 	}
 
-	if (sbus_bus_map(sa->sa_bustag,
-	    sa->sa_reg[2].sbr_slot,
-	    sa->sa_reg[2].sbr_offset,
-	    sa->sa_reg[2].sbr_size,
-	    BUS_SPACE_MAP_LINEAR, 0, &sc->sc_lpt_h)) {
+	if (sbus_bus_map(sa->sa_bustag, sa->sa_reg[2].sbr_slot,
+	    sa->sa_reg[2].sbr_offset, sa->sa_reg[2].sbr_size,
+	    0, 0, &sc->sc_lpt_h)) {
 		printf(": couldn't map clk\n");
 		return;
 	}
