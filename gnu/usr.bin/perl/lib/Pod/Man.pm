@@ -1,5 +1,5 @@
 # Pod::Man -- Convert POD data to formatted *roff input.
-# $Id: Man.pm,v 1.3 2000/04/09 05:40:02 millert Exp $
+# $Id: Man.pm,v 1.4 2000/04/24 01:20:36 millert Exp $
 #
 # Copyright 1999, 2000 by Russ Allbery <rra@stanford.edu>
 #
@@ -555,14 +555,16 @@ sub sequence {
     # mess up the results of guesswork on substrings.  So we do this
     # somewhat roundabout way of handling it.
     if ($command eq 'C') {
-        my @children = $seq->parse_tree ()->children;
-        for (@children) {
-            unless (ref) {
-                s/-/\\-/g;
-                s/__/_\\|_/g;
+        my @children = map {
+            my $block = $_;
+	    if (ref $block) {
+		$block;
+	    } else {
+		$block =~ s/-/\\-/g;
+		$block =~ s/__/_\\|_/g;
+		bless \ "$block", 'Pod::Man::String';
             }
-        }
-        $seq->parse_tree ()->children (@children);
+        } $seq->parse_tree ()->children;
     }
 
     # C<>, L<>, X<>, and E<> don't apply guesswork to their contents.

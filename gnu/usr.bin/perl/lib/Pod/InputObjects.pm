@@ -807,7 +807,7 @@ children for the top node.
 sub children {
    my $self = shift;
    if (@_ > 0) {
-      @{ $self } = (@_ == 1  and  ref $_[0]) ? ${ @_ } : @_;
+      @{ $self } = (@_ == 1  and  ref $_[0]) ? @{ @_ } : @_;
    }
    return @{ $self };
 }
