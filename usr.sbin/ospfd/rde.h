@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.5 2005/02/27 08:21:15 norby Exp $ */
+/*	$OpenBSD: rde.h,v 1.6 2005/03/08 20:12:18 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -58,10 +58,13 @@ struct rde_nbr {
 struct rt_node {
 	RB_ENTRY(rt_node)	 entry;
 	struct in_addr		 prefix;
-	u_int8_t		 prefixlen;
 	struct in_addr		 nexthop;
-	enum path_type		 p_type;
+	struct in_addr		 area;
 	u_int32_t		 cost;
+	enum path_type		 p_type;
+	enum dst_type		 d_type;
+	u_int8_t		 prefixlen;
+	bool			 invalid;
 };
 
 /* rde.c */
@@ -70,7 +73,8 @@ int		 rde_imsg_compose_parent(int, pid_t, void *, u_int16_t);
 int		 rde_imsg_compose_ospfe(int, u_int32_t, pid_t, void *,
 		     u_int16_t);
 u_int32_t	 rde_router_id(void);
-void		 rde_send_kroute(struct rt_node *);
+void		 rde_send_change_kroute(struct rt_node *);
+void		 rde_send_delete_kroute(struct rt_node *);
 void		 rde_nbr_del(struct rde_nbr *);
 int		 rde_nbr_loading(struct area *);
 struct rde_nbr	*rde_nbr_self(struct area *);

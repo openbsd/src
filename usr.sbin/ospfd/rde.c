@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.7 2005/02/27 08:21:15 norby Exp $ */
+/*	$OpenBSD: rde.c,v 1.8 2005/03/08 20:12:18 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -159,6 +159,7 @@ rde_shutdown(void)
 {
 	stop_spf_timer(rdeconf);
 	cand_list_clr();
+	rt_clear();
 
 	msgbuf_write(&ibuf_ospfe->w);
 	msgbuf_clear(&ibuf_ospfe->w);
@@ -473,7 +474,7 @@ rde_router_id(void)
 }
 
 void
-rde_send_kroute(struct rt_node *r)
+rde_send_change_kroute(struct rt_node *r)
 {
 	struct kroute	 kr;
 
@@ -483,6 +484,19 @@ rde_send_kroute(struct rt_node *r)
 	kr.prefixlen = r->prefixlen;
 
 	imsg_compose(ibuf_main, IMSG_KROUTE_CHANGE, 0, 0, -1, &kr, sizeof(kr));
+}
+
+void
+rde_send_delete_kroute(struct rt_node *r)
+{
+	struct kroute	 kr;
+
+	bzero(&kr, sizeof(kr));
+	kr.prefix.s_addr = r->prefix.s_addr;
+	kr.nexthop.s_addr = r->nexthop.s_addr;
+	kr.prefixlen = r->prefixlen;
+
+	imsg_compose(ibuf_main, IMSG_KROUTE_DELETE, 0, 0, -1, &kr, sizeof(kr));
 }
 
 LIST_HEAD(rde_nbr_head, rde_nbr);

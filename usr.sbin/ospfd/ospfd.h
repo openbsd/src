@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.12 2005/03/07 10:28:14 claudio Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.13 2005/03/08 20:12:18 norby Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -223,6 +223,16 @@ enum spf_state {
 	SPF_HOLDQUEUE
 };
 
+enum dst_type {
+	DT_NET,
+	DT_RTR
+};
+
+static const char * const dst_type_names[] = {
+	"Network",
+	"Router"
+};
+
 enum path_type {
 	PT_INTRA_AREA,
 	PT_INTER_AREA,
@@ -233,8 +243,8 @@ enum path_type {
 static const char * const path_type_names[] = {
 	"Intra-Area",
 	"Inter-Area",
-	"Type 1 external",
-	"Type 2 external"
+	"Type 1 ext",
+	"Type 2 ext"
 };
 
 /* lsa list used in RDE and OE */
