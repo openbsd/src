@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.7 1997/05/05 04:44:10 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.8 1997/06/19 18:23:21 grr Exp $
 #	$NetBSD: Makefile.inc,v 1.22 1996/09/30 15:54:35 ws Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
@@ -49,4 +49,4 @@ depend:: 		.NOTMAIN __always_make_kernlib
 	@${KERNMAKE} depend
 
 __always_make_kernlib:	.NOTMAIN
-	@mkdir -p ${KERNDST}
+	-mkdir -p ${KERNDST}

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.5 1997/05/05 04:44:11 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.6 1997/06/19 18:23:24 grr Exp $
 #	$NetBSD: Makefile.inc,v 1.2 1997/01/23 22:29:09 cgd Exp $
 #
 #	Configuration variables (default values are below):
@@ -68,4 +68,4 @@ dependzlib:		.NOTMAIN __always_make_zlib
 	@${ZMAKE} depend
 
 __always_make_zlib:	.NOTMAIN
-	@mkdir -p ${ZDST}
+	-mkdir -p ${ZDST}
