@@ -1094,8 +1094,6 @@
 ./usr/share/man/cat4/ch.0
 ./usr/share/man/cat4/clcs.0
 ./usr/share/man/cat4/clct.0
-./usr/share/man/cat4/clnp.0
-./usr/share/man/cat4/cltp.0
 ./usr/share/man/cat4/cmpci.0
 ./usr/share/man/cat4/cnw.0
 ./usr/share/man/cat4/com.0
@@ -1123,7 +1121,6 @@
 ./usr/share/man/cat4/enc.0
 ./usr/share/man/cat4/ep.0
 ./usr/share/man/cat4/esa.0
-./usr/share/man/cat4/esis.0
 ./usr/share/man/cat4/eso.0
 ./usr/share/man/cat4/ess.0
 ./usr/share/man/cat4/exphy.0
@@ -1250,7 +1247,6 @@
 ./usr/share/man/cat4/isa.0
 ./usr/share/man/cat4/isapnp.0
 ./usr/share/man/cat4/ises.0
-./usr/share/man/cat4/iso.0
 ./usr/share/man/cat4/isp.0
 ./usr/share/man/cat4/it.0
 ./usr/share/man/cat4/keynote.0
@@ -1531,7 +1527,6 @@
 ./usr/share/man/cat4/ti.0
 ./usr/share/man/cat4/tl.0
 ./usr/share/man/cat4/tlphy.0
-./usr/share/man/cat4/tp.0
 ./usr/share/man/cat4/tqphy.0
 ./usr/share/man/cat4/trm.0
 ./usr/share/man/cat4/tty.0
