@@ -2,7 +2,7 @@
  * The code in this file was written by Eivind Eklund <perhaps@yes.no>,
  * who places it in the public domain without restriction.
  *
- *	$OpenBSD: nat_cmd.c,v 1.15 2000/11/02 00:54:34 brian Exp $
+ *	$OpenBSD: nat_cmd.c,v 1.16 2001/01/28 21:56:35 brian Exp $
  */
 
 #include <sys/param.h>
@@ -312,7 +312,7 @@ nat_ProxyRule(struct cmdargs const *arg)
     pos += len;
   }
 
-  return PacketAliasProxyRule(cmd);
+  return PacketAliasProxyRule(cmd + strspn(cmd, " \t"));
 }
 
 int
