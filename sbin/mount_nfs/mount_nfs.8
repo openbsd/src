@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_nfs.8,v 1.29 2003/04/02 16:04:19 jmc Exp $
+.\"	$OpenBSD: mount_nfs.8,v 1.30 2003/05/07 17:21:01 jmc Exp $
 .\"	$NetBSD: mount_nfs.8,v 1.3 1996/02/18 11:59:10 fvdl Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994, 1995
@@ -153,13 +153,13 @@ flag followed by a comma separated string of options.
 See the
 .Xr mount 8
 man page for possible options and their meanings.
-The following NFS specific option is also available:
+The following NFS specific options are also available:
 .Bl -tag -width indent
 .It port=portnumber
 Use specified port number for NFS requests.
 The default is to query the portmapper for the NFS port.
 .It noac
-Turn off attribute caching for both directories and files
+Turn off attribute caching for both directories and files.
 .El
 .It Fl r Ar readsize
 Set the read data size to the specified value.
