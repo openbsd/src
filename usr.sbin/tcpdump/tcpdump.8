@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.53 2005/03/06 18:44:50 reyk Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.54 2005/03/06 21:05:49 jmc Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -28,7 +28,7 @@
 .Sh SYNOPSIS
 .Nm tcpdump
 .Bk -words
-.Op Fl adeflLnNoOpqStvxX
+.Op Fl adefLlNnOopqStvXx
 .Op Fl c Ar count
 .Op Fl E Oo Ar espalg: Oc Ar espkey
 .Op Fl F Ar file
@@ -63,8 +63,6 @@ Dump packet-matching code as a C program fragment.
 .It Fl ddd
 Dump packet-matching code as decimal numbers
 preceded with a count.
-.It Fl e
-Print the link-level header on each dump line.
 .It Xo
 .Fl E Oo Ar espalg: Oc Ar espkey
 .Xc
@@ -91,6 +89,13 @@ The algorithm defaults to
 This option should be used for debugging only, since the key will show up in
 .Xr ps 1
 output.
+.It Fl e
+Print the link-level header on each dump line.
+.It Fl F Ar file
+Use
+.Ar file
+as input for the filter expression.
+Any additional expressions given on the command line are ignored.
 .It Fl f
 Print
 .Dq foreign
@@ -98,11 +103,6 @@ internet addresses numerically rather than symbolically.
 This option is intended to get around serious brain damage in
 Sun's yp server \(em usually it hangs forever translating non-local
 internet numbers.
-.It Fl F Ar file
-Use
-.Ar file
-as input for the filter expression.
-Any additional expressions given on the command line are ignored.
 .It Fl i Ar interface
 Listen on
 .Ar interface .
@@ -113,6 +113,8 @@ searches the system interface list for the lowest numbered, configured
 interface
 .Pq excluding loopback .
 Ties are broken by choosing the earliest match.
+.It Fl L
+List the supported data link types for the interface and exit.
 .It Fl l
 Make stdout line buffered.
 Useful if you want to see the data while capturing it.
@@ -121,12 +123,6 @@ E.g.,
 .Dl # tcpdump -l | tee dat
 or
 .Dl # tcpdump -l > dat & tail -f dat
-.It Fl L
-List the supported data link types for the interface and exit.
-.It Fl n
-Do not convert addresses
-.Pq host addresses, port numbers, etc.
-to names.
 .It Fl N
 Do not print domain name qualification of host names.
 For example, if you specify this flag then
@@ -135,15 +131,19 @@ will print
 .Dq nic
 instead of
 .Dq nic.ddn.mil .
+.It Fl n
+Do not convert addresses
+.Pq host addresses, port numbers, etc.
+to names.
+.It Fl O
+Do not run the packet-matching code optimizer.
+This is useful only if you suspect a bug in the optimizer.
 .It Fl o
 Print a guess of the possible operating system(s) of hosts that sent
 TCP SYN packets.
 See
 .Xr pf.os 5
 for a description of the passive operating system fingerprints.
-.It Fl O
-Do not run the packet-matching code optimizer.
-This is useful only if you suspect a bug in the optimizer.
 .It Fl p
 Do not put the interface into promiscuous mode.
 The interface might be in promiscuous mode for some other reason; hence,
@@ -167,6 +167,8 @@ Standard input is used if
 .Ar file
 is
 .Ql - .
+.It Fl S
+Print absolute, rather than relative, TCP sequence numbers.
 .It Fl s Ar snaplen
 Analyze at most the first
 .Ar snaplen
@@ -188,18 +190,6 @@ You should limit
 .Ar snaplen
 to the smallest number that will capture the protocol information
 you're interested in.
-.It Fl S
-Print absolute, rather than relative, TCP sequence numbers.
-.It Fl t
-Do not print a timestamp on each dump line.
-.It Fl tt
-Print an unformatted timestamp on each dump line.
-.It Fl ttt
-Print day and month in timestamp.
-.It Fl tttt
-Print timestamp difference between packets.
-.It Fl ttttt
-Print timestamp difference since the first packet.
 .It Fl T Ar type
 Force packets selected by
 .Ar expression
@@ -225,6 +215,16 @@ Currently known types are
 and
 .Cm wb
 .Pq distributed White Board .
+.It Fl t
+Do not print a timestamp on each dump line.
+.It Fl tt
+Print an unformatted timestamp on each dump line.
+.It Fl ttt
+Print day and month in timestamp.
+.It Fl tttt
+Print timestamp difference between packets.
+.It Fl ttttt
+Print timestamp difference since the first packet.
 .It Fl v
 .Pq Slightly more
 verbose output.
@@ -247,6 +247,10 @@ Standard output is used if
 .Ar file
 is
 .Ql - .
+.It Fl X
+Like
+.Fl x
+but dumps the packet in emacs-hexl like format.
 .It Fl x
 Print each packet
 .Pq minus its link-level header
@@ -254,10 +258,6 @@ in hex.
 The smaller of the entire packet or
 .Ar snaplen
 bytes will be printed.
-.It Fl X
-Like
-.Fl x
-but dumps the packet in emacs-hexl like format.
 .It Fl y Ar datalinktype
 Set the data link type to use while capturing to
 .Ar datalinktype .

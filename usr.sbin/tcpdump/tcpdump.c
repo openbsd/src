@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.40 2005/03/06 18:44:50 reyk Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.41 2005/03/06 21:05:49 jmc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@ static const char copyright[] =
     "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n";
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.40 2005/03/06 18:44:50 reyk Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.41 2005/03/06 21:05:49 jmc Exp $ (LBL)";
 #endif
 
 /*
@@ -681,7 +681,7 @@ usage(void)
 	(void)fprintf(stderr, "%s version %s\n", program_name, version);
 	(void)fprintf(stderr, "libpcap version %s\n", pcap_version);
 	(void)fprintf(stderr,
-"Usage: %s [-adeflLnNoOpqStvxX] [-c count] [-E [espalg:]espkey] [-F file]\n",
+"Usage: %s [-adefLlNnOopqStvXx] [-c count] [-E [espalg:]espkey] [-F file]\n",
 	    program_name);
 	(void)fprintf(stderr,
 "\t\t[-i interface] [-r file] [-s snaplen] [-T type] [-w file]\n");
