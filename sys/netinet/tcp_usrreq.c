@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.63 2002/06/09 16:26:11 itojun Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.64 2002/08/08 17:07:32 provos Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -409,7 +409,7 @@ tcp_usrreq(so, req, m, nam, control)
 	 * marker if URG set.  Possibly send more data.
 	 */
 	case PRU_SEND:
-		sbappend(&so->so_snd, m);
+		sbappendstream(&so->so_snd, m);
 		error = tcp_output(tp);
 		break;
 
@@ -457,7 +457,7 @@ tcp_usrreq(so, req, m, nam, control)
 		 * of data past the urgent section.
 		 * Otherwise, snd_up should be one lower.
 		 */
-		sbappend(&so->so_snd, m);
+		sbappendstream(&so->so_snd, m);
 		tp->snd_up = tp->snd_una + so->so_snd.sb_cc;
 		tp->t_force = 1;
 		error = tcp_output(tp);
