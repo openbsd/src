@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: exchange.c,v 1.2 1997/07/24 23:47:11 provos Exp $";
+static char rcsid[] = "$Id: exchange.c,v 1.3 1998/10/02 16:52:56 niklas Exp $";
 #endif
 
 #define _EXCHANGE_C_
@@ -213,11 +213,11 @@ exchange_check_value(mpz_t exchange, mpz_t gen, mpz_t mod)
      mpz_t test;
      
      bits = mpz_sizeinbase(mod, 2);
-     if (mpz_sizeinbase(mod, 2) < bits/2)
+     if (mpz_sizeinbase(exchange, 2) < bits/2)
 	  return 0;
 
      mpz_init(test);
-     mpz_sub_ui(test, gen, 1);
+     mpz_sub_ui(test, mod, 1);
      if (!mpz_cmp(exchange,test)) {
 	  mpz_clear(test);
 	  return 0;
