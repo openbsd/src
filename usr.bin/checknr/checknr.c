@@ -1,4 +1,4 @@
-/*	$OpenBSD: checknr.c,v 1.7 2001/11/19 19:02:13 mpech Exp $	*/
+/*	$OpenBSD: checknr.c,v 1.8 2003/04/03 22:09:04 deraadt Exp $	*/
 /*	$NetBSD: checknr.c,v 1.4 1995/03/26 04:10:19 glass Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)checknr.c	8.1 (Berkeley) 6/6/93";
 #else 
-static char rcsid[] = "$OpenBSD: checknr.c,v 1.7 2001/11/19 19:02:13 mpech Exp $";
+static char rcsid[] = "$OpenBSD: checknr.c,v 1.8 2003/04/03 22:09:04 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -582,8 +582,7 @@ printf("binsrch(%s) -> %d\n", mac, slot);
 	dest = src+1;
 	while (dest > loc)
 		*dest-- = *src--;
-	*loc = malloc(3);
-	strcpy(*loc, mac);
+	*loc = strdup(mac);
 	ncmds++;
 #ifdef DEBUG
 printf("after: %s %s %s %s %s, %d cmds\n", knowncmds[slot-2], knowncmds[slot-1], knowncmds[slot], knowncmds[slot+1], knowncmds[slot+2], ncmds);
