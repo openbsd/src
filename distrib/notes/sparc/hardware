@@ -55,7 +55,7 @@ Supported devices {:-include-:}:
                 ttyc and ttyd (Sun 4/300 only)
 		SBus magma serial port cards, including:
 			4Sp, 8Sp, 12Sp, 16Sp, LC2+1Sp, 2+1Sp,
-			4+1Sp, and 8+2Sp.
+			4+1Sp, 8+2Sp, and 2+1HS Sp.
 		SBus Serial Parallel Interface (SUNW,spif)
 
 	ethernet: 
