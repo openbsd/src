@@ -1,4 +1,4 @@
-/*	$OpenBSD: comsat.c,v 1.27 2003/06/02 19:38:24 millert Exp $	*/
+/*	$OpenBSD: comsat.c,v 1.28 2003/06/19 22:35:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: comsat.c,v 1.27 2003/06/02 19:38:24 millert Exp $";
+static char rcsid[] = "$OpenBSD: comsat.c,v 1.28 2003/06/19 22:35:34 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/limits.h>
@@ -281,7 +281,7 @@ jkfprintf(FILE *tp, char name[], off_t offset)
 	if ((fi = fopen(name, "r")) == NULL)
 		return;
 
-	(void)fseek(fi, offset, SEEK_SET);
+	(void)fseeko(fi, offset, SEEK_SET);
 	/*
 	 * Print the first 7 lines or 560 characters of the new mail
 	 * (whichever comes first).  Skip header crap other than
