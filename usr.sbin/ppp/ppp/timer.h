@@ -15,7 +15,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: timer.h,v 1.1 1998/08/31 00:22:29 brian Exp $
+ * $Id: timer.h,v 1.2 1999/02/04 11:54:49 brian Exp $
  *
  *	TODO:
  */
@@ -42,6 +42,6 @@ struct prompt;
 
 extern void timer_Start(struct pppTimer *);
 extern void timer_Stop(struct pppTimer *);
-extern void timer_InitService(void);
+extern void timer_InitService(int);
 extern void timer_TermService(void);
 extern void timer_Show(int LogLevel, struct prompt *);
