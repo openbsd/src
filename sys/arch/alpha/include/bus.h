@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.8 1997/04/10 01:28:53 millert Exp $	*/
+/*	$OpenBSD: bus.h,v 1.9 1997/06/05 23:21:30 deraadt Exp $	*/
 /*	$NetBSD: bus.h,v 1.10 1996/12/02 22:19:32 cgd Exp $	*/
 
 /*
@@ -190,7 +190,7 @@ struct alpha_bus_space {
 	(*(t)->__abs_opname(type,sz))((t)->abs_cookie, h, o, a, c)
 #ifndef DEBUG
 #define	__abs_aligned_nonsingle(type, sz, t, h, o, a, c)		\
-	__abs_nonsingle((type), (sz), (t), (h), (o), (a), (c))
+	__abs_nonsingle(type, sz, (t), (h), (o), (a), (c))
 
 #else
 #define	__abs_aligned_nonsingle(type, sz, t, h, o, a, c)		\
