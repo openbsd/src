@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.51 2004/08/06 23:05:19 mickey Exp $
+#	$OpenBSD: Makefile,v 1.52 2004/12/31 00:09:58 miod Exp $
 #	$NetBSD: Makefile,v 1.13 1996/03/28 21:36:40 mark Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
@@ -18,6 +18,6 @@ MLINKS+=rc.conf.8 rc.conf.local.8
 
 SUBDIR=	man8.alpha man8.amd64 man8.cats man8.hp300 man8.hppa man8.i386 \
 	man8.luna88k man8.mac68k man8.macppc man8.mvme68k man8.mvme88k \
-	man8.sgi man8.sparc man8.sparc64 man8.vax
+	man8.sgi man8.sparc man8.sparc64 man8.vax man8.zaurus
 
 .include <bsd.prog.mk>
