@@ -1,4 +1,4 @@
-.\"	$OpenBSD: runway.4,v 1.2 2004/09/16 01:52:22 mickey Exp $
+.\"	$OpenBSD: runway.4,v 1.3 2004/09/26 20:04:46 mickey Exp $
 .\"
 .\" Copyright (c) 2004 Michael Shalayeff
 .\" All rights reserved.
@@ -32,11 +32,30 @@
 .Sh SYNOPSIS
 .Cd "uturn* at mainbus?"
 .Sh DESCRIPTION
-The Runway bus is a CPU and memory bus.
+The
+.Nm
+bus is a CPU and memory bus on systems based on PA-7200,
+PA-8000 and later CPUs.
+The
+.Nm
+bus is a 64-bit multiplexed address/data bus with support for cache
+coherency and allows up to 4-way SMP system configurrations.
+.Pp
+One or two
+.Xr uturn 4
+bridges connect
+.Nm
+bus to the system's
+.Xr gsc 4
+or 
+.Xr pci 4
+busses.
 .Sh SEE ALSO
+.Xr cpu 4 ,
 .Xr dino 4 ,
 .Xr gsc 4 ,
 .Xr intro 4 ,
+.Xr pci 4 ,
 .Xr uturn 4
 .Sh HISTORY
 The
