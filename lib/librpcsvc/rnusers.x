@@ -35,7 +35,7 @@
 %#ifndef lint
 %/*static char sccsid[] = "from: @(#)rnusers.x 1.2 87/09/20 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: @(#)rnusers.x	2.1 88/08/01 4.0 RPCSRC";*/
-%static char rcsid[] = "$Id: rnusers.x,v 1.2 1996/09/22 07:59:07 tholo Exp $";
+%static char rcsid[] = "$Id: rnusers.x,v 1.3 1996/09/22 08:13:43 tholo Exp $";
 %#endif /* not lint */
 #endif
 
@@ -55,9 +55,9 @@
 % * It corresponds to the utmp structure for BSD sytems.
 % */
 %
-%#define RUSERS_MAXUSERLEN 8
-%#define RUSERS_MAXLINELEN 8
-%#define RUSERS_MAXHOSTLEN 16
+%#define RNUSERS_MAXUSERLEN 8
+%#define RNUSERS_MAXLINELEN 8
+%#define RNUSERS_MAXHOSTLEN 16
 %
 %struct ru_utmp {
 %	char	*ut_line;		/* tty name */
@@ -111,16 +111,16 @@
 %{
 %	int size;
 %
-%	size = RUSERS_MAXLINELEN;
-%	if (!xdr_bytes(xdrs, &objp->ut_line, &size, RUSERS_MAXLINELEN)) {
+%	size = RNUSERS_MAXLINELEN;
+%	if (!xdr_bytes(xdrs, &objp->ut_line, &size, RNUSERS_MAXLINELEN)) {
 %		return (FALSE);
 %	}
-%	size = RUSERS_MAXUSERLEN;
-%	if (!xdr_bytes(xdrs, &objp->ut_name, &size, RUSERS_MAXUSERLEN)) {
+%	size = RNUSERS_MAXUSERLEN;
+%	if (!xdr_bytes(xdrs, &objp->ut_name, &size, RNUSERS_MAXUSERLEN)) {
 %		return (FALSE);
 %	}
-%	size = RUSERS_MAXHOSTLEN;
-%	if (!xdr_bytes(xdrs, &objp->ut_host, &size, RUSERS_MAXHOSTLEN)) {
+%	size = RNUSERS_MAXHOSTLEN;
+%	if (!xdr_bytes(xdrs, &objp->ut_host, &size, RNUSERS_MAXHOSTLEN)) {
 %		return (FALSE);
 %	}
 %	if (!xdr_long(xdrs, &objp->ut_time)) {
