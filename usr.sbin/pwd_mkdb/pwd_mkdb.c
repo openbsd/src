@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_mkdb.c,v 1.30 2002/06/02 06:42:29 deraadt Exp $	*/
+/*	$OpenBSD: pwd_mkdb.c,v 1.31 2002/11/21 21:25:19 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -45,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.30 2002/06/02 06:42:29 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.31 2002/11/21 21:25:19 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,7 @@ static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.30 2002/06/02 06:42:29 deraadt Ex
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <grp.h>
 #include <limits.h>
 #include <pwd.h>
 #include <signal.h>
@@ -73,6 +74,8 @@ static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.30 2002/06/02 06:42:29 deraadt Ex
 #define FILE_SECURE	0x01
 #define FILE_INSECURE	0x02
 #define FILE_ORIG	0x04
+
+#define	SHADOW_GROUP	"shadow"
 
 HASHINFO openinfo = {
 	4096,		/* bsize */
@@ -108,8 +111,10 @@ main(argc, argv)
 	FILE *fp, *oldfp = NULL;
 	struct stat st;
 	struct passwd pwd;
+	struct group *grp;
 	sigset_t set;
 	uid_t olduid;
+	gid_t shadow;
 	int ch, tfd, makeold, secureonly, flags, checkonly;
 	char *username, buf[MAX(MAXPATHLEN, LINE_MAX * 2)];
 
@@ -146,6 +151,11 @@ main(argc, argv)
 	if (argc != 1 || (makeold && secureonly) ||
 	    (username && (*username == '+' || *username == '-')))
 		usage();
+	
+	if ((grp = getgrnam(SHADOW_GROUP)) == NULL)
+		errx(1, "cannot find `%s' in the group database, aborting",
+		    SHADOW_GROUP);
+	shadow = grp->gr_gid;
 
 	/*
 	 * This could be changed to allow the user to interrupt.
@@ -223,6 +233,11 @@ main(argc, argv)
 	}
 	if (!edp)
 		error(buf);
+	if (fchown(edp->fd(edp), (uid_t)-1, shadow) != 0)
+		warn("%s: unable to set group to %s", _PATH_SMP_DB,
+		    SHADOW_GROUP);
+	else if (fchmod(edp->fd(edp), PERM_SECURE|S_IRGRP) != 0)
+		warn("%s: unable to make group readable", _PATH_SMP_DB);
 	clean |= FILE_SECURE;
 
 	/* Open the temporary insecure password database. */

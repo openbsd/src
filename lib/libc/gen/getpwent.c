@@ -33,7 +33,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getpwent.c,v 1.27 2002/07/06 03:10:23 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: getpwent.c,v 1.28 2002/11/21 21:25:19 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -965,18 +965,16 @@ static int
 __initdb()
 {
 	static int warned;
-	char *p;
 
 #ifdef YP
 	__ypmode = YPMODE_NONE;
 	__getpwent_has_yppw = -1;
 #endif
-	p = (geteuid()) ? _PATH_MP_DB : _PATH_SMP_DB;
-	_pw_db = dbopen(p, O_RDONLY, 0, DB_HASH, NULL);
-	if (_pw_db)
+	if ((_pw_db = dbopen(_PATH_SMP_DB, O_RDONLY, 0, DB_HASH, NULL)) ||
+	    (_pw_db = dbopen(_PATH_MP_DB, O_RDONLY, 0, DB_HASH, NULL)))
 		return (1);
 	if (!warned)
-		syslog(LOG_ERR, "%s: %m", p);
+		syslog(LOG_ERR, "%s: %m", _PATH_MP_DB);
 	warned = 1;
 	return (0);
 }

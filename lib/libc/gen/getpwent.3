@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getpwent.3,v 1.15 2000/12/24 00:30:49 aaron Exp $
+.\"	$OpenBSD: getpwent.3,v 1.16 2002/11/21 21:25:19 millert Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -122,9 +122,10 @@ These routines have been written to
 .Dq shadow
 the password file, e.g.,
 allow only certain programs to have access to the encrypted password.
-If the process which calls them has an effective UID of 0, the encrypted
-password will be returned, otherwise, the password field of the returned
-structure will point to the string
+If the process which calls them has an effective UID of 0 or has the
+.Dq shadow
+group in its group vector, the encrypted password will be returned, otherwise,
+the password field of the returned structure will point to the string
 .Ql * .
 .Sh RETURN VALUES
 The functions
