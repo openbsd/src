@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.29 2003/06/27 22:11:22 deraadt Exp $ */
+/*	$OpenBSD: arp.c,v 1.30 2003/06/27 22:11:39 deraadt Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)arp.c	8.2 (Berkeley) 1/2/94";*/
-static char *rcsid = "$OpenBSD: arp.c,v 1.29 2003/06/27 22:11:22 deraadt Exp $";
+static char *rcsid = "$OpenBSD: arp.c,v 1.30 2003/06/27 22:11:39 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -447,6 +447,7 @@ search(in_addr_t addr, void (*action)(struct sockaddr_dl *sdl,
 		}
 		(*action)(sdl, sin, rtm);
 	}
+	free(buf);
 }
 
 /*
