@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.7 1996/09/15 20:12:18 deraadt Exp $
+#	$OpenBSD: security,v 1.8 1996/09/15 20:29:41 deraadt Exp $
 #
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 
@@ -14,14 +14,14 @@ TMP3=$DIR/_secure4
 LIST=$DIR/_secure5
 OUTPUT=$DIR/_secure6
 
-trap 'rm -rf $DIR' 0
 
-umask 077
 if ! mkdir $DIR ; then
 	printf "tmp directory %s already exists, looks like:\n" $DIR
 	ls -alF $DIR
 	exit 1
 fi
+
+trap 'rm -rf $DIR' 0
 
 # Check the master password file syntax.
 MP=/etc/master.passwd
