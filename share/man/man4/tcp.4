@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcp.4,v 1.15 2004/02/02 17:09:36 henning Exp $
+.\"	$OpenBSD: tcp.4,v 1.16 2004/02/10 13:34:06 henning Exp $
 .\"	$NetBSD: tcp.4,v 1.3 1994/11/30 16:22:35 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -142,6 +142,17 @@ This requires
 .Em Security Associations
 to be set up, which can be done using
 .Xr ipsecadm 8 .
+When a listening socket has
+.Em TCP_MD5SIG
+set, it accepts connections with MD5 signatures only from sources for which a
+.Em Security Association
+is set up.
+Connections without MD5 signatures are only accepted from sources for which no
+.Em Security Association
+is set up.
+The connected socket only has
+.Em TCP_MD5SIG
+set if the connection is protected with MD5 signatures.
 .El
 .Pp
 The option level for the
