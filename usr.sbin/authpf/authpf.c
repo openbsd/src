@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.46 2003/01/25 16:33:19 cedric Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.47 2003/01/26 02:49:59 dhartmei Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -869,7 +869,7 @@ pfctl_append_file(char *file)
 }
 
 void
-pfctl_define_table(char *name, int flags, int addrs)
+pfctl_define_table(char *name, int flags, int addrs, int noaction)
 {
 	fprintf(stderr, "table definitions not yet supported in authpf\n");
 }
