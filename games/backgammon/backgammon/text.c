@@ -1,4 +1,4 @@
-/*	$OpenBSD: text.c,v 1.5 2001/06/23 23:49:54 pjanzen Exp $	*/
+/*	$OpenBSD: text.c,v 1.6 2003/06/01 23:50:02 millert Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -13,7 +13,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgment:
+ *    must display the following acknowledgement:
  *	This product includes software developed by the University of
  *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)text.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: text.c,v 1.5 2001/06/23 23:49:54 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: text.c,v 1.6 2003/06/01 23:50:02 millert Exp $";
 #endif
 #endif /* not lint */
 
