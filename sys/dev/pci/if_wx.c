@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wx.c,v 1.5 2000/07/06 23:32:12 mjacob Exp $	*/
+/*	$OpenBSD: if_wx.c,v 1.6 2000/08/11 15:11:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, Traakan Software
@@ -1245,11 +1245,11 @@ wx_handle_link_intr(sc)
 
 	if (sc->wx_icr & WXISR_LSC) {
 		if (READ_CSR(sc, WXREG_DSR) & WXDSR_LU) {
-			printf("%s: gigabit link now up\n", sc->wx_name);
+			/* printf("%s: gigabit link now up\n", sc->wx_name); */
 			sc->linkup = 1;
 			sc->wx_dcr |= (WXDCR_SWDPIO0|WXDCR_SWDPIN0);
 		} else {
-			printf("%s: gigabit link now down\n", sc->wx_name);
+			/* printf("%s: gigabit link now down\n", sc->wx_name); */
 			sc->linkup = 0;
 			sc->wx_dcr &= ~(WXDCR_SWDPIO0|WXDCR_SWDPIN0);
 		}
@@ -1541,12 +1541,12 @@ wx_gc(sc)
 
 			td = &sc->tdescriptors[cidx];
 			if (td->status & TXSTS_EC) {
-				printf("%s: excess collisions\n", sc->wx_name);
+				/* printf("%s: excess collisions\n", sc->wx_name); */
 				ifp->if_collisions++;
 				ifp->if_oerrors++;
 			}
 			if (td->status & TXSTS_LC) {
-				printf("%s: lost carrier\n", sc->wx_name);
+				/* printf("%s: lost carrier\n", sc->wx_name); */
 				ifp->if_oerrors++;
 			}
 			tmp = &sc->tbase[cidx];
@@ -1891,7 +1891,7 @@ wx_init(xsc)
 	WRITE_CSR(sc, WXREG_RDT1, 0);
 
 	if (ifp->if_mtu > ETHERMTU) {
-		printf("%s: enabling for jumbo packets\n", sc->wx_name);
+		/* printf("%s: enabling for jumbo packets\n", sc->wx_name); */
 		bflags = WXRCTL_EN | WXRCTL_LPE | WXRCTL_2KRBUF;
 	} else {
 		bflags = WXRCTL_EN | WXRCTL_2KRBUF;
