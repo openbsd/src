@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.30 2002/02/10 23:15:05 deraadt Exp $ */
+/*	$OpenBSD: locore.s,v 1.31 2002/02/11 19:08:30 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -465,16 +465,6 @@ Lstart2:
 
 /* do pmap_bootstrap stuff */	
 	RELOC(mmutype, a0)
-	cmpl	#MMU_68060,a0@		| 68060?
-	jne	Lpmap040	        | no, skip
-        pea	a5@			| firstpa
-	pea	a4@			| nextpa
-	RELOC(pmap_bootstrap060,a0)
-	jbsr	a0@			| pmap_bootstrap(firstpa, nextpa)
-	addql	#8,sp
-        bra     Lmmu_enable
-      
-Lpmap040:	
         pea	a5@			| firstpa
 	pea	a4@			| nextpa
 	RELOC(pmap_bootstrap,a0)
@@ -574,10 +564,8 @@ Lenab1:
 Lenab2:
 /* flush TLB and turn on caches */
 	jbsr	_C_LABEL(TBIA)		| invalidate TLB
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
-	jeq	Lnocache0		| yes, cache already on
-	cmpl	#MMU_68060,_mmutype	| 68060?
-	jeq	Lnocache0		| yes, cache already on
+	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040 or 68060?
+	jle	Lnocache0		| yes, cache already on
 	movl	#CACHE_ON,d0
 	movc	d0,cacr			| clear cache(s)
 Lnocache0:
@@ -1661,10 +1649,8 @@ Lmotommu9:
 | Invalid single cache line
 ENTRY(DCIAS)
 _C_LABEL(_DCIAS):
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040
-	jeq	Ldciasx
-	cmpl	#MMU_68060,_C_LABEL(mmutype) | 68060
-	jeq	Ldciasx
+	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040 or 68060
+	jle	Ldciasx
 	movl	sp@(4),a0
 	.word	0xf468			| cpushl dc,a0@
 Ldciasx:

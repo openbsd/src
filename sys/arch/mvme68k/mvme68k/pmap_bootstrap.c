@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.12 2001/12/20 19:02:29 miod Exp $ */
+/*	$OpenBSD: pmap_bootstrap.c,v 1.13 2002/02/11 19:08:30 miod Exp $ */
 
 /* 
  * Copyright (c) 1995 Theo de Raadt
@@ -71,10 +71,11 @@
 
 #include <sys/param.h>
 #include <sys/msgbuf.h>
+
+#include <machine/cpu.h>
+#include <machine/frame.h>
 #include <machine/pte.h>
 #include <machine/vmparam.h>
-#include <machine/cpu.h>
-#include <machine/autoconf.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -83,15 +84,29 @@
 extern char *etext;
 extern int Sysptsize;
 extern char *extiobase, *proc0paddr;
-char *iiomapbase;
-int iiomapsize;
 extern st_entry_t *Sysseg;
 extern pt_entry_t *Sysptmap, *Sysmap;
 
 extern int maxmem, physmem;
-extern vm_offset_t avail_start, avail_end, virtual_avail, virtual_end;
-extern vm_size_t mem_size;
 extern int protection_codes[];
+extern paddr_t avail_start, avail_end;
+extern vaddr_t virtual_avail, virtual_end;
+extern vsize_t mem_size;
+#ifdef M68K_MMU_HP
+extern int pmap_aliasmask;
+#endif
+
+char *iiomapbase;
+int iiomapsize;
+#define	ETHERPAGES	16
+void *etherbuf;
+int etherlen;
+
+#define	MACHINE_IIOMAPSIZE	RELOC(iiomapsize, int)
+#define	MACHINE_INTIOBASE	RELOC(iiomapbase, int)
+
+void  pmap_bootstrap __P((paddr_t, paddr_t));
+
 
 /*
  * Special purpose kernel virtual addresses, used for mapping
@@ -102,376 +117,7 @@ extern int protection_codes[];
  *	ledbase:	SPU LEDs
  *	msgbufp:	kernel message buffer
  */
-caddr_t     CADDR1, CADDR2, vmmap, ledbase;
-#define ETHERPAGES 16
-void  *etherbuf;
-int   etherlen;
-
-void
-pmap_bootstrap060(nextpa, firstpa)
-vm_offset_t nextpa;
-register vm_offset_t firstpa;
-{
-	vm_offset_t kstpa, kptpa, iiopa, eiopa, kptmpa, lkptpa, p0upa;
-	u_int nptpages, kstsize;
-	register st_entry_t protoste, *ste;
-	register pt_entry_t protopte, *pte, *epte;
-
-	/*
-	 * Calculate important physical addresses:
-	 *
-	 *	kstpa		kernel segment table	1 page (!040)
-	 *						N pages (040)
-	 *
-	 *	kptpa		statically allocated
-	 *			kernel PT pages		Sysptsize+ pages
-	 *
-	 *	iiopa		internal IO space
-	 *			PT pages		iiomapsize pages
-	 *
-	 *	eiopa		external IO space
-	 *			PT pages		EIOMAPSIZE pages
-	 *
-	 * [ Sysptsize is the number of pages of PT, iiomapsize and
-	 *   EIOMAPSIZE are the number of PTEs, hence we need to round
-	 *   the total to a page boundary with IO maps at the end. ]
-	 *
-	 *	kptmpa		kernel PT map		1 page
-	 *
-	 *	lkptpa		last kernel PT page	1 page
-	 *
-	 *	p0upa		proc 0 u-area		UPAGES pages
-	 *
-	 * The KVA corresponding to any of these PAs is:
-	 *	(PA - firstpa + KERNBASE).
-	 * NPTEPG == 1024
-	 */
-	kstsize = MAXKL2SIZE / (NPTEPG/SG4_LEV2SIZE);
-	kstpa = nextpa;
-	nextpa += kstsize * NBPG;
-	kptpa = nextpa;
-	nptpages = RELOC(Sysptsize, int) + 
-		(RELOC(iiomapsize, int) + EIOMAPSIZE + NPTEPG - 1) / NPTEPG;
-	nextpa += nptpages * NBPG;
-	eiopa = nextpa - EIOMAPSIZE * sizeof(pt_entry_t);
-	iiopa = eiopa - RELOC(iiomapsize, int) * sizeof(pt_entry_t);
-	kptmpa = nextpa;
-	nextpa += NBPG;
-	lkptpa = nextpa;
-	nextpa += NBPG;
-	p0upa = nextpa;
-	nextpa += USPACE;
-
-	RELOC(etherbuf, void *) = (void *)nextpa;
-	nextpa += ETHERPAGES * NBPG;
-
-	/*
-	 * Initialize segment table and kernel page table map.
-	 *
-	 * On the 68060, which has a mandatory 3-level structure, the 
-	 * segment table holds the level 1 table and part (or all) of 
-	 * the level 2 table. The first level consists of 128 descriptors
-	 * (512 bytes) each mapping 32mb of address space.  Each of these
-	 * points to blocks of 128 second level descriptors (512 bytes)
-	 * each mapping 256kb.  Note that there may be additional "segment
-	 * table" pages depending on how large MAXKL2SIZE is.
-	 *
-	 * Portions of the last segment of KVA space (0xFFF00000 -
-	 * 0xFFFFFFFF) are mapped for a couple of purposes.  0xFFF00000
-	 * for UPAGES is used for mapping the current process u-area
-	 * (u + kernel stack).  The very last page (0xFFFFF000) is mapped
-	 * to the last physical page of RAM to give us a region in which
-	 * PA == VA.  We use the first part of this page for enabling
-	 * and disabling mapping.  The last part of this page also contains
-	 * info left by the boot ROM.
-	 */
-
-	{
-		register int num;
-
-		/*
-		 * First invalidate the entire "segment table" pages
-		 * (levels 1 and 2 have the same "invalid" value).
-		 */
-		pte = (u_int *)kstpa;
-		epte = &pte[kstsize * NPTEPG];
-		while (pte < epte)
-			*pte++ = SG_NV;
-		/*
-		 * Initialize level 2 descriptors (which immediately
-		 * follow the level 1 table).  We need:
-		 *	NPTEPG / SG4_LEV3SIZE
-		 * level 2 descriptors to map each of the nptpages+1
-		 * pages of PTEs.  Note that we set the "used" bit
-		 * now to save the HW the expense of doing it.
-		 */
-		num = (nptpages + 1) * (NPTEPG / SG4_LEV3SIZE);
-		pte = &((u_int *)kstpa)[SG4_LEV1SIZE];
-		epte = &pte[num];
-		protoste = kptpa | SG_U | SG_RW | SG_V;
-		while (pte < epte) {
-			*pte++ = protoste;
-			protoste += (SG4_LEV3SIZE * sizeof(st_entry_t));
-		}
-		/*
-		 * Initialize level 1 descriptors.  We need:
-		 *	roundup(num, SG4_LEV2SIZE) / SG4_LEV2SIZE
-		 * level 1 descriptors to map the `num' level 2's.
-		 */
-		pte = (u_int *)kstpa;
-		epte = &pte[roundup(num, SG4_LEV2SIZE) / SG4_LEV2SIZE];
-		protoste = (u_int)&pte[SG4_LEV1SIZE] | SG_U | SG_RW | SG_V;
-		while (pte < epte) {
-			*pte++ = protoste;
-			protoste += (SG4_LEV2SIZE * sizeof(st_entry_t));
-		}
-		/*
-		 * Initialize the final level 1 descriptor to map the last
-		 * block of level 2 descriptors.
-		 */
-		ste = &((u_int *)kstpa)[SG4_LEV1SIZE-1];
-		pte = &((u_int *)kstpa)[kstsize*NPTEPG - SG4_LEV2SIZE];
-		*ste = (u_int)pte | SG_U | SG_RW | SG_V;
-		/*
-		 * Now initialize the final portion of that block of
-		 * descriptors to map the "last PT page".
-		 */
-		pte = &((u_int *)kstpa)[kstsize*NPTEPG - NPTEPG/SG4_LEV3SIZE];
-		epte = &pte[NPTEPG/SG4_LEV3SIZE];
-		protoste = lkptpa | SG_U | SG_RW | SG_V;
-		while (pte < epte) {
-			*pte++ = protoste;
-			protoste += (SG4_LEV3SIZE * sizeof(st_entry_t));
-		}
-		/*
-		 * Initialize Sysptmap
-		 */
-		pte = (u_int *)kptmpa;
-		epte = &pte[nptpages+1];
-		protopte = kptpa | PG_RW | PG_CI | PG_V | PG_U;
-		while (pte < epte) {
-			*pte++ = protopte;
-			protopte += NBPG;
-		}
-		/*
-		 * Invalidate all but the last remaining entries in both.
-		 */
-		epte = &((u_int *)kptmpa)[NPTEPG-1];
-		while (pte < epte) {
-			*pte++ = PG_NV | PG_U; /* XXX */
-		}
-		pte = &((u_int *)kptmpa)[NPTEPG-1];
-		*pte = lkptpa | PG_RW | PG_CI | PG_V | PG_U;
-	}
-
-	/*
-	 * Invalidate all but the final entry in the last kernel PT page
-	 * (u-area PTEs will be validated later).  The final entry maps
-	 * the last page of physical memory.
-	 */
-	pte = (u_int *)lkptpa;
-	epte = &pte[NPTEPG-1];
-	while (pte < epte)
-		*pte++ = PG_NV;
-#ifdef MAXADDR
-	/* tmp double-map for cpu's with physmem at the end of memory */
-	*pte = MAXADDR | PG_RW | PG_CI | PG_V | PG_U;
-#endif
-	/*
-	 * Initialize kernel page table.
-	 * Start by invalidating the `nptpages' that we have allocated.
-	 */
-	pte = (u_int *)kptpa;
-	epte = &pte[nptpages * NPTEPG];
-	while (pte < epte)
-		*pte++ = PG_NV | PG_U;
-	/*
-	 * Validate PTEs for kernel text (RO)
-	 */
-	pte = &((u_int *)kptpa)[m68k_btop(KERNBASE)];
-	epte = &pte[m68k_btop(m68k_trunc_page(&etext))];
-#if defined(KGDB) || defined(DDB)
-	protopte = firstpa | PG_RW | PG_V | PG_U;	/* XXX RW for now */
-#else
-	protopte = firstpa | PG_RO | PG_V | PG_U;
-#endif
-	*pte++ = firstpa | PG_NV;		/* make *NULL fail in the kernel */
-	protopte += NBPG;
-	while (pte < epte) {
-		*pte++ = protopte;
-		protopte += NBPG;
-	}
-	/*
-	 * Validate PTEs for kernel data/bss, dynamic data allocated
-	 * by us so far (nextpa - firstpa bytes), and pages for proc0
-	 * u-area and page table allocated below (RW).
-	 */                    
-	epte = &((u_int *)kptpa)[m68k_btop(nextpa - firstpa)];
-	protopte = (protopte & ~PG_PROT) | PG_RW | PG_U;
-	/*
-	 * Enable write-through caching of data pages
-	 */
-	protopte |= PG_CWT; /* XXX */;
-	while (pte < epte) {
-		*pte++ = protopte;
-		protopte += NBPG;
-	}
-
-	pte = &((u_int *)kptpa)[m68k_btop(etherbuf)];
-	epte = pte + ETHERPAGES;
-	while (pte < epte) {
-		*pte = (*pte & ~PG_CMASK) | PG_CIS | PG_U;
-		pte++;
-	}
-	RELOC(etherlen, int) = ETHERPAGES * NBPG;
-
-	/*
-	 * Finally, validate the internal IO space PTEs (RW+CI).
-	 */
-	pte = (u_int *)iiopa;
-	epte = (u_int *)eiopa;
-	protopte = RELOC(iiomapbase, int) | PG_RW | PG_CI | PG_V | PG_U;
-	while (pte < epte) {
-		*pte++ = protopte;
-		protopte += NBPG;
-	}
-
-	/*
-	 * Calculate important exported kernel virtual addresses
-	 */
-	/*
-	 * Sysseg: base of kernel segment table
-	 */
-	RELOC(Sysseg, st_entry_t *) =
-	(st_entry_t *)(kstpa - firstpa);
-	/*
-	 * Sysptmap: base of kernel page table map
-	 */
-	RELOC(Sysptmap, pt_entry_t *) =
-	(pt_entry_t *)(kptmpa - firstpa);
-	/*
-	 * Sysmap: kernel page table (as mapped through Sysptmap)
-	 * Immediately follows `nptpages' of static kernel page table.
-	 */
-	RELOC(Sysmap, pt_entry_t *) =
-	(pt_entry_t *)m68k_ptob(nptpages * NPTEPG);
-	/*
-	 * intiobase, intiolimit: base and end of internal (DIO) IO space.
-	 * iiomapsize pages prior to external IO space at end of static
-	 * kernel page table.
-	 */
-	RELOC(intiobase, char *) = (char *)m68k_ptob(nptpages*NPTEPG - (RELOC(iiomapsize, int)+EIOMAPSIZE));
-	RELOC(intiolimit, char *) = (char *)m68k_ptob(nptpages*NPTEPG - EIOMAPSIZE);
-	/*
-	 * extiobase: base of external (DIO-II) IO space.
-	 * EIOMAPSIZE pages at the end of the static kernel page table.
-	 */
-	RELOC(extiobase, char *) =
-	(char *)m68k_ptob(nptpages*NPTEPG - EIOMAPSIZE);
-
-	/*
-	 * Setup u-area for process 0.
-	 */
-	/*
-	 * Zero the u-area.
-	 * NOTE: `pte' and `epte' aren't PTEs here.
-	 */
-	pte = (u_int *)p0upa;
-	epte = (u_int *)(p0upa + USPACE);
-	while (pte < epte)
-		*pte++ = 0;
-	/*
-	 * Remember the u-area address so it can be loaded in the
-	 * proc struct p_addr field later.
-	 */
-	RELOC(proc0paddr, char *) = (char *)(p0upa - firstpa);
-
-	/*
-	 * VM data structures are now initialized, set up data for
-	 * the pmap module.
-	 */
-	RELOC(avail_start, vm_offset_t) = nextpa;
-	RELOC(avail_end, vm_offset_t) = m68k_ptob(RELOC(maxmem, int))
-	   /* XXX allow for msgbuf */
-	   - m68k_round_page(MSGBUFSIZE);
-	RELOC(mem_size, vm_size_t) = m68k_ptob(RELOC(physmem, int));
-	RELOC(virtual_avail, vm_offset_t) =
-	VM_MIN_KERNEL_ADDRESS + (nextpa - firstpa);
-	RELOC(virtual_end, vm_offset_t) = VM_MAX_KERNEL_ADDRESS;
-
-	/*
-	 * Initialize protection array.
-	 * XXX don't use a switch statement, it might produce an
-	 * absolute "jmp" table.
-	 */
-	{
-		register int *kp;
-
-		kp = &RELOC(protection_codes, int);
-		kp[VM_PROT_NONE|VM_PROT_NONE|VM_PROT_NONE] = 0;
-		kp[VM_PROT_READ|VM_PROT_NONE|VM_PROT_NONE] = PG_RO;
-		kp[VM_PROT_READ|VM_PROT_NONE|VM_PROT_EXECUTE] = PG_RO;
-		kp[VM_PROT_NONE|VM_PROT_NONE|VM_PROT_EXECUTE] = PG_RO;
-		kp[VM_PROT_NONE|VM_PROT_WRITE|VM_PROT_NONE] = PG_RW;
-		kp[VM_PROT_NONE|VM_PROT_WRITE|VM_PROT_EXECUTE] = PG_RW;
-		kp[VM_PROT_READ|VM_PROT_WRITE|VM_PROT_NONE] = PG_RW;
-		kp[VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE] = PG_RW;
-	}
-
-	/*
-	 * Kernel page/segment table allocated in locore,
-	 * just initialize pointers.
-	 */
-	{
-		struct pmap *kpm = &RELOC(kernel_pmap_store, struct pmap);
-
-		kpm->pm_stab = RELOC(Sysseg, st_entry_t *);
-		kpm->pm_ptab = RELOC(Sysmap, pt_entry_t *);
-		simple_lock_init(&kpm->pm_lock);
-		kpm->pm_count = 1;
-		kpm->pm_stpa = (st_entry_t *)kstpa;
-		/*
-		 * For the 060 we also initialize the free level 2
-		 * descriptor mask noting that we have used:
-		 *	           0:	level 1 table
-		 *	  1 to `num':	map page tables
-		 *	MAXKL2SIZE-1:	maps last-page page table
-		 */
-		{
-			register int num;
-
-			kpm->pm_stfree = ~l2tobm(0);
-			num = roundup((nptpages + 1) * (NPTEPG / SG4_LEV3SIZE),
-							  SG4_LEV2SIZE) / SG4_LEV2SIZE;
-			while (num)
-				kpm->pm_stfree &= ~l2tobm(num--);
-			kpm->pm_stfree &= ~l2tobm(MAXKL2SIZE-1);
-			for (num = MAXKL2SIZE;
-				 num < sizeof(kpm->pm_stfree)*NBBY;
-				 num++)
-				kpm->pm_stfree &= ~l2tobm(num);
-		}
-	}
-
-	/*
-	 * Allocate some fixed, special purpose kernel virtual addresses
-	 */
-	{
-		vm_offset_t va = RELOC(virtual_avail, vm_offset_t);
-
-		RELOC(CADDR1, caddr_t) = (caddr_t)va;
-		va += NBPG;
-		RELOC(CADDR2, caddr_t) = (caddr_t)va;
-		va += NBPG;
-		RELOC(vmmap, caddr_t) = (caddr_t)va;
-		va += NBPG;
-		RELOC(ledbase, caddr_t) = (caddr_t)va;
-		va += NBPG;
-		RELOC(msgbufp, struct msgbuf *) = (struct msgbuf *)va;
-		va += MSGBUFSIZE;
-		RELOC(virtual_avail, vm_offset_t) = va;
-	}
-}
+caddr_t		CADDR1, CADDR2, vmmap;
 
 /*
  * Bootstrap the VM system.
@@ -486,30 +132,30 @@ register vm_offset_t firstpa;
  */
 void
 pmap_bootstrap(nextpa, firstpa)
-vm_offset_t nextpa;
-register vm_offset_t firstpa;
+	paddr_t nextpa;
+	paddr_t firstpa;
 {
-	vm_offset_t kstpa, kptpa, iiopa, eiopa, kptmpa, lkptpa, p0upa;
+	paddr_t kstpa, kptpa, iiopa, eiopa, kptmpa, lkptpa, p0upa;
 	u_int nptpages, kstsize;
-	register st_entry_t protoste, *ste;
-	register pt_entry_t protopte, *pte, *epte;
+	st_entry_t protoste, *ste;
+	pt_entry_t protopte, *pte, *epte;
 
 	/*
 	 * Calculate important physical addresses:
 	 *
-	 *	kstpa		kernel segment table	1 page (!040)
-	 *						N pages (040)
+	 *	kstpa		kernel segment table	1 page (020/030)
+	 *						N pages (040/060)
 	 *
 	 *	kptpa		statically allocated
 	 *			kernel PT pages		Sysptsize+ pages
 	 *
 	 *	iiopa		internal IO space
-	 *			PT pages		iiomapsize pages
+	 *			PT pages		MACHINE_IIOMAPSIZE pages
 	 *
 	 *	eiopa		external IO space
 	 *			PT pages		EIOMAPSIZE pages
 	 *
-	 * [ Sysptsize is the number of pages of PT, iiomapsize and
+	 * [ Sysptsize is the number of pages of PT, MACHINE_IIOMAPSIZE and
 	 *   EIOMAPSIZE are the number of PTEs, hence we need to round
 	 *   the total to a page boundary with IO maps at the end. ]
 	 *
@@ -522,7 +168,7 @@ register vm_offset_t firstpa;
 	 * The KVA corresponding to any of these PAs is:
 	 *	(PA - firstpa + KERNBASE).
 	 */
-	if (RELOC(mmutype, int) == MMU_68040)
+	if (RELOC(mmutype, int) <= MMU_68040)
 		kstsize = MAXKL2SIZE / (NPTEPG/SG4_LEV2SIZE);
 	else
 		kstsize = 1;
@@ -530,10 +176,10 @@ register vm_offset_t firstpa;
 	nextpa += kstsize * NBPG;
 	kptpa = nextpa;
 	nptpages = RELOC(Sysptsize, int) +
-      (RELOC(iiomapsize, int) + EIOMAPSIZE + NPTEPG - 1) / NPTEPG;
+	    (MACHINE_IIOMAPSIZE + EIOMAPSIZE + NPTEPG - 1) / NPTEPG;
 	nextpa += nptpages * NBPG;
 	eiopa = nextpa - EIOMAPSIZE * sizeof(pt_entry_t);
-	iiopa = eiopa - RELOC(iiomapsize, int) * sizeof(pt_entry_t);
+	iiopa = eiopa - MACHINE_IIOMAPSIZE * sizeof(pt_entry_t);
 	kptmpa = nextpa;
 	nextpa += NBPG;
 	lkptpa = nextpa;
@@ -549,7 +195,7 @@ register vm_offset_t firstpa;
 	 *
 	 * On 68030s and earlier MMUs the two are identical except for
 	 * the valid bits so both are initialized with essentially the
-	 * same values.  On the 68040, which has a mandatory 3-level
+	 * same values.  On the 680[46]0, which have a mandatory 3-level
 	 * structure, the segment table holds the level 1 table and part
 	 * (or all) of the level 2 table and hence is considerably
 	 * different.  Here the first level consists of 128 descriptors
@@ -572,8 +218,8 @@ register vm_offset_t firstpa;
 	 * working.  The 224mb of address space that this allows will most
 	 * likely be insufficient in the future (at least for the kernel).
 	 */
-	if (RELOC(mmutype, int) == MMU_68040) {
-		register int num;
+	if (RELOC(mmutype, int) <= MMU_68040) {
+		int num;
 
 		/*
 		 * First invalidate the entire "segment table" pages
@@ -640,13 +286,16 @@ register vm_offset_t firstpa;
 			protopte += NBPG;
 		}
 		/*
-		 * Invalidate all but the last remaining entries in both.
+		 * Invalidate all but the last remaining entry.
 		 */
 		epte = &((u_int *)kptmpa)[NPTEPG-1];
 		while (pte < epte) {
-			*pte++ = PG_NV;
+			*pte++ = PG_NV | PG_U;
 		}
-		pte = &((u_int *)kptmpa)[NPTEPG-1];
+		/*
+		 * Initialize the last to point to the page
+		 * table page allocated earlier.
+		 */
 		*pte = lkptpa | PG_RW | PG_CI | PG_V | PG_U;
 	} else {
 		/*
@@ -690,7 +339,10 @@ register vm_offset_t firstpa;
 	while (pte < epte)
 		*pte++ = PG_NV;
 #ifdef MAXADDR
-	/* tmp double-map for cpu's with physmem at the end of memory */
+	/*
+	 * Temporary double-map for machines with physmem at the end of
+	 * memory
+	 */
 	*pte = MAXADDR | PG_RW | PG_CI | PG_V | PG_U;
 #endif
 	/*
@@ -701,17 +353,19 @@ register vm_offset_t firstpa;
 	epte = &pte[nptpages * NPTEPG];
 	while (pte < epte)
 		*pte++ = PG_NV | PG_U;
+
 	/*
-	 * Validate PTEs for kernel text (RO)
+	 * Validate PTEs for kernel text (RO).  The first page
+	 * of kernel text remains invalid; see locore.s
 	 */
 	pte = &((u_int *)kptpa)[m68k_btop(KERNBASE)];
-	epte = &pte[m68k_btop(m68k_trunc_page(&etext))];
+	epte = &pte[m68k_btop(trunc_page((vaddr_t)&etext))];
 #if defined(KGDB) || defined(DDB)
 	protopte = firstpa | PG_RW | PG_V | PG_U;	/* XXX RW for now */
 #else
 	protopte = firstpa | PG_RO | PG_V | PG_U;
 #endif
-	*pte++ = firstpa | PG_NV;		/* make *NULL fail in the kernel */
+	*pte++ = firstpa | PG_NV;	/* make *NULL fail in the kernel */
 	protopte += NBPG;
 	while (pte < epte) {
 		*pte++ = protopte;
@@ -725,10 +379,13 @@ register vm_offset_t firstpa;
 	epte = &((u_int *)kptpa)[m68k_btop(nextpa - firstpa)];
 	protopte = (protopte & ~PG_PROT) | PG_RW | PG_U;
 	/*
-	 * Enable copy-back caching of data pages
+	 * Enable copy-back caching of data pages on 040, and write-through
+	 * caching on 060
 	 */
 	if (RELOC(mmutype, int) == MMU_68040)
 		protopte |= PG_CCB;
+	else if (RELOC(mmutype, int) == MMU_68060)
+		protopte |= PG_CWT;
 	while (pte < epte) {
 		*pte++ = protopte;
 		protopte += NBPG;
@@ -736,22 +393,22 @@ register vm_offset_t firstpa;
 
 	pte = &((u_int *)kptpa)[m68k_btop(etherbuf)];
 	epte = pte + ETHERPAGES;
-	if (RELOC(mmutype, int) == MMU_68040)
-		while (pte < epte) {
-			*pte = (*pte & ~PG_CMASK) | PG_CIS | PG_U;
-			pte++;
-		} else
-		while (pte < epte) {
-			*pte++ |= PG_CI;
-		}
+	while (pte < epte) {
+		*pte = (*pte & ~PG_CMASK) | PG_CIS | PG_U;
+		pte++;
+	}
 	RELOC(etherlen, int) = ETHERPAGES * NBPG;
 
 	/*
 	 * Finally, validate the internal IO space PTEs (RW+CI).
+	 * We do this here since on hp300 machines with the HP MMU, the
+	 * the MMU registers (also used, but to a lesser extent, on other
+	 * models) are mapped in this range and it would be nice to be able
+	 * to access them after the MMU is turned on.
 	 */
 	pte = (u_int *)iiopa;
 	epte = (u_int *)eiopa;
-	protopte = RELOC(iiomapbase, int) | PG_RW | PG_CI | PG_V | PG_U;
+	protopte = MACHINE_INTIOBASE | PG_RW | PG_CI | PG_V | PG_U;
 	while (pte < epte) {
 		*pte++ = protopte;
 		protopte += NBPG;
@@ -764,33 +421,33 @@ register vm_offset_t firstpa;
 	 * Sysseg: base of kernel segment table
 	 */
 	RELOC(Sysseg, st_entry_t *) =
-	(st_entry_t *)(kstpa - firstpa);
+	    (st_entry_t *)(kstpa - firstpa);
 	/*
 	 * Sysptmap: base of kernel page table map
 	 */
 	RELOC(Sysptmap, pt_entry_t *) =
-	(pt_entry_t *)(kptmpa - firstpa);
+	    (pt_entry_t *)(kptmpa - firstpa);
 	/*
 	 * Sysmap: kernel page table (as mapped through Sysptmap)
 	 * Immediately follows `nptpages' of static kernel page table.
 	 */
 	RELOC(Sysmap, pt_entry_t *) =
-	(pt_entry_t *)m68k_ptob(nptpages * NPTEPG);
+	    (pt_entry_t *)m68k_ptob(nptpages * NPTEPG);
 	/*
 	 * intiobase, intiolimit: base and end of internal (DIO) IO space.
-	 * iiomapsize pages prior to external IO space at end of static
-	 * kernel page table.
+	 * MACHINE_IIOMAPSIZE pages prior to external IO space at end of
+	 * static kernel page table.
 	 */
-	RELOC(intiobase, char *) = (char *)
-										m68k_ptob(nptpages*NPTEPG - (RELOC(iiomapsize, int)+EIOMAPSIZE));
-	RELOC(intiolimit, char *) = (char *)
-										 m68k_ptob(nptpages*NPTEPG - EIOMAPSIZE);
+	RELOC(intiobase, char *) =
+	    (char *)m68k_ptob(nptpages*NPTEPG - (MACHINE_IIOMAPSIZE+EIOMAPSIZE));
+	RELOC(intiolimit, char *) =
+	    (char *)m68k_ptob(nptpages*NPTEPG - EIOMAPSIZE);
 	/*
 	 * extiobase: base of external (DIO-II) IO space.
 	 * EIOMAPSIZE pages at the end of the static kernel page table.
 	 */
 	RELOC(extiobase, char *) =
-	(char *)m68k_ptob(nptpages*NPTEPG - EIOMAPSIZE);
+	    (char *)m68k_ptob(nptpages*NPTEPG - EIOMAPSIZE);
 
 	/*
 	 * Setup u-area for process 0.
@@ -812,15 +469,35 @@ register vm_offset_t firstpa;
 	/*
 	 * VM data structures are now initialized, set up data for
 	 * the pmap module.
+	 *
+	 * Note about avail_end: msgbuf is initialized just after
+	 * avail_end in machdep.c.  Since the last page is used
+	 * for rebooting the system (code is copied there and
+	 * excution continues from copied code before the MMU
+	 * is disabled), the msgbuf will get trounced between
+	 * reboots if it's placed in the last physical page.
+	 * To work around this, we move avail_end back one more
+	 * page so the msgbuf can be preserved.
 	 */
-	RELOC(avail_start, vm_offset_t) = nextpa;
-	RELOC(avail_end, vm_offset_t) = m68k_ptob(RELOC(maxmem, int))
-	   /* XXX allow for msgbuf */
-	   - m68k_round_page(sizeof(struct msgbuf));
-	RELOC(mem_size, vm_size_t) = m68k_ptob(RELOC(physmem, int));
-	RELOC(virtual_avail, vm_offset_t) =
-	VM_MIN_KERNEL_ADDRESS + (nextpa - firstpa);
-	RELOC(virtual_end, vm_offset_t) = VM_MAX_KERNEL_ADDRESS;
+	RELOC(avail_start, paddr_t) = nextpa;
+	RELOC(avail_end, paddr_t) = m68k_ptob(RELOC(maxmem, int)) -
+	    (round_page(MSGBUFSIZE) + m68k_ptob(1));
+	RELOC(mem_size, vsize_t) = m68k_ptob(RELOC(physmem, int));
+	RELOC(virtual_avail, vaddr_t) =
+	    VM_MIN_KERNEL_ADDRESS + (nextpa - firstpa);
+	RELOC(virtual_end, vaddr_t) = VM_MAX_KERNEL_ADDRESS;
+
+#ifdef M68K_MMU_HP
+	/*
+	 * Determine VA aliasing distance if any
+	 */
+	if (RELOC(ectype, int) == EC_VIRT) {
+		if (RELOC(machineid, int) == HP_320)
+			RELOC(pmap_aliasmask, int) = 0x3fff;	/* 16k */
+		else if (RELOC(machineid, int) == HP_350)
+			RELOC(pmap_aliasmask, int) = 0x7fff;	/* 32k */
+	}
+#endif
 
 	/*
 	 * Initialize protection array.
@@ -854,24 +531,24 @@ register vm_offset_t firstpa;
 		kpm->pm_count = 1;
 		kpm->pm_stpa = (st_entry_t *)kstpa;
 		/*
-		 * For the 040 we also initialize the free level 2
+		 * For the 040 and 060 we also initialize the free level 2
 		 * descriptor mask noting that we have used:
 		 *	0:		level 1 table
 		 *	1 to `num':	map page tables
 		 *	MAXKL2SIZE-1:	maps last-page page table
 		 */
-		if (RELOC(mmutype, int) == MMU_68040) {
-			register int num;
-
+		if (RELOC(mmutype, int) <= MMU_68040) {
+			int num;
+			
 			kpm->pm_stfree = ~l2tobm(0);
 			num = roundup((nptpages + 1) * (NPTEPG / SG4_LEV3SIZE),
-							  SG4_LEV2SIZE) / SG4_LEV2SIZE;
+			    SG4_LEV2SIZE) / SG4_LEV2SIZE;
 			while (num)
 				kpm->pm_stfree &= ~l2tobm(num--);
 			kpm->pm_stfree &= ~l2tobm(MAXKL2SIZE-1);
 			for (num = MAXKL2SIZE;
-				 num < sizeof(kpm->pm_stfree)*NBBY;
-				 num++)
+			     num < sizeof(kpm->pm_stfree)*NBBY;
+			     num++)
 				kpm->pm_stfree &= ~l2tobm(num);
 		}
 	}
@@ -880,7 +557,7 @@ register vm_offset_t firstpa;
 	 * Allocate some fixed, special purpose kernel virtual addresses
 	 */
 	{
-		vm_offset_t va = RELOC(virtual_avail, vm_offset_t);
+		vaddr_t va = RELOC(virtual_avail, vaddr_t);
 
 		RELOC(CADDR1, caddr_t) = (caddr_t)va;
 		va += NBPG;
@@ -888,10 +565,8 @@ register vm_offset_t firstpa;
 		va += NBPG;
 		RELOC(vmmap, caddr_t) = (caddr_t)va;
 		va += NBPG;
-		RELOC(ledbase, caddr_t) = (caddr_t)va;
-		va += NBPG;
 		RELOC(msgbufp, struct msgbuf *) = (struct msgbuf *)va;
-		va += NBPG;
-		RELOC(virtual_avail, vm_offset_t) = va;
+		va += MSGBUFSIZE;
+		RELOC(virtual_avail, vaddr_t) = va;
 	}
 }
