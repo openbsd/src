@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.14 1997/04/23 14:49:23 weingart Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.15 1997/04/30 18:10:07 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -189,7 +189,7 @@ biosopen(struct open_file *f, ...)
 		}
 	}
 
-	buf = alloc(DEV_BSIZE);
+	buf = alloca(DEV_BSIZE);
 #ifdef BIOS_DEBUG
 	if (debug)
 		printf("loading disklabel @ %u\n", off);
@@ -201,7 +201,6 @@ biosopen(struct open_file *f, ...)
 		if (debug)
 			printf("failed to read disklabel\n");
 #endif
-		free(buf, 0);
 		free(bd, 0);
 		return errno;
 	}
@@ -211,12 +210,10 @@ biosopen(struct open_file *f, ...)
 		if (debug)
 			printf("%s\n", cp);
 #endif
-		free(buf, 0);
 		free(bd, 0);
 		return EINVAL;
 	}
 
-	free(buf,0);
 	f->f_devdata = bd;
 
 	return 0;
@@ -306,7 +303,9 @@ biosstrategy(void *devdata, int rw,
 		/* use a bounce buffer to not cross 64k DMA boundary */
 		if ((((u_int32_t)buf) & ~0xffff) !=
 		    (((u_int32_t)buf + n * DEV_BSIZE) & ~0xffff)) {
-			bb = alloc(n * DEV_BSIZE);
+			/* XXX we beleive that all the io is buffered
+			   by fs routines, so no big reads anyway */
+			bb = alloca(n * DEV_BSIZE);
 			if (rw != F_READ)
 				bcopy (buf, bb, n * DEV_BSIZE);
 		} else
@@ -338,11 +337,8 @@ biosstrategy(void *devdata, int rw,
 			}
 		}
 
-		if (bb != buf) {
-			if (rw == F_READ)
-				bcopy (bb, buf, n * DEV_BSIZE);
-			free (bb, n * DEV_BSIZE);
-		}
+		if (bb != buf && rw == F_READ)
+			bcopy (bb, buf, n * DEV_BSIZE);
 	}
 
 #ifdef	BIOS_DEBUG
