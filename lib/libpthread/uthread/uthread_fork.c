@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_fork.c,v 1.10 2001/08/21 19:24:53 fgsch Exp $	*/
+/*	$OpenBSD: uthread_fork.c,v 1.11 2003/08/06 21:08:05 millert Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -167,10 +167,10 @@ fork(void)
 					_thread_fd_table[i]->w_owner = NULL;
 					_thread_fd_table[i]->r_fname = NULL;
 					_thread_fd_table[i]->w_fname = NULL;
-					_thread_fd_table[i]->r_lineno = 0;;
-					_thread_fd_table[i]->w_lineno = 0;;
-					_thread_fd_table[i]->r_lockcount = 0;;
-					_thread_fd_table[i]->w_lockcount = 0;;
+					_thread_fd_table[i]->r_lineno = 0;
+					_thread_fd_table[i]->w_lineno = 0;
+					_thread_fd_table[i]->r_lockcount = 0;
+					_thread_fd_table[i]->w_lockcount = 0;
 
 					/* Initialise the read/write queues: */
 					TAILQ_INIT(&_thread_fd_table[i]->r_queue);

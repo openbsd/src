@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_pci.c,v 1.18 2003/06/03 20:49:29 deraadt Exp $	*/
+/*	$OpenBSD: gdt_pci.c,v 1.19 2003/08/06 21:08:06 millert Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -301,7 +301,7 @@ gdt_pci_attach(parent, self, aux)
 #if 0
 		/* disable board interrupts, deinit services */
 		gdth_writeb(0xff, &dp6_ptr->io.irqdel);
-		gdth_writeb(0x00, &dp6_ptr->io.irqen);;
+		gdth_writeb(0x00, &dp6_ptr->io.irqen);
 		gdth_writeb(0x00, &dp6_ptr->u.ic.S_Status);
 		gdth_writeb(0x00, &dp6_ptr->u.ic.Cmd_Index);
 

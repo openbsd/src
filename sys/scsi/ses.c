@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.4 2002/03/15 18:19:53 millert Exp $ */
+/*	$OpenBSD: ses.c,v 1.5 2003/08/06 21:08:07 millert Exp $ */
 /*	$NetBSD: ses.c,v 1.3 2000/01/21 21:19:57 mjacob Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
@@ -1455,7 +1455,7 @@ ses_encode(char *b, int amt, uint8_t *ep, int elt, int elm, SesComStat *sp)
  */
 
 static int safte_getconfig(ses_softc_t *);
-static int safte_rdstat(ses_softc_t *, int);;
+static int safte_rdstat(ses_softc_t *, int);
 static int set_objstat_sel(ses_softc_t *, ses_objstat *, int);
 static int wrbuf16(ses_softc_t *, uint8_t, uint8_t, uint8_t, uint8_t, int);
 static void wrslot_stat(ses_softc_t *, int);

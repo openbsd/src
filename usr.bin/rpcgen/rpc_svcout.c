@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_svcout.c,v 1.19 2003/07/09 03:35:21 deraadt Exp $	*/
+/*	$OpenBSD: rpc_svcout.c,v 1.20 2003/08/06 21:08:07 millert Exp $	*/
 /*	$NetBSD: rpc_svcout.c,v 1.7 1995/06/24 14:59:59 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -842,7 +842,7 @@ write_rpc_svc_fg(infile, sp)
 	else {
 		fprintf(fout, "%si = open(\"/dev/tty\", 2);\n", sp);
 		fprintf(fout, "%sif (i >= 0) {\n", sp);
-		fprintf(fout, "%s\t(void) ioctl(i, TIOCNOTTY, (char *)NULL);\n", sp);;
+		fprintf(fout, "%s\t(void) ioctl(i, TIOCNOTTY, (char *)NULL);\n", sp);
 		fprintf(fout, "%s\t(void) close(i);\n", sp);
 		fprintf(fout, "%s}\n", sp);
 	}

@@ -134,7 +134,7 @@ PRE_EndPreempt(void)
         (sigaction(SIGALRM, &sa, (struct sigaction *)0) == -1))
         return(LWP_ESYSTEM);
 #else
-    vec.sv_handler = SIG_DFL;;
+    vec.sv_handler = SIG_DFL;
     vec.sv_mask = vec.sv_onstack = 0;
 
     if ((setitimer(ITIMER_REAL, &itv, (struct itimerval *) 0) == -1) ||

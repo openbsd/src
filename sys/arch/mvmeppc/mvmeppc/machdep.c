@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.31 2003/04/06 18:54:19 ho Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.32 2003/08/06 21:08:06 millert Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -999,7 +999,7 @@ ppc_intr_establish(lcv, ih, type, level, func, arg, name)
 	return (void *)ppc_configed_intr_cnt;
 }
 
-intr_establish_t *intr_establish_func = ppc_intr_establish;;
+intr_establish_t *intr_establish_func = ppc_intr_establish;
 intr_disestablish_t *intr_disestablish_func;
 
 void

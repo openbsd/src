@@ -319,7 +319,7 @@ cmd_AddParm (struct cmd_syndesc *ts, const char *name,
 	     cmd_parmdesc_type type, cmd_parmdesc_flags flags,
 	     const char *help_str)
 {
-    struct cmd_parmdesc *p = &ts->parms[ts->nParams];;
+    struct cmd_parmdesc *p = &ts->parms[ts->nParams];
 
     memset (p, 0, sizeof(*p));
 

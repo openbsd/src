@@ -1,4 +1,4 @@
-/*	$OpenBSD: level.c,v 1.5 2003/06/03 03:01:41 millert Exp $	*/
+/*	$OpenBSD: level.c,v 1.6 2003/08/06 21:08:05 millert Exp $	*/
 /*	$NetBSD: level.c,v 1.3 1995/04/22 10:27:37 cgd Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)level.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: level.c,v 1.5 2003/06/03 03:01:41 millert Exp $";
+static const char rcsid[] = "$OpenBSD: level.c,v 1.6 2003/08/06 21:08:05 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -255,7 +255,7 @@ make_room(rn, r1, r2, r3)
 	case BIG_ROOM:
 		top_row = get_rand(MIN_ROW, MIN_ROW+5);
 		bottom_row = get_rand(DROWS-7, DROWS-2);
-		left_col = get_rand(0, 10);;
+		left_col = get_rand(0, 10);
 		right_col = get_rand(DCOLS-11, DCOLS-1);
 		rn = 0;
 		goto B;

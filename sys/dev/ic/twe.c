@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe.c,v 1.21 2003/06/02 19:24:22 mickey Exp $	*/
+/*	$OpenBSD: twe.c,v 1.22 2003/08/06 21:08:06 millert Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Michael Shalayeff.  All rights reserved.
@@ -183,7 +183,7 @@ twe_attach(sc)
 	lockinit(&sc->sc_lock, PWAIT, "twelk", 0, 0);
 
 	pa = sc->sc_cmdmap->dm_segs[0].ds_addr +
-	    sizeof(struct twe_cmd) * (TWE_MAXCMDS - 1);;
+	    sizeof(struct twe_cmd) * (TWE_MAXCMDS - 1);
 	for (cmd = sc->sc_cmds + sizeof(struct twe_cmd) * (TWE_MAXCMDS - 1);
 	     cmd >= (struct twe_cmd *)sc->sc_cmds; cmd--, pa -= sizeof(*cmd)) {
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.17 2003/06/02 20:18:41 millert Exp $	*/
+/*	$OpenBSD: kvm_proc.c,v 1.18 2003/08/06 21:08:05 millert Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.17 2003/06/02 20:18:41 millert Exp $";
+static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.18 2003/08/06 21:08:05 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -554,7 +554,7 @@ kvm_argv(kd, p, addr, narg, maxcnt)
 		cp = kd->argbuf + addr;
 		cc = kd->nbpg - addr;
 		if (maxcnt > 0 && cc > maxcnt - len)
-			cc = maxcnt - len;;
+			cc = maxcnt - len;
 		ep = memchr(cp, '\0', cc);
 		if (ep != 0)
 			cc = ep - cp + 1;

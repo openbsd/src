@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.22 2003/07/02 21:04:09 deraadt Exp $	*/
+/*	$OpenBSD: run.c,v 1.23 2003/08/06 21:08:07 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -1786,7 +1786,7 @@ Cell *sub(Node **a, int nnn)	/* substitute command */
 		if (pb > buf + bufsz)
 			FATAL("sub result2 %.30s too big; can't happen", buf);
 		setsval(x, buf);	/* BUG: should be able to avoid copy */
-		result = True;;
+		result = True;
 	}
 	tempfree(x);
 	tempfree(y);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.12 2003/04/25 21:37:47 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.13 2003/08/06 21:08:05 millert Exp $	*/
 /*	$NetBSD: misc.c,v 1.2 1995/03/24 03:59:03 cgd Exp $	*/
 
 /*
@@ -1200,7 +1200,7 @@ adjuststats()
 
 	/* calculate effective quickness */
 	dtemp = ((Player.p_gold + Player.p_gems / 2.0) - 1000.0) / Statptr->c_goldtote
-	    - Player.p_level;;
+	    - Player.p_level;
 	dtemp = MAX(0.0, dtemp);/* gold slows player down */
 	Player.p_speed = Player.p_quickness + Player.p_quksilver - dtemp;
 

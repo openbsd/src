@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.17 2002/12/09 00:45:37 millert Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.18 2003/08/06 21:08:06 millert Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -784,7 +784,7 @@ stack_decode(unsigned addr, unsigned *stack, int (*pr)(const char *, ...))
 			return 0; /* bummer */
 
 		case JUMP_SOURCE_IS_UNLIKELY:
-			next_address_likely_wrong = 1;;
+			next_address_likely_wrong = 1;
 			break;
 		}
 	}

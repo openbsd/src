@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.57 2003/04/06 18:54:20 ho Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.58 2003/08/06 21:08:06 millert Exp $	*/
 /*	$NetBSD: if_de.c,v 1.45 1997/06/09 00:34:18 thorpej Exp $	*/
 
 /*-
@@ -2370,7 +2370,7 @@ tulip_identify_asante_nic(
 	mi->mi_gpr_length = 0;
 	mi->mi_gpr_offset = 0;
 	mi->mi_reset_length = 0;
-	mi->mi_reset_offset = 0;;
+	mi->mi_reset_offset = 0;
 
 	mi->mi_phyaddr = TULIP_MII_NOPHY;
 	for (idx = 20; idx > 0 && mi->mi_phyaddr == TULIP_MII_NOPHY; idx--) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.11 2002/11/26 06:01:28 nate Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.12 2003/08/06 21:08:07 millert Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -512,7 +512,7 @@ void lge_attach(parent, self, aux)
 	if (!(command & PCI_COMMAND_IO_ENABLE)) {
 		printf("%s: failed to enable I/O ports!\n",
 		       sc->sc_dv.dv_xname);
-		error = ENXIO;;
+		error = ENXIO;
 		goto fail;
 	}
 	/*

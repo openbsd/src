@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.35 2003/06/12 18:08:09 mickey Exp $	*/
+/*	$OpenBSD: auich.c,v 1.36 2003/08/06 21:08:06 millert Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -163,9 +163,9 @@ struct auich_softc {
 	struct auich_dmalist *dmalist_pcmo, *dmap_pcmo,
 	    dmasto_pcmo[AUICH_DMALIST_MAX+1];
 	struct auich_dmalist *dmalist_pcmi, *dmap_pcmi,
-	    dmasto_pcmi[AUICH_DMALIST_MAX+1];;
+	    dmasto_pcmi[AUICH_DMALIST_MAX+1];
 	struct auich_dmalist *dmalist_mici, *dmap_mici,
-	    dmasto_mici[AUICH_DMALIST_MAX+1];;
+	    dmasto_mici[AUICH_DMALIST_MAX+1];
 	/* i/o buffer pointers */
 	u_int32_t pcmo_start, pcmo_p, pcmo_end;
 	int pcmo_blksize, pcmo_fifoe;

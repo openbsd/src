@@ -785,7 +785,7 @@ re_start:
 				/* goto end; */
 				}
 
-			sbuf_len-=i;;
+			sbuf_len-=i;
 			sbuf_off+=i;
 			if (sbuf_len <= 0)
 				{

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.83 2003/06/10 21:50:26 mickey Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.84 2003/08/06 21:08:07 millert Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1223,7 +1223,7 @@ more:
 		buf[0] = '\0';
 		if ((error = copyout(buf, rarg, 1)) != 0)
 			goto out;
-		*oldlenp += 1;;
+		*oldlenp += 1;
 		rarg += 1;
 
 		vargv++;

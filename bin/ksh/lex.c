@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.17 2003/02/28 09:45:09 jmc Exp $	*/
+/*	$OpenBSD: lex.c,v 1.18 2003/08/06 21:08:05 millert Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -1394,5 +1394,5 @@ pop_state_(si, old_end)
 
 	afree(old_base, ATEMP);
 
-	return si->base + STATE_BSIZE - 1;;
+	return si->base + STATE_BSIZE - 1;
 }

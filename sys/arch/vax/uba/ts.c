@@ -1,4 +1,4 @@
-/*	$OpenBSD: ts.c,v 1.12 2003/06/02 23:27:58 millert Exp $ */
+/*	$OpenBSD: ts.c,v 1.13 2003/08/06 21:08:06 millert Exp $ */
 /*	$NetBSD: ts.c,v 1.11 1997/01/11 11:34:43 ragge Exp $ */
 
 /*-
@@ -402,7 +402,7 @@ tscommand (dev, cmd, count)
 		debug (("tscommand: direct return, no biowait.\n"));
 		return;
 	}
-	debug (("tscommand: calling biowait ...\n"));;
+	debug (("tscommand: calling biowait ...\n"));
 	biowait (bp);
 	if (bp->b_flags & B_WANTED)
 		wakeup ((caddr_t)bp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash_bigkey.c,v 1.12 2003/06/02 20:18:33 millert Exp $	*/
+/*	$OpenBSD: hash_bigkey.c,v 1.13 2003/08/06 21:08:05 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)hash_bigkey.c	8.3 (Berkeley) 5/31/94";
 #else
-static const char rcsid[] = "$OpenBSD: hash_bigkey.c,v 1.12 2003/06/02 20:18:33 millert Exp $";
+static const char rcsid[] = "$OpenBSD: hash_bigkey.c,v 1.13 2003/08/06 21:08:05 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -608,7 +608,7 @@ __big_split(hashp, op, np, big_keyp, addr, obucket, ret)
 	if ((ret->next_addr = __find_last_page(hashp, &big_keyp))) {
 		if (!(ret->nextp =
 		    __get_buf(hashp, ret->next_addr, big_keyp, 0)))
-			return (-1);;
+			return (-1);
 	} else
 		ret->nextp = NULL;
 

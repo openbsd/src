@@ -2173,7 +2173,7 @@ again2:
 			p="Valid";
 		else
 			p="\ninvalid type, Data base error\n";
-		BIO_printf(bio_err,"Type	  :%s\n",p);;
+		BIO_printf(bio_err,"Type	  :%s\n",p);
 		if (rrow[DB_type][0] == 'R')
 			{
 			p=rrow[DB_exp_date]; if (p == NULL) p="undef";

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cons.c,v 1.5 2003/06/02 23:28:17 millert Exp $	*/
+/*	$OpenBSD: if_cons.c,v 1.6 2003/08/06 21:08:07 millert Exp $	*/
 /*	$NetBSD: if_cons.c,v 1.7 1996/02/13 22:09:44 christos Exp $	*/
 
 /*-
@@ -781,7 +781,7 @@ FACILtoNSAP(addr, buf)
 	register struct sockaddr_iso *addr;
 {
 	int             len_in_nibbles = *++buf & 0x3f;
-	u_char          buf_len = (len_in_nibbles + 1) >> 1;;	/* in bytes */
+	u_char          buf_len = (len_in_nibbles + 1) >> 1;	/* in bytes */
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CADDR]) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.14 2003/06/03 14:28:16 ho Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.15 2003/08/06 21:08:06 millert Exp $	*/
 /*	$EOM: crypto.c,v 1.32 2000/03/07 20:08:51 niklas Exp $	*/
 
 /*
@@ -347,7 +347,7 @@ crypto_decrypt (struct keystate *ks, u_int8_t *buf, u_int16_t len)
    * like this.
    */
   memcpy (ks->liv, buf + len - ks->xf->blocksize, ks->xf->blocksize);
-  ks->xf->decrypt (ks, buf, len);;
+  ks->xf->decrypt (ks, buf, len);
   LOG_DBG_BUF ((LOG_CRYPTO, 30, "crypto_decrypt: after decryption", buf,
 		len));
 }

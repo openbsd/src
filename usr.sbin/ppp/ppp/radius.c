@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: radius.c,v 1.23 2002/07/04 23:35:08 brian Exp $
+ *	$OpenBSD: radius.c,v 1.24 2003/08/06 21:08:08 millert Exp $
  *
  */
 
@@ -635,7 +635,7 @@ radius_Init(struct radius *r)
   r->mppe.recvkeylen = 0;
   r->mppe.sendkey = NULL;
   r->mppe.sendkeylen = 0;
-  *r->cfg.file = '\0';;
+  *r->cfg.file = '\0';
   log_Printf(LogDEBUG, "Radius: radius_Init\n");
 }
 

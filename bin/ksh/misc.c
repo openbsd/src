@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.17 2003/08/05 20:52:27 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.18 2003/08/06 21:08:05 millert Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -1049,13 +1049,13 @@ ksh_getopt(argv, go, options)
 				go->optarg = argv[go->optind - 1] + go->p;
 				go->p = 0;
 			} else
-				go->optarg = (char *) 0;;
+				go->optarg = (char *) 0;
 		} else {
 			if (argv[go->optind] && digit(argv[go->optind][0])) {
 				go->optarg = argv[go->optind++];
 				go->p = 0;
 			} else
-				go->optarg = (char *) 0;;
+				go->optarg = (char *) 0;
 		}
 	}
 	return c;

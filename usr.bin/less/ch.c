@@ -683,7 +683,7 @@ ch_delbufs()
 	while (ch_bufhead != END_OF_CHAIN)
 	{
 		bp = ch_bufhead;
-		bp->next->prev = bp->prev;;
+		bp->next->prev = bp->prev;
 		bp->prev->next = bp->next;
 		free(bp);
 	}

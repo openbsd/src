@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat_vm.c,v 1.3 2003/05/10 17:53:56 miod Exp $	*/
+/*	$OpenBSD: compat_vm.c,v 1.4 2003/08/06 21:08:06 millert Exp $	*/
 /*	$NetBSD: vm_12.c,v 1.8 1997/10/20 22:05:22 thorpej Exp $	*/
 
 /*
@@ -66,8 +66,8 @@ compat_25_sys_omsync(p, v, retval)
 		syscallarg(size_t) len;
 	} */ *uap = v;
 
-	SCARG(&ua, addr) = SCARG(uap, addr);;
-	SCARG(&ua, len) = SCARG(uap, len);;
+	SCARG(&ua, addr) = SCARG(uap, addr);
+	SCARG(&ua, len) = SCARG(uap, len);
 	SCARG(&ua, flags) = MS_SYNC | MS_INVALIDATE;
 	return (sys_msync(p, &ua, retval));
 }

@@ -505,7 +505,7 @@ API_EXPORT(void) ap_bpushh(BUFF *fb, HANDLE hFH)
 API_EXPORT(int) ap_bsetopt(BUFF *fb, int optname, const void *optval)
 {
     if (optname == BO_BYTECT) {
-	fb->bytes_sent = *(const long int *) optval - (long int) fb->outcnt;;
+	fb->bytes_sent = *(const long int *) optval - (long int) fb->outcnt;
 	return 0;
     }
     else {

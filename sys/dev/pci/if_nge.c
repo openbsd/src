@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.25 2003/01/15 06:31:24 art Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.26 2003/08/06 21:08:07 millert Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -806,7 +806,7 @@ nge_attach(parent, self, aux)
 	if (!(command & PCI_COMMAND_IO_ENABLE)) {
 		printf("%s: failed to enable I/O ports!\n",
 		       sc->sc_dv.dv_xname);
-		error = ENXIO;;
+		error = ENXIO;
 		goto fail;
 	}
 	/*

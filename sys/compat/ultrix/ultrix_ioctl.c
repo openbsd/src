@@ -1,4 +1,4 @@
-/*	$OpenBSD: ultrix_ioctl.c,v 1.9 2002/02/14 22:57:18 pvalchev Exp $ */
+/*	$OpenBSD: ultrix_ioctl.c,v 1.10 2003/08/06 21:08:06 millert Exp $ */
 /*	$NetBSD: ultrix_ioctl.c,v 1.3.4.1 1996/06/13 18:22:37 jonathan Exp $ */
 /*	from : NetBSD: sunos_ioctl.c,v 1.21 1995/10/07 06:27:31 mycroft Exp */
 
@@ -675,7 +675,7 @@ ultrix_sys_ioctl(p, v, retval)
 #define IFREQ_INOUT(a) { \
 	struct ifreq ifreq; \
 	if ((error = copyin (SCARG(uap, data), (caddr_t)&ifreq, sizeof (ifreq))) != 0) \
-		goto out;; \
+		goto out; \
 	if ((error = (*ctl)(fp, a, (caddr_t)&ifreq, p)) != 0) \
 		goto out; \
 	error = copyout ((caddr_t)&ifreq, SCARG(uap, data), sizeof (ifreq)); \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_subs.c,v 1.23 2003/06/02 23:32:08 millert Exp $	*/
+/*	$OpenBSD: file_subs.c,v 1.24 2003/08/06 21:08:05 millert Exp $	*/
 /*	$NetBSD: file_subs.c,v 1.4 1995/03/21 09:07:18 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: file_subs.c,v 1.23 2003/06/02 23:32:08 millert Exp $";
+static const char rcsid[] = "$OpenBSD: file_subs.c,v 1.24 2003/08/06 21:08:05 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -287,7 +287,7 @@ mk_link(char *to, struct stat *to_sb, char *from, int ign)
 		 */
 		if ((to_sb->st_dev==sb.st_dev)&&(to_sb->st_ino == sb.st_ino)) {
 			paxwarn(1, "Unable to link file %s to itself", to);
-			return(-1);;
+			return(-1);
 		}
 
 		/*

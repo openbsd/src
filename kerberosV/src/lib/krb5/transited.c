@@ -93,7 +93,7 @@ make_path(krb5_context context, struct tr_realm *r,
 	    if(path->realm == NULL){
 		r->next = path; /* XXX */
 		krb5_set_error_string (context, "malloc: out of memory");
-		return ENOMEM;;
+		return ENOMEM;
 	    }
 	}
     }else if(strncmp(from, to, strlen(to)) == 0){

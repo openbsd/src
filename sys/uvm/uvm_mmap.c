@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.49 2003/07/21 22:52:19 tedu Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.50 2003/08/06 21:08:07 millert Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -910,7 +910,7 @@ sys_madvise(p, v, retval)
 	} */ *uap = v;
 	vaddr_t addr;
 	vsize_t size, pageoff;
-	int advice, rv;;
+	int advice, rv;
 	
 	addr = (vaddr_t)SCARG(uap, addr);
 	size = (vsize_t)SCARG(uap, len);

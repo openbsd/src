@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem1.c,v 1.4 2002/02/16 21:27:59 millert Exp $	*/
+/*	$OpenBSD: mem1.c,v 1.5 2003/08/06 21:08:08 millert Exp $	*/
 /*	$NetBSD: mem1.c,v 1.2 1995/07/03 21:24:25 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: mem1.c,v 1.4 2002/02/16 21:27:59 millert Exp $";
+static char rcsid[] = "$OpenBSD: mem1.c,v 1.5 2003/08/06 21:08:08 millert Exp $";
 #endif
 
 #include <sys/types.h>
@@ -216,7 +216,7 @@ xgetblk(mbp, s)
 			frmblks = mb->nxt;
 		}
 		mb->ffree = mb->blk;
-		mb->nfree = mb->size;;
+		mb->nfree = mb->size;
 		mb->nxt = *mbp;
 		*mbp = mb;
 	}

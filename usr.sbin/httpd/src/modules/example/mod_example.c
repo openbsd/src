@@ -548,7 +548,7 @@ static int example_handler(request_rec *r)
 	    ap_get_server_version());
     ap_rputs("  <BR>\n", r);
     ap_rprintf(r, "  Server built: \"%s\"\n", ap_get_server_built());
-    ap_rputs("  </P>\n", r);;
+    ap_rputs("  </P>\n", r);
     ap_rputs("  <P>\n", r);
     ap_rputs("  The format for the callback trace is:\n", r);
     ap_rputs("  </P>\n", r);
