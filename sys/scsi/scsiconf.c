@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.49 1999/12/31 20:24:05 millert Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.50 2000/02/21 08:21:22 mjacob Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -517,6 +517,9 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_SCANNER, T_FIXED,
 	 "UMAX    ", "SuperVista S-12 ", "V1.9"}, SDEV_NOLUNS},
 
+	{{T_ENCLOSURE, T_FIXED,
+	 "SUN     ", "SENA", ""},                 SDEV_NOLUNS},
+
 	/* ATAPI device quirks */
         {{T_CDROM, T_REMOV,
          "ALPS ELECTRIC CO.,LTD. DC544C", "", "SW03D"}, ADEV_NOTUR},
@@ -642,6 +645,9 @@ scsibusprint(aux, pnp)
 			break;
 		case T_COMM:
 			dtype = "communication";
+			break;
+		case T_ENCLOSURE:
+			dtype = "enclosure services";
 			break;
 		case T_NODEVICE:
 			panic("scsibusprint: impossible device type");
