@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.30 1997/10/22 23:40:35 mickey Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.31 1997/10/25 08:23:38 mickey Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.30 1997/10/22 23:40:35 mickey Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.31 1997/10/25 08:23:38 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -212,6 +212,7 @@ listall(prefix, lp)
 	if (lp->list == NULL)
 		return;
 	(void)strncpy(name, prefix, BUFSIZ-1);
+	name[BUFSIZ-1] = '\0';
 	cp = &name[strlen(name)];
 	*cp++ = '.';
 	for (lvl2 = 0; lvl2 < lp->size; lvl2++) {
@@ -232,12 +233,12 @@ parse(string, flags)
 	char *string;
 	int flags;
 {
-	int indx, type, state;
+	int indx, type, state, len;
 	int special = 0;
 	void *newval = 0;
 	int intval, newsize = 0;
 	quad_t quadval;
-	size_t size, len;
+	size_t size;
 	struct list *lp;
 	int mib[CTL_MAXNAME];
 	char *cp, *bufp, buf[BUFSIZ];
@@ -405,13 +406,13 @@ parse(string, flags)
 #ifdef CPU_BIOS
 		if (mib[1] == CPU_BIOS) {
 			len = sysctl_bios(string, &bufp, mib, flags, &type);
-			if (mib[2] == BIOS_DISKINFO)
-				special |= BIOSGEO;
+			if (len < 0)
+				return;
 			if (mib[2] == BIOS_DEV)
 				special |= BIOSDEV;
-			if (len >= 0)
-				break;
-			return;
+			if (mib[2] == BIOS_DISKINFO)
+				special |= BIOSGEO;
+			break;
 		}
 #endif
 		break;
@@ -464,6 +465,9 @@ parse(string, flags)
 		case ENOMEM:
 			warnx("%s: type is unknown to this program", string);
 			return;
+		case ENXIO:
+			if (special & BIOSGEO)
+				return;
 		default:
 			warnx(string);
 			return;
@@ -502,12 +506,14 @@ parse(string, flags)
 	}
 #ifdef CPU_BIOS
 	if (special & BIOSGEO) {
-		bios_diskinfo_t di = *(bios_diskinfo_t *)buf;
+		bios_diskinfo_t *pdi = (bios_diskinfo_t *)buf;
 
 		if (!nflag)
 			(void)printf("%s = ", string);
-		printf("Cylinders=%d Tracks=%d Sectors=%d (%08x)\n",
-		       di.bios_cylinders, di.bios_heads, di.bios_sectors);
+		(void)printf("bootdev = 0x%x, "
+			     "cylinders = %u, heads = %u, sectors = %u\n",
+			     pdi->bsd_dev, pdi->bios_cylinders, pdi->bios_heads,
+			     pdi->bios_sectors);
 		return;
 	}
 	if (special & BIOSDEV) {
@@ -515,11 +521,7 @@ parse(string, flags)
 
 		if (!nflag)
 			(void)printf("%s = ", string);
-		if (dev & 0x80)
-			dev = ('c' + dev) & 0x7f;
-		else
-			dev += 'a';
-		(void) printf("%c:\n", dev);
+		(void) printf("0x%02x\n", dev);
 		return;
 	}
 #endif
@@ -740,6 +742,7 @@ sysctl_bios(string, bufpp, mib, flags, typep)
 	int flags;
 	int *typep;
 {
+	char *name;
 	int indx;
 
 	if (*bufpp == NULL) {
@@ -749,8 +752,31 @@ sysctl_bios(string, bufpp, mib, flags, typep)
 	if ((indx = findname(string, "third", bufpp, &bioslist)) == -1)
 		return(-1);
 	mib[2] = indx;
-	*typep = bioslist.list[indx].ctl_type;
-	return(3);
+	if (indx == BIOS_DISKINFO) {
+		if (!flags)
+			return(-1);
+		if (*bufpp == NULL) {
+			char name[BUFSIZ];
+
+			/* scan all the bios devices */
+			for (indx = 0; indx < 256; indx++) {
+				snprintf(name, sizeof(name), "%s.%u",
+					 string, indx);
+				parse(name, 1);
+			}
+			return(-1);
+		}
+		if ((name = strsep(bufpp, ".")) == NULL) {
+			warnx("%s: incomplete specification", string);
+			return(-1);
+		}
+		mib[3] = atoi(name);
+		*typep = CTLTYPE_STRUCT;
+		return 4;
+	} else {
+		*typep = bioslist.list[indx].ctl_type;
+		return(3);
+	}
 }
 #endif
 
