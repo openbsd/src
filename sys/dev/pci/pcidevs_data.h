@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.129 1999/03/12 20:01:33 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.130 1999/03/13 21:15:31 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1614,31 +1614,43 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443LX,
 	    0,
 	    "Intel",
-	    "82443LX PCI AGP (PAC)",
+	    "82443LX PCI-AGP (PAC)",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443LX_AGP,
 	    0,
 	    "Intel",
-	    "82443LX AGP Device (PAC)",
+	    "82443LX AGP (PAC)",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443BX,
 	    0,
 	    "Intel",
-	    "82443BX PCI AGP (PAC)",
+	    "82443BX PCI-AGP (PAC)",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443BX_AGP,
 	    0,
 	    "Intel",
-	    "82443BX AGP Device (PAC)",
+	    "82443BX AGP (PAC)",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443BX_NOAGP,
 	    0,
 	    "Intel",
 	    "82443BX Host-PCI (no AGP)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440BX,
+	    0,
+	    "Intel",
+	    "82440BX PCI-AGP (PAC)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440BX_AGP,
+	    0,
+	    "Intel",
+	    "82440BX AGP (PAC)",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCI450_PB,
