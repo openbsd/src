@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_pcmcia.c,v 1.7 1997/07/30 11:12:28 niklas Exp $       */
+/*	$OpenBSD: if_ep_pcmcia.c,v 1.8 1998/03/17 00:00:57 deraadt Exp $       */
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -209,8 +209,6 @@ ep_pcmcia_attach(parent, self, aux)
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
 	
-	printf(": ");
-
 	epconfig(sc, EP_CHIPSET_3C509);
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq,
 	    IST_EDGE, IPL_NET, epintr, sc, sc->sc_dev.dv_xname);
