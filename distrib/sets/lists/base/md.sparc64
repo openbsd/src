@@ -1,3 +1,12 @@
+./etc/firmware/atu-intersil-ext
+./etc/firmware/atu-intersil-int
+./etc/firmware/atu-license
+./etc/firmware/atu-rfmd-ext
+./etc/firmware/atu-rfmd-int
+./etc/firmware/atu-rfmd2958-ext
+./etc/firmware/atu-rfmd2958-int
+./etc/firmware/atu-rfmd2958smc-ext
+./etc/firmware/atu-rfmd2958smc-int
 ./sbin/ipwcontrol
 ./sbin/iwicontrol
 ./sbin/kbd

@@ -50,6 +50,7 @@
 ./etc/afs
 ./etc/amd
 ./etc/disklabels
+./etc/firmware
 ./etc/isakmpd
 ./etc/isakmpd/ca
 ./etc/isakmpd/certs
