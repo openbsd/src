@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.797 2004/11/20 23:20:10 brad Exp 
+ *	OpenBSD: pcidevs,v 1.798 2004/11/21 08:37:53 grange Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2991,12 +2991,12 @@ static const struct pci_known_product pci_known_products[] = {
 	    "8849",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_21145,
-	    "21145",
-	},
-	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EESISA,
 	    "EES ISA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_21145,
+	    "21145",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80312,
@@ -3691,6 +3691,30 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82850 Host",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82860_HB,
+	    "82860 Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82850_AGP,
+	    "82850/82860 AGP",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82860_PCI1,
+	    "82860 PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82860_PCI2,
+	    "82860 PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82860_PCI3,
+	    "82860 PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82860_PCI4,
+	    "82860 PCI-PCI",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_HB,
 	    "E7500 MCH Host",
 	},
@@ -3721,30 +3745,6 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_HI_D2,
 	    "E7500 MCH HI_D vppb 2",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82860_HB,
-	    "82860 Host",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82850_AGP,
-	    "82850/82860 AGP",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82860_PCI1,
-	    "82860 PCI-PCI",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82860_PCI2,
-	    "82860 PCI-PCI",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82860_PCI3,
-	    "82860 PCI-PCI",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82860_PCI4,
-	    "82860 PCI-PCI",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82845G,
@@ -3859,8 +3859,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82801FB PCIE",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_RCU32,
+	    "RCU32 I2O RAID",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_31244,
 	    "31244 SATA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855PE,
+	    "82855PE Hub",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855PE_AGP,
+	    "82855PE AGP",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IO_1,
@@ -3883,6 +3895,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82852GM Hub-PCI",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82852_AGP,
+	    "82852/82855 AGP",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82852GM_AGP,
 	    "82852GM AGP",
 	},
@@ -3893,34 +3909,6 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82852GM_CFG,
 	    "82852GM Configuration",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855PE,
-	    "82855PE Hub",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855PE_AGP,
-	    "82855PE AGP",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_RCU32,
-	    "RCU32 I2O RAID",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82852_IO1,
-	    "82852/82855 CPU-I/O-1",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82852_AGP,
-	    "82852/82855 AGP",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82852_IO2,
-	    "82852/82855 CPU-I/O-2",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82852_IO3,
-	    "82852/82855 CPU-I/O-3",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7710_SMCH,
@@ -4115,12 +4103,12 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82454NX PXB",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82802AB,
-	    "82802AB Firmware Hub 4Mbit",
-	},
-	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82802AC,
 	    "82802AC Firmware Hub 8Mbit",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82802AB,
+	    "82802AB Firmware Hub 4Mbit",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I2OPCIB,
