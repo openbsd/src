@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.44 2002/09/10 18:29:44 art Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.45 2002/09/12 12:56:16 art Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
@@ -1340,7 +1340,7 @@ uvm_pageidlezero()
 		uvm_unlock_fpageq(s);
 
 #ifdef PMAP_PAGEIDLEZERO
-		if (PMAP_PAGEIDLEZERO(VM_PAGE_TO_PHYS(pg)) == FALSE) {
+		if (PMAP_PAGEIDLEZERO(pg) == FALSE) {
 			/*
 			 * The machine-dependent code detected some
 			 * reason for us to abort zeroing pages,
