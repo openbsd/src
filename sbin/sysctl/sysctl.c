@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.62 2001/05/12 06:47:17 angelos Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.63 2001/05/14 07:14:53 angelos Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.62 2001/05/12 06:47:17 angelos Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.63 2001/05/14 07:14:53 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,6 +57,7 @@ static char *rcsid = "$OpenBSD: sysctl.c,v 1.62 2001/05/12 06:47:17 angelos Exp 
 #include <sys/malloc.h>
 #include <sys/dkstat.h>
 #include <sys/uio.h>
+#include <sys/tty.h>
 #include <sys/namei.h>
 #include <vm/vm_param.h>
 #include <machine/cpu.h>
@@ -128,6 +129,7 @@ struct ctlname debugname[CTL_DEBUG_MAXID];
 struct ctlname kernmallocname[] = CTL_KERN_MALLOC_NAMES;
 struct ctlname forkstatname[] = CTL_KERN_FORKSTAT_NAMES;
 struct ctlname nchstatsname[] = CTL_KERN_NCHSTATS_NAMES;
+struct ctlname ttyname[] = CTL_KERN_TTY_NAMES;
 struct ctlname *vfsname;
 #ifdef CTL_MACHDEP_NAMES
 struct ctlname machdepname[] = CTL_MACHDEP_NAMES;
@@ -342,6 +344,12 @@ parse(string, flags)
 		case KERN_FORKSTAT:
 			sysctl_forkstat(string, &bufp, mib, flags, &type);
 			return;
+		case KERN_TTY:
+			len = sysctl_tty(string, &bufp, mib, flags, &type);
+			if (len < 0)
+				return;
+			newsize = 0;
+			break;
 		case KERN_NCHSTATS:
 			sysctl_nchstats(string, &bufp, mib, flags, &type);
 			return;
@@ -392,6 +400,17 @@ parse(string, flags)
 		break;
 
 	case CTL_HW:
+		switch (mib[1]) {
+		case HW_DISKSTATS:
+			/*
+			 * Only complain if someone asks explicitly for this,
+			 * otherwise "fail" silently.
+			 */
+			if (flags)
+				warnx("use vmstat to view %s information",
+				    string);
+			return;
+		}
 		break;
 
 	case CTL_VM:
@@ -1279,6 +1298,7 @@ struct list inetvars[] = {
 struct list kernmalloclist = { kernmallocname, KERN_MALLOC_MAXID };
 struct list forkstatlist = { forkstatname, KERN_FORKSTAT_MAXID };
 struct list nchstatslist = { nchstatsname, KERN_NCHSTATS_MAXID };
+struct list ttylist = { ttyname, KERN_TTY_MAXID };
 
 /*
  * handle vfs namei cache statistics
@@ -1343,6 +1363,30 @@ sysctl_nchstats(string, bufpp, mib, flags, typep)
 		break;
 	}
 	return(-1);
+}
+
+/*
+ * handle tty statistics
+ */
+int
+sysctl_tty(string, bufpp, mib, flags, typep)
+	char *string;
+	char **bufpp;
+	int mib[];
+	int flags;
+	int *typep;
+{
+	int indx;
+
+	if (*bufpp == NULL) {
+		listall(string, &ttylist);
+		return(-1);
+	}
+	if ((indx = findname(string, "third", bufpp, &ttylist)) == -1)
+		return(-1);
+	mib[2] = indx;
+	*typep = CTLTYPE_QUAD;
+	return(3);
 }
 
 /*
@@ -1480,9 +1524,11 @@ sysctl_malloc(string, bufpp, mib, flags, typep)
 			if (lp.list == NULL)
 				return(-1);
 			lp.size = stor + 2;
-			for (i = 1;
-			    (lp.list[i].ctl_name = strsep(&buf, ",")) != NULL;
-			    i++) {
+			for (i = 1; (lp.list[i].ctl_name = strsep(&buf, ",")) != NULL; i++) {
+				if (lp.list[i].ctl_name[0] == '\0') {
+					i--;
+					continue;
+				}
 				lp.list[i].ctl_type = CTLTYPE_STRUCT;
 			}
 			lp.list[i].ctl_name = buf;
