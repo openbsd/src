@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)subr.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$Id: subr.c,v 1.8 1997/04/06 08:43:44 deraadt Exp $";
+static char rcsid[] = "$Id: subr.c,v 1.9 2000/09/08 04:30:19 aaron Exp $";
 #endif /* not lint */
 
 /*
@@ -617,8 +617,7 @@ makeenv(env)
 
 	ep = env;
 	if (TT && *TT) {
-		strncat(termbuf, TT, sizeof(termbuf)-strlen(termbuf));
-		termbuf[sizeof(termbuf)-1] = '\0';
+		strlcat(termbuf, TT, sizeof(termbuf));
 		*ep++ = termbuf;
 	}
 	if ((p = EV)) {
