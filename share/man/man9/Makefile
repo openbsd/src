@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.54 2002/08/16 17:51:44 jason Exp $
+#	$OpenBSD: Makefile,v 1.55 2002/08/23 15:22:51 art Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -6,7 +6,7 @@
 MAN=	altq.9 audio.9 boot.9 bus_dma.9 bus_space.9 copy.9 crypto.9 ctxsw.9 \
 	disk.9 disklabel.9 \
 	dohooks.9 dopowerhooks.9 doshutdownhooks.9 dostartuphooks.9 \
-	extattr.9 \
+	extattr.9 file.9 \
 	fetch.9 fork1.9 extent.9 getdevvp.9 getnewvnode.9 hash.9 hashinit.9 \
 	hardclock.9 hook_establish.9 hz.9 hzto.9 intro.9 inittodr.9 log.9 \
 	kthread.9 lock.9 malloc.9 mbuf.9 mbuf_tags.9 md5.9 microtime.9 \
@@ -86,6 +86,8 @@ MLINKS+=extent.9 extent_create.9 extent.9 extent_destroy.9 \
 	extent.9 extent_free.9 extent.9 extent_print.9
 MLINKS+=fetch.9 fubyte.9 fetch.9 fuibyte.9 fetch.9 fusword.9 \
 	fetch.9 fuswintr.9 fetch.9 fuword.9 fetch.9 fuiword.9
+MLINKS+=file.9 falloc.9 file.9 fdrelease.9 file.9 FREF.9 file.9 FRELE.9 \
+	file.9 fd_getfile.9 file.9 getvnode.9 file.9 getsock.9
 MLINKS+=hook_establish.9 hook_disestablish.9
 MLINKS+=hz.9 tick.9 hz.9 tickadj.9 hz.9 stathz.9 hz.9 profhz.9
 MLINKS+=kthread.9 kthread_create.9 kthread.9 kthread_exit.9 \

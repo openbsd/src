@@ -1,0 +1,118 @@
+.\"     $OpenBSD: file.9,v 1.1 2002/08/23 15:22:51 art Exp $
+.\"
+.\" Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd August 23, 2002
+.Dt FILE 9
+.Os
+.Sh NAME
+.Nm vnode
+.Nd an overview of file descriptor handling
+.Sh SYNOPSIS
+.Fd #include <sys/file.h>
+.Fd #include <sys/filedesc.h>
+.Ft int
+.Fn falloc "struct proc *p" "struct file **fesultfp" "int *resultfd"
+.Ft int
+.Fn fdrelease "struct proc *p" "int fd"
+.Ft void
+.Fn FREF "struct file *fp"
+.Ft void
+.Fn FRELE "struct file *fp"
+.Ft struct file *
+.Fn fd_getfile "struct filedesc *fdp" "int fd"
+.Ft int
+.Fn getvnode "struct filedesc *fdp" "int fd" "struct file **fpp"
+.Ft int
+.Fn getsock "struct filedesc *fdp" "int fd" "struct file **fpp"
+.Sh DESCRIPTION
+These functions provide the interface for the UNIX file descriptors.
+File descriptors can be used to access vnodes (see
+.Xr vnode 9 ),
+sockets (see
+.Xr socket 2 ),
+pipes (see
+.Xr pipe 2 ),
+kqueues (see
+.Xr kqueue 2 ),
+and various special purpose communication endpoints.
+.Sh 
+A new file descriptor is allocated with the function
+.Fn falloc 
+and
+freed with
+.Fn fdrelease .
+.Fn falloc
+and
+.Fn fdrelease
+deal with allocating and freeing slots in the file descriptor table
+expanding the table when necessary and intializing the descriptor.
+It's possible to do those things in smaller steps, but it's not
+recommended to make complicated kernel APIs that require it.
+.Pp
+The files are extracted from the file descriptor table using the
+functions
+.Fn fd_getfile ,
+.Fn getvnode
+and
+.Fn getsock .
+.Fn fd_getfile
+performs all necessary checks to see if the file descriptor number is
+within the range of file descriptor table, and if the descriptor is
+valid.
+.Fn getsock
+and
+.Fn getvnode
+are special cases that besides doing
+.Fn fd_getfile
+also check if the descriptor is a vnode or socket and return the proper
+errno on error.
+.Sh CONCURRENT ACCESS
+Since multiple processes can share the same file descriptor table
+it's important that the file is not freed in one process while some
+other process is still accessing it.
+To solve that problem a special use count is kept with the functions
+.Fn FREF
+and
+.Fn FRELE .
+In most cases
+.Fn FREF
+should be used on a file after it has been extracted
+from the file descriptor table and
+.Fn FRELE
+should be called when the file won't be used anymore.
+There are cases when this isn't necessary, but since
+.Fn FREF
+and
+.Fn FRELE
+are cheap to use, there is no reason to risk introducing bugs by
+not using them.
+.Sh SEE ALSO
+.Xr vnode 9
+.Sh CODE REFERENCES
+The majority of those functions are implmeneted in
+.Pa sys/kern/kern_descrip.c .
+The function prototypes and the macros are located in
+.Pa sys/sys/file.h 
+and
+.Pa sys/sys/filedesc.h .
