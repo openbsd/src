@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.if.5,v 1.1 1999/09/01 05:07:54 deraadt Exp $
+.\"	$OpenBSD: hostname.if.5,v 1.2 1999/09/01 05:16:50 deraadt Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -154,7 +154,6 @@ files.
 A bridge interface setup consists of
 .Pp
 .Bd -literal -offset xxxx
-.Va firstline
 .Va brconfig-arguments
 .Va brconfig-arguments
 \&...
@@ -170,9 +169,6 @@ add ep1
 .Pp
 The options are as follows:
 .Bl -tag -width indent -offset xxxx
-.It Va firstline
-The firstline of the bridge file contains a line like
-.Dq up media auto .
 .It Va brconfig-arguments
 .Xr brconfig 8
 is called for each successive line.
