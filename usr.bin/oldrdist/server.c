@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.7 1996/12/22 03:26:00 tholo Exp $	*/
+/*	$OpenBSD: server.c,v 1.8 1997/02/09 19:24:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: server.c,v 1.7 1996/12/22 03:26:00 tholo Exp $";
+static char *rcsid = "$OpenBSD: server.c,v 1.8 1997/02/09 19:24:59 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/wait.h>
@@ -125,7 +125,7 @@ server()
 		case 't':  /* init target file/directory name */
 			catname = 0;
 		dotarget:
-			if (exptilde(target, cp) == NULL)
+			if (exptilde(target, cp, sizeof (target)) == NULL)
 				continue;
 			tp = target;
 			while (*tp)
@@ -186,7 +186,7 @@ server()
 				continue;
 			}
 			if (*cp == '~') {
-				if (exptilde(buf, cp) == NULL)
+				if (exptilde(buf, cp, sizeof (buf)) == NULL)
 					continue;
 				cp = buf;
 			}
@@ -258,7 +258,7 @@ install(src, dest, destdir, opts)
 			return;
 	}
 
-	rname = exptilde(target, src);
+	rname = exptilde(target, src, sizeof(target));
 	if (rname == NULL)
 		return;
 	tp = target;

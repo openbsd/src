@@ -1,4 +1,4 @@
-/*	$OpenBSD: docmd.c,v 1.7 1996/08/22 20:33:17 millert Exp $	*/
+/*	$OpenBSD: docmd.c,v 1.8 1997/02/09 19:24:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)docmd.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: docmd.c,v 1.7 1996/08/22 20:33:17 millert Exp $";
+static char *rcsid = "$OpenBSD: docmd.c,v 1.8 1997/02/09 19:24:56 deraadt Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -360,7 +360,7 @@ bad:
 
 time_t	lastmod;
 FILE	*tfp;
-extern	char target[], *tp;
+extern	char *tp;
 
 /*
  * Process commands for comparing files to time stamp files.
@@ -457,7 +457,7 @@ cmptime(name)
 	 * first time cmptime() is called?
 	 */
 	if (tp == NULL) {
-		if (exptilde(target, name) == NULL)
+		if (exptilde(target, name, sizeof (target)) == NULL)
 			return;
 		tp = name = target;
 		while (*tp)

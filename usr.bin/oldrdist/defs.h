@@ -1,4 +1,4 @@
-/* *	$OpenBSD: defs.h,v 1.5 1996/08/22 20:40:43 millert Exp $*/
+/* *	$OpenBSD: defs.h,v 1.6 1997/02/09 19:24:55 deraadt Exp $*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -151,6 +151,7 @@ extern struct passwd *pw;	/* pointer to static area used by getpwent */
 extern struct group *gr;	/* pointer to static area used by getgrent */
 extern char host[];		/* host name of master copy */
 extern char buf[BUFSIZ];	/* general purpose buffer */
+extern char target[BUFSIZ];	/* target/source directory name */
 
 int	 any __P((int, char *));
 char	*colon __P((char *));
@@ -161,7 +162,7 @@ void	 error __P((const char *, ...));
 int	 except __P((char *));
 struct namelist *
 	 expand __P((struct namelist *, int));
-char	*exptilde __P((char [], char *));
+char	*exptilde __P((char [], char *, int));
 void	 fatal __P((const char *, ...));
 int	 inlist __P((struct namelist *, char *));
 void	 insert __P((char *,

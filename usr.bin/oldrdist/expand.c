@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.5 1996/08/22 20:33:18 millert Exp $	*/
+/*	$OpenBSD: expand.c,v 1.6 1997/02/09 19:24:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)expand.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: expand.c,v 1.5 1996/08/22 20:33:18 millert Exp $";
+static char *rcsid = "$OpenBSD: expand.c,v 1.6 1997/02/09 19:24:57 deraadt Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -621,9 +621,10 @@ addpath(c)
  * part corresponding to `file'.
  */
 char *
-exptilde(buf, file)
+exptilde(buf, file, maxlen)
 	char buf[];
 	register char *file;
+	int maxlen;
 {
 	register char *s1, *s2, *s3;
 	extern char homedir[];
@@ -658,13 +659,15 @@ exptilde(buf, file)
 			*s3 = '/';
 		s2 = pw->pw_dir;
 	}
-	for (s1 = buf; *s1++ = *s2++; )
+	for (s1 = buf; (*s1++ = *s2++) && s1 < buf+maxlen; )
 		;
 	s2 = --s1;
-	if (s3 != NULL) {
+	if (s3 != NULL && s1 < buf+maxlen) {
 		s2++;
-		while (*s1++ = *s3++)
+		while ((*s1++ = *s3++) && s1 < buf+maxlen)
 			;
 	}
+	if (s1 == buf+maxlen)
+		return (NULL);
 	return(s2);
 }
