@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ktrace.2,v 1.10 2002/02/22 00:05:32 deraadt Exp $
+.\"	$OpenBSD: ktrace.2,v 1.11 2002/06/06 15:41:46 mpech Exp $
 .\"	$NetBSD: ktrace.2,v 1.2 1995/02/27 12:33:58 cgd Exp $
 .\"
 .\" Copyright (c) 1993
@@ -46,7 +46,7 @@
 .Fd #include <sys/uio.h>
 .Fd #include <sys/ktrace.h>
 .Ft int
-.Fn ktrace "const char *tracefile" "int ops" "int trpoints" "int pid"
+.Fn ktrace "const char *tracefile" "int ops" "int trpoints" "pid_t pid"
 .Sh DESCRIPTION
 The
 .Fn ktrace
