@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.31 1997/11/06 05:58:21 csapuntz Exp $	*/
+/*	$OpenBSD: tty.c,v 1.32 1997/11/13 03:56:55 deraadt Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -1082,9 +1082,14 @@ ttywait(tp)
 	    (ISSET(tp->t_state, TS_CARR_ON) || ISSET(tp->t_cflag, CLOCAL))
 	    && tp->t_oproc) {
 		(*tp->t_oproc)(tp);
-		SET(tp->t_state, TS_ASLEEP);
-		error = ttysleep(tp, &tp->t_outq, TTOPRI | PCATCH, ttyout, 0);
-		if (error)
+		if ((tp->t_outq.c_cc || ISSET(tp->t_state, TS_BUSY)) &&
+		    (ISSET(tp->t_state, TS_CARR_ON) || ISSET(tp->t_cflag, CLOCAL))
+		    && tp->t_oproc) {
+			SET(tp->t_state, TS_ASLEEP);
+			error = ttysleep(tp, &tp->t_outq, TTOPRI | PCATCH, ttyout, 0);
+			if (error)
+				break;
+		} else
 			break;
 	}
 	splx(s);
