@@ -8,7 +8,7 @@
 ./usr/include/mvme68k
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.6
 ./usr/lib/libacl.so.4.1
-./usr/lib/libc.so.23.2
+./usr/lib/libc.so.23.3
 ./usr/lib/libc_r.so.1.2
 ./usr/lib/libcrypto.so.2.0
 ./usr/lib/libcurses++.so.1.1
