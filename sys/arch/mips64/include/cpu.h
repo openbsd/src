@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.9 2004/10/20 12:49:15 pefo Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.10 2004/11/11 16:14:22 pefo Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -56,6 +56,9 @@
 #define KSEG1_BASE	0xffffffffa0000000
 #define KSSEG_BASE	0xffffffffc0000000
 #define KSEG3_BASE	0xffffffffe0000000
+/* Compatible between R5K and R1xK */
+#define	XKSEG0_BASE	0x9800000000000000
+#define	XKSEG1_BASE	0x9000000000000000
 #else
 #define KSEG0_BASE	0x80000000
 #define KSEG1_BASE	0xa0000000
