@@ -2122,13 +2122,13 @@ stmp-headers:
 	touch $@
 
 FIXINCSRCDIR=$(srcdir)/fixinc
-fixinc.sh: $(FIXINCSRCDIR)/mkfixinc.sh $(FIXINCSRCDIR)/fixincl.c \
-	$(FIXINCSRCDIR)/procopen.c $(FIXINCSRCDIR)/gnu-regex.c \
-	$(FIXINCSRCDIR)/server.c $(FIXINCSRCDIR)/gnu-regex.h \
-	$(FIXINCSRCDIR)/server.h $(FIXINCSRCDIR)/inclhack.def 
-	MAKE="$(MAKE)"; srcdir=`cd $(srcdir)/fixinc; pwd` ; \
-	export MAKE srcdir ; \
-	cd ./fixinc; $(SHELL) $${srcdir}/mkfixinc.sh $(target)
+#fixinc.sh: $(FIXINCSRCDIR)/mkfixinc.sh $(FIXINCSRCDIR)/fixincl.c \
+#	$(FIXINCSRCDIR)/procopen.c $(FIXINCSRCDIR)/gnu-regex.c \
+#	$(FIXINCSRCDIR)/server.c $(FIXINCSRCDIR)/gnu-regex.h \
+#	$(FIXINCSRCDIR)/server.h $(FIXINCSRCDIR)/inclhack.def 
+#	MAKE="$(MAKE)"; srcdir=`cd $(srcdir)/fixinc; pwd` ; \
+#	export MAKE srcdir ; \
+#	cd ./fixinc; $(SHELL) $${srcdir}/mkfixinc.sh $(target)
 
 ##stmp-fixinc: $(FIXINCLUDES) gsyslimits.h
 ##	rm -rf include
