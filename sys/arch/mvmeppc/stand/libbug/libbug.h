@@ -1,4 +1,4 @@
-/*	$OpenBSD: libbug.h,v 1.4 2004/01/24 21:12:38 miod Exp $ */
+/*	$OpenBSD: libbug.h,v 1.5 2004/11/15 14:03:21 miod Exp $ */
 
 #include <machine/prom.h>
 
@@ -32,5 +32,5 @@ void	bugexec(void (*)());
 
 /* Invoke the BUG */
 #define MVMEPROM_CALL(x)	\
-	__asm__ __volatile__ ( __CONCAT("addi %r10,%r0,",__STRING(x)) ); \
+	__asm__ __volatile__ ("addi %r10,%r0," __STRING(x)); \
 	__asm__ __volatile__ ("sc");
