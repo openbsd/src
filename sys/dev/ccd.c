@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.33 1998/01/25 09:42:31 niklas Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.34 1998/02/06 22:17:16 deraadt Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -356,7 +356,8 @@ ccdinit(ccd, cpaths, p)
 			free(cs->sc_cinfo, M_DEVBUF);
 			return (error);
 		}
-		if (dpart.part->p_fstype == FS_BSDFFS) {
+		if (dpart.part->p_fstype == FS_CCD ||
+		    dpart.part->p_fstype == FS_BSDFFS) {
 			maxsecsize =
 			    ((dpart.disklab->d_secsize > maxsecsize) ?
 			    dpart.disklab->d_secsize : maxsecsize);
