@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.13 2004/02/23 16:46:24 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.14 2004/02/24 15:44:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -563,7 +563,7 @@ aspath_write(void *p, u_int16_t len, struct aspath *aspath, u_int16_t myAS,
 	u_int8_t	 type, attr_flag = ATTR_WELL_KNOWN;
 
 	prepend = aspath->hdr.prepend + (ebgp ? 1 : 0);
-	
+
 	if (prepend > 255)
 		/* lunatic prepends need to be blocked in the parser */
 		return (-1);

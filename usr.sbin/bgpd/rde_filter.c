@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.2 2004/02/24 15:43:03 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.3 2004/02/24 15:44:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -32,7 +32,7 @@ rde_filter(struct rde_peer *peer, struct attr_flags *attrs,
 {
 	struct filter_rule	*f;
 	enum filter_actions	 action = ACTION_ALLOW; /* default allow */
-	
+
 	TAILQ_FOREACH(f, rules_l, entries) {
 		if (dir != f->dir)
 			continue;
@@ -101,7 +101,7 @@ rde_filter_match(struct filter_rule *f, struct attr_flags *attrs,
 		default:
 			fatalx("rde_filter_match: unsupported address family");
 		}
-		
+
 		/* test prefixlen stuff too */
 		switch (f->match.prefixlen.op) {
 		case OP_NONE:
@@ -158,7 +158,7 @@ rde_filter_match(struct filter_rule *f, struct attr_flags *attrs,
 		}
 		/* NOTREACHED */
 	}
-	
+
 	/* matched somewhen or is anymatch rule  */
 	return (1);
 }
