@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.28 1997/08/19 08:30:47 niklas Exp $
+#	$OpenBSD: Makefile,v 1.29 1997/11/17 11:46:38 kstailey Exp $
 
 # not yet done: catman
 
@@ -34,7 +34,7 @@ SUBDIR+=bad144 apm apmd fdformat pccon pcmciad
 .elif ${MACHINE} == "pmax"
 SUBDIR+=
 .elif ${MACHINE} == "sun3"
-SUBDIR+=dbsym eeprom screenblank
+SUBDIR+=eeprom screenblank
 .elif ${MACHINE} == "sparc"
 SUBDIR+=eeprom fdformat screenblank
 .endif
