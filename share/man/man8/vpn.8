@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.24 1999/07/22 08:03:52 deraadt Exp $
+.\" $OpenBSD: vpn.8,v 1.25 1999/07/22 12:58:26 aaron Exp $
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -45,17 +45,18 @@ is used to provide the necessary network-layer cryptographic services.
 This document describes the configuration process for setting up a
 .Nm VPN .
 .Pp
-Briefly, creating a VPN consists of the following steps
+Briefly, creating a VPN consists of the following steps:
+.Pp
 .Bl -enum -compact
 .It
 Choose a key exchange method: manual keyed or
-.Xr photurisd 8
+.Xr photurisd 8 .
 .It
-Create a Security Association (SA) for each endpoint
+Create a Security Association (SA) for each endpoint.
 .It
-Create the appropriate IPSec flows
+Create the appropriate IPSec flows.
 .It
-Configure your firewall rules appropriately
+Configure your firewall rules appropriately.
 .El
 .Ss Choosing a key exchange method
 There are currently two key exchange methods available:
@@ -103,9 +104,9 @@ Use of DES or SKIPJACK as an encryption algorithm is not recommended
 Furthermore, recent attacks on SKIPJACK have shown severe weaknesses
 in its structure.
 .Pp
-Note that when using DES (or 3DES), the most significant bit of each
-byte is ignored. This means that 8 bytes are required to form a 56-bit
-DES key, and 24 bytes are required to form a 168 bit 3DES key.
+Note that DES requires 8 bytes to form a 56-bit key and 3DES requires 24 bytes
+to form its 168-bit key. This is because the most significant bit of each byte
+is ignored by both algorithms.
 .Ss Enabling the Appropriate Kernel Operations
 .Xr ipsec 4
 operations must be first enabled using
