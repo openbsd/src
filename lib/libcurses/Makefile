@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 1997/02/09 18:51:50 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.12 1997/02/27 08:02:07 angelos Exp $
 
 LIB=    curses
 SRCS=	hardscroll.c lib_acs.c lib_delch.c lib_insstr.c lib_options.c \
@@ -37,10 +37,10 @@ includes:
 	  ${DESTDIR}/usr/include
 
 keys.tries: ${.CURDIR}/keys.list ${.CURDIR}/MKkeys.awk
-	awk -f ${.CURDIR}/MKkeys.awk ${.CURDIR}/keys.list > keys.tries
+	nawk -f ${.CURDIR}/MKkeys.awk ${.CURDIR}/keys.list > keys.tries
 
 lib_keyname.c: ${.CURDIR}/keys.list ${.CURDIR}/MKkeyname.awk
-	awk -f ${.CURDIR}/MKkeyname.awk ${.CURDIR}/keys.list > lib_keyname.c
+	nawk -f ${.CURDIR}/MKkeyname.awk ${.CURDIR}/keys.list > lib_keyname.c
 
 lib_gen.c: ${.CURDIR}/curses.h ${.CURDIR}/MKlib_gen.sh
 	sh ${.CURDIR}/MKlib_gen.sh "${CPP}" "awk" < ${.CURDIR}/curses.h > lib_gen.c
