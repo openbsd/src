@@ -1,4 +1,4 @@
-/*	$OpenBSD: diofb.c,v 1.4 2005/01/18 19:17:03 miod Exp $	*/
+/*	$OpenBSD: diofb.c,v 1.5 2005/01/18 21:53:23 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -223,6 +223,9 @@ diofb_fbsetup(struct diofb *fb)
 	fb->cmap.r[1] = 0xff;
 	fb->cmap.g[1] = 0xff;
 	fb->cmap.b[1] = 0xff;
+	fb->cmap.r[(1 << fb->planes) - 1] = 0xff;
+	fb->cmap.g[(1 << fb->planes) - 1] = 0xff;
+	fb->cmap.b[(1 << fb->planes) - 1] = 0xff;
 
 	strlcpy(fb->wsd.name, "std", sizeof(fb->wsd.name));
 	fb->wsd.ncols = fb->cols;

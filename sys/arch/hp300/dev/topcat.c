@@ -1,4 +1,4 @@
-/*	$OpenBSD: topcat.c,v 1.4 2005/01/18 19:17:03 miod Exp $	*/
+/*	$OpenBSD: topcat.c,v 1.5 2005/01/18 21:53:23 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat.
@@ -317,6 +317,7 @@ topcat_reset(struct diofb *fb, int scode, struct diofbreg *fbr)
 	if (fb->planes > 8)
 		fb->planes = 8;
 
+	fb->bmv = topcat_windowmove;
 	topcat_restore(fb);
 
 	return (0);
@@ -350,7 +351,6 @@ topcat_restore(struct diofb *fb)
 	tc->ren  = fb->planemask;
 	tc->prr  = RR_COPY;
 
-	fb->bmv = topcat_windowmove;
 	diofb_fbsetup(fb);
 	diofb_fontunpack(fb);
 
@@ -360,6 +360,7 @@ topcat_restore(struct diofb *fb)
 	if (fb->planes > 1) {
 		topcat_setcolor(fb, 0);
 		topcat_setcolor(fb, 1);
+		topcat_setcolor(fb, (1 << fb->planes) - 1);
 	}
 
 	/*
