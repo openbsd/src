@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.41 2001/07/26 22:27:12 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.42 2001/08/30 17:51:02 deraadt Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -3820,14 +3820,14 @@ _sigcode:
 	std	%f30, [%sp + CCFSZ + 128]
 
 1:
-	ldd	[%fp + 64], %o0		! sig, code
+	ldd	[%fp + 64], %o0		! sig, sip
 	ld	[%fp + 76], %o3		! arg3
 #ifdef SIG_DEBUG
 	subcc	%o0, 32, %g0		! signals are 1-32
 	bgu	_suicide
 	 nop
 #endif
-	call	%g1			! (*sa->sa_handler)(sig,code,scp,arg3)
+	call	%g1			! (*sa->sa_handler)(sig,sip,scp,arg3)
 	 add	%fp, 64 + 16, %o2	! scp
 
 	/*
