@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.16 1997/07/11 23:37:59 provos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.17 1997/07/14 08:45:55 provos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -205,6 +205,16 @@ ip_output(m0, va_alist)
 		ip->ip_len = htons((u_short)ip->ip_len);
 		ip->ip_off = htons((u_short)ip->ip_off);
 		ip->ip_sum = 0;
+
+		/*
+		 * There might be a specific route, that tells us to avoid
+		 * doing IPsec; this is useful for specific routes that we
+		 * don't want to have IPsec applied on.
+		 */
+
+		if ((gw->sen_ipsp_dst.s_addr == 0) &&
+		    (gw->sen_ipsp_sproto == 0) && (gw->sen_ipsp_spi == 0))
+			goto no_encap;
 
 		/*
 		 * At this point we have an IPSP "gateway" (tunnel) spec.
