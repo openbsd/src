@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.149 2003/11/07 10:16:45 jmc Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.150 2003/12/12 13:00:37 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -5930,16 +5930,6 @@ nforce_setup_channel(struct channel_softc *chp)
 		    (drvp->drive_flags & DRIVE_UDMA) != 0) {
 			/* Setup UltraDMA mode */
 			drvp->drive_flags &= ~DRIVE_DMA;
-
-			/* Check cable */
-			if ((conf & NFORCE_CONF_CABLE(channel, drive)) == 0 &&
-			    drvp->UDMA_mode > 2) {
-				WDCDEBUG_PRINT(("%s(%s:%d:%d): 80-wire "
-				    "cable not detected\n", drvp->drive_name,
-				    sc->sc_wdcdev.sc_dev.dv_xname,
-				    channel, drive), DEBUG_PROBE);
-				drvp->UDMA_mode = 2;
-			}
 
 			udmatim |= NFORCE_UDMATIM_SET(channel, drive,
 			    nforce_udma[drvp->UDMA_mode]) |

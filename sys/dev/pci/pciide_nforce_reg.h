@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_nforce_reg.h,v 1.1 2003/02/13 15:39:59 grange Exp $	*/
+/*	$OpenBSD: pciide_nforce_reg.h,v 1.2 2003/12/12 13:00:38 grange Exp $	*/
 
 /*
  * Copyright (c) 2003 Alexander Yurchenko <grange@openbsd.org>
@@ -29,8 +29,6 @@
 #define NFORCE_CONF		0x50
 #define NFORCE_CHAN_EN(chan) \
 	(0x00000001 << (1 - (chan)))
-#define NFORCE_CONF_CABLE(chan, drive) \
-	(0x00010000 << ((chan) * 2 + (drive)))
 
 /* PIO and multiword DMA timing register */
 #define NFORCE_PIODMATIM	0x58
