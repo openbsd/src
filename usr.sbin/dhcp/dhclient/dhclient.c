@@ -2028,8 +2028,9 @@ void script_init (ip, reason, medium)
 {
 	if (ip) {
 		ip->client->scriptEnvsize = 100;
-		ip->client->scriptEnv = malloc(ip->client->scriptEnvsize 
-	          * sizeof(char *));
+		if (ip->client->scriptEnv == NULL)
+			ip->client->scriptEnv =
+			    malloc(ip->client->scriptEnvsize * sizeof(char *));
 		if (ip->client->scriptEnv == NULL)
 			error ("script_init: no memory for environment initialization");
 		

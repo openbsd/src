@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.3 2004/02/04 12:16:56 henning Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.4 2004/02/05 13:33:22 henning Exp $	*/
 
 /* DHCP Client. */
 
@@ -1931,8 +1931,9 @@ script_init(struct interface_info *ip, char *reason, struct string_list *medium)
 {
 	if (ip) {
 		ip->client->scriptEnvsize = 100;
-		ip->client->scriptEnv =
-		    malloc(ip->client->scriptEnvsize * sizeof(char *));
+		if (ip->client->scriptEnv == NULL)
+			ip->client->scriptEnv =
+			    malloc(ip->client->scriptEnvsize * sizeof(char *));
 		if (ip->client->scriptEnv == NULL)
 			error("script_init: no memory for environment initialization");
 		
