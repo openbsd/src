@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.16 2002/07/15 12:57:27 pb Exp $
+.\"	$OpenBSD: pf.4,v 1.17 2002/07/15 14:04:28 pb Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -127,7 +127,7 @@ struct pfioc_binat {
 .Ed
 .It Dv DIOCCOMMITBINATS Fa "u_int32_t"
 .It Dv DIOCGETBINATS   Fa "struct pfioc_binat"
-.It Dv DIOCGETBINAT    Fa "struct pfioc_changebinat"
+.It Dv DIOCGETBINAT    Fa "struct pfioc_binat"
 .It Dv DIOCBEGINRDRS   Fa "u_int32_t"
 .It Dv DIOCADDRDR      Fa "struct pfioc_rdr"
 .Bd -literal
@@ -277,10 +277,8 @@ Clear per-rule statistics.
 Sets hard limits on the memory pools used by the packet filter.
 .Bd -literal
 struct pfioc_limit {
-	int			psk_af;
-	int			psk_proto;
-	struct pf_rule_addr	psk_src;
-	struct pf_rule_addr	psk_dst;
+	int		index;
+	unsigned	limit;
 };
 .Ed
 .It Dv DIOCGETLIMIT   Fa "struct pfioc_limit"
