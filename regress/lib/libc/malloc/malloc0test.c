@@ -1,3 +1,4 @@
+/*	$OpenBSD: malloc0test.c,v 1.5 2002/02/18 11:29:50 art Exp $	*/
 /*
  * Public domain.  2001, Theo de Raadt
  */

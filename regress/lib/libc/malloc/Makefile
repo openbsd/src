@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2002/01/01 23:00:51 art Exp $
-#	$NetBSD: Makefile,v 1.2 1995/04/20 22:40:13 cgd Exp $
+#	$OpenBSD: Makefile,v 1.3 2002/02/18 11:29:50 art Exp $
 
 PROG=	malloc0test
 
