@@ -1,49 +1,36 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	     $Id: Makefile,v 1.1.1.1 1997/03/03 19:30:29 rahnds Exp $
+#	$OpenBSD: Makefile,v 1.2 1998/08/22 07:17:15 smurph Exp $
 
 RELOC=0x3F0000 
 
 S=	${.CURDIR}/../../../..
-DEFS= -DSTANDALONE -DCOMPAT_NOLABEL # -DROMPRF
-INCPATH=-I${.CURDIR} -I${.CURDIR}/../../include -I${S} -I${S}/lib/libsa
-CFLAGS=	${INCPATH} ${DEFS} ${COPTS}
-CLEANFILES+=sdboot bootsd bootsd.bug
+DEFS= 
+INCPATH=-I${.CURDIR} -I${.CURDIR}/../libsa -I${.CURDIR}/../libbug \
+	-I${.CURDIR}/../../include -I${S} -I${S}/lib/libsa
+CFLAGS=	-O2 ${INCPATH} ${DEFS} ${COPTS}
+LDFLAGS=-N -T ${RELOC}
+CLEANFILES+=bootsd
 
-#.PATH: ${S}/arch/${MACHINE_ARCH}/${MACHINE_ARCH}
-#.PATH: ${S}/lib/libsa
+.include "${S}/arch/mvme88k/stand/bugcrt/Makefile.inc"
+.include "${S}/arch/mvme88k/stand/libbug/Makefile.inc"
+.include "${S}/arch/mvme88k/stand/libsa/Makefile.inc"
+.include "${S}/arch/mvme88k/stand/libz/Makefile.inc"
 
-.include "${S}/arch/${MACHINE}/stand/libsa/Makefile.inc"
-.include "${S}/arch/${MACHINE}/stand/libbug/Makefile.inc"
-.include "${S}/arch/${MACHINE}/stand/bugcrt/Makefile.inc"
-.include "${S}/arch/${MACHINE}/stand/wrtvid/Makefile.inc"
+SRCS=   boot.c conf.c version.c
 
-SRCS=   boot.c filesystem.c bugdev.c version.c
-
-LIBS=	${LIBSA} ${LIBBUG} libgcc.a
+LIBS=	${LIBSA} ${LIBBUG} ${LIBZ} libgcc.a
 
 OBJS= ${SRCS:N*.h:R:S/$/.o/g}
 
-BOOTS=	bootsd sdboot
+BOOTS=	bootsd 
 ALL=	${BOOTS} 
 
 all: ${ALL}
 
-devopen.o machdep.o: Makefile
-
-bootsd.bug:	${OBJS} ${BUGCRT} ${LIBS}
-	${LD} -N -T ${RELOC} ${BUGCRT} ${OBJS} ${LIBS} -o $@
-	@size bootsd.bug
-
-bootsd sdboot: bootsd.bug ${WRTVID}
-	cp bootsd.bug bootsd.bin
-	strip bootsd.bin
-	@if [ `size bootsd.bin | awk 'BEGIN {getline} {print $$1+$$2;}'` -gt 7168 ];\
-	then\
-		echo BOOTBLOCKS ARE TOO BIG;\
-		fail;\
-	fi
-	${WRTVID} bootsd.bin
-
+bootsd: ${OBJS} ${BUGCRT} ${LIBS}
+	${LD} ${LDFLAGS} -o $@ \
+		${BUGCRT} ${OBJS} ${LIBS}
+#${SRTOBJ}
 install:
 	install -c -m 555 -g bin -o bin ${BOOTS} ${DESTDIR}${MDEC_DIR}
 

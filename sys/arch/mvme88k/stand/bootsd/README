@@ -1,3 +1,7 @@
-In short: stick the the bootblocks into a partition with
-something like:
-	cat sdboot bootsd > /dev/rsd0c
+In short: 
+	cd /usr/mdec
+	cp bootsd /
+	./installboot -v /bootsd ./bootxx /dev/rsd0c
+
+	(you will need to be single user to run installboot since it writes
+	to a raw disk device)
