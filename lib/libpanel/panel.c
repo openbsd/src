@@ -1,3 +1,4 @@
+/*	$OpenBSD: panel.c,v 1.3 1997/12/03 05:17:56 millert Exp $	*/
 
 /***************************************************************************
 *                            COPYRIGHT NOTICE                              *
@@ -21,126 +22,101 @@
 *                                                                          *
 ***************************************************************************/
 
-/* panel.c -- implementation of panels library */
+/* panel.c -- implementation of panels library, some core routines */
 #include "panel.priv.h"
 
-MODULE_ID("$Id: panel.c,v 1.2 1997/11/26 03:56:05 millert Exp $")
+MODULE_ID("Id: panel.c,v 1.14 1997/10/18 18:34:31 tom Exp $")
 
 #ifdef TRACE
-extern char *_nc_visbuf(const char *);
-#ifdef TRACE_TXT
-#define USER_PTR(ptr) _nc_visbuf((const char *)ptr)
-#else
-static char *my_nc_visbuf(const void *ptr)
+#ifndef TRACE_TXT
+const char *_nc_my_visbuf(const void *ptr)
 {
 	char temp[40];
 	if (ptr != 0)
-		sprintf(temp, "ptr:%p", ptr);
+		snprintf(temp, sizeof(temp), "ptr:%p", ptr);
 	else
 		strcpy(temp, "<null>");
 	return _nc_visbuf(temp);
 }
-#define USER_PTR(ptr) my_nc_visbuf((const char *)ptr)
 #endif
 #endif
 
-static PANEL *__bottom_panel = (PANEL *)0;
-static PANEL *__top_panel    = (PANEL *)0;
-
-static PANEL __stdscr_pseudo_panel = { (WINDOW *)0,
-				       0,0,0,0,
-				       (PANEL *)0, (PANEL *)0,
-				       (void *)0,
-				       (PANELCONS *)0 };
-
-/* Prototypes */
-static void __panel_link_bottom(PANEL *pan);
 
 /*+-------------------------------------------------------------------------
 	dPanel(text,pan)
 --------------------------------------------------------------------------*/
 #ifdef TRACE
-static void
-dPanel(const char *text, const PANEL *pan)
+void
+_nc_dPanel(const char *text, const PANEL *pan)
 {
 	_tracef("%s id=%s b=%s a=%s y=%d x=%d",
 		text, USER_PTR(pan->user),
 		(pan->below) ?  USER_PTR(pan->below->user) : "--",
 		(pan->above) ?  USER_PTR(pan->above->user) : "--",
 		pan->wstarty, pan->wstartx);
-} /* end of dPanel */
-#else
-#  define dPanel(text,pan)
+}
 #endif
 
 /*+-------------------------------------------------------------------------
 	dStack(fmt,num,pan)
 --------------------------------------------------------------------------*/
 #ifdef TRACE
-static void
-dStack(const char *fmt, int num, const PANEL *pan)
+void
+_nc_dStack(const char *fmt, int num, const PANEL *pan)
 {
   char s80[80];
 
   snprintf(s80,sizeof(s80),fmt,num,pan);
   _tracef("%s b=%s t=%s",s80,
-	  (__bottom_panel) ?  USER_PTR(__bottom_panel->user) : "--",
-	  (__top_panel)    ?  USER_PTR(__top_panel->user)    : "--");
+	  (_nc_bottom_panel) ?  USER_PTR(_nc_bottom_panel->user) : "--",
+	  (_nc_top_panel)    ?  USER_PTR(_nc_top_panel->user)    : "--");
   if(pan)
     _tracef("pan id=%s", USER_PTR(pan->user));
-  pan = __bottom_panel;
+  pan = _nc_bottom_panel;
   while(pan)
     {
       dPanel("stk",pan);
       pan = pan->above;
     }
-} /* end of dStack */
-#else
-#  define dStack(fmt,num,pan)
+}
 #endif
 
 /*+-------------------------------------------------------------------------
 	Wnoutrefresh(pan) - debugging hook for wnoutrefresh
 --------------------------------------------------------------------------*/
 #ifdef TRACE
-static void
-Wnoutrefresh(const PANEL *pan)
+void
+_nc_Wnoutrefresh(const PANEL *pan)
 {
   dPanel("wnoutrefresh",pan);
   wnoutrefresh(pan->win);
-} /* end of Wnoutrefresh */
-#else
-#  define Wnoutrefresh(pan) wnoutrefresh((pan)->win)
+}
 #endif
 
 /*+-------------------------------------------------------------------------
 	Touchpan(pan)
 --------------------------------------------------------------------------*/
 #ifdef TRACE
-static void
-Touchpan(const PANEL *pan)
+void
+_nc_Touchpan(const PANEL *pan)
 {
   dPanel("Touchpan",pan);
   touchwin(pan->win);
-} /* end of Touchpan */
-#else
-#  define Touchpan(pan) touchwin((pan)->win)
+}
 #endif
 
 /*+-------------------------------------------------------------------------
 	Touchline(pan,start,count)
 --------------------------------------------------------------------------*/
 #ifdef TRACE
-static void
-Touchline(const PANEL *pan, int start, int count)
+void
+_nc_Touchline(const PANEL *pan, int start, int count)
 {
   char s80[80];
   snprintf(s80,sizeof(s80),"Touchline s=%d c=%d",start,count);
   dPanel(s80,pan);
   touchline(pan->win,start,count);
-} /* end of Touchline */
-#else
-#  define Touchline(pan,start,count) touchline((pan)->win,start,count)
+}
 #endif
 
 /*+-------------------------------------------------------------------------
@@ -151,24 +127,25 @@ __panels_overlapped(register const PANEL *pan1, register const PANEL *pan2)
 {
   if(!pan1 || !pan2)
     return(FALSE);
+
   dBug(("__panels_overlapped %s %s", USER_PTR(pan1->user), USER_PTR(pan2->user)));
   /* pan1 intersects with pan2 ? */
-  if((pan1->wstarty >= pan2->wstarty) && (pan1->wstarty < pan2->wendy) &&
-     (pan1->wstartx >= pan2->wstartx) && (pan1->wstartx < pan2->wendx))
-    return(TRUE);
-  /* or vice versa test */
-  if((pan2->wstarty >= pan1->wstarty) && (pan2->wstarty < pan1->wendy) &&
-     (pan2->wstartx >= pan1->wstartx) && (pan2->wstartx < pan1->wendx))
-    return(TRUE);
-  dBug(("  no"));
-  return(FALSE);
-} /* end of __panels_overlapped */
+  if( (((pan1->wstarty >= pan2->wstarty) && (pan1->wstarty < pan2->wendy)) ||
+       ((pan2->wstarty >= pan1->wstarty) && (pan2->wstarty < pan1->wendy))) &&
+      (((pan1->wstartx >= pan2->wstartx) && (pan1->wstartx < pan2->wendx)) ||
+       ((pan2->wstartx >= pan1->wstartx) && (pan2->wstartx < pan1->wendx)))
+      ) return(TRUE);
+  else {
+    dBug(("  no"));
+    return(FALSE);
+  }
+}
 
 /*+-------------------------------------------------------------------------
-	__free_obscure(pan)
+	_nc_free_obscure(pan)
 --------------------------------------------------------------------------*/
-static INLINE void
-__free_obscure(PANEL *pan)
+void
+_nc_free_obscure(PANEL *pan)
 {
   PANELCONS *tobs = pan->obscure;			/* "this" one */
   PANELCONS *nobs;					/* "next" one */
@@ -180,40 +157,19 @@ __free_obscure(PANEL *pan)
       tobs = nobs;
     }
   pan->obscure = (PANELCONS *)0;
-} /* end of __free_obscure */
-
-/*+-------------------------------------------------------------------------
-  Get root (i.e. stdscr's) panel.
-  Establish the pseudo panel for stdscr if necessary.
---------------------------------------------------------------------------*/
-static PANEL*
-__root_panel(void)
-{
-  if(!__stdscr_pseudo_panel.win)
-    { /* initialize those fields not already statically initialized */
-      assert(stdscr && !__bottom_panel && !__top_panel);
-      __stdscr_pseudo_panel.win = stdscr;
-      __stdscr_pseudo_panel.wendy = LINES;
-      __stdscr_pseudo_panel.wendx = COLS;
-#ifdef TRACE
-      __stdscr_pseudo_panel.user = "stdscr";
-#endif
-      __panel_link_bottom(&__stdscr_pseudo_panel);
-    }
-  return &__stdscr_pseudo_panel;
 }
 
 /*+-------------------------------------------------------------------------
 	__override(pan,show)
 --------------------------------------------------------------------------*/
-static void
-__override(const PANEL *pan, int show)
+void
+_nc_override(const PANEL *pan, int show)
 {
   int y;
   PANEL *pan2;
   PANELCONS *tobs = pan->obscure;			   /* "this" one */
 
-  dBug(("__override %s,%d", USER_PTR(pan->user),show));
+  dBug(("_nc_override %s,%d", USER_PTR(pan->user),show));
 
   switch (show)
     {
@@ -250,27 +206,27 @@ __override(const PANEL *pan, int show)
       }
       tobs = tobs->above;
     }
-} /* end of __override */
+}
 
 /*+-------------------------------------------------------------------------
 	__calculate_obscure()
 --------------------------------------------------------------------------*/
-static void
-__calculate_obscure(void)
+void
+_nc_calculate_obscure(void)
 {
   PANEL *pan;
   PANEL *pan2;
   PANELCONS *tobs;			/* "this" one */
   PANELCONS *lobs = (PANELCONS *)0;	/* last one */
 
-  pan = __bottom_panel;
+  pan = _nc_bottom_panel;
   while(pan)
     {
       if(pan->obscure)
-	__free_obscure(pan);
+	_nc_free_obscure(pan);
       dBug(("--> __calculate_obscure %s", USER_PTR(pan->user)));
       lobs = (PANELCONS *)0;		/* last one */
-      pan2 = __bottom_panel;
+      pan2 = _nc_bottom_panel;
       /* This loop builds a list of panels obsured by pan or obscuring
 	 pan; pan itself is in the list; all panels before pan are
 	 obscured by pan, all panels after pan are obscuring pan. */
@@ -291,374 +247,53 @@ __calculate_obscure(void)
 	    }
 	  pan2 = pan2->above;
 	}
-      __override(pan,P_TOUCH);
+      _nc_override(pan,P_TOUCH);
       pan = pan->above;
     }
-} /* end of __calculate_obscure */
+}
 
 /*+-------------------------------------------------------------------------
-	__panel_is_linked(pan) - check to see if panel is in the stack
+	_nc_panel_is_linked(pan) - check to see if panel is in the stack
 --------------------------------------------------------------------------*/
-static INLINE bool
-__panel_is_linked(const PANEL *pan)
+bool
+_nc_panel_is_linked(const PANEL *pan)
 {
   /* This works! The only case where it would fail is, when the list has
      only one element. But this could only be the pseudo panel at the bottom */
   return ( ((pan->above!=(PANEL *)0) ||
 	    (pan->below!=(PANEL *)0) ||
-	    (pan==__bottom_panel)) ? TRUE : FALSE );
-} /* end of __panel_is_linked */
+	    (pan==_nc_bottom_panel)) ? TRUE : FALSE );
+}
 
-/*+-------------------------------------------------------------------------
-	__panel_link_top(pan) - link panel into stack at top
---------------------------------------------------------------------------*/
-static void
-__panel_link_top(PANEL *pan)
-{
-#ifdef TRACE
-  dStack("<lt%d>",1,pan);
-  if(__panel_is_linked(pan))
-    return;
-#endif
-
-  pan->above = (PANEL *)0;
-  pan->below = (PANEL *)0;
-  if(__top_panel)
-    {
-      __top_panel->above = pan;
-      pan->below = __top_panel;
-    }
-  __top_panel = pan;
-  if(!__bottom_panel)
-    __bottom_panel = pan;
-  __calculate_obscure();
-  dStack("<lt%d>",9,pan);
-
-} /* end of __panel_link_top */
 
 /*+-------------------------------------------------------------------------
 	__panel_link_bottom(pan) - link panel into stack at bottom
 --------------------------------------------------------------------------*/
-static void
-__panel_link_bottom(PANEL *pan)
+void
+_nc_panel_link_bottom(PANEL *pan)
 {
 #ifdef TRACE
   dStack("<lb%d>",1,pan);
-  if(__panel_is_linked(pan))
+  if(_nc_panel_is_linked(pan))
     return;
 #endif
 
   pan->above = (PANEL *)0;
   pan->below = (PANEL *)0;
-  if(__bottom_panel)
+  if(_nc_bottom_panel)
     { /* the stdscr pseudo panel always stays real bottom;
          so we insert after bottom panel*/
-      pan->below = __bottom_panel;
-      pan->above = __bottom_panel->above;
+      pan->below = _nc_bottom_panel;
+      pan->above = _nc_bottom_panel->above;
       if (pan->above)
 	pan->above->below = pan;
-      __bottom_panel->above = pan;
+      _nc_bottom_panel->above = pan;
     }
   else
-    __bottom_panel = pan;
-  if(!__top_panel)
-    __top_panel = pan;
-  assert(__bottom_panel == &__stdscr_pseudo_panel);
-  __calculate_obscure();
+    _nc_bottom_panel = pan;
+  if(!_nc_top_panel)
+    _nc_top_panel = pan;
+  assert(_nc_bottom_panel == _nc_stdscr_pseudo_panel);
+  _nc_calculate_obscure();
   dStack("<lb%d>",9,pan);
-} /* end of __panel_link_bottom */
-
-/*+-------------------------------------------------------------------------
-	__panel_unlink(pan) - unlink panel from stack
---------------------------------------------------------------------------*/
-static void
-__panel_unlink(PANEL *pan)
-{
-  PANEL *prev;
-  PANEL *next;
-
-#ifdef TRACE
-  dStack("<u%d>",1,pan);
-  if(!__panel_is_linked(pan))
-    return;
-#endif
-
-  __override(pan,P_TOUCH);
-  __free_obscure(pan);
-
-  prev = pan->below;
-  next = pan->above;
-
-  if(prev)
-    { /* if non-zero, we will not update the list head */
-      prev->above = next;
-      if(next)
-	next->below = prev;
-    }
-  else if(next)
-    next->below = prev;
-  if(pan == __bottom_panel)
-    __bottom_panel = next;
-  if(pan == __top_panel)
-    __top_panel = prev;
-
-  __calculate_obscure();
-
-  pan->above = (PANEL *)0;
-  pan->below = (PANEL *)0;
-  dStack("<u%d>",9,pan);
-} /* end of __panel_unlink */
-
-/*+-------------------------------------------------------------------------
-	panel_window(pan) - get window associated with panel
---------------------------------------------------------------------------*/
-WINDOW *
-panel_window(const PANEL *pan)
-{
-  return(pan ? pan->win : (WINDOW *)0);
-} /* end of panel_window */
-
-/*+-------------------------------------------------------------------------
-	update_panels() - wnoutrefresh windows in an orderly fashion
---------------------------------------------------------------------------*/
-void
-update_panels(void)
-{
-  PANEL *pan;
-
-  dBug(("--> update_panels"));
-  pan = __bottom_panel;
-  while(pan)
-    {
-      __override(pan,P_UPDATE);
-      pan = pan->above;
-    }
-
-  pan = __bottom_panel;
-  while (pan)
-    {
-      if(is_wintouched(pan->win))
-	Wnoutrefresh(pan);
-      pan = pan->above;
-    }
-} /* end of update_panels */
-
-/*+-------------------------------------------------------------------------
-	hide_panel(pan) - remove a panel from stack
---------------------------------------------------------------------------*/
-int
-hide_panel(register PANEL *pan)
-{
-  if(!pan)
-    return(ERR);
-
-  dBug(("--> hide_panel %s", USER_PTR(pan->user)));
-
-  if(!__panel_is_linked(pan))
-    {
-      pan->above = (PANEL *)0;
-      pan->below = (PANEL *)0;
-      return(ERR);
-    }
-
-  __panel_unlink(pan);
-  return(OK);
-} /* end of hide_panel */
-
-/*+-------------------------------------------------------------------------
-	show_panel(pan) - place a panel on top of stack
-may already be in stack
---------------------------------------------------------------------------*/
-int
-show_panel(register PANEL *pan)
-{
-  if(!pan)
-    return(ERR);
-  if(pan == __top_panel)
-    return(OK);
-  dBug(("--> show_panel %s", USER_PTR(pan->user)));
-  if(__panel_is_linked(pan))
-    (void)hide_panel(pan);
-  __panel_link_top(pan);
-  return(OK);
-} /* end of show_panel */
-
-/*+-------------------------------------------------------------------------
-	top_panel(pan) - place a panel on top of stack
---------------------------------------------------------------------------*/
-int
-top_panel(register PANEL *pan)
-{
-  return(show_panel(pan));
-} /* end of top_panel */
-
-/*+-------------------------------------------------------------------------
-	del_panel(pan) - remove a panel from stack, if in it, and free struct
---------------------------------------------------------------------------*/
-int
-del_panel(register PANEL *pan)
-{
-  if(pan)
-    {
-      dBug(("--> del_panel %s", USER_PTR(pan->user)));
-      if(__panel_is_linked(pan))
-	(void)hide_panel(pan);
-      free((void *)pan);
-      return(OK);
-    }
-  return(ERR);
-} /* end of del_panel */
-
-/*+-------------------------------------------------------------------------
-	bottom_panel(pan) - place a panel on bottom of stack
-may already be in stack
---------------------------------------------------------------------------*/
-int
-bottom_panel(register PANEL *pan)
-{
-  if(!pan)
-    return(ERR);
-  if(pan == __bottom_panel)
-    return(OK);
-  dBug(("--> bottom_panel %s", USER_PTR(pan->user)));
-  if(__panel_is_linked(pan))
-    (void)hide_panel(pan);
-  __panel_link_bottom(pan);
-  return(OK);
-} /* end of bottom_panel */
-
-/*+-------------------------------------------------------------------------
-	new_panel(win) - create a panel and place on top of stack
---------------------------------------------------------------------------*/
-PANEL *
-new_panel(WINDOW *win)
-{
-  PANEL *pan = (PANEL *)malloc(sizeof(PANEL));
-
-  (void)__root_panel();
-
-  if(pan)
-    {
-      pan->win = win;
-      pan->above = (PANEL *)0;
-      pan->below = (PANEL *)0;
-      getbegyx(win, pan->wstarty, pan->wstartx);
-      pan->wendy = pan->wstarty + getmaxy(win);
-      pan->wendx = pan->wstartx + getmaxx(win);
-#ifdef TRACE
-      pan->user = "new";
-#else
-      pan->user = (char *)0;
-#endif
-      pan->obscure = (PANELCONS *)0;
-      (void)show_panel(pan);
-    }
-  return(pan);
-} /* end of new_panel */
-
-/*+-------------------------------------------------------------------------
-	panel_above(pan)
---------------------------------------------------------------------------*/
-PANEL *
-panel_above(const PANEL *pan)
-{
-  if(!pan)
-    {
-      /* if top and bottom are equal, we have no or only the pseudo panel;
-	 if not, we return the panel above the pseudo panel */
-      return(__bottom_panel==__top_panel ? (PANEL*)0 : __bottom_panel->above);
-    }
-  else
-    return(pan->above);
-} /* end of panel_above */
-
-/*+-------------------------------------------------------------------------
-	panel_below(pan)
---------------------------------------------------------------------------*/
-PANEL *
-panel_below(const PANEL *pan)
-{
-  if(!pan)
-    {
-      /* if top and bottom are equal, we have no or only the pseudo panel */
-      return(__top_panel==__bottom_panel ? (PANEL*)0 : __top_panel);
-    }
-  else
-    {
-      /* we must not return the pseudo panel */
-      return(pan->below==__bottom_panel ? (PANEL*) 0 : pan->below);
-    }
-} /* end of panel_below */
-
-/*+-------------------------------------------------------------------------
-	set_panel_userptr(pan,uptr)
---------------------------------------------------------------------------*/
-int
-set_panel_userptr(PANEL *pan, const void *uptr)
-{
-  if(!pan)
-    return(ERR);
-  pan->user = uptr;
-  return(OK);
-} /* end of set_panel_userptr */
-
-/*+-------------------------------------------------------------------------
-	panel_userptr(pan)
---------------------------------------------------------------------------*/
-const void*
-panel_userptr(const PANEL *pan)
-{
-  return(pan ? pan->user : (void *)0);
-} /* end of panel_userptr */
-
-/*+-------------------------------------------------------------------------
-	move_panel(pan,starty,startx)
---------------------------------------------------------------------------*/
-int
-move_panel(PANEL *pan, int starty, int startx)
-{
-  WINDOW *win;
-
-  if(!pan)
-    return(ERR);
-  if(__panel_is_linked(pan))
-    __override(pan,P_TOUCH);
-  win = pan->win;
-  if(mvwin(win,starty,startx))
-    return(ERR);
-  getbegyx(win, pan->wstarty, pan->wstartx);
-  pan->wendy = pan->wstarty + getmaxy(win);
-  pan->wendx = pan->wstartx + getmaxx(win);
-  if(__panel_is_linked(pan))
-    __calculate_obscure();
-  return(OK);
-} /* end of move_panel */
-
-/*+-------------------------------------------------------------------------
-	replace_panel(pan,win)
---------------------------------------------------------------------------*/
-int
-replace_panel(PANEL *pan, WINDOW *win)
-{
-  if(!pan)
-    return(ERR);
-  if(__panel_is_linked(pan))
-    __override(pan,P_TOUCH);
-  pan->win = win;
-  if(__panel_is_linked(pan))
-    __calculate_obscure();
-  return(OK);
-} /* end of replace_panel */
-
-/*+-------------------------------------------------------------------------
-	panel_hidden(pan)
---------------------------------------------------------------------------*/
-int
-panel_hidden(const PANEL *pan)
-{
-  if(!pan)
-    return(ERR);
-  return(__panel_is_linked(pan) ? TRUE : FALSE);
-} /* end of panel_hidden */
-
-/* end of panel.c */
+}

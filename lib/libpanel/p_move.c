@@ -1,4 +1,4 @@
-/*	$OpenBSD: panel.h,v 1.3 1997/12/03 05:17:57 millert Exp $	*/
+/*	$OpenBSD: p_move.c,v 1.1 1997/12/03 05:17:53 millert Exp $	*/
 
 /***************************************************************************
 *                            COPYRIGHT NOTICE                              *
@@ -22,51 +22,29 @@
 *                                                                          *
 ***************************************************************************/
 
-/* panel.h -- interface file for panels library */
+/* p_move.c
+ * Move a panel to a new location
+ */
+#include "panel.priv.h"
 
-#ifndef _PANEL_H
-#define _PANEL_H
+MODULE_ID("Id: p_move.c,v 1.1 1997/10/12 13:16:22 juergen Exp $")
 
-#include <curses.h>
-
-typedef struct panel
+int
+move_panel(PANEL *pan, int starty, int startx)
 {
-	WINDOW *win;
-	int wstarty;
-	int wendy;
-	int wstartx;
-	int wendx;
-	struct panel *below;
-	struct panel *above;
-	NCURSES_CONST void *user;
-	struct panelcons *obscure;
+  WINDOW *win;
+
+  if(!pan)
+    return(ERR);
+  if(_nc_panel_is_linked(pan))
+    _nc_override(pan,P_TOUCH);
+  win = pan->win;
+  if(mvwin(win,starty,startx))
+    return(ERR);
+  getbegyx(win, pan->wstarty, pan->wstartx);
+  pan->wendy = pan->wstarty + getmaxy(win);
+  pan->wendx = pan->wstartx + getmaxx(win);
+  if(_nc_panel_is_linked(pan))
+    _nc_calculate_obscure();
+  return(OK);
 }
-PANEL;
-
-#if	defined(__cplusplus)
-extern "C" {
-#endif
-
-extern  WINDOW *panel_window(const PANEL *);
-extern  void update_panels(void);
-extern  int hide_panel(PANEL *);
-extern  int show_panel(PANEL *);
-extern  int del_panel(PANEL *);
-extern  int top_panel(PANEL *);
-extern  int bottom_panel(PANEL *);
-extern  PANEL *new_panel(WINDOW *);
-extern  PANEL *panel_above(const PANEL *);
-extern  PANEL *panel_below(const PANEL *);
-extern  int set_panel_userptr(PANEL *, NCURSES_CONST void *);
-extern  NCURSES_CONST void* panel_userptr(const PANEL *);
-extern  int move_panel(PANEL *, int, int);
-extern  int replace_panel(PANEL *,WINDOW *);
-extern	int panel_hidden(const PANEL *);
-
-#if	defined(__cplusplus)
-}
-#endif
-
-#endif /* _PANEL_H */
-
-/* end of panel.h */

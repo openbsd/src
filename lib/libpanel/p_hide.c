@@ -1,4 +1,4 @@
-/*	$OpenBSD: panel.h,v 1.3 1997/12/03 05:17:57 millert Exp $	*/
+/*	$OpenBSD: p_hide.c,v 1.1 1997/12/03 05:17:53 millert Exp $	*/
 
 /***************************************************************************
 *                            COPYRIGHT NOTICE                              *
@@ -22,51 +22,69 @@
 *                                                                          *
 ***************************************************************************/
 
-/* panel.h -- interface file for panels library */
+/* p_hide.c
+ * Remove a panel from the stack
+ */
+#include "panel.priv.h"
 
-#ifndef _PANEL_H
-#define _PANEL_H
+MODULE_ID("Id: p_hide.c,v 1.1 1997/10/12 13:16:22 juergen Exp $")
 
-#include <curses.h>
-
-typedef struct panel
+/*+-------------------------------------------------------------------------
+	__panel_unlink(pan) - unlink panel from stack
+--------------------------------------------------------------------------*/
+static void
+__panel_unlink(PANEL *pan)
 {
-	WINDOW *win;
-	int wstarty;
-	int wendy;
-	int wstartx;
-	int wendx;
-	struct panel *below;
-	struct panel *above;
-	NCURSES_CONST void *user;
-	struct panelcons *obscure;
-}
-PANEL;
+  PANEL *prev;
+  PANEL *next;
 
-#if	defined(__cplusplus)
-extern "C" {
+#ifdef TRACE
+  dStack("<u%d>",1,pan);
+  if(!_nc_panel_is_linked(pan))
+    return;
 #endif
 
-extern  WINDOW *panel_window(const PANEL *);
-extern  void update_panels(void);
-extern  int hide_panel(PANEL *);
-extern  int show_panel(PANEL *);
-extern  int del_panel(PANEL *);
-extern  int top_panel(PANEL *);
-extern  int bottom_panel(PANEL *);
-extern  PANEL *new_panel(WINDOW *);
-extern  PANEL *panel_above(const PANEL *);
-extern  PANEL *panel_below(const PANEL *);
-extern  int set_panel_userptr(PANEL *, NCURSES_CONST void *);
-extern  NCURSES_CONST void* panel_userptr(const PANEL *);
-extern  int move_panel(PANEL *, int, int);
-extern  int replace_panel(PANEL *,WINDOW *);
-extern	int panel_hidden(const PANEL *);
+  _nc_override(pan,P_TOUCH);
+  _nc_free_obscure(pan);
 
-#if	defined(__cplusplus)
+  prev = pan->below;
+  next = pan->above;
+
+  if(prev)
+    { /* if non-zero, we will not update the list head */
+      prev->above = next;
+      if(next)
+	next->below = prev;
+    }
+  else if(next)
+    next->below = prev;
+  if(pan == _nc_bottom_panel)
+    _nc_bottom_panel = next;
+  if(pan == _nc_top_panel)
+    _nc_top_panel = prev;
+
+  _nc_calculate_obscure();
+
+  pan->above = (PANEL *)0;
+  pan->below = (PANEL *)0;
+  dStack("<u%d>",9,pan);
 }
-#endif
 
-#endif /* _PANEL_H */
+int
+hide_panel(register PANEL *pan)
+{
+  if(!pan)
+    return(ERR);
 
-/* end of panel.h */
+  dBug(("--> hide_panel %s", USER_PTR(pan->user)));
+
+  if(!_nc_panel_is_linked(pan))
+    {
+      pan->above = (PANEL *)0;
+      pan->below = (PANEL *)0;
+      return(ERR);
+    }
+
+  __panel_unlink(pan);
+  return(OK);
+}
