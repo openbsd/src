@@ -1,4 +1,4 @@
-/*	$OpenBSD: dmesg.c,v 1.11 2001/06/22 23:24:25 deraadt Exp $	*/
+/*	$OpenBSD: dmesg.c,v 1.12 2001/07/07 00:11:26 millert Exp $	*/
 /*	$NetBSD: dmesg.c,v 1.8 1995/03/18 14:54:49 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: dmesg.c,v 1.11 2001/06/22 23:24:25 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: dmesg.c,v 1.12 2001/07/07 00:11:26 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,7 @@ static char rcsid[] = "$OpenBSD: dmesg.c,v 1.11 2001/06/22 23:24:25 deraadt Exp 
 #include <nlist.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include <unistd.h>
 #include <vis.h>
