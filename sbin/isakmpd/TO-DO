@@ -1,4 +1,4 @@
-$OpenBSD: TO-DO,v 1.24 2001/07/06 09:35:57 ho Exp $
+$OpenBSD: TO-DO,v 1.25 2001/08/23 23:01:29 angelos Exp $
 $EOM: TO-DO,v 1.45 2000/04/07 22:47:38 niklas Exp $
 
 This file mixes small nitpicks with large projects to be done.
@@ -75,7 +75,7 @@ This file mixes small nitpicks with large projects to be done.
   bottlenecks.
 
 * Rescan interfaces on SIGHUP and on reception of messages on the INADDR_ANY
-  listener socket.
+  listener socket. [done]
 
 * Validate the configuration file.
 
@@ -101,7 +101,7 @@ This file mixes small nitpicks with large projects to be done.
 
 * Flexible identification.
 
-* Remove referring flows when a SPI is removed.
+* Remove referring flows when a SPI is removed. [done]
 
 * IPCOMP.
 
