@@ -1,21 +1,12 @@
-.\"	$OpenBSD: tun.4,v 1.1 1996/10/14 12:47:02 mickey Exp $
+.\"	$OpenBSD: tun.4,v 1.2 1996/12/16 16:08:52 deraadt Exp $
 .Dd March 10, 1996
 .Dt TUN 4
 .Os OpenBSD 1.2
 .Sh NAME
 .Nm tun
-.\" Why doesn't this work right?  mdoc(7) nor mdoc.samples(7) lists
-.\" .Nd, except for a passing reference in the latter.
-tunnel software network interface
+.Nd Tunnel Network Interface
 .Sh SYNOPSIS
-.\" want to write
-.\" .Sy pseudo-device
-.\" .Nm tun
-.\" .Op Ar count
-.\" so that .Nm is just "tun", but if we do that we get a line break
-.\" after "pseudo-device", ick.
-.Nm pseudo-device tun
-.Op Ar count
+.Cd "pseudo-device tun 4"
 .Sh DESCRIPTION
 The
 .Nm tun
