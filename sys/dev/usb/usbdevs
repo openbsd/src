@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.85 2004/05/19 16:58:35 grange Exp $
+$OpenBSD: usbdevs,v 1.86 2004/05/26 22:23:16 markus Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -374,6 +374,7 @@ vendor NI		0x3923	National Instruments
 vendor IODATA2		0x40bb	I-O Data
 vendor IRIVER		0x4102	iRiver
 vendor ONSPEC2		0x55aa	OnSpec
+vendor SITECOM		0x6189	Sitecom
 vendor INTEL		0x8086	Intel
 vendor HP2		0xf003	Hewlett Packard
 
@@ -1350,6 +1351,9 @@ product SILICONPORTALS YAPPHONE	0x0201	YAP Phone
 
 /* Sirius Technologies products */
 product SIRIUS ROADSTER		0x0001	NetComm Roadster II 56 USB
+
+/* Sitecom products */
+product SITECOM CN104		0x2068	CN104
 
 /* SmartBridges products */
 product SMARTBRIDGES SMARTLINK	0x0001	SmartLink Ethernet
