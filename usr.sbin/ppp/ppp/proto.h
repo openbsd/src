@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: proto.h,v 1.5 2001/08/19 23:22:18 brian Exp $
+ * $OpenBSD: proto.h,v 1.6 2001/12/09 01:31:27 brian Exp $
  */
 
 /*
@@ -41,7 +41,7 @@
 #define	PROTO_ICOMPD	0x00fb	/* Individual link compressed */
 #define	PROTO_COMPD	0x00fd	/* Compressed datagram */
 
-#define PROTO_COMPRESSIBLE(p) (((p) & 0xffe1) == 0x21)
+#define PROTO_COMPRESSIBLE(p) (((p) & 0xff81) == 0x01)
 
 #define	PROTO_IPCP	0x8021
 #ifndef NOINET6
