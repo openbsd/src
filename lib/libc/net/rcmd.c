@@ -34,7 +34,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: rcmd.c,v 1.27 1998/02/11 02:26:15 deraadt Exp $";
+static char *rcsid = "$OpenBSD: rcmd.c,v 1.28 1998/02/11 05:28:52 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -403,39 +403,37 @@ __ivaliduser(hostf, raddrl, luser, ruser)
 {
 	register char *user, *p;
 	int ch;
-	char buf[MAXHOSTNAMELEN + 128];		/* host + login */
+	char *buf;
 	const char *auser, *ahost;
 	int hostok, userok;
 	char *rhost = (char *)-1;
 	char domain[MAXHOSTNAMELEN];
 	u_int32_t raddr = (u_int32_t)raddrl;
+	size_t buflen;
 
 	getdomainname(domain, sizeof(domain));
 
-	while (fgets(buf, sizeof(buf), hostf)) {
+	while ((buf = fgetln(hostf, &buflen))) {
 		p = buf;
-		/* Skip lines that are too long. */
-		if (strchr(p, '\n') == NULL) {
-			while ((ch = getc(hostf)) != '\n' && ch != EOF)
-				if (!isprint(ch))
-					goto bail;
-			continue;
-		}
 		if (*p == '#')
 			continue;
-		while (*p != '\n' && *p != ' ' && *p != '\t' && *p != '\0') {
+		while (*p != '\n' && *p != ' ' && *p != '\t' && p < buf + buflen) {
 			if (!isprint(*p))
 				goto bail;
 			*p = isupper(*p) ? tolower(*p) : *p;
 			p++;
 		}
+		if (p >= buf + buflen)
+			continue;
 		if (*p == ' ' || *p == '\t') {
 			*p++ = '\0';
-			while (*p == ' ' || *p == '\t')
+			while (*p == ' ' || *p == '\t' && p < buf + buflen)
 				p++;
+			if (p >= buf + buflen)
+				continue;
 			user = p;
 			while (*p != '\n' && *p != ' ' &&
-			    *p != '\t' && *p != '\0') {
+			    *p != '\t' && p < buf + buflen) {
 				if (!isprint(*p))
 					goto bail;
 				p++;
@@ -449,6 +447,9 @@ __ivaliduser(hostf, raddrl, luser, ruser)
 
 		auser = *user ? user : luser;
 		ahost = buf;
+
+		if (strlen(ahost) > MAXHOSTNAMELEN)
+			continue;
 
 		/*
 		 * innetgr() must lookup a hostname (we do not attempt
