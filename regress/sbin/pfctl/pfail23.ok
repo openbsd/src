@@ -1,0 +1,5 @@
+stdin:2: illegal port value 65536
+stdin:6: flags only apply to tcp
+stdin:7: flags only apply to tcp
+stdin:10: no routing address with matching address family found.
+pfctl: Syntax error in file: pf rules not loaded
