@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_newterm.c,v 1.3 1997/12/03 05:21:25 millert Exp $	*/
+/*	$OpenBSD: lib_newterm.c,v 1.4 1998/01/17 16:27:34 millert Exp $	*/
 
 
 /***************************************************************************
@@ -38,7 +38,7 @@
 
 #include <term.h>	/* clear_screen, cup & friends, cur_term */
 
-MODULE_ID("Id: lib_newterm.c,v 1.30 1997/11/08 17:32:31 tom Exp $")
+MODULE_ID("Id: lib_newterm.c,v 1.31 1997/12/28 00:36:51 tom Exp $")
 
 #ifndef ONLCR		/* Allows compilation under the QNX 4.2 OS */
 #define ONLCR 0
@@ -176,6 +176,14 @@ char *t = getenv("NCURSES_TRACE");
 	SP->_use_meta   = FALSE;
 #endif
 	SP->_endwin	= FALSE;
+
+	/* Check whether we can optimize scrolling under dumb terminals in case
+	 * we do not have any of these capabilities, scrolling optimization
+	 * will be useless.
+	 */
+	SP->_scrolling = ((scroll_forward && scroll_reverse) ||
+			  ((parm_rindex || parm_insert_line || insert_line) &&
+			   (parm_index  || parm_delete_line || delete_line)));
 
 	baudrate();	/* sets a field in the SP structure */
 

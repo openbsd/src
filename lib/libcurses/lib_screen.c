@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_screen.c,v 1.3 1997/12/03 05:21:29 millert Exp $	*/
+/*	$OpenBSD: lib_screen.c,v 1.4 1998/01/17 16:27:36 millert Exp $	*/
 
 
 /***************************************************************************
@@ -28,7 +28,7 @@
 #include <time.h>
 #include <term.h>	/* exit_ca_mode, non_rev_rmcup */
 
-MODULE_ID("Id: lib_screen.c,v 1.9 1997/10/18 19:22:52 tom Exp $")
+MODULE_ID("Id: lib_screen.c,v 1.10 1997/12/27 19:48:58 tom Exp $")
 
 static time_t	dumptime;
 

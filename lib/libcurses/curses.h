@@ -1,4 +1,4 @@
-/*	$OpenBSD: curses.h,v 1.6 1997/12/14 23:15:44 millert Exp $	*/
+/*	$OpenBSD: curses.h,v 1.7 1998/01/17 16:27:31 millert Exp $	*/
 
 /***************************************************************************
 *                            COPYRIGHT NOTICE                              *
@@ -28,6 +28,10 @@
 #define CURSES 1
 #define CURSES_H 1
 
+#ifdef __OpenBSD__
+#define	EXTERN_TERMINFO
+#endif
+
 /* This should be defined for the enhanced functionality to be visible.
  * However, none of the wide-character (enhanced) functionality is implemented.
  * So we do not define it (yet).
@@ -37,7 +41,7 @@
 /* These are defined only in curses.h, and are used for conditional compiles */
 #define NCURSES_VERSION_MAJOR 4
 #define NCURSES_VERSION_MINOR 1
-#define NCURSES_VERSION_PATCH 971213
+#define NCURSES_VERSION_PATCH 980103
 
 /* This is defined in more than one ncurses header, for identification */
 #undef  NCURSES_VERSION
@@ -717,6 +721,7 @@ extern int unget_wch(const wchar_t *);			/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
 extern int untouchwin(WINDOW *);			/* generated */
 #ifndef EXTERN_TERMINFO
+extern void use_env(bool);				/* implemented */
 extern int vidattr(chtype);				/* implemented */
 #endif
 extern int vid_attr(attr_t);				/* generated:WIDEC */

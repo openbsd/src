@@ -1,4 +1,4 @@
-/*	$OpenBSD: curses.priv.h,v 1.4 1997/12/06 19:11:03 millert Exp $	*/
+/*	$OpenBSD: curses.priv.h,v 1.5 1998/01/17 16:27:32 millert Exp $	*/
 
 
 /***************************************************************************
@@ -23,7 +23,7 @@
 
 
 /*
- * Id: curses.priv.h,v 1.93 1997/11/01 23:01:54 tom Exp $
+ * Id: curses.priv.h,v 1.97 1998/01/03 19:57:54 tom Exp $
  *
  *	curses.priv.h
  *
@@ -101,6 +101,20 @@ extern int errno;
 #endif
 
 #define DEFAULT_MAXCLICK 166
+
+/*
+ * If we don't have signals to support it, don't add a sigwinch handler.
+ * In any case, resizing is an extended feature.  Use it if we've got it.
+ */
+#ifndef NCURSES_EXT_FUNCS
+#undef HAVE_SIZECHANGE
+#endif
+
+#if HAVE_SIZECHANGE
+#define USE_SIZECHANGE 1
+#else
+#undef USE_SIGWINCH
+#endif
 
 /*
  * As currently coded, hashmap relies on the scroll-hints logic.
@@ -267,6 +281,7 @@ struct screen {
 	int             _carriage_return_length;
 	int             _cursor_home_length;
 	int             _cursor_to_ll_length;
+	int             _scrolling;     /* 1 if terminal's smart enough to  */
 
 	/* used in lib_color.c */
 	color_t         *_color_table;  /* screen's color palette            */
@@ -304,7 +319,9 @@ struct screen {
 	/*
 	 * This supports automatic resizing
 	 */
+#if USE_SIZECHANGE
 	int		(*_resize)(int,int);
+#endif
 
         /*
 	 * These are data that support the proper handling of the panel stack on an
@@ -537,9 +554,6 @@ extern void _nc_expanded(void);
 
 #endif
 
-/* comp_scan.c */
-extern char _nc_trans_string(char *); /* used by 'tack' program */
-
 /* doupdate.c */
 #if USE_XMC_SUPPORT
 extern void _nc_do_xmc_glitch(attr_t);
@@ -593,9 +607,9 @@ extern char *_nc_trace_buf(int, size_t);
 extern chtype _nc_background(WINDOW *);
 extern chtype _nc_render(WINDOW *, chtype);
 extern int _nc_keypad(bool);
-#ifdef EXTERN_TERMINFO                                                      
-#define	_nc_outch _ti_outc                                                  
-#endif                                                                      
+#ifdef EXTERN_TERMINFO
+#define	_nc_outch _ti_outc
+#endif
 extern int _nc_outch(int);
 extern int _nc_setupscreen(short, short const, FILE *);
 extern int _nc_timed_wait(int, int, int *);
@@ -611,7 +625,8 @@ extern void _nc_scroll_window(WINDOW *, int const, short const, short const, cht
 extern void _nc_set_buffer(FILE *ofp, bool buffered);
 extern void _nc_signal_handler(bool);
 extern void _nc_synchook(WINDOW *win);
-#ifndef EXTERN_TERMINFO
+
+#if USE_SIZECHANGE
 extern void _nc_update_screensize(void);
 #endif
 
@@ -644,10 +659,10 @@ extern int _nc_usleep(unsigned int);
  * ncurses' terminfo defines these but since we use our own terminfo
  * we need to fake it here.
  */
-#ifdef EXTERN_TERMINFO                                                      
+#ifdef EXTERN_TERMINFO
 #define	_nc_get_curterm(buf) tcgetattr(cur_term->Filedes, buf)
 #define	_nc_set_curterm(buf) tcsetattr(cur_term->Filedes, TCSADRAIN, buf)
-#endif                                                                      
+#endif
 
 /*
  * We don't want to use the lines or columns capabilities internally,
@@ -661,8 +676,8 @@ extern int _nc_usleep(unsigned int);
 extern int _nc_slk_format;  /* != 0 if slk_init() called */
 extern int _nc_slk_initialize(WINDOW *, int);
 
-/* 
- * Some constants related to SLK's 
+/*
+ * Some constants related to SLK's
  */
 #define MAX_SKEY_OLD	   8	/* count of soft keys */
 #define MAX_SKEY_LEN_OLD   8	/* max length of soft key text */

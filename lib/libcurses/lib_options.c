@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_options.c,v 1.3 1997/12/03 05:21:26 millert Exp $	*/
+/*	$OpenBSD: lib_options.c,v 1.4 1998/01/17 16:27:34 millert Exp $	*/
 
 
 /***************************************************************************
@@ -34,7 +34,7 @@
 #include <term.h>	/* keypad_xmit, keypad_local, meta_on, meta_off */
 			/* cursor_visible,cursor_normal,cursor_invisible */
 
-MODULE_ID("Id: lib_options.c,v 1.22 1997/05/01 23:46:18 Alexander.V.Lukyanov Exp $")
+MODULE_ID("Id: lib_options.c,v 1.26 1997/09/20 15:02:34 juergen Exp $")
 
 static void add_to_try(char *, short);
 

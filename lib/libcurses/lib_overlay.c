@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_overlay.c,v 1.4 1997/12/14 23:15:47 millert Exp $	*/
+/*	$OpenBSD: lib_overlay.c,v 1.5 1998/01/17 16:27:35 millert Exp $	*/
 
 
 /***************************************************************************
@@ -31,7 +31,7 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("Id: lib_overlay.c,v 1.10 1997/12/03 15:47:41 Alexander.V.Lukyanov Exp $")
+MODULE_ID("Id: lib_overlay.c,v 1.11 1997/12/19 17:04:06 xtang Exp $")
 
 static int overlap(const WINDOW *const s, WINDOW *const d, int const flag)
 {
@@ -40,6 +40,10 @@ int sminrow, smincol, dminrow, dmincol, dmaxrow, dmaxcol;
 	T(("overlap : sby %d, sbx %d, smy %d, smx %d, dby %d, dbx %d, dmy %d, dmx %d",
 		s->_begy, s->_begx, s->_maxy, s->_maxx,
 		d->_begy, d->_begx, d->_maxy, d->_maxx));
+
+	if (!s || !d)
+		returnCode(ERR);
+
 	sminrow = max(s->_begy, d->_begy) - s->_begy;
 	smincol = max(s->_begx, d->_begx) - s->_begx;
 	dminrow = max(s->_begy, d->_begy) - d->_begy;

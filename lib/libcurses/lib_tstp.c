@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_tstp.c,v 1.5 1997/12/03 05:21:38 millert Exp $	*/
+/*	$OpenBSD: lib_tstp.c,v 1.6 1998/01/17 16:27:37 millert Exp $	*/
 
 
 /***************************************************************************
@@ -43,11 +43,7 @@ typedef struct sigaction sigaction_t;
 #define _POSIX_SOURCE
 #endif
 
-#ifndef SIGWINCH
-#undef USE_SIGWINCH	/* FIXME: configure should resolve this */
-#endif
-
-MODULE_ID("Id: lib_tstp.c,v 1.13 1997/11/01 19:05:13 tom Exp $")
+MODULE_ID("Id: lib_tstp.c,v 1.14 1997/12/20 22:07:59 tom Exp $")
 
 /*
  * Note: This code is fragile!  Its problem is that different OSs

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_doupdate.c,v 1.4 1997/12/03 05:21:16 millert Exp $	*/
+/*	$OpenBSD: lib_doupdate.c,v 1.5 1998/01/17 16:27:32 millert Exp $	*/
 
 /***************************************************************************
 *                            COPYRIGHT NOTICE                              *
@@ -58,7 +58,7 @@
 
 #include <term.h>
 
-MODULE_ID("Id: lib_doupdate.c,v 1.93 1997/11/15 22:48:57 tom Exp $")
+MODULE_ID("Id: lib_doupdate.c,v 1.95 1997/12/27 23:43:53 tom Exp $")
 
 /*
  * This define controls the line-breakout optimization.  Every once in a
@@ -482,7 +482,7 @@ struct tms before, after;
 	if (SP->_fifohold)
 		SP->_fifohold--;
 
-#ifndef EXTERN_TERMINFO
+#if USE_SIZECHANGE
 	if (SP->_endwin || SP->_sig_winch)
 	{
 		/*
@@ -683,6 +683,8 @@ struct tms before, after;
 		    goto cleanup;
 
 		nonempty = min(screen_lines, newscr->_maxy+1);
+
+		if (!SP->_scrolling) {
 #if USE_HASHMAP		/* still 5% slower 960928 */
 #if defined(TRACE) || defined(NCURSES_TEST)
 		if (_nc_optimize_enable & OPTIMIZE_HASHMAP)
@@ -699,6 +701,7 @@ struct tms before, after;
 #else
 			_nc_perform_scroll();
 #endif
+		}
 
 		nonempty = ClrBottom(nonempty);
 

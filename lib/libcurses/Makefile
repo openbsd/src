@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 1997/12/17 19:35:31 millert Exp $
+#	$OpenBSD: Makefile,v 1.21 1998/01/17 16:27:30 millert Exp $
 
 # Uncomment this to enable tracing in libcurses
 #CURSESTRACE=-DTRACE
@@ -19,14 +19,14 @@ SRCS=	define_key.c hardscroll.c hashmap.c keyok.c lib_acs.c lib_addch.c \
 	lib_slkinit.c lib_slklab.c lib_slkrefr.c lib_slkset.c lib_slktouch.c \
 	lib_touch.c lib_tstp.c lib_twait.c lib_ungetch.c lib_vidattr.c \
 	lib_vline.c lib_wattroff.c lib_wattron.c lib_window.c nc_panel.c \
-	resizeterm.c safe_sprintf.c softscroll.c tries.c unctrl.c \
+	resizeterm.c safe_sprintf.c screensize.c softscroll.c tries.c unctrl.c \
 	wresize.c
 SRCS+=	expanded.c lib_gen.c lib_keyname.c
 .if defined(${CURSESTRACE})
 SRCS+=	lib_trace.c lib_traceatr.c lib_tracechr.c lib_tracedmp.c \
 	lib_tracemse.c trace_buf.c
 .endif
-CFLAGS+= -I. -I${.CURDIR} -DTERMIOS -DEXTERN_TERMINFO ${CURSESTRACE}
+CFLAGS+= -I. -I${.CURDIR} -DTERMIOS ${CURSESTRACE}
 LDADD+=  -ltermlib
 MAN=	curs_addch.3 curs_addchstr.3 curs_addstr.3 curs_attr.3 curs_beep.3 \
 	curs_bkgd.3 curs_border.3 curs_clear.3 curs_color.3 curs_delch.3 \
