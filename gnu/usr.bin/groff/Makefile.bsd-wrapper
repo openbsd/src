@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.16 2000/04/09 08:25:09 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.17 2002/03/22 15:55:54 espie Exp $
 
 #
 # groff config
@@ -10,7 +10,7 @@ INDEXDIR=	/usr/share/dict/papers
 COMMON_WORDS=	/usr/share/dict/eign
 
 GNUCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" 
-GNUCXXFLAGS=	CXX="${CXX}" CCFLAGS="${CXXFLAGS} ${COPTS}"
+GNUCXXFLAGS=	CXX="${CXX}" CCFLAGS="${CXXFLAGS} ${CXXOPTS}"
 
 CLEANFILES+=	config.cache config.log pic/pic.cc eqn/eqn.cc \
 		refer/label.cc pic/pic.tab.h eqn/eqn.tab.h
@@ -58,7 +58,8 @@ config.status:
 		--mandir=${DATASUBDIR}/man ${CF}
 
 gnu_build:
-	${MAKE} ${GNUCFLAGS} ${GNUCXXFLAGS} LDFLAGS="-s ${LDSTATIC}" \
+	${MAKE} ${GNUCFLAGS} ${GNUCXXFLAGS} \
+		LDFLAGS="${INSTALL_STRIP} ${LDSTATIC}" \
 		prefix=${PREFIX} \
 		datasubdir=${DATASUBDIR} \
 		fontdir=${FONTDIR} \
