@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.h,v 1.3 2002/11/27 16:23:01 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.h,v 1.4 2002/11/29 15:52:13 henning Exp $	*/
 /*
  * Copyright (C) 2002
  *	Sony Computer Science Laboratories Inc.  All rights reserved.
@@ -89,7 +89,7 @@ struct pf_altq_node {
 void			 pfctl_insert_altq_node(struct pf_altq_node **,
 			    const struct pf_altq);
 struct pf_altq_node	*pfctl_find_altq_node(struct pf_altq_node *,
-			    const char *);
+			    const char *, const char *);
 void			 pfctl_print_altq_node(const struct pf_altq_node *,
 			    unsigned);
 void			 pfctl_free_altq_node(struct pf_altq_node *);

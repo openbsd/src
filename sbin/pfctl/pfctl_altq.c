@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.14 2002/11/28 14:50:23 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.15 2002/11/29 15:52:13 henning Exp $	*/
 /*
  * Copyright (C) 2002
  *	Sony Computer Science Laboratories Inc.  All rights reserved.
@@ -496,7 +496,7 @@ pfctl_insert_altq_node(struct pf_altq_node **root,
 	} else {
 		struct pf_altq_node *parent;
 
-		parent = pfctl_find_altq_node(*root, altq.parent);
+		parent = pfctl_find_altq_node(*root, altq.parent, altq.ifname);
 		if (parent == NULL) {
 			errx(1, "parent %s not found", altq.parent);
 			return;
@@ -514,15 +514,18 @@ pfctl_insert_altq_node(struct pf_altq_node **root,
 }
 
 struct pf_altq_node *
-pfctl_find_altq_node(struct pf_altq_node *root, const char *qname)
+pfctl_find_altq_node(struct pf_altq_node *root, const char *qname,
+    const char *ifname)
 {
 	struct pf_altq_node *node, *child;
 
 	for (node = root; node != NULL; node = node->next) {
-		if (!strcmp(node->altq.qname, qname))
+		if (!strcmp(node->altq.qname, qname)
+		    && !(strcmp(node->altq.ifname, ifname)))
 			return (node);
 		if (node->children != NULL) {
-			child = pfctl_find_altq_node(node->children, qname);
+			child = pfctl_find_altq_node(node->children, qname,
+			    ifname);
 			if (child != NULL)
 				return (child);
 		}
