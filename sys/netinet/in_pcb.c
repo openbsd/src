@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.82 2004/12/06 02:41:43 deraadt Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.83 2004/12/06 02:46:34 deraadt Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -88,6 +88,9 @@
 #include <netinet/ip_var.h>
 #include <dev/rndvar.h>
 
+#include <sys/mount.h>
+#include <nfs/nfsproto.h>
+
 #ifdef INET6
 #include <netinet6/ip6_var.h>
 #endif /* INET6 */
@@ -158,6 +161,8 @@ in_baddynamic(port, proto)
 
 	switch (proto) {
 	case IPPROTO_TCP:
+		if (port == NFS_PORT)
+			return (1);
 		if (port < IPPORT_RESERVED/2 || port >= IPPORT_RESERVED)
 			return (0);
 		return (DP_ISSET(baddynamicports.tcp, port));
@@ -166,6 +171,8 @@ in_baddynamic(port, proto)
 		if (port == udpencap_port)
 			return (1);
 #endif
+		if (port == NFS_PORT)
+			return (1);
 		if (port < IPPORT_RESERVED/2 || port >= IPPORT_RESERVED)
 			return (0);
 		return (DP_ISSET(baddynamicports.udp, port));
