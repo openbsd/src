@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.12 2002/04/22 16:48:48 deraadt Exp $
+#	$OpenBSD: list,v 1.13 2002/04/29 17:13:38 deraadt Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # Amiga extra's
@@ -14,12 +14,9 @@ SYMLINK	/tmp	var/tmp
 
 # copy the MAKEDEV script and make some devices
 COPY	${DESTDIR}/dev/MAKEDEV		dev/MAKEDEV
-COPY	${DESTDIR}/dev/MAKEDEV.local	dev/MAKEDEV.local
 SPECIAL	cd dev; sh MAKEDEV all
-#SPECIAL	/bin/rm dev/MAKEDEV
 
-# and a few useful bits of the termcap file (512K and still growing 8-)
-SPECIAL tic -C ${CURDIR}/../../share/termtypes/termtypes.master | sed -n -e 's,/usr/share/lib/tabset,/usr/share/tabset,g' -e 's,/usr/lib/tabset,/usr/share/tabset,g' -e '/^dumb|/,/:[ 	]*$/p' -e '/^unknown|/,/:[ 	]*$/p' -e '/^vt.*|/,/:[ 	]*$/p' > usr/share/misc/termcap
+TERMCAP	vt100,vt200,dumb		usr/share/misc/termcap
 
 # copy the kernel
 COPY	bsd	bsd

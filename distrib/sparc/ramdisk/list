@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.14 2002/04/22 02:43:16 deraadt Exp $
+#	$OpenBSD: list,v 1.15 2002/04/29 17:13:39 deraadt Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # Sparc extra's
@@ -22,15 +22,13 @@ SPECIAL	cd dev; sh MAKEDEV ramdisk
 COPYDIR	${DESTDIR}/usr/mdec	usr/mdec
 SPECIAL	rm -f usr/mdec/binstall usr/mdec/installboot
 
-# and a few useful bits of the termcap file (512K and still growing 8-)
-SPECIAL tic -C ${CURDIR}/../../share/termtypes/termtypes.master | sed -n -e 's,/usr/share/lib/tabset,/usr/share/tabset,g' -e 's,/usr/lib/tabset,/usr/share/tabset,g' -e '/^dumb|/,/:[ 	]*$/p' -e '/^unknown|/,/:[ 	]*$/p' -e '/^sun.*|/,/:[ 	]*$/p' -e '/^vt.*|/,/:[ 	]*$/p' -e '/^pc3|/,/:[ 	]*$/p' -e '/^pcvt.*|/,/:[ 	]*$/p' > usr/share/misc/termcap
-
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/disktab		etc/disktab.shadow
 SYMLINK	/tmp/disktab.shadow		etc/disktab
 SYMLINK	/tmp/fstab.shadow		etc/fstab
 SYMLINK	/tmp/resolv.conf.shadow		etc/resolv.conf
 SYMLINK	/tmp/hosts			etc/hosts
+TERMCAP	vt100,vt220,dumb,sun		usr/share/misc/termcap
 
 # and the installation tools
 SPECIAL sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' -e "s/^ARCH=ARCH$/ARCH=`arch -ks`/" < ${ARCHDIR}/../install.md	 > install.md

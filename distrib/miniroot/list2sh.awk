@@ -1,4 +1,4 @@
-#	$OpenBSD: list2sh.awk,v 1.6 2002/04/25 21:57:43 deraadt Exp $
+#	$OpenBSD: list2sh.awk,v 1.7 2002/04/29 17:13:38 deraadt Exp $
 #	$NetBSD: list2sh.awk,v 1.2 1996/05/04 15:45:31 pk Exp $
 
 BEGIN {
@@ -61,6 +61,12 @@ $1 == "SPECIAL" {
 	work=$0;
 	sub("^[ 	]*" $1 "[ 	]*", "", work);
 	printf("(cd ${TARGDIR}; %s)\n", work);
+	next;
+}
+$1 == "TERMCAP" {
+	printf("echo '%s'\n", $0);
+	printf("(cd ${TARGDIR}; tic -C -x -r -e %s ${UTILS}/../../share/termtypes/termtypes.master | sed -e '/^#.*/d' -e 's,/usr/share/lib/tabset,/usr/share/tabset,g' -e 's,/usr/lib/tabset,/usr/share/tabset,g' > %s)\n",
+	    $2, $3);
 	next;
 }
 {
