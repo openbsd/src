@@ -1,5 +1,5 @@
-/*	$OpenBSD: init.c,v 1.4 1999/02/26 03:43:00 niklas Exp $	*/
-/*	$EOM: init.c,v 1.11 1999/02/25 11:39:06 niklas Exp $	*/
+/*	$OpenBSD: init.c,v 1.5 1999/03/31 20:30:11 niklas Exp $	*/
+/*	$EOM: init.c,v 1.12 1999/03/31 20:25:25 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -57,14 +57,17 @@ void
 init ()
 {
   app_init ();
-  conf_init ();
   doi_init ();
   exchange_init ();
   group_init ();
   ipsec_init ();
   isakmp_doi_init ();
   timer_init ();
-  cookie_init ();	/* Depends on properly setup timer queue */
+
+  /* The following group are depending on timer_init having run.  */
+  conf_init ();
+  cookie_init ();
+
   sa_init ();
   transport_init ();
   udp_init ();
