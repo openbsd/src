@@ -62,7 +62,7 @@ case $i in
 all)
 	sh MAKEDEV std fd sd0 sd1 sd2 st0 st1 cd0 cd1
 	sh MAKEDEV tty0 tty1 tty2 tty3 tty4 tty5 tty6 tty7
-	sh MAKEDEV pty0 pty1 vnd0 vnd1 bpf0 bpf1 bpf2 bpf3
+	sh MAKEDEV pty0 pty1 vnd0 vnd1 bpf0 bpf1 bpf2 bpf3 ipl
 	sh MAKEDEV tun0 tun1 tun2 lkm
 	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
 	;;
@@ -221,6 +221,11 @@ bpf*)
 	rm -f bpf$unit
 	mknod bpf$unit c 14 $unit
 	chown root.wheel bpf$unit
+	;;
+
+ipl)
+	mknod ipl c 19 0
+	chown root.wheel ipl
 	;;
 
 tun*)

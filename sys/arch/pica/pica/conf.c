@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)conf.c	8.2 (Berkeley) 11/14/93
- *      $Id: conf.c,v 1.1.1.1 1995/10/18 10:39:17 deraadt Exp $
+ *      $Id: conf.c,v 1.2 1996/01/07 07:41:08 dm Exp $
  */
 
 #include <sys/param.h>
@@ -142,6 +142,19 @@ cdev_decl(sd);
 cdev_decl(pc);
 cdev_decl(pms);
 
+/* open, close, read, ioctl */
+cdev_decl(ipl);
+#define	cdev_gen_ipf(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) nullop, 0, (dev_type_select((*))) enodev, \
+	(dev_type_mmap((*))) enodev, 0 }
+#ifdef IPFILTER
+#define NIPF 1
+#else
+#define NIPF 0
+#endif
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -177,7 +190,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 28: */
 	cdev_notdef(),			/* 29: */
 	cdev_notdef(),			/* 30: */
-	cdev_notdef(),			/* 31: */
+	cdev_gen_ipf(NIPF,ipl),         /* 31: IP filter log */
 };
 
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);

@@ -80,7 +80,7 @@ all)
 	sh MAKEDEV cd0 st0 st1 fd0
 	sh MAKEDEV pty0 vnd0 vnd1 vnd2 vnd3 audio tun0 tun1 tun2 tun3
 	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
-	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 bwtwo0 cgthree0 cgfour0 cgsix0
+	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 ipl bwtwo0 cgthree0 cgfour0 cgsix0
 	sh MAKEDEV cgeight0
 	sh MAKEDEV lkm local
 	;;
@@ -146,6 +146,11 @@ bpf*)
 	mknod bpf$unit c 105 $unit
 	chmod 600 bpf$unit
 	chown root.wheel bpf$unit
+	;;
+
+ipl)
+	mknod ipl c 59 0
+	chown root.wheel ipl
 	;;
 
 tun*)

@@ -323,6 +323,11 @@ pty*)
 	esac
 	;;
 
+ipl)
+	mknod ipl c 50 0
+	chown root.wheel ipl
+	;;
+
 np*)
 	class=`expr $i : 'np\(.*\)'`
 	case $class in

@@ -31,7 +31,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: MAKEDEV,v 1.4 1995/11/16 02:54:44 deraadt Exp $
+#	$Id: MAKEDEV,v 1.5 1996/01/07 07:41:21 dm Exp $
 #
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices,
@@ -84,7 +84,7 @@ all)
 	sh MAKEDEV tty00 tty01 tty02 tty03
 	sh MAKEDEV sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9
 	sh MAKEDEV vnd0 vnd1 vnd2 vnd3 vnd4 pty0 
-	sh MAKEDEV vnd5 vnd6 cd0 bpf0 bpf1 bpf2 bpf3
+	sh MAKEDEV vnd5 vnd6 cd0 bpf0 bpf1 bpf2 bpf3 ipl
 	#sh MAKEDEV ccd0 ccd1 ccd2 ccd3
 	sh MAKEDEV tun0 tun1 lkm local
 	sh MAKEDEV sram0 nvram0 flash0 vmel0 vmes0
@@ -301,6 +301,11 @@ bpf*)
 	rm -f bpf$unit
 	mknod bpf$unit c 22 $unit
 	chown root.wheel bpf$unit
+	;;
+
+ipl)
+	mknod ipl c 39 0
+	chown root.wheel ipl
 	;;
 
 tun*)

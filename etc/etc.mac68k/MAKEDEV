@@ -72,7 +72,7 @@ all)
 	sh MAKEDEV adb grf0 grf1 ttye0
 	sh MAKEDEV tty00 tty01 pty0
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
-	sh MAKEDEV bpf8 bpf9 bpfa bpfb
+	sh MAKEDEV bpf8 bpf9 bpfa bpfb ipl
 	sh MAKEDEV tun0 tun1 tun2 tun3
 	sh MAKEDEV lkm
 	sh MAKEDEV local
@@ -298,6 +298,11 @@ bpf*)
 	rm -f bpf${unit}
 	mknod bpf${unit} c 22 ${unit}
 	chown root.wheel bpf${unit}
+	;;
+
+ipl)
+	mknod ipl c 32 0
+	chown root.wheel ipl
 	;;
 
 tun*)

@@ -1,4 +1,4 @@
-/*	$Id: conf.c,v 1.2 1995/11/07 08:50:16 deraadt Exp $ */
+/*	$Id: conf.c,v 1.3 1996/01/07 07:41:05 dm Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -195,6 +195,19 @@ cdev_decl(tun);
 
 cdev_decl(lkm);
 
+/* open, close, read, ioctl */
+cdev_decl(ipl);
+#define	cdev_gen_ipf(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) nullop, 0, (dev_type_select((*))) enodev, \
+	(dev_type_mmap((*))) enodev, 0 }
+#ifdef IPFILTER
+#define NIPF 1
+#else
+#define NIPF 0
+#endif
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -236,6 +249,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 36 */
 	cdev_lkm_dummy(),		/* 37 */
 	cdev_lkm_dummy(),		/* 38 */
+	cdev_gen_ipf(NIPF,ipl),         /* 39: IP filter */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

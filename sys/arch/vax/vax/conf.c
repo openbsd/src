@@ -308,6 +308,19 @@ cdev_decl(qd);
 #endif
 cdev_decl(ii);
 
+/* open, close, read, ioctl */
+cdev_decl(ipl);
+#define	cdev_gen_ipf(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) nullop, 0, (dev_type_select((*))) enodev, \
+	(dev_type_mmap((*))) enodev, 0 }
+#ifdef IPFILTER
+#define NIPF 1
+#else
+#define NIPF 0
+#endif
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -360,7 +373,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 47 */
 	cdev_notdef(),			/* 48 */
 	cdev_notdef(),			/* 49 */
-	cdev_notdef(),			/* 50 */
+	cdev_gen_ipf(NIPF,ipl),		/* 50: IP filter log */
 	cdev_cnstore_init(NCRX,crx),	/* 51: Console RX50 at 8200 */
 	cdev_disk_init(NKDB,kdb),	/* 52: KDB50/RA?? */
 	cdev_fd_init(1,fd),		/* 53: file descriptor pseudo-device */

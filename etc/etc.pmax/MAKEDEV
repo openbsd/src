@@ -89,6 +89,11 @@ bpf*)
 	chown root.wheel bpf$unit
 	;;
 
+ipl)
+	mknod ipl c 88 0
+	chown root.wheel ipl
+	;;
+
 #tun*)
 #	unit=`expr $i : 'tun\(.*\)'`
 #	rm -f tun$unit

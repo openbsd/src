@@ -165,6 +165,19 @@ cdev_decl(bpf);
 cdev_decl(tun);
 
 
+/* open, close, read, ioctl */
+cdev_decl(ipl);
+#define	cdev_gen_ipf(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) nullop, 0, (dev_type_select((*))) enodev, \
+	(dev_type_mmap((*))) enodev, 0 }
+#ifdef IPFILTER
+#define NIPF 1
+#else
+#define NIPF 0
+#endif
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -239,6 +252,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 69: /dev/audio */
 	cdev_notdef(),			/* 70: open prom */
 	cdev_notdef(),			/* 71: (sg?) */
+	cdev_gen_ipf(NIPF,ipl),         /* 72: IP filter log */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
