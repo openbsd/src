@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.22 2001/06/11 20:56:57 mickey Exp $ */
+/* $OpenBSD: wskbd.c,v 1.23 2001/06/11 22:48:14 mickey Exp $ */
 /* $NetBSD: wskbd.c,v 1.38 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -1569,7 +1569,7 @@ wskbd_translate(id, type, value)
 	    KS_GROUP(group[1]) == KS_GROUP_Keypad)
 		ksym = group[!MOD_ONESET(id, MOD_ANYSHIFT)];
 	else
-		ksym = group[MOD_ONESET(id, MOD_CAPSLOCK|MOD_ANYSHIFT);
+		ksym = group[MOD_ONESET(id, MOD_CAPSLOCK|MOD_ANYSHIFT)];
 
 	/* Process compose sequence and dead accents */
 	res = KS_voidSymbol;
