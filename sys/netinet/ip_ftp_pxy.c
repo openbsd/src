@@ -1,10 +1,10 @@
-/*	$OpenBSD: ip_ftp_pxy.c,v 1.13 2001/03/17 22:54:20 beck Exp $	*/
+/*	$OpenBSD: ip_ftp_pxy.c,v 1.14 2001/05/08 19:58:01 fgsch Exp $	*/
 
 /*
  * Simple FTP transparent proxy for in-kernel use.  For use with the NAT
  * code.
  *
- * $IPFilter: ip_ftp_pxy.c,v 2.7.2.20 2000/12/02 00:15:06 darrenr Exp $
+ * $IPFilter: ip_ftp_pxy.c,v 2.7.2.21 2001/01/17 13:30:52 darrenr Exp $
  */
 #if SOLARIS && defined(_KERNEL)
 extern	kmutex_t	ipf_rw;
@@ -515,12 +515,11 @@ int dlen;
 
 	if ((ftp->ftp_passok == 1) && !strncmp(rptr, "331", 3))
 		 ftp->ftp_passok = 2;
-	else if ((ftp->ftp_passok == 1) && !strncmp(rptr, "230", 3))
-		 ftp->ftp_passok = 4;
-	else if ((ftp->ftp_passok == 3) && !strncmp(rptr, "230", 3))
-		 ftp->ftp_passok = 4;
-	else if ((ftp->ftp_passok == 3) && !strncmp(rptr, "530", 3))
-		 ftp->ftp_passok = 0;
+	else if (((ftp->ftp_passok == 3) || (ftp->ftp_passok == 1)) &&
+		 !strncmp(rptr, "230", 3)) {
+		ftp->ftp_passok = 4;
+	} else if ((ftp->ftp_passok == 3) && !strncmp(rptr, "530", 3))
+		ftp->ftp_passok = 0;
 	else if ((ftp->ftp_passok == 4) && !strncmp(rptr, "227 ", 4)) {
 		inc = ippr_ftp_pasv(fin, ip, nat, f, dlen);
 	} else if (ippr_ftp_insecure && !strncmp(rptr, "227 ", 4)) {

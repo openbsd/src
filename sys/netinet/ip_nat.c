@@ -1,7 +1,7 @@
-/*	$OpenBSD: ip_nat.c,v 1.39 2001/02/06 17:29:30 fgsch Exp $	*/
+/*	$OpenBSD: ip_nat.c,v 1.40 2001/05/08 19:58:01 fgsch Exp $	*/
 
 /*
- * Copyright (C) 1995-2000 by Darren Reed.
+ * Copyright (C) 1995-2001 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -11,7 +11,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static const char rcsid[] = "@(#)$IPFilter: ip_nat.c,v 2.37.2.32 2001/01/10 06:19:11 darrenr Exp $";
+static const char rcsid[] = "@(#)$IPFilter: ip_nat.c,v 2.37.2.35 2001/04/06 14:07:40 darrenr Exp $";
 #endif
 
 #if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)
@@ -2280,7 +2280,8 @@ maskloop:
 	 */
 	if (nat) {
 		np = nat->nat_ptr;
-		if (natadd && fin->fin_fi.fi_fl & FI_FRAG)
+		if (natadd && (fin->fin_fi.fi_fl & FI_FRAG) &&
+		    np && (np->in_flags & IPN_FRAG))
 			ipfr_nat_newfrag(ip, fin, 0, nat);
 		MUTEX_ENTER(&nat->nat_lock);
 		nat->nat_age = fr_defnatage;
@@ -2485,7 +2486,8 @@ maskloop:
 	if (nat) {
 		np = nat->nat_ptr;
 		fin->fin_fr = nat->nat_fr;
-		if (natadd && fin->fin_fi.fi_fl & FI_FRAG)
+		if (natadd && (fin->fin_fi.fi_fl & FI_FRAG) &&
+		    np && (np->in_flags & IPN_FRAG))
 			ipfr_nat_newfrag(ip, fin, 0, nat);
 		if ((np->in_apr != NULL) && (np->in_dport == 0 ||
 		    (tcp != NULL && sport == np->in_dport))) {

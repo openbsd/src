@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_fil.h,v 1.23 2001/02/06 17:29:30 fgsch Exp $	*/
+/*	$OpenBSD: ip_fil.h,v 1.24 2001/05/08 19:58:01 fgsch Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * $IPFilter: ip_fil.h,v 2.29.2.4 2000/11/12 11:54:53 darrenr Exp $
+ * $IPFilter: ip_fil.h,v 2.29.2.5 2001/03/20 13:18:05 darrenr Exp $
  */
 
 #ifndef	__IP_FIL_H__
@@ -61,7 +61,7 @@
 # define	SIOCSTLCK	_IOWR('r', 79, u_int)
 # define	SIOCSTPUT	_IOWR('r', 80, struct ipstate_save *)
 # define	SIOCSTGET	_IOWR('r', 81, struct ipstate_save *)
-# define	SIOCSTGSZ	_IOWR('r', 82, struct natget *)
+# define	SIOCSTGSZ	_IOWR('r', 82, struct natget)
 # define	SIOCGFRST	_IOWR('r', 83, struct ipfrstat *)
 #else
 # define	SIOCADAFR	_IOW(r, 60, struct frentry *)
@@ -86,7 +86,7 @@
 # define	SIOCSTLCK	_IOWR(r, 79, u_int)
 # define	SIOCSTPUT	_IOWR(r, 80, struct ipstate_save *)
 # define	SIOCSTGET	_IOWR(r, 81, struct ipstate_save *)
-# define	SIOCSTGSZ	_IOWR(r, 82, struct natget *)
+# define	SIOCSTGSZ	_IOWR(r, 82, struct natget)
 # define	SIOCGFRST	_IOWR(r, 83, struct ipfrstat *)
 #endif
 #define	SIOCADDFR	SIOCADAFR
@@ -424,9 +424,9 @@ typedef	struct	ipflog	{
 } ipflog_t;
 
 
-# ifndef	ICMP_UNREACH_FILTER
-#  define	ICMP_UNREACH_FILTER	13
-# endif
+#ifndef	ICMP_UNREACH_FILTER
+# define	ICMP_UNREACH_FILTER	13
+#endif
 
 #ifndef	IPF_LOGGING
 # define	IPF_LOGGING	0

@@ -1,7 +1,7 @@
-/*	$OpenBSD: ip_raudio_pxy.c,v 1.8 2001/01/17 04:47:16 fgsch Exp $	*/
+/*	$OpenBSD: ip_raudio_pxy.c,v 1.9 2001/05/08 19:58:02 fgsch Exp $	*/
 
 /*
- * $IPFilter: ip_raudio_pxy.c,v 1.7.2.3 2000/10/27 22:54:04 darrenr Exp $
+ * $IPFilter: ip_raudio_pxy.c,v 1.7.2.4 2001/04/03 15:45:15 darrenr Exp $
  */
 #if SOLARIS && defined(_KERNEL)
 extern	kmutex_t	ipf_rw;
@@ -64,8 +64,8 @@ nat_t *nat;
 	raudio_t *rap = aps->aps_data;
 	unsigned char membuf[512 + 1], *s;
 	u_short id = 0;
-	tcphdr_t *tcp;
 	int off, dlen;
+	tcphdr_t *tcp;
 	int len = 0;
 	mb_t *m;
 #if	SOLARIS
@@ -88,14 +88,16 @@ nat_t *nat;
 	dlen = msgdsize(m) - off;
 	if (dlen <= 0)
 		return 0;
-	copyout_mblk(m, off, MIN(sizeof(membuf), dlen), (char *)membuf);
+	dlen = MIN(sizeof(membuf), dlen);
+	copyout_mblk(m, off, dlen, (char *)membuf);
 #else
 	m = *(mb_t **)fin->fin_mp;
 
 	dlen = mbufchainlen(m) - off;
 	if (dlen <= 0)
 		return 0;
-	m_copydata(m, off, MIN(sizeof(membuf), dlen), (char *)membuf);
+	dlen = MIN(sizeof(membuf), dlen);
+	m_copydata(m, off, dlen, (char *)membuf);
 #endif
 	/*
 	 * In all the startup parsing, ensure that we don't go outside

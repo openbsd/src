@@ -1,7 +1,7 @@
-/*	$OpenBSD: ip_fil.c,v 1.43 2001/04/22 19:44:34 gluk Exp $	*/
+/*	$OpenBSD: ip_fil.c,v 1.44 2001/05/08 19:58:01 fgsch Exp $	*/
 
 /*
- * Copyright (C) 1993-2000 by Darren Reed.
+ * Copyright (C) 1993-2001 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)$IPFilter: ip_fil.c,v 2.42.2.17 2000/10/19 15:39:42 darrenr Exp $";
+static const char rcsid[] = "@(#)$IPFilter: ip_fil.c,v 2.42.2.19 2001/04/03 14:13:37 darrenr Exp $";
 #endif
 
 #ifndef	SOLARIS
@@ -254,15 +254,15 @@ int iplattach()
 # endif
 	if (nat_init() == -1) {
 		SPL_X(s);
-		return -1;
+		return EIO;
 	}
 	if (fr_stateinit() == -1) {
 		SPL_X(s);
-		return -1;
+		return EIO;
 	}
 	if (appr_init() == -1) {
 		SPL_X(s);
-		return -1;
+		return EIO;
 	}
 
 # ifdef NETBSD_PF

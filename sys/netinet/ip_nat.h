@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_nat.h,v 1.18 2001/01/17 04:47:15 fgsch Exp $	*/
+/*	$OpenBSD: ip_nat.h,v 1.19 2001/05/08 19:58:02 fgsch Exp $	*/
 
 /*
  * Copyright (C) 1995-2000 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_nat.h	1.5 2/4/96
- * $IPFilter: ip_nat.h,v 2.17.2.14 2000/11/18 03:58:04 darrenr Exp $
+ * $IPFilter: ip_nat.h,v 2.17.2.15 2001/04/06 13:47:35 darrenr Exp $
  */
 
 #ifndef	__IP_NAT_H__
@@ -228,6 +228,7 @@ typedef	struct	natstat	{
 #define	IPN_ROUNDR	0x100
 #define	IPN_NOTSRC	0x080000
 #define	IPN_NOTDST	0x100000
+#define	IPN_FRAG	0x200000
 
 
 typedef	struct	natlog {

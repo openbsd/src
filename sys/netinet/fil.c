@@ -1,4 +1,4 @@
-/*	$OpenBSD: fil.c,v 1.28 2001/01/30 04:23:55 kjell Exp $	*/
+/*	$OpenBSD: fil.c,v 1.29 2001/05/08 19:58:01 fgsch Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)$IPFilter: fil.c,v 2.35.2.30 2000/12/17 05:49:22 darrenr Exp $";
+static const char rcsid[] = "@(#)$IPFilter: fil.c,v 2.35.2.31 2001/04/03 15:46:41 dar renr Exp $";
 #endif
 
 #include <sys/errno.h>
@@ -260,7 +260,7 @@ fr_info_t *fin;
 		fin->fin_id = (u_short)(ip6->ip6_flow & 0xffff);
 		fi->fi_tos = 0;
 		fi->fi_fl = 0;
-		plen = ntohs(ip6->ip6_plen);
+		plen = ntohs(ip6->ip6_plen) + sizeof(*ip6);
 		fin->fin_dlen = plen;
 	}
 #endif
@@ -789,7 +789,7 @@ int out;
 	mb_t *mc = NULL;
 # if !defined(__SVR4) && !defined(__svr4__)
 #  ifdef __sgi
-	char hbuf[(0xf << 2) + sizeof(struct icmp) + sizeof(ip_t) + 8];
+	char hbuf[128];
 #  endif
 	int up;
 
@@ -814,6 +814,9 @@ int out;
 # ifdef	USE_INET6
 	if (v == 6) {
 		len = ntohs(((ip6_t*)ip)->ip6_plen);
+		if (!len)
+			return -1;	/* potential jumbo gram */
+		len += sizeof(ip6_t);
 		p = ((ip6_t *)ip)->ip6_nxt;
 	} else
 # endif
@@ -822,7 +825,8 @@ int out;
 		len = ip->ip_len;
 	}
 
-	if ((p == IPPROTO_TCP || p == IPPROTO_UDP || p == IPPROTO_ICMP
+	if ((p == IPPROTO_TCP || p == IPPROTO_UDP ||
+	    (v == 4 && p == IPPROTO_ICMP)
 # ifdef USE_INET6
 	    || (v == 6 && p == IPPROTO_ICMPV6)
 # endif
@@ -1231,7 +1235,7 @@ logit:
 			ipfr_fastroute(ip, mc, mp, fin, &fr->fr_dif);
 	}
 # endif /* !SOLARIS */
-	return (pass & FR_PASS) ? 0 : error;
+	return (pass & (FR_PASS|FR_AUTH)) ? 0 : error;
 #else /* _KERNEL */
 	if (pass & FR_NOMATCH)
 		return 1;
@@ -1460,7 +1464,7 @@ nodata:
  * SUCH DAMAGE.
  *
  *	@(#)uipc_mbuf.c	8.2 (Berkeley) 1/4/94
- * $IPFilter: fil.c,v 2.35.2.30 2000/12/17 05:49:22 darrenr Exp $
+ * $IPFilter: fil.c,v 2.35.2.31 2001/04/03 15:46:41 darrenr Exp $
  */
 /*
  * Copy data from an mbuf chain starting "off" bytes from the beginning,

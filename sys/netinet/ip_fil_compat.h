@@ -1,14 +1,14 @@
-/*	$OpenBSD: ip_fil_compat.h,v 1.20 2001/01/30 04:22:24 kjell Exp $	*/
+/*	$OpenBSD: ip_fil_compat.h,v 1.21 2001/05/08 19:58:01 fgsch Exp $	*/
 
 /*
- * Copyright (C) 1993-2000 by Darren Reed.
+ * Copyright (C) 1993-2001 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
  * @(#)ip_compat.h	1.8 1/14/96
- * $IPFilter: ip_compat.h,v 2.26.2.9 2001/01/14 14:58:01 darrenr Exp $
+ * $IPFilter: ip_compat.h,v 2.26.2.11 2001/04/03 14:13:35 darrenr Exp $
  */
 
 #ifndef	__IP_COMPAT_H__
@@ -510,7 +510,7 @@ extern	vm_map_t	kmem_map;
 #  define	SLEEP(id, n)	tsleep((id), PPAUSE|PCATCH, n, 0)
 #  define	WAKEUP(id)	wakeup(id)
 # endif /* BSD */
-# if defined(NetBSD) && NetBSD <= 1991011 && NetBSD >= 199407
+# if (defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199407))
 #  define	SPL_NET(x)	x = splsoftnet()
 #  define	SPL_X(x)	(void) splx(x)
 # else
@@ -519,7 +519,7 @@ extern	vm_map_t	kmem_map;
 #   define	SPL_NET(x)	x = splnet()
 #   define	SPL_X(x)	(void) splx(x)
 #  endif
-# endif /* NetBSD && NetBSD <= 1991011 && NetBSD >= 199407 */
+# endif /* NetBSD && (NetBSD <= 1991011) && (NetBSD >= 199407) */
 # define	PANIC(x,y)	if (x) panic y
 #else /* KERNEL */
 # define	SLEEP(x,y)	;

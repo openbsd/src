@@ -1,13 +1,13 @@
-/*	$OpenBSD: ip_log.c,v 1.11 2001/03/25 12:03:11 gluk Exp $	*/
+/*	$OpenBSD: ip_log.c,v 1.12 2001/05/08 19:58:01 fgsch Exp $	*/
 
 /*
- * Copyright (C) 1997-2000 by Darren Reed.
+ * Copyright (C) 1997-2001 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
- * $IPFilter: ip_log.c,v 2.5.2.2 2000/08/13 03:50:41 darrenr Exp $
+ * $IPFilter: ip_log.c,v 2.5.2.3 2001/04/03 15:45:49 darrenr Exp $
  */
 #include <sys/param.h>
 #if defined(KERNEL) && !defined(_KERNEL)
@@ -47,7 +47,7 @@
 #  include <sys/ioctl.h>
 # endif
 # include <sys/time.h>
-# if defined(_KERNEL) && !defined(linux)
+# if defined(_KERNEL)
 #  include <sys/systm.h>
 # endif
 # include <sys/uio.h>
@@ -57,9 +57,7 @@
 #  else
 #   include <sys/dir.h>
 #  endif
-#  ifndef linux
-#   include <sys/mbuf.h>
-#  endif
+#  include <sys/mbuf.h>
 # else
 #  include <sys/filio.h>
 #  include <sys/cred.h>
@@ -71,9 +69,7 @@
 #  include <sys/dditypes.h>
 #  include <sys/cmn_err.h>
 # endif
-# ifndef linux
-#  include <sys/protosw.h>
-# endif
+# include <sys/protosw.h>
 # include <sys/socket.h>
 
 # include <net/if.h>
@@ -91,7 +87,7 @@
 #   include <sys/hashing.h>
 #  endif
 # endif
-# if !defined(linux) && !(defined(__sgi) && !defined(IFF_DRVRLOCK)) /*IRIX<6*/
+# if !(defined(__sgi) && !defined(IFF_DRVRLOCK)) /*IRIX<6*/
 #  include <netinet/in_var.h>
 # endif
 # include <netinet/in_systm.h>
@@ -99,9 +95,7 @@
 # include <netinet/tcp.h>
 # include <netinet/udp.h>
 # include <netinet/ip_icmp.h>
-# ifndef linux
-#  include <netinet/ip_var.h>
-# endif
+# include <netinet/ip_var.h>
 # ifndef _KERNEL
 #  include <syslog.h>
 # endif
@@ -132,9 +126,6 @@ extern	kcondvar_t	iplwait;
 iplog_t	**iplh[IPL_LOGMAX+1], *iplt[IPL_LOGMAX+1], *ipll[IPL_LOGMAX+1];
 size_t	iplused[IPL_LOGMAX+1];
 static fr_info_t	iplcrc[IPL_LOGMAX+1];
-# ifdef	linux
-static struct wait_queue *iplwait[IPL_LOGMAX+1];
-# endif
 
 
 /*
@@ -231,9 +222,7 @@ mb_t *m;
 	(defined(OpenBSD) && (OpenBSD >= 199603))
 	strncpy(ipfl.fl_ifname, ifp->if_xname, IFNAMSIZ);
 #  else
-#   ifndef linux
 	ipfl.fl_unit = (u_char)ifp->if_unit;
-#   endif
 	if ((ipfl.fl_ifname[0] = ifp->if_name[0]))
 		if ((ipfl.fl_ifname[1] = ifp->if_name[1]))
 			if ((ipfl.fl_ifname[2] = ifp->if_name[2]))
@@ -339,7 +328,7 @@ int *types, cnt;
 	ipl->ipl_count = 1;
 	ipl->ipl_next = NULL;
 	ipl->ipl_dsize = len;
-# if SOLARIS || defined(sun) || defined(linux)
+# if SOLARIS || defined(sun)
 	uniqtime((struct timeval *)&ipl->ipl_sec);
 # else
 #  if BSD >= 199306 || defined(__FreeBSD__) || defined(__sgi)
@@ -372,11 +361,7 @@ int *types, cnt;
 	mutex_exit(&ipl_mutex);
 # else
 	MUTEX_EXIT(&ipl_mutex);
-#  ifdef linux
-	wake_up_interruptible(&iplwait[dev]);
-#  else
 	wakeup(&iplh[dev]);
-#  endif
 # endif
 	return 1;
 }
@@ -401,8 +386,7 @@ struct uio *uio;
 		return ENXIO;
 	if (!uio->uio_resid)
 		return 0;
-	if ((uio->uio_resid < sizeof(iplog_t)) ||
-	    (uio->uio_resid > IPLLOGSIZE))
+	if (uio->uio_resid < sizeof(iplog_t))
 		return EINVAL;
  
 	/*
@@ -419,19 +403,13 @@ struct uio *uio;
 			return EINTR;
 		}
 # else
-#  ifdef linux
-		interruptible_sleep_on(&iplwait[unit]);
-		if (current->signal & ~current->blocked)
-			return -EINTR;
-#  else
 		MUTEX_EXIT(&ipl_mutex);
-		SPL_X(s);
 		error = SLEEP(&iplh[unit], "ipl sleep");
-		if (error)
+		if (error) {
+			SPL_X(s);
 			return error;
-		SPL_NET(s);
+		}
 		MUTEX_ENTER(&ipl_mutex);
-#  endif /* linux */
 # endif /* SOLARIS */
 	}
 
@@ -468,13 +446,7 @@ struct uio *uio;
 
 	MUTEX_EXIT(&ipl_mutex);
 	SPL_X(s);
-# ifdef 	linux
-	if (!error)
-		return (int)copied;
-	return -error;
-# else
 	return error;
-# endif
 }
 
 

@@ -1,14 +1,14 @@
-/*	$OpenBSD: ip_auth.c,v 1.17 2001/01/30 04:23:55 kjell Exp $	*/
+/*	$OpenBSD: ip_auth.c,v 1.18 2001/05/08 19:58:01 fgsch Exp $	*/
 
 /*
- * Copyright (C) 1998-2000 by Darren Reed & Guido van Rooij.
+ * Copyright (C) 1998-2001 by Darren Reed & Guido van Rooij.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  */
 #if !defined(lint)
-static const char rcsid[] = "@(#)$IPFilter: ip_auth.c,v 2.11.2.5 2001/01/10 06:18:35 darrenr Exp $";
+static const char rcsid[] = "@(#)$IPFilter: ip_auth.c,v 2.11.2.8 2001/04/03 15:48:12 darrenr Exp $";
 #endif
 
 #include <sys/errno.h>
@@ -238,40 +238,29 @@ ip_t *ip;
 	fr_auth[i].fra_pass = 0;
 	fr_auth[i].fra_age = fr_defaultauthage;
 	bcopy((char *)fin, (char *)&fr_auth[i].fra_info, sizeof(*fin));
-#if !defined(sparc) && !defined(m68k)
+#if SOLARIS && defined(_KERNEL)
+# if !defined(sparc)
 	/*
 	 * No need to copyback here as we want to undo the changes, not keep
 	 * them.
 	 */
-# if SOLARIS && defined(_KERNEL)
 	if ((ip == (ip_t *)m->b_rptr) && (ip->ip_v == 4))
-# endif
 	{
 		register u_short bo;
 
 		bo = ip->ip_len;
 		ip->ip_len = htons(bo);
-# if !SOLARIS && !defined(__NetBSD__)
-		/* 4.4BSD converts this ip_input.c, but I don't in solaris.c */
-		bo = ip->ip_id;
-		ip->ip_id = htons(bo);
-# endif
 		bo = ip->ip_off;
 		ip->ip_off = htons(bo);
 	}
-#endif
-#if SOLARIS && defined(_KERNEL)
+# endif
 	m->b_rptr -= qif->qf_off;
 	fr_authpkts[i] = *(mblk_t **)fin->fin_mp;
 	fr_auth[i].fra_q = qif->qf_q;
 	cv_signal(&ipfauthwait);
 #else
 	fr_authpkts[i] = m;
-# if defined(linux) && defined(_KERNEL)
-	wake_up_interruptible(&ipfauthwait);
-# else
 	WAKEUP(&fr_authnext);
-# endif
 #endif
 	return 1;
 }
@@ -315,7 +304,9 @@ frentry_t *fr, **frptr;
 			else
 				faep = &fae->fae_next;
 		if (cmd == SIOCRMAFR) {
-			if (!fae)
+			if (!fr || !frptr)
+				error = EINVAL;
+			else if (!fae)
 				error = ESRCH;
 			else {
 				WRITE_ENTER(&ipf_auth);
@@ -324,7 +315,7 @@ frentry_t *fr, **frptr;
 				RWLOCK_EXIT(&ipf_auth);
 				KFREE(fae);
 			}
-		} else {
+		} else if (fr && frptr) {
 			KMALLOC(fae, frauthent_t *);
 			if (fae != NULL) {
 				bcopy((char *)fr, (char *)&fae->fae_fr,
@@ -340,7 +331,8 @@ frentry_t *fr, **frptr;
 				RWLOCK_EXIT(&ipf_auth);
 			} else
 				error = ENOMEM;
-		}
+		} else
+			error = EINVAL;
 		break;
 	case SIOCATHST:
 		READ_ENTER(&ipf_auth);
@@ -409,12 +401,18 @@ fr_authioctlloop:
 #  if SOLARIS
 			error = fr_qout(fr_auth[i].fra_q, m);
 #  else /* SOLARIS */
-#   if (_BSDI_VERSION >= 199802) || defined(__OpenBSD__)
-			error = ip_output(m, NULL, NULL, IP_FORWARDING, NULL,
+			struct route ro;
+
+			bzero((char *)&ro, sizeof(ro));
+#   if ((_BSDI_VERSION >= 199802) && (_BSDI_VERSION < 200005)) || \
+       defined(__OpenBSD__)
+			error = ip_output(m, NULL, &ro, IP_FORWARDING, NULL,
 					  NULL);
 #   else
-			error = ip_output(m, NULL, NULL, IP_FORWARDING, NULL);
+			error = ip_output(m, NULL, &ro, IP_FORWARDING, NULL);
 #   endif
+			if (ro.ro_rt)
+				RTFREE(ro.ro_rt);
 #  endif /* SOLARIS */
 			if (error)
 				fr_authstats.fas_sendfail++;
