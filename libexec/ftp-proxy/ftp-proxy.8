@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp-proxy.8,v 1.19 2002/06/16 19:34:42 miod Exp $
+.\"	$OpenBSD: ftp-proxy.8,v 1.20 2002/06/17 00:21:28 pvalchev Exp $
 .\"
 .\" Copyright (c) 1996-2001
 .\"	Obtuse Systems Corporation, All rights reserved.
@@ -157,7 +157,7 @@ A typical way to do this would be to use a rule such as
 rdr on xl0 from any to any port 21 -> 127.0.0.1 port 8081
 .Pp
 in
-.Xr nat.conf 5
+.Xr pf.conf 5
 (this example assumes xl0 is the interface facing an internal network).
 .Xr inetd 8
 must then be configured to run
@@ -209,7 +209,7 @@ When not in network address translation mode, the proxy returns an error
 to the client, hopefully forcing the client to revert to Passive mode (PASV)
 which is supported.
 EPSV will work in network address translation mode, assuming a
-.Xr nat.conf 5
+.Xr pf.conf 5
 setup which allows the EPSV connections through to their destinations.
 .Pp
 IPv6 is not yet supported.
