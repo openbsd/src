@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.26 2001/08/08 07:02:42 deraadt Exp $	*/
+/*	$OpenBSD: parse.c,v 1.27 2001/12/01 18:54:43 deraadt Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -174,16 +174,18 @@ timed_write(fd, buf, siz, timeout)
 	time_t timeout;
 {
 	int error;
-	fd_set writeds;
+	struct pollfd wfd[2];
 	struct timeval tv;
 
-	FD_ZERO(&writeds);
-	FD_SET(fd, &writeds);
+	wfd[0].fd = fd;
+	wfd[0].events = POLLOUT;
+	wfd[0].revents = 0;
 
 	tv.tv_sec = timeout;
 	tv.tv_usec = 0;
 
-	if ((error = select(fd + 1, 0, &writeds, 0, &tv)) <= 0)
+	if ((error = poll(wfd, 1, tv.tv_sec * 1000 +
+	    tv.tv_usec / 1000)) <= 0)
 		return error;
 	return(write(fd, buf, siz));
 }
