@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.31 2000/09/07 01:35:16 rahnds Exp $
+#	$OpenBSD: MAKEDEV,v 1.32 2000/09/10 16:39:42 rahnds Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -44,8 +44,14 @@
 #	ccd*	concatenated disk devices
 #
 # Terminal ports:
-#	ttye*	ite bitmapped consoles
+#	ttyE*	wscons
 #	tty*	standard built-in serial ports (2)
+#
+# Pointing devices:
+#	wsmouse* wscons mouse events
+#
+# Keyboard devices:
+#	wskbd* wscons keyboard events
 #
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
@@ -150,7 +156,7 @@ all)
 	sh $this bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
 	sh $this tun0 tun1 tun2 tun3
 	sh $this random uk0 uk1 ss0 ss1
-	sh $this kbd mouse
+	sh $this wscons0
 	sh $this lkm xfs0
 	sh $this usbs
 	sh $this local
@@ -161,9 +167,10 @@ ramdisk)
 	sh $this wd0 wd1 wd2 wd3 
 	sh $this sd0 sd1 sd2 sd3 sd4 st0 st1 cd0 cd1
 	sh $this rd0
-	sh $this ttyo0 ttyE0
+	sh $this ttyo0 
 	sh $this random
 	sh $this tty00 tty01 pty0
+	sh $this wscons0
 	;;
 
 std)
@@ -482,12 +489,21 @@ utty*)
 	chmod 660 utty$unit
 	;;
 
+ttyEcfg)
+	type=Ecfg
+	major=67
+	minor=255 
+	unit=${i##ttyE}
+        rm -f tty$type$unit
+        mknod tty$type$unit c $major $minor
+        chown root.wheel tty$type$unit
+        ;;
+
 ttyE*)
-		  type=E
-		  unit=${i##ttyE}
-	case $type in
-	E)	major=67; minor=$unit ;;
-	esac
+	type=E
+	unit=${i##ttyE}
+	major=67
+	minor=$unit
         rm -f tty$type$unit
         mknod tty$type$unit c $major $minor
         chown root.wheel tty$type$unit
@@ -537,18 +553,6 @@ lkm)
 	chmod 640 lkm
 	;;
 
-kbd)
-	rm -f kbd
-	mknod kbd c 29 0
-	chmod 666 kbd
-	;;
-
-mouse)
-	rm -f mouse
-	mknod mouse c 30 0
-	chmod 666 mouse
-	;;
-
 random|srandom|urandom|prandom|arandom)
 	rm -f random urandom srandom prandom arandom
 	mknod  random c 40 0
@@ -579,15 +583,7 @@ ss*)
 	;;
 wscons*)
 	unit=${i##*[a-z]}
-	sh $this wsdisplay${unit} wskbd${unit} wsmouse${unit}
-	;;
-wsdisplay*)
-	unit=${i##*[a-z]}
-	rm -f wsdisplay${unit} 
-	mknod wsdisplay${unit} c 67 ${unit}
-	# XXX
-	chmod 660 wsdisplay${unit}
-	chown root.wheel wsdisplay${unit}
+	sh $this ttyE${unit} wskbd${unit} wsmouse${unit}
 	;;
 wskbd*)
 	unit=${i##*[a-z]}
