@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv.c,v 1.8 1997/03/30 20:51:20 maja Exp $ */
+/*	$OpenBSD: ypserv.c,v 1.9 1997/04/12 00:14:28 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypserv.c,v 1.8 1997/03/30 20:51:20 maja Exp $";
+static char rcsid[] = "$OpenBSD: ypserv.c,v 1.9 1997/04/12 00:14:28 deraadt Exp $";
 #endif
 
 #include "yp.h"
@@ -347,11 +347,15 @@ char *argv[];
 	int asize = sizeof (saddr);
 	int	 usage = 0;
 	int	 xflag = 0;
+	int	 allowv1 = 0;
 	int	 ch;
 	extern	 char *optarg;
 	
-	while ((ch = getopt(argc, argv, "a:dx")) != -1)
+	while ((ch = getopt(argc, argv, "1a:dx")) != -1)
 		switch (ch) {
+		case '1':
+			allowv1 = TRUE;
+			break;
 		case 'a':
 			aclfile = optarg;
 			break;
@@ -449,9 +453,11 @@ char *argv[];
 		}
 		if (!_rpcpmstart)
 			proto = IPPROTO_UDP;
-		if (!svc_register(transp, YPPROG, YPOLDVERS, ypprog_1, proto)) {
-			_msgout("unable to register (YPPROG, YPOLDVERS, udp).");
-			exit(1);
+		if (allowv1) {
+			if (!svc_register(transp, YPPROG, YPOLDVERS, ypprog_1, proto)) {
+				_msgout("unable to register (YPPROG, YPOLDVERS, udp).");
+				exit(1);
+			}
 		}
 		if (!svc_register(transp, YPPROG, YPVERS, ypprog_2, proto)) {
 			_msgout("unable to register (YPPROG, YPVERS, udp).");
@@ -470,9 +476,11 @@ char *argv[];
 		}
 		if (!_rpcpmstart)
 			proto = IPPROTO_TCP;
-		if (!svc_register(transp, YPPROG, YPOLDVERS, ypprog_1, proto)) {
-			_msgout("unable to register (YPPROG, YPOLDVERS, tcp).");
-			exit(1);
+		if (allowv1) {
+			if (!svc_register(transp, YPPROG, YPOLDVERS, ypprog_1, proto)) {
+				_msgout("unable to register (YPPROG, YPOLDVERS, tcp).");
+				exit(1);
+			}
 		}
 		if (!svc_register(transp, YPPROG, YPVERS, ypprog_2, proto)) {
 			_msgout("unable to register (YPPROG, YPVERS, tcp).");
