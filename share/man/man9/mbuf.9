@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.11 2003/04/17 05:08:39 jmc Exp $
+.\"     $OpenBSD: mbuf.9,v 1.12 2003/12/12 10:25:00 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -114,19 +114,20 @@ struct m_hdr {
 
 struct  pkthdr {
         struct  ifnet *rcvif;
+        SLIST_HEAD(packet_tags, m_tag) tags;
         int     len;
-        void    *tdbi;
+        int     csum;
 
 };
 
 struct m_ext {
         caddr_t ext_buf;
-        void    (*ext_free)
-(struct mbuf *);
+        void    (*ext_free)(caddr_t, u_int, void *);
+        void    *ext_arg;
         u_int   ext_size;
-        void    (*ext_ref)
-(struct mbuf *);
-        void    *ext_handle;
+        int     ext_type;
+        struct mbuf *ext_nextref;
+        struct mbuf *ext_prevref;
 };
 
 struct mbuf {
@@ -141,11 +142,6 @@ struct mbuf {
                 } MH;
                 char    M_databuf[MLEN];
         } M_dat;
-};
-
-union mcluster {
-        union   mcluster *mcl_next;
-        char    mcl_buf[MCLBYTES];
 };
 
 #define m_next          m_hdr.mh_next
@@ -187,6 +183,8 @@ A pointer to the next mbuf in the mbuf chain.
 A pointer to the next mbuf chain (i.e., packet) in the queue.
 .It Fa mh_data
 Indicates the address of the beginning of data in the mbuf.
+.It Fa mh_len
+Indicates the amount of data in the mbuf.
 .It Fa mh_type
 Indicates the type of data contained in the mbuf (see below).
 .It Fa mh_flags
@@ -196,6 +194,7 @@ Flags (see below).
 The
 .Fa mh_type
 variable can take the following values:
+.Pp
 .Bl -tag -compact -offset indent -width XXXXXXXXXXXXXXXXXX
 .It Dv MT_FREE
 the mbuf should be on the free list.
@@ -218,6 +217,7 @@ the data consists of out-of-banddata.
 The
 .Fa mh_flags
 variable can take the following values:
+.Pp
 .Bl -tag -compact -offset indent -width XXXXXXXXXXXXXXXXXX
 .It Dv M_EXT
 mbuf has associated external storage.
@@ -239,6 +239,10 @@ packet was encrypted (ESP-transport).
 packet was authenticated (AH).
 .It Dv M_COMP
 packet was compressed (IPCOMP).
+.It Dv M_AUTH_AH
+header was authenticated (AH).
+.It Dv M_TUNNEL
+IP-in-IP added by tunnel mode IPsec.
 .It Dv M_IPV4_CSUM_OUT
 IPv4 checksum needed.
 .It Dv M_TCPV4_CSUM_OUT
