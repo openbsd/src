@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.137 2003/09/22 01:31:39 krw Exp $
+#	$OpenBSD: install.sh,v 1.138 2003/09/26 00:11:25 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -100,7 +100,7 @@ if [ ! -f /etc/fstab ]; then
 		else
 			# Force the user to think and type in a disk name by
 			# making 'done' the default choice.
-			ask_which "disk" "do you wish to initialize?" "$_DKDEVS" done "No more disks to initialize"
+			ask_which "disk" "do you wish to initialize" "$_DKDEVS" done "No more disks to initialize"
 			[[ $resp == done ]] && break
 		fi
 
