@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.16 1997/02/12 01:50:28 rahnds Exp $ */
+/*	$OpenBSD: conf.c,v 1.17 1997/11/23 05:21:56 mickey Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -171,8 +171,6 @@ dev_decl(filedesc,open);
 
 #include "tun.h"
 
-/* open, close, read, ioctl */
-cdev_decl(ipl);
 #ifdef IPFILTER
 #define NIPF 1
 #else

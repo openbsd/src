@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.17 1997/05/21 18:31:31 pefo Exp $ */
+/*	$OpenBSD: conf.c,v 1.18 1997/11/23 05:21:54 mickey Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)conf.c	8.2 (Berkeley) 11/14/93
- *      $Id: conf.c,v 1.17 1997/05/21 18:31:31 pefo Exp $
+ *      $Id: conf.c,v 1.18 1997/11/23 05:21:54 mickey Exp $
  */
 
 #include <sys/param.h>
@@ -155,8 +155,6 @@ cdev_decl(uk);
 cdev_decl(wd);
 cdev_decl(acd);
 
-/* open, close, read, ioctl */
-cdev_decl(ipl);
 #ifdef IPFILTER
 #define NIPF 1
 #else

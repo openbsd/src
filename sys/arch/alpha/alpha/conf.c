@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.13 1997/08/04 10:01:43 dgregor Exp $	*/
+/*	$OpenBSD: conf.c,v 1.14 1997/11/23 05:21:53 mickey Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -114,7 +114,6 @@ cdev_decl(ms);
 #include "lpt.h"
 cdev_decl(lpt);
 cdev_decl(rd);
-cdev_decl(ipl);
 #ifdef IPFILTER
 #define NIPF 1
 #else

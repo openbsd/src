@@ -129,7 +129,6 @@ cdev_decl(xcfb);
 cdev_decl(mfb);
 dev_decl(filedesc,open);
 
-cdev_decl(ipl);
 #ifdef IPFILTER
 #define NIPF 1
 #else

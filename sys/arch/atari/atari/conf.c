@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.9 1996/11/11 19:20:43 kstailey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.10 1997/11/23 05:21:54 mickey Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -128,8 +128,6 @@ dev_decl(fd,open);
 #include "bpfilter.h"
 #include "tun.h"
 
-/* open, close, read, ioctl */
-cdev_decl(ipl);
 #ifdef IPFILTER
 #define NIPF 1
 #else
