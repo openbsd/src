@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.30 2001/11/28 23:28:32 jakob Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.31 2001/12/02 18:30:30 drahn Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -602,7 +602,7 @@ msdosfs_write(v)
 
 		if (bytelen == 0)
 			break;
-		win = ubc_alloc(&vp->v_uvm.u_obj, oldoff, &bytelen, UBC_READ);
+		win = ubc_alloc(&vp->v_uvm.u_obj, oldoff, &bytelen, UBC_WRITE);
 		error = uiomove(win, bytelen, uio);
 		ubc_release(win, 0);
 		if (error) {
@@ -1692,7 +1692,6 @@ msdosfs_bmap(v)
 		int *a_runp;
 	} */ *ap = v;
 	struct denode *dep = VTODE(ap->a_vp);
-	struct msdosfsmount *pmp = dep->de_pmp;
 
 	if (ap->a_vpp != NULL)
 		*ap->a_vpp = dep->de_devvp;
@@ -1704,7 +1703,7 @@ msdosfs_bmap(v)
 		 */
 		*ap->a_runp = 0;
 	}
-	return (pcbmap(dep, de_bn2cn(pmp, ap->a_bn), ap->a_bnp, 0, 0));
+	return (pcbmap(dep, ap->a_bn, ap->a_bnp, 0, 0));
 }
 
 int
