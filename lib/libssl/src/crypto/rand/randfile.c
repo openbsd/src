@@ -215,34 +215,32 @@ err:
 
 const char *RAND_file_name(char *buf, int size)
 	{
-	char *s;
+	char *s = NULL;
 	char *ret=NULL;
 	struct stat sb;
 
-	s=getenv("RANDFILE");
-	if (s != NULL)
+	if (issetugid() == 0)
+		s = getenv("RANDFILE");
+	if (s != NULL && *s && strlen(s) < size)
 		{
-		strncpy(buf,s,size-1);
-		buf[size-1]='\0';
+		strlcpy(buf,s,size);
 		ret=buf;
 		}
 	else
 		{
-		s=getenv("HOME");
-		if (s == NULL || *s == '\0') 
-		  ret = RFILE;
-		if (((int)(strlen(s)+strlen(RFILE)+2)) > size) 
-			ret=RFILE;
-		else 
+		if (issetugid() == 0)
+			s=getenv("HOME");
+		if (s && *s && strlen(s)+strlen(RFILE)+2 < size)
 			{
-			 strlcpy(buf,s,size);
+			strlcpy(buf,s,size);
 #ifndef VMS
-			 strcat(buf,"/");
+			strcat(buf,"/");
 #endif
-			 strlcat(buf,RFILE,size);
-			 ret=buf;
+			strlcat(buf,RFILE,size);
+			ret=buf;
 			}
 		}
+
 #ifdef DEVRANDOM
 	/* given that all random loads just fail if the file can't be 
 	 * seen on a stat, we stat the file we're returning, if it
@@ -251,9 +249,11 @@ const char *RAND_file_name(char *buf, int size)
 	 * to something hopefully decent if that isn't available. 
 	 */
 
+	if (ret == NULL)
+		ret = DEVRANDOM;
+
 	if (stat(ret,&sb) == -1)
-	  ret = DEVRANDOM;
+		ret = DEVRANDOM;
 #endif
 	return(ret);
 	}
-
