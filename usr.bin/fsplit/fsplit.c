@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsplit.c,v 1.3 1998/07/10 21:44:51 mickey Exp $	*/
+/*	$OpenBSD: fsplit.c,v 1.4 1998/11/16 06:21:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -44,15 +44,24 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fsplit.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: fsplit.c,v 1.3 1998/07/10 21:44:51 mickey Exp $";
+static char rcsid[] = "$OpenBSD: fsplit.c,v 1.4 1998/11/16 06:21:58 deraadt Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <err.h>
+
+void 	badparms __P(());
+void	get_name __P((char *, int));
+int	lname __P((char *));
+int	getline __P((void));
+int	lend __P((void));
+int	scan_name __P((char *, char *));
+int	saveit __P((char *));
 
 /*
  *	usage:		fsplit [-e efile] ... [file]
@@ -103,7 +112,7 @@ main(argc, argv)
 char **argv;
 {
 	register FILE *ofp;	/* output file */
-	register rv;		/* 1 if got card in output file, 0 otherwise */
+	register int rv;	/* 1 if got card in output file, 0 otherwise */
 	register char *ptr;
 	int nflag,		/* 1 if got name of subprog., 0 otherwise */
 		retval,
@@ -187,11 +196,13 @@ char **argv;
     }
 }
 
+void
 badparms()
 {
 	err(1, "usage:  fsplit [-e efile] ... [file]");
 }
 
+int
 saveit(name)
 char *name;
 {
@@ -211,6 +222,7 @@ char *name;
 	return(0);
 }
 
+void
 get_name(name, letters)
 char *name;
 int letters;
@@ -229,6 +241,7 @@ int letters;
 	}
 }
 
+int
 getline()
 {
 	register char *ptr;
@@ -248,6 +261,7 @@ getline()
 }
 
 /* return 1 for 'end' alone on card (up to col. 72),  0 otherwise */
+int
 lend()
 {
 	register char *p;
@@ -273,11 +287,12 @@ lend()
 		return 0 if comment card, 1 if found
 		name and put in arg string. invent name for unnamed
 		block datas and main programs.		*/
+int
 lname(s)
 char *s;
 {
 #	define LINESIZE 80 
-	register char *ptr, *p, *sptr;
+	register char *ptr, *p;
 	char	line[LINESIZE], *iptr = line;
 
 	/* first check for comment cards */
@@ -324,6 +339,7 @@ char *s;
 	return(1);
 }
 
+int
 scan_name(s, ptr)
 char *s, *ptr;
 {
