@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.6 1996/05/02 13:12:11 deraadt Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.7 1996/08/15 21:51:50 tholo Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -237,6 +237,11 @@ exit1(p, rv)
 	*p->p_ru = p->p_stats->p_ru;
 	calcru(p, &p->p_ru->ru_utime, &p->p_ru->ru_stime, NULL);
 	ruadd(p->p_ru, &p->p_stats->p_cru);
+
+	/*
+	 * clear %cpu usage during swap
+	 */
+	p->p_pctcpu = 0;
 
 	/*
 	 * Notify parent that we're gone.
