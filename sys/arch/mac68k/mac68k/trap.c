@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.42 2004/12/06 20:12:24 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.43 2004/12/08 20:35:34 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.68 1998/12/22 08:47:07 scottr Exp $	*/
 
 /*
@@ -418,6 +418,9 @@ copyfault:
 		uprintf("pid %d killed: no floating point support.\n",
 			p->p_pid);
 		i = SIGILL;
+		ucode = frame.f_format;
+		typ = ILL_COPROC;
+		v = frame.f_pc;
 #endif
 		break;
 
@@ -497,7 +500,7 @@ copyfault:
 		 * check.  Note that we ensure that we are at least at SIR
 		 * IPL while processing the SIR.
 		 */
-		spl1();
+		splsoft();
 		/* FALLTHROUGH */
 
 	case T_SSIR:		/* Software interrupt */
@@ -563,24 +566,26 @@ copyfault:
 		 * The last can occur during an exec() copyin where the
 		 * argument space is lazy-allocated.
 		 */
-		if (type == T_MMUFLT &&
+		if ((type & T_USER) == 0 &&
 		    (!p->p_addr->u_pcb.pcb_onfault || KDFAULT(code)))
 			map = kernel_map;
 		else
 			map = vm ? &vm->vm_map : kernel_map;
+
 		if (WRFAULT(code)) {
 			vftype = VM_PROT_WRITE;
 			ftype = VM_PROT_READ | VM_PROT_WRITE;
 		}
 		else
 			vftype = ftype = VM_PROT_READ;
+
 		va = trunc_page((vaddr_t)v);
-#ifdef DEBUG
+
 		if (map == kernel_map && va == 0) {
-			printf("trap: bad kernel access at %x\n", v);
+			printf("trap: bad kernel %s access at 0x%x\n",
+			    (ftype & VM_PROT_WRITE) ? "read/write" : "read", v);
 			goto dopanic;
 		}
-#endif
 		rv = uvm_fault(map, va, 0, ftype);
 #ifdef DEBUG
 		if (rv && MDB_ISPID(p->p_pid))
