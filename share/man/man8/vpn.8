@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.51 2001/05/30 03:24:17 millert Exp $
+.\" $OpenBSD: vpn.8,v 1.52 2001/06/19 18:01:03 danh Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -481,7 +481,7 @@ for machine A:
 # the phase 2 negotiation traffic (i.e encrypted & authenticated).
 
 [Phase 1]
-193.168.2.1=		peer-machineB
+192.168.2.1=		peer-machineB
 
 # 'Phase 2' defines which connections the daemon should establish.
 # These connections contain the actual "IPsec VPN" information.
@@ -494,7 +494,7 @@ Connections=		VPN-A-B
 [peer-machineB]
 Phase=			1
 Transport=		udp
-Address=		192.168.1.254
+Address=		192.168.2.1
 Configuration=		Default-main-mode
 Authentication=		yoursharedsecret
 
@@ -544,7 +544,7 @@ for machine B:
 # the phase 2 negotiation traffic (i.e encrypted & authenticated).
 
 [Phase 1]
-193.168.1.254=		peer-machineA
+192.168.1.254=		peer-machineA
 
 # 'Phase 2' defines which connections the daemon should establish.
 # These connections contain the actual "IPsec VPN" information.
@@ -557,7 +557,7 @@ Connections=		VPN-B-A
 [peer-machineA]
 Phase=			1
 Transport=		udp
-Address=		192.168.2.1
+Address=		192.168.1.254
 Configuration=		Default-main-mode
 Authentication=		yoursharedsecret
 
