@@ -1,4 +1,4 @@
-/*      $NetBSD: psl.h,v 1.4 1994/11/25 19:08:58 ragge Exp $      */
+/*      $NetBSD: psl.h,v 1.5 1996/01/28 12:32:21 ragge Exp $      */
 
 /*
  * Rewritten for the VAX port. Based on Berkeley code. /IC
@@ -47,7 +47,6 @@
 #define	PSL_V		0x00000002	/* overflow bit */
 #define	PSL_Z		0x00000004     	/* zero bit */
 #define	PSL_N		0x00000008     	/* negative bit */
-/* #define	PSL_ALLCC	0x0000000F	/* all cc bits - unlikely */
 #define	PSL_T		0x00000010      /* trace enable bit */
 #define	PSL_IPL00	0x00000000	/* interrupt priority level 0 */
 #define	PSL_IPL01	0x00010000	/* interrupt priority level 1 */
