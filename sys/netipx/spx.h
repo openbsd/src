@@ -1,4 +1,4 @@
-/*	$OpenBSD: spx.h,v 1.4 2000/12/06 17:19:01 deraadt Exp $	*/
+/*	$OpenBSD: spx.h,v 1.5 2001/05/01 17:58:15 mickey Exp $	*/
 
 /*-
  *
@@ -92,7 +92,7 @@ struct spx {
 
 struct spx_q {
 	TAILQ_ENTRY(spx_q)	list;
-	caddr_t	data;
+	struct mbuf *m;
 };
 
 /*
@@ -191,7 +191,7 @@ void	spx_init __P((void));
 void	spx_input __P((struct mbuf *m, ...));
 int	spx_output __P((struct spxpcb *cb, struct mbuf *m0));
 void	spx_quench __P((struct ipxpcb *ipxp));
-int	spx_reass __P((struct spxpcb *cb, struct spx *si));
+int	spx_reass __P((struct spxpcb *cb, struct mbuf *m0));
 void	spx_setpersist __P((struct spxpcb *cb));
 void	spx_slowtimo __P((void));
 void	spx_template __P((struct spxpcb *cb));
