@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.58 2004/06/09 02:01:15 itojun Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.59 2004/09/14 22:12:27 deraadt Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -1063,7 +1063,6 @@ main(int argc, char *argv[])
 
 	for (;;) {
 		struct msghdr m;
-		struct cmsghdr *cm;
 		u_char buf[1024];
 		struct iovec iov[2];
 
@@ -1131,7 +1130,6 @@ main(int argc, char *argv[])
 		iov[0].iov_len = packlen;
 		m.msg_iov = iov;
 		m.msg_iovlen = 1;
-		cm = (struct cmsghdr *)buf;
 		m.msg_control = (caddr_t)buf;
 		m.msg_controllen = sizeof(buf);
 

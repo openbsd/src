@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.32 2004/05/27 07:41:58 otto Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.33 2004/09/14 22:13:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1113,7 +1113,7 @@ bridge_rules(int s, char *brdg, char *ifname, char *delim)
 {
 	char *inbuf = NULL, *inb;
 	struct ifbrlconf ifc;
-	struct ifbrlreq *ifrp, ifreq;
+	struct ifbrlreq *ifrp;
 	int len = 8192, i;
 
 	while (1) {
@@ -1126,12 +1126,12 @@ bridge_rules(int s, char *brdg, char *ifname, char *delim)
 		strlcpy(ifc.ifbrl_ifsname, ifname, sizeof(ifc.ifbrl_ifsname));
 		if (ioctl(s, SIOCBRDGGRL, &ifc) < 0)
 			err(1, "ioctl(SIOCBRDGGRL)");
-		if (ifc.ifbrl_len + sizeof(ifreq) < len)
+		if (ifc.ifbrl_len + sizeof(*ifrp) < len)
 			break;
 		len *= 2;
 	}
 	ifrp = ifc.ifbrl_req;
-	for (i = 0; i < ifc.ifbrl_len; i += sizeof(ifreq)) {
+	for (i = 0; i < ifc.ifbrl_len; i += sizeof(*ifrp)) {
 		ifrp = (struct ifbrlreq *)((caddr_t)ifc.ifbrl_req + i);
 		bridge_showrule(ifrp, delim);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsirand.c,v 1.21 2004/08/08 19:04:25 deraadt Exp $	*/
+/*	$OpenBSD: fsirand.c,v 1.22 2004/09/14 22:11:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fsirand.c,v 1.21 2004/08/08 19:04:25 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fsirand.c,v 1.22 2004/09/14 22:11:35 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -96,7 +96,7 @@ fsirand(char *device)
 	static size_t oldibufsize;
 	size_t ibufsize;
 	struct fs *sblock, *tmpsblock;
-	ino_t inumber, maxino;
+	ino_t inumber;
 	daddr_t dblk;
 	char sbuf[SBSIZE], sbuftmp[SBSIZE];
 	int devfd, n, cg;
@@ -131,7 +131,6 @@ fsirand(char *device)
 		    (n < SBSIZE) ? "short read" : strerror(errno));
 		return (1);
 	}
-	maxino = sblock->fs_ncg * sblock->fs_ipg;
 
 	/* Simple sanity checks on the superblock */
 	if (sblock->fs_magic != FS_MAGIC) {
