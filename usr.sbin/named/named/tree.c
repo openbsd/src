@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.2 1997/03/12 10:42:38 downsj Exp $	*/
+/*	$OpenBSD: tree.c,v 1.3 1997/07/30 15:42:47 kstailey Exp $	*/
 
 /* tree - balanced binary tree library
  *
@@ -46,7 +46,7 @@ static char	*debugFuncs[256];
 # define ENTER(proc) { \
 			debugFuncs[debugDepth] = proc; \
 			fprintf(stderr, "ENTER(%d:%s.%s)\n", \
-				debugDepth, DEBUG,
+				debugDepth, DEBUG, \
 				debugFuncs[debugDepth]); \
 			debugDepth++; \
 		}
