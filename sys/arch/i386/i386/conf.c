@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.60 2000/04/15 17:36:29 jakob Exp $	*/
+/*	$OpenBSD: conf.c,v 1.61 2000/07/06 21:51:57 fgsch Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -204,6 +204,8 @@ cdev_decl(ugen);
 cdev_decl(ulpt);
 #include "urio.h"
 cdev_decl(urio);
+#include "ucom.h"
+cdev_decl(ucom);
 
 #ifdef IPFILTER
 #define NIPF 1
@@ -306,6 +308,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ugen_init(NUGEN,ugen),	/* 63: USB generic driver */
 	cdev_ulpt_init(NULPT,ulpt), 	/* 64: USB printers */
 	cdev_usbdev_init(NURIO,urio),	/* 65: USB Diamond Rio 500 */
+	cdev_tty_init(NUCOM,ucom),	/* 66: USB tty */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

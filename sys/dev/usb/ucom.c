@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.4 2000/07/04 11:44:22 fgsch Exp $ */
+/*	$OpenBSD: ucom.c,v 1.5 2000/07/06 21:51:56 fgsch Exp $ */
 /*	$NetBSD: ucom.c,v 1.22 2000/04/14 14:21:55 augustss Exp $	*/
 
 /*
@@ -75,9 +75,9 @@ int ucomdebug = 0;
 #endif
 #define DPRINTF(x) DPRINTFN(0, x)
 
-#define	UCOMUNIT_MASK		0x3ffff
-#define	UCOMDIALOUT_MASK	0x80000
-#define	UCOMCALLUNIT_MASK	0x40000
+#define	UCOMUNIT_MASK		0x3f
+#define	UCOMDIALOUT_MASK	0x80
+#define	UCOMCALLUNIT_MASK	0x40
 
 #define	UCOMUNIT(x)		(minor(x) & UCOMUNIT_MASK)
 #define	UCOMDIALOUT(x)		(minor(x) & UCOMDIALOUT_MASK)
