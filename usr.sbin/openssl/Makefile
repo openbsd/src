@@ -30,7 +30,7 @@ CFLAGS+= -DB_ENDIAN
 .endif
 .endif 
 
-CFLAGS+= -DMONOLITH -DNO_IDEA -DTERMIOS -DANSI_SOURCE 
+CFLAGS+= -DMONOLITH -DNO_IDEA -DTERMIOS -DANSI_SOURCE -DNO_RC5
 CFLAGS+= -I/usr/include/ssl
 
 SRCS=	verify.c asn1pars.c req.c dgst.c dh.c enc.c passwd.c gendh.c errstr.c\
@@ -44,4 +44,3 @@ SRCS=	verify.c asn1pars.c req.c dgst.c dh.c enc.c passwd.c gendh.c errstr.c\
 .PATH:	${SSLEAY_SRC}
 
 .include<bsd.prog.mk>
-

@@ -21,6 +21,7 @@ CFLAGS+= -DB_ENDIAN
 .endif 
 
 CFLAGS+= -DNO_IDEA -DTERMIOS -DANSI_SOURCE -DNO_ERR -DNO_WINDOWS_BRAINDEATH
+CFLAGS+= -DNO_RC5
 CFLAGS+= -I${.CURDIR}/../${SSLEAYDIST}
 CFLAGS+= -I${LCRYPTO_SRC}
 CFLAGS+= -I${LCRYPTO_INC}
@@ -50,9 +51,9 @@ SRCS+=	rc2_ecb.c rc2_skey.c rc2_cbc.c rc2cfb64.c
 SRCS+=	rc2ofb64.c							
 CFLAGS+= -I${LCRYPTO_SRC}/rc4
 SRCS+=	rc4_skey.c rc4_enc.c
-CFLAGS+= -I${LCRYPTO_SRC}/rc5
-SRCS+=	rc5_skey.c rc5_ecb.c rc5cfb64.c rc5cfb64.c 	
-SRCS+=	rc5ofb64.c rc5_enc.c
+#CFLAGS+= -I${LCRYPTO_SRC}/rc5
+#SRCS+=	rc5_skey.c rc5_ecb.c rc5cfb64.c rc5cfb64.c 	
+#SRCS+=	rc5ofb64.c rc5_enc.c
 #CFLAGS+= -I${LCRYPTO_SRC}/idea
 #SRCS+=	i_cbc.c i_cfb64.c i_ofb64.c i_ecb.c		
 #SRCS+=	i_skey.c							
