@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_tb.c,v 1.4 2003/06/02 23:28:06 millert Exp $	*/
+/*	$OpenBSD: tty_tb.c,v 1.5 2003/08/11 09:56:49 mickey Exp $	*/
 /*	$NetBSD: tty_tb.c,v 1.18 1996/02/04 02:17:36 christos Exp $	*/
 
 /*-
@@ -60,7 +60,7 @@ struct	tbconf {
 	short	tbc_uiosize;	/* size of data record returned user */
 	int	tbc_sync;	/* mask for finding sync byte/bit */
 				/* decoding routine */
-    	void    (*tbc_decode)(struct tbconf *, char *, union tbpos *);
+    	void    (*tbc_decode)(const struct tbconf *, char *, union tbpos *);
 	u_char	*tbc_run;	/* enter run mode sequence */
 	u_char	*tbc_point;	/* enter point mode sequence */
 	u_char	*tbc_stop;	/* stop sequence */
@@ -70,14 +70,14 @@ struct	tbconf {
 #define	TBF_INPROX	0x2	/* tablet has proximity info */
 };
 
-static void gtcodecode(struct tbconf *, char *, union tbpos *);
-static void tbolddecode(struct tbconf *, char *, union tbpos *);
-static void tblresdecode(struct tbconf *, char *, union tbpos *);
-static void tbhresdecode(struct tbconf *, char *, union tbpos *);
-static void poldecode(struct tbconf *, char *, union tbpos *);
+static void gtcodecode(const struct tbconf *, char *, union tbpos *);
+static void tbolddecode(const struct tbconf *, char *, union tbpos *);
+static void tblresdecode(const struct tbconf *, char *, union tbpos *);
+static void tbhresdecode(const struct tbconf *, char *, union tbpos *);
+static void poldecode(const struct tbconf *, char *, union tbpos *);
 
 
-struct	tbconf tbconf[TBTYPE] = {
+const struct	tbconf tbconf[TBTYPE] = {
 { 0 },
 { 5, sizeof (struct hitpos), 0200, tbolddecode, "6", "4" },
 { 5, sizeof (struct hitpos), 0200, tbolddecode, "\1CN", "\1RT", "\2", "\4" },
@@ -161,8 +161,8 @@ tbread(tp, uio)
 	register struct tty *tp;
 	struct uio *uio;
 {
-	register struct tb *tbp = (struct tb *)tp->t_sc;
-	register struct tbconf *tc = &tbconf[tbp->tbflags & TBTYPE];
+	struct tb *tbp = (struct tb *)tp->t_sc;
+	const struct tbconf *tc = &tbconf[tbp->tbflags & TBTYPE];
 	int ret;
 
 	if ((tp->t_state&TS_CARR_ON) == 0)
@@ -186,8 +186,8 @@ tbinput(c, tp)
 	register int c;
 	register struct tty *tp;
 {
-	register struct tb *tbp = (struct tb *)tp->t_sc;
-	register struct tbconf *tc = &tbconf[tbp->tbflags & TBTYPE];
+	struct tb *tbp = (struct tb *)tp->t_sc;
+	const struct tbconf *tc = &tbconf[tbp->tbflags & TBTYPE];
 
 	if (tc->tbc_recsize == 0 || tc->tbc_decode == 0)	/* paranoid? */
 		return;
@@ -211,7 +211,7 @@ tbinput(c, tp)
  */
 static void
 gtcodecode(tc, cp, u)
-	struct tbconf *tc;
+	const struct tbconf *tc;
 	register char *cp;
 	register union tbpos *u;
 {
@@ -234,7 +234,7 @@ gtcodecode(tc, cp, u)
  */
 static void
 tbolddecode(tc, cp, u)
-	struct tbconf *tc;
+	const struct tbconf *tc;
 	register char *cp;
 	register union tbpos *u;
 {
@@ -260,7 +260,7 @@ tbolddecode(tc, cp, u)
  */
 static void
 tblresdecode(tc, cp, u)
-	struct tbconf *tc;
+	const struct tbconf *tc;
 	register char *cp;
 	register union tbpos *u;
 {
@@ -282,7 +282,7 @@ tblresdecode(tc, cp, u)
  */
 static void
 tbhresdecode(tc, cp, u)
-	struct tbconf *tc;
+	const struct tbconf *tc;
 	register char *cp;
 	register union tbpos *u;
 {
@@ -307,7 +307,7 @@ tbhresdecode(tc, cp, u)
  */
 static void
 poldecode(tc, cp, u)
-	struct tbconf *tc;
+	const struct tbconf *tc;
 	register char *cp;
 	register union tbpos *u;
 {
@@ -350,7 +350,7 @@ tbtioctl(tp, cmd, data, flag, p)
 		/* fall thru... to set mode bits */
 
 	case BIOSMODE: {
-		register struct tbconf *tc;
+		const struct tbconf *tc;
 		u_char *c;
 
 		tbp->tbflags &= ~TBMODE;
