@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.302 2003/02/02 23:22:07 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.303 2003/02/03 13:40:45 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -3022,6 +3022,12 @@ expand_altq(struct pf_altq *a, struct node_if *interfaces,
 	struct node_queue	*n;
 	int			 errs = 0;
 
+	if ((pf->loadopt & (PFCTL_FLAG_ALTQ | PFCTL_FLAG_ALL)) == 0) {
+		FREE_LIST(struct node_if, interfaces);
+		FREE_LIST(struct node_queue, nqueues);
+		return (0);
+	}
+
 	LOOP_THROUGH(struct node_if, interface, interfaces,
 		memcpy(&pa, a, sizeof(struct pf_altq));
 		if (strlcpy(pa.ifname, interface->ifname,
@@ -3118,6 +3124,11 @@ expand_queue(struct pf_altq *a, struct node_queue *nqueues,
 	struct node_queue	*n;
 	u_int8_t		 added = 0;
 	u_int8_t		 found = 0;
+
+	if ((pf->loadopt & (PFCTL_FLAG_ALTQ | PFCTL_FLAG_ALL)) == 0) {
+		FREE_LIST(struct node_queue, nqueues);
+		return (0);
+	}
 
 	LOOP_THROUGH(struct node_queue, tqueue, queues,
 		if (!strncmp(a->qname, tqueue->queue, PF_QNAME_SIZE)) {

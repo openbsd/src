@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.142 2003/02/02 23:22:07 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.143 2003/02/03 13:40:45 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -968,6 +968,7 @@ pfctl_rules(int dev, char *filename, int opts)
 	/* fill in callback data */
 	pf.dev = dev;
 	pf.opts = opts;
+	pf.loadopt = loadopt;
 	pf.paltq = &pa;
 	for (i = 0; i < PF_RULESET_MAX; i++) {
 		pf.prule[i] = &pr[i];
