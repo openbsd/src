@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.39 2004/06/20 17:49:46 henning Exp $ */
+/*	$OpenBSD: config.c,v 1.40 2004/10/01 15:11:12 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -228,7 +228,7 @@ host_v6(const char *s, struct bgpd_addr *h)
 void
 prepare_listeners(struct bgpd_config *conf)
 {
-	struct listen_addr	*la;
+	struct listen_addr	*la, *next;
 	int			 opt = 1;
 
 	if (TAILQ_EMPTY(conf->listen_addrs)) {
@@ -253,10 +253,18 @@ prepare_listeners(struct bgpd_config *conf)
 		TAILQ_INSERT_TAIL(conf->listen_addrs, la, entry);
 	}
 
-	TAILQ_FOREACH(la, conf->listen_addrs, entry) {
+	for (la = TAILQ_FIRST(conf->listen_addrs); la != NULL; la = next) {
+		next = TAILQ_NEXT(la, entry);
 		if ((la->fd = socket(la->sa.ss_family, SOCK_STREAM,
-		    IPPROTO_TCP)) == -1)
-			fatal("socket");
+		    IPPROTO_TCP)) == -1) {
+			if (la->flags & DEFAULT_LISTENER && (errno ==
+			    EAFNOSUPPORT || errno == EPROTONOSUPPORT)) {
+				TAILQ_REMOVE(conf->listen_addrs, la, entry);
+				free(la);
+				continue;
+			} else
+				fatal("socket");
+		}
 
 		opt = 1;
 		if (setsockopt(la->fd, SOL_SOCKET, SO_REUSEPORT,
