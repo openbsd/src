@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.72 1999/12/01 15:29:57 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.73 1999/12/02 16:30:53 deraadt Exp $
 #	from: OpenBSD: INST,v 1.19 1996/11/05 03:49:13 tholo Exp 
 #
 #	Install kernels no longer support X.
@@ -36,7 +36,7 @@ option		DEVPAGER	# mmap() of devices
 option		FFS		# UFS
 option		EXT2FS		# Linux ext2fs
 
-option		NFSCLIENT	# Network File System client
+#option		NFSCLIENT	# Network File System client
 
 option		CD9660		# ISO 9660 + Rock Ridge file system
 option		MSDOSFS		# MS-DOS file system
@@ -202,9 +202,9 @@ ep*	at pci? dev ? function ?		# 3C59x ethernet cards
 ne*	at pci? dev ? function ?		# NE2000-compat ethernet cards
 ne*	at pcmcia? function ?			# PCMCIA based NE2000 cards
 ep*	at pcmcia? function ?			# PCMCIA based 3c5xx cards
-#sm*	at pcmcia? function ?			# PCMCIA based sm cards
+sm*	at pcmcia? function ?			# PCMCIA based sm cards
 xe*	at pcmcia? function ?			# Xircom ethernet
-#wi*	at pcmcia? function ?			# WaveLAN IEEE 802.11
+wi*	at pcmcia? function ?			# WaveLAN IEEE 802.11
 #fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI cards
 xl*	at pci? dev ? function ?		# 3C9xx ethernet cards
 rl*	at pci? dev ? function ?		# RealTek 81[23]9 ethernet
