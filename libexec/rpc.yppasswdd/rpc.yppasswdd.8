@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpc.yppasswdd.8,v 1.15 2002/02/13 21:36:45 deraadt Exp $
+.\"	$OpenBSD: rpc.yppasswdd.8,v 1.16 2002/02/14 07:56:52 mpech Exp $
 .\"
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -76,7 +76,9 @@ Don't allow changes of the password in the passwd file.
 .It Fl m Ar arg1 arg2 ...
 Pass the specified arguments to
 .Xr make 1
-when invoking it in /var/yp to rebuild the passwd maps.
+when invoking it in
+.Pa /var/yp
+to rebuild the passwd maps.
 .El
 .Sh FILES
 .Bl -tag -width /etc/master.passwd -compact
