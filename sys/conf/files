@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.247 2002/05/06 16:37:39 mickey Exp $
+#	$OpenBSD: files,v 1.248 2002/05/16 16:16:51 provos Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -48,6 +48,7 @@ define	rasops32
 define	arc
 define	atm
 define	crypto
+define	systrace
 define	ether
 define	fddi
 define	sppp
@@ -326,6 +327,7 @@ pseudo-device gre: ifnet
 pseudo-device crypto: ifnet
 
 pseudo-device sequencer
+pseudo-device systrace
 
 pseudo-device ksyms
 file	dev/ksyms.c	ksyms needs-flag
@@ -391,6 +393,7 @@ file dev/midi.c				midi | midibus		needs-flag
 file dev/midisyn.c			midisyn
 file dev/mulaw.c			mulaw
 file dev/sequencer.c			sequencer		needs-flag
+file dev/systrace.c			systrace		needs-flag
 file dev/vnd.c				vnd			needs-flag
 file dev/rnd.c
 file dev/raidframe/rf_acctrace.c	raid			needs-flag

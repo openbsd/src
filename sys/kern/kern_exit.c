@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.41 2002/03/14 01:27:04 millert Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.42 2002/05/16 16:16:51 provos Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -70,6 +70,9 @@
 #ifdef SYSVSEM
 #include <sys/sem.h>
 #endif
+
+#include "systrace.h"
+#include <dev/systrace.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -197,6 +200,10 @@ exit1(p, rv)
 	p->p_traceflag = 0;	/* don't trace the vrele() */
 	if (p->p_tracep)
 		ktrsettracevnode(p, NULL);
+#endif
+#if NSYSTRACE > 0
+	if (ISSET(p->p_flag, P_SYSTRACE))
+		systrace_exit(p);
 #endif
 	/*
 	 * NOTE: WE ARE NO LONGER ALLOWED TO SLEEP!

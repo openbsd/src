@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.54 2002/03/14 01:27:04 millert Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.55 2002/05/16 16:16:51 provos Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -60,6 +60,9 @@
 #include <sys/mman.h>
 
 #include <sys/syscallargs.h>
+
+#include "systrace.h"
+#include <dev/systrace.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_map.h>
@@ -277,6 +280,10 @@ fork1(p1, exitsig, flags, stack, stacksize, func, arg, retval)
 		if ((p2->p_tracep = p1->p_tracep) != NULL)
 			VREF(p2->p_tracep);
 	}
+#endif
+#if NSYSTRACE > 0
+	if (ISSET(p1->p_flag, P_SYSTRACE))
+		systrace_fork(p1, p2);
 #endif
 
 	/*

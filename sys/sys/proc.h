@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.59 2002/03/18 07:48:11 hugh Exp $	*/
+/*	$OpenBSD: proc.h,v 1.60 2002/05/16 16:16:52 provos Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -167,6 +167,8 @@ struct	proc {
 	int	p_traceflag;		/* Kernel trace points. */
 	struct	vnode *p_tracep;	/* Trace to vnode. */
 
+	void	*p_systrace;		/* Back pointer to systrace */
+
 	int	p_siglist;		/* Signals arrived but not delivered. */
 
 	struct	vnode *p_textvp;	/* Vnode of executable. */
@@ -248,6 +250,7 @@ struct	proc {
 #define	P_NOCLDWAIT	0x080000	/* Let pid 1 wait for my children */
 #define	P_NOZOMBIE	0x100000	/* Pid 1 waits for me instead of dad */
 #define P_INEXEC	0x200000	/* Process is doing an exec right now */
+#define P_SYSTRACE	0x400000	/* Process system call tracing active*/
 
 /* Macro to compute the exit signal to be delivered. */
 #define P_EXITSIG(p) \

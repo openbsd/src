@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.49 2002/03/14 01:26:33 millert Exp $	*/
+/*	$OpenBSD: trap.c,v 1.50 2002/05/16 16:16:52 provos Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -56,6 +56,9 @@
 #include <sys/ktrace.h>
 #endif
 #include <sys/syscall.h>
+
+#include "systrace.h"
+#include <dev/systrace.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -711,7 +714,12 @@ syscall(frame)
 		goto bad;
 	rval[0] = 0;
 	rval[1] = frame.tf_edx;
-	orig_error = error = (*callp->sy_call)(p, args, rval);
+#if NSYSTRACE > 0
+	if (ISSET(p->p_flag, P_SYSTRACE))
+		orig_error = error = systrace_redirect(code, p, args, rval);
+	else
+#endif
+		orig_error = error = (*callp->sy_call)(p, args, rval);
 	switch (error) {
 	case 0:
 		/*
