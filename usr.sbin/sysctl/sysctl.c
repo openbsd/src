@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.10 1997/06/24 02:45:02 mickey Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.11 1997/06/28 07:05:34 deraadt Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.10 1997/06/24 02:45:02 mickey Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.11 1997/06/28 07:05:34 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -463,15 +463,15 @@ parse(string, flags)
 		if (!nflag)
 			fprintf(stdout, "%s = ", string);
 		fprintf(stdout,
-		        "%lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu\n",
-			rndstats->rnd_total, rndstats->rnd_used,
-			rndstats->arc4_reads, rndstats->rnd_timer,
-			rndstats->rnd_mouse, rndstats->rnd_tty,
-			rndstats->rnd_disk, rndstats->rnd_net,
-			rndstats->rnd_reads, rndstats->rnd_waits,
-			rndstats->rnd_enqs, rndstats->rnd_deqs,
-			rndstats->rnd_drops, rndstats->rnd_drople,
-			rndstats->rnd_asleep, rndstats->rnd_queued);
+		    "%u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u\n",
+		    rndstats->rnd_total, rndstats->rnd_used,
+		    rndstats->arc4_reads, rndstats->rnd_timer,
+		    rndstats->rnd_mouse, rndstats->rnd_tty,
+		    rndstats->rnd_disk, rndstats->rnd_net,
+		    rndstats->rnd_reads, rndstats->rnd_waits,
+		    rndstats->rnd_enqs, rndstats->rnd_deqs,
+		    rndstats->rnd_drops, rndstats->rnd_drople,
+		    rndstats->rnd_asleep, rndstats->rnd_queued);
 		return;
 	}
 	switch (type) {
