@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pcmcia.c,v 1.6 2001/06/11 00:50:38 millert Exp $	*/
+/*	$OpenBSD: if_wi_pcmcia.c,v 1.7 2001/06/23 01:56:10 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -56,6 +56,8 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #endif
+
+#include <net/if_ieee80211.h>
 
 #include <machine/bus.h>
 
@@ -273,6 +275,10 @@ wi_pcmcia_attach(parent, self, aux)
 	sc->wi_btag = psc->sc_pcioh.iot;
 	sc->wi_bhandle = psc->sc_pcioh.ioh;
 
+	/* Make sure interrupts are disabled. */
+	CSR_WRITE_2(sc, WI_INT_EN, 0);
+	CSR_WRITE_2(sc, WI_EVENT_ACK, 0xffff);
+
 	/* Establish the interrupt. */
 	sc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_NET, wi_intr, psc);
 	if (sc->sc_ih == NULL) {
@@ -280,10 +286,6 @@ wi_pcmcia_attach(parent, self, aux)
 		    sc->sc_dev.dv_xname);
 		goto bad;
 	}
-
-	/* Make sure interrupts are disabled. */
-	CSR_WRITE_2(sc, WI_INT_EN, 0);
-	CSR_WRITE_2(sc, WI_EVENT_ACK, 0xffff);
 
 	wi_attach(sc, 0);
 	return;
