@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.25 1997/06/28 20:19:02 denny Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.26 1998/07/09 06:32:27 deraadt Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -891,12 +891,11 @@ inetname(in)
 
 	if (first && !nflag) {
 		first = 0;
-		if (gethostname(domain, MAXHOSTNAMELEN) == 0 &&
+		if (gethostname(domain, sizeof domain) == 0 &&
 		    (cp = strchr(domain, '.')) != NULL) {
 			(void)strncpy(domain, cp + 1, sizeof(domain) - 1);
 			domain[sizeof(domain) - 1] = '\0';
-		} else
-			domain[0] = '\0';
+		}
 	}
 	if (!nflag && in.s_addr != INADDR_ANY) {
 		hp = gethostbyaddr((char *)&in, sizeof(in), AF_INET);
