@@ -1,4 +1,4 @@
-/*	$OpenBSD: fhcvar.h,v 1.1 2004/09/22 21:44:45 jason Exp $	*/
+/*	$OpenBSD: fhcvar.h,v 1.2 2004/09/24 20:50:49 jason Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net).
@@ -62,6 +62,8 @@ struct fhc_attach_args {
 	char *fa_name;
 	int fa_node;
 	int fa_nreg;
+	int fa_nintr;
+	int *fa_intr;
 	struct fhc_reg *fa_reg;
 	bus_space_tag_t fa_bustag;
 };

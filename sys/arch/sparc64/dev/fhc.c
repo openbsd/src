@@ -1,4 +1,4 @@
-/*	$OpenBSD: fhc.c,v 1.2 2004/09/23 16:26:59 jason Exp $	*/
+/*	$OpenBSD: fhc.c,v 1.3 2004/09/24 20:50:49 jason Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net)
@@ -39,7 +39,9 @@
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
 
+#include <sparc64/dev/fhcreg.h>
 #include <sparc64/dev/fhcvar.h>
+#include <sparc64/dev/iommureg.h>
 
 struct cfdriver fhc_cd = {
 	NULL, "fhc", DV_DULL
@@ -50,6 +52,11 @@ int	fhc_print(void *, const char *);
 bus_space_tag_t fhc_alloc_bus_tag(struct fhc_softc *);
 int _fhc_bus_map(bus_space_tag_t, bus_space_tag_t, bus_addr_t, bus_size_t,
     int, bus_space_handle_t *);
+void *fhc_intr_establish(bus_space_tag_t, bus_space_tag_t, int, int, int,
+    int (*)(void *), void *, const char *);
+bus_space_handle_t *fhc_find_intr_handle(struct fhc_softc *, int);
+bus_space_handle_t *fhc_try_intr_handle(struct fhc_softc *,
+    bus_space_handle_t *, bus_size_t, int);
 
 void
 fhc_attach(struct fhc_softc *sc)
@@ -78,6 +85,8 @@ fhc_attach(struct fhc_softc *sc)
 		}
 		getprop(node, "reg", sizeof(struct fhc_reg),
 		    &fa.fa_nreg, (void **)&fa.fa_reg);
+		getprop(node, "interrupts", sizeof(int),
+		    &fa.fa_nintr, (void **)&fa.fa_intr);
 
 		(void)config_found(&sc->sc_dv, (void *)&fa, fhc_print);
 
@@ -85,6 +94,8 @@ fhc_attach(struct fhc_softc *sc)
 			free(fa.fa_name, M_DEVBUF);
 		if (fa.fa_reg != NULL)
 			free(fa.fa_reg, M_DEVBUF);
+		if (fa.fa_nintr != NULL)
+			free(fa.fa_intr, M_DEVBUF);
 	}
 }
 
@@ -138,7 +149,7 @@ fhc_alloc_bus_tag(struct fhc_softc *sc)
 	bt->sasi = bt->parent->sasi;
 	bt->sparc_bus_map = _fhc_bus_map;
 	/* XXX bt->sparc_bus_mmap = fhc_bus_mmap; */
-	/* XXX bt->sparc_intr_establish = upa_intr_establish; */
+	bt->sparc_intr_establish = fhc_intr_establish;
 	return (bt);
 }
 
@@ -175,4 +186,86 @@ _fhc_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t addr,
 	}
 
 	return (EINVAL);
+}
+
+bus_space_handle_t *
+fhc_try_intr_handle(struct fhc_softc *sc, bus_space_handle_t *hp,
+    bus_size_t off, int val)
+{
+	u_int64_t r;
+
+	r = bus_space_read_8(sc->sc_bt, *hp, off);
+	if (INTINO(r) == INTINO(val))
+		return (hp);
+	return (NULL);
+}
+
+bus_space_handle_t *
+fhc_find_intr_handle(struct fhc_softc *sc, int val)
+{
+	bus_space_handle_t *hp;
+
+	hp = fhc_try_intr_handle(sc, &sc->sc_freg, FHC_F_IMAP, val);
+	if (hp != NULL)
+		return (hp);
+	hp = fhc_try_intr_handle(sc, &sc->sc_sreg, FHC_S_IMAP, val);
+	if (hp != NULL)
+		return (hp);
+	hp = fhc_try_intr_handle(sc, &sc->sc_ureg, FHC_U_IMAP, val);
+	if (hp != NULL)
+		return (hp);
+	hp = fhc_try_intr_handle(sc, &sc->sc_treg, FHC_T_IMAP, val);
+	if (hp != NULL)
+		return (hp);
+	return (NULL);
+}
+
+void *
+fhc_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
+    int level, int flags, int (*handler)(void *), void *arg, const char *what)
+{
+	struct fhc_softc *sc = t->cookie;
+	volatile u_int64_t *intrmapptr = NULL, *intrclrptr = NULL;
+	struct intrhand *ih;
+
+	if (level == IPL_NONE)
+		level = INTLEV(ihandle);
+	if (level == IPL_NONE) {
+		printf(": no IPL, setting IPL 2.\n");
+		level = 2;
+	}
+
+	if ((flags & BUS_INTR_ESTABLISH_SOFTINTR) == 0) {
+		bus_space_handle_t *hp;
+		struct fhc_intr_reg *intrregs;
+
+		hp = fhc_find_intr_handle(sc, ihandle);
+		if (hp == NULL) {
+			printf(": can't find intr handle\n");
+			return (NULL);
+		}
+
+		intrregs = bus_space_vaddr(sc->sc_bt, *hp);
+		intrmapptr = &intrregs->imap;
+		intrclrptr = &intrregs->iclr;
+	}
+
+	ih = bus_intr_allocate(t0, handler, arg, INTINO(ihandle), level,
+	    intrmapptr, intrclrptr, what);
+	if (ih == NULL)
+		return (NULL);
+
+	intr_establish(ih->ih_pil, ih);
+
+	if (intrmapptr != NULL) {
+		u_int64_t r;
+
+		r = *intrmapptr;
+		r |= INTMAP_V;
+		*intrmapptr = r;
+		r = *intrmapptr;
+		ih->ih_number |= r & INTMAP_INR;
+	}
+
+	return (ih);
 }
