@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_subr.c,v 1.11 2001/01/27 01:19:10 deraadt Exp $	*/
+/*	$OpenBSD: pci_subr.c,v 1.12 2001/05/08 20:13:18 mickey Exp $	*/
 /*	$NetBSD: pci_subr.c,v 1.19 1996/10/13 01:38:29 christos Exp $	*/
 
 /*
@@ -69,6 +69,7 @@ const struct pci_class pci_subclass_mass_storage[] = {
 	{ "floppy",		PCI_SUBCLASS_MASS_STORAGE_FLOPPY,	},
 	{ "IPI",		PCI_SUBCLASS_MASS_STORAGE_IPI,		},
 	{ "RAID",		PCI_SUBCLASS_MASS_STORAGE_RAID,		},
+	{ "ATA",		PCI_SUBCLASS_MASS_STORAGE_ATA,		},
 	{ "miscellaneous",	PCI_SUBCLASS_MASS_STORAGE_MISC,		},
 	{ 0 },
 };
@@ -78,6 +79,9 @@ const struct pci_class pci_subclass_network[] = {
 	{ "token ring",		PCI_SUBCLASS_NETWORK_TOKENRING,		},
 	{ "FDDI",		PCI_SUBCLASS_NETWORK_FDDI,		},
 	{ "ATM",		PCI_SUBCLASS_NETWORK_ATM,		},
+	{ "ISDN",		PCI_SUBCLASS_NETWORK_ISDN,		},
+	{ "WorldFip",		PCI_SUBCLASS_NETWORK_WORLDFIP,		},
+	{ "PCMIG Multi Computing", PCI_SUBCLASS_NETWORK_PCIMGMULTICOMP,	},
 	{ "miscellaneous",	PCI_SUBCLASS_NETWORK_MISC,		},
 	{ 0 },
 };
@@ -85,6 +89,7 @@ const struct pci_class pci_subclass_network[] = {
 const struct pci_class pci_subclass_display[] = {
 	{ "VGA",		PCI_SUBCLASS_DISPLAY_VGA,		},
 	{ "XGA",		PCI_SUBCLASS_DISPLAY_XGA,		},
+	{ "3D",			PCI_SUBCLASS_DISPLAY_3D,		},
 	{ "miscellaneous",	PCI_SUBCLASS_DISPLAY_MISC,		},
 	{ 0 },
 };
@@ -92,6 +97,7 @@ const struct pci_class pci_subclass_display[] = {
 const struct pci_class pci_subclass_multimedia[] = {
 	{ "video",		PCI_SUBCLASS_MULTIMEDIA_VIDEO,		},
 	{ "audio",		PCI_SUBCLASS_MULTIMEDIA_AUDIO,		},
+	{ "telephony",		PCI_SUBCLASS_MULTIMEDIA_TELEPHONY,	},
 	{ "miscellaneous",	PCI_SUBCLASS_MULTIMEDIA_MISC,		},
 	{ 0 },
 };
@@ -112,6 +118,9 @@ const struct pci_class pci_subclass_bridge[] = {
 	{ "PCMCIA",		PCI_SUBCLASS_BRIDGE_PCMCIA,		},
 	{ "NuBus",		PCI_SUBCLASS_BRIDGE_NUBUS,		},
 	{ "CardBus",		PCI_SUBCLASS_BRIDGE_CARDBUS,		},
+	{ "RACEway",		PCI_SUBCLASS_BRIDGE_RACEWAY,		},
+	{ "Semi-transparent PCI", PCI_SUBCLASS_BRIDGE_STPCI,		},
+	{ "InfiniBand",		PCI_SUBCLASS_BRIDGE_INFINIBAND,		},
 	{ "miscellaneous",	PCI_SUBCLASS_BRIDGE_MISC,		},
 	{ 0 },
 };
@@ -119,6 +128,8 @@ const struct pci_class pci_subclass_bridge[] = {
 const struct pci_class pci_subclass_communications[] = {
 	{ "serial",		PCI_SUBCLASS_COMMUNICATIONS_SERIAL,	},
 	{ "parallel",		PCI_SUBCLASS_COMMUNICATIONS_PARALLEL,	},
+	{ "multi-port serial",	PCI_SUBCLASS_COMMUNICATIONS_MPSERIAL,	},
+	{ "modem",		PCI_SUBCLASS_COMMUNICATIONS_MODEM,	},
 	{ "miscellaneous",	PCI_SUBCLASS_COMMUNICATIONS_MISC,	},
 	{ 0 },
 };
@@ -128,6 +139,7 @@ const struct pci_class pci_subclass_system[] = {
 	{ "8237 DMA",		PCI_SUBCLASS_SYSTEM_DMA,		},
 	{ "8254 timer",		PCI_SUBCLASS_SYSTEM_TIMER,		},
 	{ "RTC",		PCI_SUBCLASS_SYSTEM_RTC,		},
+	{ "PCI Hot-Plug",	PCI_SUBCLASS_SYSTEM_PCIHOTPLUG,		},
 	{ "miscellaneous",	PCI_SUBCLASS_SYSTEM_MISC,		},
 	{ 0 },
 };
@@ -136,6 +148,8 @@ const struct pci_class pci_subclass_input[] = {
 	{ "keyboard",		PCI_SUBCLASS_INPUT_KEYBOARD,		},
 	{ "digitizer",		PCI_SUBCLASS_INPUT_DIGITIZER,		},
 	{ "mouse",		PCI_SUBCLASS_INPUT_MOUSE,		},
+	{ "scanner",		PCI_SUBCLASS_INPUT_SCANNER,		},
+	{ "game port",		PCI_SUBCLASS_INPUT_GAMEPORT,		},
 	{ "miscellaneous",	PCI_SUBCLASS_INPUT_MISC,		},
 	{ 0 },
 };
@@ -152,6 +166,7 @@ const struct pci_class pci_subclass_processor[] = {
 	{ "Pentium",		PCI_SUBCLASS_PROCESSOR_PENTIUM,		},
 	{ "Alpha",		PCI_SUBCLASS_PROCESSOR_ALPHA,		},
 	{ "PowerPC",		PCI_SUBCLASS_PROCESSOR_POWERPC,		},
+	{ "MIPS",		PCI_SUBCLASS_PROCESSOR_MIPS,		},
 	{ "Co-processor",	PCI_SUBCLASS_PROCESSOR_COPROC,		},
 	{ 0 },
 };
@@ -161,7 +176,48 @@ const struct pci_class pci_subclass_serialbus[] = {
 	{ "ACCESS.bus",		PCI_SUBCLASS_SERIALBUS_ACCESS,		},
 	{ "SSA",		PCI_SUBCLASS_SERIALBUS_SSA,		},
 	{ "USB",		PCI_SUBCLASS_SERIALBUS_USB,		},
+	/* XXX Fiber Channel/_FIBRECHANNEL */
 	{ "Fiber Channel",	PCI_SUBCLASS_SERIALBUS_FIBER,		},
+	{ "SMBus",		PCI_SUBCLASS_SERIALBUS_SMBUS,		},
+	{ "InfiniBand",		PCI_SUBCLASS_SERIALBUS_INFINIBAND,	},
+	{ "IPMI",		PCI_SUBCLASS_SERIALBUS_IPMI,		},
+	{ "SERCOS",		PCI_SUBCLASS_SERIALBUS_SERCOS,		},
+	{ "CANbus",		PCI_SUBCLASS_SERIALBUS_CANBUS,		},
+	{ 0 },
+};
+
+const struct pci_class pci_subclass_wireless[] = {
+	{ "IrDA",		PCI_SUBCLASS_WIRELESS_IRDA,		},
+	{ "Consumer IR",	PCI_SUBCLASS_WIRELESS_CONSUMERIR,	},
+	{ "RF",			PCI_SUBCLASS_WIRELESS_RF,		},
+	{ "miscellaneous",	PCI_SUBCLASS_WIRELESS_MISC,		},
+	{ 0 },
+};
+
+const struct pci_class pci_subclass_i2o[] = {
+	{ "standard",		PCI_SUBCLASS_I2O_STANDARD,		},
+	{ 0 },
+};
+
+const struct pci_class pci_subclass_satcom[] = {
+	{ "TV",			PCI_SUBCLASS_SATCOM_TV,			},
+	{ "audio",		PCI_SUBCLASS_SATCOM_AUDIO,		},
+	{ "voice",		PCI_SUBCLASS_SATCOM_VOICE,		},
+	{ "data",		PCI_SUBCLASS_SATCOM_DATA,		},
+	{ 0 },
+};
+
+const struct pci_class pci_subclass_crypto[] = {
+	{ "network/computing",	PCI_SUBCLASS_CRYPTO_NETCOMP,		},
+	{ "entertainment",	PCI_SUBCLASS_CRYPTO_ENTERTAINMENT,	},
+	{ "miscellaneous",	PCI_SUBCLASS_CRYPTO_MISC,		},
+	{ 0 },
+};
+
+const struct pci_class pci_subclass_dasp[] = {
+	{ "DPIO",		PCI_SUBCLASS_DASP_DPIO,			},
+	{ "Time and Frequency",	PCI_SUBCLASS_DASP_TIMEFREQ,		},
+	{ "miscellaneous",	PCI_SUBCLASS_DASP_MISC,			},
 	{ 0 },
 };
 
@@ -192,6 +248,16 @@ const struct pci_class pci_class[] = {
 	    pci_subclass_processor,				},
 	{ "serial bus",		PCI_CLASS_SERIALBUS,
 	    pci_subclass_serialbus,				},
+	{ "wireless",		PCI_CLASS_WIRELESS,
+	    pci_subclass_wireless,				},
+	{ "I2O",		PCI_CLASS_I2O,
+	    pci_subclass_i2o,					},
+	{ "satellite comm",	PCI_CLASS_SATCOM,
+	    pci_subclass_satcom,				},
+	{ "crypto",		PCI_CLASS_CRYPTO,
+	    pci_subclass_crypto,				},
+	{ "DASP",		PCI_CLASS_DASP,
+	    pci_subclass_dasp,					},
 	{ "undefined",		PCI_CLASS_UNDEFINED,
 	    0,							},
 	{ 0 },
