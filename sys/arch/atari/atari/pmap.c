@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.7 1995/11/30 00:57:39 jtc Exp $	*/
+/*	$NetBSD: pmap.c,v 1.8 1995/12/25 14:13:53 leo Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -356,7 +356,6 @@ pmap_bootstrap_alloc(size)
 	return((void *) val);
 }
 
-
 /*
  *	Initialize the pmap module.
  *	Called by vm_init, to initialize any structures that the pmap
@@ -493,7 +492,18 @@ pmap_init(phys_start, phys_end)
 	 * map where we want it.
 	 */
 	addr = ATARI_UPTBASE;
-	s = min(ATARI_UPTMAXSIZE, maxproc * ATARI_UPTSIZE);
+	if (ATARI_UPTMAXSIZE / ATARI_UPTSIZE < maxproc) {
+		s = ATARI_UPTMAXSIZE;
+
+		/*
+		 * XXX We don't want to hang when we run out of page
+		 * tables, so we lower maxproc so that fork will fail
+		 * instead. Note that root could still raise this
+		 * value through sysctl(2).
+		 */
+		maxproc = ATARI_UPTMAXSIZE / ATARI_UPTSIZE;
+	}
+	else s = maxproc * ATARI_UPTSIZE;
 	addr2 = addr + s;
 	rv = vm_map_find(kernel_map, NULL, 0, &addr, s, TRUE);
 	if (rv != KERN_SUCCESS)
