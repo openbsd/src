@@ -84,7 +84,7 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	# Installing or upgrading?
 	_forceloop=""
 	while [ "X${_forceloop}" = X"" ]; do
-		echo -n '(I)nstall or (U)pgrade? '
+		echo -n '(I)nstall, (U)pgrade, or (S)hell? '
 		read _forceloop
 		case "$_forceloop" in
 			i*|I*)
@@ -93,6 +93,9 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 
 			u*|U*)
 				/upgrade
+				;;
+
+			s*|S*)
 				;;
 
 			*)
