@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.10 1997/09/12 04:41:52 millert Exp $	*/
+/*	$OpenBSD: print.c,v 1.11 1997/11/05 18:22:56 deraadt Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.10 1997/09/12 04:41:52 millert Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.11 1997/11/05 18:22:56 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -174,7 +174,10 @@ logname(k, ve)
 	VAR *v;
 
 	v = ve->var;
-	(void)printf("%-*s", v->width, KI_EPROC(k)->e_login);
+	if (KI_EPROC(k)->e_login[0])
+		(void)printf("%-*s", v->width, KI_EPROC(k)->e_login);
+	else
+		(void)printf("%-*s", v->width, "-");
 }
 
 void
