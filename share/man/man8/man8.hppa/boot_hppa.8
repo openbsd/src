@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_hppa.8,v 1.7 2003/07/10 08:30:36 jmc Exp $
+.\"	$OpenBSD: boot_hppa.8,v 1.8 2004/03/17 03:18:50 mickey Exp $
 .\"
 .\" Copyright (c) 2002, Miodrag Vallat.
 .\" All rights reserved.
@@ -50,6 +50,14 @@ archive, either on a disk device, or via the network, using the
 or
 .Em rboot
 protocols, depending on the PDC version.
+A small
+.Xr mkboot 8
+utility
+is provided for combining primary boot and a number
+of images (OS kernels or standalone binaries)
+into one
+.Dq LIF
+volume suitable for booting.
 .Ss PDC concepts
 If autoboot is enabled, the PDC will attempt to boot from the specified
 .Dq boot path
@@ -93,8 +101,8 @@ interactive prompt.
 With the default behaviour being a non-interactive boot process.
 .\"
 .Ss Old PDC operation
-PDC ROM v1.4 and below are easily recognizable,
-as they will start with a text banner.
+This version is used on the following models:
+705, 7x0, 715/33/50/75, 725/50/75, 735, 755.
 There are two levels of interactive commands in this version.
 The first level is a short menu:
 .Bd -literal -offset indent
@@ -155,7 +163,8 @@ the highest ID numbers being preferred.
 .It
 Network
 .Em rboot
-server.
+server (see also
+.Xr rbootd 8 ).
 .It
 Other
 .Tn SCSI
@@ -197,8 +206,8 @@ will list the various path settings.
 .El
 .\"
 .Ss Modern PDC operation
-PDC ROM 1.5 and above will start with a small graphics window at the
-screen center (unless you are using a serial console).
+Machines equipped with 7100LC, 7200 or 7300LC CPU types are
+usually blessed with a diffrent kind of PDC.
 There is only one interactive mode, with a
 .Em BOOT_ADMIN>
 prompt, which provides both boot settings and commands.
@@ -237,7 +246,10 @@ the highest ID numbers being preferred.
 .It
 Network
 .Em bootp
-server.
+server (see also
+.Xr bootpd 8
+and
+.Xr dhcpd 8 ).
 .It
 Other
 .Tn SCSI
@@ -305,21 +317,31 @@ configured dump device (which will be automatically recovered with
 during the next multi-user boot cycle), and after the dump is complete
 (successful or not) the kernel will attempt a reboot.
 .Sh FILES
-.Bl -tag -width boot.lif -compact
+.Bl -tag -width /usr/mdec/xxbootxx -compact
 .It Pa /bsd
 default system kernel
 .It Pa boot.lif
 network bootstrap and kernel combined image
-.\" .It Pa /usr/mdec/boot
-.\" system bootstrap (usually also installed as
-.\" .Pa /boot )
+.It Pa /usr/mdec/cdboot
+primary bootstrap for
+.Dq cd9660
+file system
+.It Pa /usr/mdec/xxboot
+primary bootstrap for
+.Dq ffs
+file system
+.It Pa /usr/mdec/boot
+system bootstrap (usually also installed as
+.Pa /boot )
 .El
 .Sh SEE ALSO
 .Xr ddb 4 ,
 .Xr boot 8 ,
+.Xr bootpd 8 ,
+.Xr dhcpd 8 ,
 .Xr halt 8 ,
 .Xr init 8 ,
-.\" .Xr installboot 8 ,
+.Xr rbootd 8 ,
 .Xr reboot 8 ,
 .Xr savecore 8 ,
 .Xr shutdown 8
