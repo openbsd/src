@@ -1,4 +1,4 @@
-.\"	$OpenBSD: skeyinit.1,v 1.4 1996/09/27 15:49:03 millert Exp $
+.\"	$OpenBSD: skeyinit.1,v 1.5 1996/09/29 21:51:03 millert Exp $
 .\"	$NetBSD: skeyinit.1,v 1.4 1995/07/07 22:24:09 jtc Exp $
 .\"	@(#)skeyinit.1	1.1 	10/28/93
 .\"
@@ -34,13 +34,15 @@ for that count and seed.
 You can then "cut-and-paste" or type the words into the skeyinit window.
 .It Fl z
 allows the user to zero their S/Key entry.
+.It Fl md4
+Selects MD4 as the hash algorithm.
+.It Fl md5
+Selects MD5 as the hash algorithm.
+.It Fl sha1
+Selects SHA (Secure Hash Algorithm) as the hash algorithm.
 .It Ar user
 the username to be changed/added. By default the current user is
 operated on.
-.It Fl 4 
-Selects MD4 as the hash algorithm.
-.It Fl 5 
-Selects MD5 as the hash algorithm.
 .Sh FILES
 .Bl -tag -width /etc/skeykeys
 .It Pa /etc/skeykeys
