@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.1 2001/08/28 22:25:59 art Exp $	*/
+/*	$OpenBSD: brk.S,v 1.2 2001/09/24 13:20:26 art Exp $	*/
 /*	$NetBSD: brk.S,v 1.9 2000/07/25 20:15:40 mycroft Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #include "SYS.h"
 
 	.globl	_C_LABEL(__curbrk)
-	.globl	_C_LABEL(__minbrk)
+	.globl	_C_LABEL(minbrk)
 	.globl	_C_LABEL(_end)
 
 #ifdef WEAK_ALIAS
@@ -52,14 +52,14 @@ WEAK_ALIAS(brk, _brk)
 
 	.data
 	.align	8
-_C_LABEL(__minbrk):
+_C_LABEL(minbrk):
 	.xword	_C_LABEL(_end)		/* lower brk limit; also for gmon code */
 	.text
 
 ENTRY(_brk)
 #ifdef PIC
 	PIC_PROLOGUE(%o5,%o4)
-	set	_C_LABEL(__minbrk), %o4
+	set	_C_LABEL(minbrk), %o4
 	ldx	[%o5 + %o4], %o4
 	ldx	[%o4], %o1		/* %o1 = minbrk */
 	cmp	%o1, %o0		/* if (minbrk > %o0) */
@@ -75,8 +75,8 @@ ENTRY(_brk)
 	retl				/* success, return 0 & record new break */
 	 stx	%o2, [%o4]
 #else
-	sethi	%hi(_C_LABEL(__minbrk)), %o1	/* %o1 = minbrk */
-	ldx	[%o1 + %lo(_C_LABEL(__minbrk))], %o1
+	sethi	%hi(_C_LABEL(minbrk)), %o1	/* %o1 = minbrk */
+	ldx	[%o1 + %lo(_C_LABEL(minbrk))], %o1
 	cmp	%o1, %o0		/* if (minbrk > %o0) */
 	movg	%xcc, %o1, %o0		/*	%o0 = minbrk */
 	mov	%o0, %o2		/* save argument to syscall */
