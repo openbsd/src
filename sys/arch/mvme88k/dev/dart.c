@@ -1,4 +1,4 @@
-/*	$OpenBSD: dart.c,v 1.40 2004/08/19 17:10:15 miod Exp $	*/
+/*	$OpenBSD: dart.c,v 1.41 2004/08/24 18:44:49 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -1242,7 +1242,7 @@ dartcngetc(dev)
 	union dartreg  *addr;	   /* pointer to DUART regs */
 	union dart_pt_io  *ptaddr; /* pointer to port regs */
 	unsigned char   sr;	       /* status reg of port a/b */
-	int c;		/* received character */
+	u_char c;		/* received character */
 	int s;
 	int port;
 #if 1
@@ -1289,7 +1289,6 @@ dartcngetc(dev)
 				DELAY_CR;
 				ptaddr->write.wr_cr = BRKINTRESET;
 			} else {
-				/* c &= 0x7f; */
 				break;
 			}
 		}
@@ -1299,5 +1298,5 @@ dartcngetc(dev)
 #else
 	set_psr(psr);
 #endif
-	return c;
+	return (int)c;
 }
