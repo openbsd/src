@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.6 2002/02/16 21:27:52 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.7 2003/03/13 15:47:11 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -45,7 +45,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/3/94"; */
-static char *rcsid = "$OpenBSD: main.c,v 1.6 2002/02/16 21:27:52 millert Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.7 2003/03/13 15:47:11 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -192,8 +192,8 @@ again:
 			if ((snprintf(string_ident,
 			    sizeof(string_ident), "\"%s\"", script->s)) >=
 			    sizeof(string_ident))
-				(void)strcpy(string_ident +
-				    sizeof(string_ident) - 6, " ...\"");
+				strlcpy(string_ident +
+				    sizeof(string_ident) - 6, " ...\"", 5);
 			fname = string_ident;
 			s = script->s;
 			state = ST_STRING;

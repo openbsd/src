@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.c,v 1.7 1999/12/11 10:05:04 itojun Exp $	*/
+/*	$OpenBSD: net.c,v 1.8 2003/03/13 15:47:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)net.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$OpenBSD: net.c,v 1.7 1999/12/11 10:05:04 itojun Exp $";
+static char rcsid[] = "$OpenBSD: net.c,v 1.8 2003/03/13 15:47:10 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -102,8 +102,8 @@ netfinger(name)
 
 	/* have network connection; identify the host connected with */
 	if (getnameinfo(res->ai_addr, res->ai_addrlen, hbuf, sizeof(hbuf),
-			NULL, 0, NI_NUMERICHOST) != 0) {
-		strcpy(hbuf, "(invalid)");
+	    NULL, 0, NI_NUMERICHOST) != 0) {
+		strlcpy(hbuf, "(invalid)", sizeof hbuf);
 	}
 	(void)printf("[%s/%s]\n", host, hbuf);
 

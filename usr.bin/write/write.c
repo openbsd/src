@@ -1,4 +1,4 @@
-/*	$OpenBSD: write.c,v 1.18 2002/12/09 08:15:29 deraadt Exp $	*/
+/*	$OpenBSD: write.c,v 1.19 2003/03/13 15:47:12 deraadt Exp $	*/
 /*	$NetBSD: write.c,v 1.5 1995/08/31 21:48:32 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)write.c	8.2 (Berkeley) 4/27/95";
 #endif
-static char *rcsid = "$OpenBSD: write.c,v 1.18 2002/12/09 08:15:29 deraadt Exp $";
+static char *rcsid = "$OpenBSD: write.c,v 1.19 2003/03/13 15:47:12 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -68,7 +68,7 @@ static char *rcsid = "$OpenBSD: write.c,v 1.18 2002/12/09 08:15:29 deraadt Exp $
 void done(int sig);
 void do_write(char *, char *, uid_t);
 void wr_fputs(char *);
-void search_utmp(char *, char *, char *, uid_t);
+void search_utmp(char *, char *, int, char *, uid_t);
 int term_chk(char *, int *, time_t *, int);
 int utmp_chk(char *, char *);
 
@@ -103,7 +103,7 @@ main(int argc, char **argv)
 	/* check args */
 	switch (argc) {
 	case 2:
-		search_utmp(argv[1], tty, mytty, myuid);
+		search_utmp(argv[1], tty, sizeof tty, mytty, myuid);
 		do_write(tty, mytty, myuid);
 		break;
 	case 3:
@@ -165,7 +165,7 @@ utmp_chk(char *user, char *tty)
  * writing from, unless that's the only terminal with messages enabled.
  */
 void
-search_utmp(char *user, char *tty, char *mytty, uid_t myuid)
+search_utmp(char *user, char *tty, int ttyl, char *mytty, uid_t myuid)
 {
 	struct utmp u;
 	time_t bestatime, atime;
@@ -194,7 +194,7 @@ search_utmp(char *user, char *tty, char *mytty, uid_t myuid)
 			++nttys;
 			if (atime > bestatime) {
 				bestatime = atime;
-				(void)strcpy(tty, atty);
+				(void)strlcpy(tty, atty, ttyl);
 			}
 		}
 
@@ -203,7 +203,7 @@ search_utmp(char *user, char *tty, char *mytty, uid_t myuid)
 		errx(1, "%s is not logged in", user);
 	if (nttys == 0) {
 		if (user_is_me) {		/* ok, so write to yourself! */
-			(void)strcpy(tty, mytty);
+			(void)strlcpy(tty, mytty, ttyl);
 			return;
 		}
 		errx(1, "%s has messages disabled", user);
@@ -265,7 +265,7 @@ do_write(char *tty, char *mytty, uid_t myuid)
 
 	/* print greeting */
 	if (gethostname(host, sizeof(host)) < 0)
-		(void)strcpy(host, "???");
+		(void)strlcpy(host, "???", sizeof host);
 	now = time((time_t *)NULL);
 	nows = ctime(&now);
 	nows[16] = '\0';

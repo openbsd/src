@@ -1,4 +1,4 @@
-/*	$OpenBSD: pr_time.c,v 1.9 1998/01/16 17:50:42 millert Exp $	*/
+/*	$OpenBSD: pr_time.c,v 1.10 2003/03/13 15:47:12 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pr_time.c	8.2 (Berkeley) 4/4/94";
 #else
-static char *rcsid = "$OpenBSD: pr_time.c,v 1.9 1998/01/16 17:50:42 millert Exp $";
+static char *rcsid = "$OpenBSD: pr_time.c,v 1.10 2003/03/13 15:47:12 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,16 +73,16 @@ pr_attime(started, now)
 
 	/* If more than a week, use day-month-year. */
 	if (diff > SECSPERDAY * DAYSPERWEEK)
-		(void)strcpy(fmt, "%d%b%y");
+		(void)strlcpy(fmt, "%d%b%y", sizeof fmt);
 
 	/* If not today, use day-hour-am/pm. */
 	else if (tp->tm_yday  != today ) {
-		(void)strcpy(fmt, __CONCAT("%a%", "I%p"));
+		(void)strlcpy(fmt, __CONCAT("%a%", "I%p"), sizeof fmt);
 	}
 
 	/* Default is hh:mm{am,pm}. */
 	else {
-		(void)strcpy(fmt, __CONCAT("%l:%", "M%p"));
+		(void)strlcpy(fmt, __CONCAT("%l:%", "M%p"), sizeof fmt);
 	}
 
 	(void)strftime(buf, sizeof(buf) -1, fmt, tp);
