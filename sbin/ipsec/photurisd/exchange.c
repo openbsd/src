@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: exchange.c,v 1.1.1.1 1997/07/18 22:48:48 provos Exp $";
+static char rcsid[] = "$Id: exchange.c,v 1.2 1997/07/24 23:47:11 provos Exp $";
 #endif
 
 #define _EXCHANGE_C_
@@ -205,6 +205,35 @@ mpz_to_varpre(u_int8_t *value, u_int16_t *size, mpz_t p, mpz_t gbits)
      return 0;
 }
 
+
+int
+exchange_check_value(mpz_t exchange, mpz_t gen, mpz_t mod)
+{
+     size_t bits;
+     mpz_t test;
+     
+     bits = mpz_sizeinbase(mod, 2);
+     if (mpz_sizeinbase(mod, 2) < bits/2)
+	  return 0;
+
+     mpz_init(test);
+     mpz_sub_ui(test, gen, 1);
+     if (!mpz_cmp(exchange,test)) {
+	  mpz_clear(test);
+	  return 0;
+     }
+     mpz_set_ui(test, 1);
+     if (!mpz_cmp(exchange,test)) {
+	  mpz_clear(test);
+	  return 0;
+     }
+
+     /* XXX - more tests need to go here */
+
+     mpz_clear(test);
+     return 1;
+}
+
 /* 
  * Finds to a given modulus and generator cached information
  * which is used to create the private value and exchange value
@@ -284,12 +313,23 @@ exchange_make_values(struct stateob *st, mpz_t modulus, mpz_t generator)
 	  if (p->exchangevalue == NULL) {
 	       mpz_t tmp, bits;
 
-	       mpz_init(tmp);
-	       mpz_powm(tmp, p->generator, p->private_value, p->modulus);
-
 	       mpz_init(bits);
 	       mod = scheme_get_mod(st->scheme);
 	       varpre_get_number_bits(bits, mod);
+
+	       mpz_init(tmp);
+
+	       mpz_powm(tmp, p->generator, p->private_value, p->modulus);
+
+	       /* 
+		* If our exchange value is defective we need to make a new one
+		* to avoid subgroup confinement.
+		*/
+	       while (!exchange_check_value(tmp, p->generator, p->modulus)) {
+		    make_random_mpz(p->private_value, bits);
+		    mpz_powm(tmp, p->generator, p->private_value, p->modulus);
+	       }
+
 
 	       p->exchangesize = BUFFER_SIZE;
 	       mpz_to_varpre(buffer, &(p->exchangesize), tmp, bits);
@@ -306,9 +346,45 @@ exchange_make_values(struct stateob *st, mpz_t modulus, mpz_t generator)
 	       mpz_clear(tmp);
 	  }
      }
+     if (st->exchangevalue != NULL)
+	  free(st->exchangevalue);
+     st->exchangevalue = calloc(p->exchangesize, sizeof(u_int8_t));
+     if (st->exchangevalue == NULL) {
+	  log_error(1, "calloc() in exchange_make_values()");
+	  return -1;
+     }
+     bcopy(p->exchangevalue, st->exchangevalue, p->exchangesize);
+     st->exchangesize = p->exchangesize;
      mpz_set(st->modulus, p->modulus);
      mpz_set(st->generator, p->generator);
      return 0;
+}
+
+int
+exchange_set_generator(mpz_t generator, u_int8_t *scheme, u_int8_t *gen)
+{
+	switch (ntohs(*((u_int16_t *)scheme))) {
+	case DH_G_2_MD5:                    /* DH: Generator of 2 */
+	case DH_G_2_DES_MD5:                /* DH: Generator of 2 + privacy */
+	case DH_G_2_3DES_SHA1:
+	     mpz_set_ui(generator,2);
+	     break;
+	case DH_G_3_MD5:
+	case DH_G_3_DES_MD5:
+	case DH_G_3_3DES_SHA1:
+	     mpz_set_ui(generator,3);
+	     break;
+	case DH_G_5_MD5:
+	case DH_G_5_DES_MD5:
+	case DH_G_5_3DES_SHA1:
+             mpz_set_ui(generator,5); 
+	     break;
+	default:
+	     log_error(0, "Unsupported exchange scheme %d",
+		       *((u_int16_t *)scheme)); 
+	     return -1;
+	}
+	return 0;
 }
 
 /* 
@@ -323,30 +399,15 @@ exchange_value_generate(struct stateob *st, u_int8_t *value, u_int16_t *size)
 	struct moduli_cache *p;
 	u_int8_t *varpre;
 
-	switch (ntohs(*((u_int16_t *) st->scheme))) {
-	case DH_G_2_MD5:                    /* DH: Generator of 2 */
-	case DH_G_2_DES_MD5:                /* DH: Generator of 2 + privacy */
-	case DH_G_2_3DES_SHA1:
-	     mpz_init_set_ui(generator,2);
-	     break;
-	case DH_G_3_MD5:
-	case DH_G_3_DES_MD5:
-	case DH_G_3_3DES_SHA1:
-	     mpz_init_set_ui(generator,3);
-	     break;
-	case DH_G_5_MD5:
-	case DH_G_5_DES_MD5:
-	case DH_G_5_3DES_SHA1:
-             mpz_init_set_ui(generator,5); 
-	     break;
-	default:
-	     log_error(0, "Unsupported exchange scheme: %d\n",
-		       *((u_int16_t *)st->scheme)); 
-	     return -1;
-	}
-
 	if ((varpre = scheme_get_mod(st->scheme)) == NULL)
 	     return -1;
+
+	mpz_init(generator);
+	if (exchange_set_generator(generator, st->scheme,
+				   scheme_get_gen(st->scheme)) == -1) {
+	     mpz_clear(generator);
+	     return -1;
+	}
 
 	mpz_init_set_varpre(modulus, varpre);
 

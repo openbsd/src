@@ -34,7 +34,7 @@
  */
 
 #ifndef lint 
-static char rcsid[] = "$Id: compute_secrets.c,v 1.2 1997/07/23 12:28:46 provos Exp $"; 
+static char rcsid[] = "$Id: compute_secrets.c,v 1.3 1997/07/24 23:47:08 provos Exp $"; 
 #endif 
 
 #define _SECRETS_C_
@@ -283,22 +283,18 @@ MD5privacykey(struct stateob *st, u_int8_t *key, u_int8_t *packet,
 {
      MD5_CTX ctx, ctxb; 
      u_int16_t i, n;
-     struct moduli_cache *mod; 
      u_int8_t digest[16];
      
      MD5Init(&ctxb); 
 	  
      MD5Update(&ctxb, packet, 2*COOKIE_SIZE + 4 + SPI_SIZE); 
      
-     if((mod=mod_find_modgen(st->modulus,st->generator)) == NULL)
-	  return -1;
-
      if (owner) {
-	  MD5Update(&ctxb, mod->exchangevalue, mod->exchangesize);   
+	  MD5Update(&ctxb, st->exchangevalue, st->exchangesize);   
 	  MD5Update(&ctxb, st->texchange, st->texchangesize);   
      } else {
 	  MD5Update(&ctxb, st->texchange, st->texchangesize);    
-	  MD5Update(&ctxb, mod->exchangevalue, mod->exchangesize);    
+	  MD5Update(&ctxb, st->exchangevalue, st->exchangesize);    
      }
      
      /* As many shared secrets we used already */ 
@@ -328,22 +324,18 @@ SHA1privacykey(struct stateob *st, u_int8_t *key, u_int8_t *packet,
 {
      SHA1_CTX ctx, ctxb; 
      u_int16_t i, n; 
-     struct moduli_cache *mod; 
      u_int8_t digest[20];
 
      SHA1Init(&ctxb); 
      
      SHA1Update(&ctxb, packet, 2*COOKIE_SIZE + 4 + SPI_SIZE);  
 	  
-     if((mod=mod_find_modgen(st->modulus,st->generator)) == NULL)
-	       return -1;
-
      if (owner) {
-	  SHA1Update(&ctxb, mod->exchangevalue, mod->exchangesize);   
+	  SHA1Update(&ctxb, st->exchangevalue, st->exchangesize);   
 	  SHA1Update(&ctxb, st->texchange, st->texchangesize);   
      } else {
 	  SHA1Update(&ctxb, st->texchange, st->texchangesize);    
-	  SHA1Update(&ctxb, mod->exchangevalue, mod->exchangesize);    
+	  SHA1Update(&ctxb, st->exchangevalue, st->exchangesize);    
      }
 
 

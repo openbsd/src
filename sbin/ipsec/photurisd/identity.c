@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: identity.c,v 1.2 1997/07/23 12:28:50 provos Exp $";
+static char rcsid[] = "$Id: identity.c,v 1.3 1997/07/24 23:47:15 provos Exp $";
 #endif
 
 #define _IDENTITY_C_
@@ -68,6 +68,25 @@ static char rcsid[] = "$Id: identity.c,v 1.2 1997/07/23 12:28:50 provos Exp $";
 #endif
 
 static struct identity *idob = NULL;
+
+static union {
+     MD5_CTX md5ctx;
+     SHA1_CTX sha1ctx;
+} Ctx;
+
+/* Identity transforms */
+/* XXX - argh, cast the funtions */
+
+static struct idxform idxform[] = {
+     { AT_MD5_DP, MD5_SIZE, (void *)&Ctx.md5ctx, 
+       (void (*)(void *))MD5Init, 
+       (void (*)(void *, unsigned char *, unsigned int))MD5Update, 
+       (void (*)(unsigned char *, void *))MD5Final },
+     { AT_SHA1_DP, SHA1_SIZE, (void *)&Ctx.sha1ctx, 
+       (void (*)(void *))SHA1Init, 
+       (void (*)(void *, unsigned char *, unsigned int))SHA1Update, 
+       (void (*)(unsigned char *, void *))SHA1Final },
+};
 
 int
 init_identities(char *name, struct identity *root)
@@ -368,11 +387,12 @@ choose_identity(struct stateob *st, u_int8_t *packet, u_int16_t *size,
      int mode = 0;
      rsize = *size;
 
-     /* XXX - we only have one identity choice at the moment. */
+     /* XXX - preference of identity choice ? */
      tmp = 0;
      while(attribsize>0 && !tmp) {
 	  switch(*attributes) {
 	  case AT_MD5_DP:
+	  case AT_SHA1_DP:
 	       tmp = 1;
 	       break;
 	  default:
@@ -409,7 +429,7 @@ choose_identity(struct stateob *st, u_int8_t *packet, u_int16_t *size,
 
      packet += asize;
 
-     /* Chooses identity and secrets for Owner and User */
+     /* Choose identity and secrets for Owner and User */
      if (st->uSPIsecret == NULL && st->uSPIident != NULL)
 	  mode |= ID_REMOTE;
      if (st->oSPIsecret == NULL)
@@ -436,6 +456,8 @@ get_identity_verification_size(struct stateob *st, u_int8_t *choice)
      switch(*choice) {
      case AT_MD5_DP:
 	  return (128/8)+2;
+     case AT_SHA1_DP:
+	  return (160/8)+2;
      default:
 	  log_error(0, "Unknown identity choice: %d\n", *choice);
 	  return 0;
@@ -446,16 +468,20 @@ int
 create_identity_verification(struct stateob *st, u_int8_t *buffer, 
 			     u_int8_t *packet, u_int16_t size)
 {
-     int hash_size;
-     switch(*(st->oSPIidentchoice)) {
-     case AT_MD5_DP:
-	  hash_size = MD5idsign(st, buffer+2, packet, size);
-	  break;
-     default: 
-          log_error(0, "Unknown identity choice: %d\n", 
+     int hash_size, i;
+
+     for (i=0; i<sizeof(idxform)/sizeof(idxform[0]); i++)
+	  if (*(st->oSPIidentchoice) == idxform[i].type)
+	       break;
+
+     if (i == sizeof(idxform)/sizeof(idxform[0])) {
+          log_error(0, "Unknown identity choice: %d", 
 		    *(st->oSPIidentchoice)); 
           return 0; 
      } 
+
+     hash_size = idsign(st, &idxform[i], buffer+2, packet,size);
+
      if(hash_size) {
 	  /* Create varpre number from digest */
 	  buffer[0] = hash_size >> 5 & 0xFF;
@@ -480,54 +506,56 @@ int
 verify_identity_verification(struct stateob *st, u_int8_t *buffer,  
 			     u_int8_t *packet, u_int16_t size) 
 { 
-     switch(*(st->uSPIidentchoice)) { 
-     case AT_MD5_DP: 
-	  if (varpre2octets(buffer) != 18)
-	       return 0;
-          return MD5idverify(st, buffer+2, packet, size); 
-     default:  
-          log_error(0, "Unknown identity choice %d in verify_identity_verification()",
-		    *(st->uSPIidentchoice));
-          return 0;  
-     }  
+     int i;
+
+     for (i=0; i<sizeof(idxform)/sizeof(idxform[0]); i++)
+	  if (*(st->uSPIidentchoice) == idxform[i].type)
+	       break;
+
+     if (i == sizeof(idxform)/sizeof(idxform[0])) {
+          log_error(0, "Unknown identity choice %d in verify_identity_verification()", 
+		    *(st->uSPIidentchoice)); 
+          return 0; 
+     } 
+
+     if (varpre2octets(buffer) != idxform[i].hashsize +2)
+	  return 0;
+     return idverify(st, &idxform[i], buffer+2, packet, size); 
 } 
 
 
 int
-MD5idsign(struct stateob *st, u_int8_t *signature,  
-                    u_int8_t *packet, u_int16_t psize) 
+idsign(struct stateob *st, struct idxform *hash, u_int8_t *signature,  
+       u_int8_t *packet, u_int16_t psize) 
 {
-     MD5_CTX ctx;
-     struct moduli_cache *mod;
      struct identity_message *p;
 
-     MD5Init(&ctx);
+     hash->Init(hash->ctx);
 
-     MD5Update(&ctx, st->shared, st->sharedsize); 
+     hash->Update(hash->ctx, st->shared, st->sharedsize); 
 
-     MD5Update(&ctx, st->icookie, COOKIE_SIZE);
-     MD5Update(&ctx, st->rcookie, COOKIE_SIZE);
-     MD5Update(&ctx, st->roschemes, st->roschemesize);
+     hash->Update(hash->ctx, st->icookie, COOKIE_SIZE);
+     hash->Update(hash->ctx, st->rcookie, COOKIE_SIZE);
+     hash->Update(hash->ctx, st->roschemes, st->roschemesize);
 
      /* Our exchange value */
-     mod = mod_find_modgen(st->modulus, st->generator);
-     MD5Update(&ctx, mod->exchangevalue, mod->exchangesize); 
-     MD5Update(&ctx, st->oSPIoattrib, st->oSPIoattribsize);
-     MD5Update(&ctx, st->oSPIident, strlen(st->oSPIident));
-     MD5Update(&ctx, st->oSPIsecret, st->oSPIsecretsize);
+     hash->Update(hash->ctx, st->exchangevalue, st->exchangesize); 
+     hash->Update(hash->ctx, st->oSPIoattrib, st->oSPIoattribsize);
+     hash->Update(hash->ctx, st->oSPIident, strlen(st->oSPIident));
+     hash->Update(hash->ctx, st->oSPIsecret, st->oSPIsecretsize);
 
      /* Their exchange value */
-     MD5Update(&ctx, st->texchange, st->texchangesize);
-     MD5Update(&ctx, st->uSPIoattrib, st->uSPIoattribsize);
+     hash->Update(hash->ctx, st->texchange, st->texchangesize);
+     hash->Update(hash->ctx, st->uSPIoattrib, st->uSPIoattribsize);
 
      if(st->uSPIident != NULL) {
-	  MD5Update(&ctx, st->uSPIident, strlen(st->uSPIident));
-	  MD5Update(&ctx, st->uSPIsecret, st->uSPIsecretsize);
+	  hash->Update(hash->ctx, st->uSPIident, strlen(st->uSPIident));
+	  hash->Update(hash->ctx, st->uSPIsecret, st->uSPIsecretsize);
      }
 
      /* Hash type, lifetime + spi fields */
      p = (struct identity_message *)packet;
-     MD5Update(&ctx, (char *)&(p->type), IDENTITY_MESSAGE_MIN - 2*COOKIE_SIZE);
+     hash->Update(hash->ctx, (char *)&(p->type), IDENTITY_MESSAGE_MIN - 2*COOKIE_SIZE);
 
      /* Hash attribute choice, padding */
      packet += IDENTITY_MESSAGE_MIN;
@@ -536,76 +564,75 @@ MD5idsign(struct stateob *st, u_int8_t *signature,
      psize -= varpre2octets(packet) + 2 + MD5_SIZE;
      packet += varpre2octets(packet) + 2 + MD5_SIZE;
 
-     MD5Update(&ctx, packet, psize);
+     hash->Update(hash->ctx, packet, psize);
 
      /* Data fill */
-     MD5Final(NULL, &ctx);
+     hash->Final(NULL, hash->ctx);
 
      /* And finally the trailing key */
-     MD5Update(&ctx, st->shared, st->sharedsize);
+     hash->Update(hash->ctx, st->shared, st->sharedsize);
 
-     MD5Final(signature, &ctx);
+     hash->Final(signature, hash->ctx);
 
-     return MD5_SIZE;
+     return hash->hashsize;
 }
 
 int
-MD5idverify(struct stateob *st, u_int8_t *signature,   
-	  u_int8_t *packet, u_int16_t psize)
+idverify(struct stateob *st, struct idxform *hash, u_int8_t *signature,   
+	 u_int8_t *packet, u_int16_t psize)
 {
-     MD5_CTX ctx; 
-     u_int8_t digest[16];
-     struct moduli_cache *mod; 
+     u_int8_t digest[20];    /* XXX - needs adjusting */
      struct identity_message *p;
  
      p = (struct identity_message *)packet;
 
-     MD5Init(&ctx); 
+     hash->Init(hash->ctx); 
  
      /* Our shared secret */
-     MD5Update(&ctx, st->shared, st->sharedsize); 
+     hash->Update(hash->ctx, st->shared, st->sharedsize); 
  
-     MD5Update(&ctx, st->icookie, COOKIE_SIZE); 
-     MD5Update(&ctx, st->rcookie, COOKIE_SIZE); 
-     MD5Update(&ctx, st->roschemes, st->roschemesize); 
+     hash->Update(hash->ctx, st->icookie, COOKIE_SIZE); 
+     hash->Update(hash->ctx, st->rcookie, COOKIE_SIZE); 
+     hash->Update(hash->ctx, st->roschemes, st->roschemesize); 
  
      /* Their exchange value */ 
-     MD5Update(&ctx, st->texchange, st->texchangesize); 
-     MD5Update(&ctx, st->uSPIoattrib, st->uSPIoattribsize); 
-     MD5Update(&ctx, st->uSPIident, strlen(st->uSPIident)); 
-     MD5Update(&ctx, st->uSPIsecret, st->uSPIsecretsize); 
+     hash->Update(hash->ctx, st->texchange, st->texchangesize); 
+     hash->Update(hash->ctx, st->uSPIoattrib, st->uSPIoattribsize); 
+     hash->Update(hash->ctx, st->uSPIident, strlen(st->uSPIident)); 
+     hash->Update(hash->ctx, st->uSPIsecret, st->uSPIsecretsize); 
  
      /* Our exchange value */ 
-     mod = mod_find_modgen(st->modulus, st->generator); 
-     MD5Update(&ctx, mod->exchangevalue, mod->exchangesize);  
-     MD5Update(&ctx, st->oSPIoattrib, st->oSPIoattribsize); 
+     hash->Update(hash->ctx, st->exchangevalue, st->exchangesize);  
+     hash->Update(hash->ctx, st->oSPIoattrib, st->oSPIoattribsize); 
 
      /* Determine if the sender knew our secret already */
      if(p->type != IDENTITY_REQUEST) {
-	  MD5Update(&ctx, st->oSPIident, strlen(st->oSPIident)); 
-	  MD5Update(&ctx, st->oSPIsecret, st->oSPIsecretsize); 
+	  hash->Update(hash->ctx, st->oSPIident, strlen(st->oSPIident)); 
+	  hash->Update(hash->ctx, st->oSPIsecret, st->oSPIsecretsize); 
      }
  
      /* Hash type, lifetime + spi fields */
-     MD5Update(&ctx, (char *)&(p->type), IDENTITY_MESSAGE_MIN - 2*COOKIE_SIZE);
+     hash->Update(hash->ctx, (char *)&(p->type), IDENTITY_MESSAGE_MIN - 2*COOKIE_SIZE);
 
      packet += IDENTITY_MESSAGE_MIN;
      psize -= IDENTITY_MESSAGE_MIN + packet[1] + 2;
      packet += packet[1] + 2;
      psize -= varpre2octets(packet) + 2 + MD5_SIZE;
      packet += varpre2octets(packet) + 2 + MD5_SIZE;
-     MD5Update(&ctx, packet, psize);
+     hash->Update(hash->ctx, packet, psize);
 
      /* Data fill */
-     MD5Final(NULL, &ctx); 
+     hash->Final(NULL, hash->ctx); 
 
      /* And finally the trailing key */
-     MD5Update(&ctx, st->shared, st->sharedsize);
+     hash->Update(hash->ctx, st->shared, st->sharedsize);
 
-     MD5Final(digest, &ctx); 
+     hash->Final(digest, hash->ctx); 
 
-     return !bcmp(digest, signature, MD5_SIZE);
+     return !bcmp(digest, signature, hash->hashsize);
 }
+
+/* Functions for handling the linked list of identities */
 
 int
 identity_insert(struct identity **idob, struct identity *ob)

@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* $Id: cookie.h,v 1.1.1.1 1997/07/18 22:48:48 provos Exp $ */
+/* $Id: cookie.h,v 1.2 1997/07/24 23:47:11 provos Exp $ */
 /* 
  * cookie.h: 
  * cookie generation header file
@@ -51,5 +51,6 @@ static u_int8_t rsecret[SECRET_SIZE];      /* Responder secret */
 EXTERN void reset_secret(void);
 EXTERN int secret_generate(u_int8_t *secret, u_int16_t size);
 EXTERN int cookie_generate(struct stateob *st, 
-			   u_int8_t *cookie, u_int16_t size);
+			   u_int8_t *cookie, u_int16_t size,
+			   u_int8_t *data, u_int16_t dsize);
 #endif

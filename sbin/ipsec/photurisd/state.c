@@ -113,6 +113,8 @@ state_value_reset(struct stateob *ob)
 
      if (ob->texchange != NULL)
 	  free(ob->texchange);
+     if (ob->exchangevalue != NULL)
+	  free(ob->exchangevalue);
 
      if (ob->roschemes != NULL)
 	  free(ob->roschemes);

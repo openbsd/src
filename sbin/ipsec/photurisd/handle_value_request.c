@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: handle_value_request.c,v 1.2 1997/07/22 11:18:23 provos Exp $";
+static char rcsid[] = "$Id: handle_value_request.c,v 1.3 1997/07/24 23:47:13 provos Exp $";
 #endif
 
 #include <stdio.h>
@@ -65,6 +65,7 @@ handle_value_request(u_char *packet, int size,
 {
 	struct value_request *header;
 	struct stateob *st;
+	mpz_t test, gen, mod;
 	u_int8_t *p, *modp, *refp, *genp = NULL;
 	u_int16_t i, sstart, vsize, asize, modsize, modflag;
 	u_int8_t scheme_ref[2];
@@ -85,7 +86,7 @@ handle_value_request(u_char *packet, int size,
 	     tempst.port = global_port; 
 	     tempst.counter = header->counter;
 	     
-	     cookie_generate(&tempst, rcookie, COOKIE_SIZE); 
+	     cookie_generate(&tempst, rcookie, COOKIE_SIZE, schemes, ssize); 
 
 	     /* Check for invalid cookie */
 	     if (bcmp(rcookie, header->rcookie, COOKIE_SIZE)) {
@@ -146,6 +147,21 @@ handle_value_request(u_char *packet, int size,
 	     /* This 'i' is used below as well as p */
 	     if (asize + i != size)
 		  return -1;  /* attributes dont match udp length */
+
+	     /* now check the exchange value */
+	     mpz_init_set_varpre(test, VALUE_REQUEST_VALUE(header));
+	     mpz_init_set_varpre(mod, modp);
+	     mpz_init(gen);
+	     if (exchange_set_generator(gen, header->scheme, genp) == -1 ||
+		 !exchange_check_value(test, gen, mod)) {
+		  mpz_clear(test);
+		  mpz_clear(gen);
+		  mpz_clear(mod);
+		  return 0;
+	     }
+	     mpz_clear(test);
+	     mpz_clear(gen);
+	     mpz_clear(mod);
 
 	     if ((st = state_new()) == NULL)
 		  return -1;

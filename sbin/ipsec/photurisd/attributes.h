@@ -46,7 +46,9 @@
 #define AT_AH_ATTRIB  1
 #define AT_ESP_ATTRIB 2
 #define AT_MD5_DP     3
+#define AT_SHA1_DP    4
 #define AT_MD5_KDP    5
+#define AT_SHA1_KDP   6
 #define AT_DES_CBC    8
 #define AT_ORG        255
 

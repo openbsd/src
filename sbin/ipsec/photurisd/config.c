@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: config.c,v 1.3 1997/07/23 12:28:46 provos Exp $";
+static char rcsid[] = "$Id: config.c,v 1.4 1997/07/24 23:47:09 provos Exp $";
 #endif
 
 #define _CONFIG_C_
@@ -154,6 +154,9 @@ init_attributes(void)
                     attrib[1] = 0; 
                } else if (!strcmp(p, "AT_MD5_DP")) { 
                     attrib[0] = AT_MD5_DP; 
+                    attrib[1] = 0; 
+               } else if (!strcmp(p, "AT_SHA1_DP")) { 
+                    attrib[0] = AT_SHA1_DP; 
                     attrib[1] = 0; 
                } else if (!strcmp(p, "AT_MD5_KDP")) {  
                     attrib[0] = AT_MD5_KDP;  

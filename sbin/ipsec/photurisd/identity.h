@@ -74,6 +74,15 @@ struct identity {
 #define MD5_SIZE  16
 #define SHA1_SIZE 20
 
+struct idxform {
+     u_int8_t type;           /* Type of the transform */
+     u_int8_t hashsize;       /* Size of the hash */
+     void *ctx;               /* Pointer to a context */
+     void (*Init)(void *);
+     void (*Update)(void *, unsigned char *, unsigned int);
+     void (*Final)(unsigned char *, void *);
+};
+
 int init_identities(char *name, struct identity *ob);
 int identity_insert(struct identity **idob, struct identity *ob);
 int identity_unlink(struct identity **idob, struct identity *ob);
@@ -92,6 +101,8 @@ int create_identity_verification(struct stateob *st, u_int8_t *buffer,
 int  verify_identity_verification(struct stateob *st, u_int8_t *buffer,
 				  u_int8_t *packet, u_int16_t size);
 
-int MD5idsign(struct stateob *, u_int8_t *, u_int8_t *, u_int16_t);
-int MD5idverify(struct stateob *, u_int8_t *, u_int8_t *, u_int16_t);
+int idsign(struct stateob *, struct idxform *, u_int8_t *, 
+	   u_int8_t *, u_int16_t);
+int idverify(struct stateob *, struct idxform *, u_int8_t *, 
+	     u_int8_t *, u_int16_t);
 #endif

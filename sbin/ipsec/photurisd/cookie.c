@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: cookie.c,v 1.1.1.1 1997/07/18 22:48:48 provos Exp $";
+static char rcsid[] = "$Id: cookie.c,v 1.2 1997/07/24 23:47:10 provos Exp $";
 #endif
 
 #define _COOKIE_C_
@@ -69,7 +69,8 @@ secret_generate(u_int8_t *secret, u_int16_t size)
 }
       
 int
-cookie_generate(struct stateob *st, u_int8_t *cookie, u_int16_t size)
+cookie_generate(struct stateob *st, u_int8_t *cookie, u_int16_t size,
+		u_int8_t *data, u_int16_t dsize)
 {
   MD5_CTX ctx;
   u_int8_t digest[16];
@@ -90,6 +91,10 @@ cookie_generate(struct stateob *st, u_int8_t *cookie, u_int16_t size)
   MD5Update(&ctx, (u_int8_t *)&st->counter, sizeof(st->counter));
   MD5Update(&ctx, secret, SECRET_SIZE);
   MD5Update(&ctx, st->icookie, COOKIE_SIZE);
+
+  /* For the responder cookie we also hash the schemes */
+  if (data != NULL && dsize)
+       MD5Update(&ctx, data, dsize);
 
   MD5Final(digest, &ctx);
 

@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: handle_value_response.c,v 1.1.1.1 1997/07/18 22:48:50 provos Exp $";
+static char rcsid[] = "$Id: handle_value_response.c,v 1.2 1997/07/24 23:47:14 provos Exp $";
 #endif
 
 #include <stdlib.h>
@@ -64,6 +64,7 @@ handle_value_response(u_char *packet, int size, char *address,
 {
 	struct value_response *header;
 	struct stateob *st;
+	mpz_t test;
 	u_int8_t *p;
 	u_int16_t i, asize;
 
@@ -93,6 +94,14 @@ handle_value_response(u_char *packet, int size, char *address,
 
 	if (asize + i != size)
 	     return -1;  /* attributes dont match udp length */
+
+	/* Now check the exchange value for defects */
+	mpz_init_set_varpre(test, VALUE_RESPONSE_VALUE(header));
+	if (!exchange_check_value(test, st->generator, st->modulus)) {
+	     mpz_clear(test);
+	     return 0;
+	}
+	mpz_clear(test);
 
 	/* Fill the state object */
 	st->uSPIoattrib = calloc(i, sizeof(u_int8_t));

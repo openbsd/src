@@ -1,4 +1,4 @@
-.\" $OpenBSD: photurisd.1,v 1.5 1997/07/23 12:28:53 provos Exp $
+.\" $OpenBSD: photurisd.1,v 1.6 1997/07/24 23:47:18 provos Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -37,7 +37,7 @@
 .Nd IPSec key management daemon
 .Sh SYNOPSIS
 .Nm photurisd
-.Op Fl fi
+.Op Fl ci
 .Op Fl d Ar directory
 .Sh DESCRIPTION
 The
@@ -53,10 +53,10 @@ socket for kernel requests.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl f
+.It Fl c
 The
-.Fl f
-option is used to obmit the primality check of the bootstrapped moduli.
+.Fl c
+option is used to force a primality check of the bootstrapped moduli.
 .It Fl i
 The
 .Fl i
@@ -112,7 +112,23 @@ They are followed by an integer.
 The file
 .Pa attributes.conf
 contains the attributes, i.e. different choices of encryption
-and authenication, offered to the other peer.
+and authenication, offered to the other peer. If a line starts with an ip
+address and a space seperated netmask the following attributes are only
+offered to hosts lying in that net range. Possible attributes are:
+.Bl -tag -width AT_ESP_ATTRIB -offset indent
+.It AT_AH_ATTRIB
+Starts the list of authentication attributes.
+.It AT_ESP_ATTRIB
+Starts the list of encryption attributes.
+.It AT_MD5_DP
+MD5 symmetric identification. This attribute must be offered.
+.It AT_SHA1_DP
+SHA1 symmetric identification.
+.It AT_MD5_KDP
+Simple MD5 keyed authentication.
+.It AT_DES_CBC
+DES CBC encryption.
+.El
 .Pp
 The file
 .Pa secrets.conf
@@ -129,13 +145,15 @@ The keywords
 .Nm port ,
 .Nm options ,
 .Nm tsrc ,
-.Nm tdsr
+.Nm tdsr ,
+.Nm exchange_lifetime ,
+.Nm spi_lifetime
 and
 .Nm user
 are understood in the 
 .Pa photuris.startup
 file. The values are as follows:
-.Bl -tag -width options -offset indent
+.Bl -tag -width exchange_lifetime -offset indent
 .It dst
 The destination IP address with which the exchange is to be established.
 .It port
@@ -153,6 +171,11 @@ for the tunnel to be created.
 .It tdst
 The destination address with netmask for which packets are
 accepted for the tunnel being created.
+.It exchange_lifetime
+Determines the lifetime of the exchange. After an exchange expires
+no new SPIs are created.
+.It spi_lifetime
+Determines the lifetime of each created SPI in the exchange.
 .It user
 The user name for whom the keying shall be done. Preconfigured
 secrets are taken from the users secret file.

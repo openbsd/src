@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* $Id: exchange.h,v 1.1.1.1 1997/07/18 22:48:49 provos Exp $ */
+/* $Id: exchange.h,v 1.2 1997/07/24 23:47:12 provos Exp $ */
 /* 
  * exchange.h: 
  * exchange generation header file
@@ -50,6 +50,8 @@ EXTERN u_int8_t *mpz_set_varpre(mpz_t a, u_int8_t *varpre);
 EXTERN u_int8_t *mpz_init_set_varpre(mpz_t a, u_int8_t *varpre);
 EXTERN void mpz_get_number_bits(mpz_t rop, mpz_t p);
 EXTERN int mpz_to_varpre(u_int8_t *value, u_int16_t *size, mpz_t p, mpz_t bits);
+EXTERN int exchange_set_generator(mpz_t, u_int8_t *, u_int8_t *);
+EXTERN int exchange_check_value(mpz_t, mpz_t, mpz_t);
 EXTERN int exchange_make_values(struct stateob *, mpz_t, mpz_t );
 EXTERN int exchange_value_generate(struct stateob *, u_int8_t *, u_int16_t *);
 
