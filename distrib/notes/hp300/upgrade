@@ -68,8 +68,6 @@ manually.  To do this, follow the following procedure:
 		cd /
 		tar -xzvpf /path/to/base20.tar.gz
 
-	  NOTE: the `--unlink' option is _very_ important!
-
 	* Install a new boot block:
 
 		cd /usr/mdec
