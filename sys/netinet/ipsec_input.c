@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.6 2000/01/03 12:58:13 angelos Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.7 2000/01/08 01:59:25 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -98,7 +98,7 @@ int ah_enable = 0;
  */
 
 static int
-ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
+ipsec_common_input(struct mbuf **m0, int skip, int protoff, int af, int sproto)
 {
 #define IPSEC_ISTAT(y,z) (sproto == IPPROTO_ESP ? (y)++ : (z)++)
 #define IPSEC_NAME (sproto == IPPROTO_ESP ? (af == AF_INET ? "esp_input()" :\
@@ -107,6 +107,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
                                                              "ah6_input()"))
     union sockaddr_union sunion;
     struct tdb *tdbp;
+    struct mbuf *m;
     u_int32_t spi;
     u_int8_t prot;
     int s;
@@ -121,10 +122,20 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 
     IPSEC_ISTAT(espstat.esps_input, ahstat.ahs_input);
 
+    if (m0 == 0)
+    {
+	DPRINTF(("%s: NULL packet received\n"));
+        IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops);
+        return EINVAL;
+    }
+    else
+      m = *m0;
+
     if ((sproto == IPPROTO_ESP && !esp_enable) ||
 	(sproto == IPPROTO_AH && !ah_enable))
     {
         m_freem(m);
+	*m0 = NULL;
         IPSEC_ISTAT(espstat.esps_pdrops, ahstat.ahs_pdrops);
         return EOPNOTSUPP;
     }
@@ -171,6 +182,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 	DPRINTF(("%s: could not find SA for packet to %s, spi %08x\n",
 		 IPSEC_NAME, ipsp_address(sunion), ntohl(spi)));
 	m_freem(m);
+	*m0 = NULL;
 	IPSEC_ISTAT(espstat.esps_notdb, ahstat.ahs_notdb);
 	return ENOENT;
     }
@@ -180,6 +192,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 	DPRINTF(("%s: attempted to use invalid SA %s/%08x\n",
 		 IPSEC_NAME, ipsp_address(sunion), ntohl(spi)));
 	m_freem(m);
+	*m0 = NULL;
 	IPSEC_ISTAT(espstat.esps_invalid, ahstat.ahs_invalid);
 	return EINVAL;
     }
@@ -189,6 +202,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 	DPRINTF(("%s: attempted to use uninitialized SA %s/%08x\n",
 		 IPSEC_NAME, ipsp_address(sunion), ntohl(spi)));
 	m_freem(m);
+	*m0 = NULL;
 	IPSEC_ISTAT(espstat.esps_noxform, ahstat.ahs_noxform);
 	return ENXIO;
     }
@@ -222,6 +236,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 	    DPRINTF(("%s: processing failed for SA %s/%08x\n",
 		     IPSEC_NAME, ipsp_address(tdbp->tdb_dst), ntohl(spi)));
             IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops);
+	    *m0 = NULL;
             return ENOMEM;
         }
 
@@ -249,6 +264,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 	    {
 		DPRINTF(("%s: inner source address %s doesn't correspond to expected proxy source %s, SA %s/%08x\n", IPSEC_NAME, inet_ntoa4(ipn.ip_src), ipsp_address(tdbp->tdb_proxy), ipsp_address(tdbp->tdb_dst), ntohl(spi)));
 		m_free(m);
+	    	*m0 = NULL;
                 IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops);
 		return EACCES;
 	    }
@@ -275,6 +291,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 	    {
 		DPRINTF(("%s: inner source address %s doesn't correspond to expected proxy source %s, SA %s/%08x\n", IPSEC_NAME, inet6_ntoa4(ip6n.ip6_src), ipsp_address(tdbp->tdb_proxy), ipsp_address(tdbp->tdb_dst), ntohl(spi)));
 		m_free(m);
+	    	*m0 = NULL;
 		IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops);
 		return EACCES;
 	    }
@@ -294,6 +311,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 	    DPRINTF(("%s: source address %s doesn't correspond to expected source %s, SA %s/%08x\n", IPSEC_NAME, inet_ntoa4(ip->ip_src), ipsp_address(tdbp->tdb_src), ipsp_address(tdbp->tdb_dst), ntohl(spi)));
 	    m_free(m);
 	    IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops);
+	    *m0 = NULL;
 	    return EACCES;
 	}
     }
@@ -308,6 +326,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 	    DPRINTF(("%s: processing failed for SA %s/%08x\n",
 		     IPSEC_NAME, ipsp_address(tdbp->tdb_dst), ntohl(spi)));
             IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops);
+	    *m0 = NULL;
             return ENOMEM;
         }
 
@@ -337,6 +356,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 		DPRINTF(("%s: inner source address %s doesn't correspond to expected proxy source %s, SA %s/%08x\n", IPSEC_NAME, inet_ntoa4(ipn.ip_src), ipsp_address(tdbp->tdb_proxy), ipsp_address(tdbp->tdb_dst), ntohl(spi)));
 		m_free(m);
 		IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops);
+	    	*m0 = NULL;
 		return EACCES;
 	    }
 	}
@@ -361,6 +381,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 	    {
 		DPRINTF(("%s: inner source address %s doesn't correspond to expected proxy source %s, SA %s/%08x\n", IPSEC_NAME, inet6_ntoa4(ip6n.ip6_src), ipsp_address(tdbp->tdb_proxy), ipsp_address(tdbp->tdb_dst), ntohl(spi)));
 		m_free(m);
+	    	*m0 = NULL;
 		IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops);
 		return EACCES;
 	    }
@@ -379,6 +400,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 	{
 	    DPRINTF(("%s: source address %s doesn't correspond to expected source %s, SA %s/%08x\n", IPSEC_NAME, inet6_ntoa4(ip6->ip6_src), ipsp_address(tdbp->tdb_src), ipsp_address(tdbp->tdb_dst), ntohl(spi)));
 	    m_free(m);
+	    *m0 = NULL;
 	    IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops);
 	    return EACCES;
 	}
@@ -433,22 +455,23 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
          * will only read from the mbuf (i.e., it won't
          * try to free it or keep a pointer a to it).
          */
-        struct mbuf m0;
+        struct mbuf m1;
         struct enchdr hdr;
 
 	hdr.af = af;
 	hdr.spi = tdbp->tdb_spi;
 	hdr.flags = m->m_flags & (M_AUTH|M_CONF);
 
-        m0.m_next = m;
-        m0.m_len = ENC_HDRLEN;
-        m0.m_data = (char *) &hdr;
+        m1.m_next = m;
+        m1.m_len = ENC_HDRLEN;
+        m1.m_data = (char *) &hdr;
         
-        bpf_mtap(m->m_pkthdr.rcvif->if_bpf, &m0);
+        bpf_mtap(m->m_pkthdr.rcvif->if_bpf, &m1);
     }
 #endif
     splx(s);
 
+    *m0 = m;
     return 0;
 #undef IPSEC_NAME
 #undef IPSEC_ISTAT
@@ -496,6 +519,7 @@ void
 ah_input(struct mbuf *m, ...)
 {
     struct ifqueue *ifq = &ipintrq;
+    struct mbuf *mp = m;
     int skip, s;
 
     va_list ap;
@@ -503,7 +527,7 @@ ah_input(struct mbuf *m, ...)
     skip = va_arg(ap, int);
     va_end(ap);
 
-    if (ipsec_common_input(m, skip, offsetof(struct ip, ip_p), AF_INET,
+    if (ipsec_common_input(&mp, skip, offsetof(struct ip, ip_p), AF_INET,
 			   IPPROTO_AH) != 0)
       return;
 
@@ -516,16 +540,16 @@ ah_input(struct mbuf *m, ...)
     if (IF_QFULL(ifq))
     {
 	IF_DROP(ifq);
-	if (m->m_pkthdr.tdbi)
-	  free(m->m_pkthdr.tdbi, M_TEMP);
-	m_freem(m);
+	if (mp->m_pkthdr.tdbi)
+	  free(mp->m_pkthdr.tdbi, M_TEMP);
+	m_freem(mp);
 	ahstat.ahs_qfull++;
 	splx(s);
 	DPRINTF(("ah_input(): dropped packet because of full IP queue\n"));
 	return;
     }
 
-    IF_ENQUEUE(ifq, m);
+    IF_ENQUEUE(ifq, mp);
     schednetisr(NETISR_IP);
     splx(s);
 }
@@ -535,6 +559,7 @@ void
 esp_input(struct mbuf *m, ...)
 {
     struct ifqueue *ifq = &ipintrq;
+    struct mbuf *mp = m;
     int skip, s;
 
     va_list ap;
@@ -542,7 +567,7 @@ esp_input(struct mbuf *m, ...)
     skip = va_arg(ap, int);
     va_end(ap);
 
-    if (ipsec_common_input(m, skip, offsetof(struct ip, ip_p), AF_INET,
+    if (ipsec_common_input(&mp, skip, offsetof(struct ip, ip_p), AF_INET,
 			   IPPROTO_ESP) != 0)
       return;
 
@@ -555,16 +580,16 @@ esp_input(struct mbuf *m, ...)
     if (IF_QFULL(ifq))
     {
 	IF_DROP(ifq);
-	if (m->m_pkthdr.tdbi)
-	  free(m->m_pkthdr.tdbi, M_TEMP);
-	m_freem(m);
+	if (mp->m_pkthdr.tdbi)
+	  free(mp->m_pkthdr.tdbi, M_TEMP);
+	m_freem(mp);
 	espstat.esps_qfull++;
 	splx(s);
 	DPRINTF(("esp_input(): dropped packet because of full IP queue\n"));
 	return;
     }
 
-    IF_ENQUEUE(ifq, m);
+    IF_ENQUEUE(ifq, mp);
     schednetisr(NETISR_IP);
     splx(s);
 }
@@ -608,7 +633,7 @@ ah6_input(struct mbuf **mp, int *offp, int proto)
 	protoff += offsetof(struct ip6_ext, ip6e_nxt);
     }
 
-    if (ipsec_common_input(m, *offp, protoff, AF_INET6, proto) != 0)
+    if (ipsec_common_input(&m, *offp, protoff, AF_INET6, proto) != 0)
     {
 	*mp = NULL;
 	return IPPROTO_DONE;
@@ -657,7 +682,7 @@ esp6_input(struct mbuf **mp, int *offp, int proto)
     }
 
     protoff = offsetof(struct ip6_hdr, ip6_nxt);
-    if (ipsec_common_input(m, *offp, protoff, AF_INET6, proto) != 0)
+    if (ipsec_common_input(&m, *offp, protoff, AF_INET6, proto) != 0)
     {
 	*mp = NULL;
 	return IPPROTO_DONE;
