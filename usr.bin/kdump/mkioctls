@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: mkioctls,v 1.4 1999/02/26 17:01:33 jason Exp $
+#	$OpenBSD: mkioctls,v 1.5 1999/12/28 06:02:34 angelos Exp $
 
 #
 # Copyright (c) 1994
@@ -47,6 +47,8 @@ BEGIN {
 	print "#include <netinet/if_ether.h>"
 	print "#include <net/if_bridge.h>"
 	print "#include <sys/termios.h>"
+	print "#include <netinet/ip_ipsp.h>"
+	print "#include <net/if_enc.h>"
 	print "#define COMPAT_43"
 	print "#include <sys/ioctl.h>"
 	print ""
