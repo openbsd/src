@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.12 2000/05/05 08:34:18 art Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.13 2001/05/26 04:10:26 art Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -230,8 +230,9 @@ dosetrlimit(p, which, limp)
 	u_int which;
 	struct rlimit *limp;
 {
-	register struct rlimit *alimp;
+	struct rlimit *alimp;
 	extern unsigned maxdmap, maxsmap;
+	rlim_t maxlim;
 	int error;
 
 	if (which >= RLIM_NLIMITS)
@@ -241,12 +242,10 @@ dosetrlimit(p, which, limp)
 		return (EINVAL);
 
 	alimp = &p->p_rlimit[which];
-	if (limp->rlim_cur > alimp->rlim_max || 
+	if (limp->rlim_cur > alimp->rlim_max ||
 	    limp->rlim_max > alimp->rlim_max)
 		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			return (error);
-	if (limp->rlim_cur > limp->rlim_max)
-		limp->rlim_cur = limp->rlim_max;
 	if (p->p_limit->p_refcnt > 1 &&
 	    (p->p_limit->p_lflags & PL_SHAREMOD) == 0) {
 		p->p_limit->p_refcnt--;
@@ -255,19 +254,29 @@ dosetrlimit(p, which, limp)
 	}
 
 	switch (which) {
-
 	case RLIMIT_DATA:
-		if (limp->rlim_cur > maxdmap)
-			limp->rlim_cur = maxdmap;
-		if (limp->rlim_max > maxdmap)
-			limp->rlim_max = maxdmap;
+		maxlim = maxdmap;
 		break;
-
 	case RLIMIT_STACK:
-		if (limp->rlim_cur > maxsmap)
-			limp->rlim_cur = maxsmap;
-		if (limp->rlim_max > maxsmap)
-			limp->rlim_max = maxsmap;
+		maxlim = maxsmap;
+		break;
+	case RLIMIT_NOFILE:
+		maxlim = maxfiles;
+		break;
+	case RLIMIT_NPROC:
+		maxlim = maxproc;
+		break;
+	default:
+		maxlim = RLIM_INFINITY;
+		break;
+	}
+
+	if (limp->rlim_max > maxlim)
+		limp->rlim_max = maxlim;
+	if (limp->rlim_cur > limp->rlim_max)
+		limp->rlim_cur = limp->rlim_max;
+
+	if (which == RLIMIT_STACK) {
 		/*
 		 * Stack is allocated to the max at exec time with only
 		 * "rlim_cur" bytes accessible.  If stack limit is going
@@ -305,22 +314,8 @@ dosetrlimit(p, which, limp)
 					      addr, addr+size, prot, FALSE);
 #endif
 		}
-		break;
-
-	case RLIMIT_NOFILE:
-		if (limp->rlim_cur > maxfiles)
-			limp->rlim_cur = maxfiles;
-		if (limp->rlim_max > maxfiles)
-			limp->rlim_max = maxfiles;
-		break;
-
-	case RLIMIT_NPROC:
-		if (limp->rlim_cur > maxproc)
-			limp->rlim_cur = maxproc;
-		if (limp->rlim_max > maxproc)
-			limp->rlim_max = maxproc;
-		break;
 	}
+
 	*alimp = *limp;
 	return (0);
 }
