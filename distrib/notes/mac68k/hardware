@@ -8,7 +8,7 @@ distribution (note that this does not count swap space!).  Much more
 disk space is required to install the source and objects as well (about
 another 105MB).
 
-OpenBSD/mac68k OSREV now runs on most 680x0 MacIntosh's.  Specifically, it
+OpenBSD/MACHINE OSREV now runs on most 680x0 MacIntosh's.  Specifically, it
 should work on:
 	68020 with 68851 PMMU and 68881 FPU
 	68030 with 68882 FPU (most Macs have this)

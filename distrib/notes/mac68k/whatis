@@ -1,4 +1,4 @@
-OpenBSD OSREV is a port to the old Macintosh (680x0-based)
+OpenBSD/MACHINE OSREV is a port to the old Macintosh (680x0-based)
 computers.  As always, there is much to be done on this 
 architecture, and help is very much appreciated.  However,
 a wide variety of hardware and software is completely

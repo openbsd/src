@@ -2,22 +2,22 @@ TopPart
 
 OpenBSDdistsets
 
-		bsd-generic.tgz The OpenBSD/mac68k OSREV kernel binary.  
+		bsd-generic.tgz The OpenBSD/MACHINE OSREV kernel binary.  
 				You MUST install this file.  It is the kernel
 				that you need to boot the system.
 				[ 1.4M uncompressed ]
 
 		bsd-genericsbc.tgz
-				Another OpenBSD/mac68k OSREV kernel binary.
+				Another OpenBSD/MACHINE OSREV kernel binary.
 				This is identical in every way to
 				bsd-generic.tgz accept that it enables a
 				different SCSI driver which may allow
 				some otherwise incompatible SCSI disks to
-				function with OpenBSD/mac68k.  You must
+				function with OpenBSD/MACHINE.  You must
 				install either this or bsd-generic.tgz.
 				[ 1.4M uncompressed ]
 
-		utils/		The mac68k installation utilities for MacOS.
+		utils/		The MACHINE installation utilities for MacOS.
 
 DistributionDescription(ten)
 
@@ -41,7 +41,7 @@ OpenBSDxfont(6.0M,7.3M)
 
 OpenBSDxserv(2.6M,6.3M)
 
-The directory '../OSREV/mac68k/utils' contains a number of utilities for the
+The directory '../OSREV/MACHINE/utils' contains a number of utilities for the
 MacOS to aid the installation and configuration of OpenBSD.  The files in
 this directory are as follows:
 

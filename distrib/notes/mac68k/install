@@ -1,9 +1,12 @@
+OpenBSDInstallPrelude
+
 The installation can be broken down into three basic steps:
 	* Running Mkfs to build a filesystem or filesystems.
 	* Running Install Utility to load the files onto your filesystems.
 	* Running the booter to boot the system.
 
-**** Preparing the filesystem(s)
+
+Preparing the filesystems:
 
 Double-click on the Mkfs application icon to start it up.  It will ask
 you for the SCSI ID of the drive that you are installing upon.  Once
@@ -29,14 +32,15 @@ Repeat as necessary for any extra partitions that you wish to make
 filesystems on.  Note that you do _not_ need a filesystem on your swap
 partition.
 
-**** Installing the files
+
+Installing the distribution sets:
 
 Double-click on the Install Utility icon to start it up.  The installer
 will present the same SCSI ID menu that mkfs did.  Select the same SCSI
 ID that you did for mkfs--i.e., the one you are installing onto.
 
 If you are installing onto a single root partition, proceed to the
-"Installation of base files" section, below.
+"Installing the base files" section, below.
 
 	If you have not created filesystems for the root, usr, and
 	any other partitions, go back to "Preparing the filesystem(s),"
@@ -73,6 +77,7 @@ If you are installing onto a single root partition, proceed to the
 		* Type "quit" to exit the minishell after you have mounted
 		  all the filesystems.
 
+
 Installation of base files:
 
 	Select the "Install" menu item from the "File" menu and install
@@ -91,15 +96,8 @@ Installation of base files:
 	device nodes for you in /dev and your initial /etc/fstab.  The
 	installer program also has an option to give you a mini-shell.
 
-	You may have noticed in other versions of OpenBSD that adding the
-	ssl{:--:}OSrev.tgz is supported from the installer. This is
-	unfortunately *not* the case for the macintosh installer, as the
-	ssl package will not extract in the correct directory when extracted
-	with the macintosh installation tool. Instead, should install this
-	package *after* you install your system using pkg_add(8). please
-	see afterboot(8) for details on how to do this.
 
-**** Booting the system
+Booting the system:
 
 Double-click on the BSD/Mac68k Booter icon to start the application.  Check
 that the options in the Booting dialog look sane--especially the SCSI ID.
