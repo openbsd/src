@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.43 2001/08/12 11:47:19 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.44 2001/08/16 14:59:47 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -81,6 +81,33 @@ Invoking
 with REFETCH=true
 will try to fetch a version of with mismatched checksums off the OpenBSD
 main archive site.
+.It Ar clean
+Clean ports contents. 
+By default, it will clean the work directory.
+It can be invoked as 
+make clean='[depends work fake flavors dist install sub package packages]'.
+.Bl -tag -width packages
+.It Va work
+Clean work directory.
+.It Va depends
+Recurse into dependencies.
+.It Va flavors
+Clean all work directories.
+.It Va dist
+Clean distfiles.
+.It Va install
+Uninstall package.
+.It Va package
+Remove package file.
+.It Va sub
+With
+.Va install
+or
+.Va package ,
+clean subpackages as well.
+.It Va packages
+Short-hand for `sub package'.
+.El
 .It Ar configure
 Configure the port.
 Might be a void operation.
@@ -196,7 +223,7 @@ will be applied under
 .It Ar rebuild
 Force rebuild of the port.
 .It Ar show
-Invoked with VARNAME=name, show the contents of VARNAME.
+Invoked as show=name, show the contents of ${name}.
 Mostly used from recursive makes, or to know the contents of another
 port's variables without guessing wrong.
 .El
