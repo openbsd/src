@@ -1,4 +1,4 @@
-/*	$OpenBSD: puc.c,v 1.2 1999/11/14 01:27:57 downsj Exp $	*/
+/*	$OpenBSD: puc.c,v 1.3 2001/03/15 17:52:19 deraadt Exp $	*/
 /*	$NetBSD: puc.c,v 1.3 1999/02/06 06:29:54 cgd Exp $	*/
 
 /*
@@ -254,6 +254,7 @@ puc_attach(parent, self, aux)
 		/* set up to configure the child device */
 		paa.port = i;
 		paa.type = sc->sc_desc->ports[i].type;
+		paa.flags = sc->sc_desc->ports[i].flags;
 		paa.pc = pa->pa_pc;
 		paa.intrhandle = intrhandle;
 		paa.a = sc->sc_bar_mappings[barindex].a;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.58 2001/03/13 02:53:51 mickey Exp $	*/
+/*	$OpenBSD: com.c,v 1.59 2001/03/15 17:52:20 deraadt Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -201,7 +201,8 @@ void   com_kgdb_putc __P((void *, int));
 #endif
 
 int
-comspeed(speed)
+comspeedcomspeed(freq, speed)
+	long freq;
 	long speed;
 {
 #define	divrnd(n, q)	(((n)*2/(q)+1)/2)	/* divide and round off */
@@ -212,10 +213,10 @@ comspeed(speed)
 		return 0;
 	if (speed < 0)
 		return -1;
-	x = divrnd((COM_FREQ / 16), speed);
+	x = divrnd((freq / 16), speed);
 	if (x <= 0)
 		return -1;
-	err = divrnd((COM_FREQ / 16) * 1000, speed * x) - 1000;
+	err = divrnd((freq / 16) * 1000, speed * x) - 1000;
 	if (err < 0)
 		err = -err;
 	if (err > COM_TOLERANCE)
@@ -467,6 +468,7 @@ comattach(parent, self, aux)
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
 	sc->sc_iobase = iobase;
+	sc->sc_frequency = COM_FREQ;
 
 	if (iobase == comconsaddr) {
 		comconsattached = 1;
@@ -1270,7 +1272,7 @@ comparam(tp, t)
 	struct com_softc *sc = com_cd.cd_devs[DEVUNIT(tp->t_dev)];
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	int ospeed = comspeed(t->c_ospeed);
+	int ospeed = comspeed(sc->sc_frequency, t->c_ospeed);
 	u_char lcr;
 	tcflag_t oldcflag;
 	int s;
@@ -1935,7 +1937,7 @@ cominit(iot, ioh, rate)
 	u_char stat;
 
 	bus_space_write_1(iot, ioh, com_lcr, LCR_DLAB);
-	rate = comspeed(rate); /* XXX not comdefaultrate? */
+	rate = comspeed(COM_FREQ, rate); /* XXX not comdefaultrate? */
 	bus_space_write_1(iot, ioh, com_dlbl, rate);
 	bus_space_write_1(iot, ioh, com_dlbh, rate >> 8);
 	bus_space_write_1(iot, ioh, com_lcr, LCR_8BITS);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.36 2001/01/24 09:38:01 hugh Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.37 2001/03/15 17:52:20 deraadt Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -204,7 +204,8 @@ void	com_kgdb_putc __P((void *, int));
 #endif
 
 int
-comspeed(speed)
+comspeed(freq, speed)
+	long freq;
 	long speed;
 {
 #define	divrnd(n, q)	(((n)*2/(q)+1)/2)	/* divide and round off */
@@ -215,10 +216,10 @@ comspeed(speed)
 		return 0;
 	if (speed < 0)
 		return -1;
-	x = divrnd((COM_FREQ / 16), speed);
+	x = divrnd((freq / 16), speed);
 	if (x <= 0)
 		return -1;
-	err = divrnd((COM_FREQ / 16) * 1000, speed * x) - 1000;
+	err = divrnd((freq / 16) * 1000, speed * x) - 1000;
 	if (err < 0)
 		err = -err;
 	if (err > COM_TOLERANCE)
@@ -239,11 +240,11 @@ comprobe1(iot, ioh)
 	bus_space_write_1(iot, ioh, com_lcr, 0);
 	bus_space_write_1(iot, ioh, com_iir, 0);
 	for (i = 0; i < 32; i++) {
-	    k = bus_space_read_1(iot, ioh, com_iir);
-	    if (k & 0x38) {
-		bus_space_read_1(iot, ioh, com_data); /* cleanup */
-	    } else
-		break;
+		k = bus_space_read_1(iot, ioh, com_iir);
+		if (k & 0x38) {
+			bus_space_read_1(iot, ioh, com_data); /* cleanup */
+		} else
+			break;
 	}
 	if (i >= 32) 
 	    return 0;
@@ -470,6 +471,7 @@ comattach(parent, self, aux)
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
 	sc->sc_iobase = iobase;
+	sc->sc_frequency = COM_FREQ;
 
 	timeout_set(&sc->sc_dtr_tmo, com_raisedtr, sc);
 	timeout_set(&sc->sc_diag_tmo, comdiag, sc);
@@ -1297,7 +1299,7 @@ comparam(tp, t)
 	struct com_softc *sc = pccom_cd.cd_devs[DEVUNIT(tp->t_dev)];
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	int ospeed = comspeed(t->c_ospeed);
+	int ospeed = comspeed(sc->sc_frequency, t->c_ospeed);
 	u_int8_t lcr;
 	tcflag_t oldcflag;
 	int s;
@@ -1976,7 +1978,7 @@ cominit(iot, ioh, rate)
 	u_int8_t stat;
 
 	bus_space_write_1(iot, ioh, com_lcr, LCR_DLAB);
-	rate = comspeed(rate); /* XXX not comdefaultrate? */
+	rate = comspeed(COM_FREQ, rate); /* XXX not comdefaultrate? */
 	bus_space_write_1(iot, ioh, com_dlbl, rate);
 	bus_space_write_1(iot, ioh, com_dlbh, rate >> 8);
 	bus_space_write_1(iot, ioh, com_lcr, LCR_8BITS);

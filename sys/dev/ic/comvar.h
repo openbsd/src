@@ -1,4 +1,4 @@
-/*	$OpenBSD: comvar.h,v 1.19 2001/03/13 02:53:52 mickey Exp $	*/
+/*	$OpenBSD: comvar.h,v 1.20 2001/03/15 17:52:20 deraadt Exp $	*/
 /*	$NetBSD: comvar.h,v 1.5 1996/05/05 19:50:47 christos Exp $	*/
 
 /*
@@ -151,7 +151,7 @@ int	com_activate __P((struct device *, enum devact));
 int comprobeHAYESP __P((bus_space_handle_t hayespioh, struct com_softc *sc));
 #endif
 void	comdiag		__P((void *));
-int	comspeed	__P((long));
+int	comspeed	__P((long, long));
 u_char	com_cflag2lcr	__P((tcflag_t));
 int	comparam	__P((struct tty *, struct termios *));
 void	comstart	__P((struct tty *));

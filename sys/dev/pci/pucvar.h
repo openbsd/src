@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucvar.h,v 1.2 1999/11/14 01:27:57 downsj Exp $	*/
+/*	$OpenBSD: pucvar.h,v 1.3 2001/03/15 17:52:20 deraadt Exp $	*/
 /*	$NetBSD: pucvar.h,v 1.2 1999/02/06 06:29:54 cgd Exp $	*/
 
 /*
@@ -44,9 +44,10 @@ struct puc_device_description {
 	pcireg_t		rval[4];
 	pcireg_t		rmask[4];
 	struct {
-		int	type;
-		int	bar;
-		int	offset;
+		u_short	type;
+		u_char	bar;
+		u_char	offset;
+		int	flags;
 	}			ports[PUC_MAX_PORTS];
 };
 
@@ -63,6 +64,10 @@ struct puc_device_description {
   ((port) < PUC_MAX_PORTS && (desc)->ports[(port)].type != PUC_PORT_TYPE_NONE)
 #define PUC_PORT_BAR_INDEX(bar)	(((bar) - PCI_MAPREG_START) / 4)
 
+/* Flags for PUC_PORT_TYPE_COM */
+/* * assume all clock rates have 8 lower bits to 0 - this leaves us 8 flags */
+#define PUC_COM_CLOCKMASK 0xffffff00
+
 struct puc_attach_args {
 	int			port;
 	int			type;
@@ -73,6 +78,7 @@ struct puc_attach_args {
 	bus_addr_t		a;
 	bus_space_tag_t		t;
 	bus_space_handle_t	h;
+	int			flags;
 };
 
 extern const struct puc_device_description puc_devices[];
