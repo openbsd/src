@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keyscan.c,v 1.8 2001/01/13 18:06:54 markus Exp $");
+RCSID("$OpenBSD: ssh-keyscan.c,v 1.9 2001/01/13 18:12:47 markus Exp $");
 
 #include <sys/queue.h>
 #include <errno.h>
@@ -94,7 +94,7 @@ Linebuf_alloc(const char *filename, void (*errfun) (const char *,...))
 	if (filename) {
 		lb->filename = filename;
 		if (!(lb->stream = fopen(filename, "r"))) {
-			free(lb);
+			xfree(lb);
 			if (errfun)
 				(*errfun) ("%s: %s\n", filename, strerror(errno));
 			return (NULL);
@@ -107,7 +107,7 @@ Linebuf_alloc(const char *filename, void (*errfun) (const char *,...))
 	if (!(lb->buf = malloc(lb->size = LINEBUF_SIZE))) {
 		if (errfun)
 			(*errfun) ("linebuf (%s): malloc failed\n", lb->filename);
-		free(lb);
+		xfree(lb);
 		return (NULL);
 	}
 	lb->errfun = errfun;
@@ -119,8 +119,8 @@ static inline void
 Linebuf_free(Linebuf * lb)
 {
 	fclose(lb->stream);
-	free(lb->buf);
-	free(lb);
+	xfree(lb->buf);
+	xfree(lb);
 }
 
 static inline void
@@ -314,7 +314,7 @@ conalloc(char *iname, char *oname)
 	do {
 		name = xstrsep(&namelist, ",");
 		if (!name) {
-			free(namebase);
+			xfree(namebase);
 			return (-1);
 		}
 	} while ((s = tcpconnect(name)) < 0);
@@ -347,10 +347,10 @@ confree(int s)
 	close(s);
 	if (s >= maxfd || fdcon[s].c_status == CS_UNUSED)
 		fatal("confree: attempt to free bad fdno %d", s);
-	free(fdcon[s].c_namebase);
-	free(fdcon[s].c_output_name);
+	xfree(fdcon[s].c_namebase);
+	xfree(fdcon[s].c_output_name);
 	if (fdcon[s].c_status == CS_KEYS)
-		free(fdcon[s].c_data);
+		xfree(fdcon[s].c_data);
 	fdcon[s].c_status = CS_UNUSED;
 	TAILQ_REMOVE(&tq, &fdcon[s], c_link);
 	FD_CLR(s, &read_wait);
@@ -374,11 +374,11 @@ conrecycle(int s)
 	char *iname, *oname;
 
 	iname = xstrdup(c->c_namelist);
-	oname = c->c_output_name;
-	c->c_output_name = NULL;/* prevent it from being freed */
+	oname = xstrdup(c->c_output_name);
 	confree(s);
 	ret = conalloc(iname, oname);
-	free(iname);
+	xfree(iname);
+	xfree(oname);
 	return (ret);
 }
 
