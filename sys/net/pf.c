@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.342 2003/05/10 23:04:31 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.343 2003/05/10 23:32:48 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -996,7 +996,7 @@ pf_change_icmp(struct pf_addr *ia, u_int16_t *ip, struct pf_addr *oa,
 		break;
 #endif /* INET6 */
 	}
-	/* Change outer ip address, fix outer ipv4 or icmpv6 checksum. */
+	/* Change outer ip address, fix outer ip or icmpv6 checksum. */
 	PF_ACPY(oa, na, af);
 	switch (af) {
 #ifdef INET
@@ -3709,12 +3709,56 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 			break;
 		}
 #endif /* INET6 */
-		default:
-			DPFPRINTF(PF_DEBUG_MISC,
-			    ("pf: ICMP error message for bad proto\n"));
-			return (PF_DROP);
-		}
+		default: {
+			struct pf_tree_node	key;
 
+			key.af = pd2.af;
+			key.proto = pd2.proto;
+			PF_ACPY(&key.addr[0], pd2.dst, pd2.af);
+			key.port[0] = 0;
+			PF_ACPY(&key.addr[1], pd2.src, pd2.af);
+			key.port[1] = 0;
+
+			STATE_LOOKUP();
+
+			if (STATE_TRANSLATE(*state)) {
+				if (direction == PF_IN) {
+					pf_change_icmp(pd2.src, NULL,
+					    daddr, &(*state)->lan.addr,
+					    0, NULL,
+					    pd2.ip_sum, icmpsum,
+					    pd->ip_sum, 0, pd2.af);
+				} else {
+					pf_change_icmp(pd2.dst, NULL,
+					    saddr, &(*state)->gwy.addr,
+					    0, NULL,
+					    pd2.ip_sum, icmpsum,
+					    pd->ip_sum, 0, pd2.af);
+				}
+				switch (pd2.af) {
+#ifdef INET
+				case AF_INET:
+					m_copyback(m, off, ICMP_MINLEN,
+					    (caddr_t)pd->hdr.icmp);
+					m_copyback(m, ipoff2, sizeof(h2),
+					    (caddr_t)&h2);
+					break;
+#endif /* INET */
+#ifdef INET6
+				case AF_INET6:
+					m_copyback(m, off, ICMP_MINLEN,
+					    (caddr_t)pd->hdr.icmp6);
+					m_copyback(m, ipoff2, sizeof(h2_6),
+					    (caddr_t)&h2_6);
+					break;
+#endif /* INET6 */
+				}
+			}
+
+			return (PF_PASS);
+			break;
+		}
+		}
 	}
 }
 
