@@ -1,7 +1,7 @@
 
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.4 2001/09/04 19:14:04 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.5 2001/09/04 19:17:06 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -186,7 +186,7 @@ all)
 	R pf altq tun0 tun1 tun2 random ses0 uk0 uk1 ss0 ss1
 	R fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H
 	R fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H
-	R lkm audio0 local
+	R xfs0 tcx0 lkm audio0 local
 	;;
 floppy)
 	R std fd0 wd0 wd1 sd0 sd1
