@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.46 2000/06/25 18:58:43 provos Exp $
+.\"	$OpenBSD: sysctl.3,v 1.47 2000/06/26 18:56:50 deraadt Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -190,7 +190,28 @@ int dospecialcheck = 1;
 struct ctldebug debug5 = { "dospecialcheck", &dospecialcheck };
 .Ed
 .Ss CTL_FS
-There are currently no second level names for the file system.
+The string and integer information available for the
+.Dv CTL_FS
+level is detailed below.
+The changeable column shows whether a process with appropriate
+privileges may change the value.
+.Bl -column "Second level nameXXXXXX" integerXXX -offset indent
+.It Sy Second level name	Type	Changeable
+.It Dv FS_POSIX_SETUID No "	integer	yes"
+.El
+.Pp
+.Bl -tag -width "123456"
+.It Dv FS_POSIX_SETUID
+When this variable is set, ownership changes on a file will cause
+the
+.Va S_ISUID
+and
+.Va S_ISGID
+bits to be cleared.
+As detailed in
+.Xr securelevel 7 ,
+this variable may not be changed if the securelevel is > 0. 
+.El
 .Ss CTL_HW
 The string and integer information available for the
 .Dv CTL_HW
@@ -218,7 +239,7 @@ The machine model
 .It Dv HW_NCPU
 The number of CPUs.
 .It Dv HW_BYTEORDER
-The byteorder (4,321 or 1,234).
+The byteorder (4321 or 1234).
 .It Dv HW_PHYSMEM
 The bytes of physical memory.
 .It Dv HW_USERMEM
@@ -261,7 +282,7 @@ information.
 .It Dv KERN_NAME_MAX No "	integer	no"
 .It Dv KERN_NGROUPS No "	integer	no"
 .It Dv KERN_NO_TRUNC No "	integer	no"
-.It Dv KERN_NOSUIDCOREDUMP No "	integer yes"
+.It Dv KERN_NOSUIDCOREDUMP No "	integer	yes"
 .It Dv KERN_OSRELEASE No "	string	no"
 .It Dv KERN_OSREV No "	integer	no"
 .It Dv KERN_OSTYPE No "	string	no"
@@ -1038,6 +1059,49 @@ at any one time.
 The minimum maximum number of types supported for the name of a
 timezone.
 .El
+.Ss CTL_DDB
+Integer information and settable variables are available for the
+.Dv CTL_DDB level, as described below.
+More information is also available in
+.Xr ddb 4 .
+.Bl -column "Second level nameXXXXXX" "struct loadavgXXX" -offset indent
+.It Sy Second level name	Type	Changeable
+.It Dv DBCTL_RADIX No "	integer	yes"
+.It Dv DBCTL_MAXWIDTH No "	integer	yes"
+.It Dv DBCTL_TABSTOP No "	integer	yes"
+.It Dv DBCTL_PANIC No "	integer	yes"
+.It Dv DBCTL_CONSOLE No "	integer	yes"
+.El
+.Pp
+.Bl -tag -width "123456"
+.It Dv DBCTL_RADIX
+Determines the default radix or base for non-prefixed numbers
+entered into
+.Xr ddb 4 .
+This variable is also available as the ddb $radix variable.
+.It Dv DBCTL_MAXWIDTH
+Determines the maximum width of a line in
+.Xr ddb 4 .
+This variable is also available as the ddb $maxwidth variable.
+.It Dv DBCTL_TABSTOP
+Width of a tab stop in
+.Xr ddb 4 .
+This variable is also available as the ddb $tabstops variable.
+.It Dv DBCTL_PANIC
+When this variable is set, system panics may drop into the
+kernel debugger.
+As described in
+.Xr securelevel 7 ,
+a security level greater than 1 blocks modification of this variable.
+.Xr ddb 4 .
+.It Dv DBCTL_CONSOLE
+When this variable is set, an architecture dependent magic key sequence
+on the console or a debugger button will permit entry into the
+kernel debugger.
+As described in
+.Xr securelevel 7 ,
+a security level greater than 1 blocks modification of this variable.
+.El
 .Ss CTL_VM
 The string and integer information available for the
 .Dv CTL_VM
@@ -1088,6 +1152,54 @@ erasing the data that has been encrypted with them.  Encryption
 keys are deleted when their reference counter reaches zero.
 .El
 .El
+.Ss CTL_VFS
+The string and integer information available for the
+.Dv CTL_VFS
+level is detailed below.
+The changeable column shows whether a process with appropriate
+privileges may change the value.
+.Bl -column "Second level nameXXXXXX" "struct loadavgXXX" -offset indent
+.It Sy Second level name	Type	Changeable
+.It Dv VFS_GENERIC No "	vm generic info	no"
+.It Dv filesystem # No "	filesystem info	no"
+.El
+.Pp
+.Bl -tag -width "123456"
+.It Dv VFS_GENERIC
+This second level identifier requests generic information about the
+vfs layer.
+Within it, the following third level identifiers exist:
+.Pp
+.Bl -column "Third level nameXXXXXX" "struct loadavgXXX" -offset indent
+.It Sy Third level name	Type	Changeable
+.It Dv VFS_MAXTYPENUM No "	int	no"
+.It Dv VFS_CONF No "	struct vfsconf	no"
+.El
+.It filesystem #
+After finding the filesystem dependent vfc_typenum using
+.Dv VFS_GENERIC
+with
+.Dv VFS_CONF ,
+it is possible to access filesystem dependent information.
+.Pp
+Some filesystems may contain settings.
+.Bl -tag -width "123"
+.It ffs
+.Bl -column "Third level nameXXX" "struct loadavgXXX" -offset ind
+.It Sy Third level name	Type	Changeable
+.It Dv FFS_CLUSTERREAD No "	int	yes"
+.It Dv FFS_CLUSTERWRITE No "	int	yes"
+.It Dv FFS_REALLOCBLOCKS No "	int	yes"
+.It Dv FFS_ASYNCFREE No "	int	yes"
+.El
+.It nfs
+.Bl -column "Third level nameXXX" "struct loadavgXXX" -offset ind
+.It Sy Third level name	Type	Changeable
+.It Dv NFS_NFSSTATS No "	struct nfsstats	yes"
+.It Dv NFS_NIOTHREADS No "	int	yes"
+.El
+.El
+.Pp
 .Sh RETURN VALUES
 If the call to
 .Fn sysctl
