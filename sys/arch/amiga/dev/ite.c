@@ -1,4 +1,5 @@
-/*	$NetBSD: ite.c,v 1.32.2.2 1995/10/20 11:01:08 chopps Exp $	*/
+/*    $OpenBSD: ite.c,v 1.3 1996/02/26 21:18:49 niklas Exp $  */
+/*    $NetBSD: ite.c,v 1.35 1996/02/24 07:44:06 chopps Exp $  */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1325,17 +1326,6 @@ ite_zargnum (ip)
   *ip->ap = ch;
   
   return n;	/* don't "n ? n : 1" here, <CSI>0m != <CSI>1m ! */
-}
-
-inline static int
-strncmp (a, b, l)
-    const char *a, *b;
-    int l;
-{
-  for (;l--; a++, b++)
-    if (*a != *b)
-      return *a - *b;
-  return 0;
 }
 
 void
