@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.26 2003/04/16 17:30:49 millert Exp $	*/
+/*	$OpenBSD: echo.c,v 1.27 2004/01/21 00:46:38 vincent Exp $	*/
 
 /*
  *	Echo line reading and writing.
@@ -609,7 +609,7 @@ ewprintf(const char *fmt, ...)
 static void
 eformat(const char *fp, va_list ap)
 {
-	char	kname[NKNAME], *cp;
+	char	kname[NKNAME], tmp[100], *cp;
 	int	c;
 
 	while ((c = *fp++) != '\0') {
@@ -639,6 +639,12 @@ eformat(const char *fp, va_list ap)
 
 			case 'o':
 				eputi(va_arg(ap, int), 8);
+				break;
+
+			case 'p':
+				snprintf(tmp, sizeof tmp, "%p",
+				    va_arg(ap, void *));
+				eputs(tmp);
 				break;
 
 			case 's':
