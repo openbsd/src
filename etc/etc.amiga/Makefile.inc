@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile.inc,v 1.12 1997/09/21 11:50:15 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.13 1998/04/08 00:30:55 niklas Exp $
 #	etc.amiga/Makefile.inc -- amiga-specific etc Makefile targets
 
 .ifdef DESTDIR
-snap_md: bsd distrib
+snap_md: distrib bsd
 
 bsd:
 	# The GENERIC kernel is built as a side-effect of the miniroot
