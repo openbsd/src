@@ -1,4 +1,4 @@
-/*	$OpenBSD: crtbeginS.c,v 1.1 2000/06/13 04:07:03 rahnds Exp $	*/
+/*	$OpenBSD: crtbeginS.c,v 1.2 2000/10/13 05:14:03 drahn Exp $	*/
 /*	$NetBSD: crtbegin.c,v 1.1 1996/09/12 16:59:03 cgd Exp $	*/
 
 /*
@@ -46,7 +46,62 @@
  */
 #include <stdlib.h>
 
-void (*__CTOR_LIST__[0]) __P((void))
+static void (*__CTOR_LIST__[0]) __P((void))
     __attribute__((section(".ctors"))) = { (void *)-1 };	/* XXX */
-void (*__DTOR_LIST__[0]) __P((void))
+static void (*__DTOR_LIST__[0]) __P((void))
     __attribute__((section(".dtors"))) = { (void *)-1 };	/* XXX */
+
+static void	__dtors __P((void));
+static void	__ctors __P((void));
+
+void
+__dtors()
+{
+	unsigned long i = (unsigned long) __DTOR_LIST__[0];
+	void (**p)(void);
+
+	if (i == -1)  {
+		for (i = 1; __DTOR_LIST__[i] != NULL; i++)
+			;
+		i--;
+	}
+	p = __DTOR_LIST__ + i;
+	while (i--) {
+		(**p--)();
+	}
+}
+
+static void
+__ctors()
+{
+	void (**p)(void) = __CTOR_LIST__ + 1;
+
+	while (*p) {
+		(**p++)();
+	}
+}
+
+void
+_init()
+{
+	static int initialized = 0;
+
+	/*
+	 * Call global constructors.
+	 * Arrange to call global destructors at exit.
+	 */
+	if (!initialized) {
+		initialized = 1;
+		__ctors();
+
+		atexit(__dtors);
+	}
+}
+void
+_fini()
+{
+	/*
+	 * since the _init() function sets up the destructors to be called
+	 * by atexit, do not call the destructors here.
+	 */
+}
