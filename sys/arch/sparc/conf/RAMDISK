@@ -36,8 +36,8 @@ option		SUN4M		# sun4m - SS10, SS20, Classic, etc.
 
 # Options for SPARCstation hardware
 option		RASTERCONSOLE	# fast rasterop console
-option		COMPAT_SUNOS	# compatibility with SunOS binaries
-option		COMPAT_SVR4	# compatibility with SVR4 binaries
+#option		COMPAT_SUNOS	# compatibility with SunOS binaries
+#option		COMPAT_SVR4	# compatibility with SVR4 binaries
 
 # Generic swap; second partition of root disk or network.
 config		bsd	root on rd0a
@@ -236,8 +236,8 @@ sd*	at scsibus? target ? lun ?		# SCSI disks
 st*	at scsibus? target ? lun ?		# SCSI tapes
 cd*	at scsibus? target ? lun ?		# SCSI CD-ROMs
 ch*	at scsibus? target ? lun ?		# SCSI changer devices
-ss*	at scsibus? target ? lun ?		# SCSI scanners
-uk*	at scsibus? target ? lun ?		# unknown SCSI devices
+#ss*	at scsibus? target ? lun ?		# SCSI scanners
+#uk*	at scsibus? target ? lun ?		# unknown SCSI devices
 
 # Floppy controller and drive found on SPARCstations.
 fdc0	at mainbus0				# sun4c controller
