@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.8 1997/03/21 00:36:40 niklas Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.9 1998/03/01 14:12:42 niklas Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.20 1997/02/05 05:10:25 scottr Exp $	*/
 
 /* 
@@ -268,8 +268,8 @@ findentry(sp)
 	 * an addq or addl or addw to sp just after we return to pop off our
 	 * arguments.  Find that instruction and extract the value.
 	 */
-	register	instruc;
-	register	val;
+	int		instruc;
+	int		val;
 	db_addr_t	addr, nextword;
 	label_t		db_jmpbuf;
 	label_t		*savejmp;
