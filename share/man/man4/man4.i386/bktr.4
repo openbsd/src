@@ -1,71 +1,69 @@
-.\"
-.\"	$OpenBSD: bktr.4,v 1.5 2000/11/10 20:02:18 todd Exp $
-.\"	$FreeBSD: bktr.4,v 1.1 1998/03/09 10:56:22 jkh Exp $
+.\" $OpenBSD: bktr.4,v 1.6 2001/04/17 04:40:38 fgsch Exp $
+.\" $FreeBSD: /c/ncvs/src/share/man/man4/bktr.4,v 1.9.2.5 2001/03/06 19:08:09 ru Exp $
 .\"
 .Dd January 28, 1998
-.Dt BKTR 4 i386
+.Dt BKTR 4
 .Os
 .Sh NAME
 .Nm bktr
-.Nd brooktree video capture driver
+.Nd video capture driver
 .Sh SYNOPSIS
-.Nm device bktr0
+.Cd option BROOKTREE_ALLOC_PAGES=nnn
+.Cd option BROOKTREE_SYSTEM_DEFAULT=XXX
+.Pp
+.Cd bktr* at pci? dev ? function ?
 .Sh DESCRIPTION
 The
-.Nm
-driver provides support for PCI video capture on low cost, high performance
-boards.
-The driver is heavily based on the Matrox Meteor driver.
-The
-.Nm
-driver should support most video cards based on the
-.Em Brooktree Bt848 Video Capture Chip.
+.Nm bktr
+driver provides support for PCI video capture and VBI capture on low cost,
+high performance boards. This should support most video cards based on the
+Brooktree Bt848/849/878/879 Video Capture Chip.
+The driver also supports FM Radio if the Tuner supports it.
 .Pp
-Specifically, the following cards are known to work:
-.Pp
-.Bl -tag -width -offset indent -compact
-.It Hauppage Wincast TV
-.It STB TV PCI Television Tuner
-.It Miro PC TV
-.It MIntel Smart Video Recorder III
-.El
+Specifically, the following cards are known to work: 
+.Bd -unfilled -offset indent
+Hauppage Wincast TV and WinTV/PCI
+STB TV PCI Television Tuner
+Miro PC TV
+Intel Smart Video Recorder III
+AverMedia cards
+Video Highway XTreme
+VideoLogic Captivator PCI
+.Ed
 .Pp
 The driver currently supports the following features:
+.Bd -unfilled -offset indent
+PCI to PCI dma transfer
+clipping
+yuv
+rgb16
+rgb24
+rgb32
+.Ed
 .Pp
-.Bl -tag -width -offset indent -compact
-.It PCI-to-PCI DMA transfer
-.It Clipping
-.It YUV
-.It RGB16, RGB24, RGB32
-.El
+On these cards, tuners and other components are interconnected with an I2C bus.
+The Brooktree848 chips act as a master device on the bus to control them.
 .Pp
-The following kernel parameters may be used to further configure the driver:
+The following kernel configuration options are available:
 .Pp
-.Bl -ohang
-.It Cd option "BROOKTREE_ALLOC_PAGES=xxx"
-Specifies the number of contiguous pages to allocate when successfully probed.
-The default number of pages allocated by the kernel is 216.
+.Bl -tag -width xxxxxxxx
+.It Cd option BROOKTREE_ALLOC_PAGES=nnn
+Specifies the number of contiguous pages to allocate when successfully
+probed.  The default number of pages allocated by the kernel is 216.
 This means that there are (216*4096) bytes available for use.
+.It Cd option BROOKTREE_SYSTEM_DEFAULT="(BROOKTREE_PAL | BROOKTREE_NTSC)"
+One of these options can be used to set the default video format for the driver.
+This fixed random hangs and lockups with the VideoLogic Captivator PCI card.
 .El
 .Sh AUTHORS
-This driver is based on the work of
+The
+.Nm
+driver is based on the work of
 .An Jim Lowe Aq james@miller.cs.uwm.edu ,
 .An Mark Tinguely Aq tinguely@plains.nodak.edu ,
-.An Amancio Hasty Aq hasty@star-gate.com
+.An Amancio Hasty Aq hasty@star\-gate.com ,
+.An Roger Hardiman Aq roger@FreeBSD.org
 and a bunch of other people.
-.\" .Sh FILES
-.\" .Bl -tag -width /usr/share/examples/meteor -compact
-.\" .It Pa /usr/share/examples/meteor
-.\" Examples of what you can do with the (similarly designed) Meteor driver.
-.\" .It Pa /usr/ports/graphics/fxtv
-.\" A display program utilizing the bktr driver - requires that
-.\" .Em The X Window System
-.\" and
-.\" .Em The Ports Collection
-.\" also be installed.
-.\" .El
-.\" .Sh SEE ALSO
-.\" .Xr meteor 4
 .Sh HISTORY
 The
 .Nm
