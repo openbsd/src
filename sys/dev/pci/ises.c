@@ -1,4 +1,4 @@
-/*	$OpenBSD: ises.c,v 1.11 2001/06/25 22:30:07 ho Exp $	*/
+/*	$OpenBSD: ises.c,v 1.12 2001/06/27 00:20:16 ho Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Håkan Olsson (ho@crt.se)
@@ -83,9 +83,6 @@ void	ises_bchu_switch_session __P((struct ises_softc *,
 				      struct ises_session *));
 
 void	ises_read_dma __P((struct ises_softc *));
-
-/* XXX for now... */
-void	ubsec_mcopy __P((struct mbuf *, struct mbuf *, int, int));
 
 #define READ_REG(sc,r) \
     bus_space_read_4((sc)->sc_memt, (sc)->sc_memh,r)
@@ -1358,7 +1355,9 @@ ises_process(struct cryptop *crp)
 				mp = &m->m_next;
 			}
 			q->q_dst.mbuf = top;
+#if notyet
 			ubsec_mcopy(q->q_src.mbuf, q->q_dst.mbuf, cpskip, cpoffset);
+#endif
 		} else
 			q->q_dst.mbuf = q->q_src.mbuf;
 
