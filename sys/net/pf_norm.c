@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.51 2003/01/09 15:58:35 dhartmei Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.52 2003/01/25 19:47:05 dhartmei Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -364,20 +364,17 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment *frag,
 
 	KASSERT(frep != NULL || frea != NULL);
 
-	if (frep != NULL) {
+	if (frep != NULL && frep->fr_ip->ip_off + frep->fr_ip->ip_len > off) {
 		u_int16_t	precut;
 
 		precut = frep->fr_ip->ip_off + frep->fr_ip->ip_len - off;
 		if (precut >= ip->ip_len)
 			goto drop_fragment;
-		if (precut) {
-			m_adj(frent->fr_m, precut);
-
-			DPFPRINTF(("overlap -%d\n", precut));
-			/* Enforce 8 byte boundaries */
-			off = ip->ip_off += precut;
-			ip->ip_len -= precut;
-		}
+		m_adj(frent->fr_m, precut);
+		DPFPRINTF(("overlap -%d\n", precut));
+		/* Enforce 8 byte boundaries */
+		off = ip->ip_off += precut;
+		ip->ip_len -= precut;
 	}
 
 	for (; frea != NULL && ip->ip_len + off > frea->fr_ip->ip_off;
