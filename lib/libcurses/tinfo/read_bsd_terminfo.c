@@ -1,7 +1,7 @@
-/*	$OpenBSD: read_bsd_terminfo.c,v 1.3 1999/01/23 18:31:02 millert Exp $	*/
+/*	$OpenBSD: read_bsd_terminfo.c,v 1.4 1999/02/01 20:55:41 millert Exp $	*/
 
 /*
- * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1998, 1999 Todd C. Miller <Todd.Miller@courtesan.com>
  * Copyright (c) 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
  * All rights reserved.
  *
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: read_bsd_terminfo.c,v 1.3 1999/01/23 18:31:02 millert Exp $";
+static char rcsid[] = "$OpenBSD: read_bsd_terminfo.c,v 1.4 1999/02/01 20:55:41 millert Exp $";
 #endif
 
 #include <curses.priv.h>
@@ -92,7 +92,7 @@ _nc_read_bsd_terminfo_entry(tn, filename, tp)
 	    return (1);
 	}
     }
-    return(0);
+    return (0);
 }
 
 /*
