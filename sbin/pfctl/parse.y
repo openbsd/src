@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.127 2002/07/19 21:00:25 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.128 2002/07/20 18:58:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -47,6 +47,7 @@
 #include <ctype.h>
 #include <err.h>
 #include <pwd.h>
+#include <grp.h>
 
 #include "pfctl_parser.h"
 
@@ -132,20 +133,20 @@ int	rdr_consistent(struct pf_rdr *);
 int	yyparse(void);
 void	ipmask(struct pf_addr *, u_int8_t);
 void	expand_rdr(struct pf_rdr *, struct node_if *, struct node_proto *,
-    struct node_host *, struct node_host *);
+	    struct node_host *, struct node_host *);
 void	expand_nat(struct pf_nat *, struct node_if *, struct node_proto *,
-    struct node_host *, struct node_port *,
-    struct node_host *, struct node_port *);
+	    struct node_host *, struct node_port *,
+	    struct node_host *, struct node_port *);
 void	expand_label_addr(const char *, char *, u_int8_t, struct node_host *);
 void	expand_label_port(const char *, char *, struct node_port *);
 void	expand_label_proto(const char *, char *, u_int8_t);
 void	expand_label_nr(const char *, char *);
 void	expand_label(char *, u_int8_t, struct node_host *, struct node_port *,
-    struct node_host *, struct node_port *, u_int8_t);
+	    struct node_host *, struct node_port *, u_int8_t);
 void	expand_rule(struct pf_rule *, struct node_if *, struct node_proto *,
-    struct node_host *, struct node_port *, struct node_host *,
-    struct node_port *, struct node_uid *, struct node_gid *,
-    struct node_icmp *);
+	    struct node_host *, struct node_port *, struct node_host *,
+	    struct node_port *, struct node_uid *, struct node_gid *,
+	    struct node_icmp *);
 int	check_rulestate(int);
 
 struct sym {
@@ -213,15 +214,14 @@ typedef struct {
 %token	PASS BLOCK SCRUB RETURN IN OUT LOG LOGALL QUICK ON FROM TO FLAGS
 %token	RETURNRST RETURNICMP RETURNICMP6 PROTO INET INET6 ALL ANY ICMPTYPE
 %token	ICMP6TYPE CODE KEEP MODULATE STATE PORT RDR NAT BINAT ARROW NODF
-%token	MINTTL IPV6ADDR ERROR ALLOWOPTS FASTROUTE ROUTETO DUPTO NO LABEL
+%token	MINTTL ERROR ALLOWOPTS FASTROUTE ROUTETO DUPTO NO LABEL
 %token	NOROUTE FRAGMENT USER GROUP MAXMSS MAXIMUM TTL SELF
 %token	FRAGNORM FRAGDROP FRAGCROP
 %token	SET OPTIMIZATION TIMEOUT LIMIT LOGINTERFACE
 %token	<v.string> STRING
-%token	<v.number> NUMBER
 %token	<v.i>	PORTUNARY PORTBINARY
 %type	<v.interface>	interface if_list if_item_not if_item
-%type	<v.number>	port icmptype icmp6type minttl uid gid maxmss
+%type	<v.number>	number port icmptype icmp6type minttl uid gid maxmss
 %type	<v.i>	no dir log quick af nodf allowopts fragment fragcache
 %type	<v.b>	action flag flags blockspec
 %type	<v.range>	dport rport
@@ -229,7 +229,7 @@ typedef struct {
 %type	<v.icmp>	icmpspec icmp_list icmp6_list icmp_item icmp6_item
 %type	<v.fromto>	fromto
 %type	<v.peer>	ipportspec
-%type	<v.host>	ipspec xhost host address host_list IPV6ADDR
+%type	<v.host>	ipspec xhost host address host_list
 %type	<v.port>	portspec port_list port_item
 %type	<v.uid>		uids uid_list uid_item
 %type	<v.gid>		gids gid_list gid_item
@@ -436,7 +436,7 @@ action		: PASS			{ $$.b1 = PF_PASS; $$.b2 = $$.w = 0; }
 
 blockspec	: /* empty */		{ $$.b2 = 0; $$.w = 0; }
 		| RETURNRST		{ $$.b2 = 1; $$.w = 0; }
-		| RETURNRST '(' TTL NUMBER ')'	{
+		| RETURNRST '(' TTL number ')'	{
 			$$.w = $4;
 			$$.b2 = 1;
 		}
@@ -449,34 +449,34 @@ blockspec	: /* empty */		{ $$.b2 = 0; $$.w = 0; }
 			$$.w = (ICMP6_DST_UNREACH << 8) |
 			    ICMP6_DST_UNREACH_NOPORT;
 		}
-		| RETURNICMP '(' NUMBER ')'	{
-			$$.w = (ICMP_UNREACH << 8) | $3;
-			$$.b2 = 0;
-		}
 		| RETURNICMP '(' STRING ')'	{
 			const struct icmpcodeent *p;
+			u_long ulval;
 
-			if ((p = geticmpcodebyname(ICMP_UNREACH, $3,
-			    AF_INET)) == NULL) {
-				yyerror("unknown icmp code %s", $3);
-				YYERROR;
+			if (atoul($3, &ulval) == -1) {
+				if ((p = geticmpcodebyname(ICMP_UNREACH, $3,
+				    AF_INET)) == NULL) {
+					yyerror("unknown icmp code %s", $3);
+					YYERROR;
+				}
+				ulval = p->code;
 			}
-			$$.w = (p->type << 8) | p->code;
-			$$.b2 = 0;
-		}
-		| RETURNICMP6 '(' NUMBER ')'	{
-			$$.w = (ICMP6_DST_UNREACH << 8) | $3;
+			$$.w = (ICMP_UNREACH << 8) | ulval;
 			$$.b2 = 0;
 		}
 		| RETURNICMP6 '(' STRING ')'	{
 			const struct icmpcodeent *p;
+			u_long ulval;
 
-			if ((p = geticmpcodebyname(ICMP6_DST_UNREACH, $3,
-			    AF_INET6)) == NULL) {
-				yyerror("unknown icmp code %s", $3);
-				YYERROR;
+			if (atoul($3, &ulval) == -1) {
+				if ((p = geticmpcodebyname(ICMP6_DST_UNREACH, $3,
+				    AF_INET6)) == NULL) {
+					yyerror("unknown icmp code %s", $3);
+					YYERROR;
+				}
+				ulval = p->code;
 			}
-			$$.w = (p->type << 8) | p->code;
+			$$.w = (ICMP6_DST_UNREACH << 8) | ulval;
 			$$.b2 = 0;
 		}
 		;
@@ -540,23 +540,16 @@ proto_list	: proto_item			{ $$ = $1; }
 		| proto_list ',' proto_item	{ $3->next = $1; $$ = $3; }
 		;
 
-proto_item	: NUMBER			{
+proto_item	: STRING			{
 			struct protoent *p;
+			u_long ulval;
 
-			if ((p = getprotobynumber($1)) == NULL) {
-				yyerror("unknown protocol %d", $1);
-				YYERROR;
-			}
-			$$ = malloc(sizeof(struct node_proto));
-			if ($$ == NULL)
-				err(1, "proto_item: malloc");
-			$$->proto = p->p_proto;
-			$$->next = NULL;
-		}
-		| STRING			{
-			struct protoent *p;
+			if (atoul($1, &ulval) == 0)
+				p = getprotobynumber(ulval);
+			else
+				p = getprotobyname($1);
 
-			if ((p = getprotobyname($1)) == NULL) {
+			if (p == NULL) {
 				yyerror("unknown protocol %s", $1);
 				YYERROR;
 			}
@@ -626,7 +619,7 @@ host		: address			{
 					ipmask(&n->mask, 128);
 			$$ = $1;
 		}
-		| address '/' NUMBER		{
+		| address '/' number		{
 			struct node_host *n;
 			for (n = $1; n; n = n->next) {
 				if ($1->af == AF_INET) {
@@ -650,6 +643,18 @@ host		: address			{
 		}
 		;
 
+number:		STRING
+		{
+			u_long ulval;
+
+			if (atoul($1, &ulval) == -1) {
+				yyerror("%s is not a number", $1);
+				YYERROR;
+			} else
+				$$ = ulval;
+		}
+		;
+
 address		: '(' STRING ')'		{
 			$$ = calloc(1, sizeof(struct node_host));
 			if ($$ == NULL)
@@ -666,82 +671,7 @@ address		: '(' STRING ')'		{
 				else
 					$$ = h;
 		}
-		| STRING			{
-			if (ifa_exists($1)) {
-				struct node_host *h = NULL;
-
-				/* interface with this name exists */
-				if ((h = ifa_lookup($1)) == NULL)
-					YYERROR;
-				else
-					$$ = h;
-			} else {
-				struct node_host *h = NULL, *n;
-				struct addrinfo hints, *res0, *res;
-				int error;
-
-				memset(&hints, 0, sizeof(hints));
-				hints.ai_family = PF_UNSPEC;
-				hints.ai_socktype = SOCK_STREAM; /* DUMMY */
-				error = getaddrinfo($1, NULL, &hints, &res0);
-				if (error) {
-					yyerror("cannot resolve %s: %s",
-					    $1, gai_strerror(error));
-					YYERROR;
-				}
-				for (res = res0; res; res = res->ai_next) {
-					if (res->ai_family != AF_INET &&
-					    res->ai_family != AF_INET6)
-						continue;
-					n = calloc(1, sizeof(struct node_host));
-					if (n == NULL)
-						err(1, "address: calloc");
-					n->af = res->ai_family;
-					n->addr.addr_dyn = NULL;
-					if (res->ai_family == AF_INET)
-						memcpy(&n->addr.addr,
-						&((struct sockaddr_in *)
-						    res->ai_addr)
-						    ->sin_addr.s_addr,
-						sizeof(struct in_addr));
-					else {
-						memcpy(&n->addr.addr,
-						&((struct sockaddr_in6 *)
-						    res->ai_addr)
-						    ->sin6_addr.s6_addr,
-						sizeof(struct in6_addr));
-						n->ifindex =
-						    ((struct sockaddr_in6 *)
-						    res->ai_addr)
-						    ->sin6_scope_id;
-					}
-					n->next = h;
-					h = n;
-				}
-				freeaddrinfo(res0);
-				if (h == NULL) {
-					yyerror("no IP address found for %s", $1);
-					YYERROR;
-				}
-				$$ = h;
-			}
-		}
-		| NUMBER '.' NUMBER '.' NUMBER '.' NUMBER {
-			if ($1 < 0 || $3 < 0 || $5 < 0 || $7 < 0 ||
-			    $1 > 255 || $3 > 255 || $5 > 255 || $7 > 255) {
-				yyerror("illegal ip address %d.%d.%d.%d",
-				    $1, $3, $5, $7);
-				YYERROR;
-			}
-			$$ = calloc(1, sizeof(struct node_host));
-			if ($$ == NULL)
-				err(1, "address: calloc");
-			$$->af = AF_INET;
-			$$->addr.addr_dyn = NULL;
-			$$->addr.addr.addr32[0] = htonl(($1 << 24) |
-			    ($3 << 16) | ($5 << 8) | $7);
-		}
-		| IPV6ADDR			{ $$ = $1; }
+		| STRING			{ $$ = host($1); }
 		;
 
 portspec	: port_item			{ $$ = $1; }
@@ -781,24 +711,26 @@ port_item	: port				{
 		}
 		;
 
-port		: NUMBER			{
-			if ($1 < 0 || $1 > 65535) {
-				yyerror("illegal port value %d", $1);
-				YYERROR;
-			}
-			$$ = htons($1);
-		}
-		| STRING			{
+port		: STRING			{
 			struct servent *s = NULL;
+			u_long ulval;
 
-			s = getservbyname($1, "tcp");
-			if (s == NULL)
-				s = getservbyname($1, "udp");
-			if (s == NULL) {
-				yyerror("unknown protocol %s", $1);
-				YYERROR;
+			if (atoul($1, &ulval) == 0) {
+				if (ulval < 0 || ulval > 65535) {
+					yyerror("illegal port value %d", ulval);
+					YYERROR;
+				}
+				$$ = htons(ulval);
+			} else {
+				s = getservbyname($1, "tcp");
+				if (s == NULL)
+					s = getservbyname($1, "udp");
+				if (s == NULL) {
+					yyerror("unknown protocol %s", $1);
+					YYERROR;
+				}
+				$$ = s->s_port;
 			}
-			$$ = s->s_port;
 		}
 		;
 
@@ -848,24 +780,27 @@ uid_item	: uid				{
 		}
 		;
 
-uid		: NUMBER			{
-			if ($1 < 0 || $1 >= UID_MAX) {
-				yyerror("illegal uid value %u", $1);
-				YYERROR;
-			}
-			$$ = $1;
-		}
-		| STRING			{
-			if (!strcmp($1, "unknown"))
-				$$ = UID_MAX;
-			else {
-				struct passwd *pw;
+uid		: STRING			{
+			u_long ulval;
 
-				if ((pw = getpwnam($1)) == NULL) {
-					yyerror("unknown user %s", $1);
+			if (atoul($1, &ulval) == -1) {
+				if (!strcmp($1, "unknown"))
+					$$ = UID_MAX;
+				else {
+					struct passwd *pw;
+
+					if ((pw = getpwnam($1)) == NULL) {
+						yyerror("unknown user %s", $1);
+						YYERROR;
+					}
+					$$ = pw->pw_uid;
+				}
+			} else {
+				if (ulval < 0 || ulval >= UID_MAX) {
+					yyerror("illegal uid value %ul", ulval);
 					YYERROR;
 				}
-				$$ = pw->pw_uid;
+				$$ = ulval;
 			}
 		}
 		;
@@ -916,24 +851,27 @@ gid_item	: gid				{
 		}
 		;
 
-gid		: NUMBER			{
-			if ($1 < 0 || $1 >= GID_MAX) {
-				yyerror("illegal gid value %u", $1);
-				YYERROR;
-			}
-			$$ = $1;
-		}
-		| STRING			{
-			if (!strcmp($1, "unknown"))
-				$$ = GID_MAX;
-			else {
-				struct passwd *pw;
+gid		: STRING			{
+			u_long ulval;
 
-				if ((pw = getpwnam($1)) == NULL) {
-					yyerror("unknown group %s", $1);
+			if (atoul($1, &ulval) == -1) {
+				if (!strcmp($1, "unknown"))
+					$$ = GID_MAX;
+				else {
+					struct group *grp;
+
+					if ((grp = getgrnam($1)) == NULL) {
+						yyerror("unknown group %s", $1);
+						YYERROR;
+					}
+					$$ = grp->gr_gid;
+				}
+			} else {
+				if (ulval < 0 || ulval >= GID_MAX) {
+					yyerror("illegal gid value %ul", ulval);
 					YYERROR;
 				}
-				$$ = pw->pw_uid;
+				$$ = ulval;
 			}
 		}
 		;
@@ -979,32 +917,28 @@ icmp_item	: icmptype		{
 			$$->proto = IPPROTO_ICMP;
 			$$->next = NULL;
 		}
-		| icmptype CODE NUMBER	{
-			$$ = malloc(sizeof(struct node_icmp));
-			if ($$ == NULL)
-				err(1, "icmp_item: malloc");
-			if ($3 < 0 || $3 > 255) {
-				yyerror("illegal icmp-code %d", $3);
-				YYERROR;
-			}
-			$$->type = $1;
-			$$->code = $3 + 1;
-			$$->proto = IPPROTO_ICMP;
-			$$->next = NULL;
-		}
 		| icmptype CODE STRING	{
 			const struct icmpcodeent *p;
+			u_long ulval;
 
+			if (atoul($3, &ulval) == 0) {
+				if (ulval < 0 || ulval > 255) {
+					yyerror("illegal icmp-code %d", ulval);
+					YYERROR;
+				}
+			} else {
+				if ((p = geticmpcodebyname($1, $3,
+				    AF_INET)) == NULL) {
+					yyerror("unknown icmp-code %s", $3);
+					YYERROR;
+				}
+				ulval = p->code;
+			}
 			$$ = malloc(sizeof(struct node_icmp));
 			if ($$ == NULL)
 				err(1, "icmp_item: malloc");
 			$$->type = $1;
-			if ((p = geticmpcodebyname($1, $3,
-			    AF_INET)) == NULL) {
-				yyerror("unknown icmp-code %s", $3);
-				YYERROR;
-			}
-			$$->code = p->code + 1;
+			$$->code = ulval + 1;
 			$$->proto = IPPROTO_ICMP;
 			$$->next = NULL;
 		}
@@ -1019,32 +953,28 @@ icmp6_item	: icmp6type		{
 			$$->proto = IPPROTO_ICMPV6;
 			$$->next = NULL;
 		}
-		| icmp6type CODE NUMBER	{
-			$$ = malloc(sizeof(struct node_icmp));
-			if ($$ == NULL)
-				err(1, "icmp_item: malloc");
-			if ($3 < 0 || $3 > 255) {
-				yyerror("illegal icmp6-code %d", $3);
-				YYERROR;
-			}
-			$$->type = $1;
-			$$->code = $3 + 1;
-			$$->proto = IPPROTO_ICMPV6;
-			$$->next = NULL;
-		}
 		| icmp6type CODE STRING	{
 			const struct icmpcodeent *p;
+			u_long ulval;
 
+			if (atoul($3, &ulval) == 0) {
+				if (ulval < 0 || ulval > 255) {
+					yyerror("illegal icmp6-code %ld", ulval);
+					YYERROR;
+				}
+			} else {
+				if ((p = geticmpcodebyname($1, $3,
+				    AF_INET6)) == NULL) {
+					yyerror("unknown icmp6-code %s", $3);
+					YYERROR;
+				}
+				ulval = p->code;
+			}
 			$$ = malloc(sizeof(struct node_icmp));
 			if ($$ == NULL)
 				err(1, "icmp_item: malloc");
 			$$->type = $1;
-			if ((p = geticmpcodebyname($1, $3,
-			    AF_INET6)) == NULL) {
-				yyerror("unknown icmp6-code %s", $3);
-				YYERROR;
-			}
-			$$->code = p->code + 1;
+			$$->code = ulval + 1;
 			$$->proto = IPPROTO_ICMPV6;
 			$$->next = NULL;
 		}
@@ -1052,37 +982,41 @@ icmp6_item	: icmp6type		{
 
 icmptype	: STRING			{
 			const struct icmptypeent *p;
+			u_long ulval;
 
-			if ((p = geticmptypebyname($1, AF_INET)) == NULL) {
-				yyerror("unknown icmp-type %s", $1);
-				YYERROR;
+			if (atoul($1, &ulval) == 0) {
+				if (ulval < 0 || ulval > 255) {
+					yyerror("illegal icmp-type %d", ulval);
+					YYERROR;
+				}
+				$$ = ulval + 1;
+			} else {
+				if ((p = geticmptypebyname($1, AF_INET)) == NULL) {
+					yyerror("unknown icmp-type %s", $1);
+					YYERROR;
+				}
+				$$ = p->type + 1;
 			}
-			$$ = p->type + 1;
-		}
-		| NUMBER			{
-			if ($1 < 0 || $1 > 255) {
-				yyerror("illegal icmp-type %d", $1);
-				YYERROR;
-			}
-			$$ = $1 + 1;
 		}
 		;
 
 icmp6type	: STRING			{
 			const struct icmptypeent *p;
+			u_long ulval;
 
-			if ((p = geticmptypebyname($1, AF_INET6)) == NULL) {
-				yyerror("unknown ipv6-icmp-type %s", $1);
-				YYERROR;
+			if (atoul($1, &ulval) == 0) {
+				if (ulval < 0 || ulval > 255) {
+					yyerror("illegal icmp6-type %d", ulval);
+					YYERROR;
+				}
+				$$ = ulval + 1;
+			} else {
+				if ((p = geticmptypebyname($1, AF_INET6)) == NULL) {
+					yyerror("unknown ipv6-icmp-type %s", $1);
+					YYERROR;
+				}
+				$$ = p->type + 1;
 			}
-			$$ = p->type + 1;
-		}
-		| NUMBER			{
-			if ($1 < 0 || $1 > 255) {
-				yyerror("illegal icmp6-type %d", $1);
-				YYERROR;
-			}
-			$$ = $1 + 1;
 		}
 		;
 
@@ -1113,7 +1047,7 @@ state_opt_list	: state_opt_item		{ $$ = $1; }
 		}
 		;
 
-state_opt_item	: MAXIMUM NUMBER		{
+state_opt_item	: MAXIMUM number		{
 			if ($2 <= 0) {
 				yyerror("illegal states max value %d", $2);
 				YYERROR;
@@ -1125,7 +1059,7 @@ state_opt_item	: MAXIMUM NUMBER		{
 			$$->data.max_states = $2;
 			$$->next = NULL;
 		}
-		| STRING NUMBER			{
+		| STRING number			{
 			int i;
 
 			for (i = 0; pf_timeouts[i].name &&
@@ -1156,7 +1090,7 @@ fragment	: /* empty */			{ $$ = 0; }
 		| FRAGMENT			{ $$ = 1; }
 
 minttl		: /* empty */			{ $$ = 0; }
-		| MINTTL NUMBER			{
+		| MINTTL number			{
 			if ($2 < 0 || $2 > 255) {
 				yyerror("illegal min-ttl value %d", $2);
 				YYERROR;
@@ -1170,7 +1104,7 @@ nodf		: /* empty */			{ $$ = 0; }
 		;
 
 maxmss		: /* empty */			{ $$ = 0; }
-		| MAXMSS NUMBER			{
+		| MAXMSS number			{
 			if ($2 < 0) {
 				yyerror("illegal max-mss value %d", $2);
 				YYERROR;
@@ -1494,8 +1428,8 @@ route		: /* empty */			{
 			$$.rt = PF_ROUTETO;
 			$$.addr = NULL;
 		}
-		| DUPTO STRING ':' address {
-			$$.string = strdup($2);
+		| DUPTO '(' STRING address ')' {
+			$$.string = strdup($3);
 			$$.rt = PF_DUPTO;
 			if ($4->addr.addr_dyn != NULL) {
 				yyerror("dup-to does not support"
@@ -1516,7 +1450,7 @@ route		: /* empty */			{
 		}
 		;
 
-timeout_spec	: STRING NUMBER
+timeout_spec	: STRING number
 		{
 			if (pf->opts & PF_OPT_VERBOSE)
 				printf("set timeout %s %us\n", $1, $2);
@@ -1533,7 +1467,7 @@ timeout_list	: timeout_list ',' timeout_spec
 		| timeout_spec
 		;
 
-limit_spec	: STRING NUMBER
+limit_spec	: STRING number
 		{
 			if (pf->opts & PF_OPT_VERBOSE)
 				printf("set limit %s %u\n", $1, $2);
@@ -2392,103 +2326,13 @@ top:
 		break;
 	}
 
-	/* Need to parse v6 addresses before tokenizing numbers. ick */
-	if (isxdigit(c) || c == ':') {
-		struct node_host *node = NULL;
-		u_int32_t addr[4];
-		char lookahead[46];
-		int i = 0;
-		struct addrinfo hints, *res;
-
-		lookahead[i] = c;
-
-		while (i < sizeof(lookahead) &&
-		    (isalnum(c) || c == ':' || c == '.' || c == '%')) {
-			lookahead[++i] = c = lgetc(fin);
-		}
-
-		/* quick check avoids calling inet_pton too often */
-		lungetc(lookahead[i], fin);
-		lookahead[i] = '\0';
-
-		memset(&hints, 0, sizeof(hints));
-		hints.ai_family = AF_INET6;
-		hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
-		hints.ai_flags = AI_NUMERICHOST;
-		if (getaddrinfo(lookahead, "0", &hints, &res) == 0) {
-			node = calloc(1, sizeof(struct node_host));
-			if (node == NULL)
-				err(1, "yylex: calloc");
-			node->af = AF_INET6;
-			node->addr.addr_dyn = NULL;
-			memcpy(&node->addr.addr,
-			    &((struct sockaddr_in6 *)res->ai_addr)->sin6_addr,
-			    sizeof(addr));
-			node->ifindex = ((struct sockaddr_in6 *)res->ai_addr)
-			    ->sin6_scope_id;
-			yylval.v.host = node;
-			return IPV6ADDR;
-			freeaddrinfo(res);
-		} else {
-			free(node);
-			while (i > 1)
-				lungetc(lookahead[--i], fin);
-			c = lookahead[--i];
-		}
-	}
-
-	if (isdigit(c)) {
-		int index = 0, base = 10;
-		u_int64_t n = 0;
-
-		yylval.v.number = 0;
-		while (1) {
-			if (base == 10) {
-				if (!isdigit(c))
-					break;
-				c -= '0';
-			} else if (base == 16) {
-				if (isdigit(c))
-					c -= '0';
-				else if (c >= 'a' && c <= 'f')
-					c -= 'a' - 10;
-				else if (c >= 'A' && c <= 'F')
-					c -= 'A' - 10;
-				else
-					break;
-			}
-			n = n * base + c;
-
-			if (n > UINT_MAX) {
-				yyerror("number is too large");
-				return (ERROR);
-			}
-			c = lgetc(fin);
-			if (c == EOF)
-				break;
-			if (index++ == 0 && n == 0 && c == 'x') {
-				base = 16;
-				c = lgetc(fin);
-				if (c == EOF)
-					break;
-			}
-		}
-		yylval.v.number = (u_int32_t)n;
-
-		if (c != EOF)
-			lungetc(c, fin);
-		if (debug > 1)
-			fprintf(stderr, "number: %d\n", yylval.v.number);
-		return (NUMBER);
-	}
-
 #define allowed_in_string(x) \
 	(isalnum(x) || (ispunct(x) && x != '(' && x != ')' && \
 	x != '{' && x != '}' && x != '<' && x != '>' && \
 	x != '!' && x != '=' && x != '/' && x != '#' && \
-	x != ',' && x != ':' && x != '(' && x != ')'))
+	x != ',' && x != '(' && x != ')'))
 
-	if (isalnum(c)) {
+	if (isalnum(c) || c == ':') {
 		do {
 			*p++ = c;
 			if (p-buf >= sizeof buf) {
@@ -2709,4 +2553,104 @@ ifa_pick_ip(struct node_host *nh, u_int8_t af)
 		yyerror("no translation address with matching address family "
 		    "found.");
 	return (n);
+}
+
+struct node_host *
+host(char *s)
+{
+	struct node_host *h = NULL, *n;
+	struct in_addr ina;
+	struct addrinfo hints, *res0, *res;
+	int error;
+
+	if (ifa_exists(s)) {
+		/* interface with this name exists */
+		if ((h = ifa_lookup(s)) == NULL)
+			return (NULL);
+		else
+			return (h);
+	}
+
+	if (inet_aton(s, &ina) == 1) {
+		h = calloc(1, sizeof(struct node_host));
+		if (h == NULL)
+			err(1, "address: calloc");
+		h->af = AF_INET;
+		h->addr.addr_dyn = NULL;
+		h->addr.addr.addr32[0] = ina.s_addr;
+		return (h);
+	}
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET6;
+	hints.ai_socktype = SOCK_DGRAM; /*dummy*/
+	hints.ai_flags = AI_NUMERICHOST;
+	if (getaddrinfo(s, "0", &hints, &res) == 0) {
+		n = calloc(1, sizeof(struct node_host));
+		if (n == NULL)
+			err(1, "address: calloc");
+		n->af = AF_INET6;
+		n->addr.addr_dyn = NULL;
+		memcpy(&n->addr.addr,
+		    &((struct sockaddr_in6 *)res->ai_addr)->sin6_addr,
+		    sizeof(n->addr.addr));
+		n->ifindex = ((struct sockaddr_in6 *)res->ai_addr)->sin6_scope_id;
+		freeaddrinfo(res);
+		return (n);
+	}
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM; /* DUMMY */
+	error = getaddrinfo(s, NULL, &hints, &res0);
+	if (error) {
+		yyerror("cannot resolve %s: %s",
+		    s, gai_strerror(error));
+		return (NULL);
+	}
+	for (res = res0; res; res = res->ai_next) {
+		if (res->ai_family != AF_INET &&
+		    res->ai_family != AF_INET6)
+			continue;
+		n = calloc(1, sizeof(struct node_host));
+		if (n == NULL)
+			err(1, "address: calloc");
+		n->af = res->ai_family;
+		n->addr.addr_dyn = NULL;
+		if (res->ai_family == AF_INET)
+			memcpy(&n->addr.addr,
+			    &((struct sockaddr_in *)res->ai_addr)->sin_addr.s_addr,
+			    sizeof(struct in_addr));
+		else {
+			memcpy(&n->addr.addr,
+			    &((struct sockaddr_in6 *)res->ai_addr)->sin6_addr.s6_addr,
+			    sizeof(struct in6_addr));
+			n->ifindex =
+			    ((struct sockaddr_in6 *)res->ai_addr)->sin6_scope_id;
+		}
+		n->next = h;
+		h = n;
+	}
+	freeaddrinfo(res0);
+	if (h == NULL) {
+		yyerror("no IP address found for %s", s);
+		return (NULL);
+	}
+	return (h);
+}
+
+int
+atoul(char *s, u_long *ulvalp)
+{
+	u_long ulval;
+	char *ep;
+
+	errno = 0;
+	ulval = strtoul(s, &ep, 0);
+	if (s[0] == '\0' || *ep != '\0')
+		return (-1);
+	if (errno == ERANGE && ulval == ULONG_MAX)
+		return (-1);
+	*ulvalp = ulval;
+	return (0);
 }

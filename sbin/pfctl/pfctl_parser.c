@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.93 2002/07/15 18:13:53 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.94 2002/07/20 18:58:44 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -683,16 +683,16 @@ print_rule(struct pf_rule *r)
 			printf("dup-to ");
 		else if (r->rt == PF_FASTROUTE)
 			printf("fastroute");
-		if (r->rt_ifname[0])
-			printf("%s", r->rt_ifname);
 		if (r->af && !PF_AZERO(&r->rt_addr, r->af)) {
 			struct pf_addr_wrap aw;
 
+			printf("(%s ", r->rt_ifname);
 			aw.addr = r->rt_addr;
 			aw.addr_dyn = NULL;
-			printf(":");
 			print_addr(&aw, NULL, r->af);
-		}
+			printf(")");
+		} else if (r->rt_ifname[0])
+			printf("%s", r->rt_ifname);
 		printf(" ");
 	}
 	if (r->af) {
