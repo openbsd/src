@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.4 1996/12/06 12:07:13 deraadt Exp $	*/
+/*	$OpenBSD: output.c,v 1.5 2001/02/26 00:03:32 tholo Exp $	*/
 /*	$NetBSD: output.c,v 1.4 1996/03/19 03:21:41 jtc Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	5.7 (Berkeley) 5/24/93";
 #else
-static char rcsid[] = "$OpenBSD: output.c,v 1.4 1996/12/06 12:07:13 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: output.c,v 1.5 2001/02/26 00:03:32 tholo Exp $";
 #endif
 #endif /* not lint */
 
@@ -936,7 +936,7 @@ output_debug()
     symnam[0] = "end-of-file";
 
     if (!rflag) ++outline;
-    fprintf(output_file, "#if YYDEBUG\nchar *%sname[] = {", symbol_prefix);
+    fprintf(output_file, "#if YYDEBUG\n#if defined(__cplusplus) || __STDC__\nconst char * const %sname[] =\n#else\nchar *%sname[] =\n#endif\n\t{", symbol_prefix, symbol_prefix);
     j = 80;
     for (i = 0; i <= max; ++i)
     {
@@ -1062,7 +1062,7 @@ output_debug()
     FREE(symnam);
 
     if (!rflag) ++outline;
-    fprintf(output_file, "char *%srule[] = {\n", symbol_prefix);
+    fprintf(output_file, "#if defined(__cplusplus) || __STDC__\nconst char * const %srule[] =\n#else\nchar *%srule[] =\n#endif\n\t{", symbol_prefix, symbol_prefix);
     for (i = 2; i < nrules; ++i)
     {
 	fprintf(output_file, "\"%s :", symbol_name[rlhs[i]]);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeleton.c,v 1.15 2000/01/27 21:34:23 deraadt Exp $	*/
+/*	$OpenBSD: skeleton.c,v 1.16 2001/02/26 00:03:33 tholo Exp $	*/
 /*	$NetBSD: skeleton.c,v 1.10 1996/03/25 00:36:18 mrg Exp $	*/
 
 /*
@@ -67,7 +67,7 @@ char *banner[] =
     "#if __GNUC__ == 2",
     "  __attribute__ ((unused))",
     "#endif /* __GNUC__ == 2 */",
-    "  = \"$OpenBSD: skeleton.c,v 1.15 2000/01/27 21:34:23 deraadt Exp $\";",
+    "  = \"$OpenBSD: skeleton.c,v 1.16 2001/02/26 00:03:33 tholo Exp $\";",
     "#endif",
     "#include <stdlib.h>",
     "#define YYBYACC 1",
@@ -94,9 +94,14 @@ char *tables[] =
     "extern short yytable[];",
     "extern short yycheck[];",
     "#if YYDEBUG",
+    "#if defined(__cplusplus) || __STDC__",
+    "extern const char * const yyname[];",
+    "extern const char * const yyrule[];",
+    "#else /* !(defined(__cplusplus) || __STDC__) */",
     "extern char *yyname[];",
     "extern char *yyrule[];",
-    "#endif",
+    "#endif /* !(defined(__cplusplus) || __STDC__) */",
+    "#endif /* YYDEBUG */",
     0
 };
 
@@ -190,7 +195,11 @@ char *body[] =
     "{",
     "    register int yym, yyn, yystate;",
     "#if YYDEBUG",
+    "#if defined(__cplusplus) || __STDC__",
+    "    register const char *yys;",
+    "#else /* !(defined(__cplusplus) || __STDC__) */",
     "    register char *yys;",
+    "#endif /* !(defined(__cplusplus) || __STDC__) */",
     "",
     "    if ((yys = getenv(\"YYDEBUG\")))",
     "    {",
@@ -198,7 +207,7 @@ char *body[] =
     "        if (yyn >= '0' && yyn <= '9')",
     "            yydebug = yyn - '0';",
     "    }",
-    "#endif",
+    "#endif /* YYDEBUG */",
     "",
     "    yynerrs = 0;",
     "    yyerrflag = 0;",
