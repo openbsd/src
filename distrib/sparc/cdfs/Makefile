@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2003/03/05 23:17:22 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.2 2003/08/12 20:25:01 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -24,9 +24,9 @@ ${CDROM}:
 	vnconfig -v -c svnd0 ${.OBJDIR}/${CDROM}
 	mount -t cd9660 /dev/svnd0a /mnt
 	/usr/mdec/installboot -v \
-	    -s `cat log | grep -v 'Name' | egrep '/cd-dir/3.3/sparc/boot$$' | cut -d' ' -f1` \
-	    -e `cat log | grep -v 'Name' | egrep '/cd-dir/3.3/sparc/boot$$' | cut -d' ' -f2` \
-	    /mnt/3.3/sparc/boot /usr/mdec/bootxx /dev/rsvnd0c
+	    -s `cat log | grep -v 'Name' | egrep "/cd-dir/${OSREV}/sparc/boot$$" | cut -d' ' -f1` \
+	    -e `cat log | grep -v 'Name' | egrep "/cd-dir/${OSREV}/sparc/boot$$" | cut -d' ' -f2` \
+	    /mnt/${OSREV}/sparc/boot /usr/mdec/bootxx /dev/rsvnd0c
 	disklabel -w svnd0 fakecdrom "OpenBSD/sparc   "
 	umount /mnt
 	vnconfig -u svnd0
