@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_script.c,v 1.2 1996/03/03 17:19:38 niklas Exp $	*/
+/*	$OpenBSD: exec_script.c,v 1.3 1996/06/12 07:35:06 deraadt Exp $	*/
 /*	$NetBSD: exec_script.c,v 1.13 1996/02/04 02:15:06 christos Exp $	*/
 
 /*
@@ -72,8 +72,8 @@ exec_script_makecmds(p, epp)
 	char **shellargp, **tmpsap;
 	struct vnode *scriptvp;
 #ifdef SETUIDSCRIPTS
-	uid_t script_uid;
-	gid_t script_gid;
+	uid_t script_uid = -1;
+	gid_t script_gid = -1;
 	u_short script_sbits;
 #endif
 
