@@ -1,6 +1,5 @@
 ./.cshrc
 ./.profile
-./dev/MAKEDEV.local
 ./etc/afs/CellServDB
 ./etc/afs/README
 ./etc/afs/SuidCells
