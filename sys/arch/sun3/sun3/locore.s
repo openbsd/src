@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.15 1997/02/19 00:03:35 kstailey Exp $	*/
+/*	$OpenBSD: locore.s,v 1.16 1997/02/20 06:17:03 kstailey Exp $	*/
 /*	$NetBSD: locore.s,v 1.40 1996/11/06 20:19:54 cgd Exp $	*/
 
 /*
@@ -617,6 +617,8 @@ _trap12:
 /*
  * Interrupt handlers.  Most are auto-vectored,
  * and hard-wired the same way on all sun3 models.
+ * Format in the stack is:
+ *   d0,d1,a0,a1, sr, pc, vo
  */
 
 #define INTERRUPT_SAVEREG \
@@ -904,7 +906,7 @@ Lrem2:
 	jbsr	_panic
 Lrem3:
 	.asciz	"remrunqueue"
-
+	.even
 
 | Message for Lbadsw panic
 Lsw0:
@@ -1055,6 +1057,13 @@ Lsw2:
 	fmovem	fpcr/fpsr/fpi,a2@(FPF_FPCR)	| save FP control regs
 Lswnofpsave:
 
+	/*
+	 * Now that we have saved all the registers that must be
+	 * preserved, we are free to use those registers until
+	 * we load the registers for the switched-to process.
+	 * In this section, keep:  a0=curproc, a1=curpcb
+	 */
+
 #ifdef DIAGNOSTIC
 	tstl	a0@(P_WCHAN)
 	jne	Lbadsw
@@ -1064,28 +1073,26 @@ Lswnofpsave:
 	clrl	a0@(P_BACK)		| clear back link
 	movl	a0@(P_ADDR),a1		| get p_addr
 	movl	a1,_curpcb
-	movb	a0@(P_MDFLAG+3),mdpflag	| low byte of p_md.md_flags
 
 	/* see if pmap_activate needs to be called; should remove this */
-	movl	a0@(P_VMSPACE),a0	| vmspace = p->p_vmspace
+	movl	a0@(P_VMSPACE),a2	| a2 = p->p_vmspace
 #ifdef DIAGNOSTIC
-	tstl	a0			| map == VM_MAP_NULL?
+	tstl	a2			| map == VM_MAP_NULL?
 	jeq	Lbadsw			| panic
 #endif
 
 | Important note:  We MUST call pmap_activate to set the
 | MMU context register (like setting a root table pointer).
-	lea	a0@(VM_PMAP),a0		| pmap = &vmspace.vm_pmap
-	pea	a0@			| push pmap
+	lea	a2@(VM_PMAP),a2		| pmap = &vmspace.vm_pmap
+	pea	a2@			| push pmap
 	jbsr	_pmap_activate		| pmap_activate(pmap)
 	addql	#4,sp
 	movl	_curpcb,a1		| restore p_addr
 
-| XXX - Should do this in pmap_activeate only if context reg changed.
-	movl	#IC_CLEAR,d0
-	movc	d0,cacr
-
-Lcxswdone:
+	/*
+	 * Reload the registers for the new process.
+	 * After this point we can only use d0,d1,a0,a1
+	 */
 	moveml	a1@(PCB_REGS),#0xFCFC	| reload registers
 	movl	a1@(PCB_USP),a0
 	movl	a0,usp			| and USP
