@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.62 1999/03/09 00:01:41 niklas Exp $
+#	$OpenBSD: Makefile,v 1.63 1999/03/29 03:07:39 rahnds Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -18,7 +18,8 @@ FILES=	a.out.h ar.h assert.h bitstring.h blf.h bm.h cast.h cpio.h ctype.h \
 	stddef.h stdio.h stdlib.h string.h strings.h struct.h sysexits.h \
 	tar.h time.h ttyent.h tzfile.h unistd.h utime.h utmp.h vis.h
 
-.if (${MACHINE_ARCH} != "alpha") && (${MACHINE_ARCH} != "mips")
+.if (${MACHINE_ARCH} != "alpha") && (${MACHINE_ARCH} != "mips") && \
+	(${MACHINE_ARCH} != "powerpc")
 FILES+=	dlfcn.h link.h
 .endif
 
