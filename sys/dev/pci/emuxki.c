@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxki.c,v 1.6 2001/11/26 18:16:02 mickey Exp $	*/
+/*	$OpenBSD: emuxki.c,v 1.7 2001/11/29 13:05:30 ho Exp $	*/
 /*	$NetBSD: emuxki.c,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -834,8 +834,8 @@ emuxki_mem_new(struct emuxki_softc *sc, int ptbidx,
 		return (NULL);
 
 	mem->ptbidx = ptbidx;
-	if ((mem->dmamem = emuxki_dmamem_alloc(sc->sc_dmat, size, EMU_DMA_ALIGN,
-	    EMU_DMAMEM_NSEG, type, flags)) == NULL) {
+	if ((mem->dmamem = emuxki_dmamem_alloc(sc->sc_dmat, size,
+	    EMU_DMA_ALIGN, EMU_DMAMEM_NSEG, type, flags)) == NULL) {
 		free(mem, type);
 		return (NULL);
 	}
@@ -1320,7 +1320,7 @@ emuxki_voice_new(struct emuxki_softc *sc, u_int8_t use)
 void
 emuxki_voice_delete(struct emuxki_voice *voice)
 {
-	struct emuxki_softc *sc;
+	struct emuxki_softc *sc = voice->sc;
 	struct emuxki_voice *lvoice;
 	int s;
 
