@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.10 2001/06/24 20:27:02 fgsch Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.11 2001/06/27 06:34:50 kjc Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -903,7 +903,9 @@ wb_attach(parent, self, aux)
 	ifp->if_start = wb_start;
 	ifp->if_watchdog = wb_watchdog;
 	ifp->if_baudrate = 10000000;
-	ifp->if_snd.ifq_maxlen = WB_TX_LIST_CNT - 1;
+	IFQ_SET_MAXLEN(&ifp->if_snd, WB_TX_LIST_CNT - 1);
+	IFQ_SET_READY(&ifp->if_snd);
+
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	/*
@@ -1310,7 +1312,7 @@ int wb_intr(arg)
 	/* Re-enable interrupts. */
 	CSR_WRITE_4(sc, WB_IMR, WB_INTRS);
 
-	if (ifp->if_snd.ifq_head != NULL) {
+	if (!IFQ_IS_EMPTY(&ifp->if_snd)) {
 		wb_start(ifp);
 	}
 
@@ -1449,7 +1451,7 @@ void wb_start(ifp)
 	start_tx = sc->wb_cdata.wb_tx_free;
 
 	while(sc->wb_cdata.wb_tx_free->wb_mbuf == NULL) {
-		IF_DEQUEUE(&ifp->if_snd, m_head);
+		IFQ_DEQUEUE(&ifp->if_snd, m_head);
 		if (m_head == NULL)
 			break;
 
@@ -1752,7 +1754,7 @@ void wb_watchdog(ifp)
 	wb_reset(sc);
 	wb_init(sc);
 
-	if (ifp->if_snd.ifq_head != NULL)
+	if (!IFQ_IS_EMPTY(&ifp->if_snd))
 		wb_start(ifp);
 
 	return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_eg.c,v 1.20 2001/06/25 04:44:28 fgsch Exp $	*/
+/*	$OpenBSD: if_eg.c,v 1.21 2001/06/27 06:34:45 kjc Exp $	*/
 /*	$NetBSD: if_eg.c,v 1.26 1996/05/12 23:52:27 mycroft Exp $	*/
 
 /*
@@ -444,6 +444,7 @@ egattach(parent, self, aux)
 	ifp->if_ioctl = egioctl;
 	ifp->if_watchdog = egwatchdog;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
+	IFQ_SET_READY(&ifp->if_snd);
 	
 	/* Now we can attach the interface. */
 	if_attach(ifp);
@@ -543,7 +544,7 @@ egstart(ifp)
 
 loop:
 	/* Dequeue the next datagram. */
-	IF_DEQUEUE(&ifp->if_snd, m0);
+	IFQ_DEQUEUE(&ifp->if_snd, m0);
 	if (m0 == 0)
 		return;
 	

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.11 2001/06/25 02:18:47 fgsch Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.12 2001/06/27 06:34:49 kjc Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -604,7 +604,7 @@ int ste_intr(xsc)
 	/* Re-enable interrupts */
 	CSR_WRITE_2(sc, STE_IMR, STE_INTRS);
 
-	if (ifp->if_snd.ifq_head != NULL)
+	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		ste_start(ifp);
 
 	return claimed;
@@ -818,7 +818,7 @@ void ste_stats_update(xsc)
 		if (mii->mii_media_status & IFM_ACTIVE &&
 		    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE)
 			sc->ste_link++;
-		if (ifp->if_snd.ifq_head != NULL)
+		if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 			ste_start(ifp);
 	}
 
@@ -986,7 +986,8 @@ void ste_attach(parent, self, aux)
 	ifp->if_start = ste_start;
 	ifp->if_watchdog = ste_watchdog;
 	ifp->if_baudrate = 10000000;
-	ifp->if_snd.ifq_maxlen = STE_TX_LIST_CNT - 1;
+	IFQ_SET_MAXLEN(&ifp->if_snd, STE_TX_LIST_CNT - 1);
+	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	sc->sc_mii.mii_ifp = ifp;
@@ -1433,7 +1434,7 @@ void ste_start(ifp)
 			break;
 		}
 
-		IF_DEQUEUE(&ifp->if_snd, m_head);
+		IFQ_DEQUEUE(&ifp->if_snd, m_head);
 		if (m_head == NULL)
 			break;
 
@@ -1488,7 +1489,7 @@ void ste_watchdog(ifp)
 	ste_reset(sc);
 	ste_init(sc);
 
-	if (ifp->if_snd.ifq_head != NULL)
+	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		ste_start(ifp);
 
 	return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.51 2001/06/24 20:30:24 fgsch Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.52 2001/06/27 06:34:41 kjc Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -353,7 +353,8 @@ epconfig(sc, chipset, enaddr)
 	ifp->if_watchdog = epwatchdog;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
-	ifp->if_snd.ifq_maxlen = IFQ_MAXLEN;
+	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
+	IFQ_SET_READY(&ifp->if_snd);
 
 	if_attach(ifp);
 	ether_ifattach(ifp);
@@ -984,7 +985,7 @@ epstart(ifp)
 
 startagain:
 	/* Sneak a peek at the next packet */
-	m0 = ifp->if_snd.ifq_head;
+	IFQ_POLL(&ifp->if_snd, m0);
 	if (m0 == 0)
 		return;
 
@@ -1003,7 +1004,7 @@ startagain:
 	if (len + pad > ETHER_MAX_LEN) {
 		/* packet is obviously too large: toss it */
 		++ifp->if_oerrors;
-		IF_DEQUEUE(&ifp->if_snd, m0);
+		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		m_freem(m0);
 		goto readcheck;
 	}
@@ -1019,8 +1020,7 @@ startagain:
 		bus_space_write_2(iot, ioh, EP_COMMAND,
 		    SET_TX_AVAIL_THRESH | EP_THRESH_DISABLE);
 	}
-
-	IF_DEQUEUE(&ifp->if_snd, m0);
+	IFQ_DEQUEUE(&ifp->if_snd, m0);
 	if (m0 == 0)		/* not really needed */
 		return;
 

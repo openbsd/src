@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fe.c,v 1.15 2001/06/25 04:44:28 fgsch Exp $	*/
+/*	$OpenBSD: if_fe.c,v 1.16 2001/06/27 06:34:46 kjc Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -999,6 +999,7 @@ feattach(parent, self, aux)
 	ifp->if_watchdog = fe_watchdog;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	/*
 	 * Set maximum size of output queue, if it has not been set.
@@ -1508,7 +1509,7 @@ fe_start(ifp)
 		/*
 		 * Get the next mbuf chain for a packet to send.
 		 */
-		IF_DEQUEUE(&ifp->if_snd, m);
+		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == 0) {
 			/* No more packets to send. */
 			goto indicate_inactive;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.21 2001/06/23 21:54:52 fgsch Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.22 2001/06/27 06:34:46 kjc Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.51 1996/05/12 23:52:48 mycroft Exp $	*/
 
 /*-
@@ -790,6 +790,7 @@ ieattach(parent, self, aux)
 	ifp->if_watchdog = iewatchdog;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Attach the interface. */
 	if_attach(ifp);
@@ -1484,7 +1485,7 @@ iestart(ifp)
 			break;
 		}
 
-		IF_DEQUEUE(&ifp->if_snd, m0);
+		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		if (m0 == 0)
 			break;
 

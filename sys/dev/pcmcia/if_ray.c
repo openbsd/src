@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ray.c,v 1.15 2001/06/25 04:05:51 fgsch Exp $	*/
+/*	$OpenBSD: if_ray.c,v 1.16 2001/06/27 06:34:52 kjc Exp $	*/
 /*	$NetBSD: if_ray.c,v 1.21 2000/07/05 02:35:54 onoe Exp $	*/
 
 /*
@@ -649,6 +649,7 @@ ray_attach(parent, self, aux)
 	ifp->if_ioctl = ray_ioctl;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_flags = IFF_BROADCAST|IFF_SIMPLEX|IFF_MULTICAST;
+	IFQ_SET_READY(&ifp->if_snd);
 	if_attach(ifp);
 	memcpy(&sc->sc_ec.ac_enaddr, ep->e_station_addr, ETHER_ADDR_LEN);
 	ether_ifattach(ifp);
@@ -1227,7 +1228,7 @@ ray_intr_start(sc)
 		return;
 	}
 
-	if (ifp->if_snd.ifq_len == 0) {
+	if (IFQ_IS_EMPTY(&ifp->if_snd)) {
 		RAY_DPRINTF(("%s: nothing to send.\n",ifp->if_xname));
 		return;
 	}
@@ -1260,7 +1261,7 @@ ray_intr_start(sc)
 			}
 		}
 
-		IF_DEQUEUE(&ifp->if_snd, m0);
+		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		if (!m0) {
 			RAY_DPRINTF(("%s: dry queue.\n", ifp->if_xname));
 			break;

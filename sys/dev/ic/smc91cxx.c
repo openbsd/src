@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc91cxx.c,v 1.11 2001/06/24 04:57:07 fgsch Exp $	*/
+/*	$OpenBSD: smc91cxx.c,v 1.12 2001/06/27 06:34:43 kjc Exp $	*/
 /*	$NetBSD: smc91cxx.c,v 1.11 1998/08/08 23:51:41 mycroft Exp $	*/
 
 /*-
@@ -248,7 +248,8 @@ smc91cxx_attach(sc, myea)
 	ifp->if_watchdog = smc91cxx_watchdog;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
-	ifp->if_snd.ifq_maxlen = IFQ_MAXLEN;
+	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
+	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Attach the interface. */
 	if_attach(ifp);
@@ -480,7 +481,8 @@ smc91cxx_start(ifp)
 	/*
 	 * Peek at the next packet.
 	 */
-	if ((m = ifp->if_snd.ifq_head) == NULL)
+	IFQ_POLL(&ifp->if_snd, m);
+	if (m == NULL)
 		return;
 
 	/*
@@ -499,7 +501,7 @@ smc91cxx_start(ifp)
 	if ((len + pad) > (ETHER_MAX_LEN - ETHER_CRC_LEN)) {
 		printf("%s: large packet discarded\n", sc->sc_dev.dv_xname);
 		ifp->if_oerrors++;
-		IF_DEQUEUE(&ifp->if_snd, m);
+		IFQ_DEQUEUE(&ifp->if_snd, m);
 		m_freem(m);
 		goto readcheck;
 	}
@@ -576,7 +578,7 @@ smc91cxx_start(ifp)
 	 * Get the packet from the kernel.  This will include the Ethernet
 	 * frame header, MAC address, etc.
 	 */
-	IF_DEQUEUE(&ifp->if_snd, m);
+	IFQ_DEQUEUE(&ifp->if_snd, m);
 
 	/*
 	 * Push the packet out to the card.

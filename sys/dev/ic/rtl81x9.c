@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.4 2001/06/23 23:17:35 fgsch Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.5 2001/06/27 06:34:43 kjc Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -844,7 +844,7 @@ int rl_intr(arg)
 	/* Re-enable interrupts. */
 	CSR_WRITE_2(sc, RL_IMR, RL_INTRS);
 
-	if (ifp->if_snd.ifq_head != NULL)
+	if (!IFQ_IS_EMPTY(&ifp->if_snd))
 		rl_start(ifp);
 
 	return (claimed);
@@ -911,16 +911,18 @@ void rl_start(ifp)
 {
 	struct rl_softc		*sc;
 	struct mbuf		*m_head = NULL;
+	int			pkts = 0;
 
 	sc = ifp->if_softc;
 
 	while(RL_CUR_TXMBUF(sc) == NULL) {
-		IF_DEQUEUE(&ifp->if_snd, m_head);
+		IFQ_DEQUEUE(&ifp->if_snd, m_head);
 		if (m_head == NULL)
 			break;
 
 		/* Pack the data into the descriptor. */
 		rl_encap(sc, m_head);
+		pkts++;
 
 #if NBPFILTER > 0
 		/*
@@ -941,6 +943,8 @@ void rl_start(ifp)
 
 		RL_INC(sc->rl_cdata.cur_tx);
 	}
+	if (pkts == 0)
+		return;
 
 	/*
 	 * We broke out of the loop because all our TX slots are
@@ -1271,7 +1275,8 @@ rl_attach(sc)
 	ifp->if_start = rl_start;
 	ifp->if_watchdog = rl_watchdog;
 	ifp->if_baudrate = 10000000;
-	ifp->if_snd.ifq_maxlen = IFQ_MAXLEN;
+	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
+	IFQ_SET_READY(&ifp->if_snd);
 
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 

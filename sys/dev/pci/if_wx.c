@@ -1,4 +1,4 @@
-/* $OpenBSD: if_wx.c,v 1.13 2001/06/24 20:27:03 fgsch Exp $ */
+/* $OpenBSD: if_wx.c,v 1.14 2001/06/27 06:34:51 kjc Exp $ */
 /*
  * Principal Author: Matthew Jacob
  * Copyright (c) 1999, 2001 by Traakan Software
@@ -722,7 +722,8 @@ wx_attach(device_t dev)
 	ifp->if_ioctl = wx_ioctl;
 	ifp->if_start = wx_start;
 	ifp->if_watchdog = wx_txwatchdog;
-	ifp->if_snd.ifq_maxlen = WX_MAX_TDESC - 1;
+	IFQ_SET_MAXLEN(&ifp->if_snd, WX_MAX_TDESC - 1);
+	IFQ_SET_READY(&ifp->if_snd);
 	ether_ifattach(ifp, ETHER_BPF_SUPPORTED);
 out:
 	WX_UNLOCK(sc);
@@ -1125,7 +1126,7 @@ wx_start(struct ifnet *ifp)
 		int gctried = 0;
 		struct mbuf *m, *mb_head;
 
-		IF_DEQUEUE(&ifp->if_snd, mb_head);
+		IFQ_DEQUEUE(&ifp->if_snd, mb_head);
 		if (mb_head == NULL) {
 			break;
 		}
@@ -1264,6 +1265,17 @@ wx_start(struct ifnet *ifp)
 		if (nactv == WX_MAX_TDESC && mb_head->m_next == NULL) {
 			sc->wx_xmitputback++;
 			ifp->if_flags |= IFF_OACTIVE;
+#ifdef ALTQ
+			/*
+			 * XXX when altq is enabled, we can't put the
+			 * packet back to the queue.
+			 * just give up this packet for now.
+			 */
+			if (ALTQ_IS_ENABLED(&ifp->if_snd)) {
+				m_freem(mb_head);
+				break;
+			}
+#endif
 			IF_PREPEND(&ifp->if_snd, mb_head);
 			break;
 		}
@@ -1336,7 +1348,7 @@ wx_intr(void *arg)
 		if (sc->tactive) {
 			wx_gc(sc);
 		}
-		if (sc->wx_if.if_snd.ifq_head != NULL) {
+		if (IFQ_IS_EMPTY(&sc->wx_if.if_snd) == 0) {
 			wx_start(&sc->wx_if);
 		}
 		WX_ENABLE_INT(sc);

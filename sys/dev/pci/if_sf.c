@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sf.c,v 1.11 2001/06/24 20:26:59 fgsch Exp $ */
+/*	$OpenBSD: if_sf.c,v 1.12 2001/06/27 06:34:48 kjc Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -739,7 +739,8 @@ void sf_attach(parent, self, aux)
 	ifp->if_start = sf_start;
 	ifp->if_watchdog = sf_watchdog;
 	ifp->if_baudrate = 10000000;
-	ifp->if_snd.ifq_maxlen = SF_TX_DLIST_CNT - 1;
+	IFQ_SET_MAXLEN(&ifp->if_snd, SF_TX_DLIST_CNT - 1);
+	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	/*
@@ -1029,7 +1030,7 @@ int sf_intr(arg)
 	/* Re-enable interrupts. */
 	csr_write_4(sc, SF_IMR, SF_INTRS);
 
-	if (ifp->if_snd.ifq_head != NULL)
+	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		sf_start(ifp);
 
 	return claimed;
@@ -1231,7 +1232,7 @@ void sf_start(ifp)
 	i = SF_IDX_HI(txprod) >> 4;
 
 	while(sc->sf_ldata->sf_tx_dlist[i].sf_mbuf == NULL) {
-		IF_DEQUEUE(&ifp->if_snd, m_head);
+		IFQ_DEQUEUE(&ifp->if_snd, m_head);
 		if (m_head == NULL)
 			break;
 
@@ -1352,7 +1353,7 @@ void sf_stats_update(xsc)
 		if (mii->mii_media_status & IFM_ACTIVE &&
 		    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE)
 			sc->sf_link++;
-		if (ifp->if_snd.ifq_head != NULL)
+		if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 			sf_start(ifp);
 	}
 
@@ -1377,7 +1378,7 @@ void sf_watchdog(ifp)
 	sf_reset(sc);
 	sf_init(sc);
 
-	if (ifp->if_snd.ifq_head != NULL)
+	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		sf_start(ifp);
 
 	return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lmc.c,v 1.8 2001/06/27 05:44:55 nate Exp $ */
+/*	$OpenBSD: if_lmc.c,v 1.9 2001/06/27 06:34:48 kjc Exp $ */
 /*	$NetBSD: if_lmc.c,v 1.1 1999/03/25 03:32:43 explorer Exp $	*/
 
 /*-
@@ -1286,15 +1286,20 @@ static ifnet_ret_t
 lmc_ifstart(struct ifnet * const ifp)
 {
 	lmc_softc_t * const sc = LMC_IFP_TO_SOFTC(ifp);
-	struct mbuf *m;
+	struct mbuf *m, *m0;
 
 	if (sc->lmc_flags & LMC_IFUP) {
 		while (sppp_isempty(ifp) == 0) {
-			m = sppp_dequeue(ifp);
-			if ((m = lmc_txput(sc, m)) != NULL) {
-				IF_PREPEND(&((struct sppp *)ifp)->pp_fastq, m);
+			m = sppp_pick(ifp);
+			if (m == NULL)
 				break;
-			}
+			if ((m = lmc_txput(sc, m)) != NULL)
+				break;
+			m0 = sppp_dequeue(ifp);
+#if defined(LMC_DEBUG)
+			if (m0 != m)
+				printf("lmc_ifstart: mbuf mismatch!\n");
+#endif
 		}
 		LMC_CSR_WRITE(sc, csr_txpoll, 1);
 	}
@@ -1304,13 +1309,17 @@ static ifnet_ret_t
 lmc_ifstart_one(struct ifnet * const ifp)
 {
 	lmc_softc_t * const sc = LMC_IFP_TO_SOFTC(ifp);
-	struct mbuf *m;
+	struct mbuf *m, *m0;
 
 	if ((sc->lmc_flags & LMC_IFUP) && (sppp_isempty(ifp) == 0)) {
-		m = sppp_dequeue(ifp);
-		if ((m = lmc_txput(sc, m)) != NULL) {
-			IF_PREPEND(&((struct sppp *)ifp)->pp_fastq, m);
-		}
+		m = sppp_pick(ifp);
+		if ((m = lmc_txput(sc, m)) != NULL)
+			return;
+		m0 = sppp_dequeue(ifp);
+#if defined(LMC_DEBUG)
+		if (m0 != m)
+			printf("lmc_ifstart: mbuf mismatch!\n");
+#endif
 		LMC_CSR_WRITE(sc, csr_txpoll, 1);
 	}
 }
@@ -1428,6 +1437,7 @@ lmc_attach(lmc_softc_t * const sc)
 	ifp->if_watchdog = lmc_watchdog;
 	ifp->if_timer = 1;
 	ifp->if_mtu = LMC_MTU;
+	IFQ_SET_READY(&ifp->if_snd);
 
 #if defined(__bsdi__)
 	ifp->if_type = IFT_NONE;

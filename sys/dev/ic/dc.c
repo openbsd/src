@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.28 2001/06/23 23:17:35 fgsch Exp $	*/
+/*	$OpenBSD: dc.c,v 1.29 2001/06/27 06:34:40 kjc Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1650,7 +1650,8 @@ void dc_attach(sc)
 	ifp->if_start = dc_start;
 	ifp->if_watchdog = dc_watchdog;
 	ifp->if_baudrate = 10000000;
-	ifp->if_snd.ifq_maxlen = DC_TX_LIST_CNT - 1;
+	IFQ_SET_MAXLEN(&ifp->if_snd, DC_TX_LIST_CNT - 1);
+	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	/* Do MII setup. If this is a 21143, check for a PHY on the
@@ -2278,7 +2279,7 @@ void dc_tick(xsc)
 		if (mii->mii_media_status & IFM_ACTIVE &&
 		    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
 			sc->dc_link++;
-			if (ifp->if_snd.ifq_head != NULL)
+			if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 				dc_start(ifp);
 		}
 	}
@@ -2388,7 +2389,7 @@ int dc_intr(arg)
 	/* Re-enable interrupts. */
 	CSR_WRITE_4(sc, DC_IMR, DC_INTRS);
 
-	if (ifp->if_snd.ifq_head != NULL)
+	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		dc_start(ifp);
 
 	return (claimed);
@@ -2452,6 +2453,11 @@ int dc_encap(sc, m_head, txidx)
 		sc->dc_ldata->dc_tx_list[cur].dc_ctl |= DC_TXCTL_FINT;
 	if (sc->dc_flags & DC_TX_USE_TX_INTR && sc->dc_cdata.dc_tx_cnt > 64)
 		sc->dc_ldata->dc_tx_list[cur].dc_ctl |= DC_TXCTL_FINT;
+#ifdef ALTQ
+	else if ((sc->dc_flags & DC_TX_USE_TX_INTR) &&
+		 TBR_IS_ENABLED(&sc->arpcom.ac_if.if_snd))
+		sc->dc_ldata->dc_tx_list[cur].dc_ctl |= DC_TXCTL_FINT;
+#endif
 	sc->dc_ldata->dc_tx_list[*txidx].dc_status = DC_TXSTAT_OWN;
 	*txidx = frag;
 
@@ -2516,23 +2522,33 @@ void dc_start(ifp)
 	idx = sc->dc_cdata.dc_tx_prod;
 
 	while(sc->dc_cdata.dc_tx_chain[idx] == NULL) {
-		IF_DEQUEUE(&ifp->if_snd, m_head);
+		IFQ_POLL(&ifp->if_snd, m_head);
 		if (m_head == NULL)
 			break;
 
 		if (sc->dc_flags & DC_TX_COALESCE) {
+#ifdef ALTQ
+			/* note: dc_coal breaks the poll-and-dequeue rule.
+			 * if dc_coal fails, we lose the packet.
+			 */
+#endif
+			IFQ_DEQUEUE(&ifp->if_snd, m_head);
 			if (dc_coal(sc, &m_head)) {
-				IF_PREPEND(&ifp->if_snd, m_head);
 				ifp->if_flags |= IFF_OACTIVE;
 				break;
 			}
 		}
 
 		if (dc_encap(sc, m_head, &idx)) {
-			IF_PREPEND(&ifp->if_snd, m_head);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
+
+		/* now we are committed to transmit the packet */
+		if (sc->dc_flags & DC_TX_COALESCE) {
+			/* if mbuf is coalesced, it is already dequeued */
+		} else
+			IFQ_DEQUEUE(&ifp->if_snd, m_head);
 
 		/*
 		 * If there's a BPF listener, bounce a copy of this frame
@@ -2547,6 +2563,8 @@ void dc_start(ifp)
 			break;
 		}
 	}
+	if (idx == sc->dc_cdata.dc_tx_prod)
+		return;
 
 	/* Transmit */
 	sc->dc_cdata.dc_tx_prod = idx;
@@ -2888,7 +2906,7 @@ void dc_watchdog(ifp)
 	dc_reset(sc);
 	dc_init(sc);
 
-	if (ifp->if_snd.ifq_head != NULL)
+	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		dc_start(ifp);
 
 	return;

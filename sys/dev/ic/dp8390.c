@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390.c,v 1.14 2001/06/23 22:57:13 fgsch Exp $	*/
+/*	$OpenBSD: dp8390.c,v 1.15 2001/06/27 06:34:41 kjc Exp $	*/
 /*	$NetBSD: dp8390.c,v 1.13 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
@@ -130,7 +130,7 @@ dp8390_config(sc)
 		ifp->if_watchdog = dp8390_watchdog;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
-	ifp->if_snd.ifq_maxlen = IFQ_MAXLEN;
+	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
 
 	/* Print additional info when attached. */
 	printf("%s: address %s\n", sc->sc_dev.dv_xname,
@@ -178,6 +178,7 @@ dp8390_mediastatus(ifp, ifmr)
 		ifmr->ifm_status = 0;
 		return;
 	}
+	IFQ_SET_READY(&ifp->if_snd);
 
 	if (sc->sc_mediastatus)
 		(*sc->sc_mediastatus)(sc, ifmr);
@@ -445,7 +446,7 @@ outloop:
 		ifp->if_flags |= IFF_OACTIVE;
 		return;
 	}
-	IF_DEQUEUE(&ifp->if_snd, m0);
+	IFQ_DEQUEUE(&ifp->if_snd, m0);
 	if (m0 == 0)
 		return;
 

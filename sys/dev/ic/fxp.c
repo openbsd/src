@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.19 2001/06/23 23:17:35 fgsch Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.20 2001/06/27 06:34:41 kjc Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -363,6 +363,7 @@ fxp_attach_common(sc, enaddr, intrstr)
 	ifp->if_ioctl = fxp_ioctl;
 	ifp->if_start = fxp_start;
 	ifp->if_watchdog = fxp_watchdog;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	printf(": %s, address %s\n", intrstr,
 	    ether_sprintf(sc->arpcom.ac_enaddr));
@@ -401,7 +402,7 @@ fxp_attach_common(sc, enaddr, intrstr)
 	 * Let the system queue as many packets as we have available
 	 * TX descriptors.
 	 */
-	ifp->if_snd.ifq_maxlen = FXP_NTXCB - 1;
+	IFQ_SET_MAXLEN(&ifp->if_snd, FXP_NTXCB - 1);
 	ether_ifattach(ifp);
 
 	/*
@@ -630,14 +631,16 @@ fxp_start(ifp)
 	 * NOTE: One TxCB is reserved to guarantee that fxp_mc_setup() can add
 	 *       a NOP command when needed.
 	 */
-	while (ifp->if_snd.ifq_head != NULL && sc->tx_queued < FXP_NTXCB - 1) {
+	while (IFQ_IS_EMPTY(&ifp->if_snd) == 0 && sc->tx_queued < FXP_NTXCB - 1) {
 		struct mbuf *m, *mb_head;
 		int segment;
 
 		/*
 		 * Grab a packet to transmit.
 		 */
-		IF_DEQUEUE(&ifp->if_snd, mb_head);
+		IFQ_DEQUEUE(&ifp->if_snd, mb_head);
+		if (mb_head == NULL)
+			break;
 
 		/*
 		 * Get pointer to next available tx desc.
@@ -736,6 +739,11 @@ tbdinit:
 	 * going again if suspended.
 	 */
 	if (txp != NULL) {
+#ifdef ALTQ
+		/* if tb regulator is used, we need tx complete interrupt */
+		if (TBR_IS_ENABLED(&ifp->if_snd))
+			txp->cb_command |= FXP_CB_COMMAND_I;
+#endif
 		fxp_scb_wait(sc);
 		CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND, FXP_SCB_COMMAND_CU_RESUME);
 	}
@@ -803,7 +811,7 @@ fxp_intr(arg)
 			/*
 			 * Try to start more packets transmitting.
 			 */
-			if (ifp->if_snd.ifq_head != NULL)
+			if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 				fxp_start(ifp);
 		}
 		/*

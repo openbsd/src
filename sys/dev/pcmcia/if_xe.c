@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.20 2001/06/25 04:05:51 fgsch Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.21 2001/06/27 06:34:52 kjc Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, Brandon Creighton, Job de Haas
@@ -382,7 +382,8 @@ xe_pcmcia_attach(parent, self, aux)
 	ifp->if_ioctl = xe_ioctl;
 	ifp->if_start = xe_start;
 	ifp->if_watchdog = xe_watchdog;
-	ifp->if_snd.ifq_maxlen = IFQ_MAXLEN;
+	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
+	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Establish the interrupt. */
 	sc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_NET, xe_intr, sc);
@@ -736,7 +737,7 @@ xe_intr(arg)
 	}
 			
 	/* Try to start more packets transmitting. */
-	if (ifp->if_snd.ifq_head)
+	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		xe_start(ifp);
 
 	/* Detected excessive collisions? */
@@ -1112,7 +1113,7 @@ xe_start(ifp)
 		return;
 
 	/* Peek at the next packet. */
-	m0 = ifp->if_snd.ifq_head;
+	IFQ_POLL(&ifp->if_snd, m0);
 	if (m0 == 0)
 		return;
 
@@ -1135,7 +1136,7 @@ xe_start(ifp)
 		return;
 	}
 
-	IF_DEQUEUE(&ifp->if_snd, m0);
+	IFQ_DEQUEUE(&ifp->if_snd, m0);
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf)

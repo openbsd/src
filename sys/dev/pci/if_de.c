@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.46 2001/06/12 15:40:31 niklas Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.47 2001/06/27 06:34:47 kjc Exp $	*/
 /*	$NetBSD: if_de.c,v 1.45 1997/06/09 00:34:18 thorpej Exp $	*/
 
 /*-
@@ -4116,6 +4116,11 @@ tulip_txput(
     int segcnt, free;
     u_int32_t d_status;
     struct mbuf *m0;
+#if 1 /* ALTQ */
+    struct ifnet *ifp = &sc->tulip_if;
+    struct mbuf *ombuf = m;
+    int compressed = 0;
+#endif
 
 #if defined(TULIP_DEBUG)
     if ((sc->tulip_cmdmode & TULIP_CMD_TXRUN) == 0) {
@@ -4169,6 +4174,26 @@ tulip_txput(
 		 * entries that we can use for one packet, so we have
 		 * recopy it into one mbuf and then try again.
 		 */
+#if 1 /* ALTQ */
+		struct mbuf *tmp;
+		/*
+		 * tulip_mbuf_compress() frees the original mbuf.
+		 * thus, we have to remove the mbuf from the queue
+		 * before calling it.
+		 * we don't have to worry about space shortage
+		 * after compressing the mbuf since the compressed
+		 * mbuf will take only two segs.
+		 */
+		if (compressed) {
+		    /* should not happen */
+		    printf("tulip_txput: compress called twice!\n");
+		    goto finish;
+		}
+		IFQ_DEQUEUE(&ifp->if_snd, tmp);
+		if (tmp != ombuf)
+		    panic("tulip_txput: different mbuf dequeued!");
+		compressed = 1;
+#endif
 		m = tulip_mbuf_compress(m);
 		if (m == NULL)
 		    goto finish;
@@ -4235,6 +4260,16 @@ tulip_txput(
      * The descriptors have been filled in.  Now get ready
      * to transmit.
      */
+#if 1 /* ALTQ */
+    if (!compressed && (sc->tulip_flags & TULIP_TXPROBE_ACTIVE) == 0) {
+	/* remove the mbuf from the queue */
+	struct mbuf *tmp;
+	IFQ_DEQUEUE(&ifp->if_snd, tmp);
+	if (tmp != ombuf)
+	    panic("tulip_txput: different mbuf dequeued!");
+    }
+#endif
+
     IF_ENQUEUE(&sc->tulip_txq, m);
     m = NULL;
 
@@ -4593,11 +4628,19 @@ tulip_ifioctl(
     return error;
 }
 
+#if 1 /* ALTQ */
+/*
+ * the original dequeueing policy is dequeue-and-prepend if something
+ * goes wrong.  when altq is used, it is changed to peek-and-dequeue.
+ * the modification becomes a bit complicated since tulip_txput() might
+ * copy and modify the mbuf passed.
+ */
+#endif
 /*
  * These routines gets called at device spl (from ether_output).  This might
  * pose a problem for TULIP_USE_SOFTINTR if ether_output is called at
  * device spl from another driver.
-	 */
+ */
 
 static ifnet_ret_t
 tulip_ifstart(
@@ -4611,15 +4654,23 @@ tulip_ifstart(
 	if ((sc->tulip_flags & (TULIP_WANTSETUP|TULIP_TXPROBE_ACTIVE)) == TULIP_WANTSETUP)
 	    tulip_txput_setup(sc);
 
-	while (sc->tulip_if.if_snd.ifq_head != NULL) {
-	    struct mbuf *m;
-	    IF_DEQUEUE(&sc->tulip_if.if_snd, m);
-	    if ((m = tulip_txput(sc, m)) != NULL) {
-		IF_PREPEND(&sc->tulip_if.if_snd, m);
+	while (!IFQ_IS_EMPTY(&sc->tulip_if.if_snd)) {
+	    struct mbuf *m, *m0;
+	    IFQ_POLL(&sc->tulip_if.if_snd, m);
+	    if (m == NULL)
+		break;
+	    if ((m0 = tulip_txput(sc, m)) != NULL) {
+		if (m0 != m)
+		    /* should not happen */
+		    printf("tulip_if_start: txput failed!\n");
 		break;
 	    }
 	}
-	if (sc->tulip_if.if_snd.ifq_head == NULL)
+#ifdef ALTQ
+	if (0) /* don't switch to the one packet mode */
+#else
+	if (IFQ_IS_EMPTY(&sc->tulip_if.if_snd))
+#endif
 	    sc->tulip_if.if_start = tulip_ifstart_one;
     }
 
@@ -4634,11 +4685,13 @@ tulip_ifstart_one(
     tulip_softc_t * const sc = TULIP_IFP_TO_SOFTC(ifp);
 
     if ((sc->tulip_if.if_flags & IFF_RUNNING)
-	    && sc->tulip_if.if_snd.ifq_head != NULL) {
-	struct mbuf *m;
-	IF_DEQUEUE(&sc->tulip_if.if_snd, m);
-	if ((m = tulip_txput(sc, m)) != NULL)
-	    IF_PREPEND(&sc->tulip_if.if_snd, m);
+	    && !IFQ_IS_EMPTY(&sc->tulip_if.if_snd)) {
+	struct mbuf *m, *m0;
+	IFQ_POLL(&sc->tulip_if.if_snd, m);
+	if (m != NULL && (m0 = tulip_txput(sc, m)) != NULL)
+	    if (m0 != m)
+		/* should not happen */
+		printf("tulip_if_start_one: txput failed!\n");
     }
     TULIP_PERFEND(ifstart_one);
 }
@@ -4837,6 +4890,7 @@ tulip_attach(
 
     tulip_reset(sc);
 
+    IFQ_SET_READY(&ifp->if_snd);
 #if defined(__bsdi__) && _BSDI_VERSION >= 199510
     sc->tulip_pf = printf;
     TULIP_ETHER_IFATTACH(sc);

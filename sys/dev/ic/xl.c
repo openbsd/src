@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.24 2001/06/23 23:17:35 fgsch Exp $	*/
+/*	$OpenBSD: xl.c,v 1.25 2001/06/27 06:34:43 kjc Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -708,6 +708,7 @@ void xl_testpacket(sc)
 {
 	struct mbuf		*m;
 	struct ifnet		*ifp;
+	int			error;
 
 	ifp = &sc->arpcom.ac_if;
 
@@ -725,7 +726,7 @@ void xl_testpacket(sc)
 	mtod(m, unsigned char *)[15] = 0;
 	mtod(m, unsigned char *)[16] = 0xE3;
 	m->m_len = m->m_pkthdr.len = sizeof(struct ether_header) + 3;
-	IF_ENQUEUE(&ifp->if_snd, m);
+	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
 	xl_start(ifp);
 
 	return;
@@ -1498,7 +1499,7 @@ int xl_intr(arg)
 		}
 	}
 
-	if (ifp->if_snd.ifq_head != NULL)
+	if (!IFQ_IS_EMPTY(&ifp->if_snd))
 		(*ifp->if_start)(ifp);
 
 	return (claimed);
@@ -1660,7 +1661,7 @@ void xl_start(ifp)
 	start_tx = sc->xl_cdata.xl_tx_free;
 
 	while(sc->xl_cdata.xl_tx_free != NULL) {
-		IF_DEQUEUE(&ifp->if_snd, m_head);
+		IFQ_DEQUEUE(&ifp->if_snd, m_head);
 		if (m_head == NULL)
 			break;
 
@@ -1816,7 +1817,7 @@ xl_start_90xB(ifp)
 			break;
 		}
 
-		IF_DEQUEUE(&ifp->if_snd, m_head);
+		IFQ_DEQUEUE(&ifp->if_snd, m_head);
 		if (m_head == NULL)
 			break;
 
@@ -1984,7 +1985,11 @@ void xl_init(xsc)
 	/*
 	 * Program the multicast filter, if necessary.
 	 */
+#if 0
 	if (sc->xl_type == XL_TYPE_905B)
+#else
+	if (0)	/* xl_setmulti_hash() does not work right */
+#endif
 		xl_setmulti_hash(sc);
 	else
 		xl_setmulti(sc);
@@ -2269,7 +2274,11 @@ xl_ioctl(ifp, command, data)
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly.
 			 */
+#if 0
 			if (sc->xl_type == XL_TYPE_905B)
+#else
+			if (0)	/* xl_setmulti_hash() does not work right */
+#endif
 				xl_setmulti_hash(sc);
 			else
 				xl_setmulti(sc);
@@ -2319,7 +2328,7 @@ void xl_watchdog(ifp)
 	xl_reset(sc, 0);
 	xl_init(sc);
 
-	if (ifp->if_snd.ifq_head != NULL)
+	if (!IFQ_IS_EMPTY(&ifp->if_snd))
 		(*ifp->if_start)(ifp);
 
 	return;
@@ -2489,7 +2498,8 @@ xl_attach(sc)
 		ifp->if_start = xl_start;
 	ifp->if_watchdog = xl_watchdog;
 	ifp->if_baudrate = 10000000;
-	ifp->if_snd.ifq_maxlen = XL_TX_LIST_CNT - 1;
+	IFQ_SET_MAXLEN(&ifp->if_snd, XL_TX_LIST_CNT - 1);
+	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	XL_SEL_WIN(3);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.17 2001/06/24 22:38:47 aaron Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.18 2001/06/27 06:34:50 kjc Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -766,6 +766,7 @@ vr_attach(parent, self, aux)
 	ifp->if_start = vr_start;
 	ifp->if_watchdog = vr_watchdog;
 	ifp->if_baudrate = 10000000;
+	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	/*
@@ -1185,7 +1186,7 @@ vr_intr(arg)
 	/* Re-enable interrupts. */
 	CSR_WRITE_2(sc, VR_IMR, VR_INTRS);
 
-	if (ifp->if_snd.ifq_head != NULL) {
+	if (!IFQ_IS_EMPTY(&ifp->if_snd)) {
 		vr_start(ifp);
 	}
 
@@ -1291,7 +1292,7 @@ vr_start(ifp)
 	start_tx = sc->vr_cdata.vr_tx_free;
 
 	while(sc->vr_cdata.vr_tx_free->vr_mbuf == NULL) {
-		IF_DEQUEUE(&ifp->if_snd, m_head);
+		IFQ_DEQUEUE(&ifp->if_snd, m_head);
 		if (m_head == NULL)
 			break;
 
@@ -1548,7 +1549,7 @@ vr_watchdog(ifp)
 	vr_reset(sc);
 	vr_init(sc);
 
-	if (ifp->if_snd.ifq_head != NULL)
+	if (!IFQ_IS_EMPTY(&ifp->if_snd))
 		vr_start(ifp);
 
 	return;

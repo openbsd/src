@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ex.c,v 1.6 2001/02/20 19:39:40 mickey Exp $	*/
+/*	$OpenBSD: if_ex.c,v 1.7 2001/06/27 06:34:46 kjc Exp $	*/
 /*
  * Copyright (c) 1997, Donald A. Schmidt
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
@@ -294,6 +294,7 @@ ex_attach(parent, self, aux)
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST; /* XXX not done yet. 
 						       | IFF_MULTICAST */
+	IFQ_SET_READY(&ifp->if_snd);
 
 	/*
 	 * Attach the interface.
@@ -425,8 +426,10 @@ ex_start(ifp)
  	 * Main loop: send outgoing packets to network card until there are no
  	 * more packets left, or the card cannot accept any more yet.
  	 */
-	while (((opkt = ifp->if_snd.ifq_head) != NULL) && 
-	    !(ifp->if_flags & IFF_OACTIVE)) {
+	while (!(ifp->if_flags & IFF_OACTIVE)) {
+		IFQ_POLL(&ifp->if_snd, opkt);
+		if (opkt == NULL)
+			break;
 
 		/*
 		 * Ensure there is enough free transmit buffer space for this 
@@ -449,7 +452,7 @@ ex_start(ifp)
 			avail = -i;
 		DODEBUG(Sent_Pkts, printf("i=%d, avail=%d\n", i, avail););
     		if (avail >= len + XMT_HEADER_LEN) {
-      			IF_DEQUEUE(&ifp->if_snd, opkt);
+      			IFQ_DEQUEUE(&ifp->if_snd, opkt);
 
 #ifdef EX_PSA_INTR      
 			/*
@@ -631,7 +634,7 @@ exintr(arg)
  	 * be sent, attempt to send more packets to the network card.
 	 */
 
-	if (send_pkts && (ifp->if_snd.ifq_head != NULL))
+	if (send_pkts && IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		ex_start(ifp);
 #ifdef EXDEBUG
 	exintr_count--;

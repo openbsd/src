@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iy.c,v 1.13 2001/06/25 04:44:28 fgsch Exp $	*/
+/*	$OpenBSD: if_iy.c,v 1.14 2001/06/27 06:34:47 kjc Exp $	*/
 /*	$NetBSD: if_iy.c,v 1.4 1996/05/12 23:52:53 mycroft Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
@@ -295,6 +295,7 @@ iyattach(parent, self, aux)
 
 	ifp->if_ioctl = iyioctl;
 	ifp->if_watchdog = iywatchdog;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Attach the interface. */
 	if_attach(ifp);
@@ -495,7 +496,10 @@ struct ifnet *ifp;
 	sc = ifp->if_softc;
 	iobase = sc->sc_iobase;
 
-	while ((m0 = ifp->if_snd.ifq_head) != NULL) {
+	while (1) {
+		IFQ_POLL(&ifp->if_snd, m0);
+		if (m0 == NULL)
+			break;
 #ifdef IYDEBUG
 		printf("%s: trying to write another packet to the hardware\n",
 		    sc->sc_dev.dv_xname);
@@ -518,7 +522,7 @@ struct ifnet *ifp;
 		if (len + pad > ETHER_MAX_LEN) {
 			/* packet is obviously too large: toss it */
 			++ifp->if_oerrors;
-			IF_DEQUEUE(&ifp->if_snd, m0);
+			IFQ_DEQUEUE(&ifp->if_snd, m0);
 			m_freem(m0);
 			continue;
 		}
@@ -550,7 +554,7 @@ struct ifnet *ifp;
 		}
 
 		/* we know it fits in the hardware now, so dequeue it */
-		IF_DEQUEUE(&ifp->if_snd, m0);
+		IFQ_DEQUEUE(&ifp->if_snd, m0);
 
 		last = sc->tx_end;
 		end = last + pad + len + I595_XMT_HDRLEN;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdq_ifsubr.c,v 1.6 1996/10/31 01:01:37 niklas Exp $	*/
+/*	$OpenBSD: pdq_ifsubr.c,v 1.7 2001/06/27 06:34:42 kjc Exp $	*/
 /*	$NetBSD: pdq_ifsubr.c,v 1.5 1996/05/20 00:26:21 thorpej Exp $	*/
 
 /*-
@@ -148,7 +148,7 @@ pdq_ifwatchdog(
     ifp->if_timer = 0;
     for (;;) {
 	struct mbuf *m;
-	IF_DEQUEUE(&ifp->if_snd, m);
+	IFQ_DEQUEUE(&ifp->if_snd, m);
 	if (m == NULL)
 	    return;
 	m_freem(m);
@@ -160,7 +160,6 @@ pdq_ifstart(
     struct ifnet *ifp)
 {
     pdq_softc_t *sc = (pdq_softc_t *) ((caddr_t) ifp - offsetof(pdq_softc_t, sc_ac.ac_if));
-    struct ifqueue *ifq = &ifp->if_snd;
     struct mbuf *m;
     int tx = 0;
 
@@ -175,15 +174,16 @@ pdq_ifstart(
 	return;
     }
     for (;; tx = 1) {
-	IF_DEQUEUE(ifq, m);
+	IFQ_POLL(&ifp->if_snd, m);
 	if (m == NULL)
 	    break;
 
 	if (pdq_queue_transmit_data(sc->sc_pdq, m) == PDQ_FALSE) {
 	    ifp->if_flags |= IFF_OACTIVE;
-	    IF_PREPEND(ifq, m);
 	    break;
 	}
+
+	IFQ_DEQUEUE(&ifp->if_snd, m);
     }
     if (tx)
 	PDQ_DO_TYPE2_PRODUCER(sc->sc_pdq);
@@ -221,7 +221,7 @@ pdq_os_restart_transmitter(
 {
     pdq_softc_t *sc = (pdq_softc_t *) pdq->pdq_os_ctx;
     sc->sc_if.if_flags &= ~IFF_OACTIVE;
-    if (sc->sc_if.if_snd.ifq_head != NULL) {
+    if (!IFQ_IS_EMPTY(&sc->sc_if.if_snd)) {
 	sc->sc_if.if_timer = PDQ_OS_TX_TIMEOUT;
 	pdq_ifstart(&sc->sc_if);
     } else {
@@ -374,6 +374,9 @@ pdq_ifattach(
     ifp->if_ioctl = pdq_ifioctl;
     ifp->if_output = fddi_output;
     ifp->if_start = pdq_ifstart;
+#ifdef notyet /* if_fddisubr.c hasn't been converted yet */
+    IFQ_SET_READY(&ifp->if_snd);
+#endif
   
     if_attach(ifp);
     fddi_ifattach(ifp);

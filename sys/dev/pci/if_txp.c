@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.47 2001/06/24 22:58:01 fgsch Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.48 2001/06/27 06:34:50 kjc Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -270,7 +270,8 @@ txp_attach(parent, self, aux)
 	ifp->if_start = txp_start;
 	ifp->if_watchdog = txp_watchdog;
 	ifp->if_baudrate = 10000000;
-	ifp->if_snd.ifq_maxlen = TX_ENTRIES;
+	IFQ_SET_MAXLEN(&ifp->if_snd, TX_ENTRIES);
+	IFQ_SET_READY(&ifp->if_snd);
 	ifp->if_capabilities = 0;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
@@ -1280,7 +1281,7 @@ txp_start(ifp)
 	cnt = r->r_cnt;
 
 	while (1) {
-		IF_DEQUEUE(&ifp->if_snd, m);
+		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
 

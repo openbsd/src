@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.13 2001/05/03 02:20:32 aaron Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.14 2001/06/27 06:34:53 kjc Exp $ */
 /*	$NetBSD: if_aue.c,v 1.55 2001/03/25 22:59:43 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -751,8 +751,9 @@ USB_ATTACH(aue)
 	ifp->if_start = aue_start;
 	ifp->if_watchdog = aue_watchdog;
 #if defined(__OpenBSD__)
-	ifp->if_snd.ifq_maxlen = IFQ_MAXLEN;
+	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
 #endif
+	IFQ_SET_READY(&ifp->if_snd);
 	strncpy(ifp->if_xname, USBDEVNAME(sc->aue_dev), IFNAMSIZ);
 
 	/* Initialize MII/media info. */
@@ -1149,7 +1150,7 @@ aue_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	m_freem(c->aue_mbuf);
 	c->aue_mbuf = NULL;
 
-	if (ifp->if_snd.ifq_head != NULL)
+	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		aue_start(ifp);
 
 	splx(s);
@@ -1200,7 +1201,7 @@ aue_tick_task(void *xsc)
 			DPRINTFN(2,("%s: %s: got link\n",
 				    USBDEVNAME(sc->aue_dev),__FUNCTION__));
 			sc->aue_link++;
-			if (ifp->if_snd.ifq_head != NULL)
+			if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 				aue_start(ifp);
 		}
 	}
@@ -1277,15 +1278,16 @@ aue_start(struct ifnet *ifp)
 	if (ifp->if_flags & IFF_OACTIVE)
 		return;
 
-	IF_DEQUEUE(&ifp->if_snd, m_head);
+	IFQ_POLL(&ifp->if_snd, m_head);
 	if (m_head == NULL)
 		return;
 
 	if (aue_send(sc, m_head, 0)) {
-		IF_PREPEND(&ifp->if_snd, m_head);
 		ifp->if_flags |= IFF_OACTIVE;
 		return;
 	}
+
+	IFQ_DEQUEUE(&ifp->if_snd, m_head);
 
 #if NBPFILTER > 0
 	/*
@@ -1592,7 +1594,7 @@ aue_watchdog(struct ifnet *ifp)
 	usbd_get_xfer_status(c->aue_xfer, NULL, NULL, NULL, &stat);
 	aue_txeof(c->aue_xfer, c, stat);
 
-	if (ifp->if_snd.ifq_head != NULL)
+	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		aue_start(ifp);
 	splx(s);
 }

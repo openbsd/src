@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ed.c,v 1.44 2001/06/25 04:44:27 fgsch Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.45 2001/06/27 06:34:44 kjc Exp $	*/
 /*	$NetBSD: if_ed.c,v 1.105 1996/10/21 22:40:45 thorpej Exp $	*/
 
 /*
@@ -230,7 +230,7 @@ ed_pcmcia_isa_attach(parent, match, aux, pc_link)
 		/* clear ED_NOTPRESENT, set ED_REATTACH if needed */
 		sc->spec_flags=pc_link->flags&PCMCIA_REATTACH?ED_REATTACH:0;
 		sc->type_str = dev->model;
-		sc->sc_arpcom.ac_if.if_snd.ifq_maxlen=ifqmaxlen;
+		IFQ_SET_MAXLEN(&sc->sc_arpcom.ac_if.if_snd, ifqmaxlen);
 		sc->sc_ic = ia->ia_ic;
 		return 1;
 	} else
@@ -499,6 +499,7 @@ ed_pci_attach(parent, self, aux)
 	ifp->if_watchdog = edwatchdog;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Attach the interface. */
 	if ((sc->spec_flags & ED_REATTACH) == 0)
@@ -1655,6 +1656,7 @@ edattach(parent, self, aux)
 	ifp->if_watchdog = edwatchdog;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	/*
 	 * Set default state for LINK0 flag (used to disable the tranceiver
@@ -1992,7 +1994,7 @@ outloop:
 		return;
 	}
 
-	IF_DEQUEUE(&ifp->if_snd, m0);
+	IFQ_DEQUEUE(&ifp->if_snd, m0);
 	if (m0 == 0)
 		return;
 

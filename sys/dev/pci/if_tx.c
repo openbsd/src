@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tx.c,v 1.16 2001/06/25 02:18:48 fgsch Exp $	*/
+/*	$OpenBSD: if_tx.c,v 1.17 2001/06/27 06:34:50 kjc Exp $	*/
 /* $FreeBSD: src/sys/pci/if_tx.c,v 1.45 2001/02/07 20:11:02 semenu Exp $ */
 
 /*-
@@ -447,7 +447,8 @@ epic_freebsd_attach(dev)
 	ifp->if_init = (if_init_f_t*)epic_init;
 	ifp->if_timer = 0;
 	ifp->if_baudrate = 10000000;
-	ifp->if_snd.ifq_maxlen = TX_RING_SIZE - 1;
+	IFQ_SET_MAXLEN(&ifp->if_snd, TX_RING_SIZE - 1);
+	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Enable ports, memory and busmastering */
 	command = pci_read_config(dev, PCIR_COMMAND, 4);
@@ -819,7 +820,7 @@ epic_ifstart(ifp)
 		flist = sc->tx_flist + sc->cur_tx;
 
 		/* Get next packet to send */
-		IF_DEQUEUE( &ifp->if_snd, m0 );
+		IFQ_DEQUEUE( &ifp->if_snd, m0 );
 
 		/* If nothing to send, return */
 		if( NULL == m0 ) return;
@@ -1032,7 +1033,7 @@ epic_intr(arg)
         if( status & (INTSTAT_TXC|INTSTAT_TCC|INTSTAT_TQE) ) {
             epic_tx_done( sc );
 	    if(!(sc->sc_if.if_flags & IFF_OACTIVE) &&
-		sc->sc_if.if_snd.ifq_head )
+		!IFQ_IS_EMPTY( &sc->sc_if.if_snd ))
 		    epic_ifstart( &sc->sc_if );
 	}
 
@@ -1122,7 +1123,7 @@ epic_ifwatchdog(ifp)
 		printf("seems we can continue normaly\n");
 
 	/* Start output */
-	if( ifp->if_snd.ifq_head ) epic_ifstart( ifp );
+	if( !IFQ_IS_EMPTY( &ifp->if_snd ) ) epic_ifstart( ifp );
 
 	splx(x);
 }

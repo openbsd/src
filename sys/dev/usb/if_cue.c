@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.8 2001/05/03 02:20:32 aaron Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.9 2001/06/27 06:34:53 kjc Exp $ */
 /*	$NetBSD: if_cue.c,v 1.34 2001/04/12 23:54:56 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -578,8 +578,9 @@ USB_ATTACH(cue)
 	ifp->if_start = cue_start;
 	ifp->if_watchdog = cue_watchdog;
 #if defined(__OpenBSD__)
-	ifp->if_snd.ifq_maxlen = IFQ_MAXLEN;
+	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
 #endif
+	IFQ_SET_READY(&ifp->if_snd);
 	strncpy(ifp->if_xname, USBDEVNAME(sc->cue_dev), IFNAMSIZ);
 
 	/* Attach the interface. */
@@ -908,7 +909,7 @@ cue_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	m_freem(c->cue_mbuf);
 	c->cue_mbuf = NULL;
 
-	if (ifp->if_snd.ifq_head != NULL)
+	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		cue_start(ifp);
 
 	splx(s);
@@ -1010,15 +1011,16 @@ cue_start(struct ifnet *ifp)
 	if (ifp->if_flags & IFF_OACTIVE)
 		return;
 
-	IF_DEQUEUE(&ifp->if_snd, m_head);
+	IFQ_POLL(&ifp->if_snd, m_head);
 	if (m_head == NULL)
 		return;
 
 	if (cue_send(sc, m_head, 0)) {
-		IF_PREPEND(&ifp->if_snd, m_head);
 		ifp->if_flags |= IFF_OACTIVE;
 		return;
 	}
+
+	IFQ_DEQUEUE(&ifp->if_snd, m_head);
 
 #if NBPFILTER > 0
 	/*
@@ -1273,7 +1275,7 @@ cue_watchdog(struct ifnet *ifp)
 	usbd_get_xfer_status(c->cue_xfer, NULL, NULL, NULL, &stat);
 	cue_txeof(c->cue_xfer, c, stat);
 
-	if (ifp->if_snd.ifq_head != NULL)
+	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		cue_start(ifp);
 	splx(s);
 }

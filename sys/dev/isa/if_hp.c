@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_hp.c,v 1.7 2001/06/23 22:03:09 fgsch Exp $       */
+/*    $OpenBSD: if_hp.c,v 1.8 2001/06/27 06:34:46 kjc Exp $       */
 /*    $NetBSD: if_hp.c,v 1.21 1995/12/24 02:31:31 mycroft Exp $       */
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
@@ -410,6 +410,7 @@ hpattach(dvp)
 	ifp->if_ioctl = hpioctl;
 	ifp->if_reset = hpreset;
 	ifp->if_watchdog = 0;
+	IFQ_SET_READY(&ifp->if_snd);
 	if_attach(ifp);
 }
 /*
@@ -519,7 +520,7 @@ hpstart(ifp)
 	if ((ns->ns_if.if_flags & IFF_RUNNING) == 0)
 		return;
 
-	IF_DEQUEUE(&ns->ns_if.if_snd, m);
+	IFQ_DEQUEUE(&ns->ns_if.if_snd, m);
 
 	if (m == 0)
 		return;

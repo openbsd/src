@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.14 2001/06/25 19:36:13 drahn Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.15 2001/06/27 06:34:42 kjc Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -120,7 +120,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.14 2001/06/25 19:36:13 drahn Exp $";
+	"$OpenBSD: if_wi.c,v 1.15 2001/06/27 06:34:42 kjc Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -197,7 +197,8 @@ wi_attach(sc, print_cis)
 	ifp->if_start = wi_start;
 	ifp->if_watchdog = wi_watchdog;
 	ifp->if_baudrate = 10000000;
-	ifp->if_snd.ifq_maxlen = IFQ_MAXLEN;
+	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
+	IFQ_SET_READY(&ifp->if_snd);
 
 	bzero(sc->wi_node_name, sizeof(sc->wi_node_name));
 	bcopy(WI_DEFAULT_NODENAME, sc->wi_node_name,
@@ -326,7 +327,7 @@ wi_intr(vsc)
 	/* Re-enable interrupts. */
 	CSR_WRITE_2(sc, WI_INT_EN, WI_INTRS);
 
-	if (ifp->if_snd.ifq_head != NULL)
+	if (!IFQ_IS_EMPTY(&ifp->if_snd))
 		wi_start(ifp);
 
 	return (1);
@@ -1340,7 +1341,7 @@ wi_start(ifp)
 	if (ifp->if_flags & IFF_OACTIVE)
 		return;
 
-	IF_DEQUEUE(&ifp->if_snd, m0);
+	IFQ_DEQUEUE(&ifp->if_snd, m0);
 	if (m0 == NULL)
 		return;
 

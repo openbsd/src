@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ef_isapnp.c,v 1.12 2001/06/25 04:44:28 fgsch Exp $	*/
+/*	$OpenBSD: if_ef_isapnp.c,v 1.13 2001/06/27 06:34:45 kjc Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -214,6 +214,7 @@ ef_isapnp_attach(parent, self, aux)
 	ifp->if_watchdog = efwatchdog;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	sc->sc_mii.mii_ifp = ifp;
 	sc->sc_mii.mii_readreg = ef_miibus_readreg;
@@ -253,7 +254,7 @@ efstart(ifp)
 		return;
 
 startagain:
-	m0 = ifp->if_snd.ifq_head;
+	IFQ_POLL(&ifp->if_snd, m0);
 	if (m0 == NULL)
 		return;
 
@@ -264,7 +265,7 @@ startagain:
 
 	if (len + pad > ETHER_MAX_LEN) {
 		ifp->if_oerrors++;
-		IF_DEQUEUE(&ifp->if_snd, m0);
+		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		m_freem(m0);
 		goto startagain;
 	}
@@ -287,7 +288,7 @@ startagain:
 		bpf_mtap(ifp->if_bpf, m0);
 #endif
 
-	IF_DEQUEUE(&ifp->if_snd, m0);
+	IFQ_DEQUEUE(&ifp->if_snd, m0);
 	if (m0 == NULL) /* XXX not needed */
 		return;
 
