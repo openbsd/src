@@ -1,4 +1,4 @@
-.\" $OpenBSD: sigwait.3,v 1.11 2002/04/30 16:31:42 mpech Exp $
+.\" $OpenBSD: sigwait.3,v 1.12 2003/03/14 10:22:33 jmc Exp $
 .\"
 .\" David Leonard <d@openbsd.org>, 1998. Public domain.
 .Dd August 20, 1998
@@ -48,6 +48,14 @@ with the signal number.
 Which thread returns from
 .Fn sigwait
 if more than a single thread is waiting is unspecified.
+.Pp
+.Sy Note:
+Code using the
+.Fn sigwait
+function must be compiled and linked with the
+.Cm -pthread
+option to
+.Xr gcc 1 .
 .Sh RETURN VALUES
 Upon successful completion,
 .Fn sigwait
