@@ -1,4 +1,4 @@
-.\"	$OpenBSD: banner.1,v 1.5 1999/07/09 13:35:29 aaron Exp $
+.\"	$OpenBSD: banner.1,v 1.6 2000/03/04 20:44:56 aaron Exp $
 .\"	$NetBSD: banner.1,v 1.1.1.1 1995/04/09 05:53:04 cgd Exp $
 .\"
 .\"	@(#)Copyright (c) 1995, Simon J. Gerraty.
@@ -31,5 +31,17 @@
 prints up to 10 characters of each
 .Ar string
 in large letters on the standard output.
+.Sh EXAMPLES
+The command
+.Ic banner openbsd
+displays:
+.Bd -literal -offset indent
+  ####   #####   ######  #    #  #####    ####   #####
+ #    #  #    #  #       ##   #  #    #  #       #    #
+ #    #  #    #  #####   # #  #  #####    ####   #    #
+ #    #  #####   #       #  # #  #    #       #  #    #
+ #    #  #       #       #   ##  #    #  #    #  #    #
+  ####   #       ######  #    #  #####    ####   #####
+.Ed
 .Sh SEE ALSO
 .Xr echo 1
