@@ -1,4 +1,4 @@
-/*	$OpenBSD: ts102.c,v 1.14 2005/01/27 17:03:23 millert Exp $	*/
+/*	$OpenBSD: ts102.c,v 1.15 2005/03/29 11:37:33 miod Exp $	*/
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
  *
@@ -47,7 +47,7 @@
  *   of each window upon attach - this is similar to what the stp4020 driver
  *   does.
  *
- * - IPL for the cards interrupt handles are not respected. See the stp4020
+ * - IPL for the cards interrupt handlers are not respected. See the stp4020
  *   driver source for comments about this.
  * 
  * Endianness farce:
@@ -79,6 +79,7 @@
 #include <dev/pcmcia/pcmciachip.h>
 
 #include <sparc/dev/sbusvar.h>
+#include <sparc/dev/tctrlvar.h>
 #include <sparc/dev/ts102reg.h>
 
 #define	TS102_NUM_SLOTS		2
@@ -138,20 +139,20 @@ void	tslot_event_thread(void *);
 int	tslot_intr(void *);
 void	tslot_intr_disestablish(pcmcia_chipset_handle_t, void *);
 void	*tslot_intr_establish(pcmcia_chipset_handle_t, struct pcmcia_function *,
-    int, int (*)(void *), void *, char *);
+	    int, int (*)(void *), void *, char *);
 const char *tslot_intr_string(pcmcia_chipset_handle_t, void *);
 int	tslot_io_alloc(pcmcia_chipset_handle_t, bus_addr_t, bus_size_t,
-    bus_size_t, struct pcmcia_io_handle *);
+	    bus_size_t, struct pcmcia_io_handle *);
 void	tslot_io_free(pcmcia_chipset_handle_t, struct pcmcia_io_handle *);
 int	tslot_io_map(pcmcia_chipset_handle_t, int, bus_addr_t, bus_size_t,
-    struct pcmcia_io_handle *, int *);
+	    struct pcmcia_io_handle *, int *);
 void	tslot_io_unmap(pcmcia_chipset_handle_t, int);
 int	tslot_match(struct device *, void *, void *);
 int	tslot_mem_alloc(pcmcia_chipset_handle_t, bus_size_t,
-    struct pcmcia_mem_handle *);
+	    struct pcmcia_mem_handle *);
 void	tslot_mem_free(pcmcia_chipset_handle_t, struct pcmcia_mem_handle *);
 int	tslot_mem_map(pcmcia_chipset_handle_t, int, bus_addr_t, bus_size_t,
-    struct pcmcia_mem_handle *, bus_addr_t *, int *);
+	    struct pcmcia_mem_handle *, bus_addr_t *, int *);
 void	tslot_mem_unmap(pcmcia_chipset_handle_t, int);
 int	tslot_print(void *, const char *);
 void	tslot_queue_event(struct tslot_softc *, int);
@@ -329,10 +330,13 @@ tslot_reset(struct tslot_data *td, u_int32_t iosize)
 
 	status = TSLOT_READ(td, TS102_REG_CARD_A_STS);
 	if (status & TS102_CARD_STS_PRES) {
+		tadpole_set_pcmcia(td->td_slot, 1);
 		td->td_status = TS_CARD;
 		pcmcia_card_attach(td->td_pcmcia);
-	} else
+	} else {
+		tadpole_set_pcmcia(td->td_slot, 0);
 		td->td_status = 0;
+	}
 }
 
 /* XXX there ought to be a common function for this... */
@@ -357,7 +361,7 @@ tslot_io_alloc(pcmcia_chipset_handle_t pch, bus_addr_t start, bus_size_t size,
 	struct tslot_data *td = (struct tslot_data *)pch;
 
 #ifdef TSLOT_DEBUG
-	printf("[io alloc %x]", size);
+	printf("[io alloc %x-%x]", start, size);
 #endif
 
 	pih->iot = &td->td_rr;
@@ -373,7 +377,7 @@ void
 tslot_io_free(pcmcia_chipset_handle_t pch, struct pcmcia_io_handle *pih)
 {
 #ifdef TSLOT_DEBUG
-	printf("[io free]");
+	printf("[io free %x-%x]", pih->start, pih->size);
 #endif
 }
 
@@ -429,7 +433,7 @@ void
 tslot_mem_free(pcmcia_chipset_handle_t pch, struct pcmcia_mem_handle *pmh)
 {
 #ifdef TSLOT_DEBUG
-	printf("[mem free]");
+	printf("[mem free %x]", pmh->size);
 #endif
 }
 
@@ -474,6 +478,7 @@ void
 tslot_slot_disable(pcmcia_chipset_handle_t pch)
 {
 	struct tslot_data *td = (struct tslot_data *)pch;
+
 #ifdef TSLOT_DEBUG
 	printf("%s: disable slot %d\n",
 	    td->td_parent->sc_dev.dv_xname, td->td_slot);
@@ -636,12 +641,14 @@ tslot_event_thread(void *v)
 			/* Card insertion */
 			if ((td->td_status & TS_CARD) == 0) {
 				td->td_status |= TS_CARD;
+				tadpole_set_pcmcia(td->td_slot, 1);
 				pcmcia_card_attach(td->td_pcmcia);
 			}
 		} else {
 			/* Card removal */
 			if ((td->td_status & TS_CARD) != 0) {
 				td->td_status &= ~TS_CARD;
+				tadpole_set_pcmcia(td->td_slot, 0);
 				pcmcia_card_detach(td->td_pcmcia,
 				    DETACH_FORCE);
 			}
@@ -729,7 +736,7 @@ tslot_slot_intr(struct tslot_data *td, int intreg)
 	sockstat = td->td_status;
 
 	/*
-	 * The TS102 queues interrupt request, and may trigger an interrupt
+	 * The TS102 queues interrupt requests, and may trigger an interrupt
 	 * for a condition the driver does not want to receive anymore (for
 	 * example, after a card gets removed).
 	 * Thus, only proceed if the driver is currently allowing a particular
