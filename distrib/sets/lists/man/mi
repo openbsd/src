@@ -1199,7 +1199,9 @@
 ./usr/share/man/cat4/hppa/ie.0
 ./usr/share/man/cat4/hppa/intro.0
 ./usr/share/man/cat4/hppa/io.0
+./usr/share/man/cat4/hppa/kmem.0
 ./usr/share/man/cat4/hppa/lasi.0
+./usr/share/man/cat4/hppa/mem.0
 ./usr/share/man/cat4/hppa/phantomas.0
 ./usr/share/man/cat4/hppa/power.0
 ./usr/share/man/cat4/hppa/wax.0
@@ -1208,6 +1210,7 @@
 ./usr/share/man/cat4/i386/apm.0
 ./usr/share/man/cat4/i386/autoconf.0
 ./usr/share/man/cat4/i386/bios.0
+./usr/share/man/cat4/i386/cpu.0
 ./usr/share/man/cat4/i386/elansc.0
 ./usr/share/man/cat4/i386/geodesc.0
 ./usr/share/man/cat4/i386/gus.0
