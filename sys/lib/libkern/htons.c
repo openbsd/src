@@ -1,3 +1,4 @@
+/*	$OpenBSD: htons.c,v 1.3 1996/11/27 19:51:40 niklas Exp $	*/
 /*	$NetBSD: htons.c,v 1.6.6.1 1996/05/29 23:48:02 cgd Exp $	*/
 
 /*
@@ -14,9 +15,9 @@ static char *rcsid = "$NetBSD: htons.c,v 1.6.6.1 1996/05/29 23:48:02 cgd Exp $";
 
 #undef htons
 
-unsigned short
+u_int16_t
 htons(x)
-	unsigned short x;
+	u_int16_t x;
 {
 #if BYTE_ORDER == LITTLE_ENDIAN
 	u_char *s = (u_char *) &x;

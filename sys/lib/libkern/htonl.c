@@ -1,3 +1,4 @@
+/*	$OpenBSD: htonl.c,v 1.3 1996/11/27 19:51:39 niklas Exp $	*/
 /*	$NetBSD: htonl.c,v 1.6.6.1 1996/05/29 23:47:55 cgd Exp $	*/
 
 /*
@@ -14,9 +15,9 @@ static char *rcsid = "$NetBSD: htonl.c,v 1.6.6.1 1996/05/29 23:47:55 cgd Exp $";
 
 #undef htonl
 
-unsigned long
+u_int32_t
 htonl(x)
-	unsigned long x;
+	u_int32_t x;
 {
 	u_int32_t y = x;
 

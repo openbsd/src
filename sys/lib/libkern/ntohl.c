@@ -1,3 +1,4 @@
+/*	$OpenBSD: ntohl.c,v 1.3 1996/11/27 19:51:41 niklas Exp $	*/
 /*	$NetBSD: ntohl.c,v 1.6.6.1 1996/05/29 23:48:07 cgd Exp $	*/
 
 /*
@@ -14,9 +15,9 @@ static char *rcsid = "$NetBSD: ntohl.c,v 1.6.6.1 1996/05/29 23:48:07 cgd Exp $";
 
 #undef ntohl
 
-unsigned long
+u_int32_t
 ntohl(x)
-	unsigned long x;
+	u_int32_t x;
 {
 	u_int32_t y = x;
 
