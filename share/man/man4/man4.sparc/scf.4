@@ -1,0 +1,145 @@
+.\"     $OpenBSD: scf.4,v 1.1 1999/07/26 02:29:36 jason Exp $
+.\"
+.\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
+.\" All rights reserved.
+.\"
+.\" This software was developed by Jason L. Wright under contract with
+.\" RTMX Incorporated (http://www.rtmx.com).
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by Jason L. Wright for
+.\"	 RTMX Incorporated.
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+.\" DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+.\" INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+.\" (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+.\" SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+.\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd July 25, 1999
+.Dt SCF 4 sparc
+.Os
+.Sh NAME
+.Nm scf
+.Nd SPARC Force sysconfig driver
+.Sh SYNOPSIS
+.Cd "scf0 at mainbus0"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides access to the system configuration registers on
+the Force CPU-5.
+The system configuration registers control the LED display on
+the front panel, the status of the rotary switch, and the flash
+programming control registers.
+.Pp
+By setting the
+.Xr sysctl 8
+value
+.Ar machdep.led_blink
+to a non-zero value, the two user LEDs will blink back and forth
+at a rate of 1 second per point of load average.
+The seven segment LED will also show a numeric value for the load
+average (in hex), and with load averages higher than 15, the decimal
+point will be lit.
+.Sh IOCTLS
+The
+.Nm
+device responds to the following
+.Xr ioctl 2
+calls defined in <machine/scfio.h>:
+.Bl -tag -width
+.It Dv SCFIOCSLED1
+.Pq Li "u_int8_t"
+Set LED1 register based on the bits below.
+.Bd -literal -offset indent
+#define SCF_LED_COLOR_MASK      0x03    /* color bits */
+#define SCF_LED_COLOR_OFF       0x00    /* led off */
+#define SCF_LED_COLOR_GREEN     0x01    /* green led */
+#define SCF_LED_COLOR_RED       0x02    /* red led */
+#define SCF_LED_COLOR_YELLOW    0x03    /* yellow led */
+#define SCF_LED_BLINK_MASK      0x0c    /* blink bits */
+#define SCF_LED_BLINK_NONE      0x00    /* steady led */
+#define SCF_LED_BLINK_HALF      0x04    /* blink 1/2 hz */
+#define SCF_LED_BLINK_ONE       0x08    /* blink 1 hz */
+#define SCF_LED_BLINK_TWO       0x0c    /* blink 2 hz */
+.Ed
+.It Dv SCFIOCGLED1
+.Pq Li "u_int8_t"
+Retrieve the value of the LED1 register (bits defined above).
+.It Dv SCFIOCSLED2
+.Pq Li "u_int8_t"
+Set the value of the LED2 register (bits defined above).
+.It Dv SCFIOCGLED2
+.Pq Li "u_int8_t"
+Retrieve the value of the LED2 register (bits defined above).
+.It Dv SCFIOCSLED7
+.Pq Li "u_int8_t"
+Set the value of the 7-segment LED based on the bits below:
+.Bd -literal -offset indent
+#define SCF_7LED_A              0x01    /* Layout:      */
+#define SCF_7LED_B              0x02    /*      AAA     */
+#define SCF_7LED_C              0x04    /*     FF BB    */
+#define SCF_7LED_D              0x08    /*      GGG     */
+#define SCF_7LED_E              0x10    /*     EE CC    */
+#define SCF_7LED_F              0x20    /*      DDD  P  */
+#define SCF_7LED_G              0x40
+#define SCF_7LED_P              0x80
+.Ed
+.It Dv SCFIOCGROT
+.Pq Li "u_int8_t"
+Retrieve the value of the 16 position rotary switch on the front panel.
+.It Dv SCFIOSFMCTRL
+.Pq Li "u_int8_t"
+Set up the flash memory for writing based on the bits below:
+.Bd -literal -offset indent
+#define SCF_FMCTRL_SELROM       0x01    /* sel 1st/2nd device */
+#define SCF_FMCTRL_SELBOOT      0x02    /* sel boot/user flash */
+#define SCF_FMCTRL_WRITEV       0x04    /* write voltage */
+#define SCF_FMCTRL_SELADDR      0x38    /* addr 21:19 bits */
+.Ed
+.Pp
+The SCF_FMCTRL_SELROM
+bit, if clear, selects the first flash device, otherwise the second
+flash device is selected.
+The
+.Ar SCF_FMCTRL_SELBOOT
+bit, if set selects the user flash, otherwise the boot flash is selected.
+Setting the
+.Ar SCF_FMCTRL_WRITEV
+bit, turns on the write voltage.
+The
+.Ar SCF_FMCTRL_SELADDR
+bits determine which window of 512 KBytes is active for reading/writing.
+.El
+.Sh SEE ALSO
+.Xr ioctl 2 ,
+.Xr sysctl 8
+.Sh HISTORY
+.Ox
+support for the
+.Nm
+first appeared in
+.Ox 2.6 .
+.Sh AUTHOR
+The driver for the
+.Nm
+was written by Jason L. Wright <jason@thought.net> under contract with
+RTMX Incorporated.
