@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2003/12/17 11:46:54 henning Exp $
+#	$OpenBSD: Makefile,v 1.2 2003/12/17 12:34:06 henning Exp $
 
 PROG=	bgpd
 SRCS=	bgpd.c buffer.c session.c log.c parse.y config.c imsg.c \
@@ -14,8 +14,3 @@ NOMAN=
 CFLAGS+=	-Wall
 
 .include <bsd.prog.mk>
-
-publish:
-	-rm ${.CURDIR}/*~
-	-cp ${.CURDIR}/* /var/www/www/bgpd/
-	-scp ${.CURDIR}/* henning@cvs.openbsd.org:~/bgpd/
