@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.43 2004/12/16 11:07:33 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.44 2004/12/16 11:19:59 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -349,6 +349,15 @@ sub from_installation
 
 sub to_cache
 {
+	my ($self) = @_;
+	return if defined $plist_cache->{$self->pkgname()};
+	my $plist = new OpenBSD::PackingList;
+	for my $c (qw(depend wantlib pkgdep newdepend libdepend)) {
+		if (defined $self->{$c}) {
+			$plist->{$c} = $self->{$c};
+		}
+	}
+	$plist_cache->{$self->pkgname()} = $plist;
 }
 
 sub to_installation
