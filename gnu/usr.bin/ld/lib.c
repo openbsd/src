@@ -1,4 +1,4 @@
-/* * $OpenBSD: lib.c,v 1.2 1998/03/26 19:46:21 niklas Exp $	- library routines*/
+/* * $OpenBSD: lib.c,v 1.3 2001/08/30 10:42:01 espie Exp $	- library routines*/
 /*
  */
 
@@ -730,6 +730,12 @@ read_shared_object(fd, entry)
 				subentry->filename = strdup(name);
 				subentry->local_sym_name = strdup(name);
 			}
+			/* Sanity check */
+			if (strcmp(subentry->filename, 
+			    subentry->superfile->filename) == 0)
+				errx(1, "loop in library dependencies: %s",
+				    subentry->filename);
+
 			read_file_symbols(subentry);
 
 			if (prev)
