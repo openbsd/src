@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.4 2005/02/09 15:51:30 claudio Exp $ */
+/*	$OpenBSD: hello.c,v 1.5 2005/04/05 13:01:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -39,17 +39,16 @@ int
 send_hello(struct iface *iface)
 {
 	struct sockaddr_in	 dst;
-	struct hello_hdr	*hello;
+	struct hello_hdr	 hello;
 	struct nbr		*nbr;
-	char			*buf;
-	char			*ptr;
-	int			 ret = 0;
+	struct buf		*buf;
+	int			 ret;
 
 	if (iface->passive)
 		return (0);
 
-	/* XXX use buffer API instead for better decoupling */
-	if ((ptr = buf = calloc(1, READ_BUF_SIZE)) == NULL)
+	/* XXX READ_BUF_SIZE */
+	if ((buf = buf_dynamic(PKG_DEF_SIZE, READ_BUF_SIZE)) == NULL)
 		fatal("send_hello");
 
 	dst.sin_family = AF_INET;
@@ -72,49 +71,48 @@ send_hello(struct iface *iface)
 	}
 
 	/* OSPF header */
-	gen_ospf_hdr(ptr, iface, PACKET_TYPE_HELLO);
-	ptr += sizeof(struct ospf_hdr);
+	if (gen_ospf_hdr(buf, iface, PACKET_TYPE_HELLO))
+		goto fail;
 
 	/* hello header */
-	hello = (struct hello_hdr *)ptr;
-	hello->mask = iface->mask.s_addr;
-	hello->hello_interval = htons(iface->hello_interval);
-	hello->opts = oeconf->options;
-	hello->rtr_priority = iface->priority;
-	hello->rtr_dead_interval = htonl(iface->dead_interval);
+	hello.mask = iface->mask.s_addr;
+	hello.hello_interval = htons(iface->hello_interval);
+	hello.opts = oeconf->options;
+	hello.rtr_priority = iface->priority;
+	hello.rtr_dead_interval = htonl(iface->dead_interval);
 
 	if (iface->dr) {
-		hello->d_rtr = iface->dr->addr.s_addr;
+		hello.d_rtr = iface->dr->addr.s_addr;
 		iface->self->dr.s_addr = iface->dr->addr.s_addr;
-	}
+	} else
+		hello.d_rtr = 0;
 	if (iface->bdr) {
-		hello->bd_rtr = iface->bdr->addr.s_addr;
+		hello.bd_rtr = iface->bdr->addr.s_addr;
 		iface->self->bdr.s_addr = iface->bdr->addr.s_addr;
-	}
-	ptr += sizeof(*hello);
+	} else
+		hello.bd_rtr = 0;
+
+	if (buf_add(buf, &hello, sizeof(hello)))
+		goto fail;
 
 	/* active neighbor(s) */
 	LIST_FOREACH(nbr, &iface->nbr_list, entry) {
-		if (ptr - buf > iface->mtu - PACKET_HDR) {
-			log_warnx("send_hello: too many neighbors on "
-			    "interface %s", iface->name);
-			break;
-		}
-		if ((nbr->state >= NBR_STA_INIT) && (nbr != iface->self)) {
-			memcpy(ptr, &nbr->id, sizeof(nbr->id));
-			ptr += sizeof(nbr->id);
-		}
+		if ((nbr->state >= NBR_STA_INIT) && (nbr != iface->self))
+			if (buf_add(buf, &nbr->id, sizeof(nbr->id)))
+				goto fail;
 	}
 
 	/* update authentication and calculate checksum */
-	auth_gen(buf, ptr - buf, iface);
+	if (auth_gen(buf, iface))
+		goto fail;
 
-	if ((ret = send_packet(iface, buf, (ptr - buf), &dst)) == -1)
-		log_warnx("send_hello: error sending packet on "
-		    "interface %s", iface->name);
-
-	free(buf);
+	ret = send_packet(iface, buf->buf, buf->wpos, &dst);
+	buf_free(buf);
 	return (ret);
+fail:
+	log_warn("send_hello");
+	buf_free(buf);
+	return (-1);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.4 2005/04/04 13:49:13 claudio Exp $ */
+/*	$OpenBSD: auth.c,v 1.5 2005/04/05 13:01:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <limits.h>
 #include <md5.h>
 #include <stdlib.h>
 #include <string.h>
@@ -134,26 +135,30 @@ auth_validate(void *buf, u_int16_t len, struct iface *iface, struct nbr *nbr)
 }
 
 int
-auth_gen(void *buf, u_int16_t len, struct iface *iface)
+auth_gen(struct buf *buf, struct iface *iface)
 {
 	MD5_CTX		 hash;
 	u_int8_t	 digest[MD5_DIGEST_LENGTH];
-	struct ospf_hdr	*ospf_hdr = buf;
+	struct ospf_hdr	*ospf_hdr;
 	struct auth_md	*md;
-	char		*auth_data;
+
+	if ((ospf_hdr = buf_seek(buf, 0, sizeof(ospf_hdr))) == NULL)
+		fatalx("auth_gen: buf_seek failed");
 
 	/* update length */
-	ospf_hdr->len = htons(len);
+	if (buf->wpos > USHRT_MAX)
+		fatalx("auth_gen: resulting ospf packet to big");
+	ospf_hdr->len = htons((u_int16_t)buf->wpos);
 	/* clear auth_key field */
 	bzero(ospf_hdr->auth_key.simple,
 	    sizeof(ospf_hdr->auth_key.simple));
 
 	switch (iface->auth_type) {
 	case AUTH_NONE:
-		ospf_hdr->chksum = in_cksum(buf, len);
+		ospf_hdr->chksum = in_cksum(buf->buf, buf->wpos);
 		break;
 	case AUTH_SIMPLE:
-		ospf_hdr->chksum = in_cksum(buf, len);
+		ospf_hdr->chksum = in_cksum(buf->buf, buf->wpos);
 
 		strncpy(ospf_hdr->auth_key.simple, iface->auth_key,
 		    sizeof(ospf_hdr->auth_key.simple));
@@ -178,17 +183,11 @@ auth_gen(void *buf, u_int16_t len, struct iface *iface)
 
 		/* calculate MD5 digest */
 		MD5Init(&hash);
-		MD5Update(&hash, buf, len);
+		MD5Update(&hash, buf->buf, buf->wpos);
 		MD5Update(&hash, digest, MD5_DIGEST_LENGTH);
 		MD5Final(digest, &hash);
 
-		/* insert MD5 digest */
-		/* XXX this will be fixed soon, when we switch to dynamic
-		 * buffers */
-		auth_data = buf;
-		auth_data += len;
-		bcopy(digest, auth_data, sizeof(digest));
-		break;
+		return (buf_add(buf, digest, MD5_DIGEST_LENGTH));
 	default:
 		log_debug("auth_gen: unknown auth type, interface %s",
 		    iface->name);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.24 2005/03/31 19:32:10 norby Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.25 2005/04/05 13:01:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -37,6 +37,7 @@
 #define LSA_HASHSIZE		512
 
 #define	READ_BUF_SIZE		65535
+#define	PKG_DEF_SIZE		512	/* compromise */
 #define	RT_BUF_SIZE		16384
 #define	MAX_RTSOCK_BUF		128 * 1024
 

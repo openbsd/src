@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.8 2005/03/29 17:26:35 norby Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.9 2005/04/05 13:01:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -146,11 +146,11 @@ int
 send_ls_update(struct iface *iface, struct in_addr addr, void *data, int len)
 {
 	struct sockaddr_in	 dst;
-	char			*buf;
-	char			*ptr;
+	struct buf		*buf;
+	size_t			 pos;
 	u_int32_t		 nlsa;
 	u_int16_t		 age;
-	int			 ret = 0;
+	int			 ret;
 
 	log_debug("send_ls_update: interface %s addr %s",
 	    iface->name, inet_ntoa(addr));
@@ -158,8 +158,8 @@ send_ls_update(struct iface *iface, struct in_addr addr, void *data, int len)
 	if (iface->passive)
 		return (0);
 
-	/* XXX use buffer API instead for better decoupling */
-	if ((ptr = buf = calloc(1, READ_BUF_SIZE)) == NULL)
+	/* XXX READ_BUF_SIZE */
+	if ((buf = buf_dynamic(PKG_DEF_SIZE, READ_BUF_SIZE)) == NULL)
 		fatal("send_ls_update");
 
 	/* set destination */
@@ -168,34 +168,37 @@ send_ls_update(struct iface *iface, struct in_addr addr, void *data, int len)
 	dst.sin_addr.s_addr = addr.s_addr;
 
 	/* OSPF header */
-	gen_ospf_hdr(ptr, iface, PACKET_TYPE_LS_UPDATE);
-	ptr += sizeof(struct ospf_hdr);
+	if (gen_ospf_hdr(buf, iface, PACKET_TYPE_LS_UPDATE))
+		goto fail;
 
 	nlsa = htonl(1);
-	memcpy(ptr, &nlsa, sizeof(nlsa));
-	ptr += sizeof(nlsa);
+	if (buf_add(buf, &nlsa, sizeof(nlsa)))
+		goto fail;
 
-	memcpy(ptr, data, len);		/* XXX */
+	pos = buf->wpos;
+	if (buf_add(buf, data, len))
+		goto fail;
 
 	/* age LSA befor sending it out */
-	memcpy(&age, ptr, sizeof(age));
+	memcpy(&age, data, sizeof(age));
 	age = ntohs(age);
 	if ((age += iface->transmit_delay) >= MAX_AGE)
 		age = MAX_AGE;
 	age = ntohs(age);
-	memcpy(ptr, &age, sizeof(age));
-
-	ptr += len;
+	memcpy(buf_seek(buf, pos, sizeof(age)), &age, sizeof(age));
 
 	/* update authentication and calculate checksum */
-	auth_gen(buf, ptr - buf, iface);
+	if (auth_gen(buf, iface))
+		goto fail;
 
-	if ((ret = send_packet(iface, buf, (ptr - buf), &dst)) == -1)
-		log_warnx("send_ls_update: error sending packet on "
-		    "interface %s", iface->name);
+	ret = send_packet(iface, buf->buf, buf->wpos, &dst);
 
-	free(buf);
+	buf_free(buf);
 	return (ret);
+fail:
+	log_warn("send_hello");
+	buf_free(buf);
+	return (-1);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.6 2005/03/31 19:32:10 norby Exp $ */
+/*	$OpenBSD: packet.c,v 1.7 2005/04/05 13:01:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -41,18 +41,19 @@ int		 ospf_hdr_sanity_check(const struct ip *,
 		    struct ospf_hdr *, u_int16_t, const struct iface *);
 struct iface	*find_iface(struct ospfd_conf *, struct in_addr);
 
-void
-gen_ospf_hdr(void *buf, struct iface *iface, u_int8_t type)
+int
+gen_ospf_hdr(struct buf *buf, struct iface *iface, u_int8_t type)
 {
-	struct ospf_hdr	*ospf_hdr = buf;
+	struct ospf_hdr	ospf_hdr;
 
-	ospf_hdr->version = OSPF_VERSION;
-	ospf_hdr->type = type;
-	ospf_hdr->len = 0;			/* updated later */
-	ospf_hdr->rtr_id = iface->rtr_id.s_addr;
-	ospf_hdr->area_id = iface->area->id.s_addr;
-	ospf_hdr->chksum = 0;			/* updated later */
-	ospf_hdr->auth_type = htons(iface->auth_type);
+	bzero(&ospf_hdr, sizeof(ospf_hdr));
+	ospf_hdr.version = OSPF_VERSION;
+	ospf_hdr.type = type;
+	ospf_hdr.rtr_id = iface->rtr_id.s_addr;
+	ospf_hdr.area_id = iface->area->id.s_addr;
+	ospf_hdr.auth_type = htons(iface->auth_type);
+
+	return (buf_add(buf, &ospf_hdr, sizeof(ospf_hdr)));
 }
 
 /* send and receive packets */
@@ -64,11 +65,6 @@ send_packet(struct iface *iface, char *pkt, int len, struct sockaddr_in *dst)
 		    "interface %s", iface->name);
 		return (-1);
 	}
-
-	/* XXX I don't like this */
-	/* MD5 digest is _not_ part of the OSPF packet len */
-	if (iface->auth_type == AUTH_CRYPT)
-		len += MD5_DIGEST_LENGTH;
 
 	/* set outgoing interface for multicast traffic */
 	if (IN_MULTICAST(ntohl(dst->sin_addr.s_addr)))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsreq.c,v 1.6 2005/03/23 20:36:57 claudio Exp $ */
+/*	$OpenBSD: lsreq.c,v 1.7 2005/04/05 13:01:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -34,19 +34,15 @@ int
 send_ls_req(struct nbr *nbr)
 {
 	struct sockaddr_in	 dst;
-	struct ls_req_hdr	*ls_req_hdr;
+	struct ls_req_hdr	 ls_req_hdr;
 	struct lsa_entry	*le, *nle;
-	char			*buf = NULL;
-	char			*ptr;
-	int			 ret = 0;
-
-	log_debug("send_ls_req: neighbor ID %s", inet_ntoa(nbr->id));
+	struct buf		*buf;
+	int			 ret;
 
 	if (nbr->iface->passive)
 		return (0);
 
-	/* XXX use buffer API instead for better decoupling */
-	if ((ptr = buf = calloc(1, READ_BUF_SIZE)) == NULL)
+	if ((buf = buf_open(nbr->iface->mtu - sizeof(struct ip))) == NULL)
 		fatal("send_ls_req");
 
 	/* set destination */
@@ -68,28 +64,33 @@ send_ls_req(struct nbr *nbr)
 	}
 
 	/* OSPF header */
-	gen_ospf_hdr(ptr, nbr->iface, PACKET_TYPE_LS_REQUEST);
-	ptr += sizeof(struct ospf_hdr);
+	if (gen_ospf_hdr(buf, nbr->iface, PACKET_TYPE_LS_REQUEST))
+		goto fail;
 
-	/* LSA header(s) */
+	/* LSA header(s), keep space for a possible md5 sum */
 	for (le = TAILQ_FIRST(&nbr->ls_req_list); le != NULL &&
-	    (ptr - buf) < nbr->iface->mtu - PACKET_HDR; le = nle) {
+	    buf->wpos + sizeof(struct ls_req_hdr) < buf->max - 
+	    MD5_DIGEST_LENGTH; le = nle) {
 		nbr->ls_req = nle = TAILQ_NEXT(le, entry);
-		ls_req_hdr = (struct ls_req_hdr *)ptr;
-		ls_req_hdr->type = htonl(le->le_lsa->type);
-		ls_req_hdr->ls_id = le->le_lsa->ls_id;
-		ls_req_hdr->adv_rtr = le->le_lsa->adv_rtr;
-		ptr += sizeof(*ls_req_hdr);
+		ls_req_hdr.type = htonl(le->le_lsa->type);
+		ls_req_hdr.ls_id = le->le_lsa->ls_id;
+		ls_req_hdr.adv_rtr = le->le_lsa->adv_rtr;
+		if (buf_add(buf, &ls_req_hdr, sizeof(ls_req_hdr)))
+			goto fail;
 	}
 
 	/* update authentication and calculate checksum */
-	auth_gen(buf, ptr - buf, nbr->iface);
+	if (auth_gen(buf, nbr->iface))
+		goto fail;
 
-	if ((ret = send_packet(nbr->iface, buf, (ptr - buf), &dst)) == -1)
-		log_warnx("send_ls_req: error sending packet on "
-		    "interface %s", nbr->iface->name);
-	free(buf);
+	ret = send_packet(nbr->iface, buf->buf, buf->wpos, &dst);
+
+	buf_free(buf);
 	return (ret);
+fail:
+	log_warn("send_ls_req");
+	buf_free(buf);
+	return (-1);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.h,v 1.10 2005/03/31 19:32:10 norby Exp $ */
+/*	$OpenBSD: ospfe.h,v 1.11 2005/04/05 13:01:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -147,7 +147,7 @@ struct nbr {
 /* auth.c */
 int		 auth_validate(void *buf, u_int16_t len, struct iface *,
 		     struct nbr *);
-int		 auth_gen(void *, u_int16_t, struct iface *);
+int		 auth_gen(struct buf *, struct iface *);
 void		 md_list_init(struct iface *);
 void		 md_list_add(struct iface *, u_int8_t, char *);
 void		 md_list_clr(struct iface *);
@@ -291,7 +291,7 @@ const char	*nbr_action_name(int);
 struct lsa_hdr	*lsa_hdr_new(void);
 
 /* packet.c */
-void	 gen_ospf_hdr(void *, struct iface *, u_int8_t);
+int	 gen_ospf_hdr(struct buf *, struct iface *, u_int8_t);
 int	 send_packet(struct iface *, char *, int, struct sockaddr_in *);
 void	 recv_packet(int, short, void *);
 

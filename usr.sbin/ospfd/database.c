@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.6 2005/03/22 22:13:48 norby Exp $ */
+/*	$OpenBSD: database.c,v 1.7 2005/04/05 13:01:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -20,6 +20,8 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
 #include <string.h>
@@ -39,11 +41,9 @@ int
 send_db_description(struct nbr *nbr)
 {
 	struct sockaddr_in	 dst;
-	struct db_dscrp_hdr	*dd_hdr;
-	struct lsa_hdr		*lsa_hdr;
+	struct db_dscrp_hdr	 dd_hdr;
 	struct lsa_entry	*le, *nle;
-	char			*buf;
-	char			*ptr;
+	struct buf		*buf;
 	int			 ret = 0;
 
 	log_debug("send_db_description: neighbor ID %s, seq_num %x",
@@ -52,19 +52,16 @@ send_db_description(struct nbr *nbr)
 	if (nbr->iface->passive)
 		return (0);
 
-	if ((ptr = buf = calloc(1, READ_BUF_SIZE)) == NULL)
+	if ((buf = buf_open(nbr->iface->mtu - sizeof(struct ip))) == NULL)
 		fatal("send_db_description");
 
 	/* OSPF header */
-	gen_ospf_hdr(ptr, nbr->iface, PACKET_TYPE_DD);
-	ptr += sizeof(struct ospf_hdr);
+	if (gen_ospf_hdr(buf, nbr->iface, PACKET_TYPE_DD))
+		goto fail;
 
-	/* database description header */
-	dd_hdr = (struct db_dscrp_hdr *)ptr;
-	dd_hdr->opts = oeconf->options;
-	dd_hdr->dd_seq_num = htonl(nbr->dd_seq_num);
-
-	ptr += sizeof(*dd_hdr);
+	/* reserve space for database description header */
+	if (buf_reserve(buf, sizeof(dd_hdr)) == NULL)
+		goto fail;
 
 	switch (nbr->state) {
 	case NBR_STA_DOWN:
@@ -102,14 +99,13 @@ send_db_description(struct nbr *nbr)
 
 		nbr->options &= ~OSPF_DBD_I;
 
-		/* build LSA list */
-		lsa_hdr = (struct lsa_hdr *)ptr;
-
-		for (le = TAILQ_FIRST(&nbr->db_sum_list); (le != NULL) &&
-		    ((ptr - buf) < nbr->iface->mtu - PACKET_HDR); le = nle) {
+		/* build LSA list, keep space for a possible md5 sum */
+		for (le = TAILQ_FIRST(&nbr->db_sum_list); le != NULL &&
+		    buf->wpos + sizeof(struct lsa_hdr) < buf->max - 
+		    MD5_DIGEST_LENGTH; le = nle) {
 			nbr->dd_end = nle = TAILQ_NEXT(le, entry);
-			memcpy(ptr, le->le_lsa, sizeof(struct lsa_hdr));
-			ptr += sizeof(*lsa_hdr);
+			if (buf_add(buf, le->le_lsa, sizeof(struct lsa_hdr)))
+				goto fail;
 		}
 		break;
 	case NBR_STA_LOAD:
@@ -129,11 +125,7 @@ send_db_description(struct nbr *nbr)
 
 		break;
 	default:
-		log_debug("send_db_description: unknown neighbor state, "
-		    "neighbor ID %s", inet_ntoa(nbr->id));
-		ret = -1;
-		goto done;
-		break;
+		fatalx("send_db_description: unknown neighbor state");
 	}
 
 	/* set destination */
@@ -143,36 +135,42 @@ send_db_description(struct nbr *nbr)
 	switch (nbr->iface->type) {
 	case IF_TYPE_POINTOPOINT:
 		inet_aton(AllSPFRouters, &dst.sin_addr);
-		dd_hdr->iface_mtu = htons(nbr->iface->mtu);
+		dd_hdr.iface_mtu = htons(nbr->iface->mtu);
 		break;
 	case IF_TYPE_BROADCAST:
 		dst.sin_addr = nbr->addr;
-		dd_hdr->iface_mtu = htons(nbr->iface->mtu);
+		dd_hdr.iface_mtu = htons(nbr->iface->mtu);
 		break;
 	case IF_TYPE_NBMA:
 	case IF_TYPE_POINTOMULTIPOINT:
 	case IF_TYPE_VIRTUALLINK:
 		dst.sin_addr = nbr->addr;
-		dd_hdr->iface_mtu = 0;
+		dd_hdr.iface_mtu = 0;
 		break;
 	default:
 		fatalx("send_db_description: unknown interface type");
 	}
 
-	dd_hdr->bits = nbr->options;
+	dd_hdr.opts = oeconf->options;
+	dd_hdr.bits = nbr->options;
+	dd_hdr.dd_seq_num = htonl(nbr->dd_seq_num);
+
+	memcpy(buf_seek(buf, sizeof(struct ospf_hdr), sizeof(dd_hdr)),
+	    &dd_hdr, sizeof(dd_hdr));
 
 	/* update authentication and calculate checksum */
-	auth_gen(buf, ptr - buf, nbr->iface);
+	if (auth_gen(buf, nbr->iface))
+		goto fail;
 
 	/* transmit packet */
-	if ((ret = send_packet(nbr->iface, buf, (ptr - buf), &dst)) == -1)
-		log_warnx("send_db_description: error sending packet on "
-		    "interface %s", nbr->iface->name);
-
+	ret = send_packet(nbr->iface, buf->buf, buf->wpos, &dst);
 done:
-	free(buf);
-
+	buf_free(buf);
 	return (ret);
+fail:
+	log_warn("send_db_description");
+	buf_free(buf);
+	return (-1);
 }
 
 void

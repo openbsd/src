@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsack.c,v 1.7 2005/03/22 22:13:48 norby Exp $ */
+/*	$OpenBSD: lsack.c,v 1.8 2005/04/05 13:01:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -38,9 +38,8 @@ int
 send_ls_ack(struct iface *iface, struct in_addr addr, void *data, int len)
 {
 	struct sockaddr_in	 dst;
-	char			*buf;
-	char			*ptr;
-	int			 ret = 0;
+	struct buf		*buf;
+	int			 ret;
 
 	log_debug("send_ls_ack: interface %s addr %s",
 	    iface->name, inet_ntoa(addr));
@@ -48,8 +47,8 @@ send_ls_ack(struct iface *iface, struct in_addr addr, void *data, int len)
 	if (iface->passive)
 		return (0);
 
-	/* XXX use buffer API instead for better decoupling */
-	if ((ptr = buf = calloc(1, READ_BUF_SIZE)) == NULL)
+	/* XXX READ_BUF_SIZE */
+	if ((buf = buf_dynamic(PKG_DEF_SIZE, READ_BUF_SIZE)) == NULL)
 		fatal("send_ls_ack");
 
 	dst.sin_family = AF_INET;
@@ -57,22 +56,25 @@ send_ls_ack(struct iface *iface, struct in_addr addr, void *data, int len)
 	dst.sin_addr.s_addr = addr.s_addr;
 
 	/* OSPF header */
-	gen_ospf_hdr(ptr, iface, PACKET_TYPE_LS_ACK);
-	ptr += sizeof(struct ospf_hdr);
+	if (gen_ospf_hdr(buf, iface, PACKET_TYPE_LS_ACK))
+		goto fail;
 
 	/* LS ack(s) */
-	memcpy(ptr, data, len);		/* XXX size check ??? */
-	ptr += len;
+	if (buf_add(buf, data, len))
+		goto fail;
 
 	/* update authentication and calculate checksum */
-	auth_gen(buf, ptr - buf, iface);
+	if (auth_gen(buf, iface))
+		goto fail;
 
-	if ((ret = send_packet(iface, buf, (ptr - buf), &dst)) == -1)
-		log_warnx("send_ls_ack: error sending packet on "
-		    "interface %s", iface->name);
+	ret = send_packet(iface, buf->buf, buf->wpos, &dst);
 
-	free(buf);
+	buf_free(buf);
 	return (ret);
+fail:
+	log_warn("send_ls_ack");
+	buf_free(buf);
+	return (-1);
 }
 
 void
