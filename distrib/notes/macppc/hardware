@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.22 2003/09/03 17:15:25 jason Exp $
+dnl	$OpenBSD: hardware,v 1.23 2003/09/06 23:46:57 drahn Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, G4 Cube as well
 as PowerBook and iBook machines.
 
@@ -7,19 +7,21 @@ not supported.  PowerMac G3 Beige status is unknown.
 
 OpenBSD/MACHINE has been tested on iMac Revs A-C as well as on iMac DV(+)
 machines, Power Macintosh G4 systems (single and dual processor), as well as
-the G4 Cube. B&W G3 and LCD iMac support has been added in 3.1.
+the G4 Cube, B&W G3 and LCD iMac.
 
-For portables, PowerBook G3, PowerBook G4, iBook and iBook2 have been
-tested.  Note that power saving features on portables are very limited,
-no power management features are available, suspend/sleep is not supported.
-However battery level and status charging/AC connected/AC disconnected
-is supported via an APM emulation layer.
+For portables, PowerBook G3, PowerBook G4 (12", 15", 17), iBook and iBook2
+have been tested.  Note that power saving features on portables are very
+limited, limited power management features are available, suspend/sleep
+is not supported.  However battery level and status charging/AC
+connected/AC disconnected is supported via an APM emulation layer.
 
 
 Supported devices {:-include-:}:
 
 	IDE hard disk controllers
-		Onboard controllers (pciide)
+		Onboard controllers (wdc_obio)
+		Onboard ATA100 controllers (kauaiata)
+		PCI controllers (pciide)
 
 	SCSI host adapters
 		Symbios Logic (NCR) 53C8xx-based PCI SCSI host adapters
@@ -48,10 +50,11 @@ Supported devices {:-include-:}:
 		- ATI Mach64 128 VR AGP
 		- ATI Mobility M3
 		- ATI Rage Fury AGP4x
+		- Nvidia GeForce4 440 Go 64M
 
 	Serial ports
 		Built-in Zilog 8530-based serial ports (zs)
-		Internal modems not supported on all models
+		Internal non-USB modems.
 
 	Ethernet adapters
 		Digital DC21x4x-based PCI Ethernet adapters (de), including:
@@ -155,5 +158,5 @@ Supported devices {:-include-:}:
 
 The following devices are not supported currently:
 	- built-in Texas Instrument TSB12LV23 firewire (IEEE1394) ports
-	- built-in modems
-	- built-in Cardbus slots
+	- built-in USB modems
+	- built-in Cardbus slots non-TI PCI1211
