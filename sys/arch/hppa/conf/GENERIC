@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.13 2002/12/18 23:52:41 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.14 2002/12/19 00:24:40 mickey Exp $
 #
 # Diskless kernel config
 #
@@ -6,16 +6,6 @@
 machine	hppa
 
 include "../../../conf/GENERIC"
-
-mainbus0 at root		# root "bus"
-
-mem*	at mainbus0		# /dev/*mem and memory controller
-pdc0	at mainbus0		# PDC/IODC wrapper for boot console
-cpu*	at mainbus0 irq 31	# HP PA-RISC cpu
-phantomas* at mainbus0		# Phantom PseudoBC GSC+ Port
-#fpu*	at mainbus0		# HP PA-RISC fpu (iv N/A)
-#pmu*	at mainbus0		# HP PA-RISC perfomance monitor unit (iv 29)
-#power*	at mainbus0		# power/fail manager (iv 2)
 
 # Support for various CPU types
 option	HP7000_CPU			# PCX
@@ -26,21 +16,26 @@ option	HP7200_CPU,HP7250_CPU		# PCXT, PCXT'
 #option	HP8200_CPU			# PCXU2
 #option	HP8500_CPU			# PCXW
 
-option		PMAPDEBUG
-
-# Include all GENERIC options
-#include "arch/hppa/conf/generic.hppa"
+option		FPEMUL
+option		USELEDS		# blink 'em
 
 # Need to set locally
-maxusers	16
+maxusers	32
 
 option		TIMEZONE=0	# time zone to adjust RTC time by
 option		DST=0		# daylight saving time used by RTC
 
 config	bsd root on nfs swap on nfs
 
-option		FPEMUL
-option		USELEDS		# blink 'em
+mainbus0 at root		# root "bus"
+
+mem*	at mainbus0		# /dev/*mem and memory controller
+pdc0	at mainbus0		# PDC/IODC wrapper for boot console
+cpu*	at mainbus0 irq 31	# HP PA-RISC cpu
+phantomas0 at mainbus0		# Phantom PseudoBC GSC+ Port
+#fpu*	at mainbus0		# HP PA-RISC fpu (iv N/A)
+#pmu*	at mainbus0		# HP PA-RISC perfomance monitor unit (iv 29)
+#power*	at mainbus0		# power/fail manager (iv 2)
 
 lasi0	at mainbus0 offset 0x100000 irq 28	# LASI host adapter (LSI PN???)
 lasi0	at mainbus0 offset 0xfd00000 irq 28	# LASI on J210
