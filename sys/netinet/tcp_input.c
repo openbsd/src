@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.97 2001/06/23 18:54:44 angelos Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.98 2001/06/24 22:50:58 angelos Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -838,6 +838,12 @@ findpcb:
 				inp->inp_ipsec_remotecred =
 				    tdb->tdb_remote_cred;
 				tdb->tdb_remote_cred->ref_count++;
+			}
+			if (inp->inp_ipsec_remoteauth == NULL &&
+			    tdb->tdb_remote_auth != NULL) {
+				inp->inp_ipsec_remoteauth =
+				    tdb->tdb_remote_auth;
+				tdb->tdb_remote_auth->ref_count++;
 			}
 		} else { /* Just reset */
 		        TAILQ_REMOVE(&inp->inp_tdb_in->tdb_inp_in, inp,

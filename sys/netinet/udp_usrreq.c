@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.70 2001/06/23 18:54:44 angelos Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.71 2001/06/24 22:50:59 angelos Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -547,9 +547,36 @@ udp_input(m, va_alist)
 		tdb = NULL;
 	ipsp_spd_lookup(m, srcsa.sa.sa_family, iphlen, &error,
 	    IPSP_DIRECTION_IN, tdb, inp);
-        splx(s);
 
-	/* No SA latching done for UDP. */
+	/* Latch SA only if the socket is connected */
+	if (inp->inp_tdb_in != tdb &&
+	    (inp->inp_socket->so_state & SS_ISCONNECTED)) {
+		if (tdb) {
+		        tdb_add_inp(tdb, inp, 1);
+			if (inp->inp_ipsec_remoteid == NULL &&
+			    tdb->tdb_srcid != NULL) {
+				inp->inp_ipsec_remoteid = tdb->tdb_srcid;
+				tdb->tdb_srcid->ref_count++;
+			}
+			if (inp->inp_ipsec_remotecred == NULL &&
+			    tdb->tdb_remote_cred != NULL) {
+				inp->inp_ipsec_remotecred =
+				    tdb->tdb_remote_cred;
+				tdb->tdb_remote_cred->ref_count++;
+			}
+			if (inp->inp_ipsec_remoteauth == NULL &&
+			    tdb->tdb_remote_auth != NULL) {
+				inp->inp_ipsec_remoteauth =
+				    tdb->tdb_remote_auth;
+				tdb->tdb_remote_auth->ref_count++;
+			}
+		} else { /* Just reset */
+		        TAILQ_REMOVE(&inp->inp_tdb_in->tdb_inp_in, inp,
+				     inp_tdb_in_next);
+			inp->inp_tdb_in = NULL;
+		}
+	}
+        splx(s);
 
 	/* Error or otherwise drop-packet indication. */
 	if (error)
