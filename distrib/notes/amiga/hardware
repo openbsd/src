@@ -8,11 +8,11 @@ compile, however it won't be speedy.  X really isn't usable on a
 
 Here is a table of recommended HD partition sizes for a full install:
 	partition:	advise,	with X,	needed,	with X
-	root (/)	15M	15M	10M	10M
+	root (/)	20M	15M	20M	15M
 	user (/usr)	65M	100M	45M 	80M
-	swap		----- 2M for every M ram -----
-	local (/local)	up to you
-
+	swap		---- 1MB for every MB RAM ----
+			-- but the sum of swap and ---
+			- RAM should be at least 16 --
 
 As you may note the recommended size of /usr is 20M greater than
 needed. This is to leave room for a kernel source and compile tree
@@ -24,6 +24,7 @@ larger, as your system will be doing much more swapping.
 
 Supported devices include:
 	A4000/A1200 IDE controller.
+	ISA IDE & ATAPI (but with limitations) with a supported ISA bridge.
 	SCSI host adapters:
 		33c93 based boards: A2091, A3000 and GVP series II.
 		53c80 based boards: 12 Gauge, IVS and Wordsync/Bytesync.
@@ -44,6 +45,9 @@ Supported devices include:
 		A4066 Ethernet
 		Ariadne Ethernet
 		Quicknet Ethernet
+		Via a supported ISA bridge:
+			NE[12]000, SMC/WD 8003/8013/8216, 3COM 3c503 Ethernet
+		
 	Arcnet controllers:
 		A2060 Arcnet
 	Tape drives:
@@ -51,12 +55,18 @@ Supported devices include:
 			Archive Viper, Cipher SCSI-2 ST150.
 	CD-ROM drives:
 		Most SCSI CD-ROM drives
-	Serial cards:
+	Serial ports:
+		Amiga serial port.
 		MultiFaceCard II and III
 		A2232
+		PC COM ports attached to a supported ISA bridge
+	Parallel ports:
+		Amiga parallel port.
+		PC LPT ports attached to a supported ISA bridge
+	ISA bridges:
+		The GoldenGate Bus+ (aka GG2)
+		The CrossLink
 	Amiga floppy drives.
-	Amiga parallel port.
-	Amiga serial port.
 	Amiga mouse.
 
 If its not on this list, there is no support for it in this release.
