@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vis.1,v 1.6 2000/03/14 14:58:25 aaron Exp $
+.\"	$OpenBSD: vis.1,v 1.7 2003/05/14 06:40:56 pjanzen Exp $
 .\"	$NetBSD: vis.1,v 1.5 1994/11/17 07:56:00 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
@@ -52,9 +52,11 @@ into a visual representation.
 It differs from
 .Ic cat -v
 in that
-the form is unique and invertible.
-By default, all non-graphic
-characters except space, tab, and newline are encoded.
+the form can be unique and invertible.
+By default, all non-printing
+characters except space, tab, and newline are encoded,
+as are any meta-characters
+.Pq eighth bit set .
 A detailed description of the
 various visual formats is given in
 .Xr vis 3 .
@@ -116,7 +118,10 @@ an octal number, \eddd.
 .It Fl s
 Only characters considered unsafe to send to a terminal are encoded.
 This flag allows backspace, bell, and carriage return in addition
-to the default space, tab and newline.
+to the default space, tab, and newline.
+Meta-characters that are considered graphic characters by
+.Xr isgraph 3
+are not encoded.
 .It Fl t
 Tabs are also encoded.
 .It Fl w
