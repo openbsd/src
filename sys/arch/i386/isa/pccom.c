@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.29 1999/02/08 23:43:54 rees Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.30 1999/05/21 16:06:13 rees Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -122,6 +122,7 @@ void	comattach __P((struct device *, struct device *, void *));
 void	com_absent_notify __P((struct com_softc *sc));
 void	comstart_pending __P((void *));
 void	compwroff __P((struct com_softc *));
+void	com_raisedtr __P((void *));
 
 #if NPCCOM_ISA
 struct cfattach pccom_isa_ca = {
@@ -1111,9 +1112,13 @@ comopen(dev, flag, mode, p)
 			       (!ISSET(tp->t_cflag, CLOCAL) &&
 				!ISSET(tp->t_state, TS_CARR_ON))) {
 				SET(tp->t_state, TS_WOPEN);
-				error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH,
-						 ttopen, 0);
-				if (error) {
+				error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH, ttopen, 0);
+				/*
+				 * If TS_WOPEN has been reset, that means the cua device
+				 * has been closed.  We don't want to fail in that case,
+				 * so just go around again.
+				 */
+				if (error && ISSET(tp->t_state, TS_WOPEN)) {
 					CLR(tp->t_state, TS_WOPEN);
 					if (!sc->sc_cua && !ISSET(tp->t_state, TS_ISOPEN))
 						compwroff(sc);
@@ -1135,6 +1140,8 @@ comclose(dev, flag, mode, p)
 {
 	int unit = DEVUNIT(dev);
 	struct com_softc *sc = pccom_cd.cd_devs[unit];
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	struct tty *tp = sc->sc_tty;
 	int s;
 
@@ -1144,8 +1151,17 @@ comclose(dev, flag, mode, p)
 
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	s = spltty();
-	if (!ISSET(sc->sc_hwflags, COM_HW_ABSENT|COM_HW_ABSENT_PENDING))
-		compwroff(sc);
+	if (!ISSET(sc->sc_hwflags, COM_HW_ABSENT|COM_HW_ABSENT_PENDING)) {
+		if (ISSET(tp->t_state, TS_WOPEN)) {
+			/* tty device is waiting for carrier; drop dtr then re-raise */
+			CLR(sc->sc_mcr, MCR_DTR | MCR_RTS);
+			bus_space_write_1(iot, ioh, com_mcr, sc->sc_mcr);
+			timeout(com_raisedtr, sc, hz * 2);
+		} else {
+			/* no one else waiting; turn off the uart */
+			compwroff(sc);
+		}
+	}
 	CLR(tp->t_state, TS_BUSY | TS_FLUSH);
 	sc->sc_cua = 0;
 	splx(s);
@@ -1181,7 +1197,8 @@ compwroff(sc)
 	if (ISSET(tp->t_cflag, HUPCL) &&
 	    !ISSET(sc->sc_swflags, COM_SW_SOFTCAR)) {
 		/* XXX perhaps only clear DTR */
-		bus_space_write_1(iot, ioh, com_mcr, 0);
+		sc->sc_mcr = 0;
+		bus_space_write_1(iot, ioh, com_mcr, sc->sc_mcr);
 	}
 
 	/*
@@ -1209,6 +1226,16 @@ compwroff(sc)
 		break;
 #endif
 	}
+}
+
+void
+com_raisedtr(arg)
+	void *arg;
+{
+	struct com_softc *sc = arg;
+
+	SET(sc->sc_mcr, MCR_DTR | MCR_RTS);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_mcr, sc->sc_mcr);
 }
 
 int
