@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getopt_long.3,v 1.9 2003/09/02 18:24:21 jmc Exp $
+.\"	$OpenBSD: getopt_long.3,v 1.10 2004/01/06 23:44:28 fgsch Exp $
 .\"	$NetBSD: getopt_long.3,v 1.11 2002/10/02 10:54:19 wiz Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -45,9 +45,9 @@
 .Vt extern int opterr;
 .Vt extern int optreset;
 .Ft int
-.Fn getopt_long "int argc" "char * const *argv" "const char *optstring" "const struct option *longopts" "int *index"
+.Fn getopt_long "int argc" "char * const *argv" "const char *optstring" "const struct option *longopts" "int *longindex"
 .Ft int
-.Fn getopt_long_only "int argc" "char * const *argv" "const char *optstring" "const struct option *longopts" "int *index"
+.Fn getopt_long_only "int argc" "char * const *argv" "const char *optstring" "const struct option *longopts" "int *longindex"
 .Sh DESCRIPTION
 The
 .Fn getopt_long
@@ -147,6 +147,18 @@ to the corresponding short option will make this function act just
 like
 .Xr getopt 3 .
 .Pp
+If the
+.Fa longindex
+field is not
+.Dv NULL ,
+then the integer pointed to by it will be set to the index of the long
+option relative to
+.Fa longopts .
+.Pp
+The last element of the
+.Fa longopts
+array has to be filled with zeroes.
+.Pp
 The
 .Fn getopt_long_only
 function behaves identically to
@@ -193,15 +205,15 @@ int daggerset;
 
 /* options descriptor */
 static struct option longopts[] = {
-	{ "buffy",	no_argument,		0, 		'b' },
-	{ "fluoride",	required_argument,	0, 	       	'f' },
+	{ "buffy",	no_argument,		NULL, 		'b' },
+	{ "fluoride",	required_argument,	NULL, 	       	'f' },
 	{ "daggerset",	no_argument,		&daggerset,	1 },
-	{ 0, 		0,			0, 		0 }
+	{ NULL, 	0,			NULL, 		0 }
 };
 
 bflag = 0;
 while ((ch = getopt_long(argc, argv, "bf:", longopts, NULL)) != -1)
-	switch(ch) {
+	switch (ch) {
 	case 'b':
 		bflag = 1;
 		break;
@@ -212,10 +224,9 @@ while ((ch = getopt_long(argc, argv, "bf:", longopts, NULL)) != -1)
 	case 0:
 		if (daggerset) {
 			fprintf(stderr,"Buffy will use her dagger to "
-				       "apply fluoride to dracula's teeth\en");
+			    "apply fluoride to dracula's teeth\en");
 		}
 		break;
-	case '?':
 	default:
 		usage();
 }
