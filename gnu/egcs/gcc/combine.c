@@ -4060,7 +4060,10 @@ simplify_rtx (x, op0_mode, last, in_dest)
 
       /* Canonicalize (minus A (plus B C)) to (minus (minus A B) C) for
 	 integers.  */
-      if (GET_CODE (XEXP (x, 1)) == PLUS && INTEGRAL_MODE_P (mode))
+      if (GET_CODE (XEXP (x, 1)) == PLUS && INTEGRAL_MODE_P (mode)
+	  && (! (flag_propolice_protection
+		 && XEXP (XEXP (x, 1), 0) == frame_pointer_rtx
+		 && GET_CODE (XEXP (XEXP (x, 1), 1)) == CONST_INT)))
 	return gen_binary (MINUS, mode,
 			   gen_binary (MINUS, mode, XEXP (x, 0),
 				       XEXP (XEXP (x, 1), 0)),
