@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_io.c,v 1.4 1995/03/21 09:07:04 cgd Exp $	*/
+/*	$NetBSD: ar_io.c,v 1.5 1996/03/26 23:54:13 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$NetBSD: ar_io.c,v 1.4 1995/03/21 09:07:04 cgd Exp $";
+static char rcsid[] = "$NetBSD: ar_io.c,v 1.5 1996/03/26 23:54:13 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -84,9 +84,11 @@ static int invld_rec;			/* tape has out of spec record size */
 static int wr_trail = 1;		/* trailer was rewritten in append */
 static int can_unlnk = 0;		/* do we unlink null archives?  */
 char *arcname;                  	/* printable name of archive */
+char *gzip_program;			/* name of gzip program */
 
 static int get_phys __P((void));
 extern sigset_t s_mask;
+static void ar_start_gzip __P((int));
 
 /*
  * ar_open()
@@ -126,6 +128,8 @@ ar_open(name)
 			arcname = STDN;
 		} else if ((arfd = open(name, EXT_MODE, DMOD)) < 0)
 			syswarn(0, errno, "Failed open to read on %s", name);
+		if (zflag)
+			ar_start_gzip(arfd);
 		break;
 	case ARCHIVE:
 		if (name == NULL) {
@@ -135,8 +139,12 @@ ar_open(name)
 			syswarn(0, errno, "Failed open to write on %s", name);
 		else
 			can_unlnk = 1;
+		if (zflag)
+			ar_start_gzip(arfd);
 		break;
 	case APPND:
+		if (zflag)
+			err(1, "can not gzip while appending");
 		if (name == NULL) {
 			arfd = STDOUT_FILENO;
 			arcname = STDO;
@@ -1291,4 +1299,66 @@ ar_next()
 		continue;
 	}
 	return(0);
+}
+
+/*
+ * ar_start_gzip()
+ * starts the gzip compression/decompression process as a child, using magic
+ * to keep the fd the same in the calling function (parent).
+ */
+void
+#ifdef __STDC__
+ar_start_gzip(int fd)
+#else
+ar_start_gzip(fd)
+	int fd;
+#endif
+{
+	pid_t pid;
+	int fds[2];
+	char *gzip_flags;
+
+	if (pipe(fds) < 0)
+		err(1, "could not pipe");
+	pid = fork();
+	if (pid < 0)
+		err(1, "could not fork");
+
+	/* parent */
+	if (pid) {
+		switch (act) {
+		case ARCHIVE:
+			dup2(fds[1], fd);
+			break;
+		case LIST:
+		case EXTRACT:
+			dup2(fds[0], fd);
+			break;
+		default:
+			errx(1, "ar_start_gzip:  impossible");
+		}
+		close(fds[0]);
+		close(fds[1]);
+	} else {
+		switch (act) {
+		case ARCHIVE:
+			dup2(fds[0], STDIN_FILENO);
+			dup2(fd, STDOUT_FILENO);
+			gzip_flags = "-c";
+			break;
+		case LIST:
+		case EXTRACT:
+			dup2(fds[1], STDOUT_FILENO);
+			dup2(fd, STDIN_FILENO);
+			gzip_flags = "-dc";
+			break;
+		default:
+			errx(1, "ar_start_gzip:  impossible");
+		}
+		close(fds[0]);
+		close(fds[1]);
+		if (execlp(gzip_program, gzip_program, gzip_flags, NULL) < 0)
+			err(1, "could not exec");
+		/* NOTREACHED */
+	}
 }

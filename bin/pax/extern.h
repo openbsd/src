@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.4 1995/03/21 09:07:16 cgd Exp $	*/
+/*	$NetBSD: extern.h,v 1.5 1996/03/26 23:54:16 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -49,6 +49,7 @@
  * ar_io.c
  */
 extern char *arcname;
+extern char *gzip_program;
 int ar_open __P((char *));
 void ar_close __P((void));
 void ar_drain __P((void));
@@ -215,6 +216,7 @@ extern int nflag;
 extern int tflag;
 extern int uflag;
 extern int vflag;
+extern int zflag;
 extern int Dflag;
 extern int Hflag;
 extern int Lflag;

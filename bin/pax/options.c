@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.5 1995/03/21 09:07:30 cgd Exp $	*/
+/*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$NetBSD: options.c,v 1.5 1995/03/21 09:07:30 cgd Exp $";
+static char rcsid[] = "$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -82,6 +82,9 @@ static void tar_usage __P((void));
 static void cpio_options __P((register int, register char **));
 static void cpio_usage __P((void));
 #endif
+
+#define GZIP_CMD	"gzip"		/* command to run as gzip */
+#define COMPRESS_CMD	"compress"	/* command to run as compress */
 
 /*
  *	Format specific routine table - MUST BE IN SORTED ORDER BY NAME
@@ -199,7 +202,7 @@ pax_options(argc, argv)
 	/*
 	 * process option flags
 	 */
-	while ((c=getopt(argc,argv,"ab:cdf:iklno:p:rs:tuvwx:B:DE:G:HLPT:U:XYZ"))
+	while ((c=getopt(argc,argv,"ab:cdf:iklno:p:rs:tuvwx:zB:DE:G:HLPT:U:XYZ"))
 	    != EOF) {
 		switch (c) {
 		case 'a':
@@ -382,6 +385,13 @@ pax_options(argc, argv)
 				(void)fprintf(stderr, " %s", fsub[i].name);
 			(void)fputs("\n\n", stderr);
 			pax_usage();
+			break;
+		case 'z':
+			/*
+			 * use gzip.  Non standard option.
+			 */
+			zflag = 1;
+			gzip_program = GZIP_CMD;
 			break;
 		case 'B':
 			/*
@@ -594,7 +604,7 @@ tar_options(argc, argv)
 	/*
 	 * process option flags
 	 */
-	while ((c = getoldopt(argc, argv, "b:cef:moprutvwxBHLPX014578")) 
+	while ((c = getoldopt(argc, argv, "b:cef:moprutvwxzBHLPXZ014578")) 
 	    != EOF)  {
 		switch(c) {
 		case 'b':
@@ -684,6 +694,13 @@ tar_options(argc, argv)
 			 */
 			act = EXTRACT;
 			break;
+		case 'z':
+			/*
+			 * use gzip.  Non standard option.
+			 */
+			zflag = 1;
+			gzip_program = GZIP_CMD;
+			break;
 		case 'B':
 			/*
 			 * Nothing to do here, this is pax default
@@ -712,6 +729,13 @@ tar_options(argc, argv)
 			 * do not pass over mount points in the file system
 			 */
 			Xflag = 1;
+			break;
+		case 'Z':
+			/*
+			 * use compress.
+			 */
+			zflag = 1;
+			gzip_program = COMPRESS_CMD;
 			break;
 		case '0':
 			arcname = DEV_0;
