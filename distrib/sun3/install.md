@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.8 2002/05/09 21:54:46 krw Exp $
+#	$OpenBSD: install.md,v 1.9 2002/05/14 01:49:25 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -98,14 +98,6 @@ md_installboot() {
 	cp ${_prefix}/ufsboot /mnt/boot
 	sync; sync; sync
 	installboot -v /mnt/boot ${_prefix}/bootxx ${_rawdev}
-}
-
-md_native_fstype() {
-	:
-}
-
-md_native_fsopts() {
-	:
 }
 
 md_checkfordisklabel() {

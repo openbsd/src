@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.13 2002/05/09 21:54:46 krw Exp $
+#	$OpenBSD: install.md,v 1.14 2002/05/14 01:49:25 krw Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -81,14 +81,6 @@ md_installboot() {
 	echo "Installing boot block..."
 	cp /mnt/usr/mdec/boot /mnt/boot
 	/sbin/disklabel -B $1
-}
-
-md_native_fstype() {
-	:
-}
-
-md_native_fsopts() {
-	:
 }
 
 md_checkfordisklabel() {

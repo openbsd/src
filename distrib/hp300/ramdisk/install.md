@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.29 2002/05/09 21:54:46 krw Exp $
+#	$OpenBSD: install.md,v 1.30 2002/05/14 01:49:25 krw Exp $
 #	$NetBSD: install.md,v 1.1.2.4 1996/08/26 15:45:14 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -117,12 +117,4 @@ __EOT
 }
 
 md_congrats() {
-}
-
-md_native_fstype() {
-	# Nothing to do.
-}
-
-md_native_fsopts() {
-	# Nothing to do.
 }

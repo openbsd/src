@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.220 2002/05/09 21:54:46 krw Exp $
+#	$OpenBSD: install.sub,v 1.221 2002/05/14 01:49:25 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -74,13 +74,13 @@
 #	md_get_cddevs()		  - return available CD-ROM devices
 #	md_get_diskdevs()	  - return available disk devices
 #	md_installboot()	  - install boot-blocks on disk
-#	md_native_fsopts()	  - native filesystem options for disk installs
-#	md_native_fstype()	  - native filesystem type for disk installs
 #	md_prep_disklabel()	  - label the root disk
 #	md_set_term()		  - set up terminal
 #
 # The following variables can be provided if required:
-#	MDTERM           - 'vt220' assumed if not provided
+#	MDTERM    - 'vt220' assumed if not provided
+#	MDFSTYPE  - nothing assumed if not provided
+#	MDFSOPTS  - nothing assumed if not provided
 . install.md
 
 set_term() {
@@ -1398,8 +1398,8 @@ mount_a_disk() {
 	# is $_DKDEVS.
 	# returns 0 on failure.
 
-	local _drive _def_partition _partition_range _partition _fstype
-	local _fsopts _md_fstype _md_fsopts
+	local _drive _def_partition _partition_range _partition
+	local _fstype _fsopts
 
 	cat << __EOT
 
@@ -1471,30 +1471,21 @@ __EOT
 The following filesystem types are supported:
 default		(deduced from the disklabel)
 ffs
+$MDFSTYPE
 __EOT
-
-	_md_fstype=`md_native_fstype`
-	_md_fsopts=`md_native_fsopts`
-	if [ "$_md_fstype" ]; then
-		echo "	$_md_fstype"
-	else
-		_md_fstype=_undefined_
-	fi
 
 	resp=
 	while [ -z "$resp" ]; do
 		ask "Which filesystem type?" default
 		case $resp in
 		default)
-			_fstype=
-			_fsopts=ro
 			;;
-		ffs)	_fstype="-t $resp"
-			_fsopts=async,ro
+		ffs)	_fstype="-t ffs"
+			_fsopts=async
 			;;
-		$_md_fstype)
+		$MDFSTYPE)
 			_fstype="-t $resp"
-			_fsopts=$_md_fsopts
+			_fsopts=$MDFSOPTS
 			;;
 		*)	echo "Invalid response: $resp"
 			# force loop to repeat
@@ -1503,8 +1494,8 @@ __EOT
 		esac
 	done
 
-	# Mount the disk
-	if ! mount $_fstype -o $_fsopts /dev/${_drive}${_partition} /mnt2; then
+	# Mount the disk read-only
+	if ! mount $_fstype -o ro,$_fsopts /dev/${_drive}${_partition} /mnt2; then
 		echo "Cannot mount disk. Aborting."
 		return 0
 	fi

@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.4 2002/05/09 21:54:46 krw Exp $
+#	$OpenBSD: install.md,v 1.5 2002/05/14 01:49:25 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,6 +41,8 @@
 
 # Machine-dependent install sets
 MDSETS=kernel
+MDFSTYPE=msdos
+MDFSOPTS=-l
 ARCH=ARCH
 
 md_set_term() {
@@ -129,14 +131,6 @@ w
 q' | ed /mnt/etc/sysctl.conf 2> /dev/null
 		echo
 	fi
-}
-
-md_native_fstype() {
-	echo msdos
-}
-
-md_native_fsopts() {
-	echo "ro,-l"
 }
 
 md_checkfordisklabel() {

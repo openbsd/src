@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.16 2002/05/09 21:54:46 krw Exp $
+#	$OpenBSD: install.md,v 1.17 2002/05/14 01:49:25 krw Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -42,6 +42,7 @@
 
 # Machine-dependent install sets
 MDSETS=kernel
+MDFSTYPE=ados
 ARCH=ARCH
 
 md_set_term() {
@@ -63,14 +64,6 @@ md_questions() {
 
 md_installboot() {
 	# Nothing needed
-}
-
-md_native_fstype() {
-	echo "ados"
-}
-
-md_native_fsopts() {
-	echo "ro"
 }
 
 md_checkfordisklabel() {

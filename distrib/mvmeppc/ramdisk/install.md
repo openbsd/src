@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.10 2002/05/09 21:54:46 krw Exp $
+#	$OpenBSD: install.md,v 1.11 2002/05/14 01:49:25 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 # Machine-dependent install sets
 MDSETS=kernel
 MDTERM=vt100
+MDFSTYPE=msdos
 ARCH=ARCH
 
 md_set_term() {
@@ -76,14 +77,6 @@ md_installboot() {
 			echo "Failed, you will not be able to boot from /dev/${1}."
 		fi
 	fi
-}
-
-md_native_fstype() {
-	echo "msdos"
-}
-
-md_native_fsopts() {
-	echo "ro"
 }
 
 md_init_mbr() {
