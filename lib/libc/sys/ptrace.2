@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ptrace.2,v 1.15 2005/03/26 13:31:36 jmc Exp $
+.\"	$OpenBSD: ptrace.2,v 1.16 2005/04/04 19:12:25 kettenis Exp $
 .\"	$NetBSD: ptrace.2,v 1.3 1996/02/23 01:39:41 jtc Exp $
 .\"
 .\" This file is in the public domain.
@@ -241,7 +241,7 @@ platforms support the following requests:
 .Bl -tag -width 12n
 .It Dv PT_GETREGS
 This request reads the traced process' machine registers into the
-.Dq Li "struct reg"
+.Dq Li struct reg
 (defined in
 .Aq Pa machine/reg.h )
 pointed to by
@@ -250,7 +250,7 @@ pointed to by
 This request is the converse of
 .Dv PT_GETREGS ;
 it loads the traced process' machine registers from the
-.Dq Li "struct reg"
+.Dq Li struct reg
 (defined in
 .Aq Pa machine/reg.h )
 pointed to by
@@ -272,7 +272,7 @@ pointed to by
 .\" the return values can be examined and potentially changed.  The
 .\" .Li u_kproc.kp_proc.p_md
 .\" element is of type
-.\" .Dq Li "struct mdproc" ,
+.\" .Dq Li struct mdproc ,
 .\" which should be declared by including
 .\" .Aq Pa sys/param.h ,
 .\" .Aq Pa sys/user.h ,
@@ -357,7 +357,7 @@ In addition, all platforms but vax support these additional requests:
 .It Dv PT_GETFPREGS
 This request reads the traced process' floating-point registers into
 the
-.Dq Li "struct fpreg"
+.Dq Li struct fpreg
 (defined in
 .Aq Pa machine/reg.h )
 pointed to by
@@ -366,7 +366,27 @@ pointed to by
 This request is the converse of
 .Dv PT_GETFPREGS ;
 it loads the traced process' floating-point registers from the
-.Dq Li "struct fpreg"
+.Dq Li struct fpreg
+(defined in
+.Aq Pa machine/reg.h )
+pointed to by
+.Fa addr .
+.El
+.Pp
+The following requests are available on i386:
+.Bl -tag -width 12n
+.It Dv PT_GETXMMREGS
+This request reads the traced process' XMM registers into the
+.Dq Li struct xmmregs
+(defined in
+.Aq Pa machine/reg.h )
+pointed to by
+.Fa addr .
+.It Dv PT_SETXMMREGS
+This request is the converse of
+.Dv PT_GETXMMREGS ;
+it loads the traced process' XMM registers from the
+.Dq Li struct xmmregs
 (defined in
 .Aq Pa machine/reg.h )
 pointed to by
@@ -489,4 +509,4 @@ Single-stepping is not available.
 .\" there is no easy way to tell whether the traced process stopped because
 .\" it made a syscall or because a signal was sent at a moment that it just
 .\" happened to have valid-looking garbage in its
-.\" .Dq Li "struct mdproc" .
+.\" .Dq Li struct mdproc .
