@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.48 2001/09/29 01:18:13 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.49 2001/12/07 15:48:26 deraadt Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 
 machine	alpha			# architecture, used by config; REQUIRED
@@ -63,7 +63,7 @@ pci*	at	ppb?
 # PCI devices
 #ahc*	at	pci? dev ? function ?		# AHA-28xx SCSI (NOT 64-BIT)
 de*	at	pci? dev ? function ?		# 21x4[012]-based Ethernet
-fxp*	at	pci? dev ? function ?		# EtherExpress 10/100B ethernet cards
+#fxp*	at	pci? dev ? function ?		# EtherExpress 10/100B ethernet cards
 #ne*	at	pci? dev ? function ?		# NE2000-compat ethernet cards
 #en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
 #ep*	at	pci? dev ? function ?		# 3COM 3c59x (untested)
@@ -85,14 +85,14 @@ isp*	at	pci? dev ? function ?		# Qlogic ISP [12]0x0 SCSI/FibreChannel
 
 # Media Independent Interface (mii) drivers
 #exphy*	at mii? phy ?				# 3Com internal PHYs
-inphy*	at mii? phy ?				# Intel 82555 PHYs
+#inphy*	at mii? phy ?				# Intel 82555 PHYs
 #icsphy* at mii? phy ?				# ICS 1890 PHYs
 #lxtphy* at mii? phy ?				# Level1 LXT970 PHYs
-nsphy*	at mii? phy ?				# NS and compatible PHYs
+#nsphy*	at mii? phy ?				# NS and compatible PHYs
 #qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
 #sqphy*	at mii? phy ?				# Seeq 8x220 PHYs
 #mtdphy* at mii? phy ?				# Myson MTD972 PHYs
-ukphy*	at mii? phy ?				# "unknown" PHYs
+#ukphy*	at mii? phy ?				# "unknown" PHYs
 
 # ISA/EISA bus support
 isa*	at	pceb?
