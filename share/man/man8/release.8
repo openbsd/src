@@ -1,4 +1,4 @@
-\.\"	$OpenBSD: release.8,v 1.2 2000/07/07 18:13:26 marc Exp $
+\.\"	$OpenBSD: release.8,v 1.3 2000/07/07 18:30:48 espie Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"
@@ -151,14 +151,7 @@ is your friend.
 .It
 .Li "mv /bsd /bsd.old && mv bsd / && chown root.wheel /bsd"
 .It
-.Li "sync; sync; reboot"
-.br
-You can also use
-.Bd -literal -compact -offset indent
-shutdown -r now
-.Ed
-.br
-for a more orderly shutdown if you're not in a hurry.
+.Li "shutdown -r now"
 .El
 .Pp
 If the system does not come up you can boot using
@@ -184,9 +177,9 @@ this re-builds your obj directories
 .It
 .Li "nice make build"
 .br
-If you've
+If you have set
 .Xr sudo 8
-set up you can combine this with the previous step using the command
+up, you can combine this with the previous step using the command
 .Bd -literal -compact -offset indent
 nice make SUDO=sudo build
 .Ed
@@ -203,7 +196,7 @@ At this point your system is up-to-date and running the code that you
 are going to make into a release.
 .Ss "4. Make and validate the system release"
 .Pp
-The system release consist of a generic kernel, one
+The system release consists of a generic kernel, one
 .Tn CD\-ROM
 and two floppy boot-able file-systems, the release
 .Sq tarballs ,
