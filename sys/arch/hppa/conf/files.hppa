@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.6 1998/12/23 17:48:46 mickey Exp $
+#	$OpenBSD: files.hppa,v 1.7 1998/12/28 17:26:44 mickey Exp $
 #
 # hppa-specific configuration info
 
@@ -132,6 +132,7 @@ attach	ie at gsc with ie_gsc
 file	arch/hppa/gsc/if_ie_gsc.c	ie_gsc
 file	dev/ic/i82586.c			ie
 
+#this is for ie debugging
 #device	iz: ether
 #attach	iz at gsc
 #file	arch/hppa/gsc/if_i596.c		iz
@@ -145,14 +146,11 @@ attach	hil at gsc
 file	arch/hppa/gsc/hil.c		hil
 
 # these we don't know yet
-#device	ciolan: ether
-#attach	ciolan at gsc
-#file	arch/hppa/gsc/ciolan.c		ciolan
-
 #device	medusa: fddi
 #attach	medusa at gsc
 #file	arch/hppa/gsc/medusa.c		medusa
 
+# ANSI/VITA 26-1998 Gbit packet switching network iface
 #device	myri
 #attach	myri at gsc
 #file	arch/hppa/gsc/myri.c		myri
