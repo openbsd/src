@@ -1,63 +1,25 @@
-#	$Id: Makefile,v 1.3 1998/08/31 08:16:25 brian Exp $
+#	$Id: Makefile,v 1.4 1998/09/17 00:47:13 brian Exp $
 
 PROG=	ppp
-SRCS=	arp.c async.c auth.c bundle.c cbcp.c ccp.c chap.c chat.c command.c \
-	datalink.c deflate.c defs.c filter.c fsm.c hdlc.c id.c ip.c \
-	ipcp.c iplist.c lcp.c link.c log.c lqr.c main.c mbuf.c modem.c \
+SRCS=	arp.c async.c auth.c bundle.c cbcp.c ccp.c chap.c chap_ms.c chat.c \
+	command.c datalink.c deflate.c defs.c filter.c fsm.c hdlc.c id.c \
+	ip.c ipcp.c iplist.c lcp.c link.c log.c lqr.c main.c mbuf.c modem.c \
 	mp.c pap.c physical.c pred.c probe.c prompt.c route.c server.c \
 	sig.c slcompress.c systems.c throughput.c timer.c tun.c vjcomp.c
-CFLAGS+=-Wall
-LDADD+= -lutil -lz
-DPADD+=	${LIBUTIL} ${LIBZ}
+CFLAGS+=-Wall -DHAVE_DES
+LDADD+= -ldes -lutil -lz
+DPADD+=	${LIBDES} ${LIBUTIL} ${LIBZ}
 BINMODE=4554
 BINOWN=	root
 BINGRP=	network
-
-OPSYS!=	uname -s
-.if (${OPSYS} == "OpenBSD")
 MAN=	ppp.8
-.else
-MAN8=	ppp.8
-LDADD+=	-lmd -lcrypt
-DPADD+= ${LIBMD} ${LIBCRYPT}
-.endif
-
-.if defined(RELEASE_CRUNCH)
-CFLAGS+=-DRELEASE_CRUNCH
-.endif
 
 .if defined(NOALIAS)
 CFLAGS+=-DNOALIAS
 .else
-.if !defined(RELEASE_CRUNCH)
-.if (${OPSYS} == "OpenBSD")
 CFLAGS+=-DNO_FW_PUNCH
-SRCS+=	alias.c alias_cmd.c alias_cuseeme.c alias_db.c alias_ftp.c alias_irc.c \
-	alias_nbt.c alias_util.c
-.else
-SRCS+=	alias_cmd.c
-LDADD+=	-lalias
-DPADD+= ${LIBALIAS}
-.endif
-.endif
-.endif
-
-.if exists(${.CURDIR}/../../secure) && !defined(NOCRYPT) && !defined(NOSECURE) && !defined(RELEASE_CRUNCH)
-DISTRIBUTION=des
-CFLAGS+=-DHAVE_DES
-SRCS+=	chap_ms.c
-LDADD+= -ldes
-DPADD+= ${LIBDES}
-.endif
-
-.if defined(RELEASE_CRUNCH)
-# We must create these objects because the crunchgen will link them,
-# and we don't want any unused symbols to spoil the final link.
-CFLAGS+=-DNOALIAS
-SRCS+=	alias_cmd.c chap_ms.c
-chap_ms.o alias_cmd.o:
-	>null_${.PREFIX}.c
-	cc -c -o ${.TARGET} null_${.PREFIX}.c
+SRCS+=	alias.c alias_cmd.c alias_cuseeme.c alias_db.c alias_ftp.c \
+	alias_irc.c alias_nbt.c alias_util.c
 .endif
 
 .include <bsd.prog.mk>
