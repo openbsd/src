@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.293 2002/04/02 17:14:47 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.294 2002/04/08 01:52:34 frantzen Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -389,6 +389,7 @@ clcs*	at pci? dev ? function ?		# CS4280 CrystalClear audio
 clct*	at pci? dev ? function ?		# CS4281 CrystalClear audio
 fms*	at pci? dev ? function ?		# Forte Media FM801
 maestro* at pci? dev ? function ?		# ESS Maestro PCI
+esa*	at pci? dev ? function ?		# ESS Maestro3 PCI
 yds*	at pci? dev ? function ?		# Yamaha YMF Audio
 emu*	at pci? dev ? function ?		# SB Live!
 sb0	at isa? port 0x220 irq 5 drq 1		# SoundBlaster
@@ -441,6 +442,7 @@ audio*	at auvia?
 audio*	at fms?
 audio*	at uaudio?
 audio*	at maestro?
+audio*	at esa?
 audio*	at yds?
 audio*	at emu?
 
