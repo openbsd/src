@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndbm.c,v 1.17 2003/06/25 21:15:05 deraadt Exp $	*/
+/*	$OpenBSD: ndbm.c,v 1.18 2004/05/03 17:27:50 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)dbm.c	8.6 (Berkeley) 11/7/95";
 #else
-static const char rcsid[] = "$OpenBSD: ndbm.c,v 1.17 2003/06/25 21:15:05 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ndbm.c,v 1.18 2004/05/03 17:27:50 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,7 +59,7 @@ static const char rcsid[] = "$OpenBSD: ndbm.c,v 1.17 2003/06/25 21:15:05 deraadt
  */
 static DBM *__cur_db;
 
-static DBM *_dbm_open(const char *, const char *, int, int);
+static DBM *_dbm_open(const char *, const char *, int, mode_t);
 
 /*
  * Returns:
@@ -192,7 +192,8 @@ static DBM *
 _dbm_open(file, suff, flags, mode)
 	const char *file;
 	const char *suff;
-	int flags, mode;
+	int flags;
+	mode_t mode;
 {
 	HASHINFO info;
 	char path[MAXPATHLEN];
@@ -224,7 +225,8 @@ _dbm_open(file, suff, flags, mode)
 DBM *
 dbm_open(file, flags, mode)
 	const char *file;
-	int flags, mode;
+	int flags;
+	mode_t mode;
 {
 
 	return(_dbm_open(file, DBM_SUFFIX, flags, mode));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndbm.h,v 1.5 2003/06/02 19:34:12 millert Exp $	*/
+/*	$OpenBSD: ndbm.h,v 1.6 2004/05/03 17:27:50 millert Exp $	*/
 /*	$NetBSD: ndbm.h,v 1.6 1995/07/20 23:31:11 jtc Exp $	*/
 
 /*-
@@ -54,25 +54,24 @@
 #define	DBM_SUFFIX	".db"
 
 typedef struct {
-	char *dptr;
-	int dsize;
+	void *dptr;
+	size_t dsize;
 } datum;
 
 typedef DB DBM;
 #define	dbm_pagfno(a)	DBM_PAGFNO_NOT_AVAILABLE
 
 __BEGIN_DECLS
+int	 dbm_clearerr(DBM *);
 void	 dbm_close(DBM *);
 int	 dbm_delete(DBM *, datum);
+int	 dbm_error(DBM *);
 datum	 dbm_fetch(DBM *, datum);
 datum	 dbm_firstkey(DBM *);
-long	 dbm_forder(DBM *, datum);
 datum	 dbm_nextkey(DBM *);
-DBM	*dbm_open(const char *, int, int);
+DBM	*dbm_open(const char *, int, mode_t);
 int	 dbm_store(DBM *, datum, datum, int);
 int	 dbm_dirfno(DBM *);
-int	 dbm_error(DBM *);
-int	 dbm_clearerr(DBM *);
 int	 dbm_rdonly(DBM *);
 __END_DECLS
 

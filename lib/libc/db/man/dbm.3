@@ -1,4 +1,4 @@
-.\" $OpenBSD: dbm.3,v 1.8 2003/06/17 21:56:23 millert Exp $
+.\" $OpenBSD: dbm.3,v 1.9 2004/05/03 17:27:50 millert Exp $
 .\"
 .\" Copyright (c) 1999 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -53,8 +53,8 @@ The key and the content data are described by the
 data structure:
 .Bd -literal -offset indent
 typedef struct {
-	char *dptr;
-	int dsize;
+	void *dptr;
+	size_t dsize;
 } datum
 .Ed
 .Pp

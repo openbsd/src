@@ -1,5 +1,5 @@
 .\" David Leonard, 1998. Placed in the public domain.
-.\" $OpenBSD: ndbm.3,v 1.13 2003/10/21 20:30:16 jmc Exp $
+.\" $OpenBSD: ndbm.3,v 1.14 2004/05/03 17:27:50 millert Exp $
 .Dd May 13, 1998
 .Dt NDBM 3
 .Os
@@ -35,7 +35,7 @@
 .Ft datum
 .Fn dbm_nextkey "DBM *db"
 .Ft "DBM *"
-.Fn dbm_open "const char *file" "int flags" "int mode"
+.Fn dbm_open "const char *file" "int flags" "mode_t mode"
 .Ft int
 .Fn dbm_pagfno "DBM *db"
 .Ft int
@@ -51,8 +51,8 @@ The key and the content data are described by the
 data structure:
 .Bd -literal -offset indent
 typedef struct {
-	char *dptr;
-	int dsize;
+	void *dptr;
+	size_t dsize;
 } datum
 .Ed
 .Pp
@@ -198,4 +198,5 @@ and corresponds to those errors described in
 .Sh SEE ALSO
 .Xr open 2 ,
 .Xr db 3 ,
+.Xr dbm 3 ,
 .Xr hash 3
