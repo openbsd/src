@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.58 2001/07/05 12:36:50 ho Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.59 2001/08/11 05:27:36 angelos Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -1378,8 +1378,8 @@ exchange_finalize (struct message *msg)
       exchange->recv_key = 0;
       exchange->sent_key = 0;
       exchange->keynote_key = 0;
-      exchange->policy_id = -1;
       msg->isakmp_sa->policy_id = exchange->policy_id;
+      exchange->policy_id = -1;
       msg->isakmp_sa->id_i_len = exchange->id_i_len;
       msg->isakmp_sa->id_r_len = exchange->id_r_len;
       msg->isakmp_sa->initiator = exchange->initiator;
