@@ -1,4 +1,4 @@
-/*	$OpenBSD: stivar.h,v 1.12 2003/08/17 05:52:41 mickey Exp $	*/
+/*	$OpenBSD: stivar.h,v 1.13 2003/08/19 02:52:38 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -53,6 +53,7 @@ struct sti_softc {
 	u_int	sc_fontmaxcol;		/* ...or in off-screen frame buffer */
 	u_int	sc_fontbase;
 
+	u_int8_t sc_rcmap[STI_NCMAP], sc_gcmap[STI_NCMAP], sc_bcmap[STI_NCMAP];
 	vaddr_t	sc_code;
 
 	sti_init_t	init;

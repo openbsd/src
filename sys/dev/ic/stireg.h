@@ -1,4 +1,4 @@
-/*	$OpenBSD: stireg.h,v 1.7 2003/08/19 02:25:11 mickey Exp $	*/
+/*	$OpenBSD: stireg.h,v 1.8 2003/08/19 02:52:38 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -34,6 +34,7 @@
 #define	STI_REGION_MAX	8
 #define	STI_MONITOR_MAX	256
 #define	STI_DEVNAME_LEN	32
+#define	STI_NCMAP	256
 
 /* code ROM definitions */
 #define	STI_BEGIN	0

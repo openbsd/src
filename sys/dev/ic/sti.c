@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.30 2003/08/19 02:25:11 mickey Exp $	*/
+/*	$OpenBSD: sti.c,v 1.31 2003/08/19 02:52:38 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -115,6 +115,7 @@ int sti_init(struct sti_softc *sc, int mode);
 int sti_inqcfg(struct sti_softc *sc, struct sti_inqconfout *out);
 void sti_bmove(struct sti_softc *sc, int, int, int, int, int, int,
     enum sti_bmove_funcs);
+int sti_setcment(struct sti_softc *sc, u_int i, u_char r, u_char g, u_char b);
 int sti_fetchfonts(struct sti_softc *sc, struct sti_inqconfout *cfg,
     u_int32_t addr);
 void sti_attach_deferred(void *);
@@ -562,6 +563,26 @@ sti_bmove(sc, x1, y1, x2, y2, h, w, f)
 }
 
 int
+sti_setcment(struct sti_softc *sc, u_int i, u_char r, u_char g, u_char b)
+{
+	struct {
+		struct sti_scmentflags flags;
+		struct sti_scmentin in;
+		struct sti_scmentout out;
+	} a;
+
+	bzero(&a, sizeof(a));
+
+	a.flags.flags = STI_SCMENTF_WAIT;
+	a.in.entry = i;
+	a.in.value = (r << 16) | (g << 8) | b;
+
+	(*sc->scment)(&a.flags, &a.in, &a.out, &sc->sc_cfg);
+
+	return a.out.errno;
+}
+
+int
 sti_ioctl(v, cmd, data, flag, p)
 	void *v;
 	u_long cmd;
@@ -571,8 +592,9 @@ sti_ioctl(v, cmd, data, flag, p)
 {
 	struct sti_softc *sc = v;
 	struct wsdisplay_fbinfo *wdf;
-	u_int mode;
-	int ret;
+	struct wsdisplay_cmap *cmapp;
+	u_int mode, idx, count;
+	int i, ret;
 
 	ret = 0;
 	switch (cmd) {
@@ -608,7 +630,50 @@ sti_ioctl(v, cmd, data, flag, p)
 		break;
 
 	case WSDISPLAYIO_GETCMAP:
+		if (sc->scment == NULL)
+			return ENOTTY;
+		cmapp = (struct wsdisplay_cmap *)data;
+		idx = cmapp->index;
+		count = cmapp->count;
+		if (idx > STI_NCMAP || idx + count >= STI_NCMAP)
+			return EINVAL;
+		if ((ret = copyout(&sc->sc_rcmap[idx], cmapp->red, count)))
+			break;
+		if ((ret = copyout(&sc->sc_gcmap[idx], cmapp->green, count)))
+			break;
+		if ((ret = copyout(&sc->sc_bcmap[idx], cmapp->blue, count)))
+			break;
+		break;
+
 	case WSDISPLAYIO_PUTCMAP:
+		if (sc->scment == NULL)
+			return ENOTTY;
+		cmapp = (struct wsdisplay_cmap *)data;
+		idx = cmapp->index;
+		count = cmapp->count;
+		if (idx > STI_NCMAP || idx + count >= STI_NCMAP)
+			return EINVAL;
+		if ((ret = copyin(cmapp->red, &sc->sc_rcmap[idx], count)))
+			break;
+		if ((ret = copyin(cmapp->green, &sc->sc_gcmap[idx], count)))
+			break;
+		if ((ret = copyin(cmapp->blue, &sc->sc_bcmap[idx], count)))
+			break;
+		for (i = idx + count - 1; i >= idx; i--)
+			if ((ret = sti_setcment(sc, i, sc->sc_rcmap[i],
+			    sc->sc_gcmap[i], sc->sc_bcmap[i]))) {
+#ifdef STIDEBUG
+				printf("sti_ioctl: "
+				    "sti_setcment(%d, %u, %u, %u): %d\n", i,
+				    (u_int)sc->sc_rcmap[i],
+				    (u_int)sc->sc_gcmap[i],
+				    (u_int)sc->sc_bcmap[i]);
+#endif
+				ret = EINVAL;
+				break;
+			}
+		break;
+
 	case WSDISPLAYIO_SVIDEO:
 	case WSDISPLAYIO_GVIDEO:
 	case WSDISPLAYIO_GCURPOS:
@@ -617,7 +682,7 @@ sti_ioctl(v, cmd, data, flag, p)
 	case WSDISPLAYIO_GCURSOR:
 	case WSDISPLAYIO_SCURSOR:
 	default:
-		return (-1);	/* not supported yet */
+		return (ENOTTY);	/* not supported yet */
 	}
 
 	return (ret);
