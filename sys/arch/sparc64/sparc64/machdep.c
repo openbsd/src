@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.35 2002/02/17 22:59:53 maja Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.36 2002/02/18 17:22:05 jason Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -138,6 +138,12 @@
 
 #include <sparc64/sparc64/cache.h>
 
+#include "pckbc.h"
+#include "pckbd.h"
+#if (NPCKBC > 0) && (NPCKBD == 0)
+#include <dev/ic/pckbcvar.h>
+#endif
+
 /* #include "fb.h" */
 
 int bus_space_debug = 0; /* This may be used by macros elsewhere. */
@@ -229,6 +235,21 @@ int bus_stream_asi[] = {
 	ASI_PRIMARY_LITTLE,			/* PCI I/O space */
 	0
 };
+#endif
+
+#if (NPCKBC > 0) && (NPCKBD == 0)
+/*
+ * This is called by the pckbc driver if no pckbd is configured.
+ * On the i386, it is used to glue in the old, deprecated console
+ * code.  On the sparc64, it does nothing.
+ */
+int
+pckbc_machdep_cnattach(kbctag, kbcslot)
+	pckbc_tag_t kbctag;
+	pckbc_slot_t kbcslot;
+{
+	return (ENXIO);
+}
 #endif
 
 /*
