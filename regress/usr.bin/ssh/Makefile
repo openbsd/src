@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.28 2004/04/27 09:47:30 djm Exp $
+#	$OpenBSD: Makefile,v 1.29 2004/06/13 13:51:02 dtucker Exp $
 
 REGRESS_TARGETS=	t1 t2 t3 t4 t5 t6 t7
 
@@ -26,6 +26,7 @@ LTESTS= 	connect \
 		agent-ptrace \
 		keyscan \
 		keygen-change \
+		scp \
 		sftp \
 		sftp-cmds \
 		sftp-badcmds \
@@ -39,7 +40,8 @@ CLEANFILES+=	authorized_keys_${USER} known_hosts pidfile \
 		ssh_config ssh_proxy sshd_config sshd_proxy \
 		rsa.pub rsa rsa1.pub rsa1 host.rsa host.rsa1 \
 		rsa-agent rsa-agent.pub rsa1-agent rsa1-agent.pub \
-		ls.copy banner.in banner.out empty.in
+		ls.copy banner.in banner.out empty.in \
+		scp-ssh-wrapper.exe
 
 #LTESTS+=	ssh-com ssh-com-client ssh-com-keygen ssh-com-sftp
 
