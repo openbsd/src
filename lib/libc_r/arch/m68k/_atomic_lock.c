@@ -1,4 +1,4 @@
-/*	$OpenBSD: _atomic_lock.c,v 1.4 1998/12/21 13:03:44 d Exp $	*/
+/*	$OpenBSD: _atomic_lock.c,v 1.5 1999/03/10 09:32:01 d Exp $	*/
 /*
  * Atomic lock for m68k
  */
@@ -20,10 +20,18 @@ _atomic_lock(volatile _spinlock_lock_t *lock)
 	 *      old = 0;
 	 *	CAS(old, 1, *lock);
 	 *	if (old == 1) { lock was acquired }
+	 *
+	 * From the MC68030 User's Manual (Motorola), page `3-13':
+	 *    CAS Dc,Du,<ea>:
+	 *	(<ea> - Dc) -> cc;
+	 *	if Z then Du -> <ea>
+	 *	else      <ea> -> Dc;
 	 */
 	old = _SPINLOCK_UNLOCKED;
-	__asm__("casl %0, %2, %1" : "=d"(old), "=m"(*lock)
-				  : "d"(_SPINLOCK_LOCKED), "0"(old));
+	__asm__("casl %0, %2, %1" : "=d" (old), "=m" (*lock)
+				  : "d" (_SPINLOCK_LOCKED),
+				    "0" (old),  "1" (*lock)
+				  : "cc");
 	return (old != _SPINLOCK_UNLOCKED);
 }
 
