@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365.c,v 1.9 1999/08/08 01:07:02 niklas Exp $	*/
+/*	$OpenBSD: i82365.c,v 1.10 2000/02/02 16:49:05 fgsch Exp $	*/
 /*	$NetBSD: i82365.c,v 1.10 1998/06/09 07:36:55 thorpej Exp $	*/
 
 /*
@@ -62,8 +62,8 @@
 #define	PCIC_VENDOR_I82365SLR2		3
 #define	PCIC_VENDOR_CIRRUS_PD6710	4
 #define	PCIC_VENDOR_CIRRUS_PD672X	5
-#define PCIC_VENDOR_VADEM_VG468		6
-#define PCIC_VENDOR_VADEM_VG469		7
+#define	PCIC_VENDOR_VADEM_VG468		6
+#define	PCIC_VENDOR_VADEM_VG469		7
 
 static char *pcic_vendor_to_string[] = {
 	"Unknown",
@@ -333,6 +333,7 @@ pcic_attach_socket(h)
 
 	/* initialize the rest of the handle */
 
+	h->shutdown = 0;
 	h->memalloc = 0;
 	h->ioalloc = 0;
 	h->ih_irq = 0;
@@ -402,7 +403,8 @@ pcic_event_thread(arg)
 		} else {
 			splx(s);
 			/* sleep .25s to be enqueued chatterling interrupts */
-			(void) tsleep((caddr_t)pcic_event_thread, PWAIT, "pcicss", hz/4);
+			(void) tsleep((caddr_t)pcic_event_thread, PWAIT,
+			    "pcicss", hz/4);
 		}
 		s = splhigh();
 		SIMPLEQ_REMOVE_HEAD(&h->events, pe, pe_q);
@@ -421,9 +423,11 @@ pcic_event_thread(arg)
 				if ((pe2 = SIMPLEQ_NEXT(pe1, pe_q)) == NULL)
 					break;
 				if (pe2->pe_type == PCIC_EVENT_INSERTION) {
-					SIMPLEQ_REMOVE_HEAD(&h->events, pe1, pe_q);
+					SIMPLEQ_REMOVE_HEAD(&h->events, pe1,
+					    pe_q);
 					free(pe1, M_TEMP);
-					SIMPLEQ_REMOVE_HEAD(&h->events, pe2, pe_q);
+					SIMPLEQ_REMOVE_HEAD(&h->events, pe2,
+					    pe_q);
 					free(pe2, M_TEMP);
 				}
 			}
@@ -445,9 +449,11 @@ pcic_event_thread(arg)
 				if ((pe2 = SIMPLEQ_NEXT(pe1, pe_q)) == NULL)
 					break;
 				if (pe2->pe_type == PCIC_EVENT_REMOVAL) {
-					SIMPLEQ_REMOVE_HEAD(&h->events, pe1, pe_q);
+					SIMPLEQ_REMOVE_HEAD(&h->events, pe1,
+					    pe_q);
 					free(pe1, M_TEMP);
-					SIMPLEQ_REMOVE_HEAD(&h->events, pe2, pe_q);
+					SIMPLEQ_REMOVE_HEAD(&h->events, pe2,
+					    pe_q);
 					free(pe2, M_TEMP);
 				}
 			}
@@ -656,7 +662,7 @@ pcic_intr_socket(h)
 		    PCIC_IF_STATUS_CARDDETECT_PRESENT) {
 			if (h->laststate != PCIC_LASTSTATE_PRESENT) {
 				DPRINTF(("%s: enqueing INSERTION event\n",
-						 h->sc->dev.dv_xname));
+				    h->sc->dev.dv_xname));
 				pcic_queue_event(h, PCIC_EVENT_INSERTION);
 			}
 			h->laststate = PCIC_LASTSTATE_PRESENT;
@@ -664,15 +670,16 @@ pcic_intr_socket(h)
 			if (h->laststate == PCIC_LASTSTATE_PRESENT) {
 				/* Deactivate the card now. */
 				DPRINTF(("%s: deactivating card\n",
-						 h->sc->dev.dv_xname));
+				    h->sc->dev.dv_xname));
 				pcic_deactivate_card(h);
 
 				DPRINTF(("%s: enqueing REMOVAL event\n",
-						 h->sc->dev.dv_xname));
+				    h->sc->dev.dv_xname));
 				pcic_queue_event(h, PCIC_EVENT_REMOVAL);
 			}
-			h->laststate = ((statreg & PCIC_IF_STATUS_CARDDETECT_MASK) == 0)
-				? PCIC_LASTSTATE_EMPTY : PCIC_LASTSTATE_HALF;
+			h->laststate =
+			    ((statreg & PCIC_IF_STATUS_CARDDETECT_MASK) == 0)
+			    ? PCIC_LASTSTATE_EMPTY : PCIC_LASTSTATE_HALF;
 		}
 	}
 	if (cscreg & PCIC_CSC_READY) {
