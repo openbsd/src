@@ -1,4 +1,4 @@
-/*	$OpenBSD: size.c,v 1.3 1996/06/26 05:39:18 deraadt Exp $	*/
+/*	$OpenBSD: size.c,v 1.4 1996/09/03 11:16:47 deraadt Exp $	*/
 /*	$NetBSD: size.c,v 1.7 1996/01/14 23:07:12 pk Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)size.c	8.2 (Berkeley) 12/9/93";
 #endif
-static char rcsid[] = "$OpenBSD: size.c,v 1.3 1996/06/26 05:39:18 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: size.c,v 1.4 1996/09/03 11:16:47 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -232,6 +232,11 @@ show_archive(count, fname, fp)
 				warnx("%s: bad format", name);
 				rval = 1;
 			}
+		} else if (N_GETMID(exec_head) != MID_MACHINE) {
+			if (!ignore_bad_archive_entries) {
+				warnx("%s: wrong architecture", name);
+				rval = 1;
+			}
 		} else {
 			(void)fseek(fp, (long)-sizeof(exec_head),
 			    SEEK_CUR);
@@ -271,6 +276,11 @@ show_objfile(count, name, fp)
 
 	if (N_BADMAG(head)) {
 		warnx("%s: bad format", name);
+		return(1);
+	}
+
+	if (N_GETMID(head) != MID_MACHINE) {
+		warnx("%s: wrong architecture", name);
 		return(1);
 	}
 
