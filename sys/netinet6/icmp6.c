@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.73 2003/06/24 07:55:12 itojun Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.74 2003/08/07 09:11:24 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -2603,8 +2603,8 @@ icmp6_redirect_output(m0, rt)
 		m->m_pkthdr.len = m->m_len = p - (u_char *)ip6;
 
 		/* connect m0 to m */
-		m_cat(m, m0);
 		m->m_pkthdr.len += m0->m_pkthdr.len;
+		m_cat(m, m0);
 		m0 = NULL;
 	}
 noredhdropt:
