@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re.c,v 1.10 2004/10/26 20:22:46 pvalchev Exp $	*/
+/*	$OpenBSD: if_re.c,v 1.11 2004/10/29 00:33:20 pvalchev Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -800,7 +800,7 @@ re_allocmem(struct rl_softc *sc)
 	error = bus_dmamem_map(sc->sc_dmat, &sc->rl_ldata.rl_rx_listseg,
 	    1, RL_RX_LIST_SZ,
 	    (caddr_t *)&sc->rl_ldata.rl_rx_list, BUS_DMA_NOWAIT);
-	memset(sc->rl_ldata.rl_rx_list, 0, RL_TX_LIST_SZ);
+	memset(sc->rl_ldata.rl_rx_list, 0, RL_RX_LIST_SZ);
 
 	error = bus_dmamap_load(sc->sc_dmat, sc->rl_ldata.rl_rx_list_map,
 	     sc->rl_ldata.rl_rx_list, RL_RX_LIST_SZ, NULL, BUS_DMA_NOWAIT);
