@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKC,v 1.9 2000/10/17 15:59:07 jason Exp $
+#	$OpenBSD: RAMDISKC,v 1.10 2000/10/27 17:36:19 aaron Exp $
 #	from: OpenBSD: INST,v 1.19 1996/11/05 03:49:13 tholo Exp 
 #
 #	Install kernels no longer support X.
@@ -225,6 +225,7 @@ rl*	at pci? dev ? function ?		# RealTek 81[23]9 ethernet
 #vr*	at pci? dev ? function ?		# VIA Rhine ethernet
 wb*	at pci? dev ? function ?		# Winbond W89C840F ethernet
 dc*	at pci? dev ? function ?		# 21143, "tulip" clone ethernet
+dc*	at cardbus? dev ? function ?		# 21143, "tulip" clone ethernet
 
 # Wireless network cards
 wi*	at pcmcia? function ?			# WaveLAN IEEE 802.11DS
