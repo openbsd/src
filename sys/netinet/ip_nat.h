@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_nat.h,v 1.5 1997/02/11 22:23:27 kstailey Exp $	*/
+/*	$OpenBSD: ip_nat.h,v 1.6 1997/04/18 06:10:07 niklas Exp $	*/
 /*
  * (C)opyright 1995 by Darren Reed.
  *
@@ -112,7 +112,7 @@ typedef	struct	natstat	{
 #define	IPN_TCPUDP	3
 
 extern nat_t *nat_table[2][NAT_SIZE];
-extern int nat_ioctl __P((caddr_t, int, int));
+extern int nat_ioctl __P((caddr_t, u_long, int));
 extern nat_t *nat_outlookup __P((int, struct in_addr, u_short, struct in_addr,
 				 u_short));
 extern nat_t *nat_inlookup __P((int, struct in_addr, u_short, struct in_addr,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_nat.c,v 1.10 1997/02/13 18:13:31 kstailey Exp $	*/
+/*	$OpenBSD: ip_nat.c,v 1.11 1997/04/18 06:10:07 niklas Exp $	*/
 /*
  * (C)opyright 1995-1996 by Darren Reed.
  *
@@ -165,7 +165,8 @@ fix_incksum(sp, n)
 int
 nat_ioctl(data, cmd, mode)
 	caddr_t data;
-	int cmd, mode;
+	u_long cmd;
+	int mode;
 {
 	register ipnat_t *nat, *n = NULL, **np = NULL;
 	ipnat_t natd;

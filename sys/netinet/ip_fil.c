@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_fil.c,v 1.12 1997/03/31 15:52:45 kstailey Exp $	*/
+/*	$OpenBSD: ip_fil.c,v 1.13 1997/04/18 06:10:08 niklas Exp $	*/
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
  *
@@ -75,7 +75,7 @@ static	int	iplused = 0;
 static	int	(*fr_savep) __P((ip_t *, int, struct ifnet *, int,
 				struct mbuf **));
 static	void	frflush __P((caddr_t));
-static	int	frrequest __P((int, caddr_t, int));
+static	int	frrequest __P((u_long, caddr_t, int));
 
 #if _BSDI_VERSION >= 199501
 # include <sys/device.h>
@@ -406,8 +406,9 @@ iplioctl(dev, cmd, data, mode
 
 static int
 frrequest(req, data, set)
-     int req, set;
+     u_long req;
      caddr_t data;
+     int set;
 {
 	register frentry_t *fp, *f, **fprev;
 	register frentry_t **ftail;
