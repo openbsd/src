@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.85 2003/07/15 03:51:12 jason Exp $
+#	$OpenBSD: GENERIC,v 1.86 2003/07/23 18:16:05 jason Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -35,17 +35,19 @@ ebus*	at pci?
 # PCI Ethernet
 hme*	at pci? dev ? function ?
 gem*	at pci? dev ? function ?
-#ti*	at pci? dev ? function ?		# Alteon Tigon 1Gb ethernet
-fxp*	at pci? dev ? function ?		# EtherExpress 10/100B ethernet
-xl*	at pci? dev ? function ?		# 3C9xx ethernet
-dc*	at pci? dev ? function ?		# 21143, "tulip" clone ethernet
-em*	at pci? dev ? function ?		# Intel Pro/1000 ethernet
+#ti*	at pci? dev ? function ?	# Alteon Tigon 1Gb ethernet
+fxp*	at pci? dev ? function ?	# EtherExpress 10/100B ethernet
+xl*	at pci? dev ? function ?	# 3C9xx ethernet
+dc*	at pci? dev ? function ?	# 21143, "tulip" clone ethernet
+em*	at pci? dev ? function ?	# Intel Pro/1000 ethernet
 
 # PCI SCSI
-siop*	at pci? dev ? function ?
-isp*	at pci? dev ? function ?
-option ISP_COMPILE_FW=1
+ahc*	at pci? dev ? function ?	# Adaptec 2940 SCSI controllers
+scsibus* at ahc?
+siop*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
 scsibus* at siop?
+isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
+option ISP_COMPILE_FW=1
 
 # PCI Display
 vgafb*		at pci? dev ? function ?
