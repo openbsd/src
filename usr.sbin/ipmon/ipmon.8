@@ -1,11 +1,11 @@
-.\"     $OpenBSD: ipmon.8,v 1.6 1998/11/18 01:41:08 aaron Exp $          
+.\"     $OpenBSD: ipmon.8,v 1.7 1998/12/28 10:08:42 hugh Exp $          
 .TH ipmon 8
 .SH NAME
 ipmon \- monitors /dev/ipl for logged packets
 .SH SYNOPSIS
 .B ipmon
 [
-.B \-aFhnstvxX
+.B \-aDFhnstvxX
 ] [
 .B "\-o [NSI]"
 ] [
@@ -38,6 +38,9 @@ are displayed to the same output 'device' (stderr or syslog).
 .B "\-f <device>"
 specify an alternative device/file from which to read the log information
 for normal IP Filter log records.
+.TP
+.B \-D
+When set ipmon will fork and become a daemon.
 .TP
 .B \-F
 Flush the current packet log buffer.  The number of bytes flushed is displayed,
