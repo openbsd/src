@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypcat.c,v 1.10 2003/07/02 21:04:10 deraadt Exp $ */
+/*	$OpenBSD: ypcat.c,v 1.11 2003/07/10 00:06:52 david Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
@@ -27,7 +27,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypcat.c,v 1.10 2003/07/02 21:04:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypcat.c,v 1.11 2003/07/10 00:06:52 david Exp $";
 #endif
 
 #include <sys/param.h>
@@ -36,6 +36,7 @@ static char rcsid[] = "$OpenBSD: ypcat.c,v 1.10 2003/07/02 21:04:10 deraadt Exp 
 #include <unistd.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <ctype.h>
 
 #include <rpc/rpc.h>

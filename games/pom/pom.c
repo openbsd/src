@@ -1,4 +1,4 @@
-/*	$OpenBSD: pom.c,v 1.9 2003/06/03 03:01:40 millert Exp $	*/
+/*	$OpenBSD: pom.c,v 1.10 2003/07/10 00:03:01 david Exp $	*/
 /*    $NetBSD: pom.c,v 1.6 1996/02/06 22:47:29 jtc Exp $      */
 
 /*
@@ -42,7 +42,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)pom.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: pom.c,v 1.9 2003/06/03 03:01:40 millert Exp $";
+static char rcsid[] = "$OpenBSD: pom.c,v 1.10 2003/07/10 00:03:01 david Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,6 +62,7 @@ static char rcsid[] = "$OpenBSD: pom.c,v 1.9 2003/06/03 03:01:40 millert Exp $";
 #include <sys/types.h>
 #include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include <err.h>

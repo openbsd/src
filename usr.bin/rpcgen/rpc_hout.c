@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_hout.c,v 1.14 2003/06/25 16:04:45 deraadt Exp $	*/
+/*	$OpenBSD: rpc_hout.c,v 1.15 2003/07/10 00:06:51 david Exp $	*/
 /*	$NetBSD: rpc_hout.c,v 1.4 1995/06/11 21:49:55 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,6 +39,7 @@ static char sccsid[] = "@(#)rpc_hout.c 1.12 89/02/22 (C) 1987 SMI";
  */
 #include <sys/cdefs.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <ctype.h>
 #include "rpc_parse.h"
 #include "rpc_util.h"

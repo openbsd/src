@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppt.c,v 1.9 2003/06/03 03:01:40 millert Exp $	*/
+/*	$OpenBSD: ppt.c,v 1.10 2003/07/10 00:03:01 david Exp $	*/
 /*	$NetBSD: ppt.c,v 1.4 1995/03/23 08:35:40 cgd Exp $	*/
 
 /*
@@ -40,13 +40,14 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ppt.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: ppt.c,v 1.9 2003/06/03 03:01:40 millert Exp $";
+static const char rcsid[] = "$OpenBSD: ppt.c,v 1.10 2003/07/10 00:03:01 david Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <err.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <vis.h>

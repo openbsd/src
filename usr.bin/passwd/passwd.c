@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.16 2003/06/03 02:56:14 millert Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.17 2003/07/10 00:06:51 david Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -37,10 +37,11 @@ char copyright[] =
 
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)passwd.c	5.5 (Berkeley) 7/6/91";*/
-static const char rcsid[] = "$OpenBSD: passwd.c,v 1.16 2003/06/03 02:56:14 millert Exp $";
+static const char rcsid[] = "$OpenBSD: passwd.c,v 1.17 2003/07/10 00:06:51 david Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <err.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwspawn.c,v 1.8 2003/06/03 02:56:23 millert Exp $	*/
+/*	$OpenBSD: wwspawn.c,v 1.9 2003/07/10 00:06:52 david Exp $	*/
 /*	$NetBSD: wwspawn.c,v 1.4 1995/12/21 08:39:57 mycroft Exp $	*/
 
 /*
@@ -37,12 +37,13 @@
 #if 0
 static char sccsid[] = "@(#)wwspawn.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: wwspawn.c,v 1.8 2003/06/03 02:56:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: wwspawn.c,v 1.9 2003/07/10 00:06:52 david Exp $";
 #endif
 #endif /* not lint */
 
 #include "ww.h"
 #include <sys/signal.h>
+#include <unistd.h>
 
 /*
  * There is a dead lock with vfork and closing of pseudo-ports.

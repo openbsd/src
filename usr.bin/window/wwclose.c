@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwclose.c,v 1.5 2003/06/03 02:56:23 millert Exp $	*/
+/*	$OpenBSD: wwclose.c,v 1.6 2003/07/10 00:06:52 david Exp $	*/
 /*	$NetBSD: wwclose.c,v 1.3 1995/09/28 10:35:14 tls Exp $	*/
 
 /*
@@ -37,9 +37,11 @@
 #if 0
 static char sccsid[] = "@(#)wwclose.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: wwclose.c,v 1.5 2003/06/03 02:56:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: wwclose.c,v 1.6 2003/07/10 00:06:52 david Exp $";
 #endif
 #endif /* not lint */
+
+#include <unistd.h>
 
 #include "ww.h"
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sprint.c,v 1.8 2003/06/10 22:20:46 deraadt Exp $	*/
+/*	$OpenBSD: sprint.c,v 1.9 2003/07/10 00:06:50 david Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -34,7 +34,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sprint.c	5.8 (Berkeley) 12/4/90";*/
-static char rcsid[] = "$OpenBSD: sprint.c,v 1.8 2003/06/10 22:20:46 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: sprint.c,v 1.9 2003/07/10 00:06:50 david Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -42,6 +42,7 @@ static char rcsid[] = "$OpenBSD: sprint.c,v 1.8 2003/06/10 22:20:46 deraadt Exp 
 #include <tzfile.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <err.h>
 #include "finger.h"
 #include "extern.h"

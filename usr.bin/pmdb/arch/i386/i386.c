@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386.c,v 1.4 2002/07/22 01:20:50 art Exp $	*/
+/*	$OpenBSD: i386.c,v 1.5 2003/07/10 00:06:51 david Exp $	*/
 /*
  * Copyright (c) 2002 Federico Schwindt <fgsch@openbsd.org>
  * All rights reserved. 
@@ -28,6 +28,7 @@
 #include <sys/ptrace.h>
 #include <machine/reg.h>
 #include <machine/frame.h>
+#include <string.h>
 #include "pmdb.h"
 
 /* 

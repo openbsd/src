@@ -1,4 +1,4 @@
-/*	$OpenBSD: paste.c,v 1.12 2003/06/10 22:20:49 deraadt Exp $	*/
+/*	$OpenBSD: paste.c,v 1.13 2003/07/10 00:06:51 david Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -40,10 +40,11 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)paste.c	5.7 (Berkeley) 10/30/90";*/
-static char rcsid[] = "$OpenBSD: paste.c,v 1.12 2003/06/10 22:20:49 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: paste.c,v 1.13 2003/07/10 00:06:51 david Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <err.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>

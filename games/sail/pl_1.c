@@ -1,4 +1,4 @@
-/*	$OpenBSD: pl_1.c,v 1.7 2003/06/03 03:01:41 millert Exp $	*/
+/*	$OpenBSD: pl_1.c,v 1.8 2003/07/10 00:03:01 david Exp $	*/
 /*	$NetBSD: pl_1.c,v 1.3 1995/04/22 10:37:07 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_1.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: pl_1.c,v 1.7 2003/06/03 03:01:41 millert Exp $";
+static char rcsid[] = "$OpenBSD: pl_1.c,v 1.8 2003/07/10 00:03:01 david Exp $";
 #endif
 #endif /* not lint */
 
@@ -42,6 +42,7 @@ static char rcsid[] = "$OpenBSD: pl_1.c,v 1.7 2003/06/03 03:01:41 millert Exp $"
 #include <sys/types.h>
 #include <errno.h>
 #include <sys/wait.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #ifndef __GNUC__

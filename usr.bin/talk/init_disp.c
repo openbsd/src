@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_disp.c,v 1.17 2003/06/10 22:20:52 deraadt Exp $	*/
+/*	$OpenBSD: init_disp.c,v 1.18 2003/07/10 00:06:51 david Exp $	*/
 /*	$NetBSD: init_disp.c,v 1.6 1994/12/09 02:14:17 jtc Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)init_disp.c	8.2 (Berkeley) 2/16/94";
 #endif
-static char rcsid[] = "$OpenBSD: init_disp.c,v 1.17 2003/06/10 22:20:52 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: init_disp.c,v 1.18 2003/07/10 00:06:51 david Exp $";
 #endif /* not lint */
 
 /*
@@ -46,6 +46,7 @@ static char rcsid[] = "$OpenBSD: init_disp.c,v 1.17 2003/06/10 22:20:52 deraadt 
 #include <sys/ioctl.h>
 #include <sys/ioctl_compat.h>
 #include <err.h>
+#include <stdlib.h>
 #include <termios.h>
 #include <unistd.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: unexpand.c,v 1.8 2003/06/10 22:20:53 deraadt Exp $	*/
+/*	$OpenBSD: unexpand.c,v 1.9 2003/07/10 00:06:51 david Exp $	*/
 /*	$NetBSD: unexpand.c,v 1.5 1994/12/24 17:08:05 cgd Exp $	*/
 
 /*-
@@ -40,13 +40,14 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)unexpand.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: unexpand.c,v 1.8 2003/06/10 22:20:53 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: unexpand.c,v 1.9 2003/07/10 00:06:51 david Exp $";
 #endif /* not lint */
 
 /*
  * unexpand - put tabs into a file replacing blanks
  */
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 char	genbuf[BUFSIZ];

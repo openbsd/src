@@ -1,4 +1,4 @@
-/*	$OpenBSD: gzopen.c,v 1.10 2003/07/08 00:30:12 mickey Exp $	*/
+/*	$OpenBSD: gzopen.c,v 1.11 2003/07/10 00:06:50 david Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -59,12 +59,13 @@
 */
 
 const char gz_rcsid[] =
-    "$OpenBSD: gzopen.c,v 1.10 2003/07/08 00:30:12 mickey Exp $";
+    "$OpenBSD: gzopen.c,v 1.11 2003/07/10 00:06:50 david Exp $";
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <errno.h>
 #include <unistd.h>
 #include <zlib.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.5 2003/06/03 03:01:42 millert Exp $	*/
+/*	$OpenBSD: setup.c,v 1.6 2003/07/10 00:03:01 david Exp $	*/
 /*	$NetBSD: setup.c,v 1.4 1995/04/24 12:26:06 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: setup.c,v 1.5 2003/06/03 03:01:42 millert Exp $";
+static char rcsid[] = "$OpenBSD: setup.c,v 1.6 2003/07/10 00:03:01 david Exp $";
 #endif
 #endif /* not lint */
 
@@ -42,6 +42,7 @@ static char rcsid[] = "$OpenBSD: setup.c,v 1.5 2003/06/03 03:01:42 millert Exp $
 #include <math.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <string.h>
 #include <err.h>
 #include "trek.h"
 #include "getpar.h"

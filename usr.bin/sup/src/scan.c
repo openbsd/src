@@ -1,4 +1,4 @@
-/*	$OpenBSD: scan.c,v 1.14 2003/04/30 21:34:47 vincent Exp $	*/
+/*	$OpenBSD: scan.c,v 1.15 2003/07/10 00:06:51 david Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -85,6 +85,7 @@
 
 #include <libc.h>
 #include <c.h>
+#include <stdlib.h>
 #include <vis.h>
 #include <sys/types.h>
 #include <sys/param.h>

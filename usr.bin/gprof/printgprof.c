@@ -1,4 +1,4 @@
-/*	$OpenBSD: printgprof.c,v 1.8 2003/06/03 02:56:08 millert Exp $	*/
+/*	$OpenBSD: printgprof.c,v 1.9 2003/07/10 00:06:51 david Exp $	*/
 /*	$NetBSD: printgprof.c,v 1.5 1995/04/19 07:16:21 cgd Exp $	*/
 
 /*
@@ -34,9 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)printgprof.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: printgprof.c,v 1.8 2003/06/03 02:56:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: printgprof.c,v 1.9 2003/07/10 00:06:51 david Exp $";
 #endif
 #endif /* not lint */
+
+#include <string.h>
 
 #include "gprof.h"
 #include "pathnames.h"

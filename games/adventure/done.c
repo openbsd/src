@@ -1,4 +1,4 @@
-/*	$OpenBSD: done.c,v 1.5 2003/06/03 03:01:37 millert Exp $	*/
+/*	$OpenBSD: done.c,v 1.6 2003/07/10 00:03:01 david Exp $	*/
 /*	$NetBSD: done.c,v 1.2 1995/03/21 12:05:01 cgd Exp $	*/
 
 /*-
@@ -39,13 +39,14 @@
 #if 0
 static char sccsid[] = "@(#)done.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: done.c,v 1.5 2003/06/03 03:01:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: done.c,v 1.6 2003/07/10 00:03:01 david Exp $";
 #endif
 #endif /* not lint */
 
 /*	Re-coding of advent in C: termination routines	*/
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "hdr.h"
 #include "extern.h"
 
