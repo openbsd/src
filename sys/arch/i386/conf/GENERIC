@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.14 1996/05/14 18:38:13 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.15 1996/05/15 08:56:15 mickey Exp $
 #	$NetBSD: GENERIC,v 1.45 1996/05/07 00:59:53 thorpej Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -162,6 +162,8 @@ sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 ch*	at scsibus? target ? lun ?	# SCSI autochangers
+ss*	at scsibus? target ? lun ?	# SCSI scanners
+uk*	at scsibus? target ? lun ?	# unknown SCSI
 
 fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
 #fdc1	at isa? port 0x370 irq ? drq ?

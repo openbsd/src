@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.9 1996/05/07 09:36:07 niklas Exp $
+#	$OpenBSD: GENERIC,v 1.10 1996/05/15 08:56:13 mickey Exp $
 #	$NetBSD: GENERIC,v 1.56 1996/04/30 17:40:34 is Exp $
 
 #
@@ -223,10 +223,11 @@ scsibus*	at empsc0
 # each hard drive from low target to high
 # will configure to the next available sd unit number
 sd*	at scsibus? target ? lun ?	# scsi disks
-
 st*	at scsibus? target ? lun ?	# scsi tapes
 cd*	at scsibus? target ? lun ?	# scsi cd's
+ch*	at scsibus? target ? lun ?	# scsi cd changers
 ss*	at scsibus? target ? lun ?	# scsi scanners
+uk*	at scsibus? target ? lun ?	# unknown scsi
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	sl	1		# slip

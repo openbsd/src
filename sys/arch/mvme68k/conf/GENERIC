@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.5 1996/04/28 11:24:33 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.6 1996/05/15 08:56:15 mickey Exp $
 
 machine		mvme68k m68k
 
@@ -104,3 +104,6 @@ scsibus* at siop?
 sd*	at scsibus? target ? lun ?
 st*	at scsibus? target ? lun ?
 cd*	at scsibus? target ? lun ?
+ch*	at scsibus? target ? lun ?
+ss*	at scsibus? target ? lun ?
+uk*	at scsibus? target ? lun ?

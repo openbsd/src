@@ -1,7 +1,7 @@
 #
 # GENERIC AMIGA
 #
-#	$Id: GENERIC,v 1.1.1.1 1995/10/18 10:54:18 deraadt Exp $
+#	$Id: GENERIC,v 1.2 1996/05/15 08:56:16 mickey Exp $
 #
 # This configuration file contains all possible options
 #
@@ -106,9 +106,11 @@ scsibus1	at bugscsi0
 # each hard drive from low target to high
 # will configure to the next available sd unit number
 sd*	at scsibus? target ? lun ?	# scsi disks
-
 st*	at scsibus? target ? lun ?	# scsi tapes
 cd*	at scsibus? target ? lun ?	# scsi cd's
+ch*	at scsibus? target ? lun ?	# scsi cd changers
+ss*	at scsibus? target ? lun ?	# scsi scanners
+uk*	at scsibus? target ? lun ?	# unknown scsi
 
 pseudo-device	sl			# slip
 pseudo-device	ppp			# ppp

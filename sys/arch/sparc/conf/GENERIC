@@ -147,6 +147,9 @@ scsibus* at sw?
 sd*	at scsibus? target ? lun ?
 st*	at scsibus? target ? lun ?
 cd*	at scsibus? target ? lun ?
+ch*	at scsibus? target ? lun ?
+ss*	at scsibus? target ? lun ?
+uk*	at scsibus? target ? lun ?
 
 fdc0	at mainbus0
 fd*	at fdc0

@@ -118,6 +118,9 @@ scsibus* at	ncr?
 sd*	at	scsibus? target ? lun ?
 st*	at	scsibus? target ? lun ?
 cd*	at	scsibus? target ? lun ?
+ch*	at	scsibus? target ? lun ?
+ss*	at	scsibus? target ? lun ?
+uk*	at	scsibus? target ? lun ?
 
 pseudo-device	bpfilter
 pseudo-device	loop
