@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.22 1998/02/23 11:40:32 downsj Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.23 1998/04/05 07:36:42 downsj Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*-
@@ -678,10 +678,32 @@ comattach(parent, self, aux)
 		if (bus_space_read_1(iot, ioh, com_efr) == 0) {
 			sc->sc_uarttype = COM_UART_ST16650;
 		} else {
-			bus_space_write_1(iot, ioh, com_lcr, 0xbf);
+			bus_space_write_1(iot, ioh, com_lcr, 0xbf); /* magic */
 			if (bus_space_read_1(iot, ioh, com_efr) == 0)
 				sc->sc_uarttype = COM_UART_ST16650V2;
 		}
+	}
+
+	if (sc->sc_uarttype == COM_UART_ST16650V2) {	/* Probe for XR16850s */
+		u_char dlbl, dlbh;
+
+		/* Enable latch access and get the current values. */
+		bus_space_write_1(iot, ioh, com_lcr, lcr | LCR_DLAB);
+		dlbl = bus_space_read_1(iot, ioh, com_dlbl);
+		dlbh = bus_space_read_1(iot, ioh, com_dlbh);
+
+		/* Zero out the latch divisors */
+		bus_space_write_1(iot, ioh, com_dlbl, 0);
+		bus_space_write_1(iot, ioh, com_dlbh, 0);
+
+		if (bus_space_read_1(iot, ioh, com_dlbh) == 0x10) {
+			sc->sc_uarttype = COM_UART_XR16850;
+			sc->sc_uartrev = bus_space_read_1(iot, ioh, com_dlbl);
+		}
+
+		/* Reset to original. */
+		bus_space_write_1(iot, ioh, com_dlbl, dlbl);
+		bus_space_write_1(iot, ioh, com_dlbh, dlbh);
 	}
 
 #ifdef notyet
@@ -698,6 +720,7 @@ comattach(parent, self, aux)
 	}
 #endif
 
+	/* Reset the LCR (latch access is probably enabled). */
 	bus_space_write_1(iot, ioh, com_lcr, lcr);
 	if (sc->sc_uarttype == COM_UART_16450) { /* Probe for 8250 */
 		u_int8_t scr0, scr1, scr2;
@@ -747,6 +770,11 @@ comattach(parent, self, aux)
 		printf(": ti16750, 64 byte fifo\n");
 		SET(sc->sc_hwflags, COM_HW_FIFO);
 		sc->sc_fifolen = 64;
+		break;
+	case COM_UART_XR16850:
+		printf(": xr16850 (rev %d), 128 byte fifo\n", sc->sc_uartrev);
+		SET(sc->sc_hwflags, COM_HW_FIFO);
+		sc->sc_fifolen = 128;
 		break;
 	default:
 		panic("comattach: bad fifo type\n");
@@ -869,6 +897,7 @@ comopen(dev, flag, mode, p)
 		switch (sc->sc_uarttype) {
 		case COM_UART_ST16650:
 		case COM_UART_ST16650V2:
+		case COM_UART_XR16850:
 			bus_space_write_1(iot, ioh, com_lcr, 0xbf);
 			bus_space_write_1(iot, ioh, com_efr, EFR_ECB);
 			bus_space_write_1(iot, ioh, com_ier, 0);
@@ -1061,6 +1090,7 @@ comclose(dev, flag, mode, p)
 		switch (sc->sc_uarttype) {
 		case COM_UART_ST16650:
 		case COM_UART_ST16650V2:
+		case COM_UART_XR16850:
 			bus_space_write_1(iot, ioh, com_lcr, 0xbf);
 			bus_space_write_1(iot, ioh, com_efr, EFR_ECB);
 			bus_space_write_1(iot, ioh, com_ier, IER_SLEEP);
