@@ -1,4 +1,4 @@
-/* $OpenBSD: res_random.c,v 1.12 2002/06/27 10:14:02 itojun Exp $ */
+/* $OpenBSD: res_random.c,v 1.13 2003/12/10 07:21:01 itojun Exp $ */
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -111,9 +111,9 @@ pmod(u_int16_t gen, u_int16_t exp, u_int16_t mod)
 
 	while (u) {
 		if (u & 1)
-			s = (s*t) % mod;
+			s = (s * t) % mod;
 		u >>= 1;
-		t = (t*t) % mod;
+		t = (t * t) % mod;
 	}
 	return (s);
 }
@@ -146,7 +146,7 @@ res_initid()
 	ru_b = (tmp & 0xfffe) | 1;
 	ru_a = pmod(RU_AGEN, (tmp >> 16) & 0xfffe, RU_M);
 	while (ru_b % 3 == 0)
-	  ru_b += 2;
+		ru_b += 2;
 	
 	tmp = arc4random();
 	j = tmp % RU_N;
@@ -159,17 +159,17 @@ res_initid()
 	 */
 
 	while (noprime) {
-		for (i=0; i<PFAC_N; i++)
-			if (j%pfacts[i] == 0)
+		for (i = 0; i < PFAC_N; i++)
+			if (j % pfacts[i] == 0)
 				break;
 
-		if (i>=PFAC_N)
+		if (i >= PFAC_N)
 			noprime = 0;
 		else 
-			j = (j+1) % RU_N;
+			j = (j + 1) % RU_N;
 	}
 
-	ru_g = pmod(RU_GEN,j,RU_N);
+	ru_g = pmod(RU_GEN, j, RU_N);
 	ru_counter = 0;
 
 	gettimeofday(&tv, NULL);
@@ -189,18 +189,22 @@ res_randomid()
 	if (!tmp)
 	        tmp = arc4random();
 
+#if 0
 	/* Skip a random number of ids */
 	n = tmp & 0x7; tmp = tmp >> 3;
 	if (ru_counter + n >= RU_MAX)
                 res_initid();
+#else
+	n = 0;
+#endif
 
-	for (i=0; i<=n; i++)
+	for (i = 0; i <= n; i++)
 	        /* Linear Congruential Generator */
-	        ru_x = (ru_a*ru_x + ru_b) % RU_M;
+	        ru_x = (ru_a * ru_x + ru_b) % RU_M;
 
 	ru_counter += i;
 
-	return (ru_seed ^ pmod(ru_g,ru_seed2 ^ ru_x,RU_N)) | ru_msb;
+	return (ru_seed ^ pmod(ru_g, ru_seed2 + ru_x, RU_N)) | ru_msb;
 }
 
 #if 0

@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_id.c,v 1.7 2003/09/21 04:06:39 itojun Exp $ */
+/* $OpenBSD: ip_id.c,v 1.8 2003/12/10 07:21:00 itojun Exp $ */
 
 /*
  * Copyright 1998 Niels Provos <provos@citi.umich.edu>
@@ -174,10 +174,14 @@ ip_randomid(void)
 	if (!tmp)
 		tmp = arc4random();
 
+#if 0
 	/* Skip a random number of ids */
 	n = tmp & 0x3; tmp = tmp >> 2;
 	if (ru_counter + n >= RU_MAX)
 		ip_initid();
+#else
+	n = 0;
+#endif
 
 	for (i = 0; i <= n; i++)
 		/* Linear Congruential Generator */
@@ -185,5 +189,5 @@ ip_randomid(void)
 
 	ru_counter += i;
 
-	return (ru_seed ^ pmod(ru_g,ru_seed2 ^ ru_x,RU_N)) | ru_msb;
+	return (ru_seed ^ pmod(ru_g,ru_seed2 + ru_x, RU_N)) | ru_msb;
 }

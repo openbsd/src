@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_id.c,v 1.1 2003/10/01 21:41:05 itojun Exp $	*/
+/*	$OpenBSD: ip6_id.c,v 1.2 2003/12/10 07:21:01 itojun Exp $	*/
 /*	$NetBSD: ip6_id.c,v 1.7 2003/09/13 21:32:59 itojun Exp $	*/
 /*	$KAME: ip6_id.c,v 1.8 2003/09/06 13:41:06 itojun Exp $	*/
 
@@ -223,15 +223,12 @@ static u_int32_t
 randomid(struct randomtab *p)
 {
 	int i, n;
-	u_int32_t tmp;
 
 	if (p->ru_counter >= p->ru_max || time.tv_sec > p->ru_reseed)
 		initid(p);
 
-	tmp = arc4random();
-
 	/* Skip a random number of ids */
-	n = tmp & 0x3; tmp = tmp >> 2;
+	n = arc4random() & 0x3;
 	if (p->ru_counter + n >= p->ru_max)
 		initid(p);
 
@@ -242,7 +239,7 @@ randomid(struct randomtab *p)
 
 	p->ru_counter += i;
 
-	return (p->ru_seed ^ pmod(p->ru_g, p->ru_seed2 ^ p->ru_x, p->ru_n)) |
+	return (p->ru_seed ^ pmod(p->ru_g, p->ru_seed2 + p->ru_x, p->ru_n)) |
 	    p->ru_msb;
 }
 
