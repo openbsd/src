@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.1 2004/02/04 09:18:03 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.2 2004/02/09 01:56:18 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -393,11 +393,11 @@ aspath_neighbour(struct aspath *aspath)
 
 #define AS_HASH_INITIAL 8271
 
-u_long
+u_int32_t
 aspath_hash(struct aspath *aspath)
 {
 	u_int8_t	*seg;
-	u_long		 hash;
+	u_int32_t	 hash;
 	u_int16_t	 len, seg_size;
 	u_int8_t	 i, seg_len, seg_type;
 

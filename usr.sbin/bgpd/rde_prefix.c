@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.9 2004/01/17 19:15:07 henning Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.10 2004/02/09 01:56:18 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -54,7 +54,7 @@ LIST_HEAD(pt_entryhead, pt_entry);
 
 struct pt_table {
 	struct pt_entryhead	*pt_hashtbl;
-	u_long			 pt_hashmask;
+	u_int32_t		 pt_hashmask;
 };
 
 #define MIN_PREFIX 0
@@ -64,7 +64,7 @@ struct pt_table {
  * size of the hashtable per prefixlen. The sizes were chosen from a bgp
  * dump done on Nov 4. 2003.
  */
-u_long pthashsize[MAX_PREFIX + 1 - MIN_PREFIX] = {
+u_int32_t pthashsize[MAX_PREFIX + 1 - MIN_PREFIX] = {
 	/* need to be power of 2 */
 	1, 1, 1, 1, 1, 1, 1, 1,
 	16, 8, 8, 16, 32, 64, 256, 256,
@@ -100,8 +100,8 @@ struct pt_stats {
 void
 pt_init(void)
 {
-	int	i;
-	u_long	j;
+	int		i;
+	u_int32_t	j;
 
 	for (i = MIN_PREFIX; i <= MAX_PREFIX; i++) {
 		pttable[i].pt_hashtbl = calloc(pthashsize[i],
@@ -203,7 +203,7 @@ pt_dump(void (*upcall)(struct pt_entry *, void *), void *arg)
 {
 	struct pt_entry	*p;
 	int		 i;
-	u_long		 j;
+	u_int32_t	 j;
 
 	PT_STAT(pt_dump);
 	for (i = MAX_PREFIX; i >= MIN_PREFIX; i--) {

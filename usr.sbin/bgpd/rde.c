@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.75 2004/02/09 01:46:34 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.76 2004/02/09 01:56:18 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -50,7 +50,7 @@ void		 rde_update_log(const char *,
 		     const struct bgpd_addr *, u_int8_t);
 void		 rde_update_queue_runner(void);
 
-void		 peer_init(struct peer *, u_long);
+void		 peer_init(struct peer *, u_int32_t);
 struct rde_peer	*peer_add(u_int32_t, struct peer_config *);
 void		 peer_remove(struct rde_peer *);
 struct rde_peer	*peer_get(u_int32_t);
@@ -83,9 +83,9 @@ rde_sighdlr(int sig)
 	}
 }
 
-u_long	peerhashsize = 64;
-u_long	pathhashsize = 1024;
-u_long	nexthophashsize = 64;
+u_int32_t	peerhashsize = 64;
+u_int32_t	pathhashsize = 1024;
+u_int32_t	nexthophashsize = 64;
 
 int
 rde_main(struct bgpd_config *config, struct peer *peer_l,
@@ -750,17 +750,17 @@ rde_update_queue_runner(void)
  */
 struct peer_table {
 	struct rde_peer_head	*peer_hashtbl;
-	u_long			 peer_hashmask;
+	u_int32_t		 peer_hashmask;
 } peertable;
 
 #define PEER_HASH(x)		\
 	&peertable.peer_hashtbl[(x) & peertable.peer_hashmask]
 
 void
-peer_init(struct peer *peer_l, u_long hashsize)
+peer_init(struct peer *peer_l, u_int32_t hashsize)
 {
 	struct peer	*p, *next;
-	u_long		 hs, i;
+	u_int32_t	 hs, i;
 
 	for (hs = 1; hs < hashsize; hs <<= 1)
 		;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.32 2004/02/04 09:18:03 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.33 2004/02/09 01:56:18 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -79,16 +79,16 @@ static void	path_free(struct rde_aspath *);
 
 struct path_table {
 	struct aspath_head	*path_hashtbl;
-	u_long			 path_hashmask;
+	u_int32_t		 path_hashmask;
 } pathtable;
 
 #define PATH_HASH(x)				\
 	&pathtable.path_hashtbl[aspath_hash((x)) & pathtable.path_hashmask]
 
 void
-path_init(u_long hashsize)
+path_init(u_int32_t hashsize)
 {
-	u_long	hs, i;
+	u_int32_t	hs, i;
 
 	for (hs = 1; hs < hashsize; hs <<= 1)
 		;
@@ -643,7 +643,7 @@ static void		 nexthop_free(struct nexthop *);
  */
 struct nexthop_table {
 	LIST_HEAD(, nexthop)	*nexthop_hashtbl;
-	u_long			 nexthop_hashmask;
+	u_int32_t		 nexthop_hashmask;
 } nexthoptable;
 
 #define NEXTHOP_HASH(x)					\
@@ -651,10 +651,10 @@ struct nexthop_table {
 	    nexthoptable.nexthop_hashmask]
 
 void
-nexthop_init(u_long hashsize)
+nexthop_init(u_int32_t hashsize)
 {
 	struct nexthop	*nh;
-	u_long		 hs, i;
+	u_int32_t	 hs, i;
 
 	for (hs = 1; hs < hashsize; hs <<= 1)
 		;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.22 2004/02/02 18:06:32 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.23 2004/02/09 01:56:18 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -61,7 +61,7 @@ struct rde_peer {
 	struct aspath_head		 path_h; /* list of all as paths */
 	struct peer_config		 conf;
 	enum peer_state			 state;
-	u_long				 prefix_cnt;
+	u_int32_t			 prefix_cnt;
 	u_int32_t			 remote_bgpid;
 	struct bgpd_addr		 remote_addr;
 	struct bgpd_addr		 local_addr;
@@ -233,10 +233,10 @@ u_char		*aspath_dump(struct aspath *);
 u_int16_t	 aspath_length(struct aspath *);
 u_int16_t	 aspath_count(struct aspath *);
 u_int16_t	 aspath_neighbour(struct aspath *);
-u_long		 aspath_hash(struct aspath *);
+u_int32_t	 aspath_hash(struct aspath *);
 int		 aspath_compare(struct aspath *, struct aspath *);
 
-void		 path_init(u_long);
+void		 path_init(u_int32_t);
 void		 path_update(struct rde_peer *, struct attr_flags *,
 		     struct bgpd_addr *, int);
 struct rde_aspath *path_get(struct aspath *, struct rde_peer *);
@@ -255,7 +255,7 @@ void		 prefix_updateall(struct rde_aspath *, enum nexthop_state);
 void		 prefix_destroy(struct prefix *);
 void		 prefix_network_clean(struct rde_peer *, time_t);
 
-void		 nexthop_init(u_long);
+void		 nexthop_init(u_int32_t);
 void		 nexthop_add(struct rde_aspath *);
 void		 nexthop_remove(struct rde_aspath *);
 void		 nexthop_update(struct kroute_nexthop *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.1 2004/02/04 09:07:44 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.2 2004/02/09 01:56:18 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -40,7 +40,7 @@ struct update_prefix {
 };
 
 struct update_attr {
-	u_long				 attr_hash;
+	u_int32_t			 attr_hash;
 	u_char				*attr;
 	u_int16_t			 attr_len;
 	struct uplist_prefix		 prefix_h;
