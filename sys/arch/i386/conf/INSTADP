@@ -80,6 +80,8 @@ ahb0	at isa? port ? irq ?		# Adaptec 174[024] SCSI controllers
 scsibus* at ahb?
 ahc*	at pci? bus ? dev ?		# Adaptec 2940 SCSI controllers
 scsibus* at ahc?
+ahe0	at isa? port 0x1c00 irq ?	# Adaptec 284x SCSI controllers
+scsibus* at ahe?
 aic0	at isa? port 0x340 irq 12	# Adaptec 152[02] SCSI controllers
 scsibus* at aic?
 
