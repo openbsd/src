@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.62 2003/02/20 18:33:49 jason Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -516,8 +516,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 		/* Check if we had authenticated ESP. */
 		if (tdbp->tdb_authalgxform)
 			m->m_flags |= M_AUTH;
-	}
-	else if (sproto == IPPROTO_IPCOMP)
+	} else if (sproto == IPPROTO_IPCOMP)
 		m->m_flags |= M_COMP;
 	else
 		m->m_flags |= M_AUTH | M_AUTH_AH;
