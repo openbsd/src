@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.29 2001/12/15 02:41:38 deraadt Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.30 2002/04/02 13:04:57 nate Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.26 2001/12/15 02:41:33 deraadt Exp 
+ *	OpenBSD: miidevs,v 1.27 2002/04/02 13:04:44 nate Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -94,6 +94,8 @@
 /* Contrived vendor for dcphy */
 #define	MII_OUI_xxDEC	0x040440	/* Digital Clone */
 
+#define	MII_OUI_xxMARVELL	0x000ac2	/* Marvell Semiconductor */
+
 /*
  * List of known models.  Grouped by oui.
  */
@@ -142,7 +144,13 @@
 
 /* Marvell Semiconductor PHYs */
 #define	MII_MODEL_MARVELL_E1000	0x0000
-#define	MII_STR_MARVELL_E1000	"Marvell Semiconductor 88E1000* Gigabit"
+#define	MII_STR_MARVELL_E1000	"Marvell 88E1000* Gigabit PHY"
+#define	MII_MODEL_MARVELL_E1000_3	0x0003
+#define	MII_STR_MARVELL_E1000_3	"Marvell 88E1000 Gigabit PHY"
+#define	MII_MODEL_xxMARVELL_E1000_3	0x0003
+#define	MII_STR_xxMARVELL_E1000_3	"Marvell 88E1000 Gigabit PHY"
+#define	MII_MODEL_xxMARVELL_E1000_5	0x0005
+#define	MII_STR_xxMARVELL_E1000_5	"Marvell 88E1000 Gigabit PHY"
 
 /* Contrived vendor/model for dcphy */
 #define	MII_MODEL_xxDEC_xxDC	0x0001
