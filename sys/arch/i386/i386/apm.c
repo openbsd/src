@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.25 1999/02/23 04:10:12 marc Exp $	*/
+/*	$OpenBSD: apm.c,v 1.26 1999/02/28 05:53:13 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995 John T. Kohl.  All rights reserved.
@@ -65,7 +65,7 @@
 #include <machine/biosvar.h>
 #include <machine/apmvar.h>
 
-#if defined(DEBUG) || defined(APMDEBUG)
+#if defined(APMDEBUG)
 #define DPRINTF(x)	printf x
 #define STATIC /**/
 #else
