@@ -35,7 +35,7 @@ CFLAGS = @CFLAGS@
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 
-PR_PROGRAM = /bin/pr
+PR_PROGRAM = /usr/bin/pr
 
 #### End of system configuration section. ####
 
