@@ -2075,6 +2075,9 @@
 ./usr/share/nls/sv/libc.cat
 ./usr/share/pf
 ./usr/share/pf/ackpri
+./usr/share/pf/faq-example1
+./usr/share/pf/faq-example2
+./usr/share/pf/faq-example3
 ./usr/share/pf/queue1
 ./usr/share/pf/queue2
 ./usr/share/pf/queue3
