@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.269 2000/06/15 19:12:53 ho Exp $
+	$OpenBSD: pcidevs,v 1.270 2000/06/18 15:27:41 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1005,6 +1005,7 @@ product INTEL SIO		0x0484	82378IB PCI-ISA (System I/O)
 product INTEL 82426EX		0x0486	82426EX PCI-to-ISA (PCIB)
 product INTEL PCMC		0x04a3	82434LX/NX (Mercury/Neptune) PCI/Cache/DRAM
 product INTEL 82452		0x1000	Pro/1000
+product INTEL 82559ER		0x1209	82559ER
 product INTEL 82092AA		0x1222	82092AA IDE
 product INTEL SAA7116		0x1223	SAA7116
 product INTEL 82596		0x1226	EE Pro 10 PCI
