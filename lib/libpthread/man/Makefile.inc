@@ -1,11 +1,11 @@
-# $Id: Makefile.inc,v 1.5 1999/03/24 00:46:23 d Exp $
-# $OpenBSD: Makefile.inc,v 1.5 1999/03/24 00:46:23 d Exp $
+# $Id: Makefile.inc,v 1.6 1999/06/15 00:07:40 d Exp $
+# $OpenBSD: Makefile.inc,v 1.6 1999/06/15 00:07:40 d Exp $
 
 # POSIX thread man files
 
 .PATH: ${.CURDIR}/man
 
-MAN+=	pthread_atfork.3 \
+MAN+=	\
 	pthread_cleanup_pop.3 \
 	pthread_cleanup_push.3 \
 	pthread_cond_broadcast.3 \

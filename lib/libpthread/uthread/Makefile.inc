@@ -1,5 +1,5 @@
-#	$Id: Makefile.inc,v 1.7 1999/05/26 00:18:21 d Exp $
-#	$OpenBSD: Makefile.inc,v 1.7 1999/05/26 00:18:21 d Exp $
+#	$Id: Makefile.inc,v 1.8 1999/06/15 00:07:39 d Exp $
+#	$OpenBSD: Makefile.inc,v 1.8 1999/06/15 00:07:39 d Exp $
 
 # uthread sources
 .PATH: ${.CURDIR}/uthread
@@ -8,7 +8,6 @@ CFLAGS += -I${.CURDIR}/arch/${MACHINE_ARCH}
 
 SRCS+= \
 	uthread_accept.c \
-	uthread_atfork.c \
 	uthread_attr_destroy.c \
 	uthread_attr_init.c \
 	uthread_attr_getdetachstate.c \

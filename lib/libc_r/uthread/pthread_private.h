@@ -31,7 +31,7 @@
  *
  * Private thread definitions for the uthread kernel.
  *
- * $OpenBSD: pthread_private.h,v 1.15 1999/06/09 07:06:54 d Exp $
+ * $OpenBSD: pthread_private.h,v 1.16 1999/06/15 00:07:39 d Exp $
  *
  */
 
@@ -300,10 +300,6 @@ struct pthread_attr {
 #define PTHREAD_MAX_PRIORITY			126
 #define PTHREAD_MIN_PRIORITY			0
 #define _POSIX_THREAD_ATTR_STACKSIZE
-
-#define PTHREAD_ATFORK_PREPARE			0
-#define PTHREAD_ATFORK_PARENT			1
-#define PTHREAD_ATFORK_CHILD			2
 
 /*
  * Clock resolution in nanoseconds.
@@ -784,7 +780,6 @@ pthread_addr_t _thread_gc(pthread_addr_t);
 void	_thread_enter_cancellation_point(void);
 void	_thread_leave_cancellation_point(void);
 void	_thread_cancellation_point(void);
-void	_thread_atfork(int);
 int	_thread_slow_atomic_lock(volatile _spinlock_lock_t *);
 int	_thread_slow_atomic_is_locked(volatile _spinlock_lock_t *);
 

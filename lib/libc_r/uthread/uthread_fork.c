@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_fork.c,v 1.5 1999/05/26 00:18:23 d Exp $
+ * $OpenBSD: uthread_fork.c,v 1.6 1999/06/15 00:07:39 d Exp $
  */
 #include <errno.h>
 #include <string.h>
@@ -48,17 +48,12 @@ fork(void)
 	pthread_t	pthread;
 	pthread_t	pthread_next;
 
-	/* Call atfork handlers: */
-	_thread_atfork(PTHREAD_ATFORK_PREPARE);
-
 	/* Lock the thread list: */
 	_lock_thread_list();
 
 	/* Fork a new process: */
 	if ((ret = _thread_sys_fork()) != 0) {
 		/* Parent process or error. Nothing to do here. */
-		if (ret > 0)
-			_thread_atfork(PTHREAD_ATFORK_PARENT);
 	} else {
 		/* Close the pthread kernel pipe: */
 		_thread_sys_close(_thread_kern_pipe[0]);
@@ -157,9 +152,6 @@ fork(void)
 					_thread_queue_init(&_thread_fd_table[i]->w_queue);
 				}
 			}
-
-			/* Initialise the atfork handler: */
-			_thread_atfork(PTHREAD_ATFORK_CHILD);
 		}
 	}
 
