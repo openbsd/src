@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.48 2002/06/14 21:35:00 todd Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.49 2002/07/23 15:53:45 art Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -380,9 +380,11 @@ uvm_mapent_alloc(map)
 		}
 		me->flags = UVM_MAP_STATIC;
 	} else if (map == kernel_map) {
+		splassert(IPL_NONE);
 		me = pool_get(&uvm_map_entry_kmem_pool, PR_WAITOK);
 		me->flags = UVM_MAP_KMEM;
 	} else {
+		splassert(IPL_NONE);
 		me = pool_get(&uvm_map_entry_pool, PR_WAITOK);
 		me->flags = 0;
 	}
