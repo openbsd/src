@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: ssh.1,v 1.48 2000/05/03 18:04:39 markus Exp $
+.\" $Id: ssh.1,v 1.49 2000/05/03 22:01:09 markus Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSH 1
@@ -63,7 +63,10 @@ arbitrary TCP/IP ports can also be forwarded over the secure channel.
 connects and logs into the specified
 .Ar hostname .
 The user must prove
-his/her identity to the remote machine using one of several methods.
+his/her identity to the remote machine using one of several methods
+depending on the protocol version used:
+.Pp
+.Ss SSH protocol version 1
 .Pp
 First, if the machine the user logs in from is listed in
 .Pa /etc/hosts.equiv
@@ -88,8 +91,8 @@ or
 .Pa hosts.equiv
 method combined with RSA-based host authentication.
 It means that if the login would be permitted by
-.Pa \&.rhosts ,
-.Pa \&.shosts ,
+.Pa $HOME/.rhosts ,
+.Pa $HOME/.shosts ,
 .Pa /etc/hosts.equiv ,
 or
 .Pa /etc/shosts.equiv ,
@@ -105,7 +108,7 @@ This authentication method closes security holes due to IP
 spoofing, DNS spoofing and routing spoofing.
 [Note to the administrator:
 .Pa /etc/hosts.equiv ,
-.Pa \&.rhosts ,
+.Pa $HOME/.rhosts ,
 and the rlogin/rsh protocol in general, are inherently insecure and should be
 disabled if security is desired.]
 .Pp
@@ -143,18 +146,18 @@ implements the RSA authentication protocol automatically.
 The user creates his/her RSA key pair by running
 .Xr ssh-keygen 1 .
 This stores the private key in
-.Pa \&.ssh/identity
+.Pa $HOME/.ssh/identity
 and the public key in
-.Pa \&.ssh/identity.pub
+.Pa $HOME/.ssh/identity.pub
 in the user's home directory.
 The user should then copy the
 .Pa identity.pub
 to
-.Pa \&.ssh/authorized_keys
+.Pa $HOME/.ssh/authorized_keys
 in his/her home directory on the remote machine (the
 .Pa authorized_keys
 file corresponds to the conventional
-.Pa \&.rhosts
+.Pa $HOME/.rhosts
 file, and has one key
 per line, though the lines can be very long).
 After this, the user can log in without giving the password.
@@ -173,6 +176,38 @@ prompts the user for a password.
 The password is sent to the remote
 host for checking; however, since all communications are encrypted,
 the password cannot be seen by someone listening on the network.
+.Pp
+.Ss SSH protocol version 2
+.Pp
+When a user connects using the protocol version 2
+different authentication methods are available:
+At first, the client attempts to authenticate using the public key method.
+If this method fails password authentication is tried.
+.Pp
+The public key method is similar to RSA authentication described
+in the previous section except that the DSA algorithm is used
+instead of the patented RSA algorithm.
+The client uses his private DSA key
+.Pa $HOME/.ssh/id_dsa
+to sign the session identifier and sends the result to the server.
+The server checks whether the matching public key is listed in
+.Pa $HOME/.ssh/authorized_keys2
+and grants access if both the key is found and the signature is correct.
+The session identifier is derived from a shared Diffie-Hellman value
+and is only known to the client and the server.
+.Pp
+If public key authentication fails or is not available a password
+can be sent encrypted to the remote host for proving the user's identity.
+This protocol 2 implementation does not yet support Kerberos or
+S/Key authentication.
+.Pp
+Protocol 2 provides additional mechanisms for confidentiality
+(the traffic is encrypted using 3DES, blowfish, cast128 or arcfour)
+and integrity (hmac-sha1, hmac-md5).
+Note that protocol 1 lacks a strong mechanism for ensuring the
+integrity of the connection.
+.Pp
+.Ss Login session and remote execution
 .Pp
 When the user's identity has been accepted by the server, the server
 either executes the given command, or logs into the machine and gives
@@ -219,6 +254,8 @@ The exit status of the remote program is returned as the exit status
 of
 .Nm ssh .
 .Pp
+.Ss X11 and TCP forwarding
+.Pp
 If the user is using X11 (the
 .Ev DISPLAY
 environment variable is set), the connection to the X11 display is
@@ -262,15 +299,22 @@ be specified either on command line or in a configuration file.
 One possible application of TCP/IP forwarding is a secure connection to an
 electronic purse; another is going trough firewalls.
 .Pp
+.Ss Server authentication
+.Pp
 .Nm
-automatically maintains and checks a database containing RSA-based
+automatically maintains and checks a database containing
 identifications for all hosts it has ever been used with.
-The database is stored in
-.Pa \&.ssh/known_hosts
+RSA host keys are stored in
+.Pa $HOME/.ssh/known_hosts
+and
+DSA host keys are stored in
+.Pa $HOME/.ssh/known_hosts2
 in the user's home directory.
-Additionally, the file
+Additionally, the files
 .Pa /etc/ssh_known_hosts
-is automatically checked for known hosts.
+and
+.Pa /etc/ssh_known_hosts2
+are automatically checked for known hosts.
 Any new hosts are automatically added to the user's file.
 If a host's identification
 ever changes,
@@ -333,7 +377,7 @@ Allows remote hosts to connect to local forwarded ports.
 Selects the file from which the identity (private key) for
 RSA authentication is read.
 Default is
-.Pa \&.ssh/identity
+.Pa $HOME/.ssh/identity
 in the user's home directory.
 Identity files may also be specified on
 a per-host basis in the configuration file.
@@ -640,7 +684,7 @@ specifications).
 .It Cm IdentityFile
 Specifies the file from which the user's RSA authentication identity
 is read (default
-.Pa .ssh/identity
+.Pa $HOME/.ssh/identity
 in the user's home directory).
 Additionally, any identities represented by the authentication agent
 will be used for authentication.
@@ -652,7 +696,7 @@ identities will be tried in sequence.
 .It Cm IdentityFile2
 Specifies the file from which the user's DSA authentication identity
 is read (default
-.Pa .ssh/id_dsa
+.Pa $HOME/.ssh/id_dsa
 in the user's home directory).
 The file name may use the tilde
 syntax to refer to a user's home directory.
@@ -727,7 +771,11 @@ and
 .Dq 2 .
 Multiple versions must be comma-separated.
 The default is
-.Dq 1 .
+.Dq 1,2 .
+This means that
+.Nm
+tries version 1 and falls back to version 2
+if version 1 is no available.
 .It Cm ProxyCommand
 Specifies the command to use to connect to the server.
 The command
