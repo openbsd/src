@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vnode.9,v 1.16 2003/04/02 19:00:26 jmc Exp $
+.\"     $OpenBSD: vnode.9,v 1.17 2003/04/20 20:46:14 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Constantine Sapuntzakis
 .\" All rights reserved.
@@ -39,7 +39,7 @@ Each vnode has a set of methods which start with string 'VOP_'.
 These methods include VOP_OPEN, VOP_READ, VOP_WRITE, VOP_RENAME, VOP_CLOSE,
 VOP_MKDIR.
 Many of these methods correspond closely to the equivalent
-file system call--open, read, write, rename, etc.
+file system call - open, read, write, rename, etc.
 Each file system (FFS, NFS, etc.) provides implementations for these methods.
 .Pp
 The Virtual File System (VFS) library maintains a pool of vnodes.
@@ -62,13 +62,15 @@ is called "active".
 When a vnode's reference count drops to zero, it becomes "inactive",
 that is, a candidate for reuse.
 An "inactive" vnode still refers to a valid file and one can try to
-reactivate it using vget (this is used a lot by caches).
+reactivate it using
+.Xr vget 9
+(this is used a lot by caches).
 .Pp
 Before the VFS can reuse an inactive vnode to refer to another file,
 it must clean all information pertaining to the old file.
 A cleaned out vnode is called a "reclaimed" vnode.
 .Pp
-To support forceable unmounts and the 
+To support forceable unmounts and the
 .Xr revoke 2
 system call, the VFS may "reclaim" a vnode with a positive reference
 count.
@@ -78,20 +80,20 @@ The reclaimed vnode will not be
 re-used for another file until its reference count hits zero.
 .Ss Vnode pool
 The
-.Xr getnewvnode 9 
-system call allocates a vnode from the pool, possible reusing an
+.Xr getnewvnode 9
+system call allocates a vnode from the pool, possibly reusing an
 "inactive" vnode, and returns it to the caller.
 The vnode returned has a reference count (v_usecount) of 1.
 .Pp
-The 
-.Xr vref 9 
+The
+.Xr vref 9
 call increments the reference count on the vnode.
 It may only be on a vnode with reference count of 1 or greater.
 The
 .Xr vrele 9
-and 
-.Xr vput 9 
-calls decrement the reference count. 
+and
+.Xr vput 9
+calls decrement the reference count.
 In addition, the
 .Xr vput 9
 call also releases the vnode lock.
@@ -105,18 +107,18 @@ However, if the vnode is being reclaimed concurrently, then vget will fail
 and return an error.
 .Pp
 The
-.Xr vgone 9 
-and 
-.Xr vgonel 9 
+.Xr vgone 9
+and
+.Xr vgonel 9
 orchestrate the reclamation of a vnode.
 They can be called on both active and inactive vnodes.
 .Pp
 When transitioning a vnode to the "reclaimed" state, the VFS will call
-.Xr VOP_RECLAIM 9 
+.Xr VOP_RECLAIM 9
 method.
 File systems use this method to free any file-system specific data
 they attached to the vnode.
-.Ss Vnode locks 
+.Ss Vnode locks
 The vnode actually has three different types of lock: the vnode lock,
 the vnode interlock, and the vnode reclamation lock (VXLOCK).
 .Ss The vnode lock
@@ -139,7 +141,7 @@ Otherwise, the file system's behavior is undefined.
 On rare occasions, code will hold the vnode lock so that a series of
 VOP_ operations occurs as an atomic unit.
 (Of course, this doesn't work with network file systems like NFSv2 that don't
-have any notion of bundling a bunch of operations into an atomic unit)
+have any notion of bundling a bunch of operations into an atomic unit.)
 .It
 While the vnode lock is held, the vnode will not be reclaimed.
 .El
@@ -147,11 +149,11 @@ While the vnode lock is held, the vnode will not be reclaimed.
 There is a discipline to using the vnode lock.
 Some VOP_ operations require that the vnode lock is held before being called.
 A description of this rather arcane locking discipline is in
-sys/kern/vnode_if.src.
+.Pa sys/kern/vnode_if.src .
 .Pp
-The vnode lock is acquired by calling 
-.Xr vn_lock 9 
-and released by calling 
+The vnode lock is acquired by calling
+.Xr vn_lock 9
+and released by calling
 .Xr VOP_UNLOCK 9 .
 .Pp
 A process is allowed to sleep while holding the vnode lock.
@@ -174,18 +176,18 @@ Operations on this lock are a no-op on uniprocessor systems.
 The vnode reclamation lock (VXLOCK) is used to prevent multiple
 processes from entering the vnode reclamation code.
 It is also used as a flag to indicate that reclamation is in progress.
-The VXWANT flag is set by processes that wish to woken up when reclamation
+The VXWANT flag is set by processes that wish to be woken up when reclamation
 is finished.
 .Pp
-The 
+The
 .Xr vwaitforio 9
-call is used for to wait for all outstanding write I/Os associated with a 
-vnode to complete. 
+call is used to wait for all outstanding write I/Os associated with a
+vnode to complete.
 .Ss Version number/capability
 The vnode capability, v_id, is a 32-bit version number on the vnode.
 Every time a vnode is reassigned to a new file, the vnode capability
 is changed.
-This is used by code that wish to keep pointers to vnodes but doesn't want
+This is used by code that wishes to keep pointers to vnodes but doesn't want
 to hold a reference (e.g., caches).
 The code keeps both a vnode * and a copy of the capability.
 The code can later compare the vnode's capability to its copy and see
@@ -212,12 +214,12 @@ The v_tag attribute is read-only.
 .Pp
 The v_type attribute indicates what type of file (e.g. directory,
 regular, FIFO) this vnode is.
-This is used by the generic code to ensure for various checks.
+This is used by the generic code for various checks.
 For example, the
-.Xr read 2 
+.Xr read 2
 system call returns an error when a read is attempted on a directory.
 .Pp
-The v_data attribute allows a file system to attach piece of file
+The v_data attribute allows a file system to attach a piece of file
 system specific memory to the vnode.
 This contains information about the file that is specific to
 the file system.
@@ -238,7 +240,7 @@ The exceptions are bgetvp and brelvp.
 The following fields of the vnode are manipulated at interrupt level:
 v_numoutput, v_holdcnt, v_dirtyblkhd, v_cleanblkhd, v_bioflag, v_freelist,
 and v_synclist.
-Any accesses to these fields should be protected by splbio.
+Any access to these fields should be protected by splbio.
 .Sh HISTORY
 This document first appeared in
 .Ox 2.9 .
