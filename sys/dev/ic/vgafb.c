@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.2 1998/09/27 05:29:59 rahnds Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.3 1998/09/28 01:10:34 rahnds Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -382,11 +382,15 @@ vgafb_copycols(id, row, srccol, dstcol, ncols)
 	bus_size_t srcoff, dstoff;
 	int i;
 
-	srcoff = ((row*FONT_HEIGHT) * (vc->vc_ncol*FONT_WIDTH)
-		+ srccol*FONT_WIDTH);
-	dstoff = ((row*FONT_HEIGHT) * (vc->vc_ncol*FONT_WIDTH)
-		+ dstcol*FONT_WIDTH);
 	for (i = 0; i < FONT_HEIGHT; i++) {
+		srcoff = ((row*FONT_HEIGHT) * (vc->vc_ncol*FONT_WIDTH)
+			+ srccol*FONT_WIDTH) + (i * (vc->vc_ncol*FONT_WIDTH));
+		dstoff = ((row*FONT_HEIGHT) * (vc->vc_ncol*FONT_WIDTH)
+			+ dstcol*FONT_WIDTH) + (i * (vc->vc_ncol*FONT_WIDTH));
+
+/* this could be sped up using bus_space_copy_4, but the copies tend
+ * to be slow and it didn't work correctly on ppc???
+ */
 		bus_space_copy_1(vc->vc_memt, vc->vc_memh, srcoff,
 			vc->vc_memh, dstoff, ncols*FONT_WIDTH);
 	}
@@ -417,8 +421,18 @@ vgafb_copyrows(id, srcrow, dstrow, nrows)
 	srcoff = ((srcrow*FONT_HEIGHT) * (vc->vc_ncol*FONT_WIDTH) + 0);
 	dstoff = ((dstrow*FONT_HEIGHT) * (vc->vc_ncol*FONT_WIDTH) + 0);
 
+#if 0
 	bus_space_copy_1(vc->vc_memt, vc->vc_memh, srcoff, vc->vc_memh, dstoff,
 	    (nrows*FONT_HEIGHT) * (vc->vc_ncol*FONT_WIDTH));
+#else
+	/* since pci memory space base address is a power of two, and
+	 * the screen is a mulitple of 4 (since FONT_WIDTH is 8)
+	 * aka The Screen base is always 4 byte aligned RIGHT?
+	 * copying words will be faster than bytes.
+	 */
+	bus_space_copy_4(vc->vc_memt, vc->vc_memh, srcoff, vc->vc_memh, dstoff,
+	    (nrows*FONT_HEIGHT) * (vc->vc_ncol*FONT_WIDTH)/4);
+#endif
 }
 
 void
