@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.8 1997/02/11 22:23:14 kstailey Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.9 1997/07/21 07:52:05 deraadt Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -110,6 +110,8 @@ static void in_arpinput __P((struct mbuf *));
 static void arptfree __P((struct llinfo_arp *));
 static struct llinfo_arp *arplookup __P((u_int32_t, int, int ));
 #ifdef DDB
+#include <vm/vm.h>
+
 static void db_print_sa __P((struct sockaddr *));
 static void db_print_ifa __P((struct ifaddr *));
 static void db_print_llinfo __P((caddr_t));
