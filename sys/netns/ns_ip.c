@@ -1,4 +1,4 @@
-/*	$OpenBSD: ns_ip.c,v 1.4 1996/05/10 12:31:23 deraadt Exp $	*/
+/*	$OpenBSD: ns_ip.c,v 1.5 1996/05/12 03:18:34 mickey Exp $	*/
 /*	$NetBSD: ns_ip.c,v 1.15 1996/05/07 02:48:08 thorpej Exp $	*/
 
 /*
@@ -119,7 +119,7 @@ nsipattach()
 	 * XXX Emulate the side effect of incrementing nsipif.if_unit
 	 * XXX in the days before if_xname.
 	 */
-	bzero(nsipif.if_xname, sizeof(nsipif.if_xname))
+	bzero(nsipif.if_xname, sizeof(nsipif.if_xname));
 	sprintf(nsipif.if_xname, "nsip%d", nsipif_unit);
 
 	return (m);
