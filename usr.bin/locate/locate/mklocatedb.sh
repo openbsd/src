@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$OpenBSD: mklocatedb.sh,v 1.2 1996/09/15 16:50:40 michaels Exp $
+#	$OpenBSD: mklocatedb.sh,v 1.3 1996/09/15 23:38:38 deraadt Exp $
 #
 # Copyright (c) September 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 # All rights reserved.
@@ -30,7 +30,7 @@
 # 
 # usage: mklocatedb [-presort] < filelist > database
 #
-# $Id: mklocatedb.sh,v 1.2 1996/09/15 16:50:40 michaels Exp $
+# $Id: mklocatedb.sh,v 1.3 1996/09/15 23:38:38 deraadt Exp $
 
 
 # The directory containing locate subprograms
@@ -59,12 +59,15 @@ case X"$1" in
 	X-nosort|X-presort) sortcmd=cat; sortopt=;shift;; 
 esac
 
+DTMP=${TMPDIR=/tmp}/_mklocatedb$$
+bigrams=$DTMP/bigrams
+filelist=$DTMP/list
 
-bigrams=$TMPDIR/_mklocatedb$$.bigrams
-filelist=$TMPDIR/_mklocatedb$$.list
-
-trap 'rm -f $bigrams $filelist' 0 1 2 3 5 10 15
-
+if ! mkdir $DTMP ; then
+	echo failed to create tmp dir $DTMP
+	exit 1
+fi
+trap 'rm -rf $DTMP' 0 1 2 3 5 10 15
 
 if $sortcmd $sortopt > $filelist; then
         $bigram < $filelist | $sort -nr | 
@@ -72,5 +75,7 @@ if $sortcmd $sortopt > $filelist; then
         $code $bigrams < $filelist 
 else
         echo "`basename $0`: cannot build locate database" >&2
+	rm -rf $DTMP
         exit 1
 fi
+rm -rf $DTMP
