@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ray.4,v 1.1 2000/03/22 20:01:59 mickey Exp $
+.\"	$OpenBSD: ray.4,v 1.2 2000/03/22 21:46:17 aaron Exp $
 .\"	$NetBSD: ray.4,v 1.5 2000/02/28 13:54:55 enami Exp $
 .\"
 .\" Copyright (c) 2000 Christian E. Hopps
@@ -39,28 +39,43 @@
 The
 .Nm
 device driver supports the Raytheon Raylink and Aviator 2.4/PRO
-802.11 FH 2Mbps wireless pcmcia cards.  The cards can be operated in
-either adhoc or infrastructure modes. The operating mode is
-selectable with
-.Xr ifconfig 8 
+802.11 FH 2Mbps wireless PCMCIA cards.
+The cards can be operated in either adhoc or infrastructure modes.
+The operating mode is selectable with
+.Xr ifconfig 8
 through a media option.
 .Pp
-To communicate with other 802.11 cards a common network id or NWID must
+Cards supported by the
+.Nm
+driver include:
+.Pp
+.Bl -item -offset indent -compact
+.It
+WebGear Aviator 2.4
+.It
+WebGear Aviator PRO
+.It
+Raytheon Raylink WLAN
+.El
+.Pp
+To communicate with other 802.11 cards a common network ID or NWID must
 be specified on each station that wishes to participate in the shared
-wireless network.  The NWID can
-be set with
+wireless network.
+The NWID can be set with
 .Xr ifconfig 8 .
 .Pp
 The device uses IEEE 802.11 standard Frequency Hopping Spread Spectrum
 signaling and operates in the ranges of 2.400 to 2.4835 Gigahertz.
 This frequency range is further restricted by country according to
-that country's regulations.  Currently the
+that country's regulations.
+Currently the
 .Nm
 driver defaults to using the ranges appropriate for the USA.
 To change this setting you must define the kernel option
-RAY_PID_COUNTRY_CODE_DEFAULT to one of the following values:
+.Dv RAY_PID_COUNTRY_CODE_DEFAULT
+to one of the following values:
 .Pp
-.Bl -item -compact
+.Bl -item -offset indent -compact
 .It
 .Cd RAY_PID_COUNTRY_CODE_USA
 .It
@@ -80,22 +95,10 @@ RAY_PID_COUNTRY_CODE_DEFAULT to one of the following values:
 .El
 .Pp
 The output power of the transceiver is 100mW and the card's power consumption
-is 365 mA @ 5 volts.  The transmission range in open air (line of sight)
+is 365 mA @ 5 volts.
+The transmission range in open air (line of sight)
 is a maximum of 1000 feet (or ~304 meters), and indoors (i.e., with
 obstructions) it is a maximum of 500 feet (152 meters).
-.Sh HARDWARE
-Cards supported by the 
-.Nm
-driver include:
-.Pp
-.Bl -item -compact
-.It
-WebGear Aviator 2.4
-.It
-WebGear Aviator PRO
-.It
-Raytheon Raylink WLAN
-.El
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "ray0: card failed self test: status x"
@@ -109,13 +112,17 @@ Indicates the card has failed its initial startup tests.
 .Sh HISTORY
 The
 .Nm
-driver first appeared in
+device driver first appeared in
 .Nx 1.5 .
-.Sh AUTHOR
+.Ox
+support was added in
+.Ox 2.7 .
+.Sh AUTHORS
 The
 .Nm
-driver was written by
-.An Christian E. Hopps Aq chopps@netbsd.org
+driver was written by Christian E. Hopps <chopps@netbsd.org> and ported to
+.Ox
+by Michael Shalayeff <mickey@openbsd.org>.
 .Sh BUGS
 Currently the infrastructure mode is untested, and authentication
 using WEP is unimplemented.
