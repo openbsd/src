@@ -1,7 +1,7 @@
-/*	$OpenBSD: pathnames.h,v 1.3 1996/12/05 06:04:41 millert Exp $	*/
+/*	$OpenBSD: calendar.h,v 1.1 1996/12/05 06:04:38 millert Exp $	*/
 
 /*
- * Copyright (c) 1989, 1993
+ * Copyright (c) 1989, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,13 +31,42 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)pathnames.h	8.1 (Berkeley) 6/6/93
  */
 
-#include <paths.h>
 
-#define	_PATH_CPP	"/usr/bin/cpp"
+extern struct passwd *pw;
+extern int doall;
+extern struct iovec header[];
+extern struct tm *tp;
+extern char *calendarFile;
+extern char *optarg;
 
-			/* XXX -- fix when cpp parses arguments rationally */
-#define	_PATH_INCLUDE	"-I/usr/share/calendar"
+void	 cal __P((void));
+void	 closecal __P((FILE *));
+int	 getday __P((char *));
+int	 getdayvar __P((char *));
+int	 getfield __P((char *, char **, int *));
+int	 getmonth __P((char *));
+int	 geteaster __P((char *, int));
+int      getpaskha __P((char *, int));
+int      easter __P((int));
+int	 isnow __P((char *, int *, int *, int *));
+FILE	*opencal __P((void));
+void	 settime __P((time_t));
+time_t   Mktime __P((char *));
+void	 usage __P((void));
+void     setnnames __P((void));
+
+/* some flags */
+#define	F_ISMONTH	0x01 /* month (Januar ...) */
+#define	F_ISDAY		0x02 /* day of week (Sun, Mon, ...) */
+#define	F_ISDAYVAR	0x04 /* variables day of week, like SundayLast */
+#define	F_EASTER	0x08 /* Easter or easter depending days */
+
+extern f_dayAfter; /* days after current date */
+extern f_dayBefore; /* days bevore current date */
+
+struct fixs {
+	char *name;
+	int len;
+};

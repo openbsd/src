@@ -1,3 +1,12 @@
+/*
+ * Holiday
+ *
+ * $OpenBSD: calendar.holiday,v 1.4 1996/12/05 06:04:48 millert Exp $
+ */
+
+#ifndef _calendar_holiday_
+#define _calendar_holiday_
+
 01/01	Independence Day in Haiti, Sudan
 01/01	Universal Fraternity Day in Mozambique
 01/02	Ancestry Day in Haiti
@@ -23,11 +32,10 @@
 01/19	Nameday of Archbishop Makarios in Cyprus
 01/20	Army Day in Mali 
 01/20	National Heroes Day in Guinea-Bissau
-01/20*	Lee-Jackson Day in Virginia (3rd Monday)
-01/20*	Martin Luther King Day in New York (3rd Sunday)
-01/20*	Robert E. Lee's Birthday in Alabama & Mississippi (3rd Monday)
+01/SunThird	Martin Luther King Day in New York (3rd Sunday)
+01/MonThird	Robert E. Lee's Birthday in Alabama & Mississippi (3rd Monday)
+01/MonThird	Lee-Jackson Day in Virginia (3rd Monday)
 01/21	Our Lady of Altagracia in Dominican Republic
-01/21*	Lee-Jackson Day in Virginia (3rd Monday)
 01/23	Feast of St. Ildefonsus
 01/23	National Handwriting Day
 01/24	Economic Liberation Day in Togo
@@ -75,7 +83,6 @@
 03/12	Moshoeshoe's Birthday in Lesotho
 03/12	Renovation Day in Gabon
 03/13	National Day in Grenada
-03/15	Day of the 1848 revolution in Hungary
 03/16	Black Press Day; first Black newspaper founded in 1827
 03/17	Evacuation Day in Suffolk County, Massachusetts
 03/17	St. Patrick's Day
@@ -92,7 +99,7 @@
 03/25	Lady Day (a.k.a. the Feast of the Annunciation)
 03/25	Maryland Day in Maryland
 03/25	National Holiday in Greece
-03/25*	Seward's Day in Alaska (last Monday)
+03/MonLast	Seward's Day in Alaska (last Monday)
 03/26	Independence Day in Bangladesh
 03/26	Prince Jonah Kuhio Kalanianaole Day in Hawaii
 03/27	Armed Forces Day in Burma
@@ -103,6 +110,7 @@
 04/02	Malvinas Day in Argentina
 04/02	Pascua Florida Day in Florida
 04/04	Ching Ming Festival in Hong Kong
+04/04	Liberation Day in Hungary
 04/04	National Day in Senegal
 04/05	Arbor Day in South Korea
 04/05	Tomb Sweeping Day in Taiwan
@@ -115,7 +123,7 @@
 04/13	Songkron Day in Thailand
 04/14	Day of the Americas in Honduras
 04/15	Bengali New Year in Bangladesh
-04/15*	Patriot's Day in Maine & Massachusetts (3rd Monday)
+04/MonThird	Patriot's Day in Maine & Massachusetts (3rd Monday)
 04/16	De Diego's Birthday (celebrated in Puerto Rico)
 04/16	Holy Week (5 days) in Venezuela
 04/16	Tourist Week (5 days) in Uruguay
@@ -134,8 +142,8 @@
 04/26	Confederate Memorial Day in Florida & Georgia
 04/26	Union Day in Tanzania
 04/27	Independence Day in Togo
-04/28*	Arbor Day in Wyoming (last Monday)
-04/28*	Confederate Memorial Day in Alabama & Mississippi (last Monday)
+04/MonLast	Arbor Day in Wyoming (last Monday)
+04/MonLast	Confederate Memorial Day in Alabama & Mississippi (last Monday)
 04/30	The Workers Day in Uruguay
 05/01	Labor Day in many places
 05/01	Law Day (decl. by Eisenhower)
@@ -152,7 +160,7 @@
 05/09	Liberation Day in Czechoslovakia
 05/09	Victory Day in Poland, U.S.S.R.
 05/10	Confederate Memorial Day in South Carolina
-05/10	Mothers Day in Guatamala
+05/10	Mothers Day in Guatemala
 05/11	Minnesota Day in Minnesota
 05/14	Buddhist Holiday (Waisak 2528) in Indonesia
 05/14	Independence Day (2 days) in Paraguay
@@ -165,11 +173,10 @@
 05/18	Flag Day in Haiti
 05/18	Prayer Day in Denmark
 05/19	Youth and Sports Day in Turkey
-05/19*	Memorial Day in Michigan (3rd Monday)
+05/MonThird	Memorial Day in Michigan (3rd Monday)
 05/20	Mecklenburg Independence Day in North Carolina
 05/20	National Day in Cameroon
 05/20	Victoria Day in Canada
-05/20*	Memorial Day in Michigan (3rd Monday)
 05/22	National Heroes Day in Sri Lanka
 05/23	Commonwealth Day in Jamaica, Belize
 05/23	National Labor Day in Jamaica
@@ -238,19 +245,19 @@
 07/09	Independence Day in Argentina
 07/10	Independence Day in Bahamas
 07/11	National Holiday in the Mongolian People's Republic
-07/14	Bastille Day, anniversary of French revolution, 1789
+07/14	Bastille Day
 07/14	National Holiday in Monaco
 07/15	St. Swithin's Day
-07/16	Presidents Day in Botswanna
+07/16	Presidents Day in Botswana
 07/17	Constitution Day in South Korea
-07/17	Public Holiday in Botswanna
+07/17	Public Holiday in Botswana
 07/18	Constitution Day in Uruguay
 07/18	Liberation Day in Nicaragua
 07/19	Martyrs Day in Burma
 07/20	Independence Day in Colombia
 07/21	National Holiday in Belgium
 07/22	National Day in Poland
-07/23	Eqyptian National Day in Syrian Arab Republic
+07/23	Egyptian National Day in Syrian Arab Republic
 07/23	Remembrance Day in Papua, New Guinea
 07/24	Pioneer Day in Utah
 07/24	Simon Bolivar's Day in Ecuador, Venezuela
@@ -286,18 +293,18 @@
 08/15	Independence Day in India
 08/15	Liberation Day in South Korea
 08/15	National Day in Congo
-08/15*	Admission Day in Hawaii, 1984 (3rd Friday)
+08/FriThird	Admission Day in Hawaii, 1984 (3rd Friday)
 08/16	Bennington Battle Day in Vermont
 08/16	Independence Days (3 days) in Gabon
 08/16	Restoration Day in Dominican Republic
 08/17	Independence Day in Indonesia
 08/19	Independence Day in Afghanistan
-08/20	Constitution Day in Hungary and birthday of King St. Istvan
+08/20	Constitution Day in Hungary
 08/23	Liberation Days (2 days) in Romania
 08/24	National Flag Day in Liberia
 08/25	Constitution Day in Paragual
 08/25	Independence Day in Uruguay
-08/26	Susan B. Anthony Day in Massachussetts
+08/26	Susan B. Anthony Day in Massachusetts
 08/26*	Bank Holiday in England and Wales
 08/27	Liberation Day in Hong Kong
 08/28	Heroes Day in Philippines
@@ -334,19 +341,18 @@
 09/24	Republic Day in Trinidad, Tobago
 09/25	Army Day in Mozambique
 09/25	Referendum Day in Rwanda
-09/26	National Day in Maldives, Yemem Deomcratic Republic
-09/26	Revoluation Anniversary Day in Yemen Arab
-09/28	Confucious' Day in Taiwan
-09/30	Botswanna Day in Botswanna
+09/26	National Day in Maldives, Yemem Democratic Republic
+09/26	Revolution Anniversary Day in Yemen Arab
+09/28	Confucius' Day in Taiwan
+09/30	Botswana Day in Botswana
 09/30	First Day of Sukkot
 10/01	Armed Forces Day in South Korea
 10/01	Independence Day in Nigeria
 10/01	Labor Day in Australia
 10/01	National Liberation Day (2 days) in China
-10/01	Public Holiday in Botswanna
+10/01	Public Holiday in Botswana
 10/03	National Foundation Day in South Korea
 10/03	U.N. Day in Varbados
-10/03	Day of German union
 10/04	Independence Day in Lesotho
 10/06	National Sports Day in Lesotho
 10/07	National Heroes Day in Jamaica
@@ -369,7 +375,7 @@
 10/12	Our Lady Aparecida Day in Brazil
 10/12	Pan American Day in Belize
 10/13	St. Edward's Day - Patron saint of England
-10/14	National Day in Yemen Arab Repyblic
+10/14	National Day in Yemen Arab Republic
 10/14	Young People's Day in Zaire
 10/14*	Thanksgiving Day in Canada
 10/15	Evacuation Day in Tunisia
@@ -379,8 +385,7 @@
 10/20	Kenyatta Day in Kenya
 10/21	Armed Forces Day in Honduras
 10/21	Revolution Days (2 days) in Somalia
-10/23	Chulalongkron's Day in Thsailand
-10/23	Day of the 1956 revolution in Hungary
+10/23	Chulalongkron's Day in Thailand
 10/24	Independence Day in Zambia
 10/24	United Nations Day 
 10/25	Labor Day in New Zealand
@@ -402,8 +407,9 @@
 11/04	Will Rogers Day
 11/06	Green March Day in Morocco
 11/07	National Revolution Day
+11/07	October Revolution Day in Hungary
 11/11	Independence Day in Angola
-11/11	Rememberance Day in Canada
+11/11	Remembrance Day in Canada
 11/11	Republic Day in Maldives
 11/15	Dynasty Day in Belgium
 11/17	Army Day in Zaire
@@ -421,7 +427,7 @@
 11/29	Goodwill Day in Liberia
 11/29	Liberation Day in Albania
 11/29	National Day in Burma
-11/30	Independence Day in Barbados, Yemen Deomcratic Republic
+11/30	Independence Day in Barbados, Yemen Democratic Republic
 11/30	National Day in Benin
 11/30	National Heroes Day in Philippines
 11/30	St. Andrew's Day
@@ -444,7 +450,7 @@
 12/16	Constitution Day in Nepal
 12/16	Day of the Covenant in South Africa
 12/16	National Day in Bahrain
-12/16	Victry Day in Bangladesh
+12/16	Victory Day in Bangladesh
 12/17	National Day in Bhutan
 12/18	Republic Day in Niger
 12/23	Victory Day in Egypt
@@ -470,14 +476,14 @@
 05/05	Battle of Puebla in Mexico
 05/08	Buddha's Birthday in South Korea
 05/08	Elections for the National Assembly in Philippines
-05/14	Anniversary of the Founding of Guinean Deomcratic Party in Guinea
+05/14	Anniversary of the Founding of Guinean Democratic Party in Guinea
 
 05/25	Anniversary of the Revolution of 1810 in Argentina
 05/25	Revolution in the Sudan in Libyan Arab Republic
 05/27	Afghanistan attains sovereignty, 1921
 06/02	Corpus Christi in Paraguay
-06/03	Jefferson Davis's Birthday in Alabama & Mississippi (1st Monday)
-06/03	Jefferson Davis's Birthday in Florida, Georgia, & S. Carolina
+06/MonFirst	Jefferson Davis's Birthday in Alabama & Mississippi (1st Monday)
+06/MonFirst	Jefferson Davis's Birthday in Florida, Georgia, & S. Carolina
 06/04	Queen's Birthday in New Zealand
 06/06	His Majesty, Yang Di-Pertuan Agong's Birthday in Malaysia
 06/11	Queen's Birthday
@@ -516,7 +522,7 @@
 08/17	Anniversary of the Death of General San Martin in Argentina
 09/09	Anniversary of the Socialist Revolution (2 days) in Bulgaria
 09/10	Moon Festival in Taiwan
-09/11	Aniversary of military coup in Chile
+09/11	Anniversary of military coup in Chile
 09/11	Ethiopian New Year in Ethiopia
 09/12	Amilcar Cabral's Birthday in Guinea-Bissau
 09/14	Battle of San Jacinto in Nicaragua
@@ -568,3 +574,5 @@
 12/29	His Majesty, the King's Birthday in Nepal
 12/30	Anniversary of the Democratic Republic of Madagascar in Madagascar
 12/31	Proclamation of the Republic in Congo
+
+#endif /* !_calendar_holiday_ */

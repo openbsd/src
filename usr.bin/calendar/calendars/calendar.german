@@ -1,0 +1,12 @@
+/*
+ * German calendar file(s)
+ *
+ * $OpenBSD: calendar.german,v 1.1 1996/12/05 06:04:46 millert Exp $
+ */
+
+#ifndef _calendar_german_
+#define _calendar_german_
+
+#include <de_DE.ISO_8859-1/calendar.all>
+
+#endif /* !_calendar_german_ */

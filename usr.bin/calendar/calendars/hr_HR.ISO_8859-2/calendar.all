@@ -1,0 +1,12 @@
+/*
+ *  hrvatski calendar
+ *
+ * $OpenBSD: calendar.all,v 1.1 1996/12/05 06:04:56 millert Exp $
+ */
+
+#ifndef _hr_HR_ISO_8859_2_all
+#define _hr_HR_ISO_8859_2_all
+
+#include <hr_HR.ISO_8859-2/calendar.praznici>
+
+#endif /* !_hr_HR_ISO_8859_2_all */

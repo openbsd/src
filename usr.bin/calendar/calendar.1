@@ -1,8 +1,7 @@
-.\"	$OpenBSD: calendar.1,v 1.2 1996/06/26 05:31:45 deraadt Exp $
-.\"	$NetBSD: calendar.1,v 1.7 1995/03/27 08:46:13 glass Exp $
+.\"	$OpenBSD: calendar.1,v 1.3 1996/12/05 06:04:37 millert Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
-.\"	The Regents of the University of California.  All rights reserved.
+.\"     The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -14,8 +13,8 @@
 .\"    documentation and/or other materials provided with the distribution.
 .\" 3. All advertising materials mentioning features or use of this software
 .\"    must display the following acknowledgement:
-.\"	This product includes software developed by the University of
-.\"	California, Berkeley and its contributors.
+.\"     This product includes software developed by the University of
+.\"     California, Berkeley and its contributors.
 .\" 4. Neither the name of the University nor the names of its contributors
 .\"    may be used to endorse or promote products derived from this software
 .\"    without specific prior written permission.
@@ -32,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)calendar.1	8.1 (Berkeley) 6/29/93
+.\"     @(#)calendar.1  8.1 (Berkeley) 6/29/93
 .\"
 .Dd June 29, 1993
 .Dt CALENDAR 1
@@ -43,8 +42,16 @@
 .Sh SYNOPSIS
 .Nm calendar
 .Op Fl a
+.Op Fl A Ar num
+.Op Fl B Ar num
+.Oo Fl t Ar dd
+.Sm off
+.Op . Ar mm Op . Ar year
+.Sm on
+.Oc
+.Op Fl f Ar calendarfile
 .Sh DESCRIPTION
-The 
+The
 .Nm calendar
 utility checks the current directory or the directory specified by the
 .Dq Ev CALENDAR_DIR
@@ -60,19 +67,62 @@ The following options are available:
 Process the ``calendar'' files of all users and mail the results
 to them.
 This requires super-user privileges.
+.It Fl A Ar num
+print lines from today and next
+.Ar num
+days (forward, future)
+.It Fl B Ar num
+print lines from today and previous
+.Ar num
+days (backward, past)
+.It Fl f Pa calendarfile
+use
+.Pa calendarfile
+as default calendar file.
+.It Xo Fl t
+.Sm off
+.Ar dd
+.Op . Ar mm Op . Ar year
+.Sm on
+.Xc
+for test purposes only:	set date directly to argument values.
 .El
 .Pp
-Lines should begin with a month and day.
+To handle calendars in your national code table you can specify
+.Dq LANG=<locale_name>
+in the calendar file as early as possible. To handle national Easter
+names in the calendars
+.Dq Easter=<national_name>
+(for Catholic Easter) or
+.Dq Paskha=<national_name>
+(for Orthodox Easter) can be used.
+.Pp
+Other lines should begin with a month and day.
 They may be entered in almost any format, either numeric or as character
 strings.
+If proper locale is set, national months and weekdays
+names can be used.
 A single asterisk (``*'') matches every month.
 A day without a month matches that day of every week.
 A month without a day matches the first of that month.
 Two numbers default to the month followed by the day.
 Lines with leading tabs default to the last entered date, allowing
 multiple line specifications for a single date.
+``Easter'', may be followed by an positive or negative integer, is
+Easter for this year.
+``Paskha'', may be followed by an positive or negative integer, is
+Orthodox Easter for this year.
+Weekdays may be followed by ``-4'' ... ``+5'' (aliases
+last, first, second, third, fourth) for moving events like
+``the last Monday in April''
+.Pp
 By convention, dates followed by an asterisk are not fixed, i.e., change
 from year to year.
+.Pp
+Day description	start after the	first <tab> character in the line;
+if the line not	contains <tab> character, it isn't printed out.
+If the first character in the line is a	<tab> character, it is treated as
+continue of previous description.
 .Pp
 The ``calendar'' file is preprocessed by
 .Xr cpp 1 ,
@@ -87,65 +137,107 @@ Empty lines and lines protected by the C commenting syntax
 .Pq Li /* ... */
 are ignored.
 .Pp
-Some possible calendar entries:
+Some possible calendar entries (<tab> characters highlighted by
+\fB\et\fR sequence)
 .Bd -unfilled -offset indent
-#include	<calendar.usholiday>
-#include	<calendar.birthday>
+LANG=C
+Easter=Ostern
 
-6/15		... June 15 (if ambiguous, will default to month/day).
-Jun. 15		... June 15.
-15 June		... June 15.
-Thursday	... Every Thursday.
-June		... Every June 1st.
-15 *		... 15th of every month.
+#include <calendar.usholiday>
+#include <calendar.birthday>
+
+6/15\fB\et\fRJune 15 (if ambiguous, will default to month/day).
+Jun. 15\fB\et\fRJune 15.
+15 June\fB\et\fRJune 15.
+Thursday\fB\et\fREvery Thursday.
+June\fB\et\fREvery June	1st.
+15 *\fB\et\fR15th of every month.
+
+May Sun+2\fB\et\fRsecond Sunday	in May (Muttertag)
+04/SunLast\fB\et\fRlast	Sunday in April,
+\fB\et\fRsummer	time in	Europe
+Easter\fB\et\fREaster
+Ostern-2\fB\et\fRGood Friday (2	days before Easter)
+Paskha\fB\et\fROrthodox	Easter
 .Ed
 .Sh FILES
+.Pp
+.Bl -tag -width calendar.christian -compact
+.It Pa calendar
+file in current directory
+
+.It Pa ~/.calendar
+.Pa calendar
+HOME directory.
+.Nm calendar
+does a chdir into this directory if it exists.
+
+.It Pa ~/.calendar/calendar
+calendar file to use if no calendar file exists in the current directory.
+
+.It Pa ~/.calendar/nomail
+do not send mail if this file exists.
+.El
+
 The following default calendar files are provided:
 .Pp
 .Bl -tag -width calendar.christian -compact
 .It Pa calendar.birthday
 Births and deaths of famous (and not-so-famous) people.
+
 .It Pa calendar.christian
 Christian holidays.
 This calendar should be updated yearly by the local system administrator
 so that roving holidays are set correctly for the current year.
+
 .It Pa calendar.computer
 Days of special significance to computer people.
+
 .It Pa calendar.history
 Everything  else,  mostly  U. S. historical events.
+
 .It Pa calendar.holiday
 Other  holidays,  including  the  not-well-known,  obscure, and
 .Em really
 obscure.
+
 .It Pa calendar.judaic
 Jewish holidays.
 This calendar should be updated yearly by the local system administrator
 so that roving holidays are set correctly for the current year.
+
 .It Pa calendar.music
-Musical  events,  births, and deaths.
-Strongly  oriented  toward  rock 'n' roll.
+Musical events, births, and deaths.
+Strongly oriented toward rock 'n' roll.
+
 .It Pa calendar.usholiday
 U.S. holidays.
 This calendar should be updated yearly by the local system administrator
 so that roving holidays are set correctly for the current year.
+
+.It Pa calendar.german
+German calendar.
+
+.It Pa calendar.russian
+Russian calendar.
 .El
 .Sh SEE ALSO
 .Xr at 1 ,
 .Xr cpp 1 ,
-.Xr cron 8
+.Xr cron 8 ,
+.Xr mail 1
 .Sh COMPATIBILITY
 The
 .Nm calendar
 program previously selected lines which had the correct date anywhere
 in the line.
 This is no longer true, the date is only recognized when it occurs
-first on the line.
+at the beginning of a line.
 .Sh HISTORY
 A
 .Nm
-command appeared in 
+command appeared in
 .At v7 .
 .Sh BUGS
 .Nm Calendar
-doesn't handle events that move around from year to year, i.e.,
-``the last Monday in April''.
+doesn't handle Jewish holidays and moon phases.
