@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.37 2004/06/07 15:00:38 mickey Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.38 2004/06/07 15:18:19 mickey Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -59,11 +59,11 @@ dlopen(const char *libname, int flags)
 
 	_dl_thread_kern_stop();
 	object = _dl_load_shlib(libname, _dl_objects, OBJTYPE_DLO, flags);
-	/* this add_object should not be here, XXX */
 	if (object == 0) {
 		_dl_thread_kern_go();
 		return((void *)0);
 	}
+	/* this add_object should not be here, XXX */
 	_dl_add_object(object);
 	_dl_link_sub(object, _dl_objects);
 	_dl_thread_kern_go();
@@ -142,9 +142,15 @@ dlsym(void *handle, const char *name)
 
 	retval = (void *)_dl_find_symbol(name, object, &sym, NULL,
 	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_NOTPLT, 0, object);
-	if (sym != NULL)
+	if (sym != NULL) {
 		retval += sym->st_value;
-	else
+#ifdef __hppa__
+		retval = (void *)_dl_md_plabel((Elf_Addr)retval,
+		    object->dyn.pltgot);
+#endif
+		DL_DEB(("dlsym: %s in %s: %p\n",
+		    name, object->load_name, retval));
+	} else
 		_dl_errno = DL_NO_SYMBOL;
 	return (retval);
 }

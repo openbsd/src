@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.1 2004/05/25 21:48:00 mickey Exp $	*/
+/*	$OpenBSD: archdep.h,v 1.2 2004/06/07 15:18:19 mickey Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -95,5 +95,6 @@ RELOC_RELA(Elf_RelA *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
 
 void _hppa_dl_dtors(void);
 void hppa_call(void *, Elf_Addr *, void (*)(void));
+Elf_Addr _dl_md_plabel(Elf_Addr, Elf_Addr *);
 
 #endif /* _HPPA_ARCHDEP_H_ */
