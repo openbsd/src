@@ -985,6 +985,7 @@
 #define	PCI_PRODUCT_IBM_0x0020	0x0020		/* MCA */
 #define	PCI_PRODUCT_IBM_82351	0x0022		/* 82351 PCI-PCI */
 #define	PCI_PRODUCT_IBM_0x0036	0x0036		/* Miami/PCI */
+#define	PCI_PRODUCT_IBM_OLYMPIC	0x003e		/* Olympic Token Ring */
 
 /* IDT products */
 #define	PCI_PRODUCT_IDT_77201	0x0001		/* 77201/77211 ATM (NICStAR) */

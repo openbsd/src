@@ -1845,6 +1845,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Miami/PCI",
 	},
 	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_OLYMPIC,
+	    0,
+	    "IBM",
+	    "Olympic Token Ring",
+	},
+	{
 	    PCI_VENDOR_IDT, PCI_PRODUCT_IDT_77201,
 	    0,
 	    "IDT",
