@@ -42,8 +42,20 @@ static Key_schedule sched;
 #ifdef HAVE_GSSAPI
 
 #include <netdb.h>
+
+#ifdef HAVE_GSSAPI_H
+#include <gssapi.h>
+#endif
+#ifdef HAVE_GSSAPI_GSSAPI_H
 #include <gssapi/gssapi.h>
+#endif
+#ifdef HAVE_GSSAPI_GSSAPI_GENERIC_H
 #include <gssapi/gssapi_generic.h>
+#endif
+
+#ifndef HAVE_GSS_C_NT_HOSTBASED_SERVICE
+#define GSS_C_NT_HOSTBASED_SERVICE gss_nt_service_name
+#endif
 
 /* We use Kerberos 5 routines to map the GSSAPI credential to a user
    name.  */
@@ -3101,7 +3113,7 @@ static void
 serve_remove (arg)
     char *arg;
 {
-    do_cvs_command ("cvsremove", cvsremove);
+    do_cvs_command ("remove", cvsremove);
 }
 
 static void
@@ -3115,7 +3127,7 @@ static void
 serve_rdiff (arg)
     char *arg;
 {
-    do_cvs_command ("patch", patch);
+    do_cvs_command ("rdiff", patch);
 }
 
 static void
@@ -3384,6 +3396,17 @@ server_modtime (finfo, vers_ts)
 
 /* See server.h for description.  */
 
+#if defined (USE_PROTOTYPES) ? USE_PROTOTYPES : defined (__STDC__)
+/* Need to prototype because mode_t might be smaller than int.  */
+void
+server_updated (
+    struct file_info *finfo,
+    Vers_TS *vers,
+    enum server_updated_arg4 updated,
+    mode_t mode,
+    unsigned char *checksum,
+    struct buffer *filebuf)
+#else
 void
 server_updated (finfo, vers, updated, mode, checksum, filebuf)
     struct file_info *finfo;
@@ -3392,6 +3415,7 @@ server_updated (finfo, vers, updated, mode, checksum, filebuf)
     mode_t mode;
     unsigned char *checksum;
     struct buffer *filebuf;
+#endif
 {
     if (noexec)
     {
@@ -5221,7 +5245,7 @@ gserver_authenticate_connection ()
     tok_in.value = buf;
     tok_in.length = strlen (buf);
 
-    if (gss_import_name (&stat_min, &tok_in, gss_nt_service_name,
+    if (gss_import_name (&stat_min, &tok_in, GSS_C_NT_HOSTBASED_SERVICE,
 			 &server_name) != GSS_S_COMPLETE)
 	error (1, 0, "could not import GSSAPI service name %s", buf);
 

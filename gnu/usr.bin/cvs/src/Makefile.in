@@ -180,6 +180,9 @@ cvsbug: cvsbug.sh $(srcdir)/version.c
 
 $(OBJECTS): $(HEADERS) options.h
 
+rcscmds.o: rcscmds.c $(top_srcdir)/diff/diffrun.h
+	$(CC) $(CPPFLAGS) $(INCLUDES) -I$(top_srcdir)/diff $(DEFS) $(CFLAGS) -c $(srcdir)/rcscmds.c
+
 zlib.o: zlib.c
 	$(CC) $(CPPFLAGS) $(INCLUDES) ${ZLIB_INCLUDES} $(DEFS) $(CFLAGS) -c $(srcdir)/zlib.c
 

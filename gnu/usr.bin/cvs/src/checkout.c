@@ -886,11 +886,24 @@ internal error: %s doesn't start with %s in checkout_proc",
 	       build_one_dir whenever the -d command option was specified
 	       to checkout.  */
 
-	    if (! where_is_absolute)
+	    if (! where_is_absolute && top_level_admin)
 	    {
 		/* It may be argued that we shouldn't set any sticky
 		   bits for the top-level repository.  FIXME?  */
 		build_one_dir (CVSroot_directory, ".", *pargc <= 1);
+
+#ifdef SERVER_SUPPORT
+		/* We _always_ want to have a top-level admin
+		   directory.  If we're running in client/server mode,
+		   send a "Clear-static-directory" command to make
+		   sure it is created on the client side.  (See 5.10
+		   in cvsclient.dvi to convince yourself that this is
+		   OK.)  If this is a duplicate command being sent, it
+		   will be ignored on the client side.  */
+
+		if (server_active)
+		    server_clear_entstat (".", CVSroot_directory);
+#endif
 	    }
 
 

@@ -1434,9 +1434,10 @@ commit_filesdoneproc (callerdat, err, repository, update_dir, entries)
 	       Remove anything after the `CVSROOT' component -- this is
 	       necessary when committing in a subdirectory of CVSROOT.  */
 	    char *admin_dir = xstrdup (repository);
-	    assert (admin_dir[p - repository + strlen ("CVSROOT")] == '\0'
-		    || admin_dir[p - repository + strlen ("CVSROOT")] == '/');
-	    admin_dir[p - repository + strlen ("CVSROOT")] = '\0';
+	    int cvsrootlen = strlen ("CVSROOT");
+	    assert (admin_dir[p - repository + cvsrootlen] == '\0'
+		    || admin_dir[p - repository + cvsrootlen] == '/');
+	    admin_dir[p - repository + cvsrootlen] = '\0';
 
 	    cvs_output (program_name, 0);
 	    cvs_output (" ", 1);

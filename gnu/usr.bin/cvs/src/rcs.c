@@ -1404,7 +1404,7 @@ rcsbuf_getid (rcsbuf, idp)
     rcsbuf->ptr = ptr;
     return 1;
 
-#undef my_whitespace;
+#undef my_whitespace
 }
 
 /* Read an RCS @-delimited string.  Store the result in STRP. */
@@ -4478,6 +4478,9 @@ RCS_checkout (rcs, workfile, rev, nametag, options, sout, pfn, callerdat)
 	}
     }
 
+    if (free_rev)
+	free (rev);
+
     if (log != NULL)
     {
 	free (log);
@@ -4547,9 +4550,25 @@ RCS_checkout (rcs, workfile, rev, nametag, options, sout, pfn, callerdat)
 	    if (islink (workfile))
 		if (unlink_file (workfile) < 0)
 		    error (1, errno, "cannot remove %s", workfile);
+
 	    ofp = CVS_FOPEN (workfile, expand == KFLAG_B ? "wb" : "w");
+
+	    /* If the open failed because the existing workfile was not
+	       writable, try to chmod the file and retry the open.  */
+	    if (ofp == NULL && errno == EACCES
+		&& isfile (workfile) && !iswritable (workfile))
+	    {
+		xchmod (workfile, 1);
+		ofp = CVS_FOPEN (workfile, expand == KFLAG_B ? "wb" : "w");
+	    }
+
 	    if (ofp == NULL)
-		error (1, errno, "cannot open %s", workfile);
+	    {
+		error (0, errno, "cannot open %s", workfile);
+		if (free_value)
+		    free (value);
+		return 1;
+	    }
 	}
 
 	if (workfile == NULL && sout == RUN_TTY)
@@ -4581,10 +4600,15 @@ RCS_checkout (rcs, workfile, rev, nametag, options, sout, pfn, callerdat)
 	    while (nleft > 0)
 	    {
 		if (fwrite (p, 1, nstep, ofp) != nstep)
-		    error (1, errno, "cannot write %s",
+		{
+		    error (0, errno, "cannot write %s",
 			   (workfile != NULL
 			    ? workfile
 			    : (sout != RUN_TTY ? sout : "stdout")));
+		    if (free_value)
+			free (value);
+		    return 1;
+		}
 		p += nstep;
 		nleft -= nstep;
 		if (nleft < nstep)
@@ -4593,13 +4617,19 @@ RCS_checkout (rcs, workfile, rev, nametag, options, sout, pfn, callerdat)
 	}
     }
 
+    if (free_value)
+	free (value);
+
     if (workfile != NULL)
     {
 	int ret;
 
 #ifdef PRESERVE_PERMISSIONS_SUPPORT
 	if (!special_file && fclose (ofp) < 0)
-	    error (1, errno, "cannot close %s", workfile);
+	{
+	    error (0, errno, "cannot close %s", workfile);
+	    return 1;
+	}
 
 	if (change_rcs_owner_or_group)
 	{
@@ -4614,7 +4644,10 @@ RCS_checkout (rcs, workfile, rev, nametag, options, sout, pfn, callerdat)
 		     : sb.st_mode & ~(S_IWRITE | S_IWGRP | S_IWOTH));
 #else
 	if (fclose (ofp) < 0)
-	    error (1, errno, "cannot close %s", workfile);
+	{
+	    error (0, errno, "cannot close %s", workfile);
+	    return 1;
+	}
 
 	ret = chmod (workfile,
 		     sb.st_mode & ~(S_IWRITE | S_IWGRP | S_IWOTH));
@@ -4632,7 +4665,10 @@ RCS_checkout (rcs, workfile, rev, nametag, options, sout, pfn, callerdat)
 	    !special_file &&
 #endif
 	    fclose (ofp) < 0)
-	    error (1, errno, "cannot close %s", sout);
+	{
+	    error (0, errno, "cannot close %s", sout);
+	    return 1;
+	}
     }
 
 #ifdef PRESERVE_PERMISSIONS_SUPPORT
@@ -4641,11 +4677,6 @@ RCS_checkout (rcs, workfile, rev, nametag, options, sout, pfn, callerdat)
     if (preserve_perms && workfile != NULL)
 	update_hardlink_info (workfile);
 #endif
-
-    if (free_value)
-	free (value);
-    if (free_rev)
-	free (rev);
 
     return 0;
 }
@@ -4973,6 +5004,7 @@ RCS_checkin (rcs, workfile, message, rev, flags)
     int status, checkin_quiet, allocated_workfile;
     struct tm *ftm;
     time_t modtime;
+    int adding_branch = 0;
 
     commitpt = NULL;
 
@@ -4991,6 +5023,41 @@ RCS_checkin (rcs, workfile, message, rev, flags)
 	assert (strncmp (p, RCSEXT, extlen) == 0);
 	*p = '\0';
 	allocated_workfile = 1;
+    }
+
+    /* Is the backend file a symbolic link?  Follow it and replace the
+       filename with the destination of the link.  */
+
+    while (islink (rcs->path))
+    {
+	char *newname;
+#ifdef HAVE_READLINK
+	/* The clean thing to do is probably to have each filesubr.c
+	   implement this (with an error if not supported by the
+	   platform, in which case islink would presumably return 0).
+	   But that would require editing each filesubr.c and so the
+	   expedient hack seems to be looking at HAVE_READLINK.  */
+	newname = xreadlink (rcs->path);
+#else
+	error (1, 0, "internal error: islink doesn't like readlink");
+#endif
+	
+	if (isabsolute (newname))
+	{
+	    free (rcs->path);
+	    rcs->path = newname;
+	}
+	else
+	{
+	    char *oldname = last_component (rcs->path);
+	    int dirlen = oldname - rcs->path;
+	    char *fullnewname = xmalloc (dirlen + strlen (newname) + 1);
+	    strncpy (fullnewname, rcs->path, dirlen);
+	    strcpy (fullnewname + dirlen, newname);
+	    free (newname);
+	    free (rcs->path);
+	    rcs->path = fullnewname;
+	}
     }
 
     checkin_quiet = flags & RCS_FLAGS_QUIET;
@@ -5267,6 +5334,7 @@ RCS_checkin (rcs, workfile, message, rev, flags)
 		goto checkin_done;
 	    }
 	    delta->version = RCS_addbranch (rcs, branch);
+	    adding_branch = 1;
 	    p = strrchr (branch, '.');
 	    *p = '\0';
 	    tip = xstrdup (branch);
@@ -5312,13 +5380,26 @@ RCS_checkin (rcs, workfile, message, rev, flags)
     {
 	if (! STREQ (nodep->data, delta->author))
 	{
-	    error (0, 0, "%s: revision %s locked by %s",
-		   rcs->path,
-		   nodep->key, nodep->data);
-	    status = 1;
-	    goto checkin_done;
+	    /* If we are adding a branch, then leave the old lock around.
+	       That is sensible in the sense that when adding a branch,
+	       we don't need to use the lock to tell us where to check
+	       in.  It is fishy in the sense that if it is our own lock,
+	       we break it.  However, this is the RCS 5.7 behavior (at
+	       the end of addbranch in ci.c in RCS 5.7, it calls
+	       removelock only if it is our own lock, not someone
+	       else's).  */
+
+	    if (!adding_branch)
+	    {
+		error (0, 0, "%s: revision %s locked by %s",
+		       rcs->path,
+		       nodep->key, nodep->data);
+		status = 1;
+		goto checkin_done;
+	    }
 	}
-	delnode (nodep);
+	else
+	    delnode (nodep);
     }
 
     dtext->version = xstrdup (delta->version);
@@ -6404,6 +6485,18 @@ RCS_delete_revs (rcs, tag1, tag2, inclusive)
 	goto delrev_done;
     }
 
+    if (after == NULL && before == NULL)
+    {
+	/* The user is trying to delete all revisions.  While an
+	   RCS file without revisions makes sense to RCS (e.g. the
+	   state after "rcs -i"), CVS has never been able to cope with
+	   it.  So at least for now we just make this an error.
+
+	   We don't include rcs->path in the message since "cvs admin"
+	   already printed "RCS file:" and the name.  */
+	error (1, 0, "attempt to delete all revisions");
+    }
+
     /* The conditionals at this point get really hairy.  Here is the
        general idea:
 
@@ -6415,8 +6508,6 @@ RCS_delete_revs (rcs, tag1, tag2, inclusive)
          check out both revisions and diff -n them.  This could use
 	 RCS_exec_rcsdiff with some changes, like being able
 	 to suppress diagnostic messages and to direct output. */
-
-    assert (before != NULL || after != NULL);
 
     if (after != NULL)
     {
@@ -8196,7 +8287,7 @@ RCS_copydeltas (rcs, fin, rcsbufin, fout, newdtext, insertpt)
    to count the number of RCS revisions for which some special action
    is required.  */
 
-int
+static int
 count_delta_actions (np, ignore)
     Node *np;
     void *ignore;
@@ -8535,6 +8626,9 @@ annotate (argc, argv)
 	return get_responses_and_close ();
     }
 #endif /* CLIENT_SUPPORT */
+
+    if (tag != NULL)
+	tag_check_valid (tag, argc, argv, local, 0, "");
 
     return start_recursion (annotate_fileproc, (FILESDONEPROC) NULL,
 			    (DIRENTPROC) NULL, (DIRLEAVEPROC) NULL, NULL,

@@ -1639,8 +1639,6 @@ patch_file (finfo, vers_ts, docheckout, file_info, checksum)
     {
 	char *diff_options;
 
-	/* FIXME: It might be better to come up with a diff library
-           which can be shared with the diffutils.  */
 	/* If the client does not support the Rcs-diff command, we
            send a context diff, and the client must invoke patch.
            That approach was problematical for various reasons.  The
@@ -1649,8 +1647,10 @@ patch_file (finfo, vers_ts, docheckout, file_info, checksum)
            program.  */
 	if (! rcs_diff_patches)
 	{
-	    /* We use -c, not -u, because we have no way of knowing
-	       which DIFF is in use.  */
+	    /* We use -c, not -u, because that is what CVS has
+	       traditionally used.  Kind of a moot point, now that
+	       Rcs-diff is preferred, so there is no point in making
+	       the compatibility issues worse.  */
 	    diff_options = "-c";
 	}
 	else
@@ -1932,14 +1932,21 @@ merge_file (finfo, vers)
 
     if (strcmp (vers->options, "-V4") == 0)
 	vers->options[0] = '\0';
-    (void) time (&last_register_time);
+
+    /* This file is the result of a merge, which means that it has
+       been modified.  We use a special timestamp string which will
+       not compare equal to any actual timestamp.  */
     {
 	char *cp = 0;
 
 	if (status)
+	{
+	    (void) time (&last_register_time);
 	    cp = time_stamp (finfo->file);
-	Register (finfo->entries, finfo->file, vers->vn_rcs, vers->ts_rcs, vers->options,
-		  vers->tag, vers->date, cp);
+	}
+	Register (finfo->entries, finfo->file, vers->vn_rcs,
+		  "Result of merge", vers->options, vers->tag,
+		  vers->date, cp);
 	if (cp)
 	    free (cp);
     }
@@ -2438,25 +2445,27 @@ join_file (finfo, vers)
     free (rev1);
     free (rev2);
 
-#ifdef SERVER_SUPPORT
-    /*
-     * If we're in server mode, then we need to re-register the file
-     * even if there were no conflicts (status == 0).
-     * This tells server_updated() to send the modified file back to
-     * the client.
-     */
-    if (status == 1 || (status == 0 && server_active))
-#else
-    if (status == 1)
-#endif
+    /* The file has changed, but if we just checked it out it may
+       still have the same timestamp it did when it was first
+       registered above in checkout_file.  We register it again with a
+       dummy timestamp to make sure that later runs of CVS will
+       recognize that it has changed.
+
+       We don't actually need to register again if we called
+       RCS_checkout above, and we aren't running as the server.
+       However, that is not the normal case, and calling Register
+       again won't cost much in that case.  */
     {
 	char *cp = 0;
 
 	if (status)
+	{
+	    (void) time (&last_register_time);
 	    cp = time_stamp (finfo->file);
-	Register (finfo->entries, finfo->file,
-		  vers->vn_rcs, vers->ts_rcs, vers->options,
-		  vers->tag, vers->date, cp);
+	}
+	Register (finfo->entries, finfo->file, vers->vn_rcs,
+		  "Result of merge", vers->options, vers->tag,
+		  vers->date, cp);
 	if (cp)
 	    free(cp);
     }
