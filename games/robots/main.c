@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.5 1997/02/05 18:28:35 kstailey Exp $	*/
+/*	$OpenBSD: main.c,v 1.6 1998/07/09 04:34:16 pjanzen Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1995/04/22 10:08:54 cgd Exp $	*/
 
 /*
@@ -44,29 +44,26 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.5 1995/04/22 10:08:54 cgd Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.6 1998/07/09 04:34:16 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-# include	"robots.h"
-# include	<signal.h>
-# include	<ctype.h>
+#include	"robots.h"
 
+int
 main(ac, av)
-int	ac;
-char	**av;
+	int	ac;
+	char	**av;
 {
 	register char	*sp;
 	register bool	bad_arg;
 	register bool	show_only;
 	extern char	*Scorefile;
-	extern int	Max_per_uid;
-	int		score_wfd; /* high score writable file descriptor */
-	void quit();
+	int		score_wfd;     /* high score writable file descriptor */
+	int		score_err = 0; /* hold errno from score file open */
 
-	if ((score_wfd = open(Scorefile, 2)) < 0) {
-		perror(Scorefile);
-		exit(1);
+	if ((score_wfd = open(Scorefile, O_RDWR)) < 0) {
+		score_err = errno;
 	}	
 
 	/* revoke */
@@ -77,33 +74,26 @@ char	**av;
 	if (ac > 1) {
 		bad_arg = FALSE;
 		for (++av; ac > 1 && *av[0]; av++, ac--)
-			if (av[0][0] != '-')
-				if (isdigit(av[0][0]))
-					Max_per_uid = atoi(av[0]);
-				else {
-					Scorefile = av[0];
-# ifdef	FANCY
-					sp = strrchr(Scorefile, '/');
-					if (sp == NULL)
-						sp = Scorefile;
+			if (av[0][0] != '-') {
+				Scorefile = av[0];
+				sp = strrchr(Scorefile, '/');
+				if (sp == NULL)
+					sp = Scorefile;
+				if (score_wfd >= 0)
 					close(score_wfd);
-				/* This file is in the current directory  */
-				/* and requires no special privileges: */
-					if ((score_wfd =
-					     open(Scorefile, 2)) < 0) {
-						perror(Scorefile);
-						exit(1);
-					}
-
-					if (strcmp(sp, "pattern_roll") == 0)
-						Pattern_roll = TRUE;
-					else if (strcmp(sp, "stand_still") == 0)
-						Stand_still = TRUE;
-					if (Pattern_roll || Stand_still)
-						Teleport = TRUE;
-# endif
-				}
-			else
+			/* This file is in the current directory  */
+			/* and requires no special privileges: */
+				if ((score_wfd = open(Scorefile, O_RDWR)) < 0)
+					score_err = errno;
+#ifdef	FANCY
+				if (strcmp(sp, "pattern_roll") == 0)
+					Pattern_roll = TRUE;
+				else if (strcmp(sp, "stand_still") == 0)
+					Stand_still = TRUE;
+				if (Pattern_roll || Stand_still)
+					Teleport = TRUE;
+#endif
+			} else
 				for (sp = &av[0][1]; *sp; sp++)
 					switch (*sp) {
 					  case 's':
@@ -122,7 +112,7 @@ char	**av;
 						Teleport = TRUE;
 						break;
 					  default:
-						fprintf(stderr, "robots: uknown option: %c\n", *sp);
+						fprintf(stderr, "robots: unknown option: %c\n", *sp);
 						bad_arg = TRUE;
 						break;
 					}
@@ -135,7 +125,11 @@ char	**av;
 	if (show_only) {
 		show_score();
 		exit(0);
-		/* NOTREACHED */
+	}
+
+	if (score_wfd < 0) {
+		fprintf(stderr, "%s: %s\n", Scorefile, strerror(score_err));
+		exit(1);
 	}
 
 	initscr();
@@ -154,7 +148,7 @@ char	**av;
 		stdscr = newwin(Y_SIZE, X_SIZE, 0, 0);
 	}
 
-	srand(getpid());
+	srandom(getpid());
 	if (Real_time)
 		signal(SIGALRM, move_robots);
 	do {
@@ -168,7 +162,8 @@ char	**av;
 		refresh();
 		score(score_wfd);
 	} while (another());
-	quit();
+	quit(0);
+	/* NOT REACHED */
 }
 
 void
@@ -183,7 +178,8 @@ __cputchar(ch)
  *	Leave the program elegantly.
  */
 void
-quit()
+quit(dummy)
+	int dummy;
 {
 	endwin();
 	exit(0);
@@ -194,6 +190,7 @@ quit()
  * another:
  *	See if another game is desired
  */
+bool
 another()
 {
 	register int	y;

@@ -1,3 +1,4 @@
+/*	$OpenBSD: init_field.c,v 1.3 1998/07/09 04:34:15 pjanzen Exp $	*/
 /*	$NetBSD: init_field.c,v 1.3 1995/04/22 10:08:52 cgd Exp $	*/
 
 /*
@@ -37,22 +38,21 @@
 #if 0
 static char sccsid[] = "@(#)init_field.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: init_field.c,v 1.3 1995/04/22 10:08:52 cgd Exp $";
+static char rcsid[] = "$OpenBSD: init_field.c,v 1.3 1998/07/09 04:34:15 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-# include	"robots.h"
+#include	"robots.h"
 
 /*
  * init_field:
- *	Lay down the initial pattern whih is constant across all levels,
+ *	Lay down the initial pattern which is constant across all levels,
  *	and initialize all the global variables.
  */
+void
 init_field()
 {
 	register int	i;
-	register WINDOW	*wp;
-	register int	j;
 	static bool	first = TRUE;
 	static char	*desc[] = {
 				"Directions:",

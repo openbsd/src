@@ -1,3 +1,4 @@
+/*	$OpenBSD: robots.h,v 1.2 1998/07/09 04:34:24 pjanzen Exp $	*/
 /*	$NetBSD: robots.h,v 1.5 1995/04/24 12:24:54 cgd Exp $	*/
 
 /*
@@ -35,37 +36,48 @@
  *	@(#)robots.h	8.1 (Berkeley) 5/31/93
  */
 
-# include	<curses.h>
-# include	<setjmp.h>
-# include	<string.h>
+#include	<sys/ttydefaults.h>
+#include	<sys/types.h>
+#include	<ctype.h>
+#include	<curses.h>
+#include	<err.h>
+#include	<errno.h>
+#include	<fcntl.h>
+#include	<pwd.h>
+#include	<setjmp.h>
+#include	<signal.h>
+#include	<string.h>
+#include	<stdlib.h>
+#include	<termios.h>
+#include	<unistd.h>
 
 /*
  * miscellaneous constants
  */
 
-# define	Y_FIELDSIZE	23
-# define	X_FIELDSIZE	60
-# define	Y_SIZE		24
-# define	X_SIZE		80
-# define	MAXLEVELS	4
-# define	MAXROBOTS	(MAXLEVELS * 10)
-# define	ROB_SCORE	10
-# define	S_BONUS		(60 * ROB_SCORE)
-# define	Y_SCORE		21
-# define	X_SCORE		(X_FIELDSIZE + 9)
-# define	Y_PROMPT	(Y_FIELDSIZE - 1)
-# define	X_PROMPT	(X_FIELDSIZE + 2)
-# define	MAXSCORES	(Y_SIZE - 2)
-# define	MAXNAME		16
-# define	MS_NAME		"Ten"
+#define	Y_FIELDSIZE	23
+#define	X_FIELDSIZE	60
+#define	Y_SIZE		24
+#define	X_SIZE		80
+#define	MAXLEVELS	4
+#define	MAXROBOTS	(MAXLEVELS * 10)
+#define	ROB_SCORE	10
+#define	S_BONUS		(60 * ROB_SCORE)
+#define	Y_SCORE		21
+#define	X_SCORE		(X_FIELDSIZE + 9)
+#define	Y_PROMPT	(Y_FIELDSIZE - 1)
+#define	X_PROMPT	(X_FIELDSIZE + 2)
+#define	MAXSCORES	(Y_SIZE - 2)
+#define	MAXNAME		16
+#define	MS_NAME		"Ten"
 
 /*
  * characters on screen
  */
 
-# define	ROBOT	'+'
-# define	HEAP	'*'
-# define	PLAYER	'@'
+#define	ROBOT	'+'
+#define	HEAP	'*'
+#define	PLAYER	'@'
 
 /*
  * type definitions
@@ -74,6 +86,14 @@
 typedef struct {
 	int	y, x;
 } COORD;
+
+typedef struct {
+	uid_t	s_uid;
+	int	s_score;
+	char	s_name[MAXNAME];
+} SCORE;
+
+typedef struct passwd	PASSWD;
 
 /*
  * global variables
@@ -100,11 +120,25 @@ extern jmp_buf	End_move;
  * functions types
  */
 
-int	cmp_sc();
-void	move_robots();
-
-COORD	*rnd_pos();
-
-
-
-
+void	add_score __P((int));
+bool	another __P((void));
+int	cmp_sc __P((const void *, const void *));
+bool	do_move __P((int, int));
+bool	eaten __P((COORD *));
+void	flush_in __P((void));
+void	get_move __P((void));
+void	init_field __P((void));
+bool jumping __P((void));
+void	make_level __P((void));
+void	move_robots __P((int));
+bool	must_telep __P((void));
+void	play_level __P((void));
+int	query __P((char *));
+void	quit __P((int));
+void	reset_count __P((void));
+int	rnd __P((int));
+COORD	*rnd_pos __P((void));
+void	score __P((int));
+void	set_name __P((SCORE *));
+void	show_score __P((void));
+int	sign __P((int));

@@ -1,3 +1,4 @@
+/*	$OpenBSD: move.c,v 1.3 1998/07/09 04:34:18 pjanzen Exp $	*/
 /*	$NetBSD: move.c,v 1.4 1995/04/22 10:08:58 cgd Exp $	*/
 
 /*
@@ -37,25 +38,25 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: move.c,v 1.4 1995/04/22 10:08:58 cgd Exp $";
+static char rcsid[] = "$OpenBSD: move.c,v 1.3 1998/07/09 04:34:18 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-#include <sys/ttydefaults.h>
-#include <ctype.h>
 #include "robots.h"
 
-# define	ESC	'\033'
+#define	ESC	'\033'
 
 /*
  * get_move:
  *	Get and execute a move from the player
  */
+void
 get_move()
 {
 	register int	c;
-	register int	y, x, lastmove;
-	static COORD	newpos;
+#ifdef FANCY
+	int lastmove;
+#endif
 
 	if (Waiting)
 		return;
@@ -156,7 +157,7 @@ over:
 		  case 'q':
 		  case 'Q':
 			if (query("Really quit?"))
-				quit();
+				quit(0);
 			refresh();
 			break;
 		  case 'w':
@@ -201,6 +202,7 @@ ret:
  *	Must I teleport; i.e., is there anywhere I can move without
  * being eaten?
  */
+bool
 must_telep()
 {
 	register int	x, y;
@@ -232,8 +234,9 @@ must_telep()
  * do_move:
  *	Execute a move
  */
+bool
 do_move(dy, dx)
-int	dy, dx;
+	int	dy, dx;
 {
 	static COORD	newpos;
 
@@ -268,8 +271,9 @@ int	dy, dx;
  * eaten:
  *	Player would get eaten at this place
  */
+bool
 eaten(pos)
-register COORD	*pos;
+	register COORD	*pos;
 {
 	register int	x, y;
 
@@ -290,6 +294,7 @@ register COORD	*pos;
  * reset_count:
  *	Reset the count variables
  */
+void
 reset_count()
 {
 	Count = 0;
@@ -302,6 +307,7 @@ reset_count()
  * jumping:
  *	See if we are jumping, i.e., we should not refresh.
  */
+bool
 jumping()
 {
 	return (Jump && (Count || Running || Waiting));

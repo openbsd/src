@@ -1,3 +1,4 @@
+/*	$OpenBSD: make_level.c,v 1.2 1998/07/09 04:34:17 pjanzen Exp $	*/
 /*	$NetBSD: make_level.c,v 1.3 1995/04/22 10:08:56 cgd Exp $	*/
 
 /*
@@ -37,22 +38,22 @@
 #if 0
 static char sccsid[] = "@(#)make_level.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: make_level.c,v 1.3 1995/04/22 10:08:56 cgd Exp $";
+static char rcsid[] = "$OpenBSD: make_level.c,v 1.2 1998/07/09 04:34:17 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-# include	"robots.h"
+#include	"robots.h"
 
 /*
  * make_level:
  *	Make the current level
  */
+void
 make_level()
 {
 	register int	i;
 	register COORD	*cp;
-	register WINDOW	*wp;
-	register int	x, *endp;
+	register int	x;
 
 	reset_count();
 	for (i = 1; i < Y_FIELDSIZE; i++)

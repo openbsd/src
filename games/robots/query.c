@@ -1,3 +1,4 @@
+/*	$OpenBSD: query.c,v 1.2 1998/07/09 04:34:21 pjanzen Exp $	*/
 /*	$NetBSD: query.c,v 1.3 1995/04/22 10:09:05 cgd Exp $	*/
 
 /*
@@ -37,18 +38,19 @@
 #if 0
 static char sccsid[] = "@(#)query.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: query.c,v 1.3 1995/04/22 10:09:05 cgd Exp $";
+static char rcsid[] = "$OpenBSD: query.c,v 1.2 1998/07/09 04:34:21 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-# include	"robots.h"
+#include	"robots.h"
 
 /*
  * query:
  *	Ask a question and get a yes or no answer.  Default is "no".
  */
+int
 query(prompt)
-char	*prompt;
+	char	*prompt;
 {
 	register int	c, retval;
 	register int	y, x;
