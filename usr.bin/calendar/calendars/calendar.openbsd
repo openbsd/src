@@ -1,7 +1,7 @@
 /*
  * OpenBSD-related dates to celebrate
  *
- * $OpenBSD: calendar.openbsd,v 1.4 2002/09/04 16:32:35 mickey Exp $
+ * $OpenBSD: calendar.openbsd,v 1.5 2002/09/12 07:10:32 fgsch Exp $
  */
 
 #ifndef _calendar_openbsd_
@@ -24,7 +24,7 @@ Jun 04	First hackathon, Calgary, Canada, 10 developers, 1999
 Jun 04	c2k2 hackathon, "Shutup and Hack", Calgary, Canada, 42 developers, 2002
 Jun 15	c2k hackathon, Calgary, Canada, 18 developers, 2000
 Jun 15	OpenBSD 2.7 released, including OpenSSH, 2000
-Jun 21	c2k1 hackathon, Cambridge, MA, 35 developers, 2001
+Jun 21	!c2k1 hackathon, Cambridge, MA, 35 developers, 2001
 Jun 24	PF added. Insane amounts of work done by dhartmei@, 2001
 Jul 01	OpenBSD 1.2 released on ftp, 1996
 Jul 01	add strlcpy/strlcat, safe and sensible string copy/append, 1998
