@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.30 2003/05/08 04:20:05 nate Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.31 2003/05/14 01:54:15 nate Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -100,9 +100,6 @@
 #include <net/bpf.h>
 #endif
 
-#include <uvm/uvm_extern.h>              /* for vtophys */
-#include <machine/bus.h>
-
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 #include <dev/mii/brgphyreg.h>
@@ -139,10 +136,9 @@ void sk_shutdown(void *);
 int sk_ifmedia_upd(struct ifnet *);
 void sk_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 void sk_reset(struct sk_softc *);
-int sk_newbuf(struct sk_if_softc *, struct sk_chain *,
-    struct mbuf *);
+int sk_newbuf(struct sk_if_softc *, int, struct mbuf *, bus_dmamap_t);
 int sk_init_rx_ring(struct sk_if_softc *);
-void sk_init_tx_ring(struct sk_if_softc *);
+int sk_init_tx_ring(struct sk_if_softc *);
 u_int32_t sk_win_read_4(struct sk_softc *, int);
 u_int16_t sk_win_read_2(struct sk_softc *, int);
 u_int8_t sk_win_read_1(struct sk_softc *, int);
@@ -486,65 +482,94 @@ sk_init_rx_ring(struct sk_if_softc *sc_if)
 
 	for (i = 0; i < SK_RX_RING_CNT; i++) {
 		cd->sk_rx_chain[i].sk_desc = &rd->sk_rx_ring[i];
-		if (sk_newbuf(sc_if, &cd->sk_rx_chain[i], NULL) == ENOBUFS) {
+		if (i == (SK_RX_RING_CNT - 1)) {
+			cd->sk_rx_chain[i].sk_next = &cd->sk_rx_chain[0];
+			rd->sk_rx_ring[i].sk_next = SK_RX_RING_ADDR(sc_if, 0);
+		} else {
+			cd->sk_rx_chain[i].sk_next = &cd->sk_rx_chain[i + 1];
+			rd->sk_rx_ring[i].sk_next = SK_RX_RING_ADDR(sc_if,i+1);
+		}
+	}
+
+	for (i = 0; i < SK_RX_RING_CNT; i++) {
+		if (sk_newbuf(sc_if, i, NULL, NULL) == ENOBUFS) {
 			printf("%s: failed alloc of %dth mbuf\n",
 			    sc_if->sk_dev.dv_xname, i);
 			return(ENOBUFS);
 		}
-		if (i == (SK_RX_RING_CNT - 1)) {
-			cd->sk_rx_chain[i].sk_next =
-			    &cd->sk_rx_chain[0];
-			rd->sk_rx_ring[i].sk_next = 
-			    vtophys(&rd->sk_rx_ring[0]);
-		} else {
-			cd->sk_rx_chain[i].sk_next =
-			    &cd->sk_rx_chain[i + 1];
-			rd->sk_rx_ring[i].sk_next = 
-			    vtophys(&rd->sk_rx_ring[i + 1]);
-		}
 	}
-
 	sc_if->sk_cdata.sk_rx_prod = 0;
 	sc_if->sk_cdata.sk_rx_cons = 0;
 
 	return(0);
 }
 
-void
+int
 sk_init_tx_ring(struct sk_if_softc *sc_if)
 {
+	struct sk_softc		*sc = sc_if->sk_softc;
 	struct sk_chain_data	*cd = &sc_if->sk_cdata;
 	struct sk_ring_data	*rd = sc_if->sk_rdata;
+	bus_dmamap_t		dmamap;
+	struct sk_txmap_entry	*entry;
 	int			i;
 
 	bzero((char *)sc_if->sk_rdata->sk_tx_ring,
 	    sizeof(struct sk_tx_desc) * SK_TX_RING_CNT);
 
+	SLIST_INIT(&sc_if->sk_txmap_listhead);
 	for (i = 0; i < SK_TX_RING_CNT; i++) {
 		cd->sk_tx_chain[i].sk_desc = &rd->sk_tx_ring[i];
 		if (i == (SK_TX_RING_CNT - 1)) {
-			cd->sk_tx_chain[i].sk_next =
-			    &cd->sk_tx_chain[0];
-			rd->sk_tx_ring[i].sk_next = 
-			    vtophys(&rd->sk_tx_ring[0]);
+			cd->sk_tx_chain[i].sk_next = &cd->sk_tx_chain[0];
+			rd->sk_tx_ring[i].sk_next = SK_TX_RING_ADDR(sc_if, 0);
 		} else {
-			cd->sk_tx_chain[i].sk_next =
-			    &cd->sk_tx_chain[i + 1];
-			rd->sk_tx_ring[i].sk_next = 
-			    vtophys(&rd->sk_tx_ring[i + 1]);
+			cd->sk_tx_chain[i].sk_next = &cd->sk_tx_chain[i + 1];
+			rd->sk_tx_ring[i].sk_next = SK_TX_RING_ADDR(sc_if,i+1);
 		}
+
+		if (bus_dmamap_create(sc->sc_dmatag, MCLBYTES, SK_NTXSEG,
+		    MCLBYTES, 0, BUS_DMA_NOWAIT, &dmamap))
+			return (ENOBUFS);
+
+		entry = malloc(sizeof(*entry), M_DEVBUF, M_NOWAIT);
+		if (!entry) {
+			bus_dmamap_destroy(sc->sc_dmatag, dmamap);
+			return (ENOBUFS);
+		}
+		entry->dmamap = dmamap;
+		SLIST_INSERT_HEAD(&sc_if->sk_txmap_listhead, entry, link);
 	}
 
 	sc_if->sk_cdata.sk_tx_prod = 0;
 	sc_if->sk_cdata.sk_tx_cons = 0;
 	sc_if->sk_cdata.sk_tx_cnt = 0;
+
+	return (0);
 }
 
 int
-sk_newbuf(struct sk_if_softc *sc_if, struct sk_chain *c, struct mbuf *m)
+sk_newbuf(struct sk_if_softc *sc_if, int i, struct mbuf *m,
+	  bus_dmamap_t dmamap)
 {
+	struct sk_softc		*sc = sc_if->sk_softc;
 	struct mbuf		*m_new = NULL;
+	struct sk_chain		*c;
 	struct sk_rx_desc	*r;
+
+	if (dmamap == NULL) {
+		/* if (m) panic() */
+
+		if (bus_dmamap_create(sc->sc_dmatag, MCLBYTES, 1, MCLBYTES,
+				      0, BUS_DMA_NOWAIT, &dmamap)) {
+			printf("%s: can't create recv map\n",
+			       sc_if->sk_dev.dv_xname);
+			return(ENOMEM);
+		}
+	} else if (m == NULL)
+		bus_dmamap_unload(sc->sc_dmatag, dmamap);
+
+	sc_if->sk_cdata.sk_rx_map[i] = dmamap;
 
 	if (m == NULL) {
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
@@ -560,6 +585,14 @@ sk_newbuf(struct sk_if_softc *sc_if, struct sk_chain *c, struct mbuf *m)
 			m_freem(m_new);
 			return (ENOBUFS);
 		}
+
+		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
+
+		m_adj(m_new, ETHER_ALIGN);
+
+		if (bus_dmamap_load_mbuf(sc->sc_dmatag, dmamap, m_new,
+					 BUS_DMA_NOWAIT))
+			return(ENOBUFS);
 	} else {
 		/*
 	 	 * We're re-using a previously allocated mbuf;
@@ -567,21 +600,16 @@ sk_newbuf(struct sk_if_softc *sc_if, struct sk_chain *c, struct mbuf *m)
 		 * default values.
 		 */
 		m_new = m;
+		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
+		m_adj(m_new, ETHER_ALIGN);
 		m_new->m_data = m_new->m_ext.ext_buf;
 	}
-	m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
 
-	/*
-	 * Adjust alignment so packet payload begins on a
-	 * longword boundary. Mandatory for Alpha, useful on
-	 * x86 too.
-	 */
-	m_adj(m_new, ETHER_ALIGN);
-
+	c = &sc_if->sk_cdata.sk_rx_chain[i];
 	r = c->sk_desc;
 	c->sk_mbuf = m_new;
-	r->sk_data_lo = vtophys(mtod(m_new, caddr_t));
-	r->sk_ctl = m_new->m_len | SK_RXSTAT;
+	r->sk_data_lo = dmamap->dm_segs[0].ds_addr;
+	r->sk_ctl = dmamap->dm_segs[0].ds_len | SK_RXSTAT;
 
 	return(0);
 }
@@ -778,7 +806,6 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 	struct ifnet *ifp;
 	caddr_t kva;
 	bus_dma_segment_t seg;
-	bus_dmamap_t dmamap;
 	int i, rseg;
 
 	sc_if->sk_port = sa->skc_port;
@@ -869,17 +896,18 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 		goto fail;
 	}
 	if (bus_dmamap_create(sc->sc_dmatag, sizeof(struct sk_ring_data), 1,
-	    sizeof(struct sk_ring_data), 0, BUS_DMA_NOWAIT, &dmamap)) {
+	    sizeof(struct sk_ring_data), 0, BUS_DMA_NOWAIT,
+            &sc_if->sk_ring_map)) {
 		printf("%s: can't create dma map\n", sc_if->sk_dev.dv_xname);
 		bus_dmamem_unmap(sc->sc_dmatag, kva,
 		    sizeof(struct sk_ring_data));
 		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
 		goto fail;
 	}
-	if (bus_dmamap_load(sc->sc_dmatag, dmamap, kva,
+	if (bus_dmamap_load(sc->sc_dmatag, sc_if->sk_ring_map, kva,
 	    sizeof(struct sk_ring_data), NULL, BUS_DMA_NOWAIT)) {
 		printf("%s: can't load dma map\n", sc_if->sk_dev.dv_xname);
-		bus_dmamap_destroy(sc->sc_dmatag, dmamap);
+		bus_dmamap_destroy(sc->sc_dmatag, sc_if->sk_ring_map);
 		bus_dmamem_unmap(sc->sc_dmatag, kva,
 		    sizeof(struct sk_ring_data));
 		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
@@ -1134,9 +1162,17 @@ fail:
 int
 sk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 {
+	struct sk_softc		*sc = sc_if->sk_softc;
 	struct sk_tx_desc	*f = NULL;
-	struct mbuf		*m;
 	u_int32_t		frag, cur, cnt = 0;
+	int			i;
+	struct sk_txmap_entry	*entry;
+	bus_dmamap_t		txmap;
+
+	entry = SLIST_FIRST(&sc_if->sk_txmap_listhead);
+	if (entry == NULL)
+		return (ENOBUFS);
+	txmap = entry->dmamap;
 
 	cur = frag = *txidx;
 
@@ -1145,30 +1181,29 @@ sk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 	 * the fragment pointers. Stop when we run out
 	 * of fragments or hit the end of the mbuf chain.
 	 */
-	for (m = m_head; m != NULL; m = m->m_next) {
-		if (m->m_len != 0) {
-			if ((SK_TX_RING_CNT -
-			    (sc_if->sk_cdata.sk_tx_cnt + cnt)) < 2)
-				return(ENOBUFS);
-			f = &sc_if->sk_rdata->sk_tx_ring[frag];
-			f->sk_data_lo = vtophys(mtod(m, vaddr_t));
-			f->sk_ctl = m->m_len | SK_OPCODE_DEFAULT;
-			if (cnt == 0)
-				f->sk_ctl |= SK_TXCTL_FIRSTFRAG;
-			else
-				f->sk_ctl |= SK_TXCTL_OWN;
-			cur = frag;
-			SK_INC(frag, SK_TX_RING_CNT);
-			cnt++;
-		}
-	}
-
-	if (m != NULL)
+	if (bus_dmamap_load_mbuf(sc->sc_dmatag, txmap, m_head, BUS_DMA_NOWAIT))
 		return(ENOBUFS);
 
+	for (i = 0; i < txmap->dm_nsegs; i++) {
+		if ((SK_TX_RING_CNT - (sc_if->sk_cdata.sk_tx_cnt + cnt)) < 2)
+			return(ENOBUFS);
+		f = &sc_if->sk_rdata->sk_tx_ring[frag];
+		f->sk_data_lo = txmap->dm_segs[i].ds_addr;
+		f->sk_ctl = txmap->dm_segs[i].ds_len | SK_OPCODE_DEFAULT;
+		if (cnt == 0)
+			f->sk_ctl |= SK_TXCTL_FIRSTFRAG;
+		else
+			f->sk_ctl |= SK_TXCTL_OWN;
+		cur = frag;
+		SK_INC(frag, SK_TX_RING_CNT);
+		cnt++;
+	}
+
+	sc_if->sk_cdata.sk_tx_chain[cur].sk_mbuf = m_head;
+	SLIST_REMOVE_HEAD(&sc_if->sk_txmap_listhead, link);
+	sc_if->sk_cdata.sk_tx_map[cur] = entry;
 	sc_if->sk_rdata->sk_tx_ring[cur].sk_ctl |=
 		SK_TXCTL_LASTFRAG|SK_TXCTL_EOF_INTR;
-	sc_if->sk_cdata.sk_tx_chain[cur].sk_mbuf = m_head;
 	sc_if->sk_rdata->sk_tx_ring[*txidx].sk_ctl |= SK_TXCTL_OWN;
 	sc_if->sk_cdata.sk_tx_cnt += cnt;
 
@@ -1256,25 +1291,31 @@ sk_rxeof(struct sk_if_softc *sc_if)
 	struct ifnet		*ifp = &sc_if->arpcom.ac_if;
 	struct mbuf		*m;
 	struct sk_chain		*cur_rx;
-	int			total_len = 0;
-	int			i;
+	struct sk_rx_desc	*cur_desc;
+	int			i, cur, total_len = 0;
 	u_int32_t		rxstat;
+	bus_dmamap_t		dmamap;
 
 	i = sc_if->sk_cdata.sk_rx_prod;
-	cur_rx = &sc_if->sk_cdata.sk_rx_chain[i];
 
 	while(!(sc_if->sk_rdata->sk_rx_ring[i].sk_ctl & SK_RXCTL_OWN)) {
+		cur = i;
+		cur_rx = &sc_if->sk_cdata.sk_rx_chain[cur];
+		cur_desc = &sc_if->sk_rdata->sk_rx_ring[cur];
 
-		cur_rx = &sc_if->sk_cdata.sk_rx_chain[i];
-		rxstat = sc_if->sk_rdata->sk_rx_ring[i].sk_xmac_rxstat;
+		rxstat = cur_desc->sk_xmac_rxstat;
 		m = cur_rx->sk_mbuf;
 		cur_rx->sk_mbuf = NULL;
-		total_len = SK_RXBYTES(sc_if->sk_rdata->sk_rx_ring[i].sk_ctl);
+		total_len = SK_RXBYTES(cur_desc->sk_ctl);
+
+		dmamap = sc_if->sk_cdata.sk_rx_map[cur];
+		sc_if->sk_cdata.sk_rx_map[cur] = 0;
+
 		SK_INC(i, SK_RX_RING_CNT);
 
 		if (rxstat & XM_RXSTAT_ERRFRAME) {
 			ifp->if_ierrors++;
-			sk_newbuf(sc_if, cur_rx, m);
+			sk_newbuf(sc_if, cur, m, dmamap);
 			continue;
 		}
 
@@ -1285,11 +1326,11 @@ sk_rxeof(struct sk_if_softc *sc_if)
 		 * re-used. If allocating mbufs fails, then we
 		 * have to drop the packet.
 		 */
-		if (sk_newbuf(sc_if, cur_rx, NULL) == ENOBUFS) {
+		if (sk_newbuf(sc_if, cur, NULL, dmamap) == ENOBUFS) {
 			struct mbuf		*m0;
 			m0 = m_devget(mtod(m, char *) - ETHER_ALIGN,
 			    total_len + ETHER_ALIGN, 0, ifp, NULL);
-			sk_newbuf(sc_if, cur_rx, m);
+			sk_newbuf(sc_if, cur, m, dmamap);
 			if (m0 == NULL) {
 				printf("%s: no receive buffers "
 				    "available -- packet dropped!\n",
@@ -1320,9 +1361,11 @@ sk_rxeof(struct sk_if_softc *sc_if)
 void
 sk_txeof(struct sk_if_softc *sc_if)
 {
+	struct sk_softc		*sc = sc_if->sk_softc;
 	struct sk_tx_desc	*cur_tx = NULL;
 	struct ifnet		*ifp = &sc_if->arpcom.ac_if;
 	u_int32_t		idx;
+	struct sk_txmap_entry	*entry;
 
 	/*
 	 * Go through our tx ring and free mbufs for those
@@ -1338,6 +1381,15 @@ sk_txeof(struct sk_if_softc *sc_if)
 		if (sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf != NULL) {
 			m_freem(sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf);
 			sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf = NULL;
+
+			entry = sc_if->sk_cdata.sk_tx_map[idx];
+			bus_dmamap_sync(sc->sc_dmatag, entry->dmamap, 0,
+			    entry->dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+
+			bus_dmamap_unload(sc->sc_dmatag, entry->dmamap);
+			SLIST_INSERT_HEAD(&sc_if->sk_txmap_listhead, entry,
+					  link);
+			sc_if->sk_cdata.sk_tx_map[idx] = NULL;
 		}
 		sc_if->sk_cdata.sk_tx_cnt--;
 		SK_INC(idx, SK_TX_RING_CNT);
@@ -1767,12 +1819,12 @@ sk_init(void *xsc_if)
 	/* Configure BMUs */
 	SK_IF_WRITE_4(sc_if, 0, SK_RXQ1_BMU_CSR, SK_RXBMU_ONLINE);
 	SK_IF_WRITE_4(sc_if, 0, SK_RXQ1_CURADDR_LO,
-	    vtophys(&sc_if->sk_rdata->sk_rx_ring[0]));
+	    SK_RX_RING_ADDR(sc_if, 0));
 	SK_IF_WRITE_4(sc_if, 0, SK_RXQ1_CURADDR_HI, 0);
 
 	SK_IF_WRITE_4(sc_if, 1, SK_TXQS1_BMU_CSR, SK_TXBMU_ONLINE);
 	SK_IF_WRITE_4(sc_if, 1, SK_TXQS1_CURADDR_LO,
-	    vtophys(&sc_if->sk_rdata->sk_tx_ring[0]));
+            SK_TX_RING_ADDR(sc_if, 0));
 	SK_IF_WRITE_4(sc_if, 1, SK_TXQS1_CURADDR_HI, 0);
 
 	/* Init descriptors */
@@ -1783,7 +1835,14 @@ sk_init(void *xsc_if)
 		splx(s);
 		return;
 	}
-	sk_init_tx_ring(sc_if);
+
+	if (sk_init_tx_ring(sc_if) == ENOBUFS) {
+		printf("%s: initialization failed: no "
+		    "memory for tx buffers\n", sc_if->sk_dev.dv_xname);
+		sk_stop(sc_if);
+		splx(s);
+		return;
+	}
 
 	/* Configure interrupt handling */
 	CSR_READ_4(sc, SK_ISSR);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_skreg.h,v 1.7 2003/02/11 19:20:27 mickey Exp $	*/
+/*	$OpenBSD: if_skreg.h,v 1.8 2003/05/14 01:54:15 nate Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1139,9 +1139,25 @@ struct sk_chain {
 	struct sk_chain		*sk_next;
 };
 
+/*
+ * Number of DMA segments in a TxCB. Note that this is carefully
+ * chosen to make the total struct size an even power of two. It's
+ * critical that no TxCB be split across a page boundry since
+ * no attempt is made to allocate physically contiguous memory.
+ * 
+ */
+#define SK_NTXSEG      30
+
+struct sk_txmap_entry {
+	bus_dmamap_t			dmamap;
+	SLIST_ENTRY(sk_txmap_entry)	link;
+};
+
 struct sk_chain_data {
 	struct sk_chain		sk_tx_chain[SK_TX_RING_CNT];
 	struct sk_chain		sk_rx_chain[SK_RX_RING_CNT];
+	struct sk_txmap_entry	*sk_tx_map[SK_TX_RING_CNT];
+	bus_dmamap_t		sk_rx_map[SK_RX_RING_CNT];
 	int			sk_tx_prod;
 	int			sk_tx_cons;
 	int			sk_tx_cnt;
@@ -1158,6 +1174,14 @@ struct sk_ring_data {
 	struct sk_tx_desc	sk_tx_ring[SK_TX_RING_CNT];
 	struct sk_rx_desc	sk_rx_ring[SK_RX_RING_CNT];
 };
+
+#define SK_TX_RING_ADDR(sc, i) \
+    ((sc)->sk_ring_map->dm_segs[0].ds_addr + \
+     offsetof(struct sk_ring_data, sk_tx_ring[(i)]))
+
+#define SK_RX_RING_ADDR(sc, i) \
+    ((sc)->sk_ring_map->dm_segs[0].ds_addr + \
+     offsetof(struct sk_ring_data, sk_rx_ring[(i)]))
 
 struct sk_bcom_hack {
 	int			reg;
@@ -1206,11 +1230,13 @@ struct sk_if_softc {
 	struct timeout		sk_tick_ch;
 	struct sk_chain_data	sk_cdata;
 	struct sk_ring_data	*sk_rdata;
+	bus_dmamap_t		sk_ring_map;
 	struct sk_softc		*sk_softc;	/* parent controller */
 	int			sk_tx_bmu;	/* TX BMU register */
 	int			sk_if_flags;
 	LIST_HEAD(__sk_jfreehead, sk_jpool_entry)	sk_jfree_listhead;
 	LIST_HEAD(__sk_jinusehead, sk_jpool_entry)	sk_jinuse_listhead;
+	SLIST_HEAD(__sk_txmaphead, sk_txmap_entry)	sk_txmap_listhead;
 };
 
 struct skc_attach_args {
@@ -1220,9 +1246,3 @@ struct skc_attach_args {
 #define SK_MAXUNIT	256
 #define SK_TIMEOUT	1000
 #define ETHER_ALIGN	2
-
-#ifdef __alpha__
-#undef vtophys
-#define vtophys(va)		alpha_XXX_dmamap((vm_offset_t)va)
-#endif
-
