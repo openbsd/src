@@ -1,7 +1,7 @@
-/*	$OpenBSD: inp.c,v 1.25 2003/08/08 07:53:19 otto Exp $	*/
+/*	$OpenBSD: inp.c,v 1.26 2003/08/10 21:28:48 otto Exp $	*/
 
 #ifndef lint
-static const char     rcsid[] = "$OpenBSD: inp.c,v 1.25 2003/08/08 07:53:19 otto Exp $";
+static const char     rcsid[] = "$OpenBSD: inp.c,v 1.26 2003/08/10 21:28:48 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -252,6 +252,7 @@ plan_a(const char *filename)
 	}
 	/* if the last line contains no EOL, append one */
 	if (i_size > 0 && i_womp[i_size - 1] != '\n') {
+		last_line_missing_eol = true;
 		/* fix last line */
 		sz = s - i_ptr[iline];
 		p = malloc(sz + 1);
@@ -268,7 +269,8 @@ plan_a(const char *filename)
 		i_ptr[iline] = p;
 		/* count the extra line and make it point to some valid mem */
 		i_ptr[++iline] = "";
-	}
+	} else
+		last_line_missing_eol = false;
 
 	input_lines = iline - 1;
 

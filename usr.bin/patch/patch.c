@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.36 2003/08/10 18:39:43 otto Exp $	*/
+/*	$OpenBSD: patch.c,v 1.37 2003/08/10 21:28:48 otto Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: patch.c,v 1.36 2003/08/10 18:39:43 otto Exp $";
+static const char rcsid[] = "$OpenBSD: patch.c,v 1.37 2003/08/10 21:28:48 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -68,6 +68,7 @@ char		*TMPPATNAME;
 bool		toutkeep = false;
 bool		trejkeep = false;
 bool		warn_on_invalid_line;
+bool		last_line_missing_eol;
 
 #ifdef DEBUGGING
 int		debug = 0;
@@ -93,9 +94,9 @@ static void	abort_hunk(void);
 static void	apply_hunk(LINENUM);
 static void	init_output(const char *);
 static void	init_reject(const char *);
-static void	copy_till(LINENUM);
+static void	copy_till(LINENUM, bool);
 static void	spew_output(void);
-static void	dump_line(LINENUM);
+static void	dump_line(LINENUM, bool);
 static bool	patch_match(LINENUM, LINENUM, LINENUM);
 static bool	similar(const char *, const char *, int);
 static __dead void usage(void);
@@ -732,7 +733,7 @@ apply_hunk(LINENUM where)
 
 	while (old <= lastline) {
 		if (pch_char(old) == '-') {
-			copy_till(where + old - 1);
+			copy_till(where + old - 1, false);
 			if (do_defines) {
 				if (def_state == OUTSIDE) {
 					fputs(not_defined, ofp);
@@ -748,7 +749,7 @@ apply_hunk(LINENUM where)
 		} else if (new > pat_end) {
 			break;
 		} else if (pch_char(new) == '+') {
-			copy_till(where + old - 1);
+			copy_till(where + old - 1, false);
 			if (do_defines) {
 				if (def_state == IN_IFNDEF) {
 					fputs(else_defined, ofp);
@@ -770,7 +771,7 @@ apply_hunk(LINENUM where)
 #endif
 			my_exit(2);
 		} else if (pch_char(new) == '!') {
-			copy_till(where + old - 1);
+			copy_till(where + old - 1, false);
 			if (do_defines) {
 				fputs(not_defined, ofp);
 				def_state = IN_IFNDEF;
@@ -802,7 +803,7 @@ apply_hunk(LINENUM where)
 		}
 	}
 	if (new <= pat_end && pch_char(new) == '+') {
-		copy_till(where + old - 1);
+		copy_till(where + old - 1, false);
 		if (do_defines) {
 			if (def_state == OUTSIDE) {
 				fputs(if_defined, ofp);
@@ -846,14 +847,20 @@ init_reject(const char *name)
 
 /*
  * Copy input file to output, up to wherever hunk is to be applied.
+ * If endoffile is true, treat the last line specially since it may
+ * lack a newline.
  */
 static void
-copy_till(LINENUM lastline)
+copy_till(LINENUM lastline, bool endoffile)
 {
 	if (last_frozen_line > lastline)
 		fatal("misordered hunks! output would be garbled\n");
-	while (last_frozen_line < lastline)
-		dump_line(++last_frozen_line);
+	while (last_frozen_line < lastline) {
+		if (++last_frozen_line == lastline && endoffile)
+			dump_line(last_frozen_line, !last_line_missing_eol);
+		else
+			dump_line(last_frozen_line, true);
+	}
 }
 
 /*
@@ -867,7 +874,7 @@ spew_output(void)
 		say("il=%ld lfl=%ld\n", input_lines, last_frozen_line);
 #endif
 	if (input_lines)
-		copy_till(input_lines);	/* dump remainder of file */
+		copy_till(input_lines, true);	/* dump remainder of file */
 	fclose(ofp);
 	ofp = NULL;
 }
@@ -876,7 +883,7 @@ spew_output(void)
  * Copy one line from input to output.
  */
 static void
-dump_line(LINENUM line)
+dump_line(LINENUM line, bool write_newline)
 {
 	char	*s;
 
@@ -884,8 +891,10 @@ dump_line(LINENUM line)
 	if (s == NULL)
 		return;
 	/* Note: string is not NUL terminated. */
-	for (; putc(*s, ofp) != '\n'; s++)
-		;
+	for (; *s != '\n'; s++)
+		putc(*s, ofp);
+	if (write_newline)
+		putc('\n', ofp);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.h,v 1.22 2003/08/01 20:30:48 otto Exp $	*/
+/*	$OpenBSD: common.h,v 1.23 2003/08/10 21:28:48 otto Exp $	*/
 
 #include <stdbool.h>
 
@@ -71,6 +71,7 @@ extern bool	canonicalize;
 /* TRUE if -C was specified on command line.  */
 extern bool	check_only;
 extern bool	warn_on_invalid_line;
+extern bool	last_line_missing_eol;
 
 
 #define CONTEXT_DIFF 1
