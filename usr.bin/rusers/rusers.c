@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusers.c,v 1.14 2001/11/01 23:37:42 millert Exp $	*/
+/*	$OpenBSD: rusers.c,v 1.15 2001/11/02 17:16:22 millert Exp $	*/
 
 /*
  * Copyright (c) 2001 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -55,22 +55,18 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: rusers.c,v 1.14 2001/11/01 23:37:42 millert Exp $";
+static const char rcsid[] = "$OpenBSD: rusers.c,v 1.15 2001/11/02 17:16:22 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <rpc/rpc.h>
-#include <rpc/pmap_prot.h>
-#include <rpc/pmap_rmt.h>
+#include <rpc/pmap_clnt.h>
+#include <arpa/inet.h>
 #include <rpcsvc/rusers.h>
 #include <rpcsvc/rnusers.h>	/* Old protocol version */
-#include <arpa/inet.h>
-#include <net/if.h>
 #include <err.h>
-#include <errno.h>
-#include <ifaddrs.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -89,25 +85,19 @@ void fmt_idle(int, char *, size_t);
 void print_longline(int, u_int, char *, char *, char *, char *, int);
 void onehost(char *);
 void allhosts(void);
-void alarmclock(int);
 bool_t rusers_reply(char *, struct sockaddr_in *);
 bool_t rusers_reply_3(char *, struct sockaddr_in *);
-enum clnt_stat get_reply(int, u_long, u_long, struct rpc_msg *,
-    struct rmtcallres *, bool_t (*)());
 __dead void usage(void);
 
 int longopt;
 int allopt;
 long termwidth;
-struct itimerval timeout;
 extern char *__progname;
 
 struct host_list {
 	struct host_list *next;
 	struct in_addr addr;
 } *hosts;
-
-#define MAX_BROADCAST_SIZE 1400
 
 int
 main(int argc, char **argv)
@@ -244,7 +234,7 @@ print_longline(int ut_time, u_int idle, char *host, char *user, char *line,
 	    len, "", date, idle_time, remote);
 }
 
-int
+bool_t
 rusers_reply(char *replyp, struct sockaddr_in *raddrp)
 {
 	char user[RNUSERS_MAXUSERLEN + 1];
@@ -260,7 +250,7 @@ rusers_reply(char *replyp, struct sockaddr_in *raddrp)
 	if (!allopt && !up->uia_cnt)
 		return(0);
 	
-	hp = gethostbyaddr((char *)&raddrp->sin_addr.s_addr,
+	hp = gethostbyaddr((char *)&raddrp->sin_addr,
 	    sizeof(struct in_addr), AF_INET);
 	if (hp) {
 		host = hp->h_name;
@@ -298,7 +288,7 @@ rusers_reply(char *replyp, struct sockaddr_in *raddrp)
 	return(0);
 }
 
-int
+bool_t
 rusers_reply_3(char *replyp, struct sockaddr_in *raddrp)
 {
 	char user[RUSERS_MAXUSERLEN + 1];
@@ -313,8 +303,8 @@ rusers_reply_3(char *replyp, struct sockaddr_in *raddrp)
 
 	if (!allopt && !up3->utmp_array_len)
 		return(0);
-
-	hp = gethostbyaddr((char *)&raddrp->sin_addr.s_addr,
+	
+	hp = gethostbyaddr((char *)&raddrp->sin_addr,
 	    sizeof(struct in_addr), AF_INET);
 	if (hp) {
 		host = hp->h_name;
@@ -412,244 +402,28 @@ onehost(char *host)
 	clnt_destroy(rusers_clnt);
 }
 
-enum clnt_stat
-get_reply(int sock, u_long port, u_long xid, struct rpc_msg *msgp,
-	  struct rmtcallres *resp, bool_t (*callback)())
-{
-	int inlen, fromlen;
-	struct sockaddr_in raddr;
-	char inbuf[UDPMSGSIZE];
-	XDR xdr;
-
-retry:
-	msgp->acpted_rply.ar_verf = _null_auth;
-	msgp->acpted_rply.ar_results.where = (caddr_t)resp;
-	msgp->acpted_rply.ar_results.proc = xdr_rmtcallres;
-
-	fromlen = sizeof(struct sockaddr);
-	inlen = recvfrom(sock, inbuf, sizeof(inbuf), 0,
-	    (struct sockaddr *)&raddr, &fromlen);
-	if (inlen < 0) {
-		if (errno == EINTR)
-			goto retry;
-		return (RPC_CANTRECV);
-	}
-	if (inlen < sizeof(u_int32_t))
-		goto retry;
-
-	/*
-	 * If the reply we got matches our request, decode the
-	 * replay and pass it to the callback function.
-	 */
-	xdrmem_create(&xdr, inbuf, (u_int)inlen, XDR_DECODE);
-	if (xdr_replymsg(&xdr, msgp)) {
-		if ((msgp->rm_xid == xid) &&
-		    (msgp->rm_reply.rp_stat == MSG_ACCEPTED) &&
-		    (msgp->acpted_rply.ar_stat == SUCCESS)) {
-			raddr.sin_port = htons((u_short)port);
-			(void)(*callback)(resp->results_ptr, &raddr);
-		}
-	}
-	xdr.x_op = XDR_FREE;
-	msgp->acpted_rply.ar_results.proc = xdr_void;
-	(void)xdr_replymsg(&xdr, msgp);
-	(void)(*resp->xdr_results)(&xdr, resp->results_ptr);
-	xdr_destroy(&xdr);
-
-	return(RPC_SUCCESS);
-}
-
-enum clnt_stat
-rpc_setup(int *fdp, XDR *xdrs, struct rpc_msg *msg, struct rmtcallargs *args,
-	  AUTH *unix_auth, char *buf)
-{
-	int on = 1;
-
-	if ((*fdp = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
-		return(RPC_CANTSEND);
-
-	if (setsockopt(*fdp, SOL_SOCKET, SO_BROADCAST, &on, sizeof(on)) < 0)
-		return(RPC_CANTSEND);
-
-	msg->rm_xid = arc4random();
-	msg->rm_direction = CALL;
-	msg->rm_call.cb_rpcvers = RPC_MSG_VERSION;
-	msg->rm_call.cb_prog = PMAPPROG;
-	msg->rm_call.cb_vers = PMAPVERS;
-	msg->rm_call.cb_proc = PMAPPROC_CALLIT;
-	msg->rm_call.cb_cred = unix_auth->ah_cred;
-	msg->rm_call.cb_verf = unix_auth->ah_verf;
-
-	xdrmem_create(xdrs, buf, MAX_BROADCAST_SIZE, XDR_ENCODE);
-	if (!xdr_callmsg(xdrs, msg) || !xdr_rmtcall_args(xdrs, args))
-		return(RPC_CANTENCODEARGS);
-
-	return(RPC_SUCCESS);
-}
-
 void
 allhosts(void)
 {
-	enum clnt_stat stat;
-	AUTH *unix_auth = authunix_create_default();
-	int outlen, outlen3;
-	int sock = -1;
-	int sock3 = -1;
-	int i, maxfd, rval;
-	u_long xid, xid3;
-	u_long port, port3;
-	fd_set *fds = NULL;
-	struct sockaddr_in *sin, baddr;
-	struct rmtcallargs args;
-	struct rmtcallres res, res3;
-	struct rpc_msg msg, msg3;
-	struct ifaddrs *ifa, *ifap = NULL;
-	char buf[MAX_BROADCAST_SIZE], buf3[MAX_BROADCAST_SIZE];
 	utmpidlearr up;
 	utmp_array up3;
-	XDR xdr;
+	enum clnt_stat clnt_stat;
 
-	if (getifaddrs(&ifap) != 0) {
-		perror("Cannot get list of interface addresses");
-		stat = RPC_CANTSEND;
-		goto cleanup;
-	}
+	puts("Sending broadcast for rusersd protocol version 3...");
+	memset(&up3, 0, sizeof(up3));
+	clnt_stat = clnt_broadcast(RUSERSPROG, RUSERSVERS_3,
+	    RUSERSPROC_NAMES, xdr_void, NULL, xdr_utmp_array,
+	    (char *)&up3, rusers_reply_3);
+	if (clnt_stat != RPC_SUCCESS && clnt_stat != RPC_TIMEDOUT)
+		errx(1, "%s", clnt_sperrno(clnt_stat));
 
-	args.prog = RUSERSPROG;
-	args.vers = RUSERSVERS_IDLE;
-	args.proc = RUSERSPROC_NAMES;
-	args.xdr_args = xdr_void;
-	args.args_ptr = NULL;
-
-	stat = rpc_setup(&sock, &xdr, &msg, &args, unix_auth, buf);
-	if (stat != RPC_SUCCESS)
-		goto cleanup;
-	xid = msg.rm_xid;
-	outlen = (int)xdr_getpos(&xdr);
-	xdr_destroy(&xdr);
-
-	args.vers = RUSERSVERS_3;
-	stat = rpc_setup(&sock3, &xdr, &msg3, &args, unix_auth, buf3);
-	if (stat != RPC_SUCCESS)
-		goto cleanup;
-	xid3 = msg3.rm_xid;
-	outlen3 = (int)xdr_getpos(&xdr);
-	xdr_destroy(&xdr);
-
-	maxfd = sock3 + 1;
-	fds = (fd_set *)calloc(howmany(maxfd, NFDBITS), sizeof(fd_mask));
-	if (fds == NULL) {
-		stat = RPC_CANTSEND;
-		goto cleanup;
-	}
-
-	memset(&baddr, 0, sizeof(baddr));
-	baddr.sin_len = sizeof(struct sockaddr_in);
-	baddr.sin_family = AF_INET;
-	baddr.sin_port = htons(PMAPPORT);
-	baddr.sin_addr.s_addr = htonl(INADDR_ANY);
-
-	memset(&res, 0, sizeof(res));
-	res.port_ptr = &port;
-	res.xdr_results = xdr_utmpidlearr;
-	res.results_ptr = (caddr_t)&up;
-
-	memset(&res3, 0, sizeof(res3));
-	res3.port_ptr = &port3;
-	res3.xdr_results = xdr_utmp_array;
-	res3.results_ptr = (caddr_t)&up3;
-
-	(void)signal(SIGALRM, alarmclock);
-
-	/*
-	 * We do 6 runs through the loop.  On even runs we send
-	 * a version 3 broadcast.  On odd ones we send a version 2
-	 * broadcast.  This should give version 3 replies enough
-	 * of an 'edge' over the old version 2 ones in most cases.
-	 * We select() waiting for replies for 5 seconds in between
-	 * each broadcast.
-	 */
-	for (i = 0; i < 6; i++) {
-		for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-			if (ifa->ifa_addr->sa_family != AF_INET ||
-			    !(ifa->ifa_flags & IFF_BROADCAST) ||
-			    !(ifa->ifa_flags & IFF_UP) ||
-			    ifa->ifa_broadaddr == NULL ||
-			    ifa->ifa_broadaddr->sa_family != AF_INET)
-				continue;
-			sin = (struct sockaddr_in *)ifa->ifa_broadaddr;
-			baddr.sin_addr = sin->sin_addr;
-
-			/* use protocol 2 or 3 depending on i (odd or even) */
-			if (i & 1) {
-				if (sendto(sock, buf, outlen, 0,
-				    (struct sockaddr *)&baddr,
-				    sizeof(struct sockaddr)) != outlen) {
-					warn("unable to send broadcast packet");
-					stat = RPC_CANTSEND;
-					goto cleanup;
-				}
-			} else {
-				if (sendto(sock3, buf3, outlen3, 0,
-				    (struct sockaddr *)&baddr,
-				    sizeof(struct sockaddr)) != outlen3) {
-					warn("unable to send broadcast packet");
-					stat = RPC_CANTSEND;
-					goto cleanup;
-				}
-			}
-		}
-
-		/*
-		 * We stay in the select loop for ~5 seconds
-		 */
-		timerclear(&timeout.it_value);
-		timeout.it_value.tv_sec = 5;
-		timeout.it_value.tv_usec = 0;
-		while (timerisset(&timeout.it_value)) {
-			FD_SET(sock, fds);
-			FD_SET(sock3, fds);
-			setitimer(ITIMER_REAL, &timeout, NULL);
-			rval = select(maxfd, fds, NULL, NULL, NULL);
-			setitimer(ITIMER_REAL, NULL, &timeout);
-			if (rval == -1) {
-				if (!timerisset(&timeout.it_value))
-					break;
-				warn("select");		/* shouldn't happen */
-				stat = RPC_CANTRECV;
-				goto cleanup;
-			}
-			if (FD_ISSET(sock3, fds)) {
-				stat = get_reply(sock3, port3, xid3, &msg3,
-				    &res3, rusers_reply_3);
-				if (stat != RPC_SUCCESS)
-					goto cleanup;
-			}
-			if (FD_ISSET(sock, fds)) {
-				stat = get_reply(sock, port, xid, &msg,
-				    &res, rusers_reply);
-				if (stat != RPC_SUCCESS)
-					goto cleanup;
-			}
-		}
-	}
-cleanup:
-	if (ifap != NULL)
-		freeifaddrs(ifap);
-	if (fds != NULL)
-		free(fds);
-	if (sock >= 0)
-		(void)close(sock);
-	if (sock3 >= 0)
-		(void)close(sock3);
-	AUTH_DESTROY(unix_auth);
-}
-
-void
-alarmclock(int signo)
-{
-
-	timerclear(&timeout.it_value);
+	puts("Sending broadcast for rusersd protocol version 2...");
+	memset(&up, 0, sizeof(up));
+	clnt_stat = clnt_broadcast(RUSERSPROG, RUSERSVERS_IDLE,
+	    RUSERSPROC_NAMES, xdr_void, NULL, xdr_utmpidlearr,
+	    (char *)&up, rusers_reply);
+	if (clnt_stat != RPC_SUCCESS && clnt_stat != RPC_TIMEDOUT)
+		errx(1, "%s", clnt_sperrno(clnt_stat));
 }
 
 void
