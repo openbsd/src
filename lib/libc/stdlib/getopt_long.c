@@ -1,4 +1,4 @@
-/*	$OpenBSD: getopt_long.c,v 1.14 2003/06/17 21:56:24 millert Exp $	*/
+/*	$OpenBSD: getopt_long.c,v 1.15 2003/09/22 23:45:22 millert Exp $	*/
 /*	$NetBSD: getopt_long.c,v 1.15 2002/01/31 22:43:40 tv Exp $	*/
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: getopt_long.c,v 1.14 2003/06/17 21:56:24 millert Exp $";
+static char *rcsid = "$OpenBSD: getopt_long.c,v 1.15 2003/09/22 23:45:22 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <err.h>
@@ -472,6 +472,13 @@ start:
 				return (BADARG);
 			} else
 				optarg = nargv[optind];
+		} else if (!(flags & FLAG_PERMUTE)) {
+			/*
+			 * If permutation is disabled, we can accept an
+			 * optional arg separated by whitespace.
+			 */
+			if (optind + 1 < nargc)
+				optarg = nargv[++optind];
 		}
 		place = EMSG;
 		++optind;
