@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.18 2004/12/17 21:13:58 jfb Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.19 2004/12/18 17:20:40 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1049,6 +1049,8 @@ rcs_parse_delta(RCSFILE *rfp)
 					rcs_freedelta(rdp);
 				}
 				rdp->rd_date.tm_year = datenum->rn_id[0];
+				if (rdp->rd_date.tm_year >= 1900)
+					rdp->rd_date.tm_year -= 1900;
 				rdp->rd_date.tm_mon = datenum->rn_id[1] - 1;
 				rdp->rd_date.tm_mday = datenum->rn_id[2];
 				rdp->rd_date.tm_hour = datenum->rn_id[3];
