@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypxfr.c,v 1.31 2003/07/15 06:10:46 deraadt Exp $ */
+/*	$OpenBSD: ypxfr.c,v 1.32 2004/07/08 06:20:46 matthieu Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -27,7 +27,7 @@
  */
 
 #ifndef LINT
-static const char rcsid[] = "$OpenBSD: ypxfr.c,v 1.31 2003/07/15 06:10:46 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ypxfr.c,v 1.32 2004/07/08 06:20:46 matthieu Exp $";
 #endif
 
 #include <sys/types.h>
@@ -120,7 +120,6 @@ get_local_ordernum(char *domain, char *map, u_int32_t *lordernum)
 	k.dsize = YP_LAST_LEN;
 
 	v = ypdb_fetch(db, k);
-	ypdb_close(db);
 
 	if (v.dptr == NULL) {
 		*lordernum = 0;
@@ -129,6 +128,7 @@ get_local_ordernum(char *domain, char *map, u_int32_t *lordernum)
 		*lordernum = (u_int32_t)atol(order);
 	}
 
+	ypdb_close(db);
 bail:
 	if (status == YPPUSH_NOMAP || status == YPPUSH_DBM) {
 		*lordernum = 0;
