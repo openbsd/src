@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.99 2005/01/14 22:49:24 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.100 2005/02/12 18:00:51 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -167,7 +167,6 @@ void	nmihand(struct frame);
  * "internal" framebuffer.
  */
 int	conscode;
-int	consinit_active;	/* flag for driver init routines */
 caddr_t	conaddr;		/* for drivers in cn_init() */
 int	convasize;		/* size of mapped console device */
 int	conforced;		/* console has been forced */
@@ -215,7 +214,6 @@ consinit()
 	/*
 	 * Initialize some variables for sanity.
 	 */
-	consinit_active = 1;
 	convasize = 0;
 	conforced = 0;
 	conscode = 1024;		/* invalid */
@@ -231,8 +229,6 @@ consinit()
 	 * Initialize the console before we print anything out.
 	 */
 	hp300_cninit();
-
-	consinit_active = 0;
 
 #ifdef DDB
 	ddb_init();
