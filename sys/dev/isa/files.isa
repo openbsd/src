@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.86 2004/01/05 17:27:30 markus Exp $
+#	$OpenBSD: files.isa,v 1.87 2004/05/23 17:41:09 grange Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -382,6 +382,11 @@ file	dev/isa/lm_isa.c		lm_isa
 device	nsclpcsio
 attach	nsclpcsio at isa with nsclpcsio_isa
 file	dev/isa/nsclpcsio_isa.c		nsclpcsio_isa
+
+# National Semiconductor Geode SC1100 Super I/O
+device	gscsio: i2cbus
+attach	gscsio at isa
+file	dev/isa/gscsio.c		gscsio
 
 # IT8705F, IT8712F and SiS970 hardware monitors
 device	it

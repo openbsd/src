@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.361 2004/05/23 03:23:00 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.362 2004/05/23 17:41:08 grange Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -70,6 +70,9 @@ lm0	at isa? port 0x290
 #lm1	at isa? port 0x280
 #lm2	at isa? port 0x310
 nsclpcsio*	at isa?			# NS PC87366 hardware monitor
+gscsio*	at isa?				# NS Geode SC1100 Super I/O
+iic0	at gscsio?			# ACCESS.bus 1
+iic1	at gscsio?			# ACCESS.bus 2
 
 it0	at isa? port 0x290		# IT8705F, IT8712F and SiS970 hardware
 					# monitors
