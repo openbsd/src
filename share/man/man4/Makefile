@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.183 2001/11/29 21:44:49 nate Exp $
+#	$OpenBSD: Makefile,v 1.184 2001/12/05 10:58:54 mickey Exp $
 
 MAN=	aac.4 ac97.4 addcom.4 adv.4 aha.4 ahb.4 ahc.4 aic.4 ami.4 amphy.4 \
 	an.4 aria.4 ast.4 atalk.4 atapiscsi.4 \
-	audio.4 aue.4 auich.4 autri.4 auvia.4 awi.4 bpf.4 bridge.4 \
+	audio.4 aue.4 auich.4 autri.4 auvia.4 awi.4 az.4 bpf.4 bridge.4 \
 	bge.4 bmtphy.4 brgphy.4 bt.4 cac.4 cardbus.4 ccd.4 cd.4 \
 	ch.4 clnp.4 clcs.4 clct.4 cltp.4 \
 	cmpci.4 cnw.4 com.4 crypto.4 \
@@ -13,14 +13,15 @@ MAN=	aac.4 ac97.4 addcom.4 adv.4 aha.4 ahb.4 ahc.4 aic.4 ami.4 amphy.4 \
 	idp.4 iha.4 ifmedia.4 \
 	inet.4 inphy.4 iop.4 iopsp.4 ioprbs.4 iophy.4 ip.4 ipcomp.4 ipsec.4 \
 	isa.4 isapnp.4 ises.4 iso.4 isp.4 \
-	lofn.4 \
-	ksyms.4 kue.4 lc.4 lge.4 lkm.4 lmc.4 lo.4 lxtphy.4 maestro.4 midi.4 \
-	mii.4 mtdphy.4 mtio.4 ncr.4 ne.4 neo.4 netintro.4 nge.4 ns.4 nsip.4 \
-	nsphy.4 nsphyter.4 \
+	ksyms.4 kue.4 \
+	lc.4 lge.4 lkm.4 lmc.4 lo.4 lofn.4 lxtphy.4 \
+	maestro.4 midi.4 mii.4 mtdphy.4 mr.4 mtio.4 \
+	ncr.4 ne.4 neo.4 netintro.4 nge.4 ns.4 nsip.4 nsphy.4 nsphyter.4 \
 	null.4 ohci.4 opl.4 options.4 pcdisplay.4 pchb.4 pckbc.4 pckbd.4 \
 	pci.4 pciide.4 pcmcia.4 pcscp.4 pf.4 pms.4 ppp.4 \
 	pty.4 puc.4 qsphy.4 radio.4 raid.4 random.4 ray.4 rd.4 rl.4 rln.4 \
-	rlphy.4 route.4 scsi.4 sd.4 ses.4 sf.4 siop.4 sis.4 sk.4 sl.4 sm.4 \
+	rlphy.4 route.4 rt.4 rtii.4 \
+	scsi.4 sd.4 ses.4 sf.4 sf2r.4 sf4r.4 siop.4 sis.4 sk.4 sl.4 sm.4 \
 	spp.4 sppp.4 sqphy.4 ss.4 st.4 ste.4 stge.4 sv.4 \
 	tb.4 tcic.4 tcp.4 termios.4 \
 	ti.4 tl.4 tlphy.4 tp.4 tqphy.4 tty.4 tun.4 twe.4 tx.4 txp.4 txphy.4 \

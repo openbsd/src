@@ -1,4 +1,5 @@
-.\"	$OpenBSD: radio.4,v 1.2 2001/10/08 08:52:50 mpech Exp $
+.\"	$RuOBSD: radio.4,v 1.4 2001/10/26 05:38:43 form Exp $
+.\"	$OpenBSD: radio.4,v 1.3 2001/12/05 10:58:54 mickey Exp $
 .\"
 .\" Copyright (c) 2001 Vladimir Popov
 .\" All rights reserved.
@@ -23,13 +24,22 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 21, 2001
+.Dd October 20, 2001
 .Dt RADIO 4
 .Os
 .Sh NAME
 .Nm radio
 .Nd device-independent radio driver layer
 .Sh SYNOPSIS
+.Cd option RADIO_TEA5759
+.Pp
+.Cd "radio* at az0"
+.Cd "radio* at mr0"
+.Cd "radio* at rt0"
+.Cd "radio* at rtii0"
+.Cd "radio* at sf2r0"
+.Cd "radio* at sf4r0"
+.Pp
 .Fd #include <sys/types.h>
 .Fd #include <sys/ioctl.h>
 .Fd #include <sys/radioio.h>
@@ -40,6 +50,17 @@ driver provides support for various FM radio cards.
 It provides an uniform programming interface layer above different underlying
 radio hardware drivers.
 .Pp
+Philips Semiconductors released two almost identical chips TEA5757 and
+TEA5759.
+The TEA5757 is used in FM-standards in which the local oscillator frequency
+is above the radio frequency (e.g. European and American standards).
+The TEA5759 is the version in which the oscillator frequency is below
+the radio frequency (e.g. Japanese standards).
+The option
+.Va RADIO_TEA5759
+changes the algotithm of frequency calculation for the tea5757 based cards
+to conform with the Japanese standards.
+.Pp
 For radio tuner controlling there is a single device file available:
 .Pa /dev/radio .
 .Pp
@@ -48,29 +69,65 @@ The following
 commands are supported:
 .Pp
 .Bl -tag -width indent -compact
-.It Dv RIOCSMUTE (u_long)
-This command mutes or unmutes the device.
-This operation does not affect volume value of the device.
-.It Dv RIOCGMUTE (u_long)
-This command returns current mute state of the device.
-.It Dv RIOCSMONO (u_long)
-This command sets the device output to mono even if the device receive a stereo
-signal (forced mono).
-.It Dv RIOCGMONO (u_long)
-This command returns current forced mono state of the device.
-.It Dv RIOCGVOLU (u_long)
-This command returns current volume of the device.
-.It Dv RIOCSVOLU (u_long)
-This command sets current volume of the device.
-.It Dv RIOCGFREQ (u_long)
-This command returns frequency the device is tuned to.
-.It Dv RIOCSFREQ (u_long)
-This command sets working frequency of the device.
-.It Dv RIOCSSRCH (u_long)
+.It Dv RIOCSSRCH (int)
 This command assumes that a signal search is required and gives direction
 of search to the driver - 0 to search down and any non-zero value to search up.
-.It Dv RIOCGCAPS (u_long)
-This command returns the device capabilities.
+.It Dv RIOCSINFO (struct radio_info)
+.It Dv RIOCGINFO (struct radio_info)
+Get or set the current hardware device information into the struct radio_info
+structure.
+.Bd -literal
+struct radio_info {
+	int	mute;
+	int	volume;
+	int	stereo;
+	int	rfreq;	/* reference frequency */
+	int	lock;	/* locking field strength */
+	u_int32_t	freq;	/* in kHz */
+	u_int32_t	caps;	/* card capabilities */
+#define RADIO_CAPS_DETECT_STEREO	(1<<0)
+#define RADIO_CAPS_DETECT_SIGNAL	(1<<1)
+#define RADIO_CAPS_SET_MONO		(1<<2)
+#define RADIO_CAPS_HW_SEARCH		(1<<3)
+#define RADIO_CAPS_HW_AFC		(1<<4)
+#define RADIO_CAPS_REFERENCE_FREQ	(1<<5)
+#define RADIO_CAPS_LOCK_SENSITIVITY	(1<<6)
+#define RADIO_CARD_TYPE			(0xFF<<16)
+	u_int32_t	info;
+#define RADIO_INFO_STEREO		(1<<0)
+#define RADIO_INFO_SIGNAL		(1<<1)
+};
+.Ed
+.Pp
+The
+.Va mute
+field is a boolean.
+.Pp
+The
+.Va volume
+field holds the card volume information and can be at most 255.
+.Pp
+The
+.Va stereo
+field is a boolean.
+.Pp
+The
+.Va rfreq
+holds information about the card reference frequency (not all cards support
+this feature).
+.Pp
+The
+.Va lock
+field holds information about the card locking field strength during
+an automatic search for cards that support this feature.
+.Pp
+The
+.Va freq
+field is the frequency in kHz the card is tuned to.
+.Pp
+The
+.Va caps
+field is read-only and describes the card capabilities.
 The capabilities can have following values:
 .Bl -tag -width indent -compact
 .It Dv RADIO_CAPS_DETECT_STEREO
@@ -93,22 +150,17 @@ Some cards have several different incarnations.
 This allow to determine the variant of the card.
 Currently not used.
 .El
-.It Dv RIOCGINFO (u_long)
-This commands returns current state of the device.
+.Pp
+The
+.Va info
+field is read-only and describes current state of the card - tuned/not tuned,
+stereo signal/mono signal.
 .Bl -tag -width indent -compact
 .It Dv RADIO_INFO_SIGNAL
 Informs whether the device receives a valid signal or noise.
 .It Dv RADIO_INFO_STEREO
 Informs whether the device receives a stereo or mono signal.
 .El
-.It Dv RIOCGREFF (u_long)
-This command returns current value of the device's reference frequency.
-.It Dv RIOCSREFF (u_long)
-This command sets reference frequency of the device.
-.It Dv RIOCGLOCK (u_long)
-This command returns current value of the device's station lock sensitivity.
-.It Dv RIOCSLOCK (u_long)
-This command sets station lock sensitivity of the device.
 .El
 .Sh FILES
 .Bl -tag -width /dev/radio -compact
@@ -117,6 +169,9 @@ This command sets station lock sensitivity of the device.
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr az 4 ,
+.Xr mr 4 ,
+.Xr rt 4 ,
+.Xr rtii 4 ,
 .Xr sf2r 4 ,
 .Xr sf4r 4
 .Sh BUGS
@@ -125,3 +180,13 @@ For example, if you have two aztech FM tuners, the first card with jumper
 set to port 0x358 and the second one - to 0x350, you can use only one
 aztech card (in the kernel, that is) either with port 0x350 or 0x358.
 Don't even try to compile support for the second card into the kernel.
+.Sh AUTHORS
+The
+.Nm
+driver was written by Vladimir Popov and Maxim Tsyplakov.
+The man page was written by Vladimir Popov.
+.Sh HISTORY
+The
+.Nm
+device driver appeared in
+.Ox 3.0 .

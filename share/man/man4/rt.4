@@ -1,6 +1,6 @@
-.\"	$OpenBSD: az.4,v 1.2 2001/10/08 08:52:50 mpech Exp $
+.\"	$RuOBSD: rt.4,v 1.3 2001/10/26 05:38:43 form Exp $
 .\"
-.\" Copyright (c) 2001 Vladimir Popov
+.\" Copyright (c) 2001 Vladimir Popov <jumbo@narod.ru>
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -23,35 +23,44 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 27, 2001
-.Dt AZ 4
+.Dd October 8, 2001
+.Dt rt 4
 .Os
 .Sh NAME
-.Nm az 
-.Nd Aztech/PackardBell radio card device driver
+.Nm rt
+.Nd AIMS Lab Radiotrack FM radio device driver
 .Sh SYNOPSIS
-.Cd "az0   at isa? port 0x358"
-.Cd "az0   at isa? port 0x350"
-.Cd "radio* at az0"
+.Cd "rt0   at isa? port 0x20c"
+.Cd "rt0   at isa? port 0x30c"
+.Cd "rt0   at isa? port 0x284"
+.Cd "rt0   at isa? port 0x384"
+.Cd "radio* at rt0"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the Aztech/PackardBell radio cards.
+driver provides support for the AIMS Lab Radiotrack FM radio tuners and
+compatible RadioReveal RA300 and SoundForte RadioX SF16-FMI FM radio tuners.
 .Pp
-The Aztech/PackardBell cards are stereo FM tuners that allow to tune
-in the 87.5-108.0 MHz range.
-It is capable to report signal status (tuned/not tuned, stereo/mono signal)
-and force audio output to mono.
+The Radiotrack is a stereo FM tuner that allows to tune in the range
+87.5 - 108.0 MHz, report signal status on the current frequency, and
+force audio output to mono.
 .Pp
-The Aztech cards use only one I/O port.
-The I/O port is set by the driver to the value specified in the configuration
-file.
-The I/O port must be one of
-0x350 and 0x358.
+The Radiotrack cards take only one I/O port. The I/O port is set by
+the driver to the value specified in the configuration file and must be
+either 0x20c or 0x30c.
 .Sh BUGS
-It is impossible to determine which frequency the card is tuned to.
-Thus, the driver will report an internally stored value even if it is not
-correct (changed by some program that uses direct port access).
+Support for the SF16-FMI cards is rather ugly, volume control is not working
+and the driver can not correctly determine signal state.
 .Sh SEE ALSO
-.Xr isa 4 ,
-.Xr radio 4
+.Xr radio 4 ,
+.Xr isa 4 .
+.Sh AUTHORS
+The
+.Nm
+driver was written by Vladimir Popov and Maxim Tsyplakov.
+The man page was written by Vladimir Popov.
+.Sh HISTORY
+The
+.Nm
+device driver appeared in
+.Ox 3.0 .
