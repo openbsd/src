@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ike.c,v 1.17 2004/01/15 22:59:42 ho Exp $	*/
+/*	$OpenBSD: print-ike.c,v 1.18 2004/02/14 11:33:45 ho Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -29,7 +29,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ike.c,v 1.17 2004/01/15 22:59:42 ho Exp $ (XXX)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ike.c,v 1.18 2004/02/14 11:33:45 ho Exp $ (XXX)";
 #endif
 
 #include <sys/param.h>
@@ -51,32 +51,32 @@ struct rtentry;
 #include "ike.h"
 
 struct isakmp_header {
-	u_char  init_cookie[8];
-	u_char  resp_cookie[8];
-	u_char  nextpayload;
-	u_char  version;
-	u_char  exgtype;
-	u_char  flags;
-	u_char  msgid[4];
-	u_int32_t length;
-	u_char  payloads[0];
+	u_int8_t	init_cookie[8];
+	u_int8_t	resp_cookie[8];
+	u_int8_t	nextpayload;
+	u_int8_t	version;
+	u_int8_t	exgtype;
+	u_int8_t	flags;
+	u_int8_t	msgid[4];
+	u_int32_t	length;
+	u_int8_t	payloads[0];
 };
 
 struct notification_payload {
-	u_char    next_payload;
-	u_char    reserved;
-	u_int16_t payload_length;
-	u_int32_t doi;
-	u_char    protocol_id;
-  	u_char    spi_size;
-  	u_int16_t type;
-	u_char    data[0];
+	u_int8_t	next_payload;
+	u_int8_t	reserved;
+	u_int16_t	payload_length;
+	u_int32_t	doi;
+	u_int8_t	protocol_id;
+  	u_int8_t	spi_size;
+  	u_int16_t	type;
+	u_int8_t	data[0];
 };
 
-static void ike_pl_print(u_char, u_char *, u_char);
+static void ike_pl_print(u_int8_t, u_int8_t *, u_int8_t);
 
 int ike_tab_level = 0;
-u_char xform_proto;
+u_int8_t xform_proto;
 
 static const char *ike[] = IKE_PROTO_INITIALIZER;
 
@@ -95,7 +95,7 @@ ike_tab_offset(void)
 }
 
 static char *
-ike_get_cookie (u_char *ic, u_char *rc)
+ike_get_cookie (u_int8_t *ic, u_int8_t *rc)
 {
 	static char cookie_jar[35];
 	int i;
@@ -114,12 +114,11 @@ ike_get_cookie (u_char *ic, u_char *rc)
  * Print isakmp requests
  */
 void
-ike_print (const u_char *cp, u_int length)
+ike_print (const u_int8_t *cp, u_int length)
 {
 	struct isakmp_header *ih;
-	const u_char *ep;
-	u_char *payload;
-	u_char  nextpayload;
+	const u_int8_t *ep;
+	u_int8_t *payload, nextpayload;
 	int encrypted;
 	static const char *exgtypes[] = IKE_EXCHANGE_TYPES_INITIALIZER;
 
@@ -128,7 +127,7 @@ ike_print (const u_char *cp, u_int length)
 #ifdef TCHECK
 #undef TCHECK
 #endif
-#define TCHECK(var, l) if ((u_char *)&(var) > ep - l) goto trunc
+#define TCHECK(var, l) if ((u_int8_t *)&(var) > ep - l) goto trunc
 
 	ih = (struct isakmp_header *)cp;
 
@@ -192,10 +191,10 @@ trunc:
 }
 
 void
-ike_pl_sa_print (u_char *buf, int len)
+ike_pl_sa_print (u_int8_t *buf, int len)
 {
 	u_int32_t situation = ntohl(*(u_int32_t *)(buf + 4));
-	u_char ike_doi = ntohl((*(u_int32_t *)buf));
+	u_int8_t ike_doi = ntohl((*(u_int32_t *)buf));
 	printf(" DOI: %d", ike_doi);
 	if (ike_doi == IPSEC_DOI) {
 		printf("(IPSEC) situation: ");
@@ -213,7 +212,7 @@ ike_pl_sa_print (u_char *buf, int len)
 }
 
 int
-ike_attribute_print (u_char *buf, u_char doi, int maxlen)
+ike_attribute_print (u_int8_t *buf, u_int8_t doi, int maxlen)
 {
 	static char *attrs[] = IKE_ATTR_INITIALIZER;
 	static char *attr_enc[] = IKE_ATTR_ENCRYPT_INITIALIZER;
@@ -227,7 +226,7 @@ ike_attribute_print (u_char *buf, u_char doi, int maxlen)
 	static char *ipsec_attr_auth[] = IPSEC_ATTR_AUTH_INITIALIZER;
 	static char *ipsec_attr_ltype[] = IPSEC_ATTR_DURATION_INITIALIZER;
 
-	u_char    af   = buf[0] >> 7;
+	u_int8_t af   = buf[0] >> 7;
 	u_int16_t type = (buf[0] & 0x7f) << 8 | buf[1];
 	u_int16_t len  = buf[2] << 8 | buf[3], val;
 
@@ -290,12 +289,12 @@ ike_attribute_print (u_char *buf, u_char doi, int maxlen)
 }
 
 void
-ike_pl_transform_print (u_char *buf, int len, u_char doi)
+ike_pl_transform_print (u_int8_t *buf, int len, u_int8_t doi)
 {
 	const char *ah[] = IPSEC_AH_INITIALIZER;
 	const char *esp[] = IPSEC_ESP_INITIALIZER;
 	const char *ipcomp[] = IPCOMP_INITIALIZER;
-	u_char *attr = buf + 4;
+	u_int8_t *attr = buf + 4;
 
 	printf("\n\t%stransform: %u ID: ", ike_tab_offset(), buf[0]);
 
@@ -340,7 +339,7 @@ ike_pl_transform_print (u_char *buf, int len, u_char doi)
 }
 
 void
-ike_pl_proposal_print (u_char *buf, int len, u_char doi)
+ike_pl_proposal_print (u_int8_t *buf, int len, u_int8_t doi)
 {
 	u_int8_t i, p_id = buf[1], spisz = buf[2];
 
@@ -358,16 +357,20 @@ ike_pl_proposal_print (u_char *buf, int len, u_char doi)
 			printf(" SPI: 0x");
 		for (i = 0; i < spisz && (i + 4) < len; i++)
 			printf("%02x", buf[i + 4]);
-		doi = IPSEC_DOI;
-	} else
-		doi = ISAKMP_DOI;
+	}
+
+	/* Reset to sane value. */
+	if (p_id == PROTO_ISAKMP)
+	  doi = ISAKMP_DOI;
+	else
+	  doi = IPSEC_DOI;
 
 	if ((char)buf[3] > 0)
 		ike_pl_print(PAYLOAD_TRANSFORM, buf + 4 + buf[2], doi);
 }
 
 void
-ike_pl_ke_print (u_char *buf, int len, u_char doi)
+ike_pl_ke_print (u_int8_t *buf, int len, u_int8_t doi)
 {
 	if (doi != IPSEC_DOI)
 		return;
@@ -376,12 +379,12 @@ ike_pl_ke_print (u_char *buf, int len, u_char doi)
 }
 
 void
-ipsec_id_print (u_char *buf, int len, u_char doi)
+ipsec_id_print (u_int8_t *buf, int len, u_int8_t doi)
 {
 	static const char *idtypes[] = IPSEC_ID_TYPE_INITIALIZER;
 	char ntop_buf[INET6_ADDRSTRLEN];
 	struct in_addr in;
-	u_char *p;
+	u_int8_t *p;
 
 	if (doi != ISAKMP_DOI)
 		return;
@@ -437,12 +440,12 @@ ipsec_id_print (u_char *buf, int len, u_char doi)
 }
 
 void
-ike_pl_notification_print (u_char *buf, int len)
+ike_pl_notification_print (u_int8_t *buf, int len)
 {
   	static const char *nftypes[] = IKE_NOTIFY_TYPES_INITIALIZER;
   	struct notification_payload *np = (struct notification_payload *)buf;
 	u_int32_t *replay;
-	u_char *attr;
+	u_int8_t *attr;
 
 	if (len < sizeof (struct notification_payload)) {
 		printf(" (|len)");
@@ -504,9 +507,9 @@ ike_pl_notification_print (u_char *buf, int len)
 }
 
 void
-ike_pl_vendor_print (u_char *buf, int len, u_char doi)
+ike_pl_vendor_print (u_int8_t *buf, int len, u_int8_t doi)
 {
-	u_char *p = buf;
+	u_int8_t *p = buf;
 
 	if (doi != IPSEC_DOI)
 		return;
@@ -519,16 +522,16 @@ ike_pl_vendor_print (u_char *buf, int len, u_char doi)
 
 /* IKE mode-config. */
 int
-ike_cfg_attribute_print (u_char *buf, int attr_type, int maxlen)
+ike_cfg_attribute_print (u_int8_t *buf, int attr_type, int maxlen)
 {
 	static char *attrs[] = IKE_CFG_ATTRIBUTE_INITIALIZER;
 	char ntop_buf[INET6_ADDRSTRLEN];
 	struct in_addr in;
 
-	u_char    af   = buf[0] >> 7;
+	u_int8_t af = buf[0] >> 7;
 	u_int16_t type = (buf[0] & 0x7f) << 8 | buf[1];
-	u_int16_t len  = af ? 2 : buf[2] << 8 | buf[3], p;
-	u_char   *val  = af ? buf + 2 : buf + 4;
+	u_int16_t len = af ? 2 : buf[2] << 8 | buf[3], p;
+	u_int8_t *val = af ? buf + 2 : buf + 4;
 
 	printf("\n\t\%sattribute %s = ", ike_tab_offset(),
 	    type < (sizeof attrs / sizeof attrs[0]) ? attrs[type] :
@@ -607,10 +610,10 @@ ike_cfg_attribute_print (u_char *buf, int attr_type, int maxlen)
 }
 
 void
-ike_pl_attribute_print (u_char *buf, int len)
+ike_pl_attribute_print (u_int8_t *buf, int len)
 {
 	static const char *pl_attr[] = IKE_CFG_ATTRIBUTE_TYPE_INITIALIZER;
-	u_char type, *attr;
+	u_int8_t type, *attr;
 	u_int16_t id;
 
 	type = buf[0];
@@ -626,7 +629,7 @@ ike_pl_attribute_print (u_char *buf, int len)
 }
 
 void
-ike_pl_print (u_char type, u_char *buf, u_char doi)
+ike_pl_print (u_int8_t type, u_int8_t *buf, u_int8_t doi)
 {
 	static const char *pltypes[] = IKE_PAYLOAD_TYPES_INITIALIZER;
 	int next_type = buf[0];
@@ -636,7 +639,7 @@ ike_pl_print (u_char type, u_char *buf, u_char doi)
 	    (type < (sizeof pltypes/sizeof pltypes[0]) ?
 	    pltypes[type] : "<unknown>"), this_len);
 
-	if ((u_char *)&(buf[0]) > snapend - this_len)
+	if ((u_int8_t *)&(buf[0]) > snapend - this_len)
 		goto pltrunc;
 
 	ike_tab_level++;
