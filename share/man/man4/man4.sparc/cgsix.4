@@ -1,3 +1,6 @@
+.\"	$OpenBSD: cgsix.4,v 1.4 1998/07/13 02:42:12 jason Exp $
+.\"	$NetBSD: cgsix.4,v 1.4 1998/06/11 08:32:20 fair Exp $
+.\"
 .\" Copyright 1994
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -34,7 +37,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)cgsix.4	8.1 (Berkeley) 2/16/94
-.\"	$Id: cgsix.4,v 1.3 1998/07/03 20:35:03 jason Exp $
+.\"	$Id: cgsix.4,v 1.4 1998/07/13 02:42:12 jason Exp $
 .\"
 .Dd February 16, 1994
 .Dt CGSIX 4 sparc
@@ -43,7 +46,7 @@
 .Nm cgsix
 .Nd accelerated 8-bit color frame buffer
 .Sh SYNOPSIS
-.Cd "cgsix* at sbus? slot ? offset ?"
+.Cd "cgsix* at sbus? slot ? offset ?" Pq "sun4c and sun4m"
 .Cd "cgsix0 at obio0 addr 0xfb000000 level 4" Pq sun4/300 P4
 .Cd "cgsix0 at obio0 addr 0x0b000000 level 4" Pq sun4/100 P4
 .Sh DESCRIPTION

@@ -35,7 +35,7 @@
 .\"
 .\"	from: Header: le.4,v 1.2 92/10/13 05:31:33 leres Exp
 .\"	from: @(#)le.4	8.1 (Berkeley) 6/9/93
-.\"	$Id: le.4,v 1.4 1998/03/09 09:54:18 deraadt Exp $
+.\"	$Id: le.4,v 1.5 1998/07/13 02:42:20 jason Exp $
 .\"
 .Dd June 9, 1993
 .Dt LE 4 sparc
@@ -53,11 +53,14 @@
 .Sh DESCRIPTION
 The 
 .Nm
-interface provides access to the 10 Mb/s Ethernet network via the
+interface provides access to the 10 Mb/s
+.Tn Ethernet
+network via the
 .Tn AMD
-7990
-.Tn LANCE
-Ethernet chip set.
+Am7990
+Local Area Network Controller for Ethernet
+.Pq Tn LANCE
+chip set.
 .Pp
 Each of the host's network addresses
 is specified at boot time with an
@@ -67,8 +70,9 @@ The
 .Nm
 interface employs the address resolution protocol described in
 .Xr arp 4
-to dynamically map between Internet and Ethernet addresses on the local
-network.
+to dynamically map between Internet and
+.Tn Ethernet
+addresses on the local network.
 .Pp
 The sun4m interface has two types of connectors:
 .Pp

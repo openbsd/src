@@ -1,4 +1,4 @@
-.\"     $OpenBSD: intro.4,v 1.2 1998/03/10 04:50:44 millert Exp $
+.\"     $OpenBSD: intro.4,v 1.3 1998/07/13 02:42:18 jason Exp $
 .\"	$NetBSD: intro.4,v 1.5 1998/02/06 06:07:00 perry Exp $
 .\"
 .\" Copyright (c) 1996 Jonathan Stone.
@@ -91,12 +91,8 @@ The autoconfiguration system is described in
 .Xr autoconf 4 .
 A list of the supported devices is given below.
 .Sh SEE ALSO
-.Xr cd 4 ,
-.Xr sd 4 ,
-.Xr ss 4 ,
-.Xr st 4 ,
 .Xr autoconf 4 ,
-.Xr config 8 .
+.Xr config 8
 .Sh SUPPORTED SYSTEMS
 The following Sun SPARC system architectures and models are supported:
 .Bl -tag -width speaker
@@ -179,7 +175,7 @@ The devices listed below are supported in this incarnation of
 the system.  Devices are indicated by their functional interface.
 Not all supported devices are listed.
 .Pp
-.Bl -tag -width speaker
+.Bl -tag -width le/lebuffer
 .It audio
 AMD 79C30 obio (sun4c) audio controller
 .It bwtwo
@@ -209,6 +205,8 @@ FSBE/S (X1053A, part # 501-2015) Fast SCSI-2/Buffered Ethernet Sbus controller
 .It fd
 Intel 82072 obio (sun4c) or Intel 82077 obio (sun4m)
 floppy disk drive controller
+.It hme
+HME Ethernet controllers (SunSwift and Sun QuadFastEthernet)
 .It ie
 Intel 82586 Ethernet controller (Sun 4/100)
 .It isp
@@ -217,6 +215,8 @@ Qlogic ISP Sbus SCSI controller
 Sun type 2, type 3, type 4, and type 5 keyboards (on zs)
 .It le/lebuffer
 AMD 7990 LANCE ethernet controller (Sun 4/200, 4/300, sun4c, sun4m, Sbus)
+.It magma
+Magma serial/parallel communication boards
 .It ms
 Sun mouse (on zs)
 .It openprom
