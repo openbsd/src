@@ -1,4 +1,4 @@
-/*	$OpenBSD: version.c,v 1.1.1.1 2004/07/13 22:02:40 jfb Exp $	*/
+/*	$OpenBSD: version.c,v 1.2 2004/07/28 01:57:16 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -56,13 +56,13 @@ cvs_version(int argc, char **argv)
 
 
 	if ((cvs_root) && (cvs_root->cr_method != CVS_METHOD_LOCAL))
-		if (cvs_client_connect() < 0)
+		if (cvs_client_connect(cvs_root) < 0)
 			return (1);
 
 	if ((cvs_root) && (cvs_root->cr_method != CVS_METHOD_LOCAL)) {
 		printf("Server: ");
 		cvs_client_sendreq(CVS_REQ_VERSION, NULL, 1);
-		cvs_client_disconnect();
+		cvs_client_disconnect(cvs_root);
 	}
 
 	return (0);
