@@ -1,4 +1,4 @@
-/* $OpenBSD: cddb.c,v 1.3 2002/04/18 22:07:04 espie Exp $ */
+/* $OpenBSD: cddb.c,v 1.4 2002/04/18 22:17:04 espie Exp $ */
 /*
  * Copyright (c) 2002 Marc Espie.
  *
@@ -37,7 +37,6 @@
 #include <vis.h>
 #include "extern.h"
 
-unsigned long	cddb_discid(int, struct cd_toc_entry *);
 unsigned long	cddb_sum(unsigned long);
 void		send_hello(FILE *);
 void		send_query(FILE *, int, struct cd_toc_entry *);

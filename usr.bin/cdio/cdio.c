@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.24 2002/04/18 20:18:31 espie Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.25 2002/04/18 22:17:04 espie Exp $	*/
 /*
  * Compact Disc Control Utility by Serge V. Vakulenko <vak@cronyx.ru>.
  * Based on the non-X based CD player by Jean-Marc Zucconi and
@@ -67,6 +67,7 @@
 #define CMD_PREV	17
 #define CMD_REPLAY	18
 #define CMD_CDDB	19
+#define CMD_CDID	20
 
 struct cmdtab {
 	int command;
@@ -96,7 +97,8 @@ struct cmdtab {
 { CMD_STATUS,   "status",       1, "" },
 { CMD_STOP,     "stop",         3, "" },
 { CMD_VOLUME,   "volume",       1, "<l> <r> | left | right | mute | mono | stereo" },
-{ CMD_CDDB,   	"cddbinfo",       2, "[n]" },
+{ CMD_CDDB,   	"cddbinfo",     2, "[n]" },
+{ CMD_CDID,	"cdid",		2, "" },
 { 0, 0, 0, 0}
 };
 
@@ -135,6 +137,7 @@ char            *parse(char *buf, int *cmd);
 void 		help(void);
 void		usage(void);
 char 		*strstatus(int);
+int		cdid(void);
 
 void
 help()
@@ -280,6 +283,11 @@ run(int cmd, char *arg)
 			return (0);
 
 		return cddbinfo(arg);
+
+	case CMD_CDID:
+		if (fd < 0 && ! open_cd(cdname))
+			return (0);
+		return cdid();
 
 	case CMD_STATUS:
 		if (fd < 0 && ! open_cd(cdname))
@@ -884,6 +892,33 @@ pstatus(char *arg)
 	} else
 		printf("No volume level info available\n");
 	return(0);
+}
+
+int
+cdid()
+{
+	unsigned long id;
+	struct ioc_toc_header h;
+	int rc, n;
+
+	rc = ioctl(fd, CDIOREADTOCHEADER, &h);
+	if (rc == -1) {
+		warn("getting toc header");
+		return (rc);
+	}
+
+	n = h.ending_track - h.starting_track + 1;
+	rc = read_toc_entrys((n + 1) * sizeof (struct cd_toc_entry));
+	if (rc < 0)
+		return (rc);
+
+	id = cddb_discid(n, toc_buffer);
+	if (id) {
+		if (verbose)
+			printf("CDID=");
+		printf("%08lx\n", id);
+	}
+	return id ? 0 : 1;
 }
 
 int

@@ -29,6 +29,7 @@ struct cd_toc_entry;
 extern unsigned long 	entry2time(struct cd_toc_entry *);
 extern unsigned long 	entry2frames(struct cd_toc_entry *);
 extern char ** 		cddb(const char *, int, struct cd_toc_entry *, char *);
+extern unsigned long 	cddb_discid(int, struct cd_toc_entry *);
 extern void		free_names(char **);
 
 #define VERSION "2.1"
