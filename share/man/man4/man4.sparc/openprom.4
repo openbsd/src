@@ -1,4 +1,4 @@
-.\"	$OpenBSD: openprom.4,v 1.3 2002/10/01 21:02:19 miod Exp $
+.\"	$OpenBSD: openprom.4,v 1.4 2003/03/10 11:35:06 jmc Exp $
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -46,7 +46,7 @@
 .Fd #include <machine/openpromio.h>
 .Sh DESCRIPTION
 The file
-.Nm /dev/openprom
+.Pa /dev/openprom
 is an interface to the SPARC OPENPROM,
 including the EEPROM area.
 This interface is highly stylized;
@@ -66,7 +66,7 @@ The calls that take and/or return a node
 use a pointer to an
 .Li int
 variable for this purpose;
-others use a pointer to an
+others use a pointer to a
 .Li struct opiocdesc
 descriptor,
 which contains a node and two counted strings.
@@ -130,7 +130,7 @@ As with
 the next name after the empty string is the first name.
 .El
 .Sh FILES
-.Pa /dev/openprom
+.Li /dev/openprom
 .Sh ERRORS
 The following may result in rejection of an operation:
 .Bl -tag -width Er

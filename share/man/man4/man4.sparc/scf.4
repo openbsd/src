@@ -1,4 +1,4 @@
-.\"     $OpenBSD: scf.4,v 1.3 2002/10/01 21:02:19 miod Exp $
+.\"     $OpenBSD: scf.4,v 1.4 2003/03/10 11:35:06 jmc Exp $
 .\"
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -122,10 +122,10 @@ bit, if clear, selects the first flash device, otherwise the second
 flash device is selected.
 The
 .Ar SCF_FMCTRL_SELBOOT
-bit, if set selects the user flash, otherwise the boot flash is selected.
+bit, if set, selects the user flash, otherwise the boot flash is selected.
 Setting the
 .Ar SCF_FMCTRL_WRITEV
-bit, turns on the write voltage.
+bit turns on the write voltage.
 The
 .Ar SCF_FMCTRL_SELADDR
 bits determine which window of 512 KBytes is active for reading/writing.

@@ -1,4 +1,4 @@
-.\"     $OpenBSD: fga.4,v 1.6 2002/10/01 21:02:19 miod Exp $
+.\"     $OpenBSD: fga.4,v 1.7 2003/03/10 11:35:06 jmc Exp $
 .\"
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -77,7 +77,7 @@ and is enabled if the eeprom variable
 .Pa abort-ena?
 is set to
 .Pa true .
-Toggling the switch when enabled, stops the kernel and starts the
+Toggling the switch when enabled stops the kernel and starts the
 kernel debugger
 .Xr ddb 4 .
 .Sh IOCTLS
@@ -85,7 +85,8 @@ The
 .Nm fga
 device responds to the following
 .Xr ioctl 2
-calls defined in <machine/fgaio.h>:
+calls defined in
+.Aq Pa machine/fgaio.h :
 .Bl -tag -width FGAIOCSEM
 .It Dv FGAIOCSEM
 .Pq Li "struct fga_sem"

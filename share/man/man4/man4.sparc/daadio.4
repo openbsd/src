@@ -1,4 +1,4 @@
-.\"     $OpenBSD: daadio.4,v 1.4 2002/10/01 21:02:19 miod Exp $
+.\"     $OpenBSD: daadio.4,v 1.5 2003/03/10 11:35:06 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -52,14 +52,14 @@ The
 .Nm
 has a large number of configuration options, but the driver does not.
 For the ADC, only simple polled mode is supported (there is no
-support to single cycle sampling).
+support for single cycle sampling).
 .Sh IOCTLS
 The
 .Nm
 device responds to the following
 .Xr ioctl 2
 calls defined in
-.Aq machine/daadioio.h :
+.Aq Pa machine/daadioio.h :
 .Bl -tag -width DIOGOPIO
 .It Dv DIOGPIO
 .Pq Li "struct daadio_pio"
