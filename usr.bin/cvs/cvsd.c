@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvsd.c,v 1.1.1.1 2004/07/13 22:02:40 jfb Exp $	*/
+/*	$OpenBSD: cvsd.c,v 1.2 2004/07/16 01:46:16 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -273,13 +273,13 @@ cvsd_privdrop(void)
 {
 	cvs_log(LP_INFO, "dropping privileges to %s:%s", CVSD_USER,
 	    CVSD_GROUP);
-	if (setegid(cvsd_gid) == -1) {
+	if (setgid(cvsd_gid) == -1) {
 		cvs_log(LP_ERRNO, "failed to drop group privileges to %s",
 		    CVSD_GROUP);
 		return (-1);
 	}
 
-	if (seteuid(cvsd_uid) == -1) {
+	if (setuid(cvsd_uid) == -1) {
 		cvs_log(LP_ERRNO, "failed to drop user privileges to %s",
 		    CVSD_USER);
 		return (-1);
@@ -443,15 +443,8 @@ cvsd_forkchild(void)
 		}
 		(void)chdir("/");
 
-		/* redrop privileges */
-		if (setgid(cvsd_gid) == -1) {
-			cvs_log(LP_ERRNO, "failed to drop privileges");
+		if (cvsd_privdrop() < 0)
 			exit(EX_OSERR);
-		}
-		if (setuid(cvsd_uid) == -1) {
-			cvs_log(LP_ERRNO, "failed to drop privileges");
-			exit(EX_OSERR);
-		}
 
 		setproctitle("%s [child %d]", __progname, getpid());
 
