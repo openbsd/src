@@ -1,5 +1,6 @@
-# $OpenBSD: list.local,v 1.2 2002/04/30 03:23:57 deraadt Exp $
+# $OpenBSD: list.local,v 1.3 2003/12/17 01:56:04 millert Exp $
 
 # add local links; use bin/sh since instbin has already been unlinked
 LINK	instbin					sbin/wicontrol
 LINK	instbin					sbin/ancontrol
+LINK	instbin					sbin/ccdconfig
