@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.60 2001/06/05 10:43:05 angelos Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.61 2001/06/05 10:43:56 angelos Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -3383,7 +3383,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 
 		  if (sauth->sadb_x_cred_len <= sizeof *sauth)
 		    {
-		      log_[rint ("pf_key_v2_set_spi: zero-length passphrase, "
+		      log_print ("pf_key_v2_set_spi: zero-length passphrase, "
 				 "aborting SA acquisition");
 		      conf_end (af, 0);
 		      goto fail;
