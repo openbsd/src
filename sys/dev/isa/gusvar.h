@@ -1,4 +1,4 @@
-/*	$OpenBSD: gusvar.h,v 1.2 2000/04/14 21:53:21 millert Exp $	*/
+/*	$OpenBSD: gusvar.h,v 1.3 2001/01/29 05:30:31 mickey Exp $	*/
 /*	$NetBSD: gus.c,v 1.51 1998/01/25 23:48:06 mycroft Exp $	*/
 
 /*-
@@ -18,10 +18,10 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD 
+ *        This product includes software developed by the NetBSD
  *	  Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its 
- *    contributors may be used to endorse or promote products derived 
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
@@ -42,7 +42,7 @@
  * TODO:
  *	. figure out why mixer activity while sound is playing causes problems
  *	  (phantom interrupts?)
- *  	. figure out a better deinterleave strategy that avoids sucking up
+ *	. figure out a better deinterleave strategy that avoids sucking up
  *	  CPU, memory and cache bandwidth.  (Maybe a special encoding?
  *	  Maybe use the double-speed sampling/hardware deinterleave trick
  *	  from the GUS SDK?)  A 486/33 isn't quite fast enough to keep
@@ -58,7 +58,7 @@
  * available on the net at:
  *
  * ftp://freedom.nmsu.edu/pub/ultrasound/gravis/util/
- * 	gusdkXXX.zip (developers' kit--get rev 2.22 or later)
+ *	gusdkXXX.zip (developers' kit--get rev 2.22 or later)
  *		See ultrawrd.doc inside--it's MS Word (ick), but it's the bible
  *
  */
@@ -78,17 +78,17 @@
  *   |         | play (dram)  |      +----+    |	|
  *   |         |--------------(------|-\  |    |   +-+  |
  *   +---------+              |      |  >-|----|---|C|--|------  dma chan 1
- *                            |  +---|-/  |    |   +-+ 	|
+ *                            |  +---|-/  |    |   +-+	|
  *                            |  |   +----+    |    |   |
  *                            |	 |   +----+    |    |   |
  *   +---------+        +-+   +--(---|-\  |    |    |   |
  *   |         | play   |8|      |   |  >-|----|----+---|------  dma chan 2
  *   | ---C----|--------|/|------(---|-/  |    |        |
  *   |    ^    |record  |1|      |   +----+    |	|
- *   |    |    |   /----|6|------+   	       +--------+
+ *   |    |    |   /----|6|------+	       +--------+
  *   | ---+----|--/     +-+
  *   +---------+
- *     CS4231   	8-to-16 bit bus conversion, if needed
+ *     CS4231	8-to-16 bit bus conversion, if needed
  *
  *
  * "C" is an optional combiner.
@@ -136,6 +136,7 @@ struct gus_softc {
 	struct device sc_dev;		/* base device */
 	struct device *sc_isa;		/* pointer to ISA parent */
 	void *sc_ih;			/* interrupt vector */
+	struct timeout sc_dma_tmo;
 	bus_space_tag_t sc_iot;		/* tag */
 	bus_space_handle_t sc_ioh1;	/* handle */
 	bus_space_handle_t sc_ioh2;	/* handle */
@@ -318,8 +319,8 @@ int	gus_set_in_gain __P((caddr_t, u_int, u_char));
 int	gus_get_in_gain __P((caddr_t));
 int	gus_set_out_gain __P((caddr_t, u_int, u_char));
 int	gus_get_out_gain __P((caddr_t));
-int 	gus_set_params __P((void *, int, int, struct audio_params *, struct audio_params *));
-int 	gusmax_set_params __P((void *, int, int, struct audio_params *, struct audio_params *));
+int	gus_set_params __P((void *, int, int, struct audio_params *, struct audio_params *));
+int	gusmax_set_params __P((void *, int, int, struct audio_params *, struct audio_params *));
 int	gus_round_blocksize __P((void *, int));
 int	gus_commit_settings __P((void *));
 int	gus_dma_output __P((void *, void *, int, void (*)(void *), void *));
@@ -387,13 +388,13 @@ void	gusics_cd_mute __P((struct ics2101_softc *, int));
 
 void	stereo_dmaintr __P((void *));
 
-extern int gus_irq_map[];
-extern int gus_drq_map[];
-extern int gus_base_addrs[];
-extern int gus_addrs;
-extern int gus_max_frequency[];
+extern const int gus_irq_map[];
+extern const int gus_drq_map[];
+extern const int gus_base_addrs[];
+extern const int gus_addrs;
+extern const int gus_max_frequency[];
 
-extern unsigned short gus_log_volumes[];
+extern const ushort gus_log_volumes[];
 
 #define SELECT_GUS_REG(iot,ioh1,x) bus_space_write_1(iot,ioh1,GUS_REG_SELECT,x)
 #define ADDR_HIGH(x) (unsigned int) ((x >> 7L) & 0x1fffL)
