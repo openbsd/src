@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtquery.c,v 1.11 2003/03/11 02:32:31 deraadt Exp $	*/
+/*	$OpenBSD: rtquery.c,v 1.12 2003/04/04 00:46:24 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -103,8 +103,7 @@ static u_int std_mask(u_int);
 
 
 int
-main(int argc,
-     char *argv[])
+main(int argc, char *argv[])
 {
 	int ch, bsize;
 	char *p, *options, *value;
@@ -214,9 +213,9 @@ main(int argc,
 	argc -= optind;
 	if ((not_trace && trace) || argc == 0) {
 usage:		fprintf(stderr, "%s: [-np1] [-r tgt_rt] [-w wtime]"
-			" host1 [host2 ...]\n"
-			"or\t-t {on=filename|more|off} host1 host2 ...\n",
-			pgmname);
+		    " host1 [host2 ...]\n"
+		    "or\t-t {on=filename|more|off} host1 host2 ...\n",
+		    pgmname);
 		exit(1);
 	}
 
@@ -229,7 +228,7 @@ usage:		fprintf(stderr, "%s: [-np1] [-r tgt_rt] [-w wtime]"
 	/* be prepared to receive a lot of routes */
 	for (bsize = 127*1024; ; bsize -= 1024) {
 		if (setsockopt(s, SOL_SOCKET, SO_RCVBUF,
-			       &bsize, sizeof(bsize)) == 0)
+		    &bsize, sizeof(bsize)) == 0)
 			break;
 		if (bsize <= 4*1024) {
 			perror("setsockopt SO_RCVBUF");
@@ -271,8 +270,7 @@ trace_loop(char *argv[])
 #endif
 	myaddr.sin_port = htons(IPPORT_RESERVED-1);
 	while (bind(s, (struct sockaddr *)&myaddr, sizeof(myaddr)) < 0) {
-		if (errno != EADDRINUSE
-		    || myaddr.sin_port == 0) {
+		if (errno != EADDRINUSE || myaddr.sin_port == 0) {
 			perror("bind");
 			exit(2);
 		}
@@ -304,7 +302,6 @@ query_loop(char *argv[], int argc)
 	struct sockaddr_in from;
 	int fromlen;
 
-
 	OMSG.rip_cmd = (pflag) ? RIPCMD_POLL : RIPCMD_REQUEST;
 	if (ripv2) {
 		OMSG.rip_vers = RIPv2;
@@ -330,13 +327,15 @@ query_loop(char *argv[], int argc)
 		if (cc > 0) {
 			fromlen = sizeof(from);
 			cc = recvfrom(s, imsg_buf.packet,
-				      sizeof(imsg_buf.packet), 0,
-				      (struct sockaddr *)&from, &fromlen);
+			    sizeof(imsg_buf.packet), 0,
+			    (struct sockaddr *)&from, &fromlen);
 			if (cc < 0) {
 				perror("recvfrom");
 				exit(1);
 			}
-			/* count the distinct responding hosts.
+
+			/*
+			 * count the distinct responding hosts.
 			 * You cannot match responding hosts with
 			 * addresses to which queries were transmitted,
 			 * because a router might respond with a
@@ -421,7 +420,7 @@ out(char *host)
 	router.sin_port = htons(RIP_PORT);
 
 	if (sendto(s, &omsg_buf, omsg_len, 0,
-		   (struct sockaddr *)&router, sizeof(router)) < 0) {
+	    (struct sockaddr *)&router, sizeof(router)) < 0) {
 		perror(host);
 		return -1;
 	}
@@ -448,18 +447,16 @@ rip_input(struct sockaddr_in *from,
 	struct netent *np;
 	struct netauth *a;
 
-
 	if (nflag) {
 		printf("%s:", inet_ntoa(from->sin_addr));
 	} else {
 		hp = gethostbyaddr((char*)&from->sin_addr,
-				   sizeof(struct in_addr), AF_INET);
+		    sizeof(struct in_addr), AF_INET);
 		if (hp == 0) {
-			printf("%s:",
-			       inet_ntoa(from->sin_addr));
+			printf("%s:", inet_ntoa(from->sin_addr));
 		} else {
 			printf("%s (%s):", hp->h_name,
-			       inet_ntoa(from->sin_addr));
+			    inet_ntoa(from->sin_addr));
 		}
 	}
 	if (IMSG.rip_cmd != RIPCMD_RESPONSE) {
@@ -467,16 +464,16 @@ rip_input(struct sockaddr_in *from,
 		return;
 	}
 	printf(" RIPv%d%s %d bytes\n", IMSG.rip_vers,
-	       (IMSG.rip_vers != RIPv1 && IMSG.rip_vers != RIPv2) ? " ?" : "",
-	       size);
+	    (IMSG.rip_vers != RIPv1 && IMSG.rip_vers != RIPv2) ? " ?" : "",
+	    size);
 	if (size > MAXPACKETSIZE) {
 		if (size > sizeof(imsg_buf) - sizeof(*n)) {
 			printf("       at least %d bytes too long\n",
-			       size-MAXPACKETSIZE);
+			    size-MAXPACKETSIZE);
 			size = sizeof(imsg_buf) - sizeof(*n);
 		} else {
 			printf("       %d bytes too long\n",
-			       size-MAXPACKETSIZE);
+			    size-MAXPACKETSIZE);
 		}
 	} else if (size%sizeof(*n) != sizeof(struct rip)%sizeof(*n)) {
 		printf("    response of bad length=%d\n", size);
@@ -495,18 +492,16 @@ rip_input(struct sockaddr_in *from,
 			if (mask != 0) {
 				sp = &net_buf[strlen(net_buf)];
 				if (IMSG.rip_vers == RIPv1) {
-					(void)sprintf(sp," mask=%#x ? ",mask);
+					sprintf(sp," mask=%#x ? ",mask);
 					mask = 0;
 				} else if (mask + dmask == 0) {
 					for (i = 0;
-					     (i != 32
-					      && ((1<<i)&mask) == 0);
-					     i++)
+					    (i != 32 && ((1<<i)&mask) == 0);
+					    i++)
 						continue;
-					(void)sprintf(sp, "/%d",32-i);
-				} else {
-					(void)sprintf(sp," (mask %#x)", mask);
-				}
+					sprintf(sp, "/%d",32-i);
+				} else
+					sprintf(sp," (mask %#x)", mask);
 			}
 
 			if (!nflag) {
@@ -531,12 +526,11 @@ rip_input(struct sockaddr_in *from,
 					else if (in.s_addr == 0)
 						name = "default";
 				}
-				if (name[0] == '\0'
-				    && ((in.s_addr & ~mask) != 0
-					|| mask == 0xffffffff)) {
+				if (name[0] == '\0' &&
+				    ((in.s_addr & ~mask) != 0 ||
+				    mask == 0xffffffff)) {
 					hp = gethostbyaddr((char*)&in,
-							   sizeof(in),
-							   AF_INET);
+					    sizeof(in), AF_INET);
 					if (hp != 0)
 						name = hp->h_name;
 				}
@@ -545,23 +539,24 @@ rip_input(struct sockaddr_in *from,
 		} else if (n->n_family == RIP_AF_AUTH) {
 			a = (struct netauth*)n;
 			(void)printf("    authentication type %d: ",
-				     a->a_type);
+			    a->a_type);
 			for (i = 0; i < sizeof(a->au.au_pw); i++)
 				(void)printf("%02x ", a->au.au_pw[i]);
 			putc('\n', stdout);
 			continue;
 
 		} else {
-			(void)sprintf(net_buf, "(af %#x) %d.%d.%d.%d",
-				      ntohs(n->n_family),
-				      (char)(n->n_dst >> 24),
-				      (char)(n->n_dst >> 16),
-				      (char)(n->n_dst >> 8),
-				      (char)n->n_dst);
+			snprintf(net_buf, sizeof net_buf,
+			    "(af %#x) %d.%d.%d.%d",
+			    ntohs(n->n_family),
+			    (char)(n->n_dst >> 24),
+			    (char)(n->n_dst >> 16),
+			    (char)(n->n_dst >> 8),
+			    (char)n->n_dst);
 		}
 
 		(void)printf("  %-18s metric %2d %-10s",
-			     net_buf, ntohl(n->n_metric), name);
+		    net_buf, ntohl(n->n_metric), name);
 
 		if (n->n_nhop != 0) {
 			in.s_addr = n->n_nhop;
@@ -569,14 +564,14 @@ rip_input(struct sockaddr_in *from,
 				hp = 0;
 			else
 				hp = gethostbyaddr((char*)&in, sizeof(in),
-						   AF_INET);
+				    AF_INET);
 			(void)printf(" nhop=%-15s%s",
-				     (hp != 0) ? hp->h_name : inet_ntoa(in),
-				     (IMSG.rip_vers == RIPv1) ? " ?" : "");
+			    (hp != 0) ? hp->h_name : inet_ntoa(in),
+			    (IMSG.rip_vers == RIPv1) ? " ?" : "");
 		}
 		if (n->n_tag != 0)
 			(void)printf(" tag=%#x%s", n->n_tag,
-				     (IMSG.rip_vers == RIPv1) ? " ?" : "");
+			    (IMSG.rip_vers == RIPv1) ? " ?" : "");
 		putc('\n', stdout);
 	}
 }
@@ -613,9 +608,7 @@ getnet(char *name,
 	char hname[MAXHOSTNAMELEN+1];
 	char *mname, *p;
 
-
-	/* Detect and separate "1.2.3.4/24"
-	 */
+	/* Detect and separate "1.2.3.4/24" */
 	if (0 != (mname = strrchr(name,'/'))) {
 		i = (int)(mname - name);
 		if (i > sizeof(hname)-1)	/* name too long */
