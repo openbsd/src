@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.12 2002/05/09 21:22:01 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.13 2002/05/09 21:40:41 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: misc.c,v 1.12 2002/05/09 21:22:01 millert Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.13 2002/05/09 21:40:41 millert Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the rest of the log]
@@ -434,22 +434,31 @@ skip_comments(file)
 
 /* int in_file(char *string, FILE *file)
  *	return TRUE if one of the lines in file matches string exactly,
- *	FALSE otherwise.
+ *	FALSE if no lines match, and error on error.
  */
 static int
-in_file(string, file)
+in_file(string, file, error)
 	char *string;
 	FILE *file;
+	int error;
 {
 	char line[MAX_TEMPSTR];
+	char *endp;
 
-	rewind(file);
+	if (fseek(file, 0L, SEEK_SET))
+		return (error);
 	while (fgets(line, MAX_TEMPSTR, file)) {
-		if (line[0] != '\0')
-			line[strlen(line)-1] = '\0';
+		if (line[0] != '\0') {
+			endp = &line[strlen(line) - 1];
+			if (*endp != '\n')
+				return (error);
+			*endp = '\0';
+		}
 		if (0 == strcmp(line, string))
 			return (TRUE);
 	}
+	if (ferror(file))
+		return (error);
 	return (FALSE);
 }
 
@@ -465,21 +474,30 @@ allowed(username)
 {
 	static int	init = FALSE;
 	static FILE	*allow, *deny;
+	static int	allow_error, deny_error;
 
 	if (!init) {
 		init = TRUE;
 #if defined(ALLOW_FILE) && defined(DENY_FILE)
 		allow = fopen(ALLOW_FILE, "r");
+		allow_error = !allow && errno != ENOENT;
 		deny = fopen(DENY_FILE, "r");
+		deny_error = !deny && errno != ENOENT;
 		Debug(DMISC, ("allow/deny enabled, %d/%d\n", !!allow, !!deny))
 #else
 		allow = NULL;
+		allow_error = 0;
 		deny = NULL;
+		deny_error = 0;
 #endif
 	}
 
+	if (allow_error)
+		return (FALSE);
 	if (allow)
 		return (in_file(username, allow));
+	if (deny_error)
+		return (FALSE);
 	if (deny)
 		return (!in_file(username, deny));
 
@@ -554,10 +572,6 @@ log_it(username, xpid, event, detail)
 
 #if defined(SYSLOG)
 	if (!syslog_open) {
-		/* we don't use LOG_PID since the pid passed to us by
-		 * our client may not be our own.  therefore we want to
-		 * print the pid ourselves.
-		 */
 # ifdef LOG_DAEMON
 		openlog(ProgramName, LOG_PID, LOG_CRON);
 # else
