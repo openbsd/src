@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.13 2005/03/10 22:15:03 deraadt Exp $	*/
+/*	$OpenBSD: sock.c,v 1.14 2005/03/10 22:37:00 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -81,7 +81,7 @@ cvsd_sock_open(void)
 		return (-1);
 	}
 
-	old_umask = umask(S_IXUSR|S_IXGRP|S_IWOTH|S_IROTH|S_IXOTH);
+	old_umask = umask(CVSD_SOCK_PERMS);
 	if (bind(cvsd_sock, (struct sockaddr *)&cvsd_sun,
 	    SUN_LEN(&cvsd_sun)) == -1) {
 		cvs_log(LP_ERRNO, "failed to bind local socket to `%s'",
