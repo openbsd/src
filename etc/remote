@@ -61,15 +61,15 @@ unixhost:\
 # Sample directly connected lines. Directly connected lines are
 # most commonly used for serial consoles.
 #
-tty00|For amiga,hp300,i386,mac68k,macppc,mvmeppc,vax:\
+tty00|For hp300,i386,mac68k,macppc,mvmeppc,vax:\
 	:dv=/dev/tty00:tc=direct:tc=unixhost:
 
-ttya|For sun3,sparc,mvme68k:\
+ttya|For sparc,mvme68k:\
 	:dv=/dev/ttya:tc=direct:tc=unixhost:
 
 # Sample dial out lines.
 #
-cua00|For amiga,hp300,i386,mac68k,macppc,mvmeppc,vax:\
+cua00|For hp300,i386,mac68k,macppc,mvmeppc,vax:\
 	:dv=/dev/cua00:tc=dialup:tc=unixhost:
-cuaa|For sun3,sparc,mvme68k:\
+cuaa|For sparc,mvme68k:\
 	:dv=/dev/cuaa:tc=dialup:tc=unixhost:

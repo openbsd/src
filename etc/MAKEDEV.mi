@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.53 2002/12/05 04:30:21 kjc Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.54 2002/12/31 16:22:25 miod Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -196,7 +196,6 @@ twrget(all, ceg, cgeight, 0)dnl
 twrget(all, cfo, cgfourteen, 0)dnl
 target(all, tcx, 0)dnl
 twrget(all, grf_mac, grf, 0, 1, 2, 3)dnl
-twrget(all, grf_amiga, grf, 0, 1, 2, 3, 4, 5, 6)dnl
 target(all, par, 0)dnl
 twrget(all, amouse, mouse, 0, 1)dnl
 twrget(all, akbd, kbd)dnl
@@ -513,7 +512,6 @@ __devitem(arm_tty, tty*, {-alias for PC COM ports{-,-} this is what the system r
 __devitem(tty0, tty00, standard serial port)dnl
 __devitem(mac_tty0, tty00, standard serial port)dnl
 __devitem(ttyA, ttyA*, mfc serial ports)dnl
-__devitem(attyB, ttyB*, ISA COM ports)dnl  amiga
 __devitem(ttyz, tty[a-d], onboard zs serial ports)dnl
 __devitem(cuaz, cua[a-d], onboard zs serial ports)dnl
 __devitem(ttyB, ttyB?, DEC 3000 ZS8530 ("scc") serial ports)dnl
@@ -560,7 +558,6 @@ __devtitle(graph, Graphics devices)dnl
 __devitem(grf_mac, grf*, {-custom chip (grf0){-,-} Retina Z2/Z3 (grf1/grf2){-,-}
 {-#-}		Cirrus boards (grf3){-,-} A2410 (grf4) video or
 {-#-}		CyberVision 64 (grf5)-})dnl
-__devitem(grf_amiga, grf*, {-Motherboard bitmapped video.-})dnl
 __devitem(ite, ite*, terminal emulator interface to HP300 graphics devices)dnl
 __devitem({-hil-}, {-hil-}, HP300 HIL input devices)dnl
 __devitem(oppr, openprom)dnl

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.91 2002/11/23 18:47:28 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.92 2002/12/31 16:22:26 miod Exp $
 
 # not yet done: catman
 
@@ -7,7 +7,7 @@
 SUBDIR=	ac accton adduser amd arp authpf \
 	bootpd bootpgw bootpef bootptest \
 	chroot config cron dev_mkdb dhcp \
-	edquota gspa httpd inetd iostat \
+	edquota httpd inetd iostat \
 	kgmon kvm_mkdb lpr \
 	mailwrapper mopd mtree named \
 	netgroup_mkdb openssl pkg pkg_install popa3d portmap ppp pppd pppoe \
@@ -24,9 +24,8 @@ SUBDIR=	ac accton adduser amd arp authpf \
 SUBDIR+=faithd ndp rip6query route6d rtadvd rtsold traceroute6
 
 # Arch dependent tools, with manpages
-SUBDIR+=iteconfig grfconfig videomode
 SUBDIR+=bad144 apm apmd fdformat memconfig
-SUBDIR+=eeprom screenblank grfinfo hilinfo
+SUBDIR+=eeprom grfinfo hilinfo
 SUBDIR+=wsconscfg wsfontload
 
 # Extended Attribute tools

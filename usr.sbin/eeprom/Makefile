@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.8 2002/06/14 04:21:54 art Exp $
+#	$OpenBSD: Makefile,v 1.9 2002/12/31 16:22:26 miod Exp $
 
-.if ${MACHINE} == "sparc" || ${MACHINE} == "sun3" || ${MACHINE} == "sparc64"
+.if ${MACHINE} == "sparc" || ${MACHINE} == "sparc64"
 PROG=	eeprom
 
 BINGRP=	kmem
@@ -18,6 +18,6 @@ NOPROG=yes
 .endif
 
 MAN=	eeprom.8
-MANSUBDIR=sparc sparc64 sun3
+MANSUBDIR=sparc sparc64
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.139 2002/11/23 18:43:20 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.140 2002/12/31 16:22:25 miod Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1056,8 +1056,6 @@ cat1
 
 alpha
 ..
-amiga
-..
 hp300
 ..
 hppa
@@ -1077,8 +1075,6 @@ mvmeppc
 sparc
 ..
 sparc64
-..
-sun3
 ..
 vax
 ..
@@ -1107,8 +1103,6 @@ cat3
 
 alpha
 ..
-amiga
-..
 hp300
 ..
 hppa
@@ -1128,8 +1122,6 @@ mvmeppc
 sparc
 ..
 sparc64
-..
-sun3
 ..
 vax
 ..
@@ -1147,8 +1139,6 @@ cat4
 
 alpha
 ..
-amiga
-..
 hp300
 ..
 hppa
@@ -1168,8 +1158,6 @@ mvmeppc
 sparc
 ..
 sparc64
-..
-sun3
 ..
 vax
 ..
@@ -1182,8 +1170,6 @@ cat5
 
 alpha
 ..
-amiga
-..
 hp300
 ..
 hppa
@@ -1203,8 +1189,6 @@ mvmeppc
 sparc
 ..
 sparc64
-..
-sun3
 ..
 vax
 ..
@@ -1227,8 +1211,6 @@ cat8
 
 alpha
 ..
-amiga
-..
 hp300
 ..
 hppa
@@ -1248,8 +1230,6 @@ mvmeppc
 sparc
 ..
 sparc64
-..
-sun3
 ..
 vax
 ..
@@ -1262,8 +1242,6 @@ cat9
 
 alpha
 ..
-amiga
-..
 hp300
 ..
 hppa
@@ -1283,8 +1261,6 @@ mvmeppc
 sparc
 ..
 sparc64
-..
-sun3
 ..
 vax
 ..
@@ -1297,8 +1273,6 @@ ps1
 
 alpha
 ..
-amiga
-..
 hp300
 ..
 hppa
@@ -1318,8 +1292,6 @@ mvmeppc
 sparc
 ..
 sparc64
-..
-sun3
 ..
 vax
 ..
@@ -1344,8 +1316,6 @@ ps3
 
 alpha
 ..
-amiga
-..
 hp300
 ..
 hppa
@@ -1365,8 +1335,6 @@ mvmeppc
 sparc
 ..
 sparc64
-..
-sun3
 ..
 vax
 ..
@@ -1384,8 +1352,6 @@ ps4
 
 alpha
 ..
-amiga
-..
 hp300
 ..
 hppa
@@ -1405,8 +1371,6 @@ mvmeppc
 sparc
 ..
 sparc64
-..
-sun3
 ..
 vax
 ..
@@ -1419,8 +1383,6 @@ ps5
 
 alpha
 ..
-amiga
-..
 hp300
 ..
 hppa
@@ -1440,8 +1402,6 @@ mvmeppc
 sparc
 ..
 sparc64
-..
-sun3
 ..
 vax
 ..
@@ -1464,8 +1424,6 @@ ps8
 
 alpha
 ..
-amiga
-..
 hp300
 ..
 hppa
@@ -1485,8 +1443,6 @@ mvmeppc
 sparc
 ..
 sparc64
-..
-sun3
 ..
 vax
 ..
@@ -1499,8 +1455,6 @@ ps9
 
 alpha
 ..
-amiga
-..
 hp300
 ..
 hppa
@@ -1520,8 +1474,6 @@ mvmeppc
 sparc
 ..
 sparc64
-..
-sun3
 ..
 vax
 ..
@@ -1534,8 +1486,6 @@ man1
 
 alpha
 ..
-amiga
-..
 hp300
 ..
 hppa
@@ -1555,8 +1505,6 @@ mvmeppc
 sparc
 ..
 sparc64
-..
-sun3
 ..
 vax
 ..
@@ -1584,8 +1532,6 @@ man4
 
 alpha
 ..
-amiga
-..
 hp300
 ..
 hppa
@@ -1605,8 +1551,6 @@ mvmeppc
 sparc
 ..
 sparc64
-..
-sun3
 ..
 vax
 ..
@@ -1634,8 +1578,6 @@ man8
 
 alpha
 ..
-amiga
-..
 hp300
 ..
 hppa
@@ -1655,8 +1597,6 @@ mvmeppc
 sparc
 ..
 sparc64
-..
-sun3
 ..
 vax
 ..

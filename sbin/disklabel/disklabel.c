@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.75 2002/06/09 08:13:05 todd Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.76 2002/12/31 16:22:25 miod Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.75 2002/06/09 08:13:05 todd Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.76 2002/12/31 16:22:25 miod Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1166,7 +1166,7 @@ edit(lp, f)
 "# disk. Any other partition is free for any use.  'size' and 'offset' are\n"
 "# in 512-byte blocks. fstype should be '4.2BSD', 'swap', or 'none' or some\n"
 "# other values.  fsize/bsize/cpg should typically be '1024 8192 16' for a\n"
-"# 4.2BSD filesystem (or '512 4096 16' except on alpha, sun4, amiga, sun3...)\n");
+"# 4.2BSD filesystem (or '512 4096 16' except on alpha, sun4, ...)\n");
 	fclose(fp);
 	for (;;) {
 		if (!editit())
