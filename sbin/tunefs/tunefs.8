@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tunefs.8,v 1.18 2001/12/21 11:41:50 mpech Exp $
+.\"	$OpenBSD: tunefs.8,v 1.19 2002/05/06 19:27:16 millert Exp $
 .\"	$NetBSD: tunefs.8,v 1.8 1995/03/18 15:01:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -74,10 +74,13 @@ This specifies the maximum number of contiguous blocks that will
 be laid out before forcing a rotational delay (see
 .Fl d
 below).
-The default value is one, since most device drivers require
-an interrupt per disk transfer.
-Device drivers that can chain several buffers together in a single
-transfer should set this to the maximum chain length.
+The default value depends on the block size (8 for 8KB blocks and
+16 for 4KB blocks).
+Most device drivers can chain several buffers together in a single transfer.
+For optimal performance, the value of
+.Ar maxcontig
+should be chosen based on the maximum chain length supported by
+the device driver.
 .It Fl d Ar rotdelay
 This specifies the expected time (in milliseconds)
 to service a transfer completion
