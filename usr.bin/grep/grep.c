@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.27 2004/04/02 18:39:36 otto Exp $	*/
+/*	$OpenBSD: grep.c,v 1.28 2004/05/07 14:51:42 millert Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -176,7 +176,7 @@ add_pattern(char *pat, size_t len)
 	if (pat[len - 1] == '\n')
 		--len;
 	/* pat may not be NUL-terminated */
-	if (wflag) {
+	if (wflag && !Fflag) {
 		int bol = 0, eol = 0;
 		if (pat[0] == '^')
 			bol = 1;
@@ -224,24 +224,6 @@ read_patterns(char *fn)
 	if (ferror(f))
 		err(2, "%s", fn);
 	fclose(f);
-}
-
-static void
-free_patterns(void)
-{
-	int i;
-
-	for (i = 0; i < patterns; i++) {
-		if (fg_pattern[i].pattern)
-			free(fg_pattern[i].pattern);
-		else
-			regfree(&r_pattern[i]);
-		free(pattern[i]);
-	}
-
-	free(fg_pattern);
-	free(r_pattern);
-	free(pattern);
 }
 
 int
@@ -449,18 +431,21 @@ main(int argc, char *argv[])
 
 	if (Eflag)
 		cflags |= REG_EXTENDED;
-	else if (Fflag)
-		cflags |= REG_NOSPEC;
 	fg_pattern = grep_malloc(patterns * sizeof(*fg_pattern));
 	r_pattern = grep_malloc(patterns * sizeof(*r_pattern));
 	for (i = 0; i < patterns; ++i) {
-		/* Check if cheating is allowed */
-		if (fastcomp(&fg_pattern[i], pattern[i])) {
-			/* Fall back to full regex library */
-			if ((c = regcomp(&r_pattern[i], pattern[i], cflags))) {
-				regerror(c, &r_pattern[i], re_error,
-				    RE_ERROR_BUF);
-				errx(2, "%s", re_error);
+		/* Check if cheating is allowed (always is for fgrep). */
+		if (Fflag) {
+			fgrepcomp(&fg_pattern[i], pattern[i]);
+		} else {
+			if (fastcomp(&fg_pattern[i], pattern[i])) {
+				/* Fall back to full regex library */
+				c = regcomp(&r_pattern[i], pattern[i], cflags);
+				if (c != 0) {
+					regerror(c, &r_pattern[i], re_error,
+					    RE_ERROR_BUF);
+					errx(2, "%s", re_error);
+				}
 			}
 		}
 	}
@@ -479,8 +464,6 @@ main(int argc, char *argv[])
 	else
 		for (c = 0; argc--; ++argv)
 			c += procfile(*argv);
-
-	free_patterns();
 
 	exit(!c);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.24 2004/02/04 18:38:52 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.25 2004/05/07 14:51:42 millert Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -225,6 +225,50 @@ print:
  * Returns: -1 on failure, 0 on success
  */
 int
+fgrepcomp(fastgrep_t *fg, const char *pattern)
+{
+	int i;
+
+	/* Initialize. */
+	fg->patternLen = strlen(pattern);
+	fg->bol = 0;
+	fg->eol = 0;
+	fg->wmatch = wflag;
+	fg->reversedSearch = 0;
+
+	/*
+	 * Make a copy and upper case it for later if in -i mode,
+	 * else just copy the pointer.
+	 */
+	if (iflag) {
+		fg->pattern = grep_malloc(fg->patternLen + 1);
+		for (i = 0; i < fg->patternLen; i++)
+			fg->pattern[i] = toupper(pattern[i]);
+		fg->pattern[fg->patternLen] = '\0';
+	} else
+		fg->pattern = (char *)pattern;	/* really const */
+
+	/* Preprocess pattern. */
+	for (i = 0; i <= UCHAR_MAX; i++)
+		fg->qsBc[i] = fg->patternLen;
+	for (i = 1; i < fg->patternLen; i++) {
+		fg->qsBc[fg->pattern[i]] = fg->patternLen - i;
+		/*
+		 * If case is ignored, make the jump apply to both upper and
+		 * lower cased characters.  As the pattern is stored in upper
+		 * case, apply the same to the lower case equivalents.
+		 */
+		if (iflag)
+			fg->qsBc[tolower(fg->pattern[i])] = fg->patternLen - i;
+	}
+
+	return (0);
+}
+
+/*
+ * Returns: -1 on failure, 0 on success
+ */
+int
 fastcomp(fastgrep_t *fg, const char *pattern)
 {
 	int i;
@@ -236,11 +280,6 @@ fastcomp(fastgrep_t *fg, const char *pattern)
 	int firstHalfDot = -1;
 	int firstLastHalfDot = -1;
 	int lastHalfDot = 0;
-
-	if (Fflag) {
-		fg->pattern = NULL;
-		return (-1);
-	}
 
 	/* Initialize. */
 	origPatternLen = fg->patternLen = strlen(pattern);
@@ -482,8 +521,8 @@ grep_cmp(const unsigned char *pattern, const unsigned char *data, size_t len)
 	int i;
 
 	for (i = 0; i < len; i++) {
-		if (((pattern[i] == data[i]) || (pattern[i] == '.')) ||
-		    (iflag && pattern[i] == toupper(data[i])))
+		if (((pattern[i] == data[i]) || (!Fflag && pattern[i] == '.'))
+		    || (iflag && pattern[i] == toupper(data[i])))
 			continue;
 		return (i);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.h,v 1.10 2004/01/25 21:36:00 millert Exp $	*/
+/*	$OpenBSD: grep.h,v 1.11 2004/05/07 14:51:42 millert Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -86,6 +86,7 @@ void		*grep_malloc(size_t size);
 void		*grep_realloc(void *ptr, size_t size);
 void		 printline(str_t *line, int sep);
 int		 fastcomp(fastgrep_t *, const char *);
+int		 fgrepcomp(fastgrep_t *, const char *);
 
 /* queue.c */
 void		 initqueue(void);
