@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.20 2000/06/18 04:42:54 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.21 2000/06/26 21:59:18 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -72,6 +72,8 @@ extern ServerOptions options;
 extern char *__progname;
 extern int log_stderr;
 extern int debug_flag;
+
+extern int startup_pipe;
 
 /* Local Xauthority file. */
 static char *xauthfile;
@@ -145,6 +147,7 @@ do_authenticated(struct passwd * pw)
 	 * authentication.
 	 */
 	alarm(0);
+	close(startup_pipe);
 
 	/*
 	 * Inform the channel mechanism that we are the server side and that
@@ -1560,6 +1563,7 @@ do_authenticated2(void)
 	 * authentication.
 	 */
 	alarm(0);
+	close(startup_pipe);
 	server_loop2();
 	if (xauthfile)
 		xauthfile_cleanup_proc(NULL);

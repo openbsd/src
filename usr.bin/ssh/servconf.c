@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: servconf.c,v 1.45 2000/06/20 01:39:44 markus Exp $");
+RCSID("$OpenBSD: servconf.c,v 1.46 2000/06/26 21:59:18 markus Exp $");
 
 #include "ssh.h"
 #include "servconf.h"
@@ -76,6 +76,7 @@ initialize_server_options(ServerOptions *options)
 	options->protocol = SSH_PROTO_UNKNOWN;
 	options->gateway_ports = -1;
 	options->num_subsystems = 0;
+	options->max_startups = -1;
 }
 
 void
@@ -159,6 +160,8 @@ fill_default_server_options(ServerOptions *options)
 		options->protocol = SSH_PROTO_1|SSH_PROTO_2;
 	if (options->gateway_ports == -1)
 		options->gateway_ports = 0;
+	if (options->max_startups == -1)
+		options->max_startups = 10;
 }
 
 #define WHITESPACE " \t\r\n="
@@ -183,7 +186,7 @@ typedef enum {
 	sStrictModes, sEmptyPasswd, sRandomSeedFile, sKeepAlives, sCheckMail,
 	sUseLogin, sAllowUsers, sDenyUsers, sAllowGroups, sDenyGroups,
 	sIgnoreUserKnownHosts, sHostDSAKeyFile, sCiphers, sProtocol, sPidFile,
-	sGatewayPorts, sDSAAuthentication, sXAuthLocation, sSubsystem
+	sGatewayPorts, sDSAAuthentication, sXAuthLocation, sSubsystem, sMaxStartups
 } ServerOpCodes;
 
 /* Textual representation of the tokens. */
@@ -239,6 +242,7 @@ static struct {
 	{ "protocol", sProtocol },
 	{ "gatewayports", sGatewayPorts },
 	{ "subsystem", sSubsystem },
+	{ "maxstartups", sMaxStartups },
 	{ NULL, 0 }
 };
 
@@ -637,6 +641,10 @@ parse_flag:
 			options->subsystem_command[options->num_subsystems] = xstrdup(cp);
 			options->num_subsystems++;
 			break;
+
+		case sMaxStartups:
+			intptr = &options->max_startups;
+			goto parse_int;
 
 		default:
 			fprintf(stderr, "%s line %d: Missing handler for opcode %s (%d)\n",
