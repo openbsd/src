@@ -18,7 +18,7 @@
 # you may fetch it yourself from your nearest archive site.)
 #
 
-# $Id: Configure,v 1.8 2001/05/24 18:34:43 millert Exp $
+# $Id: Configure,v 1.9 2002/04/05 17:33:58 millert Exp $
 #
 # Generated on Tue Mar 13 05:21:04 EET 2001 [metaconfig 3.0 PL70]
 # (with additional metaconfig patches by perlbug@perl.org)
@@ -6813,7 +6813,7 @@ if "$useshrplib"; then
 	solaris|netbsd)
 		xxx="-R $shrpdir"
 		;;
-	freebsd)
+	freebsd|openbsd)
 		xxx="-Wl,-R$shrpdir"
 		;;
 	linux|irix*|dec_osf)
