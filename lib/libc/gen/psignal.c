@@ -32,13 +32,15 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: psignal.c,v 1.2 1996/08/19 08:25:24 tholo Exp $";
+static char rcsid[] = "$OpenBSD: psignal.c,v 1.3 1999/09/16 19:06:00 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
  * Print the name of the signal indicated
  * along with the supplied message.
  */
+#include <sys/types.h>
+#include <sys/uio.h>
 #include <signal.h>
 #include <string.h>
 #include <unistd.h>
@@ -54,13 +56,22 @@ psignal(sig, s)
 	static char buf[NL_TEXTMAX];
 	register const char *c;
 	register int n;
+	struct iovec iov[4];
+	int niov = 0;
 
 	c = __strsignal(sig, buf);
 	if (s && *s) {
+
 		n = strlen(s);
-		(void)write(STDERR_FILENO, s, n);
-		(void)write(STDERR_FILENO, ": ", 2);
+		iov[0].iov_base = (void *)s;
+		iov[0].iov_len = n;
+		iov[1].iov_base = ": ";
+		iov[1].iov_len = 2;
+		niov = 2;
 	}
-	(void)write(STDERR_FILENO, c, strlen(c));
-	(void)write(STDERR_FILENO, "\n", 1);
+	iov[niov].iov_base = (void *)c;
+	iov[niov].iov_len = strlen(c);
+	iov[niov+1].iov_base = "\n";
+	iov[niov+1].iov_len = 1;
+	(void)writev(STDERR_FILENO, iov, niov+2);
 }

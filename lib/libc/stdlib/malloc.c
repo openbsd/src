@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.35 1999/02/03 03:58:05 d Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.36 1999/09/16 19:06:06 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -37,15 +37,16 @@ static char rcsid[] = "$OpenBSD: malloc.c,v 1.35 1999/02/03 03:58:05 d Exp $";
  */
 #define SOME_JUNK	0xd0		/* as in "Duh" :-) */
 
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/mman.h>
+#include <sys/uio.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <sys/types.h>
-#include <sys/param.h>
-#include <sys/mman.h>
 
 /*
  * The basic parameters you can tweak.
@@ -363,10 +364,18 @@ wrterror(p)
     char *p;
 {
     char *q = " error: ";
-    write(2, __progname, strlen(__progname));
-    write(2, malloc_func, strlen(malloc_func));
-    write(2, q, strlen(q));
-    write(2, p, strlen(p));
+    struct iovec iov[4];
+
+    iov[0].iov_base = __progname;
+    iov[0].iov_len = strlen(__progname);
+    iov[1].iov_base = malloc_func;
+    iov[1].iov_len = strlen(malloc_func);
+    iov[2].iov_base = q;
+    iov[2].iov_len = strlen(q);
+    iov[3].iov_base = p;
+    iov[3].iov_len = strlen(p);
+    writev(STDERR_FILENO, iov, 4);
+
     suicide = 1;
 #ifdef MALLOC_STATS
     if (malloc_stats)
@@ -380,14 +389,22 @@ wrtwarning(p)
     char *p;
 {
     char *q = " warning: ";
+    struct iovec iov[4];
+
     if (malloc_abort)
 	wrterror(p);
     else if (malloc_silent)
 	return;
-    write(2, __progname, strlen(__progname));
-    write(2, malloc_func, strlen(malloc_func));
-    write(2, q, strlen(q));
-    write(2, p, strlen(p));
+
+    iov[0].iov_base = __progname;
+    iov[0].iov_len = strlen(__progname);
+    iov[1].iov_base = malloc_func;
+    iov[1].iov_len = strlen(malloc_func);
+    iov[2].iov_base = q;
+    iov[2].iov_len = strlen(q);
+    iov[3].iov_base = p;
+    iov[3].iov_len = strlen(p);
+    writev(STDERR_FILENO, iov, 4);
 }
 
 #ifdef MALLOC_STATS

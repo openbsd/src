@@ -32,11 +32,12 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: exec.c,v 1.8 1998/08/14 21:39:23 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: exec.c,v 1.9 1999/09/16 19:05:58 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <sys/types.h>
+#include <sys/uio.h>
 #include <errno.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -241,9 +242,15 @@ execvp(name, argv)
 		 * the user may execute the wrong program.
 		 */
 		if (lp + ln + 2 > sizeof(buf)) {
-			(void)write(STDERR_FILENO, "execvp: ", 8);
-			(void)write(STDERR_FILENO, p, lp);
-			(void)write(STDERR_FILENO, ": path too long\n", 16);
+			struct iovec iov[3];
+
+			iov[0].iov_base = "execvp: ";
+			iov[0].iov_len = 8;
+			iov[1].iov_base = p;
+			iov[1].iov_len = lp;
+			iov[2].iov_base = ": path too long\n";
+			iov[2].iov_len = 16;
+			(void)writev(STDERR_FILENO, iov, 3);
 			continue;
 		}
 		bcopy(p, buf, lp);
