@@ -1,4 +1,4 @@
-/* $Id: cmds.c,v 1.6 2001/07/17 15:16:46 rees Exp $ */
+/* $Id: cmds.c,v 1.7 2001/07/17 17:10:44 rees Exp $ */
 
 /*
  * Smartcard commander.
@@ -149,7 +149,7 @@ int reset(int ac, char *av[])
 	    vflag = 1;
 	    break;
 	case 'f':
-	    rflags |= SCRFORCE;
+	    rflags |= STRFORCE;
 	    break;
 	}
     }
@@ -164,11 +164,12 @@ int reset(int ac, char *av[])
 
     aut0_vfyd = 0;
 
-    n = scxreset(fd, rflags, atr, &sw);
+    n = sectok_reset(fd, rflags, atr, &sw);
     if (vflag)
 	parse_atr(fd, SCRV, atr, n, &param);
-    if (sw != SCEOK) {
-	printf("%s\n", scerrtab[sw]);
+    if (!sectok_swOK(sw)) {
+	printf("sectok_reset: %s\n", sectok_get_sw(sw));
+	dclose(0, NULL);
 	return -1;
     }
 
@@ -224,8 +225,8 @@ int apdu(int ac, char *av[])
     }
 #endif
 
-    if (fd < 0)
-	reset(0, NULL);
+    if (fd < 0 && reset(0, NULL) < 0)
+	return -1;
 
     n = scrw(fd, xcl, ins, p1, p2, p3, buf, sizeof obuf, obuf, &r1, &r2);
 
@@ -249,8 +250,8 @@ int selfid(int ac, char *av[])
 	return -1;
     }
 
-    if (fd < 0)
-	reset(0, NULL);
+    if (fd < 0 && reset(0, NULL) < 0)
+	return -1;
 
     sectok_parse_fname(av[1], fid);
     if (sectok_selectfile(fd, cla, fid, &sw) < 0) {
@@ -266,8 +267,8 @@ int isearch(int ac, char *av[])
     int i, r1, r2;
     unsigned char buf[256];
 
-    if (fd < 0)
-	reset(0, NULL);
+    if (fd < 0 && reset(0, NULL) < 0)
+	return -1;
 
     /* find instructions */
     for (i = 0; i < 0xff; i += 2)
@@ -298,8 +299,8 @@ int dread(int ac, char *av[])
 
     sscanf(av[1], "%d", &fsize);
 
-    if (fd < 0)
-	reset(0, NULL);
+    if (fd < 0 && reset(0, NULL) < 0)
+	return -1;
 
     for (p3 = 0; fsize && p3 < 100000; p3 += n) {
 	n = (fsize < CARDIOSIZE) ? fsize : CARDIOSIZE;
@@ -329,8 +330,8 @@ int dwrite(int ac, char *av[])
 	return -1;
     }
 
-    if (fd < 0)
-	reset(0, NULL);
+    if (fd < 0 && reset(0, NULL) < 0)
+	return -1;
 
     f = fopen(av[1], "r");
     if (!f) {

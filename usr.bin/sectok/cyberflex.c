@@ -1,4 +1,4 @@
-/* $Id: cyberflex.c,v 1.6 2001/07/17 15:16:46 rees Exp $ */
+/* $Id: cyberflex.c,v 1.7 2001/07/17 17:10:44 rees Exp $ */
 
 /*
 copyright 1999, 2000
@@ -60,6 +60,7 @@ such damages.
 static unsigned char key_fid[] = {0x00, 0x11};
 static unsigned char DFLTATR[] = {0x81, 0x10, 0x06, 0x01};
 static unsigned char DFLTAUT0[] = {0xad, 0x9f, 0x61, 0xfe, 0xfa, 0x20, 0xce, 0x63};
+static unsigned char AUT0[20];
 
 int aut0_vfyd;
 
@@ -128,10 +129,15 @@ get_AUT0(int ac, char *av[], char *prompt, unsigned char *digest)
 int jlogin(int ac, char *av[])
 {
     int i, vflag = 0, sw;
-    unsigned char AUT0[20];
 
-    if (fd < 0)
-	reset(0, NULL);
+    if (fd < 0 && reset(0, NULL) < 0)
+	return -1;
+
+    cla = cyberflex_inq_class(fd);
+    if (cla < 0) {
+	printf("can't determine Cyberflex application class\n");
+	return -1;
+    }
 
     optind = optreset = 1;
 
@@ -145,8 +151,6 @@ int jlogin(int ac, char *av[])
 
     if (get_AUT0(ac, av, "Enter AUT0 passphrase: ", AUT0) < 0)
 	return -1;
-
-    cla = cyberflex_inq_class(fd);
 
     if (vflag) {
 	printf("Class %02x\n", cla);
@@ -188,8 +192,8 @@ int jdefault(int ac, char *av[])
 	}
     }
 
-    if (fd < 0)
-	reset(0, NULL);
+    if (fd < 0 && reset(0, NULL) < 0)
+	return -1;
     if (!aut0_vfyd)
 	jaut(0, NULL);
 
@@ -207,8 +211,8 @@ int jatr(int ac, char *av[])
     unsigned char buf[64];
     int n = 0, sw;
 
-    if (fd < 0)
-	reset(0, NULL);
+    if (fd < 0 && reset(0, NULL) < 0)
+	return -1;
 
     buf[n++] = 0x90;
     buf[n++] = 0x94;		/* TA1 */
@@ -237,8 +241,8 @@ int jdata(int ac, char *av[])
     unsigned char buf[32];
     int i, sw;
 
-    if (fd < 0)
-	reset(0, NULL);
+    if (fd < 0 && reset(0, NULL) < 0)
+	return -1;
 
     sectok_apdu(fd, cla, 0xca, 0, 1, 0, NULL, 0x16, buf, &sw);
     if (sectok_swOK(sw)) {
@@ -268,8 +272,8 @@ int ls(int ac, char *av[])
     char ftype[32], fname[6];
     unsigned char buf[JDIRSIZE];
 
-    if (fd < 0)
-	reset(0, NULL);
+    if (fd < 0 && reset(0, NULL) < 0)
+	return -1;
 
     for (p2 = 0; ; p2++) {
 	if (sectok_apdu(fd, cla, 0xa8, 0, p2, 0, NULL, JDIRSIZE, buf, &sw) < 0)
@@ -311,8 +315,8 @@ int jcreate(int ac, char *av[])
     sectok_parse_fname(av[1], fid);
     sscanf(av[2], "%d", &fsize);
 
-    if (fd < 0)
-	reset(0, NULL);
+    if (fd < 0 && reset(0, NULL) < 0)
+	return -1;
     if (!aut0_vfyd)
 	jaut(0, NULL);
 
@@ -336,8 +340,8 @@ int jdelete(int ac, char *av[])
 
     sectok_parse_fname(av[1], fid);
 
-    if (fd < 0)
-	reset(0, NULL);
+    if (fd < 0 && reset(0, NULL) < 0)
+	return -1;
     if (!aut0_vfyd)
 	jaut(0, NULL);
 
@@ -423,8 +427,8 @@ int jload(int ac, char *av[])
     if (analyze_load_options(ac, av) < 0)
 	return -1;
 
-    if (fd < 0)
-	reset(0, NULL);
+    if (fd < 0 && reset(0, NULL) < 0)
+	return -1;
     if (!aut0_vfyd)
 	jaut(0, NULL);
 
@@ -588,8 +592,8 @@ int junload(int ac, char *av[])
     if (analyze_load_options(ac, av) < 0)
 	return -1;
 
-    if (fd < 0)
-	reset(0, NULL);
+    if (fd < 0 && reset(0, NULL) < 0)
+	return -1;
     if (!aut0_vfyd)
 	jaut(0, NULL);
 
@@ -638,8 +642,8 @@ int jselect(int ac, char *av[])
     if (analyze_load_options(ac, av) < 0)
 	return -1;
 
-    if (fd < 0)
-	reset(0, NULL);
+    if (fd < 0 && reset(0, NULL) < 0)
+	return -1;
 
     printf ("select applet\n");
     printf ("AID                     ");
@@ -672,8 +676,8 @@ int jdeselect(int ac, char *av[])
 {
     int sw;
 
-    if (fd < 0)
-	reset(0, NULL);
+    if (fd < 0 && reset(0, NULL) < 0)
+	return -1;
 
     sectok_apdu(fd, cla, 0xa4, 0x04, 0, 0, NULL, 0, NULL, &sw);
     if (!sectok_swOK(sw)) {
@@ -732,7 +736,7 @@ int cyberflex_load_key (int fd, unsigned char *buf)
     /* Now let's do it. :) */
 
     /* add the AUT0 */
-    cyberflex_fill_key_block (data, 0, 1, DFLTAUT0);
+    cyberflex_fill_key_block (data, 0, 1, AUT0);
 
     /* add the applet sign key */
     cyberflex_fill_key_block (data+KEY_BLOCK_SIZE, 5, 0, app_key);
