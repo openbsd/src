@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: readconf.c,v 1.35 2000/05/31 09:20:38 markus Exp $");
+RCSID("$Id: readconf.c,v 1.36 2000/06/18 00:57:48 deraadt Exp $");
 
 #include "ssh.h"
 #include "cipher.h"
@@ -165,7 +165,7 @@ static struct {
 };
 
 /* Characters considered whitespace in strtok calls. */
-#define WHITESPACE " \t\r\n"
+#define WHITESPACE " \t\r\n="
 
 
 /*
