@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.33 1998/05/16 05:57:46 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.34 1998/05/16 21:14:17 angelos Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.33 1998/05/16 05:57:46 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.34 1998/05/16 21:14:17 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -156,6 +156,7 @@ long nreceived;			/* # of packets we got back */
 long nrepeats;			/* number of duplicates */
 long ntransmitted;		/* sequence # for outbound packets = #sent */
 int interval = 1;		/* interval between packets */
+volatile time_t lasttime;	/* avoid DOS attack that involves SIGALRMs */
 
 /* timing */
 int timing;			/* flag to do timing */
@@ -213,6 +214,8 @@ main(argc, argv)
 	setuid(getuid());
 
 	preload = 0;
+	lasttime = 0;
+
 	datap = &outpack[8 + sizeof(struct tvi)];
 	while ((ch = getopt(argc, argv, "DI:LRS:c:dfh:i:l:np:qrs:T:t:vw:")) != -1)
 		switch(ch) {
@@ -521,21 +524,36 @@ catcher()
 {
 	int waittime;
 	int save_errno = errno;
+	time_t timenow;
+
+	if (nreceived) {
+		waittime = 2 * tmax / 1000000;
+		if (!waittime)
+			waittime = 1;
+	} else
+		waittime = maxwait;
+
+	/*
+	 * Die if SIGALRM is caught earlier than it should have been. This
+ 	 * is usually the result of someone sending thousands of SIGALRMs
+ 	 * in an attempt to simulate a ping -f (flood).
+ 	 */
+
+	if (time((time_t *)&timenow) < lasttime + waittime)
+	  exit(0);
+
+     	lasttime = timenow;
 
 	pinger();
+
 	(void)signal(SIGALRM, catcher);
 	if (!npackets || ntransmitted < npackets)
 		alarm((u_int)interval);
 	else {
-		if (nreceived) {
-			waittime = 2 * tmax / 1000000;
-			if (!waittime)
-				waittime = 1;
-		} else
-			waittime = maxwait;
 		(void)signal(SIGALRM, finish);
 		(void)alarm((u_int)waittime);
 	}
+
 	errno = save_errno;
 }
 
