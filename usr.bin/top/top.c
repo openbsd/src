@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.24 2003/06/18 08:36:31 deraadt Exp $	*/
+/*	$OpenBSD: top.c,v 1.25 2003/06/18 08:42:17 deraadt Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -62,13 +62,9 @@ extern int      overstrike;
 static void     leave(int);
 static void     onalrm(int);
 static void     tstop(int);
-#ifdef SIGWINCH
 static void     winch(int);
-#endif
 
-volatile sig_atomic_t leaveflag;
-volatile sig_atomic_t tstopflag;
-volatile sig_atomic_t winchflag;
+volatile sig_atomic_t leaveflag, tstopflag, winchflag;
 
 static void     reset_display(void);
 int		rundisplay(void);
@@ -367,9 +363,7 @@ main(int argc, char *argv[])
 	(void) signal(SIGINT, leave);
 	(void) signal(SIGQUIT, leave);
 	(void) signal(SIGTSTP, tstop);
-#ifdef SIGWINCH
 	(void) signal(SIGWINCH, winch);
-#endif
 	sigprocmask(SIG_SETMASK, &oldmask, NULL);
 	if (warnings) {
 		fputs("....", stderr);
@@ -822,13 +816,11 @@ tstop(int signo)
 	tstopflag = 1;
 }
 
-#ifdef SIGWINCH
 void
 winch(int signo)
 {
 	winchflag = 1;
 }
-#endif
 
 void
 onalrm(int signo)
