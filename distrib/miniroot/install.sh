@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.11 1997/05/14 21:22:06 millert Exp $
+#	$OpenBSD: install.sh,v 1.12 1997/05/17 21:16:46 millert Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -234,6 +234,12 @@ __get_filesystems_1
 			echo ""
 		done
 	) < ${FILESYSTEMS}
+else
+	# Get the root device
+	ROOTDISK=`df /mnt | sed -e '/^\//!d' -e 's/\/dev\/\([^ ]*\)[a-p] .*/\1/'`
+	while [ "X${ROOTDISK}" = "X" ]; do
+		getrootdisk
+	done
 fi
 
 # Get network configuration information, and store it for placement in the
