@@ -1,4 +1,4 @@
-.\"	$NetBSD: mountd.8,v 1.9 1995/03/18 14:58:30 cgd Exp $
+.\"	$NetBSD: mountd.8,v 1.10 1995/11/06 07:00:14 thorpej Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,7 +43,7 @@
 mount requests
 .Sh SYNOPSIS
 .Nm /sbin/mountd
-.Op Fl n
+.Op Fl dn
 .Op Ar exportsfile
 .Sh DESCRIPTION
 .Xr Mountd
@@ -60,6 +60,11 @@ RFC1094.
 Options and operands available for
 .Nm mountd :
 .Bl -tag -width Ds
+.It Fl d
+Enable debugging mode.
+.Xr Mountd
+will not detach from the controlling terminal and will print
+debugging messages to stderr.
 .It Fl n
 Do not require that clients make mount requests from reserved ports.
 (Normally, only mount requsts from reserved ports are accepted.)

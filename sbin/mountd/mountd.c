@@ -1,4 +1,4 @@
-/*	$NetBSD: mountd.c,v 1.27.2.1 1995/11/01 00:06:22 jtc Exp $	*/
+/*	$NetBSD: mountd.c,v 1.30 1995/11/28 05:25:47 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mountd.c	8.8 (Berkeley) 2/20/94";
 #else
-static char rcsid[] = "$NetBSD: mountd.c,v 1.27.2.1 1995/11/01 00:06:22 jtc Exp $";
+static char rcsid[] = "$NetBSD: mountd.c,v 1.30 1995/11/28 05:25:47 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -82,9 +82,7 @@ static char rcsid[] = "$NetBSD: mountd.c,v 1.27.2.1 1995/11/01 00:06:22 jtc Exp 
 #include <unistd.h>
 #include "pathnames.h"
 
-#ifdef DEBUG
 #include <stdarg.h>
-#endif
 
 /*
  * Structures for keeping the mount list and export list
@@ -220,19 +218,15 @@ int opt_flags;
 #define	OP_ISO		0x20
 #define	OP_ALLDIRS	0x40
 
-#ifdef DEBUG
-int debug = 1;
-void	SYSLOG __P((int, const char *, ...));
-#define syslog SYSLOG
-#else
 int debug = 0;
-#endif
+void	SYSLOG __P((int, const char *, ...));
 
 /*
  * Mountd server for NFS mount protocol as described in:
  * NFS: Network File System Protocol Specification, RFC1094, Appendix A
  * The optional arguments are the exports file name
  * default: _PATH_EXPORTS
+ * "-d" to enable debugging
  * and "-n" to allow nonroot mount.
  */
 int
@@ -243,13 +237,16 @@ main(argc, argv)
 	SVCXPRT *udptransp, *tcptransp;
 	int c;
 
-	while ((c = getopt(argc, argv, "n")) != EOF)
+	while ((c = getopt(argc, argv, "dn")) != EOF)
 		switch (c) {
+		case 'd':
+			debug = 1;
+			break;
 		case 'n':
 			resvport_only = 0;
 			break;
 		default:
-			fprintf(stderr, "Usage: mountd [-n] [export_file]\n");
+			fprintf(stderr, "Usage: mountd [-dn] [export_file]\n");
 			exit(1);
 		};
 	argc -= optind;
@@ -1928,17 +1925,20 @@ free_grp(grp)
 	free((caddr_t)grp);
 }
 
-#ifdef DEBUG
 void
 SYSLOG(int pri, const char *fmt, ...)
 {
 	va_list ap;
 
 	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
+
+	if (debug)
+		vfprintf(stderr, fmt, ap);
+	else
+		vsyslog(pri, fmt, ap);
+
 	va_end(ap);
 }
-#endif /* DEBUG */
 
 /*
  * Check options for consistency.
