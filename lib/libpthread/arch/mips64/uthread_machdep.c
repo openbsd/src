@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_machdep.c,v 1.2 2004/09/09 16:59:21 pefo Exp $	*/
+/*	$OpenBSD: uthread_machdep.c,v 1.3 2004/11/02 21:36:11 pefo Exp $	*/
 /* David Leonard, <d@csee.uq.edu.au>. Public domain. */
 
 /*
@@ -11,9 +11,9 @@
 #define ALIGNBYTES	0x3
 
 struct frame {
-	long	s[9];	/* s0..s7 */
-	long	_fill;
-	double	f[3];	/* $f0..$f2 */
+	long	s[9];	/* s0..s8 */
+	double	f[8];	/* $f24..$f31 */
+	long	fcr;
 	long	t9;	/* XXX only used when bootstrapping */
 	long	ra;
 
@@ -37,9 +37,9 @@ _thread_machdep_init(statep, base, len, entry)
 	/* Locate the initial frame, aligned at the top of the stack */
 	f = (struct frame *)(((long)base + len - sizeof *f) & ~ALIGNBYTES);
 	
-	f->cra = f->cfp = 0;			/* for debugger */
 	f->ra = (long)entry;
 	f->t9 = (long)entry;
+	f->fcr = 0;
 
 	statep->frame = (long)f;
 }
