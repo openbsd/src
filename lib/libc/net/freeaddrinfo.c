@@ -39,11 +39,11 @@ freeaddrinfo(ai)
 {
 	struct addrinfo *p;
 
-	while (ai) {
+	do {
 		p = ai;
 		ai = ai->ai_next;
 		if (p->ai_canonname)
 			free(p->ai_canonname);
 		free((void *)p);
-	}
+	} while (ai);
 }
