@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.19 2002/01/23 06:31:18 todd Exp $-})dnl
+vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.20 2002/01/23 06:43:53 todd Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -160,6 +160,7 @@ target(all,rnd,random)dnl
 target(all,ses,0)dnl
 target(all,uk,0)dnl
 target(all,ss,0)dnl
+target(all,st,0)dnl
 target(all,wt,0)dnl
 target(all,wdt,0)dnl
 target(all,xfs,0)dnl
@@ -300,36 +301,33 @@ _mkdev(ss,ss*,{-M ss$U c major_ss_c $U 440 operator
 __devitem(ses,ses*,SES/SAF-TE SCSI devices)dnl
 _mkdev(ses,ses*,{-M ses$U c major_ses_c $U 640 operator-})dnl
 __devitem(ramd,ramdisk,makes all devices for a ramdisk kernel)dnl arc
+_mkdev(ramd,ramdisk,{-dnl
+show_target(ramd)dnl
+-})dnl
 ifelse(MACHINE,mvmeppc,{-dnl
 target(ramd,std)dnl
 target(ramd,tty0,0,1,2,3)dnl
 twrget(ramd,wsdisp,ttyC,0)dnl
-target(ramd,random)dnl
 target(ramd,rd,0)dnl
 target(ramd,wd,0,1,2,3)dnl
-target(ramd,bpf,0)dnl
 target(ramd,sd,0,1,2,3,4)dnl
 target(ramd,st,0,1)dnl
-target(ramd,cd,0,1)dnl
-_mkdev(ramd,ramdisk,{-dnl
-show_target(ramd)dnl
--})dnl
 -})dnl
 ifelse(MACHINE,i386,{-dnl
 target(ramd,std)dnl
 target(ramd,tty0,0,1,2,3)dnl
 twrget(ramd,wsdisp,ttyC,0)dnl
-target(ramd,random)dnl
 target(ramd,wt,0)dnl
 target(ramd,fd,0)dnl
 target(ramd,rd,0)dnl
 target(ramd,wd,0,1,2,3)dnl
-target(ramd,bpf,0)dnl
 target(ramd,sd,0,1,2,3)dnl
 target(ramd,st,0,1)dnl
-target(ramd,cd,0,1)dnl
 target(ramd,mcd,0)dnl
 -})dnl
+target(ramd,random)dnl
+target(ramd,bpf,0)dnl
+target(ramd,cd,0,1)dnl
 __devitem(rd,{-rd*-},"ramdisk" pseudo-disks)dnl
 _mkdev(rd,rd*,{-dodisk2 rd $U major_rd_b major_rd_c $U 0{--}ifstep(rd)-})dnl
 __devitem(xd,xd*,Xylogic 753/7053 disks)dnl
