@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.36 2004/08/19 16:12:31 hshoexer Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.37 2004/08/20 14:56:09 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -355,7 +355,7 @@ section in
 .Sx GLOBAL CONFIGURATION .
 .Pp
 .It Xo
-.Ic enforce neighbor-AS
+.Ic enforce neighbor-as
 .Pq Ic yes Ns \&| Ns Ic no
 .Xc
 If set to
@@ -576,12 +576,12 @@ specified by the
 .Ar as-type
 is one of the following operators:
 .Pp
-.Bl -tag -width transmit-AS -compact
+.Bl -tag -width transmit-as -compact
 .It Ic AS
 (any part)
-.It Ic source-AS
+.It Ic source-as
 (rightmost AS number)
-.It Ic transit-AS
+.It Ic transit-as
 (all but the rightmost AS number)
 .El
 .Pp
@@ -594,8 +594,8 @@ separated by commas or whitespace,
 if enclosed in curly brackets:
 .Bd -literal -offset indent
 deny from any AS { 1, 2, 3 }
-deny from any { AS 1, source-AS 2, transit-AS 3 }
-deny from any { AS { 1, 2, 3 }, source-AS 4, transit-AS 5 }
+deny from any { AS 1, source-as 2, transit-as 3 }
+deny from any { AS { 1, 2, 3 }, source-as 4, transit-as 5 }
 .Ed
 .Pp
 .It Xo

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.134 2004/08/17 16:06:39 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.135 2004/08/20 14:56:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1245,11 +1245,11 @@ lookup(char *s)
 		{ "route-reflector",	REFLECTOR},
 		{ "router-id",		ROUTERID},
 		{ "set",		SET},
-		{ "source-AS",		SOURCEAS},
+		{ "source-as",		SOURCEAS},
 		{ "spi",		SPI},
 		{ "tcp",		TCP},
 		{ "to",			TO},
-		{ "transit-AS",		TRANSITAS}
+		{ "transit-as",		TRANSITAS}
 	};
 	const struct keywords	*p;
 
