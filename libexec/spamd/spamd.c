@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.60 2004/03/13 17:46:15 beck Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.61 2004/03/14 23:09:44 beck Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -716,6 +716,11 @@ nextstate(struct con *cp)
 			    "354 Enter spam, end with \".\" on a line by "
 			    "itself\r\n");
 			cp->state = 60;
+			if (window && setsockopt(cp->fd, SOL_SOCKET, SO_RCVBUF,
+			    &window, sizeof(window)) == -1) {
+				syslog_r(LOG_DEBUG, &sdata,"setsockopt: %m");
+				/* don't fail if this doesn't work. */
+			}
 		} else {
 			snprintf(cp->obuf, cp->osize,
 			    "500 5.5.1 Command unrecognized\r\n");
@@ -960,12 +965,6 @@ main(int argc, char *argv[])
 	if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &one,
 	    sizeof(one)) == -1)
 		return (-1);
-
-	if (window && setsockopt(s, SOL_SOCKET, SO_RCVBUF, &window,
-	    sizeof(window)) == -1) {
-		syslog(LOG_ERR, "setsockopt: %s", strerror(errno));
-		return (-1);
-	}
 
 	conflisten = socket(AF_INET, SOCK_STREAM, 0);
 	if (conflisten == -1)
