@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: tcdevs,v 1.2 1996/05/26 00:27:54 deraadt Exp 
+ *	OpenBSD: tcdevs,v 1.4 1998/02/16 06:12:12 deraadt Exp 
  */
 /*	$NetBSD: tcdevs,v 1.6 1996/08/26 23:39:34 cgd Exp $	*/
 
@@ -127,6 +127,26 @@ struct tc_knowndev tc_knowndevs[] = {
 	    "PMAZ-AA ",
 	    TC_DEVICE_PMAZ_AA,
 	    TC_DESCRIPTION_PMAZ_AA,
+	},
+	{
+	    "PMAZ-DS ",
+	    TC_DEVICE_PMAZ_DS,
+	    TC_DESCRIPTION_PMAZ_DS,
+	},
+	{
+	    "PMAZ-FS ",
+	    TC_DEVICE_PMAZ_FS,
+	    TC_DESCRIPTION_PMAZ_FS,
+	},
+	{
+	    "PMAZB-AA",
+	    TC_DEVICE_PMAZB_AA,
+	    TC_DESCRIPTION_PMAZB_AA,
+	},
+	{
+	    "PMAZC-AA",
+	    TC_DEVICE_PMAZC_AA,
+	    TC_DESCRIPTION_PMAZC_AA,
 	},
 	{
 	    "T1D4PKT ",
