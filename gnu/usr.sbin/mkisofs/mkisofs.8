@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mkisofs.8,v 1.4 1999/11/29 21:53:15 d Exp $
+.\"	$OpenBSD: mkisofs.8,v 1.5 2001/11/01 21:07:20 espie Exp $
 .\"	$From: mkisofs.8,v 1.5.1.3 1998/06/02 03:36:16 eric Exp $
 .\" -*- nroff -*-
 .TH MKISOFS 8 "9 Apr 1997" "Version 1.11.3"
@@ -121,15 +121,8 @@ is not designed to communicate with the writer directly.  Most writers
 have proprietary command sets which vary from one manufacturer to
 another, and you need a specialized tool to actually burn the disk.
 The
-.B cdwrite
-utility is one such tool that runs under Linux and performs this task.
-The latest version of
-.B cdwrite
-is capable of communicating with Phillips/IMS/Kodak, HP and Yamaha drives.
-Most writers come with some version of DOS software that allows a direct image
-copy of an iso9660 image to the writer.  The current version of
-.B cdwrite
-is available from sunsite.unc.edu: /utils/disk-management/cdwrite-2.0.tar.gz
+.B cdrecord
+utility, available as part of the ports tree, is one such tool.
 .PP
 Also you should know that most cd writers are very particular about timing.
 Once you start to burn a disc, you cannot let their buffer empty before you
