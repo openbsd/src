@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.5 1995/11/23 02:34:18 cgd Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.6 1995/12/20 00:18:50 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -132,6 +132,10 @@ mbprint(aux, pnp)
 	void *aux;
 	char *pnp;
 {
+	struct confargs *ca = aux;
+
+	if (pnp)
+		printf("%s at %s", ca->ca_name, pnp);
 
 	return (UNCONF);
 }
