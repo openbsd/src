@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.9 1996/08/22 06:46:36 deraadt Exp $	*/
+/*	$OpenBSD: w.c,v 1.10 1996/08/22 09:37:19 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -411,9 +411,9 @@ pr_header(nowp, nusers)
 			if (hrs > 0)
 				(void)printf(" %d hr%s,",
 				    hrs, hrs > 1 ? "s" : "");
-			if (mins > 0)
+			if (mins > 0 || (days == 0 && hrs == 0))
 				(void)printf(" %d min%s,",
-				    mins, mins > 1 ? "s" : "");
+				    mins, mins != 1 ? "s" : "");
 		}
 	}
 
