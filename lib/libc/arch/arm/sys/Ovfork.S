@@ -1,4 +1,4 @@
-/*	$OpenBSD: Ovfork.S,v 1.2 2004/02/01 05:40:52 drahn Exp $	*/
+/*	$OpenBSD: Ovfork.S,v 1.3 2004/02/16 16:49:58 drahn Exp $	*/
 /*	$NetBSD: Ovfork.S,v 1.6 2003/08/07 16:42:03 agc Exp $	*/
 
 /*-
@@ -33,9 +33,6 @@
  */
 
 #include "SYS.h"
-
-WARN_REFERENCES(vfork, \
-    "warning: reference to compatibility vfork(); include <unistd.h> for correct reference")
 
 /*
  * pid = vfork();
