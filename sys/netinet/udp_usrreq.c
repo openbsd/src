@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.36 2000/01/04 10:38:36 itojun Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.37 2000/01/07 16:34:10 angelos Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -247,6 +247,12 @@ udp_input(m, va_alist)
 			ip = mtod(m, struct ip *);
 	}
 	uh = (struct udphdr *)(mtod(m, caddr_t) + iphlen);
+
+	/* Check for illegal destination port 0 */
+	if (uh->uh_dport == 0) {
+		udpstat.udps_noport++;
+		goto bad;
+	}
 
 	/*
 	 * Make mbuf data length reflect UDP length.
