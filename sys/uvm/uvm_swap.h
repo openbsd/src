@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_swap.h,v 1.7 2001/03/22 03:05:57 smart Exp $	*/
-/*	$NetBSD: uvm_swap.h,v 1.4 1999/06/21 17:25:12 thorpej Exp $	*/
+/*	$OpenBSD: uvm_swap.h,v 1.8 2001/07/26 19:37:13 art Exp $	*/
+/*	$NetBSD: uvm_swap.h,v 1.5 2000/01/11 06:57:51 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -34,13 +34,15 @@
 #ifndef _UVM_UVM_SWAP_H_
 #define _UVM_UVM_SWAP_H_
 
+#define SWSLOT_BAD	(-1)
+
 #ifdef _KERNEL
 
 int			uvm_swap_get __P((struct vm_page *, int, int));
 int			uvm_swap_put __P((int, struct vm_page **, int, int));
 int			uvm_swap_alloc __P((int *, boolean_t));
 void			uvm_swap_free __P((int, int));
-
+void			uvm_swap_markbad __P((int, int));
 #ifdef UVM_SWAP_ENCRYPT
 void			uvm_swap_initcrypt_all __P((void));
 #endif

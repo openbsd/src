@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_fault_i.h,v 1.5 2001/01/29 02:07:44 niklas Exp $	*/
-/*	$NetBSD: uvm_fault_i.h,v 1.9 1999/06/04 23:38:41 thorpej Exp $	*/
+/*	$OpenBSD: uvm_fault_i.h,v 1.6 2001/07/26 19:37:13 art Exp $	*/
+/*	$NetBSD: uvm_fault_i.h,v 1.10 2000/01/11 06:57:50 chs Exp $	*/
 
 /*
  *
@@ -51,6 +51,14 @@ uvmfault_unlockmaps(ufi, write_locked)
 	struct uvm_faultinfo *ufi;
 	boolean_t write_locked;
 {
+	/*
+	 * ufi can be NULL when this isn't really a fault,
+	 * but merely paging in anon data.
+	 */
+
+	if (ufi == NULL) {
+		return;
+	}
 
 	if (write_locked) {
 		vm_map_unlock(ufi->map);
@@ -213,8 +221,17 @@ static __inline boolean_t
 uvmfault_relock(ufi)
 	struct uvm_faultinfo *ufi;
 {
+	/*
+	 * ufi can be NULL when this isn't really a fault,
+	 * but merely paging in anon data.
+	 */
+
+	if (ufi == NULL) {
+		return TRUE;
+	}
 
 	uvmexp.fltrelck++;
+
 	/*
 	 * relock map.   fail if version mismatch (in which case nothing 
 	 * gets locked).

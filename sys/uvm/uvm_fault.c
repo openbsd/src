@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_fault.c,v 1.16 2001/07/25 13:25:33 art Exp $	*/
-/*	$NetBSD: uvm_fault.c,v 1.46 1999/11/13 00:24:38 thorpej Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.17 2001/07/26 19:37:13 art Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.47 2000/01/11 06:57:50 chs Exp $	*/
 
 /*
  *
@@ -280,7 +280,7 @@ uvmfault_amapcopy(ufi)
  * page in that anon.
  *
  * => maps, amap, and anon locked by caller.
- * => if we fail (result != VM_PAGER_OK) we unlock everything.
+ * => if we fail (result != VM_PAGER_OK) we unlock everything except anon.
  * => if we are successful, we return with everything still locked.
  * => we don't move the page on the queues [gets moved later]
  * => if we allocate a new page [we_own], it gets put on the queues.
@@ -291,7 +291,8 @@ uvmfault_amapcopy(ufi)
  *    else.
  */
 
-int uvmfault_anonget(ufi, amap, anon)
+int
+uvmfault_anonget(ufi, amap, anon)
 	struct uvm_faultinfo *ufi;
 	struct vm_amap *amap;
 	struct vm_anon *anon;
@@ -415,7 +416,7 @@ int uvmfault_anonget(ufi, amap, anon)
 		 */
 
 		locked = uvmfault_relock(ufi);
-		if (locked) {
+		if (locked && amap != NULL) {
 			amap_lock(amap);
 		}
 		if (locked || we_own)
@@ -452,7 +453,8 @@ int uvmfault_anonget(ufi, amap, anon)
 				simple_unlock(&anon->an_lock);
 				uvm_anfree(anon);	/* frees page for us */
 				if (locked)
-				  uvmfault_unlockall(ufi, amap, NULL, NULL);
+					uvmfault_unlockall(ufi, amap, NULL,
+							   NULL);
 				uvmexp.fltpgrele++;
 				UVMHIST_LOG(maphist, "<- REFAULT", 0,0,0,0);
 				return (VM_PAGER_REFAULT);	/* refault! */
@@ -460,13 +462,24 @@ int uvmfault_anonget(ufi, amap, anon)
 
 			if (result != VM_PAGER_OK) {
 #ifdef DIAGNOSTIC
-				if (result == VM_PAGER_PEND)
-		panic("uvmfault_anonget: got PENDING for non-async I/O");
+				if (result == VM_PAGER_PEND) {
+					panic("uvmfault_anonget: "
+					      "got PENDING for non-async I/O");
+				}
 #endif
 				/* remove page from anon */
 				anon->u.an_page = NULL;
 
-				/* 
+				/*
+				 * remove the swap slot from the anon
+				 * and mark the anon as having no real slot.
+				 * don't free the swap slot, thus preventing
+				 * it from being used again.
+				 */
+				uvm_swap_markbad(anon->an_swslot, 1);
+				anon->an_swslot = SWSLOT_BAD;
+
+				/*
 				 * note: page was never !PG_BUSY, so it
 				 * can't be mapped and thus no need to
 				 * pmap_page_protect it...
@@ -509,8 +522,9 @@ int uvmfault_anonget(ufi, amap, anon)
 		 * verify no one has touched the amap and moved the anon on us.
 		 */
 
-		if (amap_lookup(&ufi->entry->aref, 
-		    ufi->orig_rvaddr - ufi->entry->start) != anon) {
+		if (ufi != NULL &&
+		    amap_lookup(&ufi->entry->aref, 
+				ufi->orig_rvaddr - ufi->entry->start) != anon) {
 			
 			uvmfault_unlockall(ufi, amap, NULL, anon);
 			UVMHIST_LOG(maphist, "<- REFAULT", 0,0,0,0);
@@ -1051,14 +1065,18 @@ ReFault:
 	 */
 
 	/*
-	 * let uvmfault_anonget do the dirty work.   if it fails (!OK) it will
-	 * unlock for us.   if it is OK, locks are still valid and locked.
+	 * let uvmfault_anonget do the dirty work.
+	 * if it fails (!OK) it will unlock all but the anon for us.
+	 * if it succeeds, locks are still valid and locked.
 	 * also, if it is OK, then the anon's page is on the queues.
 	 * if the page is on loan from a uvm_object, then anonget will
 	 * lock that object for us if it does not fail.
 	 */
 
 	result = uvmfault_anonget(&ufi, amap, anon);
+	if (result != VM_PAGER_OK) {
+		simple_unlock(&anon->an_lock);
+	}
 
 	if (result == VM_PAGER_REFAULT)
 		goto ReFault;
@@ -1796,8 +1814,9 @@ uvm_fault_wire(map, start, end, access_type)
 	pmap = vm_map_pmap(map);
 
 	/*
-	 * fault it in page at a time.   if the fault fails then we have
-	 * to undo what we have done.
+	 * now fault it in a page at a time.   if the fault fails then we have
+	 * to undo what we have done.   note that in uvm_fault VM_PROT_NONE 
+	 * is replaced with the max protection if fault_type is VM_FAULT_WIRE.
 	 */
 
 	for (va = start ; va < end ; va += PAGE_SIZE) {

@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_anon.h,v 1.6 2001/03/09 05:34:38 smart Exp $	*/
-/*	$NetBSD: uvm_anon.h,v 1.11 1999/06/21 17:25:11 thorpej Exp $	*/
+/*	$OpenBSD: uvm_anon.h,v 1.7 2001/07/26 19:37:13 art Exp $	*/
+/*	$NetBSD: uvm_anon.h,v 1.12 2000/01/11 06:57:49 chs Exp $	*/
 
 /*
  *
@@ -103,9 +103,10 @@ struct vm_anon *uvm_analloc __P((void));
 void uvm_anfree __P((struct vm_anon *));
 void uvm_anon_init __P((void));
 void uvm_anon_add __P((int));
+void uvm_anon_remove __P((int));
 struct vm_page *uvm_anon_lockloanpg __P((struct vm_anon *));
 void uvm_anon_dropswap __P((struct vm_anon *));
-
+boolean_t anon_swap_off __P((int, int));
 #endif /* _KERNEL */
 
 #endif /* _UVM_UVM_ANON_H_ */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_anon.c,v 1.8 2001/07/18 10:47:05 art Exp $	*/
-/*	$NetBSD: uvm_anon.c,v 1.4 1999/09/12 01:17:34 chs Exp $	*/
+/*	$OpenBSD: uvm_anon.c,v 1.9 2001/07/26 19:37:13 art Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.5 2000/01/11 06:57:49 chs Exp $	*/
 
 /*
  *
@@ -42,6 +42,7 @@
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
+#include <sys/kernel.h>
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
@@ -51,66 +52,102 @@
 #include <uvm/uvm_swap.h>
 
 /*
+ * anonblock_list: global list of anon blocks,
+ * locked by swap_syscall_lock (since we never remove
+ * anything from this list and we only add to it via swapctl(2)).
+ */
+
+struct uvm_anonblock {
+	LIST_ENTRY(uvm_anonblock) list;
+	int count;
+	struct vm_anon *anons;
+};
+static LIST_HEAD(anonlist, uvm_anonblock) anonblock_list;
+
+
+static boolean_t anon_pagein __P((struct vm_anon *));
+
+
+/*
  * allocate anons
  */
 void
 uvm_anon_init()
 {
-	struct vm_anon *anon;
 	int nanon = uvmexp.free - (uvmexp.free / 16); /* XXXCDC ??? */
-	int lcv;
+
+	simple_lock_init(&uvm.afreelock);
+	LIST_INIT(&anonblock_list);
 
 	/*
 	 * Allocate the initial anons.
 	 */
-	anon = (struct vm_anon *)uvm_km_alloc(kernel_map,
-	    sizeof(*anon) * nanon);
-	if (anon == NULL) {
-		printf("uvm_anon_init: can not allocate %d anons\n", nanon);
-		panic("uvm_anon_init");
-	}
-
-	memset(anon, 0, sizeof(*anon) * nanon);
-	uvm.afree = NULL;
-	uvmexp.nanon = uvmexp.nfreeanon = nanon;
-	for (lcv = 0 ; lcv < nanon ; lcv++) {
-		anon[lcv].u.an_nxt = uvm.afree;
-		uvm.afree = &anon[lcv];
-		simple_lock_init(&uvm.afree->an_lock);
-	}
-	simple_lock_init(&uvm.afreelock);
+	uvm_anon_add(nanon);
 }
 
 /*
  * add some more anons to the free pool.  called when we add
  * more swap space.
+ *
+ * => swap_syscall_lock should be held (protects anonblock_list).
  */
 void
-uvm_anon_add(pages)
-	int	pages;
+uvm_anon_add(count)
+	int	count;
 {
+	struct uvm_anonblock *anonblock;
 	struct vm_anon *anon;
-	int lcv;
+	int lcv, needed;
 
-	anon = (struct vm_anon *)uvm_km_alloc(kernel_map,
-	    sizeof(*anon) * pages);
+	simple_lock(&uvm.afreelock);
+	uvmexp.nanonneeded += count;
+	needed = uvmexp.nanonneeded - uvmexp.nanon;
+	simple_unlock(&uvm.afreelock);
+
+	if (needed <= 0) {
+		return;
+	}
+ 
+	MALLOC(anonblock, void *, sizeof(*anonblock), M_UVMAMAP, M_WAITOK);
+	anon = (void *)uvm_km_alloc(kernel_map, sizeof(*anon) * needed);
 
 	/* XXX Should wait for VM to free up. */
-	if (anon == NULL) {
-		printf("uvm_anon_add: can not allocate %d anons\n", pages);
+	if (anonblock == NULL || anon == NULL) {
+		printf("uvm_anon_add: can not allocate %d anons\n", needed);
 		panic("uvm_anon_add");
 	}
 
+	anonblock->count = needed;
+	anonblock->anons = anon;
+	LIST_INSERT_HEAD(&anonblock_list, anonblock, list);
+	memset(anon, 0, sizeof(*anon) * needed);
+ 
 	simple_lock(&uvm.afreelock);
-	memset(anon, 0, sizeof(*anon) * pages);
-	uvmexp.nanon += pages;
-	uvmexp.nfreeanon += pages;
-	for (lcv = 0; lcv < pages; lcv++) {
+	uvmexp.nanon += needed;
+	uvmexp.nfreeanon += needed;
+	for (lcv = 0; lcv < needed; lcv++) {
 		simple_lock_init(&anon->an_lock);
 		anon[lcv].u.an_nxt = uvm.afree;
 		uvm.afree = &anon[lcv];
 		simple_lock_init(&uvm.afree->an_lock);
 	}
+	simple_unlock(&uvm.afreelock);
+}
+
+/*
+ * remove anons from the free pool.
+ */
+void
+uvm_anon_remove(count)
+	int count;
+{
+	/*
+	 * we never actually free any anons, to avoid allocation overhead.
+	 * XXX someday we might want to try to free anons.
+	 */
+
+	simple_lock(&uvm.afreelock);
+	uvmexp.nanonneeded -= count;
 	simple_unlock(&uvm.afreelock);
 }
 
@@ -361,4 +398,144 @@ uvm_anon_lockloanpg(anon)
 	 */
 
 	return(pg);
+}
+
+
+
+/*
+ * page in every anon that is paged out to a range of swslots.
+ * 
+ * swap_syscall_lock should be held (protects anonblock_list).
+ */
+
+boolean_t
+anon_swap_off(startslot, endslot)
+	int startslot, endslot;
+{
+	struct uvm_anonblock *anonblock;
+
+	for (anonblock = LIST_FIRST(&anonblock_list);
+	     anonblock != NULL;
+	     anonblock = LIST_NEXT(anonblock, list)) {
+		int i;
+
+		/*
+		 * loop thru all the anons in the anonblock,
+		 * paging in where needed.
+		 */
+
+		for (i = 0; i < anonblock->count; i++) {
+			struct vm_anon *anon = &anonblock->anons[i];
+			int slot;
+
+			/*
+			 * lock anon to work on it.
+			 */
+
+			simple_lock(&anon->an_lock);
+
+			/*
+			 * is this anon's swap slot in range?
+			 */
+
+			slot = anon->an_swslot;
+			if (slot >= startslot && slot < endslot) {
+				boolean_t rv;
+
+				/*
+				 * yup, page it in.
+				 */
+
+				/* locked: anon */
+				rv = anon_pagein(anon);
+				/* unlocked: anon */
+
+				if (rv) {
+					return rv;
+				}
+			} else {
+
+				/*
+				 * nope, unlock and proceed.
+				 */
+
+				simple_unlock(&anon->an_lock);
+			}
+		}
+	}
+	return FALSE;
+}
+
+
+/*
+ * fetch an anon's page.
+ *
+ * => anon must be locked, and is unlocked upon return.
+ * => returns TRUE if pagein was aborted due to lack of memory.
+ */
+
+static boolean_t
+anon_pagein(anon)
+	struct vm_anon *anon;
+{
+	struct vm_page *pg;
+	struct uvm_object *uobj;
+	int rv;
+	UVMHIST_FUNC("anon_pagein"); UVMHIST_CALLED(pdhist);
+	
+	/* locked: anon */
+	rv = uvmfault_anonget(NULL, NULL, anon);
+	/* unlocked: anon */
+
+	switch (rv) {
+	case VM_PAGER_OK:
+		break;
+
+	case VM_PAGER_ERROR:
+	case VM_PAGER_REFAULT:
+
+		/*
+		 * nothing more to do on errors.
+		 * VM_PAGER_REFAULT can only mean that the anon was freed,
+		 * so again there's nothing to do.
+		 */
+
+		return FALSE;
+
+#ifdef DIAGNOSTIC
+	default:
+		panic("anon_pagein: uvmfault_anonget -> %d", rv);
+#endif
+	}
+
+	/*
+	 * ok, we've got the page now.
+	 * mark it as dirty, clear its swslot and un-busy it.
+	 */
+
+	pg = anon->u.an_page;
+	uobj = pg->uobject;
+	uvm_swap_free(anon->an_swslot, 1);
+	anon->an_swslot = 0;
+	pg->flags &= ~(PG_CLEAN);
+
+	/*
+	 * deactivate the page (to put it on a page queue)
+	 */
+
+	pmap_clear_reference(pg);
+	pmap_page_protect(pg, VM_PROT_NONE);
+	uvm_lock_pageq();
+	uvm_pagedeactivate(pg);
+	uvm_unlock_pageq();
+
+	/*
+	 * unlock the anon and we're done.
+	 */
+
+	simple_unlock(&anon->an_lock);
+	if (uobj) {
+		simple_unlock(&uobj->vmobjlock);
+	}
+	return FALSE;
 }
