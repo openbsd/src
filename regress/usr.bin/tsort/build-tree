@@ -1,0 +1,28 @@
+#!/usr/bin/perl
+
+# Written by Marc Espie, 2001
+# Public domain
+
+# This does build tree of a given depth and breadth, to check on tsort's
+# efficiency
+
+$depth=shift;
+$breadth=shift;
+
+
+sub build_tree
+{
+    my $root = shift;
+    my $depth = shift;
+
+    my $leaf = 'a';
+    my $i;
+
+    for ($i = 0; $i < $breadth; $i++) {
+	    print "$root $root$leaf\n";
+	    build_tree($root.$leaf, $depth-1) if $depth > 0;
+	    $leaf++;
+    }
+}
+
+build_tree('a', $depth) if $depth > 0;

@@ -1,0 +1,24 @@
+#!/usr/bin/perl
+
+# Written by Marc Espie, 2001.
+# Public domain
+
+%order=();
+
+open(SORTED, shift) or die "No sorted output\n";
+while(<SORTED>) {
+	chomp;
+	$order{$_} = $i++;
+}
+close(SORTED);
+
+open(PAIRS, shift) or die "No pairs\n";
+undef $/;
+$_ = <PAIRS>;
+close(PAIRS);
+@pairs = split(/\s+/, $_);
+while (@pairs > 0) {
+	($a, $b) = (pop @pairs, pop @pairs);
+	next unless $order{$a} < $order{$b};
+	die "Bad pair $a $b\n";
+}

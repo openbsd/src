@@ -1,0 +1,37 @@
+#!/usr/bin/perl
+
+# Written by Marc Espie, 2001.
+# Public domain
+
+@cycle = ();
+
+sub show_cycle()
+{
+	return if @cycle == 0;
+	$min = 'zzzzz';
+	for ($i = 0; $i < @cycle; $i++) {
+		if ($cycle[$i] lt $min) {
+			$minindex = $i;
+			$min = $cycle[$i];
+		}
+	}
+	@ordered=();
+	for ($i = $minindex; $i <@cycle; $i++) {
+		push(@ordered, $cycle[$i]);
+	}
+	for ($i = 0; $i < $minindex; $i++) {
+		push(@ordered, $cycle[$i]);
+	}
+	print join(',', @ordered), "\n";
+}
+	
+while (<>) {
+	chomp;
+	if ($_ eq 'tsort: cycle in data') {
+		show_cycle();
+		@cycle = ();
+	} else {
+		m/^tsort:\s+/ and push(@cycle, $');
+	}
+}
+show_cycle();
