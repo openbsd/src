@@ -32,7 +32,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet/tcp_fsm.h>
 #include <netinet/tcp_seq.h>
 #include <netinet/tcp_timer.h>
-#include <netinet/tcpip.h>
+/* #include <netinet/tcpip.h> */
 #if __FreeBSD__ && defined(_NETINET_IN_PCB_H_)
 #undef _NETINET_IN_PCB_H_
 #include <netinet/tcp_var.h>
@@ -50,6 +50,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet6/ipv6_icmp.h>
 
 #if defined(IPSEC) || defined(NRL_IPSEC)
+#include <sys/osdep.h>
 #include <netsec/ipsec.h>
 #endif /* defined(IPSEC) || defined(NRL_IPSEC) */
 

@@ -37,7 +37,12 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet6/ipv6_var.h>
 #include <netinet6/ipv6_icmp.h>
 
+#ifdef DEBUG_NRL_SYS
 #include <sys/debug.h>
+#endif /* DEBUG_NRL_SYS */
+#ifdef DEBUG_NRL_NETINET6
+#include <netinet6/debug.h>
+#endif /* DEBUG_NRL_NETINET6 */
 
 /*
  * Globals (and forward function declarations).
@@ -106,7 +111,7 @@ add_defchild(rt)
 
   dst = (struct sockaddr_in6 *)rt_key(rt);
 
-  if (!IN6_IS_ADDR_LINKLOCAL(&dst->sin6_addr))
+  if (!IN6_IS_ADDR_LINKLOCAL(&dst->sin6_addr)) {
     /*
      * Since there are no priorities, just pick one.  For now, I guess I'll
      * Just pick v6r_next.
@@ -169,6 +174,7 @@ add_defchild(rt)
 	DPRINTF(IDL_ERROR,\
 		("Default route hit, but no default routers in list.\n"));
       }
+  }
 
   /* Either  on-link or  in trouble. Needs to be coded. */
   DPRINTF(IDL_ERROR, ("On-link or in trouble in ipv6_rtrequest\n"));
@@ -522,7 +528,7 @@ ipv6_rtrequest(req, rt, sa)
 	      tunnel_parent(rt);
 	    }
 
-	  if (rt->rt_flags & RTF_GATEWAY)
+	  if (rt->rt_flags & RTF_GATEWAY) {
 	    if (rt_mask(rt)->sa_len == 0)
 	      {
 		if (rt->rt_flags & RTF_TUNNEL)
@@ -575,7 +581,7 @@ ipv6_rtrequest(req, rt, sa)
 		   */
 		  add_non_default(rt);
 		}
-	  else if (!(rt->rt_flags & RTF_TUNNEL))
+	  } else if (!(rt->rt_flags & RTF_TUNNEL))
 	    {
 	      /*
 	       * Interface route (i.e. on-link non-host prefix).
@@ -806,7 +812,7 @@ DPRINTF(IDL_ERROR,("add_defchild returned 1, either on-link or tunnel.\n"));
 	      if (rt_mask(rt)->sa_len != 0)
 		return;   /* If default route is RTF_TUNNEL, then continue. */
 	    }
-	  if (rt->rt_flags & RTF_GATEWAY)
+	  if (rt->rt_flags & RTF_GATEWAY) {
 	    if (rt_mask(rt)->sa_len == 0)
 	      {
 		struct v6router *v6r;
@@ -891,6 +897,7 @@ DPRINTF(IDL_ERROR,("add_defchild returned 1, either on-link or tunnel.\n"));
 		remque(v6r);
 		free(v6r,M_DISCQ);
 	      }
+          }
 	  /* Anything else that isn't a HOST needs no work, so return. */
 	  return;
 	}
@@ -926,9 +933,10 @@ DPRINTF(IDL_ERROR,("add_defchild returned 1, either on-link or tunnel.\n"));
 
 	  if (v6c == NULL)
 	    {
-	      if (rt->rt_flags & RTF_HOST)
+	      if (rt->rt_flags & RTF_HOST) {
 		DPRINTF(IDL_ERROR, 
 			("no v6c in RTM_DELETE of RTF_GATEWAY.\n"));
+              }
 	    }
 	  else
 	    {

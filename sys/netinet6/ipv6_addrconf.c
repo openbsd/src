@@ -35,7 +35,12 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet6/ipv6_icmp.h>
 #include <netinet6/ipv6_addrconf.h>
 
+#ifdef DEBUG_NRL_SYS
 #include <sys/debug.h>
+#endif /* DEBUG_NRL_SYS */
+#ifdef DEBUG_NRL_NETINET6
+#include <netinet6/debug.h>
+#endif /* DEBUG_NRL_NETINET6 */
 
 /*
  * External Globals
@@ -164,41 +169,40 @@ addrconf_timer(whocares)
 	  DPRINTF(IDL_EVENT,("Address has been deprecated.\n"));
 	}
 #ifdef __FreeBSD__
-      if (i6a->i6a_expire && i6a->i6a_expire <= time_second)
+      if (i6a->i6a_expire && i6a->i6a_expire <= time_second) {
 #else /* __FreeBSD__ */
-      if (i6a->i6a_expire && i6a->i6a_expire <= time.tv_sec)
+      if (i6a->i6a_expire && i6a->i6a_expire <= time.tv_sec) {
 #endif /* __FreeBSD__ */
-	if (i6a->i6a_addrflags & I6AF_NOTSURE)
-	  {
-	    DPRINTF(IDL_FINISHED, ("Address appears to be unique.\n"));
-	    i6a->i6a_addrflags &= ~I6AF_NOTSURE;
-	    /*
-	     * From what I can tell, addrs that survive DAD are
-	     * permanent.  I won't mark as permanent, but I will zero
-	     * expiration for now.
-	     *
-	     * If this is a link-local address, it may be a good idea to
-	     * send a router solicit.  (But only if I'm a host.)
-	     */
-	    if (ipv6rsolicit && IN6_IS_ADDR_LINKLOCAL(&i6a->i6a_addr.sin6_addr))
-	      send_rsolicit(i6a->i6a_ifp);
+	if (i6a->i6a_addrflags & I6AF_NOTSURE) {
+	  DPRINTF(IDL_FINISHED, ("Address appears to be unique.\n"));
+	  i6a->i6a_addrflags &= ~I6AF_NOTSURE;
+	  /*
+	   * From what I can tell, addrs that survive DAD are
+	   * permanent.  I won't mark as permanent, but I will zero
+	   * expiration for now.
+	   *
+	   * If this is a link-local address, it may be a good idea to
+	   * send a router solicit.  (But only if I'm a host.)
+	   */
+	  if (ipv6rsolicit && IN6_IS_ADDR_LINKLOCAL(&i6a->i6a_addr.sin6_addr))
+	    send_rsolicit(i6a->i6a_ifp);
 
-	    i6a->i6a_expire = 0;
-	    i6a->i6a_preferred = 0;
-	  }
-	else
-	  {
-	    /*
-	     * Do address deletion, and nuke any routes, pcb's, etc.
-	     * that use this address.
-	     *
-	     * As an implementation note, it's probably more likely than
-	     * not that addresses that get deprecated (see above) will be
-	     * moved off the master list, as that keeps them away from
-	     * some things.  This is something we couldn't implement in time,
-	     * however.
-	     */
-	  }
+	  i6a->i6a_expire = 0;
+	  i6a->i6a_preferred = 0;
+	} else {
+	  /*
+	   * Do address deletion, and nuke any routes, pcb's, etc.
+	   * that use this address.
+	   *
+	   * As an implementation note, it's probably more likely than
+	   * not that addresses that get deprecated (see above) will be
+	   * moved off the master list, as that keeps them away from
+	   * some things.  This is something we couldn't implement in time,
+	   * however.
+	   */
+	}
+      }
+
       i6a = i6a->i6a_next;
     }
   timeout(addrconf_timer,NULL,v6d_retranstime * hz);

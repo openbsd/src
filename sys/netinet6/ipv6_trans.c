@@ -33,7 +33,12 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet6/ipv6.h>
 #include <netinet6/ipv6_var.h>
 
+#ifdef DEBUG_NRL_SYS
 #include <sys/debug.h>
+#endif /* DEBUG_NRL_SYS */
+#ifdef DEBUG_NRL_NETINET6
+#include <netinet6/debug.h>
+#endif /* DEBUG_NRL_NETINET6 */
 
 #if __OpenBSD__ && defined(NRL_IPSEC)
 #define IPSEC 1
@@ -135,9 +140,17 @@ ipv6_trans_mtu(m0, newmtu, len)
  * only sizeof(struct ip) + 64 bits of offending packet.
  ----------------------------------------------------------------------*/
 #if __OpenBSD__
+#ifdef NRL_IPSEC
 void *ipv6_trans_ctlinput(int cmd, struct sockaddr *sa, void *vp, struct mbuf *incoming)
+#else /* NRL_IPSEC */
+void *ipv6_trans_ctlinput(int cmd, struct sockaddr *sa, void *vp)
+#endif /* NRL_IPSEC */
 #else /* __OpenBSD__ */
+#ifdef IPSEC
 void ipv6_trans_ctlinput(int cmd, struct sockaddr *sa, register struct ip *ip, struct mbuf *incoming)
+#else /* IPSEC */
+void ipv6_trans_ctlinput(int cmd, struct sockaddr *sa, register struct ip *ip)
+#endif /* IPSEC */
 #endif /* __OpenBSD__ */
 {
   struct sockaddr_in *sin = (struct sockaddr_in *)sa;
@@ -302,7 +315,11 @@ ipv6_trans_output(outgoing, v4dst, v6rt)
    * the *&*&%^^& don't fragment bit.
    */
   ip->ip_v = IPVERSION;
+#if __OpenBSD__
+  ip->ip_id = ip_randomid();
+#else /* __OpenBSD__ */
   ip->ip_id = htons(ip_id++);
+#endif /* __OpenBSD__ */
   ip->ip_hl = sizeof(*ip)>>2;
   if (v6rt->rt_rmx.rmx_mtu > IPV6_MINMTU)
     ip->ip_off |= IP_DF;

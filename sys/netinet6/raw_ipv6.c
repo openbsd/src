@@ -42,7 +42,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
  * SUCH DAMAGE.
  *
  *	@(#)raw_ip.c	8.7 (Berkeley) 5/15/95
- *	$Id: raw_ipv6.c,v 1.1 1999/01/06 23:26:58 deraadt Exp $
+ *	$Id: raw_ipv6.c,v 1.2 1999/02/24 04:36:46 cmetz Exp $
  */
 
 #include <sys/param.h>
@@ -88,7 +88,12 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <net/netproc_var.h>
 #endif /* IPSEC */
 
+#ifdef DEBUG_NRL_SYS
 #include <sys/debug.h>
+#endif /* DEBUG_NRL_SYS */
+#ifdef DEBUG_NRL_NETINET6
+#include <netinet6/debug.h>
+#endif /* DEBUG_NRL_NETINET6 */
 
 /*
  * Globals
@@ -119,9 +124,6 @@ static struct inpcbinfo ri6pcbinfo;
 #endif /* __FreeBSD__ */
 
 extern struct ipv6stat ipv6stat;
-
-struct mbuf *ipv6_headertocontrol(struct mbuf *m, size_t extra, int inp_flags);
-int ipv6_controltoheader(struct mbuf **m, struct mbuf *control, struct ifnet **forceifp, int *);
 
 #define RETURN_ERROR(x) { \
   DPRINTF(EVENT, ("%s: returning %s\n", DEBUG_STATUS, #x)); \
@@ -199,7 +201,7 @@ static int ipv6_findnexthdr(struct mbuf *m, size_t extra)
 	  return -1;
 
 	hl = sizeof(struct ipv6_opthdr) +
-	     ((struct ipv6_opthdr *)p)->oh_extlen << 3;
+	     (((struct ipv6_opthdr *)p)->oh_extlen << 3);
 
 	if ((extra -= hl) < 0)
 	  return -1;
@@ -211,7 +213,7 @@ static int ipv6_findnexthdr(struct mbuf *m, size_t extra)
 	  return -1;
 
 	hl = sizeof(struct ipv6_srcroute0) +
-	     ((struct ipv6_srcroute0 *)p)->i6sr_len << 3;
+	     (((struct ipv6_srcroute0 *)p)->i6sr_len << 3);
 
 	if ((extra -= hl) < 0)
 	  return -1;
@@ -275,7 +277,6 @@ ripv6_input(m,extra)
 
   DPRINTF(FINISHED, ("ripv6_input(m=%08x, extra=%d)\n", OSDEP_PCAST(m), extra));
   DP(FINISHED, m->m_pkthdr.len, d);
-
   DDO(FINISHED,printf("In ripv6_input(), header is:\n");dump_mchain(m));
   DPRINTF(EVENT, ("In ripv6_input()\n"));
   DPRINTF(EVENT, ("Header is: "));

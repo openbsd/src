@@ -83,7 +83,12 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <net/netproc_var.h>
 #endif /* IPSEC */
 
+#ifdef DEBUG_NRL_SYS
 #include <sys/debug.h>
+#endif /* DEBUG_NRL_SYS */
+#ifdef DEBUG_NRL_NETINET6
+#include <netinet6/debug.h>
+#endif /* DEBUG_NRL_NETINET6 */
 
 #if defined(_BSDI_VERSION) && (_BSDI_VERSION >= 199802)
 #include <machine/pcpu.h>

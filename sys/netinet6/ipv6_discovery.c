@@ -39,7 +39,12 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet6/ipv6_var.h>
 #include <netinet6/ipv6_icmp.h>
 
+#ifdef DEBUG_NRL_SYS
 #include <sys/debug.h>
+#endif /* DEBUG_NRL_SYS */
+#ifdef DEBUG_NRL_NETINET6
+#include <netinet6/debug.h>
+#endif /* DEBUG_NRL_NETINET6 */
 
 #if __OpenBSD__ && defined(NRL_IPSEC)
 #define IPSEC 1
@@ -228,7 +233,7 @@ ipv6_neighbor_timer(whocares)
 	  /*
 	   * Gotta do SOMETHING...
 	   */
-	  if (sdl->sdl_alen == 0)    {
+	  if (sdl->sdl_alen == 0) {
 	    /* If RTF_REJECT, then delete... */
 	    if (rt->rt_flags & RTF_REJECT)
 	      {
@@ -240,7 +245,7 @@ ipv6_neighbor_timer(whocares)
 
 	    /* Am in INCOMPLETE mode... */
 	    
-	    if (current->dq_unanswered >= 0)  /* If not newly created... */
+	    if (current->dq_unanswered >= 0) { /* If not newly created... */
 	      if (current->dq_unanswered >= v6d_maxmcastsol)
 		{
 		  /* Dead node.  For now, just delete.  
@@ -301,6 +306,7 @@ ipv6_neighbor_timer(whocares)
 		     to ipv6_nsolicit for source address determination. */
 		  ipv6_nsolicit(rt->rt_ifp,NULL,rt);
 		}
+	    }
 	  }
 	  else
 	    /*
@@ -309,51 +315,46 @@ ipv6_neighbor_timer(whocares)
 	     * Either way, that will (in the case of REACHABLE->PROBE)
 	     * or might (in the case of PROBE->INCOMPLETE) change.
 	     */
-	    if (current->dq_unanswered >= 0)  /* PROBE */
-	      if (current->dq_unanswered >= v6d_maxucastsol)
+	    if (current->dq_unanswered >= 0) { /* PROBE */
+	      if (current->dq_unanswered >= v6d_maxucastsol) {
 		/* PROBE -> INCOMPLETE */
-		if (rt->rt_refcnt > 0)
-		  {
-		    /* The code below is an optimization for the case
-		     * when someone is using this route : 
-		     * - defer actual deletion until mcast solicits fail.
-		     *
-		     * Q: Do we still want to do this?
-		     */
-		    sdl->sdl_alen = 0;
-		    current->dq_unanswered = 0;
+		if (rt->rt_refcnt > 0) {
+		  /* The code below is an optimization for the case
+		   * when someone is using this route : 
+		   * - defer actual deletion until mcast solicits fail.
+		   *
+		   * Q: Do we still want to do this?
+		   */
+		  sdl->sdl_alen = 0;
+		  current->dq_unanswered = 0;
 #ifdef __FreeBSD__ 
-		    rt->rt_rmx.rmx_expire = time_second + v6d_retranstime;
+		  rt->rt_rmx.rmx_expire = time_second + v6d_retranstime;
 #else /* __FreeBSD__ */
-		    rt->rt_rmx.rmx_expire = time.tv_sec + v6d_retranstime;
+		  rt->rt_rmx.rmx_expire = time.tv_sec + v6d_retranstime;
 #endif /* __FreeBSD__ */
-		  }
-		else
-		  {
-		    /*
-		     * Unicast probes failed and no one is using this route.  
-		     * Delete and let address resolution take its course.
-		     *
-		     * At this point, I have an ifa, so I don't need to add
-		     * one.
-		     */
-		    rtrequest(RTM_DELETE,rt_key(rt),NULL,NULL,0,NULL);
-		  }
-	      else
-		{
-		  /* Retry PROBE */
-		  ipv6_uni_nsolicit(rt);
+		} else {
+		  /*
+		   * Unicast probes failed and no one is using this route.  
+		   * Delete and let address resolution take its course.
+		   *
+		   * At this point, I have an ifa, so I don't need to add
+		   * one.
+		   */
+		  rtrequest(RTM_DELETE,rt_key(rt),NULL,NULL,0,NULL);
 		}
-	    else
-	      {
-		/*
-		 * Do nothing if REACHABLE expires.  Only on output,
-		 * BUT... some of these might hang around for too long.
-		 * See ipv6_clean_nexthop for details on a solution.
-		 *
-		 * I am now in the STALE state.
-		 */
+	      } else {
+		/* Retry PROBE */
+		ipv6_uni_nsolicit(rt);
 	      }
+	    } else {
+	      /*
+	       * Do nothing if REACHABLE expires.  Only on output,
+	       * BUT... some of these might hang around for too long.
+	       * See ipv6_clean_nexthop for details on a solution.
+	       *
+	       * I am now in the STALE state.
+	       */
+	    }
 	}
     }
 
@@ -632,18 +633,18 @@ send_nsolicit(rt,ifp,src,mcast)
       } else
         header->ipv6_src = i6a->i6a_addr.sin6_addr;
     }
-  else if (IN6_IS_ADDR_UNSPECIFIED(src))
-    if (!mcast) {
-      DPRINTF(IDL_ERROR, ("send_nsolicit: Unicast DAD solicit.\n"));
-      m_freem(solicit);
-      return;
-    } else {
+  else
+    if (IN6_IS_ADDR_UNSPECIFIED(src)) {
+      if (!mcast) {
+	DPRINTF(IDL_ERROR, ("send_nsolicit: Unicast DAD solicit.\n"));
+	m_freem(solicit);
+	return;
+      } else {
 	DPRINTF(GROSSEVENT, ("Sending DAD solicit.\n"));
 	solicit->m_flags |= M_DAD;
 	header->ipv6_src = in6addr_any;
       }
-  else
-    {
+    } else {
       struct in6_ifaddr *llsave = NULL;
 
       for (i6a = in6_ifaddr; i6a; i6a = i6a->i6a_next)
@@ -1118,11 +1119,13 @@ ipv6_nadvert(i6a,ifp,dstrt,flags)
 
   if (dstrt == NULL)
     {
+      struct in6_addr addr = IN6ADDR_ALLNODES_INIT;
+
       i6mo.i6mo_multicast_ifp = ifp;
       i6mo.i6mo_multicast_ttl = 255;  /* Must set. */
       i6mop = &i6mo;
-      SET_IN6_ALLNODES(ipv6->ipv6_dst);
-      SET_IN6_MCASTSCOPE(ipv6->ipv6_dst, IN6_INTRA_LINK);
+
+      ipv6->ipv6_dst = addr;
     }
   else ipv6->ipv6_dst = ((struct sockaddr_in6 *)rt_key(dstrt))->sin6_addr;
 
@@ -1521,7 +1524,7 @@ ipv6_routeradv_input(incoming, extra)
 
   /* XXX - Assumes that the entire packet fits within MCLBYTES. */
   if (incoming->m_len < incoming->m_pkthdr.len)
-    if (incoming = m_pullup2(incoming, incoming->m_pkthdr.len))
+    if ((incoming = m_pullup2(incoming, incoming->m_pkthdr.len)))
       return;
 
   ipv6 = mtod(incoming,struct ipv6 *);
@@ -2088,7 +2091,7 @@ ipv6_neighborsol_input(incoming,extra)
 
   /* XXX - Assumes that the entire packet fits within MCLBYTES. */
   if (incoming->m_len < incoming->m_pkthdr.len)
-    if (incoming = m_pullup2(incoming, incoming->m_pkthdr.len))
+    if ((incoming = m_pullup2(incoming, incoming->m_pkthdr.len)))
       return;
 
   ipv6 = mtod(incoming,struct ipv6 *);
@@ -2373,7 +2376,7 @@ ipv6_neighboradv_input(incoming,extra)
 
   /* XXX - Assumes that the entire packet fits within MCLBYTES. */
   if (incoming->m_len < incoming->m_pkthdr.len)
-    if (incoming = m_pullup2(incoming, incoming->m_pkthdr.len))
+    if ((incoming = m_pullup2(incoming, incoming->m_pkthdr.len)))
       return;
 
   ipv6 = mtod(incoming,struct ipv6 *);
@@ -2655,7 +2658,7 @@ ipv6_redirect_input(incoming,extra)
 
   /* XXX - Assumes that the entire packet fits within MCLBYTES. */
   if (incoming->m_len < incoming->m_pkthdr.len)
-    if (incoming = m_pullup2(incoming, incoming->m_pkthdr.len))
+    if ((incoming = m_pullup2(incoming, incoming->m_pkthdr.len)))
       return;
 
   ipv6 = mtod(incoming,struct ipv6 *);

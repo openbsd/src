@@ -46,7 +46,12 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <sys/nbuf.h>
 #endif /* IPSEC */
 
+#ifdef DEBUG_NRL_SYS
 #include <sys/debug.h>
+#endif /* DEBUG_NRL_SYS */
+#ifdef DEBUG_NRL_NETINET6
+#include <netinet6/debug.h>
+#endif /* DEBUG_NRL_NETINET6 */
 
 /*
  * Globals and function definitions.
@@ -77,8 +82,6 @@ int ipv6_getmoptions __P((int, struct ipv6_moptions *, int *));
 void ipv6_mloopback __P((struct ifnet *, struct mbuf *, struct sockaddr_in6 *));
 int ipv6_finddivpoint __P((struct mbuf *, uint8_t *));
 
-int ipv6_controltoheader(struct mbuf **m, struct mbuf *control, struct ifnet **forceifp, int *);
-
 /*----------------------------------------------------------------------
  * IPv6 output routine.  The mbuf chain contains a near-complete IPv6 header,
  * and an already-inserted list of options.  (I figure it's something for
@@ -88,6 +91,9 @@ int ipv6_controltoheader(struct mbuf **m, struct mbuf *control, struct ifnet **f
  ----------------------------------------------------------------------*/
 
 int
+#ifdef __OpenBSD__
+ipv6_output(struct mbuf *outgoing, ...)
+#else /* __OpenBSD__ */
 ipv6_output(outgoing,ro,flags,i6mo, forceifp, socket)
      struct mbuf *outgoing;
      struct route6 *ro;
@@ -95,6 +101,7 @@ ipv6_output(outgoing,ro,flags,i6mo, forceifp, socket)
      struct ipv6_moptions *i6mo;
      struct ifnet *forceifp;
      struct socket *socket;
+#endif /* __OpenBSD__ */
 {
   struct ipv6 *header;
   struct route6 ipv6route;
@@ -103,6 +110,22 @@ ipv6_output(outgoing,ro,flags,i6mo, forceifp, socket)
   struct ifnet *ifp = NULL;
   int error=0;
   uint32_t outmtu = 0;
+#if __OpenBSD__
+  va_list ap;
+  struct route6 *ro;
+  int flags;
+  struct ipv6_moptions *i6mo;
+  struct ifnet *forceifp;
+  struct socket *socket;
+
+  va_start(ap, outgoing);
+  ro = va_arg(ap, struct route6 *);
+  flags = va_arg(ap, int);
+  i6mo = va_arg(ap, struct ipv6_moptions *);
+  forceifp = va_arg(ap, struct ifnet *);
+  socket = va_arg(ap, struct socket *);
+  va_end(ap);
+#endif /* __OpenBSD__ */
 
 #ifdef DIAGNOSTIC
   if ((outgoing->m_flags & M_PKTHDR) == 0)
@@ -300,7 +323,7 @@ ipv6_output(outgoing,ro,flags,i6mo, forceifp, socket)
        */
 
       i6a = ifatoi6a(ro->ro_rt->rt_ifa);
-      if (i6a->i6a_addrflags & I6AF_NOTSURE) 
+      if (i6a->i6a_addrflags & I6AF_NOTSURE) {
 	if (!(outgoing->m_flags & M_DAD))
 	  {
 	    /*
@@ -313,6 +336,7 @@ ipv6_output(outgoing,ro,flags,i6mo, forceifp, socket)
 	    goto bad;
 	  }
 	else i6a = NULL;
+      }
 
       /*
        * More source address selection goes here.
@@ -381,7 +405,7 @@ ipv6_output(outgoing,ro,flags,i6mo, forceifp, socket)
 
       if ((IN6_IS_ADDR_UNSPECIFIED(&header->ipv6_src) && !(outgoing->m_flags & M_DAD)) ||
 	  (IN6_IS_ADDR_LINKLOCAL(&header->ipv6_src) && 
-	   GET_IN6_MCASTSCOPE(header->ipv6_dst) > IN6_INTRA_LINK))
+	   IN6_MSCOPE(&header->ipv6_dst) > IN6_LINK_LOCAL))
 	{
 	  register struct in6_ifaddr *i6a;
 	  
@@ -429,7 +453,8 @@ ipv6_output(outgoing,ro,flags,i6mo, forceifp, socket)
        * If intra-node scope.  I've already hit it with ipv6_mloopback above.
        */
 
-      if (GET_IN6_MCASTSCOPE(header->ipv6_dst) == IN6_INTRA_NODE || (ifp->if_flags & IFF_LOOPBACK))
+      if (IN6_MSCOPE(&header->ipv6_dst) == IN6_NODE_LOCAL ||
+	  (ifp->if_flags & IFF_LOOPBACK))
 	goto bad;  /* Not really bad, y'know, just getting out of here. */
     }
 
@@ -494,14 +519,9 @@ ipv6_output(outgoing,ro,flags,i6mo, forceifp, socket)
 
 	    DP(FINISHED, preoverhead, d);
 	    DP(FINISHED, postoverhead, d);
-	    {
-	      struct netproc_policycache *policycache =
-		(struct netproc_policycache *)state;
 
-	      DP(FINISHED, policycache->doah, d);
-	      DP(FINISHED, policycache->doesp, d);
-	      DP(FINISHED, policycache->docombinedesp, d);
-	    }
+	    header->ipv6_length = htons(outgoing->m_pkthdr.len - 
+					sizeof(struct ipv6));
 
 	    if (!(nbuf = mton(outgoing, preoverhead, postoverhead))) {
 	      netproc_outputfree(state);
@@ -1065,7 +1085,7 @@ ipv6_ctloutput (op, so, level, optname, mp)
   switch (op) {
     case PRCO_SETOPT:
       switch(optname) {
-	case IPV6_UNICAST_HOPS:
+        case IPV6_UNICAST_HOPS:
 	  DPRINTF(IDL_GROSS_EVENT, ("ipv6_ctloutput: Reached IPV6_UNICAST_HOPS\n"));
 #if __FreeBSD__
 	  if (sopt->sopt_valsize != sizeof(int))
@@ -1380,7 +1400,7 @@ ipv6_ctloutput (op, so, level, optname, mp)
 	  }
 	  break;
 	case IPV6_UNICAST_HOPS:
-	  DPRINTF(IDL_GROSS_EVENT,("ipv6_ctloutput(): Reached IP_UNICAST_HOPS\n"));
+	  DPRINTF(IDL_GROSS_EVENT,("ipv6_ctloutput(): Reached IPV6_UNICAST_HOPS:\n"));
 #if __FreeBSD__
 	  error = sooptcopyout(sopt, &inp->inp_ipv6.ipv6_hoplimit,
 			       sizeof(int));
@@ -1822,7 +1842,7 @@ ipv6_finddivpoint(m, nexthdr)
 	  prevopt = nextopt;
 	  nextopt = &(oh->oh_nexthdr);
 	  divpoint += 8 + (oh->oh_extlen << 3);
-	  if (oh->oh_extlen)
+	  if (oh->oh_extlen) {
 	    if (divpoint > MHLEN)
 	      {
 		if ((m = m_pullup2(m,divpoint)) == NULL)
@@ -1842,13 +1862,14 @@ ipv6_finddivpoint(m, nexthdr)
 		    return 0;
 		  }
 	      }
+          }
 	  break;
 	case IPPROTO_DSTOPTS:
 	  oh = (struct ipv6_opthdr *)(m->m_data + divpoint);	
 	  prevopt = nextopt;
 	  nextopt = &(oh->oh_nexthdr);
 	  maybe = 8 + (oh->oh_extlen << 3);
-	  if (oh->oh_extlen)
+	  if (oh->oh_extlen) {
 	    if ( divpoint + maybe > MHLEN)
 	      {
 		if ((m = m_pullup2(m,divpoint + maybe)) == NULL)
@@ -1868,6 +1889,7 @@ ipv6_finddivpoint(m, nexthdr)
 		    return 0;
 		  }
 	      }
+          }
 	  break;
 	case IPPROTO_ROUTING:
 	  if (maybe)  /* i.e. if we had a destination options bag before
@@ -1997,11 +2019,12 @@ l2:	      bcopy(&in6_pktinfo.ipi6_addr, &(mtod(*m, struct ipv6 *)->ipv6_src), si
 
             i = *((int *)((caddr_t)cmsghdr + sizeof(struct cmsghdr)));
 
-            if (i == -1)
+            if (i == -1) {
               if (IN6_IS_ADDR_MULTICAST(&mtod(*m, struct ipv6 *)->ipv6_dst))
                 i = IPV6_DEFAULT_MCAST_HOPS;
               else
                 i = ipv6_defhoplmt;
+            }
 
             if ((i < 0) || (i > 255))
               goto ret;

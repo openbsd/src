@@ -7,8 +7,8 @@ Laboratory (NRL). The NRL Copyright Notice and License Agreement Version
 1.1 (January 17, 1995) applies to this software.
 You should have received a copy of the license with this software. If you
 didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
-*/
 
+*/
 #ifndef _NETINET6_IPV6_VAR_H
 #define _NETINET6_IPV6_VAR_H 1
 
@@ -63,8 +63,7 @@ struct	ipv6stat {
 	_IPV6STAT_TYPE	ips_rawout;		/* total raw ip packets generated */
 };
 
-#ifdef _KERNEL
-
+#if defined(_KERNEL) || defined(KERNEL)
 /*
  * The IPv6 fragment queue entry structure.
  * Notes:
@@ -195,51 +194,163 @@ void ipv6_slowtimo __P((void));
 int ipv6_sysctl __P((int *, uint, void *, size_t *, void *, size_t));
 struct route6;
 
+#if __FreeBSD__
+int ipv6_ctloutput __P((struct socket *, struct sockopt *));
+int ripv6_ctloutput __P((struct socket *, struct sockopt *));
+#else /* __FreeBSD__ */
 int ipv6_ctloutput __P((int, struct socket *,int,int, struct mbuf **));
 int ripv6_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
-
+#endif /* __FreeBSD__ */
 void	 ripv6_init __P((void));
+#if __OpenBSD__
 void	 ripv6_input __P((struct mbuf *, ...));
-int	 ripv6_output __P((struct mbuf *, struct socket *, struct in6_addr *,
-	    struct mbuf *));
+int	 ripv6_output __P((struct mbuf *, ...));
+#else /* __OpenBSD__ */
+void	 ripv6_input __P((struct mbuf *, int));
+int	 ripv6_output __P((struct mbuf *, struct socket *, struct in6_addr *, struct mbuf *));
+#endif /* __OpenBSD__ */
 
+#if __NetBSD__ || __FreeBSD__
+int ripv6_usrreq_send(struct socket *, int, struct mbuf *, struct sockaddr *,
+		      struct mbuf *, struct proc *);
+#else /* __NetBSD__ || __FreeBSD__ */
 int ripv6_usrreq_send(struct socket *, int, struct mbuf *, struct sockaddr *,
 		      struct mbuf *);
+#endif /* __NetBSD__ || __FreeBSD__ */
 
+#if __FreeBSD__
+int ripv6_usrreq_abort(struct socket *);
+int ripv6_usrreq_attach(struct socket *, int , struct proc *);
+int ripv6_usrreq_bind(struct socket *, struct sockaddr *, struct proc *);
+int ripv6_usrreq_connect(struct socket *, struct sockaddr *, struct proc *);
+int ripv6_usrreq_control(struct socket *, u_long, caddr_t, struct ifnet *,
+			 struct proc *);
+int ripv6_usrreq_detach(struct socket *);
+int ripv6_usrreq_peeraddr(struct socket *, struct sockaddr **);
+int ripv6_usrreq_sense(struct socket *, struct stat *);
+int ripv6_usrreq_shutdown(struct socket *);
+int ripv6_usrreq_sockaddr(struct socket *, struct sockaddr **);
+#else /* __FreeBSD__ */
+#if __NetBSD__
+int ripv6_usrreq __P((struct socket *, int, struct mbuf *, struct mbuf *,
+		      struct mbuf *, struct proc *));
+#else /* __NetBSD__ */
 int ripv6_usrreq __P((struct socket *, int, struct mbuf *, struct mbuf *,
 		      struct mbuf *));
+#endif /* __NetBSD__ */
+#endif /* __FreeBSD__ */
 
+#if __OpenBSD__
 void ipv6_input __P((struct mbuf *, ...));
-
 int ipv6_output __P((struct mbuf *, ...));
-#if 0
+#else /* __OpenBSD__ */
+void ipv6_input __P((struct mbuf *, int));
 int ipv6_output __P((struct mbuf *, struct route6 *, int, struct ipv6_moptions *, struct ifnet *, struct socket *));
-#endif
+#endif /* __OpenBSD__ */
 void ipv6_reasm __P((struct mbuf *, int));
 void ipv6_hop __P((struct mbuf *, int));
 
+#if __FreeBSD__
+int in6_control __P((struct socket *,int, caddr_t, struct ifnet *,int, struct proc *));
+#else /* __FreeBSD__ */
+#if __NetBSD__
+int in6_control __P((struct socket *,u_long, caddr_t, struct ifnet *,int, struct proc *));
+#else /* __NetBSD__ */
 int in6_control __P((struct socket *,int, caddr_t, struct ifnet *,int));
+#endif /* __NetBSD__ */
+#endif /* __FreeBSD__ */
 void ipv6_stripoptions __P((struct mbuf *, int));
 struct in6_multi *in6_addmulti __P((struct in6_addr *,struct ifnet *));
 void in6_delmulti __P((struct in6_multi *));
 
-extern int ipv6_icmp_send(struct socket *, int, struct mbuf *, 
-	    struct sockaddr *, struct mbuf *, struct proc *);
+#if __FreeBSD__
+/* ripv6_usrreq  and  ipv6_icmp_usrreq functions */
+extern struct pr_usrreqs ripv6_usrreqs;
+extern struct pr_usrreqs ipv6_icmp_usrreqs;
 
+extern int ripv6_usr_attach(struct socket *, int , struct proc *);
+extern int ripv6_usr_disconnect(struct socket *);
+extern int ripv6_usr_abort(struct socket *);
+extern int ripv6_usr_detach(struct socket *);
+extern int ripv6_usr_bind(struct socket *, struct sockaddr *, struct proc *);
+extern int ripv6_usr_connect(struct socket *, struct sockaddr *, struct proc *);
+extern int ripv6_usr_shutdown(struct socket *);
+extern int ripv6_usr_send(struct socket *, int, struct mbuf *, 
+			  struct sockaddr *, struct mbuf *, struct proc *);
+extern int ripv6_usr_control(struct socket *, int, caddr_t,   
+			     struct ifnet *, struct proc *);
+extern int ripv6_usr_sense(struct socket *, struct stat *);
+extern int ripv6_usr_sockaddr(struct socket *, struct sockaddr **);
+extern int ripv6_usr_peeraddr(struct socket *, struct sockaddr **);
+#endif /* __FreeBSD__ */
+
+extern int ipv6_icmp_send(struct socket *, int, struct mbuf *, 
+			  struct sockaddr *, struct mbuf *, struct proc *);
+
+#if __OpenBSD__
+#ifdef NRL_IPSEC
+void *ipv6_trans_ctlinput __P((int, struct sockaddr *, void *, struct mbuf *));
+#else /* NRL_IPSEC */
 void *ipv6_trans_ctlinput __P((int, struct sockaddr *, void *));
+#endif /* NRL_IPSEC */
+#else /* __OpenBSD__ */
+struct ip;
+#ifdef NRL_IPSEC
+void ipv6_trans_ctlinput __P((int, struct sockaddr *, struct ip *, struct mbuf *));
+#else /* NRL_IPSEC */
+void ipv6_trans_ctlinput __P((int, struct sockaddr *, struct ip *));
+#endif /* NRL_IPSEC */
+#endif /* __OpenBSD__ */
 
 /* These might belong in in_pcb.h */
 struct inpcb;
-
+#if __FreeBSD__
+/*
+ * FreeBSD, having done away with the *_usrreq() functions no longer needs to 
+ * pass mbufs to these functions.  Thus they pass in sockaddrs instead.  
+ */
+int in6_pcbbind(struct inpcb *, struct sockaddr *);
+int in6_pcbconnect(struct inpcb *, struct sockaddr *);
+int in6_setsockaddr(struct inpcb *, struct sockaddr **);
+int in6_setpeeraddr(struct inpcb *, struct sockaddr **);
+#else /* __FreeBSD__ */
+int in6_pcbbind(struct inpcb *, struct mbuf *);
+int in6_pcbconnect(struct inpcb *, struct mbuf *);
+int in6_setsockaddr(struct inpcb *, struct mbuf *);
+int in6_setpeeraddr(struct inpcb *, struct mbuf *);
+#endif /* __FreeBSD__ */
 void ipv6_onlink_query(struct sockaddr_in6 *);
 int ipv6_verify_onlink(struct sockaddr_in6 *);
 
+#if __FreeBSD__ 
+struct inpcbhead; 		/* XXX?  Forward declaration needed. */
+#define __IN6_PCBNOTIFY_FIRSTARG struct inpcbhead *
+#endif /* __FreeBSD__ */
+#if __NetBSD__ || __OpenBSD__
 struct inpcbtable;
+#define __IN6_PCBNOTIFY_FIRSTARG struct inpcbtable *
+#endif /* __NetBSD__ || __OpenBSD__ */
+#if __bsdi__
+struct inpcb;
+#define __IN6_PCBNOTIFY_FIRSTARG struct inpcb *
+#endif /* __bsdi__ */
 
-int in6_pcbnotify __P((struct inpcbtable *, struct sockaddr *, uint,
-	    struct in6_addr *, uint, int, void (*)(struct inpcb *, int)));
+#if (!__OpenBSD__ && defined(IPSEC)) || (__OpenBSD__ && defined(NRL_IPSEC))
+int in6_pcbnotify __P((__IN6_PCBNOTIFY_FIRSTARG, struct sockaddr *, uint,
+                       struct in6_addr *, uint, int, void (*)(struct inpcb *,
+                       int), struct mbuf *, int));
+#else /* (!__OpenBSD__ && defined(IPSEC)) || (__OpenBSD__ && defined(NRL_IPSEC)) */
+int in6_pcbnotify __P((__IN6_PCBNOTIFY_FIRSTARG, struct sockaddr *, uint,
+                       struct in6_addr *, uint, int, void (*)(struct inpcb *,
+                       int)));
+#endif /* (!__OpenBSD__ && defined(IPSEC)) || (__OpenBSD__ && defined(NRL_IPSEC)) */
+
+#undef __IN6_PCBNOTIFY_FIRSTARG
 
 void ipv6_freemoptions __P((struct ipv6_moptions *));
-#endif /* _KERNEL */
+
+int ipv6_controltoheader(struct mbuf **m, struct mbuf *control, struct ifnet **forceifp, int *);
+struct mbuf *ipv6_headertocontrol(struct mbuf *m, int extra, int inp_flags);
+#endif /* defined(_KERNEL) || defined(KERNEL) */
 
 #endif /* _NETINET6_IPV6_VAR_H */

@@ -56,7 +56,12 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <sys/sysctl.h>
 #endif /* __FreeBSD__ */
 
+#ifdef DEBUG_NRL_SYS
 #include <sys/debug.h>
+#endif /* DEBUG_NRL_SYS */
+#ifdef DEBUG_NRL_NETINET6
+#include <netinet6/debug.h>
+#endif /* DEBUG_NRL_NETINET6 */
 
 /*
  * Globals
@@ -102,7 +107,6 @@ static struct mbuf *ipv6_saveopt(caddr_t p, int size, int type, int level);
 #if 0
 static struct mbuf *ipv6_savebag(struct mbuf *m, int level);
 #endif /* 0 */
-struct mbuf *ipv6_headertocontrol(struct mbuf *m, int extra, int inp_flags);
 
 /*----------------------------------------------------------------------
  * IPv6 initialization function.
@@ -157,12 +161,12 @@ ipv6_init()
 
   ipv6intrq.ifq_maxlen = ipv6qmaxlen;
 
-#ifdef IPSEC
+#if 0 /* defined(INET6) && defined(IPSEC) */
   /*
    * Initialise IPsec
    */
   ipsec_init();
-#endif /* IPSEC */
+#endif /* defined(INET6) && defined(IPSEC) */
 
   DPRINTF(GROSSEVENT,("...done\n"));
 }
@@ -188,7 +192,7 @@ ipv6intr()
 	return;       /* ...HERE.  THIS is how I exit this endless loop. */
       }
 
-#ifdef IPSEC
+#if 0 /* def IPSEC */
       m->m_flags &= ~(M_AUTHENTIC | M_DECRYPTED);
 #endif /* IPSEC */
       
@@ -205,10 +209,21 @@ NETISR_SET(NETISR_IPV6, ipv6intr);
  * IPv6 processing.
  ----------------------------------------------------------------------*/
 
+#if __OpenBSD__
+void
+#if __STDC__
+ipv6_input(struct mbuf *incoming, ...)
+#else /* __STDC__ */
+ipv6_input(incoming, va_alist)
+	struct mbuf *m;
+	va_dcl
+#endif /* __STDC__ */
+#else /* __OpenBSD__ */
 void
 ipv6_input(incoming, extra)
      struct mbuf *incoming;
      int extra;
+#endif /* __OpenBSD__ */
 {
   struct ipv6 *header;
   struct in6_ifaddr *i6a = NULL;
@@ -216,9 +231,19 @@ ipv6_input(incoming, extra)
   int jumbogram = 0;
   uint8_t nexthdr;
   int payload_len;
+#if __OpenBSD__
+  va_list ap;
+  int extra;
+#endif /* __OpenBSD__ */
 
   DPRINTF(GROSSEVENT,("ipv6_input(struct mbuf *incoming=%08lx, int extra=%x)\n", (unsigned long)incoming, extra));
   DPRINTF(IDL_FINISHED,("incoming->m_data = %08lx, & 3 = %lx\n", (unsigned long)incoming->m_data, (unsigned long)incoming->m_data & 3));
+
+#if __OpenBSD__
+  va_start(ap, incoming);
+  extra = va_arg(ap, int);
+  va_end(ap);
+#endif /* __OpenBSD__ */
 
   /*
    * Can't do anything until at least an interface is marked as
@@ -342,16 +367,19 @@ ipv6_input(incoming, extra)
       return;
     }
 
-  if (incoming->m_pkthdr.len > payload_len + sizeof(struct ipv6))
-    if (!payload_len)
+  if (incoming->m_pkthdr.len > payload_len + sizeof(struct ipv6)) {
+    if (!payload_len) {
       jumbogram = 1;  /* We might have a jumbogram here! */
-    else if (incoming->m_len == incoming->m_pkthdr.len)
-      {
+    } else {
+      if (incoming->m_len == incoming->m_pkthdr.len) {
 	incoming->m_len = payload_len + sizeof(struct ipv6);
 	incoming->m_pkthdr.len = payload_len + sizeof(struct ipv6);
-      }
-    else m_adj(incoming,
+      } else {
+         m_adj(incoming,
 	       (payload_len + sizeof(struct ipv6)) - incoming->m_pkthdr.len );
+      }
+    }
+  }
 
   /*
    * See if it's for me by checking list of i6a's.  I may want to convert
@@ -563,7 +591,7 @@ ipv6_reasm(incoming, extra)
    * know which is right. The easiest solution is to drop this packet.
    */
 
-  if (!(fraghdr->frag_bitsoffset & 1))
+  if (!(fraghdr->frag_bitsoffset & 1)) {
     if (fragment->flags & 1)  /* i.e. we already have the end... */
       {
 	/*
@@ -574,6 +602,7 @@ ipv6_reasm(incoming, extra)
       }
     else
       fragment->flags |= 1;
+  }
 
   if (!(fraghdr->frag_bitsoffset & 0xFFF8)) {
     /*

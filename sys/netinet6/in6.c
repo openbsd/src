@@ -33,7 +33,12 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet6/ipv6_var.h>
 #include <netinet6/ipv6_icmp.h>
 
+#ifdef DEBUG_NRL_SYS
 #include <sys/debug.h>
+#endif /* DEBUG_NRL_SYS */
+#ifdef DEBUG_NRL_NETINET6
+#include <netinet6/debug.h>
+#endif /* DEBUG_NRL_NETINET6 */
 
 /*
  * Globals
@@ -311,12 +316,17 @@ in6_control(so, cmd, data, ifp, internal)
        * not sure, return 0 if sure.  Return EADDRNOTAVAIL if not available
        * (i.e. DAD failed.).
        */
-      if (cmd == SIOCVIFADDR_INET6)
-	if (i6a == NULL)
+      if (cmd == SIOCVIFADDR_INET6) {
+	if (i6a == NULL) {
 	  return EADDRNOTAVAIL;
-	else if (i6a->i6a_addrflags & I6AF_NOTSURE)
-	  return EWOULDBLOCK;
-	else return 0;
+	} else {
+          if (i6a->i6a_addrflags & I6AF_NOTSURE) {
+	    return EWOULDBLOCK;
+	  } else {
+            return 0;
+          }
+        }
+      }
 
       /* FALLTHROUGH TO... */
 
@@ -454,15 +464,18 @@ in6_control(so, cmd, data, ifp, internal)
       maskIsNew = 0;
       hostIsNew = 1;
       error = 0;
-      if (i6a->i6a_addr.sin6_family == AF_INET6)
-	if (ifra->ifra_addr.sin6_len == 0)
+      if (i6a->i6a_addr.sin6_family == AF_INET6) {
+	if (ifra->ifra_addr.sin6_len == 0) {
 	  {
 	    bcopy(&(i6a->i6a_addr),&(ifra->ifra_addr),
 		  sizeof(struct sockaddr_in6));
 	    hostIsNew = 0;
 	  }
-	else if (IN6_ARE_ADDR_EQUAL(&ifra->ifra_addr.sin6_addr, &i6a->i6a_addr.sin6_addr))
-	  hostIsNew = 0;
+	} else {
+          if (IN6_ARE_ADDR_EQUAL(&ifra->ifra_addr.sin6_addr, &i6a->i6a_addr.sin6_addr))
+	    hostIsNew = 0;
+        }
+      }
 
       if (ifra->ifra_mask.sin6_len)
 	{
@@ -731,7 +744,6 @@ in6_ifinit(ifp, i6a, sin6, scrub, useDAD)
    */
   if (ifp->if_flags & IFF_MULTICAST)
     {
-      struct in6_addr addr;
       struct in6_multi *rc;
       
       /* NOTE2:  Set default multicast interface here.
@@ -739,27 +751,44 @@ in6_ifinit(ifp, i6a, sin6, scrub, useDAD)
       if (ifp->if_type != IFT_LOOP && mcastdefault == NULL)
 	setmcastdef(ifp);
 
-      /* All-nodes. */
-      SET_IN6_ALLNODES(addr);
-      SET_IN6_MCASTSCOPE(addr,IN6_INTRA_LINK);
-      rc = in6_addmulti(&addr, ifp);
+      {
+        struct in6_addr addr = IN6ADDR_ALLNODES_INIT;
+
+        rc = in6_addmulti(&addr, ifp);
+      };
 
       /* All-routers, if forwarding */
       if (ipv6forwarding) {
-	SET_IN6_ALLROUTERS(addr);
-	SET_IN6_MCASTSCOPE(addr, IN6_INTRA_LINK);
+        struct in6_addr addr = IN6ADDR_ALLROUTERS_INIT;
+
 	rc = in6_addmulti(&addr, ifp);
       };
 
+      {
+        struct in6_addr addr = IN6ADDR_ALLHOSTS_INIT;
+
+        rc = in6_addmulti(&addr, ifp);
+      };
+
       /* Solicited-nodes. */
+      {
+        struct in6_addr addr = IN6ADDR_SN_PREFIX_INIT;
+
+	addr.s6_addr[13] = i6a->i6a_addr.sin6_addr.in6a_words[13];
+	addr.s6_addr[14] = i6a->i6a_addr.sin6_addr.in6a_words[14];
+	addr.s6_addr[15] = i6a->i6a_addr.sin6_addr.in6a_words[15];
+
+        DDO(IDL_EVENT, dump_in6_addr(&addr));
+
+        rc=in6_addmulti(&addr, ifp);
+      };
+
+#if 0
       addr.in6a_words[0] = htonl(0xff020000);
       addr.in6a_words[1] = 0;
       addr.in6a_words[2] = htonl(1);
       addr.in6a_words[3] = i6a->i6a_addr.sin6_addr.in6a_words[3] | htonl(0xff000000);
-
-      DDO(IDL_EVENT, dump_in6_addr(&addr));
-
-      rc=in6_addmulti(&addr, ifp);
+#endif /* 0 */
     }
 
   if (useDAD /*&& error != 0*/)

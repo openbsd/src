@@ -231,7 +231,7 @@ struct ext_mtu      /* Recommended link MTU. */
 
 #define	ICMPV6_INFOTYPE(type) ((type) >= 128)
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(KERNEL)
 #include <netinet6/ipv6_var.h>
 
 /* Function prototypes */
@@ -252,6 +252,6 @@ void ipv6_routeradv_input(struct mbuf *, int);
 void ipv6_neighborsol_input(struct mbuf *, int);
 void ipv6_neighboradv_input(struct mbuf *, int);
 void ipv6_redirect_input(struct mbuf *, int);
-#endif
+#endif /* defined(_KERNEL) || defined(KERNEL) */
 
 #endif /* _NETINET6_IPV6_ICMP_H */

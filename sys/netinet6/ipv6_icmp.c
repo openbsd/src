@@ -47,7 +47,12 @@ extern struct netproc_security fixedencrypt;
 extern struct netproc_auth fixedauth;
 #endif /* IPSEC */
 
+#ifdef DEBUG_NRL_SYS
 #include <sys/debug.h>
+#endif /* DEBUG_NRL_SYS */
+#ifdef DEBUG_NRL_NETINET6
+#include <netinet6/debug.h>
+#endif /* DEBUG_NRL_NETINET6 */
 
 #if __FreeBSD__
 #include <sys/sysctl.h>
@@ -228,7 +233,7 @@ ipv6_icmp_reflect(m, extra)
   ipv6->ipv6_versfl = htonl(((6) << 28) | 
 		((ICMPV6_INFOTYPE(icmp->icmp_type) ? 12 : 15) << 24));
 
-#ifdef IPSEC
+#if 0 /* def IPSEC */
   /*
    *  Packet sent should be authenticated/encrypted if responding to
    *  received packet that was authenticated/encrypted.
@@ -368,7 +373,7 @@ ipv6_icmp_error(badpack, type, code, paramptr)
 
   outgoing->m_pkthdr.len = outgoing->m_len;
 
-#if defined(IPSEC) || defined(NRL_IPSEC)
+#if 0 /* defined(IPSEC) || defined(NRL_IPSEC) */
   /*
    * Copy over the DECRYPTED and AUTHENTIC flag.
    * NB: If the inbound packet was sent to us in an authenticated
@@ -432,21 +437,19 @@ update_pathmtu(dst, newmtu)
   if ((rt = rtalloc1((struct sockaddr *)&sin6,0)) != NULL)
 #endif /* __FreeBSD__ */
     {
-      if (rt->rt_flags & RTF_HOST)
-        {
-	  if (rt->rt_rmx.rmx_mtu < newmtu)
+      if (rt->rt_flags & RTF_HOST) {
+	  if (rt->rt_rmx.rmx_mtu < newmtu) {
 	    DPRINTF(IDL_ERROR, 
 	    ("DANGER:  New MTU message is LARGER than current MTU.\n"));
+          };
 
 	  rt->rt_rmx.rmx_mtu = newmtu;   /* This should be enough for HLP's to
 					    know MTU has changed, IMHO. */
 	  rt->rt_refcnt--;
-        }
-      else
-        {
-	  DPRINTF(IDL_ERROR, 
-		 ("Got path MTU message for non-cloned destination route.\n"));
-        }
+      } else {
+	DPRINTF(IDL_ERROR, 
+	  ("Got path MTU message for non-cloned destination route.\n"));
+      }
       /*
        * Find all active tcp connections, and indicate they need path MTU
        * updating as well.
@@ -512,7 +515,7 @@ ipv6_icmp_input(incoming, extra)
   {
     unsigned int cksum;
 
-    if (cksum = in6_cksum(incoming, IPPROTO_ICMPV6, icmplen, extra))
+    if ((cksum = in6_cksum(incoming, IPPROTO_ICMPV6, icmplen, extra)))
       {
 	DPRINTF(IDL_ERROR,("ipv6_icmp_input() -- checksum returned %08x.\n", cksum));
 	m_freem(incoming);
