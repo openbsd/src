@@ -1,4 +1,4 @@
-#	$OpenBSD: DS5000_240,v 1.7 2000/05/01 22:25:46 maja Exp $
+#	$OpenBSD: DS5000_240,v 1.8 2000/11/10 01:07:04 miod Exp $
 #
 # DECstation 5000/240 kernel config
 #
@@ -85,8 +85,6 @@ clock0		at mainbus0		# rtc
 dz0		at mainbus0
 le0		at tc?			# tc ether "option" on baseboard
 asc0		at tc?			# tc scsi  "option" on baseboard
-# for now, pretend this machine has an ioasic
-dz0		at ioasic? offset?	# dc7083 four-port dz device
 # the scsi busses
 oldscsibus*	at asc?
 # scsi configuration for old 4.4bsd/pmax decstation scsi driver
