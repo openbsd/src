@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.77 2003/02/14 12:04:23 henning Exp $
+.\" $OpenBSD: pfctl.8,v 1.78 2003/02/14 14:11:44 cedric Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -235,7 +235,7 @@ Show all of the above.
 Specify the name of the table.
 .It Fl T Ar command
 Specify the command to apply to the table.
-commands include:
+Commands include:
 .Bl -tag -width "T Replace " -compact
 .It Fl T Ar create
 Create a new table.
@@ -258,7 +258,8 @@ Test if the given addresses match a table.
 .It Fl T Ar zero
 Clear all the statistics of a table.
 .It Fl T Ar load
-Load only the table definitions from pf.conf.
+Load only the table definitions from
+.Xr pf.conf 5 .
 Used in conjunction with the
 .Fl f
 flag, like in: "pfctl -Tl -f pf.conf".
@@ -274,7 +275,7 @@ commands, the list of addresses can be specified either directly on the command
 line and/or in an unformatted text file, using the
 .Fl f
 flag.
-#-starting comments are allowed in the text file.
+Comments starting with a "#" are allowed in the text file.
 With these commands, the
 .Fl v
 flag can also be used once or twice, in which case
@@ -291,7 +292,7 @@ The address/network has been changed (negated).
 .It D
 The address/network has been deleted.
 .It M
-The address match (test operation only).
+The address matches (test operation only).
 .It X
 The address/network is duplicated and therefore ignored.
 .It Y
@@ -304,14 +305,14 @@ Each table maintains a set of counters that can be retrieved using the
 .Fl v
 flag of
 .Nm pfctl .
-For example, the following command define a wide open firewall which will keep
-track of packets going to or coming from OpenBSD ftp server.
+For example, the following commands define a wide open firewall which will keep
+track of packets going to or coming from the OpenBSD ftp server.
 The following commands configure the firewall and send 10 pings to the ftp
 server:
 .Pp
 .Bd -literal -offset indent
-.Ic # echo \&"table <test> { ftp.openbsd.org }\en\&"\e
-.Ic > \&"pass out to <test> keep state\&" Xo
+.Ic # echo \&"table <test> { ftp.openbsd.org }\en\& "\e
+.Ic \  \  pass out to <test> keep state" Xo
 .Ic \&| pfctl -f-
 .Xc
 .Ic # ping -qc10 ftp.openbsd.org
@@ -335,10 +336,10 @@ line.
 .Ic \ \ \ \ Out/Pass: \ \ \ [ Packets: 10 \ \ \ \ \ \ Bytes: 840 \ \ \ \ \ ]
 .Ed
 .Pp
-Similarly, It is possible to view global information about the tables
-by using two times the
+Similarly, it is possible to view global information about the tables
+by using the
 .Fl v
-modifier and the
+modifier twice and the
 .Ar show Tables
 command.
 This will display the number of addresses on each table,
@@ -361,7 +362,7 @@ packet statistics for the whole table:
 .Ed
 .Pp
 As we can see here, only one packet - the initial ping request - matched the
-table; but all packets passing at the result of the state are correctly
+table; but all packets passing as the result of the state are correctly
 accounted for.
 Reloading the table(s) will not affect packet accounting in any way; however,
 the state accounting will stop if the rules are reloaded or flushed.
@@ -383,10 +384,10 @@ The flags are defined as follows:
 .Bl -tag -width XXX -compact
 .It c
 For constant tables, which cannot be altered outside
-.Nm pf.conf .
+.Xr pf.conf 5 .
 .It p
 For persistant tables, which don't get automatically flushed when no rules
-refers to them.
+refer to them.
 .It a
 For tables which are part of the
 .Ar active
@@ -400,7 +401,7 @@ For tables which are part of the
 .Ar inactive
 tableset.
 This flag can only be witnessed briefly during the loading of
-.Nm pf.conf .
+.Xr pf.conf 5 .
 .It r
 For tables which are referenced (used) by rules.
 .El
