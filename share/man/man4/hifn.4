@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hifn.4,v 1.15 2001/06/22 19:12:49 jason Exp $
+.\"	$OpenBSD: hifn.4,v 1.16 2001/06/22 19:13:47 jason Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt
 .\" All rights reserved.
@@ -64,7 +64,7 @@ The
 .Tn Hi/Fn 7951
 will also supply data to the kernel
 .Xr random 4
-number generator.
+subsystem.
 .Sh BUGS
 The 7751 chip starts out at initialization by only supporting compression.
 A proprietary algorithm, which has been reverse engineered, is required to
@@ -74,6 +74,7 @@ all vendors currently just use the obvious ID which is 13 bytes of 0.
 .Sh SEE ALSO
 .Xr crypt 3 ,
 .Xr ipsec 4 ,
+.Xr random 4 ,
 .Xr crypto 9
 .Sh CAVEATS
 The Hi/fn 9751 shares the same PCI id.  This chip is basically a 7751, but
