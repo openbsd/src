@@ -76,5 +76,6 @@ typedef int32_t			register_t;
 
 #define	__BDEVSW_DUMP_OLD_TYPE
 #define	__SWAP_BROKEN
+#define __FORK_BRAINDAMAGE
 
 #endif	/* _MACHTYPES_H_ */

@@ -35,12 +35,12 @@
 
 #define	outb(a,v)	(*(volatile unsigned char*)(a) = (v))
 #define	outw(a,v)	(*(volatile unsigned short*)(a) = (v))
-#define	out16(a,v)	outh(a,v)
+#define	out16(a,v)	outw(a,v)
 #define	outl(a,v)	(*(volatile unsigned int*)(a) = (v))
-#define	out32(a,v)	outw(a,v)
+#define	out32(a,v)	outl(a,v)
 #define	inb(a)		(*(volatile unsigned char*)(a))
 #define	inw(a)		(*(volatile unsigned short*)(a))
-#define	in16(a)		inh(a)
+#define	in16(a)		inw(a)
 #define	inl(a)		(*(volatile unsigned int*)(a))
-#define	in32(a)		inw(a)
+#define	in32(a)		inl(a)
 

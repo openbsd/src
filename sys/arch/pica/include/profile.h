@@ -34,10 +34,10 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)profile.h	8.1 (Berkeley) 6/10/93
- *      $Id: profile.h,v 1.2 1996/03/24 16:52:37 tholo Exp $
+ *      $Id: profile.h,v 1.3 1996/05/01 18:23:48 pefo Exp $
  */
 
-#define	_MCOUNT_DECL static void __mcount
+#define	_MCOUNT_DECL static void ___mcount
 
 #define	MCOUNT \
 	__asm(".globl _mcount;" \

@@ -93,6 +93,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <sys/device.h>
 
 #include <machine/cpu.h>
+#include <machine/pio.h>
 #include <machine/autoconf.h>
 
 #include <pica/pica/pica.h>

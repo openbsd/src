@@ -31,11 +31,12 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)reloc.h	8.1 (Berkeley) 6/10/93
- *      $Id: reloc.h,v 1.1.1.1 1995/10/18 10:39:14 deraadt Exp $
+ *      $Id: reloc.h,v 1.2 1996/05/01 18:23:53 pefo Exp $
  *
  * from: Header: reloc.h,v 1.6 92/06/20 09:59:37 torek Exp
  */
 
+#if 0
 /*
  * MIPS relocation types.
  */
@@ -71,3 +72,4 @@ struct reloc_info_pica {
 };
 
 #define relocation_info reloc_info_pica
+#endif
