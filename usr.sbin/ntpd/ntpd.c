@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.31 2005/03/09 20:31:11 henning Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.32 2005/03/13 10:06:27 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -332,17 +332,19 @@ ntpd_settime(double d)
 	if (d < SETTIME_MIN_OFFSET && d > -SETTIME_MIN_OFFSET)
 		return;
 
-	d_to_tv(d, &tv);
-	if (gettimeofday(&curtime, NULL) == -1)
+	if (gettimeofday(&curtime, NULL) == -1) {
 		log_warn("gettimeofday");
-	curtime.tv_sec += tv.tv_sec;
-	curtime.tv_usec += tv.tv_usec;
-	if (curtime.tv_usec > 1000000) {
-		curtime.tv_sec++;
-		curtime.tv_usec -= 1000000;
+		return;
 	}
-	if (settimeofday(&curtime, NULL) == -1)
+	d_to_tv(d, &tv);
+	curtime.tv_usec += tv.tv_usec + 1000000;
+	curtime.tv_sec += tv.tv_sec - 1 + (curtime.tv_usec / 1000000);
+	curtime.tv_usec %= 1000000;
+
+	if (settimeofday(&curtime, NULL) == -1) {
 		log_warn("settimeofday");
+		return;
+	}
 	tval = curtime.tv_sec;
 	strftime(buf, sizeof(buf), "%a %b %e %H:%M:%S %Z %Y",
 	    localtime(&tval));
