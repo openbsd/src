@@ -19,4 +19,7 @@ $(TARG): $(DEP)
 clean cleandir:
 	/bin/rm INSTALL.*
 
+beforeinstall:
+	cp ${TARG} ${DESTDIR}/snapshot/
+
 .include <bsd.prog.mk>
