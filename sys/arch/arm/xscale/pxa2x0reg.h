@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0reg.h,v 1.2 2005/01/02 19:52:36 drahn Exp $ */
+/*	$OpenBSD: pxa2x0reg.h,v 1.3 2005/01/03 04:43:47 drahn Exp $ */
 /* $NetBSD: pxa2x0reg.h,v 1.4 2003/06/11 20:43:01 scw Exp $ */
 
 /*
@@ -265,44 +265,56 @@ struct pxa2x0_dma_desc {
  */
 #define GPIO_GPLR0  0x00	/* Level reg [31:0] */
 #define GPIO_GPLR1  0x04	/* Level reg [63:32] */
-#define GPIO_GPLR2  0x08	/* Level reg [80:64] */
+#define GPIO_GPLR2  0x08	/* Level reg [80:64] PXA 270 [95:64] */
 
 #define GPIO_GPDR0  0x0c	/* dir reg [31:0] */
 #define GPIO_GPDR1  0x10	/* dir reg [63:32] */
-#define GPIO_GPDR2  0x14	/* dir reg [80:64] */
+#define GPIO_GPDR2  0x14	/* dir reg [80:64] PXA 270 [95:64] */
 
 #define GPIO_GPSR0  0x18	/* set reg [31:0] */
 #define GPIO_GPSR1  0x1c	/* set reg [63:32] */
-#define GPIO_GPSR2  0x20	/* set reg [80:64] */
+#define GPIO_GPSR2  0x20	/* set reg [80:64] PXA 270 [95:64] */
 
 #define GPIO_GPCR0  0x24	/* clear reg [31:0] */
 #define GPIO_GPCR1  0x28	/* clear reg [63:32] */
-#define GPIO_GPCR2  0x2c	/* clear reg [80:64] */
+#define GPIO_GPCR2  0x2c	/* clear reg [80:64] PXA 270 [95:64] */
 
 #define GPIO_GPER0  0x30	/* rising edge [31:0] */
 #define GPIO_GPER1  0x34	/* rising edge [63:32] */
-#define GPIO_GPER2  0x38	/* rising edge [80:64] */
+#define GPIO_GPER2  0x38	/* rising edge [80:64] PXA 270 [95:64] */
 
 #define GPIO_GRER0  0x30	/* rising edge [31:0] */
 #define GPIO_GRER1  0x34	/* rising edge [63:32] */
-#define GPIO_GRER2  0x38	/* rising edge [80:64] */
+#define GPIO_GRER2  0x38	/* rising edge [80:64] PXA 270 [95:64] */
 
 #define GPIO_GFER0  0x3c	/* falling edge [31:0] */
 #define GPIO_GFER1  0x40	/* falling edge [63:32] */
-#define GPIO_GFER2  0x44	/* falling edge [80:64] */
+#define GPIO_GFER2  0x44	/* falling edge [80:64] PXA 270 [95:64] */
 
 #define GPIO_GEDR0  0x48	/* edge detect [31:0] */
 #define GPIO_GEDR1  0x4c	/* edge detect [63:32] */
-#define GPIO_GEDR2  0x50	/* edge detect [80:64] */
+#define GPIO_GEDR2  0x50	/* edge detect [80:64] PXA 270 [95:64] */
 
 #define GPIO_GAFR0_L  0x54	/* alternate function [15:0] */
 #define GPIO_GAFR0_U  0x58	/* alternate function [31:16] */
 #define GPIO_GAFR1_L  0x5c	/* alternate function [47:32] */
 #define GPIO_GAFR1_U  0x60	/* alternate function [63:48] */
 #define GPIO_GAFR2_L  0x64	/* alternate function [79:64] */
-#define GPIO_GAFR2_U  0x68	/* alternate function [80] */
+#define GPIO_GAFR2_U  0x68	/* alternate function [80] PXA 270 [95:80] */
 
-#define	GPIO_REG(r, pin)	((r) + (((pin) / 32) * 4))
+#define GPIO_GAFR3_L  0x6C	/* alternate function PXA 270 [111:96] */
+#define GPIO_GAFR3_U  0x70	/* alternate function PXA 270 [120:112] */
+
+#define GPIO_GPLR3  0x100	/* Level PXA 270 [120:96] */
+#define GPIO_GPDR3  0x10C	/* dir reg PXA 270 [120:96] */
+#define GPIO_GPSR3  0x118	/* set reg PXA 270 [120:96] */
+#define GPIO_GPCR3  0x124	/* clear reg PXA 270 [120:96] */
+#define GPIO_GRER3  0x130	/* rising edge PXA 270 [120:96] */
+#define GPIO_GFER3  0x13c	/* falling edge PXA 270 [120:96] */
+#define GPIO_GEDR3  0x148	/* edge detect PXA270 [120:96] */
+
+#define	GPIO_REG(r, pin)	((r) + \
+				((pin > 95) ? GPIO_GPLR3 : (((pin) / 32) * 4)))
 #define	GPIO_BANK(pin)		((pin) / 32)
 #define	GPIO_BIT(pin)		(1u << ((pin) & 0x1f))
 #define	GPIO_FN_REG(pin)	(GPIO_GAFR0_L + (((pin) / 16) * 4))
@@ -327,7 +339,7 @@ struct pxa2x0_dma_desc {
 #define	GPIO_IS_GPIO_IN(n)	(((n) & (GPIO_FN_MASK|GPIO_OUT)) == GPIO_IN)
 #define	GPIO_IS_GPIO_OUT(n)	(((n) & (GPIO_FN_MASK|GPIO_OUT)) == GPIO_OUT)
 
-#define	GPIO_NPINS    85
+#define	GPIO_NPINS    120
 
 /*
  * memory controller
@@ -423,6 +435,12 @@ struct pxa2x0_dma_desc {
 #define  LCCR0_QDM	(1U<<11) /* LCD Quick Disable Mask */
 #define  LCCR0_BM	(1U<<20) /* Branch Mask */
 #define  LCCR0_OUM	(1U<<21) /* Output FIFO Underrun Mask */
+/* PXA270 */
+#define  LCCR0_LCDT	(1U<<22) /* LCD Panel Type */
+#define  LCCR0_RDSTM	(1U<<23) /* Read Status Interrupt Mask */
+#define  LCCR0_CMDIM	(1U<<24) /* Command Interrupt Mask */
+#define  LCCR0_OUC	(1U<<25) /* Overlay Underlay Control */
+#define  LCCR0_LDDALT	(1U<<26) /* LDD Alernate Mapping Control Bit */
 
 #define  LCCR0_IMASK	(LCCR0_LDM|LCCR0_SFM|LCCR0_IUM|LCCR0_EFM|LCCR0_QDM|LCCR0_BM|LCCR0_OUM)
 
