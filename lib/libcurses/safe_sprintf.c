@@ -1,4 +1,4 @@
-/*	$OpenBSD: safe_sprintf.c,v 1.3 1998/08/14 21:11:42 millert Exp $	*/
+/*	$OpenBSD: safe_sprintf.c,v 1.4 1998/08/15 19:06:38 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -232,10 +232,7 @@ _nc_printf_string(const char *fmt, va_list ap)
 		if (screen_lines   > rows) rows = screen_lines;
 		if (screen_columns > cols) cols = screen_columns;
 		len = (rows * (cols + 1)) + 1;
-		if (buf == 0)
-			nbuf = malloc(len);
-		else
-			nbuf = realloc(buf, len);
+		nbuf = buf ? realloc(buf, len) : malloc(len);
 		if (nbuf == NULL) {
 			if (buf != NULL)
 				free(buf);

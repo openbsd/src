@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_tparm.c,v 1.2 1998/08/14 21:11:40 millert Exp $	*/
+/*	$OpenBSD: lib_tparm.c,v 1.3 1998/08/15 19:06:36 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -306,13 +306,12 @@ static	int static_vars[NUM_VARS];
 
 		len_fmt = (cp - string) + len_fmt + 2;
 		nformat = format ? realloc(format, len_fmt) : malloc(len_fmt);
-		if (nformat != 0) {
-			format = nformat;
-		} else {
+		if (nformat == 0) {
 			if (format != 0)
 				free(format);
 			return 0;
 		}
+		format = nformat;
 	}
 
 	if (number > 9) number = 9;
