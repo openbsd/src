@@ -1,4 +1,4 @@
-/* $OpenBSD: zaurus_kbd.c,v 1.1 2005/01/13 20:47:57 drahn Exp $ */
+/* $OpenBSD: zaurus_kbd.c,v 1.2 2005/01/13 23:33:37 drahn Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -24,6 +24,12 @@
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0_gpio.h>
 
+#include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wskbdvar.h>
+#include <dev/wscons/wsksymdef.h>
+#include <dev/wscons/wsksymvar.h>
+
+#include <zaurus/dev/zaurus_kbdmap.h>
 
 int
 gpio_sense_pins_c3000[] = {
@@ -69,6 +75,11 @@ struct zkbd_softc {
 	int sc_swb_pin;
 	char *sc_okeystate;
 	char *sc_keystate;
+
+
+	/* wskbd bits */
+	struct device   *sc_wskbddev;
+	int sc_rawkbd;
 };
 
 int zkbd_match(struct device *, void *, void *);
@@ -86,6 +97,30 @@ struct cfdriver zkbd_cd = {
 	NULL, "zkbd", DV_DULL
 };
 
+int zkbd_enable(void *, int);
+void zkbd_set_leds(void *, int);
+int zkbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
+void zkbd_rawrepeat(void *v);
+
+struct wskbd_accessops zkbd_accessops = {
+	zkbd_enable,
+	zkbd_set_leds,
+	zkbd_ioctl,
+};
+
+void zkbd_cngetc(void *, u_int *, int *);
+void zkbd_cnpollc(void *, int);
+ 
+struct wskbd_consops zkbd_consops = {
+        zkbd_cngetc,
+        zkbd_cnpollc,
+};              
+
+struct wskbd_mapdata zkbd_keymapdata = {
+        zkbd_keydesctab,   
+        KB_US,
+};
+
 
 
 int
@@ -100,6 +135,7 @@ zkbd_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct zkbd_softc *sc = (struct zkbd_softc *)self;
 	int pin, i;
+	struct wskbddev_attach_args a;
 
 	/* Determine which system we are - XXX */
 
@@ -145,6 +181,13 @@ zkbd_attach(struct device *parent, struct device *self, void *aux)
 	    zkbd_hinge, sc, sc->sc_dev.dv_xname);
 	pxa2x0_gpio_intr_establish(sc->sc_swb_pin, IST_EDGE_BOTH, IPL_BIO,
 	    zkbd_hinge, sc, sc->sc_dev.dv_xname);
+
+	a.console = 0;
+	a.keymap = &zkbd_keymapdata;
+	a.accessops = &zkbd_accessops;
+	a.accesscookie = sc;
+
+	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
 }
 
 /* XXX only deal with keys that can be pressed when display is open? */
@@ -156,6 +199,7 @@ zkbd_irq(void *v)
 	struct zkbd_softc *sc = v;
 	int i, col;
 	int pin;
+	int type;
 
 	/* discharge all */
 	for (i = 0; i < sc->sc_nstrobe; i++) {
@@ -192,18 +236,6 @@ zkbd_irq(void *v)
 		/* reset_col */
 		pxa2x0_gpio_set_dir(pin, GPIO_IN);
 	}
-
-	printf("zkbd_irq\n");
-	for (i = 0; i < (sc->sc_nsense * sc->sc_nstrobe); i++) {
-		if (sc->sc_okeystate[i] != sc->sc_keystate[i]) {
-			if (sc->sc_keystate[i]) 
-				printf("key %d pressed\n", i);
-			else
-				printf("key %d released\n", i);
-		}
-		sc->sc_okeystate[i] = sc->sc_keystate[i];
-	}
-
 	/* charge all */
 	for (i = 0; i < sc->sc_nstrobe; i++) {
 		pin = sc->sc_strobe_array[i];
@@ -217,6 +249,24 @@ zkbd_irq(void *v)
 	for (i = 0; i < sc->sc_nsense; i++)
 		if (sc->sc_sense_array[i] != -1)
 			pxa2x0_gpio_clear_intr(sc->sc_sense_array[i]);
+
+	/* process after resetting interrupt */
+
+	for (i = 0; i < (sc->sc_nsense * sc->sc_nstrobe); i++) {
+		if (sc->sc_okeystate[i] != sc->sc_keystate[i]) {
+
+			type = sc->sc_keystate[i] ? WSCONS_EVENT_KEY_DOWN :
+			    WSCONS_EVENT_KEY_UP;
+
+/*
+printf("key %d %s\n", i, sc->sc_keystate[i] ? "pressed" : "released");
+*/
+
+	                wskbd_input(sc->sc_wskbddev, type, i);
+
+			sc->sc_okeystate[i] = sc->sc_keystate[i];
+		}
+	}
 
 	return 1;
 }
@@ -241,3 +291,56 @@ zkbd_hinge(void *v)
 	printf("hing event pressed\n");
 	return 1;
 }
+
+int
+zkbd_enable(void *v, int on)
+{
+        return 0;
+}
+        
+void
+zkbd_set_leds(void *v, int on)
+{
+}
+
+int
+zkbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+{
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	struct akbd_softc *sc = v;
+#endif
+
+	switch (cmd) {
+
+	case WSKBDIO_GTYPE:
+		*(int *)data = WSKBD_TYPE_ADB;
+		return 0;
+	case WSKBDIO_SETLEDS:
+		return 0;
+	case WSKBDIO_GETLEDS:
+		*(int *)data = 0;
+		return 0;
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	case WSKBDIO_SETMODE:
+		sc->sc_rawkbd = *(int *)data == WSKBD_RAW;
+		timeout_del(&sc->sc_rawrepeat_ch);
+		return (0);
+#endif
+ 
+	}
+	/* kbdioctl(...); */
+
+	return -1;
+}
+
+/* implement polling for zaurus_kbd */
+void
+zkbd_cngetc(void *v, u_int *type, int *data)
+{               
+}
+
+void
+zkbd_cnpollc(void *v, int on)
+{
+}
+

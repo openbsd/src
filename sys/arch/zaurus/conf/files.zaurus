@@ -29,7 +29,7 @@ attach lcd at pxaip with lcd_pxaip
 file arch/zaurus/zaurus/zaurus_lcd.c			lcd_pxaip
 
 # GPIO keyboard 
-device zkbd
+device zkbd: wskbddev
 attach zkbd at pxaip
 file arch/zaurus/dev/zaurus_kbd.c			zkbd
 

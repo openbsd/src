@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.10 2005/01/13 20:47:57 drahn Exp $
+#	$OpenBSD: GENERIC,v 1.11 2005/01/13 23:33:37 drahn Exp $
 #
 # GENERIC machine description file
 #
@@ -78,7 +78,8 @@ ohci0		at pxaip? addr 0x4c000000 size 0x70 intr 3
 usb*		at ohci?
 
 # keyboard
-zkbd0		at pxaip? # mux 1
+zkbd0		at pxaip?
+wskbd*		at zkbd? mux 1
 
 # USB bus support
 usb*		at ohci?	flags 0x1
