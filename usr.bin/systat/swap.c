@@ -1,4 +1,4 @@
-/*	$OpenBSD: swap.c,v 1.15 2002/02/16 21:27:54 millert Exp $	*/
+/*	$OpenBSD: swap.c,v 1.16 2002/06/18 00:46:48 deraadt Exp $	*/
 /*	$NetBSD: swap.c,v 1.9 1998/12/26 07:05:08 marc Exp $	*/
 
 /*-
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)swap.c	8.3 (Berkeley) 4/29/95";
 #endif
-static char rcsid[] = "$OpenBSD: swap.c,v 1.15 2002/02/16 21:27:54 millert Exp $";
+static char rcsid[] = "$OpenBSD: swap.c,v 1.16 2002/06/18 00:46:48 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -67,14 +67,13 @@ static	int first = 1;
 static	struct swapent *swap_devices;
 
 WINDOW *
-openswap()
+openswap(void)
 {
 	return (subwin(stdscr, LINES-5-1, 0, 5, 0));
 }
 
 void
-closeswap(w)
-	WINDOW *w;
+closeswap(WINDOW *w)
 {
 	if (w == NULL)
 		return;
@@ -85,13 +84,13 @@ closeswap(w)
 
 /* do nothing */
 int
-initswap()
+initswap(void)
 {
 	return (1);
 }
 
 void
-fetchswap()
+fetchswap(void)
 {
 	int	update_label = 0;
 
@@ -119,7 +118,7 @@ fetchswap()
 }
 
 void
-labelswap()
+labelswap(void)
 {
 	char	*header;
 	int	row;
@@ -140,7 +139,8 @@ labelswap()
 }
 
 void
-showswap() {
+showswap(void)
+{
 	int	col, div, i, j, avail, used, xsize, free;
 	struct	swapent *sep;
 	char	*p;

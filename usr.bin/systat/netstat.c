@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.c,v 1.21 2002/02/16 21:27:54 millert Exp $	*/
+/*	$OpenBSD: netstat.c,v 1.22 2002/06/18 00:46:47 deraadt Exp $	*/
 /*	$NetBSD: netstat.c,v 1.3 1995/06/18 23:53:07 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: netstat.c,v 1.21 2002/02/16 21:27:54 millert Exp $";
+static char rcsid[] = "$OpenBSD: netstat.c,v 1.22 2002/06/18 00:46:47 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -91,7 +91,7 @@ static void inet6print(struct in6_addr *, int, char *);
 #define	YMAX(w)		((w)->_maxy-1)
 
 WINDOW *
-opennetstat()
+opennetstat(void)
 {
 	sethostent(1);
 	setnetent(1);
@@ -131,8 +131,7 @@ static	int nflag = 0;
 static	int lastrow = 1;
 
 void
-closenetstat(w)
-	WINDOW *w;
+closenetstat(WINDOW *w)
 {
 	struct netinfo *p;
 
@@ -161,7 +160,7 @@ static struct nlist namelist[] = {
 };
 
 int
-initnetstat()
+initnetstat(void)
 {
 	int ret;
 
@@ -179,7 +178,7 @@ initnetstat()
 }
 
 void
-fetchnetstat()
+fetchnetstat(void)
 {
 	struct inpcbtable pcbtable;
 	struct inpcb *head, *prev, *next;
@@ -211,7 +210,8 @@ again:
 	while (next != head) {
 		KREAD(next, &inpcb, sizeof (inpcb));
 		if (inpcb.inp_queue.cqe_prev != prev) {
-printf("prev = %p, head = %p, next = %p, inpcb...prev = %p\n", prev, head, next, inpcb.inp_queue.cqe_prev);
+			printf("prev = %p, head = %p, next = %p, inpcb...prev = %p\n",
+			    prev, head, next, inpcb.inp_queue.cqe_prev);
 			p = netcb.nif_forw;
 			for (; p != (struct netinfo *)&netcb; p = p->nif_forw)
 				p->nif_seen = 1;
@@ -255,11 +255,7 @@ printf("prev = %p, head = %p, next = %p, inpcb...prev = %p\n", prev, head, next,
 }
 
 static void
-enter(inp, so, state, proto)
-	struct inpcb *inp;
-	struct socket *so;
-	int state;
-	char *proto;
+enter(struct inpcb *inp, struct socket *so, int state, char *proto)
 {
 	struct netinfo *p;
 
@@ -344,7 +340,7 @@ enter(inp, so, state, proto)
 
 
 void
-labelnetstat()
+labelnetstat(void)
 {
 	if (namelist[X_TCBTABLE].n_type == 0)
 		return;
@@ -358,7 +354,7 @@ labelnetstat()
 }
 
 void
-shownetstat()
+shownetstat(void)
 {
 	struct netinfo *p, *q;
 
@@ -461,10 +457,7 @@ shownetstat()
  * If the nflag was specified, use numbers instead of names.
  */
 static void
-inetprint(in, port, proto)
-	struct in_addr *in;
-	int port;
-	char *proto;
+inetprint(struct in_addr *in, int port, char *proto)
 {
 	struct servent *sp = 0;
 	char line[80], *cp;
@@ -489,10 +482,7 @@ inetprint(in, port, proto)
 
 #ifdef INET6
 static void
-inet6print(in6, port, proto)
-	struct in6_addr *in6;
-	int port;
-	char *proto;
+inet6print(struct in6_addr *in6, int port, char *proto)
 {
 	struct servent *sp = 0;
 	char line[80], *cp;
@@ -522,8 +512,7 @@ inet6print(in6, port, proto)
  * numeric value, otherwise try for symbolic name.
  */
 static const char *
-inetname(in)
-	struct in_addr in;
+inetname(struct in_addr in)
 {
 	char *cp = 0;
 	static char line[50];
@@ -560,8 +549,7 @@ inetname(in)
 
 #ifdef INET6
 static const char *
-inet6name(in6)
-	struct in6_addr *in6;
+inet6name(struct in6_addr *in6)
 {
 	static char line[NI_MAXHOST];
 	struct sockaddr_in6 sin6;
@@ -585,8 +573,7 @@ inet6name(in6)
 #endif
 
 int
-cmdnetstat(cmd, args)
-	char *cmd, *args;
+cmdnetstat(char *cmd, char *args)
 {
 	struct netinfo *p;
 

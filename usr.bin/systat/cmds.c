@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.10 2001/12/07 09:18:08 deraadt Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.11 2002/06/18 00:46:47 deraadt Exp $	*/
 /*	$NetBSD: cmds.c,v 1.4 1996/05/10 23:16:32 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/29/95";
 #endif
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.10 2001/12/07 09:18:08 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.11 2002/06/18 00:46:47 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -50,8 +50,7 @@ static char rcsid[] = "$OpenBSD: cmds.c,v 1.10 2001/12/07 09:18:08 deraadt Exp $
 #include "extern.h"
 
 void
-command(cmd)
-	char *cmd;
+command(char *cmd)
 {
 	struct cmdtab *p;
 	char *cp;
@@ -151,8 +150,7 @@ done:
 }
 
 struct cmdtab *
-lookup(name)
-	char *name;
+lookup(char *name)
 {
 	char *p, *q;
 	struct cmdtab *c, *found;
@@ -180,7 +178,7 @@ lookup(name)
 }
 
 void
-status()
+status(void)
 {
 
 	error("Showing %s, refresh every %d seconds.",
@@ -188,8 +186,7 @@ status()
 }
 
 int
-prefix(s1, s2)
-	char *s1, *s2;
+prefix(char *s1, char *s2)
 {
 
 	while (*s1 == *s2) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.34 2002/04/29 17:28:12 millert Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.35 2002/06/18 00:46:48 deraadt Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.34 2002/04/29 17:28:12 millert Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.35 2002/06/18 00:46:48 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -118,7 +118,7 @@ static	int nextintsrow;
 struct	utmp utmp;
 
 WINDOW *
-openkre()
+openkre(void)
 {
 
 	ut = open(_PATH_UTMP, O_RDONLY);
@@ -128,8 +128,7 @@ openkre()
 }
 
 void
-closekre(w)
-	WINDOW *w;
+closekre(WINDOW *w)
 {
 
 	(void) close(ut);
@@ -141,18 +140,16 @@ closekre(w)
 
 
 static struct nlist namelist[] = {
-#define	X_HZ		0
-	{ "_hz" },
-#define	X_INTRNAMES	1
+#define	X_INTRNAMES	0
 	{ "_intrnames" },
-#define	X_EINTRNAMES	2
+#define	X_EINTRNAMES	1
 	{ "_eintrnames" },
-#define	X_INTRCNT	3
+#define	X_INTRCNT	2
 	{ "_intrcnt" },
-#define	X_EINTRCNT	4
+#define	X_EINTRCNT	3
 	{ "_eintrcnt" },
 #if defined(__i386__)
-#define	X_INTRHAND	5
+#define	X_INTRHAND	4
 	{ "_intrhand" },
 #endif
 	{ "" },
@@ -185,7 +182,7 @@ static struct nlist namelist[] = {
 #define	DRIVESPACE	45	/* max space for drives */
 
 int
-initkre()
+initkre(void)
 {
 	char *intrnamebuf, *cp;
 	int i, ret;
@@ -271,7 +268,7 @@ initkre()
 }
 
 void
-fetchkre()
+fetchkre(void)
 {
 	time_t now;
 
@@ -281,7 +278,7 @@ fetchkre()
 }
 
 void
-labelkre()
+labelkre(void)
 {
 	int i, j, l;
 
@@ -350,10 +347,10 @@ labelkre()
 	}
 }
 
-#define X(fld)	{t=s.fld[i]; s.fld[i]-=s1.fld[i]; if(state==TIME) s1.fld[i]=t;}
-#define Y(fld)	{t = s.fld; s.fld -= s1.fld; if(state == TIME) s1.fld = t;}
+#define X(fld)	{t=s.fld[i]; s.fld[i]-=s1.fld[i]; if (state==TIME) s1.fld[i]=t;}
+#define Y(fld)	{t = s.fld; s.fld -= s1.fld; if (state == TIME) s1.fld = t;}
 #define Z(fld)	{t = s.nchstats.fld; s.nchstats.fld -= s1.nchstats.fld; \
-	if(state == TIME) s1.nchstats.fld = t;}
+	if (state == TIME) s1.nchstats.fld = t;}
 #define PUTRATE(fld, l, c, w) \
 	Y(fld); \
 	putint((int)((float)s.fld/etime + 0.5), l, c, w)
@@ -363,7 +360,7 @@ static	char cpuchar[CPUSTATES] = { '=' , '>', '-', ' ' };
 static	char cpuorder[CPUSTATES] = { CP_SYS, CP_USER, CP_NICE, CP_IDLE };
 
 void
-showkre()
+showkre(void)
 {
 	float f1, f2;
 	int psiz, inttotal;
@@ -373,7 +370,7 @@ showkre()
 	if (state == TIME)
 		dkswap();
 	etime = 0;
-	for(i = 0; i < CPUSTATES; i++) {
+	for (i = 0; i < CPUSTATES; i++) {
 		X(time);
 		etime += s.time[i];
 	}
@@ -510,7 +507,7 @@ showkre()
 			c += 1 + l;
 			dinfo(i, c);
 		}
-	/* and pad the DRIVESPACE */ 
+	/* and pad the DRIVESPACE */
 	l = DRIVESPACE - c;
 	for (i = 0; i < 5; i++)
 		mvprintw(DISKROW + i, DISKCOL + 5 + c, "%*s", l, "");
@@ -531,8 +528,7 @@ showkre()
 }
 
 int
-cmdkre(cmd, args)
-	char *cmd, *args;
+cmdkre(char *cmd, char *args)
 {
 
 	if (prefix(cmd, "run")) {
@@ -559,7 +555,7 @@ cmdkre(cmd, args)
 
 /* calculate number of users on the system */
 static int
-ucount()
+ucount(void)
 {
 	int nusers = 0;
 
@@ -574,8 +570,7 @@ ucount()
 }
 
 static float
-cputime(indx)
-	int indx;
+cputime(int indx)
 {
 	double t;
 	int i;
@@ -589,8 +584,7 @@ cputime(indx)
 }
 
 static void
-putint(n, l, c, w)
-	int n, l, c, w;
+putint(int n, int l, int c, int w)
 {
 	char b[128];
 
@@ -610,9 +604,7 @@ putint(n, l, c, w)
 }
 
 static void
-putfloat(f, l, c, w, d, nz)
-	double f;
-	int l, c, w, d, nz;
+putfloat(double f, int l, int c, int w, int d, int nz)
 {
 	char b[128];
 
@@ -632,9 +624,7 @@ putfloat(f, l, c, w, d, nz)
 }
 
 static void
-getinfo(s, st)
-	struct Info *s;
-	enum state st;
+getinfo(struct Info *s, enum state st)
 {
 	static int cp_time_mib[] = { CTL_KERN, KERN_CPTIME };
 	static int nchstats_mib[2] = { CTL_KERN, KERN_NCHSTATS };
@@ -686,8 +676,7 @@ getinfo(s, st)
 }
 
 static void
-allocinfo(s)
-	struct Info *s;
+allocinfo(struct Info *s)
 {
 
 	s->intrcnt = (long *) malloc(nintr * sizeof(long));
@@ -696,8 +685,7 @@ allocinfo(s)
 }
 
 static void
-copyinfo(from, to)
-	struct Info *from, *to;
+copyinfo(struct Info *from, struct Info *to)
 {
 	long *intrcnt;
 
@@ -707,8 +695,7 @@ copyinfo(from, to)
 }
 
 static void
-dinfo(dn, c)
-	int dn, c;
+dinfo(int dn, int c)
 {
 	double words, atime;
 

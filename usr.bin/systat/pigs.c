@@ -1,4 +1,4 @@
-/*	$OpenBSD: pigs.c,v 1.13 2002/02/16 21:27:54 millert Exp $	*/
+/*	$OpenBSD: pigs.c,v 1.14 2002/06/18 00:46:48 deraadt Exp $	*/
 /*	$NetBSD: pigs.c,v 1.3 1995/04/29 05:54:50 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pigs.c	8.2 (Berkeley) 9/23/93";
 #endif
-static char rcsid[] = "$OpenBSD: pigs.c,v 1.13 2002/02/16 21:27:54 millert Exp $";
+static char rcsid[] = "$OpenBSD: pigs.c,v 1.14 2002/06/18 00:46:48 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -75,14 +75,13 @@ static long stime[CPUSTATES];
 static double  lccpu;
 
 WINDOW *
-openpigs()
+openpigs(void)
 {
 	return (subwin(stdscr, LINES-5-1, 0, 5, 0));
 }
 
 void
-closepigs(w)
-	WINDOW *w;
+closepigs(WINDOW *w)
 {
 	if (w == NULL)
 		return;
@@ -93,7 +92,7 @@ closepigs(w)
 
 
 void
-showpigs()
+showpigs(void)
 {
 	int i, j, y, k;
 	struct	eproc *ep;
@@ -111,7 +110,7 @@ showpigs()
 	}
 
 	if (total < 1.0)
- 		total = 1.0;
+		total = 1.0;
 	factor = 50.0/total;
 
 	qsort(pt, nproc + 1, sizeof (struct p_times), compar);
@@ -143,7 +142,7 @@ showpigs()
 struct loadavg sysload;
 
 int
-initpigs()
+initpigs(void)
 {
 	static int sysload_mib[] = {CTL_VM, VM_LOADAVG};
 	static int cp_time_mib[] = { CTL_KERN, KERN_CPTIME };
@@ -166,7 +165,7 @@ initpigs()
 }
 
 void
-fetchpigs()
+fetchpigs(void)
 {
 	static int cp_time_mib[] = { CTL_KERN, KERN_CPTIME };
 	static int lastnproc = 0;
@@ -226,7 +225,7 @@ fetchpigs()
 }
 
 void
-labelpigs()
+labelpigs(void)
 {
 	wmove(wnd, 0, 0);
 	wclrtoeol(wnd);
@@ -235,9 +234,8 @@ labelpigs()
 }
 
 int
-compar(a, b)
-	const void *a, *b;
+compar(const void *a, const void *b)
 {
 	return (((struct p_times *) a)->pt_pctcpu >
-		((struct p_times *) b)->pt_pctcpu)? -1: 1;
+	    ((struct p_times *) b)->pt_pctcpu)? -1: 1;
 }

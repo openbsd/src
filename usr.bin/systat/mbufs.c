@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbufs.c,v 1.10 2002/06/09 05:16:20 angelos Exp $	*/
+/*	$OpenBSD: mbufs.c,v 1.11 2002/06/18 00:46:47 deraadt Exp $	*/
 /*	$NetBSD: mbufs.c,v 1.2 1995/01/20 08:52:02 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mbufs.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: mbufs.c,v 1.10 2002/06/09 05:16:20 angelos Exp $";
+static char rcsid[] = "$OpenBSD: mbufs.c,v 1.11 2002/06/18 00:46:47 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -76,14 +76,13 @@ char *mtnames[] = {
 #define	NNAMES	(sizeof (mtnames) / sizeof (mtnames[0]))
 
 WINDOW *
-openmbufs()
+openmbufs(void)
 {
 	return (subwin(stdscr, LINES-5-1, 0, 5, 0));
 }
 
 void
-closembufs(w)
-	WINDOW *w;
+closembufs(WINDOW *w)
 {
 	if (w == NULL)
 		return;
@@ -93,7 +92,7 @@ closembufs(w)
 }
 
 void
-labelmbufs()
+labelmbufs(void)
 {
 	wmove(wnd, 0, 0); wclrtoeol(wnd);
 	mvwaddstr(wnd, 0, 10,
@@ -101,7 +100,7 @@ labelmbufs()
 }
 
 void
-showmbufs()
+showmbufs(void)
 {
 	int i, j, max, index;
 	char buf[13];
@@ -145,7 +144,7 @@ static struct nlist namelist[] = {
 };
 
 int
-initmbufs()
+initmbufs(void)
 {
 	int ret;
 
@@ -167,7 +166,7 @@ initmbufs()
 }
 
 void
-fetchmbufs()
+fetchmbufs(void)
 {
 	int mib[2];
 	size_t size = sizeof (*mb);

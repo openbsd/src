@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.17 2002/02/16 21:27:54 millert Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.18 2002/06/18 00:46:47 deraadt Exp $	*/
 /*	$NetBSD: iostat.c,v 1.5 1996/05/10 23:16:35 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: iostat.c,v 1.17 2002/02/16 21:27:54 millert Exp $";
+static char rcsid[] = "$OpenBSD: iostat.c,v 1.18 2002/06/18 00:46:47 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -68,14 +68,13 @@ static void stat1(int, int);
 
 
 WINDOW *
-openiostat()
+openiostat(void)
 {
 	return (subwin(stdscr, LINES-1-5, 0, 5, 0));
 }
 
 void
-closeiostat(w)
-	WINDOW *w;
+closeiostat(WINDOW *w)
 {
 	if (w == NULL)
 		return;
@@ -85,7 +84,7 @@ closeiostat(w)
 }
 
 int
-initiostat()
+initiostat(void)
 {
 	dkinit(1);
 	dkreadstats();
@@ -93,7 +92,7 @@ initiostat()
 }
 
 void
-fetchiostat()
+fetchiostat(void)
 {
 	if (dk_ndrive == 0)
 		return;
@@ -103,7 +102,7 @@ fetchiostat()
 #define	INSET	10
 
 void
-labeliostat()
+labeliostat(void)
 {
 	int row;
 
@@ -123,8 +122,7 @@ labeliostat()
 }
 
 static int
-numlabels(row)
-	int row;
+numlabels(int row)
 {
 	int i, col, regions, ndrives;
 
@@ -166,8 +164,7 @@ numlabels(row)
 }
 
 static int
-barlabels(row)
-	int row;
+barlabels(int row)
 {
 	int i;
 
@@ -192,14 +189,14 @@ barlabels(row)
 
 
 void
-showiostat()
+showiostat(void)
 {
 	int i, row, col;
 
 	dkswap();
 
 	etime = 0;
-	for(i = 0; i < CPUSTATES; i++) {
+	for (i = 0; i < CPUSTATES; i++) {
 		etime += cur.cp_time[i];
 	}
 	if (etime == 0.0)
@@ -248,8 +245,7 @@ showiostat()
 }
 
 static int
-stats(row, col, dn)
-	int row, col, dn;
+stats(int row, int col, int dn)
 {
 	double atime, words;
 
@@ -276,8 +272,7 @@ stats(row, col, dn)
 }
 
 static void
-stat1(row, o)
-	int row, o;
+stat1(int row, int o)
 {
 	int i;
 	double time;
@@ -293,10 +288,7 @@ stat1(row, o)
 }
 
 static void
-histogram(val, colwidth, scale)
-	double val;
-	int colwidth;
-	double scale;
+histogram(double val, int colwidth, double scale)
 {
 	char buf[10];
 	int k;
@@ -318,8 +310,7 @@ histogram(val, colwidth, scale)
 }
 
 int
-cmdiostat(cmd, args)
-	char *cmd, *args;
+cmdiostat(char *cmd, char *args)
 {
 
 	if (prefix(cmd, "secs"))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: netcmds.c,v 1.10 2002/02/16 21:27:54 millert Exp $	*/
+/*	$OpenBSD: netcmds.c,v 1.11 2002/06/18 00:46:47 deraadt Exp $	*/
 /*	$NetBSD: netcmds.c,v 1.4 1995/05/21 17:14:38 mycroft Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netcmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: netcmds.c,v 1.10 2002/02/16 21:27:54 millert Exp $";
+static char rcsid[] = "$OpenBSD: netcmds.c,v 1.11 2002/06/18 00:46:47 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -84,8 +84,7 @@ static int selecthost(struct sockaddr *, int);
 static void showhosts(void);
 
 int
-netcmd(cmd, args)
-	char *cmd, *args;
+netcmd(char *cmd, char *args)
 {
 
 	if (prefix(cmd, "tcp") || prefix(cmd, "udp")) {
@@ -125,9 +124,7 @@ netcmd(cmd, args)
 
 
 static void
-changeitems(args, onoff)
-	char *args;
-	int onoff;
+changeitems(char *args, int onoff)
 {
 	char *cp;
 	struct servent *sp;
@@ -167,8 +164,7 @@ changeitems(args, onoff)
 }
 
 static int
-selectproto(proto)
-	char *proto;
+selectproto(char *proto)
 {
 	int new = protos;
 
@@ -182,7 +178,7 @@ selectproto(proto)
 }
 
 static void
-showprotos()
+showprotos(void)
 {
 
 	if ((protos&TCP) == 0)
@@ -199,9 +195,7 @@ static	struct pitem {
 } *ports;
 
 static int
-selectport(port, onoff)
-	long port;
-	int onoff;
+selectport(long port, int onoff)
 {
 	struct pitem *p;
 
@@ -228,8 +222,7 @@ selectport(port, onoff)
 }
 
 int
-checkport(inp)
-	struct inpcb *inp;
+checkport(struct inpcb *inp)
 {
 	struct pitem *p;
 
@@ -241,7 +234,7 @@ checkport(inp)
 }
 
 static void
-showports()
+showports(void)
 {
 	struct pitem *p;
 	struct servent *sp;
@@ -259,9 +252,7 @@ showports()
 }
 
 static int
-addrcmp(sa1, sa2)
-	struct sockaddr *sa1;
-	struct sockaddr *sa2;
+addrcmp(struct sockaddr *sa1, struct sockaddr *sa2)
 {
 	if (sa1->sa_family != sa2->sa_family)
 		return 0;
@@ -289,9 +280,7 @@ addrcmp(sa1, sa2)
 }
 
 static int
-selecthost(sa, onoff)
-	struct sockaddr *sa;
-	int onoff;
+selecthost(struct sockaddr *sa, int onoff)
 {
 	struct hitem *p;
 
@@ -320,8 +309,7 @@ selecthost(sa, onoff)
 }
 
 int
-checkhost(inp)
-	struct inpcb *inp;
+checkhost(struct inpcb *inp)
 {
 	struct hitem *p;
 
@@ -350,7 +338,7 @@ checkhost(inp)
 }
 
 static void
-showhosts()
+showhosts(void)
 {
 	struct hitem *p;
 	char hbuf[NI_MAXHOST];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyboard.c,v 1.11 2002/02/18 23:34:46 deraadt Exp $	*/
+/*	$OpenBSD: keyboard.c,v 1.12 2002/06/18 00:46:47 deraadt Exp $	*/
 /*	$NetBSD: keyboard.c,v 1.2 1995/01/20 08:51:59 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)keyboard.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: keyboard.c,v 1.11 2002/02/18 23:34:46 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: keyboard.c,v 1.12 2002/06/18 00:46:47 deraadt Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -50,7 +50,7 @@ static char rcsid[] = "$OpenBSD: keyboard.c,v 1.11 2002/02/18 23:34:46 deraadt E
 #include "extern.h"
 
 void
-keyboard()
+keyboard(void)
 {
 	char line[80];
 	sigset_t mask, omask;
