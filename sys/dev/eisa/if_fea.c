@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fea.c,v 1.3 1996/05/20 15:52:32 thorpej Exp $	*/
+/*	$NetBSD: if_fea.c,v 1.3.2.2 1996/06/09 23:34:52 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Id: if_fea.c,v 1.5 1996/05/17 01:15:18 thomas Exp
+ * Id: if_fea.c,v 1.6 1996/06/07 20:02:25 thomas Exp
  */
 
 /*
@@ -484,7 +484,8 @@ pdq_eisa_attach(
 
     if (bus_mem_map(sc->sc_bc, maddr, msize, 0, &sc->sc_membase)) {
 	bus_io_unmap(sc->sc_bc, sc->sc_iobase, EISA_SLOT_SIZE);
-	printf("\n%s: failed to map memory!\n", sc->sc_dev.dv_xname);
+	printf("\n%s: failed to map memory (0x%x-0x%x)!\n",
+	    sc->sc_dev.dv_xname, maddr, maddr + msize - 1);
 	return;
     }
 #endif
@@ -518,6 +519,10 @@ pdq_eisa_attach(
     sc->sc_ats = shutdownhook_establish((void (*)(void *)) pdq_hwreset, sc->sc_pdq);
     if (sc->sc_ats == NULL)
 	printf("%s: warning: couldn't establish shutdown hook\n", self->dv_xname);
+#if !defined(PDQ_IOMAPPED)
+    printf("%s: using iomem 0x%x-0x%x\n", sc->sc_dev.dv_xname, maddr,
+	maddr + msize - 1);
+#endif
     if (intrstr != NULL)
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 }
