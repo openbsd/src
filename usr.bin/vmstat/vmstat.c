@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.88 2004/06/28 21:49:35 jmc Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.89 2004/07/02 09:12:37 miod Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.88 2004/06/28 21:49:35 jmc Exp $";
+static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.89 2004/07/02 09:12:37 miod Exp $";
 #endif
 #endif /* not lint */
 
@@ -503,12 +503,15 @@ dotimes(void)
 
 	(void)printf("%u reactivates, %u total time (usec)\n",
 	    uvmexp.pdreact, rectime);
-	(void)printf("average: %u usec / reclaim\n", rectime / uvmexp.pdreact);
+	if (uvmexp.pdreact != 0)
+		(void)printf("average: %u usec / reclaim\n",
+		    rectime / uvmexp.pdreact);
 	(void)printf("\n");
 	(void)printf("%u page ins, %u total time (msec)\n",
 	    uvmexp.pageins, pgintime / 10);
-	(void)printf("average: %8.1f msec / page in\n",
-	    pgintime / (uvmexp.pageins * 10.0));
+	if (uvmexp.pageins != 0)
+		(void)printf("average: %8.1f msec / page in\n",
+	    	    pgintime / (uvmexp.pageins * 10.0));
 }
 
 int
