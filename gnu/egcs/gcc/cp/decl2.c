@@ -1673,7 +1673,7 @@ grokfield (declarator, declspecs, init, asmspec_tree, attrlist)
       && TREE_OPERAND (declarator, 0)
       && (TREE_CODE (TREE_OPERAND (declarator, 0)) == IDENTIFIER_NODE
 	  || TREE_CODE (TREE_OPERAND (declarator, 0)) == SCOPE_REF)
-      && parmlist_is_exprlist (TREE_OPERAND (declarator, 1)))
+      && parmlist_is_exprlist (CALL_DECLARATOR_PARMS (declarator)))
     {
       init = TREE_OPERAND (declarator, 1);
       declarator = TREE_OPERAND (declarator, 0);
@@ -3938,7 +3938,7 @@ reparse_absdcl_as_casts (decl, expr)
   if (TREE_CODE (expr) == CONSTRUCTOR
       && TREE_TYPE (expr) == 0)
     {
-      type = groktypename (TREE_VALUE (TREE_OPERAND (decl, 1)));
+      type = groktypename (TREE_VALUE (CALL_DECLARATOR_PARMS (decl)));
       decl = TREE_OPERAND (decl, 0);
 
       if (IS_SIGNATURE (type))
@@ -3958,7 +3958,7 @@ reparse_absdcl_as_casts (decl, expr)
 
   while (decl)
     {
-      type = groktypename (TREE_VALUE (TREE_OPERAND (decl, 1)));
+      type = groktypename (TREE_VALUE (CALL_DECLARATOR_PARMS (decl)));
       decl = TREE_OPERAND (decl, 0);
       expr = build_c_cast (type, expr);
     }
