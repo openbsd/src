@@ -29,7 +29,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: getrpcent.c,v 1.5 1996/09/02 02:48:57 deraadt Exp $";
+static char *rcsid = "$OpenBSD: getrpcent.c,v 1.6 1996/09/02 05:32:50 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -150,7 +150,8 @@ getrpcent()
 		return(NULL);
 	if (d->rpcf == NULL && (d->rpcf = fopen(RPCDB, "r")) == NULL)
 		return (NULL);
-        if (fgets(d->line, BUFSIZ, d->rpcf) == NULL)
+	/* -1 so there is room to append a \n below */
+        if (fgets(d->line, BUFSIZ-1, d->rpcf) == NULL)
 		return (NULL);
 	return (interpret(d->line, strlen(d->line)));
 }
@@ -166,10 +167,10 @@ interpret(val, len)
 
 	if (d == 0)
 		return (0);
-	(void) strncpy(d->line, val, len-1);
-	d->line[len-1] = '\0';
+	(void) strncpy(d->line, val, BUFSIZ);
+	d->line[BUFSIZ] = '\0';
 	p = d->line;
-	d->line[len] = '\n';
+	p[len] = '\n';
 	if (*p == '#')
 		return (getrpcent());
 	cp = strpbrk(p, "#\n");
