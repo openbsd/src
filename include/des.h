@@ -1,4 +1,4 @@
-/*	$OpenBSD: des.h,v 1.3 1998/08/16 16:38:55 art Exp $	*/
+/*	$OpenBSD: des.h,v 1.4 2002/03/04 22:00:13 deraadt Exp $	*/
 
 /* crypto/des/des.h */
 /* Copyright (C) 1995-1997 Eric Young (eay@mincom.oz.au)
@@ -67,11 +67,7 @@ extern "C" {
 
 #include <stdio.h>
 
-/* If this is set to 'unsigned int' on a DEC Alpha, this gives about a
- * %20 speed up (longs are 8 bytes, int's are 4). */
-#ifndef DES_LONG
-#define DES_LONG unsigned long
-#endif
+#define DES_LONG unsigned int
 
 typedef unsigned char des_cblock[8];
 typedef struct des_ks_struct
