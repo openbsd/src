@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.14 2003/06/02 23:28:02 millert Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.15 2003/08/03 19:32:34 mickey Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -230,8 +230,8 @@ osiop_attach(sc)
 		printf(": failed to create script map, err=%d\n", err);
 		return;
 	}
-	err = bus_dmamap_load(sc->sc_dmat, sc->sc_scrdma,
-	    sc->sc_script, PAGE_SIZE, NULL, BUS_DMA_NOWAIT);
+	err = bus_dmamap_load_raw(sc->sc_dmat, sc->sc_scrdma,
+	    &seg, nseg, PAGE_SIZE, BUS_DMA_NOWAIT);
 	if (err) {
 		printf(": failed to load script map, err=%d\n", err);
 		return;
@@ -270,8 +270,8 @@ osiop_attach(sc)
 		printf(": failed to create ds map, err=%d\n", err);
 		return;
 	}
-	err = bus_dmamap_load(sc->sc_dmat, sc->sc_dsdma, sc->sc_ds,
-	    sizeof(struct osiop_ds) * OSIOP_NACB, NULL, BUS_DMA_NOWAIT);
+	err = bus_dmamap_load_raw(sc->sc_dmat, sc->sc_dsdma,
+	    &seg, nseg, sizeof(struct osiop_ds) * OSIOP_NACB, BUS_DMA_NOWAIT);
 	if (err) {
 		printf(": failed to load ds map, err=%d\n", err);
 		return;
