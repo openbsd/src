@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd-setup.8,v 1.2 2003/03/08 19:33:10 beck Exp $
+.\"	$OpenBSD: spamd-setup.8,v 1.3 2003/03/08 21:36:12 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -43,25 +43,25 @@ The
 utility adds blacklists by adding addresses to the
 .Xr pf 4
 table
-.Aq spamd ,
+.Em <spamd> ,
 as well as configuring mail rejection messages for
 the added list of addresses in
 .Xr spamd 8 .
 The
-.Aq spamd
-table is used in conjuction with a
+.Em spamd
+table is used in conjunction with a
 .Xr pf 4
 redirection rule to selectively redirect mail connections
 to the
 .Xr spamd 8
 daemon.
 .Pp
-blacklists and whitelists are specified in the configuration file
+Blacklists and whitelists are specified in the configuration file
 .Pa /etc/spamd.conf
 and are processed in the order specified in the 
 .Ar all
 tag. 
-output is concatenated to build up a table for
+Output is concatenated to build up a table for
 .Xr pf 4 .
 Then the blacklist addresses are sent to a running
 .Xr spamd 8
@@ -73,10 +73,11 @@ reads all configuration information from a
 .Xr spamd.conf 5
 file.
 .Sh FILES
-.Pa /etc/spamd.conf
-.Pp
+.Bd -literal
+/etc/spamd.conf
+.Ed
 .Sh SEE ALSO
 .Xr ftp 1 ,
 .Xr pf 4 ,
-.Xr spamd 8,
-.Xr spamd.conf 5
+.Xr spamd.conf 5 ,
+.Xr spamd 8

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.22 2003/03/06 09:41:31 henning Exp $
+.\"	$OpenBSD: spamd.8,v 1.23 2003/03/08 21:36:12 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -59,7 +59,7 @@ does not
 .Xr fork 2
 into the background.
 .It Fl r
-The SMTP error to return to the spammer, i.e., 450, 451, 550.
+The SMTP error to return to the spammer, i.e. 450, 451, 550.
 This defaults to 450.
 .It Fl c
 The maximum number of concurrent connections to allow.
@@ -86,7 +86,7 @@ queue.
 .Nm
 is best started from
 .Xr rc 8
-and is used in conjuction with
+and is used in conjunction with
 .Xr spamd-setup 8
 which processes a list of spammers' addresses, and applies appropriate
 .Xr pfctl 8
@@ -111,7 +111,7 @@ to simplify handling.
 .Ed
 .Pp
 Any addresses in table
-.Aq spamd
+.Em <spamd>
 are then redirected to
 .Nm
 running on port 25.
@@ -124,7 +124,7 @@ like:
 .Pp
 .Xr spamd-setup 8
 can also be used to load addresses into the
-.Aq spamd
+.Em <spamd>
 table.
 .Xr spamd-setup 8
 also has the added benefit of being able to remove addresses from
@@ -155,7 +155,7 @@ a blacklist, and must have the format:
 The rejection message must be inside double quotes.
 A \e" will produce a double quote in the output.
 \en will produce a newline.
-%A will expand to the connecting ip address in dotted quad format.
+%A will expand to the connecting IP address in dotted quad format.
 %% may be used to produce a single % in the output.
 \e\e will produce a single \e.
 .Nm
@@ -166,6 +166,7 @@ is normally used to configure this information.
 .Pp
 .Sh SEE ALSO
 .Xr pf.conf 5 ,
+.Xr spamd.conf 5 ,
 .Xr pfctl 8 ,
 .Xr spamd-setup 8
 .Sh HISTORY
