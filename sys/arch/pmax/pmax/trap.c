@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.20 1999/05/24 23:09:06 jason Exp $	*/
+/*	$OpenBSD: trap.c,v 1.21 2000/06/08 09:46:27 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.50 1996/10/13 21:37:49 jonathan Exp $	*/
 
 /*
@@ -476,7 +476,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 		register pt_entry_t *pte;
 		register unsigned entry;
 		register vm_offset_t pa;
-		pmap_t pmap = &p->p_vmspace->vm_pmap;
+		pmap_t pmap = p->p_vmspace->vm_map.pmap;
 
 		if (!(pte = pmap_segmap(pmap, vadr)))
 			panic("trap: utlbmod: invalid segmap");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.12 2000/06/05 11:03:02 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.13 2000/06/08 09:50:16 art Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -42,7 +42,7 @@
  *	from: Utah $Hdr: vm_machdep.c 1.21 91/04/06$
  *	from: @(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
  *	vm_machdep.c,v 1.3 1993/07/07 07:09:32 cgd Exp
- *	$Id: vm_machdep.c,v 1.12 2000/06/05 11:03:02 art Exp $
+ *	$Id: vm_machdep.c,v 1.13 2000/06/08 09:50:16 art Exp $
  */
 
 #include <sys/param.h>
@@ -104,7 +104,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize)
 	/*XXX these may not be necessary nivas */
 	save_u_area(p2, p2->p_addr);
 #ifdef notneeded 
-	PMAP_ACTIVATE(&p2->p_vmspace->vm_pmap, &p2->p_addr->u_pcb, cpu);
+	PMAP_ACTIVATE(p2->p_vmspace->vm_map.pmap, &p2->p_addr->u_pcb, cpu);
 #endif /* notneeded */
 
 	/*
