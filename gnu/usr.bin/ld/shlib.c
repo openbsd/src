@@ -1,3 +1,4 @@
+/*	$OpenBSD: shlib.c,v 1.5 1999/02/20 05:53:31 marc Exp $
 /*	$NetBSD: shlib.c,v 1.13 1998/04/04 01:00:29 fvdl Exp $	*/
 
 /*
@@ -245,14 +246,12 @@ int	do_dot_a;
 		DIR		*dd = opendir(search_dirs[i]);
 		struct dirent	*dp;
 		int		found_dot_a = 0;
-		int		might_take_it;
 
 		if (dd == NULL)
 			continue;
 
-		might_take_it = 0;
 		while ((dp = readdir(dd)) != NULL) {
-			int	n;
+			int	n, might_take_it = 0;
 
 			if (do_dot_a && path == NULL &&
 					dp->d_namlen == len + 2 &&
@@ -309,9 +308,9 @@ int	do_dot_a;
 		}
 		closedir(dd);
 
-		if (found_dot_a || might_take_it)
+		if (found_dot_a)
 			/*
-			 * There's a lib in this dir; take it.
+			 * There's a .a archive here.
 			 */
 			return path;
 	}
