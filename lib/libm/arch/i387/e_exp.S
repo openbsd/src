@@ -20,7 +20,7 @@ ENTRY(__ieee754_exp)
 	fldl	12(%esp)
 	fldl2e
 	fmulp				/* x * log2(e) */
-	fstl	%st(1)
+	fst	%st(1)
 	frndint				/* int(x * log2(e)) */
 	fxch	%st(1)
 	fsub	%st(1),%st		/* fract(x * log2(e)) */
@@ -28,7 +28,7 @@ ENTRY(__ieee754_exp)
 	fld1
 	faddp				/* 2^(fract(x * log2(e))) */
 	fscale				/* e^x */
-	fstpl	%st(1)
+	fstp	%st(1)
 
 	fldcw	4(%esp)		/* restore original control word */
 

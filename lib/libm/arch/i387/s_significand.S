@@ -10,5 +10,5 @@ RCSID("$NetBSD: s_significand.S,v 1.4 1995/05/09 00:21:47 jtc Exp $")
 ENTRY(significand)
 	fldl	4(%esp)
 	fxtract
-	fstpl	%st(1)
+	fstp	%st(1)
 	ret
