@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.10 2000/12/12 03:41:22 jason Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.11 2001/02/12 15:45:18 jakob Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1283,7 +1283,7 @@ bridge_rulefile(s, brdg, fname)
 		if (feof(f))
 			break;
 		ln++;
-		if (buf[0] == '#')
+		if (buf[0] == '#' || buf[0] == '\n')
 			continue;
 
 		argc = 0;
