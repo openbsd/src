@@ -1,4 +1,4 @@
-/*	$OpenBSD: suword.c,v 1.3 2001/07/09 01:14:01 mickey Exp $	*/
+/*	$OpenBSD: suword.c,v 1.4 2001/07/09 01:14:59 mickey Exp $	*/
 /*	$NetBSD: suword.c,v 1.1 1996/09/30 16:34:55 ws Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@
  */
 int
 suword(addr,l)
-	char *addr;
+	void *addr;
 	long l;
 {
 	if (copyout(&l,addr,sizeof(l)))
