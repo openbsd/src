@@ -1,5 +1,6 @@
 /* OS ABI variant handling for GDB.
-   Copyright 2001, 2002, 2003 Free Software Foundation, Inc.
+
+   Copyright 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -501,10 +502,11 @@ generic_elf_osabi_sniffer (bfd *abfd)
   switch (elfosabi)
     {
     case ELFOSABI_NONE:
-      /* When elfosabi is ELFOSABI_NONE (0), then the ELF structures in the
-         file are conforming to the base specification for that machine
-	 (there are no OS-specific extensions).  In order to determine the
-	 real OS in use we must look for OS notes that have been added.  */
+      /* When the EI_OSABI field in the ELF header is ELFOSABI_NONE
+         (0), then the ELF structures in the file are conforming to
+         the base specification for that machine (there are no
+         OS-specific extensions).  In order to determine the real OS
+         in use we must look for OS-specific notes.  */
       bfd_map_over_sections (abfd,
 			     generic_elf_osabi_sniff_abi_tag_sections,
 			     &osabi);
@@ -531,7 +533,14 @@ generic_elf_osabi_sniffer (bfd *abfd)
       break;
 
     case ELFOSABI_HPUX:
+      /* For some reason the default value for the EI_OSABI field is
+         ELFOSABI_HPUX for all PA-RISC targets (with the exception of
+         GNU/Linux).  We use HP-UX ELF as the default, but let any
+         OS-specific notes override this.  */
       osabi = GDB_OSABI_HPUX_ELF;
+      bfd_map_over_sections (abfd,
+			     generic_elf_osabi_sniff_abi_tag_sections,
+			     &osabi);
       break;
     }
 
