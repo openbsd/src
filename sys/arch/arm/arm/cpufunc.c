@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.c,v 1.2 2004/05/19 03:17:06 drahn Exp $	*/
+/*	$OpenBSD: cpufunc.c,v 1.3 2004/12/30 23:43:15 drahn Exp $	*/
 /*	$NetBSD: cpufunc.c,v 1.65 2003/11/05 12:53:15 scw Exp $	*/
 
 /*
@@ -1120,6 +1120,7 @@ set_cpufuncs()
 #ifdef CPU_XSCALE_PXA2X0
 	/* ignore core revision to test PXA2xx CPUs */
 	if ((cputype & ~CPU_ID_XSCALE_COREREV_MASK) == CPU_ID_PXA250 ||
+	    (cputype & ~CPU_ID_XSCALE_COREREV_MASK) == CPU_ID_PXA27X ||
 	    (cputype & ~CPU_ID_XSCALE_COREREV_MASK) == CPU_ID_PXA210) {
 
 		cpufuncs = xscale_cpufuncs;
