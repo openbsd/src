@@ -1,5 +1,5 @@
 #define DEBUG
-/*	$OpenBSD: cvs.c,v 1.2 2004/07/14 03:33:09 jfb Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.3 2004/07/14 19:26:07 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -112,7 +112,7 @@ static struct cvs_cmd {
 	},
 	{
 		"diff",     { "di",  "dif" }, cvs_diff,
-		"",
+		"[-cilu] [-D date] [-r rev] ...",
 		"Show differences between revisions",
 	},
 	{
