@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.13 1995/10/03 21:42:36 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.14 1995/10/17 07:17:04 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-static char *rcsid = "$NetBSD: if.c,v 1.13 1995/10/03 21:42:36 thorpej Exp $";
+static char *rcsid = "$NetBSD: if.c,v 1.14 1995/10/17 07:17:04 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -97,7 +97,7 @@ intpr(interval, ifnetaddr)
 	}
 	if (kread(ifnetaddr, (char *)&ifnetaddr, sizeof ifnetaddr))
 		return;
-	printf("%-5.5s %-5.5s %-11.11s %-15.15s %10.10s %5.5s %8.8s %5.5s",
+	printf("%-5.5s %-5.5s %-11.11s %-17.17s %8.8s %5.5s %8.8s %5.5s",
 		"Name", "Mtu", "Network", "Address", "Ipkts", "Ierrs",
 		"Opkts", "Oerrs");
 	printf(" %5s", "Coll");
