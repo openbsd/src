@@ -54,16 +54,21 @@ static char rcsid[] = "$NetBSD: rain.c,v 1.7 1995/04/29 00:51:04 mycroft Exp $";
 
 #include <sys/types.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <term.h>
 #include <termios.h>
 #include <signal.h>
+#include <string.h>
 
 #define	cursor(c, r)	tputs(tgoto(CM, c, r), 1, fputchar)
 
 static struct termios sg, old_tty;
 
-void	fputchar __P((int));
-char	*LL, *TE, *tgoto();
+int  fputchar __P((int));
+char	*LL, *TE, *VE;
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -72,9 +77,12 @@ main(argc, argv)
 	extern char *UP;
 	register int x, y, j;
 	register char *CM, *BC, *DN, *ND, *term;
-	char *TI, *tcp, *mp, tcb[100],
-		*malloc(), *getenv(), *strcpy(), *tgetstr();
-	long cols, lines, random();
+	char *TI, *tcp, *mp, tcb[100];
+	long tcols, tlines;
+	u_int delay = 0;
+	extern int optind;
+	extern char *optarg;
+	char ch;
 	int xpos[5], ypos[5];
 	static void onsig();
 #ifdef TIOCGWINSZ
@@ -84,6 +92,22 @@ main(argc, argv)
 	/* revoke */
 	setegid(getgid());
 	setgid(getgid());
+
+	while ((ch = getopt(argc, argv, "d:h")) != -1)
+		switch(ch) {
+		case 'd':
+			if ((delay = (u_int)strtoul(optarg,(char **)NULL,10)) < 1
+				|| delay > 1000) {
+				(void)fprintf(stderr,"rain: invalid delay (1-1000)\n");
+				exit(1);
+			}
+			delay *= 1000;  /* ms -> us */
+			break;
+		case 'h':
+		default:
+			(void)fprintf(stderr,"usage: rain [-d delay]\n");
+			exit(1);
+		}
 
 	if (!(term = getenv("TERM"))) {
 		fprintf(stderr, "%s: TERM: parameter not set\n", *argv);
@@ -108,21 +132,22 @@ main(argc, argv)
 		DN = "\n";
 	if (!(ND = tgetstr("nd", &tcp)))
 		ND = " ";
+	VE = tgetstr("ve", &tcp);
 #ifdef TIOCGWINSZ
 	if (ioctl(fileno(stdout), TIOCGWINSZ, &ws) != -1 &&
 	    ws.ws_col && ws.ws_row) {
-		cols = ws.ws_col;
-		lines = ws.ws_row;
+		tcols = ws.ws_col;
+		tlines = ws.ws_row;
 	} else
 #endif
 	{
-		if ((cols = tgetnum("co")) == -1)
-			cols = 80;
-		if ((lines = tgetnum("li")) == -1)
-			lines = 24;
+		if ((tcols = tgetnum("co")) == -1)
+			tcols = 80;
+		if ((tlines = tgetnum("li")) == -1)
+			tlines = 24;
 	}
-	cols -= 4;
-	lines -= 4;
+	tcols -= 4;
+	tlines -= 4;
 	TE = tgetstr("te", &tcp);
 	TI = tgetstr("ti", &tcp);
 	UP = tgetstr("up", &tcp);
@@ -149,14 +174,15 @@ main(argc, argv)
 	if (TI)
 		tputs(TI, 1, fputchar);
 	tputs(tgetstr("cl", &tcp), 1, fputchar);
+	tputs(tgetstr("vi", &tcp), 1, fputchar);                              
 	(void)fflush(stdout);
 	for (j = 4; j >= 0; --j) {
-		xpos[j] = random() % cols + 2;
-		ypos[j] = random() % lines + 2;
+		xpos[j] = random() % tcols + 2;
+		ypos[j] = random() % tlines + 2;
 	}
 	for (j = 0;;) {
-		x = random() % cols + 2;
-		y = random() % lines + 2;
+		x = random() % tcols + 2;
+		y = random() % tlines + 2;
 		cursor(x, y);
 		fputchar('.');
 		cursor(xpos[j], ypos[j]);
@@ -220,12 +246,14 @@ main(argc, argv)
 		xpos[j] = x;
 		ypos[j] = y;
 		(void)fflush(stdout);
+		if (delay) usleep(delay);
 	}
 }
 
 static void
 onsig()
 {
+	tputs(VE, 1, fputchar);                              
 	tputs(LL, 1, fputchar);
 	if (TE)
 		tputs(TE, 1, fputchar);
@@ -234,9 +262,9 @@ onsig()
 	exit(0);
 }
 
-void
+int
 fputchar(c)
 	int c;
 {
-	(void)putchar(c);
+	return(putchar(c));
 }

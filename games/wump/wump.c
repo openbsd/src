@@ -578,7 +578,7 @@ cave_init()
 			cave[i].tunnel[j] = -1;
 
 	/* choose a random 'hop' delta for our guaranteed link */
-	while (!(delta = random() % (room_num - 1)));
+	while (!(delta = random() % ((room_num - 1) / 2)));
 
 	for (i = 1; i <= room_num; ++i) {
 		link = ((i + delta) % room_num) + 1;	/* connection */

@@ -70,7 +70,7 @@ static char rcsid[] = "$NetBSD: worms.c,v 1.8 1995/04/22 08:09:22 cgd Exp $";
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <termios.h>
+#include <term.h>
 #include <unistd.h>
 
 static struct options {
@@ -183,11 +183,9 @@ static struct	worm {
 	short *xpos, *ypos;
 } *worm;
 
-void	 fputchar __P((int));
+int   fputchar __P((int));
 void	 onsig __P((int));
-char	*tgetstr __P((char *, char **));
-char	*tgoto __P((char *, int, int));
-int	 tputs __P((char *, int, void (*)(int)));
+void  nomem __P(());
 
 int
 main(argc, argv)
@@ -206,6 +204,7 @@ main(argc, argv)
 	char *AL, *BC, *CM, *EI, *HO, *IC, *IM, *IP, *SR;
 	char *field, tcb[100], *mp;
 	long random();
+	u_int delay = 0;
 	struct termios ti;
 #ifdef TIOCGWINSZ
 	struct winsize ws;
@@ -219,8 +218,16 @@ main(argc, argv)
 	number = 3;
 	trail = ' ';
 	field = NULL;
-	while ((ch = getopt(argc, argv, "fl:n:t")) != -1)
+	while ((ch = getopt(argc, argv, "d:fhl:n:t")) != -1)
 		switch(ch) {
+		case 'd':
+			if ((delay = (u_int)strtoul(optarg,(char **)NULL,10)) < 1
+				|| delay > 1000) {
+				(void)fprintf(stderr,"worms: invalid delay (1-1000)\n");
+				exit(1);
+			}
+			delay *= 1000;  /* ms -> us */
+			break;
 		case 'f':
 			field = "WORM";
 			break;
@@ -242,10 +249,10 @@ main(argc, argv)
 		case 't':
 			trail = '.';
 			break;
-		case '?':
+		case '?': case 'h':
 		default:
 			(void)fprintf(stderr,
-			    "usage: worms [-ft] [-l length] [-n number]\n");
+			    "usage: worms [-ft] [-d delay] [-l length] [-n number]\n");
 			exit(1);
 		}
 
@@ -329,6 +336,7 @@ main(argc, argv)
 
 	tputs(tgetstr("ti", &tcp), 1, fputchar);
 	tputs(tgetstr("cl", &tcp), 1, fputchar);
+	tputs(tgetstr("vi", &tcp), 1, fputchar);
 	if (field) {
 		register char *p = field;
 
@@ -394,6 +402,7 @@ main(argc, argv)
 	}
 	for (;;) {
 		(void)fflush(stdout);
+		if (delay) usleep(delay);
 		for (n = 0, w = &worm[0]; n < number; n++, w++) {
 			if ((x = w->xpos[h = w->head]) < 0) {
 				cursor(x = w->xpos[h] = 0,
@@ -421,7 +430,7 @@ main(argc, argv)
 			case 0:
 				(void)fflush(stdout);
 				abort();
-				return;
+				return(0);
 			case 1:
 				w->orientation = op->opts[0];
 				break;
@@ -442,18 +451,20 @@ void
 onsig(signo)
 	int signo;
 {
+	tputs(tgetstr("ve", &tcp), 1, fputchar);
 	tputs(tgetstr("cl", &tcp), 1, fputchar);
 	tputs(tgetstr("te", &tcp), 1, fputchar);
 	exit(0);
 }
 
-void
+int
 fputchar(c)
 	int c;
 {
-	(void)putchar(c);
+	return(putchar(c));
 }
 
+void
 nomem()
 {
 	(void)fprintf(stderr, "worms: not enough memory.\n");
