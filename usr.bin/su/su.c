@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.6 1996/10/08 18:36:56 deraadt Exp $	*/
+/*	$OpenBSD: su.c,v 1.7 1996/10/12 17:13:57 millert Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";*/
-static char rcsid[] = "$OpenBSD: su.c,v 1.6 1996/10/08 18:36:56 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: su.c,v 1.7 1996/10/12 17:13:57 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -110,7 +110,8 @@ main(argc, argv)
 			break;
 		case '?':
 		default:
-			(void)fprintf(stderr, "usage: su [%s] [login]\n",
+			(void)fprintf(stderr,
+			    "usage: su [%s] [login [shell arguments]]\n",
 			    ARGSTR);
 			exit(1);
 		}
