@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_ops.c,v 1.16 2002/08/05 07:24:26 pvalchev Exp $	*/
+/*	$OpenBSD: nfs_ops.c,v 1.17 2003/04/07 23:45:45 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -40,7 +40,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nfs_ops.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: nfs_ops.c,v 1.16 2002/08/05 07:24:26 pvalchev Exp $";
+static char *rcsid = "$OpenBSD: nfs_ops.c,v 1.17 2003/04/07 23:45:45 tedu Exp $";
 #endif /* not lint */
 
 #include "am.h"
@@ -534,7 +534,7 @@ mount_nfs_fh(fhstatus *fhp, char *dir, char *fs_name, char *opts,
 	 * Most kernels have a name length restriction.
 	 */
 	if (strlen(host) >= HOSTNAMESZ)
-		strcpy(host + HOSTNAMESZ - 3, "..");
+		strlcpy(host + HOSTNAMESZ - 3, "..", sizeof host - HOSTNAMESZ + 3);
 #endif /* HOSTNAMESZ */
 
 	if ((nfs_args.rsize = hasmntval(&mnt, "rsize")))

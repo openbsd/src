@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fsi_analyze.c	8.1 (Berkeley) 6/6/93
- *	$Id: fsi_analyze.c,v 1.3 2002/06/11 05:29:55 itojun Exp $
+ *	$Id: fsi_analyze.c,v 1.4 2003/04/07 23:45:45 tedu Exp $
  */
 
 /*
@@ -114,6 +114,7 @@ char *hn;
 	char *p = strdup(hn);
 	char *d;
 	char path[MAXPATHLEN];
+	size_t len = strlen(p) + 1;
 
 	domain_strip(p, hostname);
 	path[0] = '\0';
@@ -131,7 +132,7 @@ char *hn;
 
 	log("hostpath of '%s' is '%s'", hn, path);
 
-	strcpy(p, path);
+	strlcpy(p, path, len);
 	return p;
 }
 

@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)opts.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: opts.c,v 1.6 2002/11/25 18:04:10 pvalchev Exp $";
+static char *rcsid = "$Id: opts.c,v 1.7 2003/04/07 23:45:45 tedu Exp $";
 #endif /* not lint */
 
 #include "am.h"
@@ -576,8 +576,8 @@ static char expand_error[] = "No space to expand \"%s\"";
 					/*dlog("Expanding \"%s\" to \"%s\"", nbuf, val);*/
 #endif /* DEBUG */
 						if (BUFSPACE(ep, vlen)) {
-							strcpy(ep, vptr);
-							ep += vlen;
+							strlcpy(ep, vptr, expbuf + sizeof expbuf - ep);
+							ep += strlen(ep);
 						} else {
 							plog(XLOG_ERROR, expand_error, *p->opt);
 							goto out;
@@ -603,8 +603,8 @@ static char expand_error[] = "No space to expand \"%s\"";
 					int vlen = strlen(env);
 
 					if (BUFSPACE(ep, vlen)) {
-						strcpy(ep, env);
-						ep += vlen;
+						strlcpy(ep, env, expbuf + sizeof expbuf - ep);
+						ep += strlen(ep);
 					} else {
 						plog(XLOG_ERROR, expand_error, *p->opt);
 						goto out;
@@ -636,8 +636,7 @@ out:
 		 * Finish off the expansion
 		 */
 		if (BUFSPACE(ep, strlen(cp))) {
-			strcpy(ep, cp);
-			/*ep += strlen(ep);*/
+			strlcpy(ep, cp, envbuf + sizeof expbuf - ep);
 		} else {
 			plog(XLOG_ERROR, expand_error, *p->opt);
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: host_ops.c,v 1.11 2003/04/04 00:43:17 deraadt Exp $	*/
+/*	$OpenBSD: host_ops.c,v 1.12 2003/04/07 23:45:45 tedu Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -363,7 +363,7 @@ host_fmount(mntfs *mf)
 	for (j = 0; j < n_export; j++) {
 		ex = ep[j];
 		if (ex) {
-			strcpy(rfs_dir, ex->ex_dir);
+			strlcpy(rfs_dir, ex->ex_dir, fs_name + sizeof fs_name - rfs_dir);
 			MAKE_MNTPT(mntpt, ex, mf);
 			if (do_mount(&fp[j], mntpt, fs_name, mf->mf_mopts, mf) == 0)
 				ok = TRUE;
