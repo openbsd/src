@@ -1,4 +1,4 @@
-/* $OpenBSD: in6_proto.c,v 1.7 2000/01/02 04:52:26 itojun Exp $ */
+/* $OpenBSD: in6_proto.c,v 1.8 2000/01/02 11:09:20 angelos Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -177,20 +177,22 @@ struct ip6protosw inet6sw[] = {
   ah6_input,	0,	 	0,		0,
   0,	  
   0,		0,		0,		0,
-  ipsec6_sysctl,
+  ah_sysctl,
 },
 { SOCK_RAW,	&inet6domain,	IPPROTO_ESP,	PR_ATOMIC|PR_ADDR,
   esp6_input,	0,	 	0,		0,
   0,	  
   0,		0,		0,		0,
-  ipsec6_sysctl,
+  esp_sysctl,
 },
+#if 0
 { SOCK_RAW,	&inet6domain,	IPPROTO_IPCOMP,	PR_ATOMIC|PR_ADDR,
   ipcomp6_input, 0,	 	0,		0,
   0,	  
   0,		0,		0,		0,
   ipsec6_sysctl,
 },
+#endif /* 0 */
 #endif /* IPSEC */
 #if NGIF > 0
 { SOCK_RAW,	&inet6domain,	IPPROTO_IPV4,	PR_ATOMIC|PR_ADDR,
