@@ -1,6 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.37 2004/04/14 20:14:49 henning Exp $	*/
-
-/* DHCP Client. */
+/*	$OpenBSD: dhclient.c,v 1.38 2004/05/04 12:52:05 henning Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -56,6 +54,7 @@
  */
 
 #include "dhcpd.h"
+#include "privsep.h"
 
 #define	PERIOD 0x2e
 #define	hyphenchar(c) ((c) == 0x2d)
@@ -81,6 +80,7 @@ char *path_dhclient_conf = _PATH_DHCLIENT_CONF;
 char *path_dhclient_db = NULL;
 
 int log_perror = 1;
+int privfd;
 
 struct iaddr iaddr_broadcast = { 4, { 255, 255, 255, 255 } };
 struct iaddr iaddr_any = { 4, { 0, 0, 0, 0 } };
@@ -111,6 +111,7 @@ int	 check_option(struct client_lease *l, int option);
 int	 ipv4addrs(char * buf);
 int	 res_hnok(const char *dn);
 char	*option_as_string(unsigned int code, unsigned char *data, int len);
+int	 fork_privchld(int, int);
 
 #define	ROUNDUP(a) \
 	    ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
@@ -210,6 +211,8 @@ main(int argc, char *argv[])
 {
 	extern char		*__progname;
 	int			 ch, fd, quiet = 0, i = 0;
+	int			 pipe_fd[2];
+	struct passwd		*pw;
 
 	/* Initially, log errors to stderr as well as to syslogd. */
 	openlog(__progname, LOG_NDELAY, DHCPD_LOG_FACILITY);
@@ -286,16 +289,41 @@ main(int argc, char *argv[])
 		fprintf(stderr, "got link\n");
 	}
 
-	script_init(ifi, "PREINIT", NULL);
+	priv_script_init("PREINIT", NULL);
 	if (ifi->client->alias)
-		script_write_params(ifi, "alias_", ifi->client->alias);
-	script_go(ifi);
+		priv_script_write_params("alias_", ifi->client->alias);
+	priv_script_go();
 
 	if ((routefd = socket(PF_ROUTE, SOCK_RAW, 0)) != -1)
 		add_protocol("AF_ROUTE", routefd, routehandler, ifi);
 
 	/* set up the interface */
 	discover_interfaces(ifi);
+
+	if ((pw = getpwnam("_dhcp")) == NULL)
+		error("no such user: _dhcp");
+
+	if (pipe(pipe_fd) == -1)
+		error("pipe");
+
+	fork_privchld(pipe_fd[0], pipe_fd[1]);
+
+	close(pipe_fd[0]);
+	privfd = pipe_fd[1];
+
+	if (chroot(_PATH_VAREMPTY) == -1)
+		error("chroot");
+	if (chdir("/") == -1)
+		error("chdir(\"/\")");
+
+	if (setgroups(1, &pw->pw_gid) ||
+	    setegid(pw->pw_gid) || setgid(pw->pw_gid) ||
+	    seteuid(pw->pw_uid) || setuid(pw->pw_uid))
+		error("can't drop privileges: %m");
+
+	endpwent();
+
+	setproctitle("%s", ifi->name);
 
 	ifi->client->state = S_INIT;
 	state_reboot(ifi);
@@ -1739,6 +1767,44 @@ FILE *scriptFile;
 void
 script_init(struct interface_info *ip, char *reason, struct string_list *medium)
 {
+	struct imsg_hdr	 hdr;
+	struct buf	*buf;
+	int		 errs;
+	size_t		 len;
+	size_t		 mediumlen = 0;
+
+	if (medium != NULL && medium->string != NULL)
+		mediumlen = strlen(medium->string);
+
+	hdr.code = IMSG_SCRIPT_INIT;
+	hdr.len = sizeof(struct imsg_hdr) +
+	    sizeof(size_t) + mediumlen +
+	    sizeof(size_t) + strlen(reason);
+
+	if ((buf = buf_open(hdr.len)) == NULL)
+		error("buf_open: %m");
+
+	errs = 0;
+	errs += buf_add(buf, &hdr, sizeof(hdr));
+	errs += buf_add(buf, &mediumlen, sizeof(mediumlen));
+	if (mediumlen > 0)
+		errs += buf_add(buf, medium->string, mediumlen);
+	len = strlen(reason);
+	errs += buf_add(buf, &len, sizeof(len));
+	errs += buf_add(buf, reason, len);
+
+	if (errs)
+		error("buf_add: %m");
+
+	if (buf_close(privfd, buf) == -1)
+		error("buf_close: %m");
+}
+
+void
+priv_script_init(char *reason, char *medium)
+{
+	struct interface_info *ip = ifi;
+
 	if (ip) {
 		ip->client->scriptEnvsize = 100;
 		if (ip->client->scriptEnv == NULL)
@@ -1756,21 +1822,20 @@ script_init(struct interface_info *ip, char *reason, struct string_list *medium)
 		script_set_env(ip->client, "", "interface", ip->name);
 
 		if (medium)
-			script_set_env(ip->client, "", "medium",
-			    medium->string);
+			script_set_env(ip->client, "", "medium", medium);
 
 		script_set_env(ip->client, "", "reason", reason);
 	}
 }
 
 void
-script_write_params(struct interface_info *ip, char *prefix,
-    struct client_lease *lease)
+priv_script_write_params(char *prefix, struct client_lease *lease)
 {
 	int i;
 	u_int8_t dbuf[1500];
 	int len = 0;
 	char tbuf[128];
+	struct interface_info *ip = ifi;
 
 	script_set_env(ip->client, prefix, "ip_address",
 	    piaddr(lease->address));
@@ -1889,8 +1954,90 @@ supersede:
 	script_set_env(ip->client, prefix, "expiry", tbuf);
 }
 
+void
+script_write_params(struct interface_info *ip, char *prefix,
+    struct client_lease *lease)
+{
+	struct imsg_hdr	 hdr;
+	struct buf	*buf;
+	int		 errs, i;
+	size_t		 fn_len = 0, sn_len = 0, pr_len= 0;
+
+	if (lease->filename != NULL)
+		fn_len = strlen(lease->filename);
+	if (lease->server_name != NULL)
+		sn_len = strlen(lease->server_name);
+	if (prefix != NULL)
+		pr_len = strlen(prefix);
+
+	hdr.code = IMSG_SCRIPT_WRITE_PARAMS;
+	hdr.len = sizeof(hdr) + sizeof(struct client_lease) +
+	    sizeof(size_t) + fn_len +
+	    sizeof(size_t) + sn_len +
+	    sizeof(size_t) + pr_len;
+
+	for (i = 0; i < 256; i++)
+		hdr.len += sizeof(int) + lease->options[i].len;
+
+	if ((buf = buf_open(hdr.len)) == NULL)
+		error("buf_open: %m");
+
+	errs = 0;
+	errs += buf_add(buf, &hdr, sizeof(hdr));
+	errs += buf_add(buf, lease, sizeof(struct client_lease));
+	errs += buf_add(buf, &fn_len, sizeof(fn_len));
+	errs += buf_add(buf, lease->filename, fn_len);
+	errs += buf_add(buf, &sn_len, sizeof(sn_len));
+	errs += buf_add(buf, lease->server_name, sn_len);
+	errs += buf_add(buf, &pr_len, sizeof(pr_len));
+	errs += buf_add(buf, prefix, pr_len);
+
+	for (i = 0; i < 256; i++) {
+		errs += buf_add(buf, &lease->options[i].len,
+		    sizeof(lease->options[i].len));
+		errs += buf_add(buf, lease->options[i].data,
+		    lease->options[i].len);
+	}
+
+	if (errs)
+		error("buf_add: %m");
+
+	if (buf_close(privfd, buf) == -1)
+		error("buf_close: %m");
+}
+
 int
 script_go(struct interface_info *ip)
+{
+	struct imsg_hdr	 hdr;
+	struct buf	*buf;
+	int		 ret;
+
+	hdr.code = IMSG_SCRIPT_GO;
+	hdr.len = sizeof(struct imsg_hdr);
+
+	if ((buf = buf_open(hdr.len)) == NULL)
+		error("buf_open: %m");
+
+	if (buf_add(buf, &hdr, sizeof(hdr)))
+		error("buf_add: %m");
+
+	if (buf_close(privfd, buf) == -1)
+		error("buf_close: %m");
+
+	bzero(&hdr, sizeof(hdr));
+	buf_read(privfd, &hdr, sizeof(hdr));
+	if (hdr.code != IMSG_SCRIPT_GO_RET)
+		error("unexpected msg type %u", hdr.code);
+	if (hdr.len != sizeof(hdr) + sizeof(int))
+		error("received corrupted message");
+	buf_read(privfd, &ret, sizeof(ret));
+
+	return (ret);
+}
+
+int
+priv_script_go(void)
 {
 	char *scriptName;
 	char *argv[2];
@@ -1899,6 +2046,7 @@ script_go(struct interface_info *ip)
 	char reason[] = "REASON=NBI";
 	static char client_path[] = CLIENT_PATH;
 	int pid, wpid, wstatus;
+	struct interface_info *ip = ifi;
 
 	if (ip) {
 		scriptName = ip->client->config->script_name;
@@ -2218,3 +2366,38 @@ toobig:
 	warn("dhcp option too large");
 	return "<error>";
 }
+
+
+int
+fork_privchld(int fd, int fd2)
+{
+	int			 nfds;
+	struct pollfd		 pfd[1];
+
+	switch (fork()) {
+	case -1:
+		error("cannot fork");
+	case 0:
+		break;
+	default:
+		return (0);
+	}
+
+	setproctitle("%s [priv]", ifi->name);
+
+	close(fd2);
+
+	for (;;) {
+		pfd[0].fd = fd;
+		pfd[0].events = POLLIN;
+		if ((nfds = poll(pfd, 1, INFTIM)) == -1)
+			if (errno != EINTR)
+				error("poll error");
+
+		if (nfds == 0 || !(pfd[0].revents & POLLIN))
+			continue;
+
+		dispatch_imsg(fd);
+	}
+}
+

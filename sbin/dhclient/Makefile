@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2004/02/25 14:22:12 henning Exp $
+# $OpenBSD: Makefile,v 1.9 2004/05/04 12:52:05 henning Exp $
 #
 # Copyright (c) 1996, 1997 The Internet Software Consortium.
 # All rights reserved.
@@ -33,7 +33,8 @@
 .include <bsd.own.mk>
 
 SRCS=	dhclient.c clparse.c alloc.c dispatch.c hash.c bpf.c options.c \
-	tree.c conflex.c errwarn.c inet.c packet.c convert.c tables.c parse.c
+	tree.c conflex.c errwarn.c inet.c packet.c convert.c tables.c \
+	parse.c privsep.c
 
 PROG=	dhclient
 MAN=	dhclient.8 dhclient.conf.5 dhclient.leases.5 dhclient-script.8

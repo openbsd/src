@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.28 2004/04/14 20:22:27 henning Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.29 2004/05/04 12:52:05 henning Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -387,6 +387,10 @@ void free_client_lease(struct client_lease *);
 void rewrite_client_leases(void);
 void write_client_lease(struct interface_info *, struct client_lease *, int);
 
+void	 priv_script_init(char *, char *);
+void	 priv_script_write_params(char *, struct client_lease *);
+int	 priv_script_go(void);
+
 void script_init(struct interface_info *, char *, struct string_list *);
 void script_write_params(struct interface_info *,
     char *, struct client_lease *);
@@ -438,3 +442,10 @@ void parse_client_lease_declaration(FILE *, struct client_lease *,
 struct option *parse_option_decl(FILE *, struct option_data *);
 void parse_string_list(FILE *, struct string_list **, int);
 void parse_reject_statement(FILE *, struct client_config *);
+
+/* privsep.c */
+struct buf	*buf_open(size_t);
+int		 buf_add(struct buf *, void *, size_t);
+int		 buf_close(int, struct buf *);
+ssize_t		 buf_read(int, void *, size_t);
+void		 dispatch_imsg(int);
