@@ -1,0 +1,120 @@
+.\"	$OpenBSD $
+.\"
+.\" Copyright (c) 2001 Ian Darwin.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd June 26, 2001
+.Dt NAT.RULES 5
+.Os
+.Sh NAME
+.Nm nat.rules
+.Nd network address translation configuration file for packet filtering
+.Sh DESCRIPTION
+The rules file for network address translation specify what addresses
+are to be mapped and which are to be redirected.
+The two rule types that can be specified are 
+.Li rdr 
+and
+.Li nat .
+.Pp
+Rules are processed in the order written.
+Each rule must be on a line by itself.
+Comments beginning with the character `#', and null lines, are
+completely ignored.
+The general syntax of rules is
+.Bd -literal
+rdr|nat ifname ipspec '->' ipspec
+.Ed
+.Pp
+.Li ifname
+is a network name such as fxp4, ne0, ep1.
+.Li ipspec
+is a host number or a network number with netmask bits after a slash,
+and optionally the word 'port' and a port number.
+On the right hand side of a rule, an ipspec must refer to a single
+IP address; it can also be specified as an
+interface name, whose IP address will then be used.
+An
+.Li ipspec
+can be preceded with the character `!' to negate it.
+.Pp
+An
+.Li rdr 
+rule specifies an incoming connection to be redirected
+to another host and optionally a different port.
+.Pp
+.A
+.Li nat
+rule specifies that IP addresses are to be changed as the 
+packet traverses the given interface. This technique of network
+address translation (NAT, also called ``IP masquerading'' on Linux)
+allows a single IP address to support a large range of machines on
+an inside network.
+Although in theory any IP address can be used on the inside,
+it is recommended that one of the network numbers assigned
+for this purpose in RFC 1918. These netblocks are:
+.Bd -literal
+10.0.0.0    - 10.255.255.255.255 (all of net 10, i.e., 10/8)
+172.16.0.0  - 172.31.255.255 (i.e, 172.16/12)
+192.168.1.0 - 192.168.255.255 (i.e., 192.168/16)
+.Ed
+.Sh EXAMPLES
+This example maps incoming requests on port 80 to port 8080, on
+which Apache Tomcat is running (I don't run Tomcat as root, therefore it
+doesn't have permission to bind to port 80).
+.Bd -literal
+# map tomcat on 8080 to appear to be on 80
+rdr ne3 0.0.0.0/0 port 80 -> 127.0.0.1 port 8080
+.Ed
+.Pp
+In the example below, fxp1 is the outside interface; the machine sits between a
+fake internal 144.19.74.* network, and a routable external IP of 204.92.77.100:
+.Bd -literal
+nat fxp1 144.19.74/24 -> 204.92.77.100
+.Ed
+.Pp
+This longer example uses both a NAT and a redirection. Interface
+kue0 is the outside interface, and its external address is 157.161.48.183.
+.Bd -literal
+# --------------------------------------------------------------------
+# NAT
+# --------------------------------------------------------------------
+
+# translate outgoing packets' source addresses (any protocol)
+# in my case, any address but the gateway's external address is mapped
+#
+nat kue0 ! 157.161.48.183 -> 157.161.48.183
+
+# --------------------------------------------------------------------
+# RDR
+# --------------------------------------------------------------------
+
+# translate incoming packets' destination addresses
+# as an example, redirect a TCP and UDP port to an internal machine
+#
+rdr kue0 157.161.48.183/32 port 8080 -> 10.1.2.151 port 22 proto tcp
+rdr kue0 157.161.48.183/32 port 8080 -> 10.1.2.151 port 53 proto udp
+.Ed
+.Sh SEE ALSO
+.Xr pfctl 8
