@@ -1,9 +1,10 @@
-#	$OpenBSD: list,v 1.8 2001/10/08 19:26:14 deraadt Exp $
+#	$OpenBSD: list,v 1.9 2001/10/26 12:03:26 jj Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # Amiga extra's
 LINK	instbin			sbin/disklabel
 LINK	instbin			sbin/mount_msdos
+LINK	instbin			sbin/mount_ados
 
 SYMLINK	../../instbin		usr/bin/basename
 SYMLINK ../../instbin		usr/bin/cksum usr/bin/sum
