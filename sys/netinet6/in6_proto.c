@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.31 2001/08/08 15:09:00 jjbg Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.32 2002/01/08 02:29:03 itojun Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -184,35 +184,35 @@ struct ip6protosw inet6sw[] = {
 #endif /* IPSEC */
 #if NGIF > 0
 { SOCK_RAW,	&inet6domain,	IPPROTO_IPV6,	PR_ATOMIC|PR_ADDR,
-  in6_gif_input,0,	 	0,		0,
-  0,	  
+  in6_gif_input, rip6_output,	 	0,		rip6_ctloutput,
+  rip6_usrreq,	/* XXX */
   0,		0,		0,		0,
 },
 #ifdef INET
-{ SOCK_RAW,	&inet6domain,	IPPROTO_IPV6,	PR_ATOMIC|PR_ADDR,
-  in6_gif_input,0,	 	0,		0,
-  0,	  
+{ SOCK_RAW,	&inet6domain,	IPPROTO_IPV4,	PR_ATOMIC|PR_ADDR,
+  in6_gif_input, rip6_output, 	0,		rip6_ctloutput,
+  rip6_usrreq,	/* XXX */
   0,		0,		0,		0,
 },
 #endif /* INET */
 #else /* NGIF */
-{ SOCK_RAW,     &inet6domain,    IPPROTO_IPV6,  PR_ATOMIC|PR_ADDR,
-  ip4_input6,   rip6_output,     0,              rip6_ctloutput,
-  rip6_usrreq,   /* XXX */
-  0,            0,              0,              0,              ipip_sysctl
+{ SOCK_RAW,	&inet6domain,	IPPROTO_IPV6,	PR_ATOMIC|PR_ADDR,
+  ip4_input6,	rip6_output,	0,		rip6_ctloutput,
+  rip6_usrreq,	/* XXX */
+  0,		0,		0,		0,		ipip_sysctl
 },
 #ifdef INET
-{ SOCK_RAW,     &inet6domain,    IPPROTO_IPV4,  PR_ATOMIC|PR_ADDR,
-  ip4_input6,   rip6_output,     0,              rip6_ctloutput,
-  0,   
-  0,            0,              0,              0,
+{ SOCK_RAW,	&inet6domain,	IPPROTO_IPV4,	PR_ATOMIC|PR_ADDR,
+  ip4_input6,	rip6_output,	0,		rip6_ctloutput,
+  rip6_usrreq,	/* XXX */
+  0,		0,		0,		0,
 },
 #endif /* INET */
 #endif /* GIF */
-{ SOCK_RAW,     &inet6domain,	IPPROTO_PIM,	PR_ATOMIC|PR_ADDR,
-  pim6_input,    rip6_output,	0,              rip6_ctloutput, 
+{ SOCK_RAW,	&inet6domain,	IPPROTO_PIM,	PR_ATOMIC|PR_ADDR,
+  pim6_input,	rip6_output,	0,		rip6_ctloutput, 
   rip6_usrreq,
-  0,            0,              0,              0,
+  0,		0,		0,		0,
 },
 /* raw wildcard */
 { SOCK_RAW,	&inet6domain,	0,		PR_ATOMIC|PR_ADDR,
