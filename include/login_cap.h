@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.h,v 1.3 2000/11/21 00:51:16 millert Exp $	*/
+/*	$OpenBSD: login_cap.h,v 1.4 2001/01/01 21:50:11 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -33,6 +33,9 @@
  *
  *	BSDI $From: login_cap.h,v 2.11 1999/09/08 18:11:57 prb Exp $
  */
+
+#ifndef _LOGIN_CAP_H_
+#define _LOGIN_CAP_H_
 
 #define	LOGIN_DEFCLASS		"default"
 #define	LOGIN_DEFSTYLE		"krb-or-pwd"
@@ -100,3 +103,5 @@ int	setclasscontext __P((char *, u_int));
 int	setusercontext __P((login_cap_t *, struct passwd *, uid_t, u_int));
 
 __END_DECLS
+
+#endif /* _LOGIN_CAP_H_ */
