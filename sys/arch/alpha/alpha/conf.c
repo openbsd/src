@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.30 2001/08/06 22:34:43 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.31 2001/09/28 02:53:13 mickey Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -132,7 +132,6 @@ cdev_decl(ucom);
 #include "ugen.h"
 cdev_decl(ugen);
 #include "pf.h"
-cdev_decl(pf);
 #ifdef USER_PCICONF
 #include "pci.h"
 cdev_decl(pci);

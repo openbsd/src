@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.79 2001/08/18 06:08:08 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.80 2001/09/28 02:53:13 mickey Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -236,7 +236,6 @@ cdev_decl(pci);
 #endif
 
 #include "pf.h"
-cdev_decl(pf);
 
 #include <altq/altqconf.h>
 

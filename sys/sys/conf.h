@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.47 2001/08/06 22:34:44 mickey Exp $	*/
+/*	$OpenBSD: conf.h,v 1.48 2001/09/28 02:53:13 mickey Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -530,11 +530,11 @@ cdev_decl(uk);
 
 cdev_decl(bpf);
 
+cdev_decl(pf);
+
 cdev_decl(tun);
 
 cdev_decl(random);
-
-cdev_decl(ipl);
 
 cdev_decl(wsdisplay);
 cdev_decl(wskbd);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.23 2001/08/06 22:34:44 mickey Exp $ */
+/*	$OpenBSD: conf.c,v 1.24 2001/09/28 02:53:13 mickey Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -177,7 +177,6 @@ dev_decl(filedesc,open);
 #include "tun.h"
 
 #include "pf.h"
-cdev_decl(pf);
 
 #include <altq/altqconf.h>
 

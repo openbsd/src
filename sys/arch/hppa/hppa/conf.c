@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.14 2001/08/12 20:20:42 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.15 2001/09/28 02:53:13 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -114,7 +114,6 @@ cdev_decl(lpt);
 cdev_decl(com);
 
 #include "pf.h"
-cdev_decl(pf);
 
 #include <altq/altqconf.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.25 2001/08/06 22:34:44 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.26 2001/09/28 02:53:13 mickey Exp $	*/
 /*	$NetBSD: conf.c,v 1.41 1997/02/11 07:35:49 scottr Exp $	*/
 
 /*
@@ -118,7 +118,6 @@ cdev_decl(xfs_dev);
 #endif
 
 #include "pf.h"
-cdev_decl(pf);
 
 #include <altq/altqconf.h>
 
