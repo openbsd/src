@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.45 1997/05/22 05:26:42 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.46 1997/06/02 22:54:02 kstailey Exp $
 #	$NetBSD: MAKEDEV,v 1.40 1996/03/31 00:50:47 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -295,6 +295,10 @@ ccd*|sd*|wd*)
 
 vnd*)
 	umask 2 ; unit=`expr $i : 'vnd\(.*\)'`
+	if [ -z "$unit" ]; then
+		echo vnd requires a unit number
+		exit 1
+	fi
 	for name in vnd svnd; do
 		blk=14; chr=41;
 		case $name in
@@ -595,6 +599,10 @@ pctr)
 local)
 	umask 0
 	test -s MAKEDEV.local && sh MAKEDEV.local
+	;;
+
+*)
+	echo no such device
 	;;
 
 esac
