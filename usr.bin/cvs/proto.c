@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.7 2004/07/27 13:55:00 jfb Exp $	*/
+/*	$OpenBSD: proto.c,v 1.8 2004/07/27 16:16:19 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -199,7 +199,7 @@ struct cvs_resp {
 static char *cvs_mt_stack[CVS_MTSTK_MAXDEPTH];
 static u_int cvs_mtstk_depth = 0;
 
-static struct tm cvs_modtime;
+static time_t cvs_modtime = 0;
 
 
 #define CVS_NBREQ   (sizeof(cvs_requests)/sizeof(cvs_requests[0]))
@@ -757,22 +757,55 @@ cvs_resp_cksum(int type, char *line)
 static int
 cvs_resp_modtime(int type, char *line)
 {
-	u_int i;
-	char mon[8];
+	int i;
+	long off;
+	char sign, mon[8], gmt[8], hr[4], min[4], *ep;
+	struct tm cvs_tm;
 
-	cvs_modtime.tm_yday = 0;
-	cvs_modtime.tm_wday = 0;
+	memset(&cvs_tm, 0, sizeof(cvs_tm));
+	sscanf(line, "%d %8s %d %2d:%2d:%2d %5s", &cvs_tm.tm_mday, mon,
+	    &cvs_tm.tm_year, &cvs_tm.tm_hour, &cvs_tm.tm_min,
+	    &cvs_tm.tm_sec, gmt);
+	cvs_tm.tm_year -= 1900;
 
-	sscanf(line, "%d %8s %d %2d:%2d:%2d", &cvs_modtime.tm_mday, mon,
-	    &cvs_modtime.tm_year, &cvs_modtime.tm_hour, &cvs_modtime.tm_min,
-	    &cvs_modtime.tm_sec);
-	cvs_modtime.tm_year -= 1900;
+	if (*gmt == '-') {
+		sscanf("%c%2s%2s", &sign, hr, min);
+		cvs_tm.tm_gmtoff = strtol(hr, &ep, 10);
+		if ((cvs_tm.tm_gmtoff == LONG_MIN) ||
+		    (cvs_tm.tm_gmtoff == LONG_MAX) ||
+		    (*ep != '\0')) {
+			cvs_log(LP_ERR,
+			    "parse error in GMT hours specification `%s'", hr);
+			cvs_tm.tm_gmtoff = 0;
+		}
+		else {
+			/* get seconds */
+			cvs_tm.tm_gmtoff *= 3600;
 
-	for (i = 0; i < sizeof(cvs_months)/sizeof(cvs_months[0]); i++) {
-		if (strcmp(cvs_months[i], mon) == 0)
-			cvs_modtime.tm_mon = (int)i;
+			/* add the minutes */
+			off = strtol(min, &ep, 10);
+			if ((cvs_tm.tm_gmtoff == LONG_MIN) ||
+			    (cvs_tm.tm_gmtoff == LONG_MAX) ||
+			    (*ep != '\0')) {
+				cvs_log(LP_ERR,
+				    "parse error in GMT minutes "
+				    "specification `%s'", min);
+			}
+			else
+				cvs_tm.tm_gmtoff += off * 60;
+		}
+	}
+	if (sign == '-')
+		cvs_tm.tm_gmtoff = -cvs_tm.tm_gmtoff;
+
+	for (i = 0; i < (int)(sizeof(cvs_months)/sizeof(cvs_months[0])); i++) {
+		if (strcmp(cvs_months[i], mon) == 0) {
+			cvs_tm.tm_mon = i;
+			break;
+		}
 	}
 
+	cvs_modtime = mktime(&cvs_tm);
 	return (0);
 }
 
@@ -802,7 +835,7 @@ cvs_resp_updated(int type, char *line)
 			return (-1);
 
 		/* set the timestamp as the last one received from Mod-time */
-		ep->ce_timestamp = asctime_r(&cvs_modtime, tbuf);
+		ep->ce_timestamp = ctime_r(&cvs_modtime, tbuf);
 		len = strlen(tbuf);
 		if ((len > 0) && (tbuf[len - 1] == '\n'))
 			tbuf[--len] = '\0';
