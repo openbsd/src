@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: mkioctls,v 1.12 2003/06/23 16:53:06 mickey Exp $
+#	$OpenBSD: mkioctls,v 1.13 2003/06/26 21:44:26 deraadt Exp $
 
 #
 # Copyright (c) 1994
@@ -84,8 +84,7 @@ BEGIN {
 	print "#include <sys/ioctl.h>"
 	print ""
 	print "const char *"
-	print "ioctlname(val)"
-	print "\tunsigned long val;"
+	print "ioctlname(unsigned long val)"
 	print "{"
 	print "\tswitch (val) {"
 	print ""
