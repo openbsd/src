@@ -1,4 +1,4 @@
-/*	$OpenBSD: conv.c,v 1.6 2003/06/03 02:56:09 millert Exp $	*/
+/*	$OpenBSD: conv.c,v 1.7 2003/06/12 20:58:09 deraadt Exp $	*/
 /*	$NetBSD: conv.c,v 1.7 2001/12/07 15:14:29 bjh21 Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)conv.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$OpenBSD: conv.c,v 1.6 2003/06/03 02:56:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: conv.c,v 1.7 2003/06/12 20:58:09 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -43,9 +43,7 @@ static char rcsid[] = "$OpenBSD: conv.c,v 1.6 2003/06/03 02:56:09 millert Exp $"
 #include "hexdump.h"
 
 void
-conv_c(pr, p)
-	PR *pr;
-	u_char *p;
+conv_c(PR *pr, u_char *p)
 {
 	char buf[10];
 	char const *str;
@@ -95,9 +93,7 @@ strpr:		*pr->cchar = 's';
 }
 
 void
-conv_u(pr, p)
-	PR *pr;
-	u_char *p;
+conv_u(PR *pr, u_char *p)
 {
 	static const char *list[] = {
 		"nul", "soh", "stx", "etx", "eot", "enq", "ack", "bel",

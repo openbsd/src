@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortran.c,v 1.5 2003/06/03 02:56:07 millert Exp $	*/
+/*	$OpenBSD: fortran.c,v 1.6 2003/06/12 20:58:09 deraadt Exp $	*/
 /*	$NetBSD: fortran.c,v 1.3 1995/03/26 20:14:08 glass Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)fortran.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: fortran.c,v 1.5 2003/06/03 02:56:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: fortran.c,v 1.6 2003/06/12 20:58:09 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -50,7 +50,7 @@ static void takeprec(void);
 char *lbp;				/* line buffer pointer */
 
 int
-PF_funcs()
+PF_funcs(void)
 {
 	bool	pfcnt;			/* pascal/fortran functions found */
 	char	*cp;
@@ -138,8 +138,7 @@ PF_funcs()
  *	do case-independent strcmp
  */
 int
-cicmp(cp)
-	char	*cp;
+cicmp(char *cp)
 {
 	int	len;
 	char	*bp;
@@ -155,7 +154,7 @@ cicmp(cp)
 }
 
 static void
-takeprec()
+takeprec(void)
 {
 	for (; isspace(*lbp); ++lbp)
 		continue;

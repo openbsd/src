@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.10 2003/06/03 02:56:14 millert Exp $	*/
+/*	$OpenBSD: build.c,v 1.11 2003/06/12 20:58:10 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -34,7 +34,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)build.c	5.3 (Berkeley) 3/12/91";*/
-static char rcsid[] = "$OpenBSD: build.c,v 1.10 2003/06/03 02:56:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: build.c,v 1.11 2003/06/12 20:58:10 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -74,7 +74,7 @@ static int rexec();
 static void symobj();
 
 int
-build()
+build(void)
 {
 	CF cf;
 	int afd, tfd;
@@ -136,9 +136,7 @@ build()
  *	out.
  */
 static int
-rexec(rfd, wfd)
-	int rfd;
-	int wfd;
+rexec(int rfd, int wfd)
 {
 	RLIB *rp;
 	long nsyms;
@@ -244,8 +242,7 @@ bad: 	if (nr < 0)
  *	writing.  Use the right format depending on mid.
  */
 static void
-symobj(mid)
-	int mid;
+symobj(int mid)
 {
 	RLIB *rp, *rnext;
 	struct ranlib rn;

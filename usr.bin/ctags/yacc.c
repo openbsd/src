@@ -1,4 +1,4 @@
-/*	$OpenBSD: yacc.c,v 1.6 2003/06/03 02:56:07 millert Exp $	*/
+/*	$OpenBSD: yacc.c,v 1.7 2003/06/12 20:58:09 deraadt Exp $	*/
 /*	$NetBSD: yacc.c,v 1.3 1995/03/26 20:14:12 glass Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)yacc.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: yacc.c,v 1.6 2003/06/03 02:56:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: yacc.c,v 1.7 2003/06/12 20:58:09 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -50,7 +50,7 @@ static char rcsid[] = "$OpenBSD: yacc.c,v 1.6 2003/06/03 02:56:07 millert Exp $"
  *	find the yacc tags and put them in.
  */
 void
-y_entries()
+y_entries(void)
 {
 	int	c;
 	char	*sp;
@@ -122,7 +122,7 @@ y_entries()
  *	throw away lines up to the next "\n%%\n"
  */
 void
-toss_yysec()
+toss_yysec(void)
 {
 	int	c;			/* read character */
 	int	state;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.7 2003/06/03 02:56:14 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.8 2003/06/12 20:58:10 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -34,7 +34,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)misc.c	5.2 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: misc.c,v 1.7 2003/06/03 02:56:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.8 2003/06/12 20:58:10 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -50,7 +50,7 @@ static char rcsid[] = "$OpenBSD: misc.c,v 1.7 2003/06/03 02:56:14 millert Exp $"
 char *tname = "temporary file";
 
 int
-tmp()
+tmp(void)
 {
 	static char *envtmp;
 	sigset_t set, oset;
@@ -83,8 +83,7 @@ tmp()
 }
 
 void *
-emalloc(len)
-	size_t len;
+emalloc(size_t len)
 {
 	void *p;
 
@@ -94,8 +93,7 @@ emalloc(len)
 }
 
 const char *
-rname(path)
-	const char *path;
+rname(const char *path)
 {
 	const char *ind;
 
@@ -103,15 +101,14 @@ rname(path)
 }
 
 void
-badfmt()
+badfmt(void)
 {
 	errno = EFTYPE;
 	error(archive);
 }
 
 void
-error(name)
-	const char *name;
+error(const char *name)
 {
 
 	err(1, "%s", name);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: append.c,v 1.4 2003/06/03 02:56:05 millert Exp $	*/
+/*	$OpenBSD: append.c,v 1.5 2003/06/12 20:58:08 deraadt Exp $	*/
 /*	$NetBSD: append.c,v 1.5 1995/03/26 03:27:37 glass Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)append.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: append.c,v 1.4 2003/06/03 02:56:05 millert Exp $";
+static char rcsid[] = "$OpenBSD: append.c,v 1.5 2003/06/12 20:58:08 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,8 +60,7 @@ static char rcsid[] = "$OpenBSD: append.c,v 1.4 2003/06/03 02:56:05 millert Exp 
  *	a new archive if named archive does not exist.
  */
 int
-append(argv)
-	char **argv;
+append(char **argv)
 {
 	int afd, fd, eval;
 	char *file;

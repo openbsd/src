@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.11 2003/06/03 02:56:09 millert Exp $	*/
+/*	$OpenBSD: display.c,v 1.12 2003/06/12 20:58:09 deraadt Exp $	*/
 /*	$NetBSD: display.c,v 1.12 2001/12/07 15:14:29 bjh21 Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)display.c	5.11 (Berkeley) 3/9/91";*/
-static char rcsid[] = "$OpenBSD: display.c,v 1.11 2003/06/03 02:56:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: display.c,v 1.12 2003/06/12 20:58:09 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -56,7 +56,7 @@ static off_t eaddress;			/* end address */
 static inline void print(PR *, u_char *);
 
 void
-display()
+display(void)
 {
 	FS *fs;
 	FU *fu;
@@ -111,9 +111,7 @@ display()
 }
 
 static inline void
-print(pr, bp)
-	PR *pr;
-	u_char *bp;
+print(PR *pr, u_char *bp)
 {
 	   double f8;
 	    float f4;
@@ -203,8 +201,7 @@ print(pr, bp)
 }
 
 void
-bpad(pr)
-	PR *pr;
+bpad(PR *pr)
 {
 	static const char *spec = " -0+#";
 	char *p1, *p2;
@@ -224,7 +221,7 @@ bpad(pr)
 static char **_argv;
 
 u_char *
-get()
+get(void)
 {
 	static int ateof = 1;
 	static u_char *curp, *savp;
@@ -291,8 +288,7 @@ get()
 }
 
 int
-next(argv)
-	char **argv;
+next(char **argv)
 {
 	static int done;
 	int statok;
@@ -326,9 +322,7 @@ next(argv)
 }
 
 void
-doskip(fname, statok)
-	const char *fname;
-	int statok;
+doskip(const char *fname, int statok)
 {
 	int cnt;
 	struct stat sb;
@@ -357,8 +351,7 @@ doskip(fname, statok)
 }
 
 void *
-emalloc(allocsize)
-	int allocsize;
+emalloc(int allocsize)
 {
 	void *p;
 
@@ -369,7 +362,7 @@ emalloc(allocsize)
 }
 
 void
-nomem()
+nomem(void)
 {
 	err(1, NULL);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: archive.c,v 1.9 2003/06/03 02:56:05 millert Exp $	*/
+/*	$OpenBSD: archive.c,v 1.10 2003/06/12 20:58:08 deraadt Exp $	*/
 /*	$NetBSD: archive.c,v 1.7 1995/03/26 03:27:46 glass Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)archive.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: archive.c,v 1.9 2003/06/03 02:56:05 millert Exp $";
+static char rcsid[] = "$OpenBSD: archive.c,v 1.10 2003/06/12 20:58:08 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,8 +61,7 @@ typedef struct ar_hdr HDR;
 static char hb[sizeof(HDR) + 1];	/* real header */
 
 int
-open_archive(mode)
-	int mode;
+open_archive(int mode)
 {
 	int created, fd, nr;
 	char buf[SARMAG];
@@ -110,8 +109,7 @@ opened:	if (flock(fd, LOCK_EX|LOCK_NB) && errno != EOPNOTSUPP)
 }
 
 void
-close_archive(fd)
-	int fd;
+close_archive(int fd)
 {
 
 	(void)close(fd);			/* Implicit unlock. */
@@ -129,8 +127,7 @@ close_archive(fd)
  *	read the archive header for this member
  */
 int
-get_arobj(fd)
-	int fd;
+get_arobj(int fd)
 {
 	struct ar_hdr *hdr;
 	int len, nr;
@@ -197,9 +194,7 @@ static int already_written;
  *	Write an archive member to a file.
  */
 void
-put_arobj(cfp, sb)
-	CF *cfp;
-	struct stat *sb;
+put_arobj(CF *cfp, struct stat *sb)
 {
 	int lname;
 	char *name;
@@ -290,9 +285,7 @@ put_arobj(cfp, sb)
  *	have been ripped out long ago.
  */
 void
-copy_ar(cfp, size)
-	CF *cfp;
-	off_t size;
+copy_ar(CF *cfp, off_t size)
 {
 	static char pad = '\n';
 	off_t sz;
@@ -333,8 +326,7 @@ copy_ar(cfp, size)
  *	Skip over an object -- taking care to skip the pad bytes.
  */
 void
-skip_arobj(fd)
-	int fd;
+skip_arobj(int fd)
 {
 	off_t len;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extract.c,v 1.5 2003/06/03 02:56:05 millert Exp $	*/
+/*	$OpenBSD: extract.c,v 1.6 2003/06/12 20:58:08 deraadt Exp $	*/
 /*	$NetBSD: extract.c,v 1.5 1995/03/26 03:27:53 glass Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)extract.c	8.3 (Berkeley) 4/2/94";
 #else 
-static char rcsid[] = "$OpenBSD: extract.c,v 1.5 2003/06/03 02:56:05 millert Exp $";
+static char rcsid[] = "$OpenBSD: extract.c,v 1.6 2003/06/12 20:58:08 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,8 +64,7 @@ static char rcsid[] = "$OpenBSD: extract.c,v 1.5 2003/06/03 02:56:05 millert Exp
  *	archive.
  */
 int
-extract(argv)
-	char **argv;
+extract(char **argv)
 {
 	char *file;
 	int afd, all, eval, tfd;

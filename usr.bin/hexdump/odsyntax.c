@@ -1,4 +1,4 @@
-/*	$OpenBSD: odsyntax.c,v 1.12 2003/06/03 02:56:09 millert Exp $	*/
+/*	$OpenBSD: odsyntax.c,v 1.13 2003/06/12 20:58:09 deraadt Exp $	*/
 /*	$NetBSD: odsyntax.c,v 1.15 2001/12/07 15:14:29 bjh21 Exp $	*/
 
 /*-
@@ -32,7 +32,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)odsyntax.c	5.4 (Berkeley) 3/8/91";*/
-static char rcsid[] = "$OpenBSD: odsyntax.c,v 1.12 2003/06/03 02:56:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: odsyntax.c,v 1.13 2003/06/12 20:58:09 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -80,9 +80,7 @@ static const char *fmt[4][4] = {
 };
 
 void
-oldsyntax(argc, argvp)
-	int argc;
-	char ***argvp;
+oldsyntax(int argc, char ***argvp)
 {
 	int ch;
 	char *p, **argv;
@@ -206,8 +204,7 @@ oldsyntax(argc, argvp)
  * Interpret a POSIX-style -t argument.
  */
 static void
-posixtypes(type_string)
-	char *type_string;
+posixtypes(char *type_string)
 {
 	int x, y, nbytes;
 
@@ -302,7 +299,7 @@ posixtypes(type_string)
 }
 
 void
-oldusage()
+oldusage(void)
 {
 	extern char *__progname;
 	fprintf(stderr, "usage: %s [-aBbcDdeFfHhIiLlOovXx] [-j skip] "
@@ -312,9 +309,7 @@ oldusage()
 }
 
 static void
-odoffset(argc, argvp)
-	int argc;
-	char ***argvp;
+odoffset(int argc, char ***argvp)
 {
 	char *num, *p;
 	int base;
@@ -412,7 +407,7 @@ odoffset(argc, argvp)
 }
 
 static void
-odprecede()
+odprecede(void)
 {
 	static int first = 1;
 

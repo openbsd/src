@@ -1,4 +1,4 @@
-/*	$OpenBSD: C.c,v 1.9 2003/06/03 02:56:07 millert Exp $	*/
+/*	$OpenBSD: C.c,v 1.10 2003/06/12 20:58:09 deraadt Exp $	*/
 /*	$NetBSD: C.c,v 1.3 1995/03/26 20:14:02 glass Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)C.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: C.c,v 1.9 2003/06/03 02:56:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: C.c,v 1.10 2003/06/12 20:58:09 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -54,7 +54,7 @@ static int	str_entry(int);
  *	read .c and .h files and call appropriate routines
  */
 void
-c_entries()
+c_entries(void)
 {
 	int	c;			/* current character */
 	int	level;			/* brace level */
@@ -272,7 +272,7 @@ endtok:			if (sp > tok) {
  *	handle a function reference
  */
 static int
-func_entry()
+func_entry(void)
 {
 	int	c;			/* current character */
 	int	level = 0;		/* for matching '()' */
@@ -370,7 +370,7 @@ fnd:
  *	handle a line starting with a '#'
  */
 static void
-hash_entry()
+hash_entry(void)
 {
 	int	c;			/* character read */
 	int	curline;		/* line started on */
@@ -439,8 +439,7 @@ skip:	if (c == '\n') {		/* get rid of rest of define */
  *	handle a struct, union or enum entry
  */
 static int
-str_entry(c)
-	int	c;			/* current character */
+str_entry(int c)
 {
 	int	curline;		/* line started on */
 	char	*sp;			/* buffer pointer */
@@ -525,8 +524,7 @@ skip_comment(int commenttype)
  *	skip to the end of a string or character constant.
  */
 void
-skip_string(key)
-	int	key;
+skip_string(int key)
 {
 	int	c,
 		skip;
@@ -551,8 +549,7 @@ skip_string(key)
  *	skip to next char "key"
  */
 int
-skip_key(key)
-	int	key;
+skip_key(int key)
 {
 	int	c,
 		skip,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar.c,v 1.10 2003/06/03 02:56:05 millert Exp $	*/
+/*	$OpenBSD: ar.c,v 1.11 2003/06/12 20:58:08 deraadt Exp $	*/
 /*	$NetBSD: ar.c,v 1.5 1995/03/26 03:27:44 glass Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ar.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: ar.c,v 1.10 2003/06/03 02:56:05 millert Exp $";
+static char rcsid[] = "$OpenBSD: ar.c,v 1.11 2003/06/12 20:58:08 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -74,9 +74,7 @@ static void usage(void);
  *	option parsing and sanity checking.
  */
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	int c;
 	char *p;
@@ -215,8 +213,7 @@ main(argc, argv)
 }
 
 static void
-badoptions(arg)
-	char *arg;
+badoptions(char *arg)
 {
 
 	warnx("illegal option combination for %s", arg);
@@ -224,7 +221,7 @@ badoptions(arg)
 }
 
 static void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr, "usage:  ar -d [-Tv] archive file ...\n");

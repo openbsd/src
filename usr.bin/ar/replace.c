@@ -1,4 +1,4 @@
-/*	$OpenBSD: replace.c,v 1.5 2003/06/03 02:56:05 millert Exp $	*/
+/*	$OpenBSD: replace.c,v 1.6 2003/06/12 20:58:08 deraadt Exp $	*/
 /*	$NetBSD: replace.c,v 1.6 1995/03/26 03:28:01 glass Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)replace.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: replace.c,v 1.5 2003/06/03 02:56:05 millert Exp $";
+static char rcsid[] = "$OpenBSD: replace.c,v 1.6 2003/06/12 20:58:08 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,8 +63,7 @@ static char rcsid[] = "$OpenBSD: replace.c,v 1.5 2003/06/03 02:56:05 millert Exp
  *	is specified, modification dates select for replacement.
  */
 int
-replace(argv)
-	char **argv;
+replace(char **argv)
 {
 	char *file;
 	int afd, curfd, errflg, exists, mods, sfd, tfd1, tfd2;

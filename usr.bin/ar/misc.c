@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.5 2003/06/03 02:56:05 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.6 2003/06/12 20:58:08 deraadt Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/03/26 03:27:55 glass Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.5 2003/06/03 02:56:05 millert Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.6 2003/06/12 20:58:08 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ static char rcsid[] = "$OpenBSD: misc.c,v 1.5 2003/06/03 02:56:05 millert Exp $"
 char *tname = "temporary file";		/* temporary file "name" */
 
 int
-tmp()
+tmp(void)
 {
 	extern char *envtmp;
 	sigset_t set, oset;
@@ -93,8 +93,7 @@ tmp()
  * 	does, remove it from the argument list.
  */
 char *
-files(argv)
-	char **argv;
+files(char **argv)
 {
 	char **list, *p;
 
@@ -109,8 +108,7 @@ files(argv)
 }
 
 void
-orphans(argv)
-	char **argv;
+orphans(char **argv)
 {
 
 	for (; *argv; ++argv)
@@ -118,8 +116,7 @@ orphans(argv)
 }
 
 char *
-rname(path)
-	char *path;
+rname(char *path)
 {
 	char *ind;
 
@@ -127,8 +124,7 @@ rname(path)
 }
 
 int
-compare(dest)
-	char *dest;
+compare(char *dest)
 {
 
 	if (options & AR_TR)
@@ -137,7 +133,7 @@ compare(dest)
 }
 
 void
-badfmt()
+badfmt(void)
 {
 
 	errno = EFTYPE;
@@ -145,8 +141,7 @@ badfmt()
 }
 
 void
-error(name)
-	char *name;
+error(char *name)
 {
 
 	err(1, "%s", name);

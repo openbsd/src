@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.5 2003/06/03 02:56:07 millert Exp $	*/
+/*	$OpenBSD: tree.c,v 1.6 2003/06/12 20:58:09 deraadt Exp $	*/
 /*	$NetBSD: tree.c,v 1.4 1995/03/26 20:14:11 glass Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tree.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: tree.c,v 1.5 2003/06/03 02:56:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.6 2003/06/12 20:58:09 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,9 +55,7 @@ static void	free_tree(NODE *);
  *	enter a new node in the tree
  */
 void
-pfnote(name, ln)
-	char	*name;
-	int	ln;
+pfnote(char *name, int ln)
 {
 	NODE	*np;
 	char	*fp;
@@ -97,9 +95,7 @@ pfnote(name, ln)
 }
 
 static void
-add_node(node, cur_node)
-	NODE	*node,
-		*cur_node;
+add_node(NODE *node, NODE *cur_node)
 {
 	int	dif;
 
@@ -127,8 +123,7 @@ add_node(node, cur_node)
 }
 
 static void
-free_tree(node)
-	NODE	*node;
+free_tree(NODE *node)
 {
 	while (node) {
 		if (node->right)

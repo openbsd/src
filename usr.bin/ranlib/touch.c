@@ -1,4 +1,4 @@
-/*	$OpenBSD: touch.c,v 1.5 2003/06/03 02:56:14 millert Exp $	*/
+/*	$OpenBSD: touch.c,v 1.6 2003/06/12 20:58:10 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -34,7 +34,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)touch.c	5.3 (Berkeley) 3/12/91";*/
-static char rcsid[] = "$OpenBSD: touch.c,v 1.5 2003/06/03 02:56:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: touch.c,v 1.6 2003/06/12 20:58:10 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -52,7 +52,7 @@ static char rcsid[] = "$OpenBSD: touch.c,v 1.5 2003/06/03 02:56:14 millert Exp $
 extern CHDR chdr;			/* converted header */
 
 int
-touch()
+touch(void)
 {
 	int afd;
 
@@ -70,8 +70,7 @@ touch()
 }
 
 void
-settime(afd)
-	int afd;
+settime(int afd)
 {
 	struct ar_hdr *hdr;
 	off_t size;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.12 2003/06/03 02:56:09 millert Exp $	*/
+/*	$OpenBSD: parse.c,v 1.13 2003/06/12 20:58:09 deraadt Exp $	*/
 /*	$NetBSD: parse.c,v 1.12 2001/12/07 13:37:39 bjh21 Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)parse.c	5.6 (Berkeley) 3/9/91";*/
-static char rcsid[] = "$OpenBSD: parse.c,v 1.12 2003/06/03 02:56:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.13 2003/06/12 20:58:09 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -51,8 +51,7 @@ static char rcsid[] = "$OpenBSD: parse.c,v 1.12 2003/06/03 02:56:09 millert Exp 
 FU *endfu;					/* format at end-of-data */
 
 void
-addfile(name)
-	char *name;
+addfile(char *name)
 {
 	char *p;
 	FILE *fp;
@@ -77,8 +76,7 @@ addfile(name)
 }
 
 void
-add(fmt)
-	const char *fmt;
+add(const char *fmt)
 {
 	const char *p;
 	static FS **nextfs;
@@ -152,8 +150,7 @@ add(fmt)
 static const char *spec = ".#-+ 0123456789";
 
 int
-size(fs)
-	FS *fs;
+size(FS *fs)
 {
 	FU *fu;
 	int bcnt, cursize;
@@ -206,8 +203,7 @@ size(fs)
 }
 
 void
-rewrite(fs)
-	FS *fs;
+rewrite(FS *fs)
 {
 	enum { NOTOKAY, USEBCNT, USEPREC } sokay;
 	PR *pr, **nextpr;
@@ -447,8 +443,7 @@ isint2:					switch(fu->bcnt) {
 }
 
 void
-escape(p1)
-	char *p1;
+escape(char *p1)
 {
 	char *p2;
 
@@ -490,28 +485,25 @@ escape(p1)
 }
 
 void
-badcnt(s)
-	char *s;
+badcnt(char *s)
 {
 	errx(1, "%s: bad byte count", s);
 }
 
 void
-badsfmt()
+badsfmt(void)
 {
 	errx(1, "%%s: requires a precision or a byte count");
 }
 
 void
-badfmt(fmt)
-	const char *fmt;
+badfmt(const char *fmt)
 {
 	errx(1, "\"%s\": bad format", fmt);
 }
 
 void
-badconv(ch)
-	char *ch;
+badconv(char *ch)
 {
 	errx(1, "%%%s: bad conversion character", ch);
 }
