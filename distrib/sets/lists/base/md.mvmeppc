@@ -804,6 +804,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/nec765reg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/ns16450reg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/ns16550reg.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/nslm7xvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/opl3sa3reg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/oplreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/oplvar.ph
@@ -1953,6 +1954,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/scsiio.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/select.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/sem.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/sensors.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/shm.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/siginfo.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/signal.ph

@@ -728,6 +728,7 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/ic/nec765reg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/ic/ns16450reg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/ic/ns16550reg.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/ic/nslm7xvar.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/ic/opl3sa3reg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/ic/oplreg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/ic/oplvar.ph
@@ -1882,6 +1883,7 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/scsiio.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/select.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/sem.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/sys/sensors.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/shm.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/siginfo.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/signal.ph

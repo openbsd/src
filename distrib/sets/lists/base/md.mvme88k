@@ -425,6 +425,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/lsi64854reg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/lsi64854var.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/mk48txxreg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/nslm7xvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/osiopreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/osiopvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/pt2254a.ph
@@ -637,6 +638,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/pciio.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/radioio.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/sched.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/sys/sensors.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/swap.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/timeout.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/tree.ph

@@ -251,6 +251,7 @@
 ./usr/include/dev/ic/nec765reg.h
 ./usr/include/dev/ic/ns16450reg.h
 ./usr/include/dev/ic/ns16550reg.h
+./usr/include/dev/ic/nslm7xvar.h
 ./usr/include/dev/ic/opl3sa3reg.h
 ./usr/include/dev/ic/oplreg.h
 ./usr/include/dev/ic/oplvar.h
@@ -1423,6 +1424,7 @@
 ./usr/include/sys/scsiio.h
 ./usr/include/sys/select.h
 ./usr/include/sys/sem.h
+./usr/include/sys/sensors.h
 ./usr/include/sys/shm.h
 ./usr/include/sys/siginfo.h
 ./usr/include/sys/signal.h

@@ -806,6 +806,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/nec765reg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/ns16450reg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/ns16550reg.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/nslm7xvar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/opl3sa3reg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/oplreg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/oplvar.ph
@@ -1966,6 +1967,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/scsiio.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/select.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/sem.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/sys/sensors.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/shm.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/siginfo.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/signal.ph

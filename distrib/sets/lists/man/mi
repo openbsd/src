@@ -1171,6 +1171,7 @@
 ./usr/share/man/cat4/lc.0
 ./usr/share/man/cat4/lge.0
 ./usr/share/man/cat4/lkm.0
+./usr/share/man/cat4/lm.0
 ./usr/share/man/cat4/lmc.0
 ./usr/share/man/cat4/lo.0
 ./usr/share/man/cat4/lofn.0
@@ -1466,6 +1467,7 @@
 ./usr/share/man/cat4/vax/vsbus.0
 ./usr/share/man/cat4/vax/ze.0
 ./usr/share/man/cat4/vga.0
+./usr/share/man/cat4/viaenv.0
 ./usr/share/man/cat4/vlan.0
 ./usr/share/man/cat4/vnd.0
 ./usr/share/man/cat4/vr.0
