@@ -7778,8 +7778,8 @@ srcdir="$srcdir"
 SRCDIR_CLEAN="#"
 if test -n "$srcdir" ; then
 	echo srcdir is $srcdir
-	$srcdir/mkdirs.sh WWW/Library/unix
-	$srcdir/mkdirs.sh src/chrtrans
+	sh $srcdir/mkdirs.sh WWW/Library/unix
+	sh $srcdir/mkdirs.sh src/chrtrans
 	test "$srcdir" != "." && SRCDIR_CLEAN=""
 fi
 
