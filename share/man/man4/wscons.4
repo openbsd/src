@@ -1,4 +1,4 @@
-.\" $OpenBSD: wscons.4,v 1.14 2004/03/21 19:47:59 miod Exp $
+.\" $OpenBSD: wscons.4,v 1.15 2004/03/22 20:31:07 miod Exp $
 .\" $NetBSD: wscons.4,v 1.11 2000/04/13 11:14:42 is Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@ is assigned to each virtual screen when the screen is created (see
 Different terminal emulations can be active at the same time on one display.
 .Pp
 The following choices are available:
-.Bl -tag -width xxxxxx
+.Bl -tag -width vt100
 .It dumb
 This minimal terminal support is always available.
 No control sequences are supported besides the ASCII control characters.
@@ -108,7 +108,10 @@ It supports the control sequences of
 machine consoles and delivers its keyboard codes for function and
 keypad keys (as far as present on the actually used keyboard).
 .Pp
-ANSI colors are also supported on this emulation.
+ANSI colors are also supported on this emulation, if the
+.Ev TERM
+environment variable is set to
+.Ar rcons-color .
 .Pp
 This emulation is sufficient for full-screen applications.
 .It vt100
@@ -227,7 +230,7 @@ find the
 driver entry points, symlinks are a helpful measure.)
 .Pp
 .Em Other options :
-.Bl -tag -width xxxxxxxx
+.Bl -tag -width 3n
 .It Cd option WS_KERNEL_FG=WSCOL_XXX
 .It Cd option WS_KERNEL_BG=WSCOL_XXX
 .It Cd option \&WS_KERNEL_COLATTR="(WSATTR_XXX | WSATTR_YYY)"
