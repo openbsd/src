@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.46 2001/12/02 18:07:32 provos Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.47 2001/12/27 22:49:35 fgsch Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -159,6 +159,7 @@ sys_accept(p, v, retval)
 	socklen_t namelen;
 	int error, s, tmpfd;
 	struct socket *head, *so;
+	int nflag;
 
 	if (SCARG(uap, name) && (error = copyin((caddr_t)SCARG(uap, anamelen),
 	    (caddr_t)&namelen, sizeof (namelen))))
@@ -205,6 +206,9 @@ sys_accept(p, v, retval)
 	if (soqremque(so, 1) == 0)
 		panic("accept");
 
+	/* Take note if socket was non-blocking. */
+	nflag = (fp->f_flag & FNONBLOCK);
+
 	if ((error = falloc(p, &fp, &tmpfd)) != 0) {
 		/*
 		 * Probably ran out of file descriptors. Put the
@@ -226,7 +230,7 @@ sys_accept(p, v, retval)
 	KNOTE(&head->so_rcv.sb_sel.si_note, 0);
 
 	fp->f_type = DTYPE_SOCKET;
-	fp->f_flag = FREAD|FWRITE;
+	fp->f_flag = FREAD | FWRITE | nflag;
 	fp->f_ops = &socketops;
 	fp->f_data = (caddr_t)so;
 	nam = m_get(M_WAIT, MT_SONAME);
