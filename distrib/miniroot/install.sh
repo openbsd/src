@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.16 1997/10/17 12:21:02 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.17 1997/10/30 05:23:44 millert Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -136,50 +136,70 @@ if [ "`df /`" = "`df /mnt`" ]; then
 	# Assume partition 'a' of $ROOTDISK is for the root filesystem.
 	# Loop and get the rest.
 	# XXX ASSUMES THAT THE USER DOESN'T PROVIDE BOGUS INPUT.
-	cat << \__get_filesystems_1
+	cat << __get_filesystems_1
 
 You will now have the opportunity to enter filesystem information.  You will be
-prompted for device name and mount point (full path, including the prepending
-'/' character).  (NOTE: these do not have to be in any particular order).
+prompted for the mount point (full path, including the prepending '/' character)
+for each BSD partition on ${ROOTDISK}.  Enter "none" to skip a partition or
+"done" when you are finished.
 __get_filesystems_1
 
-	echo	"The following will be used for the root filesystem:"
+	echo	"The following will be used for the root filesystem and swap:"
 	echo	"	${ROOTDISK}a	/"
+	echo	"	${ROOTDISK}b	swap"
 
 	echo	"${ROOTDISK}a /" > ${FILESYSTEMS}
 
-	resp="X"	# force at least one iteration
-	while [ "X$resp" != X"done" ]; do
-		echo	""
-		echo -n	"Device name? [done] "
-		getresp "done"
-		case "$resp" in
-		done)
-			;;
-
-		*)
-			_device_name=`basename $resp`
-
-			# force at least one iteration
-			_first_char="X"
-			while [ "X${_first_char}" != X"/" ]; do
-				echo -n "Mount point? "
-				getresp ""
-				_mount_point=$resp
-				_first_char=`firstchar ${_mount_point}`
-				if [ "X${_first_char}" != X"/" ]; then
-					echo "mount point must be an absolute path!"
-				fi
-			done
-			if [ "X${_mount_point}" = X"/" ]; then
-				echo "root mount point already taken care of!"
-			else
-				echo "${_device_name} ${_mount_point}" \
-					>> ${FILESYSTEMS}
-			fi
-			resp="X"	# force loop to repeat
-			;;
+	# XXX - allow the user to name mount points on disks other than ROOTDISK
+	#	also allow a way to enter non-BSD partitions (but don't newfs!)
+	# Get the list of BSD partitions and store sizes
+	_npartitions=0
+	for _p in `disklabel ${ROOTDISK} 2>&1 | grep '^ *[a-p]:.*BSD' | sed 's/^ *\([a-p]\): *\([0-9][0-9]*\) .*/\1\2/'`; do
+		case $_p in
+			a*)	# We already have an 'a'
+				;;
+			*)	_pp=`firstchar ${_p}`
+				_ps=`echo ${_p} | sed 's/^.//'`
+				_partitions[${_npartitions}]=${_pp}
+				_psizes[${_npartitions}]=${_ps}
+				_npartitions=$(( ${_npartitions} + 1 ))
+				;;
 		esac
+	done
+
+	# Now prompt the user for the mount points.  Loop until "done"
+	echo	""
+	_i=0
+	resp="X"
+	while [ $_npartitions -gt 0 -a X${resp} != X"done" ]; do
+		_pp=${_partitions[${_i}]}
+		_ps=$(( ${_psizes[${_i}]} / 2 ))
+		_mp=${_mount_points[${_i}]}
+
+		# Get the mount point from the user
+		while : ; do
+			echo -n "Mount point for ${ROOTDISK}${_pp} (size=${_ps}k) [$_mp]? "
+			getresp "$_mp"
+			case "X${resp}" in
+				X/*)	_mount_points[${_i}]=$resp
+					break ;;
+				Xdone|Xnone|X)	break ;;
+				*)	echo "mount point must be an absolute path!";;
+			esac
+		done
+		_i=$(( ${_i} + 1 ))
+		if [ $_i -ge $_npartitions ]; then
+			_i=0
+		fi
+	done
+
+	# Now write it out
+	_i=0
+	while test $_i -lt $_npartitions; do
+		if [ -n "${_mount_points[${_i}]}" ]; then
+			echo "${ROOTDISK}${_partitions[${_i}]} ${_mount_points[${_i}]}" >> ${FILESYSTEMS}
+		fi
+		_i=$(( ${_i} + 1 ))
 	done
 
 	echo	""
