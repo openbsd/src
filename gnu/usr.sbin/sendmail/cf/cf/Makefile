@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2001/09/11 19:02:48 millert Exp $
+#	$OpenBSD: Makefile,v 1.12 2001/09/12 16:15:38 millert Exp $
 #
 #  Makefile for configuration files.
 #
@@ -38,12 +38,18 @@ clean cleandir:
 depend:
 
 install:
-	@if test -e ${DESTDIR}/etc/mail/sendmail.cf -a \
-	    \! -e ${DESTDIR}/etc/mail/submit.cf; then \
-		echo "WARNING: installed missing ${DESTDIR}/etc/mail/submit.cf"; \
-		echo "You should probably rebuild ${DESTDIR}/etc/mail/sendmail.cf"; \
-		${INSTALL} ${INSTALL_COPY} -o root -g wheel -m 644 submit.cf \
-		    ${DESTDIR}/etc/mail/submit.cf; \
+	@if test -e ${DESTDIR}/etc/mail/sendmail.cf; then \
+		if test ! -e ${DESTDIR}/etc/mail/submit.cf; then \
+			echo "WARNING: installed missing ${DESTDIR}/etc/mail/submit.cf"; \
+			echo "You should probably rebuild ${DESTDIR}/etc/mail/sendmail.cf"; \
+			${INSTALL} ${INSTALL_COPY} -o root -g wheel -m 644 \
+			    submit.cf ${DESTDIR}/etc/mail/submit.cf; \
+		fi; \
+		if test ! -e ${DESTDIR}/etc/mail/localhost.cf; then \
+			echo "WARNING: installed missing ${DESTDIR}/etc/mail/localhost.cf"; \
+			${INSTALL} ${INSTALL_COPY} -o root -g wheel -m 644 \
+			    openbsd-localhost.cf ${DESTDIR}/etc/mail/localhost.cf; \
+		fi; \
 	fi
 
 distribution: openbsd-proto.cf
