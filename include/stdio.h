@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdio.h,v 1.6 1996/07/26 10:34:25 deraadt Exp $	*/
+/*	$OpenBSD: stdio.h,v 1.7 1996/10/28 06:51:05 tholo Exp $	*/
 /*	$NetBSD: stdio.h,v 1.18 1996/04/25 18:29:21 jtc Exp $	*/
 
 /*-
@@ -371,7 +371,13 @@ static __inline int __sputc(int _c, FILE *_p) {
 
 #ifndef lint
 #define	getc(fp)	__sgetc(fp)
+/*
+ * The macro implementation of putc is not fully POSIX
+ * compliant; it does not set errno on failure
+ */
+#ifndef _POSIX_SOURCE
 #define putc(x, fp)	__sputc(x, fp)
+#endif /* _POSIX_SOURCE */
 #endif /* lint */
 
 #define	getchar()	getc(stdin)
