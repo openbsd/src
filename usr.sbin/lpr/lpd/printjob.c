@@ -1,4 +1,4 @@
-/*	$OpenBSD: printjob.c,v 1.14 1997/07/21 05:24:12 deraadt Exp $ */
+/*	$OpenBSD: printjob.c,v 1.15 1997/07/23 10:12:43 deraadt Exp $ */
 /*	$NetBSD: printjob.c,v 1.9.4.3 1996/07/12 22:31:39 jtc Exp $	*/
 
 /*
@@ -1568,7 +1568,7 @@ pstatus(msg, va_alist)
 		exit(1);
 	}
 	ftruncate(fd, 0);
-	(void)vsnprintf(buf, sizeof(buf), msg, ap);
+	(void)vsnprintf(buf, sizeof(buf) - 1, msg, ap);
 	va_end(ap);
 	strcat(buf, "\n");
 	(void) write(fd, buf, strlen(buf));
