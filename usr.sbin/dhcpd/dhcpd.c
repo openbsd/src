@@ -1,7 +1,4 @@
-/* dhcpd.c
-
-   DHCP Server Daemon. */
-
+/*	$OpenBSD: dhcpd.c,v 1.4 2004/04/14 02:13:37 henning Exp $ */
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
  * The Internet Software Consortium.  All rights reserved.
@@ -41,15 +38,7 @@
  */
 
 
-static char copyright[] =
-"Copyright 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.";
-static char arr [] = "All rights reserved.";
-static char message [] = "Internet Software Consortium DHCP Server";
-static char contrib [] = "Please contribute if you find this software useful.";
-static char url [] = "For info, please visit http://www.isc.org/dhcp-contrib.html";
-
 #include "dhcpd.h"
-#include "version.h"
 
 static void usage(char *);
 
@@ -162,15 +151,7 @@ int main (argc, argv)
 		}
 	}
 
-	if (!quiet) {
-		note ("%s %s", message, DHCP_VERSION);
-		note ("%s", copyright);
-		note ("%s", arr);
-		note ("%s", "");
-		note ("%s", contrib);
-		note ("%s", url);
-		note ("%s", "");
-	} else
+	if (quiet)
 		log_perror = 0;
 
 	/* Default to the DHCP/BOOTP port. */
@@ -181,12 +162,10 @@ int main (argc, argv)
 			local_port = htons (67);
 		else
 			local_port = ent -> s_port;
-#ifndef __CYGWIN32__ /* XXX */
 		endservent ();
-#endif
 	}
   
-	remote_port = htons (ntohs (local_port) + 1);
+	remote_port = htons(ntohs(local_port) + 1);
 
 	/* Get the current time... */
 	time(&cur_time);
@@ -200,10 +179,10 @@ int main (argc, argv)
  		exit(0);
 
 	/* Start up the database... */
-	db_startup ();
+	db_startup();
 
 	/* Discover all the network interfaces and initialize them. */
-	discover_interfaces (DISCOVER_SERVER);
+	discover_interfaces(DISCOVER_SERVER);
 
 	/* Initialize icmp support... */
 	icmp_startup(1, lease_pinged);
@@ -276,25 +255,17 @@ int main (argc, argv)
 	bootp_packet_handler = do_packet;
 
 	/* Receive packets and dispatch them... */
-	dispatch ();
+	dispatch();
 
 	/* Not reached */
-	return 0;
+	return (0);
 }
 
 /* Print usage message. */
 
-static void usage (appname)
-	char *appname;
+static void
+usage(char *appname)
 {
-	note ("%s", message);
-	note ("%s", copyright);
-	note ("%s", arr);
-	note ("%s", "");
-	note ("%s", contrib);
-	note ("%s", url);
-	note ("%s", "");
-
 	warn ("Usage: %s [-p <UDP port #>] [-d] [-f] [-cf config-file]",
 	      appname);
 	error("            [-lf lease-file] [-pf pidfile] [if0 [...ifN]]");
