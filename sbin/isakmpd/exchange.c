@@ -1,5 +1,5 @@
-/*	$OpenBSD: exchange.c,v 1.21 1999/06/02 06:33:00 niklas Exp $	*/
-/*	$EOM: exchange.c,v 1.106 1999/05/21 14:12:57 ho Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.22 1999/07/07 22:05:06 niklas Exp $	*/
+/*	$EOM: exchange.c,v 1.108 1999/06/06 17:48:30 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -45,6 +45,7 @@
 
 #include "cert.h"
 #include "conf.h"
+#include "connection.h"
 #include "constants.h"
 #include "cookie.h"
 #include "crypto.h"
@@ -1270,6 +1271,15 @@ exchange_finalize (struct message *msg)
 		   attr = TAILQ_NEXT (attr, link))
 		sa->flags |= sa_flag (attr->field);
 	      conf_free_list (attrs);
+	    }
+	  /* 'Connections' should stay alive.  */
+	  if (connection_exist (exchange->name))
+	    {
+	      sa->flags |= SA_FLAG_STAYALIVE;
+
+	      /* ISAKMP SA of this connection should also stay alive.  */
+	      if (exchange->phase == 2 && msg->isakmp_sa)
+		msg->isakmp_sa->flags |= SA_FLAG_STAYALIVE;
 	    }
 	}
 
