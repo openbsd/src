@@ -125,8 +125,6 @@ ftp://ftp.sunet.se/pub/OpenBSD
 
 Switzerland:
 
-ftp://web.eunet.ch/pub/OpenBSD ==
-	ftp://ftp.eu.openbsd.org/pub/OpenBSD
 ftp://sunsite.cnlab-switch.ch/pub/OpenBSD
 
 Taiwan:
@@ -168,7 +166,6 @@ ftp://gandalf.neark.org/pub/distributions/OpenBSD
 ftp://mirror.csit.fsu.edu/pub/OpenBSD
 ftp://mirrors.rcn.net/pub/OpenBSD
 ftp://rt.fm/pub/OpenBSD
-ftp://uiarchive.uiuc.edu/pub/systems/OpenBSD
 
 As well, the file ftp://ftp.openbsd.org/pub/OpenBSD/OSREV/ftplist
 contains a list which is continually updated.  If you wish to become a
