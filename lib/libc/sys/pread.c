@@ -1,4 +1,4 @@
-/*	$OpenBSD: pread.c,v 1.1 2000/04/20 06:34:37 deraadt Exp $	*/
+/*	$OpenBSD: pread.c,v 1.2 2001/05/05 22:58:29 millert Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: pread.c,v 1.1 2000/04/20 06:34:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: pread.c,v 1.2 2001/05/05 22:58:29 millert Exp $";
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -52,6 +52,7 @@ pread(fd, buf, nbyte, offset)
 	size_t nbyte;
 	off_t offset;
 {
+	extern off_t __syscall();
 	quad_t q;
 	int rv;
 
