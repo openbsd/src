@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.161 2001/02/04 15:32:27 stevesk Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.162 2001/02/04 22:12:17 stevesk Exp $");
 
 #include <openssl/dh.h>
 #include <openssl/bn.h>
@@ -710,7 +710,7 @@ main(int ac, char **av)
 		log("Disabling protocol version 2. Could not load host key");
 		options.protocol &= ~SSH_PROTO_2;
 	}
-	if (! options.protocol & (SSH_PROTO_1|SSH_PROTO_2)) {
+	if (!(options.protocol & (SSH_PROTO_1|SSH_PROTO_2))) {
 		log("sshd: no hostkeys available -- exiting.\n");
 		exit(1);
 	}
