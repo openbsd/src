@@ -12,7 +12,7 @@
 test "$usemymalloc" || usemymalloc='n'
 
 # Currently, vfork(2) is not a real win over fork(2) but this will
-# change in a future release.
+# change starting with OpenBSD 2.7.
 usevfork='true'
 
 # setre?[ug]id() have been replaced by the _POSIX_SAVED_IDS versions
@@ -37,7 +37,17 @@ alpha|mips|powerpc|vax)
 	# we use -fPIC here because -fpic is *NOT* enough for some of the
 	# extensions like Tk on some OpenBSD platforms (ie: sparc)
 	cccdlflags="-DPIC -fPIC $cccdlflags"
-	lddlflags="-Bforcearchive -Bshareable $lddlflags"
+	lddlflags="-Bshareable $lddlflags"
+	;;
+esac
+
+#
+# Tweaks for various versions of OpenBSD
+#
+case "$osvers" in
+2.5)
+	# OpenBSD 2.5 has broken odbm support
+	i_dbm=$undef
 	;;
 esac
 
