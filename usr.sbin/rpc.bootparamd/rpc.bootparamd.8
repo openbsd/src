@@ -1,4 +1,4 @@
-.\" $Id: rpc.bootparamd.8,v 1.1.1.1 1995/10/18 08:48:06 deraadt Exp $
+.\" $Id: rpc.bootparamd.8,v 1.2 1996/09/30 12:57:05 deraadt Exp $
 .\" @(#)bootparamd.8
 .Dd Jan 8, 1994
 .Dt BOOTPARAMD 8
@@ -54,6 +54,9 @@ default configuration file
 .El
 .Sh "SEE ALSO"
 .Xr bootparams 5
+.Sh WARNINGS
+If rpc.bootparams is run on a system which is also running YP, your YP
+domainname will be made public information.
 .Sh BUGS
 You may find the syslog loggings too verbose.
 .Pp
