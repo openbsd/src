@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: arch.c,v 1.48 2001/06/05 11:59:10 espie Exp $ */
+/*	$OpenBSD: arch.c,v 1.49 2001/06/07 13:53:22 espie Exp $ */
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -901,15 +901,14 @@ Arch_Touch(gn)
 /*ARGSUSED*/
 void
 Arch_TouchLib(gn)
-    GNode	    *gn;	/* The node of the library to touch */
+    GNode	    *gn UNUSED;	/* The node of the library to touch */
+                     /* ^          Non RANLIBMAG does nothing with it */
 {
 #ifdef RANLIBMAG
     if (gn->path != NULL) {
 	ArchTouch(gn->path, RANLIBMAG);
 	set_times(gn->path);
     }
-#else
-    gn = gn;
 #endif
 }
 
