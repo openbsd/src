@@ -65,7 +65,7 @@ int	*linect;		/* array of lengths of lines on screen
 				   (the actual screen is not stored) */
 
 				/* two letter codes */
-char	tcap[] = "bccdceclcmhomcmlndup";
+char	tcap[] = "lecdceclcmhomcmlndup";
 				/* corresponding strings */
 char	**tstr[] = { &BC, &CD, &CE, &CL, &CM, &HO, &MC, &ML, &ND, &UP };
 
