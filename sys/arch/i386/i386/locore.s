@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.36 1997/10/22 23:37:12 mickey Exp $	*/
+/*	$OpenBSD: locore.s,v 1.37 1997/12/09 03:36:39 deraadt Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -1931,6 +1931,19 @@ IDTVEC(stk)
 	TRAP(T_STKFLT)
 IDTVEC(prot)
 	TRAP(T_PROTFLT)
+#ifdef I586_CPU
+IDTVEC(f00f_redirect)
+	pushl	$T_PAGEFLT
+	INTRENTRY
+	testb	$PGEX_U,TF_ERR(%esp)
+	jnz	calltrap
+	movl	%cr2,%eax
+	subl	_idt,%eax
+	cmpl	$(6*8),%eax
+	jne	calltrap
+	movb	$T_PRIVINFLT,TF_TRAPNO(%esp)
+	jmp	calltrap
+#endif
 IDTVEC(page)
 	TRAP(T_PAGEFLT)
 IDTVEC(rsvd)

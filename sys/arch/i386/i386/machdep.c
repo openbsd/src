@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.66 1997/12/02 05:06:41 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.67 1997/12/09 03:36:40 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
 
 /*-
@@ -488,6 +488,10 @@ identifycpu()
 	if (cpu_class >= CPUCLASS_586) {
 		calibrate_cyclecounter();
 		printf(" %d MHz", pentium_mhz);
+	}
+	if (!strcmp(cpu_model, "Pentium (GenuineIntel 586-class CPU)")) {
+		fix_f00f();
+		printf("\nCPU: F00F bug workaround installed");
 	}
 #endif
 	printf("\n");
@@ -1079,7 +1083,8 @@ setregs(p, pack, stack, retval)
 
 union descriptor gdt[NGDT];
 union descriptor ldt[NLDT];
-struct gate_descriptor idt[NIDT];
+struct gate_descriptor idt_region[NIDT];
+struct gate_descriptor *idt = idt_region;
 
 extern  struct user *proc0paddr;
 
@@ -1138,6 +1143,45 @@ extern	IDTVEC(div),     IDTVEC(dbg),     IDTVEC(nmi),     IDTVEC(bpt),
 	IDTVEC(stk),     IDTVEC(prot),    IDTVEC(page),    IDTVEC(rsvd),
 	IDTVEC(fpu),     IDTVEC(align),
 	IDTVEC(syscall), IDTVEC(osyscall);
+
+#if defined(I586_CPU)
+extern IDTVEC(f00f_redirect);
+pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
+
+int cpu_f00f_bug = 0;
+
+void
+fix_f00f()
+{
+	struct region_descriptor region;
+	vm_offset_t va;
+	pt_entry_t *pte;
+	void *p;
+
+	/* Allocate two new pages */
+	va = kmem_alloc(kernel_map, NBPG*2);
+	p = (void *)(va + NBPG - 7*sizeof(*idt));
+
+	/* Copy over old IDT */
+	bcopy(idt, p, sizeof(idt_region));
+	idt = p;
+
+	/* Fix up paging redirect */
+	setgate(&idt[ 14], &IDTVEC(f00f_redirect), 0, SDT_SYS386TGT,
+		SEL_KPL, GCODE_SEL);
+
+	/* Map first page RO */
+	pte = pmap_pte(pmap_kernel(), va);
+	*pte &= ~PG_RW;
+
+	/* Reload idtr */
+	setregion(&region, idt, sizeof(idt_region) - 1);
+	lidt(&region);
+
+	/* Tell the rest of the world */
+	cpu_f00f_bug = 1;
+}
+#endif
 
 void
 init386(first_avail)
@@ -1214,7 +1258,7 @@ init386(first_avail)
 
 	setregion(&region, gdt, sizeof(gdt) - 1);
 	lgdt(&region);
-	setregion(&region, idt, sizeof(idt) - 1);
+	setregion(&region, idt, sizeof(idt_region) - 1);
 	lidt(&region);
 
 #if NISA > 0
@@ -1414,8 +1458,8 @@ cpu_reset()
 	 * Try to cause a triple fault and watchdog reset by setting the
 	 * IDT to point to nothing.
 	 */
-	bzero((caddr_t)idt, sizeof(idt));
-	setregion(&region, idt, sizeof(idt) - 1);
+	bzero((caddr_t)idt, sizeof(idt_region));
+	setregion(&region, idt, sizeof(idt_region) - 1);
 	lidt(&region);
 	__asm __volatile("divl %0,%1" : : "q" (0), "a" (0));
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.17 1997/10/25 21:47:27 mickey Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.18 1997/12/09 03:36:41 deraadt Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -140,6 +140,10 @@ extern int cpu_class;
 extern struct cpu_nameclass i386_cpus[];
 #ifdef I586_CPU
 extern int pentium_mhz;
+
+/* F00F bug fix stuff for pentium cpu */
+extern int cpu_f00f_bug;
+void fix_f00f __P((void));
 #endif
 
 /* autoconf.c */

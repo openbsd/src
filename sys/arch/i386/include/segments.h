@@ -128,7 +128,8 @@ struct region_descriptor {
 
 #ifdef _KERNEL
 extern union descriptor gdt[], ldt[];
-extern struct gate_descriptor idt[];
+extern struct gate_descriptor idt_region[];
+extern struct gate_descriptor *idt;
 
 void setgate __P((struct gate_descriptor *, void *, int, int, int, int));
 void setregion __P((struct region_descriptor *, void *, size_t));
