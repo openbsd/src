@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.176 1999/08/27 06:06:11 downsj Exp 
+ *	OpenBSD: pcidevs,v 1.177 1999/09/02 07:14:30 downsj Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -919,6 +919,8 @@
 #define	PCI_PRODUCT_INDCOMPSRC_WDT50x	0x22c0		/* WDT 50x Watchdog Timer */
 
 /* Initio Corporation */
+#define	PCI_PRODUCT_INITIO_INIC850	0x0850		/* INIC-850 (A100UW) SCSI */
+#define	PCI_PRODUCT_INITIO_INIC1060	0x1060		/* INIC-1060 (A100U2W) SCSI */
 #define	PCI_PRODUCT_INITIO_INIC940	0x9400		/* INIC-940 SCSI */
 #define	PCI_PRODUCT_INITIO_INIC941	0x9401		/* INIC-941 SCSI */
 #define	PCI_PRODUCT_INITIO_INIC950	0x9500		/* INIC-950 SCSI */

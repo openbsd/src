@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.176 1999/08/27 06:06:11 downsj Exp 
+ *	OpenBSD: pcidevs,v 1.177 1999/09/02 07:14:30 downsj Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1549,6 +1549,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Industrial Computer Source",
 	    "WDT 50x Watchdog Timer",
+	},
+	{
+	    PCI_VENDOR_INITIO, PCI_PRODUCT_INITIO_INIC850,
+	    0,
+	    "Initio",
+	    "INIC-850 (A100UW) SCSI",
+	},
+	{
+	    PCI_VENDOR_INITIO, PCI_PRODUCT_INITIO_INIC1060,
+	    0,
+	    "Initio",
+	    "INIC-1060 (A100U2W) SCSI",
 	},
 	{
 	    PCI_VENDOR_INITIO, PCI_PRODUCT_INITIO_INIC940,
