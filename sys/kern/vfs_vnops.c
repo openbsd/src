@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.14 1998/01/09 16:33:49 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.15 1998/01/15 01:24:40 csapuntz Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -172,7 +172,6 @@ vn_writechk(vp)
 	register struct vnode *vp;
 {
 
-#if 0
 	/*
 	 * Disallow write attempts on read-only file systems;
 	 * unless the file is a socket or a block or character
@@ -187,7 +186,6 @@ vn_writechk(vp)
 			break;
 		}
 	}
-#endif
 	/*
 	 * If there's shared text associated with
 	 * the vnode, try to free it up once.  If
