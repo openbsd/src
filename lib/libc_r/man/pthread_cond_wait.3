@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_cond_wait.3,v 1.5 1999/11/24 05:35:31 d Exp $
+.\" $OpenBSD: pthread_cond_wait.3,v 1.6 2001/08/20 21:17:34 pvalchev Exp $
 .\" Copyright (c) 1997 Brian Cully <shmit@kublai.com>
 .\" All rights reserved.
 .\"
@@ -49,7 +49,7 @@ and unblocks the mutex specified by
 The waiting thread unblocks only after another thread calls
 .Xr pthread_cond_signal 3 , or
 .Xr pthread_cond_broadcast 3
-with the same condition variable, and the current thread reaquires the lock
+with the same condition variable, and the current thread reacquires the lock
 on
 .Fa mutex .
 .Sh RETURN VALUES
