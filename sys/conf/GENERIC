@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.64 2000/03/22 18:08:12 provos Exp $
+#	$OpenBSD: GENERIC,v 1.65 2000/04/26 19:08:23 chris Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -95,6 +95,7 @@ pseudo-device	vnd	4	# paging to files
 pseudo-device	ccd	4	# concatenated disk devices
 pseudo-device	ksyms	1	# kernel symbols device
 pseudo-device	bridge	2	# network bridging support
+#pseudo-device	vlan 	2	# IEEE 802.1Q VLAN 
 pseudo-device	gre	1	# GRE encapsulation interface
 
 option		BOOT_CONFIG	# add support for boot -c
