@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.50 2002/12/08 16:50:07 millert Exp $	*/
+/*	$OpenBSD: su.c,v 1.51 2002/12/17 19:52:02 millert Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";
 #else
-static const char rcsid[] = "$OpenBSD: su.c,v 1.50 2002/12/08 16:50:07 millert Exp $";
+static const char rcsid[] = "$OpenBSD: su.c,v 1.51 2002/12/17 19:52:02 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -300,9 +300,17 @@ main(int argc, char **argv)
 		    username, user, ontty());
 
 	(void)setpriority(PRIO_PROCESS, 0, prio);
-	if (emlogin)
+	if (emlogin) {
 		flags = LOGIN_SETALL & ~LOGIN_SETPATH;
-	else
+		/*
+		 * Only call setlogin() if this proccess is a session leader.
+		 * In practice, this means the login name will be set only if
+		 * we are exec'd by a shell.  This is important because
+		 * otherwise the parent shell's login name would change too.
+		 */
+		if (getsid(0) != getpid())
+			flags &= ~LOGIN_SETLOGIN;
+	} else
 		flags = (asthem ? (LOGIN_SETPRIORITY | LOGIN_SETUMASK) : 0) |
 		    LOGIN_SETRESOURCES | LOGIN_SETGROUP | LOGIN_SETUSER;
 	if (setusercontext(lc, pwd, pwd->pw_uid, flags) != 0)
