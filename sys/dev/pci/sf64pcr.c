@@ -1,4 +1,4 @@
-/* $OpenBSD: sf64pcr.c,v 1.3 2002/01/02 22:25:25 mickey Exp $ */
+/* $OpenBSD: sf64pcr.c,v 1.4 2002/01/07 18:32:19 mickey Exp $ */
 /* $RuOBSD: sf64pcr.c,v 1.11 2001/12/05 10:19:40 mickey Exp $ */
 
 /*
@@ -149,12 +149,12 @@ struct cfdriver sf4r_cd = {
 /*
  * Function prototypes
  */
-void sf64pcr_set_mute(struct sf64pcr_softc *);
+void	sf64pcr_set_mute(struct sf64pcr_softc *);
 
-void sf64pcr_init(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t);
-void sf64pcr_rset(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t);
-void sf64pcr_write_bit(bus_space_tag_t, bus_space_handle_t, bus_size_t, int);
-u_int32_t sf64pcr_hw_read(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+void	sf64pcr_init(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t);
+void	sf64pcr_rset(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t);
+void	sf64pcr_write_bit(bus_space_tag_t, bus_space_handle_t, bus_size_t, int);
+u_int32_t	sf64pcr_hw_read(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
 /*
  * PCI initialization stuff
@@ -164,7 +164,6 @@ sf64pcr_match(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	/* FIXME: more thorough testing */
-	/* desc = "SoundForte RadioLink SF64-PCR PCI"; */
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_FORTEMEDIA &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_FORTEMEDIA_FM801)
 		return (1);
@@ -176,6 +175,7 @@ sf64pcr_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sf64pcr_softc *sc = (struct sf64pcr_softc *) self;
 	struct pci_attach_args *pa = aux;
+	struct cfdata *cf = sc->dev.dv_cfdata;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcireg_t csr;
 
@@ -196,10 +196,13 @@ sf64pcr_attach(struct device *parent, struct device *self, void *aux)
 	sc->stereo = TEA5757_STEREO;
 	sc->lock = TEA5757_S030;
 	sc->tea.offset = SF64PCR_PCI_OFFSET;
+	sc->tea.flags = cf->cf_flags;
 	sc->tea.init = sf64pcr_init;
 	sc->tea.rset = sf64pcr_rset;
 	sc->tea.write_bit = sf64pcr_write_bit;
 	sc->tea.read = sf64pcr_hw_read;
+
+	printf(": SoundForte RadioLink SF64-PCR PCI\n");
 
 	tea5757_set_freq(&sc->tea, sc->lock, sc->stereo, sc->freq);
 	sf64pcr_set_mute(sc);
@@ -309,7 +312,8 @@ sf64pcr_get_info(void *v, struct radio_info *ri)
 	ri->lock = tea5757_decode_lock(sc->lock);
 
 	buf = sf64pcr_hw_read(sc->tea.iot, sc->tea.ioh, sc->tea.offset);
-	ri->freq  = sc->freq = tea5757_decode_freq(buf);
+	ri->freq  = sc->freq = tea5757_decode_freq(buf,
+	    sc->tea.flags & TEA5757_TEA5759);
 	ri->info  = buf & SF64PCR_INFO_SIGNAL ? 0 : RADIO_INFO_SIGNAL;
 	ri->info |= buf & SF64PCR_INFO_STEREO ? 0 : RADIO_INFO_STEREO;
 

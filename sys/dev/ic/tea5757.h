@@ -1,4 +1,4 @@
-/*	$OpenBSD: tea5757.h,v 1.2 2001/12/06 16:28:18 mickey Exp $	*/
+/*	$OpenBSD: tea5757.h,v 1.3 2002/01/07 18:32:19 mickey Exp $	*/
 /* $RuOBSD: tea5757.h,v 1.2 2001/10/18 16:51:36 pva Exp $ */
 
 /*
@@ -61,10 +61,13 @@
 #define TEA5757_S030			(1 << 16) /* 0x0010000 * > 30 mkV */
 #define TEA5757_S150			(3 << 16) /* 0x0030000 * > 150 mkV */
 
+#define TEA5757_TEA5759			(1 << 0)
+
 struct tea5757_t {
 	bus_space_tag_t	iot;
 	bus_space_handle_t	ioh;
 	bus_size_t	offset;
+	int	flags;
 
 	void	(*init)(bus_space_tag_t, bus_space_handle_t, bus_size_t,
 			u_int32_t); /* init value */
@@ -75,8 +78,8 @@ struct tea5757_t {
 	u_int32_t	(*read)(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 };
 
-u_int32_t	tea5757_encode_freq(u_int32_t);
-u_int32_t	tea5757_decode_freq(u_int32_t);
+u_int32_t	tea5757_encode_freq(u_int32_t, int);
+u_int32_t	tea5757_decode_freq(u_int32_t, int);
 u_int32_t	tea5757_encode_lock(u_int8_t);
 u_int8_t	tea5757_decode_lock(u_int32_t);
 

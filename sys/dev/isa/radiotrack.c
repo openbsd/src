@@ -1,4 +1,4 @@
-/* $OpenBSD: radiotrack.c,v 1.2 2002/01/02 19:36:50 mickey Exp $ */
+/* $OpenBSD: radiotrack.c,v 1.3 2002/01/07 18:32:19 mickey Exp $ */
 /* $RuOBSD: radiotrack.c,v 1.3 2001/10/18 16:51:36 pva Exp $ */
 
 /*
@@ -132,7 +132,7 @@ u_int8_t	rt_conv_vol(u_int8_t);
 u_int8_t	rt_unconv_vol(u_int8_t);
 
 int
-rt_probe(struct device *parent, void *self, void *aux)
+rt_probe(struct device *parent, void *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;

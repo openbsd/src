@@ -1,4 +1,4 @@
-/* $OpenBSD: radiotrack2.c,v 1.2 2002/01/02 19:36:51 mickey Exp $ */
+/* $OpenBSD: radiotrack2.c,v 1.3 2002/01/07 18:32:19 mickey Exp $ */
 /* $RuOBSD: radiotrack2.c,v 1.2 2001/10/18 16:51:36 pva Exp $ */
 
 /*
@@ -113,7 +113,7 @@ struct cfdriver rtii_cd = {
 };
 
 void	rtii_set_mute(struct rtii_softc *);
-int	rtii_find(bus_space_tag_t, bus_space_handle_t);
+int	rtii_find(bus_space_tag_t, bus_space_handle_t, int);
 
 u_int32_t	rtii_hw_read(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
@@ -122,12 +122,12 @@ void	rtii_rset(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t);
 void	rtii_write_bit(bus_space_tag_t, bus_space_handle_t, bus_size_t, int);
 
 int
-rtii_probe(struct device *parent, void *self, void *aux)
+rtii_probe(struct device *parent, void *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
-
+	struct cfdata *cf = match;
 	int iosize = 1, iobase = ia->ia_iobase;
 
 	if (!RTII_BASE_VALID(iobase)) {
@@ -138,7 +138,7 @@ rtii_probe(struct device *parent, void *self, void *aux)
 	if (bus_space_map(iot, iobase, iosize, 0, &ioh))
 		return (0);
 
-	if (!rtii_find(iot, ioh)) {
+	if (!rtii_find(iot, ioh, cf->cf_flags)) {
 		bus_space_unmap(iot, ioh, iosize);
 		return (0);
 	}
@@ -153,6 +153,7 @@ rtii_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct rtii_softc *sc = (void *) self;
 	struct isa_attach_args *ia = aux;
+	struct cfdata *cf = sc->dev.dv_cfdata;
 
 	sc->tea.iot = ia->ia_iot;
 	sc->mute = 0;
@@ -169,6 +170,7 @@ rtii_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->tea.offset = 0;
+	sc->tea.flags = cf->cf_flags;
 
 	sc->tea.init = rtii_init;
 	sc->tea.rset = rtii_rset;
@@ -211,7 +213,7 @@ rtii_rset(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t off, u_int32_t
 }
 
 int
-rtii_find(bus_space_tag_t iot, bus_space_handle_t ioh)
+rtii_find(bus_space_tag_t iot, bus_space_handle_t ioh, int flags)
 {
 	struct rtii_softc sc;
 	u_int32_t freq;
@@ -219,6 +221,7 @@ rtii_find(bus_space_tag_t iot, bus_space_handle_t ioh)
 	sc.tea.iot = iot;
 	sc.tea.ioh = ioh;
 	sc.tea.offset = 0;
+	sc.tea.flags = flags;
 	sc.tea.init = rtii_init;
 	sc.tea.rset = rtii_rset;
 	sc.tea.write_bit = rtii_write_bit;
@@ -235,7 +238,8 @@ rtii_find(bus_space_tag_t iot, bus_space_handle_t ioh)
 	tea5757_set_freq(&sc.tea, sc.stereo, sc.lock, sc.freq);
 	rtii_set_mute(&sc);
 	freq = rtii_hw_read(iot, ioh, sc.tea.offset);
-	if (tea5757_decode_freq(freq) == sc.freq)
+	if (tea5757_decode_freq(freq, sc.tea.flags & TEA5757_TEA5759)
+			== sc.freq)
 		return 1;
 
 	return 0;
@@ -288,7 +292,7 @@ rtii_get_info(void *v, struct radio_info *ri)
 	ri->lock = tea5757_decode_lock(sc->lock);
 
 	ri->freq  = sc->freq = tea5757_decode_freq(rtii_hw_read(sc->tea.iot,
-				sc->tea.ioh, sc->tea.offset));
+	    sc->tea.ioh, sc->tea.offset), sc->tea.flags & TEA5757_TEA5759);
 
 	switch (bus_space_read_1(sc->tea.iot, sc->tea.ioh, 0)) {
 	case 0xFD:

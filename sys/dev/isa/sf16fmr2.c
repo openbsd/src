@@ -1,4 +1,4 @@
-/* $OpenBSD: sf16fmr2.c,v 1.4 2002/01/02 19:36:51 mickey Exp $ */
+/* $OpenBSD: sf16fmr2.c,v 1.5 2002/01/07 18:32:19 mickey Exp $ */
 /* $RuOBSD: sf16fmr2.c,v 1.12 2001/10/18 16:51:36 pva Exp $ */
 
 /*
@@ -113,7 +113,7 @@ struct cfdriver sf2r_cd = {
 };
 
 void	sf2r_set_mute(struct sf2r_softc *);
-int	sf2r_find(bus_space_tag_t, bus_space_handle_t);
+int	sf2r_find(bus_space_tag_t, bus_space_handle_t, int);
 
 u_int32_t	sf2r_read_register(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
@@ -122,12 +122,12 @@ void	sf2r_rset(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t);
 void	sf2r_write_bit(bus_space_tag_t, bus_space_handle_t, bus_size_t, int);
 
 int
-sf2r_probe(struct device *parent, void *self, void *aux)
+sf2r_probe(struct device *parent, void *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
-
+	struct cfdata *cf = match;
 	int iosize = 1, iobase = ia->ia_iobase;
 
 	if (!SF16FMR2_BASE_VALID(iobase)) {
@@ -138,7 +138,7 @@ sf2r_probe(struct device *parent, void *self, void *aux)
 	if (bus_space_map(iot, iobase, iosize, 0, &ioh))
 		return (0);
 
-	if (!sf2r_find(iot, ioh)) {
+	if (!sf2r_find(iot, ioh, cf->cf_flags)) {
 		bus_space_unmap(iot, ioh, iosize);
 		return (0);
 	}
@@ -153,6 +153,7 @@ sf2r_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sf2r_softc *sc = (void *) self;
 	struct isa_attach_args *ia = aux;
+	struct cfdata *cf = sc->sc_dev.dv_cfdata;
 
 	sc->tea.iot = ia->ia_iot;
 	sc->mute = 0;
@@ -169,6 +170,7 @@ sf2r_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->tea.offset = 0;
+	sc->tea.flags = cf->cf_flags;
 
 	sc->tea.init = sf2r_init;
 	sc->tea.rset = sf2r_rset;
@@ -210,7 +212,7 @@ sf2r_rset(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t off, u_int32_t
 }
 
 int
-sf2r_find(bus_space_tag_t iot, bus_space_handle_t ioh)
+sf2r_find(bus_space_tag_t iot, bus_space_handle_t ioh, int flags)
 {
 	struct sf2r_softc sc;
 	u_int32_t freq;
@@ -218,6 +220,7 @@ sf2r_find(bus_space_tag_t iot, bus_space_handle_t ioh)
 	sc.tea.iot = iot;
 	sc.tea.ioh = ioh;
 	sc.tea.offset = 0;
+	sc.tea.flags = flags;
 	sc.tea.init = sf2r_init;
 	sc.tea.rset = sf2r_rset;
 	sc.tea.write_bit = sf2r_write_bit;
@@ -235,7 +238,8 @@ sf2r_find(bus_space_tag_t iot, bus_space_handle_t ioh)
 		tea5757_set_freq(&sc.tea, sc.stereo, sc.lock, sc.freq);
 		sf2r_set_mute(&sc);
 		freq = sf2r_read_register(iot, ioh, sc.tea.offset);
-		if (tea5757_decode_freq(freq) == sc.freq)
+		if (tea5757_decode_freq(freq, sc.tea.flags & TEA5757_TEA5759)
+				== sc.freq)
 			return 1;
 	}
 
@@ -307,7 +311,8 @@ sf2r_get_info(void *v, struct radio_info *ri)
 	ri->lock = tea5757_decode_lock(sc->lock);
 
 	buf = sf2r_read_register(sc->tea.iot, sc->tea.ioh, sc->tea.offset);
-	ri->freq  = sc->freq = tea5757_decode_freq(buf);
+	ri->freq  = sc->freq = tea5757_decode_freq(buf,
+			sc->tea.flags & TEA5757_TEA5759);
 	ri->info = 3 & (buf >> 24);
 
 	return (0);

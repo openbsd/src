@@ -1,4 +1,4 @@
-/*	$OpenBSD: tea5757.c,v 1.2 2001/12/06 16:28:18 mickey Exp $	*/
+/*	$OpenBSD: tea5757.c,v 1.3 2002/01/07 18:32:19 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Vladimir Popov <jumbo@narod.ru>
@@ -60,18 +60,19 @@
  * Convert frequency to hardware representation
  */
 u_int32_t
-tea5757_encode_freq(u_int32_t freq)
+tea5757_encode_freq(u_int32_t freq, int tea5759)
 {
-#ifdef RADIO_TEA5759
-	freq -= IF_FREQ;
-#else
-	freq += IF_FREQ;
-#endif /* RADIO_TEA5759 */
+	if (tea5759)
+		freq -= IF_FREQ;
+	else
+		freq += IF_FREQ;
+
 	/*
 	 * NO FLOATING POINT!
 	 */
 	freq *= 10;
 	freq /= 125;
+
 	return freq & TEA5757_FREQ;
 }
 
@@ -79,16 +80,17 @@ tea5757_encode_freq(u_int32_t freq)
  * Convert frequency from hardware representation
  */
 u_int32_t
-tea5757_decode_freq(u_int32_t freq)
+tea5757_decode_freq(u_int32_t freq, int tea5759)
 {
 	freq &= TEA5757_FREQ;
 	freq *= 125; /* 12.5 kHz */
 	freq /= 10;
-#ifdef RADIO_TEA5759
-	freq += IF_FREQ;
-#else
-	freq -= IF_FREQ;
-#endif /* RADIO_TEA5759 */
+
+	if (tea5759)
+		freq += IF_FREQ;
+	else
+		freq -= IF_FREQ;
+
 	return freq;
 }
 
@@ -139,7 +141,8 @@ tea5757_set_freq(struct tea5757_t *tea, u_int32_t stereo, u_int32_t lock, u_int3
 	if (freq > MAX_FM_FREQ)
 		freq = MAX_FM_FREQ;
 
-	data = tea5757_encode_freq(freq) | stereo | lock | TEA5757_SEARCH_END;
+	data |= tea5757_encode_freq(freq, tea->flags & TEA5757_TEA5759);
+	data |= stereo | lock | TEA5757_SEARCH_END;
 	tea5757_hardware_write(tea, data);
 
 	return freq;

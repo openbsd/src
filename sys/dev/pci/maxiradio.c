@@ -1,4 +1,4 @@
-/* $OpenBSD: maxiradio.c,v 1.3 2002/01/02 22:25:25 mickey Exp $ */
+/* $OpenBSD: maxiradio.c,v 1.4 2002/01/07 18:32:19 mickey Exp $ */
 /* $RuOBSD: maxiradio.c,v 1.5 2001/10/18 16:51:36 pva Exp $ */
 
 /*
@@ -135,6 +135,7 @@ mr_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mr_softc *sc = (struct mr_softc *) self;
 	struct pci_attach_args *pa = aux;
+	struct cfdata *cf = sc->sc_dev.dv_cfdata;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcireg_t csr;
 
@@ -155,10 +156,13 @@ mr_attach(struct device *parent, struct device *self, void *aux)
 	sc->stereo = TEA5757_STEREO;
 	sc->lock = TEA5757_S030;
 	sc->tea.offset = 0;
+	sc->tea.flags = cf->cf_flags;
 	sc->tea.init = mr_init;
 	sc->tea.rset = mr_rset;
 	sc->tea.write_bit = mr_write_bit;
 	sc->tea.read = mr_hardware_read;
+
+	printf(": Guillemot MaxiRadio FM2000 PCI\n");
 
 	radio_attach_mi(&mr_hw_if, sc, &sc->sc_dev);
 }
@@ -176,7 +180,7 @@ mr_get_info(void *v, struct radio_info *ri)
 	ri->lock = tea5757_decode_lock(sc->lock);
 
 	ri->freq = sc->freq = tea5757_decode_freq(mr_hardware_read(sc->tea.iot,
-				sc->tea.ioh, sc->tea.offset));
+	    sc->tea.ioh, sc->tea.offset), sc->tea.flags & TEA5757_TEA5759);
 
 	ri->info = mr_state(sc->tea.iot, sc->tea.ioh);
 
@@ -193,7 +197,7 @@ mr_set_info(void *v, struct radio_info *ri)
 	sc->stereo = ri->stereo ? TEA5757_STEREO: TEA5757_MONO;
 	sc->lock = tea5757_encode_lock(ri->lock);
 	ri->freq = sc->freq = tea5757_set_freq(&sc->tea,
-			sc->lock, sc->stereo, ri->freq);
+	    sc->lock, sc->stereo, ri->freq);
 	mr_set_mute(sc);
 
 	return (0);
