@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.26 1997/11/05 02:48:43 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.27 1998/01/05 06:20:48 art Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.26 1997/11/05 02:48:43 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.27 1998/01/05 06:20:48 art Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -128,7 +128,9 @@ editor(lp, f)
 	for (i = 0; i < label.d_npartitions; i++) {
 		pp = &label.d_partitions[i];
 		if (pp->p_fstype != FS_UNUSED && pp->p_fstype != FS_BOOT &&
-		    pp->p_size > 0 && pp->p_offset + pp->p_size <= ending_sector)
+		    pp->p_size > 0 && 
+		    pp->p_offset + pp->p_size <= ending_sector &&
+		    pp->p_offset >= starting_sector)
 			freesectors -= pp->p_size;
 	}
 
