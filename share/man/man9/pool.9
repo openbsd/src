@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pool.9,v 1.12 2001/06/23 16:40:16 art Exp $
+.\"	$OpenBSD: pool.9,v 1.13 2001/08/21 18:27:12 krw Exp $
 .\"	$NetBSD: pool.9,v 1.18 2001/06/21 11:59:01 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ Specifies the memory address alignment of the items returned by
 .Fn pool_get .
 This argument must be a power of two.
 If zero,
-the alignment defaults to a architecture-specific natural alignment.
+the alignment defaults to an architecture-specific natural alignment.
 .It Fa align_offset
 The offset within an item to which the
 .Fa align
