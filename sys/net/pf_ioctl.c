@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.14 2002/11/02 17:04:13 mcbride Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.15 2002/11/07 22:24:46 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -441,12 +441,14 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			}
 		} else
 			rule->rt_ifp = NULL;
-		if (pf_dynaddr_setup(&rule->src.addr, rule->af) ||
-		    pf_dynaddr_setup(&rule->dst.addr, rule->af)) {
+		if (pf_dynaddr_setup(&rule->src.addr, rule->af))
+			error = EINVAL;
+		if (pf_dynaddr_setup(&rule->dst.addr, rule->af))
+			error = EINVAL;
+		if (error) {
 			pf_dynaddr_remove(&rule->src.addr);
 			pf_dynaddr_remove(&rule->dst.addr);
 			pool_put(&pf_rule_pl, rule);
-			error = EINVAL;
 			break;
 		}
 		rule->evaluations = rule->packets = rule->bytes = 0;
@@ -578,12 +580,14 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				}
 			} else
 				newrule->rt_ifp = NULL;
-			if (pf_dynaddr_setup(&newrule->src.addr, newrule->af) ||
-			    pf_dynaddr_setup(&newrule->dst.addr, newrule->af)) {
+			if (pf_dynaddr_setup(&newrule->src.addr, newrule->af))
+				error = EINVAL;
+			if (pf_dynaddr_setup(&newrule->dst.addr, newrule->af))
+				error = EINVAL;
+			if (error) {
 				pf_dynaddr_remove(&newrule->src.addr);
 				pf_dynaddr_remove(&newrule->dst.addr);
 				pool_put(&pf_rule_pl, newrule);
-				error = EINVAL;
 				break;
 			}
 			newrule->evaluations = newrule->packets = 0;
@@ -692,14 +696,17 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			}
 		} else
 			nat->ifp = NULL;
-		if (pf_dynaddr_setup(&nat->src.addr, nat->af) ||
-		    pf_dynaddr_setup(&nat->dst.addr, nat->af) ||
-		    pf_dynaddr_setup(&nat->raddr, nat->af)) {
+		if (pf_dynaddr_setup(&nat->src.addr, nat->af))
+			error = EINVAL;
+		if (pf_dynaddr_setup(&nat->dst.addr, nat->af))
+			error = EINVAL;
+		if (pf_dynaddr_setup(&nat->raddr, nat->af))
+			error = EINVAL;
+		if (error) {
 			pf_dynaddr_remove(&nat->src.addr);
 			pf_dynaddr_remove(&nat->dst.addr);
 			pf_dynaddr_remove(&nat->raddr);
 			pool_put(&pf_nat_pl, nat);
-			error = EINVAL;
 			break;
 		}
 		TAILQ_INSERT_TAIL(pf_nats_inactive, nat, entries);
@@ -817,14 +824,17 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				}
 			} else
 				newnat->ifp = NULL;
-			if (pf_dynaddr_setup(&newnat->src.addr, newnat->af) ||
-			    pf_dynaddr_setup(&newnat->dst.addr, newnat->af) ||
-			    pf_dynaddr_setup(&newnat->raddr, newnat->af)) {
+			if (pf_dynaddr_setup(&newnat->src.addr, newnat->af))
+				error = EINVAL;
+			if (pf_dynaddr_setup(&newnat->dst.addr, newnat->af))
+				error = EINVAL;
+			if (pf_dynaddr_setup(&newnat->raddr, newnat->af))
+				error = EINVAL;
+			if (error) {
 				pf_dynaddr_remove(&newnat->src.addr);
 				pf_dynaddr_remove(&newnat->dst.addr);
 				pf_dynaddr_remove(&newnat->raddr);
 				pool_put(&pf_nat_pl, newnat);
-				error = EINVAL;
 				break;
 			}
 		}
@@ -922,14 +932,17 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			}
 		} else
 			binat->ifp = NULL;
-		if (pf_dynaddr_setup(&binat->saddr, binat->af) ||
-		    pf_dynaddr_setup(&binat->daddr, binat->af) ||
-		    pf_dynaddr_setup(&binat->raddr, binat->af)) {
+		if (pf_dynaddr_setup(&binat->saddr, binat->af))
+			error = EINVAL;
+		if (pf_dynaddr_setup(&binat->daddr, binat->af))
+			error = EINVAL;
+		if (pf_dynaddr_setup(&binat->raddr, binat->af))
+			error = EINVAL;
+		if (error) {
 			pf_dynaddr_remove(&binat->saddr);
 			pf_dynaddr_remove(&binat->daddr);
 			pf_dynaddr_remove(&binat->raddr);
 			pool_put(&pf_binat_pl, binat);
-			error = EINVAL;
 			break;
 		}
 		TAILQ_INSERT_TAIL(pf_binats_inactive, binat, entries);
@@ -1048,14 +1061,17 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				}
 			} else
 				newbinat->ifp = NULL;
-			if (pf_dynaddr_setup(&newbinat->saddr, newbinat->af) ||
-			    pf_dynaddr_setup(&newbinat->daddr, newbinat->af) ||
-			    pf_dynaddr_setup(&newbinat->raddr, newbinat->af)) {
+			if (pf_dynaddr_setup(&newbinat->saddr, newbinat->af))
+				error = EINVAL;
+			if (pf_dynaddr_setup(&newbinat->daddr, newbinat->af))
+				error = EINVAL;
+			if (pf_dynaddr_setup(&newbinat->raddr, newbinat->af))
+				error = EINVAL;
+			if (error) {
 				pf_dynaddr_remove(&newbinat->saddr);
 				pf_dynaddr_remove(&newbinat->daddr);
 				pf_dynaddr_remove(&newbinat->raddr);
 				pool_put(&pf_binat_pl, newbinat);
-				error = EINVAL;
 				break;
 			}
 		}
@@ -1154,14 +1170,17 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			}
 		} else
 			rdr->ifp = NULL;
-		if (pf_dynaddr_setup(&rdr->saddr, rdr->af) ||
-		    pf_dynaddr_setup(&rdr->daddr, rdr->af) ||
-		    pf_dynaddr_setup(&rdr->raddr, rdr->af)) {
+		if (pf_dynaddr_setup(&rdr->saddr, rdr->af))
+			error = EINVAL;
+		if (pf_dynaddr_setup(&rdr->daddr, rdr->af))
+			error = EINVAL;
+		if (pf_dynaddr_setup(&rdr->raddr, rdr->af))
+			error = EINVAL;
+		if (error) {
 			pf_dynaddr_remove(&rdr->saddr);
 			pf_dynaddr_remove(&rdr->daddr);
 			pf_dynaddr_remove(&rdr->raddr);
 			pool_put(&pf_rdr_pl, rdr);
-			error = EINVAL;
 			break;
 		}
 		TAILQ_INSERT_TAIL(pf_rdrs_inactive, rdr, entries);
@@ -1279,14 +1298,17 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				}
 			} else
 				newrdr->ifp = NULL;
-			if (pf_dynaddr_setup(&newrdr->saddr, newrdr->af) ||
-			    pf_dynaddr_setup(&newrdr->daddr, newrdr->af) ||
-			    pf_dynaddr_setup(&newrdr->raddr, newrdr->af)) {
+			if (pf_dynaddr_setup(&newrdr->saddr, newrdr->af))
+				error = EINVAL;
+			if (pf_dynaddr_setup(&newrdr->daddr, newrdr->af))
+				error = EINVAL;
+			if (pf_dynaddr_setup(&newrdr->raddr, newrdr->af))
+				error = EINVAL;
+			if (error) {
 				pf_dynaddr_remove(&newrdr->saddr);
 				pf_dynaddr_remove(&newrdr->daddr);
 				pf_dynaddr_remove(&newrdr->raddr);
 				pool_put(&pf_rdr_pl, newrdr);
-				error = EINVAL;
 				break;
 			}
 		}
