@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.42 2004/12/25 23:02:24 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.43 2005/01/17 22:33:40 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -669,7 +669,6 @@ pdc_scanbus(self, ca, maxmod, hpa)
 
 			nca.ca_hpa = pdc_memmap.hpa;
 
-			/* TODO fetch the hpa size and the addrs */
 			for (im = 0; !(error = pdc_call((iodcio_t)pdc, 0,
 			    PDC_SYSMAP, PDC_SYSMAP_FIND,
 			    &pdc_find, &path, im)) &&
