@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.1 2003/12/22 15:22:13 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.2 2003/12/23 15:50:12 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -64,16 +64,20 @@ kroute_msg(int fd, int action, struct kroute *kroute)
 	} r;
 	ssize_t	n;
 
+	bzero(&r, sizeof(r));
 	r.hdr.rtm_msglen = sizeof(r);
 	r.hdr.rtm_version = RTM_VERSION;
 	r.hdr.rtm_type = action;
 	r.hdr.rtm_flags = RTF_GATEWAY|RTF_MASK; /* XXX */
 	r.hdr.rtm_seq = rtseq++;	/* overflow doesn't matter */
 	r.hdr.rtm_addrs = RTA_DST|RTA_GATEWAY|RTA_NETMASK;
+	r.prefix.sin_len = sizeof(r.prefix);
 	r.prefix.sin_family = AF_INET;
 	r.prefix.sin_addr.s_addr = kroute->prefix;
+	r.nexthop.sin_len = sizeof(r.nexthop);
 	r.nexthop.sin_family = AF_INET;
 	r.nexthop.sin_addr.s_addr = kroute->nexthop;
+	r.mask.sin_len = sizeof(r.mask);
 	r.mask.sin_family = AF_INET;
 	r.mask.sin_addr.s_addr = htonl(0xffffffff << (32 - kroute->prefixlen));
 
@@ -88,7 +92,7 @@ retry:
 				return (0);
 			}
 		} else {
-			logit(LOG_INFO, "kroute_msg", strerror(errno));
+			logit(LOG_INFO, "kroute_msg: %s", strerror(errno));
 			return (-1);
 		}
 	}
