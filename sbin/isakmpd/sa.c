@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.c,v 1.60 2002/06/07 15:24:22 ho Exp $	*/
+/*	$OpenBSD: sa.c,v 1.61 2002/06/07 15:59:37 ho Exp $	*/
 /*	$EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	*/
 
 /*
@@ -976,7 +976,7 @@ sa_flag (char *attr)
     { "active-only", SA_FLAG_ACTIVE_ONLY },
     /* Below this point are flags that are internal to the implementation.  */
     { "__ondemand", SA_FLAG_ONDEMAND },
-    { "ikecfg}", SA_FLAG_IKECFG },
+    { "ikecfg", SA_FLAG_IKECFG },
   };
   int i;
 
