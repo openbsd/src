@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_intr_fixup.c,v 1.15 2001/05/12 21:01:53 mickey Exp $	*/
+/*	$OpenBSD: pci_intr_fixup.c,v 1.16 2001/05/13 15:33:18 mickey Exp $	*/
 /*	$NetBSD: pci_intr_fixup.c,v 1.10 2000/08/10 21:18:27 soda Exp $	*/
 
 /*
@@ -688,16 +688,16 @@ pci_intr_fixup(sc, pc, iot)
 	if (pirh->signature != 0 && (pirh->router_bus != 0 ||
 	    pirh->router_devfunc != 0 || pirh->compat_router != 0)) {
 
+		icutag = pci_make_tag(pc, pirh->router_bus,
+		    PIR_DEVFUNC_DEVICE(pirh->router_devfunc),
+		    PIR_DEVFUNC_FUNCTION(pirh->router_devfunc));
 		if (pirh->compat_router == 0 ||
 		    (piit = pciintr_icu_lookup(pirh->compat_router)) == NULL) {
 			/*
 			 * No compat ID, or don't know the compat ID?  Read
 			 * it from the configuration header.
 			 */
-			pirh->compat_router = pci_conf_read(pc,
-			    pci_make_tag(pc, pirh->router_bus,
-			    PIR_DEVFUNC_DEVICE(pirh->router_devfunc),
-			    PIR_DEVFUNC_FUNCTION(pirh->router_devfunc)),
+			pirh->compat_router = pci_conf_read(pc, icutag,
 			    PCI_ID_REG);
 		}
 		if (piit == NULL)
