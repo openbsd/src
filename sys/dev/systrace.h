@@ -1,3 +1,4 @@
+/*	$OpenBSD: systrace.h,v 1.11 2002/10/25 23:22:58 fgsch Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
