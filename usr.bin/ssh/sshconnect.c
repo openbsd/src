@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect.c,v 1.80 2000/11/06 23:13:26 markus Exp $");
+RCSID("$OpenBSD: sshconnect.c,v 1.81 2000/11/06 23:16:35 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
@@ -313,6 +313,7 @@ ssh_exchange_identification()
 	int remote_major, remote_minor, i, mismatch;
 	int connection_in = packet_get_connection_in();
 	int connection_out = packet_get_connection_out();
+	int minor1 = PROTOCOL_MINOR_1; 
 
 	/* Read other side\'s version identification. */
 	for (;;) {
@@ -366,9 +367,10 @@ ssh_exchange_identification()
 		}
 		if (remote_minor < 3) {
 			fatal("Remote machine has too old SSH software version.");
-		} else if (remote_minor == 3) {
+		} else if (remote_minor == 3 || remote_minor == 4) {
 			/* We speak 1.3, too. */
 			enable_compat13();
+			minor1 = 3;
 			if (options.forward_agent) {
 				log("Agent forwarding disabled for protocol 1.3");
 				options.forward_agent = 0;
@@ -394,7 +396,7 @@ ssh_exchange_identification()
 	/* Send our own protocol version identification. */
 	snprintf(buf, sizeof buf, "SSH-%d.%d-%.100s\n",
 	    compat20 ? PROTOCOL_MAJOR_2 : PROTOCOL_MAJOR_1,
-	    compat20 ? PROTOCOL_MINOR_2 : PROTOCOL_MINOR_1,
+	    compat20 ? PROTOCOL_MINOR_2 : minor1,
 	    SSH_VERSION);
 	if (atomicio(write, connection_out, buf, strlen(buf)) != strlen(buf))
 		fatal("write: %.100s", strerror(errno));
