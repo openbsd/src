@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.13 2002/11/30 10:07:51 mickey Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.14 2002/12/18 16:09:25 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -219,7 +219,7 @@ print_state(struct pf_state *s, int opts)
 		s->expire /= 60;
 		printf(", expires in %.2u:%.2u:%.2u", s->expire, min, sec);
 		printf(", %u pkts, %u bytes", s->packets, s->bytes);
-		if (s->rule.nr != USHRT_MAX)
+		if (s->rule.nr != -1)
 			printf(", rule %u", s->rule.nr);
 		printf("\n");
 	}
