@@ -8,3 +8,7 @@
 0	string	\012(			byte-compiled Emacs-Lisp program data
 # Emacs 19
 0	string	;ELC\023\000\000\000	byte-compiled Emacs-Lisp program data
+# clisp types, from Jim Wise (jimw@fornost.turner.com)
+0	string	(SYSTEM::VERSION\040'	CLISP byte-compiled Lisp program text
+0	long	0x70768BD2		CLISP memory image data
+0	long	0xD28B7670		CLISP memory image data, other
