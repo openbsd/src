@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.s,v 1.14 2001/12/04 00:00:36 niklas Exp $	*/
+/*	$OpenBSD: vector.s,v 1.15 2001/12/06 21:09:13 niklas Exp $	*/
 /*	$NetBSD: vector.s,v 1.32 1996/01/07 21:29:47 mycroft Exp $	*/
 
 /*
@@ -133,62 +133,6 @@
 	.globl	_isa_strayintr
 
 /*
- * Fast vectors.
- *
- * Like a normal vector, but run with all interrupts off.  The handler is
- * expected to be as fast as possible, and is expected to not change the
- * interrupt flag.  We pass an argument in like normal vectors, but we assume
- * that a pointer to the frame is never required.  There can be only one
- * handler on a fast vector.
- *
- * XXX
- * Note that we assume fast vectors don't do anything that would cause an AST
- * or softintr; if so, it will be deferred until the next clock tick (or
- * possibly sooner).
- */
-#define	FAST(irq_num, icu, ack) \
-IDTVEC(fast/**/irq_num)							;\
-	pushl	%eax			/* save call-used registers */	;\
-	pushl	%ecx							;\
-	pushl	%edx							;\
-	pushl	%ds							;\
-	pushl	%es							;\
-	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax				;\
-	movl	%ax,%ds							;\
-	movl	%ax,%es							;\
-	/* have to do this here because %eax is lost on call */		;\
-	movl	_intrhand + (irq_num) * 4,%eax				;\
-	incl	IH_COUNT(%eax)						;\
-	pushl	IH_ARG(%eax)						;\
-	call	IH_FUN(%eax)						;\
-	ack(irq_num)							;\
-	addl	$4,%esp							;\
-	incl	MY_COUNT+V_INTR		/* statistical info */		;\
-	popl	%es							;\
-	popl	%ds							;\
-	popl	%edx							;\
-	popl	%ecx							;\
-	popl	%eax							;\
-	iret
-
-FAST(0, IO_ICU1, ACK1)
-FAST(1, IO_ICU1, ACK1)
-FAST(2, IO_ICU1, ACK1)
-FAST(3, IO_ICU1, ACK1)
-FAST(4, IO_ICU1, ACK1)
-FAST(5, IO_ICU1, ACK1)
-FAST(6, IO_ICU1, ACK1)
-FAST(7, IO_ICU1, ACK1)
-FAST(8, IO_ICU2, ACK2)
-FAST(9, IO_ICU2, ACK2)
-FAST(10, IO_ICU2, ACK2)
-FAST(11, IO_ICU2, ACK2)
-FAST(12, IO_ICU2, ACK2)
-FAST(13, IO_ICU2, ACK2)
-FAST(14, IO_ICU2, ACK2)
-FAST(15, IO_ICU2, ACK2)
-
-/*
  * Normal vectors.
  *
  * We cdr down the intrhand chain, calling each handler with its appropriate
@@ -304,11 +248,6 @@ IDTVEC(intr)
 	.long   _Xintr0, _Xintr1, _Xintr2, _Xintr3, _Xintr4, _Xintr5, _Xintr6
 	.long   _Xintr7, _Xintr8, _Xintr9, _Xintr10, _Xintr11, _Xintr12
 	.long   _Xintr13, _Xintr14, _Xintr15
-/* fast interrupt routine entry points */
-IDTVEC(fast)
-	.long   _Xfast0, _Xfast1, _Xfast2, _Xfast3, _Xfast4, _Xfast5, _Xfast6
-	.long   _Xfast7, _Xfast8, _Xfast9, _Xfast10, _Xfast11, _Xfast12
-	.long   _Xfast13, _Xfast14, _Xfast15
 
 /*
  * These tables are used by Xdoreti() and Xspllower().
