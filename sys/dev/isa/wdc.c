@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.20 1997/07/04 19:17:56 downsj Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.21 1997/07/04 19:22:19 downsj Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -1578,8 +1578,9 @@ wdcreset(wdc, mode)
 	(void) bus_space_read_1(iot, ioh, wd_error);
 	bus_space_write_1(iot, ioh, wd_ctlr, WDCTL_4BIT);
 
-	if ((wait_for_unbusy(wdc) < 0) && mode != WDCRESET_SILENT) {
-		printf("%s: reset failed\n", wdc->sc_dev.dv_xname);
+	if (wait_for_unbusy(wdc) < 0) {
+		if (mode != WDCRESET_SILENT)
+			printf("%s: reset failed\n", wdc->sc_dev.dv_xname);
 		return 1;
 	}
 
