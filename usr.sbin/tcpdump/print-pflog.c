@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pflog.c,v 1.10 2002/02/19 19:39:40 millert Exp $	*/
+/*	$OpenBSD: print-pflog.c,v 1.11 2003/01/01 16:55:16 mcbride Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pflog.c,v 1.10 2002/02/19 19:39:40 millert Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pflog.c,v 1.11 2003/01/01 16:55:16 mcbride Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -89,9 +89,32 @@ pflog_if_print(u_char *user, const struct pcap_pkthdr *h,
 
 		snprintf(reason, sizeof(reason), "%d(%s)", res, why);
 
-		printf("rule %d/%s: %s %s on %s: ",
-		    (short)ntohs(hdr->rnr), reason,
-		    ntohs(hdr->action) == PF_PASS ? "pass" : "block",
+		printf("rule %d/%s: ",
+		    (short)ntohs(hdr->rnr), reason);
+		switch (hdr->action) {
+		case PF_SCRUB:
+			printf("scrub");
+			break;
+		case PF_PASS:
+			printf("pass");
+			break;
+		case PF_DROP:
+			printf("block");
+			break;
+		case PF_NAT:
+		case PF_NONAT:
+			printf("nat");
+			break;
+		case PF_BINAT:
+		case PF_NOBINAT:
+			printf("binat");
+			break;
+		case PF_RDR:
+		case PF_NORDR:
+			printf("rdr");
+			break;
+		}
+		printf(" %s on %s: ",
 		    ntohs(hdr->dir) == PF_OUT ? "out" : "in",
 		    hdr->ifname);
 	}
