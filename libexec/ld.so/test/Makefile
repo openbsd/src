@@ -1,12 +1,13 @@
-#	$OpenBSD: Makefile,v 1.3 2000/10/13 05:15:17 drahn Exp $
+#	$OpenBSD: Makefile,v 1.4 2001/05/14 22:18:23 niklas Exp $
 
 DIR=/usr/src/libexec/ld.so/obj/ld.so
-.if (${MACHINE_ARCH} == "powerpc")
+.if (${MACHINE_ARCH} != "mips")
 #necssary to build the shared objects. not necessary for dltest but
 #doesn't hurt
 CFLAGS += -fpic
 .endif
 CFLAGS += -g
+CFLAGS += -I${.CURDIR}/.. -I${.CURDIR}/../${MACHINE_ARCH}
 LDFLAGS += -Wl,--export-dynamic -Wl,-dynamic-linker -Wl,${DIR}
 #LDFLAGS += -Wl,--export-dynamic 
 
@@ -43,7 +44,7 @@ libB.so:	B.o
 	$(CC) -shared -o $@ B.o 
 
 CCtest:	libA.so libB.so tst.o
-	g++ ${LDFLAGS} -o $@ tst.o -L . -lB -lA
+	g++ ${LDFLAGS} -o $@ tst.o libB.so libA.so
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>

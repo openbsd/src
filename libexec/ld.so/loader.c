@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.8 2001/05/12 10:39:54 art Exp $ */
+/*	$OpenBSD: loader.c,v 1.9 2001/05/14 22:18:19 niklas Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -54,7 +54,7 @@
  */
 static void *_dl_malloc_base;
 static void *_dl_malloc_pool = 0;
-static long  *_dl_malloc_free = 0;
+static long *_dl_malloc_free = 0;
 
 const char *_dl_progname;
 int  _dl_pagesz;
@@ -140,6 +140,13 @@ _dl_boot(const char **argv, const char **envp, const long loff,
 	struct elf_object  *exe_obj;	/* Pointer to executable object */
 	struct elf_object  *dyn_obj;	/* Pointer to executable object */
 	struct r_debug * debug_map;
+#ifdef __mips__
+	struct r_debug	   **map_link;	/* Where to put pointer for gdb */
+#endif /* __mips__ */
+
+#if 0
+_dl_printf("%p %p 0x%lx %p %p\n", argv, envp, loff, dynp, dl_data);
+#endif
 
 	/*
 	 *  Get paths to various things we are going to use.
@@ -302,6 +309,9 @@ _dl_boot(const char **argv, const char **envp, const long loff,
 	if (_dl_traceld) {
 		_dl_exit(0);
 	}
+#if 0
+_dl_printf("0x%lx\n", dl_data[AUX_entry]);
+#endif
 	return(dl_data[AUX_entry]);
 }
 
@@ -316,10 +326,20 @@ _dl_boot_bind(const long sp, const long loff,  int argc, const char **argv,
 	AuxInfo		*auxstack;
 
 	struct elf_object  dynld;	/* Resolver data for the loader */
-#ifdef __mips__
-	struct r_debug	   *debug_map;	/* Dynamic objects map for gdb */
-	struct r_debug	   **map_link;	/* Where to put pointer for gdb */
-#endif /* __mips__ */
+
+#if 0
+_dl_printf("0x%lx 0x%lx %d %p %p %p %p\n", sp, loff, argc, argv, envp, dynamicp, dl_data);
+ _dl_printf("%p 0x%lx 0x%lx 0x%lx 0x%lx\n", &((long *)sp)[0], ((long *)sp)[0], ((long *)sp)[1], ((long *)sp)[2], ((long *)sp)[3]);
+ _dl_printf("%p 0x%lx 0x%lx 0x%lx 0x%lx\n", &((long *)sp)[4], ((long *)sp)[4], ((long *)sp)[5], ((long *)sp)[6], ((long *)sp)[7]);
+ _dl_printf("%p 0x%lx 0x%lx 0x%lx 0x%lx\n", &((long *)sp)[8], ((long *)sp)[8], ((long *)sp)[9], ((long *)sp)[10], ((long *)sp)[11]);
+ _dl_printf("%p 0x%lx 0x%lx 0x%lx 0x%lx\n", &((long *)sp)[12], ((long *)sp)[12], ((long *)sp)[13], ((long *)sp)[14], ((long *)sp)[15]);
+ _dl_printf("%p 0x%lx 0x%lx 0x%lx 0x%lx\n", &((long *)sp)[16], ((long *)sp)[16], ((long *)sp)[17], ((long *)sp)[18], ((long *)sp)[19]);
+ _dl_printf("%p 0x%lx 0x%lx 0x%lx 0x%lx\n", &((long *)sp)[20], ((long *)sp)[20], ((long *)sp)[21], ((long *)sp)[22], ((long *)sp)[23]);
+ _dl_printf("%p 0x%lx 0x%lx 0x%lx 0x%lx\n", &((long *)sp)[24], ((long *)sp)[24], ((long *)sp)[25], ((long *)sp)[26], ((long *)sp)[27]);
+ _dl_printf("%p 0x%lx 0x%lx 0x%lx 0x%lx\n", &((long *)sp)[28], ((long *)sp)[28], ((long *)sp)[29], ((long *)sp)[30], ((long *)sp)[31]);
+ _dl_printf("%p 0x%lx 0x%lx 0x%lx 0x%lx\n", &((long *)sp)[32], ((long *)sp)[32], ((long *)sp)[33], ((long *)sp)[34], ((long *)sp)[35]);
+ _dl_printf("XXX 0x%lx\n", ((long *)sp)[23]);
+#endif
 
 	/*
 	 * Scan argument and environment vectors. Find dynamic
@@ -341,12 +361,28 @@ _dl_boot_bind(const long sp, const long loff,  int argc, const char **argv,
 
 	auxstack = (AuxInfo *)stack;
 
+#if 0
+ _dl_printf("XXX 0x%lx\n", ((long *)sp)[23]);
+_dl_printf("---\n");
+#endif
 	while(auxstack->au_id != AUX_null) {
+#if 0
+ _dl_printf("XXX %p 0x%lx\n", &((long *)sp)[23], ((long *)sp)[23]);
+ _dl_printf("XXX %p 0x%lx\n", &auxstack->au_v, auxstack->au_v);
+_dl_printf("%p 0x%lx 0x%lx %d 0x%lx\n", auxstack, ((long *)auxstack)[0], ((long *)auxstack)[1], auxstack->au_id, auxstack->au_v);
+#endif
 		if(auxstack->au_id <= AUX_entry) {
 			dl_data[auxstack->au_id] = auxstack->au_v;
 		}
 		auxstack++;
 	}
+
+#if 0
+_dl_printf("---\n");
+ _dl_printf("0x%lx 0x%lx 0x%lx 0x%lx\n", dl_data[0], dl_data[1], dl_data[2], dl_data[3]);
+ _dl_printf("0x%lx 0x%lx 0x%lx 0x%lx\n", dl_data[4], dl_data[5], dl_data[6], dl_data[7]);
+ _dl_printf("0x%lx 0x%lx 0x%lx 0x%lx\n", dl_data[8], dl_data[9], dl_data[10], dl_data[11]);
+#endif
 
 	/*
 	 *  We need to do 'selfreloc' in case the code were'nt

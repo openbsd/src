@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldd.c,v 1.2 2001/05/11 15:50:14 art Exp $ */
+/*	$OpenBSD: ldd.c,v 1.3 2001/05/14 22:18:23 niklas Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -176,18 +176,18 @@ main(argc, argv)
 int
 readsoneeded(FILE *infile, int dyncheck)
 {
-	Elf32_Ehdr *epnt;
-	Elf32_Phdr *ppnt;
+	Elf_Ehdr *epnt;
+	Elf_Phdr *ppnt;
 	int i;
 	int isdynamic = 0;
 	char *header;
-	unsigned int dynamic_addr = 0;
-	unsigned int dynamic_size = 0;
+	unsigned long dynamic_addr = 0;
+	unsigned long dynamic_size = 0;
 	int strtab_val = 0;
 	int soname_val = 0;
-	int loadaddr = -1;
-	int loadbase = 0;
-	Elf32_Dyn *dpnt;
+	long loadaddr = -1;
+	long loadbase = 0;
+	Elf_Dyn *dpnt;
 	struct stat st;
 	char *res = NULL;
 
@@ -197,13 +197,13 @@ readsoneeded(FILE *infile, int dyncheck)
 	if (header == MAP_FAILED)
 		return -1;
 
-	epnt = (Elf32_Ehdr *)header;
-	if ((int)(epnt+1) > (int)(header + st.st_size))
+	epnt = (Elf_Ehdr *)header;
+	if ((u_long)(epnt+1) > (u_long)(header + st.st_size))
 		goto skip;
 
-	ppnt = (Elf32_Phdr *)&header[epnt->e_phoff];
-	if ((int)ppnt < (int)header ||
-	    (int)(ppnt+epnt->e_phnum) > (int)(header + st.st_size))
+	ppnt = (Elf_Phdr *)&header[epnt->e_phoff];
+	if ((u_long)ppnt < (u_long)header ||
+	    (u_long)(ppnt+epnt->e_phnum) > (u_long)(header + st.st_size))
 		goto skip;
 
 	for (i = 0; i < epnt->e_phnum; i++) {
@@ -217,10 +217,10 @@ readsoneeded(FILE *infile, int dyncheck)
 		ppnt++;
 	}
 		
-	dpnt = (Elf32_Dyn *) &header[dynamic_addr];
-	dynamic_size = dynamic_size / sizeof(Elf32_Dyn);
-	if ((int)dpnt < (int)header ||
-	    (int)(dpnt+dynamic_size) > (int)(header + st.st_size))
+	dpnt = (Elf_Dyn *) &header[dynamic_addr];
+	dynamic_size = dynamic_size / sizeof(Elf_Dyn);
+	if ((u_long)dpnt < (u_long)header ||
+	    (u_long)(dpnt+dynamic_size) > (u_long)(header + st.st_size))
 		goto skip;
 	
 	while (dpnt->d_tag != DT_NULL) {
@@ -235,7 +235,7 @@ readsoneeded(FILE *infile, int dyncheck)
 	if (!strtab_val)
 		goto skip;
 
-	dpnt = (Elf32_Dyn *) &header[dynamic_addr];
+	dpnt = (Elf_Dyn *) &header[dynamic_addr];
 	while (dpnt->d_tag != DT_NULL) {
 		if (dpnt->d_tag == DT_NEEDED) {
 			isdynamic = 1;

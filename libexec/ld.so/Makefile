@@ -1,13 +1,6 @@
-#	$OpenBSD: Makefile,v 1.3 2000/09/17 17:50:57 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.4 2001/05/14 22:18:19 niklas Exp $
 
 SUBDIR=libdl ldconfig ldd
-#CFLAGS =
-.if (${MACHINE_ARCH} == "powerpc")
-CFLAGS += -fpic -msoft-float
-.endif
-CFLAGS += -I${.CURDIR} -DNO_UNDERSCORE -DVERBOSE_DLINKER \
-	-DUSE_CACHE -D__PIC__ -I${.CURDIR}/${MACHINE_ARCH}
-#CFLAGS += -g
 VPATH=${.CURDIR}/../../lib/libc/string:${.CURDIR}/../../sys/lib/libsa
 
 NOMAN=
@@ -17,6 +10,18 @@ OBJS+=  strchr.o
 PROG=	ld.so
 MAN=	ld.so.8
 BINDIR=/usr/libexec
+CFLAGS += -Werror
+.if (${MACHINE_ARCH} == "powerpc")
+CFLAGS += -fpic -msoft-float
+.endif
+.if (${MACHINE_ARCH} == "alpha")
+CFLAGS += -fpic -mno-fp-regs
+LIBCSRCDIR=${.CURDIR}/../../lib/libc
+.include "${LIBCSRCDIR}/arch/alpha/Makefile.inc"
+.endif
+CFLAGS += -I${.CURDIR} -DNO_UNDERSCORE -DVERBOSE_DLINKER \
+	-DUSE_CACHE -D__PIC__ -I${.CURDIR}/${MACHINE_ARCH}
+CFLAGS += -g -DDL_PRINTF_DEBUG
 INSTALL_STRIP=
 
 .PATH:	${.CURDIR}/${MACHINE_ARCH}
