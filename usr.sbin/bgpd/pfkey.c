@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.23 2004/04/28 02:57:00 henning Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.24 2004/04/28 03:19:52 markus Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -538,6 +538,8 @@ pfkey_ipsec_establish(struct peer *p)
 		    auth->enc_key_out,
 		    0, 0) < 0)
 			return (-1);
+		if (pfkey_reply(fd, NULL) < 0)
+			return (-1);
 		if (pfkey_send(fd, SADB_SATYPE_ESP, SADB_ADD, 0,
 		    &p->conf.remote_addr, &p->conf.local_addr,
 		    auth->spi_in,
@@ -547,22 +549,32 @@ pfkey_ipsec_establish(struct peer *p)
 		    auth->enc_key_in,
 		    0, 0) < 0)
 			return (-1);
+		if (pfkey_reply(fd, NULL) < 0)
+			return (-1);
 	}
 
 	if (pfkey_flow(fd, SADB_X_ADDFLOW, IPSP_DIRECTION_OUT,
 	    &p->conf.local_addr, &p->conf.remote_addr, 0, BGP_PORT) < 0)
 		return (-1);
+	if (pfkey_reply(fd, NULL) < 0)
+		return (-1);
 
 	if (pfkey_flow(fd, SADB_X_ADDFLOW, IPSP_DIRECTION_OUT,
 	    &p->conf.local_addr, &p->conf.remote_addr, BGP_PORT, 0) < 0)
+		return (-1);
+	if (pfkey_reply(fd, NULL) < 0)
 		return (-1);
 
 	if (pfkey_flow(fd, SADB_X_ADDFLOW, IPSP_DIRECTION_IN,
 	    &p->conf.remote_addr, &p->conf.local_addr, 0, BGP_PORT) < 0)
 		return (-1);
+	if (pfkey_reply(fd, NULL) < 0)
+		return (-1);
 
 	if (pfkey_flow(fd, SADB_X_ADDFLOW, IPSP_DIRECTION_IN,
 	    &p->conf.remote_addr, &p->conf.local_addr, BGP_PORT, 0) < 0)
+		return (-1);
+	if (pfkey_reply(fd, NULL) < 0)
 		return (-1);
 
 	p->auth_established = 1;
@@ -578,28 +590,40 @@ pfkey_ipsec_remove(struct peer *p)
 		    p->conf.auth.spi_out, 0, 0, NULL, 0, 0, NULL,
 		    0, 0) < 0)
 			return (-1);
+		if (pfkey_reply(fd, NULL) < 0)
+			return (-1);
 
 		if (pfkey_send(fd, SADB_SATYPE_ESP, SADB_DELETE, 0,
 		    &p->conf.remote_addr, &p->conf.local_addr,
 		    p->conf.auth.spi_in, 0, 0, NULL, 0, 0, NULL,
 		    0, 0) < 0)
 			return (-1);
+		if (pfkey_reply(fd, NULL) < 0)
+			return (-1);
 	}
 
 	if (pfkey_flow(fd, SADB_X_DELFLOW, IPSP_DIRECTION_OUT,
 	    &p->conf.local_addr, &p->conf.remote_addr, 0, BGP_PORT) < 0)
 		return (-1);
+	if (pfkey_reply(fd, NULL) < 0)
+		return (-1);
 
 	if (pfkey_flow(fd, SADB_X_DELFLOW, IPSP_DIRECTION_OUT,
 	    &p->conf.local_addr, &p->conf.remote_addr, BGP_PORT, 0) < 0)
+		return (-1);
+	if (pfkey_reply(fd, NULL) < 0)
 		return (-1);
 
 	if (pfkey_flow(fd, SADB_X_DELFLOW, IPSP_DIRECTION_IN,
 	    &p->conf.remote_addr, &p->conf.local_addr, 0, BGP_PORT) < 0)
 		return (-1);
+	if (pfkey_reply(fd, NULL) < 0)
+		return (-1);
 
 	if (pfkey_flow(fd, SADB_X_DELFLOW, IPSP_DIRECTION_IN,
 	    &p->conf.remote_addr, &p->conf.local_addr, BGP_PORT, 0) < 0)
+		return (-1);
+	if (pfkey_reply(fd, NULL) < 0)
 		return (-1);
 
 	return (0);
