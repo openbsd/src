@@ -1,4 +1,4 @@
-/*	$OpenBSD: cy.c,v 1.10 2000/12/10 11:12:00 deraadt Exp $	*/
+/*	$OpenBSD: cy.c,v 1.11 2001/02/03 06:33:37 mickey Exp $	*/
 
 /*
  * cy.c
@@ -224,6 +224,7 @@ cyattach(parent, self, aux)
 #endif
   }
 
+  timeout_set(&sc->sc_tmo, cy_poll, NULL);
   bzero(sc->sc_ports, sizeof(sc->sc_ports));
   sc->sc_nports = num_chips * CD1400_NO_OF_CHANNELS;
 
@@ -408,7 +409,7 @@ cyopen(dev, flag, mode, p)
 	if(cy_open == 0)
 	  {
 	    cy_open = 1;
-	    timeout(cy_poll, NULL, 1);
+	    timeout_add(&sc->sc_tmo, 1);
 	  }
 
 	/* this sets parameters and raises DTR */
@@ -1150,7 +1151,7 @@ cy_poll(arg)
     counter = 0;
 
 out:
-    timeout(cy_poll, NULL, 1);
+    timeout_add(&sc->sc_tmo, 1);
 }
 
 /*

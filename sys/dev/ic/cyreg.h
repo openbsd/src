@@ -1,4 +1,4 @@
-/*	$OpenBSD: cyreg.h,v 1.3 2000/12/10 11:12:01 deraadt Exp $	*/
+/*	$OpenBSD: cyreg.h,v 1.4 2001/02/03 06:33:37 mickey Exp $	*/
 /*	$FreeBSD: cyreg.h,v 1.1 1995/07/05 12:15:51 bde Exp $	*/
 
 /*-
@@ -31,6 +31,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/timeout.h>
 
 /*
  * Definitions for Cyclades Cyclom-Y serial boards.
@@ -160,6 +162,7 @@ struct cy_port {
 struct cy_softc {
   struct device sc_dev;
   void *sc_ih;
+  struct timeout sc_tmo;
   bus_space_tag_t sc_memt;
   bus_space_handle_t sc_memh;
   int sc_bustype;
