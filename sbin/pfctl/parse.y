@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.398 2003/07/10 05:25:27 cedric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.399 2003/07/11 08:29:34 cedric Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -208,6 +208,7 @@ struct queue_opts {
 struct table_opts {
 	int			flags;
 	int			init_addr;
+	struct node_tinithead	init_nodes;
 } table_opts;
 
 struct node_hfsc_opts	hfsc_opts;
@@ -218,6 +219,7 @@ int	rule_consistent(struct pf_rule *);
 int	filter_consistent(struct pf_rule *);
 int	nat_consistent(struct pf_rule *);
 int	rdr_consistent(struct pf_rule *);
+int	process_tabledef(char *, struct table_opts *);
 int	yyparse(void);
 void	expand_label_str(char *, const char *, const char *);
 void	expand_label_if(const char *, char *, const char *);
@@ -855,26 +857,22 @@ tabledef	: TABLE '<' STRING '>' table_opts {
 				    PF_TABLE_NAME_SIZE - 1);
 				YYERROR;
 			}
-			if (pfctl_define_table($3, $5.flags, $5.init_addr,
-			    (pf->opts & PF_OPT_NOACTION) || !(pf->loadopt &
-				(PFCTL_FLAG_TABLE | PFCTL_FLAG_ALL)),
-			    pf->anchor, pf->ruleset, pf->ab, pf->tticket)) {
-				yyerror("cannot define table %s: %s", $3,
-				    pfr_strerror(errno));
-				YYERROR;
-			}
-			pf->tdirty = 1;
+			if (pf->loadopt & (PFCTL_FLAG_TABLE | PFCTL_FLAG_ALL))
+				if (process_tabledef($3, &$5))
+					YYERROR;
 		}
 		;
 
 table_opts	:	{
 			bzero(&table_opts, sizeof table_opts);
+			SIMPLEQ_INIT(&table_opts.init_nodes);
 		}
 		   table_opts_l
 			{ $$ = table_opts; }
 		| /* empty */
 			{
 			bzero(&table_opts, sizeof table_opts);
+			SIMPLEQ_INIT(&table_opts.init_nodes);
 			$$ = table_opts;
 		}
 		;
@@ -883,8 +881,7 @@ table_opts_l	: table_opts_l table_opt
 		| table_opt
 		;
 
-table_opt	: STRING
-			{
+table_opt	: STRING		{
 			if (!strcmp($1, "const"))
 				table_opts.flags |= PFR_TFLAG_CONST;
 			else if (!strcmp($1, "persist"))
@@ -892,45 +889,48 @@ table_opt	: STRING
 			else
 				YYERROR;
 		}
-		| '{' tableaddrs '}'	{ table_opts.init_addr = 1; }
-		| FILENAME STRING	{
-			if (pfr_buf_load(pf->ab, $2, 0, append_addr)) {
-				if (errno)
-					yyerror("cannot load %s: %s", $2,
-					    pfr_strerror(errno));
-					YYERROR;
+		| '{' '}'		{ table_opts.init_addr = 1; }
+		| '{' host_list '}'	{
+			struct node_host	*n;
+			struct node_tinit	*ti;
+
+			for (n = $2; n != NULL; n = n->next) {
+				switch(n->addr.type) {
+				case PF_ADDR_ADDRMASK:
+					continue; /* ok */
+				case PF_ADDR_DYNIFTL:
+					yyerror("dynamic addresses are not "
+					    "permitted inside tables");
+					break;
+				case PF_ADDR_TABLE:
+					yyerror("tables cannot contain tables");
+					break;
+				case PF_ADDR_NOROUTE:
+					yyerror("\"no-route\" is not permitted "
+					    "inside tables");
+					break;
+				default:
+					yyerror("unknown address type %d",
+					    n->addr.type);
+				}
+				YYERROR;
 			}
+			if (!(ti = calloc(1, sizeof(*ti))))
+				err(1, "table_opt: calloc");
+			ti->host = $2;
+			SIMPLEQ_INSERT_TAIL(&table_opts.init_nodes, ti,
+			    entries);
 			table_opts.init_addr = 1;
 		}
-		;
+		| FILENAME STRING	{
+			struct node_tinit	*ti;
 
-tableaddrs	: /* empty */
-		| tableaddrs tableaddr comma
-
-tableaddr	: not STRING {
-			if (append_addr_not(pf->ab, $2, 0, $1)) {
-				if (errno)
-					yyerror("cannot add %s: %s", $2,
-					    pfr_strerror(errno));
-				YYERROR;
-			}
-		}
-		| not STRING '/' number {
-			char *buf = NULL;
-
-			if (asprintf(&buf, "%s/%d", $2, $4) < 0) {
-				if (errno)
-					yyerror("cannot add %s/%d: %s", $2, $4,
-					    strerror(errno));
-                                YYERROR;
-			} else if (append_addr_not(pf->ab, buf, 0, $1)) {
-				if (errno)
-					yyerror("cannot add %s: %s", buf,
-					    pfr_strerror(errno));
-				free(buf);
-				YYERROR;
-			}
-			free(buf);
+			if (!(ti = calloc(1, sizeof(*ti))))
+				err(1, "table_opt: calloc");
+			ti->file = $2;
+			SIMPLEQ_INSERT_TAIL(&table_opts.init_nodes, ti,
+			    entries);
+			table_opts.init_addr = 1;
 		}
 		;
 
@@ -1762,7 +1762,7 @@ xhost		: not host			{
 			$$ = $2;
 		}
 		| NOROUTE			{
-			$$ = calloc(1, sizeof(struct node_host));
+		$$ = calloc(1, sizeof(struct node_host));
 			if ($$ == NULL)
 				err(1, "xhost: calloc");
 			$$->addr.type = PF_ADDR_NOROUTE;
@@ -3152,6 +3152,50 @@ rdr_consistent(struct pf_rule *r)
 		}
 	}
 	return (-problems);
+}
+
+int
+process_tabledef(char *name, struct table_opts *opts)
+{
+	struct pfr_buffer	 ab;
+	struct node_tinit	*ti;
+
+	bzero(&ab, sizeof(ab));
+	ab.pfrb_type = PFRB_ADDRS;
+	SIMPLEQ_FOREACH(ti, &opts->init_nodes, entries) {
+		if (ti->file)
+			if (pfr_buf_load(&ab, ti->file, 0, append_addr)) {
+				if (errno)
+					yyerror("cannot load \"%s\": %s",
+					    ti->file, strerror(errno));
+				else
+					yyerror("file \"%s\" contains bad data",
+					    ti->file);
+				goto _error;
+			}
+		if (ti->host)
+			if (append_addr_host(&ab, ti->host, 0, 0)) {
+				yyerror("cannot create address buffer: %s",
+				    strerror(errno));
+				goto _error;
+			}
+	}
+	if (pf->opts & PF_OPT_VERBOSE)
+		print_tabledef(name, opts->flags, opts->init_addr,
+		    &opts->init_nodes);
+	if (!(pf->opts & PF_OPT_NOACTION) &&
+	    pfctl_define_table(name, opts->flags, opts->init_addr,
+	    pf->anchor, pf->ruleset, &ab, pf->tticket)) {
+		yyerror("cannot define table %s: %s", name,
+		    pfr_strerror(errno));
+		goto _error;
+	}
+	pf->tdirty = 1;
+	pfr_buf_clear(&ab);
+	return (0);
+_error:
+	pfr_buf_clear(&ab);
+	return (-1);
 }
 
 struct keywords {

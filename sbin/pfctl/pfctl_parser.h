@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.63 2003/07/03 21:09:13 cedric Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.64 2003/07/11 08:29:34 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -67,7 +67,6 @@ struct pfctl {
 	struct pfioc_rule *prule[PF_RULESET_MAX];
 	struct pfioc_altq *paltq;
 	struct pfioc_queue *pqueue;
-	struct pfr_buffer *ab;		/* address buffer */
 	const char *anchor;
 	const char *ruleset;
 };
@@ -126,6 +125,15 @@ struct node_queue_opt {
 	}			 data;
 };
 
+SIMPLEQ_HEAD(node_tinithead, node_tinit);
+struct node_tinit {	/* table initializer */
+	SIMPLEQ_ENTRY(node_tinit)	 entries;
+	struct node_host		*host;
+	char				*file;
+};
+
+struct pfr_buffer;	/* forward definition */
+
 int	pfctl_rules(int, char *, int, char *, char *);
 
 int	pfctl_add_rule(struct pfctl *, struct pf_rule *);
@@ -144,6 +152,7 @@ int	pfctl_load_anchors(int, int);
 
 void	print_pool(struct pf_pool *, u_int16_t, u_int16_t, sa_family_t, int);
 void	print_rule(struct pf_rule *, int);
+void	print_tabledef(const char *, int, int, struct node_tinithead *);
 void	print_status(struct pf_status *);
 
 int	eval_pfaltq(struct pfctl *, struct pf_altq *, struct node_queue_bw *,
@@ -156,7 +165,7 @@ void	 print_altq(const struct pf_altq *, unsigned, struct node_queue_bw *,
 void	 print_queue(const struct pf_altq *, unsigned, struct node_queue_bw *,
 	     int, struct node_queue_opt *);
 
-int	pfctl_define_table(char *, int, int, int, const char *, const char *,
+int	pfctl_define_table(char *, int, int, const char *, const char *,
 	    struct pfr_buffer *, int);
 
 struct icmptypeent {
@@ -197,6 +206,7 @@ struct node_host	*ifa_lookup(const char *, enum pfctl_iflookup_mode);
 struct node_host	*host(const char *);
 
 int			 append_addr(struct pfr_buffer *, char *, int);
-int			 append_addr_not(struct pfr_buffer *, char *, int, int);
+int			 append_addr_host(struct pfr_buffer *,
+			    struct node_host *, int, int);
 
 #endif /* _PFCTL_PARSER_H_ */

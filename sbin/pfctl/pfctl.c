@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.180 2003/07/03 21:09:13 cedric Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.181 2003/07/11 08:29:34 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -921,13 +921,10 @@ pfctl_rules(int dev, char *filename, int opts, char *anchorname,
 	struct pfioc_rule	pr[PF_RULESET_MAX];
 	struct pfioc_altq	pa;
 	struct pfctl		pf;
-	struct pfr_buffer	ab;
 	int			i;
 
 	memset(&pa, 0, sizeof(pa));
 	memset(&pf, 0, sizeof(pf));
-	memset(&ab, 0, sizeof(ab));
-	ab.pfrb_type = PFRB_ADDRS;
 	for (i = 0; i < PF_RULESET_MAX; i++) {
 		memset(&pr[i], 0, sizeof(pr[i]));
 		memcpy(pr[i].anchor, anchorname, sizeof(pr[i].anchor));
@@ -969,7 +966,7 @@ pfctl_rules(int dev, char *filename, int opts, char *anchorname,
 				ERR("DIOCBEGINRULES");
 		}
 		if (loadopt & (PFCTL_FLAG_TABLE | PFCTL_FLAG_ALL)) {
-		        if (pfr_ina_begin(&pf.tticket, NULL, 0) != 0)
+			if (pfr_ina_begin(&pf.tticket, NULL, 0) != 0)
 				ERR("begin table");
 		}
 	}
@@ -978,7 +975,6 @@ pfctl_rules(int dev, char *filename, int opts, char *anchorname,
 	pf.opts = opts;
 	pf.loadopt = loadopt;
 	pf.paltq = &pa;
-	pf.ab = &ab;
 	for (i = 0; i < PF_RULESET_MAX; i++) {
 		pf.prule[i] = &pr[i];
 	}
