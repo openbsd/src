@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.52 2004/02/17 23:50:46 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.53 2004/02/21 00:34:27 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -451,6 +451,7 @@ scsi_execute_xs(xs)
 {
 	int error;
 	int s;
+	int flags;
 
 	xs->flags &= ~ITSDONE;
 	xs->error = XS_NOERROR;
@@ -473,12 +474,35 @@ retry:
 	 * code both expect us to return straight to them, so as soon
 	 * as the command is queued, return.
 	 */
+
+	/* 
+	 * We save the flags here because the xs structure may already
+	 * be freed by scsi_done by the time adapter->scsi_cmd returns.
+	 *
+	 * scsi_done is responsible for freeing the xs if either
+	 * (flags & (SCSI_NOSLEEP | SCSI_POLL)) == SCSI_NOSLEEP
+	 * -or-
+	 * (flags & SCSI_USER) != 0
+	 *
+	 * Note: SCSI_USER must always be called with SCSI_NOSLEEP
+	 * and never with SCSI_POLL, so the second expression should be
+	 * is equivalent to the first.
+	 */
+
+	flags = xs->flags;
+#ifdef DIAGNOSTIC
+	if ((flags & (SCSI_USER | SCSI_NOSLEEP)) == SCSI_USER)
+		panic("scsi_execute_xs: USER without NOSLEEP");
+	if ((flags & (SCSI_USER | SCSI_POLL)) == (SCSI_USER | SCSI_POLL))
+		panic("scsi_execute_xs: USER with POLL");
+#endif
+
 	switch ((*(xs->sc_link->adapter->scsi_cmd)) (xs)) {
 	case SUCCESSFULLY_QUEUED:
-		if ((xs->flags & (SCSI_NOSLEEP | SCSI_POLL)) == SCSI_NOSLEEP)
+		if ((flags & (SCSI_NOSLEEP | SCSI_POLL)) == SCSI_NOSLEEP)
 			return EJUSTRETURN;
 #ifdef DIAGNOSTIC
-		if (xs->flags & SCSI_NOSLEEP)
+		if (flags & SCSI_NOSLEEP)
 			panic("scsi_execute_xs: NOSLEEP and POLL");
 #endif
 		s = splbio();
