@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: xfrin.c,v 1.124.2.4.2.7 2004/03/08 09:04:33 marka Exp $ */
+/* $ISC: xfrin.c,v 1.124.2.4.2.9 2004/10/13 22:28:42 marka Exp $ */
 
 #include <config.h>
 
@@ -500,8 +500,8 @@ xfr_rr(dns_xfrin_ctx_t *xfr, dns_name_t *name, isc_uint32_t ttl,
 	case XFRST_IXFR_ADD:
 		if (rdata->type == dns_rdatatype_soa) {
 			isc_uint32_t soa_serial = dns_soa_getserial(rdata);
-			CHECK(ixfr_commit(xfr));
 			if (soa_serial == xfr->end_serial) {
+				CHECK(ixfr_commit(xfr));
 				xfr->state = XFRST_END;
 				break;
 			} else if (soa_serial != xfr->ixfr.current_serial) {
@@ -511,6 +511,7 @@ xfr_rr(dns_xfrin_ctx_t *xfr, dns_name_t *name, isc_uint32_t ttl,
 					  xfr->ixfr.current_serial, soa_serial);
 				FAIL(DNS_R_FORMERR);
 			} else {
+				CHECK(ixfr_commit(xfr));
 				xfr->state = XFRST_IXFR_DELSOA;
 				goto redo;
 			}

@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: socket.c,v 1.207.2.19.2.13 2004/07/01 04:51:15 marka Exp $ */
+/* $ISC: socket.c,v 1.207.2.19.2.15 2004/11/18 21:31:16 marka Exp $ */
 
 #include <config.h>
 
@@ -63,11 +63,7 @@
  * some as socklen_t.  This is here so it can be easily changed if needed.
  */
 #ifndef ISC_SOCKADDR_LEN_T
-#ifdef _BSD_SOCKLEN_T_
-#define ISC_SOCKADDR_LEN_T _BSD_SOCKLEN_T_
-#else
 #define ISC_SOCKADDR_LEN_T unsigned int
-#endif
 #endif
 
 /*
@@ -509,7 +505,7 @@ static void
 process_cmsg(isc_socket_t *sock, struct msghdr *msg, isc_socketevent_t *dev) {
 #ifdef USE_CMSG
 	struct cmsghdr *cmsgp;
-#ifdef ISC_PLATFORM_HAVEIPV6
+#ifdef ISC_PLATFORM_HAVEIN6PKTINFO
 	struct in6_pktinfo *pktinfop;
 #endif
 #ifdef SO_TIMESTAMP
@@ -548,7 +544,7 @@ process_cmsg(isc_socket_t *sock, struct msghdr *msg, isc_socketevent_t *dev) {
 #ifdef SO_TIMESTAMP
 	timevalp = NULL;
 #endif
-#ifdef ISC_PLATFORM_HAVEIPV6
+#ifdef ISC_PLATFORM_HAVEIN6PKTINFO
 	pktinfop = NULL;
 #endif
 
@@ -558,7 +554,7 @@ process_cmsg(isc_socket_t *sock, struct msghdr *msg, isc_socketevent_t *dev) {
 			   isc_msgcat, ISC_MSGSET_SOCKET, ISC_MSG_PROCESSCMSG,
 			   "processing cmsg %p", cmsgp);
 
-#ifdef ISC_PLATFORM_HAVEIPV6
+#ifdef ISC_PLATFORM_HAVEIN6PKTINFO
 		if (cmsgp->cmsg_level == IPPROTO_IPV6
 		    && cmsgp->cmsg_type == IPV6_PKTINFO) {
 
@@ -683,7 +679,7 @@ build_msghdr_send(isc_socket_t *sock, isc_socketevent_t *dev,
 	msg->msg_control = NULL;
 	msg->msg_controllen = 0;
 	msg->msg_flags = 0;
-#if defined(USE_CMSG) && defined(ISC_PLATFORM_HAVEIPV6)
+#if defined(USE_CMSG) && defined(ISC_PLATFORM_HAVEIN6PKTINFO)
 	if ((sock->type == isc_sockettype_udp)
 	    && ((dev->attributes & ISC_SOCKEVENTATTR_PKTINFO) != 0)) {
 		struct cmsghdr *cmsgp;
@@ -1222,7 +1218,7 @@ allocate_socket(isc_socketmgr_t *manager, isc_sockettype_t type,
 	 * set up cmsg buffers
 	 */
 	cmsgbuflen = 0;
-#if defined(USE_CMSG) && defined(ISC_PLATFORM_HAVEIPV6)
+#if defined(USE_CMSG) && defined(ISC_PLATFORM_HAVEIN6PKTINFO)
 	cmsgbuflen = cmsg_space(sizeof(struct in6_pktinfo));
 #endif
 #if defined(USE_CMSG) && defined(SO_TIMESTAMP)
@@ -1236,7 +1232,7 @@ allocate_socket(isc_socketmgr_t *manager, isc_sockettype_t type,
 	}
 
 	cmsgbuflen = 0;
-#if defined(USE_CMSG) && defined(ISC_PLATFORM_HAVEIPV6)
+#if defined(USE_CMSG) && defined(ISC_PLATFORM_HAVEIN6PKTINFO)
 	cmsgbuflen = cmsg_space(sizeof(struct in6_pktinfo));
 #endif
 	sock->sendcmsgbuflen = cmsgbuflen;
@@ -1480,6 +1476,7 @@ isc_socket_create(isc_socketmgr_t *manager, int pf, isc_sockettype_t type,
 					 "No buffer available to receive "
 					 "IPv6 destination");
 		}
+#ifdef ISC_PLATFORM_HAVEIN6PKTINFO
 #ifdef IPV6_RECVPKTINFO
 		/* 2292bis */
 		if ((pf == AF_INET6)
@@ -1511,6 +1508,7 @@ isc_socket_create(isc_socketmgr_t *manager, int pf, isc_sockettype_t type,
 					 strbuf);
 		}
 #endif /* IPV6_RECVPKTINFO */
+#endif /* ISC_PLATFORM_HAVEIN6PKTINFO */
 #ifdef IPV6_USE_MIN_MTU        /*2292bis, not too common yet*/
 		/* use minimum MTU */
 		if (pf == AF_INET6) {

@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: wks_11.c,v 1.44.12.7 2004/03/08 09:04:44 marka Exp $ */
+/* $ISC: wks_11.c,v 1.44.12.8 2004/09/16 01:00:58 marka Exp $ */
 
 /* Reviewed: Fri Mar 17 15:01:49 PST 2000 by explorer */
 
@@ -106,7 +106,7 @@ fromtext_in_wks(ARGS_FROMTEXT) {
 		strlcpy(service, token.value.as_pointer, sizeof(service));
 		for (i = strlen(service) - 1; i >= 0; i--)
 			if (isupper(service[i]&0xff))
-				service[i] = tolower(service[i]);
+				service[i] = tolower(service[i]&0xff);
 
 		port = strtol(DNS_AS_STR(token), &e, 10);
 		if (*e == 0)
