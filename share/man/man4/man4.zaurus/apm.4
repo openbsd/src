@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apm.4,v 1.5 2005/03/04 00:34:38 uwe Exp $
+.\"	$OpenBSD: apm.4,v 1.6 2005/04/02 17:55:37 uwe Exp $
 .\"
 .\"	Copyright (c) 1998 Marco S. Hyman
 .\"
@@ -116,23 +116,13 @@ The
 value contains the estimated percentage of battery life available.
 100% indicates a full charge.
 .Pp
-If the battery is charging, i.e. when
-.Va battery_state
-is equal to
-.Dv APM_BATT_CHARGING ,
-the
-.Va battery_life
-value is invalid.
-Otherwise, the
+The
 .Va minutes_left
 value contains the estimated number of minutes of battery life
 remaining.
 If no time estimate is available, the
 .Va minutes_left
 value is 0.
-(See also
-.Sx BUGS ,
-below.)
 .It Dv APM_IOC_NEXTEVENT
 .Em NOT YET SUPPORTED on zaurus
 .Pq Li "struct apm_event_info"
@@ -272,6 +262,5 @@ driver source code contains these copyrights:
 .Sh BUGS
 Power events are not supported.
 .Pp
-If the battery is charging, the battery life remaining is incorrectly
-reported as 100% until charging is complete.
-The estimated number of minutes left is constantly 0 minutes.
+Reported battery life remaining and minutes left can be off by 25%,
+or more, and are generally overestimated while the battery is charging.
