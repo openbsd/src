@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.41 2001/02/28 18:37:14 mickey Exp $	*/
+/*	$OpenBSD: bios.c,v 1.42 2001/02/28 19:16:06 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -237,13 +237,16 @@ biosattach(parent, self, aux)
 
 			for (cksum = 0, i = len; i--; cksum += va[i])
 				;
+#ifdef __stinkpad_sucks__
 			if (cksum != 0)
-				printf("!");	/* stinking x20 again */
+				continue;
+#endif
 
 			if (!str)
 				printf("%s: ROM list:",
 				    str = sc->sc_dev.dv_xname);
-			printf(" 0x%05x/0x%x", off, len);
+			printf(" 0x%05x/0x%x%s", off, len,
+			    cksum? "!" : "");
 
 			if ((i = extent_alloc_region(iomem_ex,
 			    (paddr_t)off, len, EX_NOWAIT)))
