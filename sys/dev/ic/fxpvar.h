@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxpvar.h,v 1.18 2004/08/04 19:42:30 mickey Exp $	*/
+/*	$OpenBSD: fxpvar.h,v 1.19 2004/09/20 04:27:23 brad Exp $	*/
 /*	$NetBSD: if_fxpvar.h,v 1.1 1997/06/05 02:01:58 thorpej Exp $	*/
 
 /*                  
@@ -104,9 +104,6 @@ struct fxp_softc {
 	struct mbuf *rfa_headm;		/* first mbuf in receive frame area */
 	struct mbuf *rfa_tailm;		/* last mbuf in receive frame area */
 	int sc_flags;			/* misc. flags */
-#define	FXPF_HAS_RESUME_BUG	0x08	/* has the resume bug */
-#define	FXPF_FIX_RESUME_BUG	0x10	/* currently need to work-around 
-					   the resume bug */
 #define	FXPF_DISABLE_STANDBY	0x20	/* currently need to work-around */
 #define	FXPF_UCODE		0x40	/* ucode is loaded */
 	struct timeout stats_update_to; /* Pointer to timeout structure */
