@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt.c,v 1.10 1998/04/25 23:02:28 millert Exp $	*/
+/*	$OpenBSD: fmt.c,v 1.11 1998/04/25 23:07:16 millert Exp $	*/
 
 /* Sensible version of fmt
  *
@@ -168,7 +168,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-  "$OpenBSD: fmt.c,v 1.10 1998/04/25 23:02:28 millert Exp $";
+  "$OpenBSD: fmt.c,v 1.11 1998/04/25 23:07:16 millert Exp $";
 static const char copyright[] =
   "Copyright (c) 1997 Gareth McCaughan. All rights reserved.\n";
 #endif /* not lint */
@@ -284,7 +284,7 @@ main(int argc, char *argv[]) {
 
   /* 1. Grok parameters. */
 
-  while ((ch = getopt(argc, argv, "cd:hl:mpst:")) != EOF) switch(ch) {
+  while ((ch = getopt(argc, argv, "cd:hl:mpst:")) != -1) switch(ch) {
     case 'c':
       centerP = 1;
       continue;
