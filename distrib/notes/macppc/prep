@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.11 2004/03/21 16:58:02 drahn Exp $
+dnl	$OpenBSD: prep,v 1.12 2004/03/23 17:37:02 jmc Exp $
 To be able to boot the OpenBSD/MACHINE installation program, you will
 need to acquire some limited knowledge of OpenFirmware, the low-level
 process that controls the microprocessor after hardware initialization
@@ -29,7 +29,7 @@ pressing the Power button.  When the upper LED bank begins lighting
 up in sequence (similar to KIT from Knight Rider), repeatedly
 press the System Identifier button until the seventh LED from
 the right is highlighted on the lower bank.  Now hold the
-system identified button for two seconds.  For more details, read:
+System Identifier button for two seconds.  For more details, read:
 http://docs.info.apple.com/article.html?artnum=75489
 
 Important Open Firmware command examples:
