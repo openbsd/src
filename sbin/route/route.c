@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.11 1996/10/27 15:11:10 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.12 1996/11/25 03:57:56 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: route.c,v 1.11 1996/10/27 15:11:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: route.c,v 1.12 1996/11/25 03:57:56 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -178,6 +178,7 @@ main(argc, argv)
 		s = open("/dev/null", O_WRONLY, 0);
 	else
 		s = socket(PF_ROUTE, SOCK_RAW, 0);
+	setuid(uid);
 	if (s < 0)
 		quit("socket");
 	if (*argv)
@@ -911,7 +912,8 @@ getaddr(which, s, hpp)
 		}
 	}
 	if ((val = inet_network(s)) != INADDR_NONE ||
-	    ((np = getnetbyname(s)) != NULL && (val = np->n_net) != 0)) {
+	    (forcehost == 0 && (np = getnetbyname(s)) != NULL &&
+	    (val = np->n_net) != 0)) {
 netdone:
 		if (which == RTA_DST)
 			inet_makenetandmask(val, &su->sin);
