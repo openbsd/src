@@ -1,6 +1,6 @@
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
-# $OpenBSD: termtypes.master,v 1.15 2000/03/10 02:54:39 millert Exp $
+# $OpenBSD: termtypes.master,v 1.16 2000/03/12 21:32:03 millert Exp $
 #
 # This version of terminfo.src is distributed with ncurses.
 # Report bugs to
@@ -2343,12 +2343,12 @@ xterm-r6|xterm-old|xterm X11R6 version,
 	il1=\E[L, ind=^J, 
 	is2=\E7\E[r\E[m\E[?7h\E[?1;3;4;6l\E[4l\E8\E>, kbs=^H, 
 	kcub1=\EOD, kcud1=\EOB, kcuf1=\EOC, kcuu1=\EOA, 
-	kdch1=\E[3~, kf1=\E[11~, kf10=\E[21~, kf11=\E[23~, 
+	kdch1=\E[3~, kend=\EOF, kf1=\E[11~, kf10=\E[21~, kf11=\E[23~, 
 	kf12=\E[24~, kf13=\E[25~, kf14=\E[26~, kf15=\E[28~, 
 	kf16=\E[29~, kf17=\E[31~, kf18=\E[32~, kf19=\E[33~, 
 	kf2=\E[12~, kf20=\E[34~, kf3=\E[13~, kf4=\E[14~, 
 	kf5=\E[15~, kf6=\E[17~, kf7=\E[18~, kf8=\E[19~, kf9=\E[20~, 
-	kfnd=\E[1~, kich1=\E[2~, kmous=\E[M, knp=\E[6~, kpp=\E[5~, 
+	kfnd=\E[1~, khome=\EOH, kich1=\E[2~, kmous=\E[M, knp=\E[6~, kpp=\E[5~, 
 	kslt=\E[4~, meml=\El, memu=\Em, rc=\E8, rev=\E[7m, ri=\EM, 
 	rmacs=^O, rmcup=\E[2J\E[?47l\E8, rmir=\E[4l, 
 	rmkx=\E[?1l\E>, rmso=\E[m, rmul=\E[m, 
