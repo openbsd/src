@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.7 1998/08/18 04:02:16 millert Exp $	*/
+/*	$OpenBSD: io.c,v 1.8 1999/03/03 15:42:46 millert Exp $	*/
 /*	$NetBSD: io.c,v 1.4 1994/12/09 02:14:20 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: io.c,v 1.7 1998/08/18 04:02:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.8 1999/03/03 15:42:46 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -69,9 +69,6 @@ talk()
 
 #if defined(NCURSES_VERSION) || defined(beep)
 	message("Connection established");
-	/*
-	 * beep() doesn't flush output on its own.
-	 */
 	beep();
 	beep();
 	beep();
