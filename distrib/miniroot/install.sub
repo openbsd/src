@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.93 1998/09/20 08:50:16 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.94 1998/09/23 07:22:34 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -598,8 +598,8 @@ configure_ifs() {
 			/media:/D
 			s/^	//
 			/media/p'
-		echo "If the default is not satisfactory, and you wish to use"
-		echo "another media, copy that line from above."
+		echo "If the default is not satisfactory, and you wish to use another"
+		echo "media, copy that line from above (ie. \"media 100baseTX\")"
 		echo ""
 		echo -n "Media directives? [$_interface_extra] "
 		getresp "$_interface_extra"
