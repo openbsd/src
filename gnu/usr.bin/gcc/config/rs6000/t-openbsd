@@ -16,13 +16,15 @@ fp-bit.c: $(srcdir)/config/fp-bit.c
 # Build libgcc.a with different options.
 
 MULTILIB_OPTIONS	= msoft-float
-
 MULTILIB_DIRNAMES	= soft-float
-			 
-
-MULTILIB_MATCHES	= msoft-float=mcpu?403 \
+MULTILIB_MATCHES_FLOAT	= msoft-float=mcpu?403 \
 			  msoft-float=mcpu?mpc403 \
 			  msoft-float=mcpu?ppc403
+MULTILIB_EXCEPTIONS     =
+MULTILIB_MATCHES        = ${MULTILIB_MATCHES_FLOAT} \
+                          fPIC=mrelocatable-lib \
+                          fPIC=mrelocatable \
+                          fPIC=fpic           
 
 LIBGCC = stmp-multilib
 INSTALL_LIBGCC = install-multilib
