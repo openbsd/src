@@ -60,6 +60,7 @@
 ./usr/include/macppc/vmparam.h
 ./usr/include/macppc/vuid_event.h
 ./usr/include/macppc/wsconsio.h
+./usr/include/macppc/z8530var.h
 ./usr/include/powerpc/ansi.h
 ./usr/include/powerpc/asm.h
 ./usr/include/powerpc/bat.h

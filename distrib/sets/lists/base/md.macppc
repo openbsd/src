@@ -1241,6 +1241,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/vmparam.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/vuid_event.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/wsconsio.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/z8530var.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/malloc.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/math.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/md4.ph
