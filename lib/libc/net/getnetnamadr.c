@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetnamadr.c,v 1.1 1997/03/13 19:07:27 downsj Exp $	*/
+/*	$OpenBSD: getnetnamadr.c,v 1.2 1997/04/03 02:15:16 kstailey Exp $	*/
 
 /* Copyright (c) 1993 Carlos Leandro and Rui Salgueiro
  *	Dep. Matematica Universidade de Coimbra, Portugal, Europe
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)getnetbyaddr.c	8.1 (Berkeley) 6/4/93";
 static char sccsid_[] = "from getnetnamadr.c	1.4 (Coimbra) 93/06/03";
 static char rcsid[] = "$From: getnetnamadr.c,v 8.7 1996/08/05 08:31:35 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: getnetnamadr.c,v 1.1 1997/03/13 19:07:27 downsj Exp $";
+static char rcsid[] = "$OpenBSD: getnetnamadr.c,v 1.2 1997/04/03 02:15:16 kstailey Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -214,9 +214,31 @@ getnetbyaddr(net, net_type)
 	char qbuf[MAXDNAME];
 	unsigned long net2;
 	struct netent *net_entry;
+	char lookups[MAXDNSLUS];
+	int i;
 
 	if (net_type != AF_INET)
 		return (_getnetbyaddr(net, net_type));
+
+	bcopy(_res.lookups, lookups, sizeof lookups);
+	if (lookups[0] == '\0')
+		strncpy(lookups, "bf", sizeof lookups);
+
+	for (i = 0; i < MAXDNSLUS && lookups[i]; i++) {
+		switch (lookups[i]) {
+#if 0 /* def YP */
+		case 'y':
+			/* YP only supports AF_INET. */
+			if (af == AF_INET)
+				hp = _yp_gethtbyaddr(addr);
+			break;
+#endif
+		case 'b':
+			break;
+		case 'f':
+			return (_getnetbyaddr(net, net_type));
+		}
+	}
 
 	for (nn = 4, net2 = net; net2; net2 >>= 8)
 		netbr[--nn] = net2 & 0xff;
