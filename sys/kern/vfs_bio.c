@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.64 2002/06/09 01:11:18 art Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.65 2002/06/09 04:34:12 art Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -597,10 +597,8 @@ incore(struct vnode *vp, daddr_t blkno)
 {
 	struct buf *bp;
 
-	bp = BUFHASH(vp, blkno)->lh_first;
-
 	/* Search hash chain */
-	for (; bp != NULL; bp = bp->b_hash.le_next) {
+	LIST_FOREACH(bp, BUFHASH(vp, blkno), b_hash) {
 		if (bp->b_lblkno == blkno && bp->b_vp == vp &&
 		    !ISSET(bp->b_flags, B_INVAL))
 			return (bp);
@@ -636,8 +634,7 @@ getblk(struct vnode *vp, daddr_t blkno, int size, int slpflag, int slptimeo)
 	 */
 	bh = BUFHASH(vp, blkno);
 start:
-	bp = bh->lh_first;
-	for (; bp != NULL; bp = bp->b_hash.le_next) {
+	LIST_FOREACH(bp, BUFHASH(vp, blkno), b_hash) {
 		if (bp->b_lblkno != blkno || bp->b_vp != vp)
 			continue;
 
