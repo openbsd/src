@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.11 2003/03/13 09:03:07 deraadt Exp $	*/
+/*	$OpenBSD: vi.c,v 1.12 2003/10/16 22:08:48 millert Exp $	*/
 
 /*
  *	vi command editing
@@ -238,7 +238,7 @@ x_vi(buf, len)
 
 	x_putc('\r'); x_putc('\n'); x_flush();
 
-	if (c == -1)
+	if (c == -1 || len <= es->linelen)
 		return -1;
 
 	if (es->cbuf != buf)
@@ -462,15 +462,22 @@ vi_hook(ch)
 			else {
 				locpat[srchlen++] = ch;
 				if ((ch & 0x80) && Flag(FVISHOW8)) {
+					if (es->linelen + 2 > es->cbufsize)
+						vi_error();
 					es->cbuf[es->linelen++] = 'M';
 					es->cbuf[es->linelen++] = '-';
 					ch &= 0x7f;
 				}
 				if (ch < ' ' || ch == 0x7f) {
+					if (es->linelen + 2 > es->cbufsize)
+						vi_error();
 					es->cbuf[es->linelen++] = '^';
 					es->cbuf[es->linelen++] = ch ^ '@';
-				} else
+				} else {
+					if (es->linelen >= es->cbufsize)
+						vi_error();
 					es->cbuf[es->linelen++] = ch;
+				}
 				es->cursor = es->linelen;
 				refresh(0);
 			}
@@ -693,7 +700,7 @@ vi_insert(ch)
 	/* End nonstandard vi commands } */
 
 	default:
-		if (es->linelen == es->cbufsize - 1)
+		if (es->linelen >= es->cbufsize - 1)
 			return -1;
 		ibuf[inslen++] = ch;
 		if (insert == INSERT) {
@@ -1405,8 +1412,8 @@ save_edstate(old)
 
 	new = (struct edstate *)alloc(sizeof(struct edstate), APERM);
 	new->cbuf = alloc(old->cbufsize, APERM);
+	memcpy(new->cbuf, old->cbuf, old->linelen);
 	new->cbufsize = old->cbufsize;
-	strlcpy(new->cbuf, old->cbuf, new->cbufsize);
 	new->linelen = old->linelen;
 	new->cursor = old->cursor;
 	new->winleft = old->winleft;
@@ -1417,7 +1424,7 @@ static void
 restore_edstate(new, old)
 	struct edstate *old, *new;
 {
-	strncpy(new->cbuf, old->cbuf, old->linelen);
+	memcpy(new->cbuf, old->cbuf, old->linelen);
 	new->linelen = old->linelen;
 	new->cursor = old->cursor;
 	new->winleft = old->winleft;
