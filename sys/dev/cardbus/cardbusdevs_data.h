@@ -1,10 +1,10 @@
-/*	$OpenBSD: cardbusdevs_data.h,v 1.4 2000/07/01 14:43:55 aaron Exp $	*/
+/*	$OpenBSD: cardbusdevs_data.h,v 1.5 2000/09/17 03:50:40 aaron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: cardbusdevs,v 1.3 2000/06/09 00:42:36 aaron Exp 
+ *	OpenBSD: cardbusdevs,v 1.4 2000/07/01 14:43:26 aaron Exp 
  */
 /*	$NetBSD: cardbusdevs,v 1.7 1999/12/11 22:22:34 explorer Exp $	*/
 
@@ -83,6 +83,12 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    "3CCFEM656C 100Base-TX",
 	},
 	{
+	    CARDBUS_VENDOR_ADMTEK, CARDBUS_PRODUCT_ADMTEK_AN985,
+	    0,
+	    "ADMtek",
+	    "AN985 100Base-TX",
+	},
+	{
 	    CARDBUS_VENDOR_ADP, CARDBUS_PRODUCT_ADP_1480,
 	    0,
 	    "Adaptec",
@@ -137,9 +143,33 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    CARDBUS_VENDOR_OPTI, 0,
+	    CARDBUS_KNOWNDEV_NOPROD,
+	    "Opti",
+	    NULL,
+	},
+	{
 	    CARDBUS_VENDOR_3COM, 0,
 	    CARDBUS_KNOWNDEV_NOPROD,
 	    "3Com",
+	    NULL,
+	},
+	{
+	    CARDBUS_VENDOR_XIRCOM, 0,
+	    CARDBUS_KNOWNDEV_NOPROD,
+	    "Xircom",
+	    NULL,
+	},
+	{
+	    CARDBUS_VENDOR_ADMTEK, 0,
+	    CARDBUS_KNOWNDEV_NOPROD,
+	    "ADMtek",
+	    NULL,
+	},
+	{
+	    CARDBUS_VENDOR_INTEL, 0,
+	    CARDBUS_KNOWNDEV_NOPROD,
+	    "Intel",
 	    NULL,
 	},
 	{
@@ -152,24 +182,6 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    CARDBUS_VENDOR_ADP2, 0,
 	    CARDBUS_KNOWNDEV_NOPROD,
 	    "Adaptec (2nd PCI Vendor ID)",
-	    NULL,
-	},
-	{
-	    CARDBUS_VENDOR_OPTI, 0,
-	    CARDBUS_KNOWNDEV_NOPROD,
-	    "Opti",
-	    NULL,
-	},
-	{
-	    CARDBUS_VENDOR_XIRCOM, 0,
-	    CARDBUS_KNOWNDEV_NOPROD,
-	    "Xircom",
-	    NULL,
-	},
-	{
-	    CARDBUS_VENDOR_INTEL, 0,
-	    CARDBUS_KNOWNDEV_NOPROD,
-	    "Intel",
 	    NULL,
 	},
 	{
