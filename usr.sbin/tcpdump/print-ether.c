@@ -20,7 +20,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ether.c,v 1.11 2000/02/18 14:39:35 jason Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ether.c,v 1.12 2000/02/19 14:55:18 chris Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -184,17 +184,6 @@ ether_encap_print(u_short ethertype, const u_char *p,
 	case ETHERTYPE_AARP:
 		aarp_print(p, length);
 		return (1);
-
-	case ETHERTYPE_VLAN:
-		printf("802.1q");
-		if (eflag) {
-			printf(" %s %d",
-				etherproto_string(ntohs(*(u_int16_t *)p)),
-				length - 4);
-		}
-		printf(": ");
-		ether_print(p + 4, length - 4);
- 		return (1);
 
 #ifdef PPP
 	case ETHERTYPE_PPPOEDISC:
