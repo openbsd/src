@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.24 1998/02/11 00:40:55 niklas Exp $
+#	$OpenBSD: bsd.port.mk,v 1.25 1998/02/19 20:41:02 marc Exp $
 #	$NetBSD: $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
@@ -284,7 +284,7 @@ __ARCH_OK=	1
 .if !defined(__ARCH_OK)
 .MAIN:	all
 
-fetch fetch-list extract patch configure build install reinstall package describe checkpatch checksum makesum all:
+fetch fetch-list extract patch clean clean-depends configure build install reinstall package describe checkpatch checksum makesum all:
 	@echo "This port is only for ${ONLY_FOR_ARCHS},"
 	@echo "and you are running ${MACHINE}."
 .else
