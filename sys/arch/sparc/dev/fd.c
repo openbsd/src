@@ -52,6 +52,7 @@
 #include <sys/disk.h>
 #include <sys/buf.h>
 #include <sys/uio.h>
+#include <sys/mtio.h>
 #include <sys/syslog.h>
 #include <sys/queue.h>
 
@@ -939,7 +940,7 @@ fdchwintr(fdc)
 		fdcresult(fdc);
 		fdc->sc_istate = ISTATE_IDLE;
 		ienab_bis(IE_FDSOFT);
-		return 1;
+		goto done;
 	case ISTATE_IDLE:
 	case ISTATE_SPURIOUS:
 		auxregbisc(0, AUXIO_FDS);	/* Does this help? */
@@ -947,12 +948,12 @@ fdchwintr(fdc)
 		fdc->sc_istate = ISTATE_SPURIOUS;
 		printf("fdc: stray hard interrupt... ");
 		ienab_bis(IE_FDSOFT);
-		return 1;
+		goto done;
 	case ISTATE_DMA:
 		break;
 	default:
 		printf("fdc: goofed ...\n");
-		return 1;
+		goto done;
 	}
 
 	read = bp->b_flags & B_READ;
@@ -995,7 +996,9 @@ fdchwintr(fdc)
 			break;
 		}
 	}
-	return 1;
+done:
+	sc->sc_intrcnt.ev_count++;
+	return (1);
 }
 #endif
 
@@ -1397,6 +1400,7 @@ fdioctl(dev, cmd, addr, flag)
 	int flag;
 {
 	struct fd_softc *fd = fdcd.cd_devs[FDUNIT(dev)];
+	struct mtop *mtop;
 	struct disklabel buffer;
 	int error;
 
@@ -1437,7 +1441,13 @@ fdioctl(dev, cmd, addr, flag)
 				       &fd->sc_dk.dk_cpulabel);
 		return error;
 
-	case DIOCEJECT:
+	case MTIOCTOP:
+		mtop = (struct mtop *)addr;
+		if (mtop->mt_op != MTOFFL)
+			return EIO;
+#ifdef COMPAT_SUNOS
+	case SUNOS_FDIOCEJECT:
+#endif
 		auxregbisc(AUXIO_FDS, AUXIO_FEJ);
 		delay(10);
 		auxregbisc(AUXIO_FEJ, AUXIO_FDS);

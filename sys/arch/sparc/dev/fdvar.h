@@ -62,7 +62,7 @@ struct fdcio {
 	/*
 	 * Statictics.
 	 */
-	struct	evcnt	fdcio_intrcnt;
+	struct	evcnt fdcio_intrcnt;
 };
 #endif /* LOCORE */
 
@@ -72,5 +72,5 @@ struct fdcio {
 #define ISTATE_SENSEI		2	/* Do SENSEI on next HW interrupt */
 #define ISTATE_DMA		3	/* Pseudo-DMA in progress */
 
-#define FDIOCEJECT	_IO('f', 24)
+#define SUNOS_FDIOCEJECT	_IO('f', 24)
 
