@@ -1,21 +1,21 @@
 /*
  * OpenBSD/alpha machine-dependent thread macros
  *
- * $OpenBSD: uthread_machdep.h,v 1.2 1999/01/17 23:49:48 d Exp $
+ * $OpenBSD: uthread_machdep.h,v 1.3 1999/02/03 05:25:01 d Exp $
  */
 
 /* save the floating point state of a thread */
 #define _thread_machdep_save_float_state(thr) 		\
 	{						\
-	    char *fdata = (char*)((thr)->_machdep.saved_fp);	\
-	    __asm__("fsave %0"::"m" (*fdata));		\
+/*	    char *fdata = (char*)((thr)->_machdep.saved_fp);	\
+	    __asm__("fsave %0"::"m" (*fdata)); */		\
 	}
 
 /* restore the floating point state of a thread */
 #define _thread_machdep_restore_float_state(thr) 	\
 	{						\
-	    char *fdata = (char*)((thr)->_machdep.saved_fp);	\
-	    __asm__("frstor %0"::"m" (*fdata));		\
+/*	    char *fdata = (char*)((thr)->_machdep.saved_fp);	\
+	    __asm__("frstor %0"::"m" (*fdata));	*/	\
 	}
 
 /* initialise the jmpbuf stack frame so it continues from entry */
