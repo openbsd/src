@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: ccp.c,v 1.4 1997/12/15 22:44:50 brian Exp $
+ * $Id: ccp.c,v 1.5 1997/12/17 21:17:59 brian Exp $
  *
  *	TODO:
  *		o Support other compression protocols
@@ -290,8 +290,6 @@ CcpDecodeConfig(u_char *cp, int plen, int mode_type)
   rejp = RejBuff;
 
   while (plen >= sizeof(struct fsmconfig)) {
-    if (plen < 0)
-      break;
     type = *cp;
     length = cp[1];
     if (type < NCFTYPES)
