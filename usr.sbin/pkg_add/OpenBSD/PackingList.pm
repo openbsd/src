@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.30 2004/10/26 17:25:36 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.31 2004/11/09 10:30:26 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -102,6 +102,17 @@ sub DependOnly
 	my ($fh, $cont) = @_;
 	local $_;
 	while (<$fh>) {
+		# XXX optimization
+		if (m/^\@arch\b/) {
+			while (<$fh>) {
+			    if (m/^\@(?:pkgdep|newdepend|libdepend)\b/) {
+				    &$cont($_);
+			    } elsif (m/^\@(?:groups|users|cwd)\b/) {
+				    last;
+			    }
+			}
+			return;
+		}
 		next unless m/^\@(?:pkgdep|newdepend|libdepend)\b/;
 		&$cont($_);
 	}
@@ -112,6 +123,17 @@ sub ConflictOnly
 	my ($fh, $cont) = @_;
 	local $_;
 	while (<$fh>) {
+		# XXX optimization
+		if (m/^\@arch\b/) {
+			while (<$fh>) {
+			    if (m/^\@(?:pkgcfl|conflict|option|name)\b/) {
+				    &$cont($_);
+			    } elsif (m/^\@(?:pkgdep|newdepend|libdepend|groups|users|cwd)\b/) {
+				    last;
+			    }
+			}
+			return;
+		}
 	    	next unless m/^\@(?:pkgcfl|conflict|option|name)\b/;
 		&$cont($_);
 	}
