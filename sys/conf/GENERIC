@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.2 1996/06/29 19:17:12 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.3 1996/07/15 15:17:43 mickey Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -69,3 +69,5 @@ pseudo-device	pty	64		# pseudo-terminals
 pseudo-device	tb	1		# tablet line discipline
 pseudo-device	vnd	4		# paging to files
 pseudo-device	ccd	4		# concatenated disk devices
+
+pseudo-device	rnd			# random data source
