@@ -30,7 +30,7 @@
  */
 
 #ifndef lint
-static char *rcsid = "$Id: util.c,v 1.1.1.1 1995/10/18 08:47:57 deraadt Exp $";
+static char *rcsid = "$Id: util.c,v 1.2 1997/04/15 15:06:13 deraadt Exp $";
 #endif
 
 #include <err.h>
@@ -91,7 +91,7 @@ getline(fp, size)
 	}
 	if (ptr[s - 1] == '\n')		/* the newline may be missing at EOF */
 	    s--;			/* forget newline */
-	if ((cnt = (ptr[s - 1] == '\\')))	/* check for \\ */
+	if (s && (cnt = (ptr[s - 1] == '\\')))	/* check for \\ */
 	    s--;			/* forget \\ */
 
 	buf = erealloc(buf, len + s + 1);
