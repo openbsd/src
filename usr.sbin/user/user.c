@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.50 2003/06/10 20:52:01 millert Exp $ */
+/* $OpenBSD: user.c,v 1.51 2003/06/10 21:00:37 millert Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -40,6 +40,9 @@
 #include <err.h>
 #include <fcntl.h>
 #include <grp.h>
+#ifdef EXTENSIONS
+#include <login_cap.h>
+#endif
 #include <paths.h>
 #include <pwd.h>
 #include <regex.h>
@@ -594,6 +597,19 @@ valid_group(char *group)
 	return 1;
 }
 
+#ifdef EXTENSIONS
+/* return 1 if `class' exists */
+static int
+valid_class(char *class)
+{
+	login_cap_t *lc;
+
+	if ((lc = login_getclass(class)) != NULL)
+		login_close(lc);
+	return lc != NULL;
+}
+#endif
+
 /* find the next gid in the range lo .. hi */
 static int
 getnextgid(uid_t *gidp, uid_t lo, uid_t hi)
@@ -899,6 +915,11 @@ adduser(char *login_name, user_t *up)
 	if (!valid_login(login_name)) {
 		errx(EXIT_FAILURE, "`%s' is not a valid login name", login_name);
 	}
+#ifdef EXTENSIONS
+	if (!valid_class(up->u_class)) {
+		errx(EXIT_FAILURE, "No such login class `%s'", up->u_class);
+	}
+#endif
 	if ((masterfd = open(_PATH_MASTERPASSWD, O_RDONLY)) < 0) {
 		err(EXIT_FAILURE, "can't open `%s'", _PATH_MASTERPASSWD);
 	}
@@ -1214,6 +1235,11 @@ moduser(char *login_name, char *newlogin, user_t *up)
 	if (!valid_login(newlogin)) {
 		errx(EXIT_FAILURE, "`%s' is not a valid login name", login_name);
 	}
+#ifdef EXTENSIONS
+	if (!valid_class(up->u_class)) {
+		errx(EXIT_FAILURE, "No such login class `%s'", up->u_class);
+	}
+#endif
 	if ((pwp = getpwnam(login_name)) == NULL) {
 		errx(EXIT_FAILURE, "No such user `%s'", login_name);
 	}
