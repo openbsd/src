@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.247 2004/05/16 15:45:46 henning Exp $
+#	$OpenBSD: rc,v 1.248 2004/06/04 04:26:41 grange Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -638,6 +638,10 @@ fi
 
 if [ X"${sensorsd_flags}" != X"NO" ]; then
 	echo -n ' sensorsd';	/usr/sbin/sensorsd ${sensorsd_flags}
+fi
+
+if [ X"${hotplugd_flags}" != X"NO" -a -x /usr/sbin/hotplugd ]; then
+	echo -n ' hotplugd';	/usr/sbin/hotplugd ${hotplugd_flags}
 fi
 
 echo -n ' cron';		cron
