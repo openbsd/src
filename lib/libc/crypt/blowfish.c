@@ -1,4 +1,4 @@
-/* $OpenBSD: blowfish.c,v 1.10 1998/08/21 23:31:28 deraadt Exp $ */
+/* $OpenBSD: blowfish.c,v 1.11 1998/08/22 07:12:58 deraadt Exp $ */
 /*
  * Blowfish block cipher for OpenBSD
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -587,6 +587,9 @@ blf_dec(c, data, blocks)
 
 /* Repeating operations for little endian machines */
 
+/*
+ * XXX This code is NOT correct for unaligned-access faulting machines.
+ */
 #define BLF_BLK_ENC  l = ntohl (*(u_int32_t *)data); \
         r = ntohl (*(u_int32_t *)(data+4)); \
         Blowfish_encipher(c, &l, &r); \
