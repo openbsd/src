@@ -1,4 +1,4 @@
-/* $OpenBSD: k6_mem.c,v 1.3 1999/11/24 01:43:32 deraadt Exp $ */
+/* $OpenBSD: k6_mem.c,v 1.4 2000/03/22 00:02:12 deraadt Exp $ */
 /*-
  * Copyright (c) 1999 Brian Fundakowski Feldman
  * All rights reserved.
@@ -93,7 +93,7 @@ k6_mrmake(desc, mtrr)
 		return EOPNOTSUPP;
 
 	for (bit = ffs(desc->mr_len >> 17) - 1; bit < 15; bit++)
-		len |= 1 << (14 - bit); 
+		len |= 1 << bit; 
 	wc = (desc->mr_flags & MDF_WRITECOMBINE) ? 1 : 0;
 	uc = (desc->mr_flags & MDF_UNCACHEABLE) ? 1 : 0;
 
