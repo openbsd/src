@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypxfr.c,v 1.24 1998/02/14 10:05:27 maja Exp $ */
+/*	$OpenBSD: ypxfr.c,v 1.25 2001/02/05 14:47:17 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypxfr.c,v 1.24 1998/02/14 10:05:27 maja Exp $";
+static char rcsid[] = "$OpenBSD: ypxfr.c,v 1.25 2001/02/05 14:47:17 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -236,7 +236,7 @@ u_int32_t ordernum;
 	char	keystr[] = YP_LAST_KEY;
 	int	status;
 
-	sprintf(datestr, "%010u", ordernum);
+	snprintf(datestr, sizeof datestr, "%010u", ordernum);
 
 	key.dptr = keystr;
 	key.dsize = strlen(keystr);

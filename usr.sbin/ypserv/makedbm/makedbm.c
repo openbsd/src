@@ -1,4 +1,4 @@
-/*	$OpenBSD: makedbm.c,v 1.13 1999/04/22 17:43:10 deraadt Exp $ */
+/*	$OpenBSD: makedbm.c,v 1.14 2001/02/05 14:47:16 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994-97 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: makedbm.c,v 1.13 1999/04/22 17:43:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: makedbm.c,v 1.14 2001/02/05 14:47:16 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -126,14 +126,14 @@ file_date(filename)
 	int	status;
 	
 	if (strcmp(filename,"-") == 0) {
-		sprintf(datestr, "%010d", time(0));
+		snprintf(datestr, sizeof datestr, "%010u", time(0));
 	} else {
 		status = stat(filename, &finfo);
 		if (status < 0) {
 			fprintf(stderr, "%s: can't stat %s\n", __progname, filename);
 			exit(1);
 		}	
-		sprintf(datestr, "%010d", finfo.st_mtime);
+		snprintf(datestr, sizeof datestr, "%010u", finfo.st_mtime);
 	}
 	return datestr;
 }

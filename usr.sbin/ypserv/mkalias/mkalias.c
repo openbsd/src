@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkalias.c,v 1.5 1998/07/09 06:33:04 deraadt Exp $ */
+/*	$OpenBSD: mkalias.c,v 1.6 2001/02/05 14:47:17 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: mkalias.c,v 1.5 1998/07/09 06:33:04 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mkalias.c,v 1.6 2001/02/05 14:47:17 deraadt Exp $";
 #endif
 
 #include <ctype.h>
@@ -325,7 +325,7 @@ fail:
 	}
 
 	if (new_db != NULL) {
-	  	sprintf(datestr, "%010d", time(NULL));
+	  	snprintf(datestr, sizeof datestr, "%010u", time(NULL));
 		key.dptr = YP_LAST_KEY;
 		key.dsize = strlen(YP_LAST_KEY);
 		val.dptr = datestr;
