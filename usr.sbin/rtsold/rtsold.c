@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.c,v 1.22 2002/05/31 22:05:16 itojun Exp $	*/
+/*	$OpenBSD: rtsold.c,v 1.23 2002/05/31 22:09:14 itojun Exp $	*/
 /*	$KAME: rtsold.c,v 1.51 2002/05/31 22:00:11 itojun Exp $	*/
 
 /*
@@ -257,25 +257,11 @@ main(argc, argv)
 
 	/* dump the current pid */
 	if (!once) {
-#if (defined(__NetBSD__) && __NetBSD_Version__ >= 106010000) || defined(__OpenBSD__)
 		if (pidfile(NULL) < 0) {
 			warnmsg(LOG_ERR, __FUNCTION__,
 			    "failed to open a pid log file: %s",
 			    strerror(errno));
 		}
-#else
-		pid_t pid = getpid();
-		FILE *fp;
-
-		if ((fp = fopen(pidfilename, "w")) == NULL)
-			warnmsg(LOG_ERR, __FUNCTION__,
-			    "failed to open a pid log file(%s): %s",
-			    pidfilename, strerror(errno));
-		else {
-			fprintf(fp, "%d\n", pid);
-			fclose(fp);
-		}
-#endif
 	}
 
 	memset(fdsetp, 0, fdmasks);
