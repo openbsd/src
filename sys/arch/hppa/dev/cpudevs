@@ -1,4 +1,4 @@
-$OpenBSD: cpudevs,v 1.20 2002/05/08 02:48:10 mickey Exp $
+$OpenBSD: cpudevs,v 1.21 2002/12/18 21:34:40 mickey Exp $
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -439,12 +439,12 @@ bha	PCMCIA	0x08b	PCMCIA Bus Adapter
 bha	WAX	0x08e	WAX Bus Adapter
 bha	WEISA	0x090	WAX EISA Bus Adapter
 bha	TIMI	0x093	TIMI Bus Adapter
-bha	EPICPCI	0x0a5	Epic PCI Bus Adapter
+bha	EPIC	0x0a5	Epic PCI Bus Adapter
 
 ioa	RUNWAY	0x00b	BC Runway Port
 
-bridge	SAGA	0x0a5	Saga PCI Bridge
 bridge	DINO	0x00a	PCI Bridge
+bridge	SAGA	0x0a5	Saga PCI Bridge
 
 fabric	DNACA	0x0aa	Halfdome DNA Central Agent
 fabric	TOGO	0x0ab	Halfdome TOGO Fabric Crossbar
