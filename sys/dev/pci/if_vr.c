@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.39 2003/10/13 04:25:30 jason Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.40 2003/10/14 05:04:00 drahn Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -950,6 +950,9 @@ vr_list_rx_init(sc)
 		if (bus_dmamap_load(sc->sc_dmat, cd->vr_rx_chain[i].vr_map,
 		    cd->vr_rx_chain[i].vr_buf, MCLBYTES, NULL, BUS_DMA_NOWAIT))
 			return (ENOBUFS);
+		bus_dmamap_sync(sc->sc_dmat, cd->vr_rx_chain[i].vr_map,
+		    0, cd->vr_rx_chain[i].vr_map->dm_mapsize,
+		    BUS_DMASYNC_PREREAD);
 
 		d->vr_status = htole32(VR_RXSTAT);
 		d->vr_data =
@@ -974,6 +977,10 @@ vr_list_rx_init(sc)
 
 	cd->vr_rx_head = &cd->vr_rx_chain[0];
 
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap, 0,
+	    sc->sc_listmap->dm_mapsize,
+	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+
 	return(0);
 }
 
@@ -992,9 +999,15 @@ vr_rxeof(sc)
 
 	ifp = &sc->arpcom.ac_if;
 
-	while(!((rxstat = sc->vr_cdata.vr_rx_head->vr_ptr->vr_status) &
-							VR_RXSTAT_OWN)) {
+	for (;;) {
 		struct mbuf		*m0 = NULL;
+
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
+		    0, sc->sc_listmap->dm_mapsize,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+		rxstat = letoh32(sc->vr_cdata.vr_rx_head->vr_ptr->vr_status);
+		if (rxstat & VR_RXSTAT_OWN)
+			break;
 
 		cur_rx = sc->vr_cdata.vr_rx_head;
 		sc->vr_cdata.vr_rx_head = cur_rx->vr_nextdesc;
@@ -1031,11 +1044,14 @@ vr_rxeof(sc)
 			    htole32(cur_rx->vr_map->dm_segs[0].ds_addr +
 			    sizeof(u_int64_t));
 			cur_rx->vr_ptr->vr_ctl = htole32(VR_RXCTL | VR_RXLEN);
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
+			    0, sc->sc_listmap->dm_mapsize,
+			    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 			continue;
 		}
 
 		/* No errors; receive the packet. */	
-		total_len = VR_RXBYTES(cur_rx->vr_ptr->vr_status);
+		total_len = VR_RXBYTES(letoh32(cur_rx->vr_ptr->vr_status));
 
 		/*
 		 * XXX The VIA Rhine chip includes the CRC with every
@@ -1046,8 +1062,14 @@ vr_rxeof(sc)
 		 */
 		total_len -= ETHER_CRC_LEN;
 
+		bus_dmamap_sync(sc->sc_dmat, cur_rx->vr_map, 0,
+		    cur_rx->vr_map->dm_mapsize,
+		    BUS_DMASYNC_POSTREAD);
 		m0 = m_devget(cur_rx->vr_buf + sizeof(u_int64_t) - ETHER_ALIGN,
 		    total_len + ETHER_ALIGN, 0, ifp, NULL);
+		bus_dmamap_sync(sc->sc_dmat, cur_rx->vr_map, 0,
+		    cur_rx->vr_map->dm_mapsize,
+		    BUS_DMASYNC_PREREAD);
 
 		/* Reinitialize descriptor */
 		cur_rx->vr_ptr->vr_status = htole32(VR_RXSTAT);
@@ -1055,6 +1077,9 @@ vr_rxeof(sc)
 		    htole32(cur_rx->vr_map->dm_segs[0].ds_addr +
 		    sizeof(u_int64_t));
 		cur_rx->vr_ptr->vr_ctl = htole32(VR_RXCTL | VR_RXLEN);
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap, 0,
+		    sc->sc_listmap->dm_mapsize,
+		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
 		if (m0 == NULL) {
 			ifp->if_ierrors++;
@@ -1074,6 +1099,10 @@ vr_rxeof(sc)
 		/* pass it on. */
 		ether_input_mbuf(ifp, m0);
 	}
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
+	    0, sc->sc_listmap->dm_mapsize,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	return;
 }
@@ -1142,7 +1171,7 @@ vr_txeof(sc)
 		int			i;
 
 		cur_tx = sc->vr_cdata.vr_tx_head;
-		txstat = cur_tx->vr_ptr->vr_status;
+		txstat = letoh32(cur_tx->vr_ptr->vr_status);
 
 		if ((txstat & VR_TXSTAT_ABRT) ||
 		    (txstat & VR_TXSTAT_UDF)) {
@@ -1156,7 +1185,7 @@ vr_txeof(sc)
 				sc->vr_flags |= VR_F_RESTART;
 				break;
 			}
-			VR_TXOWN(cur_tx) = VR_TXSTAT_OWN;
+			VR_TXOWN(cur_tx) = htole32(VR_TXSTAT_OWN);
 			CSR_WRITE_4(sc, VR_TXADDR, cur_tx->vr_paddr);
 			break;
 		}
@@ -1370,6 +1399,8 @@ vr_encap(sc, c, m_head)
 		m_freem(m_new);
 		return (1);
 	}
+	bus_dmamap_sync(sc->sc_dmat, c->vr_map, 0, c->vr_map->dm_mapsize,
+	    BUS_DMASYNC_PREWRITE);
 
 	m_freem(m_head);
 
@@ -1377,7 +1408,7 @@ vr_encap(sc, c, m_head)
 	f->vr_data = htole32(c->vr_map->dm_segs[0].ds_addr);
 	f->vr_ctl = htole32(c->vr_map->dm_mapsize);
 	f->vr_ctl |= htole32(VR_TXCTL_TLINK|VR_TXCTL_FIRSTFRAG);
-	f->vr_status = 0;
+	f->vr_status = htole32(0);
 
 	c->vr_mbuf = m_new;
 	c->vr_ptr->vr_ctl |= htole32(VR_TXCTL_LASTFRAG|VR_TXCTL_FINT);
@@ -1437,7 +1468,7 @@ vr_start(ifp)
 		}
 
 		if (cur_tx != start_tx)
-			VR_TXOWN(cur_tx) = VR_TXSTAT_OWN;
+			VR_TXOWN(cur_tx) = htole32(VR_TXSTAT_OWN);
 
 #if NBPFILTER > 0
 		/*
@@ -1447,7 +1478,7 @@ vr_start(ifp)
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, cur_tx->vr_mbuf);
 #endif
-		VR_TXOWN(cur_tx) = VR_TXSTAT_OWN;
+		VR_TXOWN(cur_tx) = htole32(VR_TXSTAT_OWN);
 	}
 
 	/*
@@ -1460,6 +1491,10 @@ vr_start(ifp)
 
 	if (sc->vr_cdata.vr_tx_head == NULL)
 		sc->vr_cdata.vr_tx_head = start_tx;
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap, 0,
+	    sc->sc_listmap->dm_mapsize,
+	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 
 	/* Tell the chip to start transmitting. */
 	VR_SETBIT16(sc, VR_COMMAND, /*VR_CMD_TX_ON|*/VR_CMD_TX_GO);
