@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_dummy.c,v 1.11 2003/07/03 00:00:04 tedu Exp $ */
+/*	$OpenBSD: linux_dummy.c,v 1.12 2003/07/23 17:42:09 tedu Exp $ */
 
 /*-
  * Copyright (c) 1994-1995 Søren Schmidt
@@ -81,7 +81,6 @@ DUMMY(vhangup);			/* #111 */
 DUMMY(idle);			/* #112 */
 DUMMY(vm86old);			/* #113 */
 DUMMY(swapoff);			/* #115 */
-DUMMY(sysinfo);			/* #116 */
 #ifndef __i386__
 DUMMY(modify_ldt);		/* #123 */
 #endif

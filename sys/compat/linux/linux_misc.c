@@ -1,9 +1,13 @@
-/*	$OpenBSD: linux_misc.c,v 1.50 2003/07/03 00:00:04 tedu Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.51 2003/07/23 17:42:09 tedu Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
-/*
- * Copyright (c) 1995 Frank van der Linden
+/*-
+ * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Frank van der Linden and Eric Haszlakiewicz; by Jason R. Thorpe
+ * of the Numerical Aerospace Simulation Facility, NASA Ames Research Center.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,21 +19,23 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed for the NetBSD Project
- *      by Frank van der Linden
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
@@ -1491,4 +1497,43 @@ linux_sys_getgid(p, v, retval)
 
 	*retval = p->p_cred->p_rgid;
 	return (0);
+}
+
+
+/*
+ * sysinfo()
+ */
+/* ARGSUSED */
+int
+linux_sys_sysinfo(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_sysinfo_args /* {
+		syscallarg(struct linux_sysinfo *) sysinfo;
+	} */ *uap = v;
+	struct linux_sysinfo si;
+	struct loadavg *la;
+	extern int bufpages;
+
+
+	si.uptime = time.tv_sec - boottime.tv_sec;
+	la = &averunnable;
+	si.loads[0] = la->ldavg[0] * LINUX_SYSINFO_LOADS_SCALE / la->fscale;
+	si.loads[1] = la->ldavg[1] * LINUX_SYSINFO_LOADS_SCALE / la->fscale;
+	si.loads[2] = la->ldavg[2] * LINUX_SYSINFO_LOADS_SCALE / la->fscale;
+	si.totalram = ctob(physmem);
+	si.freeram = uvmexp.free * uvmexp.pagesize;
+	si.sharedram = 0;/* XXX */
+	si.bufferram = bufpages * PAGE_SIZE;
+	si.totalswap = uvmexp.swpages * PAGE_SIZE;
+	si.freeswap = (uvmexp.swpages - uvmexp.swpginuse) * PAGE_SIZE;
+	si.procs = nprocs;
+	/* The following are only present in newer Linux kernels. */
+	si.totalbig = 0;
+	si.freebig = 0;
+	si.mem_unit = 1;
+
+	return (copyout(&si, SCARG(uap, sysinfo), sizeof(si)));
 }

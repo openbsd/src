@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.38 2003/07/03 00:00:04 tedu Exp $
+	$OpenBSD: syscalls.master,v 1.39 2003/07/23 17:42:09 tedu Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -40,6 +40,7 @@
 
 #include <compat/linux/linux_types.h>
 #include <compat/linux/linux_signal.h>
+#include <compat/linux/linux_misc.h>
 #include <compat/linux/linux_syscallargs.h>
 
 #include <machine/linux_machdep.h>
@@ -202,7 +203,7 @@
 114	STD		{ int linux_sys_wait4(int pid, int *status, \
 			    int options, struct rusage *rusage); }
 115	STD		{ int linux_sys_swapoff(void); }
-116	STD		{ int linux_sys_sysinfo(void); }
+116	STD		{ int linux_sys_sysinfo(struct linux_sys_sysinfo_args *sysinfo); }
 117	STD		{ int linux_sys_ipc(int what, int a1, int a2, int a3, \
 			    caddr_t ptr); }
 118	NOARGS		{ int sys_fsync(int fd); }
