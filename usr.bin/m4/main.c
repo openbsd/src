@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.46 2001/09/18 14:55:52 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.47 2001/09/18 20:59:32 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.46 2001/09/18 14:55:52 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.47 2001/09/18 20:59:32 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -214,6 +214,9 @@ main(argc,argv)
 			break;
 		case 'd':
 			set_trace_flags(optarg);
+			break;
+		case 't':
+			mark_traced(optarg);
 			break;
 		case 'o':
 			trace_file(optarg);
