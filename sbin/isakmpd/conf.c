@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.46 2002/11/14 16:13:27 ho Exp $	*/
+/*	$OpenBSD: conf.c,v 1.47 2002/11/15 14:58:38 ho Exp $	*/
 /*	$EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	*/
 
 /*
@@ -445,6 +445,12 @@ conf_load_defaults (int tr)
 	    CONF_DFLT_TYPE_LIFE_QUICK_MODE, 0, 1);
   conf_set (tr, CONF_DFLT_TAG_LIFE_QUICK_MODE, "LIFE_DURATION",
 	    (dflt ? dflt : CONF_DFLT_VAL_LIFE_QUICK_MODE), 0, 1);
+
+  /* Default Phase-1 Configuration section */
+  conf_set (tr, CONF_DFLT_TAG_PHASE1_CONFIG, "EXCHANGE_TYPE",
+	    CONF_DFLT_PHASE1_EXCH_TYPE, 0, 1);
+  conf_set (tr, CONF_DFLT_TAG_PHASE1_CONFIG, "Transforms", 
+	    CONF_DFLT_PHASE1_TRANSFORMS, 0, 1);
 
   /* Main modes */
   for (enc = 0; mm_enc[enc]; enc ++)

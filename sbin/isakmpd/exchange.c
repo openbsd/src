@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.72 2002/11/08 10:16:30 ho Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.73 2002/11/15 14:58:38 ho Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -755,19 +755,8 @@ exchange_establish_p1 (struct transport *t, u_int8_t type, u_int32_t doi,
 	  tag = conf_get_str (name, "Configuration");
 	  if (!tag)
 	    {
-	      /* Use default setting */
-	      tag = conf_get_str ("Phase 1", "Default");
-	      if (!tag)
-		{
-		  log_print ("exchange_establish_p1: "
-			     "no \"Default\" tag in [Phase 1] section");
-		  return;
-		}
-#if 0
-	      log_print ("exchange_establish_p1: "
-			 "no configuration found for peer \"%s\"",
-			 name);
-#endif
+	      /* Use default setting.  */
+	      tag = CONF_DFLT_TAG_PHASE1_CONFIG;
 	    }
 
 	  /* Figure out the DOI.  XXX Factor out?  */
@@ -820,7 +809,7 @@ exchange_establish_p1 (struct transport *t, u_int8_t type, u_int32_t doi,
 
   exchange->policy = name ? conf_get_str (name, "Configuration") : 0;
   if (!exchange->policy && name)
-    exchange->policy = conf_get_str ("Phase 1", "Default");
+    exchange->policy = CONF_DFLT_TAG_PHASE1_CONFIG;
 
   if (name)
     {
@@ -1067,11 +1056,7 @@ exchange_setup_p1 (struct message *msg, u_int32_t doi)
 
       policy = conf_get_str (name, "Configuration");
       if (!policy)
-	{
-	  log_print ("exchange_setup_p1: no configuration for peer \"%s\"",
-		     name);
-	  return 0;
-	}
+	policy = CONF_DFLT_TAG_PHASE1_CONFIG;
 
       /* Figure out the DOI.  */
       str = conf_get_str (policy, "DOI");

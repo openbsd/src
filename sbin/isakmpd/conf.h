@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.18 2002/11/14 16:13:27 ho Exp $	*/
+/*	$OpenBSD: conf.h,v 1.19 2002/11/15 14:58:38 ho Exp $	*/
 /*	$EOM: conf.h,v 1.13 2000/09/18 00:01:47 ho Exp $	*/
 
 /*
@@ -66,6 +66,11 @@
 #define CONF_DFLT_X509_CRL_DIR         "/etc/isakmpd/crls/"
 
 #define CONF_DFLT_KEYNOTE_CRED_DIR     "/etc/isakmpd/keynote/"
+
+#define CONF_DFLT_TAG_PHASE1_CONFIG    "Default-Phase-1-Configuration"
+#define CONF_DFLT_PHASE1_EXCH_TYPE     "ID_PROT"
+#define CONF_DFLT_PHASE1_TRANSFORMS    "3DES-SHA"
+
 struct conf_list_node {
   TAILQ_ENTRY (conf_list_node) link;
   char *field;
