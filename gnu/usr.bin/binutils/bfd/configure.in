@@ -142,8 +142,8 @@ if test "${target}" = "${host}"; then
 	COREFILE=trad-core.lo
 	TRAD_HEADER='"hosts/alphalinux.h"'
 	;;
-  alpha*-*-netbsd*)	COREFILE=netbsd-core.lo ;;
-  alpha*-*-openbsd*)	COREFILE=netbsd-core.lo ;;
+  alpha*-*-netbsd* | alpha*-*-openbsd*)
+	COREFILE=netbsd-core.lo ;;
   alpha*-*-*)		COREFILE=osf-core.lo ;;
   arm-*-freebsd*)	COREFILE='' ;;
   arm-*-riscix)		COREFILE=trad-core.lo ;;
@@ -311,12 +311,16 @@ changequote([,])dnl
   powerpc-*-freebsd*)	COREFILE='' ;;
   powerpc-*-netbsd*)	COREFILE=netbsd-core.lo ;;
   powerpc-*-*bsd*)	COREFILE=netbsd-core.lo ;;
-  sparc-*-netbsd* | sparc-*-openbsd*)
+  sparc-*-netbsd* | sparc*-*-openbsd*)
 	COREFILE=netbsd-core.lo
 	;;
   tahoe-*-*)
 	COREFILE=trad-core.lo
 	TRAD_HEADER='"hosts/tahoe.h"'
+	;;
+  vax-*-openbsd*)
+	COREFILE=netbsd-core.lo
+	COREFLAG=-DNETBSD_CORE
 	;;
   vax-*-ultrix2*)
 	COREFILE=trad-core.lo
