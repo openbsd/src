@@ -1,4 +1,4 @@
-#	$OpenBSD: FILIPPA,v 1.16 1997/02/22 00:29:56 niklas Exp $
+#	$OpenBSD: FILIPPA,v 1.17 1997/03/25 16:52:13 niklas Exp $
 
 #
 # Niklas' AMIGA with ISA support
@@ -129,7 +129,7 @@ option		IPL_REMAP_1	# Remap level 6 ints version 1
 #option		"ULOWELL_OSC2=66667000"
 
 # This is how you specify the blitting speed, higher values may speed up blits
-# a littel bit.  If you raise this value too much some trash may appear.
+# a little bit.  If you raise this value too much some trash may appear.
 # the commented version is the default.
 #option		RH_MEMCLK 61000000
 # this option enables the 64 bit sprite which doesn't seems to be work
@@ -248,7 +248,7 @@ isaed0	at isa? port 0x300 iomem 0xcc000 irq 10	# WD/SMC, 3C503, and NE[12]000
 tel0    at isa? iomem 0xe0000 irq 9	# Teles S0, NICCY 1000, Creatix 8bit
 tel1    at isa? port 0xe80 iomem 0xde000 irq 11	# Teles S0/16, NICCY 1016,
 						# Creatix 16bit
-tel2    at isa? port 0xd80 irq 5	# Teles S0/16.3 card (no shared memory)
+tel2    at isa? port 0x180 irq 5	# Teles S0/16.3 card (no shared memory)
 
 
 fd*	at fdc0 unit ?
