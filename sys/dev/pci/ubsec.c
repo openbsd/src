@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.26 2000/08/15 01:00:47 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.27 2000/08/15 17:27:56 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -451,7 +451,11 @@ ubsec_newsession(sidp, cri)
 		SWAP32(ses->ses_deskey[4]);
 		SWAP32(ses->ses_deskey[5]);
 	}
+
 	if (macini) {
+                for (i = 0; i < macini->cri_klen / 8; i++)
+			macini->cri_key[i] ^= HMAC_IPAD_VAL;
+
 		if (macini->cri_alg == CRYPTO_MD5_HMAC96) {
 			MD5Init(&md5ctx);
 			MD5Update(&md5ctx, macini->cri_key,
@@ -669,10 +673,12 @@ ubsec_process(crp)
 
 	if (maccrd) {
 		macoffset = maccrd->crd_skip;
+
 		if (maccrd->crd_alg == CRYPTO_MD5_HMAC96)
 			q->q_ctx.pc_flags |= UBS_PKTCTX_AUTH_MD5;
 		else
 			q->q_ctx.pc_flags |= UBS_PKTCTX_AUTH_SHA1;
+
 		for (i = 0; i < 5; i++) {
 			q->q_ctx.pc_hminner[i] = ses->ses_hminner[i];
 			q->q_ctx.pc_hmouter[i] = ses->ses_hmouter[i];
