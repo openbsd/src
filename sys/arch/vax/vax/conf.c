@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.16 1998/07/07 06:56:14 deraadt Exp $ */
+/*	$OpenBSD: conf.c,v 1.17 1998/09/25 09:20:54 todd Exp $ */
 /*	$NetBSD: conf.c,v 1.28 1997/02/04 19:13:17 ragge Exp $	*/
 
 /*-
@@ -357,6 +357,11 @@ cdev_decl(ss);
 #include "uk.h"
 cdev_decl(uk);
 
+#ifdef XFS
+#include <xfs/nxfs.h>
+cdev_decl(xfs_dev);
+#endif
+
 cdev_decl(random);
 
 dev_decl(filedesc,open);
@@ -417,7 +422,11 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 47 */
 	cdev_notdef(),			/* 48 */
 	cdev_notdef(),			/* 49 */
+#ifdef XFS
+	cdev_xfs_init(NXFS,xfs_dev),	/* 50: xfs communication device */
+#else
 	cdev_notdef(),			/* 50 */
+#endif
 	cdev_cnstore_init(NCRX,crx),	/* 51: Console RX50 at 8200 */
 	cdev_notdef(),			/* 52: was: KDB50/RA?? */
 	cdev_fd_init(1,filedesc),	/* 53: file descriptor pseudo-device */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.11 1998/09/16 04:18:09 rahnds Exp $ */
+/*	$OpenBSD: conf.c,v 1.12 1998/09/25 09:20:54 todd Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -125,6 +125,11 @@ cdev_decl(bpf);
 cdev_decl(tun);
 cdev_decl(random); 
 
+#ifdef XFS
+#include <xfs/nxfs.h>
+cdev_decl(xfs_dev);
+#endef
+
 #ifdef LKM
 #define NLKM 1
 #else
@@ -187,6 +192,18 @@ struct cdevsw cdevsw[] = {
 	cdev_uk_init(NUK,uk),		/* 41: unknown SCSI */
 	cdev_ss_init(NSS,ss),           /* 42: SCSI scanner */
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 43: Kernel symbols device */
+        cdev_notdef(),                  /* 44 */
+        cdev_notdef(),                  /* 45 */
+        cdev_notdef(),                  /* 46 */
+        cdev_notdef(),                  /* 47 */
+        cdev_notdef(),                  /* 48 */
+        cdev_notdef(),                  /* 49 */ 
+        cdev_notdef(),                  /* 50 */ 
+#ifdef XFS
+	cdev_xfs_init(NXFS,xfs_dev),	/* 51: xfs communication device */
+#else
+        cdev_notdef(),                  /* 51 */
+#endif
 	/* If adding devs, don't forget to expand 'chrtoblktbl' below! */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];

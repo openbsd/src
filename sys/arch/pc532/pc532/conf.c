@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.10 1998/07/07 06:56:08 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.11 1998/09/25 09:20:54 todd Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -88,6 +88,10 @@ cdev_decl(fd);
 #include "tun.h"
 #include "lpt.h"
 cdev_decl(lpt);
+#ifdef XFS
+#include <xfs/nxfs.h>
+cdev_decl(xfs_dev);
+#endif
 
 #ifdef IPFILTER
 #define NIPF 1
@@ -120,6 +124,39 @@ struct cdevsw	cdevsw[] =
 	cdev_random_init(1,random),	/* 20: random data source */
 	cdev_uk_init(NUK,uk),		/* 21: unknown SCSI */
 	cdev_ss_init(NSS,ss),           /* 22: SCSI scanner */
+	cdev_notdef(),			/* 23 */
+	cdev_notdef(),			/* 24 */
+	cdev_notdef(),			/* 25 */
+	cdev_notdef(),			/* 26 */
+	cdev_notdef(),			/* 27 */
+	cdev_notdef(),			/* 28 */
+	cdev_notdef(),			/* 29 */
+	cdev_notdef(),			/* 30 */
+	cdev_notdef(),			/* 31 */
+	cdev_notdef(),			/* 32 */
+	cdev_notdef(),			/* 33 */
+	cdev_notdef(),			/* 34 */
+	cdev_notdef(),			/* 35 */
+	cdev_notdef(),			/* 36 */
+	cdev_notdef(),			/* 37 */
+	cdev_notdef(),			/* 38 */
+	cdev_notdef(),			/* 39 */
+	cdev_notdef(),			/* 40 */
+	cdev_notdef(),			/* 41 */
+	cdev_notdef(),			/* 42 */
+	cdev_notdef(),			/* 43 */
+	cdev_notdef(),			/* 44 */
+	cdev_notdef(),			/* 45 */
+	cdev_notdef(),			/* 46 */
+	cdev_notdef(),			/* 47 */
+	cdev_notdef(),			/* 48 */
+	cdev_notdef(),			/* 49 */
+	cdev_notdef(),			/* 50 */
+#ifdef XFS
+	cdev_xfs_init(NXFS,xfs_dev),	/* 51: xfs communication device */
+#else
+	cdev_notdef(),			/* 51 */
+#endif
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

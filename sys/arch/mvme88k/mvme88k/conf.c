@@ -173,6 +173,11 @@ cdev_decl(bpf);
 #include "tun.h"
 cdev_decl(tun);
 
+#ifdef XFS
+#include <xfs/nxfs.h>
+#cdev_decl(xfs_dev);
+#endif
+
 #ifdef LKM
 #define NLKM 1
 #else
@@ -246,6 +251,23 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 36 */
 	cdev_lkm_dummy(),		/* 37 */
 	cdev_lkm_dummy(),		/* 38 */
+	cdev_notdef(),			/* 39 */
+	cdev_notdef(),			/* 40 */
+	cdev_notdef(),			/* 41 */
+	cdev_notdef(),			/* 42 */
+	cdev_notdef(),			/* 43 */
+	cdev_notdef(),			/* 44 */
+	cdev_notdef(),			/* 45 */
+	cdev_notdef(),			/* 46 */
+	cdev_notdef(),			/* 47 */
+	cdev_notdef(),			/* 48 */
+	cdev_notdef(),			/* 49 */
+	cdev_notdef(),			/* 50 */
+#ifdef XFS
+	cde_xfs_init(NXFS,xfs_dev),	/* 51: xfs communication device */
+#else
+	cdev_notdef(),			/* 51 */
+#endif
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

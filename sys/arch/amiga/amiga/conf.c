@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.24 1998/08/24 05:30:06 millert Exp $	*/
+/*	$OpenBSD: conf.c,v 1.25 1998/09/25 09:20:52 todd Exp $	*/
 /*	$NetBSD: conf.c,v 1.42 1997/01/07 11:35:03 mrg Exp $	*/
 
 /*-
@@ -62,6 +62,10 @@
 #include "acd.h"
 #include "rd.h"
 #include "ch.h"
+#ifdef XFS
+#include <xfs/nxfs.h>
+cdev_decl(xfs_dev);
+#endif
 #include "ksyms.h"
 
 struct bdevsw	bdevsw[] =
@@ -150,6 +154,20 @@ struct cdevsw	cdevsw[] =
 	cdev_ch_init(NCH,ch),		/* 40: SCSI autochanger */
 	cdev_disk_init(NRD,rd),		/* 41: RAM disk */
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 42: Kernel symbols device */
+	cdev_notdef(),			/* 43 */
+	cdev_notdef(),			/* 44 */
+	cdev_notdef(),			/* 45 */
+	cdev_notdef(),			/* 46 */
+	cdev_notdef(),			/* 46 */
+	cdev_notdef(),			/* 47 */
+	cdev_notdef(),			/* 48 */
+	cdev_notdef(),			/* 49 */
+	cdev_notdef(),			/* 50 */
+#ifdef XFS
+	cdev_xfs_init(NXFS,xfs_dev),	/* 51: xfs communication device */
+#else
+	cdev_notdef(),			/* 51 */
+#endif
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

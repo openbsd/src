@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.21 1998/08/24 05:29:52 millert Exp $	*/
+/*	$OpenBSD: conf.c,v 1.22 1998/09/25 09:20:53 todd Exp $	*/
 /*	$NetBSD: conf.c,v 1.39 1997/05/12 08:17:53 thorpej Exp $	*/
 
 /*-
@@ -147,6 +147,10 @@ cdev_decl(random);
 cdev_decl(rd);
 #include "ksyms.h"
 cdev_decl(ksyms);   
+#ifdef XFS
+#include <xfs/nxfs.h>
+cdev_decl(xfs_dev);
+#endif
 
 #ifdef IPFILTER
 #define NIPF 1
@@ -193,6 +197,25 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NRD,rd),		/* 34: RAM disk */
 	cdev_tty_init(NAPCI,apci),	/* 35: Apollo APCI UARTs */
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 36: Kernel symbols device */
+	cdev_notdef(),			/* 37 */
+	cdev_notdef(),			/* 38 */
+	cdev_notdef(),			/* 39 */
+	cdev_notdef(),			/* 40 */
+	cdev_notdef(),			/* 41 */
+	cdev_notdef(),			/* 42 */
+	cdev_notdef(),			/* 43 */
+	cdev_notdef(),			/* 44 */
+	cdev_notdef(),			/* 45 */
+	cdev_notdef(),			/* 46 */
+	cdev_notdef(),			/* 47 */
+	cdev_notdef(),			/* 48 */
+	cdev_notdef(),			/* 49 */
+	cdev_notdef(),			/* 50 */
+#ifdef XFS
+	cdev_xfs_init(NXFS,xfs_dev),	/* 51: xfs communication device */
+#else
+	cdev_notdef(),			/* 51 */
+#endif
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

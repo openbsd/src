@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.6 1998/07/07 06:56:15 deraadt Exp $ */
+/*	$OpenBSD: conf.c,v 1.7 1998/09/25 09:20:55 todd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)conf.c	8.2 (Berkeley) 11/14/93
- *      $Id: conf.c,v 1.6 1998/07/07 06:56:15 deraadt Exp $
+ *      $Id: conf.c,v 1.7 1998/09/25 09:20:55 todd Exp $
  */
 
 #include <sys/param.h>
@@ -131,6 +131,10 @@ cdev_decl(wd);
 cdev_decl(acd);
 cdev_decl(fl);
 
+#ifdef XFS
+#include <xfs/nxfs.h>
+cdev_decl(xfs_dev);
+#endif
 
 #ifdef IPFILTER
 #define NIPF 1
@@ -174,6 +178,28 @@ struct cdevsw	cdevsw[] =
 	cdev_gen_ipf(NIPF,ipl),         /* 31: IP filter log */
 	cdev_uk_init(NUK,uk),		/* 32: unknown SCSI */
 	cdev_random_init(1,random),	/* 33: random data source */
+	cdev_notdef(),			/* 34: */
+	cdev_notdef(),			/* 35: */
+	cdev_notdef(),			/* 36: */
+	cdev_notdef(),			/* 37: */
+	cdev_notdef(),			/* 38: */
+	cdev_notdef(),			/* 39: */
+	cdev_notdef(),			/* 30: */
+	cdev_notdef(),			/* 41: */
+	cdev_notdef(),			/* 42: */
+	cdev_notdef(),			/* 43: */
+	cdev_notdef(),			/* 44: */
+	cdev_notdef(),			/* 45: */
+	cdev_notdef(),			/* 46: */
+	cdev_notdef(),			/* 47: */
+	cdev_notdef(),			/* 48: */
+	cdev_notdef(),			/* 49: */
+	cdev_notdef(),			/* 50: */
+#ifdef XFS
+	cdev_xfs_init(NXFS,xfs_dev),	/* 51: xfs communication device */
+#else
+	cdev_notdef(),			/* 51: */
+#endif
 };
 
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);

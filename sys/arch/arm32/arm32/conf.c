@@ -248,6 +248,10 @@ cdev_decl(rtc);
 cdev_decl(random);
 /* Temporary hack for ATAPI CDROM */
 cdev_decl(wcd);
+#ifdef XFS
+#include <xfs/nxfs.h>
+cdev_decl(xfs_dev);
+#endif
 
 /* Character devices */
 
@@ -297,6 +301,17 @@ struct cdevsw cdevsw[] = {
 	cdev_iic_init(NIIC, iic),	/* 42: IIC bus driver */
 	cdev_rtc_init(NRTC, rtc),	/* 43: RTC driver */
 	cdev_random_init(1, random),	/* 44: random data source */
+	cdev_notdef(),			/* 45: */
+	cdev_notdef(),			/* 46: */
+	cdev_notdef(),			/* 47: */
+	cdev_notdef(),			/* 48: */
+	cdev_notdef(),			/* 49: */
+	cdev_notdef(),			/* 50: */
+#ifdef XFS
+	cdev_xfs_init(NXFS,xfs_dev),	/* 51: xfs communication device */
+#else
+	cdev_lkm_dummy(),		/* 51: */
+#endif
 };
 
 int nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);

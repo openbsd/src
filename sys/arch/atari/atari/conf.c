@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.12 1998/07/07 06:56:00 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.13 1998/09/25 09:20:52 todd Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -127,6 +127,10 @@ cdev_decl(fd);
 dev_decl(fd,open);
 #include "bpfilter.h"
 #include "tun.h"
+#ifdef XFS
+#include <xfs/nxfs.h>
+cdev_dec(xfs_dev);
+#endif
 
 #ifdef IPFILTER
 #define NIPF 1
@@ -171,6 +175,29 @@ struct cdevsw	cdevsw[] =
 	cdev_random_init(1,random),	/* 30: random data source */
 	cdev_uk_init(NUK,uk),		/* 31: unknown SCSI */
 	cdev_ss_init(NSS,ss),           /* 32: SCSI scanner */
+	cdev_notdef(),			/* 33 */
+	cdev_notdef(),			/* 34 */
+	cdev_notdef(),			/* 35 */
+	cdev_notdef(),			/* 36 */
+	cdev_notdef(),			/* 37 */
+	cdev_notdef(),			/* 38 */
+	cdev_notdef(),			/* 39 */
+	cdev_notdef(),			/* 40 */
+	cdev_notdef(),			/* 41 */
+	cdev_notdef(),			/* 42 */
+	cdev_notdef(),			/* 43 */
+	cdev_notdef(),			/* 44 */
+	cdev_notdef(),			/* 45 */
+	cdev_notdef(),			/* 46 */
+	cdev_notdef(),			/* 47 */
+	cdev_notdef(),			/* 48 */
+	cdev_notdef(),			/* 49 */
+	cdev_notdef(),			/* 50 */
+#ifdef XFS
+	cdev_xfs_init(NXFS,xfs_dev),	/* 51: xfs communication device */
+#else
+	cdev_notdef(),			/* 51 */
+#endif
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

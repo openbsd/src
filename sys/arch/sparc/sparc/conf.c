@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.18 1998/08/24 05:30:02 millert Exp $	*/
+/*	$OpenBSD: conf.c,v 1.19 1998/09/25 09:20:54 todd Exp $	*/
 /*	$NetBSD: conf.c,v 1.40 1996/04/11 19:20:03 thorpej Exp $ */
 
 /*
@@ -82,6 +82,10 @@
 #include "xd.h"
 #include "xy.h"
 #include "magma.h"		/* has NMTTY and NMBPP */
+#ifdef XFS
+#include <xfs/nxfs.h>
+cdev_decl(xfs_dev);
+#endif
 #include "ksyms.h"
 
 struct bdevsw	bdevsw[] =
@@ -167,7 +171,11 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 48 */
 	cdev_notdef(),			/* 49 */
 	cdev_notdef(),			/* 50 */
+#ifdef XFS
+	cdev_xfs_init(NXFS,xfs_dev),	/* 51: xfs communication device */
+#else
 	cdev_notdef(),			/* 51 */
+#endif
 	cdev_notdef(),			/* 52 */
 	cdev_notdef(),			/* 53 */
 	cdev_disk_init(NFD,fd),		/* 54: floppy disk */

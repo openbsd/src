@@ -129,6 +129,11 @@ cdev_decl(xcfb);
 cdev_decl(mfb);
 dev_decl(filedesc,open);
 
+#ifdef XFS
+#include <xfs/nxfs.h>
+cdev_decl(xfs_dev);
+#endif
+
 #ifdef IPFILTER
 #define NIPF 1
 #else
@@ -209,7 +214,11 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),		/* 48: Ultrix /dev/trace */
 	cdev_notdef(),		/* 49: sm (sysV shm?) */
 	cdev_notdef(),		/* 50 sg */
+#ifdef XFS
+	cdev_xfs_init(NXFS,xfs_dev), /* 51: xfs communication device */
+#else
 	cdev_notdef(),		/* 51: sh tty */
+#endif
 	cdev_notdef(),		/* 52: its */
 	cdev_notdef(),		/* 53: nodev */
 	cdev_notdef(),		/* 54: nodev */

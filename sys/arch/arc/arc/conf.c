@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.24 1998/08/29 11:14:08 niklas Exp $ */
+/*	$OpenBSD: conf.c,v 1.25 1998/09/25 09:20:52 todd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)conf.c	8.2 (Berkeley) 11/14/93
- *      $Id: conf.c,v 1.24 1998/08/29 11:14:08 niklas Exp $
+ *      $Id: conf.c,v 1.25 1998/09/25 09:20:52 todd Exp $
  */
 
 #include <sys/param.h>
@@ -163,6 +163,10 @@ cdev_decl(wd);
 cdev_decl(acd);
 #include "joy.h"
 cdev_decl(joy);
+#ifdef XFS
+#include <xfs/nxfs.h>
+cdev_decl(xfs_dev);
+#endif
 #include "ksyms.h"
 cdev_decl(ksyms);
 
@@ -211,6 +215,25 @@ struct cdevsw	cdevsw[] =
 	cdev_ss_init(NSS,ss),		/* 34: SCSI scanner */
 	cdev_kyms_init(NKSYMS,ksyms),	/* 35: Kernel symbols device */
 	cdev_ch_init(NCH,ch),		/* 36: SCSI autochanger */
+	cdev_notdef(),			/* 37: */
+	cdev_notdef(),			/* 38: */
+	cdev_notdef(),			/* 39: */
+	cdev_notdef(),			/* 40: */
+	cdev_notdef(),			/* 41: */
+	cdev_notdef(),			/* 42: */
+	cdev_notdef(),			/* 33: */
+	cdev_notdef(),			/* 44: */
+	cdev_notdef(),			/* 45: */
+	cdev_notdef(),			/* 46: */
+	cdev_notdef(),			/* 47: */
+	cdev_notdef(),			/* 48: */
+	cdev_notdef(),			/* 49: */
+	cdev_notdef(),			/* 50: */
+#ifdef XFS
+	cdev_xfs_init(NXFS,xfs_dev),	/* 51: xfs communication device */
+#else
+	cdev_notdef(),			/* 51: */
+#endif
 };
 
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
