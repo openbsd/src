@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfx.c,v 1.2 2004/03/01 07:53:01 miod Exp $	*/
+/*	$OpenBSD: rfx.c,v 1.3 2004/03/01 11:57:51 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -56,6 +56,8 @@
 #include <machine/fbvar.h>
 
 #include <sparc/dev/sbusvar.h>
+
+#include <dev/ic/bt463reg.h>
 
 /*
  * Configuration structure
@@ -485,14 +487,19 @@ rfx_putcmap(struct rfx_cmap *cm, struct wsdisplay_cmap *rcm)
 void
 rfx_loadcmap(struct rfx_softc *sc, int start, int ncolors)
 {
+	u_int8_t *r, *g, *b;
 
-	sc->sc_ramdac[0] = (start & 0xff);
-	sc->sc_ramdac[1] = 0;
+	r = sc->sc_cmap.red + start;
+	g = sc->sc_cmap.green + start;
+	b = sc->sc_cmap.blue + start;
+
+	start += BT463_IREG_CPALETTE_RAM;
+	sc->sc_ramdac[BT463_REG_ADDR_LOW] = start & 0xff;
+	sc->sc_ramdac[BT463_REG_ADDR_HIGH] = (start >> 8) & 0xff;
 
 	while (ncolors-- != 0) {
-		sc->sc_ramdac[3] = sc->sc_cmap.red[start];
-		sc->sc_ramdac[3] = sc->sc_cmap.green[start];
-		sc->sc_ramdac[3] = sc->sc_cmap.blue[start];
-		start++;
+		sc->sc_ramdac[BT463_REG_CMAP_DATA] = *r++;
+		sc->sc_ramdac[BT463_REG_CMAP_DATA] = *g++;
+		sc->sc_ramdac[BT463_REG_CMAP_DATA] = *b++;
 	}
 }
