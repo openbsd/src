@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.85 1998/09/20 04:16:40 deraadt Exp $
+$OpenBSD: pcidevs,v 1.86 1998/09/26 04:17:49 downsj Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -241,7 +241,7 @@ vendor DATAEXPERT	0x10c9	Dataexpert
 vendor FUJITSU		0x10ca	Fujitsu
 vendor OMRON		0x10cb	Omron
 vendor MENTOR		0x10cc	Mentor ARC
-vendor ADVSYSPROD	0x10cd	Advanced System Products
+vendor ADVSYS		0x10cd	Advanced System Products
 vendor RADIUS		0x10ce	Radius
 vendor CITICORP		0x10cf	Citicorp TTI
 vendor FUJITSU2		0x10d0	Fujitsu (2nd ID)
@@ -598,6 +598,12 @@ product ADP2 2940U2		0x0010	AHA-2940 Ultra2
 product ADP2 7890		0x001f	AIC-7890/1
 product ADP2 3940U2		0x0050	AHA-3940 Ultra2
 product ADP2 7896		0x005f	AIC-7896/7
+
+/* Advanced System Products */
+product ADVSYS 1200A		0x1100
+product ADVSYS 1200B		0x1200
+product ADVSYS ULTRA		0x1300	ABP-930/40UA
+product ADVSYS 2300		0x2300
 
 /* Alliance products */
 product	ALLIANCE AT24		0x6424	AT24
