@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_nfs.c,v 1.33 2003/07/03 22:41:40 tedu Exp $	*/
+/*	$OpenBSD: mount_nfs.c,v 1.34 2003/07/06 20:52:40 avsm Exp $	*/
 /*	$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl Exp $	*/
 
 /*
@@ -401,7 +401,10 @@ getnfsargs(char *spec, struct nfs_args *nfsargsp)
 	static struct nfhret nfhret;
 	static char nam[MNAMELEN + 1];
 
-	strlcpy(nam, spec, sizeof(nam));
+	if (strlcpy(nam, spec, sizeof(nam)) >= sizeof(nam)) {
+		errx(1, "hostname too long");
+	}
+		
 	if ((delimp = strchr(spec, '@')) != NULL) {
 		hostp = delimp + 1;
 	} else if ((delimp = strchr(spec, ':')) != NULL) {
