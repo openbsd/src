@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt.c,v 1.17 1996/06/27 21:19:45 deraadt Exp $ */
+/*	$OpenBSD: lpt.c,v 1.18 1996/06/30 03:51:55 dm Exp $ */
 /*	$NetBSD: lpt.c,v 1.39 1996/05/12 23:53:06 mycroft Exp $	*/
 
 /*
@@ -544,6 +544,7 @@ lptintr(arg)
 		u_char control = sc->sc_control;
 		/* send char */
 		bus_io_write_1(bc, ioh, lpt_data, *sc->sc_cp++);
+		delay (50);
 		bus_io_write_1(bc, ioh, lpt_control, control | LPC_STROBE);
 		sc->sc_count--;
 		bus_io_write_1(bc, ioh, lpt_control, control);
