@@ -1,0 +1,8 @@
+altq on lo0 cbq bandwidth 100.00Mb tbrsize 3648 queue { bulk prio }
+queue bulk bandwidth 100.00Mb cbq( default ) 
+queue prio bandwidth 100.00Mb priority 7 
+pass in on lo0 inet proto tcp from any to 127.0.0.1 port = ssh queue(bulk, prio) 
+pass in on lo0 inet proto tcp from any to 127.0.0.1 port = ssh queue bulk 
+pass in on lo0 inet proto tcp from any to 127.0.0.1 port = ssh queue(bulk, prio) 
+pass in on lo0 inet proto tcp from any to 127.0.0.1 port = ssh queue bulk 
+pass in on lo0 inet proto tcp from any to 127.0.0.1 port = ssh queue(bulk, prio) 
