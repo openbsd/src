@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.31 1996/12/11 12:59:27 niklas Exp $
+#	$OpenBSD: files.isa,v 1.32 1996/12/12 09:17:30 mickey Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
@@ -64,7 +64,7 @@ attach	com at commulti with com_commulti
 attach	cy at isa with cy_isa
 file	dev/isa/cy_isa.c		cy_isa
 
-# PC parallel ports (XXX what chip?)
+# 8255A-based PC parallel ports
 attach	lpt at isa with lpt_isa
 file	dev/isa/lpt_isa.c		lpt_isa needs-flag
 
