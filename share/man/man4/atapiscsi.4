@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atapiscsi.4,v 1.5 2000/04/03 21:19:35 aaron Exp $
+.\"	$OpenBSD: atapiscsi.4,v 1.6 2000/07/10 13:27:34 aaron Exp $
 .\"
 .\" Copyright (c) 1999 Constantine Sapuntzakis.
 .\"
@@ -41,14 +41,14 @@
 The
 .Nm
 driver supports ATAPI (also called IDE) devices such as CD-ROMs, ZIP
-drives, LS-120 floppy drives, and tape drives.  All ATAPI devices talk
-a subset of the SCSI protocol.
+drives, LS-120 floppy drives, and tape drives.
+All ATAPI devices talk a subset of the SCSI protocol.
 .Pp
 The
 .Nm
-driver acts like a SCSI adapter.  Thus, the ATAPI devices connected to
-the system will appear as SCSI devices.  ATAPI CD-ROMs will appear
-as
+driver acts like a SCSI adapter.
+Thus, the ATAPI devices connected to the system will appear as SCSI devices.
+ATAPI CD-ROMs will appear as
 .Xr cd 4
 devices, ATAPI tape drives as
 .Xr st 4
@@ -57,19 +57,20 @@ devices, and ATAPI floppies as
 devices.
 .Pp
 For performance reasons, one should avoid putting an ATAPI device and
-a hard disk on the same cable.  The driver does not support bus release
-and, even if it did, many ATAPI devices do not support it. There is
-only one command outstanding on a cable at a time. For example, if a
-hard disk and a CD drive are placed on the same cable, the hard disk
-requests may get queued behind slower CD operations.
-.Sh BUGS
-Slow devices, like tape drives, could do a better job of sharing the channel.
-For now, we recommend you put the tape device on its own channel.
+a hard disk on the same cable.
+The driver does not support bus release and, even if it did, many ATAPI
+devices do not support it.
+There is only one command outstanding on a cable at a time.
+For example, if a hard disk and a CD drive are placed on the same cable,
+the hard disk requests may get queued behind slower CD operations.
 .Sh SEE ALSO
+.Xr cd 4 ,
 .Xr intro 4 ,
 .Xr pciide 4 ,
 .Xr scsi 4 ,
-.Xr wdc 4 ,
-.Xr cd 4 ,
+.Xr sd 4 ,
 .Xr st 4 ,
-.Xr sd 4
+.Xr wdc 4
+.Sh BUGS
+Slow devices, like tape drives, could do a better job of sharing the channel.
+For now, we recommend you put the tape device on its own channel.

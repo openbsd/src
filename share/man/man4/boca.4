@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boca.4,v 1.1 2000/05/20 17:19:51 deraadt Exp $
+.\"	$OpenBSD: boca.4,v 1.2 2000/07/10 13:27:35 aaron Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -66,8 +66,8 @@ and is configured as such.)
 .Sh DESCRIPTION
 The
 .Nm boca
-driver provides support for BOCA Research BB1004, BB1008 and BB2016
-boards that multiplex together up to four, eight or sixteen
+driver provides support for BOCA Research BB1004, BB1008, and BB2016
+boards that multiplex together up to four, eight, or sixteen
 .Tn EIA
 .Tn RS-232C
 .Pf ( Tn CCITT
@@ -78,11 +78,13 @@ Each
 .Nm
 device is the master device for up to eight
 .Nm com
-devices.  The kernel configuration specifies these
+devices.
+The kernel configuration specifies these
 .Nm com
 devices as slave devices of the
 .Nm
-device, as shown in the synopsis.  The slave ID given for each
+device, as shown in the synopsis.
+The slave ID given for each
 .Nm com
 device determines which bit in the interrupt multiplexing register is
 tested to find interrupts for that device.
@@ -104,6 +106,6 @@ The
 .Nm
 driver was written by Charles Hannum, based on the
 .Nm ast
-driver and source code from David Muir Sharnoff.  David wishes to
-acknowledge the assistance of Jason Venner in determining how to use
-the BOCA boards.
+driver and source code from David Muir Sharnoff.
+David wishes to acknowledge the assistance of Jason Venner in determining
+how to use the BOCA boards.
