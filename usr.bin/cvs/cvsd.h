@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvsd.h,v 1.1.1.1 2004/07/13 22:02:40 jfb Exp $	*/
+/*	$OpenBSD: cvsd.h,v 1.2 2004/07/25 03:29:35 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -30,6 +30,9 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
+#include <sys/socket.h>
+
+#include <netinet/in.h>
 
 #include <pwd.h>
 #include <signal.h>
@@ -38,6 +41,7 @@
 
 #define CVSD_USER   "_cvsd"
 #define CVSD_GROUP  "_cvsd"
+#define CVSD_CONF   "/etc/cvsd.conf"
 
 #define CVSD_CHILD_DEFMIN    3
 #define CVSD_CHILD_DEFMAX    5
@@ -51,18 +55,35 @@
 /* requests */
 #define CVSD_MSG_GETUID    1
 #define CVSD_MSG_GETUNAME  2
-#define CVSD_MSG_PASSFD    3   /* server passes client file descriptor */
-#define CVSD_MSG_SETIDLE   4   /* client has no further processing to do */
+#define CVSD_MSG_GETGID    3
+#define CVSD_MSG_GETGNAME  4
+#define CVSD_MSG_PASSFD    5   /* server passes client file descriptor */
+#define CVSD_MSG_SETIDLE   6   /* client has no further processing to do */
 
 /* replies */
 #define CVSD_MSG_UID       128
 #define CVSD_MSG_UNAME     129
+#define CVSD_MSG_GID       130
+#define CVSD_MSG_GNAME     131
 
 #define CVSD_MSG_SHUTDOWN  253
 #define CVSD_MSG_OK        254
 #define CVSD_MSG_ERROR     255
 
 #define CVSD_MSG_MAXLEN    256
+
+
+#define CVSD_SET_ROOT        1
+#define CVSD_SET_CHMIN       2
+#define CVSD_SET_CHMAX       3
+#define CVSD_SET_ADDR        4
+#define CVSD_SET_SOCK        5
+
+
+#define CVSD_ST_UNKNOWN      0
+#define CVSD_ST_IDLE         1
+#define CVSD_ST_BUSY         2
+
 
 
 /* message structure to pass data between the parent and the chrooted child */
@@ -75,13 +96,21 @@ struct cvsd_msg {
 struct cvsd_child {
 	pid_t  ch_pid;
 	int    ch_sock;
+	u_int  ch_state;
 
 	TAILQ_ENTRY(cvsd_child) ch_list;
 };
 
 
+struct cvsd_addr {
+	sa_family_t ca_fam;
+	union {
+		struct sockaddr_in *sin;
+		struct sockaddr_in6 *sin6;
+	} ca_addr;
+};
 
-extern int foreground;
+
 
 extern volatile sig_atomic_t running;
 extern volatile sig_atomic_t restart;
@@ -89,15 +118,20 @@ extern volatile sig_atomic_t restart;
 
 
 
+int                cvsd_set        (int, ...);
+int                cvsd_checkperms (const char *);
+int                cvsd_child_fork (struct cvsd_child **);
+struct cvsd_child* cvsd_child_get  (void);
+int                cvsd_child_reap (struct cvsd_child *);
+
+/* from fdpass.c */
+int   cvsd_sendfd  (int, int);
+int   cvsd_recvfd  (int);
 
 
-int  cvsd_checkperms (const char *);
-int  cvsd_forkchild  (void);
-
-
-/* from aclparse.y */
-int    cvs_acl_parse  (const char *);
-u_int  cvs_acl_eval   (struct cvs_op *);
+/* from conf.y */
+int    cvs_conf_read (const char *);
+u_int  cvs_acl_eval  (struct cvs_op *);
 
 /* from msg.c */
 int    cvsd_sendmsg (int, u_int, const void *, size_t);
