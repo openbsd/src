@@ -1,4 +1,4 @@
-/*	$OpenBSD: acd.c,v 1.23 1997/03/26 01:53:49 deraadt Exp $	*/
+/*	$OpenBSD: acd.c,v 1.24 1997/06/15 02:37:59 downsj Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -242,6 +242,15 @@ acdattach(parent, self, aux)
 		if (cap->max_vol_levels)
 			printf (", %d volume levels", cap->max_vol_levels);
 		printf ("\n");
+	}
+
+	/* We can autoprobe AQUIRK_NODOORLOCK */
+	if (!(acd->ad_link->quirks & AQUIRK_NODOORLOCK)) {
+		if (atapi_prevent(acd->ad_link, PR_PREVENT)) {
+			acd->ad_link->quirks |= AQUIRK_NODOORLOCK;
+			printf ("%s: disabling door locks.\n", self->dv_xname);
+		} else
+			atapi_prevent(acd->ad_link, PR_ALLOW);
 	}
 }
 
