@@ -2,14 +2,13 @@ OpenBSD/sparc OSREV runs on the following classes of machines:
 	- sun4  -- 4/100, 4/200, and 4/300.   (note that support
 		   for the 4/400 processor is incomplete)
 	- sun4c -- SS1, SS1+, SS2, IPC, ELC, IPX, and SLC
-	- sun4m -- Sparc Classic, LX, 4, 5, 10, and 20. *** See Notes Below
+	- sun4m -- Sparc Classic, LX, 4, 5, 10, 20, and 600MP.
+		*** See Notes Below
 	- faithful clones of the above Sun systems (e.g. Integrix)
 
 OpenBSD/sparc OSREV does NOT run on these machines (yet):
 	- Sun 4/400 --  Lacking support for the I/O cache, and related
 			ethernet problems.
-	- Sun 4/6xx -- Sparcserver 600MP, Different registers (auxio
-			vs. leds), VMEbus on sun4m arch, iommu issues.
 	- sun4d -- SPARCcenter 2000, SPARCserver 1000,  XDBus and
 			multiprocessor support issues.
 	- sun4u (Ultrasparcs) --  currently no support for 64-bit Sparc
@@ -93,7 +92,9 @@ Hardware the we do NOT currently support, but get many questions about:
 As of of the OpenBSD OSREV release there are still some outstanding problems
 with OpenBSD on the various Sparc architectures.  The sun4m architecture,
 particularly the Viking/SuperSPARC implementations, is probably the least
-stable and is also lacking useful floppy/audio support.  
+stable and is also lacking useful floppy/audio support.  The 600MP support is
+less stable than the other sun4m machines, and there is currently no support
+for the VME bus found on this machine.
 
 The supplied GENERIC kernel is the best attempt at a configuration that
 works on the widest range of machinery (sun4, sun4c, and sun4m).  
