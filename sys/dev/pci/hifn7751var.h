@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751var.h,v 1.49 2003/05/13 18:55:23 jmc Exp $	*/
+/*	$OpenBSD: hifn7751var.h,v 1.50 2003/06/02 15:58:42 deraadt Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -21,7 +21,6 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- *
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
