@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.131 2001/08/19 19:46:08 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.132 2001/08/19 20:00:39 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -200,30 +200,23 @@ int			 pf_normalize_tcp(int, struct ifnet *, struct mbuf *,
 int
 pf_tree_key_compare(struct pf_tree_key *a, struct pf_tree_key *b)
 {
+	register int diff;
+
 	/*
 	 * could use memcmp(), but with the best manual order, we can
 	 * minimize the number of average compares. what is faster?
 	 */
-	if (a->proto < b->proto)
-		return (-1);
-	if (a->proto > b->proto)
-		return ( 1);
-	if (a->addr[0].s_addr < b->addr[0].s_addr)
-		return (-1);
-	if (a->addr[0].s_addr > b->addr[0].s_addr)
-		return ( 1);
-	if (a->addr[1].s_addr < b->addr[1].s_addr)
-		return (-1);
-	if (a->addr[1].s_addr > b->addr[1].s_addr)
-		return ( 1);
-	if (a->port[0] < b->port[0])
-		return (-1);
-	if (a->port[0] > b->port[0])
-		return ( 1);
-	if (a->port[1] < b->port[1])
-		return (-1);
-	if (a->port[1] > b->port[1])
-		return ( 1);
+	if ((diff = a->proto - b->proto) != 0)
+		return (diff);
+	if ((diff = a->addr[0].s_addr - b->addr[0].s_addr) != 0)
+		return (diff);
+	if ((diff = a->addr[1].s_addr - b->addr[1].s_addr) != 0)
+		return (diff);
+	if ((diff = a->port[0] - b->port[0]) != 0)
+		return (diff);
+	if ((diff = a->port[1] - b->port[1]) != 0)
+		return (diff);
+
 	return (0);
 }
 
