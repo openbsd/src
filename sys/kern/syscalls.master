@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.57 2003/04/29 19:52:32 miod Exp $
+;	$OpenBSD: syscalls.master,v 1.58 2003/05/10 17:53:58 miod Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -176,7 +176,7 @@
 			    const struct itimerval *itv, \
 			    struct itimerval *oitv); }
 84	COMPAT_43	{ int sys_wait(void); } owait
-85	STD		{ int sys_swapon(const char *name); }
+85	COMPAT_25	{ int sys_swapon(const char *name); }
 86	STD		{ int sys_getitimer(int which, \
 			    struct itimerval *itv); }
 87	COMPAT_43	{ int sys_gethostname(char *hostname, u_int len); } \

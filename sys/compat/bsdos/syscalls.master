@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.10 2003/01/30 03:29:48 millert Exp $
+	$OpenBSD: syscalls.master,v 1.11 2003/05/10 17:53:53 miod Exp $
 
 ; OpenBSD COMPAT_BSDOS system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -160,7 +160,7 @@
 83	NOARGS		{ int sys_setitimer(u_int which, \
 			    struct itimerval *itv, struct itimerval *oitv); }
 84	NOARGS		{ int compat_43_sys_wait(void); } owait
-85	NOARGS		{ int sys_swapon(char *name); }
+85	NOARGS		{ int compat_25_sys_swapon(char *name); }
 86	NOARGS		{ int sys_getitimer(u_int which, \
 			    struct itimerval *itv); }
 87	NOARGS		{ int compat_43_sys_gethostname(char *hostname, \

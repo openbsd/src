@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat_vm.c,v 1.2 2003/04/29 19:52:30 miod Exp $	*/
+/*	$OpenBSD: compat_vm.c,v 1.3 2003/05/10 17:53:56 miod Exp $	*/
 /*	$NetBSD: vm_12.c,v 1.8 1997/10/20 22:05:22 thorpej Exp $	*/
 
 /*
@@ -38,13 +38,13 @@
 #include <sys/mman.h>
 
 int
-sys_swapon(p, v, retval)
+compat_25_sys_swapon(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
 	struct sys_swapctl_args ua;
-	struct sys_swapon_args /* {
+	struct compat_25_sys_swapon_args /* {
 		syscallarg(const char *) name;
 	} */ *uap = v;
 
