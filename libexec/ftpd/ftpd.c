@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.100 2001/06/25 16:24:27 millert Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.101 2001/06/25 16:39:54 hin Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpd.c,v 1.100 2001/06/25 16:24:27 millert Exp $";
+static char rcsid[] = "$OpenBSD: ftpd.c,v 1.101 2001/06/25 16:39:54 hin Exp $";
 #endif
 #endif /* not lint */
 
@@ -750,8 +750,8 @@ user(name)
 	    auth_setitem(as, AUTHV_STYLE, style) < 0 ||
 	    auth_setitem(as, AUTHV_NAME, name) < 0 ||
 	    auth_setitem(as, AUTHV_CLASS, class) < 0 ||
-	    auth_setitem(as, "login", "yes") < 0)) {
-	    auth_setitem(as, "notickets", "yes") < 0)) {
+	    auth_setoption(as, "login", "yes") < 0 ||
+	    auth_setoption(as, "notickets", "yes") < 0)) {
 		if (as) {
 			auth_close(as);
 			as = NULL;
