@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.207 2004/12/07 09:36:16 deraadt Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.208 2004/12/07 10:33:41 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -537,6 +537,10 @@ struct pf_rule {
 	u_int8_t		 tos;
 	u_int8_t		 anchor_relative;
 	u_int8_t		 anchor_wildcard;
+
+#define PF_FLUSH		0x01
+#define PF_FLUSH_GLOBAL		0x02
+	u_int8_t		 flush;
 };
 
 /* rule flags */
@@ -548,7 +552,6 @@ struct pf_rule {
 #define	PFRULE_NOSYNC		0x0010
 #define PFRULE_SRCTRACK		0x0020  /* track source states */
 #define PFRULE_RULESRCTRACK	0x0040  /* per rule */
-#define PFRULE_SRCTRACK_FLUSH	0x0080	/* flush for src_node->open_states */
 
 /* scrub flags */
 #define	PFRULE_NODF		0x0100
