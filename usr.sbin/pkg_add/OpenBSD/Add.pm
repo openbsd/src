@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.17 2004/11/13 11:39:40 espie Exp $
+# $OpenBSD: Add.pm,v 1.18 2004/11/13 12:02:57 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -123,9 +123,9 @@ sub borked_installation
 	    } else {
 	    	$lastname = $last->fullname();
 	    }
-	    $last->{md5} = OpenBSD::md5::fromfile($last->fullname());
+	    $last->{md5} = OpenBSD::md5::fromfile($lastname);
 	    if ($old ne $last->{md5}) {
-		print "Adjusting md5 for ", $last->fullname(), " from ",
+		print "Adjusting md5 for $lastname from ",
 		    unpack('H*', $old), " to ", unpack('H*', $last->{md5}), "\n";
 	    }
 	}
