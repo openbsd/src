@@ -9,7 +9,7 @@
  *
  * S/Key misc routines.
  *
- * $OpenBSD: skeysubr.c,v 1.21 2001/11/14 20:53:03 deraadt Exp $
+ * $OpenBSD: skeysubr.c,v 1.22 2002/01/24 23:01:19 millert Exp $
  */
 
 #include <stdio.h>
@@ -338,7 +338,7 @@ trapped(sig)
 {
 	write(STDERR_FILENO, "^C\n", 3);
 
-	/* Turn on echo if necesary */
+	/* Turn on echo if necessary */
 	skey_echo(1);
 
 	_exit(-1);

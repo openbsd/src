@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.77 2001/07/07 18:26:10 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.78 2002/01/24 23:01:19 millert Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.77 2001/07/07 18:26:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.78 2002/01/24 23:01:19 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -521,7 +521,7 @@ editor_add(lp, mp, freep, p)
 		}
 	}
 
-	/* Increase d_npartitions if necesary */
+	/* Increase d_npartitions if necessary */
 	if (partno >= lp->d_npartitions)
 		lp->d_npartitions = partno + 1;
 
@@ -1424,7 +1424,7 @@ edit_parms(lp, freep)
 		} else
 			break;
 	}
-	/* Adjust ending_sector if necesary. */
+	/* Adjust ending_sector if necessary. */
 	if (ending_sector > ui)
 		ending_sector = ui;
 	lp->d_secperunit = ui;

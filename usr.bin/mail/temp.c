@@ -1,4 +1,4 @@
-/*	$OpenBSD: temp.c,v 1.12 2001/11/21 15:26:39 millert Exp $	*/
+/*	$OpenBSD: temp.c,v 1.13 2002/01/24 23:01:19 millert Exp $	*/
 /*	$NetBSD: temp.c,v 1.5 1996/06/08 19:48:42 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)temp.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: temp.c,v 1.12 2001/11/21 15:26:39 millert Exp $";
+static const char rcsid[] = "$OpenBSD: temp.c,v 1.13 2002/01/24 23:01:19 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ tinit(void)
 	if ((tmpdir = strdup(tmpdir)) == NULL)
 		errx(1, "Out of memory");
 
-	/* Strip trailing '/' if necesary */
+	/* Strip trailing '/' if necessary */
 	cp = tmpdir + strlen(tmpdir) - 1;
 	while (cp > tmpdir && *cp == '/') {
 		*cp = '\0';

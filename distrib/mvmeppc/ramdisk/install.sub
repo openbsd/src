@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.3 2001/09/19 00:04:03 krw Exp $
+#	$OpenBSD: install.sub,v 1.4 2002/01/24 23:01:19 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -911,7 +911,7 @@ else
 	fi
 fi
 
-# Yes, all those blackslashes really are necesary...
+# Yes, all those blackslashes really are necessary...
 eval echo "\\\\n"\
 "You will now be asked for files to extract.  In addition to the\\\\n"\
 "files listed in the selector you may enter any file located at\\\\n"\

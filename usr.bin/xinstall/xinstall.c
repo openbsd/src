@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.29 2001/11/19 19:02:18 mpech Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.30 2002/01/24 23:01:19 millert Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #endif
-static char rcsid[] = "$OpenBSD: xinstall.c,v 1.29 2001/11/19 19:02:18 mpech Exp $";
+static char rcsid[] = "$OpenBSD: xinstall.c,v 1.30 2002/01/24 23:01:19 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -376,7 +376,7 @@ install(from_name, to_name, fset, flags)
 	}
 
 	/*
-	 * Preserve the timestamp of the source file if necesary.
+	 * Preserve the timestamp of the source file if necessary.
 	 */
 	if (dopreserve && !files_match) {
 		utb.actime = from_sb.st_atime;
@@ -644,7 +644,7 @@ create_tempfile(path, temp, tsize)
 
 /*
  * create_newfile --
- *	create a new file, overwriting an existing one if necesary
+ *	create a new file, overwriting an existing one if necessary
  */
 int
 create_newfile(path, sbp)
