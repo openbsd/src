@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.20 1997/05/13 03:51:27 millert Exp $
+#	$OpenBSD: install.sub,v 1.21 1997/05/13 12:02:33 niklas Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -753,7 +753,7 @@ install_from_mounted_fs() {
 		fi
 
 		# Extract file
-		if [ $_f = $_kernel ]; then
+		if [ X$_f = X$_kernel ]; then
 			cp $_filename /mnt/$_f
 		else
 			cat $_filename | (cd /mnt; tar -zxvpf -)
