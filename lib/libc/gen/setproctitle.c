@@ -1,5 +1,3 @@
-/*	$NetBSD: setproctitle.c,v 1.4 1995/05/16 14:23:06 mycroft Exp $	*/
-
 /*
  * Copyright (c) 1994, 1995 Christopher G. Demetriou
  * All rights reserved.
@@ -32,7 +30,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: setproctitle.c,v 1.4 1995/05/16 14:23:06 mycroft Exp $";
+static char rcsid[] = "$OpenBSD: setproctitle.c,v 1.2 1996/08/19 08:25:59 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>

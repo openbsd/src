@@ -1,9 +1,11 @@
-/*	$NetBSD: _catopen.c,v 1.1 1996/05/13 23:29:36 jtc Exp $	*/
-
 /*
  * Written by J.T. Conklin, 10/05/94
  * Public domain.
  */
+
+#if defined(LIBC_SCCS) && !defined(lint)
+static char rcsid[] = "$OpenBSD: _catopen.c,v 1.2 1996/08/19 08:30:03 tholo Exp $";
+#endif /* LIBC_SCCS and not lint */
 
 #include <sys/cdefs.h>
 

@@ -1,5 +1,3 @@
-/*	$NetBSD: extern.h,v 1.5 1996/05/03 21:38:44 cgd Exp $	*/
-
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)extern.h	8.3 (Berkeley) 6/4/94
+ *	$OpenBSD: extern.h,v 1.3 1996/08/19 08:20:56 tholo Exp $
  */
 
 #include "../btree/extern.h"

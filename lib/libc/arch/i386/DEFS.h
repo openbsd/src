@@ -1,3 +1,3 @@
-/*	$Id: DEFS.h,v 1.1.1.1 1995/10/18 08:41:23 deraadt Exp $ */
+/*	$OpenBSD: DEFS.h,v 1.2 1996/08/19 08:12:09 tholo Exp $ */
 
 #include <machine/asm.h>

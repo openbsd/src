@@ -35,8 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char sccsid[] = "from: @(#)radixsort.c	8.1 (Berkeley) 6/4/93";*/
-static char *rcsid = "$Id: radixsort.c,v 1.2 1996/03/25 22:16:39 tholo Exp $";
+static char *rcsid = "$OpenBSD: radixsort.c,v 1.3 1996/08/19 08:33:44 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*

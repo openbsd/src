@@ -1,5 +1,3 @@
-/*	$NetBSD: page.h,v 1.6 1996/05/03 21:43:59 cgd Exp $	*/
-
 /*-
  * Copyright (c) 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)page.h	8.2 (Berkeley) 5/31/94
+ *	$OpenBSD: page.h,v 1.3 1996/08/19 08:20:43 tholo Exp $
  */
 
 /*

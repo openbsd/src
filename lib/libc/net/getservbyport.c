@@ -1,5 +1,3 @@
-/*	$NetBSD: getservbyport.c,v 1.4 1995/02/25 06:20:37 cgd Exp $	*/
-
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,11 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)getservbyport.c	8.1 (Berkeley) 6/4/93";
-#else
-static char rcsid[] = "$NetBSD: getservbyport.c,v 1.4 1995/02/25 06:20:37 cgd Exp $";
-#endif
+static char rcsid[] = "$OpenBSD: getservbyport.c,v 1.2 1996/08/19 08:28:57 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <netdb.h>

@@ -32,8 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)strerror.c	5.6 (Berkeley) 5/4/91";*/
-static char *rcsid = "$Id: __strerror.c,v 1.2 1996/01/29 02:04:11 deraadt Exp $";
+static char *rcsid = "$OpenBSD: __strerror.c,v 1.3 1996/08/19 08:33:55 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef NLS

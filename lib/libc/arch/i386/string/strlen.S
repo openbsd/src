@@ -6,7 +6,8 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strlen.S,v 1.6 1995/04/28 22:58:13 jtc Exp $")
+	.text
+	.asciz "$OpenBSD: strlen.S,v 1.2 1996/08/19 08:13:19 tholo Exp $"
 #endif
 
 ENTRY(strlen)

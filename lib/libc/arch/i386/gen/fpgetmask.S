@@ -5,6 +5,11 @@
 
 #include <machine/asm.h>
 
+#if defined(LIBC_SCCS)
+	.text
+	.asciz "$OpenBSD: fpgetmask.S,v 1.2 1996/08/19 08:12:22 tholo Exp $"
+#endif
+
 ENTRY(fpgetmask)
 	subl $4,%esp
 	fnstcw (%esp)

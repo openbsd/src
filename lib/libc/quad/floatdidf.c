@@ -1,5 +1,3 @@
-/*	$NetBSD: floatdidf.c,v 1.3 1995/02/27 17:30:07 cgd Exp $	*/
-
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,11 +36,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)floatdidf.c	8.1 (Berkeley) 6/4/93";
-#else
-static char rcsid[] = "$NetBSD: floatdidf.c,v 1.3 1995/02/27 17:30:07 cgd Exp $";
-#endif
+static char rcsid[] = "$OpenBSD: floatdidf.c,v 1.2 1996/08/19 08:30:28 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "quad.h"

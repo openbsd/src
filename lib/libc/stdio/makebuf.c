@@ -1,5 +1,3 @@
-/*	$NetBSD: makebuf.c,v 1.5 1995/02/02 02:10:08 jtc Exp $	*/
-
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,10 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)makebuf.c	8.1 (Berkeley) 6/4/93";
-#endif
-static char rcsid[] = "$NetBSD: makebuf.c,v 1.5 1995/02/02 02:10:08 jtc Exp $";
+static char rcsid[] = "$OpenBSD: makebuf.c,v 1.2 1996/08/19 08:32:54 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

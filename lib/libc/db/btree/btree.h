@@ -1,5 +1,3 @@
-/*	$NetBSD: btree.h,v 1.9 1996/05/03 21:51:00 cgd Exp $	*/
-
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)btree.h	8.11 (Berkeley) 8/17/94
+ *	$OpenBSD: btree.h,v 1.3 1996/08/19 08:20:19 tholo Exp $
  */
 
 /* Macros to set/clear/test flags. */

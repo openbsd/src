@@ -1,5 +1,3 @@
-/*	$NetBSD: getgrent.c,v 1.13 1995/07/28 05:43:57 phil Exp $	*/
-
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,11 +33,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
-#else
-static char rcsid[] = "$NetBSD: getgrent.c,v 1.13 1995/07/28 05:43:57 phil Exp $";
-#endif
+static char rcsid[] = "$OpenBSD: getgrent.c,v 1.4 1996/08/19 08:23:29 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

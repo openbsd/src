@@ -1,5 +1,3 @@
-/*	$OpenBSD: yperr_string.c,v 1.2 1996/07/01 07:09:16 deraadt Exp $	 */
-
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
@@ -32,8 +30,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: yperr_string.c,v 1.2 1996/07/01 07:09:16 deraadt Exp $";
-#endif
+static char *rcsid = "$OpenBSD: yperr_string.c,v 1.3 1996/08/19 08:35:12 tholo Exp $";
+#endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <sys/types.h>

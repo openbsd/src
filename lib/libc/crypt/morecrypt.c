@@ -1,5 +1,3 @@
-/*	$OpenBSD: morecrypt.c,v 1.5 1996/06/03 22:20:37 niklas Exp $	*/
-
 /*
  * FreeSec: libcrypt
  *
@@ -51,6 +49,11 @@
  * exportable from the USA. Hence, to also have the other crypto interfaces
  * available we have to copy pieces...
  */
+
+#if defined(LIBC_SCCS) && !defined(lint)
+static char rcsid[] = "$OpenBSD: morecrypt.c,v 1.6 1996/08/19 08:19:51 tholo Exp $";
+#endif /* LIBC_SCCS and not lint */
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <pwd.h>

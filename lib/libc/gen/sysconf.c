@@ -1,5 +1,3 @@
-/*	$NetBSD: sysconf.c,v 1.3 1995/03/04 01:56:09 cgd Exp $	*/
-
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,11 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)sysconf.c	8.2 (Berkeley) 3/20/94";
-#else
-static char rcsid[] = "$NetBSD: sysconf.c,v 1.3 1995/03/04 01:56:09 cgd Exp $";
-#endif
+static char rcsid[] = "$OpenBSD: sysconf.c,v 1.2 1996/08/19 08:26:24 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>

@@ -1,5 +1,3 @@
-/*	$NetBSD: bcopy.S,v 1.2 1995/09/26 03:37:10 cgd Exp $	*/
-
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,6 +25,11 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#if defined(LIBC_SCCS)
+	.text
+	.asciz "$OpenBSD: bcopy.S,v 1.2 1996/08/19 08:10:58 tholo Exp $"
+#endif
 
 #include "DEFS.h"
 

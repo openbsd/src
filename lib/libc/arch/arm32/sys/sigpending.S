@@ -1,5 +1,3 @@
-/* $NetBSD: sigpending.S,v 1.2 1996/05/12 19:55:30 mark Exp $ */
-
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -31,12 +29,14 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	from: @(#)sigpending.s	5.1 (Berkeley) 7/1/90
- *	$Id: sigpending.S,v 1.2 1996/05/22 11:39:23 deraadt Exp $
  */
 
 #include "SYS.h"
+
+#if defined(SYSLIBC_SCCS)
+	.text
+	.asciz "$OpenBSD: sigpending.S,v 1.3 1996/08/19 08:12:02 tholo Exp $"
+#endif /* SYSLIB_SCCS */
 
 	.text
 	.align	0

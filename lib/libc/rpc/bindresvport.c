@@ -1,6 +1,3 @@
-/*	$OpenBSD: bindresvport.c,v 1.7 1996/07/30 16:25:47 downsj Exp $	*/
-/*	$NetBSD: bindresvport.c,v 1.5 1995/06/03 22:37:19 mycroft Exp $	*/
-
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -31,10 +28,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)bindresvport.c 1.8 88/02/08 SMI";*/
-/*static char *sccsid = "from: @(#)bindresvport.c	2.2 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$OpenBSD: bindresvport.c,v 1.7 1996/07/30 16:25:47 downsj Exp $";
-#endif
+static char *rcsid = "$OpenBSD: bindresvport.c,v 1.8 1996/08/19 08:31:24 tholo Exp $";
+#endif /* LIBC_SCCS and not lint */
 
 /*
  * Copyright (c) 1987 by Sun Microsystems, Inc.

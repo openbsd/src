@@ -1,5 +1,3 @@
-/*	$NetBSD: getlogin.c,v 1.6 1995/02/27 04:12:47 cgd Exp $	*/
-
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,11 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)getlogin.c	8.1 (Berkeley) 6/4/93";
-#else
-static char rcsid[] = "$NetBSD: getlogin.c,v 1.6 1995/02/27 04:12:47 cgd Exp $";
-#endif
+static char rcsid[] = "$OpenBSD: getlogin.c,v 1.2 1996/08/19 08:23:41 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>

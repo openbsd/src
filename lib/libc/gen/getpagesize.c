@@ -1,5 +1,3 @@
-/*	$NetBSD: getpagesize.c,v 1.5 1995/02/25 08:51:21 cgd Exp $	*/
-
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,11 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)getpagesize.c	8.1 (Berkeley) 6/4/93";
-#else
-static char rcsid[] = "$NetBSD: getpagesize.c,v 1.5 1995/02/25 08:51:21 cgd Exp $";
-#endif
+static char rcsid[] = "$OpenBSD: getpagesize.c,v 1.2 1996/08/19 08:23:54 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>

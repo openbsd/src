@@ -32,17 +32,14 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	from: @(#)sigpending.s	5.1 (Berkeley) 7/1/90
- *	$Id: sigpending.S,v 1.1.1.1 1995/10/18 08:41:27 deraadt Exp $
  */
 
-#if defined(SYSLIBC_SCCS) && !defined(lint)
-	.text
-	.asciz "$Id: sigpending.S,v 1.1.1.1 1995/10/18 08:41:27 deraadt Exp $"
-#endif /* SYSLIBC_SCCS and not lint */
-
 #include "SYS.h"
+
+#if defined(SYSLIBC_SCCS)
+	.text
+	.asciz "$OpenBSD: sigpending.S,v 1.2 1996/08/19 08:13:40 tholo Exp $"
+#endif /* SYSLIBC_SCCS */
 
 SYSCALL(sigpending)
 	movl	4(%esp),%ecx		# fetch pointer to...

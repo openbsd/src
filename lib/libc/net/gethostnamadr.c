@@ -1,5 +1,3 @@
-/*	$NetBSD: gethostnamadr.c,v 1.13 1995/05/21 16:21:14 mycroft Exp $	*/
-
 /*-
  * Copyright (c) 1985, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -54,12 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
-static char rcsid[] = "$Id: gethnamaddr.c,v 4.9.1.1 1993/05/02 22:43:03 vixie Rel ";
-#else
-static char rcsid[] = "$NetBSD: gethostnamadr.c,v 1.13 1995/05/21 16:21:14 mycroft Exp $";
-#endif
+static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.7 1996/08/19 08:28:40 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>

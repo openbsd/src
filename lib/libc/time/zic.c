@@ -1,10 +1,6 @@
-/*	$NetBSD: zic.c,v 1.4 1996/01/20 02:31:50 jtc Exp $	*/
-
-#ifndef lint
-#ifndef NOID
-static char	elsieid[] = "@(#)zic.c	7.59";
-#endif /* !defined NOID */
-#endif /* !defined lint */
+#if defined(LIBC_SCCS) && !defined(lint)
+static char rcsid[] = "$OpenBSD: zic.c,v 1.4 1996/08/19 08:34:56 tholo Exp $";
+#endif /* LIBC_SCCS and not lint */
 
 #include "private.h"
 #include "tzfile.h"

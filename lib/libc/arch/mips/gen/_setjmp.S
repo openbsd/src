@@ -1,4 +1,3 @@
-/*	$OpenBSD: _setjmp.S,v 1.4 1996/07/30 20:27:49 pefo Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,11 +37,10 @@
 #include <machine/regnum.h>
 #include <machine/asm.h>
 
-
-#if defined(LIBC_SCCS) && !defined(lint)
-	ASMSTR("from: @(#)_setjmp.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: _setjmp.S,v 1.4 1996/07/30 20:27:49 pefo Exp $")
-#endif /* LIBC_SCCS and not lint */
+#if defined(LIBC_SCCS)
+	.text
+	.asciz "$OpenBSD: _setjmp.S,v 1.5 1996/08/19 08:15:51 tholo Exp $"
+#endif /* LIBC_SCCS */
 
 /*
  * C library -- _setjmp, _longjmp

@@ -1,5 +1,3 @@
-/*	$NetBSD: extern.h,v 1.6 1996/05/03 21:51:01 cgd Exp $	*/
-
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -32,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)extern.h	8.10 (Berkeley) 7/20/94
+ *	$OpenBSD: extern.h,v 1.3 1996/08/19 08:20:21 tholo Exp $
  */
 
 int	 __bt_close __P((DB *));

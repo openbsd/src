@@ -1,5 +1,3 @@
-/*	$NetBSD: initgroups.c,v 1.11 1995/06/03 02:27:19 mycroft Exp $	*/
-
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,11 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)initgroups.c	8.1 (Berkeley) 6/4/93";
-#else
-static char rcsid[] = "$NetBSD: initgroups.c,v 1.11 1995/06/03 02:27:19 mycroft Exp $";
-#endif
+static char rcsid[] = "$OpenBSD: initgroups.c,v 1.3 1996/08/19 08:24:24 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>

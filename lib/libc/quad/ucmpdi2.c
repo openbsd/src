@@ -1,5 +1,3 @@
-/*	$NetBSD: ucmpdi2.c,v 1.2 1995/02/27 17:31:06 cgd Exp $	*/
-
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,11 +36,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)ucmpdi2.c	8.1 (Berkeley) 6/4/93";
-#else
-static char rcsid[] = "$NetBSD: ucmpdi2.c,v 1.2 1995/02/27 17:31:06 cgd Exp $";
-#endif
+static char rcsid[] = "$OpenBSD: ucmpdi2.c,v 1.2 1996/08/19 08:30:46 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "quad.h"

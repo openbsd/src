@@ -1,4 +1,3 @@
-/*	$OpenBSD: bcmp.S,v 1.3 1996/07/30 20:27:53 pefo Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,11 +36,10 @@
 
 #include <machine/asm.h>
 
-#if defined(LIBC_SCCS) && !defined(lint)
-	ASMSTR("from: @(#)bcmp.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: bcmp.S,v 1.3 1996/07/30 20:27:53 pefo Exp $")
-#endif /* LIBC_SCCS and not lint */
-
+#if defined(LIBC_SCCS)
+	.text
+	.asciz "$OpenBSD: bcmp.S,v 1.4 1996/08/19 08:16:11 tholo Exp $"
+#endif /* LIBC_SCCS */
 
 /* bcmp(s1, s2, n) */
 

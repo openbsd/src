@@ -32,15 +32,13 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	from: @(#)ntohs.s	5.2 (Berkeley) 12/17/90
- *	$Id: ntohs.S,v 1.1.1.1 1995/10/18 08:41:24 deraadt Exp $
  */
 
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-RCSID("$Id: ntohs.S,v 1.1.1.1 1995/10/18 08:41:24 deraadt Exp $")
+	.text
+	.asciz "$OpenBSD: ntohs.S,v 1.2 1996/08/19 08:12:42 tholo Exp $"
 #endif
 
 /* hostorder = ntohs(netorder) */

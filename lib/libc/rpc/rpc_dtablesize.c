@@ -1,6 +1,3 @@
-/*	$OpenBSD: rpc_dtablesize.c,v 1.3 1996/08/13 06:37:42 deraadt Exp $	*/
-/*	$NetBSD: rpc_dtablesize.c,v 1.3 1995/02/25 03:01:55 cgd Exp $	*/
-
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -31,10 +28,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)rpc_dtablesize.c 1.2 87/08/11 Copyr 1987 Sun Micro";*/
-/*static char *sccsid = "from: @(#)rpc_dtablesize.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$OpenBSD: rpc_dtablesize.c,v 1.3 1996/08/13 06:37:42 deraadt Exp $";
-#endif
+static char *rcsid = "$OpenBSD: rpc_dtablesize.c,v 1.4 1996/08/19 08:31:48 tholo Exp $";
+#endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 

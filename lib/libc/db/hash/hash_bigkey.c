@@ -1,5 +1,3 @@
-/*	$NetBSD: hash_bigkey.c,v 1.6 1996/05/03 21:43:49 cgd Exp $	*/
-
 /*-
  * Copyright (c) 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -37,11 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)hash_bigkey.c	8.3 (Berkeley) 5/31/94";
-#else
-static char rcsid[] = "$NetBSD: hash_bigkey.c,v 1.6 1996/05/03 21:43:49 cgd Exp $";
-#endif
+static char rcsid[] = "$OpenBSD: hash_bigkey.c,v 1.3 1996/08/19 08:20:34 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*

@@ -1,5 +1,3 @@
-/*	$NetBSD: setjmp.S,v 1.1 1995/02/10 17:50:26 cgd Exp $	*/
-
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -28,6 +26,11 @@
  */
 
 #include "DEFS.h"
+
+#if defined(LIBC_SCCS)
+	.text
+	.asciz "$OpenBSD: setjmp.S,v 1.2 1996/08/19 08:10:45 tholo Exp $"
+#endif
 
 /*
  * C library -- setjmp, longjmp

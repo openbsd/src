@@ -1,5 +1,3 @@
-/*	$NetBSD: nsap_addr.c,v 1.1 1996/02/02 15:22:24 mrg Exp $	*/
-
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,11 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char rcsid[] = "$Id: lib-libc-net,v 8.1 1995/12/22 21:59:52 vixie Exp ";
-#else
-static char rcsid[] = "$NetBSD: nsap_addr.c,v 1.1 1996/02/02 15:22:24 mrg Exp $";
-#endif
+static char rcsid[] = "$OpenBSD: nsap_addr.c,v 1.2 1996/08/19 08:29:32 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>

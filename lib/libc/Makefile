@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1996/06/03 22:20:31 niklas Exp $
-#	$NetBSD: Makefile,v 1.47 1995/11/23 02:20:59 jtc Exp $
+#	$OpenBSD: Makefile,v 1.6 1996/08/19 08:10:10 tholo Exp $
 #
 # All library objects contain sccsid strings by default; they may be
 # excluded as a space-saving measure.  To produce a library that does

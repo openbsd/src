@@ -1,5 +1,3 @@
-/*	$NetBSD: isctype.c,v 1.13 1995/02/27 04:34:43 cgd Exp $	*/
-
 /*
  * Copyright (c) 1989 The Regents of the University of California.
  * All rights reserved.
@@ -39,11 +37,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)isctype.c	5.2 (Berkeley) 6/1/90";
-#else
-static char rcsid[] = "$NetBSD: isctype.c,v 1.13 1995/02/27 04:34:43 cgd Exp $";
-#endif
+static char rcsid[] = "$OpenBSD: isctype.c,v 1.2 1996/08/19 08:24:38 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #define _ANSI_LIBRARY

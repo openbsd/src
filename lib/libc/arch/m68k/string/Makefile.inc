@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 1995/10/21 20:24:48 jtc Exp $
+#	$OpenBSD: Makefile.inc,v 1.4 1996/08/19 08:15:05 tholo Exp $
 
 SRCS+=	bcmp.S bcopy.S bzero.S ffs.S index.S memchr.c memcmp.S memset.S \
 	rindex.S strcat.S strcmp.S strcpy.S strcspn.c strlen.S \

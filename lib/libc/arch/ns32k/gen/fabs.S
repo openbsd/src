@@ -13,15 +13,13 @@
  * LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE
  * USE OF THIS SOFTWARE.
  */
-/*
- * HISTORY
- * 29-Apr-92  Johannes Helander (jvh) at Helsinki University of Technology
- *	Created.
- *
- * 	$Id: fabs.S,v 1.1.1.1 1995/10/18 08:41:36 deraadt Exp $
- */
 
 #include <machine/asm.h>
+
+#if defined(LIBC_SCCS)
+	.text
+	.asciz "$OpenBSD: fabs.S,v 1.2 1996/08/19 08:16:39 tholo Exp $"
+#endif /* LIBC_SCCS */
 
 ENTRY(fabs)
 	absl	S_ARG0,f0

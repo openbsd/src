@@ -1,6 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.5 1996/08/16 09:47:01 mickey Exp $
-#	$NetBSD: Makefile.inc,v 1.24 1996/02/02 15:22:14 mrg Exp $
-#	@(#)Makefile.inc	8.2 (Berkeley) 9/5/93
+#	$OpenBSD: Makefile.inc,v 1.6 1996/08/19 08:28:32 tholo Exp $
 
 # net sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/net ${.CURDIR}/net

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 1995/04/25 21:22:17 christos Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 1996/08/19 08:34:34 tholo Exp $
 
 .PATH:	${.CURDIR}/termios
 

@@ -31,10 +31,10 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-	/* .asciz "@(#)modf.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: modf.S,v 1.1 1995/04/17 12:23:45 ragge Exp $"
-#endif /* LIBC_SCCS and not lint */
+#if defined(LIBC_SCCS)
+	.text
+	.asciz "$OpenBSD: modf.S,v 1.2 1996/08/19 08:18:28 tholo Exp $"
+#endif /* LIBC_SCCS */
 
 /*
  * double modf (value, iptr)

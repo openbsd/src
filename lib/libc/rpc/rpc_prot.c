@@ -1,6 +1,3 @@
-/*	$OpenBSD: rpc_prot.c,v 1.2 1996/07/20 06:12:39 deraadt Exp $	*/
-/*	$NetBSD: rpc_prot.c,v 1.3 1995/04/29 05:26:35 cgd Exp $	*/
-
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -31,10 +28,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)rpc_prot.c 1.36 87/08/11 Copyr 1984 Sun Micro";*/
-/*static char *sccsid = "from: @(#)rpc_prot.c	2.3 88/08/07 4.0 RPCSRC";*/
-static char *rcsid = "$OpenBSD: rpc_prot.c,v 1.2 1996/07/20 06:12:39 deraadt Exp $";
-#endif
+static char *rcsid = "$OpenBSD: rpc_prot.c,v 1.3 1996/08/19 08:31:49 tholo Exp $";
+#endif /* LIBC_SCCS and not lint */
 
 /*
  * rpc_prot.c

@@ -1,4 +1,3 @@
-/*	$NetBSD: memset.S,v 1.1 1996/05/19 15:57:49 ragge Exp $	*/
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,9 +31,10 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-	.asciz "@(#)memset.s	8.1 (Berkeley) 6/4/93"
-#endif /* LIBC_SCCS and not lint */
+#if defined(LIBC_SCCS)
+	.text
+	.asciz "$OpenBSD: memset.S,v 1.2 1996/08/19 08:18:53 tholo Exp $"
+#endif /* LIBC_SCCS */
 
 /* void *memset(base, c, length) */
 

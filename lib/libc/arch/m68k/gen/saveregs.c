@@ -36,8 +36,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char sccsid[] = "from: @(#)saveregs.c	5.2 (Berkeley) 6/22/90";*/
-static char rcsid[] = "$Id: saveregs.c,v 1.1.1.1 1995/10/18 08:41:29 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: saveregs.c,v 1.2 1996/08/19 08:14:39 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 __builtin_saveregs()

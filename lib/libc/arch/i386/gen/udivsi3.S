@@ -32,16 +32,13 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	from: @(#)udivsi3.s	5.1 (Berkeley) 5/15/90
- *	$Id: udivsi3.S,v 1.2 1995/12/30 08:15:43 deraadt Exp $
  */
 
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: udivsi3.S,v 1.2 1995/12/30 08:15:43 deraadt Exp $"
+	.asciz "$OpenBSD: udivsi3.S,v 1.3 1996/08/19 08:12:35 tholo Exp $"
 #endif
 
 ENTRY(__udivsi3)

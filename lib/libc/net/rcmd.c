@@ -1,5 +1,3 @@
-/*	$NetBSD: rcmd.c,v 1.12 1995/06/03 22:33:34 mycroft Exp $	*/
-
 /*
  * Copyright (c) 1983, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -34,11 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
-#else
-static char *rcsid = "$NetBSD: rcmd.c,v 1.12 1995/06/03 22:33:34 mycroft Exp $";
-#endif
+static char *rcsid = "$OpenBSD: rcmd.c,v 1.11 1996/08/19 08:29:39 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>

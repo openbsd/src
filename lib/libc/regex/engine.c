@@ -1,5 +1,3 @@
-/*	$NetBSD: engine.c,v 1.5 1995/02/27 13:28:39 cgd Exp $	*/
-
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -35,9 +33,11 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)engine.c	8.5 (Berkeley) 3/20/94
  */
+
+#if defined(SNAMES) && defined(LIBC_SCCS) && !defined(lint)
+static char enginercsid[] = "$OpenBSD: engine.c,v 1.2 1996/08/19 08:31:06 tholo Exp $";
+#endif /* SNAMES and LIBC_SCCS and not lint */
 
 /*
  * The matching engine and friends.  This file is #included by regexec.c

@@ -1,5 +1,3 @@
-/*	$OpenBSD: strcpy.c,v 1.3 1996/05/01 12:57:49 deraadt Exp $	*/
-
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -34,8 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)strcpy.c	5.7 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: strcpy.c,v 1.3 1996/05/01 12:57:49 deraadt Exp $";
+static char *rcsid = "$OpenBSD: strcpy.c,v 1.4 1996/08/19 08:34:14 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef _KERNEL

@@ -1,5 +1,3 @@
-/*	$NetBSD: recno.h,v 1.5 1996/05/03 21:38:55 cgd Exp $	*/
-
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)recno.h	8.1 (Berkeley) 6/4/93
+ *	$OpenBSD: recno.h,v 1.3 1996/08/19 08:21:13 tholo Exp $
  */
 
 enum SRCHOP { SDELETE, SINSERT, SEARCH};	/* Rec_search operation. */

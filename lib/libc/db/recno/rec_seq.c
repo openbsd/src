@@ -1,5 +1,3 @@
-/*	$NetBSD: rec_seq.c,v 1.7 1996/05/03 21:38:53 cgd Exp $	*/
-
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -34,11 +32,7 @@
  */
 
 #ifndef lint
-#if 0
-static char sccsid[] = "@(#)rec_seq.c	8.3 (Berkeley) 7/14/94";
-#else
-static char rcsid[] = "$NetBSD: rec_seq.c,v 1.7 1996/05/03 21:38:53 cgd Exp $";
-#endif
+static char rcsid[] = "$OpenBSD: rec_seq.c,v 1.3 1996/08/19 08:21:10 tholo Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>

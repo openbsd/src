@@ -1,5 +1,3 @@
-/*	$OpenBSD: yp_bind.c,v 1.5 1996/08/05 13:38:54 deraadt Exp $	 */
-
 /*
  * Copyright (c) 1996 Theo de Raadt <deraadt@theos.com>
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
@@ -33,8 +31,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: yp_bind.c,v 1.5 1996/08/05 13:38:54 deraadt Exp $";
-#endif
+static char *rcsid = "$OpenBSD: yp_bind.c,v 1.6 1996/08/19 08:35:08 tholo Exp $";
+#endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <sys/types.h>

@@ -1,5 +1,3 @@
-/*	$OpenBSD: strftime.c,v 1.5 1996/06/10 06:19:33 deraadt Exp $	*/
-
 /*
  * Copyright (c) 1989 The Regents of the University of California.
  * All rights reserved.
@@ -34,8 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)strftime.c	5.11 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: strftime.c,v 1.5 1996/06/10 06:19:33 deraadt Exp $";
+static char *rcsid = "$OpenBSD: strftime.c,v 1.6 1996/08/19 08:34:18 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>

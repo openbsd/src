@@ -33,14 +33,12 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * from: Header: fabs.s,v 1.4 91/10/07 23:59:05 torek Exp
- * $Id: fabs.S,v 1.1.1.1 1995/10/18 08:41:40 deraadt Exp $
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-	.asciz "@(#)fabs.s	8.1 (Berkeley) 6/4/93"
-#endif /* LIBC_SCCS and not lint */
+#if defined(LIBC_SCCS) 
+	.text
+	.asciz "$OpenBSD: fabs.S,v 1.2 1996/08/19 08:17:26 tholo Exp $"
+#endif /* LIBC_SCCS */
 
 /* fabs - floating absolute value */
 
@@ -50,4 +48,4 @@ ENTRY(fabs)
 	std	%o0, [%sp + 32]		! return value => %f0:f1
 	ldd	[%sp + 32], %f0		! (via kernel %o0/%o1 slot)
 	retl
-	 fabss	%f0, %f0		! return absolute value
+	fabss	%f0, %f0		! return absolute value

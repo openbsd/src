@@ -13,29 +13,13 @@
  * LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE
  * USE OF THIS SOFTWARE.
  */
-/*
- * HISTORY
- * 29-Apr-92  Tero Kivinen (kivinen) at Helsinki University of Technology
- *	Created.
- *
- * 	$Id: frexp.S,v 1.1.1.1 1995/10/18 08:41:37 deraadt Exp $
- */
-
-/*
-     double frexp(value, eptr)
-     double value;
-     int *eptr;
-
-     The frexp subroutine returns the mantissa of a double value
-     as a double quantity, x, of magnitude less than one and
-     greater than or equal to 0.5 (0.5 <= |x| < 1) and stores an
-     integer n such that value = x*2**n indirectly through eptr.
-
-     One exception: if the given value is 0, then x and *eptr are made
-     zero. 
-*/
 
 #include <machine/asm.h>
+
+#if defined(LIBC_SCCS)
+	.text
+	.asciz "$OpenBSD: frexp.S,v 1.2 1996/08/19 08:16:47 tholo Exp $"
+#endif /* LIBC_SCCS */
 
 ENTRY(frexp)
 	enter	[],8

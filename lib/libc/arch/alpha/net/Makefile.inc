@@ -1,3 +1,3 @@
-#	$NetBSD: Makefile.inc,v 1.2 1996/04/17 22:36:42 cgd Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 1996/08/19 08:10:49 tholo Exp $
 
 SRCS+=  htonl.S htons.S ntohl.S ntohs.S

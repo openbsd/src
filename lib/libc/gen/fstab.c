@@ -1,6 +1,3 @@
-/*	$OpenBSD: fstab.c,v 1.2 1996/04/21 23:39:19 deraadt Exp $	*/
-/*	$NetBSD: fstab.c,v 1.8 1996/04/03 19:48:56 jtc Exp $	*/
-
 /*
  * Copyright (c) 1980, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,11 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)fstab.c	8.1 (Berkeley) 6/4/93";
-#else
-static char rcsid[] = "$NetBSD: fstab.c,v 1.8 1996/04/03 19:48:56 jtc Exp $";
-#endif
+static char rcsid[] = "$OpenBSD: fstab.c,v 1.3 1996/08/19 08:22:51 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

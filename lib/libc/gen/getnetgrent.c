@@ -1,5 +1,3 @@
-/*	$NetBSD: getnetgrent.c,v 1.9 1996/04/27 18:59:05 christos Exp $	*/
-
 /*
  * Copyright (c) 1994 Christos Zoulas
  * All rights reserved.
@@ -32,7 +30,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$NetBSD: getnetgrent.c,v 1.9 1996/04/27 18:59:05 christos Exp $";
+static char *rcsid = "$OpenBSD: getnetgrent.c,v 1.3 1996/08/19 08:23:49 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

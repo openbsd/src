@@ -36,10 +36,10 @@
  * SUCH DAMAGE.
  */
 
-#if defined(SYSLIBC_SCCS) && !defined(lint)
-	/* .asciz "@(#)syscall.s	8.2 (Berkeley) 1/21/94" */
-	.asciz "$NetBSD: syscall.S,v 1.1 1995/04/17 12:24:11 ragge Exp $"
-#endif /* SYSLIBC_SCCS and not lint */
+#if defined(SYSLIBC_SCCS)
+	.text
+	.asciz "$OpenBSD: syscall.S,v 1.2 1996/08/19 08:19:11 tholo Exp $"
+#endif /* SYSLIBC_SCCS */
 
 #include "SYS.h"
 

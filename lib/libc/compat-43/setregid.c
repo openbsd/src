@@ -29,10 +29,11 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	from: @(#)kern_prot.c	7.21 (Berkeley) 5/3/91
- *	$Id: setregid.c,v 1.1.1.1 1995/10/18 08:41:46 deraadt Exp $
  */
+
+#if defined(LIBC_SCCS) && !defined(lint)
+static char *rcsid = "$OpenBSD: setregid.c,v 1.2 1996/08/19 08:19:31 tholo Exp $";
+#endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <unistd.h>

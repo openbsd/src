@@ -1,6 +1,3 @@
-/*	$OpenBSD: auth_none.c,v 1.2 1996/07/20 06:12:16 deraadt Exp $	*/
-/*	$NetBSD: auth_none.c,v 1.3 1995/02/25 03:01:34 cgd Exp $	*/
-
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -31,10 +28,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)auth_none.c 1.19 87/08/11 Copyr 1984 Sun Micro";*/
-/*static char *sccsid = "from: @(#)auth_none.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$OpenBSD: auth_none.c,v 1.2 1996/07/20 06:12:16 deraadt Exp $";
-#endif
+static char *rcsid = "$OpenBSD: auth_none.c,v 1.3 1996/08/19 08:31:20 tholo Exp $";
+#endif /* LIBC_SCCS and not lint */
 
 /*
  * auth_none.c

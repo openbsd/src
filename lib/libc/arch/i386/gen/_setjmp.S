@@ -32,16 +32,13 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	from: @(#)_setjmp.s	5.1 (Berkeley) 4/23/90
- *	$Id: _setjmp.S,v 1.2 1995/12/30 08:15:39 deraadt Exp $
  */
 
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: _setjmp.S,v 1.2 1995/12/30 08:15:39 deraadt Exp $"
+	.asciz "$OpenBSD: _setjmp.S,v 1.3 1996/08/19 08:12:14 tholo Exp $"
 #endif
 
 /*

@@ -1,5 +1,4 @@
-#	$NetBSD: README,v 1.4 1996/05/03 21:43:44 cgd Exp $
-#	@(#)README	8.1 (Berkeley) 6/4/93
+#	$OpenBSD: README,v 1.3 1996/08/19 08:20:28 tholo Exp $
 
 This package implements a superset of the hsearch and dbm/ndbm libraries.
 

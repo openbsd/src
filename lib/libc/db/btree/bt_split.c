@@ -1,5 +1,3 @@
-/*	$NetBSD: bt_split.c,v 1.6 1996/05/03 21:50:56 cgd Exp $	*/
-
 /*-
  * Copyright (c) 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -37,11 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)bt_split.c	8.9 (Berkeley) 7/26/94";
-#else
-static char rcsid[] = "$NetBSD: bt_split.c,v 1.6 1996/05/03 21:50:56 cgd Exp $";
-#endif
+static char rcsid[] = "$OpenBSD: bt_split.c,v 1.3 1996/08/19 08:20:16 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

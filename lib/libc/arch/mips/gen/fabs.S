@@ -1,4 +1,3 @@
-/*	$OpenBSD: fabs.S,v 1.3 1996/07/30 20:27:50 pefo Exp $	*/
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,12 +36,10 @@
 
 #include <machine/asm.h>
 
-#if defined(LIBC_SCCS) && !defined(lint)
-	ASMSTR("from: @(#)fabs.s	8.1 (Berkeley) 2/16/94")
-	ASMSTR("$Id: fabs.S,v 1.3 1996/07/30 20:27:50 pefo Exp $")
-#endif /* LIBC_SCCS and not lint */
-
-
+#if defined(LIBC_SCCS) 
+	.text
+	.asciz "$OpenBSD: fabs.S,v 1.4 1996/08/19 08:15:52 tholo Exp $"
+#endif /* LIBC_SCCS */
 
 /*
  * fabs(x)

@@ -1,5 +1,3 @@
-/* $NetBSD: cerror.S,v 1.2.4.1 1996/06/16 13:16:01 mark Exp $ */
-
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -31,12 +29,14 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	from: @(#)cerror.s	5.1 (Berkeley) 4/23/90
- *	$Id: cerror.S,v 1.3 1996/06/23 10:08:29 deraadt Exp $
  */
 
 #include "SYS.h"
+
+#if defined(SYSLIBC_SCCS)
+	.text
+	.asciz "$OpenBSD: cerror.S,v 1.4 1996/08/19 08:11:53 tholo Exp $"
+#endif /* SYSLIBC_SCCS */
 
 	.text
 	.align	0

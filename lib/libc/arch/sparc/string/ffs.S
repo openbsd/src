@@ -33,14 +33,12 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * from: Header: ffs.s,v 1.3 92/07/07 00:23:57 torek Exp
- * $Id: ffs.S,v 1.1.1.1 1995/10/18 08:41:41 deraadt Exp $
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-	.asciz "@(#)ffs.s	8.1 (Berkeley) 6/4/93"
-#endif  /* LIBC_SCCS and not lint */
+#if defined(LIBC_SCCS) 
+	.text
+	.asciz "$OpenBSD: ffs.S,v 1.2 1996/08/19 08:17:58 tholo Exp $"
+#endif /* LIBC_SCCS */
 
 #include "DEFS.h"
 

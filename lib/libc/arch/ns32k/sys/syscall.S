@@ -13,15 +13,13 @@
  * LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE
  * USE OF THIS SOFTWARE.
  */
-/*
- * HISTORY
- * 29-Apr-92  Johannes Helander (jvh) at Helsinki University of Technology
- *	Created.
- *
- *	$Id: syscall.S,v 1.1.1.1 1995/10/18 08:41:39 deraadt Exp $
- */
 
 #include "SYS.h"
+
+#if defined(SYSLIBC_SCCS)
+	.text
+	.asciz "$OpenBSD: syscall.S,v 1.2 1996/08/19 08:17:19 tholo Exp $"
+#endif /* SYSLIBC_SCCS */
 
 ENTRY(syscall)
 	movqd	0, r0	/* Tell system this is syscall! */

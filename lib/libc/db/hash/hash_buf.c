@@ -1,5 +1,3 @@
-/*	$NetBSD: hash_buf.c,v 1.6 1996/05/03 21:43:51 cgd Exp $	*/
-
 /*-
  * Copyright (c) 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -37,11 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)hash_buf.c	8.5 (Berkeley) 7/15/94";
-#else
-static char rcsid[] = "$NetBSD: hash_buf.c,v 1.6 1996/05/03 21:43:51 cgd Exp $";
-#endif
+static char rcsid[] = "$OpenBSD: hash_buf.c,v 1.3 1996/08/19 08:20:35 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*

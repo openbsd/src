@@ -1,5 +1,4 @@
-#	$NetBSD: WHATSNEW,v 1.6 1995/02/27 13:28:25 cgd Exp $
-# @(#)WHATSNEW	8.3 (Berkeley) 3/18/94
+#	$OpenBSD: WHATSNEW,v 1.2 1996/08/19 08:31:03 tholo Exp $
 
 New in alpha3.4:  The complex bug alluded to below has been fixed (in a
 slightly kludgey temporary way that may hurt efficiency a bit; this is

@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.2 1995/12/12 15:21:31 ragge Exp $ */
+/*	$OpenBSD: SYS.h,v 1.3 1996/08/19 08:18:18 tholo Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +30,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)SYS.h	8.1 (Berkeley) 6/4/93
  */
 
 #include <sys/syscall.h>

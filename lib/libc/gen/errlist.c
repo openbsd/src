@@ -1,5 +1,3 @@
-/*	$NetBSD: errlist.c,v 1.4 1995/02/25 13:40:51 cgd Exp $	*/
-
 /*
  * Copyright (c) 1982, 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,11 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)errlst.c	8.2 (Berkeley) 11/16/93";
-#else
-static char *rcsid = "$NetBSD: errlist.c,v 1.4 1995/02/25 13:40:51 cgd Exp $";
-#endif
+static char *rcsid = "$OpenBSD: errlist.c,v 1.2 1996/08/19 08:22:32 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 const char *const _sys_errlist[] = {

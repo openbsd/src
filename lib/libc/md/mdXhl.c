@@ -5,10 +5,11 @@
  * can do whatever you want with this stuff. If we meet some day, and you think
  * this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
  * ----------------------------------------------------------------------------
- *
- * $OpenBSD: mdXhl.c,v 1.1 1996/06/03 22:20:44 niklas Exp $
- *
  */
+
+#if defined(LIBC_SCCS) && !defined(lint)
+static char rcsid[] = "$OpenBSD: mdXhl.c,v 1.2 1996/08/19 08:28:30 tholo Exp $";
+#endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
 #include <stdio.h>

@@ -33,14 +33,12 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * from: Header: ntohl.s,v 1.1 92/06/25 12:47:06 torek Exp
- * $Id: ntohl.S,v 1.1.1.1 1995/10/18 08:41:41 deraadt Exp $
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-	.asciz "@(#)ntohl.s	8.1 (Berkeley) 6/4/93"
-#endif /* LIBC_SCCS and not lint */
+#if defined(LIBC_SCCS) 
+	.text
+	.asciz "$OpenBSD: ntohl.S,v 1.2 1996/08/19 08:17:51 tholo Exp $"
+#endif /* LIBC_SCCS */
 
 /* hostorder = ntohl(netorder) */
 
@@ -48,4 +46,4 @@
 
 ENTRY(ntohl)
 	retl
-	 nop
+	nop

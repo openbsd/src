@@ -1,10 +1,6 @@
-/*	$NetBSD: difftime.c,v 1.3 1996/01/20 02:30:46 jtc Exp $	*/
-
-#ifndef lint
-#ifndef NOID
-static char	elsieid[] = "@(#)difftime.c	7.6";
-#endif /* !defined NOID */
-#endif /* !defined lint */
+#if defined(LIBC_SCCS) && !defined(lint)
+static char rcsid[] = "$OpenBSD: difftime.c,v 1.3 1996/08/19 08:34:48 tholo Exp $";
+#endif /* LIBC_SCCS and not lint */
 
 /*LINTLIBRARY*/
 

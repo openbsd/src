@@ -3,6 +3,10 @@
  * Public domain.
  */
 
+#if defined(LIBC_SCCS) && !defined(lint)
+static char rcsid[] = "$OpenBSD: _sys_siglist.c,v 1.2 1996/08/19 08:21:27 tholo Exp $";
+#endif /* LIBC_SCCS and not lint */
+
 #include <sys/cdefs.h>
 
 #ifdef __indr_reference

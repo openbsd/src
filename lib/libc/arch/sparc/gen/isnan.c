@@ -33,13 +33,10 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * from: Header: isnan.c,v 1.1 91/07/08 19:03:34 torek Exp
- * $Id: isnan.c,v 1.2 1996/02/24 09:12:48 niklas Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)isnan.c	8.1 (Berkeley) 6/4/93";
+static char rcsid[] = "$OpenBSD: isnan.c,v 1.3 1996/08/19 08:17:39 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

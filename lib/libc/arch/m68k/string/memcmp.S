@@ -1,5 +1,3 @@
-/*	$NetBSD: memcmp.S,v 1.7 1995/11/28 23:40:55 thorpej Exp $	*/
-
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -39,13 +37,10 @@
 
 #include "DEFS.h"
 
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-	RCSID("from: @(#)bcmp.s	5.1 (Berkeley) 5/12/90")
-#else
-	RCSID("$NetBSD: memcmp.S,v 1.7 1995/11/28 23:40:55 thorpej Exp $")
-#endif
-#endif /* LIBC_SCCS and not lint */
+#if defined(LIBC_SCCS)
+	.text
+	.asciz "$OpenBSD: memcmp.S,v 1.3 1996/08/19 08:15:12 tholo Exp $"
+#endif /* LIBC_SCCS */
 
 /* memcmp(s1, s2, n) */
 

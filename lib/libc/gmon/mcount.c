@@ -1,5 +1,3 @@
-/*	$NetBSD: mcount.c,v 1.3.6.2 1996/06/12 04:20:17 cgd Exp $	*/
-
 /*-
  * Copyright (c) 1983, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,11 +32,7 @@
  */
 
 #if !defined(lint) && !defined(_KERNEL) && defined(LIBC_SCCS)
-#if 0
-static char sccsid[] = "@(#)mcount.c	8.1 (Berkeley) 6/4/93";
-#else
-static char rcsid[] = "$NetBSD: mcount.c,v 1.3.6.2 1996/06/12 04:20:17 cgd Exp $";
-#endif
+static char rcsid[] = "$OpenBSD: mcount.c,v 1.4 1996/08/19 08:28:04 tholo Exp $";
 #endif
 
 #include <sys/param.h>

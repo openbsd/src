@@ -36,7 +36,8 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: bcopy.S,v 1.5 1995/04/28 22:57:57 jtc Exp $")
+	.text
+	.asciz "$OpenBSD: bcopy.S,v 1.2 1996/08/19 08:12:54 tholo Exp $"
 #endif
 
 	/*

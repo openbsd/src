@@ -1,4 +1,3 @@
-/*	$OpenBSD: cerror.S,v 1.3 1996/07/30 20:27:57 pefo Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,11 +36,10 @@
 
 #include "SYS.h"
 
-#if defined(LIBC_SCCS) && !defined(lint)
-	ASMSTR("from: @(#)cerror.s	8.1 (Berkeley) 6/16/93")
-	ASMSTR("$Id: cerror.S,v 1.3 1996/07/30 20:27:57 pefo Exp $")
-#endif /* LIBC_SCCS and not lint */
-
+#if defined(SYSLIBC_SCCS)
+	.text
+	.asciz "$OpenBSD: cerror.S,v 1.4 1996/08/19 08:16:20 tholo Exp $"
+#endif /* SYSLIBC_SCCS */
 
 	.globl	_C_LABEL(errno)
 LEAF(cerror)

@@ -1,6 +1,3 @@
-/*	$OpenBSD: get_myaddress.c,v 1.4 1996/07/20 06:12:26 deraadt Exp $	*/
-/*	$NetBSD: get_myaddress.c,v 1.3 1996/01/04 20:05:04 pk Exp $	*/
-
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -31,10 +28,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)get_myaddress.c 1.4 87/08/11 Copyr 1984 Sun Micro";*/
-/*static char *sccsid = "from: @(#)get_myaddress.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$OpenBSD: get_myaddress.c,v 1.4 1996/07/20 06:12:26 deraadt Exp $";
-#endif
+static char *rcsid = "$OpenBSD: get_myaddress.c,v 1.5 1996/08/19 08:31:31 tholo Exp $";
+#endif /* LIBC_SCCS and not lint */
 
 /*
  * get_myaddress.c

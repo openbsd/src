@@ -1,4 +1,7 @@
-/*	$NetBSD: memcpy.S,v 1.1 1995/08/13 00:40:47 cgd Exp $	*/
+#if defined(LIBC_SCCS)
+	.text
+	.asciz "$OpenBSD: memcpy.S,v 1.2 1996/08/19 08:11:00 tholo Exp $"
+#endif
 
 #define MEMCOPY
 #include "bcopy.S"

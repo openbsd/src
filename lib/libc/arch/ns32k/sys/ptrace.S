@@ -13,19 +13,13 @@
  * LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE
  * USE OF THIS SOFTWARE.
  */
-/*
- * HISTORY
- * 29-Apr-92  Johannes Helander (jvh) at Helsinki University of Technology
- *	Created.
- *
- *	$Id: ptrace.S,v 1.1.1.1 1995/10/18 08:41:39 deraadt Exp $
- */
-
-/* 
- * This is included for the NetBSD version!
- */
 
 #include "SYS.h"
+
+#if defined(SYSLIBC_SCCS)
+	.text
+	.asciz "$OpenBSD: ptrace.S,v 1.2 1996/08/19 08:17:10 tholo Exp $"
+#endif /* SYSLIBC_SCCS */
 
 	.globl	_errno
 	.globl	cerror

@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)setlocale.c	8.1 (Berkeley) 7/4/93";
+static char rcsid[] = "$OpenBSD: setlocale.c,v 1.2 1996/08/19 08:28:24 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>

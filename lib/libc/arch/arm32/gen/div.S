@@ -1,5 +1,3 @@
-/* $NetBSD: div.S,v 1.2 1996/05/12 20:52:09 mark Exp $ */
-
 /*
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,6 +26,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#if defined(LIBC_SCCS)
+	.text
+	.asciz "$OpenBSD: div.S,v 1.3 1996/08/19 08:11:31 tholo Exp $"
+#endif
 
 ip	.req	r12
 sp	.req	r13

@@ -33,14 +33,12 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * from: Header: mul.s,v 1.5 92/06/25 13:24:03 torek Exp
- * $Id: mul.S,v 1.1.1.1 1995/10/18 08:41:40 deraadt Exp $
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-	.asciz "@(#)mul.s	8.1 (Berkeley) 6/4/93"
-#endif /* LIBC_SCCS and not lint */
+#if defined(LIBC_SCCS) 
+	.text
+	.asciz "$OpenBSD: mul.S,v 1.2 1996/08/19 08:17:42 tholo Exp $"
+#endif /* LIBC_SCCS */
 
 /*
  * Signed multiply, from Appendix E of the Sparc Version 8

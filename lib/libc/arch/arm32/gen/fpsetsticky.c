@@ -1,5 +1,3 @@
-/* $NetBSD: fpsetsticky.c,v 1.1 1996/05/12 20:29:37 mark Exp $ */
-
 /*
  * Copyright (c) 1996 Mark Brinicombe
  * All rights reserved.
@@ -30,6 +28,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#if defined(LIBC_SCCS) && !defined(lint)
+static char *rcsid = "$OpenBSD: fpsetsticky.c,v 1.2 1996/08/19 08:11:39 tholo Exp $";
+#endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <ieeefp.h>

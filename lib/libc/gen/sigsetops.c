@@ -1,5 +1,3 @@
-/*	$NetBSD: sigsetops.c,v 1.10 1995/03/04 01:56:07 cgd Exp $	*/
-
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,11 +34,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)sigsetops.c	8.1 (Berkeley) 6/4/93";
-#else
-static char rcsid[] = "$NetBSD: sigsetops.c,v 1.10 1995/03/04 01:56:07 cgd Exp $";
-#endif
+static char rcsid[] = "$OpenBSD: sigsetops.c,v 1.2 1996/08/19 08:26:16 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <errno.h>

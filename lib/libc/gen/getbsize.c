@@ -1,5 +1,3 @@
-/*	$NetBSD: getbsize.c,v 1.8 1996/01/22 16:34:08 mycroft Exp $	*/
-
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,11 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)getbsize.c	8.1 (Berkeley) 6/4/93";
-#else
-static char rcsid[] = "$NetBSD: getbsize.c,v 1.8 1996/01/22 16:34:08 mycroft Exp $";
-#endif
+static char rcsid[] = "$OpenBSD: getbsize.c,v 1.3 1996/08/19 08:23:04 tholo Exp $";
 #endif /* not lint */
 
 #include <err.h>

@@ -1,9 +1,11 @@
-/*	$OpenBSD: _vwarn.c,v 1.2 1996/04/21 23:39:10 deraadt Exp $	*/
-
 /*
  * J.T. Conklin, December 12, 1994
  * Public Domain
  */
+
+#if defined(LIBC_SCCS) && !defined(lint)
+static char rcsid[] = "$OpenBSD: _vwarn.c,v 1.3 1996/08/19 08:21:33 tholo Exp $";
+#endif /* LIBC_SCCS and not lint */
 
 #include <sys/cdefs.h>
 

@@ -1,5 +1,3 @@
-/* $NetBSD: reboot.S,v 1.2 1996/05/12 19:55:21 mark Exp $ */
-
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -31,12 +29,14 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	from: @(#)reboot.s	5.1 (Berkeley) 4/23/90
- *	$Id: reboot.S,v 1.2 1996/05/22 11:39:22 deraadt Exp $
  */
 
 #include "SYS.h"
+
+#if defined(SYSLIBC_SCCS)
+	.text
+	.asciz "$OpenBSD: reboot.S,v 1.3 1996/08/19 08:11:58 tholo Exp $"
+#endif /* SYSLIBC_SCCS */
 
 SYSCALL(reboot)
 	mov	r15, r14

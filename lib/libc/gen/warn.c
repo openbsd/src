@@ -1,6 +1,3 @@
-/*	$OpenBSD: warn.c,v 1.1 1996/04/21 23:39:37 deraadt Exp $ */
-/*	$NetBSD: warn.c,v 1.1 1996/04/15 23:45:42 jtc Exp $	*/
-
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,11 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 6/4/93";
-#else
-static char rcsid[] = "$NetBSD: warn.c,v 1.1 1996/04/15 23:45:42 jtc Exp $";
-#endif
+static char rcsid[] = "$OpenBSD: warn.c,v 1.2 1996/08/19 08:27:48 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <err.h>

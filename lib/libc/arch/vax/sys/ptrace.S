@@ -31,10 +31,10 @@
  * SUCH DAMAGE.
  */
 
-#if defined(SYSLIBC_SCCS) && !defined(lint)
-	/* .asciz "@(#)ptrace.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: ptrace.S,v 1.1 1995/04/17 12:24:03 ragge Exp $"
-#endif /* SYSLIBC_SCCS and not lint */
+#if defined(SYSLIBC_SCCS)
+	.text
+	.asciz "$OpenBSD: ptrace.S,v 1.2 1996/08/19 08:19:02 tholo Exp $"
+#endif /* SYSLIBC_SCCS */
 
 #include "SYS.h"
 

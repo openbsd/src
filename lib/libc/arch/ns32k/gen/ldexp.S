@@ -13,28 +13,13 @@
  * LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE
  * USE OF THIS SOFTWARE.
  */
-/*
- * HISTORY
- * 29-Apr-92  Tero Kivinen (kivinen) at Helsinki University of Technology
- *	Created.
- *
- *	$Id: ldexp.S,v 1.1.1.1 1995/10/18 08:41:37 deraadt Exp $
- */
-
-/*
- * double ldexp (value, exp)
- * double value;
- * int exp;
- *
- * Ldexp returns value*2**exp, if that result is in range.
- * If underflow occurs, it returns zero.  If overflow occurs,
- * it returns a value of appropriate sign and largest
- * possible magnitude.  In case of either overflow or underflow,
- * errno is set to ERANGE.  Note that errno is not modified if
- * no error occurs.
- */
 
 #include <machine/asm.h>
+
+#if defined(LIBC_SCCS)
+	.text
+	.asciz "$OpenBSD: ldexp.S,v 1.2 1996/08/19 08:16:49 tholo Exp $"
+#endif /* LIBC_SCCS */
 
 #define ERANGE 34
 

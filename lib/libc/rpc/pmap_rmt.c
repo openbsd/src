@@ -1,6 +1,3 @@
-/*	$OpenBSD: pmap_rmt.c,v 1.6 1996/08/15 07:27:49 deraadt Exp $	*/
-/*	$NetBSD: pmap_rmt.c,v 1.6 1995/06/03 22:37:25 mycroft Exp $	*/
-
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -31,10 +28,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)pmap_rmt.c 1.21 87/08/27 Copyr 1984 Sun Micro";*/
-/*static char *sccsid = "from: @(#)pmap_rmt.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$OpenBSD: pmap_rmt.c,v 1.6 1996/08/15 07:27:49 deraadt Exp $";
-#endif
+static char *rcsid = "$OpenBSD: pmap_rmt.c,v 1.7 1996/08/19 08:31:42 tholo Exp $";
+#endif /* LIBC_SCCS and not lint */
 
 /*
  * pmap_rmt.c

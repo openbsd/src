@@ -35,11 +35,10 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
+#if defined(LIBC_SCCS)
 	.text
-	/*.asciz "from: @(#)fabs.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: fabs.S,v 1.1.1.1 1995/10/18 08:41:28 deraadt Exp $"
-#endif /* LIBC_SCCS and not lint */
+	.asciz "$OpenBSD: fabs.S,v 1.2 1996/08/19 08:14:10 tholo Exp $"
+#endif /* LIBC_SCCS */
 
 /* fabs - floating absolute value */
 

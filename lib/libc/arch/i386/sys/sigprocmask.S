@@ -32,17 +32,14 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	from: @(#)sigprocmask.s	5.2 (Berkeley) 12/17/90
- *	$Id: sigprocmask.S,v 1.1.1.1 1995/10/18 08:41:27 deraadt Exp $
  */
 
-#if defined(SYSLIBC_SCCS) && !defined(lint)
-	.text
-	.asciz "$Id: sigprocmask.S,v 1.1.1.1 1995/10/18 08:41:27 deraadt Exp $"
-#endif /* SYSLIBC_SCCS and not lint */
-
 #include "SYS.h"
+
+#if defined(SYSLIBC_SCCS)
+        .text
+        .asciz "$OpenBSD: sigprocmask.S,v 1.2 1996/08/19 08:13:41 tholo Exp $"
+#endif /* SYSLIBC_SCCS */
 
 ENTRY(sigprocmask)
 	movl	8(%esp),%ecx		# fetch new sigset pointer

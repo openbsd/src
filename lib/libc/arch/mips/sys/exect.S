@@ -1,4 +1,3 @@
-/*	$OpenBSD: exect.S,v 1.3 1996/07/30 20:27:58 pefo Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,10 +36,10 @@
 
 #include "SYS.h"
 
-#if defined(LIBC_SCCS) && !defined(lint)
-	ASMSTR("from: @(#)exect.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: exect.S,v 1.3 1996/07/30 20:27:58 pefo Exp $")
-#endif /* LIBC_SCCS and not lint */
+#if defined(SYSLIBC_SCCS)
+	.text
+	.asciz "$OpenBSD: exect.S,v 1.4 1996/08/19 08:16:21 tholo Exp $"
+#endif /* SYSLIBC_SCCS */
 
 LEAF(exect)
 	.set	reorder

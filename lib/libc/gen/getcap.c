@@ -1,5 +1,3 @@
-/*	$NetBSD: getcap.c,v 1.10 1995/08/24 05:26:35 mycroft Exp $	*/
-
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,11 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
-#else
-static char rcsid[] = "$NetBSD: getcap.c,v 1.10 1995/08/24 05:26:35 mycroft Exp $";
-#endif
+static char rcsid[] = "$OpenBSD: getcap.c,v 1.2 1996/08/19 08:23:10 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

@@ -1,5 +1,3 @@
-/*	$OpenBSD: ipx_ntoa.c,v 1.1 1996/08/16 09:47:06 mickey Exp $	*/
-
 /*
  * Copyright (c) 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,9 +29,11 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * from	@(#)ipx_ntoa.c
  */
+
+#if defined(LIBC_SCCS) && !defined(lint)
+static char rcsid[] = "$OpenBSD: ipx_ntoa.c,v 1.2 1996/08/19 08:29:20 tholo Exp $";
+#endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <netipx/ipx.h>

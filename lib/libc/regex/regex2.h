@@ -1,4 +1,4 @@
-/*	$NetBSD: regex2.h,v 1.5 1995/02/27 13:29:40 cgd Exp $	*/
+/*	$OpenBSD: regex2.h,v 1.2 1996/08/19 08:31:14 tholo Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -35,8 +35,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)regex2.h	8.4 (Berkeley) 3/20/94
  */
 
 /*

@@ -1,5 +1,3 @@
-/*	$NetBSD: fgets.c,v 1.5 1995/03/25 02:50:04 jtc Exp $	*/
-
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,10 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)fgets.c	8.2 (Berkeley) 12/22/93";
-#endif
-static char rcsid[] = "$NetBSD: fgets.c,v 1.5 1995/03/25 02:50:04 jtc Exp $";
+static char rcsid[] = "$OpenBSD: fgets.c,v 1.2 1996/08/19 08:32:33 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>

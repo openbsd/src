@@ -1,10 +1,6 @@
-/*	$NetBSD: localtime.c,v 1.6 1996/01/20 02:31:04 jtc Exp $	*/
-
-#ifndef lint
-#ifndef NOID
-static char	elsieid[] = "@(#)localtime.c	7.53";
-#endif /* !defined NOID */
-#endif /* !defined lint */
+#if defined(LIBC_SCCS) && !defined(lint)
+static char rcsid[] = "$OpenBSD: localtime.c,v 1.4 1996/08/19 08:34:50 tholo Exp $";
+#endif /* LIBC_SCCS and not lint */
 
 /*
 ** Leap second handling from Bradley White (bww@k.gp.cs.cmu.edu).

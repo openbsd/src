@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.2 1996/05/12 20:34:15 mark Exp $
+# $OpenBSD: Makefile.inc,v 1.3 1996/08/19 08:11:27 tholo Exp $
 
 SRCS+=	_setjmp.S alloca.S \
 	fabs.c flt_rounds.c fpgetround.c fpsetround.c \

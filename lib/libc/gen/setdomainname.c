@@ -1,5 +1,3 @@
-/*	$NetBSD: setdomainname.c,v 1.4 1995/06/16 07:36:18 jtc Exp $	*/
-
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,11 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)sethostname.c	8.1 (Berkeley) 6/4/93";
-#else
-static char rcsid[] = "$NetBSD: setdomainname.c,v 1.4 1995/06/16 07:36:18 jtc Exp $";
-#endif
+static char rcsid[] = "$OpenBSD: setdomainname.c,v 1.2 1996/08/19 08:25:45 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>

@@ -1,5 +1,3 @@
-/*	$NetBSD: sigprocmask.S,v 1.1 1995/02/10 17:50:41 cgd Exp $	*/
-
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -28,6 +26,11 @@
  */
 
 #include "SYS.h"
+
+#if defined(SYSLIBC_SCCS)
+	.text
+	.asciz "$OpenBSD: sigprocmask.S,v 1.2 1996/08/19 08:11:18 tholo Exp $"
+#endif /* SYSLIBC_SCCS */
 
 LEAF(sigprocmask, 3)
 	mov	a2, a5			/* safe */

@@ -31,10 +31,10 @@
  * SUCH DAMAGE.
  */
 
-#if defined(SYSLIBC_SCCS) && !defined(lint)
-	/* .asciz "@(#)pipe.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: pipe.S,v 1.1 1995/04/17 12:24:02 ragge Exp $"
-#endif /* SYSLIBC_SCCS and not lint */
+#if defined(SYSLIBC_SCCS)
+	.text
+	.asciz "$OpenBSD: pipe.S,v 1.2 1996/08/19 08:19:01 tholo Exp $"
+#endif /* SYSLIBC_SCCS */
 
 #include "SYS.h"
 

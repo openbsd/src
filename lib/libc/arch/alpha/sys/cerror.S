@@ -1,5 +1,3 @@
-/*	$NetBSD: cerror.S,v 1.1 1995/02/10 17:50:31 cgd Exp $	*/
-
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -28,6 +26,11 @@
  */
 
 #include "SYS.h"
+
+#if defined(SYSLIBC_SCCS)
+	.text
+	.asciz "$OpenBSD: cerror.S,v 1.2 1996/08/19 08:11:06 tholo Exp $"
+#endif /* SYSLIBC_SCCS */
 
 IMPORT(errno, 4)
 

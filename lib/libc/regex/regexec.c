@@ -1,5 +1,3 @@
-/*	$NetBSD: regexec.c,v 1.6 1995/02/27 13:29:48 cgd Exp $	*/
-
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -35,16 +33,10 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)regexec.c	8.3 (Berkeley) 3/20/94
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)regexec.c	8.3 (Berkeley) 3/20/94";
-#else
-static char rcsid[] = "$NetBSD: regexec.c,v 1.6 1995/02/27 13:29:48 cgd Exp $";
-#endif
+static char rcsid[] = "$OpenBSD: regexec.c,v 1.3 1996/08/19 08:31:15 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*

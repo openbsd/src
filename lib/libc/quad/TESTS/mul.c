@@ -1,5 +1,3 @@
-/*	$NetBSD: mul.c,v 1.2 1995/02/27 17:31:34 cgd Exp $	*/
-
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -44,11 +42,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-#if 0
-static char sccsid[] = "@(#)mul.c	8.1 (Berkeley) 6/4/93";
-#else
-static char rcsid[] = "$NetBSD: mul.c,v 1.2 1995/02/27 17:31:34 cgd Exp $";
-#endif
+static char rcsid[] = "$OpenBSD: mul.c,v 1.2 1996/08/19 08:30:58 tholo Exp $";
 #endif /* not lint */
 
 #include <stdio.h>

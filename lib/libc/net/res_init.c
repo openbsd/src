@@ -1,5 +1,3 @@
-/*	$NetBSD: res_init.c,v 1.9 1996/02/02 15:22:30 mrg Exp $	*/
-
 /*-
  * Copyright (c) 1985, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -54,12 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
-static char rcsid[] = "$Id: res_init.c,v 8.3 1995/06/29 09:26:28 vixie Exp ";
-#else
-static char rcsid[] = "$NetBSD: res_init.c,v 1.9 1996/02/02 15:22:30 mrg Exp $";
-#endif
+static char rcsid[] = "$OpenBSD: res_init.c,v 1.4 1996/08/19 08:29:45 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>

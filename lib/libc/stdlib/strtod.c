@@ -1,6 +1,3 @@
-/*	$OpenBSD: strtod.c,v 1.3 1996/07/27 10:45:23 deraadt Exp $	*/
-/*	$NetBSD: strtod.c,v 1.21.4.1 1996/07/20 01:14:54 jtc Exp $	*/
-
 /****************************************************************
  *
  * The author of this software is David M. Gay.
@@ -93,7 +90,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strtod.c,v 1.3 1996/07/27 10:45:23 deraadt Exp $";
+static char *rcsid = "$OpenBSD: strtod.c,v 1.4 1996/08/19 08:33:50 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(__m68k__) || defined(__sparc__) || defined(__i386__) || \

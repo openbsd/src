@@ -1,4 +1,3 @@
-/*	$OpenBSD: SYS.h,v 1.3 1996/07/30 20:27:48 pefo Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,8 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)SYS.h	8.1 (Berkeley) 6/4/93
- *      $Id: SYS.h,v 1.3 1996/07/30 20:27:48 pefo Exp $ 
+ *      $OpenBSD: SYS.h,v 1.4 1996/08/19 08:15:49 tholo Exp $ 
  */
 
 #include <sys/syscall.h>

@@ -1,6 +1,3 @@
-/*	$OpenBSD: xdr_reference.c,v 1.2 1996/07/20 06:12:52 deraadt Exp $	*/
-/*	$NetBSD: xdr_reference.c,v 1.5 1995/04/14 20:30:18 jtc Exp $	*/
-
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -31,10 +28,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint) 
-/*static char *sccsid = "from: @(#)xdr_reference.c 1.11 87/08/11 SMI";*/
-/*static char *sccsid = "from: @(#)xdr_reference.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$OpenBSD: xdr_reference.c,v 1.2 1996/07/20 06:12:52 deraadt Exp $";
-#endif
+static char *rcsid = "$OpenBSD: xdr_reference.c,v 1.3 1996/08/19 08:32:06 tholo Exp $";
+#endif /* LIBC_SCCS and not lint */
 
 /*
  * xdr_reference.c, Generic XDR routines impelmentation.

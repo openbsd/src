@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: db2netbsd,v 1.1 1996/05/03 22:43:02 cgd Exp $
+#	$OpenBSD: db2netbsd,v 1.2 1996/08/19 08:19:58 tholo Exp $
 
 # This version transforms a Berkeley DB distribution into something
 # which can be 'cvs import'ed into the NetBSD source repository.

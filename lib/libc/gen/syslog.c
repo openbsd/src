@@ -1,5 +1,3 @@
-/*	$NetBSD: syslog.c,v 1.10 1995/08/31 16:28:01 mycroft Exp $	*/
-
 /*
  * Copyright (c) 1983, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,11 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)syslog.c	8.4 (Berkeley) 3/18/94";
-#else
-static char rcsid[] = "$NetBSD: syslog.c,v 1.10 1995/08/31 16:28:01 mycroft Exp $";
-#endif
+static char rcsid[] = "$OpenBSD: syslog.c,v 1.2 1996/08/19 08:26:33 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

@@ -32,10 +32,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char sccsid[] = "@(#)isinf.c	5.1 (Berkeley) 3/18/91"; */
-static char rcsid[] = "";
+static char rcsid[] = "$OpenBSD: isinf.c,v 1.3 1996/08/19 08:16:48 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
-
 
 /* I have not verified that this is correct for the ns32532 -- PAN */
 

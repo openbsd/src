@@ -1,5 +1,3 @@
-/*	$NetBSD: ntohs.S,v 1.1 1996/04/17 22:37:02 cgd Exp $	*/
-
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
  * All rights reserved.
@@ -26,6 +24,11 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#if defined(LIBC_SCCS)
+	.text
+	.asciz "$OpenBSD: ntohs.S,v 1.2 1996/08/19 08:10:55 tholo Exp $"
+#endif
 
 #define	NAME	ntohs
 

@@ -33,14 +33,12 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * from: Header: umul.s,v 1.4 92/06/25 13:24:05 torek Exp
- * $Id: umul.S,v 1.1.1.1 1995/10/18 08:41:40 deraadt Exp $
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-	.asciz "@(#)umul.s	8.1 (Berkeley) 6/4/93"
-#endif /* LIBC_SCCS and not lint */
+#if defined(LIBC_SCCS) 
+	.text
+	.asciz "$OpenBSD: umul.S,v 1.2 1996/08/19 08:17:46 tholo Exp $"
+#endif /* LIBC_SCCS */
 
 /*
  * Unsigned multiply.  Returns %o0 * %o1 in %o1%o0 (i.e., %o1 holds the

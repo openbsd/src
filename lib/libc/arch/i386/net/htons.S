@@ -32,15 +32,13 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	from: @(#)htons.s	5.2 (Berkeley) 12/17/90
- *	$Id: htons.S,v 1.1.1.1 1995/10/18 08:41:24 deraadt Exp $
  */
 
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-RCSID("$Id: htons.S,v 1.1.1.1 1995/10/18 08:41:24 deraadt Exp $")
+	.text
+	.asciz "$OpenBSD: htons.S,v 1.2 1996/08/19 08:12:40 tholo Exp $"
 #endif
 
 /* netorder = htons(hostorder) */

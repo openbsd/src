@@ -9,6 +9,8 @@
  * This software is provided ``as is'', and comes with no warranties
  * of any kind. I shall in no event be liable for anything that happens
  * to anyone/anything when using this software.
+ *
+ *	$OpenBSD: rand48.h,v 1.2 1996/08/19 08:33:45 tholo Exp $
  */
 
 #ifndef _RAND48_H_

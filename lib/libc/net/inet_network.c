@@ -1,6 +1,3 @@
-/*	$OpenBSD: inet_network.c,v 1.3 1996/03/19 23:26:49 niklas Exp $	*/
-/*	$NetBSD: inet_network.c,v 1.5 1996/02/17 15:35:41 hpeyerl Exp $	*/
-
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,11 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)inet_network.c	8.1 (Berkeley) 6/4/93";
-#else
-static char rcsid[] = "$OpenBSD: inet_network.c,v 1.3 1996/03/19 23:26:49 niklas Exp $";
-#endif
+static char rcsid[] = "$OpenBSD: inet_network.c,v 1.4 1996/08/19 08:29:14 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

@@ -1,5 +1,3 @@
-/* $NetBSD: sigprocmask.S,v 1.2 1996/05/12 19:55:33 mark Exp $ */
-
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -31,12 +29,14 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	from: @(#)sigprocmask.s	5.2 (Berkeley) 12/17/90
- *	$Id: sigprocmask.S,v 1.2 1996/05/22 11:39:24 deraadt Exp $
  */
 
 #include "SYS.h"
+
+#if defined(SYSLIBC_SCCS)
+	.text
+	.asciz "$OpenBSD: sigprocmask.S,v 1.3 1996/08/19 08:12:03 tholo Exp $"
+#endif /* SYSLIB_SCCS */
 
 	.text
 	.align	0

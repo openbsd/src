@@ -1,5 +1,3 @@
-/*	$NetBSD: usleep.c,v 1.7.2.2 1995/10/26 22:05:52 pk Exp $	*/
-
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,11 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)usleep.c	8.1 (Berkeley) 6/4/93";
-#else
-static char rcsid[] = "$NetBSD: usleep.c,v 1.7.2.2 1995/10/26 22:05:52 pk Exp $";
-#endif
+static char rcsid[] = "$OpenBSD: usleep.c,v 1.3 1996/08/19 08:27:19 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/time.h>

@@ -11,6 +11,10 @@
  * to anyone/anything when using this software.
  */
 
+#if defined(LIBC_SCCS) && !defined(lint)
+static char rcsid[] = "$OpenBSD: lcong48.c,v 1.2 1996/08/19 08:33:35 tholo Exp $";
+#endif /* LIBC_SCCS and not lint */
+
 #include "rand48.h"
 
 extern unsigned short __rand48_seed[3];

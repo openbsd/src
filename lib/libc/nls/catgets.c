@@ -1,5 +1,3 @@
-/*	$NetBSD: catgets.c,v 1.8.4.1 1996/05/28 20:06:20 jtc Exp $	*/
-
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,6 +33,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#if defined(LIBC_SCCS) && !defined(lint)
+static char rcsid[] = "$OpenBSD: catgets.c,v 1.4 1996/08/19 08:30:06 tholo Exp $";
+#endif /* LIBC_SCCS and not lint */
 
 #define _NLS_PRIVATE
 

@@ -1,5 +1,3 @@
-/*	$NetBSD: search.h,v 1.6 1996/05/03 21:44:01 cgd Exp $	*/
-
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)search.h	8.1 (Berkeley) 6/4/93
+ *	$OpenBSD: search.h,v 1.3 1996/08/19 08:20:44 tholo Exp $
  */
 
 /* Backward compatibility to hsearch interface. */

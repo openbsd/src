@@ -1,5 +1,3 @@
-/*	$OpenBSD: yp_maplist.c,v 1.3 1996/07/01 07:09:12 deraadt Exp $	 */
-
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
@@ -32,8 +30,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: yp_maplist.c,v 1.3 1996/07/01 07:09:12 deraadt Exp $";
-#endif
+static char *rcsid = "$OpenBSD: yp_maplist.c,v 1.4 1996/08/19 08:35:10 tholo Exp $";
+#endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <sys/types.h>

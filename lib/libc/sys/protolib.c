@@ -27,13 +27,11 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$OpenBSD: protolib.c,v 1.1 1996/03/25 23:31:48 tholo Exp $
  */
 
-#ifndef lint
-static char rcsid[] = "$OpenBSD: protolib.c,v 1.1 1996/03/25 23:31:48 tholo Exp $";
-#endif
+#if defined(LIBC_SCCS) && !defined(lint)
+static char rcsid[] = "$OpenBSD: protolib.c,v 1.2 1996/08/19 08:34:32 tholo Exp $";
+#endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/param.h>

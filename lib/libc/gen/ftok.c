@@ -1,5 +1,3 @@
-/*	$NetBSD: ftok.c,v 1.3 1995/02/27 03:43:18 cgd Exp $	*/
-
 /*
  * Copyright (c) 1994 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
  * All rights reserved.
@@ -28,7 +26,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$NetBSD: ftok.c,v 1.3 1995/02/27 03:43:18 cgd Exp $";
+static char *rcsid = "$OpenBSD: ftok.c,v 1.3 1996/08/19 08:22:54 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

@@ -1,5 +1,3 @@
-/*	$NetBSD: ungetc.c,v 1.4 1995/02/02 02:10:47 jtc Exp $	*/
-
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,10 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)ungetc.c	8.2 (Berkeley) 11/3/93";
-#endif
-static char rcsid[] = "$NetBSD: ungetc.c,v 1.4 1995/02/02 02:10:47 jtc Exp $";
+static char rcsid[] = "$OpenBSD: ungetc.c,v 1.2 1996/08/19 08:33:11 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>

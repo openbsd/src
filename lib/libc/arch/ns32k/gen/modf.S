@@ -13,23 +13,13 @@
  * LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE
  * USE OF THIS SOFTWARE.
  */
-/*
- * HISTORY
- * 29-Apr-92  Tero Kivinen (kivinen) at Helsinki University of Technology
- *	Created.
- *
- *	$Id: modf.S,v 1.1.1.1 1995/10/18 08:41:37 deraadt Exp $
- */
-
-/*
- * double modf (value, iptr)
- * double value, *iptr;
- *
- * Modf returns the fractional part of "value",
- * and stores the integer part indirectly through "iptr".
- */
 
 #include <machine/asm.h>
+
+#if defined(LIBC_SCCS)
+	.text
+	.asciz "$OpenBSD: modf.S,v 1.2 1996/08/19 08:16:50 tholo Exp $"
+#endif /* LIBC_SCCS */
 
 ENTRY(modf)
 	FRAME

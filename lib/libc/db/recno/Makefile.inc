@@ -1,5 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 1996/05/03 21:38:43 cgd Exp $
-#       @(#)Makefile.inc	8.1 (Berkeley) 6/4/93
+#	$OpenBSD: Makefile.inc,v 1.3 1996/08/19 08:20:54 tholo Exp $
 
 .PATH: ${.CURDIR}/db/recno
 

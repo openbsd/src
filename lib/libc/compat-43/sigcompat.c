@@ -32,8 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)sigcompat.c	5.3 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: sigcompat.c,v 1.1.1.1 1995/10/18 08:41:46 deraadt Exp $";
+static char *rcsid = "$OpenBSD: sigcompat.c,v 1.2 1996/08/19 08:19:39 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>

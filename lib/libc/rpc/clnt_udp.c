@@ -1,6 +1,3 @@
-/*	$OpenBSD: clnt_udp.c,v 1.5 1996/08/15 07:27:48 deraadt Exp $	*/
-/*	$NetBSD: clnt_udp.c,v 1.4 1995/02/25 03:01:42 cgd Exp $	*/
-
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -31,10 +28,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)clnt_udp.c 1.39 87/08/11 Copyr 1984 Sun Micro";*/
-/*static char *sccsid = "from: @(#)clnt_udp.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$OpenBSD: clnt_udp.c,v 1.5 1996/08/15 07:27:48 deraadt Exp $";
-#endif
+static char *rcsid = "$OpenBSD: clnt_udp.c,v 1.6 1996/08/19 08:31:30 tholo Exp $";
+#endif /* LIBC_SCCS and not lint */
 
 /*
  * clnt_udp.c, Implements a UDP/IP based, client side RPC.

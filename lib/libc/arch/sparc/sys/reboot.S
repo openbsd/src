@@ -33,14 +33,12 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * from: Header: reboot.s,v 1.1 91/07/06 13:05:59 torek Exp
- * $Id: reboot.S,v 1.1.1.1 1995/10/18 08:41:42 deraadt Exp $
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-	.asciz "@(#)reboot.s	8.1 (Berkeley) 6/4/93"
-#endif /* LIBC_SCCS and not lint */
+#if defined(SYSLIBC_SCCS) 
+	.text
+	.asciz "$OpenBSD: reboot.S,v 1.2 1996/08/19 08:18:09 tholo Exp $"
+#endif /* SYSLIBC_SCCS */
 
 #include "SYS.h"
 

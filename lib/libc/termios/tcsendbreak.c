@@ -1,5 +1,3 @@
-/*	$NetBSD: tcsendbreak.c,v 1.1 1995/04/25 00:04:46 jtc Exp $	*/
-
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,11 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)termios.c	8.2 (Berkeley) 2/21/94";
-#else
-static char rcsid[] = "$NetBSD: tcsendbreak.c,v 1.1 1995/04/25 00:04:46 jtc Exp $";
-#endif
+static char rcsid[] = "$OpenBSD: tcsendbreak.c,v 1.2 1996/08/19 08:34:41 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

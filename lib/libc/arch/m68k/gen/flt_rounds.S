@@ -3,6 +3,11 @@
  * Public domain.
  */
 
+#if defined(LIBC_SCCS) 
+	.text
+	.asciz "$OpenBSD: flt_rounds.S,v 1.2 1996/08/19 08:14:15 tholo Exp $"
+#endif /* LIBC_SCCS */
+
 #include <machine/asm.h>
 
 	.text

@@ -32,16 +32,13 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	from: @(#)fixunsdfsi.s	5.1	12/17/90
- *	$Id: fixunsdfsi.S,v 1.2 1995/12/30 08:15:21 deraadt Exp $
  */
 
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: fixunsdfsi.S,v 1.2 1995/12/30 08:15:21 deraadt Exp $"
+	.asciz "$OpenBSD: fixunsdfsi.S,v 1.3 1996/08/19 08:12:19 tholo Exp $"
 #endif
 
 ENTRY(__fixunsdfsi)

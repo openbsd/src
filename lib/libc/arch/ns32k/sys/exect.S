@@ -13,16 +13,14 @@
  * LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE
  * USE OF THIS SOFTWARE.
  */
-/*
- * HISTORY
- * 29-Apr-92  Johannes Helander (jvh) at Helsinki University of Technology
- *	Created.
- *
- *	$Id: exect.S,v 1.1.1.1 1995/10/18 08:41:39 deraadt Exp $
- */
 
 #include "SYS.h"
 #include <machine/psl.h>
+
+#if defined(SYSLIBC_SCCS)
+	.text
+	.asciz "$OpenBSD: exect.S,v 1.2 1996/08/19 08:17:07 tholo Exp $"
+#endif /* SYSLIBC_SCCS */
 
 ENTRY(exect)
 	sprb	us, r0
@@ -32,4 +30,3 @@ ENTRY(exect)
 	SVC
 	bcs	cerror
 	ret	0
-

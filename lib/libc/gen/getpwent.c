@@ -1,5 +1,3 @@
-/*	$NetBSD: getpwent.c,v 1.14 1995/07/28 05:43:01 phil Exp $	*/
-
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,11 +33,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)getpwent.c	8.1 (Berkeley) 6/4/93";
-#else
-static char rcsid[] = "$NetBSD: getpwent.c,v 1.14 1995/07/28 05:43:01 phil Exp $";
-#endif
+static char rcsid[] = "$OpenBSD: getpwent.c,v 1.3 1996/08/19 08:24:02 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>

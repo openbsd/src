@@ -12,20 +12,17 @@
  * ITS "AS IS" CONDITION. HELSINKI UNIVERSITY OF TECHNOLOGY DISCLAIMS ANY
  * LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE
  * USE OF THIS SOFTWARE.
- */
-/*
- * HISTORY
- * 29-Apr-92  Johannes Helander (jvh) at Helsinki University of Technology
- *	Created.
  *
- * 	$Id: alloca.S,v 1.1.1.1 1995/10/18 08:41:36 deraadt Exp $
- */
-/*
  * Note: Saved registers are accessed through the frame pointer so 
  * no special magic is required here.
  */
 
 #include <machine/asm.h>
+
+#if defined(LIBC_SCCS)
+	.text
+	.asciz "$OpenBSD: alloca.S,v 1.2 1996/08/19 08:16:37 tholo Exp $"
+#endif /* LIBC_SCCS */
 
 ENTRY(alloca)
 	movd	tos,r2		/* get return address */

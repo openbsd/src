@@ -33,13 +33,10 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * from: Header: frexp.c,v 1.1 91/07/07 04:45:01 torek Exp
- * $Id: frexp.c,v 1.1.1.1 1995/10/18 08:41:40 deraadt Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)frexp.c	8.1 (Berkeley) 6/4/93";
+static char rcsid[] = "$OpenBSD: frexp.c,v 1.2 1996/08/19 08:17:36 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

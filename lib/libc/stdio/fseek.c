@@ -1,5 +1,3 @@
-/*	$NetBSD: fseek.c,v 1.8 1995/03/05 06:56:09 jtc Exp $	*/
-
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,10 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)fseek.c	8.3 (Berkeley) 1/2/94";
-#endif
-static char rcsid[] = "$NetBSD: fseek.c,v 1.8 1995/03/05 06:56:09 jtc Exp $";
+static char rcsid[] = "$OpenBSD: fseek.c,v 1.2 1996/08/19 08:32:46 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: private.h,v 1.5 1996/01/20 02:31:20 jtc Exp $	*/
+/*	$OpenBSD: private.h,v 1.4 1996/08/19 08:34:51 tholo Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -16,16 +16,6 @@
 ** Do NOT copy it to any system include directory.
 ** Thank you!
 */
-
-/*
-** ID
-*/
-
-#ifndef lint
-#ifndef NOID
-static char	privatehid[] = "@(#)private.h	7.39";
-#endif /* !defined NOID */
-#endif /* !defined lint */
 
 /*
 ** Defaults for preprocessor symbols.

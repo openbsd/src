@@ -31,10 +31,10 @@
  * SUCH DAMAGE.
  */
 
-#if defined(SYSLIBC_SCCS) && !defined(lint)
-	/* .asciz "@(#)sigsuspend.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: sigsuspend.S,v 1.1 1995/04/17 12:24:10 ragge Exp $"
-#endif /* SYSLIBC_SCCS and not lint */
+#if defined(SYSLIBC_SCCS)
+	.text
+	.asciz "$OpenBSD: sigsuspend.S,v 1.2 1996/08/19 08:19:10 tholo Exp $"
+#endif /* SYSLIBC_SCCS */
 
 #include "SYS.h"
 

@@ -1,4 +1,3 @@
-/*	$NetBSD: bcmp.S,v 1.1 1996/05/19 15:57:38 ragge Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,7 +31,10 @@
  * SUCH DAMAGE.
  */
 
-/* bcmp(s1, s2, n) */
+#if defined(LIBC_SCCS) 
+	.text
+	.asciz "$OpenBSD: bcmp.S,v 1.2 1996/08/19 08:18:44 tholo Exp $"
+#endif /* LIBC_SCCS */
 
 #include "DEFS.h"
 

@@ -1,5 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 1996/05/03 21:50:36 cgd Exp $
-#	@(#)Makefile.inc	8.2 (Berkeley) 7/14/94
+#	$OpenBSD: Makefile.inc,v 1.3 1996/08/19 08:20:00 tholo Exp $
 
 .PATH: ${.CURDIR}/db/btree
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: local.h,v 1.5 1995/02/02 02:10:05 jtc Exp $	*/
+/*	$OpenBSD: local.h,v 1.2 1996/08/19 08:32:54 tholo Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,8 +34,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)local.h	8.2 (Berkeley) 1/2/94
  */
 
 /*

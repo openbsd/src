@@ -32,8 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/* static char sccsid[] = "@(#)isinf.c	8.1 (Berkeley) 6/4/93"; */
-static char rcsid[] = "$NetBSD: isinf.c,v 1.2 1996/02/05 04:31:42 jtc Exp $";
+static char rcsid[] = "$OpenBSD: isinf.c,v 1.3 1996/08/19 08:18:26 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /* ARGSUSED */

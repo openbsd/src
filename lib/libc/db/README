@@ -1,5 +1,4 @@
-#	$NetBSD: README,v 1.3 1996/05/03 21:17:07 cgd Exp $
-#	@(#)README	8.27 (Berkeley) 9/1/94
+#	$OpenBSD: README,v 1.3 1996/08/19 08:19:56 tholo Exp $
 
 This is version 1.85 of the Berkeley DB code.
 

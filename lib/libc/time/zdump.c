@@ -1,10 +1,6 @@
-/*	$NetBSD: zdump.c,v 1.2 1995/03/10 18:12:43 jtc Exp $	*/
-
-#ifndef lint
-#ifndef NOID
-static char	elsieid[] = "@(#)zdump.c	7.20";
-#endif /* !defined NOID */
-#endif /* !defined lint */
+#if defined(LIBC_SCCS) && !defined(lint)
+static char rcsid[] = "$OpenBSD: zdump.c,v 1.2 1996/08/19 08:34:55 tholo Exp $";
+#endif /* LIBC_SCCS and not lint */
 
 /*
 ** This code has been made independent of the rest of the time

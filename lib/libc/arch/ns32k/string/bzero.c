@@ -23,18 +23,11 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
-/*
- *	$Id: bzero.c,v 1.1.1.1 1995/10/18 08:41:38 deraadt Exp $ 
- */
-/*
- *	Object:
- *		bzero				EXPORTED function
- *
- *		Clear memory locations
- *
- *	Optimize for aligned memory ops, if possible and simple.
- *	Might need later recoding in assembly for better efficiency.
- */
+
+#if defined(LIBC_SCCS) && !defined(lint)
+static char rcsid[] = "$OpenBSD: bzero.c,v 1.2 1996/08/19 08:17:02 tholo Exp $";
+#endif /* LIBC_SCCS and not lint */
+
 void
 bzero(addr, bcount)
 	register unsigned addr;

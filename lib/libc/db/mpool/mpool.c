@@ -1,5 +1,3 @@
-/*	$NetBSD: mpool.c,v 1.6 1996/05/03 21:29:48 cgd Exp $	*/
-
 /*-
  * Copyright (c) 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -34,11 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)mpool.c	8.5 (Berkeley) 7/26/94";
-#else
-static char rcsid[] = "$NetBSD: mpool.c,v 1.6 1996/05/03 21:29:48 cgd Exp $";
-#endif
+static char rcsid[] = "$OpenBSD: mpool.c,v 1.3 1996/08/19 08:20:52 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>

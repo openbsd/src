@@ -32,17 +32,14 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	from: @(#)setlogin.s	5.2 (Berkeley) 4/12/91
- *	$Id: setlogin.S,v 1.1.1.1 1995/10/18 08:41:27 deraadt Exp $
  */
 
-#if defined(LIBC_SCCS)
-	.text
-	.asciz "$Id: setlogin.S,v 1.1.1.1 1995/10/18 08:41:27 deraadt Exp $"
-#endif
-
 #include "SYS.h"
+
+#if defined(SYSLIBC_SCCS)
+	.text
+	.asciz "$OpenBSD: setlogin.S,v 1.2 1996/08/19 08:13:39 tholo Exp $"
+#endif /* SYSLIB_SCCS */
 
 	.globl	___logname_valid	/* in getlogin() */
 SYSCALL(setlogin)

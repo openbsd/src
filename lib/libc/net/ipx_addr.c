@@ -1,5 +1,3 @@
-/* 	$OpenBSD: ipx_addr.c,v 1.1 1996/08/16 09:47:05 mickey Exp $	*/
-
 /*
  * Copyright (c) 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,6 +35,10 @@
  *
  * from @(#)ipx_addr.c
  */
+
+#if defined(LIBC_SCCS) && !defined(lint)
+static char rcsid[] = "$OpenBSD: ipx_addr.c,v 1.2 1996/08/19 08:29:18 tholo Exp $";
+#endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <netipx/ipx.h>

@@ -1,5 +1,3 @@
-/*	$NetBSD: tcgetpgrp.c,v 1.2 1995/06/26 23:06:00 jtc Exp $	*/
-
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,11 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)termios.c	8.2 (Berkeley) 2/21/94";
-#else
-static char rcsid[] = "$NetBSD: tcgetpgrp.c,v 1.2 1995/06/26 23:06:00 jtc Exp $";
-#endif
+static char rcsid[] = "$OpenBSD: tcgetpgrp.c,v 1.2 1996/08/19 08:34:40 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

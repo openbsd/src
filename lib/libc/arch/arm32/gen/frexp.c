@@ -1,5 +1,3 @@
-/* $NetBSD: frexp.c,v 1.1 1996/05/12 20:29:46 mark Exp $ */
-
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,12 +33,10 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * from: frexp.c,v 1.1 1993/10/07 00:21:33 cgd Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)frexp.c	8.1 (Berkeley) 6/4/93";
+static char *rcsid = "$OpenBSD: frexp.c,v 1.2 1996/08/19 08:11:40 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

@@ -32,8 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char sccsid[] = "from: @(#)qsort.c	8.1 (Berkeley) 6/4/93";*/
-static char *rcsid = "$Id: qsort.c,v 1.3 1996/03/25 22:34:43 tholo Exp $";
+static char *rcsid = "$OpenBSD: qsort.c,v 1.4 1996/08/19 08:33:42 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

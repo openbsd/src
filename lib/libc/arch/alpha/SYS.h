@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.1 1995/02/10 17:49:50 cgd Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.2 1996/08/19 08:10:16 tholo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.

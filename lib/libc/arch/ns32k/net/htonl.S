@@ -25,15 +25,13 @@
  * any improvements or extensions that they make and grant Carnegie Mellon 
  * the rights to redistribute these changes.
  */
-/*
- * HISTORY
- * 11-May-92  Johannes Helander (jvh) at Helsinki University of Technology
- *	Created.
- *
- *	$Id: htonl.S,v 1.1.1.1 1995/10/18 08:41:37 deraadt Exp $
- */
 
 #include <machine/asm.h>
+
+#if defined(LIBC_SCCS)
+	.text
+	.asciz "$OpenBSD: htonl.S,v 1.2 1996/08/19 08:16:55 tholo Exp $"
+#endif /* LIBC_SCCS */
 
 	.text
 ENTRY(htonl)

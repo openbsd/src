@@ -1,5 +1,3 @@
-/*	$NetBSD: ttyname.c,v 1.9 1995/05/02 01:45:33 mycroft Exp $	*/
-
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,11 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)ttyname.c	8.2 (Berkeley) 1/27/94";
-#else
-static char rcsid[] = "$NetBSD: ttyname.c,v 1.9 1995/05/02 01:45:33 mycroft Exp $";
-#endif
+static char rcsid[] = "$OpenBSD: ttyname.c,v 1.2 1996/08/19 08:27:02 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

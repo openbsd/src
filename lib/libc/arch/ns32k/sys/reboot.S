@@ -14,13 +14,12 @@
  * USE OF THIS SOFTWARE.
  */
 
-/*	This is a modified copy of mount.s.  Phil Nelson
- *
- *	$Id: reboot.S,v 1.1.1.1 1995/10/18 08:41:39 deraadt Exp $
- */
-
 #include "SYS.h"
+
+#if defined(SYSLIBC_SCCS)
+	.text
+	.asciz "$OpenBSD: reboot.S,v 1.2 1996/08/19 08:17:11 tholo Exp $"
+#endif /* SYSLIBC_SCCS */
 
 SYSCALL(reboot)
 	dia
-

@@ -1,5 +1,3 @@
-/*	$NetBSD: res_query.c,v 1.10 1996/02/02 15:22:34 mrg Exp $	*/
-
 /*-
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -54,12 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
-static char rcsid[] = "$Id: res_query.c,v 8.6 1995/06/29 09:26:28 vixie Exp ";
-#else
-static char rcsid[] = "$NetBSD: res_query.c,v 1.10 1996/02/02 15:22:34 mrg Exp $";
-#endif
+static char rcsid[] = "$OpenBSD: res_query.c,v 1.4 1996/08/19 08:29:48 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>

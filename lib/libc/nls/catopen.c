@@ -1,5 +1,3 @@
-/*	$NetBSD: catopen.c,v 1.6.4.3 1996/06/21 06:30:31 jtc Exp $	*/
-
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,6 +33,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#if defined(LIBC_SCCS) && !defined(lint)
+static char rcsid[] = "$OpenBSD: catopen.c,v 1.5 1996/08/19 08:30:09 tholo Exp $";
+#endif /* LIBC_SCCS and not lint */
 
 #define _NLS_PRIVATE
 

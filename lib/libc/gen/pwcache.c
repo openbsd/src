@@ -1,5 +1,3 @@
-/*	$NetBSD: pwcache.c,v 1.5 1995/05/13 06:58:23 jtc Exp $	*/
-
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,11 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)pwcache.c	8.1 (Berkeley) 6/4/93";
-#else
-static char rcsid[] = "$NetBSD: pwcache.c,v 1.5 1995/05/13 06:58:23 jtc Exp $";
-#endif
+static char rcsid[] = "$OpenBSD: pwcache.c,v 1.2 1996/08/19 08:25:29 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

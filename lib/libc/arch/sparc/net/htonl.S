@@ -33,14 +33,12 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * from: Header: htonl.s,v 1.1 92/06/25 12:47:05 torek Exp
- * $Id: htonl.S,v 1.1.1.1 1995/10/18 08:41:41 deraadt Exp $
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-	.asciz "@(#)htonl.s	8.1 (Berkeley) 6/4/93"
-#endif /* LIBC_SCCS and not lint */
+#if defined(LIBC_SCCS) 
+	.text
+	.asciz "$OpenBSD: htonl.S,v 1.2 1996/08/19 08:17:49 tholo Exp $"
+#endif /* LIBC_SCCS */
 
 /* netorder = htonl(hostorder) */
 
@@ -48,4 +46,4 @@
 
 ENTRY(htonl)
 	retl
-	 nop
+	nop

@@ -1,5 +1,3 @@
-/*	$NetBSD: getnetent.c,v 1.6 1996/02/02 15:22:21 mrg Exp $	*/
-
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,11 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)getnetent.c	8.1 (Berkeley) 6/4/93";
-#else
-static char rcsid[] = "$NetBSD: getnetent.c,v 1.6 1996/02/02 15:22:21 mrg Exp $";
-#endif
+static char rcsid[] = "$OpenBSD: getnetent.c,v 1.4 1996/08/19 08:28:47 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

@@ -1,5 +1,3 @@
-/* $NetBSD: setjmp.S,v 1.2 1996/05/12 20:25:49 mark Exp $ */
-
 /*
  * Copyright (c) 1995 Mark Brinicombe
  * All rights reserved.
@@ -30,11 +28,14 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Id: setjmp.S,v 1.2 1996/05/22 11:39:17 deraadt Exp $
  */
 
-# include "DEFS.h"
+#include "DEFS.h"
+
+#if defined(LIBC_SCCS)
+	.text
+	.asciz "$OpenBSD: setjmp.S,v 1.3 1996/08/19 08:11:45 tholo Exp $"
+#endif
 
 	.text
 	.align	0

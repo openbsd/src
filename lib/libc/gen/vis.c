@@ -1,5 +1,3 @@
-/*	$NetBSD: vis.c,v 1.6 1995/02/25 15:40:09 cgd Exp $	*/
-
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,11 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)vis.c	8.1 (Berkeley) 7/19/93";
-#else
-static char rcsid[] = "$NetBSD: vis.c,v 1.6 1995/02/25 15:40:09 cgd Exp $";
-#endif
+static char rcsid[] = "$OpenBSD: vis.c,v 1.2 1996/08/19 08:27:36 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-#	$NetBSD: changelog,v 1.2 1996/05/03 21:20:56 cgd Exp $
+#	$OpenBSD: changelog,v 1.2 1996/08/19 08:19:57 tholo Exp $
 
 1.84 -> 1.85
 	recno:	#ifdef out use of mmap, it's not portable enough.
