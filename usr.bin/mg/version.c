@@ -1,4 +1,4 @@
-/*	$OpenBSD: version.c,v 1.6 2003/05/20 03:08:55 cloder Exp $	*/
+/*	$OpenBSD: version.c,v 1.7 2003/06/01 23:58:04 art Exp $	*/
 
 /*
  * This file contains the string that get written
@@ -17,6 +17,6 @@ const char	version[] = "Mg 2a";
 int
 showversion(int f, int n)
 {
-	ewprintf(version);
+	ewprintf("%s", version);
 	return TRUE;
 }
