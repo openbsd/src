@@ -1,4 +1,4 @@
-.\"	$OpenBSD: expr.1,v 1.7 1999/06/04 02:45:13 aaron Exp $
+.\"	$OpenBSD: expr.1,v 1.8 1999/09/23 10:43:07 aaron Exp $
 .\"	$NetBSD: expr.1,v 1.9 1995/04/28 23:27:13 jtc Exp $
 .\"
 .\" Written by J.T. Conklin <jtc@netbsd.org>.
@@ -19,7 +19,6 @@ The
 utility evaluates
 .Ar expression
 and writes the result on standard output.
-.Pp
 All operators are separate arguments to the
 .Nm
 utility.
@@ -51,14 +50,14 @@ Returns the results of addition or subtraction of integer-valued arguments.
 Returns the results of multiplication, integer division, or remainder of integer-valued arguments.
 .It Ar expr1 Li : Ar expr2
 The
-.Dq \:
+.Ql \&:
 operator matches
 .Ar expr1
 against
 .Ar expr2 ,
 which must be a regular expression.  The regular expression is anchored
 to the beginning of the string with an implicit
-.Dq ^ .
+.Ql ^ .
 .Pp
 If the match succeeds and the pattern contains at least one regular
 expression subexpression
@@ -66,27 +65,33 @@ expression subexpression
 the string corresponding to
 .Dq "\e1"
 is returned;
-otherwise the matching operator returns the number of characters matched.
+otherwise, the matching operator returns the number of characters matched.
 If the match fails and the pattern contains a regular expression subexpression
 the null string is returned;
-otherwise 0.
+otherwise, returns 0.
 .El
 .Pp
 Parentheses are used for grouping in the usual manner.
 .Sh EXAMPLES
-.Bl -enum
-.It
-The following example adds one to the variable a.
+Add 1 to the variable
+.Va a :
+.Pp
 .Dl a=`expr $a + 1`
-.It
-The following example returns the filename portion of a pathname stored
-in variable a.  The // characters act to eliminate ambiguity with the
-division operator.
+.Pp
+Return the filename portion of a pathname stored
+in variable
+.Va a .
+The
+.Ql //
+characters act to eliminate ambiguity with the division operator.
+.Pp
 .Dl expr "//$a" Li : '.*/\e(.*\e)'
-.It
-The following example returns the number of characters in variable a.
+.Pp
+Return the number of characters in variable
+.Va a :
+.Pp
 .Dl expr $a Li : '.*'
-.El
+.Pp
 .Sh DIAGNOSTICS
 The
 .Nm
@@ -102,6 +107,8 @@ The expression is invalid.
 .It >2
 An error occurred (such as memory allocation failure).
 .El
+.Sh SEE ALSO
+.Xr test 1
 .Sh STANDARDS
 The
 .Nm
