@@ -61,7 +61,7 @@ a specific
 .Tn TCP
 port on the host identifying the peer entity.
 .Pp
-Sockets utilizing the tcp protocol are either
+Sockets utilizing the TCP protocol are either
 .Dq active
 or
 .Dq passive .
@@ -135,7 +135,7 @@ Do not use selective acknowledgements for this connection. See
 .El
 .Pp
 The option level for the
-.Xr setsockopt
+.Xr setsockopt 2
 call is the protocol number for
 .Tn TCP ,
 available from
@@ -180,9 +180,9 @@ exists.
 .Sh SEE ALSO
 .Xr getsockopt 2 ,
 .Xr socket 2 ,
-.Xr netintro 4 ,
 .Xr inet 4 ,
 .Xr ip 4
+.Xr netintro 4
 .Sh HISTORY
 The
 .Nm
