@@ -1,7 +1,7 @@
-/*	$OpenBSD: imsg.c,v 1.18 2004/01/03 14:06:35 henning Exp $ */
+/*	$OpenBSD: imsg.c,v 1.19 2004/01/06 03:43:50 henning Exp $ */
 
 /*
- * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
+ * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

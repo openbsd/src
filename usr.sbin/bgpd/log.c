@@ -1,7 +1,7 @@
-/*	$OpenBSD: log.c,v 1.14 2004/01/04 02:13:52 henning Exp $ */
+/*	$OpenBSD: log.c,v 1.15 2004/01/06 03:43:50 henning Exp $ */
 
 /*
- * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
+ * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
