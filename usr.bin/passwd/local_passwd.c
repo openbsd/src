@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.13 2000/12/12 02:19:58 millert Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.14 2001/06/18 21:09:23 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)local_passwd.c	5.5 (Berkeley) 5/6/91";*/
-static char rcsid[] = "$OpenBSD: local_passwd.c,v 1.13 2000/12/12 02:19:58 millert Exp $";
+static char rcsid[] = "$OpenBSD: local_passwd.c,v 1.14 2001/06/18 21:09:23 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -49,11 +49,14 @@ static char rcsid[] = "$OpenBSD: local_passwd.c,v 1.13 2000/12/12 02:19:58 mille
 #include <ctype.h>
 #include <fcntl.h>
 #include <util.h>
+#include <login_cap.h>
 
 static uid_t uid;
-extern int pwd_gensalt __P(( char *, int, struct passwd *, char));
-extern int pwd_check __P((struct passwd *, char *));
-extern int pwd_gettries __P((struct passwd *));
+extern int pwd_gensalt __P((char *, int, struct passwd *, login_cap_t *, char));
+extern int pwd_check __P((struct passwd *, login_cap_t *, char *));
+extern int pwd_gettries __P((struct passwd *, login_cap_t *));
+
+char *getnewpasswd __P((struct passwd *, login_cap_t *, int));
 
 int
 local_passwd(uname, authenticated)
@@ -61,8 +64,9 @@ local_passwd(uname, authenticated)
 	int authenticated;
 {
 	struct passwd *pw;
+	login_cap_t *lc;
 	int pfd, tfd;
-	char *getnewpasswd();
+	time_t period;
 
 	if (!(pw = getpwnam(uname))) {
 #ifdef YP
@@ -70,6 +74,10 @@ local_passwd(uname, authenticated)
 		if (!use_yp)
 #endif
 		warnx("unknown user %s.", uname);
+		return(1);
+	}
+	if ((lc = login_getclass(pw->pw_class)) == NULL) {
+		warnx("unable to get login class for user %s.", uname);
 		return(1);
 	}
 
@@ -91,23 +99,28 @@ local_passwd(uname, authenticated)
 	if (pfd < 0 || fcntl(pfd, F_SETFD, 1) == -1)
 		pw_error(_PATH_MASTERPASSWD, 1, 1);
 
-	/*
-	 * Get the new password.  Reset passwd change time to zero; when
-	 * classes are implemented, go and get the "offset" value for this
-	 * class and reset the timer.
-	 */
-	pw->pw_passwd = getnewpasswd(pw, authenticated);
-	pw->pw_change = 0;
-	pw_copy(pfd, tfd, pw);
+	/* Get the new password. */
+	pw->pw_passwd = getnewpasswd(pw, lc, authenticated);
 
+	/* Reset password change time based on login.conf. */
+	period = login_getcaptime(lc, "passwordtime", 0, 0);
+	if (period > 0)
+		pw->pw_change = time(NULL) + period;
+	else
+		pw->pw_change = 0;
+
+	/* Update master.passwd file and build .db version. */
+	pw_copy(pfd, tfd, pw);
 	if (pw_mkdb(uname) < 0)
 		pw_error((char *)NULL, 0, 1);
+
 	return(0);
 }
 
 char *
-getnewpasswd(pw, authenticated)
-	register struct passwd *pw;
+getnewpasswd(pw, lc, authenticated)
+	struct passwd *pw;
+	login_cap_t *lc;
 	int authenticated;
 {
 	register char *p;
@@ -124,7 +137,7 @@ getnewpasswd(pw, authenticated)
 		}
 	}
 	
-	pwd_tries = pwd_gettries(pw);
+	pwd_tries = pwd_gettries(pw, lc);
 
 	for (buf[0] = '\0', tries = 0;;) {
 		p = getpass("New password:");
@@ -138,14 +151,14 @@ getnewpasswd(pw, authenticated)
 		}
 		
 		if ((tries++ < pwd_tries || pwd_tries == 0) 
-		    && pwd_check(pw, p) == 0)
+		    && pwd_check(pw, lc, p) == 0)
 			continue;
 		strlcpy(buf, p, sizeof(buf));
 		if (!strcmp(buf, getpass("Retype new password:")))
 			break;
 		(void)printf("Mismatch; try again, EOF to quit.\n");
 	}
-	if(!pwd_gensalt(salt, _PASSWORD_LEN, pw, 'l')) {
+	if (!pwd_gensalt(salt, _PASSWORD_LEN, pw, lc, 'l')) {
 		(void)printf("Couldn't generate salt.\n");
 		pw_error(NULL, 0, 0);
 	}

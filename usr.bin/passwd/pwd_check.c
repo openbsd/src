@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_check.c,v 1.3 2000/11/24 21:07:04 millert Exp $	*/
+/*	$OpenBSD: pwd_check.c,v 1.4 2001/06/18 21:09:23 millert Exp $	*/
 /*
  * Copyright 2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -44,6 +44,7 @@
 #include <paths.h>
 #include <pwd.h>
 #include <util.h>
+#include <login_cap.h>
 
 struct pattern {
 	char *match;
@@ -80,14 +81,15 @@ struct pattern patterns[] = {
 };
 
 int
-pwd_check(struct passwd *pwd, char *password)
+pwd_check(struct passwd *pwd, login_cap_t *lc, char *password)
 {
 	regex_t rgx;
-	int i, res;
-	char    option[LINE_MAX];
+	int i, res, min_len;
+	char *cp, option[LINE_MAX];
 	int pipefds[2];
 	
-	if (strlen(password) <= 5) {
+	min_len = (int) login_getcapnum(lc, "minpasswordlen", 6, 6);
+	if (min_len > 0 && strlen(password) < min_len) {
 		printf("Please enter a longer password.\n");
 		return (0);
 	}
@@ -104,21 +106,33 @@ pwd_check(struct passwd *pwd, char *password)
 	}
 
 	/* Okay, now pass control to an external program */
-	pw_getconf(option, LINE_MAX, pwd->pw_name, "pwdcheck");
 
-	/* Try to find an entry for the group */
-	if (*option == 0) {
-	        struct group *grp;
-	        char grpkey[LINE_MAX];
+	/*
+	 * Check login.conf, falling back onto the deprecated passwd.conf
+	 */
+	if ((cp = login_getcapstr(lc, "passwordcheck", NULL, NULL)) != NULL) {
+		strlcpy(option, cp, sizeof(option));
+		free(cp);
+	} else {
+		pw_getconf(option, LINE_MAX, pwd->pw_name, "pwdcheck");
 
-	        grp = getgrgid(pwd->pw_gid);
-	        if (grp != NULL) {
-                        snprintf(grpkey, LINE_MAX-1, ".%s", grp->gr_name);
-			grpkey[LINE_MAX-1] = 0;
-			pw_getconf(option, LINE_MAX, grpkey, "pwdcheck");
+		/* Try to find an entry for the group */
+		if (*option == 0) {
+			struct group *grp;
+			char grpkey[LINE_MAX];
+
+			grp = getgrgid(pwd->pw_gid);
+			if (grp != NULL) {
+				snprintf(grpkey, LINE_MAX-1, ".%s",
+				    grp->gr_name);
+				grpkey[LINE_MAX-1] = 0;
+				pw_getconf(option, LINE_MAX, grpkey,
+				    "pwdcheck");
+			}
+			if (*option == 0)
+				pw_getconf(option, LINE_MAX, "default",
+				    "pwdcheck");
 		}
-		if (*option == 0)
-		        pw_getconf(option, LINE_MAX, "default", "pwdcheck");
 	}
 	
 	/* If no checker is specified, we accept the password */
@@ -168,25 +182,39 @@ pwd_check(struct passwd *pwd, char *password)
 	return (0);
 }
 
-int pwd_gettries( struct passwd *pwd ) {
+int pwd_gettries( struct passwd *pwd, login_cap_t *lc )
+{
 	char option[LINE_MAX];
 	char *ep = option; 
+	quad_t ntries;
+
+	/*
+	 * Check login.conf, falling back onto the deprecated passwd.conf
+	 */
+	if ((ntries = login_getcapnum(lc, "passwordtries", -1, -1)) != -1) {
+		if (ntries > INT_MAX || ntries < 0) {
+			fprintf(stderr,
+			    "Warning: pwdtries out of range in /etc/login.conf");   
+			goto out;
+		}
+		return((int)ntries);
+	}
 
 	pw_getconf(option, LINE_MAX, pwd->pw_name, "pwdtries");
 
 	/* Try to find an entry for the group */
 	if (*option == 0) {
-	        struct group *grp;
-	        char grpkey[LINE_MAX];
+		struct group *grp;
+		char grpkey[LINE_MAX];
 
-	        grp = getgrgid(pwd->pw_gid);
-	        if (grp != NULL) {
-                        snprintf(grpkey, LINE_MAX-1, ".%s", grp->gr_name);
+		grp = getgrgid(pwd->pw_gid);
+		if (grp != NULL) {
+			snprintf(grpkey, LINE_MAX-1, ".%s", grp->gr_name);
 			grpkey[LINE_MAX-1] = 0;
 			pw_getconf(option, LINE_MAX, grpkey, "pwdtries");
 		}
 		if (*option == 0)
-		        pw_getconf(option, LINE_MAX, "default", "pwdtries");
+			pw_getconf(option, LINE_MAX, "default", "pwdtries");
 	}
 	
 	if (*option == 0)
@@ -202,7 +230,7 @@ int pwd_gettries( struct passwd *pwd ) {
 		}
 		if ((errno == ERANGE && (lval == LONG_MAX
 					 || lval == LONG_MIN)) ||
-		    (lval > INT_MAX || lval < INT_MIN)) {
+		    (lval > INT_MAX || lval < 0)) {
 			fprintf(stderr, 
 				"Warning: pwdtries out of range in /etc/passwd.conf");   
 			goto out;

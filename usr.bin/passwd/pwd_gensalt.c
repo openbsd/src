@@ -1,4 +1,4 @@
-/* $OpenBSD: pwd_gensalt.c,v 1.9 1998/07/05 21:08:32 provos Exp $ */
+/* $OpenBSD: pwd_gensalt.c,v 1.10 2001/06/18 21:09:24 millert Exp $ */
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
  * All rights reserved.
@@ -39,14 +39,16 @@
 #include <pwd.h>
 #include <util.h>
 #include <time.h>
+#include <login_cap.h>
 
 void to64 __P((char *, int32_t, int n));
 
 int
-pwd_gensalt(salt, max, pwd, type)
+pwd_gensalt(salt, max, pwd, lc, type)
 	char   *salt;
 	int     max;
 	struct passwd *pwd;
+	login_cap_t *lc;
 	char    type;
 {
 	char   *bcrypt_gensalt __P((u_int8_t));
@@ -65,21 +67,31 @@ pwd_gensalt(salt, max, pwd, type)
 		break;
 	}
 
-	pw_getconf(option, LINE_MAX, pwd->pw_name, cipher);
+	/*
+	 * Check login.conf, falling back onto the deprecated passwd.conf
+	 */
+	/* XXX - when passwd.conf goes away completely, add a default value */
+	if ((next = login_getcapstr(lc, cipher, NULL, NULL)) != NULL) {
+		strlcpy(option, next, sizeof(option));
+		free(next);
+	} else {
+		pw_getconf(option, LINE_MAX, pwd->pw_name, cipher);
 
-	/* Try to find an entry for the group */
-	if (*option == 0) {
-	        struct group *grp;
-	        char grpkey[LINE_MAX];
+		/* Try to find an entry for the group */
+		if (*option == 0) {
+			struct group *grp;
+			char grpkey[LINE_MAX];
 
-	        grp = getgrgid(pwd->pw_gid);
-	        if (grp != NULL) {
-                        snprintf(grpkey, LINE_MAX-1, ".%s", grp->gr_name);
-			grpkey[LINE_MAX-1] = 0;
-			pw_getconf(option, LINE_MAX, grpkey, cipher);
+			grp = getgrgid(pwd->pw_gid);
+			if (grp != NULL) {
+				snprintf(grpkey, LINE_MAX-1, ".%s",
+				    grp->gr_name);
+				grpkey[LINE_MAX-1] = 0;
+				pw_getconf(option, LINE_MAX, grpkey, cipher);
+			}
+			if (*option == 0)
+				pw_getconf(option, LINE_MAX, "default", cipher);
 		}
-		if (*option == 0)
-		        pw_getconf(option, LINE_MAX, "default", cipher);
 	}
 
 	next = option;

@@ -30,10 +30,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login.conf.5,v 1.6 2001/05/29 21:35:44 millert Exp $
+.\" $OpenBSD: login.conf.5,v 1.7 2001/06/18 21:09:24 millert Exp $
 .\" BSDI $From: login.conf.5,v 2.20 2000/06/26 14:50:38 prb Exp $
 .\"
-.Dd February 23, 1995
+.Dd June 18, 2001
 .Dt LOGIN.CONF 5
 .Os
 .Sh NAME
@@ -73,7 +73,7 @@ file are either boolean or use a
 .Ql =
 to separate the capability from the value.
 The types are described after the capability table.
-.Bl -column alwaysuseklogin programxx xusrxbinxbin
+.Bl -column alwaysuseklogin program xetcxmotd
 .Sy Name	Type	Default	Description
 .\"
 .It alwaysuseklogin Ta bool Ta Dv false Ta
@@ -149,6 +149,28 @@ See
 .Xr login 1 .
 .\"
 .sp
+.It localcipher Ta string Ta old Ta
+The cipher to use for local passwords.
+Possible values are:
+.Dq old ,
+.Dq newsalt,<rounds> ,
+.Dq md5 ,
+and
+.Dq blowfish,<rounds> .
+For
+.Dq newsalt
+the value of rounds is a 24-bit integer with a minimum of 7250 rounds.
+For
+.Dq blowfish
+the value can be between 4 and 31.
+It specifies the base 2 logarithm of the number of rounds.
+.\"
+.sp
+.It ypcipher Ta string Ta old Ta
+The cipher to use for YP passwords.
+The possible values are the same as for localcipher.
+.\"
+.sp
 .It stacksize Ta size Ta "" Ta
 Maximum stack size limit.
 .\"
@@ -163,6 +185,14 @@ Maximum locked in core memory size limit.
 .sp
 .It memoryuse Ta size Ta "" Ta
 Maximum in core memoryuse size limit.
+.\"
+.sp
+.It minpasswordlen Ta number Ta 6 Ta
+The minimum length a local password may be.
+If a negative value or zero, no length restrictions are enforced.
+Used by the
+.Xr passwd 1
+utility.
 .\"
 .sp
 .It nologin Ta file Ta "" Ta
@@ -185,6 +215,34 @@ a grace period for updating their password.
 .It password-warn Ta time Ta Dv 2w Ta
 If the user's password will expire within this length of time then
 warn the user of this.
+.\"
+.sp
+.It passwordcheck Ta path Ta "" Ta
+An external program that checks the quality of the password.
+The password is passed to the program on
+.Pa stdin .
+An exit code of 0 indicates that the quality of the password is
+sufficient, an exit code of 1 signals that the password failed the check.
+.\"
+.sp
+.It passwordtime Ta time Ta "" Ta
+The lifetime of a password in seconds, reset every time a user
+changes their password.
+When this value is exceeded the user will no longer be able to
+login unless the
+.Li password-dead
+option has been specified.
+Used by the
+.Xr passwd 1
+utility.
+.\"
+.sp
+.It passwordtries Ta number Ta 3 Ta
+The number of times the
+.Xr passwd 1
+utility enforces a check on the password.
+If 0, the new password will only be accepted if it passes the password
+quality check.
 .\"
 .sp
 .It path Ta path Ta Dv "value of _PATH_DEFPATH" Ta

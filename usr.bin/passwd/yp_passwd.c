@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_passwd.c,v 1.16 2001/01/10 20:11:30 deraadt Exp $	*/
+/*	$OpenBSD: yp_passwd.c,v 1.17 2001/06/18 21:09:24 millert Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,7 +34,7 @@
  */
 #ifndef lint
 /*static char sccsid[] = "from: @(#)yp_passwd.c	1.0 2/2/93";*/
-static char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.16 2001/01/10 20:11:30 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.17 2001/06/18 21:09:24 millert Exp $";
 #endif /* not lint */
 
 #ifdef	YP
@@ -49,6 +49,7 @@ static char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.16 2001/01/10 20:11:30 deraadt 
 #include <err.h>
 #include <errno.h>
 #include <ctype.h>
+#include <login_cap.h>
 #include <rpc/rpc.h>
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
@@ -60,11 +61,11 @@ static char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.16 2001/01/10 20:11:30 deraadt 
 #define _PASSWORD_LEN PASS_MAX
 #endif
 
-extern	int pwd_gensalt __P(( char *, int, struct passwd *, char));
-extern	int pwd_check __P((struct passwd *, char *));
-extern	int pwd_gettries __P((struct passwd *));
+extern int pwd_gensalt __P((char *, int, struct passwd *, login_cap_t *, char));
+extern int pwd_check __P((struct passwd *, login_cap_t *, char *));
+extern int pwd_gettries __P((struct passwd *, login_cap_t *));
 
-char *ypgetnewpasswd __P((struct passwd *, char **));
+char *ypgetnewpasswd __P((struct passwd *, login_cap_t *, char **));
 struct passwd *ypgetpwnam __P((char *));
 
 char *domain;
@@ -92,6 +93,7 @@ yp_passwd(username)
 	struct passwd *pw;
 	struct timeval tv;
 	CLIENT *client;
+	login_cap_t *lc;
 
 	/*
 	 * Get local domain
@@ -134,6 +136,10 @@ yp_passwd(username)
 		warnx("unknown user %s.", username);
 		return(1);
 	}
+	if ((lc = login_getclass(pw->pw_class)) == NULL) {
+		warnx("unable to get login class for user %s.", username);
+		return(1);
+	}
 		
 	uid = getuid();
 	if (uid && uid != pw->pw_uid) {
@@ -142,7 +148,7 @@ yp_passwd(username)
 	}
 
 	/* prompt for new password */
-	yppasswd.newpw.pw_passwd = ypgetnewpasswd(pw, &yppasswd.oldpass);
+	yppasswd.newpw.pw_passwd = ypgetnewpasswd(pw, lc, &yppasswd.oldpass);
 
 	/* tell rpc.yppasswdd */
 	yppasswd.newpw.pw_name	= pw->pw_name;
@@ -178,8 +184,9 @@ yp_passwd(username)
 }
 
 char *
-ypgetnewpasswd(pw, old_pass)
+ypgetnewpasswd(pw, lc, old_pass)
 	struct passwd *pw;
+	login_cap_t *lc;
 	char **old_pass;
 {
 	static char buf[_PASSWORD_LEN+1];
@@ -204,7 +211,7 @@ ypgetnewpasswd(pw, old_pass)
 			pw_error(NULL, 1, 1);
 	}
 
-	pwd_tries = pwd_gettries(pw);
+	pwd_tries = pwd_gettries(pw, lc);
 
 	for (buf[0] = '\0', tries = 0;;) {
 		p = getpass("New password:");
@@ -217,7 +224,7 @@ ypgetnewpasswd(pw, old_pass)
 			continue;
 		}
 		if ((tries++ < pwd_tries || pwd_tries == 0) 
-		    && pwd_check(pw, p) == 0)
+		    && pwd_check(pw, lc, p) == 0)
 			continue;
 		strncpy(buf, p, sizeof buf-1);
 		buf[sizeof buf-1] = '\0';
@@ -225,7 +232,7 @@ ypgetnewpasswd(pw, old_pass)
 			break;
 		(void)printf("Mismatch; try again, EOF to quit.\n");
 	}
-        if( !pwd_gensalt( salt, _PASSWORD_LEN, pw, 'y' )) {
+        if( !pwd_gensalt( salt, _PASSWORD_LEN, pw, lc, 'y' )) {
                 (void)printf("Couldn't generate salt.\n");
                 pw_error(NULL, 0, 0);
         }

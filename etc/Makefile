@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.122 2001/05/30 02:11:04 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.123 2001/06/18 21:09:22 millert Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -16,7 +16,7 @@ BIN1=	bootptab changelist ccd.conf csh.cshrc csh.login csh.logout \
 	daily dhcpd.conf dhcpd.interfaces dm.conf exports ftpusers \
 	ftpchroot gettytab group hosts hosts.lpd inetd.conf \
 	ksh.kshrc locate.rc man.conf monthly motd mrouted.conf \
-	myname netstart networks newsyslog.conf passwd.conf \
+	myname netstart networks newsyslog.conf \
 	phones printcap protocols rbootd.conf rc rc.conf rc.local \
 	rc.securelevel rc.shutdown remote rpc security services \
 	shells syslog.conf weekly etc.${MACHINE}/disktab dhclient.conf \
