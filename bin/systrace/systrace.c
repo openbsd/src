@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.23 2002/07/10 07:05:02 provos Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.24 2002/07/10 07:05:38 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -371,6 +371,9 @@ systrace_initcb(void)
 	X(intercept_register_sccb("native", "chmod", trans_cb, NULL));
 	intercept_register_transfn("native", "chmod", 0);
 	intercept_register_translation("native", "chmod", 1, &modeflags);
+	X(intercept_register_sccb("native", "fchmod", trans_cb, NULL));
+	intercept_register_translation("native", "fchmod", 0, &fdt);
+	intercept_register_translation("native", "fchmod", 1, &modeflags);
 	X(intercept_register_sccb("native", "readlink", trans_cb, NULL));
 	tl = intercept_register_translink("native", "readlink", 0);
 	alias = systrace_new_alias("native", "readlink", "native", "fsread");
