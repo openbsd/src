@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wax.4,v 1.5 2003/09/02 21:11:50 jmc Exp $
+.\"	$OpenBSD: wax.4,v 1.6 2004/10/28 19:33:58 miod Exp $
 .\"
 .\"
 .\" Copyright (c) 2003 Michael Shalayeff
@@ -24,14 +24,15 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 3, 2003
+.Dd October 28, 2004
 .Dt WAX 4 hppa
 .Os
 .Sh NAME
 .Nm wax
 .Nd GSC bus controller and I/O subsystem
 .Sh SYNOPSIS
-.Cd "wax0 at mainbus? irq 23"
+.Cd "wax* at mainbus0 irq 24"
+.Cd "wax* at phantomas0 irq 24"
 .Cd "gsc2 at wax?"
 .Sh DESCRIPTION
 The

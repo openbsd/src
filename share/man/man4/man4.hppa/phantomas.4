@@ -1,4 +1,4 @@
-.\"	$OpenBSD: phantomas.4,v 1.6 2003/09/02 21:11:50 jmc Exp $
+.\"	$OpenBSD: phantomas.4,v 1.7 2004/10/28 19:33:58 miod Exp $
 .\"
 .\" Copyright (c) 2002 Michael Shalayeff
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 18, 2002
+.Dd October 28, 2004
 .Dt PHANTOMAS 4 hppa
 .Os
 .Sh NAME
@@ -31,16 +31,20 @@
 .Nd Phantom PseudoBC GSC+ Port
 .Sh SYNOPSIS
 .Cd "phantomas0 at mainbus?"
-.Cd "sti* at phantomas?"
-.Cd "lasi* at phantomas?"
 .Cd "dino* at phantomas?"
+.Cd "lasi* at phantomas?"
+.Cd "sti* at phantomas?"
+.Cd "wax* at phantomas?"
 .Sh DESCRIPTION
 Phantom bus convertor used to connect an
 .Xr sti 4
-graphics, a
+graphics,
 .Xr lasi 4
-bus host adapter for
+and
+.Xr wax 4
+bus host adapters for
 .Xr gsc 4
+bus host adapter
 and a PCI bridge
 .Xr dino 4
 to the system bus, where
@@ -50,7 +54,9 @@ and memory are located.
 .Xr dino 4 ,
 .Xr gsc 4 ,
 .Xr intro 4 ,
-.Xr lasi 4
+.Xr lasi 4 ,
+.Xr sti 4 ,
+.Xr wax 4
 .Sh HISTORY
 The
 .Nm
