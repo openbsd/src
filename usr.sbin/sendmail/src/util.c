@@ -391,7 +391,6 @@ buildfname(gecos, login, buf, bufsiz)
 {
 	register char *p;
 	register char *bp = buf;
-	int l;
 
 	if (*gecos == '*')
 		gecos++;
