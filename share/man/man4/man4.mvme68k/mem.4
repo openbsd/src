@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mem.4,v 1.5 2000/04/27 00:35:58 deraadt Exp $
+.\"	$OpenBSD: mem.4,v 1.6 2002/10/01 21:01:35 miod Exp $
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -61,8 +61,7 @@ in the same manner as
 .Nm /dev/mem .
 Only kernel virtual addresses that are currently mapped to memory are allowed.
 .Pp
-On the
-.Tn mvme68k ,
+On the mvme68k,
 physical memory may be discontiguous;
 kernel virtual memory begins at
 .Ad 0x00000000 .

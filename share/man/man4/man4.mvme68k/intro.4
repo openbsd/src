@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.4,v 1.11 2002/03/29 22:46:00 jason Exp $
+.\"	$OpenBSD: intro.4,v 1.12 2002/10/01 21:01:35 miod Exp $
 .\" Copyright (c) 1990, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -66,8 +66,7 @@ The networking support is introduced in
 .Xr netintro 4 .
 .Sh DEVICE SUPPORT
 This section describes the hardware supported on the
-.Tn mvme68k
-platform.
+mvme68k platform.
 Software support for these devices comes in two forms.
 A hardware device may be supported with a character or block
 .Em device driver ,
@@ -101,24 +100,50 @@ Pseudo-devices are not listed.
 Devices are indicated by their functional interface.
 Not all supported devices are listed.
 .Pp
-.Bl -tag -width ssh(4) -compact -offset indent
+.Bl -tag -width pcctwo(4) -compact -offset indent
+.It Xr cl 4
+Cirrus Logic CL2400 serial controller.
+.It Xr flash 4
+MVME162 on-board flash memory.
 .It Xr ie 4
 Intel-based ethernet interface.
+.It Xr ipic 4
+MVME162
+.Tn Industry Pack
+ports.
 .It Xr le 4
 On board and MVME376 AMD 7990 Lance-based ethernet interface.
+.\" .It Xr lp 4
+.\" MVME147 printer interface.
+.It Xr mc 4
+MVME162 MCchip.
+.It Xr memc 4
+MVME1[67]x memory controller.
+.It Xr pcc 4
+MVME147 PCC chip.
+.It Xr pcctwo 4
+MVME1[67]7 PCC2 chip.
 .It Xr ssh 4
 NCR53710 low level SCSI adapter interface.
+.It Xr sram 4
+MVME162 static memory.
 .It Xr vme 4
 VME bus support.
 .It Xr vs 4
 MVME328 low level SCSI adapter interface.
+.It Xr wdsc 4
+WD33C93 SCSI adapter interface.
+.It Xr zs 4
+Zilog 8530 serial controller.
 .El
 .Sh SEE ALSO
 .Xr autoconf 4 ,
+.Xr ie 4 ,
+.Xr le 4 ,
+.Xr ssh 4 ,
 .Xr config 8
 .Sh HISTORY
-The
-.Tn mvme68k
+The mvme68k
 .Nm intro
 first appeared in
 .Ox 2.6 .

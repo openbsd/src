@@ -1,4 +1,4 @@
-.\"	$OpenBSD: le.4,v 1.7 2001/11/13 13:54:26 mpech Exp $
+.\"	$OpenBSD: le.4,v 1.8 2002/10/01 21:01:35 miod Exp $
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -44,8 +44,10 @@
 .Nm le
 .Nd Ethernet driver for AMD7990(LANCE)-based boards
 .Sh SYNOPSIS
-.Cd "le* at pcc0 offset 0x1800 ipl 1"
-.Cd "le* at vmes0 addr 0xffff1200 ipl 1 vec 0x74 len 0x100"
+.Cd "le* at pcc0 offset 0x1800 ipl 1" Pq "onboard interface"
+.Cd "le* at vmes0 addr 0xffff1200 ipl 1 vec 0x74 len 0x100" Pq "MVME376"
+.Cd "le* at vmes0 addr 0xffff1400 ipl 1 vec 0x75 len 0x100" Pq "MVME376"
+.Cd "le* at vmes0 addr 0xffff1600 ipl 1 vec 0x76 len 0x100" Pq "MVME376"
 .Sh DESCRIPTION
 The
 .Nm
@@ -69,20 +71,22 @@ network.
 The
 .Nm
 interface supports the following mvme68k hardware:
-.Bl -tag -width "ON BOARD" -offset indent
-.It Em ON BOARD
-Motorola's MVME147 on board ethernet interface
+.Bl -tag -width "onboard" -offset indent
+.It Em onboard
+MVME147 onboard ethernet interface
 .It Em MVME376
-Motorola's VME bus ethernet card
+MVME376 VMEbus ethernet card
 .El
 .Sh HISTORY
-The
-.Tn mvme68k
+The mvme68k
 .Nm
 interface first appeared in
 .Ox 2.0
 .Sh SEE ALSO
 .Xr arp 4 ,
+.Xr ie 4 ,
 .Xr inet 4 ,
 .Xr intro 4 ,
+.Xr netintro 4 ,
+.Xr hostname.if 5 ,
 .Xr ifconfig 8

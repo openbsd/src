@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ie.4,v 1.2 2001/12/17 10:25:29 mpech Exp $
+.\"     $OpenBSD: ie.4,v 1.3 2002/10/01 21:01:35 miod Exp $
 .\"
 .\" Copyright (c) 1998 The OpenBSD Project
 .\" All rights reserved.
@@ -8,10 +8,10 @@
 .Os
 .Sh NAME
 .Nm ie
-.Nd Intel 82586 ethernet interface
+.Nd Intel 82586 Ethernet driver
 .Sh SYNOPSIS
-.Cd "ie0 at mc0 offset 0x46000 ipl 1"
-.Cd "ie0 at pcctwo0 offset 0x46000 ipl 1"
+.Cd "ie0 at mc0 offset 0x46000 ipl 1" Pq "MVME162"
+.Cd "ie0 at pcctwo0 offset 0x46000 ipl 1" Pq "MVME167/177"
 .Sh DESCRIPTION
 The
 .Nm
@@ -19,7 +19,6 @@ interface provides access to the 10 Mb/s Ethernet network via the
 .Tn Intel
 82586
 Ethernet chip set.
-The
 .Pp
 Each of the host's network addresses
 is specified at boot time with an
@@ -35,4 +34,7 @@ network.
 .Xr arp 4 ,
 .Xr inet 4 ,
 .Xr intro 4 ,
-.Xr le 4
+.Xr le 4 ,
+.Xr netintro 4 ,
+.Xr hostname.if 5 ,
+.Xr ifconfig 8
