@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote-keygen.1,v 1.1.1.1 1999/05/23 22:11:07 angelos Exp $
+.\" $OpenBSD: keynote-sign.1,v 1.1 1999/05/23 22:32:07 angelos Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -21,20 +21,20 @@
 .\" PURPOSE.
 .\"
 .Dd April 29, 1999
-.Dt keynote-keygen 1
+.Dt keynote-sign 1
 .Os
-.\" .TH keynote-keygen 1 local
+.\" .TH keynote-sign 1 local
 .Sh NAME
-.Nm keynote-keygen
-.Nd command line tool for generating public/private keys
+.Nm keynote-sign
+.Nd command line tool for signing
+.Xr KeyNote 3
+assertions
 .Sh SYNOPSIS
-.Nm keynote-keygen
+.Nm keynote-sign
+.Op Fl v
 .Ar AlgorithmName
-.Ar KeySize
-.Ar PublicKeyFile
+.Ar AssertionFile
 .Ar PrivateKeyFile
-.Op print-offset
-.Op print-length
 .Sh DESCRIPTION
 For details on
 .Nm KeyNote ,
@@ -43,51 +43,67 @@ see the web page
  http://www.cis.upenn.edu/~keynote
 .Ed
 .Pp
-.Nm keynote-keygen
-creates a public/private key of size
-.Fa KeySize ,
-for the algorithm specified by
-.Fa AlgorithmName .
-Typical keysizes are 512, 1024, or 2048 (bits). The minimum key size
-for DSA keys is 512 (bits). Supported
+.Nm keynote-sign
+reads the assertion contained in
+.Fa AssertionFile
+and generates a signature specified by
+.Fa AlgorithmName
+using the private key stored in
+.Fa PrivateKeyFile .
+The private key is expected to be of the form output by
+.Xr keynote-keygen 1 .
+The private key algorithm and the
+.Fa AlgorithmName
+specified as an argument are expected to match. There is no requirement
+for the internal or ASCII encodings to match.
+Valid
 .Fa AlgorithmName
 identifiers are:
 .Bl -tag -width indent
-.It ``dsa-hex:''
-.It ``dsa-base64:''
-.It ``rsa-hex:''
-.It ``rsa-base64:''
+.It ``sig-dsa-sha1-hex:''
+.It ``sig-dsa-sha1-base64:''
+.It ``sig-rsa-sha1-hex:''
+.It ``sig-rsa-sha1-base64:''
+.It ``sig-rsa-md5-hex:''
+.It ``sig-rsa-md5-base64:''
 .El
 .Pp
 Notice that the trailing colon is required.
-The resulting public key is stored in file
-.Fa PublicKeyFile .
-Similarly, the resulting private key is stored in file
-.Fa PrivateKeyFile .
-Either of the filenames can be specified to be ``-'', in which
-case the corresponding key(s) will be printed in standard output.
+The resulting signature is printed in standard output. This can then
+be added (via cut-and-paste or some script) at the end of the
+assertion, in the
+.Fa Signature
+field.
 .Pp
-The optional parameters
-.Fa print-offset
+The public key corresponding to the private key in
+.Fa PrivateKeyFile
+is expected to already be included in the
+.Fa Authorizer
+field of the assertion, either directly or indirectly (i.e., through
+use of a
+.Fa Local-Init
+attribute). Furthermore, the assertion must have a
+.Fa Signature
+field (even if it is empty), as the signature is computed on
+everything between the
+.Fa KeyNote-Version
 and
-.Fa print-length
-specify the offset from the begining of the line where the key
-will be printed, and the number of characters of the key that will
-be printed per line.
-.Fa print-length
-includes
+.Fa Signature
+keywords (inclusive), and the
 .Fa AlgorithmName
-for the first line and has to be longer (by at least 2) than
-.Fa AlgorithmName .
-.Fa print-length
-also accounts for the line-continuation character (backslash) at
-the end of each line, and the doublequotes at the begining and end
-of the key encoding.  Default values are 12 and 50 respectively.
+string.
 .Pp
+If the
+.Op Fl v
+flag is provided,
+.Nm keynote-sign
+will also verify the newly-created signature using the
+.Fa Authorizer
+field key.
 .Sh SEE ALSO
 .Xr keynote 3 ,
 .Xr keynote 4 ,
-.Xr keynote-sign 1 ,
+.Xr keynote-keygen 1 ,
 .Xr keynote-sigver 1 ,
 .Xr keynote-verify 1
 .Bl -tag -width "AAAAAAA"

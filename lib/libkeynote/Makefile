@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.1.1.1 1999/05/23 22:11:04 angelos Exp $
+#	$OpenBSD: Makefile,v 1.2 1999/05/23 22:32:06 angelos Exp $
 
 LIB=	keynote
-MAN=	man/keynote.3 man/keynote.4
+MAN=	keynote.3 keynote.4
 
-CFLAGS+= -DCRYPTO
+CFLAGS+= -DCRYPTO -I. -I${.CURDIR}
 LEXFLAGS = -Cr -Pkn -s -i
 YACCFLAGS = -d -p kn -b k
 
@@ -14,16 +14,16 @@ SRCS=	k.tab.c lex.kn.c environment.c parse_assertion.c signature.c aux.c \
 CLEANFILES+= k.tab.c lex.kn.c k.tab.h
 
 k.tab.c: keynote.y environment.h signature.h
-	$(YACC) $(YACCFLAGS) keynote.y
+	$(YACC.y) $(YACCFLAGS) ${.CURDIR}/keynote.y
 
-lex.kn.c: keynote.l k.tab.h environment.h assertion.h signature.h
-	$(LEX.l) $(LEXFLAGS) keynote.l
+lex.kn.c: keynote.l keynote.y environment.h assertion.h signature.h
+	$(LEX.l) $(LEXFLAGS) ${.CURDIR}/keynote.l
 
 includes:
 	@cd ${.CURDIR}; for i in $(HDRS); do \
 	    j="cmp -s $$i ${DESTDIR}/usr/include/$$i || \
-		${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
-		${DESTDIR}/usr/include"; \
+		${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 \
+		$$i ${DESTDIR}/usr/include"; \
 	    echo $$j; \
 	    eval "$$j"; \
 	done
