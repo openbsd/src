@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xf86.4,v 1.4 2002/08/24 17:21:44 matthieu Exp $
+.\"	$OpenBSD: xf86.4,v 1.5 2003/04/11 04:32:28 jmc Exp $
 .\"
 .\" Copyright (c) 1998 Matthieu Herrb
 .\" All rights reserved.
@@ -42,8 +42,8 @@ and
 .Va sparc64
 the
 .Pa /dev/xf86
-driver provides access to the memory and I/O ports of a VGA board 
-and to the PCI configuration registers 
+driver provides access to the memory and I/O ports of a VGA board
+and to the PCI configuration registers
 for use by the XFree86 X servers
 when running with a kernel security level > 0.
 .Pp
@@ -54,18 +54,18 @@ Access to the
 device is allowed when the sysctl variable
 .Va machdep.allowaperture
 >= 1.
-This variable (which default value is 0)
+This variable (which has a default value of 0)
 can only be manipulated when the security level is <= 0, so it should be
 set in
 .Pa /etc/sysctl.conf .
-The possible values for 
-.Va machdep.allowaperture 
+The possible values for
+.Va machdep.allowaperture
 are:
 .Bl -tag -width Ds
 .It 0
 the aperture driver is disabled.
 Opening it returns
-.Dv EPERM. 
+.Dv EPERM.
 .It 1
 the aperture driver allows access to standard VGA framebuffer and BIOS.
 Access to

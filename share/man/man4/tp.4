@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tp.4,v 1.15 2003/03/06 20:40:35 jmc Exp $
+.\"	$OpenBSD: tp.4,v 1.16 2003/04/11 04:32:27 jmc Exp $
 .\"	$NetBSD: tp.4,v 1.4 1994/11/30 16:22:38 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -291,7 +291,7 @@ See the description of the flags below.
 .It Dv TPOPT_PARAMS
 .Ar struct tp_conn_param
 .br
-Used to get or set a group parameters for a connection.
+Used to get or set group parameters for a connection.
 The
 .Ar struct tp_conn_param
 is the argument used with the
@@ -308,7 +308,7 @@ structure are
 described below.
 .El
 .Pp
-.Em Values for TPOPT_PARAMS:
+.Em Values for TPOPT_PARAMS :
 .Bl -tag -width p_sendack_ticks
 .It Ar p_Nretrans
 nonzero short integer [1]
@@ -563,7 +563,7 @@ Its meaning is as follows.
 The bit numbering used is that of the RT PC, which means that bit
 0 is the most significant bit, while bit 8 is the least significant bit.
 .sp 1
-.Em Values for TPOPT_FLAGS:
+.Em Values for TPOPT_FLAGS :
 .Bl -tag -width Bitsx
 .It Sy Bits
 .Sy Description [Default]
@@ -584,7 +584,7 @@ entity.
 Not used.
 .It \&3
 .Dv TPFLAG_XPD_PRES :
-set when expedited data are present
+set when expedited data are present.
 [0]
 .It 4\&..7
 Reserved.
@@ -638,7 +638,7 @@ because the
 call had not yet returned a
 legitimate socket descriptor when the signal was handled.
 .Dv ETIMEDOUT
-(or a some other
+(or some other
 .Va errno
 value appropriate to the type of error) is returned if
 .Dv SIGURG

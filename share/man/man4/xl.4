@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xl.4,v 1.26 2003/01/13 17:25:08 henning Exp $
+.\"	$OpenBSD: xl.4,v 1.27 2003/04/11 04:32:28 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998
 .\"     Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -116,7 +116,7 @@ Note that this media type is only available with
 adapters that have external PHYs or built-in autonegotiation logic.
 For 3C900 and 3C900B adapters, the driver
 will choose the mode specified in the EEPROM.
-You can change this by adding media options to the appropriate
+This can be changed by adding media options to the appropriate
 .Xr hostname.if 5
 file.
 .It Cm media No 100baseFX Cm mediaopt No full-duplex
@@ -139,7 +139,7 @@ Set 10base2 (thin-net) operation (half-duplex only).
 .Pp
 For more information on configuring this device, see
 .Xr ifconfig 8 .
-To view a list of media types and options supported by your card try
+To view a list of media types and options supported by this card try
 .Ic ifconfig -m <device> .
 For example,
 .Ic ifconfig -m xl0 .
@@ -167,7 +167,7 @@ To avoid getting caught in an infinite wait loop,
 the driver only polls the bit a finite number of times before
 giving up, at which point it issues this message.
 This message may be printed during driver initialization on slower machines.
-If you see this message but the driver continues to function normally, the
+If this message appears but the driver continues to function normally, the
 message can probably be ignored.
 .It "xl%d: chip is in D3 power state -- setting to D0"
 This message applies only to 3C905B adapters, which support power management.
@@ -180,13 +180,13 @@ it won't be able to configure it correctly.
 The driver tries to detect this condition and bring
 the adapter back to the D0 (full power) state, but this may not be
 enough to return the driver to a fully operational condition.
-If you see this message at boot time and the driver fails to attach
-the device as a network interface, you will have to perform second
-warm boot to have the device properly configured.
+If this message appears at boot time and the driver fails to attach
+the device as a network interface, a second warm boot will have to be
+performed to have the device properly configured.
 .Pp
 Note that this condition only occurs when warm booting from another
 operating system.
-If you power down your system prior to booting
+If the system is powered down prior to booting
 .Ox ,
 the card should be configured correctly.
 .It "xl%d: WARNING: no media options bits set in the media options register!"
@@ -212,8 +212,8 @@ the author considers it a manufacturing defect.
 .Xr ie 4 ,
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
-.Xr ti 4 ,
 .Xr netintro 4 ,
+.Xr ti 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
 .Sh HISTORY

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vnd.4,v 1.15 2002/09/26 22:09:53 miod Exp $
+.\"	$OpenBSD: vnd.4,v 1.16 2003/04/11 04:32:28 jmc Exp $
 .\"	$NetBSD: vnd.4,v 1.1 1995/12/30 18:10:48 thorpej Exp $
 .\"
 .\" Copyright (c) 1995 Jason R. Thorpe.
@@ -52,8 +52,8 @@ that bypasses the buffercache and thus is suitable for swap on files, but
 not for building disk-images, and the
 .Nm svnd
 ("safe"
-.Nm
-) variant that goes
+.Nm vnd )
+variant that goes
 through the buffercache, thereby maintaining cache-coherency after the
 block-device is closed which makes it suitable for creating disk images.
 The latter is not good for swapping on, though.
@@ -63,8 +63,8 @@ how to properly configure disks and pseudo-devices in a kernel
 configuration file.
 .Pp
 In order to compile in support for the
-.Nm
-, you must add a line similar
+.Nm vnd ,
+you must add a line similar
 to the following to your kernel configuration file:
 .Bd -unfilled -offset indent
 pseudo-device	vnd	4	# vnode disk driver
@@ -72,7 +72,7 @@ pseudo-device	vnd	4	# vnode disk driver
 .Pp
 The count argument is how many
 .Nm vnds
-memory is allocated for a boot time.
+memory is allocated for at boot time.
 In this example, no more than 4
 .Nm vnds
 may be configured.
@@ -89,15 +89,19 @@ for more information.
 .Xr MAKEDEV 8 ,
 .Xr config 8 ,
 .Xr disklabel 8 ,
-.Xr fsck 8 ,
 .Xr fdisk 8 ,
+.Xr fsck 8 ,
 .Xr mount 8 ,
 .Xr newfs 8 ,
 .Xr vnconfig 8
 .Sh HISTORY
-The vnode disk driver was originally written at the University of
+The
+.Nm
+disk driver was originally written at the University of
 Utah.
-The svnd variant was first seen in
+The
+.Nm svnd
+variant was first seen in
 .Ox 2.1 .
 .Sh BUGS
 The

@@ -1,4 +1,4 @@
-.\" $OpenBSD: vlan.4,v 1.17 2003/02/18 07:54:53 jmc Exp $
+.\" $OpenBSD: vlan.4,v 1.18 2003/04/11 04:32:28 jmc Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -59,7 +59,9 @@ port(s) the frame can go to.
 Frames transmitted through the vlan interface will be diverted to the specified
 physical interface with 802.1Q vlan encapsulation.
 Frames with 802.1Q encapsulation received by the parent interface with the
-correct vlan tag will be diverted to the associated vlan pseudo-interface.
+correct vlan tag will be diverted to the associated
+.Nm
+pseudo-interface.
 .El
 .Pp
 Frame headers which normally contain the destination host, source host, and
@@ -78,7 +80,7 @@ etc.
 The number of interfaces is given by the corresponding
 .Sy pseudo-device
 line in the system config file.
-.Xr vlan 4
+.Nm
 interfaces support the following unique
 .Xr ioctl 2 Ns s :
 .Bl -tag -width aaa
@@ -88,7 +90,7 @@ Set the vlan tag and parent for a given vlan interface.
 Get the vlan tag and parent for a given vlan interface.
 .Pp
 .El
-.Xr vlan 4
+.Nm
 interfaces use the following interface capabilities:
 .Bl -tag -width aaa
 .It IFCAP_VLAN_MTU:
@@ -100,13 +102,13 @@ The parent interface will participate in the tagging and untagging of frames.
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "vlan%d: initialized with non-standard mtu %d (parent %s)"
-The IFCAP_VLAN_MTU capability was not set on the parent interface.  
+The IFCAP_VLAN_MTU capability was not set on the parent interface.
 We assume in this event that the parent interface is not capable of handling
-frames larger then its MTU.
+frames larger than its MTU.
 This will generally result in a non-compliant 802.1Q implementation.
 .Pp
 Some Ethernet chips will either discard or truncate
-Ethernet frames that are larger then 1514 bytes.
+Ethernet frames that are larger than 1514 bytes.
 This causes a problem as 802.1Q tagged frames can be up to 1518 bytes.
 Most controller chips can be told not to discard large frames
 and/or to increase the allowed frame size.
@@ -114,13 +116,13 @@ Refer to the hardware manual for your chip to do this.
 .El
 .Pp
 If the IFCAP_VLAN_MTU capability is set on a vlan parent,
-.Xr vlan 4
-assumes that Ethernet chip on the parent can handle
+.Nm
+assumes that the Ethernet chip on the parent can handle
 oversized frames.
 Either the chip allows 1518 byte frames by default (such as
 .Xr rl 4 ) ,
 the driver has instructed the chip to do so (such as
-.Xr fxp 4 
+.Xr fxp 4
 and
 .Xr dc 4 ) ,
 or the driver also takes advantage of a hardware tagging capability,
@@ -141,7 +143,9 @@ and
 .%O http://standards.ieee.org/getieee802/802.1.html
 .Re
 .Pp
-The vlan interface is to be configured with
+The
+.Nm
+interface is to be configured with
 .Xr ifconfig 8 ,
 see its manual page for more information.
 .Sh BUGS
@@ -150,13 +154,13 @@ as well as Ethernet.
 This driver only supports such operation with Ethernet devices.
 .Pp
 When the IFCAP_VLAN_HWTAGGING capability is set on the parent interface,
-.Xr vlan 4
+.Nm
 does not participate in the actual tagging or untagging of Ethernet frames.
 It simply passes the vlan ID on to the parent interface for tagging on transmit,
-and gets a vlan ID for each packet on receive. 
+and gets a vlan ID for each packet on receive.
 The vlan tagged packet is not actually visible to
 .Ox .
-Thus, 
+Thus,
 .Xr bpf 4
 will show untagged packets on the parent interface, although frames
 are actually being transmitted and received with tags on the wire.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: we.4,v 1.9 2002/09/26 22:09:53 miod Exp $
+.\"	$OpenBSD: we.4,v 1.10 2003/04/11 04:32:28 jmc Exp $
 .\"	$NetBSD: we.4,v 1.4 1998/08/09 00:39:02 thorpej Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ If the transceiver is active, the BNC media is selected.
 Otherwise, the AUI and UTP ports are both active.
 Cards of this vintage may also be found which lack one or two of the
 connectors.
-These cards also know what interrupt they are configured for, and will 
+These cards also know what interrupt they are configured for, and will
 correct such problems (for further interrupt issues, see
 .Xr isa 4
 and
@@ -109,7 +109,7 @@ The IRQ was wildcarded in the kernel configuration file, and the card is
 a WD8003S, WD8003E, or WD8013EBT, which do not support software IRQ
 configuration.
 .It "we0: failed to clear shared memory at offset <off>"
-The memory test was unable to clear shared the interface's shared memory
+The memory test was unable to clear the interface's shared memory
 region.
 This often indicates that the card is configured at a conflicting
 .Em iomem
