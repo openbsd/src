@@ -161,13 +161,22 @@ cmd
 	| PORT check_login SP host_port CRLF
 		{
 			if ($2) {
-				if ($4 || (portcheck && (ntohs(data_dest.sin_port) <
-				    IPPORT_RESERVED ||
+				if ($4) {
+					usedefault = 1;
+					reply(500,	
+					    "Illegal PORT rejected (range errors).");
+				} else if (portcheck &&
+				    ntohs(data_dest.sin_port) < IPPORT_RESERVED) {
+					usedefault = 1;
+					reply(500,
+					    "Illegal PORT rejected (reserved port).");
+				} else if (portcheck &&
 				    memcmp(&data_dest.sin_addr,
 				    &his_addr.sin_addr,
-				    sizeof data_dest.sin_addr)))) {
+				    sizeof data_dest.sin_addr)) {
 					usedefault = 1;
-					reply(500, "Illegal PORT rejected.");
+					reply(500,
+					    "Illegal PORT rejected (address wrong).");
 				} else {
 					usedefault = 0;
 					if (pdata >= 0) {
