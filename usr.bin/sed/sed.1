@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sed.1,v 1.14 2000/04/15 02:15:13 aaron Exp $
+.\"	$OpenBSD: sed.1,v 1.15 2000/10/06 23:53:52 aaron Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -256,11 +256,13 @@ The terminating
 must be preceded by a newline or optional whitespace.
 .sp
 .Bl -tag -width "XXXXXX" -compact
-.It [2addr] function-list
-Execute function-list only when the pattern space is selected.
+.It [2addr] Em function-list
+Execute
+.Em function-list
+only when the pattern space is selected.
 .sp
-.It [1addr]a\e
-.It text
+.It [1addr] Ns Em a Ns No \e
+.It Em text
 .br
 Write
 .Em text
@@ -269,51 +271,51 @@ whether by executing the
 .Sq N
 function or by beginning a new cycle.
 .sp
-.It [2addr]b[label]
+.It [2addr] Ns Em b Ns No [label]
 Branch to the
 .Sq \&:
 function with the specified label.
 If the label is not specified, branch to the end of the script.
 .sp
-.It [2addr]c\e
-.It text
+.It [2addr] Ns Em c Ns No \e
+.It Em text
 .br
 Delete the pattern space.
 With 0 or 1 address or at the end of a 2-address range,
 .Em text
 is written to the standard output.
 .sp
-.It [2addr]d
+.It [2addr] Ns Em d
 Delete the pattern space and start the next cycle.
 .sp
-.It [2addr]D
+.It [2addr] Ns Em D
 Delete the initial segment of the pattern space through the first
 newline character and start the next cycle.
 .sp
-.It [2addr]g
+.It [2addr] Ns Em g
 Replace the contents of the pattern space with the contents of the
 hold space.
 .sp
-.It [2addr]G
+.It [2addr] Ns Em G
 Append a newline character followed by the contents of the hold space
 to the pattern space.
 .sp
-.It [2addr]h
+.It [2addr] Ns Em h
 Replace the contents of the hold space with the contents of the
 pattern space.
 .sp
-.It [2addr]H
+.It [2addr] Ns Em H
 Append a newline character followed by the contents of the pattern space
 to the hold space.
 .sp
-.It [1addr]i\e
-.It text
+.It [1addr] Ns Em i Ns No \e
+.It Em text
 .br
 Write
 .Em text
 to the standard output.
 .sp
-.It [2addr]l
+.It [2addr] Ns Em l
 (The letter ell.)
 Write the pattern space to the standard output in a visually unambiguous
 form.
@@ -336,7 +338,7 @@ This form is as follows:
 \ev
 .El
 .Pp
-Nonprintable characters are written as three-digit octal numbers (with a
+Non-printable characters are written as three-digit octal numbers (with a
 preceding backslash) for each byte in the character (most significant byte
 first).
 Long lines are folded, with the point of folding indicated by displaying
@@ -344,28 +346,28 @@ a backslash followed by a newline.
 The end of each line is marked with a
 .Ql $ .
 .sp
-.It [2addr]n
+.It [2addr] Ns Em n
 Write the pattern space to the standard output if the default output has
 not been suppressed, and replace the pattern space with the next line of
 input.
 .sp
-.It [2addr]N
+.It [2addr] Ns Em N
 Append the next line of input to the pattern space, using an embedded
 newline character to separate the appended material from the original
 contents.
 Note that the current line number changes.
 .sp
-.It [2addr]p
+.It [2addr] Ns Em p
 Write the pattern space to standard output.
 .sp
-.It [2addr]P
+.It [2addr] Ns Em P
 Write the pattern space, up to the first newline character to the
 standard output.
 .sp
-.It [1addr]q
+.It [1addr] Ns Em q
 Branch to the end of the script and quit without starting a new cycle.
 .sp
-.It [1addr]r file
+.It [1addr] Ns Em r file
 Copy the contents of
 .Em file
 to the standard output immediately before the next attempt to read a
@@ -375,7 +377,7 @@ If
 cannot be read for any reason, it is silently ignored and no error
 condition is set.
 .sp
-.It [2addr]s/regular expression/replacement/flags
+.It [2addr] Ns Em s Ns No /re/replacement/flags
 Substitute the replacement string for the first instance of the regular
 expression in the pattern space.
 Any character other than backslash or newline can be used instead of
@@ -423,7 +425,7 @@ If the replacement string is identical to that which it replaces, it
 is still considered to have been a replacement.
 .El
 .sp
-.It [2addr]t [label]
+.It [2addr] Ns Em t Ns No [label]
 Branch to the
 .Ql \&:
 function bearing the label if any substitutions have been made since the
@@ -432,14 +434,14 @@ most recent reading of an input line or execution of a
 function.
 If no label is specified, branch to the end of the script.
 .sp
-.It [2addr]w Em file
+.It [2addr] Ns Em w file
 Append the pattern space to the
 .Em file .
 .sp
-.It [2addr]x
+.It [2addr] Ns Em x
 Swap the contents of the pattern and hold spaces.
 .sp
-.It [2addr]y/string1/string2/
+.It [2addr] Ns Em y Ns No /string1/string2/
 Replace all occurrences of characters in
 .Em string1
 in the pattern space with the corresponding characters from
@@ -455,27 +457,29 @@ character, and a backslash followed by an
 .Sq n
 is replaced by a newline character.
 .sp
-.It [2addr]!function
-.It [2addr]!function-list
+.Sm off
+.It Xo [2addr] Em !function No ,\ [2addr]
+.Em !function-list
+.Xc
+.Sm on
 Apply the function or function-list only to the lines that are
 .Em not
 selected by the address(es).
 .sp
-.It [0addr]:label
+.It [0addr] Ns Em : Ns No label
 This function does nothing; it bears a label to which the
 .Sq b
 and
 .Sq t
 commands may branch.
 .sp
-.It [1addr]=
-Write the line number to the standard output followed by a newline
-character.
+.It [1addr] Ns Em =
+Write the line number to the standard output followed by a newline character.
 .sp
 .It [0addr]
 Empty lines are ignored.
 .sp
-.It [0addr]#
+.It [0addr] Ns Em #
 The
 .Ql #
 and the remainder of the line are ignored (treated as a comment), with
