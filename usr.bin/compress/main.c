@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.26 2003/06/22 22:17:46 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.27 2003/06/23 16:19:25 millert Exp $	*/
 
 static const char copyright[] =
 "@(#) Copyright (c) 1992, 1993\n\
@@ -35,7 +35,7 @@ static const char license[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.26 2003/06/22 22:17:46 deraadt Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.27 2003/06/23 16:19:25 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -324,8 +324,8 @@ main(int argc, char *argv[])
 			continue;
 		default:
 			if (!S_ISREG(entry->fts_statp->st_mode) && !pipin) {
-				warnx("%s not a regular file: unchanged",
-				    infile);
+				warnx("%s not a regular file%s",
+				    cat ? "" : ": unchanged", infile);
 				continue;
 			}
 			break;
