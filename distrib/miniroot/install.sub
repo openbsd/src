@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.29 1997/05/16 03:07:39 millert Exp $
+#	$OpenBSD: install.sub,v 1.30 1997/05/16 03:21:10 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -650,9 +650,9 @@ install_url() {
 	done
 
 	# Get server directory
-	if [ "${_url_type}" = "ftp" -a "X${ftp_server_dir}" = X"" ]; then
+	if [ "${_url_type}" = "ftp" -a "X${_ftp_server_dir}" = X"" ]; then
 		# Default ftp dir
-		ftp_server_dir="pub/OpenBSD/${VERSION_MAJOR}.${VERSION_MINOR}/${ARCH}"
+		_ftp_server_dir="pub/OpenBSD/${VERSION_MAJOR}.${VERSION_MINOR}/${ARCH}"
 	fi
 	resp=""		# force one iteration
 	while [ "X${resp}" = X"" ]; do
