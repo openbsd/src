@@ -142,11 +142,6 @@ can be used to generate simple timeouts.  This functionality may be achieved
 by passing a NULL pointer for
 .Pa fds .
 .Sh WARNINGS
-Since this implementation is a wrapper around
-.Fn select ,
-functionality is limited to such.  There is no differentiation between
-standard and priority messages in the read or write queues.
-.Pp
 The
 .Nm POLLHUP
 flag is only a close approximation and may not always be accurate.
@@ -177,7 +172,7 @@ member of the
 structure.
 .It Bq Er EINVAL
 The timeout passed to
-.Fn select
+.Fn poll
 was too large.
 .It Bq Er EAGAIN
 Resource allocation failed inside of
@@ -186,7 +181,7 @@ Subsequent calls to
 .Fn poll
 may succeed.
 .It Bq Er EINTR
-.Fn Select
+.Fn poll
 caught a signal during the polling process.
 .El
 .Sh SEE ALSO
