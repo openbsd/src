@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.8 1996/08/21 03:47:22 tholo Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.9 1996/09/06 16:14:36 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -115,7 +115,7 @@ _ffs(input)
 	unsigned input;
 {
 	int result;
-	asm("bsfl %1,%0" : "=r" (result) : "r" (input));
+	__asm("bsfl %1,%0" : "=r" (result) : "r" (input));
 	return result+1;
 }
 
@@ -125,7 +125,7 @@ _fls(input)
 	unsigned input;
 {
 	int result;
-	asm("bsrl %1,%0" : "=r" (result) : "r" (input));
+	__asm("bsrl %1,%0" : "=r" (result) : "r" (input));
 	return result+1;
 }
 
@@ -135,7 +135,7 @@ _set_bit(pi, bit)
 	struct pginfo *pi;
 	int bit;
 {
-	asm("btsl %0,(%1)" :
+	__asm("btsl %0,(%1)" :
 	: "r" (bit & (MALLOC_BITS-1)), "r" (pi->bits+(bit/MALLOC_BITS)));
 }
 
@@ -145,7 +145,7 @@ _clr_bit(pi, bit)
 	struct pginfo *pi;
 	int bit;
 {
-	asm("btcl %0,(%1)" :
+	__asm("btcl %0,(%1)" :
 	: "r" (bit & (MALLOC_BITS-1)), "r" (pi->bits+(bit/MALLOC_BITS)));
 }
 
@@ -494,7 +494,7 @@ extend_pgdir(index)
 
     /* Get new pages */
     new = (struct pginfo**) mmap(0, i * malloc_pagesize, PROT_READ|PROT_WRITE,
-				 MAP_ANON|MAP_PRIVATE, -1, 0);
+				 MAP_ANON|MAP_PRIVATE, -1, (off_t)0);
     if (new == (struct pginfo **)-1)
 	return 0;
 
@@ -608,7 +608,7 @@ malloc_init ()
 
     /* Allocate one page for the page directory */
     page_dir = (struct pginfo **) mmap(0, malloc_pagesize, PROT_READ|PROT_WRITE,
-				       MAP_ANON|MAP_PRIVATE, -1, 0);
+				       MAP_ANON|MAP_PRIVATE, -1, (off_t)0);
     if (page_dir == (struct pginfo **) -1)
 	wrterror("(Init) my first mmap failed.  (check limits ?)\n");
 
@@ -679,7 +679,7 @@ malloc_pages(size)
 	} 
 
 	p = pf->page;
-	pf->page += size;
+	pf->page = (char *)pf->page + size;
 	pf->size -= size;
 	break;
     }
@@ -763,7 +763,7 @@ malloc_make_chunks(bits)
 
     /* Do a bunch at a time */
     for(;k-i >= MALLOC_BITS; i += MALLOC_BITS)
-	bp->bits[i / MALLOC_BITS] = ~0;
+	bp->bits[i / MALLOC_BITS] = (u_long)~0;
 
     for(; i < k; i++)
 	set_bit(bp,i);
@@ -825,9 +825,9 @@ malloc_bytes(size)
     k <<= bp->shift;
 
     if (malloc_junk)
-	memset(bp->page + k, SOME_JUNK, bp->size);
+	memset((char *)bp->page + k, SOME_JUNK, bp->size);
 
-    return bp->page + k;
+    return (void *)((char *)bp->page + k);
 }
 
 /*
@@ -1043,7 +1043,7 @@ free_pages(ptr, index, info)
 
     l = i << malloc_pageshift;
 
-    tail = ptr+l;
+    tail = (char *)ptr + l;
 
     /* add to free-list */
     if (!px)
@@ -1063,7 +1063,7 @@ free_pages(ptr, index, info)
     } else {
 
 	/* Find the right spot, leave pf pointing to the modified entry. */
-	tail = ptr+l;
+	tail = (char *)ptr + l;
 
 	for(pf = free_list.next; pf->end < ptr && pf->next; pf = pf->next)
 	    ; /* Race ahead here */
@@ -1078,7 +1078,7 @@ free_pages(ptr, index, info)
 	    px = 0;
 	} else if (pf->end == ptr ) {
 	    /* Append to the previous entry */
-	    pf->end += l;
+	    pf->end = (char *)pf->end + l;
 	    pf->size += l;
 	    if (pf->next && pf->end == pf->next->page ) {
 		/* And collapse the next too. */
@@ -1116,7 +1116,7 @@ free_pages(ptr, index, info)
 	 * Keep the cache intact.  Notice that the '>' above guarantees that
 	 * the pf will always have at least one page afterwards.
 	 */
-	pf->end = pf->page + malloc_cache;
+	pf->end = (char *)pf->page + malloc_cache;
 	pf->size = malloc_cache;
 
 	brk(pf->end);
@@ -1136,6 +1136,7 @@ free_pages(ptr, index, info)
  * Free a chunk, and possibly the page it's on, if the page becomes empty.
  */
 
+/* ARGSUSED */
 static __inline void
 free_bytes(ptr, index, info)
     void *ptr;
