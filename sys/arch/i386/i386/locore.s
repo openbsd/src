@@ -189,7 +189,7 @@ tmpstk:
 	.text
 	.globl	start
 	.globl	_kernel_text
-	_kernel_text = start
+	_kernel_text = KERNTEXTOFF
 start:	movw	$0x1234,0x472			# warm boot
 
 	/*
@@ -491,27 +491,25 @@ try586:	/* Use the `cpuid' instruction. */
 	stosl
 
 	/* Find end of kernel image. */
-	movl	$RELOC(_end),%edi
+	movl	$RELOC(_end),%esi
 #if defined(DDB) && !defined(SYMTAB_SPACE)
 	/* Save the symbols (if loaded). */
 	movl	RELOC(_esym),%eax
 	testl	%eax,%eax
 	jz	1f
 	subl	$KERNBASE,%eax
-	movl	%eax,%edi
+	movl	%eax,%esi
 1:
 #endif
 
 	/* Calculate where to start the bootstrap tables. */
-	movl	%edi,%esi			# edi = esym ? esym : end
-	addl	$PGOFSET,%esi			# page align up
-	andl	$~PGOFSET,%esi
+	addl	$PGOFSET, %esi			# page align up
+	andl	$~PGOFSET, %esi
 
 	/* Clear memory for bootstrap tables. */
-	leal	(TABLESIZE)(%esi),%ecx		# end of tables
-	subl	%edi,%ecx			# size of tables
-	shrl	$2,%ecx
-	xorl	%eax,%eax
+	movl	%esi, %edi
+	movl	$((TABLESIZE + 3) >> 2), %ecx	# size of tables
+	xorl	%eax, %eax
 	cld
 	rep
 	stosl
@@ -566,18 +564,29 @@ try586:	/* Use the `cpuid' instruction. */
 
 /*
  * Construct a page table directory.
+ *
+ * Install a PDE for temporary double map of kernel text.
+ * Maps two pages, in case the kernel is larger than 4M.
+ * XXX: should the number of pages to map be decided at run-time?
  */
-	/* Install a PDE for temporary double map of kernel text. */
-	leal	(SYSMAP+PG_V|PG_KW)(%esi),%eax		# pte for KPT in proc 0,
-	movl	%eax,(PROC0PDIR+0*4)(%esi)		# which is where temp maps!
-	/* Map kernel PDEs. */
-	movl	$NKPDE,%ecx				# for this many pde s,
-	leal	(PROC0PDIR+KPTDI*4)(%esi),%ebx		# offset of pde for kernel
+	leal	(SYSMAP+PG_V|PG_KW)(%esi),%eax		# calc Sysmap physaddr
+	movl	%eax,(PROC0PDIR+0*4)(%esi)		# map it in
+	addl	$NBPG, %eax				# 2nd Sysmap page
+	movl	%eax,(PROC0PDIR+1*4)(%esi)		# map it too
+	/* code below assumes %eax == sysmap physaddr, so we adjust it back */
+	subl	$NBPG, %eax
+
+/*
+ * Map kernel PDEs: this is the real mapping used 
+ * after the temp mapping outlives its usefulness.
+ */
+	movl	$NKPDE,%ecx				# count of pde's
+	leal	(PROC0PDIR+KPTDI*4)(%esi),%ebx		# map them high
 	fillkpt
 
 	/* Install a PDE recursively mapping page directory as a page table! */
 	leal	(PROC0PDIR+PG_V|PG_KW)(%esi),%eax	# pte for ptd
-	movl	%eax,(PROC0PDIR+PTDPTDI*4)(%esi)	# which is where PTmap maps!
+	movl	%eax,(PROC0PDIR+PTDPTDI*4)(%esi)	# phys addr from above
 
 	/* Save phys. addr of PTD, for libkvm. */
 	movl	%esi,RELOC(_PTDpaddr)
@@ -596,6 +605,7 @@ try586:	/* Use the `cpuid' instruction. */
 begin:
 	/* Now running relocated at KERNBASE.  Remove double mapping. */
 	movl	$0,(PROC0PDIR+0*4)(%esi)
+	movl	$0,(PROC0PDIR+1*4)(%esi)
 
 	/* Relocate atdevbase. */
 	leal	(TABLESIZE+KERNBASE)(%esi),%edx
