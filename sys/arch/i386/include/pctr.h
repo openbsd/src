@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.h,v 1.5 1996/10/20 15:27:48 dm Exp $	*/
+/*	$OpenBSD: pctr.h,v 1.6 1997/08/16 18:26:30 dm Exp $	*/
 
 /*
  * Pentium performance counter driver for OpenBSD.
@@ -74,7 +74,11 @@ struct pctrst {
 		    "\tje 1f\n"			\
 		    "\tmovl $1,%%eax\n"		\
 		    "\tcpuid\n"			\
+		    "\tjmp 2f\n"		\
 		    "1:\t"			\
+		    "\txorl %%eax,%%eax\n"	\
+		    "\txorl %%edx,%%edx\n"	\
+		    "2:\t"			\
 		    : "=A" (id) : "i" (PSL_ID)	\
 		    : "edx", "ecx", "ebx");	\
   id;						\
