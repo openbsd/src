@@ -1631,10 +1631,6 @@
 ./usr/sbin/authpf
 ./usr/sbin/bgpctl
 ./usr/sbin/bgpd
-./usr/sbin/bootpd
-./usr/sbin/bootpef
-./usr/sbin/bootpgw
-./usr/sbin/bootptest
 ./usr/sbin/bos
 ./usr/sbin/certpatch
 ./usr/sbin/chat

@@ -8,7 +8,6 @@
 ./etc/amd/master.sample
 ./etc/authpf
 ./etc/bgpd.conf
-./etc/bootptab
 ./etc/ccd.conf
 ./etc/changelist
 ./etc/csh.cshrc

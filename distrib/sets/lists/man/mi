@@ -1645,7 +1645,6 @@
 ./usr/share/man/cat5/amd64
 ./usr/share/man/cat5/bgpd.conf.0
 ./usr/share/man/cat5/bootparams.0
-./usr/share/man/cat5/bootptab.0
 ./usr/share/man/cat5/bridgename.if.0
 ./usr/share/man/cat5/bsd.port.mk.0
 ./usr/share/man/cat5/bsd.regress.mk.0
@@ -1841,10 +1840,6 @@
 ./usr/share/man/cat8/bgpd.0
 ./usr/share/man/cat8/boot_config.0
 ./usr/share/man/cat8/bootparamd.0
-./usr/share/man/cat8/bootpd.0
-./usr/share/man/cat8/bootpef.0
-./usr/share/man/cat8/bootpgw.0
-./usr/share/man/cat8/bootptest.0
 ./usr/share/man/cat8/bos.0
 ./usr/share/man/cat8/brconfig.0
 ./usr/share/man/cat8/cats

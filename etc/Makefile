@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.205 2004/05/04 19:35:25 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.206 2004/05/04 23:37:04 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -12,15 +12,13 @@ NOOBJ=	oobj
 # -rw-r--r--
 BINOWN= root
 BINGRP= wheel
-BIN1=	bootptab changelist ccd.conf csh.cshrc csh.login csh.logout \
-	daily dhcpd.conf dhcpd.interfaces exports ftpusers \
-	ftpchroot gettytab group hosts hosts.lpd inetd.conf \
-	ksh.kshrc locate.rc man.conf monthly motd mrouted.conf \
-	myname netstart networks newsyslog.conf \
-	phones printcap protocols rbootd.conf rc rc.conf rc.local \
-	rc.securelevel rc.shutdown remote rpc security services \
-	shells spamd.conf syslog.conf weekly etc.${MACHINE}/disktab \
-	dhclient.conf mailer.conf
+BIN1=	changelist ccd.conf csh.cshrc csh.login csh.logout daily dhcpd.conf \
+	dhcpd.interfaces exports ftpusers ftpchroot gettytab group hosts \
+	hosts.lpd inetd.conf ksh.kshrc locate.rc man.conf monthly motd \
+	mrouted.conf myname netstart networks newsyslog.conf phones printcap \
+	protocols rbootd.conf rc rc.conf rc.local rc.securelevel rc.shutdown \
+	remote rpc security services shells spamd.conf syslog.conf weekly \
+	etc.${MACHINE}/disktab dhclient.conf mailer.conf
 
 .if ${MACHINE} == "alpha" || ${MACHINE} == "amd64" || \
     ${MACHINE} == "cats" || ${MACHINE} == "hppa" || \
@@ -375,7 +373,7 @@ distrib:
 DHSIZE=1024 1536 2048 3072 4096
 update-moduli:
 	( \
-		echo '#    $$OpenBSD: Makefile,v 1.205 2004/05/04 19:35:25 deraadt Exp $$'; \
+		echo '#    $$OpenBSD: Makefile,v 1.206 2004/05/04 23:37:04 deraadt Exp $$'; \
 		echo '# Time Type Tests Tries Size Generator Modulus'; \
 		( for i in ${DHSIZE}; do \
 			ssh-keygen -b $$i -G /dev/stdout; \
