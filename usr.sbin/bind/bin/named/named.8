@@ -28,14 +28,14 @@ information on the DNS, see RFCs 1033, 1034, and 1035.
 .PP
 When invoked without arguments, \fBnamed\fR will
 read the default configuration file
-\fI/etc/named.conf\fR, read any initial
+\fI/var/named/etc/named.conf\fR, read any initial
 data, and listen for queries.
 .SH "OPTIONS"
 .TP
 \fB-c \fIconfig-file\fB\fR
 Use \fIconfig-file\fR as the
 configuration file instead of the default,
-\fI/etc/named.conf\fR. To
+\fI/var/named/etc/named.conf\fR. To
 ensure that reloading the configuration file continues
 to work after the server has changed its working
 directory due to to a possible
@@ -148,7 +148,7 @@ provided in the \fIBIND 9 Administrator Reference
 Manual\fR.
 .SH "FILES"
 .TP
-\fB\fI/etc/named.conf\fB\fR
+\fB\fI/var/named/etc/named.conf\fB\fR
 The default configuration file.
 .TP
 \fB\fI/var/run/named.pid\fB\fR
