@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.84 2004/03/10 15:15:48 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.85 2004/03/11 13:35:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -99,7 +99,7 @@ main(int argc, char *argv[])
 	struct filter_head	*rules_l;
 	struct network		*net;
 	struct filter_rule	*r;
-	struct mrt		*(mrt[POLL_MAX]);
+	struct mrt		*(mrt[POLL_MAX]), *m;
 	struct pollfd		 pfd[POLL_MAX];
 	pid_t			 io_pid = 0, rde_pid = 0, pid;
 	char			*conffile;
@@ -196,8 +196,8 @@ main(int argc, char *argv[])
 
 	/* fork children */
 	rde_pid = rde_main(&conf, peer_l, &net_l, rules_l, pipe_m2r, pipe_s2r);
-	io_pid = session_main(&conf, peer_l, &net_l, rules_l, pipe_m2s,
-	    pipe_s2r);
+	io_pid = session_main(&conf, peer_l, &net_l, rules_l, &mrt_l,
+	    pipe_m2s, pipe_s2r);
 
 	setproctitle("parent");
 
@@ -325,6 +325,10 @@ main(int argc, char *argv[])
 	while ((p = peer_l) != NULL) {
 		peer_l = p->next;
 		free(p);
+	}
+	while ((m = LIST_FIRST(&mrt_l)) != NULL) {
+		LIST_REMOVE(m, list);
+		free(m);
 	}
 
 	free(rules_l);

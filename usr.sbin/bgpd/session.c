@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.133 2004/03/10 15:15:48 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.134 2004/03/11 13:35:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -139,7 +139,7 @@ setup_listener(void)
 int
 session_main(struct bgpd_config *config, struct peer *cpeers,
     struct network_head *net_l, struct filter_head *rules,
-    int pipe_m2s[2], int pipe_s2r[2])
+    struct mrt_head *m_l, int pipe_m2s[2], int pipe_s2r[2])
 {
 	int			 nfds, i, j, timeout, idx_peers;
 	pid_t			 pid;
@@ -147,6 +147,8 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 	struct passwd		*pw;
 	struct peer		*p, *peer_l[OPEN_MAX], *last, *next;
 	struct network		*net;
+	struct mrt		*m;
+	struct mrt_config	*mrt;
 	struct filter_rule	*r;
 	struct pollfd		 pfd[OPEN_MAX];
 	struct ctl_conn		*ctl_conn;
@@ -211,6 +213,12 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 	while ((net = TAILQ_FIRST(net_l)) != NULL) {
 		TAILQ_REMOVE(net_l, net, network_l);
 		free(net);
+	}
+
+	/* main mrt list is not used in the SE */
+	while ((m = LIST_FIRST(m_l)) != NULL) {
+		LIST_REMOVE(m, list);
+		free(m);
 	}
 
 	while (session_quit == 0) {
@@ -365,6 +373,11 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 		peers = p->next;
 		bgp_fsm(p, EVNT_STOP);
 		free(p);
+	}
+
+	while ((mrt = LIST_FIRST(&mrt_l)) != NULL) {
+		LIST_REMOVE(mrt, list);
+		free(mrt);
 	}
 
 	msgbuf_write(&ibuf_rde.w);
