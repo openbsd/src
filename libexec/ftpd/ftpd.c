@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.13 1996/08/08 16:22:37 downsj Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.14 1996/08/10 06:12:12 downsj Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -118,6 +118,7 @@ int	timeout = 900;    /* timeout after 15 minutes of inactivity */
 int	maxtimeout = 7200;/* don't allow idle time to be set beyond 2 hours */
 int	logging;
 int	high_data_ports = 0;
+int	multihome = 0;
 int	guest;
 int	stats;
 int	statfd = -1;
@@ -140,6 +141,8 @@ int	defumask = CMASK;		/* default umask value */
 char	tmpline[7];
 char	hostname[MAXHOSTNAMELEN];
 char	remotehost[MAXHOSTNAMELEN];
+char	dhostname[MAXHOSTNAMELEN];
+char	*guestpw;
 static char ttyline[20];
 char	*tty = ttyline;		/* for klogin */
 static struct utmp utmp;	/* for utmp */
@@ -228,7 +231,8 @@ main(argc, argv, envp)
 	int addrlen, ch, on = 1, tos;
 	char *cp, line[LINE_MAX];
 	FILE *fd;
-	char *argstr = "dDhlSt:T:u:Uv";
+	char *argstr = "dDhlMSt:T:u:Uv";
+	struct hostent *hp;
 
 	tzset();	/* in case no timezone database in ~ftp */
 
@@ -251,6 +255,10 @@ main(argc, argv, envp)
 
 		case 'l':
 			logging++;	/* > 1 == extra logging */
+			break;
+
+		case 'M':
+			multihome = 1;
 			break;
 
 		case 'S':
@@ -438,7 +446,25 @@ main(argc, argv, envp)
 		/* reply(220,) must follow */
 	}
 	(void) gethostname(hostname, sizeof(hostname));
-	reply(220, "%s FTP server (%s) ready.", hostname, version);
+
+	/* Make sure hostname is fully qualified. */
+	hp = gethostbyname(hostname);
+	if (hp != NULL)
+		strcpy (hostname, hp->h_name);
+
+	if (multihome) {
+		hp = gethostbyaddr((char *) &ctrl_addr.sin_addr,
+				   sizeof (struct in_addr), AF_INET);
+		if (hp != NULL) {
+			strcpy (dhostname, hp->h_name);
+		} else {
+			/* Default. */
+			strcpy (dhostname, inet_ntoa(ctrl_addr.sin_addr));
+		}
+	}
+
+	reply(220, "%s FTP server (%s) ready.",
+	      (multihome ? dhostname : hostname), version);
 	(void) setjmp(errcatch);
 	for (;;)
 		(void) yyparse();
@@ -518,7 +544,7 @@ sgetpwnam(name)
 
 static int login_attempts;	/* number of failed login attempts */
 static int askpasswd;		/* had user command, ask for passwd */
-static char curname[10];	/* current USER name */
+static char curname[16];	/* current USER name */
 
 /*
  * USER command.
@@ -660,6 +686,7 @@ pass(passwd)
 	int rval;
 	FILE *fd;
 	static char homedir[MAXPATHLEN];
+	char rootdir[MAXPATHLEN];
 
 	if (logged_in || askpasswd == 0) {
 		reply(503, "Login with USER first.");
@@ -712,6 +739,11 @@ skip:
 			}
 			return;
 		}
+	} else {
+		/* Save anonymous' password. */
+		guestpw = strdup(passwd);
+		if (guestpw == (char *)NULL)
+			fatal("Out of memory");
 	}
 	login_attempts = 0;		/* this time successful */
 	if (setegid((gid_t)pw->pw_gid) < 0) {
@@ -741,18 +773,32 @@ skip:
 	logged_in = 1;
 
 	dochroot = checkuser(_PATH_FTPCHROOT, pw->pw_name);
+	if (guest || dochroot) {
+		if (multihome) {
+			struct stat ts;
+
+			/* Compute root directory. */
+			snprintf (rootdir, sizeof(rootdir), "%s/%s",
+				  pw->pw_dir, dhostname);
+			if (stat(rootdir, &ts) < 0) {
+				snprintf (rootdir, sizeof(rootdir), "%s/%s",
+					  pw->pw_dir, hostname);
+			}
+		} else
+			strcpy (rootdir, pw->pw_dir);
+	}
 	if (guest) {
 		/*
 		 * We MUST do a chdir() after the chroot. Otherwise
 		 * the old current directory will be accessible as "."
 		 * outside the new root!
 		 */
-		if (chroot(pw->pw_dir) < 0 || chdir("/") < 0) {
+		if (chroot(rootdir) < 0 || chdir("/") < 0) {
 			reply(550, "Can't set guest privileges.");
 			goto bad;
 		}
 	} else if (dochroot) {
-		if (chroot(pw->pw_dir) < 0 || chdir("/") < 0) {
+		if (chroot(rootdir) < 0 || chdir("/") < 0) {
 			reply(550, "Can't change root.");
 			goto bad;
 		}
@@ -1701,10 +1747,12 @@ passive()
 		return;
 	}
 
+#ifdef IP_PORTRANGE
 	on = high_data_ports ? IP_PORTRANGE_HIGH : IP_PORTRANGE_DEFAULT;
 	if (setsockopt(pdata, IPPROTO_IP, IP_PORTRANGE,
 		       (char *)&on, sizeof(on)) < 0)
 		goto pasv_error;
+#endif
 
 	pasv_addr = ctrl_addr;
 	pasv_addr.sin_port = 0;
@@ -1930,14 +1978,20 @@ logxfer(name, size, start)
 	time_t start;
 {
 	char buf[1024];
-	char path[MAXPATHLEN + 1];
+	char path[MAXPATHLEN];
 	time_t now;
 
-	if ((statfd >= 0) && (getwd(path) != NULL)) {
+	if ((statfd >= 0) && (getcwd(path, sizeof(path)) != NULL)) {
 		time(&now);
-		snprintf(buf, sizeof(buf), "%.20s!%s!%s!%s/%s!%qd!%ld\n",
-			 ctime(&now)+4, ident, remotehost,
-			 path, name, size, now - start + (now == start));
+
+		snprintf(buf, sizeof(buf),
+			 "%.24s %d %s %qd %s/%s %c %s %c %c %s ftp %d %s %s\n",
+			 ctime(&now), now - start + (now == start),
+			 remotehost, size, path, name,
+			 ((type == TYPE_A) ? 'a' : 'b'), "*" /* none yet */,
+			 'o', ((guest) ? 'a' : 'r'),
+			 ((guest) ? guestpw : pw->pw_name), 0 /* none yet */,
+			 ((guest) ? "*" : pw->pw_name), dhostname);
 		write(statfd, buf, strlen(buf));
 	}
 }
