@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.5 1998/11/02 05:50:59 jason Exp $	*/
+/*	$OpenBSD: qe.c,v 1.6 1999/02/08 13:39:30 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright.
@@ -128,6 +128,7 @@ qeattach(parent, self, aux)
 	struct qesoftc *sc = (struct qesoftc *)self;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct confargs *ca = aux;
+	struct bootpath *bp;
 	extern void myetheraddr __P((u_char *));
 	int pri;
 
@@ -173,6 +174,11 @@ qeattach(parent, self, aux)
 	bpfattach(&sc->sc_arpcom.ac_if.if_bpf, ifp, DLT_EN10MB,
 	    sizeof(struct ether_header));
 #endif
+
+	bp = ca->ca_ra.ra_bp;
+	if (bp != NULL && strcmp(bp->name, "qe") == 0 &&
+	    sc->sc_dev.dv_unit == bp->val[1])
+		bp->dev = &sc->sc_dev;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.19 1999/01/07 03:14:42 jason Exp $	*/
+/*	$OpenBSD: be.c,v 1.20 1999/02/08 13:39:29 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -131,6 +131,7 @@ beattach(parent, self, aux)
 	struct besoftc *sc = (struct besoftc *)self;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct confargs *ca = aux;
+	struct bootpath *bp;
 	extern void myetheraddr __P((u_char *));
 	int pri, bmsr;
 
@@ -231,6 +232,11 @@ beattach(parent, self, aux)
 	bpfattach(&sc->sc_arpcom.ac_if.if_bpf, ifp, DLT_EN10MB,
 	    sizeof(struct ether_header));
 #endif
+
+	bp = ca->ca_ra.ra_bp;
+	if (bp != NULL && strcmp(bp->name, "be") == 0 &&
+	    sc->sc_dev.dv_unit == bp->val[1])
+		bp->dev = &sc->sc_dev;
 }
 
 /*
