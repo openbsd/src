@@ -1,5 +1,5 @@
+#	$OpenBSD: Makefile,v 1.3 1996/05/15 08:51:59 niklas Exp $
 #	from @(#)Makefile	5.1 (Berkeley) 6/25/90
-#	$Id: Makefile,v 1.2 1995/12/16 21:08:28 tholo Exp $
 
 # do compile_et and mk_cmds first, used by other directories
 
@@ -31,4 +31,11 @@ build:
 	(cd ${.CURDIR}/kdb && ${MAKE} depend && ${MAKE} && ${MAKE} install)
 	(cd ${.CURDIR}/ss && ${MAKE} depend && ${MAKE} && ${MAKE} install)
 
+# Since depending need to have some dynamically built sources available,
+# we need to build the generators first.
+beforedepend:
+	(cd ${.CURDIR}/compile_et && ${MAKE} depend && ${MAKE})
+	(cd ${.CURDIR}/mk_cmds && ${MAKE} depend && ${MAKE})
+
+.include <bsd.dep.mk>
 .include <bsd.subdir.mk>
