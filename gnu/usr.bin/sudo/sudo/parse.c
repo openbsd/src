@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.11 1999/03/29 20:29:05 millert Exp $	*/
+/*	$OpenBSD: parse.c,v 1.12 1999/03/30 17:26:21 millert Exp $	*/
 
 /*
  *  CU sudo version 1.5.9
@@ -81,7 +81,7 @@
 #include "sudo.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: parse.c,v 1.102 1999/03/29 04:05:10 millert Exp $";
+static const char rcsid[] = "$Sudo: parse.c,v 1.103 1999/03/30 17:17:53 millert Exp $";
 #endif /* lint */
 
 /*
@@ -168,8 +168,8 @@ int validate(check_cmnd)
     else
 	while (top) {
 	    if (host_matches == TRUE) {
-		if (cmnd_matches == TRUE) {
-		   if (runas_matches == TRUE) {
+		if (runas_matches == TRUE) {
+		    if (cmnd_matches == TRUE) {
 		    	/*
 			 * User was granted access to cmnd on host.
 		    	 * If no passwd required return as such.
@@ -178,10 +178,10 @@ int validate(check_cmnd)
 			    return(VALIDATE_OK_NOPASS);
 		    	else
 			    return(VALIDATE_OK);
+		    } else if (cmnd_matches == FALSE) {
+			/* User was explicitly denied acces to cmnd on host. */
+			return(VALIDATE_NOT_OK);
 		    }
-		} else if (cmnd_matches == FALSE) {
-		    /* User was explicitly denied acces to cmnd on host. */
-		    return(VALIDATE_NOT_OK);
 		}
 	    }
 	    top--;
