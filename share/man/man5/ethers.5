@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ethers.5,v 1.7 1998/11/26 04:25:58 aaron Exp $
+.\"	$OpenBSD: ethers.5,v 1.8 1998/11/29 15:47:23 aaron Exp $
 .\"	$NetBSD: ethers.5,v 1.2 1994/11/30 19:31:16 jtc Exp $
 .\"
 .\"     Written by Roland McGrath <roland@frob.com>.  Public domain.
@@ -11,7 +11,7 @@
 .Nd Ethernet host name data base
 .Sh DESCRIPTION
 The
-.Nm ethers
+.Nm
 file maps Ethernet addresses to host names.
 Lines consist of an address and a host name, separated by any number of blanks and/or tab characters.
 A
@@ -25,7 +25,7 @@ colons. The functions described in
 can read and produce this format.
 .Pp
 The
-.Nm ethers
+.Nm
 file has support for YP functionality.
 .Sh FILES
 .Bl -tag -width /etc/ethers -compact
@@ -44,6 +44,6 @@ are limited to
 characters (currently 1024).  Longer lines will be ignored.
 .Sh HISTORY
 The
-.Nm ethers
+.Nm
 file format was adopted from SunOS and appeared in
 NetBSD 0.9b.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cd.1,v 1.4 1998/11/03 05:40:03 aaron Exp $
+.\"	$OpenBSD: cd.1,v 1.5 1998/11/29 15:47:21 aaron Exp $
 .\"	$NetBSD: cd.1,v 1.2 1994/11/30 08:34:59 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -74,9 +74,13 @@ The following environment variables affect the execution of cd:
 .It Ev CDPATH
 If the
 .Ar directory
-operand does not begin with a slash (/) character, and the first
-component is not dot (.) or dot-dot (..),
-.Nm cd
+operand does not begin with a slash
+.Pq Sq /
+character, and the first component is not dot
+.Pq Dq \&.
+or dot-dot
+.Pq Dq \&.\&. ,
+.Nm
 searches for the directory relative to each directory named in the
 .Ev CDPATH
 variable, in the order listed.
@@ -88,7 +92,7 @@ If the new working directory was derived from
 it will be printed to the standard output.
 .It Ev HOME
 If
-.Nm cd
+.Nm
 is invoked without arguments and the
 .Ev HOME
 environment variable exists and contains a directory name, that directory
@@ -100,7 +104,7 @@ See
 for more information on environment variables.
 .Pp
 The
-.Nm cd
+.Nm
 utility exits 0 on success or >0 if an error occurred.
 .Sh SEE ALSO
 .Xr csh 1 ,
@@ -109,7 +113,7 @@ utility exits 0 on success or >0 if an error occurred.
 .Xr chdir 2
 .Sh STANDARDS
 The
-.Nm cd
+.Nm
 command is expected to be
 .St -p1003.2
 compatible.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netgroup.5,v 1.3 1998/11/26 04:25:59 aaron Exp $
+.\"	$OpenBSD: netgroup.5,v 1.4 1998/11/29 15:47:24 aaron Exp $
 .\"	$NetBSD: netgroup.5,v 1.3 1995/03/18 14:58:34 cgd Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -41,10 +41,10 @@
 .Nm netgroup
 .Nd defines network groups
 .Sh SYNOPSIS
-.Nm netgroup
+.Nm
 .Sh DESCRIPTION
 The
-.Nm netgroup
+.Nm
 file
 specifies
 .Dq netgroups ,
@@ -80,20 +80,20 @@ character may be used at the end of a line to specify line continuation.
 The functions specified in
 .Xr getnetgrent 3
 should normally be used to access the
-.Nm netgroup
+.Nm
 database.
 .Pp
 These functions operate on the
 .Xr db
 version of the 
-.Nm netgroup
+.Nm
 .Pq Pa netgroup.db
 file which can be generated using
 .Xr netgroup_mkdb .
 If that file is not present, and the system supports NIS, then the
-.Nm netgroup
+.Nm
 NIS maps are used. The NIS maps are also used if the
-.Nm netgroup
+.Nm
 file contains a 
 .Dq +
 entry.

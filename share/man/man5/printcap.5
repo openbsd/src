@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printcap.5,v 1.5 1998/11/26 04:25:59 aaron Exp $
+.\"	$OpenBSD: printcap.5,v 1.6 1998/11/29 15:47:24 aaron Exp $
 .\"	$NetBSD: printcap.5,v 1.7 1998/02/20 12:24:50 hubertf Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -41,15 +41,15 @@
 .Nm printcap
 .Nd printer capability data base
 .Sh SYNOPSIS
-.Nm printcap
+.Nm
 .Sh DESCRIPTION
 The
-.Nm printcap
+.Nm
 file is a simplified version of the
 .Xr termcap 5
 data base
 used to describe line printers.  The spooling system accesses the
-.Nm printcap
+.Nm
 file every time it is used, allowing dynamic
 addition and deletion of printers.  Each entry in the data base
 is used to describe one printer.  This data base may not be
@@ -200,7 +200,7 @@ The
 function
 is passed from the
 .Cm af
-.Nm printcap
+.Nm
 entry.
 .Pp
 If no
