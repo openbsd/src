@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.763 2004/09/21 11:31:24 grange Exp 
+ *	OpenBSD: pcidevs,v 1.764 2004/09/22 09:05:34 grange Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -608,6 +608,7 @@
 
 /* Aralion Inc. products */
 #define	PCI_PRODUCT_ARALION_ARS106S	0x0301		/* ARS106S */
+#define	PCI_PRODUCT_ARALION_ARS0303D	0x0303		/* ARS0303D */
 
 /* ARC Logic products */
 #define	PCI_PRODUCT_ARC_USB	0x0003		/* USB */
