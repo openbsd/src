@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tar.1,v 1.41 2003/04/28 06:27:36 jmc Exp $
+.\"	$OpenBSD: tar.1,v 1.42 2003/05/29 20:32:13 jmc Exp $
 .\"
 .\" Copyright (c) 1996 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: tar.1,v 1.41 2003/04/28 06:27:36 jmc Exp $
+.\"	$OpenBSD: tar.1,v 1.42 2003/05/29 20:32:13 jmc Exp $
 .\"
 .Dd February 7, 2001
 .Dt TAR 1
@@ -226,6 +226,19 @@ The options
 .Op Fl 014578
 can be used to select one of the compiled-in backup devices,
 .Pa /dev/rstN .
+.Sh ENVIRONMENT
+.Bl -tag -width Fl
+.It Ev TMPDIR
+Path in which to store temporary files.
+.It Ev TAPE
+Default tape device to use instead of
+.Pa /dev/rst0 .
+.El
+.Sh FILES
+.Bl -tag -width "/dev/rst0"
+.It Pa /dev/rst0
+default archive name
+.El
 .Sh EXAMPLES
 .Li $ tar c bonvole sekve
 .Pp
@@ -264,7 +277,6 @@ Note that the glob pattern has been quoted to avoid expansion by the shell.
 .Pp
 For more detailed examples, see
 .Xr pax 1
-.Pp
 .Sh DIAGNOSTICS
 .Nm
 will exit with one of the following values:
@@ -303,29 +315,16 @@ or error,
 .Nm
 may have only partially created the archive which may violate the
 specific archive format specification.
-.Sh FILES
-.Bl -tag -width "/dev/rst0"
-.It Pa /dev/rst0
-default archive name
-.El
-.Sh ENVIRONMENT
-.Bl -tag -width Fl
-.It Ev TMPDIR
-Path in which to store temporary files.
-.It Ev TAPE
-Default tape device to use instead of
-.Pa /dev/rst0 .
-.El
 .Sh SEE ALSO
 .Xr cpio 1 ,
 .Xr pax 1
-.Sh AUTHORS
-Keith Muller at the University of California, San Diego.
 .Sh HISTORY
 A
 .Nm
 command first appeared in
 .At v7 .
+.Sh AUTHORS
+Keith Muller at the University of California, San Diego.
 .Sh CAVEATS
 The
 .Fl L

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cpio.1,v 1.17 2001/05/11 20:02:16 mickey Exp $
+.\"	$OpenBSD: cpio.1,v 1.18 2003/05/29 20:32:13 jmc Exp $
 .\"
 .\" Copyright (c) 1997 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: cpio.1,v 1.17 2001/05/11 20:02:16 mickey Exp $
+.\"	$OpenBSD: cpio.1,v 1.18 2003/05/29 20:32:13 jmc Exp $
 .\"
 .Dd February 16, 1997
 .Dt CPIO 1
@@ -239,6 +239,11 @@ Be verbose about operations.
 List filenames as they are copied.
 .El
 .El
+.Sh ENVIRONMENT
+.Bl -tag -width Fl
+.It Ev TMPDIR
+Path in which to store temporary files.
+.El
 .Sh ERRORS
 .Nm
 will exit with one of the following values:
@@ -277,11 +282,6 @@ or error,
 .Nm
 may have only partially created the archive which may violate the
 specific archive format specification.
-.Sh ENVIRONMENT
-.Bl -tag -width Fl
-.It Ev TMPDIR
-Path in which to store temporary files.
-.El
 .Sh SEE ALSO
 .Xr pax 1 ,
 .Xr tar 1

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pax.1,v 1.37 2003/04/28 06:27:36 jmc Exp $
+.\"	$OpenBSD: pax.1,v 1.38 2003/05/29 20:32:13 jmc Exp $
 .\"	$NetBSD: pax.1,v 1.3 1995/03/21 09:07:37 cgd Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
@@ -471,7 +471,7 @@ cannot be opened for reading and writing.
 Do not overwrite existing files.
 .It Fl l
 (The lowercase letter
-.Dq ell. Ns )
+.Dq ell. )
 Link files.
 In the
 .Em copy
@@ -1057,6 +1057,11 @@ options are specified along with the
 .Fl n
 option, a file is not considered selected unless it is newer
 than the file to which it is compared.
+.Sh ENVIRONMENT
+.Bl -tag -width Fl
+.It Ev TMPDIR
+Path in which to store temporary files.
+.El
 .Sh EXAMPLES
 .Li $ pax -w -f /dev/rst0 \&.
 .Pp
@@ -1153,16 +1158,9 @@ a diagnostic message is written to standard error
 and when
 .Nm
 completes it will exit with a non-zero exit status.
-.Sh ENVIRONMENT
-.Bl -tag -width Fl
-.It Ev TMPDIR
-Path in which to store temporary files.
-.El
 .Sh SEE ALSO
 .Xr cpio 1 ,
 .Xr tar 1
-.Sh AUTHORS
-Keith Muller at the University of California, San Diego.
 .Sh STANDARDS
 The
 .Nm
@@ -1194,3 +1192,5 @@ and
 operations are extensions to the
 .Tn POSIX
 standard.
+.Sh AUTHORS
+Keith Muller at the University of California, San Diego.
