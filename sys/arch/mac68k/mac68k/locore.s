@@ -1,5 +1,5 @@
-/*	$OpenBSD: locore.s,v 1.13 1996/10/14 01:20:38 briggs Exp $	*/
-/*	$NetBSD: locore.s,v 1.68 1996/10/07 01:37:20 scottr Exp $	*/
+/*	$OpenBSD: locore.s,v 1.14 1996/10/23 04:49:47 briggs Exp $	*/
+/*	$NetBSD: locore.s,v 1.70 1996/10/17 06:32:13 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -280,7 +280,7 @@ _fpfline:
 	cmpl	#FPU_68040,_fputype	| 68040? (see fpu.c)
 	jne	Lfp_unimp		| no, skip FPSP
 	cmpw	#0x202c,sp@(6)		| format type 2?
-	jne	_illinst		| no, treat as illinst
+	jne	Lfp_unimp		| no, FPEMUL or illinst
 Ldofp_unimp:
 #ifdef FPSP
 	.globl	fpsp_unimp
@@ -970,9 +970,11 @@ Lloaddone:
 
 /* init mem sizes */
 
-/* set kernel stack, user SP, and initial pcb */
+/* set kernel stack, user SP, proc0, and initial pcb */
 	movl	_proc0paddr,a1		| get proc0 pcb addr
 	lea	a1@(USPACE-4),sp	| set kernel stack to end of area
+	lea	_proc0,a2		| initialize proc0.p_addr so that
+	movl	a1,a2@(P_ADDR)		|   we don't deref NULL in trap()
 	movl	#USRSTACK-4,a2
 	movl	a2,usp			| init user SP
 	movl	a1,_curpcb		| proc0 is running
@@ -1002,6 +1004,13 @@ Lnocache0:
 	movl	sp,a0@(P_MD_REGS)	|   in proc0.p_md.md_regs
 
 	jra	_main
+
+	pea     Lmainreturned           | Yow!  Main returned!
+	jbsr    _panic
+	/* NOTREACHED */
+Lmainreturned:
+	.asciz  "main() returned"
+	.even
 
 /*
  * proc_trampoline
@@ -1845,6 +1854,31 @@ Ldoboot1:
 	movl	#0x90,a1		| offset of ROM reset routine
 	addl	_ROMBase,a1		| add to ROM base
 	jra	a1@			| and jump to ROM to reset machine
+
+/*
+ * ptest040() does an 040 PTESTR (addr) and returns the 040 MMUSR iff
+ * translation is enabled.  This allows us to find the physical address
+ * corresponding to a MacOS logical address for get_physical().
+ * sar  01-oct-1996
+ */
+	.globl	_ptest040
+_ptest040:
+#if defined(M68040)
+	.long	0x4e7a0003		| movec tc,d0
+	andw	#0x8000,d0
+	jeq	Lget_phys1		| MMU is disabled
+	movc	sfc,d1
+	movql	#1,d0			| FC for ptestr
+	movc	d0,sfc
+	movl	sp@(4),a0		| logical address to look up
+	.word	0xf568			| ptestr (a0)
+	.long	0x4e7a0805		| movec mmusr,d0
+	movc	d1,sfc
+	rts
+Lget_phys1:
+#endif
+	movql	#0,d0			| return failure
+	rts
 
 /*
  * LAK: (7/24/94) This routine was added so that the

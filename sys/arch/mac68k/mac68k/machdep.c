@@ -1,5 +1,5 @@
-/*	$OpenBSD: machdep.c,v 1.20 1996/10/14 01:24:58 briggs Exp $	*/
-/*	$NetBSD: machdep.c,v 1.121 1996/10/13 03:21:39 christos Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.21 1996/10/23 04:49:48 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.122 1996/10/15 06:40:39 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -561,7 +561,7 @@ sendsig(catcher, sig, mask, code)
 		(void) grow(p, (unsigned) fp);
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sendsig(%d): sig %d ssp %x usp %x scp %x ft %d\n",
+		printf("sendsig(%d): sig %d ssp %p usp %p scp %p ft %d\n",
 		    p->p_pid, sig, &oonstack, fp, &fp->sf_sc, ft);
 #endif
 	if (useracc((caddr_t) fp, sizeof(struct sigframe), B_WRITE) == 0) {
@@ -631,7 +631,7 @@ sendsig(catcher, sig, mask, code)
 	}
 #ifdef DEBUG
 	if ((sigdebug & SDB_FPSTATE) && *(char *) &kfp->sf_state.ss_fpstate)
-		printf("sendsig(%d): copy out FP state (%x) to %x\n",
+		printf("sendsig(%d): copy out FP state (%x) to %p\n",
 		    p->p_pid, *(u_int *) & kfp->sf_state.ss_fpstate,
 		    &kfp->sf_state.ss_fpstate);
 #endif
@@ -650,7 +650,7 @@ sendsig(catcher, sig, mask, code)
 	frame->f_regs[SP] = (int) fp;
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("sendsig(%d): sig %d scp %x fp %x sc_sp %x sc_ap %x\n",
+		printf("sendsig(%d): sig %d scp %p fp %p sc_sp %x sc_ap %x\n",
 		    p->p_pid, sig, kfp->sf_scp, fp,
 		    kfp->sf_sc.sc_sp, kfp->sf_sc.sc_ap);
 #endif
@@ -695,7 +695,7 @@ sys_sigreturn(p, v, retval)
 	scp = SCARG(uap, sigcntxp);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
+		printf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
 #endif
 	if ((int) scp & 1)
 		return (EINVAL);
@@ -748,7 +748,7 @@ sys_sigreturn(p, v, retval)
 		return (EJUSTRETURN);
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sigreturn(%d): ssp %x usp %x scp %x ft %d\n",
+		printf("sigreturn(%d): ssp %p usp %x scp %p ft %d\n",
 		    p->p_pid, &flags, scp->sc_sp, SCARG(uap, sigcntxp),
 		    (flags & SS_RTEFRAME) ? tstate.ss_frame.f_format : -1);
 #endif
@@ -788,7 +788,7 @@ sys_sigreturn(p, v, retval)
 		m68881_restore(&tstate.ss_fpstate);
 #ifdef DEBUG
 	if ((sigdebug & SDB_FPSTATE) && *(char *) &tstate.ss_fpstate)
-		printf("sigreturn(%d): copied in FP state (%x) at %x\n",
+		printf("sigreturn(%d): copied in FP state (%x) at %p\n",
 		    p->p_pid, *(u_int *) & tstate.ss_fpstate,
 		    &tstate.ss_fpstate);
 	if ((sigdebug & SDB_FOLLOW) ||
@@ -1124,6 +1124,9 @@ straytrap(pc, evec)
 {
 	printf("unexpected trap; vector offset 0x%x from 0x%x.\n",
 	    (int) (evec & 0xfff), pc);
+#ifdef DDB
+	Debugger();
+#endif
 }
 
 int    *nofault;
@@ -1515,21 +1518,66 @@ getenv(str)
 /*
  * ROM Vector information for calling drivers in ROMs
  *
- * Egret, ADBReInit_JTBL and ROMResourceMap were added to these
- *  tables.  Egret probably isn't used anyplace anymore, but I was
- *  inspired by the default value that was used in "macrom.c".  That
- *  value was most likely non-functional for all but a few systems,
- *  so putting it here will hopefully localize system-specific ROM
- *  addresses.  Likewise ADBReInit_JTBL and ROMResourceMap are
- *  currently used on only a few systems, but changes in the Booter
- *  and changes in ROM Mapping were causing problems.  Hopefully
- *  those problems will be eliminated by having the proper addresses
- *  for those machines in this table.
+ * According to information published on the Web by Apple, there have
+ * been 9 different ROM families used in the Mac since the introduction
+ * of the Lisa/XL through the latest PowerMacs (May 96).  Each family
+ * has zero or more version variants and in some cases a version variant
+ * may exist in one than one length format.  Generally any one specific
+ * Mac will use a common set of routines within the ROM and a model-specific
+ * set also in the ROM.  Luckily most of the routines used by NetBSD fall
+ * into the common set and can therefore be defined in the ROM Family.
+ * The offset addresses (address minus the ROM Base) of these common routines
+ * is the same for all machines which use that ROM.  The offset addresses of
+ * the machine-specific routines is generally different for each machine.
+ * The machine-specific routines currently used by NetBSD/mac68k include:
+ *       ADB_interrupt, PM_interrpt, ADBBase+130_interrupt,
+ *       PMgrOp, jClkNoMem, Egret, InitEgret, and ADBReInit_JTBL
  *
- * What we probably need is a little MacOS Utility that can suck all
- *  these addresses from the System, tell the user if his/er system
- *  is currently supported via the romvec tables, and provide a
- *  formatted output file for inclusion here if it isn't.
+ * It is possible that the routine at "jClkNoMem" is a common routine, but
+ * some variation in addresses has been seen.  Also, execept for the very
+ * earliest machines which used Egret, the machine-specific value of the
+ * Egret routine may be unimportant as the machine-specific InitEgret code
+ * seems to always set the OS Trap vector for Egret.
+ *
+ * Only three of the nine different ROMs are important to NetBSD/mac68k.
+ * All other ROMs are used in early model Macs which are unable to run
+ * NetBSD due to other hardware limitations such as 68000 CPU, no MMU
+ * capability, or used only in PowerMacs.  The three that we are interested
+ * in are:
+ *
+ * ROM Family $0178 - used in the II, IIx, IIcx, and SE/30
+ *            All machines which use this ROM are now supported by NetBSD.
+ *            There are no machine-dependent routines in these ROMs used by
+ *            NetBSD/mac68k.  This ROM is always 256K in length.
+ *
+ * ROM Family $067c - used in Classic, Color Classic, Color Classic II,
+ *                      IIci, IIsi, IIvi, IIvx, IIfx, LC, LC II, LC III,
+ *                      LC III+, LC475, LC520, LC550, LC575, LC580, LC630,
+ *                      MacTV, P200, P250, P275, P400/405/410/430, P450,
+ *                      P460/466/467, P475/476, P520, P550/560, P575/577/578,
+ *                      P580/588, P600, P630/631/635/636/637/638/640, Q605,
+ *                      Q610, C610, Q630, C650, Q650, Q700, Q800, Q900, Q950,
+ *                      PB140, PB145/145B, PB150, PB160, PB165, PB165c, PB170,
+ *                      PB180, PB180c, Duo 210, Duo 230, Duo 250, Duo 270c,
+ *                      Duo280, Duo 280c, PB 520/520c/540/540c/550
+ *             This is the so-called "Universal" ROM used in almost all 68K
+ *             machines. There are machine-dependent and machine-independent
+ *             routines used by NetBSD/mac68k in this ROM, and except for the
+ *             PowerBooks and the Duos, this ROM seems to be fairly well
+ *             known by NetBSD/mac68k.  Desktop machines listed here that are
+ *             not yet running NetBSD probably only lack the necessary
+ *             addresses for the machine-dependent routines, or are waiting
+ *             for IDE disk support.  This ROM is generally 1Meg in length,
+ *             however when used in the IIci, IIfx, IIsi, LC, Classic II, and
+ *             P400/405/410/430 it is 512K in length, and when used in the
+ *             PB 520/520c/540/540c/550 it is 2Meg in length.
+ *
+ * ROM Family - $077d - used in C660AV/Q660AV, Q840AV
+ *             The "Universal" ROM used on the PowerMacs and used in the
+ *             68K line for the AV Macs only.  When used in the 68K AV
+ *             machines the ROM is 2Meg in length; all uses in the PowerMac
+ *             use a length of 4Meg.
+ *
  *		Bob Nestor - <rnestor@metronet.com>
  */
 static romvec_t romvecs[] =
@@ -1587,7 +1635,7 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x40814800,	/* Egret */
 		(caddr_t) 0x408147c4,	/* InitEgret */
 		(caddr_t) 0x0,		/* ADBReInit_JTBL */
-		(caddr_t) 0x0,		/* ROMResourceMap List Head */
+		(caddr_t) 0x4087eb90,	/* ROMResourceMap List Head */
 		(caddr_t) 0x4081c406,	/* FixDiv */
 		(caddr_t) 0x4081c312,	/* FixMul */
 	},
@@ -1606,19 +1654,19 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4080a752,	/* ADBReInit */
 		(caddr_t) 0x4080a3dc,	/* ADBOp */
 		(caddr_t) 0x0,		/* PMgrOp */
-		(caddr_t) 0x40a0c05c,	/* WriteParam */
-		(caddr_t) 0x40a0c086,	/* SetDateTime */
-		(caddr_t) 0x40a0c5cc,	/* InitUtil */
-		(caddr_t) 0x40a0b186,	/* ReadXPRam */
-		(caddr_t) 0x40a0b190,	/* WriteXPRam */
-		(caddr_t) 0x40ab39b6,	/* jClkNoMem */
-		(caddr_t) 0x40a0a818,	/* ADBAlternateInit */
-		(caddr_t) 0x40a14800,	/* Egret */
-		(caddr_t) 0x40a147c4,	/* InitEgret */
+		(caddr_t) 0x4080c05c,	/* WriteParam */
+		(caddr_t) 0x4080c086,	/* SetDateTime */
+		(caddr_t) 0x4080c5cc,	/* InitUtil */
+		(caddr_t) 0x4080b186,	/* ReadXPRam */
+		(caddr_t) 0x4080b190,	/* WriteXPRam */
+		(caddr_t) 0x4080b1e4,	/* jClkNoMem */
+		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
+		(caddr_t) 0x40814800,	/* Egret */
+		(caddr_t) 0x408147c4,	/* InitEgret */
 		(caddr_t) 0x0,		/* ADBReInit_JTBL */
-		(caddr_t) 0x0,		/* ROMResourceMap List Head */
-		(caddr_t) 0x40a1c406,	/* FixDiv */
-		(caddr_t) 0x40a1c312,	/* FixMul */
+		(caddr_t) 0x4087eb90,	/* ROMResourceMap List Head */
+		(caddr_t) 0x4081c406,	/* FixDiv */
+		(caddr_t) 0x4081c312,	/* FixMul */
 	},
 	/*
 	 * Vectors verified for Mac Classic II and LC II
@@ -1635,15 +1683,20 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x40a0a3ac,	/* SetADBInfo */
 		(caddr_t) 0x40a0a752,	/* ADBReInit */
 		(caddr_t) 0x40a0a3dc,	/* ADBOp */
-		(caddr_t) 0,	/* PMgrOp */
-		(caddr_t) 0x4080c05c,	/* WriteParam */
-		(caddr_t) 0x4080c086,	/* SetDateTime */
-		(caddr_t) 0x4080c5cc,	/* InitUtil */
-		(caddr_t) 0x4080b186,	/* ReadXPRam */
-		(caddr_t) 0x4080b190,	/* WriteXPRam */
-		(caddr_t) 0x408b39b6,	/* jClkNoMem */
-		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
-		(caddr_t) 0x408147c4,	/* InitEgret */
+		(caddr_t) 0x0,		/* PMgrOp */
+		(caddr_t) 0x40a0c05c,	/* WriteParam */
+		(caddr_t) 0x40a0c086,	/* SetDateTime */
+		(caddr_t) 0x40a0c5cc,	/* InitUtil */
+		(caddr_t) 0x40a0b186,	/* ReadXPRam */
+		(caddr_t) 0x40a0b190,	/* WriteXPRam */
+		(caddr_t) 0x40a0b1e4,	/* jClkNoMem */
+		(caddr_t) 0x40a0a818,	/* ADBAlternateInit */
+		(caddr_t) 0x40a14800,	/* Egret */
+		(caddr_t) 0x40a147c4,	/* InitEgret */
+		(caddr_t) 0x40a03ba6,	/* ADBReInit_JTBL */
+		(caddr_t) 0x40a7eb90,	/* ROMResourceMap List Head */
+		(caddr_t) 0x40a1c406,	/* FixDiv, wild guess */
+		(caddr_t) 0x40a1c312,	/* FixMul, wild guess */
 	},
 	/*
 	 * Vectors verified for IIci, Q700
@@ -1670,13 +1723,13 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x0,		/* Egret */
 		(caddr_t) 0x408147c4,	/* InitEgret */
 		(caddr_t) 0x0,		/* ADBReInit_JTBL */
-		(caddr_t) 0x0,		/* ROMResourceMap List Head */
+		(caddr_t) 0x4087eb90,	/* ROMResourceMap List Head */
 		(caddr_t) 0x4081c406,	/* FixDiv */
 		(caddr_t) 0x4081c312,	/* FixMul */
 	},
 	/*
-	 * Vectors verified for Duo 230, PB 180, PB 165
-	 * (Duo 210?  PB 165?  PB 160?  Duo 250?  Duo 270?)
+	 * Vectors verified for Duo 230, PB 180, PB 160, PB 165/165C
+	 * (Duo 210?  Duo 250?  Duo 270?)
 	 */
 	{			/* 5 */
 		"2nd Powerbook class ROMs",
@@ -1705,7 +1758,8 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4081c312,	/* FixMul, wild guess */
 	},
 	/*
-	 * Quadra, Centris merged table (C650, 610, Q800?)
+	 * Vectors verified for the Quadra, Centris 650
+	 *  (610, Q800?)
 	 */
 	{			/* 6 */
 		"Quadra/Centris ROMs",
@@ -1728,14 +1782,14 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
 		(caddr_t) 0x40814800,	/* Egret */
 		(caddr_t) 0x408147c4,	/* InitEgret */
-		(caddr_t) 0x0,		/* ADBReInit_JTBL */
-		(caddr_t) 0x0,		/* ROMResourceMap List Head */
+		(caddr_t) 0x408d2b64,	/* ADBReInit_JTBL */
+		(caddr_t) 0x4087eb90,	/* ROMResourceMap List Head */
 		(caddr_t) 0x4081c406,	/* FixDiv, wild guess */
 		(caddr_t) 0x4081c312,	/* FixMul, wild guess */
 	},
 	/*
-	 * Quadra 840AV (but ADBBase + 130 intr is unknown)
-	 * (PM intr is known to be 0, PMgrOp is guessed to be 0)
+	 * Vectors verified for the Quadra 660AV
+	 *  (Quadra 840AV?)
 	 */
 	{			/* 7 */
 		"Quadra AV ROMs",
@@ -1794,13 +1848,13 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4001c312,	/* FixMul, wild guess */
 	},
 	/*
-	 * Q 605 (but guessing at ADBBase + 130, based on Q 650)
+	 * Verified for the Q605
 	 */
 	{			/* 9 */
 		"Quadra/Centris 605 ROMs",
 		(caddr_t) 0x408a9b56,	/* ADB int */
 		(caddr_t) 0x0,		/* PM int */
-		(caddr_t) 0x408a99de,	/* ADBBase + 130 */
+		(caddr_t) 0x408b2f94,	/* ADBBase + 130 */
 		(caddr_t) 0x4080a360,	/* CountADBs */
 		(caddr_t) 0x4080a37a,	/* GetIndADB */
 		(caddr_t) 0x4080a3a6,	/* GetADBInfo */
@@ -1813,14 +1867,14 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4080c5cc,	/* InitUtil */
 		(caddr_t) 0x4080b186,	/* ReadXPRam */
 		(caddr_t) 0x4080b190,	/* WriteXPRam */
-		(caddr_t) 0x0,		/* jClkNoMem */
+		(caddr_t) 0x408b3bf8,	/* jClkNoMem */
 		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
-		(caddr_t) 0x40814800,	/* Egret */
+		(caddr_t) 0x408a99c0,	/* Egret */
 		(caddr_t) 0x408147c4,	/* InitEgret */
-		(caddr_t) 0x0,		/* ADBReInit_JTBL */
-		(caddr_t) 0x0,		/* ROMResourceMap List Head */
-		(caddr_t) 0x4081c406,	/* FixDiv, wild guess */
-		(caddr_t) 0x4081c312,	/* FixMul, wild guess */
+		(caddr_t) 0x408a82c0,	/* ADBReInit_JTBL */
+		(caddr_t) 0x4087eb90,	/* ROMResourceMap List Head */
+		(caddr_t) 0x4081c406,	/* FixDiv */
+		(caddr_t) 0x4081c312,	/* FixMul */
 	},
 	/*
 	 * Vectors verified for Duo 270c, PB150
@@ -1847,7 +1901,7 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x40814800,	/* Egret */
 		(caddr_t) 0x408147c4,	/* InitEgret */
 		(caddr_t) 0x0,		/* ADBReInit_JTBL */
-		(caddr_t) 0x0,		/* ROMResourceMap List Head */
+		(caddr_t) 0x4087eb90,	/* ROMResourceMap List Head */
 		(caddr_t) 0x4081c406,	/* FixDiv, wild guess */
 		(caddr_t) 0x4081c312,	/* FixMul, wild guess */
 	},
@@ -1881,7 +1935,7 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4081c312,	/* FixMul for P550 */
 	},
 	/*
-	 * Vectors for the MacTV
+	 * Vectors verified for the MacTV
 	 */
 	{			/* 12 */
 		"MacTV ROMs",
@@ -1909,9 +1963,8 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x40a1c406,	/* FixDiv */
 		(caddr_t) 0x40a1c312,	/* FixMul */
 	},
-
 	/*
-	 * Vectors verified for Quadra 630
+	 * Vectors verified for the Quadra630
 	 */
 	{			/* 13 */
 		"Quadra630 ROMs",
@@ -1928,6 +1981,7 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4080c05c,	/* WriteParam */
 		(caddr_t) 0x4080c086,	/* SetDateTime */
 		(caddr_t) 0x4080c5cc,	/* InitUtil */
+		(caddr_t) 0x4080b186,	/* Wild guess at ReadXPRam */
 		(caddr_t) 0x4080b190,	/* Wild guess at WriteXPRam */
 		(caddr_t) 0x408b39f4,	/* jClkNoMem */
 		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
@@ -1940,7 +1994,6 @@ static romvec_t romvecs[] =
 	},
 	/*
 	 * Vectors verified for LC III
-	 * (Universal ROM version 0x067c)
 	 */
 	{			/* 14 */
 		"LC III ROMs",
@@ -1968,6 +2021,93 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4081c406,	/* FixDiv */
 		(caddr_t) 0x4081c312,	/* FixMul */
 	},
+	/*
+	 * Vectors verified for the LC520
+	 */
+	{			/* 15 */
+		"MacLC520 ROMs",
+		(caddr_t) 0x408d16d6,	/* ADB interrupt */
+		(caddr_t) 0x0,		/* PB ADB interrupt */
+		(caddr_t) 0x408b2f84,	/* ADBBase + 130 interrupt; whatzit? */
+		(caddr_t) 0x4080a360,	/* CountADBs */
+		(caddr_t) 0x4080a37a,	/* GetIndADB */
+		(caddr_t) 0x4080a3a6,	/* GetADBInfo */
+		(caddr_t) 0x4080a3ac,	/* SetADBInfo */
+		(caddr_t) 0x4080a752,	/* ADBReInit */
+		(caddr_t) 0x4080a3dc,	/* ADBOp */
+		(caddr_t) 0x0,		/* PMgrOp */
+		(caddr_t) 0x4080c05c,	/* WriteParam */
+		(caddr_t) 0x4080c086,	/* SetDateTime */
+		(caddr_t) 0x4080c5cc,	/* InitUtil */
+		(caddr_t) 0x4080b186,	/* ReadXPRam */
+		(caddr_t) 0x4080b190,	/* WriteXPRam */
+		(caddr_t) 0x408b3c04,	/* jClkNoMem */
+		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
+		(caddr_t) 0x408d1450,	/* Egret */
+		(caddr_t) 0x408147c4,	/* InitEgret */
+		(caddr_t) 0x408d2460,	/* ADBReInit_JTBL */
+		(caddr_t) 0x4087eb90,	/* ROMResourceMap List Head */
+		(caddr_t) 0x4081c406,	/* FixDiv for P520 */
+		(caddr_t) 0x4081c312,	/* FixMul for P520 */
+	},
+	/*
+	 * Vectors verified for the LC 575/577/578
+	 */
+	{			/* 16 */
+		"MacLC575 ROMs",
+		(caddr_t) 0x408a9b56,	/* ADB interrupt */
+		(caddr_t) 0x0,		/* PB ADB interrupt */
+		(caddr_t) 0x408b2f94,	/* ADBBase + 130 interrupt; whatzit? */
+		(caddr_t) 0x4080a360,	/* CountADBs */
+		(caddr_t) 0x4080a37a,	/* GetIndADB */
+		(caddr_t) 0x4080a3a6,	/* GetADBInfo */
+		(caddr_t) 0x4080a3ac,	/* SetADBInfo */
+		(caddr_t) 0x4080a752,	/* ADBReInit */
+		(caddr_t) 0x4080a3dc,	/* ADBOp */
+		(caddr_t) 0x0,		/* PMgrOp */
+		(caddr_t) 0x4080c05c,	/* WriteParam */
+		(caddr_t) 0x4080c086,	/* SetDateTime */
+		(caddr_t) 0x4080c5cc,	/* InitUtil */
+		(caddr_t) 0x4080b186,	/* ReadXPRam */
+		(caddr_t) 0x4080b190,	/* WriteXPRam */
+		(caddr_t) 0x408b3bf8,	/* jClkNoMem */
+		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
+		(caddr_t) 0x408a99c0,	/* Egret */
+		(caddr_t) 0x408147c4,	/* InitEgret */
+		(caddr_t) 0x408a81a0,	/* ADBReInit_JTBL */
+		(caddr_t) 0x4087eb90,	/* ROMResourceMap List Head */
+		(caddr_t) 0x4081c406,	/* FixDiv for P520 */
+		(caddr_t) 0x4081c312,	/* FixMul for P520 */
+	},
+	/*
+	 * Vectors verified for the Quadra 950
+	 */
+	{			/* 17 */
+		"Quadra950 class ROMs",
+		(caddr_t) 0x40814912,	/* ADB interrupt */
+		(caddr_t) 0x0,		/* PM ADB interrupt */
+		(caddr_t) 0x4080a4d8,	/* ADBBase + 130 interrupt; whatzit? */
+		(caddr_t) 0x4080a360,	/* CountADBs */
+		(caddr_t) 0x4080a37a,	/* GetIndADB */
+		(caddr_t) 0x4080a3a6,	/* GetADBInfo */
+		(caddr_t) 0x4080a3ac,	/* SetADBInfo */
+		(caddr_t) 0x4080a752,	/* ADBReInit */
+		(caddr_t) 0x4080a3dc,	/* ADBOp */
+		(caddr_t) 0x0,		/* PMgrOp */
+		(caddr_t) 0x4080c05c,	/* WriteParam */
+		(caddr_t) 0x4080c086,	/* SetDateTime */
+		(caddr_t) 0x4080c5cc,	/* InitUtil */
+		(caddr_t) 0x4080b186,	/* ReadXPRam */
+		(caddr_t) 0x4080b190,	/* WriteXPRam */
+		(caddr_t) 0x4080b1e4,	/* jClkNoMem */
+		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
+		(caddr_t) 0x40814800,	/* Egret */
+		(caddr_t) 0x408147c4,	/* InitEgret */
+		(caddr_t) 0x408038bc,	/* ADBReInit_JTBL */
+		(caddr_t) 0x4087eb90,	/* ROMResourceMap List Head */
+		(caddr_t) 0x4081c406,	/* FixDiv */
+		(caddr_t) 0x4081c312,	/* FixMul */
+	},
 	/* Please fill these in! -BG */
 };
 
@@ -1990,11 +2130,11 @@ struct cpu_model_info cpu_models[] = {
 /* The Centris/Quadra series. */
 	{MACH_MACQ700, "Quadra", " 700 ", MACH_CLASSQ, &romvecs[4]},
 	{MACH_MACQ900, "Quadra", " 900 ", MACH_CLASSQ, &romvecs[6]},
-	{MACH_MACQ950, "Quadra", " 950 ", MACH_CLASSQ, &romvecs[2]},
+	{MACH_MACQ950, "Quadra", " 950 ", MACH_CLASSQ, &romvecs[17]},
 	{MACH_MACQ800, "Quadra", " 800 ", MACH_CLASSQ, &romvecs[6]},
 	{MACH_MACQ650, "Quadra", " 650 ", MACH_CLASSQ, &romvecs[6]},
 	{MACH_MACC650, "Centris", " 650 ", MACH_CLASSQ, &romvecs[6]},
-	{MACH_MACQ605, "Quadra", " 605", MACH_CLASSQ, &romvecs[9]},
+	{MACH_MACQ605, "Quadra", " 605 ", MACH_CLASSQ, &romvecs[9]},
 	{MACH_MACC610, "Centris", " 610 ", MACH_CLASSQ, &romvecs[6]},
 	{MACH_MACQ610, "Quadra", " 610 ", MACH_CLASSQ, &romvecs[6]},
 	{MACH_MACQ630, "Quadra", " 630 ", MACH_CLASSQ, &romvecs[13]},
@@ -2019,7 +2159,7 @@ struct cpu_model_info cpu_models[] = {
 	{MACH_MACPB210, "PowerBook Duo", " 210 ", MACH_CLASSDUO, &romvecs[5]},
 	{MACH_MACPB230, "PowerBook Duo", " 230 ", MACH_CLASSDUO, &romvecs[5]},
 	{MACH_MACPB250, "PowerBook Duo", " 250 ", MACH_CLASSDUO, &romvecs[5]},
-	{MACH_MACPB270, "PowerBook Duo", " 270 ", MACH_CLASSDUO, &romvecs[5]},
+	{MACH_MACPB270, "PowerBook Duo", " 270C ", MACH_CLASSDUO, &romvecs[5]},
 	{MACH_MACPB280, "PowerBook Duo", " 280 ", MACH_CLASSDUO, &romvecs[5]},
 	{MACH_MACPB280C, "PowerBook Duo", " 280C ", MACH_CLASSDUO, &romvecs[5]},
 
@@ -2033,9 +2173,10 @@ struct cpu_model_info cpu_models[] = {
 	{MACH_MACLCII,  "LC", " II ",  MACH_CLASSLC, &romvecs[3]},
 	{MACH_MACLCIII, "LC", " III ", MACH_CLASSLC, &romvecs[14]},
 	{MACH_MACLC475, "LC", " 475 ", MACH_CLASSQ,  &romvecs[9]},
-	{MACH_MACLC520, "LC", " 520 ", MACH_CLASSLC, &romvecs[3]},
-	{MACH_MACLC575, "LC", " 575 ", MACH_CLASSLC, &romvecs[3]},
+	{MACH_MACLC520, "LC", " 520 ", MACH_CLASSLC, &romvecs[15]},
+	{MACH_MACLC575, "LC", " 575 ", MACH_CLASSQ2, &romvecs[16]},
 	{MACH_MACCCLASSIC, "Color Classic ", "", MACH_CLASSLC, &romvecs[3]},
+	{MACH_MACCCLASSICII, "Color Classic"," II ", MACH_CLASSLC, &romvecs[3]},
 /* Does this belong here? */
 	{MACH_MACCLASSICII, "Classic", " II ", MACH_CLASSLC, &romvecs[3]},
 
@@ -2292,6 +2433,7 @@ setmachdep()
 		via_reg(VIA2, rIER) = 0x7f;	/* disable VIA2 int */
 		break;
 	case MACH_CLASSQ:
+        case MACH_CLASSQ2:
 	case MACH_CLASSAV:
 		VIA2 = 1;
 		IOBase = 0x50f00000;
@@ -2375,11 +2517,27 @@ mac68k_set_io_offsets(base)
 		Via1Base = (volatile u_char *) base;
 		sccA = (volatile u_char *) base + 0xc000;
 		ASCBase = (volatile u_char *) base + 0x14000;
-		SCSIBase = base;
+		SCSIBase = base + 0xf000;
+		break;
+	case MACH_CLASSQ2:
+		/*
+		 * Note the different offset for sccA for this class of
+		 * machines.  This seems to be common on many of the
+		 * Quadra-type machines.
+		 */
+		Via1Base = (volatile u_char *) base;
+		sccA = (volatile u_char *) base + 0xc020;
+		ASCBase = (volatile u_char *) base + 0x14000;
+		SCSIBase = base + 0xf000;
+		break;
+	case MACH_CLASSAV:
+		Via1Base = (volatile u_char *) base;
+		sccA = (volatile u_char *) base + 0x4000;
+		ASCBase = NULL;
+		SCSIBase = base + 0x18000;
 		break;
 	case MACH_CLASSII:
 	case MACH_CLASSPB:
-	case MACH_CLASSAV:
 	case MACH_CLASSIIci:
 	case MACH_CLASSIIsi:
 	case MACH_CLASSIIvx:
@@ -2438,6 +2596,7 @@ gray_bar()
 #endif
 
 /* in locore */
+extern int ptest040 __P((u_int addr));
 extern int get_pte __P((u_int addr, u_long pte[2], u_short * psr));
 
 /*
@@ -2454,46 +2613,46 @@ get_physical(u_int addr, u_long * phys)
 	int     i, numbits;
 	extern u_int macos_tc;
 
-	/* This can not work for the 040, yet */
-	if (mmutype == MMU_68040)
-		return 0;
+	if (mmutype == MMU_68040) {
+		ph = ptest040(addr);
+		if (!(ph & MMU40_RES))
+			return 0;
 
-	if (mmutype == MMU_68040)
-		return 0;
+		*phys = ph;
+		mask = 0x00000fff;
+	} else {
+		i = get_pte(addr, pte, &psr);
 
-	i = get_pte(addr, pte, &psr);
+		switch (i) {
+		case -1:
+			return 0;
+		case 0:
+			ph = pte[0] & 0xFFFFFF00;
+			break;
+		case 1:
+			ph = pte[1] & 0xFFFFFF00;
+			break;
+		default:
+			panic("get_physical(): bad get_pte()");
+		}
 
-	switch (i) {
-	case -1:
-		return 0;
-	case 0:
-		ph = pte[0] & 0xFFFFFF00;
-		break;
-	case 1:
-		ph = pte[1] & 0xFFFFFF00;
-		break;
-	default:
-		panic("get_physical(): bad get_pte()");
+		/*
+		 * We must now figure out how many levels down we went and
+		 * mask the bits appropriately -- the returned value may only
+		 * be the upper n bits, and we have to take the rest from addr.
+		 */
+		numbits = 0;
+		psr &= 0x0007;		/* Number of levels we went */
+		for (i = 0; i < psr; i++)
+			numbits += (macos_tc >> (12 - i * 4)) & 0x0f;
+
+		/*
+		 * We have to take the most significant "numbits" from
+		 * the returned value "ph", and the rest from our addr.
+		 * Assume that numbits != 0.
+		 */
+		mask = (1 << (32 - numbits)) - 1;
 	}
-
-	/*
-	 * We must now figure out how many levels down we went and
-	 * mask the bits appropriately -- the returned value may only
-	 * be the upper n bits, and we've got to take the rest from addr.
-	 */
-
-	numbits = 0;
-	psr &= 0x0007;		/* Number of levels we went */
-	for (i = 0; i < psr; i++)
-		numbits += (macos_tc >> (12 - i * 4)) & 0x0f;
-
-	/*
-	 * We have to take the most significant "numbits" from
-	 * the returned value "ph", and the rest from our addr.
-	 * Assume that numbits != 0.
-	 */
-
-	mask = (1 << (32 - numbits)) - 1;
 	*phys = (ph & ~mask) | (addr & mask);
 
 	return 1;
