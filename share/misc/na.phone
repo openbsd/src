@@ -1,4 +1,4 @@
-#	$OpenBSD: na.phone,v 1.7 1997/03/01 21:20:21 kstailey Exp $
+#	$OpenBSD: na.phone,v 1.8 1997/10/11 16:55:00 deraadt Exp $
 #	@(#)na.phone	8.1 (Berkeley) 6/8/93
 #
 # Area Code : City : State/Province : State/Province Abbrev.
@@ -84,8 +84,8 @@
 330:Akron:Ohio:OH
 330:Canton:Ohio:OH
 330:Youngstown:Ohio:OH
-334:Montgomery:Alabama:AL
 334:Mobile:Alabama:AL
+334:Montgomery:Alabama:AL
 345::Cayman Islands:
 352:Gainsville:Florida:FL
 360:Olympia:Washington:WA
@@ -171,8 +171,8 @@
 518:Schenectady:New York:NY
 518:Troy:New York:NY
 519:London:Ontario:ON
-520:Tempe:Arizona:AZ
 520:Flagstaff:Arizona:AZ
+520:Tempe:Arizona:AZ
 540:Roanoke:Virginia:VA
 541:Bend:Oregon:OR
 541:Corvallis:Oregon:OR
@@ -208,10 +208,8 @@
 616:Battle Creek:Michigan:MI
 616:Grand Rapids:Michigan:MI
 616:Kalamazoo:Michigan:MI
-617:Arlington:Massachusetts:MA
 617:Boston:Massachusetts:MA
 617:Cambridge:Massachusetts:MA
-617:Winchester:Massachusetts:MA
 618:Alton:Illinois:IL
 618:Cairo:Illinois:IL
 618:Madison:Illinois:IL
@@ -269,6 +267,9 @@
 770:Marietta:Georgia:GA
 770:Norcross:Georgia:GA
 773:Chicago:Illinois:IL
+781:Lynn:Massachusetts:MA
+781:Waltham:Massachusetts:MA
+781:Weymouth:Massachusetts:MA
 787::Puerto Rico:PR
 801::Utah:UT
 802::Vermont:VT
@@ -283,7 +284,6 @@
 806:Lubbock:Texas:TX
 807:Thunder Bay:Ontario:ON
 808::Hawaii:HI
-809::US Virgin Islands:VI
 809::Anguilla:AI
 809::British Virgin Islands:VG
 809::Dominican Republic:DO
@@ -292,6 +292,7 @@
 809::St. Vincent:VC
 809::Trinidad & Tobago:TT
 809::Turks Islands:TC
+809::US Virgin Islands:VI
 810:Flint:Michigan:MI
 810:Pontiac:Michigan:MI
 810:Southfield:Michigan:MI
@@ -375,5 +376,8 @@
 970:Ft. Collins:Colorado:CO
 970:Grand Junction:Colorado:CO
 970:Steamboat Sprints:Colorado:CO
-972:Irving:Texas:TX
 972:Dallas suburbs:Texas:TX
+972:Irving:Texas:TX
+978:Fitchburg:Massachusetts:MA
+978:Gloucester:Massachusetts:MA
+978:Lowell:Massachusetts:MA
