@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.53 2005/02/25 20:32:48 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.54 2005/03/02 16:56:58 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -885,6 +885,9 @@ cvs_file_lget(const char *path, int flags, CVSFILE *parent)
 	if ((cfp = cvs_file_alloc(path, type)) == NULL)
 		return (NULL);
 	cfp->cf_parent = parent;
+
+	if ((cfp->cf_type == DT_DIR) && (cfp->cf_parent == NULL))
+		cfp->cf_ddat->cd_flags |= CVS_DIRF_BASE;
 
 	if ((parent != NULL) && (CVS_DIR_ENTRIES(parent) != NULL))
 		ent = cvs_ent_get(CVS_DIR_ENTRIES(parent), CVS_FILE_NAME(cfp));
