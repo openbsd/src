@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.15 1997/03/12 13:29:39 briggs Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.16 1997/03/30 21:53:23 briggs Exp $	*/
 /*	$NetBSD: cpu.h,v 1.45 1997/02/10 22:13:40 scottr Exp $	*/
 
 /*
@@ -141,14 +141,19 @@ extern volatile u_int8_t ssir;
 #define	SIR_CLOCK	0x02
 #define	SIR_SERIAL	0x04
 
+/* Mac-specific SSIR(s) */
+#define	SIR_DTMGR	0x80
+
 #define	siroff(mask)	\
-	__asm __volatile ( "andb %0,_ssir" : : "ir" (~(mask)));
+	__asm __volatile ( "andb %0,_ssir" : : "ir" (~(mask) & 0xff));
 #define	setsoftnet()	\
 	__asm __volatile ( "orb %0,_ssir" : : "i" (SIR_NET))
 #define	setsoftclock()	\
 	__asm __volatile ( "orb %0,_ssir" : : "i" (SIR_CLOCK))
 #define	setsoftserial()	\
 	__asm __volatile ( "orb %0,_ssir" : : "i" (SIR_SERIAL))
+#define	setsoftdtmgr()	\
+	__asm __volatile ( "orb %0,_ssir" : : "i" (SIR_DTMGR))
 
 #define CPU_CONSDEV	1
 #define CPU_MAXID	2

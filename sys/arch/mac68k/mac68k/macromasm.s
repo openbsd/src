@@ -1,4 +1,4 @@
-/*	$OpenBSD: macromasm.s,v 1.4 1997/02/23 06:05:03 briggs Exp $	*/
+/*	$OpenBSD: macromasm.s,v 1.5 1997/03/30 21:53:27 briggs Exp $	*/
 /*	$NetBSD: macromasm.s,v 1.11 1996/05/25 14:45:37 briggs Exp $	*/
 
 /*-
@@ -104,6 +104,8 @@
 	loglob(VBLQueue, 0x160)		/* Vertical blanking Queue, unused ? */
 	loglob(VBLQueue_head, 0x162)	/* Vertical blanking Queue, head */
 	loglob(VBLQueue_tail, 0x166)	/* Vertical blanking Queue, tail */
+	loglob(jDTInstall, 0x9dc)	/* short-cut to deferred task mgr */
+					/* trap handler */
 
 	loglob(InitEgretJTVec, 0x2010)	/* pointer to a jump table for */
 					/* InitEgret on AV machines */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: macrom.h,v 1.5 1997/02/23 06:05:02 briggs Exp $	*/
+/*	$OpenBSD: macrom.h,v 1.6 1997/03/30 21:53:26 briggs Exp $	*/
 /*	$NetBSD: macrom.h,v 1.9 1996/05/25 14:45:35 briggs Exp $	*/
 
 /*-
@@ -78,6 +78,8 @@ extern caddr_t		ExpandMem;	/* pointer to Expanded Memory used by */
 extern u_int16_t	VBLQueue;	/* Vertical blanking Queue, unused ? */
 extern caddr_t		VBLQueue_head;	/* Vertical blanking Queue, head */
 extern caddr_t		VBLQueue_tail;	/* Vertical blanking Queue, tail */
+extern caddr_t		jDTInstall;	/* short-cut to deferred task mgr */
+					/* trap handler */
 
 extern u_int32_t	**InitEgretJTVec; /* pointer to a jump table for */
 					  /* InitEgret on AV machines */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.8 1997/02/21 05:49:30 briggs Exp $	*/
+/*	$OpenBSD: trap.c,v 1.9 1997/03/30 21:53:27 briggs Exp $	*/
 /*	$NetBSD: trap.c,v 1.45 1997/01/20 04:30:05 scottr Exp $	*/
 
 /*
@@ -510,6 +510,12 @@ copyfault:
 			siroff(SIR_CLOCK);
 			cnt.v_soft++;
 			softclock();
+		}
+		if (ssir & SIR_DTMGR) {
+			void mrg_execute_deferred __P((void));
+			siroff(SIR_DTMGR);
+			cnt.v_soft++;
+			mrg_execute_deferred();
 		}
 		/*
 		 * If this was not an AST trap, we are all done.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: macrom.c,v 1.10 1997/03/08 16:17:05 briggs Exp $	*/
+/*	$OpenBSD: macrom.c,v 1.11 1997/03/30 21:53:25 briggs Exp $	*/
 /*	$NetBSD: macrom.c,v 1.31 1997/03/01 17:20:34 scottr Exp $	*/
 
 /*-
@@ -121,7 +121,8 @@ caddr_t ResHndls[]={0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 #endif
 
 void	setup_egret __P((void));
-
+void	mrg_execute_deferred __P((void));
+void	mrg_DTInstall __P((void));
 
 /*
  * Last straw functions; we didn't set them up, so freak out!
@@ -151,6 +152,48 @@ mrg_Delay()
 			 *  of ticks */
 }
 
+/*
+ * Handle the Deferred Task manager here
+ */
+static caddr_t mrg_DTList = NULL;
+
+void
+mrg_DTInstall(void)
+{
+	caddr_t	ptr, prev;
+
+	__asm("	movl a0, %0" : "=g" (ptr) );
+
+	(caddr_t *)prev = &mrg_DTList;
+	while (*prev != NULL) 
+		prev = *(caddr_t *)prev;
+	*(caddr_t *)ptr = NULL;
+	*(caddr_t *)prev = ptr;
+	setsoftdtmgr();
+
+	__asm("	clrl d0" : : : "d0");
+}
+
+void
+mrg_execute_deferred(void)
+{
+	caddr_t ptr;
+	int s;
+
+	while (mrg_DTList != NULL) {
+		s = splhigh();
+		ptr = *(caddr_t *)mrg_DTList;
+		mrg_DTList = *(caddr_t *)ptr;
+		splx(s);
+
+		__asm("	moveml a0-a6/d1-d7,sp@-
+			movl %0, a0
+			movl a0@(8), a2
+			movl a0@(12), a1
+			jsr a2@
+			moveml sp@+,a0-a6/d1-d7" : : "g" (ptr) );
+	}
+}
 
 void
 mrg_VBLQueue()
@@ -581,6 +624,7 @@ caddr_t mrg_OStraps[256] = {
 	[0x3b]	(caddr_t)mrg_Delay,	
 	[0x47]	(caddr_t)mrg_SetTrapAddress,
 	[0x55]	(caddr_t)mrg_StripAddress,
+	[0x82]	(caddr_t)mrg_DTInstall,
 #else
 #error "Using a GNU C extension."
 #endif
@@ -908,6 +952,8 @@ mrg_init()
 			mrg_OStraps[0x7c]; /* probably very dangerous */
 	mrg_VIA2 = (caddr_t)(Via1Base + VIA2 * 0x2000);	/* see via.h */
 	SCCRd = (caddr_t)(IOBase + sccA);   /* ser.c ; we run before serinit */
+
+	jDTInstall = (caddr_t) mrg_DTInstall;
 
 	/* AV ROMs want this low memory vector to point to a jump table */
 	InitEgretJTVec = (u_int32_t **)&mrg_AVInitEgretJT;
