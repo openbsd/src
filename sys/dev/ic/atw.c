@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.14 2004/07/15 13:00:49 millert Exp $	*/
+/*	$OpenBSD: atw.c,v 1.15 2004/07/15 15:11:02 millert Exp $	*/
 /*	$NetBSD: atw.c,v 1.57 2004/07/15 07:11:23 dyoung Exp $	*/
 
 /*-
@@ -1615,19 +1615,33 @@ atw_rf3000_write(struct atw_softc *sc, u_int addr, u_int val)
 	u_int32_t reg;
 	int i;
 
+	for (i = 1000; --i >= 0; ) {
+		if (ATW_ISSET(sc, ATW_BBPCTL, ATW_BBPCTL_RD|ATW_BBPCTL_WR) == 0)
+			break;
+		DELAY(100);
+	}
+
+	if (i < 0) {
+		printf("%s: BBPCTL busy (pre-write)\n", sc->sc_dev.dv_xname);
+		return ETIMEDOUT;
+	}
+
 	reg = sc->sc_bbpctl_wr |
 	     LSHIFT(val & 0xff, ATW_BBPCTL_DATA_MASK) |
 	     LSHIFT(addr & 0x7f, ATW_BBPCTL_ADDR_MASK);
 
-	for (i = 10; --i >= 0; ) {
-		ATW_WRITE(sc, ATW_BBPCTL, reg);
-		DELAY(2000);
+	ATW_WRITE(sc, ATW_BBPCTL, reg);
+
+	for (i = 1000; --i >= 0; ) {
+		DELAY(100);
 		if (ATW_ISSET(sc, ATW_BBPCTL, ATW_BBPCTL_WR) == 0)
 			break;
 	}
 
+	ATW_CLR(sc, ATW_BBPCTL, ATW_BBPCTL_WR);
+
 	if (i < 0) {
-		printf("%s: BBPCTL still busy\n", sc->sc_dev.dv_xname);
+		printf("%s: BBPCTL busy (post-write)\n", sc->sc_dev.dv_xname);
 		return ETIMEDOUT;
 	}
 	return 0;
@@ -1811,38 +1825,36 @@ atw_filter_setup(struct atw_softc *sc)
 #endif
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int hash;
-	u_int32_t hashes[2] = { 0, 0 };
+	u_int32_t hashes[2];
 	struct ether_multi *enm;
 	struct ether_multistep step;
 
-	DPRINTF(sc, ("%s: atw_filter_setup: sc_flags 0x%08x\n",
-	    sc->sc_dev.dv_xname, sc->sc_flags));
-
-	/*
-	 * If we're running, idle the receive engine.  If we're NOT running,
-	 * we're being called from atw_init(), and our writing ATW_NAR will
-	 * start the transmit and receive processes in motion.
+	/* According to comments in tlp_al981_filter_setup
+	 * (dev/ic/tulip.c) the ADMtek AL981 does not like for its
+	 * multicast filter to be set while it is running.  Hopefully
+	 * the ADM8211 is not the same!
 	 */
-	if (ifp->if_flags & IFF_RUNNING)
+	if ((ifp->if_flags & IFF_RUNNING) != 0)
 		atw_idle(sc, ATW_NAR_SR);
 
 	sc->sc_opmode &= ~(ATW_NAR_PR|ATW_NAR_MM);
 
-	ifp->if_flags &= ~IFF_ALLMULTI;
-
-	if (ifp->if_flags & IFF_PROMISC) {
+	/* XXX in scan mode, do not filter packets.  Maybe this is
+	 * unnecessary.
+	 */
+	if (ic->ic_state == IEEE80211_S_SCAN ||
+	    (ifp->if_flags & IFF_PROMISC) != 0) {
 		sc->sc_opmode |= ATW_NAR_PR;
-allmulti:
-		ifp->if_flags |= IFF_ALLMULTI;
-		goto setit;
+		goto allmulti;
 	}
+
+	hashes[0] = hashes[1] = 0x0;
 
 	/*
 	 * Program the 64-bit multicast hash filter.
 	 */
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
-		/* XXX */
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 		    ETHER_ADDR_LEN) != 0)
 			goto allmulti;
@@ -1851,33 +1863,21 @@ allmulti:
 		hashes[hash >> 5] |= 1 << (hash & 0x1f);
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ifp->if_flags &= ~IFF_ALLMULTI;
+	goto setit;
 
-	if (ifp->if_flags & IFF_BROADCAST) {
-		hash = atw_calchash(etherbroadcastaddr);
-		hashes[hash >> 5] |= 1 << (hash & 0x1f);
-	}
+allmulti:
+	ifp->if_flags |= IFF_ALLMULTI;
+	hashes[0] = hashes[1] = 0xffffffff;
 
-	/* all bits set => hash is useless */
-	if (~(hashes[0] & hashes[1]) == 0)
-		goto allmulti;
-
- setit:
-	if (ifp->if_flags & IFF_ALLMULTI)
-		sc->sc_opmode |= ATW_NAR_MM;
-
-	/* XXX in scan mode, do not filter packets. maybe this is
-	 * unnecessary.
-	 */
-	if (ic->ic_state == IEEE80211_S_SCAN)
-		sc->sc_opmode |= ATW_NAR_PR;
-
+setit:
 	ATW_WRITE(sc, ATW_MAR0, hashes[0]);
 	ATW_WRITE(sc, ATW_MAR1, hashes[1]);
 	ATW_WRITE(sc, ATW_NAR, sc->sc_opmode);
+	DELAY(20 * 1000);
+
 	DPRINTF(sc, ("%s: ATW_NAR %08x opmode %08x\n", sc->sc_dev.dv_xname,
 	    ATW_READ(sc, ATW_NAR), sc->sc_opmode));
-
-	DPRINTF(sc, ("%s: atw_filter_setup: returning\n", sc->sc_dev.dv_xname));
 }
 
 /* Tell the ADM8211 our preferred BSSID. The ADM8211 must match
