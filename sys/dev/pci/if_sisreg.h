@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sisreg.h,v 1.18 2004/07/04 22:57:20 deraadt Exp $ */
+/*	$OpenBSD: if_sisreg.h,v 1.19 2004/09/28 04:37:33 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -238,11 +238,11 @@
 
 #define SIS_TXCFG_100	\
 	(SIS_TXDMA_64BYTES|SIS_TXCFG_AUTOPAD|\
-	 SIS_TXCFG_FILL(64)|SIS_TXCFG_DRAIN(1536))
+	 SIS_TXCFG_FILL(ETHER_MIN_LEN)|SIS_TXCFG_DRAIN(ETHER_MAX_DIX_LEN))
 
 #define SIS_TXCFG_10	\
 	(SIS_TXDMA_32BYTES|SIS_TXCFG_AUTOPAD|\
-	 SIS_TXCFG_FILL(64)|SIS_TXCFG_DRAIN(1536))
+	 SIS_TXCFG_FILL(ETHER_MIN_LEN)|SIS_TXCFG_DRAIN(ETHER_MAX_DIX_LEN))
 
 #define SIS_RXCFG_DRAIN_THRESH	0x0000003E /* 8-byte units */
 #define SIS_RXCFG_DMABURST	0x00700000
@@ -453,7 +453,6 @@ struct sis_softc {
 	bus_space_read_4(sc->sis_btag, sc->sis_bhandle, reg)
 
 #define SIS_TIMEOUT		1000
-#define SIS_RXLEN		1536
 #define SIS_MIN_FRAMELEN	60
 
 /*

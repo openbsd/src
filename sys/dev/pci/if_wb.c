@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.24 2004/09/23 17:45:16 brad Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.25 2004/09/28 04:37:33 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1006,7 +1006,7 @@ wb_newbuf(sc, c, m)
 
 	c->wb_mbuf = m_new;
 	c->wb_ptr->wb_data = vtophys(mtod(m_new, caddr_t));
-	c->wb_ptr->wb_ctl = WB_RXCTL_RLINK | 1536;
+	c->wb_ptr->wb_ctl = WB_RXCTL_RLINK | ETHER_MAX_DIX_LEN;
 	c->wb_ptr->wb_status = WB_RXSTAT;
 
 	return(0);
@@ -1038,7 +1038,7 @@ void wb_rxeof(sc)
 
 		if ((rxstat & WB_RXSTAT_MIIERR) ||
 		    (WB_RXBYTES(cur_rx->wb_ptr->wb_status) < WB_MIN_FRAMELEN) ||
-		    (WB_RXBYTES(cur_rx->wb_ptr->wb_status) > 1536) ||
+		    (WB_RXBYTES(cur_rx->wb_ptr->wb_status) > ETHER_MAX_DIX_LEN) ||
 		    !(rxstat & WB_RXSTAT_LASTFRAG) ||
 		    !(rxstat & WB_RXSTAT_RXCMP)) {
 			ifp->if_ierrors++;

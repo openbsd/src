@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vrreg.h,v 1.12 2004/05/19 11:37:00 brad Exp $	*/
+/*	$OpenBSD: if_vrreg.h,v 1.13 2004/09/28 04:37:33 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -393,7 +393,6 @@ struct vr_desc {
 #define VR_RX_LIST_CNT		64
 #define VR_TX_LIST_CNT		128
 #define VR_MIN_FRAMELEN		60
-#define VR_FRAMELEN		1536
 #define VR_RXLEN		1520
 
 #define VR_TXOWN(x)		x->vr_ptr->vr_status

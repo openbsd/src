@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtd8xx.c,v 1.6 2004/09/23 17:45:16 brad Exp $	*/
+/*	$OpenBSD: mtd8xx.c,v 1.7 2004/09/28 04:37:32 brad Exp $	*/
 
 /*
  * Copyright (c) 2003 Oleg Safiullin <form@pdp11.org.ru>
@@ -538,7 +538,7 @@ mtd_newbuf(struct mtd_softc *sc, int i, struct mbuf *m)
 	c->rd_buf = htole32(
 	    sc->mtd_cdata.mtd_rx_chain[i].sd_map->dm_segs[0].ds_addr +
 	    sizeof(u_int64_t));
-	c->rd_rcw = htole32(MTD_RXLEN);
+	c->rd_rcw = htole32(ETHER_MAX_DIX_LEN);
 	c->rd_rsr = htole32(RSR_OWN);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,

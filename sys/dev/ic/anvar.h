@@ -1,4 +1,4 @@
-/*	$OpenBSD: anvar.h,v 1.16 2004/08/05 07:58:55 mickey Exp $	*/
+/*	$OpenBSD: anvar.h,v 1.17 2004/09/28 04:37:32 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -654,7 +654,7 @@ struct an_softc	{
 	int			an_rxmode;
 	int			an_gone;
 	int			an_if_flags;
-	u_int8_t		an_txbuf[1536];
+	u_int8_t		an_txbuf[ETHER_MAX_DIX_LEN];
 	struct an_tx_ring_data	an_rdata;
 	struct an_ltv_stats	an_stats;
 	struct an_ltv_status	an_status;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7990reg.h,v 1.6 2003/10/21 18:58:48 jmc Exp $	*/
+/*	$OpenBSD: am7990reg.h,v 1.7 2004/09/28 04:37:32 brad Exp $	*/
 /*	$NetBSD: am7990reg.h,v 1.1 1995/04/11 04:17:50 mycroft Exp $	*/
 
 /*-
@@ -41,7 +41,6 @@
  *	http://www.amd.com/products/npd/techdocs/techdocs.html
  */
 
-#define	LEBLEN		1536	/* ETHERMTU + header + CRC */
 #define	LEMINSIZE	60	/* should be 64 if mode DTCR is set */
 
 /*
@@ -93,8 +92,8 @@ struct leinit {
 #define	LE_INITADDR(sc)		(sc->sc_initaddr)
 #define	LE_RMDADDR(sc, bix)	(sc->sc_rmdaddr + sizeof(struct lermd) * (bix))
 #define	LE_TMDADDR(sc, bix)	(sc->sc_tmdaddr + sizeof(struct letmd) * (bix))
-#define	LE_RBUFADDR(sc, bix)	(sc->sc_rbufaddr + LEBLEN * (bix))
-#define	LE_TBUFADDR(sc, bix)	(sc->sc_tbufaddr + LEBLEN * (bix))
+#define	LE_RBUFADDR(sc, bix)	(sc->sc_rbufaddr + ETHER_MAX_DIX_LEN * (bix))
+#define	LE_TBUFADDR(sc, bix)	(sc->sc_tbufaddr + ETHER_MAX_DIX_LEN * (bix))
 
 /* register addresses */
 #define	LE_CSR0		0x0000		/* Control and status register */

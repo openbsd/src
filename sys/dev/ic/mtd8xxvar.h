@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtd8xxvar.h,v 1.2 2003/10/21 18:58:49 jmc Exp $	*/
+/*	$OpenBSD: mtd8xxvar.h,v 1.3 2004/09/28 04:37:32 brad Exp $	*/
 
 /*
  * Copyright (c) 2003 Oleg Safiullin <form@pdp11.org.ru>
@@ -33,8 +33,6 @@
 
 #define MTD_RX_LIST_CNT		64
 #define MTD_TX_LIST_CNT		128
-#define MTD_RXLEN		1536
-
 
 /*
  * Transmit descriptor structure.

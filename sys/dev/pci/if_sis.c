@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.41 2004/09/23 17:45:16 brad Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.42 2004/09/28 04:37:33 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1128,9 +1128,7 @@ void sis_attach(parent, self, aux)
 	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
-#if NVLAN > 0
 	ifp->if_capabilities |= IFCAP_VLAN_MTU;
-#endif
 
 	sc->sc_mii.mii_ifp = ifp;
 	sc->sc_mii.mii_readreg = sis_miibus_readreg;
@@ -1284,7 +1282,7 @@ int sis_newbuf(sc, c, m)
 
 	c->sis_mbuf = m_new;
 	c->sis_ptr = c->map->dm_segs[0].ds_addr + sizeof(u_int64_t);
-	c->sis_ctl = SIS_RXLEN;
+	c->sis_ctl = ETHER_MAX_DIX_LEN;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
 	    ((caddr_t)c - sc->sc_listkva), sizeof(struct sis_desc),

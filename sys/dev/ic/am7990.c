@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7990.c,v 1.35 2004/06/01 12:58:51 mcbride Exp $	*/
+/*	$OpenBSD: am7990.c,v 1.36 2004/09/28 04:37:32 brad Exp $	*/
 /*	$NetBSD: am7990.c,v 1.22 1996/10/13 01:37:19 christos Exp $	*/
 
 /*-
@@ -198,9 +198,9 @@ am7990_config(sc)
 	sc->sc_tmdaddr = mem;
 	mem += sizeof(struct letmd) * sc->sc_ntbuf;
 	sc->sc_rbufaddr = mem;
-	mem += LEBLEN * sc->sc_nrbuf;
+	mem += ETHER_MAX_DIX_LEN * sc->sc_nrbuf;
 	sc->sc_tbufaddr = mem;
-	mem += LEBLEN * sc->sc_ntbuf;
+	mem += ETHER_MAX_DIX_LEN * sc->sc_ntbuf;
 #ifdef notyet
 	if (mem > ...)
 		panic(...);
@@ -266,7 +266,7 @@ am7990_meminit(sc)
 		rmd.rmd0 = a;
 		rmd.rmd1_hadr = a >> 16;
 		rmd.rmd1_bits = LE_R1_OWN;
-		rmd.rmd2 = -LEBLEN | LE_XMD2_ONES;
+		rmd.rmd2 = -ETHER_MAX_DIX_LEN | LE_XMD2_ONES;
 		rmd.rmd3 = 0;
 		(*sc->sc_copytodesc)(sc, &rmd, LE_RMDADDR(sc, bix),
 		    sizeof(rmd));
@@ -549,7 +549,7 @@ am7990_rint(sc)
 		}
 
 		rmd.rmd1_bits = LE_R1_OWN;
-		rmd.rmd2 = -LEBLEN | LE_XMD2_ONES;
+		rmd.rmd2 = -ETHER_MAX_DIX_LEN | LE_XMD2_ONES;
 		rmd.rmd3 = 0;
 		(*sc->sc_copytodesc)(sc, &rmd, rp, sizeof(rmd));
 

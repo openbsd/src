@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.32 2004/09/23 17:45:16 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.33 2004/09/28 04:37:32 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -1186,7 +1186,7 @@ bge_blockinit(sc)
 		rcb->bge_maxlen_flags = BGE_RCB_MAXLEN_FLAGS(512, 0);
 	else
 		rcb->bge_maxlen_flags =
-		    BGE_RCB_MAXLEN_FLAGS(BGE_MAX_FRAMELEN, 0);
+		    BGE_RCB_MAXLEN_FLAGS(ETHER_MAX_DIX_LEN, 0);
 	if (sc->bge_extram)
 		rcb->bge_nicaddr = BGE_EXT_STD_RX_RINGS;
 	else
@@ -1208,7 +1208,7 @@ bge_blockinit(sc)
 		BGE_HOSTADDR(rcb->bge_hostaddr,
 		    BGE_RING_DMA_ADDR(sc, bge_rx_jumbo_ring));
 		rcb->bge_maxlen_flags =
-		    BGE_RCB_MAXLEN_FLAGS(BGE_MAX_FRAMELEN,
+		    BGE_RCB_MAXLEN_FLAGS(ETHER_MAX_DIX_LEN,
 		        BGE_RCB_FLAG_RING_DISABLED);
 		if (sc->bge_extram)
 			rcb->bge_nicaddr = BGE_EXT_JUMBO_RX_RINGS;
