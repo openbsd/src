@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.23 2001/01/11 18:52:53 deraadt Exp $
+.\"	$OpenBSD: pci.4,v 1.24 2001/01/13 15:35:58 espie Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -220,11 +220,13 @@ devices.
 VGA graphics cards.
 .El
 .Ss Audio devices
-.Bl -tag -width cmpci(4) -offset ind
+.Bl -tag -width maestro(4) -offset ind
 .It Xr eap 4
 Ensoniq AudioPCI sound devices.
 .It Xr eso 4
 ESS Solo-1 PCI AudioDrive sound devices.
+.It Xr maestro 4
+ESS Maestro 1, 2 and 2E sound devices.
 .It Xr sv 4
 S3 SonicVibes sound devices.
 .It Xr neo 4
