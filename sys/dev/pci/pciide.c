@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.44 2001/02/06 07:57:08 chris Exp $     */
+/*      $OpenBSD: pciide.c,v 1.45 2001/02/22 03:04:09 chris Exp $     */
 /*	$NetBSD: pciide.c,v 1.48 1999/11/28 20:05:18 bouyer Exp $	*/
 
 /*
@@ -348,11 +348,11 @@ const struct pciide_product_desc pciide_cmd_products[] =  {
 };
 
 const struct pciide_product_desc pciide_via_products[] =  {
-	{ PCI_PRODUCT_VIATECH_VT82C586_IDE, /* VIA VT82C586 (Apollo VP) IDE */
+	{ PCI_PRODUCT_VIATECH_VT82C416, /* VIA VT82C416 IDE */
 	  0,
 	  apollo_chip_map
 	 },
-	{ PCI_PRODUCT_VIATECH_VT82C586A_IDE, /* VIA VT82C586A IDE */
+	{ PCI_PRODUCT_VIATECH_VT82C571, /* VIA VT82C571 IDE */
 	  0,
 	  apollo_chip_map
 	}
@@ -1988,7 +1988,7 @@ apollo_chip_map(sc, pa)
 	pciide_mapreg_dma(sc, pa);
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
-		if (sc->sc_pp->ide_product == PCI_PRODUCT_VIATECH_VT82C586A_IDE
+		if (sc->sc_pp->ide_product == PCI_PRODUCT_VIATECH_VT82C571
 		    && rev >= 6)
 			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
 	}
