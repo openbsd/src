@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.2 1996/08/26 11:01:34 pefo Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.3 1996/09/21 10:15:06 pefo Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.3 1995/04/22 12:43:22 cgd Exp $	*/
 
 /*
@@ -102,7 +102,7 @@ readdisklabel(dev, strat, lp, clp)
 		if (biowait(bp)) {
 			msg = "dos partition I/O error";
 			goto done;
-		} else if (*(unsigned int *)(bp->b_data) == 0x8ec033fa) {
+		} else if (*(unsigned int *)(bp->b_data) == 0x8efac033) {
 			/* XXX how do we check veracity/bounds of this? */
 			bcopy(bp->b_data + DOSPARTOFF, dp, NDOSPART * sizeof(*dp));
 			for (i = 0; i < NDOSPART; i++, dp++) {
@@ -229,7 +229,7 @@ writedisklabel(dev, strat, lp, clp)
 		(*strat)(bp);
 
 		if (((error = biowait(bp)) == 0) 
-		   && *(unsigned int *)(bp->b_data) == 0x8ec033fa) {
+		   && *(unsigned int *)(bp->b_data) == 0x8efac033) {
 			/* XXX how do we check veracity/bounds of this? */
 			bcopy(bp->b_data + DOSPARTOFF, dp, NDOSPART * sizeof(*dp));
 			for (i = 0; i < NDOSPART; i++, dp++) {
