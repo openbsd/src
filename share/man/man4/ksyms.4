@@ -1,4 +1,4 @@
-.\" $OpenBSD: ksyms.4,v 1.6 2001/10/05 14:45:53 mpech Exp $
+.\" $OpenBSD: ksyms.4,v 1.7 2002/01/31 21:13:08 pvalchev Exp $
 .\"
 .\" Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -44,11 +44,6 @@ Use of
 .Nm /dev/ksyms
 requires that the boot loader preserve the kernel symbols and place
 them at the end of the kernel's address space.
-Any port that is capable of using the
-.Em DDB
-debugger does this, even if
-.Em DDB
-is not configured into the kernel.
 .Pp
 The
 .Nm /dev/ksyms
