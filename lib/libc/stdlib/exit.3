@@ -29,25 +29,30 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: exit.3,v 1.9 2003/06/02 20:18:37 millert Exp $
+.\"	$OpenBSD: exit.3,v 1.10 2004/05/03 17:21:13 millert Exp $
 .\"
-.Dd June 29, 1991
+.Dd January 21, 2004
 .Dt EXIT 3
 .Os
 .Sh NAME
-.Nm exit
+.Nm exit, _Exit
 .Nd perform normal program termination
 .Sh SYNOPSIS
 .Fd #include <stdlib.h>
 .Ft void
 .Fn exit "int status"
+.Ft void
+.Fn _Exit "int status"
 .Sh DESCRIPTION
 The
 .Fn exit
-function terminates a process.
+and
+.Fn _Exit
+functions terminate a process.
 .Pp
-Before termination it performs the following functions in the
-order listed:
+Before termination,
+.Fn exit
+performs the following operations in the order listed:
 .Bl -enum -offset indent
 .It
 Call the functions registered with the
@@ -63,9 +68,25 @@ Unlink all files created with the
 function.
 .El
 .Pp
-Following this,
+The
+.Fn _Exit
+function terminates without calling the functions registered with the
+.Xr atexit 3
+function.
+The
+.Ox
+implementation of
+.Fn _Exit
+does not flush open output streams or unlink files created with the
+.Xr tmpfile 3
+function.
+However, this behavior is implementation-specific.
+.Pp
+Lastly,
 .Fn exit
-calls
+and
+.Fn _Exit
+call
 .Xr _exit 2 .
 Note that typically
 .Xr _exit 2
@@ -75,7 +96,9 @@ on to the parent, thus negative values have less meaning.
 .Sh RETURN VALUES
 The
 .Fn exit
-function never returns.
+and
+.Fn _Exit
+functions never return.
 .Sh SEE ALSO
 .Xr _exit 2 ,
 .Xr atexit 3 ,
@@ -85,5 +108,7 @@ function never returns.
 .Sh STANDARDS
 The
 .Fn exit
-function conforms to
-.St -ansiC .
+and
+.Fn _Exit
+functions conform to
+.St -ansiC-99 .

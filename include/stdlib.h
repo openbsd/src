@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.29 2004/01/21 19:50:39 millert Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.30 2004/05/03 17:21:13 millert Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -111,6 +111,7 @@ void	*calloc(size_t, size_t);
 div_t	 div(int, int);
 char	*ecvt(double, int, int *, int *);
 __dead void	 exit(int);
+__dead void	 _Exit(int);
 char	*fcvt(double, int, int *, int *);
 void	 free(void *);
 char	*gcvt(double, int, char *);
