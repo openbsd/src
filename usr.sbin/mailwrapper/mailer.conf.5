@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mailer.conf.5,v 1.4 2000/08/18 06:00:53 jakob Exp $
+.\"	$OpenBSD: mailer.conf.5,v 1.5 2001/07/07 20:03:44 jakob Exp $
 .\"	$NetBSD: mailer.conf.5,v 1.1 1999/03/25 16:40:17 is Exp $
 .\"
 .\" Copyright (c) 1998
@@ -58,20 +58,29 @@ The file may also contain comments, denoted by a
 .Ql #
 character in the first column of any line.
 .Sh EXAMPLES
-The following is an example of how to set up a
+The following is an example of how to set up
 .Nm
-file for traditional sendmail invocation behavior.
+for traditional
+.Xr sendmail 8
+invocation behavior.
 .Bd -literal
 # Execute the "real" sendmail program, named /usr/libexec/sendmail/sendmail
 sendmail	/usr/libexec/sendmail/sendmail
+send-mail	/usr/libexec/sendmail/sendmail
 mailq		/usr/libexec/sendmail/sendmail
 newaliases	/usr/libexec/sendmail/sendmail
+hoststat	/usr/libexec/sendmail/sendmail
+purgestat	/usr/libexec/sendmail/sendmail
 .Ed
 .Pp
-This example shows how to invoke the "postfix" program in place of sendmail.
+This example shows how to invoke the
+.Sy postfix
+MTA suite in place of
+.Xr sendmail 8 .
 .Bd -literal
 # Emulate sendmail using postfix
 sendmail	/usr/local/sbin/sendmail
+send-mail	/usr/local/sbin/sendmail
 mailq		/usr/local/sbin/sendmail
 newaliases	/usr/local/sbin/sendmail
 .Ed
@@ -88,8 +97,7 @@ newaliases	/usr/local/sbin/sendmail
 .Sh AUTHORS
 Perry E. Metzger <perry@piermont.com>
 .Sh BUGS
-The entire reason this program exists is a crock.
-Instead, a command
+The entire reason this program exists is a crock. Instead, a command
 for how to submit mail should be standardized, and all the "behave
 differently if invoked with a different name" behavior of things like
 .Xr mailq 1
