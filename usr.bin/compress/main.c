@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.27 2003/06/23 16:19:25 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.28 2003/06/23 19:35:31 millert Exp $	*/
 
 static const char copyright[] =
 "@(#) Copyright (c) 1992, 1993\n\
@@ -35,7 +35,7 @@ static const char license[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.27 2003/06/23 16:19:25 millert Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.28 2003/06/23 19:35:31 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -280,6 +280,14 @@ main(int argc, char *argv[])
 		argv[1] = NULL;
 		pipin++;
 		cat = 1;
+	} else {
+		for (i = 0; i < argc; i++) {
+			if (argv[i][0] == '-' && argv[i][1] == '\0') {
+				argv[i] = "/dev/stdin";
+				pipin++;
+				cat = 1;
+			}
+		}
 	}
 	if (oflag && (recurse || argc > 1))
 		errx(1, "-o option may only be used with a single input file");
@@ -325,7 +333,7 @@ main(int argc, char *argv[])
 		default:
 			if (!S_ISREG(entry->fts_statp->st_mode) && !pipin) {
 				warnx("%s not a regular file%s",
-				    cat ? "" : ": unchanged", infile);
+				    infile, cat ? "" : ": unchanged");
 				continue;
 			}
 			break;
