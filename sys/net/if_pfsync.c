@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.25 2004/03/23 09:57:44 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.26 2004/03/28 18:14:20 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -343,6 +343,19 @@ pfsync_input(struct mbuf *m, ...)
 		s = splsoftnet();
 		for (i = 0, sp = (struct pfsync_state *)(mp->m_data + offp);
 		    i < count; i++, sp++) {
+			/* check for invalid values */
+			if (sp->timeout >= PFTM_MAX ||
+			    sp->src.state > PF_TCPS_PROXY_DST ||
+			    sp->dst.state > PF_TCPS_PROXY_DST ||
+			    sp->direction > PF_OUT ||
+			    (sp->af != AF_INET && sp->af != AF_INET6)) {
+				if (pf_status.debug >= PF_DEBUG_MISC)
+					printf("pfsync_insert: PFSYNC_ACT_INS: "
+					    "invalid value\n");
+				pfsyncstats.pfsyncs_badstate++;
+				continue;
+			}
+
 			if ((error = pfsync_insert_net_state(sp))) {
 				if (error == ENOMEM) {
 					splx(s);
@@ -363,6 +376,17 @@ pfsync_input(struct mbuf *m, ...)
 		s = splsoftnet();
 		for (i = 0, sp = (struct pfsync_state *)(mp->m_data + offp);
 		    i < count; i++, sp++) {
+			/* check for invalid values */
+			if (sp->timeout >= PFTM_MAX ||
+			    sp->src.state > PF_TCPS_PROXY_DST ||
+			    sp->dst.state > PF_TCPS_PROXY_DST) {
+				if (pf_status.debug >= PF_DEBUG_MISC)
+					printf("pfsync_insert: PFSYNC_ACT_UPD: "
+					    "invalid value\n");
+				pfsyncstats.pfsyncs_badstate++;
+				continue;
+			}
+
 			bcopy(sp->id, &key.id, sizeof(key.id));
 			key.creatorid = sp->creatorid;
 
@@ -426,6 +450,18 @@ pfsync_input(struct mbuf *m, ...)
 		s = splsoftnet();
 		for (i = 0, up = (struct pfsync_state_upd *)(mp->m_data + offp);
 		    i < count; i++, up++) {
+			/* check for invalid values */
+			if (up->timeout >= PFTM_MAX ||
+			    up->src.state > PF_TCPS_PROXY_DST ||
+			    up->dst.state > PF_TCPS_PROXY_DST) {
+				if (pf_status.debug >= PF_DEBUG_MISC)
+					printf("pfsync_insert: "
+					    "PFSYNC_ACT_UPD_C: "
+					    "invalid value\n");
+				pfsyncstats.pfsyncs_badstate++;
+				continue;
+			}
+
 			bcopy(up->id, &key.id, sizeof(key.id));
 			key.creatorid = up->creatorid;
 
