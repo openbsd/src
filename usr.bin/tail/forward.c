@@ -1,4 +1,4 @@
-/*	$OpenBSD: forward.c,v 1.18 2004/02/16 19:48:21 otto Exp $	*/
+/*	$OpenBSD: forward.c,v 1.19 2004/03/01 16:35:05 otto Exp $	*/
 /*	$NetBSD: forward.c,v 1.7 1996/02/13 16:49:10 ghudson Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)forward.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: forward.c,v 1.18 2004/02/16 19:48:21 otto Exp $";
+static char rcsid[] = "$OpenBSD: forward.c,v 1.19 2004/03/01 16:35:05 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -184,7 +184,7 @@ kq_retry:
 			ke.ident = fileno(fp);
 			ke.flags = EV_ENABLE|EV_ADD|EV_CLEAR;
 			ke.filter = EVFILT_VNODE;
-			ke.fflags = NOTE_DELETE | NOTE_RENAME;
+			ke.fflags = NOTE_DELETE | NOTE_RENAME | NOTE_TRUNCATE;
 			if (kevent(kq, &ke, 1, NULL, 0, NULL) < 0) {
 				close(kq);
 				kq = -1;
@@ -210,7 +210,7 @@ kq_retry:
 			sleep(1);
 		} else if (ke.filter == EVFILT_READ) {
 			continue;
-		} else {
+		} else if ((ke.fflags & NOTE_TRUNCATE) == 0) {
 			/*
 			 * File was renamed or deleted.
 			 *
@@ -235,11 +235,12 @@ kq_retry:
 			}
 			(void)memcpy(sbp, &nsb, sizeof(nsb));
 			goto kq_retry;
-		} else if (nsb.st_size < sbp->st_size) {
+		} else if (ke.fflags & NOTE_TRUNCATE) {
 			warnx("%s has been truncated, resetting.", fname);
+			fpurge(fp);
 			rewind(fp);
-			(void)memcpy(sbp, &nsb, sizeof(nsb));
 		}
+		(void)memcpy(sbp, &nsb, sizeof(nsb));
 	}
 	if (kq >= 0)
 		close(kq);
