@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.9 1998/07/20 19:49:32 deraadt Exp $	*/
+/*	$OpenBSD: sort.c,v 1.10 1998/07/20 20:02:19 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sort.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: sort.c,v 1.9 1998/07/20 19:49:32 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: sort.c,v 1.10 1998/07/20 20:02:19 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,7 @@ static char rcsid[] = "$OpenBSD: sort.c,v 1.9 1998/07/20 19:49:32 deraadt Exp $"
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <err.h>
 
 int REC_D = '\n';
 u_char d_mask[NBINS];		/* flags for rec_d, field_d, <blank> */
@@ -311,7 +312,7 @@ usage(msg)
 	extern char *__progname;
 
 	if (msg)
-		(void)fprintf(stderr, "sort: %s\n", msg);
+		warnx(msg);
 	(void)fprintf(stderr, "usage: %s [-T dir] [-o output] [-cmubdfinr] "
 	    "[-t char] [-R char] [-k keydef] ... [files]\n", __progname);
 	exit(2);
