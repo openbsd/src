@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsreq.c,v 1.5 2005/03/22 22:13:48 norby Exp $ */
+/*	$OpenBSD: lsreq.c,v 1.6 2005/03/23 20:36:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -198,8 +198,8 @@ ls_req_list_empty(struct nbr *nbr)
 void
 ls_req_tx_timer(int fd, short event, void *arg)
 {
-	struct nbr *nbr = arg;
-	struct timeval tv;
+	struct nbr	*nbr = arg;
+	struct timeval	 tv;
 
 	log_debug("ls_req_tx_timer: neighbor ID %s", inet_ntoa(nbr->id));
 
