@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.45 2001/03/16 15:38:13 millert Exp $
+#	$OpenBSD: security,v 1.46 2001/03/25 04:50:27 millert Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -641,7 +641,7 @@ _fnchg() {
 	echo "$1" | sed 's/^\///;s/\//_/g'
 }
 if [ -s /etc/changelist ] ; then
-	for file in `egrep -v "^#|$MP" /etc/changelist`; do
+	for file in `egrep -v "^(#|\+|$MP)" /etc/changelist`; do
 		CUR=/var/backups/$(_fnchg  "$file").current
 		BACK=/var/backups/$(_fnchg "$file").backup
 		if [ -s $file -a ! -d $file ] ; then
@@ -657,6 +657,30 @@ if [ -s /etc/changelist ] ; then
 			else
 				cp -p $file $CUR
 				chown root.wheel $CUR
+			fi
+		fi
+	done
+	for file in `egrep "^\+" /etc/changelist`; do
+		file="${file#+}"
+		CUR=/var/backups/$(_fnchg  "$file").current.md5
+		BACK=/var/backups/$(_fnchg "$file").backup.md5
+		if [ -s $file -a ! -d $file ] ; then
+			MD5_NEW=`md5 $file | sed 's/^.* //'`
+			if [ -s $CUR ] ; then
+				MD5_OLD="`cat $CUR`"
+				if [ "$MD5_NEW" != "$MD5_OLD" ]; then
+		echo "\n======\n${file} MD5 checksums\n======"
+					echo "OLD: $MD5_OLD"
+					echo "NEW: $MD5_NEW"
+					cp -p $CUR $BACK
+					echo $MD5_NEW > $CUR
+					chown root.wheel $CUR $BACK
+					chmod 600 $CUR
+				fi
+			else
+				echo $MD5_NEW > $CUR
+				chown root.wheel $CUR
+				chmod 600 $CUR
 			fi
 		fi
 	done
