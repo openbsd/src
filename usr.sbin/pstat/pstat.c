@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.22 1999/12/05 08:49:18 art Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.23 2000/05/24 03:24:23 deraadt Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.22 1999/12/05 08:49:18 art Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.23 2000/05/24 03:24:23 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -857,7 +857,9 @@ filemode()
 	nfile = (len - sizeof(struct filelist)) / sizeof(struct file);
 	
 	(void)printf("%d/%d open files\n", nfile, maxfile);
-	(void)printf("     LOC TYPE       FLG  CNT  MSG      DATA  OFFSET\n");
+
+	(void)printf("%*s TYPE       FLG  CNT  MSG  %*s  OFFSET\n",
+	    sizeof (long) * 2, "LOC", sizeof (long) *2, "DATA");
 	for (; (char *)ffp < buf + len; addr = ffp->f_list.le_next, ffp++) {
 		memmove(&fp, ffp, sizeof fp);
 		if ((unsigned)fp.f_type > DTYPE_SOCKET)
