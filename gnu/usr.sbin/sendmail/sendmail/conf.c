@@ -5153,9 +5153,12 @@ get_num_procs_online()
 void
 seed_random()
 {
-#if HASSRANDOMDEV
+#if HASARC4RANDOM
+	arc4random_stir();
+#else /* HASARC4RANDOM */
+# if HASSRANDOMDEV
 	srandomdev();
-#else /* HASSRANDOMDEV */
+# else /* HASSRANDOMDEV */
 	long seed;
 	struct timeval t;
 
@@ -5163,12 +5166,13 @@ seed_random()
 	if (gettimeofday(&t, NULL) >= 0)
 		seed += t.tv_sec + t.tv_usec;
 
-# if HASRANDOM
+#  if HASRANDOM
 	(void) srandom(seed);
-# else /* HASRANDOM */
+#  else /* HASRANDOM */
 	(void) srand((unsigned int) seed);
-# endif /* HASRANDOM */
-#endif /* HASSRANDOMDEV */
+#  endif /* HASRANDOM */
+# endif /* HASSRANDOMDEV */
+#endif /* HASARC4RANDOM */
 }
 /*
 **  SM_SYSLOG -- syslog wrapper to keep messages under SYSLOG_BUFSIZE
@@ -5504,6 +5508,9 @@ char	*OsCompileOptions[] =
 #if FAST_PID_RECYCLE
 	"FAST_PID_RECYCLE",
 #endif /* FAST_PID_RECYCLE */
+#if HASARC4RANDOM
+	"HASARC4RANDOM",
+#endif /* HASARC4RANDOM */
 #if HASFCHOWN
 	"HASFCHOWN",
 #endif /* HASFCHOWN */

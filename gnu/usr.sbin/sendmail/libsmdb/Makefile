@@ -1,17 +1,11 @@
-#       $Sendmail: Makefile,v 1.2 1999/09/23 22:36:29 ca Exp $
+#	$OpenBSD: Makefile,v 1.2 2000/04/02 19:48:31 millert Exp $
 
-SHELL= /bin/sh
-BUILD=   ./Build
-OPTIONS= $(CONFIG) $(FLAGS)
+LIB=	smdb
+SRCS=	smdb.c smdb1.c smdb2.c smndbm.c
+ENVDEF+=-DNOT_SENDMAIL
 
-all: FRC
-	$(SHELL) $(BUILD) $(OPTIONS) $@
-clean: FRC
-	$(SHELL) $(BUILD) $(OPTIONS) $@
-install: FRC
-	$(SHELL) $(BUILD) $(OPTIONS) $@
+# This is not a library that gets installed so only build the .a version
+NOPROFILE=1
+NOPIC=1
 
-fresh: FRC
-	$(SHELL) $(BUILD) $(OPTIONS) -c
-
-FRC:
+.include <bsd.lib.mk>

@@ -1,7 +1,0 @@
-#	$Sendmail: 386BSD,v 8.2 1999/02/07 03:21:07 gshapiro Exp $
-define(`confENVDEF', ` -DMIME')
-define(`confLIBS', `-lutil')
-define(`confLINKS', `/usr/sbin/sendmail /usr/bin/newaliases \
-	/usr/sbin/sendmail /usr/bin/mailq \
-	/usr/sbin/sendmail /usr/bin/hoststat \
-	/usr/sbin/sendmail /usr/bin/purgestat')

@@ -1538,4 +1538,4 @@ version.c	The version number and information about this
 		version of sendmail.  Theoretically, this gets
 		modified on every change.
 
-(Version $Revision: 1.1.1.1 $, last update $Date: 2000/04/02 19:05:43 $ )
+(Version $Revision: 1.2 $, last update $Date: 2000/04/02 19:48:34 $ )

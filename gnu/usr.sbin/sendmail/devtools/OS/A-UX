@@ -1,9 +1,0 @@
-#	$Sendmail: A-UX,v 8.7 1999/06/02 22:53:34 gshapiro Exp $
-define(`confMAPDEF', `-DNDBM')
-define(`confENVDEF', `-D_POSIX_SOURCE')
-define(`confLIBS', `-ldbm -lposix -lUTIL')
-define(`confMBINDIR', `/usr/lib')
-define(`confSBINDIR', `/usr/etc')
-define(`confUBINDIR', `/usr/ucb')
-define(`confEBINDIR', `/usr/lib')
-define(`confSBINGRP', `sys')

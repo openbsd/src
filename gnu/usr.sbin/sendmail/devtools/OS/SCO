@@ -1,7 +1,0 @@
-#	$Sendmail: SCO,v 8.6 1999/06/02 22:53:40 gshapiro Exp $
-define(`confENVDEF', `-D_SCO_unix_')
-define(`confLIBS', `-lsocket -lprot_s -lx -lc_s')
-define(`confMBINDIR', `/usr/lib')
-define(`confSBINDIR', `/usr/etc')
-define(`confUBINDIR', `/usr/ucb')
-define(`confEBINDIR', `/usr/lib')

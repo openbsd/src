@@ -27,7 +27,7 @@ divert(-1)
 
 divert(0)dnl
 VERSIONID(`$Sendmail: tcpproto.mc,v 8.13 1999/02/07 07:26:05 gshapiro Exp $')
-OSTYPE(unknown)
-FEATURE(nouucp)
+OSTYPE(openbsd)
+FEATURE(nouucp, `nospecial')
 MAILER(local)
 MAILER(smtp)

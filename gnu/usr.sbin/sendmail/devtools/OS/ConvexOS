@@ -1,9 +1,0 @@
-#	$Sendmail: ConvexOS,v 8.8 1999/04/24 05:37:49 gshapiro Exp $
-define(`confMAPDEF', `-DNDBM -DYPCOMPAT -DNIS')
-define(`confENVDEF', `-D__STDC__ -d non_int_bit_field')
-define(`confOPTIMIZE', `-g')
-define(`confLIBS', `-lshare')
-define(`confMBINDIR', `/usr/lib')
-define(`confSBINDIR', `/usr/etc')
-define(`confUBINDIR', `/usr/ucb')
-define(`confEBINDIR', `/usr/lib')

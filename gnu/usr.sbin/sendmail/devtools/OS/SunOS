@@ -1,8 +1,0 @@
-#	$Sendmail: SunOS,v 8.8 1999/04/24 05:37:59 gshapiro Exp $
-define(`confMAPDEF', `-DNDBM -DNIS')
-define(`confLDOPTS', `-Bstatic')
-define(`confMBINDIR', `/usr/lib')
-define(`confSBINDIR', `/usr/etc')
-define(`confUBINDIR', `/usr/ucb')
-define(`confEBINDIR', `/usr/lib')
-define(`confDEPEND_TYPE', `CC-M')

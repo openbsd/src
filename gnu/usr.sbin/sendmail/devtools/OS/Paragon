@@ -1,7 +1,0 @@
-#	$Sendmail: Paragon,v 8.5 1999/04/24 05:37:57 gshapiro Exp $
-define(`confMAPDEF', `-DNDBM')
-define(`confLIBDIRS', `-L/usr/shlib -L/usr/lib')
-define(`confLIBS', `-ldbm')
-define(`confSTDIR', `/var/adm/sendmail')
-define(`confINSTALL', `installbsd')
-define(`confUBINDIR', `${BINDIR}')

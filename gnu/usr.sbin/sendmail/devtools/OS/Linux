@@ -1,9 +1,0 @@
-#	$Sendmail: Linux,v 8.17 1999/12/27 18:53:09 tony Exp $
-define(`confDEPEND_TYPE', `CC-M')
-define(`confMANROOT', `/usr/man/man')
-define(`confLIBS', `-ldl')
-define(`confEBINDIR', `/usr/sbin')
-APPENDDEF(`confLIBSEARCH', `crypt nsl')
-
-define(`confMTLDOPTS', `-lpthread')
-define(`confLDOPTS_SO', `-shared')

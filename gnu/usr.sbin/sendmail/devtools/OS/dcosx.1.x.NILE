@@ -1,6 +1,0 @@
-#	$Sendmail: dcosx.1.x.NILE,v 8.5 1999/06/02 22:53:46 gshapiro Exp $
-define(`confENVDEF', `-D__svr4__ -DDCOSx')
-define(`confLIBS', `-lsocket -lnsl -lelf')
-define(`confHFDIR', `/usr/share/lib/mail')
-define(`confINSTALL', `/usr/ucb/install')
-define(`confSBINGRP', `sys')

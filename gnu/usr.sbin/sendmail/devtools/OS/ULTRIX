@@ -1,9 +1,0 @@
-#	$Sendmail: ULTRIX,v 8.12 1999/09/23 20:51:48 gshapiro Exp $
-define(`confCC', `cc -Olimit 1095')
-define(`confMAPDEF', `-DNDBM -DNIS')
-define(`confMBINDIR', `/usr/lib')
-define(`confSBINDIR', `/usr/etc')
-define(`confUBINDIR', `/usr/ucb')
-define(`confEBINDIR', `/usr/lib')
-define(`confHFDIR', `/usr/lib')
-define(`confDEPEND_TYPE', `CC-M')

@@ -30,5 +30,5 @@ divert(-1)
 divert(0)dnl
 VERSIONID(`$Sendmail: clientproto.mc,v 8.15 1999/02/07 07:26:00 gshapiro Exp $')
 
-OSTYPE(unknown)
+OSTYPE(openbsd)
 FEATURE(nullclient, mailhost.$m)

@@ -1,41 +1,9 @@
-#       $Sendmail: Makefile.dist,v 8.9 1999/09/27 21:39:11 gshapiro Exp $
+#	$OpenBSD: Makefile,v 1.2 2000/04/02 19:48:09 millert Exp $
 
-SHELL= /bin/sh
-SUBDIRS= libsmutil libsmdb sendmail mail.local mailstats makemap \
-	 praliases rmail smrsh vacation
-BUILD=   ./Build
-OPTIONS= $(CONFIG) $(FLAGS)
+SUBDIR= libsmutil libsmdb sendmail mailstats makemap praliases smrsh cf/cf
+#SUBDIR+= libmilter mail.local rmail vacation
+.if make(install)
+SUBDIR+= doc/op cf
+.endif
 
-all: FRC
-	@for x in $(SUBDIRS); \
-	do \
-		(cd $$x; echo Making $@ in:; pwd; \
-		$(SHELL) $(BUILD) $(OPTIONS)); \
-	done
-
-clean: FRC
-	@for x in $(SUBDIRS); \
-	do \
-		(cd $$x; echo Making $@ in:; pwd; \
-		$(SHELL) $(BUILD) $(OPTIONS) $@); \
-	done
-
-install: FRC
-	@for x in $(SUBDIRS); \
-	do \
-		(cd $$x; echo Making $@ in:; pwd; \
-		$(SHELL) $(BUILD) $(OPTIONS) $@); \
-	done
-
-fresh: FRC
-	@for x in $(SUBDIRS); \
-	do \
-		(cd $$x; echo Making $@ in:; pwd; \
-		$(SHELL) $(BUILD) $(OPTIONS) -c); \
-	done
-
-$(SUBDIRS): FRC
-	@cd $@; pwd; \
-	$(SHELL) $(BUILD) $(OPTIONS)
-
-FRC:
+.include <bsd.subdir.mk>

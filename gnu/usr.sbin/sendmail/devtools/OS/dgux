@@ -1,8 +1,0 @@
-#	$Sendmail: dgux,v 8.7 1999/04/24 05:38:02 gshapiro Exp $
-define(`confMAPDEF', `-DNDBM -DNIS')
-define(`confLIBS', `-ldbm')
-define(`confMBINDIR', `/usr/bin')
-define(`confSBINDIR', `/usr/etc')
-define(`confUBINDIR', `/usr/ucb')
-define(`confEBINDIR', `/usr/lib')
-define(`confSBINGRP', `bin')
