@@ -1,4 +1,4 @@
-/*	$OpenBSD: rstat_proc.c,v 1.6 1997/07/08 20:19:35 kstailey Exp $	*/
+/*	$OpenBSD: rstat_proc.c,v 1.7 1997/07/08 20:47:51 kstailey Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -31,7 +31,7 @@
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";*/
 /*static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char rcsid[] = "$OpenBSD: rstat_proc.c,v 1.6 1997/07/08 20:19:35 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: rstat_proc.c,v 1.7 1997/07/08 20:47:51 kstailey Exp $";
 #endif
 
 /*
@@ -403,7 +403,7 @@ rstat_service(rqstp, transp)
 	switch (rqstp->rq_proc) {
 	case NULLPROC:
 		(void)svc_sendreply(transp, xdr_void, (char *)NULL);
-		goto leave;
+		return;
 
 	case RSTATPROC_STATS:
 		xdr_argument = (xdrproc_t)xdr_void;
@@ -423,7 +423,7 @@ rstat_service(rqstp, transp)
 			break;
 		default:
 			svcerr_progvers(transp, RSTATVERS_ORIG, RSTATVERS_TIME);
-			goto leave;
+			return;
 		}
 		break;
 
@@ -445,18 +445,18 @@ rstat_service(rqstp, transp)
 			break;
 		default:
 			svcerr_progvers(transp, RSTATVERS_ORIG, RSTATVERS_TIME);
-			goto leave;
+			return;
 		}
 		break;
 
 	default:
 		svcerr_noproc(transp);
-		goto leave;
+		return;
 	}
 	bzero((char *)&argument, sizeof(argument));
 	if (!svc_getargs(transp, xdr_argument, (caddr_t)&argument)) {
 		svcerr_decode(transp);
-		goto leave;
+		return;
 	}
 	result = (*local)(&argument, rqstp);
 	if (result != NULL && !svc_sendreply(transp, xdr_result, result)) {
@@ -466,7 +466,4 @@ rstat_service(rqstp, transp)
 		syslog(LOG_ERR, "unable to free arguments");
 		exit(1);
 	}
-leave:
-	if (from_inetd)
-		exit(0);
 }
