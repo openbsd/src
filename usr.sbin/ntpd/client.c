@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.2 2004/07/03 21:11:29 alexander Exp $ */
+/*	$OpenBSD: client.c,v 1.3 2004/07/04 11:01:49 alexander Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -80,7 +80,7 @@ client_query(struct ntp_peer *p)
 
 	p->query->msg.xmttime.int_part = arc4random();
 	p->query->msg.xmttime.fraction = arc4random();
-	get_ts(&p->query->xmttime);
+	p->query->xmttime = gettime();
 
 	ntp_sendmsg(p->query->fd, (struct sockaddr *)&p->ss, &p->query->msg,
 	    NTP_MSGSIZE_NOAUTH, 0);
@@ -99,12 +99,15 @@ client_dispatch(struct ntp_peer *p)
 	char			 buf[NTP_MSGSIZE];
 	ssize_t			 size;
 	struct ntp_msg		 msg;
-	struct l_fixedpt	 rtt, t;
+	double			 T1, T2, T3, T4;
+	double			 offset, error;
 
 	fsa_len = sizeof(fsa);
 	if ((size = recvfrom(p->query->fd, &buf, sizeof(buf), 0,
 	    (struct sockaddr *)&fsa, &fsa_len)) == -1)
 		fatal("recvfrom");
+
+	T4 = gettime();
 
 	ntp_getmsg(buf, size, &msg);
 
@@ -114,16 +117,35 @@ client_dispatch(struct ntp_peer *p)
 		return (0);
 	}
 
-log_debug("reply received");
+	/* 
+	 * From RFC 2030:
+	 *
+	 *      Timestamp Name          ID   When Generated
+	 *     ------------------------------------------------------------
+	 *     Originate Timestamp     T1   time request sent by client
+	 *     Receive Timestamp       T2   time request received by server
+	 *     Transmit Timestamp      T3   time reply sent by server
+	 *     Destination Timestamp   T4   time reply received by client
+	 *
+	 *  The roundtrip delay d and local clock offset t are defined as
+	 *
+	 *    d = (T4 - T1) - (T2 - T3)     t = ((T2 - T1) + (T3 - T4)) / 2.
+	 */
 
-	/* XXX parse */
-	get_ts(&t);
-	rtt.int_part = (t.int_part - p->query->xmttime.int_part) -
-	    (msg.rectime.int_part - msg.xmttime.int_part);
+	T1 = p->query->xmttime;
+	T2 = lfp_to_d(msg.rectime);
+	T3 = lfp_to_d(msg.xmttime);
+
+	offset = ((T2 - T1) + (T3 - T4)) / 2;
+	error = (T2 - T1) - (T3 - T4);
 
 	p->state = STATE_REPLY_RECEIVED;
 	p->next = time(NULL) + QUERY_INTERVAL;
 	p->deadline = 0;
+	p->offset = offset;
+	p->error = error;
+
+	log_debug("reply received: offset %f error %f", offset, error);
 
 	return (0);
 }

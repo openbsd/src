@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.7 2004/06/18 04:51:31 henning Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.8 2004/07/04 11:01:49 alexander Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -55,6 +55,8 @@ struct ntp_peer {
 	enum client_state		 state;
 	time_t				 next;
 	time_t				 deadline;
+	double				 offset;
+	double				 error;
 };
 
 struct ntpd_conf {
@@ -168,3 +170,8 @@ int	ntp_reply(int, struct sockaddr *, struct ntp_msg *, int);
 int	client_peer_init(struct ntp_peer *);
 int	client_query(struct ntp_peer *);
 int	client_dispatch(struct ntp_peer *);
+
+/* util.c */
+double	gettime(void);
+double	lfp_to_d(struct l_fixedpt);
+struct	l_fixedpt d_to_lfp(double);
