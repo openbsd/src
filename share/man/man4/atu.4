@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atu.4,v 1.1 2004/11/08 21:39:54 deraadt Exp $
+.\"	$OpenBSD: atu.4,v 1.2 2004/11/08 22:10:52 deraadt Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -35,7 +35,7 @@
 .Os
 .Sh NAME
 .Nm atu
-.Nd Atmel at76c503a 802.11DS wireless network interfaces
+.Nd Atmel at76c50x 802.11B wireless network interfaces
 .Sh SYNOPSIS
 .Cd "# all architectures"
 .Cd "atu* at uhub? port ?"
@@ -43,7 +43,7 @@
 The
 .Nm
 driver provides support for wireless network adapters based around
-the Atmel at76c503a USB chipset.
+the Atmel at76c503, at76c503a, at76c505, and at76c505a USB chipsets.
 .Pp
 Supported features include 802.11 and 802.3 frames, power management, BSS,
 IBSS, ad-hoc, and host-based access point mode.
