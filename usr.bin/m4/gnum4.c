@@ -1,4 +1,4 @@
-/* $OpenBSD: gnum4.c,v 1.18 2002/04/26 16:15:16 espie Exp $ */
+/* $OpenBSD: gnum4.c,v 1.19 2003/06/07 12:02:35 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie
@@ -250,7 +250,8 @@ exit_regerror(int er, regex_t *re)
 	errlen = regerror(er, re, NULL, 0);
 	errbuf = xalloc(errlen);
 	regerror(er, re, errbuf, errlen);
-	errx(1, "regular expression error: %s", errbuf);
+	errx(1, "%s at line %lu: regular expression error: %s", 
+	    CURRENT_NAME, CURRENT_LINE, errbuf);
 }
 
 static void
