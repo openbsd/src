@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.113 2003/10/22 04:30:02 jmc Exp $
+.\"	$OpenBSD: sysctl.3,v 1.114 2003/10/25 08:00:30 jmc Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1231,7 +1231,7 @@ or programs executed by ordinary users.
 Cannot be less than 1024 or greater than 49151.
 Must be less than ip.portlast.
 .It Li ip.porthifirst
-Maximum dynamic/private port number for TCP/UDP port allocation.
+Minimum dynamic/private port number for TCP/UDP port allocation.
 Dynamic/private ports can be used by ordinary user processes
 or programs executed by ordinary users.
 Cannot be less than 49152 or greater than 65535.
