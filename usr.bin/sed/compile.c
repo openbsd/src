@@ -1,4 +1,4 @@
-/*	$OpenBSD: compile.c,v 1.16 2003/10/07 17:56:26 deraadt Exp $	*/
+/*	$OpenBSD: compile.c,v 1.17 2004/02/17 16:13:33 otto Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)compile.c	8.2 (Berkeley) 4/28/95"; */
-static char *rcsid = "$OpenBSD: compile.c,v 1.16 2003/10/07 17:56:26 deraadt Exp $";
+static char *rcsid = "$OpenBSD: compile.c,v 1.17 2004/02/17 16:13:33 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -496,6 +496,7 @@ static char *
 compile_flags(char *p, struct s_subst *s)
 {
 	int gn;			/* True if we have seen g or n */
+	long l;
 	char wfile[_POSIX2_LINE_MAX + 1], *q;
 
 	s->n = 1;				/* Default */
@@ -526,9 +527,12 @@ compile_flags(char *p, struct s_subst *s)
 				err(COMPILE,
 "more than one number or 'g' in substitute flags");
 			gn = 1;
-			/* XXX Check for overflow */
-			s->n = (int)strtol(p, &p, 10);
-			break;
+			l = strtol(p, &p, 10);
+			if (l <= 0 || l >= INT_MAX)
+				err(COMPILE,
+				    "number in substitute flags out of range");
+			s->n = (int)l;
+			continue;
 		case 'w':
 			p++;
 #ifdef HISTORIC_PRACTICE
