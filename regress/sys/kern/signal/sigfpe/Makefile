@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2002/04/30 23:22:58 millert Exp $
+#	$OpenBSD: Makefile,v 1.2 2002/08/23 15:31:00 art Exp $
 
 PROG=	sigfpe
 
@@ -7,10 +7,10 @@ CFLAGS=   -O0 ${PIPE} ${DEBUG}
 
 REGRESSTARGETS=	divzero oflow
 
-divzero:
+divzero: ${PROG}
 	./${PROG} -z
 
-oflow:
+oflow: ${PROG}
 	./${PROG} -o
 
 .include <bsd.regress.mk>
