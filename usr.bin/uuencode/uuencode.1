@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uuencode.1,v 1.10 2002/11/14 02:57:28 deraadt Exp $
+.\"	$OpenBSD: uuencode.1,v 1.11 2003/01/03 19:22:24 fgsch Exp $
 .\"	$NetBSD: uuencode.1,v 1.4 1994/11/17 07:39:42 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -95,7 +95,7 @@ into the original tree.
 .Pp
 .Bd -literal -offset indent -compact
 $ tar cf \- src_tree \&| compress \&| \\
-uuencode src_tree.tar.Z \&| mail sys1!sys2!user
+uuencode src_tree.tar.Z \&| mail user@example.com
 .Ed
 .Pp
 Both utilities exit 0 on success or >0 if an error occurred.
