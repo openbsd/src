@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.15 2004/11/25 21:54:55 markus Exp $
+.\"     $OpenBSD: mbuf.9,v 1.16 2004/11/27 00:59:14 pvalchev Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -359,7 +359,7 @@ Free the mbuf pointed to by
 .Fa m .
 A pointer to the successor of the mbuf,
 if it exists, is returned by the function.
-.It Fn MFREE "m" "n"
+.It Fn MFREE "struct mbuf *m" "struct mbuf *n"
 Free the mbuf pointed to by
 .Fa m
 and use
@@ -384,7 +384,7 @@ is
 and resources are not available,
 .Fn m_get
 returns NULL.
-.It Fn MGET "m" "how" "type"
+.It Fn MGET "struct mbuf *m" "int how" "int type"
 Return a pointer to an mbuf in
 .Fa m
 of the type specified.
@@ -406,7 +406,7 @@ See
 .Fn m_get
 for a description of
 .Fa how .
-.It Fn MGETHDR "m" "int how" "int type"
+.It Fn MGETHDR "struct mbuf *m" "int how" "int type"
 Return a pointer to an mbuf of the type specified after initializing
 it to contain a packet header.
 See
@@ -428,7 +428,7 @@ See
 .Fn m_get
 for a description of
 .Fa how .
-.It Fn M_PREPEND "m" "plen" "how"
+.It Fn M_PREPEND "struct mbuf *m" "int plen" "int how"
 Prepend space of size
 .Fa plen
 to the mbuf pointed to by
@@ -606,7 +606,7 @@ for a description of
 Add pre-allocated storage to the mbuf pointed to by
 .Fa m .
 On success, the flag M_EXT is set in the mbuf.
-.It Fn M_ALIGN "m" "len"
+.It Fn M_ALIGN "struct mbuf *m" "int len"
 Set the
 .Fa m_data
 pointer of the newly allocated mbuf with
@@ -625,21 +625,21 @@ except it is for an mbuf allocated with
 .Fn m_gethdr
 or
 .Fn MGETHDR .
-.It Fn M_READONLY "m"
+.It Fn M_READONLY "struct mbuf *m"
 Check if the data of the mbuf pointed to by
 .Fa m
 is read-only.
 This is true for non-cluster external storage and for clusters that
 are being referenced by more than one mbuf.
-.It Fn M_LEADINGSPACE "m"
+.It Fn M_LEADINGSPACE "struct mbuf *m"
 Compute the amount of space available before the current start of data
 in the mbuf pointed to by
 .Fa m .
-.It Fn M_TRAILINGSPACE "m"
+.It Fn M_TRAILINGSPACE "struct mbuf *m"
 Compute the amount of space available after the end of data in the
 mbuf pointed to by
 .Fa m .
-.It Fn MCHTYPE "m" "type"
+.It Fn MCHTYPE "struct mbuf *m" "int type"
 Change the type of the mbuf pointed to by
 .Fa m
 to
