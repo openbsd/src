@@ -295,3 +295,17 @@ dma_cachectl(addr, len)
 #endif	/* M68040 */
 	return(0);
 }
+
+int
+sys_sysarch(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sysarch_args /* {
+		syscallarg(int) op;
+		syscallarg(char *) parms;
+	} */ *uap = v;
+
+	return ENOSYS;
+}
