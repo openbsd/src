@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.130 2003/01/10 14:21:21 cedric Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.131 2003/01/11 21:10:56 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -165,7 +165,7 @@ static char *clearopt_list[] = {
 };
 
 static char *showopt_list[] = {
-	"nat", "queue", "rules", "anchors", "state", "info", "labels", 
+	"nat", "queue", "rules", "anchors", "state", "info", "labels",
 	"timeouts", "memory", "Tables", "all", NULL
 };
 
@@ -1241,8 +1241,6 @@ pfctl_lookup_option(char *cmd, char **list)
 				return (*list);
 	return (NULL);
 }
-			
-
 
 int
 main(int argc, char *argv[])
@@ -1321,7 +1319,7 @@ main(int argc, char *argv[])
 			if (showopt == NULL) {
 				warnx("Unknown show modifier '%s'", optarg);
 				usage();
-			}			
+			}
 			break;
 		case 't':
 			tableopt = optarg;
