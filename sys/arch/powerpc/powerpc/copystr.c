@@ -1,4 +1,4 @@
-/*	$OpenBSD: copystr.c,v 1.3 1997/10/13 13:42:56 pefo Exp $	*/
+/*	$OpenBSD: copystr.c,v 1.4 2001/06/24 05:05:22 drahn Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -32,18 +32,19 @@
  */
 #include <sys/param.h>
 #include <sys/errno.h>
+#include <sys/systm.h>
 
 /*
  * Emulate copyinstr.
  */
 int
 copystr(kfaddr, kdaddr, len, done)
-	void *kfaddr;
+	const void *kfaddr;
 	void *kdaddr;
 	size_t len;
 	size_t *done;
 {
-	u_char *kfp = kfaddr;
+	u_char *kfp = (u_char *)kfaddr;
 	u_char *kdp = kdaddr;
 	size_t l;
 	
