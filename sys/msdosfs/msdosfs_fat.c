@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_fat.c,v 1.7 1998/05/02 09:03:03 deraadt Exp $	*/
+/*	$OpenBSD: msdosfs_fat.c,v 1.8 1999/01/10 21:50:32 art Exp $	*/
 /*	$NetBSD: msdosfs_fat.c,v 1.26 1997/10/17 11:24:02 ws Exp $	*/
 
 /*-
@@ -337,8 +337,7 @@ updatefats(pmp, bp, fatbn)
 	struct buf *bpn;
 
 #ifdef MSDOSFS_DEBUG
-	printf("fatentry(func %d, pmp %08x, clust %d, oldcon %08x, newcon %d)\n",
-	    function, pmp, cluster, oldcontents, newcontents);
+	printf("updatefats(pmp %08, buf %x, fatbn %ld)\n", pmp, bp, fatbn);
 #endif
 
 	/*
@@ -512,7 +511,7 @@ fatentry(function, pmp, cn, oldcontents, newcontents)
 
 #ifdef MSDOSFS_DEBUG
 	 printf("fatentry(func %d, pmp %08x, clust %d, oldcon %08x, newcon %d)\n",
-	     function, pmp, cluster, oldcontents, newcontents);
+	     function, pmp, cn, oldcontents, newcontents);
 #endif
 
 #ifdef DIAGNOSTIC
