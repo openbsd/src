@@ -238,6 +238,7 @@
 ./usr/lib/perl5/alpha-openbsd/5.003/sys/dkstat.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/sys/dmap.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/sys/domain.ph
+./usr/lib/perl5/alpha-openbsd/5.003/sys/endian.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/sys/errno.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/sys/exec.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/sys/exec_aout.ph
@@ -260,6 +261,7 @@
 ./usr/lib/perl5/alpha-openbsd/5.003/sys/ktrace.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/sys/lkm.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/sys/localedef.ph
+./usr/lib/perl5/alpha-openbsd/5.003/sys/lock.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/sys/lockf.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/sys/malloc.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/sys/map.ph
@@ -289,6 +291,7 @@
 ./usr/lib/perl5/alpha-openbsd/5.003/sys/siginfo.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/sys/signal.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/sys/signalvar.ph
+./usr/lib/perl5/alpha-openbsd/5.003/sys/simplelock.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/sys/socket.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/sys/socketvar.ph
 ./usr/lib/perl5/alpha-openbsd/5.003/sys/sockio.ph
@@ -358,6 +361,3 @@
 ./usr/mdec/installboot
 ./usr/mdec/netboot
 ./usr/mdec/setnetbootinfo
-./usr/lib/perl5/alpha-openbsd/5.003/sys/endian.ph
-./usr/lib/perl5/alpha-openbsd/5.003/sys/lock.ph
-./usr/lib/perl5/alpha-openbsd/5.003/sys/simplelock.ph

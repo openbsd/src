@@ -1,4 +1,3 @@
-./usr/lib/perl5/m68k-openbsd/5.003/rmd160.ph
 ./sbin/ldconfig
 ./usr/bin/ldd
 ./usr/include/m68k
@@ -7,7 +6,7 @@
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.2/2.7.2.1/include
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.2/2.7.2.1/include/objc
 ./usr/lib/libacl.so.4.0
-./usr/lib/libc.so.17.4
+./usr/lib/libc.so.17.5
 ./usr/lib/libcurses.so.4.0
 ./usr/lib/libdes.so.6.0
 ./usr/lib/libedit.so.0.0
@@ -15,9 +14,9 @@
 ./usr/lib/libg++.so.27.1
 ./usr/lib/libiberty.so.0.0
 ./usr/lib/libkadm.so.4.0
-./usr/lib/libkafs.so.4.0
+./usr/lib/libkafs.so.5.0
 ./usr/lib/libkdb.so.4.1
-./usr/lib/libkrb.so.4.1
+./usr/lib/libkrb.so.6.0
 ./usr/lib/libkvm.so.4.1
 ./usr/lib/libm.so.0.1
 ./usr/lib/libmenu.so.1.0
@@ -281,12 +280,8 @@
 ./usr/lib/perl5/m68k-openbsd/5.003/cpio.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/ctype.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/curses.ph
-./usr/lib/perl5/m68k-openbsd/5.003/inttypes.ph
-./usr/lib/perl5/m68k-openbsd/5.003/libgen.ph
-./usr/lib/perl5/m68k-openbsd/5.003/machine/hp300spu.ph
-./usr/lib/perl5/m68k-openbsd/5.003/des.ph
-./usr/lib/perl5/m68k-openbsd/5.003/gmp.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/db.ph
+./usr/lib/perl5/m68k-openbsd/5.003/des.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/dirent.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/disktab.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/dlfcn.ph
@@ -302,12 +297,15 @@
 ./usr/lib/perl5/m68k-openbsd/5.003/fstab.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/fts.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/glob.ph
+./usr/lib/perl5/m68k-openbsd/5.003/gmp.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/grp.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/histedit.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/ieeefp.ph
+./usr/lib/perl5/m68k-openbsd/5.003/inttypes.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/iso646.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/kvm.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/langinfo.ph
+./usr/lib/perl5/m68k-openbsd/5.003/libgen.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/limits.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/link.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/locale.ph
@@ -323,6 +321,7 @@
 ./usr/lib/perl5/m68k-openbsd/5.003/machine/exec.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/machine/float.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/machine/frame.ph
+./usr/lib/perl5/m68k-openbsd/5.003/machine/hp300spu.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/machine/hpux_machdep.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/machine/ieeefp.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/machine/intr.ph
@@ -400,6 +399,7 @@
 ./usr/lib/perl5/m68k-openbsd/5.003/regex.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/regexp.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/resolv.ph
+./usr/lib/perl5/m68k-openbsd/5.003/rmd160.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/scsi.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/search.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/setjmp.ph
@@ -436,6 +436,7 @@
 ./usr/lib/perl5/m68k-openbsd/5.003/sys/dkstat.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/sys/dmap.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/sys/domain.ph
+./usr/lib/perl5/m68k-openbsd/5.003/sys/endian.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/sys/errno.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/sys/exec.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/sys/exec_aout.ph
@@ -458,6 +459,7 @@
 ./usr/lib/perl5/m68k-openbsd/5.003/sys/ktrace.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/sys/lkm.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/sys/localedef.ph
+./usr/lib/perl5/m68k-openbsd/5.003/sys/lock.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/sys/lockf.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/sys/malloc.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/sys/map.ph
@@ -487,6 +489,7 @@
 ./usr/lib/perl5/m68k-openbsd/5.003/sys/siginfo.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/sys/signal.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/sys/signalvar.ph
+./usr/lib/perl5/m68k-openbsd/5.003/sys/simplelock.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/sys/socket.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/sys/socketvar.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/sys/sockio.ph
@@ -552,14 +555,11 @@
 ./usr/mdec/ctboot
 ./usr/mdec/hdboot
 ./usr/mdec/installboot
+./usr/mdec/isolif
 ./usr/mdec/rbootd
 ./usr/mdec/rbootd/SYS_UBOOT
 ./usr/mdec/sdboot
 ./usr/mdec/uboot.lif
+./usr/mdec/uboot.raw
 ./usr/sbin/grfinfo
 ./usr/sbin/hilinfo
-./usr/mdec/uboot.raw
-./usr/mdec/isolif
-./usr/lib/perl5/m68k-openbsd/5.003/sys/endian.ph
-./usr/lib/perl5/m68k-openbsd/5.003/sys/lock.ph
-./usr/lib/perl5/m68k-openbsd/5.003/sys/simplelock.ph

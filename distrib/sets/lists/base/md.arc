@@ -11,15 +11,15 @@
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.2/2.7.2.1/include
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.2/2.7.2.1/include/objc
 ./usr/lib/libacl.so.4.0
-./usr/lib/libc.so.17.4
+./usr/lib/libc.so.17.5
 ./usr/lib/libcurses.so.4.0
 ./usr/lib/libdes.so.6.0
 ./usr/lib/libedit.so.0.0
 ./usr/lib/libform.so.1.0
 ./usr/lib/libkadm.so.4.0
-./usr/lib/libkafs.so.4.0
+./usr/lib/libkafs.so.5.0
 ./usr/lib/libkdb.so.4.1
-./usr/lib/libkrb.so.4.1
+./usr/lib/libkrb.so.6.0
 ./usr/lib/libkvm.so.4.1
 ./usr/lib/libm.so.0.1
 ./usr/lib/libmenu.so.1.0
@@ -116,12 +116,12 @@
 ./usr/lib/perl5/mips-openbsd/5.003/gmp.ph
 ./usr/lib/perl5/mips-openbsd/5.003/grp.ph
 ./usr/lib/perl5/mips-openbsd/5.003/histedit.ph
-./usr/lib/perl5/mips-openbsd/5.003/inttypes.ph
-./usr/lib/perl5/mips-openbsd/5.003/libgen.ph
 ./usr/lib/perl5/mips-openbsd/5.003/ieeefp.ph
+./usr/lib/perl5/mips-openbsd/5.003/inttypes.ph
 ./usr/lib/perl5/mips-openbsd/5.003/iso646.ph
 ./usr/lib/perl5/mips-openbsd/5.003/kvm.ph
 ./usr/lib/perl5/mips-openbsd/5.003/langinfo.ph
+./usr/lib/perl5/mips-openbsd/5.003/libgen.ph
 ./usr/lib/perl5/mips-openbsd/5.003/limits.ph
 ./usr/lib/perl5/mips-openbsd/5.003/link.ph
 ./usr/lib/perl5/mips-openbsd/5.003/locale.ph
@@ -266,6 +266,7 @@
 ./usr/lib/perl5/mips-openbsd/5.003/sys/dkstat.ph
 ./usr/lib/perl5/mips-openbsd/5.003/sys/dmap.ph
 ./usr/lib/perl5/mips-openbsd/5.003/sys/domain.ph
+./usr/lib/perl5/mips-openbsd/5.003/sys/endian.ph
 ./usr/lib/perl5/mips-openbsd/5.003/sys/errno.ph
 ./usr/lib/perl5/mips-openbsd/5.003/sys/exec.ph
 ./usr/lib/perl5/mips-openbsd/5.003/sys/exec_aout.ph
@@ -288,6 +289,7 @@
 ./usr/lib/perl5/mips-openbsd/5.003/sys/ktrace.ph
 ./usr/lib/perl5/mips-openbsd/5.003/sys/lkm.ph
 ./usr/lib/perl5/mips-openbsd/5.003/sys/localedef.ph
+./usr/lib/perl5/mips-openbsd/5.003/sys/lock.ph
 ./usr/lib/perl5/mips-openbsd/5.003/sys/lockf.ph
 ./usr/lib/perl5/mips-openbsd/5.003/sys/malloc.ph
 ./usr/lib/perl5/mips-openbsd/5.003/sys/map.ph
@@ -317,6 +319,7 @@
 ./usr/lib/perl5/mips-openbsd/5.003/sys/siginfo.ph
 ./usr/lib/perl5/mips-openbsd/5.003/sys/signal.ph
 ./usr/lib/perl5/mips-openbsd/5.003/sys/signalvar.ph
+./usr/lib/perl5/mips-openbsd/5.003/sys/simplelock.ph
 ./usr/lib/perl5/mips-openbsd/5.003/sys/socket.ph
 ./usr/lib/perl5/mips-openbsd/5.003/sys/socketvar.ph
 ./usr/lib/perl5/mips-openbsd/5.003/sys/sockio.ph
@@ -383,6 +386,3 @@
 ./usr/mipsel-unknown-openbsd2.2/bin
 ./usr/mipsel-unknown-openbsd2.2/lib
 ./usr/mipsel-unknown-openbsd2.2/lib/ldscripts
-./usr/lib/perl5/mips-openbsd/5.003/sys/endian.ph
-./usr/lib/perl5/mips-openbsd/5.003/sys/lock.ph
-./usr/lib/perl5/mips-openbsd/5.003/sys/simplelock.ph

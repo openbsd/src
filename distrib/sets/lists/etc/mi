@@ -55,6 +55,11 @@
 ./etc/passwd
 ./etc/passwd.conf
 ./etc/phones
+./etc/photuris
+./etc/photuris/attributes.conf
+./etc/photuris/photuris.conf
+./etc/photuris/photuris.startup
+./etc/photuris/secrets.conf
 ./etc/portal.conf
 ./etc/ppp/chap-secrets
 ./etc/ppp/chatscript.sample
@@ -90,7 +95,6 @@
 ./etc/uucp/passwd
 ./etc/uucp/port
 ./etc/uucp/sys
-./etc/photuris
 ./etc/weekly
 ./root/.cshrc
 ./root/.klogin
@@ -99,7 +103,3 @@
 ./var/at/at.deny
 ./var/cron/tabs/root
 ./var/msgs/bounds
-./etc/photuris/attributes.conf
-./etc/photuris/photuris.conf
-./etc/photuris/photuris.startup
-./etc/photuris/secrets.conf

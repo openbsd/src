@@ -8,7 +8,7 @@
 ./usr/lib/gcc-lib/sparc-unknown-openbsd2.2/2.7.2.1/include
 ./usr/lib/gcc-lib/sparc-unknown-openbsd2.2/2.7.2.1/include/objc
 ./usr/lib/libacl.so.4.0
-./usr/lib/libc.so.17.4
+./usr/lib/libc.so.17.5
 ./usr/lib/libcurses.so.4.0
 ./usr/lib/libdes.so.6.0
 ./usr/lib/libedit.so.0.0
@@ -16,9 +16,9 @@
 ./usr/lib/libg++.so.27.1
 ./usr/lib/libiberty.so.0.0
 ./usr/lib/libkadm.so.4.0
-./usr/lib/libkafs.so.4.0
+./usr/lib/libkafs.so.5.0
 ./usr/lib/libkdb.so.4.1
-./usr/lib/libkrb.so.4.1
+./usr/lib/libkrb.so.6.0
 ./usr/lib/libkvm.so.5.1
 ./usr/lib/libm.so.0.1
 ./usr/lib/libmenu.so.1.0
@@ -459,6 +459,7 @@
 ./usr/lib/perl5/sparc-openbsd/5.003/sys/dkstat.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/sys/dmap.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/sys/domain.ph
+./usr/lib/perl5/sparc-openbsd/5.003/sys/endian.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/sys/errno.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/sys/exec.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/sys/exec_aout.ph
@@ -481,6 +482,7 @@
 ./usr/lib/perl5/sparc-openbsd/5.003/sys/ktrace.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/sys/lkm.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/sys/localedef.ph
+./usr/lib/perl5/sparc-openbsd/5.003/sys/lock.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/sys/lockf.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/sys/malloc.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/sys/map.ph
@@ -510,6 +512,7 @@
 ./usr/lib/perl5/sparc-openbsd/5.003/sys/siginfo.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/sys/signal.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/sys/signalvar.ph
+./usr/lib/perl5/sparc-openbsd/5.003/sys/simplelock.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/sys/socket.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/sys/socketvar.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/sys/sockio.ph
@@ -571,10 +574,7 @@
 ./usr/mdec/binstall
 ./usr/mdec/boot
 ./usr/mdec/bootxx
+./usr/mdec/installboot
 ./usr/sbin/eeprom
 ./usr/sbin/fdformat
 ./usr/sbin/screenblank
-./usr/mdec/installboot
-./usr/lib/perl5/sparc-openbsd/5.003/sys/endian.ph
-./usr/lib/perl5/sparc-openbsd/5.003/sys/lock.ph
-./usr/lib/perl5/sparc-openbsd/5.003/sys/simplelock.ph

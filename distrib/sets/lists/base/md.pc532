@@ -1,10 +1,9 @@
-./usr/lib/perl5/pc532-openbsd/5.003/rmd160.ph
 ./dev/scan0
 ./sbin/bim
 ./usr/bin/ldd
 ./usr/include/ns32k
 ./usr/lib/libacl.so.4.0
-./usr/lib/libc.so.17.4
+./usr/lib/libc.so.17.5
 ./usr/lib/libcurses.so.4.0
 ./usr/lib/libdes.so.6.0
 ./usr/lib/libedit.so.0.0
@@ -31,6 +30,7 @@
 ./usr/lib/libutil.so.4.1
 ./usr/lib/libwrap.so.1.0
 ./usr/lib/libz.so.1.2
+./usr/lib/perl5/pc532-openbsd/5.003/rmd160.ph
 ./usr/libexec/ld.so
 ./usr/mdec/boot
 ./usr/mdec/zboot.o

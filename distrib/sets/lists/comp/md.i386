@@ -2,9 +2,9 @@
 ./usr/include/dlfcn.h
 ./usr/include/link.h
 ./usr/include/machine/ansi.h
-./usr/include/machine/biosvar.h
 ./usr/include/machine/apmvar.h
 ./usr/include/machine/asm.h
+./usr/include/machine/biosvar.h
 ./usr/include/machine/bus.h
 ./usr/include/machine/cdefs.h
 ./usr/include/machine/conf.h

@@ -55,9 +55,9 @@
 ./usr/include/ddb/db_watch.h
 ./usr/include/des.h
 ./usr/include/dev/atapi
-./usr/include/dev/auconv.h
 ./usr/include/dev/atapi/atapi.h
 ./usr/include/dev/atapi/atapilink.h
+./usr/include/dev/auconv.h
 ./usr/include/dev/audio_if.h
 ./usr/include/dev/audiovar.h
 ./usr/include/dev/ccdvar.h
@@ -83,6 +83,7 @@
 ./usr/include/dev/ic/dc21040reg.h
 ./usr/include/dev/ic/dp8390reg.h
 ./usr/include/dev/ic/dp857xreg.h
+./usr/include/dev/ic/ds.h
 ./usr/include/dev/ic/elink3reg.h
 ./usr/include/dev/ic/elink3var.h
 ./usr/include/dev/ic/espreg.h
@@ -114,13 +115,12 @@
 ./usr/include/dev/ic/smc93cx6var.h
 ./usr/include/dev/ic/uhareg.h
 ./usr/include/dev/ic/uhavar.h
+./usr/include/dev/ic/vgavar.h
 ./usr/include/dev/ic/z8530reg.h
 ./usr/include/dev/ic/z8530sc.h
 ./usr/include/dev/ic/z8536reg.h
 ./usr/include/dev/isa
 ./usr/include/dev/isa/ad1848var.h
-./usr/include/dev/ic/ds.h
-./usr/include/dev/isa/if_exreg.h
 ./usr/include/dev/isa/ahareg.h
 ./usr/include/dev/isa/ariareg.h
 ./usr/include/dev/isa/btreg.h
@@ -133,6 +133,7 @@
 ./usr/include/dev/isa/if_edreg.h
 ./usr/include/dev/isa/if_egreg.h
 ./usr/include/dev/isa/if_elreg.h
+./usr/include/dev/isa/if_exreg.h
 ./usr/include/dev/isa/if_fereg.h
 ./usr/include/dev/isa/if_ie507.h
 ./usr/include/dev/isa/if_ieatt.h
@@ -152,6 +153,7 @@
 ./usr/include/dev/isa/sbdspvar.h
 ./usr/include/dev/isa/sbreg.h
 ./usr/include/dev/isa/sbvar.h
+./usr/include/dev/isa/vga_isavar.h
 ./usr/include/dev/isa/wdlink.h
 ./usr/include/dev/isa/wdreg.h
 ./usr/include/dev/isa/wdsreg.h
@@ -175,6 +177,7 @@
 ./usr/include/dev/pci/pcireg.h
 ./usr/include/dev/pci/pcivar.h
 ./usr/include/dev/pci/ppbreg.h
+./usr/include/dev/pci/vga_pcivar.h
 ./usr/include/dev/pcmcia
 ./usr/include/dev/pcmcia/pcmcia.h
 ./usr/include/dev/pcmcia/pcmcia_ioctl.h
@@ -200,6 +203,15 @@
 ./usr/include/dev/tc/tcreg.h
 ./usr/include/dev/tc/tcvar.h
 ./usr/include/dev/vndioctl.h
+./usr/include/dev/wscons
+./usr/include/dev/wscons/ascii.h
+./usr/include/dev/wscons/event_var.h
+./usr/include/dev/wscons/kbd.h
+./usr/include/dev/wscons/ms.h
+./usr/include/dev/wscons/wscons_emul.h
+./usr/include/dev/wscons/wscons_raster.h
+./usr/include/dev/wscons/wscons_rfont.h
+./usr/include/dev/wscons/wsconsvar.h
 ./usr/include/dirent.h
 ./usr/include/disktab.h
 ./usr/include/elf_abi.h
@@ -612,7 +624,6 @@
 ./usr/include/netdb.h
 ./usr/include/netgroup.h
 ./usr/include/netinet/icmp_var.h
-./usr/include/netinet/ip_rmd160.h
 ./usr/include/netinet/if_arc.h
 ./usr/include/netinet/if_atm.h
 ./usr/include/netinet/if_ether.h
@@ -624,6 +635,9 @@
 ./usr/include/netinet/in_var.h
 ./usr/include/netinet/ip.h
 ./usr/include/netinet/ip_ah.h
+./usr/include/netinet/ip_blf.h
+./usr/include/netinet/ip_cast.h
+./usr/include/netinet/ip_castsb.h
 ./usr/include/netinet/ip_esp.h
 ./usr/include/netinet/ip_fil.h
 ./usr/include/netinet/ip_fil_compat.h
@@ -633,6 +647,7 @@
 ./usr/include/netinet/ip_ipsp.h
 ./usr/include/netinet/ip_mroute.h
 ./usr/include/netinet/ip_nat.h
+./usr/include/netinet/ip_rmd160.h
 ./usr/include/netinet/ip_sha1.h
 ./usr/include/netinet/ip_state.h
 ./usr/include/netinet/ip_var.h
@@ -833,6 +848,7 @@
 ./usr/include/sys/dkstat.h
 ./usr/include/sys/dmap.h
 ./usr/include/sys/domain.h
+./usr/include/sys/endian.h
 ./usr/include/sys/errno.h
 ./usr/include/sys/exec.h
 ./usr/include/sys/exec_aout.h
@@ -855,6 +871,7 @@
 ./usr/include/sys/ktrace.h
 ./usr/include/sys/lkm.h
 ./usr/include/sys/localedef.h
+./usr/include/sys/lock.h
 ./usr/include/sys/lockf.h
 ./usr/include/sys/malloc.h
 ./usr/include/sys/map.h
@@ -884,6 +901,7 @@
 ./usr/include/sys/siginfo.h
 ./usr/include/sys/signal.h
 ./usr/include/sys/signalvar.h
+./usr/include/sys/simplelock.h
 ./usr/include/sys/socket.h
 ./usr/include/sys/socketvar.h
 ./usr/include/sys/sockio.h
@@ -1099,7 +1117,6 @@
 ./usr/share/man/cat1/yacc.0
 ./usr/share/man/cat2/__syscall.0
 ./usr/share/man/cat2/_exit.0
-./usr/share/man/cat2/getsid.0
 ./usr/share/man/cat2/accept.0
 ./usr/share/man/cat2/access.0
 ./usr/share/man/cat2/acct.0
@@ -1150,6 +1167,7 @@
 ./usr/share/man/cat2/getpriority.0
 ./usr/share/man/cat2/getrlimit.0
 ./usr/share/man/cat2/getrusage.0
+./usr/share/man/cat2/getsid.0
 ./usr/share/man/cat2/getsockname.0
 ./usr/share/man/cat2/getsockopt.0
 ./usr/share/man/cat2/gettimeofday.0
@@ -1257,7 +1275,6 @@
 ./usr/share/man/cat2/write.0
 ./usr/share/man/cat2/writev.0
 ./usr/share/man/cat3/MD4Data.0
-./usr/share/man/cat3/mkdtemp.0
 ./usr/share/man/cat3/MD4End.0
 ./usr/share/man/cat3/MD4File.0
 ./usr/share/man/cat3/MD4Final.0
@@ -1297,6 +1314,7 @@
 ./usr/share/man/cat3/asctime.0
 ./usr/share/man/cat3/asin.0
 ./usr/share/man/cat3/asinh.0
+./usr/share/man/cat3/asprintf.0
 ./usr/share/man/cat3/assert.0
 ./usr/share/man/cat3/atan.0
 ./usr/share/man/cat3/atan2.0
@@ -1418,13 +1436,9 @@
 ./usr/share/man/cat3/curs_outopts.0
 ./usr/share/man/cat3/curs_overlay.0
 ./usr/share/man/cat3/curs_pad.0
+./usr/share/man/cat3/curs_print.0
 ./usr/share/man/cat3/curs_printw.0
 ./usr/share/man/cat3/curs_refresh.0
-./usr/share/man/cat3/curs_print.0
-./usr/share/man/cat3/form_requestname.0
-./usr/share/man/cat3/menu_requestname.0
-./usr/share/man/cat3/menu_spacing.0
-./usr/share/man/cat3/wresize.0
 ./usr/share/man/cat3/curs_scanw.0
 ./usr/share/man/cat3/curs_scr_dmp.0
 ./usr/share/man/cat3/curs_scroll.0
@@ -1438,6 +1452,7 @@
 ./usr/share/man/cat3/daemon.0
 ./usr/share/man/cat3/db.0
 ./usr/share/man/cat3/dbopen.0
+./usr/share/man/cat3/del_curterm.0
 ./usr/share/man/cat3/des_3cbc_encrypt.0
 ./usr/share/man/cat3/des_3ecb_encrypt.0
 ./usr/share/man/cat3/des_cbc_cksum.0
@@ -1558,6 +1573,7 @@
 ./usr/share/man/cat3/form_opts.0
 ./usr/share/man/cat3/form_page.0
 ./usr/share/man/cat3/form_post.0
+./usr/share/man/cat3/form_requestname.0
 ./usr/share/man/cat3/form_userptr.0
 ./usr/share/man/cat3/form_win.0
 ./usr/share/man/cat3/fprintf.0
@@ -1795,15 +1811,19 @@
 ./usr/share/man/cat3/menu_opts.0
 ./usr/share/man/cat3/menu_pattern.0
 ./usr/share/man/cat3/menu_post.0
+./usr/share/man/cat3/menu_requestname.0
+./usr/share/man/cat3/menu_spacing.0
 ./usr/share/man/cat3/menu_userptr.0
 ./usr/share/man/cat3/menu_win.0
 ./usr/share/man/cat3/mergesort.0
+./usr/share/man/cat3/mkdtemp.0
 ./usr/share/man/cat3/mkstemp.0
 ./usr/share/man/cat3/mktemp.0
 ./usr/share/man/cat3/mktime.0
 ./usr/share/man/cat3/modf.0
 ./usr/share/man/cat3/moncontrol.0
 ./usr/share/man/cat3/mrand48.0
+./usr/share/man/cat3/mvcur.0
 ./usr/share/man/cat3/ncurses.0
 ./usr/share/man/cat3/network.0
 ./usr/share/man/cat3/nextafter.0
@@ -1839,6 +1859,7 @@
 ./usr/share/man/cat3/putc.0
 ./usr/share/man/cat3/putchar.0
 ./usr/share/man/cat3/putenv.0
+./usr/share/man/cat3/putp.0
 ./usr/share/man/cat3/puts.0
 ./usr/share/man/cat3/putw.0
 ./usr/share/man/cat3/pw_abort.0
@@ -1890,6 +1911,7 @@
 ./usr/share/man/cat3/res_search.0
 ./usr/share/man/cat3/res_send.0
 ./usr/share/man/cat3/resolver.0
+./usr/share/man/cat3/restartterm.0
 ./usr/share/man/cat3/rewind.0
 ./usr/share/man/cat3/rewinddir.0
 ./usr/share/man/cat3/rexec.0
@@ -1917,6 +1939,7 @@
 ./usr/share/man/cat3/scsireq_reset.0
 ./usr/share/man/cat3/seed48.0
 ./usr/share/man/cat3/seekdir.0
+./usr/share/man/cat3/set_curterm.0
 ./usr/share/man/cat3/setbuf.0
 ./usr/share/man/cat3/setbuffer.0
 ./usr/share/man/cat3/setdomainname.0
@@ -1948,7 +1971,9 @@
 ./usr/share/man/cat3/setruid.0
 ./usr/share/man/cat3/setservent.0
 ./usr/share/man/cat3/setstate.0
+./usr/share/man/cat3/setterm.0
 ./usr/share/man/cat3/setttyent.0
+./usr/share/man/cat3/setupterm.0
 ./usr/share/man/cat3/setusershell.0
 ./usr/share/man/cat3/setvbuf.0
 ./usr/share/man/cat3/sha1.0
@@ -2064,6 +2089,7 @@
 ./usr/share/man/cat3/telldir.0
 ./usr/share/man/cat3/tempnam.0
 ./usr/share/man/cat3/termcap.0
+./usr/share/man/cat3/terminfo.0
 ./usr/share/man/cat3/tf_close.0
 ./usr/share/man/cat3/tf_get_cred.0
 ./usr/share/man/cat3/tf_get_pinst.0
@@ -2076,6 +2102,9 @@
 ./usr/share/man/cat3/tgetnum.0
 ./usr/share/man/cat3/tgetstr.0
 ./usr/share/man/cat3/tgoto.0
+./usr/share/man/cat3/tigetflag.0
+./usr/share/man/cat3/tigetnum.0
+./usr/share/man/cat3/tigetstr.0
 ./usr/share/man/cat3/time.0
 ./usr/share/man/cat3/time2posix.0
 ./usr/share/man/cat3/times.0
@@ -2085,6 +2114,8 @@
 ./usr/share/man/cat3/toascii.0
 ./usr/share/man/cat3/tolower.0
 ./usr/share/man/cat3/toupper.0
+./usr/share/man/cat3/tparam.0
+./usr/share/man/cat3/tparm.0
 ./usr/share/man/cat3/tputs.0
 ./usr/share/man/cat3/tsearch.0
 ./usr/share/man/cat3/ttyname.0
@@ -2105,10 +2136,13 @@
 ./usr/share/man/cat3/va_start.0
 ./usr/share/man/cat3/valloc.0
 ./usr/share/man/cat3/varargs.0
+./usr/share/man/cat3/vasprintf.0
 ./usr/share/man/cat3/verr.0
 ./usr/share/man/cat3/verrx.0
 ./usr/share/man/cat3/vfprintf.0
 ./usr/share/man/cat3/vfscanf.0
+./usr/share/man/cat3/vidattr.0
+./usr/share/man/cat3/vidputs.0
 ./usr/share/man/cat3/vis.0
 ./usr/share/man/cat3/vlimit.0
 ./usr/share/man/cat3/vprintf.0
@@ -2122,6 +2156,7 @@
 ./usr/share/man/cat3/vwarnx.0
 ./usr/share/man/cat3/warn.0
 ./usr/share/man/cat3/warnx.0
+./usr/share/man/cat3/wresize.0
 ./usr/share/man/cat3/xdr.0
 ./usr/share/man/cat3/xdr_accepted_reply.0
 ./usr/share/man/cat3/xdr_array.0
@@ -2252,21 +2287,3 @@
 ./usr/share/mk/bsd.subdir.mk
 ./usr/share/mk/bsd.sys.mk
 ./var/db/libc.tags
-./usr/include/dev/ic/vgavar.h
-./usr/include/dev/isa/vga_isavar.h
-./usr/include/dev/pci/vga_pcivar.h
-./usr/include/dev/wscons
-./usr/include/dev/wscons/ascii.h
-./usr/include/dev/wscons/event_var.h
-./usr/include/dev/wscons/kbd.h
-./usr/include/dev/wscons/ms.h
-./usr/include/dev/wscons/wscons_emul.h
-./usr/include/dev/wscons/wscons_raster.h
-./usr/include/dev/wscons/wscons_rfont.h
-./usr/include/dev/wscons/wsconsvar.h
-./usr/include/netinet/ip_blf.h
-./usr/include/netinet/ip_cast.h
-./usr/include/netinet/ip_castsb.h
-./usr/include/sys/endian.h
-./usr/include/sys/lock.h
-./usr/include/sys/simplelock.h

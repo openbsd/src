@@ -750,6 +750,7 @@
 ./usr/sbin/map-mbone
 ./usr/sbin/mk-amd-map
 ./usr/sbin/mkalias
+./usr/sbin/mkisofs
 ./usr/sbin/mknetid
 ./usr/sbin/mopa.out
 ./usr/sbin/mopchk
@@ -979,6 +980,11 @@
 ./usr/share/ipf/firewall.2
 ./usr/share/ipf/nat.1
 ./usr/share/ipf/nat.2
+./usr/share/ipsec
+./usr/share/ipsec/attributes.conf
+./usr/share/ipsec/photuris.conf
+./usr/share/ipsec/photuris.startup
+./usr/share/ipsec/secrets.conf
 ./usr/share/lkm
 ./usr/share/lkm/misc
 ./usr/share/lkm/misc/module
@@ -1735,9 +1741,3 @@
 ./var/yp/Makefile.yp
 ./var/yp/Makefile.yp.dist
 ./var/yp/README
-./usr/sbin/mkisofs
-./usr/share/ipsec
-./usr/share/ipsec/attributes.conf
-./usr/share/ipsec/photuris.conf
-./usr/share/ipsec/photuris.startup
-./usr/share/ipsec/secrets.conf

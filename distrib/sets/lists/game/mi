@@ -192,6 +192,8 @@
 ./usr/share/man/cat6/worm.0
 ./usr/share/man/cat6/worms.0
 ./usr/share/man/cat6/wump.0
+./var/games/atc_score
+./var/games/battlestar.log
 ./var/games/hackdir/data
 ./var/games/hackdir/help
 ./var/games/hackdir/hh
@@ -206,5 +208,3 @@
 ./var/games/phantasia/scoreboard
 ./var/games/phantasia/void
 ./var/games/robots_roll
-./var/games/atc_score
-./var/games/battlestar.log
