@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.24 2001/11/17 19:10:25 deraadt Exp $	*/
+/*	$OpenBSD: lex.c,v 1.25 2001/11/20 20:50:00 millert Exp $	*/
 /*	$NetBSD: lex.c,v 1.10 1997/05/17 19:55:13 pk Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: lex.c,v 1.24 2001/11/17 19:10:25 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: lex.c,v 1.25 2001/11/20 20:50:00 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -209,7 +209,7 @@ incfile()
 
 
 int	*msgvec;
-int	reset_on_stop;			/* do a reset() if stopped */
+int	reset_on_stop;			/* reset prompt if stopped */
 
 /*
  * Interpret user commands one by one.  If standard input is not a tty,
@@ -218,20 +218,11 @@ int	reset_on_stop;			/* do a reset() if stopped */
 void
 commands()
 {
-	int n;
-	volatile int eofloop = 0;
+	int n, sig, *sigp;
+	int eofloop = 0;
 	char linebuf[LINESIZE];
 
-	if (!sourcing) {
-		if (signal(SIGINT, SIG_IGN) != SIG_IGN)
-			(void)signal(SIGINT, intr);
-		if (signal(SIGHUP, SIG_IGN) != SIG_IGN)
-			(void)signal(SIGHUP, hangup);
-		(void)signal(SIGTSTP, stop);
-		(void)signal(SIGTTOU, stop);
-		(void)signal(SIGTTIN, stop);
-	}
-	setexit();
+	prompt:
 	for (;;) {
 		/*
 		 * Print the prompt, if needed.  Clear out
@@ -250,8 +241,24 @@ commands()
 		 * and handle end of file specially.
 		 */
 		n = 0;
+		sig = 0;
+		sigp = sourcing ? NULL : &sig;
 		for (;;) {
-			if (readline(input, &linebuf[n], LINESIZE - n) < 0) {
+			if (readline(input, &linebuf[n], LINESIZE - n, sigp) < 0) {
+				if (sig) {
+					if (sig == SIGINT)
+						dointr();
+					else if (sig == SIGHUP)
+						/* nothing to do? */
+						exit(1);
+					else {
+						/* Stopped by job control */
+						(void)kill(0, sig);
+						if (reset_on_stop)
+							reset_on_stop = 0;
+					}
+					goto prompt;
+				}
 				if (n == 0)
 					n = -1;
 				break;
@@ -597,10 +604,8 @@ isprefix(as1, as2)
 
 int	inithdr;			/* am printing startup headers */
 
-/*ARGSUSED*/
 void
-intr(s)
-	int s;
+dointr()
 {
 
 	noreset = 0;
@@ -617,42 +622,6 @@ intr(s)
 		image = -1;
 	}
 	fputs("Interrupt\n", stderr);
-	reset(0);
-}
-
-/*
- * When we wake up after ^Z, reprint the prompt.
- */
-void
-stop(s)
-	int s;
-{
-	sig_t old_action = signal(s, SIG_DFL);
-	sigset_t nset;
-
-	(void)sigemptyset(&nset);
-	(void)sigaddset(&nset, s);
-	(void)sigprocmask(SIG_UNBLOCK, &nset, NULL);
-	(void)kill(0, s);
-	(void)sigprocmask(SIG_BLOCK, &nset, NULL);
-	(void)signal(s, old_action);
-	if (reset_on_stop) {
-		reset_on_stop = 0;
-		reset(0);
-	}
-}
-
-/*
- * Branch here on hangup signal and simulate "exit".
- */
-/*ARGSUSED*/
-void
-hangup(s)
-	int s;
-{
-
-	/* nothing to do? */
-	exit(1);
 }
 
 /*

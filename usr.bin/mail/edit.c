@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.9 2001/01/19 04:11:28 millert Exp $	*/
+/*	$OpenBSD: edit.c,v 1.10 2001/11/20 20:50:00 millert Exp $	*/
 /*	$NetBSD: edit.c,v 1.5 1996/06/08 19:48:20 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: edit.c,v 1.9 2001/01/19 04:11:28 millert Exp $";
+static char rcsid[] = "$OpenBSD: edit.c,v 1.10 2001/11/20 20:50:00 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -88,6 +88,8 @@ edit1(msgvec, type)
 {
 	int c, i;
 	FILE *fp;
+	struct sigaction oact;
+	sigset_t oset;
 	struct message *mp;
 	off_t size;
 
@@ -95,8 +97,6 @@ edit1(msgvec, type)
 	 * Deal with each message to be edited . . .
 	 */
 	for (i = 0; msgvec[i] && i < msgCount; i++) {
-		sig_t sigint;
-
 		if (i > 0) {
 			char buf[100];
 			char *p;
@@ -113,7 +113,7 @@ edit1(msgvec, type)
 		}
 		dot = mp = &message[msgvec[i] - 1];
 		touch(mp);
-		sigint = signal(SIGINT, SIG_IGN);
+		(void)ignoresig(SIGINT, &oact, &oset);
 		fp = run_editor(setinput(mp), mp->m_size, type, readonly);
 		if (fp != NULL) {
 			(void)fseek(otf, 0L, 2);
@@ -134,7 +134,8 @@ edit1(msgvec, type)
 				warn("/tmp");
 			(void)Fclose(fp);
 		}
-		(void)signal(SIGINT, sigint);
+		(void)sigprocmask(SIG_SETMASK, &oset, NULL);
+		(void)sigaction(SIGINT, &oact, NULL);
 	}
 	return(0);
 }

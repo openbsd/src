@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd3.c,v 1.15 2001/01/19 04:11:28 millert Exp $	*/
+/*	$OpenBSD: cmd3.c,v 1.16 2001/11/20 20:50:00 millert Exp $	*/
 /*	$NetBSD: cmd3.c,v 1.8 1997/07/09 05:29:49 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: cmd3.c,v 1.15 2001/01/19 04:11:28 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmd3.c,v 1.16 2001/11/20 20:50:00 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,17 +61,19 @@ shell(v)
 	void *v;
 {
 	char *str = v;
-	sig_t sigint = signal(SIGINT, SIG_IGN);
 	char *shell;
 	char cmd[BUFSIZ];
+	struct sigaction oact;
+	sigset_t oset;
 
-	(void)strncpy(cmd, str, sizeof(cmd) - 1);
-	cmd[sizeof(cmd) - 1] = '\0';
+	(void)ignoresig(SIGINT, &oact, &oset);
+	(void)strlcpy(cmd, str, sizeof(cmd));
 	if (bangexp(cmd, sizeof(cmd)) < 0)
 		return(1);
 	shell = value("SHELL");
 	(void)run_command(shell, 0, 0, -1, "-c", cmd, NULL);
-	(void)signal(SIGINT, sigint);
+	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
+	(void)sigaction(SIGINT, &oact, NULL);
 	puts("!");
 	return(0);
 }
@@ -84,12 +86,15 @@ int
 dosh(v)
 	void *v;
 {
-	sig_t sigint = signal(SIGINT, SIG_IGN);
 	char *shell;
+	struct sigaction oact;
+	sigset_t oset;
 
 	shell = value("SHELL");
+	(void)ignoresig(SIGINT, &oact, &oset);
 	(void)run_command(shell, 0, 0, -1, NULL, NULL, NULL);
-	(void)signal(SIGINT, sigint);
+	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
+	(void)sigaction(SIGINT, &oact, NULL);
 	putchar('\n');
 	return(0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aux.c,v 1.18 2001/09/16 16:12:56 millert Exp $	*/
+/*	$OpenBSD: aux.c,v 1.19 2001/11/20 20:50:00 millert Exp $	*/
 /*	$NetBSD: aux.c,v 1.5 1997/05/13 06:15:52 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: aux.c,v 1.18 2001/09/16 16:12:56 millert Exp $";
+static char rcsid[] = "$OpenBSD: aux.c,v 1.19 2001/11/20 20:50:00 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -150,7 +150,7 @@ hfield(field, mp)
 	ibuf = setinput(mp);
 	if ((lc = mp->m_lines - 1) < 0)
 		return(NULL);
-	if (readline(ibuf, linebuf, LINESIZE) < 0)
+	if (readline(ibuf, linebuf, LINESIZE, NULL) < 0)
 		return(NULL);
 	while (lc > 0) {
 		if ((lc = gethfield(ibuf, linebuf, lc, &colon)) < 0)
@@ -181,7 +181,7 @@ gethfield(f, linebuf, rem, colon)
 	for (;;) {
 		if (--rem < 0)
 			return(-1);
-		if ((c = readline(f, linebuf, LINESIZE)) <= 0)
+		if ((c = readline(f, linebuf, LINESIZE, NULL)) <= 0)
 			return(-1);
 		for (cp = linebuf; isprint(*cp) && *cp != ' ' && *cp != ':';
 		     cp++)
@@ -203,7 +203,7 @@ gethfield(f, linebuf, rem, colon)
 			ungetc(c = getc(f), f);
 			if (c != ' ' && c != '\t')
 				break;
-			if ((c = readline(f, line2, LINESIZE)) < 0)
+			if ((c = readline(f, line2, LINESIZE, NULL)) < 0)
 				break;
 			rem--;
 			for (cp2 = line2; *cp2 == ' ' || *cp2 == '\t'; cp2++)
@@ -559,7 +559,7 @@ name1(mp, reptype)
 		return(cp);
 	ibuf = setinput(mp);
 	namebuf[0] = '\0';
-	if (readline(ibuf, linebuf, LINESIZE) < 0)
+	if (readline(ibuf, linebuf, LINESIZE, NULL) < 0)
 		return(savestr(namebuf));
 newname:
 	for (cp = linebuf; *cp && *cp != ' '; cp++)
@@ -570,7 +570,7 @@ newname:
 	     *cp && *cp != ' ' && *cp != '\t' && cp2 < namebuf + LINESIZE - 1;)
 		*cp2++ = *cp++;
 	*cp2 = '\0';
-	if (readline(ibuf, linebuf, LINESIZE) < 0)
+	if (readline(ibuf, linebuf, LINESIZE, NULL) < 0)
 		return(savestr(namebuf));
 	if ((cp = strchr(linebuf, 'F')) == NULL)
 		return(savestr(namebuf));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: glob.h,v 1.4 1998/09/27 21:16:42 millert Exp $	*/
+/*	$OpenBSD: glob.h,v 1.5 2001/11/20 20:50:00 millert Exp $	*/
 /*	$NetBSD: glob.h,v 1.4 1996/06/08 19:48:25 christos Exp $	*/
 
 /*
@@ -84,10 +84,7 @@ int	screenheight;			/* Screen height, or best guess,
 					   for "header" command */
 int	realscreenheight;		/* the real screen height */
 int	uflag;				/* Are we in -u mode? */
-
-#include <setjmp.h>
-
-sigjmp_buf	srbuf;
+sigset_t intset;			/* Signal set that is just SIGINT */
 
 
 /*

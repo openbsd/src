@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd1.c,v 1.19 2001/11/16 17:10:06 millert Exp $	*/
+/*	$OpenBSD: cmd1.c,v 1.20 2001/11/20 20:50:00 millert Exp $	*/
 /*	$NetBSD: cmd1.c,v 1.9 1997/07/09 05:29:48 mikel Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: cmd1.c,v 1.19 2001/11/16 17:10:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmd1.c,v 1.20 2001/11/20 20:50:00 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,6 +57,7 @@ static char rcsid[] = "$OpenBSD: cmd1.c,v 1.19 2001/11/16 17:10:06 millert Exp $
  */
 
 static int screen;
+static volatile sig_atomic_t gothdrint;
 
 int
 headers(v)
@@ -65,6 +66,8 @@ headers(v)
 	int *msgvec = v;
 	int n, mesg, flag, size;
 	struct message *mp;
+	struct sigaction act, oact;
+	sigset_t oset;
 
 	size = screensize();
 	n = msgvec[0];
@@ -81,13 +84,29 @@ headers(v)
 	mesg = mp - &message[0];
 	if (dot != &message[n-1])
 		dot = mp;
-	for (; mp < &message[msgCount]; mp++) {
+	sigemptyset(&act.sa_mask);
+	act.sa_flags = SA_RESTART;
+	act.sa_handler = hdrint;
+	if (sigaction(SIGINT, NULL, &oact) == 0 &&
+	    oact.sa_handler != SIG_IGN) {
+		(void)sigaction(SIGINT, &act, &oact);
+		(void)sigprocmask(SIG_UNBLOCK, &intset, &oset);
+	}
+	for (gothdrint = 0; !gothdrint && mp < &message[msgCount]; mp++) {
 		mesg++;
 		if (mp->m_flag & MDELETED)
 			continue;
 		if (flag++ >= size)
 			break;
 		printhead(mesg);
+	}
+	if (gothdrint) {
+		fflush(stdout);
+		fputs("\nInterrupt\n", stderr);
+	}
+	if (oact.sa_handler != SIG_IGN) {
+		(void)sigprocmask(SIG_SETMASK, &oset, NULL);
+		(void)sigaction(SIGINT, &oact, NULL);
 	}
 	if (flag == 0) {
 		puts("No more mail.");
@@ -186,7 +205,7 @@ printhead(mesg)
 	char **ap;
 
 	mp = &message[mesg-1];
-	(void)readline(setinput(mp), headline, LINESIZE);
+	(void)readline(setinput(mp), headline, LINESIZE, NULL);
 	if ((subjline = hfield("subject", mp)) == NULL)
 		subjline = hfield("subj", mp);
 	/*
@@ -344,8 +363,8 @@ type1(msgvec, cmd, doign, page)
 	int nlines, *ip, restoreterm;
 	struct message *mp;
 	struct termios tbuf;
-	char * volatile cp;
-	FILE * volatile obuf;
+	char *cp;
+	FILE *obuf;
 
 	obuf = stdout;
 	restoreterm = 0;
@@ -357,10 +376,8 @@ type1(msgvec, cmd, doign, page)
 		restoreterm = (tcgetattr(fileno(stdin), &tbuf) == 0);
 		obuf = Popen(cmd, "w");
 		if (obuf == NULL) {
-			warn("%s", cp);
+			warn("%s", cmd);
 			obuf = stdout;
-		} else {
-			(void)signal(SIGPIPE, SIG_IGN);
 		}
 	} else if (value("interactive") != NULL &&
 	         (page || (cp = value("crt")) != NULL)) {
@@ -375,8 +392,7 @@ type1(msgvec, cmd, doign, page)
 			if (obuf == NULL) {
 				warn("%s", cp);
 				obuf = stdout;
-			} else
-				(void)signal(SIGPIPE, SIG_IGN);
+			}
 		}
 	}
 
@@ -395,7 +411,6 @@ type1(msgvec, cmd, doign, page)
 
 	if (obuf != stdout) {
 		(void)Pclose(obuf);
-		(void)signal(SIGPIPE, SIG_DFL);
 		if (restoreterm)
 			(void)tcsetattr(fileno(stdin), TCSADRAIN, &tbuf);
 	}
@@ -437,7 +452,7 @@ top(v)
 		if (!lineb)
 			putchar('\n');
 		for (lines = 0; lines < c && lines <= topl; lines++) {
-			if (readline(ibuf, linebuf, sizeof(linebuf)) < 0)
+			if (readline(ibuf, linebuf, sizeof(linebuf), NULL) < 0)
 				break;
 			puts(linebuf);
 			lineb = blankline(linebuf);
@@ -527,4 +542,15 @@ inc(v)
 	}
 
 	return(0);
+}
+
+/*
+ * User hit ^C while printing the headers.
+ */
+void
+hdrint(s)
+	int s;
+{
+
+	gothdrint = 1;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.17 2001/11/16 17:10:06 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.18 2001/11/20 20:50:00 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.7 1997/07/09 05:22:00 mikel Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95
- *	$OpenBSD: extern.h,v 1.17 2001/11/16 17:10:06 millert Exp $
+ *	$OpenBSD: extern.h,v 1.18 2001/11/20 20:50:00 millert Exp $
  */
 
 struct name;
@@ -103,9 +103,7 @@ void	 clob1 __P((int));
 int	 clobber __P((void *));
 void	 close_all_files __P((void));
 int	 cmatch __P((char *, char *));
-void	 collhup __P((int));
-void	 collint __P((int));
-void	 collstop __P((int));
+int	 collabort __P((void));
 void	 commands __P((void));
 int	 copycmd __P((void *));
 int	 core __P((void *));
@@ -114,13 +112,14 @@ int	 delete __P((void *));
 int	 delm __P((int []));
 int	 deltype __P((void *));
 void	 demail __P((void));
+void	 dointr __P((void));
 int	 dosh __P((void *));
 int	 dot_lock __P((const char *, int, FILE *, const char *));
 void	 dot_unlock __P((const char *));
 int	 echo __P((void *));
 int	 edit1 __P((int *, int));
 int	 editor __P((void *));
-void	 edstop __P((void));
+int	 edstop __P((void));
 int	 elsecmd __P((void *));
 int	 endifcmd __P((void *));
 int	 evalcol __P((int));
@@ -131,6 +130,7 @@ int	 file __P((void *));
 struct grouphead *
 	 findgroup __P((char []));
 void	 findmail __P((char *, char *, int));
+void	 fioint __P((int));
 int	 first __P((int, int));
 void	 fixhead __P((struct header *, struct name *));
 void	 fmt __P((char *, struct name *, FILE *, int));
@@ -141,15 +141,14 @@ int	 from __P((void *));
 off_t	 fsize __P((FILE *));
 int	 getfold __P((char *, int));
 int	 gethfield __P((FILE *, char [], int, char **));
-void	 gethfromtty __P((struct header *, int));
+int	 gethfromtty __P((struct header *, int));
 int	 getmsglist __P((char *, int *, int));
 int	 getrawlist __P((char [], char **, int));
 int	 getuserid __P((char []));
 int	 grabh __P((struct header *, int));
 int	 group __P((void *));
-void	 hangup __P((int));
 int	 hash __P((char *));
-void	 hdrstop __P((int));
+void	 hdrint __P((int));
 int	 headers __P((void *));
 int	 help __P((void *));
 void	 holdsigs __P((void));
@@ -157,6 +156,7 @@ int	 ifcmd __P((void *));
 int	 igfield __P((void *));
 struct ignoretab;
 int	 ignore1 __P((char *[], struct ignoretab *, char *));
+int	 ignoresig __P((int, struct sigaction *, sigset_t *));
 int	 igshow __P((struct ignoretab *, char *));
 void	 intr __P((int));
 int	 inc __P((void *));
@@ -205,10 +205,10 @@ void	 printhead __P((int));
 int	 puthead __P((struct header *, FILE *, int));
 int	 putline __P((FILE *, char *, int));
 int	 pversion __P((void *));
-void	 quit __P((void));
+int	 quit __P((void));
 int	 quitcmd __P((void *));
 int	 raise __P((int));
-int	 readline __P((FILE *, char *, int));
+int	 readline __P((FILE *, char *, int, int *));
 void	 register_file __P((FILE *, int, int));
 void	 regret __P((int));
 void	 relsesigs __P((void));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.7 2001/01/16 05:36:08 millert Exp $	*/
+/*	$OpenBSD: def.h,v 1.8 2001/11/20 20:50:00 millert Exp $	*/
 /*	$NetBSD: def.h,v 1.9 1996/12/28 07:11:00 tls Exp $	*/
 /*
  * Copyright (c) 1980, 1993
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)def.h	8.4 (Berkeley) 4/20/95
- *	$OpenBSD: def.h,v 1.7 2001/01/16 05:36:08 millert Exp $
+ *	$OpenBSD: def.h,v 1.8 2001/11/20 20:50:00 millert Exp $
  */
 
 /*
@@ -269,13 +269,6 @@ struct ignoretab {
 #define	CANY		0		/* Execute in send or receive mode */
 #define	CRCV		1		/* Execute in receive mode only */
 #define	CSEND		2		/* Execute in send mode only */
-
-/*
- * Kludges to handle the change from setexit / reset to sigsetjmp / siglongjmp
- */
-
-#define	setexit()	sigsetjmp(srbuf, 1)
-#define	reset(x)	siglongjmp(srbuf, x)
 
 /*
  * Truncate a file to the last character written. This is

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fio.c,v 1.18 2001/01/16 05:36:08 millert Exp $	*/
+/*	$OpenBSD: fio.c,v 1.19 2001/11/20 20:50:00 millert Exp $	*/
 /*	$NetBSD: fio.c,v 1.8 1997/07/07 22:57:55 phil Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: fio.c,v 1.18 2001/01/16 05:36:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: fio.c,v 1.19 2001/11/20 20:50:00 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,8 @@ static char rcsid[] = "$OpenBSD: fio.c,v 1.18 2001/01/16 05:36:08 millert Exp $"
  *
  * File I/O.
  */
+
+static volatile sig_atomic_t fiosignal;
 
 /*
  * Wrapper for read() to catch EINTR.
@@ -206,22 +208,67 @@ putline(obuf, linebuf, outlf)
  * include the newline (or carriage return) at the end.
  */
 int
-readline(ibuf, linebuf, linesize)
+readline(ibuf, linebuf, linesize, signo)
 	FILE *ibuf;
 	char *linebuf;
 	int linesize;
+	int *signo;
 {
+	struct sigaction act;
+	struct sigaction savetstp;
+	struct sigaction savettou;
+	struct sigaction savettin;
+	struct sigaction saveint;
+	struct sigaction savehup;
+	sigset_t oset;
 	int n;
 
-	clearerr(ibuf);
-	if (fgets(linebuf, linesize, ibuf) == NULL)
-		return(-1);
+	/*
+	 * Setup signal handlers if the caller asked us to catch signals.
+	 * Note that we do not restart system calls since we need the
+	 * read to be interuptible.
+	 */
+	if (signo) {
+		fiosignal = 0;
+		sigemptyset(&act.sa_mask);
+		act.sa_flags = 0;
+		act.sa_handler = fioint;
+		if (sigaction(SIGINT, NULL, &saveint) == 0 &&
+		    saveint.sa_handler != SIG_IGN) {
+			(void)sigaction(SIGINT, &act, &saveint);
+			(void)sigprocmask(SIG_UNBLOCK, &intset, &oset);
+		}
+		if (sigaction(SIGHUP, NULL, &savehup) == 0 &&
+		    savehup.sa_handler != SIG_IGN)
+			(void)sigaction(SIGHUP, &act, &savehup);
+		(void)sigaction(SIGTSTP, &act, &savetstp);
+		(void)sigaction(SIGTTOU, &act, &savettou);
+		(void)sigaction(SIGTTIN, &act, &savettin);
+	}
 
-	n = strlen(linebuf);
-	if (n > 0 && linebuf[n - 1] == '\n')
-		linebuf[--n] = '\0';
-	if (n > 0 && linebuf[n - 1] == '\r')
-		linebuf[--n] = '\0';
+	clearerr(ibuf);
+	if (fgets(linebuf, linesize, ibuf) == NULL) {
+		if (ferror(ibuf))
+			clearerr(ibuf);
+		n = -1;
+	} else {
+		n = strlen(linebuf);
+		if (n > 0 && linebuf[n - 1] == '\n')
+			linebuf[--n] = '\0';
+		if (n > 0 && linebuf[n - 1] == '\r')
+			linebuf[--n] = '\0';
+	}
+
+	if (signo) {
+		(void)sigprocmask(SIG_SETMASK, &oset, NULL);
+		(void)sigaction(SIGINT, &saveint, NULL);
+		(void)sigaction(SIGHUP, &savehup, NULL);
+		(void)sigaction(SIGTSTP, &savetstp, NULL);
+		(void)sigaction(SIGTTOU, &savettou, NULL);
+		(void)sigaction(SIGTTIN, &savettin, NULL);
+		*signo = fiosignal;
+	}
+
 	return(n);
 }
 
@@ -337,6 +384,34 @@ relsesigs()
 
 	if (--sigdepth == 0)
 		sigprocmask(SIG_SETMASK, &oset, NULL);
+}
+
+/*
+ * Unblock and ignore a signal
+ */
+int
+ignoresig(sig, oact, oset)
+	int sig;
+	struct sigaction *oact;
+	sigset_t *oset;
+{
+	struct sigaction act;
+	sigset_t nset;
+	int error;
+
+	sigemptyset(&act.sa_mask);
+	act.sa_flags = SA_RESTART;
+	act.sa_handler = SIG_IGN;
+	error = sigaction(sig, &act, oact);
+
+	if (error == 0) {
+		sigemptyset(&nset);
+		sigaddset(&nset, sig);
+		(void)sigprocmask(SIG_UNBLOCK, &nset, oset);
+	} else if (oset != NULL)
+		(void)sigprocmask(SIG_BLOCK, NULL, oset);
+
+	return(error);
 }
 
 /*
@@ -492,4 +567,16 @@ getdeadletter()
 		cp = expand(buf);
 	}
 	return(cp);
+}
+
+/*
+ * Signal handler used by readline() to catch SIGINT, SIGHUP, SIGTSTP,
+ * SIGTTOU, SIGTTIN.
+ */
+void
+fioint(s)
+	int s;
+{
+
+	fiosignal = s;
 }
