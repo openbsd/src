@@ -337,13 +337,17 @@ setuid perl scripts securely.\n");
 	    if (euid != uid || egid != gid)
 		croak("No -e allowed in setuid scripts");
 	    if (!e_fp) {
+		int fd;
+
 	        e_tmpname = savepv(TMPPATH);
-		(void)mktemp(e_tmpname);
-		if (!*e_tmpname)
-		    croak("Can't mktemp()");
-		e_fp = fopen(e_tmpname,"w");
-		if (!e_fp)
+		fd = mkstemp(e_tmpname);
+		if (fd == -1)
+		    croak("Can't mkstemp()");
+		e_fp = fdopen(fd,"w");
+		if (!e_fp) {
+		    close(fd);
 		    croak("Cannot open temporary file");
+		}
 	    }
 	    if (argv[1]) {
 		fputs(argv[1],e_fp);
