@@ -1,4 +1,4 @@
-/*	$OpenBSD: grfinfo.c,v 1.5 2002/09/06 22:08:36 miod Exp $	*/
+/*	$OpenBSD: grfinfo.c,v 1.6 2002/09/06 22:12:18 deraadt Exp $	*/
 
 /* 
  * Copyright (c) 1987-1993, The University of Utah and
@@ -52,8 +52,7 @@ struct grf_info {
 };
 
 int
-main(argc, argv)
-	char **argv;
+main(int argc, char *argv[])
 {
 	int aflg, tflg;
 	int c;
@@ -96,8 +95,7 @@ main(argc, argv)
 }
 
 int
-getinfo(dname)
-	char *dname;
+getinfo(char *dname)
 {
 	int f;
 
@@ -117,7 +115,7 @@ getinfo(dname)
 }
 
 void
-printall()
+printall(void)
 {
 	printf("%d x %d, ", gi.gd_dwidth, gi.gd_dheight);
 	if (gi.gd_colors < 3)
@@ -129,13 +127,13 @@ printall()
 	}
 	printf("%s\n", tname());
 	printf("registers: 0x%x bytes at 0x%x\n",
-	       gi.gd_regsize, gi.gd_regaddr);
+	    gi.gd_regsize, gi.gd_regaddr);
 	printf("framebuf:  0x%x bytes at 0x%x (%d x %d)\n",
-	       gi.gd_fbsize, gi.gd_fbaddr, gi.gd_fbwidth, gi.gd_fbheight);
+	    gi.gd_fbsize, gi.gd_fbaddr, gi.gd_fbwidth, gi.gd_fbheight);
 }
 
 char *
-tname()
+tname(void)
 {
 	struct grf_info *gp;
 
@@ -149,13 +147,13 @@ tname()
 	 */
 	if (gi.gd_id == GRFBOBCAT &&
 	    (gi.gd_dwidth == 1280 ||
-	     gi.gd_fbsize == 0x100000 && gi.gd_colors == 64))
+	    gi.gd_fbsize == 0x100000 && gi.gd_colors == 64))
 		return("catseye");
 	return(gp->grf_name);
 }
 
 void
-usage()
+usage(void)
 {
 	extern char *__progname;
 
