@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.45 2003/03/05 20:24:04 deraadt Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.46 2003/03/06 23:07:27 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,6 +81,7 @@
  */
 
 #include "bpfilter.h"
+#include "vlan.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,6 +109,11 @@
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
+#endif
+
+#if NVLAN > 0
+#include <net/if_types.h>
+#include <net/if_vlan_var.h>
 #endif
 
 #include <dev/pci/pcireg.h>
@@ -1736,6 +1742,10 @@ ti_attach(parent, self, aux)
 	ifp->if_start = ti_start;
 	ifp->if_watchdog = ti_watchdog;
 	ifp->if_mtu = ETHERMTU;
+#if NVLAN >0
+	ifp->if_capabilities |= IFCAP_VLAN_MTU | IFCAP_VLAN_HWTAGGING;
+#endif
+
 	IFQ_SET_MAXLEN(&ifp->if_snd, TI_TX_RING_CNT - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->sc_dv.dv_xname, ifp->if_xname, IFNAMSIZ);
