@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2002/04/25 22:10:27 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.17 2002/04/25 22:12:08 deraadt Exp $
 #	$NetBSD: Makefile,v 1.1 1995/07/18 04:13:06 briggs Exp $
 
 TOP=		${.CURDIR}/..
@@ -24,7 +24,7 @@ all: ${CBIN} ${IMAGE} bsd.rd bsd.rd.gz
 
 install: bsd.rd
 	cp bsd.rd ${DESTDIR}/snapshot/bsd.rd
-	cp ${.CURDIR}/../HP-IB.geometry ${DESTDIR}/snapshot
+	cp ${.CURDIR}/../common/HP-IB.geometry ${DESTDIR}/snapshot
 
 .include "Makefile.inc"
 

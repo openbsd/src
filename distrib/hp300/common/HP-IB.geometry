@@ -1,4 +1,4 @@
-	$OpenBSD: HP-IB.geometry,v 1.2 1997/02/16 18:19:55 downsj Exp $
+	$OpenBSD: HP-IB.geometry,v 1.1 2002/04/25 22:12:08 deraadt Exp $
 	$NetBSD: HP-IB.geometry,v 1.1 1995/11/17 07:42:29 thorpej Exp $
 
 This file lists disk geometry for several types of HP-IB disks.  These
