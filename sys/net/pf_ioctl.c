@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.82 2003/09/26 21:44:08 cedric Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.83 2003/10/08 14:44:35 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -730,6 +730,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		case DIOCRCLRASTATS:
 		case DIOCRTSTADDRS:
 		case DIOCOSFPGET:
+		case DIOCXBEGIN:
+		case DIOCXROLLBACK:
+		case DIOCXCOMMIT:
 			break;
 		default:
 			return (EPERM);
