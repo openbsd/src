@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.111 2003/01/30 07:50:17 henric Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.112 2003/02/13 15:30:21 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -2135,6 +2135,7 @@ amd756_setup_channel(chp)
 	struct ata_drive_datas *drvp;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
 	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+	pcireg_t chanenable;
 #ifndef	PCIIDE_AMD756_ENABLEDMA
 	int product = PCI_PRODUCT(
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_ID_REG));
@@ -2147,6 +2148,8 @@ amd756_setup_channel(chp)
 	udmatim_reg = pci_conf_read(sc->sc_pc, sc->sc_tag, AMD756_UDMA);
 	datatim_reg &= ~AMD756_DATATIM_MASK(chp->channel);
 	udmatim_reg &= ~AMD756_UDMA_MASK(chp->channel);
+	chanenable = pci_conf_read(sc->sc_pc, sc->sc_tag,
+	    AMD756_CHANSTATUS_EN);
 
 	/* setup DMA if needed */
 	pciide_channel_dma_setup(cp);
@@ -2166,6 +2169,17 @@ amd756_setup_channel(chp)
 		    (drvp->drive_flags & DRIVE_UDMA)) {
 			/* use Ultra/DMA */
 			drvp->drive_flags &= ~DRIVE_DMA;
+
+			/* Check cable */
+			if ((chanenable & AMD756_CABLE(chp->channel,
+			    drive)) == 0 && drvp->UDMA_mode > 2) {
+				WDCDEBUG_PRINT(("%s(%s:%d:%d): 80-wire "
+				    "cable not detected\n", drvp->drive_name,
+				    sc->sc_wdcdev.sc_dev.dv_xname,
+				    chp->channel, drive), DEBUG_PROBE);
+				drvp->UDMA_mode = 2;
+			}
+
 			udmatim_reg |= AMD756_UDMA_EN(chp->channel, drive) |
 			    AMD756_UDMA_EN_MTH(chp->channel, drive) |
 			    AMD756_UDMA_TIME(chp->channel, drive,
