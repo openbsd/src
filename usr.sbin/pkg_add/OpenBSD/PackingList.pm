@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.34 2004/11/11 15:32:28 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.35 2004/11/12 23:26:41 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -25,11 +25,12 @@ use OpenBSD::PackageInfo;
 sub new
 {
 	my $class = shift;
+	my $o = '.';
 	bless {state => 
 	    {default_owner=>'root', 
 	     default_group=>'bin', 
 	     default_mode=> 0444,
-	     cwd=>'.'} }, $class;
+	     cwd=>\$o} }, $class;
 }
 
 sub read

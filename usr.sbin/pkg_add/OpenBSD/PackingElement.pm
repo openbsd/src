@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.67 2004/11/12 23:00:46 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.68 2004/11/12 23:26:41 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -167,8 +167,8 @@ sub fullname($)
 {
 	my $self = $_[0];
 	my $fullname = $self->{name};
-	if ($fullname !~ m|^/| && $self->{cwd} ne '.') {
-		$fullname = $self->{cwd}."/".$fullname;
+	if ($fullname !~ m|^/| && ${$self->{cwd}} ne '.') {
+		$fullname = ${$self->{cwd}}."/".$fullname;
 	}
 	return $fullname;
 }
@@ -834,7 +834,8 @@ sub keyword() { 'cwd' }
 sub destate
 {
 	my ($self, $state) = @_;
-	$state->{cwd} = File::Spec->canonpath($self->{name});
+	my $name = File::Spec->canonpath($self->{name});
+	$state->{cwd} = \$name;
 }
 
 package OpenBSD::PackingElement::EndFake;
@@ -941,7 +942,7 @@ sub expand
 	}
 	if (m/\%D/) {
 		die "Bad expand" unless defined $state->{cwd};
-		s/\%D/$state->{cwd}/g;
+		s/\%D/${$state->{cwd}}/g;
 	}
 	if (m/\%B/) {
 		die "Bad expand" unless defined $state->{lastfile};
