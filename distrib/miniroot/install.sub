@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.159 2000/11/20 13:11:16 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.160 2000/12/10 02:40:39 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -1985,6 +1985,11 @@ _fstab_shadow=$2
 	case "$_dev" in
 		\#*)	continue;;
 		*)	;;
+	esac
+	# ...and filesystems with mounting options ``xx''
+	case "$_rest" in
+		xx*)    continue;;
+		*)      ;;
 	esac
 	# and some filesystem types (like there are swap,kernfs,...)
 	case "$_fstype" in
