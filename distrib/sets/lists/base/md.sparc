@@ -192,7 +192,7 @@
 ./usr/lib/libpanel.so.0.0
 ./usr/lib/libpcap.so.0.2
 ./usr/lib/libresolv.so.2.0
-./usr/lib/libskey.so.0.1
+./usr/lib/libskey.so.0.2
 ./usr/lib/libss.so.4.0
 ./usr/lib/libstdc++.so.27.1
 ./usr/lib/libtermlib.so.1.0
@@ -549,3 +549,4 @@
 ./usr/lib/perl5/sparc-openbsd/5.003/zlib.ph
 ./usr/lib/perl5/site_perl/sparc-openbsd
 ./usr/lkm/ipl.o
+./usr/lib/perl5/sparc-openbsd/5.003/sha1.ph

@@ -366,3 +366,6 @@
 ./usr/mips-arc-openbsd2.0/lib/ldscripts/elf32arc.xr
 ./usr/mips-arc-openbsd2.0/lib/ldscripts/elf32arc.xs
 ./usr/mips-arc-openbsd2.0/lib/ldscripts/elf32arc.xu
+./usr/lib/perl5/arc-openbsd/5.003/dlfcn.ph
+./usr/lib/perl5/arc-openbsd/5.003/link.ph
+./usr/lib/perl5/arc-openbsd/5.003/machine/dlfcn.ph

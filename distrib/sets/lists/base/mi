@@ -1638,3 +1638,4 @@
 ./usr/bin/otp-md4
 ./usr/bin/otp-md5
 ./usr/bin/otp-sha1
+./etc/termcap

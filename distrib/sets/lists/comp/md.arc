@@ -82,3 +82,4 @@
 ./usr/lib/gcc-lib/mips-arc-openbsd2.0/2.7.2.1/libgcc.a
 ./usr/lib/gcc-lib/mips-arc-openbsd2.0/2.7.2.1/libobjc.a
 ./usr/lib/gcc-lib/mips-arc-openbsd2.0/2.7.2.1/specs
+./usr/include/machine/dlfcn.h
