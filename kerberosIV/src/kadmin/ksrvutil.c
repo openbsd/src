@@ -265,7 +265,7 @@ usage(void)
     fprintf(stderr, "{list | change | add | get | delete}\n");
     fprintf(stderr, "   -i causes the program to ask for "
 	    "confirmation before changing keys.\n");
-    fprintf(stderr, "   -k causes the key to printed for list or change.\n");
+    fprintf(stderr, "   -k causes the key to be printed for list or change.\n");
     fprintf(stderr, "   -u creates one keyfile for each principal "
 	    "(only used with `get')\n");
     exit(1);
@@ -588,7 +588,7 @@ main(int argc, char **argv)
 		} else {
 		    strlcpy (sname, databuf, sizeof(sname));
 		    safe_read_stdin("Instance: ", databuf, sizeof(databuf));
-		    strlcpy (sinst, databuf, sizeof(databuf));
+		    strlcpy (sinst, databuf, sizeof(sinst));
 		}
 
 		safe_read_stdin("Realm: ", databuf, sizeof(databuf));
