@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.11 2002/05/18 09:49:16 art Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.12 2002/05/18 17:55:50 art Exp $	*/
 
 /*
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserverd.
@@ -197,7 +197,11 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	if (count == -1)
 		count = 65535;
 
-	regs = have_addr ? (db_regs_t *)addr : DDB_REGS;
+	if (have_addr) {
+		(*pr)("alpha trace requires a trap frame... giving up.\n");
+		return;
+	}
+	regs = DDB_REGS;
 trapframe:
 	/* remember where various registers are stored */
 	for (i = 0; i < 31; i++)
