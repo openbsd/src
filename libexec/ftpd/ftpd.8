@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.57 2003/04/14 06:39:24 jmc Exp $
+.\"	$OpenBSD: ftpd.8,v 1.58 2003/06/02 12:50:25 jmc Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -99,7 +99,7 @@ Normally they are permitted.
 .It Fl P
 Permit illegal port numbers or addresses for PORT command initiated connects.
 By default
-.Xr ftpd 8
+.Nm
 violates the RFC and thus constrains the PORT command to non-reserved ports
 and requires it use the same source address as the connection came from.
 This prevents the "FTP bounce attack" against services on both the local
@@ -491,11 +491,11 @@ If this variable is not set,
 is used.
 .El
 .Sh PORT ALLOCATION
-For passive mode data connections, 
+For passive mode data connections,
 .Nm
 will listen to a random high tcp port.
 The interval of ports used are configurable using
-.Xr sysctl 8 
+.Xr sysctl 8
 variables
 .Li net.inet.ip.porthifirst
 and
