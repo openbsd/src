@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypinternal.h,v 1.6 2003/06/02 03:48:42 deraadt Exp $	 */
+/*	$OpenBSD: ypinternal.h,v 1.7 2003/06/25 21:51:56 marc Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
@@ -54,18 +54,3 @@ extern int _yplib_timeout;
 void _yp_unbind(struct dom_binding *);
 int _yp_check(char **);
 
-#ifdef YPMATCHCACHE
-
-static bool_t ypmatch_add(const char *, const char *, u_int, char *, u_int);
-static bool_t ypmatch_find(const char *, const char *, u_int, char **, u_int *);
-
-static struct ypmatch_ent {
-	struct ypmatch_ent	*next;
-	char			*map, *key;
-	char			*val;
-	int			 keylen, vallen;
-	time_t			 expire_t;
-} *ypmc;
-extern int _yplib_cache;
-
-#endif
