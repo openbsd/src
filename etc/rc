@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.104 1999/08/05 08:10:06 millert Exp $
+#	$OpenBSD: rc,v 1.105 1999/08/05 08:12:10 millert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -302,7 +302,7 @@ if [ ! -f /etc/motd ]; then
 	install -c -o root -g wheel -m 664 /dev/null /etc/motd
 fi
 T=`mktemp /tmp/_motd.XXXXXXXXXX` 
-if [ $? -ne 0 ]; then
+if [ $? -eq 0 ]; then
 	sysctl -n kern.version | sed 1q > $T
 	echo "" >> $T
 	sed '1,/^$/d' < /etc/motd >> $T
