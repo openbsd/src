@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: style.9,v 1.27 2002/06/03 06:27:44 kjell Exp $
+.\"	$OpenBSD: style.9,v 1.28 2002/10/11 22:15:02 marc Exp $
 .\"
 .Dd June 18, 2001
 .Dt STYLE 9
@@ -469,17 +469,41 @@ If any warnings of this type occur you must apply the
 specifier to the variable in question.
 Failure to do so may result in improper code generation when optimization
 is enabled.
-Note that for pointers, the
+Note that for pointers, the location of
 .Dq volatile
-should go after to the type, not before.
-Use
+specifies if the type-qualifier applies to the pointer, or the thing being
+pointed to.
+A volatile pointer is declared with
+.Dq volatile
+to the right of the
+.Dq * .
+Example:
 .Bd -literal -offset 0i
-char * volatile foo;
+char *volatile foo;
 .Ed
 .Pp
-not:
+says that
+.Dq foo
+is volatile, but
+.Dq *foo
+is not.
+To make
+.Dq *foo
+volatile use the syntax
 .Bd -literal -offset 0i
 volatile char *foo;
+.Ed
+.Pp
+If both the pointer and the thing pointed to are volatile use
+.Bd -literal -offset 0i
+volatile char *volatile foo;
+.Ed
+.Pp
+.Dq const
+is also a type-qualifier and the same rules apply.  The description of
+a read-only hardware register might look something like:
+.Bd -literal -offset 0i
+const volatile char *reg;
 .Ed
 .Pp
 Global flags set inside signal handlers should be of type
