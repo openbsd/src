@@ -1,4 +1,4 @@
-/*	$OpenBSD: wall.c,v 1.2 1996/06/26 05:42:48 deraadt Exp $	*/
+/*	$OpenBSD: wall.c,v 1.3 1996/08/06 19:25:35 deraadt Exp $	*/
 /*	$NetBSD: wall.c,v 1.6 1994/11/17 07:17:58 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)wall.c	8.2 (Berkeley) 11/16/93";
 #endif
-static char rcsid[] = "$OpenBSD: wall.c,v 1.2 1996/06/26 05:42:48 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: wall.c,v 1.3 1996/08/06 19:25:35 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -163,10 +163,11 @@ makemsg(fname)
 		 * in column 80, but that can't be helped.
 		 */
 		(void)fprintf(fp, "\r%79s\r\n", " ");
-		(void)sprintf(lbuf, "Broadcast Message from %s@%s",
-		    whom, hostname);
+		(void)snprintf(lbuf, sizeof lbuf,
+		    "Broadcast Message from %s@%s", whom, hostname);
 		(void)fprintf(fp, "%-79.79s\007\007\r\n", lbuf);
-		(void)sprintf(lbuf, "        (%s) at %d:%02d ...", ttyname(2),
+		(void)snprintf(lbuf, sizeof lbuf,
+		    "        (%s) at %d:%02d ...", ttyname(2),
 		    lt->tm_hour, lt->tm_min);
 		(void)fprintf(fp, "%-79.79s\r\n", lbuf);
 	}
