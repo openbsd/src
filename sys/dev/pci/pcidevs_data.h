@@ -267,6 +267,42 @@ static const struct pci_known_product pci_known_products[] = {
 	    "2051 Host-ISA",
 	},
 	{
+	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_ATP850U,
+	    "ATP850U/UF IDE",
+	},
+	{
+	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_ATP860,
+	    "ATP860 IDE",
+	},
+	{
+	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_ATP860A,
+	    "ATP860-A IDE",
+	},
+	{
+	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_AEC6710,
+	    "AEC6710 SCSI",
+	},
+	{
+	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_AEC6712UW,
+	    "AEC6712UW SCSI",
+	},
+	{
+	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_AEC6712U,
+	    "AEC6712U SCSI",
+	},
+	{
+	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_AEC6712S,
+	    "AEC6712S SCSI",
+	},
+	{
+	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_AEC6710D,
+	    "AEC6710D SCSI",
+	},
+	{
+	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_AEC6715UW,
+	    "AEC6715UW SCSI",
+	},
+	{
 	    PCI_VENDOR_ACCTON, PCI_PRODUCT_ACCTON_5030,
 	    "MPX 5030/5038",
 	},
@@ -6123,8 +6159,8 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "Hermstedt",
 	},
 	{
-	    PCI_VENDOR_ARTOP,
-	    "Artop Electric",
+	    PCI_VENDOR_ACARD,
+	    "Acard",
 	},
 	{
 	    PCI_VENDOR_DENSAN,
