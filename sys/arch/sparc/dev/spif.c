@@ -1,4 +1,4 @@
-/*	$OpenBSD: spif.c,v 1.4 1999/02/23 23:47:46 jason Exp $	*/
+/*	$OpenBSD: spif.c,v 1.5 1999/04/18 03:04:24 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -176,11 +176,11 @@ spifattach(parent, self, aux)
 	sc->sc_osc = getpropint(sc->sc_node, "verosc", 0);
 	switch (sc->sc_osc) {
 	case SPIF_OSC10:
-		sc->sc_osc = 10;
+		sc->sc_osc = 10000000;
 		break;
 	case SPIF_OSC9:
 	default:
-		sc->sc_osc = 9;
+		sc->sc_osc = 9830400;
 		break;
 	}
 
@@ -202,13 +202,9 @@ spifattach(parent, self, aux)
 	sc->sc_regs->stc.pprh = CD180_PPRH;
 	sc->sc_regs->stc.pprl = CD180_PPRL;
 
-	printf(": rev %x chiprev %x osc %dMhz stcpri %d ppcpri %d softpri %d\n",
-	    sc->sc_rev, sc->sc_rev2, sc->sc_osc, stcpri, ppcpri, PIL_TTY);
-
-	if (sc->sc_osc == 10)
-		sc->sc_osc = 10000000;
-	else
-		sc->sc_osc = 9830400;
+	printf(": rev %x chiprev %x osc %sMhz stcpri %d ppcpri %d softpri %d\n",
+	    sc->sc_rev, sc->sc_rev2, clockfreq(sc->sc_osc),
+	    stcpri, ppcpri, PIL_TTY);
 
 	(void)config_found(self, sttymatch, NULL);
 	(void)config_found(self, sbppmatch, NULL);
