@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.22 1997/06/23 02:26:35 gene Exp $
+#	$OpenBSD: GENERIC,v 1.23 1997/10/19 23:40:44 briggs Exp $
 #	$NetBSD: GENERIC,v 1.52 1997/01/13 23:34:07 scottr Exp $
 #
 # GENERIC - an all-in-one kernel for the mac68k
@@ -7,6 +7,7 @@ machine	mac68k m68k
 include "conf/GENERIC"
 
 # Mac-specific options
+option		HZ=60		# Macs like 60hz
 option		M68040
 option		M68030
 option		M68020		# Must have 68851 PMMU
