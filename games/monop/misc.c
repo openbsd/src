@@ -92,15 +92,17 @@ reg char	*prompt; {
 
 	reg int		num;
 	reg char	*sp;
+	int		c;
 	char		buf[257];
 
 	for (;;) {
 inter:
 		printf(prompt);
 		num = 0;
-		for (sp = buf; (*sp=getchar()) != '\n'; sp++)
-			if (*sp == -1)	/* check for interrupted system call */
+		for (sp = buf; (c = getchar()) != '\n'; *sp++ = c)
+			if (c == -1)	/* check for interrupted system call */
 				goto inter;
+		*sp = c;
 		if (sp == buf)
 			continue;
 		for (sp = buf; isspace(*sp); sp++)

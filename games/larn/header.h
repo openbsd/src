@@ -71,7 +71,7 @@ struct sphere
 	struct sphere *p;	/* pointer to next structure */
 	char x,y,lev;		/* location of the sphere */
 	char dir;			/* direction sphere is going in */
-	char lifetime;		/* duration of the sphere */
+	short lifetime;		/* duration of the sphere */
 	};
 
 /*	defines for the character attribute array	c[]	*/
@@ -334,7 +334,7 @@ extern char aborted[],alpha[],beenhere[],boldon,cheat,ckpfile[],ckpflag;
 extern char *class[],course[],diagfile[],helpfile[];
 extern char *inbuffer,is_alpha[],is_digit[];
 extern char item[MAXX][MAXY],iven[],know[MAXX][MAXY],larnlevels[],lastmonst[];
-extern char level,*levelname[],logfile[],loginname[],logname[],*lpbuf,*lpend;
+extern char *levelname[],logfile[],loginname[],logname[],*lpbuf,*lpend;
 extern char *lpnt,moved[MAXX][MAXY],mitem[MAXX][MAXY],monstlevel[];
 extern char monstnamelist[],nch[],ndgg[],nlpts[],nomove,nosignal,nowelcome;
 extern char nplt[],nsw[],*objectname[],objnamelist[],optsfile[1024];
@@ -346,7 +346,7 @@ extern char spelknow[],*spelname[],*spelmes[],spelweird[MAXMONST+8][SPNUM];
 extern char splev[],stealth[MAXX][MAXY],to_lower[],to_upper[],wizard;
 extern short diroffx[],diroffy[],hitflag,hit2flag,hit3flag,hitp[MAXX][MAXY];
 extern short iarg[MAXX][MAXY],ivenarg[],lasthx,lasthy,lastnum,lastpx,lastpy;
-extern short nobeep,oldx,oldy,playerx,playery;
+extern short nobeep,oldx,oldy,playerx,playery,level;
 extern int dayplay,enable_scroll,srcount,yrepcount,userid,wisid,lfd,fd;
 extern uid_t uid, euid;
 extern long initialtime,outstanding_taxes,skill[],gtime,c[],cbak[];

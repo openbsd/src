@@ -105,7 +105,11 @@
  * will do when you have signed characters; otherwise use
  *	typedef	short int schar;
  */
+#ifdef __CHAR_UNSIGNED__
+typedef	short int	schar;
+#else
 typedef	char	schar;
+#endif
 
 /*
  * small unsigned integers (8 bits suffice - but 7 bits do not)

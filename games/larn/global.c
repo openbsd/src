@@ -26,8 +26,8 @@ static char rcsid[] = "$NetBSD: global.c,v 1.4 1995/04/24 12:23:52 cgd Exp $";
 #include <string.h>
 extern int score[],srcount,dropflag;
 extern int random;/*	the random number seed			*/
-extern short playerx,playery,lastnum;
-extern char cheat,level,monstnamelist[];
+extern short playerx,playery,lastnum,level;
+extern char cheat,monstnamelist[];
 extern char lastmonst[],*what[],*who[]; 
 extern char winner[];
 extern char logname[],monstlevel[];

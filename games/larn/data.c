@@ -142,7 +142,7 @@ char sex=1;				/*  default is a man  0=woman						*/
 char boldon=1;			/*  1=bold objects  0=inverse objects				*/
 char ckpflag=0;			/*	1 if want checkpointing of game, 0 otherwise	*/
 char cheat=0;			/*	1 if the player has fudged save file			*/
-char level=0;			/*  cavelevel player is on = c[CAVELEVEL]			*/
+short level=0;			/*  cavelevel player is on = c[CAVELEVEL]			*/
 char wizard=0;			/*	the wizard mode flag							*/
 short lastnum=0;		/* the number of the monster last hitting player 	*/
 short hitflag=0;		/*	flag for if player has been hit when running 	*/

@@ -5,7 +5,8 @@ static char rcsid[] = "$NetBSD: create.c,v 1.3 1995/03/23 08:33:14 cgd Exp $";
 /*	create.c		Larn is copyrighted 1986 by Noah Morgan. */
 #include "header.h"
 extern char spelknow[],larnlevels[];
-extern char beenhere[],wizard,level;
+extern char beenhere[],wizard;
+extern short level;
 extern short oldx,oldy;
 /*
 	makeplayer()
