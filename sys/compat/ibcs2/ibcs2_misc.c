@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_misc.c,v 1.14 1999/02/10 00:16:11 niklas Exp $	*/
+/*	$OpenBSD: ibcs2_misc.c,v 1.15 2000/03/05 20:32:13 deraadt Exp $	*/
 /*	$NetBSD: ibcs2_misc.c,v 1.23 1997/01/15 01:37:49 perry Exp $	*/
 
 /*
@@ -638,13 +638,15 @@ ibcs2_sys_getgroups(p, v, retval)
 	}
 	if ((error = sys_getgroups(p, &sa, retval)) != 0)
 		return error;
-	for (i = 0, gp = SCARG(&sa, gidset); i < retval[0]; i++)
-		iset[i] = (ibcs2_gid_t)*gp++;
-	if (retval[0] && (error = copyout((caddr_t)iset,
-					  (caddr_t)SCARG(uap, gidset),
-					  sizeof(ibcs2_gid_t) * retval[0])))
-		return error;
-        return 0;
+	if (iset) {
+		for (i = 0, gp = SCARG(&sa, gidset); i < retval[0]; i++)
+			iset[i] = (ibcs2_gid_t)*gp++;
+		if (retval[0] && (error = copyout((caddr_t)iset,
+		    (caddr_t)SCARG(uap, gidset),
+		    sizeof(ibcs2_gid_t) * retval[0])))
+			return error;
+	}
+	return 0;
 }
 
 int
