@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.312 2003/01/31 19:09:12 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.313 2003/01/31 19:22:11 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -67,6 +67,7 @@
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
 #include <netinet/udp_var.h>
+#include <netinet/icmp_var.h>
 
 #include <dev/rndvar.h>
 #include <net/pfvar.h>
@@ -234,6 +235,8 @@ int			 pf_socket_lookup(uid_t *, gid_t *, int, sa_family_t,
 			    int, struct pf_pdesc *);
 u_int8_t		 pf_get_wscale(struct mbuf *, int, u_int16_t,
 			    sa_family_t);
+int			 pf_check_proto_cksum(struct mbuf *, int, int,
+			    u_int8_t, sa_family_t);
 
 struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] =
     { { &pf_state_pl, PFSTATE_HIWAT }, { &pf_frent_pl, PFFRAG_FRENT_HIWAT } };
@@ -4091,6 +4094,89 @@ bad:
 }
 #endif /* INET6 */
 
+
+/*
+ * check protocol (tcp/udp/icmp/icmp6) checksum and set mbuf flag
+ *   off is the offset where the protocol header starts
+ *   len is the total length of protocol header plus payload
+ * returns 0 when the checksum is valid, otherwise returns 1.
+ */
+int
+pf_check_proto_cksum(struct mbuf *m, int off, int len, u_int8_t p, sa_family_t af)
+{
+	u_int16_t flag_ok, flag_bad;
+	u_int16_t sum;
+
+	switch (p) {
+	case IPPROTO_TCP:
+		flag_ok = M_TCP_CSUM_IN_OK;
+		flag_bad = M_TCP_CSUM_IN_BAD;
+		break;
+	case IPPROTO_UDP:
+		flag_ok = M_UDP_CSUM_IN_OK;
+		flag_bad = M_UDP_CSUM_IN_BAD;
+		break;
+	case IPPROTO_ICMP:
+	case IPPROTO_ICMPV6:
+		flag_ok = flag_bad = 0;
+		break;
+	default:
+		return (1);
+	}
+	if (m->m_pkthdr.csum & flag_ok)
+		return (0);
+	if (m->m_pkthdr.csum & flag_bad)
+		return (1);
+	if (off < sizeof(struct ip) || len < sizeof(struct udphdr))
+		return (1);
+	if (m->m_pkthdr.len < off + len)
+		return (1);
+		switch (af) {
+	case AF_INET:
+		if (p == IPPROTO_ICMP) {
+			if (m->m_len < off)
+				return (1);
+			m->m_data += off;
+			m->m_len -= off;
+			sum = in_cksum(m, len);
+			m->m_data -= off;
+			m->m_len += off;
+		} else {
+			if (m->m_len < sizeof(struct ip))
+				return (1);
+			sum = in4_cksum(m, p, off, len);
+		}
+		break;
+	case AF_INET6:
+		if (m->m_len < sizeof(struct ip6_hdr))
+			return (1);
+		sum = in6_cksum(m, p, off, len);
+		break;
+	default:
+		return (1);
+	}
+	if (sum) {
+		m->m_pkthdr.csum |= flag_bad;
+		switch (p) {
+		case IPPROTO_TCP:
+			tcpstat.tcps_rcvbadsum++;
+			break;
+		case IPPROTO_UDP:
+			udpstat.udps_badsum++;
+			break;
+		case IPPROTO_ICMP:
+			icmpstat.icps_checksum++;
+			break;
+		case IPPROTO_ICMPV6:
+			icmp6stat.icp6s_checksum++;
+			break;
+		}
+		return (1);
+	}
+	m->m_pkthdr.csum |= flag_ok;
+	return (0);
+}
+
 #ifdef INET
 int
 pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
@@ -4160,6 +4246,11 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 			log = action != PF_PASS;
 			goto done;
 		}
+		if (dir == PF_IN && pf_check_proto_cksum(m, off,
+		    h->ip_len - off, IPPROTO_TCP, AF_INET)) {
+			action = PF_DROP;
+			goto done;
+		}
 		pd.p_len = pd.tot_len - off - (th.th_off << 2);
 		action = pf_normalize_tcp(dir, ifp, m, 0, off, h, &pd);
 		if (action == PF_DROP)
@@ -4182,6 +4273,11 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 			log = action != PF_PASS;
 			goto done;
 		}
+		if (dir == PF_IN && uh.uh_sum && pf_check_proto_cksum(m,
+		    off, h->ip_len - off, IPPROTO_UDP, AF_INET)) {
+			action = PF_DROP;
+			goto done;
+		}
 		action = pf_test_state_udp(&s, dir, ifp, m, 0, off, h, &pd);
 		if (action == PF_PASS) {
 			r = s->rule.ptr;
@@ -4198,6 +4294,11 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 		if (!pf_pull_hdr(m, off, &ih, ICMP_MINLEN,
 		    &action, &reason, AF_INET)) {
 			log = action != PF_PASS;
+			goto done;
+		}
+		if (dir == PF_IN && pf_check_proto_cksum(m, off,
+		    h->ip_len - off, IPPROTO_ICMP, AF_INET)) {
+			action = PF_DROP;
 			goto done;
 		}
 		action = pf_test_state_icmp(&s, dir, ifp, m, 0, off, h, &pd);
@@ -4377,6 +4478,11 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 			log = action != PF_PASS;
 			goto done;
 		}
+		if (dir == PF_IN && pf_check_proto_cksum(m, off,
+		    ntohs(h->ip6_plen), IPPROTO_TCP, AF_INET6)) {
+			action = PF_DROP;
+			goto done;
+		}
 		pd.p_len = pd.tot_len - off - (th.th_off << 2);
 		action = pf_normalize_tcp(dir, ifp, m, 0, off, h, &pd);
 		if (action == PF_DROP)
@@ -4399,6 +4505,11 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 			log = action != PF_PASS;
 			goto done;
 		}
+		if (dir == PF_IN && uh.uh_sum && pf_check_proto_cksum(m,
+		    off, ntohs(h->ip6_plen), IPPROTO_UDP, AF_INET6)) {
+			action = PF_DROP;
+			goto done;
+		}
 		action = pf_test_state_udp(&s, dir, ifp, m, 0, off, h, &pd);
 		if (action == PF_PASS) {
 			r = s->rule.ptr;
@@ -4415,6 +4526,11 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 		if (!pf_pull_hdr(m, off, &ih, sizeof(ih),
 		    &action, &reason, AF_INET6)) {
 			log = action != PF_PASS;
+			goto done;
+		}
+		if (dir == PF_IN && pf_check_proto_cksum(m, off,
+		    ntohs(h->ip6_plen), IPPROTO_ICMPV6, AF_INET6)) {
+			action = PF_DROP;
 			goto done;
 		}
 		action = pf_test_state_icmp(&s, dir, ifp, m, 0, off, h, &pd);
