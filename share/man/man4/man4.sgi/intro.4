@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.4,v 1.2 2004/08/15 22:52:41 jmc Exp $
+.\"	$OpenBSD: intro.4,v 1.3 2004/08/27 13:30:57 miod Exp $
 .\"     $NetBSD: intro.4,v 1.8 2004/02/10 16:54:19 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -39,8 +39,9 @@
 .Nm intro
 .Nd introduction to special files and hardware support
 .Sh DESCRIPTION
-This section describes the special files, related driver functions,
-and networking support available in the system.
+The manual pages in section 4 describe the special files,
+related driver functions, and networking support
+available in the system.
 In this part of the manual, the
 .Tn SYNOPSIS
 section of each configurable device gives a sample specification
@@ -61,8 +62,7 @@ the system and network related information.
 The networking support is introduced in
 .Xr netintro 4 .
 .Sh DEVICE SUPPORT
-This section describes the hardware supported by
-.Ox Os /sgi .
+This section describes the hardware supported on the sgi platform.
 Software support for these devices comes in two forms.
 A hardware device may be supported with a character or block
 .Em device driver ,
@@ -91,22 +91,22 @@ A list of the supported devices is given below.
 .Sh HARDWARE
 The following systems are supported:
 .Pp
-.Bl -tag -width XXXXXXXXXX -offset indent -compact
+.Bl -tag -width 8n -offset indent -compact
 .It O2
 IP32
 .Pq Dq Moosehead
-.It Indy
-IP24
-.Pq Dq Guinness
-.It Indigo 2
-IP22
-.Pq Dq Fullhouse
-.It Indigo R4k
-IP20
-.Pq Dq Blackjack
-.It Indigo R3k
-IP12
-.Pq Dq Hollywood
+.\" .It Indy
+.\" IP24
+.\" .Pq Dq Guinness
+.\" .It Indigo 2
+.\" IP22
+.\" .Pq Dq Fullhouse
+.\" .It Indigo R4k
+.\" IP20
+.\" .Pq Dq Blackjack
+.\" .It Indigo R3k
+.\" IP12
+.\" .Pq Dq Hollywood
 .El
 .Sh LIST OF DEVICES
 The devices listed below are supported in this incarnation of the
@@ -114,56 +114,47 @@ system.
 Devices are indicated by their functional interface.
 Not all supported devices are listed.
 .Pp
-.Bl -tag -width macepci -offset indent -compact
-.It crime
-found on the O2
-.It dsclock
-real-time clock
-.It dpclock
-real-time clock
-.It gio
-PCI-like bus
-.It hpc
-High performance Peripheral Controller
-.It imc
-Indigo R4k/Indy/Indigo2 bus arbitrator
-.It mace
-found on the O2
-.\" .It macepci
+.Bl -tag -width 8n -offset indent -compact
+.\" .It crime
+.\" found on the O2
+.\" .It dsclock
+.\" real-time clock
+.\" .It dpclock
+.\" real-time clock
+.\" .It gio
+.\" PCI-like bus
+.\" .It hpc
+.\" High performance Peripheral Controller
+.\" .It imc
+.\" Indigo R4k/Indy/Indigo2 bus arbitrator
+.It macebus
+O2 main bus controller
 .It mec
-O2 MAC110 Ethernet
-.It newport
-entry framebuffer on Indy and Indigo2
-.It pic
-Personal Iris 4D/3x and Indigo R3k bus arbitrator
-.It sbic
-WD33C93 SCSI interface
-.It sq
-SEEQ 8003/80C03 Ethernet
-.It wdsc
-WD33C93 SCSI interface
+O2 on-board MAC110 Ethernet
+.\" .It newport
+.\" entry framebuffer on Indy and Indigo2
+.\" .It pic
+.\" Personal Iris 4D/3x and Indigo R3k bus arbitrator
+.\" .It sbic
+.\" WD33C93 SCSI interface
+.\" .It sq
+.\" SEEQ 8003/80C03 Ethernet
+.\" .It wdsc
+.\" WD33C93 SCSI interface
 .El
 .Pp
 PCI devices are supported through the
 .Xr pci 4
 bus and associated device drivers.
 .Pp
-.\" .Sh UNSUPPORTED DEVICES
-.\" The following devices are not supported, due to unavailability of
-.\" either documentation or sample hardware:
-.\" .Pp
-.\" .Bl -tag -width XXXXX -offset indent -compact
-.\" .It not yet
-.\" .El
-.\" .Pp
 .Sh SEE ALSO
 .Xr autoconf 4 ,
-.Xr crime 4 ,
-.Xr gio 4 ,
-.Xr hpc 4 ,
-.Xr imc 4 ,
-.Xr mace 4 ,
-.Xr pic 4 ,
+.\" .Xr crime 4 ,
+.\" .Xr gio 4 ,
+.\" .Xr hpc 4 ,
+.\" .Xr imc 4 ,
+.Xr macebus 4 ,
+.\" .Xr pic 4 ,
 .Xr config 8
 .Sh HISTORY
 This

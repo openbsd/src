@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mace.4,v 1.2 2004/08/17 23:49:21 jaredy Exp $
+.\"	$OpenBSD: macebus.4,v 1.1 2004/08/27 13:30:57 miod Exp $
 .\"	$NetBSD: mace.4,v 1.4 2004/02/10 16:54:02 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -33,27 +33,38 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd December 23, 2002
-.Dt MACE 4 sgi
+.Dt MACEBUS 4 sgi
 .Os
 .Sh NAME
-.Nm mace
+.Nm macebus
 .Nd Multimedia, Audio and Communications Engine I/O ASIC
 .Sh SYNOPSIS
-.Cd "mace0 at mainbus0 addr 0x1f000000"
+.Cd "macebus0 at mainbus0"
+.Pp
+.Cd "clock0 at macebus0"
+.Cd "com0 at macebus0 sys 0x18 base 0x00390000 irq 5"
+.Cd "com1 at macebus0 sys 0x18 base 0x00398000 irq 5"
+.Cd "mec0 at macebus0 sys 0x18 base 0x00280000 irq 4"
+.Pp
+.Cd "macepcibr0 at macebus0"
+.Cd "pci* at macepcbir?"
 .Sh DESCRIPTION
 The
 .Nm
-I/O ASIC takes care of all the basic I/O functions.
-Examples of interfaces provided by it are the keyboard and mouse,
-Fast Ethernet, video, audio, the PCI bus, and parallel and serial
-connectors.
-It is connected to the host bus through the
-.Xr crime 4
-controller.
+driver provides access to the MACE I/O ASIC, which manages all
+the on-board devices on the O2.
+.\" It is connected to the host bus through the
+.\" .Xr crime 4
+.\" controller.
+The
 .Nm
-is typically found on O2 machines.
+also provides a
+.Tn PCI
+bridge.
 .Sh SEE ALSO
-.Xr crime 4 ,
+.Xr com 4 ,
+.Xr intro 4 ,
+.Xr mec 4 ,
 .Xr pci 4
 .Sh HISTORY
 The
