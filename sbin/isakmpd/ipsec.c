@@ -1,5 +1,5 @@
-/*	$OpenBSD: ipsec.c,v 1.12 1999/04/05 20:57:50 niklas Exp $	*/
-/*	$EOM: ipsec.c,v 1.92 1999/04/05 18:28:10 niklas Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.13 1999/04/19 21:04:41 niklas Exp $	*/
+/*	$EOM: ipsec.c,v 1.101 1999/04/17 23:20:29 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -51,6 +51,7 @@
 #include "doi.h"
 #include "exchange.h"
 #include "hash.h"
+#include "ike_aggressive.h"
 #include "ike_auth.h"
 #include "ike_main_mode.h"
 #include "ike_quick_mode.h"
@@ -207,6 +208,7 @@ ipsec_sa_lookup (in_addr_t dst, u_int32_t spi, u_int8_t proto)
 /*
  * Check if SA matches the flow of another SA in V_ARG.  It has to
  * be a finished non-replaced phase 2 SA.
+ * XXX At some point other selectors will matter here too.
  */
 static int
 ipsec_sa_check_flow (struct sa *sa, void *v_arg)
@@ -238,6 +240,7 @@ ipsec_finalize_exchange (struct message *msg)
   struct timeval expiration;
   struct sockaddr *addr;
   int len;
+  u_int64_t seconds;
 
   switch (exchange->phase)
     {
@@ -262,8 +265,22 @@ ipsec_finalize_exchange (struct message *msg)
       /* If a lifetime was negotiated setup the expiration timers.  */
       if (isakmp_sa->seconds)
 	{
-	  gettimeofday(&expiration, 0);
-	  expiration.tv_sec += isakmp_sa->seconds * 9 / 10;
+	  /* 
+	   * Decrease lifetime by random 0-5% to break strictly synchronized
+	   * renegotiations. Works better when the randomization is of the
+	   * order of processing plus network-roundtrip times, or larger.
+	   * I.e depends on configuration and negotiated lifetimes.
+	   * XXX Better scheme to come?
+	   */
+	  seconds = isakmp_sa->seconds * (950 + sysdep_random () % 51) / 1000;
+
+	  log_debug (LOG_TIMER, 95, 
+		     "ipsec_finalize_exchange: "
+		     "ISAKMP SA lifetime reset from %qd to %qd seconds",
+		     isakmp_sa->seconds, seconds);
+
+	  gettimeofday (&expiration, 0);
+	  expiration.tv_sec += seconds * 9 / 10;
 	  isakmp_sa->soft_death
 	    = timer_add_event ("sa_soft_expire",
 			       (void (*) (void *))sa_soft_expire, isakmp_sa,
@@ -276,7 +293,7 @@ ipsec_finalize_exchange (struct message *msg)
 	    }
 
 	  gettimeofday(&expiration, 0);
-	  expiration.tv_sec += isakmp_sa->seconds;
+	  expiration.tv_sec += seconds;
 	  isakmp_sa->death
 	    = timer_add_event ("sa_hard_expire",
 			       (void (*) (void *))sa_hard_expire, isakmp_sa,
@@ -348,7 +365,7 @@ ipsec_finalize_exchange (struct message *msg)
 		/* Responder is source, initiator is destination.  */
 		ipsec_set_network (ie->id_cr, ie->id_ci, isa);
 
-	      log_debug (LOG_MISC, 50,
+	      log_debug (LOG_EXCHANGE, 50,
 			 "ipsec_finalize_exchange: src %x %x dst %x %x",
 			 ntohl (isa->src_net), ntohl (isa->src_mask),
 			 ntohl (isa->dst_net), ntohl (isa->dst_mask));
@@ -359,10 +376,7 @@ ipsec_finalize_exchange (struct message *msg)
 
 	      /* Mark elder SAs with the same flow information as replaced.  */
 	      while ((old_sa = sa_find (ipsec_sa_check_flow, sa)) != 0)
-		{
-		  sa_reference (old_sa);
-		  sa_mark_replaced (old_sa, 0);
-		}
+		sa_mark_replaced (old_sa);
 	    }
 	  break;
 	}
@@ -710,6 +724,7 @@ ipsec_initiator (struct message *msg)
   
   /* Check that the SA is coherent with the IKE rules.  */
   if ((exchange->phase == 1 && exchange->type != ISAKMP_EXCH_ID_PROT
+       && exchange->type != ISAKMP_EXCH_AGGRESSIVE
        && exchange->type != ISAKMP_EXCH_INFO)
       || (exchange->phase == 2 && exchange->type != IKE_EXCH_QUICK_MODE))
     {
@@ -730,6 +745,7 @@ ipsec_initiator (struct message *msg)
 		 exchange->type);
       return -1;
     case ISAKMP_EXCH_AGGRESSIVE:
+      script = ike_aggressive_initiator;
       break;
     case ISAKMP_EXCH_INFO:
       message_send_info (msg);
@@ -757,6 +773,7 @@ ipsec_responder (struct message *msg)
   /* Check that a new exchange is coherent with the IKE rules.  */
   if (exchange->step == 0
       && ((exchange->phase == 1 && exchange->type != ISAKMP_EXCH_ID_PROT
+	   && exchange->type != ISAKMP_EXCH_AGGRESSIVE
 	   && exchange->type != ISAKMP_EXCH_INFO)
 	  || (exchange->phase == 2 && exchange->type == ISAKMP_EXCH_ID_PROT)))
     {
@@ -779,7 +796,7 @@ ipsec_responder (struct message *msg)
       break;
 
     case ISAKMP_EXCH_AGGRESSIVE:
-      /* XXX Not implemented yet.  */
+      script = ike_aggressive_responder;
       break;
 
     case ISAKMP_EXCH_INFO:
@@ -963,9 +980,7 @@ ipsec_decode_attribute (u_int16_t type, u_int8_t *value, u_int16_t len,
 	  ie->ike_auth = ike_auth_get (decode_16 (value));
 	  break;
 	case IKE_ATTR_GROUP_DESCRIPTION:
-	  ie->group = group_get (decode_16 (value));
-	  if (!ie->group)
-	    return -1;
+	  isa->group_desc = decode_16 (value);
 	  break;
 	case IKE_ATTR_GROUP_TYPE:
 	  break;
@@ -1186,7 +1201,12 @@ ipsec_gen_g_x (struct message *msg)
       return -1;
     }
 
-  dh_create_exchange (ie->group, buf + ISAKMP_KE_DATA_OFF);
+  if (dh_create_exchange (ie->group, buf + ISAKMP_KE_DATA_OFF))
+    {
+      log_print ("ipsec_gen_g_x: dh_create_exchange failed");
+      free (buf);
+      return -1;
+    }
   return ipsec_g_x (msg, 0, buf + ISAKMP_KE_DATA_OFF);
 }
 
