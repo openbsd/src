@@ -1,4 +1,4 @@
-#	$OpenBSD: LUCIFIER,v 1.22 1999/12/04 05:08:22 mickey Exp $
+#	$OpenBSD: LUCIFIER,v 1.23 1999/12/05 02:50:15 mickey Exp $
 #
 
 machine	i386
@@ -86,7 +86,6 @@ pcic1	at isa? port 0x3e2 iomem 0xd4000 iosiz 0x4000
 pcmcia*	at pcic? controller ? socket ?
 
 option	PCVT_NSCREENS=10
-option	PCVT_EMU_MOUSE
 vt0	at isa? port 0x60 irq 1		# musdie
 #vga*	at pci? dev ? function ?
 #pckbc0	at isa? port 0x60
@@ -144,7 +143,7 @@ option	I82596_DEBUG
 #ie1	at isa? port 0x300
 #ie0	at pci? dev ? function ?
 xl0	at pci? dev ? function ?
-rl0	at pci? dev ? function ?
+sis0	at pci? dev ? function ?
 ne*	at pcmcia? function ?
 
 nsphy*	at mii? phy ?
