@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.18 1999/05/04 16:09:25 millert Exp $	*/
+/*	$OpenBSD: parse.c,v 1.19 1999/05/04 16:44:45 millert Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: parse.c,v 1.18 1999/05/04 16:09:25 millert Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.19 1999/05/04 16:44:45 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -814,6 +814,17 @@ ParseDoDependency (line)
 	     *cp && !isspace (*cp) && (*cp != '(');
 	     cp++)
 	{
+	    /*
+	     * We don't want to end a word on ':' or '!' if there is a
+	     * better match later on in the string.  By "better" I mean
+	     * one that is followed by whitespace.  This allows the user
+	     * to have targets like:
+	     *    fie::fi:fo: fum
+	     * where "fie::fi:fo" is the target.  In real life this is used
+	     * for perl5 library man pages where "::" separates an object
+	     * from its class.  Ie: "File::Spec::Unix".  This behaviour
+	     * is also consistent with other versions of make.
+	     */
 	    if (*cp == '!' || *cp == ':') {
 		char *p = cp + 1;
 
@@ -821,9 +832,7 @@ ParseDoDependency (line)
 		    break;			/* no chance, not enough room */
 		/*
 		 * Only end the word on ':' or '!' if there is not
-		 * a match later on followed by whitespace.  This
-		 * allows us to have targets with embedded ':' and '!'
-		 * characters.
+		 * a match later on followed by whitespace.
 		 */
 		while ((p = strchr(p + 1, *cp)) && !isspace(*(p + 1)))
 		    ;
