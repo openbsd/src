@@ -386,7 +386,7 @@ log_error(va_alist)
 	do_logfile(logline);
 
     free(logline);
-    if (message != logline);
+    if (message != logline)
 	free(message);
 
     if (!(flags & NO_EXIT))
