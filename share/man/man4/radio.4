@@ -1,5 +1,5 @@
 .\"	$RuOBSD: radio.4,v 1.4 2001/10/26 05:38:43 form Exp $
-.\"	$OpenBSD: radio.4,v 1.7 2002/05/06 16:52:00 mickey Exp $
+.\"	$OpenBSD: radio.4,v 1.8 2002/05/30 18:42:33 mickey Exp $
 .\"
 .\" Copyright (c) 2001 Vladimir Popov
 .\" All rights reserved.
@@ -38,6 +38,7 @@
 .Cd "radio* at mr0"
 .Cd "radio* at rt0"
 .Cd "radio* at rtii0"
+.Cd "radio* at sfr0"
 .Cd "radio* at sf2r0"
 .Pp
 .Fd #include <sys/types.h>
@@ -183,6 +184,16 @@ The TEA5757 chips are used in
 and
 .Xr fms 4
 cards.
+.Pp
+The TC9216P, TC9217P and TC9217F are high speed PLL-LSI with built-in
+2 modulus prescaler.
+Each function is controlled through 3 serial bus lines (DATA, CLOCK and PERIOD)
+by the data setting to a pair of 24-bit registers, total of 48 bits.
+Address 8 bits and data 24 bits, total of 32 bits, are transferred in serial
+at the same time.
+The TC921x chips are used in
+.Xr sfr 4
+cards.
 .Sh FILES
 .Bl -tag -width /dev/radio -compact
 .It Pa /dev/radio
@@ -195,14 +206,9 @@ cards.
 .Xr mr 4 ,
 .Xr rt 4 ,
 .Xr rtii 4 ,
+.Xr sfr 4 ,
 .Xr sf2r 4 ,
 .Xr radio 9
-.Sh BUGS
-You can have only one card of the same type.
-For example, if you have two aztech FM tuners, the first card with jumper
-set to port 0x358 and the second one - to 0x350, you can use only one
-aztech card (in the kernel, that is) either with port 0x350 or 0x358.
-Don't even try to compile support for the second card into the kernel.
 .Sh AUTHORS
 The
 .Nm

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.299 2002/05/15 21:39:50 jason Exp $
+#	$OpenBSD: GENERIC,v 1.300 2002/05/30 18:42:33 mickey Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -463,6 +463,7 @@ bktr0	at pci? dev ? function ?
 #radio*	at mr?
 #radio*	at bktr?
 #radio*	at fms?
+#radio*	at sfr0
 #radio*	at sf2r0
 #radio*	at az0
 #radio*	at rt0

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sfr.4,v 1.1 2002/04/25 05:02:47 mickey Exp $
+.\"	$OpenBSD: sfr.4,v 1.2 2002/05/30 18:42:34 mickey Exp $
 .\"
 .\" Copyright (c) 2002 Vladimir Popov
 .\" All rights reserved.
@@ -39,6 +39,13 @@ driver provides support for the SF16-FMR FM radio tuners.
 .Pp
 The SF16-FMR is a stereo FM tuner that allows to tune in the range
 87.5 - 108.0 MHz.
+.Pp
+The
+.Nm
+cards are based upon the TC9216P chip.
+See
+.Xr radio 4
+for details.
 .Pp
 The SF16-FMR cards take only one I/O port.
 The I/O port is set by the driver to the value specified in the configuration
