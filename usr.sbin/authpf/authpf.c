@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.36 2002/12/19 14:03:06 henning Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.37 2002/12/19 14:04:03 henning Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -655,7 +655,6 @@ changefilter(int add, char *luser, char *ipsrc)
 	}
 
 	/* add/delete rules, using parse_rule */
-	memset(&pf, 0, sizeof(pf));
 	pf.dev = dev;
 	pf.prule[PF_RULESET_RULE] = &pr;
 	if (parse_rules(fin, &pf, 0) < 0) {
