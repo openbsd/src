@@ -146,7 +146,6 @@
 ./usr/include/dev/ic/aic7xxx_inline.h
 ./usr/include/dev/ic/aic7xxx_openbsd.h
 ./usr/include/dev/ic/aic7xxxreg.h
-./usr/include/dev/ic/aic7xxxvar.h
 ./usr/include/dev/ic/am7930reg.h
 ./usr/include/dev/ic/am7990reg.h
 ./usr/include/dev/ic/am7990var.h
