@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.37 2002/06/07 23:34:54 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.38 2002/07/17 02:46:52 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -767,10 +767,16 @@ hme_eint(sc, why)
 	struct hme_softc *sc;
 	u_int32_t why;
 {
-	if (why & GR_STAT_NORXD)
+	if (why & GR_STAT_NORXD) {
 		sc->sc_arpcom.ac_if.if_ierrors++;
+		why &= ~GR_STAT_NORXD;
+	}
+	if (why & GR_STAT_DTIMEXP) {
+		sc->sc_arpcom.ac_if.if_oerrors++;
+		why &= ~GR_STAT_DTIMEXP;
+	}
 
-	if (why & (GR_STAT_ALL_ERRORS & (~GR_STAT_NORXD))) {
+	if (why & GR_STAT_ALL_ERRORS) {
 		printf("%s: stat=%b, resetting.\n", sc->sc_dev.dv_xname,
 		    why, GR_STAT_BITS);
 		hmereset(sc);
