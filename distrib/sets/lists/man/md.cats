@@ -21,17 +21,7 @@
 ./usr/share/info/ld.info-5
 ./usr/share/info/ld.info-6
 ./usr/share/man/cat1/addr2line.0
-./usr/share/man/cat1/ar.0
-./usr/share/man/cat1/as.0
-./usr/share/man/cat1/ld.0
 ./usr/share/man/cat1/ld.so.0
 ./usr/share/man/cat1/ldd.0
-./usr/share/man/cat1/nm.0
-./usr/share/man/cat1/objdump.0
-./usr/share/man/cat1/ranlib.0
-./usr/share/man/cat1/readelf.0
-./usr/share/man/cat1/size.0
-./usr/share/man/cat1/strings.0
-./usr/share/man/cat1/strip.0
 ./usr/share/man/cat8/cats/wsconsctl.0
 ./usr/share/man/cat8/ldconfig.0

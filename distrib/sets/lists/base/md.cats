@@ -569,7 +569,6 @@
 ./usr/libdata/perl5/arm-openbsd/5.8.2/auto/threads/shared
 ./usr/libdata/perl5/arm-openbsd/5.8.2/auto/threads/shared/shared.bs
 ./usr/libdata/perl5/arm-openbsd/5.8.2/auto/threads/shared/shared.so
-./usr/libdata/perl5/arm-openbsd/5.8.2/auto/threads/threads.a
 ./usr/libdata/perl5/arm-openbsd/5.8.2/auto/threads/threads.bs
 ./usr/libdata/perl5/arm-openbsd/5.8.2/auto/threads/threads.so
 ./usr/libdata/perl5/arm-openbsd/5.8.2/encoding.pm
