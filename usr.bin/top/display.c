@@ -1,4 +1,4 @@
-/* $OpenBSD: display.c,v 1.17 2003/11/01 20:20:57 deraadt Exp $	 */
+/* $OpenBSD: display.c,v 1.18 2004/06/13 18:49:02 otto Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -38,7 +38,7 @@
  *  ASSUMPTIONS:
  *        None of the "i_" routines use any of the termcap capabilities.
  *        In this way, those routines can be safely used on terminals that
- *        have minimal (or nonexistant) terminal capabilities.
+ *        have minimal (or nonexistent) terminal capabilities.
  *
  *        The routines are called in this order:  *_loadave, i_timeofday,
  *        *_procstates, *_cpustates, *_memory, *_message, *_header,
@@ -81,7 +81,7 @@ static void     line_update(char *, char *, int, int);
 
 #define lineindex(l) ((l)*display_width)
 
-/* things initialized by display_init and used thruout */
+/* things initialized by display_init and used throughout */
 
 /* buffer of proc information lines for display updating */
 char           *screenbuf = NULL;

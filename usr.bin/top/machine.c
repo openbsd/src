@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.42 2004/06/11 16:08:54 deraadt Exp $	 */
+/* $OpenBSD: machine.c,v 1.43 2004/06/13 18:49:02 otto Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -609,7 +609,7 @@ int (*proc_compares[])(const void *, const void *) = {
 /*
  * proc_owner(pid) - returns the uid that owns process "pid", or -1 if
  *		the process does not exist.
- *		It is EXTREMLY IMPORTANT that this function work correctly.
+ *		It is EXTREMELY IMPORTANT that this function work correctly.
  *		If top runs setuid root (as in SVR4), then this function
  *		is the only thing that stands in the way of a serious
  *		security problem.  It validates requests for the "kill"
