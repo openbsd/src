@@ -673,7 +673,11 @@ throw_data (FCacheEntry *entry)
 	fcache_extra_file_name (entry, fname, sizeof(fname));
 	unlink (fname);
     }
-    assert(usedbytes >= entry->length);
+    if (usedbytes < entry->length) {
+	arla_warnx(ADEBCONN, "usedbytes %d < entry->length %d", usedbytes, 
+	    entry->length);
+	exit(-1);
+    }
     /* XXX - things are wrong - continue anyway */
     if (usedbytes < entry->length)
 	usedbytes  = entry->length;
@@ -736,8 +740,11 @@ throw_entry (FCacheEntry *entry)
 
     if (entry->flags.attrp && entry->host) {
 	ce = cred_get (entry->fid.Cell, 0, CRED_NONE);
-	assert (ce != NULL);
-	
+	if (ce == NULL) {
+		arla_warnx (ADEBMISC, "cred_get failed");
+		exit(-1);
+	}
+
 	conn = conn_get (entry->fid.Cell, entry->host, afsport,
 			 FS_SERVICE_ID, fs_probe, ce);
 	cred_free (ce);
@@ -918,7 +925,8 @@ cleaner (char *arg)
 			listdel (lrulist, item);
 			throw_entry (entry);
 			entry->lru_le = listaddtail (lrulist, entry);
-			assert(entry->lru_le);
+			if(!entry->lru_le)
+				exit(-1);
 			ReleaseWriteLock (&entry->lock);
 			break;
 		    }
@@ -1255,13 +1263,17 @@ fcache_recover_entry (struct fcache_store *st, void *ptr)
     assert (cellid != -1);
     
     ce = cred_get (cellid, 0, 0);
-    assert (ce != NULL);
+    if (ce == NULL) {
+	    arla_warnx (ADEBMISC, "cred_get failed");
+	    exit(-1);
+    }
     
     res = volcache_getbyid (st->fid.Volume, cellid, ce, &vol, NULL);
     cred_free (ce);
     if (res)
 	return 0;
-    assert(vol);
+    if (!vol)
+	    exit(-1);
     
     e = calloc(1, sizeof(FCacheEntry));
     e->invalid_ptr = -1;
@@ -1303,13 +1315,15 @@ fcache_recover_entry (struct fcache_store *st, void *ptr)
     e->flags.silly 	   = FALSE;
     e->tokens	       = 0;
     e->parent.Cell = cell_name2num(st->parentcell);
-    assert(e->parent.Cell != -1);
+    if (e->parent.Cell == -1)
+	    exit(-1);
     e->parent.fid = st->parent;
     e->priority = st->priority;
     e->hits = 0;
     e->cleanergen = 0;
     e->lru_le = listaddhead (lrulist, e);
-    assert(e->lru_le);
+    if (!e->lru_le)
+	    exit(-1);
     e->volume = vol;
     hashtabadd (hashtab, e);
     if (e->length)
@@ -1411,7 +1425,8 @@ find_next_fs (fs_server_context *context,
 				context->conns[context->i - 1].ve_ent,
 				error);
     } else if (prev_conn) {
-	assert(prev_conn == context->conns[context->i - 1].conn);
+	if(prev_conn != context->conns[context->i - 1].conn)
+		exit(-1);
 	volcache_reliable_el(context->ve, context->conns[context->i - 1].ve_ent);
     }
 
@@ -1639,7 +1654,8 @@ find_entry_nolock (VenusFid fid)
     if (e != NULL) {
 	listdel (lrulist, e->lru_le);
 	e->lru_le = listaddhead (lrulist, e);
-	assert(e->lru_le);
+	if(!e->lru_le)
+		return NULL;
     }
     return e;
 }
@@ -2863,7 +2879,8 @@ create_file (FCacheEntry *dir_entry,
     } else {
 	static int fakefid = 1001;
 
-	assert(conn == NULL);
+	if (conn != NULL)
+		exit(-1);
 
 	ret = 0;
 
@@ -3009,7 +3026,8 @@ create_directory (FCacheEntry *dir_entry,
 
 	ret = 0;
 
-	assert(conn == NULL);
+	if (conn != NULL)
+		exit(-1);
 
 	OutFid.Volume = dir_entry->fid.fid.Volume;
 	OutFid.Vnode  = fakedir;
@@ -3574,7 +3592,10 @@ fcache_get (FCacheEntry **res, VenusFid fid, CredCacheEntry *ce)
     }
 
     e = find_free_entry ();
-    assert (e != NULL);
+    if (e == NULL) {
+	    arla_warnx(ADEBMISC, "find_free_entry failed");
+	    return(-1);
+    }
 
     old = find_entry (fid);
     if (old) {
@@ -3582,9 +3603,11 @@ fcache_get (FCacheEntry **res, VenusFid fid, CredCacheEntry *ce)
 	ReleaseWriteLock (&e->lock);
 
 	e->lru_le = listaddtail (lrulist, e);
-	assert(e->lru_le);
+	if (e->lru_le == NULL)
+		exit(-1);
 
-	assert (old->flags.usedp);
+	if (!old->flags.usedp) 
+		exit(-1);
 	*res = old;
 	return 0;
     }
@@ -3617,7 +3640,8 @@ fcache_get (FCacheEntry **res, VenusFid fid, CredCacheEntry *ce)
     e->tokens          = 0;
     memset (&e->parent, 0, sizeof(e->parent));
     e->lru_le = listaddhead (lrulist, e);
-    assert(e->lru_le);
+    if(!e->lru_le)
+	    exit(-1);
     e->invalid_ptr     = -1;
     e->volume	       = vol;
     e->priority	       = fprio_get(fid);

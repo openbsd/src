@@ -224,7 +224,9 @@ recycle_entry (CredCacheEntry *ce)
 
 void
 cred_free (CredCacheEntry *ce)
-{
+{ 
+    if (ce == NULL)
+        return;
     assert (ce->cell != CRED_ROOT_CELL);
 
     --ce->refcount;

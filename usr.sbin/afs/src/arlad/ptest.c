@@ -127,7 +127,8 @@ main(int argc, char **argv)
     while(number--) {
 	pe = poller_add_conn(&cce);
 	pe2 = poller_add_conn(&cce);
-	assert(pe == pe2);
+	if (pe != pe2)
+		exit(-1);
 	poller_remove(pe);
 	poller_remove(pe2);
     }

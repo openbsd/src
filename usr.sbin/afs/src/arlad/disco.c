@@ -257,7 +257,10 @@ nop_chain(uint32_t disco_id, VenusFid *newparent,
 	     * directory when connecting */
 	    struct disco_rename *rn = (struct disco_rename *)buf;
 	    
-	    assert(sz == sizeof(struct disco_rename));
+	    if (sz != sizeof(struct disco_rename)) {
+		arla_warnx(ADEBMISC, "sz != sizeof(struct disco_rename)");
+		exit(-1);
+	    }
 	    
 	    *newparent = rn->sourcepfid;
 	    strlcpy(newname, rn->sourcename, namesz);

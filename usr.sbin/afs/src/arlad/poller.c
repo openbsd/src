@@ -266,7 +266,10 @@ poller (char *arg)
 	    CredCacheEntry *ce;
 
 	    ce = cred_get (e->cell, 0, CRED_NONE);
-	    assert (ce != NULL);
+	    if (ce == NULL) {
+		    arla_warnx(ADEBCONN, "cred_get failed - poller exiting");
+		    exit(-1);
+	    }
 
 	    conn = conn_get (e->cell, e->server, afsport,
 			     FS_SERVICE_ID, fs_probe, ce);

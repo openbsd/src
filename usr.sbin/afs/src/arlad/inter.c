@@ -219,9 +219,6 @@ cm_open (FCacheEntry *entry, CredCacheEntry *ce, u_int tokens)
 		     tokens);
 	 mask = AREAD;
 	 tokens |= NNPFS_DATA_R;
-#if 0
-	 assert(FALSE);
-#endif
      }
 
      if (checkright (entry, mask, ce)) {
