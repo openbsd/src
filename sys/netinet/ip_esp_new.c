@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_new.c,v 1.51 1999/12/06 22:33:29 angelos Exp $	*/
+/*	$OpenBSD: ip_esp_new.c,v 1.52 1999/12/06 23:09:11 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -311,6 +311,7 @@ esp_new_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 
 	    default:
 		DPRINTF(("esp_new_input(): bogus value from checkreplaywindow32() in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+		espstat.esps_replay++;
 		m_freem(m);
 		return NULL;
 	}
