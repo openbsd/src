@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.4 1998/11/23 03:28:22 mickey Exp $	*/
+/*	$OpenBSD: asm.h,v 1.5 1998/12/23 17:49:55 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1990,1991,1994 The University of Utah and
@@ -24,6 +24,9 @@
 
 #ifndef _MACHINE_ASM_H_
 #define _MACHINE_ASM_H_
+
+/* this is to shutup binutils */
+#define	BFD_SUBSPA_BUG
 
 /*
  *	hppa assembler definitions
