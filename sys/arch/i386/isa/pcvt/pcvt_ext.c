@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_ext.c,v 1.3 1996/04/18 17:48:29 niklas Exp $	*/
+/*	$OpenBSD: pcvt_ext.c,v 1.4 1996/05/07 12:26:27 mickey Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -2330,7 +2330,7 @@ switch_screen(int n, int oldgrafx, int newgrafx)
 		if(vsp->force24 && (vsp->vt_pure_mode == M_PUREVT) &&
 			(vgacs[vsp->vga_charset].screen_size == SIZ_25ROWS))
 		{
-			fillw(' ', vsp->Crtat + vsp->screen_rows * vsp->maxcol,
+			fillw(' ', (caddr_t)vsp->Crtat + vsp->screen_rows * vsp->maxcol,
 				vsp->maxcol);
 		}
 	}
