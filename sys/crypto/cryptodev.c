@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.42 2002/05/08 22:04:38 jason Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.43 2002/05/18 09:58:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -51,34 +51,6 @@
 #include <crypto/blf.h>
 #include <crypto/cryptodev.h>
 #include <crypto/xform.h>
-
-struct csession {
-	TAILQ_ENTRY(csession) next;
-	u_int64_t	sid;
-	u_int32_t	ses;
-
-	u_int32_t	cipher;
-	struct enc_xform *txform;
-	u_int32_t	mac;
-	struct auth_hash *thash;
-
-	caddr_t		key;
-	int		keylen;
-	u_char		tmp_iv[EALG_MAX_BLOCK_LEN];
-
-	caddr_t		mackey;
-	int		mackeylen;
-	u_char		tmp_mac[CRYPTO_MAX_MAC_LEN];
-
-	struct iovec	iovec[IOV_MAX];
-	struct uio	uio;
-	int		error;
-};
-
-struct fcrypt {
-	TAILQ_HEAD(csessionlist, csession) csessions;
-	int		sesn;
-};
 
 void	cryptoattach(int);
 
