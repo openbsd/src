@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.7 2002/06/21 15:26:06 provos Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.8 2002/06/28 00:26:29 deraadt Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -73,6 +73,7 @@ int
 sccompare(struct intercept_syscall *a, struct intercept_syscall *b)
 {
 	int diff;
+
 	diff = strcmp(a->emulation, b->emulation);
 	if (diff)
 		return (diff);
