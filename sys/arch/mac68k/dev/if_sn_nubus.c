@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sn_nubus.c,v 1.7 1997/04/13 14:14:51 briggs Exp $	*/
+/*	$OpenBSD: if_sn_nubus.c,v 1.8 1997/04/13 16:44:01 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -142,8 +142,6 @@ sn_nubus_attach(parent, self, aux)
 
 		sn_get_enaddr(bst, tmp_bsh, 0, sc->sc_arpcom.ac_enaddr);
 
-		bus_space_unmap(bst, tmp_bsh, ETHER_ADDR_LEN);
-
 		success = 1;
                 break;
 
@@ -165,8 +163,6 @@ sn_nubus_attach(parent, self, aux)
 		}
 
 		sn_get_enaddr(bst, tmp_bsh, 0, sc->sc_arpcom.ac_enaddr);
-
-		bus_space_unmap(bst, tmp_bsh, ETHER_ADDR_LEN);
 
 		success = 1;
                 break;
