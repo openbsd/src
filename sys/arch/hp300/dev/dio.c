@@ -1,4 +1,4 @@
-/*	$OpenBSD: dio.c,v 1.10 2004/12/26 21:41:32 miod Exp $	*/
+/*	$OpenBSD: dio.c,v 1.11 2005/01/15 22:02:00 miod Exp $	*/
 /*	$NetBSD: dio.c,v 1.7 1997/05/05 21:00:32 thorpej Exp $	*/
 
 /*-
@@ -148,8 +148,25 @@ dioattach(parent, self, aux)
 		da.da_scode = scode;
 		if (scode == 7 && internalhpib)
 			da.da_id = DIO_DEVICE_ID_IHPIB;
-		else
+		else {
 			da.da_id = DIO_ID(va);
+			/*
+			 * If we probe an unknown device, we do not necessarily
+			 * know how many scodes it will span.
+			 * Extra scodes will usually report an id of zero,
+			 * which would match ihpib!
+			 * Check for this, warn the user, and skip that scode.
+			 */
+			if (da.da_id == 0) {
+				if (didmap)
+					iounmap(va, NBPG);
+				printf("%s: warning: select code %d is likely "
+				    "a span of a previous unsupported device\n",
+				    self->dv_xname, scode);
+				scode++;
+				continue;
+			}
+		}
 
 		if (DIO_ISFRAMEBUFFER(da.da_id))
 			da.da_secid = DIO_SECID(va);
