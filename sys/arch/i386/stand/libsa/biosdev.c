@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.7 1997/04/15 20:50:35 mickey Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.8 1997/04/17 19:03:20 weingart Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -290,7 +290,7 @@ biosstrategy(void *devdata, int rw,
 		else
 			n = nsect - i;
 		
-		/* use a bounce buffer to not to cross 64k DMA boundary */
+		/* use a bounce buffer to not cross 64k DMA boundary */
 		if ((((u_int32_t)buf) & ~0xffff) !=
 		    (((u_int32_t)buf + n * DEV_BSIZE) & ~0xffff)) {
 			bb = alloc(n * DEV_BSIZE);
@@ -308,14 +308,20 @@ biosstrategy(void *devdata, int rw,
 				: bioswrite(bd->biosdev, cyl, hd, sect, n, bb);
 
 			switch (error) {
-			case 0x06:	/* disk changed */
-				printf ("disk changed\n");
-			default:
-				continue;
-
+			case 0x00:	/* No errors */
 			case 0x11:	/* ECC corrected */
 				error = 0;
 				break;
+
+			default:
+#ifdef	BIOS_DEBUG
+				if (debug) {
+					for (p = bd_errors; p < &bd_errors[bd_nents] &&
+			     			p->bd_id != error; p++);
+					printf("\nBIOS error %x (%s)\n", p->bd_id, p->msg);
+				}
+#endif
+				continue;
 			}
 		}
 
