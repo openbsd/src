@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.30 2002/05/22 18:24:35 millert Exp $ */
+/*	$OpenBSD: lpd.c,v 1.31 2002/05/22 18:26:03 millert Exp $ */
 /*	$NetBSD: lpd.c,v 1.33 2002/01/21 14:42:29 wiz Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpd.c,v 1.30 2002/05/22 18:24:35 millert Exp $";
+static const char rcsid[] = "$OpenBSD: lpd.c,v 1.31 2002/05/22 18:26:03 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -438,6 +438,7 @@ mcleanup(int signo)
 	if (lflag)
 		syslog_r(LOG_INFO, &sdata, "exiting");
 	unlink(_PATH_SOCKETNAME);
+	unlink(_PATH_MASTERLOCK);
 	_exit(0);
 }
 
