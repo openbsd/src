@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Whatis.pm,v 1.1 2004/08/06 12:05:08 espie Exp $
+# $OpenBSD: Whatis.pm,v 1.2 2004/08/24 08:29:30 espie Exp $
 # Copyright (c) 2000-2004 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -17,6 +17,8 @@
 use strict;
 use warnings;
 package OpenBSD::Makewhatis::Whatis;
+
+use constant MAXLINELEN => 8192;
 
 use File::Temp qw/tempfile/;
 use File::Compare;
@@ -40,6 +42,7 @@ sub write
     my $last;
 
     while ($_ = shift @sorted) {
+    	next if length > MAXLINELEN;
 	print $out $_, "\n" unless defined $last and $_ eq $last;
 	$last = $_;
     }
