@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_meter.c,v 1.6 1997/10/06 20:21:22 deraadt Exp $	*/
+/*	$OpenBSD: vm_meter.c,v 1.7 1997/11/06 05:59:35 csapuntz Exp $	*/
 /*	$NetBSD: vm_meter.c,v 1.18 1996/02/05 01:53:59 christos Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm_meter.c	8.4 (Berkeley) 1/4/94
+ *	@(#)vm_meter.c	8.7 (Berkeley) 5/10/95
  */
 
 #include <sys/param.h>
@@ -223,6 +223,7 @@ vmtotal(totalp)
 		}
 		if (object->ref_count > 1) {
 			/* shared object */
+	simple_unlock(&vm_object_list_lock);
 			totalp->t_vmshr += num_pages(object->size);
 			totalp->t_rmshr += object->resident_page_count;
 			if (object->flags & OBJ_ACTIVE) {

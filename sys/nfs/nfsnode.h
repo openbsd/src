@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsnode.h,v 1.5 1997/10/06 20:20:55 deraadt Exp $	*/
+/*	$OpenBSD: nfsnode.h,v 1.6 1997/11/06 05:59:06 csapuntz Exp $	*/
 /*	$NetBSD: nfsnode.h,v 1.16 1996/02/18 11:54:04 fvdl Exp $	*/
 
 /*
@@ -191,15 +191,9 @@ int	nfs_readlink __P((void *));
 int	nfs_abortop __P((void *));
 int	nfs_inactive __P((void *));
 int	nfs_reclaim __P((void *));
-#ifdef Lite2_integrated
 #define nfs_lock ((int (*) __P((void *)))vop_nolock)
 #define nfs_unlock ((int (*) __P((void *)))vop_nounlock)
 #define nfs_islocked ((int (*) __P((void *)))vop_noislocked)
-#else
-int	nfs_lock __P((void *));
-int	nfs_unlock __P((void *));
-int	nfs_islocked __P((void *));
-#endif /* Lite2_integrated */
 int	nfs_bmap __P((void *));
 int	nfs_strategy __P((void *));
 int	nfs_print __P((void *));

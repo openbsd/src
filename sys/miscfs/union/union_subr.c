@@ -1,4 +1,4 @@
-/*	$OpenBSD: union_subr.c,v 1.6 1997/10/06 21:04:49 deraadt Exp $	*/
+/*	$OpenBSD: union_subr.c,v 1.7 1997/11/06 05:58:51 csapuntz Exp $	*/
 /*	$NetBSD: union_subr.c,v 1.18 1996/02/09 22:41:10 christos Exp $	*/
 
 /*
@@ -78,7 +78,7 @@ static int union_relookup __P((struct union_mount *, struct vnode *,
 			       struct componentname *, char *, int));
 int union_vn_close __P((struct vnode *, int, struct ucred *, struct proc *));
 static void union_dircache_r __P((struct vnode *, struct vnode ***, int *));
-struct vnode *union_dircache __P((struct vnode *));
+struct vnode *union_dircache __P((struct vnode *, struct proc *));
 
 /*
  * This variable is used to hold a pointer to a function
@@ -105,7 +105,7 @@ int union_check(p, vpp, fp, auio, error)
 	if ((*vpp)->v_op == union_vnodeop_p) {
 		struct vnode *lvp;
 
-		lvp = union_dircache(*vpp);
+		lvp = union_dircache(*vpp, p);
 		if (lvp != NULLVP) {
 			struct vattr va;
 
@@ -122,7 +122,7 @@ int union_check(p, vpp, fp, auio, error)
 
 		if (lvp != NULLVP) {
 			*error = VOP_OPEN(lvp, FREAD, fp->f_cred, p);
-			VOP_UNLOCK(lvp);
+			VOP_UNLOCK(lvp, 0, p);
 
 			if (*error) {
 				vrele(lvp);
@@ -140,8 +140,9 @@ int union_check(p, vpp, fp, auio, error)
 	return (0);
 };
 
-void
-union_init()
+int
+union_init(vfsp)
+	struct vfsconf *vfsp;
 {
 	int i;
 
@@ -149,6 +150,7 @@ union_init()
 		LIST_INIT(&unhead[i]);
 	bzero((caddr_t) unvplock, sizeof(unvplock));
 	union_check_p = union_check;
+	return (0);
 }
 
 static int
@@ -408,7 +410,8 @@ loop:
 			    (un->un_uppervp == uppervp ||
 			     un->un_uppervp == NULLVP) &&
 			    (UNIONTOV(un)->v_mount == mp)) {
-				if (vget(UNIONTOV(un), 0)) {
+				if (vget(UNIONTOV(un), 0,
+				    cnp ? cnp->cn_proc : NULL)) {
 					union_list_unlock(hash);
 					goto loop;
 				}
@@ -646,12 +649,12 @@ union_copyfile(fvp, tvp, cred, p)
 	uio.uio_segflg = UIO_SYSSPACE;
 	uio.uio_offset = 0;
 
-	VOP_UNLOCK(fvp);				/* XXX */
+	VOP_UNLOCK(fvp, 0, p);				/* XXX */
 	VOP_LEASE(fvp, p, cred, LEASE_READ);
-	VOP_LOCK(fvp);					/* XXX */
-	VOP_UNLOCK(tvp);				/* XXX */
+	vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY, p);
+	VOP_UNLOCK(tvp, 0, p);				/* XXX */
 	VOP_LEASE(tvp, p, cred, LEASE_WRITE);
-	VOP_LOCK(tvp);					/* XXX */
+	vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY, p);
 
 	buf = malloc(MAXBSIZE, M_TEMP, M_WAITOK);
 
@@ -719,11 +722,11 @@ union_copyup(un, docopy, cred, p)
 		 * XX - should not ignore errors
 		 * from VOP_CLOSE
 		 */
-		VOP_LOCK(lvp);
+		vn_lock(lvp, LK_EXCLUSIVE | LK_RETRY, p);
 		error = VOP_OPEN(lvp, FREAD, cred, p);
 		if (error == 0) {
 			error = union_copyfile(lvp, uvp, cred, p);
-			VOP_UNLOCK(lvp);
+			VOP_UNLOCK(lvp, 0, p);
 			(void) VOP_CLOSE(lvp, FREAD, cred, p);
 		}
 #ifdef UNION_DIAGNOSTIC
@@ -733,166 +736,166 @@ union_copyup(un, docopy, cred, p)
 
 	}
 	un->un_flags &= ~UN_ULOCK;
-	VOP_UNLOCK(uvp);
+	VOP_UNLOCK(uvp, 0, p);
 	union_vn_close(uvp, FWRITE, cred, p);
-	VOP_LOCK(uvp);
-	un->un_flags |= UN_ULOCK;
+	vn_lock(uvp, LK_EXCLUSIVE | LK_RETRY, p);
+	 un->un_flags |= UN_ULOCK;
 
-	/*
-	 * Subsequent IOs will go to the top layer, so
-	 * call close on the lower vnode and open on the
-	 * upper vnode to ensure that the filesystem keeps
-	 * its references counts right.  This doesn't do
-	 * the right thing with (cred) and (FREAD) though.
-	 * Ignoring error returns is not right, either.
-	 */
-	if (error == 0) {
-		int i;
+	 /*
+	  * Subsequent IOs will go to the top layer, so
+	  * call close on the lower vnode and open on the
+	  * upper vnode to ensure that the filesystem keeps
+	  * its references counts right.  This doesn't do
+	  * the right thing with (cred) and (FREAD) though.
+	  * Ignoring error returns is not right, either.
+	  */
+	 if (error == 0) {
+		 int i;
 
-		for (i = 0; i < un->un_openl; i++) {
-			(void) VOP_CLOSE(lvp, FREAD, cred, p);
-			(void) VOP_OPEN(uvp, FREAD, cred, p);
-		}
-		un->un_openl = 0;
-	}
+		 for (i = 0; i < un->un_openl; i++) {
+			 (void) VOP_CLOSE(lvp, FREAD, cred, p);
+			 (void) VOP_OPEN(uvp, FREAD, cred, p);
+		 }
+		 un->un_openl = 0;
+	 }
 
-	return (error);
+	 return (error);
 
-}
+ }
 
-static int
-union_relookup(um, dvp, vpp, cnp, cn, path, pathlen)
-	struct union_mount *um;
-	struct vnode *dvp;
-	struct vnode **vpp;
-	struct componentname *cnp;
-	struct componentname *cn;
-	char *path;
-	int pathlen;
-{
-	int error;
+ static int
+ union_relookup(um, dvp, vpp, cnp, cn, path, pathlen)
+	 struct union_mount *um;
+	 struct vnode *dvp;
+	 struct vnode **vpp;
+	 struct componentname *cnp;
+	 struct componentname *cn;
+	 char *path;
+	 int pathlen;
+ {
+	 int error;
 
-	/*
-	 * A new componentname structure must be faked up because
-	 * there is no way to know where the upper level cnp came
-	 * from or what it is being used for.  This must duplicate
-	 * some of the work done by NDINIT, some of the work done
-	 * by namei, some of the work done by lookup and some of
-	 * the work done by VOP_LOOKUP when given a CREATE flag.
-	 * Conclusion: Horrible.
-	 *
-	 * The pathname buffer will be FREEed by VOP_MKDIR.
-	 */
-	cn->cn_namelen = pathlen;
-	cn->cn_pnbuf = malloc(cn->cn_namelen+1, M_NAMEI, M_WAITOK);
-	bcopy(path, cn->cn_pnbuf, cn->cn_namelen);
-	cn->cn_pnbuf[cn->cn_namelen] = '\0';
+	 /*
+	  * A new componentname structure must be faked up because
+	  * there is no way to know where the upper level cnp came
+	  * from or what it is being used for.  This must duplicate
+	  * some of the work done by NDINIT, some of the work done
+	  * by namei, some of the work done by lookup and some of
+	  * the work done by VOP_LOOKUP when given a CREATE flag.
+	  * Conclusion: Horrible.
+	  *
+	  * The pathname buffer will be FREEed by VOP_MKDIR.
+	  */
+	 cn->cn_namelen = pathlen;
+	 cn->cn_pnbuf = malloc(cn->cn_namelen+1, M_NAMEI, M_WAITOK);
+	 bcopy(path, cn->cn_pnbuf, cn->cn_namelen);
+	 cn->cn_pnbuf[cn->cn_namelen] = '\0';
 
-	cn->cn_nameiop = CREATE;
-	cn->cn_flags = (LOCKPARENT|HASBUF|SAVENAME|SAVESTART|ISLASTCN);
-	cn->cn_proc = cnp->cn_proc;
-	if (um->um_op == UNMNT_ABOVE)
-		cn->cn_cred = cnp->cn_cred;
-	else
-		cn->cn_cred = um->um_cred;
-	cn->cn_nameptr = cn->cn_pnbuf;
-	cn->cn_hash = cnp->cn_hash;
-	cn->cn_consume = cnp->cn_consume;
+	 cn->cn_nameiop = CREATE;
+	 cn->cn_flags = (LOCKPARENT|HASBUF|SAVENAME|SAVESTART|ISLASTCN);
+	 cn->cn_proc = cnp->cn_proc;
+	 if (um->um_op == UNMNT_ABOVE)
+		 cn->cn_cred = cnp->cn_cred;
+	 else
+		 cn->cn_cred = um->um_cred;
+	 cn->cn_nameptr = cn->cn_pnbuf;
+	 cn->cn_hash = cnp->cn_hash;
+	 cn->cn_consume = cnp->cn_consume;
 
-	VREF(dvp);
-	error = relookup(dvp, vpp, cn);
-	if (!error)
-		vrele(dvp);
-	else {
-		free(cn->cn_pnbuf, M_NAMEI);
-		cn->cn_pnbuf = 0;
-	}
+	 VREF(dvp);
+	 error = relookup(dvp, vpp, cn);
+	 if (!error)
+		 vrele(dvp);
+	 else {
+		 free(cn->cn_pnbuf, M_NAMEI);
+		 cn->cn_pnbuf = 0;
+	 }
 
-	return (error);
-}
+	 return (error);
+ }
 
-/*
- * Create a shadow directory in the upper layer.
- * The new vnode is returned locked.
- *
- * (um) points to the union mount structure for access to the
- * the mounting process's credentials.
- * (dvp) is the directory in which to create the shadow directory.
- * it is unlocked on entry and exit.
- * (cnp) is the componentname to be created.
- * (vpp) is the returned newly created shadow directory, which
- * is returned locked.
- */
-int
-union_mkshadow(um, dvp, cnp, vpp)
-	struct union_mount *um;
-	struct vnode *dvp;
-	struct componentname *cnp;
-	struct vnode **vpp;
-{
-	int error;
-	struct vattr va;
-	struct proc *p = cnp->cn_proc;
-	struct componentname cn;
+ /*
+  * Create a shadow directory in the upper layer.
+  * The new vnode is returned locked.
+  *
+  * (um) points to the union mount structure for access to the
+  * the mounting process's credentials.
+  * (dvp) is the directory in which to create the shadow directory.
+  * it is unlocked on entry and exit.
+  * (cnp) is the componentname to be created.
+  * (vpp) is the returned newly created shadow directory, which
+  * is returned locked.
+  */
+ int
+ union_mkshadow(um, dvp, cnp, vpp)
+	 struct union_mount *um;
+	 struct vnode *dvp;
+	 struct componentname *cnp;
+	 struct vnode **vpp;
+ {
+	 int error;
+	 struct vattr va;
+	 struct proc *p = cnp->cn_proc;
+	 struct componentname cn;
 
-	error = union_relookup(um, dvp, vpp, cnp, &cn,
-			cnp->cn_nameptr, cnp->cn_namelen);
-	if (error)
-		return (error);
+	 error = union_relookup(um, dvp, vpp, cnp, &cn,
+			 cnp->cn_nameptr, cnp->cn_namelen);
+	 if (error)
+		 return (error);
 
-	if (*vpp) {
-		VOP_ABORTOP(dvp, &cn);
-		VOP_UNLOCK(dvp);
-		vrele(*vpp);
-		*vpp = NULLVP;
-		return (EEXIST);
-	}
+	 if (*vpp) {
+		 VOP_ABORTOP(dvp, &cn);
+		 VOP_UNLOCK(dvp, 0, p);
+		 vrele(*vpp);
+		 *vpp = NULLVP;
+		 return (EEXIST);
+	 }
 
-	/*
-	 * policy: when creating the shadow directory in the
-	 * upper layer, create it owned by the user who did
-	 * the mount, group from parent directory, and mode
-	 * 777 modified by umask (ie mostly identical to the
-	 * mkdir syscall).  (jsp, kb)
-	 */
+	 /*
+	  * policy: when creating the shadow directory in the
+	  * upper layer, create it owned by the user who did
+	  * the mount, group from parent directory, and mode
+	  * 777 modified by umask (ie mostly identical to the
+	  * mkdir syscall).  (jsp, kb)
+	  */
 
-	VATTR_NULL(&va);
-	va.va_type = VDIR;
-	va.va_mode = um->um_cmode;
+	 VATTR_NULL(&va);
+	 va.va_type = VDIR;
+	 va.va_mode = um->um_cmode;
 
-	/* VOP_LEASE: dvp is locked */
-	VOP_LEASE(dvp, p, cn.cn_cred, LEASE_WRITE);
+	 /* VOP_LEASE: dvp is locked */
+	 VOP_LEASE(dvp, p, cn.cn_cred, LEASE_WRITE);
 
-	error = VOP_MKDIR(dvp, vpp, &cn, &va);
-	return (error);
-}
+	 error = VOP_MKDIR(dvp, vpp, &cn, &va);
+	 return (error);
+ }
 
-/*
- * Create a whiteout entry in the upper layer.
- *
- * (um) points to the union mount structure for access to the
- * the mounting process's credentials.
- * (dvp) is the directory in which to create the whiteout.
- * it is locked on entry and exit.
- * (cnp) is the componentname to be created.
- */
-int
-union_mkwhiteout(um, dvp, cnp, path)
-	struct union_mount *um;
-	struct vnode *dvp;
-	struct componentname *cnp;
-	char *path;
-{
-	int error;
-	struct proc *p = cnp->cn_proc;
-	struct vnode *wvp;
-	struct componentname cn;
+ /*
+  * Create a whiteout entry in the upper layer.
+  *
+  * (um) points to the union mount structure for access to the
+  * the mounting process's credentials.
+  * (dvp) is the directory in which to create the whiteout.
+  * it is locked on entry and exit.
+  * (cnp) is the componentname to be created.
+  */
+ int
+ union_mkwhiteout(um, dvp, cnp, path)
+	 struct union_mount *um;
+	 struct vnode *dvp;
+	 struct componentname *cnp;
+	 char *path;
+ {
+	 int error;
+	 struct proc *p = cnp->cn_proc;
+	 struct vnode *wvp;
+	 struct componentname cn;
 
-	VOP_UNLOCK(dvp);
-	error = union_relookup(um, dvp, &wvp, cnp, &cn, path, strlen(path));
-	if (error) {
-		VOP_LOCK(dvp);
-		return (error);
+	 VOP_UNLOCK(dvp, 0, p);
+	 error = union_relookup(um, dvp, &wvp, cnp, &cn, path, strlen(path));
+	 if (error) {
+		 vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY, p);
+		 return (error);
 	}
 
 	if (wvp) {
@@ -1018,6 +1021,7 @@ void
 union_removed_upper(un)
 	struct union_node *un;
 {
+	struct proc *p = curproc;
 
 	/*
 	 * We do not set the uppervp to NULLVP here, because lowervp
@@ -1037,7 +1041,7 @@ union_removed_upper(un)
 
 	if (un->un_flags & UN_ULOCK) {
 		un->un_flags &= ~UN_ULOCK;
-		VOP_UNLOCK(un->un_uppervp);
+		VOP_UNLOCK(un->un_uppervp, 0, p);
 	}
 }
 
@@ -1109,8 +1113,9 @@ union_dircache_r(vp, vppp, cntp)
 }
 
 struct vnode *
-union_dircache(vp)
+union_dircache(vp, p)
 	struct vnode *vp;
+	struct proc *p;
 {
 	int cnt;
 	struct vnode *nvp = NULLVP;
@@ -1118,8 +1123,7 @@ union_dircache(vp)
 	struct vnode **dircache;
 	int error;
 
-	VOP_LOCK(vp);
-
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 	dircache = VTOUNION(vp)->un_dircache;
 	if (dircache == 0) {
 		cnt = 0;
@@ -1144,7 +1148,7 @@ union_dircache(vp)
 	if (*vpp == NULLVP)
 		goto out;
 
-	VOP_LOCK(*vpp);
+	vn_lock(*vpp, LK_EXCLUSIVE | LK_RETRY, p);
 	VREF(*vpp);
 	error = union_allocvp(&nvp, vp->v_mount, NULLVP, NULLVP, 0, *vpp, NULLVP, 0);
 	if (!error) {
@@ -1153,7 +1157,7 @@ union_dircache(vp)
 	}
 
 out:
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, 0, p);
 	return (nvp);
 }
 

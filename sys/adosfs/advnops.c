@@ -1,4 +1,4 @@
-/*	$OpenBSD: advnops.c,v 1.8 1997/01/20 15:49:54 niklas Exp $	*/
+/*	$OpenBSD: advnops.c,v 1.9 1997/11/06 05:58:01 csapuntz Exp $	*/
 /*	$NetBSD: advnops.c,v 1.32 1996/10/13 02:52:09 christos Exp $	*/
 
 /*
@@ -964,8 +964,11 @@ adosfs_inactive(v)
 #ifdef ADOSFS_DIAGNOSTIC
 	advopprint(sp);
 #endif
+
+	VOP_UNLOCK(ap->a_vp, 0, ap->a_p);
+
 	if (sp->a_vp->v_usecount == 0 /* && check for file gone? */)
-		vgone(sp->a_vp);
+		vrecycle(sp->a_vp, (struct simplelock *)0, ap->a_p);
 
 #ifdef ADOSFS_DIAGNOSTIC
 	printf(" 0)");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.20 1997/10/06 20:21:11 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.21 1997/11/06 05:59:11 csapuntz Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -49,8 +49,9 @@
 #include <sys/time.h>
 #include <sys/ucred.h>
 #include <sys/proc.h>
-#include <vm/vm.h>
 #endif
+
+#include <vm/vm.h>
 
 /*
  * Definitions for sysctl call.  The sysctl call uses a hierarchical name
@@ -93,7 +94,8 @@ struct ctlname {
 #define	CTL_MACHDEP	7		/* machine dependent */
 #define	CTL_USER	8		/* user-level */
 #define	CTL_DDB		9		/* DDB user interface, see ddb_var.h */
-#define	CTL_MAXID	10		/* number of valid top-level ids */
+#define CTL_VFS         10              /* VFS sysctl's */
+#define	CTL_MAXID	11		/* number of valid top-level ids */
 
 #define CTL_NAMES { \
 	{ 0, 0 }, \
@@ -106,6 +108,7 @@ struct ctlname {
 	{ "machdep", CTLTYPE_NODE }, \
 	{ "user", CTLTYPE_NODE }, \
 	{ "ddb", CTLTYPE_NODE }, \
+	{ "vfs", CTLTYPE_NODE }, \
 }
 
 /*
@@ -383,7 +386,7 @@ int sysctl_rtable __P((int *, u_int, void *, size_t *, void *, size_t));
 int sysctl_clockrate __P((char *, size_t *));
 int sysctl_rdstring __P((void *, size_t *, void *, char *));
 int sysctl_rdstruct __P((void *, size_t *, void *, void *, int));
-int sysctl_vnode __P((char *, size_t *));
+int sysctl_vnode __P((char *, size_t *, struct proc *));
 int sysctl_ntptime __P((char *, size_t *));
 #ifdef GPROF
 int sysctl_doprof __P((int *, u_int, void *, size_t *, void *, size_t));
@@ -408,6 +411,8 @@ int fs_posix_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 int net_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 		    struct proc *));
 int cpu_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
+		    struct proc *));
+int vfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 		    struct proc *));
 #else	/* !_KERNEL */
 #include <sys/cdefs.h>

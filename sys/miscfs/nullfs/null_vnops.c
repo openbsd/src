@@ -1,4 +1,4 @@
-/*	$OpenBSD: null_vnops.c,v 1.7 1997/10/06 20:20:31 deraadt Exp $	*/
+/*	$OpenBSD: null_vnops.c,v 1.8 1997/11/06 05:58:40 csapuntz Exp $	*/
 /*	$NetBSD: null_vnops.c,v 1.7 1996/05/10 22:51:01 jtk Exp $	*/
 
 /*
@@ -98,10 +98,18 @@
  * Although bypass handles most operations, 
  * vop_getattr, _inactive, _reclaim, and _print are not bypassed.
  * Vop_getattr must change the fsid being returned.
+ * Vop_lock and vop_unlock must handle any locking for the
+ * current vnode as well as pass the lock request down.
  * Vop_inactive and vop_reclaim are not bypassed so that
- * they can handle freeing null-layer specific data.
- * Vop_print is not bypassed to avoid excessive debugging
- * information.
+ * the can handle freeing null-layer specific data. Vop_print
+ * is not bypassed to avoid excessive debugging information.
+ * Also, certain vnod eoperations change the locking state within
+ * the operation (create, mknod, remove, link, rename, mkdir, rmdir,
+ * and symlink). Ideally, these operations should not change the
+ * lock state, but should be changed to let the caller of the
+ * function unlock them.Otherwise all intermediate vnode layers
+ * (such as union, umapfs, etc) must catch these functions
+ * to the necessary locking at their layer
  *
  *
  * INSTANTIATING VNODE STACKS
@@ -182,7 +190,6 @@
 
 int null_bug_bypass = 0;   /* for debugging: enables bypass printf'ing */
 
-int	null_bypass __P((void *));
 int	null_getattr __P((void *));
 int	null_inactive __P((void *));
 int	null_reclaim __P((void *));
@@ -510,6 +517,7 @@ null_lock(v)
 	struct vop_lock_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct null_node *nn;
+	struct proc *p = ap->a_p;
 
 #ifdef NULLFS_DIAGNOSTIC
 	vprint("null_lock_e", ap->a_vp);
@@ -533,7 +541,7 @@ start:
 		 * is zero, we are probably being reclaimed so we need to
 		 * keep our hands off the lower node.
 		 */
-		VOP_LOCK(nn->null_lowervp);
+		vn_lock(nn->null_lowervp, LK_EXCLUSIVE | LK_RETRY, p);
 		nn->null_flags |= NULL_LLOCK;
 	}
 
@@ -568,6 +576,7 @@ null_unlock(v)
 	void *v;
 {
 	struct vop_lock_args *ap = v;
+	struct proc *p = ap->a_p;
 	struct null_node *nn = VTONULL(ap->a_vp);
 
 #ifdef NULLFS_DIAGNOSTIC
@@ -587,7 +596,7 @@ null_unlock(v)
 	nn->null_flags &= ~NULL_LOCKED;
 
 	if ((nn->null_flags & NULL_LLOCK) != 0)
-		VOP_UNLOCK(nn->null_lowervp);
+		VOP_UNLOCK(nn->null_lowervp, 0, p);
 
 	nn->null_flags &= ~NULL_LLOCK;
     
@@ -623,20 +632,21 @@ null_lookup(v)
 	register int error;
 	register struct vnode *dvp;
 	int flags = ap->a_cnp->cn_flags;
-
+	struct componentname *cnp = ap->a_cnp;
+	struct proc *p = cnp->cn_proc;
 #ifdef NULLFS_DIAGNOSTIC
-	printf("null_lookup: dvp=%p, name='%s'\n",
-	       ap->a_dvp, ap->a_cnp->cn_nameptr);
+	printf("null_lookup: dvp=%lx, name='%s'\n",
+	       ap->a_dvp, cnp->cn_nameptr);
 #endif
 	/*
 	 * the starting dir (ap->a_dvp) comes in locked.
 	 */
 
 	/* set LOCKPARENT to hold on to it until done below */
-	ap->a_cnp->cn_flags |= LOCKPARENT;
+	cnp->cn_flags |= LOCKPARENT;
 	error = null_bypass(ap);
 	if (!(flags & LOCKPARENT))
-		ap->a_cnp->cn_flags &= ~LOCKPARENT;
+		cnp->cn_flags &= ~LOCKPARENT;
 
 	if (error)
 		/*
@@ -697,20 +707,20 @@ null_lookup(v)
 			 * lock.  No need for vget() since we hold a
 			 * refcount to the starting directory
 			 */
-			VOP_UNLOCK(dvp);
-			VOP_LOCK(*ap->a_vpp);
+			VOP_UNLOCK(dvp, 0, p);
+			vn_lock(*ap->a_vpp, LK_EXCLUSIVE | LK_RETRY, p);
 			/*
 			 * we should return our directory locked if
 			 * (flags & LOCKPARENT) and (flags & ISLASTCN)
 			 */
 			if ((flags & LOCKPARENT) && (flags & ISLASTCN))
-				VOP_LOCK(dvp);
+				vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY, p);
 		} else {
 			/*
 			 * Normal directory locking order: we hold the starting
 			 * directory locked; now lock our layer of the target.
 			 */
-			VOP_LOCK(*ap->a_vpp);
+			vn_lock(*ap->a_vpp, LK_RETRY | LK_EXCLUSIVE, p);
 			/*
 			 * underlying starting dir comes back locked
 			 * if lockparent (we set it) and no error
@@ -740,7 +750,7 @@ null_lookup(v)
 			 * end yet, !(flags & ISLASTCN)
 			 */
 			if (!(flags & LOCKPARENT) || !(flags & ISLASTCN))
-				VOP_UNLOCK(dvp);
+				VOP_UNLOCK(dvp, 0, p);
 		}
 	}
 	return error;

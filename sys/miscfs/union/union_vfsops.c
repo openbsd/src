@@ -1,4 +1,4 @@
-/*	$OpenBSD: union_vfsops.c,v 1.6 1997/10/06 21:04:50 deraadt Exp $	*/
+/*	$OpenBSD: union_vfsops.c,v 1.7 1997/11/06 05:58:52 csapuntz Exp $	*/
 /*	$NetBSD: union_vfsops.c,v 1.10 1995/06/18 14:47:47 cgd Exp $	*/
 
 /*
@@ -64,13 +64,7 @@ int union_mount __P((struct mount *, char *, caddr_t, struct nameidata *,
 int union_start __P((struct mount *, int, struct proc *));
 int union_unmount __P((struct mount *, int, struct proc *));
 int union_root __P((struct mount *, struct vnode **));
-int union_quotactl __P((struct mount *, int, uid_t, caddr_t, struct proc *));
 int union_statfs __P((struct mount *, struct statfs *, struct proc *));
-int union_sync __P((struct mount *, int, struct ucred *, struct proc *));
-int union_vget __P((struct mount *, ino_t, struct vnode **));
-int union_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
-		      struct vnode **, int *, struct ucred **));
-int union_vptofh __P((struct vnode *, struct fid *));
 
 /*
  * Mount union filesystem
@@ -214,7 +208,7 @@ union_mount(mp, path, data, ndp, p)
 	mp->mnt_flag |= (um->um_uppervp->v_mount->mnt_flag & MNT_RDONLY);
 
 	mp->mnt_data = (qaddr_t)um;
-	getnewfsid(mp, makefstype(MOUNT_UNION));
+	vfs_getnewfsid(mp);
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
 	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
@@ -293,16 +287,12 @@ union_unmount(mp, mntflags, p)
 	int error;
 	int freeing;
 	int flags = 0;
-	extern int doforce;
 
 #ifdef UNION_DIAGNOSTIC
 	printf("union_unmount(mp = %p)\n", mp);
 #endif
 
 	if (mntflags & MNT_FORCE) {
-		/* union can never be rootfs so don't check for it */
-		if (!doforce)
-			return (EINVAL);
 		flags |= FORCECLOSE;
 	}
 
@@ -373,6 +363,7 @@ union_root(mp, vpp)
 	struct mount *mp;
 	struct vnode **vpp;
 {
+	struct proc *p = curproc;
 	struct union_mount *um = MOUNTTOUNIONMOUNT(mp);
 	int error;
 	int loselock;
@@ -385,7 +376,7 @@ union_root(mp, vpp)
 	     VOP_ISLOCKED(um->um_uppervp)) {
 		loselock = 1;
 	} else {
-		VOP_LOCK(um->um_uppervp);
+		vn_lock(um->um_uppervp, LK_EXCLUSIVE | LK_RETRY, p);
 		loselock = 0;
 	}
 	if (um->um_lowervp)
@@ -399,9 +390,10 @@ union_root(mp, vpp)
 			      1);
 
 	if (error) {
-		if (!loselock)
-			VOP_UNLOCK(um->um_uppervp);
-		vrele(um->um_uppervp);
+		if (loselock)
+			vrele(um->um_uppervp);
+		else
+			vput(um->um_uppervp);
 		if (um->um_lowervp)
 			vrele(um->um_lowervp);
 	} else {
@@ -410,19 +402,6 @@ union_root(mp, vpp)
 	}
 
 	return (error);
-}
-
-/*ARGSUSED*/
-int
-union_quotactl(mp, cmd, uid, arg, p)
-	struct mount *mp;
-	int cmd;
-	uid_t uid;
-	caddr_t arg;
-	struct proc *p;
-{
-
-	return (EOPNOTSUPP);
 }
 
 int
@@ -491,66 +470,29 @@ union_statfs(mp, sbp, p)
 	sbp->f_ffree += mstat.f_ffree;
 
 	if (sbp != &mp->mnt_stat) {
+		sbp->f_type = mp->mnt_vfc->vfc_typenum;
 		bcopy(&mp->mnt_stat.f_fsid, &sbp->f_fsid, sizeof(sbp->f_fsid));
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
 		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
 	}
-	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
+	strncpy(sbp->f_fstypename, mp->mnt_vfc->vfc_name, MFSNAMELEN);
 	return (0);
 }
 
-/*ARGSUSED*/
-int
-union_sync(mp, waitfor, cred, p)
-	struct mount *mp;
-	int waitfor;
-	struct ucred *cred;
-	struct proc *p;
-{
+#define union_sync ((int (*) __P((struct mount *, int, struct ucred *, \
+				  struct proc *)))nullop)
 
-	/*
-	 * XXX - Assumes no data cached at union layer.
-	 */
-	return (0);
-}
-
-/*ARGSUSED*/
-int
-union_vget(mp, ino, vpp)
-	struct mount *mp;
-	ino_t ino;
-	struct vnode **vpp;
-{
-	
-	return (EOPNOTSUPP);
-}
-
-/*ARGSUSED*/
-int
-union_fhtovp(mp, fidp, nam, vpp, exflagsp, credanonp)
-	struct mount *mp;
-	struct fid *fidp;
-	struct mbuf *nam;
-	struct vnode **vpp;
-	int *exflagsp;
-	struct ucred **credanonp;
-{
-
-	return (EOPNOTSUPP);
-}
-
-/*ARGSUSED*/
-int
-union_vptofh(vp, fhp)
-	struct vnode *vp;
-	struct fid *fhp;
-{
-
-	return (EOPNOTSUPP);
-}
+#define union_fhtovp ((int (*) __P((struct mount *, struct fid *, \
+	    struct mbuf *, struct vnode **, int *, struct ucred **)))eopnotsupp)
+#define union_quotactl ((int (*) __P((struct mount *, int, uid_t, caddr_t, \
+	    struct proc *)))eopnotsupp)
+#define union_sysctl ((int (*) __P((int *, u_int, void *, size_t *, void *, \
+	    size_t, struct proc *)))eopnotsupp)
+#define union_vget ((int (*) __P((struct mount *, ino_t, struct vnode **))) \
+	    eopnotsupp)
+#define union_vptofh ((int (*) __P((struct vnode *, struct fid *)))eopnotsupp)
 
 struct vfsops union_vfsops = {
-	MOUNT_UNION,
 	union_mount,
 	union_start,
 	union_unmount,
@@ -562,4 +504,5 @@ struct vfsops union_vfsops = {
 	union_fhtovp,
 	union_vptofh,
 	union_init,
+	union_sysctl
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.13 1997/10/06 20:20:47 deraadt Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.14 1997/11/06 05:59:02 csapuntz Exp $	*/
 /*	$NetBSD: nfs_serv.c,v 1.25 1996/03/02 15:55:52 jtk Exp $	*/
 
 /*
@@ -2453,15 +2453,8 @@ nfsrv_readdir(nfsd, slp, procp, mrq)
 		nfsm_srvpostop_attr(getret, &at);
 		return (0);
 	}
-#ifdef Lite2_integrated
 	VOP_UNLOCK(vp, 0, procp);
-#else
-	VOP_UNLOCK(vp);
-#endif
 	MALLOC(rbuf, caddr_t, siz, M_TEMP, M_WAITOK);
-	ncookies = siz / (5 * NFSX_UNSIGNED); /*7 for V3, but it's an est. so*/
-	MALLOC(cookies, u_long *, ncookies * sizeof (u_long *), M_TEMP,
-		M_WAITOK);
 again:
 	iv.iov_base = rbuf;
 	iv.iov_len = fullsiz;
@@ -2473,13 +2466,14 @@ again:
 	io.uio_rw = UIO_READ;
 	io.uio_procp = (struct proc *)0;
 	eofflag = 0;
-#ifdef Lite2_integrated
-	VOP_LOCK(vp, 0, procp);
-#else
-	VOP_LOCK(vp);
-#endif
 
-	error = VOP_READDIR(vp, &io, cred, &eofflag, cookies, ncookies);
+	if (cookies) {
+		free((caddr_t)cookies, M_TEMP);
+		cookies = NULL;
+	}
+
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, procp);
+	error = VOP_READDIR(vp, &io, cred, &eofflag, &ncookies, &cookies);
 
 	off = (off_t)io.uio_offset;
 	if (!cookies && !error)
@@ -2490,11 +2484,7 @@ again:
 			error = getret;
 	}
 
-#ifdef Lite2_integrated
 	VOP_UNLOCK(vp, 0, procp);
-#else
-	VOP_UNLOCK(vp);
-#endif
 	if (error) {
 		vrele(vp);
 		free((caddr_t)rbuf, M_TEMP);
@@ -2721,16 +2711,9 @@ nfsrv_readdirplus(nfsd, slp, procp, mrq)
 		nfsm_srvpostop_attr(getret, &at);
 		return (0);
 	}
-#ifdef Lite2_integrated
 	VOP_UNLOCK(vp, 0, procp);
-#else
-	VOP_UNLOCK(vp);
-#endif
 
 	MALLOC(rbuf, caddr_t, siz, M_TEMP, M_WAITOK);
-	ncookies = siz / (7 * NFSX_UNSIGNED);
-	MALLOC(cookies, u_long *, ncookies * sizeof (u_long *), M_TEMP,
-		M_WAITOK);
 again:
 	iv.iov_base = rbuf;
 	iv.iov_len = fullsiz;
@@ -2743,21 +2726,19 @@ again:
 	io.uio_procp = (struct proc *)0;
 	eofflag = 0;
 
-#ifdef Lite2_integrated
-	VOP_LOCK(vp, 0, procp);
-#else
-	VOP_LOCK(vp);
-#endif
-	error = VOP_READDIR(vp, &io, cred, &eofflag, cookies, ncookies);
+	if (cookies) {
+		free((caddr_t)cookies, M_TEMP);
+		cookies = NULL;
+	}
+
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, procp);
+	error = VOP_READDIR(vp, &io, cred, &eofflag, &ncookies, &cookies);
 
 	off = (u_quad_t)io.uio_offset;
 	getret = VOP_GETATTR(vp, &at, cred, procp);
 
-#ifdef Lite2_integrated
 	VOP_UNLOCK(vp, 0, procp);
-#else
-	VOP_UNLOCK(vp);
-#endif
+
 	if (!cookies && !error)
 		error = NFSERR_PERM;
 	if (!error)

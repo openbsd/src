@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vfsops.c,v 1.5 1997/10/06 20:21:49 deraadt Exp $	*/
+/*	$OpenBSD: ufs_vfsops.c,v 1.6 1997/11/06 05:59:28 csapuntz Exp $	*/
 /*	$NetBSD: ufs_vfsops.c,v 1.4 1996/02/09 22:36:12 christos Exp $	*/
 
 /*
@@ -125,39 +125,64 @@ ufs_quotactl(mp, cmds, uid, arg, p)
 	if ((u_int)type >= MAXQUOTAS)
 		return (EINVAL);
 
+	if (vfs_busy(mp, LK_NOWAIT, 0, p))
+		return (0);
+ 
+
 	switch (cmd) {
 
 	case Q_QUOTAON:
-		return (quotaon(p, mp, type, arg));
+		error = quotaon(p, mp, type, arg);
+		break;
 
 	case Q_QUOTAOFF:
-		if (vfs_busy(mp))
-			return (0);
 		error = quotaoff(p, mp, type);
-		vfs_unbusy(mp);
-		return (error);
+		break;
 
 	case Q_SETQUOTA:
-		return (setquota(mp, uid, type, arg));
+		error = setquota(mp, uid, type, arg) ;
+		break;
 
 	case Q_SETUSE:
-		return (setuse(mp, uid, type, arg));
+		error = setuse(mp, uid, type, arg);
+		break;
 
 	case Q_GETQUOTA:
-		return (getquota(mp, uid, type, arg));
+		error = getquota(mp, uid, type, arg);
+		break;
 
 	case Q_SYNC:
-		if (vfs_busy(mp))
-			return (0);
 		error = qsync(mp);
-		vfs_unbusy(mp);
-		return (error);
+		break;
 
 	default:
-		return (EINVAL);
+		error = EINVAL;
+		break;
 	}
-	/* NOTREACHED */
+
+	vfs_unbusy(mp, p);
+	return (error);
 #endif
+}
+
+
+/*
+ * Initial UFS filesystems, done only once.
+ */
+int
+ufs_init(vfsp)
+	struct vfsconf *vfsp;
+{
+	static int done;
+
+	if (done)
+		return (0);
+	done = 1;
+	ufs_ihashinit();
+#ifdef QUOTA
+	dqinit();
+#endif
+	return (0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_conf.c,v 1.7 1997/10/06 20:20:09 deraadt Exp $	*/
+/*	$OpenBSD: vfs_conf.c,v 1.8 1997/11/06 05:58:26 csapuntz Exp $	*/
 /*	$NetBSD: vfs_conf.c,v 1.21.4.1 1995/11/01 00:06:26 jtc Exp $	*/
 
 /*
@@ -40,6 +40,28 @@
 #include <sys/mount.h>
 #include <sys/vnode.h>
 
+#ifdef FFS
+#include <ufs/ufs/quota.h>
+#include <ufs/ufs/inode.h>
+#include <ufs/ffs/ffs_extern.h>
+#endif
+
+#ifdef CD9660
+#include <isofs/cd9660/iso.h>
+#endif
+
+#ifdef MFS
+#include <ufs/mfs/mfs_extern.h>
+#endif
+
+#ifdef NFSCLIENT
+#include <nfs/rpcv2.h>
+#include <nfs/nfsproto.h>
+#include <nfs/nfsnode.h>
+#include <nfs/nfs.h>
+#include <nfs/nfsmount.h>
+#endif
+
 /*
  * These define the root filesystem and device.
  */
@@ -50,6 +72,8 @@ struct vnode *rootvnode;
  * Set up the filesystem operations for vnodes.
  * The types are defined in mount.h.
  */
+
+
 #ifdef FFS
 extern	struct vfsops ffs_vfsops;
 #endif
@@ -115,107 +139,102 @@ extern	struct vfsops ext2fs_vfsops;
 #endif
 
 /*
- * XXX ORDERING MATTERS, for COMPAT_09.  when that goes away, 
- * empty slots can go away.
+ * Set up the filesystem operations for vnodes.
  */
-struct vfsops *vfssw[] = {
-	NULL,		/* 0 = MOUNT_NONE */
+static struct vfsconf vfsconflist[] = {
+
+        /* Fast Filesystem */
 #ifdef FFS
-	&ffs_vfsops,		/* 1 = MOUNT_FFS */
-#else
-	NULL,
+        { &ffs_vfsops, "ffs", 1, 0, MNT_LOCAL, ffs_mountroot, NULL },
 #endif
-#ifdef NFSCLIENT
-	&nfs_vfsops,		/* 2 = MOUNT_NFS */
-#else
-	NULL,
-#endif
-#ifdef MFS
-	&mfs_vfsops,		/* 3 = MOUNT_MFS */
-#else
-	NULL,
-#endif
-#ifdef MSDOSFS
-	&msdosfs_vfsops,	/* 4 = MOUNT_MSDOS */
-#else
-	NULL,
-#endif
+
+        /* Log-based Filesystem */
 #ifdef LFS
-	&lfs_vfsops,		/* 5 = MOUNT_LFS */
-#else
-	NULL,
+        { &lfs_vfsops, "lfs", 5, 0, MNT_LOCAL, lfs_mountroot, NULL },
 #endif
-	NULL,			/* 6 = MOUNT_LOFS */
-#ifdef FDESC
-	&fdesc_vfsops,		/* 7 = MOUNT_FDESC */
-#else
-	NULL,
+
+        /* Memory-based Filesystem */
+#ifdef MFS
+        { &mfs_vfsops, "mfs", 3, 0, MNT_LOCAL, mfs_mountroot, NULL },
 #endif
-#ifdef PORTAL
-	&portal_vfsops,		/* 8 = MOUNT_PORTAL */
-#else
-	NULL,
-#endif
-#ifdef NULLFS
-	&null_vfsops,		/* 9 = MOUNT_NULL */
-#else
-	NULL,
-#endif
-#ifdef UMAPFS
-	&umap_vfsops,		/* 10 = MOUNT_UMAP */
-#else
-	NULL,
-#endif
-#ifdef KERNFS
-	&kernfs_vfsops,		/* 11 = MOUNT_KERNFS */
-#else
-	NULL,
-#endif
-#ifdef PROCFS
-	&procfs_vfsops,		/* 12 = MOUNT_PROCFS */
-#else
-	NULL,
-#endif
-#ifdef AFS
-	&afs_vfsops,		/* 13 = MOUNT_AFS */
-#else
-	NULL,
-#endif
+
+        /* ISO9660 (aka CDROM) Filesystem */
 #ifdef CD9660
-	&cd9660_vfsops,		/* 14 = MOUNT_ISOFS */
-#else
-	NULL,
+        { &cd9660_vfsops, "cd9660", 14, 0, MNT_LOCAL, cd9660_mountroot, NULL },
 #endif
-#ifdef UNION
-	&union_vfsops,		/* 15 = MOUNT_UNION */
-#else
-	NULL,
+
+        /* MSDOS Filesystem */
+#ifdef MSDOSFS
+        { &msdosfs_vfsops, "msdos", 4, 0, MNT_LOCAL, NULL, NULL },
 #endif
+
+        /* AmigaDOS Filesystem */
 #ifdef ADOSFS
-	&adosfs_vfsops,		/* 16 = MOUNT_ADOSFS */
-#else
-	NULL,
+        { &adosfs_vfsops, "adosfs", 16, 0, MNT_LOCAL, NULL, NULL },
 #endif
-#ifdef EXT2FS
-	&ext2fs_vfsops,		/* 17 = MOUNT_EXT2FS */
-#else
-	NULL,
+
+        /* Sun-compatible Network Filesystem */
+#ifdef NFSCLIENT
+        { &nfs_vfsops, "nfs", 2, 0, 0, nfs_mountroot, NULL },
 #endif
-#ifdef LKM			/* for LKM's.  add new FS's before these */
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+
+        /* Andrew Filesystem */
+#ifdef AFS
+        { &afs_vfsops, "andrewfs", 13, 0, 0, afs_mountroot, NULL },
 #endif
-	0
+
+        /* /proc Filesystem */
+#ifdef PROCFS
+        { &procfs_vfsops, "procfs", 12, 0, 0, NULL, NULL },
+#endif
+
+        /* Loopback (Minimal) Filesystem Layer */
+#ifdef NULLFS
+        { &null_vfsops, "loopback", 9, 0, 0, NULL, NULL },
+#endif
+
+        /* Union (translucent) Filesystem */
+#ifdef UNION
+        { &union_vfsops, "union", 15, 0, 0, NULL, NULL },
+#endif
+
+        /* User/Group Identifer Remapping Filesystem */
+#ifdef UMAPFS
+        { &umap_vfsops, "umap", 10, 0, 0, NULL, NULL },
+#endif
+
+        /* Portal Filesystem */
+#ifdef PORTAL
+        { &portal_vfsops, "portal", 8, 0, 0, NULL, NULL },
+#endif
+
+        /* File Descriptor Filesystem */
+#ifdef FDESC
+        { &fdesc_vfsops, "fdesc", 7, 0, 0, NULL, NULL },
+#endif
+
+        /* Kernel Information Filesystem */
+#ifdef KERNFS
+        { &kernfs_vfsops, "kernfs", 11, 0, 0, NULL, NULL },
+#endif
+
 };
-int	nvfssw = sizeof(vfssw) / sizeof(vfssw[0]);
+
+
+/*
+ * Initially the size of the list, vfs_init will set maxvfsconf
+ * to the highest defined type number.
+ */
+int maxvfsconf = sizeof(vfsconflist) / sizeof (struct vfsconf);
+struct vfsconf *vfsconf = vfsconflist;
+
 
 /*
  * vfs_opv_descs enumerates the list of vnode classes, each with it's own
  * vnode operation vector.  It is consulted at system boot to build operation
  * vectors.  It is NULL terminated.
  */
+extern struct vnodeopv_desc sync_vnodeop_opv_desc;
 extern struct vnodeopv_desc ffs_vnodeop_opv_desc;
 extern struct vnodeopv_desc ffs_specop_opv_desc;
 extern struct vnodeopv_desc ffs_fifoop_opv_desc;
@@ -246,6 +265,7 @@ extern struct vnodeopv_desc ext2fs_specop_opv_desc;
 extern struct vnodeopv_desc ext2fs_fifoop_opv_desc;
 
 struct vnodeopv_desc *vfs_opv_descs[] = {
+	&sync_vnodeop_opv_desc,
 #ifdef FFS
 	&ffs_vnodeop_opv_desc,
 	&ffs_specop_opv_desc,

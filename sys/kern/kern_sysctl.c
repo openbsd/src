@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.21 1997/10/06 20:19:58 deraadt Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.22 1997/11/06 05:58:19 csapuntz Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -110,7 +110,7 @@ sys___sysctl(p, v, retval)
 	switch (name[0]) {
 	case CTL_KERN:
 		fn = kern_sysctl;
-		if (name[2] != KERN_VNODE)	/* XXX */
+		if (name[2] == KERN_VNODE)	/* XXX */
 			dolock = 0;
 		break;
 	case CTL_HW:
@@ -124,6 +124,9 @@ sys___sysctl(p, v, retval)
 		break;
 	case CTL_FS:
 		fn = fs_sysctl;
+		break;
+	case CTL_VFS:
+		fn = vfs_sysctl;
 		break;
 	case CTL_MACHDEP:
 		fn = cpu_sysctl;
@@ -264,7 +267,7 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &boottime,
 		    sizeof(struct timeval)));
 	case KERN_VNODE:
-		return (sysctl_vnode(oldp, oldlenp));
+		return (sysctl_vnode(oldp, oldlenp, p));
 	case KERN_PROC:
 		return (sysctl_doproc(name + 1, namelen - 1, oldp, oldlenp));
 	case KERN_FILE:

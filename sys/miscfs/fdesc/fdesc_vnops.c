@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdesc_vnops.c,v 1.9 1997/10/06 21:04:43 deraadt Exp $	*/
+/*	$OpenBSD: fdesc_vnops.c,v 1.10 1997/11/06 05:58:33 csapuntz Exp $	*/
 /*	$NetBSD: fdesc_vnops.c,v 1.32 1996/04/11 11:24:29 mrg Exp $	*/
 
 /*
@@ -91,11 +91,10 @@ LIST_HEAD(fdhashhead, fdescnode) *fdhashtbl;
 u_long fdhash;
 
 int	fdesc_badop	__P((void *));
-int	fdesc_enotsupp	__P((void *));
 
 int	fdesc_lookup	__P((void *));
-#define	fdesc_create	fdesc_enotsupp
-#define	fdesc_mknod	fdesc_enotsupp
+#define	fdesc_create	eopnotsupp
+#define	fdesc_mknod	eopnotsupp
 int	fdesc_open	__P((void *));
 #define	fdesc_close	nullop
 #define	fdesc_access	nullop
@@ -105,34 +104,35 @@ int	fdesc_read	__P((void *));
 int	fdesc_write	__P((void *));
 int	fdesc_ioctl	__P((void *));
 int	fdesc_select	__P((void *));
-#define	fdesc_mmap	fdesc_enotsupp
+#define	fdesc_mmap	eopnotsupp
 #define	fdesc_fsync	nullop
 #define	fdesc_seek	nullop
-#define	fdesc_remove	fdesc_enotsupp
+#define	fdesc_remove	eopnotsupp
+#define fdesc_revoke    vop_revoke
 int	fdesc_link	__P((void *));
-#define	fdesc_rename	fdesc_enotsupp
-#define	fdesc_mkdir	fdesc_enotsupp
-#define	fdesc_rmdir	fdesc_enotsupp
+#define	fdesc_rename	eopnotsupp
+#define	fdesc_mkdir	eopnotsupp
+#define	fdesc_rmdir	eopnotsupp
 int	fdesc_symlink	__P((void *));
 int	fdesc_readdir	__P((void *));
 int	fdesc_readlink	__P((void *));
 int	fdesc_abortop	__P((void *));
 int	fdesc_inactive	__P((void *));
 int	fdesc_reclaim	__P((void *));
-#define	fdesc_lock	nullop
-#define	fdesc_unlock	nullop
+#define	fdesc_lock	vop_nolock
+#define	fdesc_unlock	vop_nounlock
 #define	fdesc_bmap	fdesc_badop
 #define	fdesc_strategy	fdesc_badop
 int	fdesc_print	__P((void *));
 int	fdesc_pathconf	__P((void *));
-#define	fdesc_islocked	nullop
-#define	fdesc_advlock	fdesc_enotsupp
-#define	fdesc_blkatoff	fdesc_enotsupp
-#define	fdesc_valloc	fdesc_enotsupp
+#define	fdesc_islocked	vop_noislocked
+#define	fdesc_advlock	eopnotsupp
+#define	fdesc_blkatoff	eopnotsupp
+#define	fdesc_valloc	eopnotsupp
 int	fdesc_vfree	__P((void *));
-#define	fdesc_truncate	fdesc_enotsupp
-#define	fdesc_update	fdesc_enotsupp
-#define	fdesc_bwrite	fdesc_enotsupp
+#define	fdesc_truncate	eopnotsupp
+#define	fdesc_update	eopnotsupp
+#define	fdesc_bwrite	eopnotsupp
 
 static int fdesc_attr __P((int, struct vattr *, struct ucred *, struct proc *));
 
@@ -150,6 +150,7 @@ struct vnodeopv_entry_desc fdesc_vnodeop_entries[] = {
 	{ &vop_read_desc, fdesc_read },		/* read */
 	{ &vop_write_desc, fdesc_write },	/* write */
 	{ &vop_ioctl_desc, fdesc_ioctl },	/* ioctl */
+	{ &vop_revoke_desc, fdesc_revoke },     /* revoke */
 	{ &vop_select_desc, fdesc_select },	/* select */
 	{ &vop_mmap_desc, fdesc_mmap },		/* mmap */
 	{ &vop_fsync_desc, fdesc_fsync },	/* fsync */
@@ -188,8 +189,9 @@ struct vnodeopv_desc fdesc_vnodeop_opv_desc =
 /*
  * Initialise cache headers
  */
-void
-fdesc_init()
+int
+fdesc_init(vfsp)
+	struct vfsconf *vfsp;
 {
 	int cttymajor;
 
@@ -199,6 +201,7 @@ fdesc_init()
 			break;
 	devctty = makedev(cttymajor, 0);
 	fdhashtbl = hashinit(NFDCACHE, M_CACHE, &fdhash);
+	return (0);
 }
 
 int
@@ -208,6 +211,7 @@ fdesc_allocvp(ftype, ix, mp, vpp)
 	struct mount *mp;
 	struct vnode **vpp;
 {
+	struct proc *p = curproc;       /* XXX */
 	struct fdhashhead *fc;
 	struct fdescnode *fd;
 	int error = 0;
@@ -216,7 +220,7 @@ fdesc_allocvp(ftype, ix, mp, vpp)
 loop:
 	for (fd = fc->lh_first; fd != 0; fd = fd->fd_hash.le_next) {
 		if (fd->fd_ix == ix && fd->fd_vnode->v_mount == mp) {
-			if (vget(fd->fd_vnode, 0))
+			if (vget(fd->fd_vnode, 0, p))
 				goto loop;
 			*vpp = fd->fd_vnode;
 			return (error);
@@ -272,24 +276,22 @@ fdesc_lookup(v)
 	} */ *ap = v;
 	struct vnode **vpp = ap->a_vpp;
 	struct vnode *dvp = ap->a_dvp;
-	char *pname;
-	struct proc *p;
-	int nfiles;
+	struct componentname *cnp = ap->a_cnp;
+	char *pname = cnp->cn_nameptr;
+	struct proc *p = cnp->cn_proc;
+	int nfiles = p->p_fd->fd_nfiles;
 	unsigned fd = 0;
 	int error;
 	struct vnode *fvp;
 	char *ln;
 
-	pname = ap->a_cnp->cn_nameptr;
-	if (ap->a_cnp->cn_namelen == 1 && *pname == '.') {
+	VOP_UNLOCK(dvp, 0, p);
+	if (cnp->cn_namelen == 1 && *pname == '.') {
 		*vpp = dvp;
-		VREF(dvp);	
-		VOP_LOCK(dvp);
+		VREF(dvp);
+		vn_lock(dvp, LK_SHARED | LK_RETRY, p);
 		return (0);
 	}
-
-	p = ap->a_cnp->cn_proc;
-	nfiles = p->p_fd->fd_nfiles;
 
 	switch (VTOFDESC(dvp)->fd_type) {
 	default:
@@ -300,17 +302,17 @@ fdesc_lookup(v)
 		goto bad;
 
 	case Froot:
-		if (ap->a_cnp->cn_namelen == 2 && bcmp(pname, "fd", 2) == 0) {
+		if (cnp->cn_namelen == 2 && bcmp(pname, "fd", 2) == 0) {
 			error = fdesc_allocvp(Fdevfd, FD_DEVFD, dvp->v_mount, &fvp);
 			if (error)
 				goto bad;
 			*vpp = fvp;
 			fvp->v_type = VDIR;
-			VOP_LOCK(fvp);
+			vn_lock(fvp, LK_SHARED | LK_RETRY, p);
 			return (0);
 		}
 
-		if (ap->a_cnp->cn_namelen == 3 && bcmp(pname, "tty", 3) == 0) {
+		if (cnp->cn_namelen == 3 && bcmp(pname, "tty", 3) == 0) {
 			struct vnode *ttyvp = cttyvp(p);
 			if (ttyvp == NULL) {
 				error = ENXIO;
@@ -321,12 +323,12 @@ fdesc_lookup(v)
 				goto bad;
 			*vpp = fvp;
 			fvp->v_type = VCHR;
-			VOP_LOCK(fvp);
+			vn_lock(fvp, LK_SHARED | LK_RETRY, p);
 			return (0);
 		}
 
 		ln = 0;
-		switch (ap->a_cnp->cn_namelen) {
+		switch (cnp->cn_namelen) {
 		case 5:
 			if (bcmp(pname, "stdin", 5) == 0) {
 				ln = "fd/0";
@@ -352,7 +354,7 @@ fdesc_lookup(v)
 			VTOFDESC(fvp)->fd_link = ln;
 			*vpp = fvp;
 			fvp->v_type = VLNK;
-			VOP_LOCK(fvp);
+			vn_lock(fvp, LK_SHARED | LK_RETRY, p);
 			return (0);
 		} else {
 			error = ENOENT;
@@ -362,9 +364,11 @@ fdesc_lookup(v)
 		/* FALL THROUGH */
 
 	case Fdevfd:
-		if (ap->a_cnp->cn_namelen == 2 && bcmp(pname, "..", 2) == 0) {
-			error = fdesc_root(dvp->v_mount, vpp);
-			return (error);
+		if (cnp->cn_namelen == 2 && bcmp(pname, "..", 2) == 0) {
+			if ((error = fdesc_root(dvp->v_mount, vpp))) 
+				goto bad;
+
+			return (0);
 		}
 
 		fd = 0;
@@ -388,11 +392,13 @@ fdesc_lookup(v)
 		if (error)
 			goto bad;
 		VTOFDESC(fvp)->fd_fd = fd;
+		vn_lock(fvp, LK_SHARED | LK_RETRY, p);
 		*vpp = fvp;
 		return (0);
 	}
 
 bad:;
+	vn_lock(dvp, LK_SHARED | LK_RETRY, p);
 	*vpp = NULL;
 	return (error);
 }
@@ -683,16 +689,14 @@ fdesc_readdir(v)
 		struct uio *a_uio;
 		struct ucred *a_cred;
 		int *a_eofflag;
-		u_long *a_cookies;
-		int a_ncookies;
+		int *a_ncookies;
+		u_long **a_cookies;
 	} */ *ap = v;
 	struct uio *uio = ap->a_uio;
 	struct dirent d;
 	struct filedesc *fdp;
 	int i;
 	int error;
-	u_long *cookies = ap->a_cookies;
-	int ncookies = ap->a_ncookies;
 
 	switch (VTOFDESC(ap->a_vp)->fd_type) {
 	case Fctty:
@@ -745,8 +749,6 @@ fdesc_readdir(v)
 
 			if ((error = uiomove((caddr_t)&d, UIO_MX, uio)) != 0)
 				break;
-			if (ncookies-- > 0)
-				*cookies++ = i + 1;
 		}
 	} else {
 		for (; i - 2 < fdp->fd_nfiles && uio->uio_resid >= UIO_MX;
@@ -772,8 +774,6 @@ fdesc_readdir(v)
 
 			if ((error = uiomove((caddr_t)&d, UIO_MX, uio)) != 0)
 				break;
-			if (ncookies-- > 0)
-				*cookies++ = i + 1;
 		}
 	}
 
@@ -916,6 +916,7 @@ fdesc_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
+		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
@@ -923,6 +924,7 @@ fdesc_inactive(v)
 	 * Clear out the v_type field to avoid
 	 * nasty things happening in vgone().
 	 */
+	VOP_UNLOCK(vp, 0, ap->a_p);
 	vp->v_type = VNON;
 	return (0);
 }
@@ -1045,18 +1047,6 @@ fdesc_abortop(v)
 	if ((ap->a_cnp->cn_flags & (HASBUF | SAVESTART)) == HASBUF)
 		FREE(ap->a_cnp->cn_pnbuf, M_NAMEI);
 	return (0);
-}
-
-/*
- * /dev/fd vnode unsupported operation
- */
-/*ARGSUSED*/
-int
-fdesc_enotsupp(v)
-	void *v;
-{
-
-	return (EOPNOTSUPP);
 }
 
 /*

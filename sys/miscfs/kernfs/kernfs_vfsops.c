@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfs_vfsops.c,v 1.7 1997/10/06 20:20:25 deraadt Exp $	*/
+/*	$OpenBSD: kernfs_vfsops.c,v 1.8 1997/11/06 05:58:35 csapuntz Exp $	*/
 /*	$NetBSD: kernfs_vfsops.c,v 1.26 1996/04/22 01:42:27 christos Exp $	*/
 
 /*
@@ -59,7 +59,7 @@
 
 dev_t rrootdev = NODEV;
 
-void	kernfs_init __P((void));
+int kernfs_init __P((struct vfsconf *));
 void	kernfs_get_rrootdev __P((void));
 int	kernfs_mount __P((struct mount *, char *, caddr_t, struct nameidata *,
 			  struct proc *));
@@ -67,18 +67,13 @@ int	kernfs_start __P((struct mount *, int, struct proc *));
 int	kernfs_unmount __P((struct mount *, int, struct proc *));
 int	kernfs_root __P((struct mount *, struct vnode **));
 int	kernfs_statfs __P((struct mount *, struct statfs *, struct proc *));
-int	kernfs_quotactl __P((struct mount *, int, uid_t, caddr_t,
-			     struct proc *));
-int	kernfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
-int	kernfs_vget __P((struct mount *, ino_t, struct vnode **));
-int	kernfs_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
-			   struct vnode **, int *, struct ucred **));
-int	kernfs_vptofh __P((struct vnode *, struct fid *));
 
 /*ARGSUSED*/
-void
-kernfs_init()
+int
+kernfs_init(vfsp)
+	struct vfsconf *vfsp;
 {
+	return (0);
 }
 
 void
@@ -144,7 +139,7 @@ kernfs_mount(mp, path, data, ndp, p)
 	fmp->kf_root = rvp;
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_data = (qaddr_t)fmp;
-	getnewfsid(mp, makefstype(MOUNT_KERNFS));
+	vfs_getnewfsid(mp);
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
 	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
@@ -176,7 +171,6 @@ kernfs_unmount(mp, mntflags, p)
 {
 	int error;
 	int flags = 0;
-	extern int doforce;
 	struct vnode *rootvp = VFSTOKERNFS(mp)->kf_root;
 
 #ifdef KERNFS_DIAGNOSTIC
@@ -184,9 +178,6 @@ kernfs_unmount(mp, mntflags, p)
 #endif
 
 	if (mntflags & MNT_FORCE) {
-		/* kernfs can never be rootfs so don't check for it */
-		if (!doforce)
-			return (EINVAL);
 		flags |= FORCECLOSE;
 	}
 
@@ -225,6 +216,7 @@ kernfs_root(mp, vpp)
 	struct vnode **vpp;
 {
 	struct vnode *vp;
+	struct proc *p = curproc;
 
 #ifdef KERNFS_DIAGNOSTIC
 	printf("kernfs_root(mp = %p)\n", mp);
@@ -235,21 +227,9 @@ kernfs_root(mp, vpp)
 	 */
 	vp = VFSTOKERNFS(mp)->kf_root;
 	VREF(vp);
-	VOP_LOCK(vp);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 	*vpp = vp;
 	return (0);
-}
-
-int
-kernfs_quotactl(mp, cmd, uid, arg, p)
-	struct mount *mp;
-	int cmd;
-	uid_t uid;
-	caddr_t arg;
-	struct proc *p;
-{
-
-	return (EOPNOTSUPP);
 }
 
 int
@@ -266,8 +246,6 @@ kernfs_statfs(mp, sbp, p)
 
 #ifdef COMPAT_09
 	sbp->f_type = 7;
-#else
-	sbp->f_type = 0;
 #endif
 	sbp->f_bsize = cnt.v_page_size;
 	sbp->f_iosize = cnt.v_page_size;
@@ -277,66 +255,16 @@ kernfs_statfs(mp, sbp, p)
 	sbp->f_files = desiredvnodes;
 	sbp->f_ffree = desiredvnodes - numvnodes;
 	if (sbp != &mp->mnt_stat) {
+		sbp->f_type = mp->mnt_vfc->vfc_typenum;
 		bcopy(&mp->mnt_stat.f_fsid, &sbp->f_fsid, sizeof(sbp->f_fsid));
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
 		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
 	}
-	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
+	strncpy(sbp->f_fstypename, mp->mnt_vfc->vfc_name, MFSNAMELEN);
 	return (0);
-}
-
-/*ARGSUSED*/
-int
-kernfs_sync(mp, waitfor, uc, p)
-	struct mount *mp;
-	int waitfor;
-	struct ucred *uc;
-	struct proc *p;
-{
-
-	return (0);
-}
-
-/*
- * Kernfs flat namespace lookup.
- * Currently unsupported.
- */
-int
-kernfs_vget(mp, ino, vpp)
-	struct mount *mp;
-	ino_t ino;
-	struct vnode **vpp;
-{
-
-	return (EOPNOTSUPP);
-}
-
-/*ARGSUSED*/
-int
-kernfs_fhtovp(mp, fhp, mb, vpp, what, anon)
-	struct mount *mp;
-	struct fid *fhp;
-	struct mbuf *mb;
-	struct vnode **vpp;
-	int *what;
-	struct ucred **anon;
-{
-
-	return (EOPNOTSUPP);
-}
-
-/*ARGSUSED*/
-int
-kernfs_vptofh(vp, fhp)
-	struct vnode *vp;
-	struct fid *fhp;
-{
-
-	return (EOPNOTSUPP);
 }
 
 struct vfsops kernfs_vfsops = {
-	MOUNT_KERNFS,
 	kernfs_mount,
 	kernfs_start,
 	kernfs_unmount,
@@ -348,4 +276,5 @@ struct vfsops kernfs_vfsops = {
 	kernfs_fhtovp,
 	kernfs_vptofh,
 	kernfs_init,
+	kernfs_sysctl
 };

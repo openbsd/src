@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.20 1997/10/06 20:21:08 deraadt Exp $	*/
+/*	$OpenBSD: mount.h,v 1.21 1997/11/06 05:59:09 csapuntz Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -43,6 +43,7 @@
 #include <sys/ucred.h>
 #endif
 #include <sys/queue.h>
+#include <sys/lock.h>
 
 typedef struct { int32_t val[2]; } fsid_t;	/* file system id type */
 
@@ -55,7 +56,7 @@ typedef struct { int32_t val[2]; } fsid_t;	/* file system id type */
 struct fid {
 	u_short		fid_len;		/* length of data in bytes */
 	u_short		fid_reserved;		/* force longword alignment */
-	char		fid_data[MAXFIDSZ];	/* data (variable length) */
+ 	char		fid_data[MAXFIDSZ];	/* data (variable length) */
 };
 
 /*
@@ -77,7 +78,9 @@ struct statfs {
 	long	f_ffree;		/* free file nodes in fs */
 	fsid_t	f_fsid;			/* file system id */
 	uid_t	f_owner;		/* user that mounted the file system */
-	long	f_spare[4];		/* spare for later */
+	long    f_syncwrites;           /* count of sync writes since mount */
+	long    f_asyncwrites;          /* count of async writes since mount */
+	long	f_spare[2];		/* spare for later */
 	char	f_fstypename[MFSNAMELEN]; /* fs type name */
 	char	f_mntonname[MNAMELEN];	  /* directory on which mounted */
 	char	f_mntfromname[MNAMELEN];  /* mounted file system */
@@ -116,8 +119,11 @@ LIST_HEAD(vnodelst, vnode);
 struct mount {
 	CIRCLEQ_ENTRY(mount) mnt_list;		/* mount list */
 	struct vfsops	*mnt_op;		/* operations on fs */
+	struct vfsconf  *mnt_vfc;               /* configuration info */
 	struct vnode	*mnt_vnodecovered;	/* vnode we mounted on */
+	struct vnode    *mnt_syncer;            /* syncer vnode */
 	struct vnodelst	mnt_vnodelist;		/* list of vnodes this mount */
+	struct lock     mnt_lock;               /* mount structure lock */
 	int		mnt_flag;		/* flags */
 	int		mnt_maxsymlinklen;	/* max size of short symlink */
 	struct statfs	mnt_stat;		/* cache of filesystem stats */
@@ -161,7 +167,7 @@ struct mount {
 /*
  * Mask of flags that are visible to statfs()
  */
-#define	MNT_VISFLAGMASK	0x0000ffff
+#define	MNT_VISFLAGMASK	0x0400ffff
 
 /*
  * filesystem control flags.
@@ -180,6 +186,37 @@ struct mount {
 #define MNT_MPWANT	0x00800000	/* waiting for mount point */
 #define MNT_UNMOUNT	0x01000000	/* unmount in progress */
 #define MNT_WANTRDWR	0x02000000	/* want upgrade to read/write */
+#define MNT_SOFTDEP     0x04000000      /* soft dependencies being done */
+/*
+ * Sysctl CTL_VFS definitions.
+ *
+ * Second level identifier specifies which filesystem. Second level
+ * identifier VFS_GENERIC returns information about all filesystems.
+ */
+#define	VFS_GENERIC		0	/* generic filesystem information */
+/*
+ * Third level identifiers for VFS_GENERIC are given below; third
+ * level identifiers for specific filesystems are given in their
+ * mount specific header files.
+ */
+#define VFS_MAXTYPENUM	1	/* int: highest defined filesystem type */
+#define VFS_CONF	2	/* struct: vfsconf for filesystem given
+				   as next argument */
+
+/*
+ * Filesystem configuration information. One of these exists for each
+ * type of filesystem supported by the kernel. These are searched at
+ * mount time to identify the requested filesystem.
+ */
+struct vfsconf {
+	struct	vfsops *vfc_vfsops;	/* filesystem operations vector */
+	char	vfc_name[MFSNAMELEN];	/* filesystem type name */
+	int	vfc_typenum;		/* historic filesystem type number */
+	int	vfc_refcount;		/* number mounted of this type */
+	int	vfc_flags;		/* permanent flags */
+	int	(*vfc_mountroot)(void);	/* if != NULL, routine to mount root */
+	struct	vfsconf *vfc_next;	/* next in list */
+};
 
 /*
  * Operations supported on mounted file system.
@@ -190,8 +227,10 @@ struct nameidata;
 struct mbuf;
 #endif
 
+extern int maxvfsconf;		/* highest defined filesystem type */
+extern struct vfsconf *vfsconf;	/* head of list of filesystem types */
+
 struct vfsops {
-	char	*vfs_name;
 	int	(*vfs_mount)	__P((struct mount *mp, char *path, caddr_t data,
 				    struct nameidata *ndp, struct proc *p));
 	int	(*vfs_start)	__P((struct mount *mp, int flags,
@@ -211,8 +250,9 @@ struct vfsops {
 				    struct mbuf *nam, struct vnode **vpp,
 				    int *exflagsp, struct ucred **credanonp));
 	int	(*vfs_vptofh)	__P((struct vnode *vp, struct fid *fhp));
-	void	(*vfs_init)	__P((void));
-	int	vfs_refcount;
+	int	(*vfs_init)	__P((struct vfsconf *));
+	int     (*vfs_sysctl)   __P((int *, u_int, void *, size_t *, void *,
+				     size_t, struct proc *));
 };
 
 #define VFS_MOUNT(MP, PATH, DATA, NDP, P) \
@@ -234,8 +274,9 @@ struct vfsops {
  *
  * waitfor flags to vfs_sync() and getfsstat()
  */
-#define MNT_WAIT	1
-#define MNT_NOWAIT	2
+#define MNT_WAIT	1	/* synchronously wait for I/O to complete */
+#define MNT_NOWAIT	2	/* start all I/O, but do not wait for it */
+#define MNT_LAZY	3	/* push data not written by filesystem syncer */
 
 /*
  * Generic file handle
@@ -446,21 +487,25 @@ struct adosfs_args {
 /*
  * exported vnode operations
  */
+int	vfs_busy __P((struct mount *, int, struct simplelock *, struct proc *));
+void	vfs_getnewfsid __P((struct mount *));
+struct	mount *vfs_getvfs __P((fsid_t *));
+int	vfs_mountedon __P((struct vnode *));
+int	vfs_mountroot __P((void));
+int	vfs_rootmountalloc __P((char *, char *, struct mount **));
+void	vfs_unbusy __P((struct mount *, struct proc *));
+void	vfs_unmountall __P((void));
+extern	CIRCLEQ_HEAD(mntlist, mount) mountlist;
+extern	struct simplelock mountlist_slock;
+
 struct	mount *getvfs __P((fsid_t *));	    /* return vfs given fsid */
 int	vfs_export			    /* process mount export info */
 	  __P((struct mount *, struct netexport *, struct export_args *));
 struct	netcred *vfs_export_lookup	    /* lookup host in fs export list */
 	  __P((struct mount *, struct netexport *, struct mbuf *));
-int	vfs_lock __P((struct mount *));	    /* lock a vfs */
-int	vfs_mountedon __P((struct vnode *));/* is a vfs mounted on vp */
+int	vfs_allocate_syncvnode __P((struct mount *));
+
 void	vfs_shutdown __P((void));	    /* unmount and sync file systems */
-void	vfs_unlock __P((struct mount *));   /* unlock a vfs */
-void	vfs_unmountall __P((void));	    /* unmount file systems */
-int 	vfs_busy __P((struct mount *));
-void	vfs_unbusy __P((struct mount *));
-extern	CIRCLEQ_HEAD(mntlist, mount) mountlist;	/* mounted filesystem list */
-extern	struct vfsops *vfssw[];		    /* filesystem type table */
-extern	int nvfssw;
 long	makefstype __P((char *));
 int	dounmount __P((struct mount *, int, struct proc *));
 void	vfsinit __P((void));
@@ -479,6 +524,8 @@ int	getmntinfo __P((struct statfs **, int));
 int	mount __P((const char *, const char *, int, void *));
 int	statfs __P((const char *, struct statfs *));
 int	unmount __P((const char *, int));
+
+
 __END_DECLS
 
 #endif /* _KERNEL */

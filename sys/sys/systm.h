@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.23 1997/11/04 19:17:34 chuck Exp $	*/
+/*	$OpenBSD: systm.h,v 1.24 1997/11/06 05:59:12 csapuntz Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -128,7 +128,7 @@ int	enodev __P((void));
 int	enosys __P((void));
 int	enoioctl __P((void));
 int	enxio __P((void));
-int	eopnotsupp __P((void));
+int	eopnotsupp __P((void *));
 
 int	lkmenodev __P((void));
 
@@ -241,7 +241,7 @@ void	kmstartup __P((void));
 
 int nfs_mountroot __P((void));
 int dk_mountroot __P((void));
-int (*mountroot) __P((void));
+int (*mountroot)__P((void));
 
 #include <lib/libkern/libkern.h>
 

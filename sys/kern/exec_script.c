@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_script.c,v 1.6 1997/10/06 20:19:48 deraadt Exp $	*/
+/*	$OpenBSD: exec_script.c,v 1.7 1997/11/06 05:58:13 csapuntz Exp $	*/
 /*	$NetBSD: exec_script.c,v 1.13 1996/02/04 02:15:06 christos Exp $	*/
 
 /*
@@ -228,7 +228,7 @@ check_shell:
 	scriptvp = epp->ep_vp;
 	oldpnbuf = epp->ep_ndp->ni_cnd.cn_pnbuf;
 
-	VOP_UNLOCK(scriptvp);
+	VOP_UNLOCK(scriptvp, 0, p);
 
 	if ((error = check_exec(p, epp)) == 0) {
 		/* note that we've clobbered the header */

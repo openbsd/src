@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_pager.c,v 1.7 1997/10/06 20:21:27 deraadt Exp $	*/
+/*	$OpenBSD: vm_pager.c,v 1.8 1997/11/06 05:59:37 csapuntz Exp $	*/
 /*	$NetBSD: vm_pager.c,v 1.21 1996/03/16 23:15:25 christos Exp $	*/
 
 /* 
@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm_pager.c	8.6 (Berkeley) 1/12/94
+ *	@(#)vm_pager.c	8.7 (Berkeley) 7/7/94
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.

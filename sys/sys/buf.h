@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.9 1997/10/06 20:21:03 deraadt Exp $	*/
+/*	$OpenBSD: buf.h,v 1.10 1997/11/06 05:59:07 csapuntz Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -48,6 +48,27 @@
 #define NOLIST ((struct buf *)0x87654321)
 
 /*
+ * To avoid including <ufs/ffs/softdep.h>
+ */ 
+
+LIST_HEAD(workhead, worklist);
+
+/*
+ * These are currently used only by the soft dependency code, hence
+ * are stored once in a global variable. If other subsystems wanted
+ * to use these hooks, a pointer to a set of bio_ops could be added
+ * to each buffer.
+ */
+struct mount;
+extern struct bio_ops {
+	void	(*io_start) __P((struct buf *));
+	void	(*io_complete) __P((struct buf *));
+ 	void	(*io_deallocate) __P((struct buf *));
+ 	int	(*io_sync) __P((struct mount *));
+} bioops;
+ 
+
+/*
  * The buffer header describes an I/O operation in the kernel.
  */
 struct buf {
@@ -79,6 +100,7 @@ struct buf {
 	struct	ucred *b_wcred;		/* Write credentials reference. */
 	int	b_validoff;		/* Offset in buffer of valid region. */
 	int	b_validend;		/* Offset of end of valid region. */
+ 	struct	workhead b_dep;		/* List of filesystem dependencies. */
 };
 
 /*
@@ -177,6 +199,7 @@ int	breadn __P((struct vnode *, daddr_t, int, daddr_t *, int *, int,
 void	brelse __P((struct buf *));
 void	bremfree __P((struct buf *));
 void	bufinit __P((void));
+void	bdirty __P((struct buf *));
 int	bwrite __P((struct buf *));
 void	cluster_callback __P((struct buf *));
 int	cluster_read __P((struct vnode *, u_quad_t, daddr_t, long,

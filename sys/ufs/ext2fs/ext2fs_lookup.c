@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_lookup.c,v 1.2 1997/06/12 21:09:34 downsj Exp $	*/
+/*	$OpenBSD: ext2fs_lookup.c,v 1.3 1997/11/06 05:59:15 csapuntz Exp $	*/
 /*	$NetBSD: ext2fs_lookup.c,v 1.1 1997/06/11 09:33:59 bouyer Exp $	*/
 
 /* 
@@ -149,9 +149,8 @@ ext2fs_readdir(v)
 	struct iovec aiov;
 	caddr_t dirbuf;
 	off_t off = uio->uio_offset;
-	u_long *cookies = ap->a_cookies;
-	int ncookies = ap->a_ncookies;
-
+	int ncookies = 0;
+	u_long *cookies = NULL;
 	count = uio->uio_resid;
 	/* Make sure we don't return partial entries. */
 	count -= (uio->uio_offset + count) & (fs->e2fs_bsize -1);
@@ -171,37 +170,60 @@ ext2fs_readdir(v)
 	aiov.iov_base = dirbuf;
 
 	error = VOP_READ(ap->a_vp, &auio, 0, ap->a_cred);
-	if (error == 0) {
-		readcnt = count - auio.uio_resid;
-		for (dp = (struct ext2fs_direct *)dirbuf; 
-			(char *)dp < (char *)dirbuf + readcnt; ) {
-			if (dp->e2d_reclen <= 0) {
-				error = EIO;
-				break;
-			}
-			ext2fs_dirconv2ffs(dp, &dstd);
-			if(dstd.d_reclen > uio->uio_resid) {
-				break;
-			}
-			if ((error = uiomove((caddr_t)&dstd, dstd.d_reclen, uio)) != 0) {
-				break;
-			}
-			off = off + dp->e2d_reclen;
-			if (cookies != NULL) {
-				*cookies++ = off;
-				if (--ncookies <= 0){
-					break;  /* out of cookies */
-				}
-			}
-			/* advance dp */
-			dp = (struct ext2fs_direct *) ((char *)dp + dp->e2d_reclen);
+	if (error) 
+		goto err_exit;
+
+	
+	readcnt = count - auio.uio_resid;
+	
+	for (dp = (struct ext2fs_direct *)dirbuf; 
+	     (char *)dp < (char *)dirbuf + readcnt; ) {
+		if (dp->e2d_reclen <= 0) {
+			error = EIO;
+			goto err_exit;
 		}
-		/* we need to correct uio_offset */
-		uio->uio_offset = off;
+		dp = (struct ext2fs_direct *) ((char *)dp + dp->e2d_reclen);
+		ncookies++;
 	}
+
+
+	if (ap->a_ncookies) {
+		MALLOC(cookies, u_long *, ncookies * sizeof(u_long), M_TEMP,
+		       M_WAITOK);
+		*ap->a_ncookies = ncookies;
+		*ap->a_cookies = cookies;
+	}
+
+
+	for (dp = (struct ext2fs_direct *)dirbuf; 
+	     (char *)dp < (char *)dirbuf + readcnt; ) {
+
+		ext2fs_dirconv2ffs(dp, &dstd);
+		if(dstd.d_reclen > uio->uio_resid) {
+			break;
+		}
+		if ((error = uiomove((caddr_t)&dstd, dstd.d_reclen, uio)) != 0) {
+			FREE(ap->a_ncookies, M_TEMP);
+			*ap->a_cookies = 0;
+			
+			goto err_exit;
+		}
+
+		off = off + dp->e2d_reclen;
+
+		if (cookies)
+			*cookies++ = off;
+
+		dp = (struct ext2fs_direct *) ((char *)dp + dp->e2d_reclen);			/* advance dp */
+	}
+	/* we need to correct uio_offset */
+	uio->uio_offset = off;
+
+err_exit:
 	FREE(dirbuf, M_TEMP);
 	*ap->a_eofflag = VTOI(ap->a_vp)->i_e2fs_size <= uio->uio_offset;
 	uio->uio_resid += lost;
+	
 	return (error);
 }
 
@@ -272,7 +294,7 @@ ext2fs_lookup(v)
 	struct ucred *cred = cnp->cn_cred;
 	int flags = cnp->cn_flags;
 	int nameiop = cnp->cn_nameiop;
-
+	struct proc *p = cnp->cn_proc;
 	int	dirblksize = VTOI(ap->a_dvp)->i_e2fs->e2fs_bsize;
 
 	bp = NULL;
@@ -313,14 +335,14 @@ ext2fs_lookup(v)
 			VREF(vdp);
 			error = 0;
 		} else if (flags & ISDOTDOT) {
-			VOP_UNLOCK(pdp);
-			error = vget(vdp, 1);
+			VOP_UNLOCK(pdp, 0, p);
+			error = vget(vdp, LK_EXCLUSIVE, p);
 			if (!error && lockparent && (flags & ISLASTCN))
-				error = VOP_LOCK(pdp);
+				error = vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY, p);
 		} else {
-			error = vget(vdp, 1);
+			error = vget(vdp, LK_EXCLUSIVE, p);
 			if (!lockparent || error || !(flags & ISLASTCN))
-				VOP_UNLOCK(pdp);
+				VOP_UNLOCK(pdp, 0, p);
 		}
 		/*
 		 * Check that the capability number did not change
@@ -331,9 +353,9 @@ ext2fs_lookup(v)
 				return (0);
 			vput(vdp);
 			if (lockparent && pdp != vdp && (flags & ISLASTCN))
-				VOP_UNLOCK(pdp);
+				VOP_UNLOCK(pdp, 0, p);
 		}
-		if ((error = VOP_LOCK(pdp)) != 0)
+		if ((error = vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY, p)) != 0)
 			return (error);
 		vdp = pdp;
 		dp = VTOI(pdp);
@@ -545,7 +567,7 @@ searchloop:
 		 */
 		cnp->cn_flags |= SAVENAME;
 		if (!lockparent)
-			VOP_UNLOCK(vdp);
+			VOP_UNLOCK(vdp, 0, p);
 		return (EJUSTRETURN);
 	}
 	/*
@@ -620,7 +642,7 @@ found:
 		}
 		*vpp = tdp;
 		if (!lockparent)
-			VOP_UNLOCK(vdp);
+			VOP_UNLOCK(vdp, 0, p);
 		return (0);
 	}
 
@@ -645,7 +667,7 @@ found:
 		*vpp = tdp;
 		cnp->cn_flags |= SAVENAME;
 		if (!lockparent)
-			VOP_UNLOCK(vdp);
+			VOP_UNLOCK(vdp, 0, p);
 		return (0);
 	}
 
@@ -670,13 +692,13 @@ found:
 	 */
 	pdp = vdp;
 	if (flags & ISDOTDOT) {
-		VOP_UNLOCK(pdp);	/* race to get the inode */
+		VOP_UNLOCK(pdp, 0, p);	/* race to get the inode */
 		if ((error = VFS_VGET(vdp->v_mount, dp->i_ino, &tdp)) != 0) {
-			VOP_LOCK(pdp);
+			vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY, p);
 			return (error);
 		}
 		if (lockparent && (flags & ISLASTCN) &&
-			(error = VOP_LOCK(pdp)) != 0) {
+			(error = vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY, p)) != 0) {
 			vput(tdp);
 			return (error);
 		}
@@ -688,7 +710,7 @@ found:
 		if ((error = VFS_VGET(vdp->v_mount, dp->i_ino, &tdp)) != 0)
 			return (error);
 		if (!lockparent || !(flags & ISLASTCN))
-			VOP_UNLOCK(pdp);
+			VOP_UNLOCK(pdp, 0, p);
 		*vpp = tdp;
 	}
 

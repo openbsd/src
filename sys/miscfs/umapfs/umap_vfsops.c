@@ -1,4 +1,4 @@
-/*	$OpenBSD: umap_vfsops.c,v 1.10 1997/10/06 20:20:41 deraadt Exp $	*/
+/*	$OpenBSD: umap_vfsops.c,v 1.11 1997/11/06 05:58:48 csapuntz Exp $	*/
 /*	$NetBSD: umap_vfsops.c,v 1.9 1996/02/09 22:41:05 christos Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
+#include <sys/proc.h>
 #include <sys/types.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
@@ -181,7 +182,7 @@ umapfs_mount(mp, path, data, ndp, p)
 	/*
 	 * Unlock the node (either the lower or the alias)
 	 */
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, 0, p);
 	/*
 	 * Make sure the node alias worked
 	 */
@@ -201,7 +202,7 @@ umapfs_mount(mp, path, data, ndp, p)
 	if (UMAPVPTOLOWERVP(umapm_rootvp)->v_mount->mnt_flag & MNT_LOCAL)
 		mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_data = (qaddr_t) amp;
-	getnewfsid(mp, makefstype(MOUNT_UMAP));
+	vfs_getnewfsid(mp);
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
 	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
@@ -242,16 +243,12 @@ umapfs_unmount(mp, mntflags, p)
 	struct vnode *umapm_rootvp = MOUNTTOUMAPMOUNT(mp)->umapm_rootvp;
 	int error;
 	int flags = 0;
-	extern int doforce;
 
 #ifdef UMAPFS_DIAGNOSTIC
 	printf("umapfs_unmount(mp = %p)\n", mp);
 #endif
 
 	if (mntflags & MNT_FORCE) {
-		/* lofs can never be rootfs so don't check for it */
-		if (!doforce)
-			return (EINVAL);
 		flags |= FORCECLOSE;
 	}
 
@@ -294,6 +291,7 @@ umapfs_root(mp, vpp)
 	struct mount *mp;
 	struct vnode **vpp;
 {
+	struct proc *p = curproc;
 	struct vnode *vp;
 
 #ifdef UMAPFS_DIAGNOSTIC
@@ -308,7 +306,7 @@ umapfs_root(mp, vpp)
 	 */
 	vp = MOUNTTOUMAPMOUNT(mp)->umapm_rootvp;
 	VREF(vp);
-	VOP_LOCK(vp);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 	*vpp = vp;
 	return (0);
 }
@@ -361,7 +359,7 @@ umapfs_statfs(mp, sbp, p)
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
 		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
 	}
-	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
+	strncpy(sbp->f_fstypename, mp->mnt_vfc->vfc_name, MFSNAMELEN);
 	return (0);
 }
 
@@ -407,8 +405,11 @@ umapfs_vptofh(vp, fhp)
 	return VFS_VPTOFH(UMAPVPTOLOWERVP(vp), fhp);
 }
 
+#define umapfs_sysctl ((int (*) __P((int *, u_int, void *, size_t *, void *, \
+	    size_t, struct proc *)))eopnotsupp)
+ 
+
 struct vfsops umap_vfsops = {
-	MOUNT_UMAP,
 	umapfs_mount,
 	umapfs_start,
 	umapfs_unmount,
@@ -420,4 +421,5 @@ struct vfsops umap_vfsops = {
 	umapfs_fhtovp,
 	umapfs_vptofh,
 	umapfs_init,
+	umapfs_sysctl
 };

@@ -291,6 +291,31 @@ static __inline int VOP_WRITE(vp, uio, ioflag, cred)
 	return (VCALL(vp, VOFFSET(vop_write), &a));
 }
 
+struct vop_lease_args {
+	struct vnodeop_desc *a_desc;
+	struct vnode *a_vp;
+	struct proc *a_p;
+	struct ucred *a_cred;
+	int a_flag;
+};
+extern struct vnodeop_desc vop_lease_desc;
+static __inline int VOP_LEASE __P((struct vnode *, struct proc *, 
+    struct ucred *, int));
+static __inline int VOP_LEASE(vp, p, cred, flag)
+	struct vnode *vp;
+	struct proc *p;
+	struct ucred *cred;
+	int flag;
+{
+	struct vop_lease_args a;
+	a.a_desc = VDESC(vop_lease);
+	a.a_vp = vp;
+	a.a_p = p;
+	a.a_cred = cred;
+	a.a_flag = flag;
+	return (VCALL(vp, VOFFSET(vop_lease), &a));
+}
+
 struct vop_ioctl_args {
 	struct vnodeop_desc *a_desc;
 	struct vnode *a_vp;
@@ -348,6 +373,24 @@ static __inline int VOP_SELECT(vp, which, fflags, cred, p)
 	a.a_cred = cred;
 	a.a_p = p;
 	return (VCALL(vp, VOFFSET(vop_select), &a));
+}
+
+struct vop_revoke_args {
+	struct vnodeop_desc *a_desc;
+	struct vnode *a_vp;
+	int a_flags;
+};
+extern struct vnodeop_desc vop_revoke_desc;
+static __inline int VOP_REVOKE __P((struct vnode *, int));
+static __inline int VOP_REVOKE(vp, flags)
+	struct vnode *vp;
+	int flags;
+{
+	struct vop_revoke_args a;
+	a.a_desc = VDESC(vop_revoke);
+	a.a_vp = vp;
+	a.a_flags = flags;
+	return (VCALL(vp, VOFFSET(vop_revoke), &a));
 }
 
 struct vop_mmap_args {
@@ -582,19 +625,19 @@ struct vop_readdir_args {
 	struct uio *a_uio;
 	struct ucred *a_cred;
 	int *a_eofflag;
-	u_long *a_cookies;
-	int a_ncookies;
+	int *a_ncookies;
+	u_long **a_cookies;
 };
 extern struct vnodeop_desc vop_readdir_desc;
 static __inline int VOP_READDIR __P((struct vnode *, struct uio *, 
-    struct ucred *, int *, u_long *, int));
-static __inline int VOP_READDIR(vp, uio, cred, eofflag, cookies, ncookies)
+    struct ucred *, int *, int *, u_long **));
+static __inline int VOP_READDIR(vp, uio, cred, eofflag, ncookies, cookies)
 	struct vnode *vp;
 	struct uio *uio;
 	struct ucred *cred;
 	int *eofflag;
-	u_long *cookies;
-	int ncookies;
+	int *ncookies;
+	u_long **cookies;
 {
 	struct vop_readdir_args a;
 	a.a_desc = VDESC(vop_readdir);
@@ -602,8 +645,8 @@ static __inline int VOP_READDIR(vp, uio, cred, eofflag, cookies, ncookies)
 	a.a_uio = uio;
 	a.a_cred = cred;
 	a.a_eofflag = eofflag;
-	a.a_cookies = cookies;
 	a.a_ncookies = ncookies;
+	a.a_cookies = cookies;
 	return (VCALL(vp, VOFFSET(vop_readdir), &a));
 }
 
@@ -650,60 +693,78 @@ static __inline int VOP_ABORTOP(dvp, cnp)
 struct vop_inactive_args {
 	struct vnodeop_desc *a_desc;
 	struct vnode *a_vp;
+	struct proc *a_p;
 };
 extern struct vnodeop_desc vop_inactive_desc;
-static __inline int VOP_INACTIVE __P((struct vnode *));
-static __inline int VOP_INACTIVE(vp)
+static __inline int VOP_INACTIVE __P((struct vnode *, struct proc *));
+static __inline int VOP_INACTIVE(vp, p)
 	struct vnode *vp;
+	struct proc *p;
 {
 	struct vop_inactive_args a;
 	a.a_desc = VDESC(vop_inactive);
 	a.a_vp = vp;
+	a.a_p = p;
 	return (VCALL(vp, VOFFSET(vop_inactive), &a));
 }
 
 struct vop_reclaim_args {
 	struct vnodeop_desc *a_desc;
 	struct vnode *a_vp;
+	struct proc *a_p;
 };
 extern struct vnodeop_desc vop_reclaim_desc;
-static __inline int VOP_RECLAIM __P((struct vnode *));
-static __inline int VOP_RECLAIM(vp)
+static __inline int VOP_RECLAIM __P((struct vnode *, struct proc *));
+static __inline int VOP_RECLAIM(vp, p)
 	struct vnode *vp;
+	struct proc *p;
 {
 	struct vop_reclaim_args a;
 	a.a_desc = VDESC(vop_reclaim);
 	a.a_vp = vp;
+	a.a_p = p;
 	return (VCALL(vp, VOFFSET(vop_reclaim), &a));
 }
 
 struct vop_lock_args {
 	struct vnodeop_desc *a_desc;
 	struct vnode *a_vp;
+	int a_flags;
+	struct proc *a_p;
 };
 extern struct vnodeop_desc vop_lock_desc;
-static __inline int VOP_LOCK __P((struct vnode *));
-static __inline int VOP_LOCK(vp)
+static __inline int VOP_LOCK __P((struct vnode *, int, struct proc *));
+static __inline int VOP_LOCK(vp, flags, p)
 	struct vnode *vp;
+	int flags;
+	struct proc *p;
 {
 	struct vop_lock_args a;
 	a.a_desc = VDESC(vop_lock);
 	a.a_vp = vp;
+	a.a_flags = flags;
+	a.a_p = p;
 	return (VCALL(vp, VOFFSET(vop_lock), &a));
 }
 
 struct vop_unlock_args {
 	struct vnodeop_desc *a_desc;
 	struct vnode *a_vp;
+	int a_flags;
+	struct proc *a_p;
 };
 extern struct vnodeop_desc vop_unlock_desc;
-static __inline int VOP_UNLOCK __P((struct vnode *));
-static __inline int VOP_UNLOCK(vp)
+static __inline int VOP_UNLOCK __P((struct vnode *, int, struct proc *));
+static __inline int VOP_UNLOCK(vp, flags, p)
 	struct vnode *vp;
+	int flags;
+	struct proc *p;
 {
 	struct vop_unlock_args a;
 	a.a_desc = VDESC(vop_unlock);
 	a.a_vp = vp;
+	a.a_flags = flags;
+	a.a_p = p;
 	return (VCALL(vp, VOFFSET(vop_unlock), &a));
 }
 
@@ -864,6 +925,37 @@ static __inline int VOP_VALLOC(pvp, mode, cred, vpp)
 	return (VCALL(pvp, VOFFSET(vop_valloc), &a));
 }
 
+struct vop_balloc_args {
+	struct vnodeop_desc *a_desc;
+	struct vnode *a_vp;
+	off_t a_startoffset;
+	int a_size;
+	struct ucred *a_cred;
+	int a_flags;
+	struct buf **a_bpp;
+};
+extern struct vnodeop_desc vop_balloc_desc;
+static __inline int VOP_BALLOC __P((struct vnode *, off_t, int, 
+    struct ucred *, int, struct buf **));
+static __inline int VOP_BALLOC(vp, startoffset, size, cred, flags, bpp)
+	struct vnode *vp;
+	off_t startoffset;
+	int size;
+	struct ucred *cred;
+	int flags;
+	struct buf **bpp;
+{
+	struct vop_balloc_args a;
+	a.a_desc = VDESC(vop_balloc);
+	a.a_vp = vp;
+	a.a_startoffset = startoffset;
+	a.a_size = size;
+	a.a_cred = cred;
+	a.a_flags = flags;
+	a.a_bpp = bpp;
+	return (VCALL(vp, VOFFSET(vop_balloc), &a));
+}
+
 struct vop_reallocblks_args {
 	struct vnodeop_desc *a_desc;
 	struct vnode *a_vp;
@@ -955,31 +1047,6 @@ static __inline int VOP_UPDATE(vp, access, modify, waitfor)
 	a.a_modify = modify;
 	a.a_waitfor = waitfor;
 	return (VCALL(vp, VOFFSET(vop_update), &a));
-}
-
-struct vop_lease_args {
-	struct vnodeop_desc *a_desc;
-	struct vnode *a_vp;
-	struct proc *a_p;
-	struct ucred *a_cred;
-	int a_flag;
-};
-extern struct vnodeop_desc vop_lease_desc;
-static __inline int VOP_LEASE __P((struct vnode *, struct proc *, 
-    struct ucred *, int));
-static __inline int VOP_LEASE(vp, p, cred, flag)
-	struct vnode *vp;
-	struct proc *p;
-	struct ucred *cred;
-	int flag;
-{
-	struct vop_lease_args a;
-	a.a_desc = VDESC(vop_lease);
-	a.a_vp = vp;
-	a.a_p = p;
-	a.a_cred = cred;
-	a.a_flag = flag;
-	return (VCALL(vp, VOFFSET(vop_lease), &a));
 }
 
 struct vop_whiteout_args {

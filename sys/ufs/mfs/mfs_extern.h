@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_extern.h,v 1.4 1997/10/06 20:21:40 deraadt Exp $	*/
+/*	$OpenBSD: mfs_extern.h,v 1.5 1997/11/06 05:59:23 csapuntz Exp $	*/
 /*	$NetBSD: mfs_extern.h,v 1.4 1996/02/09 22:31:27 christos Exp $	*/
 
 /*-
@@ -43,6 +43,7 @@ struct proc;
 struct statfs;
 struct ucred;
 struct vnode;
+struct vfsconf;
 
 __BEGIN_DECLS
 /* mfs_vfsops.c */
@@ -53,7 +54,7 @@ int	mfs_mount	__P((struct mount *, char *, caddr_t,
 int	mfs_start	__P((struct mount *, int, struct proc *));
 int	mfs_statfs	__P((struct mount *, struct statfs *, struct proc *));
 
-void	mfs_init	__P((void));
+int	mfs_init	__P((struct vfsconf *));
 
 /* mfs_vnops.c */
 int	mfs_open	__P((void *));
@@ -65,6 +66,7 @@ int	mfs_close	__P((void *));
 int	mfs_inactive	__P((void *));
 int	mfs_reclaim	__P((void *));
 int	mfs_print	__P((void *));
+#define	mfs_revoke vop_revoke
 int	mfs_badop	__P((void *));
 
 __END_DECLS

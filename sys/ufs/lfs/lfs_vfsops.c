@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_vfsops.c,v 1.8 1997/06/20 14:04:33 kstailey Exp $	*/
+/*	$OpenBSD: lfs_vfsops.c,v 1.9 1997/11/06 05:59:22 csapuntz Exp $	*/
 /*	$NetBSD: lfs_vfsops.c,v 1.11 1996/03/25 12:53:35 pk Exp $	*/
 
 /*
@@ -65,7 +65,6 @@
 int lfs_mountfs __P((struct vnode *, struct mount *, struct proc *));
 
 struct vfsops lfs_vfsops = {
-	MOUNT_LFS,
 	lfs_mount,
 	ufs_start,
 	lfs_unmount,
@@ -127,14 +126,14 @@ lfs_mount(mp, path, data, ndp, p)
 			 * that user has necessary permissions on the device.
 			 */
 			if (p->p_ucred->cr_uid != 0) {
-				VOP_LOCK(ump->um_devvp);
+				vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY, p);
 				error = VOP_ACCESS(ump->um_devvp, VREAD|VWRITE,
 						   p->p_ucred, p);
 				if (error) {
-					VOP_UNLOCK(ump->um_devvp);
+					VOP_UNLOCK(ump->um_devvp, 0, p);
 					return (error);
 				}
-				VOP_UNLOCK(ump->um_devvp);
+				VOP_UNLOCK(ump->um_devvp, 0, p);
 			}
 			fs->lfs_ronly = 0;
 		}
@@ -169,13 +168,13 @@ lfs_mount(mp, path, data, ndp, p)
 		accessmode = VREAD;
 		if ((mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
-		VOP_LOCK(devvp);
+		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 		error = VOP_ACCESS(devvp, accessmode, p->p_ucred, p);
 		if (error) {
 			vput(devvp);
 			return (error);
 		}
-		VOP_UNLOCK(devvp);
+		VOP_UNLOCK(devvp, 0, p);
 	}
 	if ((mp->mnt_flag & MNT_UPDATE) == 0)
 		error = lfs_mountfs(devvp, mp, p);		/* LFS */
@@ -433,7 +432,7 @@ lfs_statfs(mp, sbp, p)
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
 		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
 	}
-	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
+	strncpy(sbp->f_fstypename, mp->mnt_vfc->vfc_name, MFSNAMELEN);
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_segment.c,v 1.6 1997/05/30 08:34:42 downsj Exp $	*/
+/*	$OpenBSD: lfs_segment.c,v 1.7 1997/11/06 05:59:22 csapuntz Exp $	*/
 /*	$NetBSD: lfs_segment.c,v 1.4 1996/02/09 22:28:54 christos Exp $	*/
 
 /*
@@ -303,7 +303,7 @@ lfs_segwrite(mp, flags)
 	if (do_ckp || fs->lfs_doifile) {
 redo:
 		vp = fs->lfs_ivnode;
-		while (vget(vp, 1));
+		while (vget(vp, LK_EXCLUSIVE, p));
 		ip = VTOI(vp);
 		if (vp->v_dirtyblkhd.lh_first != NULL)
 			lfs_writefile(fs, sp, vp);
@@ -1145,7 +1145,7 @@ lfs_vref(vp)
 
 	if (vp->v_flag & VXLOCK)	/* XXX */
 		return(1);
-	return (vget(vp, 0));
+	return (vget(vp, 0, p));
 }
 
 void

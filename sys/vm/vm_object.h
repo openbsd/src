@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_object.h,v 1.7 1997/10/06 20:21:24 deraadt Exp $	*/
+/*	$OpenBSD: vm_object.h,v 1.8 1997/11/06 05:59:36 csapuntz Exp $	*/
 /*	$NetBSD: vm_object.h,v 1.16 1995/03/29 22:10:28 briggs Exp $	*/
 
 /* 
@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm_object.h	8.3 (Berkeley) 1/12/94
+ *	@(#)vm_object.h	8.4 (Berkeley) 1/9/95
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.

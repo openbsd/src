@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_var.h,v 1.6 1997/10/06 20:20:51 deraadt Exp $	*/
+/*	$OpenBSD: nfs_var.h,v 1.7 1997/11/06 05:59:04 csapuntz Exp $	*/
 /*	$NetBSD: nfs_var.h,v 1.3 1996/02/18 11:53:54 fvdl Exp $	*/
 
 /*
@@ -80,9 +80,6 @@ u_long nfs_hash __P((nfsfh_t *, int));
 int nfs_nget __P((struct mount *, nfsfh_t *, int, struct nfsnode **));
 int nfs_inactive __P((void *));
 int nfs_reclaim __P((void *));
-int nfs_lock __P((void *));
-int nfs_unlock __P((void *));
-int nfs_islocked __P((void *));
 int nfs_abortop __P((void *));
 
 /* nfs_vnops.c */
@@ -275,7 +272,7 @@ int nfsm_uiotombuf __P((struct uio *, struct mbuf **, int, caddr_t *));
 int nfsm_disct __P((struct mbuf **, caddr_t *, int, int, caddr_t *));
 int nfs_adv __P((struct mbuf **, caddr_t *, int, int));
 int nfsm_strtmbuf __P((struct mbuf **, char **, char *, long));
-void nfs_vfs_init __P((void));
+int nfs_vfs_init __P((struct vfsconf *));
 void nfs_init __P((void));
 int nfs_loadattrcache __P((struct vnode **, struct mbuf **, caddr_t *,
 			   struct vattr *));

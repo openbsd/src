@@ -1,4 +1,4 @@
-/*	$OpenBSD: umap_vnops.c,v 1.8 1997/10/06 20:20:42 deraadt Exp $	*/
+/*	$OpenBSD: umap_vnops.c,v 1.9 1997/11/06 05:58:49 csapuntz Exp $	*/
 /*	$NetBSD: umap_vnops.c,v 1.5.4.1 1996/05/25 22:13:35 jtc Exp $	*/
 
 /*
@@ -52,6 +52,7 @@
 #include <sys/namei.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
+#include <miscfs/nullfs/null.h>
 #include <miscfs/umapfs/umap.h>
 
 
@@ -65,6 +66,8 @@ int	umap_print	__P((void *));
 int	umap_rename	__P((void *));
 int	umap_strategy	__P((void *));
 int	umap_bwrite	__P((void *));
+int	umap_unlock	__P((void *));
+int	umap_lock	__P((void *));
 
 /*
  * Global vfs data structures
@@ -83,7 +86,8 @@ struct vnodeopv_entry_desc umap_vnodeop_entries[] = {
 	{ &vop_reclaim_desc, umap_reclaim },
 	{ &vop_print_desc, umap_print },
 	{ &vop_rename_desc, umap_rename },
-
+	{ &vop_lock_desc, umap_lock },
+	{ &vop_unlock_desc, umap_unlock },
 	{ &vop_strategy_desc, umap_strategy },
 	{ &vop_bwrite_desc, umap_bwrite },
 
@@ -378,9 +382,53 @@ umap_inactive(v)
 	 * cache and reusable.
 	 *
 	 */
-	VOP_UNLOCK(ap->a_vp);
+	VOP_UNLOCK(ap->a_vp, 0, ap->a_p);
 	return (0);
 }
+
+/*
+ * We need to process our own vnode lock and then clear the
+ * interlock flag as it applies only to our vnode, not the
+ * vnodes below us on the stack.
+ */
+int
+umap_lock(v)
+	void *v;
+{
+	struct vop_lock_args /* {
+		struct vnode *a_vp;
+		int a_flags;
+		struct proc *a_p;
+	} */ *ap = v;
+
+	vop_nolock(ap);
+	if ((ap->a_flags & LK_TYPE_MASK) == LK_DRAIN)
+		return (0);
+	ap->a_flags &= ~LK_INTERLOCK;
+	return (null_bypass(ap));
+}
+
+/*
+ * We need to process our own vnode unlock and then clear the
+ * interlock flag as it applies only to our vnode, not the
+ * vnodes below us on the stack.
+ */
+int
+umap_unlock(v)
+	void *v;
+{
+	struct vop_unlock_args /* {
+		struct vnode *a_vp;
+		int a_flags;
+		struct proc *a_p;
+	} */ *ap = v;
+
+	vop_nounlock(ap);
+	ap->a_flags &= ~LK_INTERLOCK;
+	return (null_bypass(ap));
+}
+
+
 
 int
 umap_reclaim(v)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dead_vnops.c,v 1.4 1997/10/06 20:20:20 deraadt Exp $	*/
+/*	$OpenBSD: dead_vnops.c,v 1.5 1997/11/06 05:58:31 csapuntz Exp $	*/
 /*	$NetBSD: dead_vnops.c,v 1.16 1996/02/13 13:12:48 mycroft Exp $	*/
 
 /*
@@ -78,11 +78,11 @@ int	dead_select	__P((void *));
 #define dead_inactive	nullop
 #define dead_reclaim	nullop
 int	dead_lock	__P((void *));
-#define dead_unlock	nullop
+#define dead_unlock	vop_nounlock
 int	dead_bmap	__P((void *));
 int	dead_strategy	__P((void *));
 int	dead_print	__P((void *));
-#define dead_islocked	nullop
+#define dead_islocked	vop_noislocked
 #define dead_pathconf	dead_ebadf
 #define dead_advlock	dead_ebadf
 #define dead_blkatoff	dead_badop
@@ -279,11 +279,23 @@ dead_lock(v)
 {
 	struct vop_lock_args /* {
 		struct vnode *a_vp;
+		int a_flags;
+		struct proc *a_p;
 	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
 
-	if (!chkvnlock(ap->a_vp))
-		return (0);
-	return (VCALL(ap->a_vp, VOFFSET(vop_lock), ap));
+	/*
+	 * Since we are not using the lock manager, we must clear
+	 * the interlock here.
+	 */
+	if (ap->a_flags & LK_INTERLOCK) {
+		simple_unlock(&vp->v_interlock);
+		ap->a_flags &= ~LK_INTERLOCK;
+	}
+	if (!chkvnlock(vp))
+ 		return (0);
+
+	return (VCALL(vp, VOFFSET(vop_lock), ap));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: advfsops.c,v 1.9 1997/01/20 15:49:53 niklas Exp $	*/
+/*	$OpenBSD: advfsops.c,v 1.10 1997/11/06 05:58:01 csapuntz Exp $	*/
 /*	$NetBSD: advfsops.c,v 1.24 1996/12/22 10:10:12 cgd Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 #include <miscfs/specfs/specdev.h> /* XXX */
 #include <adosfs/adosfs.h>
 
-void	 adosfs_init __P((void));
+int	 adosfs_init __P((struct vfsconf *));
 int	 adosfs_mount __P((struct mount *, char *, caddr_t, struct nameidata *,
     struct proc *));
 int	 adosfs_start __P((struct mount *, int, struct proc *));
@@ -125,13 +125,13 @@ adosfs_mount(mp, path, data, ndp, p)
 		accessmode = VREAD;
 		if ((mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
-		VOP_LOCK(devvp);
+		vn_lock(devvp, LK_EXCLUSIVE  | LK_RETRY, p);
 		error = VOP_ACCESS(devvp, accessmode, p->p_ucred, p);
 		if (error) {
 			vput(devvp);
 			return (error);
 		}
-		VOP_UNLOCK(devvp);
+		VOP_UNLOCK(devvp, 0, p);
 	}
 /* MNT_UPDATE? */
 	if ((error = adosfs_mountfs(devvp, mp, p)) != 0) {
@@ -332,10 +332,11 @@ adosfs_statfs(mp, sbp, p)
 	sbp->f_files = 0;		/* who knows */
 	sbp->f_ffree = 0;		/* " " */
 	if (sbp != &mp->mnt_stat) {
+		sbp->f_type = mp->mnt_vfc->vfc_typenum;
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
 		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
 	}
-	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
+	strncpy(sbp->f_fstypename, mp->mnt_vfc->vfc_name, MFSNAMELEN);
 	return (0);
 }
 
@@ -734,8 +735,8 @@ adosfs_sync(mp, waitfor, uc, p)
 	return(0);
 }
 
-void
-adosfs_init()
+int
+adosfs_init(struct vfsconf *vfsp)
 {
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_pager.h,v 1.4 1997/10/06 20:21:28 deraadt Exp $	*/
+/*	$OpenBSD: vm_pager.h,v 1.5 1997/11/06 05:59:38 csapuntz Exp $	*/
 /*	$NetBSD: vm_pager.h,v 1.10 1995/03/26 20:39:15 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm_pager.h	8.4 (Berkeley) 1/12/94
+ *	@(#)vm_pager.h	8.5 (Berkeley) 7/7/94
  */
 
 /*

@@ -1,12 +1,11 @@
-/*	$OpenBSD: fdesc.h,v 1.5 1997/11/06 05:58:32 csapuntz Exp $	*/
-/*	$NetBSD: fdesc.h,v 1.9 1996/02/09 22:40:03 christos Exp $	*/
-
 /*
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1995
  *	The Regents of the University of California.  All rights reserved.
  *
- * This code is derived from software donated to Berkeley by
- * Jan-Simon Pendry.
+ * This code is derived from software contributed to Berkeley
+ * by Pace Willisson (pace@blitz.com).  The Rock Ridge Extension
+ * Support code is derived from software contributed to Berkeley
+ * by Atsushi Murai (amurai@spec.co.jp).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,49 +35,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)fdesc.h	8.6 (Berkeley) 8/20/94
- *
- * #Id: fdesc.h,v 1.8 1993/04/06 15:28:33 jsp Exp #
+ *	@(#)cd9660_mount.h	8.1 (Berkeley) 5/24/95
  */
 
-#ifdef _KERNEL
-struct fdescmount {
-	struct vnode	*f_root;	/* Root node */
-};
-
-#define FD_ROOT		2
-#define FD_DEVFD	3
-#define FD_STDIN	4
-#define FD_STDOUT	5
-#define FD_STDERR	6
-#define FD_CTTY		7
-#define FD_DESC		8
-#define FD_MAX		12
-
-typedef enum {
-	Froot,
-	Fdevfd,
-	Fdesc,
-	Flink,
-	Fctty
-} fdntype;
-
-struct fdescnode {
-	LIST_ENTRY(fdescnode) fd_hash;	/* Hash list */
-	struct vnode	*fd_vnode;	/* Back ptr to vnode */
-	fdntype		fd_type;	/* Type of this node */
-	unsigned	fd_fd;		/* Fd to be dup'ed */
-	char		*fd_link;	/* Link to fd/n */
-	int		fd_ix;		/* filesystem index */
-};
-
-#define VFSTOFDESC(mp)	((struct fdescmount *)((mp)->mnt_data))
-#define	VTOFDESC(vp) ((struct fdescnode *)(vp)->v_data)
-
-extern dev_t devctty;
-extern int fdesc_init __P((struct vfsconf *));
-extern int fdesc_root __P((struct mount *, struct vnode **));
-extern int fdesc_allocvp __P((fdntype, int, struct mount *, struct vnode **));
-extern int (**fdesc_vnodeop_p) __P((void *));
-extern struct vfsops fdesc_vfsops;
-#endif /* _KERNEL */
+/*
+ * Arguments to mount ISO 9660 filesystems.
+ */
+#define	ISOFSMNT_NORRIP	0x00000001	/* disable Rock Ridge Ext.*/
+#define	ISOFSMNT_GENS	0x00000002	/* enable generation numbers */
+#define	ISOFSMNT_EXTATT	0x00000004	/* enable extended attributes */

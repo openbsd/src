@@ -1,4 +1,4 @@
-/*	$OpenBSD: adlookup.c,v 1.7 1997/01/20 15:49:51 niklas Exp $	*/
+/*	$OpenBSD: adlookup.c,v 1.8 1997/11/06 05:58:00 csapuntz Exp $	*/
 /*	$NetBSD: adlookup.c,v 1.17 1996/10/25 23:13:58 cgd Exp $	*/
 
 /*
@@ -75,6 +75,7 @@ adosfs_lookup(v)
 	struct vnode *vdp;	/* vnode of search dir */
 	struct anode *adp;	/* anode of search dir */
 	struct ucred *ucp;	/* lookup credentials */
+	struct proc  *p;
 	u_int32_t plen, hval, vpid;
 	daddr_t bn;
 	char *pelt;
@@ -95,6 +96,7 @@ adosfs_lookup(v)
 	wantp = flags & (LOCKPARENT | WANTPARENT);
 	pelt = cnp->cn_nameptr;
 	plen = cnp->cn_namelen;
+	p = cnp->cn_proc;
 	nocache = 0;
 	
 	/* 
@@ -118,25 +120,25 @@ adosfs_lookup(v)
 			VREF(vdp);
 			error = 0;
 		} else if (flags & ISDOTDOT) {
-			VOP_UNLOCK(vdp);	/* race */
-			error = vget(*vpp, 1);
+			VOP_UNLOCK(vdp, 0, p);	/* race */
+			error = vget(*vpp, LK_EXCLUSIVE, p);
 			if (error == 0 && lockp && last)
-				error = VOP_LOCK(vdp);
+				error = vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY, p);
 		} else {
 			error = vget(*vpp, 1);
 			/* if (lockp == 0 || error || last) */
 			if (lockp == 0 || error || last == 0)
-				VOP_UNLOCK(vdp);
+				VOP_UNLOCK(vdp, 0, p);
 		}
 		if (error == 0) {
 			if (vpid == vdp->v_id)
 				return (0);
 			vput(*vpp);
 			if (lockp && vdp != *vpp && last)
-				VOP_UNLOCK(vdp);
+				VOP_UNLOCK(vdp, 0, p);
 		}
 		*vpp = NULL;
-		if ((error = VOP_LOCK(vdp)) != 0)
+		if ((error = vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY, p)) != 0)
 			return (error);
 	}
 
@@ -170,11 +172,12 @@ adosfs_lookup(v)
 		 * and fail. Otherwise we have succeded.
 		 * 
 		 */
-		VOP_UNLOCK(vdp); /* race */
+		VOP_UNLOCK(vdp, 0, p); /* race */
 		if ((error = VFS_VGET(vdp->v_mount, ABLKTOINO(adp->pblock),
 		    vpp)) != 0)
-			VOP_LOCK(vdp);
-		else if (last && lockp && (error = VOP_LOCK(vdp)))
+			vn_lock(vdp, LK_RETRY | LK_EXCLUSIVE, p);
+		else if (last && lockp && 
+			 (error = vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY, p)))
 			vput(*vpp);
 		if (error) {
 			*vpp = NULL;
@@ -234,7 +237,7 @@ adosfs_lookup(v)
 			return (error);
 		}
 		if (lockp == 0)
-			VOP_UNLOCK(vdp);
+			VOP_UNLOCK(vdp, 0, p);
 		cnp->cn_nameiop |= SAVENAME;
 #ifdef ADOSFS_DIAGNOSTIC
 		printf("EJUSTRETURN)");
@@ -272,7 +275,7 @@ found:
 	if (vdp == *vpp)
 		VREF(vdp);
 	else if (lockp == 0 || last == 0)
-		VOP_UNLOCK(vdp);
+		VOP_UNLOCK(vdp, 0, p);
 found_lockdone:
 	if ((cnp->cn_flags & MAKEENTRY) && nocache == 0)
 		cache_enter(vdp, *vpp, cnp);

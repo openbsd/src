@@ -1,4 +1,4 @@
-/*	$OpenBSD: iso.h,v 1.5 1997/10/06 20:19:47 deraadt Exp $	*/
+/*	$OpenBSD: iso.h,v 1.6 1997/11/06 05:58:13 csapuntz Exp $	*/
 /*	$NetBSD: iso.h,v 1.11 1996/03/16 20:25:42 ws Exp $	*/
 
 /*-
@@ -179,7 +179,9 @@ int cd9660_vget __P((struct mount *, ino_t, struct vnode **));
 int cd9660_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
 	    struct vnode **, int *, struct ucred **));
 int cd9660_vptofh __P((struct vnode *, struct fid *));
-void cd9660_init __P((void));
+int cd9660_init __P((struct vfsconf *));
+#define cd9660_sysctl ((int (*) __P((int *, u_int, void *, size_t *, void *, \
+                                    size_t, struct proc *)))eopnotsupp)
 
 int cd9660_mountroot __P((void)); 
 

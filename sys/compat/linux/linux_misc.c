@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.9 1997/10/06 20:19:31 deraadt Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.10 1997/11/06 05:58:04 csapuntz Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*
@@ -768,8 +768,8 @@ linux_sys_getdents(p, v, retval)
 	off_t off;		/* true file offset */
 	int buflen, error, eofflag, nbytes, oldcall;
 	struct vattr va;
-	u_long *cookiebuf, *cookie;
-	int ncookies;
+	u_long *cookiebuf = NULL, *cookie;
+	int ncookies = 0;
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
@@ -795,9 +795,7 @@ linux_sys_getdents(p, v, retval)
 		oldcall = 0;
 	}
 	buf = malloc(buflen, M_TEMP, M_WAITOK);
-	ncookies = buflen / 16;
-	cookiebuf = malloc(ncookies * sizeof(*cookiebuf), M_TEMP, M_WAITOK);
-	VOP_LOCK(vp);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 	off = fp->f_offset;
 again:
 	aiov.iov_base = buf;
@@ -813,9 +811,12 @@ again:
          * First we read into the malloc'ed buffer, then
          * we massage it into user space, one record at a time.
          */
-	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, cookiebuf,
-	    ncookies);
+	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, &ncookies,
+	    &cookiebuf);
 	if (error)
+		goto out;
+
+	if (!error && !cookiebuf)
 		goto out;
 
 	inp = buf;
@@ -881,8 +882,9 @@ again:
 eof:
 	*retval = nbytes - resid;
 out:
-	VOP_UNLOCK(vp);
-	free(cookiebuf, M_TEMP);
+	VOP_UNLOCK(vp, 0, p);
+	if (cookiebuf)
+		free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
 	return error;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_inode.c,v 1.6 1997/10/06 20:21:46 deraadt Exp $	*/
+/*	$OpenBSD: ufs_inode.c,v 1.7 1997/11/06 05:59:26 csapuntz Exp $	*/
 /*	$NetBSD: ufs_inode.c,v 1.7 1996/05/11 18:27:52 mycroft Exp $	*/
 
 /*
@@ -57,6 +57,7 @@
 
 u_long	nextgennumber;		/* Next generation number to assign. */
 
+#if 0
 void
 ufs_init()
 {
@@ -71,7 +72,7 @@ ufs_init()
 #endif
 	return;
 }
-
+#endif
 /*
  * Last reference to an inode.  If necessary, write or delete it.
  */
@@ -81,39 +82,29 @@ ufs_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
+		sturct proc *a_p;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
-	register struct inode *ip = VTOI(vp);
+	struct vnode *vp = ap->a_vp;
+	struct inode *ip = VTOI(vp);
+	struct proc *p = ap->a_p;
 	struct timespec ts;
-	int mode, error;
+	int mode, error = 0;
 	extern int prtactive;
 
 	if (prtactive && vp->v_usecount != 0)
 		vprint("ffs_inactive: pushing active", vp);
 
-	/* Get rid of inodes related to stale file handles. */
-	if (ip->i_ffs_mode == 0) {
-		if ((vp->v_flag & VXLOCK) == 0)
-			vgone(vp);
-		return (0);
-	}
-
-	error = 0;
-#ifdef DIAGNOSTIC
-	if (VOP_ISLOCKED(vp))
-		panic("ffs_inactive: locked inode");
-	if (curproc)
-		ip->i_lockholder = curproc->p_pid;
-	else
-		ip->i_lockholder = -1;
-#endif
-	ip->i_flag |= IN_LOCKED;
+	/*
+	 * Ignore inodes related to stale file handles.
+	 */
+	if (ip->i_ffs_mode == 0)
+		goto out;
 	if (ip->i_ffs_nlink <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
 #ifdef QUOTA
 		if (!getinoquota(ip))
 			(void)chkiq(ip, -1, NOCRED, 0);
 #endif
-		error = VOP_TRUNCATE(vp, (off_t)0, 0, NOCRED, NULL);
+		error = VOP_TRUNCATE(vp, (off_t)0, 0, NOCRED, p);
 		ip->i_ffs_rdev = 0;
 		mode = ip->i_ffs_mode;
 		ip->i_ffs_mode = 0;
@@ -124,13 +115,14 @@ ufs_inactive(v)
 		TIMEVAL_TO_TIMESPEC(&time, &ts);
 		VOP_UPDATE(vp, &ts, &ts, 0);
 	}
-	VOP_UNLOCK(vp);
+out:
+	VOP_UNLOCK(vp, 0, p);
 	/*
 	 * If we are done with the inode, reclaim it
 	 * so that it can be reused immediately.
 	 */
-	if (vp->v_usecount == 0 && ip->i_ffs_mode == 0)
-		vgone(vp);
+	if (ip->i_ffs_mode == 0)
+		vrecycle(vp, (struct simplelock *)0, p);
 	return (error);
 }
 
@@ -138,8 +130,9 @@ ufs_inactive(v)
  * Reclaim an inode so that it can be used for other purposes.
  */
 int
-ufs_reclaim(vp)
+ufs_reclaim(vp, p)
 	register struct vnode *vp;
+	struct proc *p;
 {
 	register struct inode *ip;
 	extern int prtactive;

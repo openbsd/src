@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_xxx.c,v 1.5 1997/10/06 20:20:00 deraadt Exp $	*/
+/*	$OpenBSD: subr_xxx.c,v 1.6 1997/11/06 05:58:20 csapuntz Exp $	*/
 /*	$NetBSD: subr_xxx.c,v 1.10 1996/02/04 02:16:51 christos Exp $	*/
 
 /*
@@ -91,8 +91,10 @@ enosys ()
  * Return error for operation not supported
  * on a specific object or file type.
  */
+/*ARGSUSED*/
 int
-eopnotsupp()
+eopnotsupp(v)
+	void *v;
 {
 
 	return (EOPNOTSUPP);

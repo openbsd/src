@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_misc.c,v 1.13 1997/10/06 20:19:33 deraadt Exp $	*/
+/*	$OpenBSD: sunos_misc.c,v 1.14 1997/11/06 05:58:05 csapuntz Exp $	*/
 /*	$NetBSD: sunos_misc.c,v 1.65 1996/04/22 01:44:31 christos Exp $	*/
 
 /*
@@ -412,7 +412,7 @@ sunos_sys_getdents(p, v, retval)
 	struct sunos_dirent idb;
 	off_t off;			/* true file offset */
 	int buflen, error, eofflag;
-	u_long *cookiebuf, *cookie;
+	u_long *cookiebuf = NULL, *cookie;
 	int ncookies;
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
@@ -428,8 +428,6 @@ sunos_sys_getdents(p, v, retval)
 
 	buflen = min(MAXBSIZE, SCARG(uap, nbytes));
 	buf = malloc(buflen, M_TEMP, M_WAITOK);
-	ncookies = buflen / 16;
-	cookiebuf = malloc(ncookies * sizeof(*cookiebuf), M_TEMP, M_WAITOK);
 	VOP_LOCK(vp);
 	off = fp->f_offset;
 again:
@@ -446,10 +444,15 @@ again:
 	 * First we read into the malloc'ed buffer, then
 	 * we massage it into user space, one record at a time.
 	 */
-	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, cookiebuf,
-	    ncookies);
+	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, 
+	    &ncookies, &cookiebuf);
 	if (error)
 		goto out;
+	
+	if (!error && !cookiebuf) {
+		error = EPERM;
+		goto out;
+	}
 
 	inp = buf;
 	outp = SCARG(uap, buf);
@@ -501,7 +504,8 @@ eof:
 	*retval = SCARG(uap, nbytes) - resid;
 out:
 	VOP_UNLOCK(vp);
-	free(cookiebuf, M_TEMP);
+	if (cookiebuf)
+		free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
 	return (error);
 }

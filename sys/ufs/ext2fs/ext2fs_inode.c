@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_inode.c,v 1.3 1997/06/12 21:09:33 downsj Exp $	*/
+/*	$OpenBSD: ext2fs_inode.c,v 1.4 1997/11/06 05:59:14 csapuntz Exp $	*/
 /*	$NetBSD: ext2fs_inode.c,v 1.1 1997/06/11 09:33:56 bouyer Exp $	*/
 
 /*
@@ -63,16 +63,11 @@
 static int ext2fs_indirtrunc __P((struct inode *, daddr_t, daddr_t,
 									daddr_t, int, long *));
 
-void
-ext2fs_init()
+int
+ext2fs_init(vfsp)
+	struct vfsconf *vfsp;
 {
-	static int done = 0;
-
-	if (done)
-		return;
-	done = 1;
-	ufs_ihashinit();
-	return;
+	return (ufs_init(vfsp));
 }
 
 /*
@@ -94,22 +89,9 @@ ext2fs_inactive(v)
 	if (prtactive && vp->v_usecount != 0)
 		vprint("ffs_inactive: pushing active", vp);
 	/* Get rid of inodes related to stale file handles. */
-	if (ip->i_e2fs_mode == 0 || ip->i_e2fs_dtime != 0) {
-		if ((vp->v_flag & VXLOCK) == 0)
-			vgone(vp);
-		return (0);
-	}
+	if (ip->i_e2fs_mode == 0 || ip->i_e2fs_dtime != 0) 
+		goto out;
 
-	error = 0;
-#ifdef DIAGNOSTIC
-	if (VOP_ISLOCKED(vp))
-		panic("ffs_inactive: locked inode");
-	if (curproc)
-		ip->i_lockholder = curproc->p_pid;
-	else
-		ip->i_lockholder = -1;
-#endif
-	ip->i_flag |= IN_LOCKED;
 	if (ip->i_e2fs_nlink == 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
 		error = VOP_TRUNCATE(vp, (off_t)0, 0, NOCRED, NULL); 
 		TIMEVAL_TO_TIMESPEC(&time, &ts);
@@ -121,13 +103,14 @@ ext2fs_inactive(v)
 		TIMEVAL_TO_TIMESPEC(&time, &ts);
 		VOP_UPDATE(vp, &ts, &ts, 0);
 	}
-	VOP_UNLOCK(vp);
+out:
+	VOP_UNLOCK(vp, 0, ap->a_p);
 	/*
 	 * If we are done with the inode, reclaim it
 	 * so that it can be reused immediately.
 	 */
-	if (vp->v_usecount == 0 && ip->i_e2fs_dtime != 0)
-		vgone(vp);
+	if (ip->i_e2fs_dtime != 0)
+		vrecycle(vp, (struct simplelock *)0, ap->a_p);
 	return (error);
 }   
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_denode.c,v 1.7 1997/10/06 20:20:57 deraadt Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.8 1997/11/06 05:58:56 csapuntz Exp $	*/
 /*	$NetBSD: msdosfs_denode.c,v 1.22 1996/10/13 04:16:31 christos Exp $	*/
 
 /*-
@@ -76,10 +76,13 @@ static struct denode *msdosfs_hashget __P((dev_t, u_long, u_long));
 static void msdosfs_hashins __P((struct denode *));
 static void msdosfs_hashrem __P((struct denode *));
 
-void
-msdosfs_init()
+/*ARGSUSED*/
+int
+msdosfs_init(vfsp)
+	struct vfsconf *vfsp;
 {
 	dehashtbl = hashinit(desiredvnodes/2, M_MSDOSFSMNT, &dehash);
+	return (0);
 }
 
 static struct denode *
@@ -89,7 +92,8 @@ msdosfs_hashget(dev, dirclust, diroff)
 	u_long diroff;
 {
 	struct denode *dep;
-	
+	struct proc *p = curproc; /* XXX */
+
 	for (;;)
 		for (dep = dehashtbl[DEHASH(dev, dirclust, diroff)];;
 		     dep = dep->de_next) {
@@ -99,12 +103,8 @@ msdosfs_hashget(dev, dirclust, diroff)
 			    diroff == dep->de_diroffset &&
 			    dev == dep->de_dev &&
 			    dep->de_refcnt != 0) {
-				if (dep->de_flag & DE_LOCKED) {
-					dep->de_flag |= DE_WANTED;
-					sleep(dep, PINOD);
-					break;
-				}
-				if (!vget(DETOV(dep), 1))
+				simple_lock(&vp->v_interlock);
+				if (!vget(DETOV(dep), LK_EXCLUSIVE  | LK_INTERLOCK, p))
 					return (dep);
 				break;
 			}
@@ -166,6 +166,7 @@ deget(pmp, dirclust, diroffset, depp)
 	struct denode *ldep;
 	struct vnode *nvp;
 	struct buf *bp;
+	struct proc *p = curproc; /* XXX */
 
 #ifdef MSDOSFS_DEBUG
 	printf("deget(pmp %08x, dirclust %d, diroffset %x, depp %08x)\n",
@@ -218,7 +219,7 @@ deget(pmp, dirclust, diroffset, depp)
 	 * can't be accessed until we've read it in and have done what we
 	 * need to it.
 	 */
-	VOP_LOCK(nvp);
+	vn_lock(nvp, LK_EXCLUSIVE | LK_RETRY, p);
 	msdosfs_hashins(ldep);
 
 	/*
@@ -562,9 +563,11 @@ msdosfs_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
+		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct denode *dep = VTODE(vp);
+	struct proc *p = ap->a_p;
 	int error;
 	extern int prtactive;
 	
@@ -578,22 +581,10 @@ msdosfs_inactive(v)
 	/*
 	 * Get rid of denodes related to stale file handles.
 	 */
-	if (dep->de_Name[0] == SLOT_DELETED) {
-		if ((vp->v_flag & VXLOCK) == 0)
-			vgone(vp);
-		return (0);
-	}
+	if (dep->de_Name[0] == SLOT_DELETED) 
+		goto out;
 
 	error = 0;
-#ifdef DIAGNOSTIC
-	if (VOP_ISLOCKED(vp))
-		panic("msdosfs_inactive: locked denode");
-	if (curproc)
-		dep->de_lockholder = curproc->p_pid;
-	else
-		dep->de_lockholder = -1;
-#endif
-	dep->de_flag |= DE_LOCKED;
 	/*
 	 * If the file has been deleted and it is on a read/write
 	 * filesystem, then truncate the file, and mark the directory slot
@@ -608,7 +599,9 @@ msdosfs_inactive(v)
 		dep->de_Name[0] = SLOT_DELETED;
 	}
 	deupdat(dep, 0);
-	VOP_UNLOCK(vp);
+
+out:
+	VOP_UNLOCK(vp, 0, p);
 	/*
 	 * If we are done with the denode, reclaim it
 	 * so that it can be reused immediately.
@@ -617,7 +610,7 @@ msdosfs_inactive(v)
 	printf("msdosfs_inactive(): v_usecount %d, de_Name[0] %x\n", vp->v_usecount,
 	       dep->de_Name[0]);
 #endif
-	if (vp->v_usecount == 0 && dep->de_Name[0] == SLOT_DELETED)
-		vgone(vp);
+	if (dep->de_Name[0] == SLOT_DELETED)
+		vrecycle(vp, (struct simplelock *)0, p);
 	return (error);
 }

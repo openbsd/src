@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_lookup.c,v 1.7 1997/10/06 20:20:58 deraadt Exp $	*/
+/*	$OpenBSD: msdosfs_lookup.c,v 1.8 1997/11/06 05:58:57 csapuntz Exp $	*/
 /*	$NetBSD: msdosfs_lookup.c,v 1.30 1996/10/25 23:14:08 cgd Exp $	*/
 
 /*-
@@ -89,6 +89,7 @@ msdosfs_lookup(v)
 	struct vnode *vdp = ap->a_dvp;
 	struct vnode **vpp = ap->a_vpp;
 	struct componentname *cnp = ap->a_cnp;
+	struct proc *p = cnp->cn_proc;
 	daddr_t bn;
 	int error;
 	int lockparent;
@@ -161,14 +162,14 @@ msdosfs_lookup(v)
 			VREF(vdp);
 			error = 0;
 		} else if (flags & ISDOTDOT) {
-			VOP_UNLOCK(pdp);
-			error = vget(vdp, 1);
+			VOP_UNLOCK(pdp, 0, p);
+			error = vget(vdp, LK_EXCLUSIVE, p);
 			if (!error && lockparent && (flags & ISLASTCN))
-				error = VOP_LOCK(pdp);
+				error = vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY, p);
 		} else {
-			error = vget(vdp, 1);
+			error = vget(vdp, LK_EXCLUSIVE, p);
 			if (!lockparent || error || !(flags & ISLASTCN))
-				VOP_UNLOCK(pdp);
+				VOP_UNLOCK(pdp, 0, p);
 		}
 		/*
 		 * Check that the capability number did not change
@@ -184,9 +185,9 @@ msdosfs_lookup(v)
 			}
 			vput(vdp);
 			if (lockparent && pdp != vdp && (flags & ISLASTCN))
-				VOP_UNLOCK(pdp);
+				VOP_UNLOCK(pdp, 0, p);
 		}
-		if ((error = VOP_LOCK(pdp)) != 0)
+		if ((error = vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY, p)) != 0)
 			return (error);
 		vdp = pdp;
 		dp = VTODE(vdp);
@@ -414,7 +415,7 @@ notfound:;
 		 */
 		cnp->cn_flags |= SAVENAME;
 		if (!lockparent)
-			VOP_UNLOCK(vdp);
+			VOP_UNLOCK(vdp, 0, p);
 		return (EJUSTRETURN);
 	}
 	/*
@@ -484,7 +485,7 @@ foundroot:;
 			return (error);
 		*vpp = DETOV(tdp);
 		if (!lockparent)
-			VOP_UNLOCK(vdp);
+			VOP_UNLOCK(vdp, 0, p);
 		return (0);
 	}
 
@@ -512,7 +513,7 @@ foundroot:;
 		*vpp = DETOV(tdp);
 		cnp->cn_flags |= SAVENAME;
 		if (!lockparent)
-			VOP_UNLOCK(vdp);
+			VOP_UNLOCK(vdp, 0, p);
 		return (0);
 	}
 
@@ -537,13 +538,13 @@ foundroot:;
 	 */
 	pdp = vdp;
 	if (flags & ISDOTDOT) {
-		VOP_UNLOCK(pdp);	/* race to get the inode */
+		VOP_UNLOCK(pdp, 0, p);	/* race to get the inode */
 		if ((error = deget(pmp, cluster, blkoff, &tdp)) != 0) {
-			VOP_LOCK(pdp);
+			vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY, p);
 			return (error);
 		}
 		if (lockparent && (flags & ISLASTCN) &&
-		    (error = VOP_LOCK(pdp))) {
+		    (error = vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY, p))) {
 			vput(DETOV(tdp));
 			return (error);
 		}
@@ -555,7 +556,7 @@ foundroot:;
 		if ((error = deget(pmp, cluster, blkoff, &tdp)) != 0)
 			return (error);
 		if (!lockparent || !(flags & ISLASTCN))
-			VOP_UNLOCK(pdp);
+			VOP_UNLOCK(pdp, 0, p);
 		*vpp = DETOV(tdp);
 	}
 

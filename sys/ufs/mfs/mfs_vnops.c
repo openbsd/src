@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vnops.c,v 1.6 1997/10/06 20:21:42 deraadt Exp $	*/
+/*	$OpenBSD: mfs_vnops.c,v 1.7 1997/11/06 05:59:24 csapuntz Exp $	*/
 /*	$NetBSD: mfs_vnops.c,v 1.8 1996/03/17 02:16:32 christos Exp $	*/
 
 /*
@@ -72,6 +72,7 @@ struct vnodeopv_entry_desc mfs_vnodeop_entries[] = {
 	{ &vop_write_desc, mfs_write },			/* write */
 	{ &vop_ioctl_desc, mfs_ioctl },			/* ioctl */
 	{ &vop_select_desc, mfs_select },		/* select */
+	{ &vop_revoke_desc, mfs_revoke },               /* revoke */
 	{ &vop_mmap_desc, mfs_mmap },			/* mmap */
 	{ &vop_fsync_desc, spec_fsync },		/* fsync */
 	{ &vop_seek_desc, mfs_seek },			/* seek */
@@ -231,6 +232,9 @@ mfs_bmap(v)
 		*ap->a_vpp = ap->a_vp;
 	if (ap->a_bnp != NULL)
 		*ap->a_bnp = ap->a_bn;
+	if (ap->a_runp != NULL)
+		*ap->a_runp = 0;
+
 	return (0);
 }
 
@@ -294,12 +298,14 @@ mfs_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
+		struct proc *a_p;
 	} */ *ap = v;
 	register struct mfsnode *mfsp = VTOMFS(ap->a_vp);
 
 	if (mfsp->mfs_buflist && mfsp->mfs_buflist != (struct buf *)(-1))
 		panic("mfs_inactive: not inactive (mfs_buflist %p)",
 			mfsp->mfs_buflist);
+	VOP_UNLOCK(ap->a_vp, 0, ap->a_p);
 	return (0);
 }
 
@@ -352,8 +358,9 @@ mfs_badop(v)
 /*
  * Memory based filesystem initialization.
  */
-void
-mfs_init()
+int
+mfs_init(vfsp)
+	struct vfsconf *vfsp;
 {
-
+	return  (0);
 }

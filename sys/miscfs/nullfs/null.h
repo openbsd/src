@@ -1,4 +1,4 @@
-/*	$OpenBSD: null.h,v 1.6 1997/10/06 20:20:28 deraadt Exp $	*/
+/*	$OpenBSD: null.h,v 1.7 1997/11/06 05:58:39 csapuntz Exp $	*/
 /*	$NetBSD: null.h,v 1.7 1996/05/17 20:53:11 gwr Exp $	*/
 
 /*
@@ -92,6 +92,8 @@ extern struct vnode *null_checkvp __P((struct vnode *vp, char *fil, int lno));
 extern int (**null_vnodeop_p) __P((void *));
 extern struct vfsops null_vfsops;
 
-void nullfs_init __P((void));
+int nullfs_init __P((struct vfsconf *));
+int null_bypass __P((void *));
+
 
 #endif /* _KERNEL */

@@ -218,6 +218,22 @@ struct vnodeop_desc vop_write_desc = {
 	NULL,
 };
 
+int vop_lease_vp_offsets[] = {
+	VOPARG_OFFSETOF(struct vop_lease_args,a_vp),
+	VDESC_NO_OFFSET
+};
+struct vnodeop_desc vop_lease_desc = {
+	0,
+	"vop_lease",
+	0,
+	vop_lease_vp_offsets,
+	VDESC_NO_OFFSET,
+	VOPARG_OFFSETOF(struct vop_lease_args, a_cred),
+	VOPARG_OFFSETOF(struct vop_lease_args, a_p),
+	VDESC_NO_OFFSET,
+	NULL,
+};
+
 int vop_ioctl_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_ioctl_args,a_vp),
 	VDESC_NO_OFFSET
@@ -246,6 +262,22 @@ struct vnodeop_desc vop_select_desc = {
 	VDESC_NO_OFFSET,
 	VOPARG_OFFSETOF(struct vop_select_args, a_cred),
 	VOPARG_OFFSETOF(struct vop_select_args, a_p),
+	VDESC_NO_OFFSET,
+	NULL,
+};
+
+int vop_revoke_vp_offsets[] = {
+	VOPARG_OFFSETOF(struct vop_revoke_args,a_vp),
+	VDESC_NO_OFFSET
+};
+struct vnodeop_desc vop_revoke_desc = {
+	0,
+	"vop_revoke",
+	0,
+	vop_revoke_vp_offsets,
+	VDESC_NO_OFFSET,
+	VDESC_NO_OFFSET,
+	VDESC_NO_OFFSET,
 	VDESC_NO_OFFSET,
 	NULL,
 };
@@ -459,7 +491,7 @@ struct vnodeop_desc vop_inactive_desc = {
 	vop_inactive_vp_offsets,
 	VDESC_NO_OFFSET,
 	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
+	VOPARG_OFFSETOF(struct vop_inactive_args, a_p),
 	VDESC_NO_OFFSET,
 	NULL,
 };
@@ -475,7 +507,7 @@ struct vnodeop_desc vop_reclaim_desc = {
 	vop_reclaim_vp_offsets,
 	VDESC_NO_OFFSET,
 	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
+	VOPARG_OFFSETOF(struct vop_reclaim_args, a_p),
 	VDESC_NO_OFFSET,
 	NULL,
 };
@@ -491,7 +523,7 @@ struct vnodeop_desc vop_lock_desc = {
 	vop_lock_vp_offsets,
 	VDESC_NO_OFFSET,
 	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
+	VOPARG_OFFSETOF(struct vop_lock_args, a_p),
 	VDESC_NO_OFFSET,
 	NULL,
 };
@@ -507,7 +539,7 @@ struct vnodeop_desc vop_unlock_desc = {
 	vop_unlock_vp_offsets,
 	VDESC_NO_OFFSET,
 	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
+	VOPARG_OFFSETOF(struct vop_unlock_args, a_p),
 	VDESC_NO_OFFSET,
 	NULL,
 };
@@ -624,6 +656,22 @@ struct vnodeop_desc vop_valloc_desc = {
 	NULL,
 };
 
+int vop_balloc_vp_offsets[] = {
+	VOPARG_OFFSETOF(struct vop_balloc_args,a_vp),
+	VDESC_NO_OFFSET
+};
+struct vnodeop_desc vop_balloc_desc = {
+	0,
+	"vop_balloc",
+	0,
+	vop_balloc_vp_offsets,
+	VDESC_NO_OFFSET,
+	VOPARG_OFFSETOF(struct vop_balloc_args, a_cred),
+	VDESC_NO_OFFSET,
+	VDESC_NO_OFFSET,
+	NULL,
+};
+
 int vop_reallocblks_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_reallocblks_args,a_vp),
 	VDESC_NO_OFFSET
@@ -684,22 +732,6 @@ struct vnodeop_desc vop_update_desc = {
 	VDESC_NO_OFFSET,
 	VDESC_NO_OFFSET,
 	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	NULL,
-};
-
-int vop_lease_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_lease_args,a_vp),
-	VDESC_NO_OFFSET
-};
-struct vnodeop_desc vop_lease_desc = {
-	0,
-	"vop_lease",
-	0,
-	vop_lease_vp_offsets,
-	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_lease_args, a_cred),
-	VOPARG_OFFSETOF(struct vop_lease_args, a_p),
 	VDESC_NO_OFFSET,
 	NULL,
 };
@@ -769,8 +801,10 @@ struct vnodeop_desc *vfs_op_descs[] = {
 	&vop_setattr_desc,
 	&vop_read_desc,
 	&vop_write_desc,
+	&vop_lease_desc,
 	&vop_ioctl_desc,
 	&vop_select_desc,
+	&vop_revoke_desc,
 	&vop_mmap_desc,
 	&vop_fsync_desc,
 	&vop_seek_desc,
@@ -794,11 +828,11 @@ struct vnodeop_desc *vfs_op_descs[] = {
 	&vop_advlock_desc,
 	&vop_blkatoff_desc,
 	&vop_valloc_desc,
+	&vop_balloc_desc,
 	&vop_reallocblks_desc,
 	&vop_vfree_desc,
 	&vop_truncate_desc,
 	&vop_update_desc,
-	&vop_lease_desc,
 	&vop_whiteout_desc,
 	NULL
 };

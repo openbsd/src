@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.11 1997/10/06 20:20:37 deraadt Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.12 1997/11/06 05:58:44 csapuntz Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -79,6 +79,7 @@ struct vnodeopv_entry_desc spec_vnodeop_entries[] = {
 	{ &vop_lease_desc, spec_lease_check },		/* lease */
 	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */
 	{ &vop_select_desc, spec_select },		/* select */
+	{ &vop_revoke_desc, spec_revoke },              /* revoke */
 	{ &vop_mmap_desc, spec_mmap },			/* mmap */
 	{ &vop_fsync_desc, spec_fsync },		/* fsync */
 	{ &vop_seek_desc, spec_seek },			/* seek */
@@ -143,8 +144,13 @@ spec_open(v)
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
-	struct vnode *bvp, *vp = ap->a_vp;
-	dev_t bdev, dev = (dev_t)vp->v_rdev;
+	struct proc *p = ap->a_p;
+	struct vnode *vp = ap->a_vp;
+#if 0
+	struct vnode *bvp;
+	dev_t bdev;
+#endif
+	dev_t dev = (dev_t)vp->v_rdev;
 	register int maj = major(dev);
 	int error;
 
@@ -172,6 +178,7 @@ spec_open(v)
 			 * devices whose corresponding block devices are
 			 * currently mounted.
 			 */
+#if 0
 			if (securelevel >= 1) {
 				if ((bdev = chrtoblk(dev)) != NODEV &&
 				    vfinddev(bdev, VBLK, &bvp) &&
@@ -181,12 +188,13 @@ spec_open(v)
 				if (iskmemdev(dev))
 					return (EPERM);
 			}
+#endif
 		}
 		if (cdevsw[maj].d_type == D_TTY)
 			vp->v_flag |= VISTTY;
-		VOP_UNLOCK(vp);
+		VOP_UNLOCK(vp, 0, p);
 		error = (*cdevsw[maj].d_open)(dev, ap->a_mode, S_IFCHR, ap->a_p);
-		VOP_LOCK(vp);
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 		return (error);
 
 	case VBLK:
@@ -255,10 +263,10 @@ spec_read(v)
 	switch (vp->v_type) {
 
 	case VCHR:
-		VOP_UNLOCK(vp);
+		VOP_UNLOCK(vp, 0, p);
 		error = (*cdevsw[major(vp->v_rdev)].d_read)
 			(vp->v_rdev, uio, ap->a_ioflag);
-		VOP_LOCK(vp);
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 		return (error);
 
 	case VBLK:
@@ -306,6 +314,19 @@ spec_read(v)
 	/* NOTREACHED */
 }
 
+int
+spec_inactive(v)
+	void *v;
+{
+	struct vop_inactive_args /* {
+		struct vnode *a_vp;
+		struct proc *a_p;
+	} */ *ap = v;
+
+	VOP_UNLOCK(ap->a_vp, 0, ap->a_p);
+	return (0);
+}
+
 /*
  * Vnode op for write
  */
@@ -341,10 +362,10 @@ spec_write(v)
 	switch (vp->v_type) {
 
 	case VCHR:
-		VOP_UNLOCK(vp);
+		VOP_UNLOCK(vp, 0, p);
 		error = (*cdevsw[major(vp->v_rdev)].d_write)
 			(vp->v_rdev, uio, ap->a_ioflag);
-		VOP_LOCK(vp);
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 		return (error);
 
 	case VBLK:
@@ -514,6 +535,74 @@ loop:
 /*
  * Just call the device strategy routine
  */
+int fs_read[16], fs_write[16];
+
+int cur_found[10];
+
+int fs_bwrite[64][10];
+int fs_bwrite_cnt[64];
+int num_found;
+
+int num_levels = 4;
+#include <machine/cpu.h>
+#include <machine/pcb.h>
+
+int find_stack(int);
+
+int find_stack(int levels)
+
+{
+        struct    pcb  stack;
+        int   *eip, *ebp;
+
+        savectx(&stack);
+        ebp = (int *)stack.pcb_ebp;
+        eip = (int *) *(ebp + 1);
+        
+        while ((int)ebp > 0xf0000000 && levels--) {
+                eip = (int *) *(ebp + 1);
+
+                ebp = (int *) *ebp;
+        }
+        
+	return ((int)eip);
+}
+
+void track_write __P((void));
+
+void track_write(void)
+
+{
+	int  idx, cnt;
+
+	for (idx = 0; idx < 10; idx++) {
+		cur_found[idx] = find_stack(idx + num_levels);
+	}
+
+	for (cnt = 0; cnt < num_found; cnt++) {
+		for (idx = 0; idx < 10; idx++) {
+			if (fs_bwrite[cnt][idx] != cur_found[idx])
+				goto next_iter;
+		}
+
+		fs_bwrite_cnt[cnt]++;
+		break;
+	next_iter:
+	}
+
+	if ((cnt == num_found) &&
+	    (num_found != 64)) {
+		for (idx = 0; idx < 10; idx++) {
+			fs_bwrite[num_found][idx] = cur_found[idx];
+		}
+		
+		fs_bwrite_cnt[num_found] = 1;
+		num_found++;
+	}
+
+	return;
+}
+
 int
 spec_strategy(v)
 	void *v;
@@ -521,8 +610,31 @@ spec_strategy(v)
 	struct vop_strategy_args /* {
 		struct buf *a_bp;
 	} */ *ap = v;
+	struct buf *bp;
 
-	(*bdevsw[major(ap->a_bp->b_dev)].d_strategy)(ap->a_bp);
+	int maj = major(ap->a_bp->b_dev);
+	
+	if ((maj >= 0) && (maj < 16)) {
+		if (ap->a_bp->b_flags & B_READ)
+			fs_read[maj]++;
+		else {
+			fs_write[maj]++;
+			if (maj == 4)
+				track_write();
+
+		}
+	}
+
+#if 0
+	assert (!(flags & (B_DELWRI | B_DONE)));
+#endif
+
+	bp = ap->a_bp;
+
+	if (LIST_FIRST(&bp->b_dep) != NULL && bioops.io_start)
+		(*bioops.io_start)(bp);
+
+	(*bdevsw[maj].d_strategy)(ap->a_bp);
 	return (0);
 }
 
@@ -538,33 +650,16 @@ spec_bmap(v)
 		daddr_t  a_bn;
 		struct vnode **a_vpp;
 		daddr_t *a_bnp;
+		int *a_runp;
 	} */ *ap = v;
 
 	if (ap->a_vpp != NULL)
 		*ap->a_vpp = ap->a_vp;
 	if (ap->a_bnp != NULL)
 		*ap->a_bnp = ap->a_bn;
-	return (0);
-}
-
-/*
- * At the moment we do not do any locking.
- */
-/* ARGSUSED */
-int
-spec_lock(v)
-	void *v;
-{
-
-	return (0);
-}
-
-/* ARGSUSED */
-int
-spec_unlock(v)
-	void *v;
-{
-
+	if (ap->a_runp != NULL)
+		*ap->a_runp = 0;
+	
 	return (0);
 }
 
@@ -621,7 +716,9 @@ spec_close(v)
 		 * we must invalidate any in core blocks, so that
 		 * we can, for instance, change floppy disks.
 		 */
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, ap->a_p);
 		error = vinvalbuf(vp, V_SAVE, ap->a_cred, ap->a_p, 0, 0);
+		VOP_UNLOCK(vp, 0, ap->a_p);
 		if (error)
 			return (error);
 		/*

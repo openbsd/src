@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.21 1997/10/06 20:20:52 deraadt Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.22 1997/11/06 05:59:05 csapuntz Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -72,16 +72,13 @@
 extern struct nfsstats nfsstats;
 extern int nfs_ticks;
 
-#ifdef notyet
 static int nfs_sysctl(int *, u_int, void *, size_t *, void *, size_t,
 		      struct proc *);
-#endif
 
 /*
  * nfs vfs operations.
  */
 struct vfsops nfs_vfsops = {
-	MOUNT_NFS,
 	nfs_mount,
 	nfs_start,
 	nfs_unmount,
@@ -93,9 +90,7 @@ struct vfsops nfs_vfsops = {
 	nfs_fhtovp,
 	nfs_vptofh,
 	nfs_vfs_init,
-#ifdef notyet
 	nfs_sysctl
-#endif
 };
 
 extern u_int32_t nfs_procids[NFS_NPROCS];
@@ -180,7 +175,7 @@ nfs_statfs(mp, sbp, p)
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
 		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
 	}
-	strncpy(&sbp->f_fstypename[0], mp->mnt_op->vfs_name, MFSNAMELEN);
+	strncpy(&sbp->f_fstypename[0], mp->mnt_vfc->vfc_name, MFSNAMELEN);
 	nfsm_reqdone;
 	vrele(vp);
 	crfree(cred);
@@ -294,20 +289,11 @@ nfs_mountroot()
 	/*
 	 * Link it into the mount list.
 	 */
-#ifdef Lite2_integrated
 	simple_lock(&mountlist_slock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	simple_unlock(&mountlist_slock);
 	rootvp = vp;
 	vfs_unbusy(mp, procp);
-#else
-	if (vfs_lock(mp))
-		panic("nfs_mountroot: vfs_lock");
-	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	mp->mnt_vnodecovered = NULLVP;
-	vfs_unlock(mp);
-	rootvp = vp;
-#endif
 
 	/* Get root attributes (for the time). */
 	error = VOP_GETATTR(vp, &attr, procp->p_ucred, procp);
@@ -354,9 +340,7 @@ nfs_mountroot()
 	 */
 	nfs_boot_getfh(&nd.nd_boot, "swap", &nd.nd_swap);
 	mp = nfs_mount_diskless(&nd.nd_swap, "/swap", 0, &vp);
-#ifdef Lite2_integrated
 	vfs_unbusy(mp, procp);
-#endif
 	printf("swap on %s\n", nd.nd_swap.ndm_host);
 
 	/*
@@ -397,16 +381,14 @@ nfs_mount_diskless(ndmntp, mntname, mntflag, vpp)
 	struct mbuf *m;
 	int error;
 
-#ifdef Lite2_integrated
 	vfs_rootmountalloc("nfs", mntname, &mp);
-#else
 	/* Create the mount point. */
 	mp = (struct mount *)malloc((u_long)sizeof(struct mount),
 	    M_MOUNT, M_WAITOK);
 	if (mp == NULL)
 		panic("nfs_mountroot: malloc mount for %s", mntname);
 	bzero((char *)mp, (u_long)sizeof(struct mount));
-#endif
+
 	mp->mnt_op = &nfs_vfsops;
 	mp->mnt_flag = mntflag;
 
@@ -692,11 +674,8 @@ mountnfs(argp, mp, nam, pth, hst, vpp)
 		mp->mnt_data = (qaddr_t)nmp;
 		TAILQ_INIT(&nmp->nm_uidlruhead);
 	}
-#ifdef Lite2_integrated
-	vfs_getnewfsid(mp, makefstype(MOUNT_NFS));
-#else
-	getnewfsid(mp, makefstype(MOUNT_NFS));
-#endif
+
+	vfs_getnewfsid(mp);
 	nmp->nm_mountp = mp;
 	if (argp->flags & NFSMNT_NQNFS)
 		/*
@@ -728,7 +707,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp)
 #else
 	mp->mnt_stat.f_type = 0;
 #endif
-	strncpy(&mp->mnt_stat.f_fstypename[0], mp->mnt_op->vfs_name, MFSNAMELEN);
+	strncpy(&mp->mnt_stat.f_fstypename[0], mp->mnt_vfc->vfc_name, MFSNAMELEN);
 	bcopy(hst, mp->mnt_stat.f_mntfromname, MNAMELEN);
 	bcopy(pth, mp->mnt_stat.f_mntonname, MNAMELEN);
 	nmp->nm_nam = nam;
@@ -903,13 +882,10 @@ loop:
 		 */
 		if (vp->v_mount != mp)
 			goto loop;
-		if (VOP_ISLOCKED(vp) || vp->v_dirtyblkhd.lh_first == NULL)
+		if (VOP_ISLOCKED(vp) || vp->v_dirtyblkhd.lh_first == NULL ||
+		    waitfor == MNT_LAZY)
 			continue;
-#ifdef Lite2_integrated
 		if (vget(vp, LK_EXCLUSIVE, p))
-#else
-		if (vget(vp, 1))
-#endif
 			goto loop;
 		error = VOP_FSYNC(vp, cred, waitfor, p);
 		if (error)
@@ -934,7 +910,6 @@ nfs_vget(mp, ino, vpp)
 	return (EOPNOTSUPP);
 }
 
-#ifdef notyet
 /*
  * Do that sysctl thang...
  */
@@ -977,7 +952,6 @@ nfs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return EOPNOTSUPP;
 	}
 }
-#endif
 
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_node.h,v 1.4 1997/10/06 20:19:44 deraadt Exp $	*/
+/*	$OpenBSD: cd9660_node.h,v 1.5 1997/11/06 05:58:11 csapuntz Exp $	*/
 /*	$NetBSD: cd9660_node.h,v 1.11 1996/02/09 21:32:00 christos Exp $	*/
 
 /*-
@@ -87,7 +87,7 @@ struct iso_node {
 	doff_t	i_diroff;	/* offset in dir, where we found last entry */
 	doff_t	i_offset;	/* offset of free space in directory */
 	ino_t	i_ino;		/* inode number of found directory */
-	pid_t	i_lockholder, i_lockwaiter;
+	struct  lock i_lock;    /* node lock */
 
 	long iso_extent;	/* extent of file */
 	long i_size;
@@ -100,8 +100,6 @@ struct iso_node {
 #define	i_back		i_chain[1]
 
 /* flags */
-#define	IN_LOCKED	0x0001		/* inode is locked */
-#define	IN_WANTED	0x0002		/* some process waiting on lock */
 #define	IN_ACCESS	0x0020		/* inode access time to be updated */
 
 #define VTOI(vp) ((struct iso_node *)(vp)->v_data)
@@ -116,6 +114,7 @@ int cd9660_open __P((void *));
 int cd9660_close __P((void *));
 int cd9660_access __P((void *));
 int cd9660_getattr __P((void *));
+int cd9660_setattr __P((void *));
 int cd9660_read __P((void *));
 int cd9660_ioctl __P((void *));
 int cd9660_select __P((void *));

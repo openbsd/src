@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_param.h,v 1.10 1997/10/06 20:21:28 deraadt Exp $	*/
+/*	$OpenBSD: vm_param.h,v 1.11 1997/11/06 05:59:38 csapuntz Exp $	*/
 /*	$NetBSD: vm_param.h,v 1.12 1995/03/26 20:39:16 jtc Exp $	*/
 
 /* 
@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm_param.h	8.1 (Berkeley) 6/11/93
+ *	@(#)vm_param.h	8.2 (Berkeley) 1/9/95
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.

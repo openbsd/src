@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lkm.c,v 1.20 1997/10/06 20:19:54 deraadt Exp $	*/
+/*	$OpenBSD: kern_lkm.c,v 1.21 1997/11/06 05:58:17 csapuntz Exp $	*/
 /*	$NetBSD: kern_lkm.c,v 1.31 1996/03/31 21:40:27 christos Exp $	*/
 
 /*
@@ -689,57 +689,52 @@ _lkm_vfs(lkmtp, cmd)
 	struct lkm_table *lkmtp;
 	int cmd;
 {
-	struct lkm_vfs *args = lkmtp->private.lkm_vfs;
-	int i;
 	int error = 0;
-
+#if 0
+	struct lkm_vfs *args = lkmtp->private.lkm_vfs;
+	struct vfsconf *vfsp, **vfspp;
+#endif
 	switch(cmd) {
 	case LKM_E_LOAD:
 		/* don't load twice! */
 		if (lkmexists(lkmtp))
 			return (EEXIST);
 
+		return (EEXIST);
+#if 0
 		/* make sure there's no VFS in the table with this name */
-		for (i = 0; i < nvfssw; i++)
-			if (vfssw[i] != (struct vfsops *)0 &&
-			    strncmp(vfssw[i]->vfs_name,
+		for (vfspp = &vfsconf, vfsp = vfsconf; 
+		     vfsp; 
+		     vfspp = &vfsp->vfc_next, vfsp = vfsp->vfc_next)
+			if (strncmp(vfsp->vfc_name,
 				    args->lkm_vfsops->vfs_name,
 				    MFSNAMELEN) == 0)
 				return (EEXIST);
+		
 
 		/* pick the last available empty slot */
-		for (i = nvfssw - 1; i >= 0; i--)
-			if (vfssw[i] == (struct vfsops *)0)
-				break;
-		if (i == -1) {		/* or if none, punt */
-			error = EINVAL;
-			break;
-		}
+		MALLOC (vfsp, struct vfsconf *, sizeof (struct vfsconf),
+			M_VFS, M_WAITOK);
+
+		/* Add tot he end of the list */
+		*vfspp = vfsp;
 
 		/*
 		 * Set up file system
 		 */
-		vfssw[i] = args->lkm_vfsops;
-		vfssw[i]->vfs_refcount = 0;
+		/* FIXME (CPS): Setup new vfsconf structure */
 
 		/*
 		 * Call init function for this VFS...
 		 */
-	 	(*(vfssw[i]->vfs_init))();
+	 	(*(vfsp->vfc_vfsops->vfs_init))(vfsp);
 
 		/* done! */
-		args->lkm_offset = i;	/* slot in vfssw[] */
+		/* Nope - can't return this */
 		break;
+#endif
 
 	case LKM_E_UNLOAD:
-		/* current slot... */
-		i = args->lkm_offset;
-
-		if (vfssw[i]->vfs_refcount != 0)
-			return (EBUSY);
-
-		/* replace current slot contents with old contents */
-		vfssw[i] = (struct vfsops *)0;
 		break;
 
 	case LKM_E_STAT:	/* no special handling... */

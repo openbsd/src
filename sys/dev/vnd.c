@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.19 1997/10/18 10:37:04 deraadt Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.20 1997/11/06 05:58:08 csapuntz Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -369,6 +369,7 @@ vndstrategy(bp)
 	int sz, flags, error, s;
 	struct iovec aiov;
 	struct uio auio;
+	struct proc *p = curproc;
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
@@ -431,7 +432,7 @@ vndstrategy(bp)
 			auio.uio_segflg = UIO_SYSSPACE;
 			auio.uio_procp = NULL;
 
-			VOP_LOCK(vnd->sc_vp);
+			vn_lock(vnd->sc_vp, LK_EXCLUSIVE | LK_RETRY, p);
 			vnd->sc_flags |= VNF_BUSY;
 			if (bp->b_flags & B_READ) {
 				auio.uio_rw = UIO_READ;
@@ -443,7 +444,7 @@ vndstrategy(bp)
 				    vnd->sc_cred);
 			}
 			vnd->sc_flags &= ~VNF_BUSY;
-			VOP_UNLOCK(vnd->sc_vp);
+			VOP_UNLOCK(vnd->sc_vp, 0, p);
 			if (bp->b_error)
 				bp->b_flags |= B_ERROR;
 			bp->b_resid = auio.uio_resid;
@@ -477,9 +478,9 @@ vndstrategy(bp)
 		int off, s, nra;
 
 		nra = 0;
-		VOP_LOCK(vnd->sc_vp);
+		vn_lock(vnd->sc_vp, LK_RETRY | LK_EXCLUSIVE, p);
 		error = VOP_BMAP(vnd->sc_vp, bn / bsize, &vp, &nbn, &nra);
-		VOP_UNLOCK(vnd->sc_vp);
+		VOP_UNLOCK(vnd->sc_vp, 0, p);
 		if (error == 0 && (long)nbn == -1)
 			error = EIO;
 #ifdef DEBUG
@@ -732,12 +733,12 @@ vndioctl(dev, cmd, addr, flag, p)
 		}
 		error = VOP_GETATTR(nd.ni_vp, &vattr, p->p_ucred, p);
 		if (error) {
-			VOP_UNLOCK(nd.ni_vp);
+			VOP_UNLOCK(nd.ni_vp, 0, p);
 			(void) vn_close(nd.ni_vp, FREAD|FWRITE, p->p_ucred, p);
 			vndunlock(vnd);
 			return(error);
 		}
-		VOP_UNLOCK(nd.ni_vp);
+		VOP_UNLOCK(nd.ni_vp, 0, p);
 		vnd->sc_vp = nd.ni_vp;
 		vnd->sc_size = btodb(vattr.va_size);	/* note truncation */
 		if ((error = vndsetcred(vnd, p->p_ucred)) != 0) {
@@ -874,6 +875,7 @@ vndsetcred(vnd, cred)
 	struct iovec aiov;
 	char *tmpbuf;
 	int error;
+	struct proc *p = curproc;
 
 	vnd->sc_cred = crdup(cred);
 	tmpbuf = malloc(DEV_BSIZE, M_TEMP, M_WAITOK);
@@ -887,9 +889,9 @@ vndsetcred(vnd, cred)
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_resid = aiov.iov_len;
-	VOP_LOCK(vnd->sc_vp);
+	vn_lock(vnd->sc_vp, LK_RETRY | LK_EXCLUSIVE, p);
 	error = VOP_READ(vnd->sc_vp, &auio, 0, vnd->sc_cred);
-	VOP_UNLOCK(vnd->sc_vp);
+	VOP_UNLOCK(vnd->sc_vp, 0, p);
 
 	free(tmpbuf, M_TEMP);
 	return (error);

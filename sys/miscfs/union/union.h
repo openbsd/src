@@ -1,4 +1,4 @@
-/*	$OpenBSD: union.h,v 1.5 1997/10/06 21:04:48 deraadt Exp $	*/
+/*	$OpenBSD: union.h,v 1.6 1997/11/06 05:58:51 csapuntz Exp $	*/
 /*	$NetBSD: union.h,v 1.9 1996/02/09 22:41:08 christos Exp $	*/
 
 /*
@@ -39,6 +39,8 @@
  *
  *	@(#)union.h	8.9 (Berkeley) 12/10/94
  */
+
+struct vfsconf;
 
 struct union_args {
 	char		*target;	/* Target of loopback  */
@@ -129,7 +131,7 @@ extern void union_newsize __P((struct vnode *, off_t, off_t));
 extern int (**union_vnodeop_p) __P((void *));
 extern struct vfsops union_vfsops;
 
-void union_init __P((void));
+int union_init __P((struct vfsconf *));
 int union_freevp __P((struct vnode *));
 
 #endif /* _KERNEL */

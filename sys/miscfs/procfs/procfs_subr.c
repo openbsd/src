@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_subr.c,v 1.10 1997/10/06 20:20:33 deraadt Exp $	*/
+/*	$OpenBSD: procfs_subr.c,v 1.11 1997/11/06 05:58:43 csapuntz Exp $	*/
 /*	$NetBSD: procfs_subr.c,v 1.15 1996/02/12 15:01:42 christos Exp $	*/
 
 /*
@@ -54,10 +54,14 @@
 static TAILQ_HEAD(, pfsnode)	pfshead;
 static int pfsvplock;
 
-void
-procfs_init(void)
+/*ARGSUSED*/
+int
+procfs_init(vfsp)
+	struct vfsconf *vfsp;
+
 {
 	TAILQ_INIT(&pfshead);
+	return (0);
 }
 
 /*
@@ -93,6 +97,7 @@ procfs_allocvp(mp, vpp, pid, pfs_type)
 	long pid;
 	pfstype pfs_type;
 {
+	struct proc *p = curproc;
 	struct pfsnode *pfs;
 	struct vnode *vp;
 	int error;
@@ -103,7 +108,7 @@ loop:
 		if (pfs->pfs_pid == pid &&
 		    pfs->pfs_type == pfs_type &&
 		    vp->v_mount == mp) {
-			if (vget(vp, 0))
+			if (vget(vp, 0, p))
 				goto loop;
 			*vpp = vp;
 			return (0);

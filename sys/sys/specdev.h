@@ -1,4 +1,4 @@
-/*	$OpenBSD: specdev.h,v 1.5 1997/10/06 20:20:39 deraadt Exp $	*/
+/*	$OpenBSD: specdev.h,v 1.6 1997/11/06 05:58:45 csapuntz Exp $	*/
 /*	$NetBSD: specdev.h,v 1.12 1996/02/13 13:13:01 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
 struct specinfo {
 	struct	vnode **si_hashchain;
 	struct	vnode *si_specnext;
-	long	si_flags;
+	struct  mount *si_mountpoint;
 	dev_t	si_rdev;
 	struct	lockf *si_lockf;
 };
@@ -54,13 +54,8 @@ struct specinfo {
 #define v_rdev v_specinfo->si_rdev
 #define v_hashchain v_specinfo->si_hashchain
 #define v_specnext v_specinfo->si_specnext
-#define v_specflags v_specinfo->si_flags
+#define v_specmountpoint v_specinfo->si_mountpoint
 #define v_speclockf v_specinfo->si_lockf
-
-/*
- * Flags for specinfo
- */
-#define	SI_MOUNTEDON	0x0001	/* block special device is mounted on */
 
 /*
  * Special device management
@@ -113,14 +108,14 @@ int	spec_fsync	__P((void *));
 #define	spec_readdir	spec_badop
 #define	spec_readlink	spec_badop
 #define	spec_abortop	spec_badop
-#define	spec_inactive	nullop
+int spec_inactive __P((void *));
 #define	spec_reclaim	nullop
-int	spec_lock	__P((void *));
-int	spec_unlock	__P((void *));
+#define spec_lock       vop_nolock
+#define spec_unlock     vop_nounlock
+#define spec_islocked   vop_noislocked
 int	spec_bmap	__P((void *));
 int	spec_strategy	__P((void *));
 int	spec_print	__P((void *));
-#define	spec_islocked	nullop
 int	spec_pathconf	__P((void *));
 int	spec_advlock	__P((void *));
 #define	spec_blkatoff	spec_badop
@@ -130,3 +125,4 @@ int	spec_advlock	__P((void *));
 #define	spec_truncate	nullop
 #define	spec_update	nullop
 #define	spec_bwrite	vn_bwrite
+#define spec_revoke     vop_revoke

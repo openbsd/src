@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.4 1997/06/20 14:04:31 kstailey Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.5 1997/11/06 05:59:15 csapuntz Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -71,7 +71,6 @@ int ext2fs_check_export __P((struct mount *, struct ufid *, struct mbuf *,
 	struct vnode **, int *, struct ucred **));
 
 struct vfsops ext2fs_vfsops = {
-	MOUNT_EXT2FS,
 	ext2fs_mount,
 	ufs_start,
 	ext2fs_unmount,
@@ -146,10 +145,9 @@ ext2fs_mountroot()
 {
 	extern struct vnode *rootvp;
 	register struct m_ext2fs *fs;
-	register struct mount *mp;
+        struct mount *mp;
 	struct proc *p = curproc;	/* XXX */
 	struct ufsmount *ump;
-	size_t size;
 	int error;
 
 	/*
@@ -158,31 +156,23 @@ ext2fs_mountroot()
 	if (bdevvp(swapdev, &swapdev_vp) || bdevvp(rootdev, &rootvp))
 		panic("ext2fs_mountroot: can't setup bdevvp's");
 
-	mp = malloc(sizeof(struct mount), M_MOUNT, M_WAITOK);
-	bzero((char *)mp, sizeof(struct mount));
-	mp->mnt_op = &ext2fs_vfsops;
-	mp->mnt_flag = MNT_RDONLY;
+	if ((error = vfs_rootmountalloc("ext2fs", "root_device", &mp)) != 0)
+		return (error);
 	if ((error = ext2fs_mountfs(rootvp, mp, p)) != 0) {
+		mp->mnt_vfc->vfc_refcount--;
+		vfs_unbusy(mp, p);
 		free(mp, M_MOUNT);
 		return (error);
 	}
-	if ((error = vfs_lock(mp)) != 0) {
-		(void)ext2fs_unmount(mp, 0, p);
-		free(mp, M_MOUNT);
-		return (error);
-	}
+	simple_lock(&mountlist_slock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	mp->mnt_vnodecovered = NULLVP;
+	simple_unlock(&mountlist_slock);
 	ump = VFSTOUFS(mp);
 	fs = ump->um_e2fs;
-	bzero(fs->e2fs_fsmnt, sizeof(fs->e2fs_fsmnt));
-	fs->e2fs_fsmnt[0] = '/';
-	bcopy(fs->e2fs_fsmnt, mp->mnt_stat.f_mntonname, MNAMELEN);
-	(void) copystr(ROOTNAME, mp->mnt_stat.f_mntfromname, MNAMELEN - 1,
-		&size);
-	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
+	(void) copystr(mp->mnt_stat.f_mntonname, fs->e2fs_fsmnt, MNAMELEN -1, 0);
 	(void)ext2fs_statfs(mp, &mp->mnt_stat, p);
-	vfs_unlock(mp);
+
+	vfs_unbusy(mp, p);
 	inittodr(fs->e2fs.e2fs_wtime);
 	return (0);
 }
@@ -222,8 +212,6 @@ ext2fs_mount(mp, path, data, ndp, p)
 			flags = WRITECLOSE;
 			if (mp->mnt_flag & MNT_FORCE)
 				flags |= FORCECLOSE;
-			if (vfs_busy(mp))
-				return (EBUSY);
 			error = ext2fs_flushfiles(mp, flags, p);
 			if (error == 0 &&
 				ext2fs_cgupdate(ump, MNT_WAIT) == 0 &&
@@ -231,7 +219,6 @@ ext2fs_mount(mp, path, data, ndp, p)
 				fs->e2fs.e2fs_state = E2FS_ISCLEAN;
 				(void) ext2fs_sbupdate(ump, MNT_WAIT);
 			}
-			vfs_unbusy(mp);
 			if (error)
 				return (error);
 			fs->e2fs_ronly = 1;
@@ -248,14 +235,14 @@ ext2fs_mount(mp, path, data, ndp, p)
 			 */
 			if (p->p_ucred->cr_uid != 0) {
 				devvp = ump->um_devvp;
-				VOP_LOCK(devvp);
+				vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 				error = VOP_ACCESS(devvp, VREAD | VWRITE,
 						   p->p_ucred, p);
 				if (error) {
-					VOP_UNLOCK(devvp);
+					VOP_UNLOCK(devvp, 0, p);
 					return (error);
 				}
-				VOP_UNLOCK(devvp);
+				VOP_UNLOCK(devvp, 0, p);
 			}
 			fs->e2fs_ronly = 0;
 			if (fs->e2fs.e2fs_state == E2FS_ISCLEAN)
@@ -296,13 +283,13 @@ ext2fs_mount(mp, path, data, ndp, p)
 		accessmode = VREAD;
 		if ((mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
-		VOP_LOCK(devvp);
+		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 		error = VOP_ACCESS(devvp, accessmode, p->p_ucred, p);
 		if (error) {
 			vput(devvp);
 			return (error);
 		}
-		VOP_UNLOCK(devvp);
+		VOP_UNLOCK(devvp, 0, p);
 	}
 	if ((mp->mnt_flag & MNT_UPDATE) == 0)
 		error = ext2fs_mountfs(devvp, mp, p);
@@ -448,7 +435,7 @@ loop:
 		/*
 		 * Step 5: invalidate all cached file data.
 		 */
-		if (vget(vp, 1))
+		if (vget(vp, LK_EXCLUSIVE, p))
 			goto loop;
 		if (vinvalbuf(vp, 0, cred, p, 0, 0))
 			panic("ext2fs_reload: dirty2");
@@ -605,7 +592,7 @@ ext2fs_mountfs(devvp, mp, p)
 	ump->um_nindir = NINDIR(m_fs);
 	ump->um_bptrtodb = m_fs->e2fs_fsbtodb;
 	ump->um_seqinc = 1; /* no frags */
-	devvp->v_specflags |= SI_MOUNTEDON;
+	devvp->v_specmountpoint = mp;
 	return (0);
 out:
 	if (bp)
@@ -645,7 +632,8 @@ ext2fs_unmount(mp, mntflags, p)
 		fs->e2fs.e2fs_state = E2FS_ISCLEAN;
 		(void) ext2fs_sbupdate(ump, MNT_WAIT);
 	}
-	ump->um_devvp->v_specflags &= ~SI_MOUNTEDON;
+
+	ump->um_devvp->v_specmountpoint = NULL;
 	error = VOP_CLOSE(ump->um_devvp, fs->e2fs_ronly ? FREAD : FREAD|FWRITE,
 		NOCRED, p);
 	vrele(ump->um_devvp);
@@ -720,10 +708,11 @@ ext2fs_statfs(mp, sbp, p)
 	sbp->f_files =  fs->e2fs.e2fs_icount;
 	sbp->f_ffree = fs->e2fs.e2fs_ficount;
 	if (sbp != &mp->mnt_stat) {
+		sbp->f_type = mp->mnt_vfc->vfc_typenum;
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
 		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
 	}
-	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
+	strncpy(sbp->f_fstypename, mp->mnt_vfc->vfc_name, MFSNAMELEN);
 	return (0);
 }
 
@@ -782,7 +771,7 @@ loop:
 			(IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE)) == 0 &&
 			vp->v_dirtyblkhd.lh_first == NULL)
 			continue;
-		if (vget(vp, 1))
+		if (vget(vp, LK_EXCLUSIVE, p))
 			goto loop;
 		if ((error = VOP_FSYNC(vp, cred, waitfor, p)) != 0)
 			allerror = error;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls_43.c,v 1.7 1997/10/06 20:19:27 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls_43.c,v 1.8 1997/11/06 05:58:02 csapuntz Exp $	*/
 /*	$NetBSD: vfs_syscalls_43.c,v 1.4 1996/03/14 19:31:52 christos Exp $	*/
 
 /*
@@ -387,7 +387,8 @@ unionread:
 	auio.uio_segflg = UIO_USERSPACE;
 	auio.uio_procp = p;
 	auio.uio_resid = SCARG(uap, count);
-	VOP_LOCK(vp);
+       
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 	loff = auio.uio_offset = fp->f_offset;
 #	if (BYTE_ORDER != LITTLE_ENDIAN)
 		if (vp->v_mount->mnt_maxsymlinklen <= 0) {
@@ -404,7 +405,7 @@ unionread:
 		MALLOC(dirbuf, caddr_t, SCARG(uap, count), M_TEMP, M_WAITOK);
 		kiov.iov_base = dirbuf;
 		error = VOP_READDIR(vp, &kuio, fp->f_cred, &eofflag,
-			    (u_long *)0, 0);
+				    0, 0);
 		fp->f_offset = kuio.uio_offset;
 		if (error == 0) {
 			readcnt = SCARG(uap, count) - kuio.uio_resid;
@@ -440,7 +441,7 @@ unionread:
 		}
 		FREE(dirbuf, M_TEMP);
 	}
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, 0, p);
 	if (error)
 		return (error);
 	if ((SCARG(uap, count) == auio.uio_resid) &&

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_kern.c,v 1.7 1997/10/06 20:21:19 deraadt Exp $	*/
+/*	$OpenBSD: vm_kern.c,v 1.8 1997/11/06 05:59:33 csapuntz Exp $	*/
 /*	$NetBSD: vm_kern.c,v 1.17.6.1 1996/06/13 17:21:28 cgd Exp $	*/
 
 /* 
@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm_kern.c	8.3 (Berkeley) 1/12/94
+ *	@(#)vm_kern.c	8.4 (Berkeley) 1/9/95
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.

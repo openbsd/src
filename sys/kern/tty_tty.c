@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_tty.c,v 1.5 1997/10/06 20:20:05 deraadt Exp $	*/
+/*	$OpenBSD: tty_tty.c,v 1.6 1997/11/06 05:58:24 csapuntz Exp $	*/
 /*	$NetBSD: tty_tty.c,v 1.13 1996/03/30 22:24:46 christos Exp $	*/
 
 /*-
@@ -63,7 +63,7 @@ cttyopen(dev, flag, mode, p)
 
 	if (ttyvp == NULL)
 		return (ENXIO);
-	VOP_LOCK(ttyvp);
+	vn_lock(ttyvp, LK_EXCLUSIVE | LK_RETRY, p);
 #ifdef PARANOID
 	/*
 	 * Since group is tty and mode is 620 on most terminal lines
@@ -78,7 +78,7 @@ cttyopen(dev, flag, mode, p)
 	if (!error)
 #endif /* PARANOID */
 		error = VOP_OPEN(ttyvp, flag, NOCRED, p);
-	VOP_UNLOCK(ttyvp);
+	VOP_UNLOCK(ttyvp, 0, p);
 	return (error);
 }
 
@@ -89,14 +89,15 @@ cttyread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
+	struct proc *p = uio->uio_procp;
 	register struct vnode *ttyvp = cttyvp(uio->uio_procp);
 	int error;
 
 	if (ttyvp == NULL)
 		return (EIO);
-	VOP_LOCK(ttyvp);
+	vn_lock(ttyvp, LK_EXCLUSIVE | LK_RETRY, p);
 	error = VOP_READ(ttyvp, uio, flag, NOCRED);
-	VOP_UNLOCK(ttyvp);
+	VOP_UNLOCK(ttyvp, 0, p);
 	return (error);
 }
 
@@ -107,14 +108,15 @@ cttywrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
+	struct proc *p = uio->uio_procp;
 	register struct vnode *ttyvp = cttyvp(uio->uio_procp);
 	int error;
 
 	if (ttyvp == NULL)
 		return (EIO);
-	VOP_LOCK(ttyvp);
+	vn_lock(ttyvp, LK_EXCLUSIVE | LK_RETRY, p);
 	error = VOP_WRITE(ttyvp, uio, flag, NOCRED);
-	VOP_UNLOCK(ttyvp);
+	VOP_UNLOCK(ttyvp, 0, p);
 	return (error);
 }
 

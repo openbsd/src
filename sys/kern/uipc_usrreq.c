@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.6 1997/10/06 20:20:06 deraadt Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.7 1997/11/06 05:58:25 csapuntz Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -427,7 +427,7 @@ unp_bind(unp, nam, p)
 	vp->v_socket = unp->unp_socket;
 	unp->unp_vnode = vp;
 	unp->unp_addr = m_copy(nam, 0, (int)M_COPYALL);
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, 0, p);
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.14 1997/10/06 20:19:51 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.15 1997/11/06 05:58:15 csapuntz Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -188,10 +188,10 @@ check_exec(p, epp)
 
 bad2:
 	/*
-	 * unlock and close the vnode, restore the old one, free the
+	 * unlock and close the vnode, free the
 	 * pathname buf, and punt.
 	 */
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, 0, p);
 	vn_close(vp, FREAD, p->p_ucred, p);
 	FREE(ndp->ni_cnd.cn_pnbuf, M_NAMEI);
 	return error;

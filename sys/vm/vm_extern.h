@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_extern.h,v 1.13 1997/10/06 20:21:16 deraadt Exp $	*/
+/*	$OpenBSD: vm_extern.h,v 1.14 1997/11/06 05:59:31 csapuntz Exp $	*/
 /*	$NetBSD: vm_extern.h,v 1.20 1996/04/23 12:25:23 christos Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm_extern.h	8.2 (Berkeley) 1/12/94
+ *	@(#)vm_extern.h	8.5 (Berkeley) 5/3/95
  */
 
 struct buf;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.9 1997/10/06 20:20:45 deraadt Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.10 1997/11/06 05:59:00 csapuntz Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -106,9 +106,7 @@ nfs_nget(mntp, fhp, fhsize, npp)
 	int fhsize;
 	struct nfsnode **npp;
 {
-#ifdef Lite2_integrated
 	struct proc *p = curproc;	/* XXX */
-#endif
 	register struct nfsnode *np;
 	struct nfsnodehashhead *nhpp;
 	register struct vnode *vp;
@@ -123,11 +121,7 @@ loop:
 		    bcmp((caddr_t)fhp, (caddr_t)np->n_fhp, fhsize))
 			continue;
 		vp = NFSTOV(np);
-#ifdef Lite2_integrated
 		if (vget(vp, LK_EXCLUSIVE, p))
-#else
-		if (vget(vp, 1))
-#endif
 			goto loop;
 		*npp = np;
 		return(0);
@@ -162,9 +156,7 @@ nfs_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-#ifdef Lite2_integrated
 		struct proc *a_p;
-#endif
 	} */ *ap = v;
 	register struct nfsnode *np;
 	register struct sillyrename *sp;
@@ -191,9 +183,8 @@ nfs_inactive(v)
 	}
 	np->n_flag &= (NMODIFIED | NFLUSHINPROG | NFLUSHWANT | NQNFSEVICTED |
 		NQNFSNONCACHE | NQNFSWRITE);
-#ifdef Lite2_integrated
+
 	VOP_UNLOCK(ap->a_vp, 0, ap->a_p);
-#endif
 	return (0);
 }
 
@@ -247,64 +238,6 @@ nfs_reclaim(v)
 	vp->v_data = (void *)0;
 	return (0);
 }
-
-#ifndef Lite2_integrated
-/*
- * Lock an nfsnode
- */
-int
-nfs_lock(v)
-	void *v;
-{
-	struct vop_lock_args /* {
-		struct vnode *a_vp;
-	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
-
-	/*
-	 * Ugh, another place where interruptible mounts will get hung.
-	 * If you make this sleep interruptible, then you have to fix all
-	 * the VOP_LOCK() calls to expect interruptibility.
-	 */
-	while (vp->v_flag & VXLOCK) {
-		vp->v_flag |= VXWANT;
-		(void) tsleep((caddr_t)vp, PINOD, "nfslck", 0);
-	}
-	if (vp->v_tag == VT_NON)
-		return (ENOENT);
-	return (0);
-}
-
-/*
- * Unlock an nfsnode
- */
-int
-nfs_unlock(v)
-	void *v;
-{
-#if 0
-	struct vop_unlock_args /* {
-		struct vnode *a_vp;
-	} */ *ap = v;
-#endif
-	return (0);
-}
-
-/*
- * Check for a locked nfsnode
- */
-int
-nfs_islocked(v)
-	void *v;
-{
-#if 0
-	struct vop_islocked_args /* {
-		struct vnode *a_vp;
-	} */ *ap = v;
-#endif
-	return (0);
-}
-#endif /* Lite2_integrated */
 
 /*
  * Nfs abort op, called after namei() when a CREATE/DELETE isn't actually

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_subr.c,v 1.5 1997/10/06 20:21:36 deraadt Exp $	*/
+/*	$OpenBSD: ffs_subr.c,v 1.6 1997/11/06 05:59:19 csapuntz Exp $	*/
 /*	$NetBSD: ffs_subr.c,v 1.6 1996/03/17 02:16:23 christos Exp $	*/
 
 /*
@@ -42,10 +42,10 @@
 #ifdef _KERNEL
 #include <sys/systm.h>
 #include <sys/vnode.h>
-#include <ufs/ffs/ffs_extern.h>
 #include <sys/buf.h>
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
+#include <ufs/ffs/ffs_extern.h>
 
 /*
  * Return buffer with the contents of block "offset" from the beginning of
@@ -240,3 +240,30 @@ ffs_setblock(fs, cp, h)
 		panic("ffs_setblock");
 	}
 }
+
+
+/*
+ * check if a block is free
+ */
+int
+ffs_isfreeblock(fs, cp, h)
+      struct fs *fs;
+      unsigned char *cp;
+      daddr_t h;
+{
+
+      switch ((int)fs->fs_frag) {
+      case 8:
+              return (cp[h] == 0);
+      case 4:
+              return ((cp[h >> 1] & (0x0f << ((h & 0x1) << 2))) == 0);
+      case 2:
+              return ((cp[h >> 2] & (0x03 << ((h & 0x3) << 1))) == 0);
+      case 1:
+              return ((cp[h >> 3] & (0x01 << (h & 0x7))) == 0);
+      default:
+              panic("ffs_isfreeblock");
+      }
+}
+
+

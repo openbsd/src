@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_quota.c,v 1.5 1997/10/06 20:21:48 deraadt Exp $	*/
+/*	$OpenBSD: ufs_quota.c,v 1.6 1997/11/06 05:59:28 csapuntz Exp $	*/
 /*	$NetBSD: ufs_quota.c,v 1.8 1996/02/09 22:36:09 christos Exp $	*/
 
 /*
@@ -376,14 +376,10 @@ quotaon(p, mp, type, fname)
 	if ((error = vn_open(&nd, FREAD|FWRITE, 0)) != 0)
 		return (error);
 	vp = nd.ni_vp;
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, 0, p);
 	if (vp->v_type != VREG) {
 		(void) vn_close(vp, FREAD|FWRITE, p->p_ucred, p);
 		return (EACCES);
-	}
-	if (vfs_busy(mp)) {
-		(void) vn_close(vp, FREAD|FWRITE, p->p_ucred, p);
-		return (EBUSY);
 	}
 	if (*vpp != vp)
 		quotaoff(p, mp, type);
@@ -414,9 +410,9 @@ quotaon(p, mp, type, fname)
 again:
 	for (vp = mp->mnt_vnodelist.lh_first; vp != NULL; vp = nextvp) {
 		nextvp = vp->v_mntvnodes.le_next;
-		if (vp->v_writecount == 0)
+		if (vp->v_type == VNON || vp->v_writecount == 0)
 			continue;
-		if (vget(vp, 1))
+		if (vget(vp, LK_EXCLUSIVE, p))
 			goto again;
 		if ((error = getinoquota(VTOI(vp))) != 0) {
 			vput(vp);
@@ -429,7 +425,6 @@ again:
 	ump->um_qflags[type] &= ~QTF_OPENING;
 	if (error)
 		quotaoff(p, mp, type);
-	vfs_unbusy(mp);
 	return (error);
 }
 
@@ -449,8 +444,6 @@ quotaoff(p, mp, type)
 	register struct inode *ip;
 	int error;
 	
-	if ((mp->mnt_flag & MNT_MPBUSY) == 0)
-		panic("quotaoff: not busy");
 	if ((qvp = ump->um_quotas[type]) == NULLVP)
 		return (0);
 	ump->um_qflags[type] |= QTF_CLOSING;
@@ -461,7 +454,9 @@ quotaoff(p, mp, type)
 again:
 	for (vp = mp->mnt_vnodelist.lh_first; vp != NULL; vp = nextvp) {
 		nextvp = vp->v_mntvnodes.le_next;
-		if (vget(vp, 1))
+		if (vp->v_type == VNON)
+			continue;
+		if (vget(vp, LK_EXCLUSIVE, p))
 			goto again;
 		ip = VTOI(vp);
 		dq = ip->i_dquot[type];
@@ -621,16 +616,16 @@ qsync(mp)
 	struct mount *mp;
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
+	struct proc *p = curproc;
 	register struct vnode *vp, *nextvp;
 	register struct dquot *dq;
 	register int i;
+	int error = 0;
 
 	/*
 	 * Check if the mount point has any quotas.
 	 * If not, simply return.
 	 */
-	if ((mp->mnt_flag & MNT_MPBUSY) == 0)
-		panic("qsync: not busy");
 	for (i = 0; i < MAXQUOTAS; i++)
 		if (ump->um_quotas[i] != NULLVP)
 			break;
@@ -640,22 +635,34 @@ qsync(mp)
 	 * Search vnodes associated with this mount point,
 	 * synchronizing any modified dquot structures.
 	 */
+	simple_lock(&mntvnode_slock);
 again:
-	for (vp = mp->mnt_vnodelist.lh_first; vp != NULL; vp = nextvp) {
-		nextvp = vp->v_mntvnodes.le_next;
-		if (VOP_ISLOCKED(vp))
-			continue;
-		if (vget(vp, 1))
+ 	for (vp = mp->mnt_vnodelist.lh_first; vp != NULL; vp = nextvp) {
+		if (vp->v_mount != mp)
 			goto again;
+ 		nextvp = vp->v_mntvnodes.le_next;
+		if (vp->v_type == VNON)
+			continue;
+		simple_lock(&vp->v_interlock);
+		simple_unlock(&mntvnode_slock);
+		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK, p);
+		if (error) {
+			simple_lock(&mntvnode_slock);
+			if (error == ENOENT)
+				goto again;
+ 			continue;
+		}
 		for (i = 0; i < MAXQUOTAS; i++) {
 			dq = VTOI(vp)->i_dquot[i];
 			if (dq != NODQUOT && (dq->dq_flags & DQ_MOD))
 				dqsync(vp, dq);
 		}
 		vput(vp);
-		if (vp->v_mntvnodes.le_next != nextvp || vp->v_mount != mp)
-			goto again;
-	}
+		simple_lock(&mntvnode_slock);
+		if (vp->v_mntvnodes.le_next != nextvp)
+ 			goto again;
+ 	}
+	simple_unlock(&mntvnode_slock);
 	return (0);
 }
 
@@ -697,6 +704,7 @@ dqget(vp, id, ump, type, dqp)
 	register int type;
 	struct dquot **dqp;
 {
+	struct proc *p = curproc;
 	register struct dquot *dq;
 	struct dqhash *dqh;
 	register struct vnode *dqvp;
@@ -752,7 +760,7 @@ dqget(vp, id, ump, type, dqp)
 	 * Initialize the contents of the dquot structure.
 	 */
 	if (vp != dqvp)
-		VOP_LOCK(dqvp);
+		vn_lock(dqvp, LK_EXCLUSIVE | LK_RETRY, p);
 	LIST_INSERT_HEAD(dqh, dq, dq_hash);
 	DQREF(dq);
 	dq->dq_flags = DQ_LOCK;
@@ -772,7 +780,7 @@ dqget(vp, id, ump, type, dqp)
 	if (auio.uio_resid == sizeof(struct dqblk) && error == 0)
 		bzero((caddr_t)&dq->dq_dqb, sizeof(struct dqblk));
 	if (vp != dqvp)
-		VOP_UNLOCK(dqvp);
+		VOP_UNLOCK(dqvp, 0, p);
 	if (dq->dq_flags & DQ_WANT)
 		wakeup((caddr_t)dq);
 	dq->dq_flags = 0;
@@ -844,6 +852,7 @@ dqsync(vp, dq)
 	struct vnode *vp;
 	register struct dquot *dq;
 {
+	struct proc *p = curproc;
 	struct vnode *dqvp;
 	struct iovec aiov;
 	struct uio auio;
@@ -856,13 +865,13 @@ dqsync(vp, dq)
 	if ((dqvp = dq->dq_ump->um_quotas[dq->dq_type]) == NULLVP)
 		panic("dqsync: file");
 	if (vp != dqvp)
-		VOP_LOCK(dqvp);
+		vn_lock(dqvp, LK_EXCLUSIVE | LK_RETRY, p);
 	while (dq->dq_flags & DQ_LOCK) {
 		dq->dq_flags |= DQ_WANT;
 		sleep((caddr_t)dq, PINOD+2);
 		if ((dq->dq_flags & DQ_MOD) == 0) {
 			if (vp != dqvp)
-				VOP_UNLOCK(dqvp);
+				VOP_UNLOCK(dqvp, 0, p);
 			return (0);
 		}
 	}
@@ -883,7 +892,7 @@ dqsync(vp, dq)
 		wakeup((caddr_t)dq);
 	dq->dq_flags &= ~(DQ_MOD|DQ_LOCK|DQ_WANT);
 	if (vp != dqvp)
-		VOP_UNLOCK(dqvp);
+		VOP_UNLOCK(dqvp, 0, p);
 	return (error);
 }
 

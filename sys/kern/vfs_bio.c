@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.17 1997/10/06 20:20:07 deraadt Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.18 1997/11/06 05:58:25 csapuntz Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -63,6 +63,8 @@
 
 #include <vm/vm.h>
 
+#include <miscfs/specfs/specdev.h>
+
 /* Macros to clear/set/test flags. */
 #define	SET(t, f)	(t) |= (f)
 #define	CLR(t, f)	(t) &= ~(f)
@@ -94,6 +96,7 @@ u_long	bufhash;
 
 TAILQ_HEAD(bqueues, buf) bufqueues[BQUEUES];
 int needbuffer;
+struct bio_ops bioops;
 
 /*
  * Insq/Remq for the buffer free lists.
@@ -139,7 +142,6 @@ bufinit()
 	register int i;
 	int base, residual;
 
-	TAILQ_INIT(&bdirties);
 	for (dp = bufqueues; dp < &bufqueues[BQUEUES]; dp++)
 		TAILQ_INIT(dp);
 	bufhashtbl = hashinit(nbuf, M_CACHE, &bufhash);
@@ -153,6 +155,7 @@ bufinit()
 		bp->b_wcred = NOCRED;
 		bp->b_vnbufs.le_next = NOLIST;
 		bp->b_data = buffers + i * MAXBSIZE;
+		LIST_INIT(&bp->b_dep);
 		if (i < residual)
 			bp->b_bufsize = (base + 1) * CLBYTES;
 		else
@@ -278,7 +281,7 @@ int
 bwrite(bp)
 	struct buf *bp;
 {
-	int rv, sync, wasdelayed, s;
+	int rv, async, wasdelayed, s;
 
 	/*
 	 * Remember buffer type, to switch on it later.  If the write was
@@ -287,34 +290,28 @@ bwrite(bp)
 	 * XXX note that this relies on delayed tape writes being converted
 	 * to async, not sync writes (which is safe, but ugly).
 	 */
-	sync = !ISSET(bp->b_flags, B_ASYNC);
-	if (sync && bp->b_vp && bp->b_vp->v_mount &&
+	async = ISSET(bp->b_flags, B_ASYNC);
+	if (!async && bp->b_vp && bp->b_vp->v_mount &&
 	    ISSET(bp->b_vp->v_mount->mnt_flag, MNT_ASYNC)) {
 		bdwrite(bp);
 		return (0);
 	}
 	wasdelayed = ISSET(bp->b_flags, B_DELWRI);
 	CLR(bp->b_flags, (B_READ | B_DONE | B_ERROR | B_DELWRI));
-	/*
-	 * If this was a delayed write, remove it from the
-	 * list of dirty blocks now
-	 */
-	if (wasdelayed)
-		TAILQ_REMOVE(&bdirties, bp, b_synclist);
 
 	s = splbio();
-	if (!sync) {
-		/*
-		 * If not synchronous, pay for the I/O operation and make
-		 * sure the buf is on the correct vnode queue.  We have
-		 * to do this now, because if we don't, the vnode may not
-		 * be properly notified that its I/O has completed.
-		 */
-		if (wasdelayed)
-			reassignbuf(bp, bp->b_vp);
-		else
-			curproc->p_stats->p_ru.ru_oublock++;
-	}
+
+	/*
+	 * If not synchronous, pay for the I/O operation and make
+	 * sure the buf is on the correct vnode queue.  We have
+	 * to do this now, because if we don't, the vnode may not
+	 * be properly notified that its I/O has completed.
+	 */
+	if (wasdelayed)
+		reassignbuf(bp, bp->b_vp);
+	else
+		curproc->p_stats->p_ru.ru_oublock++;
+	
 
 	/* Initiate disk write.  Make sure the appropriate party is charged. */
 	bp->b_vp->v_numoutput++;
@@ -322,31 +319,18 @@ bwrite(bp)
 	SET(bp->b_flags, B_WRITEINPROG);
 	VOP_STRATEGY(bp);
 
-	if (sync) {
-		/*
-		 * If I/O was synchronous, wait for it to complete.
-		 */
-		rv = biowait(bp);
-
-		/*
-		 * Pay for the I/O operation, if it's not been paid for, and
-		 * make sure it's on the correct vnode queue. (async operatings
-		 * were payed for above.)
-		 */
-		s = splbio();
-		if (wasdelayed)
-			reassignbuf(bp, bp->b_vp);
-		else
-			curproc->p_stats->p_ru.ru_oublock++;
-		splx(s);
-
-		/* Release the buffer. */
-		brelse(bp);
-
-		return (rv);
-	} else {
+	if (async)
 		return (0);
-	}
+
+	/*
+	 * If I/O was synchronous, wait for it to complete.
+	 */
+	rv = biowait(bp);
+
+	/* Release the buffer. */
+	brelse(bp);
+
+	return (rv);
 }
 
 int
@@ -382,23 +366,10 @@ bdwrite(bp)
 	 *	(3) Make sure it's on its vnode's correct block list,
 	 *	(4) If a buffer is rewritten, move it to end of dirty list
 	 */
-	bp->b_synctime = time.tv_sec + 30;
 	if (!ISSET(bp->b_flags, B_DELWRI)) {
-		/*
-		 * Add the buffer to the list of dirty blocks.
-		 * If it is the first entry on the list, schedule
-		 * a timeout to flush it to disk
-		 */
-		TAILQ_INSERT_TAIL(&bdirties, bp, b_synclist);
-		if (bdirties.tqh_first == bp) {
-			untimeout((void (*)__P((void *)))wakeup,
-				  &bdirties);		/* XXX */
-			timeout((void (*)__P((void *)))wakeup,
-				&bdirties, 30 * hz);
-		}
 		SET(bp->b_flags, B_DELWRI);
-		curproc->p_stats->p_ru.ru_oublock++;	/* XXX */
 		reassignbuf(bp, bp->b_vp);
+		curproc->p_stats->p_ru.ru_oublock++;	/* XXX */
 	}
 
 	/* If this is a tape block, write the block now. */
@@ -426,142 +397,17 @@ bawrite(bp)
 	VOP_BWRITE(bp);
 }
 
-/*
- * Write out dirty buffers if they have been on the dirty
- * list for more than 30 seconds; scan for such buffers
- * once a second.
- */
 void
-vn_update()
-{
-	struct mount *mp, *nmp;
-	struct timespec ts;
-	struct vnode *vp;
+bdirty(bp)
 	struct buf *bp;
-	int async, s;
+{
+	struct proc *p = curproc;       /* XXX */
 
-	/*
-	 * In case any buffers got scheduled for write before the
-	 * process got started (should never happen)
-	 */
-	untimeout((void (*)__P((void *)))wakeup,
-		  &bdirties);
-	for (;;) {
-		s = splbio();
-		/*
-		 * Schedule a wakeup when the next buffer is to
-		 * be flushed to disk.  If no buffers are enqueued,
-		 * a wakeup will be scheduled at the time a new
-		 * buffer is enqueued
-		 */
-		if ((bp = bdirties.tqh_first) != NULL) {
-                        untimeout((void (*)__P((void *)))wakeup,
-				  &bdirties);		/* XXX */
-                        timeout((void (*)__P((void *)))wakeup,
-				&bdirties, (bp->b_synctime - time.tv_sec) * hz);
-		}
-		tsleep(&bdirties, PZERO - 1, "dirty", 0);
-		/*
-		 * Walk the dirty block list, starting an asyncroneous
-		 * write of any block that has timed out
-		 */
-		while ((bp = bdirties.tqh_first) != NULL &&
-		       bp->b_synctime <= time.tv_sec) {
-			/*
-			 * If the block is currently busy (perhaps being
-			 * written), move it to the end of the dirty list
-			 * and go to the next block
-			 */
-			if (ISSET(bp->b_flags, B_BUSY)) {
-				TAILQ_REMOVE(&bdirties, bp, b_synclist);
-				TAILQ_INSERT_TAIL(&bdirties, bp, b_synclist);
-				bp->b_synctime = time.tv_sec + 30;
-				continue;
-			}
-			/*
-			 * Remove the block from the per-vnode dirty
-			 * list and mark it as busy
-			 */
-			bremfree(bp);
-			SET(bp->b_flags, B_BUSY);
-			splx(s);
-			/*
-			 * Start an asyncroneous write of the buffer.
-			 * Note that this will also remove the buffer
-			 * from the dirty list
-			 */
-			bawrite(bp);
-			s = splbio();
-		}
-		splx(s);
-		/*
-		 * We also need to flush out modified vnodes
-		 */
-		for (mp = mountlist.cqh_last;
-		     mp != (void *)&mountlist;
-		     mp = nmp) {
-			/*
-			 * Get the next pointer in case we hang of vfs_busy()
-			 * while being unmounted
-			 */
-			nmp = mp->mnt_list.cqe_prev;
-			/*
-			 * The lock check below is to avoid races with mount
-			 * and unmount
-			 */
-			if ((mp->mnt_flag & (MNT_MLOCK | MNT_RDONLY | MNT_MPBUSY)) == 0 &&
-			    !vfs_busy(mp)) {
-				/*
-				 * Turn off the file system async flag until
-				 * we are done writing out vnodes
-				 */
-				async = mp->mnt_flag & MNT_ASYNC;
-				mp->mnt_flag &= ~MNT_ASYNC;
-				/*
-				 * Walk the vnode list for the file system,
-				 * writing each modified vnode out
-				 */
-loop:
-				for (vp = mp->mnt_vnodelist.lh_first;
-				     vp != NULL;
-				     vp = vp->v_mntvnodes.le_next) {
-					/*
-					 * If the vnode is no longer associated
-					 * with the file system in question, skip
-					 * it
-					 */
-					if (vp->v_mount != mp)
-						goto loop;
-					/*
-					 * If the vnode is currently locked,
-					 * ignore it
-					 */
-					if (VOP_ISLOCKED(vp))
-						continue;
-					/*
-					 * Lock the vnode, start a write and
-					 * release the vnode
-					 */
-					if (vget(vp, 1))
-						goto loop;
-					TIMEVAL_TO_TIMESPEC(&time, &ts);
-					VOP_UPDATE(vp, &ts, &ts, 0);
-					vput(vp);
-				}
-				/*
-				 * Restore the file system async flag if it
-				 * were previously set for this file system
-				 */
-				mp->mnt_flag |= async;
-				/*
-				 * Get the next pointer again as the next
-				 * file system might have been unmounted
-				 * while we were flushing vnodes
-				 */
-				nmp = mp->mnt_list.cqe_prev;
-				vfs_unbusy(mp);
-			}
-		}
+	if (ISSET(bp->b_flags, B_DELWRI) == 0) {
+		SET(bp->b_flags, B_DELWRI);
+		reassignbuf(bp, bp->b_vp);
+		if (p)
+			p->p_stats->p_ru.ru_oublock++;
 	}
 }
 
@@ -575,18 +421,6 @@ brelse(bp)
 {
 	struct bqueues *bufq;
 	int s;
-
-	/* Wake up any processes waiting for any buffer to become free. */
-	if (needbuffer) {
-		needbuffer = 0;
-		wakeup(&needbuffer);
-	}
-
-	/* Wake up any proceeses waiting for _this_ buffer to become free. */
-	if (ISSET(bp->b_flags, B_WANTED)) {
-		CLR(bp->b_flags, B_WANTED);
-		wakeup(bp);
-	}
 
 	/* Block disk interrupts. */
 	s = splbio();
@@ -622,11 +456,14 @@ brelse(bp)
 		 * If it's invalid or empty, dissociate it from its vnode
 		 * and put on the head of the appropriate queue.
 		 */
-		if (bp->b_vp)
-			brelvp(bp);
-		if (ISSET(bp->b_flags, B_DELWRI))
-			TAILQ_REMOVE(&bdirties, bp, b_synclist);
+		if (LIST_FIRST(&bp->b_dep) != NULL && bioops.io_deallocate) {
+			(*bioops.io_deallocate)(bp);
+		}
 		CLR(bp->b_flags, B_DELWRI);
+		if (bp->b_vp) {
+			reassignbuf(bp, bp->b_vp);
+			brelvp(bp);
+		}
 		if (bp->b_bufsize <= 0)
 			/* no data */
 			bufq = &bufqueues[BQ_EMPTY];
@@ -657,6 +494,18 @@ already_queued:
 
 	/* Allow disk interrupts. */
 	splx(s);
+
+	/* Wake up any processes waiting for any buffer to become free. */
+	if (needbuffer) {
+		needbuffer = 0;
+		wakeup(&needbuffer);
+	}
+
+	/* Wake up any proceeses waiting for _this_ buffer to become free. */
+	if (ISSET(bp->b_flags, B_WANTED)) {
+		CLR(bp->b_flags, B_WANTED);
+		wakeup(bp);
+	}
 }
 
 /*
@@ -806,7 +655,7 @@ allocbuf(bp, size)
 		/* find a buffer */
 		while ((nbp = getnewbuf(0, 0)) == NULL)
 			;
-		SET(nbp->b_flags, B_INVAL);
+ 		SET(nbp->b_flags, B_INVAL);
 		binshash(nbp, &invalhash);
 
 		/* and steal its pages, up to the amount we need */
@@ -875,16 +724,16 @@ getnewbuf(slpflag, slptimeo)
 
 start:
 	s = splbio();
-	if ((bp = bufqueues[BQ_AGE].tqh_first) != NULL ||
-	    (bp = bufqueues[BQ_LRU].tqh_first) != NULL) {
-		bremfree(bp);
-	} else {
+	if ((bp = bufqueues[BQ_AGE].tqh_first) == NULL &&
+	    (bp = bufqueues[BQ_LRU].tqh_first) == NULL) {
 		/* wait for a free buffer of any kind */
 		needbuffer = 1;
 		tsleep(&needbuffer, slpflag|(PRIBIO+1), "getnewbuf", slptimeo);
 		splx(s);
 		return (0);
-	}
+	} 
+
+	bremfree(bp);
 
 	if (ISSET(bp->b_flags, B_VFLUSH)) {
 		/*
@@ -916,7 +765,11 @@ start:
 	/* disassociate us from our vnode, if we had one... */
 	if (bp->b_vp)
 		brelvp(bp);
+
 	splx(s);
+
+	if (LIST_FIRST(&bp->b_dep) != NULL && bioops.io_deallocate)
+		(*bioops.io_deallocate)(bp);
 
 	/* clear out various other fields */
 	bp->b_flags = B_BUSY;
@@ -962,7 +815,9 @@ biowait(bp)
 	if (ISSET(bp->b_flags, B_EINTR)) {
 		CLR(bp->b_flags, B_EINTR);
 		return (EINTR);
-	} else if (ISSET(bp->b_flags, B_ERROR))
+	} 
+
+	if (ISSET(bp->b_flags, B_ERROR))
 		return (bp->b_error ? bp->b_error : EIO);
 	else
 		return (0);
@@ -992,13 +847,18 @@ biodone(bp)
 		panic("biodone already");
 	SET(bp->b_flags, B_DONE);		/* note that it's done */
 
-	if (!ISSET(bp->b_flags, B_READ))	/* wake up reader */
-		vwakeup(bp);
+	if (LIST_FIRST(&bp->b_dep) != NULL && bioops.io_complete)
+		(*bioops.io_complete)(bp);
 
 	if (ISSET(bp->b_flags, B_CALL)) {	/* if necessary, call out */
 		CLR(bp->b_flags, B_CALL);	/* but note callout done */
 		(*bp->b_iodone)(bp);
-	} else if (ISSET(bp->b_flags, B_ASYNC))	/* if async, release it */
+	} 
+
+	if (!ISSET(bp->b_flags, B_READ))	/* wake up reader */
+		vwakeup(bp);
+
+	if (ISSET(bp->b_flags, B_ASYNC))	/* if async, release it */
 		brelse(bp);
 	else {					/* or just wakeup the buffer */
 		CLR(bp->b_flags, B_WANTED);

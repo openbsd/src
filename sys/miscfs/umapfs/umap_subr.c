@@ -1,4 +1,4 @@
-/*	$OpenBSD: umap_subr.c,v 1.10 1997/10/06 20:20:41 deraadt Exp $	*/
+/*	$OpenBSD: umap_subr.c,v 1.11 1997/11/06 05:58:47 csapuntz Exp $	*/
 /*	$NetBSD: umap_subr.c,v 1.8 1996/03/05 02:35:39 thorpej Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/vnode.h>
@@ -75,14 +76,15 @@ static int umap_node_alloc __P((struct mount *, struct vnode *,
 /*
  * Initialise cache headers
  */
-void
-umapfs_init()
+int
+umapfs_init(struct vfsconf *vfsp)
 {
 
 #ifdef UMAPFS_DIAGNOSTIC
 	printf("umapfs_init\n");		/* printed during system boot */
 #endif
 	umap_node_hashtbl = hashinit(NUMAPNODECACHE, M_CACHE, &umap_node_hash);
+	return (0);
 }
 
 /*
@@ -141,6 +143,7 @@ umap_node_find(mp, targetvp)
 	struct mount *mp;
 	struct vnode *targetvp;
 {
+	struct proc *p = curproc;
 	struct umap_node_hashhead *hd;
 	struct umap_node *a;
 	struct vnode *vp;
@@ -166,7 +169,7 @@ loop:
 			 * stuff, but we don't want to lock
 			 * the lower node.
 			 */
-			if (vget(vp, 0)) {
+			if (vget(vp, 0, p)) {
 #ifdef UMAPFS_DIAGNOSTIC
 				printf ("umap_node_find: vget failed.\n");
 #endif
@@ -198,6 +201,7 @@ umap_node_alloc(mp, lowervp, vpp)
 	struct umap_node *xp;
 	struct vnode *vp, *nvp;
 	int error;
+	struct proc *p = curproc;
 	extern int (**dead_vnodeop_p) __P((void *));
 
 	if ((error = getnewvnode(VT_UMAP, mp, umap_vnodeop_p, &vp)) != 0)
@@ -259,14 +263,14 @@ loop:
 				vgone(cvp);
 				goto loop;
 			}
-			if (vget(cvp, 0))	/* can't lock; will die! */
+			if (vget(cvp, 0, p))	/* can't lock; will die! */
 				goto loop;
 			break;
 		}
 
 		vp->v_hashchain = cvpp;
 		vp->v_specnext = *cvpp;
-		vp->v_specflags = 0;
+		vp->v_specmountpoint = NULL;
 		*cvpp = vp;
 #ifdef DIAGNOSTIC
 		if (cvp == NULLVP)

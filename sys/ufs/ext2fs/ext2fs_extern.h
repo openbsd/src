@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_extern.h,v 1.3 1997/06/12 21:09:33 downsj Exp $	*/
+/*	$OpenBSD: ext2fs_extern.h,v 1.4 1997/11/06 05:59:14 csapuntz Exp $	*/
 /*	$NetBSD: ext2fs_extern.h,v 1.1 1997/06/11 09:33:55 bouyer Exp $	*/
 
 /*-
@@ -51,6 +51,7 @@ struct ucred;
 struct ufsmount;
 struct uio;
 struct vnode;
+struct vfsconf;
 struct mbuf;
 struct componentname;
 
@@ -75,7 +76,7 @@ int ext2fs_balloc __P((struct inode *, daddr_t, int, struct ucred *,
 int ext2fs_bmap __P((void *));
 
 /* ext2fs_inode.c */
-void ext2fs_init __P((void));
+int ext2fs_init __P((struct vfsconf *));
 int ext2fs_update __P((void *));
 int ext2fs_truncate __P((void *));
 int ext2fs_inactive __P((void *));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.12 1997/10/06 20:20:44 deraadt Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.13 1997/11/06 05:59:00 csapuntz Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -740,16 +740,6 @@ nfs_asyncio(bp, cred)
 	 * is currently doing a write for this file and will pick up the
 	 * delayed writes before going back to sleep.
 	 */
-	if (bp->b_flags & B_DELWRI)
-	    TAILQ_REMOVE(&bdirties, bp, b_synclist);
-	TAILQ_INSERT_TAIL(&bdirties, bp, b_synclist);
-	bp->b_synctime = time.tv_sec + 30;
-	if (bdirties.tqh_first == bp) {
-		untimeout((void (*)__P((void *)))wakeup,
-			  &bdirties);
-		timeout((void (*)__P((void *)))wakeup,
-			&bdirties, 30 * hz);
-	}
 	bp->b_flags |= B_DELWRI;
 	reassignbuf(bp, bp->b_vp);
 	biodone(bp);
@@ -910,16 +900,6 @@ nfs_doio(bp, cr, p)
 	     * B_DELWRI and B_NEEDCOMMIT flags.
 	     */
 	    if (error == EINTR || (!error && (bp->b_flags & B_NEEDCOMMIT))) {
-		if (bp->b_flags & B_DELWRI)
-		    TAILQ_REMOVE(&bdirties, bp, b_synclist);
-		TAILQ_INSERT_TAIL(&bdirties, bp, b_synclist);
-		bp->b_synctime = time.tv_sec + 30;
-		if (bdirties.tqh_first == bp) {
-		    untimeout((void (*)__P((void *)))wakeup,
-			      &bdirties);
-		    timeout((void (*)__P((void *)))wakeup,
-			    &bdirties, 30 * hz);
-		}
 		bp->b_flags |= B_DELWRI;
 
 		/*

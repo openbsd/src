@@ -1,4 +1,4 @@
-/*	$OpenBSD: denode.h,v 1.5 1997/10/04 19:08:10 deraadt Exp $	*/
+/*	$OpenBSD: denode.h,v 1.6 1997/11/06 05:58:55 csapuntz Exp $	*/
 /*	$NetBSD: denode.h,v 1.20 1996/02/09 19:13:39 christos Exp $	*/
 
 /*-
@@ -148,8 +148,7 @@ struct denode {
 	long de_refcnt;		/* reference count */
 	struct msdosfsmount *de_pmp;	/* addr of our mount struct */
 	struct lockf *de_lockf;	/* byte level lock list */
-	pid_t de_lockholder;	/* current lock holder */
-	pid_t de_lockwaiter;	/* lock wanter */
+	struct lock de_lock;    /* denode lock */
 	u_char de_Name[12];	/* name, from DOS directory entry */
 	u_char de_Attributes;	/* attributes, from directory entry */
 	u_char de_CTimeHundredth; /* creation time, 1/100th of a sec */
@@ -166,8 +165,6 @@ struct denode {
 /*
  * Values for the de_flag field of the denode.
  */
-#define	DE_LOCKED	0x0001	/* Denode lock. */
-#define	DE_WANTED	0x0002	/* Denode is wanted by a process. */
 #define	DE_UPDATE	0x0004	/* Modification time update request. */
 #define	DE_CREATE	0x0008	/* Creation time update */
 #define	DE_ACCESS	0x0010	/* Access time update */

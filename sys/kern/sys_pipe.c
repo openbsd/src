@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.7 1997/10/06 20:20:02 deraadt Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.8 1997/11/06 05:58:21 csapuntz Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -77,7 +77,7 @@
 #include <vm/vm.h>
 #include <vm/vm_prot.h>
 #include <vm/vm_param.h>
-#include <vm/lock.h>
+#include <sys/lock.h>
 #include <vm/vm_object.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_extern.h>

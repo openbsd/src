@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cluster.c,v 1.10 1997/10/06 20:20:08 deraadt Exp $	*/
+/*	$OpenBSD: vfs_cluster.c,v 1.11 1997/11/06 05:58:26 csapuntz Exp $	*/
 /*	$NetBSD: vfs_cluster.c,v 1.12 1996/04/22 01:39:05 christos Exp $	*/
 
 /*-
@@ -47,15 +47,6 @@
 #include <sys/resourcevar.h>
 
 #include <vm/vm.h>
-
-#ifdef DEBUG
-#include <sys/sysctl.h>
-int doreallocblks = 0;
-struct ctldebug debug13 = { "doreallocblks", &doreallocblks };
-#else
-/* XXX for cluster_write */
-#define doreallocblks 0
-#endif
 
 /*
  * Local declarations
@@ -518,8 +509,7 @@ cluster_write(bp, filesize)
 			 * Otherwise try reallocating to make it sequential.
 			 */
 			cursize = vp->v_lastw - vp->v_cstart + 1;
-			if (!doreallocblks ||
-			    (lbn + 1) * bp->b_bcount != filesize ||
+			if ((lbn + 1) * bp->b_bcount != filesize ||
 			    lbn != vp->v_lastw + 1 || vp->v_clen <= cursize) {
 				cluster_wbuild(vp, NULL, bp->b_bcount,
 				    vp->v_cstart, cursize, lbn);
@@ -708,13 +698,14 @@ redo:
 			panic("Clustered write to wrong blocks");
 		}
 
+		if (LIST_FIRST(&tbp->b_dep) != NULL && bioops.io_start)
+			(*bioops.io_start)(tbp);
+
 		pagemove(tbp->b_data, cp, size);
 		bp->b_bcount += size;
 		bp->b_bufsize += size;
 
 		tbp->b_bufsize -= size;
-		if (tbp->b_flags & B_DELWRI)
-			TAILQ_REMOVE(&bdirties, tbp, b_synclist);
 		tbp->b_flags &= ~(B_READ | B_DONE | B_ERROR | B_DELWRI);
 		/*
 		 * We might as well AGE the buffer here; it's either empty, or

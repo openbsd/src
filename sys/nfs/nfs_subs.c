@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.21 1997/10/06 20:20:49 deraadt Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.22 1997/11/06 05:59:03 csapuntz Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -1144,8 +1144,9 @@ nfs_init()
 }
 
 #ifdef NFSCLIENT
-void
-nfs_vfs_init()
+int
+nfs_vfs_init(vfsp)
+	struct vfsconf *vfsp;
 {
 	register int i;
 
@@ -1154,6 +1155,8 @@ nfs_vfs_init()
 		nfs_iodwant[i] = (struct proc *)0;
 	TAILQ_INIT(&nfs_bufq);
 	nfs_nhinit();			/* Init the nfsnode table */
+
+	return (0);
 }
 
 /*
@@ -1247,10 +1250,9 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 				 * Since the nfsnode does not have a lock, its
 				 * vnode lock has to be carried over.
 				 */
-#ifdef Lite2_integrated
+
 				nvp->v_vnlock = vp->v_vnlock;
 				vp->v_vnlock = NULL;
-#endif
 				nvp->v_data = vp->v_data;
 				vp->v_data = NULL;
 				vp->v_op = spec_vnodeop_p;
@@ -1694,9 +1696,7 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag)
 	int *rdonlyp;
 	int kerbflag;
 {
-#ifdef Lite2_integrated
 	struct proc *p = curproc;	/* XXX */
-#endif
 	register struct mount *mp;
 	register int i;
 	struct ucred *credanon;
@@ -1704,11 +1704,8 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag)
 	struct sockaddr_in *saddr;
 
 	*vpp = (struct vnode *)0;
-#ifdef Lite2_integrated
 	mp = vfs_getvfs(&fhp->fh_fsid);
-#else
-	mp = getvfs(&fhp->fh_fsid);
-#endif
+
 	if (!mp)
 		return (ESTALE);
 	error = VFS_FHTOVP(mp, &fhp->fh_fid, nam, vpp, &exflags, &credanon);
@@ -1746,11 +1743,8 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag)
 	else
 		*rdonlyp = 0;
 	if (!lockflag)
-#ifdef Lite2_integrated
 		VOP_UNLOCK(*vpp, 0, p);
-#else
-		VOP_UNLOCK(*vpp);
-#endif
+
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vfsops.c,v 1.6 1997/10/06 20:20:34 deraadt Exp $	*/
+/*	$OpenBSD: procfs_vfsops.c,v 1.7 1997/11/06 05:58:43 csapuntz Exp $	*/
 /*	$NetBSD: procfs_vfsops.c,v 1.25 1996/02/09 22:40:53 christos Exp $	*/
 
 /*
@@ -61,14 +61,7 @@ int	procfs_mount __P((struct mount *, char *, caddr_t,
 			  struct nameidata *, struct proc *));
 int	procfs_start __P((struct mount *, int, struct proc *));
 int	procfs_unmount __P((struct mount *, int, struct proc *));
-int	procfs_quotactl __P((struct mount *, int, uid_t, caddr_t,
-			     struct proc *));
 int	procfs_statfs __P((struct mount *, struct statfs *, struct proc *));
-int	procfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
-int	procfs_vget __P((struct mount *, ino_t, struct vnode **));
-int	procfs_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
-			   struct vnode **, int *, struct ucred **));
-int	procfs_vptofh __P((struct vnode *, struct fid *));
 /*
  * VFS Operations.
  *
@@ -95,7 +88,7 @@ procfs_mount(mp, path, data, ndp, p)
 
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_data = 0;
-	getnewfsid(mp, makefstype(MOUNT_PROCFS));
+	vfs_getnewfsid(mp);
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN, &size);
 	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
@@ -179,72 +172,25 @@ procfs_statfs(mp, sbp, p)
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
 		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
 	}
-	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
+	strncpy(sbp->f_fstypename, mp->mnt_vfc->vfc_name, MFSNAMELEN);
 	return (0);
 }
 
-/*ARGSUSED*/
-int
-procfs_quotactl(mp, cmds, uid, arg, p)
-	struct mount *mp;
-	int cmds;
-	uid_t uid;
-	caddr_t arg;
-	struct proc *p;
-{
 
-	return (EOPNOTSUPP);
-}
+#define procfs_sync ((int (*) __P((struct mount *, int, struct ucred *, \
+				  struct proc *)))nullop)
 
-/*ARGSUSED*/
-int
-procfs_sync(mp, waitfor, uc, p)
-	struct mount *mp;
-	int waitfor;
-	struct ucred *uc;
-	struct proc *p;
-{
-
-	return (0);
-}
-
-/*ARGSUSED*/
-int
-procfs_vget(mp, ino, vpp)
-	struct mount *mp;
-	ino_t ino;
-	struct vnode **vpp;
-{
-
-	return (EOPNOTSUPP);
-}
-
-/*ARGSUSED*/
-int
-procfs_fhtovp(mp, fhp, mb, vpp, what, anon)
-	struct mount *mp;
-	struct fid *fhp;
-	struct mbuf *mb;
-	struct vnode **vpp;
-	int *what;
-	struct ucred **anon;
-{
-
-	return (EINVAL);
-}
-
-/*ARGSUSED*/
-int
-procfs_vptofh(vp, fhp)
-	struct vnode *vp;
-	struct fid *fhp;
-{
-
-	return (EINVAL);
-}
+#define procfs_fhtovp ((int (*) __P((struct mount *, struct fid *, \
+	    struct mbuf *, struct vnode **, int *, struct ucred **)))eopnotsupp)
+#define procfs_quotactl ((int (*) __P((struct mount *, int, uid_t, caddr_t, \
+	    struct proc *)))eopnotsupp)
+#define procfs_sysctl ((int (*) __P((int *, u_int, void *, size_t *, void *, \
+	    size_t, struct proc *)))eopnotsupp)
+#define procfs_vget ((int (*) __P((struct mount *, ino_t, struct vnode **))) \
+	    eopnotsupp)
+#define procfs_vptofh ((int (*) __P((struct vnode *, struct fid *)))eopnotsupp)
 
 struct vfsops procfs_vfsops = {
-	MOUNT_PROCFS,
 	procfs_mount,
 	procfs_start,
 	procfs_unmount,
@@ -256,4 +202,5 @@ struct vfsops procfs_vfsops = {
 	procfs_fhtovp,
 	procfs_vptofh,
 	procfs_init,
+	procfs_sysctl
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.5 1997/07/03 17:49:45 deraadt Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.6 1997/11/06 05:59:16 csapuntz Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -484,6 +484,7 @@ ext2fs_link(v)
 	register struct vnode *dvp = ap->a_dvp;
 	register struct vnode *vp = ap->a_vp;
 	register struct componentname *cnp = ap->a_cnp;
+	struct proc *p = cnp->cn_proc;
 	register struct inode *ip;
 	struct timespec ts;
 	int error;
@@ -502,7 +503,7 @@ ext2fs_link(v)
 		error = EXDEV;
 		goto out2;
 	}
-	if (dvp != vp && (error = VOP_LOCK(vp))) {
+	if (dvp != vp && (error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p))) {
 		VOP_ABORTOP(dvp, cnp);
 		goto out2;
 	}
@@ -530,7 +531,7 @@ ext2fs_link(v)
 	FREE(cnp->cn_pnbuf, M_NAMEI);
 out1:
 	if (dvp != vp)
-		VOP_UNLOCK(vp);
+		VOP_UNLOCK(vp, 0, p);
 out2:
 	vput(dvp);
 	return (error);
@@ -579,6 +580,7 @@ ext2fs_rename(v)
 	register struct componentname *tcnp = ap->a_tcnp;
 	register struct componentname *fcnp = ap->a_fcnp;
 	register struct inode *ip, *xp, *dp;
+	struct proc *p = fcnp->cn_proc;
 	struct ext2fs_dirtemplate dirbuf;
 	struct timespec ts;
 	int doingdirectory = 0, oldparent = 0, newparent = 0;
@@ -640,13 +642,13 @@ abortit:
 		(void) relookup(fdvp, &fvp, fcnp);
 		return (VOP_REMOVE(fdvp, fvp, fcnp));
 	}
-	if ((error = VOP_LOCK(fvp)) != 0)
+	if ((error = vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY, p)) != 0)
 		goto abortit;
 	dp = VTOI(fdvp);
 	ip = VTOI(fvp);
 	if ((ip->i_e2fs_flags & (EXT2_IMMUTABLE | EXT2_APPEND)) ||
 		(dp->i_e2fs_flags & EXT2_APPEND)) {
-		VOP_UNLOCK(fvp);
+		VOP_UNLOCK(fvp, 0, p);
 		error = EPERM;
 		goto abortit;
 	}
@@ -655,7 +657,7 @@ abortit:
         if (!error && tvp)
                 error = VOP_ACCESS(tvp, VWRITE, tcnp->cn_cred, tcnp->cn_proc);
         if (error) {
-                VOP_UNLOCK(fvp);
+                VOP_UNLOCK(fvp, 0, p);
                 error = EACCES;
                 goto abortit;
         }
@@ -667,7 +669,7 @@ abortit:
 			(fcnp->cn_flags&ISDOTDOT) ||
 			(tcnp->cn_flags & ISDOTDOT) ||
 		    (ip->i_flag & IN_RENAME)) {
-			VOP_UNLOCK(fvp);
+			VOP_UNLOCK(fvp, 0, p);
 			error = EINVAL;
 			goto abortit;
 		}
@@ -696,7 +698,7 @@ abortit:
 	ip->i_flag |= IN_CHANGE;
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
 	if ((error = VOP_UPDATE(fvp, &ts, &ts, 1)) != 0) {
-		VOP_UNLOCK(fvp);
+		VOP_UNLOCK(fvp, 0, p);
 		goto bad;
 	}
 
@@ -711,7 +713,7 @@ abortit:
 	 * call to checkpath().
 	 */
 	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred, tcnp->cn_proc);
-	VOP_UNLOCK(fvp);
+	VOP_UNLOCK(fvp, 0, p);
 	if (oldparent != dp->i_number)
 		newparent = dp->i_number;
 	if (doingdirectory && newparent) {
@@ -930,7 +932,7 @@ bad:
 out:
 	if (doingdirectory)
 		ip->i_flag &= ~IN_RENAME;
-	if (VOP_LOCK(fvp) == 0) {
+	if (vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY, p) == 0) {
 		ip->i_e2fs_nlink--;
 		ip->i_flag |= IN_CHANGE;
 		vput(fvp);
@@ -1230,6 +1232,7 @@ ext2fs_vinit(mntp, specops, fifoops, vpp)
 {
 	struct inode *ip;
 	struct vnode *vp, *nvp;
+	struct proc *p = curproc;
 
 	vp = *vpp;
 	ip = VTOI(vp);
@@ -1243,7 +1246,7 @@ ext2fs_vinit(mntp, specops, fifoops, vpp)
 			 * Discard unneeded vnode, but save its inode.
 			 */
 			ufs_ihashrem(ip);
-			VOP_UNLOCK(vp);
+			VOP_UNLOCK(vp, 0, p);
 			nvp->v_data = vp->v_data;
 			vp->v_data = NULL;
 			vp->v_op = spec_vnodeop_p;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs.h,v 1.7 1997/10/06 20:20:33 deraadt Exp $	*/
+/*	$OpenBSD: procfs.h,v 1.8 1997/11/06 05:58:42 csapuntz Exp $	*/
 /*	$NetBSD: procfs.h,v 1.17 1996/02/12 15:01:41 christos Exp $	*/
 
 /*
@@ -128,7 +128,9 @@ int procfs_rw __P((void *));
 extern int (**procfs_vnodeop_p) __P((void *));
 extern struct vfsops procfs_vfsops;
 
-void	procfs_init __P((void));
+struct vfsconf;
+
+int	procfs_init __P((struct vfsconf *));
 int	procfs_root __P((struct mount *, struct vnode **));
 
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.67 1997/11/06 02:53:48 niklas Exp $
+#	$OpenBSD: files,v 1.68 1997/11/06 05:58:07 csapuntz Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -168,6 +168,7 @@ file kern/kern_exec.c
 file kern/kern_exit.c
 file kern/kern_fork.c
 file kern/kern_ktrace.c			ktrace
+file kern/kern_lock.c
 file kern/kern_lkm.c			lkm
 file kern/kern_ntptime.c
 file kern/kern_malloc.c
@@ -419,6 +420,7 @@ file ufs/ffs/ffs_alloc.c		ffs | mfs
 file ufs/ffs/ffs_balloc.c		ffs | mfs
 file ufs/ffs/ffs_inode.c		ffs | mfs
 file ufs/ffs/ffs_subr.c			ffs | mfs
+file ufs/ffs/ffs_softdep.c              ffs | mfs
 file ufs/ffs/ffs_tables.c		ffs | mfs
 file ufs/ffs/ffs_vfsops.c		ffs | mfs
 file ufs/ffs/ffs_vnops.c		ffs | mfs
@@ -441,7 +443,6 @@ file ufs/ext2fs/ext2fs_subr.c		ext2fs
 file ufs/ext2fs/ext2fs_vfsops.c		ext2fs
 file ufs/ext2fs/ext2fs_vnops.c		ext2fs
 file vm/device_pager.c			devpager
-file vm/kern_lock.c
 file vm/swap_pager.c			swappager
 file vm/vm_fault.c
 file vm/vm_glue.c

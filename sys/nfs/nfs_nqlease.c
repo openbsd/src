@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_nqlease.c,v 1.11 1997/10/06 20:20:46 deraadt Exp $	*/
+/*	$OpenBSD: nfs_nqlease.c,v 1.12 1997/11/06 05:59:01 csapuntz Exp $	*/
 /*	$NetBSD: nfs_nqlease.c,v 1.14 1996/02/18 14:06:50 fvdl Exp $	*/
 
 /*
@@ -1048,11 +1048,7 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, p)
 			vp = NFSTOV(np);
 			vpid = vp->v_id;
 			if (np->n_expiry < time.tv_sec) {
-#ifdef Lite2_integrated
 			   if (vget(vp, LK_EXCLUSIVE, p) == 0) {
-#else
-			   if (vget(vp, 1) == 0) {
-#endif
 			     nmp->nm_inprog = vp;
 			     if (vpid == vp->v_id) {
 				CIRCLEQ_REMOVE(&nmp->nm_timerhead, np, n_timer);
@@ -1079,11 +1075,7 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, p)
 			} else if ((np->n_expiry - NQ_RENEWAL) < time.tv_sec) {
 			    if ((np->n_flag & (NQNFSWRITE | NQNFSNONCACHE))
 				 == NQNFSWRITE && vp->v_dirtyblkhd.lh_first &&
-#ifdef Lite2_integrated
 				 vget(vp, LK_EXCLUSIVE, p) == 0) {
-#else
-				 vget(vp, 1) == 0) {
-#endif
 				 nmp->nm_inprog = vp;
 				 if (vpid == vp->v_id &&
 				     nqnfs_getlease(vp, ND_WRITE, cred, p)==0)
@@ -1188,10 +1180,8 @@ nqnfs_lease_updatetime(deltat)
 	struct mount *mp;
 	struct nfsmount *nmp;
 	int s;
-#ifdef Lite2_integrated
 	struct proc *p = curproc;	/* XXX */
 	struct mount *nxtmp;
-#endif
 
 	if (nqnfsstarttime != 0)
 		nqnfsstarttime += deltat;
@@ -1205,7 +1195,6 @@ nqnfs_lease_updatetime(deltat)
 	 * Search the mount list for all nqnfs mounts and do their timer
 	 * queues.
 	 */
-#ifdef Lite2_integrated
 	simple_lock(&mountlist_slock);
 	for (mp = mountlist.cqh_first; mp != (void *)&mountlist; mp = nxtmp) {
 		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock, p)) {
@@ -1228,22 +1217,6 @@ nqnfs_lease_updatetime(deltat)
 		vfs_unbusy(mp, p);
 	}
 	simple_unlock(&mountlist_slock);
-#else /* Lite2_integrated */
-	for (mp = mountlist.cqh_first; mp != (void *)&mountlist;
-	     mp = mp->mnt_list.cqe_next) {
-		if (!strncmp(&mp->mnt_stat.f_fstypename[0], MOUNT_NFS,
-		    MFSNAMELEN)) {
-			nmp = VFSTONFS(mp);
-			if (nmp->nm_flag & NFSMNT_NQNFS) {
-				for (np = nmp->nm_timerhead.cqh_first;
-				    np != (void *)&nmp->nm_timerhead;
-				    np = np->n_timer.cqe_next) {
-					np->n_expiry += deltat;
-				}
-			}
-		}
-	}
-#endif
 }
 
 /*

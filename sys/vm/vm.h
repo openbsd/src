@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.h,v 1.4 1997/10/06 20:21:15 deraadt Exp $	*/
+/*	$OpenBSD: vm.h,v 1.5 1997/11/06 05:59:31 csapuntz Exp $	*/
 /*	$NetBSD: vm.h,v 1.13 1994/06/29 06:47:52 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm.h	8.2 (Berkeley) 12/13/93
+ *	@(#)vm.h	8.5 (Berkeley) 5/11/95
  */
 
 #ifndef VM_H
@@ -59,10 +59,18 @@ typedef struct vm_page  *vm_page_t;
 struct pager_struct;
 typedef struct pager_struct *vm_pager_t;
 
+/*
+ *	MACH VM locking type mappings to kernel types
+ */
+typedef struct simplelock	simple_lock_data_t;
+typedef struct simplelock	*simple_lock_t;
+typedef struct lock		lock_data_t;
+typedef struct lock		*lock_t;
+
 #include <sys/vmmeter.h>
 #include <sys/queue.h>
 #include <vm/vm_param.h>
-#include <vm/lock.h>
+#include <sys/lock.h>
 #include <vm/vm_prot.h>
 #include <vm/vm_inherit.h>
 #include <vm/vm_map.h>
