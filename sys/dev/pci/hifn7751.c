@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.131 2002/07/29 05:45:28 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.132 2002/08/01 18:29:59 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -2317,9 +2317,9 @@ hifn_write_4(sc, reggrp, reg, val)
 		if (sc->sc_waw_lastgroup == reggrp &&
 		    sc->sc_waw_lastreg == reg - 4) {
 			bus_space_read_4(sc->sc_st1, sc->sc_sh1, HIFN_1_REVID);
-			sc->sc_waw_lastgroup = reggrp;
-			sc->sc_waw_lastreg = reg;
 		}
+		sc->sc_waw_lastgroup = reggrp;
+		sc->sc_waw_lastreg = reg;
 	}
 	if (reggrp == 0)
 		bus_space_write_4(sc->sc_st0, sc->sc_sh0, reg, val);
