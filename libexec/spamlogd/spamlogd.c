@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamlogd.c,v 1.10 2004/09/16 05:35:02 deraadt Exp $	*/
+/*	$OpenBSD: spamlogd.c,v 1.11 2004/09/18 07:33:03 beck Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -124,9 +124,10 @@ usage(void)
 	exit(1);
 }
 
-char *targv[17] = {
+char *targv[19] = {
 	"tcpdump", "-l",  "-n", "-e", "-i", "pflog0", "-q",
 	"-t", "port", "25", "and", "action", "pass",
+	"and", "tcp[13]&0x12=0x2",
 	NULL, NULL, NULL, NULL
 };
 
@@ -142,11 +143,11 @@ main(int argc, char **argv)
 	while ((ch = getopt(argc, argv, "i:I")) != -1) {
 		switch (ch) {
 		case 'i':
-			if (targv[15])	/* may only set once */
+			if (targv[17])	/* may only set once */
 				usage();
-			targv[13] = "and";
-			targv[14] = "on";
-			targv[15] = optarg;
+			targv[15] = "and";
+			targv[16] = "on";
+			targv[17] = optarg;
 			break;
 		case 'I':
 			inbound = 1;
@@ -208,14 +209,14 @@ main(int argc, char **argv)
 			buf = lbuf;
 		}
 
-		if (!inbound && strstr(buf, "pass out") != NULL) {
+		if (strstr(buf, "pass out") != NULL) {
 			/*
 			 * this is outbound traffic - we whitelist
 			 * the destination address, because we assume
 			 * that a reply may come to this outgoing mail
 			 * we are sending.
 			 */
-			if ((cp = (strchr(buf, '>'))) != NULL) {
+			if (!inbound && (cp = (strchr(buf, '>'))) != NULL) {
 				if (sscanf(cp, "> %s", buf2) == 1) {
 					cp = strrchr(buf2, '.');
 					if (cp != NULL) {
