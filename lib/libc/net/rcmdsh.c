@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcmdsh.c,v 1.8 2003/05/05 22:13:03 millert Exp $	*/ 
+/*	$OpenBSD: rcmdsh.c,v 1.9 2004/04/01 04:14:29 marc Exp $	*/ 
 
 /*
  * Copyright (c) 2001, MagniComp
@@ -34,7 +34,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: rcmdsh.c,v 1.8 2003/05/05 22:13:03 millert Exp $";
+static char *rcsid = "$OpenBSD: rcmdsh.c,v 1.9 2004/04/01 04:14:29 marc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include      <sys/types.h>
@@ -81,7 +81,8 @@ rcmdsh(ahost, rport, locuser, remuser, cmd, rshprog)
 
 	/* Validate remote hostname. */
 	if (strcmp(*ahost, "localhost") != 0) {
-		if ((hp = gethostbyname(*ahost)) == NULL) {
+		if (((hp = gethostbyname2(*ahost, AF_INET)) == NULL) &&
+		    ((hp = gethostbyname2(*ahost, AF_INET6)) == NULL)) {
 			herror(*ahost);
 			return(-1);
 		}
