@@ -13,7 +13,7 @@
 ./usr/lib/libedit.so.0.0
 ./usr/lib/libform.so.1.1
 ./usr/lib/libg++.so.28.0
-./usr/lib/libiberty.so.0.1
+./usr/lib/libiberty.so.2.0
 ./usr/lib/libkadm.so.5.0
 ./usr/lib/libkafs.so.5.1
 ./usr/lib/libkdb.so.5.0
