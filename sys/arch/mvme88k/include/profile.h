@@ -1,4 +1,4 @@
-/*	$OpenBSD: profile.h,v 1.9 2001/01/15 19:50:38 deraadt Exp $ */
+/*	$OpenBSD: profile.h,v 1.10 2001/03/07 23:38:22 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)profile.h	8.1 (Berkeley) 6/11/93
- *	$Id: profile.h,v 1.9 2001/01/15 19:50:38 deraadt Exp $
+ *	$Id: profile.h,v 1.10 2001/03/07 23:38:22 miod Exp $
  */
 #ifndef __MACHINE_PROFILE_H__
 #define __MACHINE_PROFILE_H__
@@ -65,12 +65,12 @@ mcount()								\
 	_mcount(callerret, selfret);					\
 }
 
-#ifdef KERNEL
+#ifdef _KERNEL
 /*
  * Note that we assume splhigh() and splx() cannot call mcount()
  * recursively.
  */
 #define	MCOUNT_ENTER	s = splhigh()
 #define	MCOUNT_EXIT	splx(s)
-#endif /* KERNEL */
+#endif /* _KERNEL */
 #endif __MACHINE_PROFILE_H__
