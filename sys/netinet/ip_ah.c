@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.56 2001/05/30 12:13:59 angelos Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.57 2001/05/30 12:29:03 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -897,7 +897,7 @@ ah_input_cb(void *op)
  */
 int
 ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
-	  int protoff, struct tdb *tdb2)
+	  int protoff)
 {
     struct auth_hash *ahx = (struct auth_hash *) tdb->tdb_authalgxform;
     struct cryptodesc *crda;
@@ -1181,13 +1181,6 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
     tc->tc_proto = tdb->tdb_sproto;
     bcopy(&tdb->tdb_dst, &tc->tc_dst, sizeof(union sockaddr_union));
 
-    if (tdb2)
-    {
-	tc->tc_spi2 = tdb2->tdb_spi;
-	tc->tc_proto2 = tdb2->tdb_sproto;
-	bcopy(&tdb2->tdb_dst, &tc->tc_dst2, sizeof(union sockaddr_union));
-    }
-
     if ((tdb->tdb_flags & TDBF_SKIPCRYPTO) == 0)
       return crypto_dispatch(crp);
     else
@@ -1200,10 +1193,10 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 int
 ah_output_cb(void *op)
 {
-    struct tdb *tdb, *tdb2 = NULL;
     int skip, protoff, error;
     struct tdb_crypto *tc;
     struct cryptop *crp;
+    struct tdb *tdb;
     struct mbuf *m;
     caddr_t ptr;
     int err, s;
@@ -1218,8 +1211,6 @@ ah_output_cb(void *op)
     s = spltdb();
 
     tdb = gettdb(tc->tc_spi, &tc->tc_dst, tc->tc_proto);
-    if (tc->tc_spi2)
-      tdb2 = gettdb(tc->tc_spi2, &tc->tc_dst2, tc->tc_proto2);
 
     FREE(tc, M_XDATA);
     if (tdb == NULL)
@@ -1263,7 +1254,7 @@ ah_output_cb(void *op)
     /* No longer needed */
     crypto_freereq(crp);
 
-    err =  ipsp_process_done(m, tdb, tdb2);
+    err =  ipsp_process_done(m, tdb);
     splx(s);
     return err;
 
