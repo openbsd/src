@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.mkshop.c,v 1.6 2003/05/19 06:30:56 pjanzen Exp $	*/
+/*	$OpenBSD: hack.mkshop.c,v 1.7 2003/05/19 06:36:30 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,7 +62,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: hack.mkshop.c,v 1.6 2003/05/19 06:30:56 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: hack.mkshop.c,v 1.7 2003/05/19 06:36:30 pjanzen Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -132,7 +132,8 @@ gottype:
 #ifdef WIZARD
 		   (wizard && getenv("SHOPTYPE") && sroom->doorct != 0) ||
 #endif /* WIZARD */
-		   (sroom->doorct <= 2 && sroom->doorct > 0)) break;
+		   sroom->doorct == 1)
+			break;
 	}
 
 	if(i < 0) {			/* shoptype not yet determined */
