@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.29 2002/05/22 08:21:02 deraadt Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.30 2002/05/22 20:09:36 deraadt Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: savecore.c,v 1.29 2002/05/22 08:21:02 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: savecore.c,v 1.30 2002/05/22 20:09:36 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -541,7 +541,7 @@ find_dev(dev, type)
 	(void)strlcpy(devname, _PATH_DEV, sizeof devname);
 	while ((dir = readdir(dfd))) {
 		(void)strlcpy(devname + sizeof(_PATH_DEV) - 1, dir->d_name,
-		    sizeof devname + sizeof(_PATH_DEV) - 1);
+		    sizeof devname - (sizeof(_PATH_DEV) - 1));
 		if (lstat(devname, &sb)) {
 			syslog(LOG_ERR, "%s: %s", devname, strerror(errno));
 			continue;
