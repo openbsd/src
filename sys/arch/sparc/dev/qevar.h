@@ -1,4 +1,4 @@
-/*	$OpenBSD: qevar.h,v 1.2 1998/11/02 05:50:59 jason Exp $	*/
+/*	$OpenBSD: qevar.h,v 1.3 1999/02/24 06:57:45 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright.
@@ -41,7 +41,6 @@ struct qesoftc {
 	int	sc_channel;
 	u_int	sc_rev;
 
-	int	sc_promisc;
 	int	sc_burst;
 
 	struct	qe_bufs *sc_bufs, *sc_bufs_dva;
