@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.60 2001/05/16 13:54:37 art Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.61 2001/06/05 21:47:07 provos Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -120,6 +120,9 @@ static __inline__ void vputonfreelist __P((struct vnode *));
 #ifdef DEBUG
 void printlockedvnodes __P((void));
 #endif
+
+#define VN_KNOTE(vp, b) \
+	KNOTE((struct klist *)&vp->v_selectinfo.vsi_selinfo.si_note, (b))
 
 struct pool vnode_pool;
 
@@ -1042,6 +1045,9 @@ vclean(vp, flags, p)
 	 * Done with purge, notify sleepers of the grim news.
 	 */
 	vp->v_op = dead_vnodeop_p;
+	simple_lock(&vp->v_selectinfo.vsi_lock);
+	VN_KNOTE(vp, NOTE_REVOKE);
+	simple_unlock(&vp->v_selectinfo.vsi_lock);
 	vp->v_tag = VT_NON;
 	vp->v_flag &= ~VXLOCK;
 #ifdef DIAGNOSTIC
