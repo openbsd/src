@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.175 2001/06/27 03:34:08 hin Exp $
+#	$OpenBSD: rc,v 1.176 2001/07/01 08:38:59 kjell Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -113,6 +113,10 @@ rm -f /fastboot		# XXX (root now writeable)
 echo 'setting tty flags'
 ttyflags -a
 
+if [ "X$pf" != X"NO" ]; then
+	echo "block in all\nblock out all" | pfctl -R - -e
+fi
+
 if [ -f /etc/sysctl.conf ]; then
 (
 	# delete comments and blank lines
@@ -127,6 +131,15 @@ fi
 # set hostname, turn on network
 echo 'starting network'
 . /etc/netstart
+
+if [ "X$pf" != X"NO" ]; then
+	if [ -f ${nat_rules} ]; then
+		pfctl -N ${nat_rules}
+	fi
+	if [ -f ${pf_rules} ]; then
+		pfctl -R ${pf_rules}
+	fi
+fi
 
 mount /usr >/dev/null 2>&1
 mount /var >/dev/null 2>&1
