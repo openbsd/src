@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.11 2001/03/28 21:11:50 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.12 2001/04/24 23:04:21 miod Exp $
 dnl
 dnl simulate an include path with a macro 'includeit'.
 define(`includeit',`sinclude('INCLUDE/`$1)sinclude('INCLUDE/../`$1)')dnl
@@ -151,20 +151,24 @@ define({:-OpenBSDxlink-:},
 {:-	xlink{:--:}OSrev  This set includes the X server link kit.showsize($1,$2)-:})dnl
 dnl
 dnl
-dnl floppy stuff
+dnl floppy and bootable cdrom stuff
 dnl
 define({:-OpenBSDfloppy-:},
 {:-		floppy{:--:}OSrev.fs	The standard MACHINE boot and installation
 				floppy; see below.-:})dnl
 define({:-OpenBSDfloppyB-:},
 {:-		floppyB{:--:}OSrev.fs	The MACHINE boot and installation floppy;
-				this removes all scsi drivers in floppy{:--:}OSrev.fs,
-				and replaces them with OTHERS; see below.-:})dnl
+				this one features all the drivers not available
+				in floppy{:--:}OSrev.fs, such as SCSI, RAID, gigabit
+				ethernet, and such; see below.-:})dnl
+define({:-OpenBSDfloppyC-:},
+{:-		floppyC{:--:}OSrev.fs	The MACHINE boot and installation floppy;
+				this one features most of the cardbus and
+				pcmcia drivers; see below.-:})dnl
 define({:-OpenBSDcdrom-:},
 {:-		cdrom{:--:}OSrev.fs	The MACHINE boot and installation
-				2.88mb floppy image that contains all drivers
-				from floppy{:--:}OSrev.fs and floppyB{:--:}OSrev.fs
-				above; see below.-:})dnl
+				2.88mb floppy image that contains almost all
+				OpenBSD drivers; see below.-:})dnl
 dnl
 define({:-OpenBSDfloppydesc-:},
 {:-In summary, there is one MACHINE floppy image called "floppy{:--:}OSrev.fs" (which
@@ -234,7 +238,10 @@ getting OpenBSD installed on your hard disk.  If any question has a
 default answer, it will be displayed in brackets ("[]") after the  
 question.  If you wish to stop the installation, you may hit Control-C
 at any time, but if you do, you'll have to begin the installation
-process again from scratch.-:})dnl
+process again from scratch.  Using Control-Z to suspend the process
+may be a better option, or at any prompt enter '!' to get a shell,
+from which 'exit' will return you back to that prompt (no refresh
+of the prompt though).-:})dnl
 dnl
 define({:-OpenBSDBootMsgs-:},
 {:-	Once the kernel has loaded, you will be presented with the
@@ -373,7 +380,7 @@ define({:-OpenBSDNFSInstall-:},
 dnl
 dnl OpenBSDDISKInstall({:-<additional disk> or-:},   <-- $1
 dnl		       {:-only -:},                  <-- $2
-dnl                    {:- or <other fs name>-:})dnl <-- $3
+dnl                    {:- or <other fs name>-:})    <-- $3
 dnl
 dnl Note the spacing used above.  It is crucial to keep words from running
 dnl together in the actual document.
@@ -421,7 +428,7 @@ define({:-OpenBSDCommonFS-:},
 		most users will want to do).  You may also enter `list'
 		to get a file list or `done' when you are done selecting
 		distribution sets.  You may also use wildcards in place of
-		a file name, eg `*.tgz' or even `base*|comp*'.  It is
+		a file name, e.g. `*.tgz' or even `base*|comp*'.  It is
 		also possible to enter an arbitrary filename and have it
 		treated as a file set.
 
@@ -447,7 +454,7 @@ define({:-OpenBSDCommonURL-:},
 		sets (which is what most users will want to do).  You
 		may also enter `list' to get a file list or `done' when
 		you are done selecting distribution sets.  You may also
-		use wildcards in place of a file name, eg `*.tgz' or
+		use wildcards in place of a file name, e.g. `*.tgz' or
 		even `base*|comp*'.  It is also possible to enter an
 		arbitrary filename and have it treated as a file set.
 
@@ -489,3 +496,23 @@ tailored for your site.  We recommend you run:
 which will tell you about a bunch of the files needing to be reviewed.
 If you are unfamiliar with UN*X-like system administration, it's
 recommended that you buy a book that discusses it.-:})dnl
+dnl
+dnl
+dnl Upgrade instructions
+dnl
+dnl OpenBSDUpgrade({:- or <list of additional boot methods>-:})dnl
+dnl Note the spacing used above.  It is crucial to keep words from running
+dnl together in the actual document.
+dnl Parameter is optional.
+define({:-OpenBSDUpgrade-:},
+{:-To upgrade OpenBSD OSREV from a previous version, start with the general
+instructions in the section "Installing OpenBSD".
+
+Boot from the miniroot$1.
+When prompted, select the (U)pgrade option rather than the (I)nstall
+option at the prompt in the install process.
+
+The upgrade script will ask you for the existing root partition, and
+will use the existing filesystems defined in /etc/fstab to install the
+new system in, and also preserve files in `/etc' which you are likely to
+have customized since a previous installation.-:})dnl
