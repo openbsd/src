@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.92 1998/09/19 23:02:49 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.93 1998/09/20 08:50:16 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -613,7 +613,7 @@ configure_ifs() {
 	# network configuration info.
 	if [ "$_interface_ip" = "dhcp" ]; then
 		ifconfig ${_interface_name} down ${_interface_extra}
-		dhclient ${_interface_name}
+		dhclient -1 ${_interface_name}
 
 		set -- `ifconfig $_interface_name | sed -n '
 			1s/.*<UP,.*$/UP/p
