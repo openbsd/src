@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcrypt.c,v 1.12 1998/08/10 18:33:07 provos Exp $	*/
+/*	$OpenBSD: bcrypt.c,v 1.13 2000/08/02 15:09:41 provos Exp $	*/
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -243,6 +243,9 @@ bcrypt(key, salt)
 
 	/* Discard num rounds + "$" identifier */
 	salt += 3;
+
+	if (strlen(salt) * 3 / 4 < BCRYPT_MAXSALT)
+		return error;
 
 	/* We dont want the base64 salt but the raw data */
 	decode_base64(csalt, BCRYPT_MAXSALT, (u_int8_t *) salt);
