@@ -18,7 +18,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: pap.c,v 1.4 1999/02/06 03:22:42 brian Exp $
+ * $Id: pap.c,v 1.5 1999/02/20 01:15:13 brian Exp $
  *
  *	TODO:
  */
@@ -155,8 +155,11 @@ pap_Input(struct physical *p, struct mbuf *bp)
   struct authinfo *authp = &p->dl->pap;
   u_char nlen, klen, *key;
 
-  if ((bp = auth_ReadHeader(authp, bp)) == NULL)
+  if ((bp = auth_ReadHeader(authp, bp)) == NULL &&
+      ntohs(authp->in.hdr.length) == 0) {
+    log_Printf(LogWARN, "Pap Input: Truncated header !\n");
     return;
+  }
 
   if (authp->in.hdr.code == 0 || authp->in.hdr.code > MAXPAPCODE) {
     log_Printf(LogPHASE, "Pap Input: %d: Bad PAP code !\n", authp->in.hdr.code);

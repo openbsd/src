@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: chap.c,v 1.8 1999/02/18 19:46:19 brian Exp $
+ * $Id: chap.c,v 1.9 1999/02/20 01:15:12 brian Exp $
  *
  *	TODO:
  */
@@ -543,8 +543,9 @@ chap_Input(struct physical *p, struct mbuf *bp)
   int lanman;
 #endif
 
-  if ((bp = auth_ReadHeader(&chap->auth, bp)) == NULL)
-    log_Printf(LogERROR, "Chap Input: Truncated header !\n");
+  if ((bp = auth_ReadHeader(&chap->auth, bp)) == NULL &&
+      ntohs(chap->auth.in.hdr.length) == 0)
+    log_Printf(LogWARN, "Chap Input: Truncated header !\n");
   else if (chap->auth.in.hdr.code == 0 || chap->auth.in.hdr.code > MAXCHAPCODE)
     log_Printf(LogPHASE, "Chap Input: %d: Bad CHAP code !\n",
                chap->auth.in.hdr.code);
