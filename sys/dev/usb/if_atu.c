@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.19 2004/11/19 22:38:12 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.20 2004/11/19 23:14:27 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -130,9 +130,6 @@ struct atu_type atu_devs[] = {
 	/* SMC2662 V.4 */
 	{ USB_VENDOR_ATMEL,	USB_PRODUCT_ATMEL_AT76C505A,
 	  RadioRFMD2958_SMC,	ATU_QUIRK_NO_REMAP | ATU_QUIRK_FW_DELAY },
-	/* XXX is this one right? */
-	{ USB_VENDOR_ATMEL,	USB_PRODUCT_ATMEL_DWL120,
-	  RadioIntersil,	ATU_NO_QUIRK },
 	{ USB_VENDOR_ACERP,	USB_PRODUCT_ACERP_AWL300,
 	  RadioIntersil,	ATU_NO_QUIRK },
 	{ 0, 0, 0, 0 }
