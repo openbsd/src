@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cpu.4,v 1.1 2004/03/17 01:28:01 tedu Exp $
+.\"	$OpenBSD: cpu.4,v 1.2 2004/03/17 01:37:50 deraadt Exp $
 .\"
 .\" Copyright (c) 2004 Ted Unangst
 .\" All rights reserved.
@@ -68,7 +68,7 @@ adjusts processor duty cycle in 12.5 percent increments.
 The presence of extended instruction sets can be determined by
 sysctl machdep.
 .Bl -tag -width "tenletters"
-.It osfxr
+.It osfxsr
 Supports the fxsave instruction.
 .It sse
 Supports the SSE instruction set.
@@ -76,6 +76,9 @@ Supports the SSE instruction set.
 Supports the SSE2 instruction set.
 .It xcrypt
 Support the VIA AES encryption instruction set.
+If this is supported, the
+.Li libcrypto
+EVP AES functions will automatically use this support.
 .El
 .Sh SEE ALSO
 .Xr npx 4 ,
