@@ -68,6 +68,11 @@
 #include <net/if_fddi.h>
 #endif
 
+#ifdef IPX
+#include <netipx/ipx.h>
+#include <netipx/ipx_if.h>
+#endif
+
 #ifdef NS
 #include <netns/ns.h>
 #include <netns/ns_if.h>
@@ -169,6 +174,18 @@ fddi_output(ifp, m0, dst, rt0)
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
 			mcopy = m_copy(m, 0, (int)M_COPYALL);
 		type = htons(ETHERTYPE_IP);
+		break;
+#endif
+#ifdef IPX
+	case AF_IPX:
+		type = htons(ETHERTYPE_IPX);
+ 		bcopy((caddr_t)&(((struct sockaddr_ipx*)dst)->sipx_addr.x_host),
+		    (caddr_t)edst, sizeof (edst));
+		if (!bcmp((caddr_t)edst, (caddr_t)&ipx_thishost, sizeof(edst)))
+			return (looutput(ifp, m, dst, rt));
+		/* If broadcasting on a simplex interface, loopback a copy */
+		if ((m->m_flags & (M_BCAST|IFF_SIMPLEX))==(M_BCAST|IFF_SIMPLEX))
+			mcopy = m_copy(m, 0, (int)M_COPYALL);
 		break;
 #endif
 #ifdef NS
@@ -404,7 +421,7 @@ fddi_input(ifp, fh, m)
 
 	l = mtod(m, struct llc *);
 	switch (l->llc_dsap) {
-#if defined(INET) || defined(NS) || defined(DECNET)
+#if defined(INET) || defined(IPX) || defined(NS) || defined(DECNET)
 	case LLC_SNAP_LSAP:
 	{
 		u_int16_t etype;
@@ -426,6 +443,12 @@ fddi_input(ifp, fh, m)
 			inq = &arpintrq;
 			break;
 #endif
+#ifdef IPX
+		case ETHERTYPE_IPX:
+			schednetisr(NETISR_IPX);
+			inq = &ipxintrq;
+			break;
+#endif
 #ifdef NS
 		case ETHERTYPE_NS:
 			schednetisr(NETISR_NS);
@@ -445,7 +468,7 @@ fddi_input(ifp, fh, m)
 		}
 		break;
 	}
-#endif /* INET || NS */
+#endif /* INET || IPX || NS || DECNET */
 #ifdef	ISO
 	case LLC_ISO_LSAP: 
 		switch (l->llc_control) {

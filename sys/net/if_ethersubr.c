@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.4 1996/04/19 18:12:28 mickey Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.5 1996/04/28 14:36:59 mickey Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.18 1996/02/13 22:00:14 christos Exp $	*/
 
 /*
@@ -366,12 +366,17 @@ ether_input(ifp, eh, m)
 		revarpinput(m);	/* XXX queue? */
 		return;
 #endif
+#ifdef IPX
+	case ETHERTYPE_IPX:
+		schednetisr(NETISR_IPX);
+		inq = &ipxintrq;
+		break;
+#endif
 #ifdef NS
 	case ETHERTYPE_NS:
 		schednetisr(NETISR_NS);
 		inq = &nsintrq;
 		break;
-
 #endif
 	default:
 #if defined (ISO) || defined (LLC)
