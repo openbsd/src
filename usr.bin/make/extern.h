@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.7 1998/12/05 00:06:28 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.8 1999/11/11 11:33:02 espie Exp $	*/
 /*	$NetBSD: nonints.h,v 1.12 1996/11/06 17:59:19 christos Exp $	*/
 
 /*-
@@ -82,6 +82,14 @@ void *emalloc __P((size_t));
 void *erealloc __P((void *, size_t));
 void enomem __P((void));
 int eunlink __P((const char *));
+
+/* make.c */
+int Make_TimeStamp __P((GNode *, GNode *));
+Boolean Make_OODate __P((GNode *));
+int Make_HandleUse __P((GNode *, GNode *));
+void Make_Update __P((GNode *));
+void Make_DoAllVar __P((GNode *));
+Boolean Make_Run __P((Lst));
 
 /* parse.c */
 void Parse_Error __P((int, char *, ...));

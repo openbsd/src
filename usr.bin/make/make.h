@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.h,v 1.13 1998/12/05 00:06:28 espie Exp $	*/
+/*	$OpenBSD: make.h,v 1.14 1999/11/11 11:33:02 espie Exp $	*/
 /*	$NetBSD: make.h,v 1.15 1997/03/10 21:20:00 christos Exp $	*/
 
 /*
@@ -374,17 +374,6 @@ extern int debug;
 
 #define	DEBUG(module)	(debug & CONCAT(DEBUG_,module))
 
-/*
- * Since there are so many, all functions that return non-integer values are
- * extracted by means of a sed script or two and stuck in the file "nonints.h"
- */
 #include "nonints.h"
-
-int Make_TimeStamp __P((GNode *, GNode *));
-Boolean Make_OODate __P((GNode *));
-int Make_HandleUse __P((GNode *, GNode *));
-void Make_Update __P((GNode *));
-void Make_DoAllVar __P((GNode *));
-Boolean Make_Run __P((Lst));
 
 #endif /* _MAKE_H_ */
