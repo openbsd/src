@@ -1,9 +1,10 @@
-/*	$OpenBSD: parse.y,v 1.430 2003/12/19 01:11:14 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.431 2003/12/19 16:12:43 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2001 Daniel Hartmeier.  All rights reserved.
  * Copyright (c) 2001 Theo de Raadt.  All rights reserved.
+ * Copyright (c) 2002,2003 Henning Brauer. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
