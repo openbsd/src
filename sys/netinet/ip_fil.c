@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_fil.c,v 1.10 1997/02/11 22:23:12 kstailey Exp $	*/
+/*	$OpenBSD: ip_fil.c,v 1.11 1997/03/15 17:18:07 kstailey Exp $	*/
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
  *
@@ -565,7 +565,7 @@ iplread(dev, uio)
 	if (!uio->uio_resid)
 		return 0;
 	while (!iplused) {
-		error = SLEEP(iplbuf, "ipl sleep");
+		error = SLEEP(iplbuf, "ipl_sleep");
 		if (error)
 			return error;
 	}
