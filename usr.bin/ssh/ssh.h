@@ -13,7 +13,7 @@
  *
  */
 
-/* RCSID("$Id: ssh.h,v 1.40 2000/04/26 20:56:30 markus Exp $"); */
+/* RCSID("$Id: ssh.h,v 1.41 2000/04/26 22:38:16 deraadt Exp $"); */
 
 #ifndef SSH_H
 #define SSH_H
@@ -80,7 +80,7 @@
 #define HOST_KEY_FILE		ETCDIR "/ssh_host_key"
 #define SERVER_CONFIG_FILE	ETCDIR "/sshd_config"
 #define HOST_CONFIG_FILE	ETCDIR "/ssh_config"
-#define DSA_KEY_FILE		ETCDIR "/ssh_dsa_key"
+#define DSA_KEY_FILE		ETCDIR "/ssh_host_dsa_key"
 
 #define SSH_PROGRAM		"/usr/bin/ssh"
 
