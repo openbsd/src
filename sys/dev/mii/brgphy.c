@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.12 2002/11/20 14:14:21 nate Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.13 2002/11/26 04:37:47 jason Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -73,8 +73,11 @@ void	brgphy_status(struct mii_softc *);
 
 int	brgphy_mii_phy_auto(struct mii_softc *, int);
 extern void	mii_phy_auto_timeout(void *);
+void	brgphy_reset(struct mii_softc *);
+void	brgphy_load_dspcode(struct mii_softc *);
 
-int brgphy_probe(parent, match, aux)
+int
+brgphy_probe(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
@@ -126,7 +129,7 @@ brgphy_attach(parent, self, aux)
 	sc->mii_flags |= MIIF_NOISOLATE;
 	sc->mii_anegticks = 10;
 
-	mii_phy_reset(sc);
+	brgphy_reset(sc);
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
@@ -273,7 +276,7 @@ brgphy_service(sc, mii, cmd)
 		if (reg & BRGPHY_AUXSTS_LINK)
 			break;
 
-		mii_phy_reset(sc);
+		brgphy_reset(sc);
 		if (brgphy_mii_phy_auto(sc, 0) == EJUSTRETURN)
 			return(0);
 		break;
@@ -353,7 +356,7 @@ brgphy_mii_phy_auto(mii, waitfor)
 	int bmsr, ktcr = 0, i;
 
 	if ((mii->mii_flags & MIIF_DOINGAUTO) == 0) {
-		mii_phy_reset(mii);
+		brgphy_reset(mii);
 		PHY_WRITE(mii, BRGPHY_MII_BMCR, 0);
 		DELAY(1000);
 		ktcr = PHY_READ(mii, BRGPHY_MII_1000CTL);
@@ -402,4 +405,69 @@ brgphy_mii_phy_auto(mii, waitfor)
 		timeout_add(&mii->mii_phy_timo, hz >> 1);
 	}
 	return (EJUSTRETURN);
+}
+
+void
+brgphy_reset(sc)
+	struct mii_softc *sc;
+{
+	brgphy_load_dspcode(sc);
+}
+
+struct bcm_dspcode {
+	int		reg;
+	u_int16_t	val;
+};
+
+static const struct bcm_dspcode bcm5401_dspcode[] = {
+	{ BRGPHY_MII_AUXCTL,            0x4c20 },
+	{ BRGPHY_MII_DSP_ADDR_REG,      0x0012 },
+	{ BRGPHY_MII_DSP_RW_PORT,       0x1804 },
+	{ BRGPHY_MII_DSP_ADDR_REG,      0x0013 },
+	{ BRGPHY_MII_DSP_RW_PORT,       0x1204 },
+	{ BRGPHY_MII_DSP_ADDR_REG,      0x8006 },
+	{ BRGPHY_MII_DSP_RW_PORT,       0x0132 },
+	{ BRGPHY_MII_DSP_ADDR_REG,      0x8006 },
+	{ BRGPHY_MII_DSP_RW_PORT,       0x0232 },
+	{ BRGPHY_MII_DSP_ADDR_REG,      0x201f },
+	{ BRGPHY_MII_DSP_RW_PORT,       0x0a20 },
+	{ 0,                            0 },
+};
+
+static const struct bcm_dspcode bcm5411_dspcode[] = {
+	{ 0x1c,                         0x8c23 },
+	{ 0x1c,                         0x8ca3 },
+	{ 0x1c,                         0x8c23 },
+	{ 0,                            0 },
+};
+
+void
+brgphy_load_dspcode(sc)
+	struct mii_softc *sc;
+{
+	const struct bcm_dspcode *dsp = NULL;
+	int id2, i;
+
+	id2 = PHY_READ(sc, MII_PHYIDR2);
+
+	mii_phy_reset(sc);
+	
+	switch (MII_MODEL(id2)) {
+	case MII_MODEL_BROADCOM_BCM5400:
+		dsp = bcm5401_dspcode;
+		break;
+	case MII_MODEL_BROADCOM_BCM5401:
+		if (MII_REV(id2) == 1 || MII_REV(id2) == 3)
+			dsp = bcm5401_dspcode;
+		break;
+	case MII_MODEL_BROADCOM_BCM5411:
+		dsp = bcm5411_dspcode;
+		break;
+	}
+
+	if (dsp == NULL)
+		return;
+
+	for (i = 0; dsp[i].reg != 0; i++)
+		PHY_WRITE(sc, dsp[i].reg, dsp[i].val);
 }
