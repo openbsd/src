@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs_line.c,v 1.6 2002/02/16 21:27:58 millert Exp $	*/
+/*	$OpenBSD: vs_line.c,v 1.7 2003/07/21 07:20:18 dhartmei Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -51,8 +51,8 @@ vs_line(sp, smp, yp, xp)
 	size_t chlen, cno_cnt, cols_per_screen, len, nlen;
 	size_t offset_in_char, offset_in_line, oldx, oldy;
 	size_t scno, skip_cols, skip_screens;
-	int ch, dne, is_cached, is_partial, is_tab;
-	int list_tab, list_dollar, empty_scrline;
+	int ch, dne, is_cached, is_partial, is_tab, no_draw;
+	int list_tab, list_dollar;
 	char *p, *cbp, *ecbp, cbuf[128];
 
 #if defined(DEBUG) && 0
@@ -63,10 +63,11 @@ vs_line(sp, smp, yp, xp)
 	 * If ex modifies the screen after ex output is already on the screen,
 	 * don't touch it -- we'll get scrolling wrong, at best.
 	 */
+	no_draw = 0;
 	if (!F_ISSET(sp, SC_TINPUT_INFO) && VIP(sp)->totalcount > 1)
-		return (0);
+		no_draw = 1;
 	if (F_ISSET(sp, SC_SCR_EXWROTE) && smp - HMAP != LASTLINE(sp))
-		return (0);
+		no_draw = 1;
 
 	/*
 	 * Assume that, if the cache entry for the line is filled in, the
@@ -75,7 +76,7 @@ vs_line(sp, smp, yp, xp)
 	 * cursor position, we can just return.
 	 */
 	is_cached = SMAP_CACHE(smp);
-	if (yp == NULL && is_cached)
+	if (yp == NULL && (is_cached || no_draw))
 		return (0);
 
 	/*
@@ -162,7 +163,7 @@ vs_line(sp, smp, yp, xp)
 		}
 
 		/* If the line is on the screen, quit. */
-		if (is_cached)
+		if (is_cached || no_draw)
 			goto ret1;
 
 		/* Set line cache information. */
@@ -326,16 +327,12 @@ display:
 	    offset_in_line + cols_per_screen < sp->cno) {
 		cno_cnt = 0;
 		/* If the line is on the screen, quit. */
-		if (is_cached)
+		if (is_cached || no_draw)
 			goto ret1;
 	} else
 		cno_cnt = (sp->cno - offset_in_line) + 1;
 
 	ecbp = (cbp = cbuf) + sizeof(cbuf) - 1;
-
-	/* Remember if we will have been displaying anything on this screen
-	   line */
-	empty_scrline = offset_in_line == len;
 
 	/* This is the loop that actually displays characters. */
 	for (is_partial = 0, scno = 0;
@@ -386,9 +383,12 @@ display:
 		if (cno_cnt &&
 		    --cno_cnt == 0 && (F_ISSET(sp, SC_TINPUT) || !is_partial)) {
 			*yp = smp - HMAP;
-			if (F_ISSET(sp, SC_TINPUT))
-				*xp = scno - chlen;
-			else
+			if (F_ISSET(sp, SC_TINPUT)) {
+				if (is_partial)
+					*xp = scno - smp->c_ecsize;
+				else
+					*xp = scno - chlen;
+			} else
 				*xp = scno - 1;
 			if (O_ISSET(sp, O_NUMBER) &&
 			    !F_ISSET(sp, SC_TINPUT_INFO) && skip_cols == 0)
@@ -429,21 +429,10 @@ display:
 		}
 	}
 
-	/* If we didn't paint the whole line, update the cache. */
 	if (scno < cols_per_screen) {
-		/*
-		 * We can end up with an empty line at least when the list
-		 * option is used and the file line is exactly the size of a
-		 * screen line. It will result in this line containing
-		 * a single dollar ($).
-		 */
-		if (empty_scrline) {
-			smp->c_sboff = smp->c_eboff = 0;
-			smp->c_scoff = smp->c_eclen = 0;
-		} else {
-			smp->c_ecsize = smp->c_eclen = KEY_LEN(sp, ch);
-			smp->c_eboff = len - 1;
-		}
+		/* If we didn't paint the whole line, update the cache. */
+		smp->c_ecsize = smp->c_eclen = KEY_LEN(sp, ch);
+		smp->c_eboff = len - 1;
 
 		/*
 		 * If not the info/mode line, and O_LIST set, and at the
