@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-main.c,v 1.4 1999/05/31 20:09:59 angelos Exp $ */
+/* $OpenBSD: keynote-main.c,v 1.5 1999/05/31 20:15:25 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -44,6 +44,8 @@ mainusage()
     fprintf(stderr, "\tsigver ...\n");
     fprintf(stderr, "\tverify ...\n");
     fprintf(stderr, "\tkeygen ...\n");
+    fprintf(stderr, "Issue one of the commands by itself to get more help, "
+		    "e.g., keynote sign\n");
 }
 
 #ifdef WIN32
