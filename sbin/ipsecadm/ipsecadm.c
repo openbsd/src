@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.61 2001/07/06 05:01:07 angelos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.62 2001/08/05 11:10:34 deraadt Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -41,6 +41,8 @@
 #include <sys/ioctl.h>
 #include <sys/mbuf.h>
 #include <sys/sysctl.h>
+#include <sys/uio.h>
+#include <sys/stat.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -49,9 +51,12 @@
 #include <netns/ns.h>
 #include <netiso/iso.h>
 #include <netccitt/x25.h>
+#include <net/pfkeyv2.h>
+#include <netinet/ip_ipsp.h>
+#include <netinet/in.h>
 #include <arpa/inet.h>
-#include <netdb.h>
 
+#include <netdb.h>
 #include <errno.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -59,11 +64,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <paths.h>
-#include <sys/uio.h>
-#include <sys/stat.h>
-#include <net/pfkeyv2.h>
-#include <netinet/ip_ipsp.h>
-#include <netinet/in.h>
 
 #define KEYSIZE_LIMIT	1024
 
