@@ -1,8 +1,8 @@
-/*      $OpenBSD: pciide.c,v 1.59 2001/07/31 06:14:05 csapuntz Exp $     */
-/*	$NetBSD: pciide.c,v 1.110 2001/03/20 17:56:46 bouyer Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.60 2001/08/03 22:03:44 chris Exp $	*/
+/*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
- * Copyright (c) 1999 Manuel Bouyer.
+ * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -113,6 +113,7 @@ int wdcdebug_pciide_mask = 0;
 #include <dev/pci/pciide_pdc202xx_reg.h>
 #include <dev/pci/pciide_opti_reg.h>
 #include <dev/pci/pciide_hpt_reg.h>
+#include <dev/pci/pciide_acard_reg.h>
 
 #include <dev/pci/cy82c693var.h>
 
@@ -234,6 +235,10 @@ void opti_setup_channel __P((struct channel_softc*));
 void hpt_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
 void hpt_setup_channel __P((struct channel_softc*));
 int  hpt_pci_intr __P((void *));
+
+void acard_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
+void acard_setup_channel __P((struct channel_softc*));
+int  acard_pci_intr __P((void *));
  
 void pciide_channel_dma_setup __P((struct pciide_channel *));
 int  pciide_dma_table_setup __P((struct pciide_softc*, int, int));
@@ -411,6 +416,21 @@ const struct pciide_product_desc pciide_promise_products[] =  {
 	}
 };
 
+const struct pciide_product_desc pciide_acard_products[] =  {
+	{ PCI_PRODUCT_ACARD_ATP850U,	/* Acard ATP850U Ultra33 Controller */
+	 IDE_PCI_CLASS_OVERRIDE,
+	 acard_chip_map,
+	 },
+	{ PCI_PRODUCT_ACARD_ATP860,	/* Acard ATP860 Ultra66 Controller */
+	 IDE_PCI_CLASS_OVERRIDE,
+	 acard_chip_map,
+	},
+	{ PCI_PRODUCT_ACARD_ATP860A,	/* Acard ATP860-A Ultra66 Controller */
+	 IDE_PCI_CLASS_OVERRIDE,
+	 acard_chip_map,
+	}
+};
+
 struct pciide_vendor_desc {
 	u_int32_t ide_vendor;
 	const struct pciide_product_desc *ide_products;
@@ -438,6 +458,8 @@ const struct pciide_vendor_desc pciide_vendors[] = {
 	  sizeof(pciide_acer_products)/sizeof(pciide_acer_products[0]) },
 	{ PCI_VENDOR_TRIONES, pciide_triones_products,
 	  sizeof(pciide_triones_products)/sizeof(pciide_triones_products[0]) },
+	{ PCI_VENDOR_ACARD, pciide_acard_products,
+	  sizeof(pciide_acard_products)/sizeof(pciide_acard_products[0]) },
 	{ PCI_VENDOR_PROMISE, pciide_promise_products,
 	  sizeof(pciide_promise_products)/sizeof(pciide_promise_products[0]) }
 };
@@ -2826,18 +2848,34 @@ sis_chip_map(sc, pa)
 	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
 	pcireg_t rev = PCI_REVISION(pa->pa_class);
 	bus_size_t cmdsize, ctlsize;
+	pcitag_t pchb_tag;
+	pcireg_t pchb_id, pchb_class;
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
 
 	printf(": DMA");
 	pciide_mapreg_dma(sc, pa);
+
+	/* get a PCI tag for the host bridge (function 0 of the same device) */
+	pchb_tag = pci_make_tag(pa->pa_pc, pa->pa_bus, pa->pa_device, 0);
+	/* and read ID and rev of the ISA bridge */
+	pchb_id = pci_conf_read(sc->sc_pc, pchb_tag, PCI_ID_REG);
+	pchb_class = pci_conf_read(sc->sc_pc, pchb_tag, PCI_CLASS_REG);
+
 	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
 	    WDC_CAPABILITY_MODE;
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_IRQACK;
 		sc->sc_wdcdev.irqack = pciide_irqack;
-		if (rev >= 0xd0)
+		/*
+		 * controllers with rev > 0xd0 support UDMA 2 at least
+		 * controllers associated to a rev 0x2 530 Host to PCI Bridge
+		 * have problems with UDMA
+		 */
+		if (rev >= 0xd0 &&
+		    (PCI_PRODUCT(pchb_id) != PCI_PRODUCT_SIS_SiS530 ||
+		    PCI_REVISION(pchb_class) >= 0x03))
 			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
 	}
 
@@ -2982,16 +3020,21 @@ acer_chip_map(sc, pa)
 
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
-		if (rev >= 0x20)
+		if (rev >= 0x20) {
 			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
+			if (rev >= 0xC4)
+				sc->sc_wdcdev.UDMA_cap = 5;
+			else if (rev >= 0xC2)
+				sc->sc_wdcdev.UDMA_cap = 4;
+			else
+				sc->sc_wdcdev.UDMA_cap = 2;
+		}
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_IRQACK;
 		sc->sc_wdcdev.irqack = pciide_irqack;
 	}
 
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
-	if (sc->sc_wdcdev.cap & WDC_CAPABILITY_UDMA)
-		sc->sc_wdcdev.UDMA_cap = 2;
 	sc->sc_wdcdev.set_modes = acer_setup_channel;
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
@@ -3018,6 +3061,24 @@ acer_chip_map(sc, pa)
 
 	pciide_print_channels(sc->sc_wdcdev.nchannels, interface);
 
+	/* From linux: enable "Cable Detection" */
+	if (rev >= 0xC2) {
+		pciide_pci_write(sc->sc_pc, sc->sc_tag, ACER_0x4B,
+		    pciide_pci_read(sc->sc_pc, sc->sc_tag, ACER_0x4B)
+		    | ACER_0x4B_CDETECT);
+		/* set south-bridge's enable bit, m1533, 0x79 */
+		if (rev == 0xC2)
+			/* 1543C-B0 (m1533, 0x79, bit 2) */
+			pciide_pci_write(sc->sc_pc, sc->sc_tag, ACER_0x79,
+			    pciide_pci_read(sc->sc_pc, sc->sc_tag, ACER_0x79)
+			    | ACER_0x79_REVC2_EN);
+		else
+			/* 1553/1535 (m1533, 0x79, bit 1) */
+			pciide_pci_write(sc->sc_pc, sc->sc_tag, ACER_0x79,
+			    pciide_pci_read(sc->sc_pc, sc->sc_tag, ACER_0x79)
+			    | ACER_0x79_EN);
+	}
+
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
 		cp = &sc->pciide_channels[channel];
 		if (pciide_chansetup(sc, channel, interface) == 0)
@@ -3031,7 +3092,7 @@ acer_chip_map(sc, pa)
 		if (cp->hw_ok == 0)
 			continue;
 		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
-		    acer_pci_intr);
+		    (rev >= 0xC2) ? pciide_pci_intr : acer_pci_intr);
 		if (cp->hw_ok == 0) {
 			pciide_unmap_compat_intr(pa, cp, channel, interface);
 			continue;
@@ -3067,6 +3128,17 @@ acer_setup_channel(chp)
 	/* setup DMA if needed */
 	pciide_channel_dma_setup(cp);
 
+	if ((chp->ch_drive[0].drive_flags | chp->ch_drive[1].drive_flags) &
+	    DRIVE_UDMA)	{	/* check 80 pins cable */
+		if (pciide_pci_read(sc->sc_pc, sc->sc_tag, ACER_0x4A) &
+		    ACER_0x4A_80PIN(chp->channel)) {
+			if (chp->ch_drive[0].UDMA_mode > 2)
+				chp->ch_drive[0].UDMA_mode = 2;
+			if (chp->ch_drive[1].UDMA_mode > 2)
+				chp->ch_drive[1].UDMA_mode = 2;
+		}
+	}
+
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
@@ -3097,6 +3169,13 @@ acer_setup_channel(chp)
 			acer_fifo_udma |= 
 			    ACER_UDMA_TIM(chp->channel, drive,
 				acer_udma[drvp->UDMA_mode]);
+			/* XXX disable if one drive < UDMA3 ? */
+			if (drvp->UDMA_mode >= 3) {
+				pciide_pci_write(sc->sc_pc, sc->sc_tag,
+				    ACER_0x4B,
+				    pciide_pci_read(sc->sc_pc, sc->sc_tag,
+				        ACER_0x4B) | ACER_0x4B_UDMA66);
+			}
 		} else {
 			/*
 			 * use Multiword DMA
@@ -3180,7 +3259,7 @@ hpt_chip_map(sc, pa)
 	} else {
 		interface = PCIIDE_INTERFACE_BUS_MASTER_DMA |
 		    PCIIDE_INTERFACE_PCI(0);
-		if (revision == HPT370_REV)
+		if (revision == HPT370_REV || revision == HPT370A_REV)
 			interface |= PCIIDE_INTERFACE_PCI(1);
 	}
 
@@ -3247,7 +3326,7 @@ hpt_chip_map(sc, pa)
 		wdcattach(&cp->wdc_channel);
 		hpt_setup_channel(&cp->wdc_channel);
 	}
-	if (revision == HPT370_REV) {
+	if (revision == HPT370_REV || revision == HPT370A_REV) {
 		/*
 		 * HPT370_REV has a bit to disable interrupts, make sure
 		 * to clear it
@@ -3763,10 +3842,24 @@ opti_chip_map(sc, pa)
 	if (pciide_chipen(sc, pa) == 0)
 		return;
 	printf(": DMA");
-	pciide_mapreg_dma(sc, pa);
+	/*
+	 * XXXSCW:
+	 * There seem to be a couple of buggy revisions/implementations
+	 * of the OPTi pciide chipset. This kludge seems to fix one of
+	 * the reported problems (NetBSD PR/11644) but still fails for the
+	 * other (NetBSD PR/13151), although the latter may be due to other
+	 * issues too...
+	 */
+	if (PCI_REVISION(pa->pa_class) <= 0x12) {
+		printf(" (disabled)");
+		sc->sc_dma_ok = 0;
+		sc->sc_wdcdev.cap = 0;
+	} else {
+		sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA32;
+		pciide_mapreg_dma(sc, pa);
+	}
 
-	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
-	    WDC_CAPABILITY_MODE;
+	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_MODE;
 	sc->sc_wdcdev.PIO_cap = 4;
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_IRQACK;
@@ -3907,4 +4000,213 @@ opti_setup_channel(chp)
 	opti_write_config(chp, OPTI_REG_CONTROL, OPTI_CONTROL_ENABLE);
 
 	pciide_print_modes(cp);
+}
+
+
+#define	ACARD_IS_850(sc)							\
+	((sc)->sc_pp->ide_product == PCI_PRODUCT_ACARD_ATP850U)
+
+void
+acard_chip_map(sc, pa)
+	struct pciide_softc *sc;
+	struct pci_attach_args *pa;
+{
+	struct pciide_channel *cp;
+	int i;
+	pcireg_t interface;
+	bus_size_t cmdsize, ctlsize;
+
+	if (pciide_chipen(sc, pa) == 0)
+		return;
+
+	/* 
+	 * when the chip is in native mode it identifies itself as a
+	 * 'misc mass storage'. Fake interface in this case.
+	 */
+	if (PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_IDE) {
+		interface = PCI_INTERFACE(pa->pa_class);
+	} else {
+		interface = PCIIDE_INTERFACE_BUS_MASTER_DMA |
+		    PCIIDE_INTERFACE_PCI(0) | PCIIDE_INTERFACE_PCI(1);
+	}
+
+	printf(": DMA");
+	pciide_mapreg_dma(sc, pa);
+	printf("\n");
+	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
+	    WDC_CAPABILITY_MODE;
+
+	if (sc->sc_dma_ok) {
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_IRQACK;
+		sc->sc_wdcdev.irqack = pciide_irqack;
+	}
+	sc->sc_wdcdev.PIO_cap = 4;
+	sc->sc_wdcdev.DMA_cap = 2;
+	sc->sc_wdcdev.UDMA_cap = ACARD_IS_850(sc) ? 2 : 4;
+
+	sc->sc_wdcdev.set_modes = acard_setup_channel;
+	sc->sc_wdcdev.channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.nchannels = 2;
+
+	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
+		cp = &sc->pciide_channels[i];
+		if (pciide_chansetup(sc, i, interface) == 0)
+			continue;
+		if (interface & PCIIDE_INTERFACE_PCI(i)) {
+			cp->hw_ok = pciide_mapregs_native(pa, cp, &cmdsize,
+			    &ctlsize, pciide_pci_intr);
+		} else {
+			cp->hw_ok = pciide_mapregs_compat(pa, cp, i,
+			    &cmdsize, &ctlsize);
+		}
+		if (cp->hw_ok == 0)
+			return;
+		cp->wdc_channel.data32iot = cp->wdc_channel.cmd_iot;
+		cp->wdc_channel.data32ioh = cp->wdc_channel.cmd_ioh;
+		wdcattach(&cp->wdc_channel);
+		acard_setup_channel(&cp->wdc_channel);
+	}
+	if (!ACARD_IS_850(sc)) {
+		u_int32_t reg;
+		reg = pci_conf_read(sc->sc_pc, sc->sc_tag, ATP8x0_CTRL);
+		reg &= ~ATP860_CTRL_INT;
+		pci_conf_write(sc->sc_pc, sc->sc_tag, ATP8x0_CTRL, reg);
+	}
+}
+
+void
+acard_setup_channel(chp)
+	struct channel_softc *chp;
+{
+	struct ata_drive_datas *drvp;
+	struct pciide_channel *cp = (struct pciide_channel*)chp;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+	int channel = chp->channel;
+	int drive;
+	u_int32_t idetime, udma_mode;
+	u_int32_t idedma_ctl;
+
+	/* setup DMA if needed */
+	pciide_channel_dma_setup(cp);
+
+	if (ACARD_IS_850(sc)) {
+		idetime = 0;
+		udma_mode = pci_conf_read(sc->sc_pc, sc->sc_tag, ATP850_UDMA);
+		udma_mode &= ~ATP850_UDMA_MASK(channel);
+	} else {
+		idetime = pci_conf_read(sc->sc_pc, sc->sc_tag, ATP860_IDETIME);
+		idetime &= ~ATP860_SETTIME_MASK(channel);
+		udma_mode = pci_conf_read(sc->sc_pc, sc->sc_tag, ATP860_UDMA);
+		udma_mode &= ~ATP860_UDMA_MASK(channel);
+	}
+
+	idedma_ctl = 0;
+
+	/* Per drive settings */
+	for (drive = 0; drive < 2; drive++) {
+		drvp = &chp->ch_drive[drive];
+		/* If no drive, skip */
+		if ((drvp->drive_flags & DRIVE) == 0)
+			continue;
+		/* add timing values, setup DMA if needed */
+		if ((chp->wdc->cap & WDC_CAPABILITY_UDMA) &&
+		    (drvp->drive_flags & DRIVE_UDMA)) {
+			/* use Ultra/DMA */
+			if (ACARD_IS_850(sc)) {
+				idetime |= ATP850_SETTIME(drive,
+				    acard_act_udma[drvp->UDMA_mode],
+				    acard_rec_udma[drvp->UDMA_mode]);
+				udma_mode |= ATP850_UDMA_MODE(channel, drive,
+				    acard_udma_conf[drvp->UDMA_mode]);
+			} else {
+				idetime |= ATP860_SETTIME(channel, drive,
+				    acard_act_udma[drvp->UDMA_mode],
+				    acard_rec_udma[drvp->UDMA_mode]);
+				udma_mode |= ATP860_UDMA_MODE(channel, drive,
+				    acard_udma_conf[drvp->UDMA_mode]);
+			}
+			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
+		} else if ((chp->wdc->cap & WDC_CAPABILITY_DMA) &&
+		    (drvp->drive_flags & DRIVE_DMA)) {
+			/* use Multiword DMA */
+			drvp->drive_flags &= ~DRIVE_UDMA;
+			if (ACARD_IS_850(sc)) {
+				idetime |= ATP850_SETTIME(drive,
+				    acard_act_dma[drvp->DMA_mode],
+				    acard_rec_dma[drvp->DMA_mode]);
+			} else {
+				idetime |= ATP860_SETTIME(channel, drive,
+				    acard_act_dma[drvp->DMA_mode],
+				    acard_rec_dma[drvp->DMA_mode]);
+			}
+			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
+		} else {
+			/* PIO only */
+			drvp->drive_flags &= ~(DRIVE_UDMA | DRIVE_DMA);
+			if (ACARD_IS_850(sc)) {
+				idetime |= ATP850_SETTIME(drive,
+				    acard_act_pio[drvp->PIO_mode],
+				    acard_rec_pio[drvp->PIO_mode]);
+			} else {
+				idetime |= ATP860_SETTIME(channel, drive,
+				    acard_act_pio[drvp->PIO_mode],
+				    acard_rec_pio[drvp->PIO_mode]);
+			}
+		pci_conf_write(sc->sc_pc, sc->sc_tag, ATP8x0_CTRL,
+		    pci_conf_read(sc->sc_pc, sc->sc_tag, ATP8x0_CTRL)
+		    | ATP8x0_CTRL_EN(channel));
+		}
+	}
+
+	if (idedma_ctl != 0) {
+		/* Add software bits in status register */
+		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
+		    IDEDMA_CTL + IDEDMA_SCH_OFFSET * channel, idedma_ctl);
+	}
+	pciide_print_modes(cp);
+
+	if (ACARD_IS_850(sc)) {
+		pci_conf_write(sc->sc_pc, sc->sc_tag,
+		    ATP850_IDETIME(channel), idetime);
+		pci_conf_write(sc->sc_pc, sc->sc_tag, ATP850_UDMA, udma_mode);
+	} else {
+		pci_conf_write(sc->sc_pc, sc->sc_tag, ATP860_IDETIME, idetime);
+		pci_conf_write(sc->sc_pc, sc->sc_tag, ATP860_UDMA, udma_mode);
+	}
+}
+
+int
+acard_pci_intr(arg)
+	void *arg;
+{
+	struct pciide_softc *sc = arg;
+	struct pciide_channel *cp;
+	struct channel_softc *wdc_cp;
+	int rv = 0;
+	int dmastat, i, crv;
+
+	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
+		dmastat = bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
+		    IDEDMA_CTL + IDEDMA_SCH_OFFSET * i);
+		if ((dmastat & IDEDMA_CTL_INTR) == 0)
+			continue;
+		cp = &sc->pciide_channels[i];
+		wdc_cp = &cp->wdc_channel;
+		if ((wdc_cp->ch_flags & WDCF_IRQ_WAIT) == 0) {
+			(void)wdcintr(wdc_cp);
+			bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
+			    IDEDMA_CTL + IDEDMA_SCH_OFFSET * i, dmastat);
+			continue;
+		}
+		crv = wdcintr(wdc_cp);
+		if (crv == 0)
+			printf("%s:%d: bogus intr\n",
+			    sc->sc_wdcdev.sc_dev.dv_xname, i);
+		else if (crv == 1)
+			rv = 1;
+		else if (rv == 0)
+			rv = crv;
+	}
+	return rv;
 }
