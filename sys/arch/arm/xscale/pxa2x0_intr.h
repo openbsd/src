@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_intr.h,v 1.5 2005/01/14 00:56:22 drahn Exp $ */
+/*	$OpenBSD: pxa2x0_intr.h,v 1.6 2005/02/28 22:10:01 drahn Exp $ */
 /*	$NetBSD: pxa2x0_intr.h,v 1.4 2003/07/05 06:53:08 dogcow Exp $ */
 
 /* Derived from i80321_intr.h */
@@ -58,7 +58,6 @@ extern vaddr_t pxaic_base;		/* Shared with pxa2x0_irq.S */
  (*(volatile uint32_t *)(pxaic_base+(offset))=(value))
 
 extern __volatile int current_spl_level;
-extern __volatile int intr_mask;
 extern __volatile int softint_pending;
 extern int pxa2x0_imask[];
 void pxa2x0_do_pending(void);
@@ -92,15 +91,6 @@ int	_splraise(int);
 int	_spllower(int);
 void	splx(int);
 void	_setsoftintr(int);
-
-#if !defined(EVBARM_SPL_NOINLINE)
-
-#define splx(new)		pxa2x0_splx(new)
-#define	_spllower(ipl)		pxa2x0_spllower(ipl)
-#define	_splraise(ipl)		pxa2x0_splraise(ipl)
-#define	_setsoftintr(si)	pxa2x0_setsoftintr(si)
-
-#endif	/* !EVBARM_SPL_NOINTR */
 
 /*
  * This function *MUST* be called very early on in a port's
