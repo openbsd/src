@@ -1,4 +1,4 @@
-/*	$OpenBSD: apci.c,v 1.4 2001/05/01 16:51:08 millert Exp $	*/
+/*	$OpenBSD: apci.c,v 1.5 2001/05/10 01:43:31 millert Exp $	*/
 /*	$NetBSD: apci.c,v 1.1 1997/05/12 08:12:36 thorpej Exp $	*/
 
 /*      
@@ -207,6 +207,9 @@ apciattach(parent, self, aux)
 	    (struct apciregs *)IIOV(FRODO_BASE + fa->fa_offset);
 	sc->sc_flags = 0;
 
+	/* Initialize timeout structure */
+	timeout_set(&sc->sc_timeout, apcitimeout, sc);
+
 	/* Are we the console? */
 	if (apci == apci_cn) {
 		sc->sc_flags |= APCI_ISCONSOLE;
@@ -228,9 +231,6 @@ apciattach(parent, self, aux)
 	/* Establish out interrupt handler. */
 	frodo_intr_establish(parent, apciintr, sc, fa->fa_line,
 	    (sc->sc_flags & APCI_HASFIFO) ? IPL_TTY : IPL_TTYNOBUF);
-
-	/* Initialize timeout structure */
-	timeout_set(&sc->sc_timeout, apcitimeout, sc);
 
 	/* Set soft carrier if requested by operator. */
 	if (self->dv_cfdata->cf_flags)
