@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.51 1998/07/07 18:49:01 art Exp $
+#	$OpenBSD: Makefile,v 1.52 1998/07/17 22:47:46 espie Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -105,7 +105,7 @@ copies:
 	rm -rf ${DESTDIR}/usr/include/machine
 	${INSTALL} -d -o ${BINOWN} -g ${BINGRP} -m 755 \
 		${DESTDIR}/usr/include/machine
-	pax -rw -pa -s "|../sys/arch/${MACHINE}/include||" \
+	pax -rw -pa -s "|\.\./sys/arch/${MACHINE}/include||" \
 	    ../sys/arch/${MACHINE}/include/*.h \
 	    ${DESTDIR}/usr/include/machine   
 	rm -rf ${DESTDIR}/usr/include/${MACHINE_ARCH}
@@ -113,7 +113,7 @@ copies:
 	    -d ../sys/arch/${MACHINE_ARCH}/include; then \
 		${INSTALL} -d -o ${BINOWN} -g ${BINGRP} -m 755 \
     	    	    ${DESTDIR}/usr/include/${MACHINE_ARCH}; \
-		pax -rw -pa -s "|../sys/arch/${MACHINE_ARCH}/include||" \
+		pax -rw -pa -s "|\.\./sys/arch/${MACHINE_ARCH}/include||" \
 		    ../sys/arch/${MACHINE_ARCH}/include/*.h \
 		    ${DESTDIR}/usr/include/${MACHINE_ARCH}; \
 	else \
