@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.18 1997/04/23 20:33:13 deraadt Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.19 1997/06/17 20:40:40 kstailey Exp $	*/
 /*	$NetBSD: ftp.c,v 1.25 1997/04/14 09:09:22 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$OpenBSD: ftp.c,v 1.18 1997/04/23 20:33:13 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ftp.c,v 1.19 1997/06/17 20:40:40 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -1410,7 +1410,7 @@ abort:
 		if (command("%s %s", cmd2, local) != PRELIM) {
 			pswitch(0);
 			if (cpend)
-				abort_remote((FILE *) NULL);
+				abort_remote(NULL);
 		}
 		pswitch(1);
 		if (ptabflg)
@@ -1419,13 +1419,13 @@ abort:
 		return;
 	}
 	if (cpend)
-		abort_remote((FILE *) NULL);
+		abort_remote(NULL);
 	pswitch(!proxy);
 	if (!cpend && !secndflag) {  /* only if cmd = "RETR" (proxy=1) */
 		if (command("%s %s", cmd2, local) != PRELIM) {
 			pswitch(0);
 			if (cpend)
-				abort_remote((FILE *) NULL);
+				abort_remote(NULL);
 			pswitch(1);
 			if (ptabflg)
 				code = -1;
@@ -1434,7 +1434,7 @@ abort:
 		}
 	}
 	if (cpend)
-		abort_remote((FILE *) NULL);
+		abort_remote(NULL);
 	pswitch(!proxy);
 	if (cpend) {
 		FD_ZERO(&mask);

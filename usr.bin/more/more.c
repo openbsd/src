@@ -1,4 +1,4 @@
-/*	$OpenBSD: more.c,v 1.7 1997/01/17 07:12:53 millert Exp $	*/
+/*	$OpenBSD: more.c,v 1.8 1997/06/17 20:42:54 kstailey Exp $	*/
 /*-
  * Copyright (c) 1980 The Regents of the University of California.
  * All rights reserved.
@@ -375,19 +375,19 @@ checkf (fs, clearfirst)
 		if (clreol)
 			cleareol ();
 		perror(fs);
-		return((FILE *)NULL);
+		return(NULL);
 	}
 	if ((stbuf.st_mode & S_IFMT) == S_IFDIR) {
 		prtf("\n*** %s: directory ***\n\n", fs);
-		return((FILE *)NULL);
+		return(NULL);
 	}
 	if ((f = Fopen(fs, "r")) == NULL) {
 		(void)fflush(stdout);
 		perror(fs);
-		return((FILE *)NULL);
+		return(NULL);
 	}
 	if (magic(f, fs))
-		return((FILE *)NULL);
+		return(NULL);
 	c = Getc(f);
 	*clearfirst = c == '\f';
 	Ungetc (c, f);

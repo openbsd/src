@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.12 1997/06/12 16:57:44 kstailey Exp $	*/
+/*	$OpenBSD: at.c,v 1.13 1997/06/17 20:48:04 kstailey Exp $	*/
 /*	$NetBSD: at.c,v 1.4 1995/03/25 18:13:31 glass Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ enum { ATQ, ATRM, AT, BATCH, CAT };	/* what program we want to run */
 
 /* File scope variables */
 #ifndef lint
-static char rcsid[] = "$OpenBSD: at.c,v 1.12 1997/06/12 16:57:44 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: at.c,v 1.13 1997/06/17 20:48:04 kstailey Exp $";
 #endif
 
 char *no_export[] =
@@ -292,7 +292,7 @@ writefile(runtimer, queue)
 			mailname = pass_entry->pw_name;
 	}
 
-	if (atinput != (char *) NULL) {
+	if (atinput != NULL) {
 		fpin = freopen(atinput, "r", stdin);
 		if (fpin == NULL)
 			perr("Cannot open input file");

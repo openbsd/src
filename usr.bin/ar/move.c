@@ -1,4 +1,4 @@
-/*	$OpenBSD: move.c,v 1.2 1996/06/26 05:31:21 deraadt Exp $	*/
+/*	$OpenBSD: move.c,v 1.3 1997/06/17 20:47:09 kstailey Exp $	*/
 /*	$NetBSD: move.c,v 1.5 1995/03/26 03:27:57 glass Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: move.c,v 1.2 1996/06/26 05:31:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: move.c,v 1.3 1997/06/17 20:47:09 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -97,7 +97,7 @@ move(argv)
 			if (options & AR_V)
 				(void)printf("m - %s\n", file);
 			cf.wfd = tfd2;
-			put_arobj(&cf, (struct stat *)NULL);
+			put_arobj(&cf, NULL);
 			continue;
 		}
 		if (mods && compare(posname)) {
@@ -105,12 +105,12 @@ move(argv)
 			if (options & AR_B)
 				curfd = tfd3;
 			cf.wfd = curfd;
-			put_arobj(&cf, (struct stat *)NULL);
+			put_arobj(&cf, NULL);
 			if (options & AR_A)
 				curfd = tfd3;
 		} else {
 			cf.wfd = curfd;
-			put_arobj(&cf, (struct stat *)NULL);
+			put_arobj(&cf, NULL);
 		}
 	}
 

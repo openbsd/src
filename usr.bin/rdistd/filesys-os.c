@@ -1,4 +1,4 @@
-/*	$OpenBSD: filesys-os.c,v 1.3 1996/06/26 05:38:21 deraadt Exp $	*/
+/*	$OpenBSD: filesys-os.c,v 1.4 1997/06/17 20:37:53 kstailey Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 static char RCSid[] = 
-"$OpenBSD: filesys-os.c,v 1.3 1996/06/26 05:38:21 deraadt Exp $";
+"$OpenBSD: filesys-os.c,v 1.4 1997/06/17 20:37:53 kstailey Exp $";
 
 static char sccsid[] = "@(#)filesys-os.c";
 
@@ -88,7 +88,7 @@ FILE *setmountent(file, mode)
 
 	entries_left = mntctl(MCTL_QUERY, size, mntbuf);
 	if (!entries_left)
-		return((FILE *)NULL);
+		return(NULL);
 
 	mnt = (struct vmount *)mntbuf;
 	return((FILE *) 1);
@@ -109,15 +109,15 @@ FILE *setmountent(file, mode)
 	if (mntbuf)
 		(void) free(mntbuf);
 
-	size = getfsstat((struct statfs *) NULL, 0, MNT_WAIT);
+	size = getfsstat(NULL, 0, MNT_WAIT);
 	if (size == -1)
-		return ((FILE *)NULL);
+		return (NULL);
 	size *= sizeof(struct statfs);
 	mntbuf = (char *) xmalloc(size);
 
 	entries_left = getfsstat((struct statfs *)mntbuf, size, MNT_WAIT);
 	if (entries_left == -1)
-		return((FILE *) NULL);
+		return(NULL);
 
 	mnt = (struct statfs *) mntbuf;
 
@@ -216,7 +216,7 @@ void endmountent(fptr)
 
 	if (mntbuf) {
 		(void) free(mntbuf);
-		mntbuf = (char *) NULL;
+		mntbuf = NULL;
 	}
 }
 #endif	/* FSI_MNTCTL || FSI_GETFSSTAT */
@@ -275,7 +275,7 @@ mntent_t *getmountent(fptr)
 
 		return(&me);
 	} else
-		return((mntent_t *) NULL);
+		return(NULL);
 }
 #endif	/* FSI_GETMNTNET2 */
 
@@ -329,7 +329,7 @@ mntent_t *getmountent(fptr)
 
 		return(&me);
 	} else
-		return((mntent_t *) NULL);
+		return(NULL);
 }
 #endif	/* FSI_GETMNTNET */
 
@@ -368,8 +368,8 @@ mntent_t *getmountent(fptr)
 	static mntent_t me;
 
 	if (getmnt(&startmounts, &fs_data, sizeof(fs_data), NOSTAT_MANY, 
-		   (char *) NULL) <= 0)
-		return((mntent_t *) NULL);
+		   NULL) <= 0)
+		return(NULL);
 
 	bzero((char *)&me, sizeof(mntent_t));
 	me.me_path = fs_data.fd_path;
@@ -394,7 +394,7 @@ mntent_t *newmountent(old)
 	mntent_t *new;
 
 	if (!old)
-		return((mntent_t *) NULL);
+		return(NULL);
 
 	new = (mntent_t *) xcalloc(1, sizeof(mntent_t));
 	new->me_path = strdup(old->me_path);

@@ -1,5 +1,5 @@
 /*	$NetBSD: archive.c,v 1.7 1995/03/26 03:27:46 glass Exp $	*/
-/*	$OpenBSD: archive.c,v 1.3 1997/05/31 08:17:18 deraadt Exp $	*/
+/*	$OpenBSD: archive.c,v 1.4 1997/06/17 20:47:08 kstailey Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -125,7 +125,7 @@ close_archive(fd)
 #define	AR_ATOI(from, to, len, base) { \
 	memmove(buf, from, len); \
 	buf[len] = '\0'; \
-	to = strtol(buf, (char **)NULL, base); \
+	to = strtol(buf, NULL, base); \
 }
 
 /*

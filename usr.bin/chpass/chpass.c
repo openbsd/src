@@ -1,4 +1,4 @@
-/*	$OpenBSD: chpass.c,v 1.8 1997/02/13 17:28:39 deraadt Exp $	*/
+/*	$OpenBSD: chpass.c,v 1.9 1997/06/17 20:49:55 kstailey Exp $	*/
 /*	$NetBSD: chpass.c,v 1.8 1996/05/15 21:50:43 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else 
-static char rcsid[] = "$OpenBSD: chpass.c,v 1.8 1997/02/13 17:28:39 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: chpass.c,v 1.9 1997/06/17 20:49:55 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -164,15 +164,15 @@ main(argc, argv)
 		/* protect p_shell -- it thinks NULL is /bin/sh */
 		if (!arg[0])
 			usage();
-		if (p_shell(arg, pw, (ENTRY *)NULL))
-			pw_error((char *)NULL, 0, 1);
+		if (p_shell(arg, pw, NULL))
+			pw_error(NULL, 0, 1);
 	}
 
 	if (op == LOADENTRY) {
 		if (uid)
 			baduser();
 		pw = &lpw;
-		if (!pw_scan(arg, pw, (int *)NULL))
+		if (!pw_scan(arg, pw, NULL))
 			exit(1);
 	}
 
@@ -202,7 +202,7 @@ main(argc, argv)
 #ifdef	YP
 	if (use_yp) {
 		if (pw_yp(pw, uid)) {
-			pw_error((char *)NULL, 0, 1);
+			pw_error(NULL, 0, 1);
 			exit(1);
 		} else {
 			pw_abort();
@@ -216,7 +216,7 @@ main(argc, argv)
 
 		/* Now finish the passwd file update. */
 		if (pw_mkdb() < 0)
-			pw_error((char *)NULL, 0, 1);
+			pw_error(NULL, 0, 1);
 	}
 
 	exit(0);

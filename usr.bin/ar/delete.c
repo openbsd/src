@@ -1,4 +1,4 @@
-/*	$OpenBSD: delete.c,v 1.2 1996/06/26 05:31:19 deraadt Exp $	*/
+/*	$OpenBSD: delete.c,v 1.3 1997/06/17 20:47:09 kstailey Exp $	*/
 /*	$NetBSD: delete.c,v 1.5 1995/03/26 03:27:52 glass Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)delete.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: delete.c,v 1.2 1996/06/26 05:31:19 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: delete.c,v 1.3 1997/06/17 20:47:09 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -83,7 +83,7 @@ delete(argv)
 			skip_arobj(afd);
 			continue;
 		}
-		put_arobj(&cf, (struct stat *)NULL);
+		put_arobj(&cf, NULL);
 	}
 
 	size = lseek(tfd, (off_t)0, SEEK_CUR);
