@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.h,v 1.4 2001/01/01 21:50:11 millert Exp $	*/
+/*	$OpenBSD: login_cap.h,v 1.5 2001/06/30 15:41:51 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -38,7 +38,7 @@
 #define _LOGIN_CAP_H_
 
 #define	LOGIN_DEFCLASS		"default"
-#define	LOGIN_DEFSTYLE		"krb-or-pwd"
+#define	LOGIN_DEFSTYLE		"krb4-or-pwd"
 #define	LOGIN_DEFSERVICE	"login"
 #define	LOGIN_DEFUMASK		022
 #define	_PATH_LOGIN_CONF	"/etc/login.conf"
