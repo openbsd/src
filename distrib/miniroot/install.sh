@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.120 2002/11/01 00:39:19 krw Exp $
+#	$OpenBSD: install.sh,v 1.121 2002/11/24 19:09:46 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -388,7 +388,7 @@ echo "...done."
 
 remount_fs
 
-_encr=`/mnt/usr/bin/encrypt -b 7 -- "$_password"`
+_encr=`/mnt/usr/bin/encrypt -b 8 -- "$_password"`
 echo "1,s@^root::@root:${_encr}:@
 w
 q" | ed /mnt/etc/master.passwd 2> /dev/null
