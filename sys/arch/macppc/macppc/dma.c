@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.10 2001/12/31 17:03:59 miod Exp $	*/
+/*	$OpenBSD: dma.c,v 1.11 2002/01/03 07:14:50 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -155,7 +155,10 @@ _dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
 		/*
 		 * Get the physical address for this segment.
 		 */
-		(void) pmap_extract(pmap, vaddr, (paddr_t *)&curaddr);
+		if (pmap_extract(pmap, vaddr, (paddr_t *)&curaddr) != TRUE) {
+			panic("dmamap_load_buffer pmap %x vaddr %x "
+				"pmap_extract failed", pmap, vaddr);
+		}
 
 		/*
 		 * Compute the segment size, and adjust counts.
