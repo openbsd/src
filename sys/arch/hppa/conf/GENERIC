@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.25 2003/02/15 23:45:50 miod Exp $
+#	$OpenBSD: GENERIC,v 1.26 2003/02/15 23:50:00 miod Exp $
 #
 # Diskless kernel config
 #
@@ -71,7 +71,7 @@ option	EISAVERBOSE
 hil*	at gsc? irq 1	# Human Interface Loop, kbd and mouse
 hilkbd*	at hil? code ?	# keyboard, knob and buttons
 hilms*	at hil? code ?	# mouse and tablets
-#hilid*	at hil? code ?	# ID module
+hilid*	at hil? code ?	# ID module
 
 #medusa* at gsc? irq 4	# FDDI
 
