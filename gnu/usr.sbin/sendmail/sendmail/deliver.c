@@ -2330,7 +2330,7 @@ tryhost:
 
 # if HASSETUSERCONTEXT
 			/*
-			**  Set user resources.
+			**  Set user resources and login name.
 			*/
 
 			if (contextaddr != NULL)
@@ -2344,9 +2344,20 @@ tryhost:
 				if (pwd != NULL)
 					(void) setusercontext(NULL,
 							      pwd, pwd->pw_uid,
-							      LOGIN_SETRESOURCES|LOGIN_SETPRIORITY);
+							      LOGIN_SETRESOURCES|LOGIN_SETPRIORITY|LOGIN_SETLOGIN);
 			}
 # endif /* HASSETUSERCONTEXT */
+# if HASSETLOGIN && !HASSETUSERCONTEXT
+			/* set login name */
+			if (ctladdr != NULL)
+			{
+				user = ctladdr->q_ruser;
+				if (user == NULL)
+					user = ctladdr->q_user;
+				(void)setlogin(user);
+
+			}
+# endif /* HASSETLOGIN && !!HASSETUSERCONTEXT*/
 
 #if HASNICE
 			/* tweak niceness */
