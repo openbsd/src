@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amq_subr.c	8.1 (Berkeley) 6/6/93
- *	$Id: amq_subr.c,v 1.10 2003/06/02 23:36:51 millert Exp $
+ *	$Id: amq_subr.c,v 1.11 2005/02/18 15:51:02 henning Exp $
  */
 
 /*
@@ -246,7 +246,7 @@ amqproc_getvers_1(void *argp, struct svc_req *rqstp)
 {
 	static amq_string res;
 
-	res = version;
+	res = "amd 1.1.1.1 of 1995/10/18 08:47:13 bsd44";
 	return &res;
 }
 

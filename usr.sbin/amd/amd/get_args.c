@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)get_args.c	8.1 (Berkeley) 6/6/93
- *	$Id: get_args.c,v 1.7 2003/06/02 23:36:51 millert Exp $
+ *	$Id: get_args.c,v 1.8 2005/02/18 15:51:02 henning Exp $
  */
 
 /*
@@ -175,7 +175,6 @@ get_args(int c, char *v[])
 			break;
 
 		case 'v':
-			fprintf(stderr, "%s%s (%s-endian).\n", copyright, version, endian);
 			fputs("Map support for: ", stderr);
 			mapc_showtypes(stderr);
 			fputs(".\nFS: ", stderr);

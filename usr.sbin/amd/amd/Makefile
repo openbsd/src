@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.2 (Berkeley) 4/22/94
-#	$Id: Makefile,v 1.1.1.1 1995/10/18 08:47:09 deraadt Exp $
+#	$Id: Makefile,v 1.2 2005/02/18 15:51:02 henning Exp $
 
 .include "../config/Makefile.config"
 
@@ -15,7 +15,6 @@ SRCS=	afs_ops.c am_ops.c clock.c util.c xutil.c \
 	pfs_ops.c rpc_fwd.c sched.c sfs_ops.c amq_svc.c \
 	amq_subr.c umount_fs.c host_ops.c nfsx_ops.c \
 	ufs_ops.c ifs_ops.c amd.c get_args.c restart.c wire.c
-OBJS+=	vers.${PROG}.o
 CFLAGS+=-I${.CURDIR}/../rpcx
 CFLAGS+=-I${.CURDIR}/../config
 CFLAGS+=-I${.CURDIR}/../include
@@ -23,13 +22,9 @@ CFLAGS+=-DARCH_REP=\"${MACHINE}\"
 CFLAGS+=-DOS_REP=\"${OS}\"
 CFLAGS+=-DOS_HDR=\"os-${OS}.h\"
 CFLAGS+=${CONFIG}
-CLEANFILES+=vers.${PROG}.c vers.${PROG}.o version.amd
 
 DPADD+=	${LIBCOMPAT}
 LDADD+=	-lcompat
-
-vers.${PROG}.c: ${SRCS:.c=.o}
-	@d=${.CURDIR}/ sh ${.CURDIR}/../config/newvers.sh ${PROG} ${MACHINE} ${OS}
 
 .PATH: ${.CURDIR}/../rpcx ${.CURDIR}/../config
 .include "../../Makefile.inc"
