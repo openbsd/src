@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.12 2000/09/02 13:45:40 espie Exp $	*/
+/*	$OpenBSD: conf.h,v 1.13 2001/06/27 06:18:29 angelos Exp $	*/
 /*	$NetBSD: conf.h,v 1.4 1996/11/30 01:13:07 is Exp $	*/
 
 /*
@@ -36,13 +36,6 @@ bdev_decl(fd);
 cdev_decl(fd);
 
 cdev_decl(grf);
-
-cdev_decl(ipl);
-#ifdef IPFILTER
-#define NIPF 1
-#else
-#define NIPF 0
-#endif
 
 cdev_decl(ite);
 
