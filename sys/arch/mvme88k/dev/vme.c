@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.27 2003/12/28 19:44:26 miod Exp $ */
+/*	$OpenBSD: vme.c,v 1.28 2004/01/14 20:50:48 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -76,7 +76,7 @@ struct cfattach vme_ca = {
 };
 
 struct cfdriver vme_cd = {
-        NULL, "vme", DV_DULL, 0
+        NULL, "vme", DV_DULL
 };
 
 int

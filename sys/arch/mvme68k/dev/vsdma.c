@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsdma.c,v 1.6 2004/01/14 02:00:41 krw Exp $ */
+/*	$OpenBSD: vsdma.c,v 1.7 2004/01/14 20:50:48 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -84,7 +84,7 @@ struct cfattach vs_ca = {
 };    
  
 struct cfdriver vs_cd = {
-        NULL, "vs", DV_DULL, 0 
+        NULL, "vs", DV_DULL
 }; 
 
 int

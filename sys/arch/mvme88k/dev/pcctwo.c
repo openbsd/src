@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcctwo.c,v 1.19 2004/01/05 20:06:59 miod Exp $ */
+/*	$OpenBSD: pcctwo.c,v 1.20 2004/01/14 20:50:48 miod Exp $ */
 /*
  * Copyright (c) 1995 Theo de Raadt
  * All rights reserved.
@@ -65,7 +65,7 @@ struct cfattach pcctwo_ca = {
 };
 
 struct cfdriver pcctwo_cd = {
-	NULL, "pcctwo", DV_DULL, 0
+	NULL, "pcctwo", DV_DULL
 };
 
 struct pcctworeg *sys_pcc2 = NULL;

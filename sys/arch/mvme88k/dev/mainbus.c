@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.9 2003/09/16 20:46:08 miod Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.10 2004/01/14 20:50:48 miod Exp $ */
 /*  Copyright (c) 1998 Steve Murphree, Jr. */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -21,7 +21,7 @@ struct cfattach mainbus_ca = {
 };
 
 struct cfdriver mainbus_cd = {
-	NULL, "mainbus", DV_DULL, 0
+	NULL, "mainbus", DV_DULL
 };
 
 int

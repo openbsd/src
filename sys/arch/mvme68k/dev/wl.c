@@ -1,4 +1,4 @@
-/*	$OpenBSD: wl.c,v 1.13 2003/10/03 16:44:50 miod Exp $ */
+/*	$OpenBSD: wl.c,v 1.14 2004/01/14 20:50:48 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -194,7 +194,7 @@ struct cfattach wl_ca = {
 };
 
 struct cfdriver wl_cd = {
-	NULL, "wl", DV_TTY, 0
+	NULL, "wl", DV_TTY
 };
 
 #define CLCDBUF 80

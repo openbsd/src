@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.26 2004/01/14 02:00:41 krw Exp $ */
+/*	$OpenBSD: vs.c,v 1.27 2004/01/14 20:50:48 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -81,7 +81,7 @@ struct cfattach vs_ca = {
 };
 
 struct cfdriver vs_cd = {
-	NULL, "vs", DV_DULL, 0
+	NULL, "vs", DV_DULL,
 };
 
 int	do_vspoll(struct vs_softc *, int);

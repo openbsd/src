@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipic.c,v 1.11 2003/06/02 05:09:14 deraadt Exp $ */
+/*	$OpenBSD: ipic.c,v 1.12 2004/01/14 20:50:48 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -57,7 +57,7 @@ struct cfattach ipic_ca = {
 };
 
 struct cfdriver ipic_cd = {
-	NULL, "ipic", DV_DULL, 0
+	NULL, "ipic", DV_DULL
 };
 
 int

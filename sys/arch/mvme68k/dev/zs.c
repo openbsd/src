@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.14 2003/10/03 16:44:50 miod Exp $ */
+/*	$OpenBSD: zs.c,v 1.15 2004/01/14 20:50:48 miod Exp $ */
 
 /*
  * Copyright (c) 2000 Steve Murphree, Jr.
@@ -150,7 +150,7 @@ struct cfattach zs_ca = {
 };
 
 struct cfdriver zs_cd = {
-	NULL, "zs", DV_TTY, 0
+	NULL, "zs", DV_TTY
 };
 
 void	zs_ttydef(struct zs *);

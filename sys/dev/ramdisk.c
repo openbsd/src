@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramdisk.c,v 1.22 2003/10/21 05:24:40 jmc Exp $	*/
+/*	$OpenBSD: ramdisk.c,v 1.23 2004/01/14 20:50:49 miod Exp $	*/
 /*	$NetBSD: ramdisk.c,v 1.8 1996/04/12 08:30:09 leo Exp $	*/
 
 /*
@@ -110,7 +110,7 @@ struct disklabel *rdgetdisklabel(dev_t dev, struct rd_softc *sc);
  * XXX - that practice is questionable...
  */
 struct cfdriver rd_cd = {
-	NULL, "rd", DV_DULL, NULL, 0
+	NULL, "rd", DV_DULL
 };
 
 void rdstrategy(struct buf *bp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.22 2003/10/05 20:25:08 miod Exp $ */
+/*	$OpenBSD: nvram.c,v 1.23 2004/01/14 20:50:48 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -68,7 +68,7 @@ struct cfattach nvram_ca = {
 };
 
 struct cfdriver nvram_cd = {
-	NULL, "nvram", DV_DULL, 0
+	NULL, "nvram", DV_DULL
 };
 
 u_long chiptotime(int, int, int, int, int, int);

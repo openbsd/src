@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.23 2003/08/23 22:52:30 deraadt Exp $ */
+/*	$OpenBSD: autoconf.c,v 1.24 2004/01/14 20:50:48 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -115,7 +115,7 @@ struct cfattach mainbus_ca = {
 };
 
 struct cfdriver mainbus_cd = {
-	NULL, "mainbus", DV_DULL, 0
+	NULL, "mainbus", DV_DULL
 };
 
 int

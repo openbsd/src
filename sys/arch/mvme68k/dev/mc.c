@@ -1,4 +1,4 @@
-/*	$OpenBSD: mc.c,v 1.12 2003/09/29 09:08:17 miod Exp $ */
+/*	$OpenBSD: mc.c,v 1.13 2004/01/14 20:50:48 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -65,7 +65,7 @@ struct cfattach mc_ca = {
 };
 
 struct cfdriver mc_cd = {
-	NULL, "mc", DV_DULL, 0
+	NULL, "mc", DV_DULL
 };
 
 struct mcreg *sys_mc = NULL;

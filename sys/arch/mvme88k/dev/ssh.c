@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssh.c,v 1.23 2004/01/05 20:06:59 miod Exp $	*/
+/*	$OpenBSD: ssh.c,v 1.24 2004/01/14 20:50:48 miod Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -90,7 +90,7 @@ struct cfattach ssh_ca = {
 };
 
 struct cfdriver ssh_cd = {
-        NULL, "ssh", DV_DULL, 0
+        NULL, "ssh", DV_DULL,
 };
 
 void	scsi_period_to_ssh(struct ssh_softc *, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.28 2003/12/22 11:54:48 miod Exp $ */
+/*	$OpenBSD: clock.c,v 1.29 2004/01/14 20:50:48 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -126,7 +126,7 @@ struct cfattach clock_ca = {
 };
 
 struct cfdriver clock_cd = {
-        NULL, "clock", DV_DULL, 0
+        NULL, "clock", DV_DULL
 };
 
 int	sbc_clockintr(void *);

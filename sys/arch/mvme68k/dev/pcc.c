@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcc.c,v 1.10 2003/06/02 05:09:14 deraadt Exp $ */
+/*	$OpenBSD: pcc.c,v 1.11 2004/01/14 20:50:48 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -65,7 +65,7 @@ struct cfattach pcc_ca = {
 };
 
 struct cfdriver pcc_cd = {
-	NULL, "pcc", DV_DULL, 0
+	NULL, "pcc", DV_DULL
 };
 
 struct pccreg *sys_pcc = NULL;
