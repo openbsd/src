@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.11 1998/08/21 19:24:39 millert Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.12 1998/08/21 19:31:29 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)nlist.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: nlist.c,v 1.11 1998/08/21 19:24:39 millert Exp $";
+static char *rcsid = "$OpenBSD: nlist.c,v 1.12 1998/08/21 19:31:29 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -169,7 +169,6 @@ __aout_knlist(name, db)
 				errx(1, "cannot allocate memory");
 			*sname = '_';
 			strcpy(sname+1, p);
-			puts(sname);
 			key.data = (u_char *)sname;
 			key.size = len;
 		} else {
