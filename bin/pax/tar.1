@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: tar.1,v 1.11 1997/04/09 17:48:25 millert Exp $
+.\"	$OpenBSD: tar.1,v 1.12 1997/04/16 03:50:24 millert Exp $
 .\"
 .Dd June 11, 1996
 .Dt TAR 1
@@ -94,7 +94,7 @@ standard and will not be portable to all systems.
 Stop after first error.
 .It Fl f Ar archive
 Filename where the archive is stored.  Defaults to
-.Pa /dev/rmt8
+.Pa /dev/rst0
 .It Fl h
 Follow symbolic links as if they were normal files
 or directories.
@@ -184,10 +184,10 @@ Compress archive using compress.
 The options
 .Op Fl 014578
 can be used to select one of the compiled-in backup devices,
-.Pa /dev/rmtN .
+.Pa /dev/rstN .
 .Sh FILES
-.Bl -tag -width "/dev/rmt8"
-.It Pa /dev/rmt8
+.Bl -tag -width "/dev/rst0"
+.It Pa /dev/rst0
 The default archive name
 .El
 .Sh SEE ALSO

@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.23 1997/04/12 17:25:25 tholo Exp $	*/
+/*	$OpenBSD: options.c,v 1.24 1997/04/16 03:50:23 millert Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.23 1997/04/12 17:25:25 tholo Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.24 1997/04/16 03:50:23 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,6 +57,7 @@ static char rcsid[] = "$OpenBSD: options.c,v 1.23 1997/04/12 17:25:25 tholo Exp 
 #include <unistd.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <paths.h>
 #include "pax.h"
 #include "options.h"
 #include "cpio.h"
@@ -855,7 +856,7 @@ tar_options(argc, argv)
 	if (!fstdin && ((arcname == (char *)NULL) || (*arcname == '\0'))) {
 		arcname = getenv("TAPE");
 		if ((arcname == (char *)NULL) || (*arcname == '\0'))
-			arcname = DEV_8;
+			arcname = _PATH_DEFTAPE;
 	}
 }
 
