@@ -1,4 +1,0 @@
-queue yayayaya: cannot be both default and control queue
-pfctl: Syntax error in file: pf rules not loaded
-altq on lo0 cbq bandwidth 1.00Mb tbrsize 33224 queue { yayayaya }
-queue root_lo0 bandwidth 1.00Mb priority 0 cbq( wrr root ) 

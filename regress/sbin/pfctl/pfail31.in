@@ -1,4 +1,0 @@
-#queue cannot be both default and control
-
-altq on lo0 bandwidth 1Mb cbq queue yayayaya
-queue yayayaya cbq(default control)
