@@ -1,4 +1,4 @@
-/*	$OpenBSD: krb_passwd.c,v 1.5 1997/03/27 00:30:52 weingart Exp $	*/
+/*	$OpenBSD: krb_passwd.c,v 1.6 1997/06/11 10:23:12 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)krb_passwd.c	5.4 (Berkeley) 3/1/91";*/
-static char rcsid[] = "$OpenBSD: krb_passwd.c,v 1.5 1997/03/27 00:30:52 weingart Exp $";
+static char rcsid[] = "$OpenBSD: krb_passwd.c,v 1.6 1997/06/11 10:23:12 deraadt Exp $";
 #endif /* not lint */
 
 #ifdef KERBEROS
@@ -76,7 +76,8 @@ krb_passwd()
 	struct hostent *host;
 	struct sockaddr_in sin;
 	CREDENTIALS cred;
-	fd_set readfds;
+	int fdsn;
+	fd_set *fdsp;
 	int rval;
 	char pass[_PASSWORD_LEN], password[_PASSWORD_LEN];
 	static void finish();
@@ -165,13 +166,17 @@ krb_passwd()
 
 	/* wait on the verification string */
 
-	FD_ZERO(&readfds);
-	FD_SET(sock, &readfds);
+	fdsn = howmany(sock+1, NFDBITS) * sizeof(fd_mask);
+	if ((fdsp = (fd_set *)malloc(fdsn)) == NULL)
+		err(1, "malloc");
+	memset(fdsp, 0, fdsn);
+	FD_SET(sock, fdsp);
 
 	rval =
-	    select(sock + 1, &readfds, (fd_set *) 0, (fd_set *) 0, &timeout);
+	    select(sock + 1, fdsp, (fd_set *) 0, (fd_set *) 0, &timeout);
 
-	if ((rval < 1) || !FD_ISSET(sock, &readfds)) {
+	if ((rval < 1) || !FD_ISSET(sock, fdsp)) {
+		free(fdsp);
 		if(rval == 0) {
 			warnx("timed out (aborted)");
 			cleanup();
@@ -181,6 +186,7 @@ krb_passwd()
 		cleanup();
 		return(1);
 	}
+	free(fdsp);
 
 	/* read verification string */
 
@@ -234,12 +240,16 @@ krb_passwd()
 
 	/* wait for ACK */
 
-	FD_ZERO(&readfds);
-	FD_SET(sock, &readfds);
+	fdsn = howmany(sock+1, NFDBITS) * sizeof(fd_mask);
+	if ((fdsp = (fd_set *)malloc(fdsn)) == NULL)
+		err(1, "malloc");
+	memset(fdsp, 0, fdsn);
+	FD_SET(sock, fdsp);
 
 	rval =
-	    select(sock + 1, &readfds, (fd_set *) 0, (fd_set *) 0, &timeout);
-	if ((rval < 1) || !FD_ISSET(sock, &readfds)) {
+	    select(sock + 1, fdsp, (fd_set *) 0, (fd_set *) 0, &timeout);
+	if ((rval < 1) || !FD_ISSET(sock, fdsp)) {
+		free(fdsp);
 		if(rval == 0) {
 			warnx("timed out reading ACK (aborted)");
 			cleanup();
@@ -249,6 +259,7 @@ krb_passwd()
 		cleanup();
 		exit(1);
 	}
+	free(fdsp);
 	recv_ack(sock);
 	cleanup();
 	exit(0);
