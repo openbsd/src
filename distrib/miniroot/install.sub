@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.142 1999/10/17 15:35:51 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.143 1999/10/17 16:45:14 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -85,7 +85,7 @@ THESETS=					# one of the above
 local_sets_dir=
 
 # decide upon an editor
-if [ X$EDITOR = X ]; then
+if [ "X$EDITOR" = X ]; then
 	if [ -x /usr/bin/vi ]; then
 		EDITOR=vi
 	else
@@ -1112,7 +1112,7 @@ while test -n "${_get_files}" ; do
 	for _f in $_get_files ; do
 		echo "Getting ${_f} ..."
 		if [ "X${_f}" = "Xssl${VERSION}.tar.gz" -o \
-		    X${_f}" = "XsslUSA${VERSION}.tar.gz"]; then
+		    "X${_f}" = "XsslUSA${VERSION}.tar.gz"]; then
 			( cd /mnt ; ftp ${_ftp_active} -o - -V -m ${_url_base}/${_f} | /mnt/usr/sbin/chroot /mnt /usr/sbin/pkg_add -I -)
 		elif [ "X${_f}" = "X${_kernel}" ]; then
 			( cd /mnt ; ftp ${_ftp_active} -V -m ${_url_base}/${_f} )
