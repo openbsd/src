@@ -1,4 +1,4 @@
-/* $OpenBSD: syslogc.c,v 1.1 2004/01/04 08:30:21 djm Exp $ */
+/* $OpenBSD: syslogc.c,v 1.2 2004/01/05 02:21:06 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Damien Miller
@@ -106,9 +106,9 @@ main(int argc, char **argv)
 	ctl.sun_family = AF_UNIX;
 
 	if ((ctlsock = socket(PF_UNIX, SOCK_STREAM, 0)) < 0)
-		err(1, "ctl socket() error");
+		err(1, "socket");
 	if (connect(ctlsock, (struct sockaddr*)&ctl, sizeof(ctl)) == -1)
-		err(1, "ctl connect(\"%s\") error", ctl.sun_path);
+		err(1, "%s", ctl.sun_path);
 	if ((ctlf = fdopen(ctlsock, "r+")) == NULL)
 		err(1, "fdopen");
 	/* Send command */
