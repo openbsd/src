@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator_upa.c,v 1.7 2003/06/17 17:35:40 miod Exp $	*/
+/*	$OpenBSD: creator_upa.c,v 1.8 2005/04/05 21:49:33 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -82,7 +82,7 @@ creator_upa_attach(parent, self, aux)
 
 	nregs = min(ma->ma_nreg, FFB_NREGS);
 
-	if (nregs < FFB_REG_DFB24) {
+	if (nregs <= FFB_REG_DFB24) {
 		printf(": no dfb24 regs found\n");
 		return;
 	}

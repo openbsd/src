@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.33 2005/03/15 18:40:15 miod Exp $	*/
+/*	$OpenBSD: creator.c,v 1.34 2005/04/05 21:49:33 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -477,7 +477,7 @@ creator_mmap(vsc, off, prot)
 		}
 		break;
 	case WSDISPLAYIO_MODE_DUMBFB:
-		if (sc->sc_nreg < FFB_REG_DFB24)
+		if (sc->sc_nreg <= FFB_REG_DFB24)
 			break;
 		if (off >= 0 && off < sc->sc_sizes[FFB_REG_DFB24])
 			return (bus_space_mmap(sc->sc_bt,
