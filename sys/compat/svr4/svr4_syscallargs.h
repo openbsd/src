@@ -65,6 +65,10 @@ struct svr4_sys_access_args {
 	syscallarg(int) flags;
 };
 
+struct svr4_sys_nice_args {
+	syscallarg(int) prio;
+};
+
 struct svr4_sys_kill_args {
 	syscallarg(int) pid;
 	syscallarg(int) signum;
@@ -361,6 +365,7 @@ int	svr4_sys_fstat	__P((struct proc *, void *, register_t *));
 int	svr4_sys_pause	__P((struct proc *, void *, register_t *));
 int	svr4_sys_utime	__P((struct proc *, void *, register_t *));
 int	svr4_sys_access	__P((struct proc *, void *, register_t *));
+int	svr4_sys_nice	__P((struct proc *, void *, register_t *));
 int	sys_sync	__P((struct proc *, void *, register_t *));
 int	svr4_sys_kill	__P((struct proc *, void *, register_t *));
 int	svr4_sys_pgrpsys	__P((struct proc *, void *, register_t *));

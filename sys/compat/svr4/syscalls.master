@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.11 1997/02/13 19:45:27 niklas Exp $
+	$OpenBSD: syscalls.master,v 1.12 1997/03/28 22:03:49 kstailey Exp $
 ;	$NetBSD: syscalls.master,v 1.17 1996/02/10 17:12:51 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -82,7 +82,7 @@
 31	UNIMPL		was stty
 32	UNIMPL		was gtty
 33	STD		{ int svr4_sys_access(char *path, int flags); }
-34	UNIMPL		nice
+34	STD		{ int svr4_sys_nice(int prio); }
 35	UNIMPL		statfs
 36	NOARGS		{ int sys_sync(void); }
 37	STD		{ int svr4_sys_kill(int pid, int signum); }

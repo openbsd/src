@@ -107,8 +107,8 @@ struct sysent svr4_sysent[] = {
 	    sys_nosys },			/* 32 = unimplemented was gtty */
 	{ 2, s(struct svr4_sys_access_args),
 	    svr4_sys_access },			/* 33 = access */
-	{ 0, 0,
-	    sys_nosys },			/* 34 = unimplemented nice */
+	{ 1, s(struct svr4_sys_nice_args),
+	    svr4_sys_nice },			/* 34 = nice */
 	{ 0, 0,
 	    sys_nosys },			/* 35 = unimplemented statfs */
 	{ 0, 0,

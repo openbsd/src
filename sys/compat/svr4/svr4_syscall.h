@@ -33,6 +33,7 @@
 #define	SVR4_SYS_pause	29
 #define	SVR4_SYS_utime	30
 #define	SVR4_SYS_access	33
+#define	SVR4_SYS_nice	34
 #define	SVR4_SYS_sync	36
 #define	SVR4_SYS_kill	37
 #define	SVR4_SYS_pgrpsys	39

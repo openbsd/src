@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_misc.c,v 1.8 1997/02/13 19:45:19 niklas Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.9 1997/03/28 22:03:46 kstailey Exp $	 */
 /*	$NetBSD: svr4_misc.c,v 1.42 1996/12/06 03:22:34 christos Exp $	 */
 
 /*
@@ -1291,4 +1291,27 @@ svr4_sys_memcntl(p, v, retval)
 
 	/* XXX: no locking, invalidating, or syncing supported */
 	return sys_mprotect(p, &ap, retval);
+}
+
+int
+svr4_sys_nice(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct svr4_sys_nice_args *uap = v;
+	struct sys_setpriority_args ap;
+	int error;
+
+	SCARG(&ap, which) = PRIO_PROCESS;
+	SCARG(&ap, who) = 0;
+	SCARG(&ap, prio) = SCARG(uap, prio);
+
+	if ((error = sys_setpriority(p, &ap, retval)) != 0)
+		return error;
+
+	if ((error = sys_getpriority(p, &ap, retval)) != 0)
+		return error;
+
+	return 0;
 }
