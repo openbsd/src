@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.77 2001/09/07 19:35:37 mickey Exp $
+#	$OpenBSD: Makefile,v 1.78 2001/09/14 06:03:11 fgsch Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -107,9 +107,9 @@ cross-tools:	cross-helpers cross-dirs cross-includes cross-binutils \
 CROSSDIR=	${DESTDIR}/usr/cross/${TARGET}
 CROSSENV=	AR=${CROSSDIR}/usr/bin/ar AS=${CROSSDIR}/usr/bin/as \
 		CC=${CROSSDIR}/usr/bin/cc CPP=${CROSSDIR}/usr/bin/cpp \
+		CXX=${CROSSDIR}/usr/bin/c++ \
 		LD=${CROSSDIR}/usr/bin/ld NM=${CROSSDIR}/usr/bin/nm \
-		LORDER=${CROSSDIR}/usr/bin/lorder \
-		RANLIB=${CROSSDIR}/usr/bin/ranlib \
+		LORDER=/usr/bin/lorder RANLIB=${CROSSDIR}/usr/bin/ranlib \
 		SIZE=${CROSSDIR}/usr/bin/size STRIP=${CROSSDIR}/usr/bin/strip \
 		HOSTCC=cc
 CROSSPATH=	${PATH}:${CROSSDIR}/usr/bin
@@ -136,15 +136,14 @@ cross-dirs:	${CROSSDIR}/stamp.dirs
 	@-mkdir -p ${CROSSDIR}
 	@-mkdir -p ${CROSSDIR}/usr/obj
 	@-mkdir -p ${CROSSDIR}/usr/bin
-	@-mkdir -p ${CROSSDIR}/usr/include
 	@-mkdir -p ${CROSSDIR}/usr/include/kerberosIV
 	@-mkdir -p ${CROSSDIR}/usr/include/kerberosV
-	@-mkdir -p ${CROSSDIR}/usr/lib
+	@-mkdir -p ${CROSSDIR}/usr/lib/apache/include/xml
 	@-mkdir -p ${CROSSDIR}/usr/libexec
 	@-mkdir -p ${CROSSDIR}/var/db
 	@-mkdir -p ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`
 	@ln -sf ${CROSSDIR}/usr/include \
-		${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/include
+	    ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/include
 	@ln -sf ${CROSSDIR}/usr/lib \
 	    ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/lib
 	@-mkdir -p ${CROSSDIR}/usr/obj
@@ -179,10 +178,7 @@ cross-binutils-new:	cross-dirs
 	    --prefix ${CROSSDIR}/usr \
 	    --disable-nls --disable-gdbtk --disable-commonbfdlib \
 	    --target `cat ${CROSSDIR}/TARGET_CANON` && \
-	    ${MAKE} CFLAGS="${CFLAGS}" && ${MAKE} install ) && \
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 755 \
-	    ${.CURDIR}/usr.bin/lorder/lorder.sh \
-	    ${CROSSDIR}/usr/bin/lorder
+	    ${MAKE} CFLAGS="${CFLAGS}" && ${MAKE} install )
 
 cross-binutils-old: cross-gas cross-ar cross-ld cross-strip cross-size \
 	cross-ranlib cross-nm
@@ -290,15 +286,18 @@ cross-gcc:	cross-dirs
 	(cd ${CROSSDIR}/usr/obj/gnu/egcs/gcc; \
 	    /bin/sh ${.CURDIR}/gnu/egcs/gcc/configure \
 	    --prefix ${CROSSDIR}/usr \
-	    --target `cat ${CROSSDIR}/TARGET_CANON` && \
-	    PATH=${CROSSPATH} ${MAKE} BISON=yacc LANGUAGES=c \
+	    --target `cat ${CROSSDIR}/TARGET_CANON` \
+	    --with-gxx-include-dir=${CROSSDIR}/usr/include/g++ && \
+	    PATH=${CROSSPATH} ${MAKE} BISON=yacc LANGUAGES="c c++" \
 	    LDFLAGS=${LDSTATIC} build_infodir=. \
 	    GCC_FOR_TARGET="./xgcc -B./ -I${CROSSDIR}/usr/include" && \
-	    ${MAKE} BISON=yacc LANGUAGES=c LDFLAGS=${LDSTATIC} \
+	    ${MAKE} BISON=yacc LANGUAGES="c c++" LDFLAGS=${LDSTATIC} \
 	    GCC_FOR_TARGET="./xgcc -B./ -I${CROSSDIR}/usr/include" \
 	    build_infodir=. INSTALL_MAN= INSTALL_HEADERS_DIR= install)
 	ln -sf ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-gcc \
 	    ${CROSSDIR}/usr/bin/cc
+	ln -sf ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-g++ \
+	    ${CROSSDIR}/usr/bin/c++
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 	    ${CROSSDIR}/usr/obj/gnu/egcs/gcc/cpp \
 	    ${CROSSDIR}/usr/libexec/cpp
