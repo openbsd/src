@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.78 2002/06/09 16:26:11 itojun Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.79 2002/06/20 03:49:02 deraadt Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -157,9 +157,8 @@ udp_input(struct mbuf *m, ...)
 	register struct udphdr *uh;
 	register struct inpcb *inp;
 	struct mbuf *opts = 0;
-	int len;
 	struct ip save_ip;
-	int iphlen;
+	int iphlen, len;
 	va_list ap;
 	u_int16_t savesum;
 	union {
@@ -250,7 +249,7 @@ udp_input(struct mbuf *m, ...)
 	len = ntohs((u_int16_t)uh->uh_ulen);
 	if (m->m_pkthdr.len - iphlen != len) {
 		if (len > (m->m_pkthdr.len - iphlen) ||
-			len < sizeof(struct udphdr)) {
+		    len < sizeof(struct udphdr)) {
 			udpstat.udps_badlen++;
 			goto bad;
 		}
@@ -297,7 +296,7 @@ udp_input(struct mbuf *m, ...)
 			}
 
 			bzero(((struct ipovly *)ip)->ih_x1,
-			      sizeof ((struct ipovly *)ip)->ih_x1);
+			    sizeof ((struct ipovly *)ip)->ih_x1);
 			((struct ipovly *)ip)->ih_len = uh->uh_ulen;
 
 			if ((uh->uh_sum = in_cksum(m, len +
@@ -354,12 +353,11 @@ udp_input(struct mbuf *m, ...)
 #ifdef INET6
 	if ((ipv6 && IN6_IS_ADDR_MULTICAST(&ipv6->ip6_dst)) ||
 	    (ip && IN_MULTICAST(ip->ip_dst.s_addr)) ||
-	    (ip && in_broadcast(ip->ip_dst, m->m_pkthdr.rcvif)))
+	    (ip && in_broadcast(ip->ip_dst, m->m_pkthdr.rcvif))) {
 #else /* INET6 */
 	if (IN_MULTICAST(ip->ip_dst.s_addr) ||
-	    in_broadcast(ip->ip_dst, m->m_pkthdr.rcvif))
+	    in_broadcast(ip->ip_dst, m->m_pkthdr.rcvif)) {
 #endif /* INET6 */
-	{
 		struct socket *last;
 		/*
 		 * Deliver a multicast or broadcast datagram to *all* sockets
@@ -415,7 +413,7 @@ udp_input(struct mbuf *m, ...)
 					if (!IN6_ARE_ADDR_EQUAL(&inp->inp_faddr6,
 					    &ipv6->ip6_src) ||
 					    inp->inp_fport != uh->uh_sport)
-			        continue;
+						continue;
 			} else
 #endif /* INET6 */
 			if (inp->inp_faddr.s_addr != INADDR_ANY) {
@@ -522,7 +520,7 @@ udp_input(struct mbuf *m, ...)
 				*ip = save_ip;
 				uh->uh_sum = savesum;
 				icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_PORT,
-					0, 0);
+				    0, 0);
 			}
 			return;
 		}
@@ -530,10 +528,10 @@ udp_input(struct mbuf *m, ...)
 
 #ifdef IPSEC
 	mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE, NULL);
-        s = splnet();
+	s = splnet();
 	if (mtag != NULL) {
 		tdbi = (struct tdb_ident *)(mtag + 1);
-	        tdb = gettdb(tdbi->spi, &tdbi->dst, tdbi->proto);
+		tdb = gettdb(tdbi->spi, &tdbi->dst, tdbi->proto);
 	} else
 		tdb = NULL;
 	ipsp_spd_lookup(m, srcsa.sa.sa_family, iphlen, &error,
@@ -547,7 +545,7 @@ udp_input(struct mbuf *m, ...)
 	if (inp->inp_tdb_in != tdb &&
 	    (inp->inp_socket->so_state & SS_ISCONNECTED)) {
 		if (tdb) {
-		        tdb_add_inp(tdb, inp, 1);
+			tdb_add_inp(tdb, inp, 1);
 			if (inp->inp_ipo == NULL) {
 				inp->inp_ipo = ipsec_add_policy(inp,
 				    srcsa.sa.sa_family, IPSP_DIRECTION_OUT);
@@ -574,12 +572,12 @@ udp_input(struct mbuf *m, ...)
 				tdb->tdb_remote_auth->ref_count++;
 			}
 		} else { /* Just reset */
-		        TAILQ_REMOVE(&inp->inp_tdb_in->tdb_inp_in, inp,
-				     inp_tdb_in_next);
+			TAILQ_REMOVE(&inp->inp_tdb_in->tdb_inp_in, inp,
+			    inp_tdb_in_next);
 			inp->inp_tdb_in = NULL;
 		}
 	}
-        splx(s);
+	splx(s);
 #endif /*IPSEC */
 
 	opts = NULL;
@@ -733,7 +731,7 @@ udp6_ctlinput(cmd, sa, d)
 		sa6.sin6_addr = *ip6cp->ip6c_finaldst;
 		/* XXX: assuming M is valid in this case */
 		sa6.sin6_scope_id = in6_addr2scopeid(m->m_pkthdr.rcvif,
-						     ip6cp->ip6c_finaldst);
+		    ip6cp->ip6c_finaldst);
 #ifndef SCOPEDROUTING
 		if (in6_embedscope(ip6cp->ip6c_finaldst, &sa6, NULL, NULL)) {
 			/* should be impossible */
@@ -770,7 +768,7 @@ udp6_ctlinput(cmd, sa, d)
 		sa6_src.sin6_len = sizeof(sa6_src);
 		sa6_src.sin6_addr = ip6->ip6_src;
 		sa6_src.sin6_scope_id = in6_addr2scopeid(m->m_pkthdr.rcvif,
-							 &ip6->ip6_src);
+		    &ip6->ip6_src);
 #ifndef SCOPEDROUTING
 		if (in6_embedscope(&sa6_src.sin6_addr, &sa6_src, NULL, NULL)) {
 			/* should be impossible */
@@ -826,11 +824,11 @@ udp6_ctlinput(cmd, sa, d)
 		}
 
 		(void) in6_pcbnotify(&udbtable, (struct sockaddr *)&sa6,
-		     uh.uh_dport, (struct sockaddr *)&sa6_src,
-		     uh.uh_sport, cmd, cmdarg, notify);
+		    uh.uh_dport, (struct sockaddr *)&sa6_src,
+		    uh.uh_sport, cmd, cmdarg, notify);
 	} else {
 		(void) in6_pcbnotify(&udbtable, (struct sockaddr *)&sa6, 0,
-		     (struct sockaddr *)&sa6_any, 0, cmd, cmdarg, notify);
+		    (struct sockaddr *)&sa6_any, 0, cmd, cmdarg, notify);
 	}
 }
 #endif
@@ -904,13 +902,13 @@ udp_output(struct mbuf *m, ...)
 	}
 
 	if (addr) {
-	        /*
+		/*
 		 * Save current PCB flags because they may change during
 		 * temporary connection.
 		 */
-                pcbflags = inp->inp_flags;
+		pcbflags = inp->inp_flags;
 
-			laddr = inp->inp_laddr;
+		laddr = inp->inp_laddr;
 		if (inp->inp_faddr.s_addr != INADDR_ANY) {
 			error = EISCONN;
 			goto release;
@@ -962,7 +960,7 @@ udp_output(struct mbuf *m, ...)
 		m->m_pkthdr.csum |= M_UDPV4_CSUM_OUT;
 		ui->ui_sum = in_cksum_phdr(ui->ui_src.s_addr,
 		    ui->ui_dst.s_addr, htons((u_int16_t)len +
-			sizeof (struct udphdr) + IPPROTO_UDP));
+		    sizeof (struct udphdr) + IPPROTO_UDP));
 	} else
 		ui->ui_sum = 0;
 	((struct ip *)ui)->ip_len = sizeof (struct udpiphdr) + len;
@@ -971,15 +969,14 @@ udp_output(struct mbuf *m, ...)
 
 	udpstat.udps_opackets++;
 	error = ip_output(m, inp->inp_options, &inp->inp_route,
-		inp->inp_socket->so_options &
-		(SO_DONTROUTE | SO_BROADCAST),
-		inp->inp_moptions, inp, NULL);
+	    inp->inp_socket->so_options & (SO_DONTROUTE | SO_BROADCAST),
+	    inp->inp_moptions, inp, NULL);
 
 bail:
 	if (addr) {
 		in_pcbdisconnect(inp);
-                inp->inp_flags = pcbflags;
-			inp->inp_laddr = laddr;
+		inp->inp_flags = pcbflags;
+		inp->inp_laddr = laddr;
 		splx(s);
 	}
 	if (control)

@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.6 2002/06/18 23:06:57 angelos Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.7 2002/06/20 03:49:02 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -316,9 +316,9 @@ ipcomp_input_cb(op)
 			m_adj(m1->m_next, roff + hlen - m1->m_len);
 
 			/*
-		         * The second mbuf is guaranteed not to have a
-		         * pkthdr...
-		         */
+			 * The second mbuf is guaranteed not to have a
+			 * pkthdr...
+			 */
 			m->m_pkthdr.len -= (roff + hlen - m1->m_len);
 		}
 		/* Now, let's unlink the mbuf chain for a second... */
@@ -334,8 +334,8 @@ ipcomp_input_cb(op)
 		m1->m_next = mo;
 	} else {
 		bcopy(mtod(m1, u_char *) + roff + hlen,
-		      mtod(m1, u_char *) + roff,
-		      m1->m_len - (roff + hlen));
+		    mtod(m1, u_char *) + roff,
+		    m1->m_len - (roff + hlen));
 		m1->m_len -= hlen;
 		m->m_pkthdr.len -= hlen;
 	}
@@ -472,13 +472,13 @@ ipcomp_output(m, tdb, mp, skip, protoff)
 		tdb->tdb_flags &= ~TDBF_SOFT_BYTES;	/* Turn off checking */
 	}
 	/*
-         * Loop through mbuf chain; if we find an M_EXT mbuf with
-         * more than one reference, replace the rest of the chain.
-         */
+	 * Loop through mbuf chain; if we find an M_EXT mbuf with
+	 * more than one reference, replace the rest of the chain.
+	 */
 	mo = NULL;
 	mi = m;
 	while (mi != NULL &&
-	       (!(mi->m_flags & M_EXT) || !MCLISREFERENCED(mi))) {
+	    (!(mi->m_flags & M_EXT) || !MCLISREFERENCED(mi))) {
 		mo = mi;
 		mi = mi->m_next;
 	}
@@ -573,7 +573,7 @@ ipcomp_output(m, tdb, mp, skip, protoff)
 
 	/* IPsec-specific opaque crypto info */
 	MALLOC(tc, struct tdb_crypto *, sizeof(struct tdb_crypto),
-	       M_XDATA, M_NOWAIT);
+	    M_XDATA, M_NOWAIT);
 	if (tc == NULL) {
 		m_freem(m);
 		crypto_freereq(crp);
