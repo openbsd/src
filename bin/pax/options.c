@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.37 1999/05/23 17:19:22 aaron Exp $	*/
+/*	$OpenBSD: options.c,v 1.38 1999/07/04 18:21:11 espie Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.37 1999/05/23 17:19:22 aaron Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.38 1999/07/04 18:21:11 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -613,7 +613,7 @@ tar_options(argc, argv)
 	 * process option flags
 	 */
 	while ((c = getoldopt(argc, argv,
-	    "b:cef:hmopruts:vwxzBC:HLOPXZ014578"))
+	    "b:cef:hmopqruts:vwxzBC:HLOPXZ014578"))
 	    != -1) {
 		switch(c) {
 		case 'b':
@@ -677,6 +677,12 @@ tar_options(argc, argv)
 			 */
 			pmode = 1;
 			pids = 1;
+			break;
+		case 'q':
+			/*
+			 * select first match for a pattern only
+			 */
+			nflag = 1;
 			break;
 		case 'r':
 		case 'u':
@@ -1495,7 +1501,7 @@ void
 tar_usage()
 #endif
 {
-	(void)fputs("usage: tar -{txru}[cevfbmopswzBHLPXZ014578] [tapefile] ",
+	(void)fputs("usage: tar -{txru}[cevfbmopqswzBHLPXZ014578] [tapefile] ",
 		 stderr);
 	(void)fputs("[blocksize] [replstr] [-C directory] file1 file2...\n",
 	    stderr);

@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: tar.1,v 1.20 1998/12/15 01:20:25 aaron Exp $
+.\"	$OpenBSD: tar.1,v 1.21 1999/07/04 18:21:12 espie Exp $
 .\"
 .Dd June 11, 1996
 .Dt TAR 1
@@ -38,7 +38,7 @@
 .Sh SYNOPSIS
 .Nm tar
 .Sm off
-.Oo \&- Oc {crtux} Op Fl befhmopvwzHLOPXZ014578
+.Oo \&- Oc {crtux} Op Fl befhmopqvwzHLOPXZ014578
 .Sm on
 .Op Ar archive
 .Op Ar blocksize
@@ -121,6 +121,14 @@ The setuid and setgid bits are only preserved if the user is
 the superuser.  Only meaningful in conjunction with the
 .Fl x
 flag.
+.It Fl q
+Select the first archive member that matches each
+.Ar pattern
+operand.
+No more than one archive member is matched for each
+.Ar pattern .
+When members of type directory are matched, the file hierarchy rooted at that
+directory is also matched.
 .It Fl s Ar replstr
 Modify the file or archive member names specified by the
 .Ar pattern
