@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.31 1997/09/03 04:32:43 weingart Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.32 1997/09/03 04:59:58 weingart Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -44,7 +44,7 @@
 extern int debug;
 
 struct biosdisk {
-	u_int	dinfo;
+	u_int32_t	dinfo;
 	dev_t	bsddev;
 	int	biosdev;
 	int	edd_flags;
@@ -232,7 +232,7 @@ biosopen(struct open_file *f, ...)
 	BIOS_vars.bios_dev = bd->biosdev;
 	bd->dinfo = biosdinfo(bd->biosdev);
 	if (!bd->dinfo)
-		bd->dinfo = 0x0118; /* fake geometry */
+		bd->dinfo = 0x01014f11; /* fake geometry */
 	/* pass c: geometry for floppy */
 	BIOS_vars.bios_geometry = (bd->biosdev & 0x80)? bd->dinfo
 		: biosdinfo(0x80);
