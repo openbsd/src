@@ -115,7 +115,7 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri)
 int
 crypto_freesession(u_int64_t sid)
 {
-    u_int32_t hid, lid;
+    u_int32_t hid;
     int err = 0;
 
     if (crypto_drivers == NULL)
@@ -123,7 +123,6 @@ crypto_freesession(u_int64_t sid)
 
     /* Determine two IDs */
     hid = (sid >> 31) & 0xffffffff;
-    lid = sid & 0xffffffff;
 
     if (hid >= crypto_drivers_num)
       return ENOENT;
@@ -133,7 +132,7 @@ crypto_freesession(u_int64_t sid)
 
     /* Call the driver cleanup routine, if available */
     if (crypto_drivers[hid].cc_freesession)
-      err = crypto_drivers[hid].cc_freesession(lid);
+      err = crypto_drivers[hid].cc_freesession(sid);
 
     /*
      * If this was the last session of a driver marked as invalid, make
@@ -228,7 +227,7 @@ crypto_register(u_int32_t driverid, int alg, void *newses, void *freeses,
 	crypto_drivers[driverid].cc_process =
 			(int (*) (struct cryptop *)) process;
 	crypto_drivers[driverid].cc_freesession =
-			(int (*) (u_int32_t)) freeses;
+			(int (*) (u_int64_t)) freeses;
     }
 
     return 0;

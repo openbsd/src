@@ -145,7 +145,7 @@ struct cryptocap
 
     int             (*cc_newsession) (u_int32_t *, struct cryptoini *);
     int             (*cc_process) (struct cryptop *);
-    int             (*cc_freesession) (u_int32_t);
+    int             (*cc_freesession) (u_int64_t);
 };
 
 

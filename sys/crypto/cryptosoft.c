@@ -564,11 +564,12 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
  * Free a session.
  */
 int
-swcr_freesession(u_int32_t sid)
+swcr_freesession(u_int64_t tid)
 {
     struct swcr_data *swd;
     struct enc_xform *txf;
     struct auth_hash *axf;
+    u_int32_t sid = (tid >> 31) & 0xffff;
 
     if ((sid > swcr_sesnum) || (swcr_sessions == NULL) ||
 	(swcr_sessions[sid] == NULL))
