@@ -1,5 +1,5 @@
-/*	$OpenBSD: amiga_init.c,v 1.14 1997/01/16 09:23:14 niklas Exp $	*/
-/*	$NetBSD: amiga_init.c,v 1.53 1996/11/30 01:20:14 is Exp $	*/
+/*	$OpenBSD: amiga_init.c,v 1.15 1997/09/08 19:42:28 niklas Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.56 1997/06/10 18:22:24 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -310,7 +310,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 		    (cd->rom.flags & ERT_Z3_SSMASK) == 0)
 			cd->size = 0x10000 <<
 			    ((cd->rom.type - 1) & ERT_MEMMASK);
-		RELOC(ZBUSAVAIL, u_int) += amiga_round_page(cd->size);
+		RELOC(ZBUSAVAIL, u_int) += m68k_round_page(cd->size);
 	}
 
 	/*
@@ -328,7 +328,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 	vend   = fphysize;
 	avail  = vend;
 	vstart = (u_int) end_loaded;
-	vstart = amiga_round_page (vstart);
+	vstart = m68k_round_page (vstart);
 	pstart = vstart + fphystart;
 	pend   = vend   + fphystart;
 	avail -= vstart;
@@ -995,7 +995,7 @@ start_c_cleanup()
 		delaydivisor = (1024 * 3) / 40;	/* 40 MHz 68040 */
 
 	else if (machineid & AMIGA_68030)
-		delaydivisor = (1024 * 3) / 50;	/* 50 MHz 68030 */
+		delaydivisor = (1024 * 8) / 50;	/* 50 MHz 68030 */
 
 	else
 		delaydivisor = (1024 * 8) / 33; /* 33 MHz 68020 */
