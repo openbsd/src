@@ -76,87 +76,9 @@ pchbmatch(parent, match, aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	/*
-	 * Match all known PCI host chipsets.
-	 */
-	switch (PCI_VENDOR(pa->pa_id)) {
-	case PCI_VENDOR_INTEL:
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_INTEL_CDC:
-		case PCI_PRODUCT_INTEL_PCMC:
-		case PCI_PRODUCT_INTEL_82437FX:
-		case PCI_PRODUCT_INTEL_82437MX:
-		case PCI_PRODUCT_INTEL_82437VX:
-		case PCI_PRODUCT_INTEL_82439HX:
-		case PCI_PRODUCT_INTEL_82439TX:
-		case PCI_PRODUCT_INTEL_82441FX:
-		case PCI_PRODUCT_INTEL_82443LX:
-		case PCI_PRODUCT_INTEL_PCI450_PB:
-		case PCI_PRODUCT_INTEL_PCI450_MC:
-			return (1);
-		}
-		break;
-	case PCI_VENDOR_UMC:
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_UMC_UM8881F:
-		case PCI_PRODUCT_UMC_UM8891N:
-			return (1);
-		}
-		break;
-	case PCI_VENDOR_ACC:
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_ACC_2188:
-			return (1);
-		}
-		break;
-	case PCI_VENDOR_ACER:
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_ACER_M1435:
-			return (1);
-		}
-		break;
-	case PCI_VENDOR_ALI:
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_ALI_M1445:
-		case PCI_PRODUCT_ALI_M1451:
-		case PCI_PRODUCT_ALI_M1461:
-			return (1);
-		}
-		break;
-	case PCI_VENDOR_COMPAQ:
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_COMPAQ_TRIFLEX1:
-		case PCI_PRODUCT_COMPAQ_TRIFLEX2:
-		case PCI_PRODUCT_COMPAQ_TRIFLEX4:
-			return (1);
-		}
-		break;
-	case PCI_VENDOR_NEXGEN:
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_NEXGEN_NX82C501:
-			return (1);
-		}
-		break;
-	case PCI_VENDOR_NKK:
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_NKK_NDR4600:
-			return (1);
-		}
-		break;
-	case PCI_VENDOR_TOSHIBA:
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_TOSHIBA_R4X00:
-			return (1);
-		}
-		break;
-	case PCI_VENDOR_VIATECH:
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_VIATECH_VT82C570M:
-		case PCI_PRODUCT_VIATECH_VT82C595:
-			return (1);
-		}
-		break;
-	}
+	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
+	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_HOST)
+		return (1);
 
 	return (0);
 }
