@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.100 2004/09/18 06:41:33 pvalchev Exp $
+#	$OpenBSD: GENERIC,v 1.101 2004/09/21 19:19:57 drahn Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -24,7 +24,7 @@ upa0	at mainbus0
 
 # Bus types found on SPARC systems.
 
-sbus0	at mainbus0				# Ultra 1
+sbus*	at mainbus0				# Ultra 1/E4500
 psycho*	at mainbus0
 pci*	at psycho?				#
 schizo*	at mainbus0
