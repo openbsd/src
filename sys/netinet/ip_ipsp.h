@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.98 2001/05/30 16:43:12 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.99 2001/05/31 23:45:50 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -88,6 +88,16 @@ union sockaddr_union
 #define IPSEC_DEFAULT_DEF_ENC                   "aes"
 #define IPSEC_DEFAULT_DEF_AUTH                   "hmac-sha1"
 #define IPSEC_DEFAULT_EXPIRE_ACQUIRE            30
+
+/* Status for IPsec processing done on IPsec-aware NICs */
+struct ipsec_nic_crypto
+{
+  u_int8_t	nic_status;	/* Bitfield */
+};
+
+#define	IPSEC_NIC_STATUS_OK		0
+#define	IPSEC_NIC_HASH_FAILED		0x0001
+#define	IPSEC_NIC_ BAD_ESP_FORMAT	0x0002
 
 struct sockaddr_encap
 {
