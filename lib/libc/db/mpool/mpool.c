@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpool.c,v 1.7 2002/01/31 03:51:21 millert Exp $	*/
+/*	$OpenBSD: mpool.c,v 1.8 2002/02/01 18:13:33 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)mpool.c	8.7 (Berkeley) 11/2/95";
 #else
-static char rcsid[] = "$OpenBSD: mpool.c,v 1.7 2002/01/31 03:51:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: mpool.c,v 1.8 2002/02/01 18:13:33 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -429,6 +429,15 @@ mpool_write(mp, bp)
 	off = mp->pagesize * bp->pgno;
 	if (pwrite(mp->fd, bp->page, mp->pagesize, off) != mp->pagesize)
 		return (RET_ERROR);
+
+	/*
+	 * Re-run through the input filter since this page may soon be
+	 * accessed via the cache, and whatever the user's output filter
+	 * did may screw things up if we don't let the input filter
+	 * restore the in-core copy.
+	 */
+	if (mp->pgin)
+		(mp->pgin)(mp->pgcookie, bp->pgno, bp->page);
 
 	bp->flags &= ~MPOOL_DIRTY;
 	return (RET_SUCCESS);
