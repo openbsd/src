@@ -358,7 +358,7 @@ Supported hardware {:-include-:}:
 		Lan Media Corporation SSI (T1)/HSSI/DS1/DS3 WAN
 		interfaces
 	Cryptography Accelerators
-		Broadcom Bluesteelnet uBsec 5501, 5601, 5805
+		Broadcom Bluesteelnet uBsec 5501, 5601, 5805, 5820
 		Hi/Fn 7751-based boards, including:
 			GTGI PowerCrypt Encryption Accelerator
 			NETSEC 7751
