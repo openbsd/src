@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.89 2003/12/03 13:28:36 markus Exp $
+#	$OpenBSD: netstart,v 1.90 2003/12/04 01:19:37 millert Exp $
 
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
@@ -136,7 +136,11 @@ bridgestart() {
 	fi
 	brconfig $1 > /dev/null 2>&1
 	if [ "$?" != "0" ]; then
-		return
+		# Try to create interface if it does not exist
+		ifconfig $if create > /dev/null 2>&1
+		if [ "$?" != "0" ]; then
+			return
+		fi
 	fi
 
 	# Now parse the bridgename.* file
