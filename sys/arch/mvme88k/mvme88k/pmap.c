@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.114 2004/05/07 15:30:04 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.115 2004/05/23 21:09:50 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -270,21 +270,28 @@ m88k_protection(pmap_t pmap, vm_prot_t prot)
 void
 flush_atc_entry(long users, vaddr_t va, boolean_t kernel)
 {
+#if NCPUS > 1
 	int cpu;
-	long tusers = users;
+
+	if (users == 0)
+		return;
 
 #ifdef DEBUG
-	if ((tusers != 0) && (ff1(tusers) >= MAX_CPUS)) {
+	if (ff1(users) >= MAX_CPUS) {
 		panic("flush_atc_entry: invalid ff1 users = %d", ff1(tusers));
 	}
 #endif
 
-	while ((cpu = ff1(tusers)) != 32) {
+	while ((cpu = ff1(users)) != 32) {
 		if (cpu_sets[cpu]) { /* just checking to make sure */
 			cmmu_flush_tlb(cpu, kernel, va, PAGE_SIZE);
 		}
-		tusers &= ~(1 << cpu);
+		users &= ~(1 << cpu);
 	}
+#else
+	if (users != 0)
+		cmmu_flush_tlb(cpu_number(), kernel, va, PAGE_SIZE);
+#endif
 }
 
 /*
