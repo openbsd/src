@@ -1,5 +1,5 @@
-/*	$OpenBSD: conf.c,v 1.4 1998/11/20 07:38:30 niklas Exp $	*/
-/*	$EOM: conf.c,v 1.10 1998/11/20 07:19:21 niklas Exp $	*/
+/*	$OpenBSD: conf.c,v 1.5 1998/12/21 21:52:56 niklas Exp $	*/
+/*	$EOM: conf.c,v 1.11 1998/12/21 21:28:55 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -133,13 +133,6 @@ conf_parse_line (char *line, size_t sz)
   static int ln = 0;
 
   ln++;
-  for (i = 0; line[i]; i++)
-    if (!isprint (*cp))
-      {
-	log_print ("conf_parse_line: %d:"
-		   "ignoring line %d with non-printable characters", ln);
-	return;
-      }
 
   /* Lines starting with '#' or ';' are comments.  */
   if (*line == '#' || *line == ';')
