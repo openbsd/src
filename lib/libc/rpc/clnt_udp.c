@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: clnt_udp.c,v 1.16 2000/08/24 17:03:15 deraadt Exp $";
+static char *rcsid = "$OpenBSD: clnt_udp.c,v 1.17 2001/09/15 13:51:00 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -51,12 +51,13 @@ static char *rcsid = "$OpenBSD: clnt_udp.c,v 1.16 2000/08/24 17:03:15 deraadt Ex
 /*
  * UDP bases client side rpc operations
  */
-static enum clnt_stat	clntudp_call();
-static void		clntudp_abort();
-static void		clntudp_geterr();
-static bool_t		clntudp_freeres();
-static bool_t           clntudp_control();
-static void		clntudp_destroy();
+static enum clnt_stat	clntudp_call(CLIENT *, u_long, xdrproc_t, caddr_t,
+			    xdrproc_t, caddr_t, struct timeval);
+static void		clntudp_abort(CLIENT *);
+static void		clntudp_geterr(CLIENT *, struct rpc_err *);
+static bool_t		clntudp_freeres(CLIENT *, xdrproc_t, caddr_t);
+static bool_t           clntudp_control(CLIENT *, u_int, void *);
+static void		clntudp_destroy(CLIENT *);
 
 static struct clnt_ops udp_ops = {
 	clntudp_call,
@@ -108,12 +109,12 @@ clntudp_bufcreate(raddr, program, version, wait, sockp, sendsz, recvsz)
 	u_long program;
 	u_long version;
 	struct timeval wait;
-	register int *sockp;
+	int *sockp;
 	u_int sendsz;
 	u_int recvsz;
 {
 	CLIENT *cl;
-	register struct cu_data *cu = NULL;
+	struct cu_data *cu = NULL;
 	struct timeval now;
 	struct rpc_msg call_msg;
 
@@ -198,7 +199,7 @@ clntudp_create(raddr, program, version, wait, sockp)
 	u_long program;
 	u_long version;
 	struct timeval wait;
-	register int *sockp;
+	int *sockp;
 {
 
 	return(clntudp_bufcreate(raddr, program, version, wait, sockp,
@@ -207,7 +208,7 @@ clntudp_create(raddr, program, version, wait, sockp)
 
 static enum clnt_stat 
 clntudp_call(cl, proc, xargs, argsp, xresults, resultsp, utimeout)
-	register CLIENT	*cl;		/* client handle */
+	CLIENT	*cl;		/* client handle */
 	u_long		proc;		/* procedure number */
 	xdrproc_t	xargs;		/* xdr routine for args */
 	caddr_t		argsp;		/* pointer to args */
@@ -215,10 +216,10 @@ clntudp_call(cl, proc, xargs, argsp, xresults, resultsp, utimeout)
 	caddr_t		resultsp;	/* pointer to results */
 	struct timeval	utimeout;	/* seconds to wait before giving up */
 {
-	register struct cu_data *cu = (struct cu_data *)cl->cl_private;
-	register XDR *xdrs;
-	register int outlen;
-	register int inlen;
+	struct cu_data *cu = (struct cu_data *)cl->cl_private;
+	XDR *xdrs;
+	int outlen;
+	int inlen;
 	int fromlen;
 	fd_set *fds, readfds;
 	struct sockaddr_in from;
@@ -402,7 +403,7 @@ clntudp_geterr(cl, errp)
 	CLIENT *cl;
 	struct rpc_err *errp;
 {
-	register struct cu_data *cu = (struct cu_data *)cl->cl_private;
+	struct cu_data *cu = (struct cu_data *)cl->cl_private;
 
 	*errp = cu->cu_error;
 }
@@ -414,26 +415,25 @@ clntudp_freeres(cl, xdr_res, res_ptr)
 	xdrproc_t xdr_res;
 	caddr_t res_ptr;
 {
-	register struct cu_data *cu = (struct cu_data *)cl->cl_private;
-	register XDR *xdrs = &(cu->cu_outxdrs);
+	struct cu_data *cu = (struct cu_data *)cl->cl_private;
+	XDR *xdrs = &(cu->cu_outxdrs);
 
 	xdrs->x_op = XDR_FREE;
 	return ((*xdr_res)(xdrs, res_ptr));
 }
 
 static void 
-clntudp_abort(/*h*/)
-	/*CLIENT *h;*/
+clntudp_abort(CLIENT *clnt)
 {
 }
 
 static bool_t
 clntudp_control(cl, request, info)
 	CLIENT *cl;
-	int request;
-	char *info;
+	u_int request;
+	void *info;
 {
-	register struct cu_data *cu = (struct cu_data *)cl->cl_private;
+	struct cu_data *cu = (struct cu_data *)cl->cl_private;
 
 	switch (request) {
 	case CLSET_TIMEOUT:
@@ -458,10 +458,9 @@ clntudp_control(cl, request, info)
 }
 	
 static void
-clntudp_destroy(cl)
-	CLIENT *cl;
+clntudp_destroy(CLIENT *cl)
 {
-	register struct cu_data *cu = (struct cu_data *)cl->cl_private;
+	struct cu_data *cu = (struct cu_data *)cl->cl_private;
 
 	if (cu->cu_closeit) {
 		(void)close(cu->cu_sock);

@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: pmap_getport.c,v 1.6 1997/09/22 05:11:08 millert Exp $";
+static char *rcsid = "$OpenBSD: pmap_getport.c,v 1.7 2001/09/15 13:51:01 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -62,7 +62,7 @@ pmap_getport(address, program, version, protocol)
 {
 	u_short port = 0;
 	int sock = -1;
-	register CLIENT *client;
+	CLIENT *client;
 	struct pmap parms;
 
 	address->sin_port = htons(PMAPPORT);

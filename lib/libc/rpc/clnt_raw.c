@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: clnt_raw.c,v 1.9 2001/03/03 06:50:28 deraadt Exp $";
+static char *rcsid = "$OpenBSD: clnt_raw.c,v 1.10 2001/09/15 13:51:00 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -59,12 +59,13 @@ static struct clntraw_private {
 	u_int	mcnt;
 } *clntraw_private;
 
-static enum clnt_stat	clntraw_call();
-static void		clntraw_abort();
-static void		clntraw_geterr();
-static bool_t		clntraw_freeres();
-static bool_t		clntraw_control();
-static void		clntraw_destroy();
+static enum clnt_stat	clntraw_call(CLIENT *, u_long, xdrproc_t, caddr_t,
+			    xdrproc_t, caddr_t, struct timeval);
+static void		clntraw_abort(CLIENT *);
+static void		clntraw_geterr(CLIENT *, struct rpc_err *);
+static bool_t		clntraw_freeres(CLIENT *, xdrproc_t, caddr_t);
+static bool_t		clntraw_control(CLIENT *, u_int, void *);
+static void		clntraw_destroy(CLIENT *);
 
 static struct clnt_ops client_ops = {
 	clntraw_call,
@@ -85,7 +86,7 @@ clntraw_create(prog, vers)
 	u_long prog;
 	u_long vers;
 {
-	register struct clntraw_private *clp = clntraw_private;
+	struct clntraw_private *clp = clntraw_private;
 	struct rpc_msg call_msg;
 	XDR *xdrs = &clp->xdr_stream;
 	CLIENT	*client = &clp->client_object;
@@ -134,8 +135,8 @@ clntraw_call(h, proc, xargs, argsp, xresults, resultsp, timeout)
 	caddr_t resultsp;
 	struct timeval timeout;
 {
-	register struct clntraw_private *clp = clntraw_private;
-	register XDR *xdrs = &clp->xdr_stream;
+	struct clntraw_private *clp = clntraw_private;
+	XDR *xdrs = &clp->xdr_stream;
 	struct rpc_msg msg;
 	enum clnt_stat status;
 	struct rpc_err error;
@@ -206,7 +207,7 @@ call_again:
 }
 
 static void
-clntraw_geterr()
+clntraw_geterr(CLIENT *clnt, struct rpc_err *err)
 {
 }
 
@@ -217,8 +218,8 @@ clntraw_freeres(cl, xdr_res, res_ptr)
 	xdrproc_t xdr_res;
 	caddr_t res_ptr;
 {
-	register struct clntraw_private *clp = clntraw_private;
-	register XDR *xdrs = &clp->xdr_stream;
+	struct clntraw_private *clp = clntraw_private;
+	XDR *xdrs = &clp->xdr_stream;
 	bool_t rval;
 
 	if (clp == NULL) {
@@ -230,17 +231,17 @@ clntraw_freeres(cl, xdr_res, res_ptr)
 }
 
 static void
-clntraw_abort()
+clntraw_abort(CLIENT *clnt)
 {
 }
 
 static bool_t
-clntraw_control()
+clntraw_control(CLIENT *clnt, u_int i, void *v)
 {
 	return (FALSE);
 }
 
 static void
-clntraw_destroy()
+clntraw_destroy(CLIENT *clnt)
 {
 }

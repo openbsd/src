@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: clnt_perror.c,v 1.12 2001/08/18 22:37:21 deraadt Exp $";
+static char *rcsid = "$OpenBSD: clnt_perror.c,v 1.13 2001/09/15 13:51:00 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -45,7 +45,7 @@ static char *rcsid = "$OpenBSD: clnt_perror.c,v 1.12 2001/08/18 22:37:21 deraadt
 #include <rpc/auth.h>
 #include <rpc/clnt.h>
 
-static char *auth_errmsg();
+static char *auth_errmsg(enum auth_stat stat);
 #define CLNT_PERROR_BUFLEN 256
 
 static char *buf;

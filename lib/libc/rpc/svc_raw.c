@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: svc_raw.c,v 1.5 2001/03/03 06:50:28 deraadt Exp $";
+static char *rcsid = "$OpenBSD: svc_raw.c,v 1.6 2001/09/15 13:51:01 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -73,7 +73,7 @@ static struct xp_ops server_ops = {
 SVCXPRT *
 svcraw_create()
 {
-	register struct svcraw_private *srp = svcraw_private;
+	struct svcraw_private *srp = svcraw_private;
 
 	if (srp == NULL) {
 		srp = (struct svcraw_private *)calloc(1, sizeof (*srp));
@@ -101,8 +101,8 @@ svcraw_recv(xprt, msg)
 	SVCXPRT *xprt;
 	struct rpc_msg *msg;
 {
-	register struct svcraw_private *srp = svcraw_private;
-	register XDR *xdrs;
+	struct svcraw_private *srp = svcraw_private;
+	XDR *xdrs;
 
 	if (srp == NULL)
 		return (0);
@@ -120,8 +120,8 @@ svcraw_reply(xprt, msg)
 	SVCXPRT *xprt;
 	struct rpc_msg *msg;
 {
-	register struct svcraw_private *srp = svcraw_private;
-	register XDR *xdrs;
+	struct svcraw_private *srp = svcraw_private;
+	XDR *xdrs;
 
 	if (srp == NULL)
 		return (FALSE);
@@ -141,7 +141,7 @@ svcraw_getargs(xprt, xdr_args, args_ptr)
 	xdrproc_t xdr_args;
 	caddr_t args_ptr;
 {
-	register struct svcraw_private *srp = svcraw_private;
+	struct svcraw_private *srp = svcraw_private;
 
 	if (srp == NULL)
 		return (FALSE);
@@ -155,8 +155,8 @@ svcraw_freeargs(xprt, xdr_args, args_ptr)
 	xdrproc_t xdr_args;
 	caddr_t args_ptr;
 { 
-	register struct svcraw_private *srp = svcraw_private;
-	register XDR *xdrs;
+	struct svcraw_private *srp = svcraw_private;
+	XDR *xdrs;
 
 	if (srp == NULL)
 		return (FALSE);

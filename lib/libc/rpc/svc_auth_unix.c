@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: svc_auth_unix.c,v 1.6 1998/11/22 07:38:25 deraadt Exp $";
+static char *rcsid = "$OpenBSD: svc_auth_unix.c,v 1.7 2001/09/15 13:51:01 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -51,13 +51,13 @@ static char *rcsid = "$OpenBSD: svc_auth_unix.c,v 1.6 1998/11/22 07:38:25 deraad
  */
 enum auth_stat
 _svcauth_unix(rqst, msg)
-	register struct svc_req *rqst;
-	register struct rpc_msg *msg;
+	struct svc_req *rqst;
+	struct rpc_msg *msg;
 {
-	register enum auth_stat stat;
+	enum auth_stat stat;
 	XDR xdrs;
-	register struct authunix_parms *aup;
-	register int32_t *buf;
+	struct authunix_parms *aup;
+	int32_t *buf;
 	struct area {
 		struct authunix_parms area_aup;
 		char area_machname[MAX_MACHINE_NAME+1];
@@ -65,7 +65,7 @@ _svcauth_unix(rqst, msg)
 	} *area;
 	u_int auth_len;
 	u_int str_len, gid_len;
-	register u_int i;
+	u_int i;
 
 	area = (struct area *) rqst->rq_clntcred;
 	aup = &area->area_aup;

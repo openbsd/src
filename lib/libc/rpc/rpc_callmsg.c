@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: rpc_callmsg.c,v 1.6 2001/03/03 06:50:28 deraadt Exp $";
+static char *rcsid = "$OpenBSD: rpc_callmsg.c,v 1.7 2001/09/15 13:51:01 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -49,11 +49,11 @@ static char *rcsid = "$OpenBSD: rpc_callmsg.c,v 1.6 2001/03/03 06:50:28 deraadt 
  */
 bool_t
 xdr_callmsg(xdrs, cmsg)
-	register XDR *xdrs;
-	register struct rpc_msg *cmsg;
+	XDR *xdrs;
+	struct rpc_msg *cmsg;
 {
-	register int32_t *buf;
-	register struct opaque_auth *oa;
+	int32_t *buf;
+	struct opaque_auth *oa;
 
 	if (xdrs->x_op == XDR_ENCODE) {
 		if (cmsg->rm_call.cb_cred.oa_length > MAX_AUTH_BYTES) {

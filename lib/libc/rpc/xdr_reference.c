@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint) 
-static char *rcsid = "$OpenBSD: xdr_reference.c,v 1.3 1996/08/19 08:32:06 tholo Exp $";
+static char *rcsid = "$OpenBSD: xdr_reference.c,v 1.4 2001/09/15 13:51:01 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -57,13 +57,13 @@ static char *rcsid = "$OpenBSD: xdr_reference.c,v 1.3 1996/08/19 08:32:06 tholo 
  */
 bool_t
 xdr_reference(xdrs, pp, size, proc)
-	register XDR *xdrs;
+	XDR *xdrs;
 	caddr_t *pp;		/* the pointer to work on */
 	u_int size;		/* size of the object pointed to */
 	xdrproc_t proc;		/* xdr routine to handle the object */
 {
-	register caddr_t loc = *pp;
-	register bool_t stat;
+	caddr_t loc = *pp;
+	bool_t stat;
 
 	if (loc == NULL)
 		switch (xdrs->x_op) {
@@ -112,7 +112,7 @@ xdr_reference(xdrs, pp, size, proc)
  */
 bool_t
 xdr_pointer(xdrs,objpp,obj_size,xdr_obj)
-	register XDR *xdrs;
+	XDR *xdrs;
 	char **objpp;
 	u_int obj_size;
 	xdrproc_t xdr_obj;

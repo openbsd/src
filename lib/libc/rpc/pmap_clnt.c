@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: pmap_clnt.c,v 1.9 1998/08/29 18:57:17 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pmap_clnt.c,v 1.10 2001/09/15 13:51:00 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -46,9 +46,6 @@ static char *rcsid = "$OpenBSD: pmap_clnt.c,v 1.9 1998/08/29 18:57:17 deraadt Ex
 static struct timeval timeout = { 5, 0 };
 static struct timeval tottimeout = { 60, 0 };
 
-void clnt_perror();
-
-
 /*
  * Set a mapping between program,version and port.
  * Calls the pmap service remotely to do the mapping.
@@ -62,7 +59,7 @@ pmap_set(program, version, protocol, port)
 {
 	struct sockaddr_in myaddress;
 	int sock = -1;
-	register CLIENT *client;
+	CLIENT *client;
 	struct pmap parms;
 	bool_t rslt;
 
@@ -99,7 +96,7 @@ pmap_unset(program, version)
 {
 	struct sockaddr_in myaddress;
 	int sock = -1;
-	register CLIENT *client;
+	CLIENT *client;
 	struct pmap parms;
 	bool_t rslt;
 

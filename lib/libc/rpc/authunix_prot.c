@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: authunix_prot.c,v 1.3 1996/08/19 08:31:22 tholo Exp $";
+static char *rcsid = "$OpenBSD: authunix_prot.c,v 1.4 2001/09/15 13:51:00 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -49,8 +49,8 @@ static char *rcsid = "$OpenBSD: authunix_prot.c,v 1.3 1996/08/19 08:31:22 tholo 
  */
 bool_t
 xdr_authunix_parms(xdrs, p)
-	register XDR *xdrs;
-	register struct authunix_parms *p;
+	XDR *xdrs;
+	struct authunix_parms *p;
 {
 
 	if (xdr_u_long(xdrs, &(p->aup_time))

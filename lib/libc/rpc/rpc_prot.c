@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: rpc_prot.c,v 1.6 1998/03/19 00:27:21 millert Exp $";
+static char *rcsid = "$OpenBSD: rpc_prot.c,v 1.7 2001/09/15 13:51:01 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -58,8 +58,8 @@ struct opaque_auth _null_auth;
  */
 bool_t
 xdr_opaque_auth(xdrs, ap)
-	register XDR *xdrs;
-	register struct opaque_auth *ap;
+	XDR *xdrs;
+	struct opaque_auth *ap;
 {
 
 	if (xdr_enum(xdrs, &(ap->oa_flavor)))
@@ -73,8 +73,8 @@ xdr_opaque_auth(xdrs, ap)
  */
 bool_t
 xdr_des_block(xdrs, blkp)
-	register XDR *xdrs;
-	register des_block *blkp;
+	XDR *xdrs;
+	des_block *blkp;
 {
 	return (xdr_opaque(xdrs, (caddr_t)blkp, sizeof(des_block)));
 }
@@ -86,8 +86,8 @@ xdr_des_block(xdrs, blkp)
  */
 bool_t 
 xdr_accepted_reply(xdrs, ar)
-	register XDR *xdrs;   
-	register struct accepted_reply *ar;
+	XDR *xdrs;   
+	struct accepted_reply *ar;
 {
 
 	/* personalized union, rather than calling xdr_union */
@@ -113,8 +113,8 @@ xdr_accepted_reply(xdrs, ar)
  */
 bool_t 
 xdr_rejected_reply(xdrs, rr)
-	register XDR *xdrs;
-	register struct rejected_reply *rr;
+	XDR *xdrs;
+	struct rejected_reply *rr;
 {
 
 	/* personalized union, rather than calling xdr_union */
@@ -142,8 +142,8 @@ static struct xdr_discrim reply_dscrm[3] = {
  */
 bool_t
 xdr_replymsg(xdrs, rmsg)
-	register XDR *xdrs;
-	register struct rpc_msg *rmsg;
+	XDR *xdrs;
+	struct rpc_msg *rmsg;
 {
 	if (xdr_u_int32_t(xdrs, &(rmsg->rm_xid)) && 
 	    xdr_enum(xdrs, (enum_t *)&(rmsg->rm_direction)) &&
@@ -161,8 +161,8 @@ xdr_replymsg(xdrs, rmsg)
  */
 bool_t
 xdr_callhdr(xdrs, cmsg)
-	register XDR *xdrs;
-	register struct rpc_msg *cmsg;
+	XDR *xdrs;
+	struct rpc_msg *cmsg;
 {
 
 	cmsg->rm_direction = CALL;
@@ -180,8 +180,8 @@ xdr_callhdr(xdrs, cmsg)
 
 static void
 accepted(acpt_stat, error)
-	register enum accept_stat acpt_stat;
-	register struct rpc_err *error;
+	enum accept_stat acpt_stat;
+	struct rpc_err *error;
 {
 
 	switch (acpt_stat) {
@@ -218,8 +218,8 @@ accepted(acpt_stat, error)
 
 static void 
 rejected(rjct_stat, error)
-	register enum reject_stat rjct_stat;
-	register struct rpc_err *error;
+	enum reject_stat rjct_stat;
+	struct rpc_err *error;
 {
 
 	switch (rjct_stat) {
@@ -243,8 +243,8 @@ rejected(rjct_stat, error)
  */
 void
 _seterr_reply(msg, error)
-	register struct rpc_msg *msg;
-	register struct rpc_err *error;
+	struct rpc_msg *msg;
+	struct rpc_err *error;
 {
 
 	/* optimized for normal, SUCCESSful case */

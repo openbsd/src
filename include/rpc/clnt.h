@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt.h,v 1.4 1998/03/19 00:27:17 millert Exp $	*/
+/*	$OpenBSD: clnt.h,v 1.5 2001/09/15 13:51:00 deraadt Exp $	*/
 /*	$NetBSD: clnt.h,v 1.6 1995/04/29 05:27:58 cgd Exp $	*/
 
 /*
@@ -280,7 +280,7 @@ __END_DECLS
  *	struct sockaddr_in *raddr;
  *	u_long prog;
  *	u_long version;
- *	register int *sockp;
+ *	int *sockp;
  *	u_int sendsz;
  *	u_int recvsz;
  */

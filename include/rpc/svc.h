@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc.h,v 1.4 2001/03/03 06:50:27 deraadt Exp $	*/
+/*	$OpenBSD: svc.h,v 1.5 2001/09/15 13:51:00 deraadt Exp $	*/
 /*	$NetBSD: svc.h,v 1.9 1995/04/29 05:28:01 cgd Exp $	*/
 
 /*
@@ -95,7 +95,7 @@ typedef struct __rpc_svcxprt {
 		/* destroy this struct */
 		void	(*xp_destroy) __P((struct __rpc_svcxprt *));
 	} *xp_ops;
-	int		xp_addrlen;	 /* length of remote address */
+	socklen_t	xp_addrlen;	 /* length of remote address */
 	struct sockaddr_in xp_raddr;	 /* remote address */
 	struct opaque_auth xp_verf;	 /* raw response verifier */
 	caddr_t		xp_p1;		 /* private */

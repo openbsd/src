@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: svc_auth.c,v 1.4 1998/03/19 00:27:22 millert Exp $";
+static char *rcsid = "$OpenBSD: svc_auth.c,v 1.5 2001/09/15 13:51:01 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -50,8 +50,8 @@ static char *rcsid = "$OpenBSD: svc_auth.c,v 1.4 1998/03/19 00:27:22 millert Exp
  * 
  *	enum auth_stat
  *	flavorx_auth(rqst, msg)
- *		register struct svc_req *rqst; 
- *		register struct rpc_msg *msg;
+ *		struct svc_req *rqst; 
+ *		struct rpc_msg *msg;
  *
  */
 
@@ -89,10 +89,10 @@ static struct {
  */
 enum auth_stat
 _authenticate(rqst, msg)
-	register struct svc_req *rqst;
+	struct svc_req *rqst;
 	struct rpc_msg *msg;
 {
-	register int cred_flavor;
+	int cred_flavor;
 
 	rqst->rq_cred = msg->rm_call.cb_cred;
 	rqst->rq_xprt->xp_verf.oa_flavor = _null_auth.oa_flavor;

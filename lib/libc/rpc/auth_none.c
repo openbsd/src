@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: auth_none.c,v 1.6 2001/03/03 06:50:27 deraadt Exp $";
+static char *rcsid = "$OpenBSD: auth_none.c,v 1.7 2001/09/15 13:51:00 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -49,11 +49,11 @@ static char *rcsid = "$OpenBSD: auth_none.c,v 1.6 2001/03/03 06:50:27 deraadt Ex
 /*
  * Authenticator operations routines
  */
-static void	authnone_destroy();
-static void	authnone_verf();
-static bool_t	authnone_marshal();
-static bool_t	authnone_refresh();
-static bool_t	authnone_validate();
+static void	authnone_destroy(struct __rpc_auth *);
+static void	authnone_verf(struct __rpc_auth *);
+static bool_t	authnone_validate(struct __rpc_auth *, struct opaque_auth *);
+static bool_t	authnone_marshal(struct __rpc_auth *, XDR *);
+static bool_t	authnone_refresh(struct __rpc_auth *);
 
 static struct auth_ops ops = {
 	authnone_verf,
@@ -72,9 +72,9 @@ static struct authnone_private {
 AUTH *
 authnone_create()
 {
-	register struct authnone_private *ap = authnone_private;
+	struct authnone_private *ap = authnone_private;
 	XDR xdr_stream;
-	register XDR *xdrs;
+	XDR *xdrs;
 
 	if (ap == NULL) {
 		ap = (struct authnone_private *)calloc(1, sizeof (*ap));
@@ -102,7 +102,7 @@ authnone_marshal(client, xdrs)
 	AUTH *client;
 	XDR *xdrs;
 {
-	register struct authnone_private *ap = authnone_private;
+	struct authnone_private *ap = authnone_private;
 
 	if (ap == NULL)
 		return (0);
@@ -111,25 +111,25 @@ authnone_marshal(client, xdrs)
 }
 
 static void 
-authnone_verf()
+authnone_verf(struct __rpc_auth *none)
 {
 }
 
 static bool_t
-authnone_validate()
+authnone_validate(struct __rpc_auth *none, struct opaque_auth *noauth)
 {
 
 	return (TRUE);
 }
 
 static bool_t
-authnone_refresh()
+authnone_refresh(struct __rpc_auth *none)
 {
 
 	return (FALSE);
 }
 
 static void
-authnone_destroy()
+authnone_destroy(struct __rpc_auth *none)
 {
 }

@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint) 
-static char *rcsid = "$OpenBSD: svc.c,v 1.13 2001/03/03 06:50:28 deraadt Exp $";
+static char *rcsid = "$OpenBSD: svc.c,v 1.14 2001/09/15 13:51:01 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -69,7 +69,7 @@ static struct svc_callout {
 	void		    (*sc_dispatch)();
 } *svc_head;
 
-static struct svc_callout *svc_find();
+static struct svc_callout *svc_find(u_long, u_long, struct svc_callout **);
 
 int __svc_fdsetsize;
 fd_set *__svc_fdset;
@@ -94,7 +94,7 @@ int
 __xprt_register(xprt)
 	SVCXPRT *xprt;
 {
-	register int sock = xprt->xp_sock;
+	int sock = xprt->xp_sock;
 
 	if (sock+1 > __svc_fdsetsize) {
 		int bytes = howmany(sock+1, NFDBITS) * sizeof(fd_mask);
@@ -146,7 +146,7 @@ void
 xprt_unregister(xprt) 
 	SVCXPRT *xprt;
 { 
-	register int sock = xprt->xp_sock;
+	int sock = xprt->xp_sock;
 
 	if (xports[sock] == xprt) {
 		xports[sock] = (SVCXPRT *)0;
@@ -182,7 +182,7 @@ svc_register(xprt, prog, vers, dispatch, protocol)
 	int protocol;
 {
 	struct svc_callout *prev;
-	register struct svc_callout *s;
+	struct svc_callout *s;
 
 	if ((s = svc_find(prog, vers, &prev)) != NULL_SVC) {
 		if (s->sc_dispatch == dispatch)
@@ -215,7 +215,7 @@ svc_unregister(prog, vers)
 	u_long vers;
 {
 	struct svc_callout *prev;
-	register struct svc_callout *s;
+	struct svc_callout *s;
 
 	if ((s = svc_find(prog, vers, &prev)) == NULL_SVC)
 		return;
@@ -240,7 +240,7 @@ svc_find(prog, vers, prev)
 	u_long vers;
 	struct svc_callout **prev;
 {
-	register struct svc_callout *s, *p;
+	struct svc_callout *s, *p;
 
 	p = NULL_SVC;
 	for (s = svc_head; s != NULL_SVC; s = s->sc_next) {
@@ -260,7 +260,7 @@ done:
  */
 bool_t
 svc_sendreply(xprt, xdr_results, xdr_location)
-	register SVCXPRT *xprt;
+	SVCXPRT *xprt;
 	xdrproc_t xdr_results;
 	caddr_t xdr_location;
 {
@@ -280,7 +280,7 @@ svc_sendreply(xprt, xdr_results, xdr_location)
  */
 void
 svcerr_noproc(xprt)
-	register SVCXPRT *xprt;
+	SVCXPRT *xprt;
 {
 	struct rpc_msg rply;
 
@@ -296,7 +296,7 @@ svcerr_noproc(xprt)
  */
 void
 svcerr_decode(xprt)
-	register SVCXPRT *xprt;
+	SVCXPRT *xprt;
 {
 	struct rpc_msg rply; 
 
@@ -312,7 +312,7 @@ svcerr_decode(xprt)
  */
 void
 svcerr_systemerr(xprt)
-	register SVCXPRT *xprt;
+	SVCXPRT *xprt;
 {
 	struct rpc_msg rply; 
 
@@ -356,7 +356,7 @@ svcerr_weakauth(xprt)
  */
 void 
 svcerr_noprog(xprt)
-	register SVCXPRT *xprt;
+	SVCXPRT *xprt;
 {
 	struct rpc_msg rply;
 
@@ -372,7 +372,7 @@ svcerr_noprog(xprt)
  */
 void
 svcerr_progvers(xprt, low_vers, high_vers)
-	register SVCXPRT *xprt; 
+	SVCXPRT *xprt; 
 	u_long low_vers;
 	u_long high_vers;
 {
@@ -436,10 +436,10 @@ svc_getreqset2(readfds, width)
 	u_long low_vers;
 	u_long high_vers;
 	struct svc_req r;
-	register SVCXPRT *xprt;
-	register int bit;
-	register fd_mask mask, *maskp;
-	register int sock;
+	SVCXPRT *xprt;
+	int bit;
+	fd_mask mask, *maskp;
+	int sock;
 	char cred_area[2*MAX_AUTH_BYTES + RQCRED_SIZE];
 	msg.rm_call.cb_cred.oa_base = cred_area;
 	msg.rm_call.cb_verf.oa_base = &(cred_area[MAX_AUTH_BYTES]);

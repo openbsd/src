@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: svc_udp.c,v 1.9 2001/03/03 06:50:28 deraadt Exp $";
+static char *rcsid = "$OpenBSD: svc_udp.c,v 1.10 2001/09/15 13:51:01 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -51,12 +51,12 @@ static char *rcsid = "$OpenBSD: svc_udp.c,v 1.9 2001/03/03 06:50:28 deraadt Exp 
 #define rpc_buffer(xprt) ((xprt)->xp_p1)
 #define MAX(a, b)     ((a > b) ? a : b)
 
-static bool_t		svcudp_recv();
-static bool_t		svcudp_reply();
-static enum xprt_stat	svcudp_stat();
-static bool_t		svcudp_getargs();
-static bool_t		svcudp_freeargs();
-static void		svcudp_destroy();
+static bool_t		svcudp_recv(SVCXPRT *, struct rpc_msg *);
+static enum xprt_stat	svcudp_stat(SVCXPRT *);
+static bool_t		svcudp_getargs(SVCXPRT *, xdrproc_t, caddr_t);
+static bool_t		svcudp_reply(SVCXPRT *, struct rpc_msg *);
+static bool_t		svcudp_freeargs(SVCXPRT *, xdrproc_t, caddr_t);
+static void		svcudp_destroy(SVCXPRT *);
 static void		cache_set __P((SVCXPRT *, u_long));
 static int		cache_get __P((SVCXPRT *, struct rpc_msg *, char **, u_long *));
 
@@ -96,12 +96,12 @@ struct svcudp_data {
  */
 SVCXPRT *
 svcudp_bufcreate(sock, sendsz, recvsz)
-	register int sock;
+	int sock;
 	u_int sendsz, recvsz;
 {
 	bool_t madesock = FALSE;
-	register SVCXPRT *xprt;
-	register struct svcudp_data *su;
+	SVCXPRT *xprt;
+	struct svcudp_data *su;
 	struct sockaddr_in addr;
 	int len = sizeof(struct sockaddr_in);
 
@@ -187,12 +187,12 @@ svcudp_stat(xprt)
 
 static bool_t
 svcudp_recv(xprt, msg)
-	register SVCXPRT *xprt;
+	SVCXPRT *xprt;
 	struct rpc_msg *msg;
 {
-	register struct svcudp_data *su = su_data(xprt);
-	register XDR *xdrs = &(su->su_xdrs);
-	register int rlen;
+	struct svcudp_data *su = su_data(xprt);
+	XDR *xdrs = &(su->su_xdrs);
+	int rlen;
 	char *reply;
 	u_long replylen;
 
@@ -212,7 +212,8 @@ svcudp_recv(xprt, msg)
 	if (su->su_cache != NULL) {
 		if (cache_get(xprt, msg, &reply, &replylen)) {
 			(void) sendto(xprt->xp_sock, reply, (int) replylen, 0,
-			  (struct sockaddr *) &xprt->xp_raddr, xprt->xp_addrlen);
+			    (struct sockaddr *) &xprt->xp_raddr,
+			    xprt->xp_addrlen);
 			return (TRUE);
 		}
 	}
@@ -221,13 +222,13 @@ svcudp_recv(xprt, msg)
 
 static bool_t
 svcudp_reply(xprt, msg)
-	register SVCXPRT *xprt; 
+	SVCXPRT *xprt; 
 	struct rpc_msg *msg; 
 {
-	register struct svcudp_data *su = su_data(xprt);
-	register XDR *xdrs = &(su->su_xdrs);
-	register int slen;
-	register bool_t stat = FALSE;
+	struct svcudp_data *su = su_data(xprt);
+	XDR *xdrs = &(su->su_xdrs);
+	int slen;
+	bool_t stat = FALSE;
 
 	xdrs->x_op = XDR_ENCODE;
 	XDR_SETPOS(xdrs, 0);
@@ -262,7 +263,7 @@ svcudp_freeargs(xprt, xdr_args, args_ptr)
 	xdrproc_t xdr_args;
 	caddr_t args_ptr;
 {
-	register XDR *xdrs = &(su_data(xprt)->su_xdrs);
+	XDR *xdrs = &(su_data(xprt)->su_xdrs);
 
 	xdrs->x_op = XDR_FREE;
 	return ((*xdr_args)(xdrs, args_ptr));
@@ -270,9 +271,9 @@ svcudp_freeargs(xprt, xdr_args, args_ptr)
 
 static void
 svcudp_destroy(xprt)
-	register SVCXPRT *xprt;
+	SVCXPRT *xprt;
 {
-	register struct svcudp_data *su = su_data(xprt);
+	struct svcudp_data *su = su_data(xprt);
 
 	xprt_unregister(xprt);
 	if (xprt->xp_sock != -1)
@@ -283,9 +284,6 @@ svcudp_destroy(xprt)
 	mem_free((caddr_t)su, sizeof(struct svcudp_data));
 	mem_free((caddr_t)xprt, sizeof(SVCXPRT));
 }
-
-
-/***********this could be a separate file*********************/
 
 /*
  * Fifo cache for udp server
@@ -327,8 +325,6 @@ struct cache_node {
 	 */
 	cache_ptr cache_next;	
 };
-
-
 
 /*
  * The entire cache
@@ -403,9 +399,9 @@ cache_set(xprt, replylen)
 	SVCXPRT *xprt;
 	u_long replylen;	
 {
-	register cache_ptr victim;	
-	register cache_ptr *vicp;
-	register struct svcudp_data *su = su_data(xprt);
+	cache_ptr victim;	
+	cache_ptr *vicp;
+	struct svcudp_data *su = su_data(xprt);
 	struct udp_cache *uc = (struct udp_cache *) su->su_cache;
 	u_int loc;
 	char *newbuf;
@@ -472,9 +468,9 @@ cache_get(xprt, msg, replyp, replylenp)
 	u_long *replylenp;
 {
 	u_int loc;
-	register cache_ptr ent;
-	register struct svcudp_data *su = su_data(xprt);
-	register struct udp_cache *uc = (struct udp_cache *) su->su_cache;
+	cache_ptr ent;
+	struct svcudp_data *su = su_data(xprt);
+	struct udp_cache *uc = (struct udp_cache *) su->su_cache;
 
 #	define EQADDR(a1, a2)	(memcmp(&a1, &a2, sizeof(a1)) == 0)
 

@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: xdr_float.c,v 1.9 2000/04/30 04:58:23 bjc Exp $";
+static char *rcsid = "$OpenBSD: xdr_float.c,v 1.10 2001/09/15 13:51:01 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -93,8 +93,8 @@ static struct sgl_limits {
 
 bool_t
 xdr_float(xdrs, fp)
-	register XDR *xdrs;
-	register float *fp;
+	XDR *xdrs;
+	float *fp;
 {
 #ifdef IEEEFP
 	bool_t rv;
@@ -200,18 +200,18 @@ static struct dbl_limits {
 
 bool_t
 xdr_double(xdrs, dp)
-	register XDR *xdrs;
+	XDR *xdrs;
 	double *dp;
 {
 #ifdef IEEEFP
-	register int32_t *i32p;
+	int32_t *i32p;
 	bool_t rv;
 	long tmpl;
 #else
-	register long *lp;
+	long *lp;
 	struct	ieee_double id;
 	struct	vax_double vd;
-	register struct dbl_limits *lim;
+	struct dbl_limits *lim;
 	int i;
 #endif
 

@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: pmap_prot2.c,v 1.3 1996/08/19 08:31:41 tholo Exp $";
+static char *rcsid = "$OpenBSD: pmap_prot2.c,v 1.4 2001/09/15 13:51:01 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -83,8 +83,8 @@ static char *rcsid = "$OpenBSD: pmap_prot2.c,v 1.3 1996/08/19 08:31:41 tholo Exp
  */
 bool_t
 xdr_pmaplist(xdrs, rp)
-	register XDR *xdrs;
-	register struct pmaplist **rp;
+	XDR *xdrs;
+	struct pmaplist **rp;
 {
 	/*
 	 * more_elements is pre-computed in case the direction is
@@ -92,8 +92,8 @@ xdr_pmaplist(xdrs, rp)
 	 * xdr_bool when the direction is XDR_DECODE.
 	 */
 	bool_t more_elements;
-	register int freeing = (xdrs->x_op == XDR_FREE);
-	register struct pmaplist **next;
+	int freeing = (xdrs->x_op == XDR_FREE);
+	struct pmaplist **next;
 
 	while (TRUE) {
 		more_elements = (bool_t)(*rp != NULL);

@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: xdr_stdio.c,v 1.4 1996/09/15 09:31:44 tholo Exp $";
+static char *rcsid = "$OpenBSD: xdr_stdio.c,v 1.5 2001/09/15 13:51:01 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -45,14 +45,14 @@ static char *rcsid = "$OpenBSD: xdr_stdio.c,v 1.4 1996/09/15 09:31:44 tholo Exp 
 #include <stdio.h>
 #include <rpc/xdr.h>
 
-static bool_t	xdrstdio_getlong();
-static bool_t	xdrstdio_putlong();
-static bool_t	xdrstdio_getbytes();
-static bool_t	xdrstdio_putbytes();
-static u_int	xdrstdio_getpos();
-static bool_t	xdrstdio_setpos();
-static int32_t *xdrstdio_inline();
-static void	xdrstdio_destroy();
+static bool_t	xdrstdio_getlong(XDR *, long *);
+static bool_t	xdrstdio_putlong(XDR *, long *);
+static bool_t	xdrstdio_getbytes(XDR *, caddr_t, u_int);
+static bool_t	xdrstdio_putbytes(XDR *, caddr_t, u_int);
+static u_int	xdrstdio_getpos(XDR *);
+static bool_t	xdrstdio_setpos(XDR *, u_int);
+static int32_t *xdrstdio_inline(XDR *, u_int);
+static void	xdrstdio_destroy(XDR *);
 
 /*
  * Ops vector for stdio type XDR
@@ -75,7 +75,7 @@ static struct xdr_ops	xdrstdio_ops = {
  */
 void
 xdrstdio_create(xdrs, file, op)
-	register XDR *xdrs;
+	XDR *xdrs;
 	FILE *file;
 	enum xdr_op op;
 {
@@ -93,7 +93,7 @@ xdrstdio_create(xdrs, file, op)
  */
 static void
 xdrstdio_destroy(xdrs)
-	register XDR *xdrs;
+	XDR *xdrs;
 {
 	(void)fflush((FILE *)xdrs->x_private);
 	/* xx should we close the file ?? */
@@ -102,7 +102,7 @@ xdrstdio_destroy(xdrs)
 static bool_t
 xdrstdio_getlong(xdrs, lp)
 	XDR *xdrs;
-	register long *lp;
+	long *lp;
 {
 
 	if (fread((caddr_t)lp, sizeof(int32_t), 1,
