@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.8 2003/11/03 11:05:55 espie Exp $
+# $OpenBSD: pkg_delete,v 1.9 2003/11/04 17:55:17 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -31,6 +31,7 @@ use Getopt::Std;
 use OpenBSD::PackingList;
 use OpenBSD::PackageInfo;
 use OpenBSD::RequiredBy;
+use OpenBSD::Logger;
 
 package OpenBSD::PackingElement;
 sub delete
@@ -39,6 +40,16 @@ sub delete
 
 sub record_dirrm
 {
+}
+
+sub log_pkgname
+{
+	my ($self, $state) = @_;
+	if (defined $state->{pkgname_tolog}) {
+		OpenBSD::Logger::log
+		    "# package ", $state->{pkgname_tolog}, "\n";
+	$state->{pkgname_tolog} = undef;
+	}
 }
 
 package OpenBSD::PackingElement::DirRm;
@@ -87,8 +98,11 @@ sub delete
 	}
 	elsif (@$entry == 1) {
 		if ($entry->[0] eq $state->{pkgname}) {
-			rmdir($name) 
-			    or print "Error deleting directory $name\n";
+			if (!rmdir $name) {
+			    print "Error deleting directory $name\n";
+			    $self->log_pkgname($state);
+			    OpenBSD::Logger::log "rmdir $name\n";
+			}
 			$state->{dirrms}->{$name} = undef;
 		} else {
 			print "Error: dirrm $name recorded as ", 
@@ -129,6 +143,8 @@ sub delete
 			if (!defined $self->{md5}) {
 				print "Problem: $name does not have an md5 checksum\n";
 				print "NOT deleting: $name\n";
+				$self->log_pkgname($state);
+				OpenBSD::Logger::log "rm $name\n";
 				return;
 			}
 			if (! -f $name) {
@@ -139,6 +155,8 @@ sub delete
 			if ($md5 ne $self->{md5}) {
 				print "Problem: md5 doesn't match for $name\n";
 				print "NOT deleting: $name\n";
+				$self->log_pkgname($state);
+				OpenBSD::Logger::log "rm $name #MD5\n";
 				return;
 			}
 		}
@@ -147,7 +165,11 @@ sub delete
 		}
 	}
 	return if $state->{not};
-	unlink($name) or print "problem deleting $name\n";
+	if (!unlink $name) {
+		print "problem deleting $name\n";
+		$self->log_pkgname($state);
+		OpenBSD::Logger::log "rm $name\n";
+	}
 }
 
 package OpenBSD::PackingElement::Extra;
@@ -323,6 +345,8 @@ for my $pkgname (@realnames) {
 
 push(@todo, @realnames);
 
+OpenBSD::Logger::log_as("pkg_delete");
+
 while (my $pkgname = pop @todo) {
 	my $deps = OpenBSD::RequiredBy->new($pkgname)->list();
 	if (@$deps > 0) {
@@ -356,6 +380,7 @@ if ($bad) {
 		my $deps = OpenBSD::RequiredBy->new($pkgname)->list();
 		next if @$deps > 0;
 		print "Deleting $pkgname\n";
+		$state->{pkgname_tolog} = $pkgname;
 		delete_package($pkgname, $state);
 		$done{$pkgname} = 1;
 		$removed++;
@@ -364,3 +389,8 @@ if ($bad) {
 	# to ever finish
 	last if $opt_n;
 } while ($removed); }
+
+my $logname = OpenBSD::Logger::logname();
+if (defined $logname) {
+	print "Problems logged as $logname\n";
+}
