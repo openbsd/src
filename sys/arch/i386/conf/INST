@@ -1,4 +1,4 @@
-#	$OpenBSD: INST,v 1.18 1996/10/26 23:06:14 deraadt Exp $
+#	$OpenBSD: INST,v 1.19 1996/11/05 03:49:13 tholo Exp $
 #	$NetBSD: INSTADP,v 1.17 1996/05/20 03:32:19 thorpej Exp $
 #
 #       Install kernels no longer support X.
@@ -143,7 +143,7 @@ ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507
 ie1	at isa? port 0x300 irq 10		# EtherExpress
 le0	at isa? port 0x320 irq 10 drq 7		# IsoLan, NE2100, and DEPCA
 ep0	at eisa? slot ?
-ep*	at eisa? slot ?				# 3C579 ethernet cards
+ep*	at eisa? slot ?				# 3C579 ethernet cards
 fea*	at eisa? slot ?				# DEC DEFEA FDDI cards
 le*	at pci? dev ? function ?		# PCnet-PCI based ethernet cards
 de*	at pci? dev ? function ?		# DC21X4X-based ethernet cards
