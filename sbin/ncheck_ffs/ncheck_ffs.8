@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ncheck_ffs.8,v 1.19 2003/06/04 16:24:44 deraadt Exp $
+.\"	$OpenBSD: ncheck_ffs.8,v 1.20 2003/11/21 22:57:32 jmc Exp $
 .\"
 .\" Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
 .\" All rights reserved.
@@ -31,33 +31,32 @@
 .Nd generate names from inode-numbers
 .Sh SYNOPSIS
 .Nm ncheck_ffs
+.Op Fl ams
 .Op Fl f Ar format
 .Op Fl i Ar number Op Ar ...
-.Op Fl ams
 .Ar filesystem
 .Sh DESCRIPTION
 .Nm
 generates a list of filenames and inode numbers for the given
 file system.
 Names of directories are followed by a
-.Dq \&. .
+.Sq \&. .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl a
+Print the file names
+.Sq \&.
+and
+.Sq .. ,
+which are ordinarily skipped.
 .It Fl f Ar format
 Use a custom output format when printing inode information.
 Characters from
 .Ar format
 are printed for each inode with the following escape sequences:
+.Pp
 .Bl -tag -width Ds -offset indent -compact
-.It Cm \eI
-Print the inode number.
-.It Cm \eP
-Print the pathname to the file using the current inode number.
-.It Cm \ee
-Print an
-.Aq escape
-character.
 .It Cm \ea
 Print a
 .Aq bell
@@ -66,14 +65,22 @@ character.
 Print a
 .Aq backspace
 character.
+.It Cm \ee
+Print an
+.Aq escape
+character.
 .It Cm \ef
 Print a
 .Aq form-feed
 character.
+.It Cm \eI
+Print the inode number.
 .It Cm \en
 Print a
 .Aq new-line
 character.
+.It Cm \eP
+Print the pathname to the file using the current inode number.
 .It Cm \er
 Print a
 .Aq carriage return
@@ -105,12 +112,6 @@ The device name is not printed on the first line of output when the
 option is specified.
 .It Fl i Ar number Op Ar ...
 Report only those files whose inode numbers are as listed.
-.It Fl a
-Print the file names
-.Dq \&.
-and
-.Dq \&.\&. ,
-which are ordinarily skipped.
 .It Fl m
 Give more verbose information on inodes.
 .It Fl s
@@ -128,7 +129,6 @@ The report is not sorted.
 The
 .Nm
 command was designed to be similar in functionality to the corresponding
-command in
-.Tn "SunOS 4.1.3" .
+command in SunOS 4.1.3.
 .Sh AUTHORS
 .An Thorsten Lockert Aq tholo@sigmasoft.com
