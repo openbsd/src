@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.769 2004/09/28 05:43:26 grange Exp 
+ *	OpenBSD: pcidevs,v 1.770 2004/09/30 07:01:35 grange Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1848,6 +1848,7 @@
 #define	PCI_PRODUCT_NVIDIA_QUADRO4_380XGL	0x018b		/* Quadro4 380 XGL */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE2_11	0x01a0		/* GeForce2 Crush11 */
 #define	PCI_PRODUCT_NVIDIA_NFORCE_PCHB	0x01a4		/* nForce PCI Host */
+#define	PCI_PRODUCT_NVIDIA_NFORCE_DDR2	0x01aa		/* nForce 220 DDR */
 #define	PCI_PRODUCT_NVIDIA_NFORCE_DDR	0x01ab		/* nForce 420 DDR */
 #define	PCI_PRODUCT_NVIDIA_NFORCE_MEM	0x01ac		/* nForce 220/420 */
 #define	PCI_PRODUCT_NVIDIA_NFORCE_MEM1	0x01ad		/* nForce 220/420 */
@@ -1858,6 +1859,7 @@
 #define	PCI_PRODUCT_NVIDIA_NFORCE_PPB	0x01b8		/* nForce PCI-PCI */
 #define	PCI_PRODUCT_NVIDIA_NFORCE_IDE	0x01bc		/* nForce IDE */
 #define	PCI_PRODUCT_NVIDIA_NFORCE_USB	0x01c2		/* nForce USB */
+#define	PCI_PRODUCT_NVIDIA_NFORCE_MCP	0x01c3		/* nForce MCP */
 #define	PCI_PRODUCT_NVIDIA_NFORCE2_PCHB	0x01e0		/* nForce2 PCI */
 #define	PCI_PRODUCT_NVIDIA_NFORCE2_AGP	0x01e8		/* nForce2 AGP */
 #define	PCI_PRODUCT_NVIDIA_NFORCE2_MEM1	0x01eb		/* nForce2 */
