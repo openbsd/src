@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lpd.8,v 1.8 1999/06/05 22:17:17 aaron Exp $
+.\"	$OpenBSD: lpd.8,v 1.9 1999/10/17 19:59:44 aaron Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,7 +43,7 @@
 .Nm lpd
 .Op Fl l
 .Sh DESCRIPTION
-.Nm lpd
+.Nm
 is the line printer daemon (spool area handler) and is normally invoked
 at boot time from the
 .Xr rc 8
@@ -59,13 +59,11 @@ transfer files to the spooling area, display the queue,
 or remove jobs from the queue.  In each case, it forks a child to handle
 the request so the parent can continue to listen for more requests.
 .Pp
-Available options:
+The options are as follows:
 .Bl -tag -width Ds
 .It Fl l
-The
-.Fl l
-flag causes
-.Nm lpd
+Cause
+.Nm
 to log valid requests received from the network. This can be useful
 for debugging purposes.
 .El
@@ -185,14 +183,14 @@ is invoked in a pipeline).
 If a file cannot be opened, a message will be logged via
 .Xr syslog 3
 using the
-.Em LOG_LPR
+.Dv LOG_LPR
 facility.
-.Nm lpd
+.Nm
 will try up to 20 times
 to reopen a file it expects to be there, after which it will
 skip the file to be printed.
 .Pp
-.Nm lpd
+.Nm
 uses
 .Xr flock 2
 to provide exclusive access to the lock file and to prevent multiple
@@ -205,7 +203,7 @@ and contains two lines.
 The first is the process ID of the daemon and the second is the control
 file name of the current job being printed.  The second line is updated to
 reflect the current status of
-.Nm lpd
+.Nm
 for the programs
 .Xr lpq 1
 and
@@ -242,4 +240,5 @@ but not under same administrative control
 .Sh HISTORY
 An
 .Nm
-daemon appeared in Version 6 AT&T UNIX.
+daemon appeared in
+.At v6 .
