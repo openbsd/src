@@ -1,4 +1,4 @@
-/*	$OpenBSD: cu.c,v 1.10 2001/09/26 06:07:28 pvalchev Exp $	*/
+/*	$OpenBSD: cu.c,v 1.11 2002/02/10 23:22:10 miod Exp $	*/
 /*	$NetBSD: cu.c,v 1.5 1997/02/11 09:24:05 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cu.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: cu.c,v 1.10 2001/09/26 06:07:28 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: cu.c,v 1.11 2002/02/10 23:22:10 miod Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -54,7 +54,7 @@ cumain(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int ch, i;
+	int ch, i, parity;
 	long l;
 	char *cp;
 	static char sbuf[12];
@@ -63,6 +63,7 @@ cumain(argc, argv)
 		cuusage();
 	CU = DV = NOSTR;
 	BR = DEFBR;
+	parity = 0;	/* none */
 	while ((ch = getopt(argc, argv, "a:l:s:htoe0123456789")) != -1) {
 		switch(ch) {
 		case 'a':
@@ -98,10 +99,16 @@ cumain(argc, argv)
 			HW = 1, DU = -1;
 			break;
 		case 'o':
-			setparity("odd");
+			if (parity != 0)
+				parity = 0;	/* -e -o */
+			else
+				parity = 1;	/* odd */
 			break;
 		case 'e':
-			setparity("even");
+			if (parity != 0)
+				parity = 0;	/* -o -e */
+			else
+				parity = -1;	/* even */
 			break;
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
@@ -152,7 +159,17 @@ cumain(argc, argv)
 	loginit();
 	user_uid();
 	vinit();
-	setparity("none");
+	switch (parity) {
+	case -1:
+		setparity("even");
+		break;
+	case 1:
+		setparity("odd");
+		break;
+	default:
+		setparity("none");
+		break;
+	}
 	setboolean(value(VERBOSE), FALSE);
 	if (HW)
 		ttysetup(speed(BR));
