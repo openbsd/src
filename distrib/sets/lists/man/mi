@@ -1612,3 +1612,5 @@
 ./usr/share/man/cat4/uhid.0
 ./usr/share/man/cat4/usb.0
 ./usr/share/man/cat8/wicontrol.0
+./usr/share/man/cat3/isinff.0
+./usr/share/man/cat3/isnanf.0
