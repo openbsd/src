@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.113 2004/07/16 23:44:24 frantzen Exp $
+.\" $OpenBSD: pfctl.8,v 1.114 2004/07/23 10:20:42 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -48,8 +48,11 @@
 .Op Fl k Ar host
 .Op Fl p Ar device
 .Op Fl s Ar modifier
-.Op Fl T Ar command Op Ar address ...
-.Op Fl t Ar table
+.Oo Xo
+.Fl t Ar table
+.Fl T Ar command
+.Op Ar address ... Oc
+.Xc
 .Op Fl x Ar level
 .Ek
 .Sh DESCRIPTION
