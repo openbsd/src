@@ -1,4 +1,4 @@
-/*	$OpenBSD: math.h,v 1.4 2000/03/01 22:27:13 todd Exp $	*/
+/*	$OpenBSD: math.h,v 1.5 2001/05/26 01:49:25 millert Exp $	*/
 /*
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -64,7 +64,7 @@ extern  _LIB_VERSION_TYPE  _LIB_VERSION;
 #define _XOPEN_ fdlibm_xopen
 #define _POSIX_ fdlibm_posix
 
-#ifdef __LIBM_PRIVATE
+#ifndef __cplusplus
 struct exception {
 	int type;
 	char *name;
