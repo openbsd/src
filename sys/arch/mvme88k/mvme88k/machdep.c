@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.105 2003/08/11 20:45:17 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.106 2003/08/31 16:52:38 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -417,7 +417,7 @@ identifycpu()
 	cpuspeed = getcpuspeed();
 	snprintf(cpu_model, sizeof cpu_model,
 	    "Motorola MVME%x, %dMHz", brdtyp, cpuspeed);
-	printf("\nModel: %s\n", cpu_model);
+	printf("Model: %s\n", cpu_model);
 }
 
 /*
@@ -827,7 +827,9 @@ setregs(p, pack, stack, retval)
 	 */
 	if (cputyp == CPU_88110) {
 		tf->exip = pack->ep_entry & ~3;
+#ifdef DEBUG
 		printf("exec @ 0x%x\n", tf->exip);
+#endif
 	} else {
 		tf->snip = pack->ep_entry & ~3;
 		tf->sfip = (pack->ep_entry & ~3) | FIP_V;
@@ -1729,8 +1731,13 @@ m188_ext_int(u_int v, struct m88100_saved_state *eframe)
 	disable_interrupt();
 	if (eframe->dmt0 & DMT_VALID) {
 		m88100_trap(T_DATAFLT, eframe);
-		data_access_emulation((unsigned *)eframe);
-		eframe->dmt0 &= ~DMT_VALID;
+		if (eframe->dmt0 & DMT_VALID) {
+#ifdef DEBUG
+			printf("m188_ext_int: T_DATAFLT not fixed\n");
+#endif
+			data_access_emulation((unsigned *)eframe);
+			eframe->dmt0 &= ~DMT_VALID;
+		}
 	}
 
 	/*
@@ -1756,8 +1763,8 @@ m188_ext_int(u_int v, struct m88100_saved_state *eframe)
 void
 m187_ext_int(u_int v, struct m88100_saved_state *eframe)
 {
-	register u_char mask, level;
-	register struct intrhand *intr;
+	int mask, level;
+	struct intrhand *intr;
 	int ret;
 	u_char vec;
 
@@ -1801,10 +1808,6 @@ m187_ext_int(u_int v, struct m88100_saved_state *eframe)
 	flush_pipeline();
 	flush_pipeline();
 
-	if (vec > 0xff) {
-		panic("interrupt vector %x greater than 255", vec);
-	}
-
 	enable_interrupt();
 
 	if ((intr = intr_handlers[vec]) == NULL) {
@@ -1826,9 +1829,9 @@ m187_ext_int(u_int v, struct m88100_saved_state *eframe)
 		 */
 
 		for (ret = 0; intr; intr = intr->ih_next) {
-			if (intr->ih_wantframe != 0)
+			if (intr->ih_wantframe != 0) {
 				ret = (*intr->ih_fn)((void *)eframe);
-			else
+			} else
 				ret = (*intr->ih_fn)(intr->ih_arg);
 			if (ret != 0) {
 				/* increment intr counter */
@@ -1851,17 +1854,20 @@ m187_ext_int(u_int v, struct m88100_saved_state *eframe)
 
 	if (eframe->dmt0 & DMT_VALID) {
 		m88100_trap(T_DATAFLT, eframe);
-		data_access_emulation((unsigned *)eframe);
-		eframe->dmt0 &= ~DMT_VALID;
+		if (eframe->dmt0 & DMT_VALID) {
+#ifdef DEBUG
+			printf("m187_ext_int: T_DATAFLT not fixed\n");
+#endif
+			data_access_emulation((unsigned *)eframe);
+			eframe->dmt0 &= ~DMT_VALID;
+		}
 	}
-
-	mask = eframe->mask;
 
 	/*
 	 * Restore the mask level to what it was when the interrupt
 	 * was taken.
 	 */
-	setipl(mask);
+	setipl(eframe->mask);
 }
 #endif /* MVME187 */
 
@@ -1869,8 +1875,8 @@ m187_ext_int(u_int v, struct m88100_saved_state *eframe)
 void
 m197_ext_int(u_int v, struct m88100_saved_state *eframe)
 {
-	register u_char mask, level, src;
-	register struct intrhand *intr;
+	int mask, level, src;
+	struct intrhand *intr;
 	int ret;
 	u_char vec;
 
@@ -1914,10 +1920,6 @@ m197_ext_int(u_int v, struct m88100_saved_state *eframe)
 		flush_pipeline();
 	}
 
-	if (vec > 0xff) {
-		panic("interrupt vector %x greater than 255", vec);
-	}
-
 	enable_interrupt();
 
 	if ((intr = intr_handlers[vec]) == NULL) {
@@ -1957,13 +1959,11 @@ m197_ext_int(u_int v, struct m88100_saved_state *eframe)
 
 	disable_interrupt();
 
-	mask = eframe->mask;
-
 	/*
 	 * Restore the mask level to what it was when the interrupt
 	 * was taken.
 	 */
-	setipl(mask);
+	setipl(eframe->mask);
 }
 #endif 
 
@@ -2295,7 +2295,7 @@ regdump(struct trapframe *f)
 	}
 #endif
 #ifdef MVME188
-	if (brdtyp == BRD_188 ) {
+	if (brdtyp == BRD_188) {
 		unsigned int istr, cur_mask;
 
 		istr = *(int *volatile)IST_REG;
