@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysarch.h,v 1.4 2002/03/14 01:26:33 millert Exp $	*/
+/*	$OpenBSD: sysarch.h,v 1.5 2004/09/15 18:46:50 deraadt Exp $	*/
 /*	$NetBSD: sysarch.h,v 1.8 1996/01/08 13:51:44 mycroft Exp $	*/
 
 #ifndef _I386_SYSARCH_H_
@@ -44,7 +44,7 @@ int i386_set_ldt(int, union descriptor *, int);
 int i386_iopl(int);
 int i386_get_ioperm(u_long *);
 int i386_set_ioperm(u_long *);
-int sysarch(int, char *);
+int sysarch(int, void *);
 #endif
 
 #endif /* !_I386_SYSARCH_H_ */
