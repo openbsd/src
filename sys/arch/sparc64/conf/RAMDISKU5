@@ -1,4 +1,4 @@
-# 	$OpenBSD: RAMDISKU5,v 1.1 2001/10/10 04:31:56 deraadt Exp $
+# 	$OpenBSD: RAMDISKU5,v 1.2 2001/10/11 01:56:45 deraadt Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -43,7 +43,7 @@ hme*	at pci? dev ? function ?
 gem*	at pci? dev ? function ?
 
 auxio*	at ebus?
-com*	at ebus?
+#com*	at ebus?
 clock*	at ebus?				# Mostek clock 
 
 ## PROM console driver -- if all else fails
