@@ -40,7 +40,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)portmap.c	5.4 (Berkeley) 4/19/91";*/
-static char rcsid[] = "$Id: portmap.c,v 1.4 1996/07/01 00:35:05 deraadt Exp $";
+static char rcsid[] = "$Id: portmap.c,v 1.5 1996/07/07 20:15:10 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -302,7 +302,7 @@ reg_service(rqstp, xprt)
 		if (xprt != ltcpxprt && xprt != ludpxprt) {
 			syslog(LOG_WARNING,
 			    "non-local set attempt (might be from %s)",
-			    inet_ntoa(fromsin));
+			    inet_ntoa(fromsin->sin_addr));
 			svcerr_noproc(xprt);
 			return;
 		}
@@ -361,7 +361,7 @@ reg_service(rqstp, xprt)
 		if (xprt != ltcpxprt && xprt != ludpxprt) {
 			syslog(LOG_WARNING,
 			    "non-local unset attempt (might be from %s)",
-			    inet_ntoa(fromsin));
+			    inet_ntoa(fromsin->sin_addr));
 			svcerr_noproc(xprt);
 			return;
 		}
