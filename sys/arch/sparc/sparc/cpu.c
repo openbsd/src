@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.22 2000/01/31 16:06:58 art Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.23 2000/02/18 18:57:14 art Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 1997/09/15 20:52:36 pk Exp $ */
 
 /*
@@ -425,7 +425,7 @@ struct module_info module_sun4 = {
 	sun4_vcache_flush_region,
 	sun4_vcache_flush_context,
 	noop_pcache_flush_line,
-	memerr4_4c
+	0
 };
 
 void
@@ -548,7 +548,7 @@ struct module_info module_sun4c = {
 	sun4_vcache_flush_region,
 	sun4_vcache_flush_context,
 	noop_pcache_flush_line,
-	memerr4_4c
+	0
 };
 
 void
