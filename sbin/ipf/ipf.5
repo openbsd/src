@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipf.5,v 1.13 1999/06/04 02:45:17 aaron Exp $
+.\"	$OpenBSD: ipf.5,v 1.14 1999/07/08 05:05:10 kjell Exp $
 .TH IPF 5
 .SH NAME
 ipf \- IP packet filter rule syntax
@@ -146,10 +146,13 @@ feature is for use by knowledgeable hackers, and is not currently
 documented.
 .TP
 .B "skip <n>"
+This action is not currently implemented.
 .TP
 .B auth
+This action is not currently implemented.
 .TP
 .B preauth
+This action is not currently implemented.
 .PP
 The next word must be either \fBin\fP or \fBout\fP.  Each packet
 moving through the kernel is either inbound (just been received on an
@@ -377,6 +380,8 @@ processing isn't stopped until it has returned from processing the group.
 .PP
 A rule may be both the head for a new group and a member of a non-default
 group (\fBhead\fP and \fBgroup\fP may be used together in a rule).
+.PP
+There may be only one \fBhead\fP rule per group.
 .TP
 .B "head <n>"
 indicates that a new group (number n) should be created.
