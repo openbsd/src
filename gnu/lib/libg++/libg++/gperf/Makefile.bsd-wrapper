@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.6 1996/07/26 14:40:44 maja Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.7 1996/10/27 01:24:08 deraadt Exp $
 
 .if defined(OBJMACHINE)
 OBJDIR=	obj.${MACHINE}
@@ -45,7 +45,7 @@ LDFLAGS+=	-L$(STD_OBJDIR) -L$(GXX_OBJDIR)
 
 # if DESTDIR is set, then -nostdlib will be fed to g++, which will prevent
 # -lg++ to be automatically included.  So add it here, no matter what.
-LDADD+=		-lg++ -lstdc++
+LDADD+=		-lg++ -lstdc++ -lcurses
 
 all:		$(STD_OBJDIR)/libstdc++.a $(GXX_OBJDIR)/libg++.a
 
