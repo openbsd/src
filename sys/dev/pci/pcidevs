@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.608 2003/03/19 20:15:02 mickey Exp $
+	$OpenBSD: pcidevs,v 1.609 2003/03/19 21:27:36 millert Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -2110,6 +2110,7 @@ product S3 SAVAGE_IX		0x8c13	Savage/IX
 product S3 SUPERSAVAGE		0x8c2e	SuperSavage
 product S3 TWISTER		0x8d01	Twister
 product S3 TWISTER_K		0x8d02	Twister-K
+product S3 PROSAVAGE_DDR	0x8d04  ProSavage DDR
 product S3 SONICVIBES		0xca00	SonicVibes
 
 /* Schneider & Koch (SysKonnect) */
