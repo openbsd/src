@@ -1,4 +1,4 @@
-/*	$OpenBSD: dart.c,v 1.37 2004/07/30 19:02:05 miod Exp $	*/
+/*	$OpenBSD: dart.c,v 1.38 2004/07/31 22:26:27 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -1086,18 +1086,28 @@ dartintr(arg)
 {
 	struct dartsoftc *sc = arg;
 
-	unsigned char isr;
+	unsigned char isr, imr;
 	int port;
 	union dartreg *addr;
 
 	/* read interrupt status register and mask with imr */
 	addr = sc->dart_reg;
-
 	isr = addr->read.rd_isr;
-	isr &= dart_sv_reg.sv_imr;
+	imr = dart_sv_reg.sv_imr;
 
-	if (isr == 0)	/* not interrupt from this duart */
-		return 0;
+	if ((isr & imr) == 0) {
+		/*
+		 * We got an interrupt on a disabled condition (such as TX
+		 * ready change on a disabled port). This should not happen,
+		 * but we have to claim the interrupt anyway.
+		 */
+#ifdef DIAGNOSTIC
+		printf("dartintr: spurious interrupt, isr %x imr %x\n",
+		    isr, imr);
+#endif
+		return 1;
+	}
+	isr &= imr;
 
 	if (isr & IIPCHG) {
 		unsigned int ip = addr->read.rd_ip;
