@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.146 1999/05/27 21:50:35 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.147 1999/06/01 17:09:09 mickey Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -2581,6 +2581,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Silicon Integrated System",
 	    "6205",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_6326,
+	    0,
+	    "Silicon Integrated System",
+	    "6326 AGP Video",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5597_USB,

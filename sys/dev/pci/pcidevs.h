@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.145 1999/05/27 21:46:54 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.147 1999/06/01 17:09:09 mickey Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -471,7 +471,7 @@
 #define	PCI_VENDOR_NETPERIPH	0x11bc		/* Network Peripherals */
 #define	PCI_VENDOR_PINNACLE	0x11bd		/* Pinnacle Systems */
 #define	PCI_VENDOR_IMI	0x11be		/* International Microcircuts */
-#define	PCI_VENDOR_FUJITSU4	0x11c1		/* Fujitsu (4th ID) */
+#define	PCI_VENDOR_LUCENT	0x11c1		/* AT&T/Lucent */
 #define	PCI_VENDOR_NEC2	0x11c3		/* NEC (2nd ID) */
 #define	PCI_VENDOR_DOCTECH	0x11c4		/* Document Technologies */
 #define	PCI_VENDOR_SHIVA	0x11c5		/* Shiva */
@@ -873,7 +873,8 @@
 #define	PCI_PRODUCT_FORE_PCA200E	0x0300		/* ATM PCA-200e */
 
 /* Fujtsu products */
-#define	PCI_PRODUCT_FUJITSU4_LTMODEM	0x0440		/* K56flex DSVD LTMODEM */
+#define	PCI_PRODUCT_LUCENT_LTMODEM	0x0440		/* K56flex DSVD LTMODEM */
+#define	PCI_PRODUCT_LUCENT_USBHC	0x5801		/* USB */
 
 /* Future Domain products */
 #define	PCI_PRODUCT_FUTUREDOMAIN_TMC_18C30	0x0000		/* TMC-18C30 (36C70) */
@@ -1167,6 +1168,8 @@
 #define	PCI_PRODUCT_SIS_5598	0x5598		/* 5598 */
 #define	PCI_PRODUCT_SIS_6204	0x6204		/* 6204 */
 #define	PCI_PRODUCT_SIS_6205	0x6205		/* 6205 */
+#define	PCI_PRODUCT_SIS_6326	0x6326		/* 6326 AGP Video */
+#define	PCI_PRODUCT_SIS_5597_USB	0x7001		/* 5597/5598 USB */
 
 /* SMC products */
 #define	PCI_PRODUCT_SMC_37C665	0x1000		/* FDC 37C665 */
