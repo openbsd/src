@@ -371,6 +371,11 @@ struct lmc___softc {
 #if defined(__NetBSD__) && NRND > 0
     rndsource_element_t    lmc_rndsource;
 #endif
+
+    u_int32_t	lmc_crcSize;
+    char	lmc_timing;		/* for HSSI and SSI */
+    u_int16_t	t1_alarm1_status;
+    u_int16_t	t1_alarm2_status;
 };
 
 /*

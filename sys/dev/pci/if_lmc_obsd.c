@@ -1,3 +1,4 @@
+/*	$OpenBSD $ */
 /*	$NetBSD: if_lmc_nbsd.c,v 1.1 1999/03/25 03:32:43 explorer Exp $	*/
 
 /*-
@@ -208,7 +209,8 @@ lmc_pci_probe(struct device *parent,
 		return 0;
 	if ((PCI_CHIPID(id) != PCI_PRODUCT_LMC_HSSI)
 	    && (PCI_CHIPID(id) != PCI_PRODUCT_LMC_DS3)
-	    && (PCI_CHIPID(id) != PCI_PRODUCT_LMC_SSI))
+	    && (PCI_CHIPID(id) != PCI_PRODUCT_LMC_SSI)
+	    && (PCI_CHIPID(id) != PCI_PRODUCT_LMC_DS1))
 		return 0;
 
 	return 10; /* must be > than any other tulip driver */
@@ -245,6 +247,7 @@ lmc_pci_attach(struct device * const parent,
 	extern lmc_media_t lmc_hssi_media;
 	extern lmc_media_t lmc_ds3_media;
 	extern lmc_media_t lmc_t1_media;
+	extern lmc_media_t lmc_ssi_media;
 
 	revinfo  = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_CFRV) & 0xFF;
 	id       = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_CFID);
@@ -262,6 +265,10 @@ lmc_pci_attach(struct device * const parent,
 		break;
 	case PCI_PRODUCT_LMC_SSI:
 		printf(": Lan Media Corporation SSI\n");
+		sc->lmc_media = &lmc_ssi_media;
+		break;
+	case PCI_PRODUCT_LMC_DS1:
+		printf(": Lan Media Corporation T1\n");
 		sc->lmc_media = &lmc_t1_media;
 		break;
 	}
@@ -344,10 +351,6 @@ lmc_pci_attach(struct device * const parent,
 	DELAY(100);
 
 	lmc_read_macaddr(sc);
-	printf("%s: pass %d.%d, serial " LMC_EADDR_FMT "\n",
-	       sc->lmc_dev.dv_xname,
-	       (sc->lmc_revinfo & 0xF0) >> 4, sc->lmc_revinfo & 0x0F,
-	       LMC_EADDR_ARGS(sc->lmc_enaddr));
 
         if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
                          pa->pa_intrline, &intrhandle)) {
@@ -373,8 +376,11 @@ lmc_pci_attach(struct device * const parent,
 		printf("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->lmc_dev.dv_xname,
-	       intrstr);
+
+        printf("%s: pass %d.%d, serial " LMC_EADDR_FMT ", %s\n",
+               sc->lmc_dev.dv_xname,
+               (sc->lmc_revinfo & 0xF0) >> 4, sc->lmc_revinfo & 0x0F,
+               LMC_EADDR_ARGS(sc->lmc_enaddr), intrstr);
 
         sc->lmc_ats = shutdownhook_establish(lmc_shutdown, sc);
         if (sc->lmc_ats == NULL)
