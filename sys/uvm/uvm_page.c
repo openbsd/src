@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.47 2003/03/29 01:13:57 mickey Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.48 2003/06/01 00:26:09 miod Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
@@ -514,7 +514,7 @@ uvm_page_physget_freelist(paddrp, freelist)
 			if (vm_physmem[lcv].avail_start ==
 			    vm_physmem[lcv].end) {
 				if (vm_nphysseg == 1)
-				    panic("vum_page_physget: out of memory!");
+				    panic("uvm_page_physget: out of memory!");
 				vm_nphysseg--;
 				for (x = lcv ; x < vm_nphysseg ; x++)
 					/* structure copy */
