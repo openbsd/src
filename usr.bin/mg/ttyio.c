@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttyio.c,v 1.24 2003/11/09 00:23:01 vincent Exp $	*/
+/*	$OpenBSD: ttyio.c,v 1.25 2003/12/04 01:37:28 vincent Exp $	*/
 
 /*
  * POSIX terminal I/O.
@@ -171,7 +171,7 @@ ttgetc(void)
 		} else if (ret == 1)
 			break;
 	} while (1);
-	return ((int) c);
+	return ((int) c) & 0xFF;
 }
 
 /*
