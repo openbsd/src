@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_float.S,v 1.9 2004/10/30 14:48:59 pefo Exp $ */
+/*	$OpenBSD: lcore_float.S,v 1.10 2004/11/08 20:55:45 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -484,7 +484,7 @@ NON_LEAF(MipsFPTrap, FRAMESZ(CF_SZ), ra)
  * Send a floating point exception signal to the current process.
  */
 3:
-	cfc1	a2, FPC_CSR		# code = FP execptions
+	cfc1	a2, FPC_CSR		# code = FP exceptions
 	PTR_L	a0, curproc		# get current process
 	PTR_L	a4, 3*REGSZ(sp)
 	and	v0, a2, FPC_EXCEPTION_INEXACT

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wax.c,v 1.9 2004/10/28 18:47:13 mickey Exp $	*/
+/*	$OpenBSD: wax.c,v 1.10 2004/11/08 20:53:25 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -41,7 +41,7 @@
 #define	WAX_IOMASK	0xfff00000
 
 struct wax_regs {
-	u_int32_t wax_irr;	/* int requset register */
+	u_int32_t wax_irr;	/* int request register */
 	u_int32_t wax_imr;	/* int mask register */
 	u_int32_t wax_ipr;	/* int pending register */
 	u_int32_t wax_icr;	/* int command? register */
