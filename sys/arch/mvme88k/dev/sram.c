@@ -1,4 +1,4 @@
-/*	$OpenBSD: sram.c,v 1.11 2003/10/11 22:08:57 miod Exp $ */
+/*	$OpenBSD: sram.c,v 1.12 2004/01/01 01:51:32 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -73,17 +73,7 @@ srammatch(parent, vcf, args)
 	ca->ca_paddr = (void *)0xffe00000;
 	ca->ca_vaddr = (void *)0xffe00000;
 
-	if (ca->ca_vaddr == (void *)-1){
-	    if (badvaddr(ca->ca_vaddr, 4) <= 0){
-		printf("==> sram: failed physical address check.\n");
-		return (0);
-	    }
-	}
-	if (badvaddr(ca->ca_vaddr, 1) <= 0){
-	    printf("==> sram: failed virtual address check.\n");
-	    return (0);
-	}
-	return (1);
+	return (!badvaddr(ca->ca_vaddr, 1))
 }
 
 void
@@ -97,17 +87,6 @@ sramattach(parent, self, args)
 	int i;
 
 	switch (brdtyp) {
-#ifdef MVME167
-	case BRD_167:
-	case BRD_166:
-		sc->sc_len = 128*1024;		/* always 128K */
-		break;
-#endif
-#ifdef MVME177
-	case BRD_177:
-		sc->sc_len = 128*1024;		/* always 128K */
-		break;
-#endif
 #ifdef MVME187
 	case BRD_187:
 		sc->sc_len = 128*1024;		/* always 128K */
