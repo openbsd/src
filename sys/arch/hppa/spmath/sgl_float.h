@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgl_float.h,v 1.3 1998/07/02 19:06:03 mickey Exp $	*/
+/*	$OpenBSD: sgl_float.h,v 1.4 2000/01/11 08:25:08 mickey Exp $	*/
 
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
@@ -339,7 +339,7 @@ int sgl_fcmp __P((sgl_floating_point *, sgl_floating_point *, unsigned int, unsi
 int sgl_fdiv __P((sgl_floating_point *, sgl_floating_point *, sgl_floating_point *, unsigned int *));
 int sgl_fmpy __P((sgl_floating_point *, sgl_floating_point *, sgl_floating_point *, unsigned int *));
 int sgl_frem __P((sgl_floating_point *, sgl_floating_point *, sgl_floating_point *, unsigned int *));
-int sgl_fsqrt __P((sgl_floating_point *, void *, sgl_floating_point *, unsigned int *));
+int sgl_fsqrt __P((sgl_floating_point *, sgl_floating_point *, unsigned int *));
 int sgl_fsub __P((sgl_floating_point *, sgl_floating_point *, sgl_floating_point *, unsigned int *));
-int sgl_frnd __P((sgl_floating_point *, void *, sgl_floating_point *, unsigned int *));
+int sgl_frnd __P((sgl_floating_point *, sgl_floating_point *, unsigned int *));
 
