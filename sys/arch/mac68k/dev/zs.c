@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.7 1997/01/24 01:35:39 briggs Exp $	*/
+/*	$OpenBSD: zs.c,v 1.8 1997/03/11 21:03:03 gene Exp $	*/
 /*	$NetBSD: zs.c,v 1.12 1996/12/18 05:04:22 scottr Exp $	*/
 
 /*
@@ -184,7 +184,7 @@ static u_char zs_init_reg[16] = {
  ****************************************************************/
 
 /* Definition of the driver for autoconfig. */
-static int	zsc_match __P((struct device *, struct cfdata *, void *));
+static int	zsc_match __P((struct device *, void *, void *));
 static void	zsc_attach __P((struct device *, struct device *, void *));
 static int	zsc_print __P((void *aux, const char *name));
 
@@ -206,7 +206,7 @@ int	zssoft __P((void *));
 static int
 zsc_match(parent, cf, aux)
 	struct device *parent;
-	struct cfdata *cf;
+	void *cf;
 	void *aux;
 {
 	return 1;

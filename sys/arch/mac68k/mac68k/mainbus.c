@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.4 1997/01/24 01:35:49 briggs Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.5 1997/03/11 21:03:04 gene Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.7 1996/12/17 06:47:41 scottr Exp $	*/
 
 /*
@@ -41,9 +41,9 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 
-static int	mainbus_match __P((struct device *, struct cfdata *, void *));
+static int	mainbus_match __P((struct device *, void *, void *));
 static void	mainbus_attach __P((struct device *, struct device *, void *));
-static int	mainbus_search __P((struct device *, struct cfdata *, void *));
+static int	mainbus_search __P((struct device *, void *, void *));
 
 struct cfattach mainbus_ca = {
 	sizeof(struct device), mainbus_match, mainbus_attach
@@ -56,7 +56,7 @@ struct cfdriver mainbus_cd = {
 static int
 mainbus_match(parent, cf, aux)
 	struct device *parent;
-	struct cfdata *cf;
+	void *cf;
 	void *aux;
 {
 	static int mainbus_matched = 0;
@@ -81,11 +81,13 @@ mainbus_attach(parent, self, aux)
 }
 
 static int
-mainbus_search(parent, cf, aux)
+mainbus_search(parent, vcf, aux)
 	struct device *parent;
-	struct cfdata *cf;
+	void *vcf;
 	void *aux;
 {
+	struct cfdata *cf = vcf;
+
 	if ((*cf->cf_attach->ca_match)(parent, cf, NULL) > 0)
 		config_attach(parent, cf, NULL, NULL);
 	return 0;

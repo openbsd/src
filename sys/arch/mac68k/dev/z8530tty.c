@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530tty.c,v 1.6 1997/01/24 01:35:38 briggs Exp $	*/
+/*	$OpenBSD: z8530tty.c,v 1.7 1997/03/11 21:03:02 gene Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.10 1996/12/18 05:17:44 scottr Exp $	*/
 
 /*
@@ -87,7 +87,7 @@ struct zstty_stats z8530tty_stats;
 
 
 /* Definition of the driver for autoconfig. */
-static int	zstty_match(struct device *, struct cfdata *, void *);
+static int	zstty_match(struct device *, void *, void *);
 static void	zstty_attach(struct device *, struct device *, void *);
 
 struct cfattach zstty_ca = {
@@ -117,12 +117,13 @@ static int	zsgetbaud __P((register struct zs_chanstate *,
  * zstty_match: how is this zs channel configured?
  */
 int 
-zstty_match(parent, cf, aux)
+zstty_match(parent, vcf, aux)
 	struct device *parent;
-	struct cfdata *cf;
+	void *vcf;
 	void *aux;
 {
 	struct zsc_attach_args *args = aux;
+	struct cfdata *cf = vcf;
 
 	/* Exact match is better than wildcard. */
 	if (cf->cf_loc[0] == args->channel)
@@ -669,6 +670,7 @@ zsstop(tp, flag)
 			tp->t_state |= TS_FLUSH;
 	}
 	splx(s);
+	return(0);
 }
 
 #ifndef ZS_TOLERANCE

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.7 1997/01/24 01:35:45 briggs Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.8 1997/03/11 21:03:04 gene Exp $	*/
 /*	$NetBSD: fpu.c,v 1.21 1996/12/16 16:17:16 scottr Exp $	*/
 
 /*-
@@ -59,7 +59,7 @@ int     fputype;
 
 extern int *nofault;
 
-static int  fpu_match __P((struct device *, struct cfdata *, void *));
+static int  fpu_match __P((struct device *, void *, void *));
 static void fpu_attach __P((struct device *, struct device *, void *));
 static int  fpu_probe __P((void));
 
@@ -74,7 +74,7 @@ struct cfdriver fpu_cd = {
 static int
 fpu_match(parent, cf, aux)
 	struct device *parent;
-	struct cfdata *cf;
+	void *cf;
 	void *aux;
 {
 	return 1;
