@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.29 2001/12/04 23:22:42 art Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.30 2001/12/06 12:43:20 art Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.51 2001/08/17 05:53:02 chs Exp $	*/
 
 /*
@@ -899,6 +899,7 @@ uvn_findpage(uobj, offset, pgp, flags)
 	int flags;
 {
 	struct vm_page *pg;
+	int s;
 	UVMHIST_FUNC("uvn_findpage"); UVMHIST_CALLED(ubchist);
 	UVMHIST_LOG(ubchist, "vp %p off 0x%lx", uobj, offset,0,0);
 
@@ -932,6 +933,9 @@ uvn_findpage(uobj, offset, pgp, flags)
 			} else {
 				uvmexp.vnodepages++;
 			}
+			s = splbio();
+			vhold((struct vnode *)uobj);
+			splx(s);
 			UVMHIST_LOG(ubchist, "alloced",0,0,0,0);
 			break;
 		} else if (flags & UFP_NOCACHE) {

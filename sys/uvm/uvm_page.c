@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.37 2001/12/04 23:22:42 art Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.38 2001/12/06 12:43:20 art Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.66 2001/09/10 21:19:43 chris Exp $	*/
 
 /*
@@ -197,10 +197,14 @@ uvm_pageremove(pg)
 	simple_unlock(&uvm.hashlock);
 	splx(s);
 
-	if (UVM_OBJ_IS_VTEXT(pg->uobject)) {
-		uvmexp.vtextpages--;
-	} else if (UVM_OBJ_IS_VNODE(pg->uobject)) {
-		uvmexp.vnodepages--;
+	if (UVM_OBJ_IS_VTEXT(pg->uobject) || UVM_OBJ_IS_VNODE(pg->uobject)) {
+		if (UVM_OBJ_IS_VNODE(pg->uobject))
+			uvmexp.vnodepages--;
+		else
+			uvmexp.vtextpages--;
+		s = splbio();
+		vholdrele((struct vnode *)pg->uobject);
+		splx(s);
 	}
 
 	/* object should be locked */
