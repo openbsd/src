@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.404 2003/07/29 18:47:43 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.405 2003/08/09 14:56:48 cedric Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2593,10 +2593,6 @@ natrule		: nataction interface af proto fromto tag redirpool pooltype
 					    "address'");
 					YYERROR;
 				}
-				if (disallow_table($7->host, "invalid use of "
-				    "table <%s> as the redirection address "
-				    "of a translation rule"))
-					YYERROR;
 				if (!r.af && ! $7->host->ifindex)
 					r.af = $7->host->af;
 
@@ -2636,11 +2632,15 @@ natrule		: nataction interface af proto fromto tag redirpool pooltype
 					break;
 				}
 
+				r.rpool.opts = $8.type;
+				if (r.rpool.opts == PF_POOL_NONE)
+					r.rpool.opts = PF_POOL_ROUNDROBIN;
+				if (r.rpool.opts != PF_POOL_ROUNDROBIN)
+					if (disallow_table($7->host, "tables "
+					    "are only supported in round-robin "
+					    "redirection pools"))
+						YYERROR;
 				if ($7->host->next) {
-					r.rpool.opts = $8.type;
-					if (r.rpool.opts == PF_POOL_NONE)
-						r.rpool.opts =
-						    PF_POOL_ROUNDROBIN;
 					if (r.rpool.opts !=
 					    PF_POOL_ROUNDROBIN) {
 						yyerror("only round-robin "
@@ -2656,13 +2656,6 @@ natrule		: nataction interface af proto fromto tag redirpool pooltype
 					    unmask(&$7->host->addr.v.a.mask,
 					    r.af) == 128)) {
 						r.rpool.opts = PF_POOL_NONE;
-					} else {
-						if ($8.type == PF_POOL_NONE)
-							r.rpool.opts =
-							    PF_POOL_ROUNDROBIN;
-						else
-							r.rpool.opts =
-							    $8.type;
 					}
 				}
 			}
@@ -2866,9 +2859,6 @@ route_host	: STRING			{
 				    $$->ifname);
 				YYERROR;
 			}
-			if (disallow_table($3, "invalid use of table <%s> in "
-			    "a route expression"))
-				YYERROR;
 		}
 		;
 

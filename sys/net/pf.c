@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.381 2003/08/07 14:20:50 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.382 2003/08/09 14:56:48 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -176,13 +176,6 @@ struct pf_tag		*pf_get_tag(struct mbuf *);
 int			 pf_match_tag(struct mbuf *, struct pf_rule *,
 			     struct pf_rule *, struct pf_rule *,
 			     struct pf_tag *, int *);
-
-#ifdef INET6
-void			 pf_poolmask(struct pf_addr *, struct pf_addr*,
-			    struct pf_addr *, struct pf_addr *, u_int8_t);
-void			 pf_addr_inc(struct pf_addr *, sa_family_t);
-#endif /* INET6 */
-
 void			 pf_hash(struct pf_addr *, struct pf_addr *,
 			    struct pf_poolhashkey *, sa_family_t);
 int			 pf_map_addr(u_int8_t, struct pf_pool *,
@@ -1573,15 +1566,22 @@ pf_map_addr(u_int8_t af, struct pf_pool *rpool, struct pf_addr *saddr,
     struct pf_addr *naddr, struct pf_addr *init_addr)
 {
 	unsigned char		 hash[16];
-	struct pf_addr		*raddr = &rpool->cur->addr.v.a.addr;
-	struct pf_addr		*rmask = &rpool->cur->addr.v.a.mask;
+	struct pf_addr		*raddr;
+	struct pf_addr		*rmask;
+	struct pf_pooladdr	*acur = rpool->cur;
 
-	if (rpool->cur->addr.type == PF_ADDR_NOROUTE ||
-	    rpool->cur->addr.type == PF_ADDR_TABLE)
+	if (rpool->cur->addr.type == PF_ADDR_NOROUTE)
 		return (1);
 	if (rpool->cur->addr.type == PF_ADDR_DYNIFTL &&
 	    rpool->cur->addr.p.dyn->undefined)
 		return (1);
+	if (rpool->cur->addr.type == PF_ADDR_TABLE) {
+	    	if ((rpool->opts & PF_POOL_TYPEMASK) != PF_POOL_ROUNDROBIN)
+			return (1); /* unsupported */
+	} else {
+		raddr = &rpool->cur->addr.v.a.addr;
+		rmask = &rpool->cur->addr.v.a.mask;
+	}
 
 	switch (rpool->opts & PF_POOL_TYPEMASK) {
 	case PF_POOL_NONE:
@@ -1630,19 +1630,36 @@ pf_map_addr(u_int8_t af, struct pf_pool *rpool, struct pf_addr *saddr,
 		PF_POOLMASK(naddr, raddr, rmask, (struct pf_addr *)&hash, af);
 		break;
 	case PF_POOL_ROUNDROBIN:
-		if (pf_match_addr(0, &rpool->cur->addr.v.a.addr,
-		    &rpool->cur->addr.v.a.mask, &rpool->counter, af)) {
-			PF_ACPY(naddr, &rpool->counter, af);
-			PF_AINC(&rpool->counter, af);
+		if (rpool->cur->addr.type == PF_ADDR_TABLE) {
+			if (!pfr_pool_get(rpool->cur->addr.p.tbl,
+			    &rpool->tblidx, &rpool->counter,
+			    &raddr, &rmask, af))
+				goto get_addr;
+		} else if (pf_match_addr(0, raddr, rmask, &rpool->counter, af))
+			goto get_addr;
+
+	try_next:
+		if ((rpool->cur = TAILQ_NEXT(rpool->cur, entries)) == NULL)
+			rpool->cur = TAILQ_FIRST(&rpool->list);
+		if (rpool->cur->addr.type == PF_ADDR_TABLE) {
+			rpool->tblidx = -1;
+			if (pfr_pool_get(rpool->cur->addr.p.tbl,
+			    &rpool->tblidx, &rpool->counter,
+			    &raddr, &rmask, af)) {
+				/* table contain no address of type 'af' */
+				if (rpool->cur != acur)
+					goto try_next;
+				return (1);
+			}
 		} else {
-			if ((rpool->cur =
-			    TAILQ_NEXT(rpool->cur, entries)) == NULL)
-				rpool->cur = TAILQ_FIRST(&rpool->list);
-			PF_ACPY(naddr, &rpool->cur->addr.v.a.addr, af);
-			PF_ACPY(&rpool->counter,
-			    &rpool->cur->addr.v.a.addr, af);
-			PF_AINC(&rpool->counter, af);
+			raddr = &rpool->cur->addr.v.a.addr;
+			rmask = &rpool->cur->addr.v.a.mask;
+			PF_ACPY(&rpool->counter, raddr, af);
 		}
+
+	get_addr:
+		PF_ACPY(naddr, &rpool->counter, af);
+		PF_AINC(&rpool->counter, af);
 		break;
 	}
 

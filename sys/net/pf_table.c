@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.39 2003/07/31 22:25:55 cedric Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.40 2003/08/09 14:56:48 cedric Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -70,6 +70,10 @@
 		a2 = tmp;			\
 	} while (0)
 
+#define SUNION2PF(su, af) (((af)==AF_INET) ?	\
+        (struct pf_addr *)&(su)->sin.sin_addr :	\
+        (struct pf_addr *)&(su)->sin6.sin6_addr)
+
 #define	AF_BITS(af)		(((af)==AF_INET)?32:128)
 #define	ADDR_NETWORK(ad)	((ad)->pfra_net < AF_BITS((ad)->pfra_af))
 #define	KENTRY_NETWORK(ke)	((ke)->pfrke_net < AF_BITS((ke)->pfrke_af))
@@ -86,18 +90,21 @@ struct pfr_walktree {
 		PFRW_SWEEP,
 		PFRW_ENQUEUE,
 		PFRW_GET_ADDRS,
-		PFRW_GET_ASTATS
+		PFRW_GET_ASTATS,
+		PFRW_POOL_GET
 	}	 pfrw_op;
 	union {
 		struct pfr_addr		*pfrw1_addr;
 		struct pfr_astats	*pfrw1_astats;
 		struct pfr_kentryworkq	*pfrw1_workq;
+		struct pfr_kentry	*pfrw1_kentry;
 	}	 pfrw_1;
 	int	 pfrw_free;
 };
 #define pfrw_addr	pfrw_1.pfrw1_addr
 #define pfrw_astats	pfrw_1.pfrw1_astats
 #define pfrw_workq	pfrw_1.pfrw1_workq
+#define pfrw_kentry	pfrw_1.pfrw1_kentry
 #define pfrw_cnt	pfrw_free
 
 #define senderr(e)	do { rv = (e); goto _bad; } while (0)
@@ -106,6 +113,8 @@ struct pool		 pfr_ktable_pl;
 struct pool		 pfr_kentry_pl;
 struct sockaddr_in	 pfr_sin;
 struct sockaddr_in6	 pfr_sin6;
+union  sockaddr_union	 pfr_mask;
+struct pf_addr		 pfr_ffaddr;
 
 void			 pfr_copyout_addr(struct pfr_addr *,
 			    struct pfr_kentry *ke);
@@ -151,6 +160,7 @@ void			 pfr_clean_node_mask(struct pfr_ktable *,
 int			 pfr_table_count(struct pfr_table *, int);
 int			 pfr_skip_table(struct pfr_table *,
 			    struct pfr_ktable *, int);
+struct pfr_kentry       *pfr_kentry_byidx(struct pfr_ktable *, int, int);
 
 RB_PROTOTYPE(pfr_ktablehead, pfr_ktable, pfrkt_tree, pfr_ktable_compare);
 RB_GENERATE(pfr_ktablehead, pfr_ktable, pfrkt_tree, pfr_ktable_compare);
@@ -171,6 +181,8 @@ pfr_initialize(void)
 	pfr_sin.sin_family = AF_INET;
 	pfr_sin6.sin6_len = sizeof(pfr_sin6);
 	pfr_sin6.sin6_family = AF_INET6;
+
+	memset(&pfr_ffaddr, 0xff, sizeof(pfr_ffaddr));
 }
 
 int
@@ -982,6 +994,14 @@ pfr_walktree(struct radix_node *rn, void *arg)
 			if (copyout(&as, w->pfrw_astats, sizeof(as)))
 				return (EFAULT);
 			w->pfrw_astats++;
+		}
+		break;
+	case PFRW_POOL_GET:
+		if (ke->pfrke_not)
+			break; /* negative entries are ignored */
+		if (!w->pfrw_cnt--) {
+			w->pfrw_kentry = ke;
+			return (1); /* finish search */
 		}
 		break;
 	}
@@ -1896,3 +1916,103 @@ pfr_detach_table(struct pfr_ktable *kt)
 	else if (!--kt->pfrkt_refcnt[PFR_REFCNT_RULE])
 		pfr_setflags_ktable(kt, kt->pfrkt_flags&~PFR_TFLAG_REFERENCED);
 }
+
+int 
+pfr_pool_get(struct pfr_ktable *kt, int *pidx, struct pf_addr *counter,
+    struct pf_addr **raddr, struct pf_addr **rmask, sa_family_t af)
+{
+	struct pfr_kentry	*ke, *ke2;
+	struct pf_addr		*addr;
+	union sockaddr_union	 mask;
+	int			 idx = -1, use_counter = 0;
+
+	addr = (af == AF_INET) ? (struct pf_addr *)&pfr_sin.sin_addr :
+	    (struct pf_addr *)&pfr_sin6.sin6_addr;
+	if (!(kt->pfrkt_flags & PFR_TFLAG_ACTIVE) && kt->pfrkt_root != NULL)
+		kt = kt->pfrkt_root;
+	if (!(kt->pfrkt_flags & PFR_TFLAG_ACTIVE))
+		return (-1);
+
+	if (pidx != NULL)
+		idx = *pidx;
+	if (counter != NULL && idx >= 0)
+		use_counter = 1;
+	if (idx < 0)
+		idx = 0;
+
+_next_block:
+	ke = pfr_kentry_byidx(kt, idx, af);
+	if (ke == NULL)
+		return (1);
+	pfr_prepare_network(&pfr_mask, af, ke->pfrke_net);
+	*raddr = SUNION2PF(&ke->pfrke_sa, af);
+	*rmask = SUNION2PF(&pfr_mask, af);
+
+	if (use_counter) {
+		/* is supplied address within block? */
+		if(!PF_MATCHA(0, *raddr, *rmask, counter, af)) {
+			/* no, go to next block in table */
+			idx++;
+			use_counter = 0;
+			goto _next_block;
+		}
+		PF_ACPY(addr, counter, af);
+	} else {
+		/* use first address of block */
+		PF_ACPY(addr, *raddr, af);
+	}
+
+	if (!KENTRY_NETWORK(ke)) {
+		/* this is a single IP address - no possible nested block */
+		PF_ACPY(counter, addr, af);
+		*pidx = idx;
+		return (0);
+	}
+	for(;;) {
+		/* we don't want to use a nested block */
+                ke2 = (struct pfr_kentry *)(af == AF_INET ?
+		    rn_match(&pfr_sin, kt->pfrkt_ip4) :
+		    rn_match(&pfr_sin6, kt->pfrkt_ip6));
+		/* no need to check KENTRY_RNF_ROOT() here */
+		if (ke2 == ke) {
+			/* lookup return the same block - perfect */
+			PF_ACPY(counter, addr, af);
+			*pidx = idx;
+			return (0);
+		}
+
+		/* we need to increase the counter past the nested block */
+		pfr_prepare_network(&mask, AF_INET, ke2->pfrke_net);
+		PF_POOLMASK(addr, addr, SUNION2PF(&mask, af), &pfr_ffaddr, af);
+		PF_AINC(addr, af);
+		if(!PF_MATCHA(0, *raddr, *rmask, addr, af)) {
+			/* ok, we reached the end of our main block */
+			/* go to next block in table */
+			idx++;
+			use_counter = 0;
+			goto _next_block;
+		}
+	}
+}
+
+struct pfr_kentry *
+pfr_kentry_byidx(struct pfr_ktable *kt, int idx, int af)
+{
+	struct pfr_walktree	w;
+
+        bzero(&w, sizeof(w));
+        w.pfrw_op = PFRW_POOL_GET;
+        w.pfrw_cnt = idx;
+
+	switch(af) {
+	case AF_INET:
+        	rn_walktree(kt->pfrkt_ip4, pfr_walktree, &w);
+		return w.pfrw_kentry;
+	case AF_INET6:
+		rn_walktree(kt->pfrkt_ip6, pfr_walktree, &w);
+		return w.pfrw_kentry;
+	default:
+		return NULL;
+	}
+}
+

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.165 2003/08/07 14:20:50 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.166 2003/08/09 14:56:48 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -316,6 +316,7 @@ struct pf_pool {
 	struct pf_pooladdr	*cur;
 	struct pf_poolhashkey	 key;
 	struct pf_addr		 counter;
+	int			 tblidx;
 	u_int16_t		 proxy_port[2];
 	u_int8_t		 port_op;
 	u_int8_t		 opts;
@@ -1053,7 +1054,10 @@ int	pf_test(int, struct ifnet *, struct mbuf **);
 
 #ifdef INET6
 int	pf_test6(int, struct ifnet *, struct mbuf **);
-#endif /* INET */
+void	pf_poolmask(struct pf_addr *, struct pf_addr*,
+	    struct pf_addr *, struct pf_addr *, u_int8_t);
+void	pf_addr_inc(struct pf_addr *, sa_family_t);
+#endif /* INET6 */
 
 void   *pf_pull_hdr(struct mbuf *, int, void *, int, u_short *, u_short *,
 	    sa_family_t);
@@ -1086,6 +1090,8 @@ void	pfr_initialize(void);
 int	pfr_match_addr(struct pfr_ktable *, struct pf_addr *, sa_family_t);
 void	pfr_update_stats(struct pfr_ktable *, struct pf_addr *, sa_family_t,
 	    u_int64_t, int, int, int);
+int	pfr_pool_get(struct pfr_ktable *, int *, struct pf_addr *,
+	    struct pf_addr **, struct pf_addr **, sa_family_t);
 struct pfr_ktable *
 	pfr_attach_table(struct pf_ruleset *, char *);
 void	pfr_detach_table(struct pfr_ktable *);
