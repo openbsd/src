@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_signal.h,v 1.3 1997/06/02 09:42:13 deraadt Exp $	*/
+/*	$OpenBSD: linux_signal.h,v 1.4 2000/03/08 03:35:29 jasoni Exp $	*/
 /* 	$NetBSD: linux_signal.h,v 1.4 1995/08/27 20:51:51 fvdl Exp $	*/
 
 /*
@@ -68,29 +68,66 @@
 #define LINUX_SIGPWR	30
 #define LINUX_NSIG	32
 
+#define LINUX__NSIG 		64
+#define LINUX__NSIG_BPW		32
+#define LINUX__NSIG_WORDS	(LINUX__NSIG / LINUX__NSIG_BPW)
+
 #define LINUX_SIG_BLOCK		0
 #define LINUX_SIG_UNBLOCK	1
 #define LINUX_SIG_SETMASK	2
 
-typedef u_long	linux_sigset_t;
+typedef u_long	linux_old_sigset_t;
+typedef struct {
+	u_long sig[LINUX__NSIG_WORDS];
+} linux_sigset_t;
+
 typedef void	(*linux_handler_t) __P((int));
 
+struct linux_old_sigaction {
+	linux_handler_t		sa__handler;
+	linux_old_sigset_t	sa_mask;
+	u_long			sa_flags;
+	void			(*sa_restorer) __P((void));
+};
 struct linux_sigaction {
-	linux_handler_t	sa__handler;
-	linux_sigset_t	sa_mask;
-	u_long		sa_flags;
-	void		(*sa_restorer) __P((void));
+	linux_handler_t		sa__handler;
+	u_long			sa_flags;
+	void			(*sa_restorer) __P((void));
+	linux_sigset_t		sa_mask;
 };
 
 /* sa_flags */
 #define LINUX_SA_NOCLDSTOP	0x00000001
+#define LINUX_SA_SIGINFO	0x00000004
 #define LINUX_SA_ONSTACK	0x08000000
 #define LINUX_SA_RESTART	0x10000000
 #define LINUX_SA_INTERRUPT	0x20000000
 #define LINUX_SA_NOMASK		0x40000000
 #define LINUX_SA_ONESHOT	0x80000000
+#define LINUX_SA_ALLBITS	0xf8000001
 
 extern int bsd_to_linux_sig[];
 extern int linux_to_bsd_sig[];
+
+void linux_old_to_bsd_sigset __P((const linux_old_sigset_t *, sigset_t *));
+void bsd_to_linux_old_sigset __P((const sigset_t *, linux_old_sigset_t *));
+
+void linux_old_extra_to_bsd_sigset __P((const linux_old_sigset_t *,
+    const unsigned long *, sigset_t *));
+void bsd_to_linux_old_extra_sigset __P((const sigset_t *,
+    linux_old_sigset_t *, unsigned long *));
+
+void linux_to_bsd_sigset __P((const linux_sigset_t *, sigset_t *));
+void bsd_to_linux_sigset __P((const sigset_t *, linux_sigset_t *));
+
+void linux_old_to_bsd_sigaction __P((struct linux_old_sigaction *, 
+    struct sigaction *));
+void bsd_to_linux_old_sigaction __P((struct sigaction *, 
+    struct linux_old_sigaction *));
+
+void linux_to_bsd_sigaction __P((struct linux_sigaction *,
+    struct sigaction *));
+void bsd_to_linux_sigaction __P((struct sigaction *,
+    struct linux_sigaction *));
 
 #endif /* !_LINUX_SIGNAL_H */

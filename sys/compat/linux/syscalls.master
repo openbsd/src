@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.15 2000/02/28 13:29:30 jasoni Exp $
+	$OpenBSD: syscalls.master,v 1.16 2000/03/08 03:35:29 jasoni Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -119,15 +119,15 @@
 65	NOARGS		{ int sys_getpgrp(void); }
 66	NOARGS		{ int sys_setsid(void); }
 67	STD		{ int linux_sys_sigaction(int signum, \
-			    struct linux_sigaction *nsa, \
-			    struct linux_sigaction *osa); }
+			    struct linux_old_sigaction *nsa, \
+			    struct linux_old_sigaction *osa); }
 68	STD		{ int linux_sys_siggetmask(void); }
-69	STD		{ int linux_sys_sigsetmask(linux_sigset_t mask); }
+69	STD		{ int linux_sys_sigsetmask(linux_old_sigset_t mask); }
 70	STD		{ int linux_sys_setreuid(int ruid, int euid); }
 71	STD		{ int linux_sys_setregid(int rgid, int egid); }
 72	STD		{ int linux_sys_sigsuspend(caddr_t restart, \
 			    int oldmask, int mask); }
-73	STD		{ int linux_sys_sigpending(linux_sigset_t *mask); }
+73	STD		{ int linux_sys_sigpending(linux_old_sigset_t *mask); }
 74	NOARGS		{ int compat_43_sys_sethostname(char *hostname, \
 			    u_int len);}
 75	NOARGS		{ int compat_43_sys_setrlimit(u_int which, \
@@ -213,7 +213,7 @@
 124	UNIMPL		adjtimex
 125	NOARGS		{ int sys_mprotect(caddr_t addr, int len, int prot); }
 126	STD		{ int linux_sys_sigprocmask(int how, \
-			    linux_sigset_t *set, linux_sigset_t *oset); }
+			    linux_old_sigset_t *set, linux_old_sigset_t *oset); }
 127	UNIMPL		create_module
 128	UNIMPL		init_module
 129	UNIMPL		delete_module
