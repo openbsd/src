@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmel.c,v 1.4 1996/06/11 10:15:32 deraadt Exp $ */
+/*	$OpenBSD: vmel.c,v 1.5 1996/12/11 21:04:14 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -50,11 +50,6 @@
 
 void vmelattach __P((struct device *, struct device *, void *));
 int  vmelmatch __P((struct device *, void *, void *));
-
-struct vmelsoftc {
-	struct device		sc_dev;
-	struct vmesoftc		*sc_vme;
-};
 
 struct cfattach vmel_ca = {
 	sizeof(struct vmelsoftc), vmelmatch, vmelattach

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.h,v 1.4 1996/06/11 10:15:29 deraadt Exp $ */
+/*	$OpenBSD: vme.h,v 1.5 1996/12/11 21:04:14 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -35,6 +35,16 @@ struct vmesoftc {
 	struct device	sc_dev;
 	void *		sc_vaddr;
 	struct intrhand sc_abih;	/* `abort' switch */
+};
+
+struct vmessoftc {
+	struct device		sc_dev;
+	struct vmesoftc		*sc_vme;
+};
+
+struct vmelsoftc {
+	struct device		sc_dev;
+	struct vmesoftc		*sc_vme;
 };
 
 /*

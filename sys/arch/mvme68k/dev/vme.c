@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.5 1996/11/23 21:46:02 kstailey Exp $ */
+/*	$OpenBSD: vme.c,v 1.6 1996/12/11 21:04:13 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -99,6 +99,24 @@ vmematch(parent, cf, args)
 	return (1);
 }
 
+#if defined(MVME162) || defined(MVME167) || defined(MVME177)
+/*
+ * make local addresses 1G-2G correspond to VME addresses 3G-4G,
+ * as D32
+ */
+#define VME2_D32STARTPHYS	(1*1024*1024*1024UL)
+#define VME2_D32ENDPHYS		(2*1024*1024*1024UL)
+#define VME2_D32STARTVME	(3*1024*1024*1024UL)
+#define VME2_D32BITSVME		(3*1024*1024*1024UL)
+
+/*
+ * make local addresses 3G-3.75G correspond to VME addresses 3G-3.75G,
+ * as D16
+ */
+#define VME2_D16STARTPHYS	(3*1024*1024*1024UL)
+#define VME2_D16ENDPHYS		(3*1024*1024*1024UL + 768*1024*1024UL)
+#endif
+
 /*
  * Returns a physical address mapping for a VME address & length.
  * Note: on some hardware it is not possible to create certain
@@ -154,15 +172,19 @@ vmepmap(sc, vmeaddr, len, bustype)
 	case BUS_PCCTWO:
 		switch (bustype) {
 		case BUS_VMES:
+			/*printf("base %x len %d\n", base, len);*/
 			if (base > VME2_A16BASE &&
-			    (base+len-VME2_A16BASE) < VME2_A16D16LEN)
+			    (base+len-VME2_A16BASE) < VME2_A16D16LEN) {
+				/* XXX busted? */
 				base = base - VME2_A16BASE + VME2_A16D16BASE;
-			else if (base > VME2_A24BASE &&
-			    (base+len-VME2_A24BASE) < VME2_A24D16LEN)
-				base = base - VME2_A24BASE + VME2_A24D16BASE;
-			else if ((base+len) < VME2_A32D16LEN)
+			} else if (base > VME2_A24BASE &&
+			    (base+len-VME2_A24BASE) < VME2_A24D16LEN) {
+				base = base - VME2_A24BASE + VME2_D16STARTPHYS;
+			} else if ((base+len) < VME2_A32D16LEN) {
+				/* XXX busted? */
 				base = base + VME2_A32D16BASE;
-			else {
+			} else {
+				printf("vme2chip_map\n");
 				base = vme2chip_map(base, len, 16);
 				if (base == NULL)
 					return (NULL);
@@ -258,7 +280,7 @@ vmeprint(args, bus)
 {
 	struct confargs *ca = args;
 
-	printf(" offset 0x%x", ca->ca_offset);
+	printf(" addr 0x%x", ca->ca_offset);
 	if (ca->ca_vec > 0)
 		printf(" vec %d", ca->ca_vec);
 	if (ca->ca_ipl > 0)
@@ -412,23 +434,8 @@ vme1chip_init(sc)
 }
 #endif
 
+
 #if defined(MVME162) || defined(MVME167) || defined(MVME177)
-
-/*
- * make local addresses 1G-2G correspond to VME addresses 3G-4G,
- * as D32
- */
-#define VME2_D32STARTPHYS	(1*1024*1024*1024UL)
-#define VME2_D32ENDPHYS		(2*1024*1024*1024UL)
-#define VME2_D32STARTVME	(3*1024*1024*1024UL)
-#define VME2_D32BITSVME		(3*1024*1024*1024UL)
-
-/*
- * make local addresses 3G-3.75G correspond to VME addresses 3G-3.75G,
- * as D16
- */
-#define VME2_D16STARTPHYS	(3*1024*1024*1024UL)
-#define VME2_D16ENDPHYS		(3*1024*1024*1024UL + 768*1024*1024UL)
 
 /*
  * XXX what AM bits should be used for the D32/D16 mappings?
@@ -445,48 +452,47 @@ vme2chip_init(sc)
 
 	ctl = vme2->vme2_masterctl;
 
-#if 0
-	/* unused decoders 1 & 2 */
-	printf("%s: phys 0x%08x-0x%08x to VMExxx 0x%08x-0x%08x\n",
+	/* unused decoders 1 */
+	vme2->vme2_master1 = 0;
+	ctl &= ~(VME2_MASTERCTL_ALL << VME2_MASTERCTL_1SHIFT);
+	printf("%s: 1phys 0x%08x-0x%08x to VMExxx 0x%08x-0x%08x\n",
 	    sc->sc_dev.dv_xname,
 	    vme2->vme2_master1 << 16, vme2->vme2_master1 & 0xffff0000,
 	    vme2->vme2_master1 << 16, vme2->vme2_master1 & 0xffff0000);
-	printf("%s: phys 0x%08x-0x%08x to VMExxx 0x%08x-0x%08x\n",
+
+	/* unused decoders 2 */
+	vme2->vme2_master2 = 0;
+	ctl &= ~(VME2_MASTERCTL_ALL << VME2_MASTERCTL_2SHIFT);
+	printf("%s: 2phys 0x%08x-0x%08x to VMExxx 0x%08x-0x%08x\n",
 	    sc->sc_dev.dv_xname,
 	    vme2->vme2_master2 << 16, vme2->vme2_master2 & 0xffff0000,
 	    vme2->vme2_master2 << 16, vme2->vme2_master2 & 0xffff0000);
-#endif
 
-	/* setup a D16 space */
+	/* setup a A24D16 space */
 	vme2->vme2_master3 = ((VME2_D16ENDPHYS-1) & 0xffff0000) |
 	    (VME2_D16STARTPHYS >> 16);
 	ctl &= ~(VME2_MASTERCTL_ALL << VME2_MASTERCTL_3SHIFT);
-	ctl |= (VME2_MASTERCTL_AM32SP | VME2_MASTERCTL_D16) <<
+	ctl |= (VME2_MASTERCTL_D16 | VME2_MASTERCTL_AM24UD) <<
 	    VME2_MASTERCTL_3SHIFT;
-#if 0
-	printf("%s: phys 0x%08x-0x%08x to VMED16 0x%08x-0x%08x\n",
+	printf("%s: 3phys 0x%08x-0x%08x to VMED16 0x%08x-0x%08x\n",
 	    sc->sc_dev.dv_xname,
-	    VME2_D16STARTPHYS, VME2_D16ENDPHYS-1,
-	    VME2_D16STARTPHYS, VME2_D16ENDPHYS-1);
-#endif
+	    vme2->vme2_master3 << 16, vme2->vme2_master3 & 0xffff0000,
+	    vme2->vme2_master3 << 16, vme2->vme2_master3 & 0xffff0000);
 
-	/* setup a D32 space */
+	/* setup a A32D32 space */
 	vme2->vme2_master4 = ((VME2_D32ENDPHYS-1) & 0xffff0000) |
 	    (VME2_D32STARTPHYS >> 16);
 	vme2->vme2_master4mod = (VME2_D32STARTVME & 0xffff0000) |
 	    (VME2_D32BITSVME >> 16);
 	ctl &= ~(VME2_MASTERCTL_ALL << VME2_MASTERCTL_4SHIFT);
-	ctl |= (VME2_MASTERCTL_AM32SP) <<
+	ctl |= (VME2_MASTERCTL_AM32UD) <<
 	    VME2_MASTERCTL_4SHIFT;
-#if 0
-	printf("%s: phys 0x%08x-0x%08x to VMED32 0x%08x-0x%08x\n",
+	printf("%s: 4phys 0x%08x-0x%08x to VMED32 0x%08x-0x%08x\n",
 	    sc->sc_dev.dv_xname,
-	    VME2_D32STARTPHYS, VME2_D32ENDPHYS-1,
-	    VME2_D32STARTVME, VME2_D32STARTVME | ~VME2_D32BITSVME);
-#endif
+	    vme2->vme2_master4 << 16, vme2->vme2_master4 & 0xffff0000,
+	    vme2->vme2_master4 << 16, vme2->vme2_master4 & 0xffff0000);
 
 	vme2->vme2_masterctl = ctl;
-
 	ctl = vme2->vme2_gcsrctl;
 
 	/* enable A16 short IO map decoder (0xffffxxxx) */
