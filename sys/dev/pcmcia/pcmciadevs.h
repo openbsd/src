@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.2 1998/09/11 13:46:59 fgsch Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.3 1998/09/14 19:21:22 deraadt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.1 1998/09/11 10:47:15 fgsch Exp 
+ *		OpenBSD: pcmciadevs,v 1.3 1998/09/14 19:21:15 deraadt Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -43,20 +43,20 @@
  * List of known PCMCIA vendors
  */
 
-#define	PCMCIA_VENDOR_NEWMEDIA	0x0057	/* NewMedia Corporation */
-#define	PCMCIA_VENDOR_IBM	0x00a4	/* IBM Corporation */
-#define	PCMCIA_VENDOR_3COM	0x0101	/* 3Com Corporation */
-#define	PCMCIA_VENDOR_MEGAHERTZ	0x0102	/* Megahertz Corporation */
+#define	PCMCIA_VENDOR_NEWMEDIA	0x0057	/* NewMedia */
+#define	PCMCIA_VENDOR_IBM	0x00a4	/* IBM */
+#define	PCMCIA_VENDOR_3COM	0x0101	/* 3Com */
+#define	PCMCIA_VENDOR_MEGAHERTZ	0x0102	/* Megahertz */
 #define	PCMCIA_VENDOR_SOCKET	0x0104	/* Socket Communications */
-#define	PCMCIA_VENDOR_TDK	0x0105	/* TDK Corporation */
-#define	PCMCIA_VENDOR_SMC	0x0108	/* Standard Microsystems Corporation */
-#define	PCMCIA_VENDOR_MOTOROLA	0x0109	/* Motorola Corporation */
-#define	PCMCIA_VENDOR_USROBOTICS	0x0115	/* US Robotics Corporation */
-#define	PCMCIA_VENDOR_MEGAHERTZ2	0x0128	/* Megahertz Corporation */
-#define	PCMCIA_VENDOR_ADAPTEC	0x012f	/* Adaptec Corporation */
-#define	PCMCIA_VENDOR_LINKSYS	0x0149	/* Linksys Corporation */
+#define	PCMCIA_VENDOR_TDK	0x0105	/* TDK */
+#define	PCMCIA_VENDOR_SMC	0x0108	/* SMC */
+#define	PCMCIA_VENDOR_MOTOROLA	0x0109	/* Motorola */
+#define	PCMCIA_VENDOR_USROBOTICS	0x0115	/* US Robotics */
+#define	PCMCIA_VENDOR_MEGAHERTZ2	0x0128	/* Megahertz */
+#define	PCMCIA_VENDOR_ADAPTEC	0x012f	/* Adaptec */
+#define	PCMCIA_VENDOR_LINKSYS	0x0149	/* Linksys */
 #define	PCMCIA_VENDOR_SIMPLETECH	0x014d	/* Simple Technology */
-#define	PCMCIA_VENDOR_DAYNA	0x0194	/* Dayna Corporation */
+#define	PCMCIA_VENDOR_DAYNA	0x0194	/* Dayna */
 #define	PCMCIA_VENDOR_IODATA	0x01bf	/* I-O DATA */
 
 /*
@@ -175,7 +175,7 @@
 #define	PCMCIA_VENDOR_RPTI	-1	/* RPTI */
 #define	PCMCIA_VENDOR_ACCTON	-1	/* ACCTON */
 #define	PCMCIA_VENDOR_YEDATA	-1	/* Y-E DATA */
-#define	PCMCIA_VENDOR_DIGITAL	-1	/* Digital Equipment Corporation */
+#define	PCMCIA_VENDOR_DIGITAL	-1	/* Digital */
 
 #define	PCMCIA_CIS_MEGAHERTZ_XJ2288	{ "MEGAHERTZ", "MODEM XJ2288", NULL, NULL }
 #define	PCMCIA_PRODUCT_MEGAHERTZ_XJ2288	-1
