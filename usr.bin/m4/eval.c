@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.51 2003/11/17 17:12:10 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.52 2005/01/20 23:47:04 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.51 2003/11/17 17:12:10 espie Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.52 2005/01/20 23:47:04 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -579,7 +579,6 @@ static void
 dodefn(const char *name)
 {
 	struct macro_definition *p;
-	char *real;
 
 	if ((p = lookup_macro_definition(name)) != NULL) {
 		if ((p->type & TYPEMASK) == MACRTYPE) {

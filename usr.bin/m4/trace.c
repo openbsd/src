@@ -1,4 +1,4 @@
-/* $OpenBSD: trace.c,v 1.10 2003/06/30 22:13:33 espie Exp $ */
+/* $OpenBSD: trace.c,v 1.11 2005/01/20 23:47:04 espie Exp $ */
 /*
  * Copyright (c) 2001 Marc Espie.
  *
@@ -47,7 +47,6 @@ FILE *traceout = stderr;
 
 static unsigned int letter_to_flag(int);
 static void print_header(struct input_file *);
-static struct t *find_trace_entry(const char *);
 static int frame_level(void);
 
 

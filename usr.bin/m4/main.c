@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.64 2003/11/17 17:12:10 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.65 2005/01/20 23:47:04 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.64 2003/11/17 17:12:10 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.65 2005/01/20 23:47:04 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -543,7 +543,6 @@ inspect(int c, char *tp)
 	char *name = tp;
 	char *etp = tp+MAXTOK;
 	ndptr p;
-	unsigned int h;
 	
 	*tp++ = c;
 
