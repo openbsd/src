@@ -1,4 +1,4 @@
-#	$OpenBSD: BABY,v 1.9 1996/09/20 06:45:04 deraadt Exp $
+#	$OpenBSD: BABY,v 1.10 1996/09/29 11:45:46 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -12,7 +12,7 @@ option		MATH_EMULATE	# floating point emulation
 # have a broken BIOS, uncomment the following and set the value
 # properly for your system.
 #option		EXTMEM_SIZE=... # size of extended memory
-option		BUFCACHEPERCENT=20
+#option		BUFCACHEPERCENT=20
 
 #option		DUMMY_NOPS	# speed hack; recommended
 option		XSERVER
