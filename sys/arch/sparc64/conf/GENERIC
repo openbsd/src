@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.109 2004/11/12 18:07:42 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.110 2004/11/29 18:12:50 miod Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -286,6 +286,10 @@ mgx*		at sbus?		# SMS MGX/MGXPlus framebuffer
 wsdisplay*	at mgx?
 agten*		at sbus?		# Fujitsu AG-10e framebuffer
 wsdisplay*	at agten?
+tvtwo*		at sbus?		# Parallax XVideo/PowerVideo framebuffer
+wsdisplay*	at tvtwo?
+vigra*		at sbus?		# Viagra framebuffer series
+wsdisplay*	at vigra?
 creator*	at mainbus0
 creator*	at upa0
 wsdisplay*	at creator?

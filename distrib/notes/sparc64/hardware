@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.75 2004/10/11 15:20:46 mickey Exp $
+dnl	$OpenBSD: hardware,v 1.76 2004/11/29 18:12:48 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- SBUS based workstations:
 		Ultra 1
@@ -341,19 +341,24 @@ dnl		PCI Alteon Tigon I/II PCI Gigabit Ethernet boards (ti)
 			Fujitsu AG-10e (agten) - 24-bit color, accelerated
 			    (currently only supported in 8-bit
 			    unaccelerated mode)
+			Parallax XVideo and PowerVideo (tvtwo) - 24-bit color,
+			    accelerated (but the driver does not support
+			    hardware acceleration)
 			RasterFlex series (rfx) - 8/24-bit color,
 			    accelerated (currently only supported in 8-bit
 			    unaccelerated mode)
 			Southland Media Systems MGX and MGXPlus (mgx) -
 			    24-bit color, accelerated (currently only
 			    supported in 8-bit unaccelerated mode)
+			Vigra VS10, VS11 and VS12 framebuffers (8-bit color,
+			    selectable VGA-compatible modes and connector)
 			ZX (aka Leo) - 8/24-bit color, overlay planes,
 			    double-buffered, 3-D acceleration
 		PCI video boards:
 			ATI Rage (vgafb), includes the on-board PGX (8 bit
 			    color, unaccelerated) and PGX24 (24 bit color,
 			    accelerated) framebuffers
-		UPA Creator/Creator3D/Elite3D (24 bit color, unaccelerated)
+		UPA Creator/Creator3D/Elite3D (24 bit color, accelerated)
 
 	PC Cards (PCMCIA):
 		PCMCIA Controllers:

@@ -1,7 +1,5 @@
-.\"	$OpenBSD: bwtwo.4,v 1.10 2004/11/29 18:12:50 miod Exp $
-.\"
-.\" Copyright (c) 2002 Jason L. Wright (jason@thought.net)
-.\" All rights reserved.
+.\"	$OpenBSD: tvtwo.4,v 1.1 2004/11/29 18:12:50 miod Exp $
+.\" Copyright (c) 2003 Miodrag Vallat.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -24,23 +22,24 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 4, 2002
-.Dt BWTWO 4 sparc64
+.Dd November 29, 2004
+.Dt TVTWO 4 sparc64
 .Os
 .Sh NAME
-.Nm bwtwo
-.Nd monochromatic frame buffer
+.Nm tvtwo
+.Nd accelerated 24-bit color frame buffer
 .Sh SYNOPSIS
-.Cd "bwtwo* at sbus?"
-.Cd "wsdisplay* at bwtwo?"
+.Cd "tvtwo* at sbus?"
+.Cd "wsdisplay* at tvtwo?"
 .Sh DESCRIPTION
 The
 .Nm
-is an SBus monochrome frame buffer.
+is a memory based color frame buffer, with graphics acceleration
+and overlay capabilities, and hardware MPEG decoding.
 .Pp
 The
 .Nm
-driver interfaces the frame buffer with the
+driver interfaces the frame buffer to the
 .Xr wscons 4
 console framework.
 It does not provide direct device driver entry points
@@ -49,6 +48,7 @@ but makes its functions available via the internal
 interface.
 .Sh SEE ALSO
 .Xr agten 4 ,
+.Xr bwtwo 4 ,
 .Xr cgsix 4 ,
 .Xr cgthree 4 ,
 .Xr creator 4 ,
@@ -56,9 +56,11 @@ interface.
 .Xr mgx 4 ,
 .Xr rfx 4 ,
 .Xr sbus 4 ,
-.Xr tvtwo 4 ,
 .Xr vgafb 4 ,
 .Xr vigra 4 ,
 .Xr wscons 4 ,
 .Xr wsdisplay 4 ,
 .Xr zx 4
+.Sh CAVEATS
+This driver does not support any acceleration features at the moment.
+Thus, vertical scrolling in console mode is abysmally slow in 24 bit mode.

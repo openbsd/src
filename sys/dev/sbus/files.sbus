@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sbus,v 1.27 2004/06/21 04:41:10 miod Exp $
+#	$OpenBSD: files.sbus,v 1.28 2004/11/29 18:12:51 miod Exp $
 #	$NetBSD: files.sbus,v 1.16 2000/12/08 17:29:12 martin Exp $
 #
 # Config file and device description for machine-independent SBUS code.
@@ -79,6 +79,14 @@ file	dev/sbus/mgx.c			mgx
 device	agten: wsemuldisplaydev, rasops8, wsemul_sun
 attach	agten at sbus
 file	dev/sbus/agten.c		agten
+
+device	tvtwo: wsemuldisplaydev, rasops32, wsemul_sun
+attach	tvtwo at sbus
+file	dev/sbus/tvtwo.c		tvtwo
+
+device	vigra: wsemuldisplaydev, rasops8, wsemul_sun
+attach	vigra at sbus
+file	dev/sbus/vigra.c		vigra
 
 device	magma {}
 attach	magma at sbus
