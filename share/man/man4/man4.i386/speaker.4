@@ -1,4 +1,5 @@
-.\"	$OpenBSD: speaker.4,v 1.5 1998/09/01 16:38:22 deraadt Exp $
+.\"	$OpenBSD: speaker.4,v 1.6 1999/01/07 22:32:58 niklas Exp $
+.\"	$NetBSD: speaker.4,v 1.9 1998/08/18 08:16:56 augustss Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -34,7 +35,7 @@
 .Sh NAME
 speaker \- console speaker device driver
 .Sh SYNOPSIS
-.Cd "spkr0	at pckbd? port 0x61"
+.Cd "spkr0	at pcppi?"
 .Fd #include <machine/spkr.h>
 .Pa /dev/speaker
 .Sh DESCRIPTION
@@ -95,7 +96,7 @@ locking is disabled for one letter note following by >, < and O[0123456].
 < -- drop the current octave down one.
 .Pp
 N <n> -- play note n, n being 1 to 84 or 0 for a rest of current time value.
-May be followed by sustain dots.
+May be followedv by sustain dots.
 .Pp
 L <n> -- sets the current time value for notes. The default is L4, quarter
 notes. The lowest possible value is 1; values up to 64 are accepted. L1 sets
@@ -151,5 +152,7 @@ to crossing a block boundary.
 .Bl -tag -width Pa -compact
 .It Pa /dev/speaker
 .El
+.\" .Sh SEE ALSO
+.\" .Xr pcppi 4 .
 .Sh AUTHOR
 Eric S. Raymond (esr@snark.thyrsus.com) Feb 1990

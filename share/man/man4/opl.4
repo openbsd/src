@@ -1,0 +1,70 @@
+.\" $OpenBSD: opl.4,v 1.1 1999/01/07 22:32:57 niklas Exp $
+.\" $NetBSD: opl.4,v 1.3 1998/09/08 11:59:48 augustss Exp $
+.\" Copyright (c) 1997 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd August 18, 1998
+.Dt OPL 4
+.Os
+.Sh NAME
+.Nm opl
+.Nd Yamaha OPL2 and OPL3 FM syntheziser driver
+.Sh SYNOPSIS
+.Cd "opl*  at ess?"
+.Cd "opl0  at isa? port 0x388"
+.Cd "opl*  at sb?"
+.Cd "opl*  at wss?"
+.Cd "midi* at opl?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for the Yamaha OPL2 (YM3812) and OPL3
+(YMF262) chips.  The chips are FM synthezisers and are capable
+of producing a wide range of (mostly awful) sounds.
+.Pp
+Access to the device is through the MIDI driver.
+.Pp
+The
+.Nm
+driver usually attaches to a sound card, but it can also sit
+directly on the ISA bus.
+.Sh SEE ALSO
+.Xr ess 4 ,
+.Xr isa 4 ,
+.Xr midi 4 ,
+.Xr sb 4 ,
+.Xr wss 4
+.Sh HISTORY
+The
+.Nm
+device driver first appeared in
+.Nx 1.4 .
