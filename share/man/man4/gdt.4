@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gdt.4,v 1.6 2000/07/04 22:27:17 aaron Exp $
+.\"	$OpenBSD: gdt.4,v 1.7 2000/07/04 23:25:20 niklas Exp $
 .\"
 .\" Copyright (c) 2000 Niklas Hallqvist.  All rights reserved.
 .\"
@@ -61,6 +61,10 @@ driver provides support for the following adapters:
 However, only the
 .Tn GDT6x27RP
 has been tested as that was the adapter that was available to the author.
+.Pp
+Although the controllers are actual RAID controllers the driver makes them
+look just like SCSI controllers.  All RAID configuration is done through
+the controllers' BIOSes.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr scsi 4 ,
@@ -78,8 +82,9 @@ The
 driver first appeared in
 .Ox 2.7 .
 .Sh BUGS
-This manpage is inadequate.
-.Pp
 An ISA & EISA front-end is needed.
 .Pp
 The driver does not yet support transparent raw SCSI mode.
+.Pp
+It would be nice to configure the RAID units after boot
+but the information on how to do that is not public.
