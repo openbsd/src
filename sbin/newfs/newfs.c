@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.49 2004/07/02 15:48:36 otto Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.50 2004/08/12 07:53:50 otto Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.49 2004/07/02 15:48:36 otto Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.50 2004/08/12 07:53:50 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -255,7 +255,7 @@ main(int argc, char *argv[])
 				    optarg);
 			break;
 		case 'b':
-			if ((bsize = atoi(optarg)) < MINBSIZE)
+			if ((bsize = atoi(optarg)) < 0)
 				fatal("%s: bad block size", optarg);
 			break;
 		case 'c':

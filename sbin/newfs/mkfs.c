@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.42 2004/07/06 07:31:59 otto Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.43 2004/08/12 07:53:50 otto Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$OpenBSD: mkfs.c,v 1.42 2004/07/06 07:31:59 otto Exp $";
+static char rcsid[] = "$OpenBSD: mkfs.c,v 1.43 2004/08/12 07:53:50 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -246,6 +246,10 @@ recalc:
 	if (sblock.fs_bsize < MINBSIZE) {
 		errx(19, "block size %d is too small, minimum is %d",
 		     sblock.fs_bsize, MINBSIZE);
+	}
+	if (sblock.fs_bsize > MAXBSIZE) {
+		errx(19, "block size %d is too large, maximum is %d",
+		     sblock.fs_bsize, MAXBSIZE);
 	}
 	if (sblock.fs_bsize < sblock.fs_fsize) {
 		errx(20, "block size (%d) cannot be smaller than fragment size (%d)",
