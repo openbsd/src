@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl.c,v 1.6 1998/09/08 03:02:57 jason Exp $	*/
+/*	$OpenBSD: if_xl.c,v 1.7 1998/09/09 21:35:46 maja Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -147,6 +147,12 @@
 #include <pci/pcivar.h>
 #endif
 
+#ifdef __OpenBSD__
+#ifdef __alpha__
+#undef vtophys
+#define vtophys(va)	alpha_XXX_dmamap((vm_offset_t)(va))
+#endif
+#endif
 
 /*
  * The following #define causes the code to use PIO to access the
@@ -1769,6 +1775,9 @@ static int xl_newbuf(sc, c)
 	struct xl_chain_onefrag	*c;
 {
 	struct mbuf		*m_new = NULL;
+#if defined(__alpha__) && defined(__OpenBSD__)
+	int pad;
+#endif
 
 	MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 	if (m_new == NULL) {
@@ -1777,6 +1786,12 @@ static int xl_newbuf(sc, c)
 		return(ENOBUFS);
 	}
 
+#if defined(__alpha__) && defined(__OpenBSD__)
+	pad = ALIGN(sizeof(struct ether_header)) - sizeof(struct ether_header);
+	m_new->m_data += pad;
+	m_new->m_len -= pad;
+#endif
+
 	MCLGET(m_new, M_DONTWAIT);
 	if (!(m_new->m_flags & M_EXT)) {
 		printf("xl%d: no memory for rx list -- packet dropped!\n",
@@ -1784,6 +1799,12 @@ static int xl_newbuf(sc, c)
 		m_freem(m_new);
 		return(ENOBUFS);
 	}
+
+#if defined(__alpha__) && defined(__OpenBSD__)
+	pad = ALIGN(sizeof(struct ether_header)) - sizeof(struct ether_header);
+	m_new->m_data += pad;
+	m_new->m_len -= pad;
+#endif
 
 	c->xl_mbuf = m_new;
 	c->xl_ptr->xl_status = 0;
@@ -2977,7 +2998,11 @@ xl_attach(parent, self, aux)
 	}
 
 	sc->xl_ldata = (struct xl_list_data *)sc->xl_ldata_ptr;
+#ifdef __alpha__
+	round = (u_int64_t)sc->xl_ldata_ptr & 0xf;
+#else
 	round = (u_int32_t)sc->xl_ldata_ptr & 0xf;
+#endif
 	roundptr = sc->xl_ldata_ptr;
 	for (i = 0; i < 8; i++) {
 		if (round % 8) {
