@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.8 1998/10/31 09:49:56 mickey Exp $
+ * $OpenBSD: calendar.birthday,v 1.9 1998/11/02 21:10:35 pjanzen Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -121,7 +121,6 @@
 04/15	Leonardo da Vinci born, 1452
 04/16	Charles (Charlie) Chaplin (Sir) born in London, 1889
 04/22	Kant born, 1724
-04/27	Louis Victor de Broglie born, 1774, physicist
 04/28	James Monroe born, 1758
 04/29	Jules Henri Poincare born, 1854, founder of topology
 04/29	William Randolph Hearst born in San Francisco, 1863
@@ -184,6 +183,7 @@
 08/08	Dustin Hoffman born in Los Angeles, 1937
 08/13	Annie Oakley born, 1860
 08/13	Fidel Castro born, 1927
+08/15	Louis Victor de Broglie born, 1892, physicist
 08/17	Mae West born, 1892
 08/18	Meriwether Lewis born, 1927
 08/20	Leon Trotsky assassinated, 1940
