@@ -1,4 +1,4 @@
-/*	$OpenBSD: cats_machdep.c,v 1.6 2004/02/13 21:32:02 drahn Exp $	*/
+/*	$OpenBSD: cats_machdep.c,v 1.7 2004/02/23 05:03:50 drahn Exp $	*/
 /*	$NetBSD: cats_machdep.c,v 1.50 2003/10/04 14:28:28 chris Exp $	*/
 
 /*
@@ -923,26 +923,22 @@ process_kernel_args(args)
 	args = bootargs;
 	boot_file = bootargs;
 
-again:
-	/* Skip the kernel image filename */
+	if (strncmp(args, "(hd0)", 5)== 0)
+		boot_file = "wd0";
+	
+	/* Skip the kernel image filename, or 'setargs' */
 	while (*args != ' ' && *args != 0)
 		++args;
-
 	if (*args != 0)
 		*args++ = 0;
+
+
 	while (*args == ' ')
 		++args;
-	if (*args != '-') {
-		if (0 == strcmp(boot_file, "setargs")) {
-			boot_file = args;
-			goto again;
-		}
-	}
-
 	boot_args = args;
 
-	if (*args == '-') {
-		while (*args) {
+	while (*args == '-') {
+		while (*args && *args != ' ') {
 			switch (*args++) {
 			case 'a':
 				boothowto |= RB_ASKNAME;
@@ -966,8 +962,9 @@ again:
 				break;
 			}
 		}
+		while (*args == ' ')
+			++args;
 	}
-
 
 	/* XXX too early for console */
 	printf("bootfile: %s\n", boot_file);
