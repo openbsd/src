@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.19 1997/06/02 02:02:25 flipk Exp $
+#	$OpenBSD: security,v 1.20 1997/06/23 02:54:31 millert Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -172,7 +172,7 @@ fi
 > $OUTPUT
 rhome=/root
 umaskset=no
-list="${rhome}/.profile"
+list="/etc/profile ${rhome}/.profile"
 for i in $list; do
 	if [ -s $i ] ; then
 		if egrep umask $i > /dev/null ; then
