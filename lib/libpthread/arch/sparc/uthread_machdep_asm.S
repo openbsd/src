@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_machdep_asm.S,v 1.7 2003/02/10 19:21:34 marc Exp $	*/
+/*	$OpenBSD: uthread_machdep_asm.S,v 1.8 2003/02/14 20:23:20 jason Exp $	*/
 /* David Leonard <d@csee.uq.edu.au>. Public domain. */
 
 #include <machine/asm.h>
@@ -40,6 +40,11 @@ ENTRY(_thread_machdep_switch)
 	ret
 	restore
 
+/*
+ * void _thread_machdep_fpsave(csr, regs)
+ *	u_int32_t *csr;
+ *	u_int64_t *regs;
+ */
 ENTRY(_thread_machdep_fpsave)
 	/*
 	 * If %psr were readable, exitting could be faster.  The EF
@@ -49,6 +54,7 @@ ENTRY(_thread_machdep_fpsave)
 	 */
 
 	/* save registers */
+	st	%fsr, [%o0]
 	std	%f0, [%o1 + 0 * 8]
 	std	%f2, [%o1 + 1 * 8]
 	std	%f4, [%o1 + 2 * 8]
@@ -68,6 +74,11 @@ ENTRY(_thread_machdep_fpsave)
 	retl
 	 nop
 
+/*
+ * void _thread_machdep_fprestore(csr, regs)
+ *	u_int32_t *csr;
+ *	u_int64_t *regs;
+ */
 ENTRY(_thread_machdep_fprestore)
 	ldd	[%o1 + 0 * 8], %f0
 	ldd	[%o1 + 1 * 8], %f2
@@ -85,5 +96,8 @@ ENTRY(_thread_machdep_fprestore)
 	ldd	[%o1 + 13 * 8], %f26
 	ldd	[%o1 + 14 * 8], %f28
 	ldd	[%o1 + 15 * 8], %f30
+	ld	[%o0], %fsr
+	/* ldfsr needs three instructions to be stable, ensure that here */
+	nop
 	retl
 	 nop
