@@ -1,4 +1,4 @@
-.\"	$OpenBSD: daily.8,v 1.2 2003/09/06 22:07:35 jmc Exp $
+.\"	$OpenBSD: daily.8,v 1.3 2003/09/18 09:16:29 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -250,6 +250,11 @@ This manual page first appeared in
 .Ox 3.4 .
 .Sh CAVEATS
 If the host machine is not running 24/7, these scripts may never be run.
+The
+.Sq @reboot
+field in
+.Xr crontab 5
+may partially alleviate this problem.
 .Pp
 Be careful when adding local additions.
 Services such as
