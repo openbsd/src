@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.5 2001/03/14 18:24:10 todd Exp $ */
+/*	$OpenBSD: wscons_machdep.c,v 1.6 2001/07/26 07:09:12 csapuntz Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell
@@ -76,6 +76,9 @@
 #if (NPCKBD > 0) || (NUKBD > 0)
 #include <dev/wscons/wskbdvar.h>
 #endif
+#if (NUKBD > 0)
+#include <dev/usb/ukbdvar.h>
+#endif
 
 #include "pc.h"
 #if (NPC > 0)
@@ -129,7 +132,12 @@ wscninit(cp)
 	if (0) goto dokbd;	/* XXX stupid gcc */
 dokbd:
 #if (NPCKBC > 0)
-	pckbc_cnattach(I386_BUS_SPACE_IO, IO_KBD, KBCMDP, PCKBC_KBD_SLOT);
+	if (!pckbc_cnattach(I386_BUS_SPACE_IO, IO_KBD, KBCMDP, PCKBC_KBD_SLOT))
+		return;
+#endif
+#if (NUKBD > 0)
+	if (!ukbd_cnattach())
+		return;
 #endif
 #endif  /* VGA | EGA | PCDISPLAY */
 	return;
