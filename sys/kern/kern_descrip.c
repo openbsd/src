@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.5 1996/04/21 22:26:59 deraadt Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.6 1996/08/27 14:46:59 shawn Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -58,6 +58,7 @@
 #include <sys/unistd.h>
 #include <sys/resourcevar.h>
 #include <sys/conf.h>
+#include <sys/pipe.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -421,6 +422,12 @@ sys_fstat(p, v, retval)
 		error = soo_stat((struct socket *)fp->f_data, &ub);
 		break;
 
+#ifndef OLD_PIPE
+	case DTYPE_PIPE:
+		error = pipe_stat((struct pipe *)fp->f_data, &ub);
+		break;
+#endif
+
 	default:
 		panic("fstat");
 		/*NOTREACHED*/
@@ -455,6 +462,9 @@ sys_fpathconf(p, v, retval)
 		return (EBADF);
 	switch (fp->f_type) {
 
+#ifndef OLD_PIPE
+	case DTYPE_PIPE:
+#endif
 	case DTYPE_SOCKET:
 		if (SCARG(uap, name) != _PC_PIPE_BUF)
 			return (EINVAL);

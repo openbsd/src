@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.3 1996/05/18 01:46:56 deraadt Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.4 1996/08/27 14:47:01 shawn Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -839,6 +839,7 @@ sys_getsockopt(p, v, retval)
 	return (error);
 }
 
+#ifdef OLD_PIPE
 /* ARGSUSED */
 int
 sys_pipe(p, v, retval)
@@ -884,6 +885,7 @@ free1:
 	(void)soclose(rso);
 	return (error);
 }
+#endif
 
 /*
  * Get socket name.
