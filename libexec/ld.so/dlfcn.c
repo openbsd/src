@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.32 2003/09/25 21:56:20 millert Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.33 2003/10/01 02:55:23 millert Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -240,22 +240,31 @@ dlerror(void)
 	switch (_dl_errno) {
 	case 0:	/* NO ERROR */
 		errmsg = NULL;
+		break;
 	case DL_NOT_FOUND:
 		errmsg = "File not found";
+		break;
 	case DL_CANT_OPEN:
 		errmsg = "Can't open file";
+		break;
 	case DL_NOT_ELF:
 		errmsg = "File not an ELF object";
+		break;
 	case DL_CANT_OPEN_REF:
 		errmsg = "Can't open referenced object";
+		break;
 	case DL_CANT_MMAP:
 		errmsg = "Can't map ELF object";
+		break;
 	case DL_INVALID_HANDLE:
 		errmsg = "Invalid handle";
+		break;
 	case DL_NO_SYMBOL:
 		errmsg = "Unable to resolve symbol";
+		break;
 	case DL_INVALID_CTL:
 		errmsg = "Invalid dlctl() command";
+		break;
 	default:
 		errmsg = "Unknown error";
 	}
