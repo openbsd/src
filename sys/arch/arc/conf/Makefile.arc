@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.arc,v 1.12 1998/03/04 07:00:59 niklas Exp $
+#	$OpenBSD: Makefile.arc,v 1.13 1999/08/15 20:43:57 niklas Exp $
 
 #	@(#)Makefile.arc	8.2 (Berkeley) 2/16/94
 #
@@ -41,7 +41,8 @@ CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Darc
 CDIAGFLAGS=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main
 
-CFLAGS=		${DEBUG} -O2 ${CDIAGFLAGS} -mno-abicalls -mips2 -mcpu=r4000
+CFLAGS=		${DEBUG} -O2 ${CDIAGFLAGS} -mno-abicalls -mips2 -mcpu=r4000 \
+		${COPTS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 
 ### find out what to use for libkern
