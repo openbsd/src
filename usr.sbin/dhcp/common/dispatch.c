@@ -185,10 +185,11 @@ void discover_interfaces (state)
 
 		if (ifp -> ifr_addr.sa_family == AF_INET) {
 			struct iaddr addr;
+			void *ptr;
 
 			/* Get a pointer to the address... */
-			memcpy (&foo, &ifp -> ifr_addr,
-				sizeof ifp -> ifr_addr);
+			ptr = &ifp->ifr_addr;
+			memcpy(&foo, ptr, sizeof(ifp->ifr_addr));
 
 			/* We don't want the loopback interface. */
 			if (foo.sin_addr.s_addr == htonl (INADDR_LOOPBACK))
