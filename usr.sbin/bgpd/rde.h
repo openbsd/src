@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.1 2003/12/17 11:46:54 henning Exp $ */
+/*	$OpenBSD: rde.h,v 1.2 2003/12/18 22:22:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <cjeker@diehard.n-r-g.com> and
@@ -46,10 +46,12 @@ enum peer_state {
  * How do we identify peers between the session handler and the rde?
  * Currently I assume that we can do that with the neighbor_ip...
  */
+LIST_HEAD(rde_peer_head, rde_peer);
 LIST_HEAD(aspath_head, rde_aspath);
 
 struct rde_peer {
-	LIST_ENTRY(rde_peer)		peer_l;	/* hash list over all peers */
+	LIST_ENTRY(rde_peer)		hash_l;	/* hash list over all peers */
+	LIST_ENTRY(rde_peer)		peer_l; /* list of all peers */
 	struct aspath_head		path_h;  /* list of all as pathes */
 	struct peer_config		conf;
 	u_int32_t			remote_bgpid;

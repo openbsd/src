@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.3 2003/12/17 19:26:26 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.4 2003/12/18 22:22:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -43,7 +43,8 @@ int		 rde_update_get_attr(u_char *, u_int16_t, struct attr_flags *);
 void		 rde_update_err(u_int32_t, enum suberr_update);
 
 void		 peer_init(struct bgpd_config *, u_long);
-void		 peer_add(u_int32_t, struct peer_config *);
+struct rde_peer	*peer_add(u_int32_t, struct peer_config *);
+void		 peer_remove(struct rde_peer *);
 struct rde_peer	*peer_get(u_int32_t);
 void		 peer_up(u_int32_t, u_int32_t);
 void		 peer_down(u_int32_t);
@@ -53,6 +54,7 @@ struct bgpd_config	*conf, *nconf;
 int			 se_queued_writes = 0;
 int			 se_sock;
 int			 main_queued_writes = 0;
+struct rde_peer_head	 peerlist;
 
 void
 rde_sighdlr(int sig)
@@ -170,7 +172,7 @@ rde_dispatch_imsg(int fd, int idx)
 {
 	struct imsg		 imsg;
 	struct peer_config	*pconf;
-	struct rde_peer		*p;
+	struct rde_peer 	*p;
 	u_int32_t		 rid;
 	int			 reconf;
 
@@ -191,16 +193,13 @@ rde_dispatch_imsg(int fd, int idx)
 			pconf = (struct peer_config *)imsg.data;
 			p = peer_get(pconf->id); /* will always fail atm */
 			if (p == NULL) {
-				if ((p = calloc(1, sizeof(struct rde_peer))) ==
-				    NULL)
-					fatal("new peer", errno);
-				p->state = PEER_NONE;
+				p = peer_add(pconf->id, pconf);
 				reconf = RECONF_REINIT;
-				/* XXXC peer_add */
-			} else
+			} else {
+				memcpy(&p->conf, pconf,
+				sizeof(struct peer_config));
 				reconf = RECONF_KEEP;
-
-			memcpy(&p->conf, pconf, sizeof(struct peer_config));
+			}
 			p->conf.reconf_action = reconf;
 			if (pconf->reconf_action > reconf)
 				p->conf.reconf_action = pconf->reconf_action;
@@ -210,8 +209,21 @@ rde_dispatch_imsg(int fd, int idx)
 				fatal("reconf request not from parent", 0);
 			if (nconf == NULL)
 				fatal("got IMSG_RECONF_DONE but no config", 0);
-			/* XXXC merge in as needed */
+			/* Just remove deleted peers, new peers need no action
+ 			 * and merged peers neither. If the SE needs to drop
+			 * the current session and reopen a new one we get a
+			 * DOWN/UP request.  We tag the deleted peers and
+			 * remove them in peer_down.
+			 */
+			LIST_FOREACH(p, &peerlist, peer_l)
+				if (p->conf.reconf_action == RECONF_NONE ||
+				    p->conf.reconf_action == RECONF_DELETE)
+					p->conf.reconf_action = RECONF_DELETE;
+				else
+					p->conf.reconf_action = RECONF_NONE;
+			memcpy(conf, nconf, sizeof(struct bgpd_config));
 			free(nconf);
+			nconf = NULL;
 			logit(LOG_INFO, "RDE reconfigured");
 			break;
 		case IMSG_UPDATE:
@@ -500,8 +512,6 @@ rde_update_err(u_int32_t peerid, enum suberr_update errorcode)
 /*
  * peer functions
  */
-LIST_HEAD(rde_peer_head, rde_peer);
-
 struct peer_table {
 	struct rde_peer_head	*peer_hashtbl;
 	u_long			 peer_hashmask;
@@ -523,12 +533,16 @@ peer_init(struct bgpd_config *bgpconf, u_long hashsize)
 
 	for (i = 0; i < hs; i++)
 		LIST_INIT(&peertable.peer_hashtbl[i]);
+	LIST_INIT(&peerlist);
 
 	peertable.peer_hashmask = hs - 1;
 
 	for (p = bgpconf->peers; p != NULL; p = p->next) {
+		p->conf.reconf_action = RECONF_NONE;
 		peer_add(p->conf.id, &p->conf);
+		free(p);
 	}
+	bgpconf->peers = NULL;
 }
 
 struct rde_peer *
@@ -540,14 +554,14 @@ peer_get(u_int32_t id)
 	head = PEER_HASH(id);
 	ENSURE(head != NULL);
 
-	LIST_FOREACH(peer, head, peer_l) {
+	LIST_FOREACH(peer, head, hash_l) {
 		if (peer->conf.id == id)
 			return peer;
 	}
 	return NULL;
 }
 
-void
+struct rde_peer *
 peer_add(u_int32_t id, struct peer_config *p_conf)
 {
 	struct rde_peer_head	*head;
@@ -555,17 +569,34 @@ peer_add(u_int32_t id, struct peer_config *p_conf)
 
 	ENSURE(peer_get(id) == NULL);
 
-	peer = calloc(1, sizeof(peer));
+	peer = calloc(1, sizeof(struct rde_peer));
 	if (peer == NULL)
 		fatal("peer_add", errno);
 
 	LIST_INIT(&peer->path_h);
-	memcpy(&peer->conf, p_conf, sizeof(*p_conf));
+	memcpy(&peer->conf, p_conf, sizeof(struct peer_config));
+	peer->remote_bgpid = 0;
+	peer->state = PEER_NONE;
 
 	head = PEER_HASH(id);
 	ENSURE(head != NULL);
 
-	LIST_INSERT_HEAD(head, peer, peer_l);
+	LIST_INSERT_HEAD(head, peer, hash_l);
+	LIST_INSERT_HEAD(&peerlist, peer, peer_l);
+	
+	return (peer);
+}
+
+void
+peer_remove(struct rde_peer *peer)
+{
+	ENSURE(peer_get(peer->conf.id) != NULL);
+	ENSURE(LIST_EMPTY(&peer->path_h));
+	
+	LIST_REMOVE(peer, hash_l);
+	LIST_REMOVE(peer, peer_l);
+	
+	free(peer);
 }
 
 void
@@ -575,7 +606,7 @@ peer_up(u_int32_t id, u_int32_t rid)
 
 	peer = peer_get(id);
 	if (peer == NULL) {
-		logit(LOG_CRIT, "peer_up: AYII, unknown peer!");
+		logit(LOG_CRIT, "peer_up: unknown peer id %d", id);
 		return;
 	}
 	peer->remote_bgpid = rid;
@@ -590,7 +621,7 @@ peer_down(u_int32_t id)
 
 	peer = peer_get(id);
 	if (peer == NULL) {
-		logit(LOG_CRIT, "peer_down: AYII, unknown peer!");
+		logit(LOG_CRIT, "peer_down: unknown peer id &d", id);
 		return;
 	}
 	peer->remote_bgpid = 0;
@@ -604,4 +635,7 @@ peer_down(u_int32_t id)
 		path_remove(asp);
 	}
 	LIST_INIT(&peer->path_h);
+
+	if (peer->conf.reconf_action == RECONF_DELETE)
+		peer_remove(peer);
 }
