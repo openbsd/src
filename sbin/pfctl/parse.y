@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.52 2002/01/09 12:39:42 mpech Exp $	*/
+/*	$OpenBSD: parse.y,v 1.53 2002/01/09 18:00:57 mpech Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -575,7 +575,7 @@ port_item	: port				{
 		;
 
 port		: NUMBER			{
-			if (0 > $1 || $1 > 65535) {
+			if ($1 <= 0 || $1 > 65535) {
 				yyerror("illegal port value %d", $1);
 				YYERROR;
 			}
