@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.2 2002/04/05 20:35:52 deraadt Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.3 2002/05/30 09:11:59 form Exp $	*/
 
 /*
  * Copyright (C) 2002 Chris Kuethe (ckuethe@ualberta.ca)
@@ -28,14 +28,15 @@
  * SUCH DAMAGE.
  */
 
-#define PATH_CONFFILE	"/etc/authpf/authpf.conf"
-#define PATH_ALLOWFILE	"/etc/authpf/authpf.allow"
-#define PATH_PFRULES	"/etc/authpf/authpf.rules"
-#define PATH_NATRULES	"/etc/authpf/authpf.nat"
-#define PATH_PROBLEM	"/etc/authpf/authpf.problem"
-#define PATH_MESSAGE	"/etc/authpf/authpf.message"
-#define PATH_USER_DIR	"/etc/authpf/users"
-#define PATH_BAN_DIR	"/etc/authpf/banned"
-#define PATH_DEVFILE	"/dev/pf"
-#define PATH_PIDFILE	"/var/run/authpf"
-#define PATH_USERFILE	"/var/authpf"
+#define PATH_CONFFILE		"/etc/authpf/authpf.conf"
+#define PATH_ALLOWFILE		"/etc/authpf/authpf.allow"
+#define PATH_PFRULES		"/etc/authpf/authpf.rules"
+#define PATH_NATRULES		"/etc/authpf/authpf.nat"
+#define PATH_PROBLEM		"/etc/authpf/authpf.problem"
+#define PATH_MESSAGE		"/etc/authpf/authpf.message"
+#define PATH_USER_DIR		"/etc/authpf/users"
+#define PATH_BAN_DIR		"/etc/authpf/banned"
+#define PATH_DEVFILE		"/dev/pf"
+#define PATH_PIDFILE		"/var/run/authpf"
+#define PATH_USERFILE		"/var/authpf"
+#define PATH_AUTHPF_SHELL	"/usr/sbin/authpf"

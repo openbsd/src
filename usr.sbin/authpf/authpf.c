@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.15 2002/05/21 19:48:04 deraadt Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.16 2002/05/30 09:11:59 form Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -121,6 +121,12 @@ main(int argc, char *argv[])
 	pwp = getpwuid(getuid());
 	if (pwp == NULL) {
 		syslog(LOG_ERR, "can't find user for uid %d", getuid());
+		exit(1);
+	}
+
+	if (strcmp(pwp->pw_shell, PATH_AUTHPF_SHELL)) {
+		syslog(LOG_ERR, "wrong shell for user %s, uid %u",
+		    pwp->pw_name, pwp->pw_uid);
 		exit(1);
 	}
 
