@@ -465,7 +465,6 @@
 ./usr/share/man/cat1/perlxstut.0
 ./usr/share/man/cat1/pfbtops.0
 ./usr/share/man/cat1/pic.0
-./usr/share/man/cat1/pkg_add.0
 ./usr/share/man/cat1/pkg_create.0
 ./usr/share/man/cat1/pkg_delete.0
 ./usr/share/man/cat1/pkg_info.0
@@ -1300,7 +1299,6 @@
 ./usr/share/man/cat8/atrun.0
 ./usr/share/man/cat8/badsect.0
 ./usr/share/man/cat8/boot_atari.0
-./usr/share/man/cat8/boot_config.0
 ./usr/share/man/cat8/boot_hp300.0
 ./usr/share/man/cat8/boot_i386.0
 ./usr/share/man/cat8/boot_mac68k.0
@@ -1329,7 +1327,6 @@
 ./usr/share/man/cat8/compat_svr4.0
 ./usr/share/man/cat8/compat_ultrix.0
 ./usr/share/man/cat8/comsat.0
-./usr/share/man/cat8/config.0
 ./usr/share/man/cat8/crash.0
 ./usr/share/man/cat8/cron.0
 ./usr/share/man/cat8/cvsbug.0
@@ -1361,11 +1358,6 @@
 ./usr/share/man/cat8/getNAME.0
 ./usr/share/man/cat8/getencstat.0
 ./usr/share/man/cat8/getty.0
-./usr/share/man/cat8/group.0
-./usr/share/man/cat8/groupadd.0
-./usr/share/man/cat8/groupdel.0
-./usr/share/man/cat8/groupinfo.0
-./usr/share/man/cat8/groupmod.0
 ./usr/share/man/cat8/halt.0
 ./usr/share/man/cat8/hp300/MAKEDEV.0
 ./usr/share/man/cat8/hp300/crash.0
@@ -1586,11 +1578,6 @@
 ./usr/share/man/cat8/update.0
 ./usr/share/man/cat8/updatedb.0
 ./usr/share/man/cat8/usbdevs.0
-./usr/share/man/cat8/user.0
-./usr/share/man/cat8/useradd.0
-./usr/share/man/cat8/userdel.0
-./usr/share/man/cat8/userinfo.0
-./usr/share/man/cat8/usermod.0
 ./usr/share/man/cat8/uucico.0
 ./usr/share/man/cat8/uucpd.0
 ./usr/share/man/cat8/uuxqt.0
