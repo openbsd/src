@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.34 2001/10/26 05:09:35 mpech Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.35 2001/11/01 08:23:33 deraadt Exp $	*/
 /*	$KAME: ping6.c,v 1.129 2001/06/22 13:16:02 itojun Exp $	*/
 
 /*
@@ -248,6 +248,11 @@ volatile sig_atomic_t seenint;
 #ifdef SIGINFO
 volatile sig_atomic_t seeninfo;
 #endif
+
+struct ping6_timeval {
+	int	tv_sec;
+	int	tv_usec;
+};
 
 int	 main __P((int, char *[]));
 void	 fill __P((char *, char *));
@@ -626,7 +631,7 @@ main(argc, argv)
 		errx(1, "-f and -i incompatible options");
 
 	if ((options & F_NOUSERDATA) == 0) {
-		if (datalen >= sizeof(struct timeval)) {
+		if (datalen >= sizeof(struct ping6_timeval)) {
 			/* we can time transfer */
 			timing = 1;
 		} else
@@ -1246,9 +1251,15 @@ pinger()
 		icp->icmp6_code = 0;
 		icp->icmp6_id = htons(ident);
 		icp->icmp6_seq = ntohs(seq);
-		if (timing)
-			(void)gettimeofday((struct timeval *)
-					   &outpack[ICMP6ECHOLEN], NULL);
+		if (timing) {
+			struct timeval tv;
+			struct ping6_timeval tv6;
+
+			(void)gettimeofday(&tv, NULL);
+			tv6.tv_sec = tv.tv_sec;
+			tv6.tv_usec = tv.tv_usec;
+			memcpy(&outpack[ICMP6ECHOLEN], &tv6, sizeof(tv6));
+		}
 		cc = ICMP6ECHOLEN + datalen;
 	}
 
@@ -1386,7 +1397,7 @@ pr_pack(buf, cc, mhdr)
 	int fromlen;
 	u_char *cp = NULL, *dp, *end = buf + cc;
 	struct in6_pktinfo *pktinfo = NULL;
-	struct timeval tv, *tp;
+	struct timeval tv, tv2;
 	double triptime = 0;
 	int dupflag;
 	size_t off;
@@ -1428,8 +1439,12 @@ pr_pack(buf, cc, mhdr)
 		seq = ntohs(icp->icmp6_seq);
 		++nreceived;
 		if (timing) {
-			tp = (struct timeval *)(icp + 1);
-			tvsub(&tv, tp);
+			struct ping6_timeval tv6;
+
+			memcpy(&tv6, (void *)(icp + 1), sizeof(tv6));
+			tv2.tv_sec = tv6.tv_sec;
+			tv2.tv_usec = tv6.tv_usec;
+			tvsub(&tv, &tv2);
 			triptime = ((double)tv.tv_sec) * 1000.0 +
 			    ((double)tv.tv_usec) / 1000.0;
 			tsum += triptime;
