@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.17 2004/08/04 20:14:39 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.18 2004/08/22 21:31:33 miod Exp $
 #
 # Ram disk kernel.
 #
@@ -20,7 +20,7 @@ option	 	HP400
 option	 	HP425
 option	 	HP433
 
-maxusers	16
+maxusers	32
 
 option		TIMEZONE=0	# time zone to adjust RTC time by
 option		DST=0		# daylight saving time used by RTC
