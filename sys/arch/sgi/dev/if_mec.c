@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mec.c,v 1.4 2004/08/26 13:03:59 pefo Exp $ */
+/*	$OpenBSD: if_mec.c,v 1.5 2004/09/23 17:45:16 brad Exp $ */
 /*	$NetBSD: if_mec_mace.c,v 1.5 2004/08/01 06:36:36 tsutsui Exp $ */
 
 /*
@@ -479,7 +479,6 @@ mec_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = mec_ioctl;
 	ifp->if_start = mec_start;
 	ifp->if_watchdog = mec_watchdog;
-	ifp->if_mtu = ETHERMTU;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	if_attach(ifp);

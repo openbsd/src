@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re.c,v 1.8 2004/08/05 21:17:20 brad Exp $	*/
+/*	$OpenBSD: if_re.c,v 1.9 2004/09/23 17:45:16 brad Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -982,7 +982,6 @@ re_attach(struct device *parent, struct device *self, void *aux)
 	ifp = &sc->sc_arpcom.ac_if;
 	ifp->if_softc = sc;
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
-	ifp->if_mtu = ETHERMTU;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = re_ioctl;
 #ifdef VLANXXX

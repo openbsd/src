@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.38 2004/08/05 20:06:58 brad Exp $	*/
+/*	$OpenBSD: an.c,v 1.39 2004/09/23 17:45:16 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -232,7 +232,6 @@ an_attach(sc)
 
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
-	ifp->if_mtu = ETHERMTU;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = an_ioctl;
 	ifp->if_start = an_start;

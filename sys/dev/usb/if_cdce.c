@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.4 2004/07/21 15:54:54 deraadt Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.5 2004/09/23 17:45:17 brad Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -228,7 +228,6 @@ USB_ATTACH(cdce)
 
 	ifp = GET_IFP(sc);
 	ifp->if_softc = sc;
-	ifp->if_mtu = ETHERMTU;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = cdce_ioctl;
 	ifp->if_start = cdce_start;

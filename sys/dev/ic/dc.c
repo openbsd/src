@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.67 2004/05/31 03:53:53 mcbride Exp $	*/
+/*	$OpenBSD: dc.c,v 1.68 2004/09/23 17:45:16 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1692,10 +1692,8 @@ hasmac:
 
 	ifp = &sc->sc_arpcom.ac_if;
 	ifp->if_softc = sc;
-	ifp->if_mtu = ETHERMTU;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = dc_ioctl;
-	ifp->if_output = ether_output;
 	ifp->if_start = dc_start;
 	ifp->if_watchdog = dc_watchdog;
 	ifp->if_baudrate = 10000000;

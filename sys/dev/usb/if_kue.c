@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.26 2004/07/08 22:18:44 deraadt Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.27 2004/09/23 17:45:17 brad Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -524,7 +524,6 @@ USB_ATTACH(kue)
 	/* Initialize interface info.*/
 	ifp = GET_IFP(sc);
 	ifp->if_softc = sc;
-	ifp->if_mtu = ETHERMTU;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = kue_ioctl;
 	ifp->if_start = kue_start;

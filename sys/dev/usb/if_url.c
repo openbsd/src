@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.14 2004/07/08 22:18:44 deraadt Exp $ */
+/*	$OpenBSD: if_url.c,v 1.15 2004/09/23 17:45:17 brad Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -289,7 +289,6 @@ USB_ATTACH(url)
 	/* initialize interface infomation */
 	ifp = GET_IFP(sc);
 	ifp->if_softc = sc;
-	ifp->if_mtu = ETHERMTU;
 	strncpy(ifp->if_xname, devname, IFNAMSIZ);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_start = url_start;

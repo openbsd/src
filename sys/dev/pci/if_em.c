@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /*$FreeBSD: if_em.c,v 1.38 2004/03/17 17:50:31 njl Exp $*/
-/* $OpenBSD: if_em.c,v 1.27 2004/09/16 09:37:14 mcbride Exp $ */
+/* $OpenBSD: if_em.c,v 1.28 2004/09/23 17:45:16 brad Exp $ */
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -2183,8 +2183,6 @@ em_setup_interface(struct em_softc * sc)
 	strlcpy(ifp->if_xname, sc->sc_dv.dv_xname, IFNAMSIZ);
 #endif
 
-	ifp->if_mtu = ETHERMTU;
-	ifp->if_output = ether_output;
 	ifp->if_baudrate = 1000000000;
 #ifdef __FreeBSD__
 	ifp->if_init =	em_init;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.54 2004/06/04 21:49:02 brad Exp $	*/
+/*	$OpenBSD: xl.c,v 1.55 2004/09/23 17:45:16 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2668,10 +2668,8 @@ xl_attach(sc)
 	timeout_set(&sc->xl_stsup_tmo, xl_stats_update, sc);
 
 	ifp->if_softc = sc;
-	ifp->if_mtu = ETHERMTU;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = xl_ioctl;
-	ifp->if_output = ether_output;
 #if NVLAN > 0
 	ifp->if_capabilities |= IFCAP_VLAN_MTU;
 #endif

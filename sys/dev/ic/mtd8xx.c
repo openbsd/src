@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtd8xx.c,v 1.5 2004/06/05 20:25:15 mcbride Exp $	*/
+/*	$OpenBSD: mtd8xx.c,v 1.6 2004/09/23 17:45:16 brad Exp $	*/
 
 /*
  * Copyright (c) 2003 Oleg Safiullin <form@pdp11.org.ru>
@@ -160,10 +160,8 @@ mtd_attach(struct mtd_softc *sc)
 
 	/* Initialize interface */
 	ifp->if_softc = sc;
-	ifp->if_mtu = ETHERMTU;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = mtd_ioctl;
-	ifp->if_output = ether_output;
 	ifp->if_start = mtd_start;
 	ifp->if_watchdog = mtd_watchdog;
 	ifp->if_baudrate = 10000000;

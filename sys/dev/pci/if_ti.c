@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.55 2004/09/19 22:22:05 brad Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.56 2004/09/23 17:45:16 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1735,10 +1735,8 @@ ti_attach(parent, self, aux)
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = ti_ioctl;
-	ifp->if_output = ether_output;
 	ifp->if_start = ti_start;
 	ifp->if_watchdog = ti_watchdog;
-	ifp->if_mtu = ETHERMTU;
 #if NVLAN >0
 	ifp->if_capabilities |= IFCAP_VLAN_MTU | IFCAP_VLAN_HWTAGGING;
 #endif

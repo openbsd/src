@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.16 2004/08/05 19:57:17 brad Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.17 2004/09/23 17:45:16 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -617,10 +617,8 @@ void lge_attach(parent, self, aux)
 
 	ifp = &sc->arpcom.ac_if;
 	ifp->if_softc = sc;
-	ifp->if_mtu = ETHERMTU;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = lge_ioctl;
-	ifp->if_output = ether_output;
 	ifp->if_start = lge_start;
 	ifp->if_watchdog = lge_watchdog;
 	ifp->if_baudrate = 1000000000;

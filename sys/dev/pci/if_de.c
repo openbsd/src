@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.60 2004/05/31 04:21:12 mcbride Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.61 2004/09/23 17:45:16 brad Exp $	*/
 /*	$NetBSD: if_de.c,v 1.45 1997/06/09 00:34:18 thorpej Exp $	*/
 
 /*-
@@ -4780,12 +4780,6 @@ tulip_attach(
     ifp->if_start = tulip_ifstart;
     ifp->if_watchdog = tulip_ifwatchdog;
     ifp->if_timer = 1;
-#if !defined(__bsdi__) || _BSDI_VERSION < 199401
-    ifp->if_output = ether_output;
-#endif
-#if defined(__bsdi__) && _BSDI_VERSION < 199401
-    ifp->if_mtu = ETHERMTU;
-#endif
 
 #ifdef __OpenBSD__
     timeout_set(&sc->tulip_stmo, tulip_timeout_callback, sc);

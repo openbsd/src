@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.45 2004/08/20 06:17:05 deraadt Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.46 2004/09/23 17:45:16 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1272,10 +1272,8 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 
 	ifp = &sc_if->arpcom.ac_if;
 	ifp->if_softc = sc_if;
-	ifp->if_mtu = ETHERMTU;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = sk_ioctl;
-	ifp->if_output = ether_output;
 	ifp->if_start = sk_start;
 	ifp->if_watchdog = sk_watchdog;
 	ifp->if_baudrate = 1000000000;

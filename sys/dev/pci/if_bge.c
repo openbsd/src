@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.31 2004/09/16 00:55:09 mcbride Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.32 2004/09/23 17:45:16 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -1683,11 +1683,9 @@ bge_attach(parent, self, aux)
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = bge_ioctl;
-	ifp->if_output = ether_output;
 	ifp->if_start = bge_start;
 	ifp->if_watchdog = bge_watchdog;
 	ifp->if_baudrate = 1000000000;
-	ifp->if_mtu = ETHERMTU;
 	IFQ_SET_MAXLEN(&ifp->if_snd, BGE_TX_RING_CNT - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 	DPRINTFN(5, ("bcopy\n"));

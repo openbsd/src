@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sf.c,v 1.25 2004/06/01 02:43:28 tedu Exp $ */
+/*	$OpenBSD: if_sf.c,v 1.26 2004/09/23 17:45:16 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -705,10 +705,8 @@ void sf_attach(parent, self, aux)
 
 	ifp = &sc->arpcom.ac_if;
 	ifp->if_softc = sc;
-	ifp->if_mtu = ETHERMTU;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = sf_ioctl;
-	ifp->if_output = ether_output;
 	ifp->if_start = sf_start;
 	ifp->if_watchdog = sf_watchdog;
 	ifp->if_baudrate = 10000000;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.40 2004/07/04 22:57:20 deraadt Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.41 2004/09/23 17:45:16 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1119,10 +1119,8 @@ void sis_attach(parent, self, aux)
 
 	ifp = &sc->arpcom.ac_if;
 	ifp->if_softc = sc;
-	ifp->if_mtu = ETHERMTU;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = sis_ioctl;
-	ifp->if_output = ether_output;
 	ifp->if_start = sis_start;
 	ifp->if_watchdog = sis_watchdog;
 	ifp->if_baudrate = 10000000;

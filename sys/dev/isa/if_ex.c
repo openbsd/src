@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ex.c,v 1.8 2002/03/14 01:26:56 millert Exp $	*/
+/*	$OpenBSD: if_ex.c,v 1.9 2004/09/23 17:45:16 brad Exp $	*/
 /*
  * Copyright (c) 1997, Donald A. Schmidt
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
@@ -287,11 +287,9 @@ ex_attach(parent, self, aux)
 	 */
 	ifp->if_softc = sc;
 	bcopy(self->dv_xname, ifp->if_xname, IFNAMSIZ);
-	ifp->if_output = ether_output;
 	ifp->if_start = ex_start;
 	ifp->if_ioctl = ex_ioctl;
 	ifp->if_watchdog = ex_watchdog;
-	ifp->if_mtu = ETHERMTU;
 	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST; /* XXX not done yet. 
 						       | IFF_MULTICAST */
 	IFQ_SET_READY(&ifp->if_snd);

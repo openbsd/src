@@ -1,4 +1,4 @@
-/*	$OpenBSD: awi.c,v 1.13 2004/05/12 06:35:10 tedu Exp $	*/
+/*	$OpenBSD: awi.c,v 1.14 2004/09/23 17:45:16 brad Exp $	*/
 /*	$NetBSD: awi.c,v 1.26 2000/07/21 04:48:55 onoe Exp $	*/
 
 /*-
@@ -305,7 +305,6 @@ awi_attach(sc)
 	ifp->if_start = awi_start;
 	ifp->if_ioctl = awi_ioctl;
 	ifp->if_watchdog = awi_watchdog;
-	ifp->if_mtu = ETHERMTU;
 	ifp->if_hdrlen = sizeof(struct ieee80211_frame) +
 	    sizeof(struct ether_header);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;

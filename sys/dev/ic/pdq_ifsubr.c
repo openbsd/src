@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdq_ifsubr.c,v 1.14 2004/05/12 06:35:10 tedu Exp $	*/
+/*	$OpenBSD: pdq_ifsubr.c,v 1.15 2004/09/23 17:45:16 brad Exp $	*/
 /*	$NetBSD: pdq_ifsubr.c,v 1.5 1996/05/20 00:26:21 thorpej Exp $	*/
 
 /*-
@@ -363,7 +363,6 @@ pdq_ifattach(
 #endif
 
     ifp->if_ioctl = pdq_ifioctl;
-    ifp->if_output = fddi_output;
     ifp->if_start = pdq_ifstart;
     IFQ_SET_READY(&ifp->if_snd);
   

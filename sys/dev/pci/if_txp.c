@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.72 2004/05/31 19:25:00 mcbride Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.73 2004/09/23 17:45:16 brad Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -260,10 +260,8 @@ txp_attach(parent, self, aux)
 	ifmedia_set(&sc->sc_ifmedia, IFM_ETHER|IFM_AUTO);
 
 	ifp->if_softc = sc;
-	ifp->if_mtu = ETHERMTU;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = txp_ioctl;
-	ifp->if_output = ether_output;
 	ifp->if_start = txp_start;
 	ifp->if_watchdog = txp_watchdog;
 	ifp->if_baudrate = 10000000;

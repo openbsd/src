@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.23 2004/06/06 17:56:37 mcbride Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.24 2004/09/23 17:45:16 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -856,10 +856,8 @@ wb_attach(parent, self, aux)
 	bzero(sc->wb_ldata, sizeof(struct wb_list_data));
 
 	ifp->if_softc = sc;
-	ifp->if_mtu = ETHERMTU;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = wb_ioctl;
-	ifp->if_output = ether_output;
 	ifp->if_start = wb_start;
 	ifp->if_watchdog = wb_watchdog;
 	ifp->if_baudrate = 10000000;

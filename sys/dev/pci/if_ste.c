@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.24 2004/08/22 18:16:20 canacar Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.25 2004/09/23 17:45:16 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -950,10 +950,8 @@ void ste_attach(parent, self, aux)
 
 	ifp = &sc->arpcom.ac_if;
 	ifp->if_softc = sc;
-	ifp->if_mtu = ETHERMTU;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = ste_ioctl;
-	ifp->if_output = ether_output;
 	ifp->if_start = ste_start;
 	ifp->if_watchdog = ste_watchdog;
 	ifp->if_baudrate = 10000000;

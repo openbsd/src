@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.26 2004/06/06 17:56:36 mcbride Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.27 2004/09/23 17:45:16 brad Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -1242,10 +1242,8 @@ rl_attach(sc)
 	sc->rl_cdata.rl_rx_buf += sizeof(u_int64_t);
 
 	ifp->if_softc = sc;
-	ifp->if_mtu = ETHERMTU;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = rl_ioctl;
-	ifp->if_output = ether_output;
 	ifp->if_start = rl_start;
 	ifp->if_watchdog = rl_watchdog;
 	ifp->if_baudrate = 10000000;
