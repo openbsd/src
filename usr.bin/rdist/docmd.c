@@ -1,4 +1,4 @@
-/*	$OpenBSD: docmd.c,v 1.4 1996/06/26 05:38:12 deraadt Exp $	*/
+/*	$OpenBSD: docmd.c,v 1.5 1997/02/12 19:48:24 dm Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 static char RCSid[] = 
-"$OpenBSD: docmd.c,v 1.4 1996/06/26 05:38:12 deraadt Exp $";
+"$OpenBSD: docmd.c,v 1.5 1997/02/12 19:48:24 dm Exp $";
 
 static char sccsid[] = "@(#)docmd.c	5.1 (Berkeley) 6/6/85";
 
@@ -310,7 +310,7 @@ static int makeconn(rhost)
 	extern long min_freefiles, min_freespace;
 	extern char *remotemsglist;
 	char tuser[BUFSIZ], buf[BUFSIZ];
-	u_char respbuff[BUFSIZ];
+	u_char respbuff[BUFSIZ] = "";
 	int n;
 
 	debugmsg(DM_CALL, "makeconn(%s)", rhost);
