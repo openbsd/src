@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_swap.c,v 1.13 2001/02/24 19:07:12 csapuntz Exp $	*/
+/*	$OpenBSD: vm_swap.c,v 1.14 2001/03/01 21:38:35 csapuntz Exp $	*/
 /*	$NetBSD: vm_swap.c,v 1.64 1998/11/08 19:45:17 mycroft Exp $	*/
 
 /*
@@ -861,6 +861,7 @@ swstrategy(bp)
 {
 	struct swapdev *sdp;
 	daddr_t	bn;
+	int s;
 
 	bn = bp->b_blkno;
 	sdp = swap_getsdpfromaddr(bn);
