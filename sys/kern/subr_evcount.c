@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_evcount.c,v 1.3 2004/09/23 21:08:54 deraadt Exp $ */
+/*	$OpenBSD: subr_evcount.c,v 1.4 2004/09/29 07:37:04 miod Exp $ */
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
  * Copyright (c) 2004 Aaron Campbell <aaron@openbsd.org>
@@ -44,17 +44,10 @@ struct evcount evcount_intr;
 
 void evcount_timeout(void *);
 void evcount_init(void);
-void evcount_sync(struct evcount *);
 
 void
 evcount_init(void)
 {
-#ifndef __LP64__
-	static struct timeout ec_to;
-
-	timeout_set(&ec_to, evcount_timeout, &ec_to);
-	timeout_add(&ec_to, hz);
-#endif
 	TAILQ_INIT(&evcount_list);
 
 	evcount_attach(&evcount_intr, "intr", NULL, NULL);
@@ -155,40 +148,6 @@ evcount_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	}
 
 	return (error);
-}
-
-#ifndef __LP64__
-/*
- * This timeout has to run once in a while for every event counter to
- * sync the real 64 bit counter with the 32 bit temporary counter, because
- * we cannot atomically increment the 64 bit counter on 32 bit systems.
- */
-void
-evcount_timeout(void *v)
-{
-	struct timeout *to = v;
-	int s;
-
-	s = splhigh();
-	if (evcount_next_sync == NULL)
-		evcount_next_sync = TAILQ_FIRST(&evcount_list);
-
-	evcount_sync(evcount_next_sync);
-	evcount_next_sync = TAILQ_NEXT(evcount_next_sync, next);
-	splx(s);
-
-	timeout_add(to, hz);
-}
-#endif
-
-void
-evcount_sync(struct evcount *ec)
-{
-#ifndef __LP64__
-	/* XXX race */
-	ec->ec_count += ec->ec_count32;
-	ec->ec_count32 = 0;
-#endif
 }
 
 #endif /* __HAVE_EVCOUNT */

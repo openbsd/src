@@ -1,4 +1,4 @@
-/*	$OpenBSD: evcount.h,v 1.1 2004/06/28 01:34:46 aaron Exp $ */
+/*	$OpenBSD: evcount.h,v 1.2 2004/09/29 07:37:07 miod Exp $ */
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
  * Copyright (c) 2004 Aaron Campbell <aaron@openbsd.org>
@@ -34,9 +34,6 @@
 
 struct evcount {
 	u_int64_t		ec_count;	/* main counter */
-#ifndef __LP64__
-	u_int32_t		ec_count32;	/* temporary 32-bit counter */
-#endif
 	int			ec_id;		/* counter ID */
 	const char		*ec_name;	/* counter name */
 	struct evcount		*ec_parent;	/* parent */
