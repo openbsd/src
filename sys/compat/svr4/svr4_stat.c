@@ -51,6 +51,7 @@
 #include <compat/svr4/svr4_syscallargs.h>
 #include <compat/svr4/svr4_util.h>
 #include <compat/svr4/svr4_stat.h>
+#include <compat/svr4/svr4_time.h>
 #include <compat/svr4/svr4_ustat.h>
 #include <compat/svr4/svr4_fuser.h>
 #include <compat/svr4/svr4_utsname.h>
