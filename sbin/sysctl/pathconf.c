@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathconf.c,v 1.7 2003/06/02 20:06:17 millert Exp $	*/
+/*	$OpenBSD: pathconf.c,v 1.8 2004/01/11 21:54:27 deraadt Exp $	*/
 /*	$NetBSD: pathconf.c,v 1.2 1995/09/30 07:12:47 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)pathconf.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: pathconf.c,v 1.7 2003/06/02 20:06:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: pathconf.c,v 1.8 2004/01/11 21:54:27 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -77,6 +77,8 @@ struct list {
 struct list pclist = { pcnames, PC_MAXID };
 
 int	Aflag, aflag, nflag, wflag, stdinflag;
+
+char *equ = " = ";
 
 int
 main(int argc, char *argv[])
@@ -181,7 +183,7 @@ parse(char *pathname, char *string, int flags)
 		}
 	}
 	if (!nflag)
-		fprintf(stdout, "%s = ", string);
+		fprintf(stdout, "%s%s", string, equ);
 	fprintf(stdout, "%d\n", value);
 }
 

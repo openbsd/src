@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.102 2004/01/09 02:46:04 millert Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.103 2004/01/11 21:54:27 deraadt Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.102 2004/01/09 02:46:04 millert Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.103 2004/01/11 21:54:27 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -162,7 +162,7 @@ struct list secondlevel[] = {
 	{ 0, 0 },			/* CTL_VFS */
 };
 
-int	Aflag, aflag, nflag, qflag, wflag;
+int	Aflag, aflag, nflag, qflag;
 
 /*
  * Variables requiring special processing.
@@ -213,13 +213,19 @@ int sysctl_chipset(char *, char **, int *, int, int *);
 #endif
 void vfsinit(void);
 
+char *equ = "=";
+
 int
 main(int argc, char *argv[])
 {
 	int ch, lvl1;
 
-	while ((ch = getopt(argc, argv, "Aanqw")) != -1) {
+	while ((ch = getopt(argc, argv, "AanqwO")) != -1) {
 		switch (ch) {
+
+		case 'O':
+			equ = " = ";
+			break;
 
 		case 'A':
 			Aflag = 1;
@@ -238,7 +244,7 @@ main(int argc, char *argv[])
 			break;
 
 		case 'w':
-			wflag = 1;
+			/* flag no longer needed; var=value implies write */
 			break;
 
 		default:
@@ -307,8 +313,6 @@ parse(char *string, int flags)
 	(void)strlcpy(buf, string, sizeof(buf));
 	bufp = buf;
 	if ((cp = strchr(string, '=')) != NULL) {
-		if (!wflag)
-			errx(2, "must specify -w to set variables");
 		*strchr(buf, '=') = '\0';
 		*cp++ = '\0';
 		while (isspace(*cp))
@@ -465,7 +469,7 @@ parse(char *string, int flags)
 
 			getloadavg(loads, 3);
 			if (!nflag)
-				(void)printf("%s = ", string);
+				(void)printf("%s%s", string, equ);
 			(void)printf("%.2f %.2f %.2f\n", loads[0],
 			    loads[1], loads[2]);
 			return;
@@ -482,7 +486,7 @@ parse(char *string, int flags)
 				return;
 			}
 			if (!nflag)
-				(void)printf("%s = ", string);
+				(void)printf("%s%s", string, equ);
 			(void)printf("%p\n", _ps.val);
 			return;
 		} else if (mib[1] == VM_SWAPENCRYPT) {
@@ -692,7 +696,7 @@ parse(char *string, int flags)
 	if (special & KMEMBUCKETS) {
 		struct kmembuckets *kb = (struct kmembuckets *)buf;
 		if (!nflag)
-			(void)printf("%s = ", string);
+			(void)printf("%s%s", string, equ);
 		printf("(");
 		printf("calls = %llu ", (long long)kb->kb_calls);
 		printf("total_allocated = %llu ", (long long)kb->kb_total);
@@ -708,7 +712,7 @@ parse(char *string, int flags)
 		int j, first = 1;
 
 		if (!nflag)
-			(void)printf("%s = ", string);
+			(void)printf("%s%s", string, equ);
 		(void)printf("(inuse = %ld, calls = %ld, memuse = %ldK, "
 		    "limblocks = %d, mapblocks = %d, maxused = %ldK, "
 		    "limit = %ldK, spare = %ld, sizes = (",
@@ -734,7 +738,7 @@ parse(char *string, int flags)
 		struct clockinfo *clkp = (struct clockinfo *)buf;
 
 		if (!nflag)
-			(void)printf("%s = ", string);
+			(void)printf("%s%s", string, equ);
 		(void)printf(
 		    "tick = %d, tickadj = %d, hz = %d, profhz = %d, stathz = %d\n",
 		    clkp->tick, clkp->tickadj, clkp->hz, clkp->profhz, clkp->stathz);
@@ -746,7 +750,7 @@ parse(char *string, int flags)
 
 		if (!nflag) {
 			boottime = btp->tv_sec;
-			(void)printf("%s = %s", string, ctime(&boottime));
+			(void)printf("%s%s%s", string, equ, ctime(&boottime));
 		} else
 			(void)printf("%ld\n", btp->tv_sec);
 		return;
@@ -755,7 +759,7 @@ parse(char *string, int flags)
 		dev_t dev = *(dev_t *)buf;
 
 		if (!nflag)
-			(void)printf("%s = %s\n", string,
+			(void)printf("%s%s%s\n", string, equ,
 			    devname(dev, S_IFBLK));
 		else
 			(void)printf("0x%x\n", dev);
@@ -765,7 +769,7 @@ parse(char *string, int flags)
 		dev_t dev = *(dev_t *)buf;
 
 		if (!nflag)
-			(void)printf("%s = %s\n", string,
+			(void)printf("%s%s%s\n", string, equ,
 			    devname(dev, S_IFCHR));
 		else
 			(void)printf("0x%x\n", dev);
@@ -776,7 +780,7 @@ parse(char *string, int flags)
 		bios_diskinfo_t *pdi = (bios_diskinfo_t *)buf;
 
 		if (!nflag)
-			(void)printf("%s = ", string);
+			(void)printf("%s%s", string, equ);
 		(void)printf("bootdev = 0x%x, "
 			     "cylinders = %u, heads = %u, sectors = %u\n",
 			     pdi->bsd_dev, pdi->bios_cylinders,
@@ -787,7 +791,7 @@ parse(char *string, int flags)
 		int dev = *(int*)buf;
 
 		if (!nflag)
-			(void)printf("%s = ", string);
+			(void)printf("%s%s", string, equ);
 		(void) printf("0x%02x\n", dev);
 		return;
 	}
@@ -795,7 +799,7 @@ parse(char *string, int flags)
 	if (special & UNSIGNED) {
 		if (newsize == 0) {
 			if (!nflag)
-				(void)printf("%s = ", string);
+				(void)printf("%s%s", string, equ);
 			(void)printf("%u\n", *(u_int *)buf);
 		} else {
 			if (!qflag) {
@@ -812,7 +816,7 @@ parse(char *string, int flags)
 		int i;
 
 		if (!nflag)
-			(void)printf("%s = ", string);
+			(void)printf("%s%s", string, equ);
 		(void)printf(
 		"%llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu",
 		    (unsigned long long)rndstats->rnd_total,
@@ -850,7 +854,7 @@ parse(char *string, int flags)
 		if (!qflag) {
 			if (!nflag)
 				(void)printf("%s%s", string,
-				    newsize ? ": " : " = ");
+				    newsize ? ": " : equ);
 			lastport = 0;
 			for (port = IPPORT_RESERVED/2; port < IPPORT_RESERVED;
 			    port++)
@@ -879,7 +883,7 @@ parse(char *string, int flags)
 	if (special & LONGARRAY) {
 		long *la = (long *)buf;
 		if (!nflag)
-			printf("%s = ", string);
+			printf("%s%s", string, equ);
 		while (lal--)
 			printf("%ld%s", *la++, lal? ",":"");
 		putchar('\n');
@@ -890,7 +894,7 @@ parse(char *string, int flags)
 
 		if (size > 0) {
 			if (!nflag)
-				printf("%s = ", string);
+				printf("%s%s", string, equ);
 			printf("%s, %s, ", s->device, s->desc);
 			switch (s->type) {
 			case SENSOR_TEMP:
@@ -918,7 +922,7 @@ parse(char *string, int flags)
 	case CTLTYPE_INT:
 		if (newsize == 0) {
 			if (!nflag)
-				(void)printf("%s = ", string);
+				(void)printf("%s%s", string, equ);
 			(void)printf("%d\n", *(int *)buf);
 		} else {
 			if (!qflag) {
@@ -933,7 +937,7 @@ parse(char *string, int flags)
 	case CTLTYPE_STRING:
 		if (newval == NULL) {
 			if (!nflag)
-				(void)printf("%s = ", string);
+				(void)printf("%s%s", string, equ);
 			(void)puts(buf);
 		} else {
 			if (!qflag) {
@@ -949,7 +953,7 @@ parse(char *string, int flags)
 			long long tmp = *(quad_t *)buf;
 
 			if (!nflag)
-				(void)printf("%s = ", string);
+				(void)printf("%s%s", string, equ);
 			(void)printf("%lld\n", tmp);
 		} else {
 			long long tmp = *(quad_t *)buf;
@@ -1444,7 +1448,7 @@ sysctl_nchstats(char *string, char **bufpp, int mib[], int flags, int *typep)
 		keepvalue = 1;
 	}
 	if (!nflag)
-		(void)printf("%s = ", string);
+		(void)printf("%s%s", string, equ);
 	switch (indx) {
 	case KERN_NCHSTATS_GOODHITS:
 		(void)printf("%ld\n", nch.ncs_goodhits);
@@ -1522,7 +1526,7 @@ sysctl_forkstat(char *string, char **bufpp, int mib[], int flags, int *typep)
 		keepvalue = 1;
 	}
 	if (!nflag)
-		(void)printf("%s = ", string);
+		(void)printf("%s%s", string, equ);
 	switch (indx)	{
 	case KERN_FORKSTAT_FORK:
 		(void)printf("%d\n", fks.cntfork);
@@ -1683,7 +1687,7 @@ sysctl_chipset(char *string, char **bufpp, int mib[], int flags, int *typep)
 		return (-1);
 	mib[2] = indx;
 	if (!nflag)
-		printf("%s = ", string);
+		printf("%s%s", string, equ);
 	switch(mib[2]) {
 	case CPU_CHIPSET_MEM:
 	case CPU_CHIPSET_DENSE:
@@ -1997,14 +2001,14 @@ sysctl_emul(char *string, char *newval, int flags)
 	head = "kern.emul.";
 
 	if (aflag || strcmp(string, "kern.emul") == 0) {
-		if (strcmp(string, "kern.emul") == 0 && wflag) {
+		if (strcmp(string, "kern.emul") == 0) {
 			warnx("%s: specification is incomplete", string);
 			return (1);
 		}
 		if (nflag)
 			printf("%d\n", nemuls);
 		else
-			printf("%snemuls = %d\n", head, nemuls);
+			printf("%snemuls%s%d\n", head, equ, nemuls);
 		for (i = 0; i < emul_num; i++) {
 			if (emul_names[i] == NULL)
 				continue;
@@ -2017,7 +2021,7 @@ sysctl_emul(char *string, char *newval, int flags)
 			if (nflag)
 				printf("%d\n", enabled);
 			else
-				printf("%s%s = %d\n", head, emul_names[i],
+				printf("%s%s%s%d\n", head, emul_names[i], equ,
 				    enabled);
 		}
 		return (0);
