@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.39 2000/04/16 20:19:45 deraadt Exp $
+.\"	$OpenBSD: afterboot.8,v 1.40 2000/04/18 15:14:36 millert Exp $
 .Dd October 20, 1997
 .Dt AFTERBOOT 8
 \!\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -533,7 +533,7 @@ Remember to get a
 from the master so that the remote commands work.
 .Ss Mail Aliases
 Edit
-.Pa /etc/aliases
+.Pa /etc/mail/aliases
 and set the four standard aliases to go to either a mailing list, or
 the system administrator.
 .Bd -literal -offset indent
@@ -550,7 +550,7 @@ after changes.
 .Ss Sendmail
 .Ox
 ships with a default
-.Pa /etc/sendmail.cf
+.Pa /etc/mail/sendmail.cf
 file that will work for simple installations; it was generated from
 .Pa openbsd-proto.mc
 in
@@ -612,7 +612,7 @@ and edit them as needed.
 (Do not edit files ending in
 .Pa .db
 \(em like
-.Pa aliases.db , pwd.db , spwd.db ,
+.Pa pwd.db , spwd.db ,
 nor
 .Pa localtime ,
 nor
