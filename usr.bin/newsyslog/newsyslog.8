@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newsyslog.8,v 1.26 2002/09/17 20:03:40 millert Exp $
+.\"	$OpenBSD: newsyslog.8,v 1.27 2002/09/17 20:16:43 millert Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -56,7 +56,7 @@
 .Nd maintain system log files to manageable sizes
 .Sh SYNOPSIS
 .Nm newsyslog
-.Op Fl mnrv
+.Op Fl Fmnrv
 .Op Fl a Ar directory
 .Op Fl f Ar config_file
 .Sh DESCRIPTION
@@ -80,6 +80,17 @@ Optionally the archived logs can be compressed to save space.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl F
+Force
+.Nm
+to trim logs regardless of the size and/or age requirements specified in
+.Pa /etc/newsyslog.conf .
+This option may be combined with the
+.Fl n
+or
+.Fl v
+flags to aid in debugging problems with
+.Pa /etc/newsyslog.conf .
 .It Fl m
 Monitoring mode; only entries marked with an
 .Sq M

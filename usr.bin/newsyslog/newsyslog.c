@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.51 2002/09/17 20:03:40 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.52 2002/09/17 20:16:43 millert Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -86,7 +86,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.51 2002/09/17 20:03:40 millert Exp $";
+static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.52 2002/09/17 20:16:43 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -161,15 +161,16 @@ struct pidinfo {
 	int	signal;
 };
 
-int     verbose = 0;		/* Print out what's going on */
-int     needroot = 1;		/* Root privs are necessary */
-int     noaction = 0;		/* Don't do anything, just show it */
+int	verbose = 0;		/* Print out what's going on */
+int	needroot = 1;		/* Root privs are necessary */
+int	noaction = 0;		/* Don't do anything, just show it */
 int	monitormode = 0;	/* Don't do monitoring by default */
-char    *conf = CONF;		/* Configuration file to use */
-time_t  timenow;
-char    hostname[MAXHOSTNAMELEN]; /* hostname */
-char    *daytime;		/* timenow in human readable form */
-char    *arcdir;		/* dir to put archives in (if it exists) */
+int	force = 0;		/* Force the logs to be rotated */
+char	*conf = CONF;		/* Configuration file to use */
+time_t	timenow;
+char	hostname[MAXHOSTNAMELEN]; /* hostname */
+char	*daytime;		/* timenow in human readable form */
+char	*arcdir;		/* dir to put archives in (if it exists) */
 
 void do_entry(struct conf_entry *);
 void parse_args(int, char **);
@@ -293,7 +294,8 @@ do_entry(struct conf_entry *ent)
 			DPRINTF(("age (hr): %d [%d] ", modtime, ent->hours));
 		if (monitormode && ent->flags & CE_MONITOR)
 			domonitor(ent->log, ent->whom);
-		if (!monitormode && ((ent->size > 0 && size >= ent->size) ||
+		if (!monitormode && (force ||
+		    (ent->size > 0 && size >= ent->size) ||
 		    (ent->hours > 0 && (modtime >= ent->hours || modtime < 0)
 		    && ((ent->flags & CE_BINARY) || size >= MIN_SIZE)))) {
 			DPRINTF(("--> trimming log....\n"));
@@ -383,7 +385,7 @@ parse_args(int argc, char **argv)
 	if ((p = strchr(hostname, '.')) != NULL)
 		*p = '\0';
 
-	while ((ch = getopt(argc, argv, "nrvma:f:")) != -1) {
+	while ((ch = getopt(argc, argv, "Fmnrva:f:")) != -1) {
 		switch (ch) {
 		case 'a':
 			arcdir = optarg;
@@ -403,10 +405,15 @@ parse_args(int argc, char **argv)
 		case 'm':
 			monitormode++;
 			break;
+		case 'F':
+			force++;
+			break;
 		default:
 			usage();
 		}
 	}
+	if (monitormode && force)
+		errx(1, "cannot specify both -m and -F flags");
 }
 
 void
@@ -414,12 +421,13 @@ usage(void)
 {
 	extern const char *__progname;
 
-	(void)fprintf(stderr, "usage: %s [-mnrv] [-a directory] "
+	(void)fprintf(stderr, "usage: %s [-Fmnrv] [-a directory] "
 	    "[-f config_file]\n", __progname);
 	exit(1);
 }
 
-/* Parse a configuration file and return a linked list of all the logs
+/*
+ * Parse a configuration file and return a linked list of all the logs
  * to process
  */
 struct conf_entry *
