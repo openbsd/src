@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd_wscons.c,v 1.16 2004/05/09 03:21:52 deraadt Exp $ */
+/*	$OpenBSD: kbd_wscons.c,v 1.17 2004/09/16 09:53:56 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Mats O Jansson.  All rights reserved.
@@ -51,6 +51,7 @@
 #define SA_HILKBD 6
 #define	SA_GSCKBD 7
 
+#ifndef NOKVM
 struct nlist nl[] = {
 	{ "_pckbd_keydesctab" },
 	{ "_ukbd_keydesctab" },
@@ -74,6 +75,10 @@ char *kbtype_tab[] = {
 	"gsc",
 };
 
+int rebuild = 0;
+
+#endif /* NOKVM */
+
 struct nameint {
 	int value;
 	char *name;
@@ -92,7 +97,6 @@ struct nameint kbdvar_tab[] = {
 };
 
 extern char *__progname;
-int rebuild = 0;
 
 void	kbd_show_enc(kvm_t *kd, int idx);
 void	kbd_list(void);
@@ -152,9 +156,11 @@ void
 kbd_list(void)
 {
 	int	fd, i, kbtype;
+#ifndef NOKVM
 	kvm_t	*kd;
-	char	device[MAXPATHLEN];
 	char	errbuf[_POSIX2_LINE_MAX];
+#endif
+	char	device[MAXPATHLEN];
 	int	pc_kbd = 0;
 	int	usb_kbd = 0;
 	int	adb_kbd = 0;
@@ -303,5 +309,5 @@ kbd_set(char *name, int verbose)
 	}
 
 	if (verbose && v > 0)
-		fprintf(stderr, "keyboard mapping set to %s\n", name);
+		fprintf(stderr, "kbd: keyboard mapping set to %s\n", name);
 }
