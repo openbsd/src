@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.158 2004/09/01 08:09:13 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.159 2004/09/10 19:13:07 miod Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -22,7 +22,7 @@ Supported hardware {:-include-:}:
 	Processors
 		All CPU chips compatible with the Intel 80386 (MACHINE)
 		architecture:
-			386/486 (SX/DX/DX2/DX4)
+			386/486 (SX/DX/DX2/DX4, an FPU is required)
 			Intel Pentium/Pentium-MMX
 			Intel Pentium Pro/II/III/Celeron/Xeon
 			Intel Pentium IV
