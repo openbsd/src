@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.120 2002/12/31 19:18:41 mcbride Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.121 2003/01/01 04:26:19 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -282,16 +282,15 @@ struct pf_pool {
 struct pf_rule {
 	struct pf_rule_addr	 src;
 	struct pf_rule_addr	 dst;
-#define PF_SKIP_ACTION		0
-#define PF_SKIP_IFP		1
-#define PF_SKIP_DIR		2
-#define PF_SKIP_AF		3
-#define PF_SKIP_PROTO		4
-#define PF_SKIP_SRC_ADDR	5
-#define PF_SKIP_SRC_PORT	6
-#define PF_SKIP_DST_ADDR	7
-#define PF_SKIP_DST_PORT	8
-#define PF_SKIP_COUNT		9
+#define PF_SKIP_IFP		0
+#define PF_SKIP_DIR		1
+#define PF_SKIP_AF		2
+#define PF_SKIP_PROTO		3
+#define PF_SKIP_SRC_ADDR	4
+#define PF_SKIP_SRC_PORT	5
+#define PF_SKIP_DST_ADDR	6
+#define PF_SKIP_DST_PORT	7
+#define PF_SKIP_COUNT		8
 	union {
 		struct pf_rule	*ptr;
 		u_int32_t	 nr;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.115 2003/01/01 00:58:10 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.116 2003/01/01 04:26:19 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -461,7 +461,7 @@ void
 pfctl_print_rule_counters(struct pf_rule *rule, int opts)
 {
 	if (opts & PF_OPT_VERBOSE2) {
-		const char *t[PF_SKIP_COUNT] = { "a", "i", "d", "f",
+		const char *t[PF_SKIP_COUNT] = { "i", "d", "f",
 		    "p", "sa", "sp", "da", "dp" };
 		int i;
 

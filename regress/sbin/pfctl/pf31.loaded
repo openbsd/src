@@ -1,36 +1,36 @@
 @0 block return in on lo0 all 
-[ Skip steps: a=end i=end d=end p=end sa=end sp=end da=end dp=end ]
+[ Skip steps: i=end d=end p=end sa=end sp=end da=end dp=end ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @1 block return in on lo0 inet all 
-[ Skip steps: a=end i=end d=end p=end sa=end sp=end da=end dp=end ]
+[ Skip steps: i=end d=end p=end sa=end sp=end da=end dp=end ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @2 block return in on lo0 inet6 all 
-[ Skip steps: a=end i=end d=end p=end sa=end sp=end da=end dp=end ]
+[ Skip steps: i=end d=end p=end sa=end sp=end da=end dp=end ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @3 block drop in on lo0 all 
-[ Skip steps: a=end i=end d=end p=end sa=end sp=end da=end dp=end ]
+[ Skip steps: i=end d=end p=end sa=end sp=end da=end dp=end ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @4 block drop in on lo0 inet all 
-[ Skip steps: a=end i=end d=end p=end sa=end sp=end da=end dp=end ]
+[ Skip steps: i=end d=end p=end sa=end sp=end da=end dp=end ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @5 block drop in on lo0 inet6 all 
-[ Skip steps: a=end i=end d=end p=end sa=end sp=end da=end dp=end ]
+[ Skip steps: i=end d=end p=end sa=end sp=end da=end dp=end ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @6 block return in on lo0 all 
-[ Skip steps: a=end i=end d=end p=end sa=end sp=end da=end dp=end ]
+[ Skip steps: i=end d=end p=end sa=end sp=end da=end dp=end ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @7 block return in on lo0 inet all 
-[ Skip steps: a=end i=end d=end p=end sa=end sp=end da=end dp=end ]
+[ Skip steps: i=end d=end p=end sa=end sp=end da=end dp=end ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @8 block return in on lo0 inet6 all 
-[ Skip steps: a=end i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+[ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 

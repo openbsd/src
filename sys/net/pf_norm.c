@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.44 2002/12/31 19:18:41 mcbride Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.45 2003/01/01 04:26:19 dhartmei Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -803,9 +803,7 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_SCRUB].active.ptr);
 	while (r != NULL) {
 		r->evaluations++;
-		if (r->action != PF_SCRUB)
-			r = r->skip[PF_SKIP_ACTION].ptr;
-		else if (r->ifp != NULL && r->ifp != ifp)
+		if (r->ifp != NULL && r->ifp != ifp)
 			r = r->skip[PF_SKIP_IFP].ptr;
 		else if (r->direction && r->direction != dir)
 			r = r->skip[PF_SKIP_DIR].ptr;
@@ -1008,9 +1006,7 @@ pf_normalize_tcp(int dir, struct ifnet *ifp, struct mbuf *m, int ipoff,
 	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_SCRUB].active.ptr);
 	while (r != NULL) {
 		r->evaluations++;
-		if (r->action != PF_SCRUB)
-			r = r->skip[PF_SKIP_ACTION].ptr;
-		else if (r->ifp != NULL && r->ifp != ifp)
+		if (r->ifp != NULL && r->ifp != ifp)
 			r = r->skip[PF_SKIP_IFP].ptr;
 		else if (r->direction && r->direction != dir)
 			r = r->skip[PF_SKIP_DIR].ptr;

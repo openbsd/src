@@ -1,8 +1,8 @@
 @0 scrub in on lo0 all fragment reassemble 
-[ Skip steps: a=end i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+[ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @0 pass in on lo1 all 
-[ Skip steps: a=end i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+[ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 

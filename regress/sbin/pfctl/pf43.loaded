@@ -1,20 +1,20 @@
 @0 pass in on lo0 inet proto tcp from any to 127.0.0.1 port = ssh queue(bulk, prio) 
-[ Skip steps: a=end i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+[ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @1 pass in on lo0 inet proto tcp from any to 127.0.0.1 port = ssh queue bulk 
-[ Skip steps: a=end i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+[ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @2 pass in on lo0 inet proto tcp from any to 127.0.0.1 port = ssh queue(bulk, prio) 
-[ Skip steps: a=end i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+[ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @3 pass in on lo0 inet proto tcp from any to 127.0.0.1 port = ssh queue bulk 
-[ Skip steps: a=end i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+[ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @4 pass in on lo0 inet proto tcp from any to 127.0.0.1 port = ssh queue(bulk, prio) 
-[ Skip steps: a=end i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+[ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 

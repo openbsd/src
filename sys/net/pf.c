@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.291 2003/01/01 03:53:22 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.292 2003/01/01 04:26:19 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -725,9 +725,6 @@ pf_calc_skip_steps(struct pf_rulequeue *rules)
 		head[i] = cur;
 	while (cur != NULL) {
 
-		if ((cur->action == PF_SCRUB && prev->action != PF_SCRUB) ||
-		    (cur->action != PF_SCRUB && prev->action == PF_SCRUB))
-			PF_SET_SKIP_STEPS(PF_SKIP_ACTION);
 		if (cur->ifp != prev->ifp || cur->ifnot != prev->ifnot)
 			PF_SET_SKIP_STEPS(PF_SKIP_IFP);
 		if (cur->direction != prev->direction)
@@ -1809,9 +1806,7 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_FILTER].active.ptr);
 	while (r != NULL) {
 		r->evaluations++;
-		if (r->action == PF_SCRUB)
-			r = r->skip[PF_SKIP_ACTION].ptr;
-		else if (r->ifp != NULL && ((r->ifp != ifp && !r->ifnot) ||
+		if (r->ifp != NULL && ((r->ifp != ifp && !r->ifnot) ||
 		    (r->ifp == ifp && r->ifnot)))
 			r = r->skip[PF_SKIP_IFP].ptr;
 		else if (r->direction && r->direction != direction)
@@ -2064,9 +2059,7 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_FILTER].active.ptr);
 	while (r != NULL) {
 		r->evaluations++;
-		if (r->action == PF_SCRUB)
-			r = r->skip[PF_SKIP_ACTION].ptr;
-		else if (r->ifp != NULL && ((r->ifp != ifp && !r->ifnot) ||
+		if (r->ifp != NULL && ((r->ifp != ifp && !r->ifnot) ||
 		    (r->ifp == ifp && r->ifnot)))
 			r = r->skip[PF_SKIP_IFP].ptr;
 		else if (r->direction && r->direction != direction)
@@ -2345,9 +2338,7 @@ pf_test_icmp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_FILTER].active.ptr);
 	while (r != NULL) {
 		r->evaluations++;
-		if (r->action == PF_SCRUB)
-			r = r->skip[PF_SKIP_ACTION].ptr;
-		else if (r->ifp != NULL && ((r->ifp != ifp && !r->ifnot) ||
+		if (r->ifp != NULL && ((r->ifp != ifp && !r->ifnot) ||
 		    (r->ifp == ifp && r->ifnot)))
 			r = r->skip[PF_SKIP_IFP].ptr;
 		else if (r->direction && r->direction != direction)
@@ -2550,9 +2541,7 @@ pf_test_other(struct pf_rule **rm, int direction, struct ifnet *ifp,
 	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_FILTER].active.ptr);
 	while (r != NULL) {
 		r->evaluations++;
-		if (r->action == PF_SCRUB)
-			r = r->skip[PF_SKIP_ACTION].ptr;
-		else if (r->ifp != NULL && ((r->ifp != ifp && !r->ifnot) ||
+		if (r->ifp != NULL && ((r->ifp != ifp && !r->ifnot) ||
 		    (r->ifp == ifp && r->ifnot)))
 			r = r->skip[PF_SKIP_IFP].ptr;
 		else if (r->direction && r->direction != direction)
@@ -2697,9 +2686,7 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct ifnet *ifp,
 	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_FILTER].active.ptr);
 	while (r != NULL) {
 		r->evaluations++;
-		if (r->action == PF_SCRUB)
-			r = r->skip[PF_SKIP_ACTION].ptr;
-		else if (r->ifp != NULL && ((r->ifp != ifp && !r->ifnot) ||
+		if (r->ifp != NULL && ((r->ifp != ifp && !r->ifnot) ||
 		    (r->ifp == ifp && r->ifnot)))
 			r = r->skip[PF_SKIP_IFP].ptr;
 		else if (r->direction && r->direction != direction)
