@@ -1,5 +1,5 @@
-/*	$OpenBSD: doi.h,v 1.5 1999/04/19 19:54:53 niklas Exp $	*/
-/*	$EOM: doi.h,v 1.25 1999/04/02 00:57:24 niklas Exp $	*/
+/*	$OpenBSD: doi.h,v 1.6 1999/04/27 20:57:20 niklas Exp $	*/
+/*	$EOM: doi.h,v 1.26 1999/04/27 09:40:31 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -43,6 +43,7 @@
 struct exchange;
 struct keystate;
 struct message;
+struct payload;
 struct proto;
 struct sa;
 
@@ -69,6 +70,8 @@ struct doi {
   void (*free_sa_data) (void *);
   struct keystate *(*get_keystate) (struct message *);
   u_int8_t *(*get_spi) (size_t *, u_int8_t, struct message *);
+  int (*handle_leftover_payload) (struct message *, u_int8_t,
+				  struct payload *);
   int (*is_attribute_incompatible) (u_int16_t, u_int8_t *, u_int16_t, void *);
   void (*proto_init) (struct proto *, char *);
   void (*setup_situation) (u_int8_t *);
