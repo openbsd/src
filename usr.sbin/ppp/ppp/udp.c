@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: udp.c,v 1.15 2002/05/16 01:13:39 brian Exp $
+ *	$OpenBSD: udp.c,v 1.16 2002/07/18 18:52:36 brian Exp $
  */
 
 #include <sys/types.h>
@@ -209,7 +209,6 @@ udp_CreateDevice(struct physical *p, char *host, char *port)
   }
 
   dev->sock.sin_family = AF_INET;
-  dev->sock.sin_addr.s_addr = inet_addr(host);
   dev->sock.sin_addr = GetIpAddr(host);
   if (dev->sock.sin_addr.s_addr == INADDR_NONE) {
     log_Printf(LogWARN, "%s: %s: unknown host\n", p->link.name, host);
