@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.59 2002/06/20 06:21:40 mpech Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.60 2002/06/20 06:43:58 mpech Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -822,7 +822,7 @@ pass in on $ext_if proto tcp from any to any port { ssh, smtp, domain, \\
 
 # pass in data mode connections for ftp-proxy running on this host.
 # (see ftp-proxy(8) for details)
-pass in on $ext_if proto tcp from any to 157.161.48.183 port >= 41951 \\
+pass in on $ext_if proto tcp from any to 157.161.48.183 port >= 49152 \\
 	flags S/SA keep state
 
 .Ed
