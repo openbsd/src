@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_krb5.c,v 1.13 2002/02/06 09:18:31 hin Exp $	*/
+/*	$OpenBSD: login_krb5.c,v 1.14 2002/02/27 09:52:45 hin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 Hans Insulander <hin@openbsd.org>.
@@ -54,8 +54,10 @@ store_tickets(struct passwd *pwd, int ticket_newfiles, int ticket_store,
 	      int token_install) {
 	char cc_file[MAXPATHLEN];
 	krb5_ccache ccache_store;
+#ifdef KRB524
 	int get_krb4_ticket = 0;
 	char krb4_ticket_file[MAXPATHLEN];
+#endif
 
 	if (ticket_newfiles)
 		snprintf(cc_file, sizeof(cc_file), "FILE:/tmp/krb5cc_%d",
@@ -136,8 +138,8 @@ store_tickets(struct passwd *pwd, int ticket_newfiles, int ticket_store,
 				      pwd->pw_uid, pwd->pw_gid);
 			}
 		}
-	}
 #endif
+	}
 	
 	/* Need to chown the ticket file */
 #ifdef KRB524
