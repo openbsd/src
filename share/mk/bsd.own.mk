@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.88 2004/09/06 06:38:02 deraadt Exp $
+#	$OpenBSD: bsd.own.mk,v 1.89 2004/10/29 20:29:34 pvalchev Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -35,7 +35,7 @@ ELF_TOOLCHAIN?=	yes
 .if ${MACHINE} == "amd64" || ${MACHINE_ARCH} == "arm" || \
     ${MACHINE_ARCH} == "hppa" || ${MACHINE_ARCH} == "hppa64" || \
     ${MACHINE_ARCH} == "sparc64" || ${MACHINE_ARCH} == "x86_64" || \
-    ${MACHINE_ARCH} == "mips64"
+    ${MACHINE_ARCH} == "mips64" || ${MACHINE_ARCH} == "powerpc"
 USE_GCC3?=yes
 .else
 USE_GCC3?=no
