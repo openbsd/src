@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt_ebus.c,v 1.5 2002/05/27 20:07:06 deraadt Exp $	*/
+/*	$OpenBSD: lpt_ebus.c,v 1.6 2002/07/18 02:20:17 jason Exp $	*/
 /*	$NetBSD: lpt_ebus.c,v 1.8 2002/03/01 11:51:00 martin Exp $	*/
 
 /*
@@ -66,9 +66,9 @@ lpt_ebus_match(parent, match, aux)
 {
 	struct ebus_attach_args *ea = aux;
 
-	if (strcmp(ea->ea_name, "ecpp") == 0)
+	if (!strcmp(ea->ea_name, "ecpp") ||
+	    !strcmp(ea->ea_name, "parallel"))
 		return (1);
-
 	return (0);
 }
 
