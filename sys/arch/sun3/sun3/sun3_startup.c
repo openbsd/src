@@ -1,4 +1,4 @@
-/*	$OpenBSD: sun3_startup.c,v 1.18 2001/08/20 19:59:45 miod Exp $	*/
+/*	$OpenBSD: sun3_startup.c,v 1.19 2001/09/14 09:09:45 art Exp $	*/
 /*	$NetBSD: sun3_startup.c,v 1.55 1996/11/20 18:57:38 gwr Exp $	*/
 
 /*-
@@ -384,7 +384,7 @@ sun3_vm_init(kehp)
 	esym = end;
 	/* This will advance esym past the symbols. */
 	sun3_save_symtab(kehp);
-	virtual_avail = round_page(esym);
+	virtual_avail = round_page((vaddr_t)esym);
 #else
 	virtual_avail = round_page(end);
 #endif
@@ -580,7 +580,7 @@ sun3_vm_init(kehp)
 
 	/* text */
 	va = (vm_offset_t) kernel_text;
-	eva = trunc_page(etext);
+	eva = trunc_page((vaddr_t)etext);
 	while (va < eva) {
 		pte = get_pte(va);
 		if ((pte & (PG_VALID|PG_TYPE)) != PG_VALID) {
@@ -594,7 +594,7 @@ sun3_vm_init(kehp)
 	}
 
 	/* data and bss */
-	eva = round_page(end);
+	eva = round_page((vaddr_t)end);
 	while (va < eva) {
 		pte = get_pte(va);
 		if ((pte & (PG_VALID|PG_TYPE)) != PG_VALID) {
