@@ -1643,6 +1643,7 @@
 ./usr/share/man/cat5/core.0
 ./usr/share/man/cat5/crontab.0
 ./usr/share/man/cat5/cvs.0
+./usr/share/man/cat5/defaultdomain.0
 ./usr/share/man/cat5/dhclient.conf.0
 ./usr/share/man/cat5/dhclient.leases.0
 ./usr/share/man/cat5/dhcp-options.0
