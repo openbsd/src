@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.32 2004/11/28 14:04:24 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.33 2004/12/01 21:19:47 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.29 1998/07/28 18:34:55 thorpej Exp $	*/
 
 /*
@@ -153,50 +153,37 @@ cpu_coredump(p, vp, cred, chdr)
 	struct ucred *cred;
 	struct core *chdr;
 {
-	int error;
 	struct md_core md_core;
 	struct coreseg cseg;
-	struct user *up = p->p_addr;
-	int i;
+	int error;
 
-	CORE_SETMAGIC(*chdr, COREMAGIC, MID_M68K, 0);
+	CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
 	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
 	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
 	chdr->c_cpusize = sizeof(md_core);
 
 	/* Save integer registers. */
-	{
-		struct frame *f;
+	error = process_read_regs(p, &md_core.intreg);
+	if (error)
+		return error;
 
-		f = (struct frame*)p->p_md.md_regs;
-		for (i = 0; i < 16; i++) {
-			md_core.intreg.r_regs[i] = f->f_regs[i];
-		}
-		md_core.intreg.r_sr = f->f_sr;
-		md_core.intreg.r_pc = f->f_pc;
-	}
 	if (fputype) {
-		struct fpframe *f;
-
-		f = &up->u_pcb.pcb_fpregs;
-		m68881_save(f);
-		for (i = 0; i < (8*3); i++) {
-			md_core.freg.r_regs[i] = f->fpf_regs[i];
-		}
-		md_core.freg.r_fpcr  = f->fpf_fpcr;
-		md_core.freg.r_fpsr  = f->fpf_fpsr;
-		md_core.freg.r_fpiar = f->fpf_fpiar;
+		/* Save floating point registers. */
+		error = process_read_fpregs(p, &md_core.freg);
+		if (error)
+			return error;
 	} else {
+		/* Make sure these are clear. */
 		bzero((caddr_t)&md_core.freg, sizeof(md_core.freg));
 	}
 
-	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_M68K, CORE_CPU);
+	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
 	cseg.c_addr = 0;
 	cseg.c_size = chdr->c_cpusize;
 
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
-	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
+	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred,
+	    NULL, p);
 	if (error)
 		return error;
 
@@ -292,6 +279,7 @@ kvtop(addr)
 
 	if (pmap_extract(pmap_kernel(), (vaddr_t)addr, &pa) == FALSE)
 		panic("kvtop: zero page frame");
+
 	return((int)pa);
 }
 
