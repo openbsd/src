@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.26 2002/06/09 05:23:26 miod Exp $	*/
+/*	$OpenBSD: sd.c,v 1.27 2002/12/25 20:40:36 miod Exp $	*/
 /*	$NetBSD: sd.c,v 1.34 1997/07/10 18:14:10 kleink Exp $	*/
 
 /*
@@ -58,6 +58,8 @@
 
 #include <ufs/ffs/fs.h>			/* for BBSIZE and SBSIZE */
 
+#include <sys/conf.h>
+
 #include <hp300/dev/scsireg.h>
 #include <hp300/dev/scsivar.h>
 #include <hp300/dev/sdvar.h>
@@ -65,13 +67,6 @@
 #ifdef USELEDS
 #include <hp300/hp300/leds.h>
 #endif
-
-/*
-extern void disksort();
-extern void biodone();
-extern int physio();
-extern void TBIS();
-*/
 
 int	sdmatch(struct device *, void *, void *);
 void	sdattach(struct device *, struct device *, void *);
@@ -119,20 +114,10 @@ static char legal_cmds[256] = {
 /*f0*/	0,  0,  0,  0,  0,  0,  0,  0,    0,  0,  0,  0,  0,  0,  0,  0,
 };
 
-/* bdev_decl(sd); */
-/* cdev_decl(sd); */
-/* XXX we should use macros to do these... */
-int	sdopen(dev_t, int, int, struct proc *);
-int	sdclose(dev_t, int, int, struct proc *);
+bdev_decl(sd);
+cdev_decl(sd);
 
-int	sdioctl(dev_t, u_long, caddr_t, int, struct proc *);
-int	sdread(dev_t, struct uio *, int);
 void	sdreset(struct sd_softc *);
-int	sdwrite(dev_t, struct uio *, int);
-
-void	sdstrategy(struct buf *);
-int	sddump(dev_t, daddr_t, caddr_t, size_t);
-int	sdsize(dev_t);
 
 static void 	sdgetgeom(struct sd_softc *);
 static void	sdlblkstrat(struct buf *, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.14 2002/06/09 05:23:26 miod Exp $	*/
+/*	$OpenBSD: st.c,v 1.15 2002/12/25 20:40:36 miod Exp $	*/
 /*	$NetBSD: st.c,v 1.22 1997/04/02 22:37:38 scottr Exp $	*/
 
 /*
@@ -88,6 +88,8 @@
 #include <sys/tprintf.h>
 #include <sys/device.h>
 
+#include <sys/conf.h>
+
 #include <hp300/dev/scsireg.h>
 #include <hp300/dev/scsivar.h>
 #include <hp300/dev/stvar.h>
@@ -162,18 +164,8 @@ int st_extti = 0x01;		/* bitmask of unit numbers, do extra */
 				/* sensing so TTi display gets updated */
 #endif
 
-/* bdev_decl(st); */
-/* cdev_decl(st); */
-/* XXX we should use macros to do these... */
-int	stopen(dev_t, int, int, struct proc *);
-int	stclose(dev_t, int, int, struct proc *);
-
-int	stioctl(dev_t, u_long, caddr_t, int, struct proc *);
-int	stread(dev_t, struct uio *, int);
-int	stwrite(dev_t, struct uio *, int);
-
-void	ststrategy(struct buf *);
-int	stdump(dev_t);
+bdev_decl(st);
+cdev_decl(st);
 
 #ifdef DEBUG
 void	dumpxsense(struct st_xsense *);
@@ -826,8 +818,7 @@ stwrite(dev, uio, flags)
 
 /*ARGSUSED*/
 int
-stdump(dev)
-	dev_t dev;
+stdump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 {
 	return(ENXIO);
 }
