@@ -39,13 +39,14 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mail.local.c	5.6 (Berkeley) 6/19/91";*/
-static char rcsid[] = "$Id: mail.local.c,v 1.5 1996/08/29 04:19:34 deraadt Exp $";
+static char rcsid[] = "$Id: mail.local.c,v 1.6 1996/08/29 07:21:58 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <sys/signal.h>
 #include <syslog.h>
 #include <fcntl.h>
 #include <netdb.h>
@@ -66,6 +67,9 @@ void	err __P((int, const char *, ...));
 void	notifybiff __P((char *));
 int	store __P((char *));
 void	usage __P((void));
+int	dohold __P((void));
+int	getlock __P((char *, struct passwd *));
+void	rellock __P((void));
 
 int
 main(argc, argv)
@@ -75,7 +79,7 @@ main(argc, argv)
 	extern int optind;
 	extern char *optarg;
 	struct passwd *pw;
-	int ch, fd, eval, lockfile=1;
+	int ch, fd, eval, lockfile=1, holdme=0;
 	uid_t uid;
 	char *from;
 
@@ -98,6 +102,9 @@ main(argc, argv)
 		case 'L':
 			lockfile=0;
 			break;
+		case 'H':
+			holdme=1;
+			break;
 		case '?':
 		default:
 			usage();
@@ -107,6 +114,9 @@ main(argc, argv)
 
 	if (!*argv)
 		usage();
+
+	if (holdme)
+		exit(dohold());
 
 	/*
 	 * If from not specified, use the name from getlogin() if the
@@ -122,6 +132,47 @@ main(argc, argv)
 	for (eval = 0; *argv; ++argv)
 		eval |= deliver(fd, *argv, lockfile);
 	exit(eval);
+}
+
+void
+unhold()
+{
+	rellock();
+	exit(0);
+}
+
+int
+dohold()
+{
+	struct passwd *pw;
+	char *from, c;
+	int holdfd;
+
+	signal(SIGTERM, unhold);
+	signal(SIGINT, unhold);
+	signal(SIGHUP, unhold);
+
+	from = getlogin();
+	if (from) {
+		pw = getpwnam(from);
+		if (pw == NULL)
+			return (1);
+	} else {
+		pw = getpwuid(getuid());
+		if (pw)
+			from = pw->pw_name;
+		else
+			return (1);
+	}
+
+	holdfd = getlock(from, pw);
+	if (holdfd == -1)
+		return (1);
+
+	while (read(0, &c, 1) == -1 && errno == EINTR)
+		;
+	rellock();
+	return (0);
 }
 
 int
@@ -184,6 +235,97 @@ baditem(path)
 		    path, npath);
 }
 
+char lpath[MAXPATHLEN];
+
+void
+rellock()
+{
+	if (lpath[0])
+		unlink(lpath);
+}
+
+int
+getlock(name, pw)
+	char *name;
+	struct passwd *pw;
+{
+	struct stat sb, fsb;
+	int lfd=-1;
+	char buf[8*1024];
+	int tries = 0;
+
+	(void)snprintf(lpath, sizeof lpath, "%s/%s.lock",
+	    _PATH_MAILDIR, name);
+
+	if (stat(_PATH_MAILDIR, &sb) != -1 &&
+	    (sb.st_mode & 7) == 7) {
+		/*
+		 * We have a writeable spool, deal with it as
+		 * securely as possible.
+		 */
+		time_t ctim = -1;
+
+		seteuid(pw->pw_uid);
+		if (lstat(lpath, &sb) != -1)
+			ctim = sb.st_ctime;
+		while (1) {
+			/*
+			 * Deal with existing user.lock files
+			 * or directories or symbolic links that
+			 * should not be here.
+			 */
+			if (readlink(lpath, buf, sizeof buf) != -1) {
+				if (lstat(lpath, &sb) != -1 &&
+				    S_ISLNK(fsb.st_mode)) {
+					seteuid(sb.st_uid);
+					unlink(lpath);
+					seteuid(pw->pw_uid);
+				}
+				goto again;
+			}
+			if ((lfd = open(lpath, O_CREAT|O_WRONLY|O_EXCL|O_EXLOCK,
+			    S_IRUSR|S_IWUSR)) != -1)
+				break;
+again:
+			if (tries > 10) {
+				err(NOTFATAL, "%s: %s", lpath,
+				    strerror(errno));
+				seteuid(0);
+				return(-1);
+			}
+			if (tries > 9 &&
+			    (lfd = open(lpath, O_WRONLY|O_EXLOCK, 0)) != -1) {
+				if (fstat(lfd, &fsb) != -1 &&
+				    lstat(lpath, &sb) != -1) {
+					if (fsb.st_dev == sb.st_dev &&
+					    fsb.st_ino == sb.st_ino &&
+					    ctim == fsb.st_ctime ) {
+						seteuid(fsb.st_uid);
+						baditem(lpath);
+						seteuid(pw->pw_uid);
+					}
+				}
+			}
+			sleep(1 << tries);
+			tries++;
+			continue;
+		}
+		seteuid(0);
+	} else {
+		/*
+		 * Only root can write the spool directory.
+		 */
+ 		if ((lfd = open(lpath, O_CREAT|O_WRONLY|O_EXCL,
+ 		    S_IRUSR|S_IWUSR)) < 0) {
+ 			err(NOTFATAL, "%s: %s", lpath, strerror(errno));
+ 			return(-1);
+		}
+	}
+	return (lfd);
+}
+
+
+
 int
 deliver(fd, name, lockfile)
 	int fd;
@@ -193,7 +335,7 @@ deliver(fd, name, lockfile)
 	struct stat sb, fsb;
 	struct passwd *pw;
 	int mbfd=-1, nr, nw, off, rval=1, lfd=-1;
-	char biffmsg[100], buf[8*1024], path[MAXPATHLEN], lpath[MAXPATHLEN];
+	char biffmsg[100], buf[8*1024], path[MAXPATHLEN];
 	off_t curoff;
 
 	/*
@@ -208,77 +350,9 @@ deliver(fd, name, lockfile)
 	(void)snprintf(path, sizeof path, "%s/%s", _PATH_MAILDIR, name);
 
 	if (lockfile) {
-		int tries = 0;
-
-		(void)snprintf(lpath, sizeof lpath, "%s/%s.lock",
-		    _PATH_MAILDIR, name);
-
-		if (stat(_PATH_MAILDIR, &sb) != -1 &&
-		    (sb.st_mode & 7) == 7) {
-			/*
-			 * We have a writeable spool, deal with it as
-			 * securely as possible.
-			 */
-			time_t ctim = -1;
-
-			seteuid(pw->pw_uid);
-			if (lstat(lpath, &sb) != -1)
-				ctim = sb.st_ctime;
-			while (1) {
-				/*
-				 * Deal with existing user.lock files
-				 * or directories or symbolic links that
-				 * should not be here.
-				 */
-				if (readlink(lpath, buf, sizeof buf) != -1) {
-					if (lstat(lpath, &sb) != -1 &&
-					    S_ISLNK(fsb.st_mode)) {
-						seteuid(sb.st_uid);
-						unlink(lpath);
-						seteuid(pw->pw_uid);
-					}
-					goto again;
-				}
-				if ((lfd = open(lpath,
-				    O_CREAT|O_WRONLY|O_EXCL|O_EXLOCK,
-				    S_IRUSR|S_IWUSR)) != -1)
-					break;
-again:
-				if (tries > 10) {
-					err(NOTFATAL, "%s: %s", lpath,
-					    strerror(errno));
-					seteuid(0);
-					return(1);
-				}
-				if (tries > 9 &&
-				    (lfd = open(lpath, O_WRONLY|O_EXLOCK,
-					    0)) != -1) {
-					if (fstat(lfd, &fsb) != -1 &&
-					    lstat(lpath, &sb) != -1) {
-						if (fsb.st_dev == sb.st_dev &&
-						    fsb.st_ino == sb.st_ino &&
-						    ctim == fsb.st_ctime ) {
-							seteuid(fsb.st_uid);
-							baditem(lpath);
-							seteuid(pw->pw_uid);
-						}
-					}
-				}
-				sleep(1 << tries);
-				tries++;
-				continue;
-			}
-			seteuid(0);
-		} else {
-			/*
-			 * Only root can write the spool directory.
-			 */
-	 		if ((lfd = open(lpath, O_CREAT|O_WRONLY|O_EXCL,
-	 		    S_IRUSR|S_IWUSR)) < 0) {
-	 			err(NOTFATAL, "%s: %s", lpath, strerror(errno));
-	 			return(1);
-			}
-		}
+		lfd = getlock(name, pw);
+		if (lfd == -1)
+			return (1);
 	}
 
 	/* after this point, always exit via bad to remove lockfile */
@@ -359,7 +433,7 @@ retry:
 
 bad:
 	if (lfd != -1) {
-		unlink(lpath);
+		rellock();
 		close(lfd);
 	}
 
