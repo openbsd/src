@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.18 2003/03/13 02:38:22 millert Exp $	*/
+/*	$OpenBSD: md5.c,v 1.19 2003/03/23 00:31:23 millert Exp $	*/
 
 /*
  * Copyright (c) 2001,2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -312,7 +312,8 @@ digest_filelist(char *file)
 		else
 			(void)printf("(%s) %s: FAILED\n", algorithm, filename);
 	}
-	(void)fclose(fp);
+	if (fp != stdin)
+		fclose(fp);
 	if (!found)
 		warnx("%s: no properly formatted checksum lines found", file);
 	if (lbuf != NULL)
