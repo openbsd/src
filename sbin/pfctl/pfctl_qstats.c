@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_qstats.c,v 1.21 2003/06/06 17:53:05 henning Exp $ */
+/*	$OpenBSD: pfctl_qstats.c,v 1.22 2003/06/20 16:53:48 deraadt Exp $ */
 
 /*
  * Copyright (c) Henning Brauer <henning@openbsd.org>
@@ -236,7 +236,7 @@ pfctl_print_altq_node(int dev, const struct pf_altq_node *node, unsigned level,
 
 	if (opts & PF_OPT_DEBUG)
 		printf("  [ qid=%u ifname=%s ifbandwidth=%s ]\n", node->altq.qid,
-		    node->altq.ifname, rate2str(node->altq.ifbandwidth));
+		    node->altq.ifname, rate2str((double)(node->altq.ifbandwidth)));
 
 	for (child = node->children; child != NULL;
 	    child = child->next)

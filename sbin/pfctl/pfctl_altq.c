@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.74 2003/06/06 17:53:05 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.75 2003/06/20 16:53:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -480,9 +480,9 @@ cbq_compute_idletime(struct pfctl *pf, struct pf_altq *pa)
 	minidle = -((double)opts->maxpktsize * (double)nsPerByte);
 
 	/* scale parameters */
-	maxidle = ((maxidle * 8.0) / nsPerByte) * pow(2, RM_FILTER_GAIN);
-	offtime = (offtime * 8.0) / nsPerByte * pow(2, RM_FILTER_GAIN);
-	minidle = ((minidle * 8.0) / nsPerByte) * pow(2, RM_FILTER_GAIN);
+	maxidle = ((maxidle * 8.0) / nsPerByte) * pow(2.0, (double)RM_FILTER_GAIN);
+	offtime = (offtime * 8.0) / nsPerByte * pow(2.0, (double)RM_FILTER_GAIN);
+	minidle = ((minidle * 8.0) / nsPerByte) * pow(2.0, (double)RM_FILTER_GAIN);
 
 	maxidle = maxidle / 1000.0;
 	offtime = offtime / 1000.0;
@@ -873,8 +873,8 @@ gsc_add_sc(struct gen_sc *gsc, struct service_curve *sc)
 	if (is_sc_null(sc))
 		return;
 	if (sc->d != 0)
-		gsc_add_seg(gsc, 0, 0, (double)sc->d, (double)sc->m1);
-	gsc_add_seg(gsc, (double)sc->d, 0, INFINITY, (double)sc->m2);
+		gsc_add_seg(gsc, 0.0, 0.0, (double)sc->d, (double)sc->m1);
+	gsc_add_seg(gsc, (double)sc->d, 0.0, INFINITY, (double)sc->m2);
 }
 
 /*
