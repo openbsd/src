@@ -1,8 +1,6 @@
-#	$OpenBSD: Makefile,v 1.1 2001/08/01 21:46:09 markus Exp $
+#	$OpenBSD: Makefile,v 1.2 2002/02/23 01:25:11 art Exp $
 
 SUBDIR+= pfctl
-
-regress: _SUBDIRUSE
 
 install:
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2002/02/18 10:16:30 art Exp $
+#	$OpenBSD: Makefile,v 1.12 2002/02/23 01:25:10 art Exp $
 
 #
 # To run full regression tests you just need two steps:
@@ -14,8 +14,6 @@
 # To skip the really slow tests, set the REGRESSSKIPSLOW variable.
 
 SUBDIR+= etc bin include lib libexec sbin sys share usr.bin
-
-regress: _SUBDIRUSE
 
 install:
 

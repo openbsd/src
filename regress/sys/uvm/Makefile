@@ -1,8 +1,6 @@
-#	$OpenBSD: Makefile,v 1.1 2002/02/16 17:34:14 art Exp $
+#	$OpenBSD: Makefile,v 1.2 2002/02/23 01:25:11 art Exp $
 
 SUBDIR=misc
-
-regress: _SUBDIRUSE
 
 install:
 

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2001/11/11 20:20:53 marc Exp $
+# $OpenBSD: Makefile,v 1.8 2002/02/23 01:25:11 art Exp $
 
 SUBDIR= cancel close cwd execve fork group netdb pcap poll \
 	preemption pthread_cond_timedwait pthread_create \
@@ -6,8 +6,6 @@ SUBDIR= cancel close cwd execve fork group netdb pcap poll \
 	sigsuspend sigwait sleep socket stdarg stdio switch system
 
 # Not available or disabled: fcntl, pause, preemption_float and pw
-
-regress: _SUBDIRUSE
 
 install:
 
