@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.8 2000/03/06 14:16:23 mickey Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.9 2000/04/18 20:02:45 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -50,7 +50,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <vm/vm.h>
 
 #include <machine/db_machdep.h>
 #include <ddb/db_access.h>
