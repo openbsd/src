@@ -2526,7 +2526,6 @@
 ./usr/lib/libcurses++_p.a
 ./usr/lib/libkeynote.a
 ./usr/lib/libkeynote_p.a
-./usr/lib/libkeynote_pic.a
 ./usr/include/f2c.h
 ./usr/include/objc
 ./usr/include/objc/NXConstStr.h
@@ -2699,3 +2698,7 @@
 ./usr/include/g++/vector
 ./usr/include/g++/vector.h
 ./usr/include/keynote.h
+./usr/include/dev/ic/rl2.h
+./usr/include/dev/ic/rl2cmd.h
+./usr/include/dev/ic/rl2reg.h
+./usr/include/dev/ic/rl2var.h

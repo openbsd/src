@@ -677,3 +677,5 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/swap.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/f2c.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/keynote.ph
+./usr/bin/objdump
+./usr/bin/c++filt

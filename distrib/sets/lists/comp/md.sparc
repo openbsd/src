@@ -127,3 +127,4 @@
 ./usr/share/man/cat3/dlsym.0
 ./usr/lib/libc_r_pic.a
 ./usr/lib/libcurses++_pic.a
+./usr/lib/libkeynote_pic.a

@@ -2616,5 +2616,3 @@
 ./var/yp/README
 ./sbin/swapctl
 ./usr/bin/keynote
-./usr/bin/c++filt
-./usr/bin/objdump

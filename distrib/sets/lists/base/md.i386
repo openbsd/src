@@ -704,3 +704,5 @@
 ./usr/share/misc/pcvtfonts/vt220l.814
 ./usr/share/misc/pcvtfonts/vt220l.816
 ./usr/libdata/perl5/site_perl/i386-openbsd/keynote.ph
+./usr/bin/objdump
+./usr/bin/c++filt

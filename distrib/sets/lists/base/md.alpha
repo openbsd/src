@@ -8,9 +8,8 @@
 ./usr/include/alpha
 ./usr/include/readline
 ./usr/lib/gcc-lib/alpha-unknown-openbsd2.5
-./usr/lib/gcc-lib/alpha-unknown-openbsd2.5/2.8.1
-./usr/lib/gcc-lib/alpha-unknown-openbsd2.5/2.8.1/include
-./usr/lib/gcc-lib/alpha-unknown-openbsd2.5/2.8.1/include/objc
+./usr/lib/gcc-lib/alpha-unknown-openbsd2.5/gcc-2.95
+./usr/lib/gcc-lib/alpha-unknown-openbsd2.5/gcc-2.95/include
 ./usr/libdata/perl5/alpha-openbsd
 ./usr/libdata/perl5/alpha-openbsd/5.00503
 ./usr/libdata/perl5/alpha-openbsd/5.00503/.packlist
@@ -653,3 +652,4 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/termcap.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/swap.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/keynote.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/f2c.ph

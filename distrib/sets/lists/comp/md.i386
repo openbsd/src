@@ -147,3 +147,4 @@
 ./usr/lib/libcurses++_pic.a
 ./usr/lib/libg2c_pic.a
 ./usr/lib/libobjc_pic.a
+./usr/lib/libkeynote_pic.a

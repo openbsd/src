@@ -152,3 +152,4 @@
 ./usr/lib/libc_r_pic.a
 ./usr/include/m68k/spinlock.h
 ./usr/lib/libcurses++_pic.a
+./usr/lib/libkeynote_pic.a
