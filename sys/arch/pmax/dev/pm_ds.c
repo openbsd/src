@@ -162,16 +162,16 @@ pminit(fi, unit, cold_console_flag)
 
 	/* Set address of frame buffer... */
 	fi->fi_unit = unit;
-	fi->fi_pixels = (caddr_t)MACH_PHYS_TO_UNCACHED(KN01_PHYS_FBUF_START);
-	fi->fi_base = (caddr_t)MACH_PHYS_TO_UNCACHED(KN01_SYS_PCC);
-	fi->fi_vdac = (caddr_t)MACH_PHYS_TO_UNCACHED(KN01_SYS_VDAC);
+	fi->fi_pixels = (caddr_t)MIPS_PHYS_TO_KSEG1(KN01_PHYS_FBUF_START);
+	fi->fi_base = (caddr_t)MIPS_PHYS_TO_KSEG1(KN01_SYS_PCC);
+	fi->fi_vdac = (caddr_t)MIPS_PHYS_TO_KSEG1(KN01_SYS_VDAC);
 
 	/* check for no frame buffer */
 	if (badaddr((char *)fi->fi_pixels, 4))
 		return (0);
 
 	/* Fill in the stuff that differs from monochrome to color. */
-	if (*(volatile u_short *)MACH_PHYS_TO_UNCACHED(KN01_SYS_CSR) &
+	if (*(volatile u_short *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CSR) &
 	    KN01_CSR_MONO) {
 		fi->fi_type.fb_depth = 1;
 	}
@@ -188,7 +188,7 @@ pminit(fi, unit, cold_console_flag)
 	 * XXX can go away when MI support for d_mmap entrypoints added.
 	 */
 	fi->fi_fbu = (struct fbuaccess *)
-		MACH_PHYS_TO_UNCACHED(MACH_CACHED_TO_PHYS(&pmu));
+		MIPS_PHYS_TO_KSEG1(MIPS_KSEG0_TO_PHYS(&pmu));
 
 	fi->fi_glasstty = &pmfb;
 

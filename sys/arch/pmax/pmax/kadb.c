@@ -202,12 +202,12 @@ kdbprinttrap(causeReg, vadr)
 	int type, pc;
 	extern char *trap_type[];
 
-	type = (causeReg & MACH_CR_EXC_CODE) >> MACH_CR_EXC_CODE_SHIFT;
+	type = (causeReg & MIPS_CR_EXC_CODE) >> MIPS_CR_EXC_CODE_SHIFT;
 
 	/* check to see if we are entering kdb via kdbpanic() */
 	pc = kdbpcb.pcb_regs[PC];
 	if (type == T_BREAK && pc < 0) {
-		if (kdbpeek(pc) == MACH_BREAK_KDB)
+		if (kdbpeek(pc) == MIPS_BREAK_KDB)
 			kdbpcb.pcb_regs[PC] = pc + 4;
 	}
 
@@ -236,12 +236,12 @@ kdbsetsstep()
 	if ((int)va < 0) {
 		/* kernel address */
 		kdb_ss_instr = kdbpeek(va);
-		kdbpoke((caddr_t)va, MACH_BREAK_SSTEP);
+		kdbpoke((caddr_t)va, MIPS_BREAK_SSTEP);
 		return;
 	}
 
 	kdb_ss_instr = fuiword(va);
-	i = suiword((caddr_t)va, MACH_BREAK_SSTEP);
+	i = suiword((caddr_t)va, MIPS_BREAK_SSTEP);
 	if (i < 0) {
 		register struct proc *p = curproc;
 		vm_offset_t sa, ea;
@@ -252,7 +252,7 @@ kdbsetsstep()
 		rv = vm_map_protect(&p->p_vmspace->vm_map, sa, ea,
 			VM_PROT_DEFAULT, FALSE);
 		if (rv == KERN_SUCCESS) {
-			i = suiword((caddr_t)va, MACH_BREAK_SSTEP);
+			i = suiword((caddr_t)va, MIPS_BREAK_SSTEP);
 			(void) vm_map_protect(&p->p_vmspace->vm_map,
 				sa, ea, VM_PROT_READ|VM_PROT_EXECUTE, FALSE);
 		}
@@ -270,7 +270,7 @@ kdbclrsstep()
 
 	/* ignore this trap if it is not a break trap */
 	cr = kdbvar[kdbvarchk('t')];
-	if ((cr & MACH_CR_EXC_CODE) != (T_BREAK << MACH_CR_EXC_CODE_SHIFT))
+	if ((cr & MIPS_CR_EXC_CODE) != (T_BREAK << MIPS_CR_EXC_CODE_SHIFT))
 		return;
 
 	/* fix pc if break instruction is in the delay slot */
@@ -285,7 +285,7 @@ kdbclrsstep()
 
 	/* read break instruction */
 	instr = kdbpeek(va);
-	if (instr != MACH_BREAK_SSTEP)
+	if (instr != MIPS_BREAK_SSTEP)
 		return;
 
 	if ((int)va < 0) {
@@ -768,7 +768,7 @@ kdbprintmachdep(modif)
 	case 'P': /* print TLB entries */
 		if (kdbadrflg) {
 			i = kdbadrval;
-			if (i < 0 || i > VMMACH_NUM_TLB_ENTRIES) {
+			if (i < 0 || i > MIPS1_TLB_NUM_TLB_ENTRIES) {
 				extern char *kdbBADMOD;
 
 				kdberror(kdbBADMOD);
@@ -778,12 +778,12 @@ kdbprintmachdep(modif)
 				j = i + 1;
 			else {
 				j = i + kdbcntval;
-				if (j > VMMACH_NUM_TLB_ENTRIES)
-					j = VMMACH_NUM_TLB_ENTRIES;
+				if (j > MIPS1_TLB_NUM_TLB_ENTRIES)
+					j = MIPS1_TLB_NUM_TLB_ENTRIES;
 			}
 		} else {
 			i = 0;
-			j = VMMACH_NUM_TLB_ENTRIES;
+			j = MIPS1_TLB_NUM_TLB_ENTRIES;
 		}
 		for (; i < j; i++) {
 			MachTLBRead(i);
@@ -797,7 +797,7 @@ kdbprintmachdep(modif)
 	case 'f': /* find a TLB entry by virtaddr */
 	case 'F': /* find a TLB entry by physaddr */
 		j = kdbdot & PG_FRAME;
-		for (i = 0; i < VMMACH_NUM_TLB_ENTRIES; i++) {
+		for (i = 0; i < MIPS1_TLB_NUM_TLB_ENTRIES; i++) {
 			MachTLBRead(i);
 			if (modif == 'f') {
 				if ((tlbhi & PG_FRAME) != j)

@@ -98,7 +98,7 @@ int consprobeslot __P((int slot));
 #include <pmax/pmax/turbochannel.h>
 
 /*#include <pmax/pmax/nameglue.h>*/
-#define KV(x) ((tc_addr_t)MACH_PHYS_TO_UNCACHED(x))
+#define KV(x) ((tc_addr_t)MIPS_PHYS_TO_KSEG1(x))
 
 
 

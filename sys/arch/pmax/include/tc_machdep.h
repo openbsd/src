@@ -60,7 +60,7 @@
 #ifndef __MACHINE_TC_MACHDEP_H__
 #define __MACHINE_TC_MACHDEP_H__
 
-#include <machine/cpuregs.h>		/* defines MACH_PHYS_TO_UNCACHED */
+#include <machine/cpuregs.h>		/* defines MIPS_PHYS_TO_KSEG1 */
 
 typedef int32_t		tc_addr_t;
 typedef int32_t		tc_offset_t;
@@ -78,7 +78,7 @@ typedef int32_t		tc_offset_t;
 
 #define	TC_DENSE_TO_SPARSE(addr)  (addr)
 		
-#define	TC_PHYS_TO_UNCACHED(addr) MACH_PHYS_TO_UNCACHED(addr)
+#define	TC_PHYS_TO_UNCACHED(addr) MIPS_PHYS_TO_KSEG1(addr)
 
 
 /*

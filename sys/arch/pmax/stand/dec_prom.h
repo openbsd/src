@@ -311,7 +311,7 @@ typedef struct {
 /*
  * The nonvolatile ram has a flag to indicate it is usable.
  */
-#define MACH_USE_NON_VOLATILE 	((char *)0xbd0000c0)
-#define MACH_NON_VOLATILE_FLAG	0x02
+#define MIPS_USE_NON_VOLATILE 	((char *)0xbd0000c0)
+#define MIPS_NON_VOLATILE_FLAG	0x02
 
 #endif /* _DEC_PROM */

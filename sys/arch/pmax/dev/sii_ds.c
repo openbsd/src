@@ -43,7 +43,7 @@ struct cfattach sii_ds_ca = {
 
 
 /* define a safe address in the SCSI buffer for doing status & message DMA */
-#define SII_BUF_ADDR	(MACH_PHYS_TO_UNCACHED(KN01_SYS_SII_B_START) \
+#define SII_BUF_ADDR	(MIPS_PHYS_TO_KSEG1(KN01_SYS_SII_B_START) \
 		+ SII_MAX_DMA_XFER_LENGTH * 14)
 
 /*
@@ -64,10 +64,10 @@ sii_ds_match(parent, match, aux)
 
 	/* XXX check for bad address, untested */
 	siiaddr = (void *)ca->ca_addr;
-	if (siiaddr != (void *)MACH_PHYS_TO_UNCACHED(KN01_SYS_SII)) {
+	if (siiaddr != (void *)MIPS_PHYS_TO_KSEG1(KN01_SYS_SII)) {
 		printf("(siimatch: bad addr %x, substituting %x\n",
-			ca->ca_addr, MACH_PHYS_TO_UNCACHED(KN01_SYS_SII));
-		siiaddr = (void *)MACH_PHYS_TO_UNCACHED(KN01_SYS_SII);
+			ca->ca_addr, MIPS_PHYS_TO_KSEG1(KN01_SYS_SII));
+		siiaddr = (void *)MIPS_PHYS_TO_KSEG1(KN01_SYS_SII);
 	}
 	if (badaddr(siiaddr, 4))
 		return (0);
@@ -83,10 +83,10 @@ sii_ds_attach(parent, self, aux)
 	register struct confargs *ca = aux;
 	register struct siisoftc *sc = (struct siisoftc *) self;
 
-	sc->sc_regs = (SIIRegs *)MACH_PHYS_TO_UNCACHED(ca->ca_addr);
+	sc->sc_regs = (SIIRegs *)MIPS_PHYS_TO_KSEG1(ca->ca_addr);
 
 	/* set up scsi buffer.  XXX Why statically allocated? */
-	sc->sc_buf = (void*)(MACH_PHYS_TO_UNCACHED(KN01_SYS_SII_B_START));
+	sc->sc_buf = (void*)(MIPS_PHYS_TO_KSEG1(KN01_SYS_SII_B_START));
 
 siiattach(sc);
 

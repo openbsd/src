@@ -49,10 +49,10 @@ dc_ioasic_consinit(dev)
 #if defined(DEBUG) && 0
 	printf("dc_ioasic(%d,%d): serial console at 0x%x\n",
 	       minor(dev) >> 2, minor(dev) & 03,
-	       MACH_PHYS_TO_UNCACHED(KN02_SYS_DZ));
+	       MIPS_PHYS_TO_KSEG1(KN02_SYS_DZ));
 	DELAY(100000);
 #endif
-	dc_consinit(dev, (void *)MACH_PHYS_TO_UNCACHED(KN02_SYS_DZ));
+	dc_consinit(dev, (void *)MIPS_PHYS_TO_KSEG1(KN02_SYS_DZ));
 	return(1);
 }
 
@@ -92,7 +92,7 @@ dc_ioasic_attach(parent, self, aux)
 
 	dcaddr = (caddr_t)d->iada_addr;
 	printf(" address %p", dcaddr);
-	(void) dcattach(sc, (void*)MACH_PHYS_TO_UNCACHED(dcaddr),
+	(void) dcattach(sc, (void*)MIPS_PHYS_TO_KSEG1(dcaddr),
 	/* dtr/dsr mask */	  (1<< DCPRINTER_PORT) + (1 << DCCOMM_PORT),
 #ifdef HW_FLOW_CONTROL
 	/* rts/cts mask */	  (1<< DCPRINTER_PORT) + (1 << DCCOMM_PORT),

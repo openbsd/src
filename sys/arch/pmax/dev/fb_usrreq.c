@@ -252,9 +252,9 @@ fbmmap(dev, off, prot)
 	len = mips_round_page(((vm_offset_t)fi->fi_fbu & PGOFSET)
 			      + sizeof(*fi->fi_fbu));
 	if (off < len)
-		return (int)mips_btop(MACH_CACHED_TO_PHYS(fi->fi_fbu) + off);
+		return (int)mips_btop(MIPS_KSEG0_TO_PHYS(fi->fi_fbu) + off);
 	off -= len;
 	if (off >= fi->fi_type.fb_size)
 		return (-1);
-	return (int)mips_btop(MACH_UNCACHED_TO_PHYS(fi->fi_pixels) + off);
+	return (int)mips_btop(MIPS_KSEG1_TO_PHYS(fi->fi_pixels) + off);
 }

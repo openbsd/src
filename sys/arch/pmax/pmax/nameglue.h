@@ -25,7 +25,7 @@
 /*
  * Map physical addresses to kernel-virtual addresses.
  */
-#define KV(x) ((void *)MACH_PHYS_TO_UNCACHED(x))
+#define KV(x) ((void *)MIPS_PHYS_TO_KSEG1(x))
 
 /*
  * Print debugging messages only if DEBUG defined on a pmax.

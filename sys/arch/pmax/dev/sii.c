@@ -239,7 +239,7 @@ old_siiattach(parent, self, aux)
 	register struct confargs *ca = aux;
 	register struct siisoftc *sc = (struct siisoftc *) self;
 
-	sc->sc_regs = (SIIRegs *)MACH_PHYS_TO_UNCACHED(ca->ca_addr);
+	sc->sc_regs = (SIIRegs *)MIPS_PHYS_TO_KSEG1(ca->ca_addr);
 	sc->sc_flags = sc->sc_dev.dv_cfdata->cf_flags;
 
 	siiattach(sc);

@@ -251,7 +251,7 @@ dtopattach(parent, self, aux)
 	int i;
 
 
-	sc->poll = (poll_reg_t)MACH_PHYS_TO_UNCACHED(XINE_REG_INTR);
+	sc->poll = (poll_reg_t)MIPS_PHYS_TO_KSEG1(XINE_REG_INTR);
 	sc->data = (data_reg_t)d->iada_addr;
 
 	for (i = 0; i < DTOP_MAX_DEVICES; i++)

@@ -234,11 +234,11 @@ clockattach(parent, self, aux)
 #if NTC>0
 	if (parent->dv_cfdata->cf_driver != &mainbus_cd)
 		Mach_clock_addr = (struct chiptime *)
-			MACH_PHYS_TO_UNCACHED(d->iada_addr);
+			MIPS_PHYS_TO_KSEG1(d->iada_addr);
 	else
 #endif
 		Mach_clock_addr = (struct chiptime *)
-			MACH_PHYS_TO_UNCACHED(ca->ca_addr);
+			MIPS_PHYS_TO_KSEG1(ca->ca_addr);
 
 #ifdef pmax
 	printf("\n");

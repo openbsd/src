@@ -202,7 +202,7 @@ bt478InitColorMap (fi)
 	register VDACRegs *vdac = (VDACRegs *)(fi -> fi_vdac);
 	register int i;
 
-	*(volatile char *)MACH_PHYS_TO_UNCACHED
+	*(volatile char *)MIPS_PHYS_TO_KSEG1
 		(KN01_PHYS_COLMASK_START) = 0xff;	/* XXX */
 	wbflush();
 

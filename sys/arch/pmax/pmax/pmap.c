@@ -205,7 +205,7 @@ pmap_bootstrap(firstaddr)
 	 * phys_start and phys_end but its better to use kseg0 addresses
 	 * rather than kernel virtual addresses mapped through the TLB.
 	 */
-	i = maxmem - mips_btop(MACH_CACHED_TO_PHYS(firstaddr));
+	i = maxmem - mips_btop(MIPS_KSEG0_TO_PHYS(firstaddr));
 	valloc(pv_table, struct pv_entry, i);
 
 	/*
@@ -214,7 +214,7 @@ pmap_bootstrap(firstaddr)
 	firstaddr = mips_round_page(firstaddr);
 	bzero((caddr_t)start, firstaddr - start);
 
-	avail_start = MACH_CACHED_TO_PHYS(firstaddr);
+	avail_start = MIPS_KSEG0_TO_PHYS(firstaddr);
 	avail_end = mips_ptob(maxmem);
 	mem_size = avail_end - avail_start;
 
@@ -248,7 +248,7 @@ pmap_bootstrap_alloc(size)
 	if (vm_page_startup_initialized)
 		panic("pmap_bootstrap_alloc: called after startup initialized");
 
-	val = MACH_PHYS_TO_CACHED(avail_start);
+	val = MIPS_PHYS_TO_KSEG0(avail_start);
 	size = round_page(size);
 	avail_start += size;
 
@@ -343,7 +343,7 @@ pmap_pinit(pmap)
 		mem = vm_page_alloc1();
 		pmap_zero_page(VM_PAGE_TO_PHYS(mem));
 		pmap->pm_segtab = stp = (struct segtab *)
-			MACH_PHYS_TO_CACHED(VM_PAGE_TO_PHYS(mem));
+			MIPS_PHYS_TO_KSEG0(VM_PAGE_TO_PHYS(mem));
 		i = mipspagesperpage * (NBPG / sizeof(struct segtab));
 		s = splimp();
 		while (--i != 0) {
@@ -428,7 +428,7 @@ pmap_release(pmap)
 			if (!pte)
 				continue;
 			vm_page_free1(
-				PHYS_TO_VM_PAGE(MACH_CACHED_TO_PHYS(pte)));
+				PHYS_TO_VM_PAGE(MIPS_KSEG0_TO_PHYS(pte)));
 #ifdef DIAGNOSTIC
 			for (j = 0; j < NPTEPG; j++) {
 				if (pte->pt_entry)
@@ -556,7 +556,7 @@ pmap_remove(pmap, sva, eva)
 			 */
 			if (pmap->pm_tlbgen == tlbpid_gen) {
 				MachTLBFlushAddr(sva | (pmap->pm_tlbpid <<
-					VMMACH_TLB_PID_SHIFT));
+					MIPS_TLB_PID_SHIFT));
 #ifdef DEBUG
 				remove_stats.flushes++;
 #endif
@@ -719,7 +719,7 @@ pmap_protect(pmap, sva, eva, prot)
 			 */
 			if (pmap->pm_tlbgen == tlbpid_gen)
 				MachTLBUpdate(sva | (pmap->pm_tlbpid <<
-					VMMACH_TLB_PID_SHIFT), entry);
+					MIPS_TLB_PID_SHIFT), entry);
 		}
 	}
 }
@@ -786,7 +786,7 @@ pmap_page_cache(pa,mode)
 					pte->pt_entry = entry;
 					if (pv->pv_pmap->pm_tlbgen == tlbpid_gen)
 						MachTLBUpdate(pv->pv_va | (pv->pv_pmap->pm_tlbpid <<
-							VMMACH_TLB_PID_SHIFT), entry);
+							MIPS_TLB_PID_SHIFT), entry);
 				}
 			}
 		}
@@ -978,7 +978,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 	 * NOTE: we only support cache flush for read only text.
 	 */
 	if (prot == (VM_PROT_READ | VM_PROT_EXECUTE))
-		MachFlushICache(MACH_PHYS_TO_CACHED(pa), PAGE_SIZE);
+		MachFlushICache(MIPS_PHYS_TO_KSEG0(pa), PAGE_SIZE);
 
 	if (!pmap->pm_segtab) {
 		/* enter entries into kernel pmap */
@@ -1014,7 +1014,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 		mem = vm_page_alloc1();
 		pmap_zero_page(VM_PAGE_TO_PHYS(mem));
 		pmap_segmap(pmap, va) = pte = (pt_entry_t *)
-			MACH_PHYS_TO_CACHED(VM_PAGE_TO_PHYS(mem));
+			MIPS_PHYS_TO_KSEG0(VM_PAGE_TO_PHYS(mem));
 	}
 	pte += (va >> PGSHIFT) & (NPTEPG - 1);
 
@@ -1041,7 +1041,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 		pte->pt_entry = npte;
 		if (pmap->pm_tlbgen == tlbpid_gen)
 			MachTLBUpdate(va | (pmap->pm_tlbpid <<
-				VMMACH_TLB_PID_SHIFT), npte);
+				MIPS_TLB_PID_SHIFT), npte);
 		va += NBPG;
 		npte += NBPG;
 		pte++;
@@ -1223,7 +1223,7 @@ pmap_zero_page(phys)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_zero_page(%lx)\n", phys);
 #endif
-	p = (int *)MACH_PHYS_TO_CACHED(phys);
+	p = (int *)MIPS_PHYS_TO_KSEG0(phys);
 	end = p + PAGE_SIZE / sizeof(int);
 	/* XXX blkclr()? */
 	do {
@@ -1250,8 +1250,8 @@ pmap_copy_page(src, dst)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_copy_page(%lx, %lx)\n", src, dst);
 #endif
-	s = (int *)MACH_PHYS_TO_CACHED(src);
-	d = (int *)MACH_PHYS_TO_CACHED(dst);
+	s = (int *)MIPS_PHYS_TO_KSEG0(src);
+	d = (int *)MIPS_PHYS_TO_KSEG0(dst);
 	end = s + PAGE_SIZE / sizeof(int);
 	do {
 		tmp0 = s[0];
@@ -1400,7 +1400,7 @@ pmap_alloc_tlbpid(p)
 	pmap = p->p_vmspace->vm_map.pmap;
 	if (pmap->pm_tlbgen != tlbpid_gen) {
 		id = tlbpid_cnt;
-		if (id == VMMACH_NUM_PIDS) {
+		if (id == MIPS_TLB_NUM_PIDS) {
 			MachTLBFlush();
 			/* reserve tlbpid_gen == 0 to alway mean invalid */
 			if (++tlbpid_gen == 0)
