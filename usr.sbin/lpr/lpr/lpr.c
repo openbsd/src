@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpr.c,v 1.14 1997/06/20 17:46:16 kstailey Exp $ */
+/*	$OpenBSD: lpr.c,v 1.15 1997/06/23 23:13:58 kstailey Exp $ */
 /*	$NetBSD: lpr.c,v 1.10 1996/03/21 18:12:25 jtc Exp $	*/
 
 /*
@@ -50,7 +50,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: lpr.c,v 1.14 1997/06/20 17:46:16 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: lpr.c,v 1.15 1997/06/23 23:13:58 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -443,12 +443,8 @@ copy(f, n)
 			nc -= BUFSIZ;
 			nr++;
 			if (MX > 0 && nr > MX) {
-  /* XXX by now you have wasted a large amount of paper by printing half
-   * a PostScript file you fool!  Can't this be evaluated earlier?
-   */
 				printf("%s: %s: copy file is too large\n",
 				       name, n);
-				printf("%s: %s: WARNING: I stupidly sent a bunch of stuff to the printer anyway\n", name, n);
 				break;
 			}
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lp.local.h,v 1.2 1997/01/17 16:11:36 millert Exp $	*/
+/*	$OpenBSD: lp.local.h,v 1.3 1997/06/23 23:13:56 kstailey Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -45,7 +45,7 @@
 #define	DEFLP		"lp"
 #define DEFLOCK		"lock"
 #define DEFSTAT		"status"
-#define	DEFMX		1000
+#define	DEFMX		0
 #define DEFMAXCOPIES	0
 #define DEFFF		"\f"
 #define DEFWIDTH	132
