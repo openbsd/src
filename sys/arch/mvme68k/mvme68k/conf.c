@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.27 2002/04/28 01:05:44 miod Exp $ */
+/*	$OpenBSD: conf.c,v 1.28 2002/04/28 14:48:29 miod Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -182,8 +182,8 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NBUGTTY,bugtty),	/* 14: BUGtty (ttyB) */
 	cdev_notdef(),			/* 15 */
 	cdev_notdef(),			/* 16 */
-	cdev_notdef(),			/* 17: concatenated disk */
-        cdev_disk_init(NRD,rd),         /* 18: ramdisk device */
+	cdev_disk_init(NCCD,ccd),	/* 17: concatenated disk */
+	cdev_disk_init(NRD,rd),		/* 18: ramdisk device */
 	cdev_disk_init(NVND,vnd),	/* 19: vnode disk */
 	cdev_tape_init(NST,st),		/* 20: SCSI tape */
 	cdev_fd_init(1,filedesc),	/* 21: file descriptor pseudo-dev */
