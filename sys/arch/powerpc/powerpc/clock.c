@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.12 2001/06/09 04:51:16 drahn Exp $	*/
+/*	$OpenBSD: clock.c,v 1.13 2001/06/10 20:01:42 drahn Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -112,7 +112,6 @@ inittodr(base)
 		u_long cursec;
 		(*time_read)(&cursec);
 		time.tv_sec = cursec;
-		printf ("time is %d seconds\n", cursec);
 	} else {
 		/* force failure */
 		time.tv_sec = 0;
