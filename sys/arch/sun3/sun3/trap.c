@@ -1,8 +1,8 @@
-/*	$NetBSD: trap.c,v 1.60 1996/10/13 03:47:57 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.62 1996/12/17 21:35:31 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
- * Copyright (c) 1993 Adam Glass 
+ * Copyright (c) 1993 Adam Glass
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -61,28 +61,27 @@
 #include <vm/pmap.h>
 
 #include <machine/cpu.h>
+#include <machine/db_machdep.h>
 #include <machine/endian.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
 #include <machine/reg.h>
+
+#include "machdep.h"
 
 #ifdef COMPAT_SUNOS
 #include <compat/sunos/sunos_syscall.h>
 extern struct emul emul_sunos;
 #endif
 
+/* Special labels in m68k/copy.s */
+extern char fubail[], subail[];
 
-/*
- * TODO:
- *        Chris's new syscall debug stuff 
- */
+/* These are called from locore.s */
+void syscall __P((register_t code, struct frame));
+void trap __P((int type, u_int code, u_int v, struct frame));
+int  nodb_trap __P((int type, struct frame *));
 
-extern int fubail(), subail();
-extern label_t *nofault;
-
-/* XXX - put these in some header file? */
-extern vm_offset_t virtual_avail;
-extern int pmap_fault_reload(pmap_t, vm_offset_t, vm_prot_t);
 
 int astpending;
 int want_resched;
@@ -141,6 +140,9 @@ int mmupid = -1;
 #define MDB_CPFAULT 	8
 #endif
 
+static void userret __P((struct proc *, struct frame *, u_quad_t));
+
+
 /*
  * trap and syscall both need the following work done before
  * returning to user mode.
@@ -195,6 +197,7 @@ userret(p, fp, oticks)
  * System calls are broken out for efficiency.
  */
 /*ARGSUSED*/
+void
 trap(type, code, v, frame)
 	int type;
 	u_int code, v;
@@ -222,7 +225,8 @@ trap(type, code, v, frame)
 		type |= T_USER;
 		sticks = p->p_sticks;
 		p->p_md.md_regs = frame.f_regs;
-	}
+	} else
+		sticks = 0;
 
 	switch (type) {
 	default:
@@ -240,9 +244,12 @@ trap(type, code, v, frame)
 			goto kgdb_cont;
 #endif
 #ifdef	DDB
-		(void) kdb_trap(type, &frame);
+		/* XXX - Yuck!  Make DDB use "struct trapframe" instead! */
+		(void) kdb_trap(type, (struct mc68020_saved_state *) &frame);
 #endif
+#ifdef KGDB
 	kgdb_cont:
+#endif
 		splx(sig);
 		if (panicstr) {
 			printf("trap during panic!\n");
@@ -524,7 +531,7 @@ trap(type, code, v, frame)
 #endif
 				goto copyfault;
 			}
-			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
+			printf("vm_fault(%p, %x, %x, 0) -> %x\n",
 			       map, va, ftype, rv);
 			goto dopanic;
 		}
@@ -548,6 +555,7 @@ douret:
 /*
  * Process a system call.
  */
+void
 syscall(code, frame)
 	register_t code;
 	struct frame frame;
@@ -591,13 +599,16 @@ syscall(code, frame)
 		if (code != SUNOS_SYS_sigreturn) {
 			frame.f_regs[SP] += sizeof (int);
 			/*
-			 * remember that we adjusted the SP, 
+			 * remember that we adjusted the SP,
 			 * might have to undo this if the system call
 			 * returns ERESTART.
+			 * XXX - Use a local variable for this? -gwr
 			 */
 			p->p_md.md_flags |= MDP_STACKADJ;
-		} else
+		} else {
+			/* XXX - This may be redundant (see below). */
 			p->p_md.md_flags &= ~MDP_STACKADJ;
+		}
 	}
 #endif
 
@@ -688,10 +699,13 @@ syscall(code, frame)
 #endif
 #ifdef COMPAT_SUNOS
 	/* need new p-value for this */
-	if (error == ERESTART && (p->p_md.md_flags & MDP_STACKADJ))
-		frame.f_regs[SP] -= sizeof (int);
+	if (p->p_md.md_flags & MDP_STACKADJ) {
+		p->p_md.md_flags &= ~MDP_STACKADJ;
+		if (error == ERESTART)
+			frame.f_regs[SP] -= sizeof (int);
+	}
 #endif
-	userret(p, &frame, sticks, (u_int)0, 0);
+	userret(p, &frame, sticks);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, code, error, rval[0]);
@@ -717,7 +731,7 @@ child_return(p)
 	 * Old ticks (3rd arg) is zero so we will charge the child
 	 * for any clock ticks that might happen before this point.
 	 */
-	userret(p, f, 0, (u_int)0, 0);
+	userret(p, f, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, SYS_fork, 0, 0);
@@ -739,7 +753,7 @@ nodb_trap(type, fp)
 		printf("\r\nKernel %s,", trap_type[type]);
 	else
 		printf("\r\nKernel trap 0x%x,", type);
-	printf(" frame=0x%x\r\n", fp);
+	printf(" frame=%p\r\n", fp);
 	printf("\r\n*No debugger. Doing PROM abort...\r\n");
 	sun3_mon_abort();
 	/* OK then, just resume... */
