@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbc.c,v 1.3 2002/03/14 01:26:55 millert Exp $ */
+/* $OpenBSD: pckbc.c,v 1.4 2002/04/30 20:56:15 miod Exp $ */
 /* $NetBSD: pckbc.c,v 1.5 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -360,14 +360,24 @@ pckbc_attach(sc)
 	}
 	bus_space_write_1(iot, ioh_d, 0, 0x5a);	/* a random value */
 	res = pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_AUX_SLOT, 1);
-	if (res == 0x5a) {
+	if (res != -1) {
+		/*
+		 * In most cases, the 0x5a gets echoed.
+		 * Some old controllers (Gateway 2000 circa 1993)
+		 * return 0xfe here.
+		 * We are satisfied if there is anything in the
+		 * aux output buffer.
+		 */
+#ifdef PCKBCDEBUG
+		printf("kbc: aux echo: %x\n", res);
+#endif
 		t->t_haveaux = 1;
 		if (pckbc_attach_slot(sc, PCKBC_AUX_SLOT))
 			cmdbits |= KC8_MENABLE;
 	}
 #ifdef PCKBCDEBUG
-	  else
-		printf("kbc: aux echo: %x\n", res);
+	else
+		printf("kbc: aux echo test failed\n");
 #endif
 
 nomouse:
