@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.79 2004/12/10 23:13:52 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.80 2004/12/15 14:13:06 pat Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -156,7 +156,8 @@ struct carp_if {
 #define	CARP_LOG(sc, s)							\
 	if (carp_opts[CARPCTL_LOG]) {					\
 		if (sc)							\
-			log(LOG_INFO, "%s: ", (sc)->sc_ac.ac_if.if_xname);\
+			log(LOG_INFO, "%s: ",				\
+			    (sc)->sc_ac.ac_if.if_xname);		\
 		else							\
 			log(LOG_INFO, "carp: ");			\
 		addlog s;						\
@@ -419,8 +420,8 @@ carp_proto_input(struct mbuf *m, ...)
 	/* verify that the IP TTL is 255.  */
 	if (ip->ip_ttl != CARP_DFLTTL) {
 		carpstats.carps_badttl++;
-		CARP_LOG(sc, ("received ttl %d != 255 on %s", ip->ip_ttl,
-		    m->m_pkthdr.rcvif->if_xname));
+		CARP_LOG(sc, ("received ttl %d != %d on %s", ip->ip_ttl,
+		    CARP_DFLTTL, m->m_pkthdr.rcvif->if_xname));
 		m_freem(m);
 		return;
 	}
@@ -429,8 +430,9 @@ carp_proto_input(struct mbuf *m, ...)
 
 	if (m->m_pkthdr.len < iplen + sizeof(*ch)) {
 		carpstats.carps_badlen++;
-		CARP_LOG(sc, ("received len %d < 36 on %s",
-		    m->m_len - sizeof(struct ip), m->m_pkthdr.rcvif->if_xname));
+		CARP_LOG(sc, ("received len %d < %d on %s",
+		    m->m_len - sizeof(struct ip), sizeof(*ch),
+		    m->m_pkthdr.rcvif->if_xname));
 		m_freem(m);
 		return;
 	}
@@ -508,8 +510,8 @@ carp6_proto_input(struct mbuf **mp, int *offp, int proto)
 	/* verify that the IP TTL is 255 */
 	if (ip6->ip6_hlim != CARP_DFLTTL) {
 		carpstats.carps_badttl++;
-		CARP_LOG(sc, ("received ttl %d != 255 on %s", ip6->ip6_hlim,
-		    m->m_pkthdr.rcvif->if_xname));
+		CARP_LOG(sc, ("received ttl %d != %d on %s", ip6->ip6_hlim,
+		    CARP_DFLTTL, m->m_pkthdr.rcvif->if_xname));
 		m_freem(m);
 		return (IPPROTO_DONE);
 	}
@@ -568,7 +570,8 @@ carp_proto_input_c(struct mbuf *m, struct carp_header *ch, sa_family_t af)
 	if (ch->carp_version != CARP_VERSION) {
 		carpstats.carps_badver++;
 		sc->sc_ac.ac_if.if_ierrors++;
-		CARP_LOG(sc, ("invalid version %d", ch->carp_version));
+		CARP_LOG(sc, ("invalid version %d != %d",
+		    ch->carp_version, CARP_VERSION));
 		m_freem(m);
 		return;
 	}
@@ -1396,13 +1399,16 @@ carp_multicast_cleanup(struct carp_softc *sc)
 {
 	struct ip_moptions *imo = &sc->sc_imo;
 	struct ip6_moptions *im6o = &sc->sc_im6o;
+	u_int16_t n = imo->imo_num_memberships;
 
 	/* Clean up our own multicast memberships */
-	while (imo->imo_num_memberships > 0) {
-		if (imo->imo_membership[--imo->imo_num_memberships] == NULL)
-		in_delmulti(imo->imo_membership[imo->imo_num_memberships]);
-		imo->imo_membership[imo->imo_num_memberships] = NULL;
+	while (n-- > 0) {
+		if (imo->imo_membership[n] != NULL) {
+			in_delmulti(imo->imo_membership[n]);
+			imo->imo_membership[n] = NULL;
+		}
 	}
+	imo->imo_num_memberships = 0;
 	imo->imo_multicast_ifp = NULL;
 
 	while (!LIST_EMPTY(&im6o->im6o_memberships)) {
@@ -2071,7 +2077,6 @@ carp_carpdev_state(struct ifnet *ifp)
 	}
 }
 
-
 int
 carp_ether_addmulti(struct carp_softc *sc, struct ifreq *ifr)
 {
@@ -2182,8 +2187,8 @@ carp_ether_purgemulti(struct carp_softc *sc)
 			char ifr_name[IFNAMSIZ];
 			struct sockaddr_storage ifr_ss;
 		} ifreq_storage;
-	} ifreq;
-	struct ifreq *ifr = &ifreq.ifreq;
+	} u;
+	struct ifreq *ifr = &u.ifreq;
 
 	if (ifp == NULL)
 		return;
