@@ -266,8 +266,10 @@ void name##_SPLAY_MINMAX(struct name *head, int __comp) \
 #define SPLAY_REMOVE(name, x, y)	name##_SPLAY_REMOVE(x, y)
 #define SPLAY_FIND(name, x, y)		name##_SPLAY_FIND(x, y)
 #define SPLAY_NEXT(name, x, y)		name##_SPLAY_NEXT(x, y)
-#define SPLAY_MIN(name, x)		name##_SPLAY_MIN_MAX(x, SPLAY_NEGINF)
-#define SPLAY_MAX(name, x)		name##_SPLAY_MIN_MAX(x, SPLAY_INF)
+#define SPLAY_MIN(name, x)		((x)->sph_root == NULL ? NULL	\
+					: name##_SPLAY_MIN_MAX(x, SPLAY_NEGINF))
+#define SPLAY_MAX(name, x)		((x)->sph_root == NULL ? NULL	\
+					: name##_SPLAY_MIN_MAX(x, SPLAY_INF))
 
 #define SPLAY_FOREACH(x, name, head)					\
 	for ((x) = SPLAY_MIN(name, head);				\
