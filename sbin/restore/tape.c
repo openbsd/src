@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.6 1996/12/27 09:48:07 deraadt Exp $	*/
+/*	$OpenBSD: tape.c,v 1.7 1997/01/27 09:33:08 downsj Exp $	*/
 /*	$NetBSD: tape.c,v 1.22 1996/11/30 18:31:29 cgd Exp $	*/
 
 /*
@@ -549,16 +549,25 @@ extractfile(name)
 		vprintf(stdout, "extract file %s\n", name);
 		return (genliteraldir(name, curfile.ino));
 
-	case IFLNK:
-		lnkbuf[0] = '\0';
-		pathlen = 0;
-		getfile(xtrlnkfile, xtrlnkskip);
-		if (pathlen == 0) {
-			vprintf(stdout,
-			    "%s: zero length symbolic link (ignored)\n", name);
+	case IFLNK: {
+			/* Gotta save these, linkit() changes curfile. */
+			uid_t luid = curfile.dip->di_uid;
+			gid_t lgid = curfile.dip->di_gid;
+
+			lnkbuf[0] = '\0';
+			pathlen = 0;
+			getfile(xtrlnkfile, xtrlnkskip);
+			if (pathlen == 0) {
+				vprintf(stdout,
+				    "%s: zero length symbolic link (ignored)\n",
+				     name);
+				return (GOOD);
+			}
+			if (linkit(lnkbuf, name, SYMLINK) == FAIL)
+				return (FAIL);
+			(void) lchown(name, luid, lgid);
 			return (GOOD);
 		}
-		return (linkit(lnkbuf, name, SYMLINK));
 
 	case IFCHR:
 	case IFBLK:
