@@ -1,6 +1,9 @@
-# $OpenBSD: Makefile,v 1.6 2004/01/23 17:02:25 hshoexer Exp $
+# $OpenBSD: Makefile,v 1.7 2004/02/09 18:31:19 espie Exp $
 
 .include <bsd.own.mk>		# for NOMAN
+
+
+POD2MAN=pod2man --official --release="OpenBSD ${OSREV}" --center=OpenSSL
 
 .ifndef NOMAN
 MANALL=	\
@@ -200,93 +203,21 @@ PSALL=	${MANALL:S/.cat1/.ps1/g:S/.cat2/.ps2/g:S/.cat3/.ps3/g:S/.cat4/.ps4/g:S/.c
 
 # buffer.pod -> BUF_MEM_new.pod
 # BUF_MEM_free BUF_MEM_grow BUF_strdup
-BUF_MEM_new.cat3: buffer.pod
-	( cp ${.ALLSRC} BUF_MEM_new.pm && pod2man --section=3 --official \
-	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
-	  BUF_MEM_new.pm ) | nroff -Tascii -man > ${.TARGET}
-.if MANPS
-BUF_MEM_new.ps3: buffer.pod
-	( cp ${.ALLSRC} BUF_MEM_new.pm && pod2man --section=3 --official \
-	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
-	  BUF_MEM_new.pm ) | nroff -Tps -man > ${.TARGET}
-.endif
 
 # rc4.pod -> RC4.pod
 # RC4_set_key
-RC4.cat3: rc4.pod
-	( cp ${.ALLSRC} RC4.pm && pod2man --section=3 --official \
-	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
-	  RC4.pm ) | nroff -Tascii -man > ${.TARGET}
-.if MANPS
-RC4.ps3: rc4.pod
-	( cp ${.ALLSRC} RC4.pm && pod2man --section=3 --official \
-	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
-	  RC4.pm ) | nroff -Tps -man > ${.TARGET}
-.endif
 
 # threads.pod -> CRYPTO_set_locking_callback.pod
 # CRYPTO_set_id_callback CRYPTO_num_locks
-CRYPTO_set_locking_callback.cat3: threads.pod
-	( cp ${.ALLSRC} CRYPTO_set_locking_callback.pm && \
-	  pod2man --section=3 --official \
-	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
-	  CRYPTO_set_locking_callback.pm ) | nroff -Tascii -man > ${.TARGET}
-.if MANPS
-CRYPTO_set_locking_callback.ps3: threads.pod
-	( cp ${.ALLSRC} CRYPTO_set_locking_callback.pm && \
-	  pod2man --section=3 --official \
-	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
-	  CRYPTO_set_locking_callback.pm ) | nroff -Tps -man > ${.TARGET}
-.endif
 
 # ripemd.pod -> RIPEMD160.pod
 # RIPEMD160_Init RIPEMD160_Update RIPEMD160_Final
-RIPEMD160.cat3: ripemd.pod
-	( cp ${.ALLSRC} RIPEMD160.pm && pod2man --section=3 --official \
-	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
-	  RIPEMD160.pm ) | nroff -Tascii -man > ${.TARGET}
-.if MANPS
-RIPEMD160.ps3: ripemd.pod
-	( cp ${.ALLSRC} RIPEMD160.pm && pod2man --section=3 --official \
-	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
-	  RIPEMD160.pm ) | nroff -Tps -man > ${.TARGET}
-.endif
 
 # sha.pod -> SHA1.pod
-SHA1.cat3: sha.pod
-	( cp ${.ALLSRC} SHA1.pm && pod2man --section=3 --official \
-	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
-	  SHA1.pm ) | nroff -Tascii -man > ${.TARGET}
-.if MANPS
-SHA1.ps3: sha.pod
-	( cp ${.ALLSRC} SHA1.pm && pod2man --section=3 --official \
-	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
-	  SHA1.pm ) | nroff -Tps -man > ${.TARGET}
-.endif
 
 # md5.pod -> MD5.pod
-MD5.cat3: md5.pod
-	( cp ${.ALLSRC} MD5.pm && pod2man --section=3 --official \
-	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
-	  MD5.pm ) | nroff -Tascii -man > ${.TARGET}
-.if MANPS
-MD5.ps3: md5.pod
-	( cp ${.ALLSRC} MD5.pm && pod2man --section=3 --official \
-	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
-	  MD5.pm ) | nroff -Tps -man > ${.TARGET}
-.endif
 
 # hmac.pod -> HMAC.pod
-HMAC.cat3: hmac.pod
-	( cp ${.ALLSRC} HMAC.pm && pod2man --section=3 --official \
-	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
-	  HMAC.pm ) | nroff -Tascii -man > ${.TARGET}
-.if MANPS
-HMAC.ps3: hmac.pod
-	( cp ${.ALLSRC} HMAC.pm && pod2man --section=3 --official \
-	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
-	  HMAC.pm ) | nroff -Tps -man > ${.TARGET}
-.endif
 
 # des.pod -> des_random_key, des_set_key, des_key_sched, des_set_key_checked,
 # des_set_key_unchecked, des_set_odd_parity, des_is_weak_key, des_ecb_encrypt,
@@ -298,16 +229,26 @@ HMAC.ps3: hmac.pod
 # des_read_2passwords, des_read_pw_string, des_cbc_cksum, des_quad_cksum,
 # des_string_to_key, des_string_to_2keys, des_fcrypt, des_crypt,
 # des_enc_read, des_enc_write
-des_random_key.cat3: des.pod
-	( cp ${.ALLSRC} des_random_key.pm && pod2man --section=3 --official \
-	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
-	  des_random_key.pm ) | nroff -Tascii -man > ${.TARGET}
-.if MANPS
-des_random_key.ps3: des.pod
-	( cp ${.ALLSRC} des_random_key.pm && pod2man --section=3 --official \
-	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
-	  des_random_key.pm ) | nroff -Tps -man > ${.TARGET}
-.endif
+
+.for page src in \
+	BUF_MEM_new buffer \
+	RC4 rc4 \
+	CRYPTO_set_locking_callback threads \
+	RIPEMD160 ripemd \
+	SHA1 sha \
+	MD5 md5 \
+	HMAC hmac \
+	des_random_key des
+
+${page}.cat3: ${src}.pod
+	${POD2MAN} --section=3 --name=${page:U} ${.ALLSRC} | \
+	    nroff -Tascii -mandoc > ${.TARGET}
+.  if MANPS
+${page}.ps3: ${src}.pod
+	${POD2MAN} --section=3 --name=${page:U} ${.ALLSRC} | \
+	    nroff -Tps -mandoc > ${.TARGET}
+.  endif
+.endfor
 
 MLINKS+=\
 	BN_CTX_new.3 BN_CTX_free.3 \
@@ -840,44 +781,19 @@ maninstall:
 # XXX .PATH order is critical because of non-unique filenames
 .PATH: ${.CURDIR}/../src/doc/crypto ${.CURDIR}/../src/doc/ssl ${.CURDIR}/../src/doc/apps
 .SUFFIXES: .pod
-.pod.cat3:
-	( cd `dirname ${.ALLSRC}` && pod2man --section=3 --official \
-	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
-	  `basename ${.ALLSRC}` ) | nroff -Tascii -man > ${.TARGET}
-.pod.cat7:
-	( cd `dirname ${.ALLSRC}` && pod2man --section=7 --official \
-	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
-	  `basename ${.ALLSRC}` ) | nroff -Tascii -man > ${.TARGET}
-.pod.cat1:
-	( cd `dirname ${.ALLSRC}` && pod2man --section=1 --official \
-	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
-	  `basename ${.ALLSRC}` ) | nroff -Tascii -man > ${.TARGET}
+.for sect in 1 3 7
 
-.pod.ps3:
-	( cd `dirname ${.ALLSRC}` && pod2man --section=3 --official \
-	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
-	  `basename ${.ALLSRC}` ) | nroff -Tps -man > ${.TARGET}
-.pod.ps7:
-	( cd `dirname ${.ALLSRC}` && pod2man --section=7 --official \
-	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
-	  `basename ${.ALLSRC}` ) | nroff -Tps -man > ${.TARGET}
-.pod.ps1:
-	( cd `dirname ${.ALLSRC}` && pod2man --section=1 --official \
-	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
-	  `basename ${.ALLSRC}` ) | nroff -Tps -man > ${.TARGET}
+.pod.cat${sect}:
+	${POD2MAN} --section=${sect} --name=${*:U} ${.ALLSRC} | \
+	    nroff -Tascii -mandoc > ${.TARGET}
+
+.pod.ps${sect}:
+	${POD2MAN} --section=${sect} --name=${*:U} ${.ALLSRC} | \
+	    nroff -Tps -mandoc > ${.TARGET}
+.endfor
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
-
-CLEANFILES+=\
-	BUF_MEM_new.pm \
-	CRYPTO_set_locking_callback.pm \
-	HMAC.pm \
-	RC4.pm \
-	RIPEMD160.pm \
-	SHA1.pm \
-	des_random_key.pm \
-	MD5.pm \
 
 clean cleandir:
 	rm -f ${CLEANFILES}
