@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.313 2004/07/29 06:25:45 tedu Exp $
+#	$OpenBSD: files,v 1.314 2004/08/05 17:04:51 pefo Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -276,7 +276,7 @@ file	dev/ic/tropic.c		tr
 
 # 8250/16[45]50-based "com" ports
 device	com: tty
-file	dev/ic/com.c		com & (com_isa | com_isapnp | com_commulti | com_pcmcia | com_pica | com_algor | com_gsc | com_puc | com_ebus | com_dino) needs-flag
+file	dev/ic/com.c		com & (com_isa | com_isapnp | com_commulti | com_pcmcia | com_localbus | com_gsc | com_puc | com_ebus | com_dino) needs-flag
 
 # PC-like keyboard controller
 device	pckbc { [slot = -1] }
@@ -300,7 +300,7 @@ file	dev/ic/cy.c		cy & (cy_isa | cy_pci)	needs-flag
 
 # PC parallel ports (IEEE 1284)
 device	lpt
-file	dev/ic/lpt.c		lpt & (lpt_isa | lpt_pica | lpt_algor | lpt_gsc | lpt_puc | lpt_apio | lpt_ebus) needs-flag
+file	dev/ic/lpt.c		lpt & (lpt_isa | lpt_localbus | lpt_gsc | lpt_puc | lpt_apio | lpt_ebus) needs-flag
 
 # STI (hp graphics)
 device	sti: wsemuldisplaydev
