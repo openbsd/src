@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.9 1998/09/16 22:41:18 jason Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.10 1998/09/18 20:27:15 deraadt Exp $	*/
 /*	$NetBSD: if_le.c,v 1.50 1997/09/09 20:54:48 pk Exp $	*/
 
 /*-
@@ -522,21 +522,24 @@ leattach(parent, self, aux)
 	sc->sc_hwreset = lehwreset;
 
 	ifmedia_init(&sc->sc_ifmedia, 0, lemediachange, lemediastatus);
+#if defined(SUN4C) || defined(SUN4M)
+	if (lebufchild) {
+		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_10_T, 0, NULL);
+		ifmedia_set(&sc->sc_ifmedia, IFM_ETHER | IFM_10_T);
+	} else
+#endif
 #if defined(SUN4M)
 	if (CPU_ISSUN4M && lesc->sc_dma) {
 		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_10_T, 0, NULL);
 		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_10_5, 0, NULL);
 		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_AUTO, 0, NULL);
 		ifmedia_set(&sc->sc_ifmedia, IFM_ETHER | IFM_AUTO);
-	}
-	else {
+	} else
+#endif
+	{
 		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_10_5, 0, NULL);
 		ifmedia_set(&sc->sc_ifmedia, IFM_ETHER | IFM_10_5);
 	}
-#else
-	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_10_5, 0, NULL);
-	ifmedia_set(&sc->sc_ifmedia, IFM_ETHER | IFM_10_5);
-#endif
 
 	am7990_config(sc);
 
