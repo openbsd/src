@@ -52,9 +52,6 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef OPENBSD_NATIVE
 
-#undef GCC_INCLUDE_DIR
-#define GCC_INCLUDE_DIR "/usr/include"
-
 /* The compiler is configured with ONLY the gcc/g++ standard headers.  */
 #undef INCLUDE_DEFAULTS
 #define INCLUDE_DEFAULTS			\
@@ -62,7 +59,7 @@ Boston, MA 02111-1307, USA.  */
     { GPLUSPLUS_INCLUDE_DIR, "G++", 1, 1 },	\
     { GPLUSPLUS_TOOL_INCLUDE_DIR, "G++", 1, 1 },\
     { GPLUSPLUS_BACKWARD_INCLUDE_DIR, "G++", 1, 1 }, \
-    { GCC_INCLUDE_DIR, "GCC", 0, 0 },		\
+    { STANDARD_INCLUDE_DIR, STANDARD_INCLUDE_COMPONENT, 0, 0 },	\
     { 0, 0, 0, 0 }				\
   }
 

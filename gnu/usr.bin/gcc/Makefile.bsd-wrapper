@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.40 2003/11/29 14:55:05 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.41 2004/01/15 17:46:53 espie Exp $
 
 #MAN=		cccp.1 gcc.1 gcc-local.1 protoize.1 gcov.1
 MAN=		gcc.1 cpp.1 gcov.1
@@ -14,6 +14,7 @@ MAN+=		f/g77.1
 MLINKS+=	gcc.1 g++.1 gcc.1 c++.1
 MLINKS+=	g77.1 f77.1
 .endif
+V=3.3.2
 
 .SUFFIXES:	.1
 .PATH.1:	${.CURDIR}/gcc ${.CURDIR}/gcc/doc
@@ -57,6 +58,7 @@ M_ARCH=		${MACHINE_ARCH}
 
 
 GCCARCH=	${M_ARCH}-unknown-openbsd${OSREV}
+GCCINC=	/usr/lib/gcc-lib/${GCCARCH}/$V/include
 
 all:	config.status
 	exec ${MAKE} ${MAKE_FLAGS} all doc
@@ -109,7 +111,7 @@ install:	maninstall target_path
 		infodir=/usr/share/info \
 		tooldir=/tmp assertdir=/tmp \
 		bindir=$(BINDIR) \
-		install-common install-headers install-multilib \
+		install-common install-multilib \
 		install-info intl.install \
 		lang.install-normal
 	chown -R ${BINOWN}:${BINGRP} ${DESTDIR}/usr/lib/gcc-lib
@@ -139,6 +141,23 @@ clean cleandir:
 
 depend: config.status
 	exec ${MAKE} ${MAKE_FLAGS} generated-manpages
+
+FILES= ${.CURDIR}/gcc/unwind.h
+.if ${M_ARCH} == "i386"
+FILES+=${.CURDIR}/gcc/config/i386/mmintrin.h \
+	${.CURDIR}/gcc/config/i386/xmmintrin.h
+.elif ${M_ARCH} == "powerpc"
+FILES+=${.CURDIR}/gcc/config/rs6000/altivec.h
+.endif
+
+includes:
+	mkdir -p ${DESTDIR}${GCCINC}
+	for i in ${FILES}; do \
+		j=`basename $$i`; \
+		cmp -s $$i ${DESTDIR}${GCCINC}/$$j || \
+		    ${INSTALL} ${INSTALL_COPY} -m 444 $$i ${DESTDIR}${GCCINC}/$$j; \
+		ln -sf ${GCCINC}/$$j ${DESTDIR}/usr/include/$$j; \
+	done
 
 lint:
 	# Nothing here so far...
