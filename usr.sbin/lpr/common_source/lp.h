@@ -1,4 +1,4 @@
-/*	$OpenBSD: lp.h,v 1.9 2002/05/20 23:13:50 millert Exp $	*/
+/*	$OpenBSD: lp.h,v 1.10 2002/06/08 01:53:43 millert Exp $	*/
 /*	$NetBSD: lp.h,v 1.14 2000/04/16 14:43:58 mrg Exp $	*/
 
 /*
@@ -92,7 +92,8 @@ extern int	remote;		/* true if sending files to a remote host */
 extern char	*printcapdb[];	/* printcap database array */
 extern u_int	wait_time;	/* time to wait for remote responses */
 
-extern uid_t	uid, euid;	/* real and effective user id's */
+extern uid_t	real_uid, effective_uid;
+extern gid_t	real_gid, effective_gid;
 
 extern volatile sig_atomic_t	gotintr;
 
@@ -103,6 +104,23 @@ struct queue {
 	time_t	q_time;			/* modification time */
 	char	q_name[MAXNAMLEN+1];	/* control file name */
 };
+
+/*
+ * Macros to raise/lower permissions.
+ */
+#define PRIV_START do {				\
+	int save_errno = errno;			\
+	(void)seteuid(effective_uid);		\
+	(void)setegid(effective_gid);		\
+	errno = save_errno;			\
+} while (0)
+
+#define PRIV_END do {				\
+	int save_errno = errno;			\
+	(void)setegid(real_gid);		\
+	(void)seteuid(real_uid);		\
+	errno = save_errno;			\
+} while (0)
 
 #include <sys/cdefs.h>
 
@@ -125,7 +143,6 @@ int      inlist(char *, char *);
 int      iscf(struct dirent *);
 int      isowner(char *, char *);
 void     ldump(char *, char *, int);
-int      lockchk(char *);
 void     prank(int);
 void     process(char *);
 void     rmjob(void);
@@ -134,4 +151,5 @@ void     show(char *, char *, int);
 int      startdaemon(char *);
 void     nodaemon(void);
 void     delay(int);
+int	 safe_open(const char *, int, mode_t);
 __END_DECLS

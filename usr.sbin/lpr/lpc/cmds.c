@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.16 2002/05/20 23:13:50 millert Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.17 2002/06/08 01:53:43 millert Exp $	*/
 /*	$NetBSD: cmds.c,v 1.12 1997/10/05 15:12:06 mrg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: cmds.c,v 1.16 2002/05/20 23:13:50 millert Exp $";
+static const char rcsid[] = "$OpenBSD: cmds.c,v 1.17 2002/06/08 01:53:43 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,8 +72,6 @@ static const char rcsid[] = "$OpenBSD: cmds.c,v 1.16 2002/05/20 23:13:50 millert
 #include "lpc.h"
 #include "extern.h"
 #include "pathnames.h"
-
-extern uid_t	uid, euid;
 
 static void	abortpr(int);
 static void	cleanpr(void);
@@ -145,22 +143,25 @@ abortpr(int dis)
 	(void)snprintf(line, sizeof(line), "%s/%s", SD, LO);
 	printf("%s:\n", printer);
 
+	PRIV_START;
 	/*
 	 * Turn on the owner execute bit of the lock file to disable printing.
 	 */
 	if (dis) {
-		seteuid(euid);
 		if (stat(line, &stbuf) >= 0) {
-			if (chmod(line, (stbuf.st_mode & 0777) | 0100) < 0)
+			stbuf.st_mode |= S_IXUSR;
+			if (chmod(line, stbuf.st_mode & 0777) < 0)
 				printf("\tcannot disable printing\n");
 			else {
 				upstat("printing disabled\n");
 				printf("\tprinting disabled\n");
 			}
 		} else if (errno == ENOENT) {
-			if ((fd = open(line, O_WRONLY|O_CREAT, 0760)) < 0)
+			if ((fd = safe_open(line, O_WRONLY|O_CREAT|O_NOFOLLOW,
+			    0760)) < 0)
 				printf("\tcannot create lock file\n");
 			else {
+				(void)fchown(fd, DEFUID, -1);
 				(void)close(fd);
 				upstat("printing disabled\n");
 				printf("\tprinting disabled\n");
@@ -175,7 +176,10 @@ abortpr(int dis)
 	/*
 	 * Kill the current daemon to stop printing now.
 	 */
-	if ((fp = fopen(line, "r")) == NULL) {
+	fd = safe_open(line, O_RDONLY|O_NOFOLLOW, 0);
+	if (fd < 0 || (fp = fdopen(fd, "r")) == NULL) {
+		if (fd >= 0)
+			close(fd);
 		printf("\tcannot open lock file\n");
 		goto out;
 	}
@@ -193,11 +197,11 @@ abortpr(int dis)
 	} else
 		printf("\tdaemon (pid %d) killed\n", pid);
 out:
-	seteuid(uid);
+	PRIV_END;
 }
 
 /*
- * Write a message into the status file.
+ * Write a message into the status file (assumes PRIV_START already called)
  */
 static void
 upstat(char *msg)
@@ -208,12 +212,12 @@ upstat(char *msg)
 	if (cgetstr(bp, "st", &ST) == -1)
 		ST = DEFSTAT;
 	(void)snprintf(statfile, sizeof(statfile), "%s/%s", SD, ST);
-	umask(0);
-	fd = open(statfile, O_WRONLY|O_CREAT, 0664);
+	fd = safe_open(statfile, O_WRONLY|O_CREAT|O_NOFOLLOW, 0660);
 	if (fd < 0 || flock(fd, LOCK_EX) < 0) {
 		printf("\tcannot create status file\n");
 		return;
 	}
+	(void)fchown(fd, DEFUID, -1);
 	(void)ftruncate(fd, 0);
 	if (msg == (char *)NULL)
 		(void)write(fd, "\n", 1);
@@ -324,9 +328,9 @@ cleanpr(void)
 		return;
 	}
 
-	seteuid(euid);
+	PRIV_START;
 	nitems = scandir(SD, &queue, doselect, sortq);
-	seteuid(uid);
+	PRIV_END;
 	if (nitems < 0) {
 		printf("\tcannot examine spool directory\n");
 		return;
@@ -370,12 +374,12 @@ cleanpr(void)
 static void
 unlinkf(char *name)
 {
-	seteuid(euid);
+	PRIV_START;
 	if (unlink(name) < 0)
 		printf("\tcannot remove %s\n", name);
 	else
 		printf("\tremoved %s\n", name);
-	seteuid(uid);
+	PRIV_END;
 }
 
 /*
@@ -435,14 +439,15 @@ enablepr(void)
 	/*
 	 * Turn off the group execute bit of the lock file to enable queuing.
 	 */
-	seteuid(euid);
+	PRIV_START;
 	if (stat(line, &stbuf) >= 0) {
-		if (chmod(line, stbuf.st_mode & 0767) < 0)
+		stbuf.st_mode &= ~S_IXGRP;
+		if (chmod(line, stbuf.st_mode & 0777) < 0)
 			printf("\tcannot enable queuing\n");
 		else
 			printf("\tqueuing enabled\n");
 	}
-	seteuid(uid);
+	PRIV_END;
 }
 
 /*
@@ -502,22 +507,24 @@ disablepr(void)
 	/*
 	 * Turn on the group execute bit of the lock file to disable queuing.
 	 */
-	seteuid(euid);
+	PRIV_START;
 	if (stat(line, &stbuf) >= 0) {
-		if (chmod(line, (stbuf.st_mode & 0777) | 010) < 0)
+		stbuf.st_mode |= S_IXGRP;
+		if (chmod(line, stbuf.st_mode & 0777) < 0)
 			printf("\tcannot disable queuing\n");
 		else
 			printf("\tqueuing disabled\n");
 	} else if (errno == ENOENT) {
-		if ((fd = open(line, O_WRONLY|O_CREAT, 0670)) < 0)
+		if ((fd = safe_open(line, O_WRONLY|O_CREAT|O_NOFOLLOW, 0670)) < 0)
 			printf("\tcannot create lock file\n");
 		else {
+			(void)fchown(fd, DEFUID, -1);
 			(void)close(fd);
 			printf("\tqueuing disabled\n");
 		}
 	} else
 		printf("\tcannot stat lock file\n");
-	seteuid(uid);
+	PRIV_END;
 }
 
 /*
@@ -581,20 +588,22 @@ putmsg(int argc, char **argv)
 	 * turn on the owner execute bit of the lock file to disable printing.
 	 */
 	(void)snprintf(line, sizeof(line), "%s/%s", SD, LO);
-	seteuid(euid);
+	PRIV_START;
 	if (stat(line, &stbuf) >= 0) {
-		if (chmod(line, (stbuf.st_mode & 0777) | 0110) < 0)
+		stbuf.st_mode |= (S_IXGRP|S_IXUSR);
+		if (chmod(line, stbuf.st_mode & 0777) < 0)
 			printf("\tcannot disable queuing\n");
 		else
 			printf("\tprinter and queuing disabled\n");
 	} else if (errno == ENOENT) {
-		if ((fd = open(line, O_WRONLY|O_CREAT, 0770)) < 0)
+		if ((fd = safe_open(line, O_WRONLY|O_CREAT|O_NOFOLLOW, 0770)) < 0)
 			printf("\tcannot create lock file\n");
 		else {
+			(void)fchown(fd, DEFUID, -1);
 			(void)close(fd);
 			printf("\tprinter and queuing disabled\n");
 		}
-		seteuid(uid);
+		PRIV_END;
 		return;
 	} else
 		printf("\tcannot stat lock file\n");
@@ -602,13 +611,14 @@ putmsg(int argc, char **argv)
 	 * Write the message into the status file.
 	 */
 	(void)snprintf(line, sizeof(line), "%s/%s", SD, ST);
-	fd = open(line, O_WRONLY|O_CREAT, 0664);
+	fd = safe_open(line, O_WRONLY|O_CREAT|O_NOFOLLOW, 0660);
 	if (fd < 0 || flock(fd, LOCK_EX) < 0) {
 		printf("\tcannot create status file\n");
-		seteuid(uid);
+		PRIV_END;
 		return;
 	}
-	seteuid(uid);
+	PRIV_END;
+	(void)fchown(fd, DEFUID, -1);
 	(void)ftruncate(fd, 0);
 	if (argc <= 0) {
 		(void)write(fd, "\n", 1);
@@ -737,19 +747,24 @@ startpr(int enable)
 
 	/*
 	 * Turn off the owner execute bit of the lock file to enable printing.
+	 * If we are marking the printer "up" also turn off group execute bit.
 	 */
-	seteuid(euid);
+	PRIV_START;
 	if (enable && stat(line, &stbuf) >= 0) {
-		if (chmod(line, stbuf.st_mode & (enable==2 ? 0666 : 0677)) < 0)
+		if (enable == 2)
+			stbuf.st_mode &= ~(S_IXUSR|S_IXGRP);
+		else
+			stbuf.st_mode &= ~S_IXUSR;
+		if (chmod(line, stbuf.st_mode & 0777) < 0)
 			printf("\tcannot enable printing\n");
 		else
 			printf("\tprinting enabled\n");
 	}
+	PRIV_END;
 	if (!startdaemon(printer))
 		printf("\tcouldn't start daemon\n");
 	else
 		printf("\tdaemon started\n");
-	seteuid(uid);
 }
 
 /*
@@ -809,7 +824,10 @@ prstat(void)
 		ST = DEFSTAT;
 	printf("%s:\n", printer);
 	(void)snprintf(line, sizeof(line), "%s/%s", SD, LO);
-	if (stat(line, &stbuf) >= 0) {
+	PRIV_START;
+	i = stat(line, &stbuf);
+	PRIV_END;
+	if (i >= 0) {
 		printf("\tqueuing is %s\n",
 			(stbuf.st_mode & 010) ? "disabled" : "enabled");
 		printf("\tprinting is %s\n",
@@ -818,7 +836,10 @@ prstat(void)
 		printf("\tqueuing is enabled\n");
 		printf("\tprinting is enabled\n");
 	}
-	if ((dirp = opendir(SD)) == NULL) {
+	PRIV_START;
+	dirp = opendir(SD);
+	PRIV_END;
+	if (dirp == NULL) {
 		printf("\tcannot examine spool directory\n");
 		return;
 	}
@@ -834,7 +855,9 @@ prstat(void)
 		printf("\t1 entry in spool area\n");
 	else
 		printf("\t%d entries in spool area\n", i);
-	fd = open(line, O_RDONLY);
+	PRIV_START;
+	fd = safe_open(line, O_RDONLY|O_NOFOLLOW, 0);
+	PRIV_END;
 	if (fd < 0 || flock(fd, LOCK_SH|LOCK_NB) == 0) {
 		(void)close(fd);	/* unlocks as well */
 		printf("\tprinter idle\n");
@@ -842,7 +865,9 @@ prstat(void)
 	}
 	(void)close(fd);
 	(void)snprintf(line, sizeof(line), "%s/%s", SD, ST);
-	fd = open(line, O_RDONLY);
+	PRIV_START;
+	fd = safe_open(line, O_RDONLY|O_NOFOLLOW, 0);
+	PRIV_END;
 	if (fd >= 0) {
 		(void)flock(fd, LOCK_SH);
 		if (fstat(fd, &stbuf) == 0 && stbuf.st_size > 0) {
@@ -913,25 +938,27 @@ stoppr(void)
 	/*
 	 * Turn on the owner execute bit of the lock file to disable printing.
 	 */
-	seteuid(euid);
+	PRIV_START;
 	if (stat(line, &stbuf) >= 0) {
-		if (chmod(line, (stbuf.st_mode & 0777) | 0100) < 0)
+		stbuf.st_mode |= S_IXUSR;
+		if (chmod(line, stbuf.st_mode & 0777) < 0)
 			printf("\tcannot disable printing\n");
 		else {
 			upstat("printing disabled\n");
 			printf("\tprinting disabled\n");
 		}
 	} else if (errno == ENOENT) {
-		if ((fd = open(line, O_WRONLY|O_CREAT, 0760)) < 0)
+		if ((fd = safe_open(line, O_WRONLY|O_CREAT|O_NOFOLLOW, 0760)) < 0)
 			printf("\tcannot create lock file\n");
 		else {
+			(void)fchown(fd, DEFUID, -1);
 			(void)close(fd);
 			upstat("printing disabled\n");
 			printf("\tprinting disabled\n");
 		}
 	} else
 		printf("\tcannot stat lock file\n");
-	seteuid(uid);
+	PRIV_END;
 }
 
 struct	queue **queue;
@@ -971,12 +998,12 @@ topq(int argc, char **argv)
 		LO = DEFLOCK;
 	printf("%s:\n", printer);
 
-	seteuid(euid);
+	PRIV_START;
 	if (chdir(SD) < 0) {
 		printf("\tcannot chdir to %s\n", SD);
 		goto out;
 	}
-	seteuid(uid);
+	PRIV_END;
 	nitems = getq(&queue);
 	if (nitems == 0)
 		return;
@@ -1000,12 +1027,14 @@ topq(int argc, char **argv)
 	 * Turn on the public execute bit of the lock file to
 	 * get lpd to rebuild the queue after the current job.
 	 */
-	seteuid(euid);
-	if (changed && stat(LO, &stbuf) >= 0)
-		(void)chmod(LO, (stbuf.st_mode & 0777) | 01);
+	PRIV_START;
+	if (changed && stat(LO, &stbuf) >= 0) {
+		stbuf.st_mode |= S_IXOTH;
+		(void)chmod(LO, stbuf.st_mode & 0777);
+	}
 
 out:
-	seteuid(uid);
+	PRIV_END;
 } 
 
 /*
@@ -1020,9 +1049,9 @@ touch(struct queue *q)
 
 	tvp[0].tv_sec = tvp[1].tv_sec = --mtime;
 	tvp[0].tv_usec = tvp[1].tv_usec = 0;
-	seteuid(euid);
+	PRIV_START;
 	ret = utimes(q->q_name, tvp);
-	seteuid(uid);
+	PRIV_END;
 	return (ret);
 }
 
@@ -1034,7 +1063,7 @@ int
 doarg(char *job)
 {
 	struct queue **qq;
-	int jobnum, n;
+	int jobnum, fd, n;
 	char *cp, *machine;
 	int cnt = 0;
 	FILE *fp;
@@ -1079,11 +1108,14 @@ doarg(char *job)
 	 * Process item consisting of owner's name (example: henry).
 	 */
 	for (qq = queue + nitems; --qq >= queue; ) {
-		seteuid(euid);
-		fp = fopen((*qq)->q_name, "r");
-		seteuid(uid);
-		if (fp == NULL)
+		PRIV_START;
+		fd = safe_open((*qq)->q_name, O_RDONLY|O_NOFOLLOW, 0);
+		PRIV_END;
+		if (fd < 0 || (fp = fdopen(fd, "r")) == NULL) {
+			if (fd >= 0)
+				close(fd);
 			continue;
+		}
 		while (getline(fp) > 0)
 			if (line[0] == 'P')
 				break;

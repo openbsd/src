@@ -1,4 +1,4 @@
-.\" $OpenBSD: 4.t,v 1.3 2002/05/18 23:03:04 millert Exp $
+.\" $OpenBSD: 4.t,v 1.4 2002/06/08 01:53:43 millert Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -36,10 +36,10 @@
 .NH 1
 Setting up
 .PP
-The 4.3BSD release comes with the necessary programs 
+OpenBSD comes with the necessary programs 
 installed and with the default line printer queue
 created.  If the system must be modified, the
-makefile in the directory /usr/src/usr.sbin/lpr
+Makefile in the directory /usr/src/usr.sbin/lpr
 should be used in recompiling and reinstalling
 the necessary programs.
 .PP
@@ -65,11 +65,11 @@ Printers on serial lines
 When a printer is connected via a serial communication line
 it must have the proper baud rate and terminal modes set.
 The following example is for a DecWriter III printer connected
-locally via a 1200 baud serial line.
+locally via a 9600 baud serial line.
 .DS
 .DT
 lp|LA-180 DecWriter III:\e
-	:lp=/dev/lp:br#1200:fs#06320:\e
+	:lp=/dev/lp:br#9600:ms=onlcr,oxtabs,-parity:\e
 	:tr=\ef:of=/usr/libexec/lpr/lpf:lf=/var/log/lpd-errs:
 .DE
 The
@@ -79,8 +79,9 @@ be left out since ``/dev/lp'' is the default.
 The
 .B br
 entry sets the baud rate for the tty line and the
-.B fs
-entry sets CRMOD, no parity, and XTABS (see \fItty\fP\|(4)).
+.B ms
+entry sets NL to CR-NL mapping, expansion of tabs to spaces,
+and disables parity (see \fIstty\fP\|(1)).
 The
 .B tr
 entry indicates that a form-feed should be printed when the queue
@@ -162,7 +163,7 @@ used in printing \fItroff\fP\|(1) output.
 This filter is needed to set the device into print mode
 for text, and plot mode for printing
 .I troff
-files and raster images (see \fIva\fP\|(4V)).
+files and raster images (see \fIva\fP\|(4)).
 Note that the page length is set to 58 lines by the
 .B pl
 entry for 8.5" by 11" fan-fold paper.

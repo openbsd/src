@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.32 2002/05/28 18:17:22 millert Exp $ */
+/*	$OpenBSD: lpd.c,v 1.33 2002/06/08 01:53:43 millert Exp $ */
 /*	$NetBSD: lpd.c,v 1.33 2002/01/21 14:42:29 wiz Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpd.c,v 1.32 2002/05/28 18:17:22 millert Exp $";
+static const char rcsid[] = "$OpenBSD: lpd.c,v 1.33 2002/06/08 01:53:43 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -66,16 +66,18 @@ static const char rcsid[] = "$OpenBSD: lpd.c,v 1.32 2002/05/28 18:17:22 millert 
  *		remove jobs from the queue.
  *
  * Strategy to maintain protected spooling area:
- *	1. Spooling area is writable only by daemon and spooling group
- *	2. lpr runs setuid root and setgrp spooling group; it uses
- *	   root to access any file it wants (verifying things before
- *	   with an access call) and group id to know how it should
- *	   set up ownership of files in the spooling area.
- *	3. Files in spooling area are owned by root, group spooling
- *	   group, with mode 660.
- *	4. lpd, lpq and lprm run setuid daemon and setgrp spooling group to
- *	   access files and printer.  Users can't get to anything
- *	   w/o help of lpq and lprm programs.
+ *	1. Spooling area is writable only by root and the group daemon.
+ *	2. Files in spooling area are owned by user daemon, group daemon,
+ *	   and are mode 660.
+ *	3. lpd runs as root but spends most of its time with its effective
+ *	   uid and gid set to the uid/gid specified in the passwd entry for
+ *	   DEFUID (1, aka daemon).
+ *	4. lpr runs setuid daemon and setgrp daemon; it opens
+ *	   files to be printed with its real uid/gid and writes to
+ *	   the spool dir with its effective uid/gid (i.e. daemon).
+ *	5. lpc, lpr and lprm run setgrp daemon.
+ *
+ * Users can't touch the spool w/o the help of one of the lp* programs.
  */
 
 #include <sys/param.h>
@@ -94,6 +96,7 @@ static const char rcsid[] = "$OpenBSD: lpd.c,v 1.32 2002/05/28 18:17:22 millert 
 #include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
+#include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -137,6 +140,7 @@ int
 main(int argc, char **argv)
 {
 	fd_set defreadfds;
+	struct passwd *pw;
 	struct sockaddr_un un, fromunix;
 	struct sockaddr_storage frominet;
 	sigset_t mask, omask;
@@ -148,13 +152,23 @@ main(int argc, char **argv)
 	const char *port = "printer";
 	char *cp;
 
-	euid = geteuid();	/* these shouldn't be different */
-	uid = getuid();
-	options = check_options = 0;
-	gethostname(host, sizeof(host));
-
-	if (euid != 0)
+	if (geteuid() != 0)
 		errx(1, "must run as root");
+
+	/*
+	 * We want to run with euid of daemon most of the time.
+	 */
+	if ((pw = getpwuid(DEFUID)) == NULL)
+		errx(1, "daemon uid (%d) not in password file", DEFUID);
+	real_uid = pw->pw_uid;
+	real_gid = pw->pw_gid;
+	effective_uid = 0;
+	effective_gid = getegid();
+	PRIV_END;	/* run as daemon for most things */
+
+	check_options = LPD_NOPORTCHK;		/* XXX - lp* not setuid root */
+	options = 0;
+	gethostname(host, sizeof(host));
 
 	while ((i = getopt(argc, argv, "b:cdln:rsw:W")) != -1) {
 		switch (i) {
@@ -240,7 +254,9 @@ main(int argc, char **argv)
 	openlog("lpd", LOG_PID, LOG_LPR);
 	syslog(LOG_INFO, "restarted");
 	(void)umask(0);
+	PRIV_START;
 	lfd = open(_PATH_MASTERLOCK, O_WRONLY|O_CREAT|O_EXLOCK|O_NONBLOCK, 0644);
+	PRIV_END;
 	if (lfd < 0) {
 		if (errno == EWOULDBLOCK)	/* active daemon present */
 			exit(0);
@@ -262,7 +278,9 @@ main(int argc, char **argv)
 	 * Restart all the printers.
 	 */
 	startup();
+	PRIV_START;
 	(void)unlink(_PATH_SOCKETNAME);
+	PRIV_END;
 	funix = socket(AF_LOCAL, SOCK_STREAM, 0);
 	if (funix < 0) {
 		syslog(LOG_ERR, "socket: %m");
@@ -287,10 +305,12 @@ main(int argc, char **argv)
 #ifndef SUN_LEN
 #define SUN_LEN(unp) (strlen((unp)->sun_path) + 2)
 #endif
+	PRIV_START;
 	if (bind(funix, (struct sockaddr *)&un, SUN_LEN(&un)) < 0) {
 		syslog(LOG_ERR, "ubind: %m");
 		exit(1);
 	}
+	PRIV_END;
 	(void)umask(0);
 	sigprocmask(SIG_SETMASK, &omask, NULL);
 	FD_ZERO(&defreadfds);
@@ -438,6 +458,7 @@ mcleanup(int signo)
 
 	if (lflag)
 		syslog_r(LOG_INFO, &sdata, "exiting");
+	PRIV_START;
 	unlink(_PATH_SOCKETNAME);
 	unlink(_PATH_MASTERLOCK);
 	_exit(0);
@@ -584,8 +605,7 @@ doit(void)
 static void
 startup(void)
 {
-	char *buf;
-	char *cp;
+	char *buf, *cp;
 
 	/*
 	 * Restart the daemons.
@@ -622,6 +642,7 @@ startup(void)
 
 /*
  * Make sure there's some work to do before forking off a child
+ * XXX - could be common w/ lpq
  */
 static int
 ckqueue(char *cap)
@@ -632,13 +653,14 @@ ckqueue(char *cap)
 
 	if (cgetstr(cap, "sd", &spooldir) == -1)
 		spooldir = _PATH_DEFSPOOL;
-	if ((dirp = opendir(spooldir)) == NULL)
+	dirp = opendir(spooldir);
+	if (dirp == NULL)
 		return (-1);
 	while ((d = readdir(dirp)) != NULL) {
-		if (d->d_name[0] != 'c' || d->d_name[1] != 'f')
-			continue;	/* daemon control files only */
-		closedir(dirp);
-		return (1);		/* found something */
+		if (d->d_name[0] == 'c' && d->d_name[1] == 'f') {
+			closedir(dirp);
+			return (1);		/* found a cf file */
+		}
 	}
 	closedir(dirp);
 	return (0);
@@ -710,7 +732,9 @@ chkhost(struct sockaddr *f, int check_opts)
 	if (good == 0)
 		fatal("address for your hostname (%s) not matched", host);
 	setproctitle("serving %s", from);
+	PRIV_START;
 	hostf = fopen(_PATH_HOSTSEQUIV, "r");
+	PRIV_END;
 again:
 	if (hostf) {
 		if (__ivaliduser_sa(hostf, f, f->sa_len, DUMMY, DUMMY) == 0) {
@@ -721,7 +745,9 @@ again:
 	}
 	if (first == 1) {
 		first = 0;
+		PRIV_START;
 		hostf = fopen(_PATH_HOSTSLPD, "r");
+		PRIV_END;
 		goto again;
 	}
 	fatal("Your host does not have line printer access");
@@ -796,7 +822,10 @@ socksetup(int af, int options, const char *port)
 					close (*s);
 					continue;
 				}
-			if (bind(*s, r->ai_addr, r->ai_addrlen) < 0) {
+			PRIV_START;
+			error = bind(*s, r->ai_addr, r->ai_addrlen);
+			PRIV_END;
+			if (error < 0) {
 				syslog(LOG_DEBUG, "bind(): %m");
 				close (*s);
 				continue;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpq.c,v 1.12 2002/05/20 23:13:50 millert Exp $	*/
+/*	$OpenBSD: lpq.c,v 1.13 2002/06/08 01:53:43 millert Exp $	*/
 /*	$NetBSD: lpq.c,v 1.9 1999/12/07 14:54:47 mrg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpq.c	8.3 (Berkeley) 5/10/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpq.c,v 1.12 2002/05/20 23:13:50 millert Exp $";
+static const char rcsid[] = "$OpenBSD: lpq.c,v 1.13 2002/06/08 01:53:43 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,6 +64,7 @@ static const char rcsid[] = "$OpenBSD: lpq.c,v 1.12 2002/05/20 23:13:50 millert 
 #include <ctype.h>
 #include <dirent.h>
 #include <err.h>
+#include <errno.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -90,9 +91,11 @@ main(int argc, char **argv)
 	char	*buf, *cp;
 	long	l;
 
-	euid = geteuid();
-	uid = getuid();
-	seteuid(uid);
+	effective_uid = geteuid();
+	real_uid = getuid();
+	effective_gid = getegid();
+	real_gid = getgid();
+	PRIV_END;	/* be safe */
 
 	if (gethostname(host, sizeof(host)) != 0)
 		err(1, "gethostname");
@@ -162,6 +165,7 @@ main(int argc, char **argv)
 	exit(0);
 }
 
+/* XXX - could be common w/ lpd */
 static int
 ckqueue(char *cap)
 {

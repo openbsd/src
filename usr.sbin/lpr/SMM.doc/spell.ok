@@ -34,7 +34,7 @@ lpd.lock
 lpf
 lpf:lf
 lprgroup
-makefile
+Makefile
 mx
 offline
 pl

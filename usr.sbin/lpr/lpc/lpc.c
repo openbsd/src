@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpc.c,v 1.13 2002/05/20 23:13:50 millert Exp $	*/
+/*	$OpenBSD: lpc.c,v 1.14 2002/06/08 01:53:43 millert Exp $	*/
 /*	$NetBSD: lpc.c,v 1.11 2001/11/14 03:01:15 enami Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpc.c	8.3 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpc.c,v 1.13 2002/05/20 23:13:50 millert Exp $";
+static const char rcsid[] = "$OpenBSD: lpc.c,v 1.14 2002/06/08 01:53:43 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -94,11 +94,13 @@ main(int argc, char **argv)
 {
 	struct cmd *c;
 
-	euid = geteuid();
-	uid = getuid();
-	seteuid(uid);
-	openlog("lpc", 0, LOG_LPR);
+	effective_uid = geteuid();
+	real_uid = getuid();
+	effective_gid = getegid();
+	real_gid = getgid();
+	PRIV_END;	/* be safe */
 
+	openlog("lpc", 0, LOG_LPR);
 	if (--argc > 0) {
 		c = getcmd(*++argv);
 		if (c == (struct cmd *)-1) {
@@ -109,7 +111,7 @@ main(int argc, char **argv)
 			printf("?Invalid command\n");
 			exit(1);
 		}
-		if (c->c_priv && getuid() && ingroup(LPR_OPER) == 0) {
+		if (c->c_priv && real_uid && ingroup(LPR_OPER) == 0) {
 			printf("?Privileged command\n");
 			exit(1);
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpr.c,v 1.25 2002/05/20 23:13:50 millert Exp $ */
+/*	$OpenBSD: lpr.c,v 1.26 2002/06/08 01:53:43 millert Exp $ */
 /*	$NetBSD: lpr.c,v 1.19 2000/10/11 20:23:52 is Exp $	*/
 
 /*
@@ -50,7 +50,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpr.c,v 1.25 2002/05/20 23:13:50 millert Exp $";
+static const char rcsid[] = "$OpenBSD: lpr.c,v 1.26 2002/06/08 01:53:43 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -66,6 +66,7 @@ static const char rcsid[] = "$OpenBSD: lpr.c,v 1.25 2002/05/20 23:13:50 millert 
 #include <sys/file.h>
 
 #include <dirent.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <a.out.h>
 #include <signal.h>
@@ -103,7 +104,6 @@ static int	 sflag;		/* symbolic link flag */
 static int	 tfd;		/* control file descriptor */
 static char	*tfname;	/* tmp copy of cf before linking */
 static char	*title;		/* pr'ing title */
-static int	 userid;	/* user id */
 static char	*width;		/* width for versatec printing */
 
 static struct stat statb;
@@ -132,9 +132,11 @@ main(int argc, char **argv)
 	int i, f, ch;
 	struct stat stb;
 
-	euid = geteuid();
-	uid = getuid();
-	seteuid(uid);
+	effective_uid = geteuid();
+	real_uid = getuid();
+	effective_gid = getegid();
+	real_gid = getgid();
+	PRIV_END;	/* be safe */
 
 	if (signal(SIGHUP, SIG_IGN) != SIG_IGN)
 		signal(SIGHUP, cleanup);
@@ -260,16 +262,16 @@ main(int argc, char **argv)
 	 * Get the identity of the person doing the lpr using the same
 	 * algorithm as lprm. 
 	 */
-	userid = getuid();
-	if (userid != DU || person == 0) {
-		if ((pw = getpwuid(userid)) == NULL)
+	if (real_uid != DU || person == NULL) {
+		if ((pw = getpwuid(real_uid)) == NULL)
 			errx(1, "Who are you?");
-		person = pw->pw_name;
+		if ((person = strdup(pw->pw_name)) == NULL)
+			err(1, NULL);
 	}
 	/*
 	 * Check for restricted group access.
 	 */
-	if (RG != NULL && userid != DU) {
+	if (RG != NULL && real_uid != DU) {
 		if ((gptr = getgrnam(RG)) == NULL)
 			errx(1, "Restricted group specified incorrectly");
 		if (gptr->gr_gid != getgid()) {
@@ -283,19 +285,16 @@ main(int argc, char **argv)
 		}
 	}
 	/*
-	 * Check to make sure queuing is enabled if userid is not root.
+	 * Check to make sure queuing is enabled if real_uid is not root.
 	 */
 	(void)snprintf(buf, sizeof(buf), "%s/%s", SD, LO);
-	if (userid && stat(buf, &stb) == 0 && (stb.st_mode & 010))
+	if (real_uid && stat(buf, &stb) == 0 && (stb.st_mode & 010))
 		errx(1, "Printer queue is disabled");
 	/*
 	 * Initialize the control file.
 	 */
 	mktemps();
 	tfd = nfile(tfname);
-	seteuid(euid);
-	(void)fchown(tfd, DU, -1);	/* owned by daemon for protection */
-	seteuid(uid);
 	card('H', host);
 	card('P', person);
 	if (hdr) {
@@ -354,7 +353,7 @@ main(int argc, char **argv)
 		}
 		if (sflag)
 			warnx("%s: not linked, copying instead", arg);
-		if ((i = open(arg, O_RDONLY)) < 0)
+		if ((i = safe_open(arg, O_RDONLY, 0)) < 0)
 			warn("%s", arg);
 		else {
 			copy(i, arg);
@@ -370,8 +369,8 @@ main(int argc, char **argv)
 		/*
 		 * Touch the control file to fix position in the queue.
 		 */
-		seteuid(euid);
-		if ((tfd = open(tfname, O_RDWR)) >= 0) {
+		PRIV_START;
+		if ((tfd = safe_open(tfname, O_RDWR|O_NOFOLLOW, 0)) >= 0) {
 			char c;
 
 			if (read(tfd, &c, 1) == 1 &&
@@ -389,7 +388,7 @@ main(int argc, char **argv)
 			cleanup(0);
 		}
 		unlink(tfname);
-		seteuid(uid);
+		PRIV_END;
 		if (qflag)		/* just q things up */
 			exit(0);
 		if (!startdaemon(printer))
@@ -478,9 +477,9 @@ linked(file)
 			return(NULL);
 		file = buf;
 	}
-	seteuid(euid);
+	PRIV_START;
 	ret = symlink(file, dfname);
-	seteuid(uid);
+	PRIV_END;
 	return(ret ? NULL : file);
 }
 
@@ -519,18 +518,14 @@ nfile(n)
 	int f;
 	int oldumask = umask(0);		/* should block signals */
 
-	seteuid(euid);
-	f = open(n, O_WRONLY | O_EXCL | O_CREAT, FILMOD);
+	PRIV_START;
+	f = open(n, O_WRONLY|O_EXCL|O_CREAT, FILMOD);
 	(void)umask(oldumask);
 	if (f < 0) {
 		warn("%s", n);
 		cleanup(0);
 	}
-	if (fchown(f, userid, -1) < 0) {
-		warn("cannot chown %s", n);
-		cleanup(0);	/* cleanup does exit */
-	}
-	seteuid(uid);
+	PRIV_END;
 	if (++n[inchar] > 'z') {
 		if (++n[inchar-2] == 't') {
 			warnx("too many files - break up the job");
@@ -556,7 +551,7 @@ cleanup(signo)
 	signal(SIGQUIT, SIG_IGN);
 	signal(SIGTERM, SIG_IGN);
 	i = inchar;
-	seteuid(euid);
+	PRIV_START;
 	if (tfname)
 		do
 			unlink(tfname);
@@ -588,20 +583,24 @@ test(file)
 	int fd;
 	char *cp;
 
-	if ((fd = open(file, O_RDONLY)) < 0) {
-		warn("cannot open %s\n", file);
+	if ((fd = open(file, O_RDONLY|O_NONBLOCK)) < 0) {
+		warn("cannot open %s", file);
 		goto bad;
 	}
 	if (fstat(fd, &statb) < 0) {
-		warn("cannot stat %s\n", file);
+		warn("cannot stat %s", file);
 		goto bad;
 	}
 	if (S_ISDIR(statb.st_mode)) {
-		warnx("%s is a directory\n", file);
+		warnx("%s is a directory", file);
+		goto bad;
+	}
+	if (!S_ISREG(statb.st_mode)) {
+		warnx("%s is not a regular file", file);
 		goto bad;
 	}
 	if (statb.st_size == 0) {
-		warnx("%s is an empty file\n", file);
+		warnx("%s is an empty file", file);
 		goto bad;
  	}
 	if (read(fd, &execb, sizeof(execb)) == sizeof(execb) &&
@@ -687,14 +686,16 @@ mktemps()
 	int len, fd, n;
 	char *cp;
 	char buf[BUFSIZ];
+	struct stat stb;
 
-	(void)snprintf(buf, sizeof(buf), "%s/.seq", SD);
-	seteuid(euid);
-	if ((fd = open(buf, O_RDWR|O_CREAT, 0661)) < 0)
-		err(1, "cannot create %s", buf);
+	if (snprintf(buf, sizeof(buf), "%s/.seq", SD) >= sizeof(buf))
+		errx(1, "%s/.seq: %s", SD, strerror(ENAMETOOLONG));
+	PRIV_START;
+	if ((fd = safe_open(buf, O_RDWR|O_CREAT|O_NOFOLLOW, 0661)) < 0)
+		err(1, "cannot open %s", buf);
 	if (flock(fd, LOCK_EX))
 		err(1, "cannot lock %s", buf);
-	seteuid(uid);
+	PRIV_END;
 	n = 0;
 	if ((len = read(fd, buf, sizeof(buf))) > 0) {
 		for (cp = buf; len--; ) {
@@ -704,11 +705,14 @@ mktemps()
 		}
 	}
 	len = strlen(SD) + strlen(host) + 8;
-	tfname = lmktemp("tf", n, len);
-	cfname = lmktemp("cf", n, len);
-	dfname = lmktemp("df", n, len);
+	do {
+		tfname = lmktemp("tf", n, len);
+		cfname = lmktemp("cf", n, len);
+		dfname = lmktemp("df", n, len);
+		n = (n + 1) % 1000;
+	} while (stat(tfname, &stb) == 0 || stat(cfname, &stb) == 0 ||
+	    stat(dfname, &stb) == 0);
 	inchar = strlen(SD) + 3;
-	n = (n + 1) % 1000;
 	(void)lseek(fd, (off_t)0, 0);
 	snprintf(buf, sizeof(buf), "%03d\n", n);
 	(void)write(fd, buf, strlen(buf));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: printjob.c,v 1.32 2002/05/20 23:13:50 millert Exp $	*/
+/*	$OpenBSD: printjob.c,v 1.33 2002/06/08 01:53:43 millert Exp $	*/
 /*	$NetBSD: printjob.c,v 1.31 2002/01/21 14:42:30 wiz Exp $	*/
 
 /*
@@ -72,6 +72,7 @@ static const char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
 #include <stdlib.h>
 #include <stdarg.h>
 #include <ctype.h>
+
 #include "lp.h"
 #include "lp.local.h"
 #include "pathnames.h"
@@ -94,13 +95,13 @@ static const char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
 static dev_t	 fdev;		/* device of file pointed to by symlink */
 static ino_t	 fino;		/* inode of file pointed to by symlink */
 static FILE	*cfp;		/* control file */
-static int	 child;		/* id of any filters */
+static pid_t	 child;		/* pid of any filters */
 static int	 lfd;		/* lock file descriptor */
 static int	 ofd;		/* output filter file descriptor */
-static int	 ofilter;	/* id of output filter, if any */
+static pid_t	 ofilter;	/* pid of output filter, if any */
 static int	 pfd;		/* prstatic inter file descriptor */
-static int	 pid;		/* pid of lpd process */
-static int	 prchild;	/* id of pr process */
+static pid_t	 pid;		/* pid of lpd process */
+static pid_t	 prchild;	/* pid of pr process */
 static char	 title[80];	/* ``pr'' title */
 static int	 tof;		/* true if at top of form */
 
@@ -118,7 +119,7 @@ static char	width[10] = "-w";	/* page width in static characters */
 
 static void       abortpr(int);
 static void       banner(char *, char *);
-static int        dofork(int);
+static pid_t      dofork(int);
 static int        dropit(int);
 static void       init(void);
 static void       openpr(void);
@@ -144,18 +145,27 @@ printjob(void)
 	struct stat stb;
 	struct queue *q, **qp;
 	struct queue **queue;
-	int i, nitems;
+	int i, fd, nitems;
 	off_t pidoff;
 	int errcnt, count = 0;
 
 	init();					/* set up capabilities */
 	(void)write(STDOUT_FILENO, "", 1);	/* ack that daemon is started */
-	(void)close(STDERR_FILENO);		/* set up log file */
-	if (open(LF, O_WRONLY|O_APPEND, 0664) < 0) {
+	PRIV_START;
+	fd = open(LF, O_WRONLY|O_APPEND, 0664);	/* set up log file */
+	PRIV_END;
+	if (fd < 0) {
 		syslog(LOG_ERR, "%s: %m", LF);
-		(void)open(_PATH_DEVNULL, O_WRONLY);
+		if ((fd = open(_PATH_DEVNULL, O_WRONLY)) < 0)
+			exit(1);
 	}
-	setgid(getegid());
+	if (fd != STDERR_FILENO) {
+		if (dup2(fd, STDERR_FILENO) < 0) {
+			syslog(LOG_ERR, "dup2: %m");
+			exit(1);
+		}
+		close(fd);
+	}
 	pid = getpid();				/* for use with lprm */
 	setpgrp(0, pid);
 	signal(SIGHUP, abortpr);
@@ -163,28 +173,23 @@ printjob(void)
 	signal(SIGQUIT, abortpr);
 	signal(SIGTERM, abortpr);
 
-	(void)mktemp(tempfile);			/* safe */
-
-	/*
-	 * uses short form file names
-	 */
+	/* so we can use short form file names */
 	if (chdir(SD) < 0) {
 		syslog(LOG_ERR, "%s: %m", SD);
 		exit(1);
 	}
-	if (stat(LO, &stb) == 0 && (stb.st_mode & S_IXUSR))
-		exit(0);		/* printing disabled */
-	lfd = open(LO, O_WRONLY|O_CREAT, 0644);
+
+	(void)mktemp(tempfile);			/* safe */
+
+	lfd = safe_open(LO, O_WRONLY|O_CREAT|O_NOFOLLOW|O_EXLOCK, 0640);
 	if (lfd < 0) {
-		syslog(LOG_ERR, "%s: %s: %m", printer, LO);
-		exit(1);
-	}
-	if (flock(lfd, LOCK_EX|LOCK_NB) < 0) {
 		if (errno == EWOULDBLOCK)	/* active daemon present */
 			exit(0);
 		syslog(LOG_ERR, "%s: %s: %m", printer, LO);
 		exit(1);
 	}
+	if (fstat(lfd, &stb) == 0 && (stb.st_mode & S_IXUSR))
+		exit(0);		/* printing disabled */
 	ftruncate(lfd, 0);
 	/*
 	 * write process id for others to know
@@ -208,10 +213,14 @@ printjob(void)
 	if (nitems == 0)		/* no work to do */
 		exit(0);
 	if (stb.st_mode & S_IXOTH) {		/* reset queue flag */
-		if (fchmod(lfd, stb.st_mode & 0776) < 0)
+		stb.st_mode &= ~S_IXOTH;
+		if (fchmod(lfd, stb.st_mode & 0777) < 0)
 			syslog(LOG_ERR, "%s: %s: %m", printer, LO);
 	}
+	PRIV_START;
 	openpr();			/* open printer or remote */
+	PRIV_END;
+
 again:
 	/*
 	 * we found something to do now do it --
@@ -246,7 +255,8 @@ again:
 			if (stb.st_mode & S_IXOTH) {
 				for (free((char *) q); nitems--; free((char *) q))
 					q = *qp++;
-				if (fchmod(lfd, stb.st_mode & 0776) < 0)
+				stb.st_mode &= ~S_IXOTH;
+				if (fchmod(lfd, stb.st_mode & 0777) < 0)
 					syslog(LOG_WARNING, "%s: %s: %m",
 						printer, LO);
 				break;
@@ -267,16 +277,20 @@ again:
 			(void)close(pfd);	/* close printer */
 			if (ftruncate(lfd, pidoff) < 0)
 				syslog(LOG_WARNING, "%s: %s: %m", printer, LO);
+			PRIV_START;
 			openpr();		/* try to reopen printer */
+			PRIV_END;
 			goto restart;
 		} else {
 			syslog(LOG_WARNING, "%s: job could not be %s (%s)", printer,
 				remote ? "sent to remote host" : "printed", q->q_name);
 			if (i == REPRINT) {
 				/* ensure we don't attempt this job again */
+				PRIV_START;
 				(void)unlink(q->q_name);
 				q->q_name[0] = 'd';
 				(void)unlink(q->q_name);
+				PRIV_END;
 				if (logname[0])
 					sendmail(logname, FATALERR);
 			}
@@ -323,15 +337,18 @@ char ifonts[4][40] = {
 static int
 printit(char *file)
 {
-	int i;
+	int i, fd;
 	char *cp;
 	int bombed = OK;
 
 	/*
 	 * open control file; ignore if no longer there.
 	 */
-	if ((cfp = fopen(file, "r")) == NULL) {
+	fd = safe_open(file, O_RDONLY|O_NOFOLLOW, 0);
+	if (fd < 0 || (cfp = fdopen(fd, "r")) == NULL) {
 		syslog(LOG_INFO, "%s: %s: %m", printer, file);
+		if (fd >= 0)
+			close(fd);
 		return(OK);
 	}
 	/*
@@ -521,14 +538,19 @@ pass2:
 static int
 print(int format, char *file)
 {
-	FILE *fp;
-	int status, serrno;
+	ssize_t nread;
 	struct stat stb;
+	pid_t pid;
 	char *prog, *av[15], buf[BUFSIZ];
-	int n, fi, fo, pid, p[2], stopped = 0, nofile;
+	int fd, status, serrno;
+	int n, fi, fo, p[2], stopped = 0, nofile;
 
-	if (lstat(file, &stb) < 0 || (fi = open(file, O_RDONLY)) < 0)
+	PRIV_START;
+	if (lstat(file, &stb) < 0 || (fi = safe_open(file, O_RDONLY, 0)) < 0) {
+		PRIV_END;
 		return(ERROR);
+	}
+	PRIV_END;
 	/*
 	 * Check to see if data file is a symbolic link. If so, it should
 	 * still point to the same file or someone is trying to print
@@ -590,7 +612,7 @@ print(int format, char *file)
 		 * For now, treat this as a plain-text file, and assume
 		 * the standard LPF_INPUT filter will recognize that it
 		 * is postscript and know what to do with it.  These
-		 * 'o'-file requests could come from MacOS 10.1 systems.
+		 * 'o'-file requests could come from MacOS X systems.
 		 */
 		/* FALLTHROUGH */
 	case 'f':	/* print plain text file */
@@ -618,7 +640,7 @@ print(int format, char *file)
 	case 'n':	/* print ditroff output */
 	case 'd':	/* print tex output */
 		(void)unlink(".railmag");
-		if ((fo = creat(".railmag", FILMOD)) < 0) {
+		if ((fo = open(".railmag", O_CREAT|O_WRONLY|O_EXCL, FILMOD)) < 0) {
 			syslog(LOG_ERR, "%s: cannot create .railmag", printer);
 			(void)unlink(".railmag");
 		} else {
@@ -697,7 +719,7 @@ start:
 		dup2(fi, 0);
 		dup2(fo, 1);
 		unlink(tempfile);
-		n = open(tempfile, O_WRONLY|O_CREAT|O_TRUNC|O_EXCL, 0664);
+		n = open(tempfile, O_WRONLY|O_CREAT|O_EXCL, 0664);
 		if (n >= 0)
 			dup2(n, 2);
 		closelog();
@@ -729,10 +751,11 @@ start:
 	tof = 0;
 
 	/* Copy filter output to "lf" logfile */
-	if ((fp = fopen(tempfile, "r")) != NULL) {
-		while (fgets(buf, sizeof(buf), fp))
-			fputs(buf, stderr);
-		fclose(fp);
+	fd = safe_open(tempfile, O_RDONLY|O_NOFOLLOW, 0);
+	if (fd >= 0) {
+		while ((nread = read(fd, buf, sizeof(buf))) > 0)
+			(void)write(STDERR_FILENO, buf, nread);
+		close(fd);
 	}
 
 	if (!WIFEXITED(status)) {
@@ -750,7 +773,7 @@ start:
 		return(ERROR);
 	default:
 		syslog(LOG_WARNING, "%s: filter '%c' exited (retcode=%d)",
-			printer, format, WEXITSTATUS(status));
+		    printer, format, WEXITSTATUS(status));
 		return(FILTERERR);
 	}
 }
@@ -763,13 +786,12 @@ start:
 static int
 sendit(char *file)
 {
-	int i, err = OK;
+	int fd, i, err = OK;
 	char *cp, last[BUFSIZ];
 
-	/*
-	 * open control file
-	 */
-	if ((cfp = fopen(file, "r")) == NULL)
+	/* open control file */
+	fd = safe_open(file, O_RDONLY|O_NOFOLLOW, 0);
+	if (fd < 0 || (cfp = fdopen(fd, "r")) == NULL)
 		return(OK);
 	/*
 	 *      read the control file for work to do
@@ -853,8 +875,12 @@ sendfile(int type, char *file)
 	char buf[BUFSIZ];
 	int sizerr, resp;
 
-	if (lstat(file, &stb) < 0 || (f = open(file, O_RDONLY)) < 0)
+	PRIV_START;
+	if (lstat(file, &stb) < 0 || (f = safe_open(file, O_RDONLY, 0)) < 0) {
+		PRIV_END;
 		return(ERROR);
+	}
+	PRIV_END;
 	/*
 	 * Check to see if data file is a symbolic link. If so, it should
 	 * still point to the same file or someone is trying to print something
@@ -1140,11 +1166,12 @@ sendmail(char *user, int bombed)
 /*
  * dofork - fork with retries on failure
  */
-static int
+static pid_t
 dofork(int action)
 {
-	int i, pid;
 	struct passwd *pw;
+	pid_t pid;
+	int i;
 
 	for (i = 0; i < 20; i++) {
 		if ((pid = fork()) < 0) {
@@ -1155,6 +1182,7 @@ dofork(int action)
 		 * Child should run as daemon instead of root
 		 */
 		if (pid == 0) {
+			PRIV_START;
 			pw = getpwuid(DU);
 			if (pw == 0) {
 				syslog(LOG_ERR, "uid %ld not in password file",
@@ -1279,6 +1307,7 @@ init(void)
 
 /*
  * Acquire line printer or remote connection.
+ * XXX - should push down privs in here
  */
 static void
 openpr(void)
@@ -1477,7 +1506,7 @@ static void
 setty(void)
 {
 	struct info i;
-	char **argv, **ap, *p, *val;
+	char **argv, **ap, **ep, *p, *val;
 
 	i.fd = pfd;
 	i.set = i.wset = 0;
@@ -1514,19 +1543,26 @@ setty(void)
 			syslog(LOG_INFO, "%s: ioctl(TIOCGWINSZ): %m",
 			       printer);
 
-		argv = (char **)calloc(256, sizeof(char *));
+		argv = (char **)malloc(256 * sizeof(char *));
 		if (argv == NULL) {
-			syslog(LOG_ERR, "%s: calloc: %m", printer);
+			syslog(LOG_ERR, "%s: malloc: %m", printer);
 			exit(1);
 		}
 		p = strdup(MS);
 		ap = argv;
+		ep = argv + 255;
 		while ((val = strsep(&p, " \t,")) != NULL) {
 			if ((*ap++ = strdup(val)) == NULL) {
 				syslog(LOG_ERR, "%s: strdup: %m", printer);
 				exit(1);
 			}
+			if (ap == ep) {
+				syslog(LOG_ERR, "%s: too many \"ms\" entries",
+				    printer);
+				exit(1);
+			}
 		}
+		*ap = NULL;
 
 		for (; *argv; ++argv) {
 			if (ksearch(&argv, &i))
@@ -1573,8 +1609,8 @@ pstatus(const char *msg, ...)
 
 	va_start(ap, msg);
 	umask(0);
-	fd = open(ST, O_WRONLY|O_CREAT, 0664);
-	if (fd < 0 || flock(fd, LOCK_EX) < 0) {
+	fd = open(ST, O_WRONLY|O_CREAT|O_NOFOLLOW|O_EXLOCK, 0660);
+	if (fd < 0) {
 		syslog(LOG_ERR, "%s: %s: %m", printer, ST);
 		exit(1);
 	}

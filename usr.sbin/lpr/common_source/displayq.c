@@ -1,4 +1,4 @@
-/*	$OpenBSD: displayq.c,v 1.17 2002/05/28 18:16:03 millert Exp $	*/
+/*	$OpenBSD: displayq.c,v 1.18 2002/06/08 01:53:43 millert Exp $	*/
 /*	$NetBSD: displayq.c,v 1.21 2001/08/30 00:51:50 itojun Exp $	*/
 
 /*
@@ -38,23 +38,25 @@
 #if 0
 static const char sccsid[] = "@(#)displayq.c	8.4 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: displayq.c,v 1.17 2002/05/28 18:16:03 millert Exp $";
+static const char rcsid[] = "$OpenBSD: displayq.c,v 1.18 2002/06/08 01:53:43 millert Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
-#include <sys/stat.h>
 #include <sys/file.h>
-
-#include <signal.h>
-#include <fcntl.h>
 #include <sys/ioctl.h>
+#include <sys/stat.h>
+
+#include <ctype.h>
+#include <errno.h>
 #include <dirent.h>
-#include <unistd.h>
+#include <fcntl.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
+#include <unistd.h>
+
 #include "lp.h"
 #include "lp.local.h"
 #include "pathnames.h"
@@ -139,25 +141,24 @@ displayq(int format)
 	 * Print out local queue
 	 * Find all the control files in the spooling directory
 	 */
-	seteuid(euid);
+	PRIV_START;
 	if (chdir(SD) < 0)
 		fatal("cannot chdir to spooling directory");
-	seteuid(uid);
+	PRIV_END;
 	if ((nitems = getq(&queue)) < 0)
 		fatal("cannot examine spooling area\n");
-	seteuid(euid);
+	PRIV_START;
 	ret = stat(LO, &statb);
-	seteuid(uid);
+	PRIV_END;
 	if (ret >= 0) {
 		if (statb.st_mode & 0100) {
 			if (remote)
 				printf("%s: ", host);
 			printf("Warning: %s is down: ", printer);
-			seteuid(euid);
-			fd = open(ST, O_RDONLY);
-			seteuid(uid);
-			if (fd >= 0) {
-				(void)flock(fd, LOCK_SH);
+			PRIV_START;
+			fd = safe_open(ST, O_RDONLY|O_NOFOLLOW, 0);
+			PRIV_END;
+			if (fd >= 0 && flock(fd, LOCK_SH) == 0) {
 				while ((i = read(fd, line, sizeof(line))) > 0)
 					(void)fwrite(line, 1, i, stdout);
 				(void)close(fd);	/* unlocks as well */
@@ -172,12 +173,14 @@ displayq(int format)
 	}
 
 	if (nitems) {
-		seteuid(euid);
-		fp = fopen(LO, "r");
-		seteuid(uid);
-		if (fp == NULL)
+		PRIV_START;
+		fd = safe_open(LO, O_RDONLY|O_NOFOLLOW, 0);
+		PRIV_END;
+		if (fd < 0 || (fp = fdopen(fd, "r")) == NULL) {
+			if (fd >= 0)
+				close(fd);
 			nodaemon();
-		else {
+		} else {
 			/* get daemon pid */
 			cp = current;
 			ecp = cp + sizeof(current) - 1;
@@ -190,11 +193,11 @@ displayq(int format)
 			if (i <= 0) {
 				ret = -1;
 			} else {
-				seteuid(euid);
+				PRIV_START;
 				ret = kill(i, 0);
-				seteuid(uid);
+				PRIV_END;
 			}
-			if (ret < 0) {
+			if (ret < 0 && errno != EPERM) {
 				nodaemon();
 			} else {
 				/* read current file name */
@@ -210,11 +213,10 @@ displayq(int format)
 				 */
 				if (remote)
 					printf("%s: ", host);
-				seteuid(euid);
-				fd = open(ST, O_RDONLY);
-				seteuid(uid);
-				if (fd >= 0) {
-					(void)flock(fd, LOCK_SH);
+				PRIV_START;
+				fd = safe_open(ST, O_RDONLY|O_NOFOLLOW, 0);
+				PRIV_END;
+				if (fd >= 0 && flock(fd, LOCK_SH) == 0) {
 					while ((i = read(fd, line, sizeof(line))) > 0)
 						(void)fwrite(line, 1, i, stdout);
 					(void)close(fd);	/* unlocks as well */
@@ -331,17 +333,21 @@ header(void)
 void
 inform(char *cf)
 {
-	int j;
-	FILE *cfp;
+	int fd, j;
+	FILE *cfp = NULL;
 
 	/*
 	 * There's a chance the control file has gone away
 	 * in the meantime; if this is the case just keep going
 	 */
-	seteuid(euid);
-	if ((cfp = fopen(cf, "r")) == NULL)
+	PRIV_START;
+	fd = safe_open(cf, O_RDONLY|O_NOFOLLOW, 0);
+	PRIV_END;
+	if (fd < 0 || (cfp = fdopen(fd, "r")) == NULL) {
+		if (fd >= 0)
+			close(fd);
 		return;
-	seteuid(uid);
+	}
 
 	if (rank < 0)
 		rank = 0;
@@ -465,10 +471,10 @@ dump(char *nfile, char *file, int copies)
 		printf("%s", nfile);
 		col += n+fill;
 	}
-	seteuid(euid);
+	PRIV_START;
 	if (*file && !stat(file, &lbuf))
 		totsize += copies * lbuf.st_size;
-	seteuid(uid);
+	PRIV_END;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.17 2002/05/20 23:13:50 millert Exp $	*/
+/*	$OpenBSD: common.c,v 1.18 2002/06/08 01:53:43 millert Exp $	*/
 /*	$NetBSD: common.c,v 1.21 2000/08/09 14:28:50 itojun Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static const char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: common.c,v 1.17 2002/05/20 23:13:50 millert Exp $";
+static const char rcsid[] = "$OpenBSD: common.c,v 1.18 2002/06/08 01:53:43 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,6 +58,7 @@ static const char rcsid[] = "$OpenBSD: common.c,v 1.17 2002/05/20 23:13:50 mille
 
 #include <dirent.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -163,11 +164,15 @@ retry:
 	for (r = res; r; r = r->ai_next) {
 		trial++;
 retryport:
-		seteuid(euid);
+		PRIV_START;
 		s = rresvport_af(&lport, r->ai_family);
-		seteuid(uid);
-		if (s < 0)
-			return(-1);
+		PRIV_END;
+		if (s < 0) {
+			/* fall back to non-privileged port */
+			if (errno != EACCES ||
+			    (s = socket(r->ai_family, SOCK_STREAM, 0)) < 0)
+				return(-1);
+		}
 		siginterrupt(SIGINT, 1);
 		if (connect(s, r->ai_addr, r->ai_addrlen) < 0) {
 			error = errno;
@@ -246,9 +251,9 @@ getq(namelist)
 	struct stat stbuf;
 	DIR *dirp;
 
-	seteuid(euid);
+	PRIV_START;
 	dirp = opendir(SD);
-	seteuid(uid);
+	PRIV_END;
 	if (dirp == NULL)
 		return(-1);
 	if (fstat(dirp->dd_fd, &stbuf) < 0)
@@ -267,12 +272,12 @@ getq(namelist)
 	while ((d = readdir(dirp)) != NULL) {
 		if (d->d_name[0] != 'c' || d->d_name[1] != 'f')
 			continue;	/* daemon control files only */
-		seteuid(euid);
+		PRIV_START;
 		if (stat(d->d_name, &stbuf) < 0) {
-			seteuid(uid);
+			PRIV_END;
 			continue;	/* Doesn't exist */
 		}
-		seteuid(uid);
+		PRIV_END;
 		q = (struct queue *)malloc(sizeof(time_t)+strlen(d->d_name)+1);
 		if (q == NULL)
 			goto errdone;
@@ -340,8 +345,13 @@ checkremote(void)
 
 	remote = 0;	/* assume printer is local on failure */
 
-	if (RM == NULL)
+	if (RM == NULL || *RM == '\0')
 		return NULL;
+
+	/* XXX */
+	remote = 1;
+	return NULL; /* XXX -- for local testing only! */
+	/* XXX */
 
 	/* get the local interface addresses */
 	siginterrupt(SIGINT, 1);
@@ -451,4 +461,29 @@ fatal(const char *msg, ...)
 	va_end(ap);
 	(void)putchar('\n');
 	exit(1);
+}
+
+int
+safe_open(const char *path, int flags, mode_t mode)
+{
+	int fd, serrno;
+	struct stat stbuf;
+
+	if ((fd = open(path, flags|O_NONBLOCK, mode)) < 0 ||
+	    fstat(fd, &stbuf) < 0) {
+		if (fd >= 0) {
+			serrno = errno;
+			close(fd);
+			errno = serrno;
+		}
+		return (-1);
+	}
+	if (!S_ISREG(stbuf.st_mode)) {
+		close(fd);
+		errno = EACCES;
+		return (-1);
+	}
+	if (mode)
+		(void)fchmod(fd, mode);
+	return (fd);
 }

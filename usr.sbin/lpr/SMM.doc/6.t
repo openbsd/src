@@ -1,4 +1,4 @@
-.\" $OpenBSD: 6.t,v 1.2 1997/01/17 15:54:18 millert Exp $
+.\" $OpenBSD: 6.t,v 1.3 2002/06/08 01:53:43 millert Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -94,3 +94,13 @@ places jobs at the top of a printer queue.  This can be used
 to reorder high priority jobs since
 .I lpr
 only provides first-come-first-serve ordering of jobs.
+.LP
+\fBup\fP and \fBdown\fP
+.IP
+\fIUp\fP and \fIdown\fP combine the functionality of \fIenable\fP
+and \fIstart\fP with \fIstart\fP and \fIstop\fP.  \fIUp\fP is
+equivalent to issuing the \fIstart\fP and \fIenable\fP commands,
+whereas \fIdown\fP is equivalent to issuing the \fIstop\fP and
+\fIdisable\fP commands.  \fIDown\fP also takes an optional message
+that will be written to the printer's status file.  This allows the
+administrator to indicate to users why the printer is out of service.

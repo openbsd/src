@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmjob.c,v 1.13 2002/05/20 23:13:50 millert Exp $	*/
+/*	$OpenBSD: rmjob.c,v 1.14 2002/06/08 01:53:43 millert Exp $	*/
 /*	$NetBSD: rmjob.c,v 1.16 2000/04/16 14:43:58 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)rmjob.c	8.2 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: rmjob.c,v 1.13 2002/05/20 23:13:50 millert Exp $";
+static const char rcsid[] = "$OpenBSD: rmjob.c,v 1.14 2002/06/08 01:53:43 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -46,6 +46,7 @@ static const char rcsid[] = "$OpenBSD: rmjob.c,v 1.13 2002/05/20 23:13:50 miller
 
 #include <signal.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <dirent.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -76,6 +77,7 @@ static char	current[NAME_MAX];	/* active control file name */
 
 static	void	do_unlink(char *);
 static	void	alarmer(int);
+static	int	lockchk(char *);
 
 void
 rmjob(void)
@@ -122,23 +124,24 @@ rmjob(void)
 		person = root;
 	}
 
-	seteuid(euid);
+	PRIV_START;
 	if (chdir(SD) < 0)
 		fatal("cannot chdir to spool directory");
 	if ((nitems = scandir(".", &files, iscf, NULL)) < 0)
 		fatal("cannot access spool directory");
-	seteuid(uid);
+	PRIV_END;
 
 	if (nitems) {
 		/*
-		 * Check for an active printer daemon (in which case we
-		 *  kill it if it is reading our file) then remove stuff
-		 *  (after which we have to restart the daemon).
+		 * Check for an active printer daemon.  If one is running
+		 * and it is reading our file, kill it, then remove stuff.
+		 * Lastly, restart the daemon if it is not (or no longer)
+		 * running.
 		 */
 		if (lockchk(LO) && chk(current)) {
-			seteuid(euid);
+			PRIV_START;
 			assasinated = kill(cur_daemon, SIGINT) == 0;
-			seteuid(uid);
+			PRIV_END;
 			if (!assasinated)
 				fatal("cannot kill printer daemon");
 		}
@@ -159,23 +162,27 @@ rmjob(void)
 
 /*
  * Process a lock file: collect the pid of the active
- *  daemon and the file name of the active spool entry.
+ * daemon and the file name of the active spool entry.
  * Return boolean indicating existence of a lock file.
  */
-int
+static int
 lockchk(char *s)
 {
-	FILE *fp;
-	int i, n;
+	FILE *fp = NULL;
+	int fd, i, n;
 
-	seteuid(euid);
-	if ((fp = fopen(s, "r")) == NULL) {
+	/* NOTE: lock file is owned by root, not the user. */
+	PRIV_START;
+	fd = safe_open(s, O_RDONLY|O_NOFOLLOW, 0);
+	PRIV_END;
+	if (fd < 0 || (fp = fdopen(fd, "r")) == NULL) {
+		if (fd >= 0)
+			close(fd);
 		if (errno == EACCES)
 			fatal("can't access lock file");
 		else
 			return(0);
 	}
-	seteuid(uid);
 	if (!getline(fp)) {
 		(void)fclose(fp);
 		return(0);		/* no daemon present */
@@ -203,14 +210,19 @@ lockchk(char *s)
 void
 process(char *file)
 {
-	FILE *cfp;
+	FILE *cfp = NULL;
+	int fd;
 
 	if (!chk(file))
 		return;
-	seteuid(euid);
-	if ((cfp = fopen(file, "r")) == NULL)
+	PRIV_START;
+	fd = safe_open(file, O_RDONLY|O_NOFOLLOW, 0);
+	PRIV_END;
+	if (fd < 0 || (cfp = fdopen(fd, "r")) == NULL) {
+		if (fd >= 0)
+			close(fd);
 		fatal("cannot open %s", file);
-	seteuid(uid);
+	}
 	while (getline(cfp)) {
 		switch (line[0]) {
 		case 'U':  /* unlink associated files */
@@ -230,9 +242,9 @@ do_unlink(char *file)
 
 	if (from != host)
 		printf("%s: ", host);
-	seteuid(euid);
+	PRIV_START;
 	ret = unlink(file);
-	seteuid(uid);
+	PRIV_END;
 	printf(ret ? "cannot dequeue %s\n" : "%s dequeued\n", file);
 }
 
@@ -242,9 +254,9 @@ do_unlink(char *file)
 int
 chk(char *file)
 {
-	int *r, n;
+	int *r, n, fd;
 	char **u, *cp;
-	FILE *cfp;
+	FILE *cfp = NULL;
 
 	/*
 	 * Check for valid cf file name (mostly checking current).
@@ -258,10 +270,14 @@ chk(char *file)
 	/*
 	 * get the owner's name from the control file.
 	 */
-	seteuid(euid);
-	if ((cfp = fopen(file, "r")) == NULL)
+	PRIV_START;
+	fd = safe_open(file, O_RDONLY|O_NOFOLLOW, 0);
+	PRIV_END;
+	if (fd < 0 || (cfp = fdopen(fd, "r")) == NULL) {
+		if (fd >= 0)
+			close(fd);
 		return(0);
-	seteuid(uid);
+	}
 	while (getline(cfp)) {
 		if (line[0] == 'P')
 			break;

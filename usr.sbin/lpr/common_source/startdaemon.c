@@ -1,4 +1,4 @@
-/*	$OpenBSD: startdaemon.c,v 1.7 2002/05/20 23:13:50 millert Exp $	*/
+/*	$OpenBSD: startdaemon.c,v 1.8 2002/06/08 01:53:43 millert Exp $	*/
 /*	$NetBSD: startdaemon.c,v 1.10 1998/07/18 05:04:39 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)startdaemon.c	8.2 (Berkeley) 4/17/94";
 #else
-static const char rcsid[] = "$OpenBSD: startdaemon.c,v 1.7 2002/05/20 23:13:50 millert Exp $";
+static const char rcsid[] = "$OpenBSD: startdaemon.c,v 1.8 2002/06/08 01:53:43 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,13 +53,13 @@ static const char rcsid[] = "$OpenBSD: startdaemon.c,v 1.7 2002/05/20 23:13:50 m
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
+
 #include "lp.h"
 #include "pathnames.h"
 
 /*
  * Tell the printer daemon that there are new files in the spool directory.
  */
-
 int
 startdaemon(char *printer)
 {
@@ -79,23 +79,23 @@ startdaemon(char *printer)
 #ifndef SUN_LEN
 #define SUN_LEN(unp) (strlen((unp)->sun_path) + 2)
 #endif
-	seteuid(euid);
 	siginterrupt(SIGINT, 1);
+	PRIV_START;
 	if (connect(s, (struct sockaddr *)&un, SUN_LEN(&un)) < 0) {
 		if (errno == EINTR && gotintr) {
+			PRIV_END;
 			siginterrupt(SIGINT, 0);
-			seteuid(uid);
 			close(s);
 			return(0);
 		}
+		PRIV_END;
 		siginterrupt(SIGINT, 0);
-		seteuid(uid);
 		perror("connect");
 		(void)close(s);
 		return(0);
 	}
+	PRIV_END;
 	siginterrupt(SIGINT, 0);
-	seteuid(uid);
 	n = snprintf(buf, sizeof(buf), "\1%s\n", printer);
 	if (n >= sizeof(buf) || n == -1) {
 		close(s);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pac.c,v 1.13 2002/05/20 23:13:50 millert Exp $ */
+/*	$OpenBSD: pac.c,v 1.14 2002/06/08 01:53:43 millert Exp $ */
 /*	$NetBSD: pac.c,v 1.14 2000/04/27 13:40:18 msaitoh Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)pac.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: pac.c,v 1.13 2002/05/20 23:13:50 millert Exp $";
+static const char rcsid[] = "$OpenBSD: pac.c,v 1.14 2002/06/08 01:53:43 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -119,8 +119,12 @@ main(int argc, char **argv)
 	FILE *acct;
 	int ch;
 
-	euid = geteuid();	/* these aren't used in pac(1) */
-	uid = getuid();
+	/* these aren't actually used in pac(1) */
+	effective_uid = geteuid();
+	real_uid = getuid();
+	effective_gid = getegid();
+	real_gid = getgid();
+
 	while ((ch = getopt(argc, argv, "P:p:scmr")) != -1) {
 		switch (ch) {
 		case 'P':

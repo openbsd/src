@@ -1,4 +1,4 @@
-/*	$OpenBSD: recvjob.c,v 1.20 2002/05/20 23:13:50 millert Exp $	*/
+/*	$OpenBSD: recvjob.c,v 1.21 2002/06/08 01:53:43 millert Exp $	*/
 /*	$NetBSD: recvjob.c,v 1.14 2001/12/04 22:52:44 christos Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)recvjob.c	8.2 (Berkeley) 4/27/95";
 #else
-static const char rcsid[] = "$OpenBSD: recvjob.c,v 1.20 2002/05/20 23:13:50 millert Exp $";
+static const char rcsid[] = "$OpenBSD: recvjob.c,v 1.21 2002/06/08 01:53:43 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -113,10 +113,12 @@ recvjob(void)
 		LO = DEFLOCK;
 
 	(void)close(2);			/* set up log file */
+	PRIV_START;
 	if (open(LF, O_WRONLY|O_APPEND, 0664) < 0) {
 		syslog(LOG_ERR, "%s: %m", LF);
 		(void)open(_PATH_DEVNULL, O_WRONLY);
 	}
+	PRIV_END;
 
 	if (chdir(SD) < 0)
 		frecverr("%s: %s: %m", printer, SD);
@@ -128,6 +130,7 @@ recvjob(void)
 		}
 	} else if (stat(SD, &stb) < 0)
 		frecverr("%s: %s: %m", printer, SD);
+
 	minfree = 2 * read_number("minfree");	/* scale KB to 512 blocks */
 	signal(SIGTERM, rcleanup);
 	signal(SIGPIPE, rcleanup);
@@ -191,12 +194,22 @@ readjob(void)
 				(void)write(STDOUT_FILENO, "\2", 1);
 				continue;
 			}
+			/*
+			 * XXX
+			 * We blindly believe what the remote host puts
+			 * for the path to the df file.  In general this
+			 * is OK since we don't allow paths with '/' in
+			 * them.  Still, it would be better to sanity
+			 * check the cf file sent to us and make the
+			 * df name match the cf name we used.  That way
+			 * we avoid any possible collisions.
+			 */
 			if (!readfile(tfname, size)) {
 				rcleanup(0);
 				continue;
 			}
 			if (link(tfname, cp) < 0)
-				frecverr("%s: %m", tfname);
+				frecverr("link %s %s: %m", tfname, cp);
 			(void)unlink(tfname);
 			tfname[0] = '\0';
 			nfiles++;
@@ -233,8 +246,7 @@ readfile(char *file, int size)
 	int i, j, amt;
 	int fd, err;
 
-	fd = open(file, O_CREAT|O_EXCL|O_WRONLY, FILMOD);
-	if (fd < 0)
+	if ((fd = open(file, O_CREAT|O_EXCL|O_WRONLY, FILMOD)) < 0)
 		frecverr("readfile: %s: illegal path name: %m", file);
 	ack();
 	err = 0;
@@ -311,7 +323,7 @@ read_number(char *fn)
 
 	if ((fp = fopen(fn, "r")) == NULL)
 		return (0);
-	if (fgets(lin, 80, fp) == NULL) {
+	if (fgets(lin, sizeof(lin), fp) == NULL) {
 		fclose(fp);
 		return (0);
 	}

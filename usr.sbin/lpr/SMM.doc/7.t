@@ -1,4 +1,4 @@
-.\" $OpenBSD: 7.t,v 1.3 2002/05/18 23:03:04 millert Exp $
+.\" $OpenBSD: 7.t,v 1.4 2002/06/08 01:53:43 millert Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -74,7 +74,7 @@ Usually it is enough to get a super-user to type the following to
 restart
 .IR lpd .
 .DS
-% /usr/lib/lpd
+% /usr/sbin/lpd
 .DE
 You can also check the state of the master printer daemon with the following.
 .DS
@@ -83,10 +83,10 @@ You can also check the state of the master printer daemon with the following.
 .IP
 Another possibility is that the
 .I lpr
-program is not set-user-id to \fIroot\fP, set-group-id to group \fIdaemon\fP.
+program is not set-user-id to \fIdaemon\fP, set-group-id to group \fIdaemon\fP.
 This can be checked with
 .DS
-% ls \-lg /usr/bin/lpr
+% ls \-l /usr/bin/lpr
 .DE
 .SH
 lpr: \fIprinter\fP\|: printer queue is disabled

@@ -1,4 +1,4 @@
-/*	$OpenBSD: common_vars.c,v 1.1 2002/05/20 23:13:50 millert Exp $	*/
+/*	$OpenBSD: common_vars.c,v 1.2 2002/06/08 01:53:43 millert Exp $	*/
 /*	$NetBSD: common.c,v 1.15 1999/09/26 10:32:27 mrg Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: common_vars.c,v 1.1 2002/05/20 23:13:50 millert Exp $";
+static const char rcsid[] = "$OpenBSD: common_vars.c,v 1.2 2002/06/08 01:53:43 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -53,5 +53,6 @@ char	host[MAXHOSTNAMELEN+1];	/* host machine name */
 char	*from = host;		/* client's machine name */
 char	*printcapdb[2] = { _PATH_PRINTCAP, 0 };
 char	*bp;			/* pointer into printcap buffer. */
-uid_t	uid, euid;		/* real and effective uids */
 u_int	wait_time = 300;	/* time out after 5 minutes by default */
+uid_t	real_uid, effective_uid;
+gid_t	real_gid, effective_gid;

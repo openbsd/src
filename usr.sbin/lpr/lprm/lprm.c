@@ -1,4 +1,4 @@
-/*	$OpenBSD: lprm.c,v 1.11 2002/05/20 23:13:50 millert Exp $	*/
+/*	$OpenBSD: lprm.c,v 1.12 2002/06/08 01:53:43 millert Exp $	*/
 /*	$$NetBSD: lprm.c,v 1.9 1999/08/16 03:12:32 simonb Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lprm.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: lprm.c,v 1.11 2002/05/20 23:13:50 millert Exp $";
+static const char rcsid[] = "$OpenBSD: lprm.c,v 1.12 2002/06/08 01:53:43 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,7 @@ static const char rcsid[] = "$OpenBSD: lprm.c,v 1.11 2002/05/20 23:13:50 millert
 #include <ctype.h>
 #include <dirent.h>
 #include <err.h>
+#include <errno.h>
 #include <pwd.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -96,13 +97,15 @@ main(int argc, char **argv)
 	long l;
 	int ch;
 
-	uid = getuid();
-	euid = geteuid();
-	seteuid(uid);	/* be safe */
+	effective_uid = geteuid();
+	real_uid = getuid();
+	effective_gid = getegid();
+	real_gid = getgid();
+	PRIV_END;	/* be safe */
 
 	gethostname(host, sizeof(host));
 	openlog("lprm", 0, LOG_LPR);
-	if ((p = getpwuid(getuid())) == NULL)
+	if ((p = getpwuid(real_uid)) == NULL)
 		fatal("Who are you?");
 	if (strlen(p->pw_name) >= sizeof(luser))
 		fatal("Your name is too long");

@@ -1,4 +1,4 @@
-.\" $OpenBSD: 5.t,v 1.2 1997/01/17 15:54:17 millert Exp $
+.\" $OpenBSD: 5.t,v 1.3 2002/06/08 01:53:43 millert Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
 .NH 1
 Output filter specifications
 .PP
-The filters supplied with 4.3BSD
+The filters supplied with OpenBSD
 handle printing and accounting for most common
 line printers, the Benson-Varian, the wide (36") and
 narrow (11") Versatec printer/plotters. For other devices or accounting

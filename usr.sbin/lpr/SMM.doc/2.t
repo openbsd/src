@@ -1,4 +1,4 @@
-.\" $OpenBSD: 2.t,v 1.3 2002/05/18 23:03:04 millert Exp $
+.\" $OpenBSD: 2.t,v 1.4 2002/06/08 01:53:43 millert Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -51,7 +51,7 @@ database restarting any printers that have jobs.
 In normal operation
 .I lpd
 listens for service requests on multiple sockets,
-one in the UNIX domain (named ``/var/run/printer'') for
+one in the LOCAL domain (named ``/var/run/printer'') for
 local requests, and one in the Internet domain
 (under the ``printer'' service specification)
 for requests for printer access from off machine;
@@ -67,7 +67,7 @@ Clients communicate with
 using a simple transaction oriented protocol.
 Authentication of remote clients is done based
 on the ``privilege port'' scheme employed by
-\fIrshd\fP\|(8C) and \fIrcmd\fP\|(3X).
+\fIrshd\fP\|(8) and \fIrcmd\fP\|(3).
 The following table shows the requests 
 understood by
 .IR lpd .
