@@ -1,5 +1,5 @@
-/*	$OpenBSD: am7990.c,v 1.5 1996/04/21 22:21:15 deraadt Exp $	*/
-/*	$NetBSD: am7990.c,v 1.16 1996/04/09 15:21:59 pk Exp $	*/
+/*	$OpenBSD: am7990.c,v 1.6 1996/05/02 13:51:45 deraadt Exp $	*/
+/*	$NetBSD: am7990.c,v 1.18 1996/04/22 02:40:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -291,6 +291,7 @@ leinit(sc)
 		lestart(ifp);
 	} else
 		printf("%s: card failed to initialize\n", sc->sc_dev.dv_xname);
+	lehwinit(sc);
 }
 
 /*
@@ -1015,8 +1016,8 @@ allmulti:
  * Buffers may have any alignment.
  */
 
-integrate void
-copytobuf_contig(sc, from, boff, len)
+void
+am7990_copytobuf_contig(sc, from, boff, len)
 	struct le_softc *sc;
 	void *from;
 	int boff, len;
@@ -1029,8 +1030,8 @@ copytobuf_contig(sc, from, boff, len)
 	bcopy(from, buf + boff, len);
 }
 
-integrate void
-copyfrombuf_contig(sc, to, boff, len)
+void
+am7990_copyfrombuf_contig(sc, to, boff, len)
 	struct le_softc *sc;
 	void *to;
 	int boff, len;
@@ -1043,8 +1044,8 @@ copyfrombuf_contig(sc, to, boff, len)
 	bcopy(buf + boff, to, len);
 }
 
-integrate void
-zerobuf_contig(sc, boff, len)
+void
+am7990_zerobuf_contig(sc, boff, len)
 	struct le_softc *sc;
 	int boff, len;
 {
@@ -1065,8 +1066,8 @@ zerobuf_contig(sc, boff, len)
  * doing an extra byte.
  */
 
-integrate void
-copytobuf_gap2(sc, fromv, boff, len)
+void
+am7990_copytobuf_gap2(sc, fromv, boff, len)
 	struct le_softc *sc;
 	void *fromv;
 	int boff;
@@ -1094,8 +1095,8 @@ copytobuf_gap2(sc, fromv, boff, len)
 		*bptr = (u_int16_t)*from;
 }
 
-integrate void
-copyfrombuf_gap2(sc, tov, boff, len)
+void
+am7990_copyfrombuf_gap2(sc, tov, boff, len)
 	struct le_softc *sc;
 	void *tov;
 	int boff, len;
@@ -1124,8 +1125,8 @@ copyfrombuf_gap2(sc, tov, boff, len)
 		*to = *bptr & 0xff;
 }
 
-integrate void
-zerobuf_gap2(sc, boff, len)
+void
+am7990_zerobuf_gap2(sc, boff, len)
 	struct le_softc *sc;
 	int boff, len;
 {
@@ -1154,8 +1155,8 @@ zerobuf_gap2(sc, boff, len)
  * Buffers must be 32-byte aligned.
  */
 
-integrate void
-copytobuf_gap16(sc, fromv, boff, len)
+void
+am7990_copytobuf_gap16(sc, fromv, boff, len)
 	struct le_softc *sc;
 	void *fromv;
 	int boff;
@@ -1179,8 +1180,8 @@ copytobuf_gap16(sc, fromv, boff, len)
 	}
 }
 
-integrate void
-copyfrombuf_gap16(sc, tov, boff, len)
+void
+am7990_copyfrombuf_gap16(sc, tov, boff, len)
 	struct le_softc *sc;
 	void *tov;
 	int boff, len;
@@ -1203,8 +1204,8 @@ copyfrombuf_gap16(sc, tov, boff, len)
 	}
 }
 
-integrate void
-zerobuf_gap16(sc, boff, len)
+void
+am7990_zerobuf_gap16(sc, boff, len)
 	struct le_softc *sc;
 	int boff, len;
 {

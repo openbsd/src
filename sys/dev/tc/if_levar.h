@@ -1,4 +1,4 @@
-/*	$NetBSD: if_levar.h,v 1.1 1995/12/20 00:52:18 cgd Exp $	*/
+/*	$NetBSD: if_levar.h,v 1.2 1996/04/18 00:50:15 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -63,8 +63,6 @@ struct le_softc {
 	struct	device sc_dev;		/* base structure */
 	struct	arpcom sc_arpcom;	/* Ethernet common part */
 
-	void	*sc_cookie;		/* bus interrupt/DMA cookie */
-
 	void	(*sc_copytodesc)	/* Copy to descriptor */
 		    __P((struct le_softc *, void *, int, int));
 	void	(*sc_copyfromdesc)	/* Copy from descriptor */
@@ -100,3 +98,6 @@ struct le_softc {
 
 	struct	lereg1 *sc_r1;		/* LANCE registers */
 };
+
+int	leintr __P((void *));
+void	dec_le_common_attach __P((struct le_softc *, u_char *));

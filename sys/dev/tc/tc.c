@@ -1,22 +1,22 @@
-/*	$OpenBSD: tc.c,v 1.3 1996/04/21 22:26:28 deraadt Exp $	*/
-/*	$NetBSD: tc.c,v 1.13 1996/04/09 20:50:06 jonathan Exp $	*/
+/*	$OpenBSD: tc.c,v 1.4 1996/05/02 13:51:51 deraadt Exp $	*/
+/*	$NetBSD: tc.c,v 1.14 1996/04/18 01:12:41 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -35,8 +35,6 @@
 #include <dev/tc/tcreg.h>
 #include <dev/tc/tcvar.h>
 #include <dev/tc/tcdevs.h>
-
-#include <machine/autoconf.h>
 
 struct tc_softc {
 	struct	device sc_dv;
@@ -78,8 +76,6 @@ tcmatch(parent, cfdata, aux)
 
 	if (strcmp(tba->tba_busname, cf->cf_driver->cd_name))
 		return (0);
-
-	/* XXX check other indicators */
 
 	return (1);
 }
@@ -139,7 +135,7 @@ tcattach(parent, self, aux)
 		ta.ta_addr = tcaddr;
 		ta.ta_cookie = builtin->tcb_cookie;
 		ta.ta_busspeed = sc->sc_speed;
-	
+
 		/*
 		 * Mark the slot as used, so we don't check it later.
 		 */
@@ -200,17 +196,17 @@ tcprint(aux, pnp)
 
 	if (pnp) {
 		tc_devinfo(ta->ta_modname, devinfo);
-		printf("%s at %s", devinfo, pnp);  
+		printf("%s at %s", devinfo, pnp);
 	}
 	printf(" slot %d offset 0x%lx", ta->ta_slot,
 	    (long)ta->ta_offset);
 	return (UNCONF);
 }
 
-int   
-tcsubmatch(parent, match, aux) 
-        struct device *parent;
-        void *match, *aux; 
+int
+tcsubmatch(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
 {
 	struct cfdata *cf = match;
 	struct tc_attach_args *d = aux;
@@ -281,7 +277,7 @@ tc_intr_establish(dev, cookie, level, handler, arg)
 {
 	struct tc_softc *sc = (struct tc_softc *)dev;
 
-	(*sc->sc_intr_establish)(sc->sc_dv.dv_parent, cookie, level, 
+	(*sc->sc_intr_establish)(sc->sc_dv.dv_parent, cookie, level,
 	    handler, arg);
 }
 
@@ -296,12 +292,12 @@ tc_intr_disestablish(dev, cookie)
 }
 
 #ifdef TCVERBOSE
-/*      
+/*
  * Descriptions of of known devices.
- */     
+ */
 struct tc_knowndev {
 	const char *id, *driver, *description;
-};      
+};
 
 #include <dev/tc/tcdevs_data.h>
 #endif /* TCVERBOSE */

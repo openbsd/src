@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_le.c,v 1.3 1996/04/21 22:26:24 deraadt Exp $	*/
-/*	$NetBSD: if_le.c,v 1.6 1996/04/08 20:09:56 jonathan Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.4 1996/05/02 13:51:48 deraadt Exp $	*/
+/*	$NetBSD: if_le.c,v 1.9 1996/04/22 02:54:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -40,37 +40,6 @@
  *	@(#)if_le.c	8.2 (Berkeley) 11/16/93
  */
 
-
-/*
- * Supported busses: DEC IOCTL asic baseboard device, TurboChannel option,
- * plus baseboard device on   "busless"  DECstations.
- */
-#ifdef alpha
-#define	CAN_HAVE_IOASIC	1
-#define	CAN_HAVE_TC	1
-#endif
-#ifdef pmax
-#define	CAN_HAVE_IOASIC	1
-#define	CAN_HAVE_TC	1
-#define	CAN_HAVE_MAINBUS 1
-#endif /* pmax */
-
-
-/*
- * For each bus on which a LANCE device might appear, determine
- * if that bus was configured into the current kernel.
- */
-
-#ifdef CAN_HAVE_MAINBUS
-/*XXX TEST FOR KN01 OR MIPSFAIR? */
-#endif
-#ifdef CAN_HAVE_TC
-#include "tc.h"
-#endif
-#ifdef CAN_HAVE_IOASIC
-#include "ioasic.h"
-#endif
-
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -87,52 +56,54 @@
 #include <netinet/if_ether.h>
 #endif
 
-#include <machine/autoconf.h>
-
-#if CAN_HAVE_TC && (NTC > 0)
-#include <dev/tc/tcvar.h>
-#endif
-#if CAN_HAVE_IOASIC && (NIOASIC > 0)
-#include <dev/tc/ioasicvar.h>
-#endif
-#if CAN_HAVE_MAINBUS
-#include <pmax/pmax/kn01.h>
-#include <pmax/pmax/kn01var.h>
-extern struct cfdriver mainbus_cd; /* XXX */
-#endif
-
 #include <dev/tc/if_levar.h>
 #include <dev/ic/am7990reg.h>
 #define	LE_NEED_BUF_CONTIG
 #define	LE_NEED_BUF_GAP2
 #define	LE_NEED_BUF_GAP16
 #include <dev/ic/am7990var.h>
+#include <dev/tc/tcvar.h>
 
 /* access LANCE registers */
 void lewritereg __P((volatile u_short *regptr, u_short val));
 #define	LERDWR(cntl, src, dst)	{ (dst) = (src); tc_mb(); }
 #define	LEWREG(src, dst)	lewritereg(&(dst), (src))
 
-#define LE_OFFSET_RAM		0x0
-#define LE_OFFSET_LANCE		0x100000
-#define LE_OFFSET_ROM		0x1c0000
-
-extern caddr_t le_iomem;
-
 #define	LE_SOFTC(unit)	le_cd.cd_devs[unit]
 #define	LE_DELAY(x)	DELAY(x)
-
-int le_tc_match __P((struct device *, void *, void *));
-void le_tc_attach __P((struct device *, struct device *, void *));
-int leintr __P((void *));
-
-struct cfattach le_tc_ca = {
-	sizeof(struct le_softc), le_tc_match, le_tc_attach
-};
 
 struct cfdriver le_cd = {
 	NULL, "le", DV_IFNET
 };
+
+void
+dec_le_common_attach(sc, eap)
+	struct le_softc *sc;
+	u_char *eap;
+{
+	int i;
+
+	sc->sc_conf3 = 0;
+	sc->sc_addr = 0;
+	sc->sc_memsize = 65536;
+
+	/*
+	 * Get the ethernet address out of rom
+	 */
+	for (i = 0; i < sizeof(sc->sc_arpcom.ac_enaddr); i++) {
+		sc->sc_arpcom.ac_enaddr[i] = *eap;
+		eap += 4;
+	}
+
+	sc->sc_arpcom.ac_if.if_name = le_cd.cd_name;
+	leconfig(sc);
+}
+
+integrate void
+lehwinit(sc)
+	struct le_softc *sc;
+{
+}
 
 integrate void
 lewrcsr(sc, port, val)
@@ -156,150 +127,6 @@ lerdcsr(sc, port)
 	LEWREG(port, ler1->ler1_rap);
 	LERDWR(0, ler1->ler1_rdp, val);
 	return (val);
-}
-
-int
-le_tc_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
-{
-
-#if CAN_HAVE_IOASIC && (NIOASIC > 0)
-	if (parent->dv_cfdata->cf_driver == &ioasic_cd) {
-		struct ioasicdev_attach_args *d = aux;
-
-		if (!ioasic_submatch(match, aux)) {
-			return (0);
-		}
-		if (strncmp("lance", d->iada_modname, TC_ROM_LLEN)) {
-			return (0);
-		}
-	} else
-#endif /* IOASIC */
-
-#if CAN_HAVE_TC && (NTC > 0)
-	if (parent->dv_cfdata->cf_driver == &tc_cd) {
-		struct tc_attach_args *d = aux;
-
-		if (strncmp("PMAD-AA ", d->ta_modname, TC_ROM_LLEN) &&
-		    strncmp("PMAD-BA ", d->ta_modname, TC_ROM_LLEN))
-			return (0);
-	} else
-#endif /* TC */
-
-#if CAN_HAVE_MAINBUS && defined(DS3100)
-	if (parent->dv_cfdata->cf_driver == &mainbus_cd) {
-	  	struct confargs *d = aux;
-		if (strcmp("lance", d->ca_name) != 0)
-			return (0);
-	} else
-#endif /* MAINBUS */
-		return (0);
-
-	return (1);
-}
-
-typedef void (*ie_fn_t) __P((struct device *, void *,
-			     tc_intrlevel_t, int (*)(void *), void *));
-
-void
-le_tc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
-{
-	register struct le_softc *sc = (void *)self;
-	ie_fn_t ie_fn;
-	u_char *cp;	/* pointer to MAC address */
-	int i;
-
-#if CAN_HAVE_IOASIC && (NIOASIC > 0)
-	if (parent->dv_cfdata->cf_driver == &ioasic_cd) {
-		struct ioasicdev_attach_args *d = aux;
-
-		/* It's on the system IOCTL ASIC */
-		sc->sc_r1 = (struct lereg1 *)
-			TC_DENSE_TO_SPARSE(TC_PHYS_TO_UNCACHED(d->iada_addr));
-		sc->sc_mem = (void *)TC_PHYS_TO_UNCACHED(le_iomem);
-		cp = ioasic_lance_ether_address();
-
-		sc->sc_copytodesc = copytobuf_gap2;
-		sc->sc_copyfromdesc = copyfrombuf_gap2;
-		sc->sc_copytobuf = copytobuf_gap16;
-		sc->sc_copyfrombuf = copyfrombuf_gap16;
-		sc->sc_zerobuf = zerobuf_gap16;
-
-		ioasic_lance_dma_setup(le_iomem);	/* XXX more thought */
-		ie_fn = ioasic_intr_establish;
-		sc->sc_cookie = (void*)d->iada_cookie;
-	} else
-#endif /* IOASIC */
-#if CAN_HAVE_TC && (NTC > 0)
-	if (parent->dv_cfdata->cf_driver == &tc_cd) {
-		struct tc_attach_args *d = aux;
-
-		/*
-		 * It's on the turbochannel proper, or a kn02
-		 * baseboard implementation of a TC option card.
-		 */
-		sc->sc_r1 = (struct lereg1 *)(d->ta_addr + LE_OFFSET_LANCE);
-		sc->sc_mem = (void *)(d->ta_addr + LE_OFFSET_RAM);
-		cp = (u_char *)(d->ta_addr + LE_OFFSET_ROM + 2);
-
-		sc->sc_copytodesc = copytobuf_contig;
-		sc->sc_copyfromdesc = copyfrombuf_contig;
-		sc->sc_copytobuf = copytobuf_contig;
-		sc->sc_copyfrombuf = copyfrombuf_contig;
-		sc->sc_zerobuf = zerobuf_contig;
-
-		sc->sc_cookie = d->ta_cookie;
-		/*
-	 	 * TC lance boards have onboard SRAM buffers.  DMA
-		 * between the onbard RAM and main memory is not possible,
-		 * so  DMA setup is not required.
-		 */
-		ie_fn = tc_intr_establish;
-	} else
-#endif /* TC */
-#if CAN_HAVE_MAINBUS && defined(DS3100)
-	if (parent->dv_cfdata->cf_driver == &mainbus_cd) {
-		struct confargs *ca = aux;
-
-		/*
-		 * It's on the baseboeard, with a dedicated interrupt line.
-		 */
-/*XXX*/		sc->sc_r1 = (struct lereg1 *)(ca->ca_addr);
-/*XXX*/		sc->sc_mem = (void *)TC_PHYS_TO_UNCACHED(0x19000000);
-/*XXX*/		cp = (u_char *)(TC_PHYS_TO_UNCACHED(KN01_SYS_CLOCK) + 1);
-
-		sc->sc_copytodesc = copytobuf_gap2;
-		sc->sc_copyfromdesc = copyfrombuf_gap2;
-		sc->sc_copytobuf = copytobuf_gap2;
-		sc->sc_copyfrombuf = copyfrombuf_gap2;
-		sc->sc_zerobuf = zerobuf_gap2;
-
-		sc->sc_cookie = (void *)ca->ca_slotpri; /*XXX more thought */
-		ie_fn = (ie_fn_t) kn01_intr_establish;
-	} else
-#endif /* MAINBUS */
-
-		panic("le_tc_attach: can't be here");
-
-	sc->sc_conf3 = 0;
-	sc->sc_addr = 0;
-	sc->sc_memsize = 65536;
-
-	/*
-	 * Get the ethernet address out of rom
-	 */
-	for (i = 0; i < sizeof(sc->sc_arpcom.ac_enaddr); i++) {
-		sc->sc_arpcom.ac_enaddr[i] = *cp;
-		cp += 4;
-	}
-
-	sc->sc_arpcom.ac_if.if_name = le_cd.cd_name;
-	leconfig(sc);
-
-	(*ie_fn)(parent, sc->sc_cookie, TC_IPL_NET, leintr, sc);
 }
 
 /*
