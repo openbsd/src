@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.13 1998/03/18 10:45:05 graichen Exp $
+#	$OpenBSD: Makefile.inc,v 1.14 1998/03/19 15:21:51 graichen Exp $
 #	etc.pmax/Makefile.inc -- pmax-specific etc Makefile targets
 
 .ifdef DESTDIR
@@ -29,11 +29,6 @@ bsd.rz0:
 	    make clean && make depend && make
 	cp ${.CURDIR}/../sys/arch/pmax/compile/GENERIC.rz0/bsd \
 	    ${DESTDIR}/snapshot/bsd.rz0
-
-# XXX this is an really ugly hack until the bootblock source will
-# compile again - or even better: someone writes it new
-bootblocks:
-	cp /usr/mdec/rzboot /usr/mdec/bootrz ${DESTDIR}/usr/mdec
 
 distrib:
 	cd ${.CURDIR}/../distrib && make cleandir && \
