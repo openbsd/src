@@ -37,6 +37,7 @@ Finland:
     ftp://ftp.jyu.fi/pub/OpenBSD (Jyvaskyla)
 
 France:
+    ftp://ftp.ac-creteil.fr/OpenBSD
     ftp://ftp.bsdfr.org/pub/OpenBSD (Paris)
     ftp://ftp.club-internet.fr/pub/OpenBSD (Paris)
     ftp://ftp.fr.openbsd.org/pub/OpenBSD (Paris)
@@ -48,6 +49,7 @@ Germany:
     ftp://openbsd.informatik.uni-erlangen.de/pub/OpenBSD (Erlangen)
     ftp://ftp-stud.fht-esslingen.de/pub/OpenBSD (Esslingen)
     ftp://pandemonium.tiscali.de/pub/OpenBSD (Frankfurt)
+    ftp://openbsd.bay13.net/pub/OpenBSD (Hamburg)
     ftp://ftp.leo.org/pub/OpenBSD (Muenchen)
     ftp://mirrors.serveftp.org/openbsd (Nurnberg)
     ftp://ftp.uni-stuttgart.de/pub/OpenBSD (Stuttgart)
@@ -107,6 +109,7 @@ Sweden:
     ftp://mirror.pudas.net/OpenBSD (Uppsala)
 
 Switzerland:
+    ftp://ftp.solnet.ch/mirror/OpenBSD
     ftp://sunsite.cnlab-switch.ch/pub/OpenBSD (Zurich)
 
 Taiwan:
@@ -126,11 +129,13 @@ United Kingdom:
 USA:
     ftp://ftp5.usa.openbsd.org/pub/OpenBSD (Redwood City, CA)
     ftp://ftp3.usa.openbsd.org/pub/OpenBSD (Boulder, CO)
+    ftp://reflection.ncsa.uiuc.edu/pub/OpenBSD (Champaign, IL)
     ftp://ftp.src.uchicago.edu/pub/openbsd (Chicago, IL)
     ftp://rt.fm/pub/OpenBSD (Lake in the Hills, IL)
     ftp://ftp7.usa.openbsd.org/pub/os/OpenBSD (West Lafayette, IN)
     ftp://ftp.groupbsd.org/pub/OpenBSD (Hillsborough, NC)
     ftp://ftp.cse.buffalo.edu/pub/OpenBSD (Buffalo, NY)
+    ftp://openbsd.mirrors.pair.com (Pittsburgh, PA)
     ftp://carroll.cac.psu.edu/pub/OpenBSD (State College, PA)
     ftp://mirrors.rcn.net/pub/OpenBSD (Fairfax, VA)
     ftp://openbsd.secsup.org/pub/openbsd (Fairfax, VA)
