@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.17 1999/11/10 22:19:22 aaron Exp $
+.\"	$OpenBSD: malloc.3,v 1.18 2000/01/19 05:36:38 pjanzen Exp $
 .\"
 .Dd August 27, 1996
 .Dt MALLOC 3
@@ -241,8 +241,11 @@ The
 and
 .Fn calloc
 functions return
-a pointer to the allocated space if successful; otherwise
-a null pointer is returned.
+a pointer to the allocated space if successful; otherwise,
+a null pointer is returned and
+.Va errno
+is set to
+.Er ENOMEM .
 .Pp
 The
 .Fn free
@@ -252,8 +255,11 @@ functions return no value.
 .Pp
 The
 .Fn realloc
-function a pointer to the possibly moved allocated space;
-otherwise a null pointer is returned.
+function returns a pointer to the (possibly moved) allocated space
+if successful; otherwise, a null pointer is returned and
+.Va errno
+is set to
+.Er ENOMEM .
 .Sh MESSAGES
 If
 .Fn malloc ,
