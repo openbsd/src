@@ -2,7 +2,7 @@
 #if 0
 static char	elsieid[] = "@(#)zdump.c	7.24";
 #else
-static char rcsid[] = "$OpenBSD: zdump.c,v 1.4 1997/01/14 03:16:56 millert Exp $";
+static char rcsid[] = "$OpenBSD: zdump.c,v 1.5 1997/01/21 04:52:45 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -224,7 +224,6 @@ _("%s: usage is %s [ -v ] [ -c cutoff ] zonename ...\n"),
 		show(argv[i], t, TRUE);
 		tm = *localtime(&t);
 		(void) strncpy(buf, abbr(&tm), (sizeof buf) - 1);
-		buf[(sizeof buf) - 1] = '\0';
 		for ( ; ; ) {
 			if (cutoff != NULL && t >= cuttime)
 				break;
@@ -241,7 +240,6 @@ _("%s: usage is %s [ -v ] [ -c cutoff ] zonename ...\n"),
 					newtm = *localtime(&newt);
 					(void) strncpy(buf, abbr(&newtm),
 						(sizeof buf) - 1);
-					buf[(sizeof buf) - 1] = '\0';
 			}
 			t = newt;
 			tm = newtm;
