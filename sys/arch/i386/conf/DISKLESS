@@ -1,4 +1,4 @@
-#	$OpenBSD: DISKLESS,v 1.42 2002/06/17 19:43:12 deraadt Exp $
+#	$OpenBSD: DISKLESS,v 1.43 2002/06/17 23:13:02 matthieu Exp $
 #	$NetBSD: DISKLESS,v 1.26 1996/05/20 18:17:16 mrg Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
@@ -16,7 +16,6 @@ option		GPL_MATH_EMULATE	# floating point emulation
 
 #option		VM86		# Virtual 8086 emulation
 #option		USER_LDT	# user-settable LDT; used by WINE
-option		XSERVER		# diddle with console driver
 option		APERTURE	# in-kernel aperture driver for XFree86
 
 #option		KGDB		# Remote debugger support; exclusive of DDB
