@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami_pci.c,v 1.16 2003/04/27 11:22:53 ho Exp $	*/
+/*	$OpenBSD: ami_pci.c,v 1.17 2003/05/24 08:45:05 markus Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -84,6 +84,8 @@ struct	ami_pci_device {
 	{ PCI_VENDOR_AMI,	PCI_PRODUCT_AMI_MEGARAID,	0 },
 	{ PCI_VENDOR_AMI,	PCI_PRODUCT_AMI_MEGARAID428,	0 },
 	{ PCI_VENDOR_AMI,	PCI_PRODUCT_AMI_MEGARAID434,	0 },
+	{ PCI_VENDOR_DELL,	PCI_PRODUCT_DELL_PERC_4DI,	0 },
+	{ PCI_VENDOR_DELL,	PCI_PRODUCT_DELL_PERC_4DI_2,	0 },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_80960RP_ATU, AMI_CHECK_SIGN },
 	{ 0 }
 };
