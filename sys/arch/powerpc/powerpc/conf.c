@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.4 1997/10/13 13:42:54 pefo Exp $ */
+/*	$OpenBSD: conf.c,v 1.5 1997/10/28 10:36:13 pefo Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -43,6 +43,8 @@
 #include "sd.h"
 bdev_decl(sd);
 bdev_decl(sw);
+#include "cd.h"
+bdev_decl(cd);
 
 #include "rd.h"
 bdev_decl(rd);
@@ -53,10 +55,10 @@ bdev_decl(vnd);
 bdev_decl(ccd);
 
 struct bdevsw bdevsw[] = {
-	bdev_notdef(),                  /* 0 */
+	bdev_notdef(),			/* 0 */
 	bdev_swap_init(1,sw),		/* 1 swap pseudo device */
 	bdev_disk_init(NSD,sd),		/* 2 SCSI Disk */
-	bdev_notdef(),                  /* 3 SCSI CD-ROM */
+	bdev_disk_init(NCD,cd),		/* 3 SCSI CD-ROM */
 	bdev_notdef(),			/* 4 */
 	bdev_notdef(),                  /* 5 unknown*/
 	bdev_notdef(),                  /* 6 unknown*/

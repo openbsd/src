@@ -1,7 +1,7 @@
 NOPROG=	noprog
 NOMAN=	noman
 
-SUBDIR=
+SUBDIR= stand
 
 obj:	_SUBDIRUSE
 
