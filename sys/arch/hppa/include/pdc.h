@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.h,v 1.10 1999/04/20 19:47:04 mickey Exp $	*/
+/*	$OpenBSD: pdc.h,v 1.11 1999/07/21 20:17:54 mickey Exp $	*/
 
 /*
  * Copyright (c) 1990 mt Xinu, Inc.  All rights reserved.
@@ -125,7 +125,9 @@
 #define	PDC_MODEL_SETBOOTSTOPTS	9	/* set boot test options */
 
 #define	PDC_CACHE	5	/* return cache and TLB params */
-#define	PDC_CACHE_DFLT		0
+#define	PDC_CACHE_DFLT		0	/* return parameters */
+#define	PDC_CACHE_SETCS		1	/* set coherence state */
+#define	PDC_CACHE_GETSPIDB	2	/* get space-id bits */
 
 #define	PDC_HPA		6	/* return HPA of processor */
 #define	PDC_HPA_DFLT		0
@@ -350,6 +352,24 @@ struct pdc_cache {	/* PDC_CACHE */
 	u_int	dt_off_count;	/* number of dt_loop iterations/space (flush) */
 	u_int	dt_loop;	/* number of PDTLBE's per off_stride (flush) */
 	u_int	filler[2];
+};
+
+struct pdc_cst {
+	u_int	cstR1  : 16;
+	u_int	cst    :  3;
+	u_int	cstR2  : 13;
+};
+
+struct pdc_coherence {	/* PDC_CACHE_SETCS */
+	struct pdc_cst	ia;
+#define	ia_cst ia.cst
+	struct pdc_cst	da;
+#define	da_cst da.cst
+	struct pdc_cst	ita;
+#define	ita_cst ita.cst
+	struct pdc_cst	dta;
+#define	dta_cst dta.cst
+	u_int	filler[28];
 };
 
 struct pdc_hpa {	/* PDC_HPA */
