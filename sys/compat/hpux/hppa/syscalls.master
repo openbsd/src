@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.7 2004/07/15 20:07:41 mickey Exp $
+	$OpenBSD: syscalls.master,v 1.8 2004/09/19 22:04:15 mickey Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -330,7 +330,7 @@
 221	UNIMPL
 222	UNIMPL
 223	UNIMPL
-224	STD		{ void hpux_sigsetreturn(int cookie); }
+224	STD		{ void hpux_sigsetreturn(caddr_t addr, int cookie, int len); }
 225	UNIMPL		sigsetstatemask
 226	UNIMPL
 227	UNIMPL		cs
