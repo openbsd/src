@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.17 1998/07/05 20:10:49 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.18 1998/07/05 20:20:44 millert Exp $
 #
 # Build wrapper for Perl 5.003.
 #
@@ -193,8 +193,9 @@ maninstall:
 .endif
 
 install: install.perl ${MANALL} maninstall
-	(cd ${DESTDIR}/usr/include; ${H2PH} -d ${DESTDIR} *.h arpa/*.h \
-		machine/*.h net/*.h protocols/*.h sys/*.h)
+	(cd ${DESTDIR}/usr/include; ${H2PH} \
+		-d ${DESTDIR}/usr/lib/perl5/site_perl/${MACHINE}-openbsd \
+		*.h arpa/*.h machine/*.h net/*.h protocols/*.h sys/*.h)
 	-chmod -R a+rX ${DESTDIR}/usr/lib/perl5
 
 install.perl:
