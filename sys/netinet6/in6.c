@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.47 2002/09/11 03:15:36 itojun Exp $	*/
+/*	$OpenBSD: in6.c,v 1.48 2002/09/23 23:28:15 itojun Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -644,6 +644,13 @@ in6_control(so, cmd, data, ifp, p)
 		int i, error = 0;
 		struct nd_prefix pr0, *pr;
 
+		/* reject read-only flags */
+		if ((ifra->ifra_flags & IN6_IFF_DUPLICATED) != 0 ||
+		    (ifra->ifra_flags & IN6_IFF_DETACHED) != 0 ||
+		    (ifra->ifra_flags & IN6_IFF_NODAD) != 0 ||
+		    (ifra->ifra_flags & IN6_IFF_AUTOCONF) != 0) {
+			return (EINVAL);
+		}
 		/*
 		 * first, make or update the interface address structure,
 		 * and link it to the list.
@@ -877,13 +884,13 @@ in6_update_ifa(ifp, ifra, ia)
 
 		if ((ifp->if_flags & (IFF_POINTOPOINT|IFF_LOOPBACK)) == 0) {
 			/* XXX: noisy message */
-			nd6log((LOG_INFO, "in6_update_ifa: a destination can be "
-			    "specified for a p2p or a loopback IF only\n"));
+			nd6log((LOG_INFO, "in6_update_ifa: a destination can "
+			    "be specified for a p2p or a loopback IF only\n"));
 			return (EINVAL);
 		}
 		if (plen != 128) {
-			nd6log((LOG_INFO, "in6_update_ifa: prefixlen should be "
-			    "128 when dstaddr is specified\n"));
+			nd6log((LOG_INFO, "in6_update_ifa: prefixlen should "
+			    "be 128 when dstaddr is specified\n"));
 #ifdef FORCE_P2PPLEN
 			/*
 			 * To be compatible with old configurations,
@@ -1026,11 +1033,22 @@ in6_update_ifa(ifp, ifra, ia)
 		goto unlink;
 
 	/*
+	 * configure address flags.
+	 */
+	ia->ia6_flags = ifra->ifra_flags;
+	/*
+	 * backward compatibility - if IN6_IFF_DEPRECATED is set from the
+	 * userland, make it deprecated.
+	 */
+	if ((ifra->ifra_flags & IN6_IFF_DEPRECATED) != 0) {
+		ia->ia6_lifetime.ia6t_pltime = 0;
+		ia->ia6_lifetime.ia6t_preferred = time_second;
+	}
+	/*
 	 * Make the address tentative before joining multicast addresses,
 	 * so that corresponding MLD responses would not have a tentative
 	 * source address.
 	 */
-	ia->ia6_flags = ifra->ifra_flags;
 	ia->ia6_flags &= ~IN6_IFF_DUPLICATED;	/* safety */
 	if (hostIsNew && in6if_do_dad(ifp))
 		ia->ia6_flags |= IN6_IFF_TENTATIVE;
