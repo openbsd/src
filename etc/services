@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.46 2002/10/29 21:36:02 pvalchev Exp $
+#	$OpenBSD: services,v 1.47 2002/11/07 21:29:15 millert Exp $
 #
 # Network services, Internet style
 #
@@ -124,6 +124,8 @@ imap3		220/tcp				# Interactive Mail Access
 imap3		220/udp				# Protocol v3
 ulistserv	372/tcp				# UNIX Listserv
 ulistserv	372/udp
+ldap		389/tcp				# Lightweight Directory Access
+ldap		389/udp
 svrloc		427/tcp				# Server Location
 svrloc		427/udp
 nnsp		433/tcp		usenet		# Network News Transfer
@@ -136,6 +138,8 @@ isakmp		500/udp				# ISAKMP key management
 kshell		544/tcp		krcmd		# Kerberos remote shell
 ekshell		545/tcp				# Kerberos encrypted shell
 submission	587/tcp		msa		# mail message submission
+ldaps		636/tcp				# LDAP over SSL
+ldaps		636/udp
 submission	587/udp		msa		# mail message submission
 imaps		993/tcp				# imap4 protocol over TLS/SSL
 imaps		993/udp				# imap4 protocol over TLS/SSL
