@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.49 2000/10/23 21:22:42 deraadt Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.50 2000/10/24 21:05:10 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -1029,10 +1029,12 @@ hifn_intr(arg)
 {
 	struct hifn_softc *sc = arg;
 	struct hifn_dma *dma = sc->sc_dma;
-	u_int32_t dmacsr;
+	u_int32_t dmacsr, dmaier;
 	int i, u;
 
 	dmacsr = READ_REG_1(sc, HIFN_1_DMA_CSR);
+	dmaier = READ_REG_1(sc, HIFN_1_DMA_IER) &
+	    (HIFN_DMAIER_R_DONE | HIFN_DMAIER_C_WAIT);
 
 #ifdef HIFN_DEBUG
 	printf("%s: irq: stat %08x ien %08x u %d/%d/%d/%d\n",
@@ -1041,7 +1043,8 @@ hifn_intr(arg)
 	    dma->cmdu, dma->srcu, dma->dstu, dma->resu);
 #endif
 
-	if ((dmacsr & (HIFN_DMACSR_R_DONE | HIFN_DMACSR_C_WAIT)) == 0)
+	/* Nothing in the DMA unit interrupted */
+	if ((dmacsr & dmaier) == 0)
 		return (0);
 
 	if (dma->resu > HIFN_D_RES_RSIZE)
