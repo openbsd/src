@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.194 2005/03/19 01:56:51 joris Exp $
+dnl	$OpenBSD: hardware,v 1.195 2005/03/19 18:54:01 miod Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -1120,8 +1120,6 @@ about:
 	NCR 5380-based and 53400-based SCSI host adapters
 	QIC-40 and QIC-80 tape drives (these are the tape drives
 		that connect to the floppy disk controller)
-	Multiprocessor motherboards (though they will run fine using
-		one processor only)
 	Sony and Panasonic proprietary CD-ROM interfaces
 	Parallel-port ZIP drives (SCSI and ATAPI ZIP drives work fine)
 	Intel i82556 (EtherExpress PRO/100A) and i82596 (EtherExpress
@@ -1138,7 +1136,7 @@ about:
 
 We are planning future support for many of these devices.
 
-To be detected by the distributed kernels, some devices must
+To be detected by the distributed kernels, some ISA devices must
 be configured with specific settings.  Here's their list:
 
 Device		Name	Port	IRQ	DRQ	Misc
