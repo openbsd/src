@@ -118,7 +118,7 @@ void free();
 /*
  * Special types and constants.
  */
-typedef long		POSITION;
+typedef off_t		POSITION;
 /*
  * {{ Warning: if POSITION is changed to other than "long",
  *    you may have to change some of the printfs which use "%ld"

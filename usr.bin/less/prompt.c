@@ -98,7 +98,7 @@ setmp()
 ap_pos(pos)
 	POSITION pos;
 {
-	sprintf(mp, "%ld", (long)pos);
+	sprintf(mp, "%qd", pos);
 	setmp();
 }
 
