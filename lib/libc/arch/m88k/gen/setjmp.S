@@ -30,7 +30,7 @@
 
 #if defined(LIBC_SCCS)
 	.data
-	.string "$OpenBSD: setjmp.S,v 1.6 2003/08/01 07:41:35 miod Exp $"
+	.string "$OpenBSD: setjmp.S,v 1.7 2003/08/06 17:28:02 miod Exp $"
 #endif /* LIBC_SCCS */
 
 #include "SYS.h"
@@ -90,8 +90,11 @@ ENTRY(setjmp)
 	or	r14,r2,0	/* store address of env in r14 */
 	bsr.n	_C_LABEL(sigblock) /* r2 = sigblock(0) */
 	 or	r2,r0,0
+	or	r1,r15,0
 	st	r2,r14,4	/* save signal set in offset 4 of env */
-	jmp.n	r15		/* return 0 */
+	ld	r15,r14,12
+	ld	r14,r14,8
+	jmp.n	r1		/* return 0 */
 	 or	r2,r0,0
 
 /*
