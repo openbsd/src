@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.28 2003/12/26 15:27:31 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.29 2003/12/26 15:42:14 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -46,6 +46,7 @@ struct knexthop_node {
 	struct kroute_node	*kroute;
 };
 
+void		kroute_protect_lo(void);
 int		kroute_msg(int, int, struct kroute *);
 int		kroute_compare(struct kroute_node *, struct kroute_node *);
 void		get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
@@ -78,7 +79,7 @@ pid_t			pid;
 int
 kroute_init(void)
 {
-	int	s, opt;
+	int s, opt;
 
 	if ((s = socket(AF_ROUTE, SOCK_RAW, 0)) < 0)
 		fatal("route socket", errno);
@@ -92,8 +93,26 @@ kroute_init(void)
 	RB_INIT(&krt);
 	RB_INIT(&knt);
 	kroute_fetchtable();
+	kroute_protect_lo();
 
 	return (s);
+}
+
+void
+kroute_protect_lo(void)
+{
+	struct kroute_node	*kr;
+
+	/* special protection for 127/8 */
+	if ((kr = calloc(1, sizeof(struct kroute_node))) == NULL)
+		fatal(NULL, errno);
+	kr->r.prefix = inet_addr("127.0.0.1");
+	kr->r.prefixlen = 8;
+	kr->r.nexthop = 0;
+	kr->flags = F_KERNEL|F_CONNECTED;
+
+	if (RB_INSERT(kroute_tree, &krt, kr) != NULL)
+		free(kr);	/* kernel route already there, no problem */
 }
 
 int
