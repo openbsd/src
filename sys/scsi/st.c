@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.16 1997/07/11 02:18:40 tholo Exp $	*/
+/*	$OpenBSD: st.c,v 1.17 1997/07/11 19:26:00 tholo Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -235,7 +235,7 @@ struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 #define EJECT 1
 
 #define NOREWIND 0
-#define REWIND 1
+#define DOREWIND 1
 
 struct st_softc {
 	struct device sc_dev;
@@ -540,7 +540,7 @@ stopen(dev, flags, mode, p)
 	 * session but continue with open processing
 	 */
 	if (st->last_dsty != dsty || !(sc_link->flags & SDEV_MEDIA_LOADED))
-		st_unmount(st, NOEJECT, REWIND);
+		st_unmount(st, NOEJECT, DOREWIND);
 
 	/*
 	 * If we are not mounted, then we should start a new
@@ -563,7 +563,7 @@ stopen(dev, flags, mode, p)
 	return 0;
 
 bad:
-	st_unmount(st, NOEJECT, REWIND);
+	st_unmount(st, NOEJECT, DOREWIND);
 	sc_link->flags &= ~SDEV_OPEN;
 	return error;
 }
@@ -586,7 +586,7 @@ stclose(dev, flags, mode, p)
 		st_write_filemarks(st, 1, 0);
 	switch (STMODE(dev)) {
 	case 0:		/* normal */
-		st_unmount(st, NOEJECT, REWIND);
+		st_unmount(st, NOEJECT, DOREWIND);
 		break;
 	case 3:		/* eject, no rewind */
 		st_unmount(st, EJECT, NOREWIND);
@@ -595,7 +595,7 @@ stclose(dev, flags, mode, p)
 		st_unmount(st, NOEJECT, NOREWIND);
 		break;
 	case 2:		/* rewind, eject */
-		st_unmount(st, EJECT, REWIND);
+		st_unmount(st, EJECT, DOREWIND);
 		break;
 	}
 	st->sc_link->flags &= ~SDEV_OPEN;
@@ -1156,7 +1156,7 @@ stioctl(dev, cmd, arg, flag, p)
 			error = st_rewind(st, 0, flags);
 			break;
 		case MTOFFL:	/* rewind and put the drive offline */
-			st_unmount(st, EJECT, REWIND);
+			st_unmount(st, EJECT, DOREWIND);
 			break;
 		case MTNOP:	/* no operation, sets status only */
 			break;
