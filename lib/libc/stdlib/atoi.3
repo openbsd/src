@@ -1,5 +1,5 @@
-.\" Copyright (c) 1990, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1990, 1991, 1993
+.\"    The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" the American National Standards Committee X3, on Information
@@ -33,10 +33,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)atoi.3	5.3 (Berkeley) 6/29/91
-.\"	$Id: atoi.3,v 1.1.1.1 1995/10/18 08:42:16 deraadt Exp $
+.\"	$OpenBSD: atoi.3,v 1.2 1996/08/10 04:51:31 tholo Exp $
 .\"
-.Dd June 29, 1991
+.Dd June 4, 1993
 .Dt ATOI 3
 .Os
 .Sh NAME
@@ -58,7 +57,6 @@ to
 representation.
 .Pp
 It is equivalent to:
-.Pp
 .Bd -literal -offset indent
 (int)strtol(nptr, (char **)NULL, 10);
 .Ed
