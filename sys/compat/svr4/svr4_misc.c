@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_misc.c,v 1.30 2001/05/05 21:26:43 art Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.31 2001/06/21 13:08:15 niklas Exp $	 */
 /*	$NetBSD: svr4_misc.c,v 1.42 1996/12/06 03:22:34 christos Exp $	 */
 
 /*
@@ -53,6 +53,7 @@
 #include <sys/ktrace.h>
 #include <sys/mman.h>
 #include <sys/mount.h>
+#include <sys/pool.h>
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
 #include <sys/socket.h>
@@ -1150,7 +1151,7 @@ loop:
 			 * release while still running in process context.
 			 */
 			cpu_wait(q);
-			FREE(q, M_PROC);
+			pool_put(&proc_pool, q);
 			nprocs--;
 			return 0;
 		}
