@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.h,v 1.7 2004/06/13 21:49:16 niklas Exp $	*/
+/*	$OpenBSD: npx.h,v 1.8 2004/07/20 05:37:14 kettenis Exp $	*/
 /*	$NetBSD: npx.h,v 1.11 1994/10/27 04:16:11 cgd Exp $	*/
 
 /*-
@@ -90,8 +90,8 @@ struct	save87 {
 struct envxmm {
 /*0*/	uint16_t en_cw;		/* FPU Control Word */
 	uint16_t en_sw;		/* FPU Status Word */
-	uint8_t  en_rsvd0;
 	uint8_t  en_tw;		/* FPU Tag Word (abridged) */
+	uint8_t  en_rsvd0;
 	uint16_t en_opcode;	/* FPU Opcode */
 	uint32_t en_fip;	/* FPU Instruction Pointer */
 	uint16_t en_fcs;	/* FPU IP selector */
