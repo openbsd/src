@@ -1,147 +1,151 @@
-.\"	$OpenBSD: ctime.3,v 1.10 1999/02/16 05:09:42 deraadt Exp $
-.TH CTIME 3
-.SH NAME
-asctime, ctime, difftime, gmtime, localtime, mktime \- convert date and time to ASCII
-.SH SYNOPSIS
-.nf
-.B #include <sys/types.h>
-.B #include <time.h>
-.PP
-.B extern char *tzname[2];
-.PP
-.B void tzset()
-.PP
-.B char *ctime(clock)
-.B const time_t *clock;
-.PP
-.B double difftime(time1, time0)
-.B time_t time1;
-.B time_t time0;
-.PP
-.B char *asctime(tm)
-.B const struct tm *tm;
-.PP
-.B struct tm *localtime(clock)
-.B const time_t *clock;
-.PP
-.B struct tm *gmtime(clock)
-.B const time_t *clock;
-.PP
-.B time_t mktime(tm)
-.B struct tm *tm;
-.fi
-.SH DESCRIPTION
-.I Ctime\^
-converts a time_t, pointed to by
-.IR clock ,
+.\"	$OpenBSD: ctime.3,v 1.11 1999/02/16 23:43:11 deraadt Exp $
+.\"
+.\"
+.Dd Feb 16, 1999
+.Dt CTIME 3
+.Os
+.Sh NAME
+.Nm asctime ,
+.Nm ctime ,
+.N difftime ,
+.Nm gmtime ,
+.Nm localtime ,
+.Nm mktime
+.Nd convert date and time to ASCII
+.Sh SYNOPSIS
+.Fd #include <sys/types.h>
+.Fd #include <time.h>
+.Ft extern char *tzname[2];
+.Ft void
+.Fn tzset "void"
+.Ft "char *"
+.Fn ctime "time_t *clock"
+.Ft double
+.Fn difftime "time_t time1" "time_t time0"
+.Ft "char *"
+.Fn asctime "const struct tm *tm"
+.Fn "struct tm *"
+.Fn localtime "const time_t *clock"
+.Ft "struct tm *"
+.Fn gmtime "const time_t *clock"
+.Ft time_t
+.Fn mktime "struct tm *tm"
+.Sh DESCRIPTION
+.Fn ctime
+converts a
+.Ft time_t ,
+pointed to by
+.Ft clock ,
 representing the time in seconds since
 00:00:00 UTC, 1970-01-01,
 and returns a pointer to a
 26-character string
 of the form
-.br
-.ce
-.eo
+.Bd -literal -offset indent
 Thu Nov 24 18:22:48 1986\n\0
-.ec
-.br
+.Ed
+.Pp
 All the fields have constant width.
-.PP
-.IR Localtime\^
+.Pp
+.Fn localtime
 and
-.I gmtime\^
-return pointers to ``tm'' structures, described below.
-.I Localtime\^
+.Fn gmtime
+return pointers to
+.Ft tm
+structures, described below.
+.Fn localtime
 corrects for the time zone and any time zone adjustments
 (such as Daylight Saving Time in the U.S.A.).
-After filling in the ``tm'' structure,
-.I localtime
+After filling in the
+.Ft tm
+structure,
+.Fn localtime
 sets the
-.BR tm_isdst 'th
+.Ft tm_isdst
+'th
 element of
-.B tzname
+.Ft tzname
 to a pointer to an
 ASCII string that's the time zone abbreviation to be used with
-.IR localtime 's
-return value.
-.PP
-.I Gmtime\^
+the return value of
+.Fn localtime .
+.Pp
+.Fn gmtime
 converts to Coordinated Universal Time.
-.PP
-.I Asctime\^
+.Pp
+.Fn asctime
 converts a time value contained in a
-``tm'' structure to a 26-character string,
+.Ft tm
+structure to a 26-character string,
 as shown in the above example,
 and returns a pointer
 to the string.
-.PP
-.I Mktime\^
+.Pp
+.Fn mktime
 converts the broken-down time,
 expressed as local time,
 in the structure pointed to by
-.I tm
+.Ft tm
 into a calendar time value with the same encoding as that of the values
 returned by the
-.I time
+.Fn time
 function.
 The original values of the
-.B tm_wday
+.Ft tm_wday
 and
-.B tm_yday
+.Ft tm_yday
 components of the structure are ignored,
 and the original values of the other components are not restricted
 to their normal ranges.
 (A positive or zero value for
-.B tm_isdst
+.Ft tm_isdst
 causes
-.I mktime
+.Fn mktime
 to presume initially that summer time (for example, Daylight Saving Time
 in the U.S.A.)
 respectively,
 is or is not in effect for the specified time.
 A negative value for
-.B tm_isdst
+.Ft tm_isdst
 causes the
-.I mktime
+.Fn mktime
 function to attempt to divine whether summer time is in effect
 for the specified time.)
 On successful completion, the values of the
-.B tm_wday
+.Ft tm_wday
 and
-.B tm_yday
+.Ft tm_yday
 components of the structure are set appropriately,
 and the other components are set to represent the specified calendar time,
 but with their values forced to their normal ranges; the final value of
-.B tm_mday
+.Ft tm_mday
 is not set until
-.B tm_mon
+.Ft tm_mon
 and
-.B tm_year
+.Ft tm_year
 are determined.
-.I Mktime\^
+.Fn mktime
 returns the specified calendar time;
 If the calendar time cannot be represented,
-it returns
-.BR -1 .
-.PP
-.I Difftime\^
+it returns -1.
+.Pp
+.Fn difftime
 returns the difference between two calendar times,
-.RI ( time1
+(
+.Ft time1
 -
-.IR time0 ),
-expressed in seconds.
-.PP
-Declarations of all the functions and externals, and the ``tm'' structure,
-are in the
-.B <time.h>\^
+.Ft time0
+), expressed in seconds.
+.Pp
+Declarations of all the functions and externals, and the
+.Ft tm
+structure, are in the
+.Ft <time.h>
 header file.
 The structure (of type)
-.B struct tm
+.Ft struct tm
 includes the following fields:
-.RS
-.PP
-.nf
-.ta .5i +\w'long tm_gmtoff;\0\0'u
+.Bd -literal -offset indent
 	int tm_sec;	/\(** seconds (0 - 60) \(**/
 	int tm_min;	/\(** minutes (0 - 59) \(**/
 	int tm_hour;	/\(** hours (0 - 23) \(**/
@@ -153,60 +157,62 @@ includes the following fields:
 	int tm_isdst;	/\(** is summer time in effect? \(**/
 	char \(**tm_zone;	/\(** abbreviation of timezone name \(**/
 	long tm_gmtoff;	/\(** offset from UTC in seconds \(**/
-.fi
-.RE
-.PP
+.Ed
+.Pp
 The
-.I tm_zone
+.Ft tm_zone
 and
-.I tm_gmtoff
+.Ft tm_gmtoff
 fields exist, and are filled in, only if arrangements to do
 so were made when the library containing these functions was
 created.
 There is no guarantee that these fields will continue to exist
 in this form in future releases of this code.
-.PP
-.I Tm_isdst\^
+.Pp
+.Ft tm_isdst
 is non-zero if summer time is in effect.
-.PP
-.I Tm_gmtoff
+.Pp
+.Ft tm_gmtoff
 is the offset (in seconds) of the time represented
 from UTC, with positive values indicating east
 of the Prime Meridian.
-.SH FILES
-.ta \w'/usr/share/zoneinfo/posixrules\0\0'u
-/usr/share/zoneinfo	time zone information directory
-.br
-/etc/localtime		local time zone file
-.br
-/usr/share/zoneinfo/posixrules	used with POSIX-style TZ's
-.br
-/usr/share/zoneinfo/GMT	for UTC leap seconds
-.sp
+.Sh FILES
+.Bl -tag -width "/usr/share/zoneinfo/posixrules"
+.It Pa /usr/share/zoneinfo
+time zone information directory
+.It Pa /etc/localtime
+local time zone file
+.It Pa /usr/share/zoneinfo/posixrules
+used with POSIX-style TZ's
+.It Pa /usr/share/zoneinfo/GMT
+for UTC leap seconds
+.El
+.Pp
 If
-.B /usr/share/zoneinfo/GMT
+.Pa /usr/share/zoneinfo/GMT
 is absent,
 UTC leap seconds are loaded from
-.BR /usr/share/zoneinfo/posixrules .
-.SH SEE ALSO
-getenv(3),
-strftime(3),
-tzset(3),
-time(3),
-tzfile(5)
-.SH NOTES
+.Pa /usr/share/zoneinfo/posixrules .
+.Sh SEE ALSO
+.Xr getenv 3 ,
+.Xr strftime 3 ,
+.Xr tzset 3 ,
+.Xr time 3 ,
+.Xr tzfil 5
+.Sh NOTES
 The return values point to static data;
 the data is overwritten by each call.
 The
-.B tm_zone
+.Ft tm_zone
 field of a returned
-.B "struct tm"
+.Ft "struct tm"
 points to a static array of characters, which
 will also be overwritten at the next call
 (and by calls to
-.IR tzset ).
-.PP
+.Fn tzset
+).
+.Pp
 Avoid using out-of-range values with
-.I mktime
+.Fn mktime
 when setting up lunch with promptness sticklers in Riyadh.
-.\" @(#)newctime.3	7.13
+.\" based on @(#)newctime.3	7.13
