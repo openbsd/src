@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.7 1997/04/30 23:56:06 grr Exp $
+#	$OpenBSD: install.sub,v 1.8 1997/05/02 20:56:18 grr Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,11 +40,11 @@
 #	OpenBSD installation/upgrade script - common subroutines.
 
 ROOTDISK=""				# filled in below
-VERSION=				# filled in automatically (see list)
+VERSION=21
 export VERSION
 
-ALLSETS="base comp etc games man misc text"	# default install sets
-UPGRSETS="base comp games man misc text"	# default upgrade sets
+ALLSETS="etc base misc comp text man game"	# default install sets
+UPGRSETS="base misc comp text man game"		# default upgrade sets
 THESETS=					# one of the above
 
 local_sets_dir=""			# Path searched for sets by install_sets
@@ -577,10 +577,19 @@ __install_ftp_1
 	done
 
 	# Get list of files for mget.
-	cat << \__install_ftp_2
+	cat << __install_ftp_2
 
-You will now be asked for files to extract.  Enter one file at a time.
+You will now be asked for files to extract.  If you specify just a setname,
+it will be treated as setname${VERSION}.tar.gz or you can specify the
+explict name.  You can also enter 'all' to install all the standard sets,
+or 'list' to list the files avilable at ${_ftp_server_ip}:${_ftp_server_dir}.
 When you are done entering files, enter 'done'.
+
+If you were enter 'all', the following sets would be fetched/extracted:
+	$THESETS
+
+Some of these sets are required for your ${MODE} and some are optional.
+Consult the intallation notes if you are not sure which sets are required!
 
 __install_ftp_2
 	echo "#!/bin/sh" > /tmp/ftp-script.sh
@@ -599,10 +608,22 @@ __install_ftp_2
 		if [ "X${resp}" = X"done" ]; then
 			break
 		fi
+		if [ "X${resp}" = X"list" ]; then
+			echo "ls" >> /tmp/ftp-script.sh
+			continue
+		fi
+		if [ "X${resp}" = X"all" ]; then
+			resp="$THESETS"
+		fi
 
-		_ftp_file=`echo ${resp} | cutword 1'`
-		echo "get ${_ftp_file} |\"tar -zxvpf -\"" >> \
-		    /tmp/ftp-script.sh
+		for _ftp_file in $resp; do
+			echo -n "get " >> /tmp/ftp-script.sh
+			echo -n "${_ftp_file}" | \
+			    sed "/\./!s/\$/${VERSION}.tar.gz/" >> \
+				/tmp/ftp-script.sh
+			echo " |\"tar -zxvpf -\"" >> \
+			    /tmp/ftp-script.sh
+		done
 	done
 
 	echo "quit" >> /tmp/ftp-script.sh
@@ -611,10 +632,10 @@ __install_ftp_2
 	cat << \__install_ftp_3
 
 Fetching the files via ftp may take a long time, especially over a slow
-network connection.  You may want to review/edit the fetch script to make
+network connection.  You may want to review/edit the ftp script to make
 sure that you haven't made any errors in the file names.
 __install_ftp_3
-	echo -n "edit ftp fetch script? [n] "
+	echo -n "edit ftp script? [n] "
 	getresp "n"
 	case "$resp" in
 	y*|Y*)
@@ -624,10 +645,18 @@ __install_ftp_3
 		;;
 	esac
 	
-
-	sh /tmp/ftp-script.sh
+	echo -n "submit ftp script? [y] "
+	getresp "n"
+	case "$resp" in
+	y*|Y*)
+		sh /tmp/ftp-script.sh
+		echo "Extraction complete."
+		;;
+	*)
+		;;
+	esac
+	
 	rm -f /tmp/ftp-script.sh
-	echo "Extraction complete."
 }
 
 install_from_mounted_fs() {
@@ -1145,8 +1174,12 @@ install_sets()
 	cat << \__install_sets_1
 
 It is now time to extract the installation sets onto the hard disk.
-Make sure the sets are either on a local device (i.e. tape, CD-ROM) or on a
-network server.
+Make sure the sets are either on a local device (i.e. tape, CD-ROM)
+or on a network server.
+
+You will have the chance to repeat this step or to extract sets from
+several places, so you don't have to try to load all the sets in one
+try and can recover from some errors.
 
 __install_sets_1
 
