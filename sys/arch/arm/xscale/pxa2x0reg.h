@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0reg.h,v 1.11 2005/02/17 22:10:35 dlg Exp $ */
+/*	$OpenBSD: pxa2x0reg.h,v 1.12 2005/02/22 21:53:03 uwe Exp $ */
 /* $NetBSD: pxa2x0reg.h,v 1.4 2003/06/11 20:43:01 scw Exp $ */
 
 /*
@@ -107,7 +107,7 @@
 #define PXA2X0_GPIO_BASE	0x40e00000
 #define PXA2X0_GPIO_SIZE  	0x70
 #define PXA2X0_POWMAN_BASE  	0x40f00000 /* Power management */
-#define PXA2X0_POWMAN_SIZE	0x100
+#define PXA2X0_POWMAN_SIZE	0x1a4	   /* incl. PI2C unit */
 #define PXA2X0_SSP_BASE		0x41000000 /* SSP serial port */
 #define PXA2X0_SSP1_BASE	0x41700000 /* PXA270 */
 #define PXA2X0_SSP2_BASE	0x41900000 /* PXA270 */
@@ -152,6 +152,15 @@
 #define PXA2X0_INT_OST3  	29
 #define PXA2X0_INT_RTCHZ  	30
 #define PXA2X0_INT_ALARM  	31	/* RTC Alarm interrupt */
+
+/* Interrupt Controller similar to SA11x0's, but not exactly the same. */
+#define INTCTL_ICIP	0x00
+#define INTCTL_ICMR	0x04
+#define INTCTL_ICLR	0x08
+#define INTCTL_ICFP	0x0c
+#define INTCTL_ICPR	0x10
+#define INTCTL_ICCR	0x14
+#define  ICCR_DIM	(1<<0)
 
 /* DMAC */
 #define DMAC_N_CHANNELS	16
@@ -221,25 +230,59 @@ struct pxa2x0_dma_desc {
 #define I2C_ISAR	0x16a0		/* Slave address */
 
 /* Power Manager */
+#define POWMAN_PMCR	0x00
 #define POWMAN_PSSR	0x04	/* Sleep Status register */
 #define  PSSR_RDH	 (1<<5)
+#define POWMAN_PSPR	0x08
+#define POWMAN_PWER	0x0c
+#define POWMAN_PRER	0x10
+#define POWMAN_PFER	0x14
+#define POWMAN_PEDR	0x18
 #define POWMAN_PCFR	0x1c	/* General Configuration register */
-#define  PCFR_GRP_EN	 (1<<4)		/* PXA270 */
+#define  PCFR_OPDE	 (1<<0)
+#define  PCFR_GPR_EN	 (1<<4)		/* PXA270 */
+#define  PCFR_PI2C_EN	 (1<<6)		/* PXA270 */
 #define  PCFR_GP_ROD	 (1<<8)		/* PXA270 */
+#define  PCFR_FVC	 (1<<10)	/* PXA270 */
+#define POWMAN_PGSR0	0x20	/* GPIO Sleep State register */
+#define POWMAN_PGSR1	0x24
+#define POWMAN_PGSR2	0x28
+#define POWMAN_PGSR3	0x2c		/* PXA270 */
 #define POWMAN_RCSR	0x30	/* Reset Controller Status register */
 #define  RCSR_HWR	 (1<<0)
 #define  RCSR_WDR	 (1<<1)
 #define  RCSR_SMR	 (1<<2)
 #define  RCSR_GPR	 (1<<3)
+#define POWMAN_PSLR	0x34		/* PXA270 */
+#define POWMAN_PKWR	0x50		/* PXA270 */
+#define POWMAN_PKSR	0x54		/* PXA270 */
+
+/* Power Manager I2C unit */
+#define POWMAN_PIDBR	0x188
+#define POWMAN_PICR	0x190
+#define  PICR_START	ICR_START
+#define  PICR_STOP	ICR_STOP
+#define  PICR_ACKNAK	ICR_ACKNAK
+#define  PICR_TB	ICR_TB
+#define  PICR_SCLE	(1<<5)		/* PXA270? */
+#define  PICR_IUE	(1<<6)		/* PXA270? */
+#define  PICR_UR	(1<<14)		/* PXA270? */
+#define POWMAN_PISR	0x198
+#define  PISR_ACKNAK	(1<<1)
+#define  PISR_ITE	(1<<6)
+#define  PISR_IRF	(1<<7)
+#define POWMAN_PISAR	0x1a0
 
 /* Clock Manager */
 #define CLKMAN_CCCR	0x00	/* Core Clock Configuration */
-#define  CCCR_CPDIS	 (1<<31) /* PXA270 */
+#define  CCCR_CPDIS	 (1<<31)	/* PXA270 */
+#define  CCCR_A		 (1<<25)	/* PXA270 */
 #define  CCCR_TURBO_X1	 (2<<7)
 #define  CCCR_TURBO_X15	 (3<<7)	/* x 1.5 */
 #define  CCCR_TURBO_X2	 (4<<7)
 #define  CCCR_TURBO_X25	 (5<<7)	/* x 2.5 */
 #define  CCCR_TURBO_X3	 (6<<7)	/* x 3.0 */
+/* PXA255 */
 #define  CCCR_RUN_X1	 (1<<5)
 #define  CCCR_RUN_X2	 (2<<5)
 #define  CCCR_RUN_X4	 (3<<5)
@@ -249,6 +292,10 @@ struct pxa2x0_dma_desc {
 #define  CCCR_MEM_X40	 (4<<0)	/* x27, 99.53MHz */
 #define  CCCR_MEM_X45	 (5<<0)	/* x27, 99.53MHz */
 #define  CCCR_MEM_X9	 (0x1f<<0)	/* x9, 33.2MHz */
+/* PXA27x: L is the core run frequency to 13Mhz oscillator ratio. */
+#define  CCCR_RUN_X7	 (7<<0)	 /* 91Mhz, 91Mhz mem, 91Mhz LCD */
+#define  CCCR_RUN_X8	 (8<<0)	 /* 104Mhz, 104Mhz mem, 52Mhz LCD */
+#define  CCCR_RUN_X16	 (16<<0) /* 208Mhz, 104/208Mhz mem, 104Mhz LCD */
 
 #define CLKMAN_CKEN	0x04	/* Clock Enable Register */
 #define CLKMAN_OSCC	0x08	/* Osillcator Configuration Register */
@@ -272,7 +319,10 @@ struct pxa2x0_dma_desc {
 #define CKEN_MMC	(1<<12)
 #define CKEN_FICP	(1<<13)
 #define CKEN_I2C	(1<<14)
+#define CKEN_PI2C	(1<<15)	/* PXA270? */
 #define CKEN_LCD	(1<<16)
+#define CKEN_KEY	(1<<19)	/* PXA270? */
+#define CKEN_MEM	(1<<22)	/* PXA270? */
 
 #define OSCC_OOK	(1<<0)	/* 32.768KHz oscillator status */
 #define OSCC_OON	(1<<1)	/* 32.768KHz oscillator */
@@ -283,6 +333,9 @@ struct pxa2x0_dma_desc {
 #define RTC_RCNR	0x0000	/* count register */
 #define RTC_RTAR	0x0004	/* alarm register */
 #define RTC_RTSR	0x0008	/* status register */
+#define  RTSR_AL	(1<<0)
+#define  RTSR_HZ	(1<<1)
+#define  RTSR_ALE	(1<<2)
 #define RTC_RTTR	0x000c	/* trim register */
 /*
  * GPIO
@@ -689,6 +742,7 @@ struct pxa2x0_dma_desc {
 #define OST_OSMR2	0x0008	/* Match 2 */
 #define OST_OSMR3	0x000c	/* Match 3 */
 #define OST_OSCR0	0x0010	/* Counter 0 */
+#define OST_OSSR	0x0014	/* Status (all counters) */
 #define OST_OWER	0x0018	/* Watchdog Enable */
 #define  OWER_WME	 (1<<0)
 #define OST_OIER	0x001c	/* Interrupt Enable */

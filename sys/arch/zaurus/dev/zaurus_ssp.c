@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_ssp.c,v 1.4 2005/01/31 03:02:16 uwe Exp $	*/
+/*	$OpenBSD: zaurus_ssp.c,v 1.5 2005/02/22 21:53:03 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -43,6 +43,8 @@ struct zssp_softc {
 
 int	zssp_match(struct device *, void *, void *);
 void	zssp_attach(struct device *, struct device *, void *);
+void	zssp_init(void);
+void	zssp_powerhook(int, void *);
 
 struct cfattach zssp_ca = {
 	sizeof (struct zssp_softc), zssp_match, zssp_attach
@@ -65,8 +67,32 @@ zssp_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_iot = &pxa2x0_bs_tag;
 	if (bus_space_map(sc->sc_iot, PXA2X0_SSP1_BASE, PXA2X0_SSP_SIZE,
-	    0, &sc->sc_ioh))
-		panic("can't map %s", sc->sc_dev.dv_xname);
+	    0, &sc->sc_ioh)) {
+		printf("can't map bus space\n");
+		return;
+	}
+
+	printf("\n");
+
+	zssp_init();
+
+	(void)powerhook_establish(zssp_powerhook, sc);
+}
+
+/*
+ * Initialize the dedicated SSP unit and disable all chip selects.
+ * This function is called with interrupts disabled.
+ */
+void
+zssp_init(void)
+{
+	struct	zssp_softc *sc;
+
+	if (zssp_cd.cd_ndevs < 1 || zssp_cd.cd_devs[0] == NULL) {
+		printf("zssp_read_max1111: not configured\n");
+		return;
+	}
+	sc = (struct zssp_softc *)zssp_cd.cd_devs[0];
 
 	pxa2x0_clkman_config(CKEN_SSP, 1);
 
@@ -76,8 +102,6 @@ zssp_attach(struct device *parent, struct device *self, void *aux)
 	pxa2x0_gpio_set_function(GPIO_TG_CS_C3000, GPIO_OUT|GPIO_SET);
 	pxa2x0_gpio_set_function(GPIO_MAX1111_CS_C3000, GPIO_OUT|GPIO_SET);
 	pxa2x0_gpio_set_function(GPIO_ADS7846_CS_C3000, GPIO_OUT|GPIO_SET);
-
-	printf("\n");
 }
 
 int
@@ -86,7 +110,7 @@ zssp_read_max1111(u_int32_t cmd)
 	struct	zssp_softc *sc;
 	int	voltage[2];
 	int	i;
-	int s;
+	int	s;
 
 	if (zssp_cd.cd_ndevs < 1 || zssp_cd.cd_devs[0] == NULL) {
 		printf("zssp_read_max1111: not configured\n");
@@ -265,4 +289,16 @@ zssp_write_lz9jg18(u_int32_t data)
 	pxa2x0_gpio_set_function(rxd_pin, rxd_fn);
 
 	splx(s);
+}
+
+void
+zssp_powerhook(int why, void *arg)
+{
+	int s;
+
+	if (why == PWR_RESUME) {
+		s = splhigh();
+		zssp_init();
+		splx(s);
+	}
 }

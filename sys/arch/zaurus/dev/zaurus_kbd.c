@@ -1,4 +1,4 @@
-/* $OpenBSD: zaurus_kbd.c,v 1.13 2005/02/22 18:13:28 deraadt Exp $ */
+/* $OpenBSD: zaurus_kbd.c,v 1.14 2005/02/22 21:53:03 uwe Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -32,6 +32,8 @@
 #include <dev/wscons/wsksymvar.h>
 
 #include <zaurus/dev/zaurus_kbdmap.h>
+
+#include "apm.h"
 
 const int
 gpio_sense_pins_c3000[] = {
@@ -426,9 +428,20 @@ zkbd_poll(void *v)
 	splx(s);
 }
 
+#if NAPM > 0
+const	struct timeval zkbdoninterval = { 1, 0 };	/* 1 second */
+static	struct timeval zkbdonlasttime = { 0, 0 };
+#endif
+
 int
 zkbd_on(void *v)
 {
+#if NAPM > 0
+	extern int apm_suspends;
+
+	if (ratecheck(&zkbdonlasttime, &zkbdoninterval))
+		apm_suspends++;
+#endif
 #if 0
 	printf("on key pressed\n");
 #endif
@@ -450,7 +463,7 @@ zkbd_hinge(void *v)
 	struct zkbd_softc *sc = v;
 	int a = pxa2x0_gpio_get_bit(sc->sc_swa_pin) ? 1 : 0;
 	int b = pxa2x0_gpio_get_bit(sc->sc_swb_pin) ? 2 : 0;
-	extern int lcd_blank(int);
+	extern void lcd_blank(int);
 
 #if 0
 	printf("hinge event A %d B %d\n", a, b);

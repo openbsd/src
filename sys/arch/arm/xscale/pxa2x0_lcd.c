@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_lcd.c,v 1.15 2005/02/17 23:16:33 drahn Exp $ */
+/*	$OpenBSD: pxa2x0_lcd.c,v 1.16 2005/02/22 21:53:03 uwe Exp $ */
 /* $NetBSD: pxa2x0_lcd.c,v 1.8 2003/10/03 07:24:05 bsh Exp $ */
 
 /*
@@ -89,6 +89,9 @@ void	pxa2x0_lcd_setup_rasops(struct rasops_info *,
 void	pxa2x0_lcd_start_dma(bus_space_tag_t, bus_space_handle_t,
 	    struct pxa2x0_lcd_screen *);
 void	pxa2x0_lcd_stop_dma(bus_space_tag_t, bus_space_handle_t);
+void	pxa2x0_lcd_suspend(struct pxa2x0_lcd_softc *);
+void	pxa2x0_lcd_resume(struct pxa2x0_lcd_softc *);
+void	pxa2x0_lcd_powerhook(int, void *);
 
 /*
  * Setup display geometry parameters.
@@ -261,6 +264,8 @@ pxa2x0_lcd_attach_sub(struct pxa2x0_lcd_softc *sc,
 		bzero(&dummy, sizeof(dummy));
 		pxa2x0_lcd_setup_rasops(&dummy, descr, geom);
 	}
+
+	(void)powerhook_establish(pxa2x0_lcd_powerhook, sc);
 }
 
 /*
@@ -816,4 +821,45 @@ pxa2x0_lcd_mmap(void *v, off_t offset, int prot)
 
 	return (bus_dmamem_mmap(sc->dma_tag, screen->segs, screen->nsegs,
 	    offset, prot, BUS_DMA_WAITOK | BUS_DMA_COHERENT));
+}
+
+void
+pxa2x0_lcd_suspend(struct pxa2x0_lcd_softc *sc)
+{
+
+	if (sc->active != NULL) {
+		pxa2x0_lcd_stop_dma(sc->iot, sc->ioh);
+		pxa2x0_clkman_config(CKEN_LCD, 0);
+		delay(1000000);	/* XXX */
+	}
+}
+
+void
+pxa2x0_lcd_resume(struct pxa2x0_lcd_softc *sc)
+{
+
+	if (sc->active != NULL) {
+		pxa2x0_lcd_initialize(sc->iot, sc->ioh, sc->geometry,
+		    pxa2x0_clkman_config);
+		pxa2x0_lcd_start_dma(sc->iot, sc->ioh, sc->active);
+		/* XXX wait here to avoid a weird fade-in effect. */
+		delay(1000000);
+	}
+}
+
+void
+pxa2x0_lcd_powerhook(int why, void *v)
+{
+	struct pxa2x0_lcd_softc *sc = v;
+
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
+		pxa2x0_lcd_suspend(sc);
+		break;
+
+	case PWR_RESUME:
+		pxa2x0_lcd_resume(sc);
+		break;
+	}
 }

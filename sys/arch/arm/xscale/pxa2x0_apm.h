@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm.h,v 1.3 2005/01/26 06:34:53 uwe Exp $	*/
+/*	$OpenBSD: pxa2x0_apm.h,v 1.4 2005/02/22 21:53:03 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -36,7 +36,40 @@ struct pxa2x0_apm_softc {
 	void	(*sc_power_info)(struct pxa2x0_apm_softc *,
 	    struct apm_power_info *);
 };
+void	pxa2x0_apm_attach_sub(struct pxa2x0_apm_softc *);
 
-extern	void pxa2x0_apm_attach_sub(struct pxa2x0_apm_softc *);
+#define PXA2X0_WAKEUP_POWERON	(1<<0)
+#define PXA2X0_WAKEUP_GPIORST	(1<<1)
+#define PXA2X0_WAKEUP_SD	(1<<2)
+#define PXA2X0_WAKEUP_RC	(1<<3)
+#define PXA2X0_WAKEUP_SYNC	(1<<4)
+#define PXA2X0_WAKEUP_KEYNS0	(1<<5)
+#define PXA2X0_WAKEUP_KEYNS1	(1<<6)
+#define PXA2X0_WAKEUP_KEYNS2	(1<<7)
+#define PXA2X0_WAKEUP_KEYNS3	(1<<8)
+#define PXA2X0_WAKEUP_KEYNS4	(1<<9)
+#define PXA2X0_WAKEUP_KEYNS5	(1<<10)
+#define PXA2X0_WAKEUP_KEYNS6	(1<<11)
+#define PXA2X0_WAKEUP_CF0	(1<<12)
+#define PXA2X0_WAKEUP_CF1	(1<<13)
+#define PXA2X0_WAKEUP_USBD	(1<<14)
+#define PXA2X0_WAKEUP_LOCKSW	(1<<15)
+#define PXA2X0_WAKEUP_JACKIN	(1<<16)
+#define PXA2X0_WAKEUP_CHRGFULL	(1<<17)
+#define PXA2X0_WAKEUP_RTC	(1<<18)
+
+#define PXA2X0_WAKEUP_KEYNS_ALL	(PXA2X0_WAKEUP_KEYNS0|			\
+    PXA2X0_WAKEUP_KEYNS1|PXA2X0_WAKEUP_KEYNS2|PXA2X0_WAKEUP_KEYNS3|	\
+    PXA2X0_WAKEUP_KEYNS4|PXA2X0_WAKEUP_KEYNS5|PXA2X0_WAKEUP_KEYNS6)
+
+#define PXA2X0_WAKEUP_CF_ALL	(PXA2X0_WAKEUP_CF0|PXA2X0_WAKEUP_CF1)
+
+#define PXA2X0_WAKEUP_ALL	(PXA2X0_WAKEUP_POWERON|			\
+    PXA2X0_WAKEUP_GPIORST|PXA2X0_WAKEUP_SD|PXA2X0_WAKEUP_RC|		\
+    PXA2X0_WAKEUP_SYNC|PXA2X0_WAKEUP_KEYNS_ALL|PXA2X0_WAKEUP_CF_ALL|	\
+    PXA2X0_WAKEUP_USBD|PXA2X0_WAKEUP_LOCKSW|PXA2X0_WAKEUP_JACKIN|	\
+    PXA2X0_WAKEUP_CHRGFULL|PXA2X0_WAKEUP_RTC)
+
+void	pxa2x0_wakeup_config(u_int32_t, int);
 
 #endif

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pxa2x0,v 1.8 2005/02/17 22:10:35 dlg Exp $
+#	$OpenBSD: files.pxa2x0,v 1.9 2005/02/22 21:53:03 uwe Exp $
 #	$NetBSD: files.pxa2x0,v 1.6 2004/05/01 19:09:14 thorpej Exp $
 #
 # Configuration info for Intel PXA2[51]0 CPU support
@@ -59,6 +59,7 @@ file arch/arm/xscale/pxa2x0_lcd.c		lcd needs-flag
 # Power manager and APM emulation
 device	apm
 file	arch/arm/xscale/pxa2x0_apm.c		apm needs-flag
+file	arch/arm/xscale/pxa2x0_apm_asm.S	apm
 
 include	"dev/pcmcia/files.pcmcia"
 

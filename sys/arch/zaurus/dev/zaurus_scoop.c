@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_scoop.c,v 1.5 2005/01/31 02:22:17 uwe Exp $	*/
+/*	$OpenBSD: zaurus_scoop.c,v 1.6 2005/02/22 21:53:03 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -32,6 +32,7 @@ struct scoop_softc {
 	struct device sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
+	u_int16_t sc_gpwr;
 };
 
 int	scoopmatch(struct device *, void *, void *);
@@ -155,17 +156,35 @@ scoop_led_set(int led, int on)
 {
 
 	if (scoop_cd.cd_ndevs > 0 && scoop_cd.cd_devs[0] != NULL) {
-		switch(led) {
-		case SCOOP_LED_GREEN:
+		if ((led & SCOOP_LED_GREEN) != 0)
 			scoop_gpio_pin_write(scoop_cd.cd_devs[0],
 			    SCOOP0_LED_GREEN, on);
-			break;
-		case SCOOP_LED_ORANGE:
+		if (scoop_cd.cd_ndevs > 1 && (led & SCOOP_LED_ORANGE) != 0)
 			scoop_gpio_pin_write(scoop_cd.cd_devs[0],
 			    SCOOP0_LED_ORANGE_C3000, on);
-			break;
-		}
 	}
+}
+
+int	scoop_leds(void);
+int
+scoop_leds(void)
+{
+	int leds = 0;
+
+	if (scoop_cd.cd_ndevs > 0 && scoop_cd.cd_devs[0] != NULL) {
+
+		if (scoop_gpio_pin_read(scoop_cd.cd_devs[0],
+		    SCOOP0_LED_GREEN))
+			leds |= SCOOP_LED_GREEN;
+
+		/* XXX */
+		if (scoop_cd.cd_ndevs > 1 &&
+		    scoop_gpio_pin_read(scoop_cd.cd_devs[0],
+		    SCOOP0_LED_ORANGE_C3000))
+			leds |= SCOOP_LED_ORANGE;
+	}
+
+	return leds;
 }
 
 void
@@ -196,4 +215,86 @@ scoop_discharge_battery(int enable)
 	if (scoop_cd.cd_ndevs > 0 && scoop_cd.cd_devs[0] != NULL)
 		scoop_gpio_pin_write(scoop_cd.cd_devs[0],
 		    SCOOP0_JK_A_C3000, enable);
+}
+
+/* XXX */
+void scoop_check_mcr(void);
+void
+scoop_check_mcr(void)
+{
+	struct	scoop_softc *sc;
+
+	/* C3000 */
+	if (scoop_cd.cd_ndevs > 1 && scoop_cd.cd_devs[1] != NULL) {
+		
+		sc = scoop_cd.cd_devs[0];
+		if ((bus_space_read_2(sc->sc_iot, sc->sc_ioh, SCOOP_MCR) &
+		    0x100) == 0)
+			bus_space_write_2(sc->sc_iot, sc->sc_ioh, SCOOP_MCR,
+			    0x0101);
+
+		sc = scoop_cd.cd_devs[1];
+		if ((bus_space_read_2(sc->sc_iot, sc->sc_ioh, SCOOP_MCR) &
+		    0x100) == 0)
+			bus_space_write_2(sc->sc_iot, sc->sc_ioh, SCOOP_MCR,
+			    0x0101);
+	}
+}
+
+void	scoop_suspend(void);
+void	scoop_resume(void);
+int	led_state;
+
+void
+scoop_suspend(void)
+{
+	struct scoop_softc *sc;
+	u_int32_t rv;
+
+	led_state = scoop_leds();
+	scoop_led_set(SCOOP_LED_GREEN | SCOOP_LED_ORANGE, 0);
+
+	if (scoop_cd.cd_ndevs > 0 && scoop_cd.cd_devs[0] != NULL) {
+		sc = scoop_cd.cd_devs[0];
+		sc->sc_gpwr = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
+		    SCOOP_GPWR);
+		/* C3000 */
+		bus_space_write_2(sc->sc_iot, sc->sc_ioh, SCOOP_GPWR,
+		    sc->sc_gpwr & ~(SCOOP0_MUTE_L | SCOOP0_MUTE_R |
+		    SCOOP0_JK_A_C3000 | SCOOP0_ADC_TEMP_ON_C3000));
+	}
+
+	/* C3000 */
+	if (scoop_cd.cd_ndevs > 1 && scoop_cd.cd_devs[1] != NULL) {
+		sc = scoop_cd.cd_devs[1];
+		sc->sc_gpwr = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
+		    SCOOP_GPWR);
+		bus_space_write_2(sc->sc_iot, sc->sc_ioh, SCOOP_GPWR,
+		    sc->sc_gpwr & ~(SCOOP1_RESERVED_4 | SCOOP1_RESERVED_5 |
+		    SCOOP1_RESERVED_6 | SCOOP1_BACKLIGHT_CONT |
+		    SCOOP1_BACKLIGHT_ON | SCOOP1_MIC_BIAS));
+		rv = bus_space_read_2(sc->sc_iot, sc->sc_ioh, SCOOP_GPWR);
+		bus_space_write_2(sc->sc_iot, sc->sc_ioh, SCOOP_GPWR,
+		    rv | (SCOOP1_IR_ON | SCOOP1_RESERVED_3));
+	}
+}
+
+void
+scoop_resume(void)
+{
+	struct scoop_softc *sc;
+
+	if (scoop_cd.cd_ndevs > 0 && scoop_cd.cd_devs[0] != NULL) {
+		sc = scoop_cd.cd_devs[0];
+		bus_space_write_2(sc->sc_iot, sc->sc_ioh, SCOOP_GPWR,
+		    sc->sc_gpwr);
+	}
+
+	if (scoop_cd.cd_ndevs > 1 && scoop_cd.cd_devs[1] != NULL) {
+		sc = scoop_cd.cd_devs[1];
+		bus_space_write_2(sc->sc_iot, sc->sc_ioh, SCOOP_GPWR,
+		    sc->sc_gpwr);
+	}
+
+	scoop_led_set(led_state, 1);
 }
