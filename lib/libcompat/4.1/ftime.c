@@ -29,12 +29,13 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: ftime.c,v 1.2 1996/12/14 07:01:27 tholo Exp $";
+static char rcsid[] = "$Id: ftime.c,v 1.3 1997/09/15 11:29:51 downsj Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/timeb.h>
+#include <time.h>
 
 int
 ftime(tbp)
@@ -42,13 +43,24 @@ ftime(tbp)
 {
         struct timezone tz;
         struct timeval t;
+	struct tm *lt;
+	time_t now;	/* because tv_sec is a long! */
 
         if (gettimeofday(&t, &tz) < 0)
                 return (-1);
         tbp->millitm = (unsigned short)(t.tv_usec / 1000);
         tbp->time = t.tv_sec;
-        tbp->timezone = tz.tz_minuteswest;
-        tbp->dstflag = tz.tz_dsttime;
+
+	time(&now);
+	lt = localtime(&now);
+	if (lt != NULL) {
+		tbp->timezone = -((lt->tm_isdst ? (lt->tm_gmtoff - 3600) :
+		    lt->tm_gmtoff) / 60);
+		tbp->dstflag = lt->tm_isdst;
+	} else {
+        	tbp->timezone = tz.tz_minuteswest;
+        	tbp->dstflag = tz.tz_dsttime;
+	}
 
 	return (0);
 }
