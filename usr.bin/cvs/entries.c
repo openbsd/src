@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.15 2004/08/13 13:24:13 jfb Exp $	*/
+/*	$OpenBSD: entries.c,v 1.16 2004/08/27 15:44:38 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -128,12 +128,10 @@ cvs_ent_open(const char *dir, int flags)
 	}
 
 	/* only keep a pointer to the open file if we're in writing mode */
-	if ((flags & O_WRONLY) || (flags & O_RDWR)) {
+	if ((flags & O_WRONLY) || (flags & O_RDWR))
 		ep->cef_flags |= CVS_ENTF_WR;
-		ep->cef_file = fp;
-	}
-	else
-		(void)fclose(fp);
+
+	(void)fclose(fp);
 
 	if (exists)
 		ep->cef_flags |= CVS_ENTF_SYNC;
@@ -188,7 +186,7 @@ cvs_ent_close(CVSENTRIES *ep)
 int
 cvs_ent_add(CVSENTRIES *ef, struct cvs_ent *ent)
 {
-	if (ef->cef_file == NULL) {
+	if (!(ef->cef_flags & CVS_ENTF_WR)) {
 		cvs_log(LP_ERR, "Entries file is opened in read-only mode");
 		return (-1);
 	}
@@ -215,7 +213,7 @@ cvs_ent_addln(CVSENTRIES *ef, const char *line)
 {
 	struct cvs_ent *ent;
 
-	if (ef->cef_file == NULL) {
+	if (!(ef->cef_flags & CVS_ENTF_WR)) {
 		cvs_log(LP_ERR, "Entries file is opened in read-only mode");
 		return (-1);
 	}
@@ -245,6 +243,11 @@ int
 cvs_ent_remove(CVSENTRIES *ef, const char *name)
 {
 	struct cvs_ent *ent;
+
+	if (!(ef->cef_flags & CVS_ENTF_WR)) {
+		cvs_log(LP_ERR, "Entries file is opened in read-only mode");
+		return (-1);
+	}
 
 	ent = cvs_ent_get(ef, name);
 	if (ent == NULL)
@@ -440,11 +443,18 @@ cvs_ent_write(CVSENTRIES *ef)
 	char revbuf[64], timebuf[32];
 	struct cvs_ent *ent;
 
-	if (ef->cef_file == NULL)
-		return (-1);
-
 	if (ef->cef_flags & CVS_ENTF_SYNC)
 		return (0);
+
+	if (ef->cef_file == NULL) {
+		ef->cef_file = fopen(ef->cef_path, "w");
+		if (ef->cef_file == NULL) {
+			cvs_log(LP_ERRNO, "failed to open Entries `%s'",
+			    ef->cef_path);
+			return (-1);
+		}
+	}
+
 
 	/* reposition ourself at beginning of file */
 	rewind(ef->cef_file);
@@ -475,6 +485,8 @@ cvs_ent_write(CVSENTRIES *ef)
 	fprintf(ef->cef_file, "D\n");
 
 	ef->cef_flags |= CVS_ENTF_SYNC;
+	fclose(ef->cef_file);
+	ef->cef_file = NULL;
 
 	return (0);
 }
