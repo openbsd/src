@@ -10,7 +10,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth1.c,v 1.50 2003/08/13 08:46:30 markus Exp $");
+RCSID("$OpenBSD: auth1.c,v 1.51 2003/08/26 09:58:43 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -315,8 +315,10 @@ do_authentication(void)
 	/* Verify that the user is a valid user. */
 	if ((authctxt->pw = PRIVSEP(getpwnamallow(user))) != NULL)
 		authctxt->valid = 1;
-	else
+	else {
 		debug("do_authentication: illegal user %s", user);
+		authctxt->pw = fakepw();
+	}
 
 	setproctitle("%s%s", authctxt->pw ? user : "unknown",
 	    use_privsep ? " [net]" : "");

@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth2-passwd.c,v 1.3 2003/04/08 20:21:28 itojun Exp $");
+RCSID("$OpenBSD: auth2-passwd.c,v 1.4 2003/08/26 09:58:43 markus Exp $");
 
 #include "xmalloc.h"
 #include "packet.h"
@@ -47,8 +47,7 @@ userauth_passwd(Authctxt *authctxt)
 		logit("password change not supported");
 	password = packet_get_string(&len);
 	packet_check_eom();
-	if (authctxt->valid &&
-	    PRIVSEP(auth_password(authctxt, password)) == 1)
+	if (PRIVSEP(auth_password(authctxt, password)) == 1)
 		authenticated = 1;
 	memset(password, 0, len);
 	xfree(password);

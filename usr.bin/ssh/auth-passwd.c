@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-passwd.c,v 1.28 2003/07/22 13:35:22 markus Exp $");
+RCSID("$OpenBSD: auth-passwd.c,v 1.29 2003/08/26 09:58:43 markus Exp $");
 
 #include "packet.h"
 #include "log.h"
@@ -54,19 +54,20 @@ int
 auth_password(Authctxt *authctxt, const char *password)
 {
 	struct passwd * pw = authctxt->pw;
+	int ok = authctxt->valid;
 
 	/* deny if no user. */
 	if (pw == NULL)
 		return 0;
 	if (pw->pw_uid == 0 && options.permit_root_login != PERMIT_YES)
-		return 0;
+		ok = 0;
 	if (*password == '\0' && options.permit_empty_passwd == 0)
 		return 0;
 #ifdef KRB5
 	if (options.kerberos_authentication == 1) {
 		int ret = auth_krb5_password(authctxt, password);
 		if (ret == 1 || ret == 0)
-			return ret;
+			return ret && ok;
 		/* Fall back to ordinary passwd authentication. */
 	}
 #endif
@@ -75,11 +76,11 @@ auth_password(Authctxt *authctxt, const char *password)
 	    (char *)password) == 0)
 		return 0;
 	else
-		return 1;
+		return ok;
 #else
 	/* Check for users with no password. */
 	if (strcmp(password, "") == 0 && strcmp(pw->pw_passwd, "") == 0)
-		return 1;
+		return ok;
 	else {
 		/* Encrypt the candidate password using the proper salt. */
 		char *encrypted_password = crypt(password,
@@ -89,7 +90,7 @@ auth_password(Authctxt *authctxt, const char *password)
 		 * Authentication is accepted if the encrypted passwords
 		 * are identical.
 		 */
-		return (strcmp(encrypted_password, pw->pw_passwd) == 0);
+		return (strcmp(encrypted_password, pw->pw_passwd) == 0) && ok;
 	}
 #endif
 }

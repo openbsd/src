@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth2-none.c,v 1.5 2003/07/31 09:21:02 markus Exp $");
+RCSID("$OpenBSD: auth2-none.c,v 1.6 2003/08/26 09:58:43 markus Exp $");
 
 #include "auth.h"
 #include "xmalloc.h"
@@ -96,7 +96,7 @@ userauth_none(Authctxt *authctxt)
 	none_enabled = 0;
 	packet_check_eom();
 	userauth_banner();
-	if (options.password_authentication && authctxt->valid)
+	if (options.password_authentication)
 		return (PRIVSEP(auth_password(authctxt, "")));
 	return (0);
 }

@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth.c,v 1.48 2003/06/02 09:17:34 markus Exp $");
+RCSID("$OpenBSD: auth.c,v 1.49 2003/08/26 09:58:43 markus Exp $");
 
 #include <libgen.h>
 
@@ -470,4 +470,23 @@ auth_debug_reset(void)
 		buffer_init(&auth_debug);
 		auth_debug_init = 1;
 	}
+}
+
+struct passwd *
+fakepw(void)
+{
+	static struct passwd fake;
+
+	memset(&fake, 0, sizeof(fake));
+	fake.pw_name = "NOUSER";
+	fake.pw_passwd =
+	    "$2a$06$r3.juUaHZDlIbQaO2dS9FuYxL1W9M81R1Tc92PoSNmzvpEqLkLGrK";	
+	fake.pw_gecos = "NOUSER";
+	fake.pw_uid = -1;
+	fake.pw_gid = -1;
+	fake.pw_class = "";
+	fake.pw_dir = "/nonexist";
+	fake.pw_shell = "/nonexist";
+
+	return (&fake);
 }
