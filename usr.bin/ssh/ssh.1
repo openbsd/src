@@ -34,7 +34,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ssh.1,v 1.88 2001/02/09 18:18:26 provos Exp $
+.\" $OpenBSD: ssh.1,v 1.89 2001/02/10 15:48:53 stevesk Exp $
 .Dd September 25, 1999
 .Dt SSH 1
 .Os
@@ -566,22 +566,6 @@ Forces
 .Nm
 to use IPv6 addresses only.
 .El
-.Pp
-If
-.Nm
-is not invoked with one of the standard program names
-.Pf ( Dq ssh ,
-.Dq slogin ,
-.Dq rsh ,
-.Dq rlogin ,
-or
-.Dq remsh ) ,
-it uses this name as its
-.Ar hostname
-argument.
-This is consistent with traditional
-.Xr rsh 1
-behavior.
 .Sh CONFIGURATION FILES
 .Nm
 obtains configuration data from the following sources (in this order):
