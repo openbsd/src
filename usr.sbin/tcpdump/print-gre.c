@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-gre.c,v 1.3 2002/09/18 18:49:03 jason Exp $	*/
+/*	$OpenBSD: print-gre.c,v 1.4 2002/09/18 19:39:35 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -31,6 +31,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * tcpdump filter for GRE - Generic Routing Encapsulation (RFC1701 and RFC1702)
+ */
+
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/uio.h>
@@ -39,8 +43,10 @@
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
+#include <arpa/inet.h>
 
 #include <stdio.h>
+#include <string.h>
 
 #include "interface.h"
 #include "addrtoname.h"
@@ -55,6 +61,14 @@
 #define	GRE_VERS	0x0007		/* protocol version */
 
 #define	GREPROTO_IP	0x0800		/* IP */
+
+/* source route entry types */
+#define	GRESRE_IP	0x0800		/* IP */
+#define	GRESRE_ASN	0xfffe		/* ASN */
+
+void gre_sre_print(u_int16_t, u_int8_t, u_int8_t, const u_char *, u_int);
+void gre_sre_ip_print(u_int8_t, u_int8_t, const u_char *, u_int);
+void gre_sre_asn_print(u_int8_t, u_int8_t, const u_char *, u_int);
 
 void
 gre_print(const u_char *bp, u_int length)
@@ -135,6 +149,8 @@ gre_print(const u_char *bp, u_int length)
 			if (af == 0 && srelen == 0)
 				break;
 
+			gre_sre_print(af, sreoff, srelen, bp, len);
+
 			if (len < srelen)
 				goto trunc;
 			bp += srelen;
@@ -153,4 +169,89 @@ gre_print(const u_char *bp, u_int length)
 
 trunc:
 	printf("[|gre]");
+}
+
+void
+gre_sre_print(u_int16_t af, u_int8_t sreoff, u_int8_t srelen,
+    const u_char *bp, u_int len)
+{
+	switch (af) {
+	case GRESRE_IP:
+		printf("(rtaf=ip");
+		gre_sre_ip_print(sreoff, srelen, bp, len);
+		printf(") ");
+		break;
+	case GRESRE_ASN:
+		printf("(rtaf=asn");
+		gre_sre_asn_print(sreoff, srelen, bp, len);
+		printf(") ");
+		break;
+	default:
+		printf("(rtaf=0x%x) ", af);
+	}
+}
+void
+gre_sre_ip_print(u_int8_t sreoff, u_int8_t srelen, const u_char *bp, u_int len)
+{
+	struct in_addr a;
+	const u_char *up = bp;
+
+	if (sreoff & 3) {
+		printf(" badoffset=%u", sreoff);
+		return;
+	}
+	if (srelen & 3) {
+		printf(" badlength=%u", srelen);
+		return;
+	}
+	if (sreoff >= srelen) {
+		printf(" badoff/len=%u/%u", sreoff, srelen);
+		return;
+	}
+
+	for (;;) {
+		if (len < 4 || srelen == 0)
+			return;
+
+		memcpy(&a, bp, sizeof(a));
+		printf(" %s%s",
+		    ((bp - up) == sreoff) ? "*" : "",
+		    inet_ntoa(a));
+
+		bp += 4;
+		len -= 4;
+		srelen -= 4;
+	}
+}
+
+void
+gre_sre_asn_print(u_int8_t sreoff, u_int8_t srelen, const u_char *bp, u_int len)
+{
+	const u_char *up = bp;
+
+	if (sreoff & 1) {
+		printf(" badoffset=%u", sreoff);
+		return;
+	}
+	if (srelen & 1) {
+		printf(" badlength=%u", srelen);
+		return;
+	}
+	if (sreoff >= srelen) {
+		printf(" badoff/len=%u/%u", sreoff, srelen);
+		return;
+	}
+
+	for (;;) {
+		if (len < 2 || srelen == 0)
+			return;
+
+		printf(" %s%x",
+		    ((bp - up) == sreoff) ? "*" : "",
+		    EXTRACT_16BITS(bp));
+
+		bp += 2;
+		len -= 2;
+		srelen -= 2;
+	}
 }
