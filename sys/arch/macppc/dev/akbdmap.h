@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbdmap.h,v 1.4 2002/05/30 23:21:02 maja Exp $	*/
+/*	$OpenBSD: akbdmap.h,v 1.5 2002/06/17 07:04:33 avsm Exp $	*/
 /*	$NetBSD: akbdmap.h,v 1.3 2000/09/01 16:00:39 tsubai Exp $	*/
 
 /*-
@@ -190,6 +190,14 @@ static const keysym_t akbd_keydesc_jp[] = {
 };
 #endif
 
+static const keysym_t akbd_keydesc_uk[] = {
+/*  pos		normal		shifted		altgr		shift-altgr */
+    KC(10),	KS_section,	KS_plusminus,
+    KC(20),	KS_3,		KS_sterling,	KS_numbersign,
+    KC(52),	KS_KP_Enter,
+    KC(58),	KS_Mode_switch,	KS_Multi_key,		/* Option */
+};
+
 static const keysym_t akbd_keydesc_sv[] = {
 /*  pos		normal		shifted		altgr		shift-altgr */
     KC(10),	KS_section,	KS_degree,
@@ -285,6 +293,7 @@ static const struct wscons_keydesc akbd_keydesctab[] = {
 	KBD_MAP(KB_SV | KB_NODEAD,	KB_SV,	akbd_keydesc_sv_nodead),
 	KBD_MAP(KB_DE,			KB_US,	akbd_keydesc_de),
 	KBD_MAP(KB_DE | KB_NODEAD,	KB_DE,	akbd_keydesc_de_nodead),
+	KBD_MAP(KB_UK,			KB_US,	akbd_keydesc_uk),
 	{0, 0, 0, 0}
 };
 
