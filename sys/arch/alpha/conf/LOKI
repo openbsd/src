@@ -1,4 +1,4 @@
-#	$OpenBSD: LOKI,v 1.6 1999/01/08 03:16:16 niklas Exp $
+#	$OpenBSD: LOKI,v 1.7 1999/09/06 22:55:44 kstailey Exp $
 #
 # LOKI, an Alpha AXPPCI33 (NoName) kernel.
 #
@@ -21,7 +21,7 @@ option		FFS		# Fast file system
 option		NFSCLIENT	# Sun NFS-compatible file system client
 option		NFSSERVER	# Sun NFS-compatible file system server
 
-#option		CD9660		# ISO 9660 + Rock Ridge file system
+option		CD9660		# ISO 9660 + Rock Ridge file system
 #option		FDESC		# /dev/fd
 option		FIFO		# POSIX fifo support (in all file systems)
 option		KERNFS		# /kern
@@ -99,8 +99,18 @@ com*	at	isa? port 0x2f8 irq 3
 lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
 ne0	at	isa? port 0x300 iomem 0xcc000 irq 10	# NE2000 Klone
 
+# IDE
+#pciide* at pci ? dev ? function ? flags 0x0000
+wdc0	at isa? port 0x1f0 irq 14 flags 0x00
+#wdc1	at isa? port 0x170 irq 15 flags 0x00
+wd*	at wdc? channel ? drive ? flags 0x0000
+#wd*	at pciide? channel ? drive ? flags 0x0000
+
 # SCSI bus support
-scsibus* at	ncr?
+atapiscsi* at wdc? channel ?
+#atapiscsi* at pciide? channel ?
+scsibus* at atapiscsi?
+scsibus* at ncr?
 
 # SCSI devices
 cd*	at	scsibus? target ? lun ?
@@ -112,11 +122,15 @@ uk*	at	scsibus? target ? lun ?
 # Workstation Console attachments
 wscons*	at	vga?
 
-pseudo-device	bpfilter	16	# Berkeley Packet Filter
+pseudo-device	bpfilter	8	# Berkeley Packet Filter
 pseudo-device	loop			# network loopback
 pseudo-device	pty		64	# pseudo-terminals
+#pseudo-device	tb		1	# tablet line discipline
 #pseudo-device	rd		1	# ramdisk
 #pseudo-device	sl		4	# CSLIP
 #pseudo-device	ppp		1	# PPP
 #pseudo-device	tun		2	# network tunneling over tty
 pseudo-device	vnd		4	# paging to files; mount disk images
+#pseudo-device	ccd		4	# concatenated disk devices
+pseudo-device	ksyms		1	# kernel symbols device
+#pseudo-device	bridge		2	# network bridging support
