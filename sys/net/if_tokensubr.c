@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tokensubr.c,v 1.3 2001/06/15 03:38:34 itojun Exp $	*/
+/*	$OpenBSD: if_tokensubr.c,v 1.4 2001/06/27 06:07:45 kjc Exp $	*/
 /*	$NetBSD: if_tokensubr.c,v 1.7 1999/05/30 00:39:07 bad Exp $	*/
 
 /*
@@ -140,7 +140,7 @@ token_output(ifp, m0, dst, rt0)
 	struct rtentry *rt0;
 {
 	u_int16_t etype;
-	int s, error = 0;
+	int s, len, error = 0;
 	u_char edst[ISO88025_ADDR_LEN];
 	register struct mbuf *m = m0;
 	register struct rtentry *rt;
@@ -152,6 +152,8 @@ token_output(ifp, m0, dst, rt0)
 	struct token_rif *rif = (struct  token_rif *)0;
 	struct token_rif bcastrif;
 	size_t riflen = 0;
+	ALTQ_DECL(struct altq_pktattr pktattr;)
+	short mflags;
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
@@ -177,6 +179,13 @@ token_output(ifp, m0, dst, rt0)
 			    time.tv_sec < rt->rt_rmx.rmx_expire)
 				senderr(rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
 	}
+
+	/*
+	 * If the queueing discipline needs packet classification,
+	 * do it before prepending link headers.
+	 */
+	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
+
 	switch (dst->sa_family) {
 
 #ifdef INET
@@ -439,23 +448,25 @@ token_output(ifp, m0, dst, rt0)
 send:
 #endif /* 0 */
 
+	mflags = m->m_flags;
+	len = m->m_pkthdr.len;
 	s = splimp();
 	/*
 	 * Queue message on interface, and start output if interface
 	 * not yet active.
 	 */
-	if (IF_QFULL(&ifp->if_snd)) {
-		IF_DROP(&ifp->if_snd);
+	IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, error);
+	if (error) {
+		/* mbuf is already freed */
 		splx(s);
-		senderr(ENOBUFS);
+		return (error);
 	}
-	ifp->if_obytes += m->m_pkthdr.len;
-	IF_ENQUEUE(&ifp->if_snd, m);
+	ifp->if_obytes += len;
+	if (mflags & M_MCAST)
+		ifp->if_omcasts++;
 	if ((ifp->if_flags & IFF_OACTIVE) == 0)
 		(*ifp->if_start)(ifp);
 	splx(s);
-	if (m->m_flags & M_MCAST)
-		ifp->if_omcasts++;
 	return (error);
 
 bad:

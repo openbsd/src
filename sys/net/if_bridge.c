@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.67 2001/06/26 18:17:53 deraadt Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.68 2001/06/27 06:07:39 kjc Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -742,7 +742,9 @@ bridge_output(ifp, m, sa, rt)
 	struct ifnet *dst_if;
 	struct ether_addr *src, *dst;
 	struct bridge_softc *sc;
-	int s;
+	int s, error, len;
+	short mflags;
+	ALTQ_DECL(struct altq_pktattr pktattr;)
 #ifdef IPSEC
 	struct m_tag *mtag;
 #endif /* IPSEC */
@@ -806,6 +808,9 @@ bridge_output(ifp, m, sa, rt)
 			dst_if = p->ifp;
 			if ((dst_if->if_flags & IFF_RUNNING) == 0)
 				continue;
+#ifdef ALTQ
+			if (ALTQ_IS_ENABLED(&dst_if->if_snd) == 0)
+#endif
 			if (IF_QFULL(&dst_if->if_snd)) {
 				IF_DROP(&dst_if->if_snd);
 				sc->sc_if.if_oerrors++;
@@ -821,13 +826,22 @@ bridge_output(ifp, m, sa, rt)
 					continue;
 				}
 			}
-
+			len = mc->m_pkthdr.len;
+			mflags = mc->m_flags;
+#ifdef ALTQ
+			if (ALTQ_IS_ENABLED(&dst_if->if_snd))
+				altq_etherclassify(&dst_if->if_snd, mc, &pktattr);
+#endif
+			IFQ_ENQUEUE(&dst_if->if_snd, mc, &pktattr, error);
+			if (error) {
+				sc->sc_if.if_oerrors++;
+				continue;
+			}
 			sc->sc_if.if_opackets++;
-			sc->sc_if.if_obytes += mc->m_pkthdr.len;
-			dst_if->if_obytes += mc->m_pkthdr.len;
-			IF_ENQUEUE(&dst_if->if_snd, mc);
-			if (mc->m_flags & M_MCAST)
-				ifp->if_omcasts++;
+			sc->sc_if.if_obytes += len;
+			dst_if->if_obytes += len;
+			if (mflags & M_MCAST)
+				dst_if->if_omcasts++;
 			if ((dst_if->if_flags & IFF_OACTIVE) == 0)
 				(*dst_if->if_start)(dst_if);
 		}
@@ -843,18 +857,22 @@ sendunicast:
 		splx(s);
 		return (0);
 	}
-	if (IF_QFULL(&dst_if->if_snd)) {
-		IF_DROP(&dst_if->if_snd);
+	len = m->m_pkthdr.len;
+	mflags = m->m_flags;
+#ifdef ALTQ
+	if (ALTQ_IS_ENABLED(&dst_if->if_snd))
+		altq_etherclassify(&dst_if->if_snd, m, &pktattr);
+#endif
+	IFQ_ENQUEUE(&dst_if->if_snd, m, &pktattr, error);
+	if (error) {
 		sc->sc_if.if_oerrors++;
-		m_freem(m);
 		splx(s);
 		return (0);
 	}
 	sc->sc_if.if_opackets++;
-	sc->sc_if.if_obytes += m->m_pkthdr.len;
-	dst_if->if_obytes += m->m_pkthdr.len;
-	IF_ENQUEUE(&dst_if->if_snd, m);
-	if (m->m_flags & M_MCAST)
+	sc->sc_if.if_obytes += len;
+	dst_if->if_obytes += len;
+	if (mflags & M_MCAST)
 		dst_if->if_omcasts++;
 	if ((dst_if->if_flags & IFF_OACTIVE) == 0)
 		(*dst_if->if_start)(dst_if);
@@ -902,11 +920,13 @@ bridgeintr_frame(sc, m)
 	struct bridge_softc *sc;
 	struct mbuf *m;
 {
-	int s;
+	int s, error, len;
 	struct ifnet *src_if, *dst_if;
 	struct bridge_iflist *ifl;
 	struct ether_addr *dst, *src;
 	struct ether_header eh;
+	short mflags;
+	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	if ((sc->sc_if.if_flags & IFF_RUNNING) == 0) {
 		m_freem(m);
@@ -1067,19 +1087,23 @@ bridgeintr_frame(sc, m)
 		m_freem(m);
 		return;
 	}
+#ifdef ALTQ
+	if (ALTQ_IS_ENABLED(&dst_if->if_snd))
+		altq_etherclassify(&dst_if->if_snd, m, &pktattr);
+#endif
+	len = m->m_pkthdr.len;
+	mflags = m->m_flags;
 	s = splimp();
-	if (IF_QFULL(&dst_if->if_snd)) {
-		IF_DROP(&dst_if->if_snd);
+	IFQ_ENQUEUE(&dst_if->if_snd, m, &pktattr, error);
+	if (error) {
 		sc->sc_if.if_oerrors++;
-		m_freem(m);
 		splx(s);
 		return;
 	}
 	sc->sc_if.if_opackets++;
-	sc->sc_if.if_obytes += m->m_pkthdr.len;
-	dst_if->if_obytes += m->m_pkthdr.len;
-	IF_ENQUEUE(&dst_if->if_snd, m);
-	if (m->m_flags & M_MCAST)
+	sc->sc_if.if_obytes += len;
+	dst_if->if_obytes += len;
+	if (mflags & M_MCAST)
 		dst_if->if_omcasts++;
 	if ((dst_if->if_flags & IFF_OACTIVE) == 0)
 		(*dst_if->if_start)(dst_if);
@@ -1245,7 +1269,9 @@ bridge_broadcast(sc, ifp, eh, m)
 	struct bridge_iflist *p;
 	struct mbuf *mc;
 	struct ifnet *dst_if;
-	int used = 0;
+	int error, len, used = 0;
+	short mflags;
+	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	LIST_FOREACH(p, &sc->sc_iflist, next) {
 		/*
@@ -1268,6 +1294,9 @@ bridge_broadcast(sc, ifp, eh, m)
 		if ((dst_if->if_flags & IFF_RUNNING) == 0)
 			continue;
 
+#ifdef ALTQ
+		if (ALTQ_IS_ENABLED(&dst_if->if_snd) == 0)
+#endif
 		if (IF_QFULL(&dst_if->if_snd)) {
 			IF_DROP(&dst_if->if_snd);
 			sc->sc_if.if_oerrors++;
@@ -1294,11 +1323,19 @@ bridge_broadcast(sc, ifp, eh, m)
 			}
 		}
 
+#ifdef ALTQ
+		if (ALTQ_IS_ENABLED(&dst_if->if_snd))
+			altq_etherclassify(&dst_if->if_snd, mc, &pktattr);
+#endif
+		IFQ_ENQUEUE(&dst_if->if_snd, mc, &pktattr, error);
+		if (error) {
+			sc->sc_if.if_oerrors++;
+			continue;
+		}
 		sc->sc_if.if_opackets++;
-		sc->sc_if.if_obytes += mc->m_pkthdr.len;
-		dst_if->if_obytes += m->m_pkthdr.len;
-		IF_ENQUEUE(&dst_if->if_snd, mc);
-		if (mc->m_flags & M_MCAST)
+		sc->sc_if.if_obytes += len;
+		dst_if->if_obytes += len;
+		if (mflags & M_MCAST)
 			dst_if->if_omcasts++;
 		if ((dst_if->if_flags & IFF_OACTIVE) == 0)
 			(*dst_if->if_start)(dst_if);

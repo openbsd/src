@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sl.c,v 1.13 2001/06/15 03:38:34 itojun Exp $	*/
+/*	$OpenBSD: if_sl.c,v 1.14 2001/06/27 06:07:43 kjc Exp $	*/
 /*	$NetBSD: if_sl.c,v 1.39.4.1 1996/06/02 16:26:31 thorpej Exp $	*/
 
 /*
@@ -214,8 +214,9 @@ slattach(n)
 		sc->sc_if.if_type = IFT_SLIP;
 		sc->sc_if.if_ioctl = slioctl;
 		sc->sc_if.if_output = sloutput;
-		sc->sc_if.if_snd.ifq_maxlen = 50;
+		IFQ_SET_MAXLEN(&sc->sc_if.if_snd, 50);
 		sc->sc_fastq.ifq_maxlen = 32;
+		IFQ_SET_READY(&sc->sc_if.if_snd);
 		if_attach(&sc->sc_if);
 #if NBPFILTER > 0
 		bpfattach(&sc->sc_bpf, &sc->sc_if, DLT_SLIP, SLIP_HDRLEN);
@@ -383,8 +384,10 @@ sloutput(ifp, m, dst, rtp)
 {
 	register struct sl_softc *sc = ifp->if_softc;
 	register struct ip *ip;
-	register struct ifqueue *ifq;
-	int s;
+	int s, error;
+	ALTQ_DECL(struct altq_pktattr pktattr;)
+
+	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
 
 	/*
 	 * `Cannot happen' (see slioctl).  Someday we will extend
@@ -407,14 +410,11 @@ sloutput(ifp, m, dst, rtp)
 		m_freem(m);
 		return (EHOSTUNREACH);
 	}
-	ifq = &sc->sc_if.if_snd;
 	ip = mtod(m, struct ip *);
 	if (sc->sc_if.if_flags & SC_NOICMP && ip->ip_p == IPPROTO_ICMP) {
 		m_freem(m);
 		return (ENETRESET);		/* XXX ? */
 	}
-	if (ip->ip_tos & IPTOS_LOWDELAY)
-		ifq = &sc->sc_fastq;
 	s = splimp();
 	if (sc->sc_oqlen && sc->sc_ttyp->t_outq.c_cc == sc->sc_oqlen) {
 		struct timeval tv;
@@ -426,14 +426,13 @@ sloutput(ifp, m, dst, rtp)
 			slstart(sc->sc_ttyp);
 		}
 	}
-	if (IF_QFULL(ifq)) {
-		IF_DROP(ifq);
-		m_freem(m);
+	IFQ_ENQUEUE(&sc->sc_if.if_snd, m, &pktattr, error);
+	if (error) {
 		splx(s);
 		sc->sc_if.if_oerrors++;
-		return (ENOBUFS);
+		return (error);
 	}
-	IF_ENQUEUE(ifq, m);
+
 	sc->sc_lastpacket = time;
 	if ((sc->sc_oqlen = sc->sc_ttyp->t_outq.c_cc) == 0)
 		slstart(sc->sc_ttyp);
@@ -500,7 +499,7 @@ slstart(tp)
 		if (m)
 			sc->sc_if.if_omcasts++;		/* XXX */
 		else
-			IF_DEQUEUE(&sc->sc_if.if_snd, m);
+			IFQ_DEQUEUE(&sc->sc_if.if_snd, m);
 		splx(s);
 		if (m == NULL)
 			return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.23 2001/06/27 03:49:53 angelos Exp $ */
+/*	$OpenBSD: if_vlan.c,v 1.24 2001/06/27 06:07:46 kjc Exp $ */
 /*
  * Copyright 1998 Massachusetts Institute of Technology
  *
@@ -165,7 +165,8 @@ vlanattach(void *dummy)
 		ifp->if_start = vlan_start;
 		ifp->if_ioctl = vlan_ioctl;
 		ifp->if_output = ether_output;
-		ifp->if_snd.ifq_maxlen = ifqmaxlen;
+		IFQ_SET_MAXLEN(&ifp->if_snd, ifqmaxlen);
+		IFQ_SET_READY(&ifp->if_snd);
 		if_attach(ifp);
 		ether_ifattach(ifp);
 
@@ -182,13 +183,15 @@ vlan_start(struct ifnet *ifp)
 	struct ifnet *p;
 	struct ether_vlan_header *evl;
 	struct mbuf *m, *m0;
+	int error;
+	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	ifv = ifp->if_softc;
 	p = ifv->ifv_p;
 
 	ifp->if_flags |= IFF_OACTIVE;
 	for (;;) {
-		IF_DEQUEUE(&ifp->if_snd, m);
+		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
 
@@ -200,6 +203,26 @@ vlan_start(struct ifnet *ifp)
 			m_freem(m);
 			continue;
 		}
+
+#ifdef ALTQ
+		/*
+		 * If ALTQ is enabled on the parent interface, do
+		 * classification; the queueing discipline might
+		 * not require classification, but might require
+		 * the address family/header pointer in the pktattr.
+		 */
+		if (ALTQ_IS_ENABLED(&p->if_snd)) {
+			switch (p->if_type) {
+			case IFT_ETHER:
+				altq_etherclassify(&p->if_snd, m, &pktattr);
+				break;
+#ifdef DIAGNOSTIC
+			default:
+				panic("vlan_start: impossible (altq)");
+#endif
+			}
+		}
+#endif /* ALTQ */
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
@@ -271,17 +294,16 @@ vlan_start(struct ifnet *ifp)
 		 * Send it, precisely as ether_output() would have.
 		 * We are already running at splimp.
 		 */
-		if (IF_QFULL(&p->if_snd)) {
-			IF_DROP(&p->if_snd);
-				/* XXX stats */
-			ifp->if_oerrors++;
-			m_freem(m);
-			continue;
-		}
 		p->if_obytes += m->m_pkthdr.len;
 		if (m->m_flags & M_MCAST)
 			p->if_omcasts++;
-		IF_ENQUEUE(&p->if_snd, m);
+		IFQ_ENQUEUE(&p->if_snd, m, &pktattr, error);
+		if (error) {
+			/* mbuf is already freed */
+			ifp->if_oerrors++;
+			continue;
+		}
+
 		ifp->if_opackets++;
 		if ((p->if_flags & IFF_OACTIVE) == 0)
 			p->if_start(p);

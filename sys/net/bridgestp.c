@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.6 2001/05/30 02:12:23 deraadt Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.7 2001/06/27 06:07:37 kjc Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -224,7 +224,7 @@ bstp_send_config_bpdu(bif, cu)
 	struct mbuf *m;
 	struct ether_header eh;
 	struct bstp_cbpdu bpdu;
-	int s;
+	int s, error;
 
 	s = splimp();
 	ifp = bif->ifp;
@@ -234,6 +234,9 @@ bstp_send_config_bpdu(bif, cu)
 		splx(s);
 		return;
 	}
+#ifdef ALTQ
+	if (!ALTQ_IS_ENABLED(&ifp->if_snd))
+#endif
 	if (IF_QFULL(&ifp->if_snd)) {
 		splx(s);
 		return;
@@ -287,8 +290,8 @@ bstp_send_config_bpdu(bif, cu)
 	bcopy(&eh, m->m_data, sizeof(eh));
 	bcopy(&bpdu, m->m_data + sizeof(eh), sizeof(bpdu));
 
-	IF_ENQUEUE(&ifp->if_snd, m);
-	if ((ifp->if_flags & IFF_OACTIVE) == 0)
+	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
+	if (error == 0 && (ifp->if_flags & IFF_OACTIVE) == 0)
 		(*ifp->if_start)(ifp);
 	splx(s);
 }
@@ -386,7 +389,7 @@ bstp_transmit_tcn(sc)
 	struct arpcom *arp = (struct arpcom *)ifp;
 	struct ether_header *eh;
 	struct mbuf *m;
-	int s;
+	int s, error;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
@@ -410,10 +413,8 @@ bstp_transmit_tcn(sc)
 	s = splimp();
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		goto out;
-	if (IF_QFULL(&ifp->if_snd))
-		goto out;
-	IF_ENQUEUE(&ifp->if_snd, m);
-	if ((ifp->if_flags & IFF_OACTIVE) == 0)
+	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
+	if (error == 0 && (ifp->if_flags & IFF_OACTIVE) == 0)
 		(*ifp->if_start)(ifp);
 	m = NULL;
 

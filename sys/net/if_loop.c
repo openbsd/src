@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.18 2001/06/15 03:38:34 itojun Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.19 2001/06/27 06:07:42 kjc Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -145,6 +145,10 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #define	LOMTU	(32768 +  MHLEN + MLEN)
 #endif
   
+#ifdef ALTQ
+static void lo_altqstart __P((struct ifnet *));
+#endif
+
 void
 loopattach(n)
 	int n;
@@ -168,6 +172,10 @@ loopattach(n)
 		ifp->if_type = IFT_LOOP;
 		ifp->if_hdrlen = sizeof(u_int32_t);
 		ifp->if_addrlen = 0;
+		IFQ_SET_READY(&ifp->if_snd);
+#ifdef ALTQ
+		ifp->if_start = lo_altqstart;
+#endif
 		if_attachhead(ifp);
 #if NBPFILTER > 0
 		bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(u_int32_t));
@@ -221,6 +229,37 @@ looutput(ifp, m, dst, rt)
 
 	ifp->if_opackets++;
 	ifp->if_obytes += m->m_pkthdr.len;
+#ifdef ALTQ
+	/*
+	 * altq for loop is just for debugging.
+	 * only used when called for loop interface (not for
+	 * a simplex interface).
+	 */
+	if ((ALTQ_IS_ENABLED(&ifp->if_snd) || TBR_IS_ENABLED(&ifp->if_snd))
+	    && ifp->if_start == lo_altqstart) {
+		struct altq_pktattr pktattr;
+		int32_t *afp;
+	        int error;
+
+		/*
+		 * if the queueing discipline needs packet classification,
+		 * do it before prepending link headers.
+		 */
+		IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
+
+		M_PREPEND(m, sizeof(int32_t), M_DONTWAIT);
+		if (m == 0)
+			return(ENOBUFS);
+		afp = mtod(m, int32_t *);
+		*afp = (int32_t)dst->sa_family;
+
+	        s = splimp();
+		IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, error);
+		(*ifp->if_start)(ifp);
+		splx(s);
+		return (error);
+	}
+#endif /* ALTQ */
 	switch (dst->sa_family) {
 
 #ifdef INET
@@ -279,6 +318,87 @@ looutput(ifp, m, dst, rt)
 	splx(s);
 	return (0);
 }
+
+#ifdef ALTQ
+static void
+lo_altqstart(ifp)
+	struct ifnet *ifp;
+{
+	struct ifqueue *ifq;
+	struct mbuf *m;
+	int32_t af, *afp;
+	int s, isr;
+	
+	while (1) {
+		s = splimp();
+		IFQ_DEQUEUE(&ifp->if_snd, m);
+		splx(s);
+		if (m == NULL)
+			return;
+
+		afp = mtod(m, int32_t *);
+		af = *afp;
+		m_adj(m, sizeof(int32_t));
+
+		switch (af) {
+#ifdef INET
+		case AF_INET:
+			ifq = &ipintrq;
+			isr = NETISR_IP;
+			break;
+#endif
+#ifdef INET6
+		case AF_INET6:
+			m->m_flags |= M_LOOP;
+			ifq = &ip6intrq;
+			isr = NETISR_IPV6;
+			break;
+#endif
+#ifdef IPX
+		case AF_IPX:
+			ifq = &ipxintrq;
+			isr = NETISR_IPX;
+			break;
+#endif
+#ifdef NS
+		case AF_NS:
+			ifq = &nsintrq;
+			isr = NETISR_NS;
+			break;
+#endif
+#ifdef ISO
+		case AF_ISO:
+			ifq = &clnlintrq;
+			isr = NETISR_ISO;
+			break;
+#endif
+#ifdef NETATALK
+		case AF_APPLETALK:
+			ifq = &atintrq2;
+			isr = NETISR_ATALK;
+			break;
+#endif NETATALK
+		default:
+			printf("lo_altqstart: can't handle af%d\n", af);
+			m_freem(m);
+			return;
+		}
+
+		s = splimp();
+		if (IF_QFULL(ifq)) {
+			IF_DROP(ifq);
+			m_freem(m);
+			splx(s);
+			return;
+		}
+		IF_ENQUEUE(ifq, m);
+		schednetisr(isr);
+		ifp->if_ipackets++;
+		ifp->if_ibytes += m->m_pkthdr.len;
+		splx(s);
+	}
+}
+#endif /* ALTQ */
 
 /* ARGSUSED */
 void

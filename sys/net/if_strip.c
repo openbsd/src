@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_strip.c,v 1.14 2001/06/15 03:38:34 itojun Exp $	*/
+/*	$OpenBSD: if_strip.c,v 1.15 2001/06/27 06:07:44 kjc Exp $	*/
 /*	$NetBSD: if_strip.c,v 1.2.4.3 1996/08/03 00:58:32 jtc Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
@@ -362,11 +362,12 @@ stripattach(n)
 		sc->sc_if.if_type = IFT_SLIP;
 		sc->sc_if.if_ioctl = stripioctl;
 		sc->sc_if.if_output = stripoutput;
-		sc->sc_if.if_snd.ifq_maxlen = 50;
+		IFQ_SET_MAXLEN(&sc->sc_if.if_snd, 50);
 		sc->sc_fastq.ifq_maxlen = 32;
 
 		sc->sc_if.if_watchdog = strip_watchdog;
 		sc->sc_if.if_timer = STRIP_WATCHDOG_INTERVAL;
+		IFQ_SET_READY(&sc->sc_if.if_snd);
 		if_attach(&sc->sc_if);
 #if NBPFILTER > 0
 		bpfattach(&sc->sc_bpf, &sc->sc_if, DLT_SLIP, SLIP_HDRLEN);
@@ -715,7 +716,7 @@ stripoutput(ifp, m, dst, rt)
 	register u_char *dldst;		/* link-level next-hop */
 	int s;
 	u_char dl_addrbuf[STARMODE_ADDR_LEN+1];
-
+	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	/*
 	 * Verify tty line is up and alive.
@@ -779,13 +780,17 @@ stripoutput(ifp, m, dst, rt)
 		return (EAFNOSUPPORT);
 	}
 	
-	ifq = &sc->sc_if.if_snd;
+	ifq = NULL;
 	ip = mtod(m, struct ip *);
 	if (sc->sc_if.if_flags & SC_NOICMP && ip->ip_p == IPPROTO_ICMP) {
 		m_freem(m);
 		return (ENETRESET);		/* XXX ? */
 	}
-	if (ip->ip_tos & IPTOS_LOWDELAY)
+	if ((ip->ip_tos & IPTOS_LOWDELAY)
+#ifdef ALTQ
+	    && ALTQ_IS_ENABLED(&sc->sc_if.if_snd) == 0
+#endif
+		)
 		ifq = &sc->sc_fastq;
 
 	/*
@@ -843,14 +848,22 @@ stripoutput(ifp, m, dst, rt)
 			stripstart(sc->sc_ttyp);
 		}
 	}
-	if (IF_QFULL(ifq)) {
-		IF_DROP(ifq);
-		m_freem(m);
+	if (ifq != NULL) {
+		if (IF_QFULL(ifq)) {
+			IF_DROP(ifq);
+			m_freem(m);
+			error = ENOBUFS;
+		} else {
+			IF_ENQUEUE(ifq, m);
+			error = 0;
+		}
+	} else
+		IFQ_ENQUEUE(&sc->sc_if.if_snd, m, &pktattr, error);
+	if (error) {
 		splx(s);
 		sc->sc_if.if_oerrors++;
-		return (ENOBUFS);
+		return (error);
 	}
-	IF_ENQUEUE(ifq, m);
 	sc->sc_lastpacket = time;
 	if ((sc->sc_oqlen = sc->sc_ttyp->t_outq.c_cc) == 0) {
 		stripstart(sc->sc_ttyp);
@@ -940,7 +953,7 @@ stripstart(tp)
 		if (m)
 			sc->sc_if.if_omcasts++;		/* XXX */
 		else
-			IF_DEQUEUE(&sc->sc_if.if_snd, m);
+			IFQ_DEQUEUE(&sc->sc_if.if_snd, m);
 		splx(s);
 		if (m == NULL) {
 			return;
