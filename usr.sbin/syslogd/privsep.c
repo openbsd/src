@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.17 2004/04/02 21:44:50 avsm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.18 2004/04/09 20:13:25 canacar Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -156,9 +156,11 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 		close(nullfd);
 
 	/* Father */
-	/* Pass TERM/HUP through to child, and accept CHLD */
+	/* Pass TERM/HUP/INT/QUIT through to child, and accept CHLD */
 	signal(SIGTERM, sig_pass_to_chld);
 	signal(SIGHUP, sig_pass_to_chld);
+	signal(SIGINT, sig_pass_to_chld);
+	signal(SIGQUIT, sig_pass_to_chld);
 	signal(SIGCHLD, sig_got_chld);
 
 	setproctitle("[priv]");
@@ -608,7 +610,7 @@ priv_gethostbyaddr(char *addr, int addr_len, int af, char *res, size_t res_len)
 	return ret_len;
 }
 
-/* If priv parent gets a TERM or HUP, pass it through to child instead */
+/* Pass the signal through to child */
 static void
 sig_pass_to_chld(int sig)
 {
