@@ -1,4 +1,4 @@
-/*	$OpenBSD: read_termcap.c,v 1.5 1998/10/08 04:20:00 millert Exp $	*/
+/*	$OpenBSD: read_termcap.c,v 1.6 1998/10/31 06:30:31 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -63,7 +63,7 @@
 #include <fcntl.h>
 #endif
 
-MODULE_ID("$From: read_termcap.c,v 1.35 1998/08/18 01:37:53 tom Exp $")
+MODULE_ID("$From: read_termcap.c,v 1.37 1998/09/19 21:42:14 tom Exp $")
 
 #ifndef PURE_TERMINFO
 
@@ -1012,11 +1012,14 @@ int _nc_read_termcap_entry(const char *const tn, TERMTYPE *const tp)
 		else
 			ADD_TC("/usr/share/misc/termcap", filecount);
 
-		if (!issetugid() && (h = getenv("HOME")) != NULL && strlen(h) + 9 < PATH_MAX)
+#define PRIVATE_CAP "%s/.termcap"
+
+		if (!issetugid() && (h = getenv("HOME")) != NULL
+		 && (strlen(h) + sizeof(PRIVATE_CAP)) < PATH_MAX)
 		{
 		    /* user's .termcap, if any, should override it */
 		    (void) strcpy(envhome, h);
-		    (void) sprintf(pathbuf, "%s/.termcap", envhome);
+		    (void) sprintf(pathbuf, PRIVATE_CAP, envhome);
 		    ADD_TC(pathbuf, filecount);
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_doupdate.c,v 1.10 1998/09/17 04:14:30 millert Exp $	*/
+/*	$OpenBSD: lib_doupdate.c,v 1.11 1998/10/31 06:30:29 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -77,7 +77,7 @@
 
 #include <term.h>
 
-MODULE_ID("$From: lib_doupdate.c,v 1.104 1998/09/12 22:50:39 tom Exp $")
+MODULE_ID("$From: lib_doupdate.c,v 1.109 1998/10/03 19:08:33 tom Exp $")
 
 /*
  * This define controls the line-breakout optimization.  Every once in a
@@ -223,7 +223,7 @@ static bool check_pending(void)
 
 		FD_ZERO(&fdset);
 		FD_SET(SP->_checkfd, &fdset);
-		if (select(SP->_checkfd+1, &fdset, NULL, NULL, &ktimeout) > 0)
+		if (select(SP->_checkfd+1, &fdset, NULL, NULL, &ktimeout) != 0)
 		{
 			have_pending = TRUE;
 		}
@@ -521,7 +521,6 @@ struct tms before, after;
 		T(("coming back from shell mode"));
 		reset_prog_mode();
 
-		NC_BUFFERED(TRUE);
 		_nc_mvcur_resume();
 		_nc_screen_resume();
 		SP->_mouse_resume(SP);
@@ -705,22 +704,7 @@ struct tms before, after;
 		nonempty = min(screen_lines, newscr->_maxy+1);
 
 		if (SP->_scrolling) {
-#if USE_HASHMAP
-#if defined(TRACE) || defined(NCURSES_TEST)
-		if (_nc_optimize_enable & OPTIMIZE_HASHMAP)
-#endif /*TRACE */
-			_nc_hash_map();
-#elif !USE_SCROLL_HINTS
-		_nc_setup_scroll();
-#endif
-#if defined(TRACE) || defined(NCURSES_TEST)
-		if (_nc_optimize_enable & OPTIMIZE_SCROLL)
-#endif /*TRACE */
-#if USE_SCROLL_HINTS || USE_HASHMAP
 			_nc_scroll_optimize();
-#else
-			_nc_perform_scroll();
-#endif
 		}
 
 		nonempty = ClrBottom(nonempty);
@@ -931,7 +915,7 @@ int	last   = min(screen_columns, newscr->_maxx+1);
 size_t	length = sizeof(chtype) * last;
 chtype	blank  = newscr->_line[total-1].text[last-1]; /* lower right char */
 
-	if (!clr_eos || !can_clear_with(blank))
+	if(!clr_eos || !can_clear_with(blank))
 		return total;
 
 	if (tstLine == 0 || length > lenLine) {
@@ -955,6 +939,11 @@ chtype	blank  = newscr->_line[total-1].text[last-1]; /* lower right char */
 			GoTo(top,0);
 			ClrToEOS(blank);
 			total = top;
+			if (SP->oldhash && SP->newhash)
+			{
+				for (row = top; row < screen_lines; row++)
+					SP->oldhash[row] = SP->newhash[row];
+			}
 		}
 	}
 #if NO_LEAKS
@@ -992,6 +981,10 @@ int	n;
 bool	attrchanged = FALSE;
 
 	T(("TransformLine(%d) called", lineno));
+
+	/* copy new hash value to old one */
+	if (SP->oldhash && SP->newhash)
+		SP->oldhash[lineno] = SP->newhash[lineno];
 
 	if(ceol_standout_glitch && clr_eol) {
 		firstChar = 0;
@@ -1282,18 +1275,10 @@ static int InsStr(chtype *line, int count)
 {
 	T(("InsStr(%p,%d) called", line, count));
 
-	if (enter_insert_mode  &&  exit_insert_mode) {
-		TPUTS_TRACE("enter_insert_mode");
-		putp(enter_insert_mode);
-		while (count) {
-			PutAttrChar(*line);
-			line++;
-			count--;
-		}
-		TPUTS_TRACE("exit_insert_mode");
-		putp(exit_insert_mode);
-		return(OK);
-	} else if (parm_ich) {
+	/* Prefer parm_ich as it has the smallest cost - no need to shift
+	 * the whole line on each character. */
+	/* The order must match that of InsCharCost. */
+	if (parm_ich) {
 		TPUTS_TRACE("parm_ich");
 		tputs(tparm(parm_ich, count), count, _nc_outch);
 		while (count) {
@@ -1301,6 +1286,22 @@ static int InsStr(chtype *line, int count)
 			line++;
 			count--;
 		}
+		return(OK);
+	} else if (enter_insert_mode  &&  exit_insert_mode) {
+		TPUTS_TRACE("enter_insert_mode");
+		putp(enter_insert_mode);
+		while (count) {
+			PutAttrChar(*line);
+			if (insert_padding)
+			{
+				TPUTS_TRACE("insert_padding");
+				putp(insert_padding);
+			}
+			line++;
+			count--;
+		}
+		TPUTS_TRACE("exit_insert_mode");
+		putp(exit_insert_mode);
 		return(OK);
 	} else {
 		while (count) {
@@ -1693,6 +1694,9 @@ int _nc_scrolln(int n, int top, int bot, int maxy)
 	return(ERR);
 
     _nc_scroll_window(curscr, n, top, bot, blank);
+
+    /* shift hash values too - they can be reused */
+    _nc_scroll_oldhash(n, top, bot);
 
     return(OK);
 }

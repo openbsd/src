@@ -1,4 +1,4 @@
-/*	$OpenBSD: hashmap.c,v 1.3 1998/07/23 21:18:19 millert Exp $	*/
+/*	$OpenBSD: hashmap.c,v 1.4 1998/10/31 06:30:29 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -65,34 +65,42 @@ hashmap: hashmap.c
 
 AUTHOR
     Eric S. Raymond <esr@snark.thyrsus.com>, May 1996
+    Bug fixes and improvements by Alexander V. Lukyanov <lav@yars.free.net>, 1997
 
 *****************************************************************************/
 
 #include <curses.priv.h>
+#include <term.h> /* for back_color_erase */
 
-MODULE_ID("$From: hashmap.c,v 1.25 1998/06/06 17:40:06 tom Exp $")
+MODULE_ID("$From: hashmap.c,v 1.28 1998/09/20 02:35:15 tom Exp $")
 
 #ifdef HASHDEBUG
-#define TEXTWIDTH	1
+
+# define _tracef	printf
+# undef TR
+# define TR(n, a)	if (_nc_tracing & (n)) { _tracef a ; putchar('\n'); }
+# undef screen_lines
+# define screen_lines MAXLINES
+# define TEXTWIDTH	1
 int oldnums[MAXLINES], reallines[MAXLINES];
 static chtype oldtext[MAXLINES][TEXTWIDTH], newtext[MAXLINES][TEXTWIDTH];
-#define OLDNUM(n)	oldnums[n]
-#define REAL(m)		reallines[m]
-#define OLDTEXT(n)	oldtext[n]
-#define NEWTEXT(m)	newtext[m]
-#undef T
-#define T(x)		(void) printf x ; (void) putchar('\n');
-#else
-#include <curses.h>
-#define OLDNUM(n)	newscr->_line[n].oldindex
-#define REAL(m)		curscr->_line[m].oldindex
-#define OLDTEXT(n)	curscr->_line[n].text
-#define NEWTEXT(m)	newscr->_line[m].text
-#define TEXTWIDTH	(curscr->_maxx+1)
-#ifndef _NEWINDEX
-#define _NEWINDEX	-1
-#endif /* _NEWINDEX */
-#endif /* HASHDEBUG */
+# define OLDNUM(n)	oldnums[n]
+# define OLDTEXT(n)	oldtext[n]
+# define NEWTEXT(m)	newtext[m]
+# define PENDING(n)     1
+
+#else /* !HASHDEBUG */
+
+# define OLDNUM(n)	_nc_oldnums[n]
+# define OLDTEXT(n)	curscr->_line[n].text
+# define NEWTEXT(m)	newscr->_line[m].text
+# define TEXTWIDTH	(curscr->_maxx+1)
+# define PENDING(n)     (newscr->_line[n].firstchar != _NOCHANGE)
+
+#endif /* !HASHDEBUG */
+
+#define oldhash	(SP->oldhash)
+#define newhash	(SP->newhash)
 
 static inline unsigned long hash(chtype *text)
 {
@@ -123,10 +131,13 @@ static int update_cost_from_blank(chtype *to)
 {
     int cost=0;
     int i;
+    chtype blank = BLANK;
 
-    /* FIXME: ClrBlank should be used */
+    if (back_color_erase)
+	blank |= (stdscr->_bkgd & A_COLOR);
+
     for (i=TEXTWIDTH; i>0; i--)
-        if (BLANK != *to++)
+        if (blank != *to++)
 	    cost++;
 
     return cost;
@@ -147,7 +158,7 @@ static inline bool cost_effective(const int from, const int to, const bool blank
     if (new_from == _NEWINDEX)
 	new_from = from;
 
-    /* 
+    /*
      * On the left side of >= is the cost before moving;
      * on the right side -- cost after moving.
      */
@@ -169,9 +180,7 @@ typedef struct
     sym;
 
 static sym *hashtab=0;
-static int lines_alloc=0; 
-static long *oldhash=0;
-static long *newhash=0;
+static int lines_alloc=0;
 
 static void grow_hunks(void)
 {
@@ -195,7 +204,7 @@ static void grow_hunks(void)
     {
 	start = i;
 	shift = OLDNUM(i) - i;
-	
+
 	/* get forward limit */
 	i = start+1;
 	while (i < screen_lines && OLDNUM(i) != _NEWINDEX && OLDNUM(i) - i == shift)
@@ -233,7 +242,7 @@ static void grow_hunks(void)
 	    }
 	    i--;
 	}
-	
+
 	i = end;
 	/* grow forward */
 	if (shift > 0)
@@ -257,7 +266,7 @@ static void grow_hunks(void)
 	    }
 	    i++;
 	}
-	
+
 	back_ref_limit = back_limit = i;
 	if (shift > 0)
 	    back_ref_limit += shift;
@@ -283,21 +292,43 @@ void _nc_hash_map(void)
 	    lines_alloc = 0;
 	    return;
 	}
-  
-	if (oldhash)
-	    free (oldhash);
-	oldhash = malloc (sizeof(*oldhash)*screen_lines*2);
-	if (!oldhash)
-	{
-	    if (hashtab)
-		FreeAndNull(hashtab);
-	    lines_alloc = 0;
-	    return;
-	}
-	
 	lines_alloc = screen_lines;
     }
-    newhash = oldhash + screen_lines;	/* two arrays in the same memory block */
+
+    if (oldhash && newhash)
+    {
+	/* re-hash only changed lines */
+	for (i = 0; i < screen_lines; i++)
+	{
+	    if (PENDING(i))
+		newhash[i] = hash(NEWTEXT(i));
+	}
+    }
+    else
+    {
+	/* re-hash all */
+	if (oldhash == 0)
+	    oldhash = typeCalloc (unsigned long, screen_lines);
+	if (newhash == 0)
+	    newhash = typeCalloc (unsigned long, screen_lines);
+	if (!oldhash || !newhash)
+	    return; /* malloc failure */
+	for (i = 0; i < screen_lines; i++)
+	{
+	    newhash[i] = hash(NEWTEXT(i));
+	    oldhash[i] = hash(OLDTEXT(i));
+	}
+    }
+
+#ifdef HASH_VERIFY
+    for (i = 0; i < screen_lines; i++)
+    {
+	if(newhash[i] != hash(NEWTEXT(i)))
+	    fprintf(stderr,"error in newhash[%d]\n",i);
+	if(oldhash[i] != hash(OLDTEXT(i)))
+	    fprintf(stderr,"error in oldhash[%d]\n",i);
+    }
+#endif
 
     /*
      * Set up and count line-hash values.
@@ -305,34 +336,32 @@ void _nc_hash_map(void)
     memset(hashtab, '\0', sizeof(*hashtab)*(screen_lines+1)*2);
     for (i = 0; i < screen_lines; i++)
     {
-	unsigned long hashval = hash(OLDTEXT(i));
+	unsigned long hashval = oldhash[i];
 
 	for (sp = hashtab; sp->hashval; sp++)
 	    if (sp->hashval == hashval)
 		break;
 	sp->hashval = hashval;	/* in case this is a new entry */
-	oldhash[i] = hashval;
 	sp->oldcount++;
 	sp->oldindex = i;
     }
     for (i = 0; i < screen_lines; i++)
     {
-	unsigned long hashval = hash(NEWTEXT(i));
+	unsigned long hashval = newhash[i];
 
 	for (sp = hashtab; sp->hashval; sp++)
 	    if (sp->hashval == hashval)
 		break;
 	sp->hashval = hashval;	/* in case this is a new entry */
-	newhash[i] = hashval;
 	sp->newcount++;
 	sp->newindex = i;
-    
-	OLDNUM(i) = _NEWINDEX;
+
+	OLDNUM(i) = _NEWINDEX;	/* initialize old indices array */
     }
 
     /*
      * Mark line pairs corresponding to unique hash pairs.
-     * 
+     *
      * We don't mark lines with offset 0, because it can make fail
      * extending hunks by cost_effective. Otherwise, it does not
      * have any side effects.
@@ -376,18 +405,65 @@ void _nc_hash_map(void)
 	    }
 	}
     }
-    
+
     /* After clearing invalid hunks, try grow the rest. */
     grow_hunks();
 
 #if NO_LEAKS
     FreeAndNull(hashtab);
-    FreeAndNull(oldhash);
     lines_alloc = 0;
 #endif
 }
 
+void _nc_make_oldhash(int i)
+{
+    if (oldhash)
+	oldhash[i] = hash(OLDTEXT(i));
+}
+
+void _nc_scroll_oldhash(int n, int top, int bot)
+{
+    int size;
+    int i;
+
+    if (!oldhash)
+	return;
+
+    size = sizeof(*oldhash) * (bot-top+1-abs(n));
+    if (n > 0)
+    {
+	memmove (oldhash+top, oldhash+top+n, size);
+	for (i = bot; i > bot-n; i--)
+	    oldhash[i] = hash(OLDTEXT(i));
+    }
+    else
+    {
+	memmove (oldhash+top-n, oldhash+top, size);
+	for (i = top; i < top-n; i++)
+	    oldhash[i] = hash(OLDTEXT(i));
+    }
+}
+
+
 #ifdef HASHDEBUG
+static void
+usage(void)
+{
+    static const char *table[] = {
+	"hashmap test-driver",
+	"",
+	"#  comment",
+	"l  get initial line number vector",
+	"n  use following letters as text of new lines",
+	"o  use following letters as text of old lines",
+	"d  dump state of test arrays",
+	"h  apply hash mapper and see scroll optimization",
+	"?  this message"
+    };
+    size_t n;
+    for (n = 0; n < sizeof(table)/sizeof(table[0]); n++)
+    	fprintf(stderr, "%s\n", table[n]);
+}
 
 int
 main(int argc GCC_UNUSED, char *argv[] GCC_UNUSED)
@@ -395,12 +471,16 @@ main(int argc GCC_UNUSED, char *argv[] GCC_UNUSED)
     char	line[BUFSIZ], *st;
     int		n;
 
+    SP = typeCalloc(SCREEN,1);
     for (n = 0; n < screen_lines; n++)
     {
 	reallines[n] = n;
 	oldnums[n] = _NEWINDEX;
 	oldtext[n][0] = newtext[n][0] = '.';
     }
+
+    if (isatty(fileno(stdin)))
+    	usage();
 
 #ifdef TRACE
     _nc_tracing = TRACE_MOVE;
@@ -475,6 +555,9 @@ main(int argc GCC_UNUSED, char *argv[] GCC_UNUSED)
 #endif
 	    _nc_scroll_optimize();
 	    (void) fputs("Done.\n", stderr);
+	    break;
+	case '?':
+	    usage();
 	    break;
 	}
     }

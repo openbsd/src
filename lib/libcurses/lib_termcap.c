@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_termcap.c,v 1.2 1998/07/27 03:37:32 millert Exp $	*/
+/*	$OpenBSD: lib_termcap.c,v 1.3 1998/10/31 06:30:30 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -178,8 +178,7 @@ int i;
 	if (cur_term != 0) {
 		for (i = 0; i < BOOLCOUNT; i++) {
 			if (!strncmp(id, boolcodes[i], 2)) {
-				if (!VALID_BOOLEAN(cur_term->type.Booleans[i]))
-					return 0;
+				/* setupterm forces invalid booleans to false */
 				return cur_term->type.Booleans[i];
 			}
 		}
@@ -232,8 +231,7 @@ int i;
 			T(("trying %s", strcodes[i]));
 			if (!strncmp(id, strcodes[i], 2)) {
 				T(("found match : %s", _nc_visbuf(cur_term->type.Strings[i])));
-				if (!VALID_STRING(cur_term->type.Strings[i]))
-					return 0;
+				/* setupterm forces cancelled strings to null */
 				return cur_term->type.Strings[i];
 			}
 		}

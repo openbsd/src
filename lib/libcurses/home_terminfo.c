@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_baudrate.c,v 1.5 1998/10/31 06:30:29 millert Exp $	*/
+/*	$OpenBSD: home_terminfo.c,v 1.1 1998/10/31 06:30:29 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -29,113 +29,36 @@
  ****************************************************************************/
 
 /****************************************************************************
- *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
- *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ *  Author: Thomas E. Dickey <dickey@clark.net> 1998                        *
  ****************************************************************************/
 
-
 /*
- *	lib_baudrate.c
- *
+ *	home_terminfo.c -- return the $HOME/.terminfo string, expanded
  */
 
 #include <curses.priv.h>
-#include <term.h>	/* cur_term, pad_char */
+#include <tic.h>
 
-MODULE_ID("$From: lib_baudrate.c,v 1.13 1998/09/19 21:34:26 tom Exp $")
+MODULE_ID("$From: home_terminfo.c,v 1.1 1998/09/19 21:25:03 tom Exp $")
 
-/*
- *	int
- *	baudrate()
- *
- *	Returns the current terminal's baud rate.
- *
- */
+#define my_length (strlen(home) + sizeof(PRIVATE_INFO))
 
-struct speed {
-	speed_t s;
-	int sp;
-};
+/* ncurses extension...fall back on user's private directory */
 
-static struct speed const speeds[] = {
-	{B0, 0},
-	{B50, 50},
-	{B75, 75},
-	{B110, 110},
-	{B134, 134},
-	{B150, 150},
-	{B200, 200},
-	{B300, 300},
-	{B600, 600},
-	{B1200, 1200},
-	{B1800, 1800},
-	{B2400, 2400},
-	{B4800, 4800},
-	{B9600, 9600},
-#ifdef B19200
-	{B19200, 19200},
-#else
-#ifdef EXTA
-	{EXTA, 19200},
-#endif
-#endif
-#ifdef B38400
-	{B38400, 38400},
-#else
-#ifdef EXTB
-	{EXTB, 38400},
-#endif
-#endif
-#ifdef B57600
-	{B57600, 57600},
-#endif
-#ifdef B115200
-	{B115200, 115200},
-#endif
-#ifdef B230400
-	{B230400, 230400},
-#endif
-#ifdef B460800
-	{B460800, 460800},
-#endif
-};
-
-int
-baudrate(void)
+char *
+_nc_home_terminfo(void)
 {
-size_t i;
-int ret;
+	char *home;
+	static char *temp = 0;
 
-	T((T_CALLED("baudrate()")));
-
-	/*
-	 * In debugging, allow the environment symbol to override when we're
-	 * redirecting to a file, so we can construct repeatable test-cases
-	 * that take into account costs that depend on baudrate.
-	 */
-#ifdef TRACE
-	if (SP && !isatty(fileno(SP->_ofp))
-	 && getenv("BAUDRATE") != 0) {
-		if ((ret = _nc_getenv_num("BAUDRATE")) <= 0)
-			ret = 9600;
-		returnCode(ret);
-	}
-	else
-#endif
-
-#ifdef TERMIOS
-	ret = cfgetospeed(&cur_term->Nttyb);
-#else
-	ret = cur_term->Nttyb.sg_ospeed;
-#endif
-	if(ret < 0 || (speed_t)ret > speeds[SIZEOF(speeds)-1].s)
-		returnCode(ERR);
-	cur_term->_baudrate = ERR;
-	for (i = 0; i < SIZEOF(speeds); i++)
-		if (speeds[i].s == (speed_t)ret)
-		{
-			cur_term->_baudrate = speeds[i].sp;
-			break;
+	if (temp == 0) {
+		if ((home = getenv("HOME")) != 0
+		 && my_length <= PATH_MAX) {
+			temp = malloc(my_length);
+			if (temp == 0)
+				_nc_err_abort("Out of memory");
+			(void) sprintf(temp, PRIVATE_INFO, home);
 		}
-	returnCode(cur_term->_baudrate);
+	}
+	return temp;
 }

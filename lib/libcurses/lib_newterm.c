@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_newterm.c,v 1.5 1998/07/23 21:19:06 millert Exp $	*/
+/*	$OpenBSD: lib_newterm.c,v 1.6 1998/10/31 06:30:30 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -50,7 +50,7 @@
 
 #include <term.h>	/* clear_screen, cup & friends, cur_term */
 
-MODULE_ID("$From: lib_newterm.c,v 1.34 1998/04/11 22:53:05 tom Exp $")
+MODULE_ID("$From: lib_newterm.c,v 1.35 1998/09/19 21:43:22 tom Exp $")
 
 #ifndef ONLCR		/* Allows compilation under the QNX 4.2 OS */
 #define ONLCR 0
@@ -98,10 +98,10 @@ SCREEN * newterm(NCURSES_CONST char *term, FILE *ofp, FILE *ifp)
 int	errret;
 SCREEN* current;
 #ifdef TRACE
-char *t = getenv("NCURSES_TRACE");
+int t = _nc_getenv_num("NCURSES_TRACE");
 
-	if (t)
-               trace((unsigned) strtol(t, 0, 0));
+	if (t >= 0)
+               trace(t);
 #endif
 
 	T((T_CALLED("newterm(\"%s\",%p,%p)"), term, ofp, ifp));

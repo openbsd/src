@@ -1,4 +1,4 @@
-/*	$OpenBSD: read_entry.c,v 1.4 1998/10/08 04:20:00 millert Exp $	*/
+/*	$OpenBSD: read_entry.c,v 1.5 1998/10/31 06:30:31 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -49,7 +49,7 @@
 #include <term.h>
 #include <tic.h>
 
-MODULE_ID("$From: read_entry.c,v 1.42 1998/08/09 11:59:36 tom Exp $")
+MODULE_ID("$From: read_entry.c,v 1.46 1998/10/11 00:30:55 tom Exp $")
 
 #ifndef O_BINARY
 #define O_BINARY 0
@@ -130,6 +130,8 @@ int _nc_read_file_entry(const char *const filename, TERMTYPE *ptr)
 	    return(0);
 	}
     }
+    else
+	str_count = 0;
 
     /* grab the name */
     read(fd, buf, min(MAX_NAME_SIZE, (unsigned)name_size));
@@ -201,6 +203,8 @@ int _nc_read_file_entry(const char *const filename, TERMTYPE *ptr)
 		ptr->Strings[i] = ABSENT_STRING;
 	    else if (IS_NEG2(buf + 2*i))
 		ptr->Strings[i] = CANCELLED_STRING;
+	    else if (LOW_MSB(buf + 2*i) > str_size)
+		ptr->Strings[i] = ABSENT_STRING;
 	    else
 		ptr->Strings[i] = (LOW_MSB(buf+2*i) + ptr->str_table);
 	}
@@ -220,6 +224,20 @@ int _nc_read_file_entry(const char *const filename, TERMTYPE *ptr)
 	{
 	    close(fd);
 	    return(0);
+	}
+    }
+
+    /* make sure all strings are NUL terminated */
+    for (i = str_count; i < STRCOUNT; i++) {
+	char *p;
+
+	if (VALID_STRING(ptr->Strings[i])) {
+	    for (p = ptr->Strings[i]; p <= ptr->str_table + str_size; p++)
+		if (*p == '\0')
+		    break;
+	    /* if there is no NUL, ignore the string */
+	    if (p > ptr->str_table + str_size)
+		ptr->Strings[i] = ABSENT_STRING;
 	}
     }
 
@@ -307,20 +325,10 @@ char		ttn[MAX_ALIAS + 3];
 	 && _nc_read_tic_entry(filename, _nc_tic_dir(envp), ttn, tp) == 1)
 		return 1;
 
-	/* this is an ncurses extension */
-	if (!issetugid() && (envp = getenv("HOME")) != 0 &&
-	    strlen(envp) + sizeof(PRIVATE_INFO) <= PATH_MAX)
-	{
-		char *home = malloc(strlen(envp) + sizeof(PRIVATE_INFO));
-
-		if (home == 0)
-			return(0);
-		(void) sprintf(home, PRIVATE_INFO, envp);
-		if (_nc_read_tic_entry(filename, home, ttn, tp) == 1) {
-			free(home);
+	if (!issetugid() && (envp = _nc_home_terminfo()) != 0) {
+		if (_nc_read_tic_entry(filename, envp, ttn, tp) == 1) {
 			return(1);
 		}
-		free(home);
 	}
 
 	/* this is an ncurses extension */

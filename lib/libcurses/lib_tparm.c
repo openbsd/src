@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_tparm.c,v 1.4 1998/09/13 19:16:28 millert Exp $	*/
+/*	$OpenBSD: lib_tparm.c,v 1.5 1998/10/31 06:30:30 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -45,7 +45,7 @@
 #include <term.h>
 #include <tic.h>
 
-MODULE_ID("$From: lib_tparm.c,v 1.32 1998/08/15 23:37:16 tom Exp $")
+MODULE_ID("$From: lib_tparm.c,v 1.36 1998/10/11 00:28:53 tom Exp $")
 
 /*
  *	char *
@@ -105,9 +105,6 @@ MODULE_ID("$From: lib_tparm.c,v 1.32 1998/08/15 23:37:16 tom Exp $")
  *	resulting in x mod y, not the reverse.
  */
 
-#define L_BRACE '{'
-#define R_BRACE '}'
-
 #define STACKSIZE	20
 
 typedef union {
@@ -136,35 +133,50 @@ void _nc_free_tparm(void)
 }
 #endif
 
-static void save_text(size_t limit, char *s)
+static void really_get_space(size_t need)
 {
-	size_t	want = strlen(s) + limit;
-	size_t	need = want + out_used + 1;
-
-	if (need > out_size) {
-		out_size = need * 2;
-		out_buff = (char *)_nc_doalloc(out_buff, out_size);
-	}
+	out_size = need * 2;
+	out_buff = (char *)_nc_doalloc(out_buff, out_size);
 	if (out_buff == 0)
 		_nc_err_abort("Out of memory");
-	(void)strcpy(out_buff + out_used, s);
-	out_used += want;
 }
 
-static void save_number(const char *fmt, int number)
+static inline void get_space(size_t need)
 {
-	char temp[80];
-	(void)sprintf(temp, fmt, number);
-	save_text(0, temp);
+	need += out_used;
+	if (need > out_size)
+		really_get_space(need);
+}
+
+static inline void save_text(const char *fmt, char *s, int len)
+{
+	size_t s_len = strlen(s);
+	if (len > (int)s_len)
+		s_len = len;
+
+	get_space(s_len + 1);
+
+	(void)sprintf(out_buff+out_used, fmt, s);
+	out_used += strlen(out_buff+out_used);
+}
+
+static inline void save_number(const char *fmt, int number, int len)
+{
+	if (len < 30)
+		len = 30; /* actually log10(MAX_INT)+1 */
+
+	get_space(len + 1);
+
+	(void)sprintf(out_buff+out_used, fmt, number);
+	out_used += strlen(out_buff+out_used);
 }
 
 static inline void save_char(int c)
 {
-	static char text[2];
 	if (c == 0)
 		c = 0200;
-	text[0] = c;
-	save_text(0, text);
+	get_space(1);
+	out_buff[out_used++] = c;
 }
 
 static inline void npush(int x)
@@ -191,8 +203,8 @@ static inline const char *parse_format(const char *s, char *format, int *len)
 	bool done = FALSE;
 	bool allowminus = FALSE;
 	bool dot = FALSE;
-	int maxlen = 0;
-	int minlen = 0;
+	int prec  = 0;
+	int width = 0;
 
 	*len = 0;
 	*format++ = '%';
@@ -231,9 +243,9 @@ static inline const char *parse_format(const char *s, char *format, int *len)
 		default:
 			if (isdigit(*s)) {
 				if (dot)
-					maxlen = (maxlen * 10) + (*s - '0');
+					prec  = (prec * 10) + (*s - '0');
 				else
-					minlen = (minlen * 10) + (*s - '0');
+					width = (width * 10) + (*s - '0');
 				*format++ = *s++;
 			} else {
 				done = TRUE;
@@ -241,7 +253,8 @@ static inline const char *parse_format(const char *s, char *format, int *len)
 		}
 	}
 	*format = '\0';
-	*len = (maxlen > minlen) ? maxlen : minlen;
+	/* return maximum string length in print */
+	*len = (prec > width) ? prec : width;
 	return s;
 }
 
@@ -331,7 +344,7 @@ static	int static_vars[NUM_VARS];
 #ifdef TRACE
 	if (_nc_tracing & TRACE_CALLS) {
 		for (i = 0; i < popcount; i++)
-			save_number(", %d", param[i]);
+			save_number(", %d", param[i], 0);
 		_tracef(T_CALLED("%s(%s%s)"), tname, _nc_visbuf(string), out_buff);
 		out_used = 0;
 	}
@@ -355,15 +368,15 @@ static	int static_vars[NUM_VARS];
 			case 'x':	/* FALLTHRU */
 			case 'X':	/* FALLTHRU */
 			case 'c':
-				save_number(format, npop());
+				save_number(format, npop(), len);
 				break;
 
 			case 'l':
-				save_number("%d", strlen(spop()));
+				save_number("%d", strlen(spop()), 0);
 				break;
 
 			case 's':
-				save_text(len, spop());
+				save_text(format, spop(), len);
 				break;
 
 			case 'p':
@@ -394,7 +407,7 @@ static	int static_vars[NUM_VARS];
 				}
 				break;
 
-			case '\'':
+			case S_QUOTE:
 				string++;
 				npush(*string);
 				string++;
@@ -553,8 +566,7 @@ static	int static_vars[NUM_VARS];
 
 	if (out_buff == 0 && (out_buff = calloc(1,1)) == NULL)
 		return(NULL);
-	if (out_used == 0)
-		*out_buff = '\0';
+	out_buff[out_used] = '\0';
 
 	T((T_RETURN("%s"), _nc_visbuf(out_buff)));
 	return(out_buff);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_getch.c,v 1.6 1998/07/23 21:18:47 millert Exp $	*/
+/*	$OpenBSD: lib_getch.c,v 1.7 1998/10/31 06:30:29 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -42,17 +42,48 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_getch.c,v 1.40 1998/02/11 12:13:58 tom Exp $")
+MODULE_ID("$From: lib_getch.c,v 1.41 1998/09/26 23:34:53 tom Exp $")
 
 #include <fifo_defs.h>
 
 int ESCDELAY = 1000;	/* max interval betw. chars in funkeys, in millisecs */
 
+#ifdef USE_EMX_MOUSE
+#  include <sys/select.h>
+static int
+kbd_mouse_read(unsigned char *p)
+{
+fd_set fdset;
+int nums = SP->_ifd+1;
+
+	for (;;) {
+		FD_ZERO(&fdset);
+		FD_SET(SP->_checkfd, &fdset);
+		if (SP->_mouse_fd >= 0) {
+			FD_SET(SP->_mouse_fd, &fdset);
+			if (SP->_mouse_fd > SP->_checkfd)
+				nums = SP->_mouse_fd+1;
+		}
+		if (select(nums, &fdset, NULL, NULL, NULL) >= 0) {
+			int n;
+
+			if (FD_ISSET(SP->_mouse_fd, &fdset)) /* Prefer mouse */
+				n = read(SP->_mouse_fd, p, 1);
+			else
+				n = read(SP->_ifd, p, 1);
+			return n;
+		}
+		if (errno != EINTR)
+			return -1;
+	}
+}
+#endif  /* USE_EMX_MOUSE */
+
 static inline int fifo_peek(void)
 {
 	int ch = SP->_fifo[peek];
 	T(("peeking at %d", peek));
-	
+
 	p_inc();
 	return ch;
 }
@@ -71,7 +102,7 @@ int ch;
 	}
 	else
 	    h_inc();
-	    
+
 #ifdef TRACE
 	if (_nc_tracing & TRACE_IEVENT) _nc_fifo_dump();
 #endif
@@ -90,8 +121,8 @@ again:
 	errno = 0;
 #endif
 
-#if USE_GPM_SUPPORT	
-	if ((SP->_mouse_fd >= 0) 
+#if USE_GPM_SUPPORT
+	if ((SP->_mouse_fd >= 0)
 	 && (_nc_timed_wait(3, -1, (int *)0) & 2))
 	{
 		SP->_mouse_event(SP);
@@ -101,17 +132,21 @@ again:
 #endif
 	{
 		unsigned char c2=0;
+#ifdef USE_EMX_MOUSE
+		n = kbd_mouse_read(&c2);
+#else
 		n = read(SP->_ifd, &c2, 1);
-		ch = c2;
+#endif
+		ch = c2 & 0xff;
 	}
 
 #ifdef HIDE_EINTR
 	/*
 	 * Under System V curses with non-restarting signals, getch() returns
-	 * with value ERR when a handled signal keeps it from completing.  
+	 * with value ERR when a handled signal keeps it from completing.
 	 * If signals restart system calls, OTOH, the signal is invisible
 	 * except to its handler.
-	 * 
+	 *
 	 * We don't want this difference to show.  This piece of code
 	 * tries to make it look like we always have restarting signals.
 	 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: write_entry.c,v 1.4 1998/09/13 19:16:31 millert Exp $	*/
+/*	$OpenBSD: write_entry.c,v 1.5 1998/10/31 06:30:31 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -51,7 +51,7 @@
 #define S_ISDIR(mode) ((mode & S_IFMT) == S_IFDIR)
 #endif
 
-MODULE_ID("$From: write_entry.c,v 1.31 1998/08/22 18:02:09 tom Exp $")
+MODULE_ID("$From: write_entry.c,v 1.33 1998/09/19 21:24:11 tom Exp $")
 
 static int total_written;
 
@@ -119,21 +119,15 @@ void  _nc_set_writedir(char *dir)
     destination = _nc_tic_dir(0);
     if (make_directory(destination) < 0)
     {
-	char	*home;
+	char	*home = _nc_home_terminfo();
 
-	/* ncurses extension...fall back on user's private directory */
-	if ((home = getenv("HOME")) != (char *)NULL &&
-	    strlen(home) + sizeof(PRIVATE_INFO) <= PATH_MAX)
-	{
-	    char *temp = malloc(sizeof(PRIVATE_INFO) + strlen(home));
-	    if (temp == NULL)
-		_nc_err_abort("Out of memory");
-	    (void) sprintf(temp, PRIVATE_INFO, home);
-	    destination = temp;
+	if (home != 0) {
 
 	    if (make_directory(destination) < 0)
 		_nc_err_abort("%s: permission denied (errno %d)",
 			destination, errno);
+
+	    destination = home;
 	}
     }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_kernel.c,v 1.5 1998/07/23 21:18:58 millert Exp $	*/
+/*	$OpenBSD: lib_kernel.c,v 1.6 1998/10/31 06:30:29 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -54,7 +54,7 @@
 #include <curses.priv.h>
 #include <term.h>	/* cur_term */
 
-MODULE_ID("$From: lib_kernel.c,v 1.17 1998/02/11 12:13:57 tom Exp $")
+MODULE_ID("$From: lib_kernel.c,v 1.18 1998/09/20 03:34:18 tom Exp $")
 
 int reset_prog_mode(void)
 {
@@ -62,8 +62,11 @@ int reset_prog_mode(void)
 
 	if (cur_term != 0) {
 		_nc_set_curterm(&cur_term->Nttyb);
-		if (SP && stdscr && stdscr->_use_keypad)
-			_nc_keypad(TRUE);
+		if (SP) {
+			if (stdscr && stdscr->_use_keypad)
+				_nc_keypad(TRUE);
+			NC_BUFFERED(TRUE);
+		}
 		returnCode(OK);
 	}
 	returnCode(ERR);
@@ -77,8 +80,9 @@ int reset_shell_mode(void)
 	if (cur_term != 0) {
 		if (SP)
 		{
-			fflush(SP->_ofp);
 			_nc_keypad(FALSE);
+			fflush(SP->_ofp);
+			NC_BUFFERED(FALSE);
 		}
 		returnCode(_nc_set_curterm(&cur_term->Ottyb));
 	}

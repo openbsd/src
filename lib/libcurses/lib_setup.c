@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_setup.c,v 1.3 1998/09/13 19:16:28 millert Exp $	*/
+/*	$OpenBSD: lib_setup.c,v 1.4 1998/10/31 06:30:30 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -50,7 +50,7 @@
 
 #include <term.h>	/* lines, columns, cur_term */
 
-MODULE_ID("$From: lib_setup.c,v 1.42 1998/09/05 22:15:14 tom Exp $")
+MODULE_ID("$From: lib_setup.c,v 1.46 1998/09/26 12:22:30 tom Exp $")
 
 /****************************************************************************
  *
@@ -106,9 +106,6 @@ int LINES, COLS, TABSIZE;
 static void _nc_get_screensize(int *linep, int *colp)
 /* Obtain lines/columns values from the environment and/or terminfo entry */
 {
-char	*rows, *cols, *p;
-long	l;
-
 	/* figure out the size of the screen */
 	T(("screen size: terminfo lines = %d columns = %d", lines, columns));
 
@@ -119,18 +116,16 @@ long	l;
 	}
 	else	/* usually want to query LINES and COLUMNS from environment */
 	{
+	    int value;
+
 	    *linep = *colp = 0;
 
 	    /* first, look for environment variables */
-	    if ((rows = getenv("LINES")) != 0) {
-		l = strtol(rows, &p, 10);
-		if (p != rows && *p == '\0' && l != LONG_MIN && l <= INT_MAX)
-		    *linep = (int)l;
+	    if ((value = _nc_getenv_num("LINES")) > 0) {
+		    *linep = value;
 	    }
-	    if ((cols = getenv("COLUMNS")) != 0) {
-		l = strtol(cols, &p, 10);
-		if (p != cols && *p == '\0' && l != LONG_MIN && l <= INT_MAX)
-		    *colp = (int)l;
+	    if ((value = _nc_getenv_num("COLUMNS")) > 0) {
+		    *colp = value;
 	    }
 	    T(("screen size: environment LINES = %d COLUMNS = %d",*linep,*colp));
 
@@ -141,7 +136,7 @@ long	l;
 		_scrsize(screendata);
 		*colp  = screendata[0];
 		*linep = screendata[1];
-		T(("EMX screen size: environment LINES = %d COLUMNS = %d",*linep,*colp));
+	    	T(("EMX screen size: environment LINES = %d COLUMNS = %d",*linep,*colp));
 	    }
 #endif
 #if HAVE_SIZECHANGE
@@ -247,26 +242,42 @@ static int grab_entry(const char *const tn, TERMTYPE *const tp)
 /* return 1 if entry found, 0 if not found, -1 if database not accessible */
 {
 	char	filename[PATH_MAX];
-	int	status;
+	int	status = 0;
 	int	_nc_read_bsd_terminfo_entry(const char *, TERMTYPE *); /* XXX */
 
 #ifdef __OpenBSD__
-	if ((status = _nc_read_bsd_terminfo_entry(tn, tp)) == 1)
-	    return(1);
+	status = _nc_read_bsd_terminfo_entry(tn, tp);
 #endif /* __OpenBSD__ */
 
-	if ((status = _nc_read_entry(tn, filename, tp)) == 1)
-	    return(1);
+	if (status != 1 && (status = _nc_read_entry(tn, filename, tp)) != 1) {
 
 #ifndef PURE_TERMINFO
-	/*
-	 * Try falling back on the termcap file.  Note: allowing this call
-	 * links the entire terminfo/termcap compiler into the startup code.
-	 * It's preferable to build a real terminfo database and use that.
-	 */
-	status = _nc_read_termcap_entry(tn, tp);
+		/*
+		 * Try falling back on the termcap file.
+		 * Note:  allowing this call links the entire terminfo/termcap
+		 * compiler into the startup code.  It's preferable to build a
+		 * real terminfo database and use that.
+		 */
+		status = _nc_read_termcap_entry(tn, tp);
 #endif /* PURE_TERMINFO */
 
+	}
+
+	/*
+	 * If we have an entry, force all of the cancelled strings to null
+	 * pointers so we don't have to test them in the rest of the library.
+	 * (The terminfo compiler bypasses this logic, since it must know if
+	 * a string is cancelled, for merging entries).
+	 */
+	if (status == 1) {
+		unsigned n;
+		for (n = 0; n < BOOLCOUNT; n++)
+			if (!VALID_BOOLEAN(tp->Booleans[n]))
+				tp->Booleans[n] = FALSE;
+		for (n = 0; n < STRCOUNT; n++)
+			if (tp->Strings[n] == CANCELLED_STRING)
+				tp->Strings[n] = ABSENT_STRING;
+	}
 	return(status);
 }
 #endif

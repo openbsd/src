@@ -1,4 +1,4 @@
-/*	$OpenBSD: hardscroll.c,v 1.7 1998/07/23 21:18:18 millert Exp $	*/
+/*	$OpenBSD: hardscroll.c,v 1.8 1998/10/31 06:30:29 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -148,19 +148,32 @@ AUTHOR
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: hardscroll.c,v 1.29 1998/02/11 12:13:57 tom Exp $")
+MODULE_ID("$From: hardscroll.c,v 1.32 1998/09/20 02:34:59 tom Exp $")
 
 #if defined(SCROLLDEBUG) || defined(HASHDEBUG)
+
+# undef screen_lines
+# define screen_lines MAXLINES
 int oldnums[MAXLINES];
-#define OLDNUM(n)	oldnums[n]
-#undef T
-#define T(x)		(void) printf x ; (void) putchar('\n');
-#else
-#include <curses.h>
-#define OLDNUM(n)	newscr->_line[n].oldindex
-#ifndef _NEWINDEX
-#define _NEWINDEX	-1
-#endif /* _NEWINDEX */
+# define OLDNUM(n)	oldnums[n]
+# define _tracef	printf
+# undef TR
+# define TR(n, a)	if (_nc_tracing & (n)) { _tracef a ; putchar('\n'); }
+
+#else /* no debug */
+
+/* OLDNUM(n) indicates which line will be shifted to the position n.
+   if OLDNUM(n) == _NEWINDEX, then the line n in new, not shifted from
+   somewhere. */
+# if USE_HASHMAP
+int *_nc_oldnums = 0;
+static int oldnums_allocated = 0;
+#  define oldnums       _nc_oldnums
+#  define OLDNUM(n)	oldnums[n]
+# else /* !USE_HASHMAP */
+#  define OLDNUM(n)	newscr->_line[n].oldindex
+# endif /* !USE_HASHMAP */
+
 #endif /* defined(SCROLLDEBUG) || defined(HASHDEBUG) */
 
 
@@ -171,6 +184,23 @@ void _nc_scroll_optimize(void)
     int start, end, shift;
 
     TR(TRACE_ICALLS, ("_nc_scroll_optimize() begins"));
+
+#if !defined(SCROLLDEBUG) && !defined(HASHDEBUG)
+#if USE_HASHMAP
+    /* get enough storage */
+    if (oldnums_allocated < screen_lines)
+    {
+	size_t size = screen_lines * sizeof(*oldnums);
+	int *new_oldnums = oldnums ? realloc(oldnums, size) : malloc(size);
+	if (!new_oldnums)
+	    return;
+	oldnums = new_oldnums;
+	oldnums_allocated = screen_lines;
+    }
+    /* calculate the indices */
+    _nc_hash_map();
+#endif
+#endif /* !defined(SCROLLDEBUG) && !defined(HASHDEBUG) */
 
 #ifdef TRACE
     if (_nc_tracing & (TRACE_UPDATE | TRACE_MOVE))
@@ -184,10 +214,10 @@ void _nc_scroll_optimize(void)
 	    i++;
 	if (i >= screen_lines)
 	    break;
-	    
+
 	shift = OLDNUM(i) - i; /* shift > 0 */
 	start = i;
-	
+
 	i++;
 	while (i < screen_lines && OLDNUM(i) != _NEWINDEX && OLDNUM(i) - i == shift)
 	    i++;
@@ -210,10 +240,10 @@ void _nc_scroll_optimize(void)
 	    i--;
 	if (i < 0)
 	    break;
-	    
+
 	shift = OLDNUM(i) - i; /* shift < 0 */
 	end = i;
-	
+
 	i--;
 	while (i >= 0 && OLDNUM(i) != _NEWINDEX && OLDNUM(i) - i == shift)
 	    i--;
@@ -230,7 +260,7 @@ void _nc_scroll_optimize(void)
     }
 }
 
-#if defined(TRACE) || defined(SCROLLDEBUG)
+#if defined(TRACE) || defined(SCROLLDEBUG) || defined(HASHDEBUG)
 void _nc_linedump(void)
 /* dump the state of the real and virtual oldnum fields */
 {

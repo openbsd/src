@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_ti.c,v 1.1 1998/07/23 21:19:37 millert Exp $	*/
+/*	$OpenBSD: lib_ti.c,v 1.2 1998/10/31 06:30:30 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -39,7 +39,7 @@
 #include <term.h>
 #include <tic.h>
 
-MODULE_ID("$From: lib_ti.c,v 1.11 1998/07/18 02:14:05 tom Exp $")
+MODULE_ID("$From: lib_ti.c,v 1.12 1998/09/26 12:26:38 tom Exp $")
 
 int tigetflag(NCURSES_CONST char *str)
 {
@@ -50,8 +50,7 @@ int i;
 	if (cur_term != 0) {
 		for (i = 0; i < BOOLCOUNT; i++) {
 			if (!strcmp(str, boolnames[i])) {
-				if (!VALID_BOOLEAN(cur_term->type.Booleans[i]))
-					return 0;
+				/* setupterm forces invalid booleans to false */
 				return cur_term->type.Booleans[i];
 			}
 		}
@@ -88,8 +87,7 @@ int i;
 	if (cur_term != 0) {
 		for (i = 0; i < STRCOUNT; i++) {
 			if (!strcmp(str, strnames[i])) {
-				if (!VALID_STRING(cur_term->type.Strings[i]))
-					return 0;
+				/* setupterm forces cancelled strings to null */
 				return cur_term->type.Strings[i];
 			}
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_tputs.c,v 1.1 1998/07/23 21:19:38 millert Exp $	*/
+/*	$OpenBSD: lib_tputs.c,v 1.2 1998/10/31 06:30:30 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -47,7 +47,7 @@
 #include <term.h>	/* padding_baud_rate, xon_xoff */
 #include <tic.h>
 
-MODULE_ID("$From: lib_tputs.c,v 1.32 1998/05/09 23:01:25 tom Exp $")
+MODULE_ID("$From: lib_tputs.c,v 1.33 1998/09/19 20:35:49 tom Exp $")
 
 #define OUTPUT ((SP != 0) ? SP->_ofp : stdout)
 
@@ -111,7 +111,7 @@ int	trailpad;
 #endif /* BSD_TPUTS */
 
 #ifdef TRACE
-char	addrbuf[17];
+char	addrbuf[32];
 
 	if (_nc_tracing & TRACE_TPUTS)
 	{

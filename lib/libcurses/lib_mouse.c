@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_mouse.c,v 1.7 1998/09/17 04:14:30 millert Exp $	*/
+/*	$OpenBSD: lib_mouse.c,v 1.8 1998/10/31 06:30:30 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -65,6 +65,17 @@
  * used yet, and a couple of bits open at the high end.
  */
 
+#ifdef __EMX__
+#  include "io.h"
+#  include "fcntl.h"
+#  define  INCL_DOS
+#  define  INCL_VIO
+#  define  INCL_KBD
+#  define  INCL_MOU
+#  define  INCL_DOSPROCESS
+#  include <os2.h>			/* Need to include before the others */
+#endif
+
 #include <curses.priv.h>
 #include <term.h>
 
@@ -75,7 +86,7 @@
 #endif
 #endif
 
-MODULE_ID("$From: lib_mouse.c,v 1.36 1998/08/22 18:09:52 tom Exp $")
+MODULE_ID("$From: lib_mouse.c,v 1.38 1998/10/03 19:08:33 tom Exp $")
 
 #define MY_TRACE TRACE_ICALLS|TRACE_IEVENT
 
@@ -125,6 +136,77 @@ static void _trace_slot(const char *tag)
 }
 #endif
 
+#ifdef USE_EMX_MOUSE
+
+#  define TOP_ROW          0
+#  define LEFT_COL         0
+
+static int mouse_wfd;
+static int mouse_thread;
+
+#  define M_FD(sp) sp->_mouse_fd
+
+static void
+write_event(int down, int button, int x, int y)
+{
+    char buf[6];
+    unsigned long ignore;
+
+    strcpy(buf, key_mouse);
+    buf[3] = ' ' + (button - 1) + (down ? 0 : 0x40);
+    buf[4] = ' ' + x - LEFT_COL + 1;
+    buf[5] = ' ' + y - TOP_ROW + 1;
+    DosWrite(mouse_wfd, buf, 6, &ignore);
+}
+
+static void
+mouse_server(unsigned long ignored GCC_UNUSED)
+{
+    unsigned short fWait = MOU_WAIT;
+    /* NOPTRRECT mourt = { 0,0,24,79 }; */
+    MOUEVENTINFO mouev;
+    HMOU hmou;
+    unsigned short mask = MOUSE_BN1_DOWN | MOUSE_BN2_DOWN | MOUSE_BN3_DOWN;
+    int oldstate = 0;
+    char errmess[] = "Unexpected termination of mouse thread\r\n";
+    unsigned long ignore;
+
+    /* open the handle for the mouse */
+    if (MouOpen(NULL,&hmou) == 0) {
+
+	if (MouSetEventMask(&mask,hmou) == 0
+	 && MouDrawPtr(hmou) == 0) {
+
+	    for (;;) {
+		/* sit and wait on the event queue */
+		if (MouReadEventQue(&mouev,&fWait,hmou))
+			break;
+
+		/*
+		 * OS/2 numbers a 3-button mouse inconsistently from other
+		 * platforms:
+		 *	1 = left
+		 *	2 = right
+		 *	3 = middle.
+		 */
+		if ((mouev.fs ^ oldstate) & MOUSE_BN1_DOWN)
+		    write_event(mouev.fs  & MOUSE_BN1_DOWN, 1, mouev.col, mouev.row);
+		if ((mouev.fs ^ oldstate) & MOUSE_BN2_DOWN)
+		    write_event(mouev.fs  & MOUSE_BN2_DOWN, 2, mouev.col, mouev.row);
+		if ((mouev.fs ^ oldstate) & MOUSE_BN3_DOWN)
+		    write_event(mouev.fs  & MOUSE_BN3_DOWN, 3, mouev.col, mouev.row);
+
+		oldstate = mouev.fs;
+	    }
+	}
+
+	DosWrite(2, errmess, strlen(errmess), &ignore);
+	MouClose(hmou);
+    }
+    DosExit(EXIT_THREAD, 0L );
+}
+#endif
+
 /* FIXME: The list of names should be configurable */
 static int is_xterm(const char *name)
 {
@@ -166,6 +248,30 @@ static void _nc_mouse_init(void)
 	if (Gpm_Open (&gpm_connect, 0) >= 0) { /* returns the file-descriptor */
 	    mousetype = M_GPM;
 	    SP->_mouse_fd = gpm_fd;
+	}
+    }
+#endif
+
+    /* OS/2 VIO */
+#ifdef USE_EMX_MOUSE
+    if (!mouse_thread && mousetype != M_XTERM && key_mouse) {
+	int handles[2];
+	if (pipe(handles) < 0) {
+	    perror("mouse pipe error");
+	} else {
+	    int rc;
+
+	    mouse_wfd = handles[1];
+	    M_FD(SP) = handles[0];
+	    /* Needed? */
+	    setmode(handles[0], O_BINARY);
+	    setmode(handles[1], O_BINARY);
+	    /* Do not use CRT functions, we may single-threaded. */
+	    rc = DosCreateThread((unsigned long*)&mouse_thread, mouse_server, 0, 0, 8192);
+	    if (rc)
+		printf("mouse thread error %d=%#x", rc, rc);
+	    else
+		mousetype = M_XTERM;
 	}
     }
 #endif
@@ -261,7 +367,13 @@ static bool _nc_mouse_inline(SCREEN *sp)
 	 */
 	for (grabbed = 0; grabbed < 3; grabbed += res)
 	{
+
+	/* For VIO mouse we add extra bit 64 to disambiguate button-up. */
+#ifdef USE_EMX_MOUSE
+	     res = read( M_FD(sp) >= 0 ? M_FD(sp) : sp->_ifd, &kbuf, 3);
+#else
 	     res = read(sp->_ifd, kbuf + grabbed, 3-grabbed);
+#endif
 	     if (res == -1)
 		 break;
 	}
@@ -277,14 +389,26 @@ static bool _nc_mouse_inline(SCREEN *sp)
 	{
 	case 0x0:
 	    eventp->bstate = BUTTON1_PRESSED;
+#ifdef USE_EMX_MOUSE
+	    if (kbuf[0] & 0x40)
+		eventp->bstate = BUTTON1_RELEASED;
+#endif
 	    break;
 
 	case 0x1:
 	    eventp->bstate = BUTTON2_PRESSED;
+#ifdef USE_EMX_MOUSE
+	    if (kbuf[0] & 0x40)
+		eventp->bstate = BUTTON2_RELEASED;
+#endif
 	    break;
 
 	case 0x2:
 	    eventp->bstate = BUTTON3_PRESSED;
+#ifdef USE_EMX_MOUSE
+	    if (kbuf[0] & 0x40)
+		eventp->bstate = BUTTON3_RELEASED;
+#endif
 	    break;
 
 	case 0x3:
