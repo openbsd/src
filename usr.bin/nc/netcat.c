@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.55 2002/12/28 10:24:09 fgsch Exp $ */
+/* $OpenBSD: netcat.c,v 1.56 2002/12/30 17:57:58 stevesk Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -426,7 +426,7 @@ remote_connect(char *host, char *port, struct addrinfo hints)
 	int s, error;
 
 	if ((error = getaddrinfo(host, port, &hints, &res)))
-		errx(1, "%s", gai_strerror(error));
+		errx(1, "getaddrinfo: %s", gai_strerror(error));
 
 	res0 = res;
 	do {
@@ -451,7 +451,7 @@ remote_connect(char *host, char *port, struct addrinfo hints)
 			ahints.ai_protocol = uflag ? IPPROTO_UDP : IPPROTO_TCP;
 			ahints.ai_flags = AI_PASSIVE;
 			if ((error = getaddrinfo(sflag, pflag, &ahints, &ares)))
-				errx(1, "%s", gai_strerror(error));
+				errx(1, "getaddrinfo: %s", gai_strerror(error));
 
 			if (bind(s, (struct sockaddr *)ares->ai_addr,
 			    ares->ai_addrlen) < 0) {
@@ -497,7 +497,7 @@ local_listen(char *host, char *port, struct addrinfo hints)
 		hints.ai_family = AF_INET;
 
 	if ((error = getaddrinfo(host, port, &hints, &res)))
-                errx(1, "%s", gai_strerror(error));
+                errx(1, "getaddrinfo: %s", gai_strerror(error));
 
 	res0 = res;
 	do {
