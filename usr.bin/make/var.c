@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.22 1999/12/16 16:52:11 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.23 1999/12/16 17:02:45 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: var.c,v 1.22 1999/12/16 16:52:11 espie Exp $";
+static char rcsid[] = "$OpenBSD: var.c,v 1.23 1999/12/16 17:02:45 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -167,7 +167,7 @@ static Lst	allVars;      /* List of all variables */
 
 typedef struct Var {
     char          *name;	/* the variable's name */
-    Buffer	  val;	    	/* its value */
+    BUFFER	  val;	    	/* its value */
     int	    	  flags;    	/* miscellaneous status flags */
 #define VAR_IN_USE	1   	    /* Variable's value currently being used.
 				     * Used to avoid recursion */
@@ -202,6 +202,7 @@ typedef struct {
 } VarREPattern;
 #endif
 
+#define VarValue(v)	Buf_Retrieve(&((v)->val))
 static int VarCmp __P((ClientData, ClientData));
 static Var *VarFind __P((char *, GNode *, int));
 static Var *VarAdd __P((char *, char *, GNode *));
@@ -373,8 +374,8 @@ VarAdd(name, val, ctxt)
     v->name = estrdup (name);
 
     len = val ? strlen(val) : 0;
-    v->val = Buf_Init(len+1);
-    Buf_AddChars(v->val, len, val);
+    Buf_Init(&(v->val), len+1);
+    Buf_AddChars(&(v->val), len, val);
 
     v->flags = 0;
 
@@ -405,8 +406,8 @@ VarDelete(vp)
 {
     Var *v = (Var *) vp;
     free(v->name);
-    Buf_Destroy(v->val, TRUE);
-    free((Address) v);
+    Buf_Destroy(&(v->val));
+    free(v);
 }
 
 
@@ -484,8 +485,8 @@ Var_Set (name, val, ctxt)
     if (v == (Var *) NIL) {
 	(void)VarAdd(name, val, ctxt);
     } else {
-	Buf_Reset(v->val);
-	Buf_AddString(v->val, val);
+	Buf_Reset(&(v->val));
+	Buf_AddString(&(v->val), val);
 
 	if (DEBUG(VAR)) {
 	    printf("%s:%s = %s\n", ctxt->name, name, val);
@@ -539,12 +540,11 @@ Var_Append (name, val, ctxt)
     if (v == (Var *) NIL) {
 	(void)VarAdd(name, val, ctxt);
     } else {
-	Buf_AddSpace(v->val);
-	Buf_AddString(v->val, val);
+	Buf_AddSpace(&(v->val));
+	Buf_AddString(&(v->val), val);
 
 	if (DEBUG(VAR)) {
-	    printf("%s:%s = %s\n", ctxt->name, name,
-		   Buf_Retrieve(v->val));
+	    printf("%s:%s = %s\n", ctxt->name, name, VarValue(v));
 	}
 
     }
@@ -598,8 +598,8 @@ Var_Value(name, ctxt)
     Var            *v;
 
     v = VarFind(name, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
-    if (v != NULL) 
-	return Buf_Retrieve(v->val);
+    if (v != (Var *)NIL) 
+	return VarValue(v);
     else
 	return NULL;
 }
@@ -1260,7 +1260,7 @@ VarModify (str, modProc, datum)
     Boolean    	  (*modProc) __P((char *, Boolean, Buffer, ClientData));
     ClientData	  datum;    	    /* Datum to pass it */
 {
-    Buffer  	  buf;	    	    /* Buffer for the new string */
+    BUFFER  	  buf;	    	    /* Buffer for the new string */
     Boolean 	  addSpace; 	    /* TRUE if need to add a space to the
 				     * buffer before adding the trimmed
 				     * word */
@@ -1268,19 +1268,17 @@ VarModify (str, modProc, datum)
     char *as;			    /* word list memory */
     int ac, i;
 
-    buf = Buf_Init(0);
+    Buf_Init(&buf, 0);
     addSpace = FALSE;
 
     av = brk_string(str, &ac, FALSE, &as);
 
     for (i = 0; i < ac; i++)
-	addSpace = (*modProc)(av[i], addSpace, buf, datum);
+	addSpace = (*modProc)(av[i], addSpace, &buf, datum);
 
     free(as);
     free(av);
-    str = Buf_Retrieve(buf);
-    Buf_Destroy(buf, FALSE);
-    return (str);
+    return Buf_Retrieve(&buf);
 }
 
 /*-
@@ -1315,8 +1313,10 @@ VarGetPattern(ctxt, err, tstr, delim, flags, length, pattern)
     VarPattern *pattern;
 {
     char *cp;
-    Buffer buf = Buf_Init(0);
+    BUFFER buf;
     int junk;
+
+    Buf_Init(&buf, 0);
     if (length == NULL)
 	length = &junk;
 
@@ -1332,12 +1332,12 @@ VarGetPattern(ctxt, err, tstr, delim, flags, length, pattern)
      */
     for (cp = *tstr; *cp && (*cp != delim); cp++) {
 	if (IS_A_MATCH(cp, delim)) {
-	    Buf_AddChar(buf, cp[1]);
+	    Buf_AddChar(&buf, cp[1]);
 	    cp++;
 	} else if (*cp == '$') {
 	    if (cp[1] == delim) {
 		if (flags == NULL)
-		    Buf_AddChar(buf, *cp);
+		    Buf_AddChar(&buf, *cp);
 		else
 		    /*
 		     * Unescaped $ at end of pattern => anchor
@@ -1356,16 +1356,16 @@ VarGetPattern(ctxt, err, tstr, delim, flags, length, pattern)
 		 * substitution and recurse.
 		 */
 		cp2 = Var_Parse(cp, ctxt, err, &len, &freeIt);
-		Buf_AddString(buf, cp2);
+		Buf_AddString(&buf, cp2);
 		if (freeIt)
 		    free(cp2);
 		cp += len - 1;
 	    }
 	}
 	else if (pattern && *cp == '&')
-	    Buf_AddChars(buf, pattern->leftLen, pattern->lhs);
+	    Buf_AddChars(&buf, pattern->leftLen, pattern->lhs);
 	else
-	    Buf_AddChar(buf, *cp);
+	    Buf_AddChar(&buf, *cp);
     }
 
     if (*cp != delim) {
@@ -1375,10 +1375,8 @@ VarGetPattern(ctxt, err, tstr, delim, flags, length, pattern)
     }
     else {
 	*tstr = ++cp;
-	cp = Buf_Retrieve(buf);
-	*length = Buf_Size(buf);
-	Buf_Destroy(buf, FALSE);
-	return cp;
+	*length = Buf_Size(&buf);
+	return Buf_Retrieve(&buf);
     }
 }
 
@@ -1400,19 +1398,17 @@ VarQuote(str)
 	char *str;
 {
 
-    Buffer  	  buf;
+    BUFFER  	  buf;
     /* This should cover most shells :-( */
     static char meta[] = "\n \t'`\";&<>()|*?{}[]\\$!#^~";
 
-    buf = Buf_Init(MAKE_BSIZE);
+    Buf_Init(&buf, MAKE_BSIZE);
     for (; *str; str++) {
 	if (strchr(meta, *str) != NULL)
-	    Buf_AddChar(buf, '\\');
-	Buf_AddChar(buf, *str);
+	    Buf_AddChar(&buf, '\\');
+	Buf_AddChar(&buf, *str);
     }
-    str = Buf_Retrieve(buf);
-    Buf_Destroy(buf, FALSE);
-    return str;
+    return Buf_Retrieve(&buf);
 }
 
 /*-
@@ -1570,7 +1566,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 			 * the only one who sets these things and we sure don't
 			 * but nested invocations in them...
 			 */
-			val = Buf_Retrieve(v->val);
+			val = VarValue(v);
 
 			if (str[3] == 'D') {
 			    val = VarModify(val, VarHead, (ClientData)0);
@@ -1653,7 +1649,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		 */
 		v = (Var *) emalloc(sizeof(Var));
 		v->name = &str[1];
-		v->val = Buf_Init(1);
+		Buf_Init(&(v->val), 1);
 		v->flags = VAR_JUNK;
 	    }
 	}
@@ -1674,7 +1670,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
      * been dynamically-allocated, so it will need freeing when we
      * return.
      */
-    str = Buf_Retrieve(v->val);
+    str = VarValue(v);
     if (strchr (str, '$') != (char *)NULL) {
 	str = Var_Subst(NULL, str, ctxt, err);
 	*freePtr = TRUE;
@@ -2070,8 +2066,8 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 	    free(str);
 	}
 	*freePtr = FALSE;
-	Buf_Destroy(v->val, TRUE);
-	free((Address)v);
+	Buf_Destroy(&(v->val));
+	free(v);
 	if (dynamic) {
 	    str = emalloc(*lengthPtr + 1);
 	    strncpy(str, start, *lengthPtr);
@@ -2113,7 +2109,7 @@ Var_Subst (var, str, ctxt, undefErr)
     GNode         *ctxt;	    /* the context wherein to find variables */
     Boolean 	  undefErr; 	    /* TRUE if undefineds are an error */
 {
-    Buffer  	  buf;	    	    /* Buffer for forming things */
+    BUFFER  	  buf;	    	    /* Buffer for forming things */
     char    	  *val;		    /* Value to substitute for a variable */
     int	    	  length;   	    /* Length of the variable invocation */
     Boolean 	  doFree;   	    /* Set true if val should be freed */
@@ -2121,7 +2117,7 @@ Var_Subst (var, str, ctxt, undefErr)
 				     * been reported to prevent a plethora
 				     * of messages when recursing */
 
-    buf = Buf_Init(MAKE_BSIZE);
+    Buf_Init(&buf, MAKE_BSIZE);
     errorReported = FALSE;
 
     while (*str) {
@@ -2132,7 +2128,7 @@ Var_Subst (var, str, ctxt, undefErr)
 	     * dollar sign into the buffer directly.
 	     */
 	    str++;
-	    Buf_AddChar(buf, *str);
+	    Buf_AddChar(&buf, *str);
 	    str++;
 	} else if (*str != '$') {
 	    /*
@@ -2143,14 +2139,14 @@ Var_Subst (var, str, ctxt, undefErr)
 
 	    for (cp = str++; *str != '$' && *str != '\0'; str++)
 		continue;
-	    Buf_AddInterval(buf, cp, str);
+	    Buf_AddInterval(&buf, cp, str);
 	} else {
 	    if (var != NULL) {
 		int expand;
 		for (;;) {
 		    if (str[1] != '(' && str[1] != '{') {
 			if (str[1] != *var || var[1] != '\0') {
-			    Buf_AddChars(buf, 2, str);
+			    Buf_AddChars(&buf, 2, str);
 			    str += 2;
 			    expand = FALSE;
 			}
@@ -2174,7 +2170,7 @@ Var_Subst (var, str, ctxt, undefErr)
 			 * the nested one
 			 */
 			if (*p == '$') {
-			    Buf_AddInterval(buf, str, p);
+			    Buf_AddInterval(&buf, str, p);
 			    str = p;
 			    continue;
 			}
@@ -2187,7 +2183,7 @@ Var_Subst (var, str, ctxt, undefErr)
 			     */
 			    for (;*p != '$' && *p != '\0'; p++)
 				continue;
-			    Buf_AddInterval(buf, str, p);
+			    Buf_AddInterval(&buf, str, p);
 			    str = p;
 			    expand = FALSE;
 			}
@@ -2230,7 +2226,7 @@ Var_Subst (var, str, ctxt, undefErr)
 		    str += length;
 		    errorReported = TRUE;
 		} else {
-		    Buf_AddChar(buf, *str);
+		    Buf_AddChar(&buf, *str);
 		    str += 1;
 		}
 	    } else {
@@ -2244,17 +2240,14 @@ Var_Subst (var, str, ctxt, undefErr)
 		 * Copy all the characters from the variable value straight
 		 * into the new string.
 		 */
-		Buf_AddString(buf, val);
-		if (doFree) {
-		    free ((Address)val);
-		}
+		Buf_AddString(&buf, val);
+		if (doFree)
+		    free(val);
 	    }
 	}
     }
 
-    str = Buf_Retrieve(buf);
-    Buf_Destroy(buf, FALSE);
-    return (str);
+    return Buf_Retrieve(&buf);
 }
 
 /*-
@@ -2332,12 +2325,12 @@ Var_End ()
 
 /****************** PRINT DEBUGGING INFO *****************/
 static int
-VarPrintVar (vp, dummy)
+VarPrintVar(vp, dummy)
     ClientData vp;
     ClientData dummy;
 {
     Var    *v = (Var *) vp;
-    printf ("%-16s = %s\n", v->name, Buf_Retrieve(v->val));
+    printf("%-16s = %s\n", v->name, VarValue(v));
     return (dummy ? 0 : 0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.28 1999/12/16 16:52:11 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.29 1999/12/16 17:02:45 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: parse.c,v 1.28 1999/12/16 16:52:11 espie Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.29 1999/12/16 17:02:45 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -2106,18 +2106,18 @@ ParseSkipLine(skip)
 {
     char *line;
     int c, lastc;
-    Buffer buf;
+    BUFFER buf;
 
-    buf = Buf_Init(MAKE_BSIZE);
+    Buf_Init(&buf, MAKE_BSIZE);
 
     for (;;) {
-        Buf_Reset(buf);
+        Buf_Reset(&buf);
         lastc = '\0';
 
         while (((c = ParseReadc()) != '\n' || lastc == '\\')
                && c != EOF) {
             if (c == '\n') {
-                Buf_ReplaceLastChar(buf, ' ');
+                Buf_ReplaceLastChar(&buf, ' ');
                 lineno++;
 
                 while ((c = ParseReadc()) == ' ' || c == '\t');
@@ -2126,11 +2126,11 @@ ParseSkipLine(skip)
                     break;
             }
 
-            Buf_AddChar(buf, c);
+            Buf_AddChar(&buf, c);
             lastc = c;
         }
 
-        line = Buf_Retrieve(buf);
+        line = Buf_Retrieve(&buf);
         lineno++;
 	    /* allow for non-newline terminated lines while skipping */
 	if (line[0] == '.')
@@ -2138,15 +2138,14 @@ ParseSkipLine(skip)
 
         if (c == EOF) {
             Parse_Error(PARSE_FATAL, "Unclosed conditional/for loop");
-            Buf_Destroy(buf, TRUE);
-            return((char *)NULL);
+            Buf_Destroy(&buf);
+            return NULL;
         }
 	if (skip == 0)
 	    break;
 
     }
 
-    Buf_Destroy(buf, FALSE);
     return line;
 }
 
@@ -2171,7 +2170,7 @@ ParseSkipLine(skip)
 static char *
 ParseReadLine ()
 {
-    Buffer  	  buf;	    	/* Buffer for current line */
+    BUFFER  	  buf;	    	/* Buffer for current line */
     register int  c;	      	/* the current character */
     register int  lastc;    	/* The most-recent character */
     Boolean	  semiNL;     	/* treat semi-colons as newlines */
@@ -2214,7 +2213,7 @@ ParseReadLine ()
 
     if (c != EOF) {
 	lastc = c;
-	buf = Buf_Init(MAKE_BSIZE);
+	Buf_Init(&buf, MAKE_BSIZE);
 
 	while (((c = ParseReadc ()) != '\n' || (lastc == '\\')) &&
 	       (c != EOF))
@@ -2328,7 +2327,7 @@ test_char:
 	    /*
 	     * Copy in the previous character and save this one in lastc.
 	     */
-	    Buf_AddChar(buf, lastc);
+	    Buf_AddChar(&buf, lastc);
 	    lastc = c;
 
 	}
@@ -2336,9 +2335,8 @@ test_char:
 	lineno++;
 
 	if (lastc != '\0') 
-	    Buf_AddChar(buf, lastc);
-	line = Buf_Retrieve(buf);
-	Buf_Destroy(buf, FALSE);
+	    Buf_AddChar(&buf, lastc);
+	line = Buf_Retrieve(&buf);
 
 	/*
 	 * Strip trailing blanks and tabs from the line.

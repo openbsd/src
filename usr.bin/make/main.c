@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.21 1999/12/16 16:41:41 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.22 1999/12/16 17:02:45 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.21 1999/12/16 16:41:41 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.22 1999/12/16 17:02:45 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -927,7 +927,7 @@ Cmd_Exec(cmd, err)
     int 	pid;	    	/* PID from wait() */
     char	*res;		/* result */
     int		status;		/* command exit status */
-    Buffer	buf;		/* buffer to store the result */
+    BUFFER	buf;		/* buffer to store the result */
     char	*cp;
     ssize_t	cc;
     size_t 	length;
@@ -983,13 +983,13 @@ Cmd_Exec(cmd, err)
 	 */
 	(void) close(fds[1]);
 
-	buf = Buf_Init(MAKE_BSIZE);
+	Buf_Init(&buf, MAKE_BSIZE);
 
 	do {
 	    char   result[BUFSIZ];
 	    cc = read(fds[0], result, sizeof(result));
 	    if (cc > 0)
-		Buf_AddChars(buf, cc, result);
+		Buf_AddChars(&buf, cc, result);
 	}
 	while (cc > 0 || (cc == -1 && errno == EINTR));
 
@@ -1004,9 +1004,8 @@ Cmd_Exec(cmd, err)
 	while(((pid = wait(&status)) != cpid) && (pid >= 0))
 	    continue;
 
-	res = Buf_Retrieve(buf);
-	length = Buf_Size(buf);
-	Buf_Destroy(buf, FALSE);
+	res = Buf_Retrieve(&buf);
+	length = Buf_Size(&buf);
 
 	if (cc == -1)
 	    *err = "Couldn't read shell's output for \"%s\"";

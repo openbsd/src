@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.10 1999/12/16 16:46:38 espie Exp $	*/
+/*	$OpenBSD: buf.h,v 1.11 1999/12/16 17:02:45 espie Exp $	*/
 /*	$NetBSD: buf.h,v 1.7 1996/12/31 17:53:22 christos Exp $	*/
 
 /*
@@ -51,11 +51,13 @@
 
 #include    "sprite.h"
 
-typedef struct Buffer {
+typedef struct Buffer_ {
     char    *buffer;	/* The buffer itself. */
     char    *inPtr;	/* Place to write to. */
     char    *endPtr;	/* End of allocated space. */
-} *Buffer;
+} BUFFER;
+
+typedef BUFFER *Buffer;
 
 /* Internal support for Buf_AddChar.  */
 void BufOverflow __P((Buffer));
@@ -92,9 +94,9 @@ void Buf_AddChars __P((Buffer, size_t, const char *));
 
 /* Buf_Init -- Initialize a buffer. If no initial size is given, 
  *	a reasonable default is used.  */
-Buffer Buf_Init __P((size_t));
-/* Buf_Destroy -- Nuke a buffer and all its resources if Boolean is TRUE. */
-void Buf_Destroy __P((Buffer, Boolean));
+void Buf_Init __P((Buffer, size_t));
+/* Buf_Destroy -- Nuke a buffer and all its resources.  */
+void Buf_Destroy __P((Buffer));
 /* Buf_ReplaceLastChar -- Replace the last char in a buffer.  */
 void Buf_ReplaceLastChar __P((Buffer, char));
 

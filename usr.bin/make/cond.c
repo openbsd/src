@@ -1,4 +1,4 @@
-/*	$OpenBSD: cond.c,v 1.10 1999/12/16 16:58:15 espie Exp $	*/
+/*	$OpenBSD: cond.c,v 1.11 1999/12/16 17:02:45 espie Exp $	*/
 /*	$NetBSD: cond.c,v 1.7 1996/11/06 17:59:02 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: cond.c,v 1.10 1999/12/16 16:58:15 espie Exp $";
+static char rcsid[] = "$OpenBSD: cond.c,v 1.11 1999/12/16 17:02:45 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -186,7 +186,7 @@ CondGetArg(linePtr, argPtr, argLen, func, parens)
     Boolean 	  parens;   	/* TRUE if arg should be bounded by parens */
 {
     register char *cp;
-    register Buffer buf;
+    BUFFER buf;
 
     cp = *linePtr;
     if (parens) {
@@ -217,7 +217,7 @@ CondGetArg(linePtr, argPtr, argLen, func, parens)
      * Create a buffer for the argument and start it out at 16 characters
      * long. Why 16? Why not?
      */
-    buf = Buf_Init(16);
+    Buf_Init(&buf, 16);
 
     while ((strchr(" \t)&|", *cp) == (char *)NULL) && (*cp != '\0')) {
 	if (*cp == '$') {
@@ -233,20 +233,19 @@ CondGetArg(linePtr, argPtr, argLen, func, parens)
 
 	    cp2 = Var_Parse(cp, VAR_CMD, TRUE, &len, &doFree);
 
-	    Buf_AddString(buf, cp2);
+	    Buf_AddString(&buf, cp2);
 	    if (doFree) {
 		free(cp2);
 	    }
 	    cp += len;
 	} else {
-	    Buf_AddChar(buf, *cp);
+	    Buf_AddChar(&buf, *cp);
 	    cp++;
 	}
     }
 
-    *argPtr = Buf_Retrieve(buf);
-    *argLen = Buf_Size(buf);
-    Buf_Destroy(buf, FALSE);
+    *argPtr = Buf_Retrieve(&buf);
+    *argLen = Buf_Size(&buf);
 
     while (*cp == ' ' || *cp == '\t') {
 	cp++;
@@ -541,21 +540,20 @@ CondToken(doEval)
 
 		if (!isspace((unsigned char) *condExpr) &&
 		    strchr("!=><", *condExpr) == NULL) {
-		    Buffer buf;
+		    BUFFER buf;
 
-		    buf = Buf_Init(0);
+		    Buf_Init(&buf, 0);
 
-		    Buf_AddString(buf, lhs);
+		    Buf_AddString(&buf, lhs);
 
 		    if (doFree)
 			free(lhs);
 
 		    for (;*condExpr && !isspace((unsigned char) *condExpr);
 			 condExpr++)
-			Buf_AddChar(buf, *condExpr);
+			Buf_AddChar(&buf, *condExpr);
 
-		    lhs = Buf_Retrieve(buf);
-		    Buf_Destroy(buf, FALSE);
+		    lhs = Buf_Retrieve(&buf);
 
 		    doFree = TRUE;
 		}
@@ -607,7 +605,7 @@ do_compare:
 		    char    *string;
 		    char    *cp, *cp2;
 		    int	    qt;
-		    Buffer  buf;
+		    BUFFER  buf;
 
 do_string_compare:
 		    if (((*op != '!') && (*op != '=')) || (op[1] != '=')) {
@@ -616,7 +614,7 @@ do_string_compare:
 			goto error;
 		    }
 
-		    buf = Buf_Init(0);
+		    Buf_Init(&buf, 0);
 		    qt = *rhs == '"' ? 1 : 0;
 
 		    for (cp = &rhs[qt];
@@ -629,28 +627,27 @@ do_string_compare:
 			     * character, if it exists.
 			     */
 			    cp++;
-			    Buf_AddChar(buf, *cp);
+			    Buf_AddChar(&buf, *cp);
 			} else if (*cp == '$') {
 			    int	len;
 			    Boolean freeIt;
 
 			    cp2 = Var_Parse(cp, VAR_CMD, doEval,&len, &freeIt);
 			    if (cp2 != var_Error) {
-				Buf_AddString(buf, cp2);
+				Buf_AddString(&buf, cp2);
 				if (freeIt) {
 				    free(cp2);
 				}
 				cp += len - 1;
 			    } else {
-				Buf_AddChar(buf, *cp);
+				Buf_AddChar(&buf, *cp);
 			    }
 			} else {
-			    Buf_AddChar(buf, *cp);
+			    Buf_AddChar(&buf, *cp);
 			}
 		    }
 
-		    string = Buf_Retrieve(buf);
-		    Buf_Destroy(buf, FALSE);
+		    string = Buf_Retrieve(&buf);
 
 		    if (DEBUG(COND)) {
 			printf("lhs = \"%s\", rhs = \"%s\", op = %.2s\n",

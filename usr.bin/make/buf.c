@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.11 1999/12/16 16:46:38 espie Exp $	*/
+/*	$OpenBSD: buf.c,v 1.12 1999/12/16 17:02:45 espie Exp $	*/
 /*	$NetBSD: buf.c,v 1.9 1996/12/31 17:53:21 christos Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)buf.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: buf.c,v 1.11 1999/12/16 16:46:38 espie Exp $";
+static char rcsid[] = "$OpenBSD: buf.c,v 1.12 1999/12/16 17:02:45 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -127,33 +127,23 @@ Buf_AddChars(bp, numBytes, bytesPtr)
     bp->inPtr += numBytes;
 }
 
-Buffer
-Buf_Init(size)
+void
+Buf_Init(bp, size)
+    Buffer 	bp;	/* New Buffer */
     size_t    	size;	/* Initial size for the buffer */
 {
-    Buffer 	bp;	/* New Buffer */
-
-    bp = (Buffer)emalloc(sizeof(*bp));
-
     if (size == 0) {
 	size = BUF_DEF_SIZE;
     }
     bp->inPtr = bp->endPtr = bp->buffer = emalloc(size);
     bp->endPtr += size;
-
-    return (bp);
 }
 
 void
-Buf_Destroy(buf, freeData)
+Buf_Destroy(buf)
     Buffer  buf;  	/* Buffer to destroy */
-    Boolean freeData;	/* TRUE if the data should be destroyed as well */
 {
-
-    if (freeData) {
-	free(buf->buffer);
-    }
-    free ((char *)buf);
+    free(buf->buffer);
 }
 
 void
