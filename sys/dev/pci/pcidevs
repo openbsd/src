@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.522 2002/06/11 05:40:39 matthieu Exp $
+	$OpenBSD: pcidevs,v 1.523 2002/06/19 21:08:31 jason Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1588,6 +1588,9 @@ product MOT RAVEN		0x4801	Raven Host-PCI
 /* Moxa */
 product MOXA CP114 		0x1141	CP-114
 product MOXA C168H		0x1680	C168H
+
+/* Mesa Ridge Technologies (MAGMA) */
+product MRTMAGMA DMA4		0x0011	DMA4 serial
 
 /* Mylex products */
 product MYLEX 960P		0x0001	DAC960P RAID
