@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.50 2003/09/23 16:51:13 millert Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.51 2003/12/02 06:00:18 mickey Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -137,6 +137,16 @@ static int tuninit(struct tun_softc *);
 #ifdef ALTQ
 static void tunstart(struct ifnet *);
 #endif
+int	filt_tunread(struct knote *, long);
+int	filt_tunwrite(struct knote *, long);
+void	filt_tunrdetach(struct knote *);
+void	filt_tunwdetach(struct knote *);
+
+struct filterops tunread_filtops =
+	{ 1, NULL, filt_tunrdetach, filt_tunread};
+
+struct filterops tunwrite_filtops =
+	{ 1, NULL, filt_tunwdetach, filt_tunwrite};
 
 void
 tunattach(n)
@@ -259,6 +269,7 @@ tunclose(dev, flag, mode, p)
 	}
 	tp->tun_pgid = 0;
 	selwakeup(&tp->tun_rsel);
+	KNOTE(&tp->tun_rsel.si_note, 0);
 		
 	TUNDEBUG(("%s: closed\n", ifp->if_xname));
 	return (0);
@@ -434,6 +445,7 @@ tun_output(ifp, m0, dst, rt)
 		csignal(tp->tun_pgid, SIGIO,
 		    tp->tun_siguid, tp->tun_sigeuid);
 	selwakeup(&tp->tun_rsel);
+	KNOTE(&tp->tun_rsel.si_note, 0);
 	return 0;
 }
 
@@ -779,12 +791,115 @@ tunpoll(dev, events, p)
 	return (revents);
 }
 
-/* Does not currently work */
-
+/*
+ * kqueue(2) support.
+ *
+ * The tun driver uses an array of tun_softc's based on the minor number
+ * of the device.  kn->kn_hook gets set to the specific tun_softc.
+ *
+ * filt_tunread() sets kn->kn_data to the iface qsize
+ * filt_tunwrite() sets kn->kn_data to the MTU size
+ */
 int
 tunkqfilter(dev_t dev,struct knote *kn)
 {
-	return (1);
+	int unit, s;
+	struct klist *klist;
+	struct tun_softc *tp;
+	struct ifnet *ifp;
+
+	if ((unit = minor(dev)) >= ntun)
+		return ENXIO;
+
+	tp = &tunctl[unit];
+	ifp = &tp->tun_if;
+
+	s = splimp();
+	TUNDEBUG(("%s: tunselect\n", ifp->if_xname));
+	splx(s);
+
+	switch (kn->kn_filter) {
+		case EVFILT_READ:
+			klist = &tp->tun_rsel.si_note;
+			kn->kn_fop = &tunread_filtops;
+			break;
+		case EVFILT_WRITE:
+			klist = &tp->tun_wsel.si_note;
+			kn->kn_fop = &tunwrite_filtops;
+			break;
+		default:
+			return EPERM;	/* 1 */
+	}
+
+	kn->kn_hook = (caddr_t)tp;
+
+	s = splhigh();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return 0;
+}
+
+void
+filt_tunrdetach(struct knote *kn)
+{
+	int s;
+	struct tun_softc *tp = (struct tun_softc *)kn->kn_hook;
+
+	s = splhigh();
+	SLIST_REMOVE(&tp->tun_rsel.si_note, kn, knote, kn_selnext);
+	splx(s);
+}
+
+int
+filt_tunread(struct knote *kn, long hint)
+{
+	int s;
+	struct tun_softc *tp;
+	struct ifnet *ifp;
+	struct mbuf *m;
+
+	tp = (struct tun_softc *)kn->kn_hook;
+	ifp = &tp->tun_if;
+
+	s = splnet();
+	IFQ_POLL(&ifp->if_snd, m);
+	if (m != NULL) {
+		splx(s);
+		kn->kn_data = ifp->if_snd.ifq_len;
+
+		TUNDEBUG(("%s: tunkqread q=%d\n", ifp->if_xname,
+					ifp->if_snd.ifq_len));
+		return 1;
+	}
+	splx(s);
+	TUNDEBUG(("%s: tunkqread waiting\n", ifp->if_xname));
+	return 0;
+}
+
+void
+filt_tunwdetach(struct knote *kn)
+{
+	int s;
+	struct tun_softc *tp = (struct tun_softc *)kn->kn_hook;
+
+	s = splhigh();
+	SLIST_REMOVE(&tp->tun_wsel.si_note, kn, knote, kn_selnext);
+	splx(s);
+}
+
+int
+filt_tunwrite(struct knote *kn, long hint)
+{
+	struct tun_softc *tp;
+	struct ifnet *ifp;
+
+	tp = (struct tun_softc *)kn->kn_hook;
+	ifp = &tp->tun_if;
+
+	kn->kn_data = ifp->if_mtu;
+
+	return 1;
 }
 
 #ifdef ALTQ
@@ -814,6 +929,7 @@ tunstart(ifp)
 			csignal(tp->tun_pgid, SIGIO,
 			    tp->tun_siguid, tp->tun_sigeuid);
 		selwakeup(&tp->tun_rsel);
+		KNOTE(&tp->tun_rsel.si_note, 0);
 	}
 }
 #endif
