@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh.c,v 1.195 2003/07/02 20:37:48 markus Exp $");
+RCSID("$OpenBSD: ssh.c,v 1.196 2003/07/03 08:09:06 djm Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -74,10 +74,6 @@ RCSID("$OpenBSD: ssh.c,v 1.195 2003/07/02 20:37:48 markus Exp $");
 #endif
 
 extern char *__progname;
-
-/* Flag indicating whether IPv4 or IPv6.  This can be set on the command line.
-   Default value is AF_UNSPEC means both IPv4 and IPv6. */
-int IPv4or6 = AF_UNSPEC;
 
 /* Flag indicating whether debug mode is on.  This can be set on the command line. */
 int debug_flag = 0;
@@ -271,10 +267,10 @@ again:
 			options.protocol = SSH_PROTO_2;
 			break;
 		case '4':
-			IPv4or6 = AF_INET;
+			options.address_family = AF_INET;
 			break;
 		case '6':
-			IPv4or6 = AF_INET6;
+			options.address_family = AF_INET6;
 			break;
 		case 'n':
 			stdin_null_flag = 1;
@@ -505,7 +501,6 @@ again:
 
 	SSLeay_add_all_algorithms();
 	ERR_load_crypto_strings();
-	channel_set_af(IPv4or6);
 
 	/* Initialize the command to execute on remote host. */
 	buffer_init(&command);
@@ -577,6 +572,8 @@ again:
 	/* Fill configuration defaults. */
 	fill_default_options(&options);
 
+	channel_set_af(options.address_family);
+
 	/* reinit */
 	log_init(av[0], options.log_level, SYSLOG_FACILITY_USER, 1);
 
@@ -605,8 +602,8 @@ again:
 	}
 	/* Open a connection to the remote host. */
 
-	if (ssh_connect(host, &hostaddr, options.port, IPv4or6,
-	    options.connection_attempts,
+	if (ssh_connect(host, &hostaddr, options.port, 
+	    options.address_family, options.connection_attempts,
 	    original_effective_uid == 0 && options.use_privileged_port,
 	    options.proxy_command) != 0)
 		exit(1);
