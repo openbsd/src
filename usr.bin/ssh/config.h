@@ -53,9 +53,6 @@ static /**/const char *const rcsid[] = { (char *)rcsid, "\100(#)" msg }
 /* Define to `unsigned' if <sys/types.h> doesn't define.  */
 /* #undef size_t */
 
-/* Define if the `S_IS*' macros in <sys/stat.h> do not work properly.  */
-/* #undef STAT_MACROS_BROKEN */
-
 /* Define if you have the ANSI C header files.  */
 #define STDC_HEADERS 1
 
@@ -135,9 +132,6 @@ static /**/const char *const rcsid[] = { (char *)rcsid, "\100(#)" msg }
 /* Location of system mail spool directory. */
 #define MAIL_SPOOL_DIRECTORY "/var/mail"
 
-/* Define this if O_NONBLOCK does not work on your system (e.g., Ultrix). */
-/* #undef O_NONBLOCK_BROKEN */
-
 /* Define this to include libwrap (tcp_wrappers) support. */
 /* #undef LIBWRAP */
 
@@ -160,10 +154,6 @@ static /**/const char *const rcsid[] = { (char *)rcsid, "\100(#)" msg }
    matching that of the local host.  This circumvents it by using the IP
    address instead of the host name in DISPLAY. */
 /* #undef HPSUX_NONSTANDARD_X11_KLUDGE */
-
-/* Define this if inet_network should be used instead of inet_addr.  This is
-   the case on DGUX 5.4. */
-/* #undef BROKEN_INET_ADDR */
 
 /* Define this if your system does not like sizeof(struct sockaddr_un) as the
    size argument in bind and connect calls for unix domain sockets. */
@@ -224,9 +214,6 @@ static /**/const char *const rcsid[] = { (char *)rcsid, "\100(#)" msg }
 /* Define if you have the getrusage function.  */
 #define HAVE_GETRUSAGE 1
 
-/* Define if you have the gettimeofday function.  */
-#define HAVE_GETTIMEOFDAY 1
-
 /* Define if you have the initgroups function.  */
 #define HAVE_INITGROUPS 1
 
@@ -278,14 +265,8 @@ static /**/const char *const rcsid[] = { (char *)rcsid, "\100(#)" msg }
 /* Define if you have the ulimit function.  */
 /* #undef HAVE_ULIMIT */
 
-/* Define if you have the umask function.  */
-#define HAVE_UMASK 1
-
 /* Define if you have the vhangup function.  */
 /* #undef HAVE_VHANGUP */
-
-/* Define if you have the vsnprintf function.  */
-#define HAVE_VSNPRINTF 1
 
 /* Define if you have the <dirent.h> header file.  */
 #define HAVE_DIRENT_H 1

@@ -18,7 +18,7 @@ Modified to work with SSL by Niels Provos <provos@citi.umich.edu> in Canada.
 */
 
 #include "includes.h"
-RCSID("$Id: ssh.c,v 1.15 1999/09/30 05:03:05 deraadt Exp $");
+RCSID("$Id: ssh.c,v 1.16 1999/09/30 05:11:29 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -205,13 +205,11 @@ main(int ac, char **av)
      we may need to create the port several times). */
   temporarily_use_uid(original_real_uid);
 
-#ifdef HAVE_UMASK
   /* Set our umask to something reasonable, as some files are created with 
      the default umask.  This will make them world-readable but writable 
      only by the owner, which is ok for all files for which we don't set
      the modes explicitly. */
   umask(022);
-#endif /* HAVE_UMASK */
   
   /* Save our own name. */
   av0 = av[0];

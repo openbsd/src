@@ -42,41 +42,17 @@ and ssh has the necessary privileges.)
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: scp.c,v 1.4 1999/09/30 01:21:41 aaron Exp $
+ *	$Id: scp.c,v 1.5 1999/09/30 05:11:29 deraadt Exp $
  */
 
 #include "includes.h"
-RCSID("$Id: scp.c,v 1.4 1999/09/30 01:21:41 aaron Exp $");
+RCSID("$Id: scp.c,v 1.5 1999/09/30 05:11:29 deraadt Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
-#ifdef HAVE_UTIME_H
 #include <utime.h>
-#ifdef _NEXT_SOURCE
-struct utimbuf {
-  time_t actime;
-  time_t modtime;
-};
-#endif /* _NEXT_SOURCE */
-#else
-struct utimbuf
-{
-  long actime;
-  long modtime;
-};
-#endif
 
 #define _PATH_CP "cp"
-
-#ifndef STDIN_FILENO
-#define STDIN_FILENO 0
-#endif
-#ifndef STDOUT_FILENO
-#define STDOUT_FILENO 1
-#endif
-#ifndef STDERR_FILENO
-#define STDERR_FILENO 2
-#endif
 
 /* For progressmeter() function. */
 #define STALLTIME	5
@@ -830,20 +806,12 @@ bad:			run_err("%s: %s", np, strerror(errno));
 #endif
 		if (pflag) {
 			if (exists || omode != mode)
-#ifdef HAVE_FCHMOD
 				if (fchmod(ofd, omode))
-#else /* HAVE_FCHMOD */
-				if (chmod(np, omode))
-#endif /* HAVE_FCHMOD */
 					run_err("%s: set mode: %s",
 					    np, strerror(errno));
 		} else {
 			if (!exists && omode != mode)
-#ifdef HAVE_FCHMOD
 				if (fchmod(ofd, omode & ~mask))
-#else /* HAVE_FCHMOD */
-				if (chmod(np, omode & ~mask))
-#endif /* HAVE_FCHMOD */
 					run_err("%s: set mode: %s",
 					    np, strerror(errno));
 		}
@@ -973,7 +941,7 @@ run_err(const char *fmt, ...)
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: scp.c,v 1.4 1999/09/30 01:21:41 aaron Exp $
+ *	$Id: scp.c,v 1.5 1999/09/30 05:11:29 deraadt Exp $
  */
 
 char *

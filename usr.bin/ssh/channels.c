@@ -16,7 +16,7 @@ arbitrary tcp/ip connections, and the authentication agent connection.
 */
 
 #include "includes.h"
-RCSID("$Id: channels.c,v 1.6 1999/09/29 21:14:16 deraadt Exp $");
+RCSID("$Id: channels.c,v 1.7 1999/09/30 05:11:29 deraadt Exp $");
 
 #include "ssh.h"
 #include "packet.h"
@@ -974,11 +974,7 @@ void channel_input_port_open(int payload_len)
     }
   
   memset(&sin, 0, sizeof(sin));
-#ifdef BROKEN_INET_ADDR
-  sin.sin_addr.s_addr = inet_network(host);
-#else /* BROKEN_INET_ADDR */
   sin.sin_addr.s_addr = inet_addr(host);
-#endif /* BROKEN_INET_ADDR */
   if ((sin.sin_addr.s_addr & 0xffffffff) != 0xffffffff)
     {
       /* It was a valid numeric host address. */
@@ -1226,11 +1222,7 @@ void x11_input_open(int payload_len)
   
   /* Try to parse the host name as a numeric IP address. */
   memset(&sin, 0, sizeof(sin));
-#ifdef BROKEN_INET_ADDR
-  sin.sin_addr.s_addr = inet_network(buf);
-#else /* BROKEN_INET_ADDR */
   sin.sin_addr.s_addr = inet_addr(buf);
-#endif /* BROKEN_INET_ADDR */
   if ((sin.sin_addr.s_addr & 0xffffffff) != 0xffffffff)
     {
       /* It was a valid numeric host address. */
@@ -1389,9 +1381,7 @@ char *auth_get_socket_name()
 void auth_input_request_forwarding(struct passwd *pw)
 {
   int pfd = get_permanent_fd(pw->pw_shell);
-#ifdef HAVE_UMASK
   mode_t savedumask;
-#endif /* HAVE_UMASK */
   
   if (pfd < 0) 
     {
@@ -1417,9 +1407,7 @@ void auth_input_request_forwarding(struct passwd *pw)
       strncpy(sunaddr.sun_path, channel_forwarded_auth_socket_name, 
 	      sizeof(sunaddr.sun_path));
 
-#ifdef HAVE_UMASK
       savedumask = umask(0077);
-#endif /* HAVE_UMASK */
 
       /* Temporarily use a privileged uid. */
       temporarily_use_uid(pw->pw_uid);
@@ -1430,9 +1418,7 @@ void auth_input_request_forwarding(struct passwd *pw)
       /* Restore the privileged uid. */
       restore_uid();
 
-#ifdef HAVE_UMASK
       umask(savedumask);
-#endif /* HAVE_UMASK */
 
       /* Start listening on the socket. */
       if (listen(sock, 5) < 0)

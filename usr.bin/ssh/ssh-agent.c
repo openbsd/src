@@ -14,7 +14,7 @@ The authentication agent program.
 */
 
 #include "includes.h"
-RCSID("$Id: ssh-agent.c,v 1.4 1999/09/29 21:14:16 deraadt Exp $");
+RCSID("$Id: ssh-agent.c,v 1.5 1999/09/30 05:11:29 deraadt Exp $");
 
 #include "ssh.h"
 #include "rsa.h"
@@ -347,13 +347,8 @@ void
 new_socket(int type, int fd)
 {
   unsigned int i, old_alloc;
-#if defined(O_NONBLOCK) && !defined(O_NONBLOCK_BROKEN)
   if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
     error("fcntl O_NONBLOCK: %s", strerror(errno));
-#else /* O_NONBLOCK && !O_NONBLOCK_BROKEN */
-  if (fcntl(fd, F_SETFL, O_NDELAY) < 0)
-    error("fcntl O_NDELAY: %s", strerror(errno));
-#endif /* O_NONBLOCK && !O_NONBLOCK_BROKEN */
 
   if (fd > max_fd)
     max_fd = fd;

@@ -15,7 +15,7 @@ The main loop for the interactive session (client side).
 */
 
 #include "includes.h"
-RCSID("$Id: clientloop.c,v 1.3 1999/09/30 05:03:04 deraadt Exp $");
+RCSID("$Id: clientloop.c,v 1.4 1999/09/30 05:11:29 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -124,11 +124,7 @@ void leave_non_blocking()
 void enter_non_blocking()
 {
   in_non_blocking_mode = 1;
-#if defined(O_NONBLOCK) && !defined(O_NONBLOCK_BROKEN)
   (void)fcntl(fileno(stdin), F_SETFL, O_NONBLOCK);
-#else /* O_NONBLOCK && !O_NONBLOCK_BROKEN */
-  (void)fcntl(fileno(stdin), F_SETFL, O_NDELAY);
-#endif /* O_NONBLOCK && !O_NONBLOCK_BROKEN */
   fatal_add_cleanup((void (*)(void *))leave_non_blocking, NULL);
 }
 
@@ -162,13 +158,9 @@ RETSIGTYPE signal_handler(int sig)
 
 double get_current_time()
 {
-#ifdef HAVE_GETTIMEOFDAY
   struct timeval tv;
   gettimeofday(&tv, NULL);
   return (double)tv.tv_sec + (double)tv.tv_usec / 1000000.0;
-#else /* HAVE_GETTIMEOFDAY */
-  return (double)time(NULL);
-#endif /* HAVE_GETTIMEOFDAY */
 }
 
 /* This is called when the interactive is entered.  This checks if there

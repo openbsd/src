@@ -12,7 +12,7 @@ Created: Mon Aug 21 15:48:58 1995 ylo
 */
 
 #include "includes.h"
-RCSID("$Id: servconf.c,v 1.5 1999/09/29 22:08:13 dugsong Exp $");
+RCSID("$Id: servconf.c,v 1.6 1999/09/30 05:11:29 deraadt Exp $");
 
 #include "ssh.h"
 #include "servconf.h"
@@ -296,11 +296,7 @@ void read_server_config(ServerOptions *options, const char *filename)
 		      filename, linenum);
 	      exit(1);
 	    }
-#ifdef BROKEN_INET_ADDR
-	  options->listen_addr.s_addr = inet_network(cp);
-#else /* BROKEN_INET_ADDR */
 	  options->listen_addr.s_addr = inet_addr(cp);
-#endif /* BROKEN_INET_ADDR */
 	  break;
 
 	case sHostKeyFile:
