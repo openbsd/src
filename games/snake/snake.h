@@ -1,4 +1,4 @@
-/*	$NetBSD: snake.h,v 1.6 1995/04/29 01:17:15 mycroft Exp $	*/
+/*	$OpenBSD: snake.h,v 1.1 1999/03/13 02:08:10 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -35,15 +35,31 @@
  *	@(#)snake.h	8.1 (Berkeley) 5/31/93
  */
 
-# include <stdio.h>
-# include <string.h>
-# include <assert.h>
-# include <sys/types.h>
-# include <signal.h>
-# include <termios.h>
-# include <math.h>
+#include <sys/types.h>
+#include <sys/ioctl.h>
+#include <err.h>
+#include <math.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <termios.h>
 
+#define PENALTY  10	/* % penalty for invoking spacewarp	*/
+
+#define EOT	'\004'
 #define ESC	'\033'
+#define LF	'\n'
+#define DEL	'\177'
+
+#define ME		'I'
+#define SNAKEHEAD	'S'
+#define SNAKETAIL	's'
+#define TREASURE	'$'
+#define GOAL		'#'
+
+#define BSIZE	80
+#define TOPN	3	/* top scores to print if you lose */
 
 struct tbuffer {
 	long t[4];
@@ -53,17 +69,17 @@ char	*CL, *UP, *DO, *ND, *BS,
 	*HO, *CM,
 	*TA, *LL,
 	*KL, *KR, *KU, *KD,
-	*TI, *TE, *KS, *KE;
+	*TI, *TE, *KS, *KE, *VE, *VI;
 int	LINES, COLUMNS;	/* physical screen size. */
 int	lcnt, ccnt;	/* user's idea of screen size */
-char	xBC, PC;
+char	PC;
 int	AM, BW;
 char	tbuf[1024], tcapbuf[128];
 char	*tgetstr(), *tgoto();
 int	Klength;	/* length of KX strings */
 int	chunk;		/* amount of money given at a time */
 speed_t	ospeed;
-#ifdef	debug
+#ifdef	DEBUG
 #define	cashvalue	(loot-penalty)/25
 #else
 #define cashvalue	chunk*(loot-penalty)/25
@@ -84,3 +100,51 @@ void	pr();
 #endif
 
 #define	same(s1, s2)	((s1)->line == (s2)->line && (s1)->col == (s2)->col)
+
+void snscore  __P((int, int));
+
+void	mainloop __P((void));
+void	chase    __P((struct point *, struct point *));
+void	setup    __P((void));
+void	drawbox  __P((void));
+void	snrand   __P((struct point *));
+int	post     __P((int, int));
+void	flushi   __P((void));
+void	spacewarp __P((int));
+void	snap     __P((void));
+int	stretch  __P((struct point *));
+void surround __P((struct point *));
+void	win      __P((struct point *));
+int	pushsnake __P((void));
+int	chk      __P((struct point *));
+void	winnings __P((int));
+void	stop    __P((int));
+void	suspend  __P((void));
+void	length   __P((int));
+void	move     __P((struct point *));
+
+#ifdef LOGGING
+void	logit   __P((char *));
+#endif
+
+void gto	__P((struct point *));
+void right	__P((struct point *));
+void up	__P((void));
+void down	__P((void));
+void bs	__P((void));
+void nd	__P((void));
+void clear	__P((void));
+void home	__P((void));
+void ll	__P((void));
+void cr	__P((void));
+void pstring	__P((const char *));
+void pch	__P((int));
+void pchar	__P((struct point *, char));
+int  outch	__P((int));
+void putpad	__P((char *));
+void cook	__P((void));
+void raw	__P((void));
+struct point	*point  __P((struct point *, int, int));
+void delay	__P((int));
+void getcap	__P((void));
+

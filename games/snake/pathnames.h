@@ -1,3 +1,4 @@
+/*	$OpenBSD: pathnames.h,v 1.1 1999/03/13 02:08:09 pjanzen Exp $	*/
 /*	$NetBSD: pathnames.h,v 1.3 1995/04/22 08:34:33 cgd Exp $	*/
 
 /*
@@ -36,4 +37,6 @@
  */
 
 #define	_PATH_RAWSCORES	"/var/games/snakerawscores"
+#ifdef LOGGING
 #define	_PATH_LOGFILE	"/var/games/snake.log"
+#endif

@@ -1,3 +1,4 @@
+/*	$OpenBSD: snscore.c,v 1.1 1999/03/13 02:08:10 pjanzen Exp $	*/
 /*	$NetBSD: snscore.c,v 1.5 1995/04/24 12:25:43 cgd Exp $	*/
 
 /*
@@ -43,69 +44,66 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)snscore.c	8.1 (Berkeley) 7/19/93";
 #else
-static char rcsid[] = "$NetBSD: snscore.c,v 1.5 1995/04/24 12:25:43 cgd Exp $";
+static char rcsid[] = "$OpenBSD: snscore.c,v 1.1 1999/03/13 02:08:10 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <err.h>
+#include <fcntl.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include "pathnames.h"
 
-char *recfile = _PATH_RAWSCORES;
 #define MAXPLAYERS 256
 
-struct	player	{
+struct player	{
 	uid_t	uids;
 	short	scores;
 	char	*name;
 } players[MAXPLAYERS], temp;
 
-int
-main()
+void
+snscore(fd, topn)
+	int fd, topn;
 {
 	uid_t	uid;
 	short	score;
-	FILE	*fd;
 	int	noplayers;
 	int	i, j, notsorted;
-	short	whoallbest, allbest;
 	char	*q;
 	struct	passwd	*p;
 
-	fd = fopen(recfile, "r");
-
-	if (fd == NULL) {
-		perror(recfile);
-		exit(1);
+	if (fd < 0) {
+		fd = open(_PATH_RAWSCORES, O_RDONLY, 0);
+		if (fd < 0)
+			errx(1, "Couldn't open raw scorefile");
 	}
 
-	/* revoke privs */
-	setegid(getgid());
-	setgid(getgid());
-
-	printf("Snake players scores to date\n");
-	fread(&whoallbest, sizeof(short), 1, fd);
-	fread(&allbest, sizeof(short), 1, fd);
+	lseek(fd, 0, SEEK_SET);
+	printf("%sSnake scores to date\n", topn > 0 ? "Top " : "");
+	/* read(fd, &whoallbest, sizeof(uid_t));
+	 * read(fd, &allbest, sizeof(short));   SCOREFILE FORMAT CHANGE
+	 */
 	noplayers = 0;
-	for (uid = 2; ;uid++) {
-		if(fread(&score, sizeof(short), 1, fd) == 0)
+	for (uid = 0; ; uid++) {
+		if (read(fd, &score, sizeof(short)) == 0)
 			break;
 		if (score > 0) {
-			if (noplayers > MAXPLAYERS) {
-				printf("too many players\n");
-				exit(2);
-			}
+			if (noplayers > MAXPLAYERS)
+				errx(2, "Too many entries in scorefile!");
 			players[noplayers].uids = uid;
 			players[noplayers].scores = score;
 			p = getpwuid(uid);
 			if (p == NULL)
 				continue;
 			q = p -> pw_name;
-			players[noplayers].name = malloc(strlen(q) + 1);
+			if ((players[noplayers].name = malloc(strlen(q) + 1)) == NULL)
+				errx(1, "malloc");
 			strcpy(players[noplayers].name, q);
 			noplayers++;
 		}
@@ -123,11 +121,14 @@ main()
 			}
 	}
 
+	if ((topn > 0) && (topn < noplayers))
+		noplayers = topn;
 	j = 1;
 	for (i = 0; i < noplayers; i++) {
 		printf("%d:\t$%d\t%s\n", j, players[i].scores, players[i].name);
 		if (players[i].scores > players[i + 1].scores)
 			j = i + 2;
 	}
-	exit(0);
+	if (noplayers == 0)
+		printf("None.\n");
 }
