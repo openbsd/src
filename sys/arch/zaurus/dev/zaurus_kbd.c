@@ -1,4 +1,4 @@
-/* $OpenBSD: zaurus_kbd.c,v 1.8 2005/01/17 18:23:34 deraadt Exp $ */
+/* $OpenBSD: zaurus_kbd.c,v 1.9 2005/01/18 01:03:15 drahn Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -61,6 +61,16 @@ gpio_strobe_pins_c3000[] = {
 	114
 };
 
+const int stuck_keys[] = {
+	7,
+	15,
+	23,
+	31
+};
+
+
+#define REP_DELAY1 400
+#define REP_DELAYN 100
 
 struct zkbd_softc {
 	struct device sc_dev;
@@ -81,13 +91,24 @@ struct zkbd_softc {
 
 	struct timeout sc_roll_to;
 
+	/* console stuff */
+	int sc_polling;
+	int sc_pollUD;
+	int sc_pollkey;
+
 	/* wskbd bits */
 	struct device   *sc_wskbddev;
 #ifdef WSDISPLAY_COMPAT_RAWKBD
+	const char *sc_xt_keymap;
 	int sc_rawkbd;
 	struct timeout sc_rawrepeat_ch;
+#define MAXKEYS 20
+	char sc_rep[MAXKEYS];
+	int sc_nrep;
 #endif
 };
+
+struct zkbd_softc *zkbd_dev; /* XXX */
 
 int zkbd_match(struct device *, void *, void *);
 void zkbd_attach(struct device *, struct device *, void *);
@@ -146,6 +167,11 @@ zkbd_attach(struct device *parent, struct device *self, void *aux)
 	struct wskbddev_attach_args a;
 	int pin, i;
 
+	zkbd_dev = sc;
+	sc->sc_polling = 0;
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	sc->sc_rawkbd = 0;
+#endif
 	/* Determine which system we are - XXX */
 
 	if (1 /* C3000 */) {
@@ -158,10 +184,15 @@ zkbd_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_sync_pin = 16;
 		sc->sc_swa_pin = 97;
 		sc->sc_swb_pin = 96;
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+		sc->sc_xt_keymap = xt_keymap;
+#endif
 	} /* XXX */
 
 	sc->sc_okeystate = malloc(sc->sc_nsense * sc->sc_nstrobe,
 	    M_DEVBUF, M_NOWAIT);
+	bzero(sc->sc_okeystate, (sc->sc_nsense * sc->sc_nstrobe));
+
 	sc->sc_keystate = malloc(sc->sc_nsense * sc->sc_nstrobe,
 	    M_DEVBUF, M_NOWAIT);
 
@@ -202,7 +233,25 @@ zkbd_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
 
 	timeout_set(&(sc->sc_roll_to), zkbd_poll, sc);
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	timeout_set(&sc->sc_rawrepeat_ch, zkbd_rawrepeat, sc);
+#endif
+
 }
+
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+void
+zkbd_rawrepeat(void *v)
+{
+	struct zkbd_softc *sc = v;
+	int s;
+		
+	s = spltty();
+	wskbd_rawinput(sc->sc_wskbddev, sc->sc_rep, sc->sc_nrep);
+	splx(s);
+	timeout_add(&sc->sc_rawrepeat_ch, hz * REP_DELAYN / 1000);
+}
+#endif
 
 /* XXX only deal with keys that can be pressed when display is open? */
 /* XXX are some not in the array? */
@@ -219,7 +268,11 @@ void
 zkbd_poll(void *v)
 {
 	struct zkbd_softc *sc = v;
-	int i, col, pin, type, keysdown = 0, s;
+	int i, j, col, pin, type, keysdown = 0, s;
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	int npress = 0, ncbuf, c;
+	char cbuf[MAXKEYS *2];
+#endif
 
 	s = spltty();
 
@@ -279,8 +332,29 @@ zkbd_poll(void *v)
 	/* process after resetting interrupt */
 
 	for (i = 0; i < (sc->sc_nsense * sc->sc_nstrobe); i++) {
-		if (sc->sc_keystate[i])
+		int stuck = 0;
+		/* extend  xt_keymap to do this faster. */
+		/* ignore 'stuck' keys' */
+		for (j = 0; j < sizeof(stuck_keys)/sizeof(stuck_keys[0]); j++) {
+			if (stuck_keys[j] == i) {
+				stuck = 1 ;
+				break;
+			}
+		}
+		if (stuck)
+			continue;
+
+		if (sc->sc_keystate[i]) {
 			keysdown++;
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+			if ((sc->sc_rawkbd) && !( npress >= MAXKEYS-1)) {
+				c = sc->sc_xt_keymap[i];
+				if (c & 0x80)
+					sc->sc_rep[npress++] = 0xe0;
+				sc->sc_rep[npress++] = c & 0x7f;
+			}
+#endif
+		}
 
 		if (sc->sc_okeystate[i] != sc->sc_keystate[i]) {
 
@@ -292,11 +366,39 @@ zkbd_poll(void *v)
 			    sc->sc_keystate[i] ? "pressed" : "released");
 #endif
 
-	                wskbd_input(sc->sc_wskbddev, type, i);
+			if (sc->sc_polling) {
+				sc->sc_pollkey = i;
+				sc->sc_pollUD = type;
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+			} else if (sc->sc_rawkbd) {
+
+				c = sc->sc_xt_keymap[i];
+
+				if (c & 0x80)
+					cbuf[ncbuf++] = 0xe0;
+				cbuf[ncbuf] = c & 0x7f;
+				if (type == WSCONS_EVENT_KEY_UP)
+					cbuf[ncbuf] |= 0x80;
+				ncbuf++;
+#endif
+			} else {
+				wskbd_input(sc->sc_wskbddev, type, i);
+			}
 
 			sc->sc_okeystate[i] = sc->sc_keystate[i];
 		}
 	}
+
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	if (sc->sc_polling == 0 && sc->sc_rawkbd) {
+		wskbd_rawinput(sc->sc_wskbddev, cbuf, ncbuf);
+		sc->sc_nrep = npress;
+		if (keysdown != 0)
+			timeout_add(&sc->sc_rawrepeat_ch, hz * REP_DELAY1/1000);
+		else 
+			timeout_del(&sc->sc_rawrepeat_ch);
+	}
+#endif
 	if (keysdown)
 		timeout_add(&(sc->sc_roll_to), hz / 8); /* how long?*/
 	else 
@@ -352,7 +454,7 @@ int
 zkbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 #ifdef WSDISPLAY_COMPAT_RAWKBD
-	struct akbd_softc *sc = v;
+	struct zkbd_softc *sc = v;
 #endif
 
 	switch (cmd) {
@@ -382,6 +484,17 @@ zkbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 void
 zkbd_cngetc(void *v, u_int *type, int *data)
 {               
+	struct zkbd_softc *sc = zkbd_dev;
+	sc->sc_pollkey = -1;
+	sc->sc_pollUD = -1;
+	sc->sc_polling = 1;
+	while (sc->sc_pollkey == -1) {
+		zkbd_poll(zkbd_dev);
+		DELAY(10000);	/* XXX */
+	}
+	sc->sc_polling = 0;
+	*data = sc->sc_pollkey;
+	*type = sc->sc_pollUD;
 }
 
 void
