@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.5 2002/02/16 21:27:48 millert Exp $
+/*	$OpenBSD: util.c,v 1.6 2002/06/24 12:37:20 naddy Exp $
  *
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: util.c,v 1.5 2002/02/16 21:27:48 millert Exp $
+ * $Id: util.c,v 1.6 2002/06/24 12:37:20 naddy Exp $
  */
 
 
@@ -231,13 +231,16 @@ int
 getwm(p)
 	caddr_t p;
 {
-	static char buf[INTSIZE];
+	union {
+		char buf[INTSIZE];
+		int i;
+	} u;
 	int i;
 
 	for (i = 0; i < INTSIZE; i++)
-		buf[i] = *p++;
+		u.buf[i] = *p++;
 
-	i = *(int *)buf;
+	i = u.i;
 
 	if (i > MAXPATHLEN || i < -(MAXPATHLEN)) {
 		i = ntohl(i);
