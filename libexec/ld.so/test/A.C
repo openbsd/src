@@ -1,17 +1,18 @@
 #include "iostream.h"
 #include "a.h"
 
-AA::AA()
+AA::AA(char *arg)
 {
-	cout << "A constructor\n";
+	cout << "A constructor " << arg << "\n";
+	argstr = arg;
 }
 AA::~AA()
 {
-	cout << "A destructor\n";
+	cout << "A destructor " << argstr << "\n";
 }
 
-AA a;
-AA d;
+AA a("a");;
+AA b("b");;
 /*
 AA f;
 */

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1.1.2 2000/06/13 03:40:29 rahnds Exp $
+#	$OpenBSD: Makefile,v 1.2 2000/10/13 04:04:04 drahn Exp $
 
 DIR=/usr/src/libexec/ld.so/obj/ld.so
 .if (${MACHINE_ARCH} == "powerpc")
@@ -22,19 +22,19 @@ dltest: dltest.o libfoo.so libbar.so libdep.so
 	$(CC) ${CFLAGS} -o $@ dltest.o ${LDFLAGS} -ldl
 
 libfoo.so: libfoo.o
-	$(LD) -x --shared --soname=libfoo.so -o libfoo.so libfoo.o
+	$(CC) -shared -o libfoo.so libfoo.o
 
 libbar.so: libbar.o 
-	$(LD) -x --shared --soname=libbar.so -o libbar.so libbar.o 
+	$(CC) -shared -o libbar.so libbar.o 
 
 libdep.so: libdep.o
-	$(LD) -x --shared --soname=libdep.so -o libdep.so libdep.o
+	$(CC) -shared -o libdep.so libdep.o
 
 A.o:	A.C
 	g++ -c ${CFLAGS} ${.IMPSRC}
 
 libA.so:	A.o
-	$(LD) -x --shared -soname $@ -o $@ /usr/lib/crtbeginS.o A.o /usr/lib/crtendS.o 
+	$(CC) -shared -o $@ A.o 
 
 CCtest:	libA.so tst.o
 	g++ ${LDFLAGS} -o $@ tst.o -L . -lA
