@@ -23,6 +23,41 @@
       / __/ | (_) |
   __ |_____(_)___/ ___________________________________________
               
+  Changes with mod_ssl 2.8.6 (16-Oct-2001 to 01-Feb-2002)
+
+   *) Upgraded to Apache 1.3.23
+
+   *) Fixed a subtle indexing bug in SHMCB. Each sub-cache used an
+      indexing structure that (correctly) used index values (and ranges)
+      as "unsigned int", but the meta-structure in the header had these
+      ranged as "unsigned char".
+
+   *) Perform the SHMCB remove operation under mutual exclusion
+      to prevent a inter-process synchronization problem.
+
+   *) Made sure that mod_ssl does not segfault in case of
+      SCOREBOARD_SIZE < 1024.
+
+   *) Merged in the SDBM patch from Uwe Ohse which fixes a problem with
+      sdbms .dir file, which arrises when a second .dir block is needed
+      for the first time. read() returns 0 in that case, and the library
+      forgot to initialize that new block. A related problem is that the
+      calculation of db->maxbno is wrong. It just appends 4096*BYTESIZ
+      bits, which is not enough except for small databases (.dir
+      basically doubles everytime it's too small).
+
+  Changes with mod_ssl 2.8.5 (20-May-2001 to 16-Oct-2001)
+
+   *) Upgraded to Apache 1.3.22
+
+   *) Fixed check whether server certificate wildcard CommonName (CN)
+      matches the configured server name.
+
+   *) Use correct ANSI C prototypes also in (semi-automatically
+      generated) ssl_engine_dh.c
+
+   *) Fixed buffer overflow in ssl_expr_eval_func_file().
+
   Changes with mod_ssl 2.8.4 (04-May-2001 to 20-May-2001)
 
    *) Removed old db1/ndbm.h kludge from mod_ssl.h, because it should be

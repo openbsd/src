@@ -70,14 +70,15 @@ is today more widely used than all other web servers combined.
 
  ============================================================================
 
-Current Apache Group in alphabetical order as of 27 July 2000:
+Current Apache Group in alphabetical order as of 2 October 2001:
 
    Brian Behlendorf       Collab.Net, California 
    Ryan Bloom             Covalent Technologies, California 
    Ken Coar               IBM Corporation, Research Triangle Park, NC, USA
    Mark J. Cox            Red Hat, England
-   Lars Eilebrecht        CyberSolutions, Munich, Germany 
-   Ralf S. Engelschall    Munich, Germany.
+   Lars Eilebrecht        Parc Technologies, Munich, Germany 
+   Ralf S. Engelschall    Cable & Wireless Deutschland, Munich, Germany
+   Justin Erenkrantz      eBuilt, California
    Roy T. Fielding        eBuilt, California 
    Tony Finch             Covalent Technologies, California
    Dean Gaudet            Transmeta Corporation, California 
@@ -100,10 +101,13 @@ Current Apache Group in alphabetical order as of 27 July 2000:
    Wilfredo Sanchez       Apple Computer, California
    Cliff Skolnick         California
    Marc Slemko            Canada 
+   Joshua Slive           Canada
    Greg Stein             California
    Bill Stoddard          IBM Corporation, Research Triangle Park, NC
    Paul Sutton            Seattle
    Randy Terbush          Covalent Technologies, California 
+   Jeff Trawick           IBM Corporation, Research Triangle Park, NC
+   Cliff Woolley          University of Virginia
 
 Apache Emeritus (old group members now off doing other things)
 
@@ -149,17 +153,18 @@ of it in serious need of updating) to be found at <http://dev.apache.org/>.
 
 If you'd like to become an active contributor to the Apache project (the
 group of volunteers who vote on changes to the distributed server), then
-you need to start by subscribing to the new-httpd@apache.org mailing list.
+you need to start by subscribing to the dev@httpd.apache.org mailing list.
 One warning though: traffic is high, 1000 to 1500 messages/month.
-To subscribe to the list, send "subscribe new-httpd" in the body of
-a message to <majordomo@apache.org>.  We recommend reading the list for
-a while before trying to jump in to development.
+To subscribe, send an email to dev-subscribe@httpd.apache.org.  We 
+recommend reading the list for a while before trying to jump in to 
+development.
 
-   NOTE: The developer mailing list (new-httpd@apache.org) is not
+   NOTE: The developer mailing list (dev@httpd.apache.org) is not
    a user support forum; it is for people actively working on development
    of the server code and documentation, and for planning future
    directions.  If you have user/configuration questions, send them
-   to the USENET newsgroup "comp.infosystems.www.servers.unix".
+   to the USENET newsgroup "comp.infosystems.www.servers.unix".or for
+   windows users, the newsgroup "comp.infosystems.www.servers.ms-windows".
 
 There is a core group of contributors (informally called the "core")
 which was formed from the project founders and is augmented from time

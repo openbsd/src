@@ -7,7 +7,13 @@
 <!-- Background white, links blue (unvisited), navy (visited), red (active) -->
 <body bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#000080"
 alink="#FF0000">
-<!--#include virtual="header.html" -->
+    <div align="CENTER">
+      <img src="../images/sub.gif" alt="[APACHE DOCUMENTATION]" /> 
+
+      <h3>Apache HTTP Server Version 1.3</h3>
+    </div>
+
+
 <h1 align="CENTER">CGI による動的コンテンツ</h1>
 
 <a name="__index__"></a> <!-- INDEX BEGIN -->
@@ -488,7 +494,13 @@ CGI プログラムを記述している言語に関する十分な情報と、
 限り、CGI の問題に関する質問を Apache バグデータベースに送るべきでない
 ことに注目してください。</p>
 
-<!--#include virtual="footer.html" -->
+    <hr />
+
+    <h3 align="CENTER">Apache HTTP Server Version 1.3</h3>
+    <a href="./"><img src="../images/index.gif" alt="Index" /></a>
+    <a href="../"><img src="../images/home.gif" alt="Home" /></a>
+
+
 
 </body>
 </html>

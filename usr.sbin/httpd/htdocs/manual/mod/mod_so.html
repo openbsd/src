@@ -1,204 +1,192 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
-<HTML>
-<HEAD>
-<TITLE>Apache module mod_so</TITLE>
-</HEAD>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<!-- Background white, links blue (unvisited), navy (visited), red (active) -->
-<BODY
- BGCOLOR="#FFFFFF"
- TEXT="#000000"
- LINK="#0000FF"
- VLINK="#000080"
- ALINK="#FF0000"
->
-<DIV ALIGN="CENTER">
- <IMG SRC="../images/sub.gif" ALT="[APACHE DOCUMENTATION]">
- <H3>
-  Apache HTTP Server Version 1.3
- </H3>
-</DIV>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org" />
 
-<H1 ALIGN="CENTER">Module mod_so</H1>
+    <title>Apache module mod_so</title>
+  </head>
+  <!-- Background white, links blue (unvisited), navy (visited), red (active) -->
 
-<p>This module provides for loading of executable code and modules into the
-server at start-up or restart time.</p>
+  <body bgcolor="#FFFFFF" text="#000000" link="#0000FF"
+  vlink="#000080" alink="#FF0000">
+        <div align="CENTER">
+      <img src="../images/sub.gif" alt="[APACHE DOCUMENTATION]" /> 
 
-<P><A
-HREF="module-dict.html#Status"
-REL="Help"
-><STRONG>Status:</STRONG></A> Base (Windows); Experimental (Unix)
-<BR>
-<A
-HREF="module-dict.html#SourceFile"
-REL="Help"
-><STRONG>Source File:</STRONG></A> mod_so.c
-<BR>
-<A
-HREF="module-dict.html#ModuleIdentifier"
-REL="Help"
-><STRONG>Module Identifier:</STRONG></A> so_module
-<BR>
-<A
-HREF="module-dict.html#Compatibility"
-REL="Help"
-><STRONG>Compatibility:</STRONG></A> Available in Apache 1.3 and later.
-</P>
+      <h3>Apache HTTP Server Version 1.3</h3>
+    </div>
 
 
-<H2>Summary</H2>
+    <h1 align="CENTER">Module mod_so</h1>
 
-<p>This is an experimental module. On selected operating systems it
-can be used to load modules into Apache at runtime via the <A
-HREF="../dso.html">Dynamic Shared Object</A> (DSO) mechanism, rather
-than requiring a recompilation.
+    <p>This module provides for loading of executable code and
+    modules into the server at start-up or restart time.</p>
 
-<P>
-On Unix, the loaded code typically comes from shared object files
-(usually with <SAMP>.so</SAMP> extension), whilst on Windows this
-module loads <SAMP>DLL</SAMP> files. This module is only available in
-Apache 1.3 and up.
+    <p><a href="module-dict.html#Status"
+    rel="Help"><strong>Status:</strong></a> Base (Windows);
+    Experimental (Unix)<br />
+     <a href="module-dict.html#SourceFile"
+    rel="Help"><strong>Source File:</strong></a> mod_so.c<br />
+     <a href="module-dict.html#ModuleIdentifier"
+    rel="Help"><strong>Module Identifier:</strong></a>
+    so_module<br />
+     <a href="module-dict.html#Compatibility"
+    rel="Help"><strong>Compatibility:</strong></a> Available in
+    Apache 1.3 and later.</p>
 
+    <h2>Summary</h2>
 
-<p>In previous releases, the functionality of this module was provided
-for Unix by mod_dld, and for Windows by mod_dll. On Windows, mod_dll
-was used in beta release 1.3b1 through 1.3b5. mod_so combines these
-two modules into a single module for all operating systems.
+    <p>This is an experimental module. On selected operating
+    systems it can be used to load modules into Apache at runtime
+    via the <a href="../dso.html">Dynamic Shared Object</a> (DSO)
+    mechanism, rather than requiring a recompilation.</p>
 
-<H2>Directives</H2>
-<UL>
-<LI><A HREF="#loadfile">LoadFile</A>
-<LI><A HREF="#loadmodule">LoadModule</A>
-</UL>
+    <p>On Unix, the loaded code typically comes from shared object
+    files (usually with <samp>.so</samp> extension), whilst on
+    Windows this module loads <samp>DLL</samp> files. This module
+    is only available in Apache 1.3 and up.</p>
 
-<H2><A NAME="creating">Creating DLL Modules for Windows</A></H2>
+    <p>In previous releases, the functionality of this module was
+    provided for Unix by mod_dld, and for Windows by mod_dll. On
+    Windows, mod_dll was used in beta release 1.3b1 through 1.3b5.
+    mod_so combines these two modules into a single module for all
+    operating systems.</p>
 
-<P>The Apache module API is unchanged between the Unix and Windows
-   versions. Many modules will run on Windows with no or little change
-   from Unix, although others rely on aspects of the Unix architecture
-   which are not present in Windows, and will not work.</P>
+    <h2>Directives</h2>
 
-<P>When a module does work, it can be added to the server in one of two
-   ways. As with Unix, it can be compiled into the server. Because Apache
-   for Windows does not have the <CODE>Configure</CODE> program of Apache
-   for Unix, the module's source file must be added to the ApacheCore
-   project file, and its symbols must be added to the
-   <CODE>os\win32\modules.c</CODE> file.</P>
+    <ul>
+      <li><a href="#loadfile">LoadFile</a></li>
 
-<P>The second way is to compile the module as a DLL, a shared library
-   that can be loaded into the server at runtime, using the
-   <CODE><A HREF="#loadmodule">LoadModule</A></CODE>
-   directive. These module DLLs can be distributed and run on any Apache
-   for Windows installation, without recompilation of the server.</P>
+      <li><a href="#loadmodule">LoadModule</a></li>
+    </ul>
 
-<P>To create a module DLL, a small change is necessary to the module's
-   source file: The module record must be exported from the DLL (which
-   will be created later; see below). To do this, add the
-   <CODE>MODULE_VAR_EXPORT</CODE> (defined in the Apache header files) to
-   your module's module record definition. For example, if your module
-   has:</P>
-<PRE>
+    <h2><a id="creating" name="creating">Creating DLL Modules for
+    Windows</a></h2>
+
+    <p>The Apache module API is unchanged between the Unix and
+    Windows versions. Many modules will run on Windows with no or
+    little change from Unix, although others rely on aspects of the
+    Unix architecture which are not present in Windows, and will
+    not work.</p>
+
+    <p>When a module does work, it can be added to the server in
+    one of two ways. As with Unix, it can be compiled into the
+    server. Because Apache for Windows does not have the
+    <code>Configure</code> program of Apache for Unix, the module's
+    source file must be added to the ApacheCore project file, and
+    its symbols must be added to the
+    <code>os\win32\modules.c</code> file.</p>
+
+    <p>The second way is to compile the module as a DLL, a shared
+    library that can be loaded into the server at runtime, using
+    the <code><a href="#loadmodule">LoadModule</a></code>
+    directive. These module DLLs can be distributed and run on any
+    Apache for Windows installation, without recompilation of the
+    server.</p>
+
+    <p>To create a module DLL, a small change is necessary to the
+    module's source file: The module record must be exported from
+    the DLL (which will be created later; see below). To do this,
+    add the <code>MODULE_VAR_EXPORT</code> (defined in the Apache
+    header files) to your module's module record definition. For
+    example, if your module has:</p>
+<pre>
     module foo_module;
-</PRE>
-<P>Replace the above with:</P>
-<PRE>
+</pre>
+
+    <p>Replace the above with:</p>
+<pre>
     module MODULE_VAR_EXPORT foo_module;
-</PRE>
-<P>Note that this will only be activated on Windows, so the module can
-   continue to be used, unchanged, with Unix if needed. Also, if you are
-   familiar with <CODE>.DEF</CODE> files, you can export the module
-   record with that method instead.</P>
+</pre>
 
-<P>Now, create a DLL containing your module. You will need to link this
-   against the ApacheCore.lib export library that is created when the
-   ApacheCore.dll shared library is compiled. You may also have to change
-   the compiler settings to ensure that the Apache header files are
-   correctly located.</P>
+    <p>Note that this will only be activated on Windows, so the
+    module can continue to be used, unchanged, with Unix if needed.
+    Also, if you are familiar with <code>.DEF</code> files, you can
+    export the module record with that method instead.</p>
 
-<P>This should create a DLL version of your module. Now simply place it
-   in the <SAMP>modules</SAMP> directory of your server root, and use
-   the <CODE><A HREF="#loadmodule">LoadModule</A></CODE> directive to
-   load it.</P>
+    <p>Now, create a DLL containing your module. You will need to
+    link this against the ApacheCore.lib export library that is
+    created when the ApacheCore.dll shared library is compiled. You
+    may also have to change the compiler settings to ensure that
+    the Apache header files are correctly located.</p>
 
-<HR>
+    <p>This should create a DLL version of your module. Now simply
+    place it in the <samp>modules</samp> directory of your server
+    root, and use the <code><a
+    href="#loadmodule">LoadModule</a></code> directive to load
+    it.</p>
+    <hr />
 
-<H2><A NAME="loadfile">LoadFile</A> directive</H2>
-<!--%plaintext &lt;?INDEX {\tt LoadFile} directive&gt; -->
-<A
- HREF="directive-dict.html#Syntax"
- REL="Help"
-><STRONG>Syntax:</STRONG></A> LoadFile <EM>filename</em> 
-   [<em>filename</em>]  ...<BR>
-<A
- HREF="directive-dict.html#Context"
- REL="Help"
-><STRONG>Context:</STRONG></A> server config<BR>
-<A
- HREF="directive-dict.html#Status"
- REL="Help"
-><STRONG>Status:</STRONG></A> Base<BR>
-<A
- HREF="directive-dict.html#Module"
- REL="Help"
-><STRONG>Module:</STRONG></A> mod_so<P>
+    <h2><a id="loadfile" name="loadfile">LoadFile</a>
+    directive</h2>
 
-The LoadFile directive links in the named object files or libraries
-when the server is started or restarted; this is used to load
-additional code which may be required for some module to
-work. <EM>Filename</EM> is either and absolute path or relative to <A
-HREF="core.html#serverroot">ServerRoot</A>.<P><HR>
+    <a href="directive-dict.html#Syntax"
+    rel="Help"><strong>Syntax:</strong></a> LoadFile
+    <em>filename</em> [<em>filename</em>] ...<br />
+     <a href="directive-dict.html#Context"
+    rel="Help"><strong>Context:</strong></a> server config<br />
+     <a href="directive-dict.html#Status"
+    rel="Help"><strong>Status:</strong></a> Base<br />
+     <a href="directive-dict.html#Module"
+    rel="Help"><strong>Module:</strong></a> mod_so 
 
-<H2><A NAME="loadmodule">LoadModule</A> directive</H2>
-<!--%plaintext &lt;?INDEX {\tt LoadModule} directive&gt; -->
-<A
- HREF="directive-dict.html#Syntax"
- REL="Help"
-><STRONG>Syntax:</STRONG></A> LoadModule <EM>module filename</EM><BR>
-<A
- HREF="directive-dict.html#Context"
- REL="Help"
-><STRONG>Context:</STRONG></A> server config<BR>
-<A
- HREF="directive-dict.html#Status"
- REL="Help"
-><STRONG>Status:</STRONG></A> Base<BR>
-<A
- HREF="directive-dict.html#Module"
- REL="Help"
-><STRONG>Module:</STRONG></A> mod_so<P>
+    <p>The LoadFile directive links in the named object files or
+    libraries when the server is started or restarted; this is used
+    to load additional code which may be required for some module
+    to work. <em>Filename</em> is either an absolute path or
+    relative to <a href="core.html#serverroot">ServerRoot</a>.</p>
+    <hr />
 
-The LoadModule directive links in the object file or library
-<EM>filename</EM> and adds the module structure named <EM>module</EM>
-to the list of active modules. <EM>Module</EM> is the name of the
-external variable of type <CODE>module</CODE> in the file, and is
-listed as the <a href="module-dict.html#ModuleIdentifier">Module
-Identifier</a> in the module documentation.  Example (Unix, and for
-Windows as of Apache 1.3.15):
-<BLOCKQUOTE><CODE>
-LoadModule status_module modules/mod_status.so
-</CODE></BLOCKQUOTE>
+    <h2><a id="loadmodule" name="loadmodule">LoadModule</a>
+    directive</h2>
 
-<P>Example (Windows prior to Apache 1.3.15, and some 3rd party modules):
-<BLOCKQUOTE><CODE>
-LoadModule foo_module modules/ApacheModuleFoo.dll<BR>
-</CODE></BLOCKQUOTE>
+    <a href="directive-dict.html#Syntax"
+    rel="Help"><strong>Syntax:</strong></a> LoadModule <em>module
+    filename</em><br />
+     <a href="directive-dict.html#Context"
+    rel="Help"><strong>Context:</strong></a> server config<br />
+     <a href="directive-dict.html#Status"
+    rel="Help"><strong>Status:</strong></a> Base<br />
+     <a href="directive-dict.html#Module"
+    rel="Help"><strong>Module:</strong></a> mod_so 
 
-<P><STRONG>Note that all modules bundled with the Apache Win32 binary
-distribution were renamed as of Apache version 1.3.15</STRONG>.</P>
+    <p>The LoadModule directive links in the object file or library
+    <em>filename</em> and adds the module structure named
+    <em>module</em> to the list of active modules. <em>Module</em>
+    is the name of the external variable of type
+    <code>module</code> in the file, and is listed as the <a
+    href="module-dict.html#ModuleIdentifier">Module Identifier</a>
+    in the module documentation. Example (Unix, and for Windows as
+    of Apache 1.3.15):</p>
 
-<P>Win32 Apache modules are often distributed with the old style names,
-or even a name such as libfoo.dll.  Whatever the name of the module,
-it must be the LoadModule directive requires the exact filename, no
-assumption is made about the filename extension.</P>
+    <blockquote>
+      <code>LoadModule status_module modules/mod_status.so</code>
+    </blockquote>
 
-<HR>
+    <p>Example (Windows prior to Apache 1.3.15, and some 3rd party
+    modules):</p>
 
-<H3 ALIGN="CENTER">
- Apache HTTP Server Version 1.3
-</H3>
+    <blockquote>
+      <code>LoadModule foo_module modules/ApacheModuleFoo.dll<br />
+      </code>
+    </blockquote>
 
-<A HREF="./"><IMG SRC="../images/index.gif" ALT="Index"></A>
-<A HREF="../"><IMG SRC="../images/home.gif" ALT="Home"></A>
+    <p><strong>Note that all modules bundled with the Apache Win32
+    binary distribution were renamed as of Apache version
+    1.3.15</strong>.</p>
 
-</BODY>
-</HTML>
+    <p>Win32 Apache modules are often distributed with the old
+    style names, or even a name such as libfoo.dll. Whatever the
+    name of the module, the LoadModule directive requires the exact
+    filename, no assumption is made about the filename
+    extension.</p>
+        <hr />
+
+    <h3 align="CENTER">Apache HTTP Server Version 1.3</h3>
+    <a href="./"><img src="../images/index.gif" alt="Index" /></a>
+    <a href="../"><img src="../images/home.gif" alt="Home" /></a>
+
+  </body>
+</html>
+

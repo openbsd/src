@@ -1,0 +1,373 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+<head>
+<title>Windows で Apache をサービスとして動かす</title>
+</head>
+<!-- English revision:1.7 -->
+<!-- Background white, links blue (unvisited), navy (visited), red (active) -->
+<body
+ bgcolor="#FFFFFF"
+ text="#000000"
+ link="#0000FF"
+ vlink="#000080"
+ alink="#FF0000"
+>
+    <div align="CENTER">
+      <img src="images/sub.gif" alt="[APACHE DOCUMENTATION]" /> 
+
+      <h3>Apache HTTP Server</h3>
+    </div>
+
+
+
+<h1 align="center">Windows で Apache をサービスとして動かす</h1>
+
+<p>Windows NT/2000 では Apache をサービスとして動かすことができます。
+ (Apache 1.3.13 で、非常に実験的に<a 
+href="#win95svc">Windows 95/98</a> においても同様の動作をサポートをするようになりました)。</p>
+
+<p>サービスとして Apache をインストールするためには、
+うまくいけばコマンドラインで一度実行すればいいです。
+Apache をサービスとしてインストールしたり、動かそうとする前に <a 
+href="windows.html">Microsoft Windows で Apache を動かす</a>を参照してください。
+コマンドラインで Apache を起動することによって、httpd.conf ファイルへの変更はいつも反映されます。
+これでうまくいけば、サービスは成功するでしょう。</p>
+
+<p><strong>注意: 
+バージョン 1.3.13 より前ではこの設定は<em>テストされていません</em></strong>。
+そして調整不足が原因で、コマンドラインではしばしばうまくいきますが、
+サービスはまだ失敗します。Apache の 1.3.13 より前のバージョンを動かすときに
+問題があるならば、<a href="#service">後述の説明</a>を参照してください。
+バージョン 1.3.13 以降でこの問題があるなら、まず最初に Apache を
+アンインストール (-u) してから再インストール (-i) を試してみてください</p>
+
+<hr>
+
+<p>Apache をサービスとして開始するためには、最初にサービスとしてインストールする必要があります。
+それぞれ別の名前と設定にすることで Apache サービスを複数インストールすることができます。
+デフォルトの "Apache" という名前で Apache サービスをインストールするには、
+スタートメニューから "Install Apache as Service" オプションを実行してください。
+これを一度行なえば、(コントロールパネルの) サービスウィンドウを開いて、
+Apache を選択して、次に Start をクリックすることで、"Apache" サービスを開始できます。
+これで Apache はバックグラウンドで動きます。
+その後は Stop をクリックすることで、Apache を終了できます。
+サービスウィンドウを使う代わりに、コマンドラインから、
+<pre>
+  NET START APACHE
+  NET STOP APACHE
+</pre>
+
+とすることで、"Apache" サービスを開始、終了できます。</p>
+
+<p>Apache サービスのインストールとコントロールに関するさらなる情報は、<a href="#signal">
+Apache サービスのコントロール</a>を参照してください。</p>
+
+<p><strong>Apache は、他の多くの Windows NT/2000 のサービスと異なり、
+ほとんどのエラーは独自に Apache のサーバルートの logs フォルダにある
+error.log ファイルに記録します。ほとんどの Apache のエラーに関する詳細は
+Windows NT のイベントログでは分からないでしょう。
+Apache を起動しようとしたときに発生したエラーだけがイベントログに記録されます。</strong></p>
+
+<p>Apache をサービスとして開始した後 (または、それを始めることに問題があれば)、
+コマンドラインから同じ<a href="windows.html#test">手順</a>でテストできます。
+デフォルトのサービス設定を確認するためには、このコマンド:</p>
+
+<pre>
+  apache -n "service name"
+</pre>
+
+<p>を使うことを覚えておいてください。</p>
+
+<h2><a name="service">Windows で Apache をサービスとして動かす</a></h2>
+
+<p><strong>注意: サービス名を指定する -n オプションは Apache 1.3.7 以降で利用可能です。</strong>
+以前のバージョンの Apache では、デフォルトのサービス名 'Apache' だけがサポートされています。</p>
+
+<p>以下のようにすることで、Apache を Windows NT サービスとしてインストールできます:</p>
+
+<pre>
+    apache -i -n "service name"
+</pre>
+
+<p>特定の設定を使ってサービスをインストールするには、
+インストールの際に設定ファイルを指定してください:</p>
+
+<pre>
+    apache -i -n "service name" -f "\my server\conf\my.conf"
+</pre>
+
+<p>サーバルートディレクトリをデフォルトから変更するための -d、
+   設定ファイルを変更するための -D, -C や -c など、その他の属性は省略できます。
+   これらがレジストリに書き込まれていて変更が困難なときは、
+   このコマンドを使ってオプションをクリアし、新しいオプションに置き換えます。
+</p>
+
+<pre>
+    apache -k config -n "service name" -f "\my server\conf\my.conf"
+</pre>
+
+<p>Apache サービスを削除するには、以下のようにします:</p>
+
+<pre>
+    apache -u -n "service name"
+</pre>
+
+<p>サービス名が指定されない場合のデフォルトの「サービス名」は "Apache" となります。</p>
+
+<p>サービスがインストールされると、
+サービスの設定ファイルを示すのに他のオプションと同時に
+<samp>-n</samp> オプションを使用することができます。例:</p>
+
+<p>サービスの設定ファイルをテストして、サービスのデフォルトのオプションを確認するには
+次のようにします:</p>
+<pre>
+    apache -n "service name" -t
+</pre>
+
+<p>サービスの設定ファイルとデフォルトのオプションを使用して、
+  コンソールから Apache を起動するには次のようにします:</p>
+<pre>
+    apache -n "service name"
+</pre>
+
+<p>Apache リリース 1.3.15 で -k install オプションが -i オプションの、
+   また、-k uninstall オプションが -u オプションの別名として追加されました。
+   元の -i そして -u オプションは Apache 2.0 では使用しないようにしてください。
+   これらの別名は、両方のバージョンを運用する管理者が (訳注: Apache 2.0 に)
+   移行しやすくするために追加されました。</p>
+
+<h2><a name="depends">サービスの依存に関する重要な留意点</a></h2>
+
+<p>リリース 1.3.13 以前の Apache では、インストールされたサービスが
+うまく開始することが前提条件となる依存関係は構成されません。
+Apache の以前のバージョンを使用してサービスをインストールした後に、
+以下の手順を踏まなければなりません : 
+
+<pre>    Run regedt32
+    Select <u>W</u>indow - "HKEY_LOCAL_MACHINE on Local Machine" from the menu
+    Double-click to open the SYSTEM, then the CurrentControlSet keys
+    Scroll down and click on the Apache servicename
+    Select <u>E</u>dit - Add <u>V</u>alue... from the menu
+    Fill in the Add Value dialog with 
+        <u>V</u>alue Name: DependOnGroup 
+        <u>D</u>ata Type: REG_MULTI_SZ
+        and click OK
+    Leave the Multi-String Editor dialog empty and click OK
+    Select <u>E</u>dit - Add <u>V</u>alue... from the menu
+    Fill in the Add Value dialog with 
+        <u>V</u>alue Name: DependOnService
+        <u>D</u>ata Type: REG_MULTI_SZ
+        and click OK
+    Type the following list (one per line) in the Multi-String Editor dialog
+        Tcpip
+        Afd
+        and click OK
+</pre>
+
+
+<p>また、サードパーティーのモジュール、ISAPI、その他 ActiveState Perlなどによる、
+   COM や DCOM の構成要素を使用しているならば、DependOnService リストに
+   Rpcss のエントリーを追加する必要があるかもしれません。
+   それが不要な場合に、TCP ポート 135 を露出するのを避けるために、
+   Apache はインストールのときにそのエントリーを作成しません。
+   上の指示に従って、DependOnService 値を確認、または作成してください。
+   既に存在しているならばその値をダブルクリックして、Rpcss のエントリーを
+   リストに追加してください。</p>
+
+<h2>ユーザアカウントで Apache を動かす (NT/2000)</h2>
+
+<p>Apache が最初にサービス ( 例えば、-i オプション ) としてインストールされるとき、
+   "System" というユーザ (LocalSystem アカウント ) で動作するでしょう。
+   もし web サーバのすべてのリソースがローカルシステム上にあるなら
+   ほとんど問題ありませんが、(LocalSystem アカウント ) はローカルマシンに
+   影響を与える幅広いセキュリティ特権を持っています。</p>
+<blockquote>
+       LocalSystem は局所的に非常に特権アカウントなので、
+       どんなシェアウェアアプリケーションもそこで動作させるべきでは
+       ありません。しかしながら、それはネットワーク特権を持たなくて、
+       NT の機密保持機能、ファイルシステム、パイプ、DCOM 、セキュア RPC を含めて
+       そのままにしておくことはできません
+</blockquote>
+
+<p><strong>決してシステムアカウントにネットワーク特権を与えてはいけません !</strong>
+   代わりに新しいユーザアカウントを作成して、そのユーザに適切な権限を与えて、
+   'Log On As' というオプションを使ってください。スタートメニュー -&gt; 設定
+   -&gt; コントロールパネル -&gt; サービス -&gt; Apache Service と選択して、
+   「スタートアップ」ボタンをクリックして、この設定にアクセスしてください。</p>
+
+<blockquote>
+       サービスは SCM 関連のセキュリティを LocalSystem アカウントに
+       引き継いで動作します。サービスはどのユーザアカウントとも
+       関連づけられなくて、またベリファイに使用されるべき証明
+        ( ドメイン名、ユーザ名、パスワード ) を持ちません。
+</blockquote>
+
+<p>SYSTEM アカウントはネットワークに特権を持たないので、共有されたページや
+   共有されたインストールはサービスからは見えません。
+   あなたが<em>どんな</em>ネットワークリソースも使用するつもりであるならば、
+   以下のステップは役に立つかもしれません</p>
+<ul>
+  <li>Control Panel の Service ダイアログから Apache を選択して、Startup をクリックします。
+  <li>サービスアカウントが正しいことを確認してください。
+      Apache サービス用のアカウントを作成することもよい方法です。
+  <li>パスワードを繰り返し入力してパスワード確認をします。
+  <li>ドメインのユーザマネージャに行ってください。
+  <li>タイトルバーメニューから Policies をクリックして、User Rights を選択してください。
+  <li>Advanced User Rights のオプションを選択してください。
+  <li>ドロップダウンリスト中で、選択されたアカウントに以下の権限が
+      与えられたことを確認してください。
+      <ul>
+          <li>Act as part of the operating system
+          <li>Back up files and directories
+          <li>Log on as a service
+          <li>Restore files and directories
+      </ul>
+  <li>選択されたアカウントが Users グループのメンバであることを確認してください。
+  <li>選択されたアカウントがすべてのドキュメントとスクリプトディレクトリに
+      アクセスする手段 (最低限読み込みとブラウズ) を持っていることを確認してください。
+  <li>選択されたアカウントが Apache logs ディレクトリに対して読み書き、
+      削除する手段を持っていることを確認してください。</li>
+</ul>
+
+<p>そのアカウントでユーザとしてログインすることを許可したら、自分自身で
+   ログインしてそのアカウントがスクリプトの実行、ウェブページの読み込みをする
+   権限を持っていること、コンソールから Apache を起動できること
+   をテストすることができます。これがうまくいき、上記のステップに従って手順を踏めば、
+   Apache は問題なくサービスとして実行するはずです。</p>
+<p><strong>注意: エラーコード 2186</strong> はサーバが必要なネットワークリソースに
+   アクセスすることができないので 'Log On As' の設定を見直す必要がある、
+   という指示です。</strong></p>
+
+
+<h2><a name=trouble>サービスとしての Windows 版 Apache トラブルシューティング</a></h2>
+
+<p>サービスとして Apache を開始する場合、Windows service manager からエラーメッセージを
+  見ることになるかもしれません。例えば Control Panel の Services アプレットを使用して
+  Apache を開始させようとする時に、以下のメッセージを見るかもしれません。
+<pre>
+  Could not start the apache service on \\COMPUTER
+  Error 1067; The process terminated unexpectedly.
+</pre>
+<p>Apache の開始において何らかの問題がある場合、このエラーに遭います。
+   問題の原因を確認するためには、<a href="windows.html#test">コマンド
+   プロンプトで Apache をテストする</a>の指示に従ってください。</p>
+
+<p>また、Apache 1.3.13 では Windows NT/2000 でサービスとして動かすとき、
+   開始時のエラーを Application Event Log に記録します。Event Viewer を起動し、
+   <u>L</u>og ... <u>A</u>pplication と選択してイベントを確認することができます。
+
+<p><strong>問題があった場合は、エラーが発生したことを警告のためのエラーメッセージが
+   ポップアップされなくても、Event Viewer で Application Event Log を
+   チェックしてください。</strong></p>
+
+<h2><a name=cmdline>Windows でコマンドラインから Apache を動かす</a></h2>
+
+コマンドラインから Apache サービスを制御することに関する詳細については、
+<a href="windows.html#cmdline">コンソールコマンドライン</a>の章を参照してください。
+
+
+<h2><a name=signal>サービスとしての Apache を制御する</a></h2>
+
+<p>Apache は複数インストールして、サービスとして動かすことができます。
+   インストールされた Apache サービスを開始、再開、終了、停止するには
+   以下のようにします:</p>
+
+<pre>
+    apache -n "service name" -k start
+    apache -n "service name" -k restart
+    apache -n "service name" -k shutdown
+    apache -n "service name" -k stop
+</pre>
+
+<p>-n オプションのない -k コマンドはコンソールウィンドウで起動している Apache に
+   向けられるので、デフォルトの "Apache" サービスでは -n Apache オプションが
+   必要です。引用符はサービス名にスペースが含まれる場合に限り
+   必要になります。</p>
+
+<p><strong>注意: 
+   -k shutdown コマンドの別名の -k stop コマンドは Apache バージョン 1.3.13 で導入されました。</strong>
+   それより前のバージョンの Apache では -k shutdown オプションだけが認識されます。
+   1.3.3 より前の Apache では<em>どんな</em> -k オプションも認識されませんでした。</p>
+
+<p>-D, -C, -c オプションを含めた apache -k start コマンドで
+   起動時のオプションを指定することもできます。
+   これらはサービスの設定プロセスに影響します。
+   &lt;IfDefine&gt; ブロックで使うことで条件つきの指定をすることもできます。
+   サーバルートのパスや -d オプションや -f オプションを使って設定ファイルを上書きすることもできます。
+   これらのオプションは -k restart コマンドによっても読み込まれますが、
+   サービスの動作中には反映されず、サービスの起動時にのみ反映されます。</p>
+
+<p>サービスは Windows NT/2000 の Service Control アプレットにも現れます。
+   NT の場合、Settings -&gt; Control Panel -&gt; Services エントリ、
+   2000 の場合、Settings -&gt; Control Panel -&gt; Administrative Tools -&gt; 
+   Services エントリで参照できます。
+   そこから開始や終了させる Apache サービスを選択できます。
+   -D, -C, -c のような追加のオプションや、開始パラメータのデフォルトの
+   -d や -f オプションの上書きは開始ボタンをクリックする前にしてください。
+   これらのオプションは apache -k start コマンドと全く同じように処理されます。</p>
+
+<p>さらに、Apache サービスの開始、終了にネイティブの Windows NT/2000 の
+   NET コマンドを使うこともできます:</p>
+
+<pre>
+    NET START "service name"
+    NET STOP "service name"
+</pre>
+
+<p>繰り返しますが、サービス名がスペースを含む場合のみ、引用符が
+   必要になります。-D, -c, -C などの追加オプションを NET START
+   コマンドで指定する方法はありません。オプションが必要なときは、
+   他の 2 種類のメソッドのどちらかを使用してください。</p>
+
+<h2><a name=win95svc>非常に実験的な Windows 95/98 サービス</a></h2>
+
+<p><strong>注意: Windows 95 と 98 でのサービスオプションは Apache 1.3.13 以降でのみ
+   有効です。</strong>以前のバージョンの Apache では Windows 95/98 では
+   コンソール窓でのみサポートされています。</p>
+
+<p>Windows NT/2000 でのサービスと同じような Windows 95/98 上での
+   Apache の動作をある程度サポートしています。それは<em>非常に実験的</em>なもので、
+   もし (すべて順調に) 動いたとしても Apache Software Foundation は、
+   信頼性や将来のサポートは保証しません。以降については自分自身のリスクで進んでください!</p>
+
+<p>Apache が <a href="windows.html#test">Command Prompt</a> で
+   正常に動作することを確認したら、Windows NT/2000 の場合と同じコマンドで
+   インストール、制御、アンインストールすることができます。</p>
+
+<p>ただし、注意すべき重要な違いがあります:</p>
+
+<p>Apache は、起動が成功すると、バックグラウンドで動作します。
+   デスクトップのショートカットを通して、コマンド
+
+<pre>
+   Apache -n "service name" -k start
+</pre>
+
+<p>を実行したら、例えば、サービスがうまく開始されれば、コンソール窓は
+   表示されますがすぐに見えなくなります。
+   Apache が開始時に、httpd.conf ファイルにおける不正なエントリのような
+   エラーを見つけると、コンソール窓は表示されたままで残ります。
+   そこには問題の原因の追求に役に立つエラーメッセージが表示されているでしょう。
+   その際 Apache の logs ディレクトリの error.log ファイルを調べ直すべきです。</p>
+
+<p>Windows 95/98 では NET START や NET STOP コマンドをサポートしていないので、
+   Command Prompt から Apache の Service Control オプションを
+   使用しなければなりません。
+   これらのコマンド毎にショートカットを用意し、スタートメニューやデスクトップからそれをただ選ぶことで必要な動作を
+   実行するようにするのはよい方法です。</p>
+
+<p>Apache と Windows 95/98 は特定のユーザに対して、Apache サービスをネットワーク特権では提供しません。
+   実際、Windows 95/98 はどんなセキュリティもローカルマシンに提供していません。
+   Apache Software Fondation がパブリックな httpd サーバとして
+   Windows 95/98 の使用を決して認めないのは、これが単純な理由です。
+   これらは、web コンテンツの制作や Apache サーバの学習、
+   または安全なイントラネット上のサーバ、プライベートネットワークの
+   ユーザを補助するために便宜上存在しているにすぎません。</p>
+
+    <hr />
+
+    <h3 align="CENTER">Apache HTTP Server</h3>
+    <a href="./"><img src="images/index.gif" alt="Index" /></a>
+
+</body>
+</html>

@@ -1,273 +1,526 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
-<HTML>
-<HEAD>
-<TITLE>The Apache TPF Port</TITLE>
-</HEAD>
-<BODY>
-<A NAME="top"></A>
-<H1 align="center">Overview of the Apache TPF Port</H1>
-<HR>
-<CENTER>[&nbsp;<A HREF="#configuration_files">Configuration Files</A>
-   &nbsp;|&nbsp;<A HREF="#whats_available">What's Available</A>
-   &nbsp;|&nbsp;<A HREF="#cgi">CGI Scripts</A>
-   &nbsp;|&nbsp;<A HREF="#porting_notes">Porting Notes</A>&nbsp;]
-</CENTER>
-<HR>
-<BR>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<P>
-   This version of Apache includes changes allowing it to run on
-   IBM's EBCDIC-based
-   <A HREF="http://www.s390.ibm.com/products/tpf/tpfhp.html">TPF</A>
-   (Transaction Processing Facility) operating system.
-   Unless otherwise noted TPF version 4.1 PUT09 is required.
-   <BR><BR>
-   Refer to htdocs/manual/<A HREF="install-tpf.html">install-tpf.html</A>
-   for step-by-step installation instructions.
-   <BR><BR>
-   As this is the first cut at making Apache run on TPF,
-   performance tuning has not been done.
-   <BR><BR>
-   This port builds upon the <A HREF="ebcdic.html">EBCDIC changes</A>
-   previously made to Apache.
-   <BR>
-</P>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org" />
 
-<A NAME="configuration_files">&nbsp;</A>
-<H2 align=center>Apache Configuration Files</H2>
-<P>
-   The distributed configuration files (httpd.conf-dist and
-   mime.types, both located in the conf subdirectory)
-   work on TPF.  Performance considerations may dictate setting KeepAlive to "Off"
-   (the default is "On") or lowering the Timeout value from the default
-   300 seconds (5 minutes) in order to reduce the number of active ECBs on your system.
-</P>
+    <title>The Apache TPF Port</title>
+  </head>
 
-<A NAME="whats_available">&nbsp;</A>
-<H2 align=center>What's Available in this Version</H2>
+  <body>
+    <a id="top" name="top"></a> 
 
-   (The Apache organization provides
-   <A HREF="http://www.apache.org/docs/">online documentation</A>
-   describing the various modules and components of the server.)
+    <center>
+      <h1>Overview of the Apache TPF Port</h1>
+    </center>
+    <hr />
 
-<H3>Components/modules tested on TPF:</H3>
+    <center>
+      [ <a href="#configuration_files">Configuration
+      Files</a>&nbsp; | <a href="#whats_available">What's
+      Available</a>&nbsp; | <a href="#cgi">CGI Scripts</a>&nbsp; |
+      <a href="#options">Options</a>&nbsp; | <a
+      href="#porting_notes">Porting Notes</a>&nbsp; ]
+    </center>
+    <hr />
 
-   <multicol COLS=3><UL>
-   <LI>alloc.c
-   <LI>ap_base64.c
-   <LI>ap_checkpass.c
-   <LI>ap_cpystrn.c
-   <LI>ap_fnmatch.c
-   <LI>ap_md5c.c
-   <LI>ap_sha1.c
-   <LI>ap_signal.c
-   <LI>ap_slack.c
-   <LI>ap_snprintf.c
-   <LI>buff.c
-   <LI>buildmark.c
-   <LI>ebcdic.c
-   <LI>gen_test.char.c
-   <LI>gen_uri_delims.c
-   <LI>htpasswd.c <i><small>(requires PUT10)</small></i>
-   <LI>http_config.c
-   <LI>http_core.c
-   <LI>http_log.c
-   <LI>http_main.c
-   <LI>http_protocol.c
-   <LI>http_request.c
-   <LI>http_vhost.c
-   <LI>logresolve.c <i><small>(requires PUT10)</small></i>
-   <LI>mod_access.c <A HREF="#notes"> <i><small>(see note 1)</small></i></A>
-   <LI>mod_actions.c
-   <LI>mod_alias.c
-   <LI>mod_asis.c
-   <LI>mod_auth.c
-   <LI>mod_auth_anon.c
-   <LI>mod_autoindex.c
-   <LI>mod_cern_meta.c
-   <LI>mod_cgi.c <i><small>(requires PUT10)</small></i>
-   <LI>mod_digest.c
-   <LI>mod_dir.c
-   <LI>mod_env.c
-   <LI>mod_example.c
-   <LI>mod_expires.c
-   <LI>mod_headers.c
-   <LI>mod_imap.c
-   <LI>mod_include.c <A HREF="#notes"> <i><small>(see note 2)</small></i></A>
-   <LI>mod_info.c
-   <LI>mod_log_agent.c
-   <LI>mod_log_config.c
-   <LI>mod_log_referer.c
-   <LI>mod_mime.c
-   <LI>mod_mime_magic.c
-   <LI>mod_negotiation.c
-   <LI><A HREF="http://hpwww.ec-lyon.fr/~vincent/apache/mod_put.html">mod_put.c</A>
-          <i> <small>(third party module)</small></i>
-   <LI>mod_proxy.c
-   <LI>mod_setenvif.c
-   <LI>mod_speling.c
-   <LI>mod_status.c
-   <LI>mod_tpf_shm_static.c <i><small>(third party module, requires PUT10)</small></i>
-   <LI>mod_unique_id.c <i><small>(requires PUT10)</small></i>
-   <LI>mod_userdir.c
-   <LI>mod_usertrack.c
-   <LI>os.c
-   <LI>os-inline.c
-   <LI>proxy_cache.c
-   <LI>proxy_connect.c
-   <LI>proxy_ftp.c
-   <LI>proxy_http.c
-   <LI>proxy_util.c
-   <LI>regular expression parser
-   <LI>regular expression test tool <i><small>(requires PUT10)</small></i>
-   <LI>rfc1413.c
-   <LI>rotatelogs.c <i><small>(requires PUT10)</small></i>
-   <LI>util.c
-   <LI>util_date.c
-   <LI>util_md5.c
-   <LI>util_script.c
-   <LI>util_uri.c
-   </UL></MULTICOL>
-   <A NAME="notes"></A><b>Notes:</b>
-   <ol>
-      <li>Use of mod_access directives &quot;<tt>allow from</tt>&quot; &amp; &quot;<tt>deny from</tt>&quot;
-          with host <i>names</i> (verses ip addresses) requires TPF version 4.1 PUT10
-      <li>CGI execution requires TPF version 4.1 PUT10
-   </ol>
+    <p>This version of Apache includes changes allowing it to run
+    on IBM's EBCDIC-based <a
+    href="http://www.ibm.com/software/ts/tpf/index.html">TPF</a>
+    (Transaction Processing Facility) operating system.<br />
+     Unless otherwise noted TPF version 4.1 PUT09 is
+    required.&nbsp;</p>
 
-<H3>Components/modules not yet supported on TPF:</H3>
+    <p>Refer to <a href="install-tpf.html">install-tpf.html</a> for
+    step-by-step installation instructions.&nbsp;</p>
 
-   <multicol COLS=3><UL>
-   <LI>htdigest.c
-   <LI>lib/expat-lite
-   <LI>mod_auth_digest.c
-   <LI>mod_rewrite.c
-   <LI>mod_vhost_alias.c
-   </UL></MULTICOL>
+    <p>This port builds upon the <a
+    href="http://httpd.apache.org/docs/ebcdic.html">EBCDIC
+    changes</a> previously made to Apache.&nbsp;<br />
+     <a id="configuration_files"
+    name="configuration_files"></a></p>
 
-<H3>Components/modules that don't apply or that probably won't ever be available on TPF:</H3>
+    <center>
+      <h2>Apache Configuration Files</h2>
+    </center>
+    The distributed configuration files (httpd.conf-dist and
+    mime.types, both located in the conf subdirectory) work on TPF.
+    Performance considerations may dictate setting KeepAlive to
+    "Off" (the default is "On") or lowering the Timeout value from
+    the default 300 seconds (5 minutes) in order to reduce the
+    number of active ECBs on your system.<br />
+     <a id="whats_available" name="whats_available"></a> 
 
-   <multicol COLS=3><UL>
-   <LI>ab.c
-   <LI>ap_getpass.c
-   <LI>mod_auth_db.c
-   <LI>mod_auth_dbm.c
-   <LI>mod_auth_db.module
-   <LI>mod_mmap_static.c
-   <LI>mod_so.c
-   <LI>suexec.c
-   </UL></MULTICOL>
+    <center>
+      <h2>What's Available in this Version</h2>
+    </center>
+    The Apache organization provides <a
+    href="http://httpd.apache.org/docs/">online documentation</a>
+    describing the various modules and components of the
+    server.&nbsp; 
 
-<A NAME="cgi">&nbsp;</A>
-<H2 align=center>How to Use CGI Scripts</H2>
-<P>
-   The following is a very simple example of a CGI script ("Hello World") and the necessary steps to run it.<BR>
-   Refer to the <A HREF="http://www.apache.org/docs/mod/mod_cgi.html">mod_cgi module</A> for 
-   additional information.<BR>
-   
-   <H3>Add necessary directives to httpd.conf:</H3>
-   <UL>
-   Example:
-   <tt><BR><UL> 
-         ScriptLog logs/script_log<BR>
-         ScriptAlias /cgi-bin/ /usr/local/apache/cgi-bin/
-   </tt></UL><BR>
-   A request for <tt>http://myserver/cgi-bin/filename.cgi</tt> would cause the server to run the script
-   <tt>/usr/local/apache/cgi-bin/filename.cgi</tt>
-   </UL>
+    <h3>Components/modules tested on TPF:</h3>
 
-   <H3>Create the CGI script:</H3>
-   <UL>
-        For this example <tt>QZZ1</tt> is the name of the TPF program that will be executed by the CGI script.<BR>                
-        The directory path must match what is in the httpd.conf file for <tt>ScriptAlias</tt> directive.<BR><BR>
-        <UL>
-        <tt>zfile echo "#!QZZ1" > /usr/local/apache/cgi-bin/filename.cgi <BR><BR>
-        zfile cat /usr/local/apache/cgi-bin/filename.cgi&nbsp;&nbsp;&nbsp;&nbsp;</tt>
-                 (this should display<tt>#!QZZ1</tt>)<BR><BR>
-        </UL>
-   </UL>
+    <ul>
+      <li>alloc.c&nbsp;</li>
 
-   <H3>Mark the script as executable:</H3>
-   <UL>
-        <tt>zfile chmod 755 /usr/local/apache/cgi-bin/filename.cgi<BR><BR></tt>
-   </UL>
+      <li>ap_base64.c&nbsp;</li>
 
-   <H3>Create, load, and activate a loadset containing the CGI program (QZZ1xx):</H3>
-   <UL> 
-        <code>
-        /**     QZZ1-- simple "Hello world" program to demonstrate basic CGI output  **/<BR><BR>
-        #include &LT;stdio.h&GT<BR><BR>
-        void main() {<BR><BR>
-        <UL>
-             /**   Print the CGI response header, required for all HTML output.    **/<BR>
-             /**   Note the extra \n, to send the blank line.                      **/<BR><BR>
+      <li>ap_checkpass.c&nbsp;</li>
 
-             printf("Content-type: text/html\n\n");<BR><BR>
+      <li>ap_cpystrn.c&nbsp;</li>
 
-             /** Print the HTML response page to stdout. **/<BR>
-             printf("&LT;html&GT\n");<BR>
-             printf("&LT;head&GT&LT;title&GT CGI Output &LT;/title&GT&LT;/head&GT\n");<BR>
-             printf("&LT;body&GT\n");<BR>
-             printf("&LT;h1&GT Hello world &LT;/h1&GT \n");<BR>
-             printf("&LT/body&GT\n");<BR>
-             printf("&LT/html&GT\n");<BR><BR>
-        </UL>
-        }<BR>
+      <li>ap_ebcdic.c&nbsp;</li>
+
+      <li>ap_fnmatch.c&nbsp;</li>
+
+      <li>ap_md5c.c&nbsp;</li>
+
+      <li>ap_sha1.c&nbsp;</li>
+
+      <li>ap_signal.c&nbsp;</li>
+
+      <li>ap_slack.c&nbsp;</li>
+
+      <li>ap_snprintf.c&nbsp;</li>
+
+      <li>buff.c&nbsp;</li>
+
+      <li>buildmark.c&nbsp;</li>
+
+      <li>gen_test.char.c&nbsp;</li>
+
+      <li>gen_uri_delims.c&nbsp;</li>
+
+      <li>htpasswd.c <em>(requires PUT10)&nbsp;</em></li>
+
+      <li>http_config.c&nbsp;</li>
+
+      <li>http_core.c&nbsp;</li>
+
+      <li>http_log.c&nbsp;</li>
+
+      <li>http_main.c&nbsp;</li>
+
+      <li>http_protocol.c&nbsp;</li>
+
+      <li>http_request.c&nbsp;</li>
+
+      <li>http_vhost.c&nbsp;</li>
+
+      <li>logresolve.c <em>(requires PUT10)&nbsp;</em></li>
+
+      <li>mod_access.c <em>(Use of mod_access directives
+      "<tt>allow&nbsp;from</tt>" &amp; "<tt>deny&nbsp;from</tt>"
+      with host <u>names</u> (verses ip addresses) requires
+      PUT10)&nbsp;</em></li>
+
+      <li>mod_actions.c&nbsp;</li>
+
+      <li>mod_alias.c&nbsp;</li>
+
+      <li>mod_asis.c&nbsp;</li>
+
+      <li>mod_auth.c&nbsp;</li>
+
+      <li>mod_auth_anon.c&nbsp;</li>
+
+      <li>mod_autoindex.c&nbsp;</li>
+
+      <li>mod_cern_meta.c&nbsp;</li>
+
+      <li>mod_cgi.c <em>(requires PUT10)</em>&nbsp;</li>
+
+      <li>mod_digest.c&nbsp;</li>
+
+      <li>mod_dir.c&nbsp;</li>
+
+      <li>mod_env.c&nbsp;</li>
+
+      <li>mod_example.c&nbsp;</li>
+
+      <li>mod_expires.c&nbsp;</li>
+
+      <li>mod_headers.c&nbsp;</li>
+
+      <li>mod_imap.c&nbsp;</li>
+
+      <li>mod_include.c <em>(CGI execution requires TPF version 4.1
+      PUT10)&nbsp;</em></li>
+
+      <li>mod_info.c&nbsp;</li>
+
+      <li>mod_log_agent.c&nbsp;</li>
+
+      <li>mod_log_config.c&nbsp;</li>
+
+      <li>mod_log_referer.c&nbsp;</li>
+
+      <li>mod_mime.c&nbsp;</li>
+
+      <li>mod_mime_magic.c&nbsp;</li>
+
+      <li>mod_negotiation.c&nbsp;</li>
+
+      <li><a
+      href="http://hpwww.ec-lyon.fr/~vincent/apache/mod_put.html">mod_put.c</a>
+      <em>(third party module)&nbsp;</em></li>
+
+      <li>mod_proxy.c&nbsp;</li>
+
+      <li>mod_setenvif.c&nbsp;</li>
+
+      <li>mod_speling.c&nbsp;</li>
+
+      <li>mod_status.c&nbsp;</li>
+
+      <li>mod_tpf_shm_static.c <em>(third party module, requires
+      PUT10)&nbsp;</em></li>
+
+      <li>mod_unique_id.c <em>(requires PUT10)</em>&nbsp;</li>
+
+      <li>mod_userdir.c&nbsp;</li>
+
+      <li>mod_usertrack.c&nbsp;</li>
+
+      <li>os.c&nbsp;</li>
+
+      <li>os-inline.c&nbsp;</li>
+
+      <li>proxy_cache.c&nbsp;</li>
+
+      <li>proxy_connect.c&nbsp;</li>
+
+      <li>proxy_ftp.c&nbsp;</li>
+
+      <li>proxy_http.c&nbsp;</li>
+
+      <li>proxy_util.c&nbsp;</li>
+
+      <li>regular expression parser&nbsp;</li>
+
+      <li>regular expression test tool <em>(requires
+      PUT10)&nbsp;</em></li>
+
+      <li>rfc1413.c&nbsp;</li>
+
+      <li>rotatelogs.c <em>(requires PUT10)&nbsp;</em></li>
+
+      <li>util.c&nbsp;</li>
+
+      <li>util_date.c&nbsp;</li>
+
+      <li>util_md5.c&nbsp;</li>
+
+      <li>util_script.c&nbsp;</li>
+
+      <li>util_uri.c&nbsp;</li>
+    </ul>
+
+    <h3>Components/modules not yet supported on TPF:</h3>
+
+    <ul>
+      <li>htdigest.c&nbsp;</li>
+
+      <li>lib/expat-lite&nbsp;</li>
+
+      <li>mod_auth_digest.c&nbsp;</li>
+
+      <li>mod_rewrite.c&nbsp;</li>
+
+      <li>mod_vhost_alias.c&nbsp;</li>
+    </ul>
+
+    <h3>Components/modules that don't apply or that probably won't
+    ever be available on TPF:</h3>
+
+    <ul>
+      <li>ab.c&nbsp;</li>
+
+      <li>ap_getpass.c&nbsp;</li>
+
+      <li>mod_auth_db.c&nbsp;</li>
+
+      <li>mod_auth_dbm.c&nbsp;</li>
+
+      <li>mod_auth_db.module&nbsp;</li>
+
+      <li>mod_mmap_static.c&nbsp;</li>
+
+      <li>mod_so.c&nbsp;</li>
+
+      <li>suexec.c&nbsp;</li>
+    </ul>
+    <a id="cgi" name="cgi"></a> 
+
+    <center>
+      <h2>How to Use CGI Scripts</h2>
+    </center>
+
+    <p>The following is a very simple example of a CGI script
+    ("Hello World") and the necessary steps to run it.<br />
+     Refer to the <a
+    href="http://httpd.apache.org/docs/mod/mod_cgi.html">mod_cgi
+    module</a> for additional information.</p>
+
+    <h3>Add necessary directives to httpd.conf:</h3>
+
+    <div style="margin-left: 2em">
+      Example: <tt><br />
+      </tt> 
+
+      <div style="margin-left: 2em">
+        <tt>ScriptLog logs/script_log<br />
+         ScriptAlias /cgi-bin/ /usr/local/apache/cgi-bin/</tt>
+      </div>
+      <br />
+       A request for <tt>http://myserver/cgi-bin/filename.cgi</tt>
+      would cause the server to run the script
+      <tt>/usr/local/apache/cgi-bin/filename.cgi</tt>
+    </div>
+
+    <h3>Create the CGI script:</h3>
+
+    <div style="margin-left: 2em">
+      <p>For this example <tt>QZZ1</tt> is the name of the TPF
+      program that will be executed by the CGI script.<br />
+       The directory path must match what is in the httpd.conf file
+      for <tt>ScriptAlias</tt> directive.</p>
+
+      <div style="margin-left: 2em">
+        <tt>zfile echo "#!QZZ1" &gt;
+        /usr/local/apache/cgi-bin/filename.cgi<br />
+         zfile cat
+        /usr/local/apache/cgi-bin/filename.cgi&nbsp;&nbsp;&nbsp;&nbsp;</tt>
+        (this should display <tt>#!QZZ1</tt>)<br />
+        <br />
+      </div>
+    </div>
+
+    <h3>Mark the script as executable:</h3>
+
+    <div style="margin-left: 2em">
+      <tt>zfile chmod 755
+      /usr/local/apache/cgi-bin/filename.cgi<br />
+      <br />
+      </tt>
+    </div>
+
+    <h3>Create, load, and activate a loadset containing the CGI
+    program (QZZ1xx):</h3>
+
+    <div style="margin-left: 2em">
+      <code>/** QZZ1-- simple "Hello world" program to demonstrate
+      basic CGI output **/<br />
+      <br />
+       #include &lt;stdio.h&gt;<br />
+      <br />
+       void main() {<br />
+      <br />
+      </code> 
+
+      <div style="margin-left: 2em">
+        <code>/** Print the CGI response header, required for all
+        HTML output. **/<br />
+         /** Note the extra \n, to send the blank line. **/<br />
+        <br />
+         printf("Content-type: text/html\n\n");<br />
+        <br />
+         /** Print the HTML response page to stdout. **/<br />
+         printf("&lt;html&gt;\n");<br />
+         printf("&lt;head&gt;&lt;title&gt; CGI Output
+        &lt;/title&gt;&lt;/head&gt;\n");<br />
+         printf("&lt;body&gt;\n");<br />
+         printf("&lt;h1&gt; Hello world &lt;/h1&gt; \n");<br />
+         printf("&lt;/body&gt;\n");<br />
+         printf("&lt;/html&gt;\n");<br />
+        <br />
         </code>
-    </UL>
+      </div>
+      <code>}<br />
+      </code>
+    </div>
 
-   <H3>Request the CGI script from a browser:</H3>
-   <UL>         
-        <tt>http://myserver/cgi-bin/filename.cgi</tt><BR>
-   </UL>
+    <h3>Request the CGI script from a browser:</h3>
 
-<A NAME="porting_notes">&nbsp;</A>
-<H2 align=center>Porting Notes</H2>
-<P>
-   <H3>Changes made due to differences between UNIX and
-   TPF's process models:</H3>
-   <UL>
-   <LI><STRONG>Signals</STRONG>: On TPF a signal that is sent to a process
-      remains unhandled until the process explicitly requests that signals
-      be handled using the <CODE>tpf_process_signals()</CODE> function.
-      Additionally, the default action for an alarm on TPF is to take
-      an OPR-7777 dump and exit.  (On UNIX the default is the equivalent
-      of <CODE>exit()</CODE> with no dump taken.)
-      These differences necessitated a few modifications:
-      <BR><BR>
-      <UL>
-      <LI>bypass the use of <CODE>ap_block_alarms()</CODE> &amp;
-         <CODE>ap_unblock_alarms()</CODE>
-      <LI>add <CODE>tpf_process_signals()</CODE> calls
-      <LI>add <CODE>select()</CODE> calls to prevent blocking.
-      </UL>
-   <BR>
-   </UL>
+    <div style="margin-left: 2em">
+      <tt>http://myserver/cgi-bin/filename.cgi</tt><br />
+    </div>
+    <a id="options" name="options"></a> 
 
-   <H3>Find that function...</H3>
-   <P>Some simple functions &amp; definitions initially needed to be added
-      on TPF, such as <CODE>FD_SET()</CODE>.
-      We've put these in src/os/tpf/os.h for now.
-   </P>
+    <center>
+      <h2>How to Use Apache Command Line Options</h2>
+    </center>
 
-   <H3>EBCDIC changes:</H3>
-   <P>TPF-specific conversion tables between US-ASCII and
-      EBCDIC (character set IBM-1047 to be exact) were created
-      and put into ebcdic.c in the src/os/tpf directory.
-   </P>
+    <p>You cannot run Apache from the command line on TPF. However
+    you can use those Apache command line options which don't
+    actually start the server. This requires PJ27277 which shipped
+    on PUT13.</p>
 
-   <H3>Miscellaneous, minor changes:</H3>
-   <P>Various minor changes (such as casting) were made due to
-      differences in how some functions are implemented on TPF.
-   </P>
+    <h3>Supported Apache options:</h3>
 
-<HR>
-<CENTER>[&nbsp;<A HREF="#top">top</A>
-   &nbsp;|&nbsp;<A HREF="#configuration_files">Configuration Files</A>
-   &nbsp;|&nbsp;<A HREF="#whats_available">What's Available</A>
-   &nbsp;|&nbsp;<A HREF="#cgi">CGI Scripts</A>
-   &nbsp;|&nbsp;<A HREF="#porting_notes">Porting Notes</A>&nbsp;]
-</CENTER>
+    <div style="margin-left: 2em">
+      <p>-d <i>directory</i><br />
+       Specify an alternate initial ServerRoot <i>directory</i>.
+      Default is <tt>/usr/local/apache</tt>.</p>
 
-</BODY>
-</HTML>
+      <p>-f <i>file</i><br />
+       Specify an alternate server configuration <i>file</i>.
+      Default is <tt>conf/httpd.conf</tt>.</p>
+
+      <p>-h<br />
+       List a short summary of available command line options.
+      (Note that this outputs all options, not just those supported
+      on TPF.)</p>
+
+      <p>-l<br />
+       List modules compiled into the server.</p>
+
+      <p>-L<br />
+       List available configuration directives. (Note that this
+      outputs all configuration directives, not just those
+      supported on TPF.)</p>
+
+      <p>-S<br />
+       Show the settings as parsed from the configuration file.
+      Currently only shows the virtualhost settings.</p>
+
+      <p>-t<br />
+       Run syntax tests for configuration files (with document root
+      checks)</p>
+
+      <p>-T<br />
+       Run syntax tests for configuration files (without document
+      root checks)</p>
+
+      <p>-v<br />
+       Show the version number.</p>
+
+      <p>-V<br />
+       Show the version number and various compile settings.</p>
+
+      <p>See <a
+      href="http://httpd.apache.org/docs/programs/httpd.html">http://httpd.apache.org/docs/programs/httpd.html</a>
+      for more information about these command line options.</p>
+
+      <p>Note: On TPF Apache arguments are supported only on the
+      command line, not through the ZINET XPARM field.</p>
+    </div>
+
+    <h3>Setup</h3>
+
+    <div style="margin-left: 2em">
+      <p>Ensure Apache (CHTA) is loaded</p>
+
+      <p>Create the httpd script:</p>
+
+      <div style="margin-left: 2em">
+        <tt>zfile echo "#!CHTA" &gt; /bin/httpd<br />
+         zfile cat /bin/httpd&nbsp;&nbsp;</tt> (this should display
+        <tt>#!CHTA</tt>)
+      </div>
+      <br />
+      <br />
+       
+
+      <p>Mark the script as executable:<br />
+      </p>
+
+      <div style="margin-left: 2em">
+        <tt>zfile chmod 755 /bin/httpd</tt>
+      </div>
+      <br />
+      <br />
+       
+
+      <p>(See "<em>ZFILE-Activate a TPF Segment or Script</em>" in
+      the <em>Operations</em> guide for more information: <a
+      href="http://www.ibm.com/tpf/pubs/tpfpubs.htm">http://www.ibm.com/tpf/pubs/tpfpubs.htm</a>.)</p>
+    </div>
+
+    <h3>Example 1</h3>
+
+    <div style="margin-left: 2em">
+      <p><tt>zfile httpd -v</tt></p>
+
+      <p><tt>FILE0001I 11.43.09 START OF DISPLAY FROM httpd
+      -v<br />
+       Server version: Apache/1.3.20 (TPF)<br />
+       Server built: May 23 2001 09:39:22<br />
+       END OF DISPLAY</tt></p>
+    </div>
+
+    <h3>Example 2</h3>
+
+    <div style="margin-left: 2em">
+      <p><tt>zfile httpd -t -f
+      /usr/local/apache/conf/httpd.conf.new</tt></p>
+
+      <p><tt>FILE0002I 11.47.26 START OF ERROR DISPLAY FROM httpd
+      -t ...<br />
+       Syntax OK<br />
+       END OF DISPLAY</tt></p>
+    </div>
+    <a id="porting_notes" name="porting_notes"></a> 
+
+    <center>
+      <h2>Porting Notes</h2>
+    </center>
+
+    <h3>Changes made due to differences between UNIX and TPF's
+    process models:</h3>
+
+    <ul>
+      <li><b>Signals</b>: On TPF a signal that is sent to a process
+      remains unhandled until the process explicitly requests that
+      signals be handled using the <tt>tpf_process_signals()</tt>
+      function. Additionally, the default action for an alarm on
+      TPF is to take an OPR-7777 dump and exit. (On UNIX the
+      default is the equivalent of <tt>exit()</tt> with no dump
+      taken.) These differences necessitated a few
+      modifications:&nbsp;</li>
+
+      <li style="list-style: none">
+        <br />
+         &nbsp; 
+
+        <ul>
+          <li>bypass the use of <tt>ap_block_alarms()</tt> &amp;
+          <tt>ap_unblock_alarms()</tt>&nbsp;</li>
+
+          <li>add <tt>tpf_process_signals()</tt> calls&nbsp;</li>
+
+          <li>add <tt>select()</tt> calls to prevent
+          blocking.&nbsp;</li>
+        </ul>
+      </li>
+    </ul>
+
+    <h3>Find that function...</h3>
+    Some simple functions &amp; definitions initially needed to be
+    added on TPF, such as <tt>FD_SET()</tt>. We've put these in
+    src/os/tpf/os.h for now.&nbsp; 
+
+    <h3>EBCDIC changes:</h3>
+    TPF-specific conversion tables between US-ASCII and EBCDIC
+    (character set IBM-1047 to be exact) were created.&nbsp; 
+
+    <h3>Miscellaneous, minor changes:</h3>
+    Various minor changes (such as casting) were made due to
+    differences in how some functions are implemented on
+    TPF.&nbsp;<br />
+     
+    <hr />
+
+    <center>
+      [ <a href="#top">top</a>&nbsp; | <a
+      href="#configuration_files">Configuration Files</a>&nbsp; |
+      <a href="#whats_available">What's Available</a>&nbsp; | <a
+      href="#cgi">CGI Scripts</a>&nbsp; | <a
+      href="#options">Options</a>&nbsp; | <a
+      href="#porting_notes">Porting Notes</a> ]
+    </center>
+  </body>
+</html>
+

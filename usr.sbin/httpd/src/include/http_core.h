@@ -172,7 +172,7 @@ API_EXPORT(file_type_e) ap_get_win32_interpreter(const request_rec *, char **);
  * the code that cares really is in http_core.c.  Also, another accessor.
  */
 
-char *ap_response_code_string (request_rec *r, int error_index);
+API_EXPORT(char *) ap_response_code_string (request_rec *r, int error_index);
 
 extern API_VAR_EXPORT module core_module;
 
@@ -180,6 +180,21 @@ extern API_VAR_EXPORT module core_module;
 
 typedef unsigned char allow_options_t;
 typedef unsigned char overrides_t;
+/*
+ * Bits of info that go into making an ETag for a file
+ * document.  Why a long?  Because char historically
+ * proved too short for Options, and int can be different
+ * sizes on different platforms.
+ */
+typedef unsigned long etag_components_t;
+
+#define ETAG_UNSET 0
+#define ETAG_NONE  (1 << 0)
+#define ETAG_MTIME (1 << 1)
+#define ETAG_INODE (1 << 2)
+#define ETAG_SIZE  (1 << 3)
+#define ETAG_BACKWARD (ETAG_MTIME | ETAG_INODE | ETAG_SIZE)
+#define ETAG_ALL   (ETAG_MTIME | ETAG_INODE | ETAG_SIZE)
 
 typedef struct {
     /* path of the directory/regex/etc.  see also d_is_fnmatch below */
@@ -279,6 +294,43 @@ typedef struct {
     interpreter_source_e script_interpreter_source;
 #endif    
     
+#ifdef CHARSET_EBCDIC
+    /* Configurable EBCDIC Conversion stuff */
+    /* Direction specific conversion: */
+#define dir_Out 0               /* 0utput (returned contents in a GET or POST) */
+#define dir_In  1               /* 1nput  (uploaded contents in a PUT / POST) */
+
+    /* Conversion Enabled/Disabled: */
+#define conv_Unset '?'          /* Conversion unconfigured */
+#define conv_Off   '0'          /* BINARY or ASCII file (no conversion) */
+#define conv_On    '1'          /* TEXT file (EBCDIC->ASCII for dir_Out; ASCII->EBCDIC for dir_In) */
+
+    /* The configuration args {On|Off}[={In|Out|InOut}] are currently stored
+     * as character strings ("0" = conv_Off, "1" = conv_On)
+     */
+    table *ebcdicconversion_by_ext_in;
+    table *ebcdicconversion_by_ext_out;
+    table *ebcdicconversion_by_type_in;
+    table *ebcdicconversion_by_type_out;
+
+#define LEGACY_KLUDGE 1 /* After a couple of versions this legacy kludge should be set to 0 */
+#ifndef ASCIITEXT_MAGIC_TYPE_PREFIX
+#define ASCIITEXT_MAGIC_TYPE_PREFIX "text/x-ascii-"     /* Text files whose content-type starts with this are passed thru unconverted */
+#endif
+    int x_ascii_magic_kludge;   /* whether to handle the text/x-ascii- kludge */
+
+#if ADD_EBCDICCONVERT_DEBUG_HEADER
+    int ebcdicconversion_debug_header; /* whether to add an X-EBCDIC-Debug-{In,Out} header to the response */
+#endif
+#endif /* CHARSET_EBCDIC */
+
+    /*
+     * What attributes/data should be included in ETag generation?
+     */
+    etag_components_t etag_bits;
+    etag_components_t etag_add;
+    etag_components_t etag_remove;
+
 } core_dir_config;
 
 /* Per-server core configuration */
@@ -303,7 +355,7 @@ typedef struct {
 } core_server_config;
 
 /* for http_config.c */
-void ap_core_reorder_directories(pool *, server_rec *);
+CORE_EXPORT(void) ap_core_reorder_directories(pool *, server_rec *);
 
 /* for mod_perl */
 CORE_EXPORT(void) ap_add_per_dir_conf (server_rec *s, void *dir_config);

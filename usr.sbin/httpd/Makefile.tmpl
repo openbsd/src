@@ -120,6 +120,7 @@ sysconfdir      = @sysconfdir@
 datadir         = @datadir@
 iconsdir        = @iconsdir@
 htdocsdir       = @htdocsdir@
+manualdir       = @manualdir@
 cgidir          = @cgidir@
 includedir      = @includedir@
 localstatedir   = @localstatedir@
@@ -329,6 +330,7 @@ install-mktree:
 	$(MKDIR) $(root)$(sysconfdir)/ssl.key
 	$(MKDIR) $(root)$(sysconfdir)/ssl.prm
 	$(MKDIR) $(root)$(htdocsdir)
+	$(MKDIR) $(root)$(manualdir)
 	$(MKDIR) $(root)$(iconsdir)
 	$(MKDIR) $(root)$(cgidir)
 	$(MKDIR) $(root)$(includedir)
@@ -434,6 +436,7 @@ install-support:
 		$(INSTALL_SCRIPT) $(TOP)/$(SRC)/.apaci.install.tmp $(root)$(sbindir)/$${apachectl}; \
 	echo "$(INSTALL_DATA) $(TOP)/$(SRC)/support/apachectl.8 $(root)$(mandir)/man8/$${apachectl}.8"; \
 	$(INSTALL_DATA) $(TOP)/$(SRC)/support/apachectl.8 $(root)$(mandir)/man8/$${apachectl}.8
+	$(INSTALL_PROGRAM) $(TOP)/$(SRC)/support/checkgid $(root)$(bindir)/checkgid
 	$(INSTALL_PROGRAM) $(TOP)/$(SRC)/support/htpasswd $(root)$(bindir)/htpasswd
 	$(INSTALL_DATA) $(TOP)/$(SRC)/support/htpasswd.1 $(root)$(mandir)/man1/htpasswd.1
 	$(INSTALL_PROGRAM) $(TOP)/$(SRC)/support/htdigest $(root)$(bindir)/htdigest
@@ -486,6 +489,7 @@ install-binsupport:
 		$(INSTALL_SCRIPT) $(TOP)/$(SRC)/.apaci.install.tmp $(root)$(sbindir)/$${apachectl}; \
 	echo "$(INSTALL_DATA) $(TOP)/$(SRC)/support/apachectl.8 $(root)$(mandir)/man8/$${apachectl}.8"; \
 	$(INSTALL_DATA) $(TOP)/$(SRC)/support/apachectl.8 $(root)$(mandir)/man8/$${apachectl}.8
+	$(INSTALL_PROGRAM) $(TOP)/$(SRC)/support/checkgid $(root)$(bindir)/checkgid
 	$(INSTALL_PROGRAM) $(TOP)/$(SRC)/support/htpasswd $(root)$(bindir)/htpasswd
 	$(INSTALL_DATA) $(TOP)/$(SRC)/support/htpasswd.1 $(root)$(mandir)/man1/htpasswd.1
 	$(INSTALL_PROGRAM) $(TOP)/$(SRC)/support/htdigest $(root)$(bindir)/htdigest
@@ -533,13 +537,20 @@ install-data:
 		echo "[PRESERVING EXISTING DATA SUBDIR: $(root)$(htdocsdir)/]"; \
 	else \
 		echo "Copying tree $(TOP)/htdocs/ -> $(root)$(htdocsdir)/"; \
-		(cd $(TOP)/htdocs/ && $(TAR) $(TAROPT) - *) |\
+		(cd $(TOP)/htdocs/ && $(TAR) $(TAROPT) - index* apache_pb.* ) |\
 		(cd $(root)$(htdocsdir)/ && $(TAR) -xf -); \
 		find $(root)$(htdocsdir)/ -type d -exec chmod a+rx {} \; ; \
-		find $(root)$(htdocsdir)/ -type f -exec chmod a+r {} \; ; \
+		find $(root)$(htdocsdir)/ -type f -print | xargs chmod a+r ; \
+	fi
+	-@if [ -d $(TOP)/htdocs/manual ]; then \
+		echo "Copying tree $(TOP)/htdocs/manual -> $(root)/$(manualdir)/"; \
+		(cd $(TOP)/htdocs/manual/ && $(TAR) $(TAROPT) - *) |\
+		(cd $(root)$(manualdir)/ && $(TAR) -xf -); \
+		find $(root)$(manualdir)/ -type d -exec chmod a+rx {} \; ; \
+		find $(root)$(manualdir)/ -type f -print | xargs chmod a+r ; \
 	fi
 	-@if [ -f $(root)$(cgidir)/printenv ]; then \
-		echo "[PRESERVING EXISTING DATA SUBDIR: $(root)$(cgidir)/]"; \
+		echo "[PRESERVING EXISTING CGI SUBDIR: $(root)$(cgidir)/]"; \
 	else \
 		for script in printenv test-cgi; do \
 			cat $(TOP)/cgi-bin/$${script} |\
@@ -586,6 +597,7 @@ install-config:
 			-e 's;@@ServerRoot@@/conf/ssl.csr;$(sysconfdir)/ssl.csr;' \
 			-e 's;@@ServerRoot@@/conf/ssl.key;$(sysconfdir)/ssl.key;' \
 			-e 's;@@ServerRoot@@/conf/ssl.prm;$(sysconfdir)/ssl.prm;' \
+			-e 's;@@ServerRoot@@/htdocs/manual;$(manualdir);' \
 			-e 's;@@ServerRoot@@/htdocs;$(htdocsdir);' \
 			-e 's;@@ServerRoot@@/icons;$(iconsdir);' \
 			-e 's;@@ServerRoot@@/cgi-bin;$(cgidir);' \
@@ -603,6 +615,7 @@ install-config:
 			-e 's;conf/mime\.types;$(sysconfdir)/mime.types;' \
 			-e 's;User nobody;User $(conf_user);' \
 			-e 's;Group #-1;Group $(conf_group);' \
+			-e 's;Group "#-1";Group $(conf_group);' \
 			-e 's;Port 80;Port $(conf_port);' \
 			-e 's;Listen 80;Listen $(conf_port);' \
 			-e 's;Listen 443;Listen $(conf_port_ssl);' \

@@ -73,6 +73,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
+#ifdef WIN32
+#include <float.h>
+#endif
 
 typedef enum {
     NO = 0, YES = 1
@@ -152,7 +155,7 @@ static char *ap_cvt(double arg, int ndigits, int *decpt, int *sign, int eflag, c
      */
     if (fi != 0) {
 	p1 = &buf[NDIG];
-	while (fi != 0) {
+	while (p1 > &buf[0] && fi != 0) {
 	    fj = modf(fi / 10, &fi);
 	    *--p1 = (int) ((fj + .03) * 10) + '0';
 	    r2++;
@@ -931,16 +934,32 @@ API_EXPORT(int) ap_vformatter(int (*flush_func)(ap_vformatter_buff *),
 		/*
 		 * * We use &num_buf[ 1 ], so that we have room for the sign
 		 */
-		s = conv_fp(*fmt, fp_num, alternate_form,
-			(adjust_precision == NO) ? FLOAT_DIGITS : precision,
-			    &is_negative, &num_buf[1], &s_len);
-		if (is_negative)
-		    prefix_char = '-';
-		else if (print_sign)
-		    prefix_char = '+';
-		else if (print_blank)
-		    prefix_char = ' ';
-		break;
+#ifdef HAVE_ISNAN
+		if (isnan(fp_num)) {
+		    s = "nan";
+		    s_len = 3;
+		}
+		else
+#endif
+#ifdef HAVE_ISINF
+		if (isinf(fp_num)) {
+		    s = "inf";
+		    s_len = 3;
+		}
+		else
+#endif
+		{
+		    s = conv_fp(*fmt, fp_num, alternate_form,
+			    (adjust_precision == NO) ? FLOAT_DIGITS : precision,
+				&is_negative, &num_buf[1], &s_len);
+		    if (is_negative)
+			prefix_char = '-';
+		    else if (print_sign)
+			prefix_char = '+';
+		    else if (print_blank)
+			prefix_char = ' ';
+		}
+	        break;
 
 
 	    case 'g':
@@ -1152,7 +1171,7 @@ static int snprintf_flush(ap_vformatter_buff *vbuff)
 }
 
 
-API_EXPORT(int) ap_snprintf(char *buf, size_t len, const char *format,...)
+API_EXPORT_NONSTD(int) ap_snprintf(char *buf, size_t len, const char *format,...)
 {
     int cc;
     va_list ap;

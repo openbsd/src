@@ -157,7 +157,11 @@ extern "C" {
 #define ap_http_method(r)   (((r)->ctx != NULL && ap_ctx_get((r)->ctx, "ap::http::method") != NULL) ? ((char *)ap_ctx_get((r)->ctx, "ap::http::method")) : "http")
 #define ap_default_port(r)  (((r)->ctx != NULL && ap_ctx_get((r)->ctx, "ap::default::port") != NULL) ? atoi((char *)ap_ctx_get((r)->ctx, "ap::default::port")) : DEFAULT_HTTP_PORT)
 #else /* EAPI */
+#ifdef NETWARE
+#define ap_http_method(r) ap_os_http_method(r)
+#else
 #define ap_http_method(r)	"http"
+#endif
 #define ap_default_port(r)	DEFAULT_HTTP_PORT
 #endif /* EAPI */
 
@@ -330,6 +334,8 @@ extern "C" {
 #ifndef HARD_SERVER_LIMIT
 #ifdef WIN32
 #define HARD_SERVER_LIMIT 1024
+#elif defined(NETWARE)
+#define HARD_SERVER_LIMIT 2048
 #else
 #define HARD_SERVER_LIMIT 256
 #endif
@@ -460,7 +466,7 @@ extern "C" {
 
 #define SERVER_BASEVENDOR   "Apache Group"
 #define SERVER_BASEPRODUCT  "Apache"
-#define SERVER_BASEREVISION "1.3.19"
+#define SERVER_BASEREVISION "1.3.23"
 #define SERVER_BASEVERSION  SERVER_BASEPRODUCT "/" SERVER_BASEREVISION
 
 #define SERVER_PRODUCT  SERVER_BASEPRODUCT
@@ -484,7 +490,7 @@ API_EXPORT(void) ap_add_config_define(const char *define);
  * Always increases along the same track as the source branch.
  * For example, Apache 1.4.2 would be '10402100', 2.5b7 would be '20500007'.
  */
-#define APACHE_RELEASE 10319100
+#define APACHE_RELEASE 10323100
 
 #define SERVER_PROTOCOL "HTTP/1.1"
 #ifndef SERVER_SUPPORT
@@ -649,7 +655,7 @@ API_EXPORT(void) ap_add_config_define(const char *define);
 #define CRLF "\015\012"
 #define OS_ASC(c) (c)
 #else /* CHARSET_EBCDIC */
-#include "ebcdic.h"
+#include "ap_ebcdic.h"
 /* OSD_POSIX uses the EBCDIC charset. The transition ASCII->EBCDIC is done in
  * the buff package (bread/bputs/bwrite), so everywhere else, we use
  * "native EBCDIC" CR and NL characters. These are therefore defined as
@@ -833,7 +839,7 @@ struct request_rec {
 
     char *unparsed_uri;		/* the uri without any parsing performed */
     char *uri;			/* the path portion of the URI */
-    char *filename;
+    char *filename;		/* filename if found, otherwise NULL */
     char *path_info;
     char *args;			/* QUERY_ARGS, if any */
     struct stat finfo;		/* ST_MODE set to zero if no such file */
@@ -865,6 +871,17 @@ struct request_rec {
      * happy.
      */
     char *case_preserved_filename;
+
+#ifdef CHARSET_EBCDIC
+    /* We don't want subrequests to modify our current conversion flags.
+     * These flags save the state of the conversion flags when subrequests
+     * are run.
+     */
+    struct {
+        unsigned conv_in:1;    /* convert ASCII->EBCDIC when read()ing? */
+        unsigned conv_out:1;   /* convert EBCDIC->ASCII when write()ing? */
+    } ebcdic;
+#endif
 
 /* Things placed at the end of the record to avoid breaking binary
  * compatibility.  It would be nice to remember to reorder the entire
@@ -1161,13 +1178,13 @@ API_EXPORT(char *) ap_os_systemcase_filename(pool *pPool, const char *szFile);
 #endif
 #endif
 
-#ifdef _OSD_POSIX
-extern const char *os_set_account(pool *p, const char *account);
-extern int os_init_job_environment(server_rec *s, const char *user_name, int one_process);
-#endif /* _OSD_POSIX */
+#ifdef CHARSET_EBCDIC
+API_EXPORT(int)    ap_checkconv(struct request_rec *r);    /* for downloads */
+API_EXPORT(int)    ap_checkconv_in(struct request_rec *r); /* for uploads */
+#endif /*#ifdef CHARSET_EBCDIC*/
 
-char *ap_get_local_host(pool *);
-unsigned long ap_get_virthost_addr(char *hostname, unsigned short *port);
+API_EXPORT(char *) ap_get_local_host(pool *);
+API_EXPORT(unsigned long) ap_get_virthost_addr(char *hostname, unsigned short *port);
 
 extern API_VAR_EXPORT time_t ap_restart_time;
 

@@ -1,161 +1,145 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
-<HTML>
-<HEAD>
-<TITLE>Apache module mod_headers</TITLE>
-</HEAD>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<!-- Background white, links blue (unvisited), navy (visited), red (active) -->
-<BODY
- BGCOLOR="#FFFFFF"
- TEXT="#000000"
- LINK="#0000FF"
- VLINK="#000080"
- ALINK="#FF0000"
->
-<DIV ALIGN="CENTER">
- <IMG SRC="../images/sub.gif" ALT="[APACHE DOCUMENTATION]">
- <H3>
-  Apache HTTP Server Version 1.3
- </H3>
-</DIV>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org" />
 
-<H1 ALIGN="CENTER">Module mod_headers</H1>
+    <title>Apache module mod_headers</title>
+  </head>
+  <!-- Background white, links blue (unvisited), navy (visited), red (active) -->
 
-<p>This module provides for the customization of HTTP
-response headers.</p>
+  <body bgcolor="#FFFFFF" text="#000000" link="#0000FF"
+  vlink="#000080" alink="#FF0000">
+        <div align="CENTER">
+      <img src="../images/sub.gif" alt="[APACHE DOCUMENTATION]" /> 
 
-<P><A
-HREF="module-dict.html#Status"
-REL="Help"
-><STRONG>Status:</STRONG></A> Extension
-<BR>
-<A
-HREF="module-dict.html#SourceFile"
-REL="Help"
-><STRONG>Source File:</STRONG></A> mod_headers.c
-<BR>
-<A
-HREF="module-dict.html#ModuleIdentifier"
-REL="Help"
-><STRONG>Module Identifier:</STRONG></A> headers_module
-<BR>
-<A
-HREF="module-dict.html#Compatibility"
-REL="Help"
-><STRONG>Compatibility:</STRONG></A> Available in Apache 1.2 and later.
-</P>
+      <h3>Apache HTTP Server Version 1.3</h3>
+    </div>
 
-<h2>Summary</h2>
 
-This module provides a directive to control the sending of HTTP
-headers.  Headers can be merged, replaced or removed. 
+    <h1 align="CENTER">Module mod_headers</h1>
 
-<H2>Directives</H2>
-<UL>
-<LI><A HREF="#header">Header</A>
-</UL>
+    <p>This module provides for the customization of HTTP response
+    headers.</p>
 
-<HR>
+    <p><a href="module-dict.html#Status"
+    rel="Help"><strong>Status:</strong></a> Extension<br />
+     <a href="module-dict.html#SourceFile"
+    rel="Help"><strong>Source File:</strong></a>
+    mod_headers.c<br />
+     <a href="module-dict.html#ModuleIdentifier"
+    rel="Help"><strong>Module Identifier:</strong></a>
+    headers_module<br />
+     <a href="module-dict.html#Compatibility"
+    rel="Help"><strong>Compatibility:</strong></a> Available in
+    Apache 1.2 and later.</p>
 
-<H2><A NAME="header">Header</A> directive</H2>
-<A
- HREF="directive-dict.html#Syntax"
- REL="Help"
-><STRONG>Syntax:</STRONG></A> Header set|append|add
- <EM>header</EM> <EM>value</EM><BR>
-<A
- HREF="directive-dict.html#Syntax"
- REL="Help"
-><STRONG>Syntax:</STRONG></A> Header unset <EM>header</EM><BR>
-<A
- HREF="directive-dict.html#Context"
- REL="Help"
-><STRONG>Context:</STRONG></A> server config, virtual host, access.conf,
- .htaccess<BR>
-<A
- HREF="directive-dict.html#Override"
- REL="Help"
-><STRONG>Override:</STRONG></A> FileInfo<BR>
-<A
- HREF="directive-dict.html#Status"
- REL="Help"
-><STRONG>Status:</STRONG></A> Extension<BR>
-<A
- HREF="directive-dict.html#Module"
- REL="Help"
-><STRONG>Module:</STRONG></A> mod_header<P>
+    <h2>Summary</h2>
+    This module provides a directive to control the sending of HTTP
+    headers. Headers can be merged, replaced or removed. 
 
-This directive can replace, merge or remove HTTP response headers. The
-action it performs is determined by the first argument. This can be one
-of the following values:
+    <h2>Directives</h2>
 
-<UL>
-<LI><STRONG>set</STRONG><BR>
-  The response header is set, replacing any previous header with this name
+    <ul>
+      <li><a href="#header">Header</a></li>
+    </ul>
+    <hr />
 
-<LI><STRONG>append</STRONG><BR>
-  The response header is appended to any existing header of the same
-  name. When a new value is merged onto an existing header it is
-  separated from the existing header with a comma. This is the HTTP standard
-  way of giving a header multiple values.
+    <h2><a id="header" name="header">Header</a> directive</h2>
+    <a href="directive-dict.html#Syntax"
+    rel="Help"><strong>Syntax:</strong></a> Header set|append|add
+    <em>header</em> <em>value</em><br />
+     <a href="directive-dict.html#Syntax"
+    rel="Help"><strong>Syntax:</strong></a> Header unset
+    <em>header</em><br />
+     <a href="directive-dict.html#Context"
+    rel="Help"><strong>Context:</strong></a> server config, virtual
+    host, access.conf, .htaccess<br />
+     <a href="directive-dict.html#Override"
+    rel="Help"><strong>Override:</strong></a> FileInfo<br />
+     <a href="directive-dict.html#Status"
+    rel="Help"><strong>Status:</strong></a> Extension<br />
+     <a href="directive-dict.html#Module"
+    rel="Help"><strong>Module:</strong></a> mod_header 
 
-<LI><STRONG>add</STRONG><BR>
-  The response header is added to the existing set of headers, even if
-  this header already exists. This can result in two (or more) headers
-  having the same name. This can lead to unforeseen consequences, and in
-  general "append" should be used instead.
+    <p>This directive can replace, merge or remove HTTP response
+    headers. The action it performs is determined by the first
+    argument. This can be one of the following values:</p>
 
-<LI><STRONG>unset</STRONG><BR>
-  The response header of this name is removed, if it exists. If there are
-  multiple headers of the same name, all will be removed.
-</UL>
+    <ul>
+      <li><strong>set</strong><br />
+       The response header is set, replacing any previous header
+      with this name</li>
 
-This argument is followed by a header name, which can include the
-final colon, but it is not required. Case is ignored. For
-add, append and set a value is given as the third argument. If this
-value contains spaces, it should be surrounded by double quotes.
-For unset, no value should be given.
+      <li><strong>append</strong><br />
+       The response header is appended to any existing header of
+      the same name. When a new value is merged onto an existing
+      header it is separated from the existing header with a comma.
+      This is the HTTP standard way of giving a header multiple
+      values.</li>
 
-<H3>Order of Processing</H3>
+      <li><strong>add</strong><br />
+       The response header is added to the existing set of headers,
+      even if this header already exists. This can result in two
+      (or more) headers having the same name. This can lead to
+      unforeseen consequences, and in general "append" should be
+      used instead.</li>
 
-The Header directive can occur almost anywhere within the server
-configuration. It is valid in the main server config and virtual host
-sections, inside &lt;Directory&gt;, &lt;Location&gt; and &lt;Files&gt;
-sections, and within .htaccess files.
-<P>
-The Header directives are processed in the following order:
-<OL>
-<LI>main server
-<LI>virtual host
-<LI>&lt;Directory&gt; sections and .htaccess
-<LI>&lt;Location&gt;
-<LI>&lt;Files&gt;
-</OL>
+      <li><strong>unset</strong><br />
+       The response header of this name is removed, if it exists.
+      If there are multiple headers of the same name, all will be
+      removed.</li>
+    </ul>
+    This argument is followed by a header name, which can include
+    the final colon, but it is not required. Case is ignored. For
+    add, append and set a value is given as the third argument. If
+    this value contains spaces, it should be surrounded by double
+    quotes. For unset, no value should be given. 
 
-Order is important. These two headers have a different effect if reversed:
-<PRE>
+    <h3>Order of Processing</h3>
+    The Header directive can occur almost anywhere within the
+    server configuration. It is valid in the main server config and
+    virtual host sections, inside &lt;Directory&gt;,
+    &lt;Location&gt; and &lt;Files&gt; sections, and within
+    .htaccess files. 
+
+    <p>The Header directives are processed in the following
+    order:</p>
+
+    <ol>
+      <li>main server</li>
+
+      <li>virtual host</li>
+
+      <li>&lt;Directory&gt; sections and .htaccess</li>
+
+      <li>&lt;Location&gt;</li>
+
+      <li>&lt;Files&gt;</li>
+    </ol>
+    Order is important. These two headers have a different effect
+    if reversed: 
+<pre>
 Header append Author "John P. Doe"
 Header unset Author
-</PRE>
+</pre>
+    This way round, the Author header is not set. If reversed, the
+    Author header is set to "John P. Doe". 
 
-This way round, the Author header is not set. If reversed, the Author
-header is set to "John P. Doe".
-<P>
+    <p>The Header directives are processed just before the response
+    is sent by its handler. These means that some headers that are
+    added just before the response is sent cannot be unset or
+    overridden. This includes headers such as "Date" and
+    "Server".</p>
 
-The Header directives are processed just before the response is sent
-by its handler. These means that some headers that are added just
-before the response is sent cannot be unset or overridden. This
-includes headers such as "Date" and "Server".
-<P>
+    <p>    <hr />
 
-<HR>
+    <h3 align="CENTER">Apache HTTP Server Version 1.3</h3>
+    <a href="./"><img src="../images/index.gif" alt="Index" /></a>
+    <a href="../"><img src="../images/home.gif" alt="Home" /></a>
 
-<H3 ALIGN="CENTER">
- Apache HTTP Server Version 1.3
-</H3>
+    </p>
+  </body>
+</html>
 
-<A HREF="./"><IMG SRC="../images/index.gif" ALT="Index"></A>
-<A HREF="../"><IMG SRC="../images/home.gif" ALT="Home"></A>
-
-</BODY>
-</HTML>

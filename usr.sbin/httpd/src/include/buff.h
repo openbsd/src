@@ -133,6 +133,10 @@ struct buff_struct {
     Sfio_t *sf_in;
     Sfio_t *sf_out;
 #endif
+
+    void *callback_data;
+    void (*filter_callback)(BUFF *, const void *, int );
+	
 };
 
 #ifdef B_SFIO
@@ -172,7 +176,7 @@ API_EXPORT(int) ap_bskiplf(BUFF *fb);
 API_EXPORT(int) ap_bwrite(BUFF *fb, const void *buf, int nbyte);
 API_EXPORT(int) ap_bflush(BUFF *fb);
 API_EXPORT(int) ap_bputs(const char *x, BUFF *fb);
-API_EXPORT(int) ap_bvputs(BUFF *fb,...);
+API_EXPORT_NONSTD(int) ap_bvputs(BUFF *fb,...);
 API_EXPORT_NONSTD(int) ap_bprintf(BUFF *fb, const char *fmt,...)
 				__attribute__((format(printf,2,3)));
 API_EXPORT(int) ap_vbprintf(BUFF *fb, const char *fmt, va_list vlist);
@@ -237,6 +241,14 @@ API_EXPORT(int) ap_bfileno(BUFF *fb, int direction);
 
 /* bflush() if a read now would block, but don't actually read anything */
 API_EXPORT(void) ap_bhalfduplex(BUFF *fb);
+
+#if defined(WIN32) || defined(NETWARE) || defined(CYGWIN_WINSOCK) 
+
+/* ap_recvwithtimeout/ap_sendwithtimeout socket primitives for WinSock */
+API_EXPORT(int) ap_sendwithtimeout(int sock, const char *buf, int len, int flags);
+API_EXPORT(int) ap_recvwithtimeout(int sock, char *buf, int len, int flags);
+
+#endif
 
 #ifdef __cplusplus
 }

@@ -93,8 +93,8 @@ typedef ap_ctx_rec ap_ctx;
  * treating numbers as pointers but keeping track of the NULL return code of
  * ap_ctx_get.
  */
-#define AP_CTX_NUM2PTR(n) (void *)((unsigned int)(n)+1)
-#define AP_CTX_PTR2NUM(p) (unsigned int)(((char *)(p))-1)
+#define AP_CTX_NUM2PTR(n) (void *)(((unsigned long)(n))+1)
+#define AP_CTX_PTR2NUM(p) (unsigned long)(((char *)(p))-1)
 
 /*
  * Prototypes for Context Handling Functions

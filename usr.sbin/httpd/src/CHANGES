@@ -1,3 +1,498 @@
+Changes with Apache 1.3.23
+ 
+  *) Changed the symbol mapping of the following from API_EXPORT
+     to API_EXPORT_NONSTD:
+         ap_snprintf(), ap_table_do(), ap_bvputs(), ap_log_error(),
+         ap_log_rerror(), ap_log_printf(), ap_rprintf()
+     [William Rowe]
+
+  *) Fixed a number of mismatched int sizes and signedness problems.
+     Still remains, MSVC's 'interesting' declaration of FD_SET still emits
+     (impotent) warnings.  [William Rowe]
+
+  *) mod_proxy changes:
+
+    *) Bug fix for ap_proxy_cache_conditional(), unititialized wetag
+       [Zvi Har'El <rl@math.technion.ac.il>]
+
+    *) Add persistent connection handling
+       The patch changes mod_proxy to write the reply-headers using
+       ap_send_http_header() instead of directly using ap_bvputs(). This not
+       only simplifies mod_proxy, in my opinion at least, but enables it to
+       make use of the features of Apache's normal header and persistent
+       connection machinery.
+       [Christian von Roques <roques@mti.ag>]
+
+    *) Graham Leggett's original 1.3.12 patch, updated for 1.3.19+
+       Original comments:
+
+       HTTP/1.1 support for mod_proxy:
+       - support for Cache-Control
+       - conditional support If-Match, If-None-Match,
+       If-Unmodified-Since, Etag
+       - support for content negotiation using Vary
+       - storing of request headers (for Vary support) in cache file 
+       - storing of updated response headers (with 304 Not Modified) in 
+         cache file
+       - support for 64 bit dates and content-lengths in cache file
+       Fixes:
+       - ProxyPassReverse applied to Content-Location
+       - entity headers no longer stripped from response after cache
+         revalidation 
+       - annotation of mod_proxy cache code
+       [Graham Leggett <minfrin@sharp.fm>]
+
+       changes to preserve binary compatibility with httpd core, clean up
+       [Chuck Murcko <chuck@topsail.org>]
+
+  *) HPUX 11.*: Do not kill the child process when accept() 
+     returns ENOBUFS on HPUX 11.*.
+     [madhusudan_mathihalli@hp.com]
+
+  *) PORT: Numerous additions to Cygwin, including: defaulting
+     to Posix thread accept mutex, excluding the call to
+     pthread_mutexattr_setpshared(), better proxy and DBM support, and
+     allowing the use of native Win32 socket ops instead of
+     Cygwin's Posix wrapper (for better performance). The last
+     item required the addition of a new Configure Rule: CYGWIN_WINSOCK.
+     [Stipe Tolj <tolj@wapme-systems.de>]
+
+  *) Use "httpready" accept filter rather than "dataready" on
+     FreeBSD after 4.1.1-RELEASE where it works correctly.
+     [Tony Finch]
+
+  *) Fix incorrect "Content-Length" header in the 416 "range not
+     satisfiable" response. [Joe Orton <joe@manyfish.co.uk>]
+
+  *) Add FileETag directive to control fields used when constructing
+     an ETag for a file-based resource.  Historically the inode,
+     size, and mtimehave been used, but the inode factor broke
+     caching for systems with content fan-out across multiple
+     back-end servers.  Now the fields used in the construction
+     can be controlled by configuration directives.  Minor MMN
+     bumped; MMN went from 19990320.10 to 19990320.11.
+     [Ken Coar, from a patch by Phil Dietz]
+
+  *) NetWare: Fixed the access forbidden problem when requesting an
+     empty directory rather than showing the empty listing.  
+     [Charles Goldman, Guenter Knauf <gk@gknw.de>]
+
+  *) Cause Win32 to capture all child-worker process errors in
+     Apache to the main server error log, until the child can
+     open it's own error logs.  [William Rowe]
+
+  *) Revert mod_negotation's handling of path_info and query_args
+     to the 1.3.20 behavior.  PR: 8628, 8582, 8538  [William Rowe]
+
+  *) Modify buff.h and buff.c to enable modules to intercept the
+     output byte stream for dynamic page caching. A pointer to a 
+     'filter callback' function is added to the end of buff.h. 
+     This function, if registered by a module, is called 
+     at the top of buff_write() and writev_it_all().
+     [Kevin Mallory <kmallory@spidercache.com>]
+
+  *) When the default of 'Group #-1' was changed to 'Group "#-1"',
+     the Makefile wasn't updated to recognise the quotation marks.
+     [Owen Boyle <obo@bourse.ch>]
+
+  *) Win32: Do not allow threads to continue handling keepalive
+     requests after a shutdown or restart has ben signaled.
+     [Bill Stoddard]
+
+  *) Win32: Accept OPTIONS * requests.  [Keith Wannamaker]
+
+  *) Unixware 7.0 and later did not have a default locking
+     mechanism defined.  This bug was introduced in apache 1.3.4.
+     [Dean Gaudet]
+
+  *) Prevent an Apache module from being loaded or added twice due
+     to duplicate LoadModule or AddModule directives (or a missing
+     ClearModuleList directive).
+     [William Rowe, Brian Pane <bpane@pacbell.net>]
+
+  *) Add checkgid app to do run-time validation of Group directive
+     values which might cause the server to fall over, but which
+     are syntactically correct.  [Ken Coar]
+
+  *) NetWare: Added mod_unique_id to the project file.  
+     [Brad Nicholes bnicholes@novell.com]
+
+  *) NetWare: Fixed a link problem with mod_vhost_alias so that it
+     exports the correct MODULE structure. PR 8598  
+     [Brad Nicholes bnicholes@novell.com]
+
+  *) Unix: The generated install script for binary distributions,
+     install-bindist.sh, now makes DSO files executable, like
+     make install.  This allows a binary distribution to work on 
+     HP-UX without any manual intervention.  PR 7428  
+     [Jeff Trawick]
+
+  *) Win32: The Apache Win32 developers generally recommend that
+     MaxRequestsPerChild be set to 0 to prevent the child process
+     from ever recycling. However, for those that do require a 
+     non-zero setting, this patch fixes a serious bug that can cause 
+     an apparent 'server-hang' condition where the server stops
+     responding to requests for a period of time. Prior to this
+     fix, when the child process handled MaxRequestsPerChild
+     connnections, the child process would stop accepting new 
+     connections and begin allowing inactive threads to exit. The
+     problem was that a new process would not be created to begin
+     handling requests until the old process fully exited. The old 
+     process can take an indeterminate amount of time to exit because
+     it may be sending large responses to clients connected over slow
+     links, or it may have threads blocked in read awaiting requests
+     (eg, one attack mode of the Nimda worm is to establish a 
+     connection to the server but not send an HTTP request. This 
+     connection will be timed out according to the setting of the
+     Timeout directive, 300 seconds). This fix allows the new process
+     to be immediately started and begin accepting requests when the 
+     old child process reaches MaxRequestsPerChild. 
+     [Bill Stoddard]
+     
+  *) Win32: Emit error message when the server bumps up against the
+     ThreadsPerChild configuration limit. This will be useful for 
+     admins to detect when their server is running out of threads
+     to handle requests. [Bill Stoddard]
+
+  *) Test all directories listed with the UserDir directive for validity.
+     Also resolves the Win32/Netware bug of unparsable quoted paths.
+     PR 8238  [William Rowe]
+
+Changes with Apache 1.3.22
+
+  *) Recognize AIX 5.1.  [Jeff Trawick]
+
+  *) PORT: Support AtheOS (see www.atheos.cx)
+     [Rodrigo Parra Novo <rodarvus@terra.com.br>]
+
+  *) The manual directory is still configurable (as enabled by
+     the 1.3.21 change), but its default setting was reverted to
+     the pre-1.3.21 default as a subdirectory of the DocumentRoot.
+     You can adapt your path in config.layout or with the
+     "configure --manualdir=" switch.      [Martin Kraemer]
+
+  *) Additional correction for the mutex changes on the TPF platform.
+     [David McCreedy <McCreedy@us.ibm.com>]
+
+  *) mod_proxy - remove Explain*; replace with ap_log_*
+     [Chuck Murcko <chuck@topsail.org>]
+
+Changes with Apache 1.3.21
+
+  *) Enable mod_mime_magic (experimental) for Win32.  [William Rowe]
+
+  *) Use an installed Expat library rather than the bundled Expat. This
+     fixes a problem where multiple copies of Expat could be loaded
+     into the process space, thus conflicting and causing strange
+     segfaults. Most notably with mod_perl and XML::Parsers::Expat.
+     [Greg Stein]
+
+  *) Handle user modification of WinNT/2K service display names.  Prior
+     versions of Apache only accepted identical internal and display names
+     (where internal service names were space-stripped.)  [William Rowe]
+
+  *) Introduce Win32 -W option for -k install/config to set up service
+     dependencies on the workstation, snmp and other services that given
+     modules or configurations might depend upon.  [William Rowe]
+
+  *) Update the mime.types file to map video/vnd.mpegurl to mxu
+     and add commonly used audio/x-mpegurl for m3u extensions.
+     [Heiko Recktenwald <uzs106@uni-bonn.de>, Lars Eilebrecht]
+
+  *) Modified mod_mime and mod_negotiation to prevent mod_negotiation 
+     from serving any multiview variant containing one or more 
+     'unknown' filename extensions. In PR #8130, mod_negotiation was 
+     incorrectly serving index.html.zh.Big5 when better variants were 
+     available. The httpd.conf file on the failing server did not have 
+     an AddLanguage directive for .zh, which caused mod_mime to loose
+     the file_type information it gleened from parsing the .html
+     extension. The absence of any language preferences, either in
+     the browser or configured on the server, caused mod_negotiation
+     to consider all the variants equivalent. When that occurs, 
+     mod_negotiation picks the 'smallest' variant available, which
+     just happened to be  index.html.zh.Big5.
+     [Bill Stoddard, Bill Rowe] PR #8130
+
+  *) Security: Close autoindex /?M=D directory listing hole reported
+     in bugtraq id 3009.  In some configurations where multiviews and 
+     indexes are enabled for a directory, requesting URI /?M=D could
+     result in a directory listing being returned to the client rather
+     than the negotiated index.html variant that was configured and
+     expected.  The work around for this problem (for pre 1.3.21
+     releases) is to disable Indexes or Multiviews in the affected
+     directories.  The Common Vulnerabilities and Exposures project
+     (cve.mitre.org) has assigned the name CAN-2001-0731 to this issue.
+     [Bill Stoddard, Bill Rowe]
+
+  *) Enabled Win32/OS2/Netware file paths (not / rooted, but c:/ rooted)
+     as arguments for mod_vhost_alias'es directives.  [William Rowe]
+
+  *) Changes for Win32 to assure mod_unique_id's UNIQUE_ID strings really
+     are unique between threads.  [William Rowe]
+
+  *) mod_proxy - fix for Pragma: nocache (HTTP/1.0 only)
+     [Kim Bisgaard <kib@dmi.dk>] PR #5668
+
+  *) PORT: Some Cygwin changes, esp. improvements for dynamic loading,
+     and cleanups. [Stipe Tolj <tolj@wapme-systems.de>]
+
+  *) Win32 SECURITY: The default installation could lead to mod_negotiation
+     and mod_dir/mod_autoindex displaying a directory listing instead of
+     the index.html.* files, if a very long path was created artificially
+     by using many slashes. Now a 403 FORBIDDEN is returned. This
+     problem was similar to and in the same area as the problem
+     reported and fixed by Martin Kraemer in 1.3.18, only the scope
+     is much narrower and is specific to Windows.  The Common 
+     Vulnerabilities and Exposures project (cve.mitre.org) has assigned the 
+     name CAN-2001-0729 to this issue.  [Bill Stoddard]
+
+  *) Update the mime.types file to the registered media types as
+     of 2001-09-25, and add xsl, so, dll extensions [Mark Cox]
+
+  *) Resolved the build failure on Win32 using MSVC 5.0 (without the
+     current SDK.)  PRs 7790, 7948.  [William Rowe]
+
+  *) mod_proxy - fix reverse proxy cookie passthrough
+     [Brian Eidelman <beidelman@netegrity.com>] PR#6055
+
+  *) mod_proxy - fix CacheForceCompletion directive
+     [Alexey Panchenko <panchenko@liwest.ru>] PR#8090
+
+  *) mod_proxy - close origin server connection when client aborts
+     [Alexey Panchenko <panchenko@liwest.ru>] PR#8067,7383,6585
+
+  *) ErrorDocument 404 pointing to a parsed html file with a
+     <!--#include virtual="file" --> with a request URI containing
+     %2f would result in a segfault (NULL pointer deref, not a
+     security problem).  [Jeff Moe <tux@themoes.org>, Dean Gaudet] PR#8362
+
+  *) UnsetEnv from main body of httpd.conf file didn't work; backport
+     of bugfix from 2.0 codebase. [Gary Benson <gbenson@redhat.com>] PR#8254
+
+  *) Win32 - add mod_unique_id.so and mod_vhost_alias.so to the build.
+     [William Rowe]
+
+  *) Enhancement of mod_auth to handle 'Require file-owner' and
+     'Require file-group'.  This allows access IFF the authenticated
+     username (from the appropriate AuthUserFile database) matches
+     the username of the UID that owns the document (and equivalent
+     checking for file GID and user's membership in AuthGroupFile).
+     See the mod_auth documentation for examples.  (Not supported
+     on Windows.)  [Ken Coar]
+
+  *) Addition of the AcceptMutex runtime directive. The accept mutex
+     method is now runtime controllable. The suite of available methods
+     per platform is defined at compile time (with HAVE_FOO_SERIALIZED_ACCEPT
+     noting that the method is available and works, and
+     USE_FOO_SERIALIZED_ACCEPT noting that it should be the default
+     method in absense of any AcceptMutex line, or via AcceptMutex default)
+     and selectable at runtime. The full (current) suite is uslock,
+     pthread, sysvsem, fcntl, flock, os2sem, tpfcore and none, but
+     not all platforms accept all methods. [Jim Jagielski]
+
+  *) Parallel to a change in Apache-2.0, the manual directory was
+     moved out of the DocumentRoot tree to simplify the separation
+     of private content&configuration from server's on-line
+     documentation. An "Alias /manual/ ..." projects the manual/
+     directory (which resides now side-by-side with the icons/
+     directory) into the logical DocumentRoot. Note that a request
+     to http://server/manual (without the trailing slash) will now
+     behave different than before (it used to redirect to
+     http://server/manual/ but no longer does).
+     [Martin Kraemer]
+     
+  *) Fixed ap_os_canonical_filename() so that it wouldn't try to
+     canonicalize an invalid file name.  Also fixed 
+     ap_os_is_path_absolute() so that it wouldn't recognize names
+     such as proxy:http://blah as a NetWare volume:pathname.  Both of 
+     these fixes were necessary to fix mod_proxy problems on NetWare.
+     [Brad Nicholes <BNICHOLES@novell.com>]
+
+  *) Fix a storage leak (a strdup() call) in mod_mime_magic.  
+     [Jeff Trawick]
+
+  *) We have always used the obsolete/deprecated Netscape syntax
+     for our tracking cookies; now the CookieStyle directive
+     allows the Webmaster to choose the Netscape, RFC2109, or
+     RFC2965 format.  The new CookieDomain directive allows the
+     setting of the cookie's Domain= attribute, too.  PR #s 5006,
+     5023, 5920, 6140 [Ken Coar]
+
+  *) The Win32 Makefile.win build script failed if
+     INSTDIR="c:\path\with spaces" was given, this is now fixed.  PR 8184
+     [Jack Tan <jack_s_tan@yahoo.com>]
+
+  *) EBCDIC: The proxy, when used in a proxy chain, "forgot" to
+     convert the "CONNECT host:port HTTP/1.0" request line to ASCII
+     before contacting the next proxy, and was thus unusable for
+     SSL proxying.  [Martin Kraemer]
+
+  *) SECURITY: Make support/split-logfile use the default log file if
+     "/" or "\" are present in the virtual host name.  This prevents
+     the possible use of specially crafted virtual host names in
+     some configurations to allow writing to any .log file on the
+     system.  The Common Vulnerabilities and Exposures project 
+     (cve.mitre.org) has assigned the name CAN-2001-0730 to this issue.
+     [Daniel Matuschek <daniel.matuschek@swisscom.com>,
+     Marc Slemko] PR#7848
+
+  *) Added a directive: "AcceptFilter <on|off>". To control BSD 
+     acccept filters when at compile time SO_ACCEPT_FILTER is 
+     detected. The default is still 'on' except when, at compile
+     time, AP_ACCEPT_FILTER_OFF is defined. 
+
+     Also downgraded the fatal exit to a warning when the 
+     associated setsocketopt(2) fails for any reason but
+     for ENOPROTOOPT. The latter - which implies that the
+     kernel does not support the filters - now rates only an 
+     info level message. All in all this should make it easier
+     to move httpd binaries and config files across BSD machines 
+     with varying acceptfilter support.
+     [Dirk-Willem van Gulik <dirkx@covalent.net>]
+
+  *) Fix the <Files ~ "^\.ht"> container to *really* deny all access.
+     Without the Satisfy All, .ht* files could still be fetched if
+     they were within the scope of a Satisfy Any directive.
+     [Ken Coar]
+
+  *) Print a warning when an attempt is made to use line-end comments.
+     Apparently they are not detected/handled gracefully by all directives.
+     [Martin Kraemer]
+
+  *) (TPF only) Take advantage of improvements to select(), fork(), and
+     exec() in the TPF operating system.  
+     [David McCreedy <McCreedy@us.ibm.com>]
+
+  *) (Cygwin only) Fix problems with signals sent to child processes;
+     Improve auto-configuration for Cygwin.
+     [Stipe Tolj <tolj@wapme-systems.de>]
+
+  *) Added Mod_Vhost_Alias to the project file so that it builds as an
+     external module (VHOST.NLM). 
+     [Brad Nicholes <BNICHOLES@novell.com>]
+
+  *) Fix problem with lingering_close() on Windows.  Issuing read() on the
+     socket descriptor on Windows always fails. Should be calling
+     recv() instead of read() on Windows.
+     [Bill Stoddard, Bill Rowe]
+
+  *) Added an abnormal exit clean up routine to make sure that ApacheC NLM
+     is always unloaded cleanly.  This fixes the "Ouch! out of memory"
+     problem when restarting Apache for NetWare after an abnormal exit
+     due to configuration errors. 
+     [Brad Nicholes <BNICHOLES@novell.com>]
+
+  *) Change the compile switches for ReliantUNIX SVR4 not to use
+     SYSV semaphores, because upon reaching the system limit of
+     semaphores, the whole server exits (not just one child).
+     Apache could be improved to use NO_SEM_UNDO flag (see test/time-sem.c)
+     which is currently implemented only in the time-sem program, but not in
+     apache. Until then, revert to using fcntl() locks.
+     [Martin Kraemer]
+
+  *) Changes to 'ab': fixed int overruns, added statistics, output in
+     csv/gnuplot format, rudimentary SSL support and various other tweaks
+     to make results more true to what is measured. The upshot of this it
+     turns out that 'ab' has often underreported the true performance of
+     apache. Often by a order of magnitude :-) See talk/paper of Sander 
+     Temme <sctemme@covalent.net> at April ApacheCon 2001 for details.
+     [Dirk-Willem van Gulik]
+
+Changes with Apache 1.3.20
+
+  *) Autodetect if platforms have isnan() and/or isinf() for use in
+     ap_snprintf.c. [Jim Jagielski]
+
+  *) Correct a vulnerability in the Win32 and OS2 ports, by which a 
+     client submitting a carefully constructed URI could cause a GP
+     (segment) fault in the child process, which would have to be
+     cleared by the operator to resume operation.  This vulnerability
+     introduced no identified means of compromising the server's data.
+     Reported by Auriemma Luigi <kaino3@genie.it>.
+     [William Rowe, Brian Havard]
+
+  *) Resolve the Win32 SSI exec cmd bug, where cmd was not executed
+     appropriately against the shell.  [William Rowe]
+
+  *) Added NOESCAPE (NS) flag to RewriteRule and enabled use of
+     '\' to allow escaping of special characters.  Previously
+     there was no way to embed either '$' or '%' in the output
+     of a RewriteRule; now 'foo\$1' will result in a literal
+     'foo$1' appearing in the result rather than 'foo\<value of $1>'.
+     Note that [NS] disables *all* normal URI escaping, so incautious
+     use can give unexpected results.  [Ken Coar]
+
+  *) Add support for Win32 apxs.  Note that cygwin builders must use a
+     cygwin perl to avoid the MSWin32 handling.  [William Rowe]
+
+  *) Changed the initial screen handling for NetWare so that the -s 
+     parameter will properly destroy the Apache console screen and switch 
+     to the system console screen.  Also removed the call to clrscr() for 
+     NetWare so that any warning messages produced during startup are visible.
+     [Brad Nicholes <BNICHOLES@novell.com>]
+
+  *) Integrate support for the Cygwin 1.x platform (a POSIX emulation layer
+     for Win32 systems, see http://www.cygwin.com)
+     [Stipe Tolj <tolj@wapme-systems.de>]
+
+  *) Hooked calls to opendir() and readdir() so that we could add '.' and
+     '..' to the entry list.  By default NetWare does not return these
+     entries which caused mod_autoindex not to display the parent directory
+     entry. [Brad Nicholes <BNICHOLES@novell.com>]
+
+  *) Solved a very serious threading problem with WinNT/2K Services.  The
+     moment master_main told that the shutdown was complete, the parent
+     control thread exited Apache, leaving mod_jserv's Java process running
+     and alternately invoking mod_perl's cleanups from the correct thread
+     or the service control thread. [William Rowe]
+
+  *) Populate the Win32 HKLM\System\CurrentControlSet\Services\[apachesvc]
+     key with the Description value of the running server across all Win32
+     platforms, including NT, ME and 9x.  This value is the server_version
+     string including loaded modules.  [William Rowe]
+
+  *) Fix ndbm.h include problems with various Linux distributions and 
+     brain-dead glibc >= 2.1, which sometimes have ndbm.h in a
+     non-standard db1/ subdir. PR#6929
+     [Victor J. Orlikowski]
+
+  *) Empty headers are allowed by RFC2068 section 4.2.  The presence or
+     absence of an empty header can be significant.  The current mod_proxy
+     of httpd 1.3.x removes empty headers. Change mod_proxy to preserve
+     empty headers. [Christian von Roques <roques@mti.ag>]
+
+  *) Enhance rotatelogs so that a UTC offset can be specified, and
+     the logfile name can be formatted using strftime(3).  [Ken Coar]
+
+  *) Fix a possible NULL pointer dereference in the detection of the
+     default ServerName or IP string (introduced in 1.3.18).
+     [Ignasi Roca, <Ignasi.Roca@fujitsu-siemens.com>]
+
+  *) Make EBCDIC conversion fully configurable. Until now, apache relied
+     on some (incomplete) heuristics, and would fail to correctly serve
+     text files when they had a MIME type of application/anything, like
+     application/x-javascript. The new conversion directives allow
+     defining the conversion based on MIME type or file suffix.
+     [Martin Kraemer]
+
+  *) Add a -V flag to suexec, which causes it to display the
+     compile-time settings with which it was built.  (Only
+     usable by root or the HTTPD_USER username.)  [Ken Coar]
+
+  *) Set the Win32 service description in the Services control panel to 
+     the server_version string from Apache and the loaded modules.
+     [William Rowe]
+
+  *) Added a new API for NetWare, ap_os_dso_unsym(), to allow Apache the 
+     chance to unimport module symbols before it shuts down.  This is 
+     necessary so that Apache on NetWare can shutdown cleanly in an error
+     condition such as a failure while reading the httpd.conf file.
+     [Brad Nicholes <BNICHOLES@novell.com>]
+
+  *) Introduce NUL device pipes for stdin and stdout for the parent Win32
+     service process.  This solves bugs such as PR7198 that report 
+     "dup2(stdin) failed" when trying to use piped logs.  [William Rowe]
+
 Changes with Apache 1.3.19
 
   *) Rewrite ap_unparse_uri_components() to make it safer and more readable
@@ -324,7 +819,7 @@ Changes with Apache 1.3.13 [not released]
 
   *) Add support for /, //, //servername and //server/sharename 
      parsing of <Directory > blocks under Win32 and OS2.
-     [Tim Costello, William Rowe, Brian Harvard]
+     [Tim Costello, William Rowe, Brian Havard]
 
   *) Expand dbmmanage to allow -d -m -s -p options for Crypt, MD5,
      SHA1 and plaintext password encodings.  Make feature tests a

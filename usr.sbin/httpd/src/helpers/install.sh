@@ -87,7 +87,15 @@ if [ -d $dst ]; then
     dst="$dst/`basename $src`"
 fi
 
-#  Add a possible extension (such as ".exe") to src and dst
+#  Check if we need to add an executable extension (such as ".exe") 
+#  on specific OS to src and dst
+if [ -f "$src.exe" ]; then
+  if [ -f "$src" ]; then
+    : # Cygwin [ test ] is too stupid to do [ -f "$src.exe" ] && [ ! -f "$src" ]
+  else
+    ext=".exe"
+  fi
+fi
 src="$src$ext"
 dst="$dst$ext"
 

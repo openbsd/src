@@ -1,94 +1,108 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
-<HTML>
-<HEAD>
-<TITLE>Compiling and Installing Apache</TITLE>
-</HEAD>
-<!-- English revision: 1.31 -->
+<?xml version="1.0" encoding="iso-2022-jp"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<!-- Background white, links blue (unvisited), navy (visited), red (active) -->
-<BODY
- BGCOLOR="#FFFFFF"
- TEXT="#000000"
- LINK="#0000FF"
- VLINK="#000080"
- ALINK="#FF0000"
->
-<!--#include virtual="header.html" -->
-
-<H1 ALIGN="CENTER">Apache 1.3 のコンパイル・インストール</H1>
-
-<P>このドキュメントは Apache を Unix システム上で、手動での
-ビルド・インストールの手法によって、コンパイル、インストールするため
-のものです。もし、あなたが autoconf スタイルの configure インターフェイス
-を使いたい場合は、Apache のソース配布のルートにある INSTALL ファイルを
-代わりに読んでください。特定のプラットフォーム上でのコンパイルと
-インストールについては、以下の項目を参照してください。</P>
-<UL>
-<LI><A HREF="windows.html">Microsoft Windows 上で Apache を使用する</A>
-<LI><A HREF="netware.html">Novell Netware 5 上で Apache を使用する</A>
-<LI><A HREF="mpeix.html">HP MPE/iX 上で Apache を使用する</A>
-<LI><A HREF="unixware.html">UnixWare 上で Apache をコンパイルする</A>
-<LI><A HREF="readme-tpf.html">Apache の TPF Port の概要</A>
-</UL>
-
-<H2>Apache のダウンロード</H2>
-
-Apache の最新版の情報は <A
-HREF="http://www.apache.org/">http://www.apache.org/</A> の 
-Apache ウェブサーバから入手することができます。
-ここには最新リリースと、より新しいベータテストリリース、ミラーウェブサイト
-と anonymous ftp サイトの詳しい情報が表示されています。
-
-<P>
-もし、あなたがバイナリ配布版をダウンロードしたのであれば、 <A
-HREF="#install">Apache のインストール</A>に移ってください。
-そうでなければ、次のセクションのサーバのコンパイルについてを読んで下さい。
-
-<H2>Apache のコンパイル</H2>
-
-Apache のコンパイルは三段階で構成されます:
- まずサーバに含めたい Apache <STRONG>モジュール</STRONG>
-を選択してください。次に、あなたの OS に合わせた設定をします。
-最後にコンパイルをします。
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ja" lang="ja">
+  <head>
 
 
-<P>
+    <title>Compiling and Installing Apache</title>
+  </head>
+  <!-- English revision: 1.34 -->
+  <!-- Background white, links blue (unvisited), navy (visited), red (active) -->
+  <body bgcolor="#ffffff" text="#000000" link="#0000ff"
+  vlink="#000080" alink="#ff0000">
+        <div align="CENTER">
+      <img src="images/sub.gif" alt="[APACHE DOCUMENTATION]" /> 
 
-Apache の全ての設定は、Apache 配布の <CODE>src</CODE> 
-ディレクトリで行われます。このディレクトリに入ってください。
-
-<OL>
- <LI>
-  <CODE>Configuration</CODE> ファイルの中で Apache にコンパイルする
-  モジュールを選択します。実装したいオプションのモジュールの行のコメント
-  を外すか (ファイルの終わりにある AddModule 行で) 、ダウンロードしたり、
-  作成した追加のモジュールの新しい行を追加します (どのように 
-  Apache モジュールを作成するのか? についてのドキュメントは<A
-  HREF="misc/API.html">API.html</A> を参照してください) 。
-  あるモジュールが確実に必要でないことがわかっているならば、
-  いくつかのデフォルトモジュールをコメントアウトすることができます
-  (ただし、デフォルトのモジュールの多くはサーバの正確な操作と
-  セキュリティにとって重要なので注意してください) 。
-
-  <P>
-
-  <CODE>Rule</CODE> 行のいくつかを設定する必要があるかどうかを知るために
-<CODE>Configuration</CODE> ファイルの指示も読んでください。
+      <h3>Apache HTTP Server</h3>
+    </div>
 
 
- <LI>
-  Apache を OS に合わせて設定します。通常はただ
-  <CODE>Configure</CODE> スクリプトを下記の例のように実行します。
-  しかし、これが失敗するときや何か特殊な要求があるとき (<EM>例えば</EM>、
-  追加したモジュールによって何らかのライブラリが必要な場合など) には
-  で <CODE>Configure</CODE> ファイルの次のオプションのいくつかを
-  編集する必要があるかもしれません。 
-    <CODE>EXTRA_CFLAGS, LIBS, LDFLAGS, INCLUDES</CODE>.
-  <P>
 
-  <CODE>Configure</CODE> スクリプトを実行します:
-  <BLOCKQUOTE>
-   <PRE>
+    <h1 align="center">Apache 1.3 のコンパイル・インストール</h1>
+
+    <p>このドキュメントは Apache を Unix システム上で、手動でのビルド
+    ・インストールの手法によって、コンパイル、インストール
+    するためのものです。もし、あなたが autoconf スタイルの configure
+    インターフェイスを使いたい場合は、Apache のソース配布のルートにある
+    INSTALL ファイルを代わりに読んでください。特定のプラットフォーム上での
+    コンパイルとインストールについては、以下の項目を参照してください。</p>
+
+    <ul>
+      <li><a href="windows.html">Microsoft Windows 上で Apache
+      を使用する</a></li>
+
+      <li><a href="cygwin.html">Cygwin 上で Apache を使用する</a></li>
+
+      <li><a href="netware.html">Novell Netware 5 上で Apache
+      を使用する</a></li>
+
+      <li><a href="mpeix.html">HP MPE/iX 上で Apache を使用する</a></li>
+
+      <li><a href="unixware.html">UnixWare 上で Apache
+      をコンパイルする</a></li>
+
+      <li><a href="readme-tpf.html">Apache の TPF Port の概要</a>
+      </li>
+    </ul>
+
+    <h2>Apache のダウンロード</h2>
+    Apache の最新版の情報は <a href="http://www.apache.org/"
+    >http://www.apache.org/</a> の Apache
+    ウェブサーバから入手することができます。ここには最新リリースと、
+    より新しいベータテストリリース、ミラーウェブサイトと anonymous ftp
+    サイトの詳しい情報が表示されています。
+
+
+    <p>もし、あなたがバイナリ配布版をダウンロードしたのであれば、<a
+    href="#install">Apache のインストール</a>に移ってください。そうでなければ、
+    次のセクションのサーバのコンパイルについてを読んで下さい。</p>
+
+    <h2>Apache のコンパイル</h2>
+    Apache のコンパイルは三段階で構成されます: まずサーバに含めたい
+    Apache <strong>モジュール</strong> を選択してください。
+    次に、あなたの OS に合わせた設定をします。
+    最後にコンパイルをします。
+
+    <p>Apache の全ての設定は、Apache 配布の <code>src</code>
+    ディレクトリで行われます。このディレクトリに入ってください。
+    </p>
+
+    <ol>
+      <li>
+        <code>Configuration</code> ファイルの中で Apache
+        にコンパイルするモジュールを選択します。実装したいオプションの
+        モジュールの行のコメントを外すか (ファイルの終わりにある
+        AddModule 行で) 、ダウンロードしたり、作成した追加のモジュールの
+        新しい行を追加します (どのように Apache モジュールを作成するのか?
+        についてのドキュメントは<a href="misc/api.html">API.html</a>
+        を参照してください) 。
+        あるモジュールが確実に必要でないことがわかっているならば、
+        いくつかのデフォルトモジュールをコメントアウトすることができます
+        (ただし、デフォルトのモジュールの多くはサーバの正確な操作と
+        セキュリティにとって重要なので注意してください) 。
+
+
+        <p><code>Rule</code>
+        行のいくつかを設定する必要があるかどうかを知るために
+        <code>Configuration</code> ファイルの指示も読んでください。</p>
+      </li>
+
+      <li>
+        Apache を OS に合わせて設定します。通常はただ
+        <code>Configure</code> スクリプトを下記の例のように実行します。
+        しかし、これが失敗するときや何か特殊な要求があるとき
+        (<em>例えば</em>、追加したモジュールによって何らかのライブラリが
+        必要な場合など) には <code>Configure</code>
+        ファイルの次のオプションのいくつかを編集する必要があるかもしれません。 
+        <code>EXTRA_CFLAGS, LIBS, LDFLAGS, INCLUDES</code>.
+
+
+        <p><code>Configure</code> スクリプトを実行します:</p>
+
+        <blockquote>
+<pre>
     % Configure
     Using 'Configuration' as config file
      + configured for &lt;whatever&gt; platform
@@ -100,105 +114,100 @@ Apache の全ての設定は、Apache 配布の <CODE>src</CODE>
     Creating Makefile in main
     Creating Makefile in os/unix
     Creating Makefile in modules/standard
-   </PRE>
-  </BLOCKQUOTE>
 
-  (*: 設定内容とシステムによっては、Configure はこの通りに表示しない
-  ことがありますが、それで問題ありません。)<P>
+   </pre>
+        </blockquote>
+        (*: 設定内容とシステムによっては、Configure はこの通りに
+        表示しないことがありますが、それで問題ありません。)
 
-  これで 3 の段階で使われる Makefile が生成されます。
-  また、オプションのサポートプログラムをコンパイルするために、
-  サポートディレクトリの中に Makefile が生成されます。
+        <p>これで 3 の段階で使われる Makefile が生成されます。
+        また、オプションのサポートプログラムをコンパイルするために、
+        サポートディレクトリの中に Makefile が生成されます。</p>
 
-  <P>
+        <p>(もし、様々な設定を管理するつもりならば、
+        <code>Configure</code> に <code>Configure -file
+        Configuration.ai</code> のように、別の Configuration
+        ファイルを読み込むようにオプションを付けるといいでしょう。)</p>
+      </li>
 
-  (もし、様々な設定を管理するつもりならば、<CODE>Configure</CODE> に
-  <CODE>Configure -file Configuration.ai</CODE> のように、
-  別の Configuration ファイルを読み込むようにオプションを付けると
-  いいでしょう。)
-  <P>
+      <li><code>make</code> を実行してください。</li>
+    </ol>
+    Apache 配布にあるモジュールはApache 開発グループによってテストが行われ、
+    多くのメンバーによって日常的に使われているものです。
+    メンバーやサードパーティによって開発された特定のニーズや機能をもつ
+    追加モジュールは、&lt;<a
+    href="http://www.apache.org/dist/httpd/contrib/modules/"
+    >http://www.apache.org/dist/httpd/contrib/modules/</a>&gt;.
+    から入手することができます。このページには、これらのモジュールを
+    Apache コアコードにリンクさせるための説明が書いてあります。
 
- <LI>
-  <CODE>make</CODE> を実行してください。
-</OL>
+    <h2><a id="install" name="install">Apache のインストール</a></h2>
+    コンパイルを行うと、<code>httpd</code> というバイナリファイルが 
+    <code>src</code> ディレクトリに作成されます。Apache
+    のバイナリ配布はこのファイルを提供します。
 
-Apache 配布にあるモジュールはApache 開発グループによって
-テストが行われ、多くのメンバーによって日常的に使われて
-いるものです。
-メンバーやサードパーティによって開発された特定のニーズや
-機能をもつ追加モジュールは、 
-&lt;<A HREF="http://www.apache.org/dist/contrib/modules/"
-    >http://www.apache.org/dist/contrib/modules/</A>&gt;
- から入手することができます。
-このページには、これらのモジュールを Apache コアコードに
-リンクさせるための説明が書いてあります。
+    <p>次のステップはプログラムをインストールし、それを設定することです。
+    Apache はコンパイルされたディレクトリと同じディレクトリのセットで
+    設定、実行されるようになっています。
+    もしどこか他のところから実行させたい場合は、ディレクトリを作成し、
+    そこに <code>conf</code> と <code>logs</code>, <code>icons</code>
+    ディレクトリをコピーしてください。どちらの場合でも、
+    サーバルートのディレクトリのパーミッションをどう設定するかについて、
+    <a href="misc/security_tips.html#serverroot">security 情報</a>
+    を読むべきです。</p>
 
-<H2><A NAME="install">Apache のインストール</A></H2>
+    <p>次に、サーバの設定ファイルを編集します。3つの設定ファイルで 
+    <strong>ディレクティブ</strong> を設定します。標準状態では、
+    これらのファイルは <code>conf</code> ディレクトリに配置される、
+    <code>srm.conf</code>, <code>access.conf</code>, <code>httpd.conf</code>
+    です。設定の参考になるように、配布の <code>conf</code>
+    ディレクトリに同じ内容のファイル、<code>srm.conf-dist</code>,
+    <code>access.conf-dist</code>, <code>httpd.conf-dist</code>
+    があります。<code>-dist</code> なしで、
+    その名前のこれらのファイルをコピーするか、名前を変えてください。
+    それからそれぞれのファイルを編集してください。
+    それぞれのファイルにあるコメントを注意深く読んでください。
+    これらのファイルの正確な設定に失敗すると、サーバが動かなくなったり、
+    セキュリティ的に危険になったりします。
+    <code>conf</code> ディレクトリには <code>mime.types</code>
+    という追加ファイルがあります。
+    通常このファイルを編集する必要はありません。
+    </p>
 
-コンパイルを行うと、 <CODE>httpd</CODE> というバイナリファイルが 
-<CODE>src</CODE> ディレクトリに作成されます。Apache のバイナリ配布は
-このファイルを提供します。<P>
+    <p>最初に <code>httpd.conf</code> を編集してください。
+    このファイルはサーバに関する一般的な属性を設定します;
+    ポート番号や起動ユーザ <em>等々</em>です。次に <code>srm.conf</code>
+    ファイルを編集してください; これはドキュメントツリーのルート、
+    server-parsed HTML や内部的なイメージマップの解析のような特別な機能
+    <em>等々</em> を設定します。最後にアクセスに関する基本事項を
+    設定するために access.conf ファイルを編集します。</p>
 
-次のステップはプログラムをインストールし、それを設定することです。
- Apache はコンパイルされたディレクトリと同じディレクトリのセットで
-設定、実行されるようになっています。もしどこか他のところから実行さ
-せたい場合は、ディレクトリを作成し、そこに <CODE>conf</CODE> と 
-<CODE>logs</CODE>, <CODE>icons</CODE> ディレクトリをコピーしてください。
-どちらの場合でも、サーバルートのディレクトリのパーミッションをどう
-設定するかについて、
- <A HREF="misc/security_tips.html#serverroot">security 情報</A> を
-読むべきです。<P>
+    <p>これら3つのファイルに加えて、サーバの動作はアクセスされた
+    ディレクトリにある <code>.htaccess</code> ファイルを使うことによって、
+    ディレクトリ毎に設定できます。</p>
 
-次に、サーバの設定ファイルを編集します。3つの設定ファイルで 
-<B>ディレクティブ</B> を設定します。標準状態では、これらのファイルは
- <CODE>conf</CODE> ディレクトリに配置される、<CODE>srm.conf</CODE>,
-<CODE>access.conf</CODE>, <CODE>httpd.conf</CODE> です。
-設定の参考になるように、配布の <CODE>conf</CODE> ディレクトリに
-同じ内容のファイル、<CODE>srm.conf-dist</CODE>,
-<CODE>access.conf-dist</CODE>, <CODE>httpd.conf-dist</CODE> があります。
-<CODE>-dist</CODE> なしで、その名前のこれらのファイルをコピーするか、
-名前を変えてください。それからそれぞれのファイルを編集してください。
-それぞれのファイルにあるコメントを注意深く読んでください。
-これらのファイルの正確な設定に失敗すると、サーバが動かなくなったり、
-セキュリティ的に危険になったりします。
-<CODE>conf</CODE> ディレクトリには <CODE>mime.types</CODE> という
-追加ファイルがあります。通常このファイルを編集する必要はありません。
+    <h3>システムタイムを正確に設定してください!</h3>
+    公開されるウェブサーバの適切な操作には、HTTP
+    プロトコルの要素がその日の時間として示されるため、
+    正確な時間が必要とされます。ですから、これを機会に UNIX においては
+    NTP やなんらかの時間の同期を取るシステム、NT
+    においても何かそれと同じ働きをするものを導入してください。
 
-<P>
 
-最初に <CODE>httpd.conf</CODE> を編集してください。このファイルは
-サーバに関する一般的な属性を設定します; ポート番号や起動ユーザ
-<EM>等々</EM>です。次に <CODE>srm.conf</CODE> ファイルを編集
-してください; これはドキュメントツリーのルート、 server-parsed HTML
- や内部的なイメージマップの解析のような特別な機能<EM>等々</EM>
-を設定します。最後にアクセスに関する基本事項を設定するために
- access.conf ファイルを編集します。
-
-<P>
-
-これら3つのファイルに加えて、サーバの動作はアクセスされたディレクトリ
-にある <CODE>.htaccess</CODE> ファイルを使うことによって、
-ディレクトリ毎に設定できます。
-
-<H3>システムタイムを正確に設定してください!</H3>
-
-公開されるウェブサーバの適切な操作には、HTTP プロトコルの要素が
-その日の時間として示されるため、正確な時間が必要とされます。
-ですから、これを機会に UNIX においては NTP やなんらかの
-時間の同期を取るシステム、NT においても何かそれと同じ働きを
-するものを導入してください。
-
-<H2>サポートプログラムのコンパイル</H2>
-
-上記でコンパイル、設定されるメインの <CODE>httpd</CODE> サーバの他に、
-Apache には多数のサポートプログラムが含まれています。これらは標準
-ではコンパイルされません。サポートプログラムは <CODE>support</CODE> 
-ディレクトリにあります。サポートプログラムをコンパイルするには、
-このディレクトリに入り、以下のように入力してください :
-<PRE>
+    <h2>サポートプログラムのコンパイル</h2>
+    上記でコンパイル、設定されるメインの <code>httpd</code>
+    サーバの他に、Apache には多数のサポートプログラムが含まれています。
+    これらは標準ではコンパイルされません。サポートプログラムは
+    <code>support</code> ディレクトリにあります。
+    サポートプログラムをコンパイルするには、このディレクトリに入り、
+    以下のように入力してください :
+<pre>
     make
-</PRE>
+</pre>
+        <hr />
 
-<!--#include virtual="footer.html" -->
-</BODY>
-</HTML>
+    <h3 align="CENTER">Apache HTTP Server</h3>
+    <a href="./"><img src="images/index.gif" alt="Index" /></a>
+
+  </body>
+</html>

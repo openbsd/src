@@ -1,25 +1,25 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
-<HTML><HEAD>
-<TITLE>Configuring Multiple IP Addresses</TITLE>
-</HEAD>
-<!-- Background white, links blue (unvisited), navy (visited), red (active) -->
-<BODY
- BGCOLOR="#FFFFFF"
- TEXT="#000000"
- LINK="#0000FF"
- VLINK="#000080"
- ALINK="#FF0000"
->
-<DIV ALIGN="CENTER">
- <IMG SRC="../images/sub.gif" ALT="[APACHE DOCUMENTATION]">
- <H3>
-  Apache HTTP Server Version 1.3
- </H3>
-</DIV>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<H1 ALIGN="CENTER">Configuring Multiple IP Addresses</H1>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org" />
 
-<PRE>
+    <title>Configuring Multiple IP Addresses</title>
+  </head>
+  <!-- Background white, links blue (unvisited), navy (visited), red (active) -->
+
+  <body bgcolor="#FFFFFF" text="#000000" link="#0000FF"
+  vlink="#000080" alink="#FF0000">
+        <div align="CENTER">
+      <img src="../images/sub.gif" alt="[APACHE DOCUMENTATION]" /> 
+
+      <h3>Apache HTTP Server Version 1.3</h3>
+    </div>
+
+
+    <h1 align="CENTER">Configuring Multiple IP Addresses</h1>
+<pre>
 This material is originally from John Ioannidis (ji@polaris.ctr.columbia.edu)
 I have condensed it some and applied some corrections for SunOS 4.1.x
 courtesy of Chuck Smoko (csmoko@relay.nswc.navy.mil).
@@ -301,7 +301,7 @@ vifoutput(ifp, m0, dst)
                 *(mtod(m0, struct ifnet **)) = ifp;
                 s = splimp();
                 ifp-&gt;if_opackets++;
-                ifq = &ipintrq;
+                ifq = &amp;ipintrq;
                 if (IF_QFULL(ifq)) {
                         IF_DROP(ifq);
                         m_freem(m0);
@@ -375,7 +375,7 @@ interfaces. If you feel like playing with the code, you may want to
 kmem_alloc() the vif_softc structure at open time, and use the minor
 number of the device to tell it how many interfaces to create.
 
-Now you can go ahead and ifconfig <EM>etc.</EM>
+Now you can go ahead and ifconfig <em>etc.</em>
 
 I'll be happy to answer minor questions, and hear about success and
 failure stories, but I cannot help you if you don't already know how
@@ -389,25 +389,20 @@ In-Real-Life: John "Heldenprogrammer" Ioannidis
 E-Mail-To: ji@cs.columbia.edu
 V-Mail-To: +1 212 854 8120
 P-Mail-To: 450 Computer Science \n Columbia University \n New York, NY 10027
-</PRE>
+</pre>
 
-<P>
+    <p>Note: there is also a <a
+    href="http://www.multihost.com/">commercial-product-turned-freeware
+    called "Col. Patch"</a> which does this as a loadable kernel
+    module for SunOS 4.1.3_U1.</p>
 
-Note: there is also a <A
-HREF="http://www.multihost.com/">commercial-product-turned-freeware
-called "Col. Patch"</A> which does this as a loadable kernel module
-for SunOS 4.1.3_U1.
+    <p>    <hr />
 
-<P>
+    <h3 align="CENTER">Apache HTTP Server Version 1.3</h3>
+    <a href="./"><img src="../images/index.gif" alt="Index" /></a>
+    <a href="../"><img src="../images/home.gif" alt="Home" /></a>
 
-<HR>
+    </p>
+  </body>
+</html>
 
-<H3 ALIGN="CENTER">
- Apache HTTP Server Version 1.3
-</H3>
-
-<A HREF="./"><IMG SRC="../images/index.gif" ALT="Index"></A>
-<A HREF="../"><IMG SRC="../images/home.gif" ALT="Home"></A>
-
-</BODY>
-</HTML>

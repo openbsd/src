@@ -1,190 +1,178 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
-<HTML>
-<HEAD>
-<TITLE>Hints on Running a High-Performance Web Server</TITLE>
-</HEAD>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<!-- Background white, links blue (unvisited), navy (visited), red (active) -->
-<BODY
- BGCOLOR="#FFFFFF"
- TEXT="#000000"
- LINK="#0000FF"
- VLINK="#000080"
- ALINK="#FF0000"
->
-<DIV ALIGN="CENTER">
- <IMG SRC="../images/sub.gif" ALT="[APACHE DOCUMENTATION]">
- <H3>
-  Apache HTTP Server Version 1.3
- </H3>
-</DIV>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org" />
 
-<H1 ALIGN="CENTER">Hints on Running a High-Performance Web Server</H1>
+    <title>Hints on Running a High-Performance Web Server</title>
+  </head>
+  <!-- Background white, links blue (unvisited), navy (visited), red (active) -->
 
-Running Apache on a heavily loaded web server, one often encounters
-problems related to the machine and OS configuration.  "Heavy" is
-relative, of course - but if you are seeing more than a couple hits
-per second on a sustained basis you should consult the pointers on
-this page.  In general the suggestions involve how to tune your kernel
-for the heavier TCP load, hardware/software conflicts that arise, <EM>etc.</EM>
+  <body bgcolor="#FFFFFF" text="#000000" link="#0000FF"
+  vlink="#000080" alink="#FF0000">
+        <div align="CENTER">
+      <img src="../images/sub.gif" alt="[APACHE DOCUMENTATION]" /> 
 
-<UL>
-<LI><A HREF="#AUX">A/UX (Apple's UNIX)</A>
-<LI><A HREF="#BSD">BSD-based (BSDI, FreeBSD, etc)</A>
-<LI><A HREF="#DEC">Digital UNIX</A>
-<LI><A HREF="perf-hp.html">HPUX</A>
-<LI><A HREF="#Linux">Linux</A>
-<LI><A HREF="#Solaris">Solaris</A>
-<LI><A HREF="#SunOS">SunOS 4.x</A>
-<LI><A HREF="#SVR4">SVR4</A>
-</UL>
+      <h3>Apache HTTP Server Version 1.3</h3>
+    </div>
 
-<HR>
 
-<H3><A NAME="AUX">
-A/UX (Apple's UNIX)
-</A></H3>
+    <h1 align="CENTER">Hints on Running a High-Performance Web
+    Server</h1>
+    Running Apache on a heavily loaded web server, one often
+    encounters problems related to the machine and OS
+    configuration. "Heavy" is relative, of course - but if you are
+    seeing more than a couple hits per second on a sustained basis
+    you should consult the pointers on this page. In general the
+    suggestions involve how to tune your kernel for the heavier TCP
+    load, hardware/software conflicts that arise, <em>etc.</em> 
 
-If you are running Apache on A/UX, a page that gives some helpful
-performance hints (concerning the <EM>listen()</EM> queue and using
-virtual hosts)
-<A HREF="http://www.jaguNET.com/apache.html">can be found here</A>
+    <ul>
+      <li><a href="#AUX">A/UX (Apple's UNIX)</a></li>
 
-<P><HR>
+      <li><a href="#BSD">BSD-based (BSDI, FreeBSD, etc)</a></li>
 
-<H3><A NAME="BSD">
-BSD-based (BSDI, FreeBSD, etc)
-</A></H3>
+      <li><a href="#DEC">Digital UNIX</a></li>
 
-<A HREF="perf-bsd44.html#initial">Quick</A> and
-<A HREF="perf-bsd44.html#detail">detailed</A>
-performance tuning hints for BSD-derived systems.
-<A HREF="perf-bsd44.html#accf">Accept filtering</A> on FreeBSD.
+      <li><a href="perf-hp.html">HPUX</a></li>
 
-<P><HR>
+      <li><a href="#Linux">Linux</a></li>
 
-<H3><A NAME="DEC">
-Digital UNIX
-</A></H3>
+      <li><a href="#Solaris">Solaris</a></li>
 
-<UL>
-  <LI><A
-       HREF="http://www.digital.com/info/internet/document/ias/tuning.html"
-      >DIGITAL UNIX Tuning Parameters for Web Servers</A>
-  <LI>We have some <A HREF="perf-dec.html">newsgroup postings</A> on how
-      to tune Digital UNIX 3.2 and 4.0.
-</UL>
+      <li><a href="#SunOS">SunOS 4.x</a></li>
 
-<P><HR>
+      <li><a href="#SVR4">SVR4</a></li>
+    </ul>
+    <hr />
 
-<H3><A NAME="Linux">
-Linux
-</A></H3>
+    <h3><a id="AUX" name="AUX">A/UX (Apple's UNIX)</a></h3>
+    If you are running Apache on A/UX, a page that gives some
+    helpful performance hints (concerning the <em>listen()</em>
+    queue and using virtual hosts) <a
+    href="http://www.jaguNET.com/apache.html">can be found here</a>
+    
+    <hr />
 
-There are no known problems with heavily loaded systems running Linux
-kernels 2.0.32 or later.  Earlier kernels have some problems, and an
-upgrade to the latest 2.0.x is a good idea to eliminate various security
-and denial of service attacks.
+    <h3><a id="BSD" name="BSD">BSD-based (BSDI, FreeBSD,
+    etc)</a></h3>
+    <a href="perf-bsd44.html#initial">Quick</a> and <a
+    href="perf-bsd44.html#detail">detailed</a> performance tuning
+    hints for BSD-derived systems. <a
+    href="perf-bsd44.html#accf">Accept filtering</a> on FreeBSD. 
+    <hr />
 
-<P><HR>
+    <h3><a id="DEC" name="DEC">Digital UNIX</a></h3>
 
-<H3><A NAME="Solaris">
-Solaris 2.4
-</A></H3>
+    <ul>
+      <li><a
+      href="http://www.digital.com/info/internet/document/ias/tuning.html">
+      DIGITAL UNIX Tuning Parameters for Web Servers</a></li>
 
-The Solaris 2.4 TCP implementation has a few inherent limitations that
-only became apparent under heavy loads.  This has been fixed to some
-extent in 2.5 (and completely revamped in 2.6), but for now consult
-the following URL for tips on how to expand the capabilities if you
-are finding slowdowns and lags are hurting performance.
+      <li>We have some <a href="perf-dec.html">newsgroup
+      postings</a> on how to tune Digital UNIX 3.2 and 4.0.</li>
+    </ul>
+    <hr />
 
-<P>
+    <h3><a id="Linux" name="Linux">Linux</a></h3>
+    There are no known problems with heavily loaded systems running
+    Linux kernels 2.0.32 or later. Earlier kernels have some
+    problems, and an upgrade to the latest 2.0.x is a good idea to
+    eliminate various security and denial of service attacks. 
+    <hr />
 
-Other links:
+    <h3><a id="Solaris" name="Solaris">Solaris 2.4</a></h3>
+    The Solaris 2.4 TCP implementation has a few inherent
+    limitations that only became apparent under heavy loads. This
+    has been fixed to some extent in 2.5 (and completely revamped
+    in 2.6), but for now consult the following URL for tips on how
+    to expand the capabilities if you are finding slowdowns and
+    lags are hurting performance. 
 
-<UL>
+    <p>Other links:</p>
 
-<LI><A HREF="http://www.sun.com/sun-on-net/performance.html">
-World Wide Web Server Performance,
-&lt;http://www.sun.com/sun-on-net/performance.html&gt;</A>
-<LI><A HREF="http://www.rvs.uni-hannover.de/people/voeckler/tune/EN/tune.html">
-Solaris 2.x - tuning your TCP/IP stack</A> contains some good technical
-information about tuning various Solaris TCP/IP parameters.
-</UL>
+    <ul>
+      <li><a
+      href="http://www.sun.com/sun-on-net/performance.html">World
+      Wide Web Server Performance,
+      &lt;http://www.sun.com/sun-on-net/performance.html&gt;</a></li>
 
-<P><HR>
+      <li><a
+      href="http://www.rvs.uni-hannover.de/people/voeckler/tune/EN/tune.html">
+      Solaris 2.x - tuning your TCP/IP stack</a> contains some good
+      technical information about tuning various Solaris TCP/IP
+      parameters.</li>
+    </ul>
+    <hr />
 
-<H3><A NAME="SunOS">
-SunOS 4.x
-</A></H3>
+    <h3><a id="SunOS" name="SunOS">SunOS 4.x</a></h3>
+    More information on tuning SOMAXCONN on SunOS can be found at
+    <a
+    href="http://www.islandnet.com/~mark/somaxconn.html">http://www.islandnet.com/~mark/somaxconn.html</a>.
+    
+    <hr />
 
-More information on tuning SOMAXCONN on SunOS can be found at
-<A HREF="http://www.islandnet.com/~mark/somaxconn.html">
-http://www.islandnet.com/~mark/somaxconn.html</A>.
+    <h3><a id="SVR4" name="SVR4">SVR4</a></h3>
+    Some SVR4 versions waste three system calls on every
+    <samp>gettimeofday()</samp> call. Depending on the syntactic
+    form of the <samp>TZ</samp> environment variable, these systems
+    have several different algorithms to determine the local time
+    zone (presumably <em>compatible</em> with something). The
+    following example uses the central european time zone to
+    demonstrate this: 
 
-<P><HR>
+    <dl>
+      <dt><strong>TZ=:MET</strong></dt>
 
-<H3><A NAME="SVR4">
-SVR4
-</A></H3>
-
-Some SVR4 versions waste three system calls on every
-<SAMP>gettimeofday()</SAMP> call. Depending on the syntactic
-form of the <SAMP>TZ</SAMP> environment variable, these
-systems have several different algorithms to determine the
-local time zone (presumably <EM>compatible</EM> with
-something). The following example uses the central european
-time zone to demonstrate this:
-<DL>
- <DT><STRONG>TZ=:MET</STRONG>
- <DD>This form delegates the knowledge of the time zone
-     information to an external compiled zoneinfo file
-     (&agrave; la BSD).<BR>
-     <STRONG>Caveat:</STRONG> Each time the gettimeofday()
-     function is called, the external zone info is read in
-     again (at least on some SVR4 systems). That results in
-     three wasted system calls with every apache request
-     served.<PRE>
+      <dd>
+        This form delegates the knowledge of the time zone
+        information to an external compiled zoneinfo file (&agrave;
+        la BSD).<br />
+         <strong>Caveat:</strong> Each time the gettimeofday()
+        function is called, the external zone info is read in again
+        (at least on some SVR4 systems). That results in three
+        wasted system calls with every apache request served. 
+<pre>
      open("/usr/lib/locale/TZ/MET", O_RDONLY) = 3
      read(3, "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"..., 7944) = 778
-     close(3)                                = 0</PRE>
+     close(3)                                = 0
+</pre>
+      </dd>
 
- <DT><STRONG>TZ=MET-1MDT,M3.5.0/02:00:00,M10.5.0/03:00:00</STRONG>
- <DD>This syntax form (&agrave; la SYSV) contains all the
-     knowledge about time zone beginning and ending times in
-     its external representation. It has to be parsed each
-     time it is evaluated, resulting in a slight computing
-     overhead, but it requires no system call. Though the
-     table lookup &agrave; la BSD is the more sophisticated
-     technical solution, the bad SVR4 implementation makes
-     this the preferred syntax on systems which otherwise
-     access the external zone info file repeatedly.
-</DL>
-You should use the <SAMP>truss</SAMP> utility on a
-single-process apache server (started with the <SAMP>-X</SAMP>
-debugging switch) to determine whether your system can profit
-from the second form of the <SAMP>TZ</SAMP> environment
-variable. If it does, you could integrate the setting of the
-preferred <SAMP>TZ</SAMP> syntax into the httpd startup
-script, which is usually simply a copy of (or symbolic link
-to) the <SAMP>apachectl</SAMP> utility script, or into the
-system's <SAMP>/etc/TIMEZONE</SAMP> script.
+      <dt>
+      <strong>TZ=MET-1MDT,M3.5.0/02:00:00,M10.5.0/03:00:00</strong></dt>
 
-<P><HR>
+      <dd>This syntax form (&agrave; la SYSV) contains all the
+      knowledge about time zone beginning and ending times in its
+      external representation. It has to be parsed each time it is
+      evaluated, resulting in a slight computing overhead, but it
+      requires no system call. Though the table lookup &agrave; la
+      BSD is the more sophisticated technical solution, the bad
+      SVR4 implementation makes this the preferred syntax on
+      systems which otherwise access the external zone info file
+      repeatedly.</dd>
+    </dl>
+    You should use the <samp>truss</samp> utility on a
+    single-process apache server (started with the <samp>-X</samp>
+    debugging switch) to determine whether your system can profit
+    from the second form of the <samp>TZ</samp> environment
+    variable. If it does, you could integrate the setting of the
+    preferred <samp>TZ</samp> syntax into the httpd startup script,
+    which is usually simply a copy of (or symbolic link to) the
+    <samp>apachectl</samp> utility script, or into the system's
+    <samp>/etc/TIMEZONE</samp> script. 
+    <hr />
 
-<H3>More welcome!</H3>
+    <h3>More welcome!</h3>
+    If you have tips to contribute, send mail to <a
+    href="mailto:apache@apache.org">apache@apache.org</a> 
+        <hr />
 
-If you have tips to contribute, send mail to <A
-HREF="mailto:apache@apache.org">apache@apache.org</A>
+    <h3 align="CENTER">Apache HTTP Server Version 1.3</h3>
+    <a href="./"><img src="../images/index.gif" alt="Index" /></a>
+    <a href="../"><img src="../images/home.gif" alt="Home" /></a>
 
-<HR>
-
-<H3 ALIGN="CENTER">
- Apache HTTP Server Version 1.3
-</H3>
-
-<A HREF="./"><IMG SRC="../images/index.gif" ALT="Index"></A>
-<A HREF="../"><IMG SRC="../images/home.gif" ALT="Home"></A>
-
-</BODY></HTML>
+  </body>
+</html>
 

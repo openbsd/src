@@ -161,11 +161,25 @@ Rule SHARED_CHAIN=default
 #  actually print-out the code that the modules execute
 #
 # EXPAT:
-#  Include James Clark's Expat package into Apache, for use by the
-#  modules. The "default" is to include it if the lib/expat-lite/
-#  directory is present. This rule will always be interpreted as "no"
-#  if the directory is not present.
+#  Include an Expat implementation into Apache for use by the
+#  modules. James Clark's Expat package (expat-lite) is bundled
+#  with Apache for the convenience of our users. The EXPAT rule
+#  determines which Expat implementation, if any, to use as follows:
 #
+#  Rule EXPAT=yes       : Use system Expat if available; otherwise
+#                         use bundled Expat (lib/expat-lite). If
+#                         neither exists the build will fail
+#  Rule EXPAT=no        : Don't include Expat at all
+#  Rule EXPAT=default   : If Expat can be found at the system or
+#                         in lib/expat-lite, use it; otherwise
+#                         skip it
+# 
+# CYGWIN_WINSOCK: 
+#  Use Win32 API system calls for socket communication instead 
+#  of Cygwin's POSIX.1 wrappers. This avoids the Cygwin specific
+#  implementation and uses the Win32 native calls. Should be faster
+#  and more reliable for high-load systems.  
+# 
 
 Rule SOCKS4=no
 Rule SOCKS5=no
@@ -173,6 +187,7 @@ Rule IRIXNIS=no
 Rule IRIXN32=yes
 Rule PARANOID=no
 Rule EXPAT=default
+Rule CYGWIN_WINSOCK=no 
 
 # DEV_RANDOM:
 #  Note: this rule is only used when compiling mod_auth_digest.

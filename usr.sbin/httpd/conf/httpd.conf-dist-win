@@ -158,22 +158,6 @@ ThreadsPerChild 50
 #BindAddress *
 
 #
-# Apache Modules compiled into the standard Windows build
-#
-# The following modules are bound into the standard Apache binary distribution
-# for Windows.  To change the standard behavior, uncomment the following lines 
-# and modify the list of those specific modules to be enabled in the server.
-#
-# WARNING: This is an advanced option that may render your server inoperable!
-# Do not use these directives without expert guidance.
-#
-#ClearModuleList
-#AddModule mod_so.c mod_mime.c mod_access.c mod_auth.c mod_negotiation.c
-#AddModule mod_include.c mod_autoindex.c mod_dir.c mod_cgi.c mod_userdir.c
-#AddModule mod_alias.c mod_env.c mod_log_config.c mod_asis.c mod_imap.c
-#AddModule mod_actions.c mod_setenvif.c mod_isapi.c
-
-#
 # Dynamic Shared Object (DSO) Support
 #
 # To be able to use the functionality of a module which was built as a DSO you
@@ -187,20 +171,74 @@ ThreadsPerChild 50
 # Note: The order in which modules are loaded is important.  Don't change
 # the order below without expert advice.
 #
+# Example:
+# LoadModule foo_module modules/mod_foo.so
+#
+#LoadModule vhost_alias_module modules/mod_vhost_alias.so
+#LoadModule mime_magic_module modules/mod_mime_magic.so
+#LoadModule status_module modules/mod_status.so
+#LoadModule info_module modules/mod_info.so
+#LoadModule speling_module modules/mod_speling.so
+#LoadModule rewrite_module modules/mod_rewrite.so
 #LoadModule anon_auth_module modules/mod_auth_anon.so
 #LoadModule dbm_auth_module modules/mod_auth_dbm.so
 #LoadModule digest_auth_module modules/mod_auth_digest.so
-#LoadModule cern_meta_module modules/mod_cern_meta.so
 #LoadModule digest_module modules/mod_digest.so
+#LoadModule proxy_module modules/mod_proxy.so
+#LoadModule cern_meta_module modules/mod_cern_meta.so
 #LoadModule expires_module modules/mod_expires.so
 #LoadModule headers_module modules/mod_headers.so
-#LoadModule proxy_module modules/mod_proxy.so
-#LoadModule rewrite_module modules/mod_rewrite.so
-#LoadModule speling_module modules/mod_speling.so
-#LoadModule info_module modules/mod_info.so
-#LoadModule status_module modules/mod_status.so
 #LoadModule usertrack_module modules/mod_usertrack.so
+#LoadModule unique_id_module modules/mod_unique_id.so
 #LoadModule ssl_module modules/mod_ssl.so
+
+#
+#  Reconstruction of the complete module list from all available modules
+#  (static and shared ones) to achieve correct module execution order.
+#
+# The modules listed below, without a corresponding LoadModule directive,
+# are static bound into the standard Apache binary distribution for Windows.
+#
+# Note: The order in which modules are loaded is important.  Don't change
+# the order below without expert advice.
+#
+# [WHENEVER YOU CHANGE THE LOADMODULE SECTION ABOVE, UPDATE THIS TOO!]
+ClearModuleList
+#AddModule mod_vhost_alias.c
+AddModule mod_env.c
+AddModule mod_log_config.c
+#AddModule mod_mime_magic.c
+AddModule mod_mime.c
+AddModule mod_negotiation.c
+#AddModule mod_status.c
+#AddModule mod_info.c
+AddModule mod_include.c
+AddModule mod_autoindex.c
+AddModule mod_dir.c
+AddModule mod_isapi.c
+AddModule mod_cgi.c
+AddModule mod_asis.c
+AddModule mod_imap.c
+AddModule mod_actions.c
+#AddModule mod_speling.c
+AddModule mod_userdir.c
+AddModule mod_alias.c
+#AddModule mod_rewrite.c
+AddModule mod_access.c
+AddModule mod_auth.c
+#AddModule mod_auth_anon.c
+#AddModule mod_auth_dbm.c
+#AddModule mod_auth_digest.c
+#AddModule mod_digest.c
+#AddModule mod_proxy.c
+#AddModule mod_cern_meta.c
+#AddModule mod_expires.c
+#AddModule mod_headers.c
+#AddModule mod_usertrack.c
+#AddModule mod_unique_id.c
+AddModule mod_so.c
+AddModule mod_setenvif.c
+
 
 #
 # ExtendedStatus controls whether Apache will generate "full" status
@@ -235,7 +273,7 @@ Port 80
 # e-mailed.  This address appears on some server-generated pages, such
 # as error documents.
 #
-ServerAdmin you@your.address
+ServerAdmin @@ServerAdmin@@
 
 #
 # ServerName allows you to set a host name which is sent back to clients for
@@ -253,7 +291,7 @@ ServerAdmin you@your.address
 # machine always knows itself by this address. If you use Apache strictly for 
 # local testing and development, you may use 127.0.0.1 as the server name.
 #
-#ServerName new.host.name
+ServerName @@ServerName@@
 
 
 #
@@ -368,6 +406,7 @@ AccessFileName .htaccess
 <Files ~ "^\.ht">
     Order allow,deny
     Deny from all
+    Satisfy All
 </Files>
 
 #
@@ -535,12 +574,27 @@ ServerSignature On
     #
     # Note that if you include a trailing / on fakename then the server will
     # require it to be present in the URL.  So "/icons" isn't aliased in this
-    # example, only "/icons/"..
+    # example, only "/icons/".  If the fakename is slash-terminated, then the 
+    # realname must also be slash terminated, and if the fakename omits the 
+    # trailing slash, the realname must also omit it.
     #
     Alias /icons/ "@@ServerRoot@@/icons/"
 
     <Directory "@@ServerRoot@@/icons">
         Options Indexes MultiViews
+        AllowOverride None
+        Order allow,deny
+        Allow from all
+    </Directory>
+
+    # This Alias will project the on-line documentation tree under /manual/
+    # even if you change the DocumentRoot. Comment it if you don't want to 
+    # provide access to the on-line documentation.
+    #
+    Alias /manual/ "@@ServerRoot@@/htdocs/manual/"
+
+    <Directory "@@ServerRoot@@/htdocs/manual">
+        Options Indexes FollowSymlinks MultiViews
         AllowOverride None
         Order allow,deny
         Allow from all
@@ -700,7 +754,7 @@ ServerSignature On
     #
     # Danish (da) - Dutch (nl) - English (en) - Estonian (ee)
     # French (fr) - German (de) - Greek-Modern (el)
-    # Italian (it) - Korean (kr) - Norwegian (no)
+    # Italian (it) - Korean (kr) - Norwegian (no) - Norwegian Nynorsk (nn)
     # Portugese (pt) - Luxembourgeois* (ltz)
     # Spanish (es) - Swedish (sv) - Catalan (ca) - Czech(cz)
     # Polish (pl) - Brazilian Portuguese (pt-br) - Japanese (ja)
@@ -720,6 +774,7 @@ ServerSignature On
     AddCharset ISO-2022-JP .jis
     AddLanguage kr .kr
     AddCharset ISO-2022-KR .iso-kr
+    AddLanguage nn .nn
     AddLanguage no .no
     AddLanguage pl .po
     AddCharset ISO-8859-2 .iso-pl
@@ -756,17 +811,6 @@ ServerSignature On
     # AddType allows you to tweak mime.types without actually editing it, or to
     # make certain files to be certain types.
     #
-    # For example, the PHP 3.x module (not part of the Apache distribution - see
-    # http://www.php.net) will typically use:
-    #
-    #AddType application/x-httpd-php3 .php3
-    #AddType application/x-httpd-php3-source .phps
-    #
-    # And for PHP 4.x, use:
-    #
-    #AddType application/x-httpd-php .php
-    #AddType application/x-httpd-php-source .phps
-
     AddType application/x-tar .tgz
 
     #
@@ -842,7 +886,7 @@ ServerSignature On
 #  N.B.: You can redirect to a script or a document using server-side-includes.
 #
 #    3) external redirects
-#ErrorDocument 402 http://some.other_server.com/subscription_info.html
+#ErrorDocument 402 http://some.other-server.com/subscription_info.html
 #  N.B.: Many of the environment variables associated with the original
 #  request will *not* be available to such a script.
 
@@ -876,25 +920,25 @@ ServerSignature On
 
 #
 # Allow server status reports, with the URL of http://servername/server-status
-# Change the ".your_domain.com" to match your domain to enable.
+# Change the "@@Domain@@" to match your domain to enable.
 #
 #<Location /server-status>
 #    SetHandler server-status
 #    Order deny,allow
 #    Deny from all
-#    Allow from .your_domain.com
+#    Allow from @@Domain@@
 #</Location>
 
 #
 # Allow remote server configuration reports, with the URL of
 # http://servername/server-info (requires that mod_info.c be loaded).
-# Change the ".your_domain.com" to match your domain to enable.
+# Change the "@@Domain@@" to match your domain to enable.
 #
 #<Location /server-info>
 #    SetHandler server-info
 #    Order deny,allow
 #    Deny from all
-#    Allow from .your_domain.com
+#    Allow from @@Domain@@
 #</Location>
 
 #
@@ -919,7 +963,7 @@ ServerSignature On
 #    <Directory proxy:*>
 #        Order deny,allow
 #        Deny from all
-#        Allow from .your_domain.com
+#        Allow from @@Domain@@
 #    </Directory>
 
     #
@@ -939,7 +983,7 @@ ServerSignature On
 #    CacheMaxExpire 24
 #    CacheLastModifiedFactor 0.1
 #    CacheDefaultExpire 1
-#    NoCache a_domain.com another_domain.edu joes.garage_sale.com
+#    NoCache a-domain.com another-domain.edu joes.garage-sale.com
 
 #</IfModule>
 # End of proxy directives.

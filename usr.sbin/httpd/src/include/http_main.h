@@ -116,23 +116,23 @@ extern "C" {
 API_EXPORT(void) ap_start_shutdown(void);
 API_EXPORT(void) ap_start_restart(int);
 API_EXPORT(void) ap_hard_timeout(char *, request_rec *);
-void ap_keepalive_timeout(char *, request_rec *);
+API_EXPORT(void) ap_keepalive_timeout(char *, request_rec *);
 API_EXPORT(void) ap_soft_timeout(char *, request_rec *);
 API_EXPORT(void) ap_kill_timeout(request_rec *);
 API_EXPORT(void) ap_reset_timeout(request_rec *);
 
 API_EXPORT(void) ap_child_terminate(request_rec *r);
 API_EXPORT(void) ap_sync_scoreboard_image(void);
-int ap_update_child_status(int child_num, int status, request_rec *r);
+API_EXPORT(int) ap_update_child_status(int child_num, int status, request_rec *r);
 void ap_time_process_request(int child_num, int status);
-#ifdef EAPI
 API_EXPORT(unsigned int) ap_set_callback_and_alarm(void (*fn) (int), int x);
-#else
-unsigned int ap_set_callback_and_alarm(void (*fn) (int), int x);
-#endif
 API_EXPORT(int) ap_check_alarm(void);
 
 void setup_signal_names(char *prefix);
+
+/* functions for determination and setting of accept() mutexing */
+char *ap_default_mutex_method(void);
+char *ap_init_mutex_method(char *t);
 
 #ifndef NO_OTHER_CHILD
 /*
