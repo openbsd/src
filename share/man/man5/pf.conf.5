@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.99 2002/10/27 13:56:59 pb Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.100 2002/10/31 09:18:24 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -451,7 +451,7 @@ matches packets of forwarded connections.
 can only be used with operators = and !=, other constructs
 like 'user >= unknown' are invalid.
 Forwarded packets with unknown user and group ID match only rules
-that explicitely compare against
+that explicitly compare against
 .Em unknown
 with operator = or !=, for instance 'user >= 0' does not match
 forwarded packets.
@@ -802,7 +802,7 @@ Caveat: Rules created by the
 .Pa antispoof
 directive interfere with packets sent over loopback interfaces
 to local addresses.
-One should pass these explicitely.
+One should pass these explicitly.
 .Sh FILTERING ON LOOPBACK INTERFACES
 There's hardly a point in filtering on loopback interfaces such as lo0.
 Every packet seen there is sent from and to the local host.
