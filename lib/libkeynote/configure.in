@@ -1,4 +1,4 @@
-dnl $OpenBSD: configure.in,v 1.4 2000/10/03 01:33:56 angelos Exp $
+dnl $OpenBSD: configure.in,v 1.5 2000/10/03 01:41:24 angelos Exp $
 dnl Process this file with autoconf to produce a configure script.
 AC_INIT(assertion.h)
 
@@ -35,7 +35,7 @@ AC_CHECK_LIB(pgp, pgpCipherByName, LIBS="$LIBS -lpgp")
 dnl Checks for header files.
 CPPFLAGS="-I/usr/include -I/usr/local/include -I/usr/ssl/include\
  -I/usr/local/ssl/include -I/usr/openssl/include -I/usr/pkg/include\
- -I/usr/local/openssl/include -I/pkg/include"
+ -I/usr/local/openssl/include -I/pkg/include -I/usr/include/openssl"
 
 AC_HEADER_STDC
 AC_HEADER_TIME

@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenBSD: configure,v 1.4 2000/10/03 01:33:55 angelos Exp $
+# $OpenBSD: configure,v 1.5 2000/10/03 01:41:24 angelos Exp $
 
 # Guess values for system-dependent variables and create Makefiles.
 # Generated automatically using autoconf version 2.13 
@@ -1463,7 +1463,7 @@ fi
 
 CPPFLAGS="-I/usr/include -I/usr/local/include -I/usr/ssl/include\
  -I/usr/local/ssl/include -I/usr/openssl/include -I/usr/pkg/include\
- -I/usr/local/openssl/include -I/pkg/include"
+ -I/usr/local/openssl/include -I/pkg/include -I/usr/include/openssl"
 
 echo $ac_n "checking how to run the C preprocessor""... $ac_c" 1>&6
 echo "configure:1469: checking how to run the C preprocessor" >&5
