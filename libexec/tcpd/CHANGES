@@ -1,9 +1,22 @@
-$OpenBSD: CHANGES,v 1.1 1997/02/26 06:00:31 downsj Exp $
+$OpenBSD: CHANGES,v 1.2 1997/06/01 05:21:39 downsj Exp $
 
 Request: after building the programs, please run the `tcpdchk' wrapper
 configuration checker. See the `tcpdchk.8' manual page (`nroff -man'
 format) for instructions. `tcpdchk' automatically identifies the most
 common configuration problems, and will save you and me a lot of time.
+
+Changes per release 7.6 (Mar 1997)
+==================================
+
+- Improved the anti source-routing protection. The code in version
+7.5 was not as strong as it could be, because I tried to be compatible
+with Linux. That was a mistake. Sorry for the inconvenience.
+
+- The program no longer terminates case of a source-routed connection,
+making the IP-spoofing code more usable for long-running daemons.
+
+- When syslogging DNS hostname problems, always stop after a limited
+number of characters.
 
 Changes per release 7.5 (Feb 1997)
 ==================================

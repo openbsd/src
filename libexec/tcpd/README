@@ -1,7 +1,7 @@
-$OpenBSD: README,v 1.1 1997/02/26 06:00:35 downsj Exp $
-@(#) README 1.29 97/02/12 02:13:20
+$OpenBSD: README,v 1.2 1997/06/01 05:21:40 downsj Exp $
+@(#) README 1.30 97/03/21 19:27:21
 
-This is the 7.5 version of the TCP/IP daemon wrapper package.
+This is the 7.6 version of the TCP/IP daemon wrapper package.
 
 Thank you for using this program. If you like it, send me a postcard.
 My postal address is at the bottom of this file.
@@ -329,9 +329,12 @@ very few, if any, UNIX vendors have adopted it.  Our site, and many
 other ones, has been running these enhanced daemons for several years,
 and without any ill effects.
 
-When the wrapper programs are compiled with -DKILL_IP_OPTIONS, the 
+When the wrapper programs are compiled with -DKILL_IP_OPTIONS, the
 programs refuse to service TCP connections with IP source routing
-options.
+options. -DKILL_IP_OPTIONS is not needed on modern UNIX systems
+that can stop source-routed traffic in the kernel. Examples are
+4.4BSD derivatives, Solaris 2.x, and Linux. See your system manuals
+for details.
 
 If you are going to use this feature on SunOS 4.1.x you should apply
 patch 100804-03+ or 101790-something depending on your SunOS version.
@@ -535,7 +538,7 @@ of the noise.  A more powerful tool is the Swatch monitoring system by
 Stephen E. Hansen and E. Todd Atkins. Swatch can process log files in
 real time and can associate arbitrary actions with patterns; its
 applications are by no means restricted to security.  Swatch is
-available from sierra.stanford.edu, directory /pub/sources.
+available ftp.stanford.edu, directory /general/security-tools/swatch.
 
 Socks, described in the UNIX Security III proceedings, can be used to
 control network traffic from hosts on an internal network, through a
