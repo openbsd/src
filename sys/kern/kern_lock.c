@@ -1,3 +1,5 @@
+/*	$OpenBSD: kern_lock.c,v 1.5 1997/11/07 10:27:43 niklas Exp $	*/
+
 /* 
  * Copyright (c) 1995
  *	The Regents of the University of California.  All rights reserved.

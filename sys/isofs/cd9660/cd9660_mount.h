@@ -1,3 +1,5 @@
+/*	$OpenBSD: cd9660_mount.h,v 1.2 1997/11/07 10:29:40 niklas Exp $	*/
+
 /*
  * Copyright (c) 1995
  *	The Regents of the University of California.  All rights reserved.

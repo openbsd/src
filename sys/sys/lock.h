@@ -1,3 +1,5 @@
+/*	$OpenBSD: lock.h,v 1.4 1997/11/07 10:25:42 niklas Exp $	*/
+
 /* 
  * Copyright (c) 1995
  *	The Regents of the University of California.  All rights reserved.

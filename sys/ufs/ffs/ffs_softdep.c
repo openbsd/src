@@ -1,3 +1,5 @@
+/*	$OpenBSD: ffs_softdep.c,v 1.2 1997/11/07 10:28:37 niklas Exp $	*/
+
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
  *
