@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcmd.3,v 1.17 2000/01/27 05:18:47 itojun Exp $
+.\"	$OpenBSD: rcmd.3,v 1.18 2000/02/23 17:28:25 aaron Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -86,6 +86,7 @@ can handle IPv4 cases only,
 the
 .Fn rcmd_af
 function can handle other cases as well.
+.Pp
 The
 .Fn rresvport
 and
@@ -145,12 +146,8 @@ signal numbers, to be
 forwarded to the process group of the command.
 If
 .Fa fd2p
-is 0, then the
-.Em stderr
-(unit 2 of the remote
-command) will be made the same as the
-.Em stdout
-and no
+is 0, then the standard error (unit 2 of the remote command) will be made the
+same as the standard output and no
 provision is made for sending arbitrary signals to the remote process,
 although you may be able to get its attention by using out-of-band data.
 Note that if the user is not the super-user,
@@ -234,11 +231,11 @@ can handle other address families as well, like IPv6.
 The first argument of
 .Fn iruserok_sa
 is typed as
-.Fa "void *"
+.Li "void *"
 to avoid dependency between
-.Aq Li unistd.h
+.Aq Pa unistd.h
 and
-.Aq Li sys/socket.h .
+.Aq Pa sys/socket.h .
 .Sh DIAGNOSTICS
 The
 .Fn rcmd
