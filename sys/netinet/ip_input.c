@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.53 2000/05/06 01:47:05 deraadt Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.54 2000/05/06 17:55:08 itojun Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -919,7 +919,7 @@ ip_dooptions(m)
 				break;
 			}
 			off--;			/* 0 origin */
-			if (off > optlen - sizeof(struct in_addr)) {
+			if ((off + sizeof(struct in_addr)) > optlen) {
 				/*
 				 * End of source route.  Should be for us.
 				 */
@@ -964,7 +964,7 @@ ip_dooptions(m)
 			 * If no space remains, ignore.
 			 */
 			off--;			/* 0 origin */
-			if (off > optlen - sizeof(struct in_addr))
+			if ((off + sizeof(struct in_addr)) > optlen)
 				break;
 			bcopy((caddr_t)(&ip->ip_dst), (caddr_t)&ipaddr.sin_addr,
 			    sizeof(ipaddr.sin_addr));
