@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.26 1995/05/17 00:05:25 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.27 1995/10/19 04:14:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-static char rcsid[] = "$NetBSD: parser.c,v 1.26 1995/05/17 00:05:25 christos Exp $";
+static char rcsid[] = "$NetBSD: parser.c,v 1.27 1995/10/19 04:14:41 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -1289,9 +1289,14 @@ parsebackq: {
         if (!oldstyle && (readtoken() != TRP))
                 synexpect(TRP);
 	(*nlpp)->n = n;
-        /* Start reading from old file again.  */
-        if (oldstyle)
+        if (oldstyle) {
+		/*
+		 * Start reading from old file again, ignoring any pushed back
+		 * tokens left from the backquote parsing
+		 */
                 popfile();
+		tokpushback = 0;
+	}
 	while (stackblocksize() <= savelen)
 		growstackblock();
 	STARTSTACKSTR(out);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.13 1995/05/11 21:28:49 christos Exp $	*/
+/*	$NetBSD: cd.c,v 1.14 1995/11/19 23:27:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)cd.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: cd.c,v 1.13 1995/05/11 21:28:49 christos Exp $";
+static char rcsid[] = "$NetBSD: cd.c,v 1.14 1995/11/19 23:27:37 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,13 +65,13 @@ static char rcsid[] = "$NetBSD: cd.c,v 1.13 1995/05/11 21:28:49 christos Exp $";
 #include "redir.h"
 #include "mystring.h"
 #include "show.h"
+#include "cd.h"
 
 STATIC int docd __P((char *, int));
 STATIC char *getcomponent __P((void));
 STATIC void updatepwd __P((char *));
-STATIC void getpwd __P((void));
 
-char *curdir;			/* current working directory */
+char *curdir = NULL;		/* current working directory */
 char *prevdir;			/* previous working directory */
 STATIC char *cdcomppath;
 
@@ -327,25 +327,75 @@ pwdcmd(argc, argv)
 
 
 
-/*
- * If we already know the current directory, this routine returns
- * immediately.
- */
 
 #define MAXPWD 256
 
-STATIC void
-getpwd() {
+/*
+ * Find out what the current directory is. If we already know the current
+ * directory, this routine returns immediately.
+ */
+void
+getpwd()
+{
 	char buf[MAXPWD];
-	char *p;
-	int i;
-	int status;
-	struct job *jp;
-	int pip[2];
 
 	if (curdir)
 		return;
+	/*
+	 * Things are a bit complicated here; we could have just used
+	 * getcwd, but traditionally getcwd is implemented using popen
+	 * to /bin/pwd. This creates a problem for us, since we cannot
+	 * keep track of the job if it is being ran behind our backs.
+	 * So we re-implement getcwd(), and we suppress interrupts
+	 * throughout the process. This is not completely safe, since
+	 * the user can still break out of it by killing the pwd program.
+	 * We still try to use getcwd for systems that we know have a
+	 * c implementation of getcwd, that does not open a pipe to
+	 * /bin/pwd.
+	 */
+#if defined(__NetBSD__) || defined(__svr4__)
 	if (getcwd(buf, sizeof(buf)) == NULL)
 		error("getcwd() failed");
+#else
+	{
+		char *p;
+		int i;
+		int status;
+		struct job *jp;
+		int pip[2];
+
+		INTOFF;
+		if (pipe(pip) < 0)
+			error("Pipe call failed");
+		jp = makejob((union node *)NULL, 1);
+		if (forkshell(jp, (union node *)NULL, FORK_NOJOB) == 0) {
+			(void) close(pip[0]);
+			if (pip[1] != 1) {
+				close(1);
+				copyfd(pip[1], 1);
+				close(pip[1]);
+			}
+			(void) execl("/bin/pwd", "pwd", (char *)0);
+			error("Cannot exec /bin/pwd");
+		}
+		(void) close(pip[1]);
+		pip[1] = -1;
+		p = buf;
+		while ((i = read(pip[0], p, buf + MAXPWD - p)) > 0
+		     || (i == -1 && errno == EINTR)) {
+			if (i > 0)
+				p += i;
+		}
+		(void) close(pip[0]);
+		pip[0] = -1;
+		status = waitforjob(jp);
+		if (status != 0)
+			error((char *)0);
+		if (i < 0 || p == buf || p[-1] != '\n')
+			error("pwd command failed");
+		p[-1] = '\0';
+	}
+#endif
 	curdir = savestr(buf);
+	INTON;
 }

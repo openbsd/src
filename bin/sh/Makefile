@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 1995/06/10 20:19:40 mycroft Exp $
+#	$NetBSD: Makefile,v 1.22 1995/10/22 00:15:02 christos Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 PROG=	sh
@@ -17,6 +17,7 @@ CLEANFILES+=\
 	nodes.c nodes.h printf.o syntax.c syntax.h token.def y.tab.h
 
 .depend parser.o: token.def
+
 token.def: mktokens
 	sh ${.CURDIR}/mktokens
 
@@ -40,5 +41,9 @@ syntax.c syntax.h: mksyntax
 
 mksyntax: ${.CURDIR}/mksyntax.c ${.CURDIR}/parser.h
 	${CC} ${CFLAGS} ${.CURDIR}/mksyntax.c -o $@
+
+arith_lex.o: arith.o
+
+${OBJS}: init.c
 
 .include <bsd.prog.mk>
