@@ -1,4 +1,4 @@
-/*	$OpenBSD: modstat.c,v 1.10 1997/11/18 23:23:18 provos Exp $	*/
+/*	$OpenBSD: modstat.c,v 1.11 1998/07/06 18:42:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -160,6 +160,9 @@ main(argc, argv)
 	 */
 	if ((devfd = open(_PATH_LKM, O_RDONLY, 0)) == -1)
 		err(2, _PATH_LKM);
+
+	setegid(getgid());
+	setgid(getgid());
 
 	atexit(cleanup);
 
