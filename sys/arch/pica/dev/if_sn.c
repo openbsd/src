@@ -43,28 +43,22 @@
 
 #include <vm/vm.h>
 
-#include "bpfilter.h"
+/*#include "bpfilter.h"*/
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
 #endif
 
+#include <pica/dev/dma.h>
+
 #define SONICDW 32
 typedef unsigned char uchar;
+
 #include <pica/dev/if_sn.h>
 #define SWR(a, x) 	(a) = (x)
 #define SRD(a)		((a) & 0xffff)
 
 #include <machine/machConst.h>
-#define IS_KSEG0(v)	(((unsigned)(v) & 0xe0000000U) == 0x80000000U)
-#define IS_KSEG1(v)	(((unsigned)(v) & 0xe0000000U) == 0xa0000000U)
-#define IS_KSEG2(v)	(((unsigned)(v) & 0xc0000000U) == 0xc0000000U)
-#define K0_TO_PHYS(v)	MACH_CACHED_TO_PHYS(v)
-#define K1_TO_PHYS(v)	MACH_UNCACHED_TO_PHYS(v)
-#define K0_TO_K1(v)	(((unsigned)(v)) | 0x20000000U)
-#define K1_TO_K0(v)	(((unsigned)(v)) & ~0x20000000U)
-#define PHYS_TO_K0(p)	MACH_PHYS_TO_CACHED(p)
-#define PHYS_TO_K1(p)	MACH_PHYS_TO_UNCACHED(p)
 #define wbflush() 	MachEmptyWriteBuffer()
 
 /*
@@ -103,6 +97,8 @@ struct sn_softc {
 #define	sc_enaddr	sc_ac.ac_enaddr	/* hardware ethernet address */
 
 	struct	sonic_reg *sc_csr;	/* hardware pointer */
+	dma_softc_t	__dma;		/* stupid macro ... */
+	dma_softc_t	*dma;		/* dma mapper control */
 	int	sc_rxmark;		/* position in rx ring for reading buffs */
 
 	int	sc_rramark;		/* index into rra of wp */
@@ -187,8 +183,8 @@ void snreset __P((struct sn_softc *sc));
 #define SOALIGN(array) (((int)array+SONICALIGN-1) & ~(SONICALIGN-1))
 #define SOALIGNED(p) (!(((uint)p)&(SONICALIGN-1)))
 
-#define UPPER(x) (K1_TO_PHYS(x) >> 16)
-#define LOWER(x) (((unsigned)(K1_TO_PHYS(x))) & 0xffff)
+#define UPPER(x) ((unsigned)(x) >> 16)
+#define LOWER(x) ((unsigned)(x) & 0xffff)
 
 /*
  * buffer sizes in 32 bit mode
@@ -213,26 +209,38 @@ void snreset __P((struct sn_softc *sc));
 
 #define FCSSIZE	4		/* size of FCS append te received packets */
 
-/* maximum recieve packet size plus 2 byte pad to make each
+/*
+ * maximum recieve packet size plus 2 byte pad to make each
  * one aligned. 4 byte slop (required for eobc)
  */
 #define RBASIZE	(sizeof(struct ether_header) + ETHERMTU	+ FCSSIZE + 2 + 4)
 
-/* receive buffers for sonic accessed by SONIC
- * each buffer will hold one ethernet packet
+/*
+ * space requiered for descriptors
  */
-char rba[NRBA][RBASIZE];	/* receive buffers */
+#define DESC_SIZE (RRASIZE + CDASIZE + RDASIZE + TDASIZE + SONICALIGN - 1)
 
-/* space for descriptors
+/*
+ *  This should really be 'allocated' but for now we
+ *  'hardwire' it.
  */
-char sonicbuffers[(RRASIZE + CDASIZE + RDASIZE + TDASIZE) * 2 + SONICALIGN - 1];
+#define SONICBUF	0xa0010000
 
-/* nicely aligned pointers into the sonicbuffers
+/*
+ *  Nicely aligned pointers into the sonicbuffers
+ *  p_ points at physical (K1_SEG) addresses.
+ *  v_ is dma viritual address used by sonic.
  */
-struct RXrsrc *rra;	/* receiver resource descriptors */
-struct RXpkt *rda;	/* receiver desriptors */
-struct TXpkt *tda;	/* transmitter descriptors */
-struct CDA *cda;		/* CAM descriptors */
+struct RXrsrc	*p_rra;	/* receiver resource descriptors */
+struct RXrsrc	*v_rra;
+struct RXpkt	*p_rda;	/* receiver desriptors */
+struct RXpkt	*v_rda;
+struct TXpkt	*p_tda;	/* transmitter descriptors */
+struct TXpkt	*v_tda;
+struct CDA	*p_cda;	/* CAM descriptors */
+struct CDA	*v_cda;
+char		*p_rba;	/* receive buffer area base */
+char		*v_rba;
 
 /* Meta transmit descriptors */
 struct mtd {
@@ -284,14 +292,62 @@ snattach(parent, self, aux)
 	struct confargs *ca = aux;
 	struct ifnet *ifp = &sc->sc_if;
 	struct cfdata *cf = sc->sc_dev.dv_cfdata;
-	u_long iobase;
+	int p, pp;
 
 	sc->sc_csr = (struct sonic_reg *)BUS_CVTADDR(ca);
+
+	sc->dma = &sc->__dma;
+	sn_dma_init(sc->dma, FRAGMAX * NTDA
+			   + (NRBA * RBASIZE / PICA_DMA_PAGE_SIZE) + 1
+			   + (DESC_SIZE * 2 / PICA_DMA_PAGE_SIZE) + 1);
+
+/*
+ * because the sonic is basicly 16bit device it 'concatenates'
+ * a higher buffer address to a 16 bit offset this will cause wrap
+ * around problems near the end of 64k !!
+ */
+	p = SONICBUF;
+	pp = SONICBUF - (FRAGMAX * NTDA * PICA_DMA_PAGE_SIZE);
+
+	if ((p ^ (p + RRASIZE + CDASIZE)) & 0x10000)
+		p = (p + 0x10000) & ~0xffff;
+	p_rra = (struct RXrsrc *) p;
+	v_rra = (struct RXrsrc *)(p - pp + sc->dma->dma_va);
+	p += RRASIZE;
+
+	p_cda = (struct CDA *) p;
+	v_cda = (struct CDA *)(p - pp + sc->dma->dma_va);
+	p += CDASIZE;
+
+	if ((p ^ (p + RDASIZE)) & 0x10000)
+		p = (p + 0x10000) & ~0xffff;
+	p_rda = (struct RXpkt *) p;
+	v_rda = (struct RXpkt *)(p - pp + sc->dma->dma_va);
+	p += RDASIZE;
+
+	if ((p ^ (p + TDASIZE)) & 0x10000)
+		p = (p + 0x10000) & ~0xffff;
+	p_tda = (struct TXpkt *) p;
+	v_tda = (struct TXpkt *)(p - pp + sc->dma->dma_va);
+	p += TDASIZE;
+
+	p += PICA_DMA_PAGE_SIZE - (p & (PICA_DMA_PAGE_SIZE -1));
+	p_rba = (char *)p;
+	v_rba = (char *)(p - pp + sc->dma->dma_va);
+	p += NRBA * RBASIZE;
+
+	DMA_MAP(sc->dma, (caddr_t)SONICBUF, p - SONICBUF, SONICBUF - pp);
 
 	sngetaddr(sc);
 	printf(" address %s\n", ether_sprintf(sc->sc_enaddr));
 
-	BUS_INTR_ESTABLISH(ca, snintr, (void *)sc);
+printf("\nsonic buffers: rra=0x%x cda=0x%x rda=0x%x tda=0x%x rba=0x%x\n",
+	p_rra, p_cda, p_rda, p_tda, p_rba);
+printf("sonic buffers: rra=0x%x cda=0x%x rda=0x%x tda=0x%x rba=0x%x\n",
+	v_rra, v_cda, v_rda, v_tda, v_rba);
+printf("mapped to offset 0x%x size 0x%x\n", SONICBUF - pp, p - SONICBUF);
+
+	BUS_INTR_ESTABLISH(ca, (intr_handler_t)snintr, (void *)sc);
 
 	ifp->if_name = "sn";
 	ifp->if_unit = sc->sc_dev.dv_unit;
@@ -415,14 +471,12 @@ snstart(ifp)
 	if (m == 0)
 		return;
 
-printf("snstart\n");
 	/*
 	 * If there is nothing in the o/p queue, and there is room in
 	 * the Tx ring, then send the packet directly.  Otherwise append
 	 * it to the o/p queue.
 	 */
 	len = sonicput(sc, m);
-printf("len=%d\n", len);
 #if NBPFILTER > 0
 	/*
 	 * If bpf is listening on this interface, let it
@@ -443,7 +497,6 @@ printf("len=%d\n", len);
 void caminitialise __P((void));
 void camentry __P((int, u_char *ea));
 void camprogram __P((struct sn_softc *));
-int allocatebuffers __P((void));
 void initialise_tda __P((struct sn_softc *));
 void initialise_rda __P((struct sn_softc *));
 void initialise_rra __P((struct sn_softc *));
@@ -475,16 +528,17 @@ sninit(unit)
 
 	s = splimp();
 
-printf("sninit csr %8x\n", csr);
+printf("sninit csr 0x%8x\n", csr);
 
 	csr->s_cr = CR_RST;	/* s_dcr only accessable reset mode! */
 
 	/* config it */
-	csr->s_dcr = DCR_ASYNC | DCR_WAIT0 | DCR_DW32 | DCR_DMABLOCK |
-	    DCR_RFT24 | DCR_TFT24;
+#if 0 /* This is done in BIOS */
+	csr->s_dcr = DCR_LBR | DCR_SYNC | DCR_WAIT0 | DCR_DW32 | DCR_DMABLOCK |
+	    DCR_RFT16 | DCR_TFT16;
+#endif
 	csr->s_rcr = RCR_BRD | RCR_LBNONE;
-	csr->s_imr = IMR_PRXEN | IMR_PTXEN | IMR_TXEREN | IMR_HBLEN |
-	    IMR_LCDEN;
+	csr->s_imr = IMR_PRXEN | IMR_PTXEN | IMR_TXEREN | IMR_HBLEN | IMR_LCDEN;
 
 	/* clear pending interrupts */
 	csr->s_isr = 0x7fff;
@@ -493,10 +547,6 @@ printf("sninit csr %8x\n", csr);
 	csr->s_crct = -1;
 	csr->s_faet = -1;
 	csr->s_mpt = -1;
-
-	/* initialize memory descriptors */
-	if (error = allocatebuffers())
-		goto bad;
 
 	initialise_tda(sc);
 	initialise_rda(sc);
@@ -608,6 +658,7 @@ sonicput(sc, m0)
 	struct mbuf *m;
 	int len = 0, fr = 0;
 	int i;
+	int fragoffset;		/* Offset in viritual dma space for fragment */
 
 	/* grab the replacement mtd */
 	if ((mtdnew = mtd_alloc()) == 0)
@@ -618,51 +669,48 @@ printf("got mtd %8x next %8x\n", mtdnew, mtdnext);
 	mtdnext->mtd_mbuf = m0;
 	txp = mtdnext->mtd_txp;
 	SWR(txp->config, 0);
+	fragoffset = (txp - p_tda) * FRAGMAX * PICA_DMA_PAGE_SIZE;
 
+	/*
+	 * Now fill in the fragments. Each fragment maps to it's
+	 * own dma page. Fragments crossing a dma page boundary
+	 * are split up in two fragments. This is somewhat stupid
+	 * because the dma mapper can do the work, but it helps
+	 * keeping the fragments in order. (read lazy programmer).
+	 */
 	for (m = m0; m; m = m->m_next) {
 		unsigned va = (unsigned) mtod(m, caddr_t);
 		int resid = m->m_len;
 
-printf("va=%x len=%d\n", va, resid);
+printf("va=%x offs=%x len=%d\n", va, fragoffset, resid);
+		MachHitFlushDCache(va, resid);
 		len += resid;
+		DMA_MAP(sc->dma, (caddr_t)va, resid, fragoffset);
 
 		while (resid) {
 			unsigned pa;
 			unsigned n;
 
-			if (IS_KSEG0(va)) {
-				pa = K0_TO_PHYS(va);
-				n = resid;
-			} else if (IS_KSEG1(va)) {
-				pa = K1_TO_PHYS(va);
-				n = resid;
-			} else if (IS_KSEG2(va)) {
-				pa = pmap_extract(pmap_kernel(), va);
-				if (pa == 0)
-					panic("sonicput: va not mapped");
-				pa |= (va & PGOFSET);
-				n = resid;
-				if (n > NBPG - (va & PGOFSET)) {
-					n = NBPG - (va & PGOFSET);
-					va += NBPG;	/* XXX TDR added */
-				}
-			} else {
-				panic("sonicput: bad va for mbuf");
+			pa = sc->dma->dma_va + (va & PGOFSET) + fragoffset;
+			n = resid;
+			if (n > NBPG - (va & PGOFSET)) {
+				n = NBPG - (va & PGOFSET);
 			}
 
-			for (i = 0; i < n; i++)
-				printf("%2x ", (*(u_char *)(va + i)) & 0xff);
-			printf("\n");
+for (i = 0; i < n; i++)
+	printf("%2x ", (*(u_char *)(va + i)) & 0xff);
+printf("\n");
+printf("frag %d: pa=%x len=%d\n", fr, pa, n);
 
-printf("pa=%x len=%d\n", pa, n);
 			if (fr < FRAGMAX) {
-				SWR(txp->u[fr].frag_ptrlo, pa & 0xffff);
-				SWR(txp->u[fr].frag_ptrhi, pa >> 16);
+				SWR(txp->u[fr].frag_ptrlo, LOWER(pa));
+				SWR(txp->u[fr].frag_ptrhi, UPPER(pa));
 				SWR(txp->u[fr].frag_size, n);
 			}
 			fr++;
 			va += n;
 			resid -= n;
+			fragoffset += PICA_DMA_PAGE_SIZE;
 		}
 	}
 	if (fr > FRAGMAX) {
@@ -683,7 +731,6 @@ printf("pa=%x len=%d\n", pa, n);
 	 */
 	if (len < ETHERMIN + sizeof(struct ether_header)) {
 		int pad = ETHERMIN + sizeof(struct ether_header) - len;
-
 		SWR(txp->u[fr - 1].frag_size, pad + SRD(txp->u[fr - 1].frag_size));
 		len = ETHERMIN + sizeof(struct ether_header);
 	}
@@ -691,12 +738,12 @@ printf("pa=%x len=%d\n", pa, n);
 	SWR(txp->pkt_size, len);
 
 	/* link onto the next mtd that will be used */
-	SWR(txp->u[fr].tlink, LOWER(mtdnew->mtd_txp) | EOL);
+	SWR(txp->u[fr].tlink, LOWER(v_tda + (mtdnew->mtd_txp - p_tda)) | EOL);
 
 	if (mtdhead == 0) {
 		/* no current transmit list start with this one */
 		mtdtail = mtdhead = mtdnext;
-		csr->s_ctda = LOWER(txp);
+		csr->s_ctda = LOWER(v_tda + (txp - p_tda));
 	} else {
 		/*
 		 * have a transmit list append it to end note
@@ -719,52 +766,30 @@ printf("pa=%x len=%d\n", pa, n);
 }
 
 /*
- * Get the ethernet addr, store it and print it
+ *  Read out the ethernet address from the cam. It is stored
+ *  there by the boot when doing a loopback test. Thus we don't
+ *  have to fetch it from nv ram.
  */
-unsigned 
-digit(c)
-	int c;
-{
-	if (c >= '0' && c <= '9')
-		return (c - '0');
-	if (c >= 'a' && c <= 'f')
-		return (c - 'a' + 10);
-	if (c >= 'A' && c <= 'F')
-		return (c - 'A' + 10);
-	return (-1);
-}
-
 int 
 sngetaddr(sc)
 	struct sn_softc *sc;
 {
-	extern char *prom_getenv();
 	unsigned i, x, y;
 	char   *cp, *ea;
 
-#if 0
-	cp = ea = prom_getenv("ethaddr");
-#else
-	cp = ea = "08:00:20:a0:66:54";
-#endif
-	if (!cp || !*cp)
-		goto bad;
-	for (i = 0; i < 6; i++) {
-		if (*cp == ':')
-			cp++;
-		x = digit(*cp++);
-		if (x < 0)
-			goto bad;
-		y = digit(*cp++);
-		if (y < 0)
-			goto bad;
-		sc->sc_enaddr[i] = (x << 4) | y;
-	}
-	if (*cp) {
-bad:
-		printf("$ethaddr not set or incorrect\n");
-		return (-1);
-	}
+	sc->sc_csr->s_cr = CR_RST;
+	sc->sc_csr->s_cep = 0;
+	i = sc->sc_csr->s_cap2;
+	sc->sc_enaddr[5] = i >> 8;
+	sc->sc_enaddr[4] = i;
+	i = sc->sc_csr->s_cap1;
+	sc->sc_enaddr[3] = i >> 8;
+	sc->sc_enaddr[2] = i;
+	i = sc->sc_csr->s_cap0;
+	sc->sc_enaddr[1] = i >> 8;
+	sc->sc_enaddr[0] = i;
+
+	sc->sc_csr->s_cr = 0;
 	return (0);
 }
 
@@ -803,8 +828,8 @@ caminitialise()
 	int     i;
 
 	for (i = 0; i < MAXCAM; i++)
-		SWR(cda->desc[i].cam_ep, i);
-	SWR(cda->enable, 0);
+		SWR(p_cda->desc[i].cam_ep, i);
+	SWR(p_cda->enable, 0);
 }
 
 void 
@@ -812,11 +837,11 @@ camentry(entry, ea)
 	int entry;
 	u_char *ea;
 {
-	SWR(cda->desc[entry].cam_ep, entry);
-	SWR(cda->desc[entry].cam_ap2, (ea[5] << 8) | ea[4]);
-	SWR(cda->desc[entry].cam_ap1, (ea[3] << 8) | ea[2]);
-	SWR(cda->desc[entry].cam_ap0, (ea[1] << 8) | ea[0]);
-	SWR(cda->enable, SRD(cda->enable) | (1 << entry));
+	SWR(p_cda->desc[entry].cam_ep, entry);
+	SWR(p_cda->desc[entry].cam_ap2, (ea[5] << 8) | ea[4]);
+	SWR(p_cda->desc[entry].cam_ap1, (ea[3] << 8) | ea[2]);
+	SWR(p_cda->desc[entry].cam_ap0, (ea[1] << 8) | ea[0]);
+	SWR(p_cda->enable, SRD(p_cda->enable) | (1 << entry));
 }
 
 void 
@@ -828,7 +853,7 @@ camprogram(sc)
 	int     i;
 
 	csr = sc->sc_csr;
-	csr->s_cdp = LOWER(cda);
+	csr->s_cdp = LOWER(v_cda);
 	csr->s_cdc = MAXCAM;
 	csr->s_cr = CR_LCAM;
 	wbflush();
@@ -874,56 +899,6 @@ camdump()
 }
 #endif
 
-/*
- * because the sonic is basicly 16bit device it 'concatenates'
- * a higher buffer address to a 16 bit offset this will cause wrap
- * around probelms near the end of 64k !!
- */
-int 
-allocatebuffers()
-{
-	int     p, n;
-	p = SOALIGN(sonicbuffers);
-
-	p = K0_TO_K1(p);
-
-	if ((p ^ (p + RRASIZE + CDASIZE)) & 0x10000)
-		p = (p + 0x10000) & ~0xffff;
-	rra = (struct RXrsrc *) p;
-	p += RRASIZE;
-	cda = (struct CDA *) p;
-	p += CDASIZE;
-
-	if ((p ^ (p + RDASIZE)) & 0x10000)
-		p = (p + 0x10000) & ~0xffff;
-	rda = (struct RXpkt *) p;
-	p += RDASIZE;
-
-	if ((p ^ (p + TDASIZE)) & 0x10000)
-		p = (p + 0x10000) & ~0xffff;
-	tda = (struct TXpkt *) p;
-	p += TDASIZE;
-
-	printf("sonic buffers: rra=0x%x cda=0x%x rda=0x%x tda=0x%x\n",
-	    rra, cda, rda, tda);
-
-	/* check sanity of buffer addresese */
-	assert(K1_TO_PHYS(rra) >= K0_TO_PHYS(&sonicbuffers[0]));
-	assert(K1_TO_PHYS(rra) < K0_TO_PHYS(&sonicbuffers[sizeof(sonicbuffers)]));
-
-	assert(K1_TO_PHYS(cda) >= K0_TO_PHYS(&sonicbuffers[0]));
-	assert(K1_TO_PHYS(cda) < K0_TO_PHYS(&sonicbuffers[sizeof(sonicbuffers)]));
-
-	assert(K1_TO_PHYS(rda) >= K0_TO_PHYS(&sonicbuffers[0]));
-	assert(K1_TO_PHYS(rda) < K0_TO_PHYS(&sonicbuffers[sizeof(sonicbuffers)]));
-
-	assert(K1_TO_PHYS(tda) >= K0_TO_PHYS(&sonicbuffers[0]));
-	assert(K1_TO_PHYS(tda) < K0_TO_PHYS(&sonicbuffers[sizeof(sonicbuffers)]));
-
-	/* return errno */
-	return (0);
-}
-
 void 
 initialise_tda(sc)
 	struct sn_softc *sc;
@@ -938,13 +913,13 @@ initialise_tda(sc)
 
 	for (i = 0; i < NTDA; i++) {
 		mtd = &mtda[i];
-		mtd->mtd_txp = &tda[i];
+		mtd->mtd_txp = &p_tda[i];
 		mtd->mtd_mbuf = (struct mbuf *) 0;
 		mtd_free(mtd);
 	}
 	mtdnext = mtd_alloc();
 
-	csr->s_utda = UPPER(tda);
+	csr->s_utda = UPPER(v_tda);
 }
 
 void 
@@ -958,19 +933,19 @@ initialise_rda(sc)
 
 	/* link the RDA's together into a circular list */
 	for (i = 0; i < (NRDA - 1); i++) {
-		SWR(rda[i].rlink, LOWER(&rda[i + 1]));
-		SWR(rda[i].in_use, 1);
+		SWR(p_rda[i].rlink, LOWER(&v_rda[i + 1]));
+		SWR(p_rda[i].in_use, 1);
 	}
-	SWR(rda[NRDA - 1].rlink, LOWER(&rda[0]) | EOL);
-	SWR(rda[NRDA - 1].in_use, 1);
+	SWR(p_rda[NRDA - 1].rlink, LOWER(&v_rda[0]) | EOL);
+	SWR(p_rda[NRDA - 1].in_use, 1);
 
 	/* mark end of receive descriptor list */
-	sc->sc_lrxp = &rda[NRDA - 1];
+	sc->sc_lrxp = &p_rda[NRDA - 1];
 
 	sc->sc_rxmark = 0;
 
-	csr->s_urda = UPPER(&rda[0]);
-	csr->s_crda = LOWER(&rda[0]);
+	csr->s_urda = UPPER(&v_rda[0]);
+	csr->s_crda = LOWER(&v_rda[0]);
 	wbflush();
 }
 
@@ -983,21 +958,21 @@ initialise_rra(sc)
 
 	csr = sc->sc_csr;
 
-	csr->s_eobc = sizeof(rba[0]) / 2 - 2;	/* must be >= MAXETHERPKT */
-	csr->s_urra = UPPER(rra);
-	csr->s_rsa = LOWER(rra);
-	csr->s_rea = LOWER(&rra[NRRA]);
-	csr->s_rrp = LOWER(rra);
+	csr->s_eobc = RBASIZE / 2 - 2;	/* must be >= MAXETHERPKT */
+	csr->s_urra = UPPER(v_rra);
+	csr->s_rsa = LOWER(v_rra);
+	csr->s_rea = LOWER(&v_rra[NRRA]);
+	csr->s_rrp = LOWER(v_rra);
 
 	/* fill up SOME of the rra with buffers */
 	for (i = 0; i < NRBA; i++) {
-		SWR(rra[i].buff_ptrhi, UPPER(&rba[i][0]));
-		SWR(rra[i].buff_ptrlo, LOWER(&rba[i][0]));
-		SWR(rra[i].buff_wchi, UPPER(sizeof(rba[i]) / 2));
-		SWR(rra[i].buff_wclo, LOWER(sizeof(rba[i]) / 2));
+		SWR(p_rra[i].buff_ptrhi, UPPER(&v_rba[i * RBASIZE]));
+		SWR(p_rra[i].buff_ptrlo, LOWER(&v_rba[i * RBASIZE]));
+		SWR(p_rra[i].buff_wchi, UPPER(RBASIZE / 2));
+		SWR(p_rra[i].buff_wclo, LOWER(RBASIZE / 2));
 	}
 	sc->sc_rramark = NRBA;
-	csr->s_rwp = LOWER(&rra[sc->sc_rramark]);
+	csr->s_rwp = LOWER(&v_rra[sc->sc_rramark]);
 	wbflush();
 }
 
@@ -1009,7 +984,7 @@ snintr(sc)
 	int	isr;
 
 printf("snintr\n");
-	while (isr = csr->s_isr) {
+	while (isr = (csr->s_isr & ISR_ALL)) {
 		/* scrub the interrupts that we are going to service */
 		printf("sonic isr %x\n", isr);
 		csr->s_isr = isr;
@@ -1135,11 +1110,11 @@ sonicrxint(sc)
 	u_long  addr;
 	int     orra;
 
-	rxp = &rda[sc->sc_rxmark];
+	rxp = &p_rda[sc->sc_rxmark];
 
 	while (SRD(rxp->in_use) == 0) {
 		unsigned status = SRD(rxp->status);
-		printf("sonic: Rx packet status=%R\n", status);
+		printf("sonic: Rx packet status=%x\n", status);
 		if ((status & RCR_LPKT) == 0)
 			printf("sonic: more than one packet in RBA!\n");
 		assert(PSNSEQ(SRD(rxp->seq_no)) == 0);
@@ -1160,9 +1135,9 @@ sonicrxint(sc)
 		 */
 		orra = RBASEQ(SRD(rxp->seq_no)) & RRAMASK;
 
-		assert(SRD(rxp->pkt_ptrhi) == SRD(rra[orra].buff_ptrhi));
-		assert(SRD(rxp->pkt_ptrlo) == SRD(rra[orra].buff_ptrlo));
-		assert(SRD(rra[orra].buff_wclo));
+		assert(SRD(rxp->pkt_ptrhi) == SRD(p_rra[orra].buff_ptrhi));
+		assert(SRD(rxp->pkt_ptrlo) == SRD(p_rra[orra].buff_ptrlo));
+		assert(SRD(p_rra[orra].buff_wclo));
 
 		/*
 		 * orra is now empty of packets and can be freed if
@@ -1170,14 +1145,14 @@ sonicrxint(sc)
 		 * wait !!
 		 * (dont bother add it back in again straight away)
 		 */
-		rra[sc->sc_rramark] = rra[orra];
+		p_rra[sc->sc_rramark] = p_rra[orra];
 
 		/* zap old rra for fun */
-		rra[orra].buff_wchi = 0;
-		rra[orra].buff_wclo = 0;
+		p_rra[orra].buff_wchi = 0;
+		p_rra[orra].buff_wclo = 0;
 
 		sc->sc_rramark = (sc->sc_rramark + 1) & RRAMASK;
-		csr->s_rwp = LOWER(&rra[sc->sc_rramark]);
+		csr->s_rwp = LOWER(&v_rra[sc->sc_rramark]);
 		wbflush();
 
 		/*
@@ -1191,7 +1166,7 @@ sonicrxint(sc)
 
 		if (++sc->sc_rxmark >= NRDA)
 			sc->sc_rxmark = 0;
-		rxp = &rda[sc->sc_rxmark];
+		rxp = &p_rda[sc->sc_rxmark];
 	}
 }
 
@@ -1220,7 +1195,8 @@ sonic_read(sc, rxp)
          */
 
 	len = SRD(rxp->byte_count) - sizeof(struct ether_header) - FCSSIZE;
-	pkt = (caddr_t)PHYS_TO_K1((SRD(rxp->pkt_ptrhi) << 16) | SRD(rxp->pkt_ptrlo));
+	pkt = (caddr_t)((SRD(rxp->pkt_ptrhi) << 16) | SRD(rxp->pkt_ptrlo));
+	pkt = pkt - v_rba + p_rba;
 	et = (struct ether_header *)pkt;
 
 	if (ethdebug) {

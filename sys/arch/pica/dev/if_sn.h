@@ -313,6 +313,7 @@ struct sonic_reg {
  * the INT pin goes active.  The interrupt is acknowledged by writing
  * the appropriate bit(s) in this register.
  */
+#define ISR_ALL		0xffff	/* all interrupts */
 #define ISR_BR		0x4000	/* bus retry occurred */
 #define ISR_HBL		0x2000	/* CD heartbeat lost */
 #define ISR_LCD		0x1000	/* load CAM command has completed */

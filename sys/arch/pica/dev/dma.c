@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)rz.c	8.1 (Berkeley) 7/29/93
- *      $Id: dma.c,v 1.1.1.1 1995/10/18 10:39:09 deraadt Exp $
+ *      $Id: dma.c,v 1.2 1995/10/28 15:47:06 deraadt Exp $
  */
 
 /*
@@ -211,9 +211,8 @@ picaDmaTLBMap(dma_softc_t *sc)
 }
 
 /*
- *  Start dma channel.
+ *  Start local dma channel.
  */
-
 void
 picaDmaStart(sc, addr, size, datain)
 	struct dma_softc *sc;
@@ -255,6 +254,27 @@ picaDmaStart(sc, addr, size, datain)
 }
 
 /*
+ *  Set up DMA mapper for external dma.
+ *  Used by ISA dma and SONIC
+ */
+void
+picaDmaMap(sc, addr, size, offset)
+	struct dma_softc *sc;
+	char	*addr;
+	size_t  size;
+	int	offset;
+{
+	/* Remap request space va into dma space va */
+
+	sc->req_va = (int)addr;
+	sc->next_va = sc->dma_va + dma_page_offs(addr) + offset;
+	sc->next_size = size;
+
+	/* Map up the request viritual dma space */
+	picaDmaTLBMap(sc);
+}
+
+/*
  *  Stop/Reset a DMA channel
  */
 void
@@ -269,6 +289,17 @@ picaDmaReset(dma_softc_t *sc)
 }
 
 /*
+ *  Null call rathole!
+ */
+void
+picaDmaNull(dma_softc_t *sc)
+{
+	pDmaReg regs = sc->dma_reg;
+
+	printf("picaDmaNull called\n");
+}
+
+/*
  *  dma_init..
  *	Called from asc to set up dma
  */
@@ -276,10 +307,11 @@ void
 asc_dma_init(dma_softc_t *sc)
 {
 	sc->reset = picaDmaReset;
-	sc->enintr = NULL;
+	sc->enintr = picaDmaNull;
 	sc->start = picaDmaStart;
-	sc->isintr = NULL;
-	sc->intr = NULL;
+	sc->map = picaDmaMap;
+	sc->isintr = picaDmaNull;
+	sc->intr = picaDmaNull;
 
 	sc->dma_reg = (pDmaReg)PICA_SYS_DMA0_REGS;
 	sc->pte_size = 32;
@@ -294,13 +326,32 @@ void
 fdc_dma_init(dma_softc_t *sc)
 {
 	sc->reset = picaDmaReset;
-	sc->enintr = NULL;
+	sc->enintr = picaDmaNull;
 	sc->start = picaDmaStart;
-	sc->isintr = NULL;
-	sc->intr = NULL;
+	sc->isintr = picaDmaNull;
+	sc->intr = picaDmaNull;
 
 	sc->dma_reg = (pDmaReg)PICA_SYS_DMA1_REGS;
 	sc->pte_size = 32;
 	sc->mode = PICA_DMA_MODE_160NS | PICA_DMA_MODE_8;
+	picaDmaTLBAlloc(sc);
+}
+/*
+ *  dma_init..
+ *	Called from sonic to set up dma
+ */
+void
+sn_dma_init(dma_softc_t *sc, int pages)
+{
+	sc->reset = picaDmaNull;
+	sc->enintr = picaDmaNull;
+	sc->map = picaDmaMap;
+	sc->start = picaDmaNull;
+	sc->isintr = picaDmaNull;
+	sc->intr = picaDmaNull;
+
+	sc->dma_reg = (pDmaReg)NULL;
+	sc->pte_size = pages;
+	sc->mode = 0;
 	picaDmaTLBAlloc(sc);
 }
