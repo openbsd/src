@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.373 2001/03/12 06:18:07 aaron Exp $
+	$OpenBSD: pcidevs,v 1.374 2001/03/12 06:43:32 aaron Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1447,6 +1447,7 @@ product NVIDIA GEFORCE256	0x0100	GeForce256
 product NVIDIA GEFORCE256_DDR	0x0101	GeForce256 DDR
 product NVIDIA GEFORCE2MX	0x0110	GeForce2 MX
 product NVIDIA GEFORCE2GTS	0x0150	GeForce2 GTS
+product NVIDIA GEFORCE2ULTRA	0x0152	GeForce2 Ultra
 
 /* Oak Technologies products */
 product OAKTECH OTI1007		0x0107	OTI107
