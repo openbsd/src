@@ -44,6 +44,9 @@
  *	cpu.h,v 1.2 1993/05/22 07:58:17 cgd Exp
  */
 
+#ifndef _SUN3_CPU_H_
+#define _SUN3_CPU_H_
+
 #ifdef _KERNEL
 
 /*
@@ -165,3 +168,16 @@ extern	unsigned char cpu_machine_id;
 #define IC_CLEAR (IC_CLR|IC_ENABLE)
 
 #endif	/* _KERNEL */
+
+/* 
+ * CTL_MACHDEP definitions.
+ */
+#define	CPU_CONSDEV		1	/* dev_t: console terminal device */
+#define	CPU_MAXID		2	/* number of valid machdep ids */
+
+#define	CTL_MACHDEP_NAMES { \
+	{ 0, 0 }, \
+	{ "console_device", CTLTYPE_STRUCT }, \
+}
+
+#endif /* !_SUN3_CPU_H_ */
