@@ -1,12 +1,12 @@
-#	$OpenBSD: Makefile,v 1.85 2003/07/22 17:15:39 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.86 2003/09/26 07:33:03 otto Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR= apply apropos arch asa asn1_compile at aucat audioctl awk banner \
-	basename bdes \
+	basename bc bdes \
 	biff cal calendar cap_mkdb cdio checknr chpass cksum cmp col \
 	colcrt colrm column comm compile_et compress cpp crontab ctags cut \
-	deroff diff diff3 dirname du elf2olf encrypt env expand false file \
+	dc deroff diff diff3 dirname du elf2olf encrypt env expand false file \
 	file2c find fgen finger fmt fold from fsplit fstat ftp gencat getconf \
 	getopt gprof grep head hexdump id indent infocmp ipcrm ipcs join jot \
 	kdump keynote ktrace lam last lastcomm leave less lex lndir locate \
