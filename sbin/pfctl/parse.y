@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.331 2003/02/25 20:59:09 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.332 2003/02/26 20:27:20 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -3296,6 +3296,8 @@ expand_rule(struct pf_rule *r,
 		expand_label(r->label, r->ifname, r->af, src_host, src_port,
 		    dst_host, dst_port, proto->proto);
 		r->qid = qname_to_qid(r->qname, r->ifname);
+		if ((r->pqid = qname_to_qid(r->pqname, r->ifname)) == 0)
+			r->pqid = r->qid;
 		r->ifnot = interface->not;
 		r->proto = proto->proto;
 		r->src.addr = src_host->addr;
