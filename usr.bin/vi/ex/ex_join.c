@@ -1,81 +1,54 @@
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1992, 1993, 1994, 1995, 1996
+ *	Keith Bostic.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * See the LICENSE file for redistribution information.
  */
 
+#include "config.h"
+
 #ifndef lint
-static char sccsid[] = "@(#)ex_join.c	8.14 (Berkeley) 8/17/94";
+static const char sccsid[] = "@(#)ex_join.c	10.9 (Berkeley) 3/6/96";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/queue.h>
-#include <sys/time.h>
 
 #include <bitstring.h>
 #include <ctype.h>
 #include <limits.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <termios.h>
 
-#include "compat.h"
-#include <db.h>
-#include <regex.h>
-
-#include "vi.h"
-#include "excmd.h"
+#include "../common/common.h"
 
 /*
  * ex_join -- :[line [,line]] j[oin][!] [count] [flags]
  *	Join lines.
+ *
+ * PUBLIC: int ex_join __P((SCR *, EXCMD *));
  */
 int
-ex_join(sp, ep, cmdp)
+ex_join(sp, cmdp)
 	SCR *sp;
-	EXF *ep;
-	EXCMDARG *cmdp;
+	EXCMD *cmdp;
 {
 	recno_t from, to;
 	size_t blen, clen, len, tlen;
 	int echar, extra, first;
 	char *bp, *p, *tbp;
 
+	NEEDFILE(sp, cmdp);
+
 	from = cmdp->addr1.lno;
 	to = cmdp->addr2.lno;
 
 	/* Check for no lines to join. */
-	if ((p = file_gline(sp, ep, from + 1, &len)) == NULL) {
-		msgq(sp, M_ERR, "No following lines to join");
+	if (!db_exist(sp, from + 1)) {
+		msgq(sp, M_ERR, "131|No following lines to join");
 		return (1);
 	}
 
@@ -85,7 +58,7 @@ ex_join(sp, ep, cmdp)
 	 * The count for the join command was off-by-one,
 	 * historically, to other counts for other commands.
 	 */
-	if (F_ISSET(cmdp, E_COUNT))
+	if (FL_ISSET(cmdp->iflags, E_C_COUNT))
 		++cmdp->addr2.lno;
 
 	/*
@@ -102,7 +75,7 @@ ex_join(sp, ep, cmdp)
 		 * Get next line.  Historic versions of vi allowed "10J" while
 		 * less than 10 lines from the end-of-file, so we do too.
 		 */
-		if ((p = file_gline(sp, ep, from, &len)) == NULL) {
+		if (db_get(sp, from, 0, &p, &len)) {
 			cmdp->addr2.lno = from - 1;
 			break;
 		}
@@ -127,13 +100,17 @@ ex_join(sp, ep, cmdp)
 		 * If the current line ends with whitespace, strip leading
 		 *    whitespace from the joined line.
 		 * If the next line starts with a ), do nothing.
-		 * If the current line ends with ., ? or !, insert two spaces.
+		 * If the current line ends with ., insert two spaces.
 		 * Else, insert one space.
+		 *
+		 * One change -- add ? and ! to the list of characters for
+		 * which we insert two spaces.  I expect that POSIX 1003.2
+		 * will require this as well.
 		 *
 		 * Echar is the last character in the last line joined.
 		 */
 		extra = 0;
-		if (!first && !F_ISSET(cmdp, E_FORCE)) {
+		if (!first && !FL_ISSET(cmdp->iflags, E_C_FORCE)) {
 			if (isblank(echar))
 				for (; len && isblank(*p); --len, ++p);
 			else if (p[0] != ')') {
@@ -185,11 +162,11 @@ ex_join(sp, ep, cmdp)
 
 	/* Delete the joined lines. */
         for (from = cmdp->addr1.lno, to = cmdp->addr2.lno; to > from; --to)
-		if (file_dline(sp, ep, to))
+		if (db_delete(sp, to))
 			goto err;
 
 	/* If the original line changed, reset it. */
-	if (!first && file_sline(sp, ep, from, bp, tbp - bp)) {
+	if (!first && db_set(sp, from, bp, tbp - bp)) {
 err:		FREE_SPACE(sp, bp, blen);
 		return (1);
 	}

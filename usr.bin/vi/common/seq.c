@@ -1,71 +1,44 @@
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1992, 1993, 1994, 1995, 1996
+ *	Keith Bostic.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * See the LICENSE file for redistribution information.
  */
 
+#include "config.h"
+
 #ifndef lint
-static char sccsid[] = "@(#)seq.c	8.33 (Berkeley) 8/17/94";
+static const char sccsid[] = "@(#)seq.c	10.10 (Berkeley) 3/30/96";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/queue.h>
-#include <sys/time.h>
 
 #include <bitstring.h>
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <termios.h>
 
-#include "compat.h"
-#include <db.h>
-#include <regex.h>
-
-#include "vi.h"
-#include "excmd.h"
+#include "common.h"
 
 /*
  * seq_set --
  *	Internal version to enter a sequence.
+ *
+ * PUBLIC: int seq_set __P((SCR *, CHAR_T *,
+ * PUBLIC:    size_t, CHAR_T *, size_t, CHAR_T *, size_t, seq_t, int));
  */
 int
 seq_set(sp, name, nlen, input, ilen, output, olen, stype, flags)
 	SCR *sp;
 	CHAR_T *name, *input, *output;
 	size_t nlen, ilen, olen;
-	enum seqtype stype;
+	seq_t stype;
 	int flags;
 {
 	CHAR_T *p;
@@ -79,7 +52,10 @@ seq_set(sp, name, nlen, input, ilen, output, olen, stype, flags)
 	 *
 	 * Just replace the output field if the string already set.
 	 */
-	if ((qp = seq_find(sp, &lastqp, input, ilen, stype, NULL)) != NULL) {
+	if ((qp =
+	    seq_find(sp, &lastqp, NULL, input, ilen, stype, NULL)) != NULL) {
+		if (LF_ISSET(SEQ_NOOVERWRITE))
+			return (0);
 		if (output == NULL || olen == 0) {
 			p = NULL;
 			olen = 0;
@@ -126,7 +102,7 @@ seq_set(sp, name, nlen, input, ilen, output, olen, stype, flags)
 		free(qp->input);
 mem3:		if (qp->name != NULL)
 			free(qp->name);
-mem2:		FREE(qp, sizeof(SEQ));
+mem2:		free(qp);
 mem1:		errno = sv_errno;
 		msgq(sp, M_SYSERR, NULL);
 		return (1);
@@ -154,17 +130,19 @@ mem1:		errno = sv_errno;
 /*
  * seq_delete --
  *	Delete a sequence.
+ *
+ * PUBLIC: int seq_delete __P((SCR *, CHAR_T *, size_t, seq_t));
  */
 int
 seq_delete(sp, input, ilen, stype)
 	SCR *sp;
 	CHAR_T *input;
 	size_t ilen;
-	enum seqtype stype;
+	seq_t stype;
 {
 	SEQ *qp;
 
-	if ((qp = seq_find(sp, NULL, input, ilen, stype, NULL)) == NULL)
+	if ((qp = seq_find(sp, NULL, NULL, input, ilen, stype, NULL)) == NULL)
 		return (1);
 	return (seq_mdel(qp));
 }
@@ -172,6 +150,8 @@ seq_delete(sp, input, ilen, stype)
 /*
  * seq_mdel --
  *	Delete a map entry, without lookup.
+ *
+ * PUBLIC: int seq_mdel __P((SEQ *));
  */
 int
 seq_mdel(qp)
@@ -183,7 +163,7 @@ seq_mdel(qp)
 	free(qp->input);
 	if (qp->output != NULL)
 		free(qp->output);
-	FREE(qp, sizeof(SEQ));
+	free(qp);
 	return (0);
 }
 
@@ -191,14 +171,18 @@ seq_mdel(qp)
  * seq_find --
  *	Search the sequence list for a match to a buffer, if ispartial
  *	isn't NULL, partial matches count.
+ *
+ * PUBLIC: SEQ *seq_find
+ * PUBLIC:    __P((SCR *, SEQ **, EVENT *, CHAR_T *, size_t, seq_t, int *));
  */
 SEQ *
-seq_find(sp, lastqp, input, ilen, stype, ispartialp)
+seq_find(sp, lastqp, e_input, c_input, ilen, stype, ispartialp)
 	SCR *sp;
 	SEQ **lastqp;
-	CHAR_T *input;
+	EVENT *e_input;
+	CHAR_T *c_input;
 	size_t ilen;
-	enum seqtype stype;
+	seq_t stype;
 	int *ispartialp;
 {
 	SEQ *lqp, *qp;
@@ -218,15 +202,26 @@ seq_find(sp, lastqp, input, ilen, stype, ispartialp)
 		*ispartialp = 0;
 	for (lqp = NULL, qp = sp->gp->seqq.lh_first;
 	    qp != NULL; lqp = qp, qp = qp->q.le_next) {
-		/* Fast checks on the first character and type. */
-		if (qp->input[0] > input[0])
-			break;
-		if (qp->input[0] < input[0] ||
-		    qp->stype != stype || F_ISSET(qp, SEQ_FUNCMAP))
-			continue;
-
-		/* Check on the real comparison. */
-		diff = memcmp(qp->input, input, MIN(qp->ilen, ilen));
+		/*
+		 * Fast checks on the first character and type, and then
+		 * a real comparison.
+		 */
+		if (e_input == NULL) {
+			if (qp->input[0] > c_input[0])
+				break;
+			if (qp->input[0] < c_input[0] ||
+			    qp->stype != stype || F_ISSET(qp, SEQ_FUNCMAP))
+				continue;
+			diff = memcmp(qp->input, c_input, MIN(qp->ilen, ilen));
+		} else {
+			if (qp->input[0] > e_input->e_c)
+				break;
+			if (qp->input[0] < e_input->e_c ||
+			    qp->stype != stype || F_ISSET(qp, SEQ_FUNCMAP))
+				continue;
+			diff =
+			    e_memcmp(qp->input, e_input, MIN(qp->ilen, ilen));
+		}
 		if (diff > 0)
 			break;
 		if (diff < 0)
@@ -260,47 +255,73 @@ seq_find(sp, lastqp, input, ilen, stype, ispartialp)
 }
 
 /*
+ * seq_close --
+ *	Discard all sequences.
+ *
+ * PUBLIC: void seq_close __P((GS *));
+ */
+void
+seq_close(gp)
+	GS *gp;
+{
+	SEQ *qp;
+
+	while ((qp = gp->seqq.lh_first) != NULL) {
+		if (qp->name != NULL)
+			free(qp->name);
+		if (qp->input != NULL)
+			free(qp->input);
+		if (qp->output != NULL)
+			free(qp->output);
+		LIST_REMOVE(qp, q);
+		free(qp);
+	}
+}
+
+/*
  * seq_dump --
  *	Display the sequence entries of a specified type.
+ *
+ * PUBLIC: int seq_dump __P((SCR *, seq_t, int));
  */
 int
 seq_dump(sp, stype, isname)
 	SCR *sp;
-	enum seqtype stype;
+	seq_t stype;
 	int isname;
 {
 	CHAR_T *p;
+	GS *gp;
 	SEQ *qp;
 	int cnt, len, olen;
 
 	cnt = 0;
-	for (qp = sp->gp->seqq.lh_first; qp != NULL; qp = qp->q.le_next) {
+	gp = sp->gp;
+	for (qp = gp->seqq.lh_first; qp != NULL; qp = qp->q.le_next) {
 		if (stype != qp->stype || F_ISSET(qp, SEQ_FUNCMAP))
 			continue;
 		++cnt;
 		for (p = qp->input,
 		    olen = qp->ilen, len = 0; olen > 0; --olen, ++p)
-			len += ex_printf(EXCOOKIE, "%s", KEY_NAME(sp, *p));
+			len += ex_puts(sp, KEY_NAME(sp, *p));
 		for (len = STANDARD_TAB - len % STANDARD_TAB; len > 0;)
-			len -= ex_printf(EXCOOKIE, " ");
+			len -= ex_puts(sp, " ");
 
 		if (qp->output != NULL)
 			for (p = qp->output,
 			    olen = qp->olen, len = 0; olen > 0; --olen, ++p)
-				len +=
-				    ex_printf(EXCOOKIE, "%s", KEY_NAME(sp, *p));
+				len += ex_puts(sp, KEY_NAME(sp, *p));
 		else
 			len = 0;
 
 		if (isname && qp->name != NULL) {
 			for (len = STANDARD_TAB - len % STANDARD_TAB; len > 0;)
-				len -= ex_printf(EXCOOKIE, " ");
+				len -= ex_puts(sp, " ");
 			for (p = qp->name,
 			    olen = qp->nlen; olen > 0; --olen, ++p)
-				(void)ex_printf(EXCOOKIE,
-				    "%s", KEY_NAME(sp, *p));
+				(void)ex_puts(sp, KEY_NAME(sp, *p));
 		}
-		(void)ex_printf(EXCOOKIE, "\n");
+		(void)ex_puts(sp, "\n");
 	}
 	return (cnt);
 }
@@ -308,13 +329,15 @@ seq_dump(sp, stype, isname)
 /*
  * seq_save --
  *	Save the sequence entries to a file.
+ *
+ * PUBLIC: int seq_save __P((SCR *, FILE *, char *, seq_t));
  */
 int
 seq_save(sp, fp, prefix, stype)
 	SCR *sp;
 	FILE *fp;
 	char *prefix;
-	enum seqtype stype;
+	seq_t stype;
 {
 	CHAR_T *p;
 	SEQ *qp;
@@ -323,8 +346,7 @@ seq_save(sp, fp, prefix, stype)
 
 	/* Write a sequence command for all keys the user defined. */
 	for (qp = sp->gp->seqq.lh_first; qp != NULL; qp = qp->q.le_next) {
-		if (stype != qp->stype ||
-		    F_ISSET(qp, SEQ_FUNCMAP) || !F_ISSET(qp, SEQ_USERDEF))
+		if (stype != qp->stype || !F_ISSET(qp, SEQ_USERDEF))
 			continue;
 		if (prefix)
 			(void)fprintf(fp, "%s", prefix);
@@ -348,4 +370,26 @@ seq_save(sp, fp, prefix, stype)
 		(void)putc('\n', fp);
 	}
 	return (0);
+}
+
+/*
+ * e_memcmp --
+ *	Compare a string of EVENT's to a string of CHAR_T's.
+ *
+ * PUBLIC: int e_memcmp __P((CHAR_T *, EVENT *, size_t));
+ */
+int
+e_memcmp(p1, ep, n)
+	CHAR_T *p1;
+	EVENT *ep;
+	size_t n;
+{
+	if (n != 0) {
+                do {
+                        if (*p1++ != ep->e_c)
+                                return (*--p1 - ep->e_c);
+			++ep;
+                } while (--n != 0);
+        }
+        return (0);
 }

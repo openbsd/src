@@ -1,38 +1,16 @@
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1992, 1993, 1994, 1995, 1996
+ *	Keith Bostic.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * See the LICENSE file for redistribution information.
  */
 
+#include "config.h"
+
 #ifndef lint
-static char sccsid[] = "@(#)v_mark.c	8.10 (Berkeley) 8/17/94";
+static const char sccsid[] = "@(#)v_mark.c	10.7 (Berkeley) 3/6/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -41,32 +19,28 @@ static char sccsid[] = "@(#)v_mark.c	8.10 (Berkeley) 8/17/94";
 
 #include <bitstring.h>
 #include <limits.h>
-#include <signal.h>
+#include <stdlib.h>
 #include <stdio.h>
-#include <termios.h>
 
-#include "compat.h"
-#include <db.h>
-#include <regex.h>
-
+#include "../common/common.h"
 #include "vi.h"
-#include "vcmd.h"
 
 /*
  * v_mark -- m[a-z]
  *	Set a mark.
+ *
+ * PUBLIC: int v_mark __P((SCR *, VICMD *));
  */
 int
-v_mark(sp, ep, vp)
+v_mark(sp, vp)
 	SCR *sp;
-	EXF *ep;
-	VICMDARG *vp;
+	VICMD *vp;
 {
-	return (mark_set(sp, ep, vp->character, &vp->m_start, 1));
+	return (mark_set(sp, vp->character, &vp->m_start, 1));
 }
 
-enum which {BMARK, FMARK};
-static int mark __P((SCR *, EXF *, VICMDARG *, enum which));
+enum which {BQMARK, FQMARK};
+static int mark __P((SCR *, VICMD *, enum which));
 
 
 /*
@@ -81,14 +55,15 @@ static int mark __P((SCR *, EXF *, VICMDARG *, enum which));
  * the same as "``".  Remember this fact -- you'll be amazed at how many
  * people don't know it and will be delighted that you are able to tell
  * them.
+ *
+ * PUBLIC: int v_bmark __P((SCR *, VICMD *));
  */
 int
-v_bmark(sp, ep, vp)
+v_bmark(sp, vp)
 	SCR *sp;
-	EXF *ep;
-	VICMDARG *vp;
+	VICMD *vp;
 {
-	return (mark(sp, ep, vp, BMARK));
+	return (mark(sp, vp, BQMARK));
 }
 
 /*
@@ -96,35 +71,60 @@ v_bmark(sp, ep, vp)
  *	Move to a mark.
  *
  * Move to the first nonblank character of the line containing the mark.
+ *
+ * PUBLIC: int v_fmark __P((SCR *, VICMD *));
  */
 int
-v_fmark(sp, ep, vp)
+v_fmark(sp, vp)
 	SCR *sp;
-	EXF *ep;
-	VICMDARG *vp;
+	VICMD *vp;
 {
-	return (mark(sp, ep, vp, FMARK));
+	return (mark(sp, vp, FQMARK));
 }
 
+/*
+ * mark --
+ *	Mark commands.
+ */
 static int
-mark(sp, ep, vp, cmd)
+mark(sp, vp, cmd)
 	SCR *sp;
-	EXF *ep;
-	VICMDARG *vp;
+	VICMD *vp;
 	enum which cmd;
 {
+	dir_t dir;
 	MARK m;
 	size_t len;
-	enum direction dir;
 
-	if (mark_get(sp, ep, vp->character, &vp->m_stop))
+	if (mark_get(sp, vp->character, &vp->m_stop, M_BERR))
 		return (1);
 
-	/* Forward marks move to the first non-blank. */
-	if (cmd == FMARK) {
-		vp->m_stop.cno = 0;
-		if (nonblank(sp, ep, vp->m_stop.lno, &vp->m_stop.cno))
+	/*
+	 * !!!
+	 * Historically, BQMARKS for character positions that no longer
+	 * existed acted as FQMARKS.
+	 *
+	 * FQMARKS move to the first non-blank.
+	 */
+	switch (cmd) {
+	case BQMARK:
+		if (db_get(sp, vp->m_stop.lno, DBG_FATAL, NULL, &len))
 			return (1);
+		if (vp->m_stop.cno < len ||
+		    vp->m_stop.cno == len && len == 0)
+			break;
+
+		if (ISMOTION(vp))
+			F_SET(vp, VM_LMODE);
+		cmd = FQMARK;
+		/* FALLTHROUGH */
+	case FQMARK:
+		vp->m_stop.cno = 0;
+		if (nonblank(sp, vp->m_stop.lno, &vp->m_stop.cno))
+			return (1);
+		break;
+	default:
+		abort();
 	}
 
 	/* Non-motion commands move to the end of the range. */
@@ -135,9 +135,10 @@ mark(sp, ep, vp, cmd)
 
 	/*
 	 * !!!
-	 * If a motion component, the cursor has to move.
+	 * If a motion component to a BQMARK, the cursor has to move.
 	 */
-	if (vp->m_stop.lno == vp->m_start.lno &&
+	if (cmd == BQMARK &&
+	    vp->m_stop.lno == vp->m_start.lno &&
 	    vp->m_stop.cno == vp->m_start.cno) {
 		v_nomove(sp);
 		return (1);
@@ -148,60 +149,80 @@ mark(sp, ep, vp, cmd)
 	 * stop MARK's so that it's in a forward direction.  (There's no
 	 * reason for this other than to make the tests below easier.  The
 	 * code in vi.c:vi() would have done the switch.)  Both forward
-	 * and backward motions can happen for either kind of mark command.
+	 * and backward motions can happen for any kind of search command.
 	 */
 	if (vp->m_start.lno > vp->m_stop.lno ||
 	    vp->m_start.lno == vp->m_stop.lno &&
 	    vp->m_start.cno > vp->m_stop.cno) {
-		dir = BACKWARD;
 		m = vp->m_start;
 		vp->m_start = vp->m_stop;
 		vp->m_stop = m;
+		dir = BACKWARD;
 	} else
 		dir = FORWARD;
 
 	/*
-	 * BACKWARD:
-	 *	VC_D commands move to the end of the range.  VC_Y stays at
-	 *	the start unless the end of the range is on a different line,
-	 *	when it moves to the end of the range.  Ignore VC_C and
-	 *	VC_DEF.
+	 * Yank cursor motion, when associated with marks as motion commands,
+	 * historically behaved as follows:
 	 *
-	 * FORWARD:
-	 *	VC_D and VC_Y commands don't move.  Ignore VC_C and VC_DEF.
+	 * ` motion			' motion
+	 *		Line change?		Line change?
+	 *		Y	N		Y	N
+	 *	      --------------	      ---------------
+	 * FORWARD:  |	NM	NM	      | NM	NM
+	 *	     |			      |
+	 * BACKWARD: |	M	M	      | M	NM(1)
+	 *
+	 * where NM means the cursor didn't move, and M means the cursor
+	 * moved to the mark.
+	 *
+	 * As the cursor was usually moved for yank commands associated
+	 * with backward motions, this implementation regularizes it by
+	 * changing the NM at position (1) to be an M.  This makes mark
+	 * motions match search motions, which is probably A Good Thing.
+	 *
+	 * Delete cursor motion was always to the start of the text region,
+	 * regardless.  Ignore other motion commands.
 	 */
-	if (dir == BACKWARD)
-		if (F_ISSET(vp, VC_D) ||
-		    F_ISSET(vp, VC_Y) && vp->m_start.lno != vp->m_stop.lno)
-			vp->m_final = vp->m_start;
-		else
+#ifdef HISTORICAL_PRACTICE
+	if (ISCMD(vp->rkp, 'y')) {
+		if ((cmd == BQMARK ||
+		    cmd == FQMARK && vp->m_start.lno != vp->m_stop.lno) &&
+		    (vp->m_start.lno > vp->m_stop.lno ||
+		    vp->m_start.lno == vp->m_stop.lno &&
+		    vp->m_start.cno > vp->m_stop.cno))
 			vp->m_final = vp->m_stop;
-	else
-		vp->m_final = vp->m_start;
-
-	if (cmd == FMARK)
-		return (0);
+	} else if (ISCMD(vp->rkp, 'd'))
+		if (vp->m_start.lno > vp->m_stop.lno ||
+		    vp->m_start.lno == vp->m_stop.lno &&
+		    vp->m_start.cno > vp->m_stop.cno)
+			vp->m_final = vp->m_stop;
+#else
+	vp->m_final = vp->m_start;
+#endif
 
 	/*
 	 * Forward marks are always line oriented, and it's set in the
-	 * vcmd.c table.  Backward marks that start and stop at column
-	 * 0 of the line are also line mode commands. 
+	 * vcmd.c table.
 	 */
-	if (vp->m_start.cno == 0 && vp->m_stop.cno == 0)
-		F_SET(vp, VM_LMODE);
+	if (cmd == FQMARK)
+		return (0);
 
 	/*
-	 * BMARK'S that move backward and start at column 0, or move forward
-	 * and end at column 0 are corrected to the last column of the previous
-	 * line.  Else, adjust the starting/ending point to the character
-	 * before the current one (this is safe because we know the command had
-	 * to move to succeed).
+	 * BQMARK'S moving backward and starting at column 0, and ones moving
+	 * forward and ending at column 0 are corrected to the last column of
+	 * the previous line.  Otherwise, adjust the starting/ending point to
+	 * the character before the current one (this is safe because we know
+	 * the search had to move to succeed).
+	 *
+	 * Mark motions become line mode opertions if they start at column 0
+	 * and end at column 0 of another line.
 	 */
 	if (vp->m_start.lno < vp->m_stop.lno && vp->m_stop.cno == 0) {
-		if (file_gline(sp, ep, --vp->m_stop.lno, &len) == NULL) {
-			GETLINE_ERR(sp, vp->m_stop.lno);
+		if (db_get(sp, --vp->m_stop.lno, DBG_FATAL, NULL, &len))
 			return (1);
-		}
+		if (vp->m_start.cno == 0)
+			F_SET(vp, VM_LMODE);
 		vp->m_stop.cno = len ? len - 1 : 0;
 	} else
 		--vp->m_stop.cno;

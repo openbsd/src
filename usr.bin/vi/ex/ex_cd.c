@@ -1,71 +1,42 @@
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1992, 1993, 1994, 1995, 1996
+ *	Keith Bostic.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * See the LICENSE file for redistribution information.
  */
 
+#include "config.h"
+
 #ifndef lint
-static char sccsid[] = "@(#)ex_cd.c	8.18 (Berkeley) 8/17/94";
+static const char sccsid[] = "@(#)ex_cd.c	10.9 (Berkeley) 3/30/96";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/queue.h>
-#include <sys/time.h>
 
 #include <bitstring.h>
 #include <errno.h>
 #include <limits.h>
 #include <pwd.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <termios.h>
 #include <unistd.h>
 
-#include "compat.h"
-#include <db.h>
-#include <regex.h>
-
-#include "vi.h"
-#include "excmd.h"
+#include "../common/common.h"
 
 /*
  * ex_cd -- :cd[!] [directory]
  *	Change directories.
+ *
+ * PUBLIC: int ex_cd __P((SCR *, EXCMD *));
  */
 int
-ex_cd(sp, ep, cmdp)
+ex_cd(sp, cmdp)
 	SCR *sp;
-	EXF *ep;
-	EXCMDARG *cmdp;
+	EXCMD *cmdp;
 {
 	struct passwd *pw;
 	ARGS *ap;
@@ -79,10 +50,10 @@ ex_cd(sp, ep, cmdp)
 	 * been modified, unless its name begins with a leading '/' or the
 	 * force flag is set.
 	 */
-	if (F_ISSET(ep, F_MODIFIED) &&
-	    !F_ISSET(cmdp, E_FORCE) && sp->frp->name[0] != '/') {
+	if (F_ISSET(sp->ep, F_MODIFIED) &&
+	    !FL_ISSET(cmdp->iflags, E_C_FORCE) && sp->frp->name[0] != '/') {
 		msgq(sp, M_ERR,
-    "File modified since last complete write; write or use ! to override");
+    "120|File modified since last complete write; write or use ! to override");
 		return (1);
 	}
 
@@ -93,7 +64,7 @@ ex_cd(sp, ep, cmdp)
 			if ((pw = getpwuid(getuid())) == NULL ||
 			    pw->pw_dir == NULL || pw->pw_dir[0] == '\0') {
 				msgq(sp, M_ERR,
-			   "Unable to find home directory location");
+			   "121|Unable to find home directory location");
 				return (1);
 			}
 			dir = pw->pw_dir;
@@ -106,9 +77,13 @@ ex_cd(sp, ep, cmdp)
 		abort();
 	}
 
-	/* Try the current directory first. */
+	/*
+	 * Try the current directory first.  If this succeeds, don't
+	 * display a message, vi didn't historically, and it's real
+	 * obvious to the user where they are.
+	 */
 	if (!chdir(dir))
-		goto ret;
+		return (0);
 
 	/*
 	 * If moving to the user's home directory, or, the path begins with
@@ -125,23 +100,27 @@ ex_cd(sp, ep, cmdp)
 	for (cdp = EXP(sp)->cdq.tqh_first; cdp != NULL; cdp = cdp->q.tqe_next) {
 		(void)snprintf(buf, sizeof(buf), "%s/%s", cdp->path, dir);
 		if (!chdir(buf)) {
-ret:			if (getcwd(buf, sizeof(buf)) != NULL)
-				msgq(sp, M_INFO, "New directory: %s", buf);
+			if (getcwd(buf, sizeof(buf)) != NULL)
+				msgq_str(sp, M_INFO, buf,
+				    "122|New current directory: %s");
 			return (0);
 		}
 	}
-err:	msgq(sp, M_SYSERR, "%s", dir);
+err:	msgq_str(sp, M_SYSERR, dir, "%s");
 	return (1);
 }
 
 #define	FREE_CDPATH(cdp) {						\
 	TAILQ_REMOVE(&exp->cdq, (cdp), q);				\
 	free((cdp)->path);						\
-	FREE((cdp), sizeof(CDPATH));					\
+	free(cdp);							\
 }
+
 /*
  * ex_cdalloc --
  *	Create a new list of cd paths.
+ *
+ * PUBLIC: int ex_cdalloc __P((SCR *, char *));
  */
 int
 ex_cdalloc(sp, str)
@@ -207,6 +186,8 @@ ex_cdalloc(sp, str)
 /*
  * ex_cdfree --
  *	Free the cd path list.
+ *
+ * PUBLIC: int ex_cdfree __P((SCR *));
  */
 int
 ex_cdfree(sp)

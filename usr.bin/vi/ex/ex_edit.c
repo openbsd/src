@@ -1,38 +1,16 @@
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1992, 1993, 1994, 1995, 1996
+ *	Keith Bostic.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * See the LICENSE file for redistribution information.
  */
 
+#include "config.h"
+
 #ifndef lint
-static char sccsid[] = "@(#)ex_edit.c	8.20 (Berkeley) 8/17/94";
+static const char sccsid[] = "@(#)ex_edit.c	10.10 (Berkeley) 4/27/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -42,68 +20,70 @@ static char sccsid[] = "@(#)ex_edit.c	8.20 (Berkeley) 8/17/94";
 #include <bitstring.h>
 #include <errno.h>
 #include <limits.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <termios.h>
 
-#include "compat.h"
-#include <db.h>
-#include <regex.h>
+#include "../common/common.h"
+#include "../vi/vi.h"
 
-#include "vi.h"
-#include "excmd.h"
+static int ex_N_edit __P((SCR *, EXCMD *, FREF *, int));
 
 /*
  * ex_edit --	:e[dit][!] [+cmd] [file]
+ *		:ex[!] [+cmd] [file]
  *		:vi[sual][!] [+cmd] [file]
  *
- * Edit a file; if none specified, re-edit the current file.  The second
+ * Edit a file; if none specified, re-edit the current file.  The third
  * form of the command can only be executed while in vi mode.  See the
  * hack in ex.c:ex_cmd().
  *
  * !!!
  * Historic vi didn't permit the '+' command form without specifying
- * a file name as well.
+ * a file name as well.  This seems unreasonable, so we support it
+ * regardless.
+ *
+ * PUBLIC: int ex_edit __P((SCR *, EXCMD *));
  */
 int
-ex_edit(sp, ep, cmdp)
+ex_edit(sp, cmdp)
 	SCR *sp;
-	EXF *ep;
-	EXCMDARG *cmdp;
+	EXCMD *cmdp;
 {
-	ARGS *ap;
 	FREF *frp;
+	int attach, setalt;
 
-	frp = sp->frp;
 	switch (cmdp->argc) {
 	case 0:
 		/*
 		 * If the name has been changed, we edit that file, not the
-		 * original name.  If the user was editing a temporary file,
-		 * create another one.  The reason for this is that we do
-		 * special exit processing of temporary files, and reusing
-		 * them is tricky.
+		 * original name.  If the user was editing a temporary file
+		 * (or wasn't editing any file), create another one.  The
+		 * reason for not reusing temporary files is that there is
+		 * special exit processing of them, and reuse is tricky.
 		 */
-		if (F_ISSET(frp, FR_TMPFILE)) {
+		frp = sp->frp;
+		if (sp->ep == NULL || F_ISSET(frp, FR_TMPFILE)) {
 			if ((frp = file_add(sp, NULL)) == NULL)
 				return (1);
-		} else {
-			if ((frp = file_add(sp, frp->name)) == NULL)
-				return (1);
-			set_alt_name(sp, sp->frp->name);
-		}
+			attach = 0;
+		} else
+			attach = 1;
+		setalt = 0;
 		break;
 	case 1:
-		ap = cmdp->argv[0];
-		if ((frp = file_add(sp, ap->bp)) == NULL)
+		if ((frp = file_add(sp, cmdp->argv[0]->bp)) == NULL)
 			return (1);
-		set_alt_name(sp, ap->bp);
+		attach = 0;
+		setalt = 1;
+		set_alt_name(sp, cmdp->argv[0]->bp);
 		break;
 	default:
 		abort();
 	}
+
+	if (F_ISSET(cmdp, E_NEWSCREEN))
+		return (ex_N_edit(sp, cmdp, frp, attach));
 
 	/*
 	 * Check for modifications.
@@ -111,12 +91,63 @@ ex_edit(sp, ep, cmdp)
 	 * !!!
 	 * Contrary to POSIX 1003.2-1992, autowrite did not affect :edit.
 	 */
-	if (file_m2(sp, ep, F_ISSET(cmdp, E_FORCE)))
+	if (file_m2(sp, FL_ISSET(cmdp->iflags, E_C_FORCE)))
 		return (1);
 
 	/* Switch files. */
-	if (file_init(sp, frp, NULL, F_ISSET(cmdp, E_FORCE)))
+	if (file_init(sp, frp, NULL, (setalt ? FS_SETALT : 0) |
+	    (FL_ISSET(cmdp->iflags, E_C_FORCE) ? FS_FORCE : 0)))
 		return (1);
-	F_SET(sp, S_FSWITCH);
+
+	F_SET(sp, SC_FSWITCH);
+	return (0);
+}
+
+/*
+ * ex_N_edit --
+ *	New screen version of ex_edit.
+ */
+static int
+ex_N_edit(sp, cmdp, frp, attach)
+	SCR *sp;
+	EXCMD *cmdp;
+	FREF *frp;
+	int attach;
+{
+	SCR *new;
+
+	/* Get a new screen. */
+	if (screen_init(sp->gp, sp, &new))
+		return (1);
+	if (vs_split(sp, new, 0)) {
+		(void)screen_end(new);
+		return (1);
+	}
+
+	/* Get a backing file. */
+	if (attach) {
+		/* Copy file state, keep the screen and cursor the same. */
+		new->ep = sp->ep;
+		++new->ep->refcnt;
+
+		new->frp = frp;
+		new->frp->flags = sp->frp->flags;
+
+		new->lno = sp->lno;
+		new->cno = sp->cno;
+	} else if (file_init(new, frp, NULL,
+	    (FL_ISSET(cmdp->iflags, E_C_FORCE) ? FS_FORCE : 0))) {
+		(void)vs_discard(new, NULL);
+		(void)screen_end(new);
+		return (1);
+	}
+
+	/* Create the argument list. */
+	new->cargv = new->argv = ex_buildargv(sp, NULL, frp->name);
+
+	/* Set up the switch. */
+	sp->nextdisp = new;
+	F_SET(sp, SC_SSWITCH);
+
 	return (0);
 }

@@ -1,38 +1,16 @@
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1992, 1993, 1994, 1995, 1996
+ *	Keith Bostic.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * See the LICENSE file for redistribution information.
  */
 
+#include "config.h"
+
 #ifndef lint
-static char sccsid[] = "@(#)v_section.c	8.12 (Berkeley) 8/17/94";
+static const char sccsid[] = "@(#)v_section.c	10.7 (Berkeley) 3/6/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -41,17 +19,11 @@ static char sccsid[] = "@(#)v_section.c	8.12 (Berkeley) 8/17/94";
 
 #include <bitstring.h>
 #include <limits.h>
-#include <signal.h>
 #include <stdio.h>
 #include <string.h>
-#include <termios.h>
 
-#include "compat.h"
-#include <db.h>
-#include <regex.h>
-
+#include "../common/common.h"
 #include "vi.h"
-#include "vcmd.h"
 
 /*
  * !!!
@@ -86,12 +58,13 @@ static char sccsid[] = "@(#)v_section.c	8.12 (Berkeley) 8/17/94";
  * match } as well as the usual { and section values.  If it matched a { or
  * a section, it did NOT include the matched line.  If it matched a }, it
  * did include the line.  No clue why.
+ *
+ * PUBLIC: int v_sectionf __P((SCR *, VICMD *));
  */
 int
-v_sectionf(sp, ep, vp)
+v_sectionf(sp, vp)
 	SCR *sp;
-	EXF *ep;
-	VICMDARG *vp;
+	VICMD *vp;
 {
 	recno_t cnt, lno;
 	size_t len;
@@ -115,15 +88,14 @@ v_sectionf(sp, ep, vp)
 		else {
 			vp->m_stop = vp->m_start;
 			vp->m_stop.cno = 0;
-			if (nonblank(sp, ep, vp->m_stop.lno, &vp->m_stop.cno))
+			if (nonblank(sp, vp->m_stop.lno, &vp->m_stop.cno))
 				return (1);
 			if (vp->m_start.cno <= vp->m_stop.cno)
 				F_SET(vp, VM_LMODE);
 		}
 
 	cnt = F_ISSET(vp, VC_C1SET) ? vp->count : 1;
-	for (lno = vp->m_start.lno;
-	    (p = file_gline(sp, ep, ++lno, &len)) != NULL;) {
+	for (lno = vp->m_start.lno; !db_get(sp, ++lno, 0, &p, &len);) {
 		if (len == 0)
 			continue;
 		if (p[0] == '{' || ISMOTION(vp) && p[0] == '}') {
@@ -137,7 +109,7 @@ v_sectionf(sp, ep, vp)
 		/*
 		 * !!!
 		 * Historic documentation (USD:15-11, 4.2) said that formfeed
-		 * characters (^L) in the first column delimited sections.  
+		 * characters (^L) in the first column delimited sections.
 		 * The historic code mentions formfeed characters, but never
 		 * implements them.  Seems reasonable, do it.
 		 */
@@ -169,18 +141,18 @@ adjust2:			vp->m_stop.lno = lno;
 
 	/* If moving forward, reached EOF, check to see if we started there. */
 	if (vp->m_start.lno == lno - 1) {
-		v_eof(sp, ep, NULL);
+		v_eof(sp, NULL);
 		return (1);
 	}
 
-ret1:	if (file_gline(sp, ep, --lno, &len) == NULL)
+ret1:	if (db_get(sp, --lno, DBG_FATAL, NULL, &len))
 		return (1);
 	vp->m_stop.lno = lno;
 	vp->m_stop.cno = len ? len - 1 : 0;
 
 	/*
-	 * Non-motion commands go to the end of the range.  VC_D and
-	 * VC_Y stay at the start of the range.  Ignore VC_C and VC_DEF.
+	 * Non-motion commands go to the end of the range.  Delete and
+	 * yank stay at the start of the range.  Ignore others.
 	 */
 ret2:	if (ISMOTION(vp)) {
 		vp->m_final = vp->m_start;
@@ -194,12 +166,13 @@ ret2:	if (ISMOTION(vp)) {
 /*
  * v_sectionb -- [count][[
  *	Move backward count sections/functions.
+ *
+ * PUBLIC: int v_sectionb __P((SCR *, VICMD *));
  */
 int
-v_sectionb(sp, ep, vp)
+v_sectionb(sp, vp)
 	SCR *sp;
-	EXF *ep;
-	VICMDARG *vp;
+	VICMD *vp;
 {
 	size_t len;
 	recno_t cnt, lno;
@@ -216,8 +189,7 @@ v_sectionb(sp, ep, vp)
 		return (1);
 
 	cnt = F_ISSET(vp, VC_C1SET) ? vp->count : 1;
-	for (lno = vp->m_start.lno;
-	    (p = file_gline(sp, ep, --lno, &len)) != NULL;) {
+	for (lno = vp->m_start.lno; !db_get(sp, --lno, 0, &p, &len);) {
 		if (len == 0)
 			continue;
 		if (p[0] == '{') {
@@ -228,7 +200,7 @@ v_sectionb(sp, ep, vp)
 		/*
 		 * !!!
 		 * Historic documentation (USD:15-11, 4.2) said that formfeed
-		 * characters (^L) in the first column delimited sections.  
+		 * characters (^L) in the first column delimited sections.
 		 * The historic code mentions formfeed characters, but never
 		 * implements them.  Seems reasonable, do it.
 		 */

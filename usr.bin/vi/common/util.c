@@ -1,63 +1,36 @@
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1991, 1993, 1994, 1995, 1996
+ *	Keith Bostic.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * See the LICENSE file for redistribution information.
  */
 
+#include "config.h"
+
 #ifndef lint
-static char sccsid[] = "@(#)util.c	8.74 (Berkeley) 8/17/94";
+static const char sccsid[] = "@(#)util.c	10.10 (Berkeley) 3/6/96";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/queue.h>
-#include <sys/time.h>
 
 #include <bitstring.h>
+#include <errno.h>
 #include <limits.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <termios.h>
 #include <unistd.h>
 
-#include "compat.h"
-#include <curses.h>
-#include <db.h>
-#include <regex.h>
-
-#include "vi.h"
+#include "common.h"
 
 /*
  * binc --
  *	Increase the size of a buffer.
+ *
+ * PUBLIC: void *binc __P((SCR *, void *, size_t *, size_t));
  */
 void *
 binc(sp, bp, bsizep, min)
@@ -96,30 +69,26 @@ binc(sp, bp, bsizep, min)
  *	Set the column number of the first non-blank character
  *	including or after the starting column.  On error, set
  *	the column to 0, it's safest.
+ *
+ * PUBLIC: int nonblank __P((SCR *, recno_t, size_t *));
  */
 int
-nonblank(sp, ep, lno, cnop)
+nonblank(sp, lno, cnop)
 	SCR *sp;
-	EXF *ep;
 	recno_t lno;
 	size_t *cnop;
 {
 	char *p;
 	size_t cnt, len, off;
+	int isempty;
 
 	/* Default. */
 	off = *cnop;
 	*cnop = 0;
 
-	/* Get the line. */
-	if ((p = file_gline(sp, ep, lno, &len)) == NULL) {
-		if (file_lline(sp, ep, &lno))
-			return (1);
-		if (lno == 0)
-			return (0);
-		GETLINE_ERR(sp, lno);
-		return (1);
-	}
+	/* Get the line, succeeding in an empty file. */
+	if (db_eget(sp, lno, &p, &len, &isempty))
+		return (!isempty);
 
 	/* Set the offset. */
 	if (len == 0 || off >= len)
@@ -136,6 +105,8 @@ nonblank(sp, ep, lno, cnop)
 /*
  * tail --
  *	Return tail of a path.
+ *
+ * PUBLIC: char *tail __P((char *));
  */
 char *
 tail(path)
@@ -149,46 +120,15 @@ tail(path)
 }
 
 /*
- * set_alt_name --
- *	Set the alternate file name.
- *
- * Swap the alternate file name.  It's a routine because I wanted some place
- * to hang this comment.  The alternate file name (normally referenced using
- * the special character '#' during file expansion) is set by many
- * operations.  In the historic vi, the commands "ex", and "edit" obviously
- * set the alternate file name because they switched the underlying file.
- * Less obviously, the "read", "file", "write" and "wq" commands set it as
- * well.  In this implementation, some new commands have been added to the
- * list.  Where it gets interesting is that the alternate file name is set
- * multiple times by some commands.  If an edit attempt fails (for whatever
- * reason, like the current file is modified but as yet unwritten), it is
- * set to the file name that the user was unable to edit.  If the edit
- * succeeds, it is set to the last file name that was edited.  Good fun.
- *
- * If the user edits a temporary file, there are time when there isn't an
- * alternative file name.  A name argument of NULL turns it off.
- */
-void
-set_alt_name(sp, name)
-	SCR *sp;
-	char *name;
-{
-	if (sp->alt_name != NULL)
-		free(sp->alt_name);
-	if (name == NULL)
-		sp->alt_name = NULL;
-	else if ((sp->alt_name = strdup(name)) == NULL)
-		msgq(sp, M_SYSERR, NULL);
-}
-
-/*
  * v_strdup --
  *	Strdup for wide character strings with an associated length.
+ *
+ * PUBLIC: CHAR_T *v_strdup __P((SCR *, const CHAR_T *, size_t));
  */
 CHAR_T *
 v_strdup(sp, str, len)
 	SCR *sp;
-	CHAR_T *str;
+	const CHAR_T *str;
 	size_t len;
 {
 	CHAR_T *copy;
@@ -202,12 +142,89 @@ v_strdup(sp, str, len)
 }
 
 /*
- * vi_putchar --
- *	Functional version of putchar, for tputs.
+ * nget_uslong --
+ *      Get an unsigned long, checking for overflow.
+ *
+ * PUBLIC: enum nresult nget_uslong __P((u_long *, const char *, char **, int));
+ */
+enum nresult
+nget_uslong(valp, p, endp, base)
+	u_long *valp;
+	const char *p;
+	char **endp;
+	int base;
+{
+	errno = 0;
+	*valp = strtoul(p, endp, base);
+	if (errno == 0)
+		return (NUM_OK);
+	if (errno == ERANGE && *valp == ULONG_MAX)
+		return (NUM_OVER);
+	return (NUM_ERR);
+}
+
+/*
+ * nget_slong --
+ *      Convert a signed long, checking for overflow and underflow.
+ *
+ * PUBLIC: enum nresult nget_slong __P((long *, const char *, char **, int));
+ */
+enum nresult
+nget_slong(valp, p, endp, base)
+	long *valp;
+	const char *p;
+	char **endp;
+	int base;
+{
+	errno = 0;
+	*valp = strtol(p, endp, base);
+	if (errno == 0)
+		return (NUM_OK);
+	if (errno == ERANGE) {
+		if (*valp == LONG_MAX)
+			return (NUM_OVER);
+		if (*valp == LONG_MIN)
+			return (NUM_UNDER);
+	}
+	return (NUM_ERR);
+}
+
+#ifdef DEBUG
+#ifdef __STDC__
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
+
+/*
+ * TRACE --
+ *	debugging trace routine.
+ *
+ * PUBLIC: void TRACE __P((SCR *, const char *, ...));
  */
 void
-vi_putchar(ch)
-	int ch;
+#ifdef __STDC__
+TRACE(SCR *sp, const char *fmt, ...)
+#else
+TRACE(sp, fmt, va_alist)
+	SCR *sp;
+	char *fmt;
+	va_dcl
+#endif
 {
-	(void)putchar(ch);
+	FILE *tfp;
+	va_list ap;
+
+	if ((tfp = sp->gp->tracefp) == NULL)
+		return;
+#ifdef __STDC__
+	va_start(ap, fmt);
+#else
+	va_start(ap);
+#endif
+	(void)vfprintf(tfp, fmt, ap);
+	va_end(ap);
+
+	(void)fflush(tfp);
 }
+#endif

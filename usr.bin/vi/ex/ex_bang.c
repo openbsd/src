@@ -1,38 +1,16 @@
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1992, 1993, 1994, 1995, 1996
+ *	Keith Bostic.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * See the LICENSE file for redistribution information.
  */
 
+#include "config.h"
+
 #ifndef lint
-static char sccsid[] = "@(#)ex_bang.c	8.35 (Berkeley) 8/17/94";
+static const char sccsid[] = "@(#)ex_bang.c	10.32 (Berkeley) 5/18/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -42,20 +20,13 @@ static char sccsid[] = "@(#)ex_bang.c	8.35 (Berkeley) 8/17/94";
 #include <bitstring.h>
 #include <errno.h>
 #include <limits.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <termios.h>
 #include <unistd.h>
 
-#include "compat.h"
-#include <db.h>
-#include <regex.h>
-
-#include "vi.h"
-#include "excmd.h"
-#include "../sex/sex_screen.h"
+#include "../common/common.h"
+#include "../vi/vi.h"
 
 /*
  * ex_bang -- :[line [,line]] ! command
@@ -72,29 +43,29 @@ static char sccsid[] = "@(#)ex_bang.c	8.35 (Berkeley) 8/17/94";
  * There's some fairly amazing slop in this routine to make the different
  * ways of getting here display the right things.  It took a long time to
  * get it right (wrong?), so be careful.
+ *
+ * PUBLIC: int ex_bang __P((SCR *, EXCMD *));
  */
 int
-ex_bang(sp, ep, cmdp)
+ex_bang(sp, cmdp)
 	SCR *sp;
-	EXF *ep;
-	EXCMDARG *cmdp;
+	EXCMD *cmdp;
 {
 	enum filtertype ftype;
 	ARGS *ap;
 	EX_PRIVATE *exp;
 	MARK rm;
 	recno_t lno;
-	size_t blen;
 	int rval;
-	char *bp, *msg;
+	const char *msg;
 
 	ap = cmdp->argv[0];
 	if (ap->len == 0) {
-		msgq(sp, M_ERR, "Usage: %s", cmdp->cmd->usage);
+		ex_emsg(sp, cmdp->cmd->usage, EXM_USAGE);
 		return (1);
 	}
 
-	/* Set the last bang command. */
+	/* Set the "last bang command" remembered value. */
 	exp = EXP(sp);
 	if (exp->lastbcomm != NULL)
 		free(exp->lastbcomm);
@@ -104,34 +75,45 @@ ex_bang(sp, ep, cmdp)
 	}
 
 	/*
-	 * If the command was modified by the expansion, we redisplay it.
-	 * Redisplaying it in vi mode is tricky, and handled separately
-	 * in each case below.  If we're in ex mode, it's easy, so we just
-	 * do it here.
+	 * If the command was modified by the expansion, it was historically
+	 * redisplayed.
 	 */
-	bp = NULL;
-	if (F_ISSET(cmdp, E_MODIFY) && !F_ISSET(sp, S_EXSILENT)) {
-		if (IN_EX_MODE(sp)) {
-			(void)ex_printf(EXCOOKIE, "!%s\n", ap->bp);
-			(void)ex_fflush(EXCOOKIE);
-		}
+	if (F_ISSET(cmdp, E_MODIFY) && !F_ISSET(sp, SC_EX_SILENT)) {
 		/*
-		 * Vi: Display the command if modified.  Historic vi displayed
+		 * Display the command if modified.  Historic ex/vi displayed
 		 * the command if it was modified due to file name and/or bang
-		 * expansion.  If piping lines, it was immediately overwritten
-		 * by any error or line change reporting.  We don't the user to
-		 * have to page through the responses, so we only post it until
-		 * it's erased by something else.  Otherwise, pass it on to the
-		 * ex_exec_proc routine to display after the screen has been
-		 * cleaned up.
+		 * expansion.  If piping lines in vi, it would be immediately
+		 * overwritten by any error or line change reporting.
 		 */
-		if (IN_VI_MODE(sp)) {
-			GET_SPACE_RET(sp, bp, blen, ap->len + 3);
-			bp[0] = '!';
-			memmove(bp + 1, ap->bp, ap->len);
-			bp[ap->len + 1] = '\n';
-			bp[ap->len + 2] = '\0';
+		if (F_ISSET(sp, SC_VI))
+			vs_update(sp, "!", ap->bp);
+		else {
+			(void)ex_printf(sp, "!%s\n", ap->bp);
+			(void)ex_fflush(sp);
 		}
+	}
+
+	/*
+	 * If no addresses were specified, run the command.  If the file has
+	 * been modified and autowrite is set, write the file back.  If the
+	 * file has been modified, autowrite is not set and the warn option is
+	 * set, tell the user about the file.
+	 */
+	if (cmdp->addrcnt == 0) {
+		msg = NULL;
+		if (F_ISSET(sp->ep, F_MODIFIED))
+			if (O_ISSET(sp, O_AUTOWRITE)) {
+				if (file_aw(sp, FS_ALL))
+					return (0);
+			} else if (O_ISSET(sp, O_WARN) &&
+			    !F_ISSET(sp, SC_EX_SILENT))
+				msg = msg_cat(sp,
+				    "303|File modified since last write.",
+				    NULL);
+
+		/* If we're still in a vi screen, move out explicitly. */
+		(void)ex_exec_proc(sp,
+		    cmdp, ap->bp, msg, !F_ISSET(sp, SC_EX | SC_SCR_EXWROTE));
 	}
 
 	/*
@@ -139,37 +121,37 @@ ex_bang(sp, ep, cmdp)
 	 * command.
 	 *
 	 * Historically, vi lines were replaced by both the stdout and stderr
-	 * lines of the command, but ex by only the stdout lines.  This makes
-	 * no sense to me, so nvi makes it consistent for both, and matches
-	 * vi's historic behavior.
+	 * lines of the command, but ex lines by only the stdout lines.  This
+	 * makes no sense to me, so nvi makes it consistent for both, and
+	 * matches vi's historic behavior.
 	 */
-	if (cmdp->addrcnt != 0) {
-		/* Autoprint is set historically, even if the command fails. */
-		F_SET(exp, EX_AUTOPRINT);
+	else {
+		NEEDFILE(sp, cmdp);
 
-		/* Vi gets a busy message. */
-		if (bp != NULL)
-			(void)sp->s_busy(sp, bp);
+		/* Autoprint is set historically, even if the command fails. */
+		F_SET(cmdp, E_AUTOPRINT);
 
 		/*
 		 * !!!
-		 * Historical vi permitted "!!" in an empty file.  When it
-		 * happens, we get called with two addresses of 1,1 and a
+		 * Historical vi permitted "!!" in an empty file.  When this
+		 * happens, we arrive here with two addresses of 1,1 and a
 		 * bad attitude.  The simple solution is to turn it into a
-		 * FILTER_READ operation, but that means that we don't put
-		 * an empty line into the default cut buffer as did historic
-		 * vi.  Tough.
+		 * FILTER_READ operation, with the exception that stdin isn't
+		 * opened for the utility, and the cursor position isn't the
+		 * same.  The only historic glitch (I think) is that we don't
+		 * put an empty line into the default cut buffer, as historic
+		 * vi did.  Imagine, if you can, my disappointment.
 		 */
-		ftype = FILTER;
+		ftype = FILTER_BANG;
 		if (cmdp->addr1.lno == 1 && cmdp->addr2.lno == 1) {
-			if (file_lline(sp, ep, &lno))
+			if (db_last(sp, &lno))
 				return (1);
 			if (lno == 0) {
 				cmdp->addr1.lno = cmdp->addr2.lno = 0;
-				ftype = FILTER_READ;
+				ftype = FILTER_RBANG;
 			}
 		}
-		rval = filtercmd(sp, ep,
+		rval = ex_filter(sp, cmdp,
 		    &cmdp->addr1, &cmdp->addr2, &rm, ap->bp, ftype);
 
 		/*
@@ -181,57 +163,19 @@ ex_bang(sp, ep, cmdp)
 		 * did a backward motion it didn't.  And, if you followed a
 		 * backward motion with a forward motion, it wouldn't move to
 		 * the nonblank for either.  Going to the nonblank generally
-		 * seems more useful, so we do it.
+		 * seems more useful and consistent, so we do it.
 		 */
-		if (rval == 0) {
-			sp->lno = rm.lno;
-			if (IN_VI_MODE(sp)) {
-				sp->cno = 0;
-				(void)nonblank(sp, ep, sp->lno, &sp->cno);
-			}
-		}
-		goto ret2;
+		sp->lno = rm.lno;
+		if (F_ISSET(sp, SC_VI)) {
+			sp->cno = 0;
+			(void)nonblank(sp, sp->lno, &sp->cno);
+		} else
+			sp->cno = rm.cno;
 	}
 
-	/*
-	 * If no addresses were specified, run the command.  If the file
-	 * has been modified and autowrite is set, write the file back.
-	 * If the file has been modified, autowrite is not set and the
-	 * warn option is set, tell the user about the file.
-	 */
-	msg = NULL;
-	if (F_ISSET(ep, F_MODIFIED))
-		if (O_ISSET(sp, O_AUTOWRITE)) {
-			if (file_write(sp, ep, NULL, NULL, NULL, FS_ALL)) {
-				rval = 1;
-				goto ret1;
-			}
-		} else if (O_ISSET(sp, O_WARN) && !F_ISSET(sp, S_EXSILENT))
-			msg = "File modified since last write.\n";
-
-	/* Run the command. */
-	rval = ex_exec_proc(sp, ap->bp, bp, msg);
-
-	/* Vi requires user permission to continue. */
-	if (IN_VI_MODE(sp))
-		F_SET(sp, S_CONTINUE);
-
-ret2:	if (IN_EX_MODE(sp)) {
-		/*
-		 * Put ex error messages out so they aren't confused with
-		 * the autoprint output.
-		 */
-		if (rval)
-			(void)sex_refresh(sp, sp->ep);
-
-		/* Ex terminates with a bang, even if the command fails. */
-		if (!F_ISSET(sp, S_EXSILENT))
-			(void)write(STDOUT_FILENO, "!\n", 2);
-	}
-
-	/* Free the extra space. */
-ret1:	if (bp != NULL)
-		FREE_SPACE(sp, bp, blen);
+	/* Ex terminates with a bang, even if the command fails. */
+	if (!F_ISSET(sp, SC_VI) && !F_ISSET(sp, SC_EX_SILENT))
+		(void)ex_puts(sp, "!\n");
 
 	/*
 	 * XXX

@@ -1,36 +1,12 @@
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1991, 1993, 1994, 1995, 1996
+ *	Keith Bostic.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ * See the LICENSE file for redistribution information.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- *	@(#)cut.h	8.19 (Berkeley) 7/28/94
+ *	@(#)cut.h	10.5 (Berkeley) 4/3/96
  */
 
 typedef struct _texth TEXTH;		/* TEXT list head structure. */
@@ -55,7 +31,8 @@ struct _text {				/* Text: a linked list of lines. */
 	size_t	 len;			/* Line length. */
 
 	/* These fields are used by the vi text input routine. */
-	recno_t	 lno;			/* 1-N: line number. */
+	recno_t	 lno;			/* 1-N: file line. */
+	size_t	 cno;			/* 0-N: file character in line. */
 	size_t	 ai;			/* 0-N: autoindent bytes. */
 	size_t	 insert;		/* 0-N: bytes to insert (push). */
 	size_t	 offset;		/* 0-N: initial, unerasable chars. */
@@ -64,9 +41,21 @@ struct _text {				/* Text: a linked list of lines. */
 	size_t	 sv_cno;		/* 0-N: Saved line cursor. */
 	size_t	 sv_len;		/* 0-N: Saved line length. */
 
-	/* These fields are used by the ex text input routine. */
-	u_char	*wd;			/* Width buffer. */
-	size_t	 wd_len;		/* Width buffer length. */
+	/*
+	 * These fields returns information from the vi text input routine.
+	 *
+	 * The termination condition.  Note, this field is only valid if the
+	 * text input routine returns success.
+	 *	TERM_BS:	User backspaced over the prompt.
+	 *	TERM_CEDIT:	User entered <edit-char>.
+	 *	TERM_CR:	User entered <carriage-return>; no data.
+	 *	TERM_ESC:	User entered <escape>; no data.
+	 *	TERM_OK:	Data available.
+	 *	TERM_SEARCH:	Incremental search.
+	 */
+	enum {
+	    TERM_BS, TERM_CEDIT, TERM_CR, TERM_ESC, TERM_OK, TERM_SEARCH
+	} term;
 };
 
 /*
@@ -74,23 +63,15 @@ struct _text {				/* Text: a linked list of lines. */
  * Translate upper-case buffer names to lower-case buffer names.
  */
 #define	CBNAME(sp, cbp, nch) {						\
-	CHAR_T __name;							\
-	__name = isupper(nch) ? tolower(nch) : (nch);			\
+	CHAR_T L__name;							\
+	L__name = isupper(nch) ? tolower(nch) : (nch);			\
 	for (cbp = sp->gp->cutq.lh_first;				\
 	    cbp != NULL; cbp = cbp->q.le_next)				\
-		if (cbp->name == __name)				\
+		if (cbp->name == L__name)				\
 			break;						\
 }
 
+/* Flags to the cut() routine. */
 #define	CUT_LINEMODE	0x01		/* Cut in line mode. */
 #define	CUT_NUMOPT	0x02		/* Numeric buffer: optional. */
 #define	CUT_NUMREQ	0x04		/* Numeric buffer: required. */
-int	 cut __P((SCR *, EXF *, CHAR_T *, MARK *, MARK *, int));
-
-int	 cut_line __P((SCR *, EXF *, recno_t, size_t, size_t, CB *));
-int	 delete __P((SCR *, EXF *, MARK *, MARK *, int));
-int	 put __P((SCR *, EXF *, CB *, CHAR_T *, MARK *, MARK *, int));
-
-void	 text_free __P((TEXT *));
-TEXT	*text_init __P((SCR *, const char *, size_t, size_t));
-void	 text_lfree __P((TEXTH *));

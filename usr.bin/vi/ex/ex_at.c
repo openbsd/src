@@ -1,118 +1,127 @@
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1992, 1993, 1994, 1995, 1996
+ *	Keith Bostic.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * See the LICENSE file for redistribution information.
  */
 
+#include "config.h"
+
 #ifndef lint
-static char sccsid[] = "@(#)ex_at.c	8.27 (Berkeley) 8/17/94";
+static const char sccsid[] = "@(#)ex_at.c	10.10 (Berkeley) 4/27/96";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/queue.h>
-#include <sys/time.h>
 
 #include <bitstring.h>
 #include <ctype.h>
 #include <limits.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <termios.h>
 
-#include "compat.h"
-#include <db.h>
-#include <regex.h>
-
-#include "vi.h"
-#include "excmd.h"
+#include "../common/common.h"
 
 /*
  * ex_at -- :@[@ | buffer]
  *	    :*[* | buffer]
  *
  *	Execute the contents of the buffer.
+ *
+ * PUBLIC: int ex_at __P((SCR *, EXCMD *));
  */
 int
-ex_at(sp, ep, cmdp)
+ex_at(sp, cmdp)
 	SCR *sp;
-	EXF *ep;
-	EXCMDARG *cmdp;
+	EXCMD *cmdp;
 {
 	CB *cbp;
-	EX_PRIVATE *exp;
+	CHAR_T name;
+	EXCMD *ecp;
+	RANGE *rp;
 	TEXT *tp;
-	int name;
-
-	exp = EXP(sp);
+	size_t len;
+	char *p;
 
 	/*
 	 * !!!
 	 * Historically, [@*]<carriage-return> and [@*][@*] executed the most
-	 * recently executed buffer in ex mode.  In vi mode, only @@ repeated
-	 * the last buffer.  We change historic practice and make @* work from
-	 * vi mode as well, it's simpler and more consistent.
+	 * recently executed buffer in ex mode.
 	 */
-	name = F_ISSET(cmdp, E_BUFFER) ? cmdp->buffer : '@';
+	name = FL_ISSET(cmdp->iflags, E_C_BUFFER) ? cmdp->buffer : '@';
 	if (name == '@' || name == '*') {
-		if (!exp->at_lbuf_set) {
-			msgq(sp, M_ERR, "No previous buffer to execute");
+		if (!F_ISSET(sp, SC_AT_SET)) {
+			ex_emsg(sp, NULL, EXM_NOPREVBUF);
 			return (1);
 		}
-		name = exp->at_lbuf;
+		name = sp->at_lbuf;
 	}
+	sp->at_lbuf = name;
+	F_SET(sp, SC_AT_SET);
 
 	CBNAME(sp, cbp, name);
 	if (cbp == NULL) {
-		msgq(sp, M_ERR, "Buffer %s is empty", KEY_NAME(sp, name));
+		ex_emsg(sp, KEY_NAME(sp, name), EXM_EMPTYBUF);
 		return (1);
 	}
 
-	/* Save for reuse. */
-	exp->at_lbuf = name;
-	exp->at_lbuf_set = 1;
-
 	/*
 	 * !!!
-	 * Historic practice is that if the buffer was cut in line mode,
-	 * <newlines> were appended to each line as it was pushed onto
-	 * the stack.  If the buffer was cut in character mode, <newlines>
-	 * were appended to all lines but the last one.
+	 * Historically the @ command took a range of lines, and the @ buffer
+	 * was executed once per line.  The historic vi could be trashed by
+	 * this because it didn't notice if the underlying file changed, or,
+	 * for that matter, if there were no more lines on which to operate.
+	 * For example, take a 10 line file, load "%delete" into a buffer,
+	 * and enter :8,10@<buffer>.
+	 *
+	 * The solution is a bit tricky.  If the user specifies a range, take
+	 * the same approach as for global commands, and discard the command
+	 * if exit or switch to a new file/screen.  If the user doesn't specify
+	 * the  range, continue to execute after a file/screen switch, which
+	 * means @ buffers are still useful in a multi-screen environment.
 	 */
-	for (tp = cbp->textq.cqh_last;
+	CALLOC_RET(sp, ecp, EXCMD *, 1, sizeof(EXCMD));
+	CIRCLEQ_INIT(&ecp->rq);
+	CALLOC_RET(sp, rp, RANGE *, 1, sizeof(RANGE));
+	rp->start = cmdp->addr1.lno;
+	if (F_ISSET(cmdp, E_ADDR_DEF)) {
+		rp->stop = rp->start;
+		FL_SET(ecp->agv_flags, AGV_AT_NORANGE);
+	} else {
+		rp->stop = cmdp->addr2.lno;
+		FL_SET(ecp->agv_flags, AGV_AT);
+	}
+	CIRCLEQ_INSERT_HEAD(&ecp->rq, rp, q);
+
+	/*
+	 * Buffers executed in ex mode or from the colon command line in vi
+	 * were ex commands.  We can't push it on the terminal queue, since
+	 * it has to be executed immediately, and we may be in the middle of
+	 * an ex command already.  Push the command on the ex command stack.
+	 * Build two copies of the command.  We need two copies because the
+	 * ex parser may step on the command string when it's parsing it.
+	 */
+	for (len = 0, tp = cbp->textq.cqh_last;
 	    tp != (void *)&cbp->textq; tp = tp->q.cqe_prev)
-		if ((F_ISSET(cbp, CB_LMODE) ||
-		    tp->q.cqe_next != (void *)&cbp->textq) &&
-		    term_push(sp, "\n", 1, 0) ||
-		    term_push(sp, tp->lb, tp->len, 0))
-			return (1);
+		len += tp->len + 1;
+
+	/* See ex.h for a discussion of SEARCH_TERMINATION. */
+	MALLOC_RET(sp, ecp->cp, char *, len * 2 + SEARCH_TERMINATION);
+	ecp->o_cp = ecp->cp;
+	ecp->o_clen = len;
+	ecp->cp[len] = '\0';
+
+	/* Copy the buffer into the command space. */
+	for (p = ecp->cp + len + SEARCH_TERMINATION, tp = cbp->textq.cqh_last;
+	    tp != (void *)&cbp->textq; tp = tp->q.cqe_prev) {
+		memmove(p, tp->lb, tp->len);
+		p += tp->len;
+		*p++ = '\n';
+	}
+
+	LIST_INSERT_HEAD(&sp->gp->ecq, ecp, q);
 	return (0);
 }

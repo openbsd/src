@@ -1,38 +1,16 @@
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1992, 1993, 1994, 1995, 1996
+ *	Keith Bostic.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * See the LICENSE file for redistribution information.
  */
 
+#include "config.h"
+
 #ifndef lint
-static char sccsid[] = "@(#)ex_read.c	8.41 (Berkeley) 8/17/94";
+static const char sccsid[] = "@(#)ex_read.c	10.31 (Berkeley) 5/8/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -44,52 +22,50 @@ static char sccsid[] = "@(#)ex_read.c	8.41 (Berkeley) 8/17/94";
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <termios.h>
 
-#include "compat.h"
-#include <db.h>
-#include <regex.h>
-
-#include "vi.h"
-#include "excmd.h"
+#include "../common/common.h"
+#include "../vi/vi.h"
 
 /*
  * ex_read --	:read [file]
  *		:read [!cmd]
- * Read from a file or utility.
+ *	Read from a file or utility.
  *
  * !!!
  * Historical vi wouldn't undo a filter read, for no apparent reason.
+ *
+ * PUBLIC: int ex_read __P((SCR *, EXCMD *));
  */
 int
-ex_read(sp, ep, cmdp)
+ex_read(sp, cmdp)
 	SCR *sp;
-	EXF *ep;
-	EXCMDARG *cmdp;
+	EXCMD *cmdp;
 {
+	enum { R_ARG, R_EXPANDARG, R_FILTER } which;
 	struct stat sb;
 	CHAR_T *arg, *name;
 	EX_PRIVATE *exp;
 	FILE *fp;
+	FREF *frp;
+	GS *gp;
 	MARK rm;
 	recno_t nlines;
-	size_t arglen, blen, len;
-	int btear, farg, rval;
+	size_t arglen;
+	int argc, rval;
 	char *p;
 
+	gp = sp->gp;
+
 	/*
-	 *  0 args: we're done.
-	 *  1 args: check for "read !arg".
-	 *  2 args: check for "read ! arg".
-	 * >2 args: object, too many args.
+	 * 0 args: read the current pathname.
+	 * 1 args: check for "read !arg".
 	 */
-	farg = 0;
 	switch (cmdp->argc) {
 	case 0:
+		which = R_ARG;
 		break;
 	case 1:
 		arg = cmdp->argv[0]->bp;
@@ -97,104 +73,166 @@ ex_read(sp, ep, cmdp)
 		if (*arg == '!') {
 			++arg;
 			--arglen;
-			farg = 1;
-		}
+			which = R_FILTER;
+
+			/* Secure means no shell access. */
+			if (O_ISSET(sp, O_SECURE)) {
+				ex_emsg(sp, cmdp->cmd->name, EXM_SECURE_F);
+				return (1);
+			}
+		} else
+			which = R_EXPANDARG;
 		break;
-	case 2:
-		if (cmdp->argv[0]->len == 1 && cmdp->argv[0]->bp[0] == '!')  {
-			arg = cmdp->argv[1]->bp;
-			arglen = cmdp->argv[1]->len;
-			farg = 2;
-			break;
-		}
-		/* FALLTHROUGH */
 	default:
-		goto badarg;
+		abort();
+		/* NOTREACHED */
 	}
 
-	if (farg != 0) {
-		/* File name and bang expand the user's argument. */
-		if (argv_exp1(sp, ep, cmdp, arg, arglen, 1))
+	/* Load a temporary file if no file being edited. */
+	if (sp->ep == NULL) {
+		if ((frp = file_add(sp, NULL)) == NULL)
 			return (1);
+		if (file_init(sp, frp, NULL, 0))
+			return (1);
+	}
 
-		/* If argc unchanged, there wasn't anything to expand. */
-		if (cmdp->argc == farg)
-			goto usage;
+	switch (which) {
+	case R_FILTER:
+		/*
+		 * File name and bang expand the user's argument.  If
+		 * we don't get an additional argument, it's illegal.
+		 */
+		argc = cmdp->argc;
+		if (argv_exp1(sp, cmdp, arg, arglen, 1))
+			return (1);
+		if (argc == cmdp->argc) {
+			ex_emsg(sp, cmdp->cmd->usage, EXM_USAGE);
+			return (1);
+		}
+		argc = cmdp->argc - 1;
 
 		/* Set the last bang command. */
 		exp = EXP(sp);
 		if (exp->lastbcomm != NULL)
 			free(exp->lastbcomm);
-		if ((exp->lastbcomm = strdup(cmdp->argv[farg]->bp)) == NULL) {
+		if ((exp->lastbcomm =
+		    strdup(cmdp->argv[argc]->bp)) == NULL) {
 			msgq(sp, M_SYSERR, NULL);
 			return (1);
 		}
 
-		/* Redisplay the user's argument if it's changed. */
-		if (F_ISSET(cmdp, E_MODIFY) && IN_VI_MODE(sp)) {
-			len = cmdp->argv[farg]->len;
-			GET_SPACE_RET(sp, p, blen, len + 2);
-			p[0] = '!';
-			memmove(p + 1,
-			    cmdp->argv[farg]->bp, cmdp->argv[farg]->len + 1);
-			(void)sp->s_busy(sp, p);
-			FREE_SPACE(sp, p, blen);
+		/*
+		 * Vi redisplayed the user's argument if it changed, ex
+		 * always displayed a !, plus the user's argument if it
+		 * changed.
+		 */
+		if (F_ISSET(sp, SC_VI)) {
+			if (F_ISSET(cmdp, E_MODIFY))
+				(void)vs_update(sp, "!", cmdp->argv[argc]->bp);
+		} else {
+			if (F_ISSET(cmdp, E_MODIFY))
+				(void)ex_printf(sp,
+				    "!%s\n", cmdp->argv[argc]->bp);
+			else
+				(void)ex_puts(sp, "!\n");
+			(void)ex_fflush(sp);
 		}
 
-		if (filtercmd(sp, ep, &cmdp->addr1,
-		    NULL, &rm, cmdp->argv[farg]->bp, FILTER_READ))
+		/*
+		 * Historically, filter reads as the first ex command didn't
+		 * wait for the user. If SC_SCR_EXWROTE not already set, set
+		 * the don't-wait flag.
+		 */
+		if (!F_ISSET(sp, SC_SCR_EXWROTE))
+			F_SET(sp, SC_EX_DONTWAIT);
+
+		/*
+		 * Switch into ex canonical mode.  The reason to restore the
+		 * original terminal modes for read filters is so that users
+		 * can do things like ":r! cat /dev/tty".
+		 *
+		 * !!!
+		 * We do not output an extra <newline>, so that we don't touch
+		 * the screen on a normal read.
+		 */
+		if (F_ISSET(sp, SC_VI)) {
+			if (sp->gp->scr_screen(sp, SC_EX)) {
+				ex_emsg(sp, cmdp->cmd->name, EXM_NOCANON_F);
+				return (1);
+			}
+			F_SET(sp, SC_SCR_EX | SC_SCR_EXWROTE);
+		}
+
+		if (ex_filter(sp, cmdp, &cmdp->addr1,
+		    NULL, &rm, cmdp->argv[argc]->bp, FILTER_READ))
 			return (1);
 
 		/* The filter version of read set the autoprint flag. */
-		F_SET(EXP(sp), EX_AUTOPRINT);
+		F_SET(cmdp, E_AUTOPRINT);
 
-		/* If in vi mode, move to the first nonblank. */
+		/*
+		 * If in vi mode, move to the first nonblank.  Might have
+		 * switched into ex mode, so saved the original SC_VI value.
+		 */
 		sp->lno = rm.lno;
-		if (IN_VI_MODE(sp)) {
+		if (F_ISSET(sp, SC_VI)) {
 			sp->cno = 0;
-			(void)nonblank(sp, ep, sp->lno, &sp->cno);
+			(void)nonblank(sp, sp->lno, &sp->cno);
 		}
 		return (0);
-	}
-
-	/* Shell and file name expand the user's argument. */
-	if (argv_exp2(sp, ep, cmdp, arg, arglen, 0))
-		return (1);
-
-	/*
-	 *  0 args: no arguments, read the current file, don't set the
-	 *	    alternate file name.
-	 *  1 args: read it, switching to it or settgin the alternate file
-	 *	    name.
-	 * >1 args: object, too many args.
-	 */
-	switch (cmdp->argc) {
-	case 1:
+	case R_ARG:
 		name = sp->frp->name;
 		break;
-	case 2:
-		name = cmdp->argv[1]->bp;
+	case R_EXPANDARG:
+		if (argv_exp2(sp, cmdp, arg, arglen))
+			return (1);
 		/*
-		 * !!!
-		 * Historically, if you had an "unnamed" file, the read command
-		 * renamed the file.
+		 *  0 args: impossible.
+		 *  1 args: impossible (I hope).
+		 *  2 args: read it.
+		 * >2 args: object, too many args.
+		 *
+		 * The 1 args case depends on the argv_sexp() function refusing
+		 * to return success without at least one non-blank character.
 		 */
-		if (F_ISSET(sp->frp, FR_TMPFILE) &&
-		    !F_ISSET(sp->frp, FR_READNAMED)) {
-			if ((p = v_strdup(sp,
-			    cmdp->argv[1]->bp, cmdp->argv[1]->len)) != NULL) {
-				free(sp->frp->name);
-				sp->frp->name = p;
-			}
-			F_SET(sp->frp, FR_NAMECHANGE | FR_READNAMED);
-		} else
-			set_alt_name(sp, name);
+		switch (cmdp->argc) {
+		case 0:
+		case 1:
+			abort();
+			/* NOTREACHED */
+		case 2:
+			name = cmdp->argv[1]->bp;
+			/*
+			 * !!!
+			 * Historically, the read and write commands renamed
+			 * "unnamed" files, or, if the file had a name, set
+			 * the alternate file name.
+			 */
+			if (F_ISSET(sp->frp, FR_TMPFILE) &&
+			    !F_ISSET(sp->frp, FR_EXNAMED)) {
+				if ((p = v_strdup(sp, cmdp->argv[1]->bp,
+				    cmdp->argv[1]->len)) != NULL) {
+					free(sp->frp->name);
+					sp->frp->name = p;
+				}
+				/*
+				 * The file has a real name, it's no longer a
+				 * temporary, clear the temporary file flags.
+				 */
+				F_CLR(sp->frp, FR_TMPEXIT | FR_TMPFILE);
+				F_SET(sp->frp, FR_NAMECHANGE | FR_EXNAMED);
+
+				/* Notify the screen. */
+				(void)gp->scr_rename(sp);
+			} else
+				set_alt_name(sp, name);
+			break;
+		default:
+			ex_emsg(sp, cmdp->argv[0]->bp, EXM_FILECOUNT);
+			return (1);
+		
+		}
 		break;
-	default:
-badarg:		msgq(sp, M_ERR,
-		    "%s expanded into too many file names", cmdp->argv[0]->bp);
-usage:		msgq(sp, M_ERR, "Usage: %s", cmdp->cmd->usage);
-		return (1);
 	}
 
 	/*
@@ -204,20 +242,20 @@ usage:		msgq(sp, M_ERR, "Usage: %s", cmdp->cmd->usage);
 	 * was no way to "force" it.
 	 */
 	if ((fp = fopen(name, "r")) == NULL || fstat(fileno(fp), &sb)) {
-		msgq(sp, M_SYSERR, "%s", name);
+		msgq_str(sp, M_SYSERR, name, "%s");
 		return (1);
 	}
 	if (!S_ISREG(sb.st_mode)) {
 		(void)fclose(fp);
-		msgq(sp, M_ERR, "Only regular files may be read");
+		msgq(sp, M_ERR, "145|Only regular files may be read");
 		return (1);
 	}
 
-	/* Turn on busy message. */
-	btear = F_ISSET(sp, S_EXSILENT) ? 0 : !busy_on(sp, "Reading...");
-	rval = ex_readfp(sp, ep, name, fp, &cmdp->addr1, &nlines, 1);
-	if (btear)
-		busy_off(sp);
+	/* Try and get a lock. */
+	if (file_lock(sp, NULL, NULL, fileno(fp), 0) == LOCK_UNAVAIL)
+		msgq(sp, M_ERR, "146|%s: read lock was unavailable", name);
+
+	rval = ex_readfp(sp, name, fp, &cmdp->addr1, &nlines, 0);
 
 	/*
 	 * Set the cursor to the first line read in, if anything read
@@ -235,24 +273,27 @@ usage:		msgq(sp, M_ERR, "Usage: %s", cmdp->cmd->usage);
 /*
  * ex_readfp --
  *	Read lines into the file.
+ *
+ * PUBLIC: int ex_readfp __P((SCR *, char *, FILE *, MARK *, recno_t *, int));
  */
 int
-ex_readfp(sp, ep, name, fp, fm, nlinesp, success_msg)
+ex_readfp(sp, name, fp, fm, nlinesp, silent)
 	SCR *sp;
-	EXF *ep;
 	char *name;
 	FILE *fp;
 	MARK *fm;
 	recno_t *nlinesp;
-	int success_msg;
+	int silent;
 {
 	EX_PRIVATE *exp;
+	GS *gp;
 	recno_t lcnt, lno;
 	size_t len;
 	u_long ccnt;			/* XXX: can't print off_t portably. */
-	int rval;
+	int nf, rval;
+	char *p;
 
-	rval = 0;
+	gp = sp->gp;
 	exp = EXP(sp);
 
 	/*
@@ -261,40 +302,45 @@ ex_readfp(sp, ep, name, fp, fm, nlinesp, success_msg)
 	 */
 	ccnt = 0;
 	lcnt = 0;
+	p = "147|Reading...";
 	for (lno = fm->lno; !ex_getline(sp, fp, &len); ++lno, ++lcnt) {
-		if (INTERRUPTED(sp)) {
-			if (!success_msg)
-				msgq(sp, M_INFO, "Interrupted");
-			break;
+		if ((lcnt + 1) % INTERRUPT_CHECK == 0) {
+			if (INTERRUPTED(sp))
+				break;
+			if (!silent) {
+				gp->scr_busy(sp, p,
+				    p == NULL ? BUSY_UPDATE : BUSY_ON);
+				p = NULL;
+			}
 		}
-		if (file_aline(sp, ep, 1, lno, exp->ibp, len)) {
-			rval = 1;
-			break;
-		}
+		if (db_append(sp, 1, lno, exp->ibp, len))
+			goto err;
 		ccnt += len;
 	}
 
-	if (ferror(fp)) {
-		msgq(sp, M_SYSERR, "%s", name);
-		rval = 1;
-	}
-
-	if (fclose(fp)) {
-		msgq(sp, M_SYSERR, "%s", name);
-		return (1);
-	}
-
-	if (rval)
-		return (1);
+	if (ferror(fp) || fclose(fp))
+		goto err;
 
 	/* Return the number of lines read in. */
 	if (nlinesp != NULL)
 		*nlinesp = lcnt;
 
-	if (success_msg)
-		msgq(sp, M_INFO, "%s%s: %lu line%s, %lu characters",
-		    INTERRUPTED(sp) ? "Interrupted read: " : "",
-		    name, lcnt, lcnt == 1 ? "" : "s", ccnt);
+	if (!silent) {
+		p = msg_print(sp, name, &nf);
+		msgq(sp, M_INFO,
+		    "148|%s: %lu lines, %lu characters", p, lcnt, ccnt);
+		if (nf)
+			FREE_SPACE(sp, p, 0);
+	}
 
-	return (0);
+	rval = 0;
+	if (0) {
+err:		msgq_str(sp, M_SYSERR, name, "%s");
+		(void)fclose(fp);
+		rval = 1;
+	}
+
+	if (!silent)
+		gp->scr_busy(sp, NULL, BUSY_OFF);
+	return (rval);
 }

@@ -1,38 +1,16 @@
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1992, 1993, 1994, 1995, 1996
+ *	Keith Bostic.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * See the LICENSE file for redistribution information.
  */
 
+#include "config.h"
+
 #ifndef lint
-static char sccsid[] = "@(#)v_match.c	8.16 (Berkeley) 8/17/94";
+static const char sccsid[] = "@(#)v_match.c	10.8 (Berkeley) 3/6/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -41,56 +19,45 @@ static char sccsid[] = "@(#)v_match.c	8.16 (Berkeley) 8/17/94";
 
 #include <bitstring.h>
 #include <limits.h>
-#include <signal.h>
 #include <stdio.h>
 #include <string.h>
-#include <termios.h>
 
-#include "compat.h"
-#include <db.h>
-#include <regex.h>
-
+#include "../common/common.h"
 #include "vi.h"
-#include "vcmd.h"
 
 /*
  * v_match -- %
  *	Search to matching character.
+ *
+ * PUBLIC: int v_match __P((SCR *, VICMD *));
  */
 int
-v_match(sp, ep, vp)
+v_match(sp, vp)
 	SCR *sp;
-	EXF *ep;
-	VICMDARG *vp;
+	VICMD *vp;
 {
 	VCS cs;
 	MARK *mp;
-	recno_t lno;
 	size_t cno, len, off;
-	int cnt, matchc, startc, (*gc)__P((SCR *, EXF *, VCS *));
+	int cnt, isempty, matchc, startc, (*gc)__P((SCR *, VCS *));
 	char *p;
 
 	/*
 	 * !!!
 	 * Historic practice; ignore the count.
+	 *
+	 * !!!
+	 * Historical practice was to search for the initial character in the
+	 * forward direction only.
 	 */
-	if ((p = file_gline(sp, ep, vp->m_start.lno, &len)) == NULL) {
-		if (file_lline(sp, ep, &lno))
-			return (1);
-		if (lno == 0)
+	if (db_eget(sp, vp->m_start.lno, &p, &len, &isempty)) {
+		if (isempty)
 			goto nomatch;
-		GETLINE_ERR(sp, vp->m_start.lno);
 		return (1);
 	}
-
-	/*
-	 * !!!
-	 * Historical practice was to search for the initial character
-	 * in the forward direction only.
-	 */
 	for (off = vp->m_start.cno;; ++off) {
 		if (off >= len) {
-nomatch:		msgq(sp, M_BERR, "No match character on this line");
+nomatch:		msgq(sp, M_BERR, "184|No match character on this line");
 			return (1);
 		}
 		switch (startc = p[off]) {
@@ -118,6 +85,14 @@ nomatch:		msgq(sp, M_BERR, "No match character on this line");
 			matchc = '{';
 			gc = cs_prev;
 			break;
+		case '<':
+			matchc = '>';
+			gc = cs_next;
+			break;
+		case '>':
+			matchc = '<';
+			gc = cs_prev;
+			break;
 		default:
 			continue;
 		}
@@ -126,10 +101,10 @@ nomatch:		msgq(sp, M_BERR, "No match character on this line");
 
 	cs.cs_lno = vp->m_start.lno;
 	cs.cs_cno = off;
-	if (cs_init(sp, ep, &cs))
+	if (cs_init(sp, &cs))
 		return (1);
 	for (cnt = 1;;) {
-		if (gc(sp, ep, &cs))
+		if (gc(sp, &cs))
 			return (1);
 		if (cs.cs_flags != 0) {
 			if (cs.cs_flags == CS_EOF || cs.cs_flags == CS_SOF)
@@ -142,7 +117,7 @@ nomatch:		msgq(sp, M_BERR, "No match character on this line");
 			break;
 	}
 	if (cnt) {
-		msgq(sp, M_BERR, "Matching character not found");
+		msgq(sp, M_BERR, "185|Matching character not found");
 		return (1);
 	}
 
@@ -151,9 +126,9 @@ nomatch:		msgq(sp, M_BERR, "No match character on this line");
 
 	/*
 	 * If moving right, non-motion commands move to the end of the range.
-	 * VC_D and VC_Y stay at the start.  If moving left, non-motion and
-	 * VC_D commands move to the end of the range.  VC_Y remains at the
-	 * start.  Ignore VC_C and VC_DEF.
+	 * Delete and yank stay at the start.
+	 *
+	 * If moving left, all commands move to the end of the range.
 	 *
 	 * !!!
 	 * Don't correct for leftward movement -- historic vi deleted the
@@ -164,8 +139,7 @@ nomatch:		msgq(sp, M_BERR, "No match character on this line");
 	    vp->m_start.cno < vp->m_stop.cno)
 		vp->m_final = ISMOTION(vp) ? vp->m_start : vp->m_stop;
 	else
-		vp->m_final = ISMOTION(vp) &&
-		    F_ISSET(vp, VC_Y) ? vp->m_start : vp->m_stop;
+		vp->m_final = vp->m_stop;
 
 	/*
 	 * !!!
@@ -180,16 +154,14 @@ nomatch:		msgq(sp, M_BERR, "No match character on this line");
 	mp = vp->m_start.lno < vp->m_stop.lno ? &vp->m_start : &vp->m_stop;
 	if (mp->cno != 0) {
 		cno = 0;
-		if (nonblank(sp, ep, mp->lno, &cno))
+		if (nonblank(sp, mp->lno, &cno))
 			return (1);
 		if (cno < mp->cno)
 			return (0);
 	}
 	mp = vp->m_start.lno < vp->m_stop.lno ? &vp->m_stop : &vp->m_start;
-	if ((p = file_gline(sp, ep, mp->lno, &len)) == NULL) {
-		GETLINE_ERR(sp, mp->lno);
+	if (db_get(sp, mp->lno, DBG_FATAL, &p, &len))
 		return (1);
-	}
 	for (p += mp->cno + 1, len -= mp->cno; --len; ++p)
 		if (!isblank(*p))
 			return (0);

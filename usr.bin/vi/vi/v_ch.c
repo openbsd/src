@@ -1,38 +1,16 @@
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1992, 1993, 1994, 1995, 1996
+ *	Keith Bostic.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * See the LICENSE file for redistribution information.
  */
 
+#include "config.h"
+
 #ifndef lint
-static char sccsid[] = "@(#)v_ch.c	8.15 (Berkeley) 8/17/94";
+static const char sccsid[] = "@(#)v_ch.c	10.8 (Berkeley) 3/6/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -41,17 +19,11 @@ static char sccsid[] = "@(#)v_ch.c	8.15 (Berkeley) 8/17/94";
 
 #include <bitstring.h>
 #include <limits.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <termios.h>
 
-#include "compat.h"
-#include <db.h>
-#include <regex.h>
-
+#include "../common/common.h"
 #include "vi.h"
-#include "vcmd.h"
 
 static void notfound __P((SCR *, ARG_CHAR_T));
 static void noprev __P((SCR *));
@@ -59,12 +31,13 @@ static void noprev __P((SCR *));
 /*
  * v_chrepeat -- [count];
  *	Repeat the last F, f, T or t search.
+ *
+ * PUBLIC: int v_chrepeat __P((SCR *, VICMD *));
  */
 int
-v_chrepeat(sp, ep, vp)
+v_chrepeat(sp, vp)
 	SCR *sp;
-	EXF *ep;
-	VICMDARG *vp;
+	VICMD *vp;
 {
 	vp->character = VIP(sp)->lastckey;
 
@@ -73,13 +46,13 @@ v_chrepeat(sp, ep, vp)
 		noprev(sp);
 		return (1);
 	case FSEARCH:
-		return (v_chF(sp, ep, vp));
+		return (v_chF(sp, vp));
 	case fSEARCH:
-		return (v_chf(sp, ep, vp));
+		return (v_chf(sp, vp));
 	case TSEARCH:
-		return (v_chT(sp, ep, vp));
+		return (v_chT(sp, vp));
 	case tSEARCH:
-		return (v_cht(sp, ep, vp));
+		return (v_cht(sp, vp));
 	default:
 		abort();
 	}
@@ -89,14 +62,15 @@ v_chrepeat(sp, ep, vp)
 /*
  * v_chrrepeat -- [count],
  *	Repeat the last F, f, T or t search in the reverse direction.
+ *
+ * PUBLIC: int v_chrrepeat __P((SCR *, VICMD *));
  */
 int
-v_chrrepeat(sp, ep, vp)
+v_chrrepeat(sp, vp)
 	SCR *sp;
-	EXF *ep;
-	VICMDARG *vp;
+	VICMD *vp;
 {
-	enum cdirection savedir;
+	cdir_t savedir;
 	int rval;
 
 	vp->character = VIP(sp)->lastckey;
@@ -107,16 +81,16 @@ v_chrrepeat(sp, ep, vp)
 		noprev(sp);
 		return (1);
 	case FSEARCH:
-		rval = v_chf(sp, ep, vp);
+		rval = v_chf(sp, vp);
 		break;
 	case fSEARCH:
-		rval = v_chF(sp, ep, vp);
+		rval = v_chF(sp, vp);
 		break;
 	case TSEARCH:
-		rval = v_cht(sp, ep, vp);
+		rval = v_cht(sp, vp);
 		break;
 	case tSEARCH:
-		rval = v_chT(sp, ep, vp);
+		rval = v_chT(sp, vp);
 		break;
 	default:
 		abort();
@@ -129,14 +103,15 @@ v_chrrepeat(sp, ep, vp)
  * v_cht -- [count]tc
  *	Search forward in the line for the character before the next
  *	occurrence of the specified character.
+ *
+ * PUBLIC: int v_cht __P((SCR *, VICMD *));
  */
 int
-v_cht(sp, ep, vp)
+v_cht(sp, vp)
 	SCR *sp;
-	EXF *ep;
-	VICMDARG *vp;
+	VICMD *vp;
 {
-	if (v_chf(sp, ep, vp))
+	if (v_chf(sp, vp))
 		return (1);
 
 	/*
@@ -161,17 +136,17 @@ v_cht(sp, ep, vp)
  * v_chf -- [count]fc
  *	Search forward in the line for the next occurrence of the
  *	specified character.
+ *
+ * PUBLIC: int v_chf __P((SCR *, VICMD *));
  */
 int
-v_chf(sp, ep, vp)
+v_chf(sp, vp)
 	SCR *sp;
-	EXF *ep;
-	VICMDARG *vp;
+	VICMD *vp;
 {
 	size_t len;
-	recno_t lno;
 	u_long cnt;
-	int key;
+	int isempty, key;
 	char *endp, *p, *startp;
 
 	/*
@@ -184,19 +159,14 @@ v_chf(sp, ep, vp)
 		VIP(sp)->lastckey = key;
 	VIP(sp)->csearchdir = fSEARCH;
 
-	if ((p = file_gline(sp, ep, vp->m_start.lno, &len)) == NULL) {
-		if (file_lline(sp, ep, &lno))
-			return (1);
-		if (lno == 0) {
-			notfound(sp, key);
-			return (1);
-		}
-		GETLINE_ERR(sp, vp->m_start.lno);
+	if (db_eget(sp, vp->m_start.lno, &p, &len, &isempty)) {
+		if (isempty)
+			goto empty;
 		return (1);
 	}
 
 	if (len == 0) {
-		notfound(sp, key);
+empty:		notfound(sp, key);
 		return (1);
 	}
 
@@ -213,8 +183,8 @@ v_chf(sp, ep, vp)
 	vp->m_stop.cno = p - startp;
 
 	/*
-	 * Non-motion commands move to the end of the range.  VC_D
-	 * and VC_Y stay at the start.  Ignore VC_C and VC_DEF.
+	 * Non-motion commands move to the end of the range.
+	 * Delete and yank stay at the start, ignore others.
 	 */
 	vp->m_final = ISMOTION(vp) ? vp->m_start : vp->m_stop;
 	return (0);
@@ -224,14 +194,15 @@ v_chf(sp, ep, vp)
  * v_chT -- [count]Tc
  *	Search backward in the line for the character after the next
  *	occurrence of the specified character.
+ *
+ * PUBLIC: int v_chT __P((SCR *, VICMD *));
  */
 int
-v_chT(sp, ep, vp)
+v_chT(sp, vp)
 	SCR *sp;
-	EXF *ep;
-	VICMDARG *vp;
+	VICMD *vp;
 {
-	if (v_chF(sp, ep, vp))
+	if (v_chF(sp, vp))
 		return (1);
 
 	/*
@@ -240,17 +211,7 @@ v_chT(sp, ep, vp)
 	 * we had to move left for v_chF() to have succeeded.
 	 */
 	++vp->m_stop.cno;
-
-	/*
-	 * Make any necessary correction to the motion decision made
-	 * by the v_chF routine.
-	 *
-	 * XXX
-	 * If you change this, notice that v_chF changes vp->m_start
-	 * AFTER setting vp->m_final.
-	 */
-	if (!F_ISSET(vp, VC_Y))
-		vp->m_final = vp->m_stop;
+	vp->m_final = vp->m_stop;
 
 	VIP(sp)->csearchdir = TSEARCH;
 	return (0);
@@ -260,17 +221,17 @@ v_chT(sp, ep, vp)
  * v_chF -- [count]Fc
  *	Search backward in the line for the next occurrence of the
  *	specified character.
+ *
+ * PUBLIC: int v_chF __P((SCR *, VICMD *));
  */
 int
-v_chF(sp, ep, vp)
+v_chF(sp, vp)
 	SCR *sp;
-	EXF *ep;
-	VICMDARG *vp;
+	VICMD *vp;
 {
-	recno_t lno;
 	size_t len;
 	u_long cnt;
-	int key;
+	int isempty, key;
 	char *endp, *p;
 
 	/*
@@ -284,19 +245,14 @@ v_chF(sp, ep, vp)
 		VIP(sp)->lastckey = key;
 	VIP(sp)->csearchdir = FSEARCH;
 
-	if ((p = file_gline(sp, ep, vp->m_start.lno, &len)) == NULL) {
-		if (file_lline(sp, ep, &lno))
-			return (1);
-		if (lno == 0) {
-			notfound(sp, key);
-			return (1);
-		}
-		GETLINE_ERR(sp, vp->m_start.lno);
+	if (db_eget(sp, vp->m_start.lno, &p, &len, &isempty)) {
+		if (isempty)
+			goto empty;
 		return (1);
 	}
 
 	if (len == 0) {
-		notfound(sp, key);
+empty:		notfound(sp, key);
 		return (1);
 	}
 
@@ -313,12 +269,11 @@ v_chF(sp, ep, vp)
 	vp->m_stop.cno = (p - endp) - 1;
 
 	/*
-	 * VC_D and non-motion commands move to the end of the range,
-	 * VC_Y stays at the start.  Ignore VC_C and VC_DEF.  Motion
-	 * commands adjust the starting point to the character before
-	 * the current one.
+	 * All commands move to the end of the range.  Motion commands
+	 * adjust the starting point to the character before the current
+	 * one.
 	 */
-	vp->m_final = F_ISSET(vp, VC_Y) ? vp->m_start : vp->m_stop;
+	vp->m_final = vp->m_stop;
 	if (ISMOTION(vp))
 		--vp->m_start.cno;
 	return (0);
@@ -328,7 +283,7 @@ static void
 noprev(sp)
 	SCR *sp;
 {
-	msgq(sp, M_BERR, "No previous F, f, T or t search");
+	msgq(sp, M_BERR, "178|No previous F, f, T or t search");
 }
 
 static void
@@ -336,5 +291,5 @@ notfound(sp, ch)
 	SCR *sp;
 	ARG_CHAR_T ch;
 {
-	msgq(sp, M_BERR, "%s not found", KEY_NAME(sp, ch));
+	msgq(sp, M_BERR, "179|%s not found", KEY_NAME(sp, ch));
 }

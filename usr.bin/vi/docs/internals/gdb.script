@@ -1,12 +1,13 @@
-#	@(#)gdb.script	8.3 (Berkeley) 8/16/94
+#	@(#)gdb.script	8.5 (Berkeley) 5/4/96
 
-# display the SVI screen map
+# display the VI screen map
 # usage dmap(sp)
 define	dmap
-	set $h = ((SVI_PRIVATE *)$arg0->svi_private)->h_smap
-	set $t = ((SVI_PRIVATE *)$arg0->svi_private)->t_smap
+	set $h = ((VI_PRIVATE *)$arg0->vi_private)->h_smap
+	set $t = ((VI_PRIVATE *)$arg0->vi_private)->t_smap
 	while ($h <= $t)
-		printf "lno: %d; off %d ", (int)$h->lno, (int)$h->off
+		printf "lno: %2d; soff %d coff %d ", \
+		    (int)$h->lno, (int)$h->soff, (int)$h->coff
 		if ($h->c_ecsize == 0)
 			printf "flushed\n"
 		else
@@ -20,12 +21,13 @@ define	dmap
 	end
 end
 
-# display the tail of the SVI screen map
+# display the tail of the VI screen map
 define	tmap
-	set $h = ((SVI_PRIVATE *)$arg0->svi_private)->h_smap
-	set $t = ((SVI_PRIVATE *)$arg0->svi_private)->t_smap
+	set $h = ((VI_PRIVATE *)$arg0->vi_private)->h_smap
+	set $t = ((VI_PRIVATE *)$arg0->vi_private)->t_smap
 	while ($t >= $h)
-		printf "lno: %d; off %d ", (int)$t->lno, (int)$t->off
+		printf "lno: %2d; soff %d coff %d ", \
+		    (int)$t->lno, (int)$t->soff, (int)$t->coff
 		if ($t->c_ecsize == 0)
 			printf "flushed\n"
 		else
@@ -40,17 +42,14 @@ define	tmap
 end
 
 # display the private structures
+define	clp
+	print *((CL_PRIVATE *)sp->gp->cl_private)
+end
 define	vip
 	print *((VI_PRIVATE *)sp->vi_private)
 end
-define	svp
-	print *((SVI_PRIVATE *)sp->svi_private)
-end
 define	exp
 	print *((EX_PRIVATE *)sp->ex_private)
-end
-define	sxp
-	print *((SEX_PRIVATE *)sp->sex_private)
 end
 
 # display the marks

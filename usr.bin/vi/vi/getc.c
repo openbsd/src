@@ -1,38 +1,16 @@
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1992, 1993, 1994, 1995, 1996
+ *	Keith Bostic.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * See the LICENSE file for redistribution information.
  */
 
+#include "config.h"
+
 #ifndef lint
-static char sccsid[] = "@(#)getc.c	8.11 (Berkeley) 8/17/94";
+static const char sccsid[] = "@(#)getc.c	10.10 (Berkeley) 3/6/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -42,16 +20,11 @@ static char sccsid[] = "@(#)getc.c	8.11 (Berkeley) 8/17/94";
 #include <bitstring.h>
 #include <ctype.h>
 #include <limits.h>
-#include <signal.h>
 #include <stdio.h>
-#include <termios.h>
+#include <stdlib.h>
 
-#include "compat.h"
-#include <db.h>
-#include <regex.h>
-
+#include "../common/common.h"
 #include "vi.h"
-#include "vcmd.h"
 
 /*
  * Character stream routines --
@@ -66,23 +39,19 @@ static char sccsid[] = "@(#)getc.c	8.11 (Berkeley) 8/17/94";
 /*
  * cs_init --
  *	Initialize character stream routines.
+ *
+ * PUBLIC: int cs_init __P((SCR *, VCS *));
  */
 int
-cs_init(sp, ep, csp)
+cs_init(sp, csp)
 	SCR *sp;
-	EXF *ep;
 	VCS *csp;
 {
-	recno_t lno;
+	int isempty;
 
-	if ((csp->cs_bp =
-	    file_gline(sp, ep, csp->cs_lno, &csp->cs_len)) == NULL) {
-		if (file_lline(sp, ep, &lno))
-			return (1);
-		if (lno == 0)
-			msgq(sp, M_BERR, "Empty file");
-		else
-			GETLINE_ERR(sp, csp->cs_lno);
+	if (db_eget(sp, csp->cs_lno, (char **)&csp->cs_bp, &csp->cs_len, &isempty)) {
+		if (isempty)
+			msgq(sp, M_BERR, "177|Empty file");
 		return (1);
 	}
 	if (csp->cs_len == 0 || v_isempty(csp->cs_bp, csp->cs_len)) {
@@ -98,36 +67,32 @@ cs_init(sp, ep, csp)
 /*
  * cs_next --
  *	Retrieve the next character.
+ *
+ * PUBLIC: int cs_next __P((SCR *, VCS *));
  */
 int
-cs_next(sp, ep, csp)
+cs_next(sp, csp)
 	SCR *sp;
-	EXF *ep;
 	VCS *csp;
 {
-	recno_t slno;
+	char *p;
 
 	switch (csp->cs_flags) {
 	case CS_EMP:				/* EMP; get next line. */
 	case CS_EOL:				/* EOL; get next line. */
-		slno = csp->cs_lno;		/* Save current line. */
-		if ((csp->cs_bp =
-		    file_gline(sp, ep, ++csp->cs_lno, &csp->cs_len)) == NULL) {
-			csp->cs_lno = slno;
-			if (file_lline(sp, ep, &slno))
-				return (1);
-			if (slno > csp->cs_lno) {
-				GETLINE_ERR(sp, csp->cs_lno);
-				return (1);
-			}
+		if (db_get(sp, ++csp->cs_lno, 0, &p, &csp->cs_len)) {
+			--csp->cs_lno;
 			csp->cs_flags = CS_EOF;
-		} else if (csp->cs_len == 0 ||
-		    v_isempty(csp->cs_bp, csp->cs_len)) {
-			csp->cs_cno = 0;
-			csp->cs_flags = CS_EMP;
 		} else {
-			csp->cs_flags = 0;
-			csp->cs_ch = csp->cs_bp[csp->cs_cno = 0];
+			csp->cs_bp = p;
+			if (csp->cs_len == 0 ||
+			    v_isempty(csp->cs_bp, csp->cs_len)) {
+				csp->cs_cno = 0;
+				csp->cs_flags = CS_EMP;
+			} else {
+				csp->cs_flags = 0;
+				csp->cs_ch = csp->cs_bp[csp->cs_cno = 0];
+			}
 		}
 		break;
 	case 0:
@@ -154,17 +119,18 @@ cs_next(sp, ep, csp)
  * Semantics of checking the current character were coded for the fword()
  * function -- once the other word routines are converted, they may have
  * to change.
+ *
+ * PUBLIC: int cs_fspace __P((SCR *, VCS *));
  */
 int
-cs_fspace(sp, ep, csp)
+cs_fspace(sp, csp)
 	SCR *sp;
-	EXF *ep;
 	VCS *csp;
 {
 	if (csp->cs_flags != 0 || !isblank(csp->cs_ch))
 		return (0);
 	for (;;) {
-		if (cs_next(sp, ep, csp))
+		if (cs_next(sp, csp))
 			return (1);
 		if (csp->cs_flags != 0 || !isblank(csp->cs_ch))
 			break;
@@ -175,15 +141,16 @@ cs_fspace(sp, ep, csp)
 /*
  * cs_fblank --
  *	Eat forward to the next non-whitespace character.
+ *
+ * PUBLIC: int cs_fblank __P((SCR *, VCS *));
  */
 int
-cs_fblank(sp, ep, csp)
+cs_fblank(sp, csp)
 	SCR *sp;
-	EXF *ep;
 	VCS *csp;
 {
 	for (;;) {
-		if (cs_next(sp, ep, csp))
+		if (cs_next(sp, csp))
 			return (1);
 		if (csp->cs_flags == CS_EOL || csp->cs_flags == CS_EMP ||
 		    csp->cs_flags == 0 && isblank(csp->cs_ch))
@@ -196,15 +163,14 @@ cs_fblank(sp, ep, csp)
 /*
  * cs_prev --
  *	Retrieve the previous character.
+ *
+ * PUBLIC: int cs_prev __P((SCR *, VCS *));
  */
 int
-cs_prev(sp, ep, csp)
+cs_prev(sp, csp)
 	SCR *sp;
-	EXF *ep;
 	VCS *csp;
 {
-	recno_t slno;
-
 	switch (csp->cs_flags) {
 	case CS_EMP:				/* EMP; get previous line. */
 	case CS_EOL:				/* EOL; get previous line. */
@@ -212,11 +178,9 @@ cs_prev(sp, ep, csp)
 			csp->cs_flags = CS_SOF;
 			break;
 		}
-		slno = csp->cs_lno;		/* Save current line. */
-		if ((csp->cs_bp =		/* Line should exist. */
-		    file_gline(sp, ep, --csp->cs_lno, &csp->cs_len)) == NULL) {
-			GETLINE_ERR(sp, csp->cs_lno);
-			csp->cs_lno = slno;
+		if (db_get(sp,			/* The line should exist. */
+		    --csp->cs_lno, DBG_FATAL, (char **)&csp->cs_bp, &csp->cs_len)) {
+			++csp->cs_lno;
 			return (1);
 		}
 		if (csp->cs_len == 0 || v_isempty(csp->cs_bp, csp->cs_len)) {
@@ -228,6 +192,7 @@ cs_prev(sp, ep, csp)
 			csp->cs_ch = csp->cs_bp[csp->cs_cno];
 		}
 		break;
+	case CS_EOF:				/* EOF: get previous char. */
 	case 0:
 		if (csp->cs_cno == 0)
 			if (csp->cs_lno == 1)
@@ -249,15 +214,16 @@ cs_prev(sp, ep, csp)
 /*
  * cs_bblank --
  *	Eat backward to the next non-whitespace character.
+ *
+ * PUBLIC: int cs_bblank __P((SCR *, VCS *));
  */
 int
-cs_bblank(sp, ep, csp)
+cs_bblank(sp, csp)
 	SCR *sp;
-	EXF *ep;
 	VCS *csp;
 {
 	for (;;) {
-		if (cs_prev(sp, ep, csp))
+		if (cs_prev(sp, csp))
 			return (1);
 		if (csp->cs_flags == CS_EOL || csp->cs_flags == CS_EMP ||
 		    csp->cs_flags == 0 && isblank(csp->cs_ch))

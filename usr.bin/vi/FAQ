@@ -1,0 +1,71 @@
+@(#)FAQ	8.5 (Berkeley) 5/9/96
+
+Q: How can I get nvi to display my character set?
+A: Nvi uses the C library routine isprint(3) to determine if a character
+   is printable, or should be displayed as an octal or hexadecimal value
+   on the screen.  Generally, if nvi is displaying printable characters
+   in octal/hexadecimal forms, your environment is not configured correctly.
+   Try looking at the man pages that allow you to configure your locale.
+   For example, to configure an ISO 8859-1 locale under Solaris using csh,
+   you would do:
+
+	setenv LANG C
+	setenv LC_CTYPE iso_8859_1
+
+   Other LC_CTYPE systems/values that I'm told work:
+
+   System	Value
+   ======	=====
+   FreeBSD	lt_LN.ISO_8859-1
+   HP-UX  9.X	american.iso88591
+   HP-UX 10.X	en_US.iso88591
+   SunOS  4.X	iso_8859_1
+   SunOS  5.X	iso_8859_1
+	
+Q: My map won't work!
+A: One thing that you should immediately check if a vi map doesn't work
+   is if depends on the final cursor position after a P or p command.
+   Historic vi's were inconsistent as to the final position of the cursor,
+   and, to make matter worse, the final cursor position also depended on
+   whether the put text came from a named or unnamed buffer!  Nvi follows
+   the POSIX 1003.2 standard on this one, and makes this consistent, always
+   placing the cursor on the first character.
+
+Q: I'm using ksh or csh as my vi edit option shell value, and file
+   expansions don't work right!
+A: The problem may be in your ksh or csh startup files, e.g., .cshrc.  Vi
+   executes the shell to do name expansion, and the shell generally reads
+   its startup files.  If the startup files are not correctly configured
+   for non-interactive use, e.g., they always echo a prompt to the screen,
+   vi will be unable to parse the output and things will not work
+   correctly.
+
+Q: How does the iclower edit option differ from the ignorecase (i.e. ic)
+   edit option?
+A: The difference is that the ignorecase edit option always ignores the
+   case of letters in the Regular Expression (RE), and the iclower edit
+   option only ignores the case if there are no upper-case letters in the
+   RE.  If any upper-case letters appear in the Regular Expression, then
+   it will be treated case-sensitively, as if the ignorecase edit option
+   was not set.
+
+Q: When I edit binary files, nvi appends a <newline> to the last line!
+A: This is historic practice for vi, and further, it's required by the
+   POSIX 1003.2 standard.  My intent is to provide a command line and/or
+   edit option to turn this behavior off when I switch to version 2.0 of
+   the Berkeley DB package.
+
+Q: My cursor keys don't work when I'm in text input mode!
+A: A common problem over slow links is that the set of characters sent by
+   the cursor keys don't arrive close enough together for vi to understand
+   that they are a single keystroke, and not separate keystrokes.  Try
+   increasing the value of the escapetime edit option, which will cause
+   vi to wait longer before deciding that the <escape> character that
+   starts cursor key sequences doesn't have any characters following it.
+
+Q: When I edit some files, nvi seems to hang forever, and I have to kill it.
+A: Nvi uses flock(2) and fcntl(2) to do file locking.  When it attempts to
+   acquired a lock for a file on an NFS mounted filesystem, it can hang
+   for a very long (perhaps infinite) period of time.  Turning off the
+   "lock" edit option will keep nvi from attempting to acquire any locks
+   on the files you edit.

@@ -1,38 +1,16 @@
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1991, 1993, 1994, 1995, 1996
+ *	Keith Bostic.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * See the LICENSE file for redistribution information.
  */
 
+#include "config.h"
+
 #ifndef lint
-static char sccsid[] = "@(#)ex_args.c	8.29 (Berkeley) 8/17/94";
+static const char sccsid[] = "@(#)ex_args.c	10.14 (Berkeley) 4/27/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -42,18 +20,14 @@ static char sccsid[] = "@(#)ex_args.c	8.29 (Berkeley) 8/17/94";
 #include <bitstring.h>
 #include <errno.h>
 #include <limits.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <termios.h>
 
-#include "compat.h"
-#include <db.h>
-#include <regex.h>
+#include "../common/common.h"
+#include "../vi/vi.h"
 
-#include "vi.h"
-#include "excmd.h"
+static int ex_N_next __P((SCR *, EXCMD *));
 
 /*
  * ex_next -- :next [+cmd] [files]
@@ -64,41 +38,50 @@ static char sccsid[] = "@(#)ex_args.c	8.29 (Berkeley) 8/17/94";
  * historic vi.  See nvi/docs/autowrite for details, but the basic
  * idea was that it ignored the force flag if the autowrite flag was
  * set.  This implementation handles them all identically.
+ *
+ * PUBLIC: int ex_next __P((SCR *, EXCMD *));
  */
 int
-ex_next(sp, ep, cmdp)
+ex_next(sp, cmdp)
 	SCR *sp;
-	EXF *ep;
-	EXCMDARG *cmdp;
+	EXCMD *cmdp;
 {
-	ARGS **argv, **pc;
+	ARGS **argv;
 	FREF *frp;
 	int noargs;
 	char **ap;
 
-	if (file_m1(sp, ep, F_ISSET(cmdp, E_FORCE), FS_ALL | FS_POSSIBLE))
+	/* Check for file to move to. */
+	if (cmdp->argc == 0 && (sp->cargv == NULL || sp->cargv[1] == NULL)) {
+		msgq(sp, M_ERR, "111|No more files to edit");
+		return (1);
+	}
+
+	if (F_ISSET(cmdp, E_NEWSCREEN)) {
+		/* By default, edit the next file in the old argument list. */
+		if (cmdp->argc == 0) {
+			if (argv_exp0(sp,
+			    cmdp, sp->cargv[1], strlen(sp->cargv[1])))
+				return (1);
+			return (ex_edit(sp, cmdp));
+		}
+		return (ex_N_next(sp, cmdp));
+	}
+
+	/* Check modification. */
+	if (file_m1(sp,
+	    FL_ISSET(cmdp->iflags, E_C_FORCE), FS_ALL | FS_POSSIBLE))
 		return (1);
 
-	/*
-	 * If the first argument is a plus sign, '+', it's an initial
-	 * ex command.
-	 */
-	argv = cmdp->argv;
-	if (cmdp->argc && argv[0]->bp[0] == '+') {
-		--cmdp->argc;
-		pc = argv++;
-	} else
-		pc = NULL;
-
-	/* Any other arguments are a replacement file list. */
+	/* Any arguments are a replacement file list. */
 	if (cmdp->argc) {
 		/* Free the current list. */
-		if (!F_ISSET(sp, S_ARGNOFREE) && sp->argv != NULL) {
+		if (!F_ISSET(sp, SC_ARGNOFREE) && sp->argv != NULL) {
 			for (ap = sp->argv; *ap != NULL; ++ap)
 				free(*ap);
 			free(sp->argv);
 		}
-		F_CLR(sp, S_ARGNOFREE | S_ARGRECOVER);
+		F_CLR(sp, SC_ARGNOFREE | SC_ARGRECOVER);
 		sp->cargv = NULL;
 
 		/* Create a new list. */
@@ -111,83 +94,125 @@ ex_next(sp, ep, cmdp)
 				return (1);
 		*ap = NULL;
 
-		/* Switch to the first one. */
+		/* Switch to the first file. */
 		sp->cargv = sp->argv;
 		if ((frp = file_add(sp, *sp->cargv)) == NULL)
 			return (1);
 		noargs = 0;
 	} else {
-		if (sp->cargv == NULL || sp->cargv[1] == NULL) {
-			msgq(sp, M_ERR, "No more files to edit");
-			return (1);
-		}
 		if ((frp = file_add(sp, sp->cargv[1])) == NULL)
 			return (1);
-		if (F_ISSET(sp, S_ARGRECOVER))
+		if (F_ISSET(sp, SC_ARGRECOVER))
 			F_SET(frp, FR_RECOVER);
 		noargs = 1;
 	}
 
-	if (file_init(sp, frp, NULL, F_ISSET(cmdp, E_FORCE)))
+	if (file_init(sp, frp, NULL, FS_SETALT |
+	    (FL_ISSET(cmdp->iflags, E_C_FORCE) ? FS_FORCE : 0)))
 		return (1);
 	if (noargs)
 		++sp->cargv;
 
-	/* Push the initial command onto the stack. */
-	if (pc != NULL)
-		if (IN_EX_MODE(sp))
-			(void)term_push(sp, pc[0]->bp, pc[0]->len, 0);
-		else if (IN_VI_MODE(sp)) {
-			(void)term_push(sp, "\n", 1, 0);
-			(void)term_push(sp, pc[0]->bp, pc[0]->len, 0);
-			(void)term_push(sp, ":", 1, 0);
-			(void)file_lline(sp, sp->ep, &sp->frp->lno);
-			F_SET(sp->frp, FR_CURSORSET);
-		}
+	F_SET(sp, SC_FSWITCH);
+	return (0);
+}
 
-	F_SET(sp, S_FSWITCH);
+/*
+ * ex_N_next --
+ *	New screen version of ex_next.
+ */
+static int
+ex_N_next(sp, cmdp)
+	SCR *sp;
+	EXCMD *cmdp;
+{
+	SCR *new;
+	FREF *frp;
+
+	/* Get a new screen. */
+	if (screen_init(sp->gp, sp, &new))
+		return (1);
+	if (vs_split(sp, new, 0)) {
+		(void)screen_end(new);
+		return (1);
+	}
+
+	/* Get a backing file. */
+	if ((frp = file_add(new, cmdp->argv[0]->bp)) == NULL ||
+	    file_init(new, frp, NULL,
+	    (FL_ISSET(cmdp->iflags, E_C_FORCE) ? FS_FORCE : 0))) {
+		(void)vs_discard(new, NULL);
+		(void)screen_end(new);
+		return (1);
+	}
+
+	/* The arguments are a replacement file list. */
+	new->cargv = new->argv = ex_buildargv(sp, cmdp, NULL);
+
+	/* Set up the switch. */
+	sp->nextdisp = new;
+	F_SET(sp, SC_SSWITCH);
+
 	return (0);
 }
 
 /*
  * ex_prev -- :prev
  *	Edit the previous file.
+ *
+ * PUBLIC: int ex_prev __P((SCR *, EXCMD *));
  */
 int
-ex_prev(sp, ep, cmdp)
+ex_prev(sp, cmdp)
 	SCR *sp;
-	EXF *ep;
-	EXCMDARG *cmdp;
+	EXCMD *cmdp;
 {
 	FREF *frp;
 
-	if (file_m1(sp, ep, F_ISSET(cmdp, E_FORCE), FS_ALL | FS_POSSIBLE))
-		return (1);
-
 	if (sp->cargv == sp->argv) {
-		msgq(sp, M_ERR, "No previous files to edit");
+		msgq(sp, M_ERR, "112|No previous files to edit");
 		return (1);
 	}
+
+	if (F_ISSET(cmdp, E_NEWSCREEN)) {
+		if (argv_exp0(sp, cmdp, sp->cargv[-1], strlen(sp->cargv[-1])))
+			return (1);
+		return (ex_edit(sp, cmdp));
+	}
+
+	if (file_m1(sp,
+	    FL_ISSET(cmdp->iflags, E_C_FORCE), FS_ALL | FS_POSSIBLE))
+		return (1);
+
 	if ((frp = file_add(sp, sp->cargv[-1])) == NULL)
 		return (1);
 
-	if (file_init(sp, frp, NULL, F_ISSET(cmdp, E_FORCE)))
+	if (file_init(sp, frp, NULL, FS_SETALT |
+	    (FL_ISSET(cmdp->iflags, E_C_FORCE) ? FS_FORCE : 0)))
 		return (1);
-
 	--sp->cargv;
-	F_SET(sp, S_FSWITCH);
+
+	F_SET(sp, SC_FSWITCH);
 	return (0);
 }
 
 /*
  * ex_rew -- :rew
  *	Re-edit the list of files.
+ *
+ * !!!
+ * Historic practice was that all files would start editing at the beginning
+ * of the file.  We don't get this right because we may have multiple screens
+ * and we can't clear the FR_CURSORSET bit for a single screen.  I don't see
+ * anyone noticing, but if they do, we'll have to put information into the SCR
+ * structure so we can keep track of it.
+ *
+ * PUBLIC: int ex_rew __P((SCR *, EXCMD *));
  */
 int
-ex_rew(sp, ep, cmdp)
+ex_rew(sp, cmdp)
 	SCR *sp;
-	EXF *ep;
-	EXCMDARG *cmdp;
+	EXCMD *cmdp;
 {
 	FREF *frp;
 
@@ -196,68 +221,99 @@ ex_rew(sp, ep, cmdp)
 	 * Historic practice -- you can rewind to the current file.
 	 */
 	if (sp->argv == NULL) {
-		msgq(sp, M_ERR, "No previous files to rewind");
+		msgq(sp, M_ERR, "113|No previous files to rewind");
 		return (1);
 	}
 
-	if (file_m1(sp, ep, F_ISSET(cmdp, E_FORCE), FS_ALL | FS_POSSIBLE))
+	if (file_m1(sp,
+	    FL_ISSET(cmdp->iflags, E_C_FORCE), FS_ALL | FS_POSSIBLE))
 		return (1);
 
-	/*
-	 * !!!
-	 * Historic practice, start at the beginning of the file.
-	 */
-	for (frp = sp->frefq.cqh_first;
-	    frp != (FREF *)&sp->frefq; frp = frp->q.cqe_next)
-		F_CLR(frp, FR_CURSORSET | FR_FNONBLANK);
-	
 	/* Switch to the first one. */
 	sp->cargv = sp->argv;
 	if ((frp = file_add(sp, *sp->cargv)) == NULL)
 		return (1);
-	if (file_init(sp, frp, NULL, F_ISSET(cmdp, E_FORCE)))
+	if (file_init(sp, frp, NULL, FS_SETALT |
+	    (FL_ISSET(cmdp->iflags, E_C_FORCE) ? FS_FORCE : 0)))
 		return (1);
 
-	F_SET(sp, S_FSWITCH);
+	F_SET(sp, SC_FSWITCH);
 	return (0);
 }
 
 /*
  * ex_args -- :args
  *	Display the list of files.
+ *
+ * PUBLIC: int ex_args __P((SCR *, EXCMD *));
  */
 int
-ex_args(sp, ep, cmdp)
+ex_args(sp, cmdp)
 	SCR *sp;
-	EXF *ep;
-	EXCMDARG *cmdp;
+	EXCMD *cmdp;
 {
+	GS *gp;
 	int cnt, col, len, sep;
 	char **ap;
 
 	if (sp->argv == NULL) {
-		(void)ex_printf(EXCOOKIE, "No file list to display.\n");
+		(void)msgq(sp, M_ERR, "114|No file list to display");
 		return (0);
 	}
-		
+
+	gp = sp->gp;
 	col = len = sep = 0;
 	for (cnt = 1, ap = sp->argv; *ap != NULL; ++ap) {
 		col += len = strlen(*ap) + sep + (ap == sp->cargv ? 2 : 0);
 		if (col >= sp->cols - 1) {
 			col = len;
 			sep = 0;
-			(void)ex_printf(EXCOOKIE, "\n");
+			(void)ex_puts(sp, "\n");
 		} else if (cnt != 1) {
 			sep = 1;
-			(void)ex_printf(EXCOOKIE, " ");
+			(void)ex_puts(sp, " ");
 		}
 		++cnt;
 
-		if (ap == sp->cargv)
-			(void)ex_printf(EXCOOKIE, "[%s]", *ap);
-		else
-			(void)ex_printf(EXCOOKIE, "%s", *ap);
+		(void)ex_printf(sp, "%s%s%s", ap == sp->cargv ? "[" : "",
+		    *ap, ap == sp->cargv ? "]" : "");
+		if (INTERRUPTED(sp))
+			break;
 	}
-	(void)ex_printf(EXCOOKIE, "\n");
+	(void)ex_puts(sp, "\n");
 	return (0);
+}
+
+/*
+ * ex_buildargv --
+ *	Build a new file argument list.
+ *
+ * PUBLIC: char **ex_buildargv __P((SCR *, EXCMD *, char *));
+ */
+char **
+ex_buildargv(sp, cmdp, name)
+	SCR *sp;
+	EXCMD *cmdp;
+	char *name;
+{
+	ARGS **argv;
+	int argc;
+	char **ap, **s_argv;
+
+	argc = cmdp == NULL ? 1 : cmdp->argc;
+	CALLOC(sp, s_argv, char **, argc + 1, sizeof(char *));
+	if ((ap = s_argv) == NULL)
+		return (NULL);
+
+	if (cmdp == NULL) {
+		if ((*ap = v_strdup(sp, name, strlen(name))) == NULL)
+			return (NULL);
+		++ap;
+	} else
+		for (argv = cmdp->argv; argv[0]->len != 0; ++ap, ++argv)
+			if ((*ap =
+			    v_strdup(sp, argv[0]->bp, argv[0]->len)) == NULL)
+				return (NULL);
+	*ap = NULL;
+	return (s_argv);
 }

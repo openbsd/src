@@ -1,38 +1,16 @@
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1993, 1994, 1995, 1996
+ *	Keith Bostic.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * See the LICENSE file for redistribution information.
  */
 
+#include "config.h"
+
 #ifndef lint
-static char sccsid[] = "@(#)ex_screen.c	8.15 (Berkeley) 8/17/94";
+static const char sccsid[] = "@(#)ex_screen.c	10.10 (Berkeley) 3/6/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -41,115 +19,108 @@ static char sccsid[] = "@(#)ex_screen.c	8.15 (Berkeley) 8/17/94";
 
 #include <bitstring.h>
 #include <limits.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <termios.h>
 
-#include "compat.h"
-#include <db.h>
-#include <regex.h>
-
-#include "vi.h"
-#include "excmd.h"
-
-/*
- * ex_split --	:s[plit] [file ...]
- *	Split the screen, optionally setting the file list.
- */
-int
-ex_split(sp, ep, cmdp)
-	SCR *sp;
-	EXF *ep;
-	EXCMDARG *cmdp;
-{
-	return (sp->s_split(sp, cmdp->argc ? cmdp->argv : NULL, cmdp->argc));
-}
+#include "../common/common.h"
+#include "../vi/vi.h"
 
 /*
  * ex_bg --	:bg
  *	Hide the screen.
+ *
+ * PUBLIC: int ex_bg __P((SCR *, EXCMD *));
  */
 int
-ex_bg(sp, ep, cmdp)
+ex_bg(sp, cmdp)
 	SCR *sp;
-	EXF *ep;
-	EXCMDARG *cmdp;
+	EXCMD *cmdp;
 {
-	return (sp->s_bg(sp));
+	return (vs_bg(sp));
 }
 
 /*
  * ex_fg --	:fg [file]
  *	Show the screen.
+ *
+ * PUBLIC: int ex_fg __P((SCR *, EXCMD *));
  */
 int
-ex_fg(sp, ep, cmdp)
+ex_fg(sp, cmdp)
 	SCR *sp;
-	EXF *ep;
-	EXCMDARG *cmdp;
+	EXCMD *cmdp;
 {
-	return (sp->s_fg(sp, cmdp->argc ? cmdp->argv[0]->bp : NULL));
+	return (vs_fg(sp, cmdp->argc ? cmdp->argv[0]->bp : NULL));
 }
 
 /*
  * ex_resize --	:resize [+-]rows
  *	Change the screen size.
+ *
+ * PUBLIC: int ex_resize __P((SCR *, EXCMD *));
  */
 int
-ex_resize(sp, ep, cmdp)
+ex_resize(sp, cmdp)
 	SCR *sp;
-	EXF *ep;
-	EXCMDARG *cmdp;
+	EXCMD *cmdp;
 {
-	enum adjust adj;
+	adj_t adj;
 
-	if (!F_ISSET(cmdp, E_COUNT)) {
-		msgq(sp, M_ERR, "Usage: %s", cmdp->cmd->usage);
+	switch (FL_ISSET(cmdp->iflags,
+	    E_C_COUNT | E_C_COUNT_NEG | E_C_COUNT_POS)) {
+	case E_C_COUNT:
+		adj = A_SET;
+		break;
+	case E_C_COUNT | E_C_COUNT_NEG:
+		adj = A_DECREASE;
+		break;
+	case E_C_COUNT | E_C_COUNT_POS:
+		adj = A_INCREASE;
+		break;
+	default:
+		ex_emsg(sp, cmdp->cmd->usage, EXM_USAGE);
 		return (1);
 	}
-	if (F_ISSET(cmdp, E_COUNT_NEG))
-		adj = A_DECREASE;
-	else if (F_ISSET(cmdp, E_COUNT_POS))
-		adj = A_INCREASE;
-	else
-		adj = A_SET;
-	return (sp->s_rabs(sp, cmdp->count, adj));
+	return (vs_resize(sp, cmdp->count, adj));
 }
 
 /*
  * ex_sdisplay --
  *	Display the list of screens.
+ *
+ * PUBLIC: int ex_sdisplay __P((SCR *));
  */
 int
-ex_sdisplay(sp, ep)
+ex_sdisplay(sp)
 	SCR *sp;
-	EXF *ep;
 {
+	GS *gp;
 	SCR *tsp;
 	int cnt, col, len, sep;
 
-	if ((tsp = sp->gp->hq.cqh_first) == (void *)&sp->gp->hq) {
-		(void)ex_printf(EXCOOKIE,
-		    "No backgrounded screens to display.\n");
+	gp = sp->gp;
+	if ((tsp = gp->hq.cqh_first) == (void *)&gp->hq) {
+		msgq(sp, M_INFO, "149|No background screens to display");
 		return (0);
 	}
 
 	col = len = sep = 0;
-	for (cnt = 1; tsp != (void *)&sp->gp->hq; tsp = tsp->q.cqe_next) {
+	for (cnt = 1; tsp != (void *)&gp->hq && !INTERRUPTED(sp);
+	    tsp = tsp->q.cqe_next) {
 		col += len = strlen(tsp->frp->name) + sep;
 		if (col >= sp->cols - 1) {
 			col = len;
 			sep = 0;
-			(void)ex_printf(EXCOOKIE, "\n");
+			(void)ex_puts(sp, "\n");
 		} else if (cnt != 1) {
 			sep = 1;
-			(void)ex_printf(EXCOOKIE, " ");
+			(void)ex_puts(sp, " ");
 		}
-		(void)ex_printf(EXCOOKIE, "%s", tsp->frp->name);
+		(void)ex_puts(sp, tsp->frp->name);
 		++cnt;
 	}
-	(void)ex_printf(EXCOOKIE, "\n");
+	if (!INTERRUPTED(sp))
+		(void)ex_puts(sp, "\n");
 	return (0);
 }

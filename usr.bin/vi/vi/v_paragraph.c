@@ -1,38 +1,16 @@
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1992, 1993, 1994, 1995, 1996
+ *	Keith Bostic.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * See the LICENSE file for redistribution information.
  */
 
+#include "config.h"
+
 #ifndef lint
-static char sccsid[] = "@(#)v_paragraph.c	8.20 (Berkeley) 8/17/94";
+static const char sccsid[] = "@(#)v_paragraph.c	10.7 (Berkeley) 3/6/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -42,18 +20,12 @@ static char sccsid[] = "@(#)v_paragraph.c	8.20 (Berkeley) 8/17/94";
 #include <bitstring.h>
 #include <errno.h>
 #include <limits.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <termios.h>
 
-#include "compat.h"
-#include <db.h>
-#include <regex.h>
-
+#include "../common/common.h"
 #include "vi.h"
-#include "vcmd.h"
 
 #define	INTEXT_CHECK {							\
 	if (len == 0 || v_isempty(p, len)) {				\
@@ -88,16 +60,18 @@ static char sccsid[] = "@(#)v_paragraph.c	8.20 (Berkeley) 8/17/94";
  *
  * Paragraphs are empty lines after text, formfeed characters, or values
  * from the paragraph or section options.
+ *
+ * PUBLIC: int v_paragraphf __P((SCR *, VICMD *));
  */
 int
-v_paragraphf(sp, ep, vp)
+v_paragraphf(sp, vp)
 	SCR *sp;
-	EXF *ep;
-	VICMDARG *vp;
+	VICMD *vp;
 {
 	enum { P_INTEXT, P_INBLANK } pstate;
 	size_t lastlen, len;
 	recno_t cnt, lastlno, lno;
+	int isempty;
 	char *p, *lp;
 
 	/*
@@ -120,7 +94,7 @@ v_paragraphf(sp, ep, vp)
 		else {
 			vp->m_stop = vp->m_start;
 			vp->m_stop.cno = 0;
-			if (nonblank(sp, ep, vp->m_stop.lno, &vp->m_stop.cno))
+			if (nonblank(sp, vp->m_stop.lno, &vp->m_stop.cno))
 				return (1);
 			if (vp->m_start.cno <= vp->m_stop.cno)
 				F_SET(vp, VM_LMODE);
@@ -128,7 +102,7 @@ v_paragraphf(sp, ep, vp)
 
 	/* Figure out what state we're currently in. */
 	lno = vp->m_start.lno;
-	if ((p = file_gline(sp, ep, lno, &len)) == NULL)
+	if (db_get(sp, lno, 0, &p, &len))
 		goto eof;
 
 	/*
@@ -147,7 +121,7 @@ v_paragraphf(sp, ep, vp)
 	for (;;) {
 		lastlno = lno;
 		lastlen = len;
-		if ((p = file_gline(sp, ep, ++lno, &len)) == NULL)
+		if (db_get(sp, ++lno, 0, &p, &len))
 			goto eof;
 		switch (pstate) {
 		case P_INTEXT:
@@ -163,11 +137,11 @@ v_paragraphf(sp, ep, vp)
 			/*
 			 * !!!
 			 * Non-motion commands move to the end of the range,
-			 * VC_D and VC_Y stay at the start.  Ignore VC_C and
-			 * VC_DEF.  Adjust the end of the range for motion
-			 * commands; historically, a motion component was to
-			 * the end of the previous line, whereas the movement
-			 * command was to the start of the new "paragraph".
+			 * delete and yank stay at the start.  Ignore others.
+			 * Adjust the end of the range for motion commands;
+			 * historically, a motion component was to the end of
+			 * the previous line, whereas the movement command was
+			 * to the start of the new "paragraph".
 			 */
 found:			if (ISMOTION(vp)) {
 				vp->m_stop.lno = lastlno;
@@ -193,30 +167,26 @@ found:			if (ISMOTION(vp)) {
 	 * have to make it okay.
 	 */
 eof:	if (vp->m_start.lno == lno || vp->m_start.lno == lno - 1) {
-		if (file_gline(sp, ep, vp->m_start.lno, &len) == NULL) {
-			if (file_lline(sp, ep, &lno))
+		if (db_eget(sp, vp->m_start.lno, &p, &len, &isempty)) {
+			if (!isempty)
 				return (1);
-			if (vp->m_start.lno != 1 || lno != 0) {
-				GETLINE_ERR(sp, vp->m_start.lno);
-				return (1);
-			}
 			vp->m_start.cno = 0;
 			return (0);
 		}
 		if (vp->m_start.cno == (len ? len - 1 : 0)) {
-			v_eof(sp, ep, NULL);
+			v_eof(sp, NULL);
 			return (1);
 		}
 	}
 	/*
 	 * !!!
-	 * Non-motion commands move to the end of the range, VC_D
-	 * and VC_Y stay at the start.  Ignore VC_C and VC_DEF.
+	 * Non-motion commands move to the end of the range, delete
+	 * and yank stay at the start.  Ignore others.
 	 *
 	 * If deleting the line (which happens if deleting to EOF), then
 	 * cursor movement is to the first nonblank.
 	 */
-	if (F_ISSET(vp, VC_D)) {
+	if (ISMOTION(vp) && ISCMD(vp->rkp, 'd')) {
 		F_CLR(vp, VM_RCM_MASK);
 		F_SET(vp, VM_RCM_SETFNB);
 	}
@@ -229,12 +199,13 @@ eof:	if (vp->m_start.lno == lno || vp->m_start.lno == lno - 1) {
 /*
  * v_paragraphb -- [count]{
  *	Move backward count paragraphs.
+ *
+ * PUBLIC: int v_paragraphb __P((SCR *, VICMD *));
  */
 int
-v_paragraphb(sp, ep, vp)
+v_paragraphb(sp, vp)
 	SCR *sp;
-	EXF *ep;
-	VICMDARG *vp;
+	VICMD *vp;
 {
 	enum { P_INTEXT, P_INBLANK } pstate;
 	size_t len;
@@ -276,7 +247,7 @@ v_paragraphb(sp, ep, vp)
 		goto sof;
 
 	/* Figure out what state we're currently in. */
-	if ((p = file_gline(sp, ep, lno, &len)) == NULL)
+	if (db_get(sp, lno, 0, &p, &len))
 		goto sof;
 
 	/*
@@ -301,7 +272,7 @@ v_paragraphb(sp, ep, vp)
 	}
 
 	for (;;) {
-		if ((p = file_gline(sp, ep, --lno, &len)) == NULL)
+		if (db_get(sp, --lno, 0, &p, &len))
 			goto sof;
 		switch (pstate) {
 		case P_INTEXT:
@@ -336,21 +307,24 @@ found:	vp->m_stop.lno = lno;
 /*
  * v_buildps --
  *	Build the paragraph command search pattern.
+ *
+ * PUBLIC: int v_buildps __P((SCR *, char *, char *));
  */
 int
-v_buildps(sp)
+v_buildps(sp, p_p, s_p)
 	SCR *sp;
+	char *p_p, *s_p;
 {
 	VI_PRIVATE *vip;
 	size_t p_len, s_len;
-	char *p, *p_p, *s_p;
+	char *p;
 
 	/*
 	 * The vi paragraph command searches for either a paragraph or
 	 * section option macro.
 	 */
-	p_len = (p_p = O_STR(sp, O_PARAGRAPHS)) == NULL ? 0 : strlen(p_p);
-	s_len = (s_p = O_STR(sp, O_SECTIONS)) == NULL ? 0 : strlen(s_p);
+	p_len = p_p == NULL ? 0 : strlen(p_p);
+	s_len = s_p == NULL ? 0 : strlen(s_p);
 
 	if (p_len == 0 && s_len == 0)
 		return (0);

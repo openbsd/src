@@ -1,38 +1,16 @@
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1992, 1993, 1994, 1995, 1996
+ *	Keith Bostic.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * See the LICENSE file for redistribution information.
  */
 
+#include "config.h"
+
 #ifndef lint
-static char sccsid[] = "@(#)v_undo.c	8.12 (Berkeley) 8/17/94";
+static const char sccsid[] = "@(#)v_undo.c	10.5 (Berkeley) 3/6/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -42,28 +20,23 @@ static char sccsid[] = "@(#)v_undo.c	8.12 (Berkeley) 8/17/94";
 #include <bitstring.h>
 #include <errno.h>
 #include <limits.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <termios.h>
 
-#include "compat.h"
-#include <db.h>
-#include <regex.h>
-
+#include "../common/common.h"
 #include "vi.h"
-#include "vcmd.h"
 
 /*
  * v_Undo -- U
  *	Undo changes to this line.
+ *
+ * PUBLIC: int v_Undo __P((SCR *, VICMD *));
  */
 int
-v_Undo(sp, ep, vp)
+v_Undo(sp, vp)
 	SCR *sp;
-	EXF *ep;
-	VICMDARG *vp;
+	VICMD *vp;
 {
 	/*
 	 * Historically, U reset the cursor to the first column in the line
@@ -84,22 +57,25 @@ v_Undo(sp, ep, vp)
 	 * the line, so starting to replay the changes seems the best way to
 	 * get to there.
 	 */
-	F_SET(ep, F_UNDO);
-	ep->lundo = BACKWARD;
+	F_SET(sp->ep, F_UNDO);
+	sp->ep->lundo = BACKWARD;
 
-	return (log_setline(sp, ep));
+	return (log_setline(sp));
 }
 
 /*
  * v_undo -- u
  *	Undo the last change.
+ *
+ * PUBLIC: int v_undo __P((SCR *, VICMD *));
  */
 int
-v_undo(sp, ep, vp)
+v_undo(sp, vp)
 	SCR *sp;
-	EXF *ep;
-	VICMDARG *vp;
+	VICMD *vp;
 {
+	EXF *ep;
+
 	/* Set the command count. */
 	VIP(sp)->u_ccnt = sp->ccnt;
 
@@ -144,6 +120,7 @@ v_undo(sp, ep, vp)
 	 * to completely match historic practice, we'd have to track users line
 	 * changes, too.  This isn't worth the effort.
 	 */
+	ep = sp->ep;
 	if (!F_ISSET(ep, F_UNDO)) {
 		F_SET(ep, F_UNDO);
 		ep->lundo = BACKWARD;
@@ -152,9 +129,9 @@ v_undo(sp, ep, vp)
 
 	switch (ep->lundo) {
 	case BACKWARD:
-		return (log_backward(sp, ep, &vp->m_final));
+		return (log_backward(sp, &vp->m_final));
 	case FORWARD:
-		return (log_forward(sp, ep, &vp->m_final));
+		return (log_forward(sp, &vp->m_final));
 	default:
 		abort();
 	}

@@ -1,111 +1,83 @@
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1992, 1993, 1994, 1995, 1996
+ *	Keith Bostic.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * See the LICENSE file for redistribution information.
  */
 
+#include "config.h"
+
 #ifndef lint
-static char sccsid[] = "@(#)ex_write.c	8.38 (Berkeley) 8/17/94";
+static const char sccsid[] = "@(#)ex_write.c	10.25 (Berkeley) 5/8/96";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
-#include <sys/time.h>
 
 #include <bitstring.h>
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
-#include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include <termios.h>
 #include <unistd.h>
 
-#include "compat.h"
-#include <db.h>
-#include <regex.h>
-
-#include "vi.h"
-#include "excmd.h"
+#include "../common/common.h"
 
 enum which {WN, WQ, WRITE, XIT};
-
-static int exwr __P((SCR *, EXF *, EXCMDARG *, enum which));
+static int exwr __P((SCR *, EXCMD *, enum which));
 
 /*
  * ex_wn --	:wn[!] [>>] [file]
  *	Write to a file and switch to the next one.
+ *
+ * PUBLIC: int ex_wn __P((SCR *, EXCMD *));
  */
 int
-ex_wn(sp, ep, cmdp)
+ex_wn(sp, cmdp)
 	SCR *sp;
-	EXF *ep;
-	EXCMDARG *cmdp;
+	EXCMD *cmdp;
 {
-	if (exwr(sp, ep, cmdp, WN))
+	if (exwr(sp, cmdp, WN))
 		return (1);
-	if (file_m3(sp, ep, 0))
+	if (file_m3(sp, 0))
 		return (1);
 
 	/* The file name isn't a new file to edit. */
 	cmdp->argc = 0;
 
-	return (ex_next(sp, ep, cmdp));
+	return (ex_next(sp, cmdp));
 }
 
 /*
  * ex_wq --	:wq[!] [>>] [file]
  *	Write to a file and quit.
+ *
+ * PUBLIC: int ex_wq __P((SCR *, EXCMD *));
  */
 int
-ex_wq(sp, ep, cmdp)
+ex_wq(sp, cmdp)
 	SCR *sp;
-	EXF *ep;
-	EXCMDARG *cmdp;
+	EXCMD *cmdp;
 {
 	int force;
 
-	if (exwr(sp, ep, cmdp, WQ))
+	if (exwr(sp, cmdp, WQ))
 		return (1);
-	if (file_m3(sp, ep, 0))
+	if (file_m3(sp, 0))
 		return (1);
 
-	force = F_ISSET(cmdp, E_FORCE);
+	force = FL_ISSET(cmdp->iflags, E_C_FORCE);
 
 	if (ex_ncheck(sp, force))
 		return (1);
 
-	F_SET(sp, force ? S_EXIT_FORCE : S_EXIT);
+	F_SET(sp, force ? SC_EXIT_FORCE : SC_EXIT);
 	return (0);
 }
 
@@ -113,41 +85,44 @@ ex_wq(sp, ep, cmdp)
  * ex_write --	:write[!] [>>] [file]
  *		:write [!] [cmd]
  *	Write to a file.
+ *
+ * PUBLIC: int ex_write __P((SCR *, EXCMD *));
  */
 int
-ex_write(sp, ep, cmdp)
+ex_write(sp, cmdp)
 	SCR *sp;
-	EXF *ep;
-	EXCMDARG *cmdp;
+	EXCMD *cmdp;
 {
-	return (exwr(sp, ep, cmdp, WRITE));
+	return (exwr(sp, cmdp, WRITE));
 }
 
 
 /*
  * ex_xit -- :x[it]! [file]
- *
  *	Write out any modifications and quit.
+ *
+ * PUBLIC: int ex_xit __P((SCR *, EXCMD *));
  */
 int
-ex_xit(sp, ep, cmdp)
+ex_xit(sp, cmdp)
 	SCR *sp;
-	EXF *ep;
-	EXCMDARG *cmdp;
+	EXCMD *cmdp;
 {
 	int force;
 
-	if (F_ISSET((ep), F_MODIFIED) && exwr(sp, ep, cmdp, XIT))
+	NEEDFILE(sp, cmdp);
+
+	if (F_ISSET(sp->ep, F_MODIFIED) && exwr(sp, cmdp, XIT))
 		return (1);
-	if (file_m3(sp, ep, 0))
+	if (file_m3(sp, 0))
 		return (1);
 
-	force = F_ISSET(cmdp, E_FORCE);
+	force = FL_ISSET(cmdp->iflags, E_C_FORCE);
 
 	if (ex_ncheck(sp, force))
 		return (1);
 
-	F_SET(sp, force ? S_EXIT_FORCE : S_EXIT);
+	F_SET(sp, force ? SC_EXIT_FORCE : SC_EXIT);
 	return (0);
 }
 
@@ -156,111 +131,161 @@ ex_xit(sp, ep, cmdp)
  *	The guts of the ex write commands.
  */
 static int
-exwr(sp, ep, cmdp, cmd)
+exwr(sp, cmdp, cmd)
 	SCR *sp;
-	EXF *ep;
-	EXCMDARG *cmdp;
+	EXCMD *cmdp;
 	enum which cmd;
 {
-	EX_PRIVATE *exp;
 	MARK rm;
 	int flags;
 	char *name, *p;
 
+	NEEDFILE(sp, cmdp);
+
 	/* All write commands can have an associated '!'. */
 	LF_INIT(FS_POSSIBLE);
-	if (F_ISSET(cmdp, E_FORCE))
+	if (FL_ISSET(cmdp->iflags, E_C_FORCE))
 		LF_SET(FS_FORCE);
 
 	/* Skip any leading whitespace. */
 	if (cmdp->argc != 0)
-		for (p = cmdp->argv[0]->bp; *p && isblank(*p); ++p);
-
-	/* If no arguments, just write the file back. */
-	if (cmdp->argc == 0 || *p == '\0') {
-		if (F_ISSET(cmdp, E_ADDR2_ALL))
-			LF_SET(FS_ALL);
-		return (file_write(sp, ep,
-		    &cmdp->addr1, &cmdp->addr2, NULL, flags));
-	}
+		for (p = cmdp->argv[0]->bp; *p != '\0' && isblank(*p); ++p);
 
 	/* If "write !" it's a pipe to a utility. */
-	exp = EXP(sp);
-	if (cmd == WRITE && *p == '!') {
+	if (cmdp->argc != 0 && cmd == WRITE && *p == '!') {
+		/* Secure means no shell access. */
+		if (O_ISSET(sp, O_SECURE)) {
+			ex_emsg(sp, cmdp->cmd->name, EXM_SECURE_F);
+			return (1);
+		}
+
 		for (++p; *p && isblank(*p); ++p);
 		if (*p == '\0') {
-			msgq(sp, M_ERR, "Usage: %s", cmdp->cmd->usage);
+			ex_emsg(sp, cmdp->cmd->usage, EXM_USAGE);
 			return (1);
 		}
 		/* Expand the argument. */
-		if (argv_exp1(sp, ep, cmdp, p, strlen(p), 0))
+		if (argv_exp1(sp, cmdp, p, strlen(p), 1))
 			return (1);
-		if (filtercmd(sp, ep, &cmdp->addr1, &cmdp->addr2,
-		    &rm, cmdp->argv[1]->bp, FILTER_WRITE))
+
+		/*
+		 * !!!
+		 * Ignore the return cursor position, the cursor doesn't
+		 * move.
+		 */
+		if (ex_filter(sp, cmdp, &cmdp->addr1,
+		    &cmdp->addr2, &rm, cmdp->argv[1]->bp, FILTER_WRITE))
 			return (1);
-		sp->lno = rm.lno;
+
+		/* Ex terminates with a bang, even if the command fails. */
+		if (!F_ISSET(sp, SC_VI) && !F_ISSET(sp, SC_EX_SILENT))
+			(void)ex_puts(sp, "!\n");
+
 		return (0);
 	}
 
 	/* If "write >>" it's an append to a file. */
-	if (cmd != XIT && p[0] == '>' && p[1] == '>') {
+	if (cmdp->argc != 0 && cmd != XIT && p[0] == '>' && p[1] == '>') {
 		LF_SET(FS_APPEND);
 
 		/* Skip ">>" and whitespace. */
 		for (p += 2; *p && isblank(*p); ++p);
 	}
 
+	/* If no arguments, just write the file back. */
+	if (cmdp->argc == 0 || *p == '\0') {
+		if (F_ISSET(cmdp, E_ADDR2_ALL))
+			LF_SET(FS_ALL);
+		return (file_write(sp,
+		    &cmdp->addr1, &cmdp->addr2, NULL, flags));
+	}
+
 	/* Build an argv so we get an argument count and file expansion. */
-	if (argv_exp2(sp, ep, cmdp, p, strlen(p), 0))
+	if (argv_exp2(sp, cmdp, p, strlen(p)))
 		return (1);
 
+	/*
+	 *  0 args: impossible.
+	 *  1 args: impossible (I hope).
+	 *  2 args: read it.
+	 * >2 args: object, too many args.
+	 *
+	 * The 1 args case depends on the argv_sexp() function refusing
+	 * to return success without at least one non-blank character.
+	 */
 	switch (cmdp->argc) {
+	case 0:
 	case 1:
-		/*
-		 * Nothing to expand, write the current file.
-		 * XXX
-		 * Should never happen, already checked this case.
-		 */
-		name = NULL;
-		break;
+		abort();
+		/* NOTREACHED */
 	case 2:
-		/* One new argument, write it. */
-		name = cmdp->argv[exp->argsoff - 1]->bp;
-		set_alt_name(sp, name);
+		name = cmdp->argv[1]->bp;
+
+		/*
+		 * !!!
+		 * Historically, the read and write commands renamed
+		 * "unnamed" files, or, if the file had a name, set
+		 * the alternate file name.
+		 */
+		if (F_ISSET(sp->frp, FR_TMPFILE) &&
+		    !F_ISSET(sp->frp, FR_EXNAMED)) {
+			if ((p = v_strdup(sp,
+			    cmdp->argv[1]->bp, cmdp->argv[1]->len)) != NULL) {
+				free(sp->frp->name);
+				sp->frp->name = p;
+			}
+			/*
+			 * The file has a real name, it's no longer a
+			 * temporary, clear the temporary file flags.
+			 *
+			 * !!!
+			 * If we're writing the whole file, FR_NAMECHANGE
+			 * will be cleared by the write routine -- this is
+			 * historic practice.
+			 */
+			F_CLR(sp->frp, FR_TMPEXIT | FR_TMPFILE);
+			F_SET(sp->frp, FR_NAMECHANGE | FR_EXNAMED);
+
+			/* Notify the screen. */
+			(void)sp->gp->scr_rename(sp);
+		} else
+			set_alt_name(sp, name);
 		break;
 	default:
-		/* If expanded to more than one argument, object. */
-		msgq(sp, M_ERR, "%s expanded into too many file names",
-		    cmdp->argv[0]->bp);
-		msgq(sp, M_ERR, "Usage: %s", cmdp->cmd->usage);
+		ex_emsg(sp, p, EXM_FILECOUNT);
 		return (1);
 	}
 
 	if (F_ISSET(cmdp, E_ADDR2_ALL))
 		LF_SET(FS_ALL);
-	return (file_write(sp, ep, &cmdp->addr1, &cmdp->addr2, name, flags));
+	return (file_write(sp, &cmdp->addr1, &cmdp->addr2, name, flags));
 }
 
 /*
  * ex_writefp --
  *	Write a range of lines to a FILE *.
+ *
+ * PUBLIC: int ex_writefp __P((SCR *,
+ * PUBLIC:    char *, FILE *, MARK *, MARK *, u_long *, u_long *, int));
  */
 int
-ex_writefp(sp, ep, name, fp, fm, tm, nlno, nch)
+ex_writefp(sp, name, fp, fm, tm, nlno, nch, silent)
 	SCR *sp;
-	EXF *ep;
 	char *name;
 	FILE *fp;
 	MARK *fm, *tm;
 	u_long *nlno, *nch;
+	int silent;
 {
 	struct stat sb;
+	GS *gp;
 	u_long ccnt;			/* XXX: can't print off_t portably. */
 	recno_t fline, tline, lcnt;
 	size_t len;
-	int sv_errno;
-	char *p;
+	int rval;
+	char *msg, *p;
 
+	gp = sp->gp;
 	fline = fm->lno;
 	tline = tm->lno;
 
@@ -272,8 +297,8 @@ ex_writefp(sp, ep, name, fp, fm, tm, nlno, nch)
 	/*
 	 * The vi filter code has multiple processes running simultaneously,
 	 * and one of them calls ex_writefp().  The "unsafe" function calls
-	 * in this code are to file_gline() and msgq().  File_gline() is safe,
-	 * see the comment in filter.c:filtercmd() for details.  We don't call
+	 * in this code are to db_get() and msgq().  Db_get() is safe, see
+	 * the comment in ex_filter.c:ex_filter() for details.  We don't call
 	 * msgq if the multiple process bit in the EXF is set.
 	 *
 	 * !!!
@@ -286,42 +311,58 @@ ex_writefp(sp, ep, name, fp, fm, tm, nlno, nch)
 	 */
 	ccnt = 0;
 	lcnt = 0;
-	if (tline != 0) {
+	msg = "253|Writing...";
+	if (tline != 0)
 		for (; fline <= tline; ++fline, ++lcnt) {
 			/* Caller has to provide any interrupt message. */
-			if (INTERRUPTED(sp))
-				break;
-			if ((p = file_gline(sp, ep, fline, &len)) == NULL)
-				break;
-			if (fwrite(p, 1, len, fp) != len) {
-				msgq(sp, M_SYSERR, name);
-				(void)fclose(fp);
-				return (1);
+			if ((lcnt + 1) % INTERRUPT_CHECK == 0) {
+				if (INTERRUPTED(sp))
+					break;
+				if (!silent) {
+					gp->scr_busy(sp, msg, msg == NULL ?
+					    BUSY_UPDATE : BUSY_ON);
+					msg = NULL;
+				}
 			}
+			if (db_get(sp, fline, DBG_FATAL, &p, &len))
+				goto err;
+			if (fwrite(p, 1, len, fp) != len)
+				goto err;
 			ccnt += len;
 			if (putc('\n', fp) != '\n')
 				break;
 			++ccnt;
 		}
-	}
 
-	/* If it's a regular file, sync it so that NFS is forced to flush. */
-	if (!fstat(fileno(fp), &sb) &&
-	    S_ISREG(sb.st_mode) && fsync(fileno(fp))) {
-		sv_errno = errno;
-		(void)fclose(fp);
-		errno = sv_errno;
+	if (fflush(fp))
 		goto err;
-	}
+	/*
+	 * XXX
+	 * I don't trust NFS -- check to make sure that we're talking to
+	 * a regular file and sync so that NFS is forced to flush.
+	 */
+	if (!fstat(fileno(fp), &sb) &&
+	    S_ISREG(sb.st_mode) && fsync(fileno(fp)))
+		goto err;
+
 	if (fclose(fp))
 		goto err;
+
+	rval = 0;
+	if (0) {
+err:		if (!F_ISSET(sp->ep, F_MULTILOCK))
+			msgq_str(sp, M_SYSERR, name, "%s");
+		(void)fclose(fp);
+		rval = 1;
+	}
+
+	if (!silent)
+		gp->scr_busy(sp, NULL, BUSY_OFF);
+
+	/* Report the possibly partial transfer. */
 	if (nlno != NULL) {
 		*nch = ccnt;
 		*nlno = lcnt;
 	}
-	return (0);
-
-err:	if (!F_ISSET(ep, F_MULTILOCK))
-		msgq(sp, M_SYSERR, name);
-	return (1);
+	return (rval);
 }

@@ -1,38 +1,16 @@
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1992, 1993, 1994, 1995, 1996
+ *	Keith Bostic.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * See the LICENSE file for redistribution information.
  */
 
+#include "config.h"
+
 #ifndef lint
-static char sccsid[] = "@(#)v_z.c	8.18 (Berkeley) 8/17/94";
+static const char sccsid[] = "@(#)v_z.c	10.10 (Berkeley) 5/16/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -41,28 +19,23 @@ static char sccsid[] = "@(#)v_z.c	8.18 (Berkeley) 8/17/94";
 
 #include <bitstring.h>
 #include <limits.h>
-#include <signal.h>
 #include <stdio.h>
-#include <termios.h>
 
-#include "compat.h"
-#include <db.h>
-#include <regex.h>
-
+#include "../common/common.h"
 #include "vi.h"
-#include "vcmd.h"
 
 /*
  * v_z -- [count]z[count][-.+^<CR>]
  *	Move the screen.
+ *
+ * PUBLIC: int v_z __P((SCR *, VICMD *));
  */
 int
-v_z(sp, ep, vp)
+v_z(sp, vp)
 	SCR *sp;
-	EXF *ep;
-	VICMDARG *vp;
+	VICMD *vp;
 {
-	recno_t last, lno;
+	recno_t lno;
 	u_int value;
 
 	/*
@@ -71,37 +44,39 @@ v_z(sp, ep, vp)
 	 */
 	if (F_ISSET(vp, VC_C1SET)) {
 		lno = vp->count;
-		if (file_lline(sp, ep, &last))
+		if (!db_exist(sp, lno) && db_last(sp, &lno))
 			return (1);
-		if (lno > last)
-			lno = last;
 	} else
 		lno = vp->m_start.lno;
 
-	/* Set default return cursor values. */
+	/* Set default return cursor line. */
 	vp->m_final.lno = lno;
 	vp->m_final.cno = vp->m_start.cno;
 
 	/*
-	 * The second count is the displayed window size, i.e. the 'z'
-	 * command is another way to get artificially small windows.
+	 * The second count is the displayed window size, i.e. the 'z' command
+	 * is another way to get artificially small windows.  Note, you can't
+	 * grow beyond the size of the window.
 	 *
 	 * !!!
 	 * A window size of 0 was historically allowed, and simply ignored.
-	 * Also, this could be much more simply done by modifying the value
-	 * of the O_WINDOW option, but that's not how it worked historically.
+	 * This could be much more simply done by modifying the value of the
+	 * O_WINDOW option, but that's not how it worked historically.
 	 */
-	if (F_ISSET(vp, VC_C2SET) &&
-	    vp->count2 != 0 && sp->s_crel(sp, vp->count2))
-		return (1);
+	if (F_ISSET(vp, VC_C2SET) && vp->count2 != 0) {
+		if (vp->count2 > O_VAL(sp, O_WINDOW))
+			vp->count2 = O_VAL(sp, O_WINDOW);
+		if (vs_crel(sp, vp->count2))
+			return (1);
+	}
 
 	switch (vp->character) {
 	case '-':		/* Put the line at the bottom. */
-		if (sp->s_fill(sp, ep, lno, P_BOTTOM))
+		if (vs_sm_fill(sp, lno, P_BOTTOM))
 			return (1);
 		break;
 	case '.':		/* Put the line in the middle. */
-		if (sp->s_fill(sp, ep, lno, P_MIDDLE))
+		if (vs_sm_fill(sp, lno, P_MIDDLE))
 			return (1);
 		break;
 	case '+':
@@ -111,13 +86,12 @@ v_z(sp, ep, vp)
 		 * a screen from the current screen.
 		 */
 		if (F_ISSET(vp, VC_C1SET)) {
-			if (sp->s_fill(sp, ep, lno, P_TOP))
+			if (vs_sm_fill(sp, lno, P_TOP))
 				return (1);
-			if (sp->s_position(sp, ep, &vp->m_final, 0, P_TOP))
+			if (vs_sm_position(sp, &vp->m_final, 0, P_TOP))
 				return (1);
 		} else
-			if (sp->s_scroll(sp, ep,
-			    &vp->m_final, sp->t_rows, Z_PLUS))
+			if (vs_sm_scroll(sp, &vp->m_final, sp->t_rows, Z_PLUS))
 				return (1);
 		break;
 	case '^':
@@ -132,28 +106,44 @@ v_z(sp, ep, vp)
 		 * vi, here.
 		 */
 		if (F_ISSET(vp, VC_C1SET)) {
-			if (sp->s_fill(sp, ep, lno, P_BOTTOM))
+			if (vs_sm_fill(sp, lno, P_BOTTOM))
 				return (1);
-			if (sp->s_position(sp, ep, &vp->m_final, 0, P_TOP))
+			if (vs_sm_position(sp, &vp->m_final, 0, P_TOP))
 				return (1);
-			if (sp->s_fill(sp, ep, vp->m_final.lno, P_BOTTOM))
+			if (vs_sm_fill(sp, vp->m_final.lno, P_BOTTOM))
 				return (1);
 		} else
-			if (sp->s_scroll(sp, ep,
-			    &vp->m_final, sp->t_rows, Z_CARAT))
+			if (vs_sm_scroll(sp, &vp->m_final, sp->t_rows, Z_CARAT))
 				return (1);
 		break;
 	default:		/* Put the line at the top for <cr>. */
 		value = KEY_VAL(sp, vp->character);
 		if (value != K_CR && value != K_NL) {
-			msgq(sp, M_ERR, "usage: %s", vp->kp->usage);
+			v_emsg(sp, vp->kp->usage, VIM_USAGE);
 			return (1);
 		}
-		if (sp->s_fill(sp, ep, lno, P_TOP))
+		if (vs_sm_fill(sp, lno, P_TOP))
 			return (1);
 		break;
 	}
+	return (0);
+}
 
-
+/*
+ * vs_crel --
+ *	Change the relative size of the current screen.
+ *
+ * PUBLIC: int vs_crel __P((SCR *, long));
+ */
+int
+vs_crel(sp, count)
+	SCR *sp;
+	long count;
+{
+	sp->t_minrows = sp->t_rows = count;
+	if (sp->t_rows > sp->rows - 1)
+		sp->t_minrows = sp->t_rows = sp->rows - 1;
+	TMAP = HMAP + (sp->t_rows - 1);
+	F_SET(sp, SC_SCR_REDRAW);
 	return (0);
 }

@@ -1,58 +1,107 @@
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1992, 1993, 1994, 1995, 1996
+ *	Keith Bostic.  All rights reserved.
+ * Copyright (c) 1994, 1996
+ *	Rob Mayoff.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ * See the LICENSE file for redistribution information.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- *	@(#)tag.h	8.13 (Berkeley) 7/17/94
+ *	@(#)tag.h	10.5 (Berkeley) 5/15/96
  */
 
-struct _tagf {				/* Tag file. */
-	TAILQ_ENTRY(_tagf) q;		/* Linked list of tag files. */
-	char	*name;			/* Tag file name. */
+/*
+ * Cscope connection information.  One of these is maintained per cscope
+ * connection, linked from the EX_PRIVATE structure.
+ */
+struct _csc {
+	LIST_ENTRY(_csc) q;	/* Linked list of cscope connections. */
 
-#define	TAGF_DNE	0x01		/* Didn't exist. */
-#define	TAGF_DNE_WARN	0x02		/* DNE error reported. */
+	char	*dname;		/* Base directory of this cscope connection. */
+	size_t	 dlen;		/* Length of base directory. */
+	pid_t	 pid;		/* PID of the connected cscope process. */
+	time_t	 mtime;		/* Last modification time of cscope database. */
+
+	FILE	*from_fp;	/* from cscope: FILE. */
+	int	 from_fd;	/* from cscope: file descriptor. */
+	FILE	*to_fp;		/* to cscope: FILE. */
+	int	 to_fd;		/* to cscope: file descriptor. */
+
+	char   **paths;		/* Array of search paths for this cscope. */
+	char	*pbuf;		/* Search path buffer. */
+	size_t	 pblen;		/* Search path buffer length. */
+
+	char	 buf[1];	/* Variable length buffer. */
+};
+
+/*
+ * Tag file information.  One of these is maintained per tag file, linked
+ * from the EXPRIVATE structure.
+ */
+struct _tagf {			/* Tag files. */
+	TAILQ_ENTRY(_tagf) q;	/* Linked list of tag files. */
+	char	*name;		/* Tag file name. */
+	int	 errnum;	/* Errno. */
+
+#define	TAGF_ERR	0x01	/* Error occurred. */
+#define	TAGF_ERR_WARN	0x02	/* Error reported. */
 	u_int8_t flags;
 };
 
-struct _tag {				/* Tag stack. */
-	TAILQ_ENTRY(_tag) q;		/* Linked list of tags. */
-	FREF	*frp;			/* Saved file name. */
-	recno_t	 lno;			/* Saved line number. */
-	size_t	 cno;			/* Saved column number. */
-	char	*search;		/* Search string. */
-	size_t	 slen;			/* Search string length. */
+/*
+ * Tags are structured internally as follows:
+ *
+ * +----+    +----+	+----+     +----+
+ * | EP | -> | Q1 | <-- | T1 | <-- | T2 |
+ * +----+    +----+ --> +----+ --> +----+
+ *	     |
+ *	     +----+     +----+
+ *	     | Q2 | <-- | T1 |
+ *	     +----+ --> +----+
+ *	     |
+ *	     +----+	+----+
+ *	     | Q3 | <-- | T1 |
+ *	     +----+ --> +----+
+ *
+ * Each Q is a TAGQ, or tag "query", which is the result of one tag or cscope
+ * command.  Each Q references one or more TAG's, or tagged file locations.
+ *
+ * tag:		put a new Q at the head	(^])
+ * tagnext:	T1 -> T2 inside Q	(^N)
+ * tagprev:	T2 -> T1 inside Q	(^P)
+ * tagpop:	discard Q		(^T)
+ * tagtop:	discard all Q
+ */
+struct _tag {			/* Tag list. */
+	CIRCLEQ_ENTRY(_tag) q;	/* Linked list of tags. */
+
+				/* Tag pop/return information. */
+	FREF	*frp;		/* Saved file. */
+	recno_t	 lno;		/* Saved line number. */
+	size_t	 cno;		/* Saved column number. */
+
+	char	*fname;		/* Filename. */
+	size_t	 fnlen;		/* Filename length. */
+	recno_t	 slno;		/* Search line number. */
+	char	*search;	/* Search string. */
+	size_t	 slen;		/* Search string length. */
+
+	char	 buf[1];	/* Variable length buffer. */
 };
 
-int	ex_tagalloc __P((SCR *, char *));
-int	ex_tagcopy __P((SCR *, SCR *));
-int	ex_tagdisplay __P((SCR *, EXF *));
-int	ex_tagfirst __P((SCR *, char *));
-int	ex_tagfree __P((SCR *));
+struct _tagq {			/* Tag queue. */
+	CIRCLEQ_ENTRY(_tagq) q;	/* Linked list of tag queues. */
+				/* This queue's tag list. */
+	CIRCLEQ_HEAD(_tagqh, _tag) tagq;
+
+	TAG	*current;	/* Current TAG within the queue. */
+
+	char	*tag;		/* Tag string. */
+	size_t	 tlen;		/* Tag string length. */
+
+#define	TAG_CSCOPE	0x01	/* Cscope tag. */
+	u_int8_t flags;
+
+	char	 buf[1];	/* Variable length buffer. */
+};

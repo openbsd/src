@@ -1,60 +1,31 @@
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1992, 1993, 1994, 1995, 1996
+ *	Keith Bostic.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * See the LICENSE file for redistribution information.
  */
 
+#include "config.h"
+
 #ifndef lint
-static char sccsid[] = "@(#)mark.c	8.21 (Berkeley) 8/17/94";
+static const char sccsid[] = "@(#)mark.c	10.12 (Berkeley) 3/30/96";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/queue.h>
-#include <sys/time.h>
 
 #include <bitstring.h>
 #include <errno.h>
 #include <limits.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <termios.h>
 
-#include "compat.h"
-#include <db.h>
-#include <regex.h>
+#include "common.h"
 
-#include "vi.h"
-
-static LMARK *mark_find __P((SCR *, EXF *, ARG_CHAR_T));
+static LMARK *mark_find __P((SCR *, ARG_CHAR_T));
 
 /*
  * Marks are maintained in a key sorted doubly linked list.  We can't
@@ -90,30 +61,29 @@ static LMARK *mark_find __P((SCR *, EXF *, ARG_CHAR_T));
 /*
  * mark_init --
  *	Set up the marks.
+ *
+ * PUBLIC: int mark_init __P((SCR *, EXF *));
  */
 int
 mark_init(sp, ep)
 	SCR *sp;
 	EXF *ep;
 {
-	LMARK *lmp;
-
 	/*
-	 * Make sure the marks have been set up.  If they
-	 * haven't, do so, and create the absolute mark.
+	 * !!!
+	 * ep MAY NOT BE THE SAME AS sp->ep, DON'T USE THE LATTER.
+	 *
+	 * Set up the marks.
 	 */
-	MALLOC_RET(sp, lmp, LMARK *, sizeof(LMARK));
-	lmp->lno = 1;
-	lmp->cno = 0;
-	lmp->name = ABSMARK1;
-	lmp->flags = 0;
-	LIST_INSERT_HEAD(&ep->marks, lmp, q);
+	LIST_INIT(&ep->marks);
 	return (0);
 }
 
 /*
  * mark_end --
  *	Free up the marks.
+ *
+ * PUBLIC: int mark_end __P((SCR *, EXF *));
  */
 int
 mark_end(sp, ep)
@@ -122,9 +92,13 @@ mark_end(sp, ep)
 {
 	LMARK *lmp;
 
+	/*
+	 * !!!
+	 * ep MAY NOT BE THE SAME AS sp->ep, DON'T USE THE LATTER.
+	 */
 	while ((lmp = ep->marks.lh_first) != NULL) {
 		LIST_REMOVE(lmp, q);
-		FREE(lmp, sizeof(LMARK));
+		free(lmp);
 	}
 	return (0);
 }
@@ -132,33 +106,40 @@ mark_end(sp, ep)
 /*
  * mark_get --
  *	Get the location referenced by a mark.
+ *
+ * PUBLIC: int mark_get __P((SCR *, ARG_CHAR_T, MARK *, mtype_t));
  */
 int
-mark_get(sp, ep, key, mp)
+mark_get(sp, key, mp, mtype)
 	SCR *sp;
-	EXF *ep;
 	ARG_CHAR_T key;
 	MARK *mp;
+	mtype_t mtype;
 {
 	LMARK *lmp;
-	size_t len;
 
 	if (key == ABSMARK2)
 		key = ABSMARK1;
 
-	lmp = mark_find(sp, ep, key);
+	lmp = mark_find(sp, key);
 	if (lmp == NULL || lmp->name != key) {
-		msgq(sp, M_BERR, "Mark %s: not set", KEY_NAME(sp, key));
+		msgq(sp, mtype, "017|Mark %s: not set", KEY_NAME(sp, key));
                 return (1);
 	}
 	if (F_ISSET(lmp, MARK_DELETED)) {
-		msgq(sp, M_BERR,
-		    "Mark %s: the line was deleted", KEY_NAME(sp, key));
+		msgq(sp, mtype,
+		    "018|Mark %s: the line was deleted", KEY_NAME(sp, key));
                 return (1);
 	}
-	if (file_gline(sp, ep, lmp->lno, &len) == NULL ||
-	    lmp->cno > len || lmp->cno == len && len != 0) {
-		msgq(sp, M_BERR, "Mark %s: cursor position no longer exists",
+
+	/*
+	 * !!!
+	 * The absolute mark is initialized to lno 1/cno 0, and historically
+	 * you could use it in an empty file.  Make such a mark always work.
+	 */
+	if ((lmp->lno != 1 || lmp->cno != 0) && !db_exist(sp, lmp->lno)) {
+		msgq(sp, mtype,
+		    "019|Mark %s: cursor position no longer exists",
 		    KEY_NAME(sp, key));
 		return (1);
 	}
@@ -170,11 +151,12 @@ mark_get(sp, ep, key, mp)
 /*
  * mark_set --
  *	Set the location referenced by a mark.
+ *
+ * PUBLIC: int mark_set __P((SCR *, ARG_CHAR_T, MARK *, int));
  */
 int
-mark_set(sp, ep, key, value, userset)
+mark_set(sp, key, value, userset)
 	SCR *sp;
-	EXF *ep;
 	ARG_CHAR_T key;
 	MARK *value;
 	int userset;
@@ -190,11 +172,11 @@ mark_set(sp, ep, key, value, userset)
 	 * an undo, and we set it if it's not already set or if it was set
 	 * by a previous undo.
 	 */
-	lmp = mark_find(sp, ep, key);
+	lmp = mark_find(sp, key);
 	if (lmp == NULL || lmp->name != key) {
 		MALLOC_RET(sp, lmt, LMARK *, sizeof(LMARK));
 		if (lmp == NULL) {
-			LIST_INSERT_HEAD(&ep->marks, lmt, q);
+			LIST_INSERT_HEAD(&sp->ep->marks, lmt, q);
 		} else
 			LIST_INSERT_AFTER(lmp, lmt, q);
 		lmp = lmt;
@@ -215,9 +197,8 @@ mark_set(sp, ep, key, value, userset)
  *	where it would go.
  */
 static LMARK *
-mark_find(sp, ep, key)
+mark_find(sp, key)
 	SCR *sp;
-	EXF *ep;
 	ARG_CHAR_T key;
 {
 	LMARK *lmp, *lastlmp;
@@ -226,7 +207,7 @@ mark_find(sp, ep, key)
 	 * Return the requested mark or the slot immediately before
 	 * where it should go.
 	 */
-	for (lastlmp = NULL, lmp = ep->marks.lh_first;
+	for (lastlmp = NULL, lmp = sp->ep->marks.lh_first;
 	    lmp != NULL; lastlmp = lmp, lmp = lmp->q.le_next)
 		if (lmp->name >= key)
 			return (lmp->name == key ? lmp : lastlmp);
@@ -236,37 +217,61 @@ mark_find(sp, ep, key)
 /*
  * mark_insdel --
  *	Update the marks based on an insertion or deletion.
+ *
+ * PUBLIC: int mark_insdel __P((SCR *, lnop_t, recno_t));
  */
-void
-mark_insdel(sp, ep, op, lno)
+int
+mark_insdel(sp, op, lno)
 	SCR *sp;
-	EXF *ep;
-	enum operation op;
+	lnop_t op;
 	recno_t lno;
 {
 	LMARK *lmp;
+	recno_t lline;
 
 	switch (op) {
 	case LINE_APPEND:
-		return;
+		/* All insert/append operations are done as inserts. */
+		abort();
 	case LINE_DELETE:
-		for (lmp = ep->marks.lh_first;
+		for (lmp = sp->ep->marks.lh_first;
 		    lmp != NULL; lmp = lmp->q.le_next)
 			if (lmp->lno >= lno)
 				if (lmp->lno == lno) {
 					F_SET(lmp, MARK_DELETED);
-					(void)log_mark(sp, ep, lmp);
+					(void)log_mark(sp, lmp);
 				} else
 					--lmp->lno;
-		return;
+		break;
 	case LINE_INSERT:
-		for (lmp = ep->marks.lh_first;
+		/*
+		 * XXX
+		 * Very nasty special case.  If the file was empty, then we're
+		 * adding the first line, which is a replacement.  So, we don't
+		 * modify the marks.  This is a hack to make:
+		 *
+		 *	mz:r!echo foo<carriage-return>'z
+		 *
+		 * work, i.e. historically you could mark the "line" in an empty
+		 * file and replace it, and continue to use the mark.  Insane,
+		 * well, yes, I know, but someone complained.
+		 *
+		 * Check for line #2 before going to the end of the file.
+		 */
+		if (!db_exist(sp, 2)) {
+			if (db_last(sp, &lline))
+				return (1);
+			if (lline == 1)
+				return (0);
+		}
+
+		for (lmp = sp->ep->marks.lh_first;
 		    lmp != NULL; lmp = lmp->q.le_next)
 			if (lmp->lno >= lno)
 				++lmp->lno;
-		return;
+		break;
 	case LINE_RESET:
-		return;
+		break;
 	}
-	/* NOTREACHED */
+	return (0);
 }

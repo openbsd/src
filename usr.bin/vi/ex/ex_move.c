@@ -1,68 +1,39 @@
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1992, 1993, 1994, 1995, 1996
+ *	Keith Bostic.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * See the LICENSE file for redistribution information.
  */
 
+#include "config.h"
+
 #ifndef lint
-static char sccsid[] = "@(#)ex_move.c	8.19 (Berkeley) 8/17/94";
+static const char sccsid[] = "@(#)ex_move.c	10.9 (Berkeley) 3/6/96";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/queue.h>
-#include <sys/time.h>
 
 #include <bitstring.h>
 #include <limits.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <termios.h>
 
-#include "compat.h"
-#include <db.h>
-#include <regex.h>
-
-#include "vi.h"
-#include "excmd.h"
+#include "../common/common.h"
 
 /*
  * ex_copy -- :[line [,line]] co[py] line [flags]
  *	Copy selected lines.
+ *
+ * PUBLIC: int ex_copy __P((SCR *, EXCMD *));
  */
 int
-ex_copy(sp, ep, cmdp)
+ex_copy(sp, cmdp)
 	SCR *sp;
-	EXF *ep;
-	EXCMDARG *cmdp;
+	EXCMD *cmdp;
 {
 	CB cb;
 	MARK fm1, fm2, m, tm;
@@ -70,6 +41,8 @@ ex_copy(sp, ep, cmdp)
 	int rval;
 
 	rval = 0;
+
+	NEEDFILE(sp, cmdp);
 
 	/*
 	 * It's possible to copy things into the area that's being
@@ -81,7 +54,7 @@ ex_copy(sp, ep, cmdp)
 	memset(&cb, 0, sizeof(cb));
 	CIRCLEQ_INIT(&cb.textq);
 	for (cnt = fm1.lno; cnt <= fm2.lno; ++cnt)
-		if (cut_line(sp, ep, cnt, 0, 0, &cb)) {
+		if (cut_line(sp, cnt, 0, 0, &cb)) {
 			rval = 1;
 			goto err;
 		}
@@ -90,7 +63,7 @@ ex_copy(sp, ep, cmdp)
 	/* Put the text into place. */
 	tm.lno = cmdp->lineno;
 	tm.cno = 0;
-	if (put(sp, ep, &cb, NULL, &tm, &m, 1))
+	if (put(sp, &cb, NULL, &tm, &m, 1))
 		rval = 1;
 	else {
 		/*
@@ -109,12 +82,13 @@ err:	text_lfree(&cb.textq);
 /*
  * ex_move -- :[line [,line]] mo[ve] line
  *	Move selected lines.
+ *
+ * PUBLIC: int ex_move __P((SCR *, EXCMD *));
  */
 int
-ex_move(sp, ep, cmdp)
+ex_move(sp, cmdp)
 	SCR *sp;
-	EXF *ep;
-	EXCMDARG *cmdp;
+	EXCMD *cmdp;
 {
 	LMARK *lmp;
 	MARK fm1, fm2;
@@ -123,6 +97,8 @@ ex_move(sp, ep, cmdp)
 	int mark_reset;
 	char *bp, *p;
 
+	NEEDFILE(sp, cmdp);
+
 	/*
 	 * It's not possible to move things into the area that's being
 	 * moved.
@@ -130,7 +106,7 @@ ex_move(sp, ep, cmdp)
 	fm1 = cmdp->addr1;
 	fm2 = cmdp->addr2;
 	if (cmdp->lineno >= fm1.lno && cmdp->lineno <= fm2.lno) {
-		msgq(sp, M_ERR, "Destination line is inside move range");
+		msgq(sp, M_ERR, "139|Destination line is inside move range");
 		return (1);
 	}
 
@@ -150,12 +126,12 @@ ex_move(sp, ep, cmdp)
 
 	/* Log the old positions of the marks. */
 	mark_reset = 0;
-	for (lmp = ep->marks.lh_first; lmp != NULL; lmp = lmp->q.le_next)
+	for (lmp = sp->ep->marks.lh_first; lmp != NULL; lmp = lmp->q.le_next)
 		if (lmp->name != ABSMARK1 &&
 		    lmp->lno >= fl && lmp->lno <= tl) {
 			mark_reset = 1;
 			F_CLR(lmp, MARK_USERSET);
-			(void)log_mark(sp, ep, lmp);
+			(void)log_mark(sp, lmp);
 		}
 
 	/* Get memory for the copy. */
@@ -167,39 +143,39 @@ ex_move(sp, ep, cmdp)
 		mfl = tl - diff;
 		mtl = tl;
 		for (cnt = diff; cnt--;) {
-			if ((p = file_gline(sp, ep, fl, &len)) == NULL)
+			if (db_get(sp, fl, DBG_FATAL, &p, &len))
 				return (1);
 			BINC_RET(sp, bp, blen, len);
 			memmove(bp, p, len);
-			if (file_aline(sp, ep, 1, tl, bp, len))
+			if (db_append(sp, 1, tl, bp, len))
 				return (1);
 			if (mark_reset)
-				for (lmp = ep->marks.lh_first;
+				for (lmp = sp->ep->marks.lh_first;
 				    lmp != NULL; lmp = lmp->q.le_next)
 					if (lmp->name != ABSMARK1 &&
 					    lmp->lno == fl)
 						lmp->lno = tl + 1;
-			if (file_dline(sp, ep, fl))
+			if (db_delete(sp, fl))
 				return (1);
 		}
 	} else {				/* Destination < source. */
 		mfl = tl;
 		mtl = tl + diff;
 		for (cnt = diff; cnt--;) {
-			if ((p = file_gline(sp, ep, fl, &len)) == NULL)
+			if (db_get(sp, fl, DBG_FATAL, &p, &len))
 				return (1);
 			BINC_RET(sp, bp, blen, len);
 			memmove(bp, p, len);
-			if (file_aline(sp, ep, 1, tl++, bp, len))
+			if (db_append(sp, 1, tl++, bp, len))
 				return (1);
 			if (mark_reset)
-				for (lmp = ep->marks.lh_first;
+				for (lmp = sp->ep->marks.lh_first;
 				    lmp != NULL; lmp = lmp->q.le_next)
 					if (lmp->name != ABSMARK1 &&
 					    lmp->lno == fl)
 						lmp->lno = tl;
 			++fl;
-			if (file_dline(sp, ep, fl))
+			if (db_delete(sp, fl))
 				return (1);
 		}
 	}
@@ -210,11 +186,11 @@ ex_move(sp, ep, cmdp)
 
 	/* Log the new positions of the marks. */
 	if (mark_reset)
-		for (lmp = ep->marks.lh_first;
+		for (lmp = sp->ep->marks.lh_first;
 		    lmp != NULL; lmp = lmp->q.le_next)
 			if (lmp->name != ABSMARK1 &&
 			    lmp->lno >= mfl && lmp->lno <= mtl)
-				(void)log_mark(sp, ep, lmp);
+				(void)log_mark(sp, lmp);
 
 
 	sp->rptlines[L_MOVED] += diff;

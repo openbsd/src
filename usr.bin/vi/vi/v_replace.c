@@ -1,38 +1,16 @@
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1992, 1993, 1994, 1995, 1996
+ *	Keith Bostic.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * See the LICENSE file for redistribution information.
  */
 
+#include "config.h"
+
 #ifndef lint
-static char sccsid[] = "@(#)v_replace.c	8.20 (Berkeley) 8/17/94";
+static const char sccsid[] = "@(#)v_replace.c	10.16 (Berkeley) 4/27/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -43,64 +21,57 @@ static char sccsid[] = "@(#)v_replace.c	8.20 (Berkeley) 8/17/94";
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <termios.h>
 
-#include "compat.h"
-#include <db.h>
-#include <regex.h>
-
+#include "../common/common.h"
 #include "vi.h"
-#include "vcmd.h"
 
 /*
- * v_replace -- [count]rc
+ * v_replace -- [count]r<char>
  *
  * !!!
  * The r command in historic vi was almost beautiful in its badness.  For
  * example, "r<erase>" and "r<word erase>" beeped the terminal and deleted
  * a single character.  "Nr<carriage return>", where N was greater than 1,
- * inserted a single carriage return.  This may not be right, but at least
- * it's not insane.
+ * inserted a single carriage return.  "r<escape>" did cancel the command,
+ * but "r<literal><escape>" erased a single character.  To enter a literal
+ * <literal> character, it required three <literal> characters after the
+ * command.  This may not be right, but at least it's not insane.
+ *
+ * PUBLIC: int v_replace __P((SCR *, VICMD *));
  */
 int
-v_replace(sp, ep, vp)
+v_replace(sp, vp)
 	SCR *sp;
-	EXF *ep;
-	VICMDARG *vp;
+	VICMD *vp;
 {
-	CH ikey;
+	EVENT ev;
+	VI_PRIVATE *vip;
 	TEXT *tp;
-	recno_t lno;
 	size_t blen, len;
 	u_long cnt;
-	int rval;
+	int quote, rval;
 	char *bp, *p;
+
+	vip = VIP(sp);
 
 	/*
 	 * If the line doesn't exist, or it's empty, replacement isn't
 	 * allowed.  It's not hard to implement, but:
 	 *
-	 *	1: It's historic practice.
+	 *	1: It's historic practice (vi beeped before the replacement
+	 *	   character was even entered).
 	 *	2: For consistency, this change would require that the more
 	 *	   general case, "Nr", when the user is < N characters from
-	 *	   the end of the line, also work.
-	 *	3: Replacing a newline has somewhat odd semantics.
+	 *	   the end of the line, also work, which would be a bit odd.
+	 *	3: Replacing with a <newline> has somewhat odd semantics.
 	 */
-	if ((p = file_gline(sp, ep, vp->m_start.lno, &len)) == NULL) {
-		if (file_lline(sp, ep, &lno))
-			return (1);
-		if (lno != 0) {
-			GETLINE_ERR(sp, vp->m_start.lno);
-			return (1);
-		}
-		goto nochar;
-	}
+	if (db_get(sp, vp->m_start.lno, DBG_FATAL, &p, &len))
+		return (1);
 	if (len == 0) {
-nochar:		msgq(sp, M_BERR, "No characters to replace");
+		msgq(sp, M_BERR, "186|No characters to replace");
 		return (1);
 	}
 
@@ -109,38 +80,63 @@ nochar:		msgq(sp, M_BERR, "No characters to replace");
 	 * reason (other than that the semantics of replacing the newline
 	 * are confusing) only permit the replacement of the characters in
 	 * the current line.  I suppose we could append replacement characters
-	 * to the line, but I see no compelling reason to do so.
+	 * to the line, but I see no compelling reason to do so.  Check this
+	 * before we get the character to match historic practice, where Nr
+	 * failed immediately if there were less than N characters from the
+	 * cursor to the end of the line.
 	 */
 	cnt = F_ISSET(vp, VC_C1SET) ? vp->count : 1;
 	vp->m_stop.lno = vp->m_start.lno;
 	vp->m_stop.cno = vp->m_start.cno + cnt - 1;
 	if (vp->m_stop.cno > len - 1) {
-		v_eol(sp, ep, &vp->m_start);
+		v_eol(sp, &vp->m_start);
 		return (1);
 	}
 
 	/*
-	 * Get the character.  Literal escapes escape any character,
-	 * single escapes return.
+	 * If it's not a repeat, reset the current mode and get a replacement
+	 * character.
 	 */
-	if (F_ISSET(vp, VC_ISDOT)) {
-		ikey.ch = VIP(sp)->rlast;
-		ikey.value = KEY_VAL(sp, ikey.ch);
-	} else {
-		sp->showmode = "Replace char";
-		(void)sp->s_refresh(sp, ep);
-
-		if (term_key(sp, &ikey, 0) != INP_OK)
+	quote = 0;
+	if (!F_ISSET(vp, VC_ISDOT)) {
+		sp->showmode = SM_REPLACE;
+		if (vs_refresh(sp, 0))
 			return (1);
-		switch (ikey.value) {
-		case K_ESCAPE:
-			return (0);
-		case K_VLNEXT:
-			if (term_key(sp, &ikey, 0) != INP_OK)
-				return (1);
+next:		if (v_event_get(sp, &ev, 0, 0))
+			return (1);
+
+		switch (ev.e_event) {
+		case E_CHARACTER:
+			/*
+			 * <literal_next> means escape the next character.
+			 * <escape> means they changed their minds.
+			 */
+			if (!quote) {
+				if (ev.e_value == K_VLNEXT) {
+					quote = 1;
+					goto next;
+				}
+				if (ev.e_value == K_ESCAPE)
+					return (0);
+			}
+			vip->rlast = ev.e_c;
+			vip->rvalue = ev.e_value;
 			break;
+		case E_ERR:
+		case E_EOF:
+			F_SET(sp, SC_EXIT_FORCE);
+			return (1);
+		case E_INTERRUPT:
+			/* <interrupt> means they changed their minds. */
+			return (0);
+		case E_REPAINT:
+			if (vs_repaint(sp, &ev))
+				return (1);
+			goto next;
+		default:
+			v_event_err(sp, &ev);
+			return (0);
 		}
-		VIP(sp)->rlast = ikey.ch;
 	}
 
 	/* Copy the line. */
@@ -148,44 +144,53 @@ nochar:		msgq(sp, M_BERR, "No characters to replace");
 	memmove(bp, p, len);
 	p = bp;
 
-	if (ikey.value == K_CR || ikey.value == K_NL) {
+	/*
+	 * Versions of nvi before 1.57 created N new lines when they replaced
+	 * N characters with <carriage-return> or <newline> characters.  This
+	 * is different from the historic vi, which replaced N characters with
+	 * a single new line.  Users complained, so we match historic practice.
+	 */
+	if (!quote && vip->rvalue == K_CR || vip->rvalue == K_NL) {
 		/* Set return line. */
-		vp->m_stop.lno = vp->m_start.lno + cnt;
+		vp->m_stop.lno = vp->m_start.lno + 1;
 		vp->m_stop.cno = 0;
 
 		/* The first part of the current line. */
-		if (file_sline(sp, ep, vp->m_start.lno, p, vp->m_start.cno))
+		if (db_set(sp, vp->m_start.lno, p, vp->m_start.cno))
 			goto err_ret;
 
 		/*
 		 * The rest of the current line.  And, of course, now it gets
-		 * tricky.  Any white space after the replaced character is
-		 * stripped, and autoindent is applied.  Put the cursor on the
-		 * last indent character as did historic vi.
+		 * tricky.  If there are characters left in the line and if
+		 * the autoindent edit option is set, white space after the
+		 * replaced character is discarded, autoindent is applied, and
+		 * the cursor moves to the last indent character.
 		 */
-		for (p += vp->m_start.cno + cnt, len -= vp->m_start.cno + cnt;
-		    len && isblank(*p); --len, ++p);
+		p += vp->m_start.cno + cnt;
+		len -= vp->m_start.cno + cnt;
+		if (len != 0 && O_ISSET(sp, O_AUTOINDENT))
+			for (; len && isblank(*p); --len, ++p);
 
 		if ((tp = text_init(sp, p, len, len)) == NULL)
 			goto err_ret;
-		if (txt_auto(sp, ep, vp->m_start.lno, NULL, 0, tp))
-			goto err_ret;
+
+		if (len != 0 && O_ISSET(sp, O_AUTOINDENT)) {
+			if (v_txt_auto(sp, vp->m_start.lno, NULL, 0, tp))
+				goto err_ret;
+			vp->m_stop.cno = tp->ai ? tp->ai - 1 : 0;
+		} else
+			vp->m_stop.cno = 0;
+
 		vp->m_stop.cno = tp->ai ? tp->ai - 1 : 0;
-		if (file_aline(sp, ep, 1, vp->m_start.lno, tp->lb, tp->len))
-			goto err_ret;
-		text_free(tp);
-
-		rval = 0;
-
-		/* All of the middle lines. */
-		while (--cnt)
-			if (file_aline(sp, ep, 1, vp->m_start.lno, "", 0)) {
-err_ret:			rval = 1;
-				break;
-			}
+		if (db_append(sp, 1, vp->m_start.lno, tp->lb, tp->len))
+err_ret:		rval = 1;
+		else {
+			text_free(tp);
+			rval = 0;
+		}
 	} else {
-		memset(bp + vp->m_start.cno, ikey.ch, cnt);
-		rval = file_sline(sp, ep, vp->m_start.lno, bp, len);
+		memset(bp + vp->m_start.cno, vip->rlast, cnt);
+		rval = db_set(sp, vp->m_start.lno, bp, len);
 	}
 	FREE_SPACE(sp, bp, blen);
 

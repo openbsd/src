@@ -1,76 +1,47 @@
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1993, 1994, 1995, 1996
+ *	Keith Bostic.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * See the LICENSE file for redistribution information.
  */
 
+#include "config.h"
+
 #ifndef lint
-static char sccsid[] = "@(#)ex_argv.c	8.38 (Berkeley) 8/17/94";
+static const char sccsid[] = "@(#)ex_argv.c	10.19 (Berkeley) 3/30/96";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/queue.h>
-#include <sys/time.h>
 
 #include <bitstring.h>
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <termios.h>
 #include <unistd.h>
 
-#include "compat.h"
-#include <db.h>
-#include <regex.h>
-
-#include "vi.h"
-#include "excmd.h"
+#include "../common/common.h"
 
 static int argv_alloc __P((SCR *, size_t));
-static int argv_fexp __P((SCR *, EXCMDARG *,
+static int argv_fexp __P((SCR *, EXCMD *,
 	       char *, size_t, char *, size_t *, char **, size_t *, int));
 static int argv_sexp __P((SCR *, char **, size_t *, size_t *));
 
 /*
  * argv_init --
  *	Build  a prototype arguments list.
+ *
+ * PUBLIC: int argv_init __P((SCR *, EXCMD *));
  */
 int
-argv_init(sp, ep, excp)
+argv_init(sp, excp)
 	SCR *sp;
-	EXF *ep;
-	EXCMDARG *excp;
+	EXCMD *excp;
 {
 	EX_PRIVATE *exp;
 
@@ -86,12 +57,13 @@ argv_init(sp, ep, excp)
 /*
  * argv_exp0 --
  *	Append a string to the argument list.
+ *
+ * PUBLIC: int argv_exp0 __P((SCR *, EXCMD *, char *, size_t));
  */
 int
-argv_exp0(sp, ep, excp, cmd, cmdlen)
+argv_exp0(sp, excp, cmd, cmdlen)
 	SCR *sp;
-	EXF *ep;
-	EXCMDARG *excp;
+	EXCMD *excp;
 	char *cmd;
 	size_t cmdlen;
 {
@@ -112,12 +84,13 @@ argv_exp0(sp, ep, excp, cmd, cmdlen)
  * argv_exp1 --
  *	Do file name expansion on a string, and append it to the
  *	argument list.
+ *
+ * PUBLIC: int argv_exp1 __P((SCR *, EXCMD *, char *, size_t, int));
  */
 int
-argv_exp1(sp, ep, excp, cmd, cmdlen, is_bang)
+argv_exp1(sp, excp, cmd, cmdlen, is_bang)
 	SCR *sp;
-	EXF *ep;
-	EXCMDARG *excp;
+	EXCMD *excp;
 	char *cmd;
 	size_t cmdlen;
 	int is_bang;
@@ -145,8 +118,8 @@ argv_exp1(sp, ep, excp, cmd, cmdlen, is_bang)
 	} else
 		goto ret;
 
-	(void)argv_exp0(sp, ep, excp, bp, len);
-		
+	(void)argv_exp0(sp, excp, bp, len);
+
 ret:	FREE_SPACE(sp, bp, blen);
 	return (0);
 }
@@ -155,15 +128,15 @@ ret:	FREE_SPACE(sp, bp, blen);
  * argv_exp2 --
  *	Do file name and shell expansion on a string, and append it to
  *	the argument list.
+ *
+ * PUBLIC: int argv_exp2 __P((SCR *, EXCMD *, char *, size_t));
  */
 int
-argv_exp2(sp, ep, excp, cmd, cmdlen, is_bang)
+argv_exp2(sp, excp, cmd, cmdlen)
 	SCR *sp;
-	EXF *ep;
-	EXCMDARG *excp;
+	EXCMD *excp;
 	char *cmd;
 	size_t cmdlen;
-	int is_bang;
 {
 	size_t blen, len, n;
 	int rval;
@@ -181,7 +154,7 @@ argv_exp2(sp, ep, excp, cmd, cmdlen, is_bang)
 	TRACE(sp, "file_argv: {%.*s}\n", (int)cmdlen, cmd);
 #endif
 
-	if (argv_fexp(sp, excp, cmd, cmdlen, p, &len, &bp, &blen, is_bang)) {
+	if (argv_fexp(sp, excp, cmd, cmdlen, p, &len, &bp, &blen, 0)) {
 		rval = 1;
 		goto err;
 	}
@@ -202,20 +175,24 @@ argv_exp2(sp, ep, excp, cmd, cmdlen, is_bang)
 	 *
 	 * To avoid a function call per character, we do a first pass through
 	 * the meta characters looking for characters that aren't expected
-	 * to be there.
+	 * to be there, and then we can ignore them in the user's argument.
 	 */
-	for (p = mp = O_STR(sp, O_META); *p != '\0'; ++p)
-		if (isblank(*p) || isalnum(*p))
-			break;
-	if (*p != '\0') {
-		for (p = bp, n = len; n > 0; --n, ++p)
-			if (strchr(mp, *p) != NULL)
+	if (opts_empty(sp, O_SHELL, 1) || opts_empty(sp, O_SHELLMETA, 1))
+		n = 0;
+	else {
+		for (p = mp = O_STR(sp, O_SHELLMETA); *p != '\0'; ++p)
+			if (isblank(*p) || isalnum(*p))
 				break;
-	} else
-		for (p = bp, n = len; n > 0; --n, ++p)
-			if (!isblank(*p) &&
-			    !isalnum(*p) && strchr(mp, *p) != NULL)
-				break;
+		if (*p != '\0') {
+			for (p = bp, n = len; n > 0; --n, ++p)
+				if (strchr(mp, *p) != NULL)
+					break;
+		} else
+			for (p = bp, n = len; n > 0; --n, ++p)
+				if (!isblank(*p) &&
+				    !isalnum(*p) && strchr(mp, *p) != NULL)
+					break;
+	}
 	if (n > 0) {
 		if (argv_sexp(sp, &bp, &blen, &len)) {
 			rval = 1;
@@ -231,7 +208,7 @@ argv_exp2(sp, ep, excp, cmd, cmdlen, is_bang)
 	TRACE(sp, "after shell: %d: {%s}\n", len, bp);
 #endif
 
-	rval = argv_exp3(sp, ep, excp, p, len);
+	rval = argv_exp3(sp, excp, p, len);
 
 err:	FREE_SPACE(sp, bp, blen);
 	return (rval);
@@ -241,12 +218,13 @@ err:	FREE_SPACE(sp, bp, blen);
  * argv_exp3 --
  *	Take a string and break it up into an argv, which is appended
  *	to the argument list.
+ *
+ * PUBLIC: int argv_exp3 __P((SCR *, EXCMD *, char *, size_t));
  */
 int
-argv_exp3(sp, ep, excp, cmd, cmdlen)
+argv_exp3(sp, excp, cmd, cmdlen)
 	SCR *sp;
-	EXF *ep;
-	EXCMDARG *excp;
+	EXCMD *excp;
 	char *cmd;
 	size_t cmdlen;
 {
@@ -276,7 +254,7 @@ argv_exp3(sp, ep, excp, cmd, cmdlen)
 		 */
 		for (ap = cmd, len = 0; cmdlen > 0; ++cmd, --cmdlen, ++len) {
 			ch = *cmd;
-			if (IS_ESCAPE(sp, ch) && cmdlen > 1) {
+			if (IS_ESCAPE(sp, excp, ch) && cmdlen > 1) {
 				++cmd;
 				--cmdlen;
 			} else if (isblank(ch))
@@ -294,7 +272,7 @@ argv_exp3(sp, ep, excp, cmd, cmdlen)
 		off = exp->argsoff;
 		exp->args[off]->len = len;
 		for (p = exp->args[off]->bp; len > 0; --len, *p++ = *ap++)
-			if (IS_ESCAPE(sp, *(u_char *)ap))
+			if (IS_ESCAPE(sp, excp, *(u_char *)ap))
 				++ap;
 		*p = '\0';
 	}
@@ -315,7 +293,7 @@ argv_exp3(sp, ep, excp, cmd, cmdlen)
 static int
 argv_fexp(sp, excp, cmd, cmdlen, p, lenp, bpp, blenp, is_bang)
 	SCR *sp;
-	EXCMDARG *excp;
+	EXCMD *excp;
 	char *cmd, *p, **bpp;
 	size_t cmdlen, *lenp, *blenp;
 	int is_bang;
@@ -333,7 +311,7 @@ argv_fexp(sp, excp, cmd, cmdlen, p, lenp, bpp, blenp, is_bang)
 			exp = EXP(sp);
 			if (exp->lastbcomm == NULL) {
 				msgq(sp, M_ERR,
-				    "No previous command to replace \"!\"");
+				    "115|No previous command to replace \"!\"");
 				return (1);
 			}
 			len += tlen = strlen(exp->lastbcomm);
@@ -345,7 +323,7 @@ argv_fexp(sp, excp, cmd, cmdlen, p, lenp, bpp, blenp, is_bang)
 		case '%':
 			if ((t = sp->frp->name) == NULL) {
 				msgq(sp, M_ERR,
-				    "No filename to substitute for %%");
+				    "116|No filename to substitute for %%");
 				return (1);
 			}
 			tlen = strlen(t);
@@ -358,7 +336,7 @@ argv_fexp(sp, excp, cmd, cmdlen, p, lenp, bpp, blenp, is_bang)
 		case '#':
 			if ((t = sp->alt_name) == NULL) {
 				msgq(sp, M_ERR,
-				    "No filename to substitute for #");
+				    "117|No filename to substitute for #");
 				return (1);
 			}
 			len += tlen = strlen(t);
@@ -374,7 +352,8 @@ argv_fexp(sp, excp, cmd, cmdlen, p, lenp, bpp, blenp, is_bang)
 			 * Strip any backslashes that protected the file
 			 * expansion characters.
 			 */
-			if (cmdlen > 1 && (cmd[1] == '%' || cmd[1] == '#')) {
+			if (cmdlen > 1 &&
+			    (cmd[1] == '%' || cmd[1] == '#' || cmd[1] == '!')) {
 				++cmd;
 				--cmdlen;
 			}
@@ -424,7 +403,7 @@ argv_alloc(sp, len)
 			(void)argv_free(sp);
 			goto mem;
 		}
-		memset(&exp->args[off], 0, INCREMENT * sizeof(ARGS *));
+		memset(&exp->args[exp->argscnt], 0, INCREMENT * sizeof(ARGS *));
 		exp->argscnt = cnt;
 	}
 
@@ -465,6 +444,8 @@ mem:			msgq(sp, M_SYSERR, NULL);
 /*
  * argv_free --
  *	Free up argument structures.
+ *
+ * PUBLIC: int argv_free __P((SCR *));
  */
 int
 argv_free(sp)
@@ -480,9 +461,9 @@ argv_free(sp)
 				continue;
 			if (F_ISSET(exp->args[off], A_ALLOCATED))
 				free(exp->args[off]->bp);
-			FREE(exp->args[off], sizeof(ARGS));
+			free(exp->args[off]);
 		}
-		FREE(exp->args, exp->argscnt * sizeof(ARGS *));
+		free(exp->args);
 	}
 	exp->args = NULL;
 	exp->argscnt = 0;
@@ -501,14 +482,19 @@ argv_sexp(sp, bpp, blenp, lenp)
 	char **bpp;
 	size_t *blenp, *lenp;
 {
+	enum { SEXP_ERR, SEXP_EXPANSION_ERR, SEXP_OK } rval;
 	FILE *ifp;
 	pid_t pid;
 	size_t blen, len;
-	int ch, rval, output[2];
+	int ch, std_output[2];
 	char *bp, *p, *sh, *sh_path;
 
-	bp = *bpp;
-	blen = *blenp;
+	/* Secure means no shell access. */
+	if (O_ISSET(sp, O_SECURE)) {
+		msgq(sp, M_ERR,
+"289|Shell expansions not supported when the secure edit option is set");
+		return (1);
+	}
 
 	sh_path = O_STR(sp, O_SHELL);
 	if ((sh = strrchr(sh_path, '/')) == NULL)
@@ -516,64 +502,69 @@ argv_sexp(sp, bpp, blenp, lenp)
 	else
 		++sh;
 
+	bp = *bpp;
+	blen = *blenp;
+
 	/*
-	 * There are two different processes running through this code.
-	 * They are named the utility and the parent. The utility reads
-	 * from standard input and writes to the parent.  The parent reads
-	 * from the utility and writes into the buffer.  The parent reads
-	 * from output[0], and the utility writes to output[1].
+	 * There are two different processes running through this code, named
+	 * the utility (the shell) and the parent. The utility reads standard
+	 * input and writes standard output and standard error output.  The
+	 * parent writes to the utility, reads its standard output and ignores
+	 * its standard error output.  Historically, the standard error output
+	 * was discarded by vi, as it produces a lot of noise when file patterns
+	 * don't match.
+	 *
+	 * The parent reads std_output[0], and the utility writes std_output[1].
 	 */
-	if (pipe(output) < 0) {
+	ifp = NULL;
+	std_output[0] = std_output[1] = -1;
+	if (pipe(std_output) < 0) {
 		msgq(sp, M_SYSERR, "pipe");
 		return (1);
 	}
-	if ((ifp = fdopen(output[0], "r")) == NULL) {
+	if ((ifp = fdopen(std_output[0], "r")) == NULL) {
 		msgq(sp, M_SYSERR, "fdopen");
 		goto err;
 	}
 
 	/*
-	 * Do the minimal amount of work possible, the shell is going
-	 * to run briefly and then exit.  Hopefully.
+	 * Do the minimal amount of work possible, the shell is going to run
+	 * briefly and then exit.  We sincerely hope.
 	 */
-	SIGBLOCK(sp->gp);
 	switch (pid = vfork()) {
 	case -1:			/* Error. */
-		SIGUNBLOCK(sp->gp);
-
 		msgq(sp, M_SYSERR, "vfork");
-err:		(void)close(output[0]);
-		(void)close(output[1]);
+err:		if (ifp != NULL)
+			(void)fclose(ifp);
+		else if (std_output[0] != -1)
+			close(std_output[0]);
+		if (std_output[1] != -1)
+			close(std_output[0]);
 		return (1);
 	case 0:				/* Utility. */
-		/* The utility has default signal behavior. */
-		sig_end();
-
-		/* Redirect stdout/stderr to the write end of the pipe. */
-		(void)dup2(output[1], STDOUT_FILENO);
-		(void)dup2(output[1], STDERR_FILENO);
+		/* Redirect stdout to the write end of the pipe. */
+		(void)dup2(std_output[1], STDOUT_FILENO);
 
 		/* Close the utility's file descriptors. */
-		(void)close(output[0]);
-		(void)close(output[1]);
+		(void)close(std_output[0]);
+		(void)close(std_output[1]);
+		(void)close(STDERR_FILENO);
 
-		/* Assumes that all shells have -c. */
+		/*
+		 * XXX
+		 * Assume that all shells have -c.
+		 */
 		execl(sh_path, sh, "-c", bp, NULL);
-		msgq(sp, M_ERR,
-		    "Error: execl: %s: %s", sh_path, strerror(errno));
+		msgq_str(sp, M_SYSERR, sh_path, "118|Error: execl: %s");
 		_exit(127);
 	default:			/* Parent. */
-		SIGUNBLOCK(sp->gp);
-
-		/* Close the pipe end the parent won't use. */
-		(void)close(output[1]);
+		/* Close the pipe ends the parent won't use. */
+		(void)close(std_output[1]);
 		break;
 	}
 
-	rval = 0;
-
 	/*
-	 * Copy process output into a buffer.
+	 * Copy process standard output into a buffer.
 	 *
 	 * !!!
 	 * Historic vi apparently discarded leading \n and \r's from
@@ -583,7 +574,7 @@ err:		(void)close(output[0]);
 	for (p = bp, len = 0, ch = EOF;
 	    (ch = getc(ifp)) != EOF; *p++ = ch, --blen, ++len)
 		if (blen < 5) {
-			ADD_SPACE_GOTO(sp, bp, blen, *blenp * 2);
+			ADD_SPACE_GOTO(sp, bp, *blenp, *blenp * 2);
 			p = bp + len;
 			blen = *blenp - len;
 		}
@@ -595,15 +586,36 @@ err:		(void)close(output[0]);
 	} else
 		*p = '\0';
 	*lenp = len;
-
-	if (ferror(ifp)) {
-		msgq(sp, M_ERR, "I/O error: %s", sh);
-binc_err:	rval = 1;
-	}
-	(void)fclose(ifp);
-
 	*bpp = bp;		/* *blenp is already updated. */
 
-	/* Wait for the process. */
-	return (proc_wait(sp, (long)pid, sh, 0) || rval);
+	if (ferror(ifp))
+		goto ioerr;
+	if (fclose(ifp)) {
+ioerr:		msgq_str(sp, M_ERR, sh, "119|I/O error: %s");
+alloc_err:	rval = SEXP_ERR;
+	} else
+		rval = SEXP_OK;
+
+	/*
+	 * Wait for the process.  If the shell process fails (e.g., "echo $q"
+	 * where q wasn't a defined variable) or if the returned string has
+	 * no characters or only blank characters, (e.g., "echo $5"), complain
+	 * that the shell expansion failed.  We can't know for certain that's
+	 * the error, but it's a good guess, and it matches historic practice.
+	 * This won't catch "echo foo_$5", but that's not a common error and
+	 * historic vi didn't catch it either.
+	 */
+	if (proc_wait(sp, (long)pid, sh, 1, 0))
+		rval = SEXP_EXPANSION_ERR;
+
+	for (p = bp; len; ++p, --len)
+		if (!isblank(*p))
+			break;
+	if (len == 0)
+		rval = SEXP_EXPANSION_ERR;
+
+	if (rval == SEXP_EXPANSION_ERR)
+		msgq(sp, M_ERR, "304|Shell expansion failed");
+
+	return (rval == SEXP_OK ? 0 : 1);
 }

@@ -1,117 +1,105 @@
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1992, 1993, 1994, 1995, 1996
+ *	Keith Bostic.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * See the LICENSE file for redistribution information.
  */
 
+#include "config.h"
+
 #ifndef lint
-static char sccsid[] = "@(#)ex_global.c	8.43 (Berkeley) 8/17/94";
+static const char sccsid[] = "@(#)ex_global.c	10.20 (Berkeley) 5/3/96";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/queue.h>
-#include <sys/time.h>
 
 #include <bitstring.h>
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <termios.h>
 #include <unistd.h>
 
-#include "compat.h"
-#include <db.h>
-#include <regex.h>
+#include "../common/common.h"
 
-#include "vi.h"
-#include "excmd.h"
+enum which {GLOBAL, V};
 
-enum which {GLOBAL, VGLOBAL};
-
-static int	global __P((SCR *, EXF *, EXCMDARG *, enum which));
+static int ex_g_setup __P((SCR *, EXCMD *, enum which));
 
 /*
  * ex_global -- [line [,line]] g[lobal][!] /pattern/ [commands]
  *	Exec on lines matching a pattern.
+ *
+ * PUBLIC: int ex_global __P((SCR *, EXCMD *));
  */
 int
-ex_global(sp, ep, cmdp)
+ex_global(sp, cmdp)
 	SCR *sp;
-	EXF *ep;
-	EXCMDARG *cmdp;
+	EXCMD *cmdp;
 {
-	return (global(sp, ep,
-	    cmdp, F_ISSET(cmdp, E_FORCE) ? VGLOBAL : GLOBAL));
+	return (ex_g_setup(sp,
+	    cmdp, FL_ISSET(cmdp->iflags, E_C_FORCE) ? V : GLOBAL));
 }
 
 /*
- * ex_vglobal -- [line [,line]] v[global] /pattern/ [commands]
+ * ex_v -- [line [,line]] v /pattern/ [commands]
  *	Exec on lines not matching a pattern.
+ *
+ * PUBLIC: int ex_v __P((SCR *, EXCMD *));
  */
 int
-ex_vglobal(sp, ep, cmdp)
+ex_v(sp, cmdp)
 	SCR *sp;
-	EXF *ep;
-	EXCMDARG *cmdp;
+	EXCMD *cmdp;
 {
-	return (global(sp, ep, cmdp, VGLOBAL));
+	return (ex_g_setup(sp, cmdp, V));
 }
 
+/*
+ * ex_g_setup --
+ *	Ex global and v commands.
+ */
 static int
-global(sp, ep, cmdp, cmd)
+ex_g_setup(sp, cmdp, cmd)
 	SCR *sp;
-	EXF *ep;
-	EXCMDARG *cmdp;
+	EXCMD *cmdp;
 	enum which cmd;
 {
+	EXCMD *ecp;
 	MARK abs;
 	RANGE *rp;
-	EX_PRIVATE *exp;
-	recno_t elno, lno;
+	busy_t btype;
+	recno_t start, end;
+	regex_t *re;
 	regmatch_t match[1];
-	regex_t *re, lre;
-	size_t clen, len;
-	int delim, eval, reflags, replaced, rval;
-	char *cb, *ptrn, *p, *t;
+	size_t len;
+	int cnt, delim, eval;
+	char *ptrn, *p, *t;
+
+	NEEDFILE(sp, cmdp);
+
+	if (F_ISSET(sp, SC_EX_GLOBAL)) {
+		msgq(sp, M_ERR,
+	"124|The %s command can't be used as part of a global or v command",
+		    cmdp->cmd->name);
+		return (1);
+	}
 
 	/*
-	 * Skip leading white space.  Historic vi allowed any non-
-	 * alphanumeric to serve as the global command delimiter.
+	 * Skip leading white space.  Historic vi allowed any non-alphanumeric
+	 * to serve as the global command delimiter.
 	 */
+	if (cmdp->argc == 0)
+		goto usage;
 	for (p = cmdp->argv[0]->bp; isblank(*p); ++p);
-	if (*p == '\0' || isalnum(*p)) {
-		msgq(sp, M_ERR, "Usage: %s", cmdp->cmd->usage);
+	if (*p == '\0' || isalnum(*p) ||
+	    *p == '\\' || *p == '|' || *p == '\n') {
+usage:		ex_emsg(sp, cmdp->cmd->usage, EXM_USAGE);
 		return (1);
 	}
 	delim = *p++;
@@ -134,79 +122,69 @@ global(sp, ep, cmdp, cmd)
 			*t = '\0';
 			break;
 		}
-		if (p[0] == '\\' && p[1] == delim)
-			++p;
+		if (p[0] == '\\')
+			if (p[1] == delim)
+				++p;
+			else if (p[1] == '\\')
+				*t++ = *p++;
 		*t++ = *p++;
 	}
 
 	/* If the pattern string is empty, use the last one. */
 	if (*ptrn == '\0') {
-		if (!F_ISSET(sp, S_SRE_SET)) {
-			msgq(sp, M_ERR, "No previous regular expression");
+		if (sp->re == NULL) {
+			ex_emsg(sp, NULL, EXM_NOPREVRE);
 			return (1);
 		}
-		re = &sp->sre;
+
+		/* Compile the RE if necessary. */
+		if (!F_ISSET(sp, SC_RE_SEARCH) &&
+		    re_compile(sp, sp->re, NULL, NULL, &sp->re_c, RE_C_SEARCH))
+			return (1);
 	} else {
-		/* Set RE flags. */
-		reflags = 0;
-		if (O_ISSET(sp, O_EXTENDED))
-			reflags |= REG_EXTENDED;
-		if (O_ISSET(sp, O_IGNORECASE))
-			reflags |= REG_ICASE;
-
-		/* Convert vi-style RE's to POSIX 1003.2 RE's. */
-		if (re_conv(sp, &ptrn, &replaced))
-			return (1);
-
 		/* Compile the RE. */
-		re = &lre;
-		eval = regcomp(re, ptrn, reflags);
-
-		/* Free up any allocated memory. */
-		if (replaced)
-			FREE_SPACE(sp, ptrn, 0);
-
-		if (eval) {
-			re_error(sp, eval, re);
+		if (re_compile(sp,
+		    ptrn, &sp->re, &sp->re_len, &sp->re_c, RE_C_SEARCH))
 			return (1);
-		}
 
 		/*
-		 * Set saved RE.  Historic practice is that
-		 * globals set direction as well as the RE.
+		 * Set saved RE.  Historic practice is that globals set
+		 * direction as well as the RE.
 		 */
-		sp->sre = lre;
 		sp->searchdir = FORWARD;
-		F_SET(sp, S_SRE_SET);
 	}
-
-	/*
-	 * Get a copy of the command string; the default command is print.
-	 * Don't worry about a set of <blank>s with no command, that will
-	 * default to print in the ex parser.
-	 */
-	if ((clen = strlen(p)) == 0) {
-		p = "p";
-		clen = 1;
-	}
-	MALLOC_RET(sp, cb, char *, clen);
-	memmove(cb, p, clen);
-
-	/*
-	 * The global commands sets the substitute RE as well as
-	 * the everything-else RE.
-	 */
-	sp->subre = sp->sre;
-	F_SET(sp, S_SUBRE_SET);
-
-	/* Set the global flag. */
-	F_SET(sp, S_GLOBAL);
+	re = &sp->re_c;
 
 	/* The global commands always set the previous context mark. */
 	abs.lno = sp->lno;
 	abs.cno = sp->cno;
-	if (mark_set(sp, ep, ABSMARK1, &abs, 1))
-		goto err;
+	if (mark_set(sp, ABSMARK1, &abs, 1))
+		return (1);
+
+	/* Get an EXCMD structure. */
+	CALLOC_RET(sp, ecp, EXCMD *, 1, sizeof(EXCMD));
+	CIRCLEQ_INIT(&ecp->rq);
+
+	/*
+	 * Get a copy of the command string; the default command is print.
+	 * Don't worry about a set of <blank>s with no command, that will
+	 * default to print in the ex parser.  We need to have two copies
+	 * because the ex parser may step on the command string when it's
+	 * parsing it.
+	 */
+	if ((len = strlen(p)) == 0) {
+		p = "pp";
+		len = 1;
+	}
+
+	/* See ex.h for a discussion of SEARCH_TERMINATION. */
+	MALLOC_RET(sp, ecp->cp, char *, len * 2 + SEARCH_TERMINATION);
+	ecp->o_cp = ecp->cp;
+	ecp->o_clen = len;
+	memmove(ecp->cp + len + SEARCH_TERMINATION, p, len);
+	ecp->range_lno = OOBLNO;
+	FL_SET(ecp->agv_flags, cmd == GLOBAL ? AGV_GLOBAL : AGV_V);
+	LIST_INSERT_HEAD(&sp->gp->ecq, ecp, q);
 
 	/*
 	 * For each line...  The semantics of global matching are that we first
@@ -220,23 +198,28 @@ global(sp, ep, cmdp, cmd)
 	 * routines call when a line is created or deleted.  This doesn't help
 	 * the layering much.
 	 */
-	exp = EXP(sp);
-	for (rval = 0, lno = cmdp->addr1.lno,
-	    elno = cmdp->addr2.lno; lno <= elno; ++lno) {
-		/* Someone's unhappy, time to stop. */
-		if (INTERRUPTED(sp))
-			goto interrupted;
-
-		/* Get the line and search for a match. */
-		if ((t = file_gline(sp, ep, lno, &len)) == NULL) {
-			GETLINE_ERR(sp, lno);
-			goto err;
+	btype = BUSY_ON;
+	cnt = INTERRUPT_CHECK;
+	for (start = cmdp->addr1.lno,
+	    end = cmdp->addr2.lno; start <= end; ++start) {
+		if (cnt-- == 0) {
+			if (INTERRUPTED(sp)) {
+				LIST_REMOVE(ecp, q);
+				free(ecp->cp);
+				free(ecp);
+				break;
+			}
+			search_busy(sp, btype);
+			btype = BUSY_UPDATE;
+			cnt = INTERRUPT_CHECK;
 		}
+		if (db_get(sp, start, DBG_FATAL, &p, &len))
+			return (1);
 		match[0].rm_so = 0;
 		match[0].rm_eo = len;
-		switch(eval = regexec(re, t, 1, match, REG_STARTEND)) {
+		switch (eval = regexec(&sp->re_c, p, 0, match, REG_STARTEND)) {
 		case 0:
-			if (cmd == VGLOBAL)
+			if (cmd == V)
 				continue;
 			break;
 		case REG_NOMATCH:
@@ -244,13 +227,13 @@ global(sp, ep, cmdp, cmd)
 				continue;
 			break;
 		default:
-			re_error(sp, eval, re);
-			goto err;
+			re_error(sp, eval, &sp->re_c);
+			break;
 		}
 
 		/* If follows the last entry, extend the last entry's range. */
-		if ((rp = exp->rangeq.cqh_last) != (void *)&exp->rangeq &&
-		    rp->stop == lno - 1) {
+		if ((rp = ecp->rq.cqh_last) != (void *)&ecp->rq &&
+		    rp->stop == start - 1) {
 			++rp->stop;
 			continue;
 		}
@@ -258,143 +241,87 @@ global(sp, ep, cmdp, cmd)
 		/* Allocate a new range, and append it to the list. */
 		CALLOC(sp, rp, RANGE *, 1, sizeof(RANGE));
 		if (rp == NULL)
-			goto err;
-		rp->start = rp->stop = lno;
-		CIRCLEQ_INSERT_TAIL(&exp->rangeq, rp, q);
-	}
-
-	exp = EXP(sp);
-	exp->range_lno = OOBLNO;
-	for (;;) {
-		/*
-		 * Start at the beginning of the range each time, it may have
-		 * been changed (or exhausted) if lines were inserted/deleted.
-		 */
-		if ((rp = exp->rangeq.cqh_first) == (void *)&exp->rangeq)
-			break;
-		if (rp->start > rp->stop) {
-			CIRCLEQ_REMOVE(&exp->rangeq, exp->rangeq.cqh_first, q);
-			free(rp);
-			continue;
-		}
-
-		/*
-		 * Execute the command, setting the cursor to the line so that
-		 * relative addressing works.  This means that the cursor moves
-		 * to the last line sent to the command, by default, even if
-		 * the command fails.
-		 */
-		exp->range_lno = sp->lno = rp->start++;
-		if (ex_cmd(sp, ep, cb, clen, 0))
-			goto err;
-
-		/* Someone's unhappy, time to stop. */
-		if (INTERRUPTED(sp)) {
-interrupted:		msgq(sp, M_INFO, "Interrupted");
-			break;
-		}
-	}
-
-	/* Set the cursor to the new value, making sure it exists. */
-	if (exp->range_lno != OOBLNO) {
-		if (file_lline(sp, ep, &lno))
 			return (1);
-		sp->lno =
-		    lno < exp->range_lno ? (lno ? lno : 1) : exp->range_lno;
+		rp->start = rp->stop = start;
+		CIRCLEQ_INSERT_TAIL(&ecp->rq, rp, q);
 	}
-	if (0) {
-err:		rval = 1;
-	}
-
-	/* Command we ran may have set the autoprint flag, clear it. */
-	F_CLR(exp, EX_AUTOPRINT);
-
-	/* Clear the global flag. */
-	F_CLR(sp, S_GLOBAL);
-
-	/* Free any remaining ranges and the command buffer. */
-	while ((rp = exp->rangeq.cqh_first) != (void *)&exp->rangeq) {
-		CIRCLEQ_REMOVE(&exp->rangeq, exp->rangeq.cqh_first, q);
-		free(rp);
-	}
-	free(cb);
-	return (rval);
+	search_busy(sp, BUSY_OFF);
+	return (0);
 }
 
 /*
- * global_insdel --
+ * ex_g_insdel --
  *	Update the ranges based on an insertion or deletion.
+ *
+ * PUBLIC: int ex_g_insdel __P((SCR *, lnop_t, recno_t));
  */
-void
-global_insdel(sp, ep, op, lno)
+int
+ex_g_insdel(sp, op, lno)
 	SCR *sp;
-	EXF *ep;
-	enum operation op;
+	lnop_t op;
 	recno_t lno;
 {
-	EX_PRIVATE *exp;
+	EXCMD *ecp;
 	RANGE *nrp, *rp;
 
-	exp = EXP(sp);
+	/* All insert/append operations are done as inserts. */
+	if (op == LINE_APPEND)
+		abort();
 
-	switch (op) {
-	case LINE_APPEND:
-		return;
-	case LINE_DELETE:
-		for (rp = exp->rangeq.cqh_first;
-		    rp != (void *)&exp->rangeq; rp = nrp) {
+	if (op == LINE_RESET)
+		return (0);
+
+	for (ecp = sp->gp->ecq.lh_first; ecp != NULL; ecp = ecp->q.le_next) {
+		if (!FL_ISSET(ecp->agv_flags, AGV_AT | AGV_GLOBAL | AGV_V))
+			continue;
+		for (rp = ecp->rq.cqh_first; rp != (void *)&ecp->rq; rp = nrp) {
 			nrp = rp->q.cqe_next;
+
 			/* If range less than the line, ignore it. */
 			if (rp->stop < lno)
 				continue;
-			/* If range greater than the line, decrement range. */
-			if (rp->start > lno) {
-				--rp->start;
-				--rp->stop;
-				continue;
-			}
-			/* Lno is inside the range, decrement the end point. */
-			if (rp->start > --rp->stop) {
-				CIRCLEQ_REMOVE(&exp->rangeq, rp, q);
-				free(rp);
-			}
-		}
-		break;
-	case LINE_INSERT:
-		for (rp = exp->rangeq.cqh_first;
-		    rp != (void *)&exp->rangeq; rp = rp->q.cqe_next) {
-			/* If range less than the line, ignore it. */
-			if (rp->stop < lno)
-				continue;
-			/* If range greater than the line, increment range. */
-			if (rp->start >= lno) {
-				++rp->start;
-				++rp->stop;
-				continue;
-			}
+			
 			/*
-			 * Lno is inside the range, so the range must be split.
-			 * Since we're inserting a new element, neither range
-			 * can be exhausted.
+			 * If range greater than the line, decrement or
+			 * increment the range.
 			 */
-			CALLOC(sp, nrp, RANGE *, 1, sizeof(RANGE));
-			if (nrp == NULL) {
-				F_SET(sp, S_INTERRUPTED);
-				return;
+			if (rp->start > lno) {
+				if (op == LINE_DELETE) {
+					--rp->start;
+					--rp->stop;
+				} else {
+					++rp->start;
+					++rp->stop;
+				}
+				continue;
 			}
-			nrp->start = lno + 1;
-			nrp->stop = rp->stop + 1;
-			rp->stop = lno - 1;
-			CIRCLEQ_INSERT_AFTER(&exp->rangeq, rp, nrp, q);
-			rp = nrp;
+
+			/*
+			 * Lno is inside the range, decrement the end point
+			 * for deletion, and split the range for insertion.
+			 * In the latter case, since we're inserting a new
+			 * element, neither range can be exhausted.
+			 */
+			if (op == LINE_DELETE) {
+				if (rp->start > --rp->stop) {
+					CIRCLEQ_REMOVE(&ecp->rq, rp, q);
+					free(rp);
+				}
+			} else {
+				CALLOC_RET(sp, nrp, RANGE *, 1, sizeof(RANGE));
+				nrp->start = lno + 1;
+				nrp->stop = rp->stop + 1;
+				rp->stop = lno - 1;
+				CIRCLEQ_INSERT_AFTER(&ecp->rq, rp, nrp, q);
+				rp = nrp;
+			}
 		}
-		break;
-	case LINE_RESET:
-		return;
+
+		/*
+		 * If the command deleted/inserted lines, the cursor moves to
+		 * the line after the deleted/inserted line.
+		 */
+		ecp->range_lno = lno;
 	}
-	/*
-	 * If the command deleted/inserted lines, the cursor moves to
-	 * the line after the deleted/inserted line.
-	 */
-	exp->range_lno = lno;
+	return (0);
 }

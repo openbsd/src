@@ -1,36 +1,12 @@
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1992, 1993, 1994, 1995, 1996
+ *	Keith Bostic.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ * See the LICENSE file for redistribution information.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- *	@(#)exf.h	8.35 (Berkeley) 8/4/94
+ *	@(#)exf.h	10.6 (Berkeley) 3/6/96
  */
 					/* Undo direction. */
 /*
@@ -53,10 +29,16 @@ struct _exf {
 	recno_t	 l_high;		/* Log last + 1 record number. */
 	recno_t	 l_cur;			/* Log current record number. */
 	MARK	 l_cursor;		/* Log cursor position. */
-	enum direction lundo;		/* Last undo direction. */
+	dir_t	 lundo;			/* Last undo direction. */
 
 	LIST_HEAD(_markh, _lmark) marks;/* Linked list of file MARK's. */
 
+	/*
+	 * XXX
+	 * Mtime should be a struct timespec, but time_t is more portable.
+	 */
+	dev_t	 mdev;			/* Device. */
+	ino_t	 minode;		/* Inode. */
 	time_t	 mtime;			/* Last modification time. */
 
 	int	 fcntl_fd;		/* Fcntl locking fd; see exf.c. */
@@ -69,7 +51,6 @@ struct _exf {
 	char	*rcv_path;		/* Recover file name. */
 	char	*rcv_mpath;		/* Recover mail file name. */
 	int	 rcv_fd;		/* Locked mail file descriptor. */
-	struct timeval rcv_tod;		/* ITIMER_REAL: recovery time-of-day. */
 
 #define	F_FIRSTMODIFY	0x001		/* File not yet modified. */
 #define	F_MODIFIED	0x002		/* File is currently dirty. */
@@ -81,48 +62,20 @@ struct _exf {
 	u_int8_t flags;
 };
 
-#define	GETLINE_ERR(sp, lno) {						\
-	msgq(sp, M_ERR,							\
-	    "Error: %s/%d: unable to retrieve line %u",			\
-	    tail(__FILE__), __LINE__, lno);				\
-}
+/* Flags to db_get(). */
+#define	DBG_FATAL	0x001	/* If DNE, error message. */
+#define	DBG_NOCACHE	0x002	/* Ignore the front-end cache. */
 
-/* EXF routines. */
-FREF	*file_add __P((SCR *, CHAR_T *));
-int	 file_end __P((SCR *, EXF *, int));
-int	 file_init __P((SCR *, FREF *, char *, int));
-int	 file_m1 __P((SCR *, EXF *, int, int));
-int	 file_m2 __P((SCR *, EXF *, int));
-int	 file_m3 __P((SCR *, EXF *, int));
+/* Flags to file_init() and file_write(). */
+#define	FS_ALL		0x001	/* Write the entire file. */
+#define	FS_APPEND	0x002	/* Append to the file. */
+#define	FS_FORCE	0x004	/* Force is set. */
+#define	FS_OPENERR	0x008	/* Open failed, try it again. */
+#define	FS_POSSIBLE	0x010	/* Force could have been set. */
+#define	FS_SETALT	0x020	/* Set alternate file name. */
 
-enum lockt { LOCK_FAILED, LOCK_SUCCESS, LOCK_UNAVAIL };
-enum lockt
-	 file_lock __P((char *, int *, int, int));
-
-#define	FS_ALL		0x01	/* Write the entire file. */
-#define	FS_APPEND	0x02	/* Append to the file. */
-#define	FS_FORCE	0x04	/* Force is set. */
-#define	FS_POSSIBLE	0x08	/* Force could be set. */
-int	 file_write __P((SCR *, EXF *, MARK *, MARK *, char *, int));
-
-/* Recovery routines. */
-int	 rcv_init __P((SCR *, EXF *));
-int	 rcv_list __P((SCR *));
-int	 rcv_on __P((SCR *, EXF *));
-int	 rcv_read __P((SCR *, FREF *));
-
+/* Flags to rcv_sync(). */
 #define	RCV_EMAIL	0x01	/* Send the user email, IFF file modified. */
 #define	RCV_ENDSESSION	0x02	/* End the file session. */
 #define	RCV_PRESERVE	0x04	/* Preserve backup file, IFF file modified. */
 #define	RCV_SNAPSHOT	0x08	/* Snapshot the recovery, and send email. */
-int	 rcv_sync __P((SCR *, EXF *, u_int));
-int	 rcv_tmp __P((SCR *, EXF *, char *));
-
-/* DB interface routines */
-int	 file_aline __P((SCR *, EXF *, int, recno_t, char *, size_t));
-int	 file_dline __P((SCR *, EXF *, recno_t));
-char	*file_gline __P((SCR *, EXF *, recno_t, size_t *));
-int	 file_iline __P((SCR *, EXF *, recno_t, char *, size_t));
-int	 file_lline __P((SCR *, EXF *, recno_t *));
-char	*file_rline __P((SCR *, EXF *, recno_t, size_t *));
-int	 file_sline __P((SCR *, EXF *, recno_t, char *, size_t));

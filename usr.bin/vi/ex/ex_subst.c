@@ -1,38 +1,16 @@
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1992, 1993, 1994, 1995, 1996
+ *	Keith Bostic.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * See the LICENSE file for redistribution information.
  */
 
+#include "config.h"
+
 #ifndef lint
-static char sccsid[] = "@(#)ex_subst.c	8.59 (Berkeley) 8/17/94";
+static const char sccsid[] = "@(#)ex_subst.c	10.30 (Berkeley) 5/16/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -43,44 +21,41 @@ static char sccsid[] = "@(#)ex_subst.c	8.59 (Berkeley) 8/17/94";
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <termios.h>
 #include <unistd.h>
 
-#include "compat.h"
-#include <db.h>
-#include <regex.h>
-
-#include "vi.h"
-#include "excmd.h"
+#include "../common/common.h"
+#include "../vi/vi.h"
 
 #define	SUB_FIRST	0x01		/* The 'r' flag isn't reasonable. */
 #define	SUB_MUSTSETR	0x02		/* The 'r' flag is required. */
 
-static __inline int	regsub __P((SCR *, char *,
-			    char **, size_t *, size_t *, regmatch_t [10]));
-static int		substitute __P((SCR *, EXF *,
-			    EXCMDARG *, char *, regex_t *, u_int));
+static int re_conv __P((SCR *, char **, int *));
+static int re_cscope_conv __P((SCR *, char **, int *));
+static int re_sub __P((SCR *,
+		char *, char **, size_t *, size_t *, regmatch_t [10]));
+static int re_tag_conv __P((SCR *, char **, int *));
+static int s __P((SCR *, EXCMD *, char *, regex_t *, u_int));
 
 /*
- * ex_substitute --
+ * ex_s --
  *	[line [,line]] s[ubstitute] [[/;]pat[/;]/repl[/;] [cgr] [count] [#lp]]
  *
  *	Substitute on lines matching a pattern.
+ *
+ * PUBLIC: int ex_s __P((SCR *, EXCMD *));
  */
 int
-ex_substitute(sp, ep, cmdp)
+ex_s(sp, cmdp)
 	SCR *sp;
-	EXF *ep;
-	EXCMDARG *cmdp;
+	EXCMD *cmdp;
 {
-	regex_t *re, lre;
+	regex_t *re;
 	size_t blen, len;
 	u_int flags;
-	int delim, eval, reflags, replaced;
+	int delim;
 	char *bp, *ptrn, *rep, *p, *t;
 
 	/*
@@ -94,17 +69,19 @@ ex_substitute(sp, ep, cmdp)
 	 * If the arguments are empty, it's the same as &, i.e. we
 	 * repeat the last substitution.
 	 */
+	if (cmdp->argc == 0)
+		goto subagain;
 	for (p = cmdp->argv[0]->bp,
 	    len = cmdp->argv[0]->len; len > 0; --len, ++p) {
 		if (!isblank(*p))
 			break;
 	}
 	if (len == 0)
-		return (ex_subagain(sp, ep, cmdp));
+subagain:	return (ex_subagain(sp, cmdp));
+
 	delim = *p++;
-	if (isalnum(delim))
-		return (substitute(sp, ep,
-		    cmdp, p, &sp->subre, SUB_MUSTSETR));
+	if (isalnum(delim) || delim == '\\')
+		return (s(sp, cmdp, p, &sp->subre_c, SUB_MUSTSETR));
 
 	/*
 	 * !!!
@@ -112,7 +89,7 @@ ex_substitute(sp, ep, cmdp)
 	 * state of the 'c' and 'g' suffices.
 	 */
 	sp->c_suffix = sp->g_suffix = 0;
-	
+
 	/*
 	 * Get the pattern string, toss escaped characters.
 	 *
@@ -157,59 +134,42 @@ ex_substitute(sp, ep, cmdp)
 	 * last substitution RE).
 	 */
 	if (*ptrn == '\0') {
-		if (!F_ISSET(sp, S_SRE_SET)) {
-			msgq(sp, M_ERR, "No previous regular expression");
+		if (sp->re == NULL) {
+			ex_emsg(sp, NULL, EXM_NOPREVRE);
 			return (1);
 		}
-		re = &sp->sre;
+
+		/* Compile the RE if necessary. */
+		if (!F_ISSET(sp, SC_RE_SEARCH) &&
+		    re_compile(sp, sp->re, NULL, NULL, &sp->re_c, RE_C_SEARCH))
+			return (1);
 		flags = 0;
 	} else {
-		/* Set RE flags. */
-		reflags = 0;
-		if (O_ISSET(sp, O_EXTENDED))
-			reflags |= REG_EXTENDED;
-		if (O_ISSET(sp, O_IGNORECASE))
-			reflags |= REG_ICASE;
-
-		/* Convert vi-style RE's to POSIX 1003.2 RE's. */
-		if (re_conv(sp, &ptrn, &replaced))
-			return (1);
-
-		/* Compile the RE. */
-		eval = regcomp(&lre, (char *)ptrn, reflags);
-
-		/* Free up any allocated memory. */
-		if (replaced)
-			FREE_SPACE(sp, ptrn, 0);
-
-		if (eval) {
-			re_error(sp, eval, &lre);
-			return (1);
-		}
-
 		/*
-		 * Set saved RE.
-		 *
 		 * !!!
-		 * Historic practice is that substitutes set the search
-		 * direction as well as both substitute and search RE's.
+		 * Compile the RE.  Historic practice is that substitutes set
+		 * the search direction as well as both substitute and search
+		 * RE's.  We compile the RE twice, as we don't want to bother
+		 * ref counting the pattern string and (opaque) structure.
 		 */
-		sp->searchdir = FORWARD;
-		sp->sre = lre;
-		F_SET(sp, S_SRE_SET);
-		sp->subre = lre;
-		F_SET(sp, S_SUBRE_SET);
-
-		re = &lre;
+		if (re_compile(sp,
+		    ptrn, &sp->re, &sp->re_len, &sp->re_c, RE_C_SEARCH))
+			return (1);
+		if (re_compile(sp,
+		    ptrn, &sp->subre, &sp->subre_len, &sp->subre_c, RE_C_SUBST))
+			return (1);
+		
 		flags = SUB_FIRST;
+		sp->searchdir = FORWARD;
 	}
+	re = &sp->re_c;
 
 	/*
 	 * Get the replacement string.
 	 *
 	 * The special character & (\& if O_MAGIC not set) matches the
 	 * entire RE.  No handling of & is required here, it's done by
-	 * regsub().
+	 * re_sub().
 	 *
 	 * The special character ~ (\~ if O_MAGIC not set) inserts the
 	 * previous replacement string into this replacement string.
@@ -232,7 +192,7 @@ ex_substitute(sp, ep, cmdp)
 		if (p[0] == delim)
 			++p;
 		if (sp->repl != NULL)
-			FREE(sp->repl, sp->repl_len);
+			free(sp->repl);
 		sp->repl = NULL;
 		sp->repl_len = 0;
 	} else if (p[0] == '%' && (p[1] == '\0' || p[1] == delim))
@@ -282,7 +242,7 @@ tilde:				++p;
 		}
 		FREE_SPACE(sp, bp, blen);
 	}
-	return (substitute(sp, ep, cmdp, p, re, flags));
+	return (s(sp, cmdp, p, re, flags));
 }
 
 /*
@@ -290,18 +250,23 @@ tilde:				++p;
  *	[line [,line]] & [cgr] [count] [#lp]]
  *
  *	Substitute using the last substitute RE and replacement pattern.
+ *
+ * PUBLIC: int ex_subagain __P((SCR *, EXCMD *));
  */
 int
-ex_subagain(sp, ep, cmdp)
+ex_subagain(sp, cmdp)
 	SCR *sp;
-	EXF *ep;
-	EXCMDARG *cmdp;
+	EXCMD *cmdp;
 {
-	if (!F_ISSET(sp, S_SUBRE_SET)) {
-		msgq(sp, M_ERR, "No previous regular expression");
+	if (sp->subre == NULL) {
+		ex_emsg(sp, NULL, EXM_NOPREVRE);
 		return (1);
 	}
-	return (substitute(sp, ep, cmdp, cmdp->argv[0]->bp, &sp->subre, 0));
+	if (!F_ISSET(sp, SC_RE_SUBST) &&
+	    re_compile(sp, sp->subre, NULL, NULL, &sp->subre_c, RE_C_SUBST))
+		return (1);
+	return (s(sp,
+	    cmdp, cmdp->argc ? cmdp->argv[0]->bp : NULL, &sp->subre_c, 0));
 }
 
 /*
@@ -309,26 +274,36 @@ ex_subagain(sp, ep, cmdp)
  *	[line [,line]] ~ [cgr] [count] [#lp]]
  *
  *	Substitute using the last RE and last substitute replacement pattern.
+ *
+ * PUBLIC: int ex_subtilde __P((SCR *, EXCMD *));
  */
 int
-ex_subtilde(sp, ep, cmdp)
+ex_subtilde(sp, cmdp)
 	SCR *sp;
-	EXF *ep;
-	EXCMDARG *cmdp;
+	EXCMD *cmdp;
 {
-	if (!F_ISSET(sp, S_SRE_SET)) {
-		msgq(sp, M_ERR, "No previous regular expression");
+	if (sp->re == NULL) {
+		ex_emsg(sp, NULL, EXM_NOPREVRE);
 		return (1);
 	}
-	return (substitute(sp, ep, cmdp, cmdp->argv[0]->bp, &sp->sre, 0));
+	if (!F_ISSET(sp, SC_RE_SEARCH) &&
+	    re_compile(sp, sp->re, NULL, NULL, &sp->re_c, RE_C_SEARCH))
+		return (1);
+	return (s(sp,
+	    cmdp, cmdp->argc ? cmdp->argv[0]->bp : NULL, &sp->re_c, 0));
 }
 
 /*
+ * s --
+ * Do the substitution.  This stuff is *really* tricky.  There are lots of
+ * special cases, and general nastiness.  Don't mess with it unless you're
+ * pretty confident.
+ * 
  * The nasty part of the substitution is what happens when the replacement
  * string contains newlines.  It's a bit tricky -- consider the information
  * that has to be retained for "s/f\(o\)o/^M\1^M\1/".  The solution here is
  * to build a set of newline offsets which we use to break the line up later,
- * when the replacement is done.  Don't change it unless you're pretty damned
+ * when the replacement is done.  Don't change it unless you're *damned*
  * confident.
  */
 #define	NEEDNEWLINE(sp) {						\
@@ -368,30 +343,31 @@ ex_subtilde(sp, ep, cmdp)
 	}								\
 }
 
-/*
- * substitute --
- *	Do the substitution.  This stuff is *really* tricky.  There are
- *	lots of special cases, and general nastiness.  Don't mess with it
- * 	unless you're pretty confident.
- */
 static int
-substitute(sp, ep, cmdp, s, re, flags)
+s(sp, cmdp, s, re, flags)
 	SCR *sp;
-	EXF *ep;
-	EXCMDARG *cmdp;
+	EXCMD *cmdp;
 	char *s;
 	regex_t *re;
 	u_int flags;
 {
+	EVENT ev;
 	MARK from, to;
-	recno_t elno;
-	long lno;
+	TEXTH tiq;
+	recno_t elno, lno, slno;
+	long llno;
 	regmatch_t match[10];
-	size_t blen, cnt, last, lbclen, lblen, len, llen, offset, saved_offset;
+	size_t blen, cnt, last, lbclen, lblen, len, llen;
+	size_t offset, saved_offset, scno;
 	int cflag, lflag, nflag, pflag, rflag;
 	int didsub, do_eol_match, eflags, empty_ok, eval;
 	int linechanged, matched, quit, rval;
 	char *bp, *lb;
+
+	NEEDFILE(sp, cmdp);
+
+	slno = sp->lno;
+	scno = sp->cno;
 
 	/*
 	 * !!!
@@ -399,7 +375,7 @@ substitute(sp, ep, cmdp, s, re, flags)
 	 * so ":s/A/B/" was the same as ":s/A/B/ccgg".  If O_EDCOMPATIBLE was
 	 * not set, they were initialized to 0 for all substitute commands.  If
 	 * O_EDCOMPATIBLE was set, they were initialized to 0 only if the user
-	 * specified substitute/replacement patterns (see ex_substitute()).
+	 * specified substitute/replacement patterns (see ex_s()).
 	 */
 	if (!O_ISSET(sp, O_EDCOMPATIBLE))
 		sp->c_suffix = sp->g_suffix = 0;
@@ -421,6 +397,8 @@ substitute(sp, ep, cmdp, s, re, flags)
 	 * usage statement doesn't reflect this.)
 	 */
 	cflag = lflag = nflag = pflag = rflag = 0;
+	if (s == NULL)
+		goto noargs;
 	for (lno = OOBLNO; *s != '\0'; ++s)
 		switch (*s) {
 		case ' ':
@@ -437,14 +415,19 @@ substitute(sp, ep, cmdp, s, re, flags)
 			if (lno != OOBLNO)
 				goto usage;
 			errno = 0;
-			lno = strtoul(s, &s, 10);
+			llno = strtoul(s, &s, 10);
 			if (*s == '\0')		/* Loop increment correction. */
 				--s;
+			lno = llno;
+			if (llno != lno) {
+				errno = ERANGE;
+				llno = LONG_MAX;
+			}
 			if (errno == ERANGE) {
-				if (lno == LONG_MAX)
-					msgq(sp, M_ERR, "Count overflow");
-				else if (lno == LONG_MIN)
-					msgq(sp, M_ERR, "Count underflow");
+				if (llno == LONG_MAX)
+					msgq(sp, M_ERR, "153|Count overflow");
+				else if (llno == LONG_MIN)
+					msgq(sp, M_ERR, "154|Count underflow");
 				else
 					msgq(sp, M_SYSERR, NULL);
 				return (1);
@@ -455,12 +438,21 @@ substitute(sp, ep, cmdp, s, re, flags)
 			 */
 			cmdp->addr1.lno = cmdp->addr2.lno;
 			cmdp->addr2.lno += lno - 1;
+			if (!db_exist(sp, cmdp->addr2.lno) &&
+			    db_last(sp, &cmdp->addr2.lno))
+				return (1);
 			break;
 		case '#':
 			nflag = 1;
 			break;
 		case 'c':
 			sp->c_suffix = !sp->c_suffix;
+
+			/* Ex text structure initialization. */
+			if (F_ISSET(sp, SC_EX)) {
+				memset(&tiq, 0, sizeof(TEXTH));
+				CIRCLEQ_INIT(&tiq);
+			}
 			break;
 		case 'g':
 			sp->g_suffix = !sp->g_suffix;
@@ -474,29 +466,28 @@ substitute(sp, ep, cmdp, s, re, flags)
 		case 'r':
 			if (LF_ISSET(SUB_FIRST)) {
 				msgq(sp, M_ERR,
-		    "Regular expression specified; r flag meaningless");
+		    "155|Regular expression specified; r flag meaningless");
 				return (1);
 			}
-			if (!F_ISSET(sp, S_SRE_SET)) {
-				msgq(sp, M_ERR,
-				    "No previous regular expression");
+			if (!F_ISSET(sp, SC_RE_SEARCH)) {
+				ex_emsg(sp, NULL, EXM_NOPREVRE);
 				return (1);
 			}
 			rflag = 1;
-			re = &sp->sre;
+			re = &sp->re_c;
 			break;
 		default:
 			goto usage;
 		}
 
 	if (*s != '\0' || !rflag && LF_ISSET(SUB_MUSTSETR)) {
-usage:		msgq(sp, M_ERR, "Usage: %s", cmdp->cmd->usage);
+usage:		ex_emsg(sp, cmdp->cmd->usage, EXM_USAGE);
 		return (1);
 	}
 
-	if (IN_VI_MODE(sp) && sp->c_suffix && (lflag || nflag || pflag)) {
+noargs:	if (F_ISSET(sp, SC_VI) && sp->c_suffix && (lflag || nflag || pflag)) {
 		msgq(sp, M_ERR,
-	"The #, l and p flags may not be combined with the c flag in vi mode");
+"156|The #, l and p flags may not be combined with the c flag in vi mode");
 		return (1);
 	}
 
@@ -515,17 +506,12 @@ usage:		msgq(sp, M_ERR, "Usage: %s", cmdp->cmd->usage);
 	    elno = cmdp->addr2.lno; !quit && lno <= elno; ++lno) {
 
 		/* Someone's unhappy, time to stop. */
-		if (INTERRUPTED(sp)) {
-			if (!F_ISSET(sp, S_GLOBAL))
-				msgq(sp, M_INFO, "Interrupted");
+		if (INTERRUPTED(sp))
 			break;
-		}
 
 		/* Get the line. */
-		if ((s = file_gline(sp, ep, lno, &llen)) == NULL) {
-			GETLINE_ERR(sp, lno);
-			goto ret1;
-		}
+		if (db_get(sp, lno, DBG_FATAL, &s, &llen))
+			goto err;
 
 		/*
 		 * Make a local copy if doing confirmation -- when calling
@@ -586,7 +572,7 @@ nextmatch:	match[0].rm_so = 0;
 			goto endmatch;
 		if (eval != 0) {
 			re_error(sp, eval, re);
-			goto ret1;
+			goto err;
 		}
 		matched = 1;
 
@@ -629,53 +615,95 @@ nextmatch:	match[0].rm_so = 0;
 			 * Set the cursor position for confirmation.  Note,
 			 * if we matched on a '$', the cursor may be past
 			 * the end of line.
-			 *
-			 * XXX
-			 * We may want to "fix" this in the confirm routine,
-			 * if the confirm routine should be able to display
-			 * a cursor past EOL.
 			 */
 			from.lno = to.lno = lno;
 			from.cno = match[0].rm_so + offset;
-			to.cno = match[0].rm_eo;
+			to.cno = match[0].rm_eo + offset;
+			/*
+			 * Both ex and vi have to correct for a change before
+			 * the first character in the line.
+			 */
 			if (llen == 0)
 				from.cno = to.cno = 0;
-			else {
+			if (F_ISSET(sp, SC_VI)) {
+				/*
+				 * Only vi has to correct for a change after
+				 * the last character in the line.
+				 *
+				 * XXX
+				 * It would be nice to change the vi code so
+				 * that we could display a cursor past EOL.
+				 */
 				if (to.cno >= llen)
 					to.cno = llen - 1;
 				if (from.cno >= llen)
 					from.cno = llen - 1;
+
+				sp->lno = from.lno;
+				sp->cno = from.cno;
+				if (vs_refresh(sp, 1))
+					goto err;
+
+				vs_update(sp, msg_cat(sp,
+				    "169|Confirm change? [n]", NULL), NULL);
+
+				if (v_event_get(sp, &ev, 0, 0))
+					goto err;
+				switch (ev.e_event) {
+				case E_CHARACTER:
+					break;
+				case E_EOF:
+				case E_ERR:
+				case E_INTERRUPT:
+					goto lquit;
+				default:
+					v_event_err(sp, &ev);
+					goto lquit;
+				}
+			} else {
+				if (ex_print(sp, cmdp, &from, &to, 0) ||
+				    ex_scprint(sp, &from, &to))
+					goto lquit;
+				if (ex_txt(sp, &tiq, 0, TXT_CR))
+					goto err;
+				ev.e_c = tiq.cqh_first->lb[0];
 			}
-			switch (sp->s_confirm(sp, ep, &from, &to)) {
-			case CONF_YES:
+
+			switch (ev.e_c) {
+			case CH_YES:
 				break;
-			case CONF_NO:
+			default:
+			case CH_NO:
 				didsub = 0;
 				BUILD(sp, s +offset, match[0].rm_eo);
 				goto skip;
-			case CONF_QUIT:
-				/* Set the quit flag. */
-				quit = 1;
-
-				/* If interruptible, pass the info back. */
-				if (F_ISSET(sp, S_INTERRUPTIBLE))
-					F_SET(sp, S_INTERRUPTED);
+			case CH_QUIT:
+				/* Set the quit/interrupted flags. */
+lquit:				quit = 1;
+				F_SET(sp->gp, G_INTERRUPTED);
 
 				/*
-				 * If any changes, resolve them, otherwise
-				 * return to the main loop.
+				 * Resolve any changes, then return to (and
+				 * exit from) the main loop.
 				 */
 				goto endmatch;
 			}
 		}
+
+		/*
+		 * Set the cursor to the last position changed, converting
+		 * from 1-based to 0-based.
+		 */
+		sp->lno = lno;
+		sp->cno = match[0].rm_so;
 
 		/* Copy the bytes before the match into the build buffer. */
 		BUILD(sp, s + offset, match[0].rm_so);
 
 		/* Substitute the matching bytes. */
 		didsub = 1;
-		if (regsub(sp, s + offset, &lb, &lbclen, &lblen, match))
-			goto ret1;
+		if (re_sub(sp, s + offset, &lb, &lbclen, &lblen, match))
+			goto err;
 
 		/* Set the change flag so we know this line was modified. */
 		linechanged = 1;
@@ -711,9 +739,9 @@ skip:		offset += match[0].rm_eo;
 			if (sp->newl_cnt) {
 				for (cnt = 0;
 				    cnt < sp->newl_cnt; ++cnt, ++lno, ++elno) {
-					if (file_iline(sp, ep, lno,
+					if (db_insert(sp, lno,
 					    lb + last, sp->newl[cnt] - last))
-						goto ret1;
+						goto err;
 					last = sp->newl[cnt] + 1;
 					++sp->rptlines[L_ADDED];
 				}
@@ -723,12 +751,10 @@ skip:		offset += match[0].rm_eo;
 			}
 
 			/* Store and retrieve the line. */
-			if (file_sline(sp, ep, lno, lb + last, lbclen))
-				goto ret1;
-			if ((s = file_gline(sp, ep, lno, &llen)) == NULL) {
-				GETLINE_ERR(sp, lno);
-				goto ret1;
-			}
+			if (db_set(sp, lno, lb + last, lbclen))
+				goto err;
+			if (db_get(sp, lno, DBG_FATAL, &s, &llen))
+				goto err;
 			ADD_SPACE_RET(sp, bp, blen, llen)
 			memmove(bp, s, llen);
 			s = bp;
@@ -779,9 +805,9 @@ endmatch:	if (!linechanged)
 		if (sp->newl_cnt) {
 			for (cnt = 0;
 			    cnt < sp->newl_cnt; ++cnt, ++lno, ++elno) {
-				if (file_iline(sp, ep,
+				if (db_insert(sp,
 				    lno, lb + last, sp->newl[cnt] - last))
-					goto ret1;
+					goto err;
 				last = sp->newl[cnt] + 1;
 				++sp->rptlines[L_ADDED];
 			}
@@ -790,8 +816,8 @@ endmatch:	if (!linechanged)
 		}
 
 		/* Store the changed line. */
-		if (file_sline(sp, ep, lno, lb + last, lbclen))
-			goto ret1;
+		if (db_set(sp, lno, lb + last, lbclen))
+			goto err;
 
 		/* Update changed line counter. */
 		if (sp->rptlchange != lno) {
@@ -809,50 +835,50 @@ endmatch:	if (!linechanged)
 			from.lno = to.lno = lno;
 			from.cno = to.cno = 0;
 			if (lflag)
-				ex_print(sp, ep, &from, &to, E_F_LIST);
+				(void)ex_print(sp, cmdp, &from, &to, E_C_LIST);
 			if (nflag)
-				ex_print(sp, ep, &from, &to, E_F_HASH);
+				(void)ex_print(sp, cmdp, &from, &to, E_C_HASH);
 			if (pflag)
-				ex_print(sp, ep, &from, &to, E_F_PRINT);
+				(void)ex_print(sp, cmdp, &from, &to, E_C_PRINT);
 		}
-
-		if (!sp->c_suffix)
-			sp->lno = lno;
-
-		/*
-		 * !!!
-		 * Move the cursor to the last line changed.
-		 */
-		if (!sp->c_suffix)
-			sp->lno = lno;
 	}
 
 	/*
 	 * !!!
-	 * Move the cursor to the first non-blank of the last line change.
+	 * Historically, vi attempted to leave the cursor at the same place if
+	 * the substitution was done at the current cursor position.  Otherwise
+	 * it moved it to the first non-blank of the last line changed.  There
+	 * were some problems: for example, :s/$/foo/ with the cursor on the
+	 * last character of the line left the cursor on the last character, or
+	 * the & command with multiple occurrences of the matching string in the
+	 * line usually left the cursor in a fairly random position.
 	 *
-	 * XXX
-	 * This is NOT backward compatible with historic vi, which always
-	 * moved to the last line actually changed.
+	 * We try to do the same thing, with the exception that if the user is
+	 * doing substitution with confirmation, we move to the last line about
+	 * which the user was consulted, as opposed to the last line that they
+	 * actually changed.  This prevents a screen flash if the user doesn't
+	 * change many of the possible lines.
 	 */
-	if (!sp->c_suffix) {
+	if (!sp->c_suffix && (sp->lno != slno || sp->cno != scno)) {
 		sp->cno = 0;
-		(void)nonblank(sp, ep, sp->lno, &sp->cno);
+		(void)nonblank(sp, sp->lno, &sp->cno);
 	}
 
 	/*
 	 * If not in a global command, and nothing matched, say so.
 	 * Else, if none of the lines displayed, put something up.
 	 */
-	if (!matched) {
-		if (!F_ISSET(sp, S_GLOBAL))
-			msgq(sp, M_INFO, "No match found");
-	} else if (!lflag && !nflag && !pflag)
-		F_SET(EXP(sp), EX_AUTOPRINT);
-
 	rval = 0;
+	if (!matched) {
+		if (!F_ISSET(sp, SC_EX_GLOBAL)) {
+			msgq(sp, M_ERR, "157|No match found");
+			goto err;
+		}
+	} else if (!lflag && !nflag && !pflag)
+		F_SET(cmdp, E_AUTOPRINT);
+
 	if (0) {
-ret1:		rval = 1;
+err:		rval = 1;
 	}
 
 	if (bp != NULL)
@@ -863,11 +889,414 @@ ret1:		rval = 1;
 }
 
 /*
- * regsub --
+ * re_compile --
+ *	Compile the RE.
+ *
+ * PUBLIC: int re_compile __P((SCR *,
+ * PUBLIC:     char *, char **, size_t *, regex_t *, u_int));
+ */
+int
+re_compile(sp, ptrn, ptrnp, lenp, rep, flags)
+	SCR *sp;
+	char *ptrn, **ptrnp;
+	size_t *lenp;
+	regex_t *rep;
+	u_int flags;
+{
+	size_t len;
+	int reflags, replaced, rval;
+	char *p;
+
+	/* Set RE flags. */
+	reflags = 0;
+	if (!LF_ISSET(RE_C_CSCOPE | RE_C_TAG)) {
+		if (O_ISSET(sp, O_EXTENDED))
+			reflags |= REG_EXTENDED;
+		if (O_ISSET(sp, O_IGNORECASE))
+			reflags |= REG_ICASE;
+		if (O_ISSET(sp, O_ICLOWER)) {
+			for (p = ptrn; *p != '\0'; ++p)
+				if (isupper(*p))
+					break;
+			if (*p == '\0')
+				reflags |= REG_ICASE;
+		}
+	}
+
+	/* If we're replacing a saved value, clear the old one. */
+	if (LF_ISSET(RE_C_SEARCH) && F_ISSET(sp, SC_RE_SEARCH)) {
+		regfree(&sp->re_c);
+		F_CLR(sp, SC_RE_SEARCH);
+	}
+	if (LF_ISSET(RE_C_SUBST) && F_ISSET(sp, SC_RE_SUBST)) {
+		regfree(&sp->subre_c);
+		F_CLR(sp, SC_RE_SUBST);
+	}
+
+	/*
+	 * If we're saving the string, it's a pattern we haven't seen before,
+	 * so convert the vi-style RE's to POSIX 1003.2 RE's.  Save a copy for
+	 * later recompilation.   Free any previously saved value.
+	 */
+	replaced = 0;
+	if (ptrnp != NULL) {
+		if (*ptrnp != NULL) {
+			free(*ptrnp);
+			*ptrnp = NULL;
+		}
+		if (LF_ISSET(RE_C_CSCOPE)) {
+			if (re_cscope_conv(sp, &ptrn, &replaced))
+				return (1);
+			/*
+			 * XXX
+			 * Currently, the match-any-<blank> expression used in
+			 * re_cscope_conv() requires extended RE's.  This may
+			 * not be right or safe.
+			 */
+			reflags |= REG_EXTENDED;
+		} else if (LF_ISSET(RE_C_TAG)) {
+			if (re_tag_conv(sp, &ptrn, &replaced))
+				return (1);
+		} else
+			if (re_conv(sp, &ptrn, &replaced))
+				return (1);
+		len = strlen(ptrn);
+		if (lenp != NULL)
+			*lenp = len;
+		if ((*ptrnp = v_strdup(sp, ptrn, len)) == NULL)
+			return (1);
+	}
+
+	rval = regcomp(rep, ptrn, reflags);
+
+	/* Free up any allocated memory. */
+	if (replaced)
+		FREE_SPACE(sp, ptrn, 0);
+
+	if (rval) {
+		if (!LF_ISSET(RE_C_SILENT))
+			re_error(sp, rval, rep); 
+		return (1);
+	}
+
+	if (LF_ISSET(RE_C_SEARCH))
+		F_SET(sp, SC_RE_SEARCH);
+	if (LF_ISSET(RE_C_SUBST))
+		F_SET(sp, SC_RE_SUBST);
+
+	return (0);
+}
+
+/*
+ * re_conv --
+ *	Convert vi's regular expressions into something that the
+ *	the POSIX 1003.2 RE functions can handle.
+ *
+ * There are three conversions we make to make vi's RE's (specifically
+ * the global, search, and substitute patterns) work with POSIX RE's.
+ *
+ * 1: If O_MAGIC is not set, strip backslashes from the magic character
+ *    set (.[*~) that have them, and add them to the ones that don't.
+ * 2: If O_MAGIC is not set, the string "\~" is replaced with the text
+ *    from the last substitute command's replacement string.  If O_MAGIC
+ *    is set, it's the string "~".
+ * 3: The pattern \<ptrn\> does "word" searches, convert it to use the
+ *    new RE escapes.
+ *
+ * !!!/XXX
+ * This doesn't exactly match the historic behavior of vi because we do
+ * the ~ substitution before calling the RE engine, so magic characters
+ * in the replacement string will be expanded by the RE engine, and they
+ * weren't historically.  It's a bug.
+ */
+static int
+re_conv(sp, ptrnp, replacedp)
+	SCR *sp;
+	char **ptrnp;
+	int *replacedp;
+{
+	size_t blen, needlen;
+	int magic;
+	char *bp, *p, *t;
+
+	/*
+	 * First pass through, we figure out how much space we'll need.
+	 * We do it in two passes, on the grounds that most of the time
+	 * the user is doing a search and won't have magic characters.
+	 * That way we can skip the malloc and memmove's.
+	 */
+	for (p = *ptrnp, magic = 0, needlen = 0; *p != '\0'; ++p)
+		switch (*p) {
+		case '\\':
+			switch (*++p) {
+			case '<':
+				magic = 1;
+				needlen += sizeof(RE_WSTART);
+				break;
+			case '>':
+				magic = 1;
+				needlen += sizeof(RE_WSTOP);
+				break;
+			case '~':
+				if (!O_ISSET(sp, O_MAGIC)) {
+					magic = 1;
+					needlen += sp->repl_len;
+				}
+				break;
+			case '.':
+			case '[':
+			case '*':
+				if (!O_ISSET(sp, O_MAGIC)) {
+					magic = 1;
+					needlen += 1;
+				}
+				break;
+			default:
+				needlen += 2;
+			}
+			break;
+		case '~':
+			if (O_ISSET(sp, O_MAGIC)) {
+				magic = 1;
+				needlen += sp->repl_len;
+			}
+			break;
+		case '.':
+		case '[':
+		case '*':
+			if (!O_ISSET(sp, O_MAGIC)) {
+				magic = 1;
+				needlen += 2;
+			}
+			break;
+		default:
+			needlen += 1;
+			break;
+		}
+
+	if (!magic) {
+		*replacedp = 0;
+		return (0);
+	}
+
+	/*
+	 * Get enough memory to hold the final pattern.
+	 *
+	 * XXX
+	 * It's nul-terminated, for now.
+	 */
+	GET_SPACE_RET(sp, bp, blen, needlen + 1);
+
+	for (p = *ptrnp, t = bp; *p != '\0'; ++p)
+		switch (*p) {
+		case '\\':
+			switch (*++p) {
+			case '<':
+				memmove(t, RE_WSTART, sizeof(RE_WSTART) - 1);
+				t += sizeof(RE_WSTART) - 1;
+				break;
+			case '>':
+				memmove(t, RE_WSTOP, sizeof(RE_WSTOP) - 1);
+				t += sizeof(RE_WSTOP) - 1;
+				break;
+			case '~':
+				if (O_ISSET(sp, O_MAGIC))
+					*t++ = '~';
+				else {
+					memmove(t, sp->repl, sp->repl_len);
+					t += sp->repl_len;
+				}
+				break;
+			case '.':
+			case '[':
+			case '*':
+				if (O_ISSET(sp, O_MAGIC))
+					*t++ = '\\';
+				*t++ = *p;
+				break;
+			default:
+				*t++ = '\\';
+				*t++ = *p;
+			}
+			break;
+		case '~':
+			if (O_ISSET(sp, O_MAGIC)) {
+				memmove(t, sp->repl, sp->repl_len);
+				t += sp->repl_len;
+			} else
+				*t++ = '~';
+			break;
+		case '.':
+		case '[':
+		case '*':
+			if (!O_ISSET(sp, O_MAGIC))
+				*t++ = '\\';
+			*t++ = *p;
+			break;
+		default:
+			*t++ = *p;
+			break;
+		}
+	*t = '\0';
+
+	*ptrnp = bp;
+	*replacedp = 1;
+	return (0);
+}
+
+/*
+ * re_tag_conv --
+ *	Convert a tags search path into something that the POSIX
+ *	1003.2 RE functions can handle.
+ */
+static int
+re_tag_conv(sp, ptrnp, replacedp)
+	SCR *sp;
+	char **ptrnp;
+	int *replacedp;
+{
+	size_t blen, len;
+	int lastdollar;
+	char *bp, *p, *t;
+
+	*replacedp = 0;
+
+	len = strlen(p = *ptrnp);
+
+	/* Max memory usage is 2 times the length of the string. */
+	GET_SPACE_RET(sp, bp, blen, len * 2);
+
+	t = bp;
+
+	/* The last character is a '/' or '?', we just strip it. */
+	if (p[len - 1] == '/' || p[len - 1] == '?')
+		p[len - 1] = '\0';
+
+	/* The next-to-last character is a '$', and it's magic. */
+	if (p[len - 2] == '$') {
+		lastdollar = 1;
+		p[len - 2] = '\0';
+	} else
+		lastdollar = 0;
+
+	/* The first character is a '/' or '?', we just strip it. */
+	if (p[0] == '/' || p[0] == '?')
+		++p;
+
+	/* The second character is a '^', and it's magic. */
+	if (p[0] == '^')
+		*t++ = *p++;
+
+	/*
+	 * Escape every other magic character we can find, stripping the
+	 * backslashes ctags inserts to escape the search delimiter
+	 * characters.
+	 */
+	while (p[0]) {
+		/* Ctags escapes the search delimiter characters. */
+		if (p[0] == '\\' && (p[1] == '/' || p[1] == '?'))
+			++p;
+		else if (strchr("^.[]$*", p[0]))
+			*t++ = '\\';
+		*t++ = *p++;
+	}
+	if (lastdollar)
+		*t++ = '$';
+	*t++ = '\0';
+
+	*ptrnp = bp;
+	*replacedp = 1;
+	return (0);
+}
+
+/*
+ * re_cscope_conv --
+ *	 Convert a cscope search path into something that the POSIX
+ *      1003.2 RE functions can handle.
+ */
+static int
+re_cscope_conv(sp, ptrnp, replacedp)
+	SCR *sp;
+	char **ptrnp;
+	int *replacedp;
+{
+	size_t blen, len, nspaces;
+	char *bp, *p, *re;
+
+	/*
+	 * Each space in the source line printed by cscope represents an
+	 * arbitrary sequence of spaces, tabs, and comments.
+	 */
+#define	CSCOPE_RE_SPACE		"([ \t]|/\\*([^*]|\\*/)*\\*/)*"
+	for (nspaces = 0, p = *ptrnp; *p != '\0'; ++p)
+		if (*p == ' ')
+			++nspaces;
+
+	/*
+	 * Allocate plenty of space:
+	 *	the string, plus potential escaping characters
+	 *	nspaces + 2 copies of CSCOPE_RE_SPACE
+	 *	^, $, nul terminator characters
+	 */
+	len = (p - *ptrnp) * 2 + (nspaces + 2) * sizeof(CSCOPE_RE_SPACE) + 3;
+	GET_SPACE_RET(sp, bp, blen, len);
+
+	p = bp;
+	*p++ = '^';
+	memcpy(p, CSCOPE_RE_SPACE, sizeof(CSCOPE_RE_SPACE) - 1);
+	p += sizeof(CSCOPE_RE_SPACE) - 1;
+
+	for (re = *ptrnp; *re != '\0'; ++re)
+		if (*re == ' ') {
+			memcpy(p, CSCOPE_RE_SPACE, sizeof(CSCOPE_RE_SPACE) - 1);
+			p += sizeof(CSCOPE_RE_SPACE) - 1;
+		} else {
+			if (strchr("\\^.[]$*", *re))
+				*p++ = '\\';
+			*p++ = *re;
+		}
+
+	memcpy(p, CSCOPE_RE_SPACE, sizeof(CSCOPE_RE_SPACE) - 1);
+	p += sizeof(CSCOPE_RE_SPACE) - 1;
+	*p++ = '$';
+	*p = '\0';
+
+	*ptrnp = bp;
+	*replacedp = 1;
+	return (0);
+}
+
+/*
+ * re_error --
+ *	Report a regular expression error.
+ *
+ * PUBLIC: void re_error __P((SCR *, int, regex_t *));
+ */
+void
+re_error(sp, errcode, preg)
+	SCR *sp;
+	int errcode;
+	regex_t *preg;
+{
+	size_t s;
+	char *oe;
+
+	s = regerror(errcode, preg, "", 0);
+	if ((oe = malloc(s)) == NULL)
+		msgq(sp, M_SYSERR, NULL);
+	else {
+		(void)regerror(errcode, preg, oe, s);
+		msgq(sp, M_ERR, "RE error: %s", oe);
+		free(oe);
+	}
+}
+
+/*
+ * re_sub --
  * 	Do the substitution for a regular expression.
  */
-static __inline int
-regsub(sp, ip, lbp, lbclenp, lblenp, match)
+static int
+re_sub(sp, ip, lbp, lbclenp, lblenp, match)
 	SCR *sp;
 	char *ip;			/* Input line. */
 	char **lbp;
@@ -905,7 +1334,7 @@ regsub(sp, ip, lbp, lbclenp, lblenp, match)
 	 * Otherwise, since this is the lowest level of replacement, discard
 	 * all escape characters.  This (hopefully) follows historic practice.
 	 */
-#define	ADDCH(ch) {							\
+#define	OUTCH(ch) {							\
 	CHAR_T __ch = (ch);						\
 	u_int __value = KEY_VAL(sp, __ch);				\
 	if (__value == K_CR || __value == K_NL) {			\
@@ -964,7 +1393,7 @@ subzero:			if (match[no].rm_so == -1 ||
 					break;
 				mlen = match[no].rm_eo - match[no].rm_so;
 				for (t = ip + match[no].rm_so; mlen--; ++t)
-					ADDCH(*t);
+					OUTCH(*t);
 				continue;
 			case 'e':
 			case 'E':
@@ -992,7 +1421,7 @@ subzero:			if (match[no].rm_so == -1 ||
 				break;
 			}
 		}
-		ADDCH(ch);
+		OUTCH(ch);
 	}
 
 	*lbp = lb;			/* Update caller's information. */

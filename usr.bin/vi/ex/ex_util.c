@@ -1,65 +1,83 @@
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1993, 1994, 1995, 1996
+ *	Keith Bostic.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * See the LICENSE file for redistribution information.
  */
 
+#include "config.h"
+
 #ifndef lint
-static char sccsid[] = "@(#)ex_util.c	8.14 (Berkeley) 8/17/94";
+static const char sccsid[] = "@(#)ex_util.c	10.21 (Berkeley) 5/8/96";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
-#include <sys/time.h>
 
 #include <bitstring.h>
 #include <errno.h>
 #include <limits.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <termios.h>
 #include <unistd.h>
 
-#include "compat.h"
-#include <db.h>
-#include <regex.h>
+#include "../common/common.h"
 
-#include "vi.h"
-#include "excmd.h"
+/*
+ * ex_cinit --
+ *	Create an EX command structure.
+ *
+ * PUBLIC: void ex_cinit __P((EXCMD *,
+ * PUBLIC:    int, int, recno_t, recno_t, int, ARGS **));
+ */
+void
+ex_cinit(cmdp, cmd_id, naddr, lno1, lno2, force, ap)
+	EXCMD *cmdp;
+	int cmd_id, force, naddr;
+	recno_t lno1, lno2;
+	ARGS **ap;
+{
+	memset(cmdp, 0, sizeof(EXCMD));
+	cmdp->cmd = &cmds[cmd_id];
+	cmdp->addrcnt = naddr;
+	cmdp->addr1.lno = lno1;
+	cmdp->addr2.lno = lno2;
+	cmdp->addr1.cno = cmdp->addr2.cno = 1;
+	if (force)
+		cmdp->iflags |= E_C_FORCE;
+	cmdp->argc = 0;
+	if ((cmdp->argv = ap) != NULL)
+		cmdp->argv[0] = NULL;
+}
+
+/*
+ * ex_cadd --
+ *	Add an argument to an EX command structure.
+ *
+ * PUBLIC: void ex_cadd __P((EXCMD *, ARGS *, char *, size_t));
+ */
+void
+ex_cadd(cmdp, ap, arg, len)
+	EXCMD *cmdp;
+	ARGS *ap;
+	char *arg;
+	size_t len;
+{
+	cmdp->argv[cmdp->argc] = ap;
+	ap->bp = arg;
+	ap->len = len;
+	cmdp->argv[++cmdp->argc] = NULL;
+}
 
 /*
  * ex_getline --
- *	Return a line from the terminal.
+ *	Return a line from the file.
+ *
+ * PUBLIC: int ex_getline __P((SCR *, FILE *, size_t *));
  */
 int
 ex_getline(sp, fp, lenp)
@@ -99,74 +117,10 @@ ex_getline(sp, fp, lenp)
 }
 
 /*
- * ex_sleave --
- *	Save the terminal/signal state, screen modification time.
- * 	Specific to ex/filter.c and ex/ex_shell.c.
- */
-int
-ex_sleave(sp)
-	SCR *sp;
-{
-	struct stat sb;
-	EX_PRIVATE *exp;
-
-	/* Ignore sessions not using tty's. */
-	if (!F_ISSET(sp->gp, G_STDIN_TTY))
-		return (1);
-	
-	exp = EXP(sp);
-	if (tcgetattr(STDIN_FILENO, &exp->leave_term)) {
-		msgq(sp, M_SYSERR, "tcgetattr");
-		return (1);
-	}
-	if (tcsetattr(STDIN_FILENO,
-	    TCSANOW | TCSASOFT, &sp->gp->original_termios)) {
-		msgq(sp, M_SYSERR, "tcsetattr");
-		return (1);
-	}
-	/*
-	 * The process may write to the terminal.  Save the access time
-	 * (read) and modification time (write) of the tty; if they have
-	 * changed when we restore the modes, will have to refresh the
-	 * screen.
-	 */
-	if (fstat(STDIN_FILENO, &sb)) {
-		msgq(sp, M_SYSERR, "stat: stdin");
-		exp->leave_atime = exp->leave_mtime = 0;
-	} else {
-		exp->leave_atime = sb.st_atime;
-		exp->leave_mtime = sb.st_mtime;
-	}
-	return (0);
-}
-
-/*
- * ex_rleave --
- *	Return the terminal/signal state, not screen modification time.
- * 	Specific to ex/filter.c and ex/ex_shell.c.
- */
-void
-ex_rleave(sp)
-	SCR *sp;
-{
-	EX_PRIVATE *exp;
-	struct stat sb;
-
-	exp = EXP(sp);
-
-	/* Restore the terminal modes. */
-	if (tcsetattr(STDIN_FILENO, TCSANOW | TCSASOFT, &exp->leave_term))
-		msgq(sp, M_SYSERR, "tcsetattr");
-
-	/* If the terminal was used, refresh the screen. */
-	if (fstat(STDIN_FILENO, &sb) || exp->leave_atime == 0 ||
-	    exp->leave_atime != sb.st_atime || exp->leave_mtime != sb.st_mtime)
-		F_SET(sp, S_REFRESH);
-}
-
-/*
  * ex_ncheck --
  *	Check for more files to edit.
+ *
+ * PUBLIC: int ex_ncheck __P((SCR *, int));
  */
 int
 ex_ncheck(sp, force)
@@ -182,8 +136,89 @@ ex_ncheck(sp, force)
 	    sp->cargv != NULL && sp->cargv[1] != NULL) {
 		sp->q_ccnt = sp->ccnt;
 		msgq(sp, M_ERR,
-    "More files to edit; use n[ext] to go to the next file, q[uit]! to quit");
+"167|More files to edit; use n[ext] to go to the next file, q[uit]! to quit");
 		return (1);
 	}
 	return (0);
+}
+
+/*
+ * ex_init --
+ *	Init the screen for ex.
+ *
+ * PUBLIC: int ex_init __P((SCR *));
+ */
+int
+ex_init(sp)
+	SCR *sp;
+{
+	if (sp->gp->scr_screen(sp, SC_EX))
+		return (1);
+
+	sp->rows = O_VAL(sp, O_LINES);
+	sp->cols = O_VAL(sp, O_COLUMNS);
+
+	F_CLR(sp, SC_VI);
+	F_SET(sp, SC_EX | SC_SCR_EX);
+	return (0);
+}
+
+/*
+ * ex_emsg --
+ *	Display a few common ex and vi error messages.
+ *
+ * PUBLIC: void ex_emsg __P((SCR *, char *, exm_t));
+ */
+void
+ex_emsg(sp, p, which)
+	SCR *sp;
+	char *p;
+	exm_t which;
+{
+	switch (which) {
+	case EXM_EMPTYBUF:
+		msgq(sp, M_ERR, "168|Buffer %s is empty", p);
+		break;
+	case EXM_FILECOUNT:
+		 msgq_str(sp, M_ERR, p, 
+		     "144|%s: expanded into too many file names");
+		break;
+	case EXM_NOCANON:
+		msgq(sp, M_ERR,
+		    "283|The %s command requires the ex terminal interface", p);
+		break;
+	case EXM_NOCANON_F:
+		msgq(sp, M_ERR,
+		    "272|That form of %s requires the ex terminal interface",
+		    p);
+		break;
+	case EXM_NOFILEYET:
+		if (p == NULL)
+			msgq(sp, M_ERR,
+			    "274|Command failed, no file read in yet.");
+		else
+			msgq(sp, M_ERR,
+	"173|The %s command requires that a file have already been read in", p);
+		break;
+	case EXM_NOPREVBUF:
+		msgq(sp, M_ERR, "171|No previous buffer to execute");
+		break;
+	case EXM_NOPREVRE:
+		msgq(sp, M_ERR, "172|No previous regular expression");
+		break;
+	case EXM_NOSUSPEND:
+		msgq(sp, M_ERR, "230|This screen may not be suspended");
+		break;
+	case EXM_SECURE:
+		msgq(sp, M_ERR,
+"290|The %s command is not supported when the secure edit option is set", p);
+		break;
+	case EXM_SECURE_F:
+		msgq(sp, M_ERR,
+"284|That form of %s is not supported when the secure edit option is set", p);
+		break;
+	case EXM_USAGE:
+		msgq(sp, M_ERR, "174|Usage: %s", p);
+		break;
+	}
 }

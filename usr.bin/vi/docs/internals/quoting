@@ -1,93 +1,89 @@
-#	@(#)quoting	5.4 (Berkeley) 8/20/93
+#	@(#)quoting	5.5 (Berkeley) 11/12/94
 
 QUOTING IN EX/VI:
 
-There are two escape characters in historic ex/vi, ^V (or whatever
-character the user specified as their literal next character) and
-backslashes.  There are two different areas in ex/vi where escaping
-is interesting: the command and text input modes, and within the ex
-commands themselves.  In the examples below, ^V is used as the
-typical literal next character.
+There are four escape characters in historic ex/vi:
 
-1: Escaping characters in ex and vi command and text input modes.
-   The set of characters that users might want to escape are as
-   follows:
+	\ (backslashes)
+	^V
+	^Q (assuming it wasn't used for IXON/IXOFF)
+	The terminal literal next character.
 
-   vi text input mode (a, i, o, etc.):
+Vi did not use the lnext character, it always used ^V (or ^Q).
+^V and ^Q were equivalent in all cases for vi.
 
-	carriage return (^M)
-	escape		(^[)
-	autoindent characters
-			(^D, 0, ^, ^T)
-	erase, word erase, and line erase
-			(^H, ^W, ^U)
-	newline		(^J)			(not historic practice)
-	suspend		(^Z)			(not historic practice)
-	repaint		(^L)			(not historic practice)
+There are four different areas in ex/vi where escaping characters
+is interesting:
 
-   vi command line (:colon commands):
+	1: In vi text input mode.
+	2: In vi command mode.
+	3: In ex command and text input modes.
+	4: In the ex commands themselves.
+
+1: Vi text input mode (a, i, o, :colon commands, etc.):
+
+   The set of characters that users might want to escape are as follows.
+   As ^L and ^Z were not special in input mode, they are not listed.
 
 	carriage return (^M)
 	escape		(^[)
-	erase, word erase, and line erase
-			(^H, ^W, ^U)
-	newline		(^J)			(not historic practice)
-	suspend		(^Z)			(not historic practice)
-	repaint		(^L)			(not historic practice)
+	autoindents	(^D, 0, ^, ^T)
+	erase		(^H)
+	word erase	(^W)
+	line erase	(^U)
+	newline		(^J)		(not historic practice)
 
-   ex text input mode (a, i, o, etc.):
+   Historic practice was that ^V was the only way to escape any
+   of these characters, and that whatever character followed
+   the ^V was taken literally, e.g. ^V^V is a single ^V.  I
+   don't see any strong reason to make it possible to escape
+   ^J, so I'm going to leave that alone.
 
-	carriage return (^M)
-	erase, word erase, and line erase
-			(^H, ^W, ^U)
-	newline		(^J)			(not historic practice)
+   One comment regarding the autoindent characters.  In historic
+   vi, if you entered "^V0^D" autoindent erasure was still
+   triggered, although it wasn't if you entered "0^V^D".  In
+   nvi, if you escape either character, autoindent erasure is
+   not triggered.
 
-   ex command line:
+   Abbreviations were not performed if the non-word character
+   that triggered the abbreviation was escaped by a ^V.  Input
+   maps were not triggered if any part of the map was escaped
+   by a ^V.
 
-	carriage return (^M)
-	erase, word erase, and line erase
-			(^H, ^W, ^U)
-	newline		(^J)			(not historic practice)
-	suspend		(^Z)
+   The historic vi implementation for the 'r' command requires
+   two leading ^V's to replace a character with a literal
+   character.  This is obviously a bug, and should be fixed.
 
-   I intend to follow historic practice for all of these cases, which
-   was that ^V was the only way to escape any of these characters, and
-   that whatever character followed the ^V was taken literally, i.e.
-   ^V^V is a single ^V.
+2: Vi command mode
 
-   The historic ex/vi disallowed the insertion of various control
-   characters (^D, ^T, whatever) during various different modes, or,
-   permitted the insertion of only a single one, or lots of other random
-   behaviors (you can use ^D to enter a command in ex).  I have
-   regularized this behavior in nvi, there are no characters that cannot
-   be entered or which have special meaning other than the ones listed
-   above.
+   Command maps were not triggered if the second or later
+   character of a map was escaped by a ^V.
 
-   One comment regarding the autoindent characters.  In historic vi,
-   if you entered "^V0^D" autoindent erasure was still triggered,
-   although it wasn't if you entered "0^V^D".  In nvi, if you escape
-   either character, autoindent erasure is not triggered.
+   The obvious extension is that ^V should keep the next command
+   character from being mapped, so you can do ":map x xxx" and
+   then enter ^Vx to delete a single character.
 
-   This doesn't permit whitespace in command names, but that wasn't
-   historic practice and doesn't seem worth doing.
+3: Ex command and text input modes.
 
-   Fun facts to know and tell:
-	   The historic vi implementation for the 'r' command requires
-	   *three* ^V's to replace a single character with ^V.
+   As ex ran in canonical mode, there was little work that it
+   needed to do for quoting.  The notable differences between
+   ex and vi are that it was possible to escape a <newline> in
+   the ex command and text input modes, and ex used the "literal
+   next" character, not control-V/control-Q.
 
-2: Ex commands:
+4: The ex commands:
 
-   Ex commands are delimited by '|' or newline characters.  Within
-   the commands, whitespace characters delimit the arguments.
-
-   I intend to treat ^V, followed by any character, as that literal
-   character.
+   Ex commands are delimited by '|' or newline characters.
+   Within the commands, whitespace characters delimit the
+   arguments.  Backslash will generally escape any following
+   character.  In the abbreviate, unabbreviate, map and unmap
+   commands, control-V escapes the next character, instead.
 
    This is historic behavior in vi, although there are special
    cases where it's impossible to escape a character, generally
    a whitespace character.
 
-3: Escaping characters in file names in ex commands:
+   Escaping characters in file names in ex commands:
 
 	:cd [directory]				(directory)
 	:chdir [directory]			(directory)
@@ -101,26 +97,18 @@ typical literal next character.
 	:wq [file]				(file)
 	:xit [file]				(file)
 
-   I intend to treat a backslash in a file name, followed by any
-   character, as that literal character.
-
-   This is historic behavior in vi.
-
-   In addition, since file names are also subject to word expansion,
-   the rules for escape characters in section 3 of this document also
-   apply.  This is NOT historic behavior in vi, making it impossible
-   to insert a whitespace, newline or carriage return character into
-   a file name.  This change could cause a problem if there were files
-   with ^V's in their names, but I think that's unlikely.
+   Since file names are also subject to word expansion, the
+   underlying shell had better be doing the correct backslash
+   escaping.  This is NOT historic behavior in vi, making it
+   impossible to insert a whitespace, newline or carriage return
+   character into a file name.
 
 4: Escaping characters in non-file arguments in ex commands:
 
 	:abbreviate word string			(word, string)
 *	:edit [+cmd] [file]			(+cmd)
 *	:ex [+cmd] [file]			(+cmd)
-	:k key					(key)
 	:map word string			(word, string)
-	:mark key				(key)
 *	:set [option ...]			(option)
 *	:tag string				(string)
 	:unabbreviate word			(word)
@@ -147,9 +135,9 @@ typical literal next character.
 
 	:edit +10|s/abc/ABC/ file.c
 
-   In addition, the edit and ex commands have historically ignored
-   literal next characters in the +cmd string, so that the following
-   command won't work.
+   In addition, the edit and ex commands have historically
+   ignored literal next characters in the +cmd string, so that
+   the following command won't work.
 
 	:edit +10|s/X/^V / file.c
 
@@ -167,19 +155,19 @@ typical literal next character.
 
 4.2: The set command:
 
-   The set command treats ^V's as literal characters, so the following
-   command won't work.  Backslashes do work in this case, though, so
-   the second version of the command does work.
+   The set command treats ^V's as literal characters, so the
+   following command won't work.  Backslashes do work in this
+   case, though, so the second version of the command does work.
 
 	set tags=tags_file1^V tags_file2
 	set tags=tags_file1\ tags_file2
 
-   I intend to continue permitting backslashes in set commands, but
-   to also permit literal next characters to work as well.  This is
-   backward compatible, but will also make set consistent with the
-   other commands.  I think it's unlikely to break any historic
-   .exrc's, given that there are probably very few files with ^V's
-   in their name.
+   I intend to continue permitting backslashes in set commands,
+   but to also permit literal next characters to work as well.
+   This is backward compatible, but will also make set
+   consistent with the other commands.  I think it's unlikely
+   to break any historic .exrc's, given that there are probably
+   very few files with ^V's in their name.
 
 4.3: The tag command:
 
@@ -217,3 +205,4 @@ typical literal next character.
    In all of the above rules, an escape character (either ^V or a
    backslash) at the end of an argument or file name is not handled
    specially, but used as a literal character.
+

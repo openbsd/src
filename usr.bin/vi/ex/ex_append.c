@@ -1,220 +1,275 @@
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1992, 1993, 1994, 1995, 1996
+ *	Keith Bostic.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * See the LICENSE file for redistribution information.
  */
 
+#include "config.h"
+
 #ifndef lint
-static char sccsid[] = "@(#)ex_append.c	8.24 (Berkeley) 8/17/94";
+static const char sccsid[] = "@(#)ex_append.c	10.27 (Berkeley) 4/27/96";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/queue.h>
-#include <sys/time.h>
 
 #include <bitstring.h>
 #include <limits.h>
-#include <signal.h>
 #include <stdio.h>
 #include <string.h>
-#include <termios.h>
 #include <unistd.h>
 
-#include "compat.h"
-#include <db.h>
-#include <regex.h>
-
-#include "vi.h"
-#include "excmd.h"
-#include "../sex/sex_screen.h"
+#include "../common/common.h"
 
 enum which {APPEND, CHANGE, INSERT};
 
-static int aci __P((SCR *, EXF *, EXCMDARG *, enum which));
+static int ex_aci __P((SCR *, EXCMD *, enum which));
 
 /*
  * ex_append -- :[line] a[ppend][!]
  *	Append one or more lines of new text after the specified line,
  *	or the current line if no address is specified.
+ *
+ * PUBLIC: int ex_append __P((SCR *, EXCMD *));
  */
 int
-ex_append(sp, ep, cmdp)
+ex_append(sp, cmdp)
 	SCR *sp;
-	EXF *ep;
-	EXCMDARG *cmdp;
+	EXCMD *cmdp;
 {
-	return (aci(sp, ep, cmdp, APPEND));
+	return (ex_aci(sp, cmdp, APPEND));
 }
 
 /*
  * ex_change -- :[line[,line]] c[hange][!] [count]
  *	Change one or more lines to the input text.
+ *
+ * PUBLIC: int ex_change __P((SCR *, EXCMD *));
  */
 int
-ex_change(sp, ep, cmdp)
+ex_change(sp, cmdp)
 	SCR *sp;
-	EXF *ep;
-	EXCMDARG *cmdp;
+	EXCMD *cmdp;
 {
-	return (aci(sp, ep, cmdp, CHANGE));
+	return (ex_aci(sp, cmdp, CHANGE));
 }
 
 /*
  * ex_insert -- :[line] i[nsert][!]
  *	Insert one or more lines of new text before the specified line,
  *	or the current line if no address is specified.
+ *
+ * PUBLIC: int ex_insert __P((SCR *, EXCMD *));
  */
 int
-ex_insert(sp, ep, cmdp)
+ex_insert(sp, cmdp)
 	SCR *sp;
-	EXF *ep;
-	EXCMDARG *cmdp;
+	EXCMD *cmdp;
 {
-	return (aci(sp, ep, cmdp, INSERT));
+	return (ex_aci(sp, cmdp, INSERT));
 }
 
+/*
+ * ex_aci --
+ *	Append, change, insert in ex.
+ */
 static int
-aci(sp, ep, cmdp, cmd)
+ex_aci(sp, cmdp, cmd)
 	SCR *sp;
-	EXF *ep;
-	EXCMDARG *cmdp;
+	EXCMD *cmdp;
 	enum which cmd;
 {
-	MARK m;
-	TEXTH *sv_tiqp, tiq;
+	CHAR_T *p, *t;
 	TEXT *tp;
-	struct termios t;
-	u_int flags;
-	int rval;
+	TEXTH tiq;
+	recno_t cnt, lno;
+	size_t len;
+	u_int32_t flags;
+	int need_newline;
 
-	rval = 0;
+	NEEDFILE(sp, cmdp);
+
+	/*
+	 * If doing a change, replace lines for as long as possible.  Then,
+	 * append more lines or delete remaining lines.  Changes to an empty
+	 * file are appends, inserts are the same as appends to the previous
+	 * line.
+	 *
+	 * !!!
+	 * Set the address to which we'll append.  We set sp->lno to this
+	 * address as well so that autoindent works correctly when get text
+	 * from the user.
+	 */
+	lno = cmdp->addr1.lno;
+	sp->lno = lno;
+	if ((cmd == CHANGE || cmd == INSERT) && lno != 0)
+		--lno;
+
+	/*
+	 * !!!
+	 * If the file isn't empty, cut changes into the unnamed buffer.
+	 */
+	if (cmd == CHANGE && cmdp->addr1.lno != 0 &&
+	    (cut(sp, NULL, &cmdp->addr1, &cmdp->addr2, CUT_LINEMODE) ||
+	    delete(sp, &cmdp->addr1, &cmdp->addr2, 1)))
+		return (1);
+
+	/*
+	 * !!!
+	 * Anything that was left after the command separator becomes part
+	 * of the inserted text.  Apparently, it was common usage to enter:
+	 *
+	 *	:g/pattern/append|stuff1
+	 *
+	 * and append the line of text "stuff1" to the lines containing the
+	 * pattern.  It was also historically legal to enter:
+	 *
+	 *	:append|stuff1
+	 *	stuff2
+	 *	.
+	 *
+	 * and the text on the ex command line would be appended as well as
+	 * the text inserted after it.  There was an historic bug however,
+	 * that the user had to enter *two* terminating lines (the '.' lines)
+	 * to terminate text input mode, in this case.  This whole thing
+	 * could be taken too far, however.  Entering:
+	 *
+	 *	:append|stuff1\
+	 *	stuff2
+	 *	stuff3
+	 *	.
+	 *
+	 * i.e. mixing and matching the forms confused the historic vi, and,
+	 * not only did it take two terminating lines to terminate text input
+	 * mode, but the trailing backslashes were retained on the input.  We
+	 * match historic practice except that we discard the backslashes.
+	 *
+	 * Input lines specified on the ex command line lines are separated by
+	 * <newline>s.  If there is a trailing delimiter an empty line was
+	 * inserted.  There may also be a leading delimiter, which is ignored
+	 * unless it's also a trailing delimiter.  It is possible to encounter
+	 * a termination line, i.e. a single '.', in a global command, but not
+	 * necessary if the text insert command was the last of the global
+	 * commands.
+	 */
+	if (cmdp->save_cmdlen != 0) {
+		for (p = cmdp->save_cmd,
+		    len = cmdp->save_cmdlen; len > 0; p = t) {
+			for (t = p; len > 0 && t[0] != '\n'; ++t, --len);
+			if (t != p || len == 0) {
+				if (F_ISSET(sp, SC_EX_GLOBAL) &&
+				    t - p == 1 && p[0] == '.') {
+					++t;
+					if (len > 0)
+						--len;
+					break;
+				}
+				if (db_append(sp, 1, lno++, p, t - p))
+					return (1);
+			}
+			if (len != 0) {
+				++t;
+				if (--len == 0 &&
+				    db_append(sp, 1, lno++, "", 0))
+					return (1);
+			}
+		}
+		/*
+		 * If there's any remaining text, we're in a global, and
+		 * there's more command to parse.
+		 *
+		 * !!!
+		 * We depend on the fact that non-global commands will eat the
+		 * rest of the command line as text input, and before getting
+		 * any text input from the user.  Otherwise, we'd have to save
+		 * off the command text before or during the call to the text
+		 * input function below.
+		 */
+		if (len != 0)
+			cmdp->save_cmd = t;
+		cmdp->save_cmdlen = len;
+	}
+
+	if (F_ISSET(sp, SC_EX_GLOBAL)) {
+		if ((sp->lno = lno) == 0 && db_exist(sp, 1))
+			sp->lno = 1;
+		return (0);
+	}
+
+	/*
+	 * If not in a global command, read from the terminal.
+	 *
+	 * If this code is called by vi, we want to reset the terminal and use
+	 * ex's line get routine.  It actually works fine if we use vi's get
+	 * routine, but it doesn't look as nice.  Maybe if we had a separate
+	 * window or something, but getting a line at a time looks awkward.
+	 * However, depending on the screen that we're using, that may not
+	 * be possible.
+	 */
+	if (F_ISSET(sp, SC_VI)) {
+		if (sp->gp->scr_screen(sp, SC_EX)) {
+			ex_emsg(sp, cmdp->cmd->name, EXM_NOCANON);
+			return (1);
+		}
+
+		/* If we're still in the vi screen, move out explicitly. */
+		need_newline = !F_ISSET(sp, SC_SCR_EXWROTE);
+		F_SET(sp, SC_SCR_EX | SC_SCR_EXWROTE);
+		if (need_newline)
+			(void)ex_puts(sp, "\n");
+
+		/*
+		 * !!!
+		 * Users of historical versions of vi sometimes get confused
+		 * when they enter append mode, and can't seem to get out of
+		 * it.  Give them an informational message.
+		 */
+		(void)ex_puts(sp,
+		    msg_cat(sp, "273|Entering ex input mode.", NULL));
+		(void)ex_puts(sp, "\n");
+		(void)ex_fflush(sp);
+	}
 
 	/*
 	 * Set input flags; the ! flag turns off autoindent for append,
 	 * change and insert.
 	 */
-	LF_INIT(TXT_DOTTERM | TXT_NLECHO);
-	if (!F_ISSET(cmdp, E_FORCE) && O_ISSET(sp, O_AUTOINDENT))
+	LF_INIT(TXT_DOTTERM | TXT_NUMBER);
+	if (!FL_ISSET(cmdp->iflags, E_C_FORCE) && O_ISSET(sp, O_AUTOINDENT))
 		LF_SET(TXT_AUTOINDENT);
 	if (O_ISSET(sp, O_BEAUTIFY))
 		LF_SET(TXT_BEAUTIFY);
 
-	/* Input is interruptible. */
-	F_SET(sp, S_INTERRUPTIBLE);
+	/*
+	 * This code can't use the common screen TEXTH structure (sp->tiq),
+	 * as it may already be in use, e.g. ":append|s/abc/ABC/" would fail
+	 * as we are only halfway through the text when the append code fires.
+	 * Use a local structure instead.  (The ex code would have to use a
+	 * local structure except that we're guaranteed to finish remaining
+	 * characters in the common TEXTH structure when they were inserted
+	 * into the file, above.)
+	 */
+	memset(&tiq, 0, sizeof(TEXTH));
+	CIRCLEQ_INIT(&tiq);
+
+	if (ex_txt(sp, &tiq, 0, flags))
+		return (1);
+
+	for (cnt = 0, tp = tiq.cqh_first;
+	    tp != (TEXT *)&tiq; ++cnt, tp = tp->q.cqe_next)
+		if (db_append(sp, 1, lno++, tp->lb, tp->len))
+			return (1);
 
 	/*
-	 * If this code is called by vi, the screen TEXTH structure (sp->tiqp)
-	 * may already be in use, e.g. ":append|s/abc/ABC/" would fail as we're
-	 * only halfway through the line when the append code fires.  Use the
-	 * local structure instead.
-	 *
-	 * If this code is called by vi, we want to reset the terminal and use
-	 * ex's s_get() routine.  It actually works fine if we use vi's s_get()
-	 * routine, but it doesn't look as nice.  Maybe if we had a separate
-	 * window or something, but getting a line at a time looks awkward.
+	 * Set sp->lno to the final line number value (correcting for a
+	 * possible 0 value) as that's historically correct for the final
+	 * line value, whether or not the user entered any text.
 	 */
-	if (IN_VI_MODE(sp)) {
-		memset(&tiq, 0, sizeof(TEXTH));
-		CIRCLEQ_INIT(&tiq);
-		sv_tiqp = sp->tiqp;
-		sp->tiqp = &tiq;
+	if ((sp->lno = lno) == 0 && db_exist(sp, 1))
+		sp->lno = 1;
 
-		if (F_ISSET(sp->gp, G_STDIN_TTY))
-			SEX_RAW(t);
-		(void)write(STDOUT_FILENO, "\n", 1);
-		LF_SET(TXT_NLECHO);
-
-	}
-
-	/* Set the line number, so that autoindent works correctly. */
-	sp->lno = cmdp->addr1.lno;
-
-	if (sex_get(sp, ep, sp->tiqp, 0, flags) != INP_OK)
-		goto err;
-	
-	/*
-	 * If doing a change, replace lines for as long as possible.  Then,
-	 * append more lines or delete remaining lines.  Changes to an empty
-	 * file are just appends, and inserts are the same as appends to the
-	 * previous line.
-	 *
-	 * !!!
-	 * Adjust the current line number for the commands to match historic
-	 * practice if the user doesn't enter anything, and set the address
-	 * to which we'll append.  This is safe because an address of 0 is
-	 * illegal for change and insert.
-	 */
-	m = cmdp->addr1;
-	switch (cmd) {
-	case INSERT:
-		--m.lno;
-		/* FALLTHROUGH */
-	case APPEND:
-		if (sp->lno == 0)
-			sp->lno = 1;
-		break;
-	case CHANGE:
-		--m.lno;
-		if (sp->lno != 1)
-			--sp->lno;
-		break;
-	}
-
-	/*
-	 * !!!
-	 * Cut into the unnamed buffer.
-	 */
-	if (cmd == CHANGE &&
-	    (cut(sp, ep, NULL, &cmdp->addr1, &cmdp->addr2, CUT_LINEMODE) ||
-	    delete(sp, ep, &cmdp->addr1, &cmdp->addr2, 1)))
-		goto err;
-
-	for (tp = sp->tiqp->cqh_first;
-	    tp != (TEXT *)sp->tiqp; tp = tp->q.cqe_next) {
-		if (file_aline(sp, ep, 1, m.lno, tp->lb, tp->len)) {
-err:			rval = 1;
-			break;
-		}
-		sp->lno = ++m.lno;
-	}
-
-	if (IN_VI_MODE(sp)) {
-		sp->tiqp = sv_tiqp;
-		text_lfree(&tiq);
-
-		/* Reset the terminal state. */
-		if (F_ISSET(sp->gp, G_STDIN_TTY)) {
-			if (SEX_NORAW(t))
-				rval = 1;
-			F_SET(sp, S_REFRESH);
-		}
-	}
-	return (rval);
+	return (0);
 }

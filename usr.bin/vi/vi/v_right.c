@@ -1,38 +1,16 @@
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1992, 1993, 1994, 1995, 1996
+ *	Keith Bostic.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * See the LICENSE file for redistribution information.
  */
 
+#include "config.h"
+
 #ifndef lint
-static char sccsid[] = "@(#)v_right.c	8.10 (Berkeley) 8/17/94";
+static const char sccsid[] = "@(#)v_right.c	10.7 (Berkeley) 3/6/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -41,50 +19,41 @@ static char sccsid[] = "@(#)v_right.c	8.10 (Berkeley) 8/17/94";
 
 #include <bitstring.h>
 #include <limits.h>
-#include <signal.h>
 #include <stdio.h>
-#include <termios.h>
 
-#include "compat.h"
-#include <db.h>
-#include <regex.h>
-
+#include "../common/common.h"
 #include "vi.h"
-#include "vcmd.h"
 
 /*
  * v_right -- [count]' ', [count]l
  *	Move right by columns.
+ *
+ * PUBLIC: int v_right __P((SCR *, VICMD *));
  */
 int
-v_right(sp, ep, vp)
+v_right(sp, vp)
 	SCR *sp;
-	EXF *ep;
-	VICMDARG *vp;
+	VICMD *vp;
 {
-	recno_t lno;
 	size_t len;
+	int isempty;
 
-	if (file_gline(sp, ep, vp->m_start.lno, &len) == NULL) {
-		if (file_lline(sp, ep, &lno))
-			return (1);
-		if (lno == 0)
-			v_eol(sp, ep, NULL);
-		else
-			GETLINE_ERR(sp, vp->m_start.lno);
+	if (db_eget(sp, vp->m_start.lno, NULL, &len, &isempty)) {
+		if (isempty)
+			goto eol;
 		return (1);
 	}
 
 	/* It's always illegal to move right on empty lines. */
 	if (len == 0) {
-		v_eol(sp, ep, NULL);
+eol:		v_eol(sp, NULL);
 		return (1);
 	}
 
 	/*
-	 * Non-motion commands move to the end of the range.  VC_D and
-	 * VC_Y stay at the start.  Ignore VC_C and VC_DEF.  Adjust the
-	 * end of the range for motion commands.
+	 * Non-motion commands move to the end of the range.  Delete and
+	 * yank stay at the start.  Ignore others.  Adjust the end of the
+	 * range for motion commands.
 	 *
 	 * !!!
 	 * Historically, "[cdsy]l" worked at the end of a line.  Also,
@@ -93,7 +62,7 @@ v_right(sp, ep, vp)
 	vp->m_stop.cno = vp->m_start.cno +
 	    (F_ISSET(vp, VC_C1SET) ? vp->count : 1);
 	if (vp->m_start.cno == len - 1 && !ISMOTION(vp)) {
-		v_eol(sp, ep, NULL);
+		v_eol(sp, NULL);
 		return (1);
 	}
 	if (vp->m_stop.cno >= len) {
@@ -110,15 +79,16 @@ v_right(sp, ep, vp)
 /*
  * v_dollar -- [count]$
  *	Move to the last column.
+ *
+ * PUBLIC: int v_dollar __P((SCR *, VICMD *));
  */
 int
-v_dollar(sp, ep, vp)
+v_dollar(sp, vp)
 	SCR *sp;
-	EXF *ep;
-	VICMDARG *vp;
+	VICMD *vp;
 {
-	recno_t lno;
 	size_t len;
+	int isempty;
 
 	/*
 	 * !!!
@@ -132,29 +102,42 @@ v_dollar(sp, ep, vp)
 		 * line motion, and the line motion flag is set.
 		 */
 		vp->m_stop.cno = 0;
-		if (nonblank(sp, ep, vp->m_start.lno, &vp->m_stop.cno))
+		if (nonblank(sp, vp->m_start.lno, &vp->m_stop.cno))
 			return (1);
 		if (ISMOTION(vp) && vp->m_start.cno <= vp->m_stop.cno)
 			F_SET(vp, VM_LMODE);
 
 		--vp->count;
-		if (v_down(sp, ep, vp))
+		if (v_down(sp, vp))
 			return (1);
-	}
-
-	if (file_gline(sp, ep, vp->m_stop.lno, &len) == NULL) {
-		if (file_lline(sp, ep, &lno))
-			return (1);
-		if (lno == 0)
-			v_eol(sp, ep, NULL);
-		else
-			GETLINE_ERR(sp, vp->m_start.lno);
-		return (1);
 	}
 
 	/*
-	 * Non-motion commands move to the end of the range.  VC_D
-	 * and VC_Y stay at the start.  Ignore VC_C and VC_DEF.
+	 * !!!
+	 * Historically, it was illegal to use $ as a motion command on
+	 * an empty line.  Unfortunately, even though C was historically
+	 * aliased to c$, it (and not c$) was special cased to work on
+	 * empty lines.  Since we alias C to c$ too, we have a problem.
+	 * To fix it, we let c$ go through, on the assumption that it's
+	 * not a problem for it to work.
+	 */
+	if (db_eget(sp, vp->m_stop.lno, NULL, &len, &isempty)) {
+		if (!isempty)
+			return (1);
+		len = 0;
+	}
+
+	if (len == 0) {
+		if (ISMOTION(vp) && !ISCMD(vp->rkp, 'c')) {
+			v_eol(sp, NULL);
+			return (1);
+		}
+		return (0);
+	}
+
+	/*
+	 * Non-motion commands move to the end of the range.  Delete
+	 * and yank stay at the start.  Ignore others.
 	 */
 	vp->m_stop.cno = len ? len - 1 : 0;
 	vp->m_final = ISMOTION(vp) ? vp->m_start : vp->m_stop;

@@ -1,67 +1,39 @@
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1992, 1993, 1994, 1995, 1996
+ *	Keith Bostic.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * See the LICENSE file for redistribution information.
  */
 
+#include "config.h"
+
 #ifndef lint
-static char sccsid[] = "@(#)put.c	8.11 (Berkeley) 8/17/94";
+static const char sccsid[] = "@(#)put.c	10.9 (Berkeley) 3/6/96";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/queue.h>
-#include <sys/time.h>
 
 #include <bitstring.h>
 #include <ctype.h>
 #include <limits.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <termios.h>
 
-#include "compat.h"
-#include <db.h>
-#include <regex.h>
-
-#include "vi.h"
+#include "common.h"
 
 /*
  * put --
  *	Put text buffer contents into the file.
+ *
+ * PUBLIC: int put __P((SCR *, CB *, CHAR_T *, MARK *, MARK *, int));
  */
 int
-put(sp, ep, cbp, namep, cp, rp, append)
+put(sp, cbp, namep, cp, rp, append)
 	SCR *sp;
-	EXF *ep;
 	CB *cbp;
 	CHAR_T *namep;
 	MARK *cp, *rp;
@@ -78,15 +50,16 @@ put(sp, ep, cbp, namep, cp, rp, append)
 		if (namep == NULL) {
 			cbp = sp->gp->dcbp;
 			if (cbp == NULL) {
-				msgq(sp, M_ERR, "The default buffer is empty");
+				msgq(sp, M_ERR,
+				    "053|The default buffer is empty");
 				return (1);
 			}
 		} else {
 			name = *namep;
 			CBNAME(sp, cbp, name);
 			if (cbp == NULL) {
-				msgq(sp, M_ERR,
-				    "Buffer %s is empty", KEY_NAME(sp, name));
+				msgq(sp, M_ERR, "054|Buffer %s is empty",
+				    KEY_NAME(sp, name));
 				return (1);
 			}
 		}
@@ -108,12 +81,12 @@ put(sp, ep, cbp, namep, cp, rp, append)
 	 * in the file.
 	 */
 	if (cp->lno == 1) {
-		if (file_lline(sp, ep, &lno))
+		if (db_last(sp, &lno))
 			return (1);
 		if (lno == 0) {
 			for (; tp != (void *)&cbp->textq;
 			    ++lno, ++sp->rptlines[L_ADDED], tp = tp->q.cqe_next)
-				if (file_aline(sp, ep, 1, lno, tp->lb, tp->len))
+				if (db_append(sp, 1, lno, tp->lb, tp->len))
 					return (1);
 			rp->lno = 1;
 			rp->cno = 0;
@@ -127,10 +100,10 @@ put(sp, ep, cbp, namep, cp, rp, append)
 		rp->lno = lno + 1;
 		for (; tp != (void *)&cbp->textq;
 		    ++lno, ++sp->rptlines[L_ADDED], tp = tp->q.cqe_next)
-			if (file_aline(sp, ep, 1, lno, tp->lb, tp->len))
+			if (db_append(sp, 1, lno, tp->lb, tp->len))
 				return (1);
 		rp->cno = 0;
-		(void)nonblank(sp, ep, rp->lno, &rp->cno);
+		(void)nonblank(sp, rp->lno, &rp->cno);
 		return (0);
 	}
 
@@ -144,10 +117,8 @@ put(sp, ep, cbp, namep, cp, rp, append)
 	 * Get the first line.
 	 */
 	lno = cp->lno;
-	if ((p = file_gline(sp, ep, lno, &len)) == NULL) {
-		GETLINE_ERR(sp, lno);
+	if (db_get(sp, lno, DBG_FATAL, &p, &len))
 		return (1);
-	}
 
 	GET_SPACE_RET(sp, bp, blen, tp->len + len + 1);
 	t = bp;
@@ -163,8 +134,24 @@ put(sp, ep, cbp, namep, cp, rp, append)
 	memmove(t, tp->lb, tp->len);
 	t += tp->len;
 
-	/* Calculate length left in original line. */
-	clen = len ? len - cp->cno - (append ? 1 : 0) : 0;
+	/* Calculate length left in the original line. */
+	clen = len != 0 ? len - cp->cno - (append ? 1 : 0) : 0;
+
+	/*
+	 * !!!
+	 * In the historical 4BSD version of vi, character mode puts within
+	 * a single line have two cursor behaviors: if the put is from the
+	 * unnamed buffer, the cursor moves to the character inserted which
+	 * appears last in the file.  If the put is from a named buffer,
+	 * the cursor moves to the character inserted which appears first
+	 * in the file.  In System III/V, it was changed at some point and
+	 * the cursor always moves to the first character.  In both versions
+	 * of vi, character mode puts that cross line boundaries leave the
+	 * cursor on the first character.  Nvi implements the System III/V
+	 * behavior, and expect POSIX.2 to do so as well.
+	 */
+	rp->lno = lno;
+	rp->cno = len == 0 ? 0 : sp->cno + (append ? 1 : 0);
 
 	/*
 	 * If no more lines in the CB, append the rest of the original
@@ -172,22 +159,13 @@ put(sp, ep, cbp, namep, cp, rp, append)
 	 * the intermediate lines, because the line changes will lose
 	 * the cached line.
 	 */
-	rval = 0;
 	if (tp->q.cqe_next == (void *)&cbp->textq) {
-		/*
-		 * Historical practice is that if a non-line mode put
-		 * is inside a single line, the cursor ends up on the
-		 * last character inserted.
-		 */
-		rp->lno = lno;
-		rp->cno = (t - bp) - 1;
-
 		if (clen > 0) {
 			memmove(t, p, clen);
 			t += clen;
 		}
-		if (file_sline(sp, ep, lno, bp, t - bp))
-			goto mem;
+		if (db_set(sp, lno, bp, t - bp))
+			goto err;
 		if (sp->rptlchange != lno) {
 			sp->rptlchange = lno;
 			++sp->rptlines[L_CHANGED];
@@ -223,32 +201,29 @@ put(sp, ep, cbp, namep, cp, rp, append)
 		 *
 		 * Output the line replacing the original line.
 		 */
-		if (file_sline(sp, ep, lno, bp, t - bp))
-			goto mem;
+		if (db_set(sp, lno, bp, t - bp))
+			goto err;
 		if (sp->rptlchange != lno) {
 			sp->rptlchange = lno;
 			++sp->rptlines[L_CHANGED];
 		}
 
-		/*
-		 * Historical practice is that if a non-line mode put
-		 * covers multiple lines, the cursor ends up on the
-		 * first character inserted.  (Of course.)
-		 */
-		rp->lno = lno;
-		rp->cno = (t - bp) - 1;
-
 		/* Output any intermediate lines in the CB. */
 		for (tp = tp->q.cqe_next;
 		    tp->q.cqe_next != (void *)&cbp->textq;
 		    ++lno, ++sp->rptlines[L_ADDED], tp = tp->q.cqe_next)
-			if (file_aline(sp, ep, 1, lno, tp->lb, tp->len))
-				goto mem;
+			if (db_append(sp, 1, lno, tp->lb, tp->len))
+				goto err;
 
-		if (file_aline(sp, ep, 1, lno, t, clen))
-mem:			rval = 1;
+		if (db_append(sp, 1, lno, t, clen))
+			goto err;
 		++sp->rptlines[L_ADDED];
 	}
+	rval = 0;
+
+	if (0)
+err:		rval = 1;
+
 	FREE_SPACE(sp, bp, blen);
 	return (rval);
 }

@@ -1,38 +1,16 @@
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1992, 1993, 1994, 1995, 1996
+ *	Keith Bostic.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * See the LICENSE file for redistribution information.
  */
 
+#include "config.h"
+
 #ifndef lint
-static char sccsid[] = "@(#)v_search.c	8.34 (Berkeley) 8/17/94";
+static const char sccsid[] = "@(#)v_search.c	10.16 (Berkeley) 5/8/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -40,50 +18,255 @@ static char sccsid[] = "@(#)v_search.c	8.34 (Berkeley) 8/17/94";
 #include <sys/time.h>
 
 #include <bitstring.h>
+#include <ctype.h>
 #include <errno.h>
 #include <limits.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <termios.h>
 
-#include "compat.h"
-#include <db.h>
-#include <regex.h>
-
+#include "../common/common.h"
 #include "vi.h"
-#include "vcmd.h"
 
-static int correct __P((SCR *, EXF *, VICMDARG *, u_int));
-static int getptrn __P((SCR *, EXF *, ARG_CHAR_T, char **, size_t *));
-static int search __P((SCR *,
-    EXF *, VICMDARG *, char *, size_t, u_int, enum direction));
+static int v_exaddr __P((SCR *, VICMD *, dir_t));
+static int v_search __P((SCR *, VICMD *, char *, u_int, dir_t));
 
 /*
- * v_searchn -- n
- *	Repeat last search.
+ * v_srch -- [count]?RE[? offset]
+ *	Ex address search backward.
+ *
+ * PUBLIC: int v_searchb __P((SCR *, VICMD *));
  */
 int
-v_searchn(sp, ep, vp)
+v_searchb(sp, vp)
 	SCR *sp;
-	EXF *ep;
-	VICMDARG *vp;
+	VICMD *vp;
 {
-	return (search(sp, ep, vp, NULL, 0, SEARCH_MSG, sp->searchdir));
+	return (v_exaddr(sp, vp, BACKWARD));
+}
+
+/*
+ * v_searchf -- [count]/RE[/ offset]
+ *	Ex address search forward.
+ *
+ * PUBLIC: int v_searchf __P((SCR *, VICMD *));
+ */
+int
+v_searchf(sp, vp)
+	SCR *sp;
+	VICMD *vp;
+{
+	return (v_exaddr(sp, vp, FORWARD));
+}
+
+/*
+ * v_exaddr --
+ *	Do a vi search (which is really an ex address).
+ */
+static int
+v_exaddr(sp, vp, dir)
+	SCR *sp;
+	VICMD *vp;
+	dir_t dir;
+{
+	static EXCMDLIST fake = { "search" };
+	EXCMD *cmdp;
+	GS *gp;
+	TEXT *tp;
+	recno_t s_lno;
+	size_t len, s_cno, tlen;
+	int err, nb, type;
+	char *cmd, *t, buf[20];
+
+	/*
+	 * !!!
+	 * If using the search command as a motion, any addressing components
+	 * are lost, i.e. y/ptrn/+2, when repeated, is the same as y/ptrn/.
+	 */
+	if (F_ISSET(vp, VC_ISDOT))
+		return (v_search(sp, vp,
+		    NULL, SEARCH_PARSE | SEARCH_MSG | SEARCH_SET, dir));
+
+	/* Get the search pattern. */
+	if (v_tcmd(sp, vp, dir == BACKWARD ? CH_BSEARCH : CH_FSEARCH,
+	    TXT_BS | TXT_CR | TXT_ESCAPE | TXT_PROMPT |
+	    (O_ISSET(sp, O_SEARCHINCR) ? TXT_SEARCHINCR : 0)))
+		return (1);
+
+	tp = sp->tiq.cqh_first;
+
+	/* If the user backspaced over the prompt, do nothing. */
+	if (tp->term == TERM_BS)
+		return (1);
+
+	/*
+	 * If the user was doing an incremental search, then we've already
+	 * updated the cursor and moved to the right location.  Return the
+	 * correct values, we're done.
+	 */
+	if (tp->term == TERM_SEARCH) {
+		vp->m_stop.lno = sp->lno;
+		vp->m_stop.cno = sp->cno;
+		if (ISMOTION(vp))
+			return (v_correct(sp, vp, 0));
+		vp->m_final = vp->m_stop;
+		return (0);
+	}
+
+	/*
+	 * If the user entered <escape> or <carriage-return>, the length is
+	 * 1 and the right thing will happen, i.e. the prompt will be used
+	 * as a command character.
+	 *
+	 * Build a fake ex command structure.
+	 */
+	gp = sp->gp;
+	gp->excmd.cp = tp->lb;
+	gp->excmd.clen = tp->len;
+	F_SET(&gp->excmd, E_VISEARCH);
+
+	/* Save the current line/column. */
+	s_lno = sp->lno;
+	s_cno = sp->cno;
+
+	/*
+	 * !!!
+	 * Historically, vi / and ? commands were full-blown ex addresses,
+	 * including ';' delimiters, trailing <blank>'s, multiple search
+	 * strings (separated by semi-colons) and, finally, full-blown z
+	 * commands after the / and ? search strings.  (If the search was
+	 * being used as a motion, the trailing z command was ignored.
+	 * Also, we do some argument checking on the z command, to be sure
+	 * that it's not some other random command.) For multiple search
+	 * strings, leading <blank>'s at the second and subsequent strings
+	 * were eaten as well.  This has some (unintended?) side-effects:
+	 * the command /ptrn/;3 is legal and results in moving to line 3.
+	 * I suppose you could use it to optionally move to line 3...
+	 *
+	 * !!!
+	 * Historically, if any part of the search command failed, the cursor
+	 * remained unmodified (even if ; was used).  We have to play games
+	 * because the underlying ex parser thinks we're modifying the cursor
+	 * as we go, but I think we're compatible with historic practice.
+	 *
+	 * !!!
+	 * Historically, the command "/STRING/;   " failed, apparently it
+	 * confused the parser.  We're not that compatible.
+	 */
+	cmdp = &gp->excmd;
+	if (ex_range(sp, cmdp, &err))
+		return (1);
+	
+	/*
+	 * Remember where any remaining command information is, and clean
+	 * up the fake ex command.
+	 */
+	cmd = cmdp->cp;
+	len = cmdp->clen;
+	gp->excmd.clen = 0;
+
+	if (err)
+		goto err2;
+
+	/* Copy out the new cursor position and make sure it's okay. */
+	switch (cmdp->addrcnt) {
+	case 1:
+		vp->m_stop = cmdp->addr1;
+		break;
+	case 2:
+		vp->m_stop = cmdp->addr2;
+		break;
+	}
+	if (!db_exist(sp, vp->m_stop.lno)) {
+		ex_badaddr(sp, &fake,
+		    vp->m_stop.lno == 0 ? A_ZERO : A_EOF, NUM_OK);
+		goto err2;
+	}
+
+	/*
+	 * !!!
+	 * Historic practice is that a trailing 'z' was ignored if it was a
+	 * motion command.  Should probably be an error, but not worth the
+	 * effort.
+	 */
+	if (ISMOTION(vp))
+		return (v_correct(sp, vp, F_ISSET(cmdp, E_DELTA)));
+		
+	/*
+	 * !!!
+	 * Historically, if it wasn't a motion command, a delta in the search
+	 * pattern turns it into a first nonblank movement.
+	 */
+	nb = F_ISSET(cmdp, E_DELTA);
+
+	/* Check for the 'z' command. */
+	if (len != 0) {
+		if (*cmd != 'z')
+			goto err1;
+
+		/* No blanks, just like the z command. */
+		for (t = cmd + 1, tlen = len - 1; tlen > 0; ++t, --tlen)
+			if (!isdigit(*t))
+				break;
+		if (tlen &&
+		    (*t == '-' || *t == '.' || *t == '+' || *t == '^')) {
+			++t;
+			--tlen;
+			type = 1;
+		} else
+			type = 0;
+		if (tlen)
+			goto err1;
+
+		/* The z command will do the nonblank for us. */
+		nb = 0;
+
+		/* Default to z+. */
+		if (!type &&
+		    v_event_push(sp, NULL, "+", 1, CH_NOMAP | CH_QUOTED))
+			return (1);
+
+		/* Push the user's command. */
+		if (v_event_push(sp, NULL, cmd, len, CH_NOMAP | CH_QUOTED))
+			return (1);
+
+		/* Push line number so get correct z display. */
+		tlen = snprintf(buf,
+		    sizeof(buf), "%lu", (u_long)vp->m_stop.lno);
+		if (v_event_push(sp, NULL, buf, tlen, CH_NOMAP | CH_QUOTED))
+			return (1);
+		 
+		/* Don't refresh until after 'z' happens. */
+		F_SET(VIP(sp), VIP_S_REFRESH);
+	}
+
+	/* Non-motion commands move to the end of the range. */
+	vp->m_final = vp->m_stop;
+	if (nb) {
+		F_CLR(vp, VM_RCM_MASK);
+		F_SET(vp, VM_RCM_SETFNB);
+	}
+	return (0);
+
+err1:	msgq(sp, M_ERR,
+	    "188|Characters after search string, line offset and/or z command");
+err2:	vp->m_final.lno = s_lno;
+	vp->m_final.cno = s_cno;
+	return (1);
 }
 
 /*
  * v_searchN -- N
  *	Reverse last search.
+ *
+ * PUBLIC: int v_searchN __P((SCR *, VICMD *));
  */
 int
-v_searchN(sp, ep, vp)
+v_searchN(sp, vp)
 	SCR *sp;
-	EXF *ep;
-	VICMDARG *vp;
+	VICMD *vp;
 {
-	enum direction dir;
+	dir_t dir;
 
 	switch (sp->searchdir) {
 	case BACKWARD:
@@ -92,212 +275,93 @@ v_searchN(sp, ep, vp)
 	case FORWARD:
 		dir = BACKWARD;
 		break;
-	default:			/* NOTSET handled in search(). */
+	default:
 		dir = sp->searchdir;
 		break;
 	}
-	return (search(sp, ep, vp, NULL, 0, SEARCH_MSG, dir));
+	return (v_search(sp, vp, NULL, SEARCH_PARSE, dir));
 }
 
 /*
- * v_searchb -- [count]?RE[? offset]
- *	Search backward.
+ * v_searchn -- n
+ *	Repeat last search.
+ *
+ * PUBLIC: int v_searchn __P((SCR *, VICMD *));
  */
 int
-v_searchb(sp, ep, vp)
+v_searchn(sp, vp)
 	SCR *sp;
-	EXF *ep;
-	VICMDARG *vp;
+	VICMD *vp;
 {
-	size_t len;
-	char *ptrn;
-
-	if (F_ISSET(vp, VC_ISDOT))
-		ptrn = NULL;
-	else {
-		if (getptrn(sp, ep, CH_BSEARCH, &ptrn, &len))
-			return (1);
-		if (len == 0) {
-			F_SET(vp, VM_NOMOTION);
-			return (0);
-		}
-	}
-	return (search(sp, ep, vp, ptrn, len,
-	    SEARCH_MSG | SEARCH_PARSE | SEARCH_SET, BACKWARD));
-}
-
-/*
- * v_searchf -- [count]/RE[/ offset]
- *	Search forward.
- */
-int
-v_searchf(sp, ep, vp)
-	SCR *sp;
-	EXF *ep;
-	VICMDARG *vp;
-{
-	size_t len;
-	char *ptrn;
-
-	if (F_ISSET(vp, VC_ISDOT))
-		ptrn = NULL;
-	else {
-		if (getptrn(sp, ep, CH_FSEARCH, &ptrn, &len))
-			return (1);
-		if (len == 0) {
-			F_SET(vp, VM_NOMOTION);
-			return (0);
-		}
-	}
-	return (search(sp, ep, vp, ptrn, len,
-	    SEARCH_MSG | SEARCH_PARSE | SEARCH_SET, FORWARD));
+	return (v_search(sp, vp, NULL, SEARCH_PARSE, sp->searchdir));
 }
 
 /*
  * v_searchw -- [count]^A
  *	Search for the word under the cursor.
+ *
+ * PUBLIC: int v_searchw __P((SCR *, VICMD *));
  */
 int
-v_searchw(sp, ep, vp)
+v_searchw(sp, vp)
 	SCR *sp;
-	EXF *ep;
-	VICMDARG *vp;
+	VICMD *vp;
 {
 	size_t blen, len;
 	int rval;
 	char *bp;
 
-	len = vp->kbuflen + sizeof(RE_WSTART) + sizeof(RE_WSTOP);
+	len = VIP(sp)->klen + sizeof(RE_WSTART) + sizeof(RE_WSTOP);
 	GET_SPACE_RET(sp, bp, blen, len);
-	(void)snprintf(bp, blen, "%s%s%s", RE_WSTART, vp->keyword, RE_WSTOP);
+	(void)snprintf(bp, blen, "%s%s%s", RE_WSTART, VIP(sp)->keyw, RE_WSTOP);
 
-	rval = search(sp, ep, vp, bp, 0, SEARCH_MSG | SEARCH_TERM, FORWARD);
+	rval = v_search(sp, vp, bp, SEARCH_SET, FORWARD);
 
 	FREE_SPACE(sp, bp, blen);
 	return (rval);
 }
 
+/*
+ * v_search --
+ *	The search commands.
+ */
 static int
-search(sp, ep, vp, ptrn, len, flags, dir)
+v_search(sp, vp, ptrn, flags, dir)
 	SCR *sp;
-	EXF *ep;
-	VICMDARG *vp;
+	VICMD *vp;
 	u_int flags;
 	char *ptrn;
-	size_t len;
-	enum direction dir;
+	dir_t dir;
 {
-	char *eptrn;
-
-	if (ISMOTION(vp))
-		flags |= SEARCH_EOL;
-
-	for (;;) {
-		switch (dir) {
-		case BACKWARD:
-			if (b_search(sp, ep,
-			    &vp->m_start, &vp->m_stop, ptrn, &eptrn, &flags))
-				return (1);
-			break;
-		case FORWARD:
-			if (f_search(sp, ep,
-			    &vp->m_start, &vp->m_stop, ptrn, &eptrn, &flags))
-				return (1);
-			break;
-		case NOTSET:
-			msgq(sp, M_ERR, "No previous search pattern");
+	switch (dir) {
+	case BACKWARD:
+		if (b_search(sp, &vp->m_start, &vp->m_stop, ptrn, NULL,
+		    flags | SEARCH_MSG | (ISMOTION(vp) ? SEARCH_EOL : 0)))
 			return (1);
-		default:
-			abort();
-		}
-
-		/*
-		 * !!!
-		 * Historically, vi permitted trailing <blank>'s, multiple
-		 * search strings (separated by semi-colons) and full-blown
-		 * z commands after / and ? search strings.  In the case of
-		 * multiple search strings, leading <blank>'s on the second
-		 * and subsequent strings was eaten as well.
-		 *
-		 * !!!
-		 * However, the command "/STRING/;   " failed, apparently it
-		 * confused the parser.  We're not *that* compatible.
-		 *
-		 * The N, n, and ^A commands also get to here, but they've
-		 * set ptrn to NULL, len to 0, or the SEARCH_TERM flag, or
-		 * some combination thereof.
-		 */
-		if (ptrn == NULL || len == 0)
-			break;
-		len -= eptrn - ptrn;
-		for (; len > 0 && isblank(*eptrn); ++eptrn, --len);
-		if (len == 0)
-			break;
-
-		switch (*eptrn) {
-		case ';':
-			for (++eptrn; --len > 0 && isblank(*eptrn); ++eptrn);
-			ptrn = eptrn;
-			switch (*eptrn) {
-			case '/':
-				dir = FORWARD;
-				break;
-			case '?':
-				dir = BACKWARD;
-				break;
-			default:
-				goto usage;
-			}
-			ptrn = eptrn;
-			vp->m_start = vp->m_stop;
-			continue;
-		case 'z':
-			if (term_push(sp, eptrn, len, CH_NOMAP | CH_QUOTED))
-				return (1);
-			goto ret;
-		default:
-usage:			msgq(sp, M_ERR,
-			    "Characters after search string and/or delta");
+		break;
+	case FORWARD:
+		if (f_search(sp, &vp->m_start, &vp->m_stop, ptrn, NULL,
+		    flags | SEARCH_MSG | (ISMOTION(vp) ? SEARCH_EOL : 0)))
 			return (1);
-		}
+		break;
+	case NOTSET:
+		msgq(sp, M_ERR, "189|No previous search pattern");
+		return (1);
+	default:
+		abort();
 	}
 
-	/* Non-motion commands move to the end of the range. */
-ret:	if (ISMOTION(vp)) {
-		if (correct(sp, ep, vp, flags))
-			return (1);
+	/* Correct motion commands, otherwise, simply move to the location. */
+	if (ISMOTION(vp)) {
+		if (v_correct(sp, vp, 0))
+			return(1);
 	} else
 		vp->m_final = vp->m_stop;
 	return (0);
 }
 
 /*
- * getptrn --
- *	Get the search pattern.
- */
-static int
-getptrn(sp, ep, prompt, ptrnp, lenp)
-	SCR *sp;
-	EXF *ep;
-	ARG_CHAR_T prompt;
-	char **ptrnp;
-	size_t *lenp;
-{
-	TEXT *tp;
-
-	if (sp->s_get(sp, ep, sp->tiqp, prompt,
-	    TXT_BS | TXT_CR | TXT_ESCAPE | TXT_PROMPT) != INP_OK)
-		return (1);
-
-	/* Len is 0 if backspaced over the prompt, 1 if only CR entered. */
-	tp = sp->tiqp->cqh_first;
-	*ptrnp = tp->lb;
-	*lenp = tp->len;
-	return (0);
-}
-
-/*
- * correct --
+ * v_correct --
  *	Handle command with a search as the motion.
  *
  * !!!
@@ -312,15 +376,16 @@ getptrn(sp, ep, prompt, ptrnp, lenp)
  * placing the cursor on the 'A' and doing y?$ would so confuse it that 'h'
  * 'k' and put would no longer work correctly.  In any case, we try to do
  * the right thing, but it's not going to exactly match historic practice.
+ *
+ * PUBLIC: int v_correct __P((SCR *, VICMD *, int));
  */
-static int
-correct(sp, ep, vp, flags)
+int
+v_correct(sp, vp, isdelta)
 	SCR *sp;
-	EXF *ep;
-	VICMDARG *vp;
-	u_int flags;
+	VICMD *vp;
+	int isdelta;
 {
-	enum direction dir;
+	dir_t dir;
 	MARK m;
 	size_t len;
 
@@ -339,16 +404,16 @@ correct(sp, ep, vp, flags)
 	 */
 	if (vp->m_start.lno == vp->m_stop.lno &&
 	    vp->m_start.cno == vp->m_stop.cno) {
-		msgq(sp, M_BERR, "Search wrapped to original position");
+		msgq(sp, M_BERR, "190|Search wrapped to original position");
 		return (1);
 	}
 
 	/*
 	 * !!!
-	 * Searches become line mode operations if there was a delta
-	 * specified to the search pattern.
+	 * Searches become line mode operations if there was a delta specified
+	 * to the search pattern.
 	 */
-	if (LF_ISSET(SEARCH_DELTA))
+	if (isdelta)
 		F_SET(vp, VM_LMODE);
 
 	/*
@@ -362,31 +427,29 @@ correct(sp, ep, vp, flags)
 	if (vp->m_start.lno > vp->m_stop.lno ||
 	    vp->m_start.lno == vp->m_stop.lno &&
 	    vp->m_start.cno > vp->m_stop.cno) {
-		dir = BACKWARD;
 		m = vp->m_start;
 		vp->m_start = vp->m_stop;
 		vp->m_stop = m;
+		dir = BACKWARD;
 	} else
 		dir = FORWARD;
 
 	/*
 	 * BACKWARD:
-	 *	VC_D commands move to the end of the range.  VC_Y stays at
-	 *	the start unless the end of the range is on a different line,
-	 *	when it moves to the end of the range.  Ignore VC_C and
-	 *	VC_DEF.
+	 *	Delete and yank commands move to the end of the range.
+	 *	Ignore others.
 	 *
 	 * FORWARD:
-	 *	VC_D and VC_Y commands don't move.  Ignore VC_C and VC_DEF.
+	 *	Delete and yank commands don't move.  Ignore others.
 	 */
-	if (dir == BACKWARD)
-		if (F_ISSET(vp, VC_D) ||
-		    F_ISSET(vp, VC_Y) && vp->m_start.lno != vp->m_stop.lno)
-			vp->m_final = vp->m_start;
-		else
-			vp->m_final = vp->m_stop;
-	else
-		vp->m_final = vp->m_start;
+	vp->m_final = vp->m_start;
+
+	/*
+	 * !!!
+	 * Delta'd searches don't correct based on column positions.
+	 */
+	if (isdelta)
+		return (0);
 
 	/*
 	 * !!!
@@ -400,10 +463,8 @@ correct(sp, ep, vp, flags)
 	 * end at column 0 of another line.
 	 */
 	if (vp->m_start.lno < vp->m_stop.lno && vp->m_stop.cno == 0) {
-		if (file_gline(sp, ep, --vp->m_stop.lno, &len) == NULL) {
-			GETLINE_ERR(sp, vp->m_stop.lno);
+		if (db_get(sp, --vp->m_stop.lno, DBG_FATAL, NULL, &len))
 			return (1);
-		}
 		if (vp->m_start.cno == 0)
 			F_SET(vp, VM_LMODE);
 		vp->m_stop.cno = len ? len - 1 : 0;

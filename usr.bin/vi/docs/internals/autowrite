@@ -1,4 +1,4 @@
-#	@(#)autowrite	8.2 (Berkeley) 9/28/93
+#	@(#)autowrite	8.3 (Berkeley) 2/17/95
 
 Vi autowrite behavior, the fields with *'s are "don't cares".
 
@@ -13,9 +13,9 @@ Command	File		Autowrite?	Action:
 ^Z	N		*		Suspend.
 
 # This behavior is NOT identical to :edit.
-^	Y		Y		Write file and jump.
-^	Y		N		Error.
-^	N		*		Jump.
+^^	Y		Y		Write file and jump.
+^^	Y		N		Error.
+^^	N		*		Jump.
 
 # The new nvi command ^T (:tagpop) behaves identically to ^].
 # This behavior is identical to :tag, :tagpop, and :tagpush with
