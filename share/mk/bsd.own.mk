@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.37 2000/11/08 19:42:14 art Exp $
+#	$OpenBSD: bsd.own.mk,v 1.38 2000/11/10 00:24:31 deraadt Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -49,6 +49,9 @@ DIRMODE?=	755
 # Define MANZ to have the man pages compressed (gzip)
 #MANZ=		1
 
+# Define MANPS to have PostScript manual pages generated
+#MANPS=		1
+
 SHAREDIR?=	/usr/share
 SHAREGRP?=	bin
 SHAREOWN?=	root
@@ -58,6 +61,11 @@ MANDIR?=	/usr/share/man/cat
 MANGRP?=	bin
 MANOWN?=	root
 MANMODE?=	${NONBINMODE}
+
+PSDIR?=		/usr/share/man/ps
+PSGRP?=		bin
+PSOWN?=		root
+PSMODE?=	${NONBINMODE}
 
 LIBDIR?=	/usr/lib
 LINTLIBDIR?=	/usr/libdata/lint
