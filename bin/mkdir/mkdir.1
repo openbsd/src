@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mkdir.1,v 1.19 2004/12/13 15:50:02 jmc Exp $
+.\"	$OpenBSD: mkdir.1,v 1.20 2004/12/13 16:02:40 jmc Exp $
 .\"	$NetBSD: mkdir.1,v 1.9 1995/07/25 19:37:13 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -89,22 +89,22 @@ The
 .Nm
 utility exits 0 on success or >0 if an error occurred.
 .Sh EXAMPLES
-.Li $ mkdir foobar
-.Pp
 Create a directory named
-.Pa foobar .
+.Pa foobar :
 .Pp
-.Li $ mkdir -m 700 foobar
+.Dl $ mkdir foobar
 .Pp
 Create a directory named
 .Pa foobar
-and set its file mode to 700.
+and set its file mode to 700:
 .Pp
-.Li $ mkdir -p cow/horse/monkey
+.Dl $ mkdir -m 700 foobar
 .Pp
 Create a directory named
 .Pa cow/horse/monkey ,
-creating any non-existent intermediate directories as necessary.
+creating any non-existent intermediate directories as necessary:
+.Pp
+.Dl $ mkdir -p cow/horse/monkey
 .Sh SEE ALSO
 .Xr chmod 1 ,
 .Xr rmdir 1 ,
