@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.55 2004/09/14 23:39:32 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.56 2005/03/15 05:13:32 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -179,7 +179,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	pcbp->pcb_fpregs[1] = 0;
 	pcbp->pcb_fpregs[2] = 0;
 	pcbp->pcb_fpregs[3] = 0;
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)&pcbp->pcb_fpregs[0], 8 * 4);
 
 	sp = (register_t)p2->p_addr + NBPG;
 	p2->p_md.md_regs = tf = (struct trapframe *)sp;
