@@ -15,7 +15,7 @@ that should get you started.
 
 	smtpd implements a minimal subset of the Simple Mail Transfer
 Protocol as specified in RFC 821.  This daemon is used to talk to other smtp
-mailers on the internet so that the host may recieve mail. This is the
+mailers on the internet so that the host may receive mail. This is the
 storing daemon. smtpd agressively checks the originating host and logs
 anything it knows about it. it also imposes the RFC mandated limits on the
 length of command lines, and checks the hostnames and mailnames given by the

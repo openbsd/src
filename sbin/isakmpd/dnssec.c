@@ -1,4 +1,4 @@
-/*	$OpenBSD: dnssec.c,v 1.10 2001/08/22 13:30:33 ho Exp $	*/
+/*	$OpenBSD: dnssec.c,v 1.11 2001/08/23 14:17:08 aaron Exp $	*/
 
 /*
  * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
@@ -193,7 +193,7 @@ dns_get_key (int type, struct message *msg, int *keylen)
   /* Sanity. */
   if (rr->rri_nrdatas == 0 || rr->rri_rdtype != T_KEY)
     {
-      LOG_DBG ((LOG_MISC, 30, "dns_get_key: no KEY RRs recieved"));
+      LOG_DBG ((LOG_MISC, 30, "dns_get_key: no KEY RRs received"));
       freerrset (rr);
       return 0;
     } 

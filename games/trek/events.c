@@ -1,4 +1,4 @@
-/*	$OpenBSD: events.c,v 1.2 1998/08/19 07:41:33 pjanzen Exp $	*/
+/*	$OpenBSD: events.c,v 1.3 2001/08/23 14:17:08 aaron Exp $	*/
 /*	$NetBSD: events.c,v 1.3 1995/04/22 10:58:50 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)events.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: events.c,v 1.2 1998/08/19 07:41:33 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: events.c,v 1.3 2001/08/23 14:17:08 aaron Exp $";
 #endif
 #endif /* not lint */
 
@@ -234,7 +234,7 @@ events(warp)
 			/* report it if we can */
 			if (!damaged(SSRADIO))
 			{
-				printf("\nUhura:  Captain, we have recieved a distress signal\n");
+				printf("\nUhura:  Captain, we have received a distress signal\n");
 				printf("  from the starbase in quadrant %d,%d.\n",
 					ix, iy);
 				restcancel++;

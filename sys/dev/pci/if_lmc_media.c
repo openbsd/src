@@ -1,5 +1,5 @@
-/* $OpenBSD: if_lmc_media.c,v 1.9 2001/08/12 20:33:50 mickey Exp $ */
-/* $Id: if_lmc_media.c,v 1.9 2001/08/12 20:33:50 mickey Exp $ */
+/* $OpenBSD: if_lmc_media.c,v 1.10 2001/08/23 14:17:07 aaron Exp $ */
+/* $Id: if_lmc_media.c,v 1.10 2001/08/23 14:17:07 aaron Exp $ */
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -1131,7 +1131,7 @@ lmc_t1_watchdog(lmc_softc_t * const sc)
 	/* blue alarm -- RAIS */
 	if (t1stat & 0x08) {
 		if (sc->lmc_blue != 1)
-			printf ("%s: AIS Recieved\n", sc->lmc_xname);
+			printf ("%s: AIS Received\n", sc->lmc_xname);
 		lmc_led_on (sc, LMC_DS3_LED1 | LMC_DS3_LED2);
 		sc->lmc_blue = 1;
 	} else {
@@ -1157,12 +1157,12 @@ lmc_t1_watchdog(lmc_softc_t * const sc)
 	sc->lmc_red = 0;
 	}
 
-	/* check for Recieve Multiframe Yellow Alarm
-	 * Ignore Recieve Yellow Alarm
+	/* check for Receive Multiframe Yellow Alarm
+	 * Ignore Receive Yellow Alarm
 	 */
 	if (t1stat & 0x80) {
 		if (sc->lmc_yel != 1) {
-			printf ("%s: Recieve Yellow Alarm\n", sc->lmc_xname);
+			printf ("%s: Receive Yellow Alarm\n", sc->lmc_xname);
 		}
 			lmc_led_on (sc, LMC_DS3_LED0 | LMC_DS3_LED2);
 			sc->lmc_yel = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmpd.c,v 1.33 2001/07/05 12:36:53 ho Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.34 2001/08/23 14:17:08 aaron Exp $	*/
 /*	$EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	*/
 
 /*
@@ -210,7 +210,7 @@ parse_args (int argc, char *argv[])
 static void
 reinit (void)
 {
-  log_print ("SIGHUP recieved, reinitializing daemon.");
+  log_print ("SIGHUP received, reinitializing daemon.");
 
   /*
    * XXX Remove all(/some?) pending exchange timers? - they may not be

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdq.c,v 1.10 2001/07/04 22:53:26 espie Exp $	*/
+/*	$OpenBSD: pdq.c,v 1.11 2001/08/23 14:17:07 aaron Exp $	*/
 /*	$NetBSD: pdq.c,v 1.9 1996/10/13 01:37:26 christos Exp $	*/
 
 /*-
@@ -1423,7 +1423,7 @@ pdq_initialize(
     pdq->pdq_host_smt_info.rx_buffers = (void *) pdq->pdq_dbp->pdqdb_host_smt_buffers;
 
     PDQ_PRINTF(("\nPDQ Descriptor Block = " PDQ_OS_PTR_FMT "\n", pdq->pdq_dbp));
-    PDQ_PRINTF(("    Recieve Queue          = " PDQ_OS_PTR_FMT "\n", pdq->pdq_dbp->pdqdb_receives));
+    PDQ_PRINTF(("    Receive Queue          = " PDQ_OS_PTR_FMT "\n", pdq->pdq_dbp->pdqdb_receives));
     PDQ_PRINTF(("    Transmit Queue         = " PDQ_OS_PTR_FMT "\n", pdq->pdq_dbp->pdqdb_transmits));
     PDQ_PRINTF(("    Host SMT Queue         = " PDQ_OS_PTR_FMT "\n", pdq->pdq_dbp->pdqdb_host_smt));
     PDQ_PRINTF(("    Command Response Queue = " PDQ_OS_PTR_FMT "\n", pdq->pdq_dbp->pdqdb_command_responses));

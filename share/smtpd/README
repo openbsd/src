@@ -5,7 +5,7 @@ WHAT IS IT?:
 
 	smtpd and smtpfwdd are an implementation of a store and forward
 smtp proxy. Smtpd is a daemon witch runs in a chrooted environment and
-talks smtp in order to recieve mail. It spools received mail to it's 
+talks smtp in order to receive mail. It spools received mail to it's 
 chroot. Smtpfwdd is a daemon which periodically scans the smtpd chroot
 directory and invokes sendmail to deliver the mail, either locally or
 by forwarding it to its eventual destination. 

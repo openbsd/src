@@ -1,4 +1,4 @@
-/* $OpenBSD: smtpfwdd.c,v 1.6 2001/01/28 19:34:34 niklas Exp $*/
+/* $OpenBSD: smtpfwdd.c,v 1.7 2001/08/23 14:17:08 aaron Exp $*/
 
 /*
  * smtpfwdd, Obtuse SMTP forward daemon, master process watches spool
@@ -42,7 +42,7 @@
  */
 char *obtuse_copyright =
 "Copyright 1996 - Obtuse Systems Corporation - All rights reserved.";
-char *obtuse_rcsid = "$OpenBSD: smtpfwdd.c,v 1.6 2001/01/28 19:34:34 niklas Exp $";
+char *obtuse_rcsid = "$OpenBSD: smtpfwdd.c,v 1.7 2001/08/23 14:17:08 aaron Exp $";
 
 #include <stdio.h>
 #include <signal.h>
@@ -346,7 +346,7 @@ show_usage()
 }
 
 /*
- * forward a mail message recieved by smtpd contained in file fname.
+ * forward a mail message received by smtpd contained in file fname.
  * file is expected to be as follows:
  * -------------------
  * FROM addr
