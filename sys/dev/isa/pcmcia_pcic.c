@@ -1,4 +1,4 @@
-/*	$Id: pcmcia_pcic.c,v 1.10 1996/11/29 22:55:06 niklas Exp $	*/
+/*	$Id: pcmcia_pcic.c,v 1.11 1997/01/01 20:08:10 graichen Exp $	*/
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
  *  All rights reserved.
@@ -1061,6 +1061,6 @@ pcicmaster_print(aux, name)
 	const char *name;
 {
 	if (name != NULL)       
-		printf("%s: master controller ", name);
+		printf("%s: master controller", name);
 	return UNCONF;
 }
