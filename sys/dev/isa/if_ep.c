@@ -30,6 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "pcmciabus.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -166,6 +167,142 @@ epaddcard(iobase, irq, bustype)
 	epcards[nepcards].bustype = bustype;
 	nepcards++;
 }
+
+#if NPCMCIABUS > 0
+#include <dev/pcmcia/pcmciabus.h>
+static int ep_probe_pcmcia __P((struct device *, void *,
+				void *, struct pcmcia_link *));
+static int epmod __P((struct pcmcia_link *, struct device *,
+		      struct pcmcia_conf *, struct cfdata * cf));
+static int ep_remove __P((struct pcmcia_link *, struct device *));
+
+/* additional setup needed for pcmcia devices */
+static int
+ep_probe_pcmcia(parent, match, aux, pc_link)
+	struct device	*parent;
+	void		*match;
+	void		*aux;
+	struct pcmcia_link *pc_link;
+{
+	struct ep_softc *sc = (void *) match;
+	struct cfdata  *cf = sc->sc_dev.dv_cfdata;
+	struct isa_attach_args *ia = aux;
+	struct pcmciadevs *dev = pc_link->device;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	int             i;
+	extern int      ifqmaxlen;
+	short		addr[3];
+
+	outw(ia->ia_iobase + EP_COMMAND, WINDOW_SELECT | 0);
+	outw(ia->ia_iobase + EP_W0_CONFIG_CTRL, ENABLE_DRQ_IRQ);
+	outw(ia->ia_iobase + EP_W0_RESOURCE_CFG, 0x3f00);
+
+	/*
+	 * ok til here. Now try to figure out which link we have.
+	 * try coax first...
+	 */
+	sc->bustype = EP_BUS_PCMCIA;
+#ifdef EP_COAX_DEFAULT
+	outw(ia->ia_iobase + EP_W0_ADDRESS_CFG, 0xC000);
+#else
+	/* COAX as default is reportet to be a problem */
+	outw(ia->ia_iobase + EP_W0_ADDRESS_CFG, 0x0000);
+#endif
+	ifp->if_snd.ifq_maxlen = ifqmaxlen;
+
+	epaddcard(ia->ia_iobase, ia->ia_irq, 0);
+
+	for (i = 0; i < nepcards; i++) {
+		if (epcards[i].available == 0)
+			continue;
+		if (ia->ia_iobase != IOBASEUNK &&
+		    ia->ia_iobase != epcards[i].iobase)
+			continue;
+		if (ia->ia_irq != IRQUNK &&
+		    ia->ia_irq != epcards[i].irq)
+			continue;
+		goto good;
+	}
+	return 0;
+
+good:
+
+	epcards[i].available = 0;
+	ia->ia_iobase = epcards[i].iobase;
+	ia->ia_irq = epcards[i].irq;
+	ia->ia_iosize = 0x10;
+	ia->ia_msize = 0;
+
+	return 1;
+}
+
+
+/* modify config entry */
+static int
+epmod(pc_link, self, pc_cf, cf)
+	struct pcmcia_link *pc_link;
+	struct device  *self;
+	struct pcmcia_conf *pc_cf;
+	struct cfdata  *cf;
+{
+	int             err;
+	struct pcmciadevs *dev = pc_link->device;
+	struct ep_softc *sc = (void *) self;
+
+	if ((err = pc_link->adapter->bus_link->bus_config(pc_link, self,
+							  pc_cf, cf)) != 0) {
+		printf("bus_config failed %d\n", err);
+		return err;
+	}
+
+	if (pc_cf->io[0].len > 0x10)
+	    pc_cf->io[0].len = 0x10;
+#if 0
+	pc_cf->cfgtype = DOSRESET;
+#endif
+	pc_cf->cfgtype = 1;
+
+	return 0;
+}
+
+static int
+ep_remove(pc_link, self)
+	struct pcmcia_link *pc_link;
+	struct device  *self;
+{
+	struct ep_softc *sc = (void *) self;
+	struct ifnet   *ifp = &sc->sc_arpcom.ac_if;
+	if_down(ifp);
+	epstop(sc);
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_UP);
+	return pc_link->adapter->bus_link->bus_unconfig(pc_link);
+}
+
+static struct pcmcia_3com {
+	struct pcmcia_device pcd;
+} pcmcia_3com = {
+	"PCMCIA 3COM 3C589", epmod, ep_probe_pcmcia, NULL, ep_remove
+};
+
+struct pcmciadevs pcmcia_ep_devs[] = {
+	{
+		"ep", 0, "3Com Corporation", "3C589",
+#if 0
+		"TP/BNC LAN Card Ver. 1a", "000001",
+#else
+		NULL, NULL,
+#endif
+		(void *) -1, (void *) &pcmcia_3com
+	},
+#if 0
+	{
+		"ep", 0, "3Com Corporation", "3C589", "TP/BNC LAN Card Ver. 2a", "000002",
+		(void *) -1, (void *) &pcmcia_3com
+	},
+#endif
+	{ NULL }
+};
+#endif
 
 /*
  * 3c579 cards on the EISA bus are probed by their slot number. 3c509
@@ -339,8 +476,9 @@ epconfig(sc, conn)
 	 */
 	for (i = 0; i < 3; i++) {
 		u_short x;
-		if (epbusyeeprom(sc))
+		if (epbusyeeprom(sc)) {
 			return;
+		}
 		outw(BASE + EP_W0_EEPROM_COMMAND, READ_EEPROM | i);
 		if (epbusyeeprom(sc))
 			return;

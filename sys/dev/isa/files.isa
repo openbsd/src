@@ -21,6 +21,12 @@ file	dev/isa/isa.c			isa needs-flag
 define	isadma
 file	dev/isa/isadma.c		isadma needs-flag
 
+#pcmcia
+#config problems
+#device pcic at isa
+#file dev/isa/pcmcia_pcic.c  pcic pcmciabus
+file dev/isa/pcmcia_isa.c  pcmciabus
+
 #
 # 8250/16[45]50-based multi-port serial boards
 #
@@ -44,7 +50,7 @@ file	dev/isa/rtfps.c			rtfps
 #
 
 # 8250/16[45]50-based "com" ports
-device	com at isa, commulti: tty
+device	com at isa, commulti, pcmciabus: tty
 file	dev/isa/com.c			com needs-flag
 
 # Cyclades Cyclom multiport serial cards
@@ -120,7 +126,7 @@ file	dev/isa/elink.c			elink
 
 # National Semiconductor DS8390/WD83C690-based boards
 # (WD/SMC 80x3 family, SMC Ultra [8216], 3Com 3C503, NE[12]000, and clones)
-device	ed at isa: ether, ifnet
+device	ed at isa, pcmciabus: ether, ifnet
 file	dev/isa/if_ed.c			ed
 
 # 3Com 3C505
@@ -132,7 +138,7 @@ device	el at isa: ether, ifnet
 file	dev/isa/if_el.c			el
 
 # 3Com 3C5x9, 3c59x (EtherLink III) family
-device	ep at isa, pci: ether, ifnet, elink
+device	ep at isa, pci, pcmciabus: ether, ifnet, elink
 file	dev/isa/if_ep.c			ep
 
 # Fujitsu MB8696[05]-based boards

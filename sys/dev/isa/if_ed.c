@@ -17,6 +17,7 @@
  * similar clones.
  */
 
+#include "pcmciabus.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -68,10 +69,15 @@ struct ed_softc {
 	void *sc_ih;
 
 	struct	arpcom sc_arpcom;	/* ethernet common */
+	void *sc_sh;			/* shutdown hook */
 
 	char	*type_str;	/* pointer to type string */
 	u_char	vendor;		/* interface vendor */
 	u_char	type;		/* interface type code */
+	u_short	spec_flags;
+#define ED_REATTACH	0x0001	/* Reattach */
+#define ED_NOTPRESENT 	0x0002	/* card not present; do not allow
+				   reconfiguration */
 
 	int	asic_addr;	/* ASIC I/O bus address */
 	int	nic_addr;	/* NIC (DS8390) I/O bus address */
@@ -142,6 +148,148 @@ struct cfdriver edcd = {
 
 #define	NIC_PUT(sc, off, val)	outb(sc->nic_addr + off, val)
 #define	NIC_GET(sc, off)	inb(sc->nic_addr + off)
+
+#if NPCMCIABUS > 0 
+
+#include <dev/pcmcia/pcmciabus.h>
+static int ed_probe_pcmcia_ne __P((struct device *, void *,
+				   void *, struct pcmcia_link *));
+
+static int edmod __P((struct pcmcia_link *, struct device *,
+		      struct pcmcia_conf *, struct cfdata *cf));
+
+static int ed_remove __P((struct pcmcia_link *, struct device *));
+
+/* additional setup needed for pcmcia devices */
+static int
+ed_probe_pcmcia_ne(parent, match, aux, pc_link)
+	struct device *parent;
+	void *match;
+	void *aux;
+	struct pcmcia_link *pc_link;
+{
+	struct ed_softc *sc = match;
+	struct cfdata *cf = sc->sc_dev.dv_cfdata;
+	struct isa_attach_args *ia = aux;
+	struct pcmciadevs *dev=pc_link->device;
+	int err;
+	extern int ifqmaxlen;
+	u_char enaddr[ETHER_ADDR_LEN];
+
+	if ((int)dev->param >= 0)
+		err = pcmcia_read_cis(pc_link, enaddr, 
+				      (int) dev->param, ETHER_ADDR_LEN);
+	else
+		err = 0;
+	if (err)
+		printf("Cannot read cis info %d\n", err);
+
+	if (ed_probe_Novell(sc, cf, ia)) {
+		delay(100);
+		if ((int)dev->param >= 0) {
+		    err = pcmcia_read_cis(pc_link, sc->sc_arpcom.ac_enaddr,
+				      (int) dev->param, ETHER_ADDR_LEN);
+		    if (err) {
+			    printf("Cannot read cis info %d\n", err);
+			    return 0;
+		    }
+		    if(bcmp(enaddr, sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN)) {
+			    printf("ENADDR MISMATCH %s ",
+				   ether_sprintf(sc->sc_arpcom.ac_enaddr));
+			    printf("- %s\n", ether_sprintf(enaddr));
+			    bcopy(enaddr,sc->sc_arpcom.ac_enaddr,
+					    ETHER_ADDR_LEN);
+		    }
+		}
+		/* clear ED_NOTPRESENT, set ED_REATTACH if needed */
+		sc->spec_flags=pc_link->flags&PCMCIA_REATTACH?ED_REATTACH:0;
+		sc->type_str = dev->model;
+		sc->sc_arpcom.ac_if.if_snd.ifq_maxlen=ifqmaxlen;
+		return 1;
+	}
+	return 0;
+}
+
+/* modify config entry */
+static int
+edmod(pc_link, self, pc_cf, cf) 
+	struct pcmcia_link *pc_link;
+	struct device *self;
+	struct pcmcia_conf *pc_cf;
+	struct cfdata *cf;
+{
+	int err;
+	struct pcmciadevs *dev=pc_link->device;
+	struct ed_softc *sc = (void *)self;
+	int svec_card = strcmp(dev->manufacturer, "SVEC") == 0;
+	int de650_0 = (pc_cf->memwin != 0) && !svec_card;
+	err = pc_link->adapter->bus_link->bus_config(pc_link, self, pc_cf, cf);
+	if (err)
+		return err;
+
+	if (svec_card) {
+		pc_cf->memwin = 0;
+	}
+	if (de650_0) {
+		pc_cf->io[0].flags =
+		    (pc_cf->io[0].flags&~PCMCIA_MAP_16)|PCMCIA_MAP_8;
+		pc_cf->memwin = 0;
+		pc_cf->cfgtype = DOSRESET|1;
+	}
+	else {
+		/* still wrong in CIS; fix it here */
+		pc_cf->io[0].flags = PCMCIA_MAP_8|PCMCIA_MAP_16;
+		pc_cf->cfgtype = 1;
+	}
+
+	return err;
+}
+
+
+static int
+ed_remove(pc_link,self) 
+	struct pcmcia_link *pc_link;
+	struct device *self;
+{
+	struct ed_softc *sc = (void *)self;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	if_down(ifp);
+	edstop(sc);
+	shutdownhook_disestablish(sc->sc_sh);
+	ifp->if_flags &= ~(IFF_RUNNING|IFF_UP);
+	sc->spec_flags |= ED_NOTPRESENT;
+	return pc_link->adapter->bus_link->bus_unconfig(pc_link); 
+}
+
+static struct pcmcia_dlink {
+	struct pcmcia_device pcd;
+} pcmcia_dlink= {
+	"PCMCIA Novell compatible", edmod, ed_probe_pcmcia_ne, NULL, ed_remove
+};
+
+struct pcmciadevs pcmcia_ed_devs[]={
+      { "ed", 0, "D-Link", "DE-650", "Ver 01.00", NULL, (void *) -1,
+	(void *)&pcmcia_dlink },
+      { "ed", 0, "D-Link", "DE-650", "", NULL, (void *) 0x40,
+	(void *)&pcmcia_dlink },
+      { "ed", 0, "LINKSYS", "E-CARD", "Ver 01.00", NULL, (void *)-1,
+        (void *)&pcmcia_dlink },
+      { "ed", 0, "IBM Corp.", "Ethernet", "0933495", NULL, (void *) 0xff0,
+	(void *)&pcmcia_dlink },
+      { "ed", 0, "Socket Communications Inc",
+	"Socket EA PCMCIA LAN Adapter Revision D", "Ethernet ID 000000000000",
+	NULL, (void *) -1,
+	(void *)&pcmcia_dlink },
+	/* probably not right for ethernet address--card does not seem to
+	   have it anywhere. */
+      { "ed", 0, "SVEC", "FD605 PCMCIA EtherNet Card", "V1-1", NULL,
+	(void *)0xb4, (void *)&pcmcia_dlink },
+      { "ed", 0, "PMX   ", "PE-200", "ETHERNET", "R01", (void *) 0x110,
+        (void *)&pcmcia_dlink }, /* 0x110 is a guess */
+      { NULL }
+};
+#endif
+
 
 /*
  * Determine if the device is present.
@@ -1078,7 +1226,10 @@ edattach(parent, self, aux)
 	}
 
 	/* Attach the interface. */
-	if_attach(ifp);
+	if ((sc->spec_flags & ED_REATTACH) == 0) {
+		if_attach(ifp);
+		ether_ifattach(ifp);
+	}
 	ether_ifattach(ifp);
 
 	/* Print additional info when attached. */
@@ -1106,11 +1257,14 @@ edattach(parent, self, aux)
 	printf("\n");
 
 #if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
+	if ((sc->spec_flags & ED_REATTACH) == 0)
+		bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB,
+			  sizeof(struct ether_header));
 #endif
 
 	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_NET, edintr,
 	    sc);
+	sc->sc_sh = shutdownhook_establish((void (*)(void *))edstop, sc);
 }
 
 /*
@@ -1784,6 +1938,12 @@ edioctl(ifp, cmd, data)
 	int s, error = 0;
 
 	s = splnet();
+	if ((sc->spec_flags & ED_NOTPRESENT) != 0) {
+		if_down(ifp);
+		printf("%s: device offline\n", sc->sc_dev.dv_xname);
+		splx(s);
+		return ENXIO;		/* may be ignored, oh well. */
+	}
 
 	switch (cmd) {
 

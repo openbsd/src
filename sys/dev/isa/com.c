@@ -134,6 +134,50 @@ extern int kgdb_debug_init;
 #define	CLR(t, f)	(t) &= ~(f)
 #define	ISSET(t, f)	((t) & (f))
 
+#include "pcmciabus.h"
+#if NPCMCIABUS >0                       
+/* additional setup needed for pcmcia devices */
+#include <dev/pcmcia/pcmciabus.h>
+/* modify config entry */
+static int 
+commod(pc_link,self,pc_cf,cf)
+    struct pcmcia_link *pc_link;
+    struct device *self;
+    struct pcmcia_conf *pc_cf; 
+    struct cfdata *cf;
+{               
+    int err; 
+    struct pcmciadevs *dev=pc_link->device;
+    struct ed_softc *sc = (void *)self; 
+    if(!(err=pc_link->adapter->bus_link->bus_config(pc_link,self,pc_cf,cf))) {
+        pc_cf->memwin=0;
+	if(pc_cf->cfgtype==0) 
+	    pc_cf->cfgtype=CFGENTRYID; /* determine from ioaddr */
+    }
+    return err;
+}
+static struct pcmcia_com {
+    struct pcmcia_device pcd;
+} pcmcia_com= {
+    "PCMCIA Modem card",commod,NULL,NULL,NULL
+};          
+struct pcmciadevs pcmcia_com_devs[]={
+  { "com", 0, 
+  NULL, "*MODEM*", NULL, NULL,
+  NULL, (void *)&pcmcia_com 
+  },
+  { "com", 0, 
+  NULL, NULL, "*MODEM*", NULL,
+  NULL, (void *)&pcmcia_com 
+  },
+  { "com", 0, 
+  NULL, NULL, NULL, "*MODEM*",
+  NULL, (void *)&pcmcia_com 
+  },
+  {NULL}
+};
+#endif
+
 int
 comspeed(speed)
 	long speed;
@@ -163,12 +207,21 @@ int
 comprobe1(iobase)
 	int iobase;
 {
+	int tmp;
+	int i,k;
 
 	/* force access to id reg */
 	outb(iobase + com_lcr, 0);
 	outb(iobase + com_iir, 0);
-	if (inb(iobase + com_iir) & 0x38)
-		return 0;
+	for(i=0;i<32;i++) {
+	    k=inb(iobase + com_iir);
+	    if (k & 0x38) {
+		inb(iobase + com_data ); /* cleanup */
+	    } else
+		break;
+	}
+	if(i>=32) 
+	    return 0;
 
 	return 1;
 }
