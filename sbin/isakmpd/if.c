@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.14 2003/06/03 14:28:16 ho Exp $	*/
+/*	$OpenBSD: if.c,v 1.15 2003/09/25 14:15:15 cloder Exp $	*/
 /*	$EOM: if.c,v 1.12 1999/10/01 13:45:20 niklas Exp $	*/
 
 /*
@@ -80,13 +80,13 @@ siocgifconf (struct ifconf *ifcp)
        * Allocate a larger buffer each time around the loop and get the
        * network interfaces configurations into it.
        */
-      ifcp->ifc_len = len;
       new_buf = realloc (buf, len);
       if (!new_buf)
 	{
 	  log_error ("siocgifconf: realloc (%p, %d) failed", buf, len);
 	  goto err;
 	}
+      ifcp->ifc_len = len;
       ifcp->ifc_buf = buf = new_buf;
       if (ioctl (s, SIOCGIFCONF, ifcp) == -1)
 	{
@@ -108,6 +108,8 @@ siocgifconf (struct ifconf *ifcp)
 err:
   if (buf)
     free (buf);
+  ifcp->ifc_len = 0;
+  ifcp->ifc_buf = 0;
   close (s);
   return -1;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.84 2003/08/08 08:46:59 ho Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.85 2003/09/25 14:15:15 cloder Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -1666,7 +1666,7 @@ exchange_add_certs (struct message *msg)
 {
   struct exchange *exchange = msg->exchange;
   struct certreq_aca *aca;
-  u_int8_t *cert;
+  u_int8_t *cert = 0, *new_cert = 0;
   u_int32_t certlen;
   u_int8_t *id;
   size_t id_len;
@@ -1691,15 +1691,20 @@ exchange_add_certs (struct message *msg)
 	{
 	  log_print ("exchange_add_certs: could not obtain cert for a type %d "
 		     "cert request", aca->id);
+	  if (cert)
+	    free(cert);
 	  return -1;
 	}
-      cert = realloc (cert, ISAKMP_CERT_SZ + certlen);
-      if (!cert)
+      new_cert = realloc (cert, ISAKMP_CERT_SZ + certlen);
+      if (!new_cert)
 	{
 	  log_error ("exchange_add_certs: realloc (%p, %d) failed", cert,
 		     ISAKMP_CERT_SZ + certlen);
+	  if (cert)
+	    free(cert);
 	  return -1;
 	}
+      cert = new_cert;
       memmove (cert + ISAKMP_CERT_DATA_OFF, cert, certlen);
       SET_ISAKMP_CERT_ENCODING (cert, aca->id);
       if (message_add_payload (msg, ISAKMP_PAYLOAD_CERT, cert,
