@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpc.3,v 1.15 1999/05/15 02:18:00 aaron Exp $
+.\"	$OpenBSD: rpc.3,v 1.16 1999/05/20 15:22:52 aaron Exp $
 .\" Mostly converted to mandoc by Theo de Raadt, Tue Feb 24 04:04:46 MST 1998
 .\"
 .Dd February 16, 1988
@@ -64,7 +64,7 @@
 .Nm xprt_unregister
 .Nd library routines for remote procedure calls
 .Sh SYNOPSIS
-.Fd #include <rpc.h>
+.Fd #include <rpc/rpc.h>
 .Ft int
 .Fn callrpc "char *host" "u_long prognum" "u_long versnum" "u_long procnum" "xdrproc_t inproc" "char *in" "xdrproc_t outproc" "char *out"
 .Ft "enum clnt_stat"
