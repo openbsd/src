@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.18 1999/03/22 02:22:15 deraadt Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.19 1999/05/24 17:18:52 deraadt Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -767,7 +767,7 @@ pollscan(p, pl, nfd, retval)
 	register struct filedesc *fdp = p->p_fd;
 	register int msk, i;
 	struct file *fp;
-	int n = 0;
+	int x, n = 0;
 	static int flag[3] = { FREAD, FWRITE, 0 };
 	static int pflag[3] = { POLLIN|POLLRDNORM, POLLOUT, POLLERR };
 
@@ -783,15 +783,17 @@ pollscan(p, pl, nfd, retval)
 			}
 			continue;
 		}
-		for (msk = 0; msk < 3; msk++) {
+		for (x = msk = 0; msk < 3; msk++) {
 			if (pl[i].events & pflag[msk]) {
 				if ((*fp->f_ops->fo_select)(fp, flag[msk], p)) {
 					pl[i].revents |= pflag[msk] &
 					    pl[i].events;
-					n++;
+					x++;
 				}
 			}
 		}
+		if (x)
+			n++;
 	}
 	*retval = n;
 }
