@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsack.c,v 1.4 2005/02/02 19:29:15 henning Exp $ */
+/*	$OpenBSD: lsack.c,v 1.5 2005/02/08 12:56:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -146,7 +146,7 @@ lsa_hdr_check(struct nbr *nbr, struct lsa_hdr *lsa_hdr)
 	}
 
 	/* invalid sequence number */
-	if (ntohl(lsa_hdr->seq_num) == 0x80000000) {
+	if (ntohl(lsa_hdr->seq_num) == RESV_SEQ_NUM) {
 		log_debug("ls_hdr_check: invalid seq num, neighbor ID %s",
 			inet_ntoa(nbr->id));
 		return (0);

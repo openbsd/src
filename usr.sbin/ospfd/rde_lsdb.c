@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.5 2005/02/07 05:51:00 david Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.6 2005/02/08 12:56:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -110,6 +110,10 @@ lsa_newer(struct lsa_hdr *a, struct lsa_hdr *b)
 	if (b == NULL)
 		return (1);
 
+	/*
+	 * The sequnece number is defined as signed 32-bit integer,
+	 * no idea how IETF came up with such a stupid idea.
+	 */
 	a32 = (int32_t)ntohl(a->seq_num);
 	b32 = (int32_t)ntohl(b->seq_num);
 
@@ -169,7 +173,7 @@ lsa_check(struct rde_nbr *nbr, struct lsa *lsa, u_int16_t len)
 	}
 
 	/* invalid sequence number */
-	if (ntohl(lsa->hdr.seq_num) == 0x80000000) {
+	if (ntohl(lsa->hdr.seq_num) == RESV_SEQ_NUM) {
 		log_debug("ls_check: bad seq num");
 		return (0);
 	}

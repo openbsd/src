@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf.h,v 1.5 2005/02/04 07:38:04 claudio Exp $ */
+/*	$OpenBSD: ospf.h,v 1.6 2005/02/08 12:56:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -91,6 +91,7 @@
 #define CHECK_AGE		300
 #define MAX_AGE_DIFF		900
 #define LS_INFINITY		0xffffff
+#define RESV_SEQ_NUM		0x80000000	/* reserved and "unused" */
 #define INIT_SEQ_NUM		0x80000001
 #define MAX_SEQ_NUM		0x7fffffff
 
@@ -196,7 +197,7 @@ struct lsa_hdr {
 	u_int8_t		type;
 	u_int32_t		ls_id;
 	u_int32_t		adv_rtr;
-	int32_t			seq_num;
+	u_int32_t		seq_num;
 	u_int16_t		ls_chksum;
 	u_int16_t		len;
 };
