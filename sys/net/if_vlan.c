@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.33 2003/01/07 09:00:34 kjc Exp $ */
+/*	$OpenBSD: if_vlan.c,v 1.34 2003/02/01 00:14:40 chris Exp $ */
 /*
  * Copyright 1998 Massachusetts Institute of Technology
  *
@@ -110,6 +110,7 @@ vlanattach(int count)
 	bzero(ifv_softc, nifvlan * sizeof(struct ifvlan));
 
 	for (i = 0; i < nifvlan; i++) {
+		LIST_INIT(&ifv_softc[i].vlan_mc_listhead);
 		ifp = &ifv_softc[i].ifv_if;
 		ifp->if_softc = &ifv_softc[i];
 		sprintf(ifp->if_xname, "vlan%d", i);
@@ -140,7 +141,6 @@ vlan_start(struct ifnet *ifp)
 
 	ifv = ifp->if_softc;
 	p = ifv->ifv_p;
-	LIST_INIT(&ifv->vlan_mc_listhead);
 
 	ifp->if_flags |= IFF_OACTIVE;
 	for (;;) {
@@ -619,6 +619,7 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 int
 vlan_ether_addmulti(struct ifvlan *ifv, struct ifreq *ifr)
 {
+	struct ifnet *ifp = ifv->ifv_p;		/* Parent. */
 	struct vlan_mc_entry *mc;
 	u_int8_t addrlo[ETHER_ADDR_LEN], addrhi[ETHER_ADDR_LEN];
 	int error;
@@ -651,10 +652,10 @@ vlan_ether_addmulti(struct ifvlan *ifv, struct ifreq *ifr)
 	memcpy(&mc->mc_addr, &ifr->ifr_addr, ifr->ifr_addr.sa_len);
 	LIST_INSERT_HEAD(&ifv->vlan_mc_listhead, mc, mc_entries);
 
-	error = ether_ioctl(ifv->ifv_p, &ifv->ifv_ac, SIOCADDMULTI,
-	    (caddr_t)ifr);
+	error = (*ifp->if_ioctl)(ifp, SIOCADDMULTI, (caddr_t)ifr);
 	if (error != 0)
 		goto ioctl_failed;
+
 	return (error);
 
  ioctl_failed:
@@ -662,12 +663,14 @@ vlan_ether_addmulti(struct ifvlan *ifv, struct ifreq *ifr)
 	FREE(mc, M_DEVBUF);
  alloc_failed:
 	(void)ether_delmulti(ifr, (struct arpcom *)&ifv->ifv_ac);
+
 	return (error);
 }
 
 int
 vlan_ether_delmulti(struct ifvlan *ifv, struct ifreq *ifr)
 {
+	struct ifnet *ifp = ifv->ifv_p;		/* Parent. */
 	struct ether_multi *enm;
 	struct vlan_mc_entry *mc;
 	u_int8_t addrlo[ETHER_ADDR_LEN], addrhi[ETHER_ADDR_LEN];
@@ -686,8 +689,7 @@ vlan_ether_delmulti(struct ifvlan *ifv, struct ifreq *ifr)
 		return (error);
 
 	/* We no longer use this multicast address.  Tell parent so. */
-	error = ether_ioctl(ifv->ifv_p, &ifv->ifv_ac, SIOCDELMULTI,
-	    (caddr_t)ifr);
+	error = (*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)ifr);
 	if (error == 0) {
 		/* And forget about this address. */
 		for (mc = LIST_FIRST(&ifv->vlan_mc_listhead); mc != NULL;
@@ -724,7 +726,7 @@ vlan_ether_purgemulti(struct ifvlan *ifv)
 
 	memcpy(ifr->ifr_name, ifp->if_xname, IFNAMSIZ);
 	while ((mc = LIST_FIRST(&ifv->vlan_mc_listhead)) != NULL) {
-		memcpy(&ifr->ifr_addr, &mc->mc_addr, ETHER_ADDR_LEN);
+		memcpy(&ifr->ifr_addr, &mc->mc_addr, mc->mc_addr.ss_len);
 		(void)(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)ifr);
 		LIST_REMOVE(mc, mc_entries);
 		FREE(mc, M_DEVBUF);
