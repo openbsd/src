@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.3 1998/11/15 01:11:25 niklas Exp $	*/
+/*	$OpenBSD: message.c,v 1.4 1998/11/15 01:13:27 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -350,8 +350,10 @@ message_validate_cert (struct message *msg, struct payload *p)
 static int
 message_validate_cert_req (struct message *msg, struct payload *p)
 {
+#if 0
   struct cert_handler *cert;
   size_t len = GET_ISAKMP_GEN_LENGTH (p->p)- ISAKMP_CERTREQ_AUTHORITY_OFF;
+#endif
 
   if (GET_ISAKMP_CERTREQ_TYPE (p->p) >= ISAKMP_CERTENC_RESERVED_MIN)
     {

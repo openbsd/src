@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.4 1998/11/15 01:09:59 niklas Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.5 1998/11/15 01:13:27 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -52,7 +52,6 @@
 #include "pkcs.h"
 #include "prf.h"
 
-static u_int8_t *enc_gen_skeyid (struct exchange *, size_t *);
 static u_int8_t *pre_shared_gen_skeyid (struct exchange *, size_t *);
 static u_int8_t *sig_gen_skeyid (struct exchange *, size_t *);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.3 1998/11/15 01:11:25 niklas Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.4 1998/11/15 01:13:26 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -857,8 +857,10 @@ int
 exchange_save_certreq (struct message *msg)
 {
   struct payload *cp = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_CERT_REQ]);
+#if 0
   struct exchange *exchange = msg->exchange;
   struct certreq_aca *tmp;
+#endif
 
   for ( ; cp; cp = TAILQ_NEXT (cp, link))
     {
