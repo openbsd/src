@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.387 2003/08/28 09:41:03 cedric Exp $ */
+/*	$OpenBSD: pf.c,v 1.388 2003/09/01 10:41:38 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4846,7 +4846,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 	u_short		   action, reason = 0, log = 0;
 	struct mbuf	  *m = *m0;
 	struct ip	  *h;
-	struct pf_rule	  *a = NULL, *r = &pf_default_rule;
+	struct pf_rule	  *a = NULL, *r = &pf_default_rule, *tr;
 	struct pf_state	  *s = NULL;
 	struct pf_ruleset *ruleset = NULL;
 	struct pf_pdesc	   pd;
@@ -5008,16 +5008,19 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 	}
 
 done:
-	if (r->src.addr.type == PF_ADDR_TABLE)
-		pfr_update_stats(r->src.addr.p.tbl,
+	tr = r;
+	if (r == &pf_default_rule && s != NULL && s->nat_rule.ptr != NULL)
+		tr = s->nat_rule.ptr;
+	if (tr->src.addr.type == PF_ADDR_TABLE)
+		pfr_update_stats(tr->src.addr.p.tbl,
 		    (s == NULL || s->direction == dir) ? pd.src : pd.dst, pd.af,
 		    pd.tot_len, dir == PF_OUT, r->action == PF_PASS,
-		    r->src.not);
-	if (r->dst.addr.type == PF_ADDR_TABLE)
-		pfr_update_stats(r->dst.addr.p.tbl,
+		    tr->src.not);
+	if (tr->dst.addr.type == PF_ADDR_TABLE)
+		pfr_update_stats(tr->dst.addr.p.tbl,
 		    (s == NULL || s->direction == dir) ? pd.dst : pd.src, pd.af,
 		    pd.tot_len, dir == PF_OUT, r->action == PF_PASS,
-		    r->dst.not);
+		    tr->dst.not);
 
 	if (action == PF_PASS && h->ip_hl > 5 &&
 	    !((s && s->allow_opts) || r->allow_opts)) {
@@ -5070,7 +5073,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 	u_short		   action, reason = 0, log = 0;
 	struct mbuf	  *m = *m0;
 	struct ip6_hdr	  *h;
-	struct pf_rule	  *a = NULL, *r = &pf_default_rule;
+	struct pf_rule	  *a = NULL, *r = &pf_default_rule, *tr;
 	struct pf_state	  *s = NULL;
 	struct pf_ruleset *ruleset = NULL;
 	struct pf_pdesc    pd;
@@ -5242,16 +5245,19 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 	}
 
 done:
-	if (r->src.addr.type == PF_ADDR_TABLE)
-		pfr_update_stats(r->src.addr.p.tbl,
+	tr = r;
+	if (r == &pf_default_rule && s != NULL && s->nat_rule.ptr != NULL)
+		tr = s->nat_rule.ptr;
+	if (tr->src.addr.type == PF_ADDR_TABLE)
+		pfr_update_stats(tr->src.addr.p.tbl,
 		    (s == NULL || s->direction == dir) ? pd.src : pd.dst, pd.af,
 		    pd.tot_len, dir == PF_OUT, r->action == PF_PASS,
-		    r->src.not);
-	if (r->dst.addr.type == PF_ADDR_TABLE)
-		pfr_update_stats(r->dst.addr.p.tbl,
+		    tr->src.not);
+	if (tr->dst.addr.type == PF_ADDR_TABLE)
+		pfr_update_stats(tr->dst.addr.p.tbl,
 		    (s == NULL || s->direction == dir) ? pd.dst : pd.src, pd.af,
 		    pd.tot_len, dir == PF_OUT, r->action == PF_PASS,
-		    r->dst.not);
+		    tr->dst.not);
 
 	/* XXX handle IPv6 options, if not allowed. not implemented. */
 
