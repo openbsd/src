@@ -1,4 +1,4 @@
-/*	$OpenBSD: names.c,v 1.14 2001/11/21 15:26:39 millert Exp $	*/
+/*	$OpenBSD: names.c,v 1.15 2001/11/21 18:43:27 millert Exp $	*/
 /*	$NetBSD: names.c,v 1.5 1996/06/08 19:48:32 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)names.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: names.c,v 1.14 2001/11/21 15:26:39 millert Exp $";
+static const char rcsid[] = "$OpenBSD: names.c,v 1.15 2001/11/21 18:43:27 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -470,7 +470,7 @@ cat(struct name *n1, struct name *n2)
  * Return an error if the name list won't fit.
  */
 char **
-unpack(struct name *np, struct name *sm)
+unpack(struct name *sm, struct name *np)
 {
 	char **ap, **top;
 	int t, extra, metoo, verbose;
