@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.15 2002/11/07 01:28:52 krw Exp $
+#	$OpenBSD: install.md,v 1.16 2003/09/19 01:05:34 krw Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -48,13 +48,7 @@ md_set_term() {
 }
 
 md_installboot() {
-	local _rawdev _prefix
-
-	if [ -z "$1" ]; then
-		echo No disk device specified, you must run installboot manually.
-		return
-	fi
-	_rawdev=/dev/r${1}c
+	local _rawdev=/dev/r${1}c _prefix
 
 	# use extracted mdec if it exists (may be newer)
 	if [ -e /mnt/usr/mdec/bootblk ]; then

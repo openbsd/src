@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.15 2002/11/07 01:28:51 krw Exp $
+#       $OpenBSD: install.md,v 1.16 2003/09/19 01:05:34 krw Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -45,13 +45,7 @@ md_set_term() {
 }
 
 md_installboot() {
-	local _rawdev
-
-	if [ -z "$1" ]; then
-		echo No disk device specified, you must run installboot manually.
-		return
-	fi
-	_rawdev=/dev/r${1}c
+	local _rawdev=/dev/r${1}c
 
 	# use extracted mdec if it exists (may be newer)
 	if [ -d /mnt/usr/mdec ]; then
