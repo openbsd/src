@@ -1,5 +1,6 @@
-#	$OpenBSD: Makefile,v 1.1 1997/02/21 23:17:32 niklas Exp $
+#	$OpenBSD: Makefile,v 1.2 1997/07/20 10:32:43 provos Exp $
 
 PROG=	rtdelete
+NOMAN=
 
 .include <bsd.prog.mk>
