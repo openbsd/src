@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.107 2004/10/20 23:04:57 miod Exp $
+#	$OpenBSD: GENERIC,v 1.108 2004/10/20 23:11:01 miod Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -29,11 +29,11 @@ fhc*	at mainbus0
 
 # Bus types found on SPARC systems.
 
-sbus*	at mainbus0				# Ultra 1/E4500
+sbus*	at mainbus0
 psycho*	at mainbus0
-pci*	at psycho?				#
+pci*	at psycho?
 schizo*	at mainbus0
-pci*	at schizo?				#
+pci*	at schizo?
 pci*	at ppb?
 ppb*	at pci?
 ebus*	at pci?
@@ -56,10 +56,6 @@ siop*	at pci?			# NCR 538XX SCSI controllers
 scsibus* at siop?
 isp*	at pci?			# Qlogic ISP [12]0x0 SCSI/FibreChannel
 option ISP_COMPILE_FW=1
-
-# PCI Display
-vgafb*		at pci?
-wsdisplay*	at vgafb?
 
 # PCI crypto
 hifn*	at pci?			# Hifn 7751/7811/7951
@@ -161,6 +157,13 @@ com*	at ebus?
 comkbd*	at ebus?
 wskbd* at comkbd?
 
+# Z8530 based serial ports
+zs*	at sbus?
+zs*	at fhc?
+zstty*	at zs?
+zskbd*	at zs?
+wskbd*	at zskbd?
+
 # i8042 based serial ports (PS/2 ports)
 pckbc*	at ebus?			# controller
 pckbd*	at pckbc?			#  ps2 keyboard
@@ -178,12 +181,6 @@ lpt*	at ebus?
 # performance counters
 uperf*	at ebus?
 uperf*	at sbus?
-
-zs*	at sbus?
-zs*	at fhc?
-zstty*	at zs?
-zskbd*	at zs?
-wskbd*	at zskbd?
 
 ## PROM console driver -- if all else fails
 pcons0	at mainbus0			# PROM console
@@ -271,26 +268,26 @@ lxtphy*	at mii?				# Level1 LXT970 PHYs
 rlphy*	at mii?				# RealTek 8139 internal PHYs
 ukphy*	at mii?				# Unknown PHYs
 
+# Framebuffers
+vgafb*		at pci?			# PCI display
+wsdisplay*	at vgafb?
 bwtwo*		at sbus?		# bw2, sbus mono framebuffer
 wsdisplay*	at bwtwo?
-
 cgsix*		at sbus?		# cg6, sbus color framebuffer
 wsdisplay*	at cgsix?
-
 cgthree*	at sbus?		# cg3, sbus color framebuffer
 wsdisplay*	at cgthree?
-
 zx*		at sbus?		# Sun Leo (ZX) framebuffer
 wsdisplay*	at zx?
-
 rfx*		at sbus?		# RasterFlex framebuffer series
 wsdisplay*	at rfx?
-
 mgx*		at sbus?		# SMS MGX/MGXPlus framebuffer
 wsdisplay*	at mgx?
-
 agten*		at sbus?		# Fujitsu AG-10e framebuffer
 wsdisplay*	at agten?
+creator*	at mainbus0
+creator*	at upa0
+wsdisplay*	at creator?
 
 audiocs*	at sbus?
 
@@ -304,10 +301,6 @@ pcmcia*		at stp?
 #com*		at pcmcia?		# PCMCIA modems/serial ports
 wi*		at pci?			# WaveLAN IEEE 802.11DS
 wi*		at pcmcia?		# WaveLAN IEEE 802.11DS
-
-creator*	at mainbus0
-creator*	at upa0
-wsdisplay*	at creator?
 
 #pseudo-device	hotplug	1		# devices hot plugging
 

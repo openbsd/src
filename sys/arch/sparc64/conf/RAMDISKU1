@@ -1,4 +1,4 @@
-# 	$OpenBSD: RAMDISKU1,v 1.10 2004/09/21 19:39:44 drahn Exp $
+# 	$OpenBSD: RAMDISKU1,v 1.11 2004/10/20 23:11:01 miod Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -38,9 +38,6 @@ sbus*	at mainbus0				# Ultra 1
 clock*	at sbus?				# Mostek clock
 timer*	at mainbus0				# Timer chip
 
-## PROM console driver -- if all else fails
-pcons0	at mainbus0				# PROM console
-
 le*		at sbus?			# Lance Ethernet - AMD7990
 ledma*		at sbus?
 le*		at ledma?
@@ -77,6 +74,33 @@ sd*	at scsibus?		# SCSI disks
 nsphy*	at mii?			# NS and compatible PHYs
 qsphy*	at mii?			# Quality Semi QS6612 PHYs
 ukphy*	at mii?			# Unknown PHYs
+
+# Z8530 based serial ports
+zs*	at sbus?
+zstty*	at zs?
+zskbd*	at zs?
+wskbd*	at zskbd?
+
+# Framebuffers
+bwtwo*		at sbus?		# bw2, sbus mono framebuffer
+wsdisplay*	at bwtwo?
+cgsix*		at sbus?		# cg6, sbus color framebuffer
+wsdisplay*	at cgsix?
+cgthree*	at sbus?		# cg3, sbus color framebuffer
+wsdisplay*	at cgthree?
+zx*		at sbus?		# Sun Leo (ZX) framebuffer
+wsdisplay*	at zx?
+rfx*		at sbus?		# RasterFlex framebuffer series
+wsdisplay*	at rfx?
+mgx*		at sbus?		# SMS MGX/MGXPlus framebuffer
+wsdisplay*	at mgx?
+agten*		at sbus?		# Fujitsu AG-10e framebuffer
+wsdisplay*	at agten?
+creator*	at mainbus0
+wsdisplay*	at creator?
+
+## PROM console driver -- if all else fails
+pcons0	at mainbus0			# PROM console
 
 pseudo-device	rd	2	# ramdisk
 pseudo-device	loop	1	# network loopback

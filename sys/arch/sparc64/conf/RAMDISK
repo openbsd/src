@@ -1,4 +1,4 @@
-# 	$OpenBSD: RAMDISK,v 1.33 2004/10/20 23:04:57 miod Exp $
+# 	$OpenBSD: RAMDISK,v 1.34 2004/10/20 23:11:01 miod Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -40,6 +40,7 @@ fhc*	at mainbus0
 # Bus types found on SPARC systems.
 sbus*	at mainbus0		# Ultra 1/E4500
 psycho*	at mainbus0
+upa0	at mainbus0
 pci*	at psycho?		# Ultra 5
 pci*	at ppb?
 ppb*	at pci?
@@ -64,9 +65,6 @@ clock*	at ebus?
 clock0	at fhc?
 rtc*	at ebus?			# DS1287/M5819 clock
 timer*	at mainbus0			# Timer chip
-
-## PROM console driver -- if all else fails
-pcons0	at mainbus0			# PROM console
 
 ## Lance Ethernet - AMD7990
 le*		at sbus?
@@ -126,6 +124,66 @@ iophy*	at mii?			# Intel 82553 PHYs
 inphy*	at mii?			# Intel 82555 PHYs
 lxtphy*	at mii?			# Level1 LXT970 PHYs
 ukphy*	at mii?			# Unknown PHYs
+
+# PCI USB Controllers
+ohci*	at pci?			# Open Host Controller
+uhci*	at pci?			# Universal Host Controller (Intel)
+
+# USB bus support
+usb*	at ohci? flags 0x1
+usb*	at uhci? flags 0x1
+
+# USB devices
+uhub*	at usb?			# USB Hubs
+uhub*	at uhub?		# USB Hubs
+uhidev*	at uhub?		# Human Interface Devices
+ukbd*	at uhidev?		# USB keyboard
+wskbd*	at ukbd?
+
+# SAB82532 based serial ports
+sab*	at ebus?
+sabtty* at sab?
+
+# NS16550 based serial ports
+com*	at ebus?
+comkbd*	at ebus?
+wskbd* at comkbd?
+
+# Z8530 based serial ports
+zs*	at sbus?
+zs*	at fhc?
+zstty*	at zs?
+zskbd*	at zs?
+wskbd*	at zskbd?
+
+# i8042 based serial ports (PS/2 ports)
+pckbc*	at ebus?			# controller
+pckbd*	at pckbc?			#  ps2 keyboard
+wskbd*	at pckbd?			#   generic keyboard layer
+
+# Framebuffers
+vgafb*		at pci?			# PCI display
+wsdisplay*	at vgafb?
+bwtwo*		at sbus?		# bw2, sbus mono framebuffer
+wsdisplay*	at bwtwo?
+cgsix*		at sbus?		# cg6, sbus color framebuffer
+wsdisplay*	at cgsix?
+cgthree*	at sbus?		# cg3, sbus color framebuffer
+wsdisplay*	at cgthree?
+zx*		at sbus?		# Sun Leo (ZX) framebuffer
+wsdisplay*	at zx?
+rfx*		at sbus?		# RasterFlex framebuffer series
+wsdisplay*	at rfx?
+mgx*		at sbus?		# SMS MGX/MGXPlus framebuffer
+wsdisplay*	at mgx?
+agten*		at sbus?		# Fujitsu AG-10e framebuffer
+wsdisplay*	at agten?
+creator*	at mainbus0
+creator*	at upa0
+wsdisplay*	at creator?
+
+## PROM console driver -- if all else fails
+pcons0	at mainbus0			# PROM console
 
 pseudo-device	rd	2	# ramdisk
 pseudo-device	loop	1	# network loopback
