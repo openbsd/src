@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.29 2002/03/22 05:37:48 jason Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.30 2002/04/01 18:41:47 nate Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -122,22 +122,35 @@ dc_pci_match(parent, match, aux)
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	struct dc_type *t;
 
+	/*
+	 * Support for the 21140 chip is experimental.  If it works for you,
+	 * that's great.  By default, this chip will use de.
+	 */
         if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_DEC &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DEC_21140)
 		return (1);
 
+	/*
+	 * The following chip revision doesn't seem to work so well with dc,
+	 * so let's have de handle it.  (de will return a match of 2)
+	 */
         if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_DEC &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DEC_21142 &&
 	    PCI_REVISION(pa->pa_class) == 0x21)
 		return (1);
 
+	/*
+	 * Since dc doesn't fit on the alpha floppy, we want de to win by
+	 * default on alpha so that RAMDISK* and GENERIC will use the same
+	 * driver.
+	 */
 	for (t = dc_devs; t->dc_vid != 0; t++) {
 		if ((PCI_VENDOR(pa->pa_id) == t->dc_vid) &&
 		    (PCI_PRODUCT(pa->pa_id) == t->dc_did)) {
 #ifdef __alpha__
 			return (1);
 #else
-			return (2);
+			return (3);
 #endif
 		}
 	}
