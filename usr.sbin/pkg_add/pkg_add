@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.12 2003/11/09 15:42:48 espie Exp $
+# $OpenBSD: pkg_add,v 1.13 2003/11/09 16:13:37 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -374,13 +374,17 @@ sub really_add($)
 my @todo = (@ARGV);
 my $cache={};
 
+my $errors = 0;
 MAINLOOP:
 while (my $pkg = shift @todo) {
 	if (!defined $cache->{$pkg}) {
 		$cache->{$pkg} = pre_add($pkg);
 	}
 	my $handle = $cache->{$pkg};
-	next unless defined $handle;
+	if (!defined $handle) {
+		$errors++;
+		next;
+	}
 
 	my $plist = $handle->{plist};
 
@@ -417,3 +421,5 @@ while (my $pkg = shift @todo) {
 	really_add($handle);
 	$conflict_list->{$plist->pkgname()} = $handle->{conflicts};
 }
+
+exit(1) if $errors;
