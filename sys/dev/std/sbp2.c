@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbp2.c,v 1.5 2004/02/15 02:38:38 tedu Exp $	*/
+/*	$OpenBSD: sbp2.c,v 1.6 2004/04/08 16:08:21 henning Exp $	*/
 
 /*
  * Copyright (c) 2002 Thierry Deval.  All rights reserved.
@@ -225,7 +225,7 @@ sbp2_elfind_last(struct sbp2_account *ac)
 {
 	struct sbp2_orb_element *elm;
 
-	TAILQ_FOREACH_REVERSE(elm, &sbp2_elm_head, elm_chain, sbp2_orb_tq) {
+	TAILQ_FOREACH_REVERSE(elm, &sbp2_elm_head, sbp2_orb_tq, elm_chain) {
 		if (elm->elm_ac == ac)
 			break;
 	}
@@ -379,8 +379,8 @@ sbp2_clean(struct fwnode_softc *sc, struct p1212_dir *unitdir, int logout)
 		if ((ac = sbp2_acfind(sc, lun)) != NULL) {
 			DPRINTF(("%s: clean lun %d\n", __func__, lun));
 			i = 0;
-			TAILQ_FOREACH_REVERSE(elm, &sbp2_elm_head, elm_chain,
-			    sbp2_orb_tq) {
+			TAILQ_FOREACH_REVERSE(elm, &sbp2_elm_head, sbp2_orb_tq,
+			    elm_chain) {
 				DPRINTF(("%s%d", i++?" ":"", i));
 				if (elm != NULL && elm->elm_ac == ac) {
 					TAILQ_REMOVE(&sbp2_elm_head, elm,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.33 2003/12/16 21:08:20 millert Exp $
+.\"	$OpenBSD: queue.3,v 1.34 2004/04/08 16:08:21 henning Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -200,7 +200,7 @@
 .Ft "bool"
 .Fn TAILQ_EMPTY "TAILQ_HEAD *head"
 .Fn TAILQ_FOREACH "VARNAME" "TAILQ_HEAD *head" "TAILQ_ENTRY NAME"
-.Fn TAILQ_FOREACH_REVERSE "VARNAME" "TAILQ_HEAD *head" "TAILQ_ENTRY NAME" "HEADNAME"
+.Fn TAILQ_FOREACH_REVERSE "VARNAME" "TAILQ_HEAD *head" "HEADNAME" "TAILQ_ENTRY NAME"
 .Ft void
 .Fn TAILQ_INIT "TAILQ_HEAD *head"
 .Ft void
@@ -824,7 +824,7 @@ starts at the first element and proceeds towards the last.
 starts at the last element and proceeds towards the first.
 .Bd -literal -offset indent
 TAILQ_FOREACH(np, &head, NAME)
-TAILQ_FOREACH_REVERSE(np, &head, NAME, HEADNAME)
+TAILQ_FOREACH_REVERSE(np, &head, HEADNAME, NAME)
 .Ed
 .Pp
 The
