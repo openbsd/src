@@ -1,4 +1,4 @@
-/*	$OpenBSD: funmap.c,v 1.7 2002/03/16 15:10:11 vincent Exp $	*/
+/*	$OpenBSD: funmap.c,v 1.8 2002/05/29 12:33:36 vincent Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>.  All rights reserved.
  *
@@ -116,6 +116,7 @@ static struct funmap functnames[] = {
 	{extend, "execute-extended-command",},
 	{fillpara, "fill-paragraph",},
 	{filevisit, "find-file",},
+	{filevisitro, "find-file-read-only",},
 	{poptofile, "find-file-other-window",},
 	{forwchar, "forward-char",},
 	{gotoeop, "forward-paragraph",},
@@ -216,6 +217,7 @@ static struct funmap functnames[] = {
 	{spawncli, "suspend-emacs",},
 	{usebuffer, "switch-to-buffer",},
 	{poptobuffer, "switch-to-buffer-other-window",},
+	{togglereadonly, "toggle-read-only" },
 	{twiddle, "transpose-chars",},
 	{ undo, "undo", },
 	{ undo_dump, "undo-list", },
