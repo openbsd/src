@@ -1,4 +1,4 @@
-/*	$OpenBSD: strip.c,v 1.16 2002/02/16 21:27:53 millert Exp $	*/
+/*	$OpenBSD: strip.c,v 1.17 2002/08/21 15:51:08 espie Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)strip.c	5.8 (Berkeley) 11/6/91";*/
-static char rcsid[] = "$OpenBSD: strip.c,v 1.16 2002/02/16 21:27:53 millert Exp $";
+static char rcsid[] = "$OpenBSD: strip.c,v 1.17 2002/08/21 15:51:08 espie Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -69,8 +69,8 @@ typedef struct nlist NLIST;
 
 #define	strx	n_un.n_strx
 
-int s_stab(const char *, int, EXEC *, struct stat *);
-int s_sym(const char *, int, EXEC *, struct stat *);
+int s_stab(const char *, int, EXEC *, struct stat *, off_t *);
+int s_sym(const char *, int, EXEC *, struct stat *, off_t *);
 void usage(void);
 
 int xflag = 0;
@@ -83,9 +83,10 @@ main(argc, argv)
 	int fd;
 	EXEC *ep;
 	struct stat sb;
-	int (*sfcn)(const char *, int, EXEC *, struct stat *);
+	int (*sfcn)(const char *, int, EXEC *, struct stat *, off_t *);
 	int ch, errors;
 	char *fn;
+	off_t newsize;
 
 	sfcn = s_sym;
 	while ((ch = getopt(argc, argv, "dx")) != -1)
@@ -131,9 +132,14 @@ main(argc, argv)
 		   for dealing with data in memory, and a second time for out
 		 */
 		fix_header_order(ep);
-		errors |= sfcn(fn, fd, ep, &sb);
+		newsize = 0;
+		errors |= sfcn(fn, fd, ep, &sb, &newsize);
 		fix_header_order(ep);
 		munmap((caddr_t)ep, sb.st_size);
+		if (newsize  && ftruncate(fd, newsize)) {
+			warn("%s", fn);
+			errors = 1;
+		}
 		if (close(fd)) {
 			ERROR(errno);
 		}
@@ -143,11 +149,12 @@ main(argc, argv)
 }
 
 int
-s_sym(fn, fd, ep, sp)
+s_sym(fn, fd, ep, sp, sz)
 	const char *fn;
 	int fd;
 	EXEC *ep;
 	struct stat *sp;
+	off_t *sz;
 {
 	char *neweof;
 #if	0
@@ -203,20 +210,18 @@ s_sym(fn, fd, ep, sp)
 	ep->a_syms = ep->a_trsize = ep->a_drsize = 0;
 
 	/* Truncate the file. */
-	if (ftruncate(fd, neweof - (char *)ep)) {
-		warn("%s", fn);
-		return 1;
-	}
+	*sz = neweof - (char *)ep;
 
 	return 0;
 }
 
 int
-s_stab(fn, fd, ep, sp)
+s_stab(fn, fd, ep, sp, sz)
 	const char *fn;
 	int fd;
 	EXEC *ep;
 	struct stat *sp;
+	off_t *sz;
 {
 	int cnt, len;
 	char *nstr, *nstrbase, *p, *strbase;
@@ -276,6 +281,10 @@ s_stab(fn, fd, ep, sp)
                                 continue;
                         }
 			len = strlen(p) + 1;
+			if (N_STROFF(*ep) + sym->strx + len > sp->st_size) {
+				warnx("%s: bad symbol table", fn);
+				return 1;
+			}
 			bcopy(p, nstr, len);
 			nstr += len;
 			fix_nlist_order(nsym++, mid);
@@ -297,10 +306,7 @@ s_stab(fn, fd, ep, sp)
 	free(nstrbase);
 
 	/* Truncate to the current length. */
-	if (ftruncate(fd, (char *)nsym + len - (char *)ep)) {
-		warn("%s", fn);
-		return 1;
-	}
+	*sz = (char *)nsym + len - (char *)ep;
 
 	return 0;
 }
