@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.39 1998/07/26 17:01:45 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.40 1998/07/26 17:36:09 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.39 1998/07/26 17:01:45 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.40 1998/07/26 17:36:09 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -42,6 +42,7 @@ static char rcsid[] = "$OpenBSD: editor.c,v 1.39 1998/07/26 17:01:45 millert Exp
 #include <err.h>
 #include <errno.h>
 #include <string.h>
+#include <libgen.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -63,7 +64,7 @@ struct diskchunk {
 };
 
 void	edit_parms __P((struct disklabel *, u_int32_t *));
-int	editor __P((struct disklabel *, int));
+int	editor __P((struct disklabel *, int, char *));
 void	editor_add __P((struct disklabel *, u_int32_t *, char *));
 void	editor_modify __P((struct disklabel *, u_int32_t *, char *));
 void	editor_delete __P((struct disklabel *, u_int32_t *, char *));
@@ -77,7 +78,7 @@ void	make_contiguous __P((struct disklabel *));
 u_int32_t next_offset __P((struct disklabel *, struct partition *));
 int	partition_cmp __P((const void *, const void *));
 struct partition **sort_partitions __P((struct disklabel *, u_int16_t *));
-void	getdisktype __P((struct disklabel *, char *));
+void	getdisktype __P((struct disklabel *, char *, char *));
 void	find_bounds __P((struct disklabel *));
 void	set_bounds __P((struct disklabel *, u_int32_t *));
 struct diskchunk *free_chunks __P((struct disklabel *));
@@ -104,9 +105,10 @@ struct dos_partition *dosdp;	/* DOS partition, if found */
  * Simple partition editor.  Primarily intended for new labels.
  */
 int
-editor(lp, f)
+editor(lp, f, dev)
 	struct disklabel *lp;
 	int f;
+	char *dev;
 {
 	struct disklabel lastlabel, tmplabel, label = *lp;
 	struct partition *pp;
@@ -115,7 +117,7 @@ editor(lp, f)
 	char buf[BUFSIZ], *cmd, *arg;
 
 	/* Don't allow disk type of "unknown" */
-	getdisktype(&label, "You need to specify a disk type for this disk.");
+	getdisktype(&label, "You need to specify a type for this disk.", dev);
 
 	/* How big is the OpenBSD portion of the disk?  */
 	find_bounds(&label);
@@ -1589,12 +1591,42 @@ sort_partitions(lp, npart)
  * Get a valid disk type if necessary.
  */
 void
-getdisktype(lp, banner)
+getdisktype(lp, banner, dev)
 	struct disklabel *lp;
 	char *banner;
+	char *dev;
 {
 	int i;
-	char *s;
+	char *s, *def = "SCSI";
+	struct dtypes {
+		char *dev;
+		char *type;
+	} dtypes[] = {
+		"sd",	"SCSI",
+		"wd",	"IDE",
+		"fd",	"FLOPPY",
+		"xd",	"SMD",
+		"xy",	"SMD",
+		"hd",	"HP-IB",
+		"ccd",	"CCD",
+		"vnd",	"VND",
+		"svnd",	"VND",
+		NULL,	NULL
+	};
+
+	if ((s = basename(dev)) != NULL) {
+		if (*s == 'r')
+			s++;
+		i = strcspn(s, "0123456789");
+		s[i] = '\0';
+		dev = s;
+		for (i = 0; dtypes[i].dev != NULL; i++) {
+			if (strcmp(dev, dtypes[i].dev) == 0) {
+				def = dtypes[i].type;
+				break;
+			}
+		}
+	}
 
 	if (lp->d_type > DKMAXTYPES || lp->d_type == 0) {
 		puts(banner);
@@ -1609,9 +1641,8 @@ getdisktype(lp, banner)
 
 		for (;;) {
 			s = getstring(lp, "Disk type",
-			    "What kind of disk is this?  Usually SCSI, ESDI, "
-			    "ST506, or floppy (use ESDI for IDE).",
-			    "SCSI");
+			    "What kind of disk is this?  Usually SCSI, IDE, "
+			    "ESDI, CCD, ST506, or floppy.", def);
 			if (s == NULL)
 				continue;
 			if (strcasecmp(s, "IDE") == 0) {
