@@ -1,6 +1,6 @@
 #!/usr/bin/awk -f
 #
-# $NetBSD: setversion,v 1.1.1.1 1996/01/07 21:54:17 leo Exp $
+# $NetBSD: setrev.awk,v 1.1 1996/01/16 15:15:55 leo Exp $
 #
 function revcmp(r1, r2,    n1, n2, a1, a2, n, i) {
 	n1 = split(r1, a1, "\.")

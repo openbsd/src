@@ -1,4 +1,4 @@
-/*	$NetBSD: diskio.c,v 1.1.1.1 1996/01/07 21:54:16 leo Exp $	*/
+/*	$NetBSD: diskio.c,v 1.2 1996/01/16 15:15:16 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -38,7 +38,7 @@
 #include <xhdi.h>
 #include "libtos.h"
 #include "aptck.h"
-#include "disklabel.h"
+#include "ahdilbl.h"
 #include <osbind.h>
 
 struct pun_info {

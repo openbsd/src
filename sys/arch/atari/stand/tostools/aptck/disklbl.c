@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.1.1.1 1996/01/07 21:54:16 leo Exp $	*/
+/*	$NetBSD: disklbl.c,v 1.1 1996/01/16 15:15:48 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -35,7 +35,8 @@
 #include <stdio.h>
 #include "libtos.h"
 #include "aptck.h"
-#include "disklabel.h"
+#include "ahdilbl.h"
+#include "disklbl.h"
 
 static int	dkcksum    PROTO((struct disklabel *));
 static int	bsd_label  PROTO((disk_t *, u_int));
@@ -282,9 +283,10 @@ ahdi_display(dd)
 		printf("* Weird # of partitions (zero) *\n"); rv = 1;
 	}
 	if (dd->nparts > AHDI_MAXPARTS) {
-		printf("* Too many AHDI partitions for NetBSD *\n");
-		printf("  Increase MAXAUXROOTS in machine/disklabel.h,\n");
-		printf("  then recompile the NetBSD kernel.\n");
+		printf("* Too many AHDI partitions for the default NetBSD "
+			"kernel *\n  Increase MAXAUXROOTS in src/sys/arch/"
+			"atari/include/disklabel.h\n  to at least %u, and "
+			"recompile the NetBSD kernel.\n", dd->nroots);
 		rv = -1;
 	}
 	return(rv);
