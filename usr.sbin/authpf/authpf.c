@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.70 2003/09/26 21:44:09 cedric Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.71 2003/11/14 15:31:07 henning Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -854,6 +854,13 @@ int
 pfctl_set_limit(struct pfctl *pf, const char *opt, unsigned int limit)
 {
 	fprintf(stderr, "set limit not supported in authpf\n");
+	return (1);
+}
+
+int
+pfctl_set_debug(struct pfctl *pf, char *d)
+{
+	fprintf(stderr, "set debug not supported in authpf\n");
 	return (1);
 }
 
