@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_mkdb.c,v 1.18 1998/07/15 00:50:19 millert Exp $	*/
+/*	$OpenBSD: pwd_mkdb.c,v 1.19 1998/07/15 19:33:28 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -45,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.18 1998/07/15 00:50:19 millert Exp $";
+static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.19 1998/07/15 19:33:28 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -164,14 +164,13 @@ main(argc, argv)
 	if (fstat(fileno(fp), &st) == -1)
 		error(pname);
 
-	if (st.st_size > (off_t)100*1024) {
-		/*
-		 * It is a large file. We are going to crank db's cache size.
-		 */
-		openinfo.cachesize = st.st_size * 20;
-		if (openinfo.cachesize > 12*1024*1024)
-			openinfo.cachesize = 12*1024*1024;
-	}
+	/*
+	 * Tweak openinfo values for large passwd files.
+	 */
+	if (st.st_size > (off_t)100*1024)
+		openinfo.cachesize = MIN(st.st_size * 20, (off_t)12*1024*1024);
+	if (st.st_size / 128 > openinfo.nelem)
+		openinfo.nelem = st.st_size / 128;
 
 	/* Open the temporary insecure password database. */
 	(void)snprintf(buf, sizeof(buf), "%s.tmp",
