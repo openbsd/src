@@ -36,7 +36,7 @@ static char sccsid[] = "@(#)readmsg.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.5 $"
+#ident "$Revision: 1.6 $"
 #endif
 
 #include "globals.h"
@@ -449,7 +449,7 @@ struct sockaddr_in *addr;
 	char tm[26];
 	time_t msgtime;
 	
-	if (msg->tsp_type > TSPTYPENUMBER) {
+	if (msg->tsp_type >= TSPTYPENUMBER) {
 		fprintf(fd, "bad type (%u) on packet from %s\n",
 		    msg->tsp_type, inet_ntoa(addr->sin_addr));
 		return;
