@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.27 2004/08/19 02:11:38 mickey Exp $
+ * $OpenBSD: calendar.birthday,v 1.28 2005/01/31 13:40:45 mickey Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -29,6 +29,7 @@
 01/19	Edgar Allan Poe born in Boston, 1809
 01/19	Robert Edward Lee born in Stratford Estate, Virginia, 1807
 01/20	George Burns born, 1896
+01/20	Dr. Mendeleev died with a pen in his hand, 1907
 01/21	Lenin died, 1924
 01/21	Thomas Jonathan "Stonewall" Jackson born in Clarksburg, VA, 1824
 01/21	Ethan Allen born, 1738
@@ -52,6 +53,7 @@
 02/07	Sinclair Lewis born, 1885
 02/08	Friedleib F. Runge born, 1795, father of paper chromatography
 02/08	Jules Verne born in Nantes, France, 1828
+02/08	Dmitry Ivanovich Mendeleev born, an excellent suit-case master, 1834
 02/09	George Hartmann born, 1489, designed astrolabes, timepieces, etc.
 02/10	Charles Lamb born, 1775
 02/10	William Allen White born, 1868

@@ -1,7 +1,7 @@
 /*
  * History
  *
- * $OpenBSD: calendar.history,v 1.36 2004/11/30 19:27:20 dhartmei Exp $
+ * $OpenBSD: calendar.history,v 1.37 2005/01/31 13:40:45 mickey Exp $
  */
 
 #ifndef _calendar_history_
@@ -52,6 +52,8 @@
 01/31	"Ham" the chimpanzee soars into space aboard Mercury-Redstone 2, 1961
 01/31	Explorer I launched, 1958.  Van Allen Belt discovered
 01/31	Irving Langmuir, 1881, invented tungsten filament lamp
+01/31	Dmitry Mendeleev, 1865, established optimal alcohol-water mixture ratio
+	in his PhD work on alcohol-water mixtures
 02/01	First TV soap: Secret Storm, 1954
 02/01	Space Shuttle Columbia (STS-107) explodes prior to landing, 2003
 02/01	Forces led by Khomeini take over Iran, 1979
