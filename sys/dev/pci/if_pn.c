@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pn.c,v 1.5 1999/06/28 20:51:10 jason Exp $	*/
+/*	$OpenBSD: if_pn.c,v 1.6 1999/06/29 02:28:22 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$FreeBSD: if_pn.c,v 1.8 1999/02/26 07:50:53 wpaul Exp $
+ *	$FreeBSD: if_pn.c,v 1.21 1999/05/28 18:43:10 wpaul Exp $
  */
 
 /*
@@ -121,7 +121,7 @@
 
 /* #define PN_BACKGROUND_AUTONEG */
 
-#define PN_PROMISC_BUG_WAR
+#define PN_RX_BUG_WAR
 
 #ifdef __FreeBSD__
 #include <pci/if_pnreg.h>
@@ -131,7 +131,7 @@
 
 #if !defined(lint) && defined(__FreeBSD__)
 static const char rcsid[] =
-	"$FreeBSD: if_pn.c,v 1.8 1999/02/26 07:50:53 wpaul Exp $";
+	"$FreeBSD: if_pn.c,v 1.21 1999/05/28 18:43:10 wpaul Exp $";
 #endif
 
 #if defined(__FreeBSD__)
@@ -141,8 +141,6 @@ static const char rcsid[] =
 static struct pn_type pn_devs[] = {
 	{ PN_VENDORID, PN_DEVICEID_PNIC,
 		"82c168/82c169 PNIC 10/100BaseTX" },
-	{ PN_VENDORID, PN_DEVICEID_PNIC_II,
-		"82c115 PNIC II 10/100BaseTX" },
 	{ 0, 0, NULL }
 };
 #endif
@@ -181,8 +179,8 @@ static int pn_newbuf		__P((struct pn_softc *,
 static int pn_encap		__P((struct pn_softc *, struct pn_chain *,
 						struct mbuf *));
 
-#ifdef PN_PROMISC_BUG_WAR
-static void pn_promisc_bug_war	__P((struct pn_softc *,
+#ifdef PN_RX_BUG_WAR
+static void pn_rx_bug_war	__P((struct pn_softc *,
 						struct pn_chain_onefrag *));
 #endif
 static void pn_rxeof		__P((struct pn_softc *));
@@ -207,7 +205,9 @@ static void pn_autoneg_xmit	__P((struct pn_softc *));
 static void pn_autoneg_mii	__P((struct pn_softc *, int, int));
 static void pn_setmode_mii	__P((struct pn_softc *, int));
 static void pn_getmode_mii	__P((struct pn_softc *));
-static void pn_setcfg		__P((struct pn_softc *, u_int16_t));
+static void pn_autoneg		__P((struct pn_softc *, int, int));
+static void pn_setmode		__P((struct pn_softc *, int));
+static void pn_setcfg		__P((struct pn_softc *, u_int32_t));
 static u_int32_t pn_calchash	__P((u_int8_t *));
 static void pn_setfilt		__P((struct pn_softc *));
 static void pn_reset		__P((struct pn_softc *));
@@ -216,11 +216,11 @@ static int pn_list_tx_init	__P((struct pn_softc *));
 
 #define PN_SETBIT(sc, reg, x)				\
 	CSR_WRITE_4(sc, reg,				\
-		CSR_READ_4(sc, reg) | x)
+		CSR_READ_4(sc, reg) | (x))
 
 #define PN_CLRBIT(sc, reg, x)				\
 	CSR_WRITE_4(sc, reg,				\
-		CSR_READ_4(sc, reg) & ~x)
+		CSR_READ_4(sc, reg) & ~(x))
 
 /*
  * Read a word of data stored in the EEPROM at address 'addr.'
@@ -306,7 +306,6 @@ static void pn_phy_writereg(sc, reg, data)
 
 	CSR_WRITE_4(sc, PN_MII,
 		PN_MII_WRITE | (sc->pn_phy_addr << 23) | (reg << 18) | data);
-
 
 	for (i = 0; i < PN_TIMEOUT; i++) {
 		if (!(CSR_READ_4(sc, PN_MII) & PN_MII_BUSY))
@@ -484,7 +483,7 @@ static void pn_autoneg_mii(sc, flag, verbose)
 		media &= ~PHY_BMCR_AUTONEGENBL;
 
 		/* Set ASIC's duplex mode to match the PHY. */
-		pn_setcfg(sc, media);
+		pn_setcfg(sc, ifm->ifm_media);
 		pn_phy_writereg(sc, PHY_BMCR, media);
 	} else {
 		if (verbose)
@@ -561,9 +560,160 @@ static void pn_getmode_mii(sc)
 	return;
 }
 
-/*
- * Set speed and duplex mode.
- */
+static void pn_autoneg(sc, flag, verbose)
+        struct pn_softc		*sc;
+	int			flag;
+	int			verbose;
+{
+	u_int32_t		nway = 0, ability;
+	struct ifnet		*ifp;
+	struct ifmedia		*ifm;
+
+	ifm = &sc->ifmedia;
+	ifp = &sc->arpcom.ac_if;
+
+	ifm->ifm_media = IFM_ETHER | IFM_AUTO;
+
+	switch (flag) {
+	case PN_FLAG_FORCEDELAY:
+		/*
+		 * XXX Never use this option anywhere but in the probe
+		 * routine: making the kernel stop dead in its tracks
+		 * for three whole seconds after we've gone multi-user
+		 * is really bad manners.
+		 */
+		CSR_WRITE_4(sc, PN_GEN,
+		    PN_GEN_MUSTBEONE|PN_GEN_100TX_LOOP);
+		PN_CLRBIT(sc, PN_NWAY, PN_NWAY_AUTONEGRSTR);
+		PN_SETBIT(sc, PN_NWAY, PN_NWAY_AUTOENB);
+		DELAY(5000000);
+		break;
+	case PN_FLAG_SCHEDDELAY:
+		/*
+		 * Wait for the transmitter to go idle before starting
+		 * an autoneg session, otherwise pn_start() may clobber
+		 * our timeout, and we don't want to allow transmission
+		 * during an autoneg session since that can screw it up.
+		 */
+		if (sc->pn_cdata.pn_tx_head != NULL) {
+			sc->pn_want_auto = 1;
+			return;
+		}
+		CSR_WRITE_4(sc, PN_GEN,
+		    PN_GEN_MUSTBEONE|PN_GEN_100TX_LOOP);
+		PN_CLRBIT(sc, PN_NWAY, PN_NWAY_AUTONEGRSTR);
+		PN_SETBIT(sc, PN_NWAY, PN_NWAY_AUTOENB);
+		ifp->if_timer = 5;
+		sc->pn_autoneg = 1;
+		sc->pn_want_auto = 0;
+		return;
+		break;
+	case PN_FLAG_DELAYTIMEO:
+		ifp->if_timer = 0;
+		sc->pn_autoneg = 0;
+		break;
+	default:
+		printf("pn%d: invalid autoneg flag: %d\n", sc->pn_unit, flag);
+		return;
+	}
+
+	if (CSR_READ_4(sc, PN_NWAY) & PN_NWAY_LPAR) {
+		if (verbose)
+			printf("pn%d: autoneg complete, ", sc->pn_unit);
+	} else {
+		if (verbose)
+			printf("pn%d: autoneg not complete, ", sc->pn_unit);
+	}
+
+	/* Link is good. Report the modes and set the duplex mode. */
+	if (CSR_READ_4(sc, PN_ISR) & PN_ISR_LINKPASS) {
+		if (verbose)
+			printf("link status good.");
+
+		ability = CSR_READ_4(sc, PN_NWAY);
+		if (ability & PN_NWAY_LPAR100T4) {
+			ifm->ifm_media = IFM_ETHER|IFM_100_T4;
+			nway = PN_NWAY_MODE_100T4;
+			printf("(100baseT4)\n");
+		} else if (ability & PN_NWAY_LPAR100FULL) {
+			ifm->ifm_media = IFM_ETHER|IFM_100_TX|IFM_FDX;
+			nway = PN_NWAY_MODE_100FD;
+			printf("(full-duplex, 100Mbps)\n");
+		} else if (ability & PN_NWAY_LPAR100HALF) {
+			ifm->ifm_media = IFM_ETHER|IFM_100_TX|IFM_HDX;
+			nway = PN_NWAY_MODE_100HD;
+			printf("(half-duplex, 100Mbps)\n");
+		} else if (ability & PN_NWAY_LPAR10FULL) {
+			ifm->ifm_media = IFM_ETHER|IFM_10_T|IFM_FDX;
+			nway = PN_NWAY_MODE_10FD;
+			printf("(full-duplex, 10Mbps)\n");
+		} else if (ability & PN_NWAY_LPAR10HALF) {
+			ifm->ifm_media = IFM_ETHER|IFM_10_T|IFM_HDX;
+			nway = PN_NWAY_MODE_10HD;
+			printf("(half-duplex, 10Mbps)\n");
+		}
+
+		/* Set ASIC's duplex mode to match the PHY. */
+		pn_setcfg(sc, ifm->ifm_media);
+		CSR_WRITE_4(sc, PN_NWAY, nway);
+	} else {
+		if (verbose)
+			printf("no carrier\n");
+	}
+
+	pn_init(sc);
+
+	if (sc->pn_tx_pend) {
+		sc->pn_autoneg = 0;
+		sc->pn_tx_pend = 0;
+		pn_start(ifp);
+	}
+
+	return;
+}
+
+static void pn_setmode(sc, media)
+        struct pn_softc		*sc;
+	int			media;
+{
+	struct ifnet		*ifp;
+
+	ifp = &sc->arpcom.ac_if;
+
+	/*
+	 * If an autoneg session is in progress, stop it.
+	 */
+	if (sc->pn_autoneg) {
+		printf("pn%d: canceling autoneg session\n", sc->pn_unit);
+		ifp->if_timer = sc->pn_autoneg = sc->pn_want_auto = 0;
+		PN_CLRBIT(sc, PN_NWAY, PN_NWAY_AUTONEGRSTR);
+	}
+
+	printf("pn%d: selecting NWAY, ", sc->pn_unit);
+
+	if (IFM_SUBTYPE(media) == IFM_100_T4) {
+		printf("100Mbps/T4, half-duplex\n");
+	}
+
+	if (IFM_SUBTYPE(media) == IFM_100_TX) {
+		printf("100Mbps, ");
+	}
+
+	if (IFM_SUBTYPE(media) == IFM_10_T) {
+		printf("10Mbps, ");
+	}
+
+	if ((media & IFM_GMASK) == IFM_FDX) {
+		printf("full duplex\n");
+	} else {
+		printf("half duplex\n");
+	}
+
+	pn_setcfg(sc, media);
+
+	return;
+}
+
 static void pn_setmode_mii(sc, media)
 	struct pn_softc		*sc;
 	int			media;
@@ -615,7 +765,7 @@ static void pn_setmode_mii(sc, media)
 		bmcr &= ~PHY_BMCR_DUPLEX;
 	}
 
-	pn_setcfg(sc, bmcr);
+	pn_setcfg(sc, media);
 	pn_phy_writereg(sc, PHY_BMCR, bmcr);
 
 	return;
@@ -727,9 +877,9 @@ void pn_setfilt(sc)
  * 'full-duplex' and '100Mbps' bits in the netconfig register, we
  * first have to put the transmit and/or receive logic in the idle state.
  */
-static void pn_setcfg(sc, bmcr)
+static void pn_setcfg(sc, media)
 	struct pn_softc		*sc;
-	u_int16_t		bmcr;
+	u_int32_t		media;
 {
 	int			i, restart = 0;
 
@@ -750,15 +900,35 @@ static void pn_setcfg(sc, bmcr)
 
 	}
 
-	if (bmcr & PHY_BMCR_SPEEDSEL)
+	if (IFM_SUBTYPE(media) == IFM_100_TX) {
 		PN_CLRBIT(sc, PN_NETCFG, PN_NETCFG_SPEEDSEL);
-	else
+		if (sc->pn_pinfo == NULL) {
+			CSR_WRITE_4(sc, PN_GEN, PN_GEN_MUSTBEONE|
+			    PN_GEN_SPEEDSEL|PN_GEN_100TX_LOOP);
+			PN_SETBIT(sc, PN_NETCFG, PN_NETCFG_PCS|
+			    PN_NETCFG_SCRAMBLER|PN_NETCFG_MIIENB);
+			PN_SETBIT(sc, PN_NWAY, PN_NWAY_SPEEDSEL);
+		}
+	} else {
 		PN_SETBIT(sc, PN_NETCFG, PN_NETCFG_SPEEDSEL);
+		if (sc->pn_pinfo == NULL) {
+			CSR_WRITE_4(sc, PN_GEN,
+			    PN_GEN_MUSTBEONE|PN_GEN_100TX_LOOP);
+			PN_CLRBIT(sc, PN_NETCFG, PN_NETCFG_PCS|
+			    PN_NETCFG_SCRAMBLER|PN_NETCFG_MIIENB);
+			PN_CLRBIT(sc, PN_NWAY, PN_NWAY_SPEEDSEL);
+		}
+	}
 
-	if (bmcr & PHY_BMCR_DUPLEX)
+	if ((media & IFM_GMASK) == IFM_FDX) {
 		PN_SETBIT(sc, PN_NETCFG, PN_NETCFG_FULLDUPLEX);
-	else
+		if (sc->pn_pinfo == NULL)
+			PN_SETBIT(sc, PN_NWAY, PN_NWAY_DUPLEX);
+	} else {
 		PN_CLRBIT(sc, PN_NETCFG, PN_NETCFG_FULLDUPLEX);
+		if (sc->pn_pinfo == NULL)
+			PN_CLRBIT(sc, PN_NWAY, PN_NWAY_DUPLEX);
+	}
 
 	if (restart)
 		PN_SETBIT(sc, PN_NETCFG, PN_NETCFG_TX_ON|PN_NETCFG_RX_ON);
@@ -797,12 +967,28 @@ pn_probe(config_id, device_id)
 	pcidi_t			device_id;
 {
 	struct pn_type		*t;
+	u_int32_t		rev;
 
 	t = pn_devs;
 
 	while(t->pn_name != NULL) {
 		if ((device_id & 0xFFFF) == t->pn_vid &&
 		    ((device_id >> 16) & 0xFFFF) == t->pn_did) {
+			if (t->pn_did == PN_DEVICEID_PNIC) {
+				rev = pci_conf_read(config_id,
+				    PN_PCI_REVISION) & 0xFF;
+				switch (rev & PN_REVMASK) {
+				case PN_REVID_82C168:
+					return (t->pn_name);
+					break;
+				case PN_REVID_82C169:
+					t++;
+					return (t->pn_name);
+				default:
+					printf("uknown PNIC rev: %x\n", rev);
+					break;
+				}
+			}
 			return(t->pn_name);
 		}
 		t++;
@@ -833,7 +1019,7 @@ pn_attach(config_id, unit)
 	caddr_t			roundptr;
 	struct pn_type		*p;
 	u_int16_t		phy_vid, phy_did, phy_sts;
-#ifdef PN_PROMISC_BUG_WAR
+#ifdef PN_RX_BUG_WAR
 	u_int32_t		revision = 0;
 #endif
 
@@ -895,7 +1081,12 @@ pn_attach(config_id, unit)
 		printf ("pn%d: couldn't map ports\n", unit);
 		goto fail;
 	}
+#ifdef __i386__
 	sc->pn_btag = I386_BUS_SPACE_IO;
+#endif
+#ifdef __alpha__
+	sc->pn_btag = ALPHA_BUS_SPACE_IO;
+#endif
 #else
 	if (!(command & PCIM_CMD_MEMEN)) {
 		printf("pn%d: failed to enable memory mapping!\n", unit);
@@ -907,7 +1098,12 @@ pn_attach(config_id, unit)
 		goto fail;
 	}
 	sc->pn_bhandle = vbase;
+#ifdef __i386__
 	sc->pn_btag = I386_BUS_SPACE_MEM;
+#endif
+#ifdef __alpha__
+	sc->pn_btag = ALPHA_BUS_SPACE_MEM;
+#endif
 #endif
 
 	/* Allocate interrupt */
@@ -915,6 +1111,8 @@ pn_attach(config_id, unit)
 		printf("pn%d: couldn't map interrupt\n", unit);
 		goto fail;
 	}
+
+	sc->pn_cachesize = pci_conf_read(config_id, PN_PCI_CACHELEN) & 0xFF;
 
 	/* Reset the adapter. */
 	pn_reset(sc);
@@ -953,17 +1151,18 @@ pn_attach(config_id, unit)
 	sc->pn_ldata = (struct pn_list_data *)roundptr;
 	bzero(sc->pn_ldata, sizeof(struct pn_list_data));
 
-#ifdef PN_PROMISC_BUG_WAR
+#ifdef PN_RX_BUG_WAR
 	revision = pci_conf_read(config_id, PN_PCI_REVISION) & 0x000000FF;
-	if (revision == PN_169B_REV || revision == PN_169_REV) {
-		sc->pn_promisc_war = 1;
-		sc->pn_promisc_buf = malloc(PN_RXLEN * 5, M_DEVBUF, M_NOWAIT);
-		if (sc->pn_promisc_buf == NULL) {
+	if (revision == PN_169B_REV || revision == PN_169_REV ||
+	    (revision & 0xF0) == PN_168_REV) {
+		sc->pn_rx_war = 1;
+		sc->pn_rx_buf = malloc(PN_RXLEN * 5, M_DEVBUF, M_NOWAIT);
+		if (sc->pn_rx_buf == NULL) {
 			printf("pn%d: no memory for workaround buffer\n", unit);
 			goto fail;
 		}
 	} else {
-		sc->pn_promisc_war = 0;
+		sc->pn_rx_war = 0;
 	}
 #endif
 
@@ -981,6 +1180,10 @@ pn_attach(config_id, unit)
 	ifp->if_baudrate = 10000000;
 	ifp->if_snd.ifq_maxlen = PN_TX_LIST_CNT - 1;
 
+	ifmedia_init(&sc->ifmedia, 0, pn_ifmedia_upd, pn_ifmedia_sts);
+
+	if (bootverbose)
+		printf("pn%d: probing for a PHY\n", sc->pn_unit);
 	for (i = PN_PHYADDR_MIN; i < PN_PHYADDR_MAX + 1; i++) {
 		sc->pn_phy_addr = i;
 		pn_phy_writereg(sc, PHY_BMCR, PHY_BMCR_RESET);
@@ -1004,21 +1207,24 @@ pn_attach(config_id, unit)
 		}
 		if (sc->pn_pinfo == NULL)
 			sc->pn_pinfo = &pn_phys[PHY_UNKNOWN];
+		pn_getmode_mii(sc);
+		pn_autoneg_mii(sc, PN_FLAG_FORCEDELAY, 1);
 	} else {
-		printf("pn%d: MII without any phy!\n", sc->pn_unit);
-		goto fail;
+		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_T, 0, NULL);
+		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_T|IFM_HDX, 0, NULL);
+		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_T|IFM_FDX, 0, NULL);
+		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_100_TX, 0, NULL);
+		ifmedia_add(&sc->ifmedia,
+		    IFM_ETHER|IFM_100_TX|IFM_HDX, 0, NULL);
+		ifmedia_add(&sc->ifmedia,
+		    IFM_ETHER|IFM_100_TX|IFM_FDX, 0, NULL);
+		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_100_T4, 0, NULL);
+		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_AUTO, 0, NULL);
+		pn_autoneg(sc, PN_FLAG_FORCEDELAY, 1);
 	}
 
-	/*
-	 * Do ifmedia setup.
-	 */
-	ifmedia_init(&sc->ifmedia, 0, pn_ifmedia_upd, pn_ifmedia_sts);
-
-	pn_getmode_mii(sc);
-	pn_autoneg_mii(sc, PN_FLAG_FORCEDELAY, 1);
 	media = sc->ifmedia.ifm_media;
 	pn_stop(sc);
-
 	ifmedia_set(&sc->ifmedia, media);
 
 	/*
@@ -1146,14 +1352,17 @@ static int pn_newbuf(sc, c)
 	return(0);
 }
 
-#ifdef PN_PROMISC_BUG_WAR
+#ifdef PN_RX_BUG_WAR
 /*
  * Grrrrr.
- * Revision 33 of the PNIC chip has a terrible bug in it that manifests
- * itself when you enable promiscuous mode. Sometimes instead of uploading
- * one complete frame, it uploads its entire FIFO memory. The frame we
- * want is at the end of this whole mess, but we never know exactly
- * how much data has been uploaded, so finding it can be hard.
+ * The PNIC chip has a terrible bug in it that manifests itself during
+ * periods of heavy activity. The exact mode of failure if difficult to
+ * pinpoint: sometimes it only happens in promiscuous mode, sometimes it
+ * will happen on slow machines. The bug is that sometimes instead of
+ * uploading one complete frame during reception, it uploads what looks
+ * like the entire contents of its FIFO memory. The frame we want is at
+ * the end of the whole mess, but we never know exactly how much data has
+ * been uploaded, so salvaging the frame is hard.
  *
  * There is only one way to do it reliably, and it's disgusting.
  * Here's what we know:
@@ -1197,7 +1406,7 @@ static int pn_newbuf(sc, c)
  */
 
 #define PN_WHOLEFRAME	(PN_RXSTAT_FIRSTFRAG|PN_RXSTAT_LASTFRAG)
-static void pn_promisc_bug_war(sc, cur_rx)
+static void pn_rx_bug_war(sc, cur_rx)
 	struct pn_softc		*sc;
 	struct pn_chain_onefrag	*cur_rx;
 {
@@ -1206,8 +1415,8 @@ static void pn_promisc_bug_war(sc, cur_rx)
 	int			total_len;
 	u_int32_t		rxstat = 0;
 
-	c = sc->pn_promisc_bug_save;
-	ptr = sc->pn_promisc_buf;
+	c = sc->pn_rx_bug_save;
+	ptr = sc->pn_rx_buf;
 	bzero(ptr, sizeof(PN_RXLEN * 5));
 
 	/* Copy all the bytes from the bogus buffers. */
@@ -1225,22 +1434,28 @@ static void pn_promisc_bug_war(sc, cur_rx)
 		c = c->pn_nextdesc;
 	}
 
-
 	/* Find the length of the actual receive frame. */
 	total_len = PN_RXBYTES(rxstat);
 
 	/* Scan backwards until we hit a non-zero byte. */
-	while(*ptr == 0x00) {
+	while(*ptr == 0x00)
 		ptr--;
-	}
 
+	/* Round off. */
+#if defined(__i386__)
 	if ((u_int32_t)(ptr) & 0x3)
 		ptr -= 1;
+#elif defined(__alpha__)
+	if ((u_int64_t)(ptr) & 0x3)
+		ptr -= 1;
+#else
+# error "unsupported architecture"
+#endif
 
 	/* Now find the start of the frame. */
 	ptr -= total_len;
-	if (ptr < sc->pn_promisc_buf)
-		ptr = sc->pn_promisc_buf;
+	if (ptr < sc->pn_rx_buf)
+		ptr = sc->pn_rx_buf;
 
 	/*
 	 * Now copy the salvaged frame to the last mbuf and fake up
@@ -1273,22 +1488,29 @@ static void pn_rxeof(sc)
 
 	while(!((rxstat = sc->pn_cdata.pn_rx_head->pn_ptr->pn_status) &
 							PN_RXSTAT_OWN)) {
+#ifdef __alpha__
+		struct mbuf		*m0 = NULL;
+#endif
+
 		cur_rx = sc->pn_cdata.pn_rx_head;
 		sc->pn_cdata.pn_rx_head = cur_rx->pn_nextdesc;
 
-#ifdef PN_PROMISC_BUG_WAR
+#ifdef PN_RX_BUG_WAR
 		/*
-		 * XXX The PNIC seems to have a bug that manifests
-		 * when the promiscuous mode bit is set: we have to
-		 * watch for it and work around it.
+		 * XXX The PNIC has a nasty receiver bug that manifests
+		 * under certain conditions (sometimes only in promiscuous
+		 * mode, sometimes only on slow machines even when not in
+		 * promiscuous mode). We have to keep an eye out for the
+		 * failure condition and employ a workaround to recover
+		 * any mangled frames.
 		 */
-		if (sc->pn_promisc_war && ifp->if_flags & IFF_PROMISC) {
+		if (sc->pn_rx_war) {
 			if ((rxstat & PN_WHOLEFRAME) != PN_WHOLEFRAME) {
 				if (rxstat & PN_RXSTAT_FIRSTFRAG)
-					sc->pn_promisc_bug_save = cur_rx;
+					sc->pn_rx_bug_save = cur_rx;
 				if ((rxstat & PN_RXSTAT_LASTFRAG) == 0)
 					continue;
-				pn_promisc_bug_war(sc, cur_rx);
+				pn_rx_bug_war(sc, cur_rx);
 				rxstat = cur_rx->pn_ptr->pn_status;
 			}
 		}
@@ -1332,10 +1554,53 @@ static void pn_rxeof(sc)
 			continue;
 		}
 
+#ifdef __alpha__
+		/*
+		 * Grrrr! On the alpha platform, the start of the
+		 * packet data must be longword aligned so that ip_input()
+		 * doesn't perform any unaligned accesses when it tries
+		 * to fiddle with the IP header. But the PNIC is stupid
+		 * and wants RX buffers to start on longword boundaries.
+		 * So we can't just shift the DMA address over a few
+		 * bytes to alter the payload alignment. Instead, we
+		 * have to chop out ethernet and IP header parts of
+		 * the packet and place then in a separate mbuf with
+		 * the alignment fixed up properly.
+		 *
+		 * As if this chip wasn't broken enough already.
+		 */
+		MGETHDR(m0, M_DONTWAIT, MT_DATA);
+		if (m0 == NULL) {
+			ifp->if_ierrors++;
+			cur_rx->pn_ptr->pn_status = PN_RXSTAT;
+			cur_rx->pn_ptr->pn_ctl = PN_RXCTL_RLINK | PN_RXLEN;
+			bzero((char *)mtod(cur_rx->pn_mbuf, char *), MCLBYTES);
+			continue;
+		}
+
+		m0->m_data += 2;
+		if (total_len <= (MHLEN - 2)) {
+			bcopy(mtod(m, caddr_t), mtod(m0, caddr_t), total_len);
+			m_freem(m);
+			m = m0;
+			m->m_pkthdr.len = m->m_len = total_len;
+		} else {
+			bcopy(mtod(m, caddr_t), mtod(m0, caddr_t), (MHLEN - 2));
+			m->m_len = total_len - (MHLEN - 2);
+			m->m_data += (MHLEN - 2);
+			m0->m_next = m;
+			m0->m_len = (MHLEN - 2);
+			m = m0;
+			m->m_pkthdr.len = total_len;
+		}
+#else
+		m->m_pkthdr.len = m->m_len = total_len;
+#endif
+
 		ifp->if_ipackets++;
 		eh = mtod(m, struct ether_header *);
 		m->m_pkthdr.rcvif = ifp;
-		m->m_pkthdr.len = m->m_len = total_len;
+
 #if NBPFILTER > 0
 		/*
 		 * Handle BPF listeners. Let the BPF user see the packet.
@@ -1398,7 +1663,7 @@ static void pn_txeof(sc)
 		cur_tx = sc->pn_cdata.pn_tx_head;
 		txstat = PN_TXSTATUS(cur_tx);
 
-		if ((txstat & PN_TXSTAT_OWN) || txstat == PN_UNSENT)
+		if (txstat & PN_TXSTAT_OWN)
 			break;
 
 		if (txstat & PN_TXSTAT_ERRSUM) {
@@ -1443,13 +1708,11 @@ static void pn_txeoc(sc)
 	if (sc->pn_cdata.pn_tx_head == NULL) {
 		ifp->if_flags &= ~IFF_OACTIVE;
 		sc->pn_cdata.pn_tx_tail = NULL;
-		if (sc->pn_want_auto)
-			pn_autoneg_mii(sc, PN_FLAG_SCHEDDELAY, 1);
-	} else {
-		if (PN_TXOWN(sc->pn_cdata.pn_tx_head) == PN_UNSENT) {
-			PN_TXOWN(sc->pn_cdata.pn_tx_head) = PN_TXSTAT_OWN;
-			ifp->if_timer = 5;
-			CSR_WRITE_4(sc, PN_TXSTART, 0xFFFFFFFF);
+		if (sc->pn_want_auto) {
+			if (sc->pn_pinfo == NULL)
+				pn_autoneg(sc, PN_FLAG_SCHEDDELAY, 1);
+			else
+				pn_autoneg_mii(sc, PN_FLAG_SCHEDDELAY, 1);
 		}
 	}
 
@@ -1628,7 +1891,7 @@ static int pn_encap(sc, c, m_head)
 
 	c->pn_mbuf = m_head;
 	c->pn_lastdesc = frag - 1;
-	PN_TXCTL(c) |= PN_TXCTL_LASTFRAG;
+	PN_TXCTL(c) |= PN_TXCTL_LASTFRAG|PN_TXCTL_FINT;
 	PN_TXNEXT(c) = vtophys(&c->pn_nextdesc->pn_ptr->pn_frag[0]);
 
 	return(0);
@@ -1693,6 +1956,8 @@ static void pn_start(ifp)
 			bpf_mtap(ifp->if_bpf, cur_tx->pn_mbuf);
 #endif
 #endif
+		PN_TXOWN(cur_tx) = PN_TXSTAT_OWN;
+		CSR_WRITE_4(sc, PN_TXSTART, 0xFFFFFFFF);
 	}
 
 	/*
@@ -1701,23 +1966,10 @@ static void pn_start(ifp)
 	if (cur_tx == NULL)
 		return;
 
-	/*
-	 * Place the request for the upload interrupt
-	 * in the last descriptor in the chain. This way, if
-	 * we're chaining several packets at once, we'll only
-	 * get an interupt once for the whole chain rather than
-	 * once for each packet.
-	 */
-	PN_TXCTL(cur_tx) |= PN_TXCTL_FINT;
 	sc->pn_cdata.pn_tx_tail = cur_tx;
 
-	if (sc->pn_cdata.pn_tx_head == NULL) {
+	if (sc->pn_cdata.pn_tx_head == NULL)
 		sc->pn_cdata.pn_tx_head = start_tx;
-		PN_TXOWN(start_tx) = PN_TXSTAT_OWN;
-		CSR_WRITE_4(sc, PN_TXSTART, 0xFFFFFFFF);
-	} else {
-		PN_TXOWN(start_tx) = PN_UNSENT;
-	}
 
 	/*
 	 * Set a timeout in case the chip goes out to lunch.
@@ -1752,7 +2004,23 @@ static void pn_init(xsc)
 	/*
 	 * Set cache alignment and burst length.
 	 */
-	CSR_WRITE_4(sc, PN_BUSCTL, PN_BUSCTL_CONFIG);
+	CSR_WRITE_4(sc, PN_BUSCTL, PN_BUSCTL_MUSTBEONE|PN_BUSCTL_ARBITRATION);
+	PN_SETBIT(sc, PN_BUSCTL, PN_BURSTLEN_16LONG);
+	switch(sc->pn_cachesize) {
+	case 32:
+		PN_SETBIT(sc, PN_BUSCTL, PN_CACHEALIGN_32LONG);
+		break;
+	case 16:
+		PN_SETBIT(sc, PN_BUSCTL, PN_CACHEALIGN_16LONG);
+		break;
+	case 8:
+		PN_SETBIT(sc, PN_BUSCTL, PN_CACHEALIGN_8LONG);
+		break;
+	case 0:
+	default:
+		PN_SETBIT(sc, PN_BUSCTL, PN_CACHEALIGN_NONE);
+		break;
+	}
 
 	PN_CLRBIT(sc, PN_NETCFG, PN_NETCFG_TX_IMMEDIATE);
 	PN_CLRBIT(sc, PN_NETCFG, PN_NETCFG_NO_RXCRC);
@@ -1763,12 +2031,15 @@ static void pn_init(xsc)
 	PN_CLRBIT(sc, PN_NETCFG, PN_NETCFG_TX_THRESH);
 	PN_SETBIT(sc, PN_NETCFG, PN_TXTHRESH_72BYTES);
 
-	pn_setcfg(sc, pn_phy_readreg(sc, PHY_BMCR));
-
-	if (sc->pn_pinfo != NULL) {
+	if (sc->pn_pinfo == NULL) {
+		PN_CLRBIT(sc, PN_NETCFG, PN_NETCFG_MIIENB);
+		PN_SETBIT(sc, PN_NETCFG, PN_NETCFG_TX_BACKOFF);
+	} else {
 		PN_SETBIT(sc, PN_NETCFG, PN_NETCFG_MIIENB);
 		PN_SETBIT(sc, PN_ENDEC, PN_ENDEC_JABBERDIS);
 	}
+
+	pn_setcfg(sc, sc->ifmedia.ifm_media);
 
 	/* Init circular RX list. */
 	if (pn_list_rx_init(sc) == ENOBUFS) {
@@ -1831,10 +2102,17 @@ static int pn_ifmedia_upd(ifp)
 	if (IFM_TYPE(ifm->ifm_media) != IFM_ETHER)
 		return(EINVAL);
 
-	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_AUTO)
-		pn_autoneg_mii(sc, PN_FLAG_SCHEDDELAY, 1);
-	else
-		pn_setmode_mii(sc, ifm->ifm_media);
+	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_AUTO) {
+		if (sc->pn_pinfo == NULL)
+			pn_autoneg(sc, PN_FLAG_SCHEDDELAY, 1);
+		else
+			pn_autoneg_mii(sc, PN_FLAG_SCHEDDELAY, 1);
+	} else {
+		if (sc->pn_pinfo == NULL)
+			pn_setmode(sc, ifm->ifm_media);
+		else
+			pn_setmode_mii(sc, ifm->ifm_media);
+	}
 
 	return(0);
 }
@@ -1852,6 +2130,18 @@ static void pn_ifmedia_sts(ifp, ifmr)
 	sc = ifp->if_softc;
 
 	ifmr->ifm_active = IFM_ETHER;
+
+	if (sc->pn_pinfo == NULL) {
+		if (CSR_READ_4(sc, PN_NETCFG) & PN_NETCFG_SPEEDSEL)
+			ifmr->ifm_active = IFM_ETHER|IFM_10_T;
+		else
+			ifmr->ifm_active = IFM_ETHER|IFM_100_TX;
+		if (CSR_READ_4(sc, PN_NETCFG) & PN_NETCFG_FULLDUPLEX)
+			ifmr->ifm_active |= IFM_FDX;
+		else
+			ifmr->ifm_active |= IFM_HDX;
+		return;
+	}
 
 	if (!(pn_phy_readreg(sc, PHY_BMCR) & PHY_BMCR_AUTONEGENBL)) {
 		if (pn_phy_readreg(sc, PHY_BMCR) & PHY_BMCR_SPEEDSEL)
@@ -1967,7 +2257,10 @@ static void pn_watchdog(ifp)
 	sc = ifp->if_softc;
 
 	if (sc->pn_autoneg) {
-		pn_autoneg_mii(sc, PN_FLAG_DELAYTIMEO, 1);
+		if (sc->pn_pinfo == NULL)
+			pn_autoneg(sc, PN_FLAG_DELAYTIMEO, 1);
+		else
+			pn_autoneg_mii(sc, PN_FLAG_DELAYTIMEO, 1);
 		return;
 	}
 
@@ -2058,7 +2351,7 @@ static struct pci_device pn_device = {
 	&pn_count,
 	NULL
 };
-DATA_SET(pcidevice_set, pn_device);
+COMPAT_PCI_DRIVER(pn, pn_device);
 #endif /* __FreeBSD__ */
 
 #ifdef __OpenBSD__
@@ -2099,6 +2392,9 @@ pn_attach(parent, self, aux)
 	int s, i, media = IFM_ETHER|IFM_100_TX|IFM_FDX;
 	u_int round;
 	caddr_t roundptr;
+#ifdef PN_RX_BUG_WAR
+	u_int32_t revision = 0;
+#endif
 
 	s = splimp();
 
@@ -2159,6 +2455,9 @@ pn_attach(parent, self, aux)
 	}
 	printf(": %s", intrstr);
 
+	sc->pn_cachesize = pci_conf_read(pa->pa_pc, pa->pa_tag,
+	    PN_PCI_CACHELEN) & 0xFF;
+
 	pn_reset(sc);
 
 	pn_read_eeprom(sc, (caddr_t)&sc->arpcom.ac_enaddr, 0, 3, 1);
@@ -2171,7 +2470,12 @@ pn_attach(parent, self, aux)
 		goto fail;
 	}
 	sc->pn_ldata = (struct pn_list_data *)sc->pn_ldata_ptr;
-	round = (unsigned int)sc->pn_ldata_ptr & 0xf;
+#if defined(__i386__)
+	round = (u_int32_t)sc->pn_ldata_ptr & 0xf;
+#elif defined(__alpha__)
+	round = (u_int64_t)sc->pn_ldata_ptr & 0xf;
+#endif
+	
 	roundptr = sc->pn_ldata_ptr;
 	for (i = 0; i < 8; i++) {
 		if (round % 8) {
@@ -2184,6 +2488,20 @@ pn_attach(parent, self, aux)
 	sc->pn_ldata = (struct pn_list_data *)roundptr;
 	bzero(sc->pn_ldata, sizeof(struct pn_list_data));
 
+	revision = pci_conf_read(pa->pa_pc, pa->pa_tag, PN_PCI_REVISION)
+	    & 0xFF;
+	if (revision == PN_169B_REV || revision == PN_169_REV ||
+	    (revision & 0xF0) == PN_168_REV) {
+		sc->pn_rx_war = 1;
+		sc->pn_rx_buf = malloc(PN_RXLEN * 5, M_DEVBUF, M_NOWAIT);
+		if (sc->pn_rx_buf == NULL) {
+			printf("%s: no memory for workaround buffer\n",
+			    sc->sc_dev.dv_xname);
+			goto fail;
+		}
+	} else
+		sc->pn_rx_war = 0;
+
 	ifp = &sc->arpcom.ac_if;
 	ifp->if_softc = sc;
 	ifp->if_mtu = ETHERMTU;
@@ -2195,6 +2513,8 @@ pn_attach(parent, self, aux)
 	ifp->if_baudrate = 10000000;
 	ifp->if_snd.ifq_maxlen = PN_TX_LIST_CNT - 1;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+
+	ifmedia_init(&sc->ifmedia, 0, pn_ifmedia_upd, pn_ifmedia_sts);
 
 	for (i = PN_PHYADDR_MIN; i < PN_PHYADDR_MAX + 1; i++) {
 		sc->pn_phy_addr = i;
@@ -2218,15 +2538,22 @@ pn_attach(parent, self, aux)
 		}
 		if (sc->pn_pinfo == NULL)
 			sc->pn_pinfo = &pn_phys[PHY_UNKNOWN];
-	}
-	else {
-		printf("%s: MII without any phy!\n", sc->sc_dev.dv_xname);
-		goto fail;
+		pn_getmode_mii(sc);
+		pn_autoneg_mii(sc, PN_FLAG_FORCEDELAY, 1);
+	} else {
+		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_T, 0, NULL);
+		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_T|IFM_HDX, 0, NULL);
+		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_T|IFM_FDX, 0, NULL);
+		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_100_TX, 0, NULL);
+		ifmedia_add(&sc->ifmedia,
+                    IFM_ETHER|IFM_100_TX|IFM_HDX, 0, NULL);
+		ifmedia_add(&sc->ifmedia,
+                    IFM_ETHER|IFM_100_TX|IFM_FDX, 0, NULL);
+		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_100_T4, 0, NULL);
+		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_AUTO, 0, NULL);
+		pn_autoneg(sc, PN_FLAG_FORCEDELAY, 1);
 	}
 
-	ifmedia_init(&sc->ifmedia, 0, pn_ifmedia_upd, pn_ifmedia_sts);
-	pn_getmode_mii(sc);
-	pn_autoneg_mii(sc, PN_FLAG_FORCEDELAY, 1);
 	media = sc->ifmedia.ifm_media;
 	pn_stop(sc);
 	ifmedia_set(&sc->ifmedia, media);
