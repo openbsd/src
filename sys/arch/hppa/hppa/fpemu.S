@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpemu.S,v 1.2 2000/01/11 10:14:22 mickey Exp $	*/
+/*	$OpenBSD: fpemu.S,v 1.3 2001/03/29 00:05:19 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -73,13 +73,13 @@
 	.import	__CONCAT(__CONCAT(epf,_),name), code	! \
 	.word	__CONCAT(__CONCAT(ep0,_),name),	__CONCAT(__CONCAT(ep1,_),name),	__CONCAT(__CONCAT(ep2,_),name), __CONCAT(__CONCAT(ep3,_),name), __CONCAT(__CONCAT(ep4,_),name), __CONCAT(__CONCAT(ep5,_),name), __CONCAT(__CONCAT(ep6,_),name), __CONCAT(__CONCAT(ep7,_),name), __CONCAT(__CONCAT(ep8,_),name), __CONCAT(__CONCAT(ep9,_),name), __CONCAT(__CONCAT(epa,_),name), __CONCAT(__CONCAT(epb,_),name), __CONCAT(__CONCAT(epc,_),name), __CONCAT(__CONCAT(epd,_),name), __CONCAT(__CONCAT(epe,_),name), __CONCAT(__CONCAT(epf,_),name)
 
-	.space	$PRIVATE$
-	.subspa	$BSS$
+	.section .bss
 
 	.export	$fpemu_stack, data
 $fpemu_stack
-	.block	NBPG
+	.comm	NBPG
 
+	.text
 /*
  * fpu_emulate(iir)
  */
