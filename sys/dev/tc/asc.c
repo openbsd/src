@@ -1,3 +1,4 @@
+/*	$OpenBSD: asc.c,v 1.13 1997/07/08 05:29:11 mhitch Exp $	*/
 /*	$NetBSD: asc.c,v 1.31 1996/10/13 01:38:35 christos Exp $	*/
 
 /*-
@@ -972,12 +973,41 @@ again:
 			readback(regs->asc_cmd);
 			goto done;
 
+		case SCSI_PHASE_COMMAND:
+			/*
+			 * This seems to occur after the command is sent
+			 * following sync negotiation.  The device still
+			 * wants more command data.  The fifo appears to
+			 * to still have the unsent data - but the 53C94
+			 * signaled TC.  If the fifo still contains data,
+			 * transfer it, otherwise do a transfer pad.  The
+			 * target should then continue through the rest of
+			 * the phases and complete normally.
+			 */
+			printf("asc_intr: tgt %d command phase TC zero",
+			    asc->target);
+			if ((regs->asc_flags & ASC_FLAGS_FIFO_CNT) != 0) {
+				printf(" with non-empty fifo %d\n",
+				    regs->asc_flags & ASC_FLAGS_FIFO_CNT);
+				regs->asc_cmd = ASC_CMD_XFER_INFO;
+			} else {
+				printf("; padding command\n");
+				ASC_TC_PUT(regs, 0xff);
+				regs->asc_cmd = ASC_CMD_XFER_PAD | ASC_CMD_DMA;
+			}
+			goto done;
+
 		default:
+			printf("asc_intr: target %d, unknown phase 0x%x\n", 
+			  	asc->target, status);
 			goto abort;
 		}
 
-		if (state->script)
+		if (state->script) {
+			printf("asc_intr: target %d, incomplete script %p\n", 
+			  	asc->target, state->script);
 			goto abort;
+		}
 
 		/* check for DMA in progress */
 		ASC_TC_GET(regs, len);
@@ -1187,8 +1217,12 @@ again:
 		unsigned fifo, id, msg;
 
 		fifo = regs->asc_flags & ASC_FLAGS_FIFO_CNT;
-		if (fifo < 2)
+		if (fifo < 2) {
+			printf("asc_intr: target %d, reselect, fifo %d too small for msg\n", 
+			  	asc->target, fifo);
+
 			goto abort;
+		}
 		/* read unencoded SCSI ID and convert to binary */
 		msg = regs->asc_fifo & asc->myidmask;
 		for (id = 0; (msg & 1) == 0; id++)
@@ -1206,8 +1240,11 @@ again:
 		state = &asc->st[id];
 		asc->script = state->script;
 		state->script = (script_t *)0;
-		if (!(state->flags & DISCONN))
+		if (!(state->flags & DISCONN)) {
+			printf("asc_intr: reselect tgt %d, flags 0x%x not disconnected\n",
+			       asc->target, state->flags);
 			goto abort;
+		}
 		state->flags &= ~DISCONN;
 		regs->asc_syn_p = state->sync_period;
 		regs->asc_syn_o = state->sync_offset;
@@ -1217,9 +1254,10 @@ again:
 	}
 
 	/* check if we are being selected as a target */
-	if (ir & (ASC_INT_SEL | ASC_INT_SEL_ATN))
+	if (ir & (ASC_INT_SEL | ASC_INT_SEL_ATN)) {
+			printf("asc_intr: host adaptor selected as target\n");
 		goto abort;
-
+	}
 	/*
 	 * 'ir' must be just ASC_INT_FC.
 	 * This is normal if canceling an ASC_ENABLE_SEL.
@@ -1863,8 +1901,11 @@ asc_msg_in(asc, status, ss, ir)
 			state->msglen = msg;
 			return (1);
 		}
-		if (state->msgcnt >= state->msglen)
+		if (state->msgcnt >= state->msglen) {
+		  	printf("asc: msg_in too big, msgcnt %d msglen %d\n",
+			       state->msgcnt, state->msglen);
 			goto abort;
+		}
 		state->msg_in[state->msgcnt++] = msg;
 
 		/* did we just read the last byte of the message? */
@@ -1988,8 +2029,11 @@ asc_msg_in(asc, status, ss, ir)
 		break;
 
 	case SCSI_DISCONNECT:
-		if (state->flags & DISCONN)
+		if (state->flags & DISCONN) {
+			printf("asc: disconnected target %d disconnecting again\n",
+			    asc->target);
 			goto abort;
+		}
 		state->flags |= DISCONN;
 		regs->asc_cmd = ASC_CMD_MSG_ACPT;
 		readback(regs->asc_cmd);
@@ -2011,6 +2055,8 @@ done:
 	regs->asc_cmd = ASC_CMD_MSG_ACPT;
 	readback(regs->asc_cmd);
 	if (!state->script) {
+	  	printf("asc_msg_in: target %d, no script?\n", asc->target);
+
 	abort:
 #ifdef DEBUG
 		asc_DumpLog("asc_msg_in");
@@ -2028,12 +2074,11 @@ asc_disconnect(asc, status, ss, ir)
 	register asc_softc_t asc;
 	register int status, ss, ir;
 {
-#if  MACH_DDIAGNOSTIC
+	int i;
+#ifdef DIAGNOSTIC
 	/* later Mach driver checks for late asych disconnect here. */
 	register State *state = &asc->st[asc->target];
-#endif
 
-#ifdef DIAGNOSTIC
 	if (!(state->flags & DISCONN)) {
 		printf("asc_disconnect: device %d: DISCONN not set!\n",
 			asc->target);
@@ -2041,6 +2086,18 @@ asc_disconnect(asc, status, ss, ir)
 #endif /*DIAGNOSTIC*/
 	asc->target = -1;
 	asc->state = ASC_STATE_RESEL;
+	/*
+	 * Look for another device that is ready.
+	 * May want to keep last one started and increment for fairness
+	 * rather than always starting at zero.
+	 */
+	for (i = 0; i < ASC_NCMD; i++) {
+		/* don't restart a disconnected command */
+		if (!asc->cmd[i] || asc->st[i].flags & DISCONN)
+			continue;
+		asc_startcmd(asc, i);
+		return (0);
+	}
 	return (1);
 }
 
