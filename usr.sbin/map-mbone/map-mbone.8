@@ -1,91 +1,97 @@
 .\"	$NetBSD: map-mbone.8,v 1.2 1995/10/03 23:16:53 thorpej Exp $
 .\"
-.TH MAP-MBONE 8
-.UC 5
-.SH NAME
-map-mbone \- Multicast connection mapper
-.SH SYNOPSIS
-.B /usr/sbin/map-mbone
-[
-.B \-d
-.I debug_level
-] [
-.B \-f
-] [
-.B \-g
-] [
-.B \-n
-] [
-.B \-r
-.I retry_count
-] [
-.B \-t
-.I timeout_count
-] [
-.B starting_router
-]
-.SH DESCRIPTION
-.I map-mbone
+.Dd 13 June, 1999
+.Os
+.Dt MAP-MBONE 8
+.Sh NAME
+.Nm map-mbone
+.Nd Multicast connection mapper
+.Sh SYNOPSIS
+.Nm map-mbone
+.Op Fl d Ar level
+.Op Fl fgn
+.Op Fl r Ar count
+.Op Fl t Ar seconds
+.Op Ar starting_router
+.Sh DESCRIPTION
+.Nm
 attempts to display all multicast routers that are reachable from the multicast
-.I starting_router.
-If not specified on the command line, the default multicast
-.I starting_router
-is the localhost.
-.PP
-.I map-mbone
-traverses neighboring multicast routers by sending the ASK_NEIGHBORS IGMP
-message to the multicast starting_router. If this multicast router responds,
-the version number and a list of their neighboring multicast router addresses is
-part of that response. If the responding router has recent multicast version
-number, then
-.I map-mbone
-requests additional information such as metrics, thresholds, and flags from the
-multicast router. For each new occurrence of neighboring multicast router in
-the reply and provided the flooding option has been selected, then
-.I map-mbone
-asks each of this multicast router for a list of neighbors. This search
-for unique routers will continue until no new neighboring multicast routers
-are reported.
-.br
-.ne 5
-.SH INVOCATION
-.PP
-"\-d" option sets the debug level. When the debug level is greater than the
-default value of 0, addition debugging messages are printed. Regardless of
-the debug level, an error condition, will always write an error message and will
-cause
-.I map-mbone
-to terminate.
-Non-zero debug levels have the following effects:
-.IP "level 1"
-packet warnings are printed to stderr.
-.IP "level 2"
-all level 1 messages plus notifications down networks are printed to stderr.
-.IP "level 3"
-all level 2 messages plus notifications of all packet
-timeouts are printed to stderr.
-.PP
-"\-f" option sets flooding option. Flooding allows the recursive search
-of neighboring multicast routers and is enable by default when starting_router
-is not used.
-.PP
-"\-g" option sets graphing in GraphEd format.
-.PP
-"\-n" option disables the DNS lookup for the multicast  routers names.
-.PP
-"\-r retry_count" sets the neighbor query retry limit. Default is 1 retry.
-.PP
-"\-t timeout_count" sets the number of seconds to wait for a neighbor query
-reply before retrying. Default timeout is 2 seconds.
-.PP
-.SH IMPORTANT NOTE
-.I map-mbone
+router
+.Ar starting_router .
+If not specified on the command line,
+.Ar starting_router
+is
+.Sq localhost .
+.Pp
+.Nm
+sends an
+.Dv ASK_NEIGHBORS
+.Tn IGMP
+message to
+.Ar starting_router .
+A response contains the
+multicast version number
+of
+.Ar starting_router
+and the addresses of
+all its neighboring multicast routers.
+If the multicast version number is recent, then
+.Nm
+requests additional information such as metrics, thresholds, and flags.
+
+If a recursive search has been requested (see
+.Fl f ) ,
+.Nm
+repeats the above operation for each new
+multicast router in the list of neighbors and
+continues the process until no new multicast routers are reported.
+.Pp
+.Nm
 must be run as root.
-.PP
-.SH SEE ALSO
-.BR mrouted (8) ,
-.BR mrinfo (8) ,
-.BR mtrace (8)
-.PP
-.SH AUTHOR
+.Pp
+.Em Options
+.Bl -tag -width "-t seconds"
+.It Fl d Ar level
+sets the debug level to
+.Ar level .
+When the debug level is greater than
+0, addition debugging messages are printed to stderr. Regardless of
+the debug level, an error condition will always write an error message and will
+cause
+.Nm
+to terminate.
+Non-zero debug levels are
+.Bl -tag -width "1: " -offset indent
+.It 1 :
+print packet warnings, plus level 0 messages.
+.It 2 :
+print notifications of down networks, plus level 1 messages.
+.It 3 :
+print notifications of all packet timeouts, plus level 2 messages.
+.El
+.Pp
+Default is 0.
+.It Fl f
+causes a recursive (flooding) search. If no
+.Ar starting_router
+is specified, a recursive search is always performed.
+.It Fl g
+sets graphing format to GraphEd format.
+.It Fl n
+disables DNS lookup for the names of the multicast routers.
+.It Fl r Ar count
+sets the neighbor query retry limit to
+.Ar count .
+Default is 1.
+.It Fl t Ar seconds
+sets the number of seconds to wait for a neighbor query
+reply before retrying to
+.Ar seconds .
+Default is 2.
+.Sh SEE ALSO
+.Xr mrouted 8 ,
+.Xr mrinfo 8 ,
+.Xr mtrace 8
+.Pp
+.Sh AUTHOR
 Pavel Curtis

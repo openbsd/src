@@ -26,34 +26,53 @@
 .\"this software for any purpose.  It is provided "as is" without express
 .\"or implied warranty.
 .\"
-.\"	$OpenBSD: krb.conf.5,v 1.6 1999/02/27 08:49:49 deraadt Exp $
-.TH KRB.CONF 5 "Kerberos Version 4.0" "MIT Project Athena"
-.SH NAME
-krb.conf \- Kerberos configuration file
-.SH DESCRIPTION
-.I krb.conf
+.\"	$OpenBSD: krb.conf.5,v 1.7 1999/07/04 15:34:52 aaron Exp $
+.Dd 15 June, 1999
+.Os
+.Dt KRB.CONF 5
+.Sh NAME
+.Nm krb.conf
+.Nd Kerberos configuration file
+.Sh DESCRIPTION
+.Nm
 contains configuration information describing the Kerberos realm and the
 Kerberos key distribution center (KDC) servers for known realms.
-.PP
-.I krb.conf
-contains the name of the local realm in the first
-line, followed by lines indicating realm/host
-entries.  The first token is a realm name, and the second is the hostname
-of a host running a KDC for that realm.
-The words "admin server" following the hostname indicate that 
-the host also provides an administrative database server.
-
-A hash sign (#) as a first character of the krb.conf file disables kerberos
-authentication on the system.
-
-For example:
-.nf
-.in +1i
+.Pp
+The first line of
+.Nm
+contains the name of the local realm. If the first character in the first line
+is a hash sign
+.Pf ( Ql # ) ,
+then Kerberos authentication is disabled.
+.Pp
+Subsequent lines are of the form
+.Bd -ragged -offset indent
+.Fa realm
+.Fa KDC_server
+.Op admin server
+.Ed
+.Pp
+where
+.Fa realm
+is a Kerberos realm name and
+.Fa KDC_server
+is the name of a host running a KDC for
+.Fa realm .
+The words
+.Dq admin server
+following
+.Fa KDC_server
+indicate that the host also provides an administrative database server.
+.Pp
+.Sh EXAMPLES
+A krb.conf file for a host in the ATHENA.MIT.EDU realm might look like:
+.Bd -literal -offset indent
 ATHENA.MIT.EDU
 ATHENA.MIT.EDU kerberos-1.mit.edu admin server
 ATHENA.MIT.EDU kerberos-2.mit.edu
 LCS.MIT.EDU kerberos.lcs.mit.edu admin server
-.in -1i
-.SH SEE ALSO
-krb.realms(5), krb_get_krbhst(3), krb_get_lrealm(3)
-
+.Ed
+.Sh SEE ALSO
+.Xr krb_get_krbhst 3 ,
+.Xr krb_get_lrealm 3 ,
+.Xr krb.realms 5

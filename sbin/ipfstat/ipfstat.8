@@ -1,83 +1,104 @@
-.\"     $OpenBSD: ipfstat.8,v 1.11 1999/02/10 22:12:53 deraadt Exp $
-.TH ipfstat 8
-.SH NAME
-ipfstat \- reports on packet filter statistics and filter list
-.SH SYNOPSIS
-.B ipfstat
-[
-.B \-aAfhIinosv
-] [
-.B \-d
-<device>
-]
-.SH DESCRIPTION
-.PP
-\fBipfstat\fP examines /dev/kmem using the symbols \fB_fr_flags\fP,
-\fB_frstats\fP, \fB_filterin\fP, and \fB_filterout\fP.
-To run and work, it needs to be able to read both /dev/kmem and the
-kernel itself.
-.PP
-The default behaviour of \fBipfstat\fP
-is to retrieve and display the accumulated statistics which have been
-accumulated over time as the kernel has put packets through the filter.
-.SH OPTIONS
-.TP
-.B \-a
-Display the accounting filter list and show bytes counted against each rule.
-.TP
-.B \-A
-Display packet authentication statistics.
-.TP
-.BR \-d \0<device>
-Use a device other than \fB/dev/ipl\fP for interfacing with the kernel.
-.TP
-.B \-f
-Show fragment state information (statistics) and held state information (in
-the kernel) if any is present.
-.TP
-.B \-h
-Show per-rule the number of times each one scores a "hit".  For use in
-combination with \fB\-i\fP.
-.TP
-.B \-i
-Display the filter list used for the input side of the kernel IP processing.
-.TP
-.B \-I
-Swap between retrieving "inactive"/"active" filter list details.  For use
-in combination with \fB\-i\fP.
-.TP
-.B \-n
-Show the "rule number" for each rule as it is printed.
-.TP
-.B \-o
-Display the filter list used for the output side of the kernel IP processing.
-.TP
-.B \-s
-Show packet/flow state information (statistics) and held state information (in
-the kernel) if any is present.
-.TP
-.B \-v
-Turn verbose mode on.  Displays more debugging information.
-.SH SYNOPSIS
-The role of \fBipfstat\fP is to display current kernel statistics gathered
-as a result of applying the filters in place (if any) to packets going in and
-out of the kernel.  This is the default operation when no command line
-parameters are present.
-.PP
-When supplied with either \fB\-i\fP or \fB\-o\fP, it will retrieve and display
+.\"     $OpenBSD: ipfstat.8,v 1.12 1999/07/04 15:34:52 aaron Exp $
+.Dd 13 June, 1999
+.Os
+.Dt ipfstat 8
+.Sh NAME
+.Nm ipfstat
+.Nd reports on packet filter statistics and filter lists
+.Sh SYNOPSIS
+.Nm ipfstat
+.Op Fl aAfhIinosv
+.Op Fl d Ar device
+.Sh DESCRIPTION
+By default
+.Nm
+displays current kernel statistics gathered
+as a result of applying the filters in place (if any) to packets going through
+the kernel.
+.Pp
+When supplied with either
+.Fl i
+or
+.Fl o ,
+it will retrieve and display
 the appropriate list of filter rules currently installed and in use by the
 kernel.
-.SH FILES
-/dev/kmem
+.Pp
+.Nm
+examines
+.Pa /dev/kmem
+using the symbols
+.Sy _fr_flags ,
+.Sy _frstats ,
+.Sy _filterin ,
+and
+.Sy _filterout .
+To run and work, it needs to be able to read both
+.Pa /dev/kmem
+and the kernel itself.
+.Sh OPTIONS
+.Bl -tag -width "-d device"
+.It Fl a
+Display the accounting filter list and show bytes counted against each rule. Used
+with
+.Fl i
+or
+.Fl o .
+.It Fl A
+Display packet authentication statistics.
+.It Fl d Ar device
+Use
+.Ar device
+instead of
+.Pa /dev/ipl
+for interfacing with the kernel.
+.It Fl f
+Show fragment state information (statistics) and held state information (in
+the kernel) if any is present.
+.It Fl h
+Show per-rule the number of times each one scores a
+.Sq hit .
+For use in
+combination with
+.Fl i .
+.It Fl i
+Display the filter list used for the input side of the kernel IP processing.
+.It Fl I
+Swap between retrieving
+.Sq inactive
+/
+.Sq active
+filter list details. For use in combination with
+.Fl i .
+.It Fl n
+Show the rule number for each rule as it is printed.
+.It Fl o
+Display the filter list used for the output side of the kernel IP processing.
+.It Fl s
+Show packet/flow state information (statistics) and held state information (in
+the kernel) if any is present.
+.It Fl v
+Turn verbose mode on. Displays more debugging information.
+.El
+.Sh FILES
+.Pa /dev/kmem
 .br
-/dev/ipl
+.Pa /dev/ipl
 .br
-/dev/ipstate
+.Pa /dev/ipstate
 .br
-/bsd
-.SH SEE ALSO
-ipf(8), ipftest(1), ipnat(8), ipf(4), ipl(4), ipnat(4), ipf(5), ipnat(5), ipmon(8)
-.br
+.Pa /bsd
+.Sh SEE ALSO
+.Xr ipftest 1 ,
+.Xr ipf 4 ,
+.Xr ipl 4 ,
+.Xr ipnat 4 ,
+.Xr ipf 5 ,
+.Xr ipnat 5 ,
+.Xr ipf 8 ,
+.Xr ipmon 8 ,
+.Xr ipnat 8 ,
+.Pp
 http://coombs.anu.edu.au/ipfilter/
-.SH BUGS
+.Sh BUGS
 If you find any, please send email to me at darrenr@pobox.com.

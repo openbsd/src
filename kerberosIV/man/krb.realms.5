@@ -26,36 +26,39 @@
 .\"this software for any purpose.  It is provided "as is" without express
 .\"or implied warranty.
 .\"
-.\"	$OpenBSD: krb.realms.5,v 1.5 1999/02/27 08:49:49 deraadt Exp $
-.TH KRB.REALMS 5 "Kerberos Version 4.0" "MIT Project Athena"
-.SH NAME
-krb.realms \- host to Kerberos realm translation file
-.SH DESCRIPTION
-.I krb.realms
+.\"	$OpenBSD: krb.realms.5,v 1.6 1999/07/04 15:34:52 aaron Exp $
+.Dd 15 June, 1999
+.Os
+.Dt KRB.REALMS 5
+.Sh NAME
+.Nm krb.realms
+.Nd host to Kerberos realm translation file
+.Sh DESCRIPTION
+.Nm
 provides a translation from a hostname to the Kerberos realm name for
 the services provided by that host.
-.PP
+.Pp
 Each line of the translation file is in one of the following forms
-(domain_name should be of the form .XXX.YYY, e.g. .LCS.MIT.EDU):
-.nf
-.in +5n
+.Pf ( Fa domain_name
+should be of the form .XXX.YYY, e.g. .LCS.MIT.EDU):
+.Bd -literal -offset indent
 host_name kerberos_realm
 domain_name kerberos_realm
-.in -5n
-.fi
-If a hostname exactly matches the 
-.I host_name
-field in a line of the first
-form, the corresponding realm is the realm of the host.
-If a hostname does not match any 
-.I host_name
-in the file, but its
-domain exactly matches the 
-.I domain_name
-field in a line of the second
-form, the corresponding realm is the realm of the host.
-.PP
+.Ed
+.Pp
+If a hostname exactly matches the
+.Fa host_name
+field in a line of the first form, the corresponding
+.Fa kerberos_realm
+is the realm of the host.  If a hostname does not match any
+.Fa host_name
+in the file, but its domain exactly matches the
+.Fa domain_name
+field in a line of the second form, the corresponding
+.Fa kerberos_realm
+is the realm of the host.
+.Pp
 If no translation entry applies, the host's realm is considered to be
 the hostname's domain portion converted to upper case.
-.SH SEE ALSO
-krb_realmofhost(3)
+.Sh SEE ALSO
+.Xr krb_realmofhost 3
