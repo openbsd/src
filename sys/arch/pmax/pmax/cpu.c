@@ -83,7 +83,7 @@ cpuattach(parent, dev, aux)
 static int
 cpuprint(aux, pnp)
 	void *aux;
-	char *pnp;
+	const char *pnp;
 {
 	register struct confargs *ca = aux;
 

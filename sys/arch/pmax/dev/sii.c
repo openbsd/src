@@ -88,7 +88,7 @@ struct  cfdriver sii_cd = {
 	NULL, "sii", DV_DULL
 };
 
-int	siiprint(void*, char*);
+int	siiprint(void*, const char*);
 int siiintr __P((void *sc));
 
 #ifdef USE_NEW_SCSI

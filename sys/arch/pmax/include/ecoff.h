@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecoff.h,v 1.4 1996/12/22 15:18:10 graichen Exp $	*/
+/*	$OpenBSD: ecoff.h,v 1.5 1996/12/22 15:22:21 graichen Exp $	*/
 /*	$NetBSD: ecoff.h,v 1.4 1995/06/16 02:07:33 mellon Exp $	*/
 
 /*

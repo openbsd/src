@@ -47,18 +47,16 @@
 #include <sys/vnode.h>
 
 #include "vnd.h"
-bdev_decl(vnd);
 bdev_decl(sw);
 #include "rz.h"
 bdev_decl(rz);
 #include "tz.h"
 bdev_decl(tz);
 #include "sd.h"
-bdev_decl(sd);
 #include "st.h"
-bdev_decl(st);
+#include "ss.h"
+#include "uk.h"
 #include "ccd.h"
-bdev_decl(ccd);
 
 struct bdevsw	bdevsw[] =
 {
@@ -101,29 +99,13 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 dev_t	swapdev = makedev(4, 0);
 
 
-cdev_decl(cn);
 cdev_decl(sw);
-cdev_decl(random);
-cdev_decl(ctty);
 #define	mmread	mmrw
 #define	mmwrite	mmrw
 dev_type_read(mmrw);
 cdev_decl(mm);
 #include "pty.h"
-#define ptstty ptytty
-#define ptsioctl ptyioctl
-cdev_decl(pts);
-#define ptctty ptytty
-#define ptcioctl ptyioctl
-cdev_decl(ptc);
-cdev_decl(log);
-cdev_decl(fd);
-cdev_decl(sd);
-cdev_decl(st);
-cdev_decl(vnd);
-cdev_decl(ccd);
 #include "bpfilter.h"
-cdev_decl(bpf);
 #include "dtop.h"
 cdev_decl(dtop);
 #include "dc.h"
@@ -253,6 +235,8 @@ struct cdevsw	cdevsw[] =
 	cdev_fbm_init(NFB,fb),	/* 86: frame buffer pseudo-device */
 	cdev_disk_init(NCCD,ccd),	/* 87: concatenated disk driver */
 	cdev_random_init(1,random),     /* 88: random data source */
+	cdev_uk_init(NUK,uk),           /* 98: unknown SCSI */
+	cdev_ss_init(NSS,ss),           /* 99: SCSI scanner */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

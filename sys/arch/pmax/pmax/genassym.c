@@ -1,4 +1,4 @@
-/*	$OpenBSD: genassym.c,v 1.4 1996/12/22 15:18:29 graichen Exp $	*/
+/*	$OpenBSD: genassym.c,v 1.5 1996/12/22 15:22:30 graichen Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)genassym.c	8.2 (Berkeley) 9/23/93
- *      $Id: genassym.c,v 1.4 1996/12/22 15:18:29 graichen Exp $
+ *      $Id: genassym.c,v 1.5 1996/12/22 15:22:30 graichen Exp $
  */
 
 
