@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.35 2005/01/30 20:46:20 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.36 2005/03/10 22:41:56 deraadt Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: misc.c,v 1.35 2005/01/30 20:46:20 millert Exp $";
+static char const rcsid[] = "$OpenBSD: misc.c,v 1.36 2005/03/10 22:41:56 deraadt Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the rest of the log]
@@ -752,8 +752,10 @@ open_socket(void)
 		fprintf(stderr, "%s: can't bind socket: %s\n",
 		    ProgramName, strerror(errno));
 		log_it("CRON", getpid(), "DEATH", "can't bind socket");
+		umask(omask);
 		exit(ERROR_EXIT);
 	}
+	umask(omask);
 	if (listen(sock, SOMAXCONN)) {
 		fprintf(stderr, "%s: can't listen on socket: %s\n",
 		    ProgramName, strerror(errno));
@@ -761,7 +763,6 @@ open_socket(void)
 		exit(ERROR_EXIT);
 	}
 	chmod(s_un.sun_path, 0660);
-	umask(omask);
 
 	return(sock);
 }
