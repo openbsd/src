@@ -313,8 +313,12 @@ runas_setup()
 	} else
 #endif /* HAVE_LOGIN_CAP_H */
 	{
-	    if (setgid(runas_pw->pw_gid))
-		perror("cannot set gid to runas gid");
+	    if (setgid(runas_pw->pw_gid)) {
+		if (runas_pw->pw_gid != 0)
+		    fatal("unable to set user context", 1);
+		else
+		    perror("cannot set gid to runas gid");
+	    }
 #ifdef HAVE_INITGROUPS
 	    /*
 	     * Initialize group vector unless asked not to.
