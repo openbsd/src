@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.95 2002/11/26 04:40:34 nate Exp $
+dnl	$OpenBSD: hardware,v 1.96 2002/11/28 14:40:15 grange Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PC's and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -73,10 +73,12 @@ Supported hardware {:-include-:}:
 		Intel PIIX, PIIX3, and PIIX4
 		Intel 82801 (ICH/ICH0/ICH2/ICH3/ICH4)
 		National Semiconductor PC87415
-		Promise PDC20246, PDC20262, PDC20265/7/8/8R/9, 20271/6
+		Promise PDC20246, PDC20262, PDC20265, PDC20267, PDC20268,
+		    PDC20268R, PDC20269, PDC20271, PDC20275, PDC20276, PDC20277
 		    (but the Promise RAID mode is not supported)
 		Silicon Integrated Systems 5513 (5597/5598)
-		VIA Technologies VT82C586A/B, VT82C596A/B, VT82C686A/B
+		VIA Technologies VT82C586A/B, VT82C596A/B, VT82C686A/B,
+		    VT8366, VT8233, VT8235
 		(Other PCI IDE-compliant controllers should work, but
 		 those not listed above may not be capable of DMA modes)
 	SCSI Host Adapters
