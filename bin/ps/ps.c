@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.29 2002/06/09 05:46:44 art Exp $	*/
+/*	$OpenBSD: ps.c,v 1.30 2002/06/12 03:44:35 art Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: ps.c,v 1.29 2002/06/09 05:46:44 art Exp $";
+static char rcsid[] = "$OpenBSD: ps.c,v 1.30 2002/06/12 03:44:35 art Exp $";
 #endif
 #endif /* not lint */
 
@@ -411,7 +411,6 @@ static void
 saveuser(ki)
 	KINFO *ki;
 {
-	struct pstats pstats;
 	struct usave *usp;
 
 	usp = &ki->ki_u;
