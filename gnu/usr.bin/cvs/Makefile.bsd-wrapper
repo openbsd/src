@@ -1,15 +1,16 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.39 2002/05/31 20:17:00 wcobb Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.40 2002/06/03 15:50:17 todd Exp $
 
 .include <bsd.own.mk>
 
 MAN=	man/cvs.1 man/cvs.5 man/cvsbug.8
 GNUCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}"
-CLEANFILES=	lib/getdate.c macintosh/Makefile os2/Makefile zlib/Makefile \
-		windows-NT/SCC/Makefile emx/Makefile \
+CLEANFILES=	src/version.c lib/getdate.c lib/getdate.h macintosh/Makefile
+		os2/Makefile zlib/Makefile \
+		windows-NT/SCC/Makefile emx/Makefile doc/CVSvn.texi \
                 doc/cvs.info doc/cvs.info-1 doc/cvs.info-2 doc/cvs.info-3 \
                 doc/cvs.info-4 doc/cvs.info-5 doc/cvs.info-6 doc/cvs.info-7 \
-		doc/cvs.info-8 doc/cvs.info-9 doc/cvsclient.info doc/cvsclient.info-1 \
-		doc/cvsclient.info-2 doc/cvsclient.info-3
+		doc/cvs.info-8 doc/cvs.info-9 doc/cvsclient.info \
+		doc/cvsclient.info-1 doc/cvsclient.info-2 doc/cvsclient.info-3
 
 .if (${KERBEROS:L} == "yes")
 KRB=--with-krb4=/usr --enable-encryption
