@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_atmsubr.c,v 1.8 1996/11/09 23:02:32 chuck Exp $       */
+/*      $OpenBSD: if_atmsubr.c,v 1.9 1998/03/25 23:57:36 chuck Exp $       */
 
 /*
  *
@@ -258,7 +258,7 @@ atm_input(ifp, ah, m, rxhand)
 	      m_freem(m);
               return;
 	    }
-	    etype = ATM_LLC_TYPE(alc);
+	    etype = ntohs(ATM_LLC_TYPE(alc));
 	    m_adj(m, sizeof(*alc));
 	  }
 
