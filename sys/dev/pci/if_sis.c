@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.34 2003/10/30 22:10:25 deraadt Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.35 2003/12/11 07:41:19 chris Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -967,18 +967,30 @@ void sis_attach(parent, self, aux)
 		printf("\n");
 		goto fail;
 	}
-	printf(": %s", intrstr);
 
 	sc->sis_rev = PCI_REVISION(pa->pa_class);
 
 	/* Reset the adapter. */
 	sis_reset(sc);
 
+	printf(": ");
+
 	/*
 	 * Get station address from the EEPROM.
 	 */
 	switch (PCI_VENDOR(pa->pa_id)) {
 	case PCI_VENDOR_NS:
+		sc->sis_srr = CSR_READ_4(sc, NS_SRR);
+
+		if (sc->sis_srr == NS_SRR_15C)
+			printf("DP83815C,");
+		else if (sc->sis_srr == NS_SRR_15D)
+			printf("DP83815D,");
+		else if (sc->sis_srr == NS_SRR_16A)
+			printf("DP83816A,");
+		else
+			printf("srr %x,", sc->sis_srr);
+
 		/*
 		 * Reading the MAC address out of the EEPROM on
 		 * the NatSemi chip takes a bit more work than
@@ -1047,7 +1059,8 @@ void sis_attach(parent, self, aux)
 		break;
 	}
 
-	printf(" address %s\n", ether_sprintf(sc->arpcom.ac_enaddr));
+	printf(" %s, address %s\n", intrstr,
+	    ether_sprintf(sc->arpcom.ac_enaddr));
 
 	sc->sc_dmat = pa->pa_dmat;
 
@@ -1670,7 +1683,6 @@ void sis_init(xsc)
 	struct ifnet		*ifp = &sc->arpcom.ac_if;
 	struct mii_data		*mii;
 	int			s;
-	int                     tmp;
 
 	s = splnet();
 
@@ -1717,6 +1729,27 @@ void sis_init(xsc)
 	 * Init tx descriptors.
 	 */
 	sis_list_tx_init(sc);
+
+        /*
+	 * Page 78 of the DP83815 data sheet (september 2002 version)
+	 * recommends the following register settings "for optimum
+	 * performance." for rev 15C.  The driver from NS also sets  
+	 * the PHY_CR register for later versions.
+	 */
+	 if (sc->sis_type == SIS_TYPE_83815) {
+		CSR_WRITE_4(sc, NS_PHY_PAGE, 0x0001);
+		/* DC speed = 01 */
+		CSR_WRITE_4(sc, NS_PHY_CR, 0x189C);
+		if (sc->sis_srr == NS_SRR_15C) {  
+			/* set val for c2 */
+			CSR_WRITE_4(sc, NS_PHY_TDATA, 0x0000);
+			/* load/kill c2 */ 
+			CSR_WRITE_4(sc, NS_PHY_DSPCFG, 0x5040);
+			/* rais SD off, from 4 to c */
+			CSR_WRITE_4(sc, NS_PHY_SDCFG, 0x008C);
+		}
+		CSR_WRITE_4(sc, NS_PHY_PAGE, 0);
+	}
 
 	/*
 	 * For the NatSemi chip, we have to explicitly enable the
@@ -1787,6 +1820,36 @@ void sis_init(xsc)
 		SIS_CLRBIT(sc, SIS_RX_CFG, SIS_RXCFG_RX_TXPKTS);
 	}
 
+	if (sc->sis_type == SIS_TYPE_83815 && sc->sis_srr < NS_SRR_16A &&
+	     IFM_SUBTYPE(mii->mii_media_active) == IFM_100_TX) {
+		uint32_t reg;
+
+		/*
+		 * Some DP83815s experience problems when used with short
+		 * (< 30m/100ft) Ethernet cables in 100BaseTX mode.  This
+		 * sequence adjusts the DSP's signal attenuation to fix the
+		 * problem.
+		 */
+		CSR_WRITE_4(sc, NS_PHY_PAGE, 0x0001);
+
+		reg = CSR_READ_4(sc, NS_PHY_DSPCFG);
+		/* Allow coefficient to be read */
+		CSR_WRITE_4(sc, NS_PHY_DSPCFG, (reg & 0xfff) | 0x1000);
+		DELAY(100);
+		reg = CSR_READ_4(sc, NS_PHY_TDATA);
+		if ((reg & 0x0080) == 0 ||
+		    (reg > 0xd8 && reg <= 0xff)) {
+#ifdef DEBUG
+			printf("%s: Applying short cable fix (reg=%x)\n",
+			    sc->sc_dev.dv_xname, reg);
+#endif
+			CSR_WRITE_4(sc, NS_PHY_TDATA, 0x00e8);
+			/* Adjust coefficient and prevent change */
+			SIS_SETBIT(sc, NS_PHY_DSPCFG, 0x20);
+		}
+		CSR_WRITE_4(sc, NS_PHY_PAGE, 0);
+	}
+
 	/*
 	 * Enable interrupts.
 	 */
@@ -1800,45 +1863,6 @@ void sis_init(xsc)
 #ifdef notdef
 	mii_mediachg(mii);
 #endif
-
-	/*
-	 * Page 75 of the DP83815 manual recommends the
-	 * following register settings "for optimum
-	 * performance." Note however that at least three
-	 * of the registers are listed as "reserved" in
-	 * the register map, so who knows what they do.
-	 */
-	if (sc->sis_type == SIS_TYPE_83815) {
-		CSR_WRITE_4(sc, NS_PHY_PAGE, 0x0001);
-		CSR_WRITE_4(sc, NS_PHY_CR, 0x189C);
-		CSR_WRITE_4(sc, NS_PHY_TDATA, 0x0000);
-		CSR_WRITE_4(sc, NS_PHY_DSPCFG, 0x5040);
-		CSR_WRITE_4(sc, NS_PHY_SDCFG, 0x008C);
-		
-		/* 
-		 * A small number of DP83815's will have excessive receive
-		 * errors when using short cables (<30m/100feet) in 100Base-TX
-		 * mode. This patch was taken from the National Semiconductor
-		 * linux driver and (supposedly - no mention of this in any NS
-		 * docs) modifies the dsp's signal attenuation.
-		 */
-		if (IFM_SUBTYPE(mii->mii_media_active) != IFM_10_T) {
-			CSR_WRITE_4(sc, NS_PHY_PAGE, 0x0001);
-			tmp = CSR_READ_4(sc, NS_PHY_DSPCFG);
-			tmp &= 0xFFF;
-			CSR_WRITE_4(sc, NS_PHY_DSPCFG, (tmp | 0x1000));
-			DELAY(100);
-			tmp = CSR_READ_4(sc, NS_PHY_TDATA);
-			tmp &= 0xFF;
-			if (!(tmp & 0x80) || (tmp >= 0xD8)) {
-				CSR_WRITE_4(sc, NS_PHY_TDATA, 0xE8);
-				tmp = CSR_READ_4(sc, NS_PHY_DSPCFG);
-				CSR_WRITE_4(sc, NS_PHY_DSPCFG, (tmp | 0x20));
-			} else {
-				CSR_WRITE_4(sc, NS_PHY_PAGE, 0);
-			}
-		}
-	}
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;

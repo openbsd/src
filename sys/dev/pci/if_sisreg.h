@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sisreg.h,v 1.13 2003/07/09 02:09:08 krw Exp $ */
+/*	$OpenBSD: if_sisreg.h,v 1.14 2003/12/11 07:41:19 chris Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -75,8 +75,10 @@
 #define SIS_TIMEUNIT		0xA4
 #define SIS_GPIO		0xB8
 
-/* NS DP83815 registers */
+/* NS DP83815/6 registers */
+#define NS_IHR			0x1C
 #define NS_CLKRUN		0x3C
+#define NS_SRR			0x58
 #define NS_BMCR			0x80
 #define NS_BMSR			0x84
 #define NS_PHYIDR1		0x88
@@ -97,6 +99,11 @@
 #define NS_CLKRUN_PMESTS	0x00008000
 #define NS_CLKRUN_PMEENB	0x00000100
 #define NS_CLNRUN_CLKRUN_ENB	0x00000001
+
+/* NS silicon revisions */
+#define NS_SRR_15C		0x302
+#define NS_SRR_15D		0x403
+#define NS_SRR_16A		0x505
 
 #define SIS_CSR_TX_ENABLE	0x00000001
 #define SIS_CSR_TX_DISABLE	0x00000002
@@ -415,6 +422,7 @@ struct sis_softc {
 	u_int8_t		sis_type;
 	u_int8_t		sis_rev;
 	u_int8_t		sis_link;
+	u_int			sis_srr;
 	struct sis_list_data	*sis_ldata;
 	struct sis_ring_data	sis_cdata;
 	struct timeout		sis_timeout;
