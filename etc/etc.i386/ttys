@@ -1,6 +1,6 @@
 #
 #	from: @(#)ttys	5.1 (Berkeley) 4/17/89
-#	$Id: ttys,v 1.6 1997/01/01 20:15:34 graichen Exp $
+#	$Id: ttys,v 1.7 1997/01/03 03:27:54 etheisen Exp $
 #
 # name	getty				type	status		comments
 #
@@ -11,8 +11,8 @@ ttyC0	"/usr/libexec/getty Pc"		pc3	on  secure
 # the line above and uncomment the following line
 #
 #ttyC0	"/usr/X11R6/bin/xdm -nodaemon"	xterm	on  secure
-ttyC1	"/usr/libexec/getty Pc"		vt220	on  secure
-ttyC2	"/usr/libexec/getty Pc"		vt220	on  secure
+ttyC1	"/usr/libexec/getty Pc"		vt220	off secure
+ttyC2	"/usr/libexec/getty Pc"		vt220	off secure
 ttyC3	"/usr/libexec/getty Pc"		vt220	off secure
 ttyC4	"/usr/libexec/getty Pc"		vt220	off secure
 ttyC5	"/usr/libexec/getty Pc"		vt220	off secure
