@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.74 2004/01/18 19:15:00 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.75 2004/01/22 03:07:51 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -804,6 +804,7 @@ if_change(u_short ifindex, int flags, struct if_data *ifd)
 	struct kif_kr		*kkr;
 	struct kroute_nexthop	 nh;
 	struct knexthop_node	*n;
+	u_int8_t		 reachable;
 
 	if ((kif = kif_find(ifindex)) == NULL) {
 		logit(LOG_CRIT, "interface with index %u not found",
@@ -816,13 +817,19 @@ if_change(u_short ifindex, int flags, struct if_data *ifd)
 	kif->k.media_type = ifd->ifi_type;
 	kif->k.baudrate = ifd->ifi_baudrate;
 
+	if ((reachable = (flags & IFF_UP) &&
+	    (ifd->ifi_link_state != LINK_STATE_DOWN)) == kif->k.nh_reachable)
+		return;		/* nothing changed wrt nexthop validity */
+
+	kif->k.nh_reachable = reachable;
+
 	LIST_FOREACH(kkr, &kif->kroute_l, entry) {
 		/*
 		 * we treat link_state == LINK_STATE_UNKNOWN as valid
 		 * not all interfaces have a conecpt of "link state" and/or
 		 * do not report up
 		 */
-		if ((flags & IFF_UP) && (kif->k.link_state != LINK_STATE_DOWN))
+		if (reachable)
 			kkr->kr->r.flags &= ~F_DOWN;
 		else
 			kkr->kr->r.flags |= F_DOWN;
@@ -1080,6 +1087,8 @@ fetchifs(int ifindex)
 		kif->k.link_state = ifm->ifm_data.ifi_link_state;
 		kif->k.media_type = ifm->ifm_data.ifi_type;
 		kif->k.baudrate = ifm->ifm_data.ifi_baudrate;
+		kif->k.nh_reachable = (kif->k.flags & IFF_UP) &&
+		    (ifm->ifm_data.ifi_link_state != LINK_STATE_DOWN);
 
 		if ((sa = rti_info[RTAX_IFP]) != NULL)
 			if (sa->sa_family == AF_LINK) {
