@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.52 2003/05/22 20:42:43 deraadt Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.53 2003/05/27 21:03:49 henning Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -61,7 +61,7 @@
 
 /*
  * note that stdarg.h and the ansi style va_start macro is used for both
- * ansi and traditional c complers.
+ * ansi and traditional c compilers.
  */
 #include <machine/stdarg.h>
 
