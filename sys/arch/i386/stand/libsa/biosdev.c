@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.56 2003/05/31 00:15:29 weingart Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.57 2003/05/31 15:17:43 weingart Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -47,8 +47,8 @@
 static const char *biosdisk_err(u_int);
 static int biosdisk_errno(u_int);
 
-static int CHS_rw __P((int, int, int, int, int, int, void *));
-static int EDD_rw __P((int, int, u_int64_t, u_int32_t, void *));
+static int CHS_rw (int, int, int, int, int, int, void *);
+static int EDD_rw (int, int, u_int64_t, u_int32_t, void *);
 
 extern int debug;
 
