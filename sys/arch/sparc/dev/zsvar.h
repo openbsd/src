@@ -78,8 +78,9 @@
 #define	ZRING_MAKE(t, v)	((t) | (v) << 8)
 
 struct zs_chanstate {
-	struct	zs_chanstate *cs_next;	/* linked list for zshard() */
-	volatile struct zschan *cs_zc;	/* points to hardware regs */
+	struct zs_chanstate *cs_next;	/* linked list for zshard() */
+	struct zs_softc *cs_sc;		/* points to my softc */
+	struct zschan *cs_zc;		/* points to hardware regs */
 	int	cs_unit;		/* unit number */
 	struct	tty *cs_ttyp;		/* ### */
 
@@ -153,9 +154,9 @@ struct zs_chanstate {
 #define	ZS_READ(c, r)		zs_read(c, r)
 #define	ZS_WRITE(c, r, v)	zs_write(c, r, v)
 #if defined(SUN4C) || defined(SUN4M)
-#define	ZS_DELAY()		(cputyp == CPU_SUN4 ? delay(1) : 0)
+#define	ZS_DELAY()		(cputyp == CPU_SUN4 ? delay(2) : 0)
 #else
-#define	ZS_DELAY()		delay(1)
+#define	ZS_DELAY()		delay(2)
 #endif
 #else
 #define	ZS_READ(c, r)		((c)->zc_csr = (r), (c)->zc_csr)
