@@ -1,4 +1,4 @@
-/*	$OpenBSD: test_cancel.c,v 1.2 1999/03/10 09:23:55 d Exp $	*/
+/*	$OpenBSD: test_cancel.c,v 1.3 1999/05/26 00:08:02 d Exp $	*/
 /* David Leonard <d@openbsd.org>, 1999. Public Domain. */
 
 #include <pthread.h>
@@ -70,6 +70,7 @@ c2handler(void *arg)
 	v();
 }
 
+static int message_seen = 0;
 void *
 child2fn(arg)
 	void *arg;
@@ -105,7 +106,9 @@ child2fn(arg)
 		c2_in_test = 1;
 		pthread_testcancel();
 		printf("you should see this message exactly once\n");
+		message_seen++;
 		c2_in_test = 0;
+		ASSERT(message_seen == 1);
 	}
 	PANIC("child 2");
 }
