@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.9 2004/07/06 02:49:05 deraadt Exp $ */
+/*	$OpenBSD: ehci.c,v 1.10 2004/07/06 02:49:47 deraadt Exp $ */
 /*	$NetBSD: ehci.c,v 1.54 2004/01/17 13:15:05 jdolecek Exp $	*/
 
 /*
@@ -683,7 +683,7 @@ ehci_check_intr(ehci_softc_t *sc, struct ehci_xfer *ex)
 			if (status & EHCI_QTD_HALTED)
 				goto done;
 			/* We want short packets, and it is short: it's done */
-			if (EHCI_QTD_SET_BYTES(status) != 0)
+			if (EHCI_QTD_GET_BYTES(status) != 0)
 				goto done;
 		}
 		DPRINTFN(12, ("ehci_check_intr: ex=%p std=%p still active\n",
