@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.43 2002/11/17 02:34:52 jason Exp $	*/
+/*	$OpenBSD: xl.c,v 1.44 2002/11/17 02:41:30 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -100,9 +100,6 @@
  * Since using bus master DMA is a big win, we use this driver to
  * support the PCI "boomerang" chips even though they work with the
  * "vortex" driver in order to obtain better performance.
- *
- * This driver is in the /sys/pci directory because it only supports
- * PCI-based NICs.
  */
 
 #include "bpfilter.h"
