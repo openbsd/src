@@ -296,22 +296,4 @@ _thread_init(void)
 
 	return;
 }
-
-/*
- * Use the a.out .init symbol to start the thread package going
- */
-extern void __init_threads __P((void)) asm(".init");
-void __init_threads() {
-	_thread_init();
-}
-
-/*
- * Use elf's ld.so _init symbol to start the thread package going
- */
-extern int _init __P((void));
-int _init() {
-	_thread_init();
-	return 0;
-}
-
 #endif _THREAD_SAFE

@@ -1,5 +1,5 @@
-#	$Id: Makefile.inc,v 1.2 1998/11/09 03:13:18 d Exp $
-#	$OpenBSD: Makefile.inc,v 1.2 1998/11/09 03:13:18 d Exp $
+#	$Id: Makefile.inc,v 1.3 1998/12/10 00:33:54 d Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 1998/12/10 00:33:54 d Exp $
 
 # uthread sources
 .PATH: ${.CURDIR}/uthread
@@ -17,6 +17,7 @@ SRCS+= \
 	uthread_attr_setdetachstate.c \
 	uthread_attr_setstackaddr.c \
 	uthread_attr_setstacksize.c \
+	uthread_autoinit.c \
 	uthread_bind.c \
 	uthread_clean.c \
 	uthread_close.c \
