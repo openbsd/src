@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.55 2003/07/21 22:44:50 tedu Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.56 2003/12/28 16:35:46 tedu Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -151,6 +151,8 @@ malloc(size, type, flags)
 		return ((void *) va);
 #endif
 
+	if (size > 65535 * PAGE_SIZE)
+		panic("malloc: allocation too large");
 	indx = BUCKETINDX(size);
 	kbp = &bucket[indx];
 	s = splvm();
@@ -199,8 +201,6 @@ malloc(size, type, flags)
 		kup = btokup(va);
 		kup->ku_indx = indx;
 		if (allocsize > MAXALLOCSAVE) {
-			if (npg > 65535)
-				panic("malloc: allocation too large");
 			kup->ku_pagecnt = npg;
 #ifdef KMEMSTATS
 			ksp->ks_memuse += allocsize;
