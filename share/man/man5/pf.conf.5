@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.217 2003/03/13 19:26:27 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.218 2003/03/20 01:27:17 david Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -121,7 +121,7 @@ or
 translation rules such as
 .Ar nat
 or
-.Ar rdr 
+.Ar rdr
 (see below for details on the various rule types).
 Tables cannot be used for things like the redirect address of
 translation rules, nor can they be used in the routing options of
@@ -225,7 +225,6 @@ added to the table.
 may be tuned for various situations using the
 .Ar set
 command.
-.Pp
 .Bl -tag -width xxxx
 .It Ar set timeout
 .Pp
@@ -580,22 +579,22 @@ for Class Based Queueing and
 .Ar priq
 for Priority Queueing.
 .It Ar bandwidth <bw>
-The maximum bitrate for all queues on an 
+The maximum bitrate for all queues on an
 interface may be specified using the
 .Ar bandwidth
 keyword.
 The value can be specified as an absolute value or as a
 percentage of the interface bandwidth.
 When using an absolute value, the suffixes
-.Ar b , 
-.Ar Kb , 
-.Ar Mb , 
-and 
-.Ar Gb 
+.Ar b ,
+.Ar Kb ,
+.Ar Mb ,
+and
+.Ar Gb
 are used to represent bits, kilobits, megabits, and
 gigabits per second, respectively.
-The value must not exceed the interface bandwidth.  
-If 
+The value must not exceed the interface bandwidth.
+If
 .Ar bandwidth
 is not specified, the interface bandwidth is used.
 .It Ar qlimit <limit>
@@ -603,7 +602,7 @@ The maximum number of packets held in the queue.
 The default is 50.
 .It Ar tbrsize <size>
 Adjusts the size, in bytes, of the token bucket regulator.
-If not specified, heuristics based on the 
+If not specified, heuristics based on the
 interface bandwidth are used to determine the size.
 .It Ar queue <list>
 Defines a list of subqueues to create on an interface.
@@ -650,8 +649,8 @@ For
 the range is 0 to 7 and for
 .Ar priq ,
 the range is 0 to 15.
-The default for both is 1. 
-.Ar Priq 
+The default for both is 1.
+.Ar Priq
 queues with a higher priority are always served first.
 .Ar Cbq
 queues with a higher priority are preferred in the case of overload.
@@ -734,7 +733,7 @@ queue mail bandwidth 10% priority 0 cbq(borrow ecn)
 queue ssh bandwidth 20% cbq(borrow) { ssh_interactive, ssh_bulk }
 queue \ ssh_interactive priority 7
 queue \ ssh_bulk priority 0
-.Pp
+
 block return out on dc0 inet all queue std
 pass out on dc0 inet proto tcp from $developerhosts to any port 80 \e
       keep state queue developers
@@ -1002,7 +1001,7 @@ Common protocols are
 .Xr icmp 4 ,
 .Xr icmp6 4 ,
 .Xr tcp 4 ,
-and 
+and
 .Xr udp 4 .
 For a list of all the protocol name to number mappings used by
 .Xr pfctl 8 ,
@@ -1046,7 +1045,7 @@ This is especially useful with
 .Ar nat .
 .Pp
 Ports can be specified either by number or by name.
-For example, port 80 can be specified as 
+For example, port 80 can be specified as
 .Em www .
 For a list of all port name to number mappings used by
 .Xr pfctl 8 ,
@@ -1234,7 +1233,7 @@ pass in proto tcp from any to 1.2.3.5 \e
 The macro expansion for the
 .Ar label
 directive occurs only at configuration file parse time, not during runtime.
-.It Ar queue <queue> | ( <queue> , <queue> ) 
+.It Ar queue <queue> | ( <queue> , <queue> )
 Packets matching this rule will be assigned to the specified queue.
 If two queues are given, packets which have a
 .Em tos
@@ -1592,7 +1591,7 @@ For instance, the rule
 .Bd -literal -offset indent
 pass in proto tcp from any to any port 80
 .Ed
-.Pp 
+.Pp
 never applies to a fragment, even if the fragment is part of a TCP
 packet with destination port 80, because without reassembly this information
 is not available for each fragment.
@@ -1800,20 +1799,20 @@ listening for outbound ftp sessions captured to port 8081.
 # translate outgoing packets' source addresses (any protocol)
 # in this case, any address but the gateway's external address is mapped
 nat on kue0 inet from ! (kue0) to any -> (kue0)
-.Pp
+
 # NAT PROXYING
 # map outgoing packets' source port to an assigned proxy port instead of
 # an arbitrary port
 # in this case, proxy outgoing isakmp with port 500 on the gateway
 nat on kue0 inet proto udp from any port = isakmp to any -> (kue0) \e
       port 500
-.Pp
+
 # BINAT
 # translate outgoing packets' source address (any protocol)
 # translate incoming packets' destination address to an internal machine
 # (bidirectional)
 binat on kue0 from 10.1.2.150 to any -> (kue0)
-.Pp
+
 # RDR
 # translate incoming packets' destination addresses
 # as an example, redirect a TCP and UDP port to an internal machine
@@ -1821,24 +1820,24 @@ rdr on kue0 inet proto tcp from any to (kue0) port 8080 -> 10.1.2.151 \e
       port 22
 rdr on kue0 inet proto udp from any to (kue0) port 8080 -> 10.1.2.151 \e
       port 53
-.Pp
+
 # RDR
 # translate outgoing ftp control connections to send them to localhost
 # for proxying with ftp-proxy(8) running on port 8081
 rdr on fxp0 proto tcp from any to any port 21 -> 127.0.0.1 port 8081
-.Pp
+
 In this example, a NAT gateway is set up to translate internal addresses
 using a pool of public addresses (192.0.2.16/28) and to redirect
 incoming web server connections to a group of web servers on the internal
 network.
 Interface fxp0 is the external interface.
-.Pp
+
 # NAT LOAD BALANCE
 # translate outgoing packets' source addresses using an address pool.  A
 # given source address is always translated to the same pool address by
 # using the source-hash keyword.
 nat on fxp0 inet from any to any -> 192.0.2.16/28 source-hash
-.Pp
+
 # RDR ROUND ROBIN
 # translate incoming web server connections to a group of web servers on
 # the internal network
@@ -1850,59 +1849,59 @@ rdr on fxp0 proto tcp from any to any port 80 \e
 # The external interface is kue0
 # (157.161.48.183, the only routable address)
 # and the private network is 10.0.0.0/8, for which we are doing NAT.
-.Pp
+
 # use a macro for the interface name, so it can be changed easily
 ext_if = \&"kue0\&"
-.Pp
+
 # normalize all incoming traffic
 scrub in on $ext_if all fragment reassemble
-.Pp
+
 # block and log everything by default
 block return log on $ext_if all
-.Pp
+
 # block anything coming from source we have no back routes for
 block in from no-route to any
-.Pp
+
 # block and log outgoing packets that do not have our address as source,
 # they are either spoofed or something is misconfigured (NAT disabled,
 # for instance), we want to be nice and do not send out garbage.
 block out log quick on $ext_if from ! 157.161.48.183 to any
-.Pp
+
 # silently drop broadcasts (cable modem noise)
 block in quick on $ext_if from any to 255.255.255.255
-.Pp
+
 # block and log incoming packets from reserved address space and invalid
 # addresses, they are either spoofed or misconfigured, we cannot reply to
 # them anyway (hence, no return-rst).
 block in log quick on $ext_if from { 10.0.0.0/8, 172.16.0.0/12, \e
       192.168.0.0/16, 255.255.255.255/32 } to any
-.Pp
+
 # ICMP
-.Pp
+
 # pass out/in certain ICMP queries and keep state (ping)
 # state matching is done on host addresses and ICMP id (not type/code),
 # so replies (like 0/0 for 8/0) will match queries
 # ICMP error messages (which always refer to a TCP/UDP packet) are
 # handled by the TCP/UDP states
 pass on $ext_if inet proto icmp all icmp-type 8 code 0 keep state
-.Pp
+
 # UDP
-.Pp
+
 # pass out all UDP connections and keep state
 pass out on $ext_if proto udp all keep state
-.Pp
+
 # pass in certain UDP connections and keep state (DNS)
 pass in on $ext_if proto udp from any to any port domain keep state
-.Pp
+
 # TCP
-.Pp
+
 # pass out all TCP connections and modulate state
 pass out on $ext_if proto tcp all modulate state
-.Pp
+
 # pass in certain TCP connections and keep state (SSH, SMTP, DNS, IDENT)
 pass in on $ext_if proto tcp from any to any port { ssh, smtp, domain, \e
       auth } flags S/SA keep state
-.Pp
+
 # pass in data mode connections for ftp-proxy running on this host.
 # (see ftp-proxy(8) for details)
 pass in on $ext_if proto tcp from any to 157.161.48.183 port >= 49152 \e
@@ -1968,7 +1967,7 @@ queue-rule     = queue string queueopts-list queue-list
 queueopts-list = queueopts-list queueopts | queueopts
 queueopts      = [ bandwidth number ( b | Kb | Mb | Gb |  %) ] |
                  [ qlimit number ] | [ tbrsize number ] |
-                 [ priority number ] | [ schedulers ] | 
+                 [ priority number ] | [ schedulers ] |
                  [ qlimit number ]
 schedulers     = ( cbq-def | priq-def )
 
