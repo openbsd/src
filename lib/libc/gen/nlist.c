@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: nlist.c,v 1.30 1998/09/08 15:13:31 millert Exp $";
+static char rcsid[] = "$OpenBSD: nlist.c,v 1.31 1998/09/24 06:17:47 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -57,23 +57,12 @@ static char rcsid[] = "$OpenBSD: nlist.c,v 1.30 1998/09/08 15:13:31 millert Exp 
 #include <sys/exec_ecoff.h>
 #endif
 
-#ifdef _NLIST_DO_GZIP
-#include <zlib.h>
-#define Read	gzread
-#define Seek	gzseek
-typedef gzFile	File;
-#else
-#define Read	read
-#define Seek	lseek
-typedef int	File;
-#endif /* _NLIST_DO_GZIP */
-
 #define	ISLAST(p)	(p->n_un.n_name == 0 || p->n_un.n_name[0] == 0)
 
 #ifdef _NLIST_DO_AOUT
 int
 __aout_fdnlist(fd, list)
-	register File fd;
+	register int fd;
 	register struct nlist *list;
 {
 	register struct nlist *p, *s;
@@ -85,8 +74,8 @@ __aout_fdnlist(fd, list)
 	struct nlist nbuf[1024];
 	struct exec exec;
 
-	if (Seek(fd, 0, SEEK_SET) == -1 ||
-	    Read(fd, &exec, sizeof(exec)) != sizeof(exec) ||
+	if (lseek(fd, (off_t)0, SEEK_SET) == -1 ||
+	    read(fd, &exec, sizeof(exec)) != sizeof(exec) ||
 	    N_BADMAG(exec) || exec.a_syms == NULL)
 		return (-1);
 
@@ -95,9 +84,9 @@ __aout_fdnlist(fd, list)
 	stroff = symoff + symsize;
 
 	/* Read in the size of the string table. */
-	if (Seek(fd, N_STROFF(exec), SEEK_SET) == -1)
+	if (lseek(fd, N_STROFF(exec), SEEK_SET) == -1)
 		return (-1);
-	if (Read(fd, (char *)&strsize, sizeof(strsize)) != sizeof(strsize))
+	if (read(fd, (char *)&strsize, sizeof(strsize)) != sizeof(strsize))
 		return (-1);
 
 	/*
@@ -107,7 +96,7 @@ __aout_fdnlist(fd, list)
 	strsize -= sizeof(strsize);
 	if ((strtab = (char *)malloc(strsize)) == NULL)
 		return (-1);
-	if (Read(fd, strtab, strsize) != strsize)
+	if (read(fd, strtab, strsize) != strsize)
 		return (-1);
 
 	/*
@@ -128,12 +117,12 @@ __aout_fdnlist(fd, list)
 		p->n_value = 0;
 		++nent;
 	}
-	if (Seek(fd, symoff, SEEK_SET) == -1)
+	if (lseek(fd, symoff, SEEK_SET) == -1)
 		return (-1);
 
 	while (symsize > 0) {
 		cc = MIN(symsize, sizeof(nbuf));
-		if (Read(fd, nbuf, cc) != cc)
+		if (read(fd, nbuf, cc) != cc)
 			break;
 		symsize -= cc;
 		for (s = nbuf; cc > 0; ++s, cc -= sizeof(*s)) {
@@ -165,55 +154,59 @@ __aout_fdnlist(fd, list)
 #ifdef _NLIST_DO_ECOFF
 #define check(off, size)	((off < 0) || (off + size > mappedsize))
 #define	BAD			do { rv = -1; goto out; } while (0)
-#define	BADFREE			do { rv = -1; goto freestr; } while (0)
+#define	BADUNMAP		do { rv = -1; goto unmap; } while (0)
 
 int
 __ecoff_fdnlist(fd, list)
-	register File fd;
+	register int fd;
 	register struct nlist *list;
 {
 	struct nlist *p;
-	struct ecoff_exechdr exechdr;
-	struct ecoff_symhdr symhdr;
-	struct ecoff_extsym esym;
-	char *strtab, *nlistname, *symtabname;
-	int rv, nent, strsize, nesyms;
+	struct ecoff_exechdr *exechdrp;
+	struct ecoff_symhdr *symhdrp;
+	struct ecoff_extsym *esyms;
+	struct stat st;
+	char *mappedfile;
+	size_t mappedsize;
+	u_long symhdroff, extstroff;
+	u_int symhdrsize;
+	int rv, nent;
+	long i, nesyms;
 
 	rv = -3;
 
-	if (Seek(fd, 0, SEEK_SET) == -1)
+	if (fstat(fd, &st) < 0)
+		BAD;
+	if (st.st_size > SIZE_T_MAX) {
+		errno = EFBIG;
+		BAD;
+	}
+	mappedsize = st.st_size;
+	mappedfile = mmap(NULL, mappedsize, PROT_READ, MAP_COPY|MAP_FILE,
+	    fd, 0);
+	if (mappedfile == MAP_FAILED)
 		BAD;
 
-	/* Read in exec header and check magic nummber. */
-	if (Read(fd, &exechdr, sizeof(exechdr)) != sizeof(exechdr))
-		BAD;
-	if (ECOFF_BADMAG(&exechdr))  
-		BAD;
+	if (check(0, sizeof *exechdrp))
+		BADUNMAP;
+	exechdrp = (struct ecoff_exechdr *)&mappedfile[0];
 
-	/* Can't operate on stripped executables. *.
-	if (exechdr.f.f_nsyms == 0)
-		BAD;
+	if (ECOFF_BADMAG(exechdrp))
+		BADUNMAP;
 
-	/* Read in symbol table header and check magic nummber. */
-	if (Seek(fd, exechdr.f.f_symptr, SEEK_SET) == -1)
-		BAD;
-	if (Read(fd, &symhdr, sizeof(symhdr)) != sizeof(symhdr))
-		BAD;
-	if (ECOFF_BADMAG(&exechdr))
-		BAD;
+	symhdroff = exechdrp->f.f_symptr;
+	symhdrsize = exechdrp->f.f_nsyms;
 
-	/* Read in the string table. */
-	if (Seek(fd, symhdr.cbSsExtOffset, SEEK_SET) == -1)
-		BAD;
-#ifdef __alpha__
-	strsize = symhdr.estrMax;
-#else
-	strsize = symhdr.sh_estrmax;
-#endif
-	if (!(strtab = (char *)malloc(strsize)))
-		BAD;
-	if (Read(fd, strtab, strsize) != strsize)
-		BADFREE;
+	if (check(symhdroff, sizeof *symhdrp) ||
+	    sizeof *symhdrp != symhdrsize)
+		BADUNMAP;
+	symhdrp = (struct ecoff_symhdr *)&mappedfile[symhdroff];
+
+	nesyms = symhdrp->esymMax;
+	if (check(symhdrp->cbExtOffset, nesyms * sizeof *esyms))
+		BADUNMAP;
+	esyms = (struct ecoff_extsym *)&mappedfile[symhdrp->cbExtOffset];
+	extstroff = symhdrp->cbSsExtOffset;
 
 	/*
 	 * clean out any left-over information for all valid entries.
@@ -232,24 +225,22 @@ __ecoff_fdnlist(fd, list)
 		++nent;
 	}
 
-	/* Seek to symbol table. */
-	if (Seek(fd, symhdr.cbExtOffset, SEEK_SET) == -1)
-		BADFREE;
-
-	/* Check each symbol against the list */
-	nesyms = symhdr.esymMax;
-	while (nesyms--) {
-		if (Read(fd, &esym, sizeof (esym)) != sizeof (esym))
-			BADFREE;
-		symtabname = strtab + esym.es_strindex;
+	for (i = 0; i < nesyms; i++) {
 		for (p = list; !ISLAST(p); p++) {
+			char *nlistname;
+			char *symtabname;
+
 			nlistname = p->n_un.n_name;
 			if (*nlistname == '_')
 				nlistname++;
+			symtabname =
+			    &mappedfile[extstroff + esyms[i].es_strindex];
 
-			if (strcmp(symtabname, nlistname) == 0) {
-				p->n_value = esym.es_value;
+			if (!strcmp(symtabname, nlistname)) {
+				p->n_value = esyms[i].es_value;
 				p->n_type = N_EXT;		/* XXX */
+				p->n_desc = 0;			/* XXX */
+				p->n_other = 0;			/* XXX */
 				if (--nent <= 0)
 					break;
 			}
@@ -257,8 +248,8 @@ __ecoff_fdnlist(fd, list)
 	}
 	rv = nent;
 
-freestr:
-	free(strtab);
+unmap:
+	munmap(mappedfile, mappedsize);
 out:
 	return (rv);
 }
@@ -298,11 +289,11 @@ __elf_is_okay__(ehdr)
 
 int
 __elf_fdnlist(fd, list)
-	register File fd;
+	register int fd;
 	register struct nlist *list;
 {
 	register struct nlist *p;
-	register char *strtab = NULL;
+	register caddr_t strtab;
 	register Elf32_Off symoff = 0, symstroff = 0;
 	register Elf32_Word symsize = 0, symstrsize = 0;
 	register Elf32_Sword nent, cc, i;
@@ -311,42 +302,29 @@ __elf_fdnlist(fd, list)
 	Elf32_Ehdr ehdr;
 	Elf32_Shdr *shdr = NULL;
 	Elf32_Word shdr_size;
-	int serrno;
 	struct stat st;
 
 	/* Make sure obj is OK */
-	if (Seek(fd, 0, SEEK_SET) == -1 ||
-	    Read(fd, &ehdr, sizeof(Elf32_Ehdr)) != sizeof(Elf32_Ehdr) ||
-	    !__elf_is_okay__(&ehdr))
+	if (lseek(fd, (off_t)0, SEEK_SET) == -1 ||
+	    read(fd, &ehdr, sizeof(Elf32_Ehdr)) != sizeof(Elf32_Ehdr) ||
+	    !__elf_is_okay__(&ehdr) ||
+	    fstat(fd, &st) < 0)
 		return (-1);
 
-	/*
-	 * Clean out any left-over information for all valid entries.
-	 * Type and value defined to be 0 if not found; historical
-	 * versions cleared other and desc as well.  Also figure out
-	 * the largest string length so don't read any more of the
-	 * string table than we have to.
-	 *
-	 * XXX clearing anything other than n_type and n_value violates
-	 * the semantics given in the man page.
-	 */
-	nent = 0;
-	for (p = list; !ISLAST(p); ++p) {
-		p->n_type = 0;
-		p->n_other = 0;
-		p->n_desc = 0;
-		p->n_value = 0;
-		++nent;
-	}
-
-	/* Calculate section header table size */
+	/* calculate section header table size */
 	shdr_size = ehdr.e_shentsize * ehdr.e_shnum;
 
-	/* Alloc and read section header table */
-	shdr = (Elf32_Shdr *)malloc((size_t)shdr_size);
-	if (shdr == NULL || Seek(fd, ehdr.e_shoff, SEEK_SET) == -1 ||
-	    Read(fd, shdr, shdr_size) != shdr_size)
-		goto done;
+	/* Make sure it's not too big to mmap */
+	if (shdr_size > SIZE_T_MAX) {
+		errno = EFBIG;
+		return (-1);
+	}
+
+	/* mmap section header table */
+	shdr = (Elf32_Shdr *)mmap(NULL, (size_t)shdr_size, PROT_READ,
+	    MAP_COPY|MAP_FILE, fd, (off_t) ehdr.e_shoff);
+	if (shdr == (Elf32_Shdr *)-1)
+		return (-1);
 
 	/*
 	 * Find the symbol table entry and it's corresponding
@@ -364,22 +342,57 @@ __elf_fdnlist(fd, list)
 		}
 	}
 
-	/* Alloc and read in string table */
-	strtab = (char *)malloc(symstrsize);
-	if (strtab == NULL || Seek(fd, symstroff, SEEK_SET) == -1 ||
-	    Read(fd, strtab, symstrsize) != symstrsize)
+	/* Flush the section header table */
+	munmap((caddr_t)shdr, shdr_size);
+
+	/* Check for files too large to mmap. */
+	/* XXX is this really possible? */
+	if (symstrsize > SIZE_T_MAX) {
+		errno = EFBIG;
+		return (-1);
+	}
+	/*
+	 * Map string table into our address space.  This gives us
+	 * an easy way to randomly access all the strings, without
+	 * making the memory allocation permanent as with malloc/free
+	 * (i.e., munmap will return it to the system).
+	 */
+	strtab = mmap(NULL, (size_t)symstrsize, PROT_READ, MAP_COPY|MAP_FILE,
+	    fd, (off_t) symstroff);
+	if (strtab == (char *)-1)
+		return (-1);
+	/*
+	 * clean out any left-over information for all valid entries.
+	 * Type and value defined to be 0 if not found; historical
+	 * versions cleared other and desc as well.  Also figure out
+	 * the largest string length so don't read any more of the
+	 * string table than we have to.
+	 *
+	 * XXX clearing anything other than n_type and n_value violates
+	 * the semantics given in the man page.
+	 */
+	nent = 0;
+	for (p = list; !ISLAST(p); ++p) {
+		p->n_type = 0;
+		p->n_other = 0;
+		p->n_desc = 0;
+		p->n_value = 0;
+		++nent;
+	}
+
+	/* Don't process any further if object is stripped. */
+	/* ELFism - dunno if stripped by looking at header */
+	if (symoff == 0)
 		goto done;
 
-	/*
-	 * Don't process any further if object is stripped.
-	 * ELFism -- dunno if stripped by looking at header
-	 */
-	if (symoff == 0 || Seek(fd, symoff, SEEK_SET) == -1)
+	if (lseek(fd, (off_t) symoff, SEEK_SET) == -1) {
+		nent = -1;
 		goto done;
+	}
 
 	while (symsize > 0) {
 		cc = MIN(symsize, sizeof(sbuf));
-		if (Read(fd, sbuf, cc) != cc)
+		if (read(fd, sbuf, cc) != cc)
 			break;
 		symsize -= cc;
 		for (s = sbuf; cc > 0; ++s, cc -= sizeof(*s)) {
@@ -419,6 +432,8 @@ __elf_fdnlist(fd, list)
 					if (ELF32_ST_BIND(s->st_info) ==
 					    STB_LOCAL)
 						p->n_type = N_EXT;
+					p->n_desc = 0;
+					p->n_other = 0;
 					if (--nent <= 0)
 						break;
 				}
@@ -426,19 +441,14 @@ __elf_fdnlist(fd, list)
 		}
 	}
 done:
-	serrno = errno;
-	if (shdr)
-		free(shdr);
-	if (strtab)
-		free(strtab);
-	errno = serrno;
+	munmap(strtab, symstrsize);
 	return (nent);
 }
 #endif /* _NLIST_DO_ELF */
 
 
 static struct nlist_handlers {
-	int	(*fn) __P((File fd, struct nlist *list));
+	int	(*fn) __P((int fd, struct nlist *list));
 } nlist_fn[] = {
 #ifdef _NLIST_DO_AOUT
 	{ __aout_fdnlist },
@@ -456,44 +466,26 @@ __fdnlist(fd, list)
 	register int fd;
 	register struct nlist *list;
 {
-	int n = -1, i, serrno;
-	File f;
-#ifdef _NLIST_DO_GZIP
-	int nfd;
-
-	if ((nfd = dup(fd)) == -1)
-		return (-1);
-
-	if ((f = gzdopen(nfd, "r")) == NULL)
-		return (-1);
-#else
-	f = fd;
-#endif /* _NLIST_DO_GZIP */
+	int n = -1, i;
 
 	for (i = 0; i < sizeof(nlist_fn)/sizeof(nlist_fn[0]); i++) {
-		n = (nlist_fn[i].fn)(f, list);
-		serrno = errno;
+		n = (nlist_fn[i].fn)(fd, list);
 		if (n != -1)
 			break;
 	}
-
-#ifdef _NLIST_DO_GZIP
-	(void)gzclose(f);
-#endif /* _NLIST_DO_GZIP */
-
-	errno = serrno;
 	return (n);
 }
+
 
 int
 nlist(name, list)
 	const char *name;
 	struct nlist *list;
 {
-	int n, fd;
+	int fd, n;
 
-	fd = open(name, O_RDONLY);
-	if (fd == -1)
+	fd = open(name, O_RDONLY, 0);
+	if (fd < 0)
 		return (-1);
 	n = __fdnlist(fd, list);
 	(void)close(fd);
