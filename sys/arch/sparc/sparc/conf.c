@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.39 2004/02/10 01:31:21 millert Exp $	*/
+/*	$OpenBSD: conf.c,v 1.40 2005/03/29 16:26:45 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.40 1996/04/11 19:20:03 thorpej Exp $ */
 
 /*
@@ -125,8 +125,8 @@ struct bdevsw	bdevsw[] =
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
 #include "pf.h"
-
 #include "systrace.h"
+#include "tctrl.h"
 
 struct cdevsw	cdevsw[] =
 {
@@ -160,7 +160,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 27: was /dev/bwtwo */
 	cdev_notdef(),			/* 28 */
 	cdev_notdef(),			/* 29: was /dev/kbd */
-	cdev_notdef(),			/* 30 */
+	cdev_apm_init(NTCTRL,apm),	/* 30: tctrl APM interface */
 	cdev_notdef(),			/* 31: was /dev/cgtwo */
 	cdev_notdef(),			/* 32: should be /dev/gpone */
 	cdev_notdef(),			/* 33 */

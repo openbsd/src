@@ -1,4 +1,4 @@
-/*	$OpenBSD: ts102reg.h,v 1.3 2003/06/18 17:50:23 miod Exp $	*/
+/*	$OpenBSD: ts102reg.h,v 1.4 2005/03/29 16:26:44 miod Exp $	*/
 /*	$NetBSD: ts102reg.h,v 1.7 2002/09/29 23:23:58 wiz Exp $ */
 
 /*-
@@ -348,6 +348,7 @@ enum ts102_opcode {			/* Argument	Returned */
     TS102_OP_ADMIN_VRFY_SYSTEM_PASS=0x73, /* len <pass>   ack + status */
     TS102_OP_RD_INT_CHARGE_LEVEL=0x7a, /* ack + 2 byte */
     TS102_OP_RD_EXT_CHARGE_LEVEL=0x7b, /* ack + 2 byte */
+#define	TS102_CHARGE_UNKNOWN	0xfa
     TS102_OP_SLEEP=0x80, /* supposedly sleeps, not sure */
     TS102_OP_ADMIN_POWER_OFF=0x82,	 /* len <pass>	none */
     TS102_OP_ADMIN_POWER_RESTART=0x83,	 /* msb,xx,lsb	none */

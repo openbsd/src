@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.18 2003/09/23 16:51:11 millert Exp $	*/
+/*	$OpenBSD: conf.h,v 1.19 2005/03/29 16:26:44 miod Exp $	*/
 /*	$NetBSD: conf.h,v 1.8 1996/12/31 07:12:43 mrg Exp $	*/
 
 /*
@@ -105,3 +105,11 @@ cdev_decl(fga);
 	(dev_type_stop((*))) nullop, 0, seltrue, \
 	(dev_type_mmap((*))) enodev }
 cdev_decl(daadio);
+
+/* open, close, write, ioctl, kqueue */
+#define cdev_apm_init(c,n) { \
+        dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+        (dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, (dev_type_poll((*))) enodev, \
+	(dev_type_mmap((*))) enodev, D_KQFILTER, dev_init(c,n,kqfilter) }
+cdev_decl(apm);
