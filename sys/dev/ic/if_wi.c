@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.33 2002/03/31 00:33:42 mickey Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.34 2002/03/31 01:01:44 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.33 2002/03/31 00:33:42 mickey Exp $";
+	"$OpenBSD: if_wi.c,v 1.34 2002/03/31 01:01:44 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -1673,9 +1673,8 @@ nextpkt:
 	eh = mtod(m0, struct ether_header *);
 
 	if (sc->wi_ptype == WI_PORTTYPE_AP) {
-		if (!(ifp->if_flags & IFF_PROMISC) &&
-		    !wihap_check_tx(&sc->wi_hostap_info,
-		        eh->ether_dhost, &tx_frame.wi_tx_rate)) {
+		if (!wihap_check_tx(&sc->wi_hostap_info, eh->ether_dhost,
+		    &tx_frame.wi_tx_rate) && !(ifp->if_flags & IFF_PROMISC)) {
 			if (ifp->if_flags & IFF_DEBUG)
 				printf("wi_start: dropping unassoc dst %s\n",
 				    ether_sprintf(eh->ether_dhost));
