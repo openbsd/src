@@ -1,4 +1,4 @@
-#	$OpenBSD: inter.phone,v 1.30 2002/06/06 22:34:11 fgsch Exp $
+#	$OpenBSD: inter.phone,v 1.31 2004/11/04 15:51:44 pedro Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 #	$FreeBSD-Id: inter.phone,v 1.15 1997/02/22 13:56:06 peter Exp $
 #
@@ -9645,10 +9645,11 @@
 54:221:La Plata:Argentina
 54:341:Rosario:Argentina
 54:351:Cordoba:Argentina
-55:11:San Paulo:Brazil
+55:11:Sao Paulo:Brazil
 55:21:Rio de Janeiro:Brazil
 55:31:Belo Horizonte:Brazil
-55:512:Porto Alegre:Brazil
+55:41:Curitiba:Brazil
+55:51:Porto Alegre:Brazil
 55:61:Brasilia:Brazil
 55:71:Salvador:Brazil
 55:81:Recife:Brazil
