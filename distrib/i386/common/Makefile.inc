@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.9 2003/04/17 03:49:24 drahn Exp $
+#	$OpenBSD: Makefile.inc,v 1.10 2003/04/26 16:23:44 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -6,7 +6,6 @@ TOP=		${.CURDIR}/..
 IMAGE=		mr.fs
 CBIN?=		instbin
 CRUNCHCONF?=	${CBIN}.conf
-CRUNCHCONFS?=	${.CURDIR}/../common/crunch.conf
 LISTS?=		${.CURDIR}/../common/list
 UTILS?=		${.CURDIR}/../../miniroot
 
@@ -109,7 +108,7 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	make -f ${CBIN}.mk all
 
 ${CRUNCHCONF}: ${LISTS}
-	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
+	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CRUNCHCONF}
 
 do_files:
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
