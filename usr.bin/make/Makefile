@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.33 2001/11/11 12:35:02 espie Exp $
+#	$OpenBSD: Makefile,v 1.34 2002/04/22 21:45:01 miod Exp $
 
 PROG=	make
 CFLAGS+= -I${.OBJDIR} -I${.CURDIR}
@@ -9,9 +9,6 @@ CFLAGS+=-DUSE_TIMESPEC
 CFLAGS+=-DHAS_BOOL_H
 CFLAGS+=-DHAS_PATHS_H
 CFLAGS+=-DHAS_EXTENDED_GETCWD
-.if (${MACHINE_ARCH} == "m88k")
-CFLAGS+=-O0
-.endif
 
 SRCS=	arch.c buf.c cmd_exec.c compat.c cond.c dir.c error.c for.c \
 	init.c job.c lowparse.c main.c make.c memory.c parse.c \
