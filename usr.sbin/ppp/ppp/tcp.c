@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: tcp.c,v 1.2 1999/05/12 10:03:54 brian Exp $
+ *	$Id: tcp.c,v 1.3 1999/05/24 16:39:19 brian Exp $
  */
 
 #include <sys/types.h>
@@ -115,8 +115,10 @@ struct device *
 tcp_iov2device(int type, struct physical *p, struct iovec *iov,
                int *niov, int maxiov)
 {
-  if (type == TCP_DEVICE)
+  if (type == TCP_DEVICE) {
+    physical_SetupStack(p, tcpdevice.name, PHYSICAL_FORCE_ASYNC);
     return &tcpdevice;
+  }
 
   return NULL;
 }
@@ -179,7 +181,7 @@ tcp_Create(struct physical *p)
                  inet_ntoa(sock.sin_addr), ntohs(sock.sin_port));
         p->name.base = p->name.full;
       }
-      physical_SetupStack(p, PHYSICAL_FORCE_ASYNC);
+      physical_SetupStack(p, tcpdevice.name, PHYSICAL_FORCE_ASYNC);
       return &tcpdevice;
     }
   }
