@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.17 1996/11/03 18:57:46 millert Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.18 1997/07/17 05:48:41 millert Exp $	*/
 /*	$NetBSD: skeyinit.c,v 1.6 1995/06/05 19:50:48 pk Exp $	*/
 
 /* S/KEY v1.1b (skeyinit.c)
@@ -326,6 +326,6 @@ usage(s)
 	char *s;
 {
 	(void)fprintf(stderr,
-		"Usage: %s [-s] [-x] [-z] [-n count] [-md4|-md5|-sha1] [user]\n", s);
+		"Usage: %s [-s] [-x] [-z] [-n count] [-md4|-md5|-sha1|-rmd160] [user]\n", s);
 	exit(1);
 }

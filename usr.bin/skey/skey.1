@@ -1,16 +1,16 @@
-.\" $OpenBSD: skey.1,v 1.8 1997/01/05 21:30:06 millert Exp $
+.\" $OpenBSD: skey.1,v 1.9 1997/07/17 05:48:39 millert Exp $
 .\"	@(#)skey.1	1.1 	10/28/93
 .\"
 .Dd 28 October 1993
 .Dt SKEY 1
 .Os
 .Sh NAME
-.Nm skey, otp-md4, otp-md5, otp-sha1
+.Nm skey, otp-md4, otp-md5, otp-sha1, otp-rmd160
 .Nd Respond to a OTP challenge.
 .Sh SYNOPSIS
 .Nm skey
 .Op Fl x
-.Op Fl md4 | Fl md5 | Fl sha1
+.Op Fl md4 | Fl md5 | Fl sha1 | Fl rmd160
 .Op Fl n Ar count
 .Op Fl p Ar passwd
 <sequence#>[/] key
@@ -33,7 +33,7 @@ will use
 .Ar method
 as the hash function where
 .Ar method
-is currently one of md4, md5, or sha1.
+is currently one of md4, md5, sha1, or rmd160.
 .Pp
 If you misspell your password while running
 .Nm skey ,
@@ -62,7 +62,9 @@ Selects MD4 as the hash algorithm.
 .It Fl md5
 Selects MD5 as the hash algorithm.
 .It Fl sha1
-Selects SHA1 (NIST Secure Hash Algorithm Revision 1) as the hash algorithm.
+Selects SHA-1 (NIST Secure Hash Algorithm Revision 1) as the hash algorithm.
+.It Fl rmd160
+Selects RMD-160 (160 bit Ripe Message Digest) as the hash algorithm.
 .El
 .Sh EXAMPLE
 .sp 0

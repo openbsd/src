@@ -10,7 +10,7 @@
  *
  * S/KEY misc routines.
  *
- * $Id: skeysubr.c,v 1.14 1997/07/11 01:32:57 millert Exp $
+ * $Id: skeysubr.c,v 1.15 1997/07/17 05:48:38 millert Exp $
  */
 
 #include <stdio.h>
@@ -22,6 +22,7 @@
 #include <md4.h>
 #include <md5.h>
 #include <sha1.h>
+#include <rmd160.h>
 
 #include "skey.h"
 
@@ -33,9 +34,11 @@
 static void f_md4 __P((char *x));
 static void f_md5 __P((char *x));
 static void f_sha1 __P((char *x));
+static void f_rmd160 __P((char *x));
 static int keycrunch_md4 __P((char *result, char *seed, char *passwd));
 static int keycrunch_md5 __P((char *result, char *seed, char *passwd));
 static int keycrunch_sha1 __P((char *result, char *seed, char *passwd));
+static int keycrunch_rmd160 __P((char *result, char *seed, char *passwd));
 static void lowcase __P((char *s));
 static void skey_echo __P((int action));
 static void trapped __P((int sig));
@@ -47,7 +50,7 @@ static int skey_hash_type = SKEY_HASH_DEFAULT;
  * Hash types we support.
  * Each has an associated keycrunch() and f() function.
  */
-#define SKEY_ALGORITH_LAST	3
+#define SKEY_ALGORITH_LAST	4
 struct skey_algorithm_table {
 	const char *name;
 	int (*keycrunch) __P((char *, char *, char *));
@@ -56,7 +59,8 @@ struct skey_algorithm_table {
 static struct skey_algorithm_table skey_algorithm_table[] = {
 	{ "md4", keycrunch_md4, f_md4 },
 	{ "md5", keycrunch_md5, f_md5 },
-	{ "sha1", keycrunch_sha1, f_sha1 }
+	{ "sha1", keycrunch_sha1, f_sha1 },
+	{ "rmd160", keycrunch_rmd160, f_rmd160 }
 };
 
 
@@ -177,6 +181,41 @@ keycrunch_sha1(result, seed, passwd)
 	return 0;
 }
 
+static int
+keycrunch_rmd160(result, seed, passwd)
+	char *result;	/* SKEY_BINKEY_SIZE result */
+	char *seed;	/* Seed, any length */
+	char *passwd;	/* Password, any length */
+{
+	char *buf;
+	RMD160_CTX rmd;
+	u_int32_t results[5];
+	unsigned int buflen;
+
+	buflen = strlen(seed) + strlen(passwd);
+	if ((buf = (char *)malloc(buflen+1)) == NULL)
+		return -1;
+	(void)strcpy(buf, seed);
+	lowcase(buf);
+	(void)strcat(buf, passwd);
+
+	/* Crunch the key through RMD-160 */
+	sevenbit(buf);
+	RMD160Init(&rmd);
+	RMD160Update(&rmd, (unsigned char *)buf, buflen);
+	RMD160Final((unsigned char *)results, &rmd);
+	(void)free(buf);
+
+	/* Fold 160 to 64 bits */
+	results[0] ^= results[2];
+	results[1] ^= results[3];
+	results[0] ^= results[4];
+
+	(void)memcpy((void *)result, (void *)results, SKEY_BINKEY_SIZE);
+
+	return 0;
+}
+
 /*
  * The one-way function f().
  * Takes SKEY_BINKEY_SIZE bytes and returns SKEY_BINKEY_SIZE bytes in place.
@@ -234,6 +273,25 @@ f_sha1(x)
 	SHA1Init(&sha);
 	SHA1Update(&sha, (unsigned char *)x, SKEY_BINKEY_SIZE);
 	SHA1Final((unsigned char *)results, &sha);
+
+	/* Fold 160 to 64 bits */
+	results[0] ^= results[2];
+	results[1] ^= results[3];
+	results[0] ^= results[4];
+
+	(void)memcpy((void *)x, (void *)results, SKEY_BINKEY_SIZE);
+}
+
+static void
+f_rmd160(x)
+	char *x;
+{
+	RMD160_CTX rmd;
+	u_int32_t results[5];
+
+	RMD160Init(&rmd);
+	RMD160Update(&rmd, (unsigned char *)x, SKEY_BINKEY_SIZE);
+	RMD160Final((unsigned char *)results, &rmd);
 
 	/* Fold 160 to 64 bits */
 	results[0] ^= results[2];
