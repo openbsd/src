@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.3 2001/06/24 17:05:37 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.4 2001/11/23 00:47:46 miod Exp $	*/
 /*
  * Copyright (C) 2000 Steve Murphree, Jr.
  * All rights reserved.
@@ -73,7 +73,6 @@ u_long	allocate_sir __P((void (*proc)(), void *arg));
 #define	splclock()		spl5()
 #define	splstatclock()		spl5()
 #define	splhigh()		spl7()
-#define	splsched()		spl7()
 
 /* watch out for side effects */
 #define	splx(s)		(s & PSL_IPL ? _spl(s) : spl0())
