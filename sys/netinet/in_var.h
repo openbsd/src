@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_var.h,v 1.7 2003/12/10 07:22:43 itojun Exp $	*/
+/*	$OpenBSD: in_var.h,v 1.8 2005/01/15 09:09:27 pascoe Exp $	*/
 /*	$NetBSD: in_var.h,v 1.16 1996/02/13 23:42:15 christos Exp $	*/
 
 /*
@@ -59,6 +59,8 @@ struct in_ifaddr {
 #define	ia_broadaddr	ia_dstaddr
 	struct	sockaddr_in ia_sockmask; /* reserve space for general netmask */
 	LIST_HEAD(, in_multi) ia_multiaddrs; /* list of multicast addresses */
+	struct  in_multi *ia_allhosts;	/* multicast address record for
+					   the allhosts multicast group */
 };
 
 struct	in_aliasreq {

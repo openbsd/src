@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.38 2004/11/18 23:14:49 dhartmei Exp $	*/
+/*	$OpenBSD: in.c,v 1.39 2005/01/15 09:09:27 pascoe Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -427,7 +427,6 @@ in_control(so, cmd, data, ifp)
 		return (error);
 
 	case SIOCDIFADDR: {
-		struct in_multi *inm;
 
 		error = 0;
 cleanup:
@@ -441,8 +440,10 @@ cleanup:
 		in_ifscrub(ifp, ia);
 		TAILQ_REMOVE(&ifp->if_addrlist, (struct ifaddr *)ia, ifa_list);
 		TAILQ_REMOVE(&in_ifaddr, ia, ia_list);
-		while ((inm = LIST_FIRST(&ia->ia_multiaddrs)) != NULL)
-			in_delmulti(inm);
+		if (ia->ia_allhosts != NULL) {
+			in_delmulti(ia->ia_allhosts);
+			ia->ia_allhosts = NULL;
+		}
 		IFAFREE((&ia->ia_ifa));
 		dohooks(ifp->if_addrhooks, 0);
 		splx(s);
@@ -743,11 +744,11 @@ in_ifinit(ifp, ia, sin, scrub)
 	 * If the interface supports multicast, join the "all hosts"
 	 * multicast group on that interface.
 	 */
-	if (ifp->if_flags & IFF_MULTICAST) {
+	if ((ifp->if_flags & IFF_MULTICAST) && ia->ia_allhosts == NULL) {
 		struct in_addr addr;
 
 		addr.s_addr = INADDR_ALLHOSTS_GROUP;
-		in_addmulti(&addr, ifp);
+		ia->ia_allhosts = in_addmulti(&addr, ifp);
 	}
 	return (error);
 }
