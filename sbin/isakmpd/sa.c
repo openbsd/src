@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.c,v 1.43 2001/06/07 03:20:21 angelos Exp $	*/
+/*	$OpenBSD: sa.c,v 1.44 2001/06/29 18:12:07 ho Exp $	*/
 /*	$EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	*/
 
 /*
@@ -203,7 +203,8 @@ sa_check_peer (struct sa *sa, void *v_addr)
     return 0;
 
   sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
-  return dstlen == addr->len && memcmp (dst, addr->addr, dstlen) == 0;
+  return dst->sa_len == addr->len
+    && memcmp (dst, addr->addr, dst->sa_len) == 0;
 }
 
 struct dst_isakmpspi_arg {
