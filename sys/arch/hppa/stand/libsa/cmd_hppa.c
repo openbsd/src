@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd_hppa.c,v 1.1 2002/03/02 09:36:43 miod Exp $	*/
+/*	$OpenBSD: cmd_hppa.c,v 1.2 2002/03/06 23:09:44 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Miodrag Vallat
@@ -62,6 +62,8 @@ extern int sstorsiz;
 struct consoledev {
 	struct device_path dp;
 	int	type;
+	int	iodc_type;
+	int	iodc_model;
 };
 
 #define	PS2		1
@@ -69,12 +71,12 @@ struct consoledev {
 #define	SERIAL		3
 #define	GRAPHICS	4
 
-/* max. 2 serial ports (PDC compatibility) */
-#define	MAX_SERIALS	2
+/* max. serial ports */
+#define	MAX_SERIALS	4
 /* max. HIL and PS2 */
 #define	MAX_KEYBOARDS	2
-/* max. 3 heads (PDC compatibility) */
-#define	MAX_GRAPHICS	3
+/* max. heads */
+#define	MAX_GRAPHICS	4
 
 struct consoledev serials[MAX_SERIALS];
 struct consoledev keyboards[MAX_KEYBOARDS];
@@ -90,7 +92,7 @@ int walked;
 
 void bus_walk __P((int));
 void register_device __P((struct consoledev *, int,
-			  struct device_path *, int, int));
+			  struct device_path *, struct iodc_data *, int, int));
 
 int Xconsole __P((void));
 void print_console __P((void));
@@ -121,6 +123,11 @@ int i_speeds[] = {
 	4800,
 	7200,
 	9600,
+	19200,
+	38400,
+	57600,
+	115200,
+	230400,
 };
 
 char* c_speeds[] = {
@@ -135,6 +142,11 @@ char* c_speeds[] = {
 	"4800",
 	"7200",
 	"9600",
+	"19200",
+	"38400",
+	"57600",
+	"115200",
+	"230400",
 };
 
 /* values to console parity table */
@@ -213,15 +225,13 @@ print_console()
 		 * Serial console
 		 */
 
-		printf("rs232%s",
-		    port == 2 ? "_2" : "");
+		if (port == 1)
+			printf("rs232");
+		else
+			printf("rs232_%d", port);
 
 		speed = PZL_SPEED(sstor.ss_console.dp_layers[0]);
-		if (speed < NENTS(i_speeds)) {
-			speed = i_speeds[speed];
-			printf(".%d", speed);
-		} else
-			printf(".<unknown speed>");
+		printf(".%d", i_speeds[speed]);
 
 		bits = PZL_BITS(sstor.ss_console.dp_layers[0]);
 		printf(".%d", bits);
@@ -390,6 +400,7 @@ set_console(console)
 	struct device_path *console;
 {
 	char *arg = cmd.argv[1], *dot;
+	int port;
 
 	/* extract first word */
 	dot = strchr(arg, '.');
@@ -401,20 +412,22 @@ set_console(console)
 	 */
 	if (strcmp(arg, "graphics") == 0)
 		return set_graphics(console, 0, dot);
-
-	if (strcmp(arg, "graphics_1") == 0)
-		return set_graphics(console, 1, dot);
-	if (strcmp(arg, "graphics_2") == 0)
-		return set_graphics(console, 2, dot);
+	if (strncmp(arg, "graphics_", 9) == 0) {
+		port = arg[9] - '0';
+		if (port > 0 && port < MAX_GRAPHICS)
+			return set_graphics(console, port, dot);
+	}
 
 	/*
 	 * Serial console
 	 */
 	if (strcmp(arg, "rs232") == 0)
 		return set_serial(console, 1, dot);
-
-	if (strcmp(arg, "rs232_2") == 0)
-		return set_serial(console, 2, dot);
+	if (strncmp(arg, "rs232_", 6) == 0) {
+		port = arg[6] - '0';
+		if (port > 0 && port <= MAX_SERIALS)
+			return set_serial(console, port, dot);
+	}
 
 	printf("invalid device specification, %s\n", arg);
 	return 0;
@@ -650,25 +663,31 @@ bus_walk(bus)
 		 * If the device can be considered as a valid rs232,
 		 * graphics console or keyboard, register it.
 		 *
-		 * GIO devices are registered as ``main'' devices, since
-		 * in the PDC's view of the world, they are, yet other
-		 * devices can be found before them...
+		 * Unfortunately, devices which should be considered as
+		 * ``main'' aren't necessarily seen first.
+		 * The rules we try to enforce here are as follows:
+		 * - GIO PS/2 ports wins over any other PS/2 port.
+		 * - the first GIO serial found wins over any other
+		 *   serial port.
+		 * The second rule is a bit tricky to achieve, since on
+		 * some machines (for example, 715/100XC), the two serial
+		 * ports are not seen as attached to the same busses...
 		 */
 		switch (mptr.iodc_type) {
 		case HPPA_TYPE_ADIRECT:
 			switch (mptr.iodc_sv_model) {
 			case HPPA_ADIRECT_RS232:
 				register_device(serials, MAX_SERIALS,
-				    &dp, SERIAL, 0);
+				    &dp, &mptr, SERIAL, 0);
 				break;
 			case HPPA_ADIRECT_HIL:
 				register_device(keyboards, MAX_KEYBOARDS,
-				    &dp, HIL, 0);
+				    &dp, &mptr, HIL, 0);
 				break;
 			case HPPA_ADIRECT_PEACOCK:
 			case HPPA_ADIRECT_LEONARDO:
 				register_device(graphics, MAX_GRAPHICS,
-				    &dp, GRAPHICS, 0);
+				    &dp, &mptr, GRAPHICS, 0);
 				break;
 			}
 			break;
@@ -676,15 +695,15 @@ bus_walk(bus)
 			switch (mptr.iodc_sv_model) {
 			case HPPA_FIO_HIL:
 				register_device(keyboards, MAX_KEYBOARDS,
-				    &dp, HIL, 0);
+				    &dp, &mptr, HIL, 0);
 				break;
 			case HPPA_FIO_RS232:
 				register_device(serials, MAX_SERIALS,
-				    &dp, SERIAL, 0);
+				    &dp, &mptr, SERIAL, 0);
 				break;
 			case HPPA_FIO_DINOPCK:
 				register_device(keyboards, MAX_KEYBOARDS,
-				    &dp, PS2, 0);
+				    &dp, &mptr, PS2, 0);
 				break;
 			case HPPA_FIO_GPCIO:
 				/*
@@ -697,20 +716,39 @@ bus_walk(bus)
 				if (kluge_ps2 != 0)
 					break;
 				register_device(keyboards, MAX_KEYBOARDS,
-				    &dp, PS2, 1);
+				    &dp, &mptr, PS2, 1);
 				kluge_ps2++;
 				break;
 			case HPPA_FIO_GRS232:
+			{
+				int j, first;
+
+				/*
+				 * If a GIO serial port is already registered,
+				 * registered as extra port...
+				 */
+				first = 1;
+				for (j = 0; j < MAX_SERIALS; j++)
+					if (serials[j].type == SERIAL &&
+					    serials[j].iodc_type ==
+					      HPPA_TYPE_FIO &&
+					    serials[j].iodc_model ==
+					      HPPA_FIO_GRS232) {
+						first = 0;
+						break;
+					}
+
 				register_device(serials, MAX_SERIALS,
-				    &dp, SERIAL, 1);
+				    &dp, &mptr, SERIAL, first);
+			}
 				break;
 			case HPPA_FIO_SGC:
 				register_device(graphics, MAX_GRAPHICS,
-				    &dp, GRAPHICS, 0);
+				    &dp, &mptr, GRAPHICS, 0);
 				break;
 			case HPPA_FIO_GSGC:
 				register_device(graphics, MAX_GRAPHICS,
-				    &dp, GRAPHICS, 1);
+				    &dp, &mptr, GRAPHICS, 1);
 				break;
 			}
 			break;
@@ -747,10 +785,11 @@ bus_walk(bus)
 }
 
 void
-register_device(devlist, cnt, dp, type, first) 
+register_device(devlist, cnt, dp, mptr, type, first) 
 	struct consoledev *devlist;
 	int cnt;
 	struct device_path *dp;
+	struct iodc_data *mptr;
 	int type;
 	int first;
 {
@@ -779,6 +818,8 @@ register_device(devlist, cnt, dp, type, first)
 
 	dev->dp = *dp;
 	dev->type = type;
+	dev->iodc_type = mptr->iodc_type;
+	dev->iodc_model = mptr->iodc_sv_model;
 
 #ifdef DEBUG
 	printf("(registered as type %d)\n", type);
