@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.4 2000/07/06 19:12:12 aaron Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.5 2000/07/06 23:25:17 aaron Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -30,7 +30,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/pci/if_sis.c,v 1.17 2000/07/06 06:02:04 wpaul Exp $
+ * $FreeBSD: src/sys/pci/if_sis.c,v 1.18 2000/07/06 19:21:07 wpaul Exp $
  */
 
 /*
@@ -729,11 +729,11 @@ void sis_attach(parent, self, aux)
 
 			/* Shift everything over one bit. */
 			tmp[3] = tmp[3] >> 1;
-			tmp[3] |= tmp[2] >> 15;
+			tmp[3] |= tmp[2] << 15;
 			tmp[2] = tmp[2] >> 1;
-			tmp[2] |= tmp[1] >> 15;
+			tmp[2] |= tmp[1] << 15;
 			tmp[1] = tmp[1] >> 1;
-			tmp[1] |= tmp[0] >> 15;
+			tmp[1] |= tmp[0] << 15;
 
 			/* Now reverse all the bits. */
 			tmp[3] = sis_reverse(tmp[3]);
