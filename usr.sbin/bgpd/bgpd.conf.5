@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.17 2004/02/07 20:40:47 henning Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.18 2004/02/25 21:15:01 claudio Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2002 Daniel Hartmeier <dhartmei@openbsd.org>
@@ -126,14 +126,24 @@ messages and
 .Em state
 transitions are dumped to the specified file:
 .Bd -literal -offset indent
-dump msg all in "/tmp/all-in-%H%M" 300
+dump all in "/tmp/all-in-%H%M" 300
 .Ed
 .Pp
-As before, but only the filtered
+As before, but only the
 .Em UPDATE
 messages are dumped to the file:
 .Bd -literal -offset indent
-dump msg filtered in "/tmp/filtered-in-%H%M" 300
+dump updates in "/tmp/updates-in-%H%M" 300
+.Ed
+.Pp
+It is also possible to dump outgoing messages:
+.Bd -literal -offset indent
+dump all out "/tmp/all-out-%H%M" 300
+.Ed
+.Pp
+or
+.Bd -literal -offset indent
+dump updates out "/tmp/updates-out-%H%M" 300
 .Ed
 .It Ar fib-update
 If set to
@@ -249,6 +259,14 @@ Add a description.
 The description is used when logging neighbor events and in status
 reports etc and has no further meaning to
 .Ar bgpd .
+.It Ar dump
+Do a peer specific mrt dump.
+Peer specific dumps are limited to
+.Em all
+and
+.Em updates .
+See also the dump section in
+.Sx GLOBAL CONFIGURATION .
 .It Ar holdtime
 Set the holdtime in seconds.
 Inherited from the global configuration if not given.
