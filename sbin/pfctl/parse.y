@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.234 2002/12/04 12:57:55 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.235 2002/12/05 13:07:24 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -443,7 +443,7 @@ string		: string STRING				{
 
 varset		: STRING PORTUNARY string		{
 			if (pf->opts & PF_OPT_VERBOSE)
-				printf("%s = %s\n", $1, $3);
+				printf("%s = \"%s\"\n", $1, $3);
 			if (symset($1, $3) == -1) {
 				yyerror("cannot store variable %s", $1);
 				YYERROR;
@@ -2213,7 +2213,7 @@ route		: /* empty */			{
 timeout_spec	: STRING number
 		{
 			if (pf->opts & PF_OPT_VERBOSE)
-				printf("set timeout %s %us\n", $1, $2);
+				printf("set timeout %s %u\n", $1, $2);
 			if (check_rulestate(PFCTL_STATE_OPTION))
 				YYERROR;
 			if (pfctl_set_timeout(pf, $1, $2) != 0) {
