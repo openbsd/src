@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.64 2002/04/02 17:54:27 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.65 2002/05/09 17:20:09 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -80,12 +80,12 @@
 /*
  * hv-specific instructions
  */
-#define	DR_PAGE0	diag (0x70 << 5)
-#define	DR_PAGE1	diag (0x72 << 5)
-#define	MTCPU_T(x,t)	diag ((t) << 21) | ((x) << 16) | (0xc0 << 5)
-#define	MTCPU_C(x,t)	diag ((t) << 21) | ((x) << 16) | (0x12 << 5)
-#define	MFCPU_T(r,x)	diag ((r) << 21) | (0xa0 << 5) | (x)
-#define	MFCPU_C(r,x)	diag ((r) << 21) | ((x) << 16) | (0x30 << 5)
+#define	DR_PAGE0	.word	0x04001200
+#define	DR_PAGE1	.word	0x04001240
+#define	MTCPU_T(x,t)	.word	0x04001400 | ((t) << 21) | ((x) << 16)
+#define	MFCPU_T(r,x)	.word	0x04001400 | ((r) << 21) | (x)
+#define	MTCPU_C(x,t)	.word	0x04000240 | ((t) << 21) | ((x) << 16)
+#define	MFCPU_C(r,x)	.word	0x04000600 | ((r) << 21) | ((x) << 16)
 
 	.import	$global$, data
 	.import pdc, data
@@ -226,6 +226,7 @@ $qisnowon
 	 * Cannot change the queues or IPSW with the Q-bit on
 	 */
 	rsm	RESET_PSW, r0
+	nop ! nop ! nop ! nop ! nop ! nop ! nop
 
 	/*
 	 * We need to do an rfi to get the C bit set
@@ -281,6 +282,7 @@ LEAF_ENTRY($kernel_setup)
 	 * we start in a known state.
 	 */
 	rsm	RESET_PSW, r0
+	nop ! nop ! nop ! nop ! nop ! nop
 
 	/* get things ready for the kernel to run in virtual mode */
 	ldi	HPPA_PID_KERNEL, r1
@@ -835,7 +837,7 @@ $syscall_return_ok
 	 * since we don't use it anyway.
 	 */
 	rsm	RESET_PSW, r0
-	nop ! nop ! nop ! nop ! nop ! nop ! nop ! nop	/* XXX really? */
+	nop ! nop ! nop ! nop ! nop ! nop ! nop
 $syscall_return_phys
 
 	ldil	L%$trap_tmp_save, t3
@@ -1262,54 +1264,42 @@ EXIT($sfu_emu)
 	dep	r8, 31, 16, r16		/* put in the space id */	! \
 	depi	1, 0, 1, r16		/* and set the valid bit */
 
-	.align	64
-/*
- * void desidhash_s(void)
- */
-#if defined(HP7000_CPU) || defined(HP7100_CPU)
-LEAF_ENTRY(desidhash_s)
-ALTENTRY(desidhash_x)
-	sync
-	MFCPU_T(DR_CPUCFG,22)	/* t1 */
-	MFCPU_T(DR_CPUCFG,22)
-	nop
-	nop
-	depi	0, DR0_PCXS_DHE, 3, t1	/* 3 4 DR0_PCXS_DOMAIN|DR0_PCXS_IHE */
-	depi	1, DR0_PCXS_EQWSTO, 1, t1
-	depi	0, DR0_PCXS_DHPMC, 1, t1
-	depi	0, DR0_PCXS_ILPMC, 1, t1
-	sync
-	MTCPU_T(22,DR_CPUCFG)
-	MTCPU_T(22,DR_CPUCFG)
-	nop
-	nop
-	bv	0(rp)
-	extru	t1, 4, 5, ret0	/* return chip revision */
-EXIT(desidhash_s)
-#endif /* HP7000_CPU || HP7100_CPU */
+#if 1
+	.section .bss
+	.align	8
+	.export	dtlb_c, data
+dtlb_c
+	.comm	8
+	.export	dtlb_c, data
+tlbd_c
+	.comm	8
+	.export	dtlb_c, data
+itlb_c
+	.comm	8
 
-#ifdef HP7200_CPU
-/*
- * void desidhash_t(void)
- */
-LEAF_ENTRY(desidhash_t)
-	sync
-	MFCPU_T(DR_CPUCFG,22)	/* t1 */
-	MFCPU_T(DR_CPUCFG,22)
-	nop
-	nop
-	depi	0, DR0_PCXT_IHE, 1, t1
-	depi	0, DR0_PCXT_DHE, 1, t1
-	depi	0, DR0_PCXT_DHPMC, 1, t1
-	depi	0, DR0_PCXT_ILPMC, 1, t1
-	sync
-	MTCPU_T(22,DR_CPUCFG)
-	MTCPU_T(22,DR_CPUCFG)
-	nop
-	nop
-	bv	0(rp)
-	extru	t1, 4, 5, ret0	/* return chip revision */
-EXIT(desidhash_t)
+	.text
+	/* XXX this touches tr5, which it should not, perhaps */
+
+#define	TLB_STATS_PRE(t) \
+	mfctl	itmr, r17	! \
+	mtctl	r17, tr5
+#define	TLB_STATS_AFT(t) \
+	mfctl	itmr, r16			! \
+	mfctl	tr5, r17			! \
+	ldil	L%__CONCAT(t,_c), r25		! \
+	ldo	R%__CONCAT(t,_c)(r25), r25	! \
+	sub	r16, r17, r16			! \
+	ldw	0(r25), r24			! \
+	ldw	4(r25), r17			! \
+	ldo	1(r24), r24			! \
+	ldo	-2(r16), r16			! \
+	add	r16, r17, r17			! \
+	stw	r24, 0(r25)			! \
+	stw	r17, 4(r25)
+
+#else
+#define	TLB_STATS_PRE(t)	/**/
+#define	TLB_STATS_AFT(t)	/**/
 #endif
 
 #if defined(HP7000_CPU) || defined(HP7100_CPU) || defined(HP7200_CPU)
@@ -1334,15 +1324,18 @@ EXIT(desidhash_t)
 	addi	2, r25, r25						! \
 	extru	r17, 24, 25, r17
 
+	.align	32
 $tlbd_x
 $tlbd_s
 $tlbd_t
+	TLB_STATS_PRE(tlbd)
 	TLB_PULL(1)
 	mfsp	sr1, r16
 	mtsp	r8, sr1
 	idtlba	r17,(sr1, r9)
 	idtlbp	r25,(sr1, r9)
 	mtsp	r16, sr1
+	TLB_STATS_AFT(tlbd)
 	rfir
 	nop
 
@@ -1352,12 +1345,14 @@ $itlb_s
 $itlbna_s
 $itlb_t
 $itlbna_t
+	TLB_STATS_PRE(itlb)
 	TLB_PULL(0)
 	mfsp	sr1, r16
 	mtsp	r8, sr1
 	iitlba	r17,(sr1, r9)
 	iitlbp	r25,(sr1, r9)
 	mtsp	r16, sr1
+	TLB_STATS_AFT(itlb)
 	rfir
 	nop
 
@@ -1365,96 +1360,26 @@ $dtlb_x
 $dtlbna_x
 $dtlb_s
 $dtlbna_s
+	/*
+	 * from the 7100lc ers, pg.6:
+	 * pa7100 provides cr28 for dtlb traps only
+	 */
 $dtlb_t
 $dtlbna_t
+	TLB_STATS_PRE(dtlb)
 	TLB_PULL(0)
 	mfsp	sr1, r16
 	mtsp	r8, sr1
 	idtlba	r17,(sr1, r9)
 	idtlbp	r25,(sr1, r9)
 	mtsp	r16, sr1
+	TLB_STATS_AFT(dtlb)
 	rfir
 	nop
 #endif /*  defined(HP7000_CPU) || defined(HP7100_CPU) || defined(HP7200_CPU) */
 
 #ifdef HP7100LC_CPU
-/*
- * int
- * ibtlb_l(int i, pa_space_t sp, vaddr_t va, paddr_t pa, vsize_t sz, u_int prot)
- */
-LEAF_ENTRY(ibtlb_l)
-	rsm	(PSW_R|PSW_I), t4
 
-	bv	0(rp)
-	mtsm	t4
-EXIT(ibtlb_l)
-
-/* hpti_l(addr,size) */
-LEAF_ENTRY(hpti_l)
-	ldo	-1(arg1), arg1
-	depi	0, 31, 12, arg1
-	ldi	0x1c0, t1		/* cache size assumed 128k XXX */
-	or	arg0, t1, arg0
-	sync
-	MTCPU_C(26,DR0_PCXL2_HTLB_ADDR)
-	MTCPU_C(25,DR0_PCXL2_HTLB_CFG)
-	nop
-	nop
-	bv,n	r0(rp)
-	nop
-EXIT(hpti_l)
-
-/*
- * int
- * pbtlb_l(int i)
- */
-LEAF_ENTRY(pbtlb_l)
-	; DR_PAGE0
-	rsm	(PSW_R|PSW_I), t4
-	ldil	L%0xc041, t1
-	ldo	R%0xc041(t1), t1
-	dep	arg0, 30, 3, t1
-	sync
-	MTCPU_T(22,DR_DTLB)	/* t1 */
-	nop
-	nop
-	mtsp	r0, sr1
-	idtlba	r0,(sr1,r0)
-	idtlbp	r0,(sr1,r0)
-	zdepi	-1, 18, 1, t1
-	nop
-	sync
-	MTCPU_T(22,DR_DTLB)
-	nop
-	nop
-	bv	0(rp)
-	mtsm	t4
-EXIT(pbtlb_l)
-
-/*
- * int desidhash_l(void)
- */
-LEAF_ENTRY(desidhash_l)
-	MFCPU_C(DR_CPUCFG,22)	/* t1 */
-	nop
-	nop
-	depi	0, DR0_PCXL_L2IHASH_EN, 2, t1	/* + DR0_PCXL_L2DHASH_EN */
-	depi	0, DR0_PCXL_L2IHPMC, 1, t1	/* don't reset */
-	depi	0, DR0_PCXL_L2DHPMC, 1, t1	/* don't reset */
-	depi	0, DR0_PCXL_L1IHPMC, 1, t1	/* don't reset */
-	depi	0, DR0_PCXL_L2PARERR,1, t1	/* don't reset */
-		/* set DR0_PCXL_L1ICACHE_EN ??? */
-	depi	0, DR0_PCXL_PFMASK, 1, t1	/* enable power fail int */
-	sync
-	MTCPU_C(22,DR_CPUCFG)
-	nop
-	nop
-	bv	0(rp)
-	extru	t1, 4, 5, ret0	/* return chip revision */
-EXIT(desidhash_l)
-
-
-	.align	32
 #define	IITLBAF(r)	.word	0x04000440 | ((r) << 16)
 #define	IITLBPF(r)	.word	0x04000400 | ((r) << 16)
 #define	IDTLBAF(r)	.word	0x04001440 | ((r) << 16)
@@ -1469,48 +1394,58 @@ EXIT(desidhash_l)
 #define	TLB_PULL_L(bits)						! \
 	/* space:pgaddr -- r8:r9 */					! \
 	mfctl	vtop, r16						! \
-	ldwax,s	r8(r16), r17		/* space -> page directory */	! \
+	ldwx,s	r8(r16), r17		/* space -> page directory */	! \
 	extru	r9, 9, 10, r25						! \
 	combt,=,n r0, r17, TLABEL(all)					! \
-	ldwax,s	r25(r17), r24		/* page -> page table */	! \
+	ldwx,s	r25(r17), r24		/* page -> page table */	! \
 	extru	r9, 19, 10, r16						! \
 	combt,=,n r0, r24, TLABEL(all)					! \
-	ldwax,s	r16(r24), r17		/* va -> pa:prot */		! \
+	ldwx,s	r16(r24), r17		/* va -> pa:prot */		! \
 	sh2addl	r16, r24, r25						! \
 	combt,=,n r0, r17, TLABEL(all)					! \
+	copy	r17, r16						! \
 	depi	(bits), 21+bits, 1+bits, r17				! \
 	mfctl	tr7, r1							! \
-	stwas	r17, 0(r25)		/* store back w/ the bits */	! \
+	xor,=	r16, r17, r0		/* do not store if unchanged */	! \
+	stws	r17, 0(r25)		/* store back w/ the bits */	! \
 	shd	r17, r0, 13, r25					! \
 	dep	r8, 30, 15, r25		/* mix0r the pid from the sid */! \
 	dep	r0, 31, 12, r17		/* needed ? */			! \
 	addi	2, r25, r25						! \
-	extru	r17, 24, 25, r17
-
-$tlbd_l
-	TLB_PULL_L(1)
+	extru	r17, 24, 25, r17					! \
 	sync
+
+	.align	32
+$tlbd_l
+	TLB_STATS_PRE(tlbd)
+	TLB_PULL_L(1)
 	IDTLBAF(17)
 	IDTLBPF(25)
+	TLB_STATS_AFT(tlbd)
+	rfir
 	nop
+
+	/*
+	 * from 7100lc ers, pg.6:
+	 * we found a post-silicon bug that makes cr28
+	 * unreliable for the itlb miss handler
+	 */
+$itlb_l
+	TLB_STATS_PRE(itlb)
+	TLB_PULL_L(0)
+	IITLBAF(17)
+	IITLBPF(25)
+	TLB_STATS_AFT(itlb)
 	rfir
 	nop
 $itlbna_l
-$itlb_l
-	TLB_PULL_L(0)
-	sync
-	IITLBAF(17)
-	IITLBPF(25)
-	nop
-	rfir
-	nop
 $dtlbna_l
 $dtlb_l
+	TLB_STATS_PRE(dtlb)
 	TLB_PULL_L(0)
-	sync
 	IDTLBAF(17)
 	IDTLBPF(25)
-	nop
+	TLB_STATS_AFT(dtlb)
 	rfir
 	nop
 #endif /* HP7100LC_CPU */
@@ -1788,6 +1723,140 @@ $trapnowvirt
 $trap$all$end
 EXIT(TLABEL(all))
 
+#if defined(HP7000_CPU) || defined(HP7100_CPU)
+/*
+ * void desidhash_s(void)
+ */
+LEAF_ENTRY(desidhash_s)
+ALTENTRY(desidhash_x)
+	sync
+	MFCPU_T(DR_CPUCFG,22)	/* t1 */
+	MFCPU_T(DR_CPUCFG,22)
+	nop
+	nop
+	depi	0, DR0_PCXS_DHE, 3, t1	/* 3 4 DR0_PCXS_DOMAIN|DR0_PCXS_IHE */
+	depi	1, DR0_PCXS_EQWSTO, 1, t1
+	depi	0, DR0_PCXS_DHPMC, 1, t1
+	depi	0, DR0_PCXS_ILPMC, 1, t1
+	sync
+	MTCPU_T(22,DR_CPUCFG)
+	MTCPU_T(22,DR_CPUCFG)
+	nop
+	nop
+	bv	0(rp)
+	extru	t1, 4, 5, ret0	/* return chip revision */
+EXIT(desidhash_s)
+#endif /* HP7000_CPU || HP7100_CPU */
+
+#ifdef HP7200_CPU
+/*
+ * void desidhash_t(void)
+ */
+LEAF_ENTRY(desidhash_t)
+	sync
+	MFCPU_T(DR_CPUCFG,22)	/* t1 */
+	MFCPU_T(DR_CPUCFG,22)
+	nop
+	nop
+	depi	0, DR0_PCXT_IHE, 1, t1
+	depi	0, DR0_PCXT_DHE, 1, t1
+	depi	0, DR0_PCXT_DHPMC, 1, t1
+	depi	0, DR0_PCXT_ILPMC, 1, t1
+	sync
+	MTCPU_T(22,DR_CPUCFG)
+	MTCPU_T(22,DR_CPUCFG)
+	nop
+	nop
+	bv	0(rp)
+	extru	t1, 4, 5, ret0	/* return chip revision */
+EXIT(desidhash_t)
+#endif /* HP7200_CPU */
+
+#ifdef HP7100LC_CPU
+
+/*
+ * int
+ * ibtlb_l(int i, pa_space_t sp, vaddr_t va, paddr_t pa, vsize_t sz, u_int prot)
+ */
+LEAF_ENTRY(ibtlb_l)
+	rsm	(PSW_R|PSW_I), t4
+	nop ! nop ! nop ! nop ! nop ! nop ! nop
+
+	bv	0(rp)
+	mtsm	t4
+EXIT(ibtlb_l)
+
+/* hpti_l(addr,size) */
+LEAF_ENTRY(hpti_l)
+	ldo	-1(arg1), arg1
+	depi	0, 31, 12, arg1
+	ldi	0x1c0, t1		/* cache size assumed 128k XXX */
+	or	arg0, t1, arg0
+	sync
+	MTCPU_C(26,DR0_PCXL2_HTLB_ADDR)
+	MTCPU_C(25,DR0_PCXL2_HTLB_CFG)
+	nop
+	nop
+	bv,n	r0(rp)
+	nop
+EXIT(hpti_l)
+
+/*
+ * int
+ * pbtlb_l(int i)
+ */
+LEAF_ENTRY(pbtlb_l)
+	; DR_PAGE0
+	rsm	(PSW_R|PSW_I), t4
+	nop ! nop ! nop ! nop
+	ldil	L%0xc041, t1
+	ldo	R%0xc041(t1), t1
+	dep	arg0, 30, 3, t1
+	sync
+	MTCPU_T(22,DR_DTLB)	/* t1 */
+	nop
+	nop
+	mtsp	r0, sr1
+	idtlba	r0,(sr1,r0)
+	idtlbp	r0,(sr1,r0)
+	zdepi	-1, 18, 1, t1
+	nop
+	sync
+	MTCPU_T(22,DR_DTLB)
+	nop
+	nop
+	bv	0(rp)
+	mtsm	t4
+EXIT(pbtlb_l)
+
+/*
+ * int desidhash_l(void)
+ */
+LEAF_ENTRY(desidhash_l)
+	MFCPU_C(DR_CPUCFG,22)	/* t1 */
+	nop
+	nop
+	depi	0, DR0_PCXL_L2IHASH_EN, 2, t1	/* + DR0_PCXL_L2DHASH_EN */
+	depi	0, DR0_PCXL_L2IHPMC, 1, t1	/* don't reset */
+	depi	0, DR0_PCXL_L2DHPMC, 1, t1	/* don't reset */
+	depi	0, DR0_PCXL_L1IHPMC, 1, t1	/* don't reset */
+	depi	0, DR0_PCXL_L2PARERR,1, t1	/* don't reset */
+	/* XXX disable all i-cache ops */
+	depi	0, DR0_PCXL_ISTRM_EN,1, t1
+	depi	0, DR0_PCXL_IPREF_EN,1, t1
+	depi	0, DR0_PCXL_L1ICACHE_EN,1, t1
+	depi	0, DR0_PCXL_L2IHASH_EN,1, t1
+	depi	0, DR0_PCXL_L2DHASH_EN,1, t1
+	sync
+	MTCPU_C(22,DR_CPUCFG)
+	nop
+	nop
+	bv	0(rp)
+	extru	t1, 4, 5, ret0	/* return chip revision */
+EXIT(desidhash_l)
+
+#endif /* HP7100LC_CPU */
+
 /*
  * High Priority Machine Check Interrupt
  */
@@ -1971,12 +2040,12 @@ fdc_short				/* flush one line at a time */
 	fdc,m	arg3(sr1, arg1)
 
 	addi	-1, arg0, arg1
-	fdc	(sr1, arg1)
+	fdc	r0(sr1, arg1)
 
 	sync
 	syncdma
 	bv	r0(r2)
-	sync
+	nop
 EXIT(fdcache)
 
 	.import	dcache_stride, data
@@ -2018,12 +2087,12 @@ pdc_short				/* flush one line at a time */
 	pdc,m	arg3(sr1, arg1)
 
 	addi	-1, arg0, arg1
-	pdc	(sr1, arg1)
+	pdc	r0(sr1, arg1)
 
 	sync
 	syncdma
 	bv	r0(r2)
-	sync
+	nop
 EXIT(pdcache)
 
 	.import	icache_stride, data
@@ -2065,12 +2134,12 @@ fic_short				/* flush one line at a time */
 	fic,m	arg3(sr1, arg1)
 
 	addi	-1, arg0, arg1
-	fic	(sr1, arg1)
+	fic	r0(sr1, arg1)
 
 	sync
 	syncdma
 	bv	r0(r2)
-	sync
+	nop
 EXIT(ficache)
 
 
