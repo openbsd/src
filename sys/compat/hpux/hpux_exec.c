@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_exec.c,v 1.11 1999/11/26 16:44:27 art Exp $	*/
+/*	$OpenBSD: hpux_exec.c,v 1.12 2001/08/11 23:21:14 art Exp $	*/
 /*	$NetBSD: hpux_exec.c,v 1.8 1997/03/16 10:14:44 thorpej Exp $	*/
 
 /*
@@ -48,8 +48,6 @@
 #include <sys/stat.h>
 
 #include <vm/vm.h>
-#include <vm/vm_param.h>
-#include <vm/vm_map.h>
 
 #include <machine/cpu.h>
 #include <machine/reg.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.14 2001/07/25 13:25:33 art Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.15 2001/08/11 23:21:14 art Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.37 1996/11/20 18:57:22 gwr Exp $	*/
 
 /*-
@@ -61,7 +61,6 @@
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
-#include <vm/vm_map.h>
 
 #include <uvm/uvm_extern.h>
 
