@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.21 2000/08/11 00:35:18 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.22 2001/01/16 15:44:36 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -491,6 +491,64 @@ struct elf_args {
         u_long  arg_os;			/* OS tag */
 };
 
+#endif
+
+#if defined(ELFSIZE)
+#define CONCAT(x,y)	__CONCAT(x,y)
+#define ELFNAME(x)	CONCAT(elf,CONCAT(ELFSIZE,CONCAT(_,x)))
+#define ELFNAME2(x,y)	CONCAT(x,CONCAT(_elf,CONCAT(ELFSIZE,CONCAT(_,y))))
+#define ELFNAMEEND(x)	CONCAT(x,CONCAT(_elf,ELFSIZE))
+#define ELFDEFNNAME(x)	CONCAT(ELF,CONCAT(ELFSIZE,CONCAT(_,x)))
+#endif
+
+#include <machine/elf_machdep.h>
+
+#if defined(ELFSIZE) && (ELFSIZE == 32)
+#define Elf_Ehdr	Elf32_Ehdr
+#define Elf_Phdr	Elf32_Phdr
+#define Elf_Shdr	Elf32_Shdr
+#define Elf_Sym		Elf32_Sym
+#define Elf_Rel		Elf32_Rel
+#define Elf_RelA	Elf32_RelA
+#define Elf_Dyn		Elf32_Dyn
+#define Elf_Word	Elf32_Word
+#define Elf_Sword	Elf32_Sword
+#define Elf_Addr	Elf32_Addr
+#define Elf_Off		Elf32_Off
+#define Elf_Nhdr	Elf32_Nhdr
+
+#define ELF_R_SYM	ELF32_R_SYM
+#define ELF_R_TYPE	ELF32_R_TYPE
+#define ELFCLASS	ELFCLASS32
+
+#define ELF_ST_BIND	ELF32_ST_BIND
+#define ELF_ST_TYPE	ELF32_ST_TYPE
+#define ELF_ST_INFO	ELF32_ST_INFO
+
+#define AuxInfo		Aux32Info
+#elif defined(ELFSIZE) && (ELFSIZE == 64)
+#define Elf_Ehdr	Elf64_Ehdr
+#define Elf_Phdr	Elf64_Phdr
+#define Elf_Shdr	Elf64_Shdr
+#define Elf_Sym		Elf64_Sym
+#define Elf_Rel		Elf64_Rel
+#define Elf_RelA	Elf64_RelA
+#define Elf_Dyn		Elf64_Dyn
+#define Elf_Word	Elf64_Word
+#define Elf_Sword	Elf64_Sword
+#define Elf_Addr	Elf64_Addr
+#define Elf_Off		Elf64_Off
+#define Elf_Nhdr	Elf64_Nhdr
+
+#define ELF_R_SYM	ELF64_R_SYM
+#define ELF_R_TYPE	ELF64_R_TYPE
+#define ELFCLASS	ELFCLASS64
+
+#define ELF_ST_BIND	ELF64_ST_BIND
+#define ELF_ST_TYPE	ELF64_ST_TYPE
+#define ELF_ST_INFO	ELF64_ST_INFO
+
+#define AuxInfo		Aux64Info
 #endif
 
 #ifdef	_KERNEL
