@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.53 2001/08/23 14:01:03 art Exp $	*/
+/* $OpenBSD: machdep.c,v 1.54 2001/08/24 19:26:15 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1657,7 +1657,7 @@ m188_ext_int(u_int v, struct m88100_saved_state *eframe)
 			panic("m188_ext_int");
 		}
 		if (vec > 0xFF) {
-			panic("m188_ext_int: interrupt vector 0x%x greater than 255!\nlevel = %d iack = 0x%x\n", 
+			panic("m188_ext_int: interrupt vector 0x%x greater than 255!\nlevel = %d iack = 0x%x", 
 			      vec, level, ivec[level]);
 		}
 

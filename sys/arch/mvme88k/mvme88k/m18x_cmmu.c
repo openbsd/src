@@ -1,4 +1,4 @@
-/*	$OpenBSD: m18x_cmmu.c,v 1.10 2001/08/11 01:55:55 miod Exp $	*/
+/*	$OpenBSD: m18x_cmmu.c,v 1.11 2001/08/24 19:26:15 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -376,7 +376,7 @@ m18x_setup_board_config()
 	case 0:
 		printf("MVME%x board configuration #%X: %d CPUs %d CMMUs\n", cputyp, 
 		       vme188_config, max_cpus, max_cmmus);
-		panic("This configuration is not supported - go and get another OS.\n");
+		panic("This configuration is not supported - go and get another OS.");
 		/* NOTREACHED */
 		break;
 	case 1:
@@ -385,7 +385,7 @@ m18x_setup_board_config()
 		m18x_setup_cmmu_config();
 		break;
 	default:
-		panic("UNKNOWN MVME%x board configuration: WHOAMI = 0x%02x\n", cputyp, *whoami);
+		panic("UNKNOWN MVME%x board configuration: WHOAMI = 0x%02x", cputyp, *whoami);
 		/* NOTREACHED */
 		break;
 	}

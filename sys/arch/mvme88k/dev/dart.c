@@ -1,4 +1,4 @@
-/*	$OpenBSD: dart.c,v 1.7 2001/07/04 08:09:21 niklas Exp $	*/
+/*	$OpenBSD: dart.c,v 1.8 2001/08/24 19:26:12 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -481,7 +481,7 @@ dartmctl (dev, flags, how)
 		addr->write.wr_oprreset = newflags;
 		break;
 	case DMGET:
-		panic("dartmctl: DMGET not supported (yet)\n");
+		panic("dartmctl: DMGET not supported (yet)");
 		break;
 	}
 

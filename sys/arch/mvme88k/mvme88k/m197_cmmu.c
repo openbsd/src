@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_cmmu.c,v 1.5 2001/08/11 01:55:55 miod Exp $	*/
+/*	$OpenBSD: m197_cmmu.c,v 1.6 2001/08/24 19:26:15 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -325,7 +325,7 @@ static
 void
 m197_cmmu_remote_set(unsigned cpu, unsigned r, unsigned data, unsigned x)
 {
-	panic("m197_cmmu_remote_set() called!\n");
+	panic("m197_cmmu_remote_set() called!");
 }
 
 /*
@@ -338,7 +338,7 @@ static
 unsigned
 m197_cmmu_remote_get(unsigned cpu, unsigned r, unsigned data)
 {
-	panic("m197_cmmu_remote_get() called!\n");
+	panic("m197_cmmu_remote_get() called!");
 	return 0;
 }
 
