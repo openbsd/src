@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_svr4.8,v 1.7 1999/07/09 13:35:36 aaron Exp $
+.\"	$OpenBSD: compat_svr4.8,v 1.8 2000/08/08 19:16:11 brad Exp $
 .\"	$NetBSD: compat_svr4.8,v 1.1 1996/07/06 17:14:50 christos Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas
@@ -39,10 +39,24 @@
 .Nm compat_svr4
 .Nd setup procedure for running SVR4/iBCS2 binaries under emulation
 .Sh DESCRIPTION
-OpenBSD supports running SVR4/iBCS2 binaries. This code has been tested on
+.Ox
+supports running SVR4/iBCS2 binaries. This code has been tested on
 i386 and sparc systems. Most programs should work, but not ones that use
-the /proc filesystem, sound, or threads (unfortunately ttsession uses threads).
-.\" XXX: What else?
+or depend on:
+.Pp
+.Bl -tag -width 123 -compact -offset indent
+.It kernel internal data structures
+.br
+.It the /proc filesystem
+.br
+.It the ticotsord loopback rpc mechanism (nis uses this)
+.br
+.It sound and video interfaces
+.br
+.It threads (ttsession uses threads)
+.br
+.It the streams administrative driver
+.El
 .Pp
 The SVR4 compatibility feature is active
 for kernels compiled with the
@@ -52,18 +66,25 @@ option enabled.
 Most SVR4 programs are dynamically linked. This means that you will
 also need the shared libraries that the program depends on and the
 runtime linker. Also, you will need to create a "shadow root"
-directory for SVR4 binaries on your OpenBSD system. This directory
+directory for SVR4 binaries on your
+.Ox
+system. This directory
 is named /emul/svr4. Any file operations done by SVR4 programs
-run under OpenBSD will look in this directory first. So, if a SVR4
-program opens, for example, /etc/passwd, OpenBSD will
+run under
+.Ox
+will look in this directory first. So, if a SVR4
+program opens, for example, /etc/passwd,
+.Ox
+will
 first try to open /emul/svr4/etc/passwd, and if that does not exist
 open the 'real' /etc/passwd file. It is recommended that you install
 SVR4 packages that include configuration files, etc under /emul/svr4,
-to avoid naming conflicts with possible OpenBSD counterparts. Shared
+to avoid naming conflicts with possible
+.Ox
+counterparts. Shared
 libraries should also be installed in the shadow tree.
 .Pp
 The simplest way to setup your system for SVR4 biraries is:
-
 .Bl -tag -width 123 -compact
 .It 1.
 Make the necessary directories:
@@ -77,7 +98,7 @@ Make the necessary directories:
 .El
 .Pp
 .It 2.
-Copy files from an svr4 system:
+Copy files from an SVR4 system:
 .Pp
 .Bl -tag -width 123 -compact -offset indent
 .It (me@svr4) cd /usr/lib
@@ -88,7 +109,7 @@ Copy files from an svr4 system:
 .in -5
 .El
 .Pp
-If you are running openwindows:
+If you are running OpenWindows:
 .Pp
 .Bl -tag -width 123 -compact -offset indent
 .It (me@svr4) cd /usr/openwin/lib
@@ -109,11 +130,11 @@ Setup the configuration files and devices:
 .br
 .It (me@openbsd) cp SVR4_MAKEDEV /emul/svr4/dev
 .br
-.It (me@openbsd) cd /emul/svr4/dev; ./SVR4_MAKEDEV all
+.It (me@openbsd) cd /emul/svr4/dev; sh SVR4_MAKEDEV all
 .El
 .El
 .Pp
-An alternative method is to mount a whole svr4 partition in /emul/svr4
+An alternative method is to mount a whole SVR4 partition in /emul/svr4
 and then override with other mounts /emul/svr4/etc and /emul/svr4/dev.
 .Pp
 Clearly, you cannot use a complete SVR4
@@ -122,7 +143,21 @@ directory as
 .Pa /emul/svr4/dev ,
 because other device nodes, such as
 .Pa /dev/null ,
-need to be OpenBSD device nodes.
+need to be
+.Ox
+device nodes.
 .Sh BUGS
-Many system calls are still not emulated.
-
+Many system calls are still not emulated. The streams emulation is
+incomplete (socketpair does not work yet).
+.Pp
+Most SVR4 executables can not handle directory offset cookies > 32
+bits. More recent ones, compiled for large file support (Solaris 2.6
+and up) can. With older programs, you will see the message "svr4_getdents:
+dir offset too large for emulated program" when this happens. Currently,
+this can only happen on NFS mounted filesystems, mounted from servers
+that return offsets with information in the upper 32 bits. These errors
+should rarely happen, but can be avoided by mounting this filesystem with
+the
+.Fl 2
+option to
+.Xr mount_nfs 8 .
