@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2002/06/07 05:02:58 hin Exp $
+#	$OpenBSD: Makefile,v 1.5 2003/08/05 11:07:43 hin Exp $
 
 # To the future maintainer (if I get hit by a car or something): The structure
 # is like this (everything in src, except the makefiles), because we want
@@ -18,8 +18,7 @@ SUBDIR		+= usr.sbin/ydr
 .endif
 SUBDIR		+= lib libexec usr.sbin
 
-## To be able to make depend in libarla we have to have ydr (that needs
-## libroken) and libroken used by gensysname in (libarla/Makefile.ko.inc)
+## To be able to make depend in libarla we have to have ydr
 
 beforedepend:
 	cd usr.sbin/ydr && make depend && exec make
