@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: id.c,v 1.7 2000/08/16 09:07:27 brian Exp $
+ *	$OpenBSD: id.c,v 1.8 2002/03/05 13:10:11 brian Exp $
  */
 
 #include <sys/param.h>
@@ -220,17 +220,18 @@ void
 ID0logout(const char *device, int nologout)
 {
   struct utmp ut;
+  char ut_line[sizeof ut.ut_line + 1];
 
-  strncpy(ut.ut_line, device, sizeof ut.ut_line - 1);
-  ut.ut_line[sizeof ut.ut_line - 1] = '\0';
+  strncpy(ut_line, device, sizeof ut_line - 1);
+  ut_line[sizeof ut_line - 1] = '\0';
 
   ID0set0();
-  if (nologout || logout(ut.ut_line)) {
-    log_Printf(LogID0, "logout(\"%s\")\n", ut.ut_line);
-    logwtmp(ut.ut_line, "", ""); 
-    log_Printf(LogID0, "logwtmp(\"%s\", \"\", \"\")\n", ut.ut_line);
+  if (nologout || logout(ut_line)) {
+    log_Printf(LogID0, "logout(\"%s\")\n", ut_line);
+    logwtmp(ut_line, "", ""); 
+    log_Printf(LogID0, "logwtmp(\"%s\", \"\", \"\")\n", ut_line);
   } else
-    log_Printf(LogERROR, "ID0logout: No longer logged in on %s\n", ut.ut_line);
+    log_Printf(LogERROR, "ID0logout: No longer logged in on %s\n", ut_line);
   ID0setuser();
 }
 
