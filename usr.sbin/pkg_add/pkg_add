@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.106 2004/11/11 12:45:15 espie Exp $
+# $OpenBSD: pkg_add,v 1.107 2004/11/12 00:04:34 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -258,9 +258,9 @@ sub borked_installation
 	    require OpenBSD::md5;
 
 	    my $old = $last->{md5};
-	    $last->{md5} = OpenBSD::md5::fromfile($last->{fullname});
+	    $last->{md5} = OpenBSD::md5::fromfile($last->fullname());
 	    if ($old ne $last->{md5}) {
-		print "Adjusting md5 for ", $last->{fullname}, " from ",
+		print "Adjusting md5 for ", $last->fullname(), " from ",
 		    $old, " to ", $last->{md5}, "\n";
 	    }
 	}
