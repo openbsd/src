@@ -1,5 +1,5 @@
-/*	$OpenBSD: asn.c,v 1.5 1998/11/17 11:10:07 niklas Exp $	*/
-/*	$EOM: asn.c,v 1.20 1998/08/21 13:47:55 provos Exp $	*/
+/*	$OpenBSD: asn.c,v 1.6 1999/02/26 03:32:11 niklas Exp $	*/
+/*	$EOM: asn.c,v 1.21 1999/02/25 11:38:42 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -42,6 +42,8 @@
 #include <string.h>
 #include <gmp.h>
 #include <unistd.h>
+
+#include "sysdep.h"
 
 #include "log.h"
 #include "asn.h"
