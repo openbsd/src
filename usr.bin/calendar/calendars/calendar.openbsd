@@ -1,7 +1,7 @@
 /*
  * OpenBSD-related dates to celebrate
  *
- * $OpenBSD: calendar.openbsd,v 1.21 2004/12/07 22:49:58 mickey Exp $
+ * $OpenBSD: calendar.openbsd,v 1.22 2005/01/03 19:26:49 mickey Exp $
  */
 
 #ifndef _calendar_openbsd_
@@ -66,5 +66,6 @@ Dec 05	OpenCVS moves development into the tree, 2004
 Dec 07	KAME IPv6 merger TODOs.  you may want to see them earlier..., 1999
 Dec 17	Welkomen OpenBGPD, 2003
 Dec 21	OpenBSD/powerpc port is added, 1996
+Dec 30	OpenBSD/zaurus port is added, 2004
 
 #endif /* !_calendar_openbsd_ */
