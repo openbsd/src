@@ -1,4 +1,4 @@
-#	$OpenBSD: NETTAN,v 1.9 1996/07/31 18:35:19 deraadt Exp $
+#	$OpenBSD: NETTAN,v 1.10 1996/08/05 10:38:34 niklas Exp $
 #
 #	NETTAN -- Applitron Datasystem AB
 #
@@ -51,7 +51,7 @@ option		LKM		# loadable kernel modules
 
 option		FFS		# UFS
 option		QUOTA		# UFS quotas
-#option			LFS		# log-structured file system
+#option		LFS		# log-structured file system
 option		MFS		# memory file system
 
 option		NFSCLIENT	# Network File System client
@@ -70,10 +70,10 @@ option		UNION		# union file system
 
 #option		GATEWAY		# packet forwarding
 option		INET		# IP + ICMP + TCP + UDP
-option		NS		# XNS
-#option			ISO,TPIP	# OSI
-#option			EON		# OSI tunneling over IP
-#option			CCITT,LLC,HDLC	# X.25
+#option		NS		# XNS
+#option		ISO,TPIP	# OSI
+#option		EON		# OSI tunneling over IP
+#option		CCITT,LLC,HDLC	# X.25
 
 config		bsd	swap generic
 
