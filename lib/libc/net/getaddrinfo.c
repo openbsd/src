@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.36 2002/06/29 12:25:42 itojun Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.37 2002/07/01 07:43:48 itojun Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.31 2000/08/31 17:36:43 itojun Exp $	*/
 
 /*
@@ -219,7 +219,7 @@ static const struct afd *find_afd(int);
 static int addrconfig(const struct addrinfo *);
 #endif
 #ifdef INET6
-static int ip6_str2scopeid(char *, struct sockaddr_in6 *);
+static u_int32_t ip6_str2scopeid(char *, struct sockaddr_in6 *);
 #endif
 
 static void _sethtent(void);
@@ -292,8 +292,9 @@ str_isnumber(p)
 	if (*p == '\0')
 		return NO;
 	ep = NULL;
+	errno = 0;
 	(void)strtoul(p, &ep, 10);
-	if (ep && *ep == '\0')
+	if (errno == 0 && ep && *ep == '\0')
 		return YES;
 	else
 		return NO;
@@ -777,7 +778,7 @@ explore_numeric_scope(pai, hostname, servname, res)
 
 	error = explore_numeric(pai, addr, servname, res);
 	if (error == 0) {
-		int scopeid;
+		u_int32_t scopeid;
 
 		for (cur = *res; cur; cur = cur->ai_next) {
 			if (cur->ai_family != AF_INET6)
@@ -967,12 +968,13 @@ addrconfig(pai)
 
 #ifdef INET6
 /* convert a string to a scope identifier. XXX: IPv6 specific */
-static int
+static u_int32_t
 ip6_str2scopeid(scope, sin6)
 	char *scope;
 	struct sockaddr_in6 *sin6;
 {
-	int scopeid;
+	u_int32_t scopeid;
+	u_long lscopeid;
 	struct in6_addr *a6 = &sin6->sin6_addr;
 	char *ep;
 
@@ -1002,8 +1004,10 @@ ip6_str2scopeid(scope, sin6)
 
 	/* try to convert to a numeric id as a last resort */
   trynumeric:
-	scopeid = (int)strtoul(scope, &ep, 10);
-	if (*ep == '\0')
+	errno = 0;
+	lscopeid = strtoul(scope, &ep, 10);
+	scopeid = lscopeid & 0xffffffff;
+	if (errno == 0 && ep && *ep == '\0' && scopeid == lscopeid)
 		return scopeid;
 	else
 		return -1;
