@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_fsm.h,v 1.7 2003/06/02 23:28:14 millert Exp $	*/
+/*	$OpenBSD: tcp_fsm.h,v 1.8 2004/07/06 13:52:31 markus Exp $	*/
 /*	$NetBSD: tcp_fsm.h,v 1.6 1994/10/14 16:01:48 mycroft Exp $	*/
 
 /*
@@ -71,7 +71,7 @@
 u_char	tcp_outflags[TCP_NSTATES] = {
     TH_RST|TH_ACK, 0, TH_SYN, TH_SYN|TH_ACK,
     TH_ACK, TH_ACK,
-    TH_FIN|TH_ACK, TH_ACK, TH_FIN|TH_ACK, TH_ACK, TH_ACK,
+    TH_FIN|TH_ACK, TH_FIN|TH_ACK, TH_FIN|TH_ACK, TH_ACK, TH_ACK,
 };
 #endif /* TCPOUTFLAGS */
 
