@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.76 2002/12/04 21:33:20 jason Exp $
+#	$OpenBSD: GENERIC,v 1.77 2003/02/06 13:26:44 deraadt Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -44,6 +44,7 @@ dc*	at pci? dev ? function ?		# 21143, "tulip" clone ethernet
 # PCI SCSI
 siop*	at pci? dev ? function ?
 isp*	at pci? dev ? function ?
+option ISP_COMPILE_FW=1
 scsibus* at siop?
 
 # PCI Display
@@ -172,6 +173,7 @@ esp*	at dma? flags 0x0000			# SBus
 esp*	at sbus? slot ? offset ?
 
 isp*	at sbus? slot ? offset ?
+option ISP_COMPILE_1000_FW=1
 
 # SCSI bus layer.  SCSI devices attach to the SCSI bus, which attaches
 # to the underlying hardware controller.
