@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.13 2002/06/05 20:52:47 provos Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.14 2002/06/10 19:16:26 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -334,7 +334,7 @@ void
 usage(void)
 {
 	fprintf(stderr,
-	    "Usage: systrace [-ait] [-g gui] [-f policy] command ...\n");
+	    "Usage: systrace [-ait] [-g gui] [-f policy] [-p pid] command ...\n");
 	exit(1);
 }
 
@@ -392,9 +392,10 @@ main(int argc, char **argv)
 	char **args;
 	char *filename = NULL;
 	char *guipath = _PATH_XSYSTRACE;
+	pid_t pidattach = 0;
 	int usex11 = 1;
 
-	while ((c = getopt(argc, argv, "aAitUg:f:")) != -1) {
+	while ((c = getopt(argc, argv, "aAitUg:f:p:")) != -1) {
 		switch (c) {
 		case 'a':
 			automatic = 1;
@@ -411,6 +412,12 @@ main(int argc, char **argv)
 		case 'f':
 			filename = optarg;
 			break;
+		case 'p':
+			if ((pidattach = atoi(optarg)) == 0) {
+				warnx("bad pid: %s", optarg);
+				usage();
+			}
+			break;
 		case 't':
 			usex11 = 0;
 			break;
@@ -425,7 +432,7 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if (argc == 0)
+	if (argc == 0 || (pidattach && *argv[0] != '/'))
 		usage();
 
 	/* Username for automatic mode, and policy predicates */
@@ -435,13 +442,6 @@ main(int argc, char **argv)
 	if (getcwd(cwd, sizeof(cwd)) == NULL)
 		err(1, "getcwd");
 
-	if ((args = malloc((argc + 1) * sizeof(char *))) == NULL)
-		err(1, "malloc");
-
-	for (i = 0; i < argc; i++)
-		args[i] = argv[i];
-	args[i] = NULL;
-
 	if (signal(SIGCHLD, child_handler) == SIG_ERR)
 		err(1, "signal");
 
@@ -449,21 +449,37 @@ main(int argc, char **argv)
 	systrace_initpolicy(filename);
 	systrace_initcb();
 
-	if ((fd = intercept_open()) == -1)
-		exit(1);
-
-	pid = intercept_run(fd, args[0], args);
-	if (pid == -1)
-		err(1, "fork");
-
-	if (intercept_attach(fd, pid) == -1)
-		err(1, "attach");
-
+	/* Start the policy gui if necessary */
 	if (usex11 && !automatic && !allow)
 		requestor_start(guipath);
 
-	if (kill(pid, SIGCONT) == -1)
-		err(1, "kill");
+	if ((fd = intercept_open()) == -1)
+		exit(1);
+
+	if (pidattach == 0) {
+		/* Run a command and attach to it */
+		if ((args = malloc((argc + 1) * sizeof(char *))) == NULL)
+			err(1, "malloc");
+
+		for (i = 0; i < argc; i++)
+			args[i] = argv[i];
+		args[i] = NULL;
+
+		pid = intercept_run(fd, args[0], args);
+		if (pid == -1)
+			err(1, "fork");
+
+		if (intercept_attach(fd, pid) == -1)
+			err(1, "attach");
+
+		if (kill(pid, SIGCONT) == -1)
+			err(1, "kill");
+	} else {
+		/* Attach to a running command */
+
+		if (intercept_attachpid(fd, pidattach, argv[0]) == -1)
+			err(1, "attachpid");
+	}
 
 	while (intercept_read(fd) != -1)
 		if (!intercept_existpids())

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.h,v 1.1 2002/06/04 17:20:04 provos Exp $	*/
+/*	$OpenBSD: intercept.h,v 1.2 2002/06/10 19:16:26 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -41,6 +41,7 @@ struct intercept_system {
 	int (*open)(void);
 	int (*attach)(int, pid_t);
 	int (*detach)(int, pid_t);
+	int (*report)(int, pid_t);
 	int (*read)(int);
 	int (*getsyscallnumber)(char *, char *);
 	char *(*getcwd)(int, pid_t, char *, size_t);
@@ -102,6 +103,7 @@ int intercept_init(void);
 pid_t intercept_run(int, char *, char * const *);
 int intercept_open(void);
 int intercept_attach(int, pid_t);
+int intercept_attachpid(int, pid_t, char *);
 int intercept_detach(int, pid_t);
 int intercept_read(int);
 int intercept_newpolicy(int);

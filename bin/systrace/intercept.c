@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.4 2002/06/04 19:25:54 provos Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.5 2002/06/10 19:16:26 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -301,6 +301,31 @@ int
 intercept_attach(int fd, pid_t pid)
 {
 	return (intercept.attach(fd, pid));
+}
+
+int
+intercept_attachpid(int fd, pid_t pid, char *name)
+{
+	struct intercept_pid *icpid;
+	int res;
+
+	res = intercept.attach(fd, pid);
+	if (res == -1)
+		return (-1);
+
+	if ((icpid = intercept_getpid(pid)) == NULL)
+		return (-1);
+
+	if ((icpid->newname = strdup(name)) == NULL)
+		err(1, "strdup");
+
+	if (intercept.report(fd, pid) == -1)
+		return (-1);
+
+	/* Indicates a running attach */
+	icpid->execve_code = -1;
+
+	return (0);
 }
 
 int

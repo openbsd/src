@@ -1,4 +1,4 @@
-/*	$OpenBSD: openbsd-syscalls.c,v 1.4 2002/06/04 19:15:54 deraadt Exp $	*/
+/*	$OpenBSD: openbsd-syscalls.c,v 1.5 2002/06/10 19:16:26 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -134,6 +134,15 @@ obsd_attach(int fd, pid_t pid)
 }
 
 int
+obsd_report(int fd, pid_t pid)
+{
+	if (ioctl(fd, STRIOCREPORT, &pid) == -1)
+		return (-1);
+
+	return (0);
+}
+
+int
 obsd_detach(int fd, pid_t pid)
 {
 	if (ioctl(fd, STRIOCDETACH, &pid) == -1)
@@ -245,6 +254,15 @@ obsd_set_emulation(pid_t pidnr, char *name)
 	data->commit = tmp;
 
 	return (0);
+}
+
+struct emulation *
+obsd_switch_emulation(struct obsd_data *data)
+{
+	data->current = data->commit;
+	data->commit = NULL;
+
+	return (data->current);
 }
 
 char *
@@ -458,8 +476,7 @@ obsd_read(int fd)
 
 		/* Switch emulation around at the right time */
 		if (data->commit != NULL) {
-			current = data->current = data->commit;
-			data->commit = NULL;
+			current = obsd_switch_emulation(data);
 		}
 
 		intercept_syscall_result(fd, msg.msg_pid, msg.msg_policy,
@@ -477,6 +494,19 @@ obsd_read(int fd)
 		if (obsd_set_emulation(msg.msg_pid, name) == -1)
 			errx(1, "%s:%d: set_emulation(%s)",
 			    __func__, __LINE__, name);
+
+		if (icpid->execve_code == -1) {
+			icpid->execve_code = 0;
+
+			/* A running attach fake a exec cb */
+			current = obsd_switch_emulation(data);
+
+			intercept_syscall_result(fd,
+			    msg.msg_pid, msg.msg_policy,
+			    "execve", 0, current->name,
+			    NULL, 0, 0, NULL);
+			break;
+		}
 
 		if (obsd_answer(fd, msg.msg_pid, 0, 0, 0) == -1)
 			err(1, "%s:%d: answer", __func__, __LINE__);
@@ -496,6 +526,7 @@ struct intercept_system intercept = {
 	obsd_open,
 	obsd_attach,
 	obsd_detach,
+	obsd_report,
 	obsd_read,
 	obsd_syscall_number,
 	obsd_getcwd,
