@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.12 2004/04/18 02:28:04 pvalchev Exp $
+#	$OpenBSD: GENERIC,v 1.13 2004/04/20 15:05:18 pvalchev Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -107,7 +107,7 @@ ucom*	at umct? portno ?
 uaudio* at uhub? port ? configuration ?	# USB Audio
 audio*	at uaudio?
 umidi*	at uhub? port ? configuration ?	# USB MIDI
-#midi*	at umidi?
+midi*	at umidi?
 ulpt*	at uhub? port ? configuration ? # USB Printers
 umass*	at uhub? port ? configuration ? # USB Mass Storage devices
 scsibus* at umass?
