@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpemu.S,v 1.7 2002/10/07 14:38:34 mickey Exp $	*/
+/*	$OpenBSD: fpemu.S,v 1.8 2003/04/10 17:27:58 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000,2002 Michael Shalayeff
@@ -101,21 +101,32 @@ LEAF_ENTRY(fpu_emulate)
 $fpemu_nzt
 	/*
 	 * arg0 -- source register (address)
-	 * arg1 -- target register (address)
-	 * arg2 -- fpregs context
+	 * arg1 -- fpregs context
+	 * arg2 -- target register (address)
+	 * arg3 -- fpregs context
 	 * t3 -- class
 	 * r31 -- subop
 	 * r1 -- format specifier
 	 * (t4 -- copy of arg0, ie iir)
 	 */
+	copy	arg2, arg3
+	copy	arg2, arg1
 	sh3add	t1, arg2, arg0
-	sh3add	t2, arg2, arg1
-	stw	r0, 32*8+0(arg2)	/* make sure zero reg is zero */
-	stw	r0, 32*8+4(arg2)
+	sh3add	t2, arg2, arg2
+	stw	r0, 32*8+0(arg1)	/* make sure zero reg is zero */
+	stw	r0, 32*8+4(arg1)
+
+	extru,=	t4, 24, 1, r0		/* adjust for the L in source */
+	addi	4, arg0, arg0
+
+	comib,=,n 2, t3, $fpemu0c_2
+	nop
+
+	extru,=	t4, 24, 1, r0		/* adjust for the L in target */
+	addi	4, arg2, arg2
 
 	comib,=,n 0, t3, $fpemu0c_0
 	comib,=,n 1, t3, $fpemu0c_1
-	comib,=,n 2, t3, $fpemu0c_2
 	comib,=,n 3, t3, $fpemu0c_3
 
 $fpemu0c_0
@@ -132,7 +143,7 @@ $fpemu0c_0
 
 $fpemu0c_0_0
 	ldi	FPEMU_VERSION, t4
-	stw	t4, 0(arg2)
+	stw	t4, 0(arg3)
 	bv	0(rp)
 	copy	r0, ret0
 
@@ -143,13 +154,13 @@ $fpemu0c_0_2	/* fcpy */
 	ldw	2*4(arg0), t3
 	blr,n	r1, r0
 	ldw	3*4(arg0), t4
-	stw	t3, 2*4(arg1)
-	stw	t4, 3*4(arg1)
+	stw	t3, 2*4(arg2)
+	stw	t4, 3*4(arg2)
 	nop
 	nop
 	nop
-	stw	t2, 1*4(arg1)
-	stw	t1, 0*4(arg1)
+	stw	t2, 1*4(arg2)
+	stw	t1, 0*4(arg2)
 	bv	0(rp)
 	copy	r0, ret0
 
@@ -161,13 +172,13 @@ $fpemu0c_0_3	/* fabs */
 	ldw	3*4(arg0), t4
 	blr,n	r1, r0
 	depi	0, 0, 1, t1
-	stw	t3, 2*4(arg1)
-	stw	t4, 3*4(arg1)
+	stw	t3, 2*4(arg2)
+	stw	t4, 3*4(arg2)
 	nop
 	nop
 	nop
-	stw	t2, 1*4(arg1)
-	stw	t1, 0*4(arg1)
+	stw	t2, 1*4(arg2)
+	stw	t1, 0*4(arg2)
 	bv	0(rp)
 	copy	r0, ret0
 
@@ -222,17 +233,18 @@ $fpemu0c_2
 	comib,<>,n 0, r31, $fpemu_exit
 
 $fpemu0c_2_0
-	copy	arg2, arg3
 	extru,<> t4, 15, 5, t1
 	ldi	32, t1
-	sh3add	t1, arg3, arg2
+	sh3add	t1, arg3, arg1
+	extru,=	t4, 19, 1, r0	/* see if it's the L reg */
+	addi	4, arg1, arg1
 	FP_TABLE2(fcmp,sgl,dbl,invalid,invalid)
 
 $fpemu0c_2_1
 	comib,<>,n 0, r1, $fpemu_exit
 
 	/* XXX timex is much more compilicated */
-	ldw	0(arg2), t1
+	ldw	0(arg3), t1
 	ldi	0, ret0
 	extru,<> t1, 5, 1, r0
 	bv,n	r0(rp)
@@ -252,25 +264,27 @@ $fpemu0c_2_1
 $fpemu0c_3
 	extru,<> t4, 15, 5, t1
 	ldi	32, t1
+	extru,=	t4, 19, 1, r0	/* see if it's the L reg */
+	addi	4, arg1, arg1
 	blr	r31, r0
-	copy	arg2, arg3
+	nop
 
 	b	$fpemu0c_3_0
-	sh3add	t1, arg3, arg2
+	sh3add	t1, arg1, arg1
 	b	$fpemu0c_3_1
-	sh3add	t1, arg3, arg2
+	sh3add	t1, arg1, arg1
 	b	$fpemu0c_3_2
-	sh3add	t1, arg3, arg2
+	sh3add	t1, arg1, arg1
 	b	$fpemu0c_3_3
-	sh3add	t1, arg3, arg2
+	sh3add	t1, arg1, arg1
 	b	$fpemu0c_3_4
-	sh3add	t1, arg3, arg2
+	sh3add	t1, arg1, arg1
 	b	$fpemu_exit
-	sh3add	t1, arg3, arg2
+	sh3add	t1, arg1, arg1
 	b	$fpemu_exit
-	sh3add	t1, arg3, arg2
+	sh3add	t1, arg1, arg1
 	b	$fpemu_exit
-	sh3add	t1, arg3, arg2
+	sh3add	t1, arg1, arg1
 
 $fpemu0c_3_0	/* fadd */
 	FP_TABLE2(fadd,sgl,dbl,invalid,invalid)
@@ -278,7 +292,12 @@ $fpemu0c_3_0	/* fadd */
 $fpemu0c_3_1	/* fsub */
 	FP_TABLE2(fsub,sgl,dbl,invalid,invalid)
 
-$fpemu0c_3_2	/* fmpy */
+$fpemu0c_3_2	/* fmpy/xmpy */
+	bb,>=	t4, 23, $fpemu0c_3_2_f
+	nop
+
+	FP_TABLE2(xmpy,s,u,s,u)
+$fpemu0c_3_2_f
 	FP_TABLE2(fmpy,sgl,dbl,invalid,invalid)
 
 $fpemu0c_3_3	/* fdiv */

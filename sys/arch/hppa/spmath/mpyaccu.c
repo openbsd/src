@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpyaccu.c,v 1.6 2002/05/07 22:19:30 mickey Exp $	*/
+/*	$OpenBSD: mpyaccu.c,v 1.7 2003/04/10 17:27:58 mickey Exp $	*/
 /*
   (c) Copyright 1986 HEWLETT-PACKARD COMPANY
   To anyone who acknowledges that this file is provided "AS IS"
@@ -24,7 +24,7 @@ mpyaccu(opnd1,opnd2,result)
 	struct mdsfu_register temp;
 	int carry;
 
-	impyu(&opnd1,&opnd2,&temp);
+	u_xmpy(&opnd1,&opnd2,&temp);
 
 	/* get result of low word add, and check for carry out */
 	if ((result_lo += (unsigned)temp.rslt_lo) < (unsigned)temp.rslt_lo)

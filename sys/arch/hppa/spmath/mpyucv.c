@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpyucv.c,v 1.5 2002/05/07 22:19:30 mickey Exp $	*/
+/*	$OpenBSD: mpyucv.c,v 1.6 2003/04/10 17:27:58 mickey Exp $	*/
 /*
   (c) Copyright 1986 HEWLETT-PACKARD COMPANY
   To anyone who acknowledges that this file is provided "AS IS"
@@ -21,6 +21,6 @@ mpyucv(opnd1,opnd2,result)
 	unsigned int opnd1, opnd2;
 	struct mdsfu_register *result;
 {
-	impyu(&opnd1,&opnd2,result);
+	u_xmpy(&opnd1,&opnd2,result);
 	overflow = FALSE;
 }

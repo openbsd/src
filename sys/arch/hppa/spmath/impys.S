@@ -1,4 +1,4 @@
-/*	$OpenBSD: impys.S,v 1.9 2003/01/23 20:25:21 mickey Exp $	*/
+/*	$OpenBSD: impys.S,v 1.10 2003/04/10 17:27:58 mickey Exp $	*/
 /*
   (c) Copyright 1986 HEWLETT-PACKARD COMPANY
   To anyone who acknowledges that this file is provided "AS IS"
@@ -44,7 +44,7 @@ pm	.equ	       10		; value of -1 used in shifting
 ;*****************************************************************************
 	.text
 
-LEAF_ENTRY(impys)
+LEAF_ENTRY(s_xmpy)
 	stws,ma		pu,4(sp)		; save registers on stack
 	stws,ma		pl,4(sp)		; save registers on stack
 	stws,ma		op1,4(sp)		; save registers on stack
@@ -287,6 +287,6 @@ fini	stws		pu,0(arg2)		; save high part of result
 	ldws,mb		-4(sp),pl		; restore registers
 	bv		0(rp)			; return
 	ldws,mb		-4(sp),pu		; restore registers
-EXIT(imyps)
+EXIT(s_xmpy)
 
 	.end

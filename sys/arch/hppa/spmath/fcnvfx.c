@@ -1,4 +1,4 @@
-/*	$OpenBSD: fcnvfx.c,v 1.6 2002/05/07 22:19:30 mickey Exp $	*/
+/*	$OpenBSD: fcnvfx.c,v 1.7 2003/04/10 17:27:58 mickey Exp $	*/
 /*
   (c) Copyright 1986 HEWLETT-PACKARD COMPANY
   To anyone who acknowledges that this file is provided "AS IS"
@@ -24,8 +24,8 @@
  */
 /*ARGSUSED*/
 int
-sgl_to_sgl_fcnvfx(srcptr,dstptr,status)
-	sgl_floating_point *srcptr;
+sgl_to_sgl_fcnvfx(srcptr, null, dstptr, status)
+	sgl_floating_point *srcptr, *null;
 	int *dstptr;
 	unsigned int *status;
 {
@@ -135,8 +135,8 @@ sgl_to_sgl_fcnvfx(srcptr,dstptr,status)
  */
 /*ARGSUSED*/
 int
-sgl_to_dbl_fcnvfx(srcptr,dstptr,status)
-	sgl_floating_point *srcptr;
+sgl_to_dbl_fcnvfx(srcptr, null, dstptr, status)
+	sgl_floating_point *srcptr, *null;
 	dbl_integer *dstptr;
 	unsigned int *status;
 {
@@ -270,8 +270,8 @@ sgl_to_dbl_fcnvfx(srcptr,dstptr,status)
  */
 /*ARGSUSED*/
 int
-dbl_to_sgl_fcnvfx(srcptr,dstptr,status)
-	dbl_floating_point *srcptr;
+dbl_to_sgl_fcnvfx(srcptr, null, dstptr, status)
+	dbl_floating_point *srcptr, *null;
 	int *dstptr;
 	unsigned int *status;
 {
@@ -404,8 +404,8 @@ dbl_to_sgl_fcnvfx(srcptr,dstptr,status)
  */
 /*ARGSUSED*/
 int
-dbl_to_dbl_fcnvfx(srcptr,dstptr,status)
-	dbl_floating_point *srcptr;
+dbl_to_dbl_fcnvfx(srcptr, null, dstptr, status)
+	dbl_floating_point *srcptr, *null;
 	dbl_integer *dstptr;
 	unsigned int *status;
 {
