@@ -1,4 +1,4 @@
-/*	$OpenBSD: scores.c,v 1.5 1998/09/15 05:12:33 pjanzen Exp $	*/
+/*	$OpenBSD: scores.c,v 1.6 1999/03/27 03:45:50 pjanzen Exp $	*/
 /*	$NetBSD: scores.c,v 1.10 1997/10/18 20:03:48 christos Exp $	*/
 
 /*
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: scores.c,v 1.5 1998/09/15 05:12:33 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: scores.c,v 1.6 1999/03/27 03:45:50 pjanzen Exp $";
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -661,7 +661,7 @@ invalid:
 				sncbr();
 				resetscroll();
 				lflush();
-				exit(0);
+				exit(1);
 			}
 			setegid(egid);
 			chmod(logfile, 0660);

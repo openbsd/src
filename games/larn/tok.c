@@ -1,9 +1,9 @@
-/*	$OpenBSD: tok.c,v 1.2 1998/09/15 05:12:33 pjanzen Exp $	*/
+/*	$OpenBSD: tok.c,v 1.3 1999/03/27 03:45:50 pjanzen Exp $	*/
 /*	$NetBSD: tok.c,v 1.5 1997/10/18 20:03:54 christos Exp $	*/
 
 /* tok.c		Larn is copyrighted 1986 by Noah Morgan. */
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tok.c,v 1.2 1998/09/15 05:12:33 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: tok.c,v 1.3 1999/03/27 03:45:50 pjanzen Exp $";
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -63,7 +63,7 @@ yylex()
 						 * finish */
 				if (fork() == 0) {
 					savegame(ckpfile);
-					exit();
+					exit(0);
 				}
 #endif
 
@@ -99,6 +99,8 @@ yylex()
 			clear();/* scrolling region, home, clear, no
 				 * attributes */
 			if ((ic = fork()) == 0) {	/* child */
+				/* revoke */
+				setgid(getgid());
 				execl("/bin/csh", 0);
 				exit(1);
 			}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: header.h,v 1.7 1998/09/15 05:12:32 pjanzen Exp $	*/
+/*	$OpenBSD: header.h,v 1.8 1999/03/27 03:45:49 pjanzen Exp $	*/
 /* $NetBSD: header.h,v 1.12 1997/10/25 01:40:48 thorpej Exp $	 */
 
 /* header.h		Larn is copyrighted 1986 by Noah Morgan. */
@@ -362,7 +362,6 @@ extern int      dayplay, enable_scroll, srcount, yrepcount, userid, wisid,
 extern gid_t    gid, egid;
 extern long     outstanding_taxes, skill[], gltime, c[], cbak[];
 extern time_t	initialtime;
-extern unsigned long randx;
 extern struct cel *cell;
 extern struct monst monster[];
 extern struct sphere *spheres;
@@ -427,9 +426,10 @@ extern int      rmst, maxitm, lasttime;
 /* macro to output one byte to the output buffer */
 #define lprc(ch) ((lpnt>=lpend)?(*lpnt++ =(ch), lflush()):(*lpnt++ =(ch)))
 
-/* macro to seed the random number generator */
-#define srand(x) (randx=x)
 #ifdef MACRORND
+extern unsigned long randx;
+/* macro to seed the random number generator */
+#define srandom(x) (randx=x)
 /* macros to generate random numbers   1<=rnd(N)<=N   0<=rund(N)<=N-1 */
 #define rnd(x)  ((((randx=randx*1103515245+12345)>>7)%(x))+1)
 #define rund(x) ((((randx=randx*1103515245+12345)>>7)%(x))  )

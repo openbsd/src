@@ -1,4 +1,4 @@
-/*	$OpenBSD: data.c,v 1.5 1998/09/15 05:12:31 pjanzen Exp $	*/
+/*	$OpenBSD: data.c,v 1.6 1999/03/27 03:45:49 pjanzen Exp $	*/
 /*	$NetBSD: data.c,v 1.9 1997/10/25 01:40:47 thorpej Exp $	 */
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char     sccsid[] = "@(#)data.c	5.3 (Berkeley) 5/13/91";
 #else
-static char rcsid[] = "$OpenBSD: data.c,v 1.5 1998/09/15 05:12:31 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: data.c,v 1.6 1999/03/27 03:45:49 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -162,7 +162,9 @@ short		oldx, oldy;
 short		lasthx = 0, lasthy = 0;	/* location of monster last hit by
 					 * player		 */
 short		nobeep = 0;	/* true if program is not to beep	*/
+#ifdef MACRORND
 unsigned long	randx = 33601;	/* the random number seed		*/
+#endif
 time_t		initialtime = 0;/* time playing began			*/
 long		gltime = 0;	/* the clock for the game		*/
 long		outstanding_taxes = 0;	/* present tax bill from score file */
