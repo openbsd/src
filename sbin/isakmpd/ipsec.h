@@ -1,5 +1,5 @@
-/*	$OpenBSD: ipsec.h,v 1.4 1998/12/21 01:02:25 niklas Exp $	*/
-/*	$EOM: ipsec.h,v 1.29 1998/11/26 09:15:45 niklas Exp $	*/
+/*	$OpenBSD: ipsec.h,v 1.5 1999/02/26 03:44:04 niklas Exp $	*/
+/*	$EOM: ipsec.h,v 1.32 1999/02/25 09:30:26 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -36,6 +36,8 @@
 
 #ifndef _IPSEC_H_
 #define _IPSEC_H_
+
+#include <netinet/in.h>
 
 #include "ipsec_doi.h"
 
@@ -116,6 +118,9 @@ struct ipsec_proto {
   u_int16_t keylen;
   u_int16_t keyrounds;
 
+  /* This is not negotiated, but rather configured.  */
+  int32_t replay_window;
+
   /* KEYMAT */
   u_int8_t *keymat[2];
 };
@@ -128,10 +133,12 @@ extern void ipsec_decode_transform (struct message *, struct sa *,
 extern int ipsec_esp_authkeylength (struct proto *);
 extern int ipsec_esp_enckeylength (struct proto *);
 extern int ipsec_gen_g_x (struct message *);
+extern int ipsec_get_id (char *, int *, struct in_addr *, struct in_addr *);
 extern void ipsec_init (void);
 extern int ipsec_is_attribute_incompatible (u_int16_t, u_int8_t *, u_int16_t,
 					    void *);
 extern int ipsec_keymat_length (struct proto *);
 extern int ipsec_save_g_x (struct message *);
+extern struct sa *ipsec_sa_lookup (in_addr_t, u_int32_t, u_int8_t);
 
 #endif /* _IPSEC_H_ */
