@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.5 1997/10/02 05:58:51 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.6 1997/10/02 06:56:19 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.5 1997/10/02 05:58:51 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.6 1997/10/02 06:56:19 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -318,7 +318,10 @@ editor_add(lp, freep, p)
 		memset(pp, 0, sizeof(*pp));
 		pp->p_offset = next_offset(lp);
 		pp->p_size = *freep;
-		pp->p_fstype = FS_BSDFFS;
+		if (partno == 1)
+			pp->p_fstype = FS_SWAP;
+		else
+			pp->p_fstype = FS_BSDFFS;
 		pp->p_fsize = 1024;
 		pp->p_frag = 8;
 		pp->p_cpg = 16;
@@ -719,23 +722,48 @@ u_int32_t
 next_offset(lp)
 	struct disklabel *lp;
 {
-	struct partition *pp = lp->d_partitions;
+	struct partition **spp;
+	u_int16_t npartitions;
 	u_int32_t new_offset = 0;
 	int i;
 
-	for (i = 0; i < lp->d_npartitions; i++ ) {
-		if (pp[i].p_fstype == FS_UNUSED || pp[i].p_size == 0)
-			continue;
+	/* How many "real" partitions do we have? */
+	for (npartitions = 0, i = 0; i < lp->d_npartitions; i++) {
+		if (lp->d_partitions[i].p_fstype != FS_UNUSED &&
+		    lp->d_partitions[i].p_size != 0)
+			npartitions++;
+	}
 
+	/* Create an array of pointers to the partition data */
+	if ((spp = malloc(sizeof(struct partition *) * npartitions)) == NULL)
+		errx(4, "out of memory");
+	for (npartitions = 0, i = 0; i < lp->d_npartitions; i++) {
+		if (lp->d_partitions[i].p_fstype != FS_UNUSED &&
+		    lp->d_partitions[i].p_size != 0)
+			spp[npartitions++] = &lp->d_partitions[i];
+	}
+
+	/*
+	 * Sort the partitions based on starting offset.
+	 * This is safe because we guarantee no overlap.
+	 */
+	if (npartitions > 1)
+		if (heapsort((void *)spp, npartitions, sizeof(spp[0]),
+		    partition_cmp))
+			err(4, "failed to sort partition table");
+
+
+	for (i = 0; i < npartitions; i++ ) {
 		/*
 		 * Is new_offset inside this partition?  If so,
 		 * make it the next block after the partition ends.
 		 */
-		if (new_offset >= pp[i].p_offset &&
-		    new_offset < pp[i].p_offset + pp[i].p_size)
-			new_offset = pp[i].p_offset + pp[i].p_size;
+		if (new_offset >= spp[i]->p_offset &&
+		    new_offset < spp[i]->p_offset + spp[i]->p_size)
+			new_offset = spp[i]->p_offset + spp[i]->p_size;
 	}
 
+	(void)free(spp);
 	return(new_offset);
 }
 
@@ -847,6 +875,8 @@ make_contiguous(lp)
 	/* Now make everything contiguous but don't muck with start of 'a' */
 	for (i = 1; i < npartitions; i++)
 		spp[i]->p_offset = spp[i - 1]->p_offset + spp[i - 1]->p_size;
+
+	(void)free(spp);
 }
 
 /*
@@ -1075,8 +1105,10 @@ has_overlap(lp, freep, resolve)
 				display_partition(stdout, lp, j, 0);
 
 				/* Did they ask us to resolve it ourselves? */
-				if (!resolve)
+				if (!resolve) {
+					(void)free(spp);
 					return(1);
+				}
 
 				printf("Disable which one? [%c %c] ",
 				    'a' + i, 'a' + j);
@@ -1096,6 +1128,8 @@ has_overlap(lp, freep, resolve)
 			    }
 		}
 	}
+
+	(void)free(spp);
 	return(rval);
 }
 
