@@ -924,13 +924,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ASIX, PCI_PRODUCT_ASIX_AX88140A,
 	    0,
 	    "ASIX",
-	    "AX88140A 10/100",
-	},
-	{
-	    PCI_VENDOR_ASIX, PCI_PRODUCT_ASIX_AX88141,
-	    0,
-	    "ASIX",
-	    "AX88141 10/100",
+	    "AX88140A/88141",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH32,
