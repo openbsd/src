@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.22 2001/09/20 21:31:35 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.23 2001/09/21 17:58:56 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -23,7 +23,6 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
 #
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices.
@@ -77,10 +76,11 @@
 #	bpf*	Berkeley Packet Filter
 #	tun*	network tunnel driver
 #	lkm	loadable kernel modules interface
-#	*random	inkernal random data source
+#	*random	inkernel random data source
 #
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
+
 # set this to echo for Echo-Only debugging
 [ "$eo" ] || eo=
 
@@ -193,6 +193,7 @@ all)
 	R fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H
 	R xfs0 tcx0 lkm audio0 local
 	R ttya ttyb ttyc ttyd cuaa cuab cuac cuad
+	R tty00 tty01 tty02 tty03
 	;;
 floppy)
 	R std fd0 wd0 wd1 sd0 sd1
@@ -226,24 +227,42 @@ mouse*)name=${i##mouse-}
 	fi
 	RMlist="$RMlist mouse"
 	MKlist="$MKlist;ln -s $name mouse";;
-tty[a-z])u=${i#tty*}
-	case $u in
-	a) n=0 ;;
-	b) n=1 ;;
-	c) n=4 ;;
-	d) n=5 ;;
-	*) echo unknown tty device $i ;;
-	esac
-	M tty$u c 12 $n 660 dialer uucp;;
-cua[a-z])u=${i#cua*}
-	case $u in
-	a) n=0 ;;
-	b) n=1 ;;
-	c) n=4 ;;
-	d) n=5 ;;
-	*) echo unknown cua device $i ;;  
-	esac
-	M cua$u c 12 $(($n+128)) 660 dialer uucp;;
+*random)n=0
+	for pre in " " s u p a
+	do
+		M ${pre}random c 119 $n 644
+		n=$(($n+1))
+	done;;
+lkm)M lkm c 112 0 640 kmem;;tun*)M tun$U c 111 $U 600;;
+bpf*)M bpf$U c 105 $U 600;;
+tcx*)M tcx$U c 109 $U;;
+cgfourteen*)M cgfourteen$U c 99 $U;;
+altq)RMlist="mkdir -p altq;$RMlist"
+	for d in altq cbq wfq afm fifoq red rio localq hfsc cdnr blue priq; do
+		M altq/$d c 74 $U 644
+		U=$(($U+1))
+	done;;
+pf*)M pf c 73 0 600;;
+cgsix*)M cgsix$U c 67 $U 666;;
+audio*)M sound$U	c 69 $U
+	M mixer$U	c 69 $(($U+16))
+	M audio$U	c 69 $(($U+128))
+	M audioctl$U	c 69 $(($U+192))
+	MKlist="$MKlist;[ -e audio ] || ln -s audio$U audio"
+	MKlist="$MKlist;[ -e mixer ] || ln -s mixer$U mixer"
+	MKlist="$MKlist;[ -e sound ] || ln -s sound$U sound"
+	MKlist="$MKlist;[ -e audioctl ] || ln -s audioctl$U audioctl";;
+uk*)M uk$U c 60 $U 640 operator;;
+ss*)M ss$U c 59 $U 440 operator
+	RMlist="$RMlist scan$U"
+	MKlist="$MKlist;umask 77;ln -s ss$U scan$U";;
+cgthree*)M cgthree$U c 55 $U 666;;
+xfs*)M xfs$U c 51 $U 600;;
+bwtwo*)M bwtwo$U c 27 $U 666;;
+fd)RMlist="mkdir -p fd;$RMlist" n=0
+	while [ $n -lt 64 ];do M fd/$n c 24 $n;n=$(($n+1));done
+	MKlist="$MKlist;chmod 555 fd";;
+ses*)M ses$U c 4 $U 640 operator;;
 pty*)case $U in
 	0) off=0 name=p;;
 	1) off=16 name=q;;
@@ -272,21 +291,30 @@ pty*)case $U in
 		M pty$nam c 21 $(($off+$n))
 		n=$(($n+1))
 	done;;
-bwtwo*)M bwtwo$U c 27 $U 666;;
-cgthree*)M cgthree$U c 55 $U 666;;
-cgsix*)M cgsix$U c 67 $U 666;;
-cgfourteen*)M cgfourteen$U c 99 $U;;
-tcx*)M tcx$U c 109 $U;;
-fd)RMlist="mkdir -p fd;$RMlist" n=0
-	while [ $n -lt 64 ];do M fd/$n c 24 $n;n=$(($n+1));done
-	MKlist="$MKlist;chmod 555 fd";;
-st*)n=$(($U*16))
-	for pre in " " n e en
-	do
-		M ${pre}st$U	b 11 $n 660 operator
-		M ${pre}rst$U	c 18 $n 660 operator
-		n=$(($n+1))
-	done;;
+tty0*)M tty$U c 36 $U 660 dialer uucp
+	M cua$U c 36 $(($U+128)) 660 dialer uucp;;
+cua[a-z])u=${i#cua*}
+	case $u in
+	a) n=0 ;;
+	b) n=1 ;;
+	c) n=4 ;;
+	d) n=5 ;;
+	*) echo unknown cua device $i ;;  
+	esac
+	M cua$u c 12 $(($n+128)) 660 dialer uucp;;
+tty[a-z])u=${i#tty*}
+	case $u in
+	a) n=0 ;;
+	b) n=1 ;;
+	c) n=4 ;;
+	d) n=5 ;;
+	*) echo unknown tty device $i ;;
+	esac
+	M tty$u c 12 $n 660 dialer uucp;;
+mouse)M mouse c 30 0 666 ;;rd*)dodisk2 rd $U 5 61 $U 0;;
+vnd*)dodisk vnd $U 8 110 $U 0
+	dodisk svnd $U 8 110 $U 128;;
+cd*)dodisk2 cd $U 18 58 $U 0;;
 fd*)typnam=$U${i#fd[01]*}
 	case $typnam in
 	0|1)	typnum=0;; # no type specified, assume A
@@ -312,22 +340,7 @@ fd*)typnam=$U${i#fd[01]*}
 	M r${nam}a	c $chr $n 640 operator
 	M r${nam}b	c $chr $(($n+1)) 640 operator
 	M r${nam}c	c $chr $(($n+2)) 640 operator;;
-sd*|ccd*|raid*|wd*)case $i in
-	sd*) n=sd b=7 c=17;;
-	ccd*) n=ccd b=9 c=23;;
-	raid*) n=raid b=25 c=121;;
-	wd*) n=wd b=12 c=26;;
-	esac
-	dodisk $n $U $b $c $U 0;;
-cd*)dodisk2 cd $U 18 58 $U 0;;
-rd*)dodisk2 rd $U 5 61 $U 0;;
-
-vnd*)dodisk vnd $U 8 110 $U 0
-	dodisk svnd $U 8 110 $U 128;;
-uk*)M uk$U c 60 $U 640 operator;;
-ss*)M ss$U c 59 $U 440 operator
-	RMlist="$RMlist scan$U"
-	MKlist="$MKlist;umask 77;ln -s ss$U scan$U";;
+ch*)M ch$U c 19 $U 660 operator;;
 st*)n=$(($U*16))
 	for pre in " " n e en
 	do
@@ -335,34 +348,14 @@ st*)n=$(($U*16))
 		M ${pre}rst$U	c 18 $n 660 operator
 		n=$(($n+1))
 	done;;
-ses*)M ses$U c 4 $U 640 operator;;
-ch*)M ch$U c 19 $U 660 operator;;
-lkm)M lkm c 112 0 640 kmem;;
-xfs*)M xfs$U c 51 $U 600;;
-*random)n=0
-	for pre in " " s u p a
-	do
-		M ${pre}random c 119 $n 644
-		n=$(($n+1))
-	done;;
-audio*)M sound$U	c 69 $U
-	M mixer$U	c 69 $(($U+16))
-	M audio$U	c 69 $(($U+128))
-	M audioctl$U	c 69 $(($U+192))
-	MKlist="$MKlist;[ -e audio ] || ln -s audio$U audio"
-	MKlist="$MKlist;[ -e mixer ] || ln -s mixer$U mixer"
-	MKlist="$MKlist;[ -e sound ] || ln -s sound$U sound"
-	MKlist="$MKlist;[ -e audioctl ] || ln -s audioctl$U audioctl";;
-pf*)M pf c 73 0 600;;
-altq)RMlist="mkdir -p altq;$RMlist"
-	for d in altq cbq wfq afm fifoq red rio localq hfsc cdnr blue priq; do
-		M altq/$d c 74 $U 644
-		U=$(($U+1))
-	done;;
-bpf*)M bpf$U c 105 $U 600;;
-tun*)M tun$U c 111 $U 600;;
 local)test -s $T.local && sh $T.local;;
-
+sd*|ccd*|raid*|wd*)case $i in
+	sd*) n=sd b=7 c=17;;
+	ccd*) n=ccd b=9 c=23;;
+	raid*) n=raid b=25 c=121;;
+	wd*) n=wd b=12 c=26;;
+	esac
+	dodisk $n $U $b $c $U 0;;
 *)
 	echo $i: unknown device
 	;;
