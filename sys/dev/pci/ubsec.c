@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.111 2002/09/04 15:37:29 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.112 2002/09/11 22:40:31 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -1603,9 +1603,11 @@ void
 ubsec_init_board(sc)
 	struct ubsec_softc *sc;
 {
-	WRITE_REG(sc, BS_CTRL,
-	    READ_REG(sc, BS_CTRL) | BS_CTRL_MCR1INT | BS_CTRL_DMAERR |
-	    ((sc->sc_flags & UBS_FLAGS_KEY) ? BS_CTRL_MCR2INT : 0));
+	/* Turn on appropriate interrupts and disable hardware normalization */
+	WRITE_REG(sc, BS_CTRL, READ_REG(sc, BS_CTRL) |
+	    BS_CTRL_MCR1INT | BS_CTRL_DMAERR | BS_CTRL_LITTLE_ENDIAN |
+	    ((sc->sc_flags & UBS_FLAGS_KEY) ? BS_CTRL_MCR2INT : 0) |
+	    ((sc->sc_flags & UBS_FLAGS_HWNORM) ? BS_CTRL_SWNORM : 0));
 }
 
 /*
@@ -1617,15 +1619,6 @@ ubsec_init_pciregs(pa)
 {
 	pci_chipset_tag_t pc = pa->pa_pc;
 	u_int32_t misc;
-
-#if 0
-	misc = pci_conf_read(pc, pa->pa_tag, BS_RTY_TOUT);
-	misc = (misc & ~(UBS_PCI_RTY_MASK << UBS_PCI_RTY_SHIFT))
-	    | ((UBS_DEF_RTY & 0xff) << UBS_PCI_RTY_SHIFT);
-	misc = (misc & ~(UBS_PCI_TOUT_MASK << UBS_PCI_TOUT_SHIFT))
-	    | ((UBS_DEF_TOUT & 0xff) << UBS_PCI_TOUT_SHIFT);
-	pci_conf_write(pc, pa->pa_tag, BS_RTY_TOUT, misc);
-#endif
 
 	/*
 	 * This will set the cache line size to 1, this will
@@ -1856,10 +1849,7 @@ ubsec_kprocess_modexp(sc, krp)
 		goto errout;
 	}
 
-	if (sc->sc_flags & UBS_FLAGS_HWNORM)
-		shiftbits = 0;
-	else
-		shiftbits = normbits - nbits;
+	shiftbits = normbits - nbits;
 
 	me->me_modbits = nbits;
 	me->me_shiftbits = shiftbits;
@@ -1962,8 +1952,8 @@ ubsec_kprocess_modexp(sc, krp)
 	    ctx->me_N, normbits);
 	ctx->me_len = htole16((normbits / 8) + (4 * sizeof(u_int16_t)));
 	ctx->me_op = htole16(UBS_CTXOP_MODEXP);
-	ctx->me_E_len = htole16(normbits - shiftbits);
-	ctx->me_N_len = htole16(normbits - shiftbits);
+	ctx->me_E_len = htole16(nbits);
+	ctx->me_N_len = htole16(nbits);
 
 #ifdef UBSEC_DEBUG
 	ubsec_dump_mcr(mcr);

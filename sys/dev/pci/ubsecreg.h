@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecreg.h,v 1.26 2002/09/03 18:56:50 jason Exp $	*/
+/*	$OpenBSD: ubsecreg.h,v 1.27 2002/09/11 22:40:31 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -77,6 +77,7 @@
 #define	BS_CTRL_RNG_16		0x01800000	/* 1bit rn/16 slow clocks */
 #define	BS_CTRL_SWNORM		0x00400000	/* 582[01], sw normalization */
 #define	BS_CTRL_FRAG_M		0x0000ffff	/* output fragment size mask */
+#define	BS_CTRL_LITTLE_ENDIAN	(BS_CTRL_BE32 | BS_CTRL_BE64)
 
 /* BS_STAT - DMA Status */
 #define	BS_STAT_MCR1_BUSY	0x80000000	/* MCR1 is busy */
@@ -181,7 +182,7 @@ struct ubsec_ctx_modexp {
 	volatile u_int16_t	me_op;		/* modexp, 0x47 */
 	volatile u_int16_t	me_E_len;	/* E (bits) */
 	volatile u_int16_t	me_N_len;	/* N (bits) */
-	u_int8_t		me_N[1024/8];	/* N */
+	u_int8_t		me_N[2048/8];	/* N */
 };
 
 struct ubsec_ctx_rsapriv {
