@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stdio.3,v 1.13 2000/04/20 01:39:32 aaron Exp $
+.\"	$OpenBSD: stdio.3,v 1.14 2002/07/24 22:59:03 deraadt Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -215,6 +215,7 @@ definitions are explicitly removed.
 .Sh LIST OF FUNCTIONS
 .Bl -column "Description"
 .Sy Function	Description
+asprintf	formatted output conversion with allocation
 clearerr	check and reset stream status
 fclose	close a stream
 fdopen	stream open functions
@@ -270,6 +271,7 @@ tempnam	temporary file routines
 tmpfile	temporary file routines
 tmpnam	temporary file routines
 ungetc	un-get character from input stream
+vasprintf	formatted output conversion with allocation
 vfprintf	formatted output conversion
 vfscanf	input format conversion
 vprintf	formatted output conversion
