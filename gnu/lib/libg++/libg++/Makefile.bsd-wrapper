@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.1 1996/03/16 05:18:44 etheisen Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.2 1996/03/26 00:27:38 niklas Exp $
 
 VERSION = 2.7.1
 LIBG++_DIST_VERSION = 2.7.1
@@ -28,12 +28,35 @@ CSRCS=		bitand.c bitany.c bitblt.c bitclear.c bitcopy.c bitcount.c \
 COBJS=		$(CSRCS:N*.h:R:S/$/.o/g)
 GXXOBJS=	$(CXXOBJS) $(COBJS)
 
-RX_DIR=		../librx
-RXOBJ=		$(RX_DIR)/rx.o
-LIBIO_DIR=	../libio
-G_CFG_H=	$(LIBIO)/_G_config.h
+.if defined(OBJMACHINE)
+OBJDIR=	obj.${MACHINE}
+.else
+OBJDIR=	obj
+.endif
 
-SRCS=		$(CXXSRCS) $(CSRCS) $(RXOBJ)
+RX_DIR=		$(.CURDIR)/../librx
+
+RX_OBJDIR!=	if [ -d $(RX_DIR)/$(OBJDIR) ]; then \
+			echo $(RX_DIR)/$(OBJDIR); \
+		else \
+			echo $(RX_DIR); \
+		fi
+
+RXOBJ=		$(RX_OBJDIR)/rx.o
+
+LIBIO_DIR=	$(.CURDIR)/../libio
+
+LIBIO_OBJDIR!=	if [ -d $(LIBIO_DIR)/$(OBJDIR) ]; then \
+			echo $(LIBIO_DIR)/$(OBJDIR); \
+		else \
+			echo $(LIBIO_DIR); \
+		fi
+
+G_CFG_H=	$(LIBIO_OBJDIR)/_G_config.h
+
+SRCS=		$(CXXSRCS) $(CSRCS)
+
+OBJS=		$(RXOBJ)
 
 CLEANFILES+=	rx.h
 
@@ -42,13 +65,13 @@ all:		rx.h $(G_CFG_H)
 beforedepend:	rx.h $(G_CFG_H)
 
 rx.h:
-	ln -s $(.CURDIR)/../librx/rx.h
+	ln -s $(RX_DIR)/rx.h
 
 $(G_CFG_H):
-	@cd $(.CURDIR)/../libio; $(MAKE) -f Makefile.bsd-wrapper _G_config.h
+	@cd $(LIBIO_DIR); $(MAKE) -f Makefile.bsd-wrapper _G_config.h
 
 $(RXOBJ) $(RXOBJ:.o=.po) $(RXOBJ:.o=.so):
-	cd $(.CURDIR)/../$(RX_DIR); $(MAKE) -f Makefile.bsd-wrapper
+	cd $(RX_DIR); $(MAKE) -f Makefile.bsd-wrapper
 
 clean: _SUBDIRUSE
 	rm -f a.out [Ee]rrs mklog core *.core ${CLEANFILES}

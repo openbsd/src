@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.1 1996/03/16 05:18:55 etheisen Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.2 1996/03/26 00:29:27 niklas Exp $
 
 LIB=		stdc++
 CXXFLAGS+=	-fno-implicit-templates -nostdinc++
@@ -19,17 +19,46 @@ LIBIBERTY_DIR=	../libiberty
 STL_DIR=	./stl
 STD_DIR=	./std
 
-IO_OBJS!=	cat $(IO_DIR)/iostream.list
+.if defined(OBJMACHINE)
+OBJDIR=	obj.${MACHINE}
+.else
+OBJDIR=	obj
+.endif
+
+IO_OBJDIR!=	if [ -d $(IO_DIR)/$(OBJDIR) ]; then \
+			echo $(IO_DIR)/$(OBJDIR); \
+		else \
+			echo $(IO_DIR); \
+		fi
+
+IO_OBJS!=	if [ -f $(IO_OBJDIR)/iostream.list ]; then \
+			cat $(IO_OBJDIR)/iostream.list; \
+		else \
+			echo ' '; \
+		fi
+
 QIO_OBJS=	$(IO_OBJS:S/^/$(IO_DIR)\//g)
 
-LIBIBERTY_OBJS!=cat $(LIBIBERTY_DIR)/needed-list
+LIBIBERTY_OBJDIR!=if [ -d $(LIBIBERTY_DIR)/$(OBJDIR) ]; then \
+			echo $(LIBIBERTY_DIR)/$(OBJDIR); \
+		else \
+			echo $(LIBIBERTY_DIR); \
+		fi
+
+LIBIBERTY_OBJS!=if [ -f $(LIBIBERTY_OBJDIR)/needed-list ]; then \
+			cat $(LIBIBERTY_OBJDIR)/needed-list; \
+		else \
+			echo ' '; \
+		fi
+
 LIBIBERTY_OBJS+=strerror.o
 QLIBIBERTY_OBJS=$(LIBIBERTY_OBJS:S/^/$(LIBIBERTY_DIR)\//g)
 
 STL_OBJS=	$(STL_DIR)/tempbuf.o $(STL_DIR)/tree.o $(STL_DIR)/random.o
 
-SRCS=		$(STD_SRCS) $(SPEC_OBJS) $(QIO_OBJS) $(QLIBIBERTY_OBJS) \
-		$(STL_OBJS)
+SRCS=		$(STD_SRCS)
+
+OBJS=		$(SPEC_OBJS) $(QIO_OBJS) $(QLIBIBERTY_OBJS) $(STL_OBJS)
 
 HEADERS=	cassert cctype cerrno cfloat ciso646 climits clocale cmath \
 		complex csetjmp csignal cstdarg cstddef cstdio cstdlib \
