@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.71 2001/11/15 06:40:39 art Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.72 2001/11/21 21:13:34 csapuntz Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -112,6 +112,8 @@ int vfs_free_netcred __P((struct radix_node *, void *));
 void vfs_free_addrlist __P((struct netexport *));
 static __inline__ void vputonfreelist __P((struct vnode *));
 
+int vflush_vnode(struct vnode *, void *);
+
 #ifdef DEBUG
 void printlockedvnodes __P((void));
 #endif
@@ -194,6 +196,12 @@ vfs_unbusy(mp, p)
 	struct proc *p;
 {
 	lockmgr(&mp->mnt_lock, LK_RELEASE, NULL, p);
+}
+
+int
+vfs_isbusy(struct mount *mp) 
+{
+	return (lockstatus(&mp->mnt_lock));
 }
 
 /*
@@ -863,14 +871,10 @@ struct ctldebug debug1 = { "busyprt", &busyprt };
 #endif
 
 int
-vflush(mp, skipvp, flags)
-	struct mount *mp;
-	struct vnode *skipvp;
-	int flags;
-{
-	struct proc *p = curproc;
-	register struct vnode *vp, *nvp;
-	int busy = 0;
+vfs_mount_foreach_vnode(struct mount *mp, 
+    int (*func)(struct vnode *, void *), void *arg) {
+	struct vnode *vp, *nvp;
+	int error = 0;
 
 	simple_lock(&mntvnode_slock);
 loop:
@@ -878,65 +882,101 @@ loop:
 		if (vp->v_mount != mp)
 			goto loop;
 		nvp = vp->v_mntvnodes.le_next;
-		/*
-		 * Skip over a selected vnode.
-		 */
-		if (vp == skipvp)
-			continue;
+		simple_lock(&vp->v_interlock);		
+		simple_unlock(&mntvnode_slock);
 
-		simple_lock(&vp->v_interlock);
-		/*
-		 * Skip over a vnodes marked VSYSTEM.
-		 */
-		if ((flags & SKIPSYSTEM) && (vp->v_flag & VSYSTEM)) {
-			simple_unlock(&vp->v_interlock);
-			continue;
-		}
-		/*
-		 * If WRITECLOSE is set, only flush out regular file
-		 * vnodes open for writing.
-		 */
-		if ((flags & WRITECLOSE) &&
-		    (vp->v_writecount == 0 || vp->v_type != VREG)) {
-			simple_unlock(&vp->v_interlock);
-			continue;
-		}
-		/*
-		 * With v_usecount == 0, all we need to do is clear
-		 * out the vnode data structures and we are done.
-		 */
-		if (vp->v_usecount == 0) {
-			simple_unlock(&mntvnode_slock);
-			vgonel(vp, p);
-			simple_lock(&mntvnode_slock);
-			continue;
-		}
-		/*
-		 * If FORCECLOSE is set, forcibly close the vnode.
-		 * For block or character devices, revert to an
-		 * anonymous device. For all other files, just kill them.
-		 */
-		if (flags & FORCECLOSE) {
-			simple_unlock(&mntvnode_slock);
-			if (vp->v_type != VBLK && vp->v_type != VCHR) {
-				vgonel(vp, p);
-			} else {
-				vclean(vp, 0, p);
-				vp->v_op = spec_vnodeop_p;
-				insmntque(vp, (struct mount *)0);
-			}
-			simple_lock(&mntvnode_slock);
-			continue;
-		}
-#ifdef DEBUG
-		if (busyprt)
-			vprint("vflush: busy vnode", vp);
-#endif
-		simple_unlock(&vp->v_interlock);
-		busy++;
+		error = func(vp, arg);
+
+		simple_lock(&mntvnode_slock);
+
+		if (error != 0)
+			break;
 	}
 	simple_unlock(&mntvnode_slock);
-	if (busy)
+
+	return (error);
+}
+
+
+struct vflush_args {
+	struct vnode *skipvp;
+	int busy;
+	int flags;
+};
+
+int
+vflush_vnode(struct vnode *vp, void *arg) {
+	struct vflush_args *va = arg;
+	struct proc *p = curproc;
+
+	if (vp == va->skipvp) {
+		simple_unlock(&vp->v_interlock);
+		return (0);
+	}
+
+	if ((va->flags & SKIPSYSTEM) && (vp->v_flag & VSYSTEM)) {
+		simple_unlock(&vp->v_interlock);
+		return (0);
+	}
+
+	/*
+	 * If WRITECLOSE is set, only flush out regular file
+	 * vnodes open for writing.
+	 */
+	if ((va->flags & WRITECLOSE) &&
+	    (vp->v_writecount == 0 || vp->v_type != VREG)) {
+		simple_unlock(&vp->v_interlock);
+		return (0);
+	}
+
+	/*
+	 * With v_usecount == 0, all we need to do is clear
+	 * out the vnode data structures and we are done.
+	 */
+	if (vp->v_usecount == 0) {
+		vgonel(vp, p);
+		return (0);
+	}
+		
+	/*
+	 * If FORCECLOSE is set, forcibly close the vnode.
+	 * For block or character devices, revert to an
+	 * anonymous device. For all other files, just kill them.
+	 */
+	if (va->flags & FORCECLOSE) {
+		if (vp->v_type != VBLK && vp->v_type != VCHR) {
+			vgonel(vp, p);
+		} else {
+			vclean(vp, 0, p);
+			vp->v_op = spec_vnodeop_p;
+			insmntque(vp, (struct mount *)0);
+		}
+		return (0);
+	}
+
+#ifdef DEBUG
+	if (busyprt)
+		vprint("vflush: busy vnode", vp);
+#endif
+	simple_unlock(&vp->v_interlock);
+	va->busy++;
+	return (0);
+}
+
+int
+vflush(mp, skipvp, flags)
+	struct mount *mp;
+	struct vnode *skipvp;
+	int flags;
+{
+	struct vflush_args va;
+	va.skipvp = skipvp;
+	va.busy = 0;
+	va.flags = flags;
+
+	vfs_mount_foreach_vnode(mp, vflush_vnode, &va);
+
+	if (va.busy)
 		return (EBUSY);
 	return (0);
 }

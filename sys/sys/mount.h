@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.39 2001/03/23 00:24:10 mickey Exp $	*/
+/*	$OpenBSD: mount.h,v 1.40 2001/11/21 21:13:34 csapuntz Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -535,6 +535,9 @@ struct netexport {
  * exported vnode operations
  */
 int	vfs_busy __P((struct mount *, int, struct simplelock *, struct proc *));
+int     vfs_isbusy(struct mount *);
+int     vfs_mount_foreach_vnode(struct mount *, int (*func)(struct vnode *,
+				    void *), void *);
 void	vfs_getnewfsid __P((struct mount *));
 struct	mount *vfs_getvfs __P((fsid_t *));
 int	vfs_mountedon __P((struct vnode *));
