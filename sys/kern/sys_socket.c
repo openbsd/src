@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_socket.c,v 1.5 2001/03/01 20:54:34 provos Exp $	*/
+/*	$OpenBSD: sys_socket.c,v 1.6 2001/05/14 11:04:04 art Exp $	*/
 /*	$NetBSD: sys_socket.c,v 1.13 1995/08/12 23:59:09 mycroft Exp $	*/
 
 /*
@@ -185,10 +185,12 @@ soo_select(fp, which, p)
 }
 
 int
-soo_stat(so, ub)
-	register struct socket *so;
-	register struct stat *ub;
+soo_stat(fp, ub, p)
+	struct file *fp;
+	struct stat *ub;
+	struct proc *p;
 {
+	struct socket *so = (struct socket *)fp->f_data;
 
 	bzero((caddr_t)ub, sizeof (*ub));
 	ub->st_mode = S_IFSOCK;
