@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.5 2003/12/15 07:28:25 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.6 2003/12/15 21:49:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -110,7 +110,7 @@ struct pfsync_state_clr {
 
 #ifdef _KERNEL
 
-union sc_sp {
+union sc_statep {
 	struct pfsync_state	*s;
 	struct pfsync_state_upd	*u;
 	struct pfsync_state_del	*d;
@@ -125,8 +125,8 @@ struct pfsync_softc {
 	struct timeout		 sc_tmo;
 	struct mbuf		*sc_mbuf;	/* current cummulative mbuf */
 	struct mbuf		*sc_mbuf_net;	/* current cummulative mbuf */
-	union sc_sp		 sc_sp;
-	union sc_sp		 sc_sp_net;
+	union sc_statep		 sc_statep;
+	union sc_statep		 sc_statep_net;
 	int			 sc_maxcount;	/* number of states in mtu */
 	int			 sc_maxupdates;	/* number of updates/state */
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.9 2003/12/15 07:28:25 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.10 2003/12/15 21:49:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -97,8 +97,8 @@ pfsyncattach(int npfsync)
 	bzero(&pfsyncif, sizeof(pfsyncif));
 	pfsyncif.sc_mbuf = NULL;
 	pfsyncif.sc_mbuf_net = NULL;
-	pfsyncif.sc_sp.s = NULL;
-	pfsyncif.sc_sp_net.s = NULL;
+	pfsyncif.sc_statep.s = NULL;
+	pfsyncif.sc_statep_net.s = NULL;
 	pfsyncif.sc_maxupdates = 128;
 	ifp = &pfsyncif.sc_if;
 	strlcpy(ifp->if_xname, "pfsync0", sizeof ifp->if_xname);
@@ -650,7 +650,7 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st)
 	s = splnet();
 	if (sc->sc_mbuf == NULL) {
 		if ((sc->sc_mbuf = pfsync_get_mbuf(sc, action,
-		    (void *)&sc->sc_sp.s)) == NULL) {
+		    (void *)&sc->sc_statep.s)) == NULL) {
 			splx(s);
 			return (ENOMEM);
 		}
@@ -660,7 +660,7 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st)
 		if (h->action != action) {
 			pfsync_sendout(sc);
 			if ((sc->sc_mbuf = pfsync_get_mbuf(sc, action,
-			    (void *)&sc->sc_sp.s)) == NULL) {
+			    (void *)&sc->sc_statep.s)) == NULL) {
 				splx(s);
 				return (ENOMEM);
 			}
@@ -690,7 +690,7 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st)
 
 	if (sp == NULL) {
 		/* not a "duplicate" update */
-		sp = sc->sc_sp.s++;
+		sp = sc->sc_statep.s++;
 		sc->sc_mbuf->m_pkthdr.len =
 		    sc->sc_mbuf->m_len += sizeof(struct pfsync_state);
 		h->count++;
@@ -754,7 +754,7 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st)
 	if (newaction) {
 		if (sc->sc_mbuf_net == NULL) {
 			if ((sc->sc_mbuf_net = pfsync_get_mbuf(sc, newaction,
-			    (void *)&sc->sc_sp_net.s)) == NULL) {
+			    (void *)&sc->sc_statep_net.s)) == NULL) {
 				splx(s);
 				return (ENOMEM);
 			}
@@ -771,7 +771,7 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st)
 				h_net->count++;
 				sc->sc_mbuf_net->m_pkthdr.len =
 				    sc->sc_mbuf_net->m_len += sizeof(*up);
-				up = sc->sc_sp_net.u++;
+				up = sc->sc_statep_net.u++;
 
 				bzero(up, sizeof(*up));
 				up->id = st->id;
@@ -784,7 +784,7 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st)
 		case PFSYNC_ACT_DEL_C:
 			sc->sc_mbuf_net->m_pkthdr.len =
 			    sc->sc_mbuf_net->m_len += sizeof(*dp);
-			dp = sc->sc_sp_net.d++;
+			dp = sc->sc_statep_net.d++;
 			h_net->count++;
 
 			bzero(dp, sizeof(*dp));
@@ -815,12 +815,12 @@ pfsync_clear_states(u_int32_t creatorid)
 		pfsync_sendout(sc);
 	}
 	if ((sc->sc_mbuf = pfsync_get_mbuf(sc, PFSYNC_ACT_CLR,
-	    (void *)&sc->sc_sp.c)) == NULL) {
+	    (void *)&sc->sc_statep.c)) == NULL) {
 		splx(s);
 		return (ENOMEM);
 	}
 	sc->sc_mbuf->m_pkthdr.len = sc->sc_mbuf->m_len += sizeof(*cp);
-	cp = sc->sc_sp.c;
+	cp = sc->sc_statep.c;
 	cp->creatorid = creatorid;
 
 	ret = (pfsync_sendout(sc));
@@ -848,7 +848,7 @@ pfsync_sendout(sc)
 
 	timeout_del(&sc->sc_tmo);
 	sc->sc_mbuf = NULL;
-	sc->sc_sp.s = NULL;
+	sc->sc_statep.s = NULL;
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
@@ -860,7 +860,7 @@ pfsync_sendout(sc)
 		m_freem(m);
 		m = sc->sc_mbuf_net;
 		sc->sc_mbuf_net = NULL;
-		sc->sc_sp_net.s = NULL;
+		sc->sc_statep_net.s = NULL;
 	}
 
 	if (sc->sc_sync_ifp) {
