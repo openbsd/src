@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.36 2003/06/02 23:28:15 millert Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.37 2003/06/03 06:24:22 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
 /*
@@ -314,20 +314,15 @@ mrt6_ioctl(cmd, data)
 	int cmd;
 	caddr_t data;
 {
-	int error = 0;
 
 	switch (cmd) {
 	case SIOCGETSGCNT_IN6:
 		return (get_sg_cnt((struct sioc_sg_req6 *)data));
-		break;		/* for safety */
 	case SIOCGETMIFCNT_IN6:
 		return (get_mif6_cnt((struct sioc_mif_req6 *)data));
-		break;		/* for safety */
 	default:
 		return (EINVAL);
-		break;
 	}
-	return error;
 }
 
 /*
