@@ -1624,7 +1624,7 @@ pfkeyv2_acquire(void *os)
 #if 0
   int rval = 0;
   int i, j;
-  void *p, *headers[SADB_EXT_MAX+1], *buffer;
+  void *p, *headers[SADB_EXT_MAX+1], *buffer = NULL;
 
   if (!nregistered) {
     rval = ESRCH;
@@ -1730,6 +1730,10 @@ pfkeyv2_acquire(void *os)
   rval = 0;
 
 ret:
+  if (buffer != NULL) {
+    bzero(buffer, i);
+    free(buffer, M_TEMP);
+  }
   return rval;
 #endif
   return 0;
@@ -1741,7 +1745,7 @@ pfkeyv2_expire(struct tdb *sa, u_int16_t type)
   int rval = 0;
   int i;
   u_int8_t satype;
-  void *p, *headers[SADB_EXT_MAX+1], *buffer;
+  void *p, *headers[SADB_EXT_MAX+1], *buffer = NULL;
 
   switch (sa->tdb_sproto) {
     case IPPROTO_AH:
@@ -1803,6 +1807,10 @@ pfkeyv2_expire(struct tdb *sa, u_int16_t type)
   rval = 0;
 
 ret:
+  if (buffer != NULL) {
+    bzero(buffer, i);
+    free(buffer, M_TEMP);
+  }
   return rval;
 }
 
