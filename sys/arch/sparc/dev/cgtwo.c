@@ -198,7 +198,7 @@ cgtwoattach(parent, self, args)
 		 * Assume this is the console if there's no eeprom info
 		 * to be found.
 		 */
-		if (eep == NULL || eep->eeConsole == EE_CONS_COLOR)
+		if (eep == NULL || eep->ee_diag.eed_console == EED_CONS_COLOR)
 			isconsole = (fbconstty != NULL);
 		else
 			isconsole = 0;
@@ -212,8 +212,7 @@ cgtwoattach(parent, self, args)
 	if ((sc->sc_fb.fb_pixels = ca->ca_ra.ra_vaddr) == NULL && isconsole) {
 		/* this probably cannot happen, but what the heck */
 		sc->sc_fb.fb_pixels = mapiodev(sc->sc_phys + CG2_PIXMAP_OFF,
-					       CG2_PIXMAP_SIZE,
-					       ca->ca_bustype);
+		    CG2_PIXMAP_SIZE, ca->ca_bustype);
 	}
 #ifndef offsetof
 #define	offsetof(type, member)  ((size_t)(&((type *)0)->member))
@@ -221,13 +220,13 @@ cgtwoattach(parent, self, args)
 
 	sc->sc_reg = (volatile struct cg2statusreg *)
 	    mapiodev((caddr_t)sc->sc_phys +
-		     CG2_ROPMEM_OFF + offsetof(struct cg2fb, status.reg),
-		     sizeof(struct cg2statusreg), ca->ca_bustype);
+		CG2_ROPMEM_OFF + offsetof(struct cg2fb, status.reg),
+		sizeof(struct cg2statusreg), ca->ca_bustype);
 
 	sc->sc_cmap = (volatile u_short *)
 	    mapiodev((caddr_t)sc->sc_phys +
-		     CG2_ROPMEM_OFF + offsetof(struct cg2fb, redmap[0]),
-		     3 * CG2_CMSIZE, ca->ca_bustype);
+		CG2_ROPMEM_OFF + offsetof(struct cg2fb, redmap[0]),
+		3 * CG2_CMSIZE, ca->ca_bustype);
 
 	if (isconsole) {
 		printf(" (console)\n");

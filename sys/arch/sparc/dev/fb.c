@@ -76,7 +76,8 @@ fb_attach(fb)
 	struct fbdevice *fb;
 {
 
-if (devfb) panic("multiple /dev/fb declarers");
+	if (devfb)
+		panic("multiple /dev/fb declarers");
 	devfb = fb;
 }
 
@@ -156,27 +157,31 @@ fb_setsize(fb, depth, def_width, def_height, node, bustype)
 		if (cputyp==CPU_SUN4) {
 			struct eeprom *eep = (struct eeprom *)eeprom_va;
 			if (eep != NULL) {
-				switch (eep->eeScreenSize) {
-				case EE_SCR_1152X900:
+				switch (eep->ee_diag.eed_scrsize) {
+				case EED_SCR_1152X900:
 					fb->fb_type.fb_width = 1152;
 					fb->fb_type.fb_height = 900;
 					break;
-
-				case EE_SCR_1024X1024:
+				case EED_SCR_1024X1024:
 					fb->fb_type.fb_width = 1024;
 					fb->fb_type.fb_height = 1024;
 					break;
-
-				case EE_SCR_1600X1280:
+				case EED_SCR_1600X1280:
 					fb->fb_type.fb_width = 1600;
 					fb->fb_type.fb_height = 1280;
 					break;
-
-				case EE_SCR_1440X1440:
+				case EED_SCR_1440X1440:
 					fb->fb_type.fb_width = 1440;
 					fb->fb_type.fb_height = 1440;
 					break;
-
+				case EED_SCR_640X480:
+					fb->fb_type.fb_width = 640;
+					fb->fb_type.fb_height = 480;
+					break;
+				case EED_SCR_1280X1024:
+					fb->fb_type.fb_width = 1280;
+					fb->fb_type.fb_height = 1024;
+					break;
 				default:
 					/*
 					 * XXX: Do nothing, I guess.
@@ -197,14 +202,12 @@ fb_setsize(fb, depth, def_width, def_height, node, bustype)
  donesize:
 		fb->fb_linebytes = (fb->fb_type.fb_width * depth) / 8;
 		break;
-
 	case BUS_SBUS:
 		fb->fb_type.fb_width = getpropint(node, "width", 1152);
 		fb->fb_type.fb_height = getpropint(node, "height", 900);
 		fb->fb_linebytes = getpropint(node, "linebytes",
 		    (fb->fb_type.fb_width * depth) / 8);
 		break;
-
 	default:
 		panic("fb_setsize: inappropriate bustype");
 		/* NOTREACHED */
@@ -269,25 +272,24 @@ fbrcons_init(fb)
 			rc->rc_maxcol = 80;
 			rc->rc_maxrow = 34;
 		} else {
-			rc->rc_maxcol = eep->eeTtyCols;
-			rc->rc_maxrow = eep->eeTtyRows;
+			rc->rc_maxcol = eep->ee_diag.eed_colsize;
+			rc->rc_maxrow = eep->ee_diag.eed_rowsize;
 		}
 	}
 #endif /* SUN4 */
 #if defined(SUN4C) || defined(SUN4M)
 	if (cputyp != CPU_SUN4) {
-		rc->rc_maxcol =
-		    a2int(getpropstring(optionsnode, "screen-#columns"), 80);
-		rc->rc_maxrow =
-		    a2int(getpropstring(optionsnode, "screen-#rows"), 34);
+		rc->rc_maxcol = a2int(getpropstring(optionsnode,
+		    "screen-#columns"), 80);
+		rc->rc_maxrow = a2int(getpropstring(optionsnode,
+		    "screen-#rows"), 34);
 	}
 #endif /* SUN4C || SUN4M */
 #endif /* RASTERCONS_FULLSCREEN || RASTERCONS_SMALLFONT */
 
 #if !(defined(RASTERCONS_FULLSCREEN) || defined(RASTERCONS_SMALLFONT))
 	/* Determine addresses of prom emulator row and column */
-	if (cputyp == CPU_SUN4 ||
-	    romgetcursoraddr(&rc->rc_row, &rc->rc_col))
+	if (cputyp == CPU_SUN4 || romgetcursoraddr(&rc->rc_row, &rc->rc_col))
 #endif
 		rc->rc_row = rc->rc_col = NULL;
 
