@@ -466,7 +466,7 @@ tree null_pointer_node;
 
 /* The value for __null (NULL), namely, a zero of an integer type with
    the same number of bits as a pointer.  */
-tree null_node;
+extern tree null_node;
 
 /* A node for the integer constants 1, 2, and 3.  */
 

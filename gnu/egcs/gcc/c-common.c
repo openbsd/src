@@ -45,6 +45,8 @@ static enum cpp_token cpp_token;
 #endif
 #endif
 
+tree null_node;
+
 extern struct obstack permanent_obstack;
 
 /* Nonzero means the expression being parsed will never be evaluated.
@@ -1686,6 +1688,7 @@ check_sentinel_info (info, params)
 {
   tree arg;
   int arg_num;
+  int found_zero = 0;
 
   /* Skip to first checked argument.  If the argument isn't available, there's
      no work for us to do; prototype checking will catch the problem.  */
@@ -1705,12 +1708,20 @@ check_sentinel_info (info, params)
 	break;
       while (TREE_CODE (arg) == NOP_EXPR)
 	arg = TREE_OPERAND (arg, 0); /* strip coercion */
+      /* Special C++ check */
+      if (arg == null_node)
+      	return;
       if (POINTER_TYPE_P (TREE_TYPE (arg)) && integer_zerop (arg))
       	return;
+      if (integer_zerop (arg))
+      	found_zero = 1;
       params = TREE_CHAIN (params);
     }
 
-  warning("couldn't find sentinel value starting at %d", arg_num);
+
+  warning("couldn't find null pointer sentinel value starting at %d", arg_num);
+  if (found_zero)
+  	warning("(integer 0 is not a null pointer in varargs context)");
 }
 
 /* Check the argument list of a call to printf, scanf, etc.
