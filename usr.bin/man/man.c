@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.14 1999/07/28 01:17:56 deraadt Exp $	*/
+/*	$OpenBSD: man.c,v 1.15 1999/10/18 01:46:36 aaron Exp $	*/
 /*	$NetBSD: man.c,v 1.7 1995/09/28 06:05:34 tls Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-static char rcsid[] = "$OpenBSD: man.c,v 1.14 1999/07/28 01:17:56 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: man.c,v 1.15 1999/10/18 01:46:36 aaron Exp $";
 #endif
 #endif /* not lint */
 
@@ -100,7 +100,7 @@ main(argc, argv)
 	if (argv[1] == NULL && strcmp(basename(__progname), "help") == 0) {
 		static char *nargv[3];
 		nargv[0] = "man";
-		nargv[1] = "man";
+		nargv[1] = "help";
 		nargv[2] = NULL;
 		argv = nargv;
 		argc = 2;
