@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.18 2002/03/14 01:26:54 millert Exp $	*/
+/*	$OpenBSD: gem.c,v 1.19 2002/03/22 05:41:55 jason Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -338,8 +338,6 @@ gem_tick(arg)
 	bus_space_handle_t mac = sc->sc_h;
 	int s;
 
-	s = splimp();
-
 	/* unload collisions counters */
 	ifp->if_collisions +=
 	    bus_space_read_4(t, mac, GEM_MAC_NORM_COLL_CNT) +
@@ -353,6 +351,7 @@ gem_tick(arg)
 	bus_space_write_4(t, mac, GEM_MAC_EXCESS_COLL_CNT, 0);
 	bus_space_write_4(t, mac, GEM_MAC_LATE_COLL_CNT, 0);
 
+	s = splimp();
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
@@ -922,8 +921,8 @@ gem_rint(sc)
 		rxstat = GEM_DMA_READ(sc, sc->sc_rxdescs[i].gd_flags);
 
 		if (rxstat & GEM_RD_OWN) {
-			printf("gem_rint: completed descriptor "
-				"still owned %d\n", i);
+			printf("%s: gem_rint: completed descriptor "
+				"still owned %d\n", sc->sc_dev.dv_xname, i);
 			/*
 			 * We have processed all of the receive buffers.
 			 */
@@ -1055,7 +1054,7 @@ gem_eint(sc, status)
 	u_int status;
 {
 	if ((status & GEM_INTR_MIF) != 0) {
-		printf("%s: XXXlink status changed\n", sc->sc_dev.dv_xname);
+		printf("%s: link status changed\n", sc->sc_dev.dv_xname);
 		return (1);
 	}
 
@@ -1091,12 +1090,16 @@ gem_intr(v)
 	if (status & GEM_INTR_TX_MAC) {
 		int txstat = bus_space_read_4(t, seb, GEM_MAC_TX_STATUS);
 		if (txstat & ~GEM_MAC_TX_XMIT_DONE)
-			printf("MAC tx fault, status %x\n", txstat);
+			printf("%s: MAC tx fault, status %x\n",
+			    sc->sc_dev.dv_xname, txstat);
 	}
 	if (status & GEM_INTR_RX_MAC) {
 		int rxstat = bus_space_read_4(t, seb, GEM_MAC_RX_STATUS);
-		if (rxstat & ~GEM_MAC_RX_DONE)
-			printf("MAC rx fault, status %x\n", rxstat);
+
+		rxstat &= ~(GEM_MAC_RX_DONE | GEM_MAC_RX_FRAME_CNT);
+		if (rxstat != 0)
+			printf("%s: MAC rx fault, status %x\n",
+			    sc->sc_dev.dv_xname, rxstat);
 	}
 	return (r);
 }
