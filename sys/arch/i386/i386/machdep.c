@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.139 2000/11/13 15:53:33 aaron Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.140 2000/11/16 19:10:58 millert Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -706,11 +706,13 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			{
 				"Pentium Pro (A-step)", "Pentium Pro", 0,
 				"Pentium II (Klamath)", "Pentium Pro",
-				"Pentium II (Deschutes)",
-				"Pentium II (Celeron)",
-				"Pentium III", "Pentium III (Coppermine)",
-				0, 0, 0, 0, 0, 0, 0,
-				"Pentium Pro"	/* Default */
+				"Pentium II/Celeron (Deschutes)",
+				"Celeron (Mendocino)",
+				"Pentium III (Katmai)",
+				"Pentium III/Celeron (Coppermine)",
+				0, "Pentium III Xeon (Cascades)", 0, 0, 0,
+				0, 0,
+				"Pentium Pro, II or III"	/* Default */
 			},
 			intel686_cpu_setup
 		} }
@@ -738,7 +740,8 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			CPUCLASS_586,
 			{
 				"K5", "K5", "K5", "K5", 0, 0, "K6",
-				"K6", "K6-2", "K6-3", 0, 0, 0, 0, 0, 0,
+				"K6", "K6-2", "K6-III", 0, 0, 0,
+				"K6-2+/III+", 0, 0,
 				"K5 or K6"		/* Default */
 			},
 			NULL
@@ -747,8 +750,9 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{
 			CPUCLASS_686,
 			{
-				0, "K7 (Athlon)", 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, "Athlon Model 1", "Athlon Model 2",
+				"Duron", "Athlon Model 4 (Thunderbird)",
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"K7 (Athlon)"		/* Default */
 			},
 			NULL
