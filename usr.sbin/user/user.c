@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.54 2003/12/25 10:23:57 grange Exp $ */
+/* $OpenBSD: user.c,v 1.55 2004/01/03 18:30:39 millert Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -1240,7 +1240,7 @@ moduser(char *login_name, char *newlogin, user_t *up)
 	size_t		cc;
 	FILE		*master;
 	char		newdir[MaxFileNameLen];
-	char		*colon, *line;
+	char		*colon;
 	int		len;
 	int		masterfd;
 	int		ptmpfd;
@@ -1366,13 +1366,13 @@ moduser(char *login_name, char *newlogin, user_t *up)
 #endif
 	}
 	loginc = strlen(login_name);
-	while ((line = fgetln(master, &len)) != NULL) {
-		if ((colon = strchr(line, ':')) == NULL) {
-			warnx("Malformed entry `%s'. Skipping", line);
+	while (fgets(buf, sizeof(buf), master) != NULL) {
+		if ((colon = strchr(buf, ':')) == NULL) {
+			warnx("Malformed entry `%s'. Skipping", buf);
 			continue;
 		}
-		colonc = (size_t)(colon - line);
-		if (strncmp(login_name, line, loginc) == 0 && loginc == colonc) {
+		colonc = (size_t)(colon - buf);
+		if (strncmp(login_name, buf, loginc) == 0 && loginc == colonc) {
 			if (up != NULL) {
 				if ((len = snprintf(buf, sizeof(buf),
 				    "%s:%s:%d:%d:%s:%ld:%ld:%s:%s:%s\n",
@@ -1405,12 +1405,15 @@ moduser(char *login_name, char *newlogin, user_t *up)
 					err(EXIT_FAILURE, "can't add `%s'", buf);
 				}
 			}
-		} else if ((cc = write(ptmpfd, line, len)) != len) {
-			(void) close(masterfd);
-			(void) close(ptmpfd);
-			pw_abort();
-			err(EXIT_FAILURE, "short write to /etc/ptmp (%lld not %lld chars)",
-			    (long long)cc, (long long)len);
+		} else {
+			len = strlen(buf);
+			if ((cc = write(ptmpfd, buf, len)) != len) {
+				(void) close(masterfd);
+				(void) close(ptmpfd);
+				pw_abort();
+				err(EXIT_FAILURE, "short write to /etc/ptmp (%lld not %lld chars)",
+				    (long long)cc, (long long)len);
+			}
 		}
 	}
 	if (up != NULL) {
