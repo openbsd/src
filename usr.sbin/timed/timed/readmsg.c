@@ -1,4 +1,4 @@
-/*	$OpenBSD: readmsg.c,v 1.12 2003/06/02 23:36:55 millert Exp $	*/
+/*	$OpenBSD: readmsg.c,v 1.13 2003/06/12 21:09:48 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -69,7 +69,7 @@ struct timeval from_when;
 
 struct tsp *
 readmsg(int type, char *machfrom, struct timeval *intvl,
-	struct netinfo *netfrom)
+    struct netinfo *netfrom)
 {
 	int length;
 	socklen_t salength;
@@ -333,7 +333,7 @@ again:
  * only the type ACK is to be sent by a slave
  */
 void
-slaveack()
+slaveack(void)
 {
 	switch(msgin.tsp_type) {
 
@@ -365,7 +365,7 @@ slaveack()
  * These packets should be acknowledged.
  */
 void
-ignoreack()
+ignoreack(void)
 {
 	switch(msgin.tsp_type) {
 
@@ -393,7 +393,7 @@ ignoreack()
  * to the messages received by a master
  */
 void
-masterack()
+masterack(void)
 {
 	struct tsp resp;
 
@@ -436,9 +436,7 @@ masterack()
  * Print a TSP message
  */
 void
-print(msg, addr)
-struct tsp *msg;
-struct sockaddr_in *addr;
+print(struct tsp *msg, struct sockaddr_in *addr)
 {
 	char tm[26];
 	time_t msgtime;

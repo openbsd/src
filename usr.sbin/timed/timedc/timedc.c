@@ -1,4 +1,4 @@
-/*	$OpenBSD: timedc.c,v 1.9 2003/06/02 23:36:55 millert Exp $	*/
+/*	$OpenBSD: timedc.c,v 1.10 2003/06/12 21:09:48 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -155,8 +155,7 @@ main(int argc, char *argv[])
 }
 
 void
-sigintr(signo)
-	int signo;
+sigintr(int signo)
 {
 	if (!fromatty)
 		_exit(0);
@@ -198,7 +197,7 @@ getcmd(char *name)
  * Slice a string up into argc/argv.
  */
 void
-makeargv()
+makeargv(void)
 {
 	char **argp = margv;
 	char *cp;
@@ -226,9 +225,7 @@ makeargv()
  * Help command.
  */
 void
-help(argc, argv)
-	int argc;
-	char *argv[];
+help(int argc, char *argv[])
 {
 	extern struct cmd cmdtab[];
 	struct cmd *c;

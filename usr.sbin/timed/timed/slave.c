@@ -1,4 +1,4 @@
-/*	$OpenBSD: slave.c,v 1.8 2003/06/02 23:36:55 millert Exp $	*/
+/*	$OpenBSD: slave.c,v 1.9 2003/06/12 21:09:48 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -54,7 +54,7 @@ static void setmaster(struct tsp *);
 static void answerdelay(void);
 
 int
-slave()
+slave(void)
 {
 	int tries;
 	long electiontime, refusetime, looktime, looptime, adjtime;

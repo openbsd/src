@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv.c,v 1.28 2003/06/02 21:58:27 maja Exp $ */
+/*	$OpenBSD: ypserv.c,v 1.29 2003/06/12 21:09:48 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -27,7 +27,7 @@
  */
 
 #ifndef LINT
-static const char rcsid[] = "$OpenBSD: ypserv.c,v 1.28 2003/06/02 21:58:27 maja Exp $";
+static const char rcsid[] = "$OpenBSD: ypserv.c,v 1.29 2003/06/12 21:09:48 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -329,7 +329,7 @@ ypprog_2(struct svc_req *rqstp, SVCXPRT *transp)
 }
 
 void
-hup()
+hup(void)
 {
 	/* Handle the log. */
 	ypcloselog();
@@ -346,7 +346,7 @@ hup()
 }
 
 void
-my_svc_run()
+my_svc_run(void)
 {
 	fd_set *fds;
 

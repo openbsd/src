@@ -1,4 +1,4 @@
-/*	$OpenBSD: timed.c,v 1.18 2003/06/02 23:36:55 millert Exp $	*/
+/*	$OpenBSD: timed.c,v 1.19 2003/06/12 21:09:48 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -606,7 +606,7 @@ lookformaster(struct netinfo *ntp)
  * networks;
  */
 void
-setstatus()
+setstatus(void)
 {
 	struct netinfo *ntp;
 
@@ -725,7 +725,7 @@ casual(long inf, long sup)
 }
 
 char *
-date()
+date(void)
 {
 	struct	timeval tv;
 	time_t t;
@@ -854,7 +854,7 @@ good_host_name(const char *name)
 }
 
 static void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "timed: [-dtM] [-i net|-n net] "
 	    "[-F host1 host2 ...] [-G netgp]\n");
