@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.49 2000/11/06 18:18:56 angelos Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.50 2000/11/17 04:08:44 angelos Exp $ */
 /*
 %%% copyright-nrl-97
 This software is Copyright 1997-1998 by Randall Atkinson, Ronald Lee,
@@ -58,9 +58,9 @@ static struct sadb_alg ealgs[] =
 
 static struct sadb_alg aalgs[] =
 {
-    { SADB_AALG_SHA1HMAC96, 0, 160, 160 },
-    { SADB_AALG_MD5HMAC96, 0, 128, 128 },
-    { SADB_X_AALG_RIPEMD160HMAC96, 0, 160, 160 }
+    { SADB_AALG_SHA1HMAC, 0, 160, 160 },
+    { SADB_AALG_MD5HMAC, 0, 128, 128 },
+    { SADB_X_AALG_RIPEMD160HMAC, 0, 160, 160 }
 };
 
 void export_address(void **, struct sockaddr *);
@@ -218,16 +218,16 @@ export_sa(void **p, struct tdb *tdb)
     {
 	switch (tdb->tdb_authalgxform->type)
 	{
-	    case CRYPTO_MD5_HMAC96:
-		sadb_sa->sadb_sa_auth = SADB_AALG_MD5HMAC96;
+	    case CRYPTO_MD5_HMAC:
+		sadb_sa->sadb_sa_auth = SADB_AALG_MD5HMAC;
 		break;
 
-	    case CRYPTO_SHA1_HMAC96:
-		sadb_sa->sadb_sa_auth = SADB_AALG_SHA1HMAC96;
+	    case CRYPTO_SHA1_HMAC:
+		sadb_sa->sadb_sa_auth = SADB_AALG_SHA1HMAC;
 		break;
 
-	    case CRYPTO_RIPEMD160_HMAC96:
-		sadb_sa->sadb_sa_auth = SADB_X_AALG_RIPEMD160HMAC96;
+	    case CRYPTO_RIPEMD160_HMAC:
+		sadb_sa->sadb_sa_auth = SADB_X_AALG_RIPEMD160HMAC;
 		break;
 
 	    case CRYPTO_MD5_KPDK:
@@ -2277,7 +2277,7 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
 	/* Set the authentication algorithm */
 	if (!strncasecmp(ipsec_def_auth, "hmac-sha1", sizeof("hmac-sha1")))
 	{
-	    sadb_comb->sadb_comb_auth = SADB_AALG_SHA1HMAC96;
+	    sadb_comb->sadb_comb_auth = SADB_AALG_SHA1HMAC;
 	    sadb_comb->sadb_comb_auth_minbits = 160;
 	    sadb_comb->sadb_comb_auth_maxbits = 160;
 	}
@@ -2285,14 +2285,14 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
 	  if (!strncasecmp(ipsec_def_auth, "hmac-ripemd160",
 			   sizeof("hmac_ripemd160")))
 	  {
-	      sadb_comb->sadb_comb_auth = SADB_X_AALG_RIPEMD160HMAC96;
+	      sadb_comb->sadb_comb_auth = SADB_X_AALG_RIPEMD160HMAC;
 	      sadb_comb->sadb_comb_auth_minbits = 160;
 	      sadb_comb->sadb_comb_auth_maxbits = 160;
 	  }
 	  else
 	    if (!strncasecmp(ipsec_def_auth, "hmac-md5", sizeof("hmac-md5")))
 	    {
-		sadb_comb->sadb_comb_auth = SADB_AALG_MD5HMAC96;
+		sadb_comb->sadb_comb_auth = SADB_AALG_MD5HMAC;
 		sadb_comb->sadb_comb_auth_minbits = 128;
 		sadb_comb->sadb_comb_auth_maxbits = 128;
 	    }

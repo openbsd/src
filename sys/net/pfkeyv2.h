@@ -215,21 +215,22 @@ struct sadb_policy {
 #define SADB_SASTATE_MAX      3
 
 #define SADB_AALG_NONE               0
-#define SADB_AALG_MD5HMAC            1
-#define SADB_AALG_SHA1HMAC           2
-#define SADB_AALG_MD5HMAC96          3
-#define SADB_AALG_SHA1HMAC96         4
-#define SADB_X_AALG_RIPEMD160HMAC96  5
-#define SADB_X_AALG_MD5              6
-#define SADB_X_AALG_SHA1             7
-#define SADB_AALG_MAX                7
+#define SADB_AALG_MD5HMAC            2
+#define SADB_AALG_SHA1HMAC           3
+#define SADB_AALG_SHA2_256           5
+#define SADB_AALG_SHA2_384           6
+#define SADB_AALG_SHA2_512           7
+#define SADB_AALG_RIPEMD160HMAC      8
+#define SADB_X_AALG_MD5              249
+#define SADB_X_AALG_SHA1             250
+#define SADB_AALG_MAX                250
 
 #define SADB_EALG_NONE        0
 #define SADB_EALG_DESCBC      2
 #define SADB_EALG_3DESCBC     3
-#define SADB_X_EALG_SKIPJACK  5
 #define SADB_X_EALG_CAST      6
 #define SADB_X_EALG_BLF       7
+#define SADB_X_EALG_SKIPJACK  5
 #define SADB_X_EALG_AES       12
 #define SADB_EALG_MAX         12
 
