@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusersd.c,v 1.8 2002/06/28 22:59:20 deraadt Exp $	*/
+/*	$OpenBSD: rusersd.c,v 1.9 2002/06/28 23:22:21 deraadt Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rusersd.c,v 1.8 2002/06/28 22:59:20 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rusersd.c,v 1.9 2002/06/28 23:22:21 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -69,7 +69,7 @@ main(int argc, char *argv[])
 	struct passwd *pw;
 	SVCXPRT *transp;
 
-	if (utmp_fd = open(_PATH_UTMP, O_RDONLY) == -1) {
+	if ((utmp_fd = open(_PATH_UTMP, O_RDONLY)) == -1) {
 		syslog(LOG_ERR, "cannot open %s", _PATH_UTMP);
 		exit(1);
 	}
