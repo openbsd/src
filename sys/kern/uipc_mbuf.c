@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.17 1999/10/01 02:00:12 jason Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.18 1999/12/05 07:30:31 angelos Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -718,6 +718,67 @@ bad:
 	m_freem(n);
 	MPFail++;
 	return (NULL);
+}
+
+/*
+ * Inject a new mbuf chain of length siz in mbuf chain m0 at
+ * position len0. Returns a pointer to the first injected mbuf, or
+ * NULL on failure (m0 is left undisturbed). Note that if there is
+ * enough space for an object of size siz in the appropriate position,
+ * no memory will be allocated. Also, there will be no data movement in
+ * the first len0 bytes (pointers to that will remain valid).
+ *
+ * XXX It is assumed that siz is less than the size of an mbuf at the moment.
+ */
+struct mbuf *
+m_inject(m0, len0, siz, wait)
+	register struct mbuf *m0;
+	int len0, siz, wait;
+{
+	register struct mbuf *m, *n, *n2 = NULL, *n3;
+	unsigned len = len0, remain;
+
+	if ((siz >= MHLEN) || (len0 <= 0))
+	        return (NULL);
+	for (m = m0; m && len > m->m_len; m = m->m_next)
+		len -= m->m_len;
+	if (m == NULL)
+		return (NULL);
+	remain = m->m_len - len;
+	if (remain == 0) {
+	        if ((m->m_next) &&  (M_LEADINGSPACE(m->m_next) >= siz)) {
+		        m->m_next->m_len += siz;
+			m0->m_pkthdr.len += siz;
+			m->m_next->m_data -= siz;
+			return m->m_next;
+		}
+	} else {
+	        n2 = m_copym2(m, len, remain, wait);
+		if (n2 == NULL)
+		        return (NULL);
+	}
+
+	MGET(n, wait, MT_DATA);
+	if (n == NULL) {
+	        if (n2)
+		        m_freem(n2);
+		return (NULL);
+	}
+
+	n->m_len = siz;
+	m0->m_pkthdr.len += siz;
+	m->m_len -= remain; /* Trim */
+	if (n2)	{
+	        for (n3 = n; n3->m_next != NULL; n3 = n3->m_next)
+		        ;
+		n3->m_next = n2;
+	} else
+	        n3 = n;
+	for (; n3->m_next != NULL; n3 = n3->m_next)
+	        ;
+	n3->m_next = m->m_next;
+	m->m_next = n;
+	return n;
 }
 
 /*
