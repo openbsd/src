@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.h,v 1.5 1999/01/18 19:09:16 millert Exp $	*/
+/*	$OpenBSD: term.h,v 1.6 1999/03/02 06:23:27 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -33,7 +33,7 @@
 /*    and: Eric S. Raymond <esr@snark.thyrsus.com>                          */
 /****************************************************************************/
 
-/* $From: MKterm.h.awk.in,v 1.32 1999/01/09 22:01:45 tom Exp $ */
+/* $From: MKterm.h.awk.in,v 1.35 1999/02/24 01:04:55 tom Exp $ */
 
 /*
 **	term.h -- Definition of struct term
@@ -47,7 +47,7 @@
 #endif
 
 #undef  NCURSES_VERSION
-#define NCURSES_VERSION "4.2"
+#define NCURSES_VERSION "5.0"
 
 #ifdef __cplusplus
 extern "C" {
@@ -82,6 +82,9 @@ extern "C" {
 
 #undef  NCURSES_CONST
 #define NCURSES_CONST /*nothing*/
+
+#undef  NCURSES_XNAMES
+#define NCURSES_XNAMES 0
 
 /* We will use these symbols to hide differences between
  * termios/termio/sgttyb interfaces.
@@ -680,6 +683,9 @@ extern "C" {
 #endif /* __INTERNAL_CAPS_VISIBLE */
 
 
+/*
+ * Predefined terminfo array sizes
+ */
 #define BOOLCOUNT 44
 #define NUMCOUNT  39
 #define STRCOUNT  414
@@ -687,21 +693,34 @@ extern "C" {
 typedef struct termtype {	/* in-core form of terminfo data */
     char  *term_names;		/* str_table offset of term names */
     char  *str_table;		/* pointer to string table */
-    char  Booleans[BOOLCOUNT];	/* array of values */
-    short Numbers[NUMCOUNT];	/* array of values */
-    char  *Strings[STRCOUNT];	/* array of string offsets */
+    char  *Booleans;		/* array of boolean values */
+    short *Numbers;		/* array of integer values */
+    char  **Strings;		/* array of string offsets */
+
+#if NCURSES_XNAMES
+    char  *ext_str_table;	/* pointer to extended string table */
+    char  **ext_Names;		/* corresponding names */
+
+    unsigned short num_Booleans;/* count total Booleans */
+    unsigned short num_Numbers;	/* count total Numbers */
+    unsigned short num_Strings;	/* count total Strings */
+
+    unsigned short ext_Booleans;/* count extensions to Booleans */
+    unsigned short ext_Numbers;	/* count extensions to Numbers */
+    unsigned short ext_Strings;	/* count extensions to Strings */
+#endif /* NCURSES_XNAMES */
+
 } TERMTYPE;
 
 typedef struct term {		/* describe an actual terminal */
     TERMTYPE	type;		/* terminal type description */
     short 	Filedes;	/* file description being written to */
-    TTY          Ottyb,		/* original state of the terminal */
-                 Nttyb;		/* current state of the terminal */
-    int          _baudrate;      /* used to compute padding */
+    TTY		Ottyb,		/* original state of the terminal */
+		Nttyb;		/* current state of the terminal */
+    int		_baudrate;	/* used to compute padding */
 } TERMINAL;
 
 extern TERMINAL	*cur_term;
-
 
 #if BROKEN_LINKER
 #define boolnames  _nc_boolnames()

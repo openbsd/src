@@ -1,4 +1,4 @@
-/*	$OpenBSD: trace_tries.c,v 1.2 1999/03/02 06:23:30 millert Exp $	*/
+/*	$OpenBSD: free_ttype.c,v 1.1 1999/03/02 06:23:28 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1999 Free Software Foundation, Inc.                        *
@@ -31,46 +31,44 @@
 /****************************************************************************
  *  Author: Thomas E. Dickey <dickey@clark.net> 1999                        *
  ****************************************************************************/
+
+
 /*
- *	trace_tries.c - Tracing/Debugging buffers (keycode tries-trees)
+ * free_ttype.c -- allocation functions for TERMTYPE
+ *
+ *	_nc_free_termtype()
+ *	use_extended_names()
+ *
  */
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: trace_tries.c,v 1.5 1999/02/28 23:42:28 tom Exp $")
+#include <tic.h>
+#include <term_entry.h>
 
-#ifdef TRACE
-static char *buffer;
-static unsigned len;
+MODULE_ID("$Id: free_ttype.c,v 1.1 1999/03/02 06:23:28 millert Exp $")
 
-static void recur_tries(struct tries *tree, unsigned level)
+void _nc_free_termtype(TERMTYPE *ptr)
 {
-	if (level > len)
-		buffer = (char *)realloc(buffer, len = (level + 1) * 4);
-
-	while (tree != 0) {
-		if ((buffer[level] = tree->ch) == 0)
-			buffer[level] = 128;
-		buffer[level+1] = 0;
-		if (tree->value != 0) {
-			_tracef("%5d: %s (%s)", tree->value, _nc_visbuf(buffer), keyname(tree->value));
-		}
-		if (tree->child)
-			recur_tries(tree->child, level+1);
-		tree = tree->sibling;
-	}
+	FreeIfNeeded(ptr->str_table);
+	FreeIfNeeded(ptr->term_names);
+#if NCURSES_XNAMES
+	FreeIfNeeded(ptr->ext_str_table);
+	FreeIfNeeded(ptr->Booleans);
+	FreeIfNeeded(ptr->Numbers);
+	FreeIfNeeded(ptr->Strings);
+	FreeIfNeeded(ptr->ext_Names);
+#endif
+	memset(ptr, 0, sizeof(TERMTYPE));
 }
 
-void _nc_trace_tries(struct tries *tree)
+#if NCURSES_XNAMES
+bool _nc_user_definable = TRUE;
+
+int use_extended_names(bool flag)
 {
-	buffer = typeMalloc(char, len = 80);
-	_tracef("BEGIN tries %p", tree);
-	recur_tries(tree, 0);
-	_tracef(". . . tries %p", tree);
-	free(buffer);
-}
-#else
-void _nc_trace_tries(struct tries *tree GCC_UNUSED)
-{
+	int oldflag = _nc_user_definable;
+	_nc_user_definable = flag;
+	return oldflag;
 }
 #endif

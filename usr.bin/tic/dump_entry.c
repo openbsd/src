@@ -1,7 +1,7 @@
-/*	$OpenBSD: dump_entry.c,v 1.3 1999/01/24 19:33:51 millert Exp $	*/
+/*	$OpenBSD: dump_entry.c,v 1.4 1999/03/02 06:23:55 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -40,7 +40,7 @@
 #include <termsort.c>		/* this C file is generated */
 #include <parametrized.h>	/* so is this */
 
-MODULE_ID("$From: dump_entry.c,v 1.30 1999/01/24 02:44:40 Jeffrey.C.Honig Exp $")
+MODULE_ID("$From: dump_entry.c,v 1.35 1999/03/02 01:23:01 tom Exp $")
 
 #define INDENT			8
 
@@ -75,6 +75,16 @@ static const char *separator, *trailer;
 #define V_BSD		4	/* BSD */
 
 #define OBSOLETE(n) (n[0] == 'O' && n[1] == 'T')
+
+#if NCURSES_XNAMES
+#define BoolIndirect(j) ((j >= BOOLCOUNT) ? (j) : ((sortmode == S_NOSORT) ? j : bool_indirect[j]))
+#define NumIndirect(j)  ((j >= NUMCOUNT)  ? (j) : ((sortmode == S_NOSORT) ? j : num_indirect[j]))
+#define StrIndirect(j)  ((j >= STRCOUNT)  ? (j) : ((sortmode == S_NOSORT) ? j : str_indirect[j]))
+#else
+#define BoolIndirect(j) ((sortmode == S_NOSORT) ? (j) : bool_indirect[j])
+#define NumIndirect(j)  ((sortmode == S_NOSORT) ? (j) : num_indirect[j])
+#define StrIndirect(j)  ((sortmode == S_NOSORT) ? (j) : str_indirect[j])
+#endif
 
 #if NO_LEAKS
 void _nc_leaks_dump_entry(void)
@@ -460,6 +470,7 @@ int fmt_entry(TERMTYPE *tterm,
 {
 int	i, j;
 char    buffer[MAX_TERMINFO_LENGTH];
+char *	name;
 int	predval, len;
 int	num_bools = 0;
 int	num_values = 0;
@@ -483,21 +494,19 @@ bool	outcount = 0;
     column = out_used;
     force_wrap();
 
-    for (j=0; j < BOOLCOUNT; j++) {
-	if (sortmode == S_NOSORT)
-	    i = j;
-	else
-	    i = bool_indirect[j];
+    for_each_boolean(j,tterm) {
+	i = BoolIndirect(j);
+	name = ExtBoolname(tterm,i,bool_names);
 
 	if (!version_filter(BOOLEAN, i))
 	    continue;
 	else if ((outform == F_LITERAL || outform == F_TERMINFO || outform == F_VARIABLE)
-		 && (OBSOLETE(bool_names[i]) && outform != F_LITERAL))
+		 && (OBSOLETE(name) && outform != F_LITERAL))
 	    continue;
 
 	predval = pred(BOOLEAN, i);
 	if (predval != FAIL) {
-	    (void) strcpy(buffer, bool_names[i]);
+	    (void) strcpy(buffer, name);
 	    if (predval <= 0)
 		(void) strcat(buffer, "@");
 	    else if (i + 1 > num_bools)
@@ -509,24 +518,22 @@ bool	outcount = 0;
     if (column != INDENT)
 	force_wrap();
 
-    for (j=0; j < NUMCOUNT; j++) {
-	if (sortmode == S_NOSORT)
-	    i = j;
-	else
-	    i = num_indirect[j];
+    for_each_number(j,tterm) {
+	i = NumIndirect(j);
+	name = ExtNumname(tterm,i,num_names);
 
 	if (!version_filter(NUMBER, i))
 	    continue;
 	else if ((outform == F_LITERAL || outform == F_TERMINFO || outform == F_VARIABLE)
-		 && (OBSOLETE(num_names[i]) && outform != F_LITERAL))
+		 && (OBSOLETE(name) && outform != F_LITERAL))
 	    continue;
 
 	predval = pred(NUMBER, i);
 	if (predval != FAIL) {
 	    if (tterm->Numbers[i] < 0) {
-		sprintf(buffer, "%s@", num_names[i]);
+		sprintf(buffer, "%s@", name);
 	    } else {
-		sprintf(buffer, "%s#%d", num_names[i], tterm->Numbers[i]);
+		sprintf(buffer, "%s#%d", name, tterm->Numbers[i]);
 		if (i + 1 > num_values)
 		    num_values = i + 1;
 	    }
@@ -544,16 +551,14 @@ bool	outcount = 0;
     	len++;
 
     repair_acsc(tterm);
-    for (j=0; j < STRCOUNT; j++) {
-	if (sortmode == S_NOSORT)
-	    i = j;
-	else
-	    i = str_indirect[j];
+    for_each_string(j, tterm) {
+	i = StrIndirect(j);
+	name = ExtStrname(tterm,i,str_names);
 
 	if (!version_filter(STRING, i))
 	    continue;
 	else if ((outform == F_LITERAL || outform == F_TERMINFO || outform == F_VARIABLE)
-		 && (OBSOLETE(str_names[i]) && outform != F_LITERAL))
+		 && (OBSOLETE(name) && outform != F_LITERAL))
 	    continue;
 
 	/*
@@ -600,29 +605,29 @@ bool	outcount = 0;
 	     && i + 1 > num_strings)
 		num_strings = i + 1;
 	    if (!VALID_STRING(tterm->Strings[i]))
-		sprintf(buffer, "%s@", str_names[i]);
+		sprintf(buffer, "%s@", name);
 	    else if (outform == F_TERMCAP || outform == F_TCONVERR)
 	    {
 		char *srccap = _nc_tic_expand(tterm->Strings[i], FALSE, numbers);
-		char *cv = _nc_infotocap(str_names[i], srccap, parametrized[i]);
+		char *cv = _nc_infotocap(name, srccap, parametrized[i]);
 
 		if (cv == 0)
 		{
 		    if (outform == F_TCONVERR)
-			sprintf(buffer, "%s=!!! %s WILL NOT CONVERT !!!", str_names[i], srccap);
+			sprintf(buffer, "%s=!!! %s WILL NOT CONVERT !!!", name, srccap);
 		    else if (suppress_untranslatable)
 			continue;
 		    else
-			sprintf(buffer, "..%s=%s", str_names[i], srccap);
+			sprintf(buffer, "..%s=%s", name, srccap);
 		}
 		else
-		    sprintf(buffer, "%s=%s", str_names[i], cv);
+		    sprintf(buffer, "%s=%s", name, cv);
 		len += strlen(tterm->Strings[i]) + 1;
 	    }
 	    else
 	    {
 		char *src = _nc_tic_expand(tterm->Strings[i], outform==F_TERMINFO, numbers);
-		sprintf(buffer, "%s=", str_names[i]);
+		sprintf(buffer, "%s=", name);
 		if (pretty && outform==F_TERMINFO)
 		    fmt_complex(buffer + strlen(buffer), src, 1);
 		else
@@ -746,7 +751,7 @@ int dump_entry(TERMTYPE *tterm, bool limited, bool numbers, int (*pred)(int type
 	infodump = TRUE;
     }
 
-    if (((len = fmt_entry(tterm, pred, FALSE, infodump, numbers)) > critlen) && limited)
+    if (((len = fmt_entry(tterm, pred, outform == F_TERMCAP ? TRUE : FALSE, infodump, numbers)) > critlen) && limited)
     {
 	(void) printf("# (untranslatable capabilities removed to fit entry within %d bytes)\n",
 		      critlen);
@@ -800,54 +805,49 @@ int dump_uses(const char *name, bool infodump)
     return out_used;
 }
 
-void compare_entry(void (*hook)(int t, int i, const char *name))
+void compare_entry(void (*hook)(int t, int i, const char *name), TERMTYPE *tp GCC_UNUSED)
 /* compare two entries */
 {
     int	i, j;
+    char * name;
 
     (void) fputs("    comparing booleans.\n", stdout);
-    for (j=0; j < BOOLCOUNT; j++)
+    for_each_boolean(j,tp)
     {
-	if (sortmode == S_NOSORT)
-	    i = j;
-	else
-	    i = bool_indirect[j];
+	i = BoolIndirect(j);
+	name = ExtBoolname(tp,i,bool_names);
 
 	if ((outform == F_LITERAL || outform == F_TERMINFO || outform == F_VARIABLE)
-		 && (OBSOLETE(bool_names[i]) && outform != F_LITERAL))
+		 && (OBSOLETE(name) && outform != F_LITERAL))
 	    continue;
 
-	(*hook)(BOOLEAN, i, bool_names[i]);
+	(*hook)(BOOLEAN, i, name);
     }
 
     (void) fputs("    comparing numbers.\n", stdout);
-    for (j=0; j < NUMCOUNT; j++)
+    for_each_number(j,tp)
     {
-	if (sortmode == S_NOSORT)
-	    i = j;
-	else
-	    i = num_indirect[j];
+	i = NumIndirect(j);
+	name = ExtNumname(tp,i,num_names);
 
 	if ((outform==F_LITERAL || outform==F_TERMINFO || outform==F_VARIABLE)
-		 && (OBSOLETE(num_names[i]) && outform != F_LITERAL))
+		 && (OBSOLETE(name) && outform != F_LITERAL))
 	    continue;
 
-	(*hook)(NUMBER, i, num_names[i]);
+	(*hook)(NUMBER, i, name);
     }
 
     (void) fputs("    comparing strings.\n", stdout);
-    for (j=0; j < STRCOUNT; j++)
+    for_each_string(j,tp)
     {
-	if (sortmode == S_NOSORT)
-	    i = j;
-	else
-	    i = str_indirect[j];
+	i = StrIndirect(j);
+	name = ExtStrname(tp,i,str_names);
 
 	if ((outform==F_LITERAL || outform==F_TERMINFO || outform==F_VARIABLE)
-		 && (OBSOLETE(str_names[i]) && outform != F_LITERAL))
+		 && (OBSOLETE(name) && outform != F_LITERAL))
 	    continue;
 
-	(*hook)(STRING, i, str_names[i]);
+	(*hook)(STRING, i, name);
     }
 }
 

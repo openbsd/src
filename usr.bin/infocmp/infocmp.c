@@ -1,7 +1,7 @@
-/*	$OpenBSD: infocmp.c,v 1.1 1999/01/22 04:51:31 millert Exp $	*/
+/*	$OpenBSD: infocmp.c,v 1.2 1999/03/02 06:23:56 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -44,7 +44,7 @@
 #include <term_entry.h>
 #include <dump_entry.h>
 
-MODULE_ID("$From: infocmp.c,v 1.38 1998/10/17 21:32:36 tom Exp $")
+MODULE_ID("$From: infocmp.c,v 1.40 1999/03/01 00:40:17 tom Exp $")
 
 #define L_CURL "{"
 #define R_CURL "}"
@@ -208,15 +208,15 @@ static bool entryeq(TERMTYPE *t1, TERMTYPE *t2)
 {
     int	i;
 
-    for (i = 0; i < BOOLCOUNT; i++)
+    for (i = 0; i < NUM_BOOLEANS(t1); i++)
 	if (t1->Booleans[i] != t2->Booleans[i])
 	    return(FALSE);
 
-    for (i = 0; i < NUMCOUNT; i++)
+    for (i = 0; i < NUM_NUMBERS(t1); i++)
 	if (t1->Numbers[i] != t2->Numbers[i])
 	    return(FALSE);
 
-    for (i = 0; i < STRCOUNT; i++)
+    for (i = 0; i < NUM_STRINGS(t1); i++)
 	if (capcmp(t1->Strings[i], t2->Strings[i]))
 	    return(FALSE);
 
@@ -742,12 +742,16 @@ static void file_comparison(int argc, char *argv[])
     {
 	rp = (ENTRY *)qp->uses[0].parent;
 
+#if NCURSES_XNAMES
+	if (termcount > 1)
+	    _nc_align_termtype(&qp->tterm, &rp->tterm);
+#endif
 	if (qp->nuses == 1 && !entryeq(&qp->tterm, &rp->tterm))
 	{
 	    char name1[NAMESIZE], name2[NAMESIZE];
 
-	    memcpy(&term[0], &qp->tterm, sizeof(TERMTYPE));
-	    memcpy(&term[1], &rp->tterm, sizeof(TERMTYPE));
+	    term[0] = qp->tterm;
+	    term[1] = rp->tterm;
 
 	    (void) canonical_name(qp->tterm.term_names, name1);
 	    (void) canonical_name(rp->tterm.term_names, name2);
@@ -758,7 +762,7 @@ static void file_comparison(int argc, char *argv[])
 		if (itrace)
 		    (void)fprintf(stderr, "infocmp: dumping differences\n");
 		(void) printf("comparing %s to %s.\n", name1, name2);
-		compare_entry(compare_predicate);
+		compare_entry(compare_predicate, term);
 		break;
 
 	    case C_COMMON:
@@ -766,7 +770,7 @@ static void file_comparison(int argc, char *argv[])
 		    (void) fprintf(stderr,
 				   "infocmp: dumping common capabilities\n");
 		(void) printf("comparing %s to %s.\n", name1, name2);
-		compare_entry(compare_predicate);
+		compare_entry(compare_predicate, term);
 		break;
 
 	    case C_NAND:
@@ -774,7 +778,7 @@ static void file_comparison(int argc, char *argv[])
 		    (void) fprintf(stderr,
 				   "infocmp: dumping differences\n");
 		(void) printf("comparing %s to %s.\n", name1, name2);
-		compare_entry(compare_predicate);
+		compare_entry(compare_predicate, term);
 		break;
 
 	    }
@@ -1056,6 +1060,11 @@ int main(int argc, char *argv[])
 		}
 	    }
 
+#if NCURSES_XNAMES
+	    if (termcount > 1)
+		_nc_align_termtype(&term[0], &term[1]);
+#endif
+
 	    /* dump as C initializer for the terminal type */
 	    if (initdump)
 	    {
@@ -1068,7 +1077,7 @@ int main(int argc, char *argv[])
 		(void) printf("\t\t(char *)0,\n");
 
 		(void) printf("\t\t%s /* BOOLEANS */\n", L_CURL);
-		for (n = 0; n < BOOLCOUNT; n++)
+		for_each_boolean(n,term)
 		{
 		    switch((int)(term->Booleans[n]))
 		    {
@@ -1089,12 +1098,12 @@ int main(int argc, char *argv[])
 			break;
 		    }
 		    (void) printf("\t\t/* %s */\t%s%s,\n",
-				  boolnames[n], str,
-				  n == BOOLCOUNT-1 ? R_CURL : "");
+				  ExtBoolname(term,n,boolnames), str,
+				  n == NUM_BOOLEANS(term)-1 ? R_CURL : "");
 		}
 
 		(void) printf("\t\t%s /* NUMERICS */\n", L_CURL);
-		for (n = 0; n < NUMCOUNT; n++)
+		for_each_number(n,term)
 		{
 		    char	buf[BUFSIZ];
 		    switch (term->Numbers[n])
@@ -1112,15 +1121,15 @@ int main(int argc, char *argv[])
 		    }
 		    (void) printf("\t\t/* %s */\t%s%s,\n",
 			numnames[n], str,
-			n == NUMCOUNT-1 ? R_CURL : "");
+			n == NUM_NUMBERS(term)-1 ? R_CURL : "");
 		}
 
 		size = sizeof(TERMTYPE)
-		    + (BOOLCOUNT * sizeof(term->Booleans[0]))
-		    + (NUMCOUNT * sizeof(term->Numbers[0]));
+		    + (NUM_BOOLEANS(term) * sizeof(term->Booleans[0]))
+		    + (NUM_NUMBERS(term) * sizeof(term->Numbers[0]));
 
 		(void) printf("\t\t%s /* STRINGS */\n", L_CURL);
-		for (n = 0; n < STRCOUNT; n++)
+		for_each_string(n,term)
 		{
 		    char	buf[BUFSIZ], *sp, *tp;
 
@@ -1149,8 +1158,8 @@ int main(int argc, char *argv[])
 		    }
 		    (void) printf("\t\t/* %s */\t%s%s%s\n",
 		    	strnames[n], str,
-			n == STRCOUNT-1 ? R_CURL : "",
-			n == STRCOUNT-1 ? ""     : ",");
+			n == NUM_STRINGS(term)-1 ? R_CURL : "",
+			n == NUM_STRINGS(term)-1 ? ""     : ",");
 		}
 		(void) printf("\t%s /* size = %d */\n", R_CURL, size);
 		ExitProgram(EXIT_SUCCESS);
@@ -1195,7 +1204,7 @@ int main(int argc, char *argv[])
 		if (itrace)
 		    (void)fprintf(stderr, "infocmp: dumping differences\n");
 		(void) printf("comparing %s to %s.\n", tname[0], tname[1]);
-		compare_entry(compare_predicate);
+		compare_entry(compare_predicate, term);
 		break;
 
 	    case C_COMMON:
@@ -1203,7 +1212,7 @@ int main(int argc, char *argv[])
 		    (void) fprintf(stderr,
 				   "infocmp: dumping common capabilities\n");
 		(void) printf("comparing %s to %s.\n", tname[0], tname[1]);
-		compare_entry(compare_predicate);
+		compare_entry(compare_predicate, term);
 		break;
 
 	    case C_NAND:
@@ -1211,7 +1220,7 @@ int main(int argc, char *argv[])
 		    (void) fprintf(stderr,
 				   "infocmp: dumping differences\n");
 		(void) printf("comparing %s to %s.\n", tname[0], tname[1]);
-		compare_entry(compare_predicate);
+		compare_entry(compare_predicate, term);
 		break;
 
 	    case C_USEALL:

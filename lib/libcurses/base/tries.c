@@ -1,4 +1,4 @@
-/*	$OpenBSD: tries.c,v 1.2 1999/02/24 06:31:08 millert Exp $	*/
+/*	$OpenBSD: tries.c,v 1.3 1999/03/02 06:23:27 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -41,7 +41,7 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: tries.c,v 1.10 1999/02/19 11:52:11 tom Exp $")
+MODULE_ID("$From: tries.c,v 1.12 1999/03/01 23:23:59 tom Exp $")
 
 /*
  * Expand a keycode into the string that it corresponds to, returning null if
@@ -84,12 +84,14 @@ char *_nc_expand_try(struct tries *tree, unsigned short code, int *count, size_t
  */
 int _nc_remove_key(struct tries **tree, unsigned short code)
 {
+	T((T_CALLED("_nc_remove_key(%p,%d)"), tree, code));
+
 	if (code == 0)
-		return FALSE;
+		returnCode(FALSE);
 		
 	while (*tree != 0) {
 		if (_nc_remove_key(&(*tree)->child, code)) {
-			return TRUE;
+			returnCode(TRUE);
 		}
 		if ((*tree)->value == code) {
 			if((*tree)->child) {
@@ -100,11 +102,11 @@ int _nc_remove_key(struct tries **tree, unsigned short code)
 				*tree = (*tree)->sibling;
 				free(to_free);
 			}
-			return TRUE;
+			returnCode(TRUE);
 		}
 		tree = &(*tree)->sibling;
 	}
-	return FALSE;
+	returnCode(FALSE);
 }
 
 /*
@@ -113,14 +115,15 @@ int _nc_remove_key(struct tries **tree, unsigned short code)
  */
 int _nc_remove_string(struct tries **tree, char *string)
 {
+	T((T_CALLED("_nc_remove_string(%p,%s)"), tree, _nc_visbuf(string)));
+
 	if (string == 0 || *string == 0)
-		return FALSE;
+		returnCode(FALSE);
 		
 	while (*tree != 0) {
-		if (_nc_remove_string(&(*tree)->child, string+1)) {
-			return TRUE;
-		}
 		if ((unsigned char)(*tree)->ch == (unsigned char)*string) {
+			if (string[1] != 0)
+				returnCode(_nc_remove_string(&(*tree)->child, string+1));
 			if((*tree)->child) {
 				/* don't cut the whole sub-tree */
 				(*tree)->value = 0;
@@ -129,9 +132,9 @@ int _nc_remove_string(struct tries **tree, char *string)
 				*tree = (*tree)->sibling;
 				free(to_free);
 			}
-			return TRUE;
+			returnCode(TRUE);
 		}
 		tree = &(*tree)->sibling;
 	}
-	return FALSE;
+	returnCode(FALSE);
 }

@@ -1,7 +1,7 @@
-/*	$OpenBSD: dump_entry.h,v 1.2 1998/11/03 21:59:53 millert Exp $	*/
+/*	$OpenBSD: dump_entry.h,v 1.3 1999/03/02 06:23:55 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -57,6 +57,6 @@ extern void dump_init(const char *, int, int, int, int, bool);
 extern int fmt_entry(TERMTYPE *, int (*)(int, int), bool, bool, bool);
 extern int dump_entry(TERMTYPE *, bool, bool, int (*)(int, int));
 extern int dump_uses(const char *, bool);
-extern void compare_entry(void (*)(int, int, const char *));
+extern void compare_entry(void (*)(int, int, const char *), TERMTYPE *);
 
 #define FAIL	-1

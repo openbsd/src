@@ -1,4 +1,4 @@
-/*	$OpenBSD: home_terminfo.c,v 1.1 1999/01/18 19:10:15 millert Exp $	*/
+/*	$OpenBSD: home_terminfo.c,v 1.2 1999/03/02 06:23:28 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -39,7 +39,7 @@
 #include <curses.priv.h>
 #include <tic.h>
 
-MODULE_ID("$From: home_terminfo.c,v 1.1 1998/09/19 21:25:03 tom Exp $")
+MODULE_ID("$From: home_terminfo.c,v 1.2 1999/02/27 19:58:46 tom Exp $")
 
 #define my_length (strlen(home) + sizeof(PRIVATE_INFO))
 
@@ -54,7 +54,7 @@ _nc_home_terminfo(void)
 	if (temp == 0) {
 		if ((home = getenv("HOME")) != 0
 		 && my_length <= PATH_MAX) {
-			temp = malloc(my_length);
+			temp = typeMalloc(char, my_length);
 			if (temp == 0)
 				_nc_err_abort("Out of memory");
 			(void) sprintf(temp, PRIVATE_INFO, home);

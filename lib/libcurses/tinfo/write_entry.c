@@ -1,4 +1,4 @@
-/*	$OpenBSD: write_entry.c,v 1.1 1999/01/18 19:10:23 millert Exp $	*/
+/*	$OpenBSD: write_entry.c,v 1.2 1999/03/02 06:23:29 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -44,14 +44,19 @@
 #include <sys/stat.h>
 
 #include <tic.h>
-#include <term.h>
 #include <term_entry.h>
 
 #ifndef S_ISDIR
 #define S_ISDIR(mode) ((mode & S_IFMT) == S_IFDIR)
 #endif
 
-MODULE_ID("$From: write_entry.c,v 1.34 1998/12/20 02:49:27 tom Exp $")
+#if 0
+#define TRACE_OUT(p) DEBUG(2, p)
+#else
+#define TRACE_OUT(p) /*nothing*/
+#endif
+
+MODULE_ID("$From: write_entry.c,v 1.45 1999/02/28 22:26:33 tom Exp $")
 
 static int total_written;
 
@@ -139,7 +144,7 @@ void  _nc_set_writedir(char *dir)
     if (chdir(_nc_tic_dir(destination)) < 0
      || getcwd(actual, sizeof(actual)) == 0)
 	_nc_err_abort("%s: not a directory", destination);
-    _nc_keep_tic_dir(strcpy(malloc(strlen(actual)+1), actual));
+    _nc_keep_tic_dir(strdup(actual));
 }
 
 /*
@@ -353,6 +358,46 @@ static time_t	start_time;		/* time at start of writes */
 #define LO(x)			((x) % 256)
 #define LITTLE_ENDIAN(p, x)	(p)[0] = LO(x), (p)[1] = HI(x)
 
+#define WRITE_STRING(str) (fwrite(str, sizeof(char), strlen(str) + 1, fp) == strlen(str) + 1)
+
+static int compute_offsets(char **Strings, int strmax, short *offsets)
+{
+    size_t nextfree = 0;
+    int i;
+
+    for (i = 0; i < strmax; i++) {
+	if (Strings[i] == ABSENT_STRING) {
+	    offsets[i] = -1;
+	} else if (Strings[i] == CANCELLED_STRING) {
+	    offsets[i] = -2;
+	} else {
+	    offsets[i] = nextfree;
+	    nextfree += strlen(Strings[i]) + 1;
+	    TRACE_OUT(("put Strings[%d]=%s(%d)", i, _nc_visbuf(Strings[i]), nextfree));
+	}
+    }
+    return nextfree;
+}
+
+static void convert_shorts(char *buf, short *Numbers, int count)
+{
+    int i;
+    for (i = 0; i < count; i++) {
+	if (Numbers[i] == -1) {		/* HI/LO won't work */
+	    buf[2*i] = buf[2*i + 1] = 0377;
+	} else if (Numbers[i] == -2) {	/* HI/LO won't work */
+	    buf[2*i] = 0376;
+	    buf[2*i + 1] = 0377;
+	} else {
+	    LITTLE_ENDIAN(buf + 2*i, Numbers[i]);
+	    TRACE_OUT(("put Numbers[%d]=%d", i, Numbers[i]));
+	}
+    }
+}
+
+#define even_boundary(value) \
+	    ((value) % 2 != 0 && fwrite(&zero, sizeof(char), 1, fp) != 1)
+
 static int write_object(FILE *fp, TERMTYPE *tp)
 {
 char		*namelist;
@@ -360,38 +405,35 @@ size_t		namelen, boolmax, nummax, strmax;
 char		zero = '\0';
 size_t		i;
 short		nextfree;
-short		offsets[STRCOUNT];
+short		offsets[MAX_ENTRY_SIZE/2];
 unsigned char	buf[MAX_ENTRY_SIZE];
 
 	namelist = tp->term_names;
 	namelen = strlen(namelist) + 1;
 
+	/*
+	 * BOOLWRITE, etc., are less than BOOLCOUNT because we store some
+	 * values internally.
+	 */
 	boolmax = 0;
-	for (i = 0; i < BOOLWRITE; i++)
-		if (tp->Booleans[i])
-			boolmax = i+1;
+	for (i = 0; i < BOOLWRITE; i++) {
+	    if (tp->Booleans[i])
+		boolmax = i+1;
+	}
 
 	nummax = 0;
-	for (i = 0; i < NUMWRITE; i++)
-		if (tp->Numbers[i] != ABSENT_NUMERIC)
-			nummax = i+1;
+	for (i = 0; i < NUMWRITE; i++) {
+	    if (tp->Numbers[i] != ABSENT_NUMERIC)
+		nummax = i+1;
+	}
 
 	strmax = 0;
-	for (i = 0; i < STRWRITE; i++)
-		if (tp->Strings[i] != ABSENT_STRING)
-			strmax = i+1;
+	for (i = 0; i < STRWRITE; i++) {
+	    if (tp->Strings[i] != ABSENT_STRING)
+		strmax = i+1;
+	}
 
-	nextfree = 0;
-	for (i = 0; i < strmax; i++)
-	    if (tp->Strings[i] == ABSENT_STRING)
-		offsets[i] = -1;
-	    else if (tp->Strings[i] == CANCELLED_STRING)
-		offsets[i] = -2;
-	    else
-	    {
-		offsets[i] = nextfree;
-		nextfree += strlen(tp->Strings[i]) + 1;
-	    }
+	nextfree = compute_offsets(tp->Strings, strmax, offsets);
 
 	/* fill in the header */
 	LITTLE_ENDIAN(buf,    MAGIC);
@@ -402,59 +444,109 @@ unsigned char	buf[MAX_ENTRY_SIZE];
 	LITTLE_ENDIAN(buf+10, nextfree);
 
 	/* write out the header */
+	TRACE_OUT(("Header of %s @%ld", namelist, ftell(fp)));
 	if (fwrite(buf, 12, 1, fp) != 1
-		||  fwrite(namelist, sizeof(char), (size_t)namelen, fp) != namelen
-		||  fwrite(tp->Booleans, sizeof(char), (size_t)boolmax, fp) != boolmax)
-		return(ERR);
+	    ||  fwrite(namelist, sizeof(char), namelen, fp) != namelen
+	    ||  fwrite(tp->Booleans, sizeof(char), boolmax, fp) != boolmax)
+	    return(ERR);
 
-	/* the even-boundary padding byte */
-	if ((namelen+boolmax) % 2 != 0 &&  fwrite(&zero, sizeof(char), 1, fp) != 1)
-		return(ERR);
+	if (even_boundary(namelen+boolmax))
+	    return(ERR);
 
-#ifdef SHOWOFFSET
-	(void) fprintf(stderr, "Numerics begin at %04lx\n", ftell(fp));
-#endif /* SHOWOFFSET */
+	TRACE_OUT(("Numerics begin at %04lx", ftell(fp)));
 
 	/* the numerics */
-	for (i = 0; i < nummax; i++)
-	{
-		if (tp->Numbers[i] == -1)	/* HI/LO won't work */
-			buf[2*i] = buf[2*i + 1] = 0377;
-		else if (tp->Numbers[i] == -2)	/* HI/LO won't work */
-			buf[2*i] = 0376, buf[2*i + 1] = 0377;
-		else
-			LITTLE_ENDIAN(buf + 2*i, tp->Numbers[i]);
-	}
-	if (fwrite(buf, 2, (size_t)nummax, fp) != nummax)
-		return(ERR);
+	convert_shorts(buf, tp->Numbers, nummax);
+	if (fwrite(buf, 2, nummax, fp) != nummax)
+	    return(ERR);
 
-#ifdef SHOWOFFSET
-	(void) fprintf(stderr, "String offets begin at %04lx\n", ftell(fp));
-#endif /* SHOWOFFSET */
+	TRACE_OUT(("String offsets begin at %04lx", ftell(fp)));
 
 	/* the string offsets */
-	for (i = 0; i < strmax; i++)
-		if (offsets[i] == -1)	/* HI/LO won't work */
-			buf[2*i] = buf[2*i + 1] = 0377;
-		else if (offsets[i] == -2)	/* HI/LO won't work */
-		{
-			buf[2*i] = 0376;
-			buf[2*i + 1] = 0377;
-		}
-		else
-			LITTLE_ENDIAN(buf + 2*i, offsets[i]);
-	if (fwrite(buf, 2, (size_t)strmax, fp) != strmax)
-		return(ERR);
+	convert_shorts(buf, offsets, strmax);
+	if (fwrite(buf, 2, strmax, fp) != strmax)
+	    return(ERR);
 
-#ifdef SHOWOFFSET
-	(void) fprintf(stderr, "String table begins at %04lx\n", ftell(fp));
-#endif /* SHOWOFFSET */
+	TRACE_OUT(("String table begins at %04lx", ftell(fp)));
 
 	/* the strings */
 	for (i = 0; i < strmax; i++)
-	    if (tp->Strings[i] != ABSENT_STRING && tp->Strings[i] != CANCELLED_STRING)
-		if (fwrite(tp->Strings[i], sizeof(char), strlen(tp->Strings[i]) + 1, fp) != strlen(tp->Strings[i]) + 1)
+	    if (VALID_STRING(tp->Strings[i]))
+		if (!WRITE_STRING(tp->Strings[i]))
 		    return(ERR);
+
+#if NCURSES_XNAMES
+	if (NUM_EXT_NAMES(tp)) {
+	    unsigned extcnt = NUM_EXT_NAMES(tp);
+
+	    if (even_boundary(nextfree))
+		return(ERR);
+
+	    nextfree = compute_offsets(tp->Strings + STRCOUNT, tp->ext_Strings, offsets);
+	    TRACE_OUT(("after extended string capabilities, nextfree=%d", nextfree));
+	    nextfree += compute_offsets(tp->ext_Names, extcnt, offsets + tp->ext_Strings);
+	    TRACE_OUT(("after extended capnames, nextfree=%d", nextfree));
+	    strmax = tp->ext_Strings + extcnt;
+
+	    /*
+	     * Write the extended header
+	     */
+	    LITTLE_ENDIAN(buf+0, tp->ext_Booleans);
+	    LITTLE_ENDIAN(buf+2, tp->ext_Numbers);
+	    LITTLE_ENDIAN(buf+4, tp->ext_Strings);
+	    LITTLE_ENDIAN(buf+6, strmax);
+	    LITTLE_ENDIAN(buf+8, nextfree);
+	    TRACE_OUT(("WRITE extended-header @%ld", ftell(fp)));
+	    if (fwrite(buf, 10, 1, fp) != 1)
+		return(ERR);
+
+	    TRACE_OUT(("WRITE %d booleans @%ld", tp->ext_Booleans, ftell(fp)));
+	    if (tp->ext_Booleans
+	     && fwrite(tp->Booleans + BOOLCOUNT, sizeof(char), tp->ext_Booleans, fp) != tp->ext_Booleans)
+		return(ERR);
+
+	    if (even_boundary(tp->ext_Booleans))
+		return(ERR);
+
+	    TRACE_OUT(("WRITE %d numbers @%ld", tp->ext_Numbers, ftell(fp)));
+	    if (tp->ext_Numbers) {
+		convert_shorts(buf, tp->Numbers + NUMCOUNT, tp->ext_Numbers);
+		if (fwrite(buf, 2, tp->ext_Numbers, fp) != tp->ext_Numbers)
+		    return(ERR);
+	    }
+
+	    /*
+	     * Convert the offsets for the ext_Strings and ext_Names tables,
+	     * in that order.
+	     */
+	    convert_shorts(buf, offsets, strmax);
+	    TRACE_OUT(("WRITE offsets @%ld", ftell(fp)));
+	    if (fwrite(buf, 2, strmax, fp) != strmax)
+		return(ERR);
+
+	    /*
+	     * Write the string table after the offset tables so we do not
+	     * have to do anything about alignment.
+	     */
+	    for (i = 0; i < tp->ext_Strings; i++) {
+		if (VALID_STRING(tp->Strings[i+STRCOUNT])) {
+		    TRACE_OUT(("WRITE ext_Strings[%d]=%s", i, _nc_visbuf(tp->Strings[i+STRCOUNT])));
+		    if (!WRITE_STRING(tp->Strings[i+STRCOUNT]))
+			return(ERR);
+		}
+	    }
+
+	    /*
+	     * Write the extended names
+	     */
+	    for (i = 0; i < extcnt; i++) {
+		TRACE_OUT(("WRITE ext_Names[%d]=%s", i, tp->ext_Names[i]));
+		if (!WRITE_STRING(tp->ext_Names[i]))
+		    return(ERR);
+	    }
+
+	}
+#endif /* NCURSES_XNAMES */
 
 	total_written++;
 	return(OK);

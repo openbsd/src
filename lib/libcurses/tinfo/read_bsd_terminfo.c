@@ -1,4 +1,4 @@
-/*	$OpenBSD: read_bsd_terminfo.c,v 1.4 1999/02/01 20:55:41 millert Exp $	*/
+/*	$OpenBSD: read_bsd_terminfo.c,v 1.5 1999/03/02 06:23:29 millert Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: read_bsd_terminfo.c,v 1.4 1999/02/01 20:55:41 millert Exp $";
+static char rcsid[] = "$OpenBSD: read_bsd_terminfo.c,v 1.5 1999/03/02 06:23:29 millert Exp $";
 #endif
 
 #include <curses.priv.h>
@@ -175,19 +175,19 @@ _nc_lookup_bsd_terminfo_entry(tn, filename, tp)
 		_nc_warning("alias `%s' may be too long", p);
 
 	/* Copy capabilities */
-	for (i = 0 ; i < BOOLCOUNT ; i++) {
+	for_each_boolean(i, tp) {
 	    if (cgetcap(capbuf, (char *)boolnames[i], ':') == NULL)
 		tp->Booleans[i] = FALSE;
 	    else
 		tp->Booleans[i] = TRUE;
 	}
-	for (i = 0 ; i < NUMCOUNT ; i++) {
+	for_each_number(i, tp) {
 	    if (cgetnum(capbuf, (char *)numnames[i], &num) < 0)
 		tp->Numbers[i] = 0;
 	    else
 		tp->Numbers[i] = (int)num;
 	}
-	for (i = 0 ; i < STRCOUNT ; i++) {
+	for_each_string(i, tp) {
 	    if (cgetstr(capbuf, (char *)strnames[i], &p) < 0)
 		tp->Strings[i] = NULL;
 	    else

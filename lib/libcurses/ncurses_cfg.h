@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncurses_cfg.h,v 1.10 1999/01/31 20:25:38 millert Exp $	*/
+/*	$OpenBSD: ncurses_cfg.h,v 1.11 1999/03/02 06:23:27 millert Exp $	*/
 
 /* include/ncurses_cfg.h.  Generated automatically by configure.  */
 /****************************************************************************
@@ -115,6 +115,7 @@
 #define USE_DATABASE 1
 #define USE_GETCAP 1
 #define USE_HASHMAP 1
+/* #define USE_SIGWINCH 1 */
 
 	/* The C compiler may not treat these properly but C++ has to */
 #ifdef __cplusplus

@@ -1,4 +1,4 @@
-/*	$OpenBSD: safe_sprintf.c,v 1.1 1999/01/18 19:10:07 millert Exp $	*/
+/*	$OpenBSD: safe_sprintf.c,v 1.2 1999/03/02 06:23:27 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -35,7 +35,7 @@
 #include <curses.priv.h>
 #include <ctype.h>
 
-MODULE_ID("$From: safe_sprintf.c,v 1.9 1998/08/15 23:58:49 tom Exp $")
+MODULE_ID("$From: safe_sprintf.c,v 1.10 1999/02/27 19:56:37 tom Exp $")
 
 #if USE_SAFE_SPRINTF
 
@@ -59,9 +59,9 @@ _nc_printf_length(const char *fmt, va_list ap)
 
 	if (fmt == 0 || *fmt == '\0')
 		return -1;
-	if ((format = malloc(strlen(fmt)+1)) == 0)
+	if ((format = typeMalloc(char, strlen(fmt)+1)) == 0)
 		return -1;
-	if ((buffer = malloc(length)) == 0) {
+	if ((buffer = typeMalloc(char, length)) == 0) {
 		free(format);
 		return -1;
 	}
@@ -152,7 +152,7 @@ _nc_printf_length(const char *fmt, va_list ap)
 							prec = strlen(pval);
 						if (prec > (int)length) {
 							length = length + prec;
-							buffer = (char *)_nc_doalloc(buffer, length);
+							buffer = typeRealloc(char, length, buffer);
 							if (buffer == 0) {
 								free(format);
 								return -1;
@@ -214,7 +214,7 @@ _nc_printf_string(const char *fmt, va_list ap)
 	int len = _nc_printf_length(fmt, ap);
 
 	if (len > 0) {
-		if ((buf = malloc(len+1)) == 0)
+		if ((buf = typeMalloc(char, len+1)) == 0)
 			return(0);
 		vsprintf(buf, fmt, ap);
 	}
@@ -227,7 +227,7 @@ _nc_printf_string(const char *fmt, va_list ap)
 		if (screen_lines   > rows) rows = screen_lines;
 		if (screen_columns > cols) cols = screen_columns;
 		len = (rows * (cols + 1)) + 1;
-		buf = (char *)_nc_doalloc(buf, len);
+		buf = typeRealloc(char, len, buf);
 		if (buf == 0) {
 			return(0);
 		}

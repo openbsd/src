@@ -1,4 +1,4 @@
-/*	$OpenBSD: define_key.c,v 1.2 1999/02/24 06:31:07 millert Exp $	*/
+/*	$OpenBSD: define_key.c,v 1.3 1999/03/02 06:23:27 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -34,7 +34,7 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: define_key.c,v 1.3 1999/02/19 11:53:02 tom Exp $")
+MODULE_ID("$From: define_key.c,v 1.4 1999/02/21 13:03:55 tom Exp $")
 
 int
 define_key(char *str, int keycode)
@@ -43,7 +43,9 @@ define_key(char *str, int keycode)
 
 	T((T_CALLED("define_key(%s,%d)"), _nc_visbuf(str), keycode));
 	if (keycode > 0) {
-		if (has_key(keycode)) {
+		if (str != 0) {
+			define_key(str, 0);
+		} else if (has_key(keycode)) {
 			while (_nc_remove_key(&(SP->_keytry), keycode))
 				code = OK;
 		}

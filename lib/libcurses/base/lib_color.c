@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_color.c,v 1.1 1999/01/18 19:09:39 millert Exp $	*/
+/*	$OpenBSD: lib_color.c,v 1.2 1999/03/02 06:23:27 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -43,7 +43,7 @@
 
 #include <term.h>
 
-MODULE_ID("$From: lib_color.c,v 1.33 1998/09/20 00:51:51 tom Exp $")
+MODULE_ID("$From: lib_color.c,v 1.34 1999/02/27 19:54:51 tom Exp $")
 
 /*
  * These should be screen structure members.  They need to be globals for
@@ -168,7 +168,7 @@ int start_color(void)
 		returnCode(ERR);
 	SP->_coloron = 1;
 
-	if ((SP->_color_table = malloc(sizeof(color_t) * COLORS)) == 0)
+	if ((SP->_color_table = typeMalloc(color_t, COLORS)) == 0)
 		returnCode(ERR);
 	if (hue_lightness_saturation)
 	    memcpy(SP->_color_table, hls_palette, sizeof(color_t) * COLORS);

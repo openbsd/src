@@ -1,4 +1,4 @@
-/*	$OpenBSD: hardscroll.c,v 1.1 1999/01/18 19:10:25 millert Exp $	*/
+/*	$OpenBSD: hardscroll.c,v 1.2 1999/03/02 06:23:30 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -148,7 +148,7 @@ AUTHOR
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: hardscroll.c,v 1.32 1998/09/20 02:34:59 tom Exp $")
+MODULE_ID("$From: hardscroll.c,v 1.33 1999/02/27 20:01:29 tom Exp $")
 
 #if defined(SCROLLDEBUG) || defined(HASHDEBUG)
 
@@ -190,8 +190,7 @@ void _nc_scroll_optimize(void)
     /* get enough storage */
     if (oldnums_allocated < screen_lines)
     {
-	size_t size = screen_lines * sizeof(*oldnums);
-	int *new_oldnums = oldnums ? realloc(oldnums, size) : malloc(size);
+	int *new_oldnums = typeRealloc(int, screen_lines, oldnums);
 	if (!new_oldnums)
 	    return;
 	oldnums = new_oldnums;
@@ -271,7 +270,7 @@ void _nc_linedump(void)
     size_t	want = (screen_lines + 1) * 4;
 
     if (have < want)
-	buf = malloc(have = want);
+	buf = typeMalloc(char, have = want);
 
     (void) strcpy(buf, "virt");
     for (n = 0; n < screen_lines; n++)

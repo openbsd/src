@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.36 1999/02/24 06:31:06 millert Exp $
+#	$OpenBSD: Makefile,v 1.37 1999/03/02 06:23:26 millert Exp $
 
 # Uncomment this to enable tracing in libcurses
 #CURSESTRACE=-DTRACE
@@ -35,18 +35,18 @@ SRCS+=	define_key.c keybound.c keyok.c lib_adabind.c lib_addch.c lib_addstr.c \
 	lib_winch.c lib_window.c nc_panel.c resizeterm.c safe_sprintf.c \
 	sigaction.c tries.c wresize.c
 # tinfo
-SRCS+=	access.c add_tries.c alloc_entry.c captoinfo.c comp_error.c \
-	comp_expand.c comp_hash.c comp_parse.c comp_scan.c doalloc.c \
-	getenv_num.c home_terminfo.c init_keytry.c lib_acs.c lib_baudrate.c \
-	lib_cur_term.c lib_data.c lib_has_cap.c lib_kernel.c \
-	lib_longname.c lib_napms.c lib_options.c lib_print.c lib_raw.c \
-	lib_setup.c lib_termcap.c lib_termname.c lib_ti.c lib_tparm.c \
-	lib_tputs.c lib_ttyflags.c name_match.c \
+SRCS+=	access.c add_tries.c alloc_entry.c alloc_ttype.c captoinfo.c \
+	comp_error.c comp_expand.c comp_hash.c comp_parse.c comp_scan.c \
+	doalloc.c free_ttype.c getenv_num.c home_terminfo.c init_keytry.c \
+	lib_acs.c lib_baudrate.c lib_cur_term.c lib_data.c lib_has_cap.c \
+	lib_kernel.c lib_longname.c lib_napms.c lib_options.c lib_print.c \
+	lib_raw.c lib_setup.c lib_termcap.c lib_termname.c lib_ti.c \
+	lib_tparm.c lib_tputs.c lib_ttyflags.c name_match.c \
 	parse_entry.c read_bsd_terminfo.c read_entry.c read_termcap.c \
 	setbuf.c write_entry.c
 # trace
 SRCS+=	lib_trace.c lib_traceatr.c lib_tracebits.c lib_tracechr.c \
-	lib_tracedmp.c lib_tracemse.c trace_buf.c trace_tries.c
+	lib_tracedmp.c lib_tracemse.c trace_buf.c trace_tries.c trace_xnames.c
 # tty
 SRCS+=	hardscroll.c hashmap.c lib_mvcur.c lib_tstp.c lib_twait.c \
 	lib_vidattr.c tty_update.c

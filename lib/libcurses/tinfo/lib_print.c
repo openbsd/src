@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_print.c,v 1.1 1999/01/18 19:10:19 millert Exp $	*/
+/*	$OpenBSD: lib_print.c,v 1.2 1999/03/02 06:23:28 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -38,7 +38,7 @@
 
 #include <term.h>
 
-MODULE_ID("$From: lib_print.c,v 1.10 1998/10/13 14:47:53 Alexander.V.Lukyanov Exp $")
+MODULE_ID("$From: lib_print.c,v 1.11 1999/02/27 19:59:05 tom Exp $")
 
 int mcprint(char *data, int len)
 /* ship binary character data to the printer via mc4/mc5/mc5p */
@@ -66,7 +66,7 @@ int mcprint(char *data, int len)
 	offsize = strlen(prtr_off);
     }
 
-    if ((mybuf = malloc(onsize + len + offsize + 1)) == (char *)NULL)
+    if ((mybuf = typeMalloc(char, onsize + len + offsize + 1)) == (char *)0)
     {
 	errno = ENOMEM;
 	return(ERR);

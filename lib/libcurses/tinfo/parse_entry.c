@@ -1,7 +1,7 @@
-/*	$OpenBSD: parse_entry.c,v 1.1 1999/01/18 19:10:21 millert Exp $	*/
+/*	$OpenBSD: parse_entry.c,v 1.2 1999/03/02 06:23:29 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1999 Free Software Foundation, Inc.                        *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -48,10 +48,9 @@
 #include <ctype.h>
 #include <tic.h>
 #define __INTERNAL_CAPS_VISIBLE
-#include <term.h>
 #include <term_entry.h>
 
-MODULE_ID("$From: parse_entry.c,v 1.24 1998/07/04 23:08:38 tom Exp $")
+MODULE_ID("$From: parse_entry.c,v 1.39 1999/03/01 02:28:51 tom Exp $")
 
 #ifdef LINT
 static short const parametrized[] = { 0 };
@@ -64,6 +63,116 @@ struct token	_nc_curr_token;
 static	void postprocess_termcap(TERMTYPE *, bool);
 static	void postprocess_terminfo(TERMTYPE *);
 static	struct name_table_entry	const * lookup_fullname(const char *name);
+
+#if NCURSES_XNAMES
+
+static struct name_table_entry	const *
+_nc_extend_names(ENTRY *entryp, char *name, int token_type)
+{
+    static struct name_table_entry temp;
+    TERMTYPE *tp = &(entryp->tterm);
+    unsigned offset = 0;
+    unsigned actual;
+    unsigned tindex;
+    unsigned first, last, n;
+    bool found;
+
+    switch (token_type) {
+    case BOOLEAN:
+	first  = 0;
+	last   = tp->ext_Booleans;
+	offset = tp->ext_Booleans;
+	tindex = tp->num_Booleans;
+	break;
+    case NUMBER:
+	first  = tp->ext_Booleans;
+	last   = tp->ext_Numbers  + first;
+	offset = tp->ext_Booleans + tp->ext_Numbers;
+	tindex = tp->num_Numbers;
+	break;
+    case STRING:
+	first  = tp->ext_Booleans + tp->ext_Numbers;
+	last   = tp->ext_Strings  + first;
+	offset = tp->ext_Booleans + tp->ext_Numbers + tp->ext_Strings;
+	tindex = tp->num_Strings;
+	break;
+    case CANCEL:
+	actual = NUM_EXT_NAMES(tp);
+	for (n = 0; n < actual; n++) {
+	    if (!strcmp(name, tp->ext_Names[n])) {
+		if (n > (unsigned)(tp->ext_Booleans + tp->ext_Numbers)) {
+		    token_type = STRING;
+		} else if (n > tp->ext_Booleans) {
+		    token_type = NUMBER;
+		} else {
+		    token_type = BOOLEAN;
+		}
+		return _nc_extend_names(entryp, name, token_type);
+	    }
+	}
+	/* Well, we are given a cancel for a name that we don't recognize */
+	return _nc_extend_names(entryp, name, STRING);
+    default:
+	return 0;
+    }
+
+    /* Adjust the 'offset' (insertion-point) to keep the lists of extended
+     * names sorted.
+     */
+    for (n = first, found = FALSE; n < last; n++) {
+	int cmp = strcmp(tp->ext_Names[n], name);
+	if (cmp == 0)
+	    found = TRUE;
+	if (cmp >= 0) {
+	    offset = n;
+	    tindex = n - first;
+	    switch (token_type) {
+	    case BOOLEAN:	tindex += BOOLCOUNT;	break;
+	    case NUMBER:	tindex += NUMCOUNT;	break;
+	    case STRING:	tindex += STRCOUNT;	break;
+	    }
+	    break;
+	}
+    }
+    if (!found) {
+	switch (token_type) {
+	case BOOLEAN:
+	    tp->ext_Booleans += 1;
+	    tp->num_Booleans += 1;
+	    tp->Booleans = typeRealloc(char, tp->num_Booleans, tp->Booleans);
+	    for (last = tp->num_Booleans-1; last > tindex; last--)
+		tp->Booleans[last] = tp->Booleans[last-1];
+	    break;
+	case NUMBER:
+	    tp->ext_Numbers += 1;
+	    tp->num_Numbers += 1;
+	    tp->Numbers = typeRealloc(short, tp->num_Numbers, tp->Numbers);
+	    for (last = tp->num_Numbers-1; last > tindex; last--)
+		tp->Numbers[last] = tp->Numbers[last-1];
+	    break;
+	case STRING:
+	    tp->ext_Strings += 1;
+	    tp->num_Strings += 1;
+	    tp->Strings = typeRealloc(char *, tp->num_Strings, tp->Strings);
+	    for (last = tp->num_Strings-1; last > tindex; last--)
+		tp->Strings[last] = tp->Strings[last-1];
+	    break;
+	}
+	actual = NUM_EXT_NAMES(tp);
+	tp->ext_Names  = typeRealloc(char *, actual, tp->ext_Names);
+	while (--actual > offset)
+	    tp->ext_Names[actual] = tp->ext_Names[actual-1];
+	tp->ext_Names[offset] = _nc_save_str(name);
+    }
+
+    temp.nte_name  = tp->ext_Names[offset];
+    temp.nte_type  = token_type;
+    temp.nte_index = tindex;
+    temp.nte_link  = -1;
+
+    return &temp;
+}
+#endif /* NCURSES_XNAMES */
 
 /*
  *	int
@@ -198,12 +307,23 @@ int _nc_parse_entry(struct entry *entryp, int literal, bool silent)
 			    break;
 			}
 
-		    /* last chance: a full-name */
 		    if (entry_ptr == NOTFOUND) {
 			entry_ptr = lookup_fullname(_nc_curr_token.tk_name);
 		    }
 		}
 	    }
+
+#if NCURSES_XNAMES
+	    /*
+	     * If we have extended-names active, we will automatically
+	     * define a name based on its context.
+	     */
+	    if (entry_ptr == NOTFOUND
+	     && _nc_user_definable
+	     && (entry_ptr = _nc_extend_names(entryp, _nc_curr_token.tk_name, token_type)) != 0) {
+		_nc_warning("extended capability '%s'", _nc_curr_token.tk_name);
+	    }
+#endif /* NCURSES_XNAMES */
 
 	    /* can't find this cap name, not even as an alias */
 	    if (entry_ptr == NOTFOUND) {
@@ -342,7 +462,7 @@ int _nc_parse_entry(struct entry *entryp, int literal, bool silent)
 		 * have picked up defaults via translation.
 		 */
 		for (i = 0; i < entryp->nuses; i++)
-		    if (!strchr(entryp->uses[i].parent, '+'))
+		    if (!strchr((char *)entryp->uses[i].parent, '+'))
 			has_base_entry = TRUE;
 
 	    postprocess_termcap(&entryp->tterm, has_base_entry);

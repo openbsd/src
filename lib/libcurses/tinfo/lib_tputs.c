@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_tputs.c,v 1.1 1999/01/18 19:10:20 millert Exp $	*/
+/*	$OpenBSD: lib_tputs.c,v 1.2 1999/03/02 06:23:29 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -48,7 +48,7 @@
 #include <termcap.h>	/* ospeed */
 #include <tic.h>
 
-MODULE_ID("$From: lib_tputs.c,v 1.38 1999/01/10 00:57:41 tom Exp $")
+MODULE_ID("$From: lib_tputs.c,v 1.39 1999/02/25 10:44:29 tom Exp $")
 
 #define OUTPUT ((SP != 0) ? SP->_ofp : stdout)
 
@@ -121,7 +121,7 @@ char	addrbuf[32];
 	}
 #endif /* TRACE */
 	
-	if (string == ABSENT_STRING || string == CANCELLED_STRING)
+	if (!VALID_STRING(string))
 		return ERR;
 
 	if (cur_term == 0) {

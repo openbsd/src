@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_termcap.c,v 1.1 1999/01/18 19:10:19 millert Exp $	*/
+/*	$OpenBSD: lib_termcap.c,v 1.2 1999/03/02 06:23:29 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -39,9 +39,9 @@
 #include <tic.h>
 
 #define __INTERNAL_CAPS_VISIBLE
-#include <term.h>
+#include <term_entry.h>
 
-MODULE_ID("$From: lib_termcap.c,v 1.25 1999/01/10 00:48:11 tom Exp $")
+MODULE_ID("$From: lib_termcap.c,v 1.28 1999/02/27 22:12:58 tom Exp $")
 
 /*
    some of the code in here was contributed by:
@@ -115,12 +115,14 @@ int i;
 
 	T((T_CALLED("tgetflag(%s)"), id));
 	if (cur_term != 0) {
-		for (i = 0; i < BOOLCOUNT; i++) {
-			if (!strncmp(id, boolcodes[i], 2)) {
-				/* setupterm forces invalid booleans to false */
-				returnCode(cur_term->type.Booleans[i]);
-			}
+	    TERMTYPE *tp = &(cur_term->type);
+	    for_each_boolean(i, tp) {
+		const char *capname = ExtBoolname(tp, i, boolcodes);
+		if (!strncmp(id, capname, 2)) {
+		    /* setupterm forces invalid booleans to false */
+		    returnCode(tp->Booleans[i]);
 		}
+	    }
 	}
 	returnCode(0);	/* Solaris does this */
 }
@@ -140,13 +142,15 @@ int i;
 
 	T((T_CALLED("tgetnum(%s)"), id));
 	if (cur_term != 0) {
-		for (i = 0; i < NUMCOUNT; i++) {
-			if (!strncmp(id, numcodes[i], 2)) {
-				if (!VALID_NUMERIC(cur_term->type.Numbers[i]))
-					return -1;
-				returnCode(cur_term->type.Numbers[i]);
-			}
+	    TERMTYPE *tp = &(cur_term->type);
+	    for_each_number(i, tp) {
+		const char *capname = ExtNumname(tp, i, numcodes);
+		if (!strncmp(id, capname, 2)) {
+		    if (!VALID_NUMERIC(tp->Numbers[i]))
+			return -1;
+		    returnCode(tp->Numbers[i]);
 		}
+	    }
 	}
 	returnCode(ERR);
 }
@@ -166,14 +170,16 @@ int i;
 
 	T((T_CALLED("tgetstr(%s,%p)"), id, area));
 	if (cur_term != 0) {
-		for (i = 0; i < STRCOUNT; i++) {
-			T(("trying %s", strcodes[i]));
-			if (!strncmp(id, strcodes[i], 2)) {
-				T(("found match : %s", _nc_visbuf(cur_term->type.Strings[i])));
-				/* setupterm forces cancelled strings to null */
-				returnPtr(cur_term->type.Strings[i]);
-			}
+	    TERMTYPE *tp = &(cur_term->type);
+	    for_each_string(i, tp) {
+		const char *capname = ExtStrname(tp, i, strcodes);
+		T(("trying %s", capname));
+		if (!strncmp(id, capname, 2)) {
+		    T(("found match : %s", _nc_visbuf(tp->Strings[i])));
+		    /* setupterm forces cancelled strings to null */
+		    returnPtr(tp->Strings[i]);
 		}
+	    }
 	}
 	returnPtr(NULL);
 }

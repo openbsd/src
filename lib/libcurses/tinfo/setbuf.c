@@ -1,4 +1,4 @@
-/*	$OpenBSD: setbuf.c,v 1.2 1999/02/24 05:36:11 millert Exp $	*/
+/*	$OpenBSD: setbuf.c,v 1.3 1999/03/02 06:23:29 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -44,7 +44,7 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: setbuf.c,v 1.4 1999/02/10 03:15:09 tom Exp $")
+MODULE_ID("$From: setbuf.c,v 1.5 1999/02/27 20:00:15 tom Exp $")
 
 /*
  * If the output file descriptor is connected to a tty (the typical case) it
@@ -115,7 +115,7 @@ void _nc_set_buffer(FILE *ofp, bool buffered)
 	if ((SP->_buffered = buffered) != 0) {
 		buf_len = min(LINES * (COLS + 6), 2800);
 	 	if ((buf_ptr = SP->_setbuf) == 0) {
-			if ((buf_ptr = malloc(buf_len)) == NULL)
+			if ((buf_ptr = typeMalloc(char, buf_len)) == NULL)
 				return;
 			SP->_setbuf = buf_ptr;
 			/* Don't try to free this! */

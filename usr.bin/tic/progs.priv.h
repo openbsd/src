@@ -1,4 +1,4 @@
-/*	$OpenBSD: progs.priv.h,v 1.2 1998/11/03 21:59:53 millert Exp $	*/
+/*	$OpenBSD: progs.priv.h,v 1.3 1999/03/02 06:23:55 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -32,7 +32,7 @@
  *  Author: Thomas E. Dickey <dickey@clark.net> 1997,1998                   *
  ****************************************************************************/
 /*
- * $From: progs.priv.h,v 1.18 1998/07/25 17:38:51 tom Exp $
+ * $From: progs.priv.h,v 1.19 1999/02/23 11:10:32 tom Exp $
  *
  *	progs.priv.h
  *
@@ -104,7 +104,7 @@ extern int optind;
 #endif /* HAVE_GETOPT_H */
 
 #include <curses.h>
-#include <term.h>
+#include <term_entry.h>
 #include <tic.h>
 #include <nc_alloc.h>
 

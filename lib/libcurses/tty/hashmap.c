@@ -1,4 +1,4 @@
-/*	$OpenBSD: hashmap.c,v 1.1 1999/01/18 19:10:26 millert Exp $	*/
+/*	$OpenBSD: hashmap.c,v 1.2 1999/03/02 06:23:30 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -72,7 +72,7 @@ AUTHOR
 #include <curses.priv.h>
 #include <term.h> /* for back_color_erase */
 
-MODULE_ID("$From: hashmap.c,v 1.28 1998/09/20 02:35:15 tom Exp $")
+MODULE_ID("$From: hashmap.c,v 1.29 1999/02/27 20:02:24 tom Exp $")
 
 #ifdef HASHDEBUG
 
@@ -284,7 +284,7 @@ void _nc_hash_map(void)
     {
 	if (hashtab)
 	    free (hashtab);
-	hashtab = malloc (sizeof(*hashtab)*(screen_lines+1)*2);
+	hashtab = typeMalloc(sym, (screen_lines+1)*2);
 	if (!hashtab)
 	{
 	    if (oldhash)

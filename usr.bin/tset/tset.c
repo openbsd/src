@@ -103,7 +103,7 @@ char *ttyname(int fd);
 #include <curses.h>	/* for bool typedef */
 #include <dump_entry.h>
 
-MODULE_ID("$From: tset.c,v 0.35 1999/01/02 19:57:24 tom Exp $")
+MODULE_ID("$From: tset.c,v 0.36 1999/02/23 11:05:30 tom Exp $")
 
 extern char **environ;
 
@@ -599,8 +599,7 @@ found:	if ((p = getenv("TERMCAP")) != 0 && *p != '/') {
 			ttype = 0;
 		}
 		else {
-			(void)fprintf(stderr, "tset: can't initialize terminal\
-			    type %s (error %d)\n", ttype, errret);
+			(void)fprintf(stderr, "tset: can't initialize terminal type %s (error %d)\n", ttype, errret);
 			ttype = 0;
 		}
 		ttype = askuser(ttype);

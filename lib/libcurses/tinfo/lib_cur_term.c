@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_cur_term.c,v 1.1 1999/01/18 19:10:17 millert Exp $	*/
+/*	$OpenBSD: lib_cur_term.c,v 1.2 1999/03/02 06:23:28 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -39,10 +39,10 @@
  */
 
 #include <curses.priv.h>
-#include <term.h>	/* TTY, cur_term */
+#include <term_entry.h>	/* TTY, cur_term */
 #include <termcap.h>	/* ospeed */
 
-MODULE_ID("$From: lib_cur_term.c,v 1.6 1999/01/10 00:48:44 tom Exp $")
+MODULE_ID("$From: lib_cur_term.c,v 1.7 1999/02/22 18:41:09 tom Exp $")
 
 TERMINAL *cur_term;
 
@@ -62,8 +62,7 @@ int del_curterm(TERMINAL *term)
 	T((T_CALLED("del_curterm(%p)"), term));
 
 	if (term != 0) {
-		FreeIfNeeded(term->type.str_table);
-		FreeIfNeeded(term->type.term_names);
+		_nc_free_termtype(&(term->type));
 		free(term);
 		if (term == cur_term)
 			cur_term = 0;

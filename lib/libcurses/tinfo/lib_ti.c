@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_ti.c,v 1.1 1999/01/18 19:10:20 millert Exp $	*/
+/*	$OpenBSD: lib_ti.c,v 1.2 1999/03/02 06:23:29 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -36,10 +36,10 @@
 
 #include <curses.priv.h>
 
-#include <term.h>
+#include <term_entry.h>
 #include <tic.h>
 
-MODULE_ID("$From: lib_ti.c,v 1.13 1999/01/03 01:44:27 tom Exp $")
+MODULE_ID("$From: lib_ti.c,v 1.16 1999/02/28 23:11:28 tom Exp $")
 
 int tigetflag(NCURSES_CONST char *str)
 {
@@ -48,12 +48,14 @@ int i;
 	T((T_CALLED("tigetflag(%s)"), str));
 
 	if (cur_term != 0) {
-		for (i = 0; i < BOOLCOUNT; i++) {
-			if (!strcmp(str, boolnames[i])) {
-				/* setupterm forces invalid booleans to false */
-				returnCode(cur_term->type.Booleans[i]);
-			}
+	    TERMTYPE *tp = &(cur_term->type);
+	    for_each_boolean(i,tp) {
+		const char *capname = ExtBoolname(tp, i, boolnames);
+		if (!strcmp(str, capname)) {
+		    /* setupterm forces invalid booleans to false */
+		    returnCode(tp->Booleans[i]);
 		}
+	    }
 	}
 
 	returnCode(ABSENT_BOOLEAN);
@@ -66,13 +68,15 @@ int i;
 	T((T_CALLED("tigetnum(%s)"), str));
 
 	if (cur_term != 0) {
-		for (i = 0; i < NUMCOUNT; i++) {
-			if (!strcmp(str, numnames[i])) {
-				if (!VALID_NUMERIC(cur_term->type.Numbers[i]))
-					return -1;
-				returnCode(cur_term->type.Numbers[i]);
-			}
+	    TERMTYPE *tp = &(cur_term->type);
+	    for_each_number(i, tp) {
+		const char *capname = ExtNumname(tp, i, numnames);
+		if (!strcmp(str, capname)) {
+		    if (!VALID_NUMERIC(tp->Numbers[i]))
+			return -1;
+		    returnCode(tp->Numbers[i]);
 		}
+	    }
 	}
 
 	returnCode(CANCELLED_NUMERIC);	/* Solaris returns a -1 instead */
@@ -85,12 +89,14 @@ int i;
 	T((T_CALLED("tigetstr(%s)"), str));
 
 	if (cur_term != 0) {
-		for (i = 0; i < STRCOUNT; i++) {
-			if (!strcmp(str, strnames[i])) {
-				/* setupterm forces cancelled strings to null */
-				returnPtr(cur_term->type.Strings[i]);
-			}
+	    TERMTYPE *tp = &(cur_term->type);
+	    for_each_string(i, tp) {
+		const char *capname = ExtStrname(tp, i, strnames);
+		if (!strcmp(str, capname)) {
+		    /* setupterm forces cancelled strings to null */
+		    returnPtr(tp->Strings[i]);
 		}
+	    }
 	}
 
 	returnPtr(CANCELLED_STRING);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: curses.h,v 1.21 1999/02/24 06:33:14 millert Exp $	*/
+/*	$OpenBSD: curses.h,v 1.22 1999/03/02 06:23:26 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -33,7 +33,7 @@
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
  ****************************************************************************/
 
-/* $From: curses.h.in,v 1.79 1999/02/19 12:03:06 tom Exp $ */
+/* $From: curses.h.in,v 1.81 1999/02/28 23:38:22 tom Exp $ */
 
 #ifndef __NCURSES_H
 #define __NCURSES_H
@@ -50,7 +50,7 @@
 /* These are defined only in curses.h, and are used for conditional compiles */
 #define NCURSES_VERSION_MAJOR 5
 #define NCURSES_VERSION_MINOR 0
-#define NCURSES_VERSION_PATCH 990220
+#define NCURSES_VERSION_PATCH 990301
 
 /* This is defined in more than one ncurses header, for identification */
 #undef  NCURSES_VERSION
@@ -79,24 +79,16 @@ typedef unsigned long chtype;
 /* XSI and SVr4 specify that curses implements 'bool'.  However, C++ may also
  * implement it.  If so, we must use the C++ compiler's type to avoid conflict
  * with other interfaces.
- *
- * To simplify use with/without the configuration script, we define the symbols
- * CXX_BUILTIN_BOOL and CXX_TYPE_OF_BOOL; they're edited by the configure
- * script.
  */
 
 #undef TRUE
-#undef FALSE
-#define CXX_BUILTIN_BOOL 1
-#define CXX_TYPE_OF_BOOL char
+#define TRUE    1
 
-#if defined(__cplusplus) && CXX_BUILTIN_BOOL
-#define TRUE    ((CXX_TYPE_OF_BOOL)true)
-#define FALSE   ((CXX_TYPE_OF_BOOL)false)
-#else
-typedef CXX_TYPE_OF_BOOL bool;
-#define TRUE    ((bool)1)
-#define FALSE   ((bool)0)
+#undef FALSE
+#define FALSE   0
+
+#if !defined(__cplusplus) || !1
+typedef char bool;
 #endif
 
 #ifdef __cplusplus
@@ -325,6 +317,7 @@ extern int define_key (char *, int);
 extern int keyok (int, bool);
 extern int resizeterm (int, int);
 extern int use_default_colors (void);
+extern int use_extended_names (bool);
 extern int wresize (WINDOW *, int, int);
 
 extern char ttytype[];		/* needed for backward compatibility */
