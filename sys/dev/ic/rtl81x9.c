@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.31 2004/09/30 17:37:54 jason Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.32 2004/09/30 17:41:58 jason Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -114,7 +114,6 @@
 #include <net/bpf.h>
 #endif
 
-#include <uvm/uvm_extern.h>
 #include <machine/bus.h>
 
 #include <dev/mii/mii.h>
