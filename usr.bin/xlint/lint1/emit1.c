@@ -1,4 +1,4 @@
-/*	$OpenBSD: emit1.c,v 1.3 2002/02/16 21:27:59 millert Exp $	*/
+/*	$OpenBSD: emit1.c,v 1.4 2005/01/24 00:25:15 millert Exp $	*/
 /*	$NetBSD: emit1.c,v 1.4 1995/10/02 17:21:28 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: emit1.c,v 1.3 2002/02/16 21:27:59 millert Exp $";
+static char rcsid[] = "$OpenBSD: emit1.c,v 1.4 2005/01/24 00:25:15 millert Exp $";
 #endif
 
 #include <ctype.h>
@@ -431,13 +431,17 @@ outcall(tn, rvused, rvdisc)
 				}
 				outint(n);
 			}
-		} else if (arg->tn_op == AMPER &&
-			   arg->tn_left->tn_op == STRING &&
-			   arg->tn_left->tn_strg->st_tspec == CHAR) {
-			/* constant string, write all format specifiers */
-			outchar('s');
-			outint(n);
-			outfstrg(arg->tn_left->tn_strg);
+		} else {
+			if (arg->tn_op == CVT && !arg->tn_cast)
+				arg = arg->tn_left;
+			if (arg->tn_op == AMPER &&
+			    arg->tn_left->tn_op == STRING &&
+			    arg->tn_left->tn_strg->st_tspec == CHAR) {
+				/* constant string, write format specifiers */
+				outchar('s');
+				outint(n);
+				outfstrg(arg->tn_left->tn_strg);
+			}
 		}
 
 	}
