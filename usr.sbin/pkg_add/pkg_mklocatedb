@@ -33,12 +33,12 @@ sub print_name
 
 package main;
 
-set_usage('pkg_mklocatedb -nq [pkgname ...]');
+set_usage('pkg_mklocatedb -nq [-r release] [-s src] [-x X11src] [pkgname ...]');
 
-our ($opt_n, $opt_q);
+our ($opt_n, $opt_q, $opt_s, $opt_x, $opt_r);
 
 try {
-	getopts('nq');
+	getopts('nqs:x:r:');
 } catchall {
 	Usage($_);
 };
@@ -51,6 +51,59 @@ if ($opt_n or -t STDOUT) {
 } else {
 	open $fh, "|-", $MKLOCATEDB, $MKLOCATEDB or die "couldn't open pipe: $!";
 }
+if ($opt_s || $opt_x) {
+	my ($rev, $arch) = split(/ /, `uname -mr`);
+	chomp $arch;
+	$rev =~ s/\.//;
+	if ($opt_s) {
+		my $dir = "$opt_s/distrib/sets/lists";
+		for my $set (qw(base comp etc game man misc)) {
+			for my $f ("$dir/$set/mi", "$dir/$set/md.$arch") {
+				open my $l, '<', $f or next;
+				while (my $e = <$l>) {
+					chomp $e;
+					$e =~ s/^\.//;
+					print "$set$rev:$e\n";
+				}
+			}
+		}
+	}
+	if ($opt_x) {
+		my $dir = "$opt_x/distrib/sets/lists";
+		for my $set (qw(xbase xetc xfont xserv xshare)) {
+			for my $f ("$dir/$set/mi", "$dir/$set/md.$arch") {
+				open my $l, '<', $f or next;
+				while (my $e = <$l>) {
+					chomp $e;
+					$e =~ s/^\.//;
+					print "$set$rev:$e\n";
+				}
+			}
+		}
+	}
+}
+
+if ($opt_r) {
+	require OpenBSD::Ustar;
+
+	opendir(my $dir, $opt_r) or next;
+	while (my $e = readdir $dir) {
+		if ($e =~ m/^(\w+\d\d)\.tgz$/) {
+			my $set = $1;
+			open my $arc, '-|', '/usr/bin/gzip', 'gzip', '-c', '-d', "$opt_r/$e";
+			my $u = OpenBSD::Ustar->new($arc, '/');
+			while (my $f = $u->next()) {
+				my $name = $f->{name};
+				$name =~ s/^\.//;
+				print "$set:$name\n";
+			}
+			close $arc;
+		}
+	}
+	closedir($dir);
+}
+			
+		
 
 if (@ARGV==0) {
 	for my $pkgname (installed_packages()) {

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_mklocatedb.1,v 1.2 2005/02/15 20:34:27 jmc Exp $
+.\"	$OpenBSD: pkg_mklocatedb.1,v 1.3 2005/03/03 11:52:15 espie Exp $
 .\" Copyright (c) 2005 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -22,6 +22,9 @@
 .Sh SYNOPSIS
 .Nm pkg_mklocatedb
 .Op Fl nq
+.Op Fl r Ar release
+.Op Fl s Ar src
+.Op Fl x Ar X11src
 .Op Ar pkg-name Op Ar ...
 .Sh DESCRIPTION
 The
@@ -48,6 +51,11 @@ the list of names is fed to
 .Pa /usr/libexec/locate.mklocatedb
 and the end result should be redirected to a file.
 .Pp
+In addition,
+.Nm
+can also list files in the base sets of an OpenBSD distribution, which
+are not exactly packages in the usual sense.
+.Pp
 The options are as follows:
 .Bl -tag -width opt
 .It Fl n
@@ -56,6 +64,24 @@ Do not pipe output to
 (default if standard output is a terminal).
 .It Fl q
 Be quiet: do not report every package processed to standard error.
+.It Fl r Ar release
+Specify the location of a release directory
+.Po
+see
+.Xr release 8
+.Pc .
+.Nm
+will lists release tar balls from that directory.
+.It Fl s Ar src
+Specify the location of
+.Ox
+source.
+.Nm
+will list sets found under that source directory.
+.It Fl x Ar X11src
+Specify the location of X11 source.
+.Nm
+will list sets found under that X11 source directory.
 .El
 .Sh SEE ALSO
 .Xr locate 1 ,
