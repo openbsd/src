@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.228 2001/10/27 05:02:29 deraadt Exp $
+#	$OpenBSD: files,v 1.229 2001/11/02 10:06:13 jjbg Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -598,7 +598,7 @@ file net/if_ppp.c			ppp			needs-count
 file net/ppp_tty.c			ppp
 file net/bsd-comp.c			ppp_bsdcomp
 file net/ppp-deflate.c			ppp_deflate
-file net/zlib.c				ppp_deflate | ipsec
+file net/zlib.c				ppp_deflate | ipsec | crypto
 file net/if_tokensubr.c			token			needs-flag
 file net/if_tun.c			tun			needs-count
 file net/if_bridge.c			bridge			needs-count

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.93 2001/10/25 19:03:49 mickey Exp $
+#	$OpenBSD: files.i386,v 1.94 2001/11/02 10:06:13 jjbg Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -38,7 +38,7 @@ file	arch/i386/i386/sys_machdep.c
 file	arch/i386/i386/trap.c
 file	arch/i386/i386/vm_machdep.c
 file	arch/i386/i386/dkcsum.c		bios
-file	lib/libz/adler32.c		!ppp_deflate & !ipsec
+file	lib/libz/adler32.c		!ppp_deflate & !ipsec & !crypto
 file	dev/cons.c
 file	dev/cninit.c
 file	arch/i386/i386/wscons_machdep.c	wsdisplay
