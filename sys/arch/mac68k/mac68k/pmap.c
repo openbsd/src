@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.21 2001/06/08 08:09:02 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.22 2001/06/23 21:42:23 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.55 1999/04/22 04:24:53 chs Exp $	*/
 
 /*
@@ -413,7 +413,7 @@ pmap_init()
 #endif
 
 	Segtabzero = (st_entry_t *)addr;
-	pmap_extract(pmap_kernel(), addr, (paddr_t *)Segtabzeropa);
+	pmap_extract(pmap_kernel(), addr, (paddr_t *)&Segtabzeropa);
 	addr += MAC_STSIZE;
 
 	pv_table = (struct pv_entry *)addr;
