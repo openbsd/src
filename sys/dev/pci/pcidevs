@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.245 2000/04/13 04:25:08 smurph Exp $
+	$OpenBSD: pcidevs,v 1.246 2000/04/14 06:05:50 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -967,7 +967,7 @@ product IBM 82351		0x0022	82351 PCI-PCI
 product IBM 0x0036		0x0036	Miami/PCI
 
 /* IDT products */
-product IDT 77201	0x0001	77201/77211 ATM (NICStAR)
+product IDT 77201		0x0001	77201/77211 ATM (NICStAR)
 
 /* Industrial Computer Source */
 product INDCOMPSRC WDT50x	0x22c0	WDT 50x Watchdog Timer
