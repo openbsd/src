@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.19 2002/02/04 21:07:13 mickey Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.20 2002/02/05 03:46:23 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -105,20 +105,20 @@ pdc_init()
 
 	/* setup the console */
 #include "com.h"
-#if NCOM > 0
+#if NCOM_GSC > 0
 	if (PAGE0->mem_cons.pz_class == PCL_DUPLEX) {
 		struct pz_device *pzd = &PAGE0->mem_cons;
 		extern int comdefaultrate;
 #ifdef DEBUG
-		printf("console: class %d flags %b bc %d/%d/%d/%d/%d/%d "
-		       "mod %x layers %x/%x/%x/%x/%x/%x hpa %x\n",
-		   pzd->pz_class, pzd->pz_flags, PZF_BITS,
-		   pzd->pz_bc[0], pzd->pz_bc[1], pzd->pz_bc[2],
-		pzd->pz_bc[3], pzd->pz_bc[4], pzd->pz_bc[5], pzd->pz_mod,
-		pzd->pz_layers[0], pzd->pz_layers[1], pzd->pz_layers[2],
-		pzd->pz_layers[3], pzd->pz_layers[4], pzd->pz_layers[5],
-		pzd->pz_hpa);
-		DELAY(2000);
+		printf("console: class %d flags %b ",
+		    pzd->pz_class, pzd->pz_flags, PZF_BITS);
+		printf("bc %d/%d/%d/%d/%d/%d ",
+		    pzd->pz_bc[0], pzd->pz_bc[1], pzd->pz_bc[2],
+		    pzd->pz_bc[3], pzd->pz_bc[4], pzd->pz_bc[5]);
+		printf("mod %x layers %x/%x/%x/%x/%x/%x hpa %x\n", pzd->pz_mod,
+		    pzd->pz_layers[0], pzd->pz_layers[1], pzd->pz_layers[2],
+		    pzd->pz_layers[3], pzd->pz_layers[4], pzd->pz_layers[5],
+		    pzd->pz_hpa);
 #endif
 		conaddr = (u_long)pzd->pz_hpa + IOMOD_DEVOFFSET;
 		conunit = 0;
