@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.20 2004/11/14 19:50:44 espie Exp $
+# $OpenBSD: Add.pm,v 1.21 2004/11/18 21:48:02 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -500,16 +500,17 @@ sub install
 
 sub available_lib
 {
-	my ($self, $avail) = @_;
+	my ($self, $avail, $pkgname) = @_;
 	my $fullname = $self->fullname();
 
 	if ($fullname =~ m/^(.*\.so\.\d+)\.(\d+)$/) {
 		my ($stem, $minor) = ($1, $2);
-		if (!defined $avail->{"$stem"} || $avail->{"$stem"} < $minor) {
-			$avail->{"$stem"} = $minor;
+		if (!defined $avail->{"$stem"} || $avail->{"$stem"}->[0] < $minor) {
+			$avail->{"$stem"} = [$minor, $pkgname];
 		}
 	}
 }
+
 package OpenBSD::PackingElement::Arch;
 
 sub check

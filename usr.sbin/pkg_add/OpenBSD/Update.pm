@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.32 2004/11/14 19:25:45 espie Exp $
+# $OpenBSD: Update.pm,v 1.33 2004/11/18 21:48:02 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -182,6 +182,20 @@ sub validate_depend
 	if (defined $self->{name}) {
 		return unless $self->{name} eq $wanting;
 	}
+	return unless OpenBSD::PkgSpec::match($self->{pattern}, $toreplace);
+	if (!OpenBSD::PkgSpec::match($self->{pattern}, $replacement)) {
+		$state->{okay} = 0;
+		Warn "Can't update forward dependency of $wanting on $toreplace\n";
+	}
+}
+
+package OpenBSD::PackingElement::Dependency;
+use OpenBSD::Error;
+
+sub validate_depend
+{
+	my ($self, $state, $wanting, $toreplace, $replacement) = @_;
+
 	return unless OpenBSD::PkgSpec::match($self->{pattern}, $toreplace);
 	if (!OpenBSD::PkgSpec::match($self->{pattern}, $replacement)) {
 		$state->{okay} = 0;

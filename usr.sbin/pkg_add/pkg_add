@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.122 2004/11/14 19:25:45 espie Exp $
+# $OpenBSD: pkg_add,v 1.123 2004/11/18 21:48:02 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -189,7 +189,7 @@ sub solve_dependencies
 		}
 		push(@$to_register, $dep->{name});
 	}
-	for my $dep (@{$plist->{newdepend}}, @{$plist->{libdepend}}) {
+	for my $dep (@{$plist->{depend}}, @{$plist->{newdepend}}, @{$plist->{libdepend}}) {
 	    next if defined $dep->{name} and $dep->{name} ne $plist->pkgname();
 	    my @candidates = OpenBSD::PkgSpec::match($dep->{pattern}, installed_packages());
 	    if (@candidates >= 1) {
@@ -257,8 +257,9 @@ sub check_lib_specs
 		if ($spec =~ m/^(.*)\.(\d+)\.(\d+)$/) {
 			my ($libname, $major, $minor) = ($1, $2, $3);
 			my $exists = $available->{"$dir/lib$libname.so.$major"};
-			if ((defined $exists) && $exists >= $minor) {
-				print "found $dir/lib$libname.so.$major.$exists\n" if $verbose;
+			if ((defined $exists) && $exists->[0] >= $minor) {
+				my ($m, $where) = @$exists;
+				print "found $dir/lib$libname.so.$major.$m in $where\n" if $verbose;
 			} else {
 				print "not found\n" if $verbose;
 				return undef;
@@ -469,25 +470,101 @@ sub build_deptree
 
 sub find_old_lib
 {
-	my ($state, $dep, $global_avail, $dependencies) = @_;
+	my ($state, $pattern, $lib, $global_avail, $dependencies) = @_;
 
-	my $pattern = ".libs-".$dep->{pattern};
+	$pattern = ".libs-".$pattern;
 	for my $try (OpenBSD::PkgSpec::match($pattern, installed_packages())) {
 		my $plist = OpenBSD::PackingList->from_installation($try,
 			\&OpenBSD::PackingList::LibraryOnly);
 		my $available = {};
-		$plist->visit('available_lib', $available);
+		$plist->visit('available_lib', $available, $try);
 		if (check_lib_specs($state->{very_verbose},
-		    $state->{destdir}.$plist->pkgbase(), $dep->{libspec},
-		    $available)) {
-			Warn "Found libspec ", $dep->{libspec}, " in old package $try\n";
-			$plist->visit('available_lib', $global_avail);
+		    $state->{destdir}.$plist->pkgbase(), $lib, $available)) {
+			Warn "Found library ", $lib, " in old package $try\n";
+			$plist->visit('available_lib', $global_avail, $try);
 			push(@$dependencies, $try);
 			return 1;
 		}
 	}
 	return 0;
 }
+
+my $syst_avail;
+
+sub add_system_libs
+{
+	my ($destdir, $avail) = @_;
+	for my $dir ("/usr/lib", "/usr/X11R6/lib") {
+		local *DIR;
+		opendir(DIR, $destdir.$dir);
+		while (my $d = readdir(DIR)) {
+			next unless $d =~ m/^(.*\.so\.\d+)\.(\d+)$/;
+			my ($stem, $minor) = ($1, $2);
+			$stem = "$dir/$stem";
+			if (!defined $avail->{"$stem"} || $avail->{"$stem"}->[0] < $minor) {
+				$avail->{"$stem"} = [$minor, 'system'];
+			}
+		}
+		closedir(DIR);
+	}
+}
+
+sub lookup_library
+{
+	my ($state, $lib, $available, $plist, $dependencies, $harder) = @_;
+
+	if (check_lib_specs($state->{very_verbose},
+	    $state->{destdir}.$plist->pkgbase(), $lib, $available)) {
+	    return 1;
+	}
+	if ($harder && $lib !~ m|/|) {
+		if (!defined $syst_avail) {
+			$syst_avail = {};
+			add_system_libs($state->{destdir}, $syst_avail);
+		}
+		if (check_lib_specs($state->{very_verbose},
+		    $state->{destdir}."/usr", $lib, $syst_avail)) {
+			return 1;
+		}
+		if (check_lib_specs($state->{very_verbose},
+		    $state->{destdir}."/usr/X11R6", $lib, $syst_avail)) {
+			return 1;
+		}
+	}
+	for my $dep (@{$plist->{depends}}) {
+		if (find_old_lib($state, $dep->{pattern}, $lib, $available, 
+		    $dependencies)) {
+			return 1;
+		}
+    	}
+	return 0 unless $harder;
+	# lookup through the full tree...
+	my $done = {};
+	my %base_dependencies = map {($_, 1)} @$dependencies;
+	my @todo = @$dependencies;
+	while (my $dep = pop @todo) {
+		require OpenBSD::RequiredBy;
+
+		next if $done->{$dep};
+		$done->{$dep} = 1;
+		for my $dep2 (OpenBSD::Requiring->new($dep)->list()) {
+			push(@todo, $dep2) unless $done->{$dep2};
+		}
+		next if $base_dependencies{$dep};
+		my $plist = OpenBSD::PackingList->from_installation($dep,
+			\&OpenBSD::PackingList::LibraryOnly);
+		my $avail2 = {};
+		$plist->visit('available_lib', $avail2, $dep);
+		if (check_lib_specs($state->{very_verbose},
+		    $state->{destdir}.$plist->pkgbase(), $lib, $avail2)) {
+			Warn "Found library ", $lib, " in dependent package $dep\n";
+			$plist->visit('available_lib', $available, $dep);
+			push(@$dependencies, $dep);
+			return 1;
+		}
+	}
+}
+
 
 sub install_package
 {
@@ -538,18 +615,22 @@ sub install_package
 	for my $dep (@{$handle->{solved_dependencies}}) {
 		my $plist = OpenBSD::PackingList->from_installation($dep, 
 			\&OpenBSD::PackingList::LibraryOnly);
-		$plist->visit('available_lib', $available);
+		$plist->visit('available_lib', $available, $dep);
 	}
 	for my $dep (@{$plist->{libdepend}}) {
 		return () if defined $dep->{name} and $dep->{name} ne $plist->pkgname();
-		if (!check_lib_specs($state->{very_verbose}, 
-		    $state->{destdir}.$plist->pkgbase(), $dep->{libspec}, $available)) {
-		    	# second chance
-			if (!find_old_lib($state, $dep, $available, $handle->{solved_dependencies})) {
-				Warn "Can't install $pkg: incorrect libspec: ",
-				    $dep->{libspec}, "\n";
-				return () unless $forced{libdepends};
-			}
+		if (!lookup_library($state, $dep->{libspec}, $available, 
+		    $plist, $handle->{solved_dependencies}, 0)) {
+		    	Warn "Can't install $pkg: lib not found ", $dep->{libspec}, "\n";
+			return () unless $forced{libdepends};
+		}
+	}
+#	add_system_libs($state->{destdir}, $available);
+	for my $lib (@{$plist->{wantlib}}) {
+		if (!lookup_library($state, $lib->{name}, $available, 
+		    $plist, $handle->{solved_dependencies}, 1)) {
+		    	Warn "Can't install $pkg: lib not found ", $lib->{name}, "\n";
+			return () unless $forced{libdepends};
 		}
 	}
 	really_add($handle, $state);
