@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.54 2002/02/23 22:07:20 millert Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.55 2002/04/08 09:12:36 deraadt Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -257,13 +257,19 @@ or
 .Dq UTP
 would activate twisted pair.
 Refer to the interfaces' driver
-specific man page for a complete list of the available types.
+specific man page for a complete list of the available types,
+or use
+.Cm ifconfig -m interface
+for a listing of choices.
 .It Cm mediaopt Ar opts
 Set the specified media options on the interface.
 .Ar opts
 is a comma delimited list of options to apply to the interface.
 Refer to the interfaces' driver specific man page for a complete
-list of available options.
+list of available options,
+or use
+.Cm ifconfig -m interface
+for a listing of choices.
 .It Fl mediaopt Ar opts
 Disable the specified media options on the interface.
 .It Cm mtu Ar value
