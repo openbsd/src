@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.102 2004/05/07 10:06:15 djm Exp $ */
+/*	$OpenBSD: parse.y,v 1.103 2004/05/08 17:23:20 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -68,6 +68,7 @@ int		 add_mrtconfig(enum mrt_type, char *, time_t, struct peer *);
 int		 get_id(struct peer *);
 int		 expand_rule(struct filter_rule *, struct filter_peers *,
 		    struct filter_match *, struct filter_set *);
+int		 str2key(char *, char *, size_t);
 
 TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
 struct sym {
@@ -524,37 +525,15 @@ peeropts	: REMOTEAS asnumber	{
 			free($4);
 		}
 		| TCP MD5SIG KEY string {
-			unsigned	i;
-			char		s[3];
-
 			if (curpeer->conf.auth.method) {
 				yyerror("auth method cannot be redefined");
 				YYERROR;
 			}
-			if (strlen($4) / 2 >=
-			    sizeof(curpeer->conf.auth.md5key)) {
-				yyerror("key too long");
+
+			if (str2key($4, curpeer->conf.auth.md5key,
+			    sizeof(curpeer->conf.auth.md5key)) == -1) {
 				free($4);
 				YYERROR;
-			}
-
-			if (strlen($4) % 2) {
-				yyerror("key must be of even length");
-				free($4);
-				YYERROR;
-			}
-
-			for (i = 0; i < strlen($4) / 2; i++) {
-				s[0] = $4[2*i];
-				s[1] = $4[2*i + 1];
-				s[2] = 0;
-				if (!isxdigit(s[0]) || !isxdigit(s[1])) {
-					yyerror("key must be specified in hex");
-					free($4);
-					YYERROR;
-				}
-				curpeer->conf.auth.md5key[i] =
-				    strtoul(s, NULL, 16);
 			}
 			curpeer->conf.auth.method = AUTH_MD5SIG;
 			curpeer->conf.auth.md5key_len = strlen($4) / 2;
@@ -575,8 +554,6 @@ peeropts	: REMOTEAS asnumber	{
 			curpeer->conf.auth.method = AUTH_IPSEC_IKE_AH;
 		}
 		| IPSEC ESP inout SPI number STRING STRING encspec {
-			unsigned	i;
-			char		s[3];
 			u_int32_t	auth_alg;
 			u_int8_t	keylen;
 
@@ -600,12 +577,6 @@ peeropts	: REMOTEAS asnumber	{
 			}
 			free($6);
 
-			if (strlen($7) % 2) {
-				yyerror("auth key must be of even length");
-				free($7);
-				YYERROR;
-			}
-
 			if (strlen($7) / 2 != keylen) {
 				yyerror("auth key len: must be %u bytes, "
 				    "is %u bytes", keylen, strlen($7) / 2);
@@ -613,25 +584,13 @@ peeropts	: REMOTEAS asnumber	{
 				YYERROR;
 			}
 
-			for (i = 0; i < strlen($7) / 2; i++) {
-				s[0] = $7[2*i];
-				s[1] = $7[2*i + 1];
-				s[2] = 0;
-				if (!isxdigit(s[0]) || !isxdigit(s[1])) {
-					yyerror("key must be specified in hex");
+			if ($3 == 1) {
+				if (str2key($7, curpeer->conf.auth.auth_key_in,
+				    sizeof(curpeer->conf.auth.auth_key_in)) ==
+				    -1) {
 					free($7);
 					YYERROR;
 				}
-				if ($3 == 1)
-					curpeer->conf.auth.auth_key_in[i] =
-					    strtoul(s, NULL, 16);
-				else
-					curpeer->conf.auth.auth_key_out[i] =
-					    strtoul(s, NULL, 16);
-			}
-			free($7);
-
-			if ($3 == 1) {
 				curpeer->conf.auth.spi_in = $5;
 				curpeer->conf.auth.auth_alg_in = auth_alg;
 				curpeer->conf.auth.enc_alg_in = $8.enc_alg;
@@ -642,6 +601,12 @@ peeropts	: REMOTEAS asnumber	{
 				    $8.enc_key_len;
 				curpeer->conf.auth.auth_keylen_in = keylen;
 			} else {
+				if (str2key($7, curpeer->conf.auth.auth_key_out,
+				    sizeof(curpeer->conf.auth.auth_key_out)) ==
+				    -1) {
+					free($7);
+					YYERROR;
+				}
 				curpeer->conf.auth.spi_out = $5;
 				curpeer->conf.auth.auth_alg_out = auth_alg;
 				curpeer->conf.auth.enc_alg_out = $8.enc_alg;
@@ -652,6 +617,7 @@ peeropts	: REMOTEAS asnumber	{
 				    $8.enc_key_len;
 				curpeer->conf.auth.auth_keylen_out = keylen;
 			}
+			free($7);
 		}
 		| ANNOUNCE CAPABILITIES yesno {
 			curpeer->conf.capabilities = $3;
@@ -671,9 +637,6 @@ encspec		: /* nada */	{
 			bzero(&$$, sizeof($$));
 		}
 		| STRING STRING {
-			unsigned	i;
-			char		s[3];
-
 			bzero(&$$, sizeof($$));
 			if (!strcmp($1, "3des") || !strcmp($1, "3des-cbc")) {
 				$$.enc_alg = SADB_EALG_3DESCBC;
@@ -690,12 +653,6 @@ encspec		: /* nada */	{
 			}
 			free($1);
 
-			if (strlen($2) % 2) {
-				yyerror("key must be of even length");
-				free($2);
-				YYERROR;
-			}
-
 			if (strlen($2) / 2 != $$.enc_key_len) {
 				yyerror("enc key length wrong: should be %u "
 				    "bytes, is %u bytes",
@@ -704,16 +661,9 @@ encspec		: /* nada */	{
 				YYERROR;
 			}
 
-			for (i = 0; i < strlen($2) / 2; i++) {
-				s[0] = $2[2*i];
-				s[1] = $2[2*i + 1];
-				s[2] = 0;
-				if (!isxdigit(s[0]) || !isxdigit(s[1])) {
-					yyerror("key must be specified in hex");
-					free($2);
-					YYERROR;
-				}
-				$$.enc_key[i] = strtoul(s, NULL, 16);
+			if (str2key($2, $$.enc_key, sizeof($$.enc_key)) == -1) {
+				free($2);
+				YYERROR;
 			}
 			free($2);
 		}
@@ -1587,6 +1537,36 @@ expand_rule(struct filter_rule *rule, struct filter_peers *peer,
 	memcpy(&r->set, set, sizeof(struct filter_set));
 
 	TAILQ_INSERT_TAIL(filter_l, r, entries);
+
+	return (0);
+}
+
+int
+str2key(char *s, char *dest, size_t max_len)
+{
+	unsigned	i;
+	char		t[3];
+
+	if (strlen(s) / 2 >= max_len) {
+		yyerror("key too long");
+		return (-1);
+	}
+
+	if (strlen(s) % 2) {
+		yyerror("key must be of even length");
+		return (-1);
+	}
+
+	for (i = 0; i < strlen(s) / 2; i++) {
+		t[0] = s[2*i];
+		t[1] = s[2*i + 1];
+		t[2] = 0;
+		if (!isxdigit(t[0]) || !isxdigit(t[1])) {
+			yyerror("key must be specified in hex");
+			return (-1);
+		}
+		dest[i] = strtoul(t, NULL, 16);
+	}
 
 	return (0);
 }
