@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2001/06/27 08:24:49 deraadt Exp $
+# $OpenBSD: Makefile,v 1.8 2001/06/27 17:54:43 art Exp $
 
 SUBDIR	= usr.bin/asn1_compile lib usr.bin libexec usr.sbin doc
 
@@ -7,7 +7,7 @@ build:
 	cd lib/roken && exec ${MAKE}
 	cd usr.bin/asn1_compile && ${MAKE} && exec ${SUDO} ${MAKE} install
 	${SUDO} ${MAKE} includes
-	cd ../kerberosIV/lib/kafs && ${MAKE} && exec ${MAKE} install
+	cd ../kerberosIV/lib/kafs && ${MAKE} && exec ${SUDO} ${MAKE} install
 	${MAKE} depend
 	cd lib && ${MAKE} && exec ${SUDO} ${MAKE} install
 	${MAKE}
