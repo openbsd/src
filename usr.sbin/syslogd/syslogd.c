@@ -218,7 +218,7 @@ main(argc, argv)
 	char *p, line[MSG_BSIZE + 1];
 
 	while ((ch = getopt(argc, argv, "duf:m:p:")) != -1)
-		switch(ch) {
+		switch (ch) {
 		case 'd':		/* debug */
 			Debug++;
 			break;
@@ -516,7 +516,7 @@ logmsg(pri, msg, from, flags)
 
 	/* extract program name */
 	for(i = 0; i < NAME_MAX; i++) {
-		if(!isalnum(msg[i]))
+		if (!isalnum(msg[i]))
 			break;
 		prog[i] = msg[i];
 	}
@@ -542,8 +542,8 @@ logmsg(pri, msg, from, flags)
 			continue;
 
 		/* skip messages with the incorrect program name */
-		if(f->f_program)
-			if(strcmp(prog, f->f_program) != 0)
+		if (f->f_program)
+			if (strcmp(prog, f->f_program) != 0)
 				continue;
 
 		if (f->f_type == F_CONSOLE && (flags & IGN_CONS))
@@ -922,7 +922,7 @@ init(signo)
 			break;
 		}
 		next = f->f_next;
-		if(f->f_program)
+		if (f->f_program)
 			free(f->f_program);
 		free((char *)f);
 	}
@@ -955,20 +955,21 @@ init(signo)
 			continue;
 		if (*p == NULL)
 			continue;
-		if(*p == '#') {
+		if (*p == '#') {
 			p++;
-			if(*p != '!')
+			if (*p != '!')
 				continue;
 		}
-		if(*p == '!') {
+		if (*p == '!') {
 			p++;
-			while(isspace(*p)) p++;
-			if(!*p) {
+			while (isspace(*p))
+				p++;
+			if (!*p) {
 				strcpy(prog, "*");
 				continue;
 			}
-			for(i = 0; i < NAME_MAX; i++) {
-				if(!isalnum(p[i]))
+			for (i = 0; i < NAME_MAX; i++) {
+				if (!isalnum(p[i]))
 					break;
 				prog[i] = p[i];
 			}
@@ -1013,7 +1014,7 @@ init(signo)
 					printf("%s, ", f->f_un.f_uname[i]);
 				break;
 			}
-			if(f->f_program)
+			if (f->f_program)
 				printf(" (%s)", f->f_program);
 			printf("\n");
 		}
@@ -1051,7 +1052,7 @@ cfline(line, f, prog)
 		prog = NULL;
 	else {
 		f->f_program = calloc(1, strlen(prog)+1);
-		if(f->f_program)
+		if (f->f_program)
 			strcpy(f->f_program, prog);
 	}
 
