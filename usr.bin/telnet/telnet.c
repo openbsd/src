@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnet.c,v 1.16 2003/06/03 02:56:18 millert Exp $	*/
+/*	$OpenBSD: telnet.c,v 1.17 2003/10/04 10:18:05 jmc Exp $	*/
 /*	$NetBSD: telnet.c,v 1.7 1996/02/28 21:04:15 thorpej Exp $	*/
 
 /*
@@ -2227,7 +2227,7 @@ telnet(user)
 		}
 	    }
 	    if (auth_has_failed) {
-		printf("\nAuthentication negotation has failed,");
+		printf("\nAuthentication negotiation has failed,");
 		printf(" which is required for encryption.\n");
 		Exit(1);
 	    }
