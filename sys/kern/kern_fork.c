@@ -70,7 +70,6 @@ sys_fork(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-
 	return (fork1(p, ISFORK, 0, retval));
 }
 
@@ -80,7 +79,6 @@ sys_vfork(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-
 	return (fork1(p, ISVFORK, 0, retval));
 }
 
@@ -315,6 +313,18 @@ again:
 	 */
 	vm_fork(p1, p2);
 #endif
+
+	switch (forktype) {
+		case ISFORK:
+			forkstat.cntfork++;
+			break;
+		case ISVFORK:
+			forkstat.cntvfork++;
+			break;
+		case ISRFORK:
+			forkstat.cntrfork++;
+			break;
+	}
 
 	/*
 	 * Make child runnable, set start time, and add to run queue.
