@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.32 2000/01/06 16:53:30 d Exp $
+#	$OpenBSD: Makefile.inc,v 1.33 2000/02/07 04:59:30 assar Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -34,7 +34,8 @@ SRCS+=	ftruncate.c lseek.c mmap.c ptrace.c semctl.c truncate.c \
 ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
 	chown.o chroot.o clock_gettime.o clock_settime.o clock_getres.o \
 	close.o connect.o dup.o dup2.o execve.o fchdir.o \
-	fchflags.o fchmod.o fchown.o fcntl.o flock.o fpathconf.o fstat.o \
+	fchflags.o fchmod.o fchown.o fcntl.o fhopen.o fhstat.o fhstatfs.o \
+	flock.o fpathconf.o fstat.o \
 	fstatfs.o fsync.o futimes.o getdirentries.o getegid.o geteuid.o \
 	getfh.o getfsstat.o getgid.o getgroups.o getitimer.o getpeername.o \
 	getpgid.o \
@@ -149,7 +150,8 @@ LintSysPseudoNoerr.c: ${LIBCSRCDIR}/sys/makelintstub.sh \
 
 MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 chflags.2 \
 	chmod.2 chown.2 chroot.2 clock_gettime.2 close.2 connect.2 dup.2 \
-	execve.2 _exit.2 fcntl.2 flock.2 fork.2 fsync.2 getdirentries.2 \
+	execve.2 _exit.2 fcntl.2 fhopen.2 \
+	flock.2 fork.2 fsync.2 getdirentries.2 \
 	getfh.2 getfsstat.2 \
 	getgid.2 getgroups.2 getitimer.2 getlogin.2 getpeername.2 getpgrp.2 \
 	getpid.2 getpriority.2 getrlimit.2 getrusage.2 getsid.2 getsockname.2 \
@@ -179,6 +181,7 @@ MLINKS+=chown.2 fchown.2
 MLINKS+=chown.2 lchown.2
 MLINKS+=clock_gettime.2 clock_settime.2
 MLINKS+=clock_gettime.2 clock_getres.2
+MLINKS+=fhopen.2 fhstat.2 fhopen.2 fhstatfs.2
 MLINKS+=getgid.2 getegid.2
 MLINKS+=getitimer.2 setitimer.2
 MLINKS+=getlogin.2 setlogin.2
