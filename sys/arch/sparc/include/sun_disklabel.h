@@ -1,4 +1,4 @@
-/*	$NetBSD: sun_disklabel.h,v 1.5 1995/06/26 22:09:47 pk Exp $ */
+/*	$NetBSD: sun_disklabel.h,v 1.4 1995/03/28 18:20:12 jtc Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,9 +51,9 @@
 #define	SUN_DKMAGIC	55998
 
 /* These are the guys that Sun's dkinfo needs... */
-#define DKIOCGGEOM	_IOR('d', 2, struct sun_dkgeom)	/* geometry info */
-#define DKIOCINFO	_IOR('d', 8, struct sun_dkctlr)	/* controller info */
-#define DKIOCGPART	_IOR('d', 4, struct sun_dkpart)	/* partition info */
+#define SUNOS_DKIOCGGEOM	_IOR('d', 2, struct sun_dkgeom)	/* geometry info */
+#define SUNOS_DKIOCINFO		_IOR('d', 8, struct sun_dkctlr)	/* controller info */
+#define SUNOS_DKIOCGPART	_IOR('d', 4, struct sun_dkpart)	/* partition info */
 
 /* geometry info */
 struct sun_dkgeom {
@@ -107,9 +107,5 @@ struct sun_disklabel {			/* total size = 512 bytes */
 #define SUN_LABELOFFSET	128
 
 #ifdef _KERNEL
-/* reads sun label in sector at [cp..cp+511] and sets *lp to BSD label */
-int	sun_disklabel __P((caddr_t, struct disklabel *)); /* true on success */
-
-/* compatability dk ioctl's */
-int	sun_dkioctl __P((struct dkdevice *, u_long, caddr_t, int));
+int	sunos_dkioctl __P((struct dkdevice *, u_long, caddr_t, int));
 #endif
