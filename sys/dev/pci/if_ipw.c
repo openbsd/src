@@ -1,4 +1,4 @@
-/*	$Id: if_ipw.c,v 1.22 2004/11/03 17:11:14 damien Exp $  */
+/*	$Id: if_ipw.c,v 1.23 2004/11/03 17:12:28 damien Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -732,7 +732,7 @@ ipw_intr(void *arg)
 	struct ipw_softc *sc = arg;
 	u_int32_t r;
 
-	if ((r = CSR_READ_4(sc, IPW_CSR_INTR)) == 0)
+	if ((r = CSR_READ_4(sc, IPW_CSR_INTR)) == 0 || r == 0xffffffff)
 		return 0;
 
 	/* Disable interrupts */
@@ -762,7 +762,7 @@ ipw_intr(void *arg)
 	/* Re-enable interrupts */
 	CSR_WRITE_4(sc, IPW_CSR_INTR_MASK, IPW_INTR_MASK);
 
-	return 0;
+	return 1;
 }
 
 int
