@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pn.c,v 1.4 1999/03/03 22:51:48 jason Exp $	*/
+/*	$OpenBSD: if_pn.c,v 1.5 1999/06/28 20:51:10 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -2073,7 +2073,6 @@ pn_probe(parent, match, aux)
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_LITEON) {
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_LITEON_PNIC:
-		case PCI_PRODUCT_LITEON_PNICII:
 			return (1);
 		}
 	}

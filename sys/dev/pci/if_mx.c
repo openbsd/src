@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mx.c,v 1.5 1999/03/03 22:51:46 jason Exp $	*/
+/*	$OpenBSD: if_mx.c,v 1.6 1999/06/28 20:51:09 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$FreeBSD: if_mx.c,v 1.11 1999/02/01 21:25:51 wpaul Exp $
+ *	$FreeBSD: if_mx.c,v 1.19 1999/06/16 16:27:30 wpaul Exp $
  */
 
 /*
@@ -123,8 +123,8 @@ static void mx_ifmedia_sts	__P((struct ifnet *, struct ifmediareq *));
 
 static void mx_delay		__P((struct mx_softc *));
 static void mx_eeprom_idle	__P((struct mx_softc *));
-static void mx_eeprom_putbyte	__P((struct mx_softc *, u_int8_t));
-static void mx_eeprom_getword	__P((struct mx_softc *, u_int8_t, u_int16_t *));
+static void mx_eeprom_putbyte	__P((struct mx_softc *, int));
+static void mx_eeprom_getword	__P((struct mx_softc *, int, u_int16_t *));
 static void mx_read_eeprom	__P((struct mx_softc *, caddr_t, int,
 							int, int));
 
@@ -135,7 +135,7 @@ static void mx_mii_send		__P((struct mx_softc *, u_int32_t, int));
 static int mx_mii_readreg	__P((struct mx_softc *, struct mx_mii_frame *));
 static int mx_mii_writereg	__P((struct mx_softc *, struct mx_mii_frame *));
 static u_int16_t mx_phy_readreg	__P((struct mx_softc *, int));
-static void mx_phy_writereg	__P((struct mx_softc *, u_int16_t, u_int16_t));
+static void mx_phy_writereg	__P((struct mx_softc *, int, int));
 
 static void mx_autoneg_xmit	__P((struct mx_softc *));
 static void mx_autoneg_mii	__P((struct mx_softc *, int, int));
@@ -143,8 +143,8 @@ static void mx_autoneg		__P((struct mx_softc *, int, int));
 static void mx_setmode_mii	__P((struct mx_softc *, int));
 static void mx_setmode		__P((struct mx_softc *, int, int));
 static void mx_getmode_mii	__P((struct mx_softc *));
-static void mx_setcfg		__P((struct mx_softc *, u_int16_t));
-static u_int32_t mx_calchash	__P((u_int8_t *));
+static void mx_setcfg		__P((struct mx_softc *, int));
+static u_int32_t mx_calchash	__P((struct mx_softc *, caddr_t));
 static void mx_setfilt		__P((struct mx_softc *));
 static void mx_reset		__P((struct mx_softc *));
 static int mx_list_rx_init	__P((struct mx_softc *));
@@ -210,7 +210,7 @@ static void mx_eeprom_idle(sc)
  */
 static void mx_eeprom_putbyte(sc, addr)
 	struct mx_softc		*sc;
-	u_int8_t		addr;
+	int			addr;
 {
 	register int		d, i;
 
@@ -240,7 +240,7 @@ static void mx_eeprom_putbyte(sc, addr)
  */
 static void mx_eeprom_getword(sc, addr, dest)
 	struct mx_softc		*sc;
-	u_int8_t		addr;
+	int			addr;
 	u_int16_t		*dest;
 {
 	register int		i;
@@ -511,8 +511,8 @@ static u_int16_t mx_phy_readreg(sc, reg)
 
 static void mx_phy_writereg(sc, reg, data)
 	struct mx_softc		*sc;
-	u_int16_t		reg;
-	u_int16_t		data;
+	int			reg;
+	int			data;
 {
 	struct mx_mii_frame	frame;
 	u_int32_t		cfg;
@@ -531,11 +531,13 @@ static void mx_phy_writereg(sc, reg, data)
 	return;
 }
 
-#define MX_POLY		0xEDB88320
-#define MX_BITS		9
+#define MX_POLY			0xEDB88320
+#define MX_BITS			9
+#define	MX_BITS_PNIC_II		7
 
-static u_int32_t mx_calchash(addr)
-	u_int8_t		*addr;
+static u_int32_t mx_calchash(sc, addr)
+        struct mx_softc *sc;
+	caddr_t			addr;
 {
 	u_int32_t		idx, bit, data, crc;
 
@@ -546,6 +548,10 @@ static u_int32_t mx_calchash(addr)
 		for (data = *addr++, bit = 0; bit < 8; bit++, data >>= 1)
 			crc = (crc >> 1) ^ (((crc ^ data) & 1) ? MX_POLY : 0);
 	}
+
+	/* The hash table on the PNIC II is only 128 bits wide. */
+	if (sc->mx_info.mx_vid == PN_VENDORID)
+		return (crc & ((1 << MX_BITS_PNIC_II) - 1));
 
 	return (crc & ((1 << MX_BITS) - 1));
 }
@@ -1076,12 +1082,12 @@ void mx_setfilt(sc)
 
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		h = mx_calchash(enm->enm_addrlo);
+		h = mx_calchash(sc, (caddr_t)&enm->enm_addrlo);
 		ETHER_NEXT_MULTI(step, enm);
 	}
 
 	if (ifp->if_flags & IFF_BROADCAST) {
-		h = mx_calchash(etherbroadcastaddr);
+		h = mx_calchash(sc, (caddr_t)&etherbroadcastaddr);
 		sp[h >> 4] |= 1 << (h & 0xF);
 	}
 
@@ -1118,7 +1124,7 @@ void mx_setfilt(sc)
  */
 static void mx_setcfg(sc, bmcr)
 	struct mx_softc		*sc;
-	u_int16_t		bmcr;
+	int			bmcr;
 {
 	int			i, restart = 0;
 
@@ -1224,7 +1230,7 @@ static int mx_list_rx_init(sc)
 
 	for (i = 0; i < MX_RX_LIST_CNT; i++) {
 		cd->mx_rx_chain[i].mx_ptr =
-			(volatile struct mx_desc *)&ld->mx_rx_list[i];
+			(struct mx_desc *)&ld->mx_rx_list[i];
 		if (mx_newbuf(sc, &cd->mx_rx_chain[i]) == ENOBUFS)
 			return(ENOBUFS);
 		if (i == (MX_RX_LIST_CNT - 1)) {
@@ -1339,10 +1345,43 @@ static void mx_rxeof(sc)
 			continue;
 		}
 
+#ifdef __alpha__
+		/*
+		 * Deal with alignment on alpha.
+		 */
+		MGETHDR(m0, M_DONTWAIT, MT_DATA);
+		if (m0 == NULL) {
+			ifp->if_ierrors++;
+			cur_rx->mx_ptr->mx_status = MX_RXSTAT;
+			cur_rx->mx_ptr->mx_ctl =
+			    MX_RXCTL_RLINK | (MCLBYTES - 1);
+			bzero((char *)mtod(cur_rx->mx_mbuf, char *), MCLBYTES);
+			continue;
+		}
+
+		m0->m_data += 2;
+		if (total_len <= (MHLEN - 2)) {
+			bcopy(mtod(m, caddr_t), mtod(m0, caddr_t), total_len);
+			m = m0;
+			m->m_pkthdr.len = m->m_len = total_len;
+		} else {
+			bcopy(mtod(m, caddr_t), mtod(m0, caddr_t),
+			    (MHLEN - 2));
+			m->m_len = total_len - (MHLEN - 2);
+			m->m_data += (MHLEN - 2);
+			m0->m_next = m;
+			m0->m_len = (MHLEN - 2);
+			m = m0;
+			m->m_pkthdr.len = total_len;
+		}
+#else
+		m->m_pkthdr.len = m->m_len = total_len;
+#endif
+
 		ifp->if_ipackets++;
 		eh = mtod(m, struct ether_header *);
 		m->m_pkthdr.rcvif = ifp;
-		m->m_pkthdr.len = m->m_len = total_len;
+
 #if NBPFILTER > 0
 		/*
 		 * Handle BPF listeners. Let the BPF user see the packet, but
@@ -1403,7 +1442,7 @@ static void mx_txeof(sc)
 		cur_tx = sc->mx_cdata.mx_tx_head;
 		txstat = MX_TXSTATUS(cur_tx);
 
-		if ((txstat & MX_TXSTAT_OWN) || txstat == MX_UNSENT)
+		if (txstat & MX_TXSTAT_OWN)
 			break;
 
 		if (txstat & MX_TXSTAT_ERRSUM) {
@@ -1453,12 +1492,6 @@ static void mx_txeoc(sc)
 				mx_autoneg_mii(sc, MX_FLAG_DELAYTIMEO, 1);
 			else
 				mx_autoneg(sc, MX_FLAG_DELAYTIMEO, 1);
-		}
-	} else {
-		if (MX_TXOWN(sc->mx_cdata.mx_tx_head) == MX_UNSENT) {
-			MX_TXOWN(sc->mx_cdata.mx_tx_head) = MX_TXSTAT_OWN;
-			ifp->if_timer = 5;
-			CSR_WRITE_4(sc, MX_TXSTART, 0xFFFFFFFF);
 		}
 	}
 
@@ -1551,7 +1584,7 @@ static int mx_encap(sc, c, m_head)
 	struct mbuf		*m_head;
 {
 	int			frag = 0;
-	volatile struct mx_desc	*f = NULL;
+	struct mx_desc		*f = NULL;
 	int			total_len;
 	struct mbuf		*m;
 
@@ -1628,7 +1661,7 @@ static int mx_encap(sc, c, m_head)
 
 	c->mx_mbuf = m_head;
 	c->mx_lastdesc = frag - 1;
-	MX_TXCTL(c) |= MX_TXCTL_LASTFRAG;
+	MX_TXCTL(c) |= MX_TXCTL_LASTFRAG|MX_TXCTL_FINT;
 	MX_TXNEXT(c) = vtophys(&c->mx_nextdesc->mx_ptr->mx_frag[0]);
 	return(0);
 }
@@ -1653,6 +1686,9 @@ static void mx_start(ifp)
 		sc->mx_tx_pend = 1;
 		return;
 	}
+
+	if (ifp->if_flags & IFF_OACTIVE)
+		return;
 
 	/*
 	 * Check for an available queue slot. If there are none,
@@ -1687,6 +1723,8 @@ static void mx_start(ifp)
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, cur_tx->mx_mbuf);
 #endif
+		MX_TXOWN(cur_tx) = MX_TXSTAT_OWN;
+		CSR_WRITE_4(sc, MX_TXSTART, 0xFFFFFFFF);
 	}
 
 	/*
@@ -1695,23 +1733,10 @@ static void mx_start(ifp)
 	if (cur_tx == NULL)
 		return;
 
-	/*
-	 * Place the request for the upload interrupt
-	 * in the last descriptor in the chain. This way, if
-	 * we're chaining several packets at once, we'll only
-	 * get an interupt once for the whole chain rather than
-	 * once for each packet.
-	 */
-	MX_TXCTL(cur_tx) |= MX_TXCTL_FINT;
 	sc->mx_cdata.mx_tx_tail = cur_tx;
 
-	if (sc->mx_cdata.mx_tx_head == NULL) {
+	if (sc->mx_cdata.mx_tx_head == NULL)
 		sc->mx_cdata.mx_tx_head = start_tx;
-		MX_TXOWN(start_tx) = MX_TXSTAT_OWN;
-		CSR_WRITE_4(sc, MX_TXSTART, 0xFFFFFFFF);
-	} else {
-		MX_TXOWN(start_tx) = MX_UNSENT;
-	}
 
 	/*
 	 * Set a timeout in case the chip goes out to lunch.
@@ -1746,11 +1771,27 @@ static void mx_init(xsc)
 	/*
 	 * Set cache alignment and burst length.
 	 */
-	CSR_WRITE_4(sc, MX_BUSCTL, MX_BUSCTL_CONFIG);
+	CSR_WRITE_4(sc, MX_BUSCTL, MX_BUSCTL_MUSTBEONE|MX_BUSCTL_ARBITRATION);
+	MX_SETBIT(sc, MX_BUSCTL, MX_BURSTLEN_16LONG);
+	switch(sc->mx_cachesize) {
+	case 32:
+		MX_SETBIT(sc, MX_BUSCTL, MX_CACHEALIGN_32LONG);
+		break;
+	case 16:
+		MX_SETBIT(sc, MX_BUSCTL, MX_CACHEALIGN_16LONG);
+		break;
+	case 8:
+		MX_SETBIT(sc, MX_BUSCTL, MX_CACHEALIGN_8LONG);
+		break;
+	case 0:
+	default:
+		MX_SETBIT(sc, MX_BUSCTL, MX_CACHEALIGN_NONE);
+		break;
+	}
 
 	MX_SETBIT(sc, MX_NETCFG, MX_NETCFG_NO_RXCRC);
 	MX_CLRBIT(sc, MX_NETCFG, MX_NETCFG_HEARTBEAT);
-	MX_CLRBIT(sc, MX_NETCFG, MX_NETCFG_STORENFWD);
+	MX_SETBIT(sc, MX_NETCFG, MX_NETCFG_STORENFWD);
 	MX_CLRBIT(sc, MX_NETCFG, MX_NETCFG_TX_BACKOFF);
 
 	/*
@@ -1774,7 +1815,7 @@ static void mx_init(xsc)
 		mx_setmode(sc, sc->ifmedia.ifm_media, 0);
 
 	MX_CLRBIT(sc, MX_NETCFG, MX_NETCFG_TX_THRESH);
-	MX_CLRBIT(sc, MX_NETCFG, MX_NETCFG_SPEEDSEL);
+	/*MX_CLRBIT(sc, MX_NETCFG, MX_NETCFG_SPEEDSEL);*/
 
 	if (IFM_SUBTYPE(sc->ifmedia.ifm_media) == IFM_10_T)
 		MX_SETBIT(sc, MX_NETCFG, MX_TXTHRESH_160BYTES);
@@ -2080,6 +2121,20 @@ mx_probe(parent, match, aux)
 		}
 	}
 
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_COMPEX) {
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_COMPEX_98713:
+			return (1);
+		}
+	}
+
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_LITEON) {
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_LITEON_PNICII:
+			return (1);
+		}
+	}
+
 	return (0);
 }
 
@@ -2155,17 +2210,24 @@ mx_attach(parent, self, aux)
 	}
 	printf(": %s", intrstr);
 
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_MACRONIX) {
-		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_MACRONIX_MX98713) {
-			if (PCI_REVISION(pa->pa_class) < MX_REVISION_98713A)
-				sc->mx_type = MX_TYPE_98713;
-			else
-				sc->mx_type = MX_TYPE_98713A;
-		}
-		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_MACRONIX_MX98715) {
-			sc->mx_type = MX_TYPE_987x5;
-		}
-	}
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_MACRONIX_MX98713 &&
+	    PCI_REVISION(pa->pa_class) < MX_REVISION_98713A)
+		sc->mx_type = MX_TYPE_98713;
+	else if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_COMPEX_98713 &&
+	    PCI_REVISION(pa->pa_class) < MX_REVISION_98713A)
+		sc->mx_type = MX_TYPE_98713;
+	else if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_MACRONIX_MX98713 &&
+	    PCI_REVISION(pa->pa_class) >= MX_REVISION_98713A)
+		sc->mx_type = MX_TYPE_98713A;
+	else
+		sc->mx_type = MX_TYPE_987x5;
+
+	/* Save the cache line size. */
+	sc->mx_cachesize = pci_conf_read(pa->pa_pc, pa->pa_tag,
+	    MX_PCI_CACHELEN) & 0xFF;
+
+	sc->mx_info.mx_vid = PCI_VENDOR(pa->pa_id);
+	sc->mx_info.mx_did = PCI_PRODUCT(pa->pa_id);
 
 	mx_reset(sc);
 
