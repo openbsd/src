@@ -1,4 +1,4 @@
-#	$OpenBSD: HELIOS_PCMCIA,v 1.4 1996/04/29 14:12:01 hvozda Exp $
+#	$OpenBSD: HELIOS_PCMCIA,v 1.5 1996/04/30 18:49:41 hvozda Exp $
 #
 #	HELIOS_PCMCIA -- Eric Hvozda's notebook
 #
@@ -62,28 +62,13 @@ npx0	at isa? port 0xf0 irq 13	# math coprocessor
 pc0	at isa? port 0x60 irq 1		# generic PC console device
 #spkr0	at pckbd? port 0x61		# PC speaker
 
-# Multiple controllers need some testing.  Some laptops have multiple PCIC
-# controllers instead of two-slot controllers.
-# The i82365 (pcic) controller uses the same ports for the first two
-# controllers and for the second two controllers.
-
-# IRQ 2/9 doesn't seem to work for status change interrupts, so use one
-# of the higher ones.
 pcicmaster0	at isa? port 0x3E0 size 2
 pcic0	at pcicmaster0 irq 11 iomem 0xd4000 iosiz 4096
-pcic1	at pcicmaster0 irq 12 iomem 0xd5000 iosiz 4096
-pcicmaster1 at isa? port 0x3E2 size 2
-pcic2	at pcicmaster1 irq 11 iomem 0xd6000 iosiz 4096
-pcic3	at pcicmaster1 irq 12 iomem 0xd7000 iosiz 4096
 
 pcmcia* at pcic?
 
-#ed0     at pcmcia? port 0x300 iomem 0xd8000 iosiz 8192 	irq 10
 ed0     at pcmcia? port 0x300 size 0x20 irq 10 slot ?
-#ep0     at pcmcia? port 0x300 size 0x10 irq 10 slot ?
-#com1    at pcmcia? port 0x2f8 size 8 irq 5 slot ?
 com2    at pcmcia? port 0x3e8 size 8 irq 5 slot ?
-#com3    at pcmcia? port 0x2e8 size 8	irq 3 slot ?
 
 com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
