@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_create.c,v 1.11 1999/11/25 07:01:33 d Exp $	*/
+/*	$OpenBSD: uthread_create.c,v 1.12 1999/11/30 04:51:56 d Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -173,10 +173,10 @@ pthread_create(pthread_t * thread, const pthread_attr_t * attr,
 			TAILQ_INSERT_HEAD(&_thread_list, new_thread, tle);
 
 			if (pattr->suspend == PTHREAD_CREATE_SUSPENDED) {
-				new_thread->state = PS_SUSPENDED;
+				PTHREAD_SET_STATE(new_thread, PS_SUSPENDED);
 				PTHREAD_WAITQ_INSERT(new_thread);
 			} else {
-				new_thread->state = PS_RUNNING;
+				PTHREAD_SET_STATE(new_thread, PS_RUNNING);
 				PTHREAD_PRIOQ_INSERT_TAIL(new_thread);
 			}
 
