@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_inline.h,v 1.12 2003/03/03 18:33:49 mjacob Exp $ */
+/*	$OpenBSD: isp_inline.h,v 1.13 2004/08/02 19:55:45 art Exp $ */
 /*
  * Qlogic Host Adapter Inline Functions
  *
@@ -31,6 +31,11 @@
  */
 #ifndef	_ISP_INLINE_H
 #define	_ISP_INLINE_H
+
+#ifndef EXP_INLINE
+#define EXP_INLINE static __inline
+#define EXPENSIVE_INLINE
+#endif
 
 /*
  * Handle Functions.
@@ -114,10 +119,11 @@ isp_remove_handle(struct ispsoftc *isp, XS_T *xs)
 	isp_destroy_handle(isp, isp_find_handle(isp, xs));
 }
 
-static INLINE int
+EXP_INLINE int
 isp_getrqentry(struct ispsoftc *, u_int16_t *, u_int16_t *, void **);
 
-static INLINE int
+#ifdef EXPENSIVE_INLINE
+EXP_INLINE int
 isp_getrqentry(struct ispsoftc *isp, u_int16_t *iptrp,
     u_int16_t *optrp, void **resultp)
 {
@@ -136,6 +142,7 @@ isp_getrqentry(struct ispsoftc *isp, u_int16_t *iptrp,
 		*iptrp = iptr;
 	return (0);
 }
+#endif
 
 static INLINE void isp_print_qentry (struct ispsoftc *, char *, int, void *);
 
@@ -248,8 +255,8 @@ isp_fc_runstate(struct ispsoftc *isp, int tval)
  * (with a few exceptions for efficiency).
  */
 
-static INLINE void isp_copy_out_hdr(struct ispsoftc *, isphdr_t *, isphdr_t *);
-static INLINE void isp_copy_in_hdr(struct ispsoftc *, isphdr_t *, isphdr_t *);
+EXP_INLINE void isp_copy_out_hdr(struct ispsoftc *, isphdr_t *, isphdr_t *);
+EXP_INLINE void isp_copy_in_hdr(struct ispsoftc *, isphdr_t *, isphdr_t *);
 static INLINE int isp_get_response_type(struct ispsoftc *, isphdr_t *);
 
 static INLINE void
@@ -274,14 +281,14 @@ static INLINE void
 isp_put_icb(struct ispsoftc *, isp_icb_t *, isp_icb_t *);
 static INLINE void
 isp_get_pdb(struct ispsoftc *, isp_pdb_t *, isp_pdb_t *);
-static INLINE void
+EXP_INLINE void
 isp_get_ct_hdr(struct ispsoftc *isp, ct_hdr_t *, ct_hdr_t *);
 static INLINE void
 isp_put_sns_request(struct ispsoftc *, sns_screq_t *, sns_screq_t *);
 static INLINE void
 isp_put_gid_ft_request(struct ispsoftc *, sns_gid_ft_req_t *,
     sns_gid_ft_req_t *);
-static INLINE void
+EXP_INLINE void
 isp_put_gxn_id_request(struct ispsoftc *, sns_gxn_id_req_t *,
     sns_gxn_id_req_t *);
 static INLINE void
@@ -346,7 +353,9 @@ isp_get_notify_ack_fc(struct ispsoftc *, na_fcentry_t *, na_fcentry_t *);
 /*
  * Swizzle/Copy Functions
  */
-static INLINE void
+
+#ifdef EXPENSIVE_INLINE
+EXP_INLINE void
 isp_copy_out_hdr(struct ispsoftc *isp, isphdr_t *hpsrc, isphdr_t *hpdst)
 {
 	if (ISP_IS_SBUS(isp)) {
@@ -370,7 +379,7 @@ isp_copy_out_hdr(struct ispsoftc *isp, isphdr_t *hpsrc, isphdr_t *hpdst)
 	}
 }
 
-static INLINE void
+EXP_INLINE void
 isp_copy_in_hdr(struct ispsoftc *isp, isphdr_t *hpsrc, isphdr_t *hpdst)
 {
 	if (ISP_IS_SBUS(isp)) {
@@ -393,6 +402,7 @@ isp_copy_in_hdr(struct ispsoftc *isp, isphdr_t *hpsrc, isphdr_t *hpdst)
 		    hpdst->rqs_flags);
 	}
 }
+#endif
 
 static INLINE int
 isp_get_response_type(struct ispsoftc *isp, isphdr_t *hp)
@@ -695,7 +705,8 @@ isp_get_pdb(struct ispsoftc *isp, isp_pdb_t *src, isp_pdb_t *dst)
 /*
  * CT_HDR canonicalization- only needed for SNS responses
  */
-static INLINE void
+#ifdef EXPENSIVE_INLINE
+EXP_INLINE void
 isp_get_ct_hdr(struct ispsoftc *isp, ct_hdr_t *src, ct_hdr_t *dst)
 {
 	ISP_IOXGET_8(isp, &src->ct_revision, dst->ct_revision);
@@ -715,6 +726,7 @@ isp_get_ct_hdr(struct ispsoftc *isp, ct_hdr_t *src, ct_hdr_t *dst)
 	ISP_IOXGET_8(isp, &src->ct_explanation, dst->ct_explanation);
 	ISP_IOXGET_8(isp, &src->ct_vunique, dst->ct_vunique);
 }
+#endif
 
 /*
  * Generic SNS request - not particularly useful since the per-command data
@@ -753,7 +765,8 @@ isp_put_gid_ft_request(struct ispsoftc *isp, sns_gid_ft_req_t *src,
 	ISP_IOXPUT_32(isp, src->snscb_fc4_type, &dst->snscb_fc4_type);
 }
 
-static INLINE void
+#ifdef EXPENSIVE_INLINE
+EXP_INLINE void
 isp_put_gxn_id_request(struct ispsoftc *isp, sns_gxn_id_req_t *src,
     sns_gxn_id_req_t *dst)
 {
@@ -770,6 +783,7 @@ isp_put_gxn_id_request(struct ispsoftc *isp, sns_gxn_id_req_t *src,
 	ISP_IOXPUT_32(isp, src->snscb_res3, &dst->snscb_res3);
 	ISP_IOXPUT_32(isp, src->snscb_portid, &dst->snscb_portid);
 }
+#endif
 
 /*
  * Generic SNS response - not particularly useful since the per-command data

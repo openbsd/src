@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp_openbsd.c,v 1.26 2003/10/21 18:58:49 jmc Exp $ */
+/* 	$OpenBSD: isp_openbsd.c,v 1.27 2004/08/02 19:55:45 art Exp $ */
 /*
  * Platform (OpenBSD) dependent common attachment code for Qlogic adapters.
  *
@@ -40,6 +40,8 @@
  *  San Francisco, CA, 94131
  */
 
+/* expand expensive inline functions here. */
+#define EXPENSIVE_INLINE
 #include <dev/ic/isp_openbsd.h>
 
 /*
