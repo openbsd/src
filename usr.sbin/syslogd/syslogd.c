@@ -210,7 +210,7 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int ch, funix, i, inetm, fklog, klogm, len;
+	int ch, funix, i, inetm = 0, fklog, klogm, len;
 	struct sockaddr_un sunx, fromunix;
 	struct sockaddr_in sin, frominet;
 	FILE *fp;
@@ -545,7 +545,7 @@ logmsg(pri, msg, from, flags)
 			(void)strncpy(f->f_lasttime, timestamp, 15);
 			f->f_prevcount++;
 			dprintf("msg repeated %d times, %ld sec of %d\n",
-			    f->f_prevcount, now - f->f_time,
+			    f->f_prevcount, (long)(now - f->f_time),
 			    repeatinterval[f->f_repeatcount]);
 			/*
 			 * If domark would have logged this by now,
