@@ -5,6 +5,7 @@
 ./bin/chgrp
 ./bin/chio
 ./bin/chmod
+./bin/cksum
 ./bin/cp
 ./bin/cpio
 ./bin/csh
@@ -189,7 +190,6 @@
 ./usr/bin/chpass
 ./usr/bin/chsh
 ./usr/bin/ci
-./usr/bin/cksum
 ./usr/bin/clear
 ./usr/bin/cmp
 ./usr/bin/co
