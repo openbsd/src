@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: style.9,v 1.37 2004/02/24 19:55:51 jmc Exp $
+.\"	$OpenBSD: style.9,v 1.38 2004/04/10 09:10:16 jmc Exp $
 .\"
 .Dd June 18, 2001
 .Dt STYLE 9
@@ -41,7 +41,7 @@ In general, code can be considered
 when it makes up about 50% or more of the file(s) involved.
 This is enough to break precedents in the existing code and use the
 current style guidelines.
-.Bd -literal -offset 0i
+.Bd -literal -offset indent
 /*
  * Style guide for the OpenBSD KNF (Kernel Normal Form).
  */
@@ -53,8 +53,8 @@ current style guidelines.
 /* Most single-line comments look like this. */
 
 /*
- * Multi-line comments look like this.  Make them real sentences.  Fill
- * them so they look like real paragraphs.
+ * Multi-line comments look like this.  Make them real sentences.
+ * Fill them so they look like real paragraphs.
  */
 .Ed
 .Pp
@@ -69,12 +69,12 @@ but not both!
 includes
 .Aq Pa sys/cdefs.h ,
 and it's okay to depend on that.
-.Bd -literal -offset 0i
-#include <sys/types.h>		/* Non-local includes in brackets. */
+.Bd -literal -offset indent
+#include <sys/types.h>	/* Non-local includes in brackets. */
 .Ed
 .Pp
 If it's a network program, put the network include files next.
-.Bd -literal -offset 0i
+.Bd -literal -offset indent
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/route.h>
@@ -88,7 +88,7 @@ files.
 The
 .Pa /usr/include
 files should be sorted!
-.Bd -literal -offset 0i
+.Bd -literal -offset indent
 #include <stdio.h>
 .Ed
 .Pp
@@ -97,13 +97,13 @@ Global pathnames are defined in
 Pathnames local to the program go in
 .Pa pathnames.h
 in the local directory.
-.Bd -literal -offset 0i
+.Bd -literal -offset indent
 #include <paths.h>
 .Ed
 .Pp
-Then, there's a blank line, and the user include files.
-.Bd -literal -offset 0i
-#include "pathnames.h"		/* Local includes in double quotes. */
+Then there's a blank line, and the user include files.
+.Bd -literal -offset indent
+#include "pathnames.h"	/* Local includes in double quotes. */
 .Ed
 .Pp
 All functions are prototyped somewhere.
@@ -129,19 +129,18 @@ It is allowed in code imported from other sources but should not be
 used in native
 .Ox
 code.
-Prototypes should not have variable names associated with the types; i.e.:
-.Bd -literal -compact -offset 0i
+Prototypes should not have variable names associated with the types; i.e.,
+.Bd -literal -offset indent
 void	function(int);
 .Ed
-.Pp
 not:
-.Bd -literal -compact -offset 0i
+.Bd -literal -offset indent -compact
 void	function(int a);
 .Ed
 .Pp
 Prototypes may have an extra space after a tab to enable function names
 to line up:
-.Bd -literal -offset 0i
+.Bd -literal -offset indent
 static char	*function(int, const char *);
 static void	 usage(void);
 .Ed
@@ -153,7 +152,7 @@ Use
 from
 .Aq Pa sys/cdefs.h
 for functions that don't return, i.e.,
-.Bd -literal -offset 0i
+.Bd -literal -offset indent
 __dead void	abort(void);
 .Ed
 .Pp
@@ -176,15 +175,15 @@ statements.
 Any final statement-terminating semicolon should be
 supplied by the macro invocation rather than the macro, to make parsing easier
 for pretty-printers and editors.
-.Bd -literal -offset 0i
-#define	MACRO(x, y) do {						\e
-	variable = (x) + (y);						\e
-	(y) += 2;							\e
+.Bd -literal -offset indent
+#define	MACRO(x, y) do {					\e
+	variable = (x) + (y);					\e
+	(y) += 2;						\e
 } while (0)
 .Ed
 .Pp
 Enumeration values are all uppercase.
-.Bd -literal -offset 0i
+.Bd -literal -offset indent
 enum enumtype { ONE, TWO } et;
 .Ed
 .Pp
@@ -203,7 +202,7 @@ source files.
 Use of the structures should be by separate declarations and should be
 .Dq Li extern
 if they are declared in a header file.
-.Bd -literal -offset 0i
+.Bd -literal -offset indent
 struct foo {
 	struct	foo *next;	/* List of active foo */
 	struct	mumble amumble;	/* Comment for mumble */
@@ -216,7 +215,7 @@ Use
 .Xr queue 3
 macros rather than rolling your own lists, whenever possible.
 Thus, the previous example would be better written:
-.Bd -literal -offset 0i
+.Bd -literal -offset indent
 #include <sys/queue.h>
 struct	foo {
 	LIST_ENTRY(foo)	link;	/* Queue macro glue for foo lists */
@@ -237,13 +236,13 @@ except as specified in Standard C or by
 .Tn POSIX .
 Don't use the same name for a struct tag and a typedef, as this makes
 the code unusable from C++.
-.Bd -literal -offset 0i
+.Bd -literal -offset indent
 /* Make the structure name match the typedef. */
 typedef struct _bar {
 	int	level;
 } BAR;
 .Ed
-.Bd -literal -offset 0i
+.Bd -literal -offset indent
 /*
  * All major routines should have a comment briefly describing what
  * they do.  The comment before the "main" routine should describe
@@ -268,34 +267,33 @@ parts of the switch cascade.
 Elements in a switch statement that cascade should have a FALLTHROUGH comment.
 Numerical arguments should be checked for accuracy.
 Code that cannot be reached should have a NOTREACHED comment.
-.Bd -literal -offset 0i
-	while ((ch = getopt(argc, argv, "abn:")) != -1)
-		switch (ch) {		/* Indent the switch. */
-		case 'a':		/* Don't indent the case. */
-			aflag = 1;
-			/* FALLTHROUGH */
-		case 'b':
-			bflag = 1;
-			break;
-		case 'n':
-			num = strtol(optarg, &ep, 10);
-			if (num <= 0 || *ep != '\e0') {
-				warnx("illegal number, -n argument -- %s",
-				    optarg);
-				usage();
-			}
-			break;
-		case '?':
-		default:
+.Bd -literal -offset indent
+while ((ch = getopt(argc, argv, "abn:")) != -1)
+	switch (ch) {		/* Indent the switch. */
+	case 'a':		/* Don't indent the case. */
+		aflag = 1;
+		/* FALLTHROUGH */
+	case 'b':
+		bflag = 1;
+		break;
+	case 'n':
+		num = strtol(optarg, &ep, 10);
+		if (num <= 0 || *ep != '\e0') {
+			warnx("illegal number, -n argument -- %s",
+			    optarg);
 			usage();
-			/* NOTREACHED */
 		}
-	argc -= optind;
-	argv += optind;
-
+		break;
+	case '?':
+	default:
+		usage();
+		/* NOTREACHED */
+	}
+argc -= optind;
+argv += optind;
 .Ed
 .Pp
-Use space after keywords
+Use a space after keywords
 .Pf ( Li if ,
 .Li while ,
 .Li for ,
@@ -308,39 +306,39 @@ Forever loops are done with
 .Li for ,
 not
 .Li while .
-.Bd -literal -offset 0i
-	for (p = buf; *p != '\e0'; ++p)
-		;	/* nothing */
-	for (;;)
+.Bd -literal -offset indent
+for (p = buf; *p != '\e0'; ++p)
+	;	/* nothing */
+for (;;)
+	stmt;
+for (;;) {
+	z = a + really + long + statement + that + needs +
+	    two + lines + gets + indented + four + spaces +
+	    on + the + second + and + subsequent + lines;
+}
+for (;;) {
+	if (cond)
 		stmt;
-	for (;;) {
-		z = a + really + long + statement + that + needs +
-		    two + lines + gets + indented + four + spaces +
-		    on + the + second + and + subsequent + lines;
-	}
-	for (;;) {
-		if (cond)
-			stmt;
-	}
+}
 .Ed
 .Pp
 Parts of a for loop may be left empty.
 Don't put declarations inside blocks unless the routine is
 unusually complicated.
-.Bd -literal -offset 0i
-	for (; cnt < 15; cnt++) {
-		stmt1;
-		stmt2;
-	}
+.Bd -literal -offset indent
+for (; cnt < 15; cnt++) {
+	stmt1;
+	stmt2;
+}
 .Ed
 .Pp
 Indentation is an 8 character tab.
 Second level indents are four spaces.
-.Bd -literal -offset 0i
-	while (cnt < 20)
-		z = a + really + long + statement + that + needs +
-		    two lines + gets + indented + four + spaces +
-		    on + the + second + and + subsequent + lines;
+.Bd -literal -offset indent
+while (cnt < 20)
+	z = a + really + long + statement + that + needs +
+	    two lines + gets + indented + four + spaces +
+	    on + the + second + and + subsequent + lines;
 .Ed
 .Pp
 Do not add whitespace at the end of a line, and only use tabs
@@ -351,14 +349,14 @@ and do not use spaces in front of tabs.
 Closing and opening braces go on the same line as the else.
 Braces that aren't necessary may be left out, unless they cause
 a compiler warning.
-.Bd -literal -offset 0i
-	if (test)
-		stmt;
-	else if (bar) {
-		stmt;
-		stmt;
-	} else
-		stmt;
+.Bd -literal -offset indent
+if (test)
+	stmt;
+else if (bar) {
+	stmt;
+	stmt;
+} else
+	stmt;
 .Ed
 .Pp
 Do not use spaces after function names.
@@ -372,9 +370,9 @@ or preceding
 or
 .Sq \&)
 characters.
-.Bd -literal -offset 0i
-	if ((error = function(a1, a2)))
-		exit(error);
+.Bd -literal -offset indent
+if ((error = function(a1, a2)))
+	exit(error);
 .Ed
 .Pp
 Unary operators don't require spaces; binary operators do.
@@ -382,49 +380,49 @@ Don't use parentheses unless they're required for precedence, the statement
 is confusing without them, or the compiler generates a warning without them.
 Remember that other people may be confused more easily than you.
 Do YOU understand the following?
-.Bd -literal -offset 0i
-	a = b->c[0] + ~d == (e || f) || g && h ? i : j >> 1;
-	k = !(l & FLAGS);
+.Bd -literal -offset indent
+a = b->c[0] + ~d == (e || f) || g && h ? i : j >> 1;
+k = !(l & FLAGS);
 .Ed
 .Pp
 Exits should be 0 on success, or non-zero for errors.
-.Bd -literal -offset 0i
-	exit(0);	/*
-			 * Avoid obvious comments such as
-			 * "Exit 0 on success."
-			 */
+.Bd -literal -offset indent
+exit(0);	/*
+		 * Avoid obvious comments such as
+		 * "Exit 0 on success."
+		 */
 }
 .Ed
 .Pp
 The function type should be on a line by itself
 preceding the function.
-.Bd -literal -offset 0i
+.Bd -literal -offset indent
 static char *
 function(int a1, int a2, float fl, int a4)
 {
 .Ed
 .Pp
-When declaring variables in functions declare them sorted by size (largest to
+When declaring variables in functions, declare them sorted by size (largest to
 smallest), then in alphabetical order; multiple ones per line are okay.
 Old style function declarations should be avoided.
 ANSI style function declarations should go in an include file such as
 .Dq Pa extern.h .
-If a line overflows reuse the type keyword.
+If a line overflows, reuse the type keyword.
 .Pp
 Be careful not to obfuscate the code by initializing variables in
 the declarations.
 Use this feature only thoughtfully.
 DO NOT use function calls in initializers!
-.Bd -literal -offset 0i
-	struct foo one, *two;
-	double three;
-	int *four, five;
-	char *six, seven, eight, nine, ten, eleven, twelve;
+.Bd -literal -offset indent
+struct foo one, *two;
+double three;
+int *four, five;
+char *six, seven, eight, nine, ten, eleven, twelve;
 
-	four = myfunction();
+four = myfunction();
 .Ed
 .Pp
-Do not declare functions inside other functions; ANSI C says that
+Do not declare functions inside other functions: ANSI C says that
 such declarations have file scope regardless of the nesting of the
 declaration.
 Hiding file declarations in what appears to be a local scope is
@@ -459,11 +457,11 @@ or
 .Fl Wall
 flag should be used to verify that the compiler does not generate
 warnings such as
-.Bd -literal -offset 0i
+.Bd -literal -offset indent
 warning: variable `foo' might be clobbered by `longjmp' or `vfork'.
 .Ed
 .Pp
-If any warnings of this type occur you must apply the
+If any warnings of this type occur, you must apply the
 .Dq volatile
 type-qualifier to the variable in question.
 Failure to do so may result in improper code generation when optimization
@@ -477,7 +475,7 @@ A volatile pointer is declared with
 to the right of the
 .Dq * .
 Example:
-.Bd -literal -offset 0i
+.Bd -literal -offset indent
 char *volatile foo;
 .Ed
 .Pp
@@ -489,19 +487,19 @@ is not.
 To make
 .Dq *foo
 volatile use the syntax
-.Bd -literal -offset 0i
+.Bd -literal -offset indent
 volatile char *foo;
 .Ed
 .Pp
 If both the pointer and the thing pointed to are volatile use
-.Bd -literal -offset 0i
+.Bd -literal -offset indent
 volatile char *volatile foo;
 .Ed
 .Pp
 .Dq const
 is also a type-qualifier and the same rules apply.
 The description of a read-only hardware register might look something like:
-.Bd -literal -offset 0i
+.Bd -literal -offset indent
 const volatile char *reg;
 .Ed
 .Pp
@@ -527,24 +525,22 @@ Test pointers
 against
 .Dv NULL ,
 i.e., use:
-.Bd -literal -offset 0i
+.Bd -literal -offset indent
 (p = f()) == NULL
 .Ed
-.Pp
 not:
-.Bd -literal -offset 0i
+.Bd -literal -offset indent -compact
 !(p = f())
 .Ed
 .Pp
 Don't use
 .Ql \&!
 for tests unless it's a boolean, i.e., use
-.Bd -literal -offset 0i
+.Bd -literal -offset indent
 if (*p == '\e0')
 .Ed
-.Pp
 not
-.Bd -literal -offset 0i
+.Bd -literal -offset indent -compact
 if (!*p)
 .Ed
 .Pp
@@ -557,17 +553,17 @@ Use
 or
 .Xr warn 3 ,
 don't roll your own!
-.Bd -literal -offset 0i
-	if ((four = malloc(sizeof(struct foo))) == NULL)
-		err(1, (char *)NULL);
-	if ((six = (int *)overflow()) == NULL)
-		errx(1, "Number overflowed.");
-	return (eight);
+.Bd -literal -offset indent
+if ((four = malloc(sizeof(struct foo))) == NULL)
+	err(1, (char *)NULL);
+if ((six = (int *)overflow()) == NULL)
+	errx(1, "Number overflowed.");
+return (eight);
 }
 .Ed
 .Pp
 Old-style function declarations look like this:
-.Bd -literal -offset 0i
+.Bd -literal -offset indent
 static char *
 function(a1, a2, fl, a4)
 	int a1, a2;	/* Declare ints, too, don't default them. */
@@ -582,7 +578,7 @@ Use ANSI function declarations unless you explicitly need K&R compatibility.
 Long parameter lists are wrapped with a normal four space indent.
 .Pp
 Variable numbers of arguments should look like this:
-.Bd -literal -offset 0i
+.Bd -literal -offset indent
 #include <stdarg.h>
 
 void
@@ -623,7 +619,7 @@ as shown in the example below.
 Uppercase letters take precedence over lowercase.
 Note that the options list in manual pages should be purely alphabetical.
 That is, with no regard to whether an option takes an argument.
-.Bd -ragged -offset 0.3i
+.Bd -literal -offset indent
 "usage: f [-12aDde] [-b b_arg] [-m m_arg] req1 req2 [opt1 [opt2]]\en"
 "usage: f [-a | -b] [-c [-de] [-n number]]\en"
 .Ed
@@ -631,9 +627,9 @@ That is, with no regard to whether an option takes an argument.
 The
 .Li __progname
 string, should be used instead of hard-coding the program name.
-.Bd -literal -offset 0i
-	(void)fprintf(stderr, "usage: %s [-ab]\en", __progname);
-	exit(1);
+.Bd -literal -offset indent
+(void)fprintf(stderr, "usage: %s [-ab]\en", __progname);
+exit(1);
 }
 .Ed
 .Pp
