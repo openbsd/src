@@ -44,8 +44,5 @@
 ./usr/share/man/man8/tahoe
 ./usr/share/man/man8/x68k
 ./usr/share/info/cpio.info
-./usr/man
-./usr/man/man1
-./usr/man/man1/gprof.1
 ./usr/share/doc/smm/01.setup/tahoe
 ./usr/share/doc/smm/01.setup/vax
