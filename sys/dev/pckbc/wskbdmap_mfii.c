@@ -1,4 +1,4 @@
-/*	$OpenBSD: wskbdmap_mfii.c,v 1.13 2001/10/04 23:23:46 mickey Exp $ */
+/*	$OpenBSD: wskbdmap_mfii.c,v 1.14 2001/10/25 15:42:43 mickey Exp $ */
 /*	$NetBSD: wskbdmap_mfii.c,v 1.15 2000/05/19 16:40:04 drochner Exp $	*/
 
 /*-
@@ -367,7 +367,7 @@ static const keysym_t pckbd_keydesc_es[] = {
     KC(9),   KS_8,		KS_parenleft,
     KC(10),  KS_9,		KS_parenright,
     KC(11),  KS_0,		KS_equal,
-    KC(12),  KS_grave,		KS_question,
+    KC(12),  KS_apostrophe,	KS_question,
     KC(13),  KS_exclamdown,	KS_questiondown,
     KC(26),  KS_dead_grave,	KS_dead_circumflex, KS_bracketleft,
     KC(27),  KS_plus,		KS_asterisk,	KS_bracketright,
