@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.91 2003/03/11 09:23:30 david Exp $
+.\" $OpenBSD: pfctl.8,v 1.92 2003/03/11 09:59:37 david Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -114,7 +114,7 @@ Evaluation of
 rules from the main ruleset is described in
 .Xr pf.conf 5 .
 For example, to show all filter rules inside anchor
-.Cm foo :
+.Li foo :
 .Bd -literal -offset indent
 # pfctl -a foo -s rules
 .Ed
@@ -176,15 +176,15 @@ from the first
 to the second
 .Ar host .
 For example, to kill all of the state entries originating from
-.Cm host :
+.Li host :
 .Bd -literal -offset indent
 # pfctl -k host
 .Ed
 .Pp
 To kill all of the state entries from
-.Cm host1
+.Li host1
 to
-.Cm host2 :
+.Li host2 :
 .Bd -literal -offset indent
 # pfctl -k host1 -k host2
 .Ed
