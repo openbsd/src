@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.34 2000/09/04 19:06:03 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.35 2000/09/04 19:07:21 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -602,6 +602,7 @@ do_login(Session *s)
 	FILE *f;
 	char *time_string;
 	char buf[256];
+	char hostname[MAXHOSTNAMELEN];
 	socklen_t fromlen;
 	struct sockaddr_storage from;
 	struct stat st;
@@ -623,6 +624,10 @@ do_login(Session *s)
 		}
 	}
 
+	/* Get the time and hostname when the user last logged in. */
+	last_login_time = get_last_login_time(pw->pw_uid, pw->pw_name,
+	    hostname, sizeof(hostname));
+
 	/* Record that there was a login on that tty from the remote host. */
 	record_login(pid, s->tty, pw->pw_name, pw->pw_uid,
 	    get_remote_name_or_ip(), (struct sockaddr *)&from);
@@ -635,12 +640,6 @@ do_login(Session *s)
 	if (stat(buf, &st) >= 0)
 #endif
 		return;
-	/*
-	 * Get the time when the user last logged in.  'buf' will be set
-	 * to contain the hostname the last login was from. 
-	 */
-	last_login_time = get_last_login_time(pw->pw_uid, pw->pw_name,
-	    buf, sizeof(buf));
 	if (last_login_time != 0) {
 		time_string = ctime(&last_login_time);
 		if (strchr(time_string, '\n'))
