@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.107 2003/07/14 14:09:24 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.108 2003/07/14 18:51:37 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -165,7 +165,7 @@ for a complete description.
 Do not use
 .Ev pre-extract
 and
-.Ev do-extract 
+.Ev do-extract
 hooks.
 .It Ar fake
 Do a fake port installation, that is, simulate the port installation under
@@ -216,8 +216,8 @@ See
 .It Ar install
 Install the package after building.
 See the description of THE FAKE FRAMEWORK
-for the non-intuitive details of the way 
-.Ar {pre,do,post}-install 
+for the non-intuitive details of the way
+.Ar {pre,do,post}-install
 hooks are actually used by the ports tree.
 .It Ar lib-depends-check
 Verify that the
@@ -244,17 +244,18 @@ Verify that
 can do a correct job with the port's manpages.
 .It Ar package
 Build a port package (or packages in
-.Ev MULTI_PACKAGES 
+.Ev MULTI_PACKAGES
 cases) from the fake installation.
 Involves creating packaging information from templates
 (see
 .Ev COMMENT ,
 .Ev SED_PLIST ,
-.Ev SUBST_VARS 
+.Ev SUBST_VARS
 among others) and invoking
 .Xr pkg_create 1
 for each package in the
-.Ev MULTI_PACKAGES list.
+.Ev MULTI_PACKAGES
+list.
 .It Ar patch
 Apply distribution and
 .Ox
@@ -273,7 +274,7 @@ and
 but the default
 .Ar do-patch
 target invokes
-.Ar distpatch 
+.Ar distpatch
 directly.
 So, if the
 .Ar do-patch
@@ -314,7 +315,7 @@ testing, define a
 .Ev FLAVOR .
 .It Ar reinstall
 Force reinstallation of a port, by first cleaning the old installation.
-.It AR repackage
+.It Ar repackage
 For rebuilding of the packages of a port, by first removing the old packages.
 .It Ar show
 Invoked as show=name, show the contents of ${name}.
@@ -381,8 +382,8 @@ does not handle flavor situations yet, so beware.
 Note that some variables are marked as
 .Sq User-settings ,
 which means that individual ports should not modify them,
-and that some variables are marked as 
-.Sq read-only , 
+and that some variables are marked as
+.Sq read-only ,
 which means that they shouldn't ever be changed.
 .Bl -tag -width MASTER_SITES
 .It Ev show
@@ -421,14 +422,12 @@ can be used to specify what packages to depend upon.
 .It Ev BATCH
 User-settings.
 Set to
-.Sq Yes 
-to avoid ports that require user-interaction 
+.Sq Yes
+to avoid ports that require user-interaction
 Use in conjunction with
 .Ev INTERACTIVE
 to simplify bulk-package builds.
-.Po 
-See IGNORE
-.Pc .
+.Pq See IGNORE .
 .It Ev BROKEN
 Define only for broken ports, set to reason the port is broken.
 See also
@@ -511,7 +510,8 @@ See
 Flags appended to
 .Ev CFLAGS
 if
-.Ev WARNINGS is set.
+.Ev WARNINGS
+is set.
 .It Ev CDROM_PACKAGES
 Base location where packages suitable for a CDROM (see
 PERMIT_PACKAGE_CDROM) will be placed
@@ -632,7 +632,8 @@ ${CFLAGS} ${COPTS} as CFLAGS.
 Flags appended to
 .Ev CXXFLAGS
 if
-.Ev WARNINGS is set.
+.Ev WARNINGS
+is set.
 .It Ev CXXFLAGS
 Default flags passed to the C++ compiler for building.
 Many ports ignore it.
@@ -659,7 +660,7 @@ so that those few directories do not get in the way.
 .It Ev DISTDIR
 Directory where all ports distfiles and patchfiles are stashed.
 Defaults to
-.Pa ${PORTSDIR}/distfiles.
+.Pa ${PORTSDIR}/distfiles .
 Override if distfiles are stored elsewhere.
 Always use
 .Ev FULLDISTDIR
@@ -703,7 +704,7 @@ to avoid confusing
 Optional subdirectory of ${DISTDIR} where the current port's distfiles
 and patchfiles will be located.
 See target
-.Ar fetch.
+.Ar fetch .
 .It Ev ECHO_MSG
 Used to display
 .Sq ===> Configuring for foo
@@ -926,7 +927,7 @@ See the
 .Ar fetch
 target for more details.
 See
-.Xr ports 7 
+.Xr ports 7
 for user configuration.
 .It Ev MASTER_SITES0 , ... , MASTER_SITES9
 Supplementary locations from which distfiles and patchfiles are retrieved.
@@ -1017,7 +1018,7 @@ Revision number of
 (read-only).
 .It Ev PACKAGES
 Base location for packages built (default: ${PORTSDIR}/packages/${ARCH}).
-.it Ev PACKAGING
+.It Ev PACKAGING
 Defined while building packages, read-only.
 See the description of FLAVORS AND MULTI_PACKAGES for a detailed explanation.
 .It Ev PATCH
@@ -1617,7 +1618,8 @@ issues.
 Set to reason not to otherwise.
 PERMIT_* lines in the Makefile should be preceded with a comment explaining
 details about licensing and patents issues the port may have.
-Porters must be very thorough in their checks. In case of doubt, ask.
+Porters must be very thorough in their checks.
+In case of doubt, ask.
 .It Ev PLIST_SRC
 From
 .Nx .
@@ -1711,7 +1713,7 @@ or in a subdirectory of
 .Sh THE FAKE FRAMEWORK
 The
 .Ar fake
-target is used to install the port in a private directory first, ready for 
+target is used to install the port in a private directory first, ready for
 packaging by the
 .Ar package
 target, so that the real installation will use the package.
