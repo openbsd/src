@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.h,v 1.8 2003/10/31 04:08:10 drahn Exp $	*/
+/*	$OpenBSD: openfirm.h,v 1.9 2004/01/11 16:20:01 drahn Exp $	*/
 /*	$NetBSD: openfirm.h,v 1.1 1996/09/30 16:35:10 ws Exp $	*/
 
 /*
@@ -66,6 +66,7 @@ int OF_interpret(char *cmd, int nreturns, ...);
 #if 0
 void (*OF_set_callback(void (*newfunc)(void *))) ();
 #endif
+int OF_getnodebyname(int, const char *);
 
 /*
  * Some generic routines for OpenFirmware handling.
