@@ -2357,10 +2357,13 @@ tryhost:
 					pwd = sm_getpwnam(contextaddr->q_ruser);
 				else
 					pwd = sm_getpwnam(contextaddr->q_user);
-				if (pwd != NULL)
-					(void) setusercontext(NULL,
-							      pwd, pwd->pw_uid,
-							      LOGIN_SETRESOURCES|LOGIN_SETPRIORITY);
+				if (pwd != NULL && setusercontext(NULL, pwd,
+				    pwd->pw_uid, LOGIN_SETRESOURCES | 
+				    LOGIN_SETPRIORITY) == -1 && suidwarn)
+				{
+					syserr("openmailer: setusercontext() failed");
+					exit(EX_TEMPFAIL);
+				}
 			}
 # endif /* HASSETUSERCONTEXT */
 
