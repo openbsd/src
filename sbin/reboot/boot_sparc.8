@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_sparc.8,v 1.12 1999/07/08 20:25:03 deraadt Exp $
+.\"	$OpenBSD: boot_sparc.8,v 1.13 1999/07/08 20:28:03 deraadt Exp $
 .\"	$NetBSD: boot_sparc.8,v 1.4 1995/04/25 11:37:25 pk Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -110,7 +110,11 @@ will be loaded, type the following:
 .Em \	ok
 setenv boot-from sd(0,0,0)bsd
 .Pp
-At any time you can break back to the ROM by pressing the
+If the
+.Xr sysctl 8
+variable
+.Ev ddb.console
+is enabled, at any time you can break back to the ROM by pressing the
 .Dq L1
 and
 .Dq a
