@@ -1,4 +1,4 @@
-/*	$OpenBSD: comvar.h,v 1.8 1997/03/06 07:06:45 tholo Exp $	*/
+/*	$OpenBSD: comvar.h,v 1.9 1997/07/07 16:37:12 niklas Exp $	*/
 /*	$NetBSD: comvar.h,v 1.5 1996/05/05 19:50:47 christos Exp $	*/
 
 /*
@@ -89,7 +89,7 @@ struct com_softc {
 	u_char sc_ibufs[2][COM_IBUFSIZE];
 };
 
-int	comprobe1 __P((bus_space_tag_t, bus_space_handle_t, int));
+int	comprobe1 __P((bus_space_tag_t, bus_space_handle_t));
 void	cominit __P((bus_space_tag_t, bus_space_handle_t, int));
 int	comintr __P((void *));
 void	com_absent_notify __P((struct com_softc *sc));
