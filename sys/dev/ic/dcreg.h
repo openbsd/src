@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcreg.h,v 1.30 2003/05/20 18:48:43 henning Exp $ */
+/*	$OpenBSD: dcreg.h,v 1.31 2003/09/25 21:47:10 mickey Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -398,6 +398,7 @@ struct dc_desc {
 	u_int32_t		dc_ctl;
 	u_int32_t		dc_ptr1;
 	u_int32_t		dc_ptr2;
+	u_int32_t		dc_pad[4];
 };
 
 #define dc_data		dc_ptr1
@@ -461,7 +462,7 @@ struct dc_desc {
 #define DC_MAXFRAGS		16
 #define DC_RX_LIST_CNT		64
 #define DC_TX_LIST_CNT		256
-#define DC_MIN_FRAMELEN		60
+#define DC_MIN_FRAMELEN		64
 #define DC_RXLEN		1536
 
 #define DC_INC(x, y)	(x) = (x + 1) % y
