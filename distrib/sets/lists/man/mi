@@ -1921,6 +1921,7 @@
 ./usr/share/man/cat8/spppcontrol.0
 ./usr/share/man/cat8/spray.0
 ./usr/share/man/cat8/sprayd.0
+./usr/share/man/cat8/ssh-keysign.0
 ./usr/share/man/cat8/sshd.0
 ./usr/share/man/cat8/ssl.0
 ./usr/share/man/cat8/starttls.0
