@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.20 1996/09/24 11:36:55 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.21 1996/09/30 11:28:35 deraadt Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.20 1996/09/24 11:36:55 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.21 1996/09/30 11:28:35 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -263,8 +263,10 @@ main(argc, argv)
 			error = writelabel(f, bootarea, lp);
 		break;
 	case SETWRITEABLE:
-		if (ioctl(f, DIOCWLABEL, (char *)&writeable) < 0)
-			err(4, "ioctl DIOCWLABEL");
+		if (!donothing) {
+			if (ioctl(f, DIOCWLABEL, (char *)&writeable) < 0)
+				err(4, "ioctl DIOCWLABEL");
+		}
 		break;
 	case WRITE:
 		if (argc < 2 || argc > 3)
@@ -431,10 +433,12 @@ writelabel(f, boot, lp)
 		 * may prevent us from changing the current (in-core)
 		 * label.
 		 */
-		if (ioctl(f, DIOCSDINFO, lp) < 0 &&
-		    errno != ENODEV && errno != ENOTTY) {
-			l_perror("ioctl DIOCSDINFO");
-			return (1);
+		if (!donothing) {
+			if (ioctl(f, DIOCSDINFO, lp) < 0 &&
+			    errno != ENODEV && errno != ENOTTY) {
+				l_perror("ioctl DIOCSDINFO");
+				return (1);
+			}
 		}
 		if (verbose)
 			printf("writing label to block %d (0x%x)\n",
@@ -488,9 +492,11 @@ writelabel(f, boot, lp)
 			if (ioctl(f, DIOCWLABEL, &writeable) < 0)
 				perror("ioctl DIOCWLABEL");
 	} else {
-		if (ioctl(f, DIOCWDINFO, lp) < 0) {
-			l_perror("ioctl DIOCWDINFO");
-			return (1);
+		if (!donothing) {
+			if (ioctl(f, DIOCWDINFO, lp) < 0) {
+				l_perror("ioctl DIOCWDINFO");
+				return (1);
+			}
 		}
 	}
 #ifdef vax
@@ -574,7 +580,7 @@ readmbr(f)
 	/* Find OpenBSD partition. */
 	for (part = 0; part < NDOSPART; part++) {
 		if (dp[part].dp_size && dp[part].dp_typ == DOSPTYP_OPENBSD) {
-			fprintf(stderr, "using MBR partition %d: "
+			fprintf(stderr, "# using MBR partition %d: "
 			    "type %d (0x%02x) "
 			    "offset %d (0x%x) size %d (0x%x)\n", part,
 			    dp[part].dp_typ, dp[part].dp_typ,
@@ -585,7 +591,7 @@ readmbr(f)
 	}
 	for (part = 0; part < NDOSPART; part++) {
 		if (dp[part].dp_size && dp[part].dp_typ == DOSPTYP_386BSD) {
-			fprintf(stderr, "using MBR partition %d: "
+			fprintf(stderr, "# using MBR partition %d: "
 			    "type %d (0x%02x) "
 			    "offset %d (0x%x) size %d (0x%x)\n", part,
 			    dp[part].dp_typ, dp[part].dp_typ, 
