@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.77 2001/06/23 02:27:09 angelos Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.78 2001/06/23 03:39:03 angelos Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -338,6 +338,8 @@ ipv4_input(m)
 			ipstat.ips_badsum++;
 			goto bad;
 		}
+
+		m->m_pkthdr.csum &= ~M_IPV4_CSUM_IN_OK;
 	}
 
 	/*
