@@ -1,5 +1,5 @@
 
-/* $OpenBSD: exec_i386.c,v 1.5 1997/04/09 08:39:36 mickey Exp $ */
+/* $OpenBSD: exec_i386.c,v 1.6 1997/04/11 19:14:18 weingart Exp $ */
 
 #include <sys/param.h>
 #include <sys/exec.h>
@@ -7,8 +7,12 @@
 #include <libsa.h>
 
 #include <biosdev.h>
+
 int startprog(void *, void *);
 static int bootdev;
+
+#define round_to_size(x) (((int)(x) + sizeof(int) - 1) & ~(sizeof(int) - 1))
+
 
 void
 machdep_start(startaddr, howto, loadaddr, ssym, esym)
@@ -16,10 +20,10 @@ machdep_start(startaddr, howto, loadaddr, ssym, esym)
 	int howto;
 {
 	static int argv[9];
-	struct exec *x;
-
 
 #ifdef DEBUG
+	struct exec *x;
+
 	x = (void *)loadaddr;
 	printf("exec {\n");
 	printf("  a_midmag = %lx\n", x->a_midmag);
@@ -55,7 +59,7 @@ machdep_start(startaddr, howto, loadaddr, ssym, esym)
 	argv[1] = howto;
 	argv[2] = bootdev;
 	argv[3] = (int)ssym;
-	argv[4] = (int)esym;
+	argv[4] = (int)round_to_size(esym);
 	argv[5] = (int)startaddr;
 	argv[6] = 0;
 	argv[7] = cnvmem;

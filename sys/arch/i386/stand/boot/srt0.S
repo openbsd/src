@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.S,v 1.5 1997/04/07 01:26:00 weingart Exp $	*/
+/*	$OpenBSD: srt0.S,v 1.6 1997/04/11 19:12:58 weingart Exp $	*/
 /*	$NetBSD: srt0.c,v 1.3 1994/10/27 04:21:59 cgd Exp $	*/
 
 /*-
@@ -105,6 +105,7 @@ __rtt:
 	movw	$0x1234, %ax
 	movw	%ax, 0x472	# warm boot
 
+	/* Try to use the KBD to reboot system */
 	movl	$0xfe, %eax
 	movl	$0x64, %edx
 	outb	%al, %dx
@@ -125,8 +126,16 @@ __rtt:
 	movl	$0xb8000, %ebx
 	movl	$0x07310731, (%ebx)
 #endif
+
+	/* Try to cause a tripple fault... */
 	lidt    _Idtr_reset
+	xorl	%eax, %eax
+	divl	%eax, %eax
+
+	/* Again... */
 	int $0x8
+
+	/* Again... */
 	movl	$0, %esp	# segment violation
 	ret
 

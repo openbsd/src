@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosboot.S,v 1.3 1997/03/31 23:06:19 mickey Exp $	*/
+/*	$OpenBSD: biosboot.S,v 1.4 1997/04/11 19:09:59 weingart Exp $	*/
 
 	.file	"bootbios.S"
 
@@ -11,10 +11,14 @@
 #define addr32  .byte 0x67
 #define data32  .byte 0x66
 
+/* Better use 32, 48 does not seem to compile */
+#define	BLKCNT	32
+#if 0
 #ifdef	DEBUG
 #define	BLKCNT	32
 #else
 #define	BLKCNT	48
+#endif
 #endif
 
 #define BOOTSEG		0x07c0	/* boot loaded here */

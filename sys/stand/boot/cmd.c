@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.5 1997/04/08 22:48:29 mickey Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.6 1997/04/11 19:12:56 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -339,6 +339,8 @@ execmd(cmd)
 		       version,
 #ifdef DEBUG
 		       (debug? "on": "off"),
+#else
+				"not present",
 #endif
 		       cmd->bootdev, cmd->cwd, cmd->image,
 		       cmd->addr, cmd->timeout);
