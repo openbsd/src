@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.30 2001/12/06 22:25:37 jason Exp $
+#	$OpenBSD: GENERIC,v 1.31 2001/12/07 19:11:26 jason Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -53,9 +53,10 @@ zstty*	at zs? channel ?
 ## PROM console driver -- if all else fails
 pcons0	at mainbus0				# PROM console
 
-## Mostek clock 
+## Mostek/DS1287 clocks
 clock*	at sbus? slot ? offset ?
 clock*	at ebus?
+rtc*	at ebus?
 
 ## Timer chip found on (some) sun4u systems.
 timer*	at mainbus0
