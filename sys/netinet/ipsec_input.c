@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.50 2001/07/06 19:35:38 jjbg Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.51 2001/08/07 14:07:47 deraadt Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -84,8 +84,8 @@ void *ipsec_common_ctlinput(int, struct sockaddr *, void *, int);
 #endif
 
 /* sysctl variables */
-int esp_enable = 0;
-int ah_enable = 0;
+int esp_enable = 1;
+int ah_enable = 1;
 int ipcomp_enable = 0;
 
 #ifdef INET6
