@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_ieee.h,v 1.2 2001/06/07 04:58:20 mickey Exp $	*/
+/*	$OpenBSD: if_wi_ieee.h,v 1.3 2001/06/07 18:51:59 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -162,11 +162,11 @@ struct wi_counters {
 
 #define WI_RID_DNLD_BUF		0xFD01
 #define WI_RID_MEMSZ		0xFD02
-#define WI_RID_DOMAINS		0xFD11
-#define WI_RID_CIS		0xFD13
-#define WI_RID_COMMQUAL		0xFD43
-#define WI_RID_SCALETHRESH	0xFD46
-#define WI_RID_PCF		0xFD87
+#define WI_RID_DOMAINS		0xFD11 /* List of intended regulatory domains */
+#define WI_RID_CIS		0xFD13 /* CIS info */
+#define WI_RID_COMMQUAL		0xFD43 /* Communications quality */
+#define WI_RID_SCALETHRESH	0xFD46 /* Actual system scale thresholds */
+#define WI_RID_PCF		0xFD87 /* PCF info */
 
 /*
  * Network parameters, static configuration entities.
@@ -199,20 +199,20 @@ struct wi_counters {
 #define	WI_RID_P2_TX_CRYPT_KEY	0xFC23
 #define	WI_RID_P2_CRYPT_KEY0	0xFC24
 #define	WI_RID_P2_CRYPT_KEY1	0xFC25
-#define	WI_RID_MICROWAVE_OVEN	0xFC25
+#define	WI_RID_MICROWAVE_OVEN	0xFC25 /* Microwave oven robustness */
 #define	WI_RID_P2_CRYPT_KEY2	0xFC26
 #define	WI_RID_P2_CRYPT_KEY3	0xFC27
 #define	WI_RID_P2_ENCRYPTION	0xFC28
 #define	WI_RID_WEP_MAPTABLE	0xFC29
 #define	WI_RID_AUTH_CNTL	0xFC2A
-#define	WI_RID_ROAMING_MODE	0xFC2D
+#define	WI_RID_ROAMING_MODE	0xFC2D /* Roaming mode (1:firm,3:disable) */
 #define	WI_RID_BASIC_RATE	0xFCB3
 #define	WI_RID_SUPPORT_RATE	0xFCB4
 
 /*
  * Network parameters, dynamic configuration entities
  */
-#define WI_RID_MCAST_LIST	0xFC80 /* list of multicast addrs */
+#define WI_RID_MCAST_LIST	0xFC80 /* list of multicast addrs (up to 16) */
 #define WI_RID_CREATE_IBSS	0xFC81 /* create IBSS */
 #define WI_RID_FRAG_THRESH	0xFC82 /* frag len, unicast msg xmit */
 #define WI_RID_RTS_THRESH	0xFC83 /* frame len for RTS/CTS handshake */
@@ -241,7 +241,7 @@ struct wi_counters {
 #define WI_RID_TX_RATE6		0xFCA4
 #define WI_RID_DEFLT_CRYPT_KEYS	0xFCB0
 #define WI_RID_TX_CRYPT_KEY	0xFCB1
-#define WI_RID_TICK_TIME	0xFCE0
+#define WI_RID_TICK_TIME	0xFCE0 /* Auxiliary Timer tick interval */
 #define WI_RID_SCAN_REQ		0xFCE1
 #define WI_RID_JOIN_REQ		0xFCE2
 
@@ -270,7 +270,7 @@ struct wi_ltv_keys {
 #define WI_RID_REG_DOMAINS	0xFD11 /* list of intendted regulatory doms */
 #define WI_RID_TEMP_TYPE	0xFD12 /* hw temp range code */
 #define WI_RID_CIS		0xFD13 /* PC card info struct */
-#define WI_RID_STA_IDENEITY	0xFD20 /* station funcs firmware ident */
+#define WI_RID_STA_IDENTITY	0xFD20 /* station funcs firmware ident */
 #define WI_RID_STA_SUP_RANGE	0xFD21 /* station supplier compat */
 #define WI_RID_MFI_ACT_RANGE	0xFD22
 #define WI_RID_CFI_ACT_RANGE	0xFD33

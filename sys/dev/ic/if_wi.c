@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.4 2001/06/07 06:04:45 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.5 2001/06/07 18:51:59 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -120,7 +120,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.4 2001/06/07 06:04:45 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.5 2001/06/07 18:51:59 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -894,7 +894,7 @@ wi_setmulti(sc)
 
 	bzero((char *)&mcast, sizeof(mcast));
 
-	mcast.wi_type = WI_RID_MCAST;
+	mcast.wi_type = WI_RID_MCAST_LIST;
 	mcast.wi_len = ((ETHER_ADDR_LEN / 2) * 16) + 1;
 
 	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
@@ -1474,7 +1474,7 @@ wi_get_id(sc)
 
 	/* getting chip identity */
 	memset(&ver, 0, sizeof(ver));
-	ver.wi_type = WI_RID_CARDID;
+	ver.wi_type = WI_RID_CARD_ID;
 	ver.wi_len = 5;
 	wi_read_record(sc, (struct wi_ltv_gen *)&ver);
 	switch (letoh16(ver.wi_ver[0])) {
@@ -1519,7 +1519,7 @@ wi_get_id(sc)
 	if (sc->sc_prism2) {
 		/* try to get prism2 firmware version */
 		memset(&ver, 0, sizeof(ver));
-		ver.wi_type = WI_RID_IDENT;
+		ver.wi_type = WI_RID_STA_IDENTITY;
 		ver.wi_len = 5;
 		wi_read_record(sc, (struct wi_ltv_gen *)&ver);
 		ver.wi_ver[1] = letoh16(ver.wi_ver[1]);
