@@ -23,7 +23,7 @@ documentation and/or software.
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: md5c.c,v 1.6 1996/12/04 02:31:57 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: md5c.c,v 1.7 1997/01/06 00:18:23 niklas Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
@@ -58,7 +58,7 @@ static void MD5Transform __P ((u_int32_t [4], const unsigned char [64]));
 #define Encode memcpy
 #define Decode memcpy
 #else /* BIG_ENDIAN */
-static void Encode __P((void *, void *, size_t));
+static void Encode __P((void *, const void *, size_t));
 static void Decode __P((void *, const void *, size_t));
 #endif /* LITTLE_ENDIAN */
 
@@ -107,14 +107,14 @@ Rotation is separate from addition to prevent recomputation.
 /* Encodes input (u_int32_t) into output (unsigned char). Assumes len is
   a multiple of 4.
  */
-static void Encode (in, out, len)
+static void Encode (out, in, len)
 void *out;
-void *in;
+const void *in;
 size_t len;
 {
   unsigned char *output = out;
   size_t i, j;
-  u_int32_t *input = in;
+  const u_int32_t *input = in;
 
   for (i = 0, j = 0; j < len; i++, j += 4) {
     output[j] = (unsigned char)(input[i] & 0xff);
@@ -170,7 +170,7 @@ size_t inputLen;                     /* length of input block */
   index = (unsigned int)((context->count >> 3) & 0x3F);
 
   /* Update number of bits */
-  context->count += (inputLen << 3);
+  context->count += ((u_int64_t)inputLen << 3);
 
   partLen = 64 - index;
 
@@ -203,7 +203,8 @@ MD5_CTX *context;                                       /* context */
   size_t padLen;
 
   /* Save number of bits */
-  Encode (bits, &context->count, 8);
+  Encode (bits, ((void *)&context->count) + 4, 4);
+  Encode (bits + 4, &context->count, 4);
 
   /* Pad out to 56 mod 64. */
   index = (unsigned int)((context->count >> 3) & 0x3f);
