@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rlreg.h,v 1.10 1999/12/14 22:34:45 jason Exp $	*/
+/*	$OpenBSD: if_rlreg.h,v 1.11 2001/02/03 05:46:17 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -367,6 +367,7 @@ struct rl_softc {
 	u_int8_t		rl_type;
 	int			rl_txthresh;
 	struct rl_chain_data	rl_cdata;
+	struct timeout		sc_tick_tmo;
 };
 
 /*

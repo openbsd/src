@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl.c,v 1.22 2000/10/16 17:08:08 aaron Exp $	*/
+/*	$OpenBSD: if_rl.c,v 1.23 2001/02/03 05:46:17 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -95,6 +95,7 @@
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/device.h>
+#include <sys/timeout.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -1065,7 +1066,8 @@ void rl_init(xsc)
 
 	(void)splx(s);
 
-	timeout(rl_tick, sc, hz);
+	timeout_set(&sc->sc_tick_tmo, rl_tick, sc);
+	timeout_add(&sc->sc_tick_tmo, hz);
 
 	return;
 }
@@ -1195,7 +1197,7 @@ void rl_stop(sc)
 	ifp = &sc->arpcom.ac_if;
 	ifp->if_timer = 0;
 
-	untimeout(rl_tick, sc);
+	timeout_del(&sc->sc_tick_tmo);
 
 	CSR_WRITE_1(sc, RL_COMMAND, 0x00);
 	CSR_WRITE_2(sc, RL_IMR, 0x0000);
@@ -1537,7 +1539,7 @@ rl_tick(v)
 	struct rl_softc *sc = v;
 
 	mii_tick(&sc->sc_mii);
-	timeout(rl_tick, sc, hz);
+	timeout_add(&sc->sc_tick_tmo, hz);
 }
 
 struct cfattach rl_ca = {
