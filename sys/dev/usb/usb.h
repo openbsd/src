@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.h,v 1.18 2002/05/09 15:06:29 nate Exp $ */
+/*	$OpenBSD: usb.h,v 1.19 2002/06/11 03:47:29 nate Exp $ */
 /*	$NetBSD: usb.h,v 1.52 2001/07/23 15:17:50 nathanw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
@@ -65,6 +65,8 @@ MALLOC_DECLARE(M_USBHC);
 #endif /* KERNEL */
 #endif /* __FreeBSD__ */
 
+
+#define USB_STACK_VERSION 2
 
 #define USB_MAX_DEVICES 128
 #define USB_START_ADDR 0
