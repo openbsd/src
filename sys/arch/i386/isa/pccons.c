@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.22 1996/08/10 21:28:20 tholo Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.23 1996/08/27 07:32:04 deraadt Exp $	*/
 /*	$NetBSD: pccons.c,v 1.99.4.1 1996/06/04 20:03:53 cgd Exp $	*/
 
 /*-
@@ -431,8 +431,9 @@ pcprobe(parent, match, aux)
 	kbd_flush_input();
 	/* Reset the keyboard. */
 	if (!kbd_cmd(KBC_RESET, 1)) {
+#ifdef DIAGNOSTIC
 		printf("pcprobe: reset error %d\n", 1);
-		goto lose;
+#endif
 	}
 	for (i = 600000; i; i--)
 		if ((inb(KBSTATP) & KBS_DIB) != 0) {
@@ -440,8 +441,9 @@ pcprobe(parent, match, aux)
 			break;
 		}
 	if (i == 0 || inb(KBDATAP) != KBR_RSTDONE) {
+#ifdef DIAGNOSTIC
 		printf("pcprobe: reset error %d\n", 2);
-		goto lose;
+#endif
 	}
 	/*
 	 * Some keyboards seem to leave a second ack byte after the reset.
