@@ -13,7 +13,7 @@ Functions for reading the configuration file.
 
 */
 
-/* RCSID("$Id: readconf.h,v 1.8 1999/11/10 23:36:44 markus Exp $"); */
+/* RCSID("$Id: readconf.h,v 1.9 1999/11/14 21:45:07 markus Exp $"); */
 
 #ifndef READCONF_H
 #define READCONF_H
@@ -92,8 +92,9 @@ void initialize_options(Options *options);
 void fill_default_options(Options *options);
 
 /* Processes a single option line as used in the configuration files. 
-   This only sets those values that have not already been set. */
-void process_config_line(Options *options, const char *host,
+   This only sets those values that have not already been set.
+   Returns 0 for legal options */
+int process_config_line(Options *options, const char *host,
 			 char *line, const char *filename, int linenum,
 			 int *activep);
 
