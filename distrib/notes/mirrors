@@ -2,7 +2,7 @@ This is a list of currently known ftp servers:
 
 Germany:
 
-ftp://ftp.fu-berlin.de/pub/unix/openbsd/mirrors/OpenBSD ==
+ftp://ftp.fu-berlin.de/unix/OpenBSD ==
 	ftp://ftp.de.openbsd.org/pub/unix/openbsd/mirrors/OpenBSD
 
 Japan:
