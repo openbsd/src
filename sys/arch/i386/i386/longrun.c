@@ -1,4 +1,4 @@
-/* $OpenBSD: longrun.c,v 1.1 2003/05/14 22:08:04 tedu Exp $ */
+/* $OpenBSD: longrun.c,v 1.2 2003/05/26 08:30:03 tedu Exp $ */
 /*
  * Copyright (c) 2003 Ted Unangst
  * Copyright (c) 2001 Tamotsu Hattori
@@ -46,6 +46,9 @@ union msrinfo {
 	uint32_t regs[2];
 };
 
+/*
+ * Crusoe model specific registers which interest us.
+ */
 #define MSR_TMx86_LONGRUN       0x80868010
 #define MSR_TMx86_LONGRUN_FLAGS 0x80868011
 
@@ -58,25 +61,46 @@ union msrinfo {
 #define write_eflags(x)         ({register u_long ef = (x); \
                                   __asm("pushl %0; popfl" : : "r" (ef));})
 
-/* sysctl handler and entry point.  Just call the right function */
+/* 
+ * sysctl handler and entry point.  Just call the right function
+ */
 int longrun_sysctl(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 {
-	struct longrun *oinfo = oldp;
-	struct longrun *ninfo = newp;
+	struct longrun oinfo;
+	struct longrun ninfo;
+	int error;
 
 	if (!longrun_enabled)
 		return (EINVAL);
 
-	if (ninfo != NULL)
-		longrun_setmode(ninfo->low, ninfo->high, ninfo->mode);
-	
-	if (oinfo != NULL)
-		longrun_getmode(&oinfo->freq, &oinfo->voltage, &oinfo->percent);
+	if (oldp && *oldlenp < sizeof(oinfo))
+		return (ENOMEM);
+	*oldlenp = sizeof(oinfo);
 
-	return (0);
+	if (newp != NULL) {
+		error = copyin(newp, &ninfo, sizeof(ninfo));
+		if (error)
+			return (error);
+		longrun_setmode(ninfo.low, ninfo.high, ninfo.mode);
+	}
+	
+	if (oldp != NULL) {
+		memset(&oinfo, 0, sizeof(oinfo));
+		longrun_getmode(&oinfo.freq, &oinfo.voltage, &oinfo.percent);
+		error = copyout(&oinfo, oldp, sizeof(oinfo));
+	}
+
+	return (error);
 
 }
 
+/*
+ * These are the instantaneous values used by the CPU.
+ * Frequency is self-evident.
+ * Voltage is returned in millivolts.
+ * Percent is amount of performance window being used, not percentage
+ * of top megahertz.  (0 values are typical.)
+ */
 static void
 longrun_getmode(u_int32_t *freq, u_int32_t *voltage, u_int32_t *percent)
 {
@@ -95,28 +119,39 @@ longrun_getmode(u_int32_t *freq, u_int32_t *voltage, u_int32_t *percent)
 	write_eflags(eflags);
 }
 
+/*
+ * Get the info.  Multiple return values
+ */
 static void
-longrun_readreg(u_int ax, u_int * p)
+longrun_readreg(u_int32_t ax, u_int32_t *regs)
 {
 	__asm __volatile(
 	".byte	0x0f, 0xa2;"
-	"movl	%%eax, (%2);"
+	"movl	%%eax, 0(%2);"
 	"movl	%%ebx, 4(%2);"
 	"movl	%%ecx, 8(%2);"
 	"movl	%%edx, 12(%2);"
 	:"=a"(ax)
-	:"0"(ax), "S"(p)
+	:"0"(ax), "S"(regs)
 	:"bx", "cx", "dx"
 	);
 }
 
+/*
+ * Transmeta documentation says performance window boundries
+ * must be between 0 and 100 or a GP0 exception is generated.
+ * mode is really only a bit, 0 or 1
+ * These values will be rounded by the CPU to within the
+ * limits it handles.  Typically, there are about 5 performance
+ * levels selectable.
+ */
 static void 
 longrun_setmode(u_int32_t low, u_int32_t high, u_int32_t mode)
 {
  	u_long		eflags;
  	union msrinfo	msrinfo;
 
-	if (low < 0 || low > 100 || high < 0 || high > 100)
+	if (low > 100 || high > 100 || low > high)
 		return;
 	if (mode != 0 && mode != 1)
 		return;
@@ -127,7 +162,7 @@ longrun_setmode(u_int32_t low, u_int32_t high, u_int32_t mode)
 	msrinfo.regs[0] = LONGRUN_MODE_WRITE(msrinfo.regs[0], low);
 	msrinfo.regs[1] = LONGRUN_MODE_WRITE(msrinfo.regs[1], high);
 	wrmsr(MSR_TMx86_LONGRUN, msrinfo.msr);
-	
+
 	msrinfo.msr = rdmsr(MSR_TMx86_LONGRUN_FLAGS);
 	msrinfo.regs[0] = (msrinfo.regs[0] & ~0x01) | mode;
 	wrmsr(MSR_TMx86_LONGRUN_FLAGS, msrinfo.msr);
