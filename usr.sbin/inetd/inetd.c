@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.38 1997/08/29 17:07:04 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.39 1997/08/31 18:04:37 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.38 1997/08/29 17:07:04 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.39 1997/08/31 18:04:37 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -187,7 +187,7 @@ int	options;
 int	timingout;
 struct	servent *sp;
 char	*curdom;
-int	uid;
+uid_t	uid;
 
 #ifndef OPEN_MAX
 #define OPEN_MAX	64
@@ -300,9 +300,9 @@ main(argc, argv, envp)
 	register struct group *grp = NULL;
 	register int tmpint;
 	struct sigvec sv;
-	int ch, pid, dofork, plen;
+	int ch, dofork;
+	pid_t pid;
 	char buf[50];
-	struct sockaddr_in peer;
 
 	Argv = argv;
 	if (envp == 0 || *envp == 0)
@@ -424,17 +424,22 @@ main(argc, argv, envp)
 				    sep->se_service);
 				continue;
 			}
-			plen = sizeof(peer);
-			if (getpeername(ctrl, (struct sockaddr *)&peer,
-			    &plen) < 0) {
-				syslog(LOG_WARNING, "could not getpeername");
-				close(ctrl);
-				continue;
-			}
-			if (ntohs(peer.sin_port) == 20) {
-				/* XXX ftp bounce */
-				close(ctrl);
-				continue;
+			if (sep->se_family == AF_INET &&
+			    sep->se_socktype == SOCK_STREAM) {
+				struct sockaddr_in peer;
+				int plen = sizeof(peer);
+
+				if (getpeername(ctrl, (struct sockaddr *)&peer,
+				    &plen) < 0) {
+					syslog(LOG_WARNING, "could not getpeername");
+					close(ctrl);
+					continue;
+				}
+				if (ntohs(peer.sin_port) == 20) {
+					/* XXX ftp bounce */
+					close(ctrl);
+					continue;
+				}
 			}
 		} else
 			ctrl = sep->se_fd;
@@ -453,6 +458,20 @@ main(argc, argv, envp)
 					sep->se_time = now;
 					sep->se_count = 1;
 				} else {
+					if (!sep->se_wait &&
+					    sep->se_socktype == SOCK_STREAM)
+						close(ctrl);
+					if (sep->se_family == AF_INET &&
+					    ntohs(sep->se_ctrladdr_in.sin_port) >=
+					    IPPORT_RESERVED) {
+						/*
+						 * Cannot close it -- there are
+						 * thieves on the system.
+						 * Simply ignore the connection.
+						 */
+						--sep->se_count;
+						continue;
+					}
 					syslog(LOG_ERR,
 			"%s/%s server failing (looping), service terminated",
 					    sep->se_service, sep->se_proto);
@@ -473,7 +492,7 @@ main(argc, argv, envp)
 		}
 		if (pid < 0) {
 			syslog(LOG_ERR, "fork: %m");
-			if (sep->se_socktype == SOCK_STREAM)
+			if (!sep->se_wait && sep->se_socktype == SOCK_STREAM)
 				close(ctrl);
 			sigsetmask(0L);
 			sleep(1);
@@ -577,9 +596,8 @@ void
 reapchild(sig)
 	int sig;
 {
-	int status;
-	int pid;
-	int save_errno = errno;
+	pid_t pid;
+	int save_errno = errno, status;
 	register struct servtab *sep;
 
 	for (;;) {
