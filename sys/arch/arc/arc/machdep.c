@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.10 1996/09/05 08:04:14 pefo Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.11 1996/09/06 04:57:52 imp Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.10 1996/09/05 08:04:14 pefo Exp $
+ *      $Id: machdep.c,v 1.11 1996/09/06 04:57:52 imp Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -90,6 +90,7 @@
 #include <dev/cons.h>
 
 #include <arc/arc/arctype.h>
+#include <arc/arc/arcbios.h>
 #include <arc/pica/pica.h>
 #include <arc/dti/desktech.h>
 
@@ -184,9 +185,8 @@ mips_init(argc, argv, code)
 	v = (caddr_t)mips_round_page(end);
 	bzero(edata, v - edata);
 
-	cputype = ACER_PICA_61; /* FIXME find systemtype */
-
-	cputype = DESKSTATION_TYNE; /* FIXME find systemtype */
+    /* Initialize the CPU type */
+    bios_ident();
 
 	/*
 	 * Get config register now as mapped from BIOS since we are

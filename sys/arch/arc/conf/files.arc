@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arc,v 1.2 1996/06/24 20:05:35 pefo Exp $
+#	$OpenBSD: files.arc,v 1.3 1996/09/06 04:57:50 imp Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -22,6 +22,8 @@ file	arch/arc/arc/process_machdep.c
 file	arch/arc/arc/sys_machdep.c
 file	arch/arc/arc/trap.c
 file	arch/arc/arc/vm_machdep.c
+
+file	arch/arc/arc/arcbios.c
 
 #
 #	Machine-independent ATAPI drivers 
