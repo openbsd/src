@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootparamd.c,v 1.12 2002/06/11 18:49:18 hin Exp $	*/
+/*	$OpenBSD: bootparamd.c,v 1.13 2002/07/14 03:53:05 deraadt Exp $	*/
 
 /*
  * This code is not copyright, and is placed in the public domain.
@@ -32,18 +32,18 @@
 #define MAXLEN 800
 
 struct hostent *he;
-static char buffer[MAXLEN];
 static char hostname[MAX_MACHINE_NAME];
 static char askname[MAX_MACHINE_NAME];
-static char path[MAX_PATH_LEN];
 static char domain_name[MAX_MACHINE_NAME];
 
 extern void bootparamprog_1(struct svc_req *, SVCXPRT *);
+int lookup_bootparam(char *client, char *client_canonical, char *id,
+    char **server, char **path);
 
 int	_rpcsvcdirty = 0;
 int	_rpcpmstart = 0;
-int     debug = 0;
-int     dolog = 0;
+int	debug = 0;
+int	dolog = 0;
 in_addr_t route_addr;
 in_addr_t inet_addr();
 struct sockaddr_in my_addr;
@@ -54,7 +54,7 @@ extern char *optarg;
 extern int optind;
 
 void
-usage()
+usage(void)
 {
 	fprintf(stderr,
 	    "usage: rpc.bootparamd [-d] [-s] [-r router] [-f bootparmsfile]\n");
@@ -66,13 +66,11 @@ usage()
  * ever familiar
  */
 int
-main(argc, argv)
-	int     argc;
-	char  **argv;
+main(int argc, char *argv[])
 {
-	SVCXPRT *transp;
 	struct hostent *he;
 	struct stat buf;
+	SVCXPRT *transp;
 	int    c;
 
 	while ((c = getopt(argc, argv, "dsr:f:")) != -1)
@@ -128,7 +126,7 @@ main(argc, argv)
 
 	if (!svc_register(transp, BOOTPARAMPROG, BOOTPARAMVERS, bootparamprog_1,
 	    IPPROTO_UDP))
-		errx(1, "unable to register BOOTPARAMPROG version %d, udp",
+		errx(1, "unable to register BOOTPARAMPROG version %ld, udp",
 		    BOOTPARAMVERS);
 
 	svc_run();
@@ -136,9 +134,7 @@ main(argc, argv)
 }
 
 bp_whoami_res *
-bootparamproc_whoami_1_svc(whoami, rqstp)
-	bp_whoami_arg *whoami;
-	struct svc_req *rqstp;
+bootparamproc_whoami_1_svc(bp_whoami_arg *whoami, struct svc_req *rqstp)
 {
 	in_addr_t haddr;
 	static bp_whoami_res res;
@@ -156,8 +152,8 @@ bootparamproc_whoami_1_svc(whoami, rqstp)
 		    255 & whoami->client_address.bp_address_u.ip_addr.lh,
 		    255 & whoami->client_address.bp_address_u.ip_addr.impno);
 
-	bcopy((char *) &whoami->client_address.bp_address_u.ip_addr, (char *) &haddr,
-	    sizeof(haddr));
+	bcopy((char *) &whoami->client_address.bp_address_u.ip_addr,
+	    &haddr, sizeof(haddr));
 	he = gethostbyaddr((char *) &haddr, sizeof(haddr), AF_INET);
 	if (!he)
 		goto failed;
@@ -167,8 +163,7 @@ bootparamproc_whoami_1_svc(whoami, rqstp)
 	if (dolog)
 		syslog(LOG_NOTICE, "This is host %s", he->h_name);
 
-	strncpy(askname, he->h_name, sizeof askname-1);
-	askname[sizeof askname-1] = '\0';
+	strlcpy(askname, he->h_name, sizeof askname);
 	if (!lookup_bootparam(askname, hostname, NULL, NULL, NULL)) {
 		res.client_name = hostname;
 		getdomainname(domain_name, MAX_MACHINE_NAME);
@@ -176,7 +171,8 @@ bootparamproc_whoami_1_svc(whoami, rqstp)
 
 		if (res.router_address.address_type != IP_ADDR_TYPE) {
 			res.router_address.address_type = IP_ADDR_TYPE;
-			bcopy(&route_addr, &res.router_address.bp_address_u.ip_addr, 4);
+			bcopy(&route_addr,
+			    &res.router_address.bp_address_u.ip_addr, 4);
 		}
 		if (debug)
 			warnx("Returning %s   %s    %d.%d.%d.%d",
@@ -192,7 +188,6 @@ bootparamproc_whoami_1_svc(whoami, rqstp)
 			    255 & res.router_address.bp_address_u.ip_addr.host,
 			    255 & res.router_address.bp_address_u.ip_addr.lh,
 			    255 & res.router_address.bp_address_u.ip_addr.impno);
-
 		return (&res);
 	}
 failed:
@@ -205,19 +200,18 @@ failed:
 
 
 bp_getfile_res *
-bootparamproc_getfile_1_svc(getfile, rqstp)
-	bp_getfile_arg *getfile;
-	struct svc_req *rqstp;
+bootparamproc_getfile_1_svc(bp_getfile_arg *getfile, struct svc_req *rqstp)
 {
 	static bp_getfile_res res;
-	int     err;
+	int err;
 
 	if (debug)
 		warnx("getfile got question for \"%s\" and file \"%s\"",
 		    getfile->client_name, getfile->file_id);
 
 	if (dolog)
-		syslog(LOG_NOTICE, "getfile got question for \"%s\" and file \"%s\"",
+		syslog(LOG_NOTICE,
+		    "getfile got question for \"%s\" and file \"%s\"",
 		    getfile->client_name, getfile->file_id);
 
 	he = NULL;
@@ -225,8 +219,7 @@ bootparamproc_getfile_1_svc(getfile, rqstp)
 	if (!he)
 		goto failed;
 
-	strncpy(askname, he->h_name, sizeof askname-1);
-	askname[sizeof askname-1] = '\0';
+	strlcpy(askname, he->h_name, sizeof askname);
 	err = lookup_bootparam(askname, NULL, getfile->file_id,
 	    &res.server_name, &res.server_path);
 	if (err == 0) {
@@ -268,14 +261,9 @@ failed:
 	return (&res);
 }
 
-
 int
-lookup_bootparam(client, client_canonical, id, server, path)
-	char	*client;
-	char	*client_canonical;
-	char	*id;
-	char	**server;
-	char	**path;
+lookup_bootparam(char *client, char *client_canonical, char *id,
+    char **server, char **path)
 {
 	FILE   *f = fopen(bootpfile, "r");
 #ifdef YP
@@ -283,16 +271,16 @@ lookup_bootparam(client, client_canonical, id, server, path)
 	static int ypbuflen = 0;
 #endif
 	static char buf[BUFSIZ];
-	char   *bp, *word;
+	char   *bp, *word = NULL;
 	size_t  idlen = id == NULL ? 0 : strlen(id);
-	int     contin = 0;
-	int     found = 0;
+	int	contin = 0, found = 0;
 
 	if (f == NULL)
 		return EINVAL;	/* ? */
 
 	while (fgets(buf, sizeof buf, f)) {
-		int     wascontin = contin;
+		int	wascontin = contin;
+
 		contin = buf[strlen(buf) - 2] == '\\';
 		bp = buf + strspn(buf, " \t\n");
 
@@ -344,7 +332,7 @@ lookup_bootparam(client, client_canonical, id, server, path)
 		}
 
 		if (client_canonical)
-			strncpy(client_canonical, word, MAX_MACHINE_NAME);
+			strlcpy(client_canonical, word, MAX_MACHINE_NAME);
 
 		/* We have found a line for CLIENT */
 		if (id == NULL) {
