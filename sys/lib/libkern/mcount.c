@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcount.c,v 1.4 1997/11/07 15:56:45 niklas Exp $	*/
+/*	$OpenBSD: mcount.c,v 1.5 2000/02/22 13:46:54 art Exp $	*/
 /*	$NetBSD: mcount.c,v 1.3.6.1 1996/06/12 04:23:01 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mcount.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: mcount.c,v 1.4 1997/11/07 15:56:45 niklas Exp $";
+static char rcsid[] = "$OpenBSD: mcount.c,v 1.5 2000/02/22 13:46:54 art Exp $";
 #endif
 #endif
 
@@ -59,8 +59,12 @@ static char rcsid[] = "$OpenBSD: mcount.c,v 1.4 1997/11/07 15:56:45 niklas Exp $
  * Note: the original BSD code used the same variable (frompcindex) for
  * both frompcindex and frompc.  Any reasonable, modern compiler will
  * perform this optimization.
+ *
+ * XXX - the unused attribute is there because some archs define _mcount
+ *       as static and gcc doesn't check for function calls in assembler
+ *       stubs.
  */
-_MCOUNT_DECL(u_long frompc, u_long selfpc);
+_MCOUNT_DECL(u_long frompc, u_long selfpc) __attribute__((unused));
 _MCOUNT_DECL(frompc, selfpc)	/* _mcount; may be static, inline, etc */
 	register u_long frompc, selfpc;
 {
