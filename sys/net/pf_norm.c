@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.65 2003/07/09 22:09:20 itojun Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.66 2003/07/09 22:11:08 itojun Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -1131,6 +1131,8 @@ pf_normalize_ip6(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 		plen = ntohs(h->ip6_plen);
 	if (plen == 0)
 		goto drop;
+	if (sizeof(struct ip6_hdr) + plen < m->m_pkthdr.len)
+		goto shortpkt;
 
 	/* Enforce a minimum ttl, may cause endless packet loops */
 	if (r->min_ttl && h->ip6_hlim < r->min_ttl)
