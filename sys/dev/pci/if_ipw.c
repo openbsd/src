@@ -1,4 +1,4 @@
-/*	$Id: if_ipw.c,v 1.31 2004/12/05 19:39:22 damien Exp $  */
+/*	$Id: if_ipw.c,v 1.32 2004/12/05 19:54:03 damien Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -86,6 +86,7 @@ int ipw_media_change(struct ifnet *);
 void ipw_media_status(struct ifnet *, struct ifmediareq *);
 int ipw_newstate(struct ieee80211com *, enum ieee80211_state, int);
 u_int16_t ipw_read_prom_word(struct ipw_softc *, u_int8_t);
+void ipw_scan_result(struct ipw_softc *);
 void ipw_command_intr(struct ipw_softc *, struct ipw_soft_buf *);
 void ipw_newstate_intr(struct ipw_softc *, struct ipw_soft_buf *);
 void ipw_data_intr(struct ipw_softc *, struct ipw_status *,
@@ -735,6 +736,57 @@ ipw_read_prom_word(struct ipw_softc *sc, u_int8_t addr)
 }
 
 void
+ipw_scan_result(struct ipw_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_node *ni;
+	u_int32_t i, cnt, off;
+	struct ipw_node ap;
+
+	/* flush previously seen access points */
+	ieee80211_free_allnodes(ic);
+
+	cnt = ipw_read_table1(sc, IPW_INFO_APS_CNT);
+	off = ipw_read_table1(sc, IPW_INFO_APS_BASE);
+
+	DPRINTF(("Found %u APs\n", cnt));
+
+	for (i = 0; i < cnt; i++) {
+		ipw_read_mem_1(sc, off, (u_int8_t *)&ap, sizeof ap);
+		off += sizeof ap;
+
+#ifdef IPW_DEBUG
+		if (ipw_debug >= 2) {
+			u_char *p = (u_char *)&ap;
+			int j;
+
+			printf("AP%u\n", i);
+			for (j = 0; j < sizeof ap; j++)
+				printf("%02x", *p++);
+			printf("\n");
+		}
+#endif
+
+		ni = ieee80211_lookup_node(ic, ap.bssid,
+		    &ic->ic_channels[ap.chan]);
+		if (ni != NULL)
+			continue;
+
+		ni = ieee80211_alloc_node(ic, ap.bssid);
+		if (ni == NULL)
+			return;
+
+		IEEE80211_ADDR_COPY(ni->ni_bssid, ap.bssid);
+		ni->ni_rssi = ap.rssi;
+		ni->ni_intval = letoh16(ap.intval);
+		ni->ni_capinfo = letoh16(ap.capinfo);
+		ni->ni_chan = &ic->ic_channels[ap.chan];
+		ni->ni_esslen = ap.esslen;
+		bcopy(ap.essid, ni->ni_essid, IEEE80211_NWID_LEN);
+	}
+}
+
+void
 ipw_command_intr(struct ipw_softc *sc, struct ipw_soft_buf *sbuf)
 {
 	struct ipw_cmd *cmd;
@@ -773,6 +825,10 @@ ipw_newstate_intr(struct ipw_softc *sc, struct ipw_soft_buf *sbuf)
 		/* don't leave run state on background scan */
 		if (ic->ic_state != IEEE80211_S_RUN)
 			ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
+		break;
+
+	case IPW_STATE_SCAN_COMPLETE:
+		ipw_scan_result(sc);
 		break;
 
 	case IPW_STATE_ASSOCIATION_LOST:

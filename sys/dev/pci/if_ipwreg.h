@@ -1,4 +1,4 @@
-/*      $Id: if_ipwreg.h,v 1.8 2004/12/05 19:39:22 damien Exp $ */
+/*      $Id: if_ipwreg.h,v 1.9 2004/12/05 19:54:03 damien Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -97,6 +97,8 @@
 
 /* table1 offsets */
 #define IPW_INFO_LOCK			480
+#define IPW_INFO_APS_CNT		604
+#define IPW_INFO_APS_BASE		608
 #define IPW_INFO_CARD_DISABLED		628
 #define IPW_INFO_CURRENT_CHANNEL	756
 #define IPW_INFO_CURRENT_TX_RATE	768
@@ -250,6 +252,24 @@ struct ipw_configuration {
 #define IPW_CFG_IBSS_MASK	0x00010000
 	u_int32_t	bss_chan;
 	u_int32_t	ibss_chan;
+} __attribute__((__packed__));
+
+/* element in AP table */
+struct ipw_node {
+	u_int32_t	reserved1[2];
+	u_int8_t	bssid[IEEE80211_ADDR_LEN];
+	u_int8_t	chan;
+	u_int8_t	rates;
+	u_int16_t	reserved2;
+	u_int16_t	capinfo;
+	u_int16_t	reserved3;
+	u_int16_t	intval;
+	u_int8_t	reserved4[28];
+	u_int8_t	essid[IEEE80211_NWID_LEN];
+	u_int16_t	reserved5;
+	u_int8_t	esslen;
+	u_int8_t	reserved6[7];
+	u_int8_t	rssi;
 } __attribute__((__packed__));
 
 /* EEPROM = Electrically Erasable Programmable Read-Only Memory */
