@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.134 2003/04/06 22:50:37 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.135 2003/11/03 07:01:33 david Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -2702,7 +2702,7 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 #endif
 
 	/*
-	 * Intialize the kernel pmap.
+	 * Initialize the kernel pmap.
 	 */
 	/* kernel_pmap_store.pm_ctxnum = 0; */
 	simple_lock_init(&kernel_pmap_store.pm_lock);
@@ -3004,7 +3004,7 @@ pmap_bootstrap4m(void)
 #endif /* defined Sun4/Sun4c */
 
 	/*
-	 * Intialize the kernel pmap.
+	 * Initialize the kernel pmap.
 	 */
 	/* kernel_pmap_store.pm_ctxnum = 0; */
 	simple_lock_init(&kernel_pmap_store.pm_lock);

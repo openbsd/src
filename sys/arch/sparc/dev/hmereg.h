@@ -1,4 +1,4 @@
-/*	$OpenBSD: hmereg.h,v 1.9 2003/06/02 18:40:59 jason Exp $	*/
+/*	$OpenBSD: hmereg.h,v 1.10 2003/11/03 07:01:33 david Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -344,7 +344,7 @@ struct hme_rxd {
 };
 #define	HME_RXD_OWN		0x80000000	/* desc owner: 1=hw,0=sw */
 #define HME_RXD_OVERFLOW	0x40000000	/* 1 = buffer over flow */
-#define HME_RXD_SIZE		0x3fff0000	/* desciptor size */
+#define HME_RXD_SIZE		0x3fff0000	/* descriptor size */
 #define HME_RXD_CSUM		0x0000ffff	/* checksum mask */
 
 struct hme_txd {

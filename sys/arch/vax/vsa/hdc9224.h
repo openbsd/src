@@ -1,5 +1,5 @@
 /*	$NetBSD: hdc9224.h,v 1.1 1996/07/20 18:55:12 ragge Exp $ */
-/*	$OpenBSD: hdc9224.h,v 1.3 1998/05/11 07:34:51 niklas Exp $ */
+/*	$OpenBSD: hdc9224.h,v 1.4 2003/11/03 07:06:17 david Exp $ */
 
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -91,7 +91,7 @@ struct hdc9224_DKCreg {
 #define DKC_TC_DATAERR	(3<<3)		/* Error in DATA-TRANSFER seq. */
 
 /*
- * Definitions of delays neccessary for floppy-operation
+ * Definitions of delays necessary for floppy-operation
  */
 #define DKC_DELAY_MOTOR		500	/* allow 500 ms to reach speed */
 #define DKC_DELAY_SELECT	 70	/* 70 ms for data-recovery-circuit */

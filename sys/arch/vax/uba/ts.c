@@ -1,4 +1,4 @@
-/*	$OpenBSD: ts.c,v 1.13 2003/08/06 21:08:06 millert Exp $ */
+/*	$OpenBSD: ts.c,v 1.14 2003/11/03 07:06:17 david Exp $ */
 /*	$NetBSD: ts.c,v 1.11 1997/01/11 11:34:43 ragge Exp $ */
 
 /*-
@@ -224,7 +224,7 @@ struct	cfattach ts_ca = {
  * Since we don't have credits and thus only one operation per time,
  * we don't have and don't need queues like MSCP/TMSCP use them.
  * Per controller we only need one internal buffer for ioctls and 
- * two pointers to buffers to simulate similiar behaviour ...
+ * two pointers to buffers to simulate similar behaviour ...
  */
 struct buf	 ts_cbuf[NTS];		/* internal cmd buffer (for ioctls) */
 struct buf	*ts_wtab[NTS];		/* dummy I/O wait queue */

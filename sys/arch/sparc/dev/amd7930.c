@@ -1,4 +1,4 @@
-/*	$OpenBSD: amd7930.c,v 1.26 2003/06/28 20:53:02 deraadt Exp $	*/
+/*	$OpenBSD: amd7930.c,v 1.27 2003/11/03 07:01:33 david Exp $	*/
 /*	$NetBSD: amd7930.c,v 1.37 1998/03/30 14:23:40 pk Exp $	*/
 
 /*
@@ -68,7 +68,7 @@ struct amd7930_softc {
 	struct	intrhand sc_swih;	/* software interrupt vector */
 
 	int	sc_open;		/* single use device */
-	int	sc_locked;		/* true when transfering data */
+	int	sc_locked;		/* true when transferring data */
 	struct	mapreg sc_map;		/* current contents of map registers */
 
 	u_char	sc_rlevel;		/* record level */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuvar.h,v 1.8 2002/03/14 01:26:44 millert Exp $	*/
+/*	$OpenBSD: cpuvar.h,v 1.9 2003/11/03 07:01:33 david Exp $	*/
 /*	$NetBSD: cpuvar.h,v 1.4 1997/07/06 21:14:25 pk Exp $ */
 
 /*
@@ -81,7 +81,7 @@ struct module_info {
  * The cpu_softc structure. This structure maintains information about one
  * currently installed CPU (there may be several of these if the machine
  * supports multiple CPUs, as on some Sun4m architectures). The information
- * in this structure supercedes the old "cpumod", "mmumod", and similar
+ * in this structure supersedes the old "cpumod", "mmumod", and similar
  * fields.
  */
 

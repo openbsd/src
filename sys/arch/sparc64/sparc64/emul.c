@@ -1,4 +1,4 @@
-/*	$OpenBSD: emul.c,v 1.11 2003/07/14 00:05:35 jason Exp $	*/
+/*	$OpenBSD: emul.c,v 1.12 2003/11/03 07:01:33 david Exp $	*/
 /*	$NetBSD: emul.c,v 1.8 2001/06/29 23:58:40 eeh Exp $	*/
 
 /*-
@@ -507,7 +507,7 @@ emul_qf(int32_t insv, struct proc *p, union sigval sv, struct trapframe *tf)
 		addr += tf->tf_global[ins.i_asi.i_rs2];
 
 	if (asi < ASI_PRIMARY) {
-		/* priviledged asi */
+		/* privileged asi */
 		trapsignal(p, SIGILL, 0, ILL_PRVOPC, sv);
 		return (0);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.25 2003/06/03 17:16:33 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.26 2003/11/03 07:01:33 david Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -2646,7 +2646,7 @@ pmap_dumpmmu(dump, blkno)
 }
 
 /*
- * Determine (non)existance of physical page
+ * Determine (non)existence of physical page
  */
 int pmap_pa_exists(pa)
 paddr_t pa;
