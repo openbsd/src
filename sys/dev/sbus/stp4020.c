@@ -1,4 +1,4 @@
-/*	$OpenBSD: stp4020.c,v 1.7 2003/06/25 21:20:54 mickey Exp $	*/
+/*	$OpenBSD: stp4020.c,v 1.8 2003/06/25 22:33:18 mickey Exp $	*/
 /*	$NetBSD: stp4020.c,v 1.23 2002/06/01 23:51:03 lukem Exp $	*/
 
 /*-
@@ -706,21 +706,25 @@ stp4020_chip_socket_enable(pch)
 	/*
 	 * wait 100ms until power raise (Tpr) and 20ms to become
 	 * stable (Tsu(Vcc)).
+	 *
+	 * some machines require some more time to be settled
+	 * (another 200ms is added here).
 	 */
-	stp4020_delay((100 + 20) * 1000);
+	stp4020_delay((100 + 20 + 200) * 1000);
 
 	v |= STP4020_ICR1_PCIFOE | STP4020_ICR1_VPP1_VCC;
 	stp4020_wr_sockctl(h, STP4020_ICR1_IDX, v);
+	stp4020_wr_sockctl(h, STP4020_ICR0_IDX, 
+	    stp4020_rd_sockctl(h, STP4020_ICR0_IDX) | STP4020_ICR0_RESET);
 
 	/*
-	 * hold RESET at least 10us.
+	 * hold RESET at least 20us.
 	 */
-	delay(10);
+	delay(20);
 
 	/* Clear reset flag */
-	v = stp4020_rd_sockctl(h, STP4020_ICR0_IDX);
-	v &= ~STP4020_ICR0_RESET;
-	stp4020_wr_sockctl(h, STP4020_ICR0_IDX, v);
+	stp4020_wr_sockctl(h, STP4020_ICR0_IDX,
+	    stp4020_rd_sockctl(h, STP4020_ICR0_IDX) & ~STP4020_ICR0_RESET);
 
 	/* wait 20ms as per pc card standard (r2.01) section 4.3.6 */
 	stp4020_delay(20000);
