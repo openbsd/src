@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.5 2004/01/15 20:10:43 canacar Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.6 2004/01/18 14:21:52 canacar Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -141,9 +141,10 @@ priv_init(void)
 		case PRIV_OPEN_LOG:
 			logmsg(LOG_DEBUG,
 			    "[priv]: msg PRIV_OPEN_LOG received");
-
-			/* XXX */
-			fd = open(filename, O_RDWR|O_APPEND|O_NONBLOCK, 0);
+			/* create or append logs but do not follow symlinks */
+			fd = open(filename,
+			    O_RDWR|O_CREAT|O_APPEND|O_NONBLOCK|O_NOFOLLOW,
+			    0600);
 			if (fd < 0)
 				logmsg(LOG_NOTICE,
 				    "[priv]: failed to open %s: %s",
