@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux.h,v 1.12 2004/07/10 06:11:20 deraadt Exp $	*/
+/*	$OpenBSD: hpux.h,v 1.13 2004/07/11 01:15:51 mickey Exp $	*/
 /*	$NetBSD: hpux.h,v 1.11 1997/04/01 19:58:58 scottr Exp $	*/
 
 /*
@@ -93,39 +93,72 @@ struct hpux_sgttyb {
 #define bsdtohpuxdev(d)	((major(d) << 24) | minor(d))
 
 struct	hpux_stat {
-	long		hst_dev;
-	u_long		hst_ino;
+	int		hst_dev;
+	u_int		hst_ino;
 	u_short		hst_mode;
 	short		hst_nlink;
 	u_short		hst_old_uid;	/* these have since moved */
 	u_short		hst_old_gid;	/* ... */
-	long		hst_rdev;
-	long		hst_size;
-	long		hst_atime;
+	int		hst_rdev;
+	int		hst_size;
+	int		hst_atime;
 	int		hst_spare1;
-	long		hst_mtime;
+	int		hst_mtime;
 	int		hst_spare2;
-	long		hst_ctime;
+	int		hst_ctime;
 	int		hst_spare3;
-	long		hst_blksize;
-	long		hst_blocks;
+	int		hst_blksize;
+	int		hst_blocks;
 	u_int		hst_remote;
-	long		hst_netdev;
-	u_long		hst_netino;
+	int		hst_netdev;
+	u_int		hst_netino;
 	u_short		hst_cnode;
 	u_short		hst_rcnode;
 	u_short		hst_netsite;
 	short		hst_fstype;
-	long		hst_realdev;
+	int		hst_realdev;
 	u_short		hst_basemode;
 	u_short		hst_spareshort1;
-	long		hst_uid;
-	long		hst_gid;
-	long		hst_spare4[3];
+	int		hst_uid;
+	int		hst_gid;
+	int		hst_spare4[3];
+};
+
+struct	hpux_stat64 {
+	int		hst_dev;
+	u_quad_t	hst_ino;
+	u_short		hst_mode;
+	short		hst_nlink;
+	u_short		hst_old_uid;	/* these have since moved */
+	u_short		hst_old_gid;	/* ... */
+	int		hst_rdev;
+	quad_t		hst_size;
+	quad_t		hst_atime;
+	int		hst_spare1;
+	quad_t		hst_mtime;
+	int		hst_spare2;
+	quad_t		hst_ctime;
+	int		hst_spare3;
+	quad_t		hst_blksize;
+	quad_t		hst_blocks;
+	u_int		hst_remote;
+	int		hst_netdev;
+	u_quad_t	hst_netino;
+	u_short		hst_cnode;
+	u_short		hst_rcnode;
+	u_short		hst_netsite;
+	short		hst_fstype;
+	int		hst_realdev;
+	u_short		hst_basemode;
+	u_short		hst_spareshort1;
+	int		hst_uid;
+	int		hst_gid;
+	int		hst_spare4[3];
 };
 
 #define	HST_REMOTE_REMOTE	0x01	/* set if file is remote */
 #define	HST_REMOTE_ACL		0x02	/* set if file has ACL entries */
+#define	HST_REMOTE_ACLV		0x04	/* set if file has ACL v2 entries */
 
 /* from old timeb.h */
 struct hpux_otimeb {
