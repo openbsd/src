@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.65 2001/01/30 00:00:33 aaron Exp $
+#	$OpenBSD: files.isa,v 1.66 2001/07/13 17:26:44 niklas Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -148,6 +148,10 @@ file	dev/isa/wt.c			wt needs-flag
 #
 # ISA networking drivers
 #
+
+# DEC EtherWORKS III (LEMAC-based: DE203, DE204, DE205) cards
+attach	lc at isa with lc_isa
+file	dev/isa/if_lc_isa.c		lc_isa
 
 # Novell NE1000, NE2000, and clones
 # Must be before the WD/SMC probe which it is hurt by.

@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.214 2001/07/05 17:52:45 deraadt Exp $
+#	$OpenBSD: files,v 1.215 2001/07/13 17:26:44 niklas Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -40,9 +40,9 @@ define	rasops32
 # and fddi.
 define	arc
 define	atm
+define	crypto
 define	ether
 define	fddi
-define	crypto
 define	sppp
 define	token
 
@@ -153,6 +153,10 @@ file	dev/ic/siop.c			siop
 # 3Com Etherlink-III Ethernet controller
 device	ep: ether, ifnet, ifmedia, mii
 file	dev/ic/elink3.c		ep
+
+# LEMAC-based cards
+device	lc: ether, ifnet, ifmedia
+file	dev/ic/lemac.c		lc
 
 # WaveLan
 device	wi: ether, ifnet, ifmedia
