@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_i386.c,v 1.22 1999/08/25 00:54:19 mickey Exp $	*/
+/*	$OpenBSD: dev_i386.c,v 1.23 2000/06/08 01:51:32 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 Michael Shalayeff
@@ -187,4 +187,15 @@ ttydev(name)
 		if (strncmp(name, cdevs[i], no - name + 1) == 0)
 			return (makedev(i, unit));
 	return (NODEV);
+}
+
+int
+cnspeed(dev, sp)
+	dev_t	dev;
+	int	sp;
+{
+	if (major(dev) == 8)	/* comN */
+		return comspeed(dev, sp);
+	/* pc0 and anything else */
+	return 9600;
 }
