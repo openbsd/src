@@ -1,4 +1,4 @@
-/*	$OpenBSD: amphy.c,v 1.4 2002/04/17 19:30:26 jason Exp $	*/
+/*	$OpenBSD: amphy.c,v 1.5 2004/08/06 09:57:16 pefo Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -87,6 +87,9 @@ amphymatch(parent, match, aux)
 	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_DAVICOM &&
 	    MII_MODEL(ma->mii_id2) == MII_MODEL_DAVICOM_DM9102)
 		return(10);
+	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxALTIMA &&	/*XXX*/
+	     MII_MODEL(ma->mii_id2) == MII_MODEL_AMD_79C875phy)
+		return(10);
 
 	return(0);
 }
@@ -100,8 +103,14 @@ amphyattach(parent, self, aux)
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 
-	printf(": %s, rev. %d\n", MII_STR_xxAMD_79C873,
-	    MII_REV(ma->mii_id2));
+	if ((MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxALTIMA &&	/*XXX*/
+	     MII_MODEL(ma->mii_id2) == MII_MODEL_AMD_79C875phy)) {
+		printf(": %s, rev. %d\n", MII_STR_AMD_79C875phy,
+		    MII_REV(ma->mii_id2));
+	} else {
+		printf(": %s, rev. %d\n", MII_STR_xxAMD_79C873,
+		    MII_REV(ma->mii_id2));
+	}
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
