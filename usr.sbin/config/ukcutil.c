@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukcutil.c,v 1.3 2000/08/08 21:42:40 deraadt Exp $ */
+/*	$OpenBSD: ukcutil.c,v 1.4 2001/01/15 23:53:34 maja Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ukcutil.c,v 1.3 2000/08/08 21:42:40 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ukcutil.c,v 1.4 2001/01/15 23:53:34 maja Exp $";
 #endif
 
 #include <sys/types.h>
@@ -91,10 +91,10 @@ more()
 			fflush(stdout);
 			ask_cmd(&cmd);
 			cnt = 0;
+			if (cmd.cmd[0] == 'q' || cmd.cmd[0] == 'Q')
+				quit = 1;
 		}
 		cnt++;
-		if (cmd.cmd[0] == 'q' || cmd.cmd[0] == 'Q')
-			quit = 1;
 	}
 	
 	return (quit);
