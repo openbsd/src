@@ -1,4 +1,4 @@
-.\"	$OpenBSD: conclusions.ms,v 1.3 2003/06/02 23:30:09 millert Exp $
+.\"	$OpenBSD: conclusions.ms,v 1.4 2003/10/30 14:52:24 jmc Exp $
 .\"
 .\" Copyright (c) 1983 The Regents of the University of California.
 .\" All rights reserved.
@@ -56,7 +56,7 @@ against the future value and expandability of newer technologies.
 Two important conclusions about storage systems in general
 can be drawn from these tests.
 The first is that buffering can be effective in smoothing
-the the effects of lower bus speeds and bus contention.
+the effects of lower bus speeds and bus contention.
 Even though the UDA50 is located on the relatively slow
 UNIBUS, its performance is similar to controllers located on
 the faster processor busses.

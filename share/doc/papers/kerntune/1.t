@@ -1,4 +1,4 @@
-.\"	$OpenBSD: 1.t,v 1.3 2003/06/02 23:30:09 millert Exp $
+.\"	$OpenBSD: 1.t,v 1.4 2003/10/30 14:52:24 jmc Exp $
 .\"
 .\" Copyright (c) 1984 M. K. McKusick
 .\" Copyright (c) 1984 The Regents of the University of California.
@@ -35,7 +35,7 @@
 Introduction
 .PP
 The purpose of this paper is to describe the tools and techniques 
-that are available for improving the performance of the the kernel.
+that are available for improving the performance of the kernel.
 The primary tool used to measure the kernel is the hierarchical
 profiler \fIgprof\fP.
 The profiler enables the user to measure the cost of

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tests.ms,v 1.3 2003/06/02 23:30:09 millert Exp $
+.\"	$OpenBSD: tests.ms,v 1.4 2003/10/30 14:52:24 jmc Exp $
 .\"
 .\" Copyright (c) 1983 The Regents of the University of California.
 .\" All rights reserved.
@@ -37,7 +37,7 @@ Our battery of tests consists of four programs,
 read_8192, write_8192, write_4096
 and rewrite_8192 originally written by [McKusick83]
 to evaluate the performance of the new file system in 4.2BSD.
-These programs all follow the the same model and are typified by
+These programs all follow the same model and are typified by
 read_8192 shown here.
 .DS
 #define	BUFSIZ 8192

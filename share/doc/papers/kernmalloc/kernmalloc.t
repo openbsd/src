@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kernmalloc.t,v 1.3 2003/06/02 23:30:09 millert Exp $
+.\"	$OpenBSD: kernmalloc.t,v 1.4 2003/10/30 14:52:24 jmc Exp $
 .\"
 .\" Copyright (c) 1988 The Regents of the University of California.
 .\" All rights reserved.
@@ -598,7 +598,7 @@ Two of the traditional UNIX
 memory allocators remain in the current system.
 The terminal subsystem uses \fIclist\fP\^s (character lists).
 That part of the system is expected to undergo major revision within
-the the next year or so, and it will probably be changed to use
+the next year or so, and it will probably be changed to use
 \fImbuf\fP\^s as it is merged into the network system.
 The other major allocator that remains is
 .RN getblk ,
