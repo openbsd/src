@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.4 2004/01/20 17:30:21 miod Exp $
+dnl	$OpenBSD: install,v 1.5 2004/01/20 17:33:20 miod Exp $
 OpenBSDInstallShortPrelude
 
 dnl XXX sync with reality!
@@ -42,7 +42,7 @@ OpenBSDInstallPart4({:-If you have MorphOS
 	partitions defined on the disk, these will usually show up as
 	partition 'h', 'i' and so on.
 
-	If the disk is parititioned using MBR, the bootloader is
+	If the disk is partitioned using MBR, the bootloader is
 	automatically installed. However because fdisk is not LBA
 	knowledgeable it may be necessary to run the 'b' command in
 	disklabel to allow OpenBSD to use the entire disk.

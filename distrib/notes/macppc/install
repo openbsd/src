@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.17 2004/01/20 17:31:54 miod Exp $
+dnl	$OpenBSD: install,v 1.18 2004/01/20 17:33:18 miod Exp $
 OpenBSDInstallShortPrelude
 
 Before you begin, you should decide if OpenBSD is to be installed
@@ -119,7 +119,7 @@ OpenBSDInstallPart4({:-If you have DOS or Linux
 	necessary copy 'ofwboot' from the installation media into
 	the first HFS(+) partition using MacOS or MacOS X.
 
-	If the disk is parititioned using MBR, the bootloader is
+	If the disk is partitioned using MBR, the bootloader is
 	automatically installed. However because fdisk is not LBA
 	knowledgeable it may be necessary to run the 'b' command in
 	disklabel to allow OpenBSD to use the entire disk.
