@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_sysent.c,v 1.14 2001/08/26 04:14:26 deraadt Exp $	*/
+/*	$OpenBSD: netbsd_sysent.c,v 1.15 2001/09/05 23:42:34 art Exp $	*/
 
 /*
  * System call switch table.
@@ -253,17 +253,22 @@ struct sysent netbsd_sysent[] = {
 	    sys_sigsuspend },			/* 111 = sigsuspend */
 	{ 2, s(struct compat_43_sys_sigstack_args),
 	    compat_43_sys_sigstack },		/* 112 = osigstack */
+#ifdef MSG_COMPAT
 	{ 3, s(struct compat_43_sys_recvmsg_args),
 	    compat_43_sys_recvmsg },		/* 113 = orecvmsg */
-	{ 3, s(struct compat_43_sys_sendmsg_args),
-	    compat_43_sys_sendmsg },		/* 114 = osendmsg */
-#ifdef TRACE
-	{ 2, s(struct sys_vtrace_args),
-	    sys_vtrace },			/* 115 = vtrace */
 #else
 	{ 0, 0,
-	    sys_nosys },			/* 115 = obsolete vtrace */
+	    sys_nosys },			/* 113 = obsolete orecvmsg */
 #endif
+#ifdef MSG_COMPAT
+	{ 3, s(struct compat_43_sys_sendmsg_args),
+	    compat_43_sys_sendmsg },		/* 114 = osendmsg */
+#else
+	{ 0, 0,
+	    sys_nosys },			/* 114 = obsolete orecvmsg */
+#endif
+	{ 0, 0,
+	    sys_nosys },			/* 115 = obsolete vtrace */
 	{ 2, s(struct sys_gettimeofday_args),
 	    sys_gettimeofday },			/* 116 = gettimeofday */
 	{ 2, s(struct sys_getrusage_args),
@@ -282,8 +287,13 @@ struct sysent netbsd_sysent[] = {
 	    sys_fchown },			/* 123 = fchown */
 	{ 2, s(struct sys_fchmod_args),
 	    sys_fchmod },			/* 124 = fchmod */
+#ifdef MSG_COMPAT
 	{ 6, s(struct compat_43_sys_recvfrom_args),
 	    compat_43_sys_recvfrom },		/* 125 = orecvfrom */
+#else
+	{ 0, 0,
+	    sys_nosys },			/* 125 = obsolete orecvfrom */
+#endif
 	{ 2, s(struct compat_43_sys_setreuid_args),
 	    compat_43_sys_setreuid },		/* 126 = osetreuid */
 	{ 2, s(struct compat_43_sys_setregid_args),
@@ -732,5 +742,21 @@ struct sysent netbsd_sysent[] = {
 	    netbsd_sys___getcwd },		/* 296 = __getcwd */
 	{ 0, 0,
 	    sys_nosys },			/* 297 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 298 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 299 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 300 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 301 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 302 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 303 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 304 = unimplemented */
+	{ 0, 0,
+	    sys_issetugid },			/* 305 = issetugid */
 };
 

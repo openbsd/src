@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_syscall.h,v 1.14 2001/08/26 04:14:26 deraadt Exp $	*/
+/*	$OpenBSD: netbsd_syscall.h,v 1.15 2001/09/05 23:42:34 art Exp $	*/
 
 /*
  * System call numbers.
@@ -331,12 +331,11 @@
 /* syscall: "orecvmsg" ret: "int" args: "int" "struct omsghdr *" "int" */
 #define	NETBSD_SYS_orecvmsg	113
 
+				/* 113 is obsolete orecvmsg */
 /* syscall: "osendmsg" ret: "int" args: "int" "caddr_t" "int" */
 #define	NETBSD_SYS_osendmsg	114
 
-/* syscall: "vtrace" ret: "int" args: "int" "int" */
-#define	NETBSD_SYS_vtrace	115
-
+				/* 114 is obsolete orecvmsg */
 				/* 115 is obsolete vtrace */
 /* syscall: "gettimeofday" ret: "int" args: "struct timeval *" "struct timezone *" */
 #define	NETBSD_SYS_gettimeofday	116
@@ -366,6 +365,7 @@
 /* syscall: "orecvfrom" ret: "int" args: "int" "caddr_t" "size_t" "int" "caddr_t" "int *" */
 #define	NETBSD_SYS_orecvfrom	125
 
+				/* 125 is obsolete orecvfrom */
 /* syscall: "osetreuid" ret: "int" args: "int" "int" */
 #define	NETBSD_SYS_osetreuid	126
 
@@ -629,7 +629,7 @@
 /* syscall: "minherit" ret: "int" args: "void *" "size_t" "int" */
 #define	NETBSD_SYS_minherit	273
 
-/* syscall: "lchmod" ret: "int" args: "const char *" "mode_t" */
+/* syscall: "lchmod" ret: "int" args: "const char *" "netbsd_mode_t" */
 #define	NETBSD_SYS_lchmod	274
 
 /* syscall: "lchown" ret: "int" args: "const char *" "uid_t" "gid_t" */
@@ -683,4 +683,7 @@
 /* syscall: "__getcwd" ret: "int" args: "char *" "size_t" */
 #define	NETBSD_SYS___getcwd	296
 
-#define	NETBSD_SYS_MAXSYSCALL	298
+/* syscall: "issetugid" ret: "int" args: */
+#define	NETBSD_SYS_issetugid	305
+
+#define	NETBSD_SYS_MAXSYSCALL	306

@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_syscallargs.h,v 1.14 2001/08/26 04:14:26 deraadt Exp $	*/
+/*	$OpenBSD: netbsd_syscallargs.h,v 1.15 2001/09/05 23:42:34 art Exp $	*/
 
 /*
  * System call argument lists.
@@ -187,7 +187,7 @@ struct netbsd_sys_getdents_args {
 
 struct netbsd_sys_lchmod_args {
 	syscallarg(const char *) path;
-	syscallarg(mode_t) mode;
+	syscallarg(netbsd_mode_t) mode;
 };
 
 struct netbsd_sys_lutimes_args {
@@ -371,10 +371,12 @@ int	compat_43_sys_sigblock	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_sigsetmask	__P((struct proc *, void *, register_t *));
 int	sys_sigsuspend	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_sigstack	__P((struct proc *, void *, register_t *));
+#ifdef MSG_COMPAT
 int	compat_43_sys_recvmsg	__P((struct proc *, void *, register_t *));
+#else
+#endif
+#ifdef MSG_COMPAT
 int	compat_43_sys_sendmsg	__P((struct proc *, void *, register_t *));
-#ifdef TRACE
-int	sys_vtrace	__P((struct proc *, void *, register_t *));
 #else
 #endif
 int	sys_gettimeofday	__P((struct proc *, void *, register_t *));
@@ -385,7 +387,10 @@ int	sys_writev	__P((struct proc *, void *, register_t *));
 int	sys_settimeofday	__P((struct proc *, void *, register_t *));
 int	sys_fchown	__P((struct proc *, void *, register_t *));
 int	sys_fchmod	__P((struct proc *, void *, register_t *));
+#ifdef MSG_COMPAT
 int	compat_43_sys_recvfrom	__P((struct proc *, void *, register_t *));
+#else
+#endif
 int	compat_43_sys_setreuid	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_setregid	__P((struct proc *, void *, register_t *));
 int	netbsd_sys_rename	__P((struct proc *, void *, register_t *));
@@ -536,3 +541,4 @@ int	netbsd_sys___sigprocmask14	__P((struct proc *, void *, register_t *));
 int	netbsd_sys___sigsuspend14	__P((struct proc *, void *, register_t *));
 int	netbsd_sys___sigreturn14	__P((struct proc *, void *, register_t *));
 int	netbsd_sys___getcwd	__P((struct proc *, void *, register_t *));
+int	sys_issetugid	__P((struct proc *, void *, register_t *));

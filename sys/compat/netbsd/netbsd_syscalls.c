@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_syscalls.c,v 1.14 2001/08/26 04:14:26 deraadt Exp $	*/
+/*	$OpenBSD: netbsd_syscalls.c,v 1.15 2001/09/05 23:42:34 art Exp $	*/
 
 /*
  * System call names.
@@ -125,13 +125,17 @@ char *netbsd_syscallnames[] = {
 	"osigsetmask",			/* 110 = osigsetmask */
 	"sigsuspend",			/* 111 = sigsuspend */
 	"osigstack",			/* 112 = osigstack */
+#ifdef MSG_COMPAT
 	"orecvmsg",			/* 113 = orecvmsg */
-	"osendmsg",			/* 114 = osendmsg */
-#ifdef TRACE
-	"vtrace",			/* 115 = vtrace */
 #else
-	"#115 (obsolete vtrace)",		/* 115 = obsolete vtrace */
+	"#113 (obsolete orecvmsg)",		/* 113 = obsolete orecvmsg */
 #endif
+#ifdef MSG_COMPAT
+	"osendmsg",			/* 114 = osendmsg */
+#else
+	"#114 (obsolete orecvmsg)",		/* 114 = obsolete orecvmsg */
+#endif
+	"#115 (obsolete vtrace)",		/* 115 = obsolete vtrace */
 	"gettimeofday",			/* 116 = gettimeofday */
 	"getrusage",			/* 117 = getrusage */
 	"getsockopt",			/* 118 = getsockopt */
@@ -141,7 +145,11 @@ char *netbsd_syscallnames[] = {
 	"settimeofday",			/* 122 = settimeofday */
 	"fchown",			/* 123 = fchown */
 	"fchmod",			/* 124 = fchmod */
+#ifdef MSG_COMPAT
 	"orecvfrom",			/* 125 = orecvfrom */
+#else
+	"#125 (obsolete orecvfrom)",		/* 125 = obsolete orecvfrom */
+#endif
 	"osetreuid",			/* 126 = osetreuid */
 	"osetregid",			/* 127 = osetregid */
 	"rename",			/* 128 = rename */
@@ -384,4 +392,12 @@ char *netbsd_syscallnames[] = {
 	"__sigreturn14",			/* 295 = __sigreturn14 */
 	"__getcwd",			/* 296 = __getcwd */
 	"#297 (unimplemented)",		/* 297 = unimplemented */
+	"#298 (unimplemented)",		/* 298 = unimplemented */
+	"#299 (unimplemented)",		/* 299 = unimplemented */
+	"#300 (unimplemented)",		/* 300 = unimplemented */
+	"#301 (unimplemented)",		/* 301 = unimplemented */
+	"#302 (unimplemented)",		/* 302 = unimplemented */
+	"#303 (unimplemented)",		/* 303 = unimplemented */
+	"#304 (unimplemented)",		/* 304 = unimplemented */
+	"issetugid",			/* 305 = issetugid */
 };
