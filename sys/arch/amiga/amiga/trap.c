@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.12 1997/02/21 08:51:49 niklas Exp $	*/
+/*	$OpenBSD: trap.c,v 1.13 1997/04/10 08:51:04 niklas Exp $	*/
 /*	$NetBSD: trap.c,v 1.53 1997/01/16 15:30:57 gwr Exp $	*/
 
 /*
@@ -708,13 +708,14 @@ trap(type, code, v, frame)
 	case T_TRAP15|T_USER:
 #ifdef COMPAT_SUNOS
 		/*
-		 * XXX This comment/code is not consistent XXX
-		 * SunOS seems to use Trap #2 for some obscure 
-		 * fpu operations.  So far, just ignore it, but
-		 * DONT trap on it.. 
+		 * SunOS uses Trap #2 for a "CPU cache flush"
+		 * Just flush the on-chip caches and return.
+		 * XXX - Too bad m68k BSD uses trap 2...
 		 */
 		if (p->p_emul == &emul_sunos) {
-			userret(p, frame.f_pc, sticks); 
+			ICIA();
+			DCIU();
+			/* get out fast */
 			return;
 		}
 #endif
