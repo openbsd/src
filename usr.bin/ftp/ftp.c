@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.36 2000/06/21 19:22:54 itojun Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.37 2000/06/27 00:19:16 fgsch Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$OpenBSD: ftp.c,v 1.36 2000/06/21 19:22:54 itojun Exp $";
+static char rcsid[] = "$OpenBSD: ftp.c,v 1.37 2000/06/27 00:19:16 fgsch Exp $";
 #endif
 #endif /* not lint */
 
@@ -1193,7 +1193,7 @@ int
 initconn()
 {
 	char *p, *a;
-	int result, len, tmpno = 0;
+	int result = ERROR, len, tmpno = 0;
 	int on = 1;
 	int error;
 	u_int addr[16], port[2];
