@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.24 2003/02/15 22:39:13 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.25 2003/03/10 03:57:57 david Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -641,7 +641,7 @@ _dl_bind(elf_object_t *object, int reloff)
 	return (value);
 }
 
-/* should not be defined here, but is is 32 for all powerpc 603-G4 */
+/* should not be defined here, but it is 32 for all powerpc 603-G4 */
 #define CACHELINESIZE 32
 void
 _dl_syncicache(char *from, size_t len)
