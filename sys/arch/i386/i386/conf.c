@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.58 2000/02/21 08:15:32 mjacob Exp $	*/
+/*	$OpenBSD: conf.c,v 1.59 2000/04/09 21:07:46 matthieu Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -200,6 +200,8 @@ cdev_decl(usb);
 cdev_decl(uhid);
 #include "ugen.h"
 cdev_decl(ugen);
+#include "ulpt.h"
+cdev_decl(ulpt);
 
 #ifdef IPFILTER
 #define NIPF 1
@@ -300,6 +302,7 @@ struct cdevsw	cdevsw[] =
 	cdev_usb_init(NUSB,usb),	/* 61: USB controller */
 	cdev_usbdev_init(NUHID,uhid),	/* 62: USB generic HID */
 	cdev_ugen_init(NUGEN,ugen),	/* 63: USB generic driver */
+	cdev_ulpt_init(NULPT,ulpt), 	/* 64: USB printers */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

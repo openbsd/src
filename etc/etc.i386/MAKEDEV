@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.77 2000/03/29 21:46:07 aaron Exp $
+#	$OpenBSD: MAKEDEV,v 1.78 2000/04/09 21:08:26 matthieu Exp $
 #	$NetBSD: MAKEDEV,v 1.40 1996/03/31 00:50:47 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -249,7 +249,7 @@ uhid*)
 
 ulpt*)
 	rm -f ulpt$unit
-	mknod ulpt$unit c 63 $unit
+	mknod ulpt$unit c 64 $unit
 	chown root.wheel ulpt$unit
 	chmod 600 ulpt$unit
 	;;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.35 2000/02/21 08:14:13 mjacob Exp $	*/
+/*	$OpenBSD: conf.h,v 1.36 2000/04/09 21:07:46 matthieu Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -375,6 +375,12 @@ void	randomattach __P((void));
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, dev_init(c,n,select), \
 	(dev_type_mmap((*))) enodev }
+
+/* open, close, write, ioctl */
+#define cdev_ulpt_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
+	0, (dev_type_select((*))) enodev, (dev_type_mmap((*))) enodev }
 
 #define	cdev_usbdev_init(c,n)	cdev_random_init(c,n)
 #define	cdev_ugen_init(c,n)	cdev_random_init(c,n)
