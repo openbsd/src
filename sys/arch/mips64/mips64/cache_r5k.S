@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r5k.S,v 1.5 2004/09/09 22:11:38 pefo Exp $ */
+/*	$OpenBSD: cache_r5k.S,v 1.6 2004/09/10 08:58:27 pefo Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB (www.opsycon.se)
@@ -166,7 +166,7 @@
  *
  *----------------------------------------------------------------------------
  */
-LEAF(Mips5k_ConfigCache)
+LEAF(Mips5k_ConfigCache, 0)
 	.set	noreorder
 	mfc0	v1, COP_0_PRID			# read processor ID register
 	mfc0	v0, COP_0_CONFIG		# Get configuration register
@@ -372,7 +372,7 @@ END(Mips5k_ConfigCache)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(Mips5k_SyncCache)
+LEAF(Mips5k_SyncCache, 0)
 	.set	noreorder
 	lw	t1, CpuPrimaryInstCacheSize
 	lw	t2, CpuPrimaryDataCacheSize
@@ -489,7 +489,7 @@ END(Mips5k_SyncCache)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(Mips5k_InvalidateICachePage)
+LEAF(Mips5k_InvalidateICachePage, 0)
 #ifdef CPUR4600
 	mfc0	v1, COP_0_STATUS_REG		# Save the status register.
 	li	v0, SR_DIAG_DE
@@ -537,7 +537,7 @@ END(Mips5k_InvalidateICachePage)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(Mips5k_InvalidateICache)
+LEAF(Mips5k_InvalidateICache, 0)
 #ifdef CPUR4600
 	mfc0	v1, COP_0_STATUS_REG		# Save the status register.
 	li	v0, SR_DIAG_DE
@@ -601,7 +601,7 @@ END(Mips5k_InvalidateICache)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(Mips5k_SyncDCachePage)
+LEAF(Mips5k_SyncDCachePage, 0)
 #ifdef CPUR4600
 	mfc0	v1, COP_0_STATUS_REG		# Save the status register.
 	li	v0, SR_DIAG_DE
@@ -681,7 +681,7 @@ END(Mips5k_SyncDCachePage)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(Mips5k_HitSyncDCache)
+LEAF(Mips5k_HitSyncDCache, 0)
 #ifdef CPUR4600
 	mfc0	v1, COP_0_STATUS_REG		# Save the status register.
 	li	v0, SR_DIAG_DE
@@ -736,7 +736,7 @@ END(Mips5k_HitSyncDCache)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(Mips5k_HitSyncSCache)
+LEAF(Mips5k_HitSyncSCache, 0)
 #ifdef CPUR4600
 	mfc0	v1, COP_0_STATUS_REG		# Save the status register.
 	li	v0, SR_DIAG_DE
@@ -785,7 +785,7 @@ END(Mips5k_HitSyncSCache)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(Mips5k_HitInvalidateDCache)
+LEAF(Mips5k_HitInvalidateDCache, 0)
 #ifdef CPUR4600
 	mfc0	v1, COP_0_STATUS_REG		# Save the status register.
 	li	v0, SR_DIAG_DE
@@ -835,7 +835,7 @@ END(Mips5k_HitInvalidateDCache)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(Mips5k_HitInvalidateSCache)
+LEAF(Mips5k_HitInvalidateSCache, 0)
 #ifdef CPUR4600
 	mfc0	v1, COP_0_STATUS_REG		# Save the status register.
 	li	v0, SR_DIAG_DE

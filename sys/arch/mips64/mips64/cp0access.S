@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp0access.S,v 1.3 2004/08/10 20:15:47 deraadt Exp $ */
+/*	$OpenBSD: cp0access.S,v 1.4 2004/09/10 08:58:27 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -48,7 +48,7 @@
  * Set/clear software interrupt.
  */
 
-LEAF(setsoftintr0)
+LEAF(setsoftintr0, 0)
 	mfc0	v0, COP_0_CAUSE_REG	# read cause register
 	nop
 	or	v0, v0, SOFT_INT_MASK_0	# set soft clock interrupt
@@ -57,7 +57,7 @@ LEAF(setsoftintr0)
 	nop
 END(setsoftintr0)
 
-LEAF(clearsoftintr0)
+LEAF(clearsoftintr0, 0)
 	mfc0	v0, COP_0_CAUSE_REG	# read cause register
 	nop
 	and	v0, v0, ~SOFT_INT_MASK_0	# clear soft clock interrupt
@@ -66,7 +66,7 @@ LEAF(clearsoftintr0)
 	nop
 END(clearsoftintr0)
 
-LEAF(setsoftintr1)
+LEAF(setsoftintr1, 0)
 	mfc0	v0, COP_0_CAUSE_REG	# read cause register
 	nop
 	or	v0, v0, SOFT_INT_MASK_1	# set soft net interrupt
@@ -75,7 +75,7 @@ LEAF(setsoftintr1)
 	nop
 END(setsoftintr1)
 
-LEAF(clearsoftintr1)
+LEAF(clearsoftintr1, 0)
 	mfc0	v0, COP_0_CAUSE_REG	# read cause register
 	nop
 	and	v0, v0, ~SOFT_INT_MASK_1	# clear soft net interrupt
@@ -89,7 +89,7 @@ END(clearsoftintr1)
  * These routines return the previous state.
  */
 
-LEAF(enableintr)
+LEAF(enableintr, 0)
 	mfc0	v0, COP_0_STATUS_REG	# read status register
 	nop
 	or	v1, v0, SR_INT_ENAB
@@ -98,7 +98,7 @@ LEAF(enableintr)
 	nop
 END(enableintr)
 
-LEAF(disableintr)
+LEAF(disableintr, 0)
 	mfc0	v0, COP_0_STATUS_REG	# read status register
 	nop
 	and	v1, v0, ~SR_INT_ENAB
@@ -117,7 +117,7 @@ LEAF(disableintr)
 	nop
 END(disableintr)
 
-LEAF(updateimask)
+LEAF(updateimask, 0)
 	lw	t0, idle_mask
 	not	a0, a0			# 1 means masked so invert.
 	and	a0, t0			# never upgrade to higher than max
@@ -150,7 +150,7 @@ LEAF(updateimask)
 	move	v0, v1
 END(updateimask)
 
-LEAF(setsr)
+LEAF(setsr, 0)
 	mtc0	a0, COP_0_STATUS_REG
 	nop				# total 10 nops to handle
 	nop				# RM7000 1.x bug.
@@ -166,39 +166,39 @@ LEAF(setsr)
 	move	v0, a0
 END(setsr)
 
-LEAF(cp0_get_prid)
+LEAF(cp0_get_prid, 0)
 	mfc0	v0, COP_0_PRID
 	j	ra
 	nop
 END(cp0_get_prid)
 
-LEAF(cp0_get_count)
+LEAF(cp0_get_count, 0)
 	mfc0	v0, COP_0_COUNT
 	j	ra
 	nop
 END(cp0_get_count)
 
-LEAF(cp0_set_compare)
+LEAF(cp0_set_compare, 0)
 	mtc0	a0, COP_0_COMPARE
 	j	ra
 	nop
 END(cp0_set_compare)
 
-LEAF(cp0_getperfcount)
+LEAF(cp0_getperfcount, 0)
 	mfc0	v0, COP_0_PC_COUNT
 	nop; nop
 	j	ra
 	nop
 END(cp0_getperfcount)
 
-LEAF(cp0_setperfcount)
+LEAF(cp0_setperfcount, 0)
 	mtc0	a0, COP_0_PC_COUNT
 	nop; nop
 	j	ra
 	nop
 END(cp0_setperfcount)
 
-LEAF(cp0_setperfctrl)
+LEAF(cp0_setperfctrl, 0)
 	mtc0	a0, COP_0_PC_CTRL
 	nop; nop
 	j	ra

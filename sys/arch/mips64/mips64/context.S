@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.4 2004/09/09 22:11:38 pefo Exp $ */
+/*	$OpenBSD: context.S,v 1.5 2004/09/10 08:58:27 pefo Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -47,7 +47,7 @@
 /*
  * Save registers and state used by reboot to take snapshot.
  */
-LEAF(savectx)
+LEAF(savectx, 0)
 	REG_S	s0, U_PCB_CONTEXT+0*REGSZ(a0)
 	REG_S	s1, U_PCB_CONTEXT+1*REGSZ(a0)
 	REG_S	s2, U_PCB_CONTEXT+2*REGSZ(a0)
@@ -153,7 +153,7 @@ END(remrunqueue)
 /*
  *   Idle, this is where we spend time when nothing to do.
  */
-LEAF(idle)
+LEAF(idle, 0)
 	PTR_S	zero, curproc		# set curproc NULL for stats
 	sw	zero, cpl		# lower to spl0
 
@@ -206,7 +206,7 @@ END(idle)
  * At exit of a process, do a cpu_switch for the last time.
  * All interrupts should be blocked at this point.
  */
-LEAF(switch_exit)
+LEAF(switch_exit, 0)
 	mfc0	v0, COP_0_STATUS_REG
 	li	v1, ~SR_INT_ENAB
 	and	v0, v0, v1

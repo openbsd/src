@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_float.S,v 1.5 2004/09/09 22:11:38 pefo Exp $ */
+/*	$OpenBSD: lcore_float.S,v 1.6 2004/09/10 08:58:27 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -62,7 +62,7 @@
  *
  *----------------------------------------------------------------------------
  */
-LEAF(MipsSwitchFPState)
+LEAF(MipsSwitchFPState, 0)
 	mfc0	t1, COP_0_STATUS_REG	# Save old SR
 	li	t0, SR_COP_1_BIT|SR_FR_32	# enable the coprocessor
 	mtc0	t0, COP_0_STATUS_REG
@@ -166,7 +166,7 @@ LEAF(MipsSwitchFPState)
 	nop
 END(MipsSwitchFPState)
 
-LEAF(MipsSwitchFPState16)
+LEAF(MipsSwitchFPState16, 0)
 	mfc0	t1, COP_0_STATUS_REG	# Save old SR
 	li	t0, SR_COP_1_BIT	# enable the coprocessor
 	mtc0	t0, COP_0_STATUS_REG
@@ -287,7 +287,7 @@ END(MipsSwitchFPState16)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(MipsSaveCurFPState)
+LEAF(MipsSaveCurFPState, 0)
 	PTR_L	a0, P_ADDR(a0)			# get pointer to pcb for proc
 	mfc0	t1, COP_0_STATUS_REG	# Disable interrupts and
 	li	t0, SR_COP_1_BIT|SR_FR_32	# enable the coprocessor
@@ -347,7 +347,7 @@ LEAF(MipsSaveCurFPState)
 	nop
 END(MipsSaveCurFPState)
 
-LEAF(MipsSaveCurFPState16)
+LEAF(MipsSaveCurFPState16, 0)
 	PTR_L	a0, P_ADDR(a0)			# get pointer to pcb for proc
 	mfc0	t1, COP_0_STATUS_REG	# Disable interrupts and
 	li	t0, SR_COP_1_BIT	# enable the coprocessor
@@ -532,7 +532,7 @@ END(MipsFPTrap)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(cp1_get_prid)
+LEAF(cp1_get_prid, 0)
 	mfc0	v1, COP_0_STATUS_REG
 	li	a0, SR_COP_1_BIT
 	or	v1, a0

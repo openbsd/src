@@ -1,4 +1,4 @@
-/*	$OpenBSD: fp.S,v 1.3 2004/09/09 22:11:38 pefo Exp $	*/
+/*	$OpenBSD: fp.S,v 1.4 2004/09/10 08:58:27 pefo Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fp.s	8.1 (Berkeley) 6/10/93
- *      $Id: fp.S,v 1.3 2004/09/09 22:11:38 pefo Exp $
+ *      $Id: fp.S,v 1.4 2004/09/10 08:58:27 pefo Exp $
  */
 
 /*
@@ -2272,7 +2272,7 @@ END(MipsEmulateFP)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(get_fs_int)
+LEAF(get_fs_int, 0)
 	srl	a3, a0, 12 - 2			# get FS field (even regs only)
 	and	a3, a3, 0xF << 2		# mask FS field
 	lw	a3, get_fs_int_tbl(a3)		# switch on register number
@@ -2370,7 +2370,7 @@ END(get_fs_int)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(get_ft_fs_s)
+LEAF(get_ft_fs_s, 0)
 	srl	a3, a0, 17 - 2			# get FT field (even regs only)
 	and	a3, a3, 0xF << 2		# mask FT field
 	lw	a3, get_ft_s_tbl(a3)		# switch on register number
@@ -2572,7 +2572,7 @@ END(get_ft_fs_s)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(get_ft_fs_d)
+LEAF(get_ft_fs_d, 0)
 	srl	a3, a0, 17 - 2			# get FT field (even regs only)
 	and	a3, a3, 0xF << 2		# mask FT field
 	lw	a3, get_ft_d_tbl(a3)		# switch on register number
@@ -2805,7 +2805,7 @@ END(get_ft_fs_d)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(get_cmp_s)
+LEAF(get_cmp_s, 0)
 	srl	a3, a0, 12 - 2			# get FS field (even regs only)
 	and	a3, a3, 0xF << 2		# mask FS field
 	lw	a3, cmp_fs_s_tbl(a3)		# switch on register number
@@ -2983,7 +2983,7 @@ END(get_cmp_s)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(get_cmp_d)
+LEAF(get_cmp_d, 0)
 	srl	a3, a0, 12 - 2			# get FS field (even regs only)
 	and	a3, a3, 0xF << 2		# mask FS field
 	lw	a3, cmp_fs_d_tbl(a3)		# switch on register number
@@ -3197,7 +3197,7 @@ END(get_cmp_d)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(set_fd_s)
+LEAF(set_fd_s, 0)
 	sll	t0, t0, 31			# position sign
 	sll	t1, t1, 23			# position exponent
 	or	t2, t2, t0
@@ -3293,7 +3293,7 @@ END(set_fd_s)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(set_fd_d)
+LEAF(set_fd_d, 0)
 	sll	t0, t0, 31			# set sign
 	sll	t1, t1, 20			# set exponent
 	or	t0, t0, t1
@@ -3398,7 +3398,7 @@ END(set_fd_d)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(renorm_fs_s)
+LEAF(renorm_fs_s, 0)
 /*
  * Find out how many leading zero bits are in t2 and put in t9.
  */
@@ -3447,7 +3447,7 @@ END(renorm_fs_s)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(renorm_fs_d)
+LEAF(renorm_fs_d, 0)
 /*
  * Find out how many leading zero bits are in t2,t3 and put in t9.
  */
@@ -3511,7 +3511,7 @@ END(renorm_fs_d)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(renorm_ft_s)
+LEAF(renorm_ft_s, 0)
 /*
  * Find out how many leading zero bits are in ta6 and put in t9.
  */
@@ -3560,7 +3560,7 @@ END(renorm_ft_s)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(renorm_ft_d)
+LEAF(renorm_ft_d, 0)
 /*
  * Find out how many leading zero bits are in ta6,ta7 and put in t9.
  */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_access.S,v 1.5 2004/09/09 22:11:38 pefo Exp $ */
+/*	$OpenBSD: lcore_access.S,v 1.6 2004/09/10 08:58:27 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -77,7 +77,7 @@ onfault_table:
  *	char *addr;
  *	int len;
  */
-LEAF(badaddr)
+LEAF(badaddr, 0)
 	li	v0, KT_BADERR
 	PTR_L	t3, curprocpaddr
 	bne	a1, 1, 2f
@@ -136,7 +136,7 @@ esigcode_o32:
  *		u_int maxlength;
  *		u_long *lencopied;
  */
-LEAF(copystr)
+LEAF(copystr, 0)
 	move	t2, a2			# Save the number of bytes
 1:
 	lbu	t0, 0(a0)
@@ -160,7 +160,7 @@ END(copystr)
  *  Read 64 bits from bus in non LP64 mode.
  *  XXX ints should be disabled!
  */
-LEAF(lp32_read8)
+LEAF(lp32_read8, 0)
 #if defined(__MIPSEB__)
 	ld	v1, 0(a0)
 	jr	ra
@@ -176,7 +176,7 @@ END(lp32_read8)
  *  Write 64 bits to bus in non LP64 mode.
  *  XXX ints should be disabled!
  */
-LEAF(lp32_write8)
+LEAF(lp32_write8, 0)
 #if defined(__MIPSEB__)
 	dsll	a2, 32
 	dsll	a3, 32
@@ -196,7 +196,7 @@ END(lp32_write8)
 /*
  * fillw(pat, addr, count)
  */
-LEAF(fillw)
+LEAF(fillw, 0)
 1:
 	PTR_ADDU a2, a2, -1
 	sh	a0, 0(a1)
@@ -211,7 +211,7 @@ END(fillw)
  * Optimized memory zero code.
  * mem_zero_page(addr);
  */
-LEAF(mem_zero_page)
+LEAF(mem_zero_page, 0)
 	LI	v0, NBPG
 1:
 	dsubu	v0, 8
@@ -229,7 +229,7 @@ END(mem_zero_page)
  *			a1 = memory address
  *			a2 = count
  */
-LEAF(insb)
+LEAF(insb, 0)
 	beq	a2, zero, 2f
 	PTR_ADDU a2, a1
 1:
@@ -242,7 +242,7 @@ LEAF(insb)
 	nop
 END(insb)
 
-LEAF(insw)
+LEAF(insw, 0)
 	beq	a2, zero, 2f
 	PTR_ADDU a2, a2
 	PTR_ADDU a2, a1
@@ -256,7 +256,7 @@ LEAF(insw)
 	nop
 END(insw)
 
-LEAF(insl)
+LEAF(insl, 0)
 	beq	a2, zero, 2f
 	PTR_SLL	a2, 2
 	PTR_ADDU a2, a1
@@ -270,7 +270,7 @@ LEAF(insl)
 	nop
 END(insl)
 
-LEAF(outsb)
+LEAF(outsb, 0)
 	beq	a2, zero, 2f
 	PTR_ADDU a2, a1
 1:
@@ -283,7 +283,7 @@ LEAF(outsb)
 	nop
 END(outsb)
 
-LEAF(outsw)
+LEAF(outsw, 0)
 	beq	a2, zero, 2f
 	PTR_ADDU a2, a2
 	LI	v0, 1
@@ -309,7 +309,7 @@ LEAF(outsw)
 	nop
 END(outsw)
 
-LEAF(outsl)
+LEAF(outsl, 0)
 	beq	a2, zero, 2f
 	PTR_SLL	a2, 2
 	LI	v0, 3

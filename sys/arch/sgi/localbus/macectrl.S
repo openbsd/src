@@ -1,4 +1,4 @@
-/*	$OpenBSD: macectrl.S,v 1.3 2004/09/09 22:11:39 pefo Exp $ */
+/*	$OpenBSD: macectrl.S,v 1.4 2004/09/10 08:58:27 pefo Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -37,7 +37,7 @@
 	.set	noreorder		# Noreorder is default style!
 
 	.globl	hw_setintrmask
-LEAF(hw_setintrmask)
+LEAF(hw_setintrmask, 0)
 	lw	v0, mace_intem
 	PTR_L	v1, hwmask_addr
 	nor	a0, zero, a0

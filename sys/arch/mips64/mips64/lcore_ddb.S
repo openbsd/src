@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_ddb.S,v 1.3 2004/08/10 20:15:47 deraadt Exp $ */
+/*	$OpenBSD: lcore_ddb.S,v 1.4 2004/09/10 08:58:27 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -42,7 +42,7 @@
 
 #define	ITLBNOPFIX	nop;nop;nop;nop;nop;nop;nop;nop;nop;nop;
 
-LEAF(kdbpeek)
+LEAF(kdbpeek, 0)
 	PTR_L	t0, curprocpaddr
 	li	v0, KT_DDBERR
 	and	v1, a0, 3			# unaligned ?
@@ -60,7 +60,7 @@ LEAF(kdbpeek)
 	sw	zero, U_PCB_ONFAULT(t0)
 END(kdbpeek)
 
-LEAF(kdbpeekw)
+LEAF(kdbpeekw, 0)
 	PTR_L	t0, curprocpaddr
 	li	v0, KT_DDBERR
 	and	v1, a0, 1			# unaligned ?
@@ -77,7 +77,7 @@ LEAF(kdbpeekw)
 	sw	zero, U_PCB_ONFAULT(t0)
 END(kdbpeekw)
 
-LEAF(kdbpeekb)
+LEAF(kdbpeekb, 0)
 	PTR_L	t0, curprocpaddr
 	li	v0, KT_DDBERR
 	sw	v0, U_PCB_ONFAULT(t0)
@@ -91,7 +91,7 @@ kt_ddberr:
 	jr	ra
 	li	v0, -1
 
-LEAF(kdbpoke)
+LEAF(kdbpoke, 0)
 	PTR_L	t0, curprocpaddr
 	li	v0, KT_DDBERR
 	and	v1, a0, 3			# unaligned ?
@@ -109,7 +109,7 @@ LEAF(kdbpoke)
 	sw	zero, U_PCB_ONFAULT(t0)
 END(kdbpoke)
 
-LEAF(kdbpokew)
+LEAF(kdbpokew, 0)
 	PTR_L	t0, curprocpaddr
 	li	v0, KT_DDBERR
 	and	v1, a0, 1			# unaligned ?
@@ -125,7 +125,7 @@ LEAF(kdbpokew)
 	sw	zero, U_PCB_ONFAULT(t0)
 END(kdbpokew)
 
-LEAF(kdbpokeb)
+LEAF(kdbpokeb, 0)
 	PTR_L	t0, curprocpaddr
 	li	v0, KT_DDBERR
 	sw	v0, U_PCB_ONFAULT(t0)
@@ -134,13 +134,13 @@ LEAF(kdbpokeb)
 	sw	zero, U_PCB_ONFAULT(t0)
 END(kdbpokeb)
 
-LEAF(Debugger)
+LEAF(Debugger, 0)
 	break   BREAK_SOVER_VAL
 	jr	ra
 	nop
 END(Debugger)
 
-LEAF(setjmp)
+LEAF(setjmp, 0)
 	mfc0	v0, COP_0_STATUS_REG	# Later the "real" spl value!
 	REG_S	s0, REGSZ * 0(a0)
 	REG_S	s1, REGSZ * 1(a0)
@@ -158,7 +158,7 @@ LEAF(setjmp)
 	li	v0, 0			# setjmp return
 END(setjmp)
 
-LEAF(longjmp)
+LEAF(longjmp, 0)
 	REG_L	v0, REGSZ * 11(a0)
 	REG_L	ra, REGSZ * 10(a0)
 	REG_L	s0, REGSZ * 0(a0)

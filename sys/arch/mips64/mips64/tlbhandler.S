@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.4 2004/09/09 22:11:38 pefo Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.5 2004/09/10 08:58:27 pefo Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -376,7 +376,7 @@ END(k_tlb_miss)
 /*---------------------------------------------------------------- tlb_write_i
  *	Write the given entry into the TLB at the given index.
  */
-LEAF(tlb_write_indexed)
+LEAF(tlb_write_indexed, 0)
 	mfc0	v1, COP_0_STATUS_REG	# Save the status register.
 	mtc0	zero, COP_0_STATUS_REG	# Disable interrupts
 	ITLBNOPFIX
@@ -415,7 +415,7 @@ END(tlb_write_indexed)
  *	Uses "wired" register to determine what register to start with.
  *	Arg "tlbsize" is the number of entries to flush.
  */
-LEAF(tlb_flush)
+LEAF(tlb_flush, 0)
 	mfc0	v1, COP_0_STATUS_REG	# Save the status register.
 	mtc0	zero, COP_0_STATUS_REG	# Disable interrupts
 	ITLBNOPFIX
@@ -452,7 +452,7 @@ END(tlb_flush)
 /*--------------------------------------------------------------- tlb_flush_addr
  *	Flush any TLB entries for the given address and TLB PID.
  */
-LEAF(tlb_flush_addr)
+LEAF(tlb_flush_addr, 0)
 	mfc0	v1, COP_0_STATUS_REG	# Save the status register.
 	mtc0	zero, COP_0_STATUS_REG	# Disable interrupts
 	ITLBNOPFIX
@@ -496,7 +496,7 @@ END(tlb_flush_addr)
 /*---------------------------------------------------------------- tlb_update
  *	Update the TLB if highreg is found; otherwise, enter the data.
  */
-LEAF(tlb_update)
+LEAF(tlb_update, 0)
 	mfc0	v1, COP_0_STATUS_REG	# Save the status register.
 	mtc0	zero, COP_0_STATUS_REG	# Disable interrupts
 	ITLBNOPFIX
@@ -586,7 +586,7 @@ END(tlb_update)
 /*---------------------------------------------------------------- tlb_read
  *	Read the TLB entry.
  */
-LEAF(tlb_read)
+LEAF(tlb_read, 0)
 	mfc0	v1, COP_0_STATUS_REG	# Save the status register.
 	mtc0	zero, COP_0_STATUS_REG	# Disable interrupts
 	ITLBNOPFIX
@@ -621,7 +621,7 @@ END(tlb_read)
 /*---------------------------------------------------------------- tlb_get_pid
  *	Read the tlb pid value.
  */
-LEAF(tlb_get_pid)
+LEAF(tlb_get_pid, 0)
 	dmfc0	v0, COP_0_TLB_HI	# get PID
 	li	v1, VMTLB_PID		# mask off PID
 	j	ra
@@ -631,7 +631,7 @@ END(tlb_get_pid)
 /*---------------------------------------------------------------- tlb_set_pid
  *	Write the given pid into the TLB pid reg.
  */
-LEAF(tlb_set_pid)
+LEAF(tlb_set_pid, 0)
 	dmtc0	a0, COP_0_TLB_HI		# Write the hi reg value
 	j	ra
 	nop
@@ -640,7 +640,7 @@ END(tlb_set_pid)
 /*---------------------------------------------------------------- tlb_get_wired
  *	Get the value from the TLB wired reg.
  */
-LEAF(tlb_get_wired)
+LEAF(tlb_get_wired, 0)
 	mfc0	v0, COP_0_TLB_WIRED
 	j	ra
 	nop
@@ -649,7 +649,7 @@ END(tlb_get_wired)
 /*---------------------------------------------------------------- tlb_set_wired
  *	Write the given value into the TLB wired reg.
  */
-LEAF(tlb_set_wired)
+LEAF(tlb_set_wired, 0)
 	mtc0	a0, COP_0_TLB_WIRED
 	j	ra
 	nop
