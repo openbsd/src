@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.51 2004/10/05 21:04:36 beck Exp $
+.\"	$OpenBSD: spamd.8,v 1.52 2005/01/19 17:07:31 deraadt Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -55,9 +55,9 @@ it will attempt to waste the time and resources of the spam sender.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl 4
-Return error code 450 to the spammer (default).
+For black listed entries, return error code 450 to the spammer (default).
 .It Fl 5
-Return error code 550 to the spammer.
+For black-listed entries, return error code 550 to the spammer.
 .It Fl B Ar maxblack
 The maximum number of concurrent blacklisted connections to allow in
 greylisting mode.
@@ -84,6 +84,13 @@ into the background.
 Adjust the three time parameters for greylisting; see
 .Sx GREYLISTING
 below.
+.Ar passtime
+defaults to 25 (minutes),
+.Ar greyexp
+to 4 (hours),
+and
+.Ar whiteexp
+to 864 (hours, approximately 36 days).
 .It Fl g
 Greylisting mode; see
 .Sx GREYLISTING
@@ -252,7 +259,7 @@ A previously unseen tuple is added to the
 database, recording the time an initial connection attempt was seen.
 After
 .Em passtime
-minutes (by default 25) if
+minutes if
 .Nm
 sees a retried attempt to deliver mail for the same tuple,
 .Nm
@@ -308,7 +315,7 @@ removes tuple entries from the
 .Pa /var/db/spamd
 database if delivery has not been retried within
 .Em greyexp
-hours (by default 4) from the initial time a connection is seen.
+hours from the initial time a connection is seen.
 The default is 4 hours as this is the most common setting after which
 MTA's will give up attempting to retry delivery of a message.
 .Pp
@@ -320,7 +327,7 @@ whitelisted address by
 .Xr spamlogd 8
 within
 .Em whiteexp
-hours (by default 864, or 36 days) from the initial time an address
+hours from the initial time an address
 is whitelisted.
 The default is 36 days to allow for the delivery of
 monthly mailing list digests without greylist delays every time.
