@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_debug.c,v 1.19 2004/07/15 15:27:22 markus Exp $	*/
+/*	$OpenBSD: tcp_debug.c,v 1.20 2004/09/24 15:02:43 markus Exp $	*/
 /*	$NetBSD: tcp_debug.c,v 1.10 1996/02/13 23:43:36 christos Exp $	*/
 
 /*
@@ -145,6 +145,7 @@ tcp_trace(short act, short ostate, struct tcpcb *tp, caddr_t headers,
 		if (ti6) {
 			th = &ti6->ti6_t;
 			td->td_ti6 = *ti6;
+			td->td_ti6.ti6_plen = len;
 		} else
 			bzero(&td->td_ti6, sizeof(struct tcpipv6hdr));
 		break;
@@ -153,6 +154,7 @@ tcp_trace(short act, short ostate, struct tcpcb *tp, caddr_t headers,
 		if (ti) {
 			th = &ti->ti_t;
 			td->td_ti = *ti;
+			td->td_ti.ti_len = len;
 		} else
 			bzero(&td->td_ti, sizeof(struct tcpiphdr));
 		break;
