@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.30 2002/04/08 01:43:13 frantzen Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.31 2002/07/28 06:27:07 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -429,7 +429,7 @@ const char * const ac97enhancement[] = {
 	"Wolfson Microelectronics 3D",
 	"Delta Integration 3D",
 	"SigmaTel 3D",
-	"Unknown 3D",
+	"KS Waves 3D",
 	"Rockwell 3D",
 	"Unknown 3D",
 	"Unknown 3D",

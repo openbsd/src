@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.h,v 1.13 2002/05/21 08:42:03 espie Exp $	*/
+/*	$OpenBSD: ac97.h,v 1.14 2002/07/28 06:27:07 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1999 Constantine Sapuntzakis
@@ -126,13 +126,15 @@ int ac97_set_rate(struct ac97_codec_if *, struct audio_params *, int);
 #define	AC97_EXT_AUDIO_DRA		0x0002
 #define	AC97_EXT_AUDIO_SPDIF		0x0004
 #define	AC97_EXT_AUDIO_VRM		0x0008
-#define	AC97_EXT_AUDIO_DSA		0x0030
+#define	AC97_EXT_AUDIO_DSA0		0x0010
+#define	AC97_EXT_AUDIO_DSA1		0x0020
 #define	AC97_EXT_AUDIO_CDAC		0x0040
 #define	AC97_EXT_AUDIO_SDAC		0x0080
 #define	AC97_EXT_AUDIO_LDAC		0x0100
 #define	AC97_EXT_AUDIO_AMAP		0x0200
 #define	AC97_EXT_AUDIO_REV_11		0x0000
 #define	AC97_EXT_AUDIO_REV_22		0x0400
+#define	AC97_EXT_AUDIO_REV_23		0x0800
 #define	AC97_EXT_AUDIO_REV_MASK		0x0c00
 #define	AC97_EXT_AUDIO_ID		0xc000
 #define	AC97_EXT_AUDIO_BITS		"\020\01vra\02dra\03spdif\04vrm\05dsa0\06dsa1\07cdac\010sdac\011ldac\012amap\013rev0\014rev1\017id0\020id1"
