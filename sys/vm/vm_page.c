@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_page.c,v 1.17 1999/09/03 18:02:28 art Exp $	*/
+/*	$OpenBSD: vm_page.c,v 1.18 2000/05/27 18:31:35 art Exp $	*/
 /*	$NetBSD: vm_page.c,v 1.41 1998/02/08 18:24:52 thorpej Exp $	*/
 
 #define	VM_PAGE_ALLOC_MEMORY_STATS
@@ -528,7 +528,10 @@ vm_page_physload(start, end, avail_start, avail_end)
 {
 	struct	vm_page *pgs;
 	struct	vm_physseg *ps;
-	int	preload, lcv, npages, x;
+	int	preload, lcv, npages;
+#if (VM_PHYSSEG_STRAT != VM_PSTRAT_RANDOM)
+	int	x;
+#endif
   
 	if (page_shift == 0)
 		panic("vm_page_physload: page size not set!");
