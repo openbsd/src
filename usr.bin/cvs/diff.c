@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.14 2004/12/28 19:51:07 jfb Exp $	*/
+/*	$OpenBSD: diff.c,v 1.15 2004/12/28 20:39:15 jfb Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -728,12 +728,12 @@ files_differ(FILE *f1, FILE *f2)
 
 
 char *
-splice(char *dir, char *file)
+splice(char *dir, char *filename)
 {
 	char *tail, *buf;
 
-	if ((tail = strrchr(file, '/')) == NULL)
-		tail = file;
+	if ((tail = strrchr(filename, '/')) == NULL)
+		tail = filename;
 	else
 		tail++;
 	asprintf(&buf, "%s/%s", dir, tail);
@@ -1149,17 +1149,17 @@ uni_range(int a, int b)
 }
 
 static char *
-preadline(int fd, size_t len, off_t off)
+preadline(int fd, size_t rlen, off_t off)
 {
 	char *line;
 	ssize_t nr;
 
-	line = malloc(len + 1);
+	line = malloc(rlen + 1);
 	if (line == NULL) {
 		cvs_log(LP_ERRNO, "failed to allocate line");
 		return (NULL);
 	}
-	if ((nr = pread(fd, line, len, off)) < 0) {
+	if ((nr = pread(fd, line, rlen, off)) < 0) {
 		cvs_log(LP_ERRNO, "preadline failed");
 		return (NULL);
 	}
