@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_pci.c,v 1.20 2000/12/29 03:51:41 smurph Exp $	*/
+/*	$OpenBSD: ahc_pci.c,v 1.21 2001/01/22 22:36:52 deraadt Exp $	*/
 /*	$NetBSD: ahc_pci.c,v 1.9 1996/10/21 22:56:24 thorpej Exp $	*/
 
 /*
@@ -467,13 +467,13 @@ void *aux;
 
 	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
 			 pa->pa_intrline, &ih)) {
-		printf("%s: couldn't map interrupt\n", ahc->sc_dev.dv_xname);
+		printf(": couldn't map interrupt\n", ahc->sc_dev.dv_xname);
 		ahc_free(ahc);
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 	ahc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, ahc_intr, ahc,
-                                        ahc->sc_dev.dv_xname);
+	    ahc->sc_dev.dv_xname);
 
 	if (ahc->sc_ih == NULL) {
 		printf(": couldn't establish interrupt");
@@ -726,7 +726,7 @@ struct ahc_softc *ahc;
 
 	}
 	ahc_ext_scbram_config(ahc, enable, pcheck, fast);
-}             
+}
 
 /*
  * Check the external port logic for a serial eeprom
@@ -1351,9 +1351,9 @@ struct ahc_softc *ahc;
 {
 	pcireg_t status1;
 	struct ahc_pci_data *pd = ahc->pci_data;
-        
+
 	if ((ahc_inb(ahc, ERROR) & PCIERRSTAT) == 0)
-                return 0;
+		return 0;
 
 	status1 = pci_conf_read(pd->pc, pd->tag, PCI_COMMAND_STATUS_REG);
 
@@ -1390,5 +1390,5 @@ struct ahc_softc *ahc;
 		ahc_outb(ahc, CLRINT, CLRPARERR);
 	}
 
-        return 1;
+	return 1;
 }
