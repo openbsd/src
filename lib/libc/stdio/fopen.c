@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: fopen.c,v 1.3 2003/06/02 20:18:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: fopen.c,v 1.4 2004/09/28 18:12:44 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -42,12 +42,10 @@ static char rcsid[] = "$OpenBSD: fopen.c,v 1.3 2003/06/02 20:18:37 millert Exp $
 #include "local.h"
 
 FILE *
-fopen(file, mode)
-	const char *file;
-	const char *mode;
+fopen(const char *file, const char *mode)
 {
-	register FILE *fp;
-	register int f;
+	FILE *fp;
+	int f;
 	int flags, oflags;
 
 	if ((flags = __sflags(mode, &oflags)) == 0)

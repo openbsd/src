@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: freopen.c,v 1.5 2003/06/02 20:18:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: freopen.c,v 1.6 2004/09/28 18:12:44 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -49,11 +49,9 @@ static char rcsid[] = "$OpenBSD: freopen.c,v 1.5 2003/06/02 20:18:37 millert Exp
  * all possible, no matter what.
  */
 FILE *
-freopen(file, mode, fp)
-	const char *file, *mode;
-	register FILE *fp;
+freopen(const char *file, const char *mode, FILE *fp)
 {
-	register int f;
+	int f;
 	int flags, isopen, oflags, sverrno, wantfd;
 
 	if ((flags = __sflags(mode, &oflags)) == 0) {

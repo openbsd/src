@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: fseek.c,v 1.5 2003/06/02 20:18:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: fseek.c,v 1.6 2004/09/28 18:12:44 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -49,12 +49,9 @@ static char rcsid[] = "$OpenBSD: fseek.c,v 1.5 2003/06/02 20:18:37 millert Exp $
  * `Whence' must be one of the three SEEK_* macros.
  */
 int
-fseeko(fp, offset, whence)
-	register FILE *fp;
-	off_t offset;
-	int whence;
+fseeko(FILE *fp, off_t offset, int whence)
 {
-	register fpos_t (*seekfn)(void *, fpos_t, int);
+	fpos_t (*seekfn)(void *, fpos_t, int);
 	fpos_t target, curoff;
 	size_t n;
 	struct stat st;
@@ -188,7 +185,7 @@ fseeko(fp, offset, whence)
 	 */
 	if ((fp->_flags & __SMOD) == 0 &&
 	    target >= curoff && target < curoff + n) {
-		register int o = target - curoff;
+		int o = target - curoff;
 
 		fp->_p = fp->_bf._base + o;
 		fp->_r = n - o;
@@ -249,10 +246,7 @@ dumb:
 __indr_reference(fseeko, fseek);
 #else
 int
-fseek(fp, offset, whence)
-	register FILE *fp;
-	long offset;
-	int whence;
+fseek(FILE *fp, long offset, int whence)
 {
 	off_t off = offset;
 

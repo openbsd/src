@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ungetc.c,v 1.5 2003/06/02 20:18:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: ungetc.c,v 1.6 2004/09/28 18:12:44 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -47,11 +47,10 @@ static int __submore(FILE *);
  * are all at the end (stack-style).
  */
 static int
-__submore(fp)
-	FILE *fp;
+__submore(FILE *fp)
 {
-	register int i;
-	register unsigned char *p;
+	int i;
+	unsigned char *p;
 
 	if (fp->_ub._base == fp->_ubuf) {
 		/*
@@ -80,9 +79,7 @@ __submore(fp)
 }
 
 int
-ungetc(c, fp)
-	int c;
-	register FILE *fp;
+ungetc(int c, FILE *fp)
 {
 	if (c == EOF)
 		return (EOF);

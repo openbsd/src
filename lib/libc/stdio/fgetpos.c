@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: fgetpos.c,v 1.4 2003/06/02 20:18:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: fgetpos.c,v 1.5 2004/09/28 18:12:44 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -40,9 +40,7 @@ static char rcsid[] = "$OpenBSD: fgetpos.c,v 1.4 2003/06/02 20:18:37 millert Exp
  * fgetpos: like ftello.
  */
 int
-fgetpos(fp, pos)
-	FILE *fp;
-	fpos_t *pos;
+fgetpos(FILE *fp, fpos_t *pos)
 {
 	return((*pos = ftello(fp)) == (fpos_t)-1);
 }

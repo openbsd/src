@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: fwrite.c,v 1.3 2003/06/02 20:18:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: fwrite.c,v 1.4 2004/09/28 18:12:44 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -43,10 +43,7 @@ static char rcsid[] = "$OpenBSD: fwrite.c,v 1.3 2003/06/02 20:18:37 millert Exp 
  * Return the number of whole objects written.
  */
 size_t
-fwrite(buf, size, count, fp)
-	const void *buf;
-	size_t size, count;
-	FILE *fp;
+fwrite(const void *buf, size_t size, size_t count, FILE *fp)
 {
 	size_t n;
 	struct __suio uio;

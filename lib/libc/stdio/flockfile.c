@@ -1,4 +1,4 @@
-/*	$OpenBSD: flockfile.c,v 1.6 2004/06/07 21:11:23 marc Exp $	*/
+/*	$OpenBSD: flockfile.c,v 1.7 2004/09/28 18:12:44 otto Exp $	*/
 
 #include <sys/time.h>
 #include <stdio.h>
@@ -23,22 +23,19 @@ WEAK_ALIAS(ftrylockfile);
 WEAK_ALIAS(funlockfile);
 
 void
-WEAK_NAME(flockfile)(fp)
-	FILE * fp;
+WEAK_NAME(flockfile)(FILE * fp)
 {
 }
 
 
 int
-WEAK_NAME(ftrylockfile)(fp)
-	FILE * fp;
+WEAK_NAME(ftrylockfile)(FILE *fp)
 {
 
 	return 0;
 }
 
 void
-WEAK_NAME(funlockfile)(fp)
-	FILE * fp;
+WEAK_NAME(funlockfile)(FILE * fp)
 {
 }

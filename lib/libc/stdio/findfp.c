@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: findfp.c,v 1.4 2003/06/02 20:18:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: findfp.c,v 1.5 2004/09/28 18:12:44 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -63,11 +63,10 @@ FILE __sF[3] = {
 struct glue __sglue = { &uglue, 3, __sF };
 
 static struct glue *
-moreglue(n)
-	register int n;
+moreglue(int n)
 {
-	register struct glue *g;
-	register FILE *p;
+	struct glue *g;
+	FILE *p;
 	static FILE empty;
 
 	g = (struct glue *)malloc(sizeof(*g) + ALIGNBYTES + n * sizeof(FILE));
@@ -86,11 +85,11 @@ moreglue(n)
  * Find a free FILE for fopen et al.
  */
 FILE *
-__sfp()
+__sfp(void)
 {
-	register FILE *fp;
-	register int n;
-	register struct glue *g;
+	FILE *fp;
+	int n;
+	struct glue *g;
 
 	if (!__sdidinit)
 		__sinit();
@@ -124,9 +123,9 @@ found:
  * but documented historically for certain applications.  Bad applications.
  */
 void
-f_prealloc()
+f_prealloc(void)
 {
-	register struct glue *g;
+	struct glue *g;
 	int n;
 
 	n = getdtablesize() - FOPEN_MAX + 20;		/* 20 for slop. */
@@ -145,7 +144,7 @@ f_prealloc()
  * The name `_cleanup' is, alas, fairly well known outside stdio.
  */
 void
-_cleanup()
+_cleanup(void)
 {
 	/* (void) _fwalk(fclose); */
 	(void) _fwalk(__sflush);		/* `cheating' */
@@ -155,7 +154,7 @@ _cleanup()
  * __sinit() is called whenever stdio's internal variables must be set up.
  */
 void
-__sinit()
+__sinit(void)
 {
 	/* make sure we clean up on exit */
 	__atexit_register_cleanup(_cleanup); /* conservative */

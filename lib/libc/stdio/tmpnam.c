@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: tmpnam.c,v 1.8 2003/06/02 20:18:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: tmpnam.c,v 1.9 2004/09/28 18:12:44 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -45,8 +45,7 @@ __warn_references(tmpnam,
 extern char *_mktemp(char *);
 
 char *
-tmpnam(s)
-	char *s;
+tmpnam(char *s)
 {
 	static u_long tmpcount;
 	static char buf[L_tmpnam];

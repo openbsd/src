@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: fflush.c,v 1.3 2003/06/02 20:18:36 millert Exp $";
+static char rcsid[] = "$OpenBSD: fflush.c,v 1.4 2004/09/28 18:12:44 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <errno.h>
@@ -40,8 +40,7 @@ static char rcsid[] = "$OpenBSD: fflush.c,v 1.3 2003/06/02 20:18:36 millert Exp 
 
 /* Flush a single file, or (if fp is NULL) all files.  */
 int
-fflush(fp)
-	register FILE *fp;
+fflush(FILE *fp)
 {
 
 	if (fp == NULL)
@@ -54,11 +53,10 @@ fflush(fp)
 }
 
 int
-__sflush(fp)
-	register FILE *fp;
+__sflush(FILE *fp)
 {
-	register unsigned char *p;
-	register int n, t;
+	unsigned char *p;
+	int n, t;
 
 	t = fp->_flags;
 	if ((t & __SWR) == 0)

@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: vfprintf.c,v 1.27 2004/09/25 06:35:50 brad Exp $";
+static char *rcsid = "$OpenBSD: vfprintf.c,v 1.28 2004/09/28 18:12:44 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -62,11 +62,9 @@ static int __grow_type_table(unsigned char **typetable, int *tablesize);
  * then reset it so that it can be reused.
  */
 static int
-__sprint(fp, uio)
-	FILE *fp;
-	register struct __suio *uio;
+__sprint(FILE *fp, struct __suio *uio)
 {
-	register int err;
+	int err;
 
 	if (uio->uio_resid == 0) {
 		uio->uio_iovcnt = 0;
@@ -84,10 +82,7 @@ __sprint(fp, uio)
  * worries about ungetc buffers and so forth.
  */
 static int
-__sbprintf(fp, fmt, ap)
-	register FILE *fp;
-	const char *fmt;
-	va_list ap;
+__sbprintf(FILE *fp, const char *fmt, va_list ap)
 {
 	int ret;
 	FILE fake;
@@ -155,17 +150,14 @@ static int exponent(char *, int, int);
 #define SIZEINT		0x400		/* (signed) size_t */
 
 int
-vfprintf(fp, fmt0, ap)
-	FILE *fp;
-	const char *fmt0;
-	_BSD_VA_LIST_ ap;
+vfprintf(FILE *fp, const char *fmt0, _BSD_VA_LIST_ ap)
 {
-	register char *fmt;	/* format string */
-	register int ch;	/* character from fmt */
-	register int n, m, n2;	/* handy integers (short term usage) */
-	register char *cp;	/* handy char pointer (short term usage) */
-	register struct __siov *iovp;/* for PRINT macro */
-	register int flags;	/* flags as above */
+	char *fmt;	/* format string */
+	int ch;	/* character from fmt */
+	int n, m, n2;	/* handy integers (short term usage) */
+	char *cp;	/* handy char pointer (short term usage) */
+	struct __siov *iovp;/* for PRINT macro */
+	int flags;	/* flags as above */
 	int ret;		/* return value accumulator */
 	int width;		/* width from format (%8d), or 0 */
 	int prec;		/* precision from format (%.3d), or -1 */
@@ -817,17 +809,14 @@ error:
  * problematic since we have nested functions..)
  */
 static void
-__find_arguments(fmt0, ap, argtable, argtablesiz)
-	const char *fmt0;
-	va_list ap;
-	va_list **argtable;
-	size_t *argtablesiz;
+__find_arguments(const char *fmt0, va_list ap, va_list **argtable,
+    size_t *argtablesiz)
 {
-	register char *fmt;	/* format string */
-	register int ch;	/* character from fmt */
-	register int n, n2;	/* handy integer (short term usage) */
-	register char *cp;	/* handy char pointer (short term usage) */
-	register int flags;	/* flags as above */
+	char *fmt;	/* format string */
+	int ch;	/* character from fmt */
+	int n, n2;	/* handy integer (short term usage) */
+	char *cp;	/* handy char pointer (short term usage) */
+	int flags;	/* flags as above */
 	unsigned char *typetable; /* table of types */
 	unsigned char stattypetable[STATIC_ARG_TBL_SIZE];
 	int tablesize;		/* current size of type table */
@@ -1128,9 +1117,7 @@ done:
  * Increase the size of the type table.
  */
 static int
-__grow_type_table(typetable, tablesize)
-	unsigned char **typetable;
-	int *tablesize;
+__grow_type_table(unsigned char **typetable, int *tablesize)
 {
 	unsigned char *oldtable = *typetable;
 	int newsize = *tablesize * 2;
@@ -1162,10 +1149,8 @@ __grow_type_table(typetable, tablesize)
 extern char *__dtoa(double, int, int, int *, int *, char **);
 
 static char *
-cvt(value, ndigits, flags, sign, decpt, ch, length)
-	double value;
-	int ndigits, flags, *decpt, ch, *length;
-	char *sign;
+cvt(double value, int ndigits, int flags, char *sign, int *decpt, int ch, 
+    int *length)
 {
 	int mode, dsgn;
 	char *digits, *bp, *rve;
@@ -1206,11 +1191,9 @@ cvt(value, ndigits, flags, sign, decpt, ch, length)
 }
 
 static int
-exponent(p0, exp, fmtch)
-	char *p0;
-	int exp, fmtch;
+exponent(char *p0, int exp, int fmtch)
 {
-	register char *p, *t;
+	char *p, *t;
 	char expbuf[MAXEXP];
 
 	p = p0;

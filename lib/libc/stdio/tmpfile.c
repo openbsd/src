@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: tmpfile.c,v 1.7 2003/06/02 20:18:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: tmpfile.c,v 1.8 2004/09/28 18:12:44 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -44,7 +44,7 @@ static char rcsid[] = "$OpenBSD: tmpfile.c,v 1.7 2003/06/02 20:18:37 millert Exp
 #include <paths.h>
 
 FILE *
-tmpfile()
+tmpfile(void)
 {
 	sigset_t set, oset;
 	FILE *fp;

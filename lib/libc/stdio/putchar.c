@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: putchar.c,v 1.5 2003/06/02 20:18:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: putchar.c,v 1.6 2004/09/28 18:12:44 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -41,8 +41,7 @@ static char rcsid[] = "$OpenBSD: putchar.c,v 1.5 2003/06/02 20:18:37 millert Exp
  * A subrouting version of the macro putchar_unlocked
  */
 int
-putchar_unlocked(c)
-	int c;
+putchar_unlocked(int c)
 {
 	FILE *so = stdout;
 
@@ -55,8 +54,7 @@ putchar_unlocked(c)
  * A subroutine version of the macro putchar
  */
 int
-putchar(c)
-	int c;
+putchar(int c)
 {
 	FILE *so = stdout;
 

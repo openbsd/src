@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: sscanf.c,v 1.6 2003/06/02 20:18:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: sscanf.c,v 1.7 2004/09/28 18:12:44 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -41,10 +41,7 @@ static char rcsid[] = "$OpenBSD: sscanf.c,v 1.6 2003/06/02 20:18:37 millert Exp 
 
 /* ARGSUSED */
 static int
-eofread(cookie, buf, len)
-	void *cookie;
-	char *buf;
-	int len;
+eofread(void *cookie, char *buf, int len)
 {
 
 	return (0);

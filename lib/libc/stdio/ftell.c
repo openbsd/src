@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ftell.c,v 1.4 2003/06/02 20:18:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: ftell.c,v 1.5 2004/09/28 18:12:44 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -42,10 +42,9 @@ static char rcsid[] = "$OpenBSD: ftell.c,v 1.4 2003/06/02 20:18:37 millert Exp $
  * ftello: return current offset.
  */
 off_t
-ftello(fp)
-	register FILE *fp;
+ftello(FILE *fp)
 {
-	register fpos_t pos;
+	fpos_t pos;
 
 	if (fp->_seek == NULL) {
 		errno = ESPIPE;			/* historic practice */
@@ -91,8 +90,7 @@ ftello(fp)
 __indr_reference(ftello, ftell);
 #else
 long
-ftell(fp)
-	register FILE *fp;
+ftell(FILE *fp)
 {
 	long pos;
 

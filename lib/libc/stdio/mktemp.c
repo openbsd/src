@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: mktemp.c,v 1.17 2003/06/02 20:18:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: mktemp.c,v 1.18 2004/09/28 18:12:44 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -43,9 +43,7 @@ static char rcsid[] = "$OpenBSD: mktemp.c,v 1.17 2003/06/02 20:18:37 millert Exp
 static int _gettemp(char *, int *, int, int);
 
 int
-mkstemps(path, slen)
-	char *path;
-	int slen;
+mkstemps(char *path, int slen)
 {
 	int fd;
 
@@ -53,8 +51,7 @@ mkstemps(path, slen)
 }
 
 int
-mkstemp(path)
-	char *path;
+mkstemp(char *path)
 {
 	int fd;
 
@@ -62,8 +59,7 @@ mkstemp(path)
 }
 
 char *
-mkdtemp(path)
-	char *path;
+mkdtemp(char *path)
 {
 	return(_gettemp(path, (int *)NULL, 1, 0) ? path : (char *)NULL);
 }
@@ -71,8 +67,7 @@ mkdtemp(path)
 char *_mktemp(char *);
 
 char *
-_mktemp(path)
-	char *path;
+_mktemp(char *path)
 {
 	return(_gettemp(path, (int *)NULL, 0, 0) ? path : (char *)NULL);
 }
@@ -81,21 +76,16 @@ __warn_references(mktemp,
     "warning: mktemp() possibly used unsafely; consider using mkstemp()");
 
 char *
-mktemp(path)
-	char *path;
+mktemp(char *path)
 {
 	return(_mktemp(path));
 }
 
 
 static int
-_gettemp(path, doopen, domkdir, slen)
-	char *path;
-	register int *doopen;
-	int domkdir;
-	int slen;
+_gettemp(char *path, int *doopen, int domkdir, int slen)
 {
-	register char *start, *trv, *suffp;
+	char *start, *trv, *suffp;
 	struct stat sbuf;
 	int rval;
 	pid_t pid;

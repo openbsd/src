@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: makebuf.c,v 1.5 2003/06/02 20:18:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: makebuf.c,v 1.6 2004/09/28 18:12:44 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -49,11 +49,10 @@ static char rcsid[] = "$OpenBSD: makebuf.c,v 1.5 2003/06/02 20:18:37 millert Exp
  * optimisation) right after the fstat() that finds the buffer size.
  */
 void
-__smakebuf(fp)
-	register FILE *fp;
+__smakebuf(FILE *fp)
 {
-	register void *p;
-	register int flags;
+	void *p;
+	int flags;
 	size_t size;
 	int couldbetty;
 
@@ -82,10 +81,7 @@ __smakebuf(fp)
  * Internal routine to determine `proper' buffering for a file.
  */
 int
-__swhatbuf(fp, bufsize, couldbetty)
-	register FILE *fp;
-	size_t *bufsize;
-	int *couldbetty;
+__swhatbuf(FILE *fp, size_t *bufsize, int *couldbetty)
 {
 	struct stat st;
 

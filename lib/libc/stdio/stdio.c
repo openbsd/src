@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: stdio.c,v 1.5 2003/06/02 20:18:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: stdio.c,v 1.6 2004/09/28 18:12:44 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <fcntl.h>
@@ -44,13 +44,10 @@ static char rcsid[] = "$OpenBSD: stdio.c,v 1.5 2003/06/02 20:18:37 millert Exp $
  * These maintain the `known seek offset' for seek optimisation.
  */
 int
-__sread(cookie, buf, n)
-	void *cookie;
-	char *buf;
-	int n;
+__sread(void *cookie, char *buf, int n)
 {
-	register FILE *fp = cookie;
-	register int ret;
+	FILE *fp = cookie;
+	int ret;
 	
 	ret = read(fp->_file, buf, n);
 	/* if the read succeeded, update the current offset */
@@ -62,12 +59,9 @@ __sread(cookie, buf, n)
 }
 
 int
-__swrite(cookie, buf, n)
-	void *cookie;
-	char const *buf;
-	int n;
+__swrite(void *cookie, char const *buf, int n)
 {
-	register FILE *fp = cookie;
+	FILE *fp = cookie;
 
 	if (fp->_flags & __SAPP)
 		(void) lseek(fp->_file, (off_t)0, SEEK_END);
@@ -76,13 +70,10 @@ __swrite(cookie, buf, n)
 }
 
 fpos_t
-__sseek(cookie, offset, whence)
-	void *cookie;
-	fpos_t offset;
-	int whence;
+__sseek(void *cookie, fpos_t offset, int whence)
 {
-	register FILE *fp = cookie;
-	register off_t ret;
+	FILE *fp = cookie;
+	off_t ret;
 	
 	ret = lseek(fp->_file, (off_t)offset, whence);
 	if (ret == (off_t)-1)

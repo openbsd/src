@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: perror.c,v 1.6 2004/05/03 05:07:34 espie Exp $";
+static char rcsid[] = "$OpenBSD: perror.c,v 1.7 2004/09/28 18:12:44 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -40,10 +40,9 @@ static char rcsid[] = "$OpenBSD: perror.c,v 1.6 2004/05/03 05:07:34 espie Exp $"
 #include <limits.h>
 
 void
-perror(s)
-	const char *s;
+perror(const char *s)
 {
-	register struct iovec *v;
+	struct iovec *v;
 	struct iovec iov[4];
 	char buf[NL_TEXTMAX];
 

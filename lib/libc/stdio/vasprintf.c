@@ -1,4 +1,4 @@
-/*	$OpenBSD: vasprintf.c,v 1.8 2003/06/17 21:56:24 millert Exp $	*/
+/*	$OpenBSD: vasprintf.c,v 1.9 2004/09/28 18:12:44 otto Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: vasprintf.c,v 1.8 2003/06/17 21:56:24 millert Exp $";
+static char rcsid[] = "$OpenBSD: vasprintf.c,v 1.9 2004/09/28 18:12:44 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -25,10 +25,7 @@ static char rcsid[] = "$OpenBSD: vasprintf.c,v 1.8 2003/06/17 21:56:24 millert E
 #include <errno.h>
 
 int
-vasprintf(str, fmt, ap)
-	char **str;
-	const char *fmt;
-	_BSD_VA_LIST_ ap;
+vasprintf(char **str, const char *fmt, _BSD_VA_LIST_ ap)
 {
 	int ret;
 	FILE f;

@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getchar.c,v 1.5 2003/06/02 20:18:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: getchar.c,v 1.6 2004/09/28 18:12:44 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -42,7 +42,7 @@ static char rcsid[] = "$OpenBSD: getchar.c,v 1.5 2003/06/02 20:18:37 millert Exp
 #undef getchar_unlocked
 
 int
-getchar_unlocked()
+getchar_unlocked(void)
 {
 	return (getc_unlocked(stdin));
 }
@@ -55,7 +55,7 @@ getchar_unlocked()
 #undef getchar
 
 int
-getchar()
+getchar(void)
 {
 	return (getc(stdin));
 }

@@ -31,16 +31,13 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: setbuffer.c,v 1.3 2003/06/02 20:18:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: setbuffer.c,v 1.4 2004/09/28 18:12:44 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
 
 void
-setbuffer(fp, buf, size)
-	register FILE *fp;
-	char *buf;
-	int size;
+setbuffer(FILE *fp, char *buf, int size)
 {
 
 	(void)setvbuf(fp, buf, buf ? _IOFBF : _IONBF, size);
@@ -50,8 +47,7 @@ setbuffer(fp, buf, size)
  * set line buffering
  */
 int
-setlinebuf(fp)
-	FILE *fp;
+setlinebuf(FILE *fp)
 {
 
 	return (setvbuf(fp, (char *)NULL, _IOLBF, (size_t)0));

@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: fread.c,v 1.4 2003/06/02 20:18:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: fread.c,v 1.5 2004/09/28 18:12:44 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -39,14 +39,11 @@ static char rcsid[] = "$OpenBSD: fread.c,v 1.4 2003/06/02 20:18:37 millert Exp $
 #include "local.h"
 
 size_t
-fread(buf, size, count, fp)
-	void *buf;
-	size_t size, count;
-	register FILE *fp;
+fread(void *buf, size_t size, size_t count, FILE *fp)
 {
-	register size_t resid;
-	register char *p;
-	register int r;
+	size_t resid;
+	char *p;
+	int r;
 	size_t total;
 
 	/*

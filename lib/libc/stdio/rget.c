@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: rget.c,v 1.4 2003/06/02 20:18:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: rget.c,v 1.5 2004/09/28 18:12:44 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -43,8 +43,7 @@ static char rcsid[] = "$OpenBSD: rget.c,v 1.4 2003/06/02 20:18:37 millert Exp $"
  * in the newly-filled buffer.
  */
 int
-__srget(fp)
-	register FILE *fp;
+__srget(FILE *fp)
 {
 	if (__srefill(fp) == 0) {
 		fp->_r--;

@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: refill.c,v 1.6 2003/06/02 20:18:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: refill.c,v 1.7 2004/09/28 18:12:44 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <errno.h>
@@ -40,8 +40,7 @@ static char rcsid[] = "$OpenBSD: refill.c,v 1.6 2003/06/02 20:18:37 millert Exp 
 #include "local.h"
 
 static int
-lflush(fp)
-	FILE *fp;
+lflush(FILE *fp)
 {
 
 	if ((fp->_flags & (__SLBF|__SWR)) == (__SLBF|__SWR))
@@ -54,8 +53,7 @@ lflush(fp)
  * Return EOF on eof or error, 0 otherwise.
  */
 int
-__srefill(fp)
-	register FILE *fp;
+__srefill(FILE *fp)
 {
 
 	/* make sure stdio is set up */

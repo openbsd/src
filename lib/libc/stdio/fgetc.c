@@ -31,14 +31,13 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: fgetc.c,v 1.3 2003/06/02 20:18:36 millert Exp $";
+static char rcsid[] = "$OpenBSD: fgetc.c,v 1.4 2004/09/28 18:12:44 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
 
 int
-fgetc(fp)
-	FILE *fp;
+fgetc(FILE *fp)
 {
 	return (__sgetc(fp));
 }
