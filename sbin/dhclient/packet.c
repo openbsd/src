@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.4 2004/02/07 13:26:35 henning Exp $	*/
+/*	$OpenBSD: packet.c,v 1.5 2004/02/23 18:27:37 henning Exp $	*/
 
 /* Packet assembly code, originally contributed by Archie Cobbs. */
 
@@ -117,13 +117,7 @@ void
 assemble_hw_header(struct interface_info *interface, unsigned char *buf,
     int *bufix, struct hardware *to)
 {
-#ifdef HAVE_TR_SUPPORT
-	if (interface->hw_address.htype == HTYPE_IEEE802)
-		assemble_tr_header(interface, buf, bufix, to);
-	else
-#endif
-		assemble_ethernet_header(interface, buf, bufix, to);
-
+	assemble_ethernet_header(interface, buf, bufix, to);
 }
 
 /*
@@ -184,12 +178,7 @@ ssize_t
 decode_hw_header(struct interface_info *interface, unsigned char *buf,
     int bufix, struct hardware *from)
 {
-#ifdef HAVE_TR_SUPPORT
-	if (interface->hw_address.htype == HTYPE_IEEE802)
-		return (decode_tr_header(interface, buf, bufix, from));
-	else
-#endif
-		return (decode_ethernet_header(interface, buf, bufix, from));
+	return (decode_ethernet_header(interface, buf, bufix, from));
 }
 
 /*
