@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 1996/09/24 04:35:17 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.8 1997/04/20 08:59:36 deraadt Exp $
 #	$NetBSD: Makefile,v 1.18 1995/10/17 16:34:04 cgd Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/17/94
 
@@ -27,7 +27,7 @@ CFLAGS+= -DNUMBOOT=1
 .endif
 
 .if (${MACHINE} == "sun3") || (${MACHINE} == "sparc")
-CFLAGS+= -DSEEALSO="\"installboot(8)\""
+CFLAGS+= -DSEEALSO="\"installboot(8)\"" -DCYLCHECK
 .endif
 
 .if (${MACHINE} == "mvme68k") || (${MACHINE} == "mvme68k")

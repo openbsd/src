@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.29 1997/04/10 22:26:13 millert Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.30 1997/04/20 08:59:40 deraadt Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.29 1997/04/10 22:26:13 millert Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.30 1997/04/20 08:59:40 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1387,7 +1387,7 @@ checklabel(lp)
 		if (pp->p_size == 0 && pp->p_offset != 0)
 			warnx("warning, partition %c: size 0, but offset %d",
 			    part, pp->p_offset);
-#ifdef notdef
+#ifdef CYLCHECK
 		if (pp->p_size % lp->d_secpercyl)
 			warnx("warning, partition %c: size %% cylinder-size != 0",
 			    part);
