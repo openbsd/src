@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.74 2001/08/23 14:01:02 art Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.75 2001/09/07 12:58:18 art Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -402,7 +402,8 @@ main(framep)
 	/* Create process 1 (init(8)). */
 	if (fork1(p, SIGCHLD, FORK_FORK, NULL, 0, rval))
 		panic("fork init");
-	cpu_set_kpc(pfind(rval[0]), start_init, pfind(rval[0]));
+	initproc = pfind(rval[0]);
+	cpu_set_kpc(initproc, start_init, initproc);
 
 	/* Create process 2, the pageout daemon kernel thread. */
 	if (kthread_create(start_pagedaemon, NULL, NULL, "pagedaemon"))
@@ -488,8 +489,6 @@ start_init(arg)
 	/*
 	 * Now in process 1.
 	 */
-	initproc = p;
-
 	check_console(p);
 
 	/*
