@@ -1,7 +1,7 @@
-/*	$OpenBSD: show.c,v 1.5 1998/11/19 04:12:55 espie Exp $	*/
+/*	$OpenBSD: show.c,v 1.6 1998/11/22 23:22:41 espie Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: show.c,v 1.5 1998/11/19 04:12:55 espie Exp $";
+static const char *rcsid = "$OpenBSD: show.c,v 1.6 1998/11/22 23:22:41 espie Exp $";
 #endif
 
 /*
@@ -39,7 +39,7 @@ typedef struct show_t {
 /* the entries in this table must be ordered the same as pl_ent_t constants */
 static show_t	showv[] = {
 	{	PLIST_FILE,	"%s",		"File: %s" },
-	{	PLIST_CWD,	"@cwd: %s",	"\tCWD to: %s" },
+	{	PLIST_CWD,	"@cwd %s",	"\tCWD to: %s" },
 	{	PLIST_CMD,	"@exec %s",	"\tEXEC '%s'" },
 	{	PLIST_CHMOD,	"@chmod %s",	"\tCHMOD to %s" },
 	{	PLIST_CHOWN,	"@chown %s",	"\tCHOWN to %s" },
