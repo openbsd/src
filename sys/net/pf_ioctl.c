@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.19 2002/11/26 03:44:53 kjc Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.20 2002/11/29 13:03:24 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2251,12 +2251,12 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 
+		pool = pf_get_pool(0, pca->r_id, pca->r_num, 1, 0);
+		if (pool == NULL) {
+			error = EBUSY;
+			break;
+		}
 		if (pca->action != PF_CHANGE_REMOVE) {
-			pool = pf_get_pool(0, pca->r_id, pca->r_num, 1, 0);
-			if (pool == NULL) {
-				error = EBUSY;
-				break;
-			}
 			newpa = pool_get(&pf_pooladdr_pl, PR_NOWAIT);
 			if (newpa == NULL) {
 				error = ENOMEM;
