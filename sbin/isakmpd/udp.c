@@ -1,4 +1,4 @@
-/* $OpenBSD: udp.c,v 1.83 2005/03/04 16:51:52 hshoexer Exp $	 */
+/* $OpenBSD: udp.c,v 1.84 2005/03/05 12:21:34 ho Exp $	 */
 /* $EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	 */
 
 /*
@@ -41,7 +41,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <ctype.h>
-#include <err.h>
 #include <limits.h>
 #include <netdb.h>
 #include <stdlib.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtual.c,v 1.12 2005/03/04 16:55:15 hshoexer Exp $	*/
+/*	$OpenBSD: virtual.c,v 1.13 2005/03/05 12:21:35 ho Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -34,7 +34,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <ctype.h>
-#include <err.h>
 #include <limits.h>
 #include <netdb.h>
 #include <stdlib.h>
