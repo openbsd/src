@@ -1,4 +1,4 @@
-.\" $OpenBSD: eap.4,v 1.5 2000/07/20 08:48:17 deraadt Exp $
+.\" $OpenBSD: eap.4,v 1.6 2000/12/21 05:32:52 aaron Exp $
 .\" $NetBSD: eap.4,v 1.2 1998/05/06 19:14:06 augustss Exp $
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,11 +44,9 @@
 The
 .Nm
 driver supports the older Ensoniq AudioPCI and other ES1370 based
-sound cards, as well as the Creative Labs SoundBlaster 128PCI. The
-driver also supports many revisions of the more modern Ensoniq
+sound cards, as well as the Creative Labs SoundBlaster 128PCI.
+The driver also supports many revisions of the more modern Ensoniq
 AudioPCI 97 (ES1371).
-.Sh BUGS
-The "FM" DAC and MIDI port are not supported.
 .Sh SEE ALSO
 .Xr audio 4 ,
 .XR ac97 4
@@ -57,4 +55,5 @@ The
 .Nm
 device driver appeared in
 .Ox 2.6 .
-
+.Sh BUGS
+The "FM" DAC and MIDI port are not supported.

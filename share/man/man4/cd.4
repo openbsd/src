@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cd.4,v 1.7 1999/11/13 04:07:56 angelos Exp $
+.\"	$OpenBSD: cd.4,v 1.8 2000/12/21 05:32:52 aaron Exp $
 .\"	$NetBSD: cd.4,v 1.3 1996/10/20 23:15:21 explorer Exp $
 .\"
 .\" Copyright (c) 1996
@@ -38,30 +38,26 @@
 .Sh DESCRIPTION
 The
 .Nm cd
-driver provides support for a
-.Tn SCSI
-.Tn CD-ROM
-(Compact Disc-Read Only Memory) drive.
+driver provides support for a SCSI CD-ROM (Compact Disc-Read Only Memory)
+drive.
 In an attempt to look like a regular disk, the
 .Nm
 driver synthesizes a partition table, with one partition covering the entire
-.Tn CD-ROM .
+CD-ROM.
 It is possible to modify this partition table using
 .Xr disklabel 8 ,
-but it will only last until the
-.Tn CD-ROM
-is unmounted.
+but it will only last until the CD-ROM is unmounted.
 In general the interfaces are similar to those described by
 .Xr wd 4
 and
 .Xr sd 4 .
 .Pp
-As the
-.Tn SCSI
-adapter is probed during boot, the
-.Tn SCSI
-bus is scanned for devices. Any devices found which answer as `Read-only'
-type devices will be `attached' to the
+As the SCSI adapter is probed during boot, the SCSI bus is scanned for devices.
+Any devices found which answer as
+.Dq Read-only
+type devices will be
+.Dq attached
+to the
 .Nm
 driver.
 .Pp
@@ -70,37 +66,26 @@ The system utility
 may be used to read the synthesized
 disk label
 structure, which will contain correct figures for the size of the
-.Tn CD-ROM
-should that information be required.
+CD-ROM should that information be required.
 .Sh KERNEL CONFIGURATION
-Any number of
-.Tn CD-ROM
-devices may be attached to the system regardless of system
+Any number of CD-ROM devices may be attached to the system regardless of system
 configuration as all resources are dynamically allocated.
 .Sh IOCTLS
 The following
 .Xr ioctl 2
-calls which apply to
-.Tn SCSI
-.Tn CD-ROM
-drives are defined
-in the header files
+calls which apply to SCSI CD-ROM drives are defined in the header files
 .Aq Pa sys/cdio.h
 and
 .Aq Pa sys/disklabel.h .
 .Pp
-.Bl -tag -width CDIOCREADSUBCHANNEL -compact
-.It Dv DIOCGDINFO
-.It Dv DIOCSDINFO
+.Bl -tag -width Ds
+.It Dv DIOCGDINFO , Dv DIOCSDINFO
 .Pq Li "struct disklabel"
-Read or write the in-core copy of the disklabel for the
-drive.  The disklabel is initialized with information
-read from the
-.Tn SCSI
-inquiry commands, and should be the same as
-the information printed at boot.  This structure is defined in
+Read or write the in-core copy of the disklabel for the drive.
+The disklabel is initialized with information read from the SCSI inquiry
+commands, and should be the same as the information printed at boot.
+This structure is defined in
 .Xr disklabel 5 .
-
 .\".It Dv CDIOCCAPABILITY
 .\".Pq Li "struct ioc_capability"
 .\"Retrieve information from the drive on what features it supports.  The
@@ -166,8 +151,8 @@ the information printed at boot.  This structure is defined in
 .\".Ed
 .It Dv CDIOCPLAYTRACKS
 .Pq Li "struct ioc_play_track"
-Start audio playback given a track address and length.  The structure
-is defined as follows:
+Start audio playback given a track address and length.
+The structure is defined as follows:
 .Bd -literal -offset indent
 struct ioc_play_track {
 	u_char	start_track;
@@ -176,22 +161,22 @@ struct ioc_play_track {
 	u_char	end_index;
 };
 .Ed
-
 .It Dv CDIOCPLAYBLOCKS
 .Pq Li "struct ioc_play_blocks"
-Start audio playback given a block address and length.  The structure
-is defined as follows:
+Start audio playback given a block address and length.
+The structure is defined as follows:
 .Bd -literal -offset indent
 struct ioc_play_blocks {
 	int	blk;
 	int	len;
 };
 .Ed
-
 .It Dv CDIOCPLAYMSF
 .Pq Li "struct ioc_play_msf"
-Start audio playback given a `minutes-seconds-frames' address and
-length.  The structure is defined as follows:
+Start audio playback given a
+.Dq minutes-seconds-frames
+address and length.
+The structure is defined as follows:
 .Bd -literal -offset indent
 struct ioc_play_msf {
 	u_char	start_m;
@@ -202,7 +187,6 @@ struct ioc_play_msf {
 	u_char	end_f;
 };
 .Ed
-
 .It Dv CDIOCREADSUBCHANNEL
 .Pq Li "struct ioc_read_subchannel"
 Read information from the subchannel at the location specified by this
@@ -222,11 +206,10 @@ struct ioc_read_subchannel {
 	struct  cd_sub_channel_info *data;
 };
 .Ed
-
 .It Dv CDIOREADTOCHEADER
 .Pq Li "struct ioc_toc_header"
-Return summary information about the table of contents for the mounted
-.Tn CD-ROM .
+Return summary information about the table of contents for the
+mounted CD-ROM.
 The information is returned into the following structure:
 .Bd -literal -offset indent
 struct ioc_toc_header {
@@ -235,11 +218,11 @@ struct ioc_toc_header {
 	u_char  ending_track;
 };
 .Ed
-
 .It Dv CDIOREADTOCENTRYS
 .Pq Li "struct ioc_read_toc_entry"
-Return information from the table of contents entries mentioned.  (Yes, this
-command name is misspelled.)  The argument structure is defined as follows:
+Return information from the table of contents entries mentioned.
+(Yes, this command name is misspelled.)
+The argument structure is defined as follows:
 .Bd -literal -offset indent
 struct ioc_read_toc_entry {
 	u_char	address_format;
@@ -252,70 +235,48 @@ The requested data is written into an area of size
 .Li data_len
 and pointed to by
 .Li data .
-
 .It Dv CDIOCSETPATCH
 .Pq Li "struct ioc_patch"
-Attach various audio channels to various output channels.  The
-argument structure is defined thusly:
+Attach various audio channels to various output channels.
+The argument structure is defined thusly:
 .Bd -literal -offset indent
 struct ioc_patch {
 	u_char	patch[4];
 	/* one for each channel */
 };
 .Ed
-
-.It Dv CDIOCGETVOL
-.It Dv CDIOCSETVOL
+.It Dv CDIOCGETVOL , Dv CDIOSETVOL
 .Pq Li "struct ioc_vol"
-Get (set) information about the volume settings of the output channels.  The
-argument structure is as follows:
+Get (set) information about the volume settings of the output channels.
+The argument structure is as follows:
 .Bd -literal -offset indent
 struct	ioc_vol {
 	u_char	vol[4];
 	/* one for each channel */
 };
 .Ed
-
 .It Dv CDIOCSETMONO
 Patch all output channels to all source channels.
-
 .It Dv CDIOCSETSTEREO
 Patch left source channel to the left output channel and the right
 source channel to the right output channel.
-
 .It Dv CDIOCSETMUTE
 Mute output without changing the volume settings.
-
-.It Dv CDIOCSETLEFT
-.It Dv CDIOCSETRIGHT
+.It Dv CDIOCSETLEFT , Dv CDIOCSETRIGHT
 Attach both output channels to the left (right) source channel.
-
-.It Dv CDIOCSETDEBUG
-.It Dv CDIOCCLRDEBUG
+.It Dv CDIOCSETDEBUG , Dv CDIOCCLRDEBUG
 Turn on (off) debugging for the appropriate device.
-
-.It Dv CDIOCPAUSE
-.It Dv CDIOCRESUME
+.It Dv CDIOCPAUSE , Dv CDIOCRESUME
 Pause (resume) audio play, without resetting the location of the read-head.
-
 .It Dv CDIOCRESET
 Reset the drive.
-
-.It Dv CDIOCSTART
-.It Dv CDIOCSTOP
-Tell the drive to spin-up (-down) the
-.Tn CD-ROM .
-
-.It Dv CDIOCALLOW
-.It Dv CDIOCPREVENT
-Tell the drive to allow (prevent) manual ejection of the
-.Tn CD-ROM
-disc.  Not all drives support this feature.
-
+.It Dv CDIOCSTART , Dv CDIOCSTOP
+Tell the drive to spin-up (-down) the CD-ROM.
+.It Dv CDIOCALLOW , Dv CDIOCPREVENT
+Tell the drive to allow (prevent) manual ejection of the CD-ROM disc.
+Not all drives support this feature.
 .It Dv CDIOCEJECT
-Eject the
-.Tn CD-ROM .
-
+Eject the CD-ROM.
 .\".It Dv CDIOCCLOSE
 .\"Tell the drive to close its door and load the media.  Not all drives
 .\"support this feature.
@@ -334,55 +295,45 @@ Eject the
 .\"	short	speed;
 .\"};
 .\".Ed
-
 .It Dv FIBMAP
 Return the physical block number (in 512-byte sectors) given the
-logical block number.  The argument is a pointer to an integer.  On
-invocation, it should contain the logical block.  On return, it
-contains the physical block number.
+logical block number.
+The argument is a pointer to an integer.
+On invocation, it should contain the logical block.
+On return, it contains the physical block number.
 .El
 .Pp
 In addition the general
 .Xr scsi 4
 ioctls may be used with the
 .Nm
-driver, if used against the `whole disk' partition (i.e.
+driver, if used against the `whole disk' partition (i.e.,
 .Pa /dev/rcd0c ) .
 .Sh NOTES
-When a
-.Tn CD-ROM
-is changed in a drive controlled by the
+When a CD-ROM is changed in a drive controlled by the
 .Nm
 driver, then the act of changing the media will invalidate the
-disklabel and information held within the kernel.  To stop corruption,
-all accesses to the device will be discarded until there are no more
-open file descriptors referencing the device.  During this period, all
-new open attempts will be rejected.  When no more open file descriptors
-reference the device, the first next open will load a new set of
-parameters (including disklabel) for the drive.
+disklabel and information held within the kernel.
+To stop corruption, all accesses to the device will be discarded until
+there are no more open file descriptors referencing the device.
+During this period, all new open attempts will be rejected.
+When no more open file descriptors reference the device, the first next open
+will load a new set of parameters (including disklabel) for the drive.
 .Pp
 The audio code in the
 .Nm
-driver only supports
-.Tn SCSI-2
-standard audio commands. Because many
-.Tn CD-ROM
-manufacturers have not followed the standard, there are many
-.Tn CD-ROM
-drives for which audio will not work. Some work is planned to support
-some of the more common `broken'
-.Tn CD-ROM
-drives; however, this is not yet under way.
+driver only supports SCSI-2 standard audio commands.
+Because many CD-ROM manufacturers have not followed the standard, there are
+many CD-ROM drives for which audio will not work.
+Some work is planned to support some of the more common
+.Dq broken
+CD-ROM drives; however, this is not yet under way.
 .Sh FILES
 .Bl -tag -width /dev/rcd[0-9][a-h] -compact
 .It Pa /dev/cd[0-9][a-h]
-block mode
-.Tn CD-ROM
-devices
+block mode CD-ROM devices
 .It Pa /dev/rcd[0-9][a-h]
-raw mode
-.Tn CD-ROM
-devices
+raw mode CD-ROM devices
 .El
 .Sh DIAGNOSTICS
 None.
@@ -391,6 +342,10 @@ None.
 .Xr sd 4 ,
 .Xr disklabel 5 ,
 .Xr disklabel 8
+.Sh HISTORY
+The
+.Nm
+driver appeared in 386BSD 0.1.
 .Sh BUGS
 The names of the structures used for the third argument to
 .Fn ioctl
@@ -398,7 +353,3 @@ were poorly chosen, and a number of spelling errors have survived in
 the names of the
 .Fn ioctl
 commands.
-.Sh HISTORY
-The
-.Nm
-driver appeared in 386BSD 0.1.

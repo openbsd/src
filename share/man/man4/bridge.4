@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bridge.4,v 1.27 2000/11/10 20:02:16 todd Exp $
+.\"	$OpenBSD: bridge.4,v 1.28 2000/12/21 05:32:52 aaron Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -107,27 +107,29 @@ They are defined in
 .Bl -tag -width SIOCBRDGGIFFLGS
 .It Dv SIOCBRDGIFS
 .Pq Li "struct ifbifconf"
-Retrieve member interface list from a bridge.  This request takes an
-.Ar ifbifconf
+Retrieve member interface list from a bridge.
+This request takes an
+.Li ifbifconf
 structure (see below) as a value-result parameter.
 The
-.Ar ifbic_len
+.Fa ifbic_len
 field should be initially set to the size of the buffer
 pointed to by
-.Ar ifbic_buf .
+.Fa ifbic_buf .
 On return it will contain the length, in bytes, of the configuration
 list.
 Alternatively, if the
-.Ar ifbic_len
+.Fa ifbic_len
 passed in is set to 0,
-SIOCBRDGIFS will set
-.Ar ifbic_len
+.Dv SIOCBRDGIFS
+will set
+.Fa ifbic_len
 to the size that
-.Ar ifbic_buf
+.Fa ifbic_buf
 needs to be to fit the entire configuration list,
 and will not fill in the other parameters.
 This is useful for determining the exact size that
-.Ar ifbic_buf
+.Fa ifbic_buf
 needs to be in advance.
 .Pp
 The argument structure is defined as follows:
@@ -155,33 +157,33 @@ struct ifbifconf {
 .It Dv SIOCBRDGADD
 .Pq Li "struct ifbreq"
 Add the interface named in
-.Ar ifbr_ifsname
+.Fa ifbr_ifsname
 to the bridge named in
-.Ar ifbr_name .
+.Fa ifbr_name .
 .It Dv SIOCBRDGDEL
 .Pq Li "struct ifbreq"
 Delete the interface named in
-.Ar ifbr_ifsname
+.Fa ifbr_ifsname
 from the bridge named in
-.Ar ifbr_name .
+.Fa ifbr_name .
 .It Dv SIOCBRDGSIFFLGS
 .Pq Li "struct ifbreq"
 Set the bridge member interface flags for the interface named in
-.Ar ifbr_ifsname
+.Fa ifbr_ifsname
 attached to the bridge
-.Ar ifbr_name .
+.Fa ifbr_name .
 If the flag
-.Ar IFBIF_LEARNING
+.Dv IFBIF_LEARNING
 is set on an interface, source addresses from frames received on the
 interface are recorded in the address cache.
 If the flag
-.Ar IFBIF_DISCOVER
+.Dv IFBIF_DISCOVER
 is set, the interface will receive packets destined for unknown
 destinations, otherwise a frame that has a destination not found
 in the address cache is not forwarded to this interface.
 The default for newly added interfaces has both flags set.
 If the flag
-.Ar IFBIF_BLOCKNONIP
+.Dv IFBIF_BLOCKNONIP
 is set, packets that are one of
 .Xr ip 4 ,
 .Xr ip6 4 ,
@@ -190,29 +192,33 @@ or
 Reverse ARP, will not be bridged from and to the interface.
 .It Dv SIOCBRDGGIFFLGS
 Retrieve the bridge member interface flags for the interface named in
-.Ar ifbr_ifsname
+.Fa ifbr_ifsname
 attached to the bridge
-.Ar ifbr_name .
+.Fa ifbr_name .
 .It Dv SIOCBRDGRTS
 .Pq Li "struct ifbaconf"
 Retrieve the address cache of the bridge named in
-.Ar ifbac_name .
+.Fa ifbac_name .
 This request takes an
-.Ar ifbaconf
+.Li ifbaconf
 structure (see below) as a value result parameter.
 The
-.Ar ifbac_len
+.Fa ifbac_len
 field should be initially set to the size of the buffer pointed to by
-.Ar ifbac_buf .
+.Fa ifbac_buf .
 On return, it will contain the length, in bytes, of the configuration list.
 Alternatively, if the
-.Ar ifbac_len
-passed in is set to 0, SIOCBRDGRTS will set it to the size that
-.Ar ifbac_buf
+.Fa ifbac_len
+passed in is set to 0,
+.Dv SIOCBRDGRTS
+will set it to the size that
+.Fa ifbac_buf
 needs to be to fit the entire configuration list and not fill in the other
 parameters.
-As with SIOCBRDGIFS, this is useful for determining the exact size that
-.Ar ifbac_buf
+As with
+.Dv SIOCBRDGIFS ,
+this is useful for determining the exact size that
+.Fa ifbac_buf
 needs to be in advance.
 .Pp
 The argument structure is defined as follows:
@@ -241,34 +247,35 @@ struct ifbaconf {
 };
 .Ed
 Address cache entries with the type set to
-.Ar IFBAF_DYNAMIC
+.Dv IFBAF_DYNAMIC
 in
-.Ar ifba_flags
+.Fa ifba_flags
 are entries learned by the bridge.
 Entries with the type set to
-.Ar IFBAF_STATIC
+.Dv IFBAF_STATIC
 are manually added entries.
 .It Dv SIOCBRDGSADDR
 .Pq Li "struct ifbareq"
 Add an entry, manually, to the address cache for the bridge named in
-.Ar ifba_name .
+.Fa ifba_name .
 The address and its associated interface and flags are set in the
-.Ar ifba_dst ,
-.Ar ifba_ifsname ,
-.Ar ifba_flags
+.Fa ifba_dst ,
+.Fa ifba_ifsname ,
+and
+.Fa ifba_flags
 fields, respectively.
 .It Dv SIOCBRDGDADDR
 .Pq Li "struct ifbareq"
 Delete an entry from the address cache of the bridge named in
-.Ar ifba_name .
+.Fa ifba_name .
 Entries are deleted strictly based on the address field
-.Ar ifba_dst .
+.Fa ifba_dst .
 .It Dv SIOCBRDGSCACHE
 .Pq Li "struct ifbcachereq"
 Set the maximum address cache size for the bridge named in
-.Ar ifbc_name
+.Fa ifbc_name
 to
-.Ar ifbc_size
+.Fa ifbc_size
 entries.
 .Pp
 The argument structure is as follows:
@@ -281,13 +288,13 @@ struct ifbcachereq {
 .It Dv SIOCBRDGGCACHE
 .Pq Li "struct ifbcachereq"
 Retrieve the maximum size of the address cache for the bridge
-.Ar ifbc_name .
+.Fa ifbc_name .
 .It Dv SIOCBRDGSTO
 .Pq Li "struct ifbcachetoreq"
 Set the time, in seconds, that addresses which have not been
 seen on the network (transmitted a packet) remain in the cache.
-If the time is set to zero, no aging is performed on the address
-cache.  The argument structure is as follows:
+If the time is set to zero, no aging is performed on the address cache.
+The argument structure is as follows:
 .Bd -literal -offset indent
 struct ifbcachetoreq {
 	char ifbct_name[IFNAMSIZ]; /* bridge */
@@ -300,50 +307,53 @@ Retrieve the address cache expiration time (see above).
 .It Dv SIOCBRDGFLUSH
 .Pq Li "struct ifbreq"
 Flush addresses from the cache.
-.Ar ifbr_name
+.Fa ifbr_name
 contains the name of the bridge device, and
-.Ar ifbr_ifsflags
+.Fa ifbr_ifsflags
 should be set to
-.Ar IFBF_FLUSHALL
+.Dv IFBF_FLUSHALL
 to flush all addresses from the cache or
-.Ar IFBF_FLUSHDYN
+.Dv IFBF_FLUSHDYN
 to flush only the dynamically learned addresses from the cache.
 .It Dv SIOCBRDGARL
 .Pq Li "struct ifbrlreq"
-Add a Ethernet address filtering rule to the bridge on a specific
-interface.  The argument structure is as follows:
+Add a Ethernet address filtering rule to the bridge on a specific interface.
+The argument structure is as follows:
 .Bd -literal -offset indent
 .Ed
 .It Dv SIOCBRDGFRL
 .Pq Li "struct ifbrlreq"
 Remove all filtering rules from a bridge interface member.
-.Ar ifbr_name
+.Fa ifbr_name
 contains the name of the bridge device, and
-.Ar ifbr_ifsname
+.Fa ifbr_ifsname
 contains the name of the bridge member interface.
 .It Dv SIOCBRDGGRL
 .Pq Li "struct ifbrlconf"
 Retrieve all of the rules from the bridge,
-.Ar ifbrl_name ,
+.Fa ifbrl_name ,
 for the member interface,
-.Ar ifbrl_ifsname .
-
+.Fa ifbrl_ifsname .
 This request takes an
-.Ar ifbrlconf
+.Li ifbrlconf
 structure (see below) as a value result parameter.
 The
-.Ar ifbrl_len
+.Fa ifbrl_len
 field should be initially set to the size of the buffer pointed to by
-.Ar ifbrl_buf .
+.Fa ifbrl_buf .
 On return, it will contain the length, in bytes, of the configuration list.
 Alternatively, if the
-.Ar ifbrl_len
-passed in is set to 0, SIOCBRDGGRL will set it to the size that
-.Ar ifbrl_buf
+.Fa ifbrl_len
+passed in is set to 0,
+.Dv SIOCBRDGGRL
+will set it to the size that
+.Fa ifbrl_buf
 needs to be to fit the entire configuration list and not fill in the other
 parameters.
-As with SIOCBRDGIFS, this is useful for determining the exact size that
-.Ar ifbrl_buf
+As with
+.Dv SIOCBRDGIFS ,
+this is useful for determining the exact size that
+.Fa ifbrl_buf
 needs to be in advance.
 .Pp
 The argument structure is defined as follows:
@@ -363,9 +373,9 @@ struct ifbrlconf {
 .It Dv SIOCBRDGARL
 .Pq Li "struct ifbrlreq"
 Add a filtering rule to the bridge named in
-.Ar ifbr_name
+.Fa ifbr_name
 on the interface named in
-.Ar ifbr_ifsname .
+.Fa ifbr_ifsname .
 The argument structure is as follows:
 .Bd -literal -offset indent
 struct ifbrlreq {
@@ -388,66 +398,66 @@ Rules are applied in the order in which they were added to the bridge,
 and the first matching rule's action parameter determines the fate of
 the packet.
 The
-.Ar ifbr_action
+.Fa ifbr_action
 parameter specifies whether a frame matching the rule is to
 be blocked or passed.
 .Pp
 If the
-.Ar BRL_FLAG_IN
+.Dv BRL_FLAG_IN
 bit is set in
-.Ar ifbr_flags ,
+.Fa ifbr_flags ,
 then the rule applies to frames received by the interface.
 If the
-.Ar BRL_FLAG_OUT
-bit is set,
-then the rule applies to frame transmitted by the interface.
+.Dv BRL_FLAG_OUT
+bit is set, then the rule applies to frame transmitted by the interface.
 At least one of
-.Ar BRL_FLAG_IN
+.Dv BRL_FLAG_IN
 or
-.Ar BRL_FLAG_OUT
+.Dv BRL_FLAG_OUT
 must be set.
 .Pp
 The source Ethernet address in
-.Ar ifbr_src
+.Fa ifbr_src
 is checked if the
-.Ar BRL_FLAG_SRCVALID
+.Dv BRL_FLAG_SRCVALID
 bit is set in
-.Ar ifbr_flags .
+.Fa ifbr_flags .
 The destination address in
-.Ar ifbr_dst
+.Fa ifbr_dst
 is check if the
-.Ar BRL_FLAG_DSTVALID
+.Dv BRL_FLAG_DSTVALID
 bit is set.
 If neither bit is set, the rule is matches all frames.
 .It Dv SIOCBRDGFRL
 .Pq Li "struct ifbrlreq"
 Flush rules from the bridge
-.Ar ifbr_name
+.Fa ifbr_name
 on the interface
-.Ar ifbr_ifsname .
+.Fa ifbr_ifsname .
 .It Dv SIOCBRDGGRL
 .Pq Li "struct ifbrlconf"
-Retrieve an array of rules from the bridge for a
-particular interface.  This request takes an
-.Ar ifbrlconf
+Retrieve an array of rules from the bridge for a particular interface.
+This request takes an
+.Li ifbrlconf
 structure (see below) as a value-result parameter.
 The
-.Ar ifbrl_len
+.Fa ifbrl_len
 field should be initially set to the size of the buffer
 pointed to by
-.Ar ifbrl_buf .
+.Fa ifbrl_buf .
 On return it will contain the length, in bytes, of the rule list.
 Alternatively, if the
-.Ar ifbrl_len
+.Fa ifbrl_len
 passed in is set to 0,
-SIOCBRDGGRL will set
-.Ar ifbrl_len
+.Dv SIOCBRDGGRL
+will set
+.Fa ifbrl_len
 to the size that
-.Ar ifbrl_buf
+.Fa ifbrl_buf
 needs to be to fit the entire configuration list,
 and will not fill in the other parameters.
 This is useful for determining the exact size that
-.Ar ifbrl_buf
+.Fa ifbrl_buf
 needs to be in advance.
 .Pp
 The argument structure is as follows:
@@ -495,8 +505,11 @@ in the down state.
 Super-user privilege is required to add and delete interfaces to and from
 bridges and to set the bridge interface flags.
 .It Bq Eq EFAULT
-The buffer used in a SIOCBRDGIFS or SIOCBRDGRTS request points outside
-of the process's allocated address space.
+The buffer used in a
+.Dv SIOCBRDGIFS
+or
+.Dv SIOCBRDGRTS
+request points outside of the process's allocated address space.
 .It Bq Eq ESRCH
 No such member interface in the bridge.
 .El
@@ -509,13 +522,6 @@ No such member interface in the bridge.
 .Xr netintro 4 ,
 .Xr bridgename.if 5 ,
 .Xr brconfig 8
-.Sh HISTORY
-The
-.Xr brconfig 8
-command and the
-.Xr bridge 4
-kernel interface first appeared in
-.Ox 2.5 .
 .Sh AUTHORS
 The
 .Xr brconfig 8
@@ -525,9 +531,17 @@ kernel interface were written by
 .An Jason L. Wright Aq jason@thought.net
 as part of an undergraduate independent study at the
 University of North Carolina at Greensboro.
+.Sh HISTORY
+The
+.Xr brconfig 8
+command and the
+.Xr bridge 4
+kernel interface first appeared in
+.Ox 2.5 .
 .Sh BUGS
-There is currently no loop detection.  Care must be taken to make sure
-that loops are not created when a bridge is brought up.
+There is currently no loop detection.
+Care must be taken to ensure that loops are not created when a bridge
+is brought up.
 .Pp
 Only
 .Xr ipf 4

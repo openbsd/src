@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cnw.4,v 1.3 1999/10/06 12:54:24 fgsch Exp $
+.\"	$OpenBSD: cnw.4,v 1.4 2000/12/21 05:32:52 aaron Exp $
 .\"
 .\" Copyright (c) 1999 Federico G. Schwindt.
 .\" All rights reserved.
@@ -43,15 +43,24 @@ The wireless domain number and scrambling key can be specified by the
 following kernel configuration options:
 .Bl -tag -width indent
 .It Cd CNW_DOMAIN=value
-Selects what access point(s) to talk to, by their domain number. Values
-from 0 to 0x1ff are valid; 0x100 is the default if this option is not
-defined.
+Selects what access point(s) to talk to, by their domain number.
+Values from
+.Li 0
+to
+.Li 0x1ff
+are valid;
+.Li 0x100
+is the default if this option is not defined.
 .It Cd CNW_SCRAMBLEKEY=value
-Selects the scramble key for domains that are scrambled. Values from
-0 to 0x1ff are valid; 0 (no scrambling) is the default if this option
-is not defined.
-.Sh BUGS
-Multicasting or receiver promiscuity is not supported yet.
+Selects the scramble key for domains that are scrambled.
+Values from
+.Li 0
+to
+.Li 0x1ff
+are valid;
+.Li 0
+(no scrambling)
+is the default if this option is not defined.
 .Sh SEE ALSO
 .Xr netintro 4 ,
 .Xr pcmcia 4 ,
@@ -63,3 +72,5 @@ The
 .Nm
 device driver appeared in
 .Ox 2.6 .
+.Sh BUGS
+Multicasting or receiver promiscuity is not supported yet.

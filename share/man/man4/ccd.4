@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ccd.4,v 1.13 2000/03/29 01:28:56 deraadt Exp $
+.\"	$OpenBSD: ccd.4,v 1.14 2000/12/21 05:32:52 aaron Exp $
 .\"	$NetBSD: ccd.4,v 1.5 1995/10/09 06:09:09 thorpej Exp $
 .\"
 .\" Copyright (c) 1994 Jason Downs.
@@ -38,7 +38,7 @@
 .Os
 .Sh NAME
 .Nm ccd
-.Nd Concatenated Disk Driver
+.Nd concatenated disk driver
 .Sh SYNOPSIS
 .Cd "pseudo-device ccd 4"
 .Sh DESCRIPTION
@@ -54,14 +54,18 @@ configuration file, and how to partition disks.
 Note that the
 .Sq raw
 partitions of the disks
-.Pa should not
-be combined.  Each component partition should be offset at least one
-cylinder from the beginning of the component disk.  This avoids potential
-conflicts between the component disk's disklabel and the
+.Em should not
+be combined.
+Each component partition should be offset at least one
+cylinder from the beginning of the component disk.
+This avoids potential conflicts between the component disk's disklabel and the
 .Nm ccd Ns 's
-disklabel.  The kernel wants to only allow component partitions of type FS_CCD,
+disklabel.
+The kernel wants to only allow component partitions of type
+.Dv FS_CCD ,
 but due to disklabel restrictions on some architectures will also accept
-component partitions of FS_BSDFFS.
+component partitions of
+.Dv FS_BSDFFS .
 .Pp
 In order to compile in support for the ccd, you must add a line similar
 to the following to your kernel configuration file:
@@ -70,9 +74,10 @@ pseudo-device	ccd	4	# concatenated disk devices
 .Ed
 .Pp
 The count argument is how many
-.Nm ccds
-memory is allocated for at boot time.  In this example, no more than 4
-.Nm ccds
+.Nm ccd Ns No 's
+memory is allocated for at boot time.
+In this example, no more than 4
+.Nm ccd Ns No 's
 may be configured.
 .Pp
 A
@@ -84,27 +89,38 @@ If a
 .Nm
 is interleaved correctly, a
 .Dq striping
-effect is achieved, which can increase performance.  Finding the optimum
-interleave factor is a hard problem.  Some things to think about are the
-number of disks in the ccd, the typical readahead opportunities, the
-filesystem blocksize and if it's possible to use the optimized ccd I/O
-protocol.  The optimized protocol allows smaller interleave factors for a
+effect is achieved, which can increase performance.
+Finding the optimum interleave factor is a hard problem.
+Some things to think about are the number of disks in the ccd,
+the typical readahead opportunities, the filesystem blocksize, and if
+it's possible to use the optimized ccd I/O protocol.
+The optimized protocol allows smaller interleave factors for a
 comparably cheap price but requires that the factor be a multiple of the
-software page size (CLBYTES), and that mirroring is not requested.  So far the
-best policy is to test with different interleaves and benchmark typical uses.
+software page size
+.Pf ( Dv CLBYTES ) ,
+and that mirroring is not requested.
+So far the best policy is to test with different interleaves and
+benchmark typical uses.
 A rule of thumb might be to use the software pagesize with the optimized
 I/O protocol (the default, unless the requirements mentioned above are not
-fulfilled) or MAXBSIZE / #components with the unoptimized protocol.
-Since the interleave factor is expressed in units of DEV_BSIZE, one must
-account for sector sizes other than DEV_BSIZE in order to calculate the
-correct interleave.  The kernel will not allow an interleave factor less than
-the size of the largest component sector divided by DEV_BSIZE.
+fulfilled) or
+.Dv MAXBSIZE /
+#components with the unoptimized protocol.
+Since the interleave factor is expressed in units of
+.Dv DEV_BSIZE ,
+one must account for sector sizes other than
+.Dv DEV_BSIZE
+in order to calculate the correct interleave.
+The kernel will not allow an interleave factor less than the size
+of the largest component sector divided by
+.Dv DEV_BSIZE .
 .Pp
 Note that best performance is achieved if all component disks have the same
-geometry and size.  Optimum striping cannot occur with different disk types.
+geometry and size.
+Optimum striping cannot occur with different disk types.
 .Pp
 There is a run-time utility that is used for configuring
-.Nm ccds .
+.Nm ccd Ns No 's .
 See
 .Xr ccdconfig 8
 for more information.
@@ -115,13 +131,13 @@ fails, the entire
 file system will be lost.
 .Sh FILES
 /dev/{,r}ccd* - ccd device special files.
-.Sh HISTORY
-The concatenated disk driver was originally written at the University of
-Utah.
 .Sh SEE ALSO
 .Xr MAKEDEV 8 ,
 .Xr ccdconfig 8 ,
 .Xr config 8 ,
 .Xr fsck 8 ,
 .Xr mount 8 ,
-.Xr newfs 8 .
+.Xr newfs 8
+.Sh HISTORY
+The concatenated disk driver was originally written at the University of
+Utah.

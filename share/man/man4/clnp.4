@@ -46,21 +46,16 @@
 .Ft int
 .Fn socket AF_ISO SOCK_RAW 0
 .Sh DESCRIPTION
-.Tn CLNP
-is the connectionless-mode network protocol used by the
-connectionless-mode network service. This protocol is specified in
-.Tn ISO
-8473.
-It may be accessed
-through a
+CLNP is the connectionless-mode network protocol used by the
+connectionless-mode network service.
+This protocol is specified in ISO 8473.
+It may be accessed through a
 .Dq raw socket
 for debugging purposes only.
-.Tn CLNP
-sockets are connectionless,
-and are normally used with the
-.Xr sendto
+CLNP sockets are connectionless, and are normally used with the
+.Xr sendto 2
 and
-.Xr recvfrom
+.Xr recvfrom 2
 calls, though the
 .Xr connect 2
 call may also be used to fix the destination for future
@@ -74,16 +69,11 @@ or
 .Xr send 2
 system calls may be used).
 .Pp
-Outgoing packets automatically have a
-.Tn CLNP
-header prepended to
-them. Incoming packets received by the user contain the full
-.Tn CLNP
-header.
+Outgoing packets automatically have a CLNP header prepended to them.
+Incoming packets received by the user contain the full CLNP header.
 The following
 .Xr setsockopt
-options apply to
-.Tn CLNP :
+options apply to CLNP:
 .Bl -tag -width CLNPOPT_FLAGS
 .It Dv CLNPOPT_FLAGS
 Sets the flags which are passed to clnp when sending a datagram.
@@ -91,29 +81,25 @@ Valid flags are:
 .Pp
 .Bl -tag -width "CLNP_NO_CKSUM" -offset indent -compact
 .It Dv CLNP_NO_SEG
-Do not allow segmentation
+Do not allow segmentation.
 .It Dv CLNP_NO_ER
-Suppress ER pdus
+Suppress ER pdus.
 .It Dv CLNP_NO_CKSUM
-Do not generate the
-.Tn CLNP
-checksum
+Do not generate the CLNP checksum.
 .El
 .Pp
 .It Dv CLNPOPT_OPTS
-Sets
-.Tn CLNP
-options. The options must be formatted exactly as specified by
-.Tn ISO
-8473, section 7.5
+Sets CLNP options.
+The options must be formatted exactly as specified by ISO 8473, section 7.5.
 .Dq Options Part.
-Once an option has been set, it will
-be sent on all packets until a different option is set.
+Once an option has been set, it will be sent on all packets until
+a different option is set.
 .El
 .Sh CONGESTION EXPERIENCE BIT
 Whenever a packet is transmitted, the globally unique quality of
-service option is added to the packet. The sequencing preferred bit and
-the low transit delay bit are set in this option.
+service option is added to the packet.
+The sequencing preferred bit and the low transit delay bit are set in
+this option.
 .Pp
 If a packet is forwarded containing the globally unique quality of
 service option, and the interface through which the packet will be
@@ -160,9 +146,7 @@ When specifying unsupported options.
 .Xr netintro 4
 .Sh BUGS
 Packets are sent with the type code of 0x1d (technically an invalid
-packet type) for lack of a better way to identify raw
-.Tn CLNP
-packets.
+packet type) for lack of a better way to identify raw CLNP packets.
 .Pp
 No more than
 .Dv MLEN
