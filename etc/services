@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.53 2003/12/16 13:43:04 jakob Exp $
+#	$OpenBSD: services,v 1.54 2003/12/16 13:44:49 jakob Exp $
 #
 # Network services, Internet style
 #
@@ -220,6 +220,8 @@ kauth		2120/tcp		# Remote kauth
 krb524		4444/udp		# Kerberos 5->4
 krb524		4444/tcp		# Kerberos 5->4
 iprop		2121/tcp		# Kerberos incremental propagation
+daap		3689/tcp		# Digital Audio Access Protocol
+daap		3689/udp		# Digital Audio Access Protocol
 rfe		5002/tcp		# Radio Free Ethernet
 rfe		5002/udp		# Actually uses UDP only
 sip		5060/tcp		# SIP
