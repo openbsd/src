@@ -1,4 +1,4 @@
-pass in on lo0 all 
+pass in on lo0 all
 set require-order no
 nat on lo0 inet all -> 127.0.0.1
 altq on lo0 cbq bandwidth 10Mb tbrsize 1824 queue { toad frog }

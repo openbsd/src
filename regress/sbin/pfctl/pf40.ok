@@ -1,26 +1,26 @@
-scrub all fragment reassemble 
-scrub all fragment reassemble 
-scrub in all fragment reassemble 
-scrub out all fragment reassemble 
-scrub in all fragment reassemble 
-scrub all fragment reassemble 
-block drop all 
-block return all 
-block return-rst proto tcp all 
-pass all 
-pass in all 
-pass out all 
-pass all 
-block drop in all 
-block drop out all 
-block drop all 
-pass in all 
-pass out all 
-block drop on lo0 all 
-pass on lo0 all 
-block drop on lo0 all 
-pass proto tcp all flags S/SA 
-pass proto udp all keep state 
-pass in proto udp all keep state 
-pass out proto udp all keep state 
-pass out on lo0 proto tcp from any to any port = smtp keep state 
+scrub all fragment reassemble
+scrub all fragment reassemble
+scrub in all fragment reassemble
+scrub out all fragment reassemble
+scrub in all fragment reassemble
+scrub all fragment reassemble
+block drop all
+block return all
+block return-rst proto tcp all
+pass all
+pass in all
+pass out all
+pass all
+block drop in all
+block drop out all
+block drop all
+pass in all
+pass out all
+block drop on lo0 all
+pass on lo0 all
+block drop on lo0 all
+pass proto tcp all flags S/SA
+pass proto udp all keep state
+pass in proto udp all keep state
+pass out proto udp all keep state
+pass out on lo0 proto tcp from any to any port = smtp keep state

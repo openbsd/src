@@ -1,55 +1,55 @@
-nat-anchor foo all 
-nat-anchor foo all 
-nat-anchor foo all 
-nat-anchor foo inet proto tcp from 10.0.0.0/8 to ! 1.2.3.4 
-nat-anchor foo inet proto udp from 10.1.2.3 port = 2000 to 10.3.4.5 port < 1000 
-nat-anchor foo inet proto udp from 10.1.2.3 port = 2000 to 10.3.4.5 port > 1100 
-nat-anchor foo inet proto udp from 10.1.2.3 port = 2000 to 10.4.5.6 port < 1000 
-nat-anchor foo inet proto udp from 10.1.2.3 port = 2000 to 10.4.5.6 port > 1100 
-nat-anchor foo inet proto udp from 10.1.2.3 port < 2100 to 10.3.4.5 port < 1000 
-nat-anchor foo inet proto udp from 10.1.2.3 port < 2100 to 10.3.4.5 port > 1100 
-nat-anchor foo inet proto udp from 10.1.2.3 port < 2100 to 10.4.5.6 port < 1000 
-nat-anchor foo inet proto udp from 10.1.2.3 port < 2100 to 10.4.5.6 port > 1100 
-nat-anchor foo inet proto udp from 10.2.3.4 port = 2000 to 10.3.4.5 port < 1000 
-nat-anchor foo inet proto udp from 10.2.3.4 port = 2000 to 10.3.4.5 port > 1100 
-nat-anchor foo inet proto udp from 10.2.3.4 port = 2000 to 10.4.5.6 port < 1000 
-nat-anchor foo inet proto udp from 10.2.3.4 port = 2000 to 10.4.5.6 port > 1100 
-nat-anchor foo inet proto udp from 10.2.3.4 port < 2100 to 10.3.4.5 port < 1000 
-nat-anchor foo inet proto udp from 10.2.3.4 port < 2100 to 10.3.4.5 port > 1100 
-nat-anchor foo inet proto udp from 10.2.3.4 port < 2100 to 10.4.5.6 port < 1000 
-nat-anchor foo inet proto udp from 10.2.3.4 port < 2100 to 10.4.5.6 port > 1100 
-nat-anchor foo inet proto tcp from 10.1.2.3 port = 2000 to 10.3.4.5 port < 1000 
-nat-anchor foo inet proto tcp from 10.1.2.3 port = 2000 to 10.3.4.5 port > 1100 
-nat-anchor foo inet proto tcp from 10.1.2.3 port = 2000 to 10.4.5.6 port < 1000 
-nat-anchor foo inet proto tcp from 10.1.2.3 port = 2000 to 10.4.5.6 port > 1100 
-nat-anchor foo inet proto tcp from 10.1.2.3 port < 2100 to 10.3.4.5 port < 1000 
-nat-anchor foo inet proto tcp from 10.1.2.3 port < 2100 to 10.3.4.5 port > 1100 
-nat-anchor foo inet proto tcp from 10.1.2.3 port < 2100 to 10.4.5.6 port < 1000 
-nat-anchor foo inet proto tcp from 10.1.2.3 port < 2100 to 10.4.5.6 port > 1100 
-nat-anchor foo inet proto tcp from 10.2.3.4 port = 2000 to 10.3.4.5 port < 1000 
-nat-anchor foo inet proto tcp from 10.2.3.4 port = 2000 to 10.3.4.5 port > 1100 
-nat-anchor foo inet proto tcp from 10.2.3.4 port = 2000 to 10.4.5.6 port < 1000 
-nat-anchor foo inet proto tcp from 10.2.3.4 port = 2000 to 10.4.5.6 port > 1100 
-nat-anchor foo inet proto tcp from 10.2.3.4 port < 2100 to 10.3.4.5 port < 1000 
-nat-anchor foo inet proto tcp from 10.2.3.4 port < 2100 to 10.3.4.5 port > 1100 
-nat-anchor foo inet proto tcp from 10.2.3.4 port < 2100 to 10.4.5.6 port < 1000 
-nat-anchor foo inet proto tcp from 10.2.3.4 port < 2100 to 10.4.5.6 port > 1100 
-rdr-anchor bar all 
-rdr-anchor bar all 
-rdr-anchor bar all 
-rdr-anchor bar inet proto tcp from 10.0.0.0/8 to ! 1.2.3.4 
-rdr-anchor bar inet proto udp from any to 10.1.2.0/24 port = 25 
-rdr-anchor bar inet proto tcp from any to 10.1.2.0/24 port = smtp 
-binat-anchor baz all 
-binat-anchor baz all 
-binat-anchor baz all 
-binat-anchor baz inet proto tcp all 
-anchor foo all 
-anchor bar all 
-anchor bar all 
-anchor foo inet all 
-anchor foo inet6 all 
-anchor foo inet all 
-anchor foo proto tcp all 
-anchor foo inet proto tcp from 10.1.2.3 port = smtp to 10.2.3.4 port = ssh 
-anchor foobar inet6 proto udp from ::1 port = 1 to ::1 port = 2 
+nat-anchor foo all
+nat-anchor foo all
+nat-anchor foo all
+nat-anchor foo inet proto tcp from 10.0.0.0/8 to ! 1.2.3.4
+nat-anchor foo inet proto udp from 10.1.2.3 port = 2000 to 10.3.4.5 port < 1000
+nat-anchor foo inet proto udp from 10.1.2.3 port = 2000 to 10.3.4.5 port > 1100
+nat-anchor foo inet proto udp from 10.1.2.3 port = 2000 to 10.4.5.6 port < 1000
+nat-anchor foo inet proto udp from 10.1.2.3 port = 2000 to 10.4.5.6 port > 1100
+nat-anchor foo inet proto udp from 10.1.2.3 port < 2100 to 10.3.4.5 port < 1000
+nat-anchor foo inet proto udp from 10.1.2.3 port < 2100 to 10.3.4.5 port > 1100
+nat-anchor foo inet proto udp from 10.1.2.3 port < 2100 to 10.4.5.6 port < 1000
+nat-anchor foo inet proto udp from 10.1.2.3 port < 2100 to 10.4.5.6 port > 1100
+nat-anchor foo inet proto udp from 10.2.3.4 port = 2000 to 10.3.4.5 port < 1000
+nat-anchor foo inet proto udp from 10.2.3.4 port = 2000 to 10.3.4.5 port > 1100
+nat-anchor foo inet proto udp from 10.2.3.4 port = 2000 to 10.4.5.6 port < 1000
+nat-anchor foo inet proto udp from 10.2.3.4 port = 2000 to 10.4.5.6 port > 1100
+nat-anchor foo inet proto udp from 10.2.3.4 port < 2100 to 10.3.4.5 port < 1000
+nat-anchor foo inet proto udp from 10.2.3.4 port < 2100 to 10.3.4.5 port > 1100
+nat-anchor foo inet proto udp from 10.2.3.4 port < 2100 to 10.4.5.6 port < 1000
+nat-anchor foo inet proto udp from 10.2.3.4 port < 2100 to 10.4.5.6 port > 1100
+nat-anchor foo inet proto tcp from 10.1.2.3 port = 2000 to 10.3.4.5 port < 1000
+nat-anchor foo inet proto tcp from 10.1.2.3 port = 2000 to 10.3.4.5 port > 1100
+nat-anchor foo inet proto tcp from 10.1.2.3 port = 2000 to 10.4.5.6 port < 1000
+nat-anchor foo inet proto tcp from 10.1.2.3 port = 2000 to 10.4.5.6 port > 1100
+nat-anchor foo inet proto tcp from 10.1.2.3 port < 2100 to 10.3.4.5 port < 1000
+nat-anchor foo inet proto tcp from 10.1.2.3 port < 2100 to 10.3.4.5 port > 1100
+nat-anchor foo inet proto tcp from 10.1.2.3 port < 2100 to 10.4.5.6 port < 1000
+nat-anchor foo inet proto tcp from 10.1.2.3 port < 2100 to 10.4.5.6 port > 1100
+nat-anchor foo inet proto tcp from 10.2.3.4 port = 2000 to 10.3.4.5 port < 1000
+nat-anchor foo inet proto tcp from 10.2.3.4 port = 2000 to 10.3.4.5 port > 1100
+nat-anchor foo inet proto tcp from 10.2.3.4 port = 2000 to 10.4.5.6 port < 1000
+nat-anchor foo inet proto tcp from 10.2.3.4 port = 2000 to 10.4.5.6 port > 1100
+nat-anchor foo inet proto tcp from 10.2.3.4 port < 2100 to 10.3.4.5 port < 1000
+nat-anchor foo inet proto tcp from 10.2.3.4 port < 2100 to 10.3.4.5 port > 1100
+nat-anchor foo inet proto tcp from 10.2.3.4 port < 2100 to 10.4.5.6 port < 1000
+nat-anchor foo inet proto tcp from 10.2.3.4 port < 2100 to 10.4.5.6 port > 1100
+rdr-anchor bar all
+rdr-anchor bar all
+rdr-anchor bar all
+rdr-anchor bar inet proto tcp from 10.0.0.0/8 to ! 1.2.3.4
+rdr-anchor bar inet proto udp from any to 10.1.2.0/24 port = 25
+rdr-anchor bar inet proto tcp from any to 10.1.2.0/24 port = smtp
+binat-anchor baz all
+binat-anchor baz all
+binat-anchor baz all
+binat-anchor baz inet proto tcp all
+anchor foo all
+anchor bar all
+anchor bar all
+anchor foo inet all
+anchor foo inet6 all
+anchor foo inet all
+anchor foo proto tcp all
+anchor foo inet proto tcp from 10.1.2.3 port = smtp to 10.2.3.4 port = ssh
+anchor foobar inet6 proto udp from ::1 port = 1 to ::1 port = 2

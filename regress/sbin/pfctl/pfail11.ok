@@ -4,4 +4,4 @@ stdin:5: Rules must be in order: options, normalization, queueing, translation, 
 pfctl: Syntax error in config file: pf rules not loaded
 set optimization aggressive
 set timeout tcp.closing 6
-pass in all 
+pass in all

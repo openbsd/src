@@ -1,2 +1,2 @@
 binat on lo0 inet from 192.168.1.1 to any tag regress -> 10.0.0.1
-block drop out on lo0 all tagged regress 
+block drop out on lo0 all tagged regress

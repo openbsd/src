@@ -1,2 +1,2 @@
-pass in quick on tun0 all keep state tag regress 
-pass out quick on lo0 all keep state tagged regress 
+pass in quick on tun0 all keep state tag regress
+pass out quick on lo0 all keep state tagged regress

@@ -1,4 +1,4 @@
 stdin:4: Rules must be in order: options, normalization, queueing, translation, filtering
 pfctl: Syntax error in config file: pf rules not loaded
 nat on lo0 inet all -> 127.0.0.1
-pass in on lo1 all 
+pass in on lo1 all

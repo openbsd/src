@@ -1,1 +1,1 @@
-pass in inet from 10.0.0.1 to no-route label "10.0.0.1:no-route" 
+pass in inet from 10.0.0.1 to no-route label "10.0.0.1:no-route"

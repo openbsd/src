@@ -1,1 +1,1 @@
-pass in proto tcp all synproxy state 
+pass in proto tcp all synproxy state

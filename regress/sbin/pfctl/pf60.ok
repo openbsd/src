@@ -1,7 +1,7 @@
-pass inet from 224.4.5.4 to any 
-pass inet from 224.4.0.0/16 to any 
-pass inet from 224.4.5.0/26 to any 
-pass inet from 224.4.5.64/26 to any 
-pass inet from 224.4.5.128/26 to any 
-pass inet from 224.4.5.192/26 to any 
-pass inet from 224.4.5.4 to any 
+pass inet from 224.4.5.4 to any
+pass inet from 224.4.0.0/16 to any
+pass inet from 224.4.5.0/26 to any
+pass inet from 224.4.5.64/26 to any
+pass inet from 224.4.5.128/26 to any
+pass inet from 224.4.5.192/26 to any
+pass inet from 224.4.5.4 to any

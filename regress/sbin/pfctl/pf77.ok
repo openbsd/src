@@ -1,1 +1,1 @@
-pass inet from (lo0)/8 to any 
+pass inet from (lo0)/8 to any

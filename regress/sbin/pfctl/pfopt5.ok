@@ -1,7 +1,7 @@
 ext_if = "lo0"
 set block-policy drop
 set require-order yes
-scrub in all fragment reassemble 
-pass out on lo0 proto tcp from any to any port = ssh keep state queue(pri-med, pri-high) 
-pass out on lo0 proto tcp from any to any port = www keep state queue pri-med 
-pass in on lo0 proto tcp from any to any port = www keep state queue pri-low 
+scrub in all fragment reassemble
+pass out on lo0 proto tcp from any to any port = ssh keep state queue(pri-med, pri-high)
+pass out on lo0 proto tcp from any to any port = www keep state queue pri-med
+pass in on lo0 proto tcp from any to any port = www keep state queue pri-low
