@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: eisadevs,v 1.18 2003/03/29 00:15:40 mickey Exp 
+ *	OpenBSD: eisadevs,v 1.19 2004/03/31 20:06:53 mickey Exp 
  */
 
 /*
@@ -533,6 +533,7 @@
 #define	EISA_PRODUCT_HWP1450	"Hewlett-Packard HP-IB Interface board (82335A)"
 #define	EISA_PRODUCT_HWP1460	"Hewlett-Packard ScanJet Plus Interface (88290A)"
 #define	EISA_PRODUCT_HWP1461	"Hewlett-Packard ScanJet Plus Interface (88290A)"
+#define	EISA_PRODUCT_HWP1510	"Hewlett-Packard SS8-E MUX"
 #define	EISA_PRODUCT_HWP1801	"Hewlett-Packard StarLAN 10 PC Link II (27240A)"
 #define	EISA_PRODUCT_HWP1810	"Hewlett-Packard ThinLAN Interface Board (27210B)"
 #define	EISA_PRODUCT_HWP1811	"Hewlett-Packard ThinLAN PC Adapter Card (27250A)"
@@ -540,12 +541,14 @@
 #define	EISA_PRODUCT_HWP1832	"Hewlett-Packard EtherTwist PC LAN Adapter/16 TP Plus (27247B)"
 #define	EISA_PRODUCT_HWP1840	"Hewlett-Packard EtherTwist EISA LAN Adapter/32"
 #define	EISA_PRODUCT_HWP1850	"Hewlett-Packard LAN AdapterCard -- 25567A"
+#define	EISA_PRODUCT_HWP1870	"Hewlett-Packard PSI"
 #define	EISA_PRODUCT_HWP18A0	"Hewlett-Packard EtherTwist PC LAN Adapter/16 TL Plus (27252A)"
 #define	EISA_PRODUCT_HWP18C0	"Hewlett-Packard EtherTwist PC LAN Adapter NC/16 TP (J2405A)"
 #define	EISA_PRODUCT_HWP18E0	"Hewlett-Packard 100Mbps EISA ATM Card"
 #define	EISA_PRODUCT_HWP1940	"Hewlett-Packard 10/100VG Selectable EISA LAN Adapter (J2577A)"
 #define	EISA_PRODUCT_HWP1980	"Hewlett-Packard ATM Adapter -- J2802A"
-#define	EISA_PRODUCT_HWP1990	"Hewlett-Packard Hewlett-Packard EISA 100VG AnyLAN adapter card"
+#define	EISA_PRODUCT_HWP1990	"Hewlett-Packard 100VG AnyLAN adapter card"
+#define	EISA_PRODUCT_HWP19A0	"Hewlett-Packard Low-cost PSI"
 #define	EISA_PRODUCT_HWP1C00	"Hewlett-Packard Serial/Parallel Interface Board (24540B)"
 #define	EISA_PRODUCT_HWP2002	"Hewlett-Packard ScanJet II Interface (C1752A)"
 #define	EISA_PRODUCT_HWP2051	"Hewlett-Packard EISA Test Adapter Card"

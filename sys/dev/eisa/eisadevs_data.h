@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: eisadevs,v 1.18 2003/03/29 00:15:40 mickey Exp 
+ *	OpenBSD: eisadevs,v 1.19 2004/03/31 20:06:53 mickey Exp 
  */
 
 /*
@@ -2114,6 +2114,11 @@ static const struct eisa_knowndev eisa_knowndevs[] = {
 	},
 	{
 	    0,
+	    "HWP1510",
+	    EISA_PRODUCT_HWP1510,
+	},
+	{
+	    0,
 	    "HWP1801",
 	    EISA_PRODUCT_HWP1801,
 	},
@@ -2149,6 +2154,11 @@ static const struct eisa_knowndev eisa_knowndevs[] = {
 	},
 	{
 	    0,
+	    "HWP1870",
+	    EISA_PRODUCT_HWP1870,
+	},
+	{
+	    0,
 	    "HWP18A0",
 	    EISA_PRODUCT_HWP18A0,
 	},
@@ -2176,6 +2186,11 @@ static const struct eisa_knowndev eisa_knowndevs[] = {
 	    0,
 	    "HWP1990",
 	    EISA_PRODUCT_HWP1990,
+	},
+	{
+	    0,
+	    "HWP19A0",
+	    EISA_PRODUCT_HWP19A0,
 	},
 	{
 	    0,
