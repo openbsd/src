@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.62 2001/06/23 06:24:23 angelos Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.63 2001/06/23 07:08:51 angelos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -785,7 +785,6 @@ bridge_output(ifp, m, sa, rt)
 		 */
 		if ((mtag = m_tag_find(m, PACKET_TAG_IPSEC_OUT_CRYPTO_NEEDED,
 		    NULL)) != NULL) {
-			/* Notify IPsec */
 			ipsp_skipcrypto_unmark((struct tdb_ident *)(mtag + 1));
 			m_freem(m);
 			splx(s);
@@ -793,20 +792,13 @@ bridge_output(ifp, m, sa, rt)
 		}
 #endif /* IPSEC */
 
-		/* Catch packets that needs TCP/UDP/IP hardware checksumming */
-		if (m->m_pkthdr.csum & M_IPV4_CSUM_OUT) {
-			/* XXX Compute IP checksum */
-			m->m_pkthdr.csum &= ~M_IPV4_CSUM_OUT; /* Clear */
-		}
-
-		if (m->m_pkthdr.csum & M_TCPV4_CSUM_OUT) {
-			/* XXX Compute TCP checksum */
-			m->m_pkthdr.csum &= ~M_TCPV4_CSUM_OUT; /* Clear */
-		}
-
-		if (m->m_pkthdr.csum & M_UDPV4_CSUM_OUT) {
-			/* XXX Compute UDP checksum */
-			m->m_pkthdr.csum &= ~M_UDPV4_CSUM_OUT; /* Clear */
+		/* Catch packets that need TCP/UDP/IP hardware checksumming */
+		if (m->m_pkthdr.csum & M_IPV4_CSUM_OUT ||
+		    m->m_pkthdr.csum & M_TCPV4_CSUM_OUT ||
+		    m->m_pkthdr.csum & M_UDPV4_CSUM_OUT) {
+			m_freem(m);
+			splx(s);
+			return (0);
 		}
 
 		LIST_FOREACH(p, &sc->sc_iflist, next) {
