@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.22 1999/09/20 02:49:25 deraadt Exp $	*/
+/*	$OpenBSD: zs.c,v 1.23 2000/06/28 20:22:14 mjacob Exp $	*/
 /*	$NetBSD: zs.c,v 1.49 1997/08/31 21:26:37 pk Exp $ */
 
 /*
@@ -55,6 +55,7 @@
  * This driver knows far too much about chip to usage mappings.
  */
 #include "zs.h"
+#include "kbd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -333,7 +334,9 @@ zsattach(parent, dev, aux)
 		 */
 		tp->t_ispeed = tp->t_ospeed = cs->cs_speed;
 		tp->t_cflag = CS8;
+#if	NKBD > 0
 		kbd_serial(tp, zsiopen, zsiclose);
+#endif
 		cs->cs_conk = 1;		/* do L1-A processing */
 		ringsize = 128;
 	} else {
@@ -1196,7 +1199,11 @@ again:
 				 * bstreams	XXX gag choke
 				 */
 				if (unit == ZS_KBD)
+#if	NKDD > 0
 					kbd_rint(cc);
+#else
+					;
+#endif
 				else if (unit == ZS_MOUSE)
 					ms_rint(cc);
 				else
