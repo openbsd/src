@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia_pcic.c,v 1.14 1997/03/01 22:42:58 niklas Exp $	*/
+/*	$OpenBSD: pcmcia_pcic.c,v 1.15 1997/04/16 23:29:28 niklas Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -956,6 +956,7 @@ pcicmaster_probe(parent, self, aux)
 	 * Probe the slots for each of the possible child controllers,
 	 * and if any are there we return a positive indication.
 	 */
+	pcic.sc_iot = iot;
 	pcic.sc_ioh = ioh;
 	for (i = 0; i < 2; i++) {
 		bzero(pcic.slot, sizeof(pcic.slot));
