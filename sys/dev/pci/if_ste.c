@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.18 2003/01/15 06:31:24 art Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.19 2003/06/29 13:23:48 avsm Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -963,7 +963,7 @@ void ste_attach(parent, self, aux)
 	sc->ste_ldata_ptr = malloc(sizeof(struct ste_list_data) + 8,
 				M_DEVBUF, M_NOWAIT);
 	if (sc->ste_ldata_ptr == NULL) {
-		printf("%s: no memory for list buffers!\n", sc->ste_unit);
+		printf("ste%d: no memory for list buffers!\n", sc->ste_unit);
 		goto fail;
 	}
 
