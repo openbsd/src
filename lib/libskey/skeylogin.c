@@ -1,18 +1,16 @@
-/* S/KEY v1.1b (skeylogin.c)
+/* OpenBSD S/Key (skeylogin.c)
  *
  * Authors:
  *          Neil M. Haller <nmh@thumper.bellcore.com>
  *          Philip R. Karn <karn@chicago.qualcomm.com>
  *          John S. Walden <jsw@thumper.bellcore.com>
  *          Scott Chasin <chasin@crimelab.com>
- *
- * Modifications:
  *          Todd C. Miller <Todd.Miller@courtesan.com>
  *	    Angelos D. Keromytis <adk@adk.gr>
  *
- * S/KEY verification check, lookups, and authentication.
+ * S/Key verification check, lookups, and authentication.
  * 
- * $OpenBSD: skeylogin.c,v 1.37 2001/01/04 21:51:52 todd Exp $
+ * $OpenBSD: skeylogin.c,v 1.38 2001/06/20 22:15:45 millert Exp $
  */
 
 #include <sys/param.h>
@@ -39,44 +37,10 @@
 #include "skey.h"
 
 static void skey_fakeprompt __P((char *, char *));
+static char *tgetline __P((int, char *, size_t, int));
 
-/* Issue a skey challenge for user 'name'. If successful,
- * fill in the caller's skey structure and return(0). If unsuccessful
- * (e.g., if name is unknown) return(-1).
- *
- * The file read/write pointer is left at the start of the
- * record.
- */
-int
-getskeyprompt(mp, name, prompt)
-	struct skey *mp;
-	char *name;
-	char *prompt;
-{
-	int rval;
-
-	sevenbit(name);
-	rval = skeylookup(mp, name);
-	switch (rval) {
-	case 0:		/* Lookup succeeded, return challenge */
-		(void)sprintf(prompt, "otp-%.*s %d %.*s\n",
-			      SKEY_MAX_HASHNAME_LEN, skey_get_algorithm(),
-			      mp->n - 1, SKEY_MAX_SEED_LEN, mp->seed);
-		return(0);
-
-	case 1:		/* User not found */
-		(void)fclose(mp->keyfile);
-		mp->keyfile = NULL;
-		/* FALLTHROUGH */
-
-	default:	/* File error */
-		skey_fakeprompt(name, prompt);
-		strcat(prompt, "\n");
-		return(-1);
-	}
-}
-
-/* Return  a skey challenge string for user 'name'. If successful,
+/*
+ * Return an skey challenge string for user 'name'. If successful,
  * fill in the caller's skey structure and return(0). If unsuccessful
  * (e.g., if name is unknown) return(-1).
  *
@@ -110,9 +74,11 @@ skeychallenge(mp, name, ss)
 	}
 }
 
-/* Find an entry in the One-time Password database.
+/* 
+ * Find an entry in the One-time Password database and lock it.
+ *
  * Return codes:
- * -1: error in opening database
+ * -1: error in opening database or unable to lock entry
  *  0: entry found, file R/W pointer positioned at beginning of record
  *  1: entry not found, file R/W pointer positioned at EOF
  */
@@ -121,31 +87,37 @@ skeylookup(mp, name)
 	struct skey *mp;
 	char *name;
 {
-	int found = 0;
+	FILE *keyfile;
+	int rval;
+	int locked = 0;
 	long recstart = 0;
 	char *cp, *ht = NULL;
 	struct stat statbuf;
+	struct flock fl;
 
 	/* Open _PATH_SKEYKEYS if it exists, else return an error */
 	if (stat(_PATH_SKEYKEYS, &statbuf) == 0 &&
-	    (mp->keyfile = fopen(_PATH_SKEYKEYS, "r+")) != NULL) {
+	    (keyfile = mp->keyfile = fopen(_PATH_SKEYKEYS, "r+")) != NULL) {
 		if ((statbuf.st_mode & 0007777) != 0600)
-			fchmod(fileno(mp->keyfile), 0600);
+			fchmod(fileno(keyfile), 0600);
 	} else {
 		mp->keyfile = NULL;
 		return(-1);
 	}
 
 	/* Look up user name in database */
-	while (!feof(mp->keyfile)) {
-		recstart = ftell(mp->keyfile);
-		mp->recstart = recstart;
-		if (fgets(mp->buf, sizeof(mp->buf), mp->keyfile) != mp->buf)
+	while (!feof(keyfile)) {
+		mp->recstart = recstart = ftell(keyfile);
+		if (fgets(mp->buf, sizeof(mp->buf), keyfile) == NULL)
 			break;
-		rip(mp->buf);
 		if (mp->buf[0] == '#')
 			continue;	/* Comment */
-		if ((mp->logname = strtok(mp->buf, " \t")) == NULL)
+		mp->len = strlen(mp->buf);
+		cp = mp->buf + mp->len - 1;
+		while (cp >= mp->buf && (*cp == '\n' || *cp == '\r'))
+			*cp-- = '\0';
+		if ((mp->logname = strtok(mp->buf, " \t")) == NULL ||
+		    strcmp(mp->logname, name) != 0)
 			continue;
 		if ((cp = strtok(NULL, " \t")) == NULL)
 			continue;
@@ -162,25 +134,67 @@ skeylookup(mp, name)
 			continue;
 		if ((mp->val = strtok(NULL, " \t")) == NULL)
 			continue;
-		if (strcmp(mp->logname, name) == 0) {
-			found = 1;
-			break;
-		}
-	}
-	if (found) {
-		(void)fseek(mp->keyfile, recstart, SEEK_SET);
+
 		/* Set hash type */
 		if (ht && skey_set_algorithm(ht) == NULL) {
 			warnx("Unknown hash algorithm %s, using %s", ht,
 			      skey_get_algorithm());
 		}
-		return(0);
-	} else {
-		return(1);
+		(void)fseek(keyfile, recstart, SEEK_SET);
+
+		/* If we already aquired the lock we are done */
+		if (locked)
+			return(0);
+
+		/* Ortherwise, we must lock the record */
+		fl.l_start = mp->recstart;
+		fl.l_len = mp->len;
+		fl.l_pid = getpid();
+		fl.l_type = F_WRLCK;
+		fl.l_whence = SEEK_SET;
+
+		/* If we get the lock on the first try we are done */
+		rval = fcntl(fileno(mp->keyfile), F_SETLK, &fl);
+		if (rval == 0)
+			return(0);
+		else if (errno != EAGAIN)
+			break;
+
+		/*
+		 * Wait until we our lock is granted...
+		 * Since we didn't get the lock on the first try, someone
+		 * else may have modified the record.  We need to make
+		 * sure the entry hasn't changed name (it could have been
+		 * commented out) and re-read it.
+		 */
+		if (fcntl(fileno(mp->keyfile), F_SETLKW, &fl) == -1)
+			break;
+
+		rval = fread(mp->logname, fl.l_len, 1, mp->keyfile);
+		if (rval != fl.l_len ||
+		    memcmp(mp->logname, name, rval) != 0) {
+			/* username no longer matches so unlock */
+			fl.l_type = F_UNLCK;
+			fcntl(fileno(mp->keyfile), F_SETLK, &fl);
+		} else {
+			locked = 1;
+		}
+		(void)fseek(keyfile, recstart, SEEK_SET);
 	}
+
+	/* No entry found, fill in what we can... */
+	memset(mp, 0, sizeof(*mp));
+	strlcpy(mp->buf, name, sizeof(mp->buf));
+	mp->logname = mp->buf;
+	mp->len = strlen(mp->buf);
+	mp->keyfile = keyfile;
+	mp->recstart = ftell(keyfile);
+	return(1);
 }
 
-/* Get the next entry in the One-time Password database.
+/*
+ * Get the next entry in the One-time Password database.
+ *
  * Return codes:
  * -1: error in opening database
  *  0: next entry found and stored in mp
@@ -190,9 +204,11 @@ int
 skeygetnext(mp)
 	struct skey *mp;
 {
-	long recstart = 0;
+	int rval;
+	int locked = 0;
 	char *cp;
 	struct stat statbuf;
+	struct flock fl;
 
 	/* Open _PATH_SKEYKEYS if it exists, else return an error */
 	if (mp->keyfile == NULL) {
@@ -203,17 +219,28 @@ skeygetnext(mp)
 		} else {
 			return(-1);
 		}
+	} else {
+		/* Unlock existing record */
+		fl.l_start = mp->recstart;
+		fl.l_len = mp->len;
+		fl.l_pid = getpid();
+		fl.l_type = F_UNLCK;
+		fl.l_whence = SEEK_SET;
+
+		fcntl(fileno(mp->keyfile), F_SETLK, &fl);
 	}
 
 	/* Look up next user in database */
 	while (!feof(mp->keyfile)) {
-		recstart = ftell(mp->keyfile);
-		mp->recstart = recstart;
+		mp->recstart = ftell(mp->keyfile);
 		if (fgets(mp->buf, sizeof(mp->buf), mp->keyfile) != mp->buf)
 			break;
-		rip(mp->buf);
 		if (mp->buf[0] == '#')
 			continue;	/* Comment */
+		mp->len = strlen(mp->buf);
+		cp = mp->buf + mp->len - 1;
+		while (cp >= mp->buf && (*cp == '\n' || *cp == '\r'))
+			*cp-- = '\0';
 		if ((mp->logname = strtok(mp->buf, " \t")) == NULL)
 			continue;
 		if ((cp = strtok(NULL, " \t")) == NULL)
@@ -228,13 +255,39 @@ skeygetnext(mp)
 			continue;
 		if ((mp->val = strtok(NULL, " \t")) == NULL)
 			continue;
-		/* Got a real entry */
-		break;
+
+		/* If we already locked the record, we are done */
+		if (locked)
+			break;
+
+		/* Got a real entry, lock it */
+		fl.l_start = mp->recstart;
+		fl.l_len = mp->len;
+		fl.l_pid = getpid();
+		fl.l_type = F_WRLCK;
+		fl.l_whence = SEEK_SET;
+
+		rval = fcntl(fileno(mp->keyfile), F_SETLK, &fl);
+		if (rval == 0)
+			break;
+		else if (errno != EAGAIN)
+			return(-1);
+
+		/*
+		 * Someone else has the entry locked, wait
+		 * until the lock is free, then re-read the entry.
+		 */
+		rval = fcntl(fileno(mp->keyfile), F_SETLKW, &fl);
+		if (rval == -1)		/* Can't get exclusive lock */
+			return(-1);
+		locked = 1;
+		(void)fseek(mp->keyfile, mp->recstart, SEEK_SET);
 	}
 	return(feof(mp->keyfile));
 }
 
-/* Verify response to a s/key challenge.
+/*
+ * Verify response to a S/Key challenge.
  *
  * Return codes:
  * -1: Error of some sort; database unchanged
@@ -253,9 +306,26 @@ skeyverify(mp, response)
 	char filekey[SKEY_BINKEY_SIZE];
 	time_t now;
 	struct tm *tm;
+	struct flock fl;
 	char tbuf[27];
 	char *cp;
-	int i, rval;
+	int len;
+
+	/*
+	 * The record should already be locked but lock it again
+	 * just to be safe.  We don't wait for the lock to become
+	 * available since we should already have it...
+	 */
+	fl.l_start = mp->recstart;
+	fl.l_len = mp->len;
+	fl.l_pid = getpid();
+	fl.l_type = F_WRLCK;
+	fl.l_whence = SEEK_SET;
+	if (fcntl(fileno(mp->keyfile), F_SETLK, &fl) != 0) {
+		(void)fclose(mp->keyfile);
+		mp->keyfile = NULL;
+		return(-1);
+	}
 
 	time(&now);
 	tm = localtime(&now);
@@ -270,7 +340,7 @@ skeyverify(mp, response)
 
 	/* Convert response to binary */
 	if (etob(key, response) != 1 && atob8(key, response) != 0) {
-		/* Neither english words or ascii hex */
+		/* Neither english words nor ascii hex */
 		(void)fclose(mp->keyfile);
 		mp->keyfile = NULL;
 		return(-1);
@@ -281,29 +351,17 @@ skeyverify(mp, response)
         (void)fflush(stdout);
 	f(fkey);
 
-	/*
-	 * Obtain an exclusive lock on the key file so the same password
-	 * cannot be used twice to get in to the system.
-	 */
-	for (i = 0; i < 300; i++) {
-		if ((rval = flock(fileno(mp->keyfile), LOCK_EX|LOCK_NB)) == 0 ||
-		    errno != EWOULDBLOCK)
-			break;
-		usleep(100000);			/* Sleep for 0.1 seconds */
-	}
-	if (rval == -1) {			/* Can't get exclusive lock */
-		errno = EAGAIN;
-		return(-1);
-	}
-
 	/* Reread the file record NOW */
 	(void)fseek(mp->keyfile, mp->recstart, SEEK_SET);
-	if (fgets(mp->buf, sizeof(mp->buf), mp->keyfile) != mp->buf) {
+	if (fgets(mp->buf, sizeof(mp->buf), mp->keyfile) == NULL) {
 		(void)fclose(mp->keyfile);
 		mp->keyfile = NULL;
 		return(-1);
 	}
-	rip(mp->buf);
+	len = strlen(mp->buf) - 1;
+	cp = mp->buf + len;
+	while (cp >= mp->buf && (*cp == '\n' || *cp == '\r'))
+		*cp-- = '\0';
 	mp->logname = strtok(mp->buf, " \t");
 	cp = strtok(NULL, " \t") ;
 	if (isalpha(*cp))
@@ -329,14 +387,19 @@ skeyverify(mp, response)
 	btoa8(mp->val,key);
 	mp->n--;
 	(void)fseek(mp->keyfile, mp->recstart, SEEK_SET);
-	/* Don't save algorithm type for md4 (keep record length same) */
-	if (strcmp(skey_get_algorithm(), "md4") == 0)
+	len -= strlen(mp->logname) + strlen(skey_get_algorithm()) +
+	    strlen(mp->val) + strlen(tbuf) + 9;
+	/*
+	 * If we run out of room it is because we read an old-style
+	 * md4 entry without an explicit hash type.
+	 */
+	if (len < strlen(mp->seed))
 		(void)fprintf(mp->keyfile, "%s %04d %-16s %s %-21s\n",
 			      mp->logname, mp->n, mp->seed, mp->val, tbuf);
 	else
-		(void)fprintf(mp->keyfile, "%s %s %04d %-16s %s %-21s\n",
+		(void)fprintf(mp->keyfile, "%s %s %04d %-*s %s %-21s\n",
 			      mp->logname, skey_get_algorithm(), mp->n,
-			      mp->seed, mp->val, tbuf);
+			      len, mp->seed, mp->val, tbuf);
 
 	(void)fclose(mp->keyfile);
 	mp->keyfile = NULL;
@@ -357,7 +420,6 @@ skey_haskey(username)
 	int i;
  
 	i = skeylookup(&skey, username);
-
 	if (skey.keyfile != NULL) {
 		fclose(skey.keyfile);
 		skey.keyfile = NULL;
@@ -402,7 +464,8 @@ skey_keyinfo(username)
  */
 int
 skey_passcheck(username, passwd)
-	char *username, *passwd;
+	char *username;
+	char *passwd;
 {
 	int i;
 	struct skey skey;
@@ -582,14 +645,16 @@ skey_authenticate(username)
 	int i;
 	char pbuf[SKEY_MAX_PW_LEN+1], skeyprompt[SKEY_MAX_CHALLENGE+1];
 	struct skey skey;
-	
+
 	/* Get the S/Key challenge (may be fake) */
 	i = skeychallenge(&skey, username, skeyprompt);
-	(void)fprintf(stderr, "%s\n", skeyprompt);
+	(void)fprintf(stderr, "%s\nResponse: ", skeyprompt);
 	(void)fflush(stderr);
 
-	(void)fputs("Response: ", stderr);
-	readskey(pbuf, sizeof(pbuf));
+	/* Time out on user input after 2 minutes */
+	tgetline(fileno(stdin), pbuf, sizeof(pbuf), 120);
+	sevenbit(pbuf);
+	(void)rewind(stdin);
 
 	/* Is it a valid response? */
 	if (i == 0 && skeyverify(&skey, pbuf) == 0) {
@@ -603,14 +668,14 @@ skey_authenticate(username)
 	return(-1);
 }
 
-/* Comment out user's entry in the s/key database
+/*
+ * Comment out user's entry in the S/Key database
  *
  * Return codes:
  * -1: Write error; database unchanged
  *  0:  Database updated
  *
  * The database file is always closed by this call.
- *
  */
 int
 skeyzero(mp, response)
@@ -631,4 +696,95 @@ skeyzero(mp, response)
 	(void)fclose(mp->keyfile);
 	mp->keyfile = NULL;
 	return(0);
+}
+
+/*
+ * Unlock current entry in the One-time Password database.
+ *
+ * Return codes:
+ * -1: unable to lock the record
+ *  0: record was successfully unlocked
+ */
+int
+skey_unlock(mp)
+	struct skey *mp;
+{
+	struct flock fl;
+
+	if (mp->logname == NULL)
+		return(-1);
+
+	fl.l_start = mp->recstart;
+	fl.l_len = mp->len;
+	fl.l_pid = getpid();
+	fl.l_type = F_UNLCK;
+	fl.l_whence = SEEK_SET;
+
+	return(fcntl(fileno(mp->keyfile), F_SETLK, &fl));
+}
+
+/*
+ * Get a line of input (optionally timing out) and place it in buf.
+ */
+static char *
+tgetline(fd, buf, bufsiz, timeout)
+    int fd;
+    char *buf;
+    size_t bufsiz;
+    int timeout;
+{
+    size_t left;
+    int n;
+    fd_set *readfds = NULL;
+    struct timeval tv;
+    char c;
+    char *cp;
+
+    if (bufsiz == 0)
+	    return(NULL);			/* sanity */
+
+    cp = buf;
+    left = bufsiz;
+
+    /*
+     * Timeout of <= 0 means no timeout.
+     */
+    if (timeout > 0) {
+	    /* Setup for select(2) */
+	    n = howmany(fd + 1, NFDBITS) * sizeof(fd_mask);
+	    if ((readfds = (fd_set *) malloc(n)) == NULL)
+		    return(NULL);
+	    (void) memset(readfds, 0, n);
+
+	    /* Set timeout for select */
+	    tv.tv_sec = timeout;
+	    tv.tv_usec = 0;
+
+	    while (--left) {
+		    FD_SET(fd, readfds);
+
+		    /* Make sure there is something to read (or timeout) */
+		    while ((n = select(fd + 1, readfds, 0, 0, &tv)) == -1 &&
+			(errno == EINTR || errno == EAGAIN))
+			    ;
+		    if (n == 0) {
+			    free(readfds);
+			    return(NULL);		/* timeout */
+		    }
+
+		    /* Read a character, exit loop on error, EOF or EOL */
+		    n = read(fd, &c, 1);
+		    if (n != 1 || c == '\n' || c == '\r')
+			    break;
+		    *cp++ = c;
+	    }
+	    free(readfds);
+    } else {
+	/* Keep reading until out of space, EOF, error, or newline */
+	while (--left && (n = read(fd, &c, 1)) == 1 && c != '\n' && c != '\r')
+		*cp++ = c;
+    }
+    *cp = '\0';
+
+    return(cp == buf ? NULL : buf);
 }
