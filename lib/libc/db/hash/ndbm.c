@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndbm.c,v 1.18 2004/05/03 17:27:50 millert Exp $	*/
+/*	$OpenBSD: ndbm.c,v 1.19 2004/06/21 23:13:22 marc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)dbm.c	8.6 (Berkeley) 11/7/95";
 #else
-static const char rcsid[] = "$OpenBSD: ndbm.c,v 1.18 2004/05/03 17:27:50 millert Exp $";
+static const char rcsid[] = "$OpenBSD: ndbm.c,v 1.19 2004/06/21 23:13:22 marc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -363,7 +363,7 @@ dbm_error(db)
 	HTAB *hp;
 
 	hp = (HTAB *)db->internal;
-	return (hp->errno);
+	return (hp->err);
 }
 
 int
@@ -373,7 +373,7 @@ dbm_clearerr(db)
 	HTAB *hp;
 
 	hp = (HTAB *)db->internal;
-	hp->errno = 0;
+	hp->err = 0;
 	return (0);
 }
 
