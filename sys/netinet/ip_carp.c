@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.83 2004/12/17 12:42:01 pascoe Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.84 2004/12/17 21:40:04 mpf Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -499,7 +499,7 @@ carp6_proto_input(struct mbuf **mp, int *offp, int proto)
 	}
 
 	/* check if received on a valid carp interface */
-	if (m->m_pkthdr.rcvif->if_type != IFT_CARP) {
+	if (m->m_pkthdr.rcvif->if_carp == NULL) {
 		carpstats.carps_badif++;
 		CARP_LOG(sc, ("packet received on non-carp interface: %s",
 		    m->m_pkthdr.rcvif->if_xname));
@@ -549,9 +549,14 @@ carp_proto_input_c(struct mbuf *m, struct carp_header *ch, sa_family_t af)
 	struct carp_softc *sc;
 	u_int64_t tmp_counter;
 	struct timeval sc_tv, ch_tv;
+	struct carp_if *cif;
 
-	TAILQ_FOREACH(sc, &((struct carp_if *)
-	    m->m_pkthdr.rcvif->if_carpdev->if_carp)->vhif_vrs, sc_list)
+	if (m->m_pkthdr.rcvif->if_type == IFT_CARP)
+		cif = (struct carp_if *) m->m_pkthdr.rcvif->if_carpdev->if_carp;
+	else
+		cif = (struct carp_if *) m->m_pkthdr.rcvif->if_carp;
+
+	TAILQ_FOREACH(sc, &cif->vhif_vrs, sc_list)
 		if (sc->sc_vhid == ch->carp_vhid)
 			break;
 
