@@ -1,5 +1,5 @@
-/*	$OpenBSD: isakmpd.c,v 1.10 1999/04/19 21:09:36 niklas Exp $	*/
-/*	$EOM: isakmpd.c,v 1.31 1999/04/17 23:20:30 niklas Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.11 1999/06/02 06:28:34 niklas Exp $	*/
+/*	$EOM: isakmpd.c,v 1.33 1999/05/21 14:18:14 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -46,6 +46,7 @@
 
 #include "app.h"
 #include "conf.h"
+#include "connection.h"
 #include "init.h"
 #include "log.h"
 #include "timer.h"
@@ -144,13 +145,34 @@ parse_args (int argc, char *argv[])
 static void
 reinit (void)
 {
-  /* XXX Remove log message later on? */
-  log_debug (LOG_MISC, 80, "reinit: SIGHUP recieved, reinitializing.");
+  log_print ("SIGHUP recieved, reinitializing daemon.");
 
-  /* Reread config file.  */
+  /* 
+   * XXX Remove all(/some?) pending exchange timers? - they may not be 
+   *     possible to complete after we've re-read the config file.
+   *     User-initiated SIGHUP's maybe "authorizes" a wait until
+   *     next connection-check.
+   * XXX This means we discard exchange->last_msg, is this really ok?
+   */
+
+  /* Reread config file. */
   conf_init ();
 
-  /* XXX Rescan interfaces.  */
+  /* Reinitalize our connection list. */
+  connection_reinit ();
+
+  /*
+   * XXX Rescan interfaces.
+   *   transport_reinit (); 
+   *   udp_reinit ();
+   */
+
+  /*
+   * XXX "These" (non-existant) reinitializations should not be done.
+   *   cookie_reinit();
+   *   ui_reinit ();
+   *   sa_reinit ();
+   */
 
   sighupped = 0;
 }
