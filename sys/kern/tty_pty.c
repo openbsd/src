@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.26 2004/12/07 03:42:45 pat Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.27 2004/12/19 01:44:07 millert Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -1043,9 +1043,10 @@ pty_getfree(void)
 static int
 ptm_vn_open(struct nameidata *ndp)
 {
-	struct vnode *vp;
 	struct proc *p = ndp->ni_cnd.cn_proc;
 	struct ucred *cred;
+	struct vattr vattr;
+	struct vnode *vp;
 	int error;
 
 	if ((error = namei(ndp)) != 0)
@@ -1061,6 +1062,14 @@ ptm_vn_open(struct nameidata *ndp)
 	 */
 	cred = crget();
 	error = VOP_OPEN(vp, FREAD|FWRITE, cred, p);
+	if (!error) {
+		/* update atime/mtime */
+		VATTR_NULL(&vattr);
+		getnanotime(&vattr.va_atime);
+		vattr.va_mtime = vattr.va_atime;
+		vattr.va_vaflags |= VA_UTIMES_NULL;
+		(void)VOP_SETATTR(vp, &vattr, p->p_ucred, p);
+	}
 	crfree(cred);
 
 	if (error)
