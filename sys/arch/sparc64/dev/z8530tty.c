@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530tty.c,v 1.5 2002/06/04 19:18:18 jason Exp $	*/
+/*	$OpenBSD: z8530tty.c,v 1.6 2002/08/06 15:15:51 jason Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -1330,6 +1330,13 @@ zstty_txint(cs)
 	}
 }
 
+#ifdef DDB
+#include <ddb/db_var.h>
+#define	DB_CONSOLE	db_console
+#else
+#define	DB_CONSOLE	1
+#endif
+
 /*
  * status change interrupt.  (splzs)
  */
@@ -1348,6 +1355,10 @@ zstty_stint(cs, force)
 	 * Check here for console break, so that we can abort
 	 * even when interrupts are locking up the machine.
 	 */
+	if ((zst->zst_hwflags & ZS_HWFLAG_CONSOLE_INPUT) &&
+	    ISSET(rr0, ZSRR0_BREAK) && DB_CONSOLE)
+		zs_abort(cs);
+
 	if (!force)
 		delta = rr0 ^ cs->cs_rr0;
 	else
