@@ -335,6 +335,7 @@
 ./usr/lib/perl5/site_perl/m68k-openbsd/machine
 ./usr/lib/perl5/site_perl/m68k-openbsd/machine/ansi.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/machine/asm.ph
+./usr/lib/perl5/site_perl/m68k-openbsd/machine/audioio.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/machine/bus.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/machine/cdefs.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/machine/conf.ph
@@ -354,7 +355,6 @@
 ./usr/lib/perl5/site_perl/m68k-openbsd/machine/mtpr.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/machine/param.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/machine/pcb.ph
-./usr/lib/perl5/site_perl/m68k-openbsd/machine/pio.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/machine/pmap.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/machine/proc.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/machine/profile.ph
@@ -447,6 +447,7 @@
 ./usr/lib/perl5/site_perl/m68k-openbsd/struct.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/sys
 ./usr/lib/perl5/site_perl/m68k-openbsd/sys/acct.ph
+./usr/lib/perl5/site_perl/m68k-openbsd/sys/audioio.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/sys/buf.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/sys/callout.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/sys/cdefs.ph
@@ -483,6 +484,7 @@
 ./usr/lib/perl5/site_perl/m68k-openbsd/sys/ioctl.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/sys/ioctl_compat.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/sys/ipc.ph
+./usr/lib/perl5/site_perl/m68k-openbsd/sys/kcore.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/sys/kernel.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/sys/ktrace.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/sys/lkm.ph
