@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.63 2002/06/09 00:57:05 itojun Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.64 2002/06/09 04:49:06 frantzen Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -147,7 +147,7 @@ struct mbuf {
 
 /* Checksumming flags */
 #define	M_IPV4_CSUM_OUT		0x0001	/* IPv4 checksum needed */
-#define M_TCPV4_CSUM_OUT	0x2002	/* TCP checksum needed */
+#define M_TCPV4_CSUM_OUT	0x0002	/* TCP checksum needed */
 #define	M_UDPV4_CSUM_OUT	0x0004	/* UDP checksum needed */
 #define	M_IPV4_CSUM_IN_OK	0x0008	/* IPv4 checksum verified */
 #define	M_IPV4_CSUM_IN_BAD	0x0010	/* IPv4 checksum bad */
