@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: arp.c,v 1.11 2001/10/24 10:01:09 brian Exp $
+ * $OpenBSD: arp.c,v 1.12 2002/01/16 13:20:23 brian Exp $
  *
  */
 
@@ -112,7 +112,7 @@ arp_ProxySub(struct bundle *bundle, struct in_addr addr, int add, int s)
 	       inet_ntoa(addr));
     return 0;
   }
-  routes = ID0socket(PF_ROUTE, SOCK_RAW, AF_INET);
+  routes = ID0socket(AF_ROUTE, SOCK_RAW, AF_INET);
   if (routes < 0) {
     log_Printf(LogERROR, "arp_SetProxy: opening routing socket: %s\n",
 	      strerror(errno));

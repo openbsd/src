@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: tcp.c,v 1.11 2001/06/19 10:24:59 brian Exp $
+ *	$OpenBSD: tcp.c,v 1.12 2002/01/16 13:20:23 brian Exp $
  */
 
 #include <sys/types.h>
@@ -84,7 +84,7 @@ tcp_OpenConnection(const char *name, char *host, char *port)
   }
   log_Printf(LogPHASE, "%s: Connecting to %s:%s/tcp\n", name, host, port);
 
-  sock = socket(PF_INET, SOCK_STREAM, 0);
+  sock = socket(AF_INET, SOCK_STREAM, 0);
   if (sock < 0)
     return -2;
 

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: udp.c,v 1.10 2001/06/19 10:25:01 brian Exp $
+ *	$OpenBSD: udp.c,v 1.11 2002/01/16 13:20:23 brian Exp $
  */
 
 #include <sys/types.h>
@@ -229,7 +229,7 @@ udp_CreateDevice(struct physical *p, char *host, char *port)
   log_Printf(LogPHASE, "%s: Connecting to %s:%s/udp\n", p->link.name,
              host, port);
 
-  p->fd = socket(PF_INET, SOCK_DGRAM, 0);
+  p->fd = socket(AF_INET, SOCK_DGRAM, 0);
   if (p->fd >= 0) {
     log_Printf(LogDEBUG, "%s: Opened udp socket %s\n", p->link.name,
                p->name.full);

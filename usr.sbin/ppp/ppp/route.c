@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: route.c,v 1.22 2001/11/23 19:21:36 brian Exp $
+ * $OpenBSD: route.c,v 1.23 2002/01/16 13:20:23 brian Exp $
  */
 
 #include <sys/param.h>
@@ -723,7 +723,7 @@ rt_Set(struct bundle *bundle, int cmd, const struct ncprange *dst,
     cmdstr = (cmd == RTM_ADD ? "Add!" : "Delete!");
   else
     cmdstr = (cmd == RTM_ADD ? "Add" : "Delete");
-  s = ID0socket(PF_ROUTE, SOCK_RAW, 0);
+  s = ID0socket(AF_ROUTE, SOCK_RAW, 0);
   if (s < 0) {
     log_Printf(LogERROR, "rt_Set: socket(): %s\n", strerror(errno));
     return result;
@@ -835,7 +835,7 @@ rt_Update(struct bundle *bundle, const struct sockaddr *dst,
   char *p;
   int s, wb;
 
-  s = ID0socket(PF_ROUTE, SOCK_RAW, 0);
+  s = ID0socket(AF_ROUTE, SOCK_RAW, 0);
   if (s < 0) {
     log_Printf(LogERROR, "rt_Update: socket(): %s\n", strerror(errno));
     return;

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: atm.c,v 1.4 2001/06/19 10:24:49 brian Exp $
+ *	$OpenBSD: atm.c,v 1.5 2002/01/16 13:20:23 brian Exp $
  */
 
 #include <sys/types.h>
@@ -184,7 +184,7 @@ atm_CreateDevice(struct physical *p, const char *iface, unsigned vpi,
   log_Printf(LogPHASE, "%s: Connecting to %s:%u.%u\n", p->link.name,
              iface, vpi, vci);
 
-  p->fd = socket(PF_NATM, SOCK_DGRAM, PROTO_NATMAAL5);
+  p->fd = socket(AF_NATM, SOCK_DGRAM, PROTO_NATMAAL5);
   if (p->fd >= 0) {
     log_Printf(LogDEBUG, "%s: Opened atm socket %s\n", p->link.name,
                p->name.full);
