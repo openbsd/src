@@ -73,7 +73,6 @@ static int current_function_defines_short_string;
 static int current_function_has_variable_string;
 static int current_function_defines_vsized_array;
 static int current_function_is_inlinable;
-static int saved_optimize_size = -1;
 
 static rtx guard_area, _guard;
 static rtx function_first_insn, prologue_insert_point;
@@ -105,6 +104,8 @@ static void change_arg_use_of_insns PARAMS ((rtx insn, rtx orig, rtx new, HOST_W
 static void change_arg_use_in_operand PARAMS ((rtx x, rtx orig, rtx new, HOST_WIDE_INT size));
 static void expand_value_return PARAMS ((rtx val));
 static int  replace_return_reg PARAMS ((rtx insn, rtx return_save));
+static void validate_insns_of_varrefs PARAMS ((rtx insn));
+static void validate_operand_of_varrefs PARAMS ((rtx insn, rtx orig));
 static void propagate_virtual_stack_vars_in_insns PARAMS ((rtx insn));
 static void propagate_virtual_stack_vars_in_operand PARAMS ((rtx x, rtx orig));
 
@@ -131,13 +132,10 @@ prepare_stack_protection (inlinable)
   current_function_is_inlinable = inlinable && !flag_no_inline;
   push_frame_offset = push_allocated_offset = 0;
 
-  /* solve for ssp-ppc-20021125 */
-  if (saved_optimize_size < 0) saved_optimize_size = optimize_size;
-  optimize_size = saved_optimize_size;
-
   /*
     skip the protection if the function has no block or it is an inline function
   */
+  if (current_function_is_inlinable) validate_insns_of_varrefs (get_insns ());
   if (! blocks || current_function_is_inlinable) return;
 
   current_function_defines_vulnerable_string = search_string_from_argsandvars (0);
@@ -1634,6 +1632,125 @@ expand_value_return (val)
 
 
 static void
+validate_insns_of_varrefs (insn)
+     rtx insn;
+{
+  rtx next;
+
+  /* Initialize recognition, indicating that volatile is OK.  */
+  init_recog ();
+
+  for (; insn; insn = next)
+    {
+      next = NEXT_INSN (insn);
+      if (GET_CODE (insn) == INSN || GET_CODE (insn) == JUMP_INSN
+	  || GET_CODE (insn) == CALL_INSN)
+	{
+	  /* excerpt from insn_invalid_p in recog.c */
+	  int icode = recog_memoized (insn);
+
+	  if (icode < 0 && asm_noperands (PATTERN (insn)) < 0)
+	    validate_operand_of_varrefs (insn, PATTERN (insn));
+	}
+    }
+
+  init_recog_no_volatile ();
+}
+
+
+static void
+validate_operand_of_varrefs (insn, x)
+     rtx insn, x;
+{
+  register enum rtx_code code;
+  int i, j;
+  const char *fmt;
+  
+  if (x == 0)
+    return;
+
+  code = GET_CODE (x);
+
+  switch (code)
+    {
+    case USE:
+    case CONST_INT:
+    case CONST_DOUBLE:
+    case CONST:
+    case SYMBOL_REF:
+    case CODE_LABEL:
+    case PC:
+    case CC0:
+    case ASM_INPUT:
+    case ADDR_VEC:
+    case ADDR_DIFF_VEC:
+    case RETURN:
+    case REG:
+    case ADDRESSOF:
+      return;
+
+    case CALL_PLACEHOLDER:
+      validate_insns_of_varrefs (XEXP (x, 0));
+      validate_insns_of_varrefs (XEXP (x, 1));
+      validate_insns_of_varrefs (XEXP (x, 2));
+      break;
+
+    default:
+      break;
+    }
+
+  /* Scan all subexpressions.  */
+  fmt = GET_RTX_FORMAT (code);
+  for (i = 0; i < GET_RTX_LENGTH (code); i++, fmt++)
+    if (*fmt == 'e')
+      {
+	rtx temp, seq;
+	
+	/* validate insn of frame register plus constant.  */
+	if (GET_CODE (XEXP (x, i)) == PLUS
+	    && XEXP (XEXP (x, i), 0) == virtual_stack_vars_rtx
+	    && CONSTANT_P (XEXP (XEXP (x, i), 1)))
+	  {
+	    start_sequence ();
+	    /* temp = force_operand (XEXP (x, i), NULL_RTX); */
+	    { /* excerpt from expand_binop in optabs.c */
+	      optab binoptab = add_optab;
+	      enum machine_mode mode = GET_MODE (XEXP (x, i));
+	      int icode = (int) binoptab->handlers[(int) mode].insn_code;
+	      enum machine_mode mode1 = insn_operand_mode[icode][2];
+	      rtx pat;
+	      rtx xop0 = XEXP (XEXP (x, i), 0), xop1 = XEXP (XEXP (x, i), 1);
+	      temp = gen_reg_rtx (mode);
+
+	      /* Now, if insn's predicates don't allow offset operands, put them into
+		 pseudo regs.  */
+
+	      if (! (*insn_operand_predicate[icode][2]) (xop1, mode1)
+		  && mode1 != VOIDmode)
+		xop1 = copy_to_mode_reg (mode1, xop1);
+
+	      pat = GEN_FCN (icode) (temp, xop0, xop1);
+	      if (pat)
+		emit_insn (pat);
+	    }	      
+	    seq = get_insns ();
+	    end_sequence ();
+	  
+	    emit_insns_before (seq, insn);
+	    if (! validate_change (insn, &XEXP (x, i), temp, 0))
+	      abort ();
+	    return;
+	  }
+
+	validate_operand_of_varrefs (insn, XEXP (x, i));
+      }
+    else if (*fmt == 'E')
+      for (j = 0; j < XVECLEN (x, i); j++)
+	validate_operand_of_varrefs (insn, XVECEXP (x, i, j));
+}
+
+
+static void
 propagate_virtual_stack_vars_in_insns (insn)
      rtx insn;
 {
@@ -1745,6 +1862,7 @@ static void push_frame_of_reg_equiv_constant PARAMS ((HOST_WIDE_INT push_size, H
 static void reset_used_flags_for_push_frame PARAMS ((void));
 static int check_out_of_frame_access PARAMS ((rtx insn, HOST_WIDE_INT boundary));
 static int check_out_of_frame_access_in_operand PARAMS ((rtx, HOST_WIDE_INT boundary));
+static int change_plus_constant PARAMS ((rtx pattern, rtx base, HOST_WIDE_INT offset));
 #endif
 
 rtx
@@ -1768,7 +1886,6 @@ assign_stack_local_for_pseudo_reg (mode, size, align)
       || current_function_contains_functions)
     return assign_stack_local (mode, size, align);
 
-  optimize_size = 1;		/* solve for ssp-ppc-20021125 */
   units_per_push = MAX(BIGGEST_ALIGNMENT / BITS_PER_UNIT,
 		       GET_MODE_SIZE (mode));
     
@@ -1993,6 +2110,8 @@ push_frame_in_args (parms, push_size, boundary)
 }
 
 
+static int insn_pushed;
+
 static void
 push_frame_of_insns (insn, push_size, boundary)
      rtx insn;
@@ -2002,9 +2121,58 @@ push_frame_of_insns (insn, push_size, boundary)
     if (GET_CODE (insn) == INSN || GET_CODE (insn) == JUMP_INSN
 	|| GET_CODE (insn) == CALL_INSN)
       {
-	debuginsn = insn;
+	insn_pushed = FALSE; debuginsn = insn;
 	push_frame_in_operand (PATTERN (insn), push_size, boundary);
 
+	if (insn_pushed)
+	  {
+	    rtx after = insn;
+	    rtx seq = split_insns (PATTERN (insn), insn);
+
+	    if (seq && GET_CODE (seq) == SEQUENCE)
+	      {
+		register int i;
+
+		/* replace the pattern of the insn */
+		PATTERN (insn) = PATTERN (XVECEXP (seq, 0, 0));
+
+		if (XVECLEN (seq, 0) == 2)
+		  {
+		    rtx pattern = PATTERN (XVECEXP (seq, 0, 1));
+
+		    if (GET_CODE (pattern) == SET
+			&& GET_CODE (XEXP (pattern, 0)) == REG
+			&& GET_CODE (XEXP (pattern, 1)) == PLUS
+			&& XEXP (pattern, 0) == XEXP (XEXP (pattern, 1), 0)
+			&& CONSTANT_P (XEXP (XEXP (pattern, 1), 1)))
+		      {
+			rtx offset = XEXP (XEXP (pattern, 1), 1);
+			after = NEXT_INSN (insn);
+			if (change_plus_constant (after,
+						  XEXP (pattern, 0),
+						  INTVAL (offset)))
+			  {
+			    insn = try_split (PATTERN (after), after, 1);
+			    goto next;
+			  }
+		      }
+		  }
+		
+		for (i = 1; i < XVECLEN (seq, 0); i++)
+		  {
+		    rtx insn = XVECEXP (seq, 0, i);
+		    add_insn_after (insn, after);
+		    after = insn;
+		  }
+
+		/* Recursively call try_split for each new insn created */
+	        insn = NEXT_INSN (insn);
+		for (i = 1; i < XVECLEN (seq, 0); i++, insn = NEXT_INSN (insn))
+		  insn = try_split (PATTERN (insn), insn, 1);
+	      }
+	  }
+
+      next:
 	/* push frame in NOTE */
 	push_frame_in_operand (REG_NOTES (insn), push_size, boundary);
 
@@ -2056,7 +2224,7 @@ push_frame_in_operand (orig, push_size, boundary)
 	  && boundary == 0)
 	{
 	  XEXP (x, 0) = plus_constant (frame_pointer_rtx, push_size);
-	  XEXP (x, 0)->used = 1;
+	  XEXP (x, 0)->used = 1; insn_pushed = TRUE;
 	  return;
 	}
       break;
@@ -2078,7 +2246,7 @@ push_frame_in_operand (orig, push_size, boundary)
 
 	  /* XEXP (x, 0) is frame_pointer_rtx */
 	  XEXP (x, 1) = gen_rtx_CONST_INT (VOIDmode, offset);
-	  x->used = 1;
+	  x->used = 1; insn_pushed = TRUE;
 
 	  return;
 	}
@@ -2277,5 +2445,67 @@ check_out_of_frame_access_in_operand (orig, boundary)
 	  return TRUE;
 
   return FALSE;
+}
+
+
+static int
+change_plus_constant (orig, reg, value)
+     rtx orig, reg;
+     HOST_WIDE_INT value;
+{
+  register rtx x = orig;
+  register enum rtx_code code;
+  int i, j, result = FALSE;
+  HOST_WIDE_INT offset;
+  const char *fmt;
+
+  if (x == 0)
+    return FALSE;
+
+  code = GET_CODE (x);
+  switch (code)
+    {
+    case CONST_INT:
+    case CONST_DOUBLE:
+    case CONST:
+    case SYMBOL_REF:
+    case CODE_LABEL:
+    case PC:
+    case CC0:
+    case ASM_INPUT:
+    case ADDR_VEC:
+    case ADDR_DIFF_VEC:
+    case RETURN:
+    case REG:
+    case ADDRESSOF:
+      return FALSE;
+	    
+    case PLUS:
+      if (XEXP (x, 0) == reg && CONSTANT_P (XEXP (x, 1)))
+	{
+	  offset = INTVAL (XEXP (x, 1));
+	  XEXP (x, 1) = gen_rtx_CONST_INT (VOIDmode, offset + value);
+	  return TRUE;
+	}
+      break;
+
+    default:
+      break;
+    }
+
+  /* Scan all subexpressions.  */
+  fmt = GET_RTX_FORMAT (code);
+  for (i = 0; i < GET_RTX_LENGTH (code); i++, fmt++)
+    if (*fmt == 'e')
+      {
+	if (change_plus_constant (XEXP (x, i), reg, value))
+	  result = TRUE;
+      }
+    else if (*fmt == 'E')
+      for (j = 0; j < XVECLEN (x, i); j++)
+	if (change_plus_constant (XVECEXP (x, i, j), reg, value))
+	  result = TRUE;
+
+  return result;
 }
 #endif
