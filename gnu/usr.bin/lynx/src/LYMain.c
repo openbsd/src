@@ -3152,9 +3152,6 @@ PRIVATE int version_fun ARGS1(
  * SYSTEM_NAME is set by the configure script.  Show build date/time for other
  * systems, according to predefined compiler symbols.
  */
-#ifdef SYSTEM_NAME
-    printf(gettext("Built on %s %s %s\n"), SYSTEM_NAME, __DATE__, __TIME__);
-#else
 #ifdef __CYGWIN__
     printf("Compiled by CYGWIN (%s %s).\n", __DATE__, __TIME__);
 #else
@@ -3166,13 +3163,10 @@ PRIVATE int version_fun ARGS1(
 #else
 #ifdef __DJGPP__
     printf("Compiled by DJGPP (%s %s).\n", __DATE__, __TIME__);
-#else
-    printf("Compiled at (%s %s).\n", __DATE__, __TIME__);
 #endif /* __DJGPP__ */
 #endif /* _MSC_VER */
 #endif /* __BORLANDC__ */
 #endif /* __CYGWIN__ */
-#endif
 
     printf("\n");
     printf(gettext(
