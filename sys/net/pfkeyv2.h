@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.h,v 1.44 2003/02/15 19:21:05 jason Exp $ */
+/* $OpenBSD: pfkeyv2.h,v 1.45 2003/02/16 19:54:20 jason Exp $ */
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) January 1998
  * 
@@ -67,142 +67,142 @@
 #define SADB_MAX           15
 
 struct sadb_msg {
-  uint8_t sadb_msg_version;
-  uint8_t sadb_msg_type;
-  uint8_t sadb_msg_errno;
-  uint8_t sadb_msg_satype;
-  uint16_t sadb_msg_len;
-  uint16_t sadb_msg_reserved;
-  uint32_t sadb_msg_seq;
-  uint32_t sadb_msg_pid;
+	uint8_t sadb_msg_version;
+	uint8_t sadb_msg_type;
+	uint8_t sadb_msg_errno;
+	uint8_t sadb_msg_satype;
+	uint16_t sadb_msg_len;
+	uint16_t sadb_msg_reserved;
+	uint32_t sadb_msg_seq;
+	uint32_t sadb_msg_pid;
 };
 
 struct sadb_ext {
-  uint16_t sadb_ext_len;
-  uint16_t sadb_ext_type;
+	uint16_t sadb_ext_len;
+	uint16_t sadb_ext_type;
 };
 
 struct sadb_sa {
-  uint16_t sadb_sa_len;
-  uint16_t sadb_sa_exttype;
-  uint32_t sadb_sa_spi;
-  uint8_t sadb_sa_replay;
-  uint8_t sadb_sa_state;
-  uint8_t sadb_sa_auth;
-  uint8_t sadb_sa_encrypt;
-  uint32_t sadb_sa_flags;
+	uint16_t sadb_sa_len;
+	uint16_t sadb_sa_exttype;
+	uint32_t sadb_sa_spi;
+	uint8_t sadb_sa_replay;
+	uint8_t sadb_sa_state;
+	uint8_t sadb_sa_auth;
+	uint8_t sadb_sa_encrypt;
+	uint32_t sadb_sa_flags;
 };
 
 struct sadb_lifetime {
-  uint16_t sadb_lifetime_len;
-  uint16_t sadb_lifetime_exttype;
-  uint32_t sadb_lifetime_allocations;
-  uint64_t sadb_lifetime_bytes;
-  uint64_t sadb_lifetime_addtime;
-  uint64_t sadb_lifetime_usetime;
+	uint16_t sadb_lifetime_len;
+	uint16_t sadb_lifetime_exttype;
+	uint32_t sadb_lifetime_allocations;
+	uint64_t sadb_lifetime_bytes;
+	uint64_t sadb_lifetime_addtime;
+	uint64_t sadb_lifetime_usetime;
 };
 
 struct sadb_address {
-  uint16_t sadb_address_len;
-  uint16_t sadb_address_exttype;
-  uint32_t sadb_address_reserved;
+	uint16_t sadb_address_len;
+	uint16_t sadb_address_exttype;
+	uint32_t sadb_address_reserved;
 };
 
 struct sadb_key {
-  uint16_t sadb_key_len;
-  uint16_t sadb_key_exttype;
-  uint16_t sadb_key_bits;
-  uint16_t sadb_key_reserved;
+	uint16_t sadb_key_len;
+	uint16_t sadb_key_exttype;
+	uint16_t sadb_key_bits;
+	uint16_t sadb_key_reserved;
 };
 
 struct sadb_ident {
-  uint16_t sadb_ident_len;
-  uint16_t sadb_ident_exttype;
-  uint16_t sadb_ident_type;
-  uint16_t sadb_ident_reserved;
-  uint64_t sadb_ident_id;
+	uint16_t sadb_ident_len;
+	uint16_t sadb_ident_exttype;
+	uint16_t sadb_ident_type;
+	uint16_t sadb_ident_reserved;
+	uint64_t sadb_ident_id;
 };
 
 struct sadb_sens {
-  uint16_t sadb_sens_len;
-  uint16_t sadb_sens_exttype;
-  uint32_t sadb_sens_dpd;
-  uint8_t sadb_sens_sens_level;
-  uint8_t sadb_sens_sens_len;
-  uint8_t sadb_sens_integ_level;
-  uint8_t sadb_sens_integ_len;
-  uint32_t sadb_sens_reserved;
+	uint16_t sadb_sens_len;
+	uint16_t sadb_sens_exttype;
+	uint32_t sadb_sens_dpd;
+	uint8_t sadb_sens_sens_level;
+	uint8_t sadb_sens_sens_len;
+	uint8_t sadb_sens_integ_level;
+	uint8_t sadb_sens_integ_len;
+	uint32_t sadb_sens_reserved;
 };
 
 struct sadb_prop {
-  uint16_t sadb_prop_len;
-  uint16_t sadb_prop_exttype;
-  uint8_t sadb_prop_num;
-  uint8_t sadb_prop_replay;
-  uint16_t sadb_prop_reserved;
+	uint16_t sadb_prop_len;
+	uint16_t sadb_prop_exttype;
+	uint8_t sadb_prop_num;
+	uint8_t sadb_prop_replay;
+	uint16_t sadb_prop_reserved;
 };
 
 struct sadb_comb {
-  uint8_t sadb_comb_auth;
-  uint8_t sadb_comb_encrypt;
-  uint16_t sadb_comb_flags;
-  uint16_t sadb_comb_auth_minbits;
-  uint16_t sadb_comb_auth_maxbits;
-  uint16_t sadb_comb_encrypt_minbits;
-  uint16_t sadb_comb_encrypt_maxbits;
-  uint32_t sadb_comb_reserved;
-  uint32_t sadb_comb_soft_allocations;
-  uint32_t sadb_comb_hard_allocations;
-  uint64_t sadb_comb_soft_bytes;
-  uint64_t sadb_comb_hard_bytes;
-  uint64_t sadb_comb_soft_addtime;
-  uint64_t sadb_comb_hard_addtime;
-  uint64_t sadb_comb_soft_usetime;
-  uint64_t sadb_comb_hard_usetime;
+	uint8_t sadb_comb_auth;
+	uint8_t sadb_comb_encrypt;
+	uint16_t sadb_comb_flags;
+	uint16_t sadb_comb_auth_minbits;
+	uint16_t sadb_comb_auth_maxbits;
+	uint16_t sadb_comb_encrypt_minbits;
+	uint16_t sadb_comb_encrypt_maxbits;
+	uint32_t sadb_comb_reserved;
+	uint32_t sadb_comb_soft_allocations;
+	uint32_t sadb_comb_hard_allocations;
+	uint64_t sadb_comb_soft_bytes;
+	uint64_t sadb_comb_hard_bytes;
+	uint64_t sadb_comb_soft_addtime;
+	uint64_t sadb_comb_hard_addtime;
+	uint64_t sadb_comb_soft_usetime;
+	uint64_t sadb_comb_hard_usetime;
 };
 
 struct sadb_supported {
-  uint16_t sadb_supported_len;
-  uint16_t sadb_supported_exttype;
-  uint32_t sadb_supported_reserved;
+	uint16_t sadb_supported_len;
+	uint16_t sadb_supported_exttype;
+	uint32_t sadb_supported_reserved;
 };
 
 struct sadb_alg {
-  uint8_t sadb_alg_id;
-  uint8_t sadb_alg_ivlen;
-  uint16_t sadb_alg_minbits;
-  uint16_t sadb_alg_maxbits;
-  uint16_t sadb_alg_reserved;
+	uint8_t sadb_alg_id;
+	uint8_t sadb_alg_ivlen;
+	uint16_t sadb_alg_minbits;
+	uint16_t sadb_alg_maxbits;
+	uint16_t sadb_alg_reserved;
 };
 
 struct sadb_spirange {
-  uint16_t sadb_spirange_len;
-  uint16_t sadb_spirange_exttype;
-  uint32_t sadb_spirange_min;
-  uint32_t sadb_spirange_max;
-  uint32_t sadb_spirange_reserved;
+	uint16_t sadb_spirange_len;
+	uint16_t sadb_spirange_exttype;
+	uint32_t sadb_spirange_min;
+	uint32_t sadb_spirange_max;
+	uint32_t sadb_spirange_reserved;
 };
 
 struct sadb_protocol {
-  uint16_t sadb_protocol_len;
-  uint16_t sadb_protocol_exttype;
-  uint8_t  sadb_protocol_proto;
-  uint8_t  sadb_protocol_direction;
-  uint8_t  sadb_protocol_flags;
-  uint8_t  sadb_protocol_reserved2;
+	uint16_t sadb_protocol_len;
+	uint16_t sadb_protocol_exttype;
+	uint8_t  sadb_protocol_proto;
+	uint8_t  sadb_protocol_direction;
+	uint8_t  sadb_protocol_flags;
+	uint8_t  sadb_protocol_reserved2;
 };
 
 struct sadb_x_policy {
-  uint16_t  sadb_x_policy_len;
-  uint16_t  sadb_x_policy_exttype;
-  u_int32_t sadb_x_policy_seq;
+	uint16_t  sadb_x_policy_len;
+	uint16_t  sadb_x_policy_exttype;
+	u_int32_t sadb_x_policy_seq;
 };
 
 struct sadb_x_cred {
-  uint16_t sadb_x_cred_len;
-  uint16_t sadb_x_cred_exttype;
-  uint16_t sadb_x_cred_type;
-  uint16_t sadb_x_cred_reserved;
+	uint16_t sadb_x_cred_len;
+	uint16_t sadb_x_cred_exttype;
+	uint16_t sadb_x_cred_type;
+	uint16_t sadb_x_cred_reserved;
 };
 
 #ifdef _KERNEL
@@ -370,25 +370,25 @@ struct mbuf;
 
 struct pfkey_version
 {
-    int protocol;
-    int (*create)(struct socket *socket);
-    int (*release)(struct socket *socket);
-    int (*send)(struct socket *socket, void *message, int len);
+	int protocol;
+	int (*create)(struct socket *socket);
+	int (*release)(struct socket *socket);
+	int (*send)(struct socket *socket, void *message, int len);
 };
 
 struct pfkeyv2_socket
 {
-    struct pfkeyv2_socket *next;
-    struct socket *socket;
-    int flags;
-    uint32_t pid;
-    uint32_t registration;    /* Increase size if SATYPE_MAX > 31 */
+	struct pfkeyv2_socket *next;
+	struct socket *socket;
+	int flags;
+	uint32_t pid;
+	uint32_t registration;    /* Increase size if SATYPE_MAX > 31 */
 };
 
 struct dump_state
 {
-    struct sadb_msg *sadb_msg;
-    struct socket *socket;
+	struct sadb_msg *sadb_msg;
+	struct socket *socket;
 };
 
 int pfkeyv2_init(void);
@@ -396,8 +396,7 @@ int pfkeyv2_cleanup(void);
 int pfkeyv2_parsemessage(void *, int, void **);
 int pfkeyv2_expire(struct tdb *, u_int16_t);
 int pfkeyv2_acquire(struct ipsec_policy *, union sockaddr_union *,
-                    union sockaddr_union *, u_int32_t *,
-		    struct sockaddr_encap *);
+    union sockaddr_union *, u_int32_t *, struct sockaddr_encap *);
 
 int pfkey_register(struct pfkey_version *version);
 int pfkey_unregister(struct pfkey_version *version);

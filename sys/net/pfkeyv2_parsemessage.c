@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_parsemessage.c,v 1.34 2002/06/07 06:16:39 angelos Exp $	*/
+/*	$OpenBSD: pfkeyv2_parsemessage.c,v 1.35 2003/02/16 19:54:20 jason Exp $	*/
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -124,146 +124,146 @@ extern int encdebug;
 
 uint32_t sadb_exts_allowed_in[SADB_MAX+1] =
 {
-  /* RESERVED */
-  ~0,
-  /* GETSPI */
-  BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST | BITMAP_SPIRANGE,
-  /* UPDATE */
-  BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS | BITMAP_KEY | BITMAP_IDENTITY | BITMAP_X_CREDENTIALS | BITMAP_X_FLOW,
-  /* ADD */
-  BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS | BITMAP_KEY | BITMAP_IDENTITY | BITMAP_X_CREDENTIALS | BITMAP_X_FLOW,
-  /* DELETE */
-  BITMAP_SA | BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST,
-  /* GET */
-  BITMAP_SA | BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST,
-  /* ACQUIRE */
-  BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST | BITMAP_IDENTITY | BITMAP_PROPOSAL | BITMAP_X_CREDENTIALS,
-  /* REGISTER */
-  0,
-  /* EXPIRE */
-  BITMAP_SA | BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST,
-  /* FLUSH */
-  0,
-  /* DUMP */
-  0,
-  /* X_PROMISC */
-  0,
-  /* X_ADDFLOW */
-  BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST | BITMAP_IDENTITY_SRC | BITMAP_IDENTITY_DST | BITMAP_X_FLOW,
-  /* X_DELFLOW */
-  BITMAP_X_FLOW,
-  /* X_GRPSPIS */
-  BITMAP_SA | BITMAP_X_SA2 | BITMAP_X_DST2 | BITMAP_ADDRESS_DST | BITMAP_X_PROTOCOL,
-  /* X_ASKPOLICY */
-  BITMAP_X_POLICY,
+	/* RESERVED */
+	~0,
+	/* GETSPI */
+	BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST | BITMAP_SPIRANGE,
+	/* UPDATE */
+	BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS | BITMAP_KEY | BITMAP_IDENTITY | BITMAP_X_CREDENTIALS | BITMAP_X_FLOW,
+	/* ADD */
+	BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS | BITMAP_KEY | BITMAP_IDENTITY | BITMAP_X_CREDENTIALS | BITMAP_X_FLOW,
+	/* DELETE */
+	BITMAP_SA | BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST,
+	/* GET */
+	BITMAP_SA | BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST,
+	/* ACQUIRE */
+	BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST | BITMAP_IDENTITY | BITMAP_PROPOSAL | BITMAP_X_CREDENTIALS,
+	/* REGISTER */
+	0,
+	/* EXPIRE */
+	BITMAP_SA | BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST,
+	/* FLUSH */
+	0,
+	/* DUMP */
+	0,
+	/* X_PROMISC */
+	0,
+	/* X_ADDFLOW */
+	BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST | BITMAP_IDENTITY_SRC | BITMAP_IDENTITY_DST | BITMAP_X_FLOW,
+	/* X_DELFLOW */
+	BITMAP_X_FLOW,
+	/* X_GRPSPIS */
+	BITMAP_SA | BITMAP_X_SA2 | BITMAP_X_DST2 | BITMAP_ADDRESS_DST | BITMAP_X_PROTOCOL,
+	/* X_ASKPOLICY */
+	BITMAP_X_POLICY,
 };
 
 uint32_t sadb_exts_required_in[SADB_MAX+1] =
 {
-  /* RESERVED */
-  0,
-  /* GETSPI */
-  BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST | BITMAP_SPIRANGE,
-  /* UPDATE */
-  BITMAP_SA | BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST,
-  /* ADD */
-  BITMAP_SA | BITMAP_ADDRESS_DST,
-  /* DELETE */
-  BITMAP_SA | BITMAP_ADDRESS_DST,
-  /* GET */
-  BITMAP_SA | BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST,
-  /* ACQUIRE */
-  0,
-  /* REGISTER */
-  0,
-  /* EXPIRE */
-  BITMAP_SA | BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST,
-  /* FLUSH */
-  0,
-  /* DUMP */
-  0,
-  /* X_PROMISC */
-  0,
-  /* X_ADDFLOW */
-  BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK | BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_X_FLOW_TYPE,
-  /* X_DELFLOW */
-  BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK | BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_X_FLOW_TYPE,
-  /* X_GRPSPIS */
-  BITMAP_SA | BITMAP_X_SA2 | BITMAP_X_DST2 | BITMAP_ADDRESS_DST | BITMAP_X_PROTOCOL,
-  /* X_ASKPOLICY */
-  BITMAP_X_POLICY,
+	/* RESERVED */
+	0,
+	/* GETSPI */
+	BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST | BITMAP_SPIRANGE,
+	/* UPDATE */
+	BITMAP_SA | BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST,
+	/* ADD */
+	BITMAP_SA | BITMAP_ADDRESS_DST,
+	/* DELETE */
+	BITMAP_SA | BITMAP_ADDRESS_DST,
+	/* GET */
+	BITMAP_SA | BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST,
+	/* ACQUIRE */
+	0,
+	/* REGISTER */
+	0,
+	/* EXPIRE */
+	BITMAP_SA | BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST,
+	/* FLUSH */
+	0,
+	/* DUMP */
+	0,
+	/* X_PROMISC */
+	0,
+	/* X_ADDFLOW */
+	BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK | BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_X_FLOW_TYPE,
+	/* X_DELFLOW */
+	BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK | BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_X_FLOW_TYPE,
+	/* X_GRPSPIS */
+	BITMAP_SA | BITMAP_X_SA2 | BITMAP_X_DST2 | BITMAP_ADDRESS_DST | BITMAP_X_PROTOCOL,
+	/* X_ASKPOLICY */
+	BITMAP_X_POLICY,
 };
 
 uint32_t sadb_exts_allowed_out[SADB_MAX+1] =
 {
-  /* RESERVED */
-  ~0,
-  /* GETSPI */
-  BITMAP_SA | BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST,
-  /* UPDATE */
-  BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS | BITMAP_IDENTITY | BITMAP_X_CREDENTIALS | BITMAP_X_FLOW,
-  /* ADD */
-  BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS | BITMAP_IDENTITY | BITMAP_X_CREDENTIALS | BITMAP_X_FLOW,
-  /* DELETE */
-  BITMAP_SA | BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST,
-  /* GET */
-  BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS | BITMAP_KEY | BITMAP_IDENTITY,
-  /* ACQUIRE */
-  BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST | BITMAP_IDENTITY | BITMAP_PROPOSAL | BITMAP_X_CREDENTIALS,
-  /* REGISTER */
-  BITMAP_SUPPORTED_AUTH | BITMAP_SUPPORTED_ENCRYPT | BITMAP_X_SUPPORTED_COMP,
-  /* EXPIRE */
-  BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS,
-  /* FLUSH */
-  0,
-  /* DUMP */
-  BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS | BITMAP_IDENTITY,
-  /* X_PROMISC */
-  0,
-  /* X_ADDFLOW */
-  BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST | BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK | BITMAP_X_PROTOCOL | BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_X_FLOW_TYPE | BITMAP_IDENTITY_SRC | BITMAP_IDENTITY_DST,
-  /* X_DELFLOW */
-  BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK | BITMAP_X_PROTOCOL | BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_X_FLOW_TYPE,
-  /* X_GRPSPIS */
-  BITMAP_SA | BITMAP_X_SA2 | BITMAP_X_DST2 | BITMAP_ADDRESS_DST | BITMAP_X_PROTOCOL,
-  /* X_ASKPOLICY */
-  BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK | BITMAP_X_FLOW_TYPE | BITMAP_X_POLICY,
+	/* RESERVED */
+	~0,
+	/* GETSPI */
+	BITMAP_SA | BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST,
+	/* UPDATE */
+	BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS | BITMAP_IDENTITY | BITMAP_X_CREDENTIALS | BITMAP_X_FLOW,
+	/* ADD */
+	BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS | BITMAP_IDENTITY | BITMAP_X_CREDENTIALS | BITMAP_X_FLOW,
+	/* DELETE */
+	BITMAP_SA | BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST,
+	/* GET */
+	BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS | BITMAP_KEY | BITMAP_IDENTITY,
+	/* ACQUIRE */
+	BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST | BITMAP_IDENTITY | BITMAP_PROPOSAL | BITMAP_X_CREDENTIALS,
+	/* REGISTER */
+	BITMAP_SUPPORTED_AUTH | BITMAP_SUPPORTED_ENCRYPT | BITMAP_X_SUPPORTED_COMP,
+	/* EXPIRE */
+	BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS,
+	/* FLUSH */
+	0,
+	/* DUMP */
+	BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS | BITMAP_IDENTITY,
+	/* X_PROMISC */
+	0,
+	/* X_ADDFLOW */
+	BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST | BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK | BITMAP_X_PROTOCOL | BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_X_FLOW_TYPE | BITMAP_IDENTITY_SRC | BITMAP_IDENTITY_DST,
+	/* X_DELFLOW */
+	BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK | BITMAP_X_PROTOCOL | BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_X_FLOW_TYPE,
+	/* X_GRPSPIS */
+	BITMAP_SA | BITMAP_X_SA2 | BITMAP_X_DST2 | BITMAP_ADDRESS_DST | BITMAP_X_PROTOCOL,
+	/* X_ASKPOLICY */
+	BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK | BITMAP_X_FLOW_TYPE | BITMAP_X_POLICY,
 };
 
 uint32_t sadb_exts_required_out[SADB_MAX+1] =
 {
-  /* RESERVED */
-  0,
-  /* GETSPI */
-  BITMAP_SA | BITMAP_ADDRESS_DST,
-  /* UPDATE */
-  BITMAP_SA | BITMAP_ADDRESS_DST,
-  /* ADD */
-  BITMAP_SA | BITMAP_ADDRESS_DST,
-  /* DELETE */
-  BITMAP_SA | BITMAP_ADDRESS_DST,
-  /* GET */
-  BITMAP_SA | BITMAP_LIFETIME_CURRENT | BITMAP_ADDRESS_DST,
-  /* ACQUIRE */
-  0,
-  /* REGISTER */
-  BITMAP_SUPPORTED_AUTH | BITMAP_SUPPORTED_ENCRYPT | BITMAP_X_SUPPORTED_COMP,
-  /* EXPIRE */
-  BITMAP_SA | BITMAP_ADDRESS_DST,
-  /* FLUSH */
-  0,
-  /* DUMP */
-  0,
-  /* X_PROMISC */
-  0,
-  /* X_ADDFLOW */
-  BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK | BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_X_FLOW_TYPE,
-  /* X_DELFLOW */
-  BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK | BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_X_FLOW_TYPE,
-  /* X_GRPSPIS */
-  BITMAP_SA | BITMAP_X_SA2 | BITMAP_X_DST2 | BITMAP_ADDRESS_DST | BITMAP_X_PROTOCOL,
-  /* X_REPPOLICY */
-  BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK | BITMAP_X_FLOW_TYPE,
+	/* RESERVED */
+	0,
+	/* GETSPI */
+	BITMAP_SA | BITMAP_ADDRESS_DST,
+	/* UPDATE */
+	BITMAP_SA | BITMAP_ADDRESS_DST,
+	/* ADD */
+	BITMAP_SA | BITMAP_ADDRESS_DST,
+	/* DELETE */
+	BITMAP_SA | BITMAP_ADDRESS_DST,
+	/* GET */
+	BITMAP_SA | BITMAP_LIFETIME_CURRENT | BITMAP_ADDRESS_DST,
+	/* ACQUIRE */
+	0,
+	/* REGISTER */
+	BITMAP_SUPPORTED_AUTH | BITMAP_SUPPORTED_ENCRYPT | BITMAP_X_SUPPORTED_COMP,
+	/* EXPIRE */
+	BITMAP_SA | BITMAP_ADDRESS_DST,
+	/* FLUSH */
+	0,
+	/* DUMP */
+	0,
+	/* X_PROMISC */
+	0,
+	/* X_ADDFLOW */
+	BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK | BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_X_FLOW_TYPE,
+	/* X_DELFLOW */
+	BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK | BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_X_FLOW_TYPE,
+	/* X_GRPSPIS */
+	BITMAP_SA | BITMAP_X_SA2 | BITMAP_X_DST2 | BITMAP_ADDRESS_DST | BITMAP_X_PROTOCOL,
+	/* X_REPPOLICY */
+	BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK | BITMAP_X_FLOW_TYPE,
 };
 
 int pfkeyv2_parsemessage(void *, int, void **);
@@ -282,14 +282,14 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 
 	if (left < sizeof(struct sadb_msg)) {
 		DPRINTF(("pfkeyv2_parsemessage: message too short\n"));
-		return EINVAL;
+		return (EINVAL);
 	}
 
 	headers[0] = p;
 
 	if (sadb_msg->sadb_msg_len * sizeof(uint64_t) != left) {
 		DPRINTF(("pfkeyv2_parsemessage: length not a multiple of 64\n"));
-		return EINVAL;
+		return (EINVAL);
 	}
 
 	p += sizeof(struct sadb_msg);
@@ -298,36 +298,36 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 	if (sadb_msg->sadb_msg_reserved) {
 		DPRINTF(("pfkeyv2_parsemessage: message header reserved "
 		    "field set\n"));
-		return EINVAL;
+		return (EINVAL);
 	}
 
 	if (sadb_msg->sadb_msg_type > SADB_MAX) {
 		DPRINTF(("pfkeyv2_parsemessage: message type > %d\n",
 		    SADB_MAX));
-		return EINVAL;
+		return (EINVAL);
 	}
 
 	if (!sadb_msg->sadb_msg_type) {
 		DPRINTF(("pfkeyv2_parsemessage: message type unset\n"));
-		return EINVAL;
+		return (EINVAL);
 	}
 
 	if (sadb_msg->sadb_msg_pid != curproc->p_pid) {
 		DPRINTF(("pfkeyv2_parsemessage: bad PID value\n"));
-		return EINVAL;
+		return (EINVAL);
 	}
 
 	if (sadb_msg->sadb_msg_errno) {
 		if (left) {
 			DPRINTF(("pfkeyv2_parsemessage: too-large error message\n"));
-			return EINVAL;
+			return (EINVAL);
 		}
-		return 0;
+		return (0);
 	}
 
 	if (sadb_msg->sadb_msg_type == SADB_X_PROMISC) {
 		DPRINTF(("pfkeyv2_parsemessage: message type promiscuous\n"));
-		return 0;
+		return (0);
 	}
 
 	allow = sadb_exts_allowed_in[sadb_msg->sadb_msg_type];
@@ -337,39 +337,39 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 		if (left < sizeof(struct sadb_ext)) {
 			DPRINTF(("pfkeyv2_parsemessage: extension header too "
 			    "short\n"));
-			return EINVAL;
+			return (EINVAL);
 		}
 
 		i = sadb_ext->sadb_ext_len * sizeof(uint64_t);
 		if (left < i) {
 			DPRINTF(("pfkeyv2_parsemessage: extension header "
 			    "exceeds message length\n"));
-			return EINVAL;
+			return (EINVAL);
 		}
 
 		if (sadb_ext->sadb_ext_type > SADB_EXT_MAX) {
 			DPRINTF(("pfkeyv2_parsemessage: unknown extension "
 			    "header %d\n", sadb_ext->sadb_ext_type));
-			return EINVAL;
+			return (EINVAL);
 		}
 
 		if (!sadb_ext->sadb_ext_type) {
 			DPRINTF(("pfkeyv2_parsemessage: unset extension "
 			    "header\n"));
-			return EINVAL;
+			return (EINVAL);
 		}
 
 		if (!(allow & (1 << sadb_ext->sadb_ext_type))) {
 			DPRINTF(("pfkeyv2_parsemessage: extension header %d "
 			    "not permitted on message type %d\n",
 			    sadb_ext->sadb_ext_type, sadb_msg->sadb_msg_type));
-			return EINVAL;
+			return (EINVAL);
 		}
 
 		if (headers[sadb_ext->sadb_ext_type]) {
 			DPRINTF(("pfkeyv2_parsemessage: duplicate extension "
 			    "header %d\n", sadb_ext->sadb_ext_type));
-			return EINVAL;
+			return (EINVAL);
 		}
 
 		seen |= (1 << sadb_ext->sadb_ext_type);
@@ -384,7 +384,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 				DPRINTF(("pfkeyv2_parsemessage: bad header "
 				    "length for SA extension header %d\n",
 				    sadb_ext->sadb_ext_type));
-				return EINVAL;
+				return (EINVAL);
 			}
 
 			if (sadb_sa->sadb_sa_state > SADB_SASTATE_MAX) {
@@ -392,14 +392,14 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 				    "state %d in SA extension header %d\n",
 				    sadb_sa->sadb_sa_state,
 				    sadb_ext->sadb_ext_type));
-				return EINVAL;
+				return (EINVAL);
 			}
 
 			if (sadb_sa->sadb_sa_state == SADB_SASTATE_DEAD) {
 				DPRINTF(("pfkeyv2_parsemessage: cannot set SA "
 				    "state to dead, SA extension header %d\n",
 				    sadb_ext->sadb_ext_type));
-				return EINVAL;
+				return (EINVAL);
 			}
 
 			if (sadb_sa->sadb_sa_encrypt > SADB_EALG_MAX) {
@@ -407,7 +407,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 				    "encryption algorithm %d in SA extension "
 				    "header %d\n", sadb_sa->sadb_sa_encrypt,
 				    sadb_ext->sadb_ext_type));
-				return EINVAL;
+				return (EINVAL);
 			}
 
 			if (sadb_sa->sadb_sa_auth > SADB_AALG_MAX) {
@@ -416,7 +416,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 				    "extension header %d\n",
 				    sadb_sa->sadb_sa_auth,
 				    sadb_ext->sadb_ext_type));
-				return EINVAL;
+				return (EINVAL);
 			}
 
 			if (sadb_sa->sadb_sa_replay > 32) {
@@ -424,7 +424,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 				    "replay window size %d in SA extension "
 				    "header %d\n", sadb_sa->sadb_sa_replay,
 				    sadb_ext->sadb_ext_type));
-				return EINVAL;
+				return (EINVAL);
 			}
 		}
 		break;
@@ -434,14 +434,14 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 				DPRINTF(("pfkeyv2_parsemessage: bad "
 				    "PROTOCOL/FLOW header length in extension "
 				    "header %d\n", sadb_ext->sadb_ext_type));
-				return EINVAL;
+				return (EINVAL);
 			}
 			break;
 		case SADB_X_EXT_POLICY:
 			if (i != sizeof(struct sadb_x_policy)) {
 				DPRINTF(("pfkeyv2_parsemessage: bad POLICY "
 				    "header length\n"));
-				return EINVAL;
+				return (EINVAL);
 			}
 			break;
 		case SADB_EXT_LIFETIME_CURRENT:
@@ -451,7 +451,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 				DPRINTF(("pfkeyv2_parsemessage: bad header "
 				    "length for LIFETIME extension header "
 				    "%d\n", sadb_ext->sadb_ext_type));
-				return EINVAL;
+				return (EINVAL);
 			}
 			break;
 		case SADB_EXT_ADDRESS_SRC:
@@ -473,14 +473,14 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 				DPRINTF(("pfkeyv2_parsemessage: bad ADDRESS "
 				    "extension header %d length\n",
 				    sadb_ext->sadb_ext_type));
-				return EINVAL;
+				return (EINVAL);
 			}
 
 			if (sadb_address->sadb_address_reserved) {
 				DPRINTF(("pfkeyv2_parsemessage: ADDRESS "
 				    "extension header %d reserved field set\n",
 				    sadb_ext->sadb_ext_type));
-				return EINVAL;
+				return (EINVAL);
 			}
 			if (sa->sa_len &&
 			    (i != sizeof(struct sadb_address) +
@@ -488,7 +488,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 				DPRINTF(("pfkeyv2_parsemessage: bad sockaddr "
 				    "length field in ADDRESS extension "
 				    "header %d\n", sadb_ext->sadb_ext_type));
-				return EINVAL;
+				return (EINVAL);
 			}
 
 			switch(sa->sa_family) {
@@ -499,7 +499,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 					    "invalid ADDRESS extension header "
 					    "%d length\n",
 					    sadb_ext->sadb_ext_type));
-					return EINVAL;
+					return (EINVAL);
 				}
 
 				if (sa->sa_len != sizeof(struct sockaddr_in)) {
@@ -507,7 +507,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 					    "sockaddr_in length in ADDRESS "
 					    "extension header %d\n",
 					    sadb_ext->sadb_ext_type));
-					return EINVAL;
+					return (EINVAL);
 				}
 
 				/* Only check the right pieces */
@@ -526,7 +526,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 						    "sockaddr_in of ADDRESS "
 						    "extension header %d\n",
 						    sadb_ext->sadb_ext_type));
-						return EINVAL;
+						return (EINVAL);
 					}
 					break;
 				}
@@ -542,7 +542,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 						    "ADDRESS extension header "
 						    "%d\n",
 						    sadb_ext->sadb_ext_type));
-						return EINVAL;
+						return (EINVAL);
 					}
 				}
 				break;
@@ -554,7 +554,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 					    "invalid sockaddr_in6 length in "
 					    "ADDRESS extension header %d\n",
 					    sadb_ext->sadb_ext_type));
-					return EINVAL;
+					return (EINVAL);
 				}
 
 				if (sa->sa_len !=
@@ -563,7 +563,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 					    "sockaddr_in6 length in ADDRESS "
 					    "extension header %d\n",
 					    sadb_ext->sadb_ext_type));
-					return EINVAL;
+					return (EINVAL);
 				}
 
 				if (((struct sockaddr_in6 *)sa)->sin6_flowinfo) {
@@ -572,7 +572,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 					    "sockaddr_in6 of ADDRESS "
 					    "extension header %d\n",
 					    sadb_ext->sadb_ext_type));
-					return EINVAL;
+					return (EINVAL);
 				}
 
 				/* Only check the right pieces */
@@ -591,7 +591,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 						    "sockaddr_in6 of ADDRESS "
 						    "extension header %d\n",
 						    sadb_ext->sadb_ext_type));
-						return EINVAL;
+						return (EINVAL);
 					}
 					break;
 				}
@@ -602,7 +602,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 				    "address family %d in ADDRESS extension "
 				    "header %d\n",
 				    sa->sa_family, sadb_ext->sadb_ext_type));
-				return EINVAL;
+				return (EINVAL);
 			}
 		}
 		break;
@@ -615,28 +615,28 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 				DPRINTF(("pfkeyv2_parsemessage: bad header "
 				    "length in KEY extension header %d\n",
 				    sadb_ext->sadb_ext_type));
-				return EINVAL;
+				return (EINVAL);
 			}
 
 			if (!sadb_key->sadb_key_bits) {
 				DPRINTF(("pfkeyv2_parsemessage: key length "
 				    "unset in KEY extension header %d\n",
 				    sadb_ext->sadb_ext_type));
-				return EINVAL;
+				return (EINVAL);
 			}
 
 			if (((sadb_key->sadb_key_bits + 63) / 64) * sizeof(uint64_t) != i - sizeof(struct sadb_key)) {
 				DPRINTF(("pfkeyv2_parsemessage: invalid key "
 				    "length in KEY extension header %d\n",
 				    sadb_ext->sadb_ext_type));
-				return EINVAL;
+				return (EINVAL);
 			}
 
 			if (sadb_key->sadb_key_reserved) {
 				DPRINTF(("pfkeyv2_parsemessage: reserved field"
 				    " set in KEY extension header %d\n",
 				    sadb_ext->sadb_ext_type));
-				return EINVAL;
+				return (EINVAL);
 			}
 		}
 		break;
@@ -650,7 +650,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 				DPRINTF(("pfkeyv2_parsemessage: bad header "
 				    "length for AUTH extension header %d\n",
 				    sadb_ext->sadb_ext_type));
-				return EINVAL;
+				return (EINVAL);
 			}
 
 			if (sadb_cred->sadb_x_cred_type > SADB_X_AUTHTYPE_MAX) {
@@ -658,14 +658,14 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 				    "type %d in AUTH extension header %d\n",
 				    sadb_cred->sadb_x_cred_type, 
 				    sadb_ext->sadb_ext_type));
-				return EINVAL;
+				return (EINVAL);
 			}
 
 			if (sadb_cred->sadb_x_cred_reserved) {
 				DPRINTF(("pfkeyv2_parsemessage: reserved field"
 				    " set in AUTH extension header %d\n",
 				    sadb_ext->sadb_ext_type));
-				return EINVAL;
+				return (EINVAL);
 			}
 		}
 		break;
@@ -679,7 +679,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 				DPRINTF(("pfkeyv2_parsemessage: bad header "
 				    "length of CREDENTIALS extension header "
 				    "%d\n", sadb_ext->sadb_ext_type));
-				return EINVAL;
+				return (EINVAL);
 			}
 
 			if (sadb_cred->sadb_x_cred_type > SADB_X_CREDTYPE_MAX) {
@@ -688,14 +688,14 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 				    "extension header %d\n",
 				    sadb_cred->sadb_x_cred_type,
 				    sadb_ext->sadb_ext_type));
-				return EINVAL;
+				return (EINVAL);
 			}
 
 			if (sadb_cred->sadb_x_cred_reserved) {
 				DPRINTF(("pfkeyv2_parsemessage: reserved "
 				    "field set in CREDENTIALS extension "
 				    "header %d\n", sadb_ext->sadb_ext_type));
-				return EINVAL;
+				return (EINVAL);
 			}
 		}
 		break;
@@ -708,7 +708,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 				DPRINTF(("pfkeyv2_parsemessage: bad header "
 				    "length of IDENTITY extension header %d\n",
 				    sadb_ext->sadb_ext_type));
-				return EINVAL;
+				return (EINVAL);
 			}
 
 			if (sadb_ident->sadb_ident_type > SADB_IDENTTYPE_MAX) {
@@ -717,14 +717,14 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 				    "header %d\n",
 				    sadb_ident->sadb_ident_type,
 				    sadb_ext->sadb_ext_type));
-				return EINVAL;
+				return (EINVAL);
 			}
 
 			if (sadb_ident->sadb_ident_reserved) {
 				DPRINTF(("pfkeyv2_parsemessage: reserved "
 				    "field set in IDENTITY extension header "
 				    "%d\n", sadb_ext->sadb_ext_type));
-				return EINVAL;
+				return (EINVAL);
 			}
 
 			if (i > sizeof(struct sadb_ident)) {
@@ -737,7 +737,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 					    "NUL-terminated identity in "
 					    "IDENTITY extension header %d\n",
 					    sadb_ext->sadb_ext_type));
-					return EINVAL;
+					return (EINVAL);
 				}
 
 				j = PADUP(strlen(c) + 1) +
@@ -749,7 +749,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 					    "expected length in identity "
 					    "extension header %d\n",
 					    sadb_ext->sadb_ext_type));
-					return EINVAL;
+					return (EINVAL);
 				}
 			}
 		}
@@ -762,7 +762,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 				DPRINTF(("pfkeyv2_parsemessage: bad header "
 				    "length for SENSITIVITY extension "
 				    "header\n"));
-				return EINVAL;
+				return (EINVAL);
 			}
 
 			if (i != (sadb_sens->sadb_sens_sens_len +
@@ -772,7 +772,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 				DPRINTF(("pfkeyv2_parsemessage: bad payload "
 				    "length for SENSITIVITY extension "
 				    "header\n"));
-				return EINVAL;
+				return (EINVAL);
 			}
 		}
 		break;
@@ -783,20 +783,20 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 			if (i < sizeof(struct sadb_prop)) {
 				DPRINTF(("pfkeyv2_parsemessage: bad PROPOSAL "
 				    "header length\n"));
-				return EINVAL;
+				return (EINVAL);
 			}
 
 			if (sadb_prop->sadb_prop_reserved) {
 				DPRINTF(("pfkeyv2_parsemessage: reserved field"
 				    "set in PROPOSAL extension header\n"));
-				return EINVAL;
+				return (EINVAL);
 			}
 
 			if ((i - sizeof(struct sadb_prop)) %
 			    sizeof(struct sadb_comb)) {
 				DPRINTF(("pfkeyv2_parsemessage: bad proposal "
 				    "length\n"));
-				return EINVAL;
+				return (EINVAL);
 			}
 
 			{
@@ -815,7 +815,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 						    "algorithm %d in "
 						    "PROPOSAL\n",
 						    sadb_comb->sadb_comb_auth));
-						return EINVAL;
+						return (EINVAL);
 					}
 
 					if (sadb_comb->sadb_comb_encrypt >
@@ -825,14 +825,14 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 						    "algorithm %d in "
 						    "PROPOSAL\n",
 						    sadb_comb->sadb_comb_encrypt));
-						return EINVAL;
+						return (EINVAL);
 					}
 
 					if (sadb_comb->sadb_comb_reserved) {
 						DPRINTF(("pfkeyv2_parsemessage"
 						    ": reserved field set in "
 						    "COMB header\n"));
-						return EINVAL;
+						return (EINVAL);
 					}
 				}
 			}
@@ -850,14 +850,14 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 				DPRINTF(("pfkeyv2_parsemessage: bad header "
 				    "length for SUPPORTED extension header "
 				    "%d\n", sadb_ext->sadb_ext_type));
-				return EINVAL;
+				return (EINVAL);
 			}
 
 			if (sadb_supported->sadb_supported_reserved) {
 				DPRINTF(("pfkeyv2_parsemessage: reserved "
 				    "field set in SUPPORTED extension "
 				    "header %d\n", sadb_ext->sadb_ext_type));
-				return EINVAL;
+				return (EINVAL);
 			}
 
 			{
@@ -878,7 +878,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 						    "header %d\n",
 						    sadb_alg->sadb_alg_id,
 						    sadb_ext->sadb_ext_type));
-						return EINVAL;
+						return (EINVAL);
 					}
 
 					if (sadb_alg->sadb_alg_reserved) {
@@ -888,7 +888,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 						    "header inside SUPPORTED "
 						    "extension header %d\n",
 						    sadb_ext->sadb_ext_type));
-						return EINVAL;
+						return (EINVAL);
 					}
 
 					sadb_alg++;
@@ -904,14 +904,14 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 			if (i != sizeof(struct sadb_spirange)) {
 				DPRINTF(("pfkeyv2_parsemessage: bad header "
 				    "length of SPIRANGE extension header\n"));
-				return EINVAL;
+				return (EINVAL);
 			}
 
 			if (sadb_spirange->sadb_spirange_min >
 			    sadb_spirange->sadb_spirange_max) {
 				DPRINTF(("pfkeyv2_parsemessage: bad SPI "
 				    "range\n"));
-				return EINVAL;
+				return (EINVAL);
 			}
 		}
 		break;
@@ -919,7 +919,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 			DPRINTF(("pfkeyv2_parsemessage: unknown extension "
 			    "header type %d\n",
 			    sadb_ext->sadb_ext_type));
-			return EINVAL;
+			return (EINVAL);
 		}
   
 		headers[sadb_ext->sadb_ext_type] = p;
@@ -929,7 +929,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 
 	if (left) {
 		DPRINTF(("pfkeyv2_parsemessage: message too long\n"));
-		return EINVAL;
+		return (EINVAL);
 	}
 
 	{
@@ -940,7 +940,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 		if ((seen & required) != required) {
 			DPRINTF(("pfkeyv2_parsemessage: required fields "
 			    "missing\n"));
-			return EINVAL;
+			return (EINVAL);
 		}
 	}
 
@@ -950,7 +950,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 		    SADB_SASTATE_MATURE) {
 			DPRINTF(("pfkeyv2_parsemessage: updating non-mature "
 			    "SA prohibited\n"));
-			return EINVAL;
+			return (EINVAL);
 		}
 		break;
 	case SADB_ADD:
@@ -958,10 +958,10 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 		    SADB_SASTATE_MATURE) {
 			DPRINTF(("pfkeyv2_parsemessage: adding non-mature "
 			    "SA prohibited\n"));
-			return EINVAL;
+			return (EINVAL);
 		}
 		break;
 	}
 
-	return 0;
+	return (0);
 }
