@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.13 2004/03/22 04:54:17 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.14 2004/04/28 00:47:06 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -194,21 +194,23 @@ struct pfsync_header {
 #define PFSYNC_DFLTTL		255
 
 struct pfsyncstats {
-	u_long	pfsyncs_ipackets;	/* total input packets, IPv4 */
-	u_long	pfsyncs_ipackets6;	/* total input packets, IPv6 */
-	u_long	pfsyncs_badif;		/* not the right interface */
-	u_long	pfsyncs_badttl;		/* TTL is not PFSYNC_DFLTTL */
-	u_long	pfsyncs_hdrops;		/* packets shorter than header */
-	u_long	pfsyncs_badver;		/* bad (incl unsupp) version */
-	u_long	pfsyncs_badact;		/* bad action */
-	u_long	pfsyncs_badlen;		/* data length does not match */
-	u_long	pfsyncs_badauth;	/* bad authentication */
-	u_long	pfsyncs_badstate;	/* insert/lookup failed */
+	u_int64_t	pfsyncs_ipackets;	/* total input packets, IPv4 */
+	u_int64_t	pfsyncs_ipackets6;	/* total input packets, IPv6 */
+	u_int64_t	pfsyncs_badif;		/* not the right interface */
+	u_int64_t	pfsyncs_badttl;		/* TTL is not PFSYNC_DFLTTL */
+	u_int64_t	pfsyncs_hdrops;		/* packets shorter than hdr */
+	u_int64_t	pfsyncs_badver;		/* bad (incl unsupp) version */
+	u_int64_t	pfsyncs_badact;		/* bad action */
+	u_int64_t	pfsyncs_badlen;		/* data length does not match */
+	u_int64_t	pfsyncs_badauth;	/* bad authentication */
+	u_int64_t	pfsyncs_stale;		/* stale state */
+	u_int64_t	pfsyncs_badval;		/* bad values */
+	u_int64_t	pfsyncs_badstate;	/* insert/lookup failed */
 
-	u_long	pfsyncs_opackets;	/* total output packets, IPv4 */
-	u_long	pfsyncs_opackets6;	/* total output packets, IPv6 */
-	u_long	pfsyncs_onomem;		/* no memory for an mbuf for a send */
-	u_long	pfsyncs_oerrors;	/* ip output error */
+	u_int64_t	pfsyncs_opackets;	/* total output packets, IPv4 */
+	u_int64_t	pfsyncs_opackets6;	/* total output packets, IPv6 */
+	u_int64_t	pfsyncs_onomem;		/* no memory for an mbuf */
+	u_int64_t	pfsyncs_oerrors;	/* ip output error */
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.85 2004/04/24 18:51:13 markus Exp $	*/
+/*	$OpenBSD: inet.c,v 1.86 2004/04/28 00:47:06 mcbride Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static const char *rcsid = "$OpenBSD: inet.c,v 1.85 2004/04/24 18:51:13 markus Exp $";
+static const char *rcsid = "$OpenBSD: inet.c,v 1.86 2004/04/28 00:47:06 mcbride Exp $";
 #endif
 #endif /* not lint */
 
@@ -932,20 +932,22 @@ pfsync_stats(u_long off, char *name)
 #define p2(f, m) if (pfsyncstat.f || sflag <= 1) \
 	printf(m, pfsyncstat.f)
 
-	p(pfsyncs_ipackets, "\t%lu packet%s received (IPv4)\n");
-	p(pfsyncs_ipackets6, "\t%lu packet%s received (IPv6)\n");
-	p(pfsyncs_badif, "\t\t%lu packet%s discarded for bad interface\n");
-	p(pfsyncs_badttl, "\t\t%lu packet%s discarded for bad ttl\n");
-	p(pfsyncs_hdrops, "\t\t%lu packet%s shorter than header\n");
-	p(pfsyncs_badver,	"\t\t%lu discarded packet%s with a bad version\n");
-	p(pfsyncs_badact,	"\t\t%lu discarded packet%s with a bad action\n");
-	p2(pfsyncs_badlen, "\t\t%lu discarded because packet too short\n");
-	p2(pfsyncs_badauth, "\t\t%lu discarded for bad authentication\n");
-	p(pfsyncs_badstate, "\t%lu failed state lookup/insert%s\n");
-	p(pfsyncs_opackets, "\t%lu packet%s sent (IPv4)\n");
-	p(pfsyncs_opackets6, "\t%lu packet%s sent (IPv6)\n");
-	p2(pfsyncs_onomem, "\t\t%lu send failed due to mbuf memory error\n");
-	p2(pfsyncs_oerrors, "\t\t%lu send error\n");
+	p(pfsyncs_ipackets, "\t%llu packet%s received (IPv4)\n");
+	p(pfsyncs_ipackets6, "\t%llu packet%s received (IPv6)\n");
+	p(pfsyncs_badif, "\t\t%llu packet%s discarded for bad interface\n");
+	p(pfsyncs_badttl, "\t\t%llu packet%s discarded for bad ttl\n");
+	p(pfsyncs_hdrops, "\t\t%llu packet%s shorter than header\n");
+	p(pfsyncs_badver, "\t\t%llu packet%s discarded for bad version\n");
+	p(pfsyncs_badauth, "\t\t%llu packet%s discarded for bad HMAC\n");
+	p(pfsyncs_badact,"\t\t%llu packet%s discarded for bad action\n");
+	p(pfsyncs_badlen, "\t\t%llu packet%s discarded for short packet\n");
+	p(pfsyncs_badval, "\t\t%llu state%s discarded for bad values\n");
+	p(pfsyncs_stale, "\t\t%llu stale state%s\n");
+	p(pfsyncs_badstate, "\t\t%llu failed state lookup/insert%s\n");
+	p(pfsyncs_opackets, "\t%llu packet%s sent (IPv4)\n");
+	p(pfsyncs_opackets6, "\t%llu packet%s sent (IPv6)\n");
+	p2(pfsyncs_onomem, "\t\t%llu send failed due to mbuf memory error\n");
+	p2(pfsyncs_oerrors, "\t\t%llu send error\n");
 #undef p
 #undef p2
 }
