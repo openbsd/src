@@ -1,4 +1,4 @@
-/*	$OpenBSD: head.c,v 1.4 1999/07/23 13:14:32 aaron Exp $	*/
+/*	$OpenBSD: head.c,v 1.5 1999/07/23 13:56:18 aaron Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987 Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)head.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$OpenBSD: head.c,v 1.4 1999/07/23 13:14:32 aaron Exp $";
+static char rcsid[] = "$OpenBSD: head.c,v 1.5 1999/07/23 13:56:18 aaron Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -89,9 +89,9 @@ main(argc, argv)
 	if (p) {
 		if ((linecnt == LONG_MIN || linecnt == LONG_MAX) &&
 		    errno == ERANGE)
-			err(1, "invalid line count: %s", p);
+			err(1, "illegal line count -- %s", p);
 		else if (linecnt <= 0 || *inval)
-			errx(1, "invalid line count: %s", p);
+			errx(1, "illegal line count -- %s", p);
 	}
 
 	/* setlinebuf(stdout); */
@@ -102,7 +102,7 @@ main(argc, argv)
 		}
 		else {
 			if (!freopen(*argv, "r", stdin)) {
-				fprintf(stderr, "head: can't read %s.\n", *argv++);
+				warn("%s", *argv++);
 				continue;
 			}
 			if (argc > 1) {
