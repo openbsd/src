@@ -1,4 +1,4 @@
-/*	$OpenBSD: ispcvt.c,v 1.8 1999/11/26 02:11:15 deraadt Exp $	*/
+/*	$OpenBSD: ispcvt.c,v 1.9 2000/01/19 15:51:54 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis
@@ -263,9 +263,6 @@ char *argv[];
 		next();
 		fprintf(stderr,"PCVT_USEKBDSEC       = %s",
 			(pcvtinfo.compile_opts & CONF_USEKBDSEC) ? "ON" : "OFF");
-		next();
-		fprintf(stderr,"PCVT_VT220KEYB       = %s",
-			((u_int)pcvtinfo.compile_opts & (u_int)CONF_VT220KEYB) ? "ON" : "OFF");
 		next();
 		fprintf(stderr,"PCVT_WAITRETRACE     = %s",
 			(pcvtinfo.compile_opts & CONF_WAITRETRACE) ? "ON" : "OFF");
