@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.319 2004/12/22 00:59:26 david Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.320 2004/12/22 17:17:56 dhartmei Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -482,6 +482,16 @@ ruleset finishes loading.
 For example:
 .Pp
 .Dl set fingerprints \&"/etc/pf.os.devel\&"
+.Pp
+.It Ar set skip on <ifspec>
+List interfaces for which packets should not be filtered.
+Packets passing in or out on such interfaces are passed as if pf was
+disabled, i.e. pf does not process them in any way.
+This can be useful on loopback and other virtual interfaces, when
+packet filtering is not desired and can have unexpected effects.
+For example:
+.Pp
+.Dl set skip on lo0
 .Pp
 .It Ar set debug
 Set the debug

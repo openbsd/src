@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.136 2004/12/10 22:13:26 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.137 2004/12/22 17:17:55 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1028,6 +1028,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		case DIOCCLRSRCNODES:
 		case DIOCIGETIFACES:
 		case DIOCICLRISTATS:
+		case DIOCSETIFFLAG:
+		case DIOCCLRIFFLAG:
 			break;
 		case DIOCRCLRTABLES:
 		case DIOCRADDTABLES:
@@ -2764,6 +2766,20 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		error = pfi_clr_istats(io->pfiio_name, &io->pfiio_nzero,
 		    io->pfiio_flags);
+		break;
+	}
+
+	case DIOCSETIFFLAG: {
+		struct pfioc_iface *io = (struct pfioc_iface *)addr;
+
+		error = pfi_set_flags(io->pfiio_name, io->pfiio_flags);
+		break;
+	}
+
+	case DIOCCLRIFFLAG: {
+		struct pfioc_iface *io = (struct pfioc_iface *)addr;
+
+		error = pfi_clear_flags(io->pfiio_name, io->pfiio_flags);
 		break;
 	}
 

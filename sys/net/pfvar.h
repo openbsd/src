@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.209 2004/12/10 22:13:26 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.210 2004/12/22 17:17:55 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -869,6 +869,8 @@ struct pfi_kif {
 #define PFI_IFLAG_CLONABLE	0x0010	/* clonable group */
 #define PFI_IFLAG_DYNAMIC	0x0020	/* dynamic group */
 #define PFI_IFLAG_ATTACHED	0x0040	/* interface attached */
+#define PFI_IFLAG_SKIP		0x0100	/* skip filtering on interface */
+#define PFI_IFLAG_SETABLE_MASK	0x0100	/* setable via DIOC{SET,CLR}IFFLAG */
 
 struct pf_pdesc {
 	u_int64_t	 tot_len;	/* Make Mickey money */
@@ -1326,6 +1328,8 @@ struct pfioc_iface {
 #define DIOCSETHOSTID	_IOWR('D', 86, u_int32_t)
 #define DIOCIGETIFACES	_IOWR('D', 87, struct pfioc_iface)
 #define DIOCICLRISTATS  _IOWR('D', 88, struct pfioc_iface)
+#define DIOCSETIFFLAG	_IOWR('D', 89, struct pfioc_iface)
+#define DIOCCLRIFFLAG	_IOWR('D', 90, struct pfioc_iface)
 
 #ifdef _KERNEL
 RB_HEAD(pf_src_tree, pf_src_node);
@@ -1488,6 +1492,8 @@ void		 pfi_dynaddr_remove(struct pf_addr_wrap *);
 void		 pfi_fill_oldstatus(struct pf_status *);
 int		 pfi_clr_istats(const char *, int *, int);
 int		 pfi_get_ifaces(const char *, struct pfi_if *, int *, int);
+int		 pfi_set_flags(const char *, int);
+int		 pfi_clear_flags(const char *, int);
 int		 pfi_match_addr(struct pfi_dynaddr *, struct pf_addr *,
 		    sa_family_t);
 

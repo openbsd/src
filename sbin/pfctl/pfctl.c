@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.223 2004/09/21 16:59:11 aaron Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.224 2004/12/22 17:17:55 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1265,6 +1265,39 @@ pfctl_set_debug(struct pfctl *pf, char *d)
 
 	if (pf->opts & PF_OPT_VERBOSE)
 		printf("set debug %s\n", d);
+
+	return (0);
+}
+
+int
+pfctl_set_interface_flags(struct pfctl *pf, char *ifname, int flags, int how)
+{
+	struct pfioc_iface	pi;
+
+	if ((loadopt & PFCTL_FLAG_OPTION) == 0)
+		return (0);
+
+	bzero(&pi, sizeof(pi));
+
+	pi.pfiio_flags = flags;
+
+	if (strlcpy(pi.pfiio_name, ifname, sizeof(pi.pfiio_name)) >=
+	    sizeof(pi.pfiio_name))
+		errx(1, "pfctl_set_interface_flags: strlcpy");
+
+	if ((pf->opts & PF_OPT_NOACTION) == 0) {
+		if (how == 0) {
+			if (ioctl(pf->dev, DIOCCLRIFFLAG, &pi))
+				err(1, "DIOCCLRIFFLAG");
+		} else {
+			if (ioctl(pf->dev, DIOCSETIFFLAG, &pi))
+				err(1, "DIOCSETIFFLAG");
+		}
+	}
+
+	if (pf->opts & PF_OPT_VERBOSE)
+		printf("%s %s:0x%x flags\n", how ? "set" : "clear",
+		    pi.pfiio_name, pi.pfiio_flags);
 
 	return (0);
 }

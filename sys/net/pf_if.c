@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.22 2004/12/13 23:51:22 dhartmei Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.23 2004/12/22 17:17:55 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -685,6 +685,44 @@ pfi_clr_istats(const char *name, int *nzero, int flags)
 	splx(s);
 	if (nzero != NULL)
 		*nzero = n;
+	return (0);
+}
+
+int
+pfi_set_flags(const char *name, int flags)
+{
+	struct pfi_kif	*p;
+	int		 s;
+
+	if (flags & ~PFI_IFLAG_SETABLE_MASK)
+		return (EINVAL);
+
+	s = splsoftnet();
+	RB_FOREACH(p, pfi_ifhead, &pfi_ifs) {
+		if (pfi_skip_if(name, p, PFI_FLAG_GROUP|PFI_FLAG_INSTANCE))
+			continue;
+		p->pfik_flags |= flags;
+	}
+	splx(s);
+	return (0);
+}
+
+int
+pfi_clear_flags(const char *name, int flags)
+{
+	struct pfi_kif	*p;
+	int		 s;
+
+	if (flags & ~PFI_IFLAG_SETABLE_MASK)
+		return (EINVAL);
+
+	s = splsoftnet();
+	RB_FOREACH(p, pfi_ifhead, &pfi_ifs) {
+		if (pfi_skip_if(name, p, PFI_FLAG_GROUP|PFI_FLAG_INSTANCE))
+			continue;
+		p->pfik_flags &= ~flags;
+	}
+	splx(s);
 	return (0);
 }
 

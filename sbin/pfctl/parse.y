@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.470 2004/12/15 16:11:14 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.471 2004/12/22 17:17:55 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -281,6 +281,7 @@ int	expand_altq(struct pf_altq *, struct node_if *, struct node_queue *,
 	    struct node_queue_bw bwspec, struct node_queue_opt *);
 int	expand_queue(struct pf_altq *, struct node_if *, struct node_queue *,
 	    struct node_queue_bw, struct node_queue_opt *);
+int	expand_skip_interface(struct node_if *);
 
 int	 check_rulestate(int);
 int	 kw_cmp(const void *, const void *);
@@ -398,7 +399,7 @@ typedef struct {
 %token	NOROUTE FRAGMENT USER GROUP MAXMSS MAXIMUM TTL TOS DROP TABLE
 %token	REASSEMBLE FRAGDROP FRAGCROP ANCHOR NATANCHOR RDRANCHOR BINATANCHOR
 %token	SET OPTIMIZATION TIMEOUT LIMIT LOGINTERFACE BLOCKPOLICY RANDOMID
-%token	REQUIREORDER SYNPROXY FINGERPRINTS NOSYNC DEBUG HOSTID
+%token	REQUIREORDER SYNPROXY FINGERPRINTS NOSYNC DEBUG SKIP HOSTID
 %token	ANTISPOOF FOR
 %token	BITMASK RANDOM SOURCEHASH ROUNDROBIN STATICPORT PROBABILITY
 %token	ALTQ CBQ PRIQ HFSC BANDWIDTH TBRSIZE LINKSHARE REALTIME UPPERLIMIT
@@ -569,6 +570,12 @@ option		: SET OPTIMIZATION STRING		{
 				YYERROR;
 			}
 			free($3);
+		}
+		| SET SKIP interface {
+			if (expand_skip_interface($3) != 0) {
+				yyerror("error setting skip interface(s)");
+				YYERROR;
+			}
 		}
 		;
 
@@ -4451,6 +4458,34 @@ expand_rule(struct pf_rule *r,
 		yyerror("rule expands to no valid combination");
 }
 
+int
+expand_skip_interface(struct node_if *interfaces)
+{
+	int	errs = 0;
+
+	if (!interfaces || (!interfaces->next && !interfaces->not &&
+	    !strcmp(interfaces->ifname, "none"))) {
+		errs = pfctl_set_interface_flags(pf, "", PFI_IFLAG_SKIP, 0);
+		return (errs);
+	}
+
+	LOOP_THROUGH(struct node_if, interface, interfaces,
+		if (interface->not) {
+			yyerror("skip on ! <interface> is not supported");
+			errs++;
+		} else
+			errs += pfctl_set_interface_flags(pf,
+			    interface->ifname, PFI_IFLAG_SKIP, 1);
+	);
+
+	FREE_LIST(struct node_if, interfaces);
+
+	if (errs)
+		return (1);
+	else
+		return (0);
+}
+
 #undef FREE_LIST
 #undef LOOP_THROUGH
 
@@ -4570,6 +4605,7 @@ lookup(char *s)
 		{ "rule",		RULE},
 		{ "scrub",		SCRUB},
 		{ "set",		SET},
+		{ "skip",		SKIP},
 		{ "source-hash",	SOURCEHASH},
 		{ "source-track",	SOURCETRACK},
 		{ "state",		STATE},

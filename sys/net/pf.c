@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.475 2004/12/17 17:32:28 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.476 2004/12/22 17:17:55 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5627,6 +5627,8 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 	kif = pfi_index2kif[ifp->if_index];
 	if (kif == NULL)
 		return (PF_DROP);
+	if (kif->pfik_flags & PFI_IFLAG_SKIP)
+		return (PF_PASS);
 
 #ifdef DIAGNOSTIC
 	if ((m->m_flags & M_PKTHDR) == 0)
@@ -5934,6 +5936,8 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 	kif = pfi_index2kif[ifp->if_index];
 	if (kif == NULL)
 		return (PF_DROP);
+	if (kif->pfik_flags & PFI_IFLAG_SKIP)
+		return (PF_PASS);
 
 #ifdef DIAGNOSTIC
 	if ((m->m_flags & M_PKTHDR) == 0)

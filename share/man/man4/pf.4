@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.53 2004/12/10 03:29:02 jaredy Exp $
+.\"	$OpenBSD: pf.4,v 1.54 2004/12/22 17:17:55 dhartmei Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -1013,6 +1013,19 @@ The filtering process is the same as for
 .Va pfiio_nzero
 will be set by the kernel to the number of interfaces and drivers
 that have been cleared.
+.It Dv DIOCSETIFFLAG Fa "struct pfioc_iface *io"
+Set the user setable flags (described below) of the pf internal interface
+description.
+The filtering process is the same as for
+.Dv DIOCIGETIFACES .
+.Bd -literal
+#define PFI_IFLAG_SKIP		0x0100	/* skip interface */
+#define PFI_IFLAG_SETABLE_MASK	0x0100	/* mask */
+.Ed
+.It Dv DIOCCLRIFFLAG Fa "struct pfioc_iface *io"
+Works as
+.Dv DIOCSETIFFLAG
+above but clears the flags.
 .El
 .Sh FILES
 .Bl -tag -width /dev/pf -compact
