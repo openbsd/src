@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.15 1998/08/25 07:58:48 pefo Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.16 1998/09/09 04:44:59 rahnds Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -280,6 +280,11 @@ initppc(startkernel, endkernel, args)
 	ipkdb_init();
 	if (boothowto & RB_KDB)
 		ipkdb_connect(0);
+#else
+#ifdef DDB
+	if (boothowto & RB_KDB)
+		Debugger();
+#endif
 #endif
 
 	/*
