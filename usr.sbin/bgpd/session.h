@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.45 2004/04/26 09:35:39 markus Exp $ */
+/*	$OpenBSD: session.h,v 1.46 2004/04/27 03:53:43 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -32,6 +32,7 @@
 #define	MSGSIZE_OPEN_MIN		29
 #define	MSGSIZE_UPDATE_MIN		23
 #define	MSGSIZE_KEEPALIVE		MSGSIZE_HEADER
+#define MSGSIZE_RREFRESH		MSGSIZE_HEADER + 4
 
 enum session_state {
 	STATE_NONE,
@@ -69,7 +70,8 @@ enum msg_type {
 	OPEN = 1,
 	UPDATE,
 	NOTIFICATION,
-	KEEPALIVE
+	KEEPALIVE,
+	RREFRESH
 };
 
 enum suberr_header {
@@ -133,10 +135,12 @@ struct peer_stats {
 	u_int64_t		 msg_rcvd_update;
 	u_int64_t		 msg_rcvd_notification;
 	u_int64_t		 msg_rcvd_keepalive;
+	u_int64_t		 msg_rcvd_rrefresh;
 	u_int64_t		 msg_sent_open;
 	u_int64_t		 msg_sent_update;
 	u_int64_t		 msg_sent_notification;
 	u_int64_t		 msg_sent_keepalive;
+	u_int64_t		 msg_sent_rrefresh;
 	time_t			 last_updown;
 	time_t			 last_read;
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.152 2004/04/26 09:35:39 markus Exp $ */
+/*	$OpenBSD: session.c,v 1.153 2004/04/27 03:53:43 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -73,6 +73,7 @@ int	session_dispatch_msg(struct pollfd *, struct peer *);
 int	parse_header(struct peer *, u_char *, u_int16_t *, u_int8_t *);
 int	parse_open(struct peer *);
 int	parse_update(struct peer *);
+int	parse_refresh(struct peer *);
 int	parse_notification(struct peer *);
 int	parse_keepalive(struct peer *);
 int	parse_capabilities(struct peer *, u_char *, u_int16_t);
@@ -1323,6 +1324,10 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *p)
 					bgp_fsm(p, EVNT_RCVD_KEEPALIVE);
 					p->stats.msg_rcvd_keepalive++;
 					break;
+				case RREFRESH:
+					parse_refresh(p);
+					p->stats.msg_rcvd_rrefresh++;
+					break;
 				default:	/* cannot happen */
 					session_notification(p, ERR_HEADER,
 					    ERR_HDR_TYPE, &msgtype, 1);
@@ -1414,6 +1419,15 @@ parse_header(struct peer *peer, u_char *data, u_int16_t *len, u_int8_t *type)
 		if (*len != MSGSIZE_KEEPALIVE) {
 			log_peer_warnx(&peer->conf,
 			    "received KEEPALIVE: illegal len: %u byte", *len);
+			session_notification(peer, ERR_HEADER, ERR_HDR_LEN,
+			    &olen, sizeof(olen));
+			return (-1);
+		}
+		break;
+	case RREFRESH:
+		if (*len != MSGSIZE_RREFRESH) {
+			log_peer_warnx(&peer->conf,
+			    "received RREFRESH: illegal len: %u byte", *len);
 			session_notification(peer, ERR_HEADER, ERR_HDR_LEN,
 			    &olen, sizeof(olen));
 			return (-1);
@@ -1619,6 +1633,32 @@ parse_update(struct peer *peer)
 
 	if (imsg_compose(&ibuf_rde, IMSG_UPDATE, peer->conf.id, p,
 	    datalen) == -1)
+		return (-1);
+
+	return (0);
+}
+
+int
+parse_refresh(struct peer *peer)
+{
+	u_char		*p;
+	struct rrefresh	 r;
+
+	p = peer->rbuf->rptr;
+	p += MSGSIZE_HEADER;	/* header is already checked */
+
+	/* afi, 2 byte */
+	memcpy(&r.afi, p, sizeof(r.afi));
+	p += 2;
+	/* reserved, 1 byte */
+	p += 1;
+	/* safi, 1 byte */
+	memcpy(&r.safi, p, sizeof(r.safi));
+
+	/* afi/safi unchecked -	unrecognized values will be ignored anyway */
+
+	if (imsg_compose(&ibuf_rde, IMSG_REFRESH, peer->conf.id, &r,
+	    sizeof(r)) == -1)
 		return (-1);
 
 	return (0);
