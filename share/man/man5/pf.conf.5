@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.10 2001/07/31 09:02:18 wilfried Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.11 2001/08/19 16:44:39 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -44,33 +44,37 @@ performed.
 .Sh GRAMMAR
 Syntax for filter rules in BNF:
 .Bd -literal
-rule      = action ( "in" | "out" )
-            [ "log" | "log-all" ] [ "quick" ]
-            [ "on" interface-name ]
-            [ "proto" ( proto-name | proto-number ) ]
-            hosts
-            [ flags ] [ icmp-type ] [ "keep-state" ]
-            [ "no-df" ] [ "min-ttl" number ].
+rule       = action ( "in" | "out" )
+             [ "log" | "log-all" ] [ "quick" ]
+             [ "on" interface-name ]
+             [ "proto" ( proto-name | proto-number | "{" proto-list "}" ) ]
+             hosts
+             [ flags ] [ icmp-type ] [ "keep-state" ]
+             [ "no-df" ] [ "min-ttl" number ] .
 
-action    = "pass" | "block" [ return ] | "scrub" .
-return    = "return-rst" |
-            "return-icmp" [ "(" ( icmp-code-name | icmp-code-number ) ")" ]
-            .
+action     = "pass" | "block" [ return ] | "scrub" .
+return     = "return-rst" |
+             "return-icmp" [ "(" ( icmp-code-name | icmp-code-number ) ")" ] .
 
-hosts     = "all" |
-            "from" ( "any" | host ) [ port ] "to" ( "any" | host ) [ port ]
-            .
-host      = [ "!" ] address [ "/" mask-bits ] .
-port      = "port" ( unary-op | binary-op ) .
-unary-op  = ( "=" | "!=" | "<" | "<=" | ">" | ">=" )
-            ( port-name | port-number ) .
-binary-op = port-number ( "<>" | "><" ) port-number .
+proto-list = ( proto-name | proto-number ) [ "," proto-list ] .
 
-flags     = "flags" ( flag-set | flag-set "/" flag-set | "/" flag-set ) .
-flag-set  = [ "F" ] [ "S" ] [ "R" ] [ "P" ] [ "A" ] [ "U" ] .
+hosts      = "all" |
+             "from" ( "any" | host | "{" host-list "}" ) [ port ]
+             "to"   ( "any" | host | "{" host-list "}" ) [ port ] .
 
-icmp-type = "icmp-type" ( icmp-type-name | icmp-type-number )
-            [ "code" ( icmp-code-name | icmp-code-number ) ] .
+host       = [ "!" ] address [ "/" mask-bits ] .
+host-list  = host [ "," host-list ] .
+port       = "port" ( unary-op | binary-op | "{" port-list "}" ) .
+port-list  = ( unary-op | binary-op ) [ "," port-list ] .
+unary-op   = ( "=" | "!=" | "<" | "<=" | ">" | ">=" )
+             ( port-name | port-number ) .
+binary-op  = port-number ( "<>" | "><" ) port-number .
+
+flags      = "flags" ( flag-set | flag-set "/" flag-set | "/" flag-set ) .
+flag-set   = [ "F" ] [ "S" ] [ "R" ] [ "P" ] [ "A" ] [ "U" ] .
+
+icmp-type  = "icmp-type" ( icmp-type-name | icmp-type-number )
+             [ "code" ( icmp-code-name | icmp-code-number ) ] .
 .Ed
 .Sh FILTER RULES
 Filter rules are typically manipulated using
@@ -141,6 +145,8 @@ A packet always comes in on or goes out through one interface.
 Most parameters are optional.
 If a parameter is specified, the rule only applies to packets with
 matching attributes.
+Certain parameters can be expressed as lists, in which case pfctl
+generates all needed rule combinations.
 .Ss in or out
 The rule applies to incoming or outgoing packets.
 Either
@@ -332,10 +338,7 @@ block in quick on kue0 from any to 255.255.255.255
 # block and log incoming packets from reserved address space and invalid
 # addresses, they are either spoofed or misconfigured, we can't reply to
 # them anyway (hence, no return-rst).
-block in log quick on kue0 from 10.0.0.0/8         to any
-block in log quick on kue0 from 172.16.0.0/12      to any
-block in log quick on kue0 from 192.168.0.0/16     to any
-block in log quick on kue0 from 255.255.255.255/32 to any
+block in log quick on kue0 from { 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 255.255.255.255/32 } to any
 
 # -----------------------------------------------------------------------
 # ICMP
@@ -367,10 +370,7 @@ pass in on kue0 proto udp from any to any port = domain keep state
 pass out on kue0 proto tcp all keep state
 
 # pass in certain TCP connections and keep state (SSH, SMTP, DNS, IDENT)
-pass in on kue0 proto tcp from any to any port = ssh    keep state
-pass in on kue0 proto tcp from any to any port = smtp   keep state
-pass in on kue0 proto tcp from any to any port = domain keep state
-pass in on kue0 proto tcp from any to any port = auth   keep state
+pass in on kue0 proto tcp from any to any port { ssh, smtp, domain, auth } keep state
 .Ed
 .Sh FILES
 .Bl -tag -width "/etc/pf.conf" -compact
