@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.85 2002/06/11 02:27:19 frantzen Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.86 2002/06/11 02:42:27 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -426,6 +426,34 @@ struct pf_pdesc {
 	"short", \
 	"normalize", \
 	"memory", \
+	NULL \
+}
+
+/* UDP state enumeration */
+#define PFUDPS_NO_TRAFFIC	0
+#define PFUDPS_SINGLE		1
+#define PFUDPS_MULTIPLE		2
+
+#define PFUDPS_NSTATES		3	/* number of state levels */
+
+#define PFUDPS_NAMES { \
+	"NO TRAFFIC", \
+	"SINGLE", \
+	"MULTIPLE", \
+	NULL \
+}
+
+/* Other protocol state enumeration */
+#define PFOTHERS_NO_TRAFFIC	0
+#define PFOTHERS_SINGLE		1
+#define PFOTHERS_MULTIPLE	2
+
+#define PFOTHERS_NSTATES	3	/* number of state levels */
+
+#define PFOTHERS_NAMES { \
+	"NO TRAFFIC", \
+	"SINGLE", \
+	"MULTIPLE", \
 	NULL \
 }
 

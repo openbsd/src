@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.233 2002/06/11 02:12:37 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.234 2002/06/11 02:42:27 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2117,12 +2117,12 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		s->src.seqhi = 0;
 		s->src.seqdiff = 0;
 		s->src.max_win = 0;
-		s->src.state = 1;
+		s->src.state = PFUDPS_SINGLE;
 		s->dst.seqlo = 0;
 		s->dst.seqhi = 0;
 		s->dst.seqdiff = 0;
 		s->dst.max_win = 0;
-		s->dst.state = 0;
+		s->dst.state = PFUDPS_NO_TRAFFIC;
 		s->creation = time.tv_sec;
 		s->expire = s->creation + TIMEOUT(*rm, PFTM_UDP_FIRST_PACKET);
 		s->packets = 1;
@@ -2587,12 +2587,12 @@ pf_test_other(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		s->src.seqhi = 0;
 		s->src.seqdiff = 0;
 		s->src.max_win = 0;
-		s->src.state = 1;
+		s->src.state = PFOTHERS_SINGLE;
 		s->dst.seqlo = 0;
 		s->dst.seqhi = 0;
 		s->dst.seqdiff = 0;
 		s->dst.max_win = 0;
-		s->dst.state = 0;
+		s->dst.state = PFOTHERS_NO_TRAFFIC;
 		s->creation = time.tv_sec;
 		s->expire = s->creation + TIMEOUT(*rm, PFTM_OTHER_FIRST_PACKET);
 		s->packets = 1;
@@ -2989,13 +2989,13 @@ pf_test_state_udp(struct pf_state **state, int direction, struct ifnet *ifp,
 	(*state)->bytes += pd->tot_len;
 
 	/* update states */
-	if (src->state < 1)
-		src->state = 1;
-	if (dst->state == 1)
-		dst->state = 2;
+	if (src->state < PFUDPS_SINGLE)
+		src->state = PFUDPS_SINGLE;
+	if (dst->state == PFUDPS_SINGLE)
+		dst->state = PFUDPS_MULTIPLE;
 
 	/* update expire time */
-	if (src->state == 2 && dst->state == 2)
+	if (src->state == PFUDPS_MULTIPLE && dst->state == PFUDPS_MULTIPLE)
 		(*state)->expire = time.tv_sec +
 		    TIMEOUT((*state)->rule.ptr, PFTM_UDP_MULTIPLE);
 	else
@@ -3532,13 +3532,13 @@ pf_test_state_other(struct pf_state **state, int direction, struct ifnet *ifp,
 	(*state)->bytes += pd->tot_len;
 
 	/* update states */
-	if (src->state < 1)
-		src->state = 1;
-	if (dst->state == 1)
-		dst->state = 2;
+	if (src->state < PFOTHERS_SINGLE)
+		src->state = PFOTHERS_SINGLE;
+	if (dst->state == PFOTHERS_SINGLE)
+		dst->state = PFOTHERS_MULTIPLE;
 
 	/* update expire time */
-	if (src->state == 2 && dst->state == 2)
+	if (src->state == PFOTHERS_MULTIPLE && dst->state == PFOTHERS_MULTIPLE)
 		(*state)->expire = time.tv_sec +
 		    TIMEOUT((*state)->rule.ptr, PFTM_OTHER_MULTIPLE);
 	else
