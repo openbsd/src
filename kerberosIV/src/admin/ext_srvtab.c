@@ -39,7 +39,7 @@ FWrite(void *p, int size, int n, FILE *f)
 {
     if (fwrite(p, size, n, f) != n) {
         StampOutSecrets();
-	errx(1, "Error writing output file.  Terminating.\n");
+	errx(1, "Error writing output file.  Terminating.");
     }
 }
 

@@ -157,12 +157,12 @@ get_ticket_address(krb_principal *princ, des_cblock *key)
 	
     code = get_ad_tkt(princ->name, princ->instance, princ->realm, 0);
     if(code) {
-	warnx("get_ad_tkt: %s\n", krb_get_err_text(code));
+	warnx("get_ad_tkt: %s", krb_get_err_text(code));
 	return code;
     }
     code = krb_get_cred(princ->name, princ->instance, princ->realm, &c);
     if(code) {
-	warnx("krb_get_cred: %s\n", krb_get_err_text(code));
+	warnx("krb_get_cred: %s", krb_get_err_text(code));
 	return code;
     }
 
@@ -181,7 +181,7 @@ get_ticket_address(krb_principal *princ, des_cblock *key)
 			 key,
 			 schedule);
     if(code) {
-	warnx("decomp_ticket: %s\n", krb_get_err_text(code));
+	warnx("decomp_ticket: %s", krb_get_err_text(code));
 	return code;
     }
     memset(&session, 0, sizeof(session));

@@ -322,7 +322,7 @@ main (int argc, char **argv)
 
     if(deletep || openp || listp) {
 	if(argc != 0)
-	    errx(1, "delete, open, and list requires no arguments\n");
+	    errx(1, "delete, open, and list requires no arguments");
     } else {
 	if(argc != 2)
 	    errx(1, "setup, and renew requires `num', and `seed'");

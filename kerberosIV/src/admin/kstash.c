@@ -31,7 +31,7 @@ main(int argc, char **argv)
     int ret = 0;
 
     if ((n = kerb_init()))
-        errx(1, "Kerberos db and cache init failed = %ld\n", n);
+        errx(1, "Kerberos db and cache init failed = %ld", n);
 
     if (kdb_get_master_key (KDB_GET_PROMPT, &master_key,
 			    master_key_schedule) != 0) {

@@ -123,7 +123,7 @@ kcmd(int *sock,
 		s = getport(&lport);
 		if (s < 0) {
 			if (errno == EAGAIN)
-				warnx("kcmd(socket): All ports in use\n");
+				warnx("kcmd(socket): All ports in use");
 			else
 				warn("kcmd: socket");
 			return (-1);

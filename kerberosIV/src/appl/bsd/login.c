@@ -265,7 +265,7 @@ main(int argc, char **argv)
 			break;
 	        case 'r':
 			if (rflag || hflag) {
-				warnx("Only one of -r and -h allowed\n");
+				warnx("Only one of -r and -h allowed");
 				exit(1);
                         }
 			if (getuid()) {
@@ -844,7 +844,7 @@ main(int argc, char **argv)
 
 	execlp(pwd->pw_shell, tbuf, (char *)NULL);
 	if (getuid() == 0) {
-		warnx("Can't exec %s, trying %s\n", 
+		warnx("Can't exec %s, trying %s", 
 		      pwd->pw_shell, _PATH_BSHELL);
 		execlp(_PATH_BSHELL, tbuf, (char *)NULL);
 		err(1, "%s", _PATH_BSHELL);
