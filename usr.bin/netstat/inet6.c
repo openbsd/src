@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.1 1999/12/08 12:30:17 itojun Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.2 1999/12/30 20:31:31 deraadt Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-/*__RCSID("$OpenBSD: inet6.c,v 1.1 1999/12/08 12:30:17 itojun Exp $");*/
+/*__RCSID("$OpenBSD: inet6.c,v 1.2 1999/12/30 20:31:31 deraadt Exp $");*/
 /*__RCSID("KAME Id: inet6.c,v 1.4 1999/12/02 04:47:27 itojun Exp");*/
 #endif
 #endif /* not lint */
@@ -487,8 +487,9 @@ ip6_stats(off, name)
 			printf("\t\t%s: %qu\n", ip6nh[i],
 			       ip6stat.ip6s_nxthist[i]);
 		}
-	printf("\tMbuf statics:\n");
-	printf("\t\t%qu one mbuf\n", ip6stat.ip6s_m1);
+	if (ip6stat.ip6s_m1 || sflag <= 1)
+		printf("\tMbuf statics:\n");
+	p(ip6s_m1, "\t\t%qu one mbuf\n");
 	for (first = 1, i = 0; i < 32; i++) {
 		char ifbuf[IFNAMSIZ];
 		if (ip6stat.ip6s_m2m[i] != 0) {		
@@ -501,8 +502,8 @@ ip6_stats(off, name)
 			       ip6stat.ip6s_m2m[i]);
 		}
 	}
-	printf("\t\t%qu one ext mbuf\n", ip6stat.ip6s_mext1);
-	printf("\t\t%qu two or more ext mbuf\n", ip6stat.ip6s_mext2m);	
+	p(ip6s_mext1, "\t\t%qu one ext mbuf\n");
+	p(ip6s_mext2m, "\t\t%qu two or more ext mbuf\n");
 	p(ip6s_exthdrtoolong, "\t%qu packet%s whose headers are not continuous\n");
 	p(ip6s_nogif, "\t%qu tunneling packet%s that can't find gif\n");
 #undef p
