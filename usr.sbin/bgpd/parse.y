@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.1 2003/12/17 11:46:54 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.2 2003/12/17 18:11:31 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -759,7 +759,7 @@ check_state_main(void)
 {
 	if (pstate != PSTATE_MAIN) {
 		yyerror("This statement is only valid outside "
-		     "group or neighbor definitions");
+		    "group or neighbor definitions");
 		return (-1);
 	} else
 		return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.1 2003/12/17 11:46:54 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.2 2003/12/17 18:11:31 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -149,17 +149,15 @@ session_main(struct bgpd_config *config, int pipe_m2s[2], int pipe_s2r[2])
 	switch (pid = fork()) {
 	case -1:
 		fatal("cannot fork", errno);
-
-        case 0:
-                break;
-
-        default:
-                return (pid);
-        }
+	case 0:
+		break;
+	default:
+		return (pid);
+	}
 
 	if (chroot(pw->pw_dir) < 0)
 		fatal("chroot failed", errno);
-	chdir ("/");
+	chdir("/");
 	setproctitle("session engine");
 
 	if ((sock = setup_listener()) < 0)
@@ -291,7 +289,7 @@ session_main(struct bgpd_config *config, int pipe_m2s[2], int pipe_s2r[2])
 	shutdown(sock, SHUT_RDWR);
 	close(sock);
 	logit(LOG_INFO, "session engine exiting");
-	_exit (0);
+	_exit(0);
 }
 
 void
@@ -828,7 +826,7 @@ void
 session_notification(struct peer *peer, u_int8_t errcode, u_int8_t subcode,
     u_char *data, size_t datalen)
 {
-	struct msg_notification	msg;
+	struct msg_notification	 msg;
 	struct buf		*buf;
 	size_t		 len;
 	int		 errs = 0;
@@ -1203,7 +1201,7 @@ session_dispatch_imsg(int fd, int idx)
 	int			 reconf;
 
 	if (get_imsg(fd, &imsg) > 0) {
-		switch(imsg.hdr.type) {
+		switch (imsg.hdr.type) {
 		case IMSG_RECONF_CONF:
 			if (idx != PFD_PIPE_MAIN)
 				fatal("reconf request not from parent", 0);
@@ -1277,7 +1275,7 @@ session_dispatch_imsg(int fd, int idx)
 			for (p = conf->peers; p != NULL; p = p->next)
 				if (p->conf.reconf_action == RECONF_NONE)
 					p->conf.reconf_action = RECONF_DELETE;
-			free (nconf);
+			free(nconf);
 			pending_reconf = 0;
 			logit(LOG_INFO, "got new configuration");
 			break;

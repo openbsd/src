@@ -1,4 +1,4 @@
-/*	$OpenBSD: ensure.h,v 1.1 2003/12/17 11:46:54 henning Exp $ */
+/*	$OpenBSD: ensure.h,v 1.2 2003/12/17 18:11:31 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <cjeker@diehard.n-r-g.com>
@@ -24,8 +24,7 @@
 
 #if CHECK_ENSURE != 0
 #define ENSURE(cond) \
-	((void) ((cond) || \
-		 (fatal_ensure(__FILE__, __LINE__, #cond), 0)))
+	((void) ((cond) || (fatal_ensure(__FILE__, __LINE__, #cond), 0)))
 #else
 #define ENSURE(cond)
 #endif

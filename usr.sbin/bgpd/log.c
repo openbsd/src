@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.1 2003/12/17 11:46:54 henning Exp $ */
+/*	$OpenBSD: log.c,v 1.2 2003/12/17 18:11:31 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -114,7 +114,7 @@ log_fmt_peer(struct peer *peer)
 	ip = inet_ntoa(peer->conf.remote_addr.sin_addr);
 	if (peer->conf.descr[0]) {
 		if (asprintf(&pfmt, "neighbor %s (%s)", ip, peer->conf.descr) ==
-		     -1)
+		    -1)
 			fatal(NULL, errno);
 	} else {
 		if (asprintf(&pfmt, "neighbor %s", ip) == -1)
@@ -171,7 +171,7 @@ log_err(struct peer *peer, const char *emsg, ...)
 	va_start(ap, emsg);
 	vlog(LOG_CRIT, nfmt, ap);
 	va_end(ap);
-	free (p);
+	free(p);
 }
 
 void
@@ -186,7 +186,7 @@ log_errx(struct peer *peer, const char *emsg, ...)
 	va_start(ap, emsg);
 	vlog(LOG_CRIT, nfmt, ap);
 	va_end(ap);
-	free (p);
+	free(p);
 }
 
 void
@@ -202,7 +202,7 @@ fatal(const char *emsg, int error)
 
 	/* XXX check which process we are and notify others! */
 	sleep(10);
-	_exit (1);
+	_exit(1);
 }
 
 void
@@ -213,7 +213,7 @@ fatal_ensure(const char *file, int line, const char *cond)
 
 	/* XXX check which process we are and notify others! */
 	sleep(10);
-	_exit (1);
+	_exit(1);
 }
 
 void

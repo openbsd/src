@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.1 2003/12/17 11:46:54 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.2 2003/12/17 18:11:31 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -88,17 +88,15 @@ rde_main(struct bgpd_config *config, int pipe_m2r[2], int pipe_s2r[2])
 	switch (pid = fork()) {
 	case -1:
 		fatal("cannot fork", errno);
-
-        case 0:
-                break;
-
-        default:
-                return (pid);
-        }
+	case 0:
+		break;
+	default:
+		return (pid);
+	}
 
 	if (chroot(pw->pw_dir) < 0)
 		fatal("chroot failed", errno);
-	chdir ("/");
+	chdir("/");
 	setproctitle("route decision engine");
 
 	if (setgroups(1, &pw->pw_gid) ||
@@ -164,7 +162,7 @@ rde_main(struct bgpd_config *config, int pipe_m2r[2], int pipe_s2r[2])
 	}
 
 	logit(LOG_INFO, "route decision engine exiting");
-	_exit (0);
+	_exit(0);
 }
 
 void
