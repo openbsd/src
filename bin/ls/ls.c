@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.16 2002/02/16 21:27:07 millert Exp $	*/
+/*	$OpenBSD: ls.c,v 1.17 2002/03/12 01:05:15 millert Exp $	*/
 /*	$NetBSD: ls.c,v 1.18 1996/07/09 09:16:29 mycroft Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-static char rcsid[] = "$OpenBSD: ls.c,v 1.16 2002/02/16 21:27:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: ls.c,v 1.17 2002/03/12 01:05:15 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,8 @@ static char rcsid[] = "$OpenBSD: ls.c,v 1.16 2002/02/16 21:27:07 millert Exp $";
 #include <err.h>
 #include <errno.h>
 #include <fts.h>
+#include <grp.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -66,9 +68,6 @@ static char rcsid[] = "$OpenBSD: ls.c,v 1.16 2002/02/16 21:27:07 millert Exp $";
 
 #include "ls.h"
 #include "extern.h"
-
-char	*group_from_gid(u_int, int);
-char	*user_from_uid(u_int, int);
 
 static void	 display(FTSENT *, FTSENT *);
 static int	 mastercmp(const FTSENT **, const FTSENT **);
@@ -420,7 +419,7 @@ display(p, list)
 	u_long btotal, maxblock, maxinode, maxlen, maxnlink;
 	int bcfile, flen, glen, ulen, maxflags, maxgroup, maxuser;
 	int entries, needstats;
-	char *user, *group, buf[20];	/* 32 bits == 10 digits */
+	char *user, *group, buf[21];	/* 64 bits == 20 digits */
 	char nuser[12], ngroup[12];
 	char *flags = NULL;
 
@@ -440,7 +439,7 @@ display(p, list)
 	bcfile = 0;
 	maxuser = maxgroup = maxflags = 0;
 	maxsize = 0;
-	for (cur = list, entries = 0; cur; cur = cur->fts_link) {
+	for (cur = list, entries = 0; cur != NULL; cur = cur->fts_link) {
 		if (cur->fts_info == FTS_ERR || cur->fts_info == FTS_NS) {
 			warnx("%s: %s",
 			    cur->fts_name, strerror(cur->fts_errno));
@@ -554,7 +553,7 @@ display(p, list)
 	output = 1;
 
 	if (f_longform)
-		for (cur = list; cur; cur = cur->fts_link)
+		for (cur = list; cur != NULL; cur = cur->fts_link)
 			free(cur->fts_pointer);
 }
 
