@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re.c,v 1.5 2004/06/05 19:08:25 pvalchev Exp $	*/
+/*	$OpenBSD: if_re.c,v 1.6 2004/06/25 09:46:45 pvalchev Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -1795,10 +1795,10 @@ re_init(struct ifnet *ifp)
 	 */
 	CSR_WRITE_1(sc, RL_EECMD, RL_EEMODE_WRITECFG);
 	memcpy(&reg, LLADDR(ifp->if_sadl), 4);
-	CSR_WRITE_4(sc, RL_IDR0, reg);
+	CSR_WRITE_4(sc, RL_IDR0, htole32(reg));
 	reg = 0;
 	memcpy(&reg, LLADDR(ifp->if_sadl) + 4, 4);
-	CSR_WRITE_4(sc, RL_IDR4, reg);
+	CSR_WRITE_4(sc, RL_IDR4, htole32(reg));
 	CSR_WRITE_1(sc, RL_EECMD, RL_EEMODE_OFF);
 
 	/*
