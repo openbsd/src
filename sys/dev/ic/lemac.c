@@ -1,4 +1,4 @@
-/* $OpenBSD: lemac.c,v 1.1 2001/07/13 17:26:44 niklas Exp $ */
+/* $OpenBSD: lemac.c,v 1.2 2002/02/25 08:48:30 niklas Exp $ */
 /* $NetBSD: lemac.c,v 1.20 2001/06/13 10:46:02 wiz Exp $ */
 
 /*-
@@ -76,6 +76,9 @@
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
+
+/* XXX Should be in if_ethersubr.c */
+u_int32_t ether_crc32_le(const u_int8_t *, size_t);
 
 int	lemac_ifioctl(struct ifnet *, u_long, caddr_t);
 int	lemac_ifmedia_change(struct ifnet *const);
@@ -446,7 +449,30 @@ lemac_read_macaddr(unsigned char *hwaddr, const bus_space_tag_t iot,
 	return (0);
 }
 
-#if 0
+/* XXX Should be moved to if_ethersubr.c */
+u_int32_t
+ether_crc32_le(const u_int8_t *buf, size_t len)
+{
+	static const u_int32_t crctab[] = {
+		0x00000000, 0x1db71064, 0x3b6e20c8, 0x26d930ac,
+		0x76dc4190, 0x6b6b51f4, 0x4db26158, 0x5005713c,
+		0xedb88320, 0xf00f9344, 0xd6d6a3e8, 0xcb61b38c,
+		0x9b64c2b0, 0x86d3d2d4, 0xa00ae278, 0xbdbdf21c
+	};
+	u_int32_t crc;
+	int i;
+
+	crc = 0xffffffffU;	/* initial value */
+
+	for (i = 0; i < len; i++) {
+		crc ^= buf[i];
+		crc = (crc >> 4) ^ crctab[crc & 0xf];
+		crc = (crc >> 4) ^ crctab[crc & 0xf];
+	}
+
+	return (crc);
+}
+
 void
 lemac_multicast_op(u_int16_t *mctbl, const u_char *mca, int enable)
 {
@@ -476,7 +502,6 @@ lemac_multicast_op(u_int16_t *mctbl, const u_char *mca, int enable)
 		mctbl[idx] &= ~bit;		/* Clear Bit */
 	}
 }
-#endif
 
 void
 lemac_multicast_filter(struct lemac_softc *sc)
@@ -488,9 +513,9 @@ lemac_multicast_filter(struct lemac_softc *sc)
 
 	bzero(sc->sc_mctbl, LEMAC_MCTBL_BITS / 8);
 
-#if 0
 	lemac_multicast_op(sc->sc_mctbl, etherbroadcastaddr, 1);
 
+#if 0
 	ETHER_FIRST_MULTI(step, &sc->sc_ec, enm);
 	while (enm != NULL) {
 		if (!LEMAC_ADDREQUAL(enm->enm_addrlo, enm->enm_addrhi)) {
