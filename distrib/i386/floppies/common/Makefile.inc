@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.10 2001/01/29 01:16:50 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.11 2001/04/09 06:55:40 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -10,7 +10,7 @@ CRUNCHCONF?=    ${.CURDIR}/../common/${CBIN}.conf
 .else
 CRUNCHCONF?=    ${.CURDIR}/../common/${CBIN}-nokrb.conf
 .endif
-LISTS=		${.CURDIR}/../common/list
+LISTS?=		${.CURDIR}/../common/list ${.CURDIR}
 
 MOUNT_POINT=	/mnt
 MTREE=		${.CURDIR}/../common/mtree.conf
