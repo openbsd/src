@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.35 2001/12/06 05:42:12 jason Exp $	*/
+/*	$OpenBSD: dc.c,v 1.36 2001/12/06 06:25:17 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -945,14 +945,16 @@ void dc_setfilt_21143(sc)
 	DC_INC(sc->dc_cdata.dc_tx_prod, DC_TX_LIST_CNT);
 	sc->dc_cdata.dc_tx_cnt++;
 	sframe = &sc->dc_ldata->dc_tx_list[i];
-	sp = (u_int32_t *)&sc->dc_cdata.dc_sbuf;
+	sp = &sc->dc_ldata->dc_sbuf[0];
 	bzero((char *)sp, DC_SFRAME_LEN);
 
-	sframe->dc_data = vtophys(&sc->dc_cdata.dc_sbuf);
+	sframe->dc_data = sc->sc_listmap->dm_segs[0].ds_addr +
+	    offsetof(struct dc_list_data, dc_sbuf);
 	sframe->dc_ctl = DC_SFRAME_LEN | DC_TXCTL_SETUP | DC_TXCTL_TLINK |
 	    DC_FILTER_HASHPERF | DC_TXCTL_FINT;
 
-	sc->dc_cdata.dc_tx_chain[i] = (struct mbuf *)&sc->dc_cdata.dc_sbuf;
+	sc->dc_cdata.dc_tx_chain[i] =
+	    (struct mbuf *)&sc->dc_ldata->dc_sbuf[0];
 
 	/* If we want promiscuous mode, set the allframes bit. */
 	if (ifp->if_flags & IFF_PROMISC)
@@ -1143,14 +1145,16 @@ void dc_setfilt_xircom(sc)
 	DC_INC(sc->dc_cdata.dc_tx_prod, DC_TX_LIST_CNT);
 	sc->dc_cdata.dc_tx_cnt++;
 	sframe = &sc->dc_ldata->dc_tx_list[i];
-	sp = (u_int32_t *)&sc->dc_cdata.dc_sbuf;
+	sp = &sc->dc_ldata->dc_sbuf[0];
 	bzero((char *)sp, DC_SFRAME_LEN);
 
-	sframe->dc_data = vtophys(&sc->dc_cdata.dc_sbuf);
+	sframe->dc_data = sc->sc_listmap->dm_segs[0].ds_addr +
+	    offsetof(struct dc_list_data, dc_sbuf);
 	sframe->dc_ctl = DC_SFRAME_LEN | DC_TXCTL_SETUP | DC_TXCTL_TLINK |
 	    DC_FILTER_HASHPERF | DC_TXCTL_FINT;
 
-	sc->dc_cdata.dc_tx_chain[i] = (struct mbuf *)&sc->dc_cdata.dc_sbuf;
+	sc->dc_cdata.dc_tx_chain[i] =
+	    (struct mbuf *)&sc->dc_ldata->dc_sbuf[0];
 
 	/* If we want promiscuous mode, set the allframes bit. */
 	if (ifp->if_flags & IFF_PROMISC)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcreg.h,v 1.15 2001/12/06 05:42:12 jason Exp $ */
+/*	$OpenBSD: dcreg.h,v 1.16 2001/12/06 06:25:17 jason Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -456,13 +456,13 @@ struct dc_desc {
 struct dc_list_data {
 	struct dc_desc		dc_rx_list[DC_RX_LIST_CNT];
 	struct dc_desc		dc_tx_list[DC_TX_LIST_CNT];
+	u_int32_t		dc_sbuf[DC_SFRAME_LEN/sizeof(u_int32_t)];
+	u_int8_t		dc_pad[DC_MIN_FRAMELEN];
 };
 
 struct dc_chain_data {
 	struct mbuf		*dc_rx_chain[DC_RX_LIST_CNT];
 	struct mbuf		*dc_tx_chain[DC_TX_LIST_CNT];
-	u_int32_t		dc_sbuf[DC_SFRAME_LEN/sizeof(u_int32_t)];
-	u_int8_t		dc_pad[DC_MIN_FRAMELEN];
 	int			dc_tx_prod;
 	int			dc_tx_cons;
 	int			dc_tx_cnt;
