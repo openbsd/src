@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.41 2001/08/18 22:14:03 brian Exp $	*/
+/*	$OpenBSD: route.c,v 1.42 2001/10/09 09:21:10 brian Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.41 2001/08/18 22:14:03 brian Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.42 2001/10/09 09:21:10 brian Exp $";
 #endif
 #endif /* not lint */
 
@@ -441,7 +441,7 @@ p_sockaddr(sa, mask, flags, width)
 		register struct sockaddr_in *msin = (struct sockaddr_in *)mask;
 
 		cp = (sin->sin_addr.s_addr == 0) ? "default" :
-		      ((flags & RTF_HOST) ?
+		      ((flags & RTF_HOST) || mask == NULL ?
 			routename(sin->sin_addr.s_addr) :
 			netname(sin->sin_addr.s_addr, msin->sin_addr.s_addr));
 
