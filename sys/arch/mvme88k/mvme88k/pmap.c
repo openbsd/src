@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.88 2003/10/19 18:12:00 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.89 2003/10/24 17:44:51 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -2573,7 +2573,7 @@ changebit_Retry:
 		}
 #ifdef DIAGNOSTIC
 		if (ptoa(PG_PFNUM(*pte)) != VM_PAGE_TO_PHYS(pg))
-			panic("pmap_changebit: pte %x doesn't point to page %x %x\n",
+			panic("pmap_changebit: pte %x doesn't point to page %x %x",
 			    *pte, pg, VM_PAGE_TO_PHYS(pg));
 #endif
 

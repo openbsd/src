@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.117 2003/10/09 16:30:58 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.118 2003/10/24 17:44:51 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -511,7 +511,7 @@ cpu_startup()
 	      UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 	        UVM_ADV_NORMAL, 0));
 	if (uarea_pages != UADDR)
-		panic("uarea_pages %x: UADDR not free\n", uarea_pages);
+		panic("uarea_pages %x: UADDR not free", uarea_pages);
 
 	/*
 	 * Grab machine dependant memory spaces
@@ -528,7 +528,7 @@ cpu_startup()
 		      UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 		        UVM_ADV_NORMAL, 0));
 		if (sramva != SRAM_START)
-			panic("sramva %x: SRAM not free\n", sramva);
+			panic("sramva %x: SRAM not free", sramva);
 
 		/*
 		 * Grab the BUGROM space that we hardwired in pmap_bootstrap
@@ -539,7 +539,7 @@ cpu_startup()
 		      UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 		        UVM_ADV_NORMAL, 0));
 		if (bugromva != BUG187_START)
-			panic("bugromva %x: BUGROM not free\n", bugromva);
+			panic("bugromva %x: BUGROM not free", bugromva);
 
 		/*
 		 * Grab the OBIO space that we hardwired in pmap_bootstrap
@@ -550,7 +550,7 @@ cpu_startup()
 		      UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 		        UVM_ADV_NORMAL, 0));
 		if (obiova != OBIO_START)
-			panic("obiova %x: OBIO not free\n", obiova);
+			panic("obiova %x: OBIO not free", obiova);
 		break;
 #endif
 #ifdef MVME197
@@ -564,7 +564,7 @@ cpu_startup()
 		      UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 		        UVM_ADV_NORMAL, 0));
 		if (flashva != FLASH_START)
-			panic("flashva %x: FLASH not free\n", flashva);
+			panic("flashva %x: FLASH not free", flashva);
 
 		/*
 		 * Grab the OBIO space that we hardwired in pmap_bootstrap
@@ -575,7 +575,7 @@ cpu_startup()
 		      UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 		        UVM_ADV_NORMAL, 0));
 		if (obiova != OBIO_START)
-			panic("obiova %x: OBIO not free\n", obiova);
+			panic("obiova %x: OBIO not free", obiova);
 		break;
 #endif
 #ifdef MVME188
@@ -589,7 +589,7 @@ cpu_startup()
 		      UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 		        UVM_ADV_NORMAL, 0));
 		if (utilva != MVME188_UTILITY)
-			panic("utilva %x: UTILITY area not free\n", utilva);
+			panic("utilva %x: UTILITY area not free", utilva);
 		break;
 #endif
 	}
