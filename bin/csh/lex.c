@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.9 2003/04/07 22:45:59 tedu Exp $	*/
+/*	$OpenBSD: lex.c,v 1.10 2003/04/15 01:17:33 deraadt Exp $	*/
 /*	$NetBSD: lex.c,v 1.9 1995/09/27 00:38:46 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: lex.c,v 1.9 2003/04/07 22:45:59 tedu Exp $";
+static char rcsid[] = "$OpenBSD: lex.c,v 1.10 2003/04/15 01:17:33 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -825,16 +825,6 @@ getsub(en)
 		}
 		if (c == delim)
 		    break;
-#ifdef notdef
-		if (c == '~') {
-		    if (&cp[Strlen(orhsb)] > &rhsb[sizeof(rhsb) /
-						   sizeof(Char) - 2])
-			goto toorhs;
-		    (void) Strcpy(cp, orhsb);
-		    cp = Strend(cp);
-		    continue;
-		}
-#endif
 		if (cp > &rhsb[sizeof(rhsb) / sizeof(Char) - 2]) {
 		    seterror(ERR_RHSLONG);
 		    return (en);

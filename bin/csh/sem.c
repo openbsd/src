@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.c,v 1.12 2003/01/08 06:54:16 deraadt Exp $	*/
+/*	$OpenBSD: sem.c,v 1.13 2003/04/15 01:17:33 deraadt Exp $	*/
 /*	$NetBSD: sem.c,v 1.9 1995/09/27 00:38:50 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sem.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: sem.c,v 1.12 2003/01/08 06:54:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: sem.c,v 1.13 2003/04/15 01:17:33 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -91,7 +91,8 @@ execute(t, wanttty, pipein, pipeout)
 
     case NODE_COMMAND:
 	if ((t->t_dcom[0][0] & (QUOTE | TRIM)) == QUOTE)
-	    (void) Strcpy(t->t_dcom[0], t->t_dcom[0] + 1); /* safe */
+	    (void) memmove(t->t_dcom[0], t->t_dcom[0] + 1,
+		(Strlen(t->t_dcom[0] + 1) + 1) * sizeof(Char));
 	if ((t->t_dflg & F_REPEAT) == 0)
 	    Dfix(t);		/* $ " ' \ */
 	if (t->t_dcom[0] == 0)

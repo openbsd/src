@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.h,v 1.10 2003/04/08 01:46:53 deraadt Exp $	*/
+/*	$OpenBSD: csh.h,v 1.11 2003/04/15 01:17:33 deraadt Exp $	*/
 /*	$NetBSD: csh.h,v 1.9 1995/03/21 09:02:40 cgd Exp $	*/
 
 /*-
@@ -491,7 +491,6 @@ Char    HISTSUB;		/* auto-substitute character */
 #define Strrchr(a, b)		strrchr(a, b)
 #define Strlcat(a, b, l)	strlcat(a, b, l)
 #define Strncat(a, b, c) 	strncat(a, b, c)
-#define Strcpy(a, b)		strcpy(a, b)
 #define Strlcpy(a, b, l)	strlcpy(a, b, l)
 #define Strncpy(a, b, c) 	strncpy(a, b, c)
 #define Strlen(a)		strlen(a)
@@ -512,7 +511,6 @@ Char    HISTSUB;		/* auto-substitute character */
 #define Strrchr(a, b) 		s_strrchr(a, b)
 #define Strlcat(a, b, l)	s_strlcat(a, b, l)
 #define Strncat(a, b, c) 	s_strncat(a, b, c)
-#define Strcpy(a, b)		s_strcpy(a, b)
 #define Strlcpy(a, b, l)	s_strlcpy(a, b, l)
 #define Strncpy(a, b, c)	s_strncpy(a, b, c)
 #define Strlen(a)		s_strlen(a)
