@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.10 2002/04/19 23:23:15 deraadt Exp $
+#	$OpenBSD: list,v 1.11 2002/04/21 07:31:32 deraadt Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # extras
@@ -12,7 +12,7 @@ SPECIAL /bin/rm instbin
 SYMLINK	/tmp	var/tmp
 
 # copy the MAKEDEV script and make some devices
-COPY	${DESTDIR}/dev/MAKEDEV		dev/MAKEDEV
+SPECIAL sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' < ${DESTDIR}/dev/MAKEDEV	 > dev/MAKEDEV
 SPECIAL	cd dev; sh MAKEDEV ramdisk
 
 # copy and link first stage boot code
@@ -34,4 +34,4 @@ SYMLINK	/tmp/hosts			etc/hosts
 
 # and the installation tools
 SPECIAL sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' < ${ARCHDIR}/../ramdisk/dot.profile	 > .profile
-SPECIAL sed -e '/^#[ 	].*$/d' -e "s/^ARCH=ARCH$/ARCH=`arch -s`/" < ${ARCHDIR}/../install.md	 > install.md
+SPECIAL sed -e '/^#[ 	].*$/d' -e "s/^ARCH=ARCH$/ARCH=`arch -ks`/" < ${ARCHDIR}/../install.md	 > install.md
