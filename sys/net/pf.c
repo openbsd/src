@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.302 2003/01/09 15:58:35 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.303 2003/01/18 05:07:45 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -221,10 +221,9 @@ void			 pf_hash(struct pf_addr *, struct pf_addr *,
 int			 pf_map_addr(u_int8_t, struct pf_pool *,
 			    struct pf_addr *, struct pf_addr *,
 			    struct pf_addr *);
-int			 pf_get_sport(sa_family_t, u_int8_t,
-			    struct pf_pool *, struct pf_addr *, u_int16_t,
-			    struct pf_addr *, u_int16_t, struct pf_addr *,
-			    u_int16_t*, u_int16_t, u_int16_t);
+int			 pf_get_sport(sa_family_t, u_int8_t, struct pf_pool *,
+			    struct pf_addr *, struct pf_addr *, u_int16_t,
+			    struct pf_addr *, u_int16_t*, u_int16_t, u_int16_t);
 int			 pf_normalize_tcp(int, struct ifnet *, struct mbuf *,
 			    int, int, void *, struct pf_pdesc *);
 void			 pf_route(struct mbuf **, struct pf_rule *, int,
@@ -1526,9 +1525,8 @@ pf_map_addr(u_int8_t af, struct pf_pool *rpool, struct pf_addr *saddr,
 
 int
 pf_get_sport(sa_family_t af, u_int8_t proto, struct pf_pool *rpool,
-    struct pf_addr *saddr, u_int16_t sport, struct pf_addr *daddr,
-    u_int16_t dport, struct pf_addr *naddr, u_int16_t *nport, u_int16_t low,
-    u_int16_t high)
+    struct pf_addr *saddr, struct pf_addr *daddr, u_int16_t dport,
+    struct pf_addr *naddr, u_int16_t *nport, u_int16_t low, u_int16_t high)
 {
 	struct pf_tree_node	key;
 	struct pf_addr		init_addr;
@@ -1555,11 +1553,9 @@ pf_get_sport(sa_family_t af, u_int8_t proto, struct pf_pool *rpool,
 			if (pf_find_state(&tree_ext_gwy, &key) == NULL)
 				return (0);
 		} else if (rpool->opts & PF_POOL_STATICPORT) {
-			key.port[1] = sport;
-			if (pf_find_state(&tree_ext_gwy, &key) == NULL) {
-				*nport = ntohs(sport);
+			key.port[1] = *nport;
+			if (pf_find_state(&tree_ext_gwy, &key) == NULL)
 				return (0);
-			}
 		} else if (low == 0 && high == 0) {
 			key.port[1] = *nport;
 			if (pf_find_state(&tree_ext_gwy, &key) == NULL) {
@@ -1703,9 +1699,8 @@ pf_get_translation(int direction, struct ifnet *ifp, u_int8_t proto,
 			return (NULL);
 			break;
 		case PF_NAT:
-			if (pf_get_sport(af, proto,
-			    &r->rpool, saddr, sport, daddr,
-			    dport, naddr, nport, r->rpool.proxy_port[0],
+			if (pf_get_sport(af, proto, &r->rpool, saddr, daddr,
+		            dport, naddr, nport,r->rpool.proxy_port[0],
 			    r->rpool.proxy_port[1])) {
 				DPFPRINTF(PF_DEBUG_MISC,
 				    ("pf: NAT proxy port allocation "
@@ -1844,7 +1839,7 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		    &naddr, &nport, af)) != NULL) {
 			PF_ACPY(&baddr, saddr, af);
 			pf_change_ap(saddr, &th->th_sport, pd->ip_sum,
-			    &th->th_sum, &naddr, th->th_sport, 0, af);
+			    &th->th_sum, &naddr, nport, 0, af);
 			rewrite++;
 		}
 	} else {
@@ -2089,7 +2084,7 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		    &naddr, &nport, af)) != NULL) {
 			PF_ACPY(&baddr, saddr, af);
 			pf_change_ap(saddr, &uh->uh_sport, pd->ip_sum,
-			    &uh->uh_sum, &naddr, uh->uh_sport, 1, af);
+			    &uh->uh_sum, &naddr, nport, 1, af);
 			rewrite++;
 		}
 	} else {
