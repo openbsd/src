@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.1 2004/08/06 20:56:03 pefo Exp $	*/
+/*	$OpenBSD: trap.c,v 1.2 2004/08/08 14:21:27 pefo Exp $	*/
 /* tracked to 1.23 */
 
 /*
@@ -183,7 +183,7 @@ trap(trapframe)
 	 * enable it when doing a spllower().
 	 */
 /*XXX do in locore? */
-	if(trapframe->sr & SR_INT_ENAB) {
+	if (trapframe->sr & SR_INT_ENAB) {
 #ifndef IMASK_EXTERNAL
 		updateimask(trapframe->cpl);
 #endif
@@ -291,9 +291,6 @@ trap(trapframe)
 			goto dofault;
 		}
 #undef szsigcode
-		/* check for fuswintr() or suswintr() getting a page fault */
-		if (i == 5)
-			return (onfault_table[i]);
 		goto dofault;
 
 	case T_TLB_LD_MISS+T_USER:
@@ -556,7 +553,7 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 			locr0->v0 = i;
 			locr0->a3 = 1;
 		}
-		if(code == SYS_ptrace)
+		if (code == SYS_ptrace)
 			Mips_SyncCache();
 #ifdef SYSCALL_DEBUG
 		scdebug_ret(p, code, i, rval);

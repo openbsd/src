@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_access.S,v 1.1 2004/08/06 20:56:03 pefo Exp $ */
+/*	$OpenBSD: lcore_access.S,v 1.2 2004/08/08 14:21:27 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -67,8 +67,6 @@ onfault_table:
 	PTR_VAL	baderr
 	PTR_VAL	copyerr
 	PTR_VAL	copyerr
-	PTR_VAL	fswberr
-	PTR_VAL	fswintrberr
 #if defined(DDB) || defined(DEBUG)
 	PTR_VAL	kt_ddberr
 #else
@@ -472,110 +470,3 @@ NON_LEAF(kcopy, FRAMESZ(CF_SZ), ra)
 	j	ra
 	move	v0, zero
 END(kcopy)
-
-/*
- * {fu,su},{byte,sword,word}, fetch or store a byte, short or word to
- * user space.
- */
-LEAF(fuword)
-	blt	a0, zero, fswberr	# make sure address is in user space
-	li	v0, KT_FSWBERR
-	PTR_L	t3, curprocpaddr
-	sw	v0, U_PCB_ONFAULT(t3)
-	lw	v0, 0(a0)		# fetch word
-	j	ra
-	sw	zero, U_PCB_ONFAULT(t3)
-END(fuword)
-
-LEAF(fusword)
-	blt	a0, zero, fswberr	# make sure address is in user space
-	li	v0, KT_FSWBERR
-	PTR_L	t3, curprocpaddr
-	sw	v0, U_PCB_ONFAULT(t3)
-	lhu	v0, 0(a0)		# fetch short
-	j	ra
-	sw	zero, U_PCB_ONFAULT(t3)
-END(fusword)
-
-LEAF(fubyte)
-	blt	a0, zero, fswberr	# make sure address is in user space
-	li	v0, KT_FSWBERR
-	PTR_L	t3, curprocpaddr
-	sw	v0, U_PCB_ONFAULT(t3)
-	lbu	v0, 0(a0)		# fetch byte
-	j	ra
-	sw	zero, U_PCB_ONFAULT(t3)
-END(fubyte)
-
-LEAF(suword)
-	blt	a0, zero, fswberr	# make sure address is in user space
-	li	v0, KT_FSWBERR
-	PTR_L	t3, curprocpaddr
-	sw	v0, U_PCB_ONFAULT(t3)
-	sw	a1, 0(a0)		# store word
-	sw	zero, U_PCB_ONFAULT(t3)
-	j	ra
-	move	v0, zero
-END(suword)
-
-/*
- * Will have to flush the instruction cache if byte merging is done in hardware.
- */
-LEAF(susword)
-	blt	a0, zero, fswberr	# make sure address is in user space
-	li	v0, KT_FSWBERR
-	PTR_L	t3, curprocpaddr
-	sw	v0, U_PCB_ONFAULT(t3)
-	sh	a1, 0(a0)		# store short
-	sw	zero, U_PCB_ONFAULT(t3)
-	j	ra
-	move	v0, zero
-END(susword)
-
-LEAF(subyte)
-	blt	a0, zero, fswberr	# make sure address is in user space
-	li	v0, KT_FSWBERR
-	PTR_L	t3, curprocpaddr
-	sw	v0, U_PCB_ONFAULT(t3)
-	sb	a1, 0(a0)		# store byte
-	sw	zero, U_PCB_ONFAULT(t3)
-	j	ra
-	move	v0, zero
-END(subyte)
-
-LEAF(fswberr)
-	j	ra
-	li	v0, -1
-END(fswberr)
-
-/*
- * fuswintr and suswintr are just like fusword and susword except that if
- * the page is not in memory or would cause a trap, then we return an error.
- * The important thing is to prevent sleep() and switch().
- */
-LEAF(fuswintr)
-	blt	a0, zero, fswintrberr	# make sure address is in user space
-	li	v0, KT_FSWINTRBERR
-	PTR_L	t3, curprocpaddr
-	sw	v0, U_PCB_ONFAULT(t3)
-	lhu	v0, 0(a0)		# fetch short
-	sw	zero, U_PCB_ONFAULT(t3)
-	j	ra
-	move	v0, zero
-END(fuswintr)
-
-LEAF(suswintr)
-	blt	a0, zero, fswintrberr	# make sure address is in user space
-	li	v0, KT_FSWINTRBERR
-	PTR_L	t3, curprocpaddr
-	sw	v0, U_PCB_ONFAULT(t3)
-	sh	a1, 0(a0)		# store short
-	sw	zero, U_PCB_ONFAULT(t3)
-	j	ra
-	move	v0, zero
-END(suswintr)
-
-LEAF(fswintrberr)
-	j	ra
-	li	v0, -1
-END(fswintrberr)

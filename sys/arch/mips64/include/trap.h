@@ -1,4 +1,4 @@
-/*      $OpenBSD: trap.h,v 1.1 2004/08/06 20:56:02 pefo Exp $	*/
+/*      $OpenBSD: trap.h,v 1.2 2004/08/08 14:21:27 pefo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -77,9 +77,7 @@
 #define	KT_BADERR	1		/* Bad address */
 #define	KT_COPYERR	2		/* User space copy error */
 #define	KT_KCOPYERR	3		/* Kernel space copy error */
-#define	KT_FSWBERR	4		/* Access error */
-#define	KT_FSWINTRBERR	5		/* Access error, non sleep */
-#define	KT_DDBERR	6		/* DDB access error */
+#define	KT_DDBERR	4		/* DDB access error */
 
 
 #ifndef _LOCORE
