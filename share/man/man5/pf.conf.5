@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.236 2003/05/12 04:22:04 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.237 2003/05/15 00:03:06 frantzen Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -479,14 +479,6 @@ modifier (see below) is recommended in combination with the
 modifier to ensure unique IP identifiers.
 .It Ar min-ttl <number>
 Enforces a minimum ttl for matching ip packets.
-For statefully tracked TCP connections,
-.Ar scrub
-will automatically (without the
-.Ar min-ttl
-modifier) keep the maximum TTL of each side of the connection and apply
-it to all future packets.
-Inhibits an attacker from sending low TTL packets through the firewall that
-change state but expires before being received by the end host.
 .It Ar max-mss <number>
 Enforces a maximum mss for matching tcp packets.
 .It Ar random-id
@@ -531,6 +523,39 @@ This option is similar to the
 modifier except that all overlapping or duplicate fragments will be
 dropped, and all further corresponding fragments will be
 dropped as well.
+.It Ar reassemble tcp
+Statefully normalizes TCP connections.
+.Ar scrub reassemble tcp
+rules may not have the direction (in/out) specified.
+.Ar reassemble tcp
+performs the following normalizations:
+.Pp
+.Bl -tag -width timeout -compact
+.It ttl
+Neither side of the connection is allowed to reduce their IP TTL.
+An attacker may send a packet such that it reaches the firewall, affects
+the firewall state, and expires before reaching the destination host.
+.Ar reassemble tcp
+will raise the TTL of all packets back up to the highest value seen on
+the connection.
+.It timeout modulation
+Modern TCP stacks will send a timestamp on every TCP packet and echo
+the other endpoints timestamp back to them.
+Many operating systems will merely start the timestamp at zero when
+first booted, and increment it several times a second.
+The uptime of the host can be deduced by reading the timestamp and multiplying
+by a constant.
+Also observing several different timestamps can be used to count hosts
+behind a NAT device.
+And spoofing TCP packets into a connection requires knowing or guessing
+valid timestamps.
+Timestamps merely need to be monotonically increasing and not derived off a
+guessable base time.
+.Ar reassemple tcp
+will cause
+.Ar scrub
+to modulate the TCP timestamps with a random number.
+.El
 .El
 .Pp
 For example,
@@ -2027,8 +2052,9 @@ filteropt-list = FILTEROPT-LIST FILTEROPT | FILTEROPT
 filteropt      = USER | GROUP | FLAGS | ICMP-TYPE | ICMP6-TYPE | TOS |
                  ( keep | modulate ) state [ '(' STATE-OPTS ')' ] |
                  fragment | no-df | min-ttl NUMBER | max-mss NUMBER |
-                 random-id | FRAGMENTATION | allow-opts | label STRING |
-                 queue '(' STRING | ( STRING [ [ ',' ] STRING ] ) ')'
+                 random-id | reassemble tcp | FRAGMENTATION | allow-opts |
+                 label STRING |
+		 queue '(' STRING | ( STRING [ [ ',' ] STRING ] ) ')'
 
 nat-rule       = [ no ] nat [ on IFSPEC ] [ AF ] [ PROTOSPEC ]
                  HOSTS [ '->' ( REDIRHOST | '{' REDIRHOST-LIST '}' )
