@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: hash_page.c,v 1.5 1998/07/27 15:33:43 millert Exp $";
+static char rcsid[] = "$OpenBSD: hash_page.c,v 1.6 1998/07/27 15:35:40 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -872,8 +872,8 @@ open_temp(hashp)
 	/* Block signals; make sure file goes away at process exit. */
 	(void)sigfillset(&set);
 	(void)sigprocmask(SIG_BLOCK, &set, &oset);
-	if ((hashp->fp = mkstemp(namestr)) != -1) {
-		(void)unlink(namestr);
+	if ((hashp->fp = mkstemp(path)) != -1) {
+		(void)unlink(path);
 		(void)fcntl(hashp->fp, F_SETFD, 1);
 	}
 	(void)sigprocmask(SIG_SETMASK, &oset, (sigset_t *)NULL);
