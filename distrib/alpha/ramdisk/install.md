@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.7 1997/05/15 03:44:10 millert Exp $
+#       $OpenBSD: install.md,v 1.8 1997/05/15 05:13:09 millert Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -111,6 +111,10 @@ md_get_partition_range() {
 md_installboot() {
 	local _rawdev
 
+	if [ "X${1}" = X"" ]; then
+		echo "No disk device specified, you must run installboot manually."
+		return
+	fi
 	_rawdev=/dev/r${1}c
 
 	# use extracted mdec if it exists (may be newer)
