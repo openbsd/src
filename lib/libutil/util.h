@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.14 2001/08/12 22:00:34 millert Exp $	*/
+/*	$OpenBSD: util.h,v 1.15 2001/08/16 18:24:32 millert Exp $	*/
 /*	$NetBSD: util.h,v 1.2 1996/05/16 07:00:22 thorpej Exp $	*/
 
 /*-
@@ -90,7 +90,7 @@ int	opendev __P((char *, int, int, char **));
 void	pw_setdir __P((const char *));
 char   *pw_file __P((const char *));
 int	pw_lock __P((int retries));
-int	pw_mkdb __P((char *));
+int	pw_mkdb __P((char *, int));
 int	pw_abort __P((void));
 void	pw_init __P((void));
 void	pw_edit __P((int, const char *));

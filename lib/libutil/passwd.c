@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.26 2001/07/11 16:11:10 aaron Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.27 2001/08/16 18:24:32 millert Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -34,7 +34,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: passwd.c,v 1.26 2001/07/11 16:11:10 aaron Exp $";
+static char rcsid[] = "$OpenBSD: passwd.c,v 1.27 2001/08/16 18:24:32 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -273,33 +273,45 @@ pw_lock(retries)
 }
 
 int
-pw_mkdb(username)
+pw_mkdb(username, secureonly)
 	char *username;
+	int secureonly;
 {
-	int pstat;
+	int pstat, ac;
 	pid_t pid;
+	char *av[8];
 	struct stat sb;
 
+	if (pw_lck == NULL)
+		return(-1);
+
 	/* A zero length passwd file is never ok */
-	if (pw_lck && stat(pw_lck, &sb) == 0) {
-		if (sb.st_size == 0) {
-			warnx("%s is zero length", pw_lck);
-			return (-1);
-		}
+	if (stat(pw_lck, &sb) == 0 && sb.st_size == 0) {
+		warnx("%s is zero length", pw_lck);
+		return (-1);
 	}
+
+	ac = 0;
+	av[ac++] = "pwd_mkdb";
+	av[ac++] = "-d";
+	av[ac++] = pw_dir;
+	if (secureonly)
+		av[ac++] = "-s";
+	else
+		av[ac++] = "-p";
+	if (username) {
+		av[ac++] = "-u";
+		av[ac++] = username;
+	}
+	av[ac++] = pw_lck;
+	av[ac] = NULL;
 
 	pid = vfork();
 	if (pid == -1)
 		return (-1);
 	if (pid == 0) {
-		if (pw_lck) {
-			if (username)
-				execl(_PATH_PWD_MKDB, "pwd_mkdb", "-p", "-d",
-				    pw_dir, "-u", username, pw_lck, (char *)NULL);
-			else
-				execl(_PATH_PWD_MKDB, "pwd_mkdb", "-p", "-d",
-				    pw_dir, pw_lck, (char *)NULL);
-		}
+		if (pw_lck)
+			execv(_PATH_PWD_MKDB, av);
 		_exit(1);
 	}
 	pid = waitpid(pid, &pstat, 0);
