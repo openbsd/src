@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.39 2003/01/01 16:07:01 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.40 2003/01/02 11:34:59 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -604,6 +604,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			}
 		}
 
+		if (rule->rt && !rule->direction)
+			error = EINVAL;
 		if (pf_dynaddr_setup(&rule->src.addr, rule->af))
 			error = EINVAL;
 		if (pf_dynaddr_setup(&rule->dst.addr, rule->af))
@@ -823,6 +825,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			} else
 				newrule->ifp = NULL;
 
+			if (newrule->rt && !newrule->direction)
+				error = EINVAL;
 			if (pf_dynaddr_setup(&newrule->src.addr, newrule->af))
 				error = EINVAL;
 			if (pf_dynaddr_setup(&newrule->dst.addr, newrule->af))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.271 2002/12/30 23:46:54 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.272 2003/01/02 11:34:59 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1108,6 +1108,11 @@ pfrule		: action dir logquick interface route af proto fromto
 			decide_address_family($8.dst.host, &r.af);
 
 			if ($5.rt) {
+				if(!r.direction) {
+					yyerror("direction must be explicit "
+					    "with rules that specify routing");
+					YYERROR;
+				}
 				r.rt = $5.rt;
 				r.rpool.opts = $5.pool_opts;
 			}
