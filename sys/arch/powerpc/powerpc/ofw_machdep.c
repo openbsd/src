@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.18 2000/09/19 05:54:32 rahnds Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.19 2000/10/19 03:16:16 drahn Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -389,9 +389,7 @@ ofwconprobe()
 	stdout_node = OF_instance_to_package(OF_stdout);
 	len = OF_getprop(stdout_node, "name", name, 20);
 	name[len] = 0;
-	/*
 	printf("console out [%s]", name);
-	*/
 	cons_displaytype=1;
 	cons_display_ofh = OF_stdout;
 	err = OF_getprop(stdout_node, "width", &cons_width, 4);
@@ -418,7 +416,7 @@ ofwconprobe()
 	stdin_node = OF_instance_to_package(OF_stdin);
 	len = OF_getprop(stdin_node, "name", iname, 20);
 	iname[len] = 0;
-	printf("console in [%s]", iname);
+	printf("console in [%s] ", iname);
 	/* what to do about serial console? */
 	if (strcmp ("keyboard", iname) == 0) {
 		int node;
@@ -431,6 +429,7 @@ ofwconprobe()
 		ukbd_cnattach();
 #endif
 	}
+	printf("\n");
 
 	len = OF_getprop(stdout_node, "assigned-addresses", addr, sizeof(addr));
 	if (len < sizeof(addr[0])) {
@@ -444,12 +443,14 @@ ofwconprobe()
 		pcidev(addr[1].phys_hi),
 		pcifunc(addr[1].phys_hi));
 
+#if 0
 	printf(": memaddr %x size %x, ", addr[0].phys_lo, addr[0].size_lo);
 	printf(": consaddr %x, ", cons_addr);
 	printf(": ioaddr %x, size %x", addr[1].phys_lo, addr[1].size_lo);
 	printf(": memtag %x, iotag %x", memtag, iotag);
 	printf(": cons_width %d cons_linebytes %d cons_height %d\n",
 		cons_width, cons_linebytes, cons_height);
+#endif
 
 	{
 		int i,j;
