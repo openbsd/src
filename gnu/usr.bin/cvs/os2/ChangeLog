@@ -1,3 +1,15 @@
+2001-03-14  Derek Price  <derek.price@openavenue.com>
+
+	* Makefile.in (installcheck): New target.
+
+2001-02-14  Larry Jones  <larry.jones@sdrc.com>
+
+	* Makefile.in: Remove references to rtag.c & rtag.obj.
+
+2000-12-21  Derek Price  <derek.price@openavenue.com>
+
+	* Makefile.in: Added support for Automake targets
+
 1999-02-26  Jim Kingdon  <http://www.cyclic.com>
 
 	* options.h: Make RELATIVE_REPOS the default, as in

@@ -1,4 +1,4 @@
-This is cvs.info, produced by makeinfo version 4.0 from ./cvs.texinfo.
+This is cvs.info, produced by makeinfo version 4.0 from cvs.texinfo.
 
 START-INFO-DIR-ENTRY
 * CVS: (cvs).          Concurrent Versions System
@@ -31,7 +31,7 @@ Importing for the first time
 When you use the `import' command to track third-party sources, the
 "vendor tag" and "release tags" are useful.  The "vendor tag" is a
 symbolic name for the branch (which is always 1.1.1, unless you use the
-`-b BRANCH' flag--*Note Multiple vendor branches::.).  The "release
+`-b BRANCH' flag--see *Note Multiple vendor branches::.).  The "release
 tags" are symbolic names for a particular release, such as `FSF_0_04'.
 
    Note that `import' does _not_ change the directory in which you
@@ -899,7 +899,7 @@ you undo the effect!
      and `Rel' (for released).  By default, the state of a new revision
      is set to `Exp' when it is created.  The state is visible in the
      output from CVS LOG (*note log::), and in the `$Log: cvs.info-5,v $
-     output from CVS LOG (*note log::), and in the `Revision 1.1.1.17  2001/02/10 19:03:17  tholo
+     output from CVS LOG (*note log::), and in the `Revision 1.1.1.18  2001/09/28 22:48:51  tholo
      output from CVS LOG (*note log::), and in the `Latest from Cyclic Software
      output from CVS LOG (*note log::), and in the `' and
      `$State: Exp $' keywords (*note Keyword substitution::).  Note that CVS
@@ -934,12 +934,10 @@ you undo the effect!
      with CVS.  Unlock the revision with number REV.  If a branch is
      given, unlock the latest revision on that branch.  If REV is
      omitted, remove the latest lock held by the caller.  Normally,
-     only the locker of a revision may unlock it.  Somebody else
-     unlocking a revision breaks the lock.  This causes a mail message
-     to be sent to the original locker.  The message contains a
-     commentary solicited from the breaker.  The commentary is
-     terminated by end-of-file or by a line containing `.' by itself.
-     There can be no space between `-u' and its argument.
+     only the locker of a revision may unlock it; somebody else
+     unlocking a revision breaks the lock.  This causes the original
+     locker to be sent a `commit' notification (*note Getting
+     Notified::).  There can be no space between `-u' and its argument.
 
 `-VN'
      In previous versions of CVS, this option meant to write an RCS

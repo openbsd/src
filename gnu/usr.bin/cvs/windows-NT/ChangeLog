@@ -1,3 +1,43 @@
+2001-04-25  Derek Price  <dprice@collab.net>
+
+	* Makefile.in: Regenerated using AM 1.4e as of today at 18:10 -0400.
+
+2001-03-14  Derek Price  <derek.price@openavenue.com>
+
+        * Makefile.in: Regenerated
+
+2001-02-15  Derek Price  <derek.price@openavenue.com>
+	    Laine Stump  <laine+info-cvs@laine.org>
+
+	* config.h: Define HAVE_USLEEP and define a prototype for usleep.
+	* win32.c (usleep): New function.
+
+2000-12-22  Derek Price  <derek.price@openavenue.com>
+
+        * Makefile.in: Regenerated
+
+2000-12-21  Derek Price  <derek.price@openavenue.com>
+
+	* Makefile.am: New file needed by Automake
+	* Makefile.in: Regenerated
+
+2000-11-21  Derek Price  <derek.price@openavenue.com>
+
+	* filesubr.c (check_statbuf): subtract 3600 from the times returned
+	by the stat function when daylight savings time is in effect due to a
+	bug in Windoze.  Fixes a bug where CVS thinks all files have been
+	touched after a transition to or from daylight savings time.
+
+2000-11-20  Derek Price  <derek.price@openavenue.com>
+
+	* filesubr.c (cvs_temp_file): add this function to match the one in
+	src/filesubr.c
+	(cvs_temp_name): wrap cvs_temp_file as in src/filesubr.c
+
+2000-10-18  Derek Price  <derek.price@openavenue.com>
+
+	* config.h: Add () to a macro function to supress a warning.
+
 2000-06-26  Larry Jones  <larry.jones@sdrc.com>
 
 	* config.h: Define REGEX_MALLOC and _REGEX_RE_COMP.

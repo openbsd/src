@@ -9,6 +9,7 @@ project: cvs.exe
 # path slash.  This was introduced so that it can be set to \
 # instead of / for linking, but now that the cvs.exe rule uses
 # subst to produce \, it should be possible to nuke SL.
+# FIXME - nuke SL
 SL = /
 
 # Directory in which to install executables.
@@ -19,6 +20,9 @@ srcdir     = @srcdir@
 
 # top_srcdir is usually ".."
 top_srcdir = @top_srcdir@
+
+VPATH      = @srcdir@
+subdir     = os2
 
 lib_dir     = @top_srcdir@${SL}lib
 cvs_srcdir = @top_srcdir@${SL}src
@@ -128,7 +132,6 @@ COMMON_SOURCES = \
        ${cvs_srcdir}${SL}remove.c \
        ${cvs_srcdir}${SL}repos.c \
        ${cvs_srcdir}${SL}root.c \
-       ${cvs_srcdir}${SL}rtag.c \
        ${cvs_srcdir}${SL}scramble.c \
        ${cvs_srcdir}${SL}server.c \
        ${cvs_srcdir}${SL}status.c \
@@ -213,7 +216,6 @@ COMMON_OBJECTS = \
        ${cvs_srcdir}${SL}remove.obj \
        ${cvs_srcdir}${SL}repos.obj \
        ${cvs_srcdir}${SL}root.obj \
-       ${cvs_srcdir}${SL}rtag.obj \
        ${cvs_srcdir}${SL}scramble.obj \
        ${cvs_srcdir}${SL}server.obj \
        ${cvs_srcdir}${SL}status.obj \
@@ -273,32 +275,58 @@ all:
 .PHONY: all install uninstall
 all install uninstall:
 
+# Remove targets for Automake
+info:
+.PHONY: info
+
+installcheck:
+.PHONY: installcheck
+
 installdirs:
 .PHONY: installdirs
 
 .PHONY: tags TAGS
 tags TAGS:
 
-.PHONY: ls
-ls:
-	@echo ${DISTFILES}
-
-.PHONY: clean distclean realclean mostlyclean
-clean distclean realclean mostlyclean:
-
 .PHONY: lint
 lint:
 
-.PHONY: dist-dir
-dist-dir:
-	mkdir ${DISTDIR}
-	for i in ${DISTFILES}; do \
-	  ln $${i} ${DISTDIR}; \
+.PHONY: check
+check:
+
+# distdir added for CVS.
+top_builddir = ..
+PACKAGE = @PACKAGE@
+VERSION = @VERSION@
+distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
+# FIXME - sedding the directory off of the DISTFILES targets is really yucky.
+# The $(srcdir) prefixes should really be removed from all of the files in the
+# lists that make up DISTFILES above.  Unfortunately, I don't have an OS2 box
+# to test on.
+distdir: $(DISTFILES)
+	@d=$(srcdir); \
+	for f in $(DISTFILES); do \
+	  file=`echo $$f |sed 's,.*/,,'`; \
+	  if test -d $(distdir)/`dirname $$file`; then \
+	    :; \
+	  else \
+	    mkdir $(distdir)/`dirname $$file`; \
+	  fi; \
+	  if test -d $$d/$$file; then \
+	    cp -pR $$d/$$file $(distdir) \
+	    || exit 1; \
+	  else \
+	    test -f $(distdir)/$$file \
+	    || cp -p $$d/$$file $(distdir)/$$file \
+	    || exit 1; \
+	  fi; \
 	done
+.PHONY: distdir
 
 # We don't have a real distclean or anything like that, but at least
 # we can get rid of the obj files and cvs.exe. 
-clean:
+.PHONY: clean distclean realclean mostlyclean maintainer-clean
+clean distclean realclean maintainer-clean mostlyclean:
 	rm -f cvs.exe
 	rm -f ${srcdir}${SL}*.obj 
 	rm -f ${lib_dir}${SL}*.obj 
@@ -333,7 +361,6 @@ cvs.exe: ${OBJECTS}
 
 # cvs.obj: ${OBJECTS} ${SOURCES} ${HEADERS}
 
-subdir = os2
 # Hmm.  This rule wants to exist on unix, so that "make dist" works.
 # And it doesn't want to exist on OS/2, because configure doesn't
 # run on OS/2 and so ../config.status won't exist.  For now we just

@@ -1,5 +1,5 @@
 This is cvsclient.info, produced by makeinfo version 4.0 from
-./cvsclient.texi.
+cvsclient.texi.
 
 INFO-DIR-SECTION Programming
 START-INFO-DIR-ENTRY
@@ -14,7 +14,7 @@ CVS Client/Server
 
    This document describes the client/server protocol used by CVS.  It
 does not describe how to use or administer client/server CVS; see the
-regular CVS manual for that.  This is version 1.11 of the protocol
+regular CVS manual for that.  This is version 1.11.1p1 of the protocol
 specification--*Note Introduction::, for more on what this version
 number means.
 
@@ -63,11 +63,11 @@ you are reading now) of this document, `cvsclient.texi', can be found
 at the usual GNU FTP sites, with a filename such as
 `cvs-VERSION.tar.gz'.
 
-   This is version 1.11 of the protocol specification.  This version
-number is intended only to aid in distinguishing different versions of
-this specification.  Although the specification is currently maintained
-in conjunction with the CVS implementation, and carries the same
-version number, it also intends to document what is involved with
+   This is version 1.11.1p1 of the protocol specification.  This
+version number is intended only to aid in distinguishing different
+versions of this specification.  Although the specification is currently
+maintained in conjunction with the CVS implementation, and carries the
+same version number, it also intends to document what is involved with
 interoperating with other implementations (such as other versions of
 CVS); see *Note Requirements::.  This version number should not be used
 by clients or servers to determine what variant of the protocol to
@@ -486,8 +486,8 @@ Dates
    The protocol contains times and dates in various places.
 
    For the `-D' option to the `annotate', `co', `diff', `export',
-`history', `rdiff', `rtag', `tag', and `update' requests, the server
-should support two formats:
+`history', `rannotate', `rdiff', `rtag', `tag', and `update' requests,
+the server should support two formats:
 
      26 May 1997 13:01:40 -0000  ; RFC 822 as modified by RFC 1123
      5/26/1997 13:01:40 GMT    ; traditional
@@ -495,10 +495,10 @@ should support two formats:
    The former format is preferred; the latter however is sent by the CVS
 command line client (versions 1.5 through at least 1.9).
 
-   For the `-d' option to the `log' request, servers should at least
-support RFC 822/1123 format.  Clients are encouraged to use this format
-too (the command line CVS client, version 1.10 and older, just passed
-along the date format specified by the user, however).
+   For the `-d' option to the `log' and `rlog' requests, servers should
+at least support RFC 822/1123 format.  Clients are encouraged to use
+this format too (the command line CVS client, version 1.10 and older,
+just passed along the date format specified by the user, however).
 
    The `Mod-time' response and `Checkin-time' request use RFC 822/1123
 format (see the descriptions of that response and request for details).

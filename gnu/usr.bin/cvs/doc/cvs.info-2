@@ -1,4 +1,4 @@
-This is cvs.info, produced by makeinfo version 4.0 from ./cvs.texinfo.
+This is cvs.info, produced by makeinfo version 4.0 from cvs.texinfo.
 
 START-INFO-DIR-ENTRY
 * CVS: (cvs).          Concurrent Versions System
@@ -212,7 +212,12 @@ machine which can mount the repository, known as the "server".
 Generally, using a remote repository is just like using a local one,
 except that the format of the repository name is:
 
-     :METHOD:USER@HOSTNAME:/path/to/repository
+     :METHOD:[[USER][:PASSWORD]@]HOSTNAME[:[PORT]]/path/to/repository
+
+   Specifying a password in the repository name is not recommended
+during checkout, since this will cause CVS to store a cleartext copy of
+the password in each created directory.  `cvs login' first instead
+(*note Password authentication client::).
 
    The details of exactly what needs to be set up depend on how you are
 connecting to the server.
@@ -331,7 +336,7 @@ the documentation for your rsh replacement.
 `foo' in the repository `/usr/local/cvsroot/', on machine
 `faun.example.org', you are ready to go:
 
-     cvs -d :ext:bach@faun.example.org:/usr/local/cvsroot checkout foo
+     cvs -d :ext:bach@faun.example.org/usr/local/cvsroot checkout foo
 
    (The `bach@' can be omitted if the username is the same on both the
 local and remote hosts.)
@@ -370,7 +375,9 @@ authentication security::, for more details.
 `inetd' knows to run the command `cvs pserver' when it receives a
 connection on the right port.  By default, the port number is 2401; it
 would be different if your client were compiled with `CVS_AUTH_PORT'
-defined to something else, though.
+defined to something else, though.  This can also be sepcified in the
+CVSROOT variable (*note Remote repositories::) or overridden with the
+CVS_CLIENT_PORT environment variable (*note Environment variables::).
 
    If your `inetd' allows raw port numbers in `/etc/inetd.conf', then
 the following (all on a single line in `inetd.conf') should be
@@ -503,23 +510,29 @@ Using the client with password authentication
 
    To run a CVS command on a remote repository via the
 password-authenticating server, one specifies the `pserver' protocol,
-username, repository host, and path to the repository.  For example:
+optional username, repository host, an optional port number, and path
+to the repository.  For example:
 
-     cvs -d :pserver:bach@faun.example.org:/usr/local/cvsroot checkout someproj
+     cvs -d :pserver:faun.example.org:/usr/local/cvsroot checkout someproj
 
    or
 
-     CVSROOT=:pserver:bach@faun.example.org:/usr/local/cvsroot
+     CVSROOT=:pserver:bach@faun.example.org:2401/usr/local/cvsroot
      cvs checkout someproj
 
    However, unless you're connecting to a public-access repository
 (i.e., one where that username doesn't require a password), you'll need
-to "log in" first.  Logging in verifies your password with the
-repository.  It's done with the `login' command, which will prompt you
-interactively for the password:
+to supply a password or "log in" first.  Logging in verifies your
+password with the repository and stores it in a file.  It's done with
+the `login' command, which will prompt you interactively for the
+password if you didn't supply one as part of $CVSROOT:
 
      cvs -d :pserver:bach@faun.example.org:/usr/local/cvsroot login
      CVS password:
+
+   or
+
+     cvs -d :pserver:bach:p4ss30rd@faun.example.org:/usr/local/cvsroot login
 
    After you enter the password, CVS verifies it with the server.  If
 the verification succeeds, then that combination of username, host,
@@ -664,8 +677,8 @@ use the `-x' global option to request encryption.
 
    You need to edit `inetd.conf' on the server machine to run `cvs
 kserver'.  The client uses port 1999 by default; if you want to use
-another port specify it in the `CVS_CLIENT_PORT' environment variable
-on the client.
+another port specify it in the `CVSROOT' (*note Remote repositories::)
+or the `CVS_CLIENT_PORT' environment variable on the client.
 
    When you want to use CVS, get a ticket in the usual way (generally
 `kinit'); it must be a ticket which allows you to log into the server

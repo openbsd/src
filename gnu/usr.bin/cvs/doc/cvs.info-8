@@ -1,4 +1,4 @@
-This is cvs.info, produced by makeinfo version 4.0 from ./cvs.texinfo.
+This is cvs.info, produced by makeinfo version 4.0 from cvs.texinfo.
 
 START-INFO-DIR-ENTRY
 * CVS: (cvs).          Concurrent Versions System
@@ -212,6 +212,15 @@ that string is expanded to `sh /work/local/tests/runtests'.
    All other strings containing `$' are reserved; there is no way to
 quote a `$' character so that `$' represents itself.
 
+   Environment variables passed to administrative files are:
+
+`CVS_USER'
+     The CVS-specific username provided by the user, if it can be
+     provided (currently just for the pserver access method), and to
+     the empty string otherwise.  (CVS_USER and USER may differ when
+     `$CVSROOT/CVSROOT/passwd' is used to map cvs usernames to system
+     usernames.)
+
 
 File: cvs.info,  Node: config,  Prev: Variables,  Up: Administrative files
 
@@ -352,8 +361,9 @@ All environment variables which affect CVS
      client::
 
 `$CVS_CLIENT_PORT'
-     Used in client-server mode when accessing the server via Kerberos.
-     *note Kerberos authenticated::
+     Used in client-server mode when accessing the server via Kerberos,
+     GSSAPI, or CVS's password authentication if the port is not
+     specified in $CVSROOT.  *note Remote repositories::
 
 `$CVS_RCMD_PORT'
      Used in client-server mode.  If set, specifies the port number to
@@ -756,13 +766,46 @@ the next steps depend largely on which access method you are using.
      a debugging tool.  Follow the directions given for :ext:.
 
 `:pserver:'
+     Errors along the lines of "connection refused" typically indicate
+     that inetd isn't even listening for connections on port 2401
+     whereas errors like "connection reset by peer" or "recv() from
+     server: EOF" typically indicate that inetd is listening for
+     connections but is unable to start CVS (this is frequently caused
+     by having an incorrect path in `inetd.conf').  "unrecognized auth
+     response" errors are caused by a bad command line in `inetd.conf',
+     typically an invalid option or forgetting to put the `pserver'
+     command at the end of the line.  Another less common problem is
+     invisible control characters that your editor "helpfully" added
+     without you noticing.
+
      One good debugging tool is to "telnet servername 2401".  After
      connecting, send any text (for example "foo" followed by return).
      If CVS is working correctly, it will respond with
 
           cvs [pserver aborted]: bad auth protocol start: foo
 
-     If this fails to work, then make sure inetd is working right.
+     If instead you get:
+
+          Usage: cvs [cvs-options] command [command-options-and-arguments]
+          ...
+
+     then you're missing the `pserver' command at the end of the line
+     in `inetd.conf'; check to make sure that the entire command is on
+     one line and that it's complete.
+
+     Likewise, if you get something like:
+
+          Unknown command: `pserved'
+          
+          CVS commands are:
+                  add          Add a new file/directory to the repository
+          ...
+
+     then you've misspelled `pserver' in some way.  If it isn't
+     obvious, check for invisible control characters (particularly
+     carriage returns) in `inetd.conf'.
+
+     If it fails to work at all, then make sure inetd is working right.
      Change the invocation in `inetd.conf' to run the echo program
      instead of cvs.  For example:
 
@@ -787,11 +830,7 @@ the next steps depend largely on which access method you are using.
           cvs server: cannot open /root/.cvsignore: Permission denied
           cvs [server aborted]: can't chdir(/root): Permission denied
 
-     then either you haven't specified `-f' in `inetd.conf' or your
-     system is setting the `HOME' environment variable for programs
-     being run by inetd.  In the latter case, you can either have inetd
-     run a shell script that unsets `HOME' and then runs CVS, or you
-     can use `env' to run CVS with a pristine environment.
+     then you probably haven't specified `-f' in `inetd.conf'.
 
      If you can connect successfully for a while but then can't, you've
      probably hit inetd's rate limit.  (If inetd receives too many
@@ -875,8 +914,8 @@ these problems are often worth doing something about as well as
 problems with CVS itself.
 
    * If you want someone to help you and fix bugs that you report,
-     there are companies which will do that for a fee.  Two such
-     companies are:
+     there are companies which will do that for a fee.  One such
+     company is:
 
           Signum Support AB
           Box 2044

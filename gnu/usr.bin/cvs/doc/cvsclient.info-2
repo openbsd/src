@@ -1,5 +1,5 @@
 This is cvsclient.info, produced by makeinfo version 4.0 from
-./cvsclient.texi.
+cvsclient.texi.
 
 INFO-DIR-SECTION Programming
 START-INFO-DIR-ENTRY
@@ -595,13 +595,15 @@ Requests
      line in the `Created' response must indicate whether the file is
      binary or text, so the client can create it correctly.
 
+`rannotate \n'
 `rdiff \n'
+`rlog \n'
 `rtag \n'
      Response expected: yes.  Actually do a cvs command.  This uses any
      previous `Argument' requests, if they have been sent.  The client
      should not send `Directory', `Entry', or `Modified' requests for
-     this command; they are not used.  Arguments to these commands are
-     module names, as described for `co'.
+     these commands; they are not used.  Arguments to these commands
+     are module names, as described for `co'.
 
 `init ROOT-NAME \n'
      Response expected: yes.  If it doesn't already exist, create a CVS

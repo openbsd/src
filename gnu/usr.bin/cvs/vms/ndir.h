@@ -49,13 +49,13 @@ typedef struct
 	char	dd_buf[DIRBLKSIZ];	/* directory block */
 	}	DIR;			/* stream data from opendir() */
 
-extern DIR		*opendir();
-extern struct direct	*readdir();
+extern DIR		*vms_opendir();
+extern struct direct	*vms_readdir();
 #ifndef VMS
 extern long		telldir();
 extern void		seekdir();
 #endif
-extern int		closedir();
+extern int		vms_closedir();
 
 #define rewinddir( dirp )	seekdir( dirp, 0L )
 

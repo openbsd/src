@@ -1,4 +1,4 @@
-This is cvs.info, produced by makeinfo version 4.0 from ./cvs.texinfo.
+This is cvs.info, produced by makeinfo version 4.0 from cvs.texinfo.
 
 START-INFO-DIR-ENTRY
 * CVS: (cvs).          Concurrent Versions System
@@ -743,12 +743,23 @@ other options restrict the output.
     `REV1:REV2'
           Revisions REV1 to REV2 (which must be on the same branch).
 
+    `REV1::REV2'
+          Revisions between, but not including, REV1 and REV2.
+
     `:REV'
           Revisions from the beginning of the branch up to and
           including REV.
 
+    `::REV'
+          Revisions from the beginning of the branch up to, but not
+          including, REV.
+
     `REV:'
           Revisions starting with REV to the end of the branch
+          containing REV.
+
+    `REV:'
+          Revisions starting just after REV to the end of the branch
           containing REV.
 
     `BRANCH'
@@ -756,6 +767,7 @@ other options restrict the output.
           branch.
 
     `BRANCH1:BRANCH2'
+    `BRANCH1::BRANCH2'
           A range of branches means all revisions on the branches in
           that range.
 
@@ -1135,6 +1147,11 @@ options::, for a complete description of them):
      directory.  The ancestor revision is the common ancestor of the
      revision which the working directory is based on, and the revision
      specified in the `-j' option.
+
+     Note that using a single `-j TAGNAME' option rather than `-j
+     BRANCHNAME' to merge changes from a branch will often not remove
+     files which were removed on the branch.  *Note Merging adds and
+     removals::, for more.
 
      In addition, each `-j' option can contain an optional date
      specification which, when used with branches, can limit the chosen

@@ -13,6 +13,15 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.  */
 
+#ifndef __VMS_VER
+#define __VMS_VER 0
+#endif
+#ifndef __DECC_VER
+#define __DECC_VER 0
+#endif
+
+#if __VMS_VER < 70200000 || __DECC_VER < 50700000
+
 #include "vms.h"
 
 #define WAITPID_CHILDREN 8
@@ -62,3 +71,7 @@ success:
     *stat_loc = waited_status[i];
   return p;
 }
+
+#else  /*  __VMS_VER >= 70200000 && __DECC_VER >= 50700000  */
+#pragma message disable EMPTYFILE
+#endif  /*  __VMS_VER >= 70200000 && __DECC_VER >= 50700000  */

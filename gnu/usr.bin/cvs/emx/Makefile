@@ -16,6 +16,8 @@ srcdir     = .
 # top_srcdir is usually ".."
 top_srcdir = ..
 
+subdir     = emx
+
 lib_dir     = ${top_srcdir}/lib
 cvs_srcdir = ${top_srcdir}/src
 diff_srcdir = ${top_srcdir}/diff
@@ -113,7 +115,6 @@ COMMON_SOURCES = \
        ${cvs_srcdir}/remove.c \
        ${cvs_srcdir}/repos.c \
        ${cvs_srcdir}/root.c \
-       ${cvs_srcdir}/rtag.c \
        ${cvs_srcdir}/scramble.c \
        ${cvs_srcdir}/server.c \
        ${cvs_srcdir}/status.c \
@@ -208,7 +209,6 @@ COMMON_OBJECTS = \
        ${cvs_srcdir}/remove.o \
        ${cvs_srcdir}/repos.o \
        ${cvs_srcdir}/root.o \
-       ${cvs_srcdir}/rtag.o \
        ${cvs_srcdir}/scramble.o \
        ${cvs_srcdir}/server.o \
        ${cvs_srcdir}/status.o \
@@ -280,8 +280,9 @@ DISTFILES = ${OS2_HEADERS} ${OS2_SOURCES} \
 
 all:
 
-.PHONY: all install uninstall
-all install uninstall:
+# Automake
+.PHONY: all install installcheck uninstall check info
+all install installcheck uninstall check info:
 
 installdirs:
 .PHONY: installdirs
@@ -289,26 +290,45 @@ installdirs:
 .PHONY: tags TAGS
 tags TAGS:
 
-.PHONY: ls
-ls:
-	@echo ${DISTFILES}
-
 .PHONY: clean distclean realclean mostlyclean
-clean distclean realclean mostlyclean:
+clean distclean realclean maintainer-clean mostlyclean:
 
 .PHONY: lint
 lint:
 
-.PHONY: dist-dir
-dist-dir:
-	mkdir ${DISTDIR}
-	for i in ${DISTFILES}; do \
-	  ln $${i} ${DISTDIR}; \
+# distdir added for CVS.
+top_builddir = ..
+PACKAGE = cvs
+VERSION = 1.11.1p1
+distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
+# FIXME - sedding the directory off of the DISTFILES targets is really yucky.
+# The $(srcdir) prefixes should really be removed from all of the files in the
+# lists that make up DISTFILES above.  Unfortunately, I don't have an EMX box
+# to test on.
+distdir: $(DISTFILES)
+	@d=$(srcdir); \
+	for f in $(DISTFILES); do \
+	  file=`echo $$f |sed 's,.*/,,'`; \
+	  if test -d $(distdir)/`dirname $$file`; then \
+	    :; \
+	  else \
+	    mkdir $(distdir)/`dirname $$file`; \
+	  fi; \
+	  if test -d $$d/$$file; then \
+	    cp -pR $$d/$$file $(distdir) \
+	    || exit 1; \
+	  else \
+	    test -f $(distdir)/$$file \
+	    || cp -p $$d/$$file $(distdir)/$$file \
+	    || exit 1; \
+	  fi; \
 	done
+.PHONY: distdir
 
 # We don't have a real distclean or anything like that, but at least
-# we can get rid of the obj files and cvs.exe.
-clean:
+# we can get rid of the obj files and cvs.exe. 
+.PHONY: clean distclean realclean mostlyclean maintainer-clean
+clean distclean realclean maintainer-clean mostlyclean:
 	rm -f cvs.exe cvs.out
 	rm -f ${srcdir}/*.o
 	rm -f ${diff_srcdir}/*.o
@@ -368,7 +388,6 @@ cvs-static.exe: ${OBJECTS} ${lib_dir}/libcvs.lib ${zlib_dir}/libz.lib
 
 # cvs.o: ${OBJECTS} ${SOURCES} ${HEADERS}
 
-subdir = emx
 # Hmm.  This rule wants to exist on unix, so that "make dist" works.
 # And it doesn't want to exist on OS/2, because configure doesn't
 # run on OS/2 and so ../config.status won't exist.  For now we just

@@ -432,7 +432,7 @@ unlink_file (f_file)
     if (noexec)
 	return (0);
 
-    return (unlink (f));
+    return (vms_unlink (f));
 }
 
 /*
@@ -464,7 +464,7 @@ unlink_file_dir (f_file)
     if (noexec)
 	return (0);
 
-    if (unlink (f) != 0)
+    if (vms_unlink (f) != 0)
     {
 	/* under NEXTSTEP errno is set to return EPERM if
 	 * the file is a directory,or if the user is not
@@ -499,13 +499,13 @@ deep_remove_dir (path)
 
     if (rmdir (path) != 0 && (errno == ENOTEMPTY || errno == EEXIST)) 
     {
-	if ((dirp = opendir (path)) == NULL)
+	if ((dirp = CVS_OPENDIR (path)) == NULL)
 	    /* If unable to open the directory return
 	     * an error
 	     */
 	    return -1;
 
-	while ((dp = readdir (dirp)) != NULL)
+	while ((dp = CVS_READDIR (dirp)) != NULL)
 	{
 	    if (strcmp (dp->d_name, ".") == 0 ||
 			strcmp (dp->d_name, "..") == 0)
@@ -513,13 +513,13 @@ deep_remove_dir (path)
 
 	    sprintf (buf, "%s/%s", path, dp->d_name);
 
-	    if (unlink (buf) != 0 )
+	    if (vms_unlink (buf) != 0 )
 	    {
 		if (errno == EISDIR || errno == EPERM)
 		{
 		    if (deep_remove_dir (buf))
 		    {
-			closedir (dirp);
+			CVS_CLOSEDIR (dirp);
 			return -1;
 		    }
 		}
@@ -528,12 +528,12 @@ deep_remove_dir (path)
 		    /* buf isn't a directory, or there are
 		     * some sort of permision problems
 		     */
-		    closedir (dirp);
+		    CVS_CLOSEDIR (dirp);
 		    return -1;
 		}
 	    }
 	}
-	closedir (dirp);
+	CVS_CLOSEDIR (dirp);
 	return rmdir (path);
 	}
 
@@ -701,7 +701,7 @@ fncmp (const char *n1, const char *n2)
 {
     while (*n1 && *n2
            && (VMS_filename_classes[(unsigned char) *n1]
-	       == VMS_filename_classes[(unsigned char) *n2]))
+               == VMS_filename_classes[(unsigned char) *n2]))
         n1++, n2++;
     return (VMS_filename_classes[(unsigned char) *n1]
             - VMS_filename_classes[(unsigned char) *n2]);
@@ -785,6 +785,14 @@ get_homedir ()
     return getenv ("HOME");
 }
 
+#ifndef __VMS_VER
+#define __VMS_VER 0
+#endif
+#ifndef __DECC_VER
+#define __DECC_VER 0
+#endif
+
+#if __VMS_VER < 70200000 || __DECC_VER < 50700000
 /* See cvs.h for description.  On VMS this currently does nothing, although
    I think we should be expanding wildcards here.  */
 void
@@ -798,5 +806,211 @@ expand_wild (argc, argv, pargc, pargv)
     *pargc = argc;
     *pargv = (char **) xmalloc (argc * sizeof (char *));
     for (i = 0; i < argc; ++i)
-	(*pargv)[i] = xstrdup (argv[i]);
+        (*pargv)[i] = xstrdup (argv[i]);
 }
+
+#else  /*  __VMS_VER >= 70200000 && __DECC_VER >= 50700000  */
+
+/* These global variables are necessary to pass information from the
+ * routine that calls decc$from_vms into the callback routine.  In a
+ * multi-threaded environment, access to these variables MUST be
+ * serialized.
+ */
+static char CurWorkingDir[PATH_MAX+1];
+static char **ArgvList;
+static int  CurArg;
+static int  MaxArgs;
+
+static int ew_no_op (char *fname) {
+    (void) fname;   /* Shut the compiler up */
+    return 1;       /* Continue */
+}
+
+static int ew_add_file (char *fname) {
+    char *lastslash, *firstper;
+    int i;
+
+    if (strncmp(fname,CurWorkingDir,strlen(CurWorkingDir)) == 0) {
+        fname += strlen(CurWorkingDir);
+    }
+    lastslash = strrchr(fname,'/');
+    if (!lastslash) {
+        lastslash = fname;
+    }
+    if ((firstper=strchr(lastslash,'.')) != strrchr(lastslash,'.')) {
+        /* We have two periods -- one is to separate the version off */
+        *strrchr(fname,'.') = '\0';
+    }
+    if (firstper && firstper[1]=='\0') {
+        *firstper = '\0';
+    }
+    /* The following code is to insure that no duplicates appear,
+     * because most of the time it will just be a different version
+     */
+    for (i=0;  i<CurArg && strcmp(ArgvList[i],fname)!=0;  ++i) {
+        ;
+    }
+    if (i==CurArg && CurArg<MaxArgs) {
+        ArgvList[CurArg++] = strdup(fname);
+    }
+    return ArgvList[CurArg-1] != 0; /* Stop if we couldn't dup the string */
+}
+
+/* The following two routines are meant to allow future versions of new_arglist
+ * routine to be multi-thread-safe.  It will be necessary in that environment
+ * to serialize access to CurWorkingDir, ArgvList, MaxArg, and CurArg.  We
+ * currently don't do any multi-threaded programming, so right now these
+ * routines are no-ops.
+ */
+static void wait_and_protect_globs (void) {
+    return;
+}
+
+static void release_globs (void) {
+    return;
+}
+
+/*pf---------------------------------------------------------------- expand_wild
+ *
+ *  New Argument List - (SDS)
+ *
+ *  DESCRIPTION:
+ *      This routine takes the argc, argv passed in from main() and returns a
+ *  new argc, argv list, which simulates (to an extent) Unix-Style filename
+ *  globbing with VMS wildcards.  The key difference is that it will return
+ *  Unix-style filenames, i.e., no VMS file version numbers.  The complexity
+ *  comes from the desire to not simply allocate 10000 argv entries.
+ *
+ *  INPUTS:
+ *      argc - The integer argc passed into main
+ *      argv - The pointer to the array of char*'s passed into main
+ *
+ *  OUTPUTS:
+ *      pargv - A pointer to a (char **) to hold the new argv list
+ *      pargc - A pointer to an int to hold the new argc
+ *
+ *  RETURNS:
+ *      NONE
+ *
+ *  SIDE EFFECTS:
+ *      This routine will normally modify the global statics CurArg, MaxArg,
+ *  ArgvList, and CurWorkingDir.
+ *
+ *  NOTES:
+ *      It is ok for &argc == pargc and &argv == pargv.
+ *
+ *------------------------------------------------------------------------------
+ */
+void expand_wild (int argc, char **argv, int *pargc, char ***pargv) {
+    int totfiles, filesgotten;
+    int i;
+    int largc;
+    char **largv;
+
+    /* This first loop is to find out AT MOST how big to make the
+     * pargv array.
+     */
+    for (totfiles=0,i=0;  i<argc;  ++i) {
+        char *arg = argv[i];
+
+        if (arg != 0 && (   strchr(arg,' ') != 0
+                         || strcmp(arg,".") == 0
+                         || strcmp(arg,"..") == 0) ) {
+            ++totfiles;
+        }else if (arg != 0) {
+            int num;
+            char *p = arg;
+            /* Handle comma-separated filelists */
+            while ( (p=strchr(p,',')) != 0) {
+                *p = '\0';
+                num = decc$from_vms (arg, ew_no_op, 1);
+                totfiles += num>0 ? num : 1;
+                *p++ = ',';
+                arg = p;
+            }
+            if (*arg != '\0') {
+                num = decc$from_vms (arg, ew_no_op, 1);
+                totfiles += num>0 ? num : 1;
+            }
+        }
+    }
+    largv = 0;
+    if (totfiles) {
+        largv = malloc (sizeof*largv * (totfiles + 1));
+    }
+    filesgotten = 0;
+    if (largv != 0) {
+        int len;
+        /* All bits set to zero may not be a NULL ptr */
+        for (i=totfiles;  --i>=0;  ) {
+            largv[i] = 0;
+        }
+        largv[totfiles] = 0;
+
+        wait_and_protect_globs ();
+
+        /*--- getcwd has an OpenVMS extension that allows us to ---*/
+        /*--- get back Unix-style path names ---*/
+        (void) getcwd (CurWorkingDir, sizeof CurWorkingDir - 1, 0);
+        len = strlen (CurWorkingDir);
+        if (   len > 0 && CurWorkingDir[len-1] != '/') {
+            (void) strcat (CurWorkingDir, "/");
+        }
+        CurArg = 0;
+        ArgvList = largv;
+        MaxArgs = totfiles + 1;
+
+        for (i=0;  i<argc;  ++i) {
+            char *arg = argv[i];
+
+            if (arg != 0 && (   strchr(arg,' ') != 0
+                             || strcmp(arg,".") == 0
+                             || strcmp(arg,"..") == 0) ) {
+                if (CurArg < MaxArgs) {
+                    ArgvList[CurArg++] = strdup(arg);
+                }
+                ++filesgotten;
+            }else if (arg != 0) {
+                char *p = arg;
+                int num;
+                /* Handle comma-separated filelists */
+                while ( (p=strchr(p,',')) != 0) {
+                    *p = '\0';
+                    num = decc$from_vms (arg, ew_add_file, 1);
+                    if (num <= 0 && CurArg < MaxArgs) {
+                        ArgvList[CurArg++] = strdup(arg);
+                    }
+                    filesgotten += num>0 ? num : 1;
+                    *p++ = ',';
+                    arg = p;
+                }
+                if (*arg != '\0') {
+                    num = decc$from_vms (arg, ew_add_file, 1);
+                    if (num <= 0 && CurArg < MaxArgs) {
+                        ArgvList[CurArg++] = strdup(arg);
+                    }
+                    filesgotten += num>0 ? num : 1;
+                }
+            }
+        }
+        if (filesgotten != totfiles) {
+            /*--- Files must have been created/deleted here ---*/;
+        }
+        filesgotten = CurArg;
+
+        release_globs();
+    }
+    if (!largv) {
+        (*pargv) = malloc (sizeof(char *));
+        if ((*pargv) != 0) {
+            *(*pargv) = 0;
+        }
+    }else {
+        (*pargv) = largv;
+    }
+    (*pargc) = largv ? filesgotten : 0;
+
+    return;
+}
+
+#endif  /*  __VMS_VER >= 70200000 && __DECC_VER >= 50700000  */

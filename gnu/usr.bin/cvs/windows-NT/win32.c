@@ -54,6 +54,16 @@ unsigned sleep(unsigned seconds)
 	return 0;
 }
 
+/*
+ * Sleep at least useconds microseconds.
+ */
+int usleep(unsigned long useconds)
+{
+    /* Not very accurate, but it gets the job done */
+    Sleep(useconds/1000 + (useconds%1000 ? 1 : 0));
+    return 0;
+}
+
 #if 0
 
 /* WinSock has a gethostname.  But note that WinSock gethostname may

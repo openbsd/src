@@ -1,3 +1,52 @@
+2001-04-25  Derek Price  <dprice@collab.net>
+
+	* Makefile.in: Regenerated using AM 1.4e as of today at 18:10 -0400.
+
+2001-03-14  Derek Price  <derek.price@openavenue.com>
+
+        * Makefile.in: Regenerated
+
+2000-02-06  Derek Price  <derek.price@openavenue.com>
+	    Rex Jolliff  <Rex_Jolliff@notes.ymp.gov>
+	    Shawn Smith  <Shawn_Smith@notes.ymp.gov>
+
+	* filesubr.c: Changes to handle VMS DEC C 5.7 {open,read,close}dir
+	(expand_wild): Handle comma-separated lists of files for VMS 7.2 and
+	DEC C 5.7.
+	* config.h: Changes to handle VMS DEC C 5.7 {open,read,close}dir
+	problems.
+	* ndir.c: ditto
+	* ndir.h: ditto
+
+2001-01-10  Derek Price  <derek.price@openavenue.com>
+	    Rex Jolliff  <Rex_Jolliff@notes.ymp.gov>
+	    Shawn Smith  <Shawn_Smith@notes.ymp.gov>
+ 
+	* filesubr.c (expand_wild): rewrote for VMS 7.x.  Actually
+	globs vms wildcarded filespecs now.
+	* pwd.h: put the pid_t define in a conditional since it's
+	now typedefed in VMS 7.x
+	* unlink.c: provided correct prototype for unlink based on
+	version of VMS since it changes.
+	* vms.h: put conditional compilation macros around mode_t as
+	it is defined as of VMS 7.x, and fixed prototype of unlink
+	as per above.
+	* ndir.c: undefine function for 7.x+ since it is now defined by system
+	* pipe.c: ditto
+	* pwd.c: ditto
+	* rmdir.c: ditto
+	* waitpid.c: ditto
+	* config.h: various new defines & switches
+ 
+2000-12-22  Derek Price  <derek.price@openavenue.com>
+
+        * Makefile.in: Regenerated
+
+2000-12-21  Derek Price  <derek.price@openavenue.com>
+
+	* Makefile.am: New file needed by Automake
+	* Makefile.in: Regenerated
+
 1999-02-26  Jim Kingdon  <http://www.cyclic.com>
 
 	* options.h: Make RELATIVE_REPOS the default, as in

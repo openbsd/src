@@ -1,4 +1,4 @@
-This is cvs.info, produced by makeinfo version 4.0 from ./cvs.texinfo.
+This is cvs.info, produced by makeinfo version 4.0 from cvs.texinfo.
 
 START-INFO-DIR-ENTRY
 * CVS: (cvs).          Concurrent Versions System
@@ -627,10 +627,10 @@ Merging an entire branch
 ========================
 
    You can merge changes made on a branch into your working copy by
-giving the `-j BRANCH' flag to the `update' command.  With one `-j
-BRANCH' option it merges the changes made between the point where the
-branch forked and newest revision on that branch (into your working
-copy).
+giving the `-j BRANCHNAME' flag to the `update' subcommand.  With one
+`-j BRANCHNAME' option it merges the changes made between the point
+where the branch forked and newest revision on that branch (into your
+working copy).
 
    The `-j' stands for "join".
 
@@ -666,11 +666,15 @@ example::.
 you might be getting more conflicts than strictly necessary.  See *Note
 Merging and keywords::, for information on how to avoid this.
 
-   The `checkout' command also supports the `-j BRANCH' flag.  The same
-effect as above could be achieved with this:
+   The `checkout' command also supports the `-j BRANCHNAME' flag.  The
+same effect as above could be achieved with this:
 
      $ cvs checkout -j R1fix mod
      $ cvs commit -m "Included R1fix"
+
+   It should be noted that `update -j TAGNAME' will also work but may
+not produce the desired result.  *Note Merging adds and removals::, for
+more.
 
 
 File: cvs.info,  Node: Merging more than once,  Next: Merging two revisions,  Prev: Merging a branch,  Up: Branching and merging
@@ -787,6 +791,15 @@ files, `update -j' will reflect such additions or removals.
    After these commands are executed and a `cvs commit' is done, file
 `a' will be removed and file `d' added in the main branch.
 
+   Note that using a single static tag (`-j TAGNAME') rather than a
+dynamic tag (`-j BRANCHNAME') to merge changes from a branch will
+usually not remove files which were removed on the branch since CVS
+does not automatically add static tags to dead revisions.  The
+exception to this rule occurs when a static tag has been attached to a
+dead revision manually.  Use the branch tag to merge all changes from
+the branch or use two static tags as merge endpoints to be sure that
+all intended changes are propogated in the merge.
+
 
 File: cvs.info,  Node: Merging and keywords,  Prev: Merging adds and removals,  Up: Branching and merging
 
@@ -819,7 +832,7 @@ merging will be the same as each other, and avoid spurious conflicts.
 Then you might get the following results from a merge:
 
      $ cat file1
-     key $Revision: 1.1.1.17 $
+     key $Revision: 1.1.1.18 $
      . . .
      $ cvs update -j br1
      U file1
@@ -830,9 +843,9 @@ Then you might get the following results from a merge:
      rcsmerge: warning: conflicts during merge
      $ cat file1
      <<<<<<< file1
-     key $Revision: 1.1.1.17 $
+     key $Revision: 1.1.1.18 $
      =======
-     key $Revision: 1.1.1.17 $
+     key $Revision: 1.1.1.18 $
      >>>>>>> 1.1.2.1
      . . .
 
@@ -845,7 +858,7 @@ the fact that your working directory had contained `Revision: 1.2'.
    Here is what happens if you had used `-kk':
 
      $ cat file1
-     key $Revision: 1.1.1.17 $
+     key $Revision: 1.1.1.18 $
      . . .
      $ cvs update -kk -j br1
      U file1
@@ -854,7 +867,7 @@ the fact that your working directory had contained `Revision: 1.2'.
      retrieving revision 1.1.2.1
      Merging differences between 1.1 and 1.1.2.1 into file1
      $ cat file1
-     key $Revision: 1.1.1.17 $
+     key $Revision: 1.1.1.18 $
      . . .
 
    What is going on here is that revision 1.1 and 1.1.2.1 both expand

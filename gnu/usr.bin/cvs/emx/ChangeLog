@@ -1,3 +1,15 @@
+2001-03-14  Derek Price  <derek.price@openavenue.com>
+
+	* Makefile.in (installcheck): New target.
+
+2001-02-14  Larry Jones  <larry.jones@sdrc.com>
+
+	* Makefile.in: Remove references to rtag.c & rtag.o.
+
+2000-12-21  Derek Price  <derek.price@openavenue.com>
+
+	* Makefile.in: Targets added to please Automake
+
 1999-03-27  Jim Kingdon  <http://www.cyclic.com>
 
 	* Makefile.in (LIB_OBJECTS, LIB_SOURCES): Remove vasprintf.

@@ -2,6 +2,15 @@
 #include <stdio.h>
 #include <unixlib.h>
 
+#ifndef __VMS_VER
+#define __VMS_VER 0
+#endif
+#ifndef __DECC_VER
+#define __DECC_VER 0
+#endif
+
+#if __VMS_VER < 70200000 || __DECC_VER < 50700000
+
 static struct passwd pw;
 
 /* This is only called from one relevant place, lock.c.  In that context
@@ -18,3 +27,7 @@ char *getlogin()
   static char login[256];
   return cuserid(login);
 } 
+
+#else  /*  __VMS_VER >= 70200000 && __DECC_VER >= 50700000  */
+#pragma message disable EMPTYFILE
+#endif  /*  __VMS_VER >= 70200000 && __DECC_VER >= 50700000  */

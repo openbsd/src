@@ -1,4 +1,4 @@
-This is cvs.info, produced by makeinfo version 4.0 from ./cvs.texinfo.
+This is cvs.info, produced by makeinfo version 4.0 from cvs.texinfo.
 
 START-INFO-DIR-ENTRY
 * CVS: (cvs).          Concurrent Versions System
@@ -139,6 +139,8 @@ Index
 * Choosing, reserved or unreserved checkouts: Choosing a model.
 * Cleaning up:                           Cleaning up.
 * Client/Server Operation:               Remote repositories.
+* Client/Server Operation, port specification <1>: Password authentication server.
+* Client/Server Operation, port specification: Remote repositories.
 * co (subcommand):                       checkout.
 * Command reference:                     Invoking CVS.
 * Command structure:                     Structure.
@@ -262,6 +264,7 @@ Index
 * Entries.Log file, in CVS directory:    Working directory storage.
 * Entries.Static file, in CVS directory: Working directory storage.
 * Environment variables:                 Environment variables.
+* environment variables, passed to administrative files: Variables.
 * Errors, reporting:                     BUGS.
 * Example of a work-session:             A sample session.
 * Example of merge:                      Conflicts example.
@@ -292,6 +295,8 @@ Index
 * Global cvsignore:                      cvsignore.
 * Global options:                        Global options.
 * Group:                                 File permissions.
+* gserver (client/server connection method), port specification <1>: Password authentication server.
+* gserver (client/server connection method), port specification: Remote repositories.
 * GSSAPI:                                GSSAPI authenticated.
 * Gzip <1>:                              Invoking CVS.
 * Gzip:                                  Global options.
@@ -339,6 +344,8 @@ Index
 * Kflag:                                 Substitution modes.
 * kinit:                                 Kerberos authenticated.
 * Known bugs in this manual or CVS:      BUGS.
+* kserver (client/server connection method), port specification <1>: Password authentication server.
+* kserver (client/server connection method), port specification: Remote repositories.
 * Layout of repository:                  Repository.
 * Left-hand options:                     Global options.
 * Linear development:                    Revision numbers.
@@ -433,7 +440,11 @@ Index
 * Permissions, saving in CVS:            Special Files.
 * Permissions, Windows-specific:         Windows permissions.
 * Policy:                                When to commit.
+* port, specifying for remote repositories <1>: Password authentication server.
+* port, specifying for remote repositories: Remote repositories.
 * Precommit checking:                    commitinfo.
+* pserver (client/server connection method), port specification <1>: Password authentication server.
+* pserver (client/server connection method), port specification: Remote repositories.
 * pserver (subcommand):                  Password authentication server.
 * PVCS, importing files from:            From other version control systems.
 * RCS history files:                     Repository files.
@@ -463,6 +474,8 @@ Index
 * Releases, revisions and versions:      Versions revisions releases.
 * Releasing your working copy:           Cleaning up.
 * Remote repositories:                   Remote repositories.
+* Remote repositories, port specification <1>: Password authentication server.
+* Remote repositories, port specification: Remote repositories.
 * Remove (subcommand):                   Removing files.
 * Removing a change:                     Merging two revisions.
 * Removing directories:                  Removing directories.
@@ -476,6 +489,8 @@ Index
 * Reporting bugs:                        BUGS.
 * Repositories, multiple:                Multiple repositories.
 * Repositories, remote:                  Remote repositories.
+* Repositories, remote, port specification <1>: Password authentication server.
+* Repositories, remote, port specification: Remote repositories.
 * Repository (intro):                    Repository.
 * Repository file, in CVS directory:     Working directory storage.
 * Repository, backing up:                Backing up.
@@ -598,6 +613,7 @@ Index
 * Vendor:                                Tracking sources.
 * Vendor branch:                         Tracking sources.
 * verifymsg (admin file):                verifymsg.
+* version (subcommand):                  Invoking CVS.
 * Versions, of CVS:                      Compatibility.
 * Versions, revisions and releases:      Versions revisions releases.
 * Viewing differences:                   Viewing differences.

@@ -27,6 +27,15 @@
  *    Added members to PIPE structure and memory corruption tests.
  */
 
+#ifndef __VMS_VER
+#define __VMS_VER 0
+#endif
+#ifndef __DECC_VER
+#define __DECC_VER 0
+#endif
+
+#if __VMS_VER < 70200000 || __DECC_VER < 50700000
+
 /* This won't work with GCC, but it won't cause any problems either.  */
 #define MODULE	PIPE
 #define VERSION "V1.5"
@@ -434,3 +443,7 @@ main (argc, argv)
     }
 }
 #endif
+
+#else  /*  __VMS_VER >= 70200000 && __DECC_VER >= 50700000  */
+#pragma message disable EMPTYFILE
+#endif  /*  __VMS_VER >= 70200000 && __DECC_VER >= 50700000  */

@@ -839,21 +839,6 @@ SOURCE=.\src\root.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\src\rtag.c
-
-!IF  "$(CFG)" == "cvsnt - Win32 Release"
-
-# PROP Intermediate_Dir "Release"
-
-!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
-
-# PROP Intermediate_Dir "Debug"
-
-!ENDIF 
-
-# End Source File
-# Begin Source File
-
 SOURCE=".\windows-NT\run.c"
 
 !IF  "$(CFG)" == "cvsnt - Win32 Release"

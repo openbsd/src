@@ -1,3 +1,4 @@
+.deps
 .pure
 Makefile
 TAGS
@@ -8,3 +9,4 @@ cvsbug
 mkmodules
 options.h
 options.h-SAVED
+stamp-h2

@@ -1,5 +1,5 @@
 This is cvsclient.info, produced by makeinfo version 4.0 from
-./cvsclient.texi.
+cvsclient.texi.
 
 INFO-DIR-SECTION Programming
 START-INFO-DIR-ENTRY
@@ -8,33 +8,33 @@ END-INFO-DIR-ENTRY
 
 
 Indirect:
-cvsclient.info-1: 214
-cvsclient.info-2: 24926
-cvsclient.info-3: 64193
+cvsclient.info-1: 212
+cvsclient.info-2: 24957
+cvsclient.info-3: 64251
 
 Tag Table:
 (Indirect)
-Node: Top214
-Node: Introduction1033
-Node: Goals3565
-Node: Connection and Authentication6489
-Node: Password scrambling12727
-Node: Protocol14594
-Node: Entries Lines16679
-Node: File Modes17781
-Node: Filenames19319
-Node: File transmissions20626
-Node: Strings22184
-Node: Dates22867
-Node: Request intro23906
-Node: Requests24926
-Node: Response intro60915
-Node: Response pathnames62282
-Node: Responses64193
-Node: Text tags80211
-Node: Example81925
-Node: Requirements85704
-Node: Obsolete86612
-Node: Protocol Notes87350
+Node: Top212
+Node: Introduction1035
+Node: Goals3571
+Node: Connection and Authentication6495
+Node: Password scrambling12733
+Node: Protocol14600
+Node: Entries Lines16685
+Node: File Modes17787
+Node: Filenames19325
+Node: File transmissions20632
+Node: Strings22190
+Node: Dates22873
+Node: Request intro23937
+Node: Requests24957
+Node: Response intro60973
+Node: Response pathnames62340
+Node: Responses64251
+Node: Text tags80269
+Node: Example81983
+Node: Requirements85762
+Node: Obsolete86670
+Node: Protocol Notes87408
 
 End Tag Table
