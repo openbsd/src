@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.23 1997/07/13 23:12:09 angelos Exp $	*/
+/*	$OpenBSD: route.c,v 1.24 1997/11/16 18:42:35 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: route.c,v 1.23 1997/07/13 23:12:09 angelos Exp $";
+static char rcsid[] = "$OpenBSD: route.c,v 1.24 1997/11/16 18:42:35 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -957,7 +957,7 @@ netdone:
 		memcpy(&su->sin.sin_addr, hp->h_addr, hp->h_length);
 		return (1);
 	}
-	(void) fprintf(stderr, "%s: bad value\n", s);
+	(void) fprintf(stderr, "route: %s: bad value\n", s);
 	exit(1);
 }
 
