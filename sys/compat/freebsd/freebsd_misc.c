@@ -1,4 +1,4 @@
-/*	$OpenBSD: freebsd_misc.c,v 1.5 1997/11/13 18:35:24 deraadt Exp $	*/
+/*	$OpenBSD: freebsd_misc.c,v 1.6 1999/02/10 08:05:21 deraadt Exp $	*/
 /*	$NetBSD: freebsd_misc.c,v 1.2 1996/05/03 17:03:10 christos Exp $	*/
 
 /*
@@ -94,4 +94,16 @@ freebsd_sys_poll2(p, v, retval)
 	register_t *retval;
 {
 	return (sys_poll(p, v, retval));
+}
+
+/*
+ * Our madvise is currently dead (always returns EOPNOTSUPP).
+ */
+int
+freebsd_sys_madvise(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	return (0);
 }
