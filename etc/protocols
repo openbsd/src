@@ -1,7 +1,7 @@
 #
 # Internet (IP) protocols
 #
-#	$OpenBSD: protocols,v 1.20 2003/12/17 21:36:17 mcbride Exp $
+#	$OpenBSD: protocols,v 1.21 2004/05/07 16:27:23 henning Exp $
 #
 # Updated based on RFC 1340, Assigned Numbers (July 1992).
 # See also http://www.iana.org/assignments/protocol-numbers
@@ -106,7 +106,6 @@ etherip	97	ETHERIP		# Ethernet-within-IP Encapsulation
 encap	98	ENCAP		# Yet Another IP encapsulation
 any	99	any		# private encryption scheme
 gmtp	100	GMTP		# GMTP
-ifmp	101	IFMP		# Ipsilon Flow Management Protocol
 ifmp	101	IFMP		# Ipsilon Flow Management Protocol
 pnni	102	PNNI		# PNNI over IP
 pim	103	PIM		# Protocol Independent Multicast
