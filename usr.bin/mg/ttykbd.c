@@ -43,6 +43,8 @@ ttykeymapinit()
 		dobindkey(map_table[0].p_map, "next-line", key_down);
 	if (key_beg)
 		dobindkey(map_table[0].p_map, "beginning-of-line", key_beg);
+	else if (key_home)
+		dobindkey(map_table[0].p_map, "beginning-of-line", key_home);
 	if (key_end)
 		dobindkey(map_table[0].p_map, "end-of-line", key_end);
 	if (key_npage)
