@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.4 2001/09/24 23:40:56 art Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.5 2001/09/24 23:51:12 art Exp $	*/
 /*	$NetBSD: rtld_start.S,v 1.5 2001/08/14 22:17:48 eeh Exp $	*/
 	
 /*
@@ -109,23 +109,19 @@ _dl_start:
 
 	ldx	[%l0], %l3		! argc = *sp
 	sllx	%l3, 3, %l3		! argc *= sizeof(long)
-
 	addx	%l0, 8, %o0		! argv = [sp + argc]
-
 	addx	%l0, 16, %o1		! envp = sp + 16 +
 	addx	%o1, %l3, %o1		!	+ argc
 
-	subx	%l0, ARGC, %o4		! dl_data = sp
-
-	mov	0, %o3			! dynp = 0
+	subx	%l0, DL_DATA_SIZE+ARGC, %o4 ! dl_data = sp
 
 	addx	%o4, (7*8), %l2
 	ldx	[%l2], %o2		! loff = dl_data[AUX_base];
 
 	call	_dl_boot		! _dl_boot(argv,envp,loff,dynp,dl_data)
-	 nop
+	 mov	0, %o3			! dynp = 0
 
-	add	%sp, 16, %sp		! restore stack
+	add	%sp, DL_DATA_SIZE, %sp		! restore stack
 	mov	%l1, %g1		! restore ps_strings
 
 	jmp	%o0
