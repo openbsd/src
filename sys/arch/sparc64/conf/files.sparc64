@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.6 2001/08/20 22:49:36 jason Exp $
+#	$OpenBSD: files.sparc64,v 1.7 2001/08/21 16:21:27 jason Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -13,6 +13,10 @@ attach mainbus at root
 device pcons
 attach pcons at mainbus
 file	arch/sparc64/dev/pcons.c		pcons needs-flag
+
+# Sun HME Ethernet controllers
+device	hme: ether, ifnet, mii, ifmedia
+file	dev/ic/hme.c			hme
 
 include "dev/sun/files.sun"
 include "dev/sbus/files.sbus"
