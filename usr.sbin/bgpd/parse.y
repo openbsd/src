@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.61 2004/02/26 09:53:58 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.62 2004/02/26 13:54:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -715,7 +715,7 @@ lookup(char *s)
 		{ "table",		TABLE},
 		{ "tcp",		TCP},
 		{ "to",			TO},
-		{ "transit-AS",		TRANSITAS},
+		{ "transit-AS",		TRANSITAS}
 	};
 	const struct keywords	*p;
 
