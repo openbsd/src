@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.1 1997/02/26 03:06:53 downsj Exp $	*/
+/*	$OpenBSD: misc.c,v 1.2 1997/06/30 06:06:00 deraadt Exp $	*/
 
  /*
   * Misc routines that are used by tcpd and by tcpdchk.
@@ -10,7 +10,7 @@
 #if 0
 static char sccsic[] = "@(#) misc.c 1.2 96/02/11 17:01:29";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.1 1997/02/26 03:06:53 downsj Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.2 1997/06/30 06:06:00 deraadt Exp $";
 #endif
 #endif
 
@@ -69,7 +69,7 @@ int     delimiter;
 
 /* dot_quad_addr - convert dotted quad to internal form */
 
-unsigned long dot_quad_addr(str)
+in_addr_t dot_quad_addr(str)
 char   *str;
 {
     int     in_run = 0;
