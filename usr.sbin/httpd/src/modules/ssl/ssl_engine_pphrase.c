@@ -284,13 +284,13 @@ void ssl_pphrase_Handle(server_rec *s, pool *p)
                 /*
                  * Ok, anything else now means a fatal error.
                  */
-                if (cpPassPhraseCur == NULL)
+                if (cpPassPhraseCur == NULL) {
                     ssl_log(pServ, SSL_LOG_ERROR|SSL_ADD_SSLERR, "Init: Private key not found");
                     if (sc->nPassPhraseDialogType == SSL_PPTYPE_BUILTIN) {
                         fprintf(stdout, "Apache:mod_ssl:Error: Private key not found.\n");
                         fprintf(stdout, "**Stopped\n");
                     }
-                else {
+                } else {
                     ssl_log(pServ, SSL_LOG_ERROR|SSL_ADD_SSLERR, "Init: Pass phrase incorrect");
                     if (sc->nPassPhraseDialogType == SSL_PPTYPE_BUILTIN) {
                         fprintf(stdout, "Apache:mod_ssl:Error: Pass phrase incorrect.\n");
