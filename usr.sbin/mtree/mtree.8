@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mtree.8,v 1.7 1997/07/18 05:46:13 millert Exp $
+.\"	$OpenBSD: mtree.8,v 1.8 1998/08/20 20:11:39 marc Exp $
 .\"	$NetBSD: mtree.8,v 1.4 1995/03/07 21:26:25 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -42,7 +42,7 @@
 .Nd map a directory hierarchy
 .Sh SYNOPSIS
 .Nm mtree
-.Op Fl cdeinrUux
+.Op Fl cdeinqrUux
 .Op Fl f Ar spec
 .Op Fl K Ar keywords
 .Op Fl k Ar keywords
@@ -94,6 +94,11 @@ option.
 Use the file hierarchy rooted in
 .Ar path  ,
 instead of the current directory.
+.It Fl q
+Quiet mode.  Do not complain when a
+.Sq missing
+directory can not be created because it is already exists.  This occurs
+when the directory is a symbolic link.
 .It Fl r
 Remove any files in the file hierarchy that are not described in the
 specification.

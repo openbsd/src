@@ -1,4 +1,4 @@
-/*	$OpenBSD: verify.c,v 1.5 1997/07/18 05:49:04 millert Exp $	*/
+/*	$OpenBSD: verify.c,v 1.6 1998/08/20 20:11:42 marc Exp $	*/
 /*	$NetBSD: verify.c,v 1.10 1995/03/07 21:26:28 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: verify.c,v 1.5 1997/07/18 05:49:04 millert Exp $";
+static char rcsid[] = "$OpenBSD: verify.c,v 1.6 1998/08/20 20:11:42 marc Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,7 @@ static char rcsid[] = "$OpenBSD: verify.c,v 1.5 1997/07/18 05:49:04 millert Exp 
 
 extern int32_t crc_total;
 extern int ftsoptions;
-extern int dflag, eflag, rflag, sflag, uflag;
+extern int dflag, eflag, qflag, rflag, sflag, uflag;
 extern char fullpath[MAXPATHLEN];
 
 static NODE *root;
@@ -169,8 +169,16 @@ miss(p, tail)
 		if (p->type != F_DIR && (dflag || p->flags & F_VISIT))
 			continue;
 		(void)strcpy(tail, p->name);
-		if (!(p->flags & F_VISIT))
-			(void)printf("missing: %s", path);
+		if (!(p->flags & F_VISIT)) {
+			/* Don't print missing message if file exists as a
+			   symbolic link and the -q flag is set. */
+			struct stat statbuf;
+
+			if (qflag && stat(path, &statbuf) == 0)
+				p->flags |= F_VISIT;
+			else
+				(void)printf("missing: %s", path);
+		}
 		if (p->type != F_DIR) {
 			putchar('\n');
 			continue;

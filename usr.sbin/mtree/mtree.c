@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtree.c,v 1.7 1997/07/18 05:49:03 millert Exp $	*/
+/*	$OpenBSD: mtree.c,v 1.8 1998/08/20 20:11:41 marc Exp $	*/
 /*	$NetBSD: mtree.c,v 1.7 1996/09/05 23:29:22 thorpej Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: mtree.c,v 1.7 1997/07/18 05:49:03 millert Exp $";
+static char rcsid[] = "$OpenBSD: mtree.c,v 1.8 1998/08/20 20:11:41 marc Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,7 @@ static char rcsid[] = "$OpenBSD: mtree.c,v 1.7 1997/07/18 05:49:03 millert Exp $
 extern u_int32_t crc_total;
 
 int ftsoptions = FTS_PHYSICAL;
-int cflag, dflag, eflag, iflag, nflag, rflag, sflag, tflag, uflag, Uflag;
+int cflag, dflag, eflag, iflag, nflag, qflag, rflag, sflag, tflag, uflag, Uflag;
 u_int keys;
 char fullpath[MAXPATHLEN];
 
@@ -79,7 +79,7 @@ main(argc, argv)
 
 	dir = NULL;
 	keys = KEYDEFAULT;
-	while ((ch = getopt(argc, argv, "cdef:iK:k:np:rs:tUux")) != -1)
+	while ((ch = getopt(argc, argv, "cdef:iK:k:np:qrs:tUux")) != -1)
 		switch((char)ch) {
 		case 'c':
 			cflag = 1;
@@ -113,6 +113,9 @@ main(argc, argv)
 			break;
 		case 'p':
 			dir = optarg;
+			break;
+		case 'q':
+			qflag = 1;
 			break;
 		case 'r':
 			rflag = 1;
