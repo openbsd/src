@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.12 2002/06/11 06:53:03 fgsch Exp $	*/
+/*	$OpenBSD: creator.c,v 1.13 2002/07/25 19:04:43 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -97,7 +97,6 @@ void
 creator_attach(struct creator_softc *sc)
 {
 	struct wsemuldisplaydev_attach_args waa;
-	long defattr;
 	char *model;
 	int btype;
 
@@ -140,10 +139,10 @@ creator_attach(struct creator_softc *sc)
 	creator_stdscreen.nrows = sc->sc_rasops.ri_rows;
 	creator_stdscreen.ncols = sc->sc_rasops.ri_cols;
 	creator_stdscreen.textops = &sc->sc_rasops.ri_ops;
-	sc->sc_rasops.ri_ops.alloc_attr(&sc->sc_rasops, 0, 0, 0, &defattr);
 
 	if (sc->sc_console) {
 		int *ccolp, *crowp;
+		long defattr;
 
 		if (romgetcursoraddr(&crowp, &ccolp))
 			ccolp = crowp = NULL;
@@ -152,6 +151,14 @@ creator_attach(struct creator_softc *sc)
 		if (crowp != NULL)
 			sc->sc_rasops.ri_crow = *crowp;
 
+		/* fix color choice */
+		wscol_white = 0;
+		wscol_black = 255;
+		wskernel_bg = 0;
+		wskernel_fg = 255;
+
+		sc->sc_rasops.ri_ops.alloc_attr(&sc->sc_rasops,
+		    0, 0, 0, &defattr);
 		wsdisplay_cnattach(&creator_stdscreen, &sc->sc_rasops,
 		    sc->sc_rasops.ri_ccol, sc->sc_rasops.ri_crow, defattr);
 	}
@@ -176,7 +183,7 @@ creator_ioctl(v, cmd, data, flags, p)
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		*(u_int *)data = WSDISPLAY_TYPE_SUNFFB;
+		*(u_int *)data = WSDISPLAY_TYPE_SUN24;
 		break;
 	case WSDISPLAYIO_SMODE:
 		sc->sc_mode = *(u_int *)data;

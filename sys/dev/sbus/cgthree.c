@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.18 2002/06/03 02:32:06 jason Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.19 2002/07/25 19:04:46 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -301,7 +301,7 @@ cgthreeattach(parent, self, aux)
 	cgthree_stdscreen.ncols = sc->sc_rasops.ri_cols;
 	cgthree_stdscreen.textops = &sc->sc_rasops.ri_ops;
 	sc->sc_rasops.ri_ops.alloc_attr(&sc->sc_rasops,
-	    WSCOL_WHITE, WSCOL_BLACK, WSATTR_WSCOLORS, &defattr);
+	    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, &defattr);
 
 	printf("\n");
 
@@ -417,7 +417,7 @@ cgthree_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	*curyp = 0;
 	*curxp = 0;
 	sc->sc_rasops.ri_ops.alloc_attr(&sc->sc_rasops,
-	    WSCOL_WHITE, WSCOL_BLACK, WSATTR_WSCOLORS, attrp);
+	    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, attrp);
 	sc->sc_nscreens++;
 	return (0);
 }

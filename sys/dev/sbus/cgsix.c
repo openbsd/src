@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.21 2002/06/03 02:32:06 jason Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.22 2002/07/25 19:04:46 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -365,7 +365,7 @@ cgsixattach(parent, self, aux)
 	cgsix_stdscreen.ncols = sc->sc_rasops.ri_cols;
 	cgsix_stdscreen.textops = &sc->sc_rasops.ri_ops;
 	sc->sc_rasops.ri_ops.alloc_attr(&sc->sc_rasops,
-	    WSCOL_WHITE, WSCOL_BLACK, WSATTR_WSCOLORS, &defattr);
+	    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, &defattr);
 
 	printf("\n");
 
@@ -373,7 +373,7 @@ cgsixattach(parent, self, aux)
 		int *ccolp, *crowp;
 
 		cgsix_setcolor(sc, WSCOL_BLACK, 0, 0, 0);
-		cgsix_setcolor(sc, 255, 255, 255, 255);
+		cgsix_setcolor(sc, 255, 0, 0, 0);
 		cgsix_setcolor(sc, WSCOL_RED, 255, 0, 0);
 		cgsix_setcolor(sc, WSCOL_GREEN, 0, 255, 0);
 		cgsix_setcolor(sc, WSCOL_BROWN, 154, 85, 46);
@@ -489,7 +489,7 @@ cgsix_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	*curyp = 0;
 	*curxp = 0;
 	sc->sc_rasops.ri_ops.alloc_attr(&sc->sc_rasops,
-	    WSCOL_WHITE, WSCOL_BLACK, WSATTR_WSCOLORS, attrp);
+	    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, attrp);
 	sc->sc_nscreens++;
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwtwo.c,v 1.1 2002/06/04 19:42:53 jason Exp $	*/
+/*	$OpenBSD: bwtwo.c,v 1.2 2002/07/25 19:04:46 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -304,7 +304,7 @@ bwtwo_ioctl(v, cmd, data, flags, p)
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		*(u_int *)data = WSDISPLAY_TYPE_UNKNOWN;
+		*(u_int *)data = WSDISPLAY_TYPE_SUNBW;
 		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (void *)data;
@@ -319,7 +319,7 @@ bwtwo_ioctl(v, cmd, data, flags, p)
 
 	case WSDISPLAYIO_GETCMAP:
 	case WSDISPLAYIO_PUTCMAP:
-		return (-1);
+		break;
 
 	case WSDISPLAYIO_SVIDEO:
 	case WSDISPLAYIO_GVIDEO:
