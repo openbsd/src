@@ -1,4 +1,4 @@
-/*	$OpenBSD: sram.c,v 1.13 2004/07/02 17:37:16 miod Exp $ */
+/*	$OpenBSD: sram.c,v 1.14 2004/07/02 18:00:50 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -216,7 +216,7 @@ srammmap(dev, off, prot)
 		return (-1);
 
 	/* allow access only in RAM */
-	if (off > sc->sc_len)
+	if (off < 0 || off > sc->sc_len)
 		return (-1);
 	return (m68k_btop(sc->sc_paddr + off));
 }
