@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.20 2001/09/19 02:18:50 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.21 2001/09/20 04:12:07 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -216,6 +216,7 @@ std)M console	c 0 0 600
 	M kbd		c 29 0 666
 	M mem		c 3 0 640 kmem
 	M kmem		c 3 1 640 kmem
+	M ksyms		c 76 0 640 kmem
 	M drum		c 7 0 640 kmem;;
 mouse*)name=${i##mouse-}
 	if [ ! -c $name ]; then
