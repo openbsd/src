@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgrindefs.c,v 1.6 2003/02/19 07:38:50 deraadt Exp $	*/
+/*	$OpenBSD: vgrindefs.c,v 1.7 2003/04/26 03:35:15 deraadt Exp $	*/
 /*	$NetBSD: vgrindefs.c,v 1.5 1994/12/20 12:05:29 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vgrindefs.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: vgrindefs.c,v 1.6 2003/02/19 07:38:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: vgrindefs.c,v 1.7 2003/04/26 03:35:15 deraadt Exp $";
 #endif /* not lint */
 
 #define	BUFSIZ	1024
@@ -166,7 +166,7 @@ tnchktc(void)
 		write(2, "Vgrind entry too long\n", 23);
 		q[BUFSIZ - (p-tbuf)] = 0;
 	}
-	strcpy(p, q+1);
+	strlcpy(p, q+1, l);
 	tbuf = holdtbuf;
 	return(1);
 }
