@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmu.h,v 1.23 2003/10/13 18:45:16 miod Exp $ */
+/*	$OpenBSD: mmu.h,v 1.24 2003/11/08 21:45:18 miod Exp $ */
 
 /*
  * This file bears almost no resemblance to the original m68k file,
@@ -230,7 +230,18 @@ typedef	u_int32_t	pt_ind_entry_t;
 #define DMA_CACHE_SYNC_INVAL	0x2
 #define DMA_CACHE_INV		0x3
 
-pt_entry_t invalidate_pte(pt_entry_t *);
+static pt_entry_t invalidate_pte(pt_entry_t *);
+static __inline__ pt_entry_t
+invalidate_pte(pt_entry_t *pte)
+{
+	pt_entry_t oldpte;
+
+	oldpte = PG_NV;
+	__asm__ __volatile__
+	    ("xmem %0, %2, r0" : "=r"(oldpte) : "0"(oldpte), "r"(pte));
+	__asm__ __volatile__ ("tb1 0, r0, 0");
+	return oldpte;
+}
 
 extern vaddr_t kmapva;
 

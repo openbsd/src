@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_asm_routines.S,v 1.26 2003/11/03 06:54:26 david Exp $	*/
+/* $OpenBSD: locore_asm_routines.S,v 1.27 2003/11/08 21:45:19 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -1540,20 +1540,6 @@ ENTRY(longjmp)
 	ld	r31,r2,18*4
 	jmp.n	r1
 	 or	r2,r0,1
-
-/*
- *       invalidate_pte(pte)
- *
- *       This function will invalidate specified pte indivisibly
- *       to avoid the write-back of used-bit and/or modify-bit into
- *       that pte.  It also returns the pte found in the table.
- */
-ENTRY(invalidate_pte)
-	or	r3,r0,r0	| r3 = PG_NV
-	xmem	r3,r2,r0	| exchange with *pte
-	FLUSH_PIPELINE
-	jmp.n	r1
-	 or	r2,r3,r0	| return previous value
 
 #ifdef DDB
 ENTRY(db_flush_pipeline)
