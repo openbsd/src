@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcd.c,v 1.20 1997/08/08 21:47:02 niklas Exp $ */
+/*	$OpenBSD: mcd.c,v 1.21 1997/09/29 12:01:27 mickey Exp $ */
 /*	$NetBSD: mcd.c,v 1.49 1996/05/12 23:53:11 mycroft Exp $	*/
 
 /*
@@ -56,7 +56,6 @@
 
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
