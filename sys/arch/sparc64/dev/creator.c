@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.26 2003/06/17 17:35:40 miod Exp $	*/
+/*	$OpenBSD: creator.c,v 1.27 2003/06/20 19:54:37 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -67,6 +67,7 @@ int	creator_alloc_screen(void *, const struct wsscreen_descr *, void **,
 void	creator_free_screen(void *, void *);
 int	creator_show_screen(void *, void *, int, void (*cb)(void *, int, int),
 	    void *);
+void	creator_burner(void *, u_int, u_int);
 paddr_t creator_mmap(void *, off_t, int);
 void	creator_ras_fifo_wait(struct creator_softc *, int);
 void	creator_ras_wait(struct creator_softc *);
@@ -90,7 +91,7 @@ struct wsdisplay_accessops creator_accessops = {
 	NULL,	/* load font */
 	NULL,	/* scrollback */
 	NULL,	/* getchar */
-	NULL,	/* burner */
+	creator_burner
 };
 
 struct cfdriver creator_cd = {
@@ -159,7 +160,7 @@ creator_attach(struct creator_softc *sc)
 	if (sc->sc_console) {
 		sc->sc_sunfb.sf_ro.ri_updatecursor = creator_ras_updatecursor;
 		fbwscons_console_init(&sc->sc_sunfb, &creator_stdscreen, -1,
-		    NULL);
+		    creator_burner);
 	}
 
 	waa.console = sc->sc_console;
@@ -425,6 +426,29 @@ creator_show_screen(v, cookie, waitok, cb, cbarg)
 	void *cbarg;
 {
 	return (0);
+}
+
+void
+creator_burner(void *v, u_int on, u_int flags)
+{
+	struct creator_softc *sc = v;
+	u_int32_t tgen;
+
+	DAC_WRITE(sc, FFB_DAC_TYPE, DAC_TYPE_BLANK);
+	tgen = DAC_READ(sc, FFB_DAC_VALUE);
+	if (on) {
+		tgen |= DAC_BLANK_VIDEO_ENABLE;
+		tgen &= ~(DAC_BLANK_HSYNC_DISABLE | DAC_BLANK_VSYNC_DISABLE);
+	} else {
+		tgen &= ~DAC_BLANK_VIDEO_ENABLE;
+#if 0 /* yields very strange results sometimes when unblanking... */
+		if (flags & WSDISPLAY_BURN_VBLANK)
+			tgen |= DAC_BLANK_HSYNC_DISABLE |
+			    DAC_BLANK_VSYNC_DISABLE;
+#endif
+	}
+	DAC_WRITE(sc, FFB_DAC_TYPE, DAC_TYPE_BLANK);
+	DAC_WRITE(sc, FFB_DAC_VALUE, tgen);
 }
 
 const struct creator_mappings {

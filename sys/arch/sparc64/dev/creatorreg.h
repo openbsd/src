@@ -1,4 +1,4 @@
-/*	$OpenBSD: creatorreg.h,v 1.7 2003/06/02 20:02:49 jason Exp $	*/
+/*	$OpenBSD: creatorreg.h,v 1.8 2003/06/20 19:54:37 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -313,3 +313,7 @@
 #define	DAC_TYPE2_CURSENAB	0x100	/* cursor enable */
 #define	DAC_TYPE2_CURSCMAP	0x102	/* set cursor colormap */
 #define	DAC_TYPE2_CURSPOS	0x104	/* set cursor position */
+
+#define	DAC_BLANK_VIDEO_ENABLE		0x00000001
+#define	DAC_BLANK_HSYNC_DISABLE		0x00000004
+#define	DAC_BLANK_VSYNC_DISABLE		0x00000008
