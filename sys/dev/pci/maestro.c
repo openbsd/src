@@ -1,4 +1,4 @@
-/*	$OpenBSD: maestro.c,v 1.7 2001/06/12 15:40:32 niklas Exp $	*/
+/*	$OpenBSD: maestro.c,v 1.8 2001/08/02 11:16:29 espie Exp $	*/
 /* $FreeBSD: /c/ncvs/src/sys/dev/sound/pci/maestro.c,v 1.3 2000/11/21 12:22:11 julian Exp $ */
 /*
  * FreeBSD's ESS Agogo/Maestro driver 
@@ -613,7 +613,7 @@ maestro_mappage(self, mem, off, prot)
 	if (off < 0)
 		return -1;
 	return bus_dmamem_mmap(sc->dmat, &sc->dmaseg, 1,
-	    (caddr_t)mem - sc->dmabase + off, prot, BUS_DMA_WAITOK);
+		off, prot, BUS_DMA_WAITOK);
 }
 
 int
@@ -826,8 +826,11 @@ maestro_open(hdl, flags)
 	struct maestro_softc *sc = (struct maestro_softc *)hdl;
 	DPRINTF(("%s: open(%d)\n", sc->dev.dv_xname, flags));
 
+/* XXX work around VM brokeness */
+#if 0
 	if ((OFLAGS(flags) & O_ACCMODE) != O_WRONLY)
 		return (EINVAL);
+#endif
 	sc->play.mode = MAESTRO_PLAY;
 	sc->record.mode = 0;
 #ifdef AUDIO_DEBUG
