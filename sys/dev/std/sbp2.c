@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbp2.c,v 1.3 2002/12/30 11:48:34 tdeval Exp $	*/
+/*	$OpenBSD: sbp2.c,v 1.4 2003/01/08 06:33:38 tdeval Exp $	*/
 
 /*
  * Copyright (c) 2002 Thierry Deval.  All rights reserved.
@@ -745,7 +745,8 @@ sbp2_status_resp(struct ieee1394_abuf *ab, int rcode)
 			if (elm == NULL) {
 				DPRINTF(("%s: no element found for hash"
 				    " 0x%08x\n", __func__,
-				    (u_int32_t)(csr & 0xFFFFFFFC)));
+				    (u_int32_t)(csr >> (SBP2_NODE_SHIFT -
+				     8 * sizeof(u_int32_t)))));
 				FREE(cmd_status, M_1394DATA);
 				MPRINTF("FREE(1394DATA)", cmd_status);
 				cmd_status = NULL;	/* XXX */
@@ -1044,7 +1045,6 @@ sbp2_command_send(struct ieee1394_abuf *ab, int rcode)
 	    M_1394DATA, M_WAITOK);
 	MPRINTF("MALLOC(1394DATA)", cmd_ab);
 	bcopy(ab, cmd_ab, sizeof(*cmd_ab));
-
 
 	cmd_ab->ab_retlen = 0;
 	cmd_ab->ab_cb = NULL;
