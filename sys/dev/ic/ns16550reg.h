@@ -1,4 +1,4 @@
-/*	$OpenBSD: ns16550reg.h,v 1.3 1998/02/23 11:41:26 downsj Exp $	*/
+/*	$OpenBSD: ns16550reg.h,v 1.4 1998/05/14 05:56:21 downsj Exp $	*/
 /*	$NetBSD: ns16550reg.h,v 1.4 1994/10/27 04:18:43 cgd Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
  */
 
 /*
- * NS16550 UART registers
+ * NS16550 (and above) UART registers
  */
 
 #define	com_data	0	/* data register (R/W) */
@@ -46,6 +46,7 @@
 #define	com_ier		1	/* interrupt enable (W) */
 #define	com_iir		2	/* interrupt identification (R) */
 #define	com_fifo	2	/* FIFO control (W) */
+#define com_fctl	2	/* extended FIFO control (W) */
 #define com_efr		2	/* extended features register (W) */
 #define	com_lctl	3	/* line control register (R/W) */
 #define	com_cfcr	3	/* line control register (R/W) */
