@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.3 2001/04/11 05:47:51 deraadt Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.4 2001/04/12 04:51:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -98,6 +98,17 @@ brgphy_attach(parent, self, aux)
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
+	char *model;
+
+	if (MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5400 ||
+	    MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_BCM5400)
+		model = MII_STR_BROADCOM_BCM5400;
+	if (MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_BCM5401)
+		model = MII_STR_BROADCOM_BCM5401;
+	if (MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_BCM5411)
+		model = MII_STR_BROADCOM_BCM5411;
+
+	printf(": %s, rev. %d\n", model, MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
