@@ -82,7 +82,7 @@ uLongf *c;
   s->read = s->write = s->window;
   if (s->checkfn != Z_NULL)
     z->adler = s->check = (*s->checkfn)(0L, (const Bytef *)Z_NULL, 0);
-  Tracev((stderr, "inflate:   blocks reset\n"));
+  Tracev(("inflate:   blocks reset\n"));
 }
 
 
@@ -111,7 +111,7 @@ uInt w;
   s->end = s->window + w;
   s->checkfn = c;
   s->mode = TYPE;
-  Tracev((stderr, "inflate:   blocks allocated\n"));
+  Tracev(("inflate:   blocks allocated\n"));
   inflate_blocks_reset(s, z, Z_NULL);
   return s;
 }
@@ -143,16 +143,14 @@ int r;
       switch (t >> 1)
       {
         case 0:                         /* stored */
-          Tracev((stderr, "inflate:     stored block%s\n",
-                 s->last ? " (last)" : ""));
+          Tracev(("inflate:     stored block%s\n", s->last ? " (last)" : ""));
           DUMPBITS(3)
           t = k & 7;                    /* go to byte boundary */
           DUMPBITS(t)
           s->mode = LENS;               /* get length of stored block */
           break;
         case 1:                         /* fixed */
-          Tracev((stderr, "inflate:     fixed codes block%s\n",
-                 s->last ? " (last)" : ""));
+          Tracev(("inflate:     fixed codes block%s\n", s->last?" (last)":""));
           {
             uInt bl, bd;
             inflate_huft *tl, *td;
@@ -169,8 +167,7 @@ int r;
           s->mode = CODES;
           break;
         case 2:                         /* dynamic */
-          Tracev((stderr, "inflate:     dynamic codes block%s\n",
-                 s->last ? " (last)" : ""));
+          Tracev(("inflate:     dynamic codes block%s\n", s->last?" (last)":""));
           DUMPBITS(3)
           s->mode = TABLE;
           break;
@@ -193,7 +190,7 @@ int r;
       }
       s->sub.left = (uInt)b & 0xffff;
       b = k = 0;                      /* dump bits */
-      Tracev((stderr, "inflate:       stored length %u\n", s->sub.left));
+      Tracev(("inflate:       stored length %u\n", s->sub.left));
       s->mode = s->sub.left ? STORED : (s->last ? DRY : TYPE);
       break;
     case STORED:
@@ -208,7 +205,7 @@ int r;
       q += t;  m -= t;
       if ((s->sub.left -= t) != 0)
         break;
-      Tracev((stderr, "inflate:       stored end, %lu total out\n",
+      Tracev(("inflate:       stored end, %lu total out\n",
               z->total_out + (q >= s->read ? q - s->read :
               (s->end - s->read) + (q - s->window))));
       s->mode = s->last ? DRY : TYPE;
@@ -233,7 +230,7 @@ int r;
       }
       DUMPBITS(14)
       s->sub.trees.index = 0;
-      Tracev((stderr, "inflate:       table sizes ok\n"));
+      Tracev(("inflate:       table sizes ok\n"));
       s->mode = BTREE;
     case BTREE:
       while (s->sub.trees.index < 4 + (s->sub.trees.table >> 10))
@@ -256,7 +253,7 @@ int r;
         LEAVE
       }
       s->sub.trees.index = 0;
-      Tracev((stderr, "inflate:       bits tree ok\n"));
+      Tracev(("inflate:       bits tree ok\n"));
       s->mode = DTREE;
     case DTREE:
       while (t = s->sub.trees.table,
@@ -321,7 +318,7 @@ int r;
           r = t;
           LEAVE
         }
-        Tracev((stderr, "inflate:       trees ok\n"));
+        Tracev(("inflate:       trees ok\n"));
         if ((c = inflate_codes_new(bl, bd, tl, td, z)) == Z_NULL)
         {
           r = Z_MEM_ERROR;
@@ -337,7 +334,7 @@ int r;
       r = Z_OK;
       inflate_codes_free(s->sub.decode.codes, z);
       LOAD
-      Tracev((stderr, "inflate:       codes end, %lu total out\n",
+      Tracev(("inflate:       codes end, %lu total out\n",
               z->total_out + (q >= s->read ? q - s->read :
               (s->end - s->read) + (q - s->window))));
       if (!s->last)
@@ -372,7 +369,7 @@ z_streamp z;
   ZFREE(z, s->window);
   ZFREE(z, s->hufts);
   ZFREE(z, s);
-  Tracev((stderr, "inflate:   blocks freed\n"));
+  Tracev(("inflate:   blocks freed\n"));
   return Z_OK;
 }
 

@@ -60,7 +60,7 @@ z_streamp z;
     if ((e = (t = tl + ((uInt)b & ml))->exop) == 0)
     {
       DUMPBITS(t->bits)
-      Tracevv((stderr, t->base >= 0x20 && t->base < 0x7f ?
+      Tracevv((t->base >= 0x20 && t->base < 0x7f ?
                 "inflate:         * literal '%c'\n" :
                 "inflate:         * literal 0x%02x\n", t->base));
       *q++ = (Byte)t->base;
@@ -75,7 +75,7 @@ z_streamp z;
         e &= 15;
         c = t->base + ((uInt)b & inflate_mask[e]);
         DUMPBITS(e)
-        Tracevv((stderr, "inflate:         * length %u\n", c));
+        Tracevv(("inflate:         * length %u\n", c));
 
         /* decode distance base of block to copy */
         GRABBITS(15);           /* max bits for distance code */
@@ -89,7 +89,7 @@ z_streamp z;
             GRABBITS(e)         /* get extra bits (up to 13) */
             d = t->base + ((uInt)b & inflate_mask[e]);
             DUMPBITS(e)
-            Tracevv((stderr, "inflate:         * distance %u\n", d));
+            Tracevv(("inflate:         * distance %u\n", d));
 
             /* do the copy */
             m -= c;
@@ -138,7 +138,7 @@ z_streamp z;
         if ((e = (t += ((uInt)b & inflate_mask[e]))->exop) == 0)
         {
           DUMPBITS(t->bits)
-          Tracevv((stderr, t->base >= 0x20 && t->base < 0x7f ?
+          Tracevv((t->base >= 0x20 && t->base < 0x7f ?
                     "inflate:         * literal '%c'\n" :
                     "inflate:         * literal 0x%02x\n", t->base));
           *q++ = (Byte)t->base;
@@ -148,7 +148,7 @@ z_streamp z;
       }
       else if (e & 32)
       {
-        Tracevv((stderr, "inflate:         * end of block\n"));
+        Tracevv(("inflate:         * end of block\n"));
         UNGRAB
         UPDATE
         return Z_STREAM_END;

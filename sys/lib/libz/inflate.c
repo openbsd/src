@@ -59,7 +59,7 @@ z_streamp z;
   z->msg = Z_NULL;
   z->state->mode = z->state->nowrap ? BLOCKS : METHOD;
   inflate_blocks_reset(z->state->blocks, z, Z_NULL);
-  Tracev((stderr, "inflate: reset\n"));
+  Tracev(("inflate: reset\n"));
   return Z_OK;
 }
 
@@ -73,7 +73,7 @@ z_streamp z;
     inflate_blocks_free(z->state->blocks, z);
   ZFREE(z, z->state);
   z->state = Z_NULL;
-  Tracev((stderr, "inflate: end\n"));
+  Tracev(("inflate: end\n"));
   return Z_OK;
 }
 
@@ -127,7 +127,7 @@ int stream_size;
     inflateEnd(z);
     return Z_MEM_ERROR;
   }
-  Tracev((stderr, "inflate: allocated\n"));
+  Tracev(("inflate: allocated\n"));
 
   /* reset state */
   inflateReset(z);
@@ -187,7 +187,7 @@ int f;
         z->state->sub.marker = 5;       /* can't try inflateSync */
         break;
       }
-      Tracev((stderr, "inflate: zlib header ok\n"));
+      Tracev(("inflate: zlib header ok\n"));
       if (!(b & PRESET_DICT))
       {
         z->state->mode = BLOCKS;
@@ -260,7 +260,7 @@ int f;
         z->state->sub.marker = 5;       /* can't try inflateSync */
         break;
       }
-      Tracev((stderr, "inflate: zlib check ok\n"));
+      Tracev(("inflate: zlib check ok\n"));
       z->state->mode = DONE;
     case DONE:
       return Z_STREAM_END;

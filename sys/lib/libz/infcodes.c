@@ -72,7 +72,7 @@ z_streamp z;
     c->dbits = (Byte)bd;
     c->ltree = tl;
     c->dtree = td;
-    Tracev((stderr, "inflate:       codes new\n"));
+    Tracev(("inflate:       codes new\n"));
   }
   return c;
 }
@@ -127,7 +127,7 @@ int r;
       if (e == 0)               /* literal */
       {
         c->sub.lit = t->base;
-        Tracevv((stderr, t->base >= 0x20 && t->base < 0x7f ?
+        Tracevv((t->base >= 0x20 && t->base < 0x7f ?
                  "inflate:         literal '%c'\n" :
                  "inflate:         literal 0x%02x\n", t->base));
         c->mode = LIT;
@@ -148,7 +148,7 @@ int r;
       }
       if (e & 32)               /* end of block */
       {
-        Tracevv((stderr, "inflate:         end of block\n"));
+        Tracevv(("inflate:         end of block\n"));
         c->mode = WASH;
         break;
       }
@@ -163,7 +163,7 @@ int r;
       DUMPBITS(j)
       c->sub.code.need = c->dbits;
       c->sub.code.tree = c->dtree;
-      Tracevv((stderr, "inflate:         length %u\n", c->len));
+      Tracevv(("inflate:         length %u\n", c->len));
       c->mode = DIST;
     case DIST:          /* i: get distance next */
       j = c->sub.code.need;
@@ -193,7 +193,7 @@ int r;
       NEEDBITS(j)
       c->sub.copy.dist += (uInt)b & inflate_mask[j];
       DUMPBITS(j)
-      Tracevv((stderr, "inflate:         distance %u\n", c->sub.copy.dist));
+      Tracevv(("inflate:         distance %u\n", c->sub.copy.dist));
       c->mode = COPY;
     case COPY:          /* o: copying bytes in window, waiting for space */
 #ifndef __TURBOC__ /* Turbo C bug for following expression */
@@ -253,5 +253,5 @@ inflate_codes_statef *c;
 z_streamp z;
 {
   ZFREE(z, c);
-  Tracev((stderr, "inflate:       codes free\n"));
+  Tracev(("inflate:       codes free\n"));
 }

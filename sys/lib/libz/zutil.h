@@ -8,7 +8,7 @@
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: zutil.h,v 1.7 1998/09/08 04:07:49 millert Exp $ */
+/* @(#) $Id: zutil.h,v 1.8 1999/02/14 19:47:37 mickey Exp $ */
 
 #ifndef _Z_UTIL_H
 #define _Z_UTIL_H
@@ -192,15 +192,14 @@ extern const char *z_errmsg[10]; /* indexed by 2-zlib_error */
 
 /* Diagnostic functions */
 #ifdef DEBUG
-#  include <stdio.h>
    extern int z_verbose;
    extern void z_error    OF((char *m));
 #  define Assert(cond,msg) {if(!(cond)) z_error(msg);}
-#  define Trace(x) {if (z_verbose>=0) fprintf x ;}
-#  define Tracev(x) {if (z_verbose>0) fprintf x ;}
-#  define Tracevv(x) {if (z_verbose>1) fprintf x ;}
-#  define Tracec(c,x) {if (z_verbose>0 && (c)) fprintf x ;}
-#  define Tracecv(c,x) {if (z_verbose>1 && (c)) fprintf x ;}
+#  define Trace(x) {if (z_verbose>=0) printf x ;}
+#  define Tracev(x) {if (z_verbose>0) printf x ;}
+#  define Tracevv(x) {if (z_verbose>1) printf x ;}
+#  define Tracec(c,x) {if (z_verbose>0 && (c)) printf x ;}
+#  define Tracecv(c,x) {if (z_verbose>1 && (c)) printf x ;}
 #else
 #  define Assert(cond,msg)
 #  define Trace(x)
