@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.11 1997/01/17 23:13:57 pefo Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.12 1997/03/12 19:16:52 pefo Exp $	*/
 /*	$NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp $	*/
 
 /*-
@@ -67,6 +67,7 @@
 
 #include <machine/cpu.h>
 #include <machine/pio.h>
+#include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/display.h>
 #include <machine/pccons.h>
@@ -815,7 +816,12 @@ pccnprobe(cp)
 
 	/* initialize required fields */
 	cp->cn_dev = makedev(maj, 0);
-	cp->cn_pri = CN_INTERNAL;
+	if(cputype == ALGOR_P4032) {
+		cp->cn_pri = CN_DEAD;	/* XXX For now... */
+	}
+	else {
+		cp->cn_pri = CN_INTERNAL;
+	}
 }
 
 /* ARGSUSED */
@@ -852,12 +858,12 @@ pccninit(cp)
 		break;
 
 	case DESKSTATION_RPC44:
-		mono_base += isa_io_base;
-		mono_buf += isa_mem_base;
-		cga_base += isa_io_base;
-		cga_buf = isa_mem_base + 0xa0000;
-		kbd_cmdp = isa_io_base + 0x64;
-		kbd_datap = isa_io_base + 0x60;
+		mono_base += arc_bus.isa_io_base;
+		mono_buf += arc_bus.isa_mem_base;
+		cga_base += arc_bus.isa_io_base;
+		cga_buf = arc_bus.isa_mem_base + 0xa0000;
+		kbd_cmdp = arc_bus.isa_io_base + 0x64;
+		kbd_datap = arc_bus.isa_io_base + 0x60;
 		kbc_put8042cmd(CMDBYTE);		/* Want XT codes.. */
 		break;
 	}

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.11 1996/11/28 23:35:39 niklas Exp $
+#	$OpenBSD: GENERIC,v 1.12 1997/03/12 19:16:48 pefo Exp $
 #
 #	Generic configuration file for MIPS R4x00 ARC Systems
 #
@@ -71,8 +71,14 @@ config		bsd	swap generic
 mainbus0	at root
 cpu*		at mainbus0
 
-pica*		at mainbus0
-isabr*		at mainbus0
+#### Main local buses
+
+pica*		at mainbus0	# ACER Pica systems local bus.
+algor*		at mainbus0	# Algorithmics local bus.
+isabr*		at mainbus0	# ISA Bus bridge (std ISA bus).
+pbcpcibr*	at mainbus0	# PCI Bus bridge.
+
+#### PICA bus devices
 
 clock0		at pica?
 pc0		at pica?
@@ -88,39 +94,49 @@ fd*		at fdc? drive ?
 asc0		at pica?
 scsibus* 	at asc?
 
-#
-#	ISA Bus.
-#
+#### Algor bus devices
 
-isa*	at isabr?
+clock0		at algor?
+com0		at algor?
+com1		at algor?
 
-clock0	at isa? port 0x70 irq 0
+#### PCI Bus
 
-pc0     at isa? port 0x60 irq 1         # generic PC console device
-com0	at isa? port 0x3f8 irq 4
-com1	at isa? port 0x2f8 irq 3
-com2	at isa? port 0x3e8 irq 4
-com3	at isa? port 0x2e8 irq 3
+pci*		at pbcpcibr?
 
-wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
-#wdc1	at isa? port 0x170 irq 15
-wd*	at wdc? drive ?
+ncr*		at pci? dev ? function ?
+scsibus* 	at ncr?
+de*		at pci? dev ? function ?
 
-atapibus* at wdc?
-acd*	at atapibus? drive?
+#### ISA Bus.
 
-lpt0	at isa? port 0x378 irq 7
-ep0	at isa? port ? irq ?           # 3C509 ethernet cards
-ed0     at isa? port 0x280 iomem 0xd0000 irq 9  # WD/SMC, 3C503, and NE[12]000
-ed1     at isa? port 0x250 iomem 0xd8000 irq 9  #   ethernet cards
-ed2     at isa? port 0x300 iomem 0xcc000 irq 10 #
+isa*		at isabr?
+
+clock0		at isa? port 0x70 irq 0
+
+pc0    		at isa? port 0x60 irq 1         # generic PC console device
+com0		at isa? port 0x3f8 irq 4
+com1		at isa? port 0x2f8 irq 3
+com2		at isa? port 0x3e8 irq 4
+com3		at isa? port 0x2e8 irq 3
+
+wdc0		at isa? port 0x1f0 irq 14	# ST506, ESDI, IDE controllers
+#wdc1		at isa? port 0x170 irq 15
+wd*		at wdc? drive ?
+
+atapibus*	at wdc?
+acd*		at atapibus? drive?
+
+lpt0		at isa? port 0x378 irq 7
+ep0		at isa? port ? irq ?           # 3C509 ethernet cards
+ed0    		at isa? port 0x280 iomem 0xd0000 irq 9  # WD/SMC, 3C503, NE[12]000
+ed1    		at isa? port 0x250 iomem 0xd8000 irq 9  #   ethernet cards
+ed2    		at isa? port 0x300 iomem 0xcc000 irq 10 #
 
 btl0		at isa? port 0x330 irq ? drq ?
 scsibus* 	at btl?
 
-#
-#	SCSI Bus devices
-#
+#### SCSI Bus devices
 
 sd*		at scsibus? target ? lun ?
 st*		at scsibus? target ? lun ?
@@ -129,7 +145,8 @@ ch*		at scsibus? target ? lun ?
 ss*		at scsibus? target ? lun ?
 uk*		at scsibus? target ? lun ?
 
-#
+#### PSEUDO Devices
+
 pseudo-device	loop		 1	# network loopback
 pseudo-device	bpfilter	 8	# packet filter ports
 pseudo-device	sl		 2	# serial-line IP ports

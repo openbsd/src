@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.4 1996/09/14 15:58:25 pefo Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.5 1997/03/12 19:16:56 pefo Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -251,7 +251,7 @@
 /*
  * The number of TLB entries and the first one that write random hits.
  */
-#define VMNUM_TLB_ENTRIES	48
+/*#define VMNUM_TLB_ENTRIES	48	XXX We never use this... */
 #define VMWIRED_ENTRIES	 	8
 
 /*
@@ -374,11 +374,11 @@ union cpuprid {
 #define	MIPS_R3IDT	0x07	/* IDT R3000 derivate		ISA I	*/
 #define	MIPS_R10000	0x09	/* MIPS R10000/T5 CPU		ISA IV  */
 #define	MIPS_R4200	0x0a	/* MIPS R4200 CPU (ICE)		ISA III */
-#define MIPS_UNKC1	0x0b	/* unnanounced product cpu	ISA III */
+#define MIPS_R4300	0x0b	/* NEC VR4300 CPU		ISA III */
 #define MIPS_UNKC2	0x0c	/* unnanounced product cpu	ISA III */
 #define	MIPS_R8000	0x10	/* MIPS R8000 Blackbird/TFP	ISA IV  */
 #define	MIPS_R4600	0x20	/* QED R4600 Orion		ISA III */
-#define	MIPS_R3SONY	0x21	/* Sony R3000 based CPU		ISA I   */
+#define	MIPS_R4700	0x21	/* QED R4700 Orion		ISA III */
 #define	MIPS_R3TOSH	0x22	/* Toshiba R3000 based CPU	ISA I	*/
 #define	MIPS_R3NKK	0x23	/* NKK R3000 based CPU		ISA I   */
 

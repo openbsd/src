@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.8 1997/02/15 17:40:21 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.9 1997/03/12 19:16:42 pefo Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -50,7 +50,7 @@
  *	v 1.1 89/07/10 14:27:41 nelson Exp  SPRITE (DECWRL)
  *
  *	from: @(#)locore.s	8.5 (Berkeley) 1/4/94
- *	$Id: locore.S,v 1.8 1997/02/15 17:40:21 mickey Exp $
+ *	$Id: locore.S,v 1.9 1997/03/12 19:16:42 pefo Exp $
  */
 
 /*
@@ -2005,8 +2005,9 @@ END(R4K_GetWIRED)
  *
  *	Flush the "random" entries from the TLB.
  *	Uses "wired" register to determine what register to start with.
+ *	Arg "tlbsize" is the number of entries to flush.
  *
- *	R4K_TLBFlush()
+ *	R4K_TLBFlush(tlbsize)
  *
  * Results:
  *	None.
@@ -2020,7 +2021,6 @@ LEAF(R4K_TLBFlush)
 	mfc0	v1, COP_0_STATUS_REG	# Save the status register.
 	mtc0	zero, COP_0_STATUS_REG	# Disable interrupts
 	mfc0	t1, COP_0_TLB_WIRED
-	li	t2, VMNUM_TLB_ENTRIES
 	li	v0, CACHED_MEMORY_ADDR	# invalid address
 	dmfc0	t0, COP_0_TLB_HI	# Save the PID
 
@@ -2029,7 +2029,7 @@ LEAF(R4K_TLBFlush)
 	dmtc0	zero, COP_0_TLB_LO1	# Zero out low entry1.
 	mtc0	zero, COP_0_TLB_PG_MASK	# Zero out mask entry.
 /*
- * Align the starting value (t1) and the upper bound (t2).
+ * Align the starting value (t1) and the upper bound (a0).
  */
 1:
 	mtc0	t1, COP_0_TLB_INDEX	# Set the index register.
@@ -2037,7 +2037,7 @@ LEAF(R4K_TLBFlush)
 	tlbwi				# Write the TLB entry.
 	nop
 	nop
-	bne	t1, t2, 1b
+	bne	t1, a0, 1b
 	nop
 
 	dmtc0	t0, COP_0_TLB_HI	# Restore the PID
@@ -2583,7 +2583,7 @@ LEAF(R4K_ConfigCache)
 	and	t1, 3
 	li	t2, 4096
 	sllv	t2, t2, t1
-	sw	t2, CpuPrimaryDataCacheSize
+	sw	t2, CpuPrimaryInstCacheSize
 	addiu	t2, -1
 	and	t2, ~(NBPG - 1)
 	sw	t2, CpuCacheAliasMask
@@ -2591,17 +2591,17 @@ LEAF(R4K_ConfigCache)
 	and	t2, v0, 0x20
 	srl	t2, t2, 1
 	addu	t2, t2, 16
-	sw	t2, CpuPrimaryDataCacheLSize
+	sw	t2, CpuPrimaryInstCacheLSize
 
-	srl	t1, v0, 6			# Get I cache size.
+	srl	t1, v0, 6			# Get D cache size.
 	and	t1, 3
 	li	t2, 4096
 	sllv	t2, t2, t1
-	sw	t2, CpuPrimaryInstCacheSize
+	sw	t2, CpuPrimaryDataCacheSize
 
 	and	t2, v0, 0x10
 	addu	t2, t2, 16
-	sw	t2, CpuPrimaryInstCacheLSize
+	sw	t2, CpuPrimaryDataCacheLSize
 	and	v1, 0xff00
 	li	t1, (MIPS_R4600 << 8)
 	li	t2, 1

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arc,v 1.11 1996/12/11 12:59:29 niklas Exp $
+#	$OpenBSD: files.arc,v 1.12 1997/03/12 19:16:49 pefo Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -47,17 +47,31 @@ file arch/arc/arc/cpu.c			cpu
 #	PICA bus autoconfiguration devices
 #
 device	pica {}
-attach	pica at mainbus			# 
+attach	pica at mainbus			# optional
 file	arch/arc/pica/picabus.c		pica
+
+#
+#	ALGOR bus autoconfiguration devices
+#
+device	algor {}
+attach	algor at mainbus		# optional
+file	arch/arc/algor/algorbus.c	algor
 
 #
 #	ISA Bus bridge
 #
 device	isabr {} : isabus
-attach	isabr at mainbus
+attach	isabr at mainbus		# optional
 file	arch/arc/isa/isabus.c		isabr
 
-#	Ethernet chip
+#
+#	PCI Bus bridge
+#
+device	pbcpcibr {} : pcibus
+attach	pbcpcibr at mainbus		# optional
+file	arch/arc/pci/pbcpcibus.c	pbcpcibr
+
+#	Ethernet chip on PICA bus
 device	sn
 attach	sn at pica: ifnet, ether
 file	arch/arc/dev/if_sn.c		sn	needs-count
@@ -67,12 +81,12 @@ include	"../../../scsi/files.scsi"
 major	{sd = 0}
 major	{cd = 3}
 
-#	Machine dependent SCSI interface driver
+#	Symbios 53C94 SCSI interface driver on PICA bus
 device	asc: scsi
 attach	asc at pica
 file	arch/arc/dev/asc.c		asc	needs-count
 
-#	Floppy disk controller
+#	Floppy disk controller on PICA bus
 device	fdc {drive = -1}
 attach	fdc at pica
 device	fd: disk
@@ -84,8 +98,8 @@ major	{fd = 7}
 #	Stock ISA bus support
 #
 define  pcmcia {}			# XXX dummy decl...
-define  pci {}				# XXX dummy decl...
 
+include	"../../../dev/pci/files.pci"
 include	"../../../dev/isa/files.isa"
 major	{ wd = 4 }
 
@@ -93,7 +107,8 @@ major	{ wd = 4 }
 device	clock
 attach	clock at pica with clock_pica
 attach	clock at isa with clock_isa
-file	arch/arc/arc/clock.c	clock & (clock_isa | clock_pica) needs-flag
+attach	clock at algor with clock_algor
+file	arch/arc/arc/clock.c	clock & (clock_isa | clock_pica | clock_algor) needs-flag
 file	arch/arc/arc/clock_mc.c	clock & (clock_isa | clock_pica) needs-flag
 
 #	Console driver on PC-style graphics
@@ -111,7 +126,9 @@ file    arch/arc/dti/btl.c                    btl needs-count
 
 # 8250/16[45]50-based "com" ports
 attach	com at pica with com_pica
+attach	com at algor with com_algor
 file	arch/arc/pica/com_pica.c	com_pica
+
 
 # National Semiconductor DS8390/WD83C690-based boards
 # (WD/SMC 80x3 family, SMC Ultra [8216], 3Com 3C503, NE[12]000, and clones)
@@ -125,6 +142,14 @@ file    dev/isa/if_ed.c                 ed & (ed_isa | ed_pcmcia) needs-flag
 attach	lpt at pica with lpt_pica
 file	arch/arc/pica/lpt_pica.c	lpt_pica
 
+#
+
+#
+#	PCI Bus support
+#
+
+#
+#	Common files
 #
 
 file	dev/cons.c

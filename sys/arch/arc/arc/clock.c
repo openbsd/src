@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.3 1996/09/19 00:30:34 imp Exp $	*/
+/*	$OpenBSD: clock.c,v 1.4 1997/03/12 19:16:38 pefo Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  * from: Utah Hdr: clock.c 1.18 91/01/21
  *
  *	from: @(#)clock.c	8.1 (Berkeley) 6/10/93
- *      $Id: clock.c,v 1.3 1996/09/19 00:30:34 imp Exp $
+ *      $Id: clock.c,v 1.4 1997/03/12 19:16:38 pefo Exp $
  */
 
 #include <sys/param.h>
@@ -75,6 +75,10 @@ struct cfattach clock_pica_ca = {
 	sizeof(struct clock_softc), clockmatch, clockattach
 };
 
+struct cfattach clock_algor_ca = {
+	sizeof(struct clock_softc), clockmatch, clockattach
+};
+
 void	mcclock_attach __P((struct device *, struct device *, void *));
 
 #define	SECMIN	((unsigned)60)			/* seconds per minute */
@@ -105,6 +109,7 @@ clockmatch(parent, cfdata, aux)
 
 	case DESKSTATION_RPC44:
 	case DESKSTATION_TYNE:
+	case ALGOR_P4032:
 		break;
 
 	default:
@@ -139,6 +144,7 @@ clockattach(parent, self, aux)
 	switch (cputype) {
 
 	case ACER_PICA_61:
+	case ALGOR_P4032:
 		BUS_INTR_ESTABLISH((struct confargs *)aux,
 			(intr_handler_t)hardclock, self);
 		break;
@@ -190,13 +196,17 @@ cpu_initclocks()
 	extern int tickadj;
 	struct clock_softc *csc = (struct clock_softc *)clock_cd.cd_devs[0];
 
-	hz = 100;		/* 100 Hz */
-	tick = 1000000 / hz;	/* number of micro-seconds between interrupts */
 
-	/*
-	 * Start the clock.
-	 */
+	/*  Assume 100 Hz */
+	hz = 100;
+
+	/* Start the clock.  */
 	(*csc->sc_init)(csc);
+
+	/* Recalculate theese if clock init changed hz */
+	tick = 1000000 / hz;	/* number of micro-seconds between interrupts */
+	tickadj = 240000 / (60 * hz);           /* can adjust 240ms in 60s */
+
 	clock_started++;
 }
 

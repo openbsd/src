@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.20 1997/02/03 15:05:08 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.21 1997/03/12 19:16:43 pefo Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.20 1997/02/03 15:05:08 deraadt Exp $
+ *      $Id: machdep.c,v 1.21 1997/03/12 19:16:43 pefo Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -82,6 +82,7 @@
 #include <machine/pio.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
+#include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/memconf.h>
 
@@ -93,6 +94,7 @@
 #include <arc/arc/arcbios.h>
 #include <arc/pica/pica.h>
 #include <arc/dti/desktech.h>
+#include <arc/algor/algor.h>
 
 #include <asc.h>
 
@@ -101,6 +103,7 @@
 #endif
 
 extern struct consdev *cn_tab;
+extern char kernel_start[];
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = "arc";	/* cpu "architecture" */
@@ -126,9 +129,10 @@ int	msgbufmapped = 0;	/* set when safe to use msgbuf */
 int	physmem;		/* max supported memory, changes to actual */
 int	cpucfg;			/* Value of processor config register */
 int	cputype;		/* Mother board type */
+int	num_tlbentries = 48;	/* Size of the CPU tlb */
 int	ncpu = 1;		/* At least one cpu in the system */
-int	isa_io_base;		/* Base address of ISA io port space */
-int	isa_mem_base;		/* Base address of ISA memory space */
+int	CONADDR;		/* Well, ain't it just plain stupid... */
+struct arc_bus_space arc_bus;
 
 struct mem_descriptor mem_layout[MAXMEMSEGS];
 
@@ -188,6 +192,10 @@ mips_init(argc, argv, code)
 	 * entries as possible to do something useful :-).
 	 */
 
+	arc_bus.isa_io_sparse1 = 0;
+	arc_bus.isa_io_sparse2 = 0;
+	arc_bus.isa_io_sparse4 = 0;
+	arc_bus.isa_io_sparse8 = 0;
 	switch (cputype) {
 	case ACER_PICA_61:	/* ALI PICA 61 and MAGNUM is almost the */
 	case MAGNUM:		/* Same kind of hardware. NEC goes here too */
@@ -197,8 +205,9 @@ mips_init(argc, argv, code)
 		else {
 			strcpy(cpu_model, "Acer Pica-61");
 		}
-		isa_io_base = PICA_V_ISA_IO;
-		isa_mem_base = PICA_V_ISA_MEM;
+		arc_bus.isa_io_base = PICA_V_ISA_IO;
+		arc_bus.isa_mem_base = PICA_V_ISA_MEM;
+		CONADDR = PICA_SYS_COM1;
 
 		/*
 		 * Set up interrupt handling and I/O addresses.
@@ -214,14 +223,44 @@ mips_init(argc, argv, code)
 
 	case DESKSTATION_RPC44:
 		strcpy(cpu_model, "Deskstation rPC44");
-		isa_io_base = 0xb0000000;		/*XXX*/
-		isa_mem_base = 0xa0000000;		/*XXX*/
+		arc_bus.isa_io_base = 0xb0000000;		/*XXX*/
+		arc_bus.isa_mem_base = 0xa0000000;		/*XXX*/
+		CONADDR = 0xa0000000+0x3f8;	/* Standard PC Com0 address */
 		break;
 
 	case DESKSTATION_TYNE:
 		strcpy(cpu_model, "Deskstation Tyne");
-		isa_io_base = TYNE_V_ISA_IO;
-		isa_mem_base = TYNE_V_ISA_MEM;
+		arc_bus.isa_io_base = TYNE_V_ISA_IO;
+		arc_bus.isa_mem_base = TYNE_V_ISA_MEM;
+		CONADDR = TYNE_V_ISA_MEM+0x3f8;	/* Standard PC Com0 address */
+		break;
+
+	case -1:	/* Not identified as an ARC system. We have a couple */
+			/* of other options. Systems not having an ARC Bios  */
+
+			/* Make this more fancy when more comes in here */
+		cputype = ALGOR_P4032;
+		strcpy(cpu_model, "Algorithmics P-4032");
+		arc_bus.isa_io_base = 0;
+		arc_bus.isa_io_sparse1 = 2;
+		arc_bus.isa_io_sparse2 = 1;
+		arc_bus.isa_io_sparse4 = 0;
+		arc_bus.isa_io_sparse8 = 0;
+		arc_bus.isa_mem_base = 0;
+		CONADDR = P4032_COM1;
+		num_tlbentries = 32;
+
+		mem_layout[0].mem_start = 0;
+		mem_layout[0].mem_size = mips_trunc_page(CACHED_TO_PHYS(kernel_start));
+		mem_layout[1].mem_start = CACHED_TO_PHYS((int)sysend);
+		mem_layout[1].mem_size = 0x800000 - (int)(CACHED_TO_PHYS(sysend));
+		physmem = 8192 * 1024;
+#if 0
+		mem_layout[2].mem_start = 0x800000;
+		mem_layout[2].mem_size = 0x1000000;
+		physmem += 8192 * 1024;
+#endif
+
 		break;
 
 	default:
@@ -288,7 +327,7 @@ mips_init(argc, argv, code)
 	 * Start with cleaning out the TLB. Bye bye Microsoft....
 	 */
 	R4K_SetWIRED(0);
-	R4K_TLBFlush();
+	R4K_TLBFlush(num_tlbentries);
 	R4K_SetWIRED(VMWIRED_ENTRIES);
 	
 	switch (cputype) {
@@ -302,6 +341,9 @@ mips_init(argc, argv, code)
 		break;
 
 	case DESKSTATION_RPC44:
+		break;
+
+	case ALGOR_P4032:
 		break;
 	}
 
@@ -452,6 +494,8 @@ mips_init(argc, argv, code)
 	 * Clear allocated memory.
 	 */
 	bzero(start, sysend - start);
+consinit();
+mdbpanic();
 
 	/*
 	 * Initialize the virtual memory system.

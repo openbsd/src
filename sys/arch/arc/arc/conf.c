@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.11 1996/11/28 23:35:38 niklas Exp $ */
+/*	$OpenBSD: conf.c,v 1.12 1997/03/12 19:16:40 pefo Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)conf.c	8.2 (Berkeley) 11/14/93
- *      $Id: conf.c,v 1.11 1996/11/28 23:35:38 niklas Exp $
+ *      $Id: conf.c,v 1.12 1997/03/12 19:16:40 pefo Exp $
  */
 
 #include <sys/param.h>
@@ -352,7 +352,7 @@ struct	consdev constab[] = {
 #if NPC + NVT > 0
 	cons_init(pc),
 #endif
-#if NACE > 0
+#if NCOM > 0
 	cons_init(com),
 #endif
 	{ 0 },

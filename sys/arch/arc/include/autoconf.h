@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.1.1.1 1996/06/24 09:07:17 pefo Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.2 1997/03/12 19:16:54 pefo Exp $	*/
 /*	$NetBSD: autoconf.h,v 1.1 1995/02/13 23:07:31 cgd Exp $	*/
 
 /*
@@ -55,6 +55,8 @@ struct abus {
 #define	BUS_MAIN	1		/* mainbus */
 #define	BUS_PICA	2		/* PICA Bus */
 #define	BUS_ISABR	3		/* ISA Bridge Bus */
+#define	BUS_ALGOR	4		/* Algorithmics local bus */
+#define	BUS_PCIBR	5		/* Algorithmics PCI bridge */
 
 #define	BUS_INTR_ESTABLISH(ca, handler, val)				\
 	    (*(ca)->ca_bus->ab_intr_establish)((ca), (handler), (val))

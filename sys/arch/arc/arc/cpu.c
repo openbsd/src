@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.4 1996/11/23 21:45:27 kstailey Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.5 1997/03/12 19:16:41 pefo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -104,7 +104,10 @@ cpuattach(parent, dev, aux)
 		printf("MIPS R10000 CPU");
 		break;
 	case MIPS_R4200:
-		printf("MIPS R4200 CPU (ICE)");
+		printf("NEC VR4200 CPU (ICE)");
+		break;
+	case MIPS_R4300:
+		printf("NEC VR4300 CPU");
 		break;
 	case MIPS_R8000:
 		printf("MIPS R8000 Blackbird/TFP CPU");
@@ -112,8 +115,8 @@ cpuattach(parent, dev, aux)
 	case MIPS_R4600:
 		printf("QED R4600 Orion CPU");
 		break;
-	case MIPS_R3SONY:
-		printf("Sony R3000 based CPU");
+	case MIPS_R4700:
+		printf("QED R4700 Orion CPU");
 		break;
 	case MIPS_R3TOSH:
 		printf("Toshiba R3000 based CPU");
@@ -121,7 +124,6 @@ cpuattach(parent, dev, aux)
 	case MIPS_R3NKK:
 		printf("NKK R3000 based CPU");
 		break;
-	case MIPS_UNKC1:
 	case MIPS_UNKC2:
 	default:
 		printf("Unknown CPU type (0x%x)",cpu_id.cpu.cp_imp);
@@ -157,15 +159,16 @@ cpuattach(parent, dev, aux)
 		printf("MIPS R10000 FPU");
 		break;
 	case MIPS_R4210:
-		printf("MIPS R4200 FPC (ICE)");
+		printf("NEC VR4200 FPC (ICE)");
+		break;
 	case MIPS_R8000:
 		printf("MIPS R8000 Blackbird/TFP");
 		break;
 	case MIPS_R4600:
 		printf("QED R4600 Orion FPC");
 		break;
-	case MIPS_R3SONY:
-		printf("Sony R3000 based FPC");
+	case MIPS_R4700:
+		printf("QED R4700 Orion FPC");
 		break;
 	case MIPS_R3TOSH:
 		printf("Toshiba R3000 based FPC");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sn.c,v 1.7 1996/10/19 10:02:51 niklas Exp $	*/
+/*	$OpenBSD: if_sn.c,v 1.8 1997/03/12 19:16:50 pefo Exp $	*/
 /*
  * National Semiconductor  SONIC Driver
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
@@ -1241,8 +1241,8 @@ sonic_read(sc, rxp)
 #define sonicdataaddr(eh, off, type)       ((type)(((caddr_t)((eh)+1)+(off))))
 
 /*
- * munge the recieved packet into an mbuf chain
- * because we are using stupif buffer management this
+ * munge the received packet into a mbuf chain
+ * because we are using stupid buffer management this
  * is slow.
 */
 struct mbuf *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.7 1997/01/22 22:23:19 pefo Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.8 1997/03/12 19:16:46 pefo Exp $	*/
 /* 
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	8.4 (Berkeley) 1/26/94
- *      $Id: pmap.c,v 1.7 1997/01/22 22:23:19 pefo Exp $
+ *      $Id: pmap.c,v 1.8 1997/03/12 19:16:46 pefo Exp $
  */
 
 /*
@@ -87,6 +87,7 @@
 
 extern vm_page_t vm_page_alloc1 __P((void));
 extern void vm_page_free1 __P((vm_page_t));
+extern int num_tlbentries;
 
 /*
  * For each vm_page_t, there is a list of all currently valid virtual
@@ -168,7 +169,7 @@ struct {
 #define PDB_WIRING	0x4000
 #define PDB_PVDUMP	0x8000
 
-extern int _ftext[];
+extern int kernel_start[];
 extern int _end[];
 int pmapdebug = 0x0;
 
@@ -269,7 +270,7 @@ pmap_bootstrap(firstaddr)
 			mem_layout[i].mem_start = 0x20000;  /* Adjust to be above vec's */
 		}
 		/* Adjust for the kernel expansion area (bufs etc) */
-		if((mem_layout[i].mem_start + mem_layout[i].mem_size > CACHED_TO_PHYS(_ftext)) && 
+		if((mem_layout[i].mem_start + mem_layout[i].mem_size > CACHED_TO_PHYS(kernel_start)) && 
 		   (mem_layout[i].mem_start < CACHED_TO_PHYS(avail_start))) { 
 			mem_layout[i].mem_size -= CACHED_TO_PHYS(avail_start) - mem_layout[i].mem_start;
 			mem_layout[i].mem_start = CACHED_TO_PHYS(avail_start);
@@ -284,7 +285,7 @@ pmap_bootstrap(firstaddr)
 		nextpage += (pseg->end - pseg->start) / NBPG;
 		avail_remaining += (pseg->end - pseg->start) / NBPG;
 #if 0
-/*XXX*/	sprintf(pbuf,"segment = %d start 0x%x end 0x%x avail %d page %d\n", i, pseg->start, pseg->end, avail_remaining, nextpage); bios_putstring(pbuf);
+/*XXX*/	sprintf(pbuf,"segment = %d start 0x%x end 0x%x avail %d page %d\n", i, pseg->start, pseg->end, avail_remaining, nextpage); printf(pbuf);
 #endif
 		pseg++;
 	}
@@ -1595,7 +1596,7 @@ pmap_alloc_tlbpid(p)
 	if (pmap->pm_tlbgen != tlbpid_gen) {
 		id = tlbpid_cnt;
 		if (id == VMNUM_PIDS) {
-			R4K_TLBFlush();
+			R4K_TLBFlush(num_tlbentries);
 			/* reserve tlbpid_gen == 0 to alway mean invalid */
 			if (++tlbpid_gen == 0)
 				tlbpid_gen = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: minidebug.c,v 1.3 1996/10/21 05:37:12 imp Exp $	*/
+/*	$OpenBSD: minidebug.c,v 1.4 1997/03/12 19:16:45 pefo Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kadb.c	8.1 (Berkeley) 6/10/93
- *      $Id: minidebug.c,v 1.3 1996/10/21 05:37:12 imp Exp $
+ *      $Id: minidebug.c,v 1.4 1997/03/12 19:16:45 pefo Exp $
  */
 
 /*
@@ -152,7 +152,7 @@ int gethex(u_int *val, u_int dotval)
 	u_int c;
 
 	*val = 0;
-	while((c = cngetc()) != '\e' && c != '\n') {
+	while((c = cngetc()) != '\e' && c != '\n' && c != '\r') {
 		if(c >= '0' && c <= '9') {
 			*val = (*val << 4) + c - '0';
 			cnputc(c);
@@ -174,6 +174,8 @@ int gethex(u_int *val, u_int dotval)
 			cnputc(c);
 		}
 	}
+	if(c == '\r')
+		c = '\n';
 	return(c);
 }
 

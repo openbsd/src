@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_pica.c,v 1.1 1996/11/30 13:39:44 niklas Exp $	*/
+/*	$OpenBSD: com_pica.c,v 1.2 1997/03/12 19:17:03 pefo Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -73,13 +73,14 @@
 #define	CLR(t, f)	(t) &= ~(f)
 #define	ISSET(t, f)	((t) & (f))
 
-#undef  CONADDR         /* This is stupid but using devs before config .. */
-#define CONADDR 0xe0006000
-
 int	com_pica_probe __P((struct device *, void *, void *));
 void	com_pica_attach __P((struct device *, struct device *, void *));
 
 struct cfattach com_pica_ca = {
+	sizeof(struct com_softc), com_pica_probe, com_pica_attach
+};
+
+struct cfattach com_algor_ca = {
 	sizeof(struct com_softc), com_pica_probe, com_pica_attach
 };
 
@@ -97,7 +98,7 @@ com_pica_probe(parent, match, aux)
 	if(!BUS_MATCHNAME(ca, "com"))
 		return(0);
 	iobase = (long)BUS_CVTADDR(ca);
-	iot = 0;
+	iot = &arc_bus;
 	needioh = 1;
 
 	/* if it's in use as console, it's there. */
@@ -131,7 +132,7 @@ com_pica_attach(parent, self, aux)
 	sc->sc_swflags = 0;
 	sc->sc_iobase = iobase = (bus_addr_t)BUS_CVTADDR(ca);
 	sc->sc_ioh = ioh = (bus_space_handle_t)iobase;
-	sc->sc_iot = iot = 0;
+	sc->sc_iot = iot = &arc_bus;
 
 	if (iobase == comconsaddr) {
 		comconsattached = 1;

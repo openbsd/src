@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.9 1997/02/04 17:26:14 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.10 1997/03/12 19:16:47 pefo Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  * from: Utah Hdr: trap.c 1.32 91/04/06
  *
  *	from: @(#)trap.c	8.5 (Berkeley) 1/11/94
- *      $Id: trap.c,v 1.9 1997/02/04 17:26:14 deraadt Exp $
+ *      $Id: trap.c,v 1.10 1997/03/12 19:16:47 pefo Exp $
  */
 
 #include <sys/param.h>
@@ -264,7 +264,6 @@ trap(statusReg, causeReg, vadr, pc, args)
 		trp = trapdebug;
 #endif
 
-	cnt.v_trap++;
 	type = (causeReg & CR_EXC_CODE) >> CR_EXC_CODE_SHIFT;
 	if (USERMODE(statusReg)) {
 		type |= T_USER;
@@ -838,6 +837,7 @@ interrupt(statusReg, causeReg, pc, what, args)
 	register int i;
 	struct clockframe cf;
 
+	cnt.v_trap++;
 #ifdef DEBUG
 	trp->status = statusReg;
 	trp->cause = causeReg;
@@ -935,7 +935,9 @@ set_intr(mask, int_hand, prio)
 	if(prio > 5)
 		panic("set_intr: to high priority");
 
-	if(cpu_int_tab[prio].int_mask != 0)
+	if(cpu_int_tab[prio].int_mask != 0 &&
+	   (cpu_int_tab[prio].int_mask != mask ||
+	    cpu_int_tab[prio].int_hand != int_hand))
 		panic("set_intr: int already set");
 
 	cpu_int_tab[prio].int_hand = int_hand;
@@ -954,6 +956,8 @@ set_intr(mask, int_hand, prio)
 	case DESKSTATION_TYNE:
 		break;
 	case DESKSTATION_RPC44:
+		break;
+	case ALGOR_P4032:
 		break;
 	}
 }

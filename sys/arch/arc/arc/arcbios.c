@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.4 1996/09/24 19:37:23 pefo Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.5 1997/03/12 19:16:36 pefo Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  *
@@ -243,6 +243,10 @@ get_cpu_type()
 	arc_sid_t	*sid;
 	int		i;
 
+	if(bios_base->magic != ARC_PARAM_BLK_MAGIC) {
+		return(-1);	/* This is not an ARC system */
+	}
+
 	sid = (arc_sid_t *)Bios_GetSystemId();
 	cf = (arc_config_t *)Bios_GetChild(NULL);
 	if(cf) {
@@ -275,6 +279,9 @@ void
 bios_ident()
 {
 	cputype = get_cpu_type();
+	if(cputype < 0) {
+		return;
+	}
 	bios_configure_memory();
 	displayinfo = *(arc_dsp_stat_t *)Bios_GetDisplayStatus(1);
 }
