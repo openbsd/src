@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.22 1996/08/14 08:28:03 downsj Exp $
+#	$OpenBSD: Makefile,v 1.23 1996/08/16 22:05:36 michaels Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -101,6 +101,8 @@ distribution: distrib-dirs
 		${DESTDIR}/var/cron/log
 	install -c -o nobody -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/db/locate.database
+	install -c -o root -g wheel -m 644 /dev/null \
+		${DESTDIR}/etc/locate.rc			
 	install -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/log/lastlog
 	install -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
