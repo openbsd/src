@@ -58,7 +58,7 @@ Supported devices include:
 		3COM 3c503
 		3COM 3c505 [*]
 		3COM 3c507
-		3COM 3c509 and 3c579 (But not the PCI 3c59X series)
+		3COM 3c509, 3c579, 3c589, 3c59x and 3c9xx
 		Digital DC21x4x-based PCI Ethernet adapters, including:
 			SMC EtherPower 10, 10/100 (PCI only!)
 			Znyx ZX34X
