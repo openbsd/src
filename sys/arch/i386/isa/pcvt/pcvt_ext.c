@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_ext.c,v 1.6 1996/07/17 18:11:13 downsj Exp $	*/
+/*	$OpenBSD: pcvt_ext.c,v 1.7 1996/07/18 15:37:10 shawn Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -443,6 +443,45 @@ vga_chipset(void)
 					can_do_132col = 1;
 					return VGA_S3_928;
 
+				case 0xe0:
+					outb(addr_6845, 0x2e);
+					byte = inb(addr_6845+1);
+
+					switch (byte) {
+					case 0x10:
+						outb(addr_6845, 0x38);
+						outb(addr_6845+1, old1byte);
+						return VGA_S3_732;
+					case 0x11:
+						outb(addr_6845, 0x2f);
+						byte = inb(addr_6845+1);
+
+						outb(addr_6845, 0x38);
+						outb(addr_6845+1, old1byte);
+						/*
+						 * XXX this may be wrong
+						 * from vgadoc4b.zip, the
+						 * value may be 8, but mine
+						 * reads 3, so ... 
+						 */
+						if ((byte & 0x0f) == 0x03)
+							return VGA_S3_765;
+						else
+							return VGA_S3_764;
+					case 0x80:
+						outb(addr_6845, 0x38);
+						outb(addr_6845+1, old1byte);
+						return VGA_S3_866;
+					case 0x90:
+						outb(addr_6845, 0x38);
+						outb(addr_6845+1, old1byte);
+						return VGA_S3_868;
+					case 0xB0:
+						outb(addr_6845, 0x38);
+						outb(addr_6845+1, old1byte);
+						return VGA_S3_968;
+					}
+
 				default:
 					outb(addr_6845, 0x38);
 					outb(addr_6845+1, old1byte);
@@ -588,6 +627,14 @@ vga_string(int number)
 		"s3 924",
 		"s3 801/805",
 		"s3 928",
+		"s3 864",
+		"s3 964",
+		"s3 732 (Trio32)",
+		"s3 764 (Trio64)",
+		"s3 866",
+		"s3 868",
+		"s3 968",
+		"s3 765 (Trio64 V+)",
 		"unknown s3",
 		"cl-gd5402",
 		"cl-gd5402r1",
