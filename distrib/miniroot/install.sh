@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.40 1998/10/11 02:50:47 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.41 1998/10/13 21:23:30 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -394,7 +394,7 @@ case "$resp" in
 		echo -n	"Enter IP address of primary nameserver: [$resp] "
 		getresp "$resp"
 		if [ "X${resp}" != X"none" ]; then
-			echo "search $FQDN" >> /tmp/resolv.conf
+			echo "search $FQDN" > /tmp/resolv.conf
 			for n in `echo ${resp}`; do
 				echo "nameserver $n" >> /tmp/resolv.conf
 			done
