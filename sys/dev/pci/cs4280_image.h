@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280_image.h,v 1.1 2000/06/30 03:28:07 art Exp $	*/
+/*	$OpenBSD: cs4280_image.h,v 1.2 2001/01/26 22:37:49 mickey Exp $	*/
 /*	$NetBSD: cs4280_image.h,v 1.1 1999/12/13 20:19:24 augustss Exp $	*/
 
 /* This source is based on cwcimage.h in cwcealdr1.zip, the
@@ -12,7 +12,7 @@
 
 #ifndef _CLCS_IMAGE_H
 #define _CLCS_IMAGE_H
-struct BA1struct BA1Struct = {
+static const struct BA1struct BA1Struct = {
 {{ 0x00000000, 0x00003000 },{ 0x00010000, 0x00003800 },{ 0x00020000, 0x00007000 }},
 {0x00000000,0x00000000,0x00000000,0x00000000,
 0x00000000,0x00000000,0x00000000,0x00000000,
