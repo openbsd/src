@@ -5,6 +5,7 @@ BINOWN=	root
 BINMODE=555
 BINDIR=	/usr/bin
 LDADD=	-lkrb -lcrypto -ldes -lutil -lz
+DPADD=	${LIBKRB} ${LIBCRYPTO} ${LIBDES} ${LIBUTIL} ${LIBZ}
 MAN=	ssh-add.1
 
 SRCS=	ssh-add.c log-client.c readpass.c rsa.c ssh_md5.c buffer.c \

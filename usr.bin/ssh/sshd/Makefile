@@ -5,6 +5,7 @@ BINOWN=	root
 BINMODE=555
 BINDIR=	/usr/sbin
 LDADD=	-lkrb -lcrypto -ldes -lutil -lz
+DPADD=	${LIBKRB} ${LIBCRYPTO} ${LIBDES} ${LIBUTIL} ${LIBZ}
 MAN=	sshd.8
 
 SRCS=	sshd.c auth-rhosts.c auth-passwd.c auth-rsa.c auth-rh-rsa.c \

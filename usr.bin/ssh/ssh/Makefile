@@ -5,6 +5,7 @@ BINOWN=	root
 BINMODE=4555
 BINDIR=	/usr/bin
 LDADD=	-lkrb -lcrypto -ldes -lutil -lz
+DPADD=	${LIBKRB} ${LIBCRYPTO} ${LIBDES} ${LIBUTIL} ${LIBZ}
 MAN=	ssh.1
 LINKS=	${BINDIR}/ssh ${BINDIR}/slogin
 MLINKS=	ssh.1 slogin.1
