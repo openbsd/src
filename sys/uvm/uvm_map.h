@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.26 2002/03/14 01:27:18 millert Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.27 2002/06/11 06:38:01 art Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /* 
@@ -439,7 +439,6 @@ vm_map_lock(map)
 	    &map->flags_lock, curproc);
 
 	if (error) {
-		KASSERT(error == ENOLCK);
 		goto try_again;
 	}
 
