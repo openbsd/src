@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.47 2005/04/02 01:20:56 mickey Exp $	*/
+/*	$OpenBSD: auich.c,v 1.48 2005/04/05 01:41:44 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -68,9 +68,9 @@
 #define	AUICH_NABMBAR	0x14
 #define	AUICH_CFG	0x41
 #define	AUICH_CFG_IOSE	0x01
-/* ICH4/ICH5 native audio mixer BAR */
+/* ICH4/ICH5/ICH6 native audio mixer BAR */
 #define	AUICH_MMBAR	0x18
-/* ICH4/ICH5 native bus mastering BAR */
+/* ICH4/ICH5/ICH6 native bus mastering BAR */
 #define	AUICH_MBBAR	0x1c
 #define	AUICH_S2CR	0x10000000	/* tertiary codec ready */
 
@@ -244,6 +244,7 @@ static const struct auich_devtype {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801CA_ACA,	0, "ICH3" },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801DB_ACA,	0, "ICH4" },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801EB_ACA,	0, "ICH5" },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801FB_ACA,	0, "ICH6" },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82440MX_ACA,	0, "440MX" },
 	{ PCI_VENDOR_SIS,	PCI_PRODUCT_SIS_7012_ACA,	0, "SiS7012" },
 	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_NFORCE_ACA,	0, "nForce" },
@@ -358,9 +359,10 @@ auich_attach(parent, self, aux)
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL &&
 	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801DB_ACA ||
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801EB_ACA)) {
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801EB_ACA ||
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801FB_ACA)) {
 		/*
-		 * Use native mode for ICH4/ICH5
+		 * Use native mode for ICH4/ICH5/ICH6
 		 */
 		if (pci_mapreg_map(pa, AUICH_MMBAR, PCI_MAPREG_TYPE_MEM, 0,
 		    &sc->iot_mix, &sc->mix_ioh, NULL, &mix_size, 0)) {
@@ -454,7 +456,8 @@ auich_attach(parent, self, aux)
 	if (!(status & AUICH_PCR)) {	/* reset failure */
 		if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL &&
 		    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801DB_ACA ||
-		     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801EB_ACA)) {
+		     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801EB_ACA ||
+		     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801FB_ACA)) {
 			/* MSI 845G Max never return AUICH_PCR */
 			sc->sc_ignore_codecready = 1;
 		} else {
