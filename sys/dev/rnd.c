@@ -1,9 +1,9 @@
-/*	$OpenBSD: rnd.c,v 1.59 2002/06/14 00:07:57 mickey Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.60 2002/06/19 03:03:28 mickey Exp $	*/
 
 /*
  * random.c -- A strong random number generator
  *
- * Copyright (c) 1996, 1997, 2000, 2001 Michael Shalayeff.
+ * Copyright (c) 1996, 1997, 2000-2002 Michael Shalayeff.
  *
  * Version 1.89, last modified 19-Sep-99
  *
@@ -41,7 +41,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 /*
  * (now, with legal B.S. out of the way.....)
  *
@@ -398,6 +397,19 @@ struct timer_rand_state rnd_states[RND_SRC_NUM];
 struct rand_event rnd_event_space[QEVLEN];
 struct rand_event *rnd_event_head = rnd_event_space;
 struct rand_event *rnd_event_tail = rnd_event_space;
+struct selinfo rnd_rsel, rnd_wsel;
+
+void filt_rndrdetach(struct knote *kn);
+int filt_rndread(struct knote *kn, long hint);
+
+struct filterops rndread_filtops =
+	{ 1, NULL, filt_rndrdetach, filt_rndread};
+
+void filt_rndwdetach(struct knote *kn);
+int filt_rndwrite(struct knote *kn, long hint);
+
+struct filterops rndwrite_filtops =
+	{ 1, NULL, filt_rndwdetach, filt_rndwrite};
 
 int rnd_attached;
 int arc4random_initialized;
@@ -835,6 +847,8 @@ dequeue_randomness(v)
 #endif
 			rs->asleep--;
 			wakeup((void *)&rs->asleep);
+			selwakeup(&rnd_rsel);
+			KNOTE(&rnd_rsel.si_note, 0);
 		}
 
 		s = splhigh();
@@ -1010,11 +1024,79 @@ randomselect(dev, rw, p)
 {
 	switch (rw) {
 	case FREAD:
-		return random_state.entropy_count > 0;
+		if (random_state.entropy_count > 0)
+			return (1);
+		else
+			selrecord(p, &rnd_rsel);
+		break;
 	case FWRITE:
 		return 1;
 	}
 	return 0;
+}
+
+int
+randomkqfilter(dev_t dev, struct knote *kn)
+{
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &rnd_rsel.si_note;
+		kn->kn_fop = &rndread_filtops;
+		break;
+	case EVFILT_WRITE:
+		klist = &rnd_wsel.si_note;
+		kn->kn_fop = &rndwrite_filtops;
+		break;
+	default:
+		return (1);
+	}
+	kn->kn_hook = (void *)&random_state;
+
+	s = splhigh();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
+}
+
+void
+filt_rndrdetach(struct knote *kn)
+{
+	int s = splhigh();
+
+	SLIST_REMOVE(&rnd_rsel.si_note, kn, knote, kn_selnext);
+	splx(s);
+}
+
+int
+filt_rndread(kn, hint)
+	struct knote *kn;
+	long hint;
+{
+	struct random_bucket *rs = (struct random_bucket *)kn->kn_hook;
+
+	kn->kn_data = (int)rs->entropy_count;
+	return rs->entropy_count > 0;
+}
+
+void
+filt_rndwdetach(struct knote *kn)
+{
+	int s = splhigh();
+
+	SLIST_REMOVE(&rnd_wsel.si_note, kn, knote, kn_selnext);
+	splx(s);
+}
+
+int
+filt_rndwrite(kn, hint)
+	struct knote *kn;
+	long hint;
+{
+	return (1);
 }
 
 int
