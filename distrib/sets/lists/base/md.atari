@@ -20,7 +20,6 @@
 ./usr/lib/libocurses.so.2.1
 ./usr/lib/libpanel.so.1.1
 ./usr/lib/libpcap.so.0.2
-./usr/lib/libresolv.so.2.0
 ./usr/lib/libskey.so.0.4
 ./usr/lib/libstdc++.so.27.1
 ./usr/lib/libtermcap.so.0.0

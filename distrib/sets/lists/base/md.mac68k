@@ -30,7 +30,6 @@
 ./usr/lib/libotermcap.so.3.0
 ./usr/lib/libpanel.so.1.1
 ./usr/lib/libpcap.so.0.2
-./usr/lib/libresolv.so.2.0
 ./usr/lib/librx.so.0.1
 ./usr/lib/libskey.so.1.0
 ./usr/lib/libssl.so.1.0
