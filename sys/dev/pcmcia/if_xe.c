@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.10 2000/02/01 17:03:06 fgsch Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.11 2000/02/02 19:09:59 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, C Stone, Job de Haas
@@ -486,17 +486,24 @@ xe_pcmcia_activate(dev, act)
 	enum devact act;
 {
 	struct xe_pcmcia_softc *sc = (struct xe_pcmcia_softc *)dev;
+	struct ifnet *ifp = &sc->sc_xe.sc_arpcom.ac_if;
 	int s;
 
 	s = splnet();
 	switch (act) {
 	case DVACT_ACTIVATE:
 		pcmcia_function_enable(sc->sc_pf);
+		printf("%s:", sc->sc_xe.sc_dev.dv_xname);
 		sc->sc_xe.sc_ih =
 		    pcmcia_intr_establish(sc->sc_pf, IPL_NET, xe_intr, sc);
+		printf("\n");
+		xe_init(&sc->sc_xe);
 		break;
 
 	case DVACT_DEACTIVATE:
+		ifp->if_timer = 0;
+		if (ifp->if_flags & IFF_RUNNING)
+			xe_stop(&sc->sc_xe);
 		pcmcia_function_disable(sc->sc_pf);
 		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_xe.sc_ih);
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc91cxx.c,v 1.6 1999/08/16 08:27:15 fgsch Exp $	*/
+/*	$OpenBSD: smc91cxx.c,v 1.7 2000/02/02 19:09:58 fgsch Exp $	*/
 /*	$NetBSD: smc91cxx.c,v 1.11 1998/08/08 23:51:41 mycroft Exp $	*/
 
 /*-
@@ -171,12 +171,10 @@ void	smc91cxx_mediastatus __P((struct ifnet *, struct ifmediareq *));
 
 int	smc91cxx_set_media __P((struct smc91cxx_softc *, int));
 
-void	smc91cxx_init __P((struct smc91cxx_softc *));
 void	smc91cxx_read __P((struct smc91cxx_softc *));
 void	smc91cxx_reset __P((struct smc91cxx_softc *));
 void	smc91cxx_start __P((struct ifnet *));
 void	smc91cxx_resume __P((struct smc91cxx_softc *));
-void	smc91cxx_stop __P((struct smc91cxx_softc *));
 void	smc91cxx_watchdog __P((struct ifnet *));
 int	smc91cxx_ioctl __P((struct ifnet *, u_long, caddr_t));
 

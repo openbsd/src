@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc91cxxvar.h,v 1.2 1998/09/12 07:48:07 fgsch Exp $	*/
+/*	$OpenBSD: smc91cxxvar.h,v 1.3 2000/02/02 19:09:58 fgsch Exp $	*/
 /*	$NetBSD: smc91cxxvar.h,v 1.4 1997/10/15 05:56:13 explorer Exp $	*/
 
 /*-
@@ -70,3 +70,5 @@ struct smc91cxx_softc {
 
 void	smc91cxx_attach __P((struct smc91cxx_softc *, u_int8_t *));
 int	smc91cxx_intr __P((void *));
+void	smc91cxx_init __P((struct smc91cxx_softc *));
+void	smc91cxx_stop __P((struct smc91cxx_softc *));
