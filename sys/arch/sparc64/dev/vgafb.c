@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.32 2003/06/02 20:02:49 jason Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.33 2003/06/16 20:47:04 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -53,11 +53,11 @@
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wscons_raster.h>
 #include <dev/rasops/rasops.h>
+#include <machine/fbvar.h>
 
 struct vgafb_softc {
-	struct device sc_dev;
+	struct sunfb sc_sunfb;
 	int sc_nscreens;
-	int sc_width, sc_height, sc_depth, sc_linebytes;
 	int sc_node, sc_ofhandle;
 	bus_space_tag_t sc_mem_t;
 	bus_space_tag_t sc_io_t;
@@ -72,7 +72,6 @@ struct vgafb_softc {
 	u_int8_t sc_cmap_red[256];
 	u_int8_t sc_cmap_green[256];
 	u_int8_t sc_cmap_blue[256];
-	struct rasops_info sc_rasops;
 	int *sc_crowp, *sc_ccolp;
 };
 
@@ -106,11 +105,8 @@ paddr_t vgafb_mmap(void *, off_t, int);
 int vgafb_is_console(int);
 int vgafb_getcmap(struct vgafb_softc *, struct wsdisplay_cmap *);
 int vgafb_putcmap(struct vgafb_softc *, struct wsdisplay_cmap *);
-void vgafb_setcolor(struct vgafb_softc *, unsigned int,
-    u_int8_t, u_int8_t, u_int8_t);
-void vgafb_restore_default_colors(struct vgafb_softc *);
+void vgafb_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 void vgafb_updatecursor(struct rasops_info *ri);
-static int a2int(char *, int);
 
 struct wsdisplay_accessops vgafb_accessops = {
 	vgafb_ioctl,
@@ -169,80 +165,44 @@ vgafbattach(parent, self, aux)
 	sc->sc_node = PCITAG_NODE(pa->pa_tag);
 	sc->sc_pcitag = pa->pa_tag;
 
-	sc->sc_depth = getpropint(sc->sc_node, "depth", -1);
-	if (sc->sc_depth == -1)
-		sc->sc_depth = 8;
-
-	sc->sc_linebytes = getpropint(sc->sc_node, "linebytes", -1);
-	if (sc->sc_linebytes == -1)
-		sc->sc_linebytes = 1152;
-
-	sc->sc_height = getpropint(sc->sc_node, "height", -1);
-	if (sc->sc_height == -1)
-		sc->sc_height = 900;
-
-	sc->sc_width = getpropint(sc->sc_node, "width", -1);
-	if (sc->sc_width == -1)
-		sc->sc_width = 1152;
-
-	sc->sc_console = vgafb_is_console(sc->sc_node);
+	printf("\n");
 
 	if (vgafb_mapregs(sc, pa))
 		return;
 
-	if (sc->sc_depth == 24) {
-		/* Depth is 24, but rasops really wants bpp */
-		sc->sc_rasops.ri_depth = 32;
-		/* PROM gets linebytes wrong, ignore it. */
-		sc->sc_rasops.ri_stride =
-		    (sc->sc_rasops.ri_depth / 8) * sc->sc_width;
-	} else {
-		sc->sc_rasops.ri_depth = sc->sc_depth;
-		sc->sc_rasops.ri_stride = sc->sc_linebytes;
+	sc->sc_console = vgafb_is_console(sc->sc_node);
+
+	fb_setsize(&sc->sc_sunfb, 8, 1152, 900, sc->sc_node, 0);
+	if (sc->sc_sunfb.sf_depth == 24) {
+		sc->sc_sunfb.sf_depth = 32;
+		sc->sc_sunfb.sf_linebytes =
+		    (sc->sc_sunfb.sf_depth / 8) * sc->sc_sunfb.sf_width;
+		sc->sc_sunfb.sf_fbsize =
+		    sc->sc_sunfb.sf_height * sc->sc_sunfb.sf_linebytes;
 	}
 
-	sc->sc_rasops.ri_flg = RI_CENTER | RI_BSWAP;
-	sc->sc_rasops.ri_bits = (void *)bus_space_vaddr(sc->sc_mem_t,
+	sc->sc_sunfb.sf_ro.ri_bits = (void *)bus_space_vaddr(sc->sc_mem_t,
 	    sc->sc_mem_h);
-	sc->sc_rasops.ri_width = sc->sc_width;
-	sc->sc_rasops.ri_height = sc->sc_height;
-	sc->sc_rasops.ri_hw = sc;
+	sc->sc_sunfb.sf_ro.ri_hw = sc;
 
-	rasops_init(&sc->sc_rasops,
-	    a2int(getpropstring(optionsnode, "screen-#rows"), 34),
-	    a2int(getpropstring(optionsnode, "screen-#columns"), 80));
+	fbwscons_init(&sc->sc_sunfb,
+	    RI_BSWAP | (sc->sc_console ? 0 : RI_CLEAR));
 
-	vgafb_stdscreen.nrows = sc->sc_rasops.ri_rows;
-	vgafb_stdscreen.ncols = sc->sc_rasops.ri_cols;
-	vgafb_stdscreen.textops = &sc->sc_rasops.ri_ops;
-	sc->sc_rasops.ri_ops.alloc_attr(&sc->sc_rasops,
+	vgafb_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;
+	vgafb_stdscreen.nrows = sc->sc_sunfb.sf_ro.ri_rows;
+	vgafb_stdscreen.ncols = sc->sc_sunfb.sf_ro.ri_cols;
+	vgafb_stdscreen.textops = &sc->sc_sunfb.sf_ro.ri_ops;
+	sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
 	    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, &defattr);
-
-	printf("\n");
 
 	if (sc->sc_console) {
 		sc->sc_ofhandle = OF_stdout();
-
-		if (sc->sc_depth == 8) {
-			vgafb_restore_default_colors(sc);
-		} else {
-			/* fix color choice */
-			wscol_white = 0;
-			wscol_black = 255;
-			wskernel_bg = 0;
-			wskernel_fg = 255;
-		}
-
-		if (romgetcursoraddr(&sc->sc_crowp, &sc->sc_ccolp))
-			sc->sc_ccolp = sc->sc_crowp = NULL;
-		if (sc->sc_ccolp != NULL)
-			sc->sc_rasops.ri_ccol = *sc->sc_ccolp;
-		if (sc->sc_crowp != NULL)
-			sc->sc_rasops.ri_crow = *sc->sc_crowp;
-		sc->sc_rasops.ri_updatecursor = vgafb_updatecursor;
-
-		wsdisplay_cnattach(&vgafb_stdscreen, &sc->sc_rasops,
-		    sc->sc_rasops.ri_ccol, sc->sc_rasops.ri_crow, defattr);
+		fbwscons_setcolormap(&sc->sc_sunfb, vgafb_setcolor);
+		sc->sc_sunfb.sf_ro.ri_updatecursor = vgafb_updatecursor;
+		fbwscons_console_init(&sc->sc_sunfb, &vgafb_stdscreen, -1,
+		    NULL);
+	} else {
+		/* sc->sc_ofhandle = XXX */
 	}
 
 	waa.console = sc->sc_console;
@@ -250,8 +210,6 @@ vgafbattach(parent, self, aux)
 	waa.accessops = &vgafb_accessops;
 	waa.accesscookie = sc;
 	config_found(self, &waa, wsemuldisplaydevprint);
-
-	return;
 }
 
 int
@@ -272,20 +230,18 @@ vgafb_ioctl(v, cmd, data, flags, p)
 		break;
 	case WSDISPLAYIO_SMODE:
 		sc->sc_mode = *(u_int *)data;
-		if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL &&
-		    sc->sc_depth == 8) {
-			vgafb_restore_default_colors(sc);
-		}
+		if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)
+			fbwscons_setcolormap(&sc->sc_sunfb, vgafb_setcolor);
 		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (void *)data;
-		wdf->height = sc->sc_height;
-		wdf->width  = sc->sc_width;
-		wdf->depth  = sc->sc_rasops.ri_depth;
+		wdf->height = sc->sc_sunfb.sf_height;
+		wdf->width  = sc->sc_sunfb.sf_width;
+		wdf->depth  = sc->sc_sunfb.sf_depth;
 		wdf->cmsize = 256;
 		break;
 	case WSDISPLAYIO_LINEBYTES:
-		*(u_int *)data = sc->sc_rasops.ri_stride;
+		*(u_int *)data = sc->sc_sunfb.sf_linebytes;
 		break;
 		
 	case WSDISPLAYIO_GETCMAP:
@@ -376,32 +332,17 @@ vgafb_putcmap(sc, cm)
 }
 
 void
-vgafb_setcolor(sc, index, r, g, b)
-	struct vgafb_softc *sc;
-	unsigned int index;
+vgafb_setcolor(v, index, r, g, b)
+	void *v;
+	u_int index;
 	u_int8_t r, g, b;
 {
+	struct vgafb_softc *sc = v;
+
 	sc->sc_cmap_red[index] = r;
 	sc->sc_cmap_green[index] = g;
 	sc->sc_cmap_blue[index] = b;
 	OF_call_method("color!", sc->sc_ofhandle, 4, 0, r, g, b, index);
-}
-
-void
-vgafb_restore_default_colors(struct vgafb_softc *sc)
-{
-	int i;
-
-	for (i = 0; i < 256; i++) {
-		const u_char *color;
-
-		color = &rasops_cmap[i * 3];
-		vgafb_setcolor(sc, i, color[0], color[1], color[2]);
-	}
-	/* compensate for BoW palette */
-	vgafb_setcolor(sc, WSCOL_BLACK, 0, 0, 0);
-	vgafb_setcolor(sc, 255, 0, 0, 0);	/* cursor */
-	vgafb_setcolor(sc, WSCOL_WHITE, 255, 255, 255);
 }
 
 int
@@ -417,10 +358,10 @@ vgafb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	if (sc->sc_nscreens > 0)
 		return (ENOMEM);
 
-	*cookiep = &sc->sc_rasops;
+	*cookiep = &sc->sc_sunfb.sf_ro;
 	*curyp = 0;
 	*curxp = 0;
-	sc->sc_rasops.ri_ops.alloc_attr(&sc->sc_rasops,
+	sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
 	    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, attrp);
 	sc->sc_nscreens++;
 	return (0);
@@ -481,18 +422,6 @@ vgafb_mmap(v, off, prot)
 	}
 
 	return (-1);
-}
-
-static int
-a2int(char *cp, int deflt)
-{
-	int i = 0;
-
-	if (*cp == '\0')
-		return (deflt);
-	while (*cp != '\0')
-		i = i * 10 + *cp++ - '0';
-	return (i);
 }
 
 int
