@@ -1,4 +1,4 @@
-/*	$OpenBSD: save.c,v 1.5 1999/07/31 21:57:41 pjanzen Exp $	*/
+/*	$OpenBSD: save.c,v 1.6 2001/03/30 04:41:34 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,10 +37,11 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: save.c,v 1.5 1999/07/31 21:57:41 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: save.c,v 1.6 2001/03/30 04:41:34 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
+#include <sys/param.h>
 #include <errno.h>
 #include "back.h"
 
@@ -61,7 +62,7 @@ save(n)
 {
 	int     fdesc;
 	char   *fs;
-	char    fname[50];
+	char    fname[MAXPATHLEN];
 
 	if (n) {
 		if (tflag) {
@@ -89,7 +90,10 @@ save(n)
 					writec('\007');
 				continue;
 			}
-			writec(*fs++);
+			if (fs - fname < MAXPATHLEN - 1)
+				writec(*fs++);
+			else
+				writec('\007');
 		}
 		*fs = '\0';
 		if ((fdesc = open(fname, O_RDWR)) == -1 && errno == ENOENT) {
