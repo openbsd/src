@@ -1,5 +1,5 @@
 #!/bin/sh -
-#       $OpenBSD: MAKEDEV,v 1.16 1998/05/29 04:22:18 rahnds Exp $
+#       $OpenBSD: MAKEDEV,v 1.17 1998/07/19 00:16:16 rahnds Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -58,6 +58,7 @@
 #	bpf*	packet filter
 #	tun*	network tunnel driver
 #	lkm	Device to for loadable kernel modules
+#	*random	inkernel random number generator
 #
 
 PATH=/sbin:/bin/:/usr/bin:/usr/sbin
@@ -92,6 +93,7 @@ all)
 	sh MAKEDEV tty00 tty01 pty0
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
 	sh MAKEDEV tun0 tun1 tun2 tun3
+	sh MAKEDEV random
 	sh MAKEDEV lkm
 	sh MAKEDEV local
 	;;
@@ -102,6 +104,7 @@ ramdisk)
 	sh MAKEDEV ofdisk0 ofdisk1 ofdisk2 ofdisk3 ofdisk4 
 	sh MAKEDEV rd0
 	sh MAKEDEV ttyo0
+	sh MAKEDEV random
 	sh MAKEDEV tty00 tty01 pty0
 	;;
 
@@ -407,6 +410,16 @@ lkm)
 	mknod lkm c 24 0
 	chown root.kmem lkm
 	chmod 640 lkm
+	;;
+random|srandom|urandom|prandom|arandom)
+	rm -f random urandom srandom prandom arandom
+	mknod  random c 40 0
+	mknod srandom c 40 1
+	mknod urandom c 40 2
+	mknod prandom c 40 3
+	mknod arandom c 40 4
+	chown root.wheel random srandom urandom prandom arandom
+	chmod 644 random srandom urandom prandom arandom
 	;;
 
 local)
