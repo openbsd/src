@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.man.mk,v 1.17 1999/11/27 04:31:12 millert Exp $
+#	$OpenBSD: bsd.man.mk,v 1.18 2000/05/16 19:34:47 espie Exp $
 #	$NetBSD: bsd.man.mk,v 1.23 1996/02/10 07:49:33 jtc Exp $
 #	@(#)bsd.man.mk	5.2 (Berkeley) 5/11/90
 
@@ -37,12 +37,22 @@ MCOMPRESS=	gzip -cf
 MCOMPRESSSUFFIX= .gz
 .endif
 
+.if defined(MANSUBDIR)
+# Add / so that we don't have to specify it. Better arch -> MANSUBDIR mapping
+MANSUBDIR:=${MANSUBDIR:S,^,/,}
+.else
+# XXX MANSUBDIR must be non empty for the mlink loops to work
+MANSUBDIR=''
+.endif
+
 maninstall:
 .if defined(MANALL)
 	@for page in ${MANALL}; do \
+		set -- ${MANSUBDIR}; \
+		subdir=$$1; \
 		dir=${DESTDIR}${MANDIR}$${page##*.cat}; \
 		base=$${page##*/}; \
-		instpage=$${dir}${MANSUBDIR}/$${base%.*}.0${MCOMPRESSSUFFIX}; \
+		instpage=$${dir}$${subdir}/$${base%.*}.0${MCOMPRESSSUFFIX}; \
 		if [ X"${MCOMPRESS}" = X ]; then \
 			echo ${MINSTALL} $$page $$instpage; \
 			${MINSTALL} $$page $$instpage; \
@@ -52,24 +62,32 @@ maninstall:
 			${MCOMPRESS} $$page > $$instpage; \
 			chown ${MANOWN}:${MANGRP} $$instpage; \
 			chmod ${MANMODE} $$instpage; \
-		fi \
+		fi; \
+		while test $$# -ge 2; do \
+			shift; \
+			extra=$${dir}$$1/$${base%.*}.0${MCOMPRESSSUFFIX}; \
+			echo $$extra -\> $$instpage; \
+			ln -f $$instpage $$extra; \
+		done; \
 	done
 .endif
 .if defined(MLINKS) && !empty(MLINKS)
+.  for _subdir in ${MANSUBDIR}
 	@set ${MLINKS}; \
 	while test $$# -ge 2; do \
 		name=$$1; \
 		shift; \
 		dir=${DESTDIR}${MANDIR}$${name##*.}; \
-		l=$${dir}${MANSUBDIR}/$${name%.*}.0${MCOMPRESSSUFFIX}; \
+		l=$${dir}${_subdir}/$${name%.*}.0${MCOMPRESSSUFFIX}; \
 		name=$$1; \
 		shift; \
 		dir=${DESTDIR}${MANDIR}$${name##*.}; \
-		t=$${dir}${MANSUBDIR}/$${name%.*}.0${MCOMPRESSSUFFIX}; \
+		t=$${dir}${_subdir}/$${name%.*}.0${MCOMPRESSSUFFIX}; \
 		echo $$t -\> $$l; \
 		rm -f $$t; \
 		ln $$l $$t; \
 	done
+.  endfor
 .endif
 
 .if defined(MANALL) && !defined(MANLOCALBUILD)
