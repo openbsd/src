@@ -1,6 +1,6 @@
-/*	$OpenBSD: import.c,v 1.4 2005/01/13 18:47:31 jfb Exp $	*/
+/*	$OpenBSD: import.c,v 1.5 2005/02/28 20:18:02 joris Exp $	*/
 /*
- * Copyright (c) 2004 Joris Vink <amni@pandora.be>
+ * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

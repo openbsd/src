@@ -1,7 +1,7 @@
-/*	$OpenBSD: tag.c,v 1.4 2005/02/27 00:22:08 jfb Exp $	*/
+/*	$OpenBSD: tag.c,v 1.5 2005/02/28 20:18:02 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
- * Copyright (c) 2004 Joris Vink <amni@pandora.be>
+ * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
