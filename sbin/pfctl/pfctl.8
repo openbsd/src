@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.73 2003/02/11 20:17:35 henning Exp $
+.\" $OpenBSD: pfctl.8,v 1.74 2003/02/13 10:14:43 henning Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -128,8 +128,11 @@ Overrides macro definition in the ruleset.
 .It Fl e
 Enable the packet filter.
 .It Fl f Ar file
-Load rule file. This file may contain scrub, nat, queue and filter
-rules, in that order.
+Load rule file.
+This file may contain macros, tables, options, and normalization, queueing,
+translation, and filtering rules.
+With the exception of macros and tables, the statements must appear in that
+order.
 .It Fl F Ar modifier
 Flush one of the following.
 Modifier name may be abbreviated:
