@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.31 2002/09/11 03:27:30 itojun Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.32 2002/09/12 01:11:54 itojun Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -685,6 +685,8 @@ in6_ifdetach(ifp)
 	/* undo everything done by in6_ifattach(), just in case */
 	for (ifa = ifp->if_addrlist.tqh_first; ifa; ifa = next)
 	{
+		next = ifa->ifa_list.tqe_next;
+
 		if (ifa->ifa_addr->sa_family != AF_INET6
 		 || !IN6_IS_ADDR_LINKLOCAL(&satosin6(&ifa->ifa_addr)->sin6_addr)) {
 			continue;
