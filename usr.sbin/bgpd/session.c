@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.125 2004/03/05 14:09:55 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.126 2004/03/05 20:25:30 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -75,6 +75,7 @@ int	parse_open(struct peer *);
 int	parse_update(struct peer *);
 int	parse_notification(struct peer *);
 int	parse_keepalive(struct peer *);
+int	parse_capabilities(struct peer *, u_char *, u_int16_t);
 void	session_dispatch_imsg(struct imsgbuf *, int);
 void	session_up(struct peer *);
 void	session_down(struct peer *);
@@ -1442,11 +1443,11 @@ parse_open(struct peer *peer)
 			return (-1);
 		}
 		memcpy(&op_type, p, sizeof(op_type));
-		p++;
-		plen--;
+		p += sizeof(op_type);
+		plen -= sizeof(op_type);
 		memcpy(&op_len, p, sizeof(op_len));
-		p++;
-		plen--;
+		p += sizeof(op_type);
+		plen -= sizeof(op_type);
 		if (op_len > 0) {
 			if (plen < op_len) {
 				log_peer_warnx(&peer->conf,
@@ -1463,6 +1464,15 @@ parse_open(struct peer *peer)
 			op_val = NULL;
 
 		switch (op_type) {
+		case OPT_PARAM_CAPABILITIES:		/* RFC 3392 */
+			if (parse_capabilities(peer, op_val, op_len) == -1) {
+				session_notification(peer, ERR_OPEN, 0,
+				    NULL, 0);
+				change_state(peer, STATE_IDLE, EVNT_RCVD_OPEN);
+				return (-1);
+			}
+			break;
+		case OPT_PARAM_AUTH:			/* deprecated */
 		default:
 			/*
 			 * unsupported type
@@ -1544,6 +1554,44 @@ parse_notification(struct peer *peer)
 
 	/* log */
 	log_notification(peer, errcode, subcode, p, datalen);
+
+	return (0);
+}
+
+int
+parse_capabilities(struct peer *peer, u_char *d, u_int16_t dlen)
+{
+	u_int16_t	 len;
+	u_int8_t	 capa_code;
+	u_int8_t	 capa_len;
+	void		*capa_val;
+
+	len = dlen;
+	while (len > 0) {
+		if (len < 2)
+			return (-1);
+		memcpy(&capa_code, d, sizeof(capa_code));
+		d += sizeof(capa_code);
+		len -= sizeof(capa_code);
+		memcpy(&capa_len, d, sizeof(capa_len));
+		d += sizeof(capa_len);
+		len -= sizeof(capa_len);
+		if (capa_len > 0) {
+			if (len < capa_len)
+				return (-1);
+			capa_val = d;
+			d += capa_len;
+			len -= capa_len;
+		} else
+			capa_val = NULL;
+
+		switch (capa_code) {
+		default:
+			log_peer_warnx(&peer->conf, "got capability %u len %u",
+			    capa_code, capa_len);
+			break;
+		}
+	}
 
 	return (0);
 }
