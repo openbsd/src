@@ -1,4 +1,4 @@
-/*      $OpenBSD: ac97.c,v 1.9 2000/07/20 21:36:26 deraadt Exp $ */
+/*      $OpenBSD: ac97.c,v 1.10 2000/07/27 16:34:45 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -387,7 +387,9 @@ ac97_read(as, reg, val)
 {
 	int error;
 	
-	if (as->host_flags & AC97_HOST_DONT_READ) {
+	if ((as->host_flags & AC97_HOST_DONT_READ) &&
+	    (reg != AC97_REG_VENDOR_ID1 && reg != AC97_REG_VENDOR_ID2 &&
+	    reg != AC97_REG_RESET)) {
 		*val = as->shadow_reg[reg >> 1];
 		return;
 	}
