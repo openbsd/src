@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_hangman.c,v 1.4 1996/05/10 14:00:56 mickey Exp $	*/
+/*	$OpenBSD: db_hangman.c,v 1.5 1996/05/31 10:37:25 niklas Exp $	*/
 
 /*
  * Copyright (c) 1996 Theo de Raadt, Michael Shalayeff
@@ -45,6 +45,11 @@
 #define	TOLOWER(c)	(('A'<=(c)&&(c)<='Z')?(c)-'a'+'A':(c))
 #define	ISALPHA(c)	(('a'<=(c)&&(c)<='z')||('A'<=(c)&&(c)<='Z'))
 
+static	__inline size_t db_random __P((size_t));
+static	__inline char *db_randomsym __P((size_t *));
+static	void db_hang __P((int, char *, char *));
+static	int db_hangon __P((void));
+
 static __inline size_t
 db_random( mod )
 	register size_t	mod;
@@ -54,7 +59,7 @@ db_random( mod )
 	get_random_bytes(&ret, sizeof(ret) );
 	return ret % mod;
 #else
-	u_int random();
+	u_int random __P((void));
 	return (size_t)(random() % mod);
 #endif
 }
@@ -85,7 +90,7 @@ db_randomsym(lenp)
 }
 
 
-static int
+static void
 db_hang(tries, word, abc)
 	int	tries;
 	register char	*word;
