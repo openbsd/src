@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.24 1999/12/04 22:42:31 millert Exp $
+.\"	$OpenBSD: find.1,v 1.25 2000/03/06 03:15:59 aaron Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -68,7 +68,8 @@ Causes the file information and file type (see
 returned for each symbolic link encountered on the command line to be
 those of the file referenced by the link, not the link itself.
 If the referenced file does not exist, the file information and type will
-be for the link itself.  File information of all symbolic links not on
+be for the link itself.
+File information of all symbolic links not on
 the command line is that of the link itself.
 .It Fl d
 Causes
@@ -139,7 +140,7 @@ was started, rounded up to the next full minute, is
 minutes.
 .It Ic -anewer Ar file
 True if the current file has a more recent last access time than
-.Ar file  .
+.Ar file .
 .It Ic -atime Ar n
 True if the difference between the file last access time and the time
 .Nm
@@ -155,7 +156,7 @@ was started, rounded up to the next full minute, is
 minutes.
 .It Ic -cnewer Ar file
 True if the current file has a more recent last change time than
-.Ar file  .
+.Ar file .
 .It Ic -ctime Ar n
 True if the difference between the time of last change of file status
 information and the time
@@ -186,8 +187,8 @@ Identical to the
 primary with the exception that
 .Ar utility
 will be executed from the directory that holds
-the current file.  The filename substituted for
-the string
+the current file.
+The filename substituted for the string
 .Qq {}
 is not qualified.
 .It Ic -follow
@@ -206,7 +207,7 @@ is being executed whereas the latter matches any file system which is
 mounted read-only.
 .It Ic -group Ar gname
 True if the file belongs to the group
-.Ar gname  .
+.Ar gname .
 If
 .Ar gname
 is numeric and there is no such group name, then
@@ -214,7 +215,7 @@ is numeric and there is no such group name, then
 is treated as a group ID.
 .It Ic -inum Ar n
 True if the file has inode number
-.Ar n  .
+.Ar n .
 .It Ic -links Ar n
 True if the file has
 .Ar n
@@ -251,7 +252,7 @@ was started, rounded up to the next full 24-hour period, is
 24-hour periods.
 .It Ic -name Ar pattern
 True if the last component of the pathname being examined matches
-.Ar pattern  .
+.Ar pattern .
 Special shell pattern matching characters
 .Pf ( Ql [ ,
 .Ql \&] ,
@@ -259,13 +260,13 @@ Special shell pattern matching characters
 and
 .Ql ? )
 may be used as part of
-.Ar pattern  .
+.Ar pattern .
 These characters may be matched explicitly by escaping them with a
 backslash
 .Pq Ql \e .
 .It Ic -newer Ar file
 True if the current file has a more recent last modification time than
-.Ar file  .
+.Ar file .
 .It Ic -nouser
 True if the file belongs to an unknown user.
 .It Ic -nogroup
@@ -287,7 +288,7 @@ value of the
 expression is false.
 .It Ic -path Ar pattern
 True if the pathname being examined matches
-.Ar pattern  .
+.Ar pattern .
 Special shell pattern matching characters
 .Pf ( Ql [ ,
 .Ql \&] ,
@@ -295,7 +296,7 @@ Special shell pattern matching characters
 and
 .Ql ? )
 may be used as part of
-.Ar pattern  .
+.Ar pattern .
 These characters may be matched explicitly by escaping them with a
 backslash
 .Pq Ql \e .
@@ -311,7 +312,7 @@ matched explicitly.
 The
 .Ar mode
 may be either symbolic (see
-.Xr chmod  1  )
+.Xr chmod 1 )
 or an octal number.
 If the mode is symbolic, a starting value of zero is assumed and the
 mode sets or clears permissions without regard to the process's file mode
@@ -368,7 +369,7 @@ primary has no effect if the
 option was specified.
 .It Ic -size Ar n Ns Op Cm c
 True if the file's size, rounded up, in 512-byte blocks is
-.Ar n  .
+.Ar n .
 If
 .Ar n
 is followed by a
@@ -403,7 +404,7 @@ socket
 .Pp
 .It Ic -user Ar uname
 True if the file belongs to the user
-.Ar uname  .
+.Ar uname .
 If
 .Ar uname
 is numeric and there is no such user name, then
@@ -601,3 +602,8 @@ The
 .Fl W
 option is probably not the most elegant way to handle whiteouts. It may
 be replaced by a more sophisticated algorithm eventually.
+.Sh HISTORY
+A
+.Nm
+command appeared in
+.At v1 .

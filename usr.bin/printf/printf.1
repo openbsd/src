@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.1,v 1.8 2000/01/22 12:46:30 aaron Exp $
+.\"	$OpenBSD: printf.1,v 1.9 2000/03/06 03:15:59 aaron Exp $
 .\" Copyright (c) 1989, 1990 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -283,9 +283,10 @@ no argument is used.
 In no case does a non-existent or small field width cause truncation of
 a field; padding takes place only if the specified field width exceeds
 the actual width.
-.Sh RETURN VALUES
-.Nm printf
-exits 0 on success or 1 on failure.
+.Pp
+The
+.Nm
+utility exits 0 on success or 1 on failure.
 .Sh EXAMPLES
 Convert a hexidecimal value to decimal and print it out:
 .Pp
@@ -303,6 +304,11 @@ The
 .Nm printf
 utility conforms to
 .St -p1003.2-92 .
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Bx 4.3 Reno .
 .Sh BUGS
 Since arguments are translated from
 .Tn ASCII
