@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.36 2001/12/06 06:25:17 jason Exp $	*/
+/*	$OpenBSD: dc.c,v 1.37 2001/12/06 16:51:30 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1654,31 +1654,30 @@ void dc_attach(sc)
 	sc->dc_ldata = (struct dc_list_data *)sc->sc_listkva;
 	bzero(sc->dc_ldata, sizeof(struct dc_list_data));
 
-	for (i = 0; i < DC_TX_LIST_CNT; i++) {
-		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES, 0,
-		    BUS_DMA_NOWAIT, &sc->sc_txsd[i].sd_map) != 0) {
-			printf(": tx dmamap create failed\n");
-			goto fail;
+	for (i = 0; i < DC_RX_LIST_CNT; i++) {
+		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES,
+		    0, BUS_DMA_NOWAIT,
+		    &sc->dc_cdata.dc_rx_chain[i].sd_map) != 0) {
+			printf(": can't create rx map\n");
+			return;
 		}
-		sc->sc_txsd[i].sd_mbuf = NULL;
-		if (i == DC_TX_LIST_CNT - 1)
-			sc->sc_txsd[i].sd_next = sc->sc_txsd;
-		else
-			sc->sc_txsd[i].sd_next = sc->sc_txsd + (i + 1);
+	}
+	if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES, 0,
+	    BUS_DMA_NOWAIT, &sc->sc_rx_sparemap) != 0) {
+		printf(": can't create rx spare map\n");
+		return;
 	}
 
-	for (i = 0; i < DC_RX_LIST_CNT; i++) {
-		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES, 0,
-		    BUS_DMA_NOWAIT, &sc->sc_rxsd[i].sd_map) != 0) {
-			printf(": rx dmamap create failed\n");
-			goto fail;
+#if 0
+	for (i = 0; i < DC_TX_LIST_CNT; i++) {
+		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES,
+		    0, BUS_DMA_NOWAIT,
+		    &sc->dc_cdata.dc_tx_chain[i].sd_map) != 0) {
+			printf(": can't create tx map\n");
+			return;
 		}
-		sc->sc_rxsd[i].sd_mbuf = NULL;
-		if (i == DC_RX_LIST_CNT - 1)
-			sc->sc_rxsd[i].sd_next = sc->sc_rxsd;
-		else
-			sc->sc_rxsd[i].sd_next = sc->sc_rxsd + (i + 1);
 	}
+#endif
 
 	/*
 	 * A 21143 or clone chip was detected. Inform the world.
@@ -1876,6 +1875,7 @@ int dc_newbuf(sc, i, m)
 {
 	struct mbuf		*m_new = NULL;
 	struct dc_desc		*c;
+	bus_dmamap_t		map;
 
 	c = &sc->dc_ldata->dc_rx_list[i];
 
@@ -1895,6 +1895,16 @@ int dc_newbuf(sc, i, m)
 			return(ENOBUFS);
 		}
 		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
+		if (bus_dmamap_load(sc->sc_dmat, sc->sc_rx_sparemap,
+		    mtod(m_new, caddr_t), MCLBYTES, NULL,
+		    BUS_DMA_NOWAIT) != 0) {
+			printf("%s: rx load failed\n", sc->sc_dev.dv_xname);
+			m_freem(m_new);
+			return (ENOBUFS);
+		}
+		map = sc->dc_cdata.dc_rx_chain[i].sd_map;
+		sc->dc_cdata.dc_rx_chain[i].sd_map = sc->sc_rx_sparemap;
+		sc->sc_rx_sparemap = map;
 	} else {
 		m_new = m;
 		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
@@ -1911,8 +1921,9 @@ int dc_newbuf(sc, i, m)
 	if (sc->dc_flags & DC_PNIC_RX_BUG_WAR)
 		bzero((char *)mtod(m_new, char *), m_new->m_len);
 
-	sc->dc_cdata.dc_rx_chain[i] = m_new;
-	c->dc_data = vtophys(mtod(m_new, caddr_t));
+	sc->dc_cdata.dc_rx_chain[i].sd_mbuf = m_new;
+	c->dc_data = sc->dc_cdata.dc_rx_chain[i].sd_map->dm_segs[0].ds_addr +
+	    sizeof(u_int64_t);
 	c->dc_ctl = DC_RXCTL_RLINK | DC_RXLEN;
 	c->dc_status = DC_RXSTAT_OWN;
 
@@ -1992,7 +2003,7 @@ void dc_pnic_rx_bug_war(sc, idx)
 	while (1) {
 		c = &sc->dc_ldata->dc_rx_list[i];
 		rxstat = c->dc_status;
-		m = sc->dc_cdata.dc_rx_chain[i];
+		m = sc->dc_cdata.dc_rx_chain[i].sd_mbuf;
 		bcopy(mtod(m, char *), ptr, DC_RXLEN);
 		ptr += DC_RXLEN;
 		/* If this is the last buffer, break out. */
@@ -2087,7 +2098,7 @@ void dc_rxeof(sc)
 
 		cur_rx = &sc->dc_ldata->dc_rx_list[i];
 		rxstat = cur_rx->dc_status;
-		m = sc->dc_cdata.dc_rx_chain[i];
+		m = sc->dc_cdata.dc_rx_chain[i].sd_mbuf;
 		total_len = DC_RXBYTES(rxstat);
 
 		if (sc->dc_flags & DC_PNIC_RX_BUG_WAR) {
@@ -2104,7 +2115,7 @@ void dc_rxeof(sc)
 			}
 		}
 
-		sc->dc_cdata.dc_rx_chain[i] = NULL;
+		sc->dc_cdata.dc_rx_chain[i].sd_mbuf = NULL;
 
 		/*
 		 * If an error occurs, update stats, clear the
@@ -2991,9 +3002,13 @@ void dc_stop(sc)
 	 * Free data in the RX lists.
 	 */
 	for (i = 0; i < DC_RX_LIST_CNT; i++) {
-		if (sc->dc_cdata.dc_rx_chain[i] != NULL) {
-			m_freem(sc->dc_cdata.dc_rx_chain[i]);
-			sc->dc_cdata.dc_rx_chain[i] = NULL;
+		if (sc->dc_cdata.dc_rx_chain[i].sd_map->dm_nsegs != 0) {
+			bus_dmamap_unload(sc->sc_dmat,
+			    sc->dc_cdata.dc_rx_chain[i].sd_map);
+		}
+		if (sc->dc_cdata.dc_rx_chain[i].sd_mbuf != NULL) {
+			m_freem(sc->dc_cdata.dc_rx_chain[i].sd_mbuf);
+			sc->dc_cdata.dc_rx_chain[i].sd_mbuf = NULL;
 		}
 	}
 	bzero((char *)&sc->dc_ldata->dc_rx_list,
