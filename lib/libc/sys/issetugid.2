@@ -1,4 +1,4 @@
-.\"	$OpenBSD: issetugid.2,v 1.2 1996/10/01 03:03:40 etheisen Exp $
+.\"	$OpenBSD: issetugid.2,v 1.3 1996/10/15 09:56:00 deraadt Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -49,8 +49,32 @@ the result of the last
 .Fn execve
 system call.
 Otherwise it returns 0.
+.Pp
+This system call exists so that library routines (inside libc, libtermlib,
+or other libraries) can gaurantee safe behaviour when used inside
+setuid or setgid programs.
+Some library routines may not be passed sufficient information to know
+if the current program was started setuid or setgid.
+In particular, it is wise to use this call to determine if a
+pathname returned from a
+.Fn getenv
+call may safely be used to
+.Fn open
+the specified file.
+.Pp
+.Fn issetugid
+is unaffected by calls to
+.Fn setuid
+and other such calls.  It is only controlled by
+.Fn execve
 .Sh ERRORS
 The
 .Fn issetugid
 function is always successful, and no return value is reserved to
 indicate an error.
+.Sh SEE ALSO
+.Xr execve 2 ,
+.Xr setuid 2 ,
+.Xr seteuid 2,
+.Xr setgid 2 ,
+.Xr setegid 2
