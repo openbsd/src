@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.10 2000/04/26 18:39:29 deraadt Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.11 2000/04/27 00:41:06 deraadt Exp $	*/
 /*	$NetBSD: pchb.c,v 1.6 1997/06/06 23:29:16 thorpej Exp $	*/
 
 /*
@@ -154,6 +154,7 @@ pchbattach(parent, self, aux)
 	struct pcibus_attach_args pba;
 	pcireg_t bcreg;
 	u_char bdnum, pbnum;
+	int neednl = 1;
 	int i;
 
 	/*
@@ -176,7 +177,8 @@ pchbattach(parent, self, aux)
 			 * This host bridge has a second PCI bus.
 			 * Configure it.
 			 */
-			printf(": has pci bus %d", bdnum);
+			printf(": has pci bus %d\n", bdnum);
+			neednl = 0;
 			pba.pba_busname = "pci";
 			pba.pba_iot = pa->pa_iot;
 			pba.pba_memt = pa->pa_memt;
@@ -216,7 +218,9 @@ pchbattach(parent, self, aux)
 				printf(": Compatibility PB (bus %d)", pbnum);
 				break;
 			case PCISET_INTEL_TYPE_AUX:
-				printf(": Auxiliary PB (bus %d)", pbnum);
+				printf(": Auxiliary PB (bus %d)\n", pbnum);
+				neednl = 0;
+
 				/*
 				 * This host bridge has a second PCI bus.
 				 * Configure it.
@@ -284,7 +288,8 @@ pchbattach(parent, self, aux)
 			break;
 		}
 	}
-	printf("\n");
+	if (neednl)
+		printf("\n");
 }
 
 int
