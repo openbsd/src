@@ -1,7 +1,7 @@
 /*
  * Православные праздники
  *
- * $OpenBSD: calendar.orthodox,v 1.7 2003/04/22 23:17:51 mickey Exp $
+ * $OpenBSD: calendar.orthodox,v 1.8 2003/04/29 16:47:05 mickey Exp $
  */
 
 #ifndef _ru_RU_KOI8_R_orthodox_
@@ -33,7 +33,7 @@ Paskha-56	Заговенье на мясо
 Paskha-49	Великий Пост
 Paskha-8	Лазарева суббота
 Paskha-7	Вербное Воскресенье. Вход Господень в Иерусалим
-Paskha-3	Великий Четверг
+Paskha-3	Великий (Чистый) Четверг
 Paskha-2	Страстная Пятница
 Paskha	Воскресение Христово
 Paskha+1	Светлая седмица - сплошная
