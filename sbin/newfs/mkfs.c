@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.8 1997/05/29 20:22:43 deraadt Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.9 1997/06/03 11:00:09 grr Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$OpenBSD: mkfs.c,v 1.8 1997/05/29 20:22:43 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mkfs.c,v 1.9 1997/06/03 11:00:09 grr Exp $";
 #endif
 #endif /* not lint */
 
@@ -544,8 +544,8 @@ next:
 	if (warn && !mfs) {
 		printf("Warning: %d sector(s) in last cylinder unallocated\n",
 		    sblock.fs_spc -
-		    (fssize * NSPF(&sblock) - (sblock.fs_ncyl - 1)
-		    * sblock.fs_spc));
+		    (dbtofsb(&sblock, fssize) * NSPF(&sblock) -
+		    (sblock.fs_ncyl - 1) * sblock.fs_spc));
 	}
 	/*
 	 * fill in remaining fields of the super block
