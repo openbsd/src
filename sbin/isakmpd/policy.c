@@ -1,5 +1,5 @@
-/*	$OpenBSD: policy.c,v 1.6 2000/02/01 02:46:18 niklas Exp $	*/
-/*	$EOM: policy.c,v 1.14 2000/01/31 22:33:48 niklas Exp $ */
+/*	$OpenBSD: policy.c,v 1.7 2000/02/11 10:21:05 niklas Exp $	*/
+/*	$EOM: policy.c,v 1.16 2000/02/10 11:54:07 angelos Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Angelos D. Keromytis.  All rights reserved.
@@ -155,13 +155,13 @@ policy_callback (char *name)
 {
   struct proto *proto;
 
-  u_int8_t *attr, *value, *id;
+  u_int8_t *attr, *value, *id, *idlocal, *idremote;
+  size_t id_sz, idlocalsz, idremotesz;
   struct sockaddr_in *sin;
   struct ipsec_exch *ie;
   int fmt, lifetype = 0;
   in_addr_t net, subnet;
   u_int16_t len, type;
-  size_t id_sz;
   time_t tt;
   static char mytimeofday[15];
 
@@ -181,7 +181,7 @@ policy_callback (char *name)
   static char *remote_id_type, remote_id_addr_upper[64];
   static char remote_id_addr_lower[64], *remote_id_proto, remote_id_port[32];
   static char remote_filter_port[32], local_filter_port[32];
-  static char *remote_filter_proto, *local_filter_proto, *pfs;
+  static char *remote_filter_proto, *local_filter_proto, *pfs, *initiator;
 
   /* Allocated.  */
   static char *remote_filter = 0, *local_filter = 0, *remote_id = 0;
@@ -196,7 +196,7 @@ policy_callback (char *name)
       ah_hash_alg = ah_auth_alg = "";
       esp_auth_alg = esp_enc_alg = comp_alg = ah_encapsulation = "";
       esp_encapsulation = comp_encapsulation = remote_filter_type = "";
-      local_filter_type = remote_id_type = "";
+      local_filter_type = remote_id_type = initiator = "";
       remote_filter_proto = local_filter_proto = remote_id_proto = "";
 
       if (remote_filter != 0)
@@ -749,15 +749,32 @@ policy_callback (char *name)
       snprintf (remote_id_port, sizeof remote_id_port - 1, "%d",
 		decode_16 (id + 2));
 
-      /* Initialize the ID variables.  */
-      if (ie->id_ci)
+      if (policy_exchange->initiator)
         {
-	  switch (GET_ISAKMP_ID_TYPE (ie->id_ci))
+	  initiator = "yes";
+	  idlocal = ie->id_ci;
+	  idremote = ie->id_cr;
+	  idlocalsz = ie->id_ci_sz;
+	  idremotesz = ie->id_cr_sz;
+        }
+      else
+        {
+	  initiator = "no";
+	  idlocal = ie->id_cr;
+	  idremote = ie->id_ci;
+	  idlocalsz = ie->id_cr_sz;
+	  idremotesz = ie->id_ci_sz;
+	}
+
+      /* Initialize the ID variables.  */
+      if (idremote)
+        {
+	  switch (GET_ISAKMP_ID_TYPE (idremote))
 	    {
 	    case IPSEC_ID_IPV4_ADDR:
 	      remote_filter_type = "IPv4 address";
 
-	      net = decode_32 (ie->id_ci + ISAKMP_ID_DATA_OFF);
+	      net = decode_32 (idremote + ISAKMP_ID_DATA_OFF);
 	      my_inet_ntop4 (&net, remote_filter_addr_upper,
 			     sizeof remote_filter_addr_upper - 1, 1);
 	      my_inet_ntop4 (&net, remote_filter_addr_lower,
@@ -771,10 +788,10 @@ policy_callback (char *name)
 	    case IPSEC_ID_IPV4_RANGE:
 	      remote_filter_type = "IPv4 range";
 
-	      net = decode_32 (ie->id_ci + ISAKMP_ID_DATA_OFF);
+	      net = decode_32 (idremote + ISAKMP_ID_DATA_OFF);
 	      my_inet_ntop4 (&net, remote_filter_addr_lower,
 			     sizeof remote_filter_addr_lower - 1, 1);
-	      net = decode_32 (ie->id_ci + ISAKMP_ID_DATA_OFF + 4);
+	      net = decode_32 (idremote + ISAKMP_ID_DATA_OFF + 4);
 	      my_inet_ntop4 (&net, remote_filter_addr_upper,
 			     sizeof remote_filter_addr_upper - 1, 1);
 	      remote_filter = calloc (strlen (remote_filter_addr_upper)
@@ -794,8 +811,8 @@ policy_callback (char *name)
 	    case IPSEC_ID_IPV4_ADDR_SUBNET:
 	      remote_filter_type = "IPv4 subnet";
 
-	      net = decode_32 (ie->id_ci + ISAKMP_ID_DATA_OFF);
-	      subnet = decode_32 (ie->id_ci + ISAKMP_ID_DATA_OFF + 4);
+	      net = decode_32 (idremote + ISAKMP_ID_DATA_OFF);
+	      subnet = decode_32 (idremote + ISAKMP_ID_DATA_OFF + 4);
 	      net &= subnet;
 	      my_inet_ntop4 (&net, remote_filter_addr_lower,
 			     sizeof remote_filter_addr_lower - 1, 1);
@@ -830,26 +847,26 @@ policy_callback (char *name)
 
 	    case IPSEC_ID_FQDN:
 	      remote_filter_type = "FQDN";
-	      remote_filter = calloc (ie->id_ci_sz - ISAKMP_ID_DATA_OFF + 1,
+	      remote_filter = calloc (idremotesz - ISAKMP_ID_DATA_OFF + 1,
 				      sizeof (char));
 	      if (!remote_filter)
 		log_fatal ("policy_callback: calloc (%d, %d) failed",
-			   ie->id_ci_sz - ISAKMP_ID_DATA_OFF + 1,
+			   idremotesz - ISAKMP_ID_DATA_OFF + 1,
 			   sizeof (char));
-	      memcpy (remote_filter, ie->id_ci + ISAKMP_ID_DATA_OFF,
-		      ie->id_ci_sz);
+	      memcpy (remote_filter, idremote + ISAKMP_ID_DATA_OFF,
+		      idremotesz);
 	      break;
 
 	    case IPSEC_ID_USER_FQDN:
 	      remote_filter_type = "User FQDN";
-	      remote_filter = calloc (ie->id_ci_sz - ISAKMP_ID_DATA_OFF + 1,
+	      remote_filter = calloc (idremotesz - ISAKMP_ID_DATA_OFF + 1,
 				      sizeof (char));
 	      if (!remote_filter)
 		log_fatal ("policy_callback: calloc (%d, %d) failed",
-			   ie->id_ci_sz - ISAKMP_ID_DATA_OFF + 1,
+			   idremotesz - ISAKMP_ID_DATA_OFF + 1,
 			   sizeof (char));
-	      memcpy (remote_filter, ie->id_ci + ISAKMP_ID_DATA_OFF,
-		      ie->id_ci_sz);
+	      memcpy (remote_filter, idremote + ISAKMP_ID_DATA_OFF,
+		      idremotesz);
 	      break;
 
 	    case IPSEC_ID_DER_ASN1_DN: /* XXX -- not sure what's in this.  */
@@ -865,12 +882,12 @@ policy_callback (char *name)
 	      break;
 
 	    default:
-	      log_print ("policy_callback: unknown initiator ID type %d",
-			 GET_ISAKMP_ID_TYPE (ie->id_ci));
+	      log_print ("policy_callback: unknown Remote ID type %d",
+			 GET_ISAKMP_ID_TYPE (idremote));
 	      return "";
 	    }
 
-	  switch (ie->id_ci[ISAKMP_GEN_SZ + 1])
+	  switch (idremote[ISAKMP_GEN_SZ + 1])
 	    {
 	    case IPPROTO_TCP:
 	      remote_filter_proto = "tcp";
@@ -882,11 +899,11 @@ policy_callback (char *name)
 	    }
 
 	  snprintf (remote_filter_port, sizeof remote_filter_port - 1,
-		    "%d", decode_16 (ie->id_ci + ISAKMP_GEN_SZ + 2));
+		    "%d", decode_16 (idremote + ISAKMP_GEN_SZ + 2));
 	}
       else
         {
-	  policy_sa->transport->vtbl->get_src (policy_sa->transport,
+	  policy_sa->transport->vtbl->get_dst (policy_sa->transport,
 					       (struct sockaddr **) &sin,
 					       &fmt);
 	  remote_filter_type = "IPv4 address";
@@ -894,21 +911,21 @@ policy_callback (char *name)
 	  my_inet_ntop4 (&(sin->sin_addr.s_addr), remote_filter_addr_upper,
 			 sizeof remote_filter_addr_upper - 1, 0);
 	  my_inet_ntop4 (&(sin->sin_addr.s_addr), remote_filter_addr_lower,
-			 sizeof remote_filter_addr_lower - 1, 1);
+			 sizeof remote_filter_addr_lower - 1, 0);
 	  remote_filter = strdup (remote_filter_addr_upper);
 	  if (!remote_filter)
 	    log_fatal ("policy_callback: strdup (\"%s\") failed",
 		       remote_filter_addr_upper);
 	}
 
-      if (ie->id_cr)
+      if (idlocal)
         {
-	  switch (GET_ISAKMP_ID_TYPE (ie->id_cr))
+	  switch (GET_ISAKMP_ID_TYPE (idlocal))
 	    {
 	    case IPSEC_ID_IPV4_ADDR:
 	      local_filter_type = "IPv4 address";
 
-	      net = decode_32 (ie->id_cr + ISAKMP_ID_DATA_OFF);
+	      net = decode_32 (idlocal + ISAKMP_ID_DATA_OFF);
 	      my_inet_ntop4 (&net, local_filter_addr_upper,
 			     sizeof local_filter_addr_upper - 1, 1);
 	      my_inet_ntop4 (&net, local_filter_addr_lower,
@@ -922,10 +939,10 @@ policy_callback (char *name)
 	    case IPSEC_ID_IPV4_RANGE:
 	      local_filter_type = "IPv4 range";
 
-	      net = decode_32 (ie->id_cr + ISAKMP_ID_DATA_OFF);
+	      net = decode_32 (idlocal + ISAKMP_ID_DATA_OFF);
 	      my_inet_ntop4 (&net, local_filter_addr_lower,
 			     sizeof local_filter_addr_lower - 1, 1);
-	      net = decode_32 (ie->id_cr + ISAKMP_ID_DATA_OFF + 4);
+	      net = decode_32 (idlocal + ISAKMP_ID_DATA_OFF + 4);
 	      my_inet_ntop4 (&net, local_filter_addr_upper,
 			     sizeof local_filter_addr_upper - 1, 1);
 	      local_filter = calloc (strlen (local_filter_addr_upper)
@@ -945,8 +962,8 @@ policy_callback (char *name)
 	    case IPSEC_ID_IPV4_ADDR_SUBNET:
 	      local_filter_type = "IPv4 subnet";
 
-	      net = decode_32 (ie->id_cr + ISAKMP_ID_DATA_OFF);
-	      subnet = decode_32 (ie->id_cr + ISAKMP_ID_DATA_OFF + 4);
+	      net = decode_32 (idlocal + ISAKMP_ID_DATA_OFF);
+	      subnet = decode_32 (idlocal + ISAKMP_ID_DATA_OFF + 4);
 	      net &= subnet;
 	      my_inet_ntop4 (&net, local_filter_addr_lower,
 			     sizeof local_filter_addr_lower - 1, 1);
@@ -981,26 +998,26 @@ policy_callback (char *name)
 
 	    case IPSEC_ID_FQDN:
 	      local_filter_type = "FQDN";
-	      local_filter = calloc (ie->id_cr_sz - ISAKMP_ID_DATA_OFF + 1,
+	      local_filter = calloc (idlocalsz - ISAKMP_ID_DATA_OFF + 1,
 				     sizeof (char));
 	      if (!local_filter)
 		log_fatal ("policy_callback: calloc (%d, %d) failed",
-			   ie->id_cr_sz - ISAKMP_ID_DATA_OFF + 1,
+			   idlocalsz - ISAKMP_ID_DATA_OFF + 1,
 			   sizeof (char));
-	      memcpy (local_filter, ie->id_cr + ISAKMP_ID_DATA_OFF,
-		      ie->id_cr_sz);
+	      memcpy (local_filter, idlocal + ISAKMP_ID_DATA_OFF,
+		      idlocalsz);
 	      break;
 
 	    case IPSEC_ID_USER_FQDN:
 	      local_filter_type = "User FQDN";
-	      local_filter = calloc (ie->id_cr_sz - ISAKMP_ID_DATA_OFF + 1,
+	      local_filter = calloc (idlocalsz - ISAKMP_ID_DATA_OFF + 1,
 				     sizeof (char));
 	      if (!local_filter)
 		log_fatal ("policy_callback: calloc (%d, %d) failed",
-			   ie->id_cr_sz - ISAKMP_ID_DATA_OFF + 1,
+			   idlocalsz - ISAKMP_ID_DATA_OFF + 1,
 			   sizeof (char));
-	      memcpy (local_filter, ie->id_cr + ISAKMP_ID_DATA_OFF,
-		      ie->id_cr_sz);
+	      memcpy (local_filter, idlocal + ISAKMP_ID_DATA_OFF,
+		      idlocalsz);
 	      break;
 
 	    case IPSEC_ID_DER_ASN1_DN: /* XXX -- not sure what's in this.  */
@@ -1016,12 +1033,12 @@ policy_callback (char *name)
 	      break;
 
 	    default:
-	      log_print ("policy_callback: unknown responder ID type %d",
-			 GET_ISAKMP_ID_TYPE (ie->id_cr));
+	      log_print ("policy_callback: unknown Local ID type %d",
+			 GET_ISAKMP_ID_TYPE (idlocal));
 	      return "";
 	    }
 
-	  switch (ie->id_cr[ISAKMP_GEN_SZ + 1])
+	  switch (idlocal[ISAKMP_GEN_SZ + 1])
 	    {
 	    case IPPROTO_TCP:
 	      local_filter_proto = "tcp";
@@ -1033,19 +1050,20 @@ policy_callback (char *name)
 	    }
 
 	  snprintf (local_filter_port, sizeof local_filter_port - 1,
-		    "%d", decode_16 (ie->id_cr + ISAKMP_GEN_SZ + 2));
+		    "%d", decode_16 (idlocal + ISAKMP_GEN_SZ + 2));
 	}
       else
         {
-	  policy_sa->transport->vtbl->get_dst (policy_sa->transport,
+	  policy_sa->transport->vtbl->get_src (policy_sa->transport,
 					       (struct sockaddr **) &sin,
 					       &fmt);
+
 	  local_filter_type = "IPv4 address";
 
 	  my_inet_ntop4 (&(sin->sin_addr.s_addr), local_filter_addr_upper,
 			 sizeof local_filter_addr_upper - 1, 0);
 	  my_inet_ntop4 (&(sin->sin_addr.s_addr), local_filter_addr_lower,
-			 sizeof local_filter_addr_lower - 1, 1);
+			 sizeof local_filter_addr_lower - 1, 0);
 	  local_filter = strdup (local_filter_addr_upper);
 	  if (!local_filter)
 		log_fatal ("policy_callback: strdup (\"%s\") failed",
@@ -1100,6 +1118,7 @@ policy_callback (char *name)
       printf ("remote_ike_address == %s\n", remote_ike_address);
       printf ("local_ike_address == %s\n", local_ike_address);
       printf ("pfs == %s\n", pfs);
+      printf ("initiator == %s\n", initiator);
 #endif /* 0 */
 
       /* Unset dirty now.  */
@@ -1119,6 +1138,9 @@ policy_callback (char *name)
 	strftime (mytimeofday, 14, "%G%m%d%H%M%S", localtime(&tt));
 	return mytimeofday;
     }
+
+  if (strcmp (name, "initiator") == 0)
+    return initiator;
 
   if (strcmp (name, "pfs") == 0)
     return pfs;
