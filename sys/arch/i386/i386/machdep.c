@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.61 1997/10/25 21:47:26 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.62 1997/10/25 22:04:04 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
 
 /*-
@@ -1494,7 +1494,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case CPU_CHR2BLK:
 		if (namelen != 2)
 			return (ENOTDIR);		/* overloaded */
-		dev = blktochr((dev_t)name[1]);
+		dev = chrtoblk((dev_t)name[1]);
 		return sysctl_rdstruct(oldp, oldlenp, newp, &dev, sizeof(dev));
 	default:
 		return EOPNOTSUPP;
