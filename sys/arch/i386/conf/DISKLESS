@@ -1,4 +1,4 @@
-#	$OpenBSD: DISKLESS,v 1.22 1998/07/11 15:31:17 todd Exp $
+#	$OpenBSD: DISKLESS,v 1.23 1999/01/02 00:32:56 niklas Exp $
 #	$NetBSD: DISKLESS,v 1.26 1996/05/20 18:17:16 mrg Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
@@ -158,7 +158,6 @@ ie1	at isa? port 0x300 irq 10		# EtherExpress
 #le0	at isa? port 0x320 irq 10 drq 7		# IsoLan, NE2100, and DEPCA
 
 sb0	at isa? port 0x220 irq 7 drq 1	# SoundBlaster
-#spkr0	at pckbd? port 0x61
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	bpfilter 8		# packet filter

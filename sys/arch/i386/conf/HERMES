@@ -3,7 +3,7 @@
 #
 # This system was a 468 but now has an Intel Pentium Overdrive Processor[tm]
 #
-# $OpenBSD: HERMES,v 1.15 1998/10/09 21:57:21 kstailey Exp $
+# $OpenBSD: HERMES,v 1.16 1999/01/02 00:32:55 niklas Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -110,7 +110,6 @@ fd*	at fdc? drive ?
 
 ne0	at isa? port 0x300 irq 10 iomem 0xd000	# Linksys Ether16 LAN
 
-spkr0	at pckbd? port 0x61		# built-in speaker
 sb0	at isa? port 0x220 irq 5 drq 3	# SoundBlaster
 audio*  at sb?
 

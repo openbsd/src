@@ -1,4 +1,4 @@
-#	$OpenBSD: WALDORF,v 1.17 1998/07/11 15:31:29 todd Exp $
+#	$OpenBSD: WALDORF,v 1.18 1999/01/02 00:32:53 niklas Exp $
 #
 #	WALDORF -- a 486 kernel config Applitron use for some gateway
 #		   machines (waldorf and neuro).
@@ -177,7 +177,6 @@ ed2	at isa? port 0x300 iomem 0xcc000 irq 10
 #wss0	at isa? port 0x530 irq 10 drq 0	# Windows Sound System
 #pas0	at isa? port 0x220 irq 7 drq 1	# ProAudio Spectrum
 #gus0	at isa? port 0x220 irq 7 drq 1 flags 6 # Gravis Ultra Sound (flags is record drq for full-duplex)
-#spkr0	at isa? ...
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	bpfilter 8		# packet filter

@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: ELBERETH,v 1.17 1998/09/25 16:10:41 kstailey Exp $
+#	$OpenBSD: ELBERETH,v 1.18 1999/01/02 00:32:56 niklas Exp $
 #
 #
 #	ELBERETH -- 166MHz Pentium PCI
@@ -111,7 +111,6 @@ sb*     at isapnp?
 audio*  at sb?
 
 pms0	at pckbd? irq 12		# PS/2 auxiliary port mouse
-spkr0	at pckbd? port 0x61		# built-in speaker
 
 de*	at pci? dev ? function ?	# DC21X4X-based ethernet cards
 

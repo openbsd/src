@@ -1,4 +1,4 @@
-#	$OpenBSD: OPRAH,v 1.21 1998/07/11 15:31:25 todd Exp $
+#	$OpenBSD: OPRAH,v 1.22 1999/01/02 00:32:54 niklas Exp $
 #
 #	OPRAH -- Niklas Hallqvist's test machine
 #
@@ -120,8 +120,6 @@ atapibus* at wdc?
 acd*	at atapibus? drive ?
 
 ed0	at isa? port 0x320 iomem 0xd0000 irq 5
-
-#spkr0	at isa? ...
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	bpfilter 8		# packet filter

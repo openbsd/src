@@ -1,7 +1,7 @@
 #
 #	SARUMAN -- i486DX/50 EISA bus
 #
-#	$OpenBSD: SARUMAN,v 1.7 1998/07/11 15:31:27 todd Exp $
+#	$OpenBSD: SARUMAN,v 1.8 1999/01/02 00:32:54 niklas Exp $
 #
 
 machine		i386		# architecture, used by config; REQUIRED
@@ -105,8 +105,6 @@ wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
 wd*	at wdc? drive ?
 
 ep0	at isa? port ? irq ?		# 3C509 ethernet cards
-
-spkr0	at pckbd?			# PC speaker
 
 pseudo-device	loop		1	# network loopback
 pseudo-device	bpfilter	8	# packet filter

@@ -1,4 +1,4 @@
-#	$OpenBSD: NETTAN,v 1.29 1998/09/11 11:35:35 fgsch Exp $
+#	$OpenBSD: NETTAN,v 1.30 1999/01/02 00:32:55 niklas Exp $
 #
 #	NETTAN -- Applitron Datasystem AB
 #
@@ -253,7 +253,6 @@ sb0	at isa? port 0x220 irq 7 drq 1	# SoundBlaster
 wss0	at isa? port 0x530 irq 10 drq 0	# Windows Sound System
 pas0	at isa? port 0x220 irq 7 drq 1	# ProAudio Spectrum
 gus0	at isa? port 0x220 irq 7 drq 1 drq2 6 # Gravis UltraSound (drq2 is record drq)
-#spkr0	at pckbd? port 0x61
 
 # Joystick driver. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201

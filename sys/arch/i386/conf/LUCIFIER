@@ -1,4 +1,4 @@
-#	$OpenBSD: LUCIFIER,v 1.17 1998/09/27 17:54:22 mickey Exp $
+#	$OpenBSD: LUCIFIER,v 1.18 1999/01/02 00:32:55 niklas Exp $
 #
 
 source	/sys
@@ -214,7 +214,6 @@ sb0	at isa? port 0x220 irq 5 drq 1	# SoundBlaster
 #wss0	at isa? port 0x530 irq 10 drq 0	# Windows Sound System
 #pas0	at isa? port 0x220 irq 7 drq 1	# ProAudio Spectrum
 #gus0	at isa? port 0x220 irq 7 drq 1 flags 6 # Gravis UltraSound (flags is record drq)
-spkr0	at pckbd? port 0x61
 
 audio*	at sb?
 
