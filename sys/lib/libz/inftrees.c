@@ -91,7 +91,7 @@ local uInt cpdext[30] = { /* Extra bits for distance codes */
 #define BMAX 15         /* maximum bit length of any code */
 #define N_MAX 288       /* maximum number of codes in any set */
 
-#ifdef DEBUG
+#ifdef DEBUG_ZLIB
   uInt inflate_hufts;
 #endif
 
@@ -239,7 +239,7 @@ z_streamp zs;           /* for zalloc function */
             inflate_trees_free(u[0], zs);
           return Z_MEM_ERROR;   /* not enough memory */
         }
-#ifdef DEBUG
+#ifdef DEBUG_ZLIB
         inflate_hufts += z + 1;
 #endif
         *t = q + 1;             /* link to list for huft_free() */

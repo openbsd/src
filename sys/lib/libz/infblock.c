@@ -110,7 +110,7 @@ uInt w;
 }
 
 
-#ifdef DEBUG
+#ifdef DEBUG_ZLIB
   extern uInt inflate_hufts;
 #endif
 int inflate_blocks(s, z, r)
@@ -309,7 +309,7 @@ int r;
         bl = 9;         /* must be <= 9 for lookahead assumptions */
         bd = 6;         /* must be <= 9 for lookahead assumptions */
         t = s->sub.trees.table;
-#ifdef DEBUG
+#ifdef DEBUG_ZLIB
       inflate_hufts = 0;
 #endif
         t = inflate_trees_dynamic(257 + (t & 0x1f), 1 + ((t >> 5) & 0x1f),

@@ -27,7 +27,7 @@ struct inflate_huft_s {
   } more;
 };
 
-#ifdef DEBUG
+#ifdef DEBUG_ZLIB
   extern uInt inflate_hufts;
 #endif
 
