@@ -1,7 +1,6 @@
-#	$OpenBSD: Makefile,v 1.1 2004/04/21 18:27:18 miod Exp $
+#	$OpenBSD: Makefile,v 1.2 2004/08/27 13:29:39 miod Exp $
 
-# TODO: boot_luna88k
-MAN=	MAKEDEV.8
+MAN=	boot_luna88k.8 MAKEDEV.8
 MANSUBDIR=luna88k
 
 .include <bsd.prog.mk>
