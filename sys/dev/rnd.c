@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.33 1999/09/28 01:24:46 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.34 2000/03/19 17:38:03 mickey Exp $	*/
 
 /*
  * random.c -- A strong random number generator
@@ -225,28 +225,23 @@
  * Eastlake, Steve Crocker, and Jeff Schiller.
  */
 
+#undef RNDEBUG
+
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/conf.h>
-#include <sys/device.h>
 #include <sys/disk.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
-#include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
 #include <sys/md5k.h>
 #include <sys/sysctl.h>
 
-#include <net/netisr.h>
-
 #include <dev/rndvar.h>
 #include <dev/rndioctl.h>
 
-#ifdef	DEBUG
+#ifdef	RNDEBUG
 int	rnd_debug = 0x0000;
 #define	RD_INPUT	0x000f	/* input data */
 #define	RD_OUTPUT	0x00f0	/* output data */
@@ -278,7 +273,7 @@ int	rnd_debug = 0x0000;
 /* p60/256kL2 reported to have some drops w/ these numbers */
 #define QEVLEN 40
 #define QEVSLOW 32 /* yet another 0.75 for 60-minutes hour /-; */
-#define QEVSBITS 4
+#define QEVSBITS 6
 
 /* There is actually only one of these, globally. */
 struct random_bucket {
@@ -299,7 +294,7 @@ struct arc4_stream {
 	u_int8_t i;
 	u_int8_t j;
 	u_int8_t s[256];
-	int	cnt;
+	u_int	cnt;
 };
 
 struct rand_event {
@@ -336,7 +331,7 @@ static struct rand_event *event_free;
 static __inline void add_entropy_word __P((const u_int32_t));
 static void enqueue_randomness __P((register struct timer_rand_state*, u_int));
 void dequeue_randomness __P((void *));
-static __inline int extract_entropy __P((register u_int8_t *, int));
+static __inline void extract_entropy __P((register u_int8_t *, int));
 void	arc4_init __P((u_int8_t *, int));
 static __inline void arc4_stir __P((void));
 static __inline u_int8_t arc4_getbyte __P((void));
@@ -405,8 +400,15 @@ arc4maybeinit (void)
 	}
 }
 
+int
+arc4random_8(void)
+{
+	arc4maybeinit();
+	return arc4_getbyte();
+}
+
 u_int32_t
-arc4random (void)
+arc4random(void)
 {
 	arc4maybeinit ();
 	return ((arc4_getbyte () << 24) | (arc4_getbyte () << 16)
@@ -422,6 +424,7 @@ arc4_stir (void)
 	get_random_bytes (buf + sizeof (struct timeval),
 			  sizeof (buf) - sizeof (struct timeval));
 	arc4_init (buf, sizeof (buf));
+	rndstats.arc4_stirs++;
 }
 
 void
@@ -432,7 +435,7 @@ randomattach(void)
 	struct rand_event *rep;
 
 	if (rnd_attached) {
-#ifdef DEBUG
+#ifdef RNDEBUG
 		printf("random: second attach\n");
 #endif
 		return;
@@ -539,16 +542,17 @@ enqueue_randomness(state, val)
 	register struct timer_rand_state *state;
 	u_int	val;
 {
-	u_int	nbits = 0;
 	struct timeval	tv;
 	register struct rand_event *rep;
 	int s;
-	u_int	time;
+	u_int	time, nbits;
 
 	rndstats.rnd_enqs++;
 
 	microtime(&tv);
 	time = tv.tv_usec ^ tv.tv_sec;
+	nbits = 0;
+
 	/*
 	 * Calculate number of bits of randomness we probably
 	 * added.  We take into account the first and second order
@@ -561,16 +565,39 @@ enqueue_randomness(state, val)
 
 		if (delta < 0) delta = -delta;
 		if (delta2 < 0) delta2 = -delta2;
-		delta = MIN(delta, delta2) >> 1;
-		for (nbits = 0; delta; nbits++)
-			delta >>= 1;
+		delta2 = delta = MIN(delta, delta2) >> 1;
 
-		if (rndstats.rnd_queued > QEVSLOW && nbits < QEVSBITS) {
+		if (delta & 0xffff0000) {
+			nbits = 16;
+			delta >>= 16;
+		}
+		if (delta & 0xff00) {
+			nbits += 8;
+			delta >>= 8;
+		}
+		if (delta & 0xf0) {
+			nbits += 4;
+			delta >>= 4;
+		}
+		if (delta & 0xc) {
+			nbits += 2;
+			delta >>= 2;
+		}
+		if (delta & 2) {
+			nbits += 1;
+			delta >>= 1;
+		}
+		if (delta & 1)
+			nbits++;
+
+		rndstats.rnd_ed[nbits]++;
+
+		if (rndstats.rnd_queued > QEVSLOW && nbits > QEVSBITS) {
 			rndstats.rnd_drople++;
 			return;
 		}
 		state->last_time = time;
-		state->last_delta = delta;
+		state->last_delta = delta2;
 	}
 
 	s = splhigh();
@@ -594,7 +621,7 @@ enqueue_randomness(state, val)
 	rndstats.rnd_queued++;
 
 	if (rep == NULL)
-		timeout(dequeue_randomness, (void *)0xdeadd00d, 1);
+		timeout(dequeue_randomness, NULL, 1);
 
 }
 
@@ -640,7 +667,7 @@ dequeue_randomness(v)
 		rndstats.rnd_queued--;
 		if (random_state.entropy_count > 8 &&
 		    rndstats.rnd_asleep != 0) {
-#ifdef	DEBUG
+#ifdef	RNDEBUG
 			if (rnd_debug & RD_WAIT)
 				printf("rnd: wakeup[%d]{%u}\n",
 				       rndstats.rnd_asleep,
@@ -719,12 +746,12 @@ add_tty_randomness(c)
  * bits of entropy are left in the pool, but it does not restrict the
  * number of bytes that are actually obtained.
  */
-static __inline int
+static __inline void
 extract_entropy(buf, nbytes)
 	register u_int8_t *buf;
 	int	nbytes;
 {
-	int	ret, i;
+	int	i;
 	MD5_CTX tmp;
 	
 	enqueue_randomness(&extract_timer_state, nbytes);
@@ -733,7 +760,6 @@ extract_entropy(buf, nbytes)
 	if (random_state.entropy_count > POOLBITS) 
 		random_state.entropy_count = POOLBITS;
 
-	ret = nbytes;
 	if (random_state.entropy_count / 8 >= nbytes)
 		random_state.entropy_count -= nbytes*8;
 	else
@@ -778,8 +804,6 @@ extract_entropy(buf, nbytes)
 
 	/* Wipe data from memory */
 	bzero(&tmp, sizeof(tmp));
-	
-	return ret;
 }
 
 /*
@@ -823,7 +847,7 @@ randomread(dev, uio, ioflag)
 					ret = EWOULDBLOCK;
 					break;
 				}
-#ifdef	DEBUG
+#ifdef	RNDEBUG
 				if (rnd_debug & RD_WAIT)
 					printf("rnd: sleep[%d]\n",
 					    rndstats.rnd_asleep);
@@ -832,7 +856,7 @@ randomread(dev, uio, ioflag)
 				rndstats.rnd_waits++;
 				ret = tsleep(&rndstats.rnd_asleep,
 					     PWAIT | PCATCH, "rndrd", 0);
-#ifdef	DEBUG
+#ifdef	RNDEBUG
 				if (rnd_debug & RD_WAIT)
 					printf("rnd: awakened(%d)\n", ret);
 #endif
@@ -841,13 +865,13 @@ randomread(dev, uio, ioflag)
 			}
 			n = min(n, random_state.entropy_count / 8);
 			rndstats.rnd_reads++;
-#ifdef	DEBUG
+#ifdef	RNDEBUG
 			if (rnd_debug & RD_OUTPUT)
 				printf("rnd: %u possible output\n", n);
 #endif
 		case RND_URND:
-			n = extract_entropy((char *)buf, n);
-#ifdef	DEBUG
+			get_random_bytes((char *)buf, n);
+#ifdef	RNDEBUG
 			if (rnd_debug & RD_OUTPUT)
 				printf("rnd: %u bytes for output\n", n);
 #endif
@@ -861,9 +885,8 @@ randomread(dev, uio, ioflag)
 		    {
 			u_int8_t *cp = (u_int8_t *) buf;
 			u_int8_t *end = cp + n;
-			arc4maybeinit ();
 			while (cp < end)
-				*cp++ = arc4_getbyte ();
+				*cp++ = arc4random_8();
 			break;
 		    }
 		}
@@ -919,7 +942,7 @@ randomwrite(dev, uio, flags)
 	}
 
 	if (minor(dev) == RND_ARND && !ret)
-		arc4_stir ();
+		arc4random_uninitialized = 2;
 
 	return ret;
 }
@@ -960,7 +983,7 @@ randomioctl(dev, cmd, data, flag, p)
 			return EPERM;
 		if (random_state.entropy_count < 64)
 			return EAGAIN;
-		arc4_stir ();
+		arc4random_uninitialized = 2;
 		ret = 0;
 		break;
 	default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rndvar.h,v 1.11 1997/06/28 07:05:23 deraadt Exp $	*/
+/*	$OpenBSD: rndvar.h,v 1.12 2000/03/19 17:38:03 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff.
@@ -47,25 +47,28 @@
 #define RND_NODEV	5	/* First invalid minor device number */
 
 struct rndstats {
-	u_int32_t rnd_total; /* total bits of entropy generated */
-	u_int32_t rnd_used;  /* strong data bits read so far */
-	u_int32_t arc4_reads;/* aRC4 data bytes read so far */
+	u_long rnd_total; /* total bits of entropy generated */
+	u_long rnd_used;  /* strong data bits read so far */
+	u_long arc4_reads;/* aRC4 data bytes read so far */
 
-	u_int32_t rnd_timer; /* timer calls */
-	u_int32_t rnd_mouse; /* mouse calls */
-	u_int32_t rnd_tty;   /* tty calls */
-	u_int32_t rnd_disk;  /* block devices calls */
-	u_int32_t rnd_net;   /* net calls */
+	u_long rnd_timer; /* timer calls */
+	u_long rnd_mouse; /* mouse calls */
+	u_long rnd_tty;   /* tty calls */
+	u_long rnd_disk;  /* block devices calls */
+	u_long rnd_net;   /* net calls */
 
-	u_int32_t rnd_reads; /* strong read calls */
-	u_int32_t rnd_waits; /* sleep for data */
-	u_int32_t rnd_enqs;  /* enqueue calls */
-	u_int32_t rnd_deqs;  /* dequeue calls */
-	u_int32_t rnd_drops; /* queue-full drops */
-	u_int32_t rnd_drople;/* queue low watermark low entropy drops */
+	u_long rnd_reads; /* strong read calls */
+	u_long rnd_waits; /* sleep for data */
+	u_long rnd_enqs;  /* enqueue calls */
+	u_long rnd_deqs;  /* dequeue calls */
+	u_long rnd_drops; /* queue-full drops */
+	u_long rnd_drople;/* queue low watermark low entropy drops */
 
-	u_int32_t rnd_asleep; /* sleeping for the data */
-	u_int32_t rnd_queued; /* queued for processing */
+	u_long rnd_asleep;/* sleeping for the data */
+	u_long rnd_queued;/* queued for processing */
+	u_long arc4_stirs;/* arc4 pool stirs */
+
+	u_long rnd_ed[32];/* entropy feed distribution */
 };
 
 #ifdef _KERNEL
@@ -78,6 +81,7 @@ extern void add_tty_randomness __P((int));
 
 extern void get_random_bytes __P((void *, size_t));
 extern u_int32_t arc4random __P((void));
+extern int arc4random_8 __P((void));
 
 #endif /* _KERNEL */
 
