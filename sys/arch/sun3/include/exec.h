@@ -27,7 +27,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __LDPGSZ
+#ifndef _SUN3_EXEC_H_
+#define _SUN3_EXEC_H_
+
 #define __LDPGSZ	8192
 
 /* Relocation format. */
@@ -44,4 +46,11 @@ struct relocation_info_m68k {
 };
 #define relocation_info	relocation_info_m68k
 
-#endif  /* _LDPGSZ */
+#define ELF_TARG_CLASS          ELFCLASS32
+#define ELF_TARG_DATA           ELFDATA2MSB
+#define ELF_TARG_MACH           EM_M68K
+
+#define DO_AOUT                 /* support a.out */
+#define DO_ELF                  /* support ELF */
+
+#endif  /* _SUN3_EXEC_H_ */
