@@ -1,5 +1,5 @@
-$OpenBSD: BUGS,v 1.5 1999/02/26 03:29:20 niklas Exp $
-$EOM: BUGS,v 1.23 1999/02/24 15:48:05 niklas Exp $
+$OpenBSD: BUGS,v 1.6 1999/03/31 20:29:10 niklas Exp $
+$EOM: BUGS,v 1.24 1999/03/31 20:24:50 niklas Exp $
 
 Until we have a bug-tracking system setup, we might just add bugs to this
 file:
@@ -16,7 +16,7 @@ file:
 * When we establish a phase 2 exchange we seem to get the wrong IV set,
   according to SSH's logs. [fixed]
 
-* If a phase 1 SA negotiation exists with a cause that is to be sent in
+* If a phase 1 SA negotiation terminates with a cause that is to be sent in
   a NOTIFY to the peer, we get multiple free calls on the cleanup of the
   informational exchange.
 
@@ -52,14 +52,14 @@ file:
 
 * Phase 1 rekey event removal seems to be done twice. [fixed]
 
-* PF_ENCAP expirations does not find the proper phase 2 SA to remove.
+* PF_ENCAP expirations does not find the proper phase 2 SA to remove. [fixed]
 
 * ISAKMP SA expirations should have a soft/hard timeout just like IPsec ones.
   The soft one should put a watchdog on the SA, and start a renegotiation as
   soon as something used the SA.  Hard ones should just clean it up, no
-  renegotiation at all.
+  renegotiation at all. [fixed]
 
-* ISAKMP SAs does not get removed after rekeying.
+* ISAKMP SAs does not get removed after rekeying. [fixed]
 
 * On-demand PF_ENCAP SAs does not get reestablished.
 
