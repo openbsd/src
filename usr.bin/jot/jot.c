@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.3 1999/12/04 21:27:02 deraadt Exp $	*/
+/*	$OpenBSD: jot.c,v 1.4 1999/12/04 21:28:34 deraadt Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)jot.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: jot.c,v 1.3 1999/12/04 21:27:02 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: jot.c,v 1.4 1999/12/04 21:28:34 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -144,7 +144,9 @@ getargs(ac, av)
 			else if (!--ac)
 				error("Need context word after -w or -b", "");
 			else
-				strcpy(format, *++av);
+				if (strlcpy(format, *++av, sizeof(format)) >=
+				    sizeof(format))
+					error("-w word too long", "");
 			break;
 		case 's':
 			if ((*av)[2])
@@ -154,7 +156,9 @@ getargs(ac, av)
 			else if (!--ac)
 				error("Need string after -s", "");
 			else
-				strcpy(sepstring, *++av);
+				if (strlcpy(sepstring, *++av, sizeof(sepstring)) >=
+				    sizeof(sepstring))
+					error("-s word too long", "");
 			break;
 		case 'p':
 			if ((*av)[2])
