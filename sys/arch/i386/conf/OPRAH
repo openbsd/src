@@ -1,4 +1,4 @@
-#	$OpenBSD: OPRAH,v 1.17 1997/09/21 09:40:08 niklas Exp $
+#	$OpenBSD: OPRAH,v 1.18 1997/09/26 16:43:00 kstailey Exp $
 #
 #	OPRAH -- Niklas Hallqvist's test machine
 #
@@ -62,7 +62,7 @@ option		FDESC		# /dev/fd
 option		FIFO		# FIFOs; RECOMMENDED
 option		KERNFS		# /kern
 option		NULLFS		# loopback file system
-#option		PORTAL		# create sockets with open(2)
+#option		PORTAL		# dynamically created filesystem objects
 option		PROCFS		# /proc
 #option		UMAPFS		# NULLFS + uid and gid remapping
 #option		UNION		# union file system

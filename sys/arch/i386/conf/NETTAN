@@ -1,4 +1,4 @@
-#	$OpenBSD: NETTAN,v 1.22 1997/09/21 09:40:09 niklas Exp $
+#	$OpenBSD: NETTAN,v 1.23 1997/09/26 16:43:00 kstailey Exp $
 #
 #	NETTAN -- Applitron Datasystem AB
 #
@@ -62,7 +62,7 @@ option		MSDOSFS		# MS-DOS file system
 option		FIFO		# FIFOs; RECOMMENDED
 option		KERNFS		# /kern
 #option		NULLFS		# loopback file system
-#option		PORTAL		# create sockets with open(2)
+#option		PORTAL		# dynamically created filesystem objects
 option		PROCFS		# /proc
 #option		UMAPFS		# NULLFS + uid and gid remapping
 #option		UNION		# union file system

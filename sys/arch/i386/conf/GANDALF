@@ -1,7 +1,7 @@
 #
 #	GANDALF -- Dual Tyan P5/133 PCI/EISA bus
 #
-#	$OpenBSD: GANDALF,v 1.24 1997/09/02 04:11:21 downsj Exp $
+#	$OpenBSD: GANDALF,v 1.25 1997/09/26 16:45:32 kstailey Exp $
 #
 
 machine		i386		# architecture, used by config; REQUIRED
@@ -69,7 +69,7 @@ option		FDESC		# /dev/fd
 option		FIFO		# FIFOs; RECOMMENDED
 option		KERNFS		# /kern
 option		NULLFS		# loopback file system
-#option		PORTAL		# ?
+#option		PORTAL		# dynamically created filesystem objects
 option		PROCFS		# /proc
 #option		UMAPFS		# NULLFS + uid and gid remapping
 option		UNION		# union file system

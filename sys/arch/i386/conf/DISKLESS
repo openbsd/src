@@ -1,4 +1,4 @@
-#	$OpenBSD: DISKLESS,v 1.18 1997/09/02 04:11:20 downsj Exp $
+#	$OpenBSD: DISKLESS,v 1.19 1997/09/26 16:42:58 kstailey Exp $
 #	$NetBSD: DISKLESS,v 1.26 1996/05/20 18:17:16 mrg Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
@@ -61,7 +61,7 @@ option		FDESC		# /dev/fd
 option		FIFO		# FIFOs; RECOMMENDED
 option		KERNFS		# /kern
 option		NULLFS		# loopback file system
-option		PORTAL		# create sockets with open(2)
+option		PORTAL		# dynamically created filesystem objects
 option		PROCFS		# /proc
 option		UMAPFS		# NULLFS + uid and gid remapping
 option		UNION		# union file system

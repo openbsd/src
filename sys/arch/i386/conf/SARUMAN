@@ -1,7 +1,7 @@
 #
 #	SARUMAN -- i486DX/50 EISA bus
 #
-#	$OpenBSD: SARUMAN,v 1.5 1997/09/02 04:11:24 downsj Exp $
+#	$OpenBSD: SARUMAN,v 1.6 1997/09/26 16:45:32 kstailey Exp $
 #
 
 machine		i386		# architecture, used by config; REQUIRED
@@ -64,7 +64,7 @@ option		FDESC		# /dev/fd
 option		FIFO		# FIFOs; RECOMMENDED
 option		KERNFS		# /kern
 option		NULLFS		# loopback file system
-#option		PORTAL		# ?
+#option		PORTAL		# dynamically created filesystem objects
 option		PROCFS		# /proc
 #option		UMAPFS		# NULLFS + uid and gid remapping
 option		UNION		# union file system
