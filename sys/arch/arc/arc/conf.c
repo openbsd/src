@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.1.1.1 1996/06/24 09:07:20 pefo Exp $ */
+/*	$OpenBSD: conf.c,v 1.2 1996/06/24 20:05:34 pefo Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)conf.c	8.2 (Berkeley) 11/14/93
- *      $Id: conf.c,v 1.1.1.1 1996/06/24 09:07:20 pefo Exp $
+ *      $Id: conf.c,v 1.2 1996/06/24 20:05:34 pefo Exp $
  */
 
 #include <sys/param.h>
@@ -168,7 +168,7 @@ struct cdevsw	cdevsw[] =
 	cdev_pc_init(NPC,pc),		/* 14: builtin pc style console dev */
 	cdev_mouse_init(1,pms),		/* 15: builtin PS2 style mouse */
 	cdev_lpt_init(NLPT,lpt),	/* 16: lpt paralell printer interface */
-	cdev_tty_init(NCOM,ace),	/* 17: ace 16C450 serial interface */
+	cdev_tty_init(NACE,ace),	/* 17: ace 16C450 serial interface */
 	cdev_notdef(),			/* 18: */
 	cdev_notdef(),			/* 19: */
 	cdev_tty_init(NPTY,pts),	/* 20: pseudo-tty slave */
@@ -323,7 +323,7 @@ struct	consdev constab[] = {
 #if NPC + NVT > 0
 	cons_init(pc),
 #endif
-#if NCOM > 0
+#if NACE > 0
 	cons_init(ace),
 #endif
 	{ 0 },

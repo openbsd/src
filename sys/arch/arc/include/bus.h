@@ -1,5 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.1.1.1 1996/06/24 09:07:18 pefo Exp $	*/
-/*	$NetBSD: bus.h,v 1.2 1996/04/05 23:59:37 thorpej Exp $	*/
+/*	$OpenBSD: bus.h,v 1.2 1996/06/24 20:05:36 pefo Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -101,10 +100,9 @@ struct arc_isa_busmap {
 				!!! bus_io_write_multi_8 unimplimented !!!
 #endif
 
-int	bus_mem_map __P((bus_chipset_tag_t t, bus_mem_addr_t bpa,
-	    bus_mem_size_t size, int cacheable, bus_mem_handle_t *mhp));
-void	bus_mem_unmap __P((bus_chipset_tag_t t, bus_mem_handle_t memh,
-	    bus_mem_size_t size));
+#define bus_mem_map(t, addr, size, cacheable, mhp)			\
+    (*mhp = (t == NULL ? port : port + (ulong)(t->isa_mem_base)), 0)
+#define bus_mem_unmap(t, ioh, size)
 
 #define	bus_mem_read_1(t, h, o)		(*(volatile u_int8_t *)((h) + (o)))
 #define	bus_mem_read_2(t, h, o)		(*(volatile u_int16_t *)((h) + (o)))

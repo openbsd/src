@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arc,v 1.1.1.1 1996/06/24 09:07:20 pefo Exp $
+#	$OpenBSD: files.arc,v 1.2 1996/06/24 20:05:35 pefo Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -110,6 +110,12 @@ attach  ace at isa with ace_isa
 attach  ace at commulti with ace_commulti
 attach  ace at pica with ace_pica
 file    arch/arc/dev/ace.c		ace & (ace_isa | ace_commulti | ace_pica) needs-flag 
+
+# 	Parallel ports (XXX what chip?)
+device  lpr
+attach  lpr at isa with lpr_isa
+attach	lpr at pica with lpr_pica
+file	arch/arc/dev/lpr.c		lpr & (lpr_isa | lpr_pica) needs-flag
 
 #
 

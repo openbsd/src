@@ -73,7 +73,7 @@ pc0		at pica?
 pms0		at pica?
 ace0		at pica?
 ace1		at pica?
-lpt0		at pica?
+lpr0		at pica?
 sn0		at pica?
 
 fdc0		at pica?
