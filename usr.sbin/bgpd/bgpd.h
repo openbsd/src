@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.160 2005/03/23 10:46:26 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.161 2005/03/28 15:03:33 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -28,6 +28,8 @@
 
 #include <poll.h>
 #include <stdarg.h>
+
+#include <leak.h>
 
 #define	BGP_VERSION			4
 #define	BGP_PORT			179

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.114 2005/03/24 02:39:16 tedu Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.115 2005/03/28 15:03:33 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -153,8 +153,10 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (parse_config(conffile, &conf, &mrt_l, &peer_l, &net_l, rules_l))
+	if (parse_config(conffile, &conf, &mrt_l, &peer_l, &net_l, rules_l)) {
+		free(rules_l);
 		exit(1);
+	}
 
 	if (conf.opts & BGPD_OPT_NOACTION) {
 		if (conf.opts & BGPD_OPT_VERBOSE)
