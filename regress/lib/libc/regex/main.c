@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.4 2003/07/31 21:48:03 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.5 2004/02/28 08:06:46 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.2 1995/04/20 22:39:51 cgd Exp $	*/
 
 #include <stdio.h>
@@ -228,7 +228,7 @@ int opts;			/* may not match f1 */
 	char f0copy[1000];
 	char f2copy[1000];
 
-	strcpy(f0copy, f0);
+	strlcpy(f0copy, f0, sizeof f0copy);
 	re.re_endp = (opts&REG_PEND) ? f0copy + strlen(f0copy) : NULL;
 	fixstr(f0copy);
 	err = regcomp(&re, f0copy, opts);
@@ -252,7 +252,7 @@ int opts;			/* may not match f1 */
 		return;
 	}
 
-	strcpy(f2copy, f2);
+	strlcpy(f2copy, f2, sizeof f2copy);
 	fixstr(f2copy);
 
 	if (options('e', f1)&REG_STARTEND) {

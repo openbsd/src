@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_join.c,v 1.3 2003/07/31 21:48:05 deraadt Exp $	*/
+/*	$OpenBSD: pthread_join.c,v 1.4 2004/02/28 08:06:47 deraadt Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -53,7 +53,7 @@ new_thread_1(void * new_buf)
 {
 	int i;
 
-	sprintf((char *)new_buf, "New thread %%d stack at %p\n", &i);
+	snprintf((char *)new_buf, 512, "New thread %%d stack at %p\n", &i);
 	pthread_yield();	/* (ensure parent can wait on live thread) */
 	sleep(1);
 	return(new_buf);
@@ -66,7 +66,7 @@ new_thread_2(void * new_buf)
 {
 	int i;
 
-	sprintf((char *)new_buf, "New thread %%d stack at %p\n", &i);
+	snprintf((char *)new_buf, 512, "New thread %%d stack at %p\n", &i);
 	return(new_buf);
 	PANIC("return");
 }

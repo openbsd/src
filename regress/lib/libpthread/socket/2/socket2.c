@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket2.c,v 1.4 2003/07/31 21:48:06 deraadt Exp $	*/
+/*	$OpenBSD: socket2.c,v 1.5 2004/02/28 08:06:47 deraadt Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -125,7 +125,7 @@ sock_accept(void *arg)
 	CHECKr(pthread_mutex_lock(&waiter_mutex));
 	CHECKr(pthread_create(&wthread, NULL, waiter, NULL));
 
-	sprintf(buf, "%d", port);
+	snprintf(buf, sizeof buf, "%d", port);
 
 	CHECKe(pid = fork());
 	switch(pid) {
