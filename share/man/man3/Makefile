@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.16 2004/08/11 19:14:56 drahn Exp $
+#	$OpenBSD: Makefile,v 1.17 2005/01/30 14:38:17 kettenis Exp $
 #	@(#)Makefile	8.2 (Berkeley) 12/13/93
 
-MAN=	assert.3 bitstring.3 dlfcn.3 end.3 intro.3 queue.3 stdarg.3 \
-	sysexits.3 tree.3
+MAN=	assert.3 bitstring.3 dlfcn.3 dl_iterate_phdr.3 end.3 intro.3 queue.3 \
+	stdarg.3 sysexits.3 tree.3
 MLINKS+=bitstring.3 bit_alloc.3 bitstring.3 bit_clear.3 \
 	bitstring.3 bit_decl.3 bitstring.3 bit_ffc.3 bitstring.3 bit_ffs.3 \
 	bitstring.3 bit_nclear.3 bitstring.3 bit_set.3 \
