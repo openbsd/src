@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.17 2002/09/10 18:29:44 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.18 2002/09/18 10:36:50 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -1350,7 +1350,7 @@ remap_data:
 #endif
 				/* Enter PROM map into pmap_kernel() */
 				pmap_enter_kpage(prom_map[i].vstart + j,
-					(prom_map[i].tte + j)|
+					(prom_map[i].tte + j)|TLB_EXEC|
 					page_size_map[k].code);
 			}
 	BDPRINTF(PDB_BOOT1, ("Done inserting PROM mappings into pmap_kernel()\r\n"));
