@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.9 2002/01/23 00:39:47 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.10 2002/01/25 15:43:59 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -243,6 +243,7 @@ typedef struct pv_entry {
 
 pv_entry_t	pv_table;	/* array of entries, one per page */
 static struct pool pv_pool;
+static struct pool pmap_pool;
 extern void	pmap_remove_pv __P((struct pmap *pm, vaddr_t va, paddr_t pa));
 extern void	pmap_enter_pv __P((struct pmap *pm, vaddr_t va, paddr_t pa));
 extern void	pmap_page_cache __P((struct pmap *pm, paddr_t pa, int mode));
@@ -1527,6 +1528,8 @@ pmap_init()
 
 	/* Setup a pool for additional pvlist structures */
 	pool_init(&pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pv_entry", NULL);
+	pool_init(&pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
+	    &pool_allocator_nointr);
 
 	vm_first_phys = avail_start;
 	vm_num_phys = avail_end - avail_start;
@@ -1622,7 +1625,7 @@ pmap_create()
 
 	DPRINTF(PDB_CREATE, ("pmap_create()\n"));
 
-	pm = (struct pmap *)malloc(sizeof *pm, M_VMPMAP, M_WAITOK);
+	pm = pool_get(&pmap_pool, PR_WAITOK);
 	bzero((caddr_t)pm, sizeof *pm);
 #ifdef DEBUG
 	if (pmapdebug & PDB_CREATE)
@@ -1706,7 +1709,7 @@ pmap_destroy(pm)
 			printf("pmap_destroy: freeing pmap %p\n", pm);
 #endif
 		pmap_release(pm);
-		free((caddr_t)pm, M_VMPMAP);
+		pool_put(&pmap_pool, pm);
 	}
 }
 
