@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.426 2003/12/15 07:11:30 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.427 2003/12/15 07:30:17 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -397,7 +397,7 @@ typedef struct {
 %type	<v.number>		number icmptype icmp6type uid gid
 %type	<v.number>		tos not yesno natpass
 %type	<v.i>			no dir log af fragcache sourcetrack
-%type	<v.i>			unaryop 
+%type	<v.i>			unaryop
 %type	<v.b>			action nataction flags flag blockspec
 %type	<v.range>		port rport
 %type	<v.hashkey>		hashkey
@@ -2695,7 +2695,7 @@ pool_opt	: BITMASK	{
 			}
 			pool_opts.type =  PF_POOL_BITMASK;
 		}
-		| RANDOM	{ 
+		| RANDOM	{
 			if (pool_opts.type) {
 				yyerror("pool type cannot be redefined");
 				YYERROR;
@@ -2710,7 +2710,7 @@ pool_opt	: BITMASK	{
 			pool_opts.type = PF_POOL_SRCHASH;
 			pool_opts.key = $2;
 		}
-		| ROUNDROBIN	{ 
+		| ROUNDROBIN	{
 			if (pool_opts.type) {
 				yyerror("pool type cannot be redefined");
 				YYERROR;
@@ -3150,7 +3150,7 @@ timeout_spec	: STRING number
 				yyerror("unknown timeout %s", $1);
 				YYERROR;
 			}
-		
+
 		}
 		;
 
