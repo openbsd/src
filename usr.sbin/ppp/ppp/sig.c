@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: sig.c,v 1.7 2002/06/15 01:33:23 brian Exp $
+ *	$OpenBSD: sig.c,v 1.8 2003/09/22 21:39:40 miod Exp $
  */
 
 #include <sys/types.h>
@@ -65,7 +65,7 @@ sig_signal(int sig, sig_type fn)
 {
   sig_type Result;
 
-  if (sig <= 0 || sig > NSIG) {
+  if (sig <= 0 || sig >= NSIG) {
     /* Oops - we must be a bit out of date (too many sigs ?) */
     log_Printf(LogALERT, "Eeek! %s:%d: I must be out of date!\n",
 	      __FILE__, __LINE__);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.32 2003/08/06 21:08:06 millert Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.33 2003/09/22 21:39:40 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -1400,7 +1400,7 @@ nameinterrupt(replace, newstr)
 	extern char intrnames[];
 	extern char eintrnames[];
 
-	if (replace > NENTRIES) {
+	if (replace >= NENTRIES) {
 		return;
 	}
 	src = intrnames;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: spp_usrreq.c,v 1.15 2003/06/02 23:28:19 millert Exp $	*/
+/*	$OpenBSD: spp_usrreq.c,v 1.16 2003/09/22 21:39:40 miod Exp $	*/
 /*	$NetBSD: spp_usrreq.c,v 1.9 1996/02/13 22:14:13 christos Exp $	*/
 
 /*
@@ -596,7 +596,7 @@ spp_ctlinput(cmd, sa, arg)
 	struct sockaddr_ns *sns;
 	int type;
 
-	if (cmd < 0 || cmd > PRC_NCMDS)
+	if (cmd < 0 || cmd >= PRC_NCMDS)
 		return NULL;
 	type = NS_ERR_UNREACH_HOST;
 

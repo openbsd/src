@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_sigaction.c,v 1.7 2003/01/31 04:46:17 marc Exp $	*/
+/*	$OpenBSD: uthread_sigaction.c,v 1.8 2003/09/22 21:39:35 miod Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -45,7 +45,7 @@ sigaction(int sig, const struct sigaction * act, struct sigaction * oact)
 	struct sigaction gact;
 
 	/* Check if the signal number is out of range: */
-	if (sig < 1 || sig > NSIG) {
+	if (sig < 1 || sig >= NSIG) {
 		/* Return an invalid argument: */
 		errno = EINVAL;
 		ret = -1;

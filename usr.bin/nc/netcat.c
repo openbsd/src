@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.62 2003/07/25 21:35:16 millert Exp $ */
+/* $OpenBSD: netcat.c,v 1.63 2003/09/22 21:39:40 miod Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -74,7 +74,7 @@ int	zflag;					/* Port Scan Flag */
 
 int timeout = -1;
 int family = AF_UNSPEC;
-char *portlist[PORT_MAX];
+char *portlist[PORT_MAX+1];
 
 ssize_t	atomicio(ssize_t (*)(int, void *, size_t), int, void *, size_t);
 void	atelnet(int, unsigned char *, unsigned int);
