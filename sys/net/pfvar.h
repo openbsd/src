@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.170 2003/08/22 21:50:34 david Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.171 2003/09/26 21:44:09 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -598,6 +598,7 @@ struct pf_ruleset {
 		struct {
 			struct pf_rulequeue	*ptr;
 			u_int32_t		 ticket;
+			int			 open;
 		}			 active, inactive;
 	}			 rules[PF_RULESET_MAX];
 	struct pf_anchor	*anchor;
@@ -1004,6 +1005,19 @@ struct pfioc_ruleset {
 	char		 name[PF_RULESET_NAME_SIZE];
 };
 
+#define PF_RULESET_ALTQ		(PF_RULESET_MAX)
+#define PF_RULESET_TABLE 	(PF_RULESET_MAX+1)
+struct pfioc_trans {
+	int		 size;	/* number of elements */
+	int		 esize; /* size of each element in bytes */
+	struct pfioc_trans_e {
+		int		rs_num;
+		char		anchor[PF_ANCHOR_NAME_SIZE];
+		char		ruleset[PF_RULESET_NAME_SIZE];
+		u_int32_t	ticket;
+	}		*array;
+};
+
 #define PFR_FLAG_ATOMIC		0x00000001
 #define PFR_FLAG_DUMMY		0x00000002
 #define PFR_FLAG_FEEDBACK	0x00000004
@@ -1101,6 +1115,10 @@ struct pfioc_table {
 #define DIOCOSFPFLUSH	_IO('D', 78)
 #define DIOCOSFPADD	_IOWR('D', 79, struct pf_osfp_ioctl)
 #define DIOCOSFPGET	_IOWR('D', 80, struct pf_osfp_ioctl)
+#define DIOCXBEGIN      _IOWR('D', 81, struct pfioc_trans)
+#define DIOCXCOMMIT     _IOWR('D', 82, struct pfioc_trans)
+#define DIOCXROLLBACK   _IOWR('D', 83, struct pfioc_trans)
+
 
 #ifdef _KERNEL
 RB_HEAD(pf_state_tree, pf_tree_node);
@@ -1118,6 +1136,7 @@ extern struct pf_palist			 pf_pabuf;
 
 extern u_int32_t		 ticket_altqs_active;
 extern u_int32_t		 ticket_altqs_inactive;
+extern int			 altqs_inactive_open;	
 extern u_int32_t		 ticket_pabuf;
 extern struct pf_altqqueue	*pf_altqs_active;
 extern struct pf_altqqueue	*pf_altqs_inactive;
@@ -1224,6 +1243,7 @@ int	pfr_clr_astats(struct pfr_table *, struct pfr_addr *, int, int *,
 int	pfr_tst_addrs(struct pfr_table *, struct pfr_addr *, int, int *,
 	    int);
 int	pfr_ina_begin(struct pfr_table *, u_int32_t *, int *, int);
+int	pfr_ina_rollback(struct pfr_table *, u_int32_t, int *, int);
 int	pfr_ina_commit(struct pfr_table *, u_int32_t, int *, int *, int);
 int	pfr_ina_define(struct pfr_table *, struct pfr_addr *, int, int *,
 	    int *, u_int32_t, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.175 2003/09/18 20:27:58 cedric Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.176 2003/09/26 21:44:09 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -31,6 +31,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <net/if.h>
 #include <netinet/in.h>
@@ -1283,4 +1284,46 @@ append_addr_host(struct pfr_buffer *b, struct node_host *n, int test, int not)
 	} while ((n = n->next) != NULL);
 
 	return (0);
+}
+
+int
+pfctl_add_trans(struct pfr_buffer *buf, int rs_num, const char *anchor,
+    const char *ruleset) 
+{
+	struct pfioc_trans_e trans;
+
+	bzero(&trans, sizeof(trans));
+	trans.rs_num = rs_num;
+	if (strlcpy(trans.anchor, anchor,
+	    sizeof(trans.anchor)) >= sizeof(trans.anchor) ||
+	    strlcpy(trans.ruleset, ruleset,
+	    sizeof(trans.ruleset)) >= sizeof(trans.ruleset))
+		errx(1, "pfctl_add_trans: strlcpy");
+
+	return pfr_buf_add(buf, &trans);
+}
+
+u_int32_t
+pfctl_get_ticket(struct pfr_buffer *buf, int rs_num, const char *anchor,
+    const char *ruleset) 
+{
+	struct pfioc_trans_e *p;
+	
+	PFRB_FOREACH(p, buf)
+		if (rs_num == p->rs_num && !strcmp(anchor, p->anchor) &&
+		    !strcmp(ruleset, p->ruleset))
+			return (p->ticket);
+	errx(1, "pfr_get_ticket: assertion failed");
+}
+
+int
+pfctl_trans(int dev, struct pfr_buffer *buf, int cmd, int from)
+{
+	struct pfioc_trans trans;
+
+	bzero(&trans, sizeof(trans));
+	trans.size = buf->pfrb_size - from;
+	trans.esize = sizeof(struct pfioc_trans_e);
+	trans.array = ((struct pfioc_trans_e *)buf->pfrb_caddr) + from;
+	return ioctl(dev, cmd, &trans);
 }

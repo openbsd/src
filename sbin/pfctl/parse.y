@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.415 2003/09/01 15:07:40 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.416 2003/09/26 21:44:09 cedric Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -4471,7 +4471,7 @@ parseicmpspec(char *w, sa_family_t af)
 }
 
 int
-pfctl_load_anchors(int dev, int opts)
+pfctl_load_anchors(int dev, int opts, struct pfr_buffer *trans)
 {
 	struct loadanchors	*la;
 
@@ -4480,7 +4480,7 @@ pfctl_load_anchors(int dev, int opts)
 			fprintf(stderr, "\nLoading anchor %s:%s from %s\n",
 			    la->anchorname, la->rulesetname, la->filename);
 		if (pfctl_rules(dev, la->filename, opts, la->anchorname,
-		    la->rulesetname) == -1)
+		    la->rulesetname, trans) == -1)
 			return (-1);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.69 2003/09/26 07:24:10 henning Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.70 2003/09/26 21:44:09 cedric Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -46,6 +46,7 @@
 #include <unistd.h>
 
 #include <pfctl_parser.h>
+#include <pfctl.h>
 
 #include "pathnames.h"
 
@@ -253,7 +254,7 @@ main(int argc, char *argv[])
 
 	if (change_filter(1, luser, ipsrc) == -1) {
 		printf("Unable to modify filters\r\n");
-		do_death(1);
+		do_death(0);
 	}
 
 	signal(SIGTERM, need_death);
@@ -576,10 +577,8 @@ change_filter(int add, const char *luser, const char *ipsrc)
 {
 	char			 fn[MAXPATHLEN];
 	FILE			*f = NULL;
-	const int		 action[PF_RULESET_MAX] = { PF_SCRUB,
-				    PF_PASS, PF_NAT, PF_BINAT, PF_RDR };
 	struct pfctl		 pf;
-	struct pfioc_rule	 pr[PF_RULESET_MAX];
+	struct pfr_buffer	 t;
 	int			 i;
 
 	if (luser == NULL || !luser[0] || ipsrc == NULL || !ipsrc[0]) {
@@ -614,18 +613,18 @@ change_filter(int add, const char *luser, const char *ipsrc)
 		syslog(LOG_ERR, "unable to load kernel's OS fingerprints");
 		goto error;
 	}
-
+	bzero(&t, sizeof(t));
+	t.pfrb_type = PFRB_TRANS;
 	memset(&pf, 0, sizeof(pf));
 	for (i = 0; i < PF_RULESET_MAX; ++i) {
-		memset(&pr[i], 0, sizeof(pr[i]));
-		pr[i].rule.action = action[i];
-		strlcpy(pr[i].anchor, anchorname, sizeof(pr[i].anchor));
-		strlcpy(pr[i].ruleset, rulesetname, sizeof(pr[i].ruleset));
-		if (ioctl(dev, DIOCBEGINRULES, &pr[i])) {
-			syslog(LOG_ERR, "DIOCBEGINRULES %m");
+		if (pfctl_add_trans(&t, i, anchorname, rulesetname)) {
+			syslog(LOG_ERR, "pfctl_add_trans %m");
 			goto error;
 		}
-		pf.prule[i] = &pr[i];
+	}
+	if (pfctl_trans(dev, &t, DIOCXBEGIN, 0)) {
+		syslog(LOG_ERR, "DIOCXBEGIN (%s) %m", add?"add":"remove");
+		goto error;
 	}
 
 	if (add) {
@@ -636,6 +635,10 @@ change_filter(int add, const char *luser, const char *ipsrc)
 		}
 
 		pf.dev = dev;
+		pf.trans = &t;
+		pf.anchor = anchorname;
+		pf.ruleset = rulesetname;
+
 		infile = fn;
 		if (parse_rules(f, &pf) < 0) {
 			syslog(LOG_ERR, "syntax error in rule file: "
@@ -648,16 +651,10 @@ change_filter(int add, const char *luser, const char *ipsrc)
 		f = NULL;
 	}
 
-	for (i = 0; i < PF_RULESET_MAX; ++i)
-		/*
-		 * ignore EINVAL on removal, it means the anchor was
-		 * already automatically removed by the kernel.
-		 */
-		if (ioctl(dev, DIOCCOMMITRULES, &pr[i]) &&
-		    (add || errno != EINVAL)) {
-			syslog(LOG_ERR, "DIOCCOMMITRULES %m");
-			goto error;
-		}
+	if (pfctl_trans(dev, &t, DIOCXCOMMIT, 0)) {
+		syslog(LOG_ERR, "DIOCXCOMMIT (%s) %m", add?"add":"remove");
+		goto error;
+	}
 
 	if (add) {
 		gettimeofday(&Tstart, NULL);
@@ -672,6 +669,8 @@ change_filter(int add, const char *luser, const char *ipsrc)
 error:
 	if (f != NULL)
 		fclose(f);
+	if (pfctl_trans(dev, &t, DIOCXROLLBACK, 0))
+		syslog(LOG_ERR, "DIOCXROLLBACK (%s) %m", add?"add":"remove");
 
 	infile = NULL;
 	return (-1);
@@ -747,37 +746,44 @@ do_death(int active)
 int
 pfctl_add_rule(struct pfctl *pf, struct pf_rule *r)
 {
-	struct pfioc_rule	*pr;
+	u_int8_t		rs_num;
+	struct pfioc_rule	pr;
 
 	switch (r->action) {
 	case PF_PASS:
 	case PF_DROP:
-		pr = pf->prule[PF_RULESET_FILTER];
+		rs_num = PF_RULESET_FILTER;
 		break;
 	case PF_SCRUB:
-		pr = pf->prule[PF_RULESET_SCRUB];
+		rs_num = PF_RULESET_SCRUB;
 		break;
 	case PF_NAT:
 	case PF_NONAT:
-		pr = pf->prule[PF_RULESET_NAT];
+		rs_num = PF_RULESET_NAT;
 		break;
 	case PF_RDR:
 	case PF_NORDR:
-		pr = pf->prule[PF_RULESET_RDR];
+		rs_num = PF_RULESET_RDR;
 		break;
 	case PF_BINAT:
 	case PF_NOBINAT:
-		pr = pf->prule[PF_RULESET_BINAT];
+		rs_num = PF_RULESET_BINAT;
 		break;
 	default:
 		syslog(LOG_ERR, "invalid rule action %d", r->action);
 		return (1);
 	}
+
+	bzero(&pr, sizeof(pr));
+	strlcpy(pr.anchor, pf->anchor, sizeof(pr.anchor));
+	strlcpy(pr.ruleset, pf->ruleset, sizeof(pr.ruleset));
 	if (pfctl_add_pool(pf, &r->rpool, r->af))
 		return (1);
-	pr->pool_ticket = pf->paddr.ticket;
-	memcpy(&pr->rule, r, sizeof(pr->rule));
-	if (ioctl(pf->dev, DIOCADDRULE, pr)) {
+	pr.ticket = pfctl_get_ticket(pf->trans, rs_num, pf->anchor,
+	    pf->ruleset);
+	pr.pool_ticket = pf->paddr.ticket;
+	memcpy(&pr.rule, r, sizeof(pr.rule));
+	if (ioctl(pf->dev, DIOCADDRULE, &pr)) {
 		syslog(LOG_ERR, "DIOCADDRULE %m");
 		return (1);
 	}
@@ -861,7 +867,7 @@ pfctl_define_table(char *name, int flags, int addrs, const char *anchor,
 
 int
 pfctl_rules(int dev, char *filename, int opts, char *anchorname,
-    char *rulesetname)
+    char *rulesetname, struct pfr_buffer *t)
 {
 	/* never called, no anchors inside anchors, but we need the stub */
 	fprintf(stderr, "load anchor not supported from authpf\n");

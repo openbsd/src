@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.h,v 1.25 2003/08/29 21:47:36 cedric Exp $ */
+/*	$OpenBSD: pfctl.h,v 1.26 2003/09/26 21:44:09 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -33,7 +33,8 @@
 #ifndef _PFCTL_H_
 #define _PFCTL_H_
 
-enum {	PFRB_TABLES = 1, PFRB_TSTATS, PFRB_ADDRS, PFRB_ASTATS, PFRB_MAX };
+enum {	PFRB_TABLES = 1, PFRB_TSTATS, PFRB_ADDRS, PFRB_ASTATS, PFRB_TRANS,
+	PFRB_MAX };
 struct pfr_buffer {
 	int	 pfrb_type;	/* type of content, see enum above */
 	int	 pfrb_size;	/* number of objects in buffer */
@@ -111,5 +112,9 @@ void	 print_state(struct pf_state *, int);
 int	 unmask(struct pf_addr *, sa_family_t);
 
 int	 pfctl_cmdline_symset(char *);
+int	 pfctl_add_trans(struct pfr_buffer *, int, const char *, const char *);
+u_int32_t 
+	 pfctl_get_ticket(struct pfr_buffer *, int, const char *, const char *);
+int	 pfctl_trans(int, struct pfr_buffer *, int, int);
 
 #endif /* _PFCTL_H_ */

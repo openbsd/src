@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.67 2003/08/21 19:12:09 frantzen Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.68 2003/09/26 21:44:09 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -66,9 +66,9 @@ struct pfctl {
 	int tdirty;			/* kernel dirty */
 	u_int32_t rule_nr;
 	struct pfioc_pooladdr paddr;
-	struct pfioc_rule *prule[PF_RULESET_MAX];
 	struct pfioc_altq *paltq;
 	struct pfioc_queue *pqueue;
+	struct pfr_buffer *trans;
 	const char *anchor;
 	const char *ruleset;
 };
@@ -143,7 +143,7 @@ struct node_tinit {	/* table initializer */
 
 struct pfr_buffer;	/* forward definition */
 
-int	pfctl_rules(int, char *, int, char *, char *);
+int	pfctl_rules(int, char *, int, char *, char *, struct pfr_buffer *);
 
 int	pfctl_add_rule(struct pfctl *, struct pf_rule *);
 int	pfctl_add_altq(struct pfctl *, struct pf_altq *);
@@ -157,7 +157,7 @@ int	pfctl_set_logif(struct pfctl *, char *);
 
 int	parse_rules(FILE *, struct pfctl *);
 int	parse_flags(char *);
-int	pfctl_load_anchors(int, int);
+int	pfctl_load_anchors(int, int, struct pfr_buffer *);
 
 void	print_pool(struct pf_pool *, u_int16_t, u_int16_t, sa_family_t, int);
 void	print_rule(struct pf_rule *, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.391 2003/09/26 14:48:19 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.392 2003/09/26 21:44:08 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -103,6 +103,7 @@ struct ifnet		*status_ifp;
 
 u_int32_t		 ticket_altqs_active;
 u_int32_t		 ticket_altqs_inactive;
+int			 altqs_inactive_open;
 u_int32_t		 ticket_pabuf;
 
 struct timeout		 pf_expire_to;			/* expire timeout */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.41 2003/08/22 15:19:23 henning Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.42 2003/09/26 21:44:09 cedric Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -1456,6 +1456,37 @@ _bad:
 	pfr_destroy_ktables(&tableq, 0);
 	pfr_destroy_kentries(&addrq);
 	return (rv);
+}
+
+int
+pfr_ina_rollback(struct pfr_table *trs, u_int32_t ticket, int *ndel, int flags)
+{
+	struct pfr_ktableworkq	 workq;
+	struct pfr_ktable	*p;
+	struct pf_ruleset	*rs;
+	int			 xdel = 0;
+
+	ACCEPT_FLAGS(PFR_FLAG_DUMMY);
+	rs = pf_find_ruleset(trs->pfrt_anchor, trs->pfrt_ruleset);
+	if (rs == NULL || !rs->topen || ticket != rs->tticket)
+		return (0);
+	SLIST_INIT(&workq);
+	RB_FOREACH(p, pfr_ktablehead, &pfr_ktables) {
+		if (!(p->pfrkt_flags & PFR_TFLAG_INACTIVE) ||
+		    pfr_skip_table(trs, p, 0))
+			continue;
+		p->pfrkt_nflags = p->pfrkt_flags & ~PFR_TFLAG_INACTIVE;
+		SLIST_INSERT_HEAD(&workq, p, pfrkt_workq);
+		xdel++;
+	}
+	if (!(flags & PFR_FLAG_DUMMY)) {
+		pfr_setflags_ktables(&workq);
+		rs->topen = 0;
+		pf_remove_if_empty_ruleset(rs);
+	}
+	if (ndel != NULL)
+		*ndel = xdel;
+	return (0);
 }
 
 int

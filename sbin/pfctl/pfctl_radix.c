@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_radix.c,v 1.21 2003/09/24 09:12:35 cedric Exp $ */
+/*	$OpenBSD: pfctl_radix.c,v 1.22 2003/09/26 21:44:09 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -459,6 +459,7 @@ pfr_ina_define(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 size_t buf_esize[PFRB_MAX] = { 0,
 	sizeof(struct pfr_table), sizeof(struct pfr_tstats),
 	sizeof(struct pfr_addr), sizeof(struct pfr_astats),
+	sizeof(struct pfioc_trans_e)
 };
 
 /*
