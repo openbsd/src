@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.11 2004/02/23 20:09:02 deraadt Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.12 2004/02/24 11:35:39 henning Exp $	*/
 
 /* Network input dispatcher... */
 
@@ -77,24 +77,11 @@ discover_interfaces(int state)
 	struct interface_info *last, *next;
 	struct subnet *subnet;
 	struct sockaddr_in foo;
-	int ir;
 	struct ifreq *tif;
 	struct ifaddrs *ifap, *ifa;
 
 	if (getifaddrs(&ifap) != 0)
 		error("getifaddrs failed");
-
-	/*
-	 * If we already have a list of interfaces, and we're running as
-	 * a DHCP server, the interfaces were requested.
-	 */
-	if (interfaces && (state == DISCOVER_SERVER ||
-	    state == DISCOVER_RELAY || state == DISCOVER_REQUESTED))
-		ir = 0;
-	else if (state == DISCOVER_UNCONFIGURED)
-		ir = INTERFACE_REQUESTED | INTERFACE_AUTOMATIC;
-	else
-		ir = INTERFACE_REQUESTED;
 
 	/* Cycle through the list of interfaces looking for IP addresses. */
 	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
@@ -127,7 +114,7 @@ discover_interfaces(int state)
 				    "record interface", ifa->ifa_name);
 			strlcpy(tmp->name, ifa->ifa_name, sizeof(tmp->name));
 			tmp->next = interfaces;
-			tmp->flags = ir;
+			tmp->flags = 0;
 			tmp->noifmedia = tmp->dead = tmp->errors = 0;
 			interfaces = tmp;
 		}
@@ -198,7 +185,7 @@ discover_interfaces(int state)
 			tmp->flags &=
 			    ~(INTERFACE_AUTOMATIC | INTERFACE_REQUESTED);
 		if (!tmp->ifp || !(tmp->flags & INTERFACE_REQUESTED)) {
-			if ((tmp->flags & INTERFACE_REQUESTED) != ir)
+			if ((tmp->flags & INTERFACE_REQUESTED))
 				error("%s: not found", tmp->name);
 			if (!last)
 				interfaces = interfaces->next;

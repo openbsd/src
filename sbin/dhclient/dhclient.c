@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.10 2004/02/23 20:09:02 deraadt Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.11 2004/02/24 11:35:39 henning Exp $	*/
 
 /* DHCP Client. */
 
@@ -219,11 +219,10 @@ main(int argc, char *argv[])
 {
 	int i, fd;
 	struct servent *ent;
-	struct interface_info *ip;
+	struct interface_info *ip = NULL;
 	int seed;
 	int quiet = 0;
 	char *s;
-	int ifs = 0;
 
 	s = strrchr(argv[0], '/');
 	if (!s)
@@ -268,17 +267,13 @@ main(int argc, char *argv[])
 		} else if (argv[i][0] == '-') {
 			usage(s);
 		} else {
-		    struct interface_info *tmp =
-			dmalloc(sizeof(*tmp), "specified_interface");
-		    if (!tmp)
-			error("Insufficient memory to %s %s",
-			    "record interface", argv[i]);
-		    memset(tmp, 0, sizeof(*tmp));
-		    strlcpy(tmp->name, argv[i], IFNAMSIZ);
-		    tmp->next = interfaces;
-		    tmp->flags = INTERFACE_REQUESTED;
-		    interfaces_requested = 1;
-		    interfaces = tmp;
+			if ((ip = calloc(1, sizeof(struct interface_info))) ==
+			    NULL)
+				error("calloc");
+			strlcpy(ip->name, argv[i], IFNAMSIZ);
+			ip->flags = INTERFACE_REQUESTED;
+			interfaces_requested = 1;
+			interfaces = ip;
 		}
 	}
 
@@ -305,9 +300,6 @@ main(int argc, char *argv[])
 	sockaddr_broadcast.sin_len = sizeof(sockaddr_broadcast);
 	inaddr_any.s_addr = INADDR_ANY;
 
-	/* Discover all the network interfaces. */
-	discover_interfaces(DISCOVER_UNCONFIGURED);
-
 	/* Parse the dhclient.conf file. */
 	read_client_conf();
 
@@ -325,51 +317,23 @@ main(int argc, char *argv[])
 	/* Close and unlock */
 	close(fd);
 
-	/* If no broadcast interfaces were discovered, call the script
-	   and tell it so. */
-	if (!interfaces) {
-		script_init(NULL, "NBI", NULL);
-		script_go(NULL);
+	if (!interfaces_requested)
+		error("no interface given");
 
-		note("No broadcast interfaces found - exiting.");
-		/* Nothing more to do. */
-		exit(0);
-	} else {
-		/* Call the script with the list of interfaces. */
-		for (ip = interfaces; ip; ip = ip->next) {
-			/* If interfaces were specified, don't configure
-			   interfaces that weren't specified! */
-			if (interfaces_requested &&
-			    ((ip->flags & (INTERFACE_REQUESTED |
-					     INTERFACE_AUTOMATIC)) !=
-			     INTERFACE_REQUESTED))
-				continue;
-			if (!interface_link_status(ip->name))
-				continue;
-			ifs++;
-			script_init(ip, "PREINIT", NULL);
-			if (ip->client->alias)
-				script_write_params(ip, "alias_",
-						     ip->client->alias);
-			script_go(ip);
-		}
-	}
-
-	if (ifs == 0) {
-		note("No active interfaces found - exiting.");
-		exit(0);
-	}
+	if (interface_link_status(ip->name)) {
+		script_init(ip, "PREINIT", NULL);
+		if (ip->client->alias)
+			script_write_params(ip, "alias_", ip->client->alias);
+		script_go(ip);
+	} else
+		error("no link on interface %s", ip->name);
 
 	routefd = socket(PF_ROUTE, SOCK_RAW, 0);
 	if (routefd != -1)
 		add_protocol("AF_ROUTE", routefd, routehandler, interfaces);
 
-	/* At this point, all the interfaces that the script thinks
-	   are relevant should be running, so now we once again call
-	   discover_interfaces(), and this time ask it to actually set
-	   up the interfaces. */
-	discover_interfaces(interfaces_requested ? DISCOVER_REQUESTED :
-	    DISCOVER_RUNNING);
+	/* set up the interfaces. */
+	discover_interfaces(DISCOVER_REQUESTED);
 
 	/* Make up a seed for the random number generator from current
 	   time plus the sum of the last four bytes of each
