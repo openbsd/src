@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.11 2002/04/03 17:22:40 jason Exp $	*/
+/*	$OpenBSD: clock.c,v 1.12 2002/04/04 17:01:12 jason Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -176,6 +176,7 @@ int sbus_wenable(struct todr_chip_handle *, int);
 int ebus_wenable(struct todr_chip_handle *, int);
 struct chiptime;
 void myetheraddr(u_char *);
+struct idprom *getidprom(void);
 int chiptotime(int, int, int, int, int, int);
 void timetochip(struct chiptime *);
 void stopcounter(struct timer_4u *);
@@ -426,8 +427,13 @@ clockattach(node, bt, bh)
 		panic("Can't attach %s tod clock", model);
 
 #define IDPROM_OFFSET (8*1024 - 40)	/* XXX - get nvram sz from driver */
-	idp = (struct idprom *)((u_long)bh + IDPROM_OFFSET);
-
+	if (idprom == NULL) {
+		idp = getidprom();
+		if (idp == NULL)
+			idp = (struct idprom *)((u_long)bh + IDPROM_OFFSET);
+		idprom = idp;
+	} else
+		idp = idprom;
 	h = idp->id_machine << 24;
 	h |= idp->id_hostid[0] << 16;
 	h |= idp->id_hostid[1] << 8;
@@ -435,7 +441,21 @@ clockattach(node, bt, bh)
 	hostid = h;
 	printf(": hostid %x\n", (u_int)hostid);
 
-	idprom = idp;
+}
+
+struct idprom *
+getidprom() {
+	struct idprom *idp = NULL;
+	int node, n;
+
+	node = findroot();
+	if (getprop(node, "idprom", sizeof(*idp), &n, (void **)&idp) != 0)
+		return (NULL);
+	if (n != 1) {
+		free(idp, M_DEVBUF);
+		return (NULL);
+	}
+	return (idp);
 }
 
 /*
