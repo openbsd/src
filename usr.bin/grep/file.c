@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: file.c,v 1.1 2003/06/22 22:20:07 deraadt Exp $
+ *	$Id: file.c,v 1.2 2003/06/22 22:24:13 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -37,7 +37,7 @@
 
 static char	 fname[MAXPATHLEN];
 static char	*lnbuf;
-static int	 lnbuflen;
+static size_t	 lnbuflen;
 
 #define FILE_STDIO	0
 #define FILE_MMAP	1
@@ -50,6 +50,7 @@ struct file {
 	gzFile	*gzf;
 };
 
+#ifndef NOZ
 static char *
 gzfgetln(gzFile *f, size_t *len)
 {
@@ -64,7 +65,7 @@ gzfgetln(gzFile *f, size_t *len)
 
 			if (gzeof(f))
 				break;
-			
+
 			gzerrstr = gzerror(f, &gzerr);
 			if (gzerr == Z_ERRNO)
 				err(1, "%s", fname);
@@ -85,6 +86,7 @@ gzfgetln(gzFile *f, size_t *len)
 	*len = n;
 	return lnbuf;
 }
+#endif
 
 file_t *
 grep_fdopen(int fd, char *mode)
@@ -92,22 +94,25 @@ grep_fdopen(int fd, char *mode)
 	file_t *f;
 
 	if (fd == 0)
-		sprintf(fname, "(standard input)");
+		snprintf(fname, sizeof fname, "(standard input)");
 	else
-		sprintf(fname, "(fd %d)", fd);
-	
+		snprintf(fname, sizeof fname, "(fd %d)", fd);
+
 	f = grep_malloc(sizeof *f);
-	
+
+#ifndef NOZ
 	if (Zflag) {
 		f->type = FILE_GZIP;
 		if ((f->gzf = gzdopen(fd, mode)) != NULL)
 			return f;
-	} else {
+	} else
+#endif
+	{
 		f->type = FILE_STDIO;
 		if ((f->f = fdopen(fd, mode)) != NULL)
 			return f;
 	}
-	
+
 	free(f);
 	return NULL;
 }
@@ -117,15 +122,18 @@ grep_open(char *path, char *mode)
 {
 	file_t *f;
 
-	snprintf(fname, MAXPATHLEN, "%s", path);
-	
+	snprintf(fname, sizeof fname, "%s", path);
+
 	f = grep_malloc(sizeof *f);
-	
+
+#ifndef NOZ
 	if (Zflag) {
 		f->type = FILE_GZIP;
 		if ((f->gzf = gzopen(fname, mode)) != NULL)
 			return f;
-	} else {
+	} else
+#endif
+	{
 		/* try mmap first; if it fails, try stdio */
 		if ((f->mmf = mmopen(fname, mode)) != NULL) {
 			f->type = FILE_MMAP;
@@ -135,7 +143,7 @@ grep_open(char *path, char *mode)
 		if ((f->f = fopen(path, mode)) != NULL)
 			return f;
 	}
-	
+
 	free(f);
 	return NULL;
 }
@@ -148,8 +156,10 @@ grep_bin_file(file_t *f)
 		return bin_file(f->f);
 	case FILE_MMAP:
 		return mmbin_file(f->mmf);
+#ifndef NOZ
 	case FILE_GZIP:
 		return gzbin_file(f->gzf);
+#endif
 	default:
 		/* can't happen */
 		errx(1, "invalid file type");
@@ -164,8 +174,10 @@ grep_tell(file_t *f)
 		return ftell(f->f);
 	case FILE_MMAP:
 		return mmtell(f->mmf);
+#ifndef NOZ
 	case FILE_GZIP:
 		return gztell(f->gzf);
+#endif
 	default:
 		/* can't happen */
 		errx(1, "invalid file type");
@@ -180,8 +192,10 @@ grep_fgetln(file_t *f, size_t *l)
 		return fgetln(f->f, l);
 	case FILE_MMAP:
 		return mmfgetln(f->mmf, l);
+#ifndef NOZ
 	case FILE_GZIP:
 		return gzfgetln(f->gzf, l);
+#endif
 	default:
 		/* can't happen */
 		errx(1, "invalid file type");
@@ -198,9 +212,11 @@ grep_close(file_t *f)
 	case FILE_MMAP:
 		mmclose(f->mmf);
 		break;
+#ifndef NOZ
 	case FILE_GZIP:
 		gzclose(f->gzf);
 		break;
+#endif
 	default:
 		/* can't happen */
 		errx(1, "invalid file type");

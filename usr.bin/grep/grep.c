@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: grep.c,v 1.4 2003/06/22 22:23:06 deraadt Exp $
+ *	$Id: grep.c,v 1.5 2003/06/22 22:24:13 deraadt Exp $
  */
 
 #include <sys/types.h>
@@ -64,7 +64,9 @@ int	 Pflag;		/* -P: if -R, no symlinks are followed */
 int	 Rflag;		/* -R: recursively search directory trees */
 int	 Sflag;		/* -S: if -R, follow all symlinks */
 int	 Vflag;		/* -V: display version information */
+#ifndef NOZ
 int	 Zflag;		/* -Z: decompress input before processing */
+#endif
 int	 aflag;		/* -a: only search ascii files */
 int	 bflag;		/* -b: show block numbers for each match */
 int	 cflag;		/* -c: only show a count of matching lines */
@@ -89,16 +91,23 @@ char	*progname;
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: %s %s %s\n",
-		progname,
-		"[-[AB] num] [-CEFGHLPRSVZabchilnoqsvwx]",
-		"[-e patttern] [-f file]");
+	fprintf(stderr,
+#ifdef NOZ
+	    "usage: %s [-[AB] num] [-CEFGHLPRSVabchilnoqsvwx]"
+#else
+	    "usage: %s [-[AB] num] [-CEFGHLPRSVZabchilnoqsvwx]"
+#endif
+	    " [-e patttern] [-f file]\n", progname);
 	exit(2);
 }
 
+#ifdef NOZ
+static char *optstr = "0123456789A:B:CEFGHLPSRUVabce:f:hilnoqrsuvwxy";
+#else
 static char *optstr = "0123456789A:B:CEFGHLPSRUVZabce:f:hilnoqrsuvwxy";
+#endif
 
-struct option long_options[] = 
+struct option long_options[] =
 {
 	{"basic-regexp",        no_argument,       NULL, 'G'},
 	{"extended-regexp",     no_argument,       NULL, 'E'},
@@ -126,8 +135,9 @@ struct option long_options[] =
 	{"line-regexp",         no_argument,       NULL, 'x'},
 	{"binary",              no_argument,       NULL, 'U'},
 	{"unix-byte-offsets",   no_argument,       NULL, 'u'},
+#ifndef NOZ
 	{"decompress",          no_argument,       NULL, 'Z'},
-	
+#endif
 	{NULL,                  no_argument,       NULL, 0}
 };
 
@@ -190,7 +200,7 @@ main(int argc, char *argv[])
 	else
 		progname = *argv;
 
-	while ((c = getopt_long(argc, argv, optstr, 
+	while ((c = getopt_long(argc, argv, optstr,
 				long_options, (int *)NULL)) != -1) {
 		switch (c) {
 		case '0': case '1': case '2': case '3': case '4':
@@ -208,7 +218,7 @@ main(int argc, char *argv[])
 			Bflag = strtol(optarg, (char **)NULL, 10);
 			break;
 		case 'C':
-			if (optarg == NULL) 
+			if (optarg == NULL)
 				Aflag = Bflag = 2;
 			else
 				Aflag = Bflag = strtol(optarg, (char **)NULL, 10);
@@ -249,9 +259,11 @@ main(int argc, char *argv[])
 			fprintf(stderr, argv[0]);
 			usage();
 			break;
+#ifndef NOZ
 		case 'Z':
 			Zflag++;
 			break;
+#endif
 		case 'a':
 			aflag = 1;
 			break;
@@ -317,7 +329,7 @@ main(int argc, char *argv[])
 		--argc;
 		++argv;
 	}
-	
+
 	switch (*progname) {
 	case 'e':
 		Eflag++;
@@ -328,6 +340,7 @@ main(int argc, char *argv[])
 	case 'g':
 		Gflag++;
 		break;
+#ifndef NOZ
 	case 'z':
 		Zflag++;
 		switch(progname[1]) {
@@ -342,6 +355,7 @@ main(int argc, char *argv[])
 			break;
 		}
 		break;
+#endif
 	}
 
 	cflags |= Eflag ? REG_EXTENDED : REG_BASIC;
@@ -358,7 +372,7 @@ main(int argc, char *argv[])
 
 	if (argc == 0)
 		exit(!procfile(NULL));
-	
+
 	if (Rflag)
 		c = grep_tree(argv);
 	else
