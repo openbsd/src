@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.1 2005/03/30 18:44:49 ho Exp $	*/
+/*	$OpenBSD: conf.c,v 1.2 2005/03/30 18:56:19 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -76,7 +76,7 @@ conf_parse_file(char *cfgfile)
 			cfgstate.listen_on = strdup(name);
 			if (!cfgstate.listen_on) {
 				log_err("config: strdup() failed");
-				return 1;
+				goto bad;
 			}
 			log_msg(2, "config(line %02d): listen on %s", lineno,
 			    cfgstate.listen_on);
@@ -111,12 +111,12 @@ conf_parse_file(char *cfgfile)
 			if (!peer) {
 				log_err("config: calloc(1, %lu) failed",
 				    sizeof *peer);
-				return 1;
+				goto bad;
 			}
 			peer->name = strdup(name);
 			if (!peer->name) {
 				log_err("config: strdup() failed");
-				return 1;
+				goto bad;
 			}
 			LIST_INSERT_HEAD(&cfgstate.peerlist, peer, link);
 			log_msg(2, "config(line %02d): add peer %s", lineno,
@@ -130,7 +130,7 @@ conf_parse_file(char *cfgfile)
 			cfgstate.carp_ifname = strdup(name);
 			if (!cfgstate.carp_ifname) {
 				log_err("config: strdup failed");
-				return 1;
+				goto bad;
 			}
 			log_msg(2, "config(line %02d): carp interface %s",
 			    lineno, cfgstate.carp_ifname);
@@ -158,7 +158,7 @@ conf_parse_file(char *cfgfile)
 			cfgstate.cafile = strdup(name);
 			if (!cfgstate.cafile) {
 				log_err("config: strdup failed");
-				return 1;
+				goto bad;
 			}
 			log_msg(2, "config(line %02d): CAcertificate file $s",
 			    lineno, cfgstate.cafile);
@@ -171,7 +171,7 @@ conf_parse_file(char *cfgfile)
 			cfgstate.certfile = strdup(name);
 			if (!cfgstate.certfile) {
 				log_err("config: strdup failed");
-				return 1;
+				goto bad;
 			}
 			log_msg(2, "config(line %02d): certificate file $s",
 			    lineno, cfgstate.certfile);
@@ -184,7 +184,7 @@ conf_parse_file(char *cfgfile)
 			cfgstate.privkeyfile = strdup(name);
 			if (!cfgstate.privkeyfile) {
 				log_err("config: strdup failed");
-				return 1;
+				goto bad;
 			}
 			log_msg(2, "config(line %02d): private key file $s",
 			    lineno, cfgstate.privkeyfile);
@@ -199,7 +199,7 @@ conf_parse_file(char *cfgfile)
 			else {
 				log_msg(0, "config(line %02d): unknown state "
 				    "%s", lineno, name);
-				return 1;
+				goto bad;
 			}
 			log_msg(2, "config(line %02d): runstate locked to %s",
 			    lineno, cfgstate.lockedstate == MASTER ? "MASTER" :
@@ -211,16 +211,21 @@ conf_parse_file(char *cfgfile)
 	/* Sanity checks. */
 	if (LIST_EMPTY(&cfgstate.peerlist)) {
 		log_msg(0, "config: no peers defined");
-		return 1;
+		goto bad;
 	}
 
 	if (!cfgstate.carp_ifname && cfgstate.lockedstate == INIT) {
 		log_msg(0, "config: no carp interface or runstate defined");
-		return 1;
+		goto bad;
 	}
 
 	/* Success. */
+	fclose(fp);
 	return 0;
+
+  bad:
+	fclose(fp);
+	return 1;
 }
 
 int

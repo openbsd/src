@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.1 2005/03/30 18:44:49 ho Exp $	*/
+/*	$OpenBSD: log.c,v 1.2 2005/03/30 18:56:19 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -56,7 +56,7 @@ log_output(char *msg)
 	if (cfgstate.debug)
 		fprintf(stderr, "%s\n", msg);
 	else
-		syslog(LOG_CRIT, msg);
+		syslog(LOG_CRIT, "%s", msg);
 }
 
 void

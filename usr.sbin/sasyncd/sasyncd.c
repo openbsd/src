@@ -1,4 +1,4 @@
-/*	$OpenBSD: sasyncd.c,v 1.1 2005/03/30 18:44:49 ho Exp $	*/
+/*	$OpenBSD: sasyncd.c,v 1.2 2005/03/30 18:56:19 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -51,18 +51,18 @@ privdrop(void)
 	if (!pw) {
 		log_err("%s: getpwnam(\"%s\") failed", __progname,
 		    SASYNCD_USER);
-		return -1;
+		exit(1);
 	}
 
 	if (chroot(pw->pw_dir) != 0 || chdir("/") != 0) {
 		log_err("%s: chroot failed", __progname);
-		return -1;
+		exit(1);
 	}
 
 	if (setgroups(1, &pw->pw_gid) || setegid(pw->pw_gid) ||
 	    setgid(pw->pw_gid) || seteuid(pw->pw_uid) || setuid(pw->pw_uid)) {
 		log_err("%s: failed to drop privileges", __progname);
-		return -1;
+		exit(1);
 	}
 
 	return 0;
