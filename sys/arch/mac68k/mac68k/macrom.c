@@ -1,4 +1,4 @@
-/*	$OpenBSD: macrom.c,v 1.12 1997/04/05 15:29:12 briggs Exp $	*/
+/*	$OpenBSD: macrom.c,v 1.13 1997/04/05 16:19:29 briggs Exp $	*/
 /*	$NetBSD: macrom.c,v 1.31 1997/03/01 17:20:34 scottr Exp $	*/
 
 /*-
@@ -1272,8 +1272,6 @@ mrg_fixupROMBase(obase, nbase)
 	if (	(current_mac_model->class == MACH_CLASSPB)
 	   ||	(current_mac_model->class == MACH_CLASSDUO)) {
 		switch( mac68k_machine.machineid ) {
-		case MACH_MACPB140:
-		case MACH_MACPB145:
 		case MACH_MACPB170:
 			mrg_InitPM =	/* PMgrInit */
 				(caddr_t)0x40888400 - oldbase + newbase;
@@ -1292,6 +1290,20 @@ mrg_fixupROMBase(obase, nbase)
 				(caddr_t)0x40829868 - oldbase + newbase;
 			mrg_OStraps[0x9f] =	/* PMgrDispatch */
 				(caddr_t)0x408888d8 - oldbase + newbase;
+			break;
+		case MACH_MACPB140:
+		case MACH_MACPB145:
+			mrg_InitPM =	/* PMgrInit (symbol undef.) */
+				(caddr_t)0x40888400 - oldbase + newbase;
+			jCacheFlush = (caddr_t)0x40809a7c - oldbase + newbase;
+			mrg_OStraps[0x33] =	/* VInstall */
+				(caddr_t)0x4080a230 - oldbase + newbase;
+			mrg_OStraps[0x55] =	/* _VM */
+				(caddr_t)0x40805538 - oldbase + newbase;
+			mrg_OStraps[0x5e] =	/* NMInstall */
+				(caddr_t)0x4081d720 - oldbase + newbase;
+			mrg_OStraps[0x5f] =	/* NMRemove */
+				(caddr_t)0x4081d730 - oldbase + newbase;
 			break;
 		case MACH_MACPB160:
 		case MACH_MACPB165:
