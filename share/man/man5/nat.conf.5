@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nat.conf.5,v 1.10 2001/09/06 18:05:46 jasoni Exp $
+.\"	$OpenBSD: nat.conf.5,v 1.11 2001/09/06 22:37:08 jasoni Exp $
 .\"
 .\" Copyright (c) 2001 Ian Darwin.  All rights reserved.
 .\"
@@ -50,6 +50,11 @@ These netblocks are:
 192.168.0.0 - 192.168.255.255 (i.e., 192.168/16)
 .Ed
 .Pp
+A
+.Em binat
+rule specifies a bidirectional map between an external IP address and an
+an internal IP address.
+.Pp
 An
 .Em rdr 
 rule specifies an incoming connection to be redirected
@@ -62,7 +67,7 @@ rule      = nat_rule | binat_rule | rdr_rule
 nat_rule  = "nat" "on" [ "!" ] ifname [ protospec ] "from" ipspec
             "to" ipspec "->" address
 
-binat_rule = "binat" "on" ifname [ protospec ] "from" ipspec
+binat_rule = "binat" "on" ifname [ protospec ] "from" address
              "to" ipspec "->" address
 
 rdr_rule  = "rdr" "on" [ "!" ] ifname [ protospec ] "from" ipspec
@@ -148,6 +153,12 @@ listening for outbound ftp sessions captured to port 8081.
 # in my case, any address but the gateway's external address is mapped
 #
 nat on kue0 from ! 157.161.48.183 to any -> 157.161.48.183
+
+# BINAT
+# translate outgoing packets' source address (any protocol)
+# translate incoming packets' destination address to an internal machine
+# (bidirectional)
+binat on kue0 from 10.1.2.150 to any -> 157.161.48.184
 
 # RDR
 # translate incoming packets' destination addresses

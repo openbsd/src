@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.29 2001/09/06 18:05:46 jasoni Exp $	*/
+/*	$OpenBSD: parse.y,v 1.30 2001/09/06 22:37:08 jasoni Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -551,7 +551,7 @@ natrule		: NAT interface proto FROM ipspec TO ipspec ARROW address
 		}
 		;
 
-binatrule	: BINAT interface proto FROM ipspec TO ipspec ARROW address
+binatrule	: BINAT interface proto FROM address TO ipspec ARROW address
 		{
 			struct pf_binat binat;
 
