@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.6 2003/06/02 20:18:31 millert Exp $	*/
+/*	$OpenBSD: sbrk.S,v 1.7 2003/12/19 19:36:51 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #if defined(LIBC_SCCS)
 	.data
-	.string "$OpenBSD: sbrk.S,v 1.6 2003/06/02 20:18:31 millert Exp $"
+	.string "$OpenBSD: sbrk.S,v 1.7 2003/12/19 19:36:51 miod Exp $"
 #endif /* LIBC_SCCS */
 
 #include "SYS.h"
@@ -59,10 +59,9 @@ ENTRY(sbrk)
 	br 	__cerror
 	/* Save old __curbrk */
 	or.u	r5,r0,hi16(__curbrk)
-	ld	r3,r5,lo16(__curbrk)
+	ld	r2,r5,lo16(__curbrk)
 	/* Update __curbrk */
 	st	r4,r5,lo16(__curbrk)
 	/* and return old __curbrk */
-	or	r2,r3,0
 	jmp.n	r1
 	 or	r3,r0,0
