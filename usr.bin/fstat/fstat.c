@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.45 2003/06/25 21:19:19 deraadt Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.46 2003/06/28 16:49:44 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.45 2003/06/25 21:19:19 deraadt Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.46 2003/06/28 16:49:44 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -118,9 +118,9 @@ typedef struct devs {
 } DEVS;
 DEVS *devs;
 
-int	fsflg,	/* show files on same filesystem as file(s) argument */
-	pflg,	/* show files open by a particular pid */
-	uflg;	/* show files open by a particular (effective) user */
+int	fsflg;	/* show files on same filesystem as file(s) argument */
+int	pflg;	/* show files open by a particular pid */
+int	uflg;	/* show files open by a particular (effective) user */
 int	checkfile; /* true if restricting to particular files or filesystems */
 int	nflg;	/* (numerical) display f.s. and rdev as dev_t */
 int	oflg;	/* display file offset */
