@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.67 2004/10/06 03:56:08 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.68 2004/10/28 20:34:20 henning Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -651,7 +651,7 @@ carp_clone_create(ifc, unit)
 	ifp->if_ioctl = carp_ioctl;
 	ifp->if_output = looutput;
 	ifp->if_start = carp_start;
-	ifp->if_type = IFT_PROPVIRTUAL;
+	ifp->if_type = IFT_CARP;
 	ifp->if_snd.ifq_maxlen = ifqmaxlen;
 	ifp->if_hdrlen = 0;
 	if_attach(ifp);
