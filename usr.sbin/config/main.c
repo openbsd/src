@@ -40,7 +40,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)main.c	8.1 (Berkeley) 6/6/93
- *	$Id: main.c,v 1.1.1.1 1995/10/18 08:48:33 deraadt Exp $
+ *	$Id: main.c,v 1.2 1995/12/15 18:54:35 deraadt Exp $
  */
 
 #ifndef lint
@@ -428,8 +428,8 @@ crosscheck()
 		xerror(conffile, i->i_lineno,
 		    "%s at %s is orphaned", i->i_name, i->i_at);
 		if (i->i_atunit == WILD)
-			(void)fprintf(stderr, " (no %s's declared)\n",
-			    i->i_base->d_name);
+			(void)fprintf(stderr, " (no %s declared)\n",
+			    i->i_at);
 		else
 			(void)fprintf(stderr, " (no %s declared)\n", i->i_at);
 		errs++;
