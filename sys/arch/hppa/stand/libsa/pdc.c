@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.16 2003/04/30 23:03:55 mickey Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.17 2003/08/11 06:51:45 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -405,8 +405,7 @@ pdc_findev(unit, class)
 }
 
 static __inline void
-fall(c_base, c_count, c_loop, c_stride, data)
-	int c_base, c_count, c_loop, c_stride, data;
+fall(int c_base, int c_count, int c_loop, int c_stride, int data)
 {
         int loop;                  /* Internal vars */
 
