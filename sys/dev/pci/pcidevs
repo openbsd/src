@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.580 2003/01/12 14:01:50 henning Exp $
+	$OpenBSD: pcidevs,v 1.581 2003/01/12 14:08:54 grange Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1827,6 +1827,7 @@ product NVIDIA VANTA1		0x002c	Vanta
 product NVIDIA VANTA2		0x002d	Vanta
 product NVIDIA NFORCE2_ISA	0x0060	nForce2 PCI-ISA
 product NVIDIA NFORCE2_SMBUS	0x0064	nForce2 SMBus
+product NVIDIA NFORCE2_IDE	0x0065	nForce2 IDE
 product NVIDIA NFORCE2_LAN	0x0066	nForce2 LAN
 product NVIDIA NFORCE2_USB	0x0067	nForce2 USB
 product NVIDIA NFORCE2_USB2	0x0068	nForce2 USB2
