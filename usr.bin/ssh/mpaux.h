@@ -14,7 +14,7 @@ precision integers.
 
 */
 
-/* RCSID("$Id: mpaux.h,v 1.2 1999/09/28 04:45:36 provos Exp $"); */
+/* RCSID("$Id: mpaux.h,v 1.3 1999/11/15 20:53:24 markus Exp $"); */
 
 #ifndef MPAUX_H
 #define MPAUX_H
@@ -24,9 +24,7 @@ precision integers.
    first representations of host_key_n, session_key_n, and the cookie. */
 void compute_session_id(unsigned char session_id[16],
 			unsigned char cookie[8],
-			unsigned int host_key_bits,
 			BIGNUM *host_key_n,
-			unsigned int session_key_bits,
 			BIGNUM *session_key_n);
 
 #endif /* MPAUX_H */
