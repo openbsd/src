@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.4 1997/04/30 18:52:50 niklas Exp $
+#	$OpenBSD: upgrade.sh,v 1.5 1997/05/03 23:06:02 tholo Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@ MODE="upgrade"
 . install.sub
 
 # which sets?
-THESETS="$UPGRSETS"
+THESETS="$UPGRSETS $MDSETS"
 
 # Good {morning,afternoon,evening,night}.
 md_welcome_banner
@@ -241,7 +241,7 @@ case "$resp" in
 esac
 
 # Install sets.
-install_sets
+install_sets $THESETS
 
 # Get timezone info
 get_timezone
@@ -287,10 +287,10 @@ esac
 	echo "done."
 
 	echo -n "Making devices..."
-	_pid=`twiddle`
+	#_pid=`twiddle`
 	cd /mnt/dev
 	sh MAKEDEV all
-	kill $_pid
+	#kill $_pid
 	echo "done."
 
 	md_copy_kernel

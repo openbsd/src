@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.6 1997/05/02 20:56:17 grr Exp $
+#	$OpenBSD: install.sh,v 1.7 1997/05/03 23:06:01 tholo Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ MODE="install"
 . install.sub
 
 # which sets?
-THESETS="$ALLSETS"
+THESETS="$ALLSETS $MDSETS"
 
 if [ "`df /`" = "`df /mnt`" ]; then
 	# Good {morning,afternoon,evening,night}.
@@ -403,7 +403,7 @@ mount | while read line; do
 	fi
 done
 
-install_sets $ALLSETS $MDSETS
+install_sets $THESETS
 
 # Copy in configuration information and make devices in target root.
 
@@ -451,10 +451,10 @@ if [ ! -x /mnt/dev/MAKEDEV ]; then
 fi
 
 echo -n "Making all devices..."
-pid=`twiddle`
+#pid=`twiddle`
 cd /mnt/dev
 sh MAKEDEV all
-kill $pid
+#kill $pid
 echo "done."
 cd /
 
