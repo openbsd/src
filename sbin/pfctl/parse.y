@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.99 2002/06/13 04:26:00 kjell Exp $	*/
+/*	$OpenBSD: parse.y,v 1.100 2002/06/15 19:19:09 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2418,6 +2418,7 @@ parse_rules(FILE *input, struct pfctl *xpf)
 	pf = xpf;
 	lineno = 1;
 	errors = 0;
+	rulestate = PFCTL_STATE_NONE;
 	yyparse();
 	return (errors ? -1 : 0);
 }
