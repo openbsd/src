@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rfc1413.3,v 1.5 2002/05/01 08:03:30 mpech Exp $
+.\"	$OpenBSD: rfc1413.3,v 1.6 2002/05/01 16:26:55 millert Exp $
 .\"
 .\" Copyright (c) 2001, Bob Beck.  All rights reserved.
 .\"
@@ -70,7 +70,7 @@ strips the trailing CRLF from the returned value and stores up to
 .Nm "dsize - 1"
 bytes of the returned username into
 .Nm dest,
-always terminating with a nul byte.
+always terminating with a NUL byte.
 In this case 0 is returned.
 .Fn rfc1413
 returns -1 if any failure occurs such that it was unable to
