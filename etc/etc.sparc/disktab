@@ -1,4 +1,4 @@
-# $OpenBSD: disktab,v 1.16 1998/09/23 07:30:57 todd Exp $
+# $OpenBSD: disktab,v 1.17 2001/05/30 00:17:46 deraadt Exp $
 #
 #	@(#)disktab	5.5 (Berkeley) 2/27/91
 #
@@ -30,7 +30,7 @@ rdroot:\
 	:pc#8192:oc#0:
 
 floppy|floppy3|3in|3.5in High Density Floppy:\
-	:ty=floppy:se#512:nt#2:rm#300:ns#18:nc#80:\
+	:dt=floppy:ty=floppy:se#512:nt#2:rm#300:ns#18:nc#80:\
 	:pa#2880:oa#0:ba#4096:fa#512:ta=4.2BSD:\
 	:pb#2880:ob#0:\
 	:pc#2880:oc#0:
