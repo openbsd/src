@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.10 1998/09/18 02:36:56 deraadt Exp $	*/
+/*	$OpenBSD: part.c,v 1.11 1999/02/09 19:06:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -91,6 +91,7 @@ static struct part_type {
 	{ 0xE1, "Speed       ", "Speed"},
 	{ 0xE3, "Speed       ", "Speed"},
 	{ 0xE4, "Speed       ", "Speed"},
+	{ 0xEB, "BeOS/i386   ", "BeOS for Intel"},
 	{ 0xF1, "Speed       ", "Speed"},
 	{ 0xF2, "DOS 3.3+ Sec", "DOS 3.3+ Secondary"},
 	{ 0xF4, "Speed       ", "Speed"},
