@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fcntl.2,v 1.14 1999/06/29 14:09:54 aaron Exp $
+.\"	$OpenBSD: fcntl.2,v 1.15 1999/06/29 14:23:28 aaron Exp $
 .\"	$NetBSD: fcntl.2,v 1.6 1995/02/27 12:32:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -58,7 +58,7 @@ The third parameter is called
 and is technically a pointer to
 .Fa void ,
 but is interpreted as an
-.Fa int
+.Li int
 by some commands, a pointer to a
 .Fa struct flock
 by others (see below), and ignored by the rest.
@@ -73,7 +73,7 @@ Return a new descriptor as follows:
 Lowest numbered available descriptor greater than or equal to
 .Fa arg
 (interpreted as an
-.Fa int ) .
+.Li int ) .
 .It
 Same object references as the original descriptor.
 .It
@@ -106,7 +106,7 @@ Set the close-on-exec flag associated with
 to the low-order bit of
 .Fa arg
 (interpreted as an
-.Fa int ) .
+.Li int ) .
 The flag should be specified as 0 (do not close-on-exec) or
 1 (do close-on-exec).
 .It Dv F_GETFL
@@ -117,7 +117,7 @@ is ignored).
 Set descriptor status flags to
 .Fa arg
 (interpreted as an
-.Fa int ) .
+.Li int ) .
 .It Dv F_GETOWN
 Get the process ID or process group
 currently receiving
@@ -138,7 +138,7 @@ signals;
 process groups are specified by supplying
 .Fa arg
 (interpreted as an
-.Fa int )
+.Li int )
 as negative, otherwise
 .Fa arg
 is taken as a process ID.
