@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.385 2003/05/17 02:04:24 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.386 2003/05/19 18:18:34 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1728,6 +1728,12 @@ host_list	: xhost				{ $$ = $1; }
 
 xhost		: not host			{
 			struct node_host	*n;
+
+			if ($2 == NULL)	{
+				/* error. "any" is handled elsewhere */
+				yyerror("could not parse host specification");
+				YYERROR;
+			}
 
 			for (n = $2; n != NULL; n = n->next)
 				n->not = $1;
