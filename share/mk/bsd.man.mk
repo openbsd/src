@@ -1,9 +1,9 @@
-#	$OpenBSD: bsd.man.mk,v 1.19 2000/11/10 00:24:31 deraadt Exp $
+#	$OpenBSD: bsd.man.mk,v 1.20 2000/11/10 02:55:40 deraadt Exp $
 #	$NetBSD: bsd.man.mk,v 1.23 1996/02/10 07:49:33 jtc Exp $
 #	@(#)bsd.man.mk	5.2 (Berkeley) 5/11/90
 
 MANTARGET?=	cat
-NROFF?=		nroff
+NROFF?=		nroff -Tascii
 TBL?=		tbl
 
 .if !target(.MAIN)
@@ -19,13 +19,13 @@ TBL?=		tbl
 	.ps1 .ps2 .ps3 .ps4 .ps5 .ps6 .ps7 .ps8 .ps9
 
 .9.cat9 .8.cat8 .7.cat7 .6.cat6 .5.cat5 .4.cat4 .3p.cat3p .3.cat3 .2.cat2 .1.cat1:
-	@echo "${NROFF} -Tascii -mandoc ${.IMPSRC} > ${.TARGET}"
-	@${NROFF} -Tascii -mandoc ${.IMPSRC} > ${.TARGET} || (rm -f ${.TARGET}; false)
+	@echo "${NROFF} -mandoc ${.IMPSRC} > ${.TARGET}"
+	@${NROFF} -mandoc ${.IMPSRC} > ${.TARGET} || (rm -f ${.TARGET}; false)
 
 .9tbl.cat9 .8tbl.cat8 .7tbl.cat7 .6tbl.cat6 .5tbl.cat5 .4tbl.cat4 .3tbl.cat3 \
 .2tbl.cat2 .1tbl.cat1:
-	@echo "${TBL} ${.IMPSRC} | ${NROFF} -Tascii -mandoc > ${.TARGET}"
-	@${TBL} ${.IMPSRC} | ${NROFF}  -Tascii -mandoc > ${.TARGET} || \
+	@echo "${TBL} ${.IMPSRC} | ${NROFF} -mandoc > ${.TARGET}"
+	@${TBL} ${.IMPSRC} | ${NROFF} -mandoc > ${.TARGET} || \
 	    (rm -f ${.TARGET}; false)
 
 .9.ps9 .8.ps8 .7.ps7 .6.ps6 .5.ps5 .4.ps4 .3p.ps3p .3.ps3 .2.ps2 .1.ps1:
