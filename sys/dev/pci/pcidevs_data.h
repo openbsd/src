@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.256 2000/05/03 21:49:21 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.257 2000/05/04 17:05:01 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -3079,6 +3079,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Reliance Computer",
 	    "CMIC_HE Host",
+	},
+	{
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_ROSB4_IDE,
+	    0,
+	    "Reliance Computer",
+	    "ROSB4 IDE",
+	},
+	{
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_ROSB4_USB,
+	    0,
+	    "Reliance Computer",
+	    "ROSB4 USB",
 	},
 	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_1076,
