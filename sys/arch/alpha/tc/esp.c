@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp.c,v 1.9 1998/08/04 23:15:20 millert Exp $	*/
+/*	$OpenBSD: esp.c,v 1.10 2000/02/04 17:30:07 deraadt Exp $	*/
 /*	$NetBSD: esp.c,v 1.26 1996/12/05 01:39:40 cgd Exp $	*/
 
 #ifdef __sparc__
@@ -123,7 +123,7 @@ int esp_debug = 0; /*ESP_SHOWPHASE|ESP_SHOWMISC|ESP_SHOWTRAC|ESP_SHOWCMDS;*/
 /*static*/ int esp_reselect	__P((struct esp_softc *, int));
 /*static*/ void	esp_scsi_reset	__P((struct esp_softc *));
 /*static*/ void	esp_reset	__P((struct esp_softc *));
-/*static*/ void	esp_init	__P((struct esp_softc *, int));
+/*static*/ void	espinit	__P((struct esp_softc *, int));
 /*static*/ int	esp_scsi_cmd	__P((struct scsi_xfer *));
 /*static*/ int	esp_poll	__P((struct esp_softc *, struct scsi_xfer *,
 				    int));
@@ -421,7 +421,7 @@ espattach(parent, self, aux)
 
 	/* Reset state & bus */
 	sc->sc_state = 0;
-	esp_init(sc, 1);
+	espinit(sc, 1);
 
 	printf(" %dMhz, target %d\n", sc->sc_freq, sc->sc_id);
 
@@ -557,14 +557,14 @@ esp_scsi_reset(sc)
  * Initialize esp state machine
  */
 void
-esp_init(sc, doreset)
+espinit(sc, doreset)
 	struct esp_softc *sc;
 	int doreset;
 {
 	struct esp_ecb *ecb;
 	int r;
 
-	ESP_TRACE(("[ESP_INIT(%d)] ", doreset));
+	ESP_TRACE(("[ESPINIT(%d)] ", doreset));
 
 	if (sc->sc_state == 0) {
 		/* First time through; initialize. */
@@ -1585,7 +1585,7 @@ espintr(sc)
 			if (sc->sc_state != ESP_SBR) {
 				printf("%s: SCSI bus reset\n",
 					sc->sc_dev.dv_xname);
-				esp_init(sc, 0); /* Restart everything */
+				espinit(sc, 0); /* Restart everything */
 				return 1;
 			}
 #if 0
@@ -1630,7 +1630,7 @@ espintr(sc)
 					ESPCMD(sc, ESPCMD_FLUSH);
 					DELAY(1);
 				}
-				esp_init(sc, 0); /* Restart everything */
+				espinit(sc, 0); /* Restart everything */
 				return 1;
 			}
 		}
@@ -1647,7 +1647,7 @@ espintr(sc)
 			if (r == -1) {
 				printf("%s: DMA error; resetting\n",
 					sc->sc_dev.dv_xname);
-				esp_init(sc, 1);
+				espinit(sc, 1);
 			}
 			/* If DMA active here, then go back to work... */
 			if (DMA_ISACTIVE(sc->sc_dma))
@@ -1765,7 +1765,7 @@ espintr(sc)
 			if (sc->sc_phase != MESSAGE_IN_PHASE) {
 				printf("%s: target didn't identify\n",
 					sc->sc_dev.dv_xname);
-				esp_init(sc, 1);
+				espinit(sc, 1);
 				return 1;
 			}
 printf("<<RESELECT CONT'd>>");
@@ -1775,7 +1775,7 @@ printf("<<RESELECT CONT'd>>");
 				/* IDENTIFY fail?! */
 				printf("%s: identify failed\n",
 					sc->sc_dev.dv_xname);
-				esp_init(sc, 1);
+				espinit(sc, 1);
 				return 1;
 			}
 #endif
@@ -1809,7 +1809,7 @@ if (sc->sc_flags & ESP_ICCS) printf("[[esp: BUMMER]]");
 					 */
 					printf("%s: target didn't identify\n",
 						sc->sc_dev.dv_xname);
-					esp_init(sc, 1);
+					espinit(sc, 1);
 					return 1;
 				}
 				if ((ESP_READ_REG(sc, ESP_FFLAG) & ESPFIFO_FF) != 2) {
@@ -1817,7 +1817,7 @@ if (sc->sc_flags & ESP_ICCS) printf("[[esp: BUMMER]]");
 						sc->sc_dev.dv_xname,
 						ESP_READ_REG(sc, ESP_FFLAG) &
 						ESPFIFO_FF);
-					esp_init(sc, 1);
+					espinit(sc, 1);
 					return 1;
 				}
 				sc->sc_selid = ESP_READ_REG(sc, ESP_FIFO);
@@ -1827,7 +1827,7 @@ if (sc->sc_flags & ESP_ICCS) printf("[[esp: BUMMER]]");
 					/* IDENTIFY fail?! */
 					printf("%s: identify failed\n",
 						sc->sc_dev.dv_xname);
-					esp_init(sc, 1);
+					espinit(sc, 1);
 					return 1;
 				}
 				continue; /* ie. next phase expected soon */
@@ -2086,7 +2086,7 @@ if (sc->sc_flags & ESP_ICCS) printf("[[esp: BUMMER]]");
 	panic("esp: should not get here..");
 
 reset:
-	esp_init(sc, 1);
+	espinit(sc, 1);
 	return 1;
 
 finish:
@@ -2162,7 +2162,7 @@ esp_timeout(arg)
 	if (ecb->flags & ECB_ABORT) {
 		/* abort timed out */
 		printf(" AGAIN\n");
-		esp_init(sc, 1);
+		espinit(sc, 1);
 	} else {
 		/* abort the operation that has timed out */
 		printf("\n");
