@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.8 1997/04/19 17:19:41 pefo Exp $ */
+/*	$OpenBSD: cpu.c,v 1.9 1997/06/14 23:28:53 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -200,8 +200,8 @@ cpuattach(parent, dev, aux)
 		printf(" Direct mapped.\n");
 
 	if(l2cache_is_snooping)
-		printf("No L2 cache or Snooping L2 cache.\n");
+		printf("Missing L2 cache or Snooping L2 cache.\n");
 	else
-		printf("No Snooping L2 cache!.\n");
+		printf("No Snooping L2 cache!\n");
 }
 
