@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_phase_1.c,v 1.28 2001/06/29 18:52:16 ho Exp $	*/
+/*	$OpenBSD: ike_phase_1.c,v 1.29 2001/07/01 18:46:33 angelos Exp $	*/
 /*	$EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	*/
 
 /*
@@ -801,7 +801,8 @@ ike_phase_1_send_ID (struct message *msg)
   if (!my_id)
     my_id = conf_get_str ("General", "Default-phase-1-ID");
 
-  sz = my_id ? ipsec_id_size (my_id, &id_type) : sizeof (in_addr_t);
+  msg->transport->vtbl->get_src (msg->transport, &src);
+  sz = my_id ? ipsec_id_size (my_id, &id_type) : sockaddr_len (src);
   if (sz == -1)
     return -1;
 
