@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.19 1999/06/05 02:36:31 aaron Exp $
+.\"	$OpenBSD: sysctl.3,v 1.20 1999/06/05 03:21:41 aaron Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -116,7 +116,9 @@ and
 .Fa newlen
 set to 0.
 .Pp
-The top level names are defined with a CTL_ prefix in
+The top level names are defined with a
+.Dv CTL_
+prefix in
 .Pa <sys/sysctl.h> ,
 and are as follows.
 The next and subsequent levels down are found in the include files
@@ -170,7 +172,7 @@ Each time it runs,
 gets the list of debugging variables from the kernel and
 displays their current values.
 The system defines twenty 
-.Va struct ctldebug
+.Li struct ctldebug
 variables named 
 .Va debug0
 through
@@ -283,7 +285,7 @@ The maximum bytes of argument to
 .Xr exec 2 .
 .It Dv KERN_BOOTTIME
 A
-.Va struct timeval
+.Li struct timeval
 structure is returned.
 This structure contains the time that the system was booted.
 .It Dv KERN_CHOWN_RESTRICTED
@@ -292,7 +294,7 @@ Return 1 if appropriate privileges are required for the
 system call, otherwise 0.
 .It Dv KERN_CLOCKRATE
 A
-.Va struct clockinfo
+.Li struct clockinfo
 structure is returned.
 This structure contains the clock, statistics clock and profiling clock
 frequencies, the number of micro-seconds per hz tick, and the clock
@@ -302,9 +304,9 @@ Get or set the YP domain name.
 .It Dv KERN_FILE
 Return the entire file table.
 The returned data consists of a single
-.Va struct filehead
+.Li struct filehead
 followed by an array of
-.Va struct file ,
+.Li struct file ,
 whose size depends on the current number of such objects in the system.
 .It Dv KERN_FSYNC
 Return 1 if the File Synchronisation Option is available on this system,
@@ -354,7 +356,7 @@ attempts to comply.
 .It Dv KERN_PROC
 Return the entire process table, or a subset of it.
 An array of
-.Va struct kinfo_proc
+.Li struct kinfo_proc
 structures is returned,
 whose size depends on the current number of such objects in the system.
 The third and fourth level names are as follows:
@@ -401,7 +403,7 @@ Array of statistical program counter counts.
 Array indexed by program counter of call-from points.
 .It Dv GPROF_TOS
 Array of
-.Va struct tostruct
+.Li struct tostruct
 describing destination of calls and their counts.
 .It Dv GPROF_GMONPARAM
 Structure giving the sizes of the above arrays.
@@ -434,9 +436,9 @@ the system.
 The returned data consists of an array whose size depends on the
 current number of such objects in the system.
 Each element of the array contains the kernel address of a vnode
-.Va struct vnode *
+.Li struct vnode *
 followed by the vnode itself
-.Va struct vnode .
+.Li struct vnode .
 .El
 .Ss CTL_MACHDEP
 The set of variables defined is architecture dependent.
@@ -547,7 +549,7 @@ Returns 1 if RFC1323 extensions to
 are enabled.
 .It Li tcp.baddynamic
 An array of
-.Em in_port_t
+.Li in_port_t
 is returned specifying the bitmask of
 .Tn TCP
 ports between 512
@@ -555,7 +557,7 @@ and 1023 inclusive that should not be allocated dynamically
 by the kernel (ie: they must be bound specifically by port number).
 .It Li tcp.ident
 A structure
-.Va struct tcp_ident_mapping
+.Li struct tcp_ident_mapping
 specifying a local and foreign endpoint of a tcp socket 
 is filled in with the euid and ruid of the process that owns the socket.
 If no such socket exists then the euid and ruid values are both
@@ -574,7 +576,7 @@ Disabling
 checksums is strongly discouraged.
 .It Li udp.baddynamic
 Analogous to
-.Va tcp.baddynamic
+.Li tcp.baddynamic
 but for
 .Tn UDP
 sockets.
@@ -629,7 +631,9 @@ The maximum string length in the
 utility.
 .It Dv USER_COLL_WEIGHTS_MAX
 The maximum number of weights that can be assigned to any entry of
-the LC_COLLATE order keyword in the locale definition file.
+the
+.Dv LC_COLLATE
+order keyword in the locale definition file.
 .It Dv USER_CS_PATH
 Return a value for the
 .Ev PATH
@@ -693,11 +697,11 @@ privilege may change the value.
 .It Dv VM_LOADAVG
 Return the load average history.
 The returned data consists of a
-.Va struct loadavg .
+.Li struct loadavg .
 .It Dv VM_METER
 Return the system wide virtual memory statistics.
 The returned data consists of a
-.Va struct vmtotal .
+.Li struct vmtotal .
 .El
 .Sh RETURN VALUES
 If the call to
