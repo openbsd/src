@@ -17,7 +17,7 @@
 
 /* cron.h - header for vixie's cron
  *
- * $Id: cron.h,v 1.3 1999/08/28 20:13:13 millert Exp $
+ * $Id: cron.h,v 1.4 2000/08/21 20:57:53 deraadt Exp $
  *
  * vix 14nov88 [rest of log is in RCS]
  * vix 14jan87 [0 or 7 can be sunday; thanks, mwm@berkeley]
@@ -211,6 +211,7 @@ int		job_runqueue __P((void)),
 		get_char __P((FILE *)),
 		get_string __P((char *, int, FILE *, char *)),
 		swap_uids __P((void)),
+		swap_uids_back __P((void)),
 		load_env __P((char *, FILE *)),
 		cron_pclose __P((FILE *)),
 		strcmp_until __P((char *, char *, int)),
