@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.11 2000/01/26 20:55:20 mickey Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.12 2000/03/23 20:14:08 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Michael Shalayeff
@@ -33,12 +33,9 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/select.h>
 #include <sys/tty.h>
-#include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/file.h>
-#include <sys/uio.h>
+#include <sys/timeout.h>
 
 #include <dev/cons.h>
 
@@ -50,6 +47,8 @@
 typedef
 struct pdc_softc {
 	struct device sc_dv;
+	struct tty *sc_tty;
+	struct timeout sc_to;
 } pdcsoftc_t;
 
 pdcio_t pdc;
@@ -57,7 +56,6 @@ int pdcret[32] PDC_ALIGNMENT;
 char pdc_consbuf[IODC_MINIOSIZ] PDC_ALIGNMENT;
 iodcio_t pdc_cniodc, pdc_kbdiodc;
 pz_device_t *pz_kbd, *pz_cons;
-struct tty *pdc_tty[1];
 int CONADDR;
 
 int pdcmatch __P((struct device *, void *, void*));
@@ -130,10 +128,14 @@ pdcattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
+	struct pdc_softc *sc = (struct pdc_softc *)self;
+
 	if (!pdc)
 		pdc_init();
 
 	printf("\n");
+
+	timeout_set(&sc->sc_to, pdctimeout, sc);
 }
 
 int
@@ -143,20 +145,20 @@ pdcopen(dev, flag, mode, p)
 	struct proc *p;
 {
 	int unit = minor(dev);
+	struct pdc_softc *sc;
 	struct tty *tp;
 	int s;
 	int error = 0, setuptimeout;
 
-	if (unit >= 1)
+	if (unit >= pdc_cd.cd_ndevs || (sc = pdc_cd.cd_devs[unit]) == NULL)
 		return ENXIO;
 
 	s = spltty();
 
-	if (!pdc_tty[unit]) {
-		tp = pdc_tty[unit] = ttymalloc();
-		tty_attach(tp);
-	} else
-		tp = pdc_tty[unit];
+	if (!sc->sc_tty)
+		tp = sc->sc_tty;
+	else
+		tty_attach(tp = sc->sc_tty = ttymalloc());
 
 	tp->t_oproc = pdcstart;
 	tp->t_param = pdcparam;
@@ -181,7 +183,7 @@ pdcopen(dev, flag, mode, p)
 
 	error = (*linesw[tp->t_line].l_open)(dev, tp);
 	if (error == 0 && setuptimeout)
-		timeout(pdctimeout, tp, 1);
+		pdctimeout(sc);
 
 	return error;
 }
@@ -193,9 +195,14 @@ pdcclose(dev, flag, mode, p)
 	struct proc *p;
 {
 	int unit = minor(dev);
-	struct tty *tp = pdc_tty[unit];
+	struct tty *tp;
+	struct pdc_softc *sc;
 
-	untimeout(pdctimeout, tp);
+	if (unit >= pdc_cd.cd_ndevs || (sc = pdc_cd.cd_devs[unit]) == NULL)
+		return ENXIO;
+
+	tp = sc->sc_tty;
+	timeout_del(&sc->sc_to);
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	ttyclose(tp);
 	return 0;
@@ -207,8 +214,14 @@ pdcread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct tty *tp = pdc_tty[minor(dev)];
+	int unit = minor(dev);
+	struct tty *tp;
+	struct pdc_softc *sc;
 
+	if (unit >= pdc_cd.cd_ndevs || (sc = pdc_cd.cd_devs[unit]) == NULL)
+		return ENXIO;
+
+	tp = sc->sc_tty;
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
  
@@ -218,8 +231,14 @@ pdcwrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct tty *tp = pdc_tty[minor(dev)];
- 
+	int unit = minor(dev);
+	struct tty *tp;
+	struct pdc_softc *sc;
+
+	if (unit >= pdc_cd.cd_ndevs || (sc = pdc_cd.cd_devs[unit]) == NULL)
+		return ENXIO;
+
+	tp = sc->sc_tty;
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
  
@@ -232,9 +251,14 @@ pdcioctl(dev, cmd, data, flag, p)
 	struct proc *p;
 {
 	int unit = minor(dev);
-	struct tty *tp = pdc_tty[unit];
 	int error;
+	struct tty *tp;
+	struct pdc_softc *sc;
 
+	if (unit >= pdc_cd.cd_ndevs || (sc = pdc_cd.cd_devs[unit]) == NULL)
+		return ENXIO;
+
+	tp = sc->sc_tty;
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return error;
@@ -298,24 +322,28 @@ void
 pdctimeout(v)
 	void *v;
 {
-	struct tty *tp = v;
+	struct pdc_softc *sc = v;
+	struct tty *tp = sc->sc_tty;
 	u_char c;
 
 	while (pdccnlookc(tp->t_dev, &c)) {
 		if (tp->t_state & TS_ISOPEN)
 			(*linesw[tp->t_line].l_rint)(c, tp);
 	}
-	timeout(pdctimeout, tp, 1);
+	timeout_add(&sc->sc_to, 1);
 }
 
 struct tty *
 pdctty(dev)
 	dev_t dev;
 {
-	if (minor(dev) != 0)
-		panic("pdctty: bogus");
+	int unit = minor(dev);
+	struct pdc_softc *sc;
 
-	return pdc_tty[0];
+	if (unit >= pdc_cd.cd_ndevs || (sc = pdc_cd.cd_devs[unit]) == NULL)
+		return NULL;
+
+	return sc->sc_tty;
 }
 
 void
