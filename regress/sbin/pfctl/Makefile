@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.183 2004/12/07 21:32:00 mcbride Exp $
+# $OpenBSD: Makefile,v 1.184 2004/12/29 06:09:11 david Exp $
 
 # TARGETS
 # pf: feed pfNN.in through pfctl and check wether the output matches pfNN.ok
@@ -133,6 +133,7 @@ pfload${n}-update:
 pfload:		${PFLOAD_TARGETS}
 pfload-update:	${PFLOAD_UPDATES}
 REGRESS_TARGETS+=pfload
+REGRESS_ROOT_TARGETS+=pfload
 UPDATE_TARGETS+=pfload-update
 
 .for n in ${PFLOAD}
@@ -159,6 +160,7 @@ pfoptimize${n}-update:
 pfoptimize:		${PFOPTIMIZE_TARGETS}
 pfoptimize-update:	${PFOPTIMIZE_UPDATES}
 REGRESS_TARGETS+=pfoptimize
+REGRESS_ROOT_TARGETS+=pfoptimize
 UPDATE_TARGETS+=pfoptimize-update
 
 .for n in ${PFTABLE}
@@ -178,6 +180,7 @@ pfr${n}-update:
 pfr:		${PFR_TARGETS}
 pfr-update:	${PFR_UPDATES}
 NODEFAULT_TARGETS+=pfr
+REGRESS_ROOT_TARGETS+=pfr
 
 .for n in ${PFIF2IP}
 PFI_TARGETS+=pfi${n}
@@ -196,6 +199,7 @@ pfi${n}-update:
 pfi:            ${PFI_TARGETS}
 pfi-update:     ${PFI_UPDATES}
 # REGRESS_TARGETS+=pfi
+# REGRESS_ROOT_TARGETS+=pfi
 # UPDATE_TARGETS+=pfi-update
 
 .for n in ${PFOPT}
@@ -240,6 +244,7 @@ pfsetup:	${PFSETUP_TARGETS}
 pfsetup-update:	${PFSETUP_UPDATES}
 
 NODEFAULT_TARGETS+=pfsetup
+REGRESS_ROOT_TARGETS+=pfsetup
 
 .for n in ${PFALTQ}
 PFALTQ_TARGETS+=pfaltq${n}
@@ -266,6 +271,7 @@ pfaltq:		${PFALTQ_TARGETS}
 pfaltq-update:	${PFALTQ_UPDATES}
 
 NODEFAULT_TARGETS+=pfaltq
+REGRESS_ROOT_TARGETS+=pfaltq
 
 update:	${UPDATE_TARGETS}
 
