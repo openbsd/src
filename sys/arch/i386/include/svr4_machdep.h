@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_machdep.h,v 1.5 1997/08/27 20:17:42 mickey Exp $	 */
+/*	$OpenBSD: svr4_machdep.h,v 1.6 1997/11/11 22:53:41 deraadt Exp $	 */
 /*	$NetBSD: svr4_machdep.h,v 1.5 1995/03/31 02:51:37 christos Exp $	 */
 
 /*
@@ -69,9 +69,11 @@ typedef struct {
 
 struct svr4_ucontext;
 
+#ifdef _KERNEL
 void svr4_getcontext __P((struct proc *, struct svr4_ucontext *, int, int));
 int svr4_setcontext __P((struct proc *, struct svr4_ucontext *));
 void svr4_sendsig __P((sig_t, int, int, u_long, int, union sigval));
+#endif
 
 typedef struct {
 	svr4_gregset_t	greg;
