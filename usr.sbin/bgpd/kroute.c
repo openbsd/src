@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.9 2003/12/25 01:45:57 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.10 2003/12/25 01:48:07 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -280,6 +280,9 @@ kroute_fetchtable(void)
 		get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
 
 		if ((sa_in = (struct sockaddr_in *)rti_info[RTAX_DST]) == NULL)
+			continue;
+
+		if (rtm->rtm_flags & RTF_LLINFO)
 			continue;
 
 		if ((kr = calloc(1, sizeof(struct kroute_node))) == NULL)
