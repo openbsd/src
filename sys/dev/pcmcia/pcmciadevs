@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.88 2002/04/17 04:33:02 millert Exp $
+	$OpenBSD: pcmciadevs,v 1.89 2002/05/06 03:38:28 pvalchev Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -375,6 +375,7 @@ product PLANEX FNW3600T		-1
 product PLANEX FNW3700T		-1
 product DLINK DE650		{ "D-Link", "DE-650", NULL, NULL }
 product DLINK DE660		{ "D-Link", "DE-660", NULL, NULL }
+product DLINK DE660PLUS		{ "D-Link", "DE-660+", NULL, NULL }
 product RPTI EP400		{ "RPTI&spLTD.", "EP400", "CISV100", NULL }
 product RPTI EP401		{ "RPTI", "EP401&spEthernet&spNE2000&spCompatible", NULL, NULL }
 product ACCTON EN2212		{ "ACCTON", "EN2212", NULL, NULL }
