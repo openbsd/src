@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.4 1996/08/04 01:22:45 niklas Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.5 1996/08/05 17:17:28 niklas Exp $	*/
 /*	$NetBSD: cdefs.h,v 1.2 1995/03/23 20:10:33 jtc Exp $	*/
 
 /*
@@ -31,6 +31,8 @@
 	__asm__(".stabs msg,30,0,0,0");			\
 	__asm__(".stabs \"_/**/sym\",1,0,0,0")
 #endif
+#else
+#define	__warn_references(sym,msg)	/* nothing */
 #endif
 
 #endif /* !_M68K_CDEFS_H_ */
