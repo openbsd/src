@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.14 2002/05/31 04:21:30 pjanzen Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.15 2002/05/31 20:40:11 pjanzen Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: fortune.c,v 1.14 2002/05/31 04:21:30 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: fortune.c,v 1.15 2002/05/31 20:40:11 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -639,7 +639,7 @@ all_forts(fp, offensive)
 	char		*sp;
 	FILEDESC	*scene, *obscene;
 	int		fd;
-	auto char		*datfile, *posfile;
+	char		*datfile, *posfile;
 
 	if (fp->child != NULL)	/* this is a directory, not a file */
 		return;
@@ -687,8 +687,8 @@ add_dir(fp)
 {
 	DIR		*dir;
 	struct dirent  *dirent;
-	auto FILEDESC		*tailp;
-	auto char		*name;
+	FILEDESC	*tailp;
+	char		*name;
 
 	(void) close(fp->fd);
 	fp->fd = -1;
@@ -724,7 +724,7 @@ int
 is_dir(file)
 	char	*file;
 {
-	auto struct stat	sbuf;
+	struct stat	sbuf;
 
 	if (stat(file, &sbuf) < 0)
 		return FALSE;
@@ -1123,7 +1123,7 @@ void
 get_tbl(fp)
 	FILEDESC	*fp;
 {
-	auto int		fd;
+	int		fd;
 	FILEDESC	*child;
 
 	if (fp->read_tbl)
