@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.38 2003/05/04 21:06:30 avsm Exp $	*/
+/*	$OpenBSD: at.c,v 1.39 2003/07/23 16:53:33 mpech Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -42,7 +42,7 @@
 #define TIMESIZE 50		/* Size of buffer passed to strftime() */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: at.c,v 1.38 2003/05/04 21:06:30 avsm Exp $";
+static const char rcsid[] = "$OpenBSD: at.c,v 1.39 2003/07/23 16:53:33 mpech Exp $";
 #endif
 
 /* Variables to remove from the job's environment. */
@@ -669,7 +669,7 @@ process_jobs(int argc, char **argv, int what)
 			else if ((pw = getpwnam(argv[i])) != NULL) {
 				if (real_uid != pw->pw_uid && real_uid != 0) {
 					fprintf(stderr, "%s: Only the superuser"
-					    " may %s other users' jobs",
+					    " may %s other users' jobs\n",
 					    ProgramName, what == ATRM
 					    ? "remove" : "view");
 					exit(ERROR_EXIT);
@@ -765,7 +765,7 @@ process_jobs(int argc, char **argv, int what)
 	for (error = 0, i = 0; i < jobs_len; i++) {
 		if (jobs[i] != NULL) {
 			if (!force)
-				fprintf(stderr, "%s: %s: no such job",
+				fprintf(stderr, "%s: %s: no such job\n",
 				    ProgramName, jobs[i]);
 			error++;
 		}
