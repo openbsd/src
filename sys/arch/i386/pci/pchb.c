@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.30 2002/04/24 23:02:20 deraadt Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.31 2002/04/28 20:36:23 nate Exp $	*/
 /*	$NetBSD: pchb.c,v 1.6 1997/06/06 23:29:16 thorpej Exp $	*/
 
 /*
@@ -167,7 +167,7 @@ pchbattach(parent, self, aux)
 	switch (PCI_VENDOR(pa->pa_id)) {
 	case PCI_VENDOR_RCC:
 		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_RCC_CNB20HE:
+		case PCI_PRODUCT_RCC_CIOB20:
 		case PCI_PRODUCT_RCC_CNB20LE:
 		case PCI_PRODUCT_RCC_CMIC_HE:
 			bdnum = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x44);
