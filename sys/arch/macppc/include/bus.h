@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.9 2002/10/07 05:39:48 drahn Exp $	*/
+/*	$OpenBSD: bus.h,v 1.10 2003/06/23 21:48:24 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Per Fogelstrom.  All rights reserved.
@@ -249,22 +249,9 @@ bus_space_write_region_4(bus_space_tag_t tag, bus_space_handle_t bsh,
  *	    bus_space_handle_t bsh, bus_size_t offset,
  *	    u_intN_t *addr, size_t count);
  *
- * Read `count' 1, 2, 4, or 8 byte quantities from bus space
- * described by tag/handle and starting at `offset' and copy into
- * buffer provided.
+ * Read `count' bytes from bus space described by tag/handle and starting
+ * at `offset' and copy into buffer provided w/o bus-host byte swapping.
  */
-
-static __inline void
-bus_space_read_raw_region_1(bus_space_tag_t tag, bus_space_handle_t bsh,
-	bus_size_t offset, u_int8_t *addr, size_t count)
-{
-	volatile u_int8_t *s = __BA(tag, bsh, offset);
-	u_int8_t *laddr = (void *)addr;
-
-	while (count--)
-		*laddr++ = *s++;
-	__asm __volatile("eieio; sync");
-}
 
 static __inline void
 bus_space_read_raw_region_2(bus_space_tag_t tag, bus_space_handle_t bsh,
@@ -301,21 +288,9 @@ bus_space_read_raw_region_4(bus_space_tag_t tag, bus_space_handle_t bsh,
  *	    bus_space_handle_t bsh, bus_size_t offset,
  *	    const u_intN_t *addr, size_t count);
  *
- * Write `count' 1, 2, 4, or 8 byte quantities from the buffer provided
- * to bus space described by tag/handle starting at `offset'.
+ * Write `count' bytes from the buffer provided to bus space described
+ * by tag/handle starting at `offset' w/o host-bus byte swapping.
  */
-
-static __inline void
-bus_space_write_raw_region_1(bus_space_tag_t tag, bus_space_handle_t bsh,
-	bus_size_t offset, const u_int8_t *addr, size_t count)
-{
-	volatile u_int8_t *d = __BA(tag, bsh, offset);
-	const u_int8_t *laddr = (void *)addr;
-
-	while (count--)
-		*d++ = *laddr++;
-	__asm __volatile("eieio; sync");
-}
 
 static __inline void
 bus_space_write_raw_region_2(bus_space_tag_t tag, bus_space_handle_t bsh,
@@ -412,9 +387,6 @@ bus_space_set_multi_4(tag, bsh, offset, val, count)
 
 /* These are OpenBSD extensions to the general NetBSD bus interface.  */
 void
-bus_space_read_raw_multi_1(bus_space_tag_t bst, bus_space_handle_t bsh,
-	bus_addr_t ba, u_int8_t *dst, bus_size_t size);
-void
 bus_space_read_raw_multi_2(bus_space_tag_t bst, bus_space_handle_t bsh,
 	bus_addr_t ba, u_int8_t *dst, bus_size_t size);
 void
@@ -423,9 +395,6 @@ bus_space_read_raw_multi_4(bus_space_tag_t bst, bus_space_handle_t bsh,
 #define	bus_space_read_raw_multi_8 \
     !!! bus_space_read_raw_multi_8 not implemented !!!
 
-void
-bus_space_write_raw_multi_1(bus_space_tag_t bst, bus_space_handle_t bsh,
-	bus_addr_t ba, const u_int8_t *src, bus_size_t size);
 void
 bus_space_write_raw_multi_2(bus_space_tag_t bst, bus_space_handle_t bsh,
 	bus_addr_t ba, const u_int8_t *src, bus_size_t size);

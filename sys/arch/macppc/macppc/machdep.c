@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.50 2003/06/01 20:19:33 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.51 2003/06/23 21:48:24 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -1400,7 +1400,6 @@ __C(bus_space_read_raw_multi_,BYTES)(bst, h, o, dst, size)		\
 		__asm__("eieio");					\
 	}								\
 }
-BUS_SPACE_READ_RAW_MULTI_N(1,0,u_int8_t)
 BUS_SPACE_READ_RAW_MULTI_N(2,1,u_int16_t)
 BUS_SPACE_READ_RAW_MULTI_N(4,2,u_int32_t)
 
@@ -1425,7 +1424,6 @@ __C(bus_space_write_raw_multi_,BYTES)(bst, h, o, src, size)		\
 	}								\
 }
 
-BUS_SPACE_WRITE_RAW_MULTI_N(1,0,u_int8_t)
 BUS_SPACE_WRITE_RAW_MULTI_N(2,1,u_int16_t)
 BUS_SPACE_WRITE_RAW_MULTI_N(4,2,u_int32_t)
 
