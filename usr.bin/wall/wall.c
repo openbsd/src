@@ -1,4 +1,4 @@
-/*	$OpenBSD: wall.c,v 1.20 2003/07/02 00:21:17 avsm Exp $	*/
+/*	$OpenBSD: wall.c,v 1.21 2004/02/20 12:49:34 henning Exp $	*/
 /*	$NetBSD: wall.c,v 1.6 1994/11/17 07:17:58 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)wall.c	8.2 (Berkeley) 11/16/93";
 #endif
-static const char rcsid[] = "$OpenBSD: wall.c,v 1.20 2003/07/02 00:21:17 avsm Exp $";
+static const char rcsid[] = "$OpenBSD: wall.c,v 1.21 2004/02/20 12:49:34 henning Exp $";
 #endif /* not lint */
 
 /*
@@ -120,7 +120,7 @@ main(int argc, char **argv)
 	makemsg(*argv);
 
 	if (!(fp = fopen(_PATH_UTMP, "r")))
-		errx(1, "cannot read %s.", _PATH_UTMP);
+		err(1, "cannot read %s", _PATH_UTMP);
 	iov.iov_base = mbuf;
 	iov.iov_len = mbufsize;
 	/* NOSTRICT */
@@ -172,7 +172,7 @@ makemsg(char *fname)
 		fp = fdopen(fd, "r+");
 	}
 	if (fd == -1 || fp == NULL)
-		errx(1, "can't open temporary file.");
+		err(1, "can't open temporary file");
 
 	if (!nobanner) {
 		if (!(whom = getlogin()))
@@ -206,7 +206,7 @@ makemsg(char *fname)
 
 		setegid(getgid());
 		if (freopen(fname, "r", stdin) == NULL)
-			errx(1, "can't read %s.", fname);
+			err(1, "can't read %s", fname);
 		setegid(egid);
 	}
 	while (fgets(lbuf, sizeof(lbuf), stdin))
@@ -230,12 +230,12 @@ makemsg(char *fname)
 	rewind(fp);
 
 	if (fstat(fd, &sbuf))
-		errx(1, "can't stat temporary file.");
+		err(1, "can't stat temporary file");
 	mbufsize = sbuf.st_size;
 	if (!(mbuf = malloc((u_int)mbufsize)))
-		errx(1, "out of memory.");
+		err(1, "out of memory");
 	if (fread(mbuf, sizeof(*mbuf), mbufsize, fp) != mbufsize)
-		errx(1, "can't read temporary file.");
+		err(1, "can't read temporary file");
 	(void)close(fd);
 }
 
@@ -250,16 +250,16 @@ addgroup(struct group *grp, char *name)
 
 	g = (struct wallgroup *)malloc(sizeof *g);
 	if (g == NULL)
-		errx(1, "out of memory.");
+		err(1, "out of memory");
 	g->gid = grp->gr_gid;
 	g->name = name;
 	g->mem = (char **)malloc(i + 1);
 	if (g->mem == NULL)
-		errx(1, "out of memory.");
+		err(1, "out of memory");
 	for (i = 0; grp->gr_mem[i] != NULL; i++) {
 		g->mem[i] = strdup(grp->gr_mem[i]);
 		if (g->mem[i] == NULL)
-			errx(1, "out of memory.");
+			err(1, "out of memory");
 	}
 	g->mem[i] = NULL;
 	g->next = grouplist;
