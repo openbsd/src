@@ -316,10 +316,9 @@ void RMD160Transform(state, block)
 void RMD160Update(context, data, nbytes)
 	RMD160_CTX *context;
 	const u_char *data;
-	size_t nbytes;
+	u_int32_t nbytes;
 {
-	u_int32_t	X[16];
-	size_t	i, j;
+	u_int32_t i, j, X[16];
 
 	(void)memset(X, 0, 16 * sizeof(u_int32_t));
 
