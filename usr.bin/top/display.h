@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.h,v 1.5 2003/06/12 22:30:23 pvalchev Exp $	*/
+/*	$OpenBSD: display.h,v 1.6 2003/06/13 04:29:59 pvalchev Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -30,8 +30,6 @@
 
 /* constants needed for display.c */
 
-/* "type" argument for new_message function */
-
 #define  MT_standout  1
 #define  MT_delayed   2
 
@@ -55,7 +53,7 @@ extern void i_process(int, char *);
 extern void u_process(int, char *);
 extern void u_endscreen(int);
 extern void display_header(int);
-extern void new_message(); /* XXX */
+extern void new_message(int, const char *, ...);
 extern void clear_message(void);
 extern int readline(char *, int, int);
 extern char *printable(char *);

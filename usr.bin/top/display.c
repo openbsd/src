@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.12 2003/06/12 22:30:23 pvalchev Exp $	*/
+/*	$OpenBSD: display.c,v 1.13 2003/06/13 04:29:59 pvalchev Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -53,6 +53,7 @@
 #include <term.h>
 #include <time.h>
 #include <unistd.h>
+#include <stdarg.h>
 
 #include "screen.h"		/* interface to screen package */
 #include "layout.h"		/* defines for screen position layout */
@@ -781,14 +782,16 @@ display_header(int t)
     }
 }
 
-/*VARARGS2*/
 void
-new_message(int type, char *msgfmt, caddr_t a1, caddr_t a2, caddr_t a3)
+new_message(int type, const char *msgfmt, ...)
 {
     int i;
+    va_list ap;
 
+    va_start(ap, msgfmt);
     /* first, format the message */
-    (void) snprintf(next_msg, sizeof(next_msg), msgfmt, a1, a2, a3);
+    vsnprintf(next_msg, sizeof(next_msg), msgfmt, ap);
+    va_end(ap);
 
     if (msglen > 0)
     {
