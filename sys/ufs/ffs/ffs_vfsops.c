@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.21 1998/12/05 17:01:09 csapuntz Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.22 1998/12/05 18:57:07 csapuntz Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -970,7 +970,7 @@ retry:
 		*vpp = NULL;
 		return (error);
 	}
-#ifdef DIAGNOSTIC
+#ifdef DEBUGLOCKS
 	vp->v_flag |= VLOCKSWORK;
 #endif
 	type = ump->um_devvp->v_tag == VT_MFS ? M_MFSNODE : M_FFSNODE; /* XXX */
