@@ -42,11 +42,11 @@ and ssh has the necessary privileges.)
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: scp.c,v 1.13 1999/10/08 01:25:20 aaron Exp $
+ *	$Id: scp.c,v 1.14 1999/10/27 02:14:38 aaron Exp $
  */
 
 #include "includes.h"
-RCSID("$Id: scp.c,v 1.13 1999/10/08 01:25:20 aaron Exp $");
+RCSID("$Id: scp.c,v 1.14 1999/10/27 02:14:38 aaron Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -976,7 +976,7 @@ run_err(const char *fmt, ...)
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: scp.c,v 1.13 1999/10/08 01:25:20 aaron Exp $
+ *	$Id: scp.c,v 1.14 1999/10/27 02:14:38 aaron Exp $
  */
 
 char *
@@ -1183,7 +1183,7 @@ progressmeter(int flag)
 		    " - stalled -");
 	} else {
 		remaining = (int)(totalbytes / (statbytes / elapsed) - elapsed);
-		i = elapsed / 3600;
+		i = remaining / 3600;
 		if (i)
 			snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
 			    "%2d:", i);
