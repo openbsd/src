@@ -1664,6 +1664,9 @@ EOF
 EOF
 
 	;;
+  mips-*-openbsd*)
+	COREFILE=netbsd-core.o
+	;;
   mips-dec-bsd*)
 	COREFILE=trad-core.o
 	cat >> confdefs.h <<\EOF

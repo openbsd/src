@@ -896,7 +896,7 @@ ALLDEPFILES = 29k-share/udi/udip2soc.c 29k-share/udi/udr.c \
 	mips-tdep.c mipsm3-nat.c mipsv4-nat.c news-xdep.c \
 	nindy-share/Onindy.c nindy-share/nindy.c \
 	nindy-share/ttyflush.c nindy-tdep.c \
-	ns32k-tdep.c ns32km3-nat.c osfsolib.c \
+	ns32k-tdep.c ns32km3-nat.c obsdsolib.c osfsolib.c \
 	somread.c somsolib.c $(HPREAD_SOURCE) \
 	procfs.c pyr-tdep.c pyr-xdep.c \
 	remote-adapt.c remote-array.c remote-bug.c remote-e7000.c remote-eb.c \
@@ -1304,6 +1304,9 @@ ns32k-tdep.o: ns32k-tdep.c $(bfd_h) $(dis-asm_h) $(defs_h)
 
 objfiles.o: objfiles.c $(bfd_h) $(defs_h) objfiles.h symfile.h \
 	$(symtab_h) gdb_string.h
+
+obsdsolib.o: obsdsolib.c $(command_h) $(defs_h) $(gdbcore_h) $(inferior_h) \
+	objfiles.h gnu-regex.h symfile.h target.h gdb_string.h
 
 osfsolib.o: osfsolib.c $(command_h) $(defs_h) $(gdbcore_h) $(inferior_h) \
 	objfiles.h gnu-regex.h symfile.h target.h language.h gdb_string.h

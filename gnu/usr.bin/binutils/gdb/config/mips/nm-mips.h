@@ -29,4 +29,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
    This routine returns true on success */
 
 #define GET_LONGJMP_TARGET(ADDR) get_longjmp_target(ADDR)
+
+#include "solib.h"
 extern int get_longjmp_target PARAMS ((CORE_ADDR *));

@@ -221,6 +221,9 @@ changequote([,])dnl
 	COREFILE=trad-core.o
 	AC_DEFINE(TRAD_HEADER,"hosts/i860mach3.h")
 	;;
+  mips-*-openbsd*)
+	COREFILE=netbsd-core.o
+	;;
   mips-dec-bsd*)
 	COREFILE=trad-core.o
 	AC_DEFINE(TRAD_HEADER,"hosts/mipsbsd.h")

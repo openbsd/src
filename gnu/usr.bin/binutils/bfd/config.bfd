@@ -354,6 +354,10 @@ case "${targ}" in
     targ_underscore=yes
     ;;
 
+  mips-arc-openbsd*)
+    targ_defvec=bfd_elf32_littlemips_vec
+    targ_selvecs=bfd_elf32_bigmips_vec
+    ;;
   mips*-big-*)
     targ_defvec=ecoff_big_vec
     targ_selvecs=ecoff_little_vec

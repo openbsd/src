@@ -64,6 +64,9 @@ case "${UNAME_MACHINE}:${UNAME_SYSTEM}:${UNAME_RELEASE}:${UNAME_VERSION}" in
     Amiga*:UNIX_System_V:4.0:*)
 	echo m68k-cbm-sysv4
 	exit 0;;
+    arc:OpenBSD:*:*)
+      echo mips-arc-openbsd${UNAME_RELEASE}
+      exit 0 ;;
     amiga:NetBSD:*:*)
       echo m68k-cbm-netbsd${UNAME_RELEASE}
       exit 0 ;;
