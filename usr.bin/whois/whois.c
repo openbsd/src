@@ -1,4 +1,4 @@
-/*	$OpenBSD: whois.c,v 1.21 2003/01/06 20:47:19 millert Exp $	*/
+/*	$OpenBSD: whois.c,v 1.22 2003/01/07 17:24:08 millert Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: whois.c,v 1.21 2003/01/06 20:47:19 millert Exp $";
+static const char rcsid[] = "$OpenBSD: whois.c,v 1.22 2003/01/07 17:24:08 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,7 @@ static const char rcsid[] = "$OpenBSD: whois.c,v 1.21 2003/01/06 20:47:19 miller
 #include <unistd.h>
 
 #define	NICHOST		"whois.crsnic.net"
-#define	INICHOST	"whois.internic.net"
+#define	INICHOST	"whois.networksolutions.com"
 #define	CNICHOST	"whois.corenic.net"
 #define	DNICHOST	"whois.nic.mil"
 #define	GNICHOST	"whois.nic.gov"
@@ -71,18 +71,22 @@ static const char rcsid[] = "$OpenBSD: whois.c,v 1.21 2003/01/06 20:47:19 miller
 #define	PNICHOST	"whois.apnic.net"
 #define	RUNICHOST	"whois.ripn.net"
 #define	MNICHOST	"whois.ra.net"
-#define NNICHOST	"whois.networksolutions.com"
 #define LNICHOST	"whois.lacnic.net"
 #define SNICHOST	"whois.6bone.net"
+#define BNICHOST	"whois.registro.br"
 #define	QNICHOST_TAIL	".whois-servers.net"
-#define	WHOIS_PORT	43
+
+#define	WHOIS_PORT	"whois"
+#define	WHOIS_SERVER_ID	"Whois Server: "
 
 #define WHOIS_RECURSE		0x01
-#define WHOIS_INIC_FALLBACK	0x02
-#define WHOIS_QUICK		0x04
+#define WHOIS_QUICK		0x02
+
+const char *port = WHOIS_PORT;
+const char *ip_whois[] = { LNICHOST, RNICHOST, PNICHOST, BNICHOST, NULL };
 
 static __dead void usage(void);
-static int whois(const char *, const char *, int);
+static int whois(const char *, const char *, const char *, int);
 static char *choose_server(const char *, const char *);
 
 int
@@ -96,10 +100,13 @@ main(int argc, char **argv)
 #endif
 	country = host = server = NULL;
 	flags = rval = 0;
-	while ((ch = getopt(argc, argv, "ac:dgh:ilmpqQrR6")) != -1)
+	while ((ch = getopt(argc, argv, "aAc:dgh:ilmp:qQrR6")) != -1)
 		switch((char)ch) {
 		case 'a':
 			host = ANICHOST;
+			break;
+		case 'A':
+			host = PNICHOST;
 			break;
 		case 'c':
 			country = optarg;
@@ -123,10 +130,10 @@ main(int argc, char **argv)
 			host = MNICHOST;
 			break;
 		case 'p':
-			host = PNICHOST;
+			port = optarg;
 			break;
 		case 'q':
-			/* default */
+			/* deprecated, now the default */
 			break;
 		case 'Q':
 			flags |= WHOIS_QUICK;
@@ -150,19 +157,20 @@ main(int argc, char **argv)
 		usage();
 
 	if (host == NULL && country == NULL && !(flags & WHOIS_QUICK))
-		flags |= WHOIS_INIC_FALLBACK | WHOIS_RECURSE;
+		flags |= WHOIS_RECURSE;
 	for (name = *argv; (name = *argv) != NULL; argv++)
-		rval += whois(name, host ? host : choose_server(name, country), flags);
+		rval += whois(name, host ? host : choose_server(name, country),
+		    port, flags);
 	exit(rval);
 }
 
 static int
-whois(const char *name, const char *server, int flags)
+whois(const char *query, const char *server, const char *port, int flags)
 {
 	FILE *sfi, *sfo;
 	char *buf, *p, *nhost, *nbuf = NULL;
 	size_t len;
-	int s, nomatch, error;
+	int i, s, error;
 	const char *reason = NULL;
 	struct addrinfo hints, *res, *ai;
 
@@ -170,7 +178,7 @@ whois(const char *name, const char *server, int flags)
 	hints.ai_flags = 0;
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
-	error = getaddrinfo(server, "whois", &hints, &res);
+	error = getaddrinfo(server, port, &hints, &res);
 	if (error) {
 		warnx("%s: %s", server, gai_strerror(error));
 		return (1);
@@ -188,7 +196,6 @@ whois(const char *name, const char *server, int flags)
 			s = -1;
 			continue;
 		}
-
 		break;	/*okay*/
 	}
 	if (s < 0) {
@@ -204,54 +211,52 @@ whois(const char *name, const char *server, int flags)
 	sfo = fdopen(s, "w");
 	if (sfi == NULL || sfo == NULL)
 		err(1, "fdopen");
-	(void)fprintf(sfo, "%s\r\n", name);
+	(void)fprintf(sfo, "%s\r\n", query);
 	(void)fflush(sfo);
 	nhost = NULL;
-	nomatch = 0;
-	while ((buf = fgetln(sfi, &len))) {
-		if (buf[len - 2] == '\r')
-			buf[len - 2] = '\0';
-		else if (buf[len - 1] == '\n')
-			buf[len - 1] = '\0';
-		else {
+	while ((buf = fgetln(sfi, &len)) != NULL) {
+		p = buf + len - 1;
+		if (isspace((unsigned char)*p)) {
+			do
+				*p-- = '\0';
+			while (p != buf && isspace((unsigned char)*p));
+		} else {
 			if ((nbuf = malloc(len + 1)) == NULL)
 				err(1, "malloc");
 			memcpy(nbuf, buf, len);
 			nbuf[len] = '\0';
 			buf = nbuf;
 		}
+		(void)puts(buf);
 
-		if ((flags & WHOIS_RECURSE) && nhost == NULL &&
-		    (p = strstr(buf, "Whois Server: "))) {
-			p += sizeof("Whois Server: ") - 1;
+		if (nhost != NULL || !(flags & WHOIS_RECURSE))
+			continue;
+
+		if ((p = strstr(buf, WHOIS_SERVER_ID))) {
+			p += sizeof(WHOIS_SERVER_ID) - 1;
 			if ((len = strcspn(p, " \t\n\r"))) {
 				if ((nhost = malloc(len + 1)) == NULL)
 					err(1, "malloc");
 				memcpy(nhost, p, len);
 				nhost[len] = '\0';
 			}
+		} else if (strcmp(server, ANICHOST) == 0) {
+			for (p = buf; *p != '\0'; p++)
+				*p = tolower((unsigned char)*p);
+			for (i = 0; ip_whois[i] != NULL; i++) {
+				if (strstr(buf, ip_whois[i]) != NULL) {
+					nhost = strdup(ip_whois[i]);
+					break;
+				}
+			}
 		}
-		if ((flags & WHOIS_INIC_FALLBACK) && nhost == NULL &&
-		    !nomatch && (p = strstr(buf, "No match for \""))) {
-			p += sizeof("No match for \"") - 1;
-			if ((len = strcspn(p, "\"")) && len == strlen(name) &&
-			    strncasecmp(name, p, len) == 0)
-				nomatch = 1;
-		}
-		(void)puts(buf);
 	}
 	if (nbuf != NULL)
 		free(nbuf);
 
-	/* Do second lookup as needed */
-	if (nomatch && nhost == NULL) {
-		(void)printf("Looking up %s at %s.\n\n", name, INICHOST);
-		nhost = INICHOST;
-	}
-	if (nhost) {
-		error += whois(name, nhost, 0);
-		if (!nomatch)
-			free(nhost);
+	if (nhost != NULL) {
+		error = whois(query, nhost, port, 0);
+		free(nhost);
 	}
 	freeaddrinfo(res);
 	return (error);
@@ -276,7 +281,7 @@ choose_server(const char *name, const char *country)
 		qhead = country;
 	else if ((qhead = strrchr(name, '.')) == NULL) {
 		if (*name == '!')
-			return (NNICHOST);
+			return (INICHOST);
 		else if ((strncasecmp(name, "COCO-", 5) == 0 ||
 		    strncasecmp(name, "COHO-", 5) == 0) &&
 		    strtol(name + 5, &ep, 10) > 0 && *ep == '\0')
@@ -299,7 +304,7 @@ usage(void)
 	extern char *__progname;
 
 	(void)fprintf(stderr,
-	    "usage: %s [-adgilmpqQrR6] [-c country-code | -h hostname] "
-		"name ...\n", __progname);
+	    "usage: %s [-aAdgilmpQrR6] [-c country-code | -h hostname] "
+		"[-p port] name ...\n", __progname);
 	exit(1);
 }
