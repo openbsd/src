@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.2 2002/03/18 00:19:45 mickey Exp $	*/
+/*	$OpenBSD: wscons_machdep.c,v 1.3 2002/11/08 22:27:17 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -81,7 +81,6 @@ wscnprobe(cp)
 	if (maj == nchrdev)
 		panic("wsdisplay is not in cdevsw[]");
 
-	/* TODO check the page0 console path */
 #if NSTI > 0
 	if (PAGE0->mem_cons.pz_class == PCL_DISPL) {
 
@@ -93,8 +92,7 @@ wscnprobe(cp)
 #if NPS2P > 0
 	if (PAGE0->mem_kbd.pz_class == PCL_KEYBD) {
 
-	}
-	else
+	} else
 		return;
 #else
 	return;
@@ -108,7 +106,6 @@ void
 wscninit(cp)
 	struct consdev *cp;
 {
-	/* TODO map the page0's console/keyboard devices */
 }
 
 void
