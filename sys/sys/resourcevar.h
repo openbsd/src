@@ -1,4 +1,4 @@
-/*	$OpenBSD: resourcevar.h,v 1.3 1996/03/03 12:12:13 niklas Exp $	*/
+/*	$OpenBSD: resourcevar.h,v 1.4 2000/05/05 08:34:18 art Exp $	*/
 /*	$NetBSD: resourcevar.h,v 1.12 1995/11/22 23:01:53 cgd Exp $	*/
 
 /*
@@ -89,8 +89,9 @@ void	 addupc_intr __P((struct proc *p, u_long pc, u_int ticks));
 void	 addupc_task __P((struct proc *p, u_long pc, u_int ticks));
 void	 calcru __P((struct proc *p, struct timeval *up, struct timeval *sp,
 	    struct timeval *ip));
-struct plimit
-	*limcopy __P((struct plimit *lim));
+struct plimit *limcopy __P((struct plimit *lim));
+void	limfree __P((struct plimit *));
+
 void	 ruadd __P((struct rusage *ru, struct rusage *ru2));
 #endif
 #endif	/* !_SYS_RESOURCEVAR_H_ */
