@@ -82,10 +82,9 @@ with a nil
 parameter.
 As it is redundant, it may not be supported in future releases.
 .Pp
-All three routines return the length of the message on successful
-completion.
-If a message is too long to fit in the supplied buffer,
-excess bytes may be discarded depending on the type of socket
+On successful completion, all three routines return the number of
+message bytes read.  If a message is too long to fit in the supplied
+buffer, excess bytes may be discarded depending on the type of socket
 the message is received from (see
 .Xr socket 2 ) .
 .Pp
@@ -162,7 +161,7 @@ Here
 .Fa msg_name
 and
 .Fa msg_namelen
-specify the destination address if the socket is unconnected;
+specify the source address if the socket is unconnected;
 .Fa msg_name
 may be given as a null pointer if no names are desired or required.
 .Fa Msg_iov
