@@ -1,4 +1,4 @@
-/*	$OpenBSD: dmesg.c,v 1.5 1997/03/29 20:28:20 tholo Exp $	*/
+/*	$OpenBSD: dmesg.c,v 1.6 1998/07/05 18:45:17 deraadt Exp $	*/
 /*	$NetBSD: dmesg.c,v 1.8 1995/03/18 14:54:49 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: dmesg.c,v 1.5 1997/03/29 20:28:20 tholo Exp $";
+static char rcsid[] = "$OpenBSD: dmesg.c,v 1.6 1998/07/05 18:45:17 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -117,8 +117,12 @@ main(argc, argv)
 		errx(1, "kvm_nlist: %s", kvm_geterr(kd));
 	if (nl[X_MSGBUF].n_type == 0)
 		errx(1, "%s: msgbufp not found", nlistf ? nlistf : "namelist");
-	if (KREAD(nl[X_MSGBUF].n_value, bufp) || KREAD((long)bufp, cur))
-		errx(1, "kvm_read: %s", kvm_geterr(kd));
+	if (KREAD(nl[X_MSGBUF].n_value, bufp))
+		errx(1, "kvm_read: %s: (0x%lx)", kvm_geterr(kd),
+		    nl[X_MSGBUF].n_value);
+	if (KREAD((long)bufp, cur))
+		errx(1, "kvm_read: %s (%0lx)", kvm_geterr(kd),
+		    (unsigned long)bufp);
 	kvm_close(kd);
 	if (cur.msg_magic != MSG_MAGIC)
 		errx(1, "magic number incorrect");
