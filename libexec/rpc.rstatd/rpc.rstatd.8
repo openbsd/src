@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: rpc.rstatd.8,v 1.1.1.1 1995/10/18 08:43:21 deraadt Exp $
+.\"	$Id: rpc.rstatd.8,v 1.2 1997/09/09 15:47:27 kstailey Exp $
 .\"
 .Dd June 7, 1993
 .Dt RPC.RSTATD 8
@@ -45,9 +45,11 @@
 .Sh DESCRIPTION
 .Nm rpc.rstatd
 is a server which returns performance statistics obtained from the kernel.
-These statistics are read using the 
+These statistics are usually read using the 
 .Xr rup 1
-command.
+command.  They are also used by the
+.Xr rpc.lockd 8
+server during crash recovery.
 The
 .Nm rpc.rstatd
 daemon is normally invoked by
@@ -58,5 +60,5 @@ uses an RPC protocol defined in
 .Pa /usr/include/rpcsvc/rstat.x .
 .Sh SEE ALSO
 .Xr rup 1 ,
-.Xr inetd 8
-
+.Xr inetd 8 ,
+.Xr rpc.lockd 8
