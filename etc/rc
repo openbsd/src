@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.47 1997/09/17 09:37:11 deraadt Exp $
+#	$OpenBSD: rc,v 1.48 1997/09/20 07:40:40 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -280,6 +280,7 @@ fi
 if [ "X${named_flags}" != X"NO" ]; then
 	echo -n ' named';		named $named_flags
 fi
+mount -a -t nfs		# do again, in case DNS hostnames are used..
 
 # $rwhod is imported from /etc/netstart;
 # if $rwhod == YES, rwhod is run.
