@@ -1,4 +1,4 @@
-/*	$OpenBSD: mc146818reg.h,v 1.2 1996/10/31 01:01:34 niklas Exp $	*/
+/*	$OpenBSD: mc146818reg.h,v 1.3 1997/03/12 19:51:33 pefo Exp $	*/
 /*	$NetBSD: mc146818reg.h,v 1.1 1995/05/04 19:31:18 cgd Exp $	*/
 
 /*
@@ -88,7 +88,7 @@
 #define	 MC_REGB_DSE	0x01	/* Daylight Savings Enable */
 #define	 MC_REGB_24HR	0x02	/* 24-hour mode (AM/PM mode when clear) */
 #define	 MC_REGB_BINARY	0x04	/* Binary mode (BCD mode when clear) */
-/*	 MC_REGB_UNUSED	0x08	   UNUSED */
+#define	 MC_REGB_SQWE	0x08	/* Square wave enable, ONLY in BQ3285E */
 #define	 MC_REGB_UIE	0x10	/* Update End interrupt enable */
 #define	 MC_REGB_AIE	0x20	/* Alarm interrupt enable */
 #define	 MC_REGB_PIE	0x40	/* Periodic interrupt enable */
