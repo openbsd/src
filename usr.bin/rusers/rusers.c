@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusers.c,v 1.18 2001/11/06 20:51:19 millert Exp $	*/
+/*	$OpenBSD: rusers.c,v 1.19 2001/11/07 00:02:58 millert Exp $	*/
 
 /*
  * Copyright (c) 2001 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -55,7 +55,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: rusers.c,v 1.18 2001/11/06 20:51:19 millert Exp $";
+static const char rcsid[] = "$OpenBSD: rusers.c,v 1.19 2001/11/07 00:02:58 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -97,6 +97,7 @@ void fmt_idle(int, char *, size_t);
 void onehost(char *);
 void allhosts(void);
 void sorthosts(void);
+void expandhosts(void);
 void alarmclock(int);
 char *estrndup(const char *, size_t);
 struct host_info *add_host(char *);
@@ -672,10 +673,40 @@ print_entry(struct host_info *entry)
 }
 
 void
+expandhosts()
+{
+	struct host_info *new_hostinfo, *entry;
+	u_int count;
+	int i, j;
+
+	for (i = 0, count = 0; i < nentries; i++)
+		count += hostinfo[i].count;
+
+	new_hostinfo = (struct host_info *)malloc(sizeof(*entry) * count);
+	if (new_hostinfo == NULL)
+		err(1, NULL);
+	for (i = 0, entry = new_hostinfo; i < nentries; i++) {
+		for (j = 0; j < hostinfo[i].count; j++) {
+			memcpy(entry, &hostinfo[i], sizeof(*entry));
+			entry->users = &hostinfo[i].users[j];
+			entry->idle = entry->users->ut_idle;
+			entry->count = 1;
+			entry++;
+		}
+	}
+	free(hostinfo);
+	hostinfo = new_hostinfo;
+	nentries = maxentries = count;
+}
+
+void
 sorthosts()
 {
 	int i;
 	int (*compar)(const void *, const void *);
+
+	if (iflag && lflag)
+		expandhosts();
 
 	if (hflag)
 		compar = hcompare;

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rusers.1,v 1.11 2001/11/06 20:51:19 millert Exp $
+.\"	$OpenBSD: rusers.1,v 1.12 2001/11/07 00:02:58 millert Exp $
 .\"
 .\" Copyright (c) 1983, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -65,6 +65,15 @@ Print all machines responding even if no one is currently logged in.
 Sort alphabetically by hostname.
 .It Fl i
 Sort by idle time in ascending order.
+Unlike other implementations, when the
+.Fl i
+and
+.Fl l
+flags are mixed the output is sorted by the idle time of each individual user.
+If the
+.Fl l
+flag is not specified, the idle time for a machine is considered to be
+the lowest idle time of a user on that host.
 .It Fl l
 Print a long format listing.
 This includes the user name, host name,
