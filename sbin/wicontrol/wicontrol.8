@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wicontrol.8,v 1.26 2002/03/30 18:03:05 millert Exp $
+.\"	$OpenBSD: wicontrol.8,v 1.27 2002/04/01 06:58:24 deraadt Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu> All rights reserved.
@@ -246,11 +246,11 @@ Recognized regulatory authorities include
 the FCC (United States), ETSI (Europe), France and Japan.
 Frequencies in the table are specified in Mhz.
 .Bd -filled -offset indent
-.Bl -column "Channel ID " "FCC " "ETSI " "France " "Japan "
-.Em "Channel ID	FCC	ETSI	France	Japan"
+.Bl -column "Channel ID " "FCC   " "ETSI   " "France " "Japan "
+.Em "Channel	FCC	ETSI	France	Japan"
 1	2412	2412	-	2412
 2	2417	2417	-	2417
-3	2422	2422	-	2422
+3	2422*	2422*	-	2422
 4	2427	2427	-	2427
 5	2432	2432	-	2432
 6	2437	2437	-	2437
@@ -258,19 +258,15 @@ Frequencies in the table are specified in Mhz.
 8	2447	2447	-	2447
 9	2452	2452	-	2452
 10	2457	2457	2457	2457
-11	2462	2462	2462	2462
+11	2462	2462	2462*	2462
 12	-	2467	2467	2467
 13	-	2472	2472	2472
-14	-	-	-	2484
+14	-	-	-	2484*
 .El
 .Ed
 .Pp
 If an illegal channel is specified, the
-NIC will revert to its default channel.
-For NICs sold in the United States and Europe, the default channel is 3.
-For NICs sold in France, the default channel is 11.
-For NICs sold in Japan, the default channel is 14, and it is
-the only available channel for pre-11Mbps NICs.
+NIC will revert to its default channel, indicated above with a *.
 Note that two stations must be set to the same channel in order to
 communicate.
 Note also that the channels do overlap; the bandwidth required for
