@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.175 2001/11/20 01:02:49 krw Exp $
+#	$OpenBSD: install.sub,v 1.176 2001/11/22 00:56:13 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -116,10 +116,10 @@ getresp() {
 	while [ "X$valid" = "Xfalse" ]; do
 		read resp
 		if [ ${_no_shell} -eq 1 ]; then
-			test -z "$resp" && resp=$1
+			test -z "$resp" && resp="$1"
 		else
 			case "$resp" in
-				"")	resp=$1
+				"")	resp="$1"
 					;;
 				!)	echo "Type 'exit' to return to install."
 					sh
@@ -338,12 +338,12 @@ list_has_sets() {
 ftp_list_files() {
 	# log in via ftp to host $1 as user $2 with password $3
 	# and return a list of all files in the directory $4 on stdout
-	local _host=$1 _user=$2 _pass=$3 _dir=$4
+	local _host=$1 _user="$2" _pass="$3" _dir=$4
 
 	shift; shift; shift; shift
 
 	ftp ${_ftp_active} -V -n $_host  << __ptf
-user $_user $_pass
+user "$_user" "$_pass"
 cd $_dir
 ls
 quit
@@ -942,8 +942,11 @@ encode_for_url() {
     #    ':' -> '%3a'
     #    '@' -> '%40'
     #    '/' -> '%2f'
+    #
+    # *NOTE* quotes around $1 are required to preserve trailing or
+    # embeddded blanks in usercodes and passwords!
 
-    echo $1 | sed -e 's/:/%3a/g' -e 's/@/%40/g' -e 's/\//%2f/g'
+    echo "$1" | sed -e 's/:/%3a/g' -e 's/@/%40/g' -e 's/\//%2f/g'
 }
 
 install_url() {
@@ -953,7 +956,7 @@ install_url() {
 #	_ftp_server_password, and _ftp_active must be global.
 
 local _sets _kernel _f _file_list _get_files _failed_files _osetsdone
-local _url_type _url_base _url_login _url_pass _reuse _minpat
+local _url_type _url_base _url_login _url_pass _reuse _minpat _oifs
 
 # Parse arguments, shell style
 while test $# != 0; do
@@ -1094,16 +1097,19 @@ if [ X"$_reuse" = X ]; then
 			_ftp_server_password=root@`hostname`.${FQDN}
 		fi
 
-		# Get login name
+		# Get login name, setting IFS to nothing so trailing or
+		# embedded blanks are preserved!
+		_oifs="$IFS"
+		IFS=
 		resp=
 		while [ "X${resp}" = X"" ]; do
 			echo -n "Login? [${_ftp_server_login}] "
 			getresp "${_ftp_server_login}"
-			_ftp_server_login=$resp
+			_ftp_server_login="$resp"
 		done
 
 		# Get password unless anonymous
-		if [ ${_ftp_server_login} != "anonymous" ]; then
+		if [ "${_ftp_server_login}" != "anonymous" ]; then
 			resp=
 			while [ "X${resp}" = X"" ]; do
 				echo -n "Password (will not echo): "
@@ -1111,20 +1117,21 @@ if [ X"$_reuse" = X ]; then
 				getresp -n "${_ftp_server_password}"
 				stty echo
 				echo
-				_ftp_server_password=$resp
+				_ftp_server_password="$resp"
 			done
 		else
 			# only used by ftp_list_files()
 			_ftp_server_password=root@`hostname`.${FQDN}
 		fi
+		IFS="$_oifs"
 	fi
 fi
 
 # Build up the base url since it is so nasty...
 if [ "${_url_type}" = "ftp" -a "${_ftp_server_login}" != "anonymous" ]; then
-	_url_login=`encode_for_url ${_ftp_server_login}`
-	_url_pass=`encode_for_url ${_ftp_server_password}`
-	_url_base=ftp://${_url_login}:${_url_pass}@${_ftp_server_ip}/${_ftp_server_dir}
+	_url_login=`encode_for_url "${_ftp_server_login}"`
+	_url_pass=`encode_for_url "${_ftp_server_password}"`
+	_url_base="ftp://${_url_login}:${_url_pass}@${_ftp_server_ip}/${_ftp_server_dir}"
 else
 	eval _url_base=${_url_type}://\$_${_url_type}_server_ip/\$_${_url_type}_server_dir
 fi
@@ -1136,7 +1143,7 @@ if [ "${_url_type}" = "ftp" -a "X${ftp_proxy}" = X"" ]; then
 else
 	# Assumes index file is "index.txt" for http (or proxy)
 	# We can't use index.html since the format is server-dependent
-	_file_list=`ftp -o - -V ${_url_base}/index.txt | sed 's///'`
+	_file_list=`ftp -o - -V "${_url_base}/index.txt" | sed 's///'`
 fi
 
 _sets=
@@ -1256,9 +1263,9 @@ while test -n "${_get_files}" ; do
 	for _f in $_get_files ; do
 		echo "Getting ${_f} ..."
 		if [ "X${_f}" = "X${_kernel}" ]; then
-			( cd /mnt ; ftp ${_ftp_active} -V -m ${_url_base}/${_f} )
+			( cd /mnt ; ftp ${_ftp_active} -V -m "${_url_base}/${_f}" )
 		else
-			( cd /mnt ; ftp ${_ftp_active} -o - -V -m ${_url_base}/${_f} | tar zxpf - )
+			( cd /mnt ; ftp ${_ftp_active} -o - -V -m "${_url_base}/${_f}" | tar zxpf - )
 		fi
 		if [ $? -ne 0 ]; then
 			# Mark xfer as having failed,.
