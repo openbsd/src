@@ -38,7 +38,7 @@
  * from: Utah $Hdr: machparam.h 1.11 89/08/14$
  *
  *	@(#)param.h	7.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.5 1997/03/03 20:21:06 rahnds Exp $
+ *	$Id: param.h,v 1.6 1998/08/18 21:18:47 millert Exp $
  */
 #ifndef _MACHINE_PARAM_H_
 #define _MACHINE_PARAM_H_
@@ -150,6 +150,13 @@
  * For now though just use DEV_BSIZE.
  */
 #define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE/DEV_BSIZE))
+
+/*
+ * Mach derived conversion macros
+ */
+#define mvme88k_btop(x)	((unsigned)(x) >> PGSHIFT)
+#define mvme88k_ptob(x)	((unsigned)(x) << PGSHIFT)
+
 #include <machine/psl.h>
 
 #ifdef _KERNEL
