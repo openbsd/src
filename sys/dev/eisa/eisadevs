@@ -1,5 +1,5 @@
-$OpenBSD: eisadevs,v 1.5 1996/11/28 23:27:38 niklas Exp $
-/*	$NetBSD: eisadevs,v 1.10 1996/09/06 18:01:07 thorpej Exp $	*/
+$OpenBSD: eisadevs,v 1.6 1997/07/25 02:29:51 mickey Exp $
+$NetBSD: eisadevs,v 1.14 1997/07/12 14:41:05 perry Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -43,6 +43,7 @@ vendor DEC		Digital Equipment
 vendor FSI		FORE Systems
 vendor INT		Intel
 vendor ETI		Microdyne
+vendor SMC		Standard Microsystems Corp.
 vendor TCM		3Com
 vendor USC		UltraStor
 
@@ -89,6 +90,14 @@ product ETI 1001	NE3300 Ethernet Rev. C & D
 product TCM 5091	3C509 Ethernet
 product TCM 5092	3C579-TP Ethernet
 product TCM 5093	3C579 Ethernet
+product	TCM 5920 	3C592 Etherlink III
+product	TCM 5970 	3C597 Fast Etherlink TX
+product	TCM 5971 	3C597 Fast Etherlink T4 
+product	TCM 5972 	3C597 Fast Etherlink MII 
+
+/* Standard Microsystems (SMC) */
+product SMC 8010	Ethercard Elite32C Ultra
+product SMC 0110	Elite32 Ethernet
 
 /* UltraStor products */
 product USC 0240	24f SCSI
