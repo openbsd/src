@@ -465,6 +465,9 @@ setregs(p, pack, sp, retval)
 	u_long  sp;
 	register_t *retval;
 {
+#ifdef COMPAT_SUNOS
+	extern struct emul emul_sunos;
+#endif
 	struct frame *frame;
 
 	frame = (struct frame *) p->p_md.md_regs;
