@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_signal.c,v 1.5 2000/03/08 03:35:28 jasoni Exp $	*/
+/*	$OpenBSD: linux_signal.c,v 1.6 2000/03/13 08:18:30 jasoni Exp $	*/
 /*	$NetBSD: linux_signal.c,v 1.10 1996/04/04 23:51:36 christos Exp $	*/
 
 /*
@@ -413,6 +413,68 @@ linux_sys_sigaction(p, v, retval)
 	return 0;
 }
 
+int
+linux_sys_rt_sigaction(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_rt_sigaction_args /* {
+		syscallarg(int) signum;
+		syscallarg(struct linux_sigaction *) nsa;
+		syscallarg(struct linux_sigaction *) osa;
+		syscallarg(size_t) sigsetsize;
+	} */ *uap = v;
+	struct linux_sigaction *nlsa, *olsa, tmplsa;
+	struct sigaction *nbsa, *obsa, tmpbsa;
+	struct sys_sigaction_args sa;
+	caddr_t sg;
+	int error;
+
+	if (SCARG(uap, sigsetsize) != sizeof(linux_sigset_t))
+		return (EINVAL);
+
+	if (SCARG(uap, signum) < 0 || SCARG(uap, signum) >= LINUX_NSIG)
+		return (EINVAL);
+
+	sg = stackgap_init(p->p_emul);
+	nlsa = SCARG(uap, nsa);
+	olsa = SCARG(uap, osa);
+
+	if (olsa != NULL) 
+		obsa = stackgap_alloc(&sg, sizeof(struct sigaction));
+	else
+		obsa = NULL;
+
+	if (nlsa != NULL) {
+		nbsa = stackgap_alloc(&sg, sizeof(struct sigaction));
+		if ((error = copyin(nlsa, &tmplsa, sizeof(tmplsa))) != 0)
+			return error;
+		linux_to_bsd_sigaction(&tmplsa, &tmpbsa);
+		if ((error = copyout(&tmpbsa, nbsa, sizeof(tmpbsa))) != 0)
+			return error;
+	}
+	else
+		nbsa = NULL;
+
+	SCARG(&sa, signum) = linux_to_bsd_sig[SCARG(uap, signum)];
+	SCARG(&sa, nsa) = nbsa;
+	SCARG(&sa, osa) = obsa;
+
+	if ((error = sys_sigaction(p, &sa, retval)) != 0)
+		return error;
+
+	if (olsa != NULL) {
+		if ((error = copyin(obsa, &tmpbsa, sizeof(tmpbsa))) != 0)
+			return error;
+		bsd_to_linux_sigaction(&tmpbsa, &tmplsa);
+		if ((error = copyout(&tmplsa, olsa, sizeof(tmplsa))) != 0)
+			return error;
+	}
+
+	return 0;
+}
+
 /*
  * The Linux signal() system call. I think that the signal() in the C
  * library actually calls sigaction, so I doubt this one is ever used.
@@ -521,6 +583,68 @@ linux_sys_sigprocmask(p, v, retval)
 	return error;
 }
 
+int
+linux_sys_rt_sigprocmask(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_rt_sigprocmask_args /* {
+		syscallarg(int) how;
+		syscallarg(const linux_sigset_t *) set;
+		syscallarg(linux_sigset_t *) oset;
+		syscallarg(size_t) sigsetsize;
+	} */ *uap = v;
+	linux_sigset_t ls;
+	sigset_t bs;
+	int error = 0;
+
+	if (SCARG(uap, sigsetsize) != sizeof(linux_sigset_t))
+		return (EINVAL);
+
+	*retval = 0;
+
+	if (SCARG(uap, oset) != NULL) {
+		/* Fix the return value first if needed */
+		bsd_to_linux_sigset(&p->p_sigmask, &ls);
+		if ((error = copyout(&ls, SCARG(uap, oset), sizeof(ls))) != 0)
+			return error;
+	}
+
+	if (SCARG(uap, set) == NULL)
+		/* Just examine */
+		return 0;
+
+	if ((error = copyin(SCARG(uap, set), &ls, sizeof(ls))) != 0)
+		return error;
+
+	linux_to_bsd_sigset(&ls, &bs);
+
+	(void) splhigh();
+
+	switch (SCARG(uap, how)) {
+	case LINUX_SIG_BLOCK:
+		p->p_sigmask |= bs & ~sigcantmask;
+		break;
+
+	case LINUX_SIG_UNBLOCK:
+		p->p_sigmask &= ~bs;
+		break;
+
+	case LINUX_SIG_SETMASK:
+		p->p_sigmask = bs & ~sigcantmask;
+		break;
+
+	default:
+		error = EINVAL;
+		break;
+	}
+
+	(void) spl0();
+
+	return error;
+}
+
 /*
  * The functions below really make no distinction between an int
  * and [linux_]sigset_t. This is ok for now, but it might break
@@ -588,6 +712,28 @@ linux_sys_sigpending(p, v, retval)
 }
 
 int
+linux_sys_rt_sigpending(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_rt_sigpending_args /* {
+		syscallarg(linux_sigset_t *) set;
+		syscallarg(size_t) sigsetsize;
+	} */ *uap = v;
+	sigset_t bs;
+	linux_sigset_t ls;
+
+	if (SCARG(uap, sigsetsize) != sizeof(linux_sigset_t))
+		return (EINVAL);
+
+	bs = p->p_siglist & p->p_sigmask;
+	bsd_to_linux_sigset(&bs, &ls);
+
+	return copyout(&ls, SCARG(uap, set), sizeof(ls));
+}
+
+int
 linux_sys_sigsuspend(p, v, retval)
 	register struct proc *p;
 	void *v;
@@ -602,6 +748,31 @@ linux_sys_sigsuspend(p, v, retval)
 	linux_old_sigset_t mask = SCARG(uap, mask);
 
 	linux_old_to_bsd_sigset(&mask, &SCARG(&sa, mask));
+	return sys_sigsuspend(p, &sa, retval);
+}
+
+int
+linux_sys_rt_sigsuspend(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_rt_sigsuspend_args /* {
+		syscallarg(sigset_t *) unewset;
+		syscallarg(size_t) sigsetsize;
+	} */ *uap = v;
+	struct sys_sigsuspend_args sa;
+	linux_sigset_t mask;
+	int error;
+
+	if (SCARG(uap, sigsetsize) != sizeof(linux_sigset_t))
+		return (EINVAL);
+	
+	error = copyin(SCARG(uap, unewset), &mask, sizeof(linux_sigset_t));
+	if (error)
+		return (error);
+	
+	linux_to_bsd_sigset(&mask, &SCARG(&sa, mask));
 	return sys_sigsuspend(p, &sa, retval);
 }
 

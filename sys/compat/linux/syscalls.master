@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.16 2000/03/08 03:35:29 jasoni Exp $
+	$OpenBSD: syscalls.master,v 1.17 2000/03/13 08:18:30 jasoni Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -276,12 +276,19 @@
 			    gid_t *sgid); }
 172	UNIMPL		prctl
 173	UNIMPL		rt_sigreturn
-174	UNIMPL		rt_sigaction
-175	UNIMPL		rt_sigprocmask
-176	UNIMPL		rt_sigpending
+174	STD		{ int linux_sys_rt_sigaction(int signum, \
+			    struct linux_sigaction *nsa, \
+			    struct linux_sigaction *osa, \
+		            size_t sigsetsize); }
+175	STD		{ int linux_sys_rt_sigprocmask(int how, \
+			    const linux_sigset_t *set, \
+			    linux_sigset_t *oset, size_t sigsetsize); }
+176	STD		{ int linux_sys_rt_sigpending(linux_sigset_t *set, \
+			    size_t sigsetsize); }
 177	UNIMPL		rt_sigtimedwait
 178	UNIMPL		rt_queueinfo
-179	UNIMPL		rt_sigsuspend
+179	STD		{ int linux_sys_rt_sigsuspend(linux_sigset_t *unewset, \
+			    size_t sigsetsize); }
 180	UNIMPL		pread
 181	UNIMPL		pwrite
 182	STD		{ int linux_sys_chown(char *path, int uid, int gid); }
