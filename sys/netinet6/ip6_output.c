@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.35 2001/05/26 06:57:20 angelos Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.36 2001/05/28 05:26:53 angelos Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -159,7 +159,9 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 	int hdrsplit = 0;
 	u_int8_t sproto = 0;
 #ifdef IPSEC
+	struct m_tag *mtag;
 	union sockaddr_union sdst;
+	struct tdb_ident *tdbi;
 	u_int32_t sspi;
 	struct inpcb *inp;
 	struct tdb *tdb;
@@ -196,7 +198,7 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 	}
 
 #ifdef IPSEC
-	/* Disallow nested IPsec for now */
+	/* This is kept mostly for historical reasons */
 	if (flags & IPV6_ENCAPSULATED)
 		goto done_spd;
 
@@ -244,12 +246,6 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 			goto freehdrs;
 		}
 	} else {
-	        /* We need to do IPsec */
-	        bcopy(&tdb->tdb_dst, &sdst, sizeof(sdst));
-		sspi = tdb->tdb_spi;
-		sproto = tdb->tdb_sproto;
-	        splx(s);
-
 		/*
 		 * If the socket has set the bypass flags and SA destination
 		 * matches the IP destination, skip IPsec. This allows
@@ -261,11 +257,35 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 		    inp->inp_seclevel[SL_ESP_NETWORK] == IPSEC_LEVEL_BYPASS &&
 		    sdst.sa.sa_family == AF_INET6 &&
 		    IN6_ARE_ADDR_EQUAL(&sdst.sin6.sin6_addr, &ip6->ip6_dst)) {
+			splx(s);
 		        sproto = 0; /* mark as no-IPsec-needed */
 			goto done_spd;
 		}
 
-		/* XXX Take into consideration socket requirements ? */
+		/* Loop detection */
+		for (mtag = m_tag_first(m); mtag != NULL;
+		    mtag = m_tag_next(m, mtag)) {
+			if (mtag->m_tag_id != PACKET_TAG_IPSEC_OUT_DONE &&
+			    mtag->m_tag_id !=
+			    PACKET_TAG_IPSEC_OUT_CRYPTO_NEEDED)
+				continue;
+			tdbi = (struct tdb_ident *)(mtag + 1);
+			if (tdbi->spi == tdb->tdb_spi &&
+			    tdbi->proto == tdb->tdb_sproto &&
+			    !bcmp(&tdbi->dst, &tdb->tdb_dst,
+			    sizeof(union sockaddr_union))) {
+				splx(s);
+				sproto = 0; /* mark as no-IPsec-needed */
+				DPRINTF(("ip6_output: IPsec loop detected, skipping further IPsec processing for this packet.\n"));
+				goto done_spd;
+			}
+		}
+
+	        /* We need to do IPsec */
+	        bcopy(&tdb->tdb_dst, &sdst, sizeof(sdst));
+		sspi = tdb->tdb_spi;
+		sproto = tdb->tdb_sproto;
+	        splx(s);
 
 #if 1 /* XXX */
 		/* if we have any extension header, we cannot perform IPsec */
