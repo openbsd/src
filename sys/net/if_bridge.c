@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.4 1999/03/05 21:10:52 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.5 1999/03/05 22:09:18 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -78,7 +78,7 @@
  * Timeout (in seconds) for entries learned dynamically
  */
 #ifndef BRIDGE_RTABLE_TIMEOUT
-#define BRIDGE_RTABLE_TIMEOUT	30
+#define BRIDGE_RTABLE_TIMEOUT	240
 #endif
 
 extern int ifqmaxlen;
