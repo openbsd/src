@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.34 2002/12/29 20:07:34 cedric Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.35 2002/12/30 02:24:35 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -801,7 +801,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			pf_mv_pool(&pf_pabuf, &newrule->rpool.list);
 			if (((((newrule->action == PF_NAT) ||
 			    (newrule->action == PF_RDR) ||
-		 	    (newrule->action == PF_BINAT) || 
+			    (newrule->action == PF_BINAT) ||
 			    (newrule->rt > PF_FASTROUTE)) &&
 			    !newrule->anchorname[0])) &&
 			    (TAILQ_FIRST(&newrule->rpool.list) == NULL))
