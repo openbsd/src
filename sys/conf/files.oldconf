@@ -1,4 +1,4 @@
-#	$NetBSD: files.oldconf,v 1.60 1995/07/04 06:42:23 paulus Exp $
+#	$NetBSD: files.oldconf,v 1.61 1995/11/20 01:01:05 thorpej Exp $
 #
 adosfs/adlookup.c	optional adosfs
 adosfs/adutil.c		optional adosfs
@@ -31,7 +31,6 @@ isofs/cd9660/cd9660_vnops.c	optional cd9660
 kern/exec_aout.c	standard
 kern/exec_conf.c	standard
 kern/exec_ecoff.c	optional compat_ultrix or compat_osf1
-kern/exec_hpux.c	optional compat_hpux
 kern/exec_script.c	standard
 kern/exec_subr.c	standard
 kern/init_main.c	standard
