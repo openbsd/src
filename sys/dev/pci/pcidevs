@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.429 2001/08/20 21:58:59 mickey Exp $
+	$OpenBSD: pcidevs,v 1.430 2001/08/20 22:28:25 mickey Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -866,9 +866,9 @@ product AMCIRCUITS LANAI	0x8043	Myrinet LANai
 product ATRONICS IDE_2015PL	0x2015	IDE-2015PL
 
 /* Aureal products */
-product AUREAL AU8820		0x0001	AU8820 Vortex1
-product AUREAL AU8830		0x0002	AU8830 Vortex2
-product AUREAL AU8810		0x0003	AU8810 Advantage
+product AUREAL AU8820		0x0001	Vortex 1
+product AUREAL AU8830		0x0002	Vortex 2
+product AUREAL AU8810		0x0003	Vortex Advantage
 
 /* Avance Logic products */
 product AVANCE AVL2301		0x2301	AVL2301
