@@ -365,6 +365,24 @@ extern long LYgetattrs PARAMS((WINDOW *win));
 extern int LYlines;	/* replaces LINES */
 extern int LYcols;	/* replaces COLS */
 
+/*
+ * The scrollbar, if used, occupies the rightmost column.
+ */
+#ifdef USE_SCROLLBAR
+#define LYbarWidth (LYShowScrollbar ? 1 : 0)
+#else
+#define LYbarWidth 0
+#endif
+
+/*
+ * Usable limits for display:
+ */
+#if defined(FANCY_CURSES) || defined(USE_SLANG)
+#define LYcolLimit (LYcols - LYbarWidth)
+#else
+#define LYcolLimit (LYcols - 1)
+#endif
+
 #ifdef USE_CURSES_PADS
 extern WINDOW *LYwin;
 extern int LYshiftWin;

@@ -80,6 +80,19 @@
 
 #define STACKLEVEL(me) ((me->stack + MAX_NESTING - 1) - me->sp)
 
+#define DFT_TEXTAREA_COLS 60
+#define DFT_TEXTAREA_ROWS 4
+
+#define MAX_TEXTAREA_COLS LYcolLimit
+#define MAX_TEXTAREA_ROWS (3 * LYlines)
+
+#define LimitValue(name, value) \
+ 	if (name > value) { \
+		CTRACE((tfp, "Limited " #name " to %d, was %d\n", \
+			value, name)); \
+		name = value; \
+	}
+
 struct _HTStream {
     CONST HTStreamClass *	isa;
 #ifdef USE_SOURCE_CACHE
@@ -4316,7 +4329,7 @@ PRIVATE int HTML_start_element ARGS6(
 	    I.align=NULL; I.accept=NULL; I.checked=NO; I.class=NULL;
 	    I.disabled=NO; I.error=NULL; I.height= NULL; I.id=NULL;
 	    I.lang=NULL; I.max=NULL; I.maxlength=NULL; I.md=NULL;
-	    I.min=NULL; I.name=NULL; I.size=NULL; I.src=NULL;
+	    I.min=NULL; I.name=NULL; I.size=0; I.src=NULL;
 	    I.type=NULL; I.value=NULL; I.width=NULL;
 	    I.accept_cs = NULL;
 	    I.name_cs = ATTR_CS_IN;
@@ -4502,7 +4515,7 @@ PRIVATE int HTML_start_element ARGS6(
 	    I.align=NULL; I.accept=NULL; I.checked=NO; I.class=NULL;
 	    I.disabled=NO; I.error=NULL; I.height= NULL; I.id=NULL;
 	    I.lang=NULL; I.max=NULL; I.maxlength=NULL; I.md=NULL;
-	    I.min=NULL; I.name=NULL; I.size=NULL; I.src=NULL;
+	    I.min=NULL; I.name=NULL; I.size=0; I.src=NULL;
 	    I.type=NULL; I.value=NULL; I.width=NULL;
 	    I.accept_cs = NULL;
 	    I.name_cs = ATTR_CS_IN;
@@ -4794,7 +4807,7 @@ PRIVATE int HTML_start_element ARGS6(
 		I.checked = YES;
 	    if (present && present[HTML_INPUT_SIZE] &&
 		value[HTML_INPUT_SIZE] && *value[HTML_INPUT_SIZE])
-		I.size = value[HTML_INPUT_SIZE];
+		I.size = atoi(value[HTML_INPUT_SIZE]);
 	    if (present && present[HTML_INPUT_MAXLENGTH] &&
 		value[HTML_INPUT_MAXLENGTH] && *value[HTML_INPUT_MAXLENGTH])
 		I.maxlength = value[HTML_INPUT_MAXLENGTH];
@@ -5033,26 +5046,28 @@ PRIVATE int HTML_start_element ARGS6(
 	if (present && present[HTML_TEXTAREA_COLS] &&
 	    value[HTML_TEXTAREA_COLS] &&
 	    isdigit(UCH(*value[HTML_TEXTAREA_COLS])))
-	    StrAllocCopy(me->textarea_cols, value[HTML_TEXTAREA_COLS]);
+	    me->textarea_cols = atoi(value[HTML_TEXTAREA_COLS]);
 	else {
 	    int width;
 	    width = LYcols - 1 -
 		    me->new_style->leftIndent - me->new_style->rightIndent;
 	    if (dump_output_immediately) /* don't waste too much for this */
-		width = HTMIN(width, 60);
+		width = HTMIN(width, DFT_TEXTAREA_COLS);
 	    if (width > 1 && (width-1)*6 < MAX_LINE - 3 -
 		me->new_style->leftIndent - me->new_style->rightIndent)
-		HTSprintf0(&me->textarea_cols, "%d", width);
+		me->textarea_cols = width;
 	    else
-		StrAllocCopy(me->textarea_cols, "60");
+		me->textarea_cols = DFT_TEXTAREA_COLS;
 	}
+	LimitValue(me->textarea_cols, MAX_TEXTAREA_COLS);
 
 	if (present && present[HTML_TEXTAREA_ROWS] &&
 	    value[HTML_TEXTAREA_ROWS] &&
 	    isdigit(UCH(*value[HTML_TEXTAREA_ROWS])))
 	    me->textarea_rows = atoi(value[HTML_TEXTAREA_ROWS]);
 	else
-	    me->textarea_rows = 4;
+	    me->textarea_rows = DFT_TEXTAREA_ROWS;
+	LimitValue(me->textarea_rows, MAX_TEXTAREA_ROWS);
 
 	if (present && present[HTML_TEXTAREA_DISABLED])
 	    me->textarea_disabled = YES;
@@ -5169,7 +5184,7 @@ PRIVATE int HTML_start_element ARGS6(
 		I.align=NULL; I.accept=NULL; I.checked=NO; I.class=NULL;
 		I.disabled=NO; I.error=NULL; I.height= NULL; I.id=NULL;
 		I.lang=NULL; I.max=NULL; I.maxlength=NULL; I.md=NULL;
-		I.min=NULL; I.name=NULL; I.size=NULL; I.src=NULL;
+		I.min=NULL; I.name=NULL; I.size=0; I.src=NULL;
 		I.type=NULL; I.value=NULL; I.width=NULL;
 		I.accept_cs = NULL;
 		I.name_cs = -1;
@@ -6818,7 +6833,7 @@ End_Object:
 	    I.align=NULL; I.accept=NULL; I.checked=NO; I.class=NULL;
 	    I.disabled=NO; I.error=NULL; I.height= NULL; I.id=NULL;
 	    I.lang=NULL; I.max=NULL; I.maxlength=NULL; I.md=NULL;
-	    I.min=NULL; I.name=NULL; I.size=NULL; I.src=NULL;
+	    I.min=NULL; I.name=NULL; I.size=0; I.src=NULL;
 	    I.type=NULL; I.value=NULL; I.width=NULL;
 	    I.value_cs = current_char_set;
 
@@ -6969,7 +6984,7 @@ End_Object:
 		}
 		I.value = temp;
 		chars = HText_beginInput(me->text, me->inUnderline, &I);
-		for (chars = atoi(me->textarea_cols); chars > 0; chars--)
+		for (chars = me->textarea_cols; chars > 0; chars--)
 		    HTML_put_character(me, '_');
 		HText_appendCharacter(me->text, '\r');
 		if (*data == '\n') {
@@ -6994,7 +7009,6 @@ End_Object:
 	    HTChunkClear(&me->textarea);
 	    FREE(me->textarea_name);
 	    me->textarea_name_cs = -1;
-	    FREE(me->textarea_cols);
 	    FREE(me->textarea_id);
 	    break;
 	}
@@ -7541,7 +7555,6 @@ PRIVATE void HTML_abort ARGS2(HTStructured *, me, HTError, e)
     FREE(me->map_address);
     FREE(me->textarea_name);
     FREE(me->textarea_accept_cs);
-    FREE(me->textarea_cols);
     FREE(me->textarea_id);
     FREE(me->LastOptionValue);
     FREE(me->xinclude);
@@ -7721,7 +7734,7 @@ PUBLIC HTStructured* HTML_new ARGS3(
     me->textarea_name = NULL;
     me->textarea_name_cs = -1;
     me->textarea_accept_cs = NULL;
-    me->textarea_cols = NULL;
+    me->textarea_cols = 0;
     me->textarea_rows = 4;
     me->textarea_disabled = NO;
     me->textarea_id = NULL;

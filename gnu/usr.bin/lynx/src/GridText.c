@@ -9589,8 +9589,8 @@ PUBLIC int HText_beginInput ARGS3(
     /*
      *  Set SIZE.
      */
-    if (I->size != NULL) {
-	f->size = atoi(I->size);
+    if (I->size != 0) {
+	f->size = I->size;
 	/*
 	 *  Leave at zero for option lists.
 	 */

@@ -1379,6 +1379,8 @@
 #define MAXCHARSETS 60		/* max character sets supported */
 #define TRST_MAXROWSPAN 10000	/* max rowspan accepted by TRST code */
 #define TRST_MAXCOLSPAN 1000	/* max colspan and COL/COLGROUP span accepted */
+#define MAX_TABLE_ROWS  200	/* max rows for tables */
+#define MAX_TABLE_COLS  200	/* max cols for tables */
 #define SAVE_TIME_NOT_SPACE	/* minimize number of some malloc calls */
 
 /* Win32 may support more, but old win16 helper apps may not. */

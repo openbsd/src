@@ -104,7 +104,7 @@ struct _HTStructured {
     char *			textarea_name;
     int				textarea_name_cs;
     char *			textarea_accept_cs;
-    char *			textarea_cols;
+    int				textarea_cols;
     int				textarea_rows;
     int				textarea_disabled;
     char *			textarea_id;
