@@ -1,3 +1,10 @@
+./usr/bin/c++filt
+./usr/bin/gasp
+./usr/bin/objcopy
+./usr/bin/objdump
+./usr/lib/libbfd.a
+./usr/lib/libmmalloc.a
+./usr/lib/libreadline.a
 ./usr/include/ansidecl.h
 ./usr/include/bfd.h
 ./usr/include/bfdlink.h
@@ -103,7 +110,6 @@
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd2.0/2.7.2.1/soft-float
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd2.0/2.7.2.1/soft-float/libgcc.a
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd2.0/2.7.2.1/specs
-./usr/bin/c++filt
 ./usr/powerpc-unknown-openbsd2.0
 ./usr/powerpc-unknown-openbsd2.0/bin
 ./usr/powerpc-unknown-openbsd2.0/bin/ar
@@ -121,3 +127,5 @@
 ./usr/powerpc-unknown-openbsd2.0/lib/ldscripts/elf32ppc.xr
 ./usr/powerpc-unknown-openbsd2.0/lib/ldscripts/elf32ppc.xs
 ./usr/powerpc-unknown-openbsd2.0/lib/ldscripts/elf32ppc.xu
+./usr/share/man/cat1/objcopy.0
+./usr/share/man/cat1/objdump.0

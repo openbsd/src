@@ -101,6 +101,9 @@
 ./usr/mipsel-unknown-openbsd2.1/lib/ldscripts/mipsel_obsd.xr
 ./usr/mipsel-unknown-openbsd2.1/lib/ldscripts/mipsel_obsd.xs
 ./usr/mipsel-unknown-openbsd2.1/lib/ldscripts/mipsel_obsd.xu
+./usr/share/man/cat1/gdb.0
+./usr/share/man/cat1/objcopy.0
+./usr/share/man/cat1/objdump.0
 ./usr/share/man/cat3/dlclose.0
 ./usr/share/man/cat3/dlctl.0
 ./usr/share/man/cat3/dlerror.0

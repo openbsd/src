@@ -1,8 +1,4 @@
-./usr/share/man/cat1/gprof.0
-./usr/share/man/cat1/nlmconv.0
-./usr/share/man/cat1/objcopy.0
-./usr/share/man/cat1/objdump.0
-./usr/share/man/cat2/seek.0
+./usr/share/info/cpio.info
 ./usr/share/man/cat3/dlclose.0
 ./usr/share/man/cat3/dlctl.0
 ./usr/share/man/cat3/dlerror.0
@@ -15,4 +11,3 @@
 ./usr/share/man/cat3/kvm_dump_wrtheader.0
 ./usr/share/man/cat4/i386/ncr.0
 ./usr/share/man/cat8/fdisk.0
-./usr/share/info/cpio.info

@@ -1,14 +1,5 @@
-./usr/lib/libbfd.a
-./usr/lib/libmmalloc.a
-./usr/lib/libreadline.a
-./usr/mdec/boot.mac
-./usr/mdec/boot.ppc
 ./sbin/fdisk
 ./usr/bin/dlltool
-./usr/bin/gasp
-./usr/bin/gprof
-./usr/bin/objcopy
-./usr/bin/objdump
 ./usr/lib/perl5/auto/Text
 ./usr/lib/perl5/auto/Text/ParseWords
 ./usr/lib/perl5/auto/Text/ParseWords/autosplit.ix
@@ -338,3 +329,5 @@
 ./usr/lib/perl5/powerpc-openbsd/5.003/zconf.ph
 ./usr/lib/perl5/powerpc-openbsd/5.003/zlib.ph
 ./usr/lib/perl5/site_perl/powerpc-openbsd
+./usr/mdec/boot.mac
+./usr/mdec/boot.ppc

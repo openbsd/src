@@ -1063,6 +1063,7 @@
 ./usr/share/man/cat1/fpr.0
 ./usr/share/man/cat1/g++.0
 ./usr/share/man/cat1/gcc.0
+./usr/share/man/cat1/gprof.0
 ./usr/share/man/cat1/ld.0
 ./usr/share/man/cat1/lex.0
 ./usr/share/man/cat1/lint.0
