@@ -1,4 +1,4 @@
-.\"	$OpenBSD: last.1,v 1.20 2003/06/03 02:56:09 millert Exp $
+.\"	$OpenBSD: last.1,v 1.21 2004/06/16 22:30:07 millert Exp $
 .\"	$NetBSD: last.1,v 1.3 1994/12/21 22:41:23 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -39,9 +39,10 @@
 .Sh SYNOPSIS
 .Nm last
 .Op Fl csT
-.Op Fl Ns Ar n
+.Op Fl Ns Ar number
 .Op Fl f Ar file
 .Op Fl h Ar host
+.Op Fl n Ar number
 .Op Fl t Ar tty
 .Op Fl d Ar [[[CC]YY]MMDD]hhmm[.SS]
 .Op Ar user ...
@@ -66,7 +67,11 @@ a crash or shutdown,
 will so indicate.
 .Pp
 The options are as follows:
-.Bl -tag -width Ds
+.Bl -tag -width "-n number"
+.It Fl Ns Ar number
+Same as the
+.Fl n
+option (deprecated).
 .It Fl c
 Calculates the total time displayed and prints it after the output.
 .It Fl f Ar file
@@ -75,9 +80,9 @@ reads the file
 .Ar file
 instead of the default,
 .Pa /var/log/wtmp .
-.It Fl Ar n
+.It Fl n Ar number
 Limits the report to
-.Ar n
+.Ar number
 lines.
 .It Fl s
 Display time values in seconds since the epoch, instead of formatted dates.

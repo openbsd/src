@@ -1,4 +1,4 @@
-/*	$OpenBSD: last.c,v 1.30 2004/01/08 13:36:52 otto Exp $	*/
+/*	$OpenBSD: last.c,v 1.31 2004/06/16 22:30:08 millert Exp $	*/
 /*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: last.c,v 1.30 2004/01/08 13:36:52 otto Exp $";
+static char rcsid[] = "$OpenBSD: last.c,v 1.31 2004/06/16 22:30:08 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -109,14 +109,13 @@ void	 usage(void);
 int
 main(int argc, char *argv[])
 {
-	extern int optind;
-	extern char *optarg;
-	int ch;
+	const char *errstr;
 	char *p;
+	int ch;
 
 	maxrec = -1;
 	snaptime = 0;
-	while ((ch = getopt(argc, argv, "0123456789cf:h:st:d:T")) != -1)
+	while ((ch = getopt(argc, argv, "0123456789cf:h:n:st:d:T")) != -1)
 		switch (ch) {
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
@@ -130,7 +129,7 @@ main(int argc, char *argv[])
 					maxrec = atol(++p);
 				else
 					maxrec = atol(argv[optind] + 1);
-				if (!maxrec)
+				if (maxrec == 0)
 					exit(0);
 			}
 			break;
@@ -143,6 +142,14 @@ main(int argc, char *argv[])
 		case 'h':
 			hostconv(optarg);
 			addarg(HOST_TYPE, optarg);
+			break;
+		case 'n':
+			maxrec = strtonum(optarg, 0, LONG_MAX, &errstr);
+			if (errstr != NULL)
+				errx(1, "number of lines is %s: %s", errstr,
+				    optarg);
+			if (maxrec == 0)
+				exit(0);
 			break;
 		case 's':
 			seconds++;
@@ -646,7 +653,7 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-#] [-csT] [-f file] [-t tty] [-h host]"
+	    "usage: %s [-#] [-csT] [-f file] [-n #] [-t tty] [-h host]"
 	    " [-d [[[CC]YY]MMDD]hhmm[.SS]] [user ...]\n", __progname);
 	exit(1);
 }
