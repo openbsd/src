@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.26 2001/11/06 19:20:15 art Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.27 2001/11/18 23:56:49 deraadt Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.26 2001/11/06 19:20:15 art Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.27 2001/11/18 23:56:49 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -177,8 +177,8 @@ static struct nlist namelist[] = {
 #define INTSCOL		63
 #define PROCSROW	 7	/* uses 2 rows and 20 cols */
 #define PROCSCOL	 0
-#define GENSTATROW	 7	/* uses 2 rows and 30 cols */
-#define GENSTATCOL	20
+#define GENSTATROW	 7	/* uses 2 rows and 35 cols */
+#define GENSTATCOL	16
 #define VMSTATROW	 7	/* uses 17 rows and 12 cols */
 #define VMSTATCOL	48
 #define GRAPHROW	10	/* uses 3 rows and 51 cols */
@@ -341,7 +341,7 @@ labelkre()
 	if (LINES - 1 > VMSTATROW + 16)
 		mvprintw(VMSTATROW + 16, VMSTATCOL + 10, "pdscn");
 
-	mvprintw(GENSTATROW, GENSTATCOL, "  Csw  Trp  Sys  Int  Sof  Flt");
+	mvprintw(GENSTATROW, GENSTATCOL, "   Csw   Trp   Sys   Int   Sof  Flt");
 
 	mvprintw(GRAPHROW, GRAPHCOL,
 		"    . %% Sys    . %% User    . %% Nice    . %% Idle");
@@ -518,12 +518,12 @@ showkre()
 	PUTRATE(uvmexp.pgswapin, PAGEROW + 3, PAGECOL + 5, 5);
 	PUTRATE(uvmexp.pgswapout, PAGEROW + 3, PAGECOL + 10, 5);
 
-	PUTRATE(uvmexp.swtch, GENSTATROW + 1, GENSTATCOL, 5);
-	PUTRATE(uvmexp.traps, GENSTATROW + 1, GENSTATCOL + 5, 5);
-	PUTRATE(uvmexp.syscalls, GENSTATROW + 1, GENSTATCOL + 10, 5);
-	PUTRATE(uvmexp.intrs, GENSTATROW + 1, GENSTATCOL + 15, 5);
-	PUTRATE(uvmexp.softs, GENSTATROW + 1, GENSTATCOL + 20, 5);
-	PUTRATE(uvmexp.faults, GENSTATROW + 1, GENSTATCOL + 25, 5);
+	PUTRATE(uvmexp.swtch, GENSTATROW + 1, GENSTATCOL, 6);
+	PUTRATE(uvmexp.traps, GENSTATROW + 1, GENSTATCOL + 6, 6);
+	PUTRATE(uvmexp.syscalls, GENSTATROW + 1, GENSTATCOL + 12, 6);
+	PUTRATE(uvmexp.intrs, GENSTATROW + 1, GENSTATCOL + 18, 6);
+	PUTRATE(uvmexp.softs, GENSTATROW + 1, GENSTATCOL + 24, 6);
+	PUTRATE(uvmexp.faults, GENSTATROW + 1, GENSTATCOL + 30, 5);
 	mvprintw(DISKROW, DISKCOL + 5, "                              ");
 	for (i = 0, c = 0; i < dk_ndrive && c < MAXDRIVES; i++)
 		if (dk_select[i]) {
