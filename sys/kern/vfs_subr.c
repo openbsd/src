@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.101 2004/08/02 03:26:50 pedro Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.102 2004/08/04 03:05:25 pedro Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -649,11 +649,12 @@ loop:
 
 /*
  * Grab a particular vnode from the free list, increment its
- * reference count and lock it. The vnode lock bit is set the
- * vnode is being eliminated in vgone. The process is awakened
- * when the transition is completed, and an error returned to
- * indicate that the vnode is no longer usable (possibly having
- * been changed to a new file system type).
+ * reference count and lock it. If the vnode lock bit is set,
+ * the vnode is being eliminated in vgone. In that case, we
+ * cannot grab it, so the process is awakened when the
+ * transition is completed, and an error code is returned to
+ * indicate that the vnode is no longer usable, possibly
+ * having been changed to a new file system type.
  */
 int
 vget(vp, flags, p)
@@ -908,7 +909,6 @@ loop:
 
 	return (error);
 }
-
 
 struct vflush_args {
 	struct vnode *skipvp;
@@ -1958,7 +1958,6 @@ vwaitforio(vp, slpflag, wmesg, timeo)
 	return (error);
 }
 
-
 /*
  * Update outstanding I/O count and do wakeup if requested.
  *
@@ -2179,10 +2178,10 @@ brelvp(bp)
 }
 
 /*
- * Replaces the current vnode associated with the buffer, if any
+ * Replaces the current vnode associated with the buffer, if any,
  * with a new vnode.
  *
- * If an output I/O is pending on the buffer, the old vnode is
+ * If an output I/O is pending on the buffer, the old vnode
  * I/O count is adjusted.
  *
  * Ignores vnode buffer queues. Must be called at splbio().
