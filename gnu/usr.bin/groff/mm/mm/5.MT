@@ -1,5 +1,5 @@
 .\"------------
-.\" $Id: 5.MT,v 1.2 1997/04/22 14:07:35 kstailey Exp $
+.\" $Id: 5.MT,v 1.3 1998/01/19 00:40:20 etheisen Exp $
 .\" Cover sheet. Memorandum type 5
 .\"------------
 .nr cov*mt0-ind 1.1c
