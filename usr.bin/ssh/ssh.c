@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh.c,v 1.62 2000/08/28 19:51:00 markus Exp $");
+RCSID("$OpenBSD: ssh.c,v 1.63 2000/08/28 20:19:52 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/dsa.h>
@@ -451,7 +451,7 @@ main(int ac, char **av)
 	}
 
 	/* Cannot fork to background if no command. */
-	if (fork_after_authentication_flag && buffer_len(&command) == 0)
+	if (fork_after_authentication_flag && buffer_len(&command) == 0 && !no_shell_flag)
 		fatal("Cannot fork into background without a command to execute.");
 
 	/* Allocate a tty by default if no command specified. */
