@@ -1,4 +1,4 @@
-/*	$OpenBSD: lofnreg.h,v 1.4 2001/06/26 05:16:45 jason Exp $	*/
+/*	$OpenBSD: lofnreg.h,v 1.5 2001/06/26 05:45:27 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -62,6 +62,13 @@
 
 #define	LOFN_CFG1_RESET		0x00000001	/* Reset */
 #define	LOFN_CFG1_MULTI		0x00000038	/* PLL multiple */
+#define	LOFN_CFG1_MULTI_BYP	0x00000000	/*  PLL bypass */
+#define	LOFN_CFG1_MULTI_1X	0x00000008	/*  1x CLK */
+#define	LOFN_CFG1_MULTI_15X	0x00000010	/*  1.5x CLK */
+#define	LOFN_CFG1_MULTI_2X	0x00000018	/*  2x CLK */
+#define	LOFN_CFG1_MULTI_25X	0x00000020	/*  2.5x CLK */
+#define	LOFN_CFG1_MULTI_3X	0x00000028	/*  3x CLK */
+#define	LOFN_CFG1_MULTI_4X	0x00000030	/*  4x CLK */
 #define	LOFN_CFG1_CLOCK		0x00000040	/* Clock select */
 
 #define	LOFN_CFG2_RNGENA	0x00000001	/* RNG enable */
