@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.16 1998/06/08 17:42:33 provos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.17 1998/07/29 21:02:54 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -283,7 +283,7 @@ main(argc, argv)
 	     } else if (!strcmp(argv[i]+1, "local") && iscmd(mode, FLOW)) {
 		  local = 1;
 	     } else if (!strcmp(argv[i]+1, "tunnel") &&
-			isencauth(mode) && i+2 < argc) {
+			(isencauth(mode) || mode == ENC_IP) && i+2 < argc) {
 		  osrc.s_addr = inet_addr(argv[i+1]);
 		  i++;
 		  odst.s_addr = inet_addr(argv[i+1]);
@@ -357,12 +357,14 @@ main(argc, argv)
 	     exit(1);
 	} else if ((iscmd(mode, DEL_SPI) || iscmd(mode, GRP_SPI) || 
 		   iscmd(mode, FLOW)) && 
-		   proto != IPPROTO_ESP && proto != IPPROTO_AH) {
-	     fprintf(stderr, "%s: Security protocol is neither AH or ESP\n", argv[0]);
+		   proto != IPPROTO_ESP && proto != IPPROTO_AH &&
+		   proto != IPPROTO_IPIP) {
+	     fprintf(stderr, "%s: Security protocol is none of AH, ESP or IPIP\n", argv[0]);
 	     exit(1);
 	} else if (iscmd(mode, GRP_SPI) && 
-		   proto2 != IPPROTO_ESP && proto2 != IPPROTO_AH) {
-	     fprintf(stderr, "%s: Security protocol2 is neither AH or ESP\n", argv[0]);
+		   proto2 != IPPROTO_ESP && proto2 != IPPROTO_AH &&
+		   proto2 != IPPROTO_IPIP) {
+	     fprintf(stderr, "%s: Security protocol2 is none of AH, ESP or IPIP\n", argv[0]);
 	     exit(1);
 	} else if (dst.s_addr == 0) {
 	     fprintf(stderr, "%s: No destination address specified\n", 

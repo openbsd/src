@@ -1,4 +1,4 @@
-/* $OpenBSD: xf_ip4.c,v 1.5 1998/05/24 13:29:11 provos Exp $ */
+/* $OpenBSD: xf_ip4.c,v 1.6 1998/07/29 21:02:55 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -78,6 +78,7 @@ struct in_addr osrc, odst;
 
 	em->em_version = PFENCAP_VERSION_1;
 	em->em_type = EMT_SETSPI;
+	em->em_sproto = IPPROTO_IPIP;
 	em->em_spi = spi;
 	em->em_src = src;
 	em->em_dst = dst;
