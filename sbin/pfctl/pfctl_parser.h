@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.31 2002/11/30 13:53:15 mickey Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.32 2002/12/04 08:07:28 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -40,6 +40,7 @@
 #define PF_OPT_QUIET		0x0010
 #define PF_OPT_CLRRULECTRS	0x0020
 #define PF_OPT_USEDNS		0x0040
+#define PF_OPT_VERBOSE2		0x0080
 
 #define PF_TH_ALL		0xFF
 
@@ -77,7 +78,7 @@ int	pfctl_set_optimization(struct pfctl *, const char *);
 int	pfctl_set_limit(struct pfctl *, const char *, unsigned int);
 int	pfctl_set_logif(struct pfctl *, char *);
 
-int	parse_rules(FILE *, struct pfctl *);
+int	parse_rules(FILE *, struct pfctl *, int);
 int	parse_flags(char *);
 
 void	print_rule(struct pf_rule *);

@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.56 2002/11/24 18:02:06 pb Exp $
+.\" $OpenBSD: pfctl.8,v 1.57 2002/12/04 08:07:28 deraadt Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -174,7 +174,9 @@ Show the current pool memory hard limits.
 Show all of the above.
 .El
 .It Fl v
-Produce more verbose output.
+Produce more verbose output.  A second use of
+.Fl v
+will produce an additional level of more verbose output.
 .It Fl x Ar level
 Set the debug level to one of the following.
 Level names may be abbreviated:
