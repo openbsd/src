@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.24 2001/07/05 02:40:44 mickey Exp $ */
+/*	$OpenBSD: conf.c,v 1.25 2001/07/09 04:41:28 mickey Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -374,7 +374,7 @@ blktochr(dev)
 }
 
 #include <dev/cons.h>
-#include <vgafb_pci.h>
+#include "vgafb_pci.h"
 
 cons_decl(ws);
 cons_decl(com);

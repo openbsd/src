@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.7 2001/06/25 23:30:04 drahn Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.8 2001/07/09 04:41:28 mickey Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -33,6 +33,7 @@
 #include <sys/reboot.h>
 
 #include <machine/autoconf.h>
+#include <dev/ofw/openfirm.h>
 
 struct mainbus_softc {
 	struct	device sc_dv;
@@ -117,7 +118,7 @@ mbattach(parent, self, aux)
 	if (system_type == APPL) {
 		char name[32];
 		int node;
-		for (node = OF_child(OF_peer(0)); node; node= OF_peer(node)) {
+		for (node = OF_child(OF_peer(0)); node; node=OF_peer(node)) {
 			bzero (name, sizeof(name));
 			if (OF_getprop(node, "device_type", name, sizeof(name)) <= 0)
 			{

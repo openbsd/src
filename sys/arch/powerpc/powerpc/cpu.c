@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.11 2001/06/18 21:36:06 drahn Exp $ */
+/*	$OpenBSD: cpu.c,v 1.12 2001/07/09 04:41:28 mickey Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -39,6 +39,8 @@
 #include <sys/user.h>
 #include <sys/device.h>
 
+#include <dev/ofw/openfirm.h>
+
 #include <machine/autoconf.h>
 
 #define MPC601          1
@@ -62,17 +64,20 @@ char cpu_model[80];
 char machine[] = "powerpc";	/* cpu architecture */
 
 /* Definition of the driver for autoconfig. */
-static int	cpumatch(struct device *, void *, void *);
-static void	cpuattach(struct device *, struct device *, void *);
+int	cpumatch(struct device *, void *, void *);
+void	cpuattach(struct device *, struct device *, void *);
 
 struct cfattach cpu_ca = {
 	sizeof(struct device), cpumatch, cpuattach
 };
+
 struct cfdriver cpu_cd = {
 	NULL, "cpu", DV_DULL, NULL, 0
 };
 
-static int
+void config_l2cr __P((void));
+
+int
 cpumatch(parent, cfdata, aux)
 	struct device *parent;
 	void *cfdata;
@@ -86,9 +91,8 @@ cpumatch(parent, cfdata, aux)
 
 	return (1);
 }
-void config_l2cr();
 
-static void
+void
 cpuattach(parent, dev, aux)
 	struct device *parent;
 	struct device *dev;
@@ -149,10 +153,10 @@ cpuattach(parent, dev, aux)
 		{
 			break;
 		}
-                if (phandle = OF_child(qhandle))
+                if ((phandle = OF_child(qhandle)))
                         continue;
                 while (qhandle) {
-                        if (phandle = OF_peer(qhandle))
+                        if ((phandle = OF_peer(qhandle)))
                                 break;
                         qhandle = OF_parent(qhandle);
                 }
