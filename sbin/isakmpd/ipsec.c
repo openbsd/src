@@ -1,5 +1,5 @@
-/*	$OpenBSD: ipsec.c,v 1.29 2000/10/09 23:27:30 niklas Exp $	*/
-/*	$EOM: ipsec.c,v 1.133 2000/10/09 22:08:29 angelos Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.30 2000/10/16 23:26:33 niklas Exp $	*/
+/*	$EOM: ipsec.c,v 1.139 2000/10/16 06:01:34 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -67,6 +67,11 @@
 #include "timer.h"
 #include "transport.h"
 #include "util.h"
+
+/* Backwards compatibility.  */
+#ifndef NI_MAXHOST
+#define NI_MAXHOST 1025
+#endif
 
 /* The replay window size used for all IPSec protocols if not overridden.  */
 #define DEFAULT_REPLAY_WINDOW 16
@@ -327,7 +332,12 @@ ipsec_finalize_exchange (struct message *msg)
 			ntohl (isa->src_net), ntohl (isa->src_mask),
 			ntohl (isa->dst_net), ntohl (isa->dst_mask)));
 
-	      if (sysdep_ipsec_enable_sa (sa))
+	      /*
+	       * If this is not an SA acquired by the kernel, it needs
+	       * to have a SPD entry (a.k.a. flow) set up.
+	       */
+	      if (!(sa->flags & SA_FLAG_ONDEMAND)
+		  && sysdep_ipsec_enable_sa (sa))
 		/* XXX Tear down this exchange.  */
 		return;
 
@@ -670,7 +680,7 @@ ipsec_validate_transform_id (u_int8_t proto, u_int8_t transform_id)
 	transform_id < IPSEC_AH_MD5 || transform_id > IPSEC_AH_DES ? -1 : 0;
     case IPSEC_PROTO_IPSEC_ESP:
       return transform_id < IPSEC_ESP_DES_IV64
-	|| transform_id > IPSEC_ESP_NULL ? -1 : 0;
+	|| transform_id > IPSEC_ESP_AES ? -1 : 0;
     case IPSEC_PROTO_IPCOMP:
       return transform_id < IPSEC_IPCOMP_OUI
 	|| transform_id > IPSEC_IPCOMP_V42BIS ? -1 : 0;
@@ -1350,6 +1360,7 @@ ipsec_esp_authkeylength (struct proto *proto)
     case IPSEC_AUTH_HMAC_MD5:
       return 16;
     case IPSEC_AUTH_HMAC_SHA:
+    case IPSEC_AUTH_HMAC_RIPEMD:
       return 20;
     default:
       return 0;
@@ -1365,6 +1376,7 @@ ipsec_ah_keylength (struct proto *proto)
     case IPSEC_AH_MD5:
       return 16;
     case IPSEC_AH_SHA:
+    case IPSEC_AH_RIPEMD:
       return 20;
     default:
       return -1;
@@ -1501,21 +1513,26 @@ ipsec_get_id (char *section, int *id, struct in_addr *addr,
 static void
 ipsec_ipv4toa (char *buf, size_t size, u_int8_t *addr)
 {
+#ifdef HAVE_GETNAMEINFO
   struct sockaddr_storage from;
   struct sockaddr_in *sfrom = (struct sockaddr_in *)&from;
-  socklen_t fromlen = sizeof(from);
+  socklen_t fromlen = sizeof from;
 
   memset (&from, 0, fromlen);
-  sfrom->sin_len = sizeof (struct sockaddr_in);
+  sfrom->sin_len = sizeof *sfrom;
   sfrom->sin_family = AF_INET;
-  memcpy (&sfrom->sin_addr.s_addr, addr, 4);
+  memcpy (&sfrom->sin_addr.s_addr, addr, sizeof sfrom->sin_addr.s_addr);
 
-  if (getnameinfo ((struct sockaddr *)sfrom, sfrom->sin_len,
-		  buf, size, NULL, 0, NI_NUMERICHOST) != 0)
+  if (getnameinfo ((struct sockaddr *)sfrom, sfrom->sin_len, buf, size, NULL,
+		   0, NI_NUMERICHOST) != 0)
     {
-      log_error("ipsec_ipv4toa: getnameinfo() failed");
+      log_print ("ipsec_ipv4toa: getnameinfo () failed");
       strcpy (buf, "<error>");
     }
+#else
+  strncpy (buf, inet_ntoa (*(struct in_addr *)addr), size - 1);
+  buf[size - 1] = '\0';
+#endif /* HAVE_GETNAMEINFO */
 }
 
 static void
@@ -1538,13 +1555,13 @@ ipsec_decode_id (u_int8_t *buf, int size, u_int8_t *id, size_t id_len,
       switch (id_type)
 	{
 	case IPSEC_ID_IPV4_ADDR:
-	  ipsec_ipv4toa (ntop, sizeof(ntop), id + ISAKMP_ID_DATA_OFF);
+	  ipsec_ipv4toa (ntop, sizeof ntop, id + ISAKMP_ID_DATA_OFF);
 	  snprintf (buf, size, "%08x: %s",
 		    decode_32 (id + ISAKMP_ID_DATA_OFF), ntop);
 	  break;
 	case IPSEC_ID_IPV4_ADDR_SUBNET:
-	  ipsec_ipv4toa (ntop, sizeof(ntop), id + ISAKMP_ID_DATA_OFF);
-	  ipsec_ipv4toa (ntop2, sizeof(ntop2), id + ISAKMP_ID_DATA_OFF + 4);
+	  ipsec_ipv4toa (ntop, sizeof ntop, id + ISAKMP_ID_DATA_OFF);
+	  ipsec_ipv4toa (ntop2, sizeof ntop2, id + ISAKMP_ID_DATA_OFF + 4);
 	  snprintf (buf, size, "%08x/%08x: %s/%s",
 		    decode_32 (id + ISAKMP_ID_DATA_OFF),
 		    decode_32 (id + ISAKMP_ID_DATA_OFF + 4),
@@ -1565,7 +1582,7 @@ ipsec_decode_id (u_int8_t *buf, int size, u_int8_t *id, size_t id_len,
 	}
     }
   else
-    strlcpy (buf, "<noid>", size);
+    snprintf (buf, size, "<no id>");
 }
 
 char *
@@ -1575,10 +1592,10 @@ ipsec_decode_ids (char *fmt, u_int8_t *id1, size_t id1_len,
   static char result[1024];
   char s_id1[256], s_id2[256];
 
-  ipsec_decode_id(s_id1, sizeof(s_id1), id1, id1_len, isakmpform);
-  ipsec_decode_id(s_id2, sizeof(s_id2), id2, id2_len, isakmpform);
+  ipsec_decode_id(s_id1, sizeof s_id1, id1, id1_len, isakmpform);
+  ipsec_decode_id(s_id2, sizeof s_id2, id2, id2_len, isakmpform);
 
-  snprintf (result, sizeof(result), fmt, s_id1, s_id2);
+  snprintf (result, sizeof result, fmt, s_id1, s_id2);
   return result;
 }
 #endif /* USE_DEBUG */
