@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2003/05/17 05:20:18 mho Exp $
+# $OpenBSD: Makefile,v 1.4 2003/06/02 18:45:41 jakob Exp $
 
 KRB5DIR	= ${.CURDIR}/../../kerberosV
 .include <${.CURDIR}/../libkrb5/Makefile.common.inc>
@@ -26,6 +26,7 @@ SRCS=	8003.c			\
 	compare_name.c		\
 	compat.c		\
 	context_time.c		\
+	copy_ccache.c		\
 	create_emtpy_oid_set.c	\
 	decapsulate.c		\
 	delete_sec_context.c	\
