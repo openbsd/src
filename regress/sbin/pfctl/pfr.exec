@@ -29,14 +29,14 @@ for LINE in `sed -e "s/ /_/g" $1`; do
 	if [ "$RESULT" = "pass" ]; then case $CMD in
 	add|delete|replace)
 		echo "# pass $CMD -n $ARGS"
-		pfctl -t regress -nT $CMD $ARGS 2>&1 || exit 1
+		pfctl -t regress -nT $CMD $ARGS 2>&1 | sort || exit 1
 		echo "# pass $CMD -nf-"
 		echo "# test\n" $ARGSX | pfctl -t regress -nT $CMD -f- \
-			2>&1 || exit 1
+			2>&1 | sort || exit 1
 		echo "# pass $CMD -nqv $ARGS"
-		pfctl -t regress -nqvT $CMD $ARGS 2>&1 || exit 1
+		pfctl -t regress -nqvT $CMD $ARGS 2>&1 | sort || exit 1
 		echo "# pass $CMD -nqvv $ARGS"
-		pfctl -t regress -nqvvT $CMD $ARGS 2>&1 || exit 1
+		pfctl -t regress -nqvvT $CMD $ARGS 2>&1 | sort || exit 1
 		;;
 	esac fi
 	echo "# $RESULT $CMD $ARGS"

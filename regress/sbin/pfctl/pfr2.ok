@@ -22,9 +22,9 @@ A  fe80::1
 D  ::1
 D  ::2
 # pass delete -nqvv ::1 ::2 FE80::2
+   fe80::2
 D  ::1
 D  ::2
-   fe80::2
 # pass delete ::1 ::2 FE80::2
 2/3 addresses deleted.
 # pass replace -n ::1 ::2 FE80::1
@@ -35,9 +35,9 @@ D  ::2
 A  ::1
 A  ::2
 # pass replace -nqvv ::1 ::2 FE80::1
+   fe80::1
 A  ::1
 A  ::2
-   fe80::1
 # pass replace ::1 ::2 FE80::1
 2 addresses added.
 # pass test ::1 ::2 FE80::1

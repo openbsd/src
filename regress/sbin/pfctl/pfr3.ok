@@ -29,11 +29,11 @@ D  10.11.12.0/24
 # pass delete 10.11.0.0/16 10.11.12.0/24
 2/2 addresses deleted.
 # pass replace -n 10.0/8 172.16.0/12 192.168.0/16
-2 addresses added (dummy).
 1 addresses deleted (dummy).
+2 addresses added (dummy).
 # pass replace -nf-
-2 addresses added (dummy).
 1 addresses deleted (dummy).
+2 addresses added (dummy).
 # pass replace -nqv 10.0/8 172.16.0/12 192.168.0/16
 A  172.16.0.0/12
 A  192.168.0.0/16

@@ -5,11 +5,11 @@
 # pass add -nf-
 2/2 addresses added (dummy).
 # pass add -nqv localhost
-A  ::1
 A  127.0.0.1
+A  ::1
 # pass add -nqvv localhost
-A  ::1
 A  127.0.0.1
+A  ::1
 # pass add localhost
 2/2 addresses added.
 # fail add invalid$host

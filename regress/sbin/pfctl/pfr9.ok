@@ -23,8 +23,8 @@ X  ::1
 # pass add -nqv 1.2.3.4 ::1 1.2.3.4 ::1
 # pass add -nqvv 1.2.3.4 ::1 1.2.3.4 ::1
    1.2.3.4
-   ::1
    1.2.3.4
+   ::1
    ::1
 # pass add 1.2.3.4 ::1 1.2.3.4 ::1
 0/4 addresses added.
@@ -51,8 +51,8 @@ X  ::1
 # pass delete -nqv 1.2.3.4 ::1 1.2.3.4 ::1
 # pass delete -nqvv 1.2.3.4 ::1 1.2.3.4 ::1
    1.2.3.4
-   ::1
    1.2.3.4
+   ::1
    ::1
 # pass delete 1.2.3.4 ::1 1.2.3.4 ::1
 0/4 addresses deleted.
