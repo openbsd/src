@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite.c,v 1.14 1997/04/14 01:00:35 briggs Exp $	*/
+/*	$OpenBSD: ite.c,v 1.15 1997/04/14 17:56:45 gene Exp $	*/
 /*	$NetBSD: ite.c,v 1.32 1997/02/20 00:23:25 scottr Exp $	*/
 
 /*
@@ -1110,7 +1110,8 @@ iteioctl(dev, cmd, addr, flag, p)
 }
 
 void 
-itestart(register struct tty * tp)
+itestart(tp)
+	register struct tty *tp;
 {
 	register int cc, s;
 
@@ -1134,7 +1135,9 @@ itestart(register struct tty * tp)
 }
 
 void 
-itestop(struct tty * tp, int flag)
+itestop(tp, flag)
+	struct tty *tp;
+	int flag;
 {
 	int s;
 
@@ -1146,7 +1149,8 @@ itestop(struct tty * tp, int flag)
 }
 
 int
-ite_intr(adb_event_t * event)
+ite_intr(event)
+	adb_event_t *event;
 {
 	static int shift = 0, control = 0, capslock = 0;
 	int key, press, val, state;
@@ -1190,7 +1194,7 @@ ite_intr(adb_event_t * event)
 			break;
 		default:
 			state = 0;
-			if (capslock && isealpha(keyboard[val][1])) {
+			if (capslock && isealpha(keyboard[val][1]))
 				state = 1;
 			if (shift)
 				state = 1;
@@ -1213,7 +1217,8 @@ ite_intr(adb_event_t * event)
  */
 
 int
-itecnprobe(struct consdev * cp)
+itecnprobe(cp)
+	struct consdev *cp;
 {
 	int maj, unit;
 
@@ -1235,7 +1240,8 @@ itecnprobe(struct consdev * cp)
 }
 
 int
-itecninit(struct consdev * cp)
+itecninit(cp)
+	struct consdev *cp;
 {
 	return ite_init();
 }
@@ -1297,7 +1303,9 @@ ite_init()
 }
 
 int
-iteon(dev_t dev, int flags)
+iteon(dev, flags)
+	dev_t	dev;
+	int	flags;
 {
 	erasecursor();
 	clear_screen(2);
@@ -1306,7 +1314,9 @@ iteon(dev_t dev, int flags)
 }
 
 int
-iteoff(dev_t dev, int flags)
+iteoff(dev, flags)
+	dev_t	dev;
+	int	flags;
 {
 	erasecursor();
 	clear_screen(2);
@@ -1314,7 +1324,8 @@ iteoff(dev_t dev, int flags)
 }
 
 int
-itecngetc(dev_t dev)
+itecngetc(dev)
+	dev_t	dev;
 {
 	/* Oh, man... */
 
@@ -1322,7 +1333,9 @@ itecngetc(dev_t dev)
 }
 
 int
-itecnputc(dev_t dev, int c)
+itecnputc(dev, c)
+	dev_t	dev;
+	int	c;
 {
 	extern dev_t mac68k_zsdev;
 	extern int zscnputc __P((dev_t dev, int c));
