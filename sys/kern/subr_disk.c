@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.22 2003/06/02 23:28:06 millert Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.23 2003/06/25 20:52:57 tedu Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -524,4 +524,39 @@ dk_mountroot()
 #endif
 	}
 	return (*mountrootfn)();
+}
+
+void
+bufq_default_add(struct bufq *bq, struct buf *bp)
+{
+	struct bufq_default *bufq = (struct bufq_default *)bq;
+	struct proc *p = bp->b_proc;
+	struct buf *head;
+
+	if (p == NULL || p->p_nice < NZERO)
+		head = &bufq->bufq_head[0];
+	else if (p->p_nice == NZERO)
+		head = &bufq->bufq_head[1];
+	else
+		head = &bufq->bufq_head[2];
+
+	disksort(head, bp);
+}
+
+struct buf *
+bufq_default_get(struct bufq *bq)
+{
+	struct bufq_default *bufq = (struct bufq_default *)bq;
+	struct buf *bp, *head;
+	int i;
+
+	for (i = 0; i < 3; i++) {
+		head = &bufq->bufq_head[i];
+		if ((bp = head->b_actf))
+			break;
+	}
+	if (bp == NULL)
+		return (NULL);
+	head->b_actf = bp->b_actf;
+	return (bp);
 }

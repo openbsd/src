@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.43 2003/06/02 23:28:20 millert Exp $	*/
+/*	$OpenBSD: buf.h,v 1.44 2003/06/25 20:52:57 tedu Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -99,6 +99,28 @@ struct buf {
 	int	b_validend;		/* Offset of end of valid region. */
  	struct	workhead b_dep;		/* List of filesystem dependencies. */
 };
+
+/*
+ * bufq
+ * flexible buffer queue routines
+ */
+struct bufq {
+	void (*bufq_add)(struct bufq*, struct buf *);
+	struct buf *(*bufq_get)(struct bufq*);
+};
+
+struct bufq_default {
+	struct bufq bufq;
+	struct buf bufq_head[3];
+};
+
+#define BUFQ_ADD(_bufq, _bp) \
+    ((struct bufq *)_bufq)->bufq_add((struct bufq *)_bufq, _bp)
+#define BUFQ_GET(_bufq) \
+    ((struct bufq *)_bufq)->bufq_get((struct bufq *)_bufq)
+
+void bufq_default_add(struct bufq *, struct buf *);
+struct buf *bufq_default_get(struct bufq *);
 
 /*
  * For portability with historic industry practice, the cylinder number has

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.30 2003/05/20 03:59:35 tedu Exp $ */
+/*	$OpenBSD: wd.c,v 1.31 2003/06/25 20:52:57 tedu Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -134,7 +134,7 @@ struct wd_softc {
 	/* General disk infos */
 	struct device sc_dev;
 	struct disk sc_dk;
-	struct buf sc_q;
+	struct bufq_default sc_q;
 	/* IDE disk soft states */
 	struct ata_bio sc_wdc_bio; /* current transfer */
 	struct buf *sc_bp; /* buf being transferred */
@@ -272,6 +272,9 @@ wdattach(parent, self, aux)
 	int i, blank;
 	char buf[41], c, *p, *q;
 	WDCDEBUG_PRINT(("wdattach\n"), DEBUG_FUNCS | DEBUG_PROBE);
+
+	wd->sc_q.bufq.bufq_get = bufq_default_get;
+	wd->sc_q.bufq.bufq_add = bufq_default_add;
 
 	wd->openings = aa_link->aa_openings;
 	wd->drvp = aa_link->aa_drv_data;
@@ -418,14 +421,12 @@ wddetach(self, flags)
 	int flags;
 {
 	struct wd_softc *sc = (struct wd_softc *)self;
-	struct buf *dp, *bp;
+	struct buf *bp;
 	int s, bmaj, cmaj, mn;
 
 	/* Remove unprocessed buffers from queue */
 	s = splbio();
-	for (dp = &sc->sc_q; (bp = dp->b_actf) != NULL; ) {
-		dp->b_actf = bp->b_actf;
-		
+	while ((bp = BUFQ_GET(&sc->sc_q)) != NULL) {
 		bp->b_error = ENXIO;
 		bp->b_flags |= B_ERROR;
 		biodone(bp);
@@ -512,7 +513,7 @@ wdstrategy(bp)
 		goto done;
 	/* Queue transfer on drive, activate drive and controller if idle. */
 	s = splbio();
-	disksort(&wd->sc_q, bp);
+	BUFQ_ADD(&wd->sc_q, bp);
 	wdstart(wd);
 	splx(s);
 	device_unref(&wd->sc_dev);
@@ -537,18 +538,16 @@ wdstart(arg)
 	void *arg;
 {
 	struct wd_softc *wd = arg;
-	struct buf *dp, *bp=0;
+	struct buf *bp = NULL;
 
 	WDCDEBUG_PRINT(("wdstart %s\n", wd->sc_dev.dv_xname),
 	    DEBUG_XFERS);
 	while (wd->openings > 0) {
 
 		/* Is there a buf for us ? */
-		dp = &wd->sc_q;
-		if ((bp = dp->b_actf) == NULL)  /* yes, an assign */
-			 return;
-		dp->b_actf = bp->b_actf;
-	
+		if ((bp = BUFQ_GET(&wd->sc_q)) == NULL)
+			return;
+
 		/* 
 		 * Make the command. First lock the device
 		 */
@@ -1112,11 +1111,8 @@ wdsize(dev)
 		goto exit;
 	}
 
-	if (wd->sc_dk.dk_label->d_partitions[part].p_fstype != FS_SWAP)
-		size = -1;
-	else
-		size = wd->sc_dk.dk_label->d_partitions[part].p_size *
-		    (wd->sc_dk.dk_label->d_secsize / DEV_BSIZE);
+	size = wd->sc_dk.dk_label->d_partitions[part].p_size *
+	    (wd->sc_dk.dk_label->d_secsize / DEV_BSIZE);
 	if (omask == 0 && wdclose(dev, 0, S_IFBLK, NULL) != 0)
 		size = -1;
 
