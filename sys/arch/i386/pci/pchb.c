@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.41 2003/11/07 16:43:08 mickey Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.42 2004/11/23 13:33:14 grange Exp $	*/
 /*	$NetBSD: pchb.c,v 1.6 1997/06/06 23:29:16 thorpej Exp $	*/
 
 /*
@@ -125,6 +125,13 @@ struct cfdriver pchb_cd = {
 
 void pchb_rnd(void *v);
 
+const struct pci_matchid via_devices[] = {
+	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586_PWR },
+	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C596 },
+	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C596B_PM },
+	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_SMB }
+};
+
 int
 pchbmatch(parent, match, aux)
 	struct device *parent;
@@ -133,8 +140,8 @@ pchbmatch(parent, match, aux)
 	struct pci_attach_args *pa = aux;
 
 	/* XXX work around broken via82x866 chipsets */
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_VIATECH &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_VIATECH_VT82C686A_SMB)
+	if (pci_matchbyid(pa, via_devices,
+	    sizeof(via_devices) / sizeof(via_devices[0])))
 		return (0);
 
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
