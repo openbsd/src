@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.13 2001/08/12 20:06:03 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.14 2001/08/13 00:12:38 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.16 1997/07/12 16:18:36 perry Exp $	*/
 
 /*
@@ -98,8 +98,6 @@
 /*
  * Sizes of the system and user portions of the system page table.
  */
-/* SYSPTSIZE IS SILLY; IT SHOULD BE COMPUTED AT BOOT TIME */
-#define	SYSPTSIZE	(2 * NPTEPG)	/* 16mb */
 #define	USRPTSIZE 	(1 * NPTEPG)	/* 16mb */
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.8 2001/08/12 20:06:11 miod Exp $ */
+/*	$OpenBSD: vmparam.h,v 1.9 2001/08/13 00:13:05 miod Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -97,8 +97,6 @@
 /*
  * Sizes of the system and user portions of the system page table.
  */
-/* SYSPTSIZE IS SILLY; IT SHOULD BE COMPUTED AT BOOT TIME */
-#define	SYSPTSIZE	(2 * NPTEPG)	/* 8mb */
 #define	USRPTSIZE 	(1 * NPTEPG)	/* 4mb */
 
 /*
@@ -160,7 +158,7 @@
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
 /* # of kernel PT pages (initial only, can grow dynamically) */
-#define VM_KERNEL_PT_PAGES	((vm_size_t)2)		/* XXX: SYSPTSIZE */
+#define VM_KERNEL_PT_PAGES	((vm_size_t)2)
 
 /* pcb base */
 #define	pcbb(p)		((u_int)(p)->p_addr)
