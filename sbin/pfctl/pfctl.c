@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.39 2001/09/06 18:05:46 jasoni Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.40 2001/09/22 18:30:11 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -82,7 +82,6 @@ char	*timeoutopt;
 char	*debugopt;
 
 char	*infile;
-
 
 static const struct {
 	const char	*name;
@@ -297,10 +296,8 @@ pfctl_show_states(int dev, u_int8_t proto)
 		}
 		if (ps.ps_len + sizeof(struct pfioc_state) < len)
 			break;
-		if (len == 0 && ps.ps_len == 0) {
-			printf("no states\n");
+		if (len == 0 && ps.ps_len == 0)
 			return (0);
-		}
 		if (len == 0 && ps.ps_len != 0)
 			len = ps.ps_len;
 		if (ps.ps_len == 0)
