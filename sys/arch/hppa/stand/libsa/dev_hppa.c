@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_hppa.c,v 1.4 1999/02/13 04:43:18 mickey Exp $	*/
+/*	$OpenBSD: dev_hppa.c,v 1.5 1999/04/20 20:01:01 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -55,7 +55,7 @@ const struct pdc_devs {
 	int	dev_type;
 } pdc_devs[] = {
 	{ "ct",  0 },
-	{ "sd",  1 },
+	{ "dk",  1 },
 	{ "lf",  2 },
 	{ "",   -1 },
 	{ "rd", -1 },
@@ -70,6 +70,7 @@ devopen(f, fname, file)
 	const char *fname;
 	char **file;
 {
+	register struct hppa_dev *hpd;
 	register const struct pdc_devs *dp = pdc_devs;
 	register int rc = 1;
 
@@ -78,7 +79,7 @@ devopen(f, fname, file)
 	else
 		(*file)++;
 
-#ifdef DEBUG
+#ifdef DEBUGBUG
 	if (debug)
 		printf("devopen: ");
 #endif
@@ -89,14 +90,27 @@ devopen(f, fname, file)
 
 	if (dp >= &pdc_devs[NENTS(pdc_devs)] || dp->dev_type < 0)
 		return ENODEV;
-#ifdef DEBUG
+#ifdef DEBUGBUG
 	if (debug)
 		printf("%s\n", dp->name);
 #endif
 
-	if ((rc = (*devsw[dp->dev_type].dv_open)(f, file)) == 0) {
-		f->f_dev = &devsw[dp->dev_type];
-		return 0;
+	if (!(hpd = alloc(sizeof *hpd))) {
+#ifdef DEBUG
+		printf ("devopen: no mem\n");
+#endif
+	} else {
+		bzero(hpd, sizeof *hpd);
+		hpd->bootdev = bootdev;
+		hpd->buf = (char *)(((u_int)hpd->ua_buf + IODC_MINIOSIZ-1) &
+			~(IODC_MINIOSIZ-1));
+		f->f_devdata = hpd;
+		if ((rc = (*devsw[dp->dev_type].dv_open)(f, file)) == 0) {
+			f->f_dev = &devsw[dp->dev_type];
+			return 0;
+		}
+		free (hpd, 0);
+		f->f_devdata = NULL;
 	}
 
 	if (!(f->f_flags & F_NODEV))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lf.c,v 1.2 1998/09/29 07:17:46 mickey Exp $	*/
+/*	$OpenBSD: lf.c,v 1.3 1999/04/20 20:01:02 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -45,25 +45,10 @@ lfopen(f, va_alist)
 	struct open_file *f;
 #endif
 {
-	struct hppa_dev *dp;
-	struct pz_device *pzd;
+	register struct hppa_dev *dp = f->f_devdata;;
 
-	if (!(pzd = pdc_findev(-1, PCL_NET_MASK|PCL_SEQU)))
+	if (!(dp->pz_dev = pdc_findev(-1, PCL_NET_MASK|PCL_SEQU)))
 		return ENXIO;
-
-	if (!(dp = alloc(sizeof(struct hppa_dev)))) {
-#ifdef	DEBUG
-		printf("lfopen: no mem\n");
-#endif
-		return ENODEV;
-	}
-
-	bzero (dp, sizeof (struct hppa_dev));
-	dp->pz_dev = pzd;
-	dp->bootdev = bootdev;
-	dp->last_blk = 0;
-	dp->last_read = 0;
-	f->f_devdata = dp;
 
 	return 0;
 }

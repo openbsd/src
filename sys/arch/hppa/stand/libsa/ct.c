@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct.c,v 1.4 1999/02/13 04:43:18 mickey Exp $	*/
+/*	$OpenBSD: ct.c,v 1.5 1999/04/20 20:01:01 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -56,6 +56,7 @@
 #include <sys/param.h>
 #include <sys/disklabel.h>
 #include <sys/reboot.h>
+
 #include <machine/pdc.h>
 #include <machine/iomod.h>
 
@@ -64,23 +65,6 @@
 struct pz_device ctdev;
 iodcio_t ctiodc;	/* cartridge tape IODC entry point */
 int ctcode[IODC_MAXSIZE/sizeof(int)];
-char ctbuf[IODC_MAXSIZE] __attribute__ ((aligned(MINIOSIZ)));
-
-/* hp800-specific comments:
- *
- * Tape driver ALWAYS uses "Alternate Boot Device", which is assumed to ALWAYS
- * be the boot device in pagezero (meaning we booted from it).
- *
- * NOTE about skipping file, below:  It's assumed that a read gets 2k (a page).
- * This is done because, even though the cartridge tape has record sizes of 1k,
- * and an EOF takes one record, reads through the IODC must be in 2k chunks,
- * and must start on a 2k-byte boundary.  This means that ANY TAPE FILE TO BE
- * SKIPPED OVER IS GOING TO HAVE TO BE AN ODD NUMBER OF 1 KBYTE RECORDS so the
- * read of the subsequent file can start on a 2k boundary.  If a real error
- * occurs, the record count is reset below, so this isn't a problem.
- */
-int	ctbyteno;	/* block number on tape to access next */
-int	ctworking;	/* flag:  have we read anything successfully? */
 
 int
 #ifdef __STDC__
@@ -90,6 +74,7 @@ ctopen(f)
 	struct open_file *f;
 #endif
 {
+	register struct hppa_dev *dp = f->f_devdata;
 	int ret;
 
 	if (ctiodc == 0) {
@@ -102,9 +87,12 @@ ctopen(f)
 			ctdev.pz_iodc_io = ctiodc = (iodcio_t) ctcode;
 	}
 
+	dp->pz_dev = &ctdev;
+
 	if (ctiodc != NULL)
 		if ((ret = (*ctiodc)(ctdev.pz_hpa, IODC_IO_READ, ctdev.pz_spa,
-				     ctdev.pz_layers, pdcbuf,0, ctbuf,0,0)) < 0)
+				     ctdev.pz_layers, pdcbuf, 0,
+				     dp->buf, 0, 0)) < 0)
 			printf("ct: device rewind ret'd %d\n", ret);
 
 	return (0);
@@ -115,8 +103,7 @@ int
 ctclose(f)
 	struct open_file *f;
 {
-	ctbyteno = 0;
-	ctworking = 0;
-
+	free (f->f_devdata, sizeof(struct hppa_dev));
+	f->f_devdata = NULL;
 	return 0;
 }

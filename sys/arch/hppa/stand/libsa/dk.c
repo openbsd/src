@@ -1,4 +1,4 @@
-/*	$OpenBSD: dk.c,v 1.4 1998/10/30 19:42:17 mickey Exp $	*/
+/*	$OpenBSD: dk.c,v 1.5 1999/04/20 20:01:01 mickey Exp $	*/
 
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
@@ -39,12 +39,12 @@ dk_disklabel(dp, label)
 	struct hppa_dev *dp;
 	struct disklabel *label;
 {
-	char buf[IONBPG];
-	size_t ret;
+	char buf[DEV_BSIZE];
+	int ret;
 
-	if (iodcstrategy(dp, F_READ, LABELSECTOR, IONBPG, buf, &ret))
+	if (iodcstrategy(dp, F_READ, LABELSECTOR, DEV_BSIZE, buf, &ret))
 		if (ret != DEV_BSIZE)
-			return "cannot read LIF header";
+			return "cannot read disklabel";
 
 	return (getdisklabel(buf, label));
 }
@@ -58,8 +58,7 @@ dkopen(f, va_alist)
 #endif
 {
 	register struct disklabel *lp;
-	register struct hppa_dev *dp;
-	register struct pz_device *pzd;
+	register struct hppa_dev *dp = f->f_devdata;
 	register const char *st;
 
 #ifdef	DEBUG
@@ -67,24 +66,9 @@ dkopen(f, va_alist)
 		printf("dkopen(%p)\n", f);
 #endif
 
-	if (!(pzd = pdc_findev(-1, PCL_RANDOM)))
+	if (!(dp->pz_dev = pdc_findev(-1, PCL_RANDOM)))
 		return ENXIO;
 
-#ifdef	DEBUG
-	if (debug)
-		printf("alloc\n");
-#endif
-	if (!(dp = alloc(sizeof *dp))) {
-#ifdef DEBUG
-		printf ("dkopen: no mem\n");
-#endif
-		return ENODEV;
-	}
-
-	bzero(dp, sizeof *dp);
-
-	dp->bootdev = bootdev;
-	dp->pz_dev = pzd;
 	lp = dp->label;
 	st = NULL;
 #if 0	
@@ -107,11 +91,10 @@ dkopen(f, va_alist)
 		}
 	}
 #endif
-#ifdef DEBUG
+#ifdef DEBUGBUG
 	if (debug)
 		printf ("dkopen() ret\n");
 #endif
-	f->f_devdata = dp;
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: itecons.c,v 1.5 1998/09/29 07:28:35 mickey Exp $	*/
+/*	$OpenBSD: itecons.c,v 1.6 1999/04/20 20:01:02 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -69,7 +69,7 @@ pz_device_t *cons_pzdev, *kbd_pzdev;
  * Console.
  */
 
-char cnbuf[MINIOSIZ] __attribute__ ((aligned (MINIOSIZ)));
+char cnbuf[IODC_MINIOSIZ] __attribute__ ((aligned (IODC_MINIOSIZ)));
 int kycode[IODC_MAXSIZE/sizeof(int)];
 
 int
@@ -168,7 +168,7 @@ ite_getc(dev)
 	dev_t dev;
 {
 	static int stash = 0;
-	register int err, c, l;
+	register int err, c, l, i;
 
 	if (kyiodc == NULL)
 		return(0x100);
@@ -180,6 +180,7 @@ ite_getc(dev)
 		return c;
 	}
 
+	i = 16;
 	do {
 		err = (*kyiodc)(kbd_pzdev->pz_hpa, IODC_IO_CONSIN,
 				kbd_pzdev->pz_spa, kbd_pzdev->pz_layers,
@@ -192,7 +193,7 @@ ite_getc(dev)
 #endif
 
 		/* if we are doing ischar() report immidiatelly */
-		if (dev & 0x80 && l == 0) {
+		if (!i-- && (dev & 0x80) && l == 0) {
 #ifdef DEBUG
 			if (debug > 2)
 				printf("ite_getc(0x%x): no char %d(%x)\n",

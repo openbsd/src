@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_hppa.c,v 1.5 1999/02/13 04:35:07 mickey Exp $	*/
+/*	$OpenBSD: exec_hppa.c,v 1.6 1999/04/20 20:01:02 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -64,8 +64,6 @@ machdep_exec(xp, howto, loadaddr)
 	makebootargs(av, &ac);
 #endif
 
-	fcacheall();
-
 #ifdef EXEC_DEBUG
 	if (debug) {
 		printf("ep=0x%x [", xp->xp_entry);
@@ -80,6 +78,8 @@ machdep_exec(xp, howto, loadaddr)
 		printf("\b\b ]\n");
 	}
 #endif
+
+	fcacheall();
 
 	__asm("mtctl %r0, %cr17");
 	__asm("mtctl %r0, %cr17");

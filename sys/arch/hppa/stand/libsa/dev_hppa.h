@@ -1,12 +1,9 @@
-/*	$OpenBSD: dev_hppa.h,v 1.2 1998/09/29 07:30:59 mickey Exp $	*/
+/*	$OpenBSD: dev_hppa.h,v 1.3 1999/04/20 20:01:01 mickey Exp $	*/
 
 
-#define MINIOSIZ	64		/* minimum buffer size for IODC call */
-#define MAXIOSIZ	(64 * 1024)	/* maximum buffer size for IODC call */
-#define IONBPG		(2 * 1024)	/* page alignment for I/O buffers */
-#define IOPGSHIFT	11		/* LOG2(IONBPG) */
-#define IOPGOFSET	(IONBPG-1)	/* byte offset into I/O buffer */
-#define	BTIOSIZ		(8 * 1024)	/* size of boot device I/O buffer */
+#define IOPGSHIFT	11
+#define	IONBPG		(1 << IOPGSHIFT)
+#define IOPGOFSET	(IONBPG - 1)
 
 struct disklabel;
 struct hppa_dev {
@@ -14,9 +11,11 @@ struct hppa_dev {
 	struct pz_device *pz_dev;	/* device descriptor */
 	daddr_t	last_blk;		/* byte offset for last read blk */
 	size_t	last_read;		/* amount read last time */
-	char	buf[BTIOSIZ+MINIOSIZ];	/* will be used for unaligned io */
-
 	struct disklabel *label;
+	/* buffer to cache data (aligned properly) */
+	char	*buf;
+	char	ua_buf[IODC_MAXIOSIZ + IODC_MINIOSIZ];
+
 };
 
 #ifdef PDCDEBUG

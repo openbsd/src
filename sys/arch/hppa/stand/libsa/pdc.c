@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.8 1999/02/13 04:43:18 mickey Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.9 1999/04/20 20:01:02 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -139,8 +139,6 @@ iodcstrategy(devdata, rw, blk, size, buf, rsize)
 	struct hppa_dev *dp = devdata;
 	struct pz_device *pzdev = dp->pz_dev;
 	register int	offset, xfer, ret;
-	register char	*bbuf = (void*)		/* align */
-		((((int)dp->buf) + MINIOSIZ - 1) & ~(MINIOSIZ - 1));
 
 #ifdef PDCDEBUG
 	if (debug)
@@ -162,7 +160,7 @@ iodcstrategy(devdata, rw, blk, size, buf, rsize)
 			twiddle();
 			if ((ret = (pzdev->pz_iodc_io)(pzdev->pz_hpa,
 				IODC_IO_READ, pzdev->pz_spa, pzdev->pz_layers,
-				pdcbuf, 0, bbuf, 0, 0)) < 0) {
+				pdcbuf, 0, dp->buf, 0, 0)) < 0) {
 #ifdef DEBUG
 				if (debug)
 					printf("IODC_IO: %d\n", ret);
@@ -183,9 +181,9 @@ iodcstrategy(devdata, rw, blk, size, buf, rsize)
 			twiddle();
 			dp->last_blk += dp->last_read;
 			if ((ret = (pzdev->pz_iodc_io)(pzdev->pz_hpa,
-				IODC_IO_READ,
-				pzdev->pz_spa, pzdev->pz_layers, pdcbuf,
-				dp->last_blk, bbuf, BTIOSIZ, BTIOSIZ)) < 0) {
+				IODC_IO_READ, pzdev->pz_spa, pzdev->pz_layers,
+				pdcbuf, dp->last_blk, dp->buf, IODC_MAXIOSIZ,
+				IODC_MAXIOSIZ)) < 0) {
 #ifdef DEBUG
 				if (debug)
 					printf("IODC_IO: %d\n", ret);
@@ -218,7 +216,7 @@ iodcstrategy(devdata, rw, blk, size, buf, rsize)
 			printf("off=%d,xfer=%d,size=%d,blk=%d\n",
 			       offset, xfer, size, blk);
 #endif
-		bcopy(bbuf + offset, buf, xfer);
+		bcopy(dp->buf + offset, buf, xfer);
 		buf += xfer;
 	}
 
@@ -231,11 +229,12 @@ iodcstrategy(devdata, rw, blk, size, buf, rsize)
 		if ((ret = (pzdev->pz_iodc_io)(pzdev->pz_hpa,
 				(rw == F_READ? IODC_IO_READ: IODC_IO_WRITE),
 				pzdev->pz_spa, pzdev->pz_layers, pdcbuf,
-				blk - offset, bbuf, BTIOSIZ, BTIOSIZ)) < 0) {
+				blk - offset, dp->buf, IODC_MAXIOSIZ,
+				IODC_MAXIOSIZ)) < 0) {
 #ifdef DEBUG
 			if (debug)
 				printf("iodc_read(%d,%d): %d\n",
-					blk - offset, BTIOSIZ, ret);
+					blk - offset, IODC_MAXIOSIZ, ret);
 #endif
 			if (xfer)
 				break;
@@ -248,7 +247,7 @@ iodcstrategy(devdata, rw, blk, size, buf, rsize)
 		dp->last_read = ret;
 		if ((ret -= offset) > size)
 			ret = size;
-		bcopy(bbuf + offset, buf, ret);
+		bcopy(dp->buf + offset, buf, ret);
 #ifdef PDCDEBUG
 		if (debug)
 			printf("read %d(%d,%d)@%x ", ret,
