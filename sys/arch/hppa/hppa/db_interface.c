@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.29 2004/04/07 18:24:19 mickey Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.30 2004/06/27 14:16:22 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -306,8 +306,13 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 
 			tf = (struct trapframe *)((char *)fp - sizeof(*tf));
 
-			(*pr)("-- trap #%d%s\n", tf->tf_flags & 0x3f,
-			    (tf->tf_flags & T_USER)? " from user" : "");
+			if (tf->tf_flags & TFF_SYS)
+				(*pr)("-- syscall #%d(%x, %x, %x, %x, ...)\n",
+				    tf->tf_t1, tf->tf_arg0, tf->tf_arg1,
+				    tf->tf_arg2, tf->tf_arg3);
+			else
+				(*pr)("-- trap #%d%s\n", tf->tf_flags & 0x3f,
+				    (tf->tf_flags & T_USER)? " from user" : "");
 
 			if (!(tf->tf_flags & TFF_LAST)) {
 				fp = (register_t *)tf->tf_r3;
