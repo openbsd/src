@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ast.4,v 1.1 2000/05/20 17:19:51 deraadt Exp $
+.\"	$OpenBSD: ast.4,v 1.2 2000/07/10 13:10:27 aaron Exp $
 .\"	$NetBSD: ast.4,v 1.7 1996/03/16 00:07:07 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -57,18 +57,21 @@ driver provides support for boards that multiplex together up to four
 .Tn RS-232C
 .Pf ( Tn CCITT
 .Tn V.28 )
-communications interfaces.  Apparently the original master of hardware
-using this multiplexing protocol was AST.
+communications interfaces.
+Apparently the original master of hardware using this multiplexing protocol
+was AST.
 .Pp
 Each
 .Nm
 device is the master device for up to four
 .Nm com
-devices.  The kernel configuration specifies these
+devices.
+The kernel configuration specifies these
 .Nm com
 devices as slave devices of the
 .Nm
-device, as shown in the synopsis.  The slave ID given for each
+device, as shown in the synopsis.
+The slave ID given for each
 .Nm com
 device determines which bit in the interrupt multiplexing register is
 tested to find interrupts for that device.
@@ -83,24 +86,33 @@ subdevices and the port for the interrupt multiplexing register.
 On a real AST card, the jumpers are as follows:
 .Bl -tag -width xxxxx
 .It SW1-1
-Turn ON for irq 2.  Default is OFF.
+Turn ON for irq 2.
+Default is OFF.
 .It SW1-2
-Turn ON for irq 3.  Default is OFF.
+Turn ON for irq 3.
+Default is OFF.
 .It SW1-3
-Turn ON for irq 4.  Default is OFF.
+Turn ON for irq 4.
+Default is OFF.
 .It SW2-1
-Turn ON for irq 5.  This is ON for the first card, OFF otherwise.
+Turn ON for irq 5.
+This is ON for the first card, OFF otherwise.
 .It SW2-2
-Turn ON for irq 6.  This is ON for the second card, OFF otherwise.
+Turn ON for irq 6.
+This is ON for the second card, OFF otherwise.
 .It SW2-3
-Turn ON for irq 7.  Default is OFF.
+Turn ON for irq 7.
+Default is OFF.
 .It SW3-1
-`Compatible mode'.  The ast driver needs extended mode, so leave this OFF.
+.Dq Compatible mode .
+The ast driver needs extended mode, so leave this OFF.
 .It SW3-2
-IO Address.  In extended mode, this should be OFF for the first card at
+IO Address.
+In extended mode, this should be OFF for the first card at
 0x1a0-0x1a7 and ON for the second card at 0x2a0-0x2a7.
 .It SW3-3
-Interrupt sharing.  Default is OFF.
+Interrupt sharing.
+Default is OFF.
 .It SW3-4
 Reserved, must be OFF.
 .El

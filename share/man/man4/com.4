@@ -1,4 +1,4 @@
-.\"	$OpenBSD: com.4,v 1.1 2000/05/20 17:19:51 deraadt Exp $
+.\"	$OpenBSD: com.4,v 1.2 2000/07/10 13:10:27 aaron Exp $
 .\"	$NetBSD: com.4,v 1.5 1996/03/16 00:07:08 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -70,21 +70,23 @@ driver also supports the XR16850 UART.
 The NS8250 and NS16450 have single
 character buffers, the NS16550 has a 16 character buffer, while
 the ST16650 has a 32 character buffer, and the TI16750 has a 64 character
-buffer.  The XR16850 has a 128 character buffer.
+buffer.
+The XR16850 has a 128 character buffer.
 .Pp
 The
 .Nm com
 and
 .Nm pccom
 drivers are mutually exclusive; both may not be present in the same system at
-the same time.  Attempting to compile such a system will fail.
+the same time.
+Attempting to compile such a system will fail.
 .Pp
 Input and output for each line may set to one of following baud rates;
 50, 75, 110, 134.5, 150, 300, 600, 1200, 1800, 2400, 4800, 9600,
 19200, 38400, 57600, or 115200, or any other baud rate which is a factor
 of 115200.
 .Sh FILES
-.Bl -tag -width Pa
+.Bl -tag -width Pa -compact
 .It Pa /dev/tty00
 .It Pa /dev/tty01
 .It Pa /dev/cua00

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdc.4,v 1.1 2000/05/20 17:19:51 deraadt Exp $
+.\"	$OpenBSD: fdc.4,v 1.2 2000/07/10 13:10:26 aaron Exp $
 .\"	$NetBSD: fdc.4,v 1.6 1996/03/22 01:55:14 andrew Exp $
 .\"
 .\" Copyright (c) 1996 Andrew C. Wheadon
@@ -46,10 +46,10 @@
 .Cd "fd* at fdc? drive ? flags Z"
 .Sh DESCRIPTION
 The
-.Nm fdc
-driver supports the standard AT floppy
-disk controllers. These include standard IDE, MFM, RLL,
-EIDE, ESDI and SCSI controllers with floppy attachment.
+.Nm
+driver supports the standard AT floppy disk controllers.
+These include standard IDE, MFM, RLL,
+EIDE, ESDI, and SCSI controllers with floppy attachment.
 .Pp
 The standard names of a floppy drive will take the form
 .Nm /dev/fd{0,1,2,3}{,B,C,D,E,F,G,H}[abcdefghijklmnop] .
@@ -63,7 +63,8 @@ The last component of the path is the 16 partitions that a floppy
 disk can support.
 .Pp
 The additional geometry types are as follows:
-.Bl -tag -width xxxxxx -compact
+.Pp
+.Bl -tag -width xxxxxx -offset indent -compact
 .It `B' 1.44MB
 .It `C' 1.2MB
 .It `D' 360KB/AT (360KB disk in a 1.2 MB drive)
@@ -84,7 +85,8 @@ probed type.
 If the 0x10 bit is on, the low order three bits of the
 .Cm flags
 field encode the drive type, as follows:
-.Bl -tag -width xxxxxx -compact
+.Pp
+.Bl -tag -width xxxxxx -offset indent -compact
 .It 1 2.88MB
 .It 2 1.44MB
 .It 3 1.2MB
@@ -95,17 +97,17 @@ field encode the drive type, as follows:
 .Pp
 If the 0x20 bit is on, the drive will be attached even
 if it was not found by the probe routine.
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr dmesg 8
 .Sh BUGS
 The
-.Nm fdc
+.Nm
 driver can interfere with other controllers, namely some WD/SMC
 network controllers fail to work when the probing mechanism
 in the
-.Nm fdc
+.Nm
 driver probes for a missing second floppy drive.
 In this case you should try recompiling the kernel
 replacing the relevant line with
 .Cd "fd0 at fdc? drive ?".
-.Sh SEE ALSO
-.Xr intro 4 ,
-.Xr dmesg 8 .

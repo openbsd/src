@@ -47,8 +47,7 @@ The files
 .Pa /dev/fd/0
 through
 .Pa /dev/fd/#
-refer to file descriptors which can be accessed through the file
-system.
+refer to file descriptors which can be accessed through the file system.
 If the file descriptor is open and the mode the file is being opened
 with is a subset of the mode of the existing descriptor, the call:
 .Bd -literal -offset indent
@@ -64,7 +63,7 @@ are equivalent.
 .Pp
 Opening the files
 .Pa /dev/stdin ,
-.Pa /dev/stdout
+.Pa /dev/stdout ,
 and
 .Pa /dev/stderr
 is equivalent to the following calls:
@@ -78,7 +77,7 @@ Flags to the
 .Xr open 2
 call other than
 .Dv O_RDONLY ,
-.Dv O_WRONLY
+.Dv O_WRONLY ,
 and
 .Dv O_RDWR
 are ignored.
