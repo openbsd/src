@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.28 2000/07/25 22:36:30 mickey Exp $	*/
+/*	$OpenBSD: bios.c,v 1.29 2000/07/27 20:38:10 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -166,18 +166,24 @@ bios_getopt()
 {
 	bootarg_t *q;
 
+#ifdef BIOS_DEBUG
 	printf("bootargv:");
+#endif
 
 	for(q = bootargp; q->ba_type != BOOTARG_END; q = q->ba_next) {
 		q->ba_next = (bootarg_t *)((caddr_t)q + q->ba_size);
 		switch (q->ba_type) {
 		case BOOTARG_MEMMAP:
 			bios_memmap = (bios_memmap_t *)q->ba_arg;
-			if (bootapiver & BAPIV_BMEMMAP)
+			if (bootapiver & BAPIV_BMEMMAP) {
+#ifdef BIOS_DEBUG
 				printf(" memmap %p", bios_memmap);
-			else {
+#endif
+			} else {
 				register bios_memmap_t *p;
+#ifdef BIOS_DEBUG
 				printf(" omemmap %p", bios_memmap);
+#endif
 				/*
 				 * older /boots passed memmap in Kbytes,
 				 * which is very inconvinient from the
@@ -192,17 +198,23 @@ bios_getopt()
 			break;
 		case BOOTARG_DISKINFO:
 			bios_diskinfo = (bios_diskinfo_t *)q->ba_arg;
+#ifdef BIOS_DEBUG
 			printf(" diskinfo %p", bios_diskinfo);
+#endif
 			break;
 #if NAPM > 0 || defined(DEBUG)
 		case BOOTARG_APMINFO:
+#ifdef BIOS_DEBUG
 			printf(" apminfo %p", q->ba_arg);
+#endif
 			apm = (bios_apminfo_t *)q->ba_arg;
 			break;
 #endif
 		case BOOTARG_CKSUMLEN:
 			bios_cksumlen = *(u_int32_t *)q->ba_arg;
+#ifdef BIOS_DEBUG
 			printf(" cksumlen %d", bios_cksumlen);
+#endif
 			break;
 #if NPCI > 0
 		case BOOTARG_PCIINFO:
@@ -220,16 +232,19 @@ bios_getopt()
 				extern int comdefaultrate; /* ic/com.c */
 				comdefaultrate = cdp->conspeed;
 #endif
+#ifdef BIOS_DEBUG
 				printf(" console 0x%x:%d",
 				    cdp->consdev, cdp->conspeed);
-
+#endif
 				cnset(cdp->consdev);
 			}
 			break;
 
 		default:
+#ifdef BIOS_DEBUG
 			printf(" unsupported arg (%d) %p", q->ba_type,
 			    q->ba_arg);
+#endif
 		}
 	}
 	printf("\n");
