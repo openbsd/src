@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.25 2001/08/03 23:21:19 chris Exp $ */
+/*	$OpenBSD: if_vlan.c,v 1.26 2001/09/01 00:50:49 chris Exp $ */
 /*
  * Copyright 1998 Massachusetts Institute of Technology
  *
@@ -462,6 +462,12 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p)
 	 * participate in bridges of that type.
 	 */
 	ifv->ifv_if.if_type = p->if_type;
+
+	/*
+	 * Inherit baudrate from the parent.  An SNMP agent would use this
+	 * information.
+	 */
+	ifv->ifv_if.if_baudrate = p->if_baudrate;
 
 	/*
 	 * If the parent interface can do hardware-assisted
