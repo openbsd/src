@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.77 2001/12/10 02:19:34 art Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.78 2001/12/10 04:45:31 art Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -460,7 +460,6 @@ getnewvnode(tag, mp, vops, vpp)
 		vp->v_socket = 0;
 	}
 	vp->v_type = VNON;
-	lockinit(&vp->v_glock, PVFS, "glock", 0, 0);
 	cache_purge(vp);
 	vp->v_tag = tag;
 	vp->v_op = vops;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.42 2001/12/10 02:19:34 art Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.43 2001/12/10 04:45:31 art Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -128,7 +128,7 @@ struct vnodeopv_entry_desc nfsv2_vnodeop_entries[] = {
 	{ &vop_bwrite_desc, nfs_bwrite },
 	{ &vop_getpages_desc, nfs_getpages },		/* getpages */
 	{ &vop_putpages_desc, nfs_putpages },		/* putpages */
-	{ &vop_mmap_desc, genfs_mmap },
+	{ &vop_mmap_desc, vop_generic_mmap },
 	{ NULL, NULL }
 };
 struct vnodeopv_desc nfsv2_vnodeop_opv_desc =

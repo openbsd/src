@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_extern.h,v 1.14 2001/12/04 22:44:32 art Exp $	*/
+/*	$OpenBSD: ufs_extern.h,v 1.15 2001/12/10 04:45:32 art Exp $	*/
 /*	$NetBSD: ufs_extern.h,v 1.5 1996/02/09 22:36:03 christos Exp $	*/
 
 /*-
@@ -98,7 +98,7 @@ int	 ufs_whiteout	__P((void *));
 int	 ufsspec_close	__P((void *));
 int	 ufsspec_read	__P((void *));
 int	 ufsspec_write	__P((void *));
-#define	 ufs_mmap genfs_mmap
+#define	 ufs_mmap vop_generic_mmap
 
 #ifdef FIFO
 int	ufsfifo_read	__P((void *));

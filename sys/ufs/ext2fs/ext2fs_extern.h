@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_extern.h,v 1.11 2001/11/27 05:27:12 art Exp $	*/
+/*	$OpenBSD: ext2fs_extern.h,v 1.12 2001/12/10 04:45:31 art Exp $	*/
 /*	$NetBSD: ext2fs_extern.h,v 1.9 2000/11/27 08:39:53 chs Exp $	*/
 
 /*-
@@ -74,7 +74,7 @@ int ext2fs_inode_free(struct inode *pip, ino_t ino, int mode);
 /* ext2fs_balloc.c */
 int ext2fs_buf_alloc(struct inode *, daddr_t, int, struct ucred *,
 			struct buf **, int);
-int ext2fs_ballocn __P((void *));
+int ext2fs_gop_alloc __P((struct vnode *, off_t, off_t, int, struct ucred *));
 int ext2fs_balloc_range __P((struct vnode *, off_t, off_t, struct ucred *,
 			     int));
 

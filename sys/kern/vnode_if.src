@@ -1,4 +1,4 @@
-#	$OpenBSD: vnode_if.src,v 1.16 2001/12/04 22:44:31 art Exp $
+#	$OpenBSD: vnode_if.src,v 1.17 2001/12/10 04:45:31 art Exp $
 #	$NetBSD: vnode_if.src,v 1.10 1996/05/11 18:26:27 mycroft Exp $
 #
 # Copyright (c) 1992, 1993
@@ -469,17 +469,6 @@ vop_whiteout {
 #};
 
 #
-#% ballocn    vp      L L L
-#
-vop_ballocn {
-	IN struct vnode *vp;
-	IN off_t offset;
-	IN off_t length;
-	IN struct ucred *cred;
-	IN int flags;
-};
-
-#
 #% getpages    vp L L L
 #
 vop_getpages {
@@ -502,15 +491,6 @@ vop_putpages {
 	IN int count;
 	IN int flags;
 	IN int *rtvals;
-};
-
-#
-#% size                vp = = =
-#
-vop_size {
-	IN struct vnode *vp;
-	IN off_t size;
-	OUT off_t *eobp;
 };
 
 #

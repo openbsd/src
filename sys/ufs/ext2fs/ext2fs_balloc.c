@@ -314,28 +314,16 @@ fail:
 }
 
 int
-ext2fs_ballocn(v)
-	void *v;
+ext2fs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
+    struct ucred *cred)
 {
-	struct vop_ballocn_args /* {
-		struct vnode *a_vp;
-		off_t a_offset;
-		off_t a_length;
-		struct ucred *a_cred;
-		int a_flags;
-	} */ *ap = v;
-	off_t off, len;
-	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 	struct m_ext2fs *fs = ip->i_e2fs;
 	int error, delta, bshift, bsize;
-	UVMHIST_FUNC("ext2fs_ballocn"); UVMHIST_CALLED(ubchist);
+	UVMHIST_FUNC("ext2fs_gop_alloc"); UVMHIST_CALLED(ubchist);
 
 	bshift = fs->e2fs_bshift;
 	bsize = 1 << bshift;
-
-	off = ap->a_offset;
-	len = ap->a_length;
 
 	delta = off & (bsize - 1);
 	off -= delta;
@@ -346,8 +334,8 @@ ext2fs_ballocn(v)
 		UVMHIST_LOG(ubchist, "off 0x%x len 0x%x bsize 0x%x",
 			    off, len, bsize, 0);
 
-		error = ext2fs_buf_alloc(ip, lblkno(fs, off), bsize, ap->a_cred,
-		    NULL, ap->a_flags);
+		error = ext2fs_buf_alloc(ip, lblkno(fs, off), bsize, cred,
+		    NULL, flags);
 		if (error) {
 			UVMHIST_LOG(ubchist, "error %d", error, 0,0,0);
 			return error;
@@ -389,6 +377,7 @@ ext2fs_balloc_range(vp, off, len, cred, flags)
 {
 	off_t oldeof, eof, pagestart;
 	struct uvm_object *uobj;
+	struct genfs_node *gp = VTOG(vp);
 	int i, delta, error, npages;
 	int bshift = vp->v_mount->mnt_fs_bshift;
 	int bsize = 1 << bshift;
@@ -441,10 +430,10 @@ ext2fs_balloc_range(vp, off, len, cred, flags)
 	 * now allocate the range.
 	 */
 
-	lockmgr(&vp->v_glock, LK_EXCLUSIVE, NULL, curproc);
-	error = VOP_BALLOCN(vp, off, len, cred, flags);
-	UVMHIST_LOG(ubchist, "ballocn %d", error,0,0,0);
-	lockmgr(&vp->v_glock, LK_RELEASE, NULL, curproc);
+	lockmgr(&gp->g_glock, LK_EXCLUSIVE, NULL, curproc);
+	error = GOP_ALLOC(vp, off, len, flags, cred);
+	UVMHIST_LOG(ubchist, "alloc %d", error,0,0,0);
+	lockmgr(&gp->g_glock, LK_RELEASE, NULL, curproc);
 
 	/*
 	 * unbusy any pages we are holding.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.17 2001/12/10 02:19:34 art Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.18 2001/12/10 04:45:31 art Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -1068,7 +1068,6 @@ struct vnodeopv_entry_desc cd9660_vnodeop_entries[] = {
 	{ &vop_advlock_desc, cd9660_advlock },	/* advlock */
 	{ &vop_bwrite_desc, vop_generic_bwrite },
 	{ &vop_getpages_desc, genfs_getpages },
-	{ &vop_size_desc, genfs_size },
 	{ &vop_mmap_desc, cd9660_mmap },
 	{ NULL, NULL }
 };

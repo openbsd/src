@@ -1,4 +1,4 @@
-/*	$OpenBSD: advfsops.c,v 1.19 2001/05/16 12:48:31 ho Exp $	*/
+/*	$OpenBSD: advfsops.c,v 1.20 2001/12/10 04:45:31 art Exp $	*/
 /*	$NetBSD: advfsops.c,v 1.24 1996/12/22 10:10:12 cgd Exp $	*/
 
 /*
@@ -557,6 +557,7 @@ adosfs_vget(mp, an, vpp)
 
 	*vpp = vp;		/* return vp */
 	brelse(bp);		/* release buffer */
+	vp->v_size = ap->fsize;
 	return (0);
 }
 

@@ -397,17 +397,6 @@ struct vop_whiteout_args {
 extern struct vnodeop_desc vop_whiteout_desc;
 int VOP_WHITEOUT __P((struct vnode *, struct componentname *, int));
 
-struct vop_ballocn_args {
-	struct vnodeop_desc *a_desc;
-	struct vnode *a_vp;
-	off_t a_offset;
-	off_t a_length;
-	struct ucred *a_cred;
-	int a_flags;
-};
-extern struct vnodeop_desc vop_ballocn_desc;
-int VOP_BALLOCN __P((struct vnode *, off_t, off_t, struct ucred *, int));
-
 struct vop_getpages_args {
 	struct vnodeop_desc *a_desc;
 	struct vnode *a_vp;
@@ -433,15 +422,6 @@ struct vop_putpages_args {
 };
 extern struct vnodeop_desc vop_putpages_desc;
 int VOP_PUTPAGES __P((struct vnode *, struct vm_page **, int, int, int *));
-
-struct vop_size_args {
-	struct vnodeop_desc *a_desc;
-	struct vnode *a_vp;
-	off_t a_size;
-	off_t *a_eobp;
-};
-extern struct vnodeop_desc vop_size_desc;
-int VOP_SIZE __P((struct vnode *, off_t, off_t *));
 
 struct vop_mmap_args {
 	struct vnodeop_desc *a_desc;

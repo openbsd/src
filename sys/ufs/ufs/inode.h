@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.h,v 1.17 2001/11/27 05:27:12 art Exp $	*/
+/*	$OpenBSD: inode.h,v 1.18 2001/12/10 04:45:32 art Exp $	*/
 /*	$NetBSD: inode.h,v 1.8 1995/06/15 23:22:50 cgd Exp $	*/
 
 /*
@@ -45,6 +45,7 @@
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ext2fs/ext2fs_dinode.h>
+#include <miscfs/genfs/genfs.h>
 
 typedef long ufs_lbn_t;
 
@@ -66,6 +67,7 @@ struct ext2fs_inode_ext {
  * active, and is put back when the file is no longer being used.
  */
 struct inode {
+	struct genfs_node i_gnode;
 	LIST_ENTRY(inode) i_hash; /* Hash chain */
 	struct	vnode  *i_vnode;/* Vnode associated with this inode. */
 	struct	vnode  *i_devvp;/* Vnode for block I/O. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.23 2001/12/10 02:19:34 art Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.24 2001/12/10 04:45:32 art Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -107,10 +107,8 @@ struct vnodeopv_entry_desc ffs_vnodeop_entries[] = {
 	{ &vop_advlock_desc, ufs_advlock },		/* advlock */
 	{ &vop_reallocblks_desc, ffs_reallocblks },	/* reallocblks */
 	{ &vop_bwrite_desc, vop_generic_bwrite },
-	{ &vop_ballocn_desc, ffs_ballocn },
 	{ &vop_getpages_desc, genfs_getpages },
 	{ &vop_putpages_desc, genfs_putpages },
-	{ &vop_size_desc, ffs_size },
 	{ &vop_mmap_desc, ufs_mmap },
 	{ NULL, NULL }
 };
@@ -158,7 +156,7 @@ struct vnodeopv_entry_desc ffs_specop_entries[] = {
 	{ &vop_advlock_desc, spec_advlock },		/* advlock */
 	{ &vop_reallocblks_desc, spec_reallocblks },	/* reallocblks */
 	{ &vop_bwrite_desc, vop_generic_bwrite },
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ NULL, NULL }
 };
 struct vnodeopv_desc ffs_specop_opv_desc =
 	{ &ffs_specop_p, ffs_specop_entries };
@@ -204,7 +202,7 @@ struct vnodeopv_entry_desc ffs_fifoop_entries[] = {
 	{ &vop_advlock_desc, fifo_advlock },		/* advlock */
 	{ &vop_reallocblks_desc, fifo_reallocblks },	/* reallocblks */
 	{ &vop_bwrite_desc, vop_generic_bwrite },
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ NULL, NULL }
 };
 struct vnodeopv_desc ffs_fifoop_opv_desc =
 	{ &ffs_fifoop_p, ffs_fifoop_entries };
@@ -376,26 +374,18 @@ ffs_reclaim(v)
  * Return the last logical file offset that should be written for this file
  * if we're doing a write that ends at "size".
  */
-int
-ffs_size(v)
-	void *v;
+void
+ffs_gop_size(struct vnode *vp, off_t size, off_t *eobp)
 {
-	struct vop_size_args /* {
-		struct vnode *a_vp;
-		off_t a_size;
-		off_t *a_eobp;
-	} */ *ap = v;
-	struct inode *ip = VTOI(ap->a_vp);
+	struct inode *ip = VTOI(vp);
 	struct fs *fs = ip->i_fs;
 	ufs_lbn_t olbn, nlbn;
 
 	olbn = lblkno(fs, ip->i_ffs_size);
-	nlbn = lblkno(fs, ap->a_size);
-
+	nlbn = lblkno(fs, size);
 	if (nlbn < NDADDR && olbn <= nlbn) {
-		*ap->a_eobp = fragroundup(fs, ap->a_size);
+		*eobp = fragroundup(fs, size);
 	} else {
-		*ap->a_eobp = blkroundup(fs, ap->a_size);
+		*eobp = blkroundup(fs, size);
 	}
-	return 0;
 }

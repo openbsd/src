@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_denode.c,v 1.21 2001/12/10 02:19:34 art Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.22 2001/12/10 04:45:31 art Exp $	*/
 /*	$NetBSD: msdosfs_denode.c,v 1.23 1997/10/17 11:23:58 ws Exp $	*/
 
 /*-
@@ -73,6 +73,11 @@ u_long dehash;			/* size of hash table - 1 */
 				 & dehash)
 
 extern int prtactive;
+
+struct genfs_ops msdosfs_genfsops = {
+	genfs_size,
+	msdosfs_gop_alloc,
+};
 
 static struct denode *msdosfs_hashget __P((dev_t, u_long, u_long));
 static int msdosfs_hashins __P((struct denode *));
@@ -332,6 +337,7 @@ retry:
 		}
 	} else
 		nvp->v_type = VREG;
+	genfs_node_init(nvp, &msdosfs_genfsops);
 	VREF(ldep->de_devvp);
 	*depp = ldep;
 	nvp->v_size = ldep->de_FileSize;
@@ -686,4 +692,11 @@ out:
 	if (dep->de_Name[0] == SLOT_DELETED)
 		vrecycle(vp, (struct simplelock *)0, p);
 	return (error);
+}
+
+int
+msdosfs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
+    struct ucred *cred)
+{
+	return 0;
 }

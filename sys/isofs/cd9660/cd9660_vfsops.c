@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.25 2001/11/27 05:27:11 art Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.26 2001/12/10 04:45:31 art Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -78,6 +78,10 @@ struct vfsops cd9660_vfsops = {
 	cd9660_init,
 	cd9660_sysctl,
 	cd9660_check_export
+};
+
+struct genfs_ops cd9660_genfsops = {
+	genfs_size,
 };
 
 /*
@@ -939,7 +943,8 @@ retry:
 	/*
 	 * XXX need generation number?
 	 */
-	
+
+	genfs_node_init(vp, &cd9660_genfsops);
 	*vpp = vp;
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_inode.c,v 1.14 2001/12/10 02:19:34 art Exp $	*/
+/*	$OpenBSD: ufs_inode.c,v 1.15 2001/12/10 04:45:32 art Exp $	*/
 /*	$NetBSD: ufs_inode.c,v 1.7 1996/05/11 18:27:52 mycroft Exp $	*/
 
 /*
@@ -170,6 +170,7 @@ ufs_balloc_range(vp, off, len, cred, flags)
 {
 	off_t oldeof, neweof, oldeob, neweob, oldpagestart, pagestart;
 	struct uvm_object *uobj;
+	struct genfs_node *gp = VTOG(vp);
 	int i, delta, error, npages1, npages2;
 	int bshift = vp->v_mount->mnt_fs_bshift;
 	int bsize = 1 << bshift;
@@ -180,16 +181,10 @@ ufs_balloc_range(vp, off, len, cred, flags)
 		    vp, off, len, vp->v_size);
 
 	oldeof = vp->v_size;
-	error = VOP_SIZE(vp, oldeof, &oldeob);
-	if (error) {
-		return error;
-	}
+	GOP_SIZE(vp, oldeof, &oldeob);
 
 	neweof = MAX(vp->v_size, off + len);
-	error = VOP_SIZE(vp, neweof, &neweob);
-	if (error) {
-		return error;
-	}
+	GOP_SIZE(vp, neweof, &neweob);
 
 	error = 0;
 	uobj = &vp->v_uobj;
@@ -267,9 +262,9 @@ ufs_balloc_range(vp, off, len, cred, flags)
 	 * now allocate the range.
 	 */
 
-	lockmgr(&vp->v_glock, LK_EXCLUSIVE, NULL, curproc);
-	error = VOP_BALLOCN(vp, off, len, cred, flags);
-	lockmgr(&vp->v_glock, LK_RELEASE, NULL, curproc);
+	lockmgr(&gp->g_glock, LK_EXCLUSIVE, NULL, curproc);
+	error = GOP_ALLOC(vp, off, len, flags, cred);
+	lockmgr(&gp->g_glock, LK_RELEASE, NULL, curproc);
 
 	/*
 	 * clear PG_RDONLY on any pages we are holding

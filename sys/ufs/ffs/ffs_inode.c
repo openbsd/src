@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_inode.c,v 1.27 2001/12/10 02:19:34 art Exp $	*/
+/*	$OpenBSD: ffs_inode.c,v 1.28 2001/12/10 04:45:32 art Exp $	*/
 /*	$NetBSD: ffs_inode.c,v 1.10 1996/05/11 18:27:19 mycroft Exp $	*/
 
 /*
@@ -148,7 +148,8 @@ ffs_update(struct inode *ip, struct timespec *atime,
 int
 ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 {
-	struct vnode *ovp;
+	struct vnode *ovp = ITOV(oip);
+	struct genfs_node *gp = VTOG(ovp);
 	daddr_t lastblock;
 	daddr_t bn, lastiblock[NIADDR], indir_lbn[NIADDR];
 	daddr_t oldblks[NDADDR + NIADDR], newblks[NDADDR + NIADDR];
@@ -162,7 +163,6 @@ ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 
 	if (length < 0)
 		return (EINVAL);
-	ovp = ITOV(oip);
 
 	if (ovp->v_type != VREG &&
 	    ovp->v_type != VDIR &&
@@ -235,7 +235,7 @@ ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 		simple_unlock(&uobj->vmobjlock);
 	}
 
-	lockmgr(&ovp->v_glock, LK_EXCLUSIVE, NULL, p);
+	lockmgr(&gp->g_glock, LK_EXCLUSIVE, NULL, p);
 
 	if (DOINGSOFTDEP(ovp)) {
 		if (length > 0 || softdep_slowdown(ovp)) {
@@ -250,7 +250,7 @@ ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 			 */
 			if ((error = VOP_FSYNC(ovp, cred, MNT_WAIT,
 			    curproc)) != 0) {
-				lockmgr(&ovp->v_glock, LK_RELEASE, NULL, p);
+				lockmgr(&gp->g_glock, LK_RELEASE, NULL, p);
 				return (error);
 			}
 		} else {
@@ -259,7 +259,7 @@ ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 			    NOCRED);
 			softdep_setup_freeblocks(oip, length);
 			(void) vinvalbuf(ovp, 0, cred, curproc, 0, 0);
-			lockmgr(&ovp->v_glock, LK_RELEASE, NULL, p);
+			lockmgr(&gp->g_glock, LK_RELEASE, NULL, p);
 			oip->i_flag |= IN_CHANGE | IN_UPDATE;
 			return (UFS_UPDATE(oip, 0));
 		}
@@ -396,7 +396,7 @@ done:
 	oip->i_ffs_blocks -= blocksreleased;
 	if (oip->i_ffs_blocks < 0)			/* sanity */
 		oip->i_ffs_blocks = 0;
-	lockmgr(&ovp->v_glock, LK_RELEASE, NULL, p);
+	lockmgr(&gp->g_glock, LK_RELEASE, NULL, p);
 	oip->i_flag |= IN_CHANGE;
 	(void)ufs_quota_free_blocks(oip, blocksreleased, NOCRED);
 	return (allerror);

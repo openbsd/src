@@ -1230,39 +1230,6 @@ int VOP_WHITEOUT(dvp, cnp, flags)
 	return (VCALL(dvp, VOFFSET(vop_whiteout), &a));
 }
 
-int vop_ballocn_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_ballocn_args,a_vp),
-	VDESC_NO_OFFSET
-};
-struct vnodeop_desc vop_ballocn_desc = {
-	0,
-	"vop_ballocn",
-	0,
-	vop_ballocn_vp_offsets,
-	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_ballocn_args, a_cred),
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	NULL,
-};
-
-int VOP_BALLOCN(vp, offset, length, cred, flags)
-	struct vnode *vp;
-	off_t offset;
-	off_t length;
-	struct ucred *cred;
-	int flags;
-{
-	struct vop_ballocn_args a;
-	a.a_desc = VDESC(vop_ballocn);
-	a.a_vp = vp;
-	a.a_offset = offset;
-	a.a_length = length;
-	a.a_cred = cred;
-	a.a_flags = flags;
-	return (VCALL(vp, VOFFSET(vop_ballocn), &a));
-}
-
 int vop_getpages_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_getpages_args,a_vp),
 	VDESC_NO_OFFSET
@@ -1333,35 +1300,6 @@ int VOP_PUTPAGES(vp, m, count, flags, rtvals)
 	a.a_flags = flags;
 	a.a_rtvals = rtvals;
 	return (VCALL(vp, VOFFSET(vop_putpages), &a));
-}
-
-int vop_size_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_size_args,a_vp),
-	VDESC_NO_OFFSET
-};
-struct vnodeop_desc vop_size_desc = {
-	0,
-	"vop_size",
-	0,
-	vop_size_vp_offsets,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	NULL,
-};
-
-int VOP_SIZE(vp, size, eobp)
-	struct vnode *vp;
-	off_t size;
-	off_t *eobp;
-{
-	struct vop_size_args a;
-	a.a_desc = VDESC(vop_size);
-	a.a_vp = vp;
-	a.a_size = size;
-	a.a_eobp = eobp;
-	return (VCALL(vp, VOFFSET(vop_size), &a));
 }
 
 int vop_mmap_vp_offsets[] = {
@@ -1488,10 +1426,8 @@ struct vnodeop_desc *vfs_op_descs[] = {
 	&vop_advlock_desc,
 	&vop_reallocblks_desc,
 	&vop_whiteout_desc,
-	&vop_ballocn_desc,
 	&vop_getpages_desc,
 	&vop_putpages_desc,
-	&vop_size_desc,
 	&vop_mmap_desc,
 	NULL
 };

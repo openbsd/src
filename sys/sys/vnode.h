@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.45 2001/12/10 02:19:34 art Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.46 2001/12/10 04:45:31 art Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -114,7 +114,6 @@ struct vnode {
 	} v_un;
 
 	struct  lock *v_vnlock;			/* used for non-locking fs's */
-	struct	lock v_glock;			/* getpages lock */
 	enum	vtagtype v_tag;			/* type of underlying data */
 	void 	*v_data;			/* private data for fs */
 	struct {
@@ -452,12 +451,7 @@ int	vop_generic_lock __P((void *));
 int	vop_generic_unlock __P((void *));
 int	vop_generic_revoke __P((void *));
 int	vop_generic_kqfilter __P((void *));
-
-/* XXXUBC - doesn't really belong here. */
-int	genfs_getpages __P((void *));
-int	genfs_putpages __P((void *));
-int	genfs_size __P((void *));
-int	genfs_mmap __P((void *));
+int	vop_generic_mmap __P((void *));
 
 int	vn_stat __P((struct vnode *vp, struct stat *sb, struct proc *p));
 int	vn_statfile __P((struct file *fp, struct stat *sb, struct proc *p));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_balloc.c,v 1.20 2001/12/10 02:19:34 art Exp $	*/
+/*	$OpenBSD: ffs_balloc.c,v 1.21 2001/12/10 04:45:32 art Exp $	*/
 /*	$NetBSD: ffs_balloc.c,v 1.3 1996/02/09 22:22:21 christos Exp $	*/
 
 /*
@@ -404,19 +404,9 @@ fail:
 }
 
 int
-ffs_ballocn(v)
-	void *v;
+ffs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
+    struct ucred *cred)
 {
-	struct vop_ballocn_args /* {
-		struct vnode *a_vp;
-		off_t a_offset;
-		off_t a_length;
-		struct ucred *a_cred;
-		int a_flags;
-	} */ *ap = v;
-
-	off_t off, len;
-	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 	struct fs *fs = ip->i_fs;
 	int error, delta, bshift, bsize;
@@ -425,18 +415,14 @@ ffs_ballocn(v)
 	bshift = fs->fs_bshift;
 	bsize = 1 << bshift;
 
-	off = ap->a_offset;
-	len = ap->a_length;
-
 	delta = off & (bsize - 1);
 	off -= delta;
 	len += delta;
 
 	while (len > 0) {
-		bsize = min(bsize, len);
+		bsize = MIN(bsize, len);
 
-		error = ffs_balloc(ip, off, bsize, ap->a_cred, ap->a_flags,
-				   NULL);
+		error = ffs_balloc(ip, off, bsize, cred, flags, NULL);
 		if (error) {
 			goto out;
 		}
