@@ -26,7 +26,7 @@ alpha-*-*)
   NATIVE_LIB_DIRS=/usr/ccs/lib
   ;;
 
-i[345]86-*-bsd* | i[345]86-*-freebsd* | i[345]86-*-netbsd*)
+i[345]86-*-bsd* | i[345]86-*-freebsd* | i[345]86-*-netbsd* | i[345]86-*-openbsd*)
   # The new BSD `make' has a bug: it doesn't pass empty arguments in
   # shell commands.  So we need to make this value non-empty in order
   # for the genscripts.sh call to work.  There's nothing magic about
