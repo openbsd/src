@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.71 2004/11/28 03:14:03 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.72 2004/11/30 00:17:18 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -372,7 +372,7 @@ carp_input(struct mbuf *m, ...)
 	len = iplen + sizeof(*ch);
 	if (len > m->m_pkthdr.len) {
 		carpstats.carps_badlen++;
-		CARP_LOG(sc, ("packet too short %d on %d", m->m_pkthdr.len,
+		CARP_LOG(sc, ("packet too short %d on %s", m->m_pkthdr.len,
 		    m->m_pkthdr.rcvif->if_xname));
 		m_freem(m);
 		return;
