@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.9 1996/09/29 16:42:00 dm Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.10 1996/10/18 12:28:21 mickey Exp $	*/
 
 /*
  * random.c -- A strong random number generator
@@ -319,7 +319,6 @@ struct arc4_stream {
 static struct random_bucket random_state;
 struct arc4_stream arc4random_state;
 static u_int32_t random_pool[POOLWORDS];
-static struct timer_rand_state keyboard_timer_state;
 static struct timer_rand_state mouse_timer_state;
 static struct timer_rand_state extract_timer_state;
 static struct timer_rand_state net_timer_state[32];	/* XXX */
@@ -330,6 +329,16 @@ static int	rnd_sleep = 0;
 #ifndef MIN
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
 #endif
+
+/* called by main() at boot time */
+void	randomattach __P((int num));
+
+static inline void add_entropy_word
+	__P((struct random_bucket *r, const u_int32_t input));
+static void add_timer_randomness __P((struct random_bucket *r,
+	struct timer_rand_state *state, u_int num));
+static inline int extract_entropy
+	__P((struct random_bucket *r, char *buf, int nbytes));
 
 /* Arcfour random stream generator.  This code is derived from section
  * 17.1 of Applied Cryptography, second edition, which describes a
@@ -679,7 +688,7 @@ get_random_bytes(buf, nbytes)
 	void	*buf;
 	size_t	nbytes;
 {
-	extract_entropy(&random_state, (char *) buf, nbytes, 0);
+	extract_entropy(&random_state, (char *) buf, nbytes);
 }
 
 int
@@ -730,7 +739,7 @@ randomread(dev, uio, ioflag)
 				printf("rnd: %u possible output\n", n);
 #endif
 		case RND_URND:
-			n = extract_entropy(&random_state, buf, n);
+			n = extract_entropy(&random_state, (char *)buf, n);
 #ifdef	DEBUG
 			if (rnd_debug & RD_OUTPUT)
 				printf("rnd: %u bytes for output\n", n);
