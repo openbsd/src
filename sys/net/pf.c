@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.428 2004/02/24 12:09:34 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.429 2004/03/09 21:44:40 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -483,7 +483,7 @@ struct pf_state *
 pf_find_state_byid(struct pf_state *key)
 {
 	pf_status.fcounters[FCNT_STATE_SEARCH]++;
-	return RB_FIND(pf_state_tree_id, &tree_id, key);
+	return (RB_FIND(pf_state_tree_id, &tree_id, key));
 }
 
 struct pf_state *
@@ -1862,7 +1862,7 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 			if (pfr_pool_get(rpool->cur->addr.p.tbl,
 			    &rpool->tblidx, &rpool->counter,
 			    &raddr, &rmask, af)) {
-				/* table contain no address of type 'af' */
+				/* table contains no address of type 'af' */
 				if (rpool->cur != acur)
 					goto try_next;
 				return (1);
@@ -1872,7 +1872,7 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 			if (pfr_pool_get(rpool->cur->addr.p.dyn->pfid_kt,
 			    &rpool->tblidx, &rpool->counter,
 			    &raddr, &rmask, af)) {
-				/* table contain no address of type 'af' */
+				/* table contains no address of type 'af' */
 				if (rpool->cur != acur)
 					goto try_next;
 				return (1);
@@ -1980,7 +1980,6 @@ pf_get_sport(sa_family_t af, u_int8_t proto, struct pf_rule *r,
 		case PF_POOL_BITMASK:
 		default:
 			return (1);
-			break;
 		}
 	} while (! PF_AEQ(&init_addr, naddr, af) );
 
@@ -2084,7 +2083,6 @@ pf_get_translation(struct pf_pdesc *pd, struct mbuf *m, int off, int direction,
 		case PF_NOBINAT:
 		case PF_NORDR:
 			return (NULL);
-			break;
 		case PF_NAT:
 			if (pf_get_sport(pd->af, pd->proto, r, saddr,
 			    daddr, dport, naddr, nport, r->rpool.proxy_port[0],
@@ -2182,7 +2180,6 @@ pf_get_translation(struct pf_pdesc *pd, struct mbuf *m, int off, int direction,
 		}
 		default:
 			return (NULL);
-			break;
 		}
 	}
 
@@ -2281,13 +2278,14 @@ pf_get_wscale(struct mbuf *m, int off, u_int16_t th_off, sa_family_t af)
 			if (wscale > TCP_MAX_WINSHIFT)
 				wscale = TCP_MAX_WINSHIFT;
 			wscale |= PF_WSCALE_FLAG;
-			/* fallthrough */
+			/* FALLTHROUGH */
 		default:
 			optlen = opt[1];
 			if (optlen < 2)
 				optlen = 2;
 			hlen -= optlen;
 			opt += optlen;
+			break;
 		}
 	}
 	return (wscale);
@@ -2317,13 +2315,14 @@ pf_get_mss(struct mbuf *m, int off, u_int16_t th_off, sa_family_t af)
 			break;
 		case TCPOPT_MAXSEG:
 			bcopy((caddr_t)(opt + 2), (caddr_t)&mss, 2);
-			/* fallthrough */
+			/* FALLTHROUGH */
 		default:
 			optlen = opt[1];
 			if (optlen < 2)
 				optlen = 2;
 			hlen -= optlen;
 			opt += optlen;
+			break;
 		}
 	}
 	return (mss);

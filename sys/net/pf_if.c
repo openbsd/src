@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.9 2004/02/20 19:22:03 mcbride Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.10 2004/03/09 21:44:41 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -544,7 +544,7 @@ pfi_kifaddr_update(void *v)
 int
 pfi_if_compare(struct pfi_kif *p, struct pfi_kif *q)
 {
-	return strncmp(p->pfik_name, q->pfik_name, IFNAMSIZ);
+	return (strncmp(p->pfik_name, q->pfik_name, IFNAMSIZ));
 }
 
 struct pfi_kif *
@@ -826,7 +826,7 @@ pfi_match_addr(struct pfi_dynaddr *dyn, struct pf_addr *a, sa_family_t af)
 			return (PF_MATCHA(0, &dyn->pfid_addr4,
 			    &dyn->pfid_mask4, a, AF_INET));
 		default:
-			return pfr_match_addr(dyn->pfid_kt, a, AF_INET);
+			return (pfr_match_addr(dyn->pfid_kt, a, AF_INET));
 		}
 	} else {
 		switch (dyn->pfid_acnt6) {
@@ -838,7 +838,7 @@ pfi_match_addr(struct pfi_dynaddr *dyn, struct pf_addr *a, sa_family_t af)
 			return (PF_MATCHA(0, &dyn->pfid_addr6,
 			    &dyn->pfid_mask6, a, AF_INET6));
 		default:
-			return pfr_match_addr(dyn->pfid_kt, a, AF_INET6);
+			return (pfr_match_addr(dyn->pfid_kt, a, AF_INET6));
 		}
 	}
 }

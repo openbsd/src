@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.79 2004/02/10 18:49:10 henning Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.80 2004/03/09 21:44:41 mcbride Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -1338,7 +1338,7 @@ pf_normalize_tcp_init(struct mbuf *m, int off, struct pf_pdesc *pd,
 	 * the connections.  They must all set an enabled bit in pfss_flags
 	 */
 	if ((th->th_flags & TH_SYN) == 0)
-		return 0;
+		return (0);
 
 
 	if (th->th_off > (sizeof(struct tcphdr) >> 2) && src->scrub &&

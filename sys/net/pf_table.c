@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.46 2004/02/10 22:42:57 dhartmei Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.47 2004/03/09 21:44:41 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -978,7 +978,7 @@ pfr_walktree(struct radix_node *rn, void *arg)
 	case PFRW_SWEEP:
 		if (ke->pfrke_mark)
 			break;
-		/* fall trough */
+		/* FALLTHROUGH */
 	case PFRW_ENQUEUE:
 		SLIST_INSERT_HEAD(w->pfrw_workq, ke, pfrke_workq);
 		w->pfrw_cnt++;
@@ -1038,6 +1038,7 @@ pfr_walktree(struct radix_node *rn, void *arg)
 			w->pfrw_dyn->pfid_mask6 = *SUNION2PF(
 			    &pfr_mask, AF_INET6);
 		}
+		break;
 	}
 	return (0);
 }
@@ -1859,15 +1860,16 @@ pfr_ktable_compare(struct pfr_ktable *p, struct pfr_ktable *q)
 	if ((d = strncmp(p->pfrkt_anchor, q->pfrkt_anchor,
 	    PF_ANCHOR_NAME_SIZE)))
 		return (d);
-	return strncmp(p->pfrkt_ruleset, q->pfrkt_ruleset,
-	    PF_RULESET_NAME_SIZE);
+	return (strncmp(p->pfrkt_ruleset, q->pfrkt_ruleset,
+	    PF_RULESET_NAME_SIZE));
 }
 
 struct pfr_ktable *
 pfr_lookup_table(struct pfr_table *tbl)
 {
 	/* struct pfr_ktable start like a struct pfr_table */
-	return RB_FIND(pfr_ktablehead, &pfr_ktables, (struct pfr_ktable *)tbl);
+	return (RB_FIND(pfr_ktablehead, &pfr_ktables,
+	    (struct pfr_ktable *)tbl));
 }
 
 int
@@ -1879,7 +1881,7 @@ pfr_match_addr(struct pfr_ktable *kt, struct pf_addr *a, sa_family_t af)
 	if (!(kt->pfrkt_flags & PFR_TFLAG_ACTIVE) && kt->pfrkt_root != NULL)
 		kt = kt->pfrkt_root;
 	if (!(kt->pfrkt_flags & PFR_TFLAG_ACTIVE))
-		return 0;
+		return (0);
 
 	switch (af) {
 	case AF_INET:
@@ -1977,7 +1979,7 @@ pfr_attach_table(struct pf_ruleset *rs, char *name)
 	}
 	if (!kt->pfrkt_refcnt[PFR_REFCNT_RULE]++)
 		pfr_setflags_ktable(kt, kt->pfrkt_flags|PFR_TFLAG_REFERENCED);
-	return kt;
+	return (kt);
 }
 
 void
@@ -2080,12 +2082,12 @@ pfr_kentry_byidx(struct pfr_ktable *kt, int idx, int af)
 	switch (af) {
 	case AF_INET:
 		rn_walktree(kt->pfrkt_ip4, pfr_walktree, &w);
-		return w.pfrw_kentry;
+		return (w.pfrw_kentry);
 	case AF_INET6:
 		rn_walktree(kt->pfrkt_ip6, pfr_walktree, &w);
-		return w.pfrw_kentry;
+		return (w.pfrw_kentry);
 	default:
-		return NULL;
+		return (NULL);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.108 2004/02/20 19:22:03 mcbride Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.109 2004/03/09 21:44:41 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -102,13 +102,13 @@ struct pf_rule		 pf_default_rule;
 
 #define	TAGID_MAX	 50000
 TAILQ_HEAD(pf_tags, pf_tagname)	pf_tags = TAILQ_HEAD_INITIALIZER(pf_tags),
-    				pf_qids = TAILQ_HEAD_INITIALIZER(pf_qids);
+				pf_qids = TAILQ_HEAD_INITIALIZER(pf_qids);
 
 #if (PF_QNAME_SIZE != PF_TAG_NAME_SIZE)
 #error PF_QNAME_SIZE must be equal to PF_TAG_NAME_SIZE
 #endif
 static u_int16_t	 tagname2tag(struct pf_tags *, char *);
-static void		 tag2tagname(struct pf_tags *,  u_int16_t, char *);
+static void		 tag2tagname(struct pf_tags *, u_int16_t, char *);
 static void		 tag_unref(struct pf_tags *, u_int16_t);
 
 #define DPFPRINTF(n, x) if (pf_status.debug >= (n)) printf x
@@ -508,7 +508,7 @@ tagname2tag(struct pf_tags *head, char *tagname)
 }
 
 static	void
-tag2tagname(struct pf_tags *head,  u_int16_t tagid, char *p)
+tag2tagname(struct pf_tags *head, u_int16_t tagid, char *p)
 {
 	struct pf_tagname	*tag;
 
@@ -1173,7 +1173,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 					error = EBUSY;
 				else if (newrule->pqname[0] != 0) {
 					if ((newrule->pqid =
-					    pf_qname2qid(newrule->pqname))  == 0)
+					    pf_qname2qid(newrule->pqname)) == 0)
 						error = EBUSY;
 				} else
 					newrule->pqid = newrule->qid;
