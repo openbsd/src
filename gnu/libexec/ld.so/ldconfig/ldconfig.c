@@ -58,6 +58,7 @@ int verbose = 0;		/* verbose mode */
 int libmode = 0;		/* library mode */
 int nocache = 0;		/* don't build cache */
 int nolinks = 0;		/* don't update links */
+int merge = 0;			/* cache and link dirs on cmdline */
 int Pswitch = 0;
 char *Ppath = "";
 
@@ -409,6 +410,8 @@ int main(int argc, char **argv)
 	    libmode = 1;	/* library mode */
 	    break;
 	case 'm':		/* Compatibility hack */
+	    merge = 1;
+	    nodefault = 1;
 	    break;	
 	case 'p':
 	    printcache = 1;	/* print cache */
@@ -478,7 +481,7 @@ int main(int argc, char **argv)
 
 	/* don't cache dirs on the command line */
 	int nocache_save = nocache;
-	nocache = 1;
+	nocache = nocache || !merge;
 
 	/* OK, which directories should we do? */
 	for (i = optind; i < argc; i++)

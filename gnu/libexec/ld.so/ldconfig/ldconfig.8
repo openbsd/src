@@ -4,7 +4,7 @@ ldconfig \- determine run-time link bindings
 .SH SYNOPSIS
 ldconfig
 [
-.B \-DvnNX
+.B \-DvmnNX
 ]
 .IR directory \ ...
 .PD 0
@@ -75,6 +75,15 @@ Don't update links.
 Unless
 .B \-N
 is also specified, the cache is still rebuilt.
+.TP
+.B \-m
+Merge specified directories into the cache, processes the same files as
+.B \-n
+although it does not imply
+.B \-N
+.  This option exists
+mainly for compatibility with the a.out variant of
+.IR ldconfig .
 .TP
 .B \-l
 Library mode.
