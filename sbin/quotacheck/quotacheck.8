@@ -1,4 +1,4 @@
-.\"	$OpenBSD: quotacheck.8,v 1.10 2000/04/15 02:15:16 aaron Exp $
+.\"	$OpenBSD: quotacheck.8,v 1.11 2002/06/25 21:38:52 millert Exp $
 .\"	$NetBSD: quotacheck.8,v 1.4 1995/03/18 14:59:20 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -49,7 +49,7 @@
 .Op Fl g
 .Op Fl u
 .Op Fl v
-.Ar filesystem Ar ...
+.Ar filesystem Op Ar ...
 .Nm quotacheck
 .Op Fl d
 .Op Fl g
@@ -134,7 +134,7 @@ will create it.
 .Pp
 .Nm
 is normally run at boot time from the
-.Pa /etc/rc.local
+.Pa /etc/rc
 file
 .Pq see Xr rc 8
 before enabling disk quotas with
