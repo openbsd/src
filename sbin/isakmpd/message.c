@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.88 2004/08/17 14:48:23 hshoexer Exp $	 */
+/* $OpenBSD: message.c,v 1.89 2004/09/17 13:45:02 ho Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -347,7 +347,8 @@ message_parse_payloads(struct message *msg, struct payload *p, u_int8_t next,
 		}
 		/* Ignore most private payloads.  */
 		if (next >= ISAKMP_PAYLOAD_PRIVATE_MIN &&
-		    next != ISAKMP_PAYLOAD_NAT_D) {
+		    next != ISAKMP_PAYLOAD_NAT_D &&
+		    next != ISAKMP_PAYLOAD_NAT_OA) {
 			LOG_DBG((LOG_MESSAGE, 30, "message_parse_payloads: "
 			    "private next payload type %s in payload of "
 			    "type %d ignored",
