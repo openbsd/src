@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.41 1999/08/20 15:37:13 art Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.42 1999/12/05 07:39:28 art Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -2042,18 +2042,19 @@ brelvp(bp)
 	register struct buf *bp;
 {
 	struct vnode *vp;
-	struct buf *wasdirty;
 
 	if ((vp = bp->b_vp) == (struct vnode *) 0)
 		panic("brelvp: NULL");
 	/*
 	 * Delete from old vnode list, if on one.
 	 */
-	wasdirty = vp->v_dirtyblkhd.lh_first;
 	if (bp->b_vnbufs.le_next != NOLIST)
 		bufremvn(bp);
-	if (wasdirty && LIST_FIRST(&vp->v_dirtyblkhd) == NULL)
+	if ((vp->v_flag & VONSYNCLIST) &&
+	    LIST_FIRST(&vp->v_dirtyblkhd) == NULL) {
+		vp->v_flag &= ~VONSYNCLIST;
 		LIST_REMOVE(vp, v_synclist);
+	}
 	bp->b_vp = (struct vnode *) 0;
 	HOLDRELE(vp);
 }
@@ -2071,7 +2072,6 @@ reassignbuf(bp, newvp)
 	register struct vnode *newvp;
 {
 	struct buflists *listheadp;
-	struct buf *wasdirty;
 	int delay;
 
 	if (newvp == NULL) {
@@ -2081,7 +2081,6 @@ reassignbuf(bp, newvp)
 	/*
 	 * Delete from old vnode list, if on one.
 	 */
-	wasdirty = newvp->v_dirtyblkhd.lh_first;
 	if (bp->b_vnbufs.le_next != NOLIST)
 		bufremvn(bp);
 	/*
@@ -2090,18 +2089,21 @@ reassignbuf(bp, newvp)
 	 */
 	if ((bp->b_flags & B_DELWRI) == 0) {
 		listheadp = &newvp->v_cleanblkhd;
-		if (wasdirty && LIST_FIRST(&newvp->v_dirtyblkhd) == NULL)
+		if ((newvp->v_flag & VONSYNCLIST) &&
+		    LIST_FIRST(&newvp->v_dirtyblkhd) == NULL) {
+			newvp->v_flag &= ~VONSYNCLIST;
 			LIST_REMOVE(newvp, v_synclist);
+		}
 	} else {
 		listheadp = &newvp->v_dirtyblkhd;
-		if (LIST_FIRST(listheadp) == NULL) {
+		if ((newvp->v_flag & VONSYNCLIST) == 0) {
 			switch (newvp->v_type) {
 			case VDIR:
-				delay = syncdelay / 3;
+				delay = syncdelay / 2;
 				break;
 			case VBLK:
 				if (newvp->v_specmountpoint != NULL) {
-					delay = syncdelay / 2;
+					delay = syncdelay / 3;
 					break;
 				}
 				/* fall through */
