@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.28 1997/08/21 22:17:56 mickey Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.29 1997/08/22 00:41:27 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -44,7 +44,6 @@ extern int debug;
 
 static int Xaddr __P((void));
 static int Xboot __P((void));
-static int Xcd __P((void));
 static int Xdevice __P((void));
 #ifdef DEBUG
 static int Xdebug __P((void));
@@ -83,7 +82,6 @@ static const struct cmd_table cmd_set[] = {
 
 static const struct cmd_table cmd_table[] = {
 	{"boot",   CMDT_CMD, Xboot}, /* XXX must be first */
-	{"cd",     CMDT_CMD, Xcd},
 	{"echo",   CMDT_CMD, Xecho},
 	{"help",   CMDT_CMD, Xhelp},
 	{"ls",     CMDT_CMD, Xls},
@@ -248,15 +246,9 @@ readline(buf, to)
 
 	while (1) {
 		switch ((ch = getchar())) {
-		case CTRL('r'):
-			while (pe > buf)
-				putchar('\177');
-			printf(buf);
 		case CTRL('u'):
-			while (pe >= buf) {
-				pe--;
+			while (pe-- > buf)
 				putchar('\177');
-			}
 			p = pe = buf;
 			continue;
 		case '\n':
@@ -348,7 +340,6 @@ Xset()
 	register const struct cmd_table *ct;
 
 	printf("OpenBSD boot[%s]\n", version);
-	printf("cwd\t%s\n", cmd.cwd);
 	for (ct = cmd_set; ct->cmd_name != NULL; ct++) {
 		printf("%s\t ", ct->cmd_name);
 		(*ct->cmd_exec)();
@@ -518,14 +509,14 @@ Xboot()
 	} else {
 		if (bootparse(1))
 			return 0;
-		sprintf(cmd.path, "%s:%s%s", cmd.bootdev, cmd.cwd, cmd.image);
+		sprintf(cmd.path, "%s:%s", cmd.bootdev, cmd.image);
 	}
 
 	return 1;
 }
 
 /*
- * Qualifies the path adding neccessary dev&|cwd
+ * Qualifies the path adding neccessary dev
  */
 
 static char *
@@ -538,14 +529,9 @@ qualify(name)
 		if (*p == ':')
 			break;
 	if (*p == ':')
-		if (p[1] == '/')
-			sprintf(cmd.path, "%s", name);
-		else
-			sprintf(cmd.path, "%s%s", cmd.cwd, name);
-	else if (name[0] == '/')
-		sprintf(cmd.path, "%s:%s", cmd.bootdev, name);
+		strncpy(cmd.path, name, sizeof(cmd.path));
 	else
-		sprintf(cmd.path, "%s:%s%s", cmd.bootdev, cmd.cwd, name);
+		sprintf(cmd.path, "%s:%s", cmd.bootdev, name);
 	return cmd.path;
 }
 
@@ -587,57 +573,6 @@ bootparse(i)
 		}
 	}
 	cmd.boothowto = howto;
-	return 0;
-}
-
-static int
-Xcd()
-{
-	register char *p, *q;
-	struct stat sb;
-
-	/* cd home */
-	if (cmd.argc == 1) {
-		cmd.cwd[0] = '/';
-		cmd.cwd[1] = '\0';
-		return 0;
-	}
-
-	/* cd '.' */
-	if (cmd.argv[1][0] == '.' && cmd.argv[1][1] == '\0')
-		return 0;
-
-	/* cd '..' */
-	if (cmd.argv[1][0] == '.' && cmd.argv[1][1] == '.'
-	    && cmd.argv[1][2] == '\0') {
-		/* strrchr(cmd.cwd, '/'); */
-		for (p = cmd.cwd; *++p;);
-		for (p--; *--p != '/';);
-		p[1] = '\0';
-		return 0;
-	}
-
-	/* cd dir */
-	sprintf(cmd.path, "%s:%s%s", cmd.bootdev, cmd.cwd, cmd.argv[1]);
-
-	if (stat(cmd.path, &sb) < 0) {
-		printf("stat(%s): %s\n", cmd.argv[1], strerror(errno));
-		return 0;
-	}
-
-	if (!S_ISDIR(sb.st_mode)) {
-		printf("boot: %s: not a dir\n", cmd.argv[1]);
-		return 0;
-	}
-
-	/* change dir */
-	for (p = cmd.cwd; *p; p++);
-	for (q = cmd.argv[1]; (*p++ = *q++) != '\0';);
-	if (p[-2] != '/') {
-		p[-1] = '/';
-		p[0] = '\0';
-	}
-
 	return 0;
 }
 

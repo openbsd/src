@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.14 1997/08/21 22:04:31 mickey Exp $	*/
+/*	$OpenBSD: boot.c,v 1.15 1997/08/22 00:41:27 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -39,8 +39,8 @@
 #include "cmd.h"
 
 const char *const kernels[] = {
-	"bsd",	"bsd.gz",
-	"obsd",	"obsd.gz",
+	"/bsd",  "/bsd.gz",
+	"/obsd", "/obsd.gz",
 	NULL
 };
 
@@ -61,7 +61,6 @@ boot(bootdev)
 	strncpy(cmd.image, bootfile, sizeof(cmd.image));
 	cmd.boothowto = 0;
 	cmd.conf = "/etc/boot.conf";
-	cmd.cwd[0] = '/'; cmd.cwd[1] = '\0';
 	cmd.addr = (void *)0x100000;
 	cmd.timeout = 5;
 
