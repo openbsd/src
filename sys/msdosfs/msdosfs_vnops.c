@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.36 2002/03/14 01:27:09 millert Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.37 2002/05/24 08:54:24 art Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -1758,6 +1758,7 @@ msdosfs_strategy(v)
 	struct denode *dep = VTODE(bp->b_vp);
 	struct vnode *vp;
 	int error = 0;
+	int s;
 
 	if (bp->b_vp->v_type == VBLK || bp->b_vp->v_type == VCHR)
 		panic("msdosfs_strategy: spec");
@@ -1776,7 +1777,9 @@ msdosfs_strategy(v)
 			clrbuf(bp);
 	}
 	if (bp->b_blkno == -1) {
+		s = splbio();	
 		biodone(bp);
+		splx(s);
 		return (error);
 	}
 
