@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.51 2003/05/21 16:17:37 art Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.52 2003/05/22 20:42:43 deraadt Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -530,48 +530,6 @@ vprintf(const char *fmt, va_list ap)
 		logwakeup();
 	consintr = savintr;		/* reenable interrupts */
 	return (retval);
-}
-
-__warn_references(sprintf,
-    "warning: sprintf() is often misused, please use snprintf()");
-
-/*
- * sprintf: print a message to a buffer
- */
-int
-sprintf(char *buf, const char *fmt, ...)
-{
-	int retval;
-	va_list ap;
-
-	va_start(ap, fmt);
-	retval = kprintf(fmt, TOBUFONLY, NULL, buf, ap);
-	va_end(ap);
-	*(buf + retval) = 0;	/* null terminate */
-	return(retval);
-}
-
-__warn_references(vsprintf,
-    "warning: vsprintf() is often misused, please use vsnprintf()");
-
-/*
- * vsprintf: print a message to the provided buffer [already have a
- *	va_list]
- */
-int
-vsprintf(char *buf, const char *fmt, va_list ap)
-{
-	int savintr;
-	int len;
-
-	savintr = consintr;		/* disable interrupts */
-	consintr = 0;
-	len = kprintf(fmt, TOBUFONLY, NULL, buf, ap);
-	if (!panicstr)
-		logwakeup();
-	consintr = savintr;		/* reenable interrupts */
-	buf[len] = 0;
-	return (len);
 }
 
 /*
