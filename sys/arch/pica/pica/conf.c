@@ -1,3 +1,5 @@
+/*	$OpenBSD: conf.c,v 1.3 1996/02/21 12:53:51 mickey Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)conf.c	8.2 (Berkeley) 11/14/93
- *      $Id: conf.c,v 1.2 1996/01/07 07:41:08 dm Exp $
+ *      $Id: conf.c,v 1.3 1996/02/21 12:53:51 mickey Exp $
  */
 
 #include <sys/param.h>
@@ -144,11 +146,6 @@ cdev_decl(pms);
 
 /* open, close, read, ioctl */
 cdev_decl(ipl);
-#define	cdev_gen_ipf(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) nullop, 0, (dev_type_select((*))) enodev, \
-	(dev_type_mmap((*))) enodev, 0 }
 #ifdef IPFILTER
 #define NIPF 1
 #else

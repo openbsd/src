@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.20 1995/10/05 01:53:02 jonathan Exp $	*/
+/*	$OpenBSD: conf.c,v 1.3 1996/02/21 12:53:52 mickey Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -159,11 +159,6 @@ cdev_decl(mfb);
 
 /* open, close, read, ioctl */
 cdev_decl(ipl);
-#define	cdev_gen_ipf(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) nullop, 0, (dev_type_select((*))) enodev, \
-	(dev_type_mmap((*))) enodev, 0 }
 #ifdef IPFILTER
 #define NIPF 1
 #else
