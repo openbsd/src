@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mmap.2,v 1.33 2004/04/15 19:52:18 jmc Exp $
+.\"	$OpenBSD: mmap.2,v 1.34 2004/04/19 10:26:10 jmc Exp $
 .\"	$NetBSD: mmap.2,v 1.5 1995/06/24 10:48:59 cgd Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -74,10 +74,9 @@ deletes any previous mapping in the allocated address range.
 .Pp
 The protections (region accessibility) are specified in the
 .Fa prot
-argument by
-.Tn OR Ns 'ing
-the following values:
-.Bl -tag -width MAP_FIXEDX
+argument by OR'ing the following values:
+.Pp
+.Bl -tag -width "PROT_WRITE  " -offset indent -compact
 .It Dv PROT_EXEC
 Pages may be executed.
 .It Dv PROT_READ
@@ -95,9 +94,7 @@ whether modifications made to the mapped copy of the page are private
 to the process or are to be shared with other references.
 Sharing, mapping type, and options are specified in the
 .Fa flags
-argument by
-.Em or Ns 'ing
-the following values:
+argument by OR'ing the following values:
 .Bl -tag -width MAP_FIXEDX
 .It Dv MAP_ANON
 Map anonymous memory not associated with any specific file.
