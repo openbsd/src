@@ -253,7 +253,7 @@
 #define EM_CYGNUS_FRV		0x5441
 
 /* Ubicom IP2xxx; no ABI */
-#define EM_IP2K_OLD		0x8217	
+#define EM_IP2K_OLD		0x8217
 
 /* MSP430 magic number
       Written in the absense everything.  */
@@ -288,6 +288,7 @@
 #define PT_HIPROC	0x7FFFFFFF	/* Processor-specific */
 
 #define PT_GNU_EH_FRAME	(PT_LOOS + 0x474e550)
+#define PT_GNU_STACK	(PT_LOOS + 0x474e551)
 
 /* Program segment permissions, in program header p_flags field.  */
 
@@ -364,6 +365,7 @@
 #define NT_FPREGSET	2		/* Contains copy of fpregset struct */
 #define NT_PRPSINFO	3		/* Contains copy of prpsinfo struct */
 #define NT_TASKSTRUCT	4		/* Contains copy of task struct */
+#define NT_AUXV		6		/* Contains copy of Elfxx_auxv_t */
 #define NT_PRXFPREG	0x46e62b7f	/* Contains a user_xfpregs_struct; */
 					/*   note name must be "LINUX".  */
 
@@ -395,10 +397,16 @@
 #define GNU_ABI_TAG_LINUX	0
 #define GNU_ABI_TAG_HURD	1
 #define GNU_ABI_TAG_SOLARIS	2
+#define GNU_ABI_TAG_FREEBSD	3
+#define GNU_ABI_TAG_NETBSD	4
 
 /* Values for NetBSD .note.netbsd.ident notes.  Note name is "NetBSD".  */
 
 #define NT_NETBSD_IDENT		1
+
+/* Values for OpenBSD .note.openbsd.ident notes.  Note name is "OpenBSD".  */
+
+#define NT_OPENBSD_IDENT	1
 
 /* Values for FreeBSD .note.ABI-tag notes.  Note name is "FreeBSD".  */
 
@@ -471,7 +479,7 @@
 
 /* The following constants control how a symbol may be accessed once it has
    become part of an executable or shared library.  */
-					   
+
 #define STV_DEFAULT	0		/* Visibility is specified by binding type */
 #define STV_INTERNAL	1		/* OS specific version of STV_HIDDEN */
 #define STV_HIDDEN	2		/* Can only be seen inside currect component */
@@ -529,7 +537,7 @@
    values outside of the new range (see below).	 */
 #define OLD_DT_LOOS	0x60000000
 #define DT_LOOS		0x6000000d
-#define DT_HIOS		0x6fff0000
+#define DT_HIOS		0x6ffff000
 #define OLD_DT_HIOS	0x6fffffff
 
 #define DT_LOPROC	0x70000000
@@ -686,5 +694,57 @@
 /* Section Group Flags.	 */
 
 #define GRP_COMDAT		0x1	/* A COMDAT group */
+
+/* Auxv a_type values.  */
+
+#define AT_NULL		0		/* End of vector */
+#define AT_IGNORE	1		/* Entry should be ignored */
+#define AT_EXECFD	2		/* File descriptor of program */
+#define AT_PHDR		3		/* Program headers for program */
+#define AT_PHENT	4		/* Size of program header entry */
+#define AT_PHNUM	5		/* Number of program headers */
+#define AT_PAGESZ	6		/* System page size */
+#define AT_BASE		7		/* Base address of interpreter */
+#define AT_FLAGS	8		/* Flags */
+#define AT_ENTRY	9		/* Entry point of program */
+#define AT_NOTELF	10		/* Program is not ELF */
+#define AT_UID		11		/* Real uid */
+#define AT_EUID		12		/* Effective uid */
+#define AT_GID		13		/* Real gid */
+#define AT_EGID		14		/* Effective gid */
+#define AT_CLKTCK	17		/* Frequency of times() */
+#define AT_PLATFORM	15		/* String identifying platform.  */
+#define AT_HWCAP	16		/* Machine dependent hints about
+					   processor capabilities.  */
+#define AT_FPUCW	18		/* Used FPU control word.  */
+#define AT_DCACHEBSIZE	19		/* Data cache block size.  */
+#define AT_ICACHEBSIZE	20		/* Instruction cache block size.  */
+#define AT_UCACHEBSIZE	21		/* Unified cache block size.  */
+#define AT_IGNOREPPC	22		/* Entry should be ignored */
+#define	AT_SECURE	23		/* Boolean, was exec setuid-like?  */
+/* Pointer to the global system page used for system calls and other
+   nice things.  */
+#define AT_SYSINFO	32
+#define AT_SYSINFO_EHDR	33 /* Pointer to ELF header of system-supplied DSO.  */
+
+#define AT_SUN_UID      2000    /* Effective user ID.  */
+#define AT_SUN_RUID     2001    /* Real user ID.  */
+#define AT_SUN_GID      2002    /* Effective group ID.  */
+#define AT_SUN_RGID     2003    /* Real group ID.  */
+#define AT_SUN_LDELF    2004    /* Dynamic linker's ELF header.  */
+#define AT_SUN_LDSHDR   2005    /* Dynamic linker's section headers.  */
+#define AT_SUN_LDNAME   2006    /* String giving name of dynamic linker.  */
+#define AT_SUN_LPAGESZ  2007    /* Large pagesize.   */
+#define AT_SUN_PLATFORM 2008    /* Platform name string.  */
+#define AT_SUN_HWCAP    2009	/* Machine dependent hints about
+				   processor capabilities.  */
+#define AT_SUN_IFLUSH   2010    /* Should flush icache? */
+#define AT_SUN_CPU      2011    /* CPU name string.  */
+#define AT_SUN_EMUL_ENTRY 2012	/* COFF entry point address.  */
+#define AT_SUN_EMUL_EXECFD 2013	/* COFF executable file descriptor.  */
+#define AT_SUN_EXECNAME 2014    /* Canonicalized file name given to execve.  */
+#define AT_SUN_MMU      2015    /* String for name of MMU module.   */
+#define AT_SUN_LDDATA   2016    /* Dynamic linker's data segment address.  */
+
 
 #endif /* _ELF_COMMON_H */
