@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.6 2002/05/22 20:36:06 mickey Exp $	*/
+/*	$OpenBSD: display.c,v 1.7 2002/12/11 18:27:19 deraadt Exp $	*/
 /*	$NetBSD: display.c,v 1.1 1998/12/28 14:01:16 hannken Exp $ */
 
 /*-
@@ -68,9 +68,7 @@ struct field display_field_tab[] = {
 #define	fillioctl(n)	{ cmd = n; cmd_str = #n; }
 
 void
-display_get_values(pre, fd)
-	const char *pre;
-	int fd;
+display_get_values(const char *pre, int fd)
 {
 	struct wsdisplay_addscreendata gscr;
 	struct wsdisplay_param param;
@@ -149,9 +147,7 @@ display_get_values(pre, fd)
 }
 
 void
-display_put_values(pre, fd)
-	const char *pre;
-	int fd;
+display_put_values(const char *pre, int fd)
 {
 	struct wsdisplay_param param;
 	struct wsdisplay_burner burners;

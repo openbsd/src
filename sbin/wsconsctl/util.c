@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.14 2002/11/08 22:04:53 mickey Exp $ */
+/*	$OpenBSD: util.c,v 1.15 2002/12/11 18:27:19 deraadt Exp $ */
 /*	$NetBSD: util.c,v 1.8 2000/03/14 08:11:53 sato Exp $ */
 
 /*-
@@ -125,9 +125,7 @@ int name2int(char *, const struct nameint *, int);
 void print_kmap(struct wskbd_map_data *);
 
 struct field *
-field_by_name(field_tab, name)
-	struct field *field_tab;
-	char *name;
+field_by_name(struct field *field_tab, char *name)
 {
 	const char *p = strchr(name, '.');
 
@@ -142,9 +140,7 @@ field_by_name(field_tab, name)
 }
 
 struct field *
-field_by_value(field_tab, addr)
-	struct field *field_tab;
-	void *addr;
+field_by_value(struct field *field_tab, void *addr)
 {
 	for (; field_tab->name; field_tab++)
 		if (field_tab->valp == addr)
@@ -154,9 +150,7 @@ field_by_value(field_tab, addr)
 }
 
 char *
-int2name(val, uflag, tab, len)
-	int val, uflag, len;
-	const struct nameint *tab;
+int2name(int val, int uflag, const struct nameint *tab, int len)
 {
 	static char tmp[20];
 	int i;
@@ -173,10 +167,7 @@ int2name(val, uflag, tab, len)
 }
 
 int
-name2int(val, tab, len)
-	char *val;
-	const struct nameint *tab;
-	int len;
+name2int(char *val, const struct nameint *tab, int len)
 {
 	int i;
 
@@ -187,15 +178,12 @@ name2int(val, tab, len)
 }
 
 void
-pr_field(pre, f, sep)
-	const char *pre;
-	struct field *f;
-	const char *sep;
+pr_field(const char *pre, struct field *f, const char *sep)
 {
 	struct field_pc *pc;
 	u_int flags;
-	char *p;
 	int i, n;
+	char *p;
 
 	if (sep)
 		printf("%s.%s%s", pre, f->name, sep);
@@ -254,16 +242,13 @@ pr_field(pre, f, sep)
 }
 
 void
-rd_field(f, val, merge)
-	struct field *f;
-	char *val;
-	int merge;
+rd_field(struct field *f, char *val, int merge)
 {
+	struct wscons_keymap *mp;
 	struct field_pc *pc;
-	int i;
 	u_int u, r, fr;
 	char *p;
-	struct wscons_keymap *mp;
+	int i;
 
 	switch (f->format) {
 	case FMT_UINT:
@@ -348,11 +333,10 @@ rd_field(f, val, merge)
 }
 
 void
-print_kmap(map)
-	struct wskbd_map_data *map;
+print_kmap(struct wskbd_map_data *map)
 {
-	int i;
 	struct wscons_keymap *mp;
+	int i;
 
 	for (i = 0; i < map->maplen; i++) {
 		mp = map->map + i;

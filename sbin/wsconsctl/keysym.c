@@ -1,4 +1,4 @@
-/*	$OpenBSD: keysym.c,v 1.2 2002/02/16 21:27:38 millert Exp $	*/
+/*	$OpenBSD: keysym.c,v 1.3 2002/12/11 18:27:19 deraadt Exp $	*/
 /*	$NetBSD: keysym.c,v 1.3 1999/02/08 11:08:23 hannken Exp $ */
 
 /*-
@@ -95,39 +95,31 @@ static int bcmp_ksym(const void *, const void *);
 static void sort_ksym_tab(void);
 
 static int
-qcmp_name(a, b)
-	const void *a;
-	const void *b;
+qcmp_name(const void *a, const void *b)
 {
 	return(strcmp(((struct ksym *) a)->name, ((struct ksym *) b)->name));
 }
 
 static int
-qcmp_ksym(a, b)
-	const void *a;
-	const void *b;
+qcmp_ksym(const void *a, const void *b)
 {
 	return(((struct ksym *) b)->value - ((struct ksym *) a)->value);
 }
 
 static int
-bcmp_name(a, b)
-	const void *a;
-	const void *b;
+bcmp_name(const void *a, const void *b)
 {
 	return(strcmp((char *) a, ((struct ksym *) b)->name));
 }
 
 static int
-bcmp_ksym(a, b)
-	const void *a;
-	const void *b;
+bcmp_ksym(const void *a, const void *b)
 {
 	return(((struct ksym *) b)->value - *((int *) a));
 }
 
 static void
-sort_ksym_tab()
+sort_ksym_tab(void)
 {
 	int i;
 
@@ -141,8 +133,7 @@ sort_ksym_tab()
 }
 
 char *
-ksym2name(k)
-	int k;
+ksym2name(int k)
 {
 	static char tmp[20];
 	struct ksym *r;
@@ -162,8 +153,7 @@ ksym2name(k)
 }
 
 int
-name2ksym(n)
-	char *n;
+name2ksym(char *n)
 {
 	int res;
 	struct ksym *r;
@@ -183,8 +173,7 @@ name2ksym(n)
 }
 
 keysym_t
-ksym_upcase(ksym)
-	keysym_t ksym;
+ksym_upcase(keysym_t ksym)
 {
 	if (ksym >= KS_f1 && ksym <= KS_f20)
 		return(KS_F1 - KS_f1 + ksym);
