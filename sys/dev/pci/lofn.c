@@ -1,4 +1,4 @@
-/*	$OpenBSD: lofn.c,v 1.13 2002/04/08 17:49:42 jason Exp $	*/
+/*	$OpenBSD: lofn.c,v 1.14 2002/05/08 19:09:25 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -76,11 +76,14 @@ struct cfdriver lofn_cd = {
 };
 
 int lofn_intr(void *);
-
-void lofn_putnum(struct lofn_softc *, u_int32_t, u_int32_t,
-    u_int32_t *, u_int32_t);
-int lofn_getnum(struct lofn_softc *, u_int32_t, u_int32_t,
-    u_int32_t *num, u_int32_t *numlen);
+int lofn_norm_sigbits(const u_int8_t *, u_int);
+void lofn_dump_reg(struct lofn_softc *, int);
+void lofn_zero_reg(struct lofn_softc *, int);
+void lofn_read_reg(struct lofn_softc *, int, union lofn_reg *);
+void lofn_write_reg(struct lofn_softc *, int, union lofn_reg *);
+int lofn_kprocess(struct cryptkop *);
+struct lofn_softc *lofn_kfind(struct cryptkop *);
+int lofn_kprocess_modexp(struct lofn_softc *, struct cryptkop *);
 
 int
 lofn_probe(parent, match, aux)
@@ -150,6 +153,18 @@ lofn_attach(parent, self, aux)
 	WRITE_REG_0(sc, LOFN_REL_CFG2,
 	    READ_REG_0(sc, LOFN_REL_CFG2) | LOFN_CFG2_RNGENA);
 
+	/* Enable ALU */
+	WRITE_REG_0(sc, LOFN_REL_CFG2,
+	    READ_REG_0(sc, LOFN_REL_CFG2) | LOFN_CFG2_PRCENA);
+
+	sc->sc_cid = crypto_get_driverid(0);
+	if (sc->sc_cid < 0) {
+		printf(": failed to register cid\n");
+		return;
+	}
+
+	crypto_kregister(sc->sc_cid, CRK_MOD_EXP, 0, lofn_kprocess);
+
 	printf(": %s\n", intrstr, sc->sc_sh);
 
 	return;
@@ -188,31 +203,255 @@ lofn_intr(vsc)
 }
 
 void
-lofn_putnum(sc, win, reg, num, numlen)
+lofn_read_reg(sc, ridx, rp)
 	struct lofn_softc *sc;
-	u_int32_t reg, win, *num, numlen;
+	int ridx;
+	union lofn_reg *rp;
 {
-	u_int32_t i, len;
+	bus_space_read_region_4(sc->sc_st, sc->sc_sh,
+	    LOFN_REGADDR(LOFN_WIN_2, ridx, 0), rp->w, 1024/32);
+}
 
-	len = ((numlen >> 5) + 3) >> 2;
-	for (i = 0; i < len; i++)
-		WRITE_REG(sc, LOFN_REGADDR(win, reg, i), num[i]);
-	WRITE_REG(sc, LOFN_LENADDR(win, reg), numlen);
+void
+lofn_write_reg(sc, ridx, rp)
+	struct lofn_softc *sc;
+	int ridx;
+	union lofn_reg *rp;
+{
+	bus_space_write_region_4(sc->sc_st, sc->sc_sh,
+	    LOFN_REGADDR(LOFN_WIN_2, ridx, 0), rp->w, 1024/32);
+}
+
+void
+lofn_zero_reg(sc, ridx)
+	struct lofn_softc *sc;
+	int ridx;
+{
+	lofn_write_reg(sc, ridx, &sc->sc_zero);
+}
+
+void
+lofn_dump_reg(sc, ridx)
+	struct lofn_softc *sc;
+	int ridx;
+{
+	int i;
+
+	printf("reg %d bits %4u ", ridx,
+	    READ_REG(sc, LOFN_LENADDR(LOFN_WIN_2, ridx)) & LOFN_LENMASK);
+
+	for (i = 0; i < 1024/32; i++) {
+		printf("%08X", READ_REG(sc, LOFN_REGADDR(LOFN_WIN_3, ridx, i)));
+	}
+	printf("\n");
+}
+
+struct lofn_softc *
+lofn_kfind(krp)
+	struct cryptkop *krp;
+{
+	struct lofn_softc *sc;
+	int i;
+
+	for (i = 0; i < lofn_cd.cd_ndevs; i++) {
+		sc = lofn_cd.cd_devs[i];
+		if (sc == NULL)
+			continue;
+		if (sc->sc_cid == krp->krp_hid)
+			return (sc);
+	}
+	return (NULL);
 }
 
 int
-lofn_getnum(sc, win, reg, num, numlen)
-	struct lofn_softc *sc;
-	u_int32_t win, reg, *num, *numlen;
+lofn_kprocess(krp)
+	struct cryptkop *krp;
 {
-	u_int32_t len, i;
+	struct lofn_softc *sc;
 
-	len = READ_REG(sc, LOFN_LENADDR(win, reg)) & LOFN_LENMASK;
-	if (len > (*numlen))
-		return (-1);
-	(*numlen) = len;
-	len = ((len >> 5) + 3) >> 2;
-	for (i = 0; i < len; i++)
-		num[i] = READ_REG(sc, LOFN_REGADDR(win, reg, i));
+	if (krp == NULL || krp->krp_callback == NULL)
+		return (EINVAL);
+	if ((sc = lofn_kfind(krp)) == NULL)
+		return (EINVAL);
+
+	switch (krp->krp_op) {
+	case CRK_MOD_EXP:
+		return (lofn_kprocess_modexp(sc, krp));
+	default:
+		printf("%s: kprocess: invalid op 0x%x\n",
+		    sc->sc_dv.dv_xname, krp->krp_op);
+		krp->krp_status = EOPNOTSUPP;
+		crypto_kdone(krp);
+		return (0);
+	}
+}
+
+/*
+ * Start computation of cr[C] = (cr[M] ^ cr[E]) mod cr[N]
+ */
+int
+lofn_kprocess_modexp(sc, krp)
+	struct lofn_softc *sc;
+	struct cryptkop *krp;
+{
+	int ip = 0, bits, err = 0;
+	int mshift, eshift, nshift;
+
+	if (krp->krp_param[LOFN_MODEXP_PAR_M].crp_nbits > 1024) {
+		err = ERANGE;
+		goto errout;
+	}
+
+	/* Poll until done... */
+	while (1) {
+		if (READ_REG(sc, LOFN_REL_SR) & LOFN_SR_DONE)
+			break;
+	}
+
+	/* Zero out registers. */
+	lofn_zero_reg(sc, 0);
+	lofn_zero_reg(sc, 1);
+	lofn_zero_reg(sc, 2);
+	lofn_zero_reg(sc, 3);
+
+	/* Write out M... */
+	bits = lofn_norm_sigbits(krp->krp_param[LOFN_MODEXP_PAR_M].crp_p,
+	    krp->krp_param[LOFN_MODEXP_PAR_M].crp_nbits);
+	if (bits > 1024) {
+		err = E2BIG;
+		goto errout;
+	}
+	bzero(&sc->sc_tmp, sizeof(sc->sc_tmp));
+	bcopy(krp->krp_param[LOFN_MODEXP_PAR_M].crp_p, &sc->sc_tmp,
+	    (bits + 7) / 8);
+	lofn_write_reg(sc, 0, &sc->sc_tmp);
+
+	mshift = 1024 - bits;
+	WRITE_REG(sc, LOFN_LENADDR(LOFN_WIN_2, 0), 1024);
+	if (mshift != 0) {
+		WRITE_REG(sc, LOFN_REL_INSTR + ip,
+		    LOFN_INSTR2(0, OP_CODE_SL, 0, 0, mshift));
+		ip += 4;
+
+		WRITE_REG(sc, LOFN_REL_INSTR + ip,
+		    LOFN_INSTR2(0, OP_CODE_TAG, 0, 0, bits));
+		ip += 4;
+	}
+
+	/* Write out E... */
+	bits = lofn_norm_sigbits(krp->krp_param[LOFN_MODEXP_PAR_E].crp_p,
+	    krp->krp_param[LOFN_MODEXP_PAR_E].crp_nbits);
+	if (bits > 1024) {
+		err = E2BIG;
+		goto errout;
+	}
+	if (bits < 1) {
+		err = ERANGE;
+		goto errout;
+	}
+	bzero(&sc->sc_tmp, sizeof(sc->sc_tmp));
+	bcopy(krp->krp_param[LOFN_MODEXP_PAR_E].crp_p, &sc->sc_tmp,
+	    (bits + 7) / 8);
+	lofn_write_reg(sc, 1, &sc->sc_tmp);
+
+	eshift = 1024 - bits;
+	WRITE_REG(sc, LOFN_LENADDR(LOFN_WIN_2, 1), 1024);
+	if (eshift != 0) {
+		WRITE_REG(sc, LOFN_REL_INSTR + ip,
+		    LOFN_INSTR2(0, OP_CODE_SL, 1, 1, eshift));
+		ip += 4;
+
+		WRITE_REG(sc, LOFN_REL_INSTR + ip,
+		    LOFN_INSTR2(0, OP_CODE_TAG, 0, 0, bits));
+		ip += 4;
+	}
+
+	/* Write out N... */
+	bits = lofn_norm_sigbits(krp->krp_param[LOFN_MODEXP_PAR_N].crp_p,
+	    krp->krp_param[LOFN_MODEXP_PAR_N].crp_nbits);
+	if (bits > 1024) {
+		err = E2BIG;
+		goto errout;
+	}
+	if (bits < 5) {
+		err = ERANGE;
+		goto errout;
+	}
+	bzero(&sc->sc_tmp, sizeof(sc->sc_tmp));
+	bcopy(krp->krp_param[LOFN_MODEXP_PAR_N].crp_p, &sc->sc_tmp,
+	    (bits + 7) / 8);
+	lofn_write_reg(sc, 2, &sc->sc_tmp);
+
+	nshift = 1024 - bits;
+	WRITE_REG(sc, LOFN_LENADDR(LOFN_WIN_2, 2), 1024);
+	if (nshift != 0) {
+		WRITE_REG(sc, LOFN_REL_INSTR + ip,
+		    LOFN_INSTR2(0, OP_CODE_SL, 2, 2, nshift));
+		ip += 4;
+
+		WRITE_REG(sc, LOFN_REL_INSTR + ip,
+		    LOFN_INSTR2(0, OP_CODE_TAG, 0, 0, bits));
+		ip += 4;
+	}
+
+	if (nshift == 0) {
+		WRITE_REG(sc, LOFN_REL_INSTR + ip,
+		    LOFN_INSTR(OP_DONE, OP_CODE_MODEXP, 3, 0, 1, 2));
+		ip += 4;
+	} else {
+		WRITE_REG(sc, LOFN_REL_INSTR + ip,
+		    LOFN_INSTR(0, OP_CODE_MODEXP, 3, 0, 1, 2));
+		ip += 4;
+
+		WRITE_REG(sc, LOFN_REL_INSTR + ip,
+		    LOFN_INSTR2(OP_DONE, OP_CODE_SR, 3, 3, nshift));
+		ip += 4;
+	}
+
+	WRITE_REG(sc, LOFN_REL_CR, 0);
+
+	while (1) {
+		if (READ_REG(sc, LOFN_REL_SR) & LOFN_SR_DONE)
+			break;
+	}
+
+	lofn_read_reg(sc, 3, &sc->sc_tmp);
+	bcopy(sc->sc_tmp.b, krp->krp_param[LOFN_MODEXP_PAR_C].crp_p,
+	    (krp->krp_param[LOFN_MODEXP_PAR_C].crp_nbits + 7) / 8);
+	crypto_kdone(krp);
 	return (0);
+
+errout:
+	bzero(&sc->sc_tmp, sizeof(sc->sc_tmp));
+	lofn_zero_reg(sc, 0);
+	lofn_zero_reg(sc, 1);
+	lofn_zero_reg(sc, 2);
+	lofn_zero_reg(sc, 3);
+	krp->krp_status = err;
+	crypto_kdone(krp);
+	return (0);
+}
+
+/*
+ * Return the number of significant bits of a big number.
+ */
+int
+lofn_norm_sigbits(const u_int8_t *p, u_int pbits)
+{
+	u_int plen = (pbits + 7) / 8;
+	int i, sig = plen * 8;
+	u_int8_t c;
+
+	for (i = plen - 1; i >= 0; i--) {
+		c = p[i];
+		if (c != 0) {
+			while ((c & 0x80) == 0) {
+				sig--;
+				c <<= 1;
+			}
+			break;
+		}
+		sig -= 8;
+	}
+	return (sig);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lofnreg.h,v 1.12 2002/04/08 17:49:42 jason Exp $	*/
+/*	$OpenBSD: lofnreg.h,v 1.13 2002/05/08 19:09:25 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -154,3 +154,10 @@
      (((rd) & OP_R_MASK) << OP_RD_SHIFT) |		\
      (((ra) & OP_R_MASK) << OP_RA_SHIFT) |		\
      ((len) & OP_LEN_MASK))
+
+/* registers are 1024 bits wide, but must be addressed by word. */
+union lofn_reg {
+	u_int8_t b[128];
+	u_int32_t w[32];
+};
+

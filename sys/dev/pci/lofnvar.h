@@ -1,4 +1,4 @@
-/*	$OpenBSD: lofnvar.h,v 1.5 2002/04/08 17:49:42 jason Exp $	*/
+/*	$OpenBSD: lofnvar.h,v 1.6 2002/05/08 19:09:25 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -45,6 +45,9 @@ struct lofn_softc {
 	bus_space_tag_t		sc_st;
 	bus_dma_tag_t		sc_dmat;
 	u_int32_t		sc_rngbuf[LOFN_RNGBUF_SIZE];
+	int32_t			sc_cid;
+	union lofn_reg		sc_tmp;
+	union lofn_reg		sc_zero;
 };
 
 #define	READ_REG(sc,r)		\
@@ -64,3 +67,9 @@ struct lofn_softc {
 #ifndef LOFN_RNG_SCALAR
 #define	LOFN_RNG_SCALAR		0x00000700
 #endif
+
+/* C = M ^ E mod N */
+#define	LOFN_MODEXP_PAR_M	0
+#define	LOFN_MODEXP_PAR_E	1
+#define	LOFN_MODEXP_PAR_N	2
+#define	LOFN_MODEXP_PAR_C	3
