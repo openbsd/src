@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.18 1997/09/17 06:47:19 downsj Exp $	*/
+/*	$OpenBSD: locore.s,v 1.19 1998/02/24 07:33:36 deraadt Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -351,7 +351,7 @@ _msgbuf = KERNBASE
 #endif
 
 	.globl	start, _kernel_text
-	_kernel_text = start		! for kvm_mkdb(8)
+_kernel_text:
 start:
 /*
  * Put sun4 traptable first, since it needs the most stringent aligment (8192)
