@@ -1,4 +1,4 @@
-/*	$OpenBSD: quotacheck.c,v 1.14 2002/07/03 22:32:33 deraadt Exp $	*/
+/*	$OpenBSD: quotacheck.c,v 1.15 2003/03/11 02:32:31 deraadt Exp $	*/
 /*	$NetBSD: quotacheck.c,v 1.12 1996/03/30 22:34:25 mark Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.3 (Berkeley) 1/29/94";
 #else
-static char rcsid[] = "$OpenBSD: quotacheck.c,v 1.14 2002/07/03 22:32:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: quotacheck.c,v 1.15 2003/03/11 02:32:31 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -489,7 +489,7 @@ hasquota(struct fstab *fs, int type, char **qfnamep)
 		    "%s%s", qfextension[GRPQUOTA], qfname);
 		initname = 1;
 	}
-	strcpy(buf, fs->fs_mntops);
+	(void)strlcpy(buf, fs->fs_mntops, sizeof(buf));
 	for (opt = strtok(buf, ","); opt; opt = strtok(NULL, ",")) {
 		if ((cp = strchr(opt, '=')) != NULL)
 			*cp++ = '\0';

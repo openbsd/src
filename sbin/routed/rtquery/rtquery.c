@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtquery.c,v 1.10 2001/03/08 21:41:49 deraadt Exp $	*/
+/*	$OpenBSD: rtquery.c,v 1.11 2003/03/11 02:32:31 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -488,7 +488,7 @@ rip_input(struct sockaddr_in *from,
 		name = "";
 		if (n->n_family == RIP_AF_INET) {
 			in.s_addr = n->n_dst;
-			(void)strcpy(net_buf, inet_ntoa(in));
+			(void)strlcpy(net_buf, inet_ntoa(in), sizeof(net_buf));
 
 			mask = ntohl(n->n_mask);
 			dmask = mask & -mask;

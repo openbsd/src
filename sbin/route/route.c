@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.54 2003/01/31 17:51:16 millert Exp $	*/
+/*	$OpenBSD: route.c,v 1.55 2003/03/11 02:32:31 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static const char rcsid[] = "$OpenBSD: route.c,v 1.54 2003/01/31 17:51:16 millert Exp $";
+static const char rcsid[] = "$OpenBSD: route.c,v 1.55 2003/03/11 02:32:31 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -372,14 +372,14 @@ routename(struct sockaddr *sa)
 		first = 0;
 		if (gethostname(domain, sizeof domain) == 0 &&
 		    (cp = strchr(domain, '.')))
-			(void) strcpy(domain, cp + 1);
+			(void) strlcpy(domain, cp + 1, sizeof domain);
 		else
 			domain[0] = 0;
 		cp = NULL;
 	}
 
 	if (sa->sa_len == 0)
-		strcpy(line, "default");
+		(void) strlcpy(line, "default", sizeof line);
 	else switch (sa->sa_family) {
 
 	case AF_INET:

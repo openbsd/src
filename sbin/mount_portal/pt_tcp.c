@@ -1,4 +1,4 @@
-/*	$OpenBSD: pt_tcp.c,v 1.5 1997/08/18 03:11:25 millert Exp $	*/
+/*	$OpenBSD: pt_tcp.c,v 1.6 2003/03/11 02:32:29 deraadt Exp $	*/
 /*	$NetBSD: pt_tcp.c,v 1.9 1995/05/21 15:33:22 mycroft Exp $	*/
 
 /*
@@ -88,7 +88,7 @@ portal_tcp(pcr, key, v, kso, fdp)
 	if (q == 0 || q - p >= sizeof(host))
 		return (EINVAL);
 	*q = '\0';
-	(void)strcpy(host, p);
+	(void)strlcpy(host, p, sizeof(host));
 	p = q + 1;
 
 	q = strchr(p, '/');
@@ -96,7 +96,7 @@ portal_tcp(pcr, key, v, kso, fdp)
 		*q = '\0';
 	if (strlen(p) >= sizeof(port))
 		return (EINVAL);
-	(void)strcpy(port, p);
+	(void)strlcpy(port, p, sizeof(port));
 	if (q) {
 		p = q + 1;
 		if (strcmp(p, "priv") == 0) {
