@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.7 2001/01/28 09:43:41 aaron Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.8 2001/01/30 21:07:27 deraadt Exp $ */
 /*	$NetBSD: if_kue.c,v 1.28 2000/04/02 21:25:41 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -189,6 +189,7 @@ Static const struct kue_type kue_devs[] = {
 	{ USB_VENDOR_LINKSYS, USB_PRODUCT_LINKSYS_USB10T },
 	{ USB_VENDOR_KLSI, USB_PRODUCT_KLSI_DUH3E10BT },
 	{ USB_VENDOR_IODATA, USB_PRODUCT_IODATA_USBETT },
+	{ USB_VENDOR_ABOCOM, USB_PRODUCT_ABOCOM_URE450 },
 	{ 0, 0 }
 };
 
