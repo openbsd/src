@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.80 2000/11/14 20:27:01 itojun Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.81 2000/11/23 16:50:51 itojun Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -2329,7 +2329,7 @@ long_passive(char *cmd, int pf)
 			    "%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u)",
 				6, 16, a[0], a[1], a[2], a[3], a[4],
 				a[5], a[6], a[7], a[8], a[9], a[10],
-				a[11], a[12], a[13], a[14], a[15], 2,
+				a[11], a[12], a[13], a[14], a[15],
 				2, p[0], p[1]);
 			return;
 		}
