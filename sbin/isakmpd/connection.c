@@ -1,4 +1,4 @@
-/*	$OpenBSD: connection.c,v 1.15 2001/03/14 10:42:19 deraadt Exp $	*/
+/*	$OpenBSD: connection.c,v 1.16 2001/03/14 12:15:45 niklas Exp $	*/
 /*	$EOM: connection.c,v 1.28 2000/11/23 12:21:18 niklas Exp $	*/
 
 /*
@@ -75,7 +75,7 @@ struct connection_passive
 #if 0
   /* XXX Potential additions to 'connection_passive'.  */
   char *isakmp_peer;
-  struct sa *sa;                /* XXX "Soft" ref to active sa?  */ 
+  struct sa *sa;                /* XXX "Soft" ref to active sa?  */
   struct timeval sa_expiration; /* XXX *sa may expire.  */
 #endif
 };
@@ -120,10 +120,10 @@ connection_init ()
 	   */
 	  attrs = conf_get_list (conn->field, "Flags");
 	  if (attrs)
-	      for (attr = TAILQ_FIRST (&attrs->fields); attr;
-		   attr = TAILQ_NEXT (attr, link))
-		if (strcasecmp ("active-only", attr->field) == 0)
-		  break;
+	    for (attr = TAILQ_FIRST (&attrs->fields); attr;
+		 attr = TAILQ_NEXT (attr, link))
+	      if (strcasecmp ("active-only", attr->field) == 0)
+		break;
 	  if (!attrs || (attrs && !attr))
 	    if (connection_record_passive (conn->field))
 	      log_print ("connection_init: could not record "
@@ -196,17 +196,17 @@ connection_passive_lookup_by_name (char *name)
 }
 
 /*
- * IDs of different types cannot be the same.  
+ * IDs of different types cannot be the same.
  * XXX Rename to ipsec_compare_id, and move to ipsec.c ?
  */
-static int 
+static int
 compare_ids (u_int8_t *id1, u_int8_t *id2, size_t idlen)
 {
   int id1_type, id2_type;
 
   id1_type = GET_ISAKMP_ID_TYPE (id1);
   id2_type = GET_ISAKMP_ID_TYPE (id2);
-  
+
   return id1_type == id2_type
     ? memcmp (id1 + ISAKMP_ID_DATA_OFF, id2 + ISAKMP_ID_DATA_OFF,
 	      idlen - ISAKMP_ID_DATA_OFF) : -1;
@@ -217,7 +217,7 @@ char *
 connection_passive_lookup_by_ids (u_int8_t *id1, u_int8_t *id2)
 {
   struct connection_passive *conn;
-  
+
   for (conn = TAILQ_FIRST (&connections_passive); conn;
        conn = TAILQ_NEXT (conn, link))
     {
@@ -248,7 +248,7 @@ connection_passive_lookup_by_ids (u_int8_t *id1, u_int8_t *id2)
     {
       if (conn->remote_id != NULL)
 	continue;
-      
+
       if (compare_ids (id1, conn->local_id, conn->local_sz) == 0
 	  || compare_ids (id2, conn->local_id, conn->local_sz) == 0)
 	{
@@ -326,12 +326,12 @@ connection_record_passive (char *name)
 
   if (connection_passive_lookup_by_name (name))
     {
-      LOG_DBG ((LOG_MISC, 10, 
+      LOG_DBG ((LOG_MISC, 10,
 		"connection_record_passive: cannot add \"%s\" twice",
 		name));
       return 0;
     }
-  
+
   local_id = conf_get_str (name, "Local-ID");
   if (!local_id)
     {
@@ -351,7 +351,7 @@ connection_record_passive (char *name)
 		 sizeof *conn);
       return -1;
     }
-  
+
   conn->name = strdup (name);
   if (!conn->name)
     {
@@ -364,7 +364,7 @@ connection_record_passive (char *name)
   if (!conn->local_id)
     goto fail;
 
-  if (remote_id) 
+  if (remote_id)
     {
       conn->remote_id = ipsec_build_id (remote_id, &conn->remote_sz);
       if (!conn->remote_id)
@@ -374,7 +374,7 @@ connection_record_passive (char *name)
     conn->remote_id = NULL;
 
   TAILQ_INSERT_TAIL (&connections_passive, conn, link);
-  
+
   LOG_DBG ((LOG_MISC, 60,
 	    "connection_record_passive: passive connection \"%s\" "
 	    "added", conn->name));
@@ -412,9 +412,9 @@ connection_passive_teardown (char *name)
   struct connection_passive *conn;
 
   conn = connection_passive_lookup_by_name (name);
-  if (!conn) 
+  if (!conn)
     return;
-  
+
   TAILQ_REMOVE (&connections_passive, conn, link);
   free (conn->name);
   free (conn->local_id);
@@ -434,38 +434,43 @@ connection_report (void)
 
   gettimeofday (&now, 0);
   for (conn = TAILQ_FIRST (&connections); conn; conn = TAILQ_NEXT (conn, link))
-    LOG_DBG ((LOG_REPORT, 0, 
+    LOG_DBG ((LOG_REPORT, 0,
 	      "connection_report: connection %s next check %ld seconds",
 	      (conn->name ? conn->name : "<unnamed>"),
 	      conn->ev->expiration.tv_sec - now.tv_sec));
 #ifdef USE_DEBUG
-  for (pconn = TAILQ_FIRST (&connections_passive); pconn; 
+  for (pconn = TAILQ_FIRST (&connections_passive); pconn;
        pconn = TAILQ_NEXT (pconn, link))
     LOG_DBG ((LOG_REPORT, 0,
-	      "connection_report: passive connection %s %s", pconn->name, 
+	      "connection_report: passive connection %s %s", pconn->name,
 	      doi->decode_ids ("local_id: %s, remote_id: %s",
-				pconn->local_id, pconn->local_sz,
-				pconn->remote_id, pconn->remote_sz, 1)));
+			       pconn->local_id, pconn->local_sz,
+			       pconn->remote_id, pconn->remote_sz, 1)));
 #endif
 }
 
-/* Reinit all connections (SIGHUP handling).  */
+/* Reinitialize all connections (SIGHUP handling).  */
 void
 connection_reinit (void)
 {
-  struct connection *conn;
-  struct connection_passive *pconn;
+  struct connection *conn, *next;
+  struct connection_passive *pconn, *pnext;
 
-  LOG_DBG ((LOG_MISC, 30, 
+  LOG_DBG ((LOG_MISC, 30,
 	    "connection_reinit: reinitializing connection list"));
 
   /* Remove all present connections.  */
+  for (conn = TAILQ_FIRST (&connections); conn; conn = next)
+    {
+      next = TAILQ_NEXT (conn);
+      connection_teardown (conn->name);
+    }
 
-  while ((conn = TAILQ_FIRST (&connections)))
-    connection_teardown (conn->name);
-
-  while ((pconn = TAILQ_FIRST (&connections_passive)))
-    connection_passive_teardown (pconn->name);
+  for (pconn = TAILQ_FIRST (&connections_passive); pconn; pconn = pnext)
+    {
+      pnext = TAILQ_NEXT (pconn);
+      connection_passive_teardown (pconn->name);
+    }
 
   /* Setup new connections, as the (new) config directs.  */
   connection_init ();
