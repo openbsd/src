@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.3 1997/04/03 13:01:40 briggs Exp $
+#	$OpenBSD: Makefile.inc,v 1.4 1997/05/04 23:35:33 millert Exp $
 #	$NetBSD: Makefile.inc,v 1.2 1997/01/23 22:29:09 cgd Exp $
 #
 #	Configuration variables (default values are below):
@@ -52,7 +52,7 @@ ${ZLIB_PROF}:		.NOTMAIN __always_make_zlib
 	@${ZMAKE} libz.po
 .endif
 
-clean::			.NOTMAIN cleanzlib
+clean:			.NOTMAIN cleanzlib
 cleanzlib:		.NOTMAIN __always_make_zlib
 	@echo cleaning the z library objects
 	@${ZMAKE} clean
@@ -62,7 +62,7 @@ cleandirzlib:		.NOTMAIN __always_make_zlib
 	@echo cleandiring the z library objects
 	@${ZMAKE} cleandir
 
-depend::		.NOTMAIN dependzlib
+depend:			.NOTMAIN dependzlib
 dependzlib:		.NOTMAIN __always_make_zlib
 	@echo depending the z library objects
 	@${ZMAKE} depend
