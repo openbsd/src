@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.26 2004/06/25 11:03:27 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.27 2004/07/03 20:36:04 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1034,7 +1034,6 @@ dumpsys()
 {
 	u_long totalbytesleft, bytes, i, n, memseg;
 	u_long maddr;
-	int psize;
 	daddr_t blkno;
 	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 	int error;
@@ -1061,7 +1060,7 @@ dumpsys()
 
 	error = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
 	printf("dump ");
-	if (psize == -1) {
+	if (error == -1) {
 		printf("area unavailable\n");
 		return;
 	}
