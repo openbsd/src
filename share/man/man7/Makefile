@@ -5,5 +5,6 @@
 
 MAN=	ascii.7 environ.7 hier.7 hostname.7 intro.7 mailaddr.7 \
 	mdoc.7 mdoc.samples.7 operator.7 
+MLINKS=	mdoc.7 mandoc.7 mdoc.samples.7 mandoc.samples.7 
 
 .include <bsd.prog.mk>
