@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.11 2002/01/08 00:59:59 todd Exp $-})dnl
+vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.12 2002/01/08 01:33:19 todd Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -106,7 +106,7 @@ _mkdev(all,{-all-},{-dnl
 _dl({-std-},{-std-},
 {-fdesc-},{-fd-},
 {-sd-},{-sd0 sd1 sd2 sd3 sd4-},
-{-aflo-},{-sd5 sd6 sd7 sd8 sd9-},
+{-attyB-},{-sd5 sd6 sd7 sd8 sd9-},
 {-pty-},{-pty0 pty1-},
 {-st-},{-st0 st1-},
 {-ch-},{-ch0-},
@@ -134,6 +134,7 @@ _dl({-std-},{-std-},
 {-cry-},{-crypto-},
 {-apm-},{-apm-},
 {-tth-},{-ttyh0 ttyh1-},
+{-ttyA-},{-ttyA0 ttyA1-},
 {-ttyB-},{-ttyB0 ttyB1 ttyB2 ttyB3 ttyB4 ttyB5-},
 {-attyB-},{-ttyB0 ttyB1 ttyB2 ttyB3 ttyB4-},
 {-tty0-},{-tty00 tty01 tty02 tty03-},
@@ -170,7 +171,7 @@ _dl({-std-},{-std-},
 {-amouse-},{-mouse0 mouse1-},
 {-akbd-},{-kbd-},
 {-ppi-},{-ppi0-},
-{-view-},{-view00 view01-},
+{-view-},{-view00 view01 view02 view03 view04 view05-},
 {-local-},{-local-})-})dnl
 __devitem(floppy,floppy,devices to be put on install floppies)dnl
 __devitem(std,{-std-},standard devices)dnl
