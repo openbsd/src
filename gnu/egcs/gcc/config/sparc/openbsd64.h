@@ -61,5 +61,25 @@ Boston, MA 02111-1307, USA.  */
 #undef ENDFILE_SPEC
 #define ENDFILE_SPEC "%{!shared:crtend%O%s} %{shared:crtendS%O%s}"
 
-/* Use sjlj exceptions.  */
-#define DWARF2_UNWIND_INFO 0
+/* A C statement (sans semicolon) to output an element in the table of
+   global constructors.  */
+#undef ASM_OUTPUT_CONSTRUCTOR
+#define ASM_OUTPUT_CONSTRUCTOR(FILE,NAME)				\
+  do {									\
+    ctors_section ();							\
+    fprintf ((FILE), "\t%s\t ", TARGET_ARCH64 ? ASM_LONGLONG : INT_ASM_OP) ; \
+    assemble_name ((FILE), (NAME));					\
+    fprintf ((FILE), "\n");						\
+  } while (0)
+
+/* A C statement (sans semicolon) to output an element in the table of
+   global destructors.  */
+#undef ASM_OUTPUT_DESTRUCTOR
+#define ASM_OUTPUT_DESTRUCTOR(FILE,NAME)				\
+  do {									\
+    dtors_section ();							\
+    fprintf ((FILE), "\t%s\t ", TARGET_ARCH64 ? ASM_LONGLONG : INT_ASM_OP); \
+    assemble_name ((FILE), (NAME));					\
+    fprintf ((FILE), "\n");						\
+  } while (0)
+
