@@ -1,7 +1,7 @@
-stdin:2: invalid use of table <sometable> as the redirection address of a translation rule
-stdin:3: invalid use of table <sometable> as the redirection address of a translation rule
+stdin:2: address family not given and translation address expands to multiple address families
+stdin:3: address family not given and translation address expands to multiple address families
 stdin:4: invalid use of table <sometable> as the redirect address of a binat rule
 stdin:5: invalid use of table <sometable> as the source address of a binat rule
-stdin:6: invalid use of table <sometable> in a route expression
-stdin:7: invalid use of table <sometable> in a route expression
-stdin:8: invalid use of table <sometable> in a route expression
+pass in dup-to (lo0 <sometable>) all
+pass in route-to (lo0 <sometable>) all
+pass in reply-to (lo0 <sometable>) all
