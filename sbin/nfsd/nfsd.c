@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsd.c,v 1.2 1996/03/21 00:16:22 niklas Exp $	*/
+/*	$OpenBSD: nfsd.c,v 1.3 1996/09/16 20:41:28 deraadt Exp $	*/
 /*	$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $	*/
 
 /*
@@ -320,9 +320,10 @@ main(argc, argv, envp)
 				kin.t1 = kverf.t1;
 				kin.t2 = kverf.t2;
 				kin.w2 = kverf.w2;
-				bzero((caddr_t)kivec, sizeof (kivec));
-				bcopy((caddr_t)kauth.session,
-				    (caddr_t)nsd.nsd_key,sizeof(kauth.session));
+				memset((caddr_t)kivec, 0, sizeof (kivec));
+				memmove((caddr_t)nsd.nsd_key,
+				    (caddr_t)kauth.session,
+				    sizeof(kauth.session));
 
 				/*
 				 * Decrypt the timestamp verifier in CBC mode.
@@ -350,6 +351,7 @@ main(argc, argv, envp)
 			syslog(LOG_ERR, "can't create udp socket");
 			exit(1);
 		}
+		memset(&inetaddr, 0, sizeof inetaddr);
 		inetaddr.sin_family = AF_INET;
 		inetaddr.sin_addr.s_addr = INADDR_ANY;
 		inetaddr.sin_port = htons(NFS_PORT);
@@ -427,6 +429,7 @@ main(argc, argv, envp)
 		if (setsockopt(tcpsock,
 		    SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0)
 			syslog(LOG_ERR, "setsockopt SO_REUSEADDR: %m");
+		memset(&inetaddr, 0, sizeof inetaddr);
 		inetaddr.sin_family = AF_INET;
 		inetaddr.sin_addr.s_addr = INADDR_ANY;
 		inetaddr.sin_port = htons(NFS_PORT);
@@ -499,6 +502,7 @@ main(argc, argv, envp)
 		if (setsockopt(tpipsock,
 		    SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0)
 			syslog(LOG_ERR, "setsockopt SO_REUSEADDR: %m");
+		memset(&inetaddr, 0, sizeof inetaddr);
 		inetaddr.sin_family = AF_INET;
 		inetaddr.sin_addr.s_addr = INADDR_ANY;
 		inetaddr.sin_port = htons(NFS_PORT);
