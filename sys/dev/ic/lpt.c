@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt.c,v 1.1 1996/11/30 00:53:35 niklas Exp $ */
+/*	$OpenBSD: lpt.c,v 1.2 1997/09/02 01:16:50 deraadt Exp $ */
 /*	$NetBSD: lpt.c,v 1.42 1996/10/21 22:41:14 thorpej Exp $	*/
 
 /*
@@ -83,7 +83,7 @@
 #if !defined(DEBUG) || !defined(notdef)
 #define LPRINTF(a)
 #else
-#define LPRINTF		if (lptdebug) printf a
+#define LPRINTF(a)	if (lptdebug) printf a
 int lptdebug = 1;
 #endif
 
