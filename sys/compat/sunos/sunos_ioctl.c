@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_ioctl.c,v 1.8 1998/04/26 21:40:41 niklas Exp $	*/
+/*	$OpenBSD: sunos_ioctl.c,v 1.9 1998/04/26 22:54:19 niklas Exp $	*/
 /*	$NetBSD: sunos_ioctl.c,v 1.23 1996/03/14 19:33:46 christos Exp $	*/
 
 /*
@@ -24,7 +24,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * loosely from: Header: sunos_ioctl.c,v 1.7 93/05/28 04:40:43 torek Exp 
+ * loosely from: Header: sunos_ioctl.c,v 1.7 93/05/28 04:40:43 torek Exp
  */
 
 #include <sys/param.h>
@@ -36,12 +36,13 @@
 #include <sys/termios.h>
 #include <sys/tty.h>
 #include <sys/socket.h>
-#include <sys/vnode.h>
 #include <sys/audioio.h>
+#include <sys/vnode.h>
 #include <net/if.h>
-#include <miscfs/specfs/specdev.h>
 
 #include <sys/mount.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <sys/syscallargs.h>
 #include <compat/sunos/sunos.h>
@@ -75,7 +76,7 @@ static struct speedtab sptab[] = {
 	{ -1, -1 }
 };
 
-static u_long s2btab[] = { 
+static u_long s2btab[] = {
 	0,
 	50,
 	75,
@@ -100,8 +101,8 @@ static void stios2stio __P((struct sunos_termios *, struct sunos_termio *));
 static void stio2stios __P((struct sunos_termio *, struct sunos_termios *));
 
 /*
- * these two conversion functions have mostly been done
- * with some perl cut&paste, then handedited to comment
+ * These two conversion functions have mostly been done
+ * with some perl cut&paste, then hand-edited to comment
  * out what doesn't exist under NetBSD.
  * A note from Markus's code:
  *	(l & BITMASK1) / BITMASK1 * BITMASK2  is translated
@@ -110,8 +111,8 @@ static void stio2stios __P((struct sunos_termio *, struct sunos_termios *));
  *
  * I don't know what optimizer you used, but seeing divu's and
  * bfextu's in the m68k assembly output did not encourage me...
- * as well, gcc on the sparc definately generates much better
- * code with ?:.
+ * as well, gcc on the sparc definitely generates much better
+ * code with `?:'.
  */
 
 static void
@@ -181,7 +182,7 @@ stios2btios(st, bt)
 	case 0x00000030:
 		r = CS8;
 		break;
-	}		
+	}
 	r |=	((l & 0x00000040) ? CSTOPB	: 0);
 	r |=	((l & 0x00000080) ? CREAD	: 0);
 	r |= 	((l & 0x00000100) ? PARENB	: 0);
@@ -450,7 +451,7 @@ sunos_sys_ioctl(p, v, retval)
 		int on = 1;
 		return (*ctl)(fp, TIOCCONS, (caddr_t)&on, p);
 	    }
-	case _IOW('t', 37, struct sunos_ttysize): 
+	case _IOW('t', 37, struct sunos_ttysize):
 	    {
 		struct winsize ws;
 		struct sunos_ttysize ss;
@@ -466,7 +467,7 @@ sunos_sys_ioctl(p, v, retval)
 
 		return ((*ctl)(fp, TIOCSWINSZ, (caddr_t)&ws, p));
 	    }
-	case _IOW('t', 38, struct sunos_ttysize): 
+	case _IOW('t', 38, struct sunos_ttysize):
 	    {
 		struct winsize ws;
 		struct sunos_ttysize ss;
@@ -479,10 +480,10 @@ sunos_sys_ioctl(p, v, retval)
 
 		return copyout ((caddr_t)&ss, SCARG(uap, data), sizeof (ss));
 	    }
-	case _IOW('t', 130, int):		/* TIOCSETPGRP: posix variant */
+	case _IOW('t', 130, int):	/* TIOCSETPGRP: posix variant */
 		SCARG(uap, com) = TIOCSPGRP;
 		break;
-	case _IOR('t', 131, int):
+	case _IOR('t', 131, int):	/* TIOCGETPGRP: posix variant */
 	    {
 		/*
 		 * sigh, must do error translation on pty devices
@@ -507,15 +508,15 @@ sunos_sys_ioctl(p, v, retval)
 		/* XXX: fixme */
 		return (0);
 	case SUNOS_TCGETA:
-	case SUNOS_TCGETS: 
+	case SUNOS_TCGETS:
 	    {
 		struct termios bts;
 		struct sunos_termios sts;
 		struct sunos_termio st;
-	
+
 		if ((error = (*ctl)(fp, TIOCGETA, (caddr_t)&bts, p)) != 0)
 			return error;
-	
+
 		btios2stios (&bts, &sts);
 		if (SCARG(uap, com) == SUNOS_TCGETA) {
 			stios2stio (&sts, &st);
@@ -715,8 +716,6 @@ sunos_sys_ioctl(p, v, retval)
 		sunos_aui.record = *(struct sunos_audio_prinfo *)&aui.record;
 
 		/* `avail_ports' is `seek' in BSD */
-#define AUDIO_SPEAKER	1
-#define AUDIO_HEADPHONE	2
 		sunos_aui.play.avail_ports = AUDIO_SPEAKER | AUDIO_HEADPHONE;
 		sunos_aui.record.avail_ports = AUDIO_SPEAKER | AUDIO_HEADPHONE;
 
@@ -751,7 +750,7 @@ sunos_sys_ioctl(p, v, retval)
 		aui.blocksize = ~0;
 		aui.hiwat = ~0;
 		aui.lowat = ~0;
-		aui.backlog = ~0;
+		/* XXX somebody check this please. - is: aui.backlog = ~0; */
 		aui.mode = ~0;
 		/*
 		 * The bsd driver does not distinguish between paused and
@@ -815,7 +814,7 @@ sunos_sys_ioctl(p, v, retval)
 		}
                 return (*ctl)(fp, TIOCFLUSH, (caddr_t)&tmp, p);
 	    }
-	case _IO('S', 9):	/* I_SIGSET */
+	case _IO('S', 9):	/* I_SETSIG */
 	    {
 		int on = 1;
 
