@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_classq.h,v 1.2 2002/11/26 01:03:34 henning Exp $	*/
+/*	$OpenBSD: altq_classq.h,v 1.3 2003/01/07 00:29:28 cloder Exp $	*/
 /*	$KAME: altq_classq.h,v 1.4 2001/02/09 07:20:40 kjc Exp $	*/
 
 /*
@@ -54,7 +54,7 @@ extern "C" {
 #ifdef _KERNEL
 
 /*
- * Packet Queue strcutures and macros to manipulate them.
+ * Packet Queue structures and macros to manipulate them.
  */
 struct _class_queue_ {
 	struct mbuf	*tail_;	/* Tail of packet queue */

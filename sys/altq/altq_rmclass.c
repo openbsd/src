@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_rmclass.c,v 1.7 2002/12/16 17:27:20 henning Exp $	*/
+/*	$OpenBSD: altq_rmclass.c,v 1.8 2003/01/07 00:29:28 cloder Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.10 2001/02/09 07:20:40 kjc Exp $	*/
 
 /*
@@ -308,13 +308,13 @@ rmc_newclass(int pri, struct rm_ifdat *ifd, u_int nsecPerByte,
 	}
 
 	/*
-	 * Compute the depth of this class and it's ancestors in the class
+	 * Compute the depth of this class and its ancestors in the class
 	 * hierarchy.
 	 */
 	rmc_depth_compute(cl);
 
 	/*
-	 * If CBQ's WRR is enabled, then initailize the class WRR state.
+	 * If CBQ's WRR is enabled, then initialize the class WRR state.
 	 */
 	if (ifd->wrr_) {
 		ifd->num_[pri]++;
@@ -400,7 +400,7 @@ rmc_wrr_set_weights(struct rm_ifdat *ifd)
 			ifd->M_[i] = ifd->alloc_[i] /
 				(ifd->num_[i] * ifd->maxpkt_);
 		/*
-		 * Compute the weigthed allotment for each class.
+		 * Compute the weighted allotment for each class.
 		 * This takes the expensive div instruction out
 		 * of the main loop for the wrr scheduling path.
 		 * These only get recomputed when a class comes or
@@ -647,7 +647,7 @@ rmc_init(struct ifaltq *ifq, struct rm_ifdat *ifd, u_int nsecPerByte,
 	int		i, mtu;
 
 	/*
-	 * Initialize the CBQ traciing/debug facility.
+	 * Initialize the CBQ tracing/debug facility.
 	 */
 	CBQTRACEINIT();
 
@@ -912,7 +912,7 @@ rmc_under_limit(struct rm_class *cl, struct timeval *now)
  * _rmc_wrr_dequeue_next() - This is scheduler for WRR as opposed to
  *	Packet-by-packet round robin.
  *
- * The heart of the weigthed round-robin scheduler, which decides which
+ * The heart of the weighted round-robin scheduler, which decides which
  * class next gets to send a packet.  Highest priority first, then
  * weighted round-robin within priorites.
  *
@@ -1241,7 +1241,7 @@ rmc_update_class_util(struct rm_ifdat *ifd)
 	PKTCNTR_ADD(&cl->stats_.xmit_cnt, pktlen);
 
 	/*
-	 * Run estimator on class and it's ancesstors.
+	 * Run estimator on class and its ancestors.
 	 */
 	/*
 	 * rm_update_class_util is designed to be called when the

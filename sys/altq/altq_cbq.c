@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_cbq.c,v 1.9 2002/12/16 17:27:19 henning Exp $	*/
+/*	$OpenBSD: altq_cbq.c,v 1.10 2003/01/07 00:29:28 cloder Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.9 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -63,7 +63,7 @@ static void		 cbq_purge(cbq_state_t *);
 /*
  * int
  * cbq_class_destroy(cbq_mod_state_t *, struct rm_class *) - This
- *	function destroys a given traffic class.  Before destorying
+ *	function destroys a given traffic class.  Before destroying
  *	the class, all traffic for that class is released.
  */
 static int
@@ -482,7 +482,7 @@ cbq_getqstats(struct pf_altq *a, void *ubuf, int *nbytes)
  *
  *	Assumptions:	called in splimp
  *	Returns:	0 if the queueing is successful.
- *			ENOBUFS if a packet dropping occured as a result of
+ *			ENOBUFS if a packet dropping occurred as a result of
  *			the queueing.
  */
 

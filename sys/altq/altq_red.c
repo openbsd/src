@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_red.c,v 1.9 2002/12/16 17:27:20 henning Exp $	*/
+/*	$OpenBSD: altq_red.c,v 1.10 2003/01/07 00:29:28 cloder Exp $	*/
 /*	$KAME: altq_red.c,v 1.10 2002/04/03 05:38:51 kjc Exp $	*/
 
 /*
@@ -112,7 +112,7 @@
  * for a slow link like dial-up, 500 packets takes more than 1 minute!
  * when q_weight is 0.008, N is about 127 packets.
  * when q_weight is 0.016, N is about 63 packets.
- * bursts of 50 packets are allowd for 0.002, bursts of 25 packets
+ * bursts of 50 packets are allowed for 0.002, bursts of 25 packets
  * are allowed for 0.016.
  * see Sally's paper for more details.
  */
