@@ -44,9 +44,6 @@ static char rcsid[] = "$NetBSD: move.c,v 1.4 1995/03/24 05:01:57 cgd Exp $";
 #include <termios.h>
 
 #include	"mille.h"
-#ifndef	unctrl
-#include	"unctrl.h"
-#endif
 
 # ifdef	attron
 #	include	<term.h>
@@ -66,9 +63,9 @@ char	*Movenames[] = {
 
 domove()
 {
-	reg PLAY	*pp;
-	reg int		i, j;
-	reg bool	goodplay;
+	register PLAY	*pp;
+	register int		i, j;
+	register bool	goodplay;
 
 	pp = &Player[Play];
 	if (Play == PLAYER)
@@ -169,9 +166,9 @@ acc:
  */
 check_go() {
 
-	reg CARD	card;
-	reg PLAY	*pp, *op;
-	reg int		i;
+	register CARD	card;
+	register PLAY	*pp, *op;
+	register int		i;
 
 	for (pp = Player; pp < &Player[2]; pp++) {
 		op = (pp == &Player[COMP] ? &Player[PLAYER] : &Player[COMP]);
@@ -198,10 +195,10 @@ check_go() {
 }
 
 playcard(pp)
-reg PLAY	*pp;
+register PLAY	*pp;
 {
-	reg int		v;
-	reg CARD	card;
+	register int		v;
+	register CARD	card;
 
 	/*
 	 * check and see if player has picked
@@ -348,7 +345,7 @@ protected:
 
 getmove()
 {
-	reg char	c, *sp;
+	register char	c, *sp;
 #ifdef EXTRAP
 	static bool	last_ex = FALSE;	/* set if last command was E */
 
@@ -477,9 +474,9 @@ ret:
  * return whether or not the player has picked
  */
 haspicked(pp)
-reg PLAY	*pp; {
+register PLAY	*pp; {
 
-	reg int	card;
+	register int	card;
 
 	if (Topcard <= Deck)
 		return TRUE;
@@ -496,9 +493,9 @@ reg PLAY	*pp; {
 }
 
 account(card)
-reg CARD	card; {
+register CARD	card; {
 
-	reg CARD	oppos;
+	register CARD	oppos;
 
 	if (card == C_INIT)
 		return;
@@ -552,10 +549,10 @@ int	promptno;
 }
 
 sort(hand)
-reg CARD	*hand;
+register CARD	*hand;
 {
-	reg CARD	*cp, *tp;
-	reg CARD	temp;
+	register CARD	*cp, *tp;
+	register CARD	temp;
 
 	cp = hand;
 	hand += HAND_SZ;

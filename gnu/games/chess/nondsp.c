@@ -25,7 +25,7 @@
 */
 
 #ifndef lint
-static char rcsid[] = "$Id: nondsp.c,v 1.1.1.1 1995/10/18 08:41:11 deraadt Exp $";
+static char rcsid[] = "$Id: nondsp.c,v 1.2 1996/06/02 19:51:41 tholo Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -84,7 +84,7 @@ char s[80];
 
 TerminateSearch()
 {
-  timeout = true;
+  timeo = true;
   bothsides = false;
 }
 #endif MSDOS
@@ -159,7 +159,7 @@ char s[80];
       if (strcmp(s,"list") == 0) ListGame();
       if (strcmp(s,"level") == 0) SelectLevel();
       if (strcmp(s,"hash") == 0) hashflag = !hashflag;
-      if (strcmp(s,"beep") == 0) beep = !beep;
+      if (strcmp(s,"beep") == 0) beepit = !beepit;
       if (strcmp(s,"Awindow") == 0) ChangeAlphaWindow();
       if (strcmp(s,"Bwindow") == 0) ChangeBetaWindow();
       if (strcmp(s,"rcptr") == 0) rcptr = !rcptr;
@@ -406,7 +406,7 @@ OutputMove()
   if (root->flags & epmask) UpdateDisplay(0,0,1,0);
   else UpdateDisplay(root->f,root->t,0,root->flags & cstlmask);
   printz("My move is: %s\n\n",mvstr1);
-  if (beep) printz("%c",7);
+  if (beepit) printz("%c",7);
   
   if (root->flags & draw) printz("Draw game!\n");
   else if (root->score == -9999) printz("opponent mates!\n");
@@ -432,7 +432,7 @@ short iop;
   ETnodes += 50;
   if (et > et0 || iop == 1)
     {
-      if (et > ResponseTime+ExtraTime && Sdepth > 1) timeout = true;
+      if (et > ResponseTime+ExtraTime && Sdepth > 1) timeo = true;
       et0 = et;
       if (iop == 1)
         {
@@ -443,7 +443,7 @@ short iop;
       if (et > 0) evrate = NodeCnt/(et+ft); else evrate = 0;
       if (kbhit() && Sdepth > 1)
         {
-          timeout = true;
+          timeo = true;
           bothsides = false;
         }
 #else

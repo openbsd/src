@@ -48,13 +48,13 @@ static char rcsid[] = "$NetBSD: types.c,v 1.4 1995/03/24 05:02:22 cgd Exp $";
  */
 
 isrepair(card)
-reg CARD	card; {
+register CARD	card; {
 
 	return card == C_GAS || card == C_SPARE || card == C_REPAIRS || card == C_INIT;
 }
 
 safety(card)
-reg CARD	card; {
+register CARD	card; {
 
 	switch (card) {
 	  case C_EMPTY:

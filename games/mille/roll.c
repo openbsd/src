@@ -51,9 +51,9 @@ static char rcsid[] = "$NetBSD: roll.c,v 1.4 1995/03/24 05:02:07 cgd Exp $";
  */
 
 roll(ndie, nsides)
-reg int	ndie, nsides; {
+register int	ndie, nsides; {
 
-	reg int			tot;
+	register int			tot;
 	extern unsigned int	random();
 
 	tot = 0;

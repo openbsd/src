@@ -57,7 +57,7 @@ static char rcsid[] = "$NetBSD: table.c,v 1.4 1995/03/24 05:02:18 cgd Exp $";
 
 main() {
 
-	reg int	i, j, count;
+	register int	i, j, count;
 
 	printf("   %16s -> %5s %5s %4s %s\n", "Card", "cards", "count", "need", "opposite");
 	for (i = 0; i < NUM_CARDS - 1; i++) {

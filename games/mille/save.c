@@ -47,10 +47,6 @@ static char rcsid[] = "$NetBSD: save.c,v 1.4 1995/03/24 05:02:13 cgd Exp $";
 #include <termios.h>
 #include "mille.h"
 
-#ifndef	unctrl
-#include "unctrl.h"
-#endif
-
 # ifdef	attron
 #	include	<term.h>
 #	define	_tty	cur_term->Nttyb
@@ -73,9 +69,9 @@ int	read(), write();
 save() {
 
 	extern int	errno;
-	reg char	*sp;
-	reg int		outf;
-	reg time_t	*tp;
+	register char	*sp;
+	register int		outf;
+	register time_t	*tp;
 	char		buf[80];
 	time_t		tme;
 	STAT		junk;
@@ -149,10 +145,10 @@ over:
  * be cleaned up before the game starts.
  */
 rest_f(file)
-reg char	*file; {
+register char	*file; {
 
-	reg char	*sp;
-	reg int		inf;
+	register char	*sp;
+	register int		inf;
 	char		buf[80];
 	STAT		sbuf;
 

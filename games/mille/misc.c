@@ -45,10 +45,6 @@ static char rcsid[] = "$NetBSD: misc.c,v 1.4 1995/03/24 05:01:54 cgd Exp $";
 #include <termios.h>
 
 #include	"mille.h"
-#ifndef	unctrl
-#include	"unctrl.h"
-#endif
-
 
 # ifdef	attron
 #	include	<term.h>
@@ -77,7 +73,7 @@ char	*str;
 CARD
 getcard()
 {
-	reg int		c, c1;
+	register int		c, c1;
 
 	for (;;) {
 		while ((c = readch()) == '\n' || c == '\r' || c == ' ')
@@ -124,7 +120,7 @@ cont:		;
 }
 
 check_ext(forcomp)
-reg bool	forcomp; {
+register bool	forcomp; {
 
 
 	if (End == 700)
@@ -143,8 +139,8 @@ done:
 			}
 		}
 		else {
-			reg PLAY	*pp, *op;
-			reg int		i, safe, miles;
+			register PLAY	*pp, *op;
+			register int		i, safe, miles;
 
 			pp = &Player[COMP];
 			op = &Player[PLAYER];
@@ -180,7 +176,7 @@ done:
 getyn(promptno)
 register int	promptno; {
 
-	reg char	c;
+	register char	c;
 
 	Saved = FALSE;
 	for (;;) {
@@ -249,7 +245,7 @@ check_more() {
 
 readch()
 {
-	reg int		cnt;
+	register int		cnt;
 	static char	c;
 
 	for (cnt = 0; read(0, &c, 1) <= 0; cnt++)

@@ -52,9 +52,9 @@ static char rcsid[] = "$NetBSD: end.c,v 1.4 1995/03/24 05:01:30 cgd Exp $";
  * the end-of-games points to the user who deserves it (if any).
  */
 finalscore(pp)
-reg PLAY	*pp; {
+register PLAY	*pp; {
 
-	reg int		temp, tot, num;
+	register int		temp, tot, num;
 
 	if (pp->was_finished == Finished)
 		return;
@@ -96,9 +96,9 @@ static int	Last_tot[2];	/* last tot used for extrapolate	*/
  * the end-of-games points to the user who deserves it (if any).
  */
 extrapolate(pp)
-reg PLAY	*pp; {
+register PLAY	*pp; {
 
-	reg int		x, num, tot, count;
+	register int		x, num, tot, count;
 
 	num = pp - Player;
 	tot += SC_TRIP + SC_DELAY + SC_EXT;
@@ -141,8 +141,8 @@ reg PLAY	*pp; {
 
 undoex() {
 
-	reg PLAY	*pp;
-	reg int		i;
+	register PLAY	*pp;
+	register int		i;
 
 	i = 0;
 	for (pp = Player; pp < &Player[2]; pp++) {

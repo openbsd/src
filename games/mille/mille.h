@@ -158,11 +158,6 @@
 #	define	erasechar()	_tty.c_cc[VERASE]
 #	define	killchar()	_tty.c_cc[VKILL]
 # endif
-# else
-# ifndef	erasechar
-#	define	erasechar()	_tty.sg_erase
-#	define	killchar()	_tty.sg_kill
-# endif
 # endif	SYSV
 
 typedef struct {

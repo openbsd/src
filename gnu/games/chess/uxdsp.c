@@ -25,7 +25,7 @@
 */
 
 #ifndef lint
-static char rcsid[] = "$Id: uxdsp.c,v 1.1.1.1 1995/10/18 08:41:11 deraadt Exp $";
+static char rcsid[] = "$Id: uxdsp.c,v 1.2 1996/06/02 19:51:42 tholo Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -82,7 +82,7 @@ TerminateSearch()
 {
   signal(SIGINT,SIG_IGN);
   signal(SIGQUIT,SIG_IGN);
-  timeout = true;
+  timeo = true;
   bothsides = false;
   signal(SIGINT,Die); signal(SIGQUIT,Die);
 }
@@ -157,7 +157,7 @@ char s[80];
       if (strcmp(s,"list") == 0) ListGame();
       if (strcmp(s,"level") == 0) SelectLevel();
       if (strcmp(s,"hash") == 0) hashflag = !hashflag;
-      if (strcmp(s,"beep") == 0) beep = !beep;
+      if (strcmp(s,"beep") == 0) beepit = !beepit;
       if (strcmp(s,"Awindow") == 0) ChangeAlphaWindow();
       if (strcmp(s,"Bwindow") == 0) ChangeBetaWindow();
       if (strcmp(s,"hint") == 0) GiveHint();
@@ -391,7 +391,7 @@ OutputMove()
   if (root->flags & epmask) UpdateDisplay(0,0,1,0);
   else UpdateDisplay(root->f,root->t,0,root->flags & cstlmask);
   gotoXY(50,17); printz("My move is: %s",mvstr1);
-  if (beep) putchar(7);
+  if (beepit) putchar(7);
   ClrEoln();
   
   gotoXY(50,24);
@@ -425,7 +425,7 @@ short iop;
   ETnodes += 50;
   if (et > et0 || iop == 1)
     {
-      if (et > ResponseTime+ExtraTime && Sdepth > 1) timeout = true;
+      if (et > ResponseTime+ExtraTime && Sdepth > 1) timeo = true;
       et0 = et;
       if (iop == 1)
         {

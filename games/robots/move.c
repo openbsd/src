@@ -163,7 +163,9 @@ over:
 		  case 'W':
 			Waiting = TRUE;
 			leaveok(stdscr, TRUE);
+#ifndef NCURSES_VERSION
 			flushok(stdscr, FALSE);
+#endif
 			goto ret;
 		  case 't':
 		  case 'T':

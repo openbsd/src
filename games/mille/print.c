@@ -52,8 +52,8 @@ static char rcsid[] = "$NetBSD: print.c,v 1.4 1995/03/24 05:02:02 cgd Exp $";
 
 prboard() {
 
-	reg PLAY	*pp;
-	reg int		i, j, k, temp;
+	register PLAY	*pp;
+	register int		i, j, k, temp;
 
 	for (k = 0; k < 2; k++) {
 		pp = &Player[k];
@@ -68,8 +68,8 @@ prboard() {
 		show_card(14, temp, pp->battle, &pp->sh_battle);
 		show_card(16, temp, pp->speed, &pp->sh_speed);
 		for (i = C_25; i <= C_200; i++) {
-			reg char	*name;
-			reg int		end;
+			register char	*name;
+			register int		end;
 
 			if (pp->nummiles[i] == pp->sh_nummiles[i])
 				continue;
@@ -118,10 +118,10 @@ register CARD	c, *lc;
 static char	Score_fmt[] = "%4d";
 
 prscore(for_real)
-reg bool	for_real; {
+register bool	for_real; {
 
-	reg PLAY	*pp;
-	reg int		x;
+	register PLAY	*pp;
+	register int		x;
 
 	stdscr = Score;
 	for (pp = Player; pp < &Player[2]; pp++) {

@@ -82,7 +82,9 @@ init_field()
 
 	Dead = FALSE;
 	Waiting = FALSE;
+#ifndef NCURSES_VERSION
 	flushok(stdscr, TRUE);
+#endif
 	Score = 0;
 
 	erase();

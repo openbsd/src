@@ -25,7 +25,7 @@
 */
 
 #ifndef lint
-static char rcsid[] = "$Id: gnuchess.c,v 1.2 1995/12/21 14:50:10 deraadt Exp $";
+static char rcsid[] = "$Id: gnuchess.c,v 1.3 1996/06/02 19:51:39 tholo Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -135,8 +135,8 @@ short c1,c2,*atk1,*atk2,*PC1,*PC2,EnemyKing;
 short mate,post,opponent,computer,Sdepth,Awindow,Bwindow,dither;
 long ResponseTime,ExtraTime,Level,et,et0,time0,cputimer,ft;
 long NodeCnt,evrate,ETnodes,EvalNodes,HashCnt;
-short quit,reverse,bothsides,hashflag,InChk,player,force,easy,beep;
-short wking,bking,FROMsquare,TOsquare,timeout,Zscore,zwndw,xwndw,slk;
+short quit,reverse,bothsides,hashflag,InChk,player,force,easy,beepit;
+short wking,bking,FROMsquare,TOsquare,timeo,Zscore,zwndw,xwndw,slk;
 short INCscore;
 short HasPawn[2],HasKnight[2],HasBishop[2],HasRook[2],HasQueen[2];
 short ChkFlag[maxdepth],CptrFlag[maxdepth],PawnThreat[maxdepth];
@@ -405,7 +405,7 @@ short l,r,c,p;
 
   mate = quit = reverse = bothsides = post = false;
   hashflag = force = PawnStorm = false;
-  beep = rcptr = easy = true;
+  beepit = rcptr = easy = true;
   lpost =  NodeCnt = epsquare = et0 = 0;
   dither = 0;
   Awindow = 90;
@@ -478,7 +478,7 @@ short side,iop;
 {
 static short i,alpha,beta,score,tempb,tempc,tempsf,tempst,xside,rpt;
 
-  timeout = false;
+  timeo = false;
   xside = otherside[side];
   if (iop != 2) player = side;
   if (TCflag)
@@ -515,12 +515,12 @@ static short i,alpha,beta,score,tempb,tempc,tempsf,tempst,xside,rpt;
     MoveList(side,1);
     for (i = TrPnt[1]; i < TrPnt[2]; i++) pick(i,TrPnt[2]-1);
     if (Book != NULL) OpeningBook();
-    if (Book != NULL) timeout = true;
+    if (Book != NULL) timeo = true;
     NodeCnt = ETnodes = EvalNodes = HashCnt = 0;
     Zscore = 0; zwndw = 20;
   }
   
-  while (!timeout && Sdepth < MaxSearchDepth)
+  while (!timeo && Sdepth < MaxSearchDepth)
     {
       Sdepth++;
       ShowDepth(' ');
@@ -541,17 +541,17 @@ static short i,alpha,beta,score,tempb,tempc,tempsf,tempst,xside,rpt;
           score = search(side,1,Sdepth,alpha,9000,PrVar,&rpt);
         }
       score = root->score;
-      if (!timeout)
+      if (!timeo)
         for (i = TrPnt[1]+1; i < TrPnt[2]; i++) pick(i,TrPnt[2]-1);
       ShowResults(score,PrVar,'.');
       for (i = 1; i <= Sdepth; i++) killr0[i] = PrVar[i];
       if (score > Zscore-zwndw && score > Tree[1].score+250) ExtraTime = 0;
       else if (score > Zscore-3*zwndw) ExtraTime = ResponseTime;
       else ExtraTime = 3*ResponseTime;
-      if (root->flags & exact) timeout = true;
-      if (Tree[1].score < -9000) timeout = true;
-      if (4*et > 2*ResponseTime + ExtraTime) timeout = true;
-      if (!timeout)
+      if (root->flags & exact) timeo = true;
+      if (Tree[1].score < -9000) timeo = true;
+      if (4*et > 2*ResponseTime + ExtraTime) timeo = true;
+      if (!timeo)
         {
           Tscore[0] = score;
           if (Zscore == 0) Zscore = score;
@@ -764,7 +764,7 @@ struct leaf *node,tmp;
           node->reply = nxtline[ply+1];
           UnmakeMove(side,node,&tempb,&tempc,&tempsf,&tempst);
         }
-      if (node->score > best && !timeout)
+      if (node->score > best && !timeo)
         {
           if (depth > 0)
             if (node->score > alpha && !(node->flags & exact))
@@ -790,7 +790,7 @@ struct leaf *node,tmp;
             }
         }
       if (NodeCnt > ETnodes) ElapsedTime(0);
-      if (timeout) return(-Tscore[ply-1]);
+      if (timeo) return(-Tscore[ply-1]);
     }
     
   node = &Tree[pbst];

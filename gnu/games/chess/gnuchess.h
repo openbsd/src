@@ -19,7 +19,7 @@
   file named COPYING.  Among other things, the copyright notice
   and this notice must be preserved on all copies.
 
-	$Id: gnuchess.h,v 1.1.1.1 1995/10/18 08:41:11 deraadt Exp $
+	$Id: gnuchess.h,v 1.2 1996/06/02 19:51:41 tholo Exp $
 */
 
 
@@ -83,8 +83,8 @@ extern short c1,c2,*atk1,*atk2,*PC1,*PC2;
 extern short mate,post,opponent,computer,Sdepth,Awindow,Bwindow,dither;
 extern long ResponseTime,ExtraTime,Level,et,et0,time0,cputimer,ft;
 extern long NodeCnt,evrate,ETnodes,EvalNodes,HashCnt;
-extern short quit,reverse,bothsides,hashflag,InChk,player,force,easy,beep,meter;
-extern short timeout,xwndw;
+extern short quit,reverse,bothsides,hashflag,InChk,player,force,easy,beepit,meter;
+extern short timeo,xwndw;
 extern struct GameRec GameList[240];
 extern short GameCnt,Game50,epsquare,lpost,rcptr,contempt;
 extern short MaxSearchDepth;
