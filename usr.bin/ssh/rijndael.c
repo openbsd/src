@@ -1,4 +1,4 @@
-/*	$OpenBSD: rijndael.c,v 1.8 2001/07/30 16:23:30 stevesk Exp $	*/
+/*	$OpenBSD: rijndael.c,v 1.9 2001/08/22 09:46:42 heko Exp $	*/
 
 /* This is an independent implementation of the encryption algorithm:   */
 /*                                                                      */
@@ -350,11 +350,20 @@ rijndael_encrypt(rijndael_ctx *ctx, const u4byte *in_blk, u4byte *out_blk)
 	u4byte k_len = ctx->k_len;
 	u4byte *e_key = ctx->e_key;
 	u4byte  b0[4], b1[4], *kp;
+	u4byte tbuf[4];
 
+	if ((u_long)in_blk & 3) {
+		bcopy(in_blk, tbuf, sizeof(tbuf));
+		b0[0] = io_swap(tbuf[0]) ^ e_key[0];
+		b0[1] = io_swap(tbuf[1]) ^ e_key[1];
+		b0[2] = io_swap(tbuf[2]) ^ e_key[2];
+		b0[3] = io_swap(tbuf[3]) ^ e_key[3];
+	} else {
 	b0[0] = io_swap(in_blk[0]) ^ e_key[0];
 	b0[1] = io_swap(in_blk[1]) ^ e_key[1];
 	b0[2] = io_swap(in_blk[2]) ^ e_key[2];
 	b0[3] = io_swap(in_blk[3]) ^ e_key[3];
+	}
 
 	kp = e_key + 4;
 
@@ -372,8 +381,16 @@ rijndael_encrypt(rijndael_ctx *ctx, const u4byte *in_blk, u4byte *out_blk)
 	f_nround(b1, b0, kp); f_nround(b0, b1, kp);
 	f_nround(b1, b0, kp); f_lround(b0, b1, kp);
 
+	if ((u_long)out_blk & 3) {
+		tbuf[0] = io_swap(b0[0]);
+		tbuf[1] = io_swap(b0[1]);
+		tbuf[2] = io_swap(b0[2]);
+		tbuf[3] = io_swap(b0[3]);
+		bcopy(tbuf, out_blk, sizeof(tbuf));
+	} else {
 	out_blk[0] = io_swap(b0[0]); out_blk[1] = io_swap(b0[1]);
 	out_blk[2] = io_swap(b0[2]); out_blk[3] = io_swap(b0[3]);
+	}
 }
 
 /* decrypt a block of text  */
@@ -398,11 +415,20 @@ rijndael_decrypt(rijndael_ctx *ctx, const u4byte *in_blk, u4byte *out_blk)
 	u4byte k_len = ctx->k_len;
 	u4byte *e_key = ctx->e_key;
 	u4byte *d_key = ctx->d_key;
+	u4byte tbuf[4];
 
+	if ((u_long)in_blk & 3) {
+		bcopy(in_blk, tbuf, sizeof(b0));
+		b0[0] = io_swap(tbuf[0]) ^ e_key[4 * k_len + 24];
+		b0[1] = io_swap(tbuf[1]) ^ e_key[4 * k_len + 25];
+		b0[2] = io_swap(tbuf[2]) ^ e_key[4 * k_len + 26];
+		b0[3] = io_swap(tbuf[3]) ^ e_key[4 * k_len + 27];
+	} else {
 	b0[0] = io_swap(in_blk[0]) ^ e_key[4 * k_len + 24];
 	b0[1] = io_swap(in_blk[1]) ^ e_key[4 * k_len + 25];
 	b0[2] = io_swap(in_blk[2]) ^ e_key[4 * k_len + 26];
 	b0[3] = io_swap(in_blk[3]) ^ e_key[4 * k_len + 27];
+	}
 
 	kp = d_key + 4 * (k_len + 5);
 
@@ -420,6 +446,14 @@ rijndael_decrypt(rijndael_ctx *ctx, const u4byte *in_blk, u4byte *out_blk)
 	i_nround(b1, b0, kp); i_nround(b0, b1, kp);
 	i_nround(b1, b0, kp); i_lround(b0, b1, kp);
 
+	if ((u_long)out_blk & 3) {
+		tbuf[0] = io_swap(b0[0]);
+		tbuf[1] = io_swap(b0[1]);
+		tbuf[2] = io_swap(b0[2]);
+		tbuf[3] = io_swap(b0[3]);
+		bcopy(tbuf, out_blk, sizeof(tbuf));
+	} else {
 	out_blk[0] = io_swap(b0[0]); out_blk[1] = io_swap(b0[1]);
 	out_blk[2] = io_swap(b0[2]); out_blk[3] = io_swap(b0[3]);
+	}
 }
