@@ -1,4 +1,4 @@
-/*	$OpenBSD: host_ops.c,v 1.8 2002/08/03 08:29:31 pvalchev Exp $	*/
+/*	$OpenBSD: host_ops.c,v 1.9 2002/08/03 21:49:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -120,7 +120,7 @@ host_init(mntfs *mf)
 #ifndef HOST_EXEC
 
 static bool_t
-xdr_pri_free(xdrproc_t xdr_args, caddr_t args_ptr)
+xdr_pri_free(xdrproc_t xdr_args, void *args_ptr)
 {
 	XDR xdr;
 

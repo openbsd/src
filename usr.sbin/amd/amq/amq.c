@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amq.c	8.1 (Berkeley) 6/7/93
- *	$Id: amq.c,v 1.6 2002/08/03 08:29:32 pvalchev Exp $
+ *	$Id: amq.c,v 1.7 2002/08/03 21:49:24 deraadt Exp $
  */
 
 /*
@@ -52,7 +52,7 @@ char copyright[] = "\
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$Id: amq.c,v 1.6 2002/08/03 08:29:32 pvalchev Exp $";
+static char rcsid[] = "$Id: amq.c,v 1.7 2002/08/03 21:49:24 deraadt Exp $";
 static char sccsid[] = "@(#)amq.c	8.1 (Berkeley) 6/7/93";
 #endif /* not lint */
 
@@ -234,7 +234,7 @@ deferred  fhandles  ok        failed    failed\n\
 }
 
 static bool_t
-xdr_pri_free(xdrproc_t xdr_args, caddr_t args_ptr)
+xdr_pri_free(xdrproc_t xdr_args, void *args_ptr)
 {
 	XDR xdr;
 	xdr.x_op = XDR_FREE;
@@ -537,7 +537,7 @@ Usage: %s [-h host] [[-f] [-m] [-v] [-s]] | [[-u] directory ...]] |\n\
 					} else {
 						fprintf(stderr, "%s: %s not automounted\n", __progname, fs);
 					}
-					xdr_pri_free(xdr_amq_mount_tree_p, (caddr_t) mtp);
+					xdr_pri_free(xdr_amq_mount_tree_p, mtp);
 				} else {
 					fprintf(stderr, "%s: ", __progname);
 					clnt_perror(clnt, server);
