@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.h,v 1.15 1997/08/12 21:39:01 mickey Exp $	*/
+/*	$OpenBSD: biosdev.h,v 1.16 1997/08/12 21:40:50 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -32,6 +32,8 @@
  *
  */
 
+struct consdev;
+struct open_file;
 
 /* biosdev.c */
 extern const char *biosdevs[];
@@ -39,6 +41,18 @@ int biosstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
 int biosopen __P((struct open_file *, ...));
 int biosclose __P((struct open_file *));
 int biosioctl __P((struct open_file *, u_long, void *));
+
+/* bioscons.c */
+void kbd_probe __P((struct consdev *));
+void kbd_init __P((struct consdev *));
+int kbd_getc __P((dev_t));
+void kbd_putc __P((dev_t, int));
+void kbd_pollc __P((dev_t, int));
+void com_probe __P((struct consdev *));
+void com_init __P((struct consdev *));
+int com_getc __P((dev_t));
+void com_putc __P((dev_t, int));
+void com_pollc __P((dev_t, int));
 
 /* time.c */
 void time_print __P((void));
