@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.73 2000/08/13 22:07:14 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.74 2000/10/22 23:59:40 millert Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.73 2000/08/13 22:07:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.74 2000/10/22 23:59:40 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1045,6 +1045,7 @@ getstring(prompt, helpstring, oval)
 		if (fgets(buf, sizeof(buf), stdin) == NULL) {
 			buf[0] = '\0';
 			if (feof(stdin)) {
+				clearerr(stdin);
 				putchar('\n');
 				return(NULL);
 			}
@@ -1093,6 +1094,7 @@ getuint(lp, partno, prompt, helpstring, oval, maxval, offset, flags)
 		if (fgets(buf, sizeof(buf), stdin) == NULL) {
 			buf[0] = '\0';
 			if (feof(stdin)) {
+				clearerr(stdin);
 				putchar('\n');
 				return(UINT_MAX - 1);
 			}
