@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.36 1997/09/04 04:37:16 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.37 1997/12/17 16:03:05 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.36 1997/09/04 04:37:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.37 1997/12/17 16:03:05 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -110,7 +110,8 @@ main(argc, argv)
 	doglob = 1;
 	interactive = 1;
 	autologin = 1;
-	passivemode = 0;
+	passivemode = 1;
+	activefallback = 1;
 	preserve = 1;
 	verbose = 0;
 	progress = 0;
@@ -123,20 +124,32 @@ main(argc, argv)
 	mark = HASHBYTES;
 	marg_sl = sl_init();
 
-	cp = strrchr(argv[0], '/');
-	cp = (cp == NULL) ? argv[0] : cp + 1;
-	if (strcmp(cp, "pftp") == 0)
-		passivemode = 1;
-	else if (strcmp(cp, "gate-ftp") == 0)
-		gatemode = 1;
+	/* Set default operation mode based on FTPMODE environment variable */
+	if ((cp = getenv("FTPMODE")) != NULL) {
+		if (strcmp(cp, "passive") == 0) {
+			passivemode = 1;
+			activefallback = 0;
+		} else if (strcmp(cp, "active") == 0) {
+			passivemode = 0;
+			activefallback = 0;
+		} else if (strcmp(cp, "gate") == 0) {
+			gatemode = 1;
+		} else if (strcmp(cp, "auto") == 0) {
+			passivemode = 1;
+			activefallback = 1;
+		} else
+			warnx("unknown FTPMODE: %s.  Using defaults", cp);
+	}
 
+	if (strcmp(__progname, "gate-ftp") == 0)
+		gatemode = 1;
 	gateserver = getenv("FTPSERVER");
 	if (gateserver == NULL || *gateserver == '\0')
 		gateserver = GATE_SERVER;
 	if (gatemode) {
 		if (*gateserver == '\0') {
 			warnx(
-"Neither $FTPSERVER nor GATE_SERVER is defined; disabling gate-ftp");
+"Neither $FTPSERVER nor $GATE_SERVER is defined; disabling gate-ftp");
 			gatemode = 0;
 		}
 	}
@@ -162,8 +175,13 @@ main(argc, argv)
 		ttyout = stderr;
 	}
 
-	while ((ch = getopt(argc, argv, "adeginpPr:tvV")) != -1) {
+	while ((ch = getopt(argc, argv, "AadeginpPr:tvV")) != -1) {
 		switch (ch) {
+		case 'A':
+			activefallback = 0;
+			passivemode = 0;
+			break;
+
 		case 'a':
 			anonftp = 1;
 			break;
@@ -193,6 +211,7 @@ main(argc, argv)
 
 		case 'p':
 			passivemode = 1;
+			activefallback = 0;
 			break;
 
 		case 'P':

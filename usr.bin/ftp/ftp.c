@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.23 1997/09/05 00:02:29 millert Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.24 1997/12/17 16:03:03 millert Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$OpenBSD: ftp.c,v 1.23 1997/09/05 00:02:29 millert Exp $";
+static char rcsid[] = "$OpenBSD: ftp.c,v 1.24 1997/12/17 16:03:03 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -1096,6 +1096,7 @@ initconn()
 	int on = 1;
 	int a0, a1, a2, a3, p0, p1;
 
+reinit:
 	if (passivemode) {
 		data = socket(AF_INET, SOCK_STREAM, 0);
 		if (data < 0) {
@@ -1107,6 +1108,13 @@ initconn()
 			       sizeof(on)) < 0)
 			warn("setsockopt (ignored)");
 		if (command("PASV") != COMPLETE) {
+			if (activefallback) {
+				(void)close(data);
+				data = -1;
+				passivemode = 0;
+				activefallback = 0;
+				goto reinit;
+			}
 			fputs("Passive mode refused.\n", ttyout);
 			goto bad;
 		}

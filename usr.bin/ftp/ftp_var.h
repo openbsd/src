@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp_var.h,v 1.16 1997/10/02 04:22:01 imp Exp $	*/
+/*	$OpenBSD: ftp_var.h,v 1.17 1997/12/17 16:03:04 millert Exp $	*/
 /*	$NetBSD: ftp_var.h,v 1.18 1997/08/18 10:20:25 lukem Exp $	*/
 
 /*
@@ -102,6 +102,7 @@ int	code;			/* return/reply code for ftp command */
 int	crflag;			/* if 1, strip car. rets. on ascii gets */
 char	pasv[64];		/* passive port for proxy data connection */
 int	passivemode;		/* passive mode enabled */
+int	activefallback;		/* fall back to active mode if passive fails */
 char   *altarg;			/* argv[1] with no shell-like preprocessing  */
 char	ntin[17];		/* input translation table */
 char	ntout[17];		/* output translation table */

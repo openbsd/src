@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.15 1997/09/04 04:42:34 millert Exp $
+.\" 	$OpenBSD: ftp.1,v 1.16 1997/12/17 16:03:01 millert Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -44,6 +44,7 @@
 file transfer program
 .Sh SYNOPSIS
 .Nm
+.Op Fl A
 .Op Fl a
 .Op Fl d
 .Op Fl e
@@ -80,6 +81,14 @@ below for more information.
 Options may be specified at the command line, or to the
 command interpreter.
 .Bl -tag -width "port    "
+.It Fl A
+Force active mode ftp.  By default,
+.Nm
+will try to use passive mode ftp and fall back to active mode
+if passive is not supported by the server.  This option causes
+.Nm
+to always use an active connection.  It is only useful for connecting
+to very old servers that do not implement passive mode properly.
 .It Fl a
 Causes
 .Nm
@@ -112,6 +121,10 @@ identity on the local machine), and, if necessary, prompt for a password
 and an account with which to login.
 .It Fl p
 Enable passive mode operation for use behind connection filtering firewalls.
+This option has been deprecated as
+.Nm
+now tries to use passive mode by default, falling back to active mode
+if the server does not support passive connections.
 .It Fl P Ar port
 Sets the port number to
 .Ar port .
@@ -1337,6 +1350,18 @@ By default, this is bound to the TAB key.
 .Nm
 utilizes the following environment variables.
 .Bl -tag -width "FTPSERVERPORT"
+.It Ev FTPMODE
+Overrides the default operation mode.  Recognized values are:
+.Bl -tag -width "passive  "
+.It passive
+passive mode ftp only
+.It active
+active mode ftp only
+.It auto
+automatic determination of passive or active (this is the default)
+.It gate
+gate-ftp mode
+.El
 .It Ev FTPSERVER
 Host to use as gate-ftp server when
 .Ic gate
