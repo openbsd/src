@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_olf.h,v 1.3 1996/11/06 18:41:53 etheisen Exp $	*/
+/*	$OpenBSD: exec_olf.h,v 1.4 1996/11/06 20:12:12 etheisen Exp $	*/
 /*
  * Copyright (c) 1996 Erik Theisen.  All rights reserved.
  *
@@ -47,9 +47,10 @@
 #define OI_CLASS        EI_CLASS	/* file class */
 #define OI_DATA         EI_DATA		/* data encoding */
 #define OI_VERSION      EI_VERSION	/* OLF header version */
-#define OI_OS		7		/* Operating system */
-#define OI_STRIP	8		/* Strip tag */
-#define OI_PAD		9		/* start of pad bytes */
+#define OI_OS		7		/* Operating system tag */
+#define OI_DYNAMIC	8		/* Dynamic tag */
+#define OI_STRIP	9		/* Strip tag */
+#define OI_PAD		10		/* start of pad bytes */
 #define OI_NIDENT       EI_NIDENT       /* Size of e_ident[] */
 
 /* e_ident[] magic number */
@@ -114,6 +115,10 @@
 		 	  OOSN_SOLARIS, OOSN_IRIX, OOSN_SCO, \
 		 	  OOSN_DELL, \
 		 	0 }
+
+/* e_ident[] dynamic */
+#define ODYNAMIC_N	0		/* Statically linked  */
+#define ODYNAMIC	1		/* Dynamically linked */
 
 /* e_ident[] strip */
 #define OSTRIP_N	0		/* NOT Stripped */
