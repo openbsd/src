@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.71 2003/12/27 23:23:21 espie Exp $
+#	$OpenBSD: bsd.own.mk,v 1.72 2004/01/28 02:28:14 mickey Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -30,14 +30,19 @@ DEBUGLIBS?=	no
 # Set toolchain to be able to know differences.
 .if (${MACHINE_ARCH} == "alpha" || ${MACHINE_ARCH} == "powerpc" || \
      ${MACHINE_ARCH} == "hppa" || ${MACHINE_ARCH} == "sparc64" || \
-     ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "i386")
+     ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "i386" || \
+     ${MACHINE_ARCH} == "x86_64")
 ELF_TOOLCHAIN?=	yes
 .else
 ELF_TOOLCHAIN?=	no
 .endif
 
-# don't use yet.
+# do the dew
+.if (${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "hppa64")
+USE_GCC3?=yes
+.else
 USE_GCC3?=no
+.endif
 
 # where the system object and source trees are kept; can be configurable
 # by the user in case they want them in ~/foosrc and ~/fooobj, for example
@@ -111,7 +116,7 @@ STATIC?=	-static
 
 # don't try to generate PIC versions of libraries on machines
 # which don't support PIC.
-.if (${MACHINE_ARCH} == "vax") || \
+.if (${MACHINE_ARCH} == "vax") || (${MACHINE_ARCH} == "x86_64") || \
     (${MACHINE_ARCH} == "hppa") || (${MACHINE_ARCH} == "m88k")
 NOPIC=
 .endif
