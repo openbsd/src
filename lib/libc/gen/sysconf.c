@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: sysconf.c,v 1.3 1996/09/15 09:31:06 tholo Exp $";
+static char rcsid[] = "$OpenBSD: sysconf.c,v 1.4 1998/06/02 06:10:26 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -105,6 +105,16 @@ sysconf(name)
 		mib[1] = KERN_POSIX1;
 		break;
 
+/* 1003.1b */
+	case _SC_PAGESIZE:
+		mib[0] = CTL_HW;
+		mib[1] = HW_PAGESIZE;
+		break;
+	case _SC_FSYNC:
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_FSYNC;
+		goto yesno;
+
 /* 1003.2 */
 	case _SC_BC_BASE_MAX:
 		mib[0] = CTL_USER;
@@ -173,6 +183,13 @@ sysconf(name)
 	case _SC_2_UPE:
 		mib[0] = CTL_USER;
 		mib[1] = USER_POSIX2_UPE;
+		goto yesno;
+
+/* XPG 4.2 */
+	case _SC_XOPEN_SHM:
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_SYSVSHM;
+
 yesno:		if (sysctl(mib, 2, &value, &len, NULL, 0) == -1)
 			return (-1);
 		if (value == 0)

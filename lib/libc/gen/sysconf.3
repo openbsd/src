@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysconf.3,v 1.3 1996/08/19 08:26:22 tholo Exp $
+.\"	$OpenBSD: sysconf.3,v 1.4 1998/06/02 06:10:24 deraadt Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -142,6 +142,10 @@ otherwise \-1.
 .It Li _SC_2_UPE
 Return 1 if the system supports the User Portability Utilities Option,
 otherwise \-1.
+.It Li _SC_PAGESIZE
+The size of a system page in bytes.
+.It Li _SC_FSYNC
+Return 1 if the system supports the File Synchronisation Option, otherwise \-1.
 .El
 .Sh RETURN VALUES
 If the call to

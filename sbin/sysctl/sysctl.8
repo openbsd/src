@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.17 1998/03/18 19:03:05 jason Exp $
+.\"	$OpenBSD: sysctl.8,v 1.18 1998/06/02 06:10:33 deraadt Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -136,6 +136,10 @@ privilege can change the value.
 .It kern.sominconn	integer	yes
 .It kern.usermount	integer	yes
 .It kern.random	struct	no
+.It kern.fsync	integer	no
+.It kern.sysvmsg	integer	no
+.It kern.sysvsem	integer	no
+.It kern.sysvshm	integer	no
 .It vm.loadavg	struct	no
 .It vm.psstrings	struct	no
 .It fs.posix.setuid	integer	yes

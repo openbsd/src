@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.24 1997/12/08 21:25:37 deraadt Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.25 1998/06/02 06:10:28 deraadt Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -307,6 +307,26 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		    sizeof(rndstats)));
 	case KERN_NOSUIDCOREDUMP:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &nosuidcoredump));
+	case KERN_FSYNC:
+		return (sysctl_rdint(oldp, oldlenp, newp, 1));
+	case KERN_SYSVMSG:
+#ifdef SYSVMSG
+		return (sysctl_rdint(oldp, oldlenp, newp, 1));
+#else
+		return (sysctl_rdint(oldp, oldlenp, newp, 0));
+#endif
+	case KERN_SYSVSEM:
+#ifdef SYSVSEM
+		return (sysctl_rdint(oldp, oldlenp, newp, 1));
+#else
+		return (sysctl_rdint(oldp, oldlenp, newp, 0));
+#endif
+	case KERN_SYSVSHM:
+#ifdef SYSVSHM
+		return (sysctl_rdint(oldp, oldlenp, newp, 1));
+#else
+		return (sysctl_rdint(oldp, oldlenp, newp, 0));
+#endif
 	default:
 		return (EOPNOTSUPP);
 	}

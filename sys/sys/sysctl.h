@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.24 1998/03/15 17:20:34 millert Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.25 1998/06/02 06:10:30 deraadt Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -146,7 +146,11 @@ struct ctlname {
 #define	KERN_USERMOUNT		30	/* int: users may mount filesystems */
 #define KERN_RND		31	/* struct: rnd(4) statistics */
 #define KERN_NOSUIDCOREDUMP	32	/* int: no setuid coredumps ever */ 
-#define	KERN_MAXID		33	/* number of valid kern ids */
+#define	KERN_FSYNC		33      /* int: file synchronization support */
+#define	KERN_SYSVMSG		34      /* int: SysV message queue suppoprt */
+#define	KERN_SYSVSEM		35      /* int: SysV semaphore support */
+#define	KERN_SYSVSHM		36      /* int: SysV shared memory support */
+#define	KERN_MAXID		37	/* number of valid kern ids */
 
 #define CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -182,6 +186,10 @@ struct ctlname {
 	{ "usermount", CTLTYPE_INT }, \
 	{ "random", CTLTYPE_STRUCT }, \
 	{ "nosuidcoredump", CTLTYPE_INT }, \
+	{ "fsync", CTLTYPE_INT }, \
+	{ "sysvmsg", CTLTYPE_INT }, \
+	{ "sysvsem", CTLTYPE_INT }, \
+	{ "sysvshm", CTLTYPE_INT }, \
 }
 
 /*

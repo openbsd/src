@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.5 1996/10/26 06:54:43 tholo Exp $	*/
+/*	$OpenBSD: unistd.h,v 1.6 1998/06/02 06:10:31 deraadt Exp $	*/
 /*	$NetBSD: unistd.h,v 1.10 1994/06/29 06:46:06 cgd Exp $	*/
 
 /*
@@ -54,6 +54,8 @@
 #define	_POSIX_NO_TRUNC		1
 				/* may disable terminal special characters */
 #define	_POSIX_VDISABLE		(0377)
+				/* file syncronization is available */
+#define	_POSIX_FSYNC		1
 
 /* access function */
 #define	F_OK		0	/* test for existence of file */
@@ -112,6 +114,10 @@
 #define	_SC_2_UPE		25
 #define	_SC_STREAM_MAX		26
 #define	_SC_TZNAME_MAX		27
+#define	_SC_PAGESIZE		28
+#define	_SC_PAGE_SIZE		_SC_PAGESIZE	/* 1170 compatibility */
+#define	_SC_FSYNC		29
+#define	_SC_XOPEN_SHM		30
 
 /* configurable system strings */
 #define	_CS_PATH		 1
