@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.20 2004/10/12 07:05:21 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.21 2004/10/15 23:25:02 jsg Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -656,12 +656,26 @@ dnl		    See above
 	Miscellaneous Devices
 		Brooktree 8[47][89] based frame grabber and TV tuner cards,
 		including:
-		    AVer Media TV/FM
-		    Hauppauge Wincast TV
+		    Animation Technologies FlyVideo
+		    AOpen VA1000
+		    Askey/Dynalink Magic TView
+		    ATI TV-Wonder and Wonder/VE
+		    AverMedia cards
+		    Hauppauge Wincast TV and WinTV/PCI
 		    IMS TV Turbo
 		    Intel Smart Video Recorder III
+		    I/O DATA GV-BCTV2/PCI
+		    I/O DATA GV-BCTV3/PCI
+		    KISS TV/FM PCI
+		    Leadtek Winfast TV 2000
 		    Miro PC TV
+		    MMAC Osprey
+		    NEC PK-UG-X017
 		    STB TV PCI Television Tuner
+		    Terratec TerraTVplus
+		    Video Highway XTreme
+		    VideoLogic Captivator PCI
+		    Zoltrix TV
 		Hardware monitoring sensors, including:
 		    National Semiconductor LM78, LM78-J, LM79
 		    Winbond W83697HF, W83627HF, W83627THF, W83781D, W83782D

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.164 2004/10/12 07:05:21 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.165 2004/10/15 23:25:02 jsg Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -784,12 +784,15 @@ Supported hardware {:-include-:}:
 		Brooktree 8[47][89] based frame grabber and TV tuner cards,
 		including: [G]
 		    Animation Technologies FlyVideo
+		    AOpen VA1000
 		    Askey/Dynalink Magic TView
+		    ATI TV-Wonder and Wonder/VE
 		    AverMedia cards
 		    Hauppauge Wincast TV and WinTV/PCI
 		    IMS TV Turbo
 		    Intel Smart Video Recorder III
 		    I/O DATA GV-BCTV2/PCI
+		    I/O DATA GV-BCTV3/PCI
 		    KISS TV/FM PCI
 		    Leadtek Winfast TV 2000
 		    Miro PC TV
