@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbusvar.h,v 1.2 2000/04/26 14:05:34 brad Exp $	*/
+/*	$OpenBSD: cardbusvar.h,v 1.3 2000/05/15 06:36:21 niklas Exp $	*/
 /*	$NetBSD: cardbusvar.h,v 1.17 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
@@ -329,6 +329,10 @@ struct cardbus_cis_info {
     } bar[7];
     unsigned int	funcid;
     union {
+	struct {
+	    int uart_type;
+	    int uart_present;
+	} serial;
 	struct {
 	    char netid[6];
 	    char netid_present;
