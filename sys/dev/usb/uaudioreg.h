@@ -1,5 +1,5 @@
-/*	$OpenBSD: uaudioreg.h,v 1.7 2001/05/03 02:20:33 aaron Exp $ */
-/*	$NetBSD: uaudioreg.h,v 1.7 2000/12/28 00:29:58 augustss Exp $	*/
+/*	$OpenBSD: uaudioreg.h,v 1.8 2002/05/06 23:07:26 nate Exp $ */
+/*	$NetBSD: uaudioreg.h,v 1.8 2002/03/07 14:37:03 kent Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -98,6 +98,9 @@ struct usb_audio_streaming_endpoint_descriptor {
 	uByte		bDescriptorType;
 	uByte		bDescriptorSubtype;
 	uByte		bmAttributes;
+#define UA_SED_FREQ_CONTROL	0x01
+#define UA_SED_PITCH_CONTROL	0x02
+#define UA_SED_MAXPACKETSONLY	0x80
 	uByte		bLockDelayUnits;
 	uWord		wLockDelay;
 } UPACKED;
@@ -340,8 +343,11 @@ struct usb_audio_extension_unit_1 {
 #define UA_FMT_IEEE_FLOAT 3
 #define UA_FMT_ALAW	4
 #define UA_FMT_MULAW	5
+#define UA_FMT_MPEG	0x1001
+#define UA_FMT_AC3	0x1002
 
-#define SAMPLING_FREQ_CONTROL 0x01
+#define SAMPLING_FREQ_CONTROL	0x01
+#define PITCH_CONTROL		0x02
 
 #define FORMAT_TYPE_UNDEFINED 0
 #define FORMAT_TYPE_I 1

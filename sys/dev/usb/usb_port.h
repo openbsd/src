@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.34 2002/05/06 05:44:51 nate Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.35 2002/05/06 23:07:26 nate Exp $ */
 /*	$NetBSD: usb_port.h,v 1.44 2001/05/14 20:35:29 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -272,6 +272,11 @@ typedef int usb_malloc_type;
 #define swap_bytes_change_sign16_le swap_bytes_change_sign16
 #define change_sign16_swap_bytes_le change_sign16_swap_bytes
 #define change_sign16_le change_sign16
+
+#define ulinear8_to_slinear16_le ulinear8_to_linear16_le
+#define ulinear8_to_slinear16_be ulinear8_to_linear16_be
+#define slinear16_to_ulinear8_le linear16_to_ulinear8_le
+#define slinear16_to_ulinear8_be linear16_to_ulinear8_be
 
 #define realloc usb_realloc
 void *usb_realloc(void *, u_int, int, int);
