@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.13 1997/10/16 02:41:34 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.14 1997/10/16 10:40:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.13 1997/10/16 02:41:34 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.14 1997/10/16 10:40:10 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -140,6 +140,7 @@ editor(lp, f)
 			puts("\tw          - write label to disk.");
 			puts("\tq          - quit and save changes.");
 			puts("\tx          - exit without saving changes.");
+			puts("\tM          - show entire OpenBSD man page for disklabel.");
 			puts("\t?          - this message.\n");
 			puts("Numeric parameters may use suffixes to indicate units:\n\t'b' for bytes, 'c' for cylinders, 'k' for kilobytes, 'm' for megabytes,\n\t'g' for gigabytes or no suffix for blocks (usually 512 bytes).\n\tNon-block units will be rounded to the nearest cylinder.\nThe (optional) argument to p[rint] may be one of the aforementioned units.\n");
 			break;
@@ -178,6 +179,16 @@ editor(lp, f)
 
 		case 'p':
 			editor_display(&label, &freeblocks, arg ? *arg : 0);
+			break;
+
+		case 'M':
+			fp = popen("/usr/bin/less", "w");
+			if (fp) {
+				extern char manpage[];
+
+				(void) fwrite(manpage, strlen(manpage), 1, fp);
+				pclose(fp);
+			}
 			break;
 
 		case 'q':
