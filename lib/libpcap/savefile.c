@@ -1,4 +1,4 @@
-/*	$OpenBSD: savefile.c,v 1.5 1998/07/14 00:14:05 deraadt Exp $	*/
+/*	$OpenBSD: savefile.c,v 1.6 1999/07/19 23:25:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995
@@ -178,7 +178,13 @@ pcap_open_offline(char *fname, char *errbuf)
 		break;
 	}
 
+	if (p->bufsize < 0)
+		p->bufsize = BPF_MAXBUFSIZE;
 	p->sf.base = (u_char *)malloc(p->bufsize + BPF_ALIGNMENT);
+	if (p->sf.base == NULL) {
+		strlcpy(errbuf, "out of swap", PCAP_ERRBUFF_SIZE);
+		goto bad;
+	}
 	p->buffer = p->sf.base + BPF_ALIGNMENT - (linklen % BPF_ALIGNMENT);
 	p->sf.version_major = hdr.version_major;
 	p->sf.version_minor = hdr.version_minor;
