@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.64 2001/12/04 20:54:11 niklas Exp $	*/
+/*	$OpenBSD: locore.s,v 1.65 2002/02/18 23:09:53 mickey Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -1733,6 +1733,10 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 	movl	P_ADDR(%esi),%esi
 
 	/* Save segment registers. */
+#ifdef DDB
+	xorl	%ax, %ax
+	xorl	%cx, %cx
+#endif
 	movl	%fs,%ax
 	movl	%gs,%cx
 	movl	%eax,PCB_FS(%esi)
@@ -1891,6 +1895,10 @@ ENTRY(savectx)
 	movl	4(%esp),%edx		# edx = p->p_addr
 
 	/* Save segment registers. */
+#ifdef DDB
+	xorl	%ax, %ax
+	xorl	%cx, %cx
+#endif
 	movl	%fs,%ax
 	movl	%gs,%cx
 	movl	%eax,PCB_FS(%edx)
