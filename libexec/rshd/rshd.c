@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94"; */
-static char *rcsid = "$Id: rshd.c,v 1.7 1996/10/26 04:37:29 millert Exp $";
+static char *rcsid = "$Id: rshd.c,v 1.8 1996/11/01 11:30:33 niklas Exp $";
 #endif /* not lint */
 
 /*
@@ -406,7 +406,8 @@ doit(fromp)
 			rc = krb_recvauth(authopts, 0, ticket, "rcmd",
 				instance, &fromaddr,
 				(struct sockaddr_in *) 0,
-				kdata, "", (bit_64 *) 0, version);
+				kdata, "", (struct des_ks_struct *) 0,
+				version);
 		if (rc != KSUCCESS) {
 			error("Kerberos authentication failure: %s\n",
 				  krb_err_txt[rc]);
