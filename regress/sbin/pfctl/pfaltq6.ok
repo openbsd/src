@@ -3,22 +3,22 @@ queue root_lo0 bandwidth 10Mb priority 0 cbq( wrr root ) {wim, the, minibar, is,
 queue  wim bandwidth 1Mb cbq( default ) 
 [ qid=4294967293 ifname=lo0 ifbandwidth=10Mb ]
 queue  the bandwidth 1Mb 
-[ qid=1 ifname=lo0 ifbandwidth=10Mb ]
-queue  minibar bandwidth 8Mb priority 7 
 [ qid=2 ifname=lo0 ifbandwidth=10Mb ]
-queue  is bandwidth 1Mb 
+queue  minibar bandwidth 8Mb priority 7 
 [ qid=3 ifname=lo0 ifbandwidth=10Mb ]
-queue  empty bandwidth 9Mb 
+queue  is bandwidth 1Mb 
 [ qid=4 ifname=lo0 ifbandwidth=10Mb ]
+queue  empty bandwidth 9Mb 
+[ qid=5 ifname=lo0 ifbandwidth=10Mb ]
 @0 pass in on lo0 proto tcp from any to any port = ssh keep state queue(the, minibar) 
 [ Skip steps: d=end f=end p=end sa=end sp=end da=end dp=3 ]
-[ queue: qname=the qid=1 pqname=minibar pqid=2 ]
+[ queue: qname=the qid=2 pqname=minibar pqid=3 ]
 @1 pass in proto tcp from any to any port = ssh keep state queue(is, empty) 
 [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=3 ]
-[ queue: qname=is qid=3 pqname=empty pqid=4 ]
+[ queue: qname=is qid=4 pqname=empty pqid=5 ]
 @2 pass in proto tcp from any to any port = ssh keep state queue the 
 [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end ]
-[ queue: qname=the qid=1 pqname= pqid=1 ]
+[ queue: qname=the qid=2 pqname= pqid=2 ]
 @3 pass in proto tcp from any to any port = smtp keep state queue wim 
 [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
 [ queue: qname=wim qid=4294967293 pqname= pqid=4294967293 ]

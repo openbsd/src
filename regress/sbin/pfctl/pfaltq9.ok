@@ -1,16 +1,16 @@
 queue one priq( default ) 
-[ qid=1 ifname=ppp0 ifbandwidth=10Mb ]
-queue one priq( default ) 
-[ qid=1 ifname=ppp1 ifbandwidth=10Mb ]
-queue one priq( default ) 
-[ qid=1 ifname=tun0 ifbandwidth=10Mb ]
-queue one priq( default ) 
-[ qid=1 ifname=tun1 ifbandwidth=10Mb ]
-queue two priority 15 
 [ qid=2 ifname=ppp0 ifbandwidth=10Mb ]
-queue two priority 0 
+queue one priq( default ) 
 [ qid=2 ifname=ppp1 ifbandwidth=10Mb ]
-queue two priority 0 
+queue one priq( default ) 
 [ qid=2 ifname=tun0 ifbandwidth=10Mb ]
-queue two priority 0 
+queue one priq( default ) 
 [ qid=2 ifname=tun1 ifbandwidth=10Mb ]
+queue two priority 15 
+[ qid=3 ifname=ppp0 ifbandwidth=10Mb ]
+queue two priority 0 
+[ qid=3 ifname=ppp1 ifbandwidth=10Mb ]
+queue two priority 0 
+[ qid=3 ifname=tun0 ifbandwidth=10Mb ]
+queue two priority 0 
+[ qid=3 ifname=tun1 ifbandwidth=10Mb ]
