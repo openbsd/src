@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.20 1999/09/03 18:00:47 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.21 1999/09/18 20:05:54 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -656,7 +656,7 @@ pmap_bootstrap(vstart, vend)
 	extern int maxproc; /* used to estimate pv_entries pool size */
 	extern u_int totalphysmem;
 	vaddr_t addr;
-	vm_size_t size;
+	vsize_t size;
 	struct pv_page *pvp;
 	struct hpt_entry *hptp;
 	int i;
@@ -785,7 +785,7 @@ pmap_bootstrap(vstart, vend)
 
 vaddr_t 
 pmap_steal_memory(size, startp, endp)
-	vm_size_t size;
+	vsize_t size;
 	vaddr_t *startp;
 	vaddr_t *endp;
 {
@@ -921,21 +921,14 @@ pmap_pinit(pmap)
  * only, and is bounded by that size.
  */
 pmap_t
-pmap_create(size)
-	vm_size_t size;
+pmap_create()
 {
 	register pmap_t pmap;
 
 #ifdef PMAPDEBUG
 	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_create(%d)\n", size);
+		printf("pmap_create()\n");
 #endif
-
-	/*
-	 * A software use-only map doesn't even need a pmap structure.
-	 */
-	if (size) 
-		return(NULL);
 
 	/* 
 	 * If there is a pmap in the pmap free list, reuse it. 
@@ -1184,13 +1177,14 @@ pmap_map(va, spa, epa, prot, wired)
  *	Lower the permission for all mappings to a given page.
  */
 void
-pmap_page_protect(pa, prot)
-	paddr_t pa;
+pmap_page_protect(pg, prot)
+	vm_page_t pg;
 	vm_prot_t prot;
 {
 	register struct pv_entry *pv;
 	register pmap_t pmap;
 	register u_int tlbprot;
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	int s;
 
 #ifdef PMAPDEBUG
@@ -1278,14 +1272,14 @@ pmap_protect(pmap, sva, eva, prot)
 	simple_lock(&pmap->pmap_lock);
 
 	space = pmap_sid(pmap, sva);
-	
+	tlbprot = pmap_prot(pmap, prot);
+
 	for(; sva < eva; sva += PAGE_SIZE) {
 		if((pv = pmap_find_va(space, sva))) {
 			/*
 			 * Determine if mapping is changing.
 			 * If not, nothing to do.
 			 */
-			tlbprot = pmap_prot(pmap, prot);
 			if ((pv->pv_tlbprot & TLB_AR_MASK) == tlbprot)
 				continue;
 			
@@ -1298,8 +1292,8 @@ pmap_protect(pmap, sva, eva, prot)
 			 * Purge the current TLB entry (if any) to force
 			 * a fault and reload with the new protection.
 			 */
-			pdtlb(space, pv->pv_va);
 			pitlb(space, pv->pv_va);
+			pdtlb(space, pv->pv_va);
 		}
 	}
 	simple_unlock(&pmap->pmap_lock);
@@ -1463,19 +1457,23 @@ pmap_copy_page(spa, dpa)
  *	physical address.  phys must be aligned on a machine
  *	independant page boundary.
  */
-void
-pmap_clear_modify(pa)
-	paddr_t pa;
+boolean_t
+pmap_clear_modify(pg)
+	vm_page_t pg;
 {
 	register struct pv_entry *pv;
+	register paddr_t pa = VM_PAGE_TO_PHYS(pg);
 
 #ifdef PMAPDEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_clear_modify(%x)\n", pa);
 #endif
 
-	if ((pv = pmap_find_pv(pa)))
+	if ((pv = pmap_find_pv(pa))) {
 		pv->pv_tlbprot &= ~TLB_DIRTY;
+		return TRUE;
+	} else
+		return FALSE;
 }
 
 /*
@@ -1484,10 +1482,17 @@ pmap_clear_modify(pa)
  *	since the last call to pmap_clear_modify().
  */
 boolean_t
-pmap_is_modified(pa)
-	paddr_t pa;
+pmap_is_modified(pg)
+	vm_page_t pg;
 {
-	register struct pv_entry *pv = pmap_find_pv(pa);
+	register struct pv_entry *pv;
+	register paddr_t pa = VM_PAGE_TO_PHYS(pg);
+
+#ifdef PMAPDEBUG
+	if (pmapdebug & PDB_FOLLOW)
+		printf("pmap_is_modified(%x)\n", pa);
+#endif
+	pv = pmap_find_pv(pa);
 	return pv != NULL && (pv->pv_tlbprot & TLB_DIRTY);
 }
 
@@ -1499,11 +1504,12 @@ pmap_is_modified(pa)
  *	Currently, we treat a TLB miss as a reference; i.e. to clear
  *	the reference bit we flush all mappings for pa from the TLBs.
  */
-void
-pmap_clear_reference(pa)
-	paddr_t pa;
+boolean_t
+pmap_clear_reference(pg)
+	vm_page_t pg;
 {
 	register struct pv_entry *pv;
+	register paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	int s;
 
 #ifdef PMAPDEBUG
@@ -1512,15 +1518,20 @@ pmap_clear_reference(pa)
 #endif
 
 	s = splimp();
-	for (pv = pmap_find_pv(pa); pv; pv = pv->pv_next) {
+	if (!(pv = pmap_find_pv(pa))) {
+		splx(s);
+		return FALSE;
+	}
+
+	for (; pv; pv = pv->pv_next) {
 		pitlb(pv->pv_space, pv->pv_va);
 		pdtlb(pv->pv_space, pv->pv_va);
 		pv->pv_tlbprot &= ~(TLB_REF);
 
 		pmap_clear_va(pv->pv_space, pv->pv_va);
 	}
-	pv->pv_tlbprot &= ~TLB_REF;
 	splx(s);
+	return TRUE;
 }
 
 /*
@@ -1529,10 +1540,11 @@ pmap_clear_reference(pa)
  *	since the last call to pmap_clear_reference().
  */
 boolean_t
-pmap_is_referenced(pa)
-	paddr_t pa;
+pmap_is_referenced(pg)
+	vm_page_t pg;
 {
 	register struct pv_entry *pv;
+	register paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	int s;
 
 #ifdef PMAPDEBUG
@@ -1566,6 +1578,52 @@ pmap_changebit(pa, set, reset)
 	}
 	pmap_clear_pv(pa, NULL);
 	splx(s);
+}
+
+void
+pmap_kenter_pa(va, pa, prot)
+	vaddr_t va;
+	paddr_t pa;
+	vm_prot_t prot;
+{
+#ifdef PMAPDEBUG
+	if (pmapdebug & PDB_FOLLOW && pmapdebug & PDB_ENTER)
+		printf("pmap_kenter_pa(%x, %x, %x)\n", va, pa, prot);
+#endif
+
+	simple_lock(&pmap_kernel()->pmap_lock);
+
+	pmap_enter_pv(pmap_kernel(), va, pmap_prot(pmap_kernel(), prot),
+		      tlbbtop(pa), pmap_find_pv(pa));
+	pmap_kernel()->pmap_stats.resident_count++;
+	pmap_kernel()->pmap_stats.wired_count++;
+
+	simple_unlock(&pmap_kernel()->pmap_lock);
+
+#ifdef PMAPDEBUG
+	if (pmapdebug & PDB_ENTER)
+		printf("pmap_kenter_pa: leaving\n");
+#endif
+}
+
+void
+pmap_kenter_pgs(va, pgs, npgs)
+	vaddr_t va;
+	vm_page_t *pgs;
+	int npgs;
+{
+	int i;
+
+	for (i = 0; i < npgs; i++)
+		pmap_kenter_pa(va + i*NBPG, VM_PAGE_TO_PHYS(pgs[i]), VM_PROT_ALL);
+}
+
+void
+pmap_kremove(va, size)
+	vaddr_t va;
+	vsize_t size;
+{
+	pmap_remove(kernel_pmap, va, va + size);
 }
 
 int
