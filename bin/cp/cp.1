@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cp.1,v 1.17 2000/11/09 17:51:54 aaron Exp $
+.\"	$OpenBSD: cp.1,v 1.18 2000/11/10 13:03:00 aaron Exp $
 .\"	$NetBSD: cp.1,v 1.9 1995/07/25 19:36:45 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -172,7 +172,7 @@ flags (in conjunction with the
 flag) cause symbolic links to be followed as described above.
 The
 .Fl H ,
-.Fl L
+.Fl L ,
 and
 .Fl P
 options are ignored unless the
@@ -205,6 +205,12 @@ Copy the directory
 and all of its contents (including any subdirectories) to the
 .Pa /tmp
 directory.
+.Sh SEE ALSO
+.Xr mv 1 ,
+.Xr rcp 1 ,
+.Xr umask 2 ,
+.Xr fts 3 ,
+.Xr symlink 7
 .Sh COMPATIBILITY
 Historic versions of the
 .Nm
@@ -215,12 +221,6 @@ This implementation supports that option; however, its use is strongly
 discouraged, as it does not correctly copy special files, symbolic links
 or
 .Tn FIFO Ns s.
-.Sh SEE ALSO
-.Xr mv 1 ,
-.Xr rcp 1 ,
-.Xr umask 2 ,
-.Xr fts 3 ,
-.Xr symlink 7
 .Sh STANDARDS
 The
 .Nm
