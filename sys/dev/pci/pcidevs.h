@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.659 2003/08/01 17:55:46 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.660 2003/08/02 18:26:51 fgsch Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -748,6 +748,7 @@
 #define	PCI_PRODUCT_ADMTEK_AL981	0x0981		/* AL981 */
 #define	PCI_PRODUCT_ADMTEK_AN983	0x0985		/* AN983 */
 #define	PCI_PRODUCT_ADMTEK_AN985	0x1985		/* AN985 */
+#define	PCI_PRODUCT_ADMTEK_ADM8211	0x8201		/* ADM8211 WLAN */
 
 /* Adaptec products */
 #define	PCI_PRODUCT_ADP_AIC7810	0x1078		/* AIC-7810 */
