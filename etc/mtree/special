@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.7 1996/12/14 19:40:14 millert Exp $
+#	$OpenBSD: special,v 1.8 1996/12/15 20:21:56 millert Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -111,10 +111,16 @@ yp		type=dir mode=0755 uname=root gname=wheel optional ignore
 ..	#var/yp
 backups		type=dir mode=0755 uname=root gname=wheel ignore
 ..	#var/backups
+cron		type=dir mode=0555 uname=root gname=wheel
+log		type=file mode=0600 uname=root gname=wheel
+tabs		type=dir mode=0700 uname=root gname=wheel ignore
+..	#var/cron/tabs
+..	#var/cron
 db		type=dir mode=0755 uname=root gname=wheel
 kvm_bsd.db	type=file mode=0644 uname=root gname=wheel
 ..	#var/db
 log		type=dir mode=0755 uname=root gname=wheel
+authlog		type=file mode=0640 uname=root gname=wheel
 secure		type=file mode=0600 uname=root gname=wheel
 wtmp		type=file mode=0644 uname=root gname=wheel
 ..	#var/log
