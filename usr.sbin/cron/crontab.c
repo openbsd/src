@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.20 2001/07/09 07:05:00 deraadt Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.21 2001/08/11 20:47:14 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: crontab.c,v 1.20 2001/07/09 07:05:00 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: crontab.c,v 1.21 2001/08/11 20:47:14 millert Exp $";
 #endif
 
 /* crontab - install and manage per-user crontab files
@@ -432,8 +432,9 @@ edit_cmd(void) {
 	for (;;) {
 		xpid = waitpid(pid, &waiter, WUNTRACED);
 		if (xpid == -1) {
-			fprintf(stderr, "%s: waitpid() failed waiting for PID %ld from \"%s\": %s\n",
-				ProgramName, (long)pid, editor, strerror(errno));
+			if (errno != EINTR)
+				fprintf(stderr, "%s: waitpid() failed waiting for PID %ld from \"%s\": %s\n",
+					ProgramName, (long)pid, editor, strerror(errno));
 		} else if (xpid != pid) {
 			fprintf(stderr, "%s: wrong PID (%ld != %ld) from \"%s\"\n",
 				ProgramName, (long)xpid, (long)pid, editor);
