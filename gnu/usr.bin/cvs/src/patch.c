@@ -179,7 +179,7 @@ patch (argc, argv)
 
 	if (local)
 	    send_arg("-l");
-	if (force_tag_match)
+	if (!force_tag_match)
 	    send_arg("-f");
 	if (toptwo_diffs)
 	    send_arg("-t");
