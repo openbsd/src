@@ -1,0 +1,82 @@
+#	$OpenBSD: list,v 1.1 2004/12/31 00:14:07 drahn Exp $
+
+SRCDIRS distrib/special
+SRCDIRS gnu/usr.bin usr.bin bin sbin usr.sbin
+
+# copy the crunched binary, link to it, and kill it
+COPY	${OBJDIR}/instbin			instbin
+LINK	instbin					bin/cat
+LINK	instbin					bin/chmod bin/chgrp sbin/chown
+LINK	instbin					bin/cp
+LINK	instbin					bin/dd
+LINK	instbin					bin/df
+LINK	instbin					bin/ed
+LINK	instbin					bin/expr
+LINK	instbin					bin/hostname
+LINK	instbin					bin/ln
+LINK	instbin					bin/ls
+LINK	instbin					bin/mkdir
+LINK	instbin					bin/mt bin/eject
+LINK	instbin					bin/mv
+LINK	instbin					bin/pax bin/tar bin/cpio
+LINK	instbin					bin/rm
+LINK	instbin					bin/ksh bin/sh
+ARGVLINK ksh					-sh
+LINK	instbin					bin/stty
+LINK	instbin					bin/sync
+LINK	instbin					sbin/disklabel
+#LINK	instbin					sbin/fdisk
+LINK	instbin					sbin/fsck_ffs sbin/fsck
+LINK	instbin					sbin/fsck_ext2fs
+LINK	instbin					sbin/reboot sbin/halt
+LINK	instbin					sbin/ifconfig
+LINK	instbin					sbin/init
+LINK	instbin					sbin/dhclient
+LINK	instbin					sbin/dmesg
+LINK	instbin					sbin/mknod
+LINK	instbin					sbin/mount
+LINK	instbin					sbin/mount_cd9660
+LINK	instbin					sbin/mount_ffs
+LINK	instbin					sbin/mount_msdos
+LINK	instbin					sbin/mount_nfs
+LINK	instbin					sbin/mount_ext2fs
+LINK	instbin					sbin/newfs
+LINK	instbin					sbin/newfs_msdos
+LINK	instbin					sbin/ping
+LINK	instbin					sbin/ping6
+LINK	instbin					sbin/route
+LINK	instbin					sbin/rtsol
+LINK	instbin					sbin/umount
+#LINK	instbin					sbin/kbd
+#LINK	instbin					sbin/wicontrol
+LINK	instbin					usr/bin/grep usr/bin/fgrep usr/bin/egrep
+LINK	instbin					usr/bin/ftp
+LINK	instbin					usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
+LINK	instbin					usr/bin/less usr/bin/more
+LINK	instbin					usr/bin/sed
+
+# copy the MAKEDEV script and make some devices
+SCRIPT	${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV
+SPECIAL	cd dev; sh MAKEDEV ramdisk
+
+# various files that we need in /etc for the install
+COPY	${DESTDIR}/etc/group			etc/group
+COPY	${DESTDIR}/etc/spwd.db			etc/spwd.db
+COPY	${CURDIR}/../../miniroot/protocols	etc/protocols
+COPY	${CURDIR}/../../miniroot/services	etc/services
+SYMLINK	/tmp/disktab.shadow			etc/disktab
+SYMLINK	/tmp/fstab.shadow			etc/fstab
+SYMLINK	/tmp/resolv.conf.shadow			etc/resolv.conf
+SYMLINK	/tmp/hosts				etc/hosts
+TERMCAP	vt100,vt220,dumb			usr/share/misc/termcap
+
+# dhcp things
+SCRIPT    ${DESTDIR}/sbin/dhclient-script	sbin/dhclient-script
+
+# and the installation tools
+SCRIPT	${CURDIR}/../../miniroot/dot.profile	.profile
+SCRIPT	${CURDIR}/install.md			install.md
+SCRIPT	${CURDIR}/../../miniroot/upgrade.sh	upgrade
+SCRIPT	${CURDIR}/../../miniroot/install.sh	install
+SCRIPT	${CURDIR}/../../miniroot/install.sub	install.sub
+SPECIAL	chmod 755 install upgrade sbin/dhclient-script
