@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.8 1999/10/09 03:42:03 csapuntz Exp $ */
+/*	$OpenBSD: wd.c,v 1.9 1999/10/09 07:14:00 csapuntz Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -297,9 +297,6 @@ wdattach(parent, self, aux)
 		return;
 	}
 
-	wdc_probe_caps(wd->drvp, &wd->sc_params);
-	wdc_print_caps(wd->drvp);
-
 	for (blank = 0, p = wd->sc_params.atap_model, q = buf, i = 0;
 	    i < sizeof(wd->sc_params.atap_model); i++) {
 		c = *p++;
@@ -317,6 +314,9 @@ wdattach(parent, self, aux)
 	*q++ = '\0';
 
 	printf(": <%s>\n", buf);
+
+	wdc_probe_caps(wd->drvp, &wd->sc_params);
+	wdc_print_caps(wd->drvp);
 
 	if ((wd->sc_params.atap_multi & 0xff) > 1) {
 		wd->sc_multi = wd->sc_params.atap_multi & 0xff;
