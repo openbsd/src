@@ -26,7 +26,7 @@
 .\"this software for any purpose.  It is provided "as is" without express
 .\"or implied warranty.
 .\"
-.\"	$OpenBSD: kuserok.3,v 1.4 1998/02/25 15:51:28 art Exp $
+.\"	$OpenBSD: kuserok.3,v 1.5 1998/03/25 21:00:39 art Exp $
 .TH KUSEROK 3 "Kerberos Version 4.0" "MIT Project Athena"
 .SH NAME
 kuserok \- Kerberos version of ruserok
@@ -49,7 +49,7 @@ determines whether a Kerberos principal described by the structure
 is authorized to login as user
 .I localuser
 according to the authorization file
-("~\fIlocaluser\fR/etc/kerberosIV/master_keylogin" by default).  It returns 0 (zero) if authorized,
+("~\fIlocaluser\fR/.klogin" by default).  It returns 0 (zero) if authorized,
 1 (one) if not authorized.
 .PP
 If there is no account for 
@@ -81,5 +81,5 @@ with one entry per line.
 kerberos(3), ruserok(3), krb_kntoln(3)
 .SH FILES
 .TP 20n
-~\fIlocaluser\fR/etc/kerberosIV/master_keylogin
+~\fIlocaluser\fR/.klogin
 authorization list
