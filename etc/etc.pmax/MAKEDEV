@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.5 1996/07/23 06:32:59 etheisen Exp $
+#	$OpenBSD: MAKEDEV,v 1.6 1996/08/28 08:55:27 deraadt Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
@@ -30,7 +30,7 @@
 #	cfb*	raw interface to turbochannel PMAG-BA color frame buffer
 #	xcfb*	raw interface to maxine graphics devices
 #	mfb*	raw interface to mono graphics devices
-#	*rnd	random data source
+#	*random	random data source
 
 PATH=/sbin:/bin/:/usr/bin:/usr/sbin
 umask 77
@@ -249,14 +249,15 @@ pty*)
 	esac
 	;;
 
-rnd|srnd|urnd|prnd)
-	rm -f rnd urnd srnd prnd
-	mknod  rnd c 89 0
-	mknod srnd c 89 1
-	mknod urnd c 89 2
-	mknod prnd c 89 3
-	chown root.wheel rnd srnd urnd prnd
-	chmod 644 rnd srnd urnd prnd
+random|srandom|urandom|prandom|arandom)
+	rm -f random urandom srandom prandom arandom
+	mknod  random c 89 0
+	mknod srandom c 89 1
+	mknod urandom c 89 2
+	mknod prandom c 89 3
+	mknod arandom c 89 4
+	chown root.wheel random srandom urandom prandom arandom
+	chmod 644 random srandom urandom prandom arandom
 	;;
 
 local)

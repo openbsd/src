@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.11 1996/08/23 18:26:29 niklas Exp $
+#	$OpenBSD: MAKEDEV,v 1.12 1996/08/28 08:55:20 deraadt Exp $
 #	$NetBSD: MAKEDEV,v 1.21 1996/05/19 21:03:49 veego Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -91,7 +91,7 @@
 #	ipf	IP filter
 #	ss*	SCSI scanner
 #	uk*	unknown SCSI
-#	*rnd	random data source
+#	*random	random data source
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 umask 77
@@ -107,7 +107,7 @@ all)
 	sh MAKEDEV vnd5 vnd6 cd0 fd0 fd1 fd2 fd3 bpf0 bpf1 bpf2 bpf3
 	sh MAKEDEV lpa0 lpa1 lpt0 lpt1 lpt2 ipl
 	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
-	sh MAKEDEV tun0 tun1 par0 lkm ss0 rnd local
+	sh MAKEDEV tun0 tun1 par0 lkm ss0 random local
 	;;
 
 floppy)
@@ -480,14 +480,15 @@ ss*)
 	chown root.wheel ss$unit
 	;;
 
-rnd|srnd|urnd|prnd)
-	rm -f rnd urnd srnd prnd
-	mknod  rnd c 35 0
-	mknod srnd c 35 1
-	mknod urnd c 35 2
-	mknod prnd c 35 3
-	chown root.wheel rnd srnd urnd prnd
-	chmod 644 rnd srnd urnd prnd
+random|srandom|urandom|prandom|arandom)
+	rm -f random urandom srandom prandom arandom
+	mknod  random c 35 0
+	mknod srandom c 35 1
+	mknod urandom c 35 2
+	mknod prandom c 35 3
+	mknod arandom c 35 4
+	chown root.wheel random srandom urandom prandom arandom
+	chmod 644 random srandom urandom prandom arandom
 	;;
 
 uk*)

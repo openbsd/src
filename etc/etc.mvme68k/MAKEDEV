@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.9 1996/07/23 06:32:57 etheisen Exp $
+#	$OpenBSD: MAKEDEV,v 1.10 1996/08/28 08:55:25 deraadt Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -33,7 +33,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: MAKEDEV,v 1.9 1996/07/23 06:32:57 etheisen Exp $
+#	$Id: MAKEDEV,v 1.10 1996/08/28 08:55:25 deraadt Exp $
 #
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices,
@@ -66,6 +66,7 @@
 # Special purpose devices:
 #	lkm	loadable kernel modules interface.
 #	bpf*	Berkeley Packet Filter
+#	*random	inkernel random number generator
 #	tun*	network tunnel driver
 #
 # Machine specific devices:
@@ -91,7 +92,7 @@ all)
 	sh MAKEDEV tun0 tun1 lkm local
 	sh MAKEDEV sram0 nvram0 flash0 vmel0 vmes0
 	#sh MAKEDEV lp0 lptwo0
-	sh MAKEDEV rnd
+	sh MAKEDEV random
 	;;
 
 std)
@@ -347,6 +348,17 @@ sram*|nvram*|flash*|vmel*|vmes*)
         mknod $i c ${maj} 0
         chown root:kmem $i
         chmod 640 $i
+	;;
+
+random|srandom|urandom|prandom|arandom)
+	rm -f random urandom srandom prandom arandom
+	mknod  random c 40 0
+	mknod srandom c 40 1
+	mknod urandom c 40 2
+	mknod prandom c 40 3
+	mknod arandom c 40 4
+	chown root.wheel random srandom urandom prandom arandom
+	chmod 644 random srandom urandom prandom arandom
 	;;
 
 local)

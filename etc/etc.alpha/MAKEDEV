@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.7 1996/07/23 06:15:13 etheisen Exp $
+#	$OpenBSD: MAKEDEV,v 1.8 1996/08/28 08:55:18 deraadt Exp $
 #	$NetBSD: MAKEDEV,v 1.8.4.1 1996/06/18 00:41:56 cgd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -69,7 +69,7 @@
 #	mmclock	memory mapped clock
 #	kbd	keyboard (provides events, for X11)
 #	mouse	mouse (provides events, for X11)
-#	*rnd	inkernel random number generator
+#	*random	inkernel random number generator
 #	uk*	unknown SCSI
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
@@ -84,7 +84,7 @@ all)
 	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 tun0 tun1 tun2 tun3
 	sh MAKEDEV ttyB0 ttyB1 ttyC0 ttyC1 ttyE0 ttyE1 lkm
-	sh MAKEDEV mmclock kbd mouse lpa0 lpt0 rnd
+	sh MAKEDEV mmclock kbd mouse lpa0 lpt0 random
 	sh MAKEDEV local
 	;;
 
@@ -274,14 +274,15 @@ lpt*|lpa*)
 	chown root.wheel $name$unit
 	;;
 
-rnd|srnd|urnd|prnd)
-	rm -f rnd urnd srnd prnd
-	mknod  rnd c 33 0
-	mknod srnd c 33 1
-	mknod urnd c 33 2
-	mknod prnd c 33 3
-	chown root.wheel rnd srnd urnd prnd
-	chmod 644 rnd srnd urnd prnd
+random|srandom|urandom|prandom|arandom)
+	rm -f random urandom srandom prandom arandom
+	mknod  random c 33 0
+	mknod srandom c 33 1
+	mknod urandom c 33 2
+	mknod prandom c 33 3
+	mknod arandom c 33 4
+	chown root.wheel random srandom urandom prandom arandom
+	chmod 644 random srandom urandom prandom arandom
 	;;
 
 uk*)

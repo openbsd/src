@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.4 1996/07/23 06:32:54 etheisen Exp $
+#	$OpenBSD: MAKEDEV,v 1.5 1996/08/28 08:55:22 deraadt Exp $
 #	$NetBSD: MAKEDEV,v 1.3 1996/04/26 20:10:24 mark Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
 #	ss*	SCSI scanner device
 #	iic*	IIC bus device
 #	rtc*	RTC device
-#	*rnd	random data source
+#	*random	random data source
 #
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
@@ -92,7 +92,7 @@ all)
 	sh MAKEDEV std fd fd0 fd1 wd0 wd1 rd0 rd1 sd0 sd1 sd2 tty0 tty1 pty0 pty1
 	sh MAKEDEV st0 st1 ch0 cd0 cd1 vnd0 vnd1 ccd0 ccd1 uk0 uk1 ss0
 	sh MAKEDEV ttyv0 ttyv1 ttyv2 ttyv3 ttyv4 ttyv5 ttyv6 ttyv7 ttyv8 ttyv9
-	sh MAKEDEV lpa0 lpt0 bpf0 bpf1 bpf2 bpf3 tun0 tun1 tun2 rnd
+	sh MAKEDEV lpa0 lpt0 bpf0 bpf1 bpf2 bpf3 tun0 tun1 tun2 random
 	sh MAKEDEV beep lkm quadmouse local cpu0 cpu1 cpu2 cpu3 cpu4 cpu5
 	;;
 
@@ -347,14 +347,15 @@ cpu*)
 	;;
 
 
-rnd|srnd|urnd|prnd)
-	rm -f rnd urnd srnd prnd
-	mknod  rnd c 44 0
-	mknod srnd c 44 1
-	mknod urnd c 44 2
-	mknod prnd c 44 3
-	chown root.wheel rnd srnd urnd prnd
-	chmod 644 rnd srnd urnd prnd
+random|srandom|urandom|prandom|arandom)
+	rm -f random urandom srandom prandom arandom
+	mknod  random c 44 0
+	mknod srandom c 44 1
+	mknod urandom c 44 2
+	mknod prandom c 44 3
+	mknod arandom c 44 4
+	chown root.wheel random srandom urandom prandom arandom
+	chmod 644 random srandom urandom prandom arandom
 	;;
 
 local)

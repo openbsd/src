@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.6 1996/07/23 06:33:00 etheisen Exp $
+#	$OpenBSD: MAKEDEV,v 1.7 1996/08/28 08:55:28 deraadt Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -65,7 +65,7 @@
 #	bpf*	packet filter
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
-#	*rnd	random data source
+#	*random	random data source
 
 PATH=/sbin:/bin/:/usr/bin:/usr/sbin:/usr/etc
 umask 77
@@ -85,7 +85,7 @@ all)
 	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 ipl bwtwo0 cgthree0 cgfour0 cgsix0
 	sh MAKEDEV cgeight0
-	sh MAKEDEV lkm rnd local
+	sh MAKEDEV lkm random local
 	;;
 std)
 	mknod console		c 0 0
@@ -275,14 +275,15 @@ pty*)
 	esac
 	;;
 
-rnd|srnd|urnd|prnd)
-	rm -f rnd urnd srnd prnd
-	mknod  rnd c 119 0
-	mknod srnd c 119 1
-	mknod urnd c 119 2
-	mknod prnd c 119 3
-	chown root.wheel rnd srnd urnd prnd
-	chmod 644 rnd srnd urnd prnd
+random|srandom|urandom|prandom|arandom)
+	rm -f random urandom srandom prandom arandom
+	mknod  random c 119 0
+	mknod srandom c 119 1
+	mknod urandom c 119 2
+	mknod prandom c 119 3
+	mknod arandom c 119 4
+	chown root.wheel random srandom urandom prandom arandom
+	chmod 644 random srandom urandom prandom arandom
 	;;
 
 local)

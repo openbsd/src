@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.18 1996/08/24 21:05:09 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.19 1996/08/28 08:55:23 deraadt Exp $
 #	$NetBSD: MAKEDEV,v 1.40 1996/03/31 00:50:47 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
 #	tun*	network tunnel driver
 #	joy*	joystick driver
 #	pcmcia*	PCMCIA card drivers
-#	*rnd	inkernel random number generator
+#	*random	inkernel random number generator
 #	uk*	"unknown SCSI" devices
 #
 
@@ -96,7 +96,7 @@ all)
 	sh MAKEDEV lpt0 lpt1 lpt2 ttyC0 ttyC1 ttyC2 bpf0 bpf1 bpf2 bpf3
 	sh MAKEDEV ipl tun0 tun1 tun2
 	sh MAKEDEV speaker lkm mms0 lms0 pms0 audio joy0 joy1 apm pcmcia local
-	sh MAKEDEV rnd uk0 uk1 pctr
+	sh MAKEDEV random uk0 uk1 pctr
 # MISSING:
 #	sh MAKEDEV mouse-?
 	;;
@@ -203,9 +203,10 @@ ccd*|fd*|sd*|vnd*|wd*)
 
 com*|tty*)					# (XXX -- com should die)
 	unit=`expr $i : '...\(.*\)'`
-	rm -f com$unit tty0$unit
+	rm -f com$unit tty0$unit cua0$unit
 	mknod tty0$unit c 8 $unit
-	chown uucp.wheel tty0$unit
+	mknod cua0$unit c 8 `expr $unit + 128`
+	chown uucp.wheel tty0$unit cua0$unit
 	;;
 
 pty*)
@@ -399,14 +400,15 @@ apm*)
 	chmod 644 apm apmctl
 	;;
 
-rnd|srnd|urnd|prnd)
-	rm -f rnd urnd srnd prnd
-	mknod  rnd c 45 0
-	mknod srnd c 45 1
-	mknod urnd c 45 2
-	mknod prnd c 45 3
-	chown root.wheel rnd srnd urnd prnd
-	chmod 644 rnd srnd urnd prnd
+random|srandom|urandom|prandom|arandom)
+	rm -f random urandom srandom prandom arandom
+	mknod  random c 45 0
+	mknod srandom c 45 1
+	mknod urandom c 45 2
+	mknod prandom c 45 3
+	mknod arandom c 45 4
+	chown root.wheel random srandom urandom prandom arandom
+	chmod 644 random srandom urandom prandom arandom
 	;;
 
 pcmcia*)

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.7 1996/07/15 14:59:20 mickey Exp $
+#	$OpenBSD: MAKEDEV,v 1.8 1996/08/28 08:55:29 deraadt Exp $
 #	$NetBSD: MAKEDEV,v 1.8 1996/03/03 16:54:17 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
 #	rd*	RAM-disk
-#	*rnd	random data source
+#	*random	random data source
 
 # XXX - Keep /usr/etc so SunOS can find chown
 PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/etc
@@ -84,7 +84,7 @@ unit=`expr $arg : '[a-z][a-z]*\([0-9][0-9]*\)'`
 case $arg in
 
 all)
-      sh MAKEDEV std fd sd0 sd1 sd2 sd3 st0 st1 pty0 rnd
+      sh MAKEDEV std fd sd0 sd1 sd2 sd3 st0 st1 pty0 random
 	;;
 
 std)
@@ -208,14 +208,15 @@ rd*)
 	mk rd${unit}c b 13 `expr $unit + 16`
 	;;
 
-rnd|srnd|urnd|prnd)
-	rm -f rnd urnd srnd prnd
-	mknod  rnd c 72 0
-	mknod srnd c 72 1
-	mknod urnd c 72 2
-	mknod prnd c 72 3
-	chown root.wheel rnd srnd urnd prnd
-	chmod 644 rnd srnd urnd prnd
+random|srandom|urandom|prandom|arandom)
+	rm -f random urandom srandom prandom arandom
+	mknod  random c 72 0
+	mknod srandom c 72 1
+	mknod urandom c 72 2
+	mknod prandom c 72 3
+	mknod arandom c 72 4
+	chown root.wheel random srandom urandom prandom arandom
+	chmod 644 random srandom urandom prandom arandom
 	;;
 
 local)

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.4 1996/07/23 06:32:58 etheisen Exp $
+#	$OpenBSD: MAKEDEV,v 1.5 1996/08/28 08:55:27 deraadt Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
@@ -40,7 +40,7 @@
 #	bpf*	packet filter
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
-#	*rnd	random data source
+#	*random	random data source
 #
 # Platform-specific devices:
 #
@@ -53,7 +53,7 @@ case $i in
 
 all)        
         sh MAKEDEV std fd fd0 sd0 sd1 sd2 st0 cd0 tty0 tty1 pty0 pty1
-        sh MAKEDEV ttyv0 lpt0 pms0 rnd local
+        sh MAKEDEV ttyv0 lpt0 pms0 random local
         ;;
 
 std)
@@ -243,14 +243,15 @@ pty*)
 	esac
 	;;
 
-rnd|srnd|urnd|prnd)
-	rm -f rnd urnd srnd prnd
-	mknod  rnd c 32 0
-	mknod srnd c 32 1
-	mknod urnd c 32 2
-	mknod prnd c 32 3
-	chown root.wheel rnd srnd urnd prnd
-	chmod 644 rnd srnd urnd prnd
+random|srandom|urandom|prandom|arandom)
+	rm -f random urandom srandom prandom arandom
+	mknod  random c 32 0
+	mknod srandom c 32 1
+	mknod urandom c 32 2
+	mknod prandom c 32 3
+	mknod arandom c 32 4
+	chown root.wheel random srandom urandom prandom arandom
+	chmod 644 random srandom urandom prandom arandom
 	;;
 
 local)
