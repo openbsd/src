@@ -1,3 +1,5 @@
+/*	$OpenBSD: ntp.h,v 1.2 2004/06/01 22:02:32 henning Exp $ */
+
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2004 Alexander Guy <alexander.guy@andern.org>
