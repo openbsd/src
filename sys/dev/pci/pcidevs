@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.188 1999/10/26 04:15:39 downsj Exp $
+$OpenBSD: pcidevs,v 1.189 1999/10/26 23:34:37 chris Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1006,6 +1006,7 @@ product KTI KTIE		0x3000	KTI
 product LMC HSSI		0x0003	HSSI
 product LMC DS3			0x0004	DS3
 product LMC SSI			0x0005	SSI
+product LMC DS1			0x0006	DS1
 
 /* LeadTek Research */
 product LEADTEK S3_805		0x0000	S3 805
