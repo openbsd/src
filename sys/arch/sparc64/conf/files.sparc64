@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.17 2001/10/01 18:11:57 jason Exp $
+#	$OpenBSD: files.sparc64,v 1.18 2001/10/05 17:37:30 jason Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -165,3 +165,7 @@ major { vnd = 8 }
 major { cd = 18 }
 major { rd = 5 }
 
+#
+# Machine-independent USB drivers
+#
+include "dev/usb/files.usb"
