@@ -1638,6 +1638,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/net/ppp-comp.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net/ppp_defs.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net/radix.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/net/radix_mpath.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net/raw_cb.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net/route.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/net/slcompress.ph

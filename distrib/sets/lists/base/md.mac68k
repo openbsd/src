@@ -1603,6 +1603,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/ppp-comp.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/ppp_defs.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/radix.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/net/radix_mpath.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/raw_cb.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/route.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/slcompress.ph

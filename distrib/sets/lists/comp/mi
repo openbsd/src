@@ -864,6 +864,7 @@
 ./usr/include/net/ppp-comp.h
 ./usr/include/net/ppp_defs.h
 ./usr/include/net/radix.h
+./usr/include/net/radix_mpath.h
 ./usr/include/net/raw_cb.h
 ./usr/include/net/route.h
 ./usr/include/net/slcompress.h
