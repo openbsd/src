@@ -1,4 +1,4 @@
-/*	$OpenBSD: comreg.h,v 1.5 1996/11/25 23:09:35 niklas Exp $	*/
+/*	$OpenBSD: comreg.h,v 1.6 1996/12/10 22:28:30 deraadt Exp $	*/
 /*	$NetBSD: comreg.h,v 1.8 1996/02/05 23:01:50 scottr Exp $	*/
 
 /*-

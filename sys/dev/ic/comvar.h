@@ -1,4 +1,4 @@
-/*	$OpenBSD: comvar.h,v 1.5 1996/11/29 22:54:52 niklas Exp $	*/
+/*	$OpenBSD: comvar.h,v 1.6 1996/12/10 22:28:31 deraadt Exp $	*/
 /*	$NetBSD: comvar.h,v 1.5 1996/05/05 19:50:47 christos Exp $	*/
 
 /*
@@ -40,11 +40,77 @@ struct commulti_attach_args {
 	int		ca_noien;
 };
 
-int comprobe1 __P((bus_space_tag_t, bus_space_handle_t, int));
-void cominit __P((bus_space_tag_t, bus_space_handle_t, int));
-int comintr __P((void *));
+#define	COM_IBUFSIZE	(2 * 512)
+#define	COM_IHIGHWATER	((3 * COM_IBUFSIZE) / 4)
+
+struct com_softc {
+	struct device sc_dev;
+	void *sc_ih;
+	bus_space_tag_t sc_iot;
+	struct tty *sc_tty;
+
+	int sc_overflows;
+	int sc_floods;
+	int sc_errors;
+
+	int sc_halt;
+
+	int sc_iobase;
+#ifdef COM_HAYESP
+	int sc_hayespbase;
+#endif
+
+	bus_space_handle_t sc_ioh;
+	bus_space_handle_t sc_hayespioh;
+	isa_chipset_tag_t sc_ic;
+
+	u_char sc_hwflags;
+#define	COM_HW_NOIEN	0x01
+#define	COM_HW_FIFO	0x02
+#define	COM_HW_HAYESP	0x04
+#define	COM_HW_ABSENT_PENDING	0x08	/* reattached, awaiting close/reopen */
+#define	COM_HW_ABSENT	0x10		/* configure actually failed, or removed */
+#define	COM_HW_REATTACH	0x20		/* reattaching */
+#define	COM_HW_CONSOLE	0x40
+	u_char sc_swflags;
+#define	COM_SW_SOFTCAR	0x01
+#define	COM_SW_CLOCAL	0x02
+#define	COM_SW_CRTSCTS	0x04
+#define	COM_SW_MDMBUF	0x08
+	u_char sc_msr, sc_mcr, sc_lcr, sc_ier;
+	u_char sc_dtr;
+
+	u_char	sc_cua;
+
+	u_char	sc_initialize;		/* force initialization */
+
+	u_char *sc_ibuf, *sc_ibufp, *sc_ibufhigh, *sc_ibufend;
+	u_char sc_ibufs[2][COM_IBUFSIZE];
+};
+
+int	comprobe1 __P((bus_space_tag_t, bus_space_handle_t, int));
+void	cominit __P((bus_space_tag_t, bus_space_handle_t, int));
+int	comintr __P((void *));
+void	com_absent_notify __P((struct com_softc *sc));
+
+#ifdef COM_HAYESP
+int comprobeHAYESP __P((bus_space_handle_t hayespioh, struct com_softc *sc));
+#endif
+void	comdiag		__P((void *));
+int	comspeed	__P((long));
+int	comparam	__P((struct tty *, struct termios *));
+void	comstart	__P((struct tty *));
+void	compoll		__P((void *));
+
+struct consdev;
+void	comcnprobe	__P((struct consdev *));
+void	comcninit	__P((struct consdev *));
+int	comcngetc	__P((dev_t));
+void	comcnputc	__P((dev_t, int));
+void	comcnpollc	__P((dev_t, int));
 
 extern int comconsaddr;
+extern int comconsinit;
 extern int comconsattached;
 extern bus_space_tag_t comconsiot;
 extern bus_space_handle_t comconsioh;
