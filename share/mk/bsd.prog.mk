@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.6 1996/11/14 14:41:39 mickey Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.7 1996/12/08 14:42:32 downsj Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -107,7 +107,7 @@ afterinstall:
 .if !target(realinstall)
 realinstall:
 .if defined(PROG)
-	install ${COPY} ${STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+	${INSTALL} ${COPY} ${STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 	    ${PROG} ${DESTDIR}${BINDIR}
 .endif
 .if defined(HIDEGAME)
