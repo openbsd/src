@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.3 2005/02/17 17:30:22 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.4 2005/02/17 17:38:12 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -1545,16 +1545,17 @@ ral_tx_data(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	struct ieee80211_frame_rts *rts;
 	struct ieee80211_duration d0, dn;
 	struct mbuf *m, *mnew;
-	int npkt, error;
+	int rate, npkt, error;
 
 	wh = mtod(m0, struct ieee80211_frame *);
 
 	ni->ni_txrate = ieee80211_rssadapt_choose(&sc->rssadapt, &ni->ni_rates,
 	    wh, m0->m_pkthdr.len, ic->ic_fixed_rate, NULL, 0);
+	rate = ni->ni_rates.rs_rates[ni->ni_txrate] & IEEE80211_RATE_VAL;
 
 	error = ieee80211_compute_duration(wh, m0->m_pkthdr.len, ic->ic_flags,
-	    ic->ic_fragthreshold, ni->ni_rates.rs_rates[ni->ni_txrate], &d0,
-	    &dn, &npkt, ifp->if_flags & IFF_DEBUG);
+	    ic->ic_fragthreshold, rate, &d0, &dn, &npkt,
+	    ifp->if_flags & IFF_DEBUG);
 	if (error != 0) {
 		printf("%s: could not compute duration\n", sc->sc_dev.dv_xname);
 		m_freem(m0);
@@ -1679,8 +1680,7 @@ ral_tx_data(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	desc->plcp_service = 4;
 	if (d0.d_residue != 0)
 		desc->plcp_service |= RAL_PLCP_LENGEXT;
-	desc->plcp_signal =
-	    ral_plcp_signal(ni->ni_rates.rs_rates[ni->ni_txrate]);
+	desc->plcp_signal = ral_plcp_signal(rate);
 	if (ic->ic_flags & IEEE80211_F_SHPREAMBLE)
 		desc->plcp_signal |= 0x8;
 
