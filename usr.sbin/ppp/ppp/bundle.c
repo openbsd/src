@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: bundle.c,v 1.38 2000/06/18 10:08:59 brian Exp $
+ *	$OpenBSD: bundle.c,v 1.39 2000/06/23 09:47:30 brian Exp $
  */
 
 #include <sys/param.h>
@@ -1160,7 +1160,8 @@ bundle_ShowStatus(struct cmdargs const *arg)
                   (secs / 60) % 60, secs % 60);
   }
   prompt_Printf(arg->prompt, "\n Queued:        %lu of %u\n",
-                ip_QueueLen(&arg->bundle->ncp.ipcp), arg->bundle->cfg.ifqueue);
+                (unsigned long)ip_QueueLen(&arg->bundle->ncp.ipcp),
+                arg->bundle->cfg.ifqueue);
 
   prompt_Printf(arg->prompt, "\nDefaults:\n");
   prompt_Printf(arg->prompt, " Label:         %s\n", arg->bundle->cfg.label);
