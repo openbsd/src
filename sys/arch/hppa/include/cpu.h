@@ -1,7 +1,7 @@
-/*	$OpenBSD: cpu.h,v 1.19 2000/08/15 19:50:42 mickey Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.20 2001/01/29 00:01:58 mickey Exp $	*/
 
 /*
- * Copyright (c) 2000 Michael Shalayeff
+ * Copyright (c) 2000-2001 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -107,16 +107,16 @@ extern const char *cpu_typename;
 #define	HPPA_SPA_ENABLE	0x00000020
 #define	HPPA_NMODSPBUS	64
 
-#define	clockframe	trapframe
+#define	clockframe		trapframe
 #define	CLKF_BASEPRI(framep)	((framep)->tf_eiem == ~0U)
 #define	CLKF_PC(framep)		((framep)->tf_iioq_head)
 #define	CLKF_INTR(framep)	((framep)->tf_flags & TFF_INTR)
 #define	CLKF_USERMODE(framep)	((framep)->tf_flags & T_USER)
 #define	CLKF_SYSCALL(framep)	((framep)->tf_flags & TFF_SYS)
 
-#define	signotify(p)		(void)(p)
-#define	need_resched()		{(void)1;}
-#define	need_proftick(p)	{(void)(p);}
+#define	signotify(p)		(setsoftast())
+#define	need_resched()		(want_resched = 1, setsoftast())
+#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, setsoftast())
 
 #ifndef _LOCORE
 #ifdef _KERNEL
@@ -124,6 +124,8 @@ extern const char *cpu_typename;
 #define MD_CACHE_PURGE 1
 #define MD_CACHE_CTL(a,s,t)	\
 	(((t)? pdcache : fdcache) (HPPA_SID_KERNEL,(vaddr_t)(a),(s)))
+
+extern int want_resched;
 
 #define DELAY(x) delay(x)
 
