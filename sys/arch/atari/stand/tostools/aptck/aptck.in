@@ -1,0 +1,123 @@
+/*	$NetBSD: aptck.in,v 1.1.1.1 1996/01/07 21:54:17 leo Exp $	*/
+
+/*
+ * Copyright (c) 1995 Waldi Ravens.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by Waldi Ravens.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#include <sys/types.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include "libtos.h"
+#include "aptck.h"
+
+int		main    PROTO((int, char **));
+
+static void	version PROTO((void)) NORETURN;
+static void	usage   PROTO((void)) NORETURN;
+
+static void
+version()
+{
+	eprintf("%s\n", "$Revision: 1.1 $");
+	xexit(EXIT_SUCCESS);
+}
+
+static void
+usage()
+{
+	eprintf("Usage: aptck [OPTIONS] DISK..\n"
+		"where OPTIONS are:\n"
+		"\t-V         display version information and exit\n"
+		"\t-h         display this help and exit\n"
+		"\t-o FILE    send output to FILE instead of stdout\n"
+		"\t-w         wait for key press before exiting\n\n"
+		"DISK is the concatenation of BUS, TARGET and LUN.\n"
+		"BUS is one of `i' (IDE), `a' (ACSI) or `s' (SCSI).\n"
+		"TARGET and LUN are one decimal digit each. LUN must\n"
+		"not be specified for IDE devices and is optional for\n"
+		"ACSI/SCSI devices (if omitted, LUN defaults to 0).\n\n"
+		"Examples:  a0  refers to ACSI target 0 lun 0\n"
+		"           s21 refers to SCSI target 2 lun 1\n"
+		);
+	xexit(EXIT_SUCCESS);
+}
+
+int
+main(argc, argv)
+	int		argc;
+	char		**argv;
+{
+	extern int	optind;
+	extern char	*optarg;
+
+	disk_t		*dd;
+	int		rv, c;
+
+	init_toslib(*argv);
+
+	while ((c = getopt(argc, argv, "Vho:w")) != -1) {
+		switch (c) {
+		  case 'o':
+			redirect_output(optarg);
+			break;
+		  case 'w':
+		  	set_wait_for_key();
+			break;
+		  case 'V':
+			version();
+			/* NOT REACHED */
+		  case 'h':
+		  default:
+			usage();
+			/* NOT REACHED */
+		}
+	}
+	argv += optind;
+
+	if (!*argv) {
+		error(-1, "missing DISK argument");
+		usage();
+		/* NOT REACHED */
+	}
+
+	c  = isatty(STDOUT_FILENO);
+	rv = EXIT_SUCCESS;
+	while (*argv) {
+		dd = disk_open(*argv++);
+		if (dd) {
+			if (readdisklabel(dd))
+				rv = EXIT_FAILURE;
+			disk_close(dd);
+			if (c)
+				press_any_key();
+		}
+		else rv = EXIT_FAILURE;
+	}
+	return(rv);
+}
