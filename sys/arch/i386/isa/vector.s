@@ -235,18 +235,20 @@ _Xresume/**/irq_num/**/:						;\
 	call	IH_FUN(%ebx)		/* call it */			;\
 	addl	$4,%esp			/* toss the arg */		;\
 	STRAY_INTEGRATE			/* maybe he claimed it */	;\
+	orl	%eax,%eax		/* should it be counted? */	;\
+	jz	5f			/* no, skip it */		;\
 	incl	IH_COUNT(%ebx)		/* count the intrs */		;\
-	movl	IH_NEXT(%ebx),%ebx	/* next handler in chain */	;\
+5:	movl	IH_NEXT(%ebx),%ebx	/* next handler in chain */	;\
 	testl	%ebx,%ebx						;\
 	jnz	7b							;\
 	STRAY_TEST			/* see if it's a stray */	;\
-5:	UNMASK(irq_num, icu)		/* unmask it in hardware */	;\
+6:	UNMASK(irq_num, icu)		/* unmask it in hardware */	;\
 	jmp	_Xdoreti		/* lower spl and do ASTs */	;\
 IDTVEC(stray/**/irq_num)						;\
 	pushl	$irq_num						;\
 	call	_isa_strayintr						;\
 	addl	$4,%esp							;\
-	jmp	5b							;\
+	jmp	6b							;\
 IDTVEC(hold/**/irq_num)							;\
 	orb	$IRQ_BIT(irq_num),_ipending + IRQ_BYTE(irq_num)		;\
 	INTRFASTEXIT
