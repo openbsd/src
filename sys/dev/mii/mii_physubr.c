@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii_physubr.c,v 1.23 2004/12/08 06:57:55 mcbride Exp $	*/
+/*	$OpenBSD: mii_physubr.c,v 1.24 2004/12/16 03:41:58 brad Exp $	*/
 /*	$NetBSD: mii_physubr.c,v 1.20 2001/04/13 23:30:09 thorpej Exp $	*/
 
 /*-
@@ -333,23 +333,35 @@ void
 mii_phy_update(struct mii_softc *sc, int cmd)
 {
 	struct mii_data *mii = sc->mii_pdata;
+	struct ifnet *ifp = mii->mii_ifp;
+	int announce, s;
 
 	if (sc->mii_media_active != mii->mii_media_active ||
 	    sc->mii_media_status != mii->mii_media_status ||
 	    cmd == MII_MEDIACHG) {
+		announce = mii_phy_statusmsg(sc);
 		(*mii->mii_statchg)(sc->mii_dev.dv_parent);
-		mii_phy_statusmsg(sc);
 		sc->mii_media_active = mii->mii_media_active;
 		sc->mii_media_status = mii->mii_media_status;
+
+		if (announce) {
+			s = splnet();
+			rt_ifmsg(ifp);
+			splx(s);
+#if NCARP > 0
+			if (ifp->if_carp)
+				carp_carpdev_state(ifp);
+#endif
+		}
 	}
 }
 
-void
+int
 mii_phy_statusmsg(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifnet *ifp = mii->mii_ifp;
-	int s, baudrate, link_state, announce = 0;
+	int baudrate, link_state, announce = 0;
 
 	if (mii->mii_media_status & IFM_AVALID) {
 		if (mii->mii_media_status & IFM_ACTIVE)
@@ -376,15 +388,7 @@ mii_phy_statusmsg(struct mii_softc *sc)
 		announce = 1;
 	}
 
-	if (announce) {
-		s = splnet();
-		rt_ifmsg(ifp);
-		splx(s);
-#if NCARP > 0
-		if (ifp->if_carp)
-			carp_carpdev_state(ifp);
-#endif
-	}
+	return (announce);
 }
 
 /*
