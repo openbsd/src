@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.27 2001/06/27 04:37:22 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.28 2001/07/09 01:35:33 mickey Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -40,12 +40,8 @@
 #include <sys/user.h>
 #include <sys/ktrace.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-
-#include <uvm/uvm_extern.h>
-
 #include <machine/cpu.h>
+#include <machine/fpu.h>
 #include <machine/frame.h>
 #include <machine/pcb.h>
 #include <machine/pmap.h>
@@ -53,7 +49,16 @@
 #include <machine/trap.h>
 #include <machine/db_machdep.h>
 
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+
+#include <uvm/uvm_extern.h>
+
+#include <ddb/db_extern.h>
+
 static int fix_unaligned __P((struct proc *p, struct trapframe *frame));
+int badaddr __P((char *addr, u_int32_t len));
+void trap __P((struct trapframe *frame));
 
 /* These definitions should probably be somewhere else				XXX */
 #define	FIRSTARG	3		/* first argument is in reg 3 */
@@ -64,6 +69,8 @@ volatile int want_resched;
 
 #ifdef DDB
 u_int32_t db_dumpframe(u_int32_t);
+void ppc_dumpbt __P((struct trapframe *frame));
+
 void
 ppc_dumpbt(struct trapframe *frame)
 {
@@ -76,6 +83,7 @@ ppc_dumpbt(struct trapframe *frame)
 	return;
 }
 #endif
+
 void
 trap(frame)
 	struct trapframe *frame;
@@ -102,7 +110,7 @@ trap(frame)
 		{
 			faultbuf *fb;
 
-			if (fb = p->p_addr->u_pcb.pcb_onfault) {
+			if ((fb = p->p_addr->u_pcb.pcb_onfault)) {
 				p->p_addr->u_pcb.pcb_onfault = 0;
 				frame->srr0 = fb->pc;		/* PC */
 				frame->srr1 = fb->sr;		/* SR */
@@ -142,7 +150,7 @@ trap(frame)
 			{
 				return;
 			}
-			if (fb = p->p_addr->u_pcb.pcb_onfault) {
+			if ((fb = p->p_addr->u_pcb.pcb_onfault)) {
 				p->p_addr->u_pcb.pcb_onfault = 0;
 				frame->srr0 = fb->pc;		/* PC */
 				frame->fixreg[1] = fb->sp;	/* SP */
@@ -246,9 +254,8 @@ printf("isi iar %x\n", frame->srr0);
 			n = NARGREG - (params - (frame->fixreg + FIRSTARG));
 			if (argsize > n * sizeof(register_t)) {
 				bcopy(params, args, n * sizeof(register_t));
-				if (error = copyin(MOREARGS(frame->fixreg[1]),
-						   args + n,
-						   argsize - n * sizeof(register_t))) {
+				if ((error = copyin(MOREARGS(frame->fixreg[1]),
+				   args + n, argsize - n * sizeof(register_t)))) {
 #ifdef	KTRACE
 					/* Can't get all the arguments! */
 					if (KTRPOINT(p, KTR_SYSCALL))
@@ -393,7 +400,7 @@ for (i = 0; i < errnum; i++) {
 		/* should check for correct byte here or panic */
 #ifdef DDB
 		db_save_regs(frame);
-		db_trap(T_BREAKPOINT);
+		db_trap(T_BREAKPOINT, 0);
 #else
 		panic("trap EXC_PGM");
 #endif
@@ -418,7 +425,7 @@ for (i = 0; i < errnum; i++) {
 	{
 		int sig;
 
-		while (sig = CURSIG(p))
+		while ((sig = CURSIG(p)))
 			postsig(sig);
 	}
 
@@ -439,7 +446,7 @@ for (i = 0; i < errnum; i++) {
 		p->p_stats->p_ru.ru_nivcsw++;
 		mi_switch();
 		splx(s);
-		while (sig = CURSIG(p))
+		while ((sig = CURSIG(p)))
 			postsig(sig);
 	}
 
@@ -480,8 +487,7 @@ child_return(p)
 }
 
 static inline void
-setusr(content)
-	int content;
+setusr(int content)
 {
 	asm volatile ("isync; mtsr %0,%1; isync"
 		      :: "n"(USER_SR), "r"(content));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.6 2001/06/24 04:43:04 drahn Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.7 2001/07/09 01:35:32 mickey Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -46,7 +46,8 @@
 #define	cpu_swapout(p)
 #define cpu_wait(p)
 
-extern void delay __P((unsigned));
+void	child_return __P((struct proc *));
+void	delay __P((unsigned));
 #define	DELAY(n)		delay(n)
 
 extern volatile int want_resched;
