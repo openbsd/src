@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.24 1999/12/06 22:20:34 espie Exp $
+.\"	$OpenBSD: make.1,v 1.25 1999/12/26 00:20:33 espie Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -1195,6 +1195,7 @@ For loops are expanded before tests, so a fragment such as:
 \&.endif
 \&.fi
 .Ed
+.Pp
 won't work, and should be rewritten the other way around.
 .Pp
 When handling pre-BSD 4.4 archives, 
@@ -1202,7 +1203,24 @@ When handling pre-BSD 4.4 archives,
 may erroneously mark archive members as out of date if the archive name
 was truncated.
 .Pp
-Variable handling and for loop expansion are incredibly inefficient.
+The handling of ; and other special characters in tests may be utterly
+bogus. For instance, in
+.Bd -literal
+\&A=abcd;c.c
+\&.if ${A:R} == "abcd;c"
+.Ed
+.Pp
+the test will never match, even though the value is correct.
+.Pp
+In a .for loop, only the variable value is used, assignments will be
+evaluated later, e.g., in
+.Bd -literal
+\&.for I in a b c d
+I:=${I:S/a/z}
+A+=$I
+\&.endfor
+.Ed
+A will evaluate to a b c d after the loop, not z b c d.
 .Sh SEE ALSO
 .Xr mkdep 1
 .Sh HISTORY
