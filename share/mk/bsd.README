@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.29 2001/08/18 10:46:25 miod Exp $
+#	$OpenBSD: bsd.README,v 1.30 2002/01/01 23:52:32 provos Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -17,8 +17,9 @@ bsd.own.mk		- define common variables
 bsd.port.mk		- building ports
 bsd.port.subdir.mk	- targets for building subdirectories for ports
 bsd.prog.mk		- building programs from source files
-bsd.sys.mk		- building bsd from the source tree
+bsd.regress.mk		- regression tests
 bsd.subdir.mk		- targets for building subdirectories
+bsd.sys.mk		- building bsd from the source tree
 
 Note, this file is not intended to replace reading through the .mk
 files for anything tricky.
