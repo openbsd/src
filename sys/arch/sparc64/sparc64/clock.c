@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.15 2003/02/17 01:29:20 henric Exp $	*/
+/*	$OpenBSD: clock.c,v 1.16 2003/02/22 23:50:37 jason Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -1080,36 +1080,21 @@ void
 microtime(tvp)
 	struct timeval *tvp;
 {
-	if (timerreg_4u.t_timer == NULL) {
-		int s;
-		u_int64_t tick;
+	int s;
+	u_int64_t tick;
 
-		s = splhigh();
-		__asm __volatile("rd %%tick, %0" : "=r" (tick) :);
-		tick &= TICK_TICKS;
-		tick -= lasttick;
-		tvp->tv_sec = time.tv_sec;
-		tvp->tv_usec = time.tv_usec;
-		splx(s);
+	s = splhigh();
+	__asm __volatile("rd %%tick, %0" : "=r" (tick) :);
+	tick &= TICK_TICKS;
+	tick -= lasttick;
+	tvp->tv_sec = time.tv_sec;
+	tvp->tv_usec = time.tv_usec;
+	splx(s);
 
-		tick = (tick * USECPERSEC) / cpu_clockrate;
+	tick = (tick * USECPERSEC) / cpu_clockrate;
 
-		tvp->tv_sec += tick / USECPERSEC;
-		tvp->tv_usec += tick % USECPERSEC;
-	} else {
-		struct timeval t1, t2;
-		int64_t t_tick;
-
-		do {
-		
-			t1 = time;
-			t_tick = timerreg_4u.t_timer->t_count;
-			t2 = time;
-		} while (t1.tv_sec != t2.tv_sec || t1.tv_usec != t2.tv_usec);
-
-		tvp->tv_sec = t1.tv_sec;
-		tvp->tv_usec = t1.tv_usec + t_tick;
-	}
+	tvp->tv_sec += tick / USECPERSEC;
+	tvp->tv_usec += tick % USECPERSEC;
 
 	while (tvp->tv_usec >= USECPERSEC) {
 		tvp->tv_sec++;
