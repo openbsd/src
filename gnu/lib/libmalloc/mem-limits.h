@@ -24,7 +24,7 @@ Cambridge, MA 02139, USA.  */
 #include <sys/resource.h>
 #endif
 
-#if defined(__bsdi__) && defined(__NetBSD__)
+#if defined(__bsdi__) || defined(__NetBSD__) || defined(__OpenBSD__)
 #define BSD4_2
 #endif
 
