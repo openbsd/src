@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: exec.c,v 1.6 1997/07/25 20:30:01 mickey Exp $";
+static char rcsid[] = "$OpenBSD: exec.c,v 1.7 1997/09/20 09:46:10 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -125,21 +125,32 @@ execle(name, arg, va_alist)
 #endif
 {
 	va_list ap;
-	int sverrno;
 	char **argv, **envp;
+	int i;
 
 #ifdef __STDC__
 	va_start(ap, arg);
 #else
 	va_start(ap);
 #endif
-	if ((argv = buildargv(ap, arg, &envp)))
-		(void)execve(name, argv, envp);
+	for (i = 1; va_arg(ap, char *) != NULL; i++)
+		;
 	va_end(ap);
-	sverrno = errno;
-	free(argv);
-	errno = sverrno;
-	return (-1);
+
+	argv = alloca (i * sizeof (char *));
+
+#if __STDC__
+	va_start(ap, arg);
+#else
+	va_start(ap);
+#endif
+	argv[0] = (char *) arg;
+	for (i = 1; (argv[i] = (char *) va_arg(ap, char *)) != NULL; i++)
+		;
+	envp = (char **) va_arg(ap, char **);
+	va_end(ap);
+
+	return execve(name, argv, envp);
 }
 
 int
