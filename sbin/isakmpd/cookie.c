@@ -1,5 +1,5 @@
-/*	$OpenBSD: cookie.c,v 1.3 1998/11/17 11:10:08 niklas Exp $	*/
-/*	$EOM: cookie.c,v 1.17 1998/08/05 09:21:42 niklas Exp $	*/
+/*	$OpenBSD: cookie.c,v 1.4 1999/02/26 03:35:23 niklas Exp $	*/
+/*	$EOM: cookie.c,v 1.18 1999/02/25 11:38:49 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -39,6 +39,8 @@
 #include <sha1.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "sysdep.h"
 
 #include "cookie.h"
 #include "exchange.h"
