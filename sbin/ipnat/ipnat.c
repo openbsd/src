@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipnat.c,v 1.10 1997/02/11 22:24:20 kstailey Exp $	*/
+/*	$OpenBSD: ipnat.c,v 1.11 1997/02/13 01:19:05 kstailey Exp $	*/
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
  *
@@ -373,6 +373,67 @@ char	*msk;
 	return mask;
 }
 
+/* 
+ * get_if_addr(): given a string containing an interface name (e.g. "ppp0")
+ *		  return the IP address it represents as an unsigned long
+ */
+u_long	if_addr(name)
+char	*name;
+{
+	struct ifconf ifc;
+	struct ifreq ifreq, *ifr;
+	char *inbuf = NULL;
+	int s, i, len = 8192;
+
+	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+		warn("socket");
+		return INADDR_NONE;
+	}
+	
+	while (1) {
+		ifc.ifc_len = len;
+		ifc.ifc_buf = inbuf = realloc(inbuf, len);
+		if (inbuf == NULL)
+			err(1, "malloc");
+		if (ioctl(s, SIOCGIFCONF, &ifc) < 0) {
+			warn("SIOCGIFCONF");
+			goto if_addr_lose;
+		}
+		if (ifc.ifc_len + sizeof(ifreq) < len)
+			break;
+		len *= 2;
+	}
+	ifr = ifc.ifc_req;
+	ifreq.ifr_name[0] = '\0';
+	for (i = 0; i < ifc.ifc_len; ) {
+		ifr = (struct ifreq *)((caddr_t)ifc.ifc_req + i);
+		i += sizeof(ifr->ifr_name) +
+			(ifr->ifr_addr.sa_len > sizeof(struct sockaddr)
+				? ifr->ifr_addr.sa_len
+				: sizeof(struct sockaddr));
+		if (!strncmp(ifreq.ifr_name, ifr->ifr_name,
+			     sizeof(ifr->ifr_name)))
+			continue;
+		ifreq = *ifr;
+		if (ioctl(s, SIOCGIFADDR, (caddr_t)ifr) < 0) {
+			warn("SIOCGIFADDR");
+			goto if_addr_lose;
+		}
+		if (ifr->ifr_addr.sa_family != AF_INET)
+			continue;
+		if (!strcmp(name, ifr->ifr_name)) {
+			struct sockaddr_in *sin;
+			close(s);
+			free(inbuf);
+			sin = (struct sockaddr_in *)&ifr->ifr_addr;
+			return (sin->sin_addr.s_addr);
+		}
+	}
+if_addr_lose:
+	close(s);
+	free(inbuf);
+	return INADDR_NONE;
+}
 
 /*
  * returns an ip address as a long var as a result of either a DNS lookup or
@@ -386,13 +447,16 @@ int	*resolved;
 	struct	netent	*np;
 
 	*resolved = 0;
-	if (!strcasecmp("any",host))
+	if (!strcasecmp("any", host))
 		return 0L;
 	if (isdigit(*host))
 		return inet_addr(host);
 
 	if (!(hp = gethostbyname(host))) {
 		if (!(np = getnetbyname(host))) {
+			u_long addr;
+			if ((addr = if_addr(host)) != INADDR_NONE)
+				return addr;
 			*resolved = -1;
 			fprintf(stderr, "can't resolve hostname: %s\n", host);
 			return 0;
