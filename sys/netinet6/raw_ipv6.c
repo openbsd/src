@@ -1,4 +1,4 @@
-/* $OpenBSD: raw_ipv6.c,v 1.7 1999/12/10 10:04:29 angelos Exp $ */
+/* $OpenBSD: raw_ipv6.c,v 1.8 1999/12/14 14:28:23 angelos Exp $ */
 /*
 %%% copyright-nrl-95
 This software is Copyright 1995-1998 by Randall Atkinson, Ronald Lee,
@@ -43,7 +43,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
  * SUCH DAMAGE.
  *
  *	@(#)raw_ip.c	8.7 (Berkeley) 5/15/95
- *	$Id: raw_ipv6.c,v 1.7 1999/12/10 10:04:29 angelos Exp $
+ *	$Id: raw_ipv6.c,v 1.8 1999/12/14 14:28:23 angelos Exp $
  */
 
 #include <sys/param.h>
@@ -741,7 +741,7 @@ static int rip6_usrreq_send(struct socket *so, int flags, struct mbuf *m,
    return error;
 }
 
-MAYBESTATIC MAYBEINLINE int rip6_usrreq_control(struct socket *so, int cmd,
+MAYBESTATIC MAYBEINLINE int rip6_usrreq_control(struct socket *so, u_long cmd,
                                                caddr_t data, struct ifnet *ifp)
 { 
 /* Notice that IPv4 raw sockets don't pass PRU_CONTROL.  I wonder
@@ -839,7 +839,7 @@ rip6_usrreq(so, req, m, nam, control, p)
       m = NULL;
       break;
     case PRU_CONTROL:
-      return rip6_usrreq_control(so, (int)m, (caddr_t) nam, 
+      return rip6_usrreq_control(so, (u_long)m, (caddr_t) nam, 
                                (struct ifnet *) control);
     case PRU_SENSE:
       return rip6_usrreq_sense(so, NULL); /* XXX */
