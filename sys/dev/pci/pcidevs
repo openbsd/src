@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.818 2005/01/16 20:10:35 brad Exp $
+$OpenBSD: pcidevs,v 1.819 2005/01/16 20:22:43 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -214,6 +214,7 @@ vendor	SUNDANCE	0x13f0	Sundance
 vendor	CMI		0x13f6	C-Media Electronics
 vendor	LAVA		0x1407	Lava
 vendor	SUNIX		0x1409	Sunix
+vendor	MICROSOFT	0x1414	Microsoft
 vendor	OXFORD2		0x1415	Oxford
 vendor	TAMARACK	0x143d	Tamarack Microelectronics
 vendor	ASKEY		0x144f	Askey
@@ -1706,6 +1707,10 @@ product MATROX MARV_G200_SD	0xff04	MGA Marvel G200 SD
 /* Mentor */
 product MENTOR PCI0660		0x0660	PCI
 product MENTOR PCI0661		0x0661	PCI-PCI
+
+/* Microsoft products */
+product MICROSOFT MN120		0x0001	MN-120 10/100
+product MICROSOFT MN130		0x0002	MN-130 10/100
 
 /* Mitsubishi Electronics */
 product MITSUBISHIELEC 4D30T	0x0301	Powerstorm 4D30T
