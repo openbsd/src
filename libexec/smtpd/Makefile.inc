@@ -13,7 +13,7 @@ MAIL_AGENT = /usr/sbin/sendmail
 # sendmail or whatever you are using as MAIL_AGENT above so that the user
 # may use the "-f" flag to specify the sender of a mail message.
 SMTP_USER = uucp
-SMTP_GROUP = uucp
+SMTP_GROUP = daemon
 
 # smtpd and smtpfwdd generate lots of syslogs, by design.
 #
