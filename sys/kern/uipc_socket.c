@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.31 2001/03/01 20:54:34 provos Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.32 2001/03/06 17:06:23 provos Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -883,6 +883,9 @@ sorflush(so)
 	(void) sblock(sb, M_WAITOK);
 	s = splimp();
 	socantrcvmore(so);
+	/* XXX - the bzero stumps all over so_rcv, rm knotes while possible */
+	if (sb->sb_flags & SB_KNOTE)
+		knote_remove(curproc, &sb->sb_sel.si_note);
 	sbunlock(sb);
 	asb = *sb;
 	bzero((caddr_t)sb, sizeof (*sb));
