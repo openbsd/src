@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.4 2000/09/11 14:40:27 art Exp $
+#	$OpenBSD: Makefile,v 1.5 2001/01/31 06:53:42 art Exp $
 LIB	= roken
 # roken stuff
 SRCS	= copy_basename.c base64.c emalloc.c eefile.c efile.c estrdup.c \
 	  getarg.c k_getpwuid.c k_getpwnam.c signal.c tm2time.c verify.c \
 	  inaddr2str.c mini_inetd.c get_window_size.c warnerr.c snprintf.c \
-	  resolve.c parse_units.c strnlen.c strupr.c strlwr.c strmatch.c \
+	  parse_units.c strnlen.c strupr.c strlwr.c strmatch.c \
 	  erealloc.c str2inaddr.c
 
 # util stuff
