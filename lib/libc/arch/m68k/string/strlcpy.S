@@ -29,31 +29,43 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: strlcpy.S,v 1.3 1999/04/30 22:18:22 millert Exp $"
+	.asciz "$OpenBSD: strlcpy.S,v 1.4 1999/05/01 15:57:01 millert Exp $"
 #endif /* LIBC_SCCS */
 
+/*
+ * It is faster to implement strlcpy() as two distinct operations,
+ * a strlen() and a memcpy().  Note that we *always* add a NUL, unless
+ * the count is 0.
+ *
+ * TODO: try unrolling the two main loops a bit
+ */
+
 ENTRY(strlcpy)
-	movl	sp@(4),a1		| a1 = dst
 	movl	sp@(8),a0		| a0 = src
-	movl	sp@(12),d1		| d1 = orig_count
-	movl	d1,d0			| d0 = count
-	beq	slcloop			| don't let count wrap...
-	subql	#1,d0			| subtract one for the NUL
-slcloop:
-	tstb	a0@			| got a NUL in src?
-	beq	slcnul			| if so, add NUL to dst and we're done
-	tstl	d0			| only copy bytes if count is non-zero
-	beq	slcinc			| (else just increment src ptr)
-	movb	a0@,a1@+		| copy a byte but only increment dst
-	subql	#1,d0			| decrement count
-slcinc:
-	addql	#1,a0			| increment src ptr
-	jra	slcloop			| keep going...
-slcnul:
-	tstl	d1			| make sure we had a non-zero orig_count
-	beq	slcdone
+	movl	a0,a1			| working copy of src ptr
+	movl	a0,d0			| return (d0) value is len(src)
+	notl	d0			| take the complement of d0
+strlcpy_len:
+	tstb	a1@+			| did we hit the terminating NUL?
+	bne	strlcpy_len		| nope, keep going
+	addl	a1,d0
+					| now set things up to do the copy
+	movl	sp@(4),a1		| a1 = dst
+	movl	sp@(12),d1		| d1 = count
+	beq	strlcpy_done		| zero count, just return
+
+	subql	#1,d1			| subtract one for the NUL
+	cmpl	d0, d1			| must set d1 to MIN(d0, d1)
+	ble	strlcpy_check		| count - 1 <= len(src), so d1 is ok
+	movl	d0, d1			| d1 is too big, set it to len(src)
+strlcpy_check:
+	tstl	d1			| is d1 zero?
+	beq	strlcpy_clear		| if so, skip copy and set byte to NUL
+strlcpy_copy:
+	movb	a0@+,a1@+		| copy a byte
+	subql	#1,d1			| decrement count
+	bne	strlcpy_copy		| space left?  continue copying...
+strlcpy_clear:
 	clrb	a1@			| clear last byte
-slcdone:
-	movl	a0,d0
-	subl	sp@(8),d0		| return value
+strlcpy_done:
 	rts
