@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.22 1996/10/15 12:29:27 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.23 1996/10/18 20:12:45 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -529,6 +529,7 @@ sgetpwnam(name)
 		return (p);
 	if (save.pw_name) {
 		free(save.pw_name);
+		memset(save.pw_passwd, 0, strlen(save.pw_passwd);
 		free(save.pw_passwd);
 		free(save.pw_gecos);
 		free(save.pw_dir);
