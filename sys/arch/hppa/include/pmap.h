@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.2 1998/08/20 15:50:59 mickey Exp $ */
+/* $OpenBSD: pmap.h,v 1.3 1998/09/12 03:14:49 mickey Exp $ */
 
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
@@ -51,16 +51,17 @@
 #ifndef	_HPPA_PMAP_H_
 #define	_HPPA_PMAP_H_
 
+#include <machine/pte.h>
+
 #define EQUIV_HACK	/* no multiple mapping of kernel equiv space allowed */
 
 #define BTLB		/* Use block TLBs: PA 1.1 and above */
-#define USEALIGNMENT	/* Take advantage of cache alignment for optimization*/
 
 /*
  * This hash function is the one used by the hardware TLB walker on the 7100.
  */
 #define pmap_hash(space, va) \
-	((((u_int)(space) << 5) ^ btop(va)) & (hpt_hashsize-1))
+	((((u_int)(space) << 5) ^ (((u_int)va) >> 12)) & (hpt_hashsize-1))
 
 typedef
 struct pmap {
@@ -88,7 +89,7 @@ struct hpt_entry {
 		hpt_vpn:15,	/* Virtual Page Number */
 		hpt_space:16;	/* Space ID */
 	u_int	hpt_tlbprot;	/* prot/access rights (for TLB load) */
-	u_int	hpt_tlbpage;	/* physical page (for TLB load) */
+	u_int	hpt_tlbpage;	/* physical page (<<5 for TLB load) */
 	void	*hpt_entry;	/* Pointer to associated hash list */
 };
 #ifdef _KERNEL
@@ -96,26 +97,30 @@ extern struct hpt_entry *hpt_table;
 extern u_int hpt_hashsize;
 #endif /* _KERNEL */
 
-/* keep it under 32 bytes for the cache sake */
+/* keep it at 32 bytes for the cache overall satisfaction */
 struct pv_entry {
 	struct pv_entry	*pv_next;	/* list of mappings of a given PA */
 	struct pv_entry *pv_hash;	/* VTOP hash bucket list */
-	struct pv_entry	*pv_writer;	/* mapping with R/W access XXX */
 	pmap_t		pv_pmap;	/* back link to pmap */
-#define pv_space pv_pmap->pmap_space
+	u_int		pv_space;	/* copy of space id from pmap */
 	u_int		pv_va;		/* virtual page number */
 	u_int		pv_tlbprot;	/* TLB format protection */
 	u_int		pv_tlbpage;	/* physical page (for TLB load) */
 	u_int		pv_tlbsw;
 };
 
-#define NPVPPG 127
+#define NPVPPG (NBPG/32-1)
 struct pv_page {
 	TAILQ_ENTRY(pv_page) pvp_list;	/* Chain of pages */
 	u_int		pvp_nfree;
 	struct pv_entry *pvp_freelist;
-	u_int		pvp_pad[4];	/* align to 32 */
+	u_int		pvp_flag;	/* is it direct mapped */ 
+	u_int		pvp_pad[3];	/* align to 32 */
 	struct pv_entry pvp_pv[NPVPPG];
+};
+
+struct pmap_physseg {
+	struct pv_entry *pvent;
 };
 
 #define MAX_PID		0xfffa
@@ -127,15 +132,12 @@ struct pv_page {
 #define KERNEL_TEXT_PROT (TLB_AR_KRX | (KERNEL_ACCESS_ID << 1))
 #define KERNEL_DATA_PROT (TLB_AR_KRW | (KERNEL_ACCESS_ID << 1))
 
-/* Block TLB flags */
-#define BLK_ICACHE	0
-#define BLK_DCACHE	1
-#define BLK_COMBINED	2
-#define BLK_LCOMBINED	3
-
-#define cache_align(x)		(((x) + 64) & ~(64 - 1))
-
 #ifdef _KERNEL
+#define cache_align(x)	(((x) + dcache_line_mask) & ~(dcache_line_mask))
+extern int dcache_line_mask;
+
+#define	PMAP_STEAL_MEMORY	/* we have some memory to steal */
+
 #define pmap_kernel_va(VA)	\
 	(((VA) >= VM_MIN_KERNEL_ADDRESS) && ((VA) <= VM_MAX_KERNEL_ADDRESS))
 
@@ -158,16 +160,19 @@ do { if (pmap) { \
 #define pmap_phys_address(x)	((x) << PGSHIFT)
 #define pmap_phys_to_frame(x)	((x) >> PGSHIFT)
 
+static __inline int
+pmap_prot(struct pmap *pmap, int prot)
+{
+	extern u_int kern_prot[], user_prot[];
+	return (pmap == kernel_pmap? kern_prot: user_prot)[prot];
+}
+
 /* 
  * prototypes.
  */
 vm_offset_t kvtophys __P((vm_offset_t addr));
-vm_offset_t pmap_map __P((vm_offset_t va, vm_offset_t spa,
-				 vm_offset_t epa, vm_prot_t prot));
-void pmap_bootstrap __P((vm_offset_t *avail_start,
-				vm_offset_t *avail_end));
-void pmap_block_map __P((vm_offset_t pa, vm_size_t size, vm_prot_t prot,
-				int entry, int dtlb));
+vm_offset_t pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, vm_prot_t));
+void pmap_bootstrap __P((vm_offset_t *,	vm_offset_t *));
 #endif /* _KERNEL */
 
 #endif /* _HPPA_PMAP_H_ */
