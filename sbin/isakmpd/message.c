@@ -1,5 +1,5 @@
-/*	$OpenBSD: message.c,v 1.19 1999/05/02 19:18:48 niklas Exp $	*/
-/*	$EOM: message.c,v 1.132 1999/05/02 12:55:03 niklas Exp $	*/
+/*	$OpenBSD: message.c,v 1.20 1999/05/03 22:45:04 niklas Exp $	*/
+/*	$EOM: message.c,v 1.133 1999/05/03 07:58:37 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -975,6 +975,7 @@ message_recv (struct message *msg)
       if (!msg->exchange)
 	{
 	  log_print ("message_recv: phase 1 message after ISAKMP SA is ready");
+	  message_free (msg);
 	  return -1;
 	}
       else if (msg->exchange->last_sent)
