@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: compat.c,v 1.1.1.1 1995/10/18 08:47:30 deraadt Exp $";
+static char rcsid[] = "$Id: compat.c,v 1.2 1996/11/01 23:27:28 millert Exp $";
 #endif
 
 /* vix 30dec93 [broke this out of misc.c - see RCS log for history]
@@ -53,7 +53,10 @@ strdup(str)
 {
 	char	*temp;
 
-	temp = malloc(strlen(str) + 1);
+	if ((temp = malloc(strlen(str) + 1)) == NULL) {
+		errno = ENOMEM;
+		return NULL;
+	}
 	(void) strcpy(temp, str);
 	return temp;
 }
@@ -227,7 +230,7 @@ setenv(name, value, overwrite)
 		return -1;
 	}
 
-	sprintf("%s=%s", name, value);
+	sprintf(tmp, "%s=%s", name, value);
 	return putenv(tmp);	/* intentionally orphan 'tmp' storage */
 }
 #endif

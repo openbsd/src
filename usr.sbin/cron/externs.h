@@ -20,6 +20,7 @@
 # include <unistd.h>
 # include <string.h>
 # include <dirent.h>
+# include <errno.h>
 # define DIR_T	struct dirent
 # define WAIT_T	int
 # define WAIT_IS_INT 1

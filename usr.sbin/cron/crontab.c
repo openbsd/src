@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: crontab.c,v 1.5 1996/10/31 03:10:55 millert Exp $";
+static char rcsid[] = "$Id: crontab.c,v 1.6 1996/11/01 23:27:30 millert Exp $";
 #endif
 
 /* crontab - install and manage per-user crontab files
@@ -321,7 +321,7 @@ edit_cmd() {
 	}
 
 	um = umask(077);
-	(void) sprintf(Filename, "/tmp/crontab.XXXXXXXX");
+	(void) sprintf(Filename, "/tmp/crontab.XXXXXXXXXX");
 	if ((t = mkstemp(Filename)) == -1) {
 		perror(Filename);
 		(void) umask(um);
@@ -504,6 +504,11 @@ replace_cmd() {
 	entry	*e;
 	time_t	now = time(NULL);
 	char	**envp = env_init();
+
+	if (envp == NULL) {
+		fprintf(stderr, "%s: Cannot allocate memory.\n", ProgramName);
+		return (-2);
+	}
 
 	(void) sprintf(n, "tmp.%d", Pid);
 	(void) sprintf(tn, CRON_TAB(n));
