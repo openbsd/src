@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.15 2001/06/04 23:21:10 itojun Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.16 2001/07/21 12:22:57 itojun Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -234,7 +234,9 @@ route_output(m, va_alist)
 	if (genmask) {
 		struct radix_node *t;
 		t = rn_addmask((caddr_t)genmask, 0, 1);
-		if (t && Bcmp(genmask, t->rn_key, *(u_char *)genmask) == 0)
+		if (t && genmask->sa_len >= ((struct sockaddr *)t->rn_key)->sa_len &&
+		    Bcmp((caddr_t *)genmask + 1, (caddr_t *)t->rn_key + 1,
+		    ((struct sockaddr *)t->rn_key)->sa_len) - 1)
 			genmask = (struct sockaddr *)(t->rn_key);
 		else
 			senderr(ENOBUFS);
