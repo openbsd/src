@@ -847,7 +847,20 @@ parseopts()
     char *p;
     FILE *fp;
 
-    (void) sprintf (path, "%s/%s/%s", CVSroot, CVSROOTADM, CVSROOTADM_OPTIONS);
+    if (CVSroot == NULL) {
+	printf("no CVSROOT in parseopts\n");
+	return;
+    }
+    p = strchr (CVSroot, ':');
+    if (p)
+	p++;
+    else
+	p = CVSroot;
+    if (p == NULL) {
+	printf("mangled CVSROOT in parseopts\n");
+	return;
+    }
+    (void) sprintf (path, "%s/%s/%s", p, CVSROOTADM, CVSROOTADM_OPTIONS);
     if ((fp = fopen(path, "r")) != NULL) {
 	while (fgets(buf, sizeof buf, fp) != NULL) {
 	    if (buf[0] == '#')
