@@ -69,7 +69,8 @@
  */
 #if !defined(PERL_PATCHLEVEL_H_IMPLICIT) && !defined(LOCAL_PATCH_COUNT)
 static	char	*local_patches[] = {
-	NULL
+        NULL
+	,"SUIDMAIL - fixes for suidperl security"
 	,NULL
 };
 

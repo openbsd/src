@@ -2758,18 +2758,6 @@ S_validate_suid(pTHX_ char *validarg, char *scriptname, int fdscript)
 	    if (tmpstatbuf.st_dev != PL_statbuf.st_dev ||
 		tmpstatbuf.st_ino != PL_statbuf.st_ino) {
 		(void)PerlIO_close(PL_rsfp);
-#ifdef DISGUSTINGLY_INSECURE
-		if (PL_rsfp = PerlProc_popen("/bin/mail root","w")) {	/* heh, heh */
-		    PerlIO_printf(PL_rsfp,
-"User %"Uid_t_f" tried to run dev %ld ino %ld in place of dev %ld ino %ld!\n\
-(Filename of set-id script was %s, uid %"Uid_t_f" gid %"Gid_t_f".)\n\nSincerely,\nperl\n",
-			PL_uid,(long)tmpstatbuf.st_dev, (long)tmpstatbuf.st_ino,
-			(long)PL_statbuf.st_dev, (long)PL_statbuf.st_ino,
-			CopFILE(PL_curcop),
-			PL_statbuf.st_uid, PL_statbuf.st_gid);
-		    (void)PerlProc_pclose(PL_rsfp);
-		}
-#endif
 		Perl_croak(aTHX_ "Permission denied\n");
 	    }
 	    if (
