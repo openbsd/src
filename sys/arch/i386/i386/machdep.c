@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.152 2001/03/22 23:36:51 niklas Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.153 2001/03/28 19:50:07 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -912,15 +912,15 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			},
 			winchip_cpu_setup
 		},
-		/* Family 6, not yet available from IDT */
+		/* Family 6 */
 		{
 			CPUCLASS_686,
 			{
+				0, 0, 0, 0, 0, 0, "VIA Cyrix III", 0,
 				0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0,
-				"686 class"		/* Default */
+				"VIA Cyrix III"		/* Default */
 			},
-			NULL
+			winchip_cpu_setup
 		} }
 	},
 	{
@@ -1026,7 +1026,7 @@ winchip_cpu_setup(cpu_device, model, step)
 	const char *cpu_device;
 	int model, step;
 {
-#if defined(I586_CPU)
+#if defined(I586_CPU) || defined(I686_CPU)
 	extern int cpu_feature;
 
 	switch (model) {
@@ -1036,6 +1036,10 @@ winchip_cpu_setup(cpu_device, model, step)
 		lcr4(rcr4() | CR4_TSD);
 
 		printf("%s: broken TSC disabled\n", cpu_device);
+		break;
+	case 6: /* VIA Cyrix III */
+		cpu_feature |= CPUID_CX8;
+		cpu_feature |= CPUID_3DNOW;
 		break;
 	}
 #endif
