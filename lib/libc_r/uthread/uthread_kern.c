@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_kern.c,v 1.22 2002/10/30 19:11:56 marc Exp $	*/
+/*	$OpenBSD: uthread_kern.c,v 1.23 2002/11/04 21:28:49 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -729,7 +729,8 @@ _thread_kern_poll(int wait_reqd)
 			/*
 			 * If the lock is available, let the thread run.
 			 */
-			if (pthread->data.spinlock->access_lock == 0) {
+			if (pthread->data.spinlock->access_lock ==
+			    _SPINLOCK_UNLOCKED) {
 				PTHREAD_WAITQ_CLEARACTIVE();
 				PTHREAD_WORKQ_REMOVE(pthread);
 				PTHREAD_NEW_STATE(pthread,PS_RUNNING);
@@ -840,7 +841,8 @@ _thread_kern_poll(int wait_reqd)
 				/*
 				 * If the lock is available, let the thread run.
 				 */
-				if (pthread->data.spinlock->access_lock == 0) {
+				if (pthread->data.spinlock->access_lock ==
+				    _SPINLOCK_UNLOCKED) {
 					PTHREAD_WAITQ_CLEARACTIVE();
 					PTHREAD_WORKQ_REMOVE(pthread);
 					PTHREAD_NEW_STATE(pthread,PS_RUNNING);
@@ -928,7 +930,8 @@ _thread_kern_poll(int wait_reqd)
 				/*
 				 * If the lock is available, let the thread run.
 				 */
-				if (pthread->data.spinlock->access_lock == 0) {
+				if (pthread->data.spinlock->access_lock ==
+				    _SPINLOCK_UNLOCKED) {
 					PTHREAD_WAITQ_CLEARACTIVE();
 					PTHREAD_WORKQ_REMOVE(pthread);
 					PTHREAD_NEW_STATE(pthread,PS_RUNNING);
