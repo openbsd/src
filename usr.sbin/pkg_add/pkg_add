@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.85 2004/10/31 09:06:04 espie Exp $
+# $OpenBSD: pkg_add,v 1.86 2004/10/31 11:33:50 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -34,18 +34,6 @@ use File::Copy;
 
 our %forced = ();
 our ($ftp_only, $cdrom_only);
-
-sub ensure_ldconfig
-{
-	my $state = shift;
-	return if $state->{not};
-	return if $state->{do_faked};
-	return unless defined $OpenBSD::PackingElement::Lib::todo;
-	VSystem($state->{very_verbose}, 
-	    @OpenBSD::PackingElement::Lib::ldconfig, "-m", 
-	    keys %$OpenBSD::PackingElement::Lib::todo);
-	undef $OpenBSD::PackingElement::Lib::todo;
-}
 
 # used by newuser/newgroup to deal with options.
 sub add_entry
@@ -396,9 +384,9 @@ sub fill_conflict_lists
 
 my $errors = 0;
 
-our ($opt_a, $opt_v, $opt_n, $opt_I, $opt_f, $opt_L, $opt_B, $opt_A, $opt_P, $opt_Q, $opt_x);
+our ($opt_a, $opt_v, $opt_n, $opt_I, $opt_f, $opt_L, $opt_B, $opt_A, $opt_P, $opt_Q, $opt_x, $opt_r);
 $opt_v = 0;
-getopts('avnxIL:f:B:A:P:Q:',
+getopts('avnrxIL:f:B:A:P:Q:',
 	{'v' => sub {++$opt_v;} });
 if ($opt_f) {
 	%forced = map {($_, 1)} split(/,/, $opt_f);
@@ -424,6 +412,7 @@ my $state = new OpenBSD::Error;
 $state->{cache} = {};
 $state->{deptree} = {};
 $state->{do_faked} = 0;
+$state->{replace} = $opt_r;
 if (defined $opt_Q and defined $opt_B) {
 	Fatal "-Q and -B are incompatible options";
 }
@@ -455,24 +444,45 @@ $state->{beverbose} = $opt_n || ($opt_v >= 2);
 
 fill_conflict_lists($state);
 
+sub find_conflicts
+{
+	my $pkgname = shift;
+	my @bad = ();
+	if (is_installed $pkgname) {
+		push(@bad, $pkgname);
+	}
+	while (my ($name, $l) = each %{$state->{conflict_list}}) {
+		next if $name eq $pkgname;
+		if ($l->conflicts_with($pkgname)) {
+			push(@bad, $name);
+		}
+	}
+	return @bad;
+}
+
 sub can_install($$)
 {
 	my ($pkgname, $state) = @_;
 
-	if (is_installed $pkgname) {
-		print "package $pkgname is already installed\n";
-		return undef unless $forced{installed};
+	my @l = find_conflicts($pkgname);
+
+	return 1 if @l == 0;
+	if (!$state->{replace} || @l >= 2) {
+		print "Can't install $pkgname because of conflicts (",join(',', @l), ")\n";
+		$errors++;
+		return undef;
 	}
 
-	while (my ($name, $l) = each %{$state->{conflict_list}}) {
-		if ($l->conflicts_with($pkgname)) {
-			print "package $pkgname conflicts with installed package $name\n";
-			$errors++;
-			return undef unless $forced{conflicts};
-		}
-	}
+	require OpenBSD::Update;
 
-	return 1;
+	my $toreplace = $l[0];
+	if (OpenBSD::Update::can_do($toreplace, $pkgname)) {
+		print "Will be able to update $toreplace once we're done\n";
+	} else {
+		print "Can't update $toreplace into $pkgname\n";
+	}
+	$errors++;
+	return undef;
 }
 
 
@@ -713,9 +723,9 @@ sub collision_report($)
 	}
 }
 
-sub validate_plist($$)
+sub validate_plist($$$)
 {
-	my ($plist, $destdir) = @_;
+	my ($plist, $destdir, $replace) = @_;
 
 	my $problems = 0;
 	my $pkgname = $plist->pkgname();
@@ -736,7 +746,7 @@ sub validate_plist($$)
 	for my $item (@{$plist->{items}}) {
 		next unless $item->IsFile();
 		my $fname = $destdir.$item->fullname();
-		if (OpenBSD::Vstat::vexists($fname)) {
+		if (OpenBSD::Vstat::vexists($fname) && !$replace) {
 			push(@$colliding, $fname);
 			$problems++;
 		}
@@ -808,7 +818,7 @@ sub really_add($$)
 	    }
 	    print "\n";
 	}
-	my $totsize = validate_plist($plist, $destdir);
+	my $totsize = validate_plist($plist, $destdir, $state->{replace});
 
 	if (!defined $handle) {
 		Fatal "Archive in $pkgname broken";
@@ -969,7 +979,7 @@ my $dielater = $@;
 
 OpenBSD::PackingElement::Fontdir::finish_fontdirs();
 manpages_index($state);
-ensure_ldconfig($state);
+OpenBSD::PackingElement::Lib::ensure_ldconfig($state);
 
 if ($state->{beverbose}) {
 	OpenBSD::Vstat::tally();

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.59 2004/10/23 09:43:16 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.60 2004/10/31 11:33:51 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -401,51 +401,57 @@ sub register_manpage
 package OpenBSD::PackingElement::Lib;
 our @ISA=qw(OpenBSD::PackingElement::FileBase);
 use File::Basename;
+use OpenBSD::Error;
 
 __PACKAGE__->setKeyword('lib');
 sub keyword() { "lib" }
 
-our $todo;
+my $todo = 0;
 my $path;
 our @ldconfig = ('/sbin/ldconfig');
 
-sub add_ldconfig_dirs()
+sub init_path($)
 {
-	my $sub = shift;
-	return unless defined $todo;
-	for my $d (keys %$todo) {
-		&$sub($d);
+	my $destdir = shift;
+	$path={};
+	if ($destdir ne '') {
+		unshift @ldconfig, 'chroot', $destdir;
 	}
-	$todo={};
+	open my $fh, "-|", @ldconfig, "-r";
+	if (defined $fh) {
+		local $_;
+		while (<$fh>) {
+			if (m/^\s*search directories:\s*(.*?)\s*$/) {
+				for my $d (split(':', $1)) {
+					$path->{$d} = 1;
+				}
+			}
+		}
+		close($fh);
+	} else {
+		print STDERR "Can't find ldconfig\n";
+	}
 }
 
 sub mark_ldconfig_directory
 {
 	my ($self, $destdir) = @_;
 	if (!defined $path) {
-		$path={};
-		if ($destdir ne '') {
-			unshift @ldconfig, 'chroot', $destdir;
-		}
-		open my $fh, "-|", @ldconfig, "-r";
-		if (defined $fh) {
-			local $_;
-			while (<$fh>) {
-				if (m/^\s*search directories:\s*(.*?)\s*$/) {
-					for my $d (split(':', $1)) {
-						$path->{$d} = 1;
-					}
-				}
-			}
-			close($fh);
-		} else {
-			print STDERR "Can't find ldconfig\n";
-		}
+		init_path($destdir);
 	}
 	my $d = dirname($self->fullname());
 	if ($path->{$d}) {
-		$todo = {} unless defined $todo;
-		$todo->{$d} = 1;
+		$todo = 1;
+	}
+}
+
+sub ensure_ldconfig
+{
+	my $state = shift;
+	if ($todo) {
+		VSystem($state->{very_verbose}, 
+		    @ldconfig, "-R") unless $state->{not};
+		$todo = 0;
 	}
 }
 
@@ -937,7 +943,7 @@ sub run
 {
 	my ($self, $state) = @_;
 
-	main::ensure_ldconfig($state);
+	OpenBSD::PackingElement::Lib::ensure_ldconfig($state);
 	print $self->keyword(), " ", $self->{expanded}, "\n" if $state->{beverbose};
 	$state->system('/bin/sh', '-c', $self->{expanded}) unless $state->{not};
 }
@@ -1131,7 +1137,7 @@ sub run
 
 	return if $state->{dont_run_scripts};
 
-	main::ensure_ldconfig($state);
+	OpenBSD::PackingElement::Lib::ensure_ldconfig($state);
 	print $self->beautify(), " script: $dir$name $pkgname ", join(' ', @args), "\n" if $state->{beverbose};
 	return if $not;
 	chmod 0755, $dir.$name;
