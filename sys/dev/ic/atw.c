@@ -1,5 +1,5 @@
-/*	$OpenBSD: atw.c,v 1.9 2004/07/15 12:15:09 millert Exp $	*/
-/*	$NetBSD: atw.c,v 1.47 2004/07/15 06:34:24 dyoung Exp $	*/
+/*	$OpenBSD: atw.c,v 1.10 2004/07/15 12:18:57 millert Exp $	*/
+/*	$NetBSD: atw.c,v 1.49 2004/07/15 06:38:46 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.47 2004/07/15 06:34:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.49 2004/07/15 06:38:46 dyoung Exp $");
 #endif
 
 #include "bpfilter.h"
@@ -2493,6 +2493,7 @@ atw_stop(struct ifnet *ifp, int disable)
 	/* Stop the transmit and receive processes. */
 	sc->sc_opmode = 0;
 	ATW_WRITE(sc, ATW_NAR, 0);
+	DELAY(20 * 1000);
 	ATW_WRITE(sc, ATW_TDBD, 0);
 	ATW_WRITE(sc, ATW_TDBP, 0);
 	ATW_WRITE(sc, ATW_RDB, 0);
@@ -2722,6 +2723,8 @@ atw_intr(void *arg)
 				 * the transmit process.
 				 */
 				ATW_WRITE(sc, ATW_NAR, sc->sc_opmode);
+				DELAY(20 * 1000);
+				ATW_WRITE(sc, ATW_RDR, 0x1);
 				/* XXX Log every Nth underrun from
 				 * XXX now on?
 				 */
@@ -2797,12 +2800,13 @@ atw_idle(struct atw_softc *sc, u_int32_t bits)
 	}
 
 	ATW_WRITE(sc, ATW_NAR, opmode);
+	DELAY(20 * 1000);
 
-	for (i = 0; i < 1000; i++) {
+	for (i = 0; i < 10; i++) {
 		stsr = ATW_READ(sc, ATW_STSR);
 		if ((stsr & ackmask) == ackmask)
 			break;
-		DELAY(10);
+		DELAY(1000);
 	}
 
 	ATW_WRITE(sc, ATW_STSR, stsr & ackmask);
@@ -3049,14 +3053,16 @@ atw_txintr(struct atw_softc *sc)
 	 * frames that have been transmitted.
 	 */
 	while ((txs = SIMPLEQ_FIRST(&sc->sc_txdirtyq)) != NULL) {
-		ATW_CDTXSYNC(sc, txs->txs_lastdesc,
-		    txs->txs_ndescs,
+		ATW_CDTXSYNC(sc, txs->txs_lastdesc, 1,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 #ifdef ATW_DEBUG
 		if ((ifp->if_flags & IFF_DEBUG) != 0 && atw_debug > 2) {
 			int i;
 			printf("    txsoft %p transmit chain:\n", txs);
+			ATW_CDTXSYNC(sc, txs->txs_firstdesc,
+			    txs->txs_ndescs - 1,
+			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 			for (i = txs->txs_firstdesc;; i = ATW_NEXTTX(i)) {
 				printf("     descriptor %d:\n", i);
 				printf("       at_status:   0x%08x\n",
