@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.24 2000/11/28 04:23:16 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.25 2000/11/28 05:04:32 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -482,6 +482,7 @@ hme_meminit(sc)
 		sc->sc_bufs_dva = (struct hme_bufs *) dvma_malloc(
 		    sizeof(struct hme_bufs), &sc->sc_bufs, M_NOWAIT);
 
+	
 	desc = sc->sc_desc;
 
 	/*
@@ -503,6 +504,29 @@ hme_meminit(sc)
 		    (u_int32_t) &sc->sc_bufs_dva->rx_buf[i][0];
 		desc->hme_rxd[i].rx_flags = HME_RXD_OWN |
 		    ((HME_RX_PKT_BUF_SZ - HME_RX_OFFSET) << 16);
+	}
+}
+
+void
+hme_rxd_ref(m)
+	struct mbuf *m;
+{
+	struct hme_softrxd *d = m->m_ext_handle;
+
+	d->rxd_ref++;
+}
+
+void
+hme_rxd_free(m)
+	struct mbuf *m;
+{
+	struct hme_softrxd *d = m->m_ext_handle;
+
+	if (d->rxd_ref <= 0)
+		panic("hme_rxd_free: ref %d", d->rxd_ref);
+	d->rxd_ref--;
+	if (d->rxd_ref == 0) {
+		dvma_free(
 	}
 }
 
@@ -730,7 +754,7 @@ hme_rint(sc)
 	bix = sc->sc_last_rd;
 
 	for (;;) {
-		bcopy(&sc->sc_desc->hme_rxd[bix], &rxd, sizeof(rxd));
+		rxd->rx_flags = &sc->sc_desc->hme_rxd[bix];
 		len = rxd.rx_flags >> 16;
 
 		if (rxd.rx_flags & HME_RXD_OWN)
@@ -845,7 +869,7 @@ hme_get(sc, idx, totlen)
 				len = MCLBYTES;
 		}
 		m->m_len = len = min(totlen, len);
-		bcopy(&sc->sc_bufs->rx_buf[idx][boff],
+		bcopy(&sc->sc_bufs->rx_buf[idx][boff + HME_RX_OFFSET],
 		    mtod(m, caddr_t), len);
 		boff += len;
 		totlen -= len;
