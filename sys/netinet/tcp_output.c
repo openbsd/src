@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.11 1998/10/28 21:34:33 provos Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.12 1998/11/17 19:23:02 provos Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -70,8 +70,88 @@
 extern struct mbuf *m_copypack();
 #endif
 
+#ifdef TCP_SACK
+extern int tcprexmtthresh;
+#endif
 
+#ifdef TCP_SACK
+#define MAX_TCPOPTLEN	40	/* need 40 at least for 3 SACKs + TIMESTAMP */
+#else
 #define MAX_TCPOPTLEN	32	/* max # bytes that go in options */
+#endif
+
+#ifdef TCP_SACK
+#ifdef TCP_SACK_DEBUG
+void
+tcp_print_holes(tp)
+struct tcpcb *tp;
+{
+	struct sackhole *p = tp->snd_holes;
+	if (p == 0)
+		return;
+	printf("Hole report: start--end dups rxmit\n");
+	while (p) {
+		printf("%x--%x d %d r %x\n",  p->start, p->end, p->dups,
+                    p->rxmit);
+		p = p->next;
+	}
+	printf("\n");
+}
+#endif /* TCP_SACK_DEBUG */
+
+/*
+ * Returns pointer to a sackhole if there are any pending retransmissions;
+ * NULL otherwise.
+ */
+struct sackhole *
+tcp_sack_output(tp)
+register struct tcpcb *tp;
+{
+	struct sackhole *p;
+	if (tp->sack_disable)
+		return 0;
+	p = tp->snd_holes;
+	while (p) {
+		if (p->dups >= tcprexmtthresh && SEQ_LT(p->rxmit, p->end)) {
+			if (SEQ_LT(p->rxmit, tp->snd_una)) {/* old SACK hole */
+				p = p->next;
+				continue;
+			}
+#ifdef TCP_SACK_DEBUG
+			if (p)
+				tcp_print_holes(tp);
+#endif
+			return p;
+		}
+        	p = p->next;
+	}
+	return 0;
+}
+
+/*
+ * After a timeout, the SACK list may be rebuilt.  This SACK information
+ * should be used to avoid retransmitting SACKed data.  This function
+ * traverses the SACK list to see if snd_nxt should be moved forward.
+ */
+void
+tcp_sack_adjust(tp)
+	struct tcpcb *tp;
+{
+	int i;
+
+	for (i = 0; i < tp->rcv_numsacks; i++) {
+		if (SEQ_LT(tp->snd_nxt, tp->sackblks[i].start))
+			break;
+		if (SEQ_LEQ(tp->sackblks[i].end, tp->snd_nxt))
+			continue;
+		if (tp->sackblks[i].start == 0 && tp->sackblks[i].end == 0)
+			continue;
+		/* snd_nxt must be in middle of block of SACKed data */
+		tp->snd_nxt = tp->sackblks[i].end;
+		break;
+	}
+}
+#endif /* TCP_SACK */
 
 /*
  * Tcp output routine: figure out what should be sent and send it.
@@ -88,6 +168,13 @@ tcp_output(tp)
 	u_char opt[MAX_TCPOPTLEN];
 	unsigned int optlen, hdrlen;
 	int idle, sendalot;
+#ifdef TCP_SACK
+	int i, sack_rxmit = 0;
+	struct sackhole *p;
+#endif
+#if defined(TCP_SACK) || defined(TCP_NEWRENO)
+	int maxburst = TCP_MAXBURST;
+#endif
 
 	/*
 	 * Determine length of data that should be transmitted,
@@ -105,6 +192,15 @@ tcp_output(tp)
 		tp->snd_cwnd = tp->t_maxseg;
 again:
 	sendalot = 0;
+#ifdef TCP_SACK
+	/*
+	 * If we've recently taken a timeout, snd_max will be greater than
+	 * snd_nxt.  There may be SACK information that allows us to avoid
+	 * resending already delivered data.  Adjust snd_nxt accordingly.
+	 */
+	if (!tp->sack_disable && SEQ_LT(tp->snd_nxt, tp->snd_max))
+		tcp_sack_adjust(tp);
+#endif
 	off = tp->snd_nxt - tp->snd_una;
 	win = min(tp->snd_wnd, tp->snd_cwnd);
 
@@ -115,6 +211,32 @@ again:
 	 * and timer expired, we will send what we can
 	 * and go to transmit state.
 	 */
+
+#ifdef TCP_SACK
+	/* 
+	 * Send any SACK-generated retransmissions.  If we're explicitly trying
+	 * to send out new data (when sendalot is 1), bypass this function.
+	 * If we retransmit in fast recovery mode, decrement snd_cwnd, since
+	 * we're replacing a (future) new transmission with a retransmission 
+	 * now, and we previously incremented snd_cwnd in tcp_input().
+	 */
+	if (!tp->sack_disable && !sendalot) {
+		if ((p = tcp_sack_output(tp))) {
+			off = p->rxmit - tp->snd_una;
+			sack_rxmit = 1;
+#if 0
+			/* Coalesce holes into a single retransmission */
+#endif
+			len = min(tp->t_maxseg, p->end - p->rxmit);
+#ifndef TCP_FACK
+			/* in FACK, hold snd_cwnd constant during recovery */
+			if (SEQ_LT(tp->snd_una, tp->snd_last))
+				tp->snd_cwnd -= tp->t_maxseg;
+#endif
+    		}
+	}
+#endif /* TCP_SACK */
+
 	if (tp->t_force) {
 		if (win == 0) {
 			/*
@@ -142,11 +264,24 @@ again:
 		}
 	}
 
-	if (win < so->so_snd.sb_cc) {
-		len = win - off;
-		flags &= ~TH_FIN;
-	} else
-		len = so->so_snd.sb_cc - off;
+#ifdef TCP_SACK
+	if (!sack_rxmit) {
+#endif
+	len = min(so->so_snd.sb_cc, win) - off;
+
+#if defined(TCP_SACK) && defined(TCP_FACK)
+	/* 
+	 * If we're in fast recovery (SEQ_GT(tp->snd_last, tp->snd_una)), and 
+	 * amount of outstanding data (snd_awnd) is >= snd_cwnd, then
+	 * do not send data (like zero window conditions)
+	 */
+	if (!tp->sack_disable && len && SEQ_GT(tp->snd_last, tp->snd_una) && 
+	    (tp->snd_awnd >= tp->snd_cwnd)) 
+		len = 0;
+#endif /* TCP_FACK */
+#ifdef TCP_SACK
+	}
+#endif
 
 	if (len < 0) {
 		/*
@@ -154,25 +289,23 @@ again:
 		 * but we haven't been called to retransmit,
 		 * len will be -1.  Otherwise, window shrank
 		 * after we sent into it.  If window shrank to 0,
-		 * calcel pending retransmit, pull snd_nxt back
-		 * to (closed) window, and set the persist timer
-		 * if it isn't already running.  If the window
-		 * didn't close completely, just wait for an ACK.
+		 * cancel pending retransmit and pull snd_nxt
+		 * back to (closed) window.  We will enter persist
+		 * state below.  If the window didn't close completely,
+		 * just wait for an ACK.
 		 */
 		len = 0;
 		if (win == 0) {
 			tp->t_timer[TCPT_REXMT] = 0;
-			tp->t_rxtshift = 0;
 			tp->snd_nxt = tp->snd_una;
-			if (tp->t_timer[TCPT_PERSIST] == 0)
-				tcp_setpersist(tp);
 		}
 	}
 	if (len > tp->t_maxseg) {
 		len = tp->t_maxseg;
-		flags &= ~TH_FIN;
 		sendalot = 1;
 	}
+	if (SEQ_LT(tp->snd_nxt + len, tp->snd_una + so->so_snd.sb_cc))
+		flags &= ~TH_FIN;
 
 	win = sbspace(&so->so_rcv);
 
@@ -198,6 +331,10 @@ again:
 			goto send;
 		if (SEQ_LT(tp->snd_nxt, tp->snd_max))
 			goto send;
+#ifdef TCP_SACK
+		if (sack_rxmit)
+			goto send;
+#endif
 	}
 
 	/*
@@ -294,6 +431,20 @@ send:
 			mss = htons((u_int16_t) tcp_mss(tp, 0));
 			bcopy((caddr_t)&mss, (caddr_t)(opt + 2), sizeof(mss));
 			optlen = 4;
+#ifdef TCP_SACK
+			/* 
+			 * If this is the first SYN of connection (not a SYN 
+			 * ACK), include SACK_PERMIT_HDR option.  If this is a 
+			 * SYN ACK, include SACK_PERMIT_HDR option if peer has 
+			 * already done so.
+			 */
+			if (!tp->sack_disable && ((flags & TH_ACK) == 0 ||
+			    (tp->t_flags & TF_SACK_PERMIT))) {
+				*((u_long *) (opt + optlen)) =
+				    htonl(TCPOPT_SACK_PERMIT_HDR);
+				optlen += 4;
+			}
+#endif
 	 
 			if ((tp->t_flags & TF_REQ_SCALE) &&
 			    ((flags & TH_ACK) == 0 ||
@@ -325,6 +476,34 @@ send:
 		*lp   = htonl(tp->ts_recent);
 		optlen += TCPOLEN_TSTAMP_APPA;
 	}
+
+#ifdef TCP_SACK
+	/*
+	 * Send SACKs if necessary.  This should be the last option processed.
+	 * Only as many SACKs are sent as are permitted by the maximum options
+	 * size.  No more than three SACKs are sent.
+	 */
+	if (!tp->sack_disable && tp->t_state == TCPS_ESTABLISHED &&
+	    (tp->t_flags & (TF_SACK_PERMIT|TF_NOOPT)) == TF_SACK_PERMIT &&
+	    tp->rcv_numsacks) {
+		u_long *lp = (u_long *) (opt + optlen);
+		u_long *olp = lp++;
+		int count = 0;  /* actual number of SACKs inserted */
+		int maxsack = (MAX_TCPOPTLEN - (optlen + 4))/TCPOLEN_SACK;
+
+		maxsack = min(maxsack, TCP_MAX_SACK);
+		for (i=0; (i < tp->rcv_numsacks && count < maxsack); i++) {
+			struct sackblk sack = tp->sackblks[i];
+			if (sack.start == 0 && sack.end == 0)
+				continue;
+			*lp++ = htonl(sack.start);
+			*lp++ = htonl(sack.end);
+			count++;
+		}
+		*olp = htonl(TCPOPT_SACK_HDR|(TCPOLEN_SACK*count+2));
+		optlen += TCPOLEN_SACK*count + 4; /* including leading NOPs */
+	}
+#endif /* TCP_SACK */
 
 	hdrlen += optlen;
  
@@ -447,6 +626,23 @@ send:
 		ti->ti_seq = htonl(tp->snd_nxt);
 	else
 		ti->ti_seq = htonl(tp->snd_max);
+#ifdef TCP_SACK
+	if (sack_rxmit) {
+		/* 
+		 * If sendalot was turned on (due to option stuffing), turn it 
+		 * off. Properly set th_seq field.  Advance the ret'x pointer 
+		 * by len.  
+		 */
+		if (sendalot)
+			sendalot = 0;
+		ti->ti_seq = htonl(p->rxmit);
+		p->rxmit += len;
+#if defined(TCP_SACK) && defined(TCP_FACK)
+		tp->retran_data += len;
+#endif /* TCP_FACK */
+	}
+#endif /* TCP_SACK */
+
 	ti->ti_ack = htonl(tp->rcv_nxt);
 	if (optlen) {
 		bcopy((caddr_t)opt, (caddr_t)(ti + 1), optlen);
@@ -508,6 +704,13 @@ send:
 				tp->t_flags |= TF_SENTFIN;
 			}
 		}
+#ifdef TCP_SACK
+		if (!tp->sack_disable) {
+			if (sack_rxmit && (p->rxmit != tp->snd_nxt)) {
+				goto timer;
+			}
+		}
+#endif
 		tp->snd_nxt += len;
 		if (SEQ_GT(tp->snd_nxt, tp->snd_max)) {
 			tp->snd_max = tp->snd_nxt;
@@ -530,6 +733,19 @@ send:
 		 * Initialize shift counter which is used for backoff
 		 * of retransmit time.
 		 */
+#ifdef TCP_SACK
+ timer:
+		if (!tp->sack_disable && sack_rxmit &&
+		    tp->t_timer[TCPT_REXMT] == 0 &&
+		    tp->snd_nxt != tp->snd_max) {
+			tp->t_timer[TCPT_REXMT] = tp->t_rxtcur;
+			if (tp->t_timer[TCPT_PERSIST]) {
+				tp->t_timer[TCPT_PERSIST] = 0;
+				tp->t_rxtshift = 0;
+			}
+		}
+#endif
+
 		if (tp->t_timer[TCPT_REXMT] == 0 &&
 		    tp->snd_nxt != tp->snd_una) {
 			tp->t_timer[TCPT_REXMT] = tp->t_rxtcur;
@@ -571,6 +787,11 @@ send:
 	error = ip_output(m, (struct mbuf *)0, &tp->t_inpcb->inp_route, 
 	    so->so_options & SO_DONTROUTE);
 #endif
+#if defined(TCP_SACK) && defined(TCP_FACK)
+	/* Update snd_awnd to reflect the new data that was sent.  */
+        tp->snd_awnd = tcp_seq_subtract(tp->snd_max, tp->snd_fack) +
+            tp->retran_data;                
+#endif
     }
 	if (error) {
 out:
@@ -597,7 +818,11 @@ out:
 		tp->rcv_adv = tp->rcv_nxt + win;
 	tp->last_ack_sent = tp->rcv_nxt;
 	tp->t_flags &= ~(TF_ACKNOW|TF_DELACK);
+#if defined(TCP_SACK) || defined(TCP_NEWRENO)
+	if (sendalot && --maxburst)
+#else
 	if (sendalot)
+#endif
 		goto again;
 	return (0);
 }

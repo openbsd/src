@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.11 1998/10/28 21:34:33 provos Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.12 1998/11/17 19:23:02 provos Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -77,9 +77,18 @@ int	tcp_rttdflt = TCPTV_SRTTDFLT / PR_SLOWHZ;
  * used as the default).
  */
 #ifndef TCP_DO_RFC1323
-#define TCP_DO_RFC1323 1
+#define TCP_DO_RFC1323	1
 #endif
 int    tcp_do_rfc1323 = TCP_DO_RFC1323;
+
+#ifndef TCP_DO_SACK
+#ifdef TCP_SACK
+#define TCP_DO_SACK	1
+#else
+#define TCP_DO_SACK	0
+#endif
+#endif
+int    tcp_do_sack = TCP_DO_SACK;		/* RFC 2018 selective ACKs */
 
 #ifndef TCBHASHSIZE
 #define	TCBHASHSIZE	128
@@ -237,6 +246,9 @@ tcp_newtcpcb(inp)
 	LIST_INIT(&tp->segq);
 	tp->t_maxseg = tp->t_maxopd = tcp_mssdflt;
 
+#ifdef TCP_SACK
+	tp->sack_disable = tcp_do_sack ? 0 : 1;
+#endif
 	tp->t_flags = tcp_do_rfc1323 ? (TF_REQ_SCALE|TF_REQ_TSTMP) : 0;
 	tp->t_inpcb = inp;
 	/*
@@ -293,6 +305,9 @@ tcp_close(tp)
 	register struct ipqent *qe;
 	struct inpcb *inp = tp->t_inpcb;
 	struct socket *so = inp->inp_socket;
+#ifdef TCP_SACK
+	struct sackhole *p, *q;
+#endif
 #ifdef RTV_RTT
 	register struct rtentry *rt;
 
@@ -369,6 +384,15 @@ tcp_close(tp)
 		m_freem(qe->ipqe_m);
 		FREE(qe, M_IPQ);
 	}
+#ifdef TCP_SACK
+	/* Free SACK holes. */
+	q = p = tp->snd_holes;
+	while (p != 0) {
+		q = p->next;
+		free(p, M_PCB);
+		p = q;
+	}
+#endif
 	if (tp->t_template)
 		(void) m_free(dtom(tp->t_template));
 	free(tp, M_PCB);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.12 1998/10/28 21:34:33 provos Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.13 1998/11/17 19:23:03 provos Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -35,6 +35,23 @@
  *
  *	@(#)tcp_var.h	8.3 (Berkeley) 4/10/94
  */
+
+#ifdef TCP_SACK
+struct sackblk
+{   
+	tcp_seq start;		/* start seq no. of sack block */
+	tcp_seq end; 		/* end seq no. */
+};  
+    
+struct sackhole
+{   
+	tcp_seq start;      	/* start seq no. of hole */ 
+	tcp_seq end;        	/* end seq no. */
+	int dups;      		/* number of dup(s)acks for this hole */
+	tcp_seq rxmit;      	/* next seq. no in hole to be retransmitted */
+	struct sackhole *next;  /* next in list */
+};
+#endif
 
 /*
  * Kernel variables for tcp.
@@ -78,11 +95,33 @@ struct tcpcb {
 	tcp_seq	snd_wl2;		/* window update seg ack number */
 	tcp_seq	iss;			/* initial send sequence number */
 	u_long	snd_wnd;		/* send window */
+#ifdef TCP_SACK
+	int sack_disable;            	/* disable SACK for this connection */
+	int snd_numholes; 		/* number of holes seen by sender */
+	struct sackhole *snd_holes;     /* linked list of holes (sorted) */
+#if defined(TCP_SACK) && defined(TCP_FACK)
+	tcp_seq snd_fack;		/* for FACK congestion control */
+	u_long	snd_awnd;		/* snd_nxt - snd_fack + */
+					/* retransmitted data */
+	int retran_data;		/* amount of outstanding retx. data  */
+#endif /* TCP_FACK */
+#endif /* TCP_SACK */
+#if defined(TCP_SACK) || defined(TCP_NEWRENO)
+	tcp_seq snd_last;		/* for use in fast recovery */
+#endif
 /* receive sequence variables */
 	u_long	rcv_wnd;		/* receive window */
 	tcp_seq	rcv_nxt;		/* receive next */
 	tcp_seq	rcv_up;			/* receive urgent pointer */
 	tcp_seq	irs;			/* initial receive sequence number */
+#ifdef TCP_SACK
+	tcp_seq rcv_laststart;          /* start of last segment recd. */
+	tcp_seq rcv_lastend;            /* end of ... */
+	tcp_seq rcv_lastsack;           /* last seq number(+1) sack'd by rcv'r*/
+	int rcv_numsacks;           	/* # distinct sack blks present */
+	struct sackblk sackblks[MAX_SACK_BLKS];  /* seq nos. of sack blocks */
+#endif
+
 /*
  * Additional variables for this implementation.
  */
@@ -193,6 +232,7 @@ struct	tcpstat {
 	u_quad_t tcps_sndbyte;		/* data bytes sent */
 	u_long	tcps_sndrexmitpack;	/* data packets retransmitted */
 	u_quad_t tcps_sndrexmitbyte;	/* data bytes retransmitted */
+	u_quad_t tcps_sndrexmitfast;	/* Fast retransmits */
 	u_long	tcps_sndacks;		/* ack-only packets sent */
 	u_long	tcps_sndprobe;		/* window probes sent */
 	u_long	tcps_sndurg;		/* packets sent with URG only */
@@ -243,7 +283,9 @@ struct	tcpstat {
 #define	TCPCTL_RECVSPACE	7 /* receive buffer space */
 #define	TCPCTL_SENDSPACE	8 /* send buffer space */
 #define	TCPCTL_IDENT	        9 /* get connection owner */
-#define	TCPCTL_MAXID		10
+#define	TCPCTL_SACK	       10 /* selective acknowledgement, rfc 2018 */
+#define TCPCTL_MSSDFLT	       11 /* Default maximum segment size */
+#define	TCPCTL_MAXID	       12
 
 #define	TCPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -256,6 +298,8 @@ struct	tcpstat {
 	{ "recvspace",	CTLTYPE_INT }, \
 	{ "sendspace",	CTLTYPE_INT }, \
 	{ "ident", CTLTYPE_STRUCT }, \
+	{ "sack",	CTLTYPE_INT }, \
+	{ "mssdflt",	CTLTYPE_INT }, \
 }
 
 struct tcp_ident_mapping {
@@ -268,6 +312,10 @@ struct	inpcbtable tcbtable;	/* head of queue of active tcpcb's */
 struct	tcpstat tcpstat;	/* tcp statistics */
 u_int32_t tcp_now;		/* for RFC 1323 timestamps */
 extern	int tcp_do_rfc1323;	/* enabled/disabled? */
+extern	int tcp_mssdflt;	/* default maximum segment size */
+#ifdef TCP_SACK
+extern	int tcp_do_sack;	/* SACK enabled/disabled */
+#endif
 
 int	 tcp_attach __P((struct socket *));
 void	 tcp_canceltimers __P((struct tcpcb *));
@@ -310,4 +358,21 @@ int	 tcp_usrreq __P((struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *));
 void	 tcp_xmit_timer __P((struct tcpcb *, int));
 void	 tcpdropoldhalfopen __P((struct tcpcb *, u_int16_t));
+#ifdef TCP_SACK
+int      tcp_sack_option __P((struct tcpcb *,struct tcpiphdr *,u_char *,int));
+void     tcp_update_sack_list __P((struct tcpcb *tp));
+void     tcp_del_sackholes __P((struct tcpcb *, struct tcpiphdr *));
+void     tcp_clean_sackreport __P((struct tcpcb *tp));
+void     tcp_sack_adjust __P((struct tcpcb *tp));
+struct sackhole * tcp_sack_output __P((struct tcpcb *tp));
+int    	 tcp_sack_partialack __P((struct tcpcb *, struct tcpiphdr *));
+#ifdef DEBUG
+void     tcp_print_holes __P((struct tcpcb *tp));
 #endif
+#endif /* TCP_SACK */
+#if defined(TCP_NEWRENO) || defined(TCP_SACK)
+int	 tcp_newreno __P((struct tcpcb *, struct tcpiphdr *));
+u_long	 tcp_seq_subtract  __P((u_long, u_long )); 
+#endif /* TCP_NEWRENO || TCP_SACK */
+
+#endif /* KERNEL */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.28 1998/06/27 02:42:41 deraadt Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.29 1998/11/17 19:23:02 provos Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -241,6 +241,14 @@ tcp_usrreq(so, req, m, nam, control)
 		tcp_iss += arc4random() % (TCP_ISSINCR / 2) + 1;
 #endif /* !TCP_COMPAT_42 */
 		tcp_sendseqinit(tp);
+#if defined(TCP_SACK) || defined(TCP_NEWRENO)
+		tp->snd_last = tp->snd_una;
+#endif
+#if defined(TCP_SACK) && defined(TCP_FACK)
+		tp->snd_fack = tp->snd_una;
+		tp->retran_data = 0;
+		tp->snd_awnd = 0;
+#endif
 		error = tcp_output(tp);
 		break;
 
@@ -435,6 +443,12 @@ tcp_ctloutput(op, so, level, optname, mp)
 				error = EINVAL;
 			break;
 
+#ifdef TCP_SACK
+		case TCP_SACK_DISABLE:
+			i = *mtod(m, int *);
+			tp->sack_disable = i;
+			break;
+#endif
 		default:
 			error = ENOPROTOOPT;
 			break;
@@ -454,6 +468,11 @@ tcp_ctloutput(op, so, level, optname, mp)
 		case TCP_MAXSEG:
 			*mtod(m, int *) = tp->t_maxseg;
 			break;
+#ifdef TCP_SACK
+		case TCP_SACK_DISABLE:
+			*mtod(m, int *) = tp->sack_disable;
+			break;
+#endif
 		default:
 			error = ENOPROTOOPT;
 			break;
@@ -654,7 +673,14 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case TCPCTL_RFC1323:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &tcp_do_rfc1323));
-
+#ifdef TCP_SACK
+	case TCPCTL_SACK:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &tcp_do_sack));
+#endif
+	case TCPCTL_MSSDFLT:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &tcp_mssdflt));
 	case TCPCTL_KEEPINITTIME:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &tcptv_keep_init));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.20 1998/10/28 21:34:32 provos Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.21 1998/11/17 19:23:01 provos Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -609,6 +609,11 @@ findpcb:
 	if (tp->t_state != TCPS_SYN_RECEIVED)
 		tp->t_timer[TCPT_KEEP] = tcp_keepidle;
 
+#ifdef TCP_SACK
+	if (!tp->sack_disable)
+		tcp_del_sackholes(tp, ti); /* Delete stale SACK holes */
+#endif /* TCP_SACK */
+
 	/*
 	 * Process options if not in LISTEN state,
 	 * else do it below (after getting remote address).
@@ -617,6 +622,12 @@ findpcb:
 		tcp_dooptions(tp, optp, optlen, ti,
 			&ts_present, &ts_val, &ts_ecr);
 
+#ifdef TCP_SACK
+	if (!tp->sack_disable) {
+		tp->rcv_laststart = ti->ti_seq; /* last rec'vd segment*/
+		tp->rcv_lastend = ti->ti_seq + ti->ti_len;
+	}
+#endif /* TCP_SACK */
 	/* 
 	 * Header prediction: check for the two common cases
 	 * of a uni-directional data xfer.  If the packet has
@@ -652,7 +663,7 @@ findpcb:
 			if (SEQ_GT(ti->ti_ack, tp->snd_una) &&
 			    SEQ_LEQ(ti->ti_ack, tp->snd_max) &&
 			    tp->snd_cwnd >= tp->snd_wnd &&
-			    tp->t_dupacks < tcprexmtthresh) {
+			    tp->t_dupacks == 0) {
 				/*
 				 * this is a pure ack for outstanding data.
 				 */
@@ -667,6 +678,10 @@ findpcb:
 				tcpstat.tcps_rcvackbyte += acked;
 				sbdrop(&so->so_snd, acked);
 				tp->snd_una = ti->ti_ack;
+#if defined(TCP_SACK) && defined(TCP_FACK)
+				tp->snd_fack = tp->snd_una;
+				tp->retran_data = 0;
+#endif /* TCP_FACK */
 				m_freem(m);
 
 				/*
@@ -697,6 +712,11 @@ findpcb:
 			 * with nothing on the reassembly queue and
 			 * we have enough buffer space to take it.
 			 */
+#ifdef TCP_SACK
+			/* Clean receiver SACK report if present */
+			if (!tp->sack_disable && tp->rcv_numsacks)
+				tcp_clean_sackreport(tp);
+#endif /* TCP_SACK */
 			++tcpstat.tcps_preddat;
 			tp->rcv_nxt += ti->ti_len;
 			tcpstat.tcps_rcvpack++;
@@ -822,6 +842,17 @@ findpcb:
 		if (optp)
 			tcp_dooptions(tp, optp, optlen, ti,
 				&ts_present, &ts_val, &ts_ecr);
+#ifdef TCP_SACK
+		/*
+		 * If peer did not send a SACK_PERMITTED option (i.e., if
+		 * tcp_dooptions() did not set TF_SACK_PERMIT), set 
+                 * sack_disable to 1 if it is currently 0.
+                 */
+                if (!tp->sack_disable)
+                        if ((tp->t_flags & TF_SACK_PERMIT) == 0) 
+                                tp->sack_disable = 1;
+#endif
+
 		if (iss)
 			tp->iss = iss;
 		else
@@ -833,6 +864,14 @@ findpcb:
 #endif /* !TCP_COMPAT_42 */
 		tp->irs = ti->ti_seq;
 		tcp_sendseqinit(tp);
+#if defined (TCP_SACK) || defined (TCP_NEWRENO)
+		tp->snd_last = tp->snd_una;
+#endif /* TCP_SACK || TCP_NEWRENO */
+#if defined(TCP_SACK) && defined(TCP_FACK)
+		tp->snd_fack = tp->snd_una;
+		tp->retran_data = 0;
+		tp->snd_awnd = 0;
+#endif /* TCP_FACK */
 		tcp_rcvseqinit(tp);
 		tp->t_flags |= TF_ACKNOW;
 		tp->t_state = TCPS_SYN_RECEIVED;
@@ -893,6 +932,16 @@ findpcb:
 		tp->irs = ti->ti_seq;
 		tcp_rcvseqinit(tp);
 		tp->t_flags |= TF_ACKNOW;
+#ifdef TCP_SACK
+                /*
+                 * If we've sent a SACK_PERMITTED option, and the peer
+                 * also replied with one, then TF_SACK_PERMIT should have
+                 * been set in tcp_dooptions().  If it was not, disable SACKs.
+                 */
+                if (!tp->sack_disable)
+                        if ((tp->t_flags & TF_SACK_PERMIT) == 0) 
+                                tp->sack_disable = 1;
+#endif
 		if (tiflags & TH_ACK && SEQ_GT(tp->snd_una, tp->iss)) {
 			tcpstat.tcps_connects++;
 			soisconnected(so);
@@ -911,6 +960,15 @@ findpcb:
 			 */
 			if (tp->t_rtt)
 				tcp_xmit_timer(tp, tp->t_rtt);
+			/*
+			 * Since new data was acked (the SYN), open the
+			 * congestion window by one MSS.  We do this
+			 * here, because we won't go through the normal
+			 * ACK processing below.  And since this is the
+			 * start of the connection, we know we are in
+			 * the exponential phase of slow-start.
+			 */
+			tp->snd_cwnd += tp->t_maxseg;
 		} else
 			tp->t_state = TCPS_SYN_RECEIVED;
 
@@ -1169,7 +1227,31 @@ trimthenstep6:
 	case TCPS_TIME_WAIT:
 
 		if (SEQ_LEQ(ti->ti_ack, tp->snd_una)) {
-			if (ti->ti_len == 0 && tiwin == tp->snd_wnd) {
+			/*
+			 * Duplicate/old ACK processing.
+			 * Increments t_dupacks:
+			 *	Pure duplicate (same seq/ack/window, no data)
+			 * Doesn't affect t_dupacks:
+			 *	Data packets.
+			 *	Normal window updates (window opens)
+			 * Resets t_dupacks:
+			 *	New data ACKed.
+			 *	Window shrinks
+			 *	Old ACK
+			 */
+			if (ti->ti_len)
+				break;
+			/*
+			 * If we get an old ACK, there is probably packet
+			 * reordering going on.  Be conservative and reset
+			 * t_dupacks so that we are less agressive in
+			 * doing a fast retransmit.
+			 */
+			if (ti->ti_ack != tp->snd_una) {
+				tp->t_dupacks = 0;
+				break;
+			}
+			if (tiwin == tp->snd_wnd) {
 				tcpstat.tcps_rcvdupack++;
 				/*
 				 * If we have outstanding data (other than
@@ -1195,45 +1277,186 @@ trimthenstep6:
 				 * to keep a constant cwnd packets in the
 				 * network.
 				 */
-				if (tp->t_timer[TCPT_REXMT] == 0 ||
-				    ti->ti_ack != tp->snd_una)
+				if (tp->t_timer[TCPT_REXMT] == 0)
 					tp->t_dupacks = 0;
+#if defined(TCP_SACK) && defined(TCP_FACK)
+				/* 
+				 * In FACK, can enter fast rec. if the receiver
+				 * reports a reass. queue longer than 3 segs.
+				 */
+				else if (++tp->t_dupacks == tcprexmtthresh ||
+				    ((SEQ_GT(tp->snd_fack, tcprexmtthresh * 
+				    tp->t_maxseg + tp->snd_una)) &&
+				    SEQ_GT(tp->snd_una, tp->snd_last))) {
+#else
 				else if (++tp->t_dupacks == tcprexmtthresh) {
+#endif /* TCP_FACK */
 					tcp_seq onxt = tp->snd_nxt;
 					u_int win =
 					    min(tp->snd_wnd, tp->snd_cwnd) / 2 /
 						tp->t_maxseg;
 
+#if defined(TCP_SACK) || defined(TCP_NEWRENO) 
+					if (SEQ_LT(ti->ti_ack, tp->snd_last)){
+					    	/* 
+						 * False fast retx after 
+						 * timeout.  Do not cut window.
+						 */
+						tp->snd_cwnd += tp->t_maxseg;
+						tp->t_dupacks = 0;
+						(void) tcp_output(tp); 
+						goto drop;
+					}
+#endif
 					if (win < 2)
 						win = 2;
 					tp->snd_ssthresh = win * tp->t_maxseg;
+#if defined(TCP_SACK) || defined(TCP_NEWRENO)
+					tp->snd_last = tp->snd_max;
+#endif
+#ifdef TCP_SACK
+                    			if (!tp->sack_disable) {
+						tp->t_timer[TCPT_REXMT] = 0;
+						tp->t_rtt = 0;
+						tcpstat.tcps_sndrexmitfast++;
+#if defined(TCP_SACK) && defined(TCP_FACK) 
+						(void) tcp_output(tp);
+						/*
+						 * During FR, snd_cwnd is held
+						 * constant for FACK.
+						 */
+						tp->snd_cwnd = tp->snd_ssthresh;
+						tp->t_dupacks = tcprexmtthresh;
+#else
+						/* 
+						 * tcp_output() will send
+						 * oldest SACK-eligible rtx.
+						 */
+						(void) tcp_output(tp);
+						tp->snd_cwnd = tp->snd_ssthresh+
+					           tp->t_maxseg * tp->t_dupacks;
+#endif /* TCP_FACK */
+						/* 
+						 * It is possible for 
+						 * tcp_output to fail to send
+						 * a segment.  If so, make 
+						 * sure that REMXT timer is set.
+						 */ 
+						if (SEQ_GT(tp->snd_max, 
+						    tp->snd_una) &&
+                        			tp->t_timer[TCPT_REXMT] == 0 &&
+                        			tp->t_timer[TCPT_PERSIST] == 0)
+                        			tp->t_timer[TCPT_REXMT] = 
+						    tp->t_rxtcur;
+						goto drop;
+					}
+#endif /* TCP_SACK */
 					tp->t_timer[TCPT_REXMT] = 0;
 					tp->t_rtt = 0;
 					tp->snd_nxt = ti->ti_ack;
 					tp->snd_cwnd = tp->t_maxseg;
+					tcpstat.tcps_sndrexmitfast++;
 					(void) tcp_output(tp);
+
 					tp->snd_cwnd = tp->snd_ssthresh +
 					    tp->t_maxseg * tp->t_dupacks;
 					if (SEQ_GT(onxt, tp->snd_nxt))
 						tp->snd_nxt = onxt;
 					goto drop;
 				} else if (tp->t_dupacks > tcprexmtthresh) {
+#if defined(TCP_SACK) && defined(TCP_FACK)
+					/* 
+					 * while (awnd < cwnd) 
+					 *         sendsomething(); 
+					 */
+					if (!tp->sack_disable) {
+						if (tp->snd_awnd < tp->snd_cwnd)
+							tcp_output(tp);
+						goto drop;
+					}
+#endif /* TCP_FACK */
 					tp->snd_cwnd += tp->t_maxseg;
 					(void) tcp_output(tp);
 					goto drop;
 				}
-			} else
+			} else if (tiwin < tp->snd_wnd) {
+				/*
+				 * The window was retracted!  Previous dup
+				 * ACKs may have been due to packets arriving
+				 * after the shrunken window, not a missing
+				 * packet, so play it safe and reset t_dupacks
+				 */
 				tp->t_dupacks = 0;
+			}
 			break;
 		}
 		/*
 		 * If the congestion window was inflated to account
 		 * for the other side's cached packets, retract it.
 		 */
+#ifdef TCP_NEWRENO
+		if (tp->t_dupacks >= tcprexmtthresh && !tcp_newreno(tp, ti)) {
+			/* Out of fast recovery */
+			tp->snd_cwnd = tp->snd_ssthresh;
+			/* 
+			 * Window inflation should have left us with approx.
+			 * snd_ssthresh outstanding data.  But in case we
+			 * would be inclined to send a burst, better to do
+			 * it via the slow start mechanism.
+			 */
+			if (tcp_seq_subtract(tp->snd_max, ti->ti_ack) <
+			    tp->snd_ssthresh)
+				tp->snd_cwnd = tcp_seq_subtract(tp->snd_max,
+				    ti->ti_ack) + tp->t_maxseg;	
+			tp->t_dupacks = 0;
+		}
+#elif defined(TCP_SACK)
+		if (!tp->sack_disable) {
+			if (tp->t_dupacks >= tcprexmtthresh) {
+				/* Check for a partial ACK */
+				if (tcp_sack_partialack(tp, ti)) {
+#if defined(TCP_SACK) && defined(TCP_FACK)
+					/* Force call to tcp_output */
+					if (tp->snd_awnd < tp->snd_cwnd) 
+						needoutput = 1;
+#else
+					tp->snd_cwnd += tp->t_maxseg;
+					needoutput = 1;
+#endif /* TCP_FACK */
+				} else {
+					/* Out of fast recovery */
+					tp->snd_cwnd = tp->snd_ssthresh;
+					if (tcp_seq_subtract(tp->snd_max, 
+					    ti->ti_ack) < tp->snd_ssthresh)
+						tp->snd_cwnd = 
+						   tcp_seq_subtract(tp->snd_max,
+					           ti->ti_ack) + tp->t_maxseg;	
+					tp->t_dupacks = 0;
+#if defined(TCP_SACK) && defined(TCP_FACK)
+					if (SEQ_GT(ti->ti_ack, tp->snd_fack))
+						tp->snd_fack = ti->ti_ack;
+#endif /* TCP_FACK */
+				}
+			} 
+		} else {
+			if (tp->t_dupacks >= tcprexmtthresh && 
+			    !tcp_newreno(tp, ti)) {
+				/* Out of fast recovery */
+				tp->snd_cwnd = tp->snd_ssthresh;
+				if (tcp_seq_subtract(tp->snd_max, ti->ti_ack) <
+			  	    tp->snd_ssthresh)
+					tp->snd_cwnd = 
+					    tcp_seq_subtract(tp->snd_max,
+					    ti->ti_ack) + tp->t_maxseg;	
+				tp->t_dupacks = 0;
+			}
+		}
+#else /* else neither TCP_NEWRENO nor TCP_SACK */
 		if (tp->t_dupacks >= tcprexmtthresh &&
 		    tp->snd_cwnd > tp->snd_ssthresh)
 			tp->snd_cwnd = tp->snd_ssthresh;
 		tp->t_dupacks = 0;
+#endif
 		if (SEQ_GT(ti->ti_ack, tp->snd_max)) {
 			tcpstat.tcps_rcvacktoomuch++;
 			goto dropafterack;
@@ -1272,9 +1495,7 @@ trimthenstep6:
 		 * If the window gives us less than ssthresh packets
 		 * in flight, open exponentially (maxseg per packet).
 		 * Otherwise open linearly: maxseg per window
-		 * (maxseg^2 / cwnd per packet), plus a constant
-		 * fraction of a packet (maxseg/8) to help larger windows
-		 * open quickly enough.
+		 * (maxseg^2 / cwnd per packet).
 		 */
 		{
 		register u_int cw = tp->snd_cwnd;
@@ -1282,6 +1503,9 @@ trimthenstep6:
 
 		if (cw > tp->snd_ssthresh)
 			incr = incr * incr / cw;
+#if defined (TCP_NEWRENO) || defined (TCP_SACK)
+		if (SEQ_GEQ(ti->ti_ack, tp->snd_last)) 
+#endif
 		tp->snd_cwnd = min(cw + incr, TCP_MAXWIN<<tp->snd_scale);
 		}
 		if (acked > so->so_snd.sb_cc) {
@@ -1298,6 +1522,10 @@ trimthenstep6:
 		tp->snd_una = ti->ti_ack;
 		if (SEQ_LT(tp->snd_nxt, tp->snd_una))
 			tp->snd_nxt = tp->snd_una;
+#if defined (TCP_SACK) && defined (TCP_FACK)
+		if (SEQ_GT(tp->snd_una, tp->snd_fack))
+			tp->snd_fack = tp->snd_una;
+#endif
 
 		switch (tp->t_state) {
 
@@ -1454,6 +1682,10 @@ dodata:							/* XXX */
 	if ((ti->ti_len || (tiflags & TH_FIN)) &&
 	    TCPS_HAVERCVDFIN(tp->t_state) == 0) {
 		TCP_REASS(tp, ti, m, so, tiflags);
+#ifdef TCP_SACK
+		if (!tp->sack_disable)
+			tcp_update_sack_list(tp); 
+#endif 
 		/*
 		 * Note the amount of data that peer has sent into
 		 * our window, in order to estimate the sender's
@@ -1519,8 +1751,20 @@ dodata:							/* XXX */
 	/*
 	 * Return any desired output.
 	 */
-	if (needoutput || (tp->t_flags & TF_ACKNOW))
+	if (needoutput || (tp->t_flags & TF_ACKNOW)) {
 		(void) tcp_output(tp);
+#ifdef TCP_SACK
+	/* 
+	 * In SACK, it is possible for tcp_output() to fail to send a segment 
+	 * after the retransmission timer has been turned off.  Make sure that
+	 * the retransmission timer is set if we are in fast recovery. 
+	 */
+		if (needoutput && SEQ_GT(tp->snd_max, tp->snd_una) && 
+		    tp->t_timer[TCPT_REXMT] == 0 && 
+		    tp->t_timer[TCPT_PERSIST] == 0)
+			tp->t_timer[TCPT_REXMT] = tp->t_rxtcur;
+#endif
+	}
 	return;
 
 dropafterack:
@@ -1636,12 +1880,415 @@ tcp_dooptions(tp, cp, cnt, ti, ts_present, ts_val, ts_ecr)
 				tp->ts_recent_age = tcp_now;
 			}
 			break;
+		
+#ifdef TCP_SACK 
+		case TCPOPT_SACK_PERMITTED:
+			if (tp->sack_disable || optlen!=TCPOLEN_SACK_PERMITTED)
+				continue;  
+			if (ti->ti_flags & TH_SYN)  
+				/* MUST only be set on SYN */
+				tp->t_flags |= TF_SACK_PERMIT;
+			break;
+		case TCPOPT_SACK:
+			if (tcp_sack_option(tp, ti, cp, optlen))
+				continue;
+			break;
+#endif          
 		}
 	}
 	/* Update t_maxopd and t_maxseg after all options are processed */
 	if (ti->ti_flags & TH_SYN)
 		(void) tcp_mss(tp, mss);	/* sets t_maxseg */
 }
+
+#if defined(TCP_SACK) || defined(TCP_NEWRENO)
+u_long 
+tcp_seq_subtract(a, b)
+	u_long a, b;
+{ 
+	return ((long)(a - b)); 
+}
+#endif
+
+
+#ifdef TCP_SACK 
+/*
+ * This function is called upon receipt of new valid data (while not in header
+ * prediction mode), and it updates the ordered list of sacks. 
+ */
+void 
+tcp_update_sack_list(tp)
+	struct tcpcb *tp; 
+{    
+	/* 
+	 * First reported block MUST be the most recent one.  Subsequent
+	 * blocks SHOULD be in the order in which they arrived at the
+	 * receiver.  These two conditions make the implementation fully
+	 * compliant with RFC 2018.
+	 */     
+	int i, j = 0, count = 0, lastpos = -1;
+	struct sackblk sack, firstsack, temp[MAX_SACK_BLKS];
+    
+	/* First clean up current list of sacks */
+	for (i = 0; i < tp->rcv_numsacks; i++) {
+		sack = tp->sackblks[i];
+		if (sack.start == 0 && sack.end == 0) {
+			count++; /* count = number of blocks to be discarded */
+			continue;
+		}
+		if (SEQ_LEQ(sack.end, tp->rcv_nxt)) {
+			tp->sackblks[i].start = tp->sackblks[i].end = 0;
+			count++;
+		} else { 
+			temp[j].start = tp->sackblks[i].start;
+			temp[j++].end = tp->sackblks[i].end;
+		}
+	}   
+	tp->rcv_numsacks -= count;
+	if (tp->rcv_numsacks == 0) { /* no sack blocks currently (fast path) */
+		tcp_clean_sackreport(tp);
+		if (SEQ_LT(tp->rcv_nxt, tp->rcv_laststart)) {
+			/* ==> need first sack block */
+			tp->sackblks[0].start = tp->rcv_laststart;
+			tp->sackblks[0].end = tp->rcv_lastend;
+			tp->rcv_numsacks = 1;
+		}
+		return;
+	}
+	/* Otherwise, sack blocks are already present. */
+	for (i = 0; i < tp->rcv_numsacks; i++)
+		tp->sackblks[i] = temp[i]; /* first copy back sack list */
+	if (SEQ_GEQ(tp->rcv_nxt, tp->rcv_lastend)) 
+		return;     /* sack list remains unchanged */
+	/* 
+	 * From here, segment just received should be (part of) the 1st sack.
+	 * Go through list, possibly coalescing sack block entries.
+	 */
+	firstsack.start = tp->rcv_laststart;
+	firstsack.end = tp->rcv_lastend;
+	for (i = 0; i < tp->rcv_numsacks; i++) {
+		sack = tp->sackblks[i];
+		if (SEQ_LT(sack.end, firstsack.start) ||
+		    SEQ_GT(sack.start, firstsack.end))
+			continue; /* no overlap */
+		if (sack.start == firstsack.start && sack.end == firstsack.end){
+			/* 
+			 * identical block; delete it here since we will
+			 * move it to the front of the list.
+			 */
+			tp->sackblks[i].start = tp->sackblks[i].end = 0;
+			lastpos = i;    /* last posn with a zero entry */
+			continue;
+		}
+		if (SEQ_LEQ(sack.start, firstsack.start))
+			firstsack.start = sack.start; /* merge blocks */
+		if (SEQ_GEQ(sack.end, firstsack.end))
+			firstsack.end = sack.end;     /* merge blocks */
+		tp->sackblks[i].start = tp->sackblks[i].end = 0;
+		lastpos = i;    /* last posn with a zero entry */
+	}
+	if (lastpos != -1) {    /* at least one merge */
+		for (i = 0, j = 1; i < tp->rcv_numsacks; i++) {
+			sack = tp->sackblks[i];
+			if (sack.start == 0 && sack.end == 0)
+				continue;
+			temp[j++] = sack;
+		}
+		tp->rcv_numsacks = j; /* including first blk (added later) */
+		for (i = 1; i < tp->rcv_numsacks; i++) /* now copy back */
+			tp->sackblks[i] = temp[i];
+	} else {        /* no merges -- shift sacks by 1 */
+		if (tp->rcv_numsacks < MAX_SACK_BLKS)
+			tp->rcv_numsacks++;
+		for (i = tp->rcv_numsacks-1; i > 0; i--)
+			tp->sackblks[i] = tp->sackblks[i-1];
+	}
+	tp->sackblks[0] = firstsack;
+	return;
+}  
+
+/*
+ * Process the TCP SACK option.  Returns 1 if tcp_dooptions() should continue,
+ * and 0 otherwise, if the option was fine.  tp->snd_holes is an ordered list
+ * of holes (oldest to newest, in terms of the sequence space).  
+ */             
+int         
+tcp_sack_option(tp, ti, cp, optlen) 
+	struct tcpcb *tp;
+	struct tcpiphdr *ti;
+	u_char *cp;
+	int    optlen;
+{       
+	int tmp_olen;
+	u_char *tmp_cp;
+	struct sackhole *cur, *p, *temp;
+   
+	if (tp->sack_disable)
+		return 1;
+           
+	/* Note: TCPOLEN_SACK must be 2*sizeof(tcp_seq) */
+	if (optlen <= 2 || (optlen - 2) % TCPOLEN_SACK != 0)
+		return 1;
+	tmp_cp = cp + 2;
+	tmp_olen = optlen - 2;
+	if (tp->snd_numholes < 0)
+		tp->snd_numholes = 0;
+	if (tp->t_maxseg == 0)
+		panic("tcp_sack_option"); /* Should never happen */
+	while (tmp_olen > 0) {
+		struct sackblk sack;
+            
+		bcopy((char *) tmp_cp, (char *) &(sack.start), sizeof(tcp_seq));
+		NTOHL(sack.start); 
+		bcopy((char *) tmp_cp + sizeof(tcp_seq),
+		    (char *) &(sack.end), sizeof(tcp_seq));
+		NTOHL(sack.end);
+		tmp_olen -= TCPOLEN_SACK;
+		tmp_cp += TCPOLEN_SACK;
+		if (SEQ_LEQ(sack.end, sack.start))
+			continue; /* bad SACK fields */
+		if (SEQ_LEQ(sack.end, tp->snd_una)) 
+			continue; /* old block */
+#if defined(TCP_SACK) && defined(TCP_FACK)
+		/* Updates snd_fack.  */
+		if (SEQ_GEQ(sack.end, tp->snd_fack))
+			tp->snd_fack = sack.end;
+#endif /* TCP_FACK */
+		if (tp->snd_holes == 0) { /* first hole */
+			tp->snd_holes = (struct sackhole *)
+			    malloc(sizeof(struct sackhole), M_PCB, M_NOWAIT);
+			cur = tp->snd_holes;
+			cur->start = ti->ti_ack;
+			cur->end = sack.start;
+			cur->rxmit = cur->start;
+			cur->next = 0;
+			tp->snd_numholes = 1;
+			tp->rcv_lastsack = sack.end;
+			/* 
+			 * dups is at least one.  If more data has been 
+			 * SACKed, it can be greater than one.
+			 */
+			cur->dups = min(tcprexmtthresh, 
+			    ((sack.end - cur->end)/tp->t_maxseg));
+			if (cur->dups < 1)
+				cur->dups = 1;
+			continue; /* with next sack block */
+		}
+		/* Go thru list of holes:  p = previous,  cur = current */
+		p = cur = tp->snd_holes;
+		while (cur) {
+			if (SEQ_LEQ(sack.end, cur->start)) 
+				/* SACKs data before the current hole */ 
+				break; /* no use going through more holes */
+			if (SEQ_GEQ(sack.start, cur->end)) {
+				/* SACKs data beyond the current hole */
+				cur->dups++;
+				if ( ((sack.end - cur->end)/tp->t_maxseg) >=
+					tcprexmtthresh)
+					cur->dups = tcprexmtthresh;
+				p = cur;
+				cur = cur->next;
+				continue;
+			}
+			if (SEQ_LEQ(sack.start, cur->start)) {
+				/* Data acks at least the beginning of hole */
+#if defined(TCP_SACK) && defined(TCP_FACK)
+				if (SEQ_GT(sack.end, cur->rxmit))
+					tp->retran_data -= 
+				    	    tcp_seq_subtract(cur->rxmit, 
+					    cur->start);
+				else
+					tp->retran_data -=
+					    tcp_seq_subtract(sack.end, 
+					    cur->start);
+#endif /* TCP_FACK */
+				if (SEQ_GEQ(sack.end,cur->end)){
+					/* Acks entire hole, so delete hole */
+					if (p != cur) {
+						p->next = cur->next;
+						free(cur, M_PCB);
+						cur = p->next;
+					} else {
+						cur=cur->next;
+						free(p, M_PCB);
+						p = cur;
+						tp->snd_holes = p;
+					}
+					tp->snd_numholes--;
+					continue;
+				}
+				/* otherwise, move start of hole forward */
+				cur->start = sack.end;
+				cur->rxmit = max (cur->rxmit, cur->start);
+				p = cur;
+				cur = cur->next;
+				continue;
+			}
+			/* move end of hole backward */
+			if (SEQ_GEQ(sack.end, cur->end)) {
+#if defined(TCP_SACK) && defined(TCP_FACK)
+				if (SEQ_GT(cur->rxmit, sack.start)) 
+					tp->retran_data -= 
+					    tcp_seq_subtract(cur->rxmit, 
+					    sack.start);
+#endif /* TCP_FACK */
+				cur->end = sack.start;
+				cur->rxmit = min (cur->rxmit, cur->end);
+				cur->dups++;
+				if ( ((sack.end - cur->end)/tp->t_maxseg) >=
+					tcprexmtthresh)
+					cur->dups = tcprexmtthresh;
+				p = cur;
+				cur = cur->next;
+				continue;
+			}
+			if (SEQ_LT(cur->start, sack.start) &&
+			    SEQ_GT(cur->end, sack.end)) {
+				/* 
+				 * ACKs some data in middle of a hole; need to 
+				 * split current hole
+				 */
+#if defined(TCP_SACK) && defined(TCP_FACK)
+				if (SEQ_GT(cur->rxmit, sack.end)) 
+					tp->retran_data -= 
+					    tcp_seq_subtract(sack.end, 
+					    sack.start);
+				else if (SEQ_GT(cur->rxmit, sack.start))
+					tp->retran_data -= 
+					    tcp_seq_subtract(cur->rxmit, 
+					    sack.start);
+#endif /* TCP_FACK */
+				temp = (struct sackhole *)malloc(sizeof(*temp),
+				    M_PCB,M_NOWAIT);
+				temp->next = cur->next;
+				temp->start = sack.end;
+				temp->end = cur->end;
+				temp->dups = cur->dups;
+				temp->rxmit = max (cur->rxmit, temp->start);
+				cur->end = sack.start;
+				cur->rxmit = min (cur->rxmit, cur->end);
+				cur->dups++;
+				if ( ((sack.end - cur->end)/tp->t_maxseg) >=
+					tcprexmtthresh)
+					cur->dups = tcprexmtthresh;
+				cur->next = temp;
+				p = temp;
+				cur = p->next;
+				tp->snd_numholes++;
+			}
+		}
+		/* At this point, p points to the last hole on the list */
+		if (SEQ_LT(tp->rcv_lastsack, sack.start)) {
+			/*
+			 * Need to append new hole at end.
+			 * Last hole is p (and it's not NULL).
+			 */
+			temp = (struct sackhole *) malloc(sizeof(*temp),
+			    M_PCB, M_NOWAIT);
+			temp->start = tp->rcv_lastsack;
+			temp->end = sack.start;
+			temp->dups = min(tcprexmtthresh, 
+			    ((sack.end - sack.start)/tp->t_maxseg));
+			if (temp->dups < 1)
+				temp->dups = 1;
+			temp->rxmit = temp->start;
+			temp->next = 0;
+			p->next = temp;
+			tp->rcv_lastsack = sack.end;
+			tp->snd_numholes++;
+		}
+	}
+#if defined(TCP_SACK) && defined(TCP_FACK)
+	/* 
+	 * Update retran_data, snd_fack, and snd_awnd.  Go through the list of 
+	 * holes.   Increment retran_data by (hole->rxmit - hole->start).
+	 * snd_fack gets the highest value of hole->end. 
+	 */
+	tp->retran_data = 0;
+	cur = tp->snd_holes;
+	while (cur) {
+		tp->retran_data += cur->rxmit - cur->start;
+		cur = cur->next;
+	}
+	tp->snd_awnd = tcp_seq_subtract(tp->snd_nxt, tp->snd_fack) + 
+	    tp->retran_data;
+#endif /* TCP_FACK */
+
+	return 0;
+}   
+
+/*
+ * Delete stale (i.e, cumulatively ack'd) holes.  Hole is deleted only if
+ * it is completely acked; otherwise, tcp_sack_option(), called from 
+ * tcp_dooptions(), will fix up the hole.
+ */
+void
+tcp_del_sackholes(tp, ti)
+	struct tcpcb *tp;
+	struct tcpiphdr *ti;
+{
+	if (!tp->sack_disable && tp->t_state != TCPS_LISTEN) {
+		/* max because this could be an older ack just arrived */
+		tcp_seq lastack = max(ti->ti_ack, tp->snd_una);
+		struct sackhole *cur = tp->snd_holes;
+		struct sackhole *prev = cur;
+		while (cur)
+			if (SEQ_LEQ(cur->end, lastack)) {
+				cur = cur->next;
+				free(prev, M_PCB);
+				prev = cur;
+				tp->snd_numholes--;
+			} else if (SEQ_LT(cur->start, lastack)) {
+				cur->start = lastack;
+				break;
+			} else
+				break;
+		tp->snd_holes = cur;
+	}
+}
+
+/* 
+ * Delete all receiver-side SACK information.
+ */
+void
+tcp_clean_sackreport(tp)
+	struct tcpcb *tp;
+{
+	int i;
+
+	tp->rcv_numsacks = 0;
+	for (i = 0; i < MAX_SACK_BLKS; i++)
+		tp->sackblks[i].start = tp->sackblks[i].end=0;
+
+}
+
+/* 
+ * Checks for partial ack.  If partial ack arrives, turn off retransmission
+ * timer, deflate the window, do not clear tp->t_dupacks, and return 1.
+ * If the ack advances at least to tp->snd_last, return 0.
+ */
+int
+tcp_sack_partialack(tp, ti)
+	struct tcpcb *tp;
+	struct tcpiphdr *ti;
+{
+	if (SEQ_LT(ti->ti_ack, tp->snd_last)) {
+		/* Turn off retx. timer (will start again next segment) */
+		tp->t_timer[TCPT_REXMT] = 0;
+		tp->t_rtt = 0;
+#ifndef TCP_FACK
+		/* 
+		 * Partial window deflation.  This statement relies on the 
+		 * fact that tp->snd_una has not been updated yet.  In FACK
+		 * hold snd_cwnd constant during fast recovery.
+		 */
+		tp->snd_cwnd -= (ti->ti_ack - tp->snd_una - tp->t_maxseg);
+#endif
+		return 1;
+	}
+	return 0;
+}
+#endif TCP_SACK
 
 /*
  * Pull out of band byte out of a segment so
@@ -1784,7 +2431,6 @@ tcp_mss(tp, offer)
 	u_long bufsize;
 	struct inpcb *inp;
 	struct socket *so;
-	extern int tcp_mssdflt;
 
 	inp = tp->t_inpcb;
 	ro = &inp->inp_route;
@@ -1919,3 +2565,40 @@ tcp_mss(tp, offer)
 	return (mss);
 }
 #endif /* TUBA_INCLUDE */
+
+#if defined(TCP_NEWRENO) || defined (TCP_SACK)
+/* 
+ * Checks for partial ack.  If partial ack arrives, force the retransmission
+ * of the next unacknowledged segment, do not clear tp->t_dupacks, and return
+ * 1.  By setting snd_nxt to ti_ack, this forces retransmission timer to
+ * be started again.  If the ack advances at least to tp->snd_last, return 0.
+ */
+int
+tcp_newreno(tp, ti)
+struct tcpcb *tp;
+struct tcpiphdr *ti;
+{
+	if (SEQ_LT(ti->ti_ack, tp->snd_last)) {
+		tcp_seq onxt = tp->snd_nxt;
+		tcp_seq ouna = tp->snd_una;	/* snd_una not yet updated */
+		u_long  ocwnd = tp->snd_cwnd;
+		tp->t_timer[TCPT_REXMT] = 0;
+		tp->t_rtt = 0;
+		tp->snd_nxt = ti->ti_ack;
+		tp->snd_cwnd = tp->t_maxseg;
+		tp->snd_una = ti->ti_ack;
+		(void) tcp_output(tp);
+		tp->snd_cwnd = ocwnd;
+		tp->snd_una = ouna;
+		if (SEQ_GT(onxt, tp->snd_nxt))
+			tp->snd_nxt = onxt;
+		/* 
+		 * Partial window deflation.  Relies on fact that tp->snd_una 
+		 * not updated yet.  
+		 */
+		tp->snd_cwnd -= (ti->ti_ack - tp->snd_una - tp->t_maxseg);
+		return 1;
+    }
+    return 0;
+}
+#endif /* TCP_NEWRENO || TCP_SACK */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp.h,v 1.2 1997/02/24 14:06:44 niklas Exp $	*/
+/*	$OpenBSD: tcp.h,v 1.3 1998/11/17 19:23:00 provos Exp $	*/
 /*	$NetBSD: tcp.h,v 1.8 1995/04/17 05:32:58 cgd Exp $	*/
 
 /*
@@ -75,12 +75,27 @@ struct tcphdr {
 #define	TCPOPT_SACK_PERMITTED	4		/* Experimental */
 #define	   TCPOLEN_SACK_PERMITTED	2
 #define	TCPOPT_SACK		5		/* Experimental */
+#define	TCPOLEN_SACK		8		/* 2*sizeof(tcp_seq) */
 #define	TCPOPT_TIMESTAMP	8
 #define	   TCPOLEN_TIMESTAMP		10
 #define	   TCPOLEN_TSTAMP_APPA		(TCPOLEN_TIMESTAMP+2) /* appendix A */
 
 #define TCPOPT_TSTAMP_HDR	\
     (TCPOPT_NOP<<24|TCPOPT_NOP<<16|TCPOPT_TIMESTAMP<<8|TCPOLEN_TIMESTAMP)
+
+#ifdef TCP_SACK
+/* Option definitions */
+#define TCPOPT_SACK_PERMIT_HDR \
+(TCPOPT_NOP<<24|TCPOPT_NOP<<16|TCPOPT_SACK_PERMITTED<<8|TCPOLEN_SACK_PERMITTED)
+#define TCPOPT_SACK_HDR   (TCPOPT_NOP<<24|TCPOPT_NOP<<16|TCPOPT_SACK<<8)
+/* Miscellaneous constants */
+#define MAX_SACK_BLKS	6	/* Max # SACK blocks stored at sender side */
+#define TCP_MAX_SACK	3	/* MAX # SACKs sent in any segment */
+#endif /* TCP_SACK */
+
+#if defined(TCP_SACK) || defined(TCP_NEWRENO)
+#define TCP_MAXBURST	4	/* Max # packets after leaving Fast Rxmit */
+#endif
 
 /*
  * Default maximum segment size for TCP.
@@ -99,3 +114,6 @@ struct tcphdr {
  */
 #define	TCP_NODELAY	0x01	/* don't delay send to coalesce packets */
 #define	TCP_MAXSEG	0x02	/* set maximum segment size */
+#ifdef TCP_SACK
+#define TCP_SACK_DISABLE	0x300 /* disable SACKs(if enabled by deflt.)*/
+#endif /* TCP_SACK */
