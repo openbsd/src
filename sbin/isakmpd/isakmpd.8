@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.26 2001/04/30 14:38:12 ho Exp $
+.\" $OpenBSD: isakmpd.8,v 1.27 2001/05/24 15:59:30 ho Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -331,6 +331,8 @@ A local private key for certificate based authentication.  There has
 to be a certificate for this key in the certificate directory mentioned
 above.  The same mode requirements as
 .Nm isakmpd.conf .
+.It Pa /var/run/isakmpd.pid
+The PID of the current daemon.
 .It Pa /var/run/isakmpd.fifo
 The FIFO used to manually control
 .Nm isakmpd .
