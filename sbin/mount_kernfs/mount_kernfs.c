@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_kernfs.c,v 1.5 1998/12/21 13:41:46 art Exp $	*/
+/*	$OpenBSD: mount_kernfs.c,v 1.6 1998/12/21 13:43:37 art Exp $	*/
 /*	$NetBSD: mount_kernfs.c,v 1.8 1996/04/13 05:35:39 cgd Exp $	*/
 
 /*
@@ -48,7 +48,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_kernfs.c	8.2 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_kernfs.c,v 1.5 1998/12/21 13:41:46 art Exp $";
+static char rcsid[] = "$OpenBSD: mount_kernfs.c,v 1.6 1998/12/21 13:43:37 art Exp $";
 #endif
 #endif /* not lint */
 
@@ -99,7 +99,8 @@ main(argc, argv)
 		else
 			err(1, NULL);
 	}
-	exit(0);
+
+	return 0;
 }
 
 void
