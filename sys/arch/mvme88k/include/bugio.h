@@ -1,7 +1,9 @@
-/*	$OpenBSD: bugio.h,v 1.10 2001/08/24 22:46:25 miod Exp $ */
+/*	$OpenBSD: bugio.h,v 1.11 2001/09/28 20:45:48 miod Exp $ */
+
 #ifndef __MACHINE_BUGIO_H__
 #define __MACHINE_BUGIO_H__
-#include "sys/cdefs.h"
+
+#include <sys/cdefs.h>
 
 struct bugdisk_io {
 	char	clun;

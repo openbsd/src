@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88100.h,v 1.8 2001/08/12 12:03:02 heko Exp $ */
+/*	$OpenBSD: m88100.h,v 1.9 2001/09/28 20:45:49 miod Exp $ */
 /* 
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -52,7 +52,7 @@
 #define	DMT_VALID	0x00000001	/* Valid Transaction Bit */
 
 #ifndef	_LOCORE
-#include "sys/types.h"
+#include <sys/types.h>
 
 /* dmt_skip is never set by the cpu.  It is used to 
  * mark 'known' transactions so that they don't get 
