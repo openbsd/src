@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.45 2003/03/10 14:54:17 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.46 2003/03/11 14:02:12 henning Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -80,6 +80,8 @@ static double		 sc_x2y(struct service_curve *, double);
 
 u_int32_t	 getifspeed(char *);
 u_long		 getifmtu(char *);
+
+static u_int32_t	 max_qid = 0;
 
 void
 pfaltq_store(struct pf_altq *a)
@@ -414,6 +416,8 @@ eval_pfqueue_cbq(struct pfctl *pf, struct pf_altq *pa)
 
 	if (pa->parent[0] == 0)
 		opts->flags |= (CBQCLF_ROOTCLASS | CBQCLF_WRR);
+	else if (pa->qid == 0 && (opts->flags & CBQCLF_DEFCLASS) == 0)
+		pa->qid = ++max_qid;
 
 	cbq_compute_idletime(pf, pa);
 	return (0);
