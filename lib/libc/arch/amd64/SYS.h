@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.1 2004/01/28 01:44:44 mickey Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.2 2004/02/06 18:19:19 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -47,19 +47,24 @@
 #include <sys/syscall.h>
 
 #ifdef __STDC__
+
 #define SYSTRAP(x)	movl $(SYS_ ## x),%eax; movq %rcx, %r10; syscall
-#else
-#define SYSTRAP(x)	movl $(SYS_/**/x),%eax; movq %rcx, %r10; syscall
-#endif
-
-#define CERROR		_C_LABEL(__cerror)
-#define CURBRK		_C_LABEL(__curbrk)
-
 #define SYSENTRY(x)							\
 	ENTRY(_thread_sys_ ## x);					\
 	.weak _C_LABEL(x);						\
 	_C_LABEL(x) = _C_LABEL(_thread_sys_ ## x)
+#else
 
+#define SYSTRAP(x)	movl $(SYS_/**/x),%eax; movq %rcx, %r10; syscall
+#define SYSENTRY(x)							\
+	ENTRY(_thread_sys_/**/x);					\
+	.weak _C_LABEL(x);						\
+	_C_LABEL(x) = _C_LABEL(_thread_sys_/**/x)
+
+#endif
+
+#define CERROR		_C_LABEL(__cerror)
+#define CURBRK		_C_LABEL(__curbrk)
 
 #define _SYSCALL_NOERROR(x,y)						\
 	SYSENTRY(x);							\
