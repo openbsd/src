@@ -1,4 +1,4 @@
-.\"	$OpenBSD: csh.1,v 1.25 1999/05/23 14:10:46 aaron Exp $
+.\"	$OpenBSD: csh.1,v 1.26 1999/05/24 13:11:18 aaron Exp $
 .\"	$NetBSD: csh.1,v 1.10 1995/03/21 09:02:35 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@
 .Nd a shell (command interpreter) with C-like syntax
 .Sh SYNOPSIS
 .Nm csh
-.Op Fl bcefinstvVxX
+.Op Fl bcefimnstvVxX
 .Op arg ...
 .Nm csh
 .Op Fl l
@@ -99,6 +99,12 @@ and outputs are terminals.
 The shell is a login shell (only applicable if
 .Fl l
 is the only flag specified).
+.It Fl m
+Read
+.Pa \&.cshrc ,
+regardless of its owner and group. This option is dangerous and should only
+be used by
+.Xr su 1 .
 .It Fl n
 Commands are parsed, but not executed.
 This aids in syntactic checking of shell scripts. When used interactively, the
