@@ -1,4 +1,4 @@
-/*	$OpenBSD: helper.c,v 1.2 2004/04/29 02:39:32 millert Exp $	*/
+/*	$OpenBSD: helper.c,v 1.3 2004/04/29 02:43:06 millert Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -10,7 +10,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: helper.c,v 1.2 2004/04/29 02:39:32 millert Exp $";
+static const char rcsid[] = "$OpenBSD: helper.c,v 1.3 2004/04/29 02:43:06 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -35,7 +35,7 @@ HASHEnd(HASH_CTX *ctx, char buf[HASH_DIGEST_STRING_LENGTH])
 	if (buf == NULL && (buf = malloc(HASH_DIGEST_STRING_LENGTH)) == NULL)
 		return(NULL);
 
-	HASHFinal(digest,ctx);
+	HASHFinal(digest, ctx);
 	for (i = 0; i < HASH_DIGEST_LENGTH; i++) {
 		buf[i + i] = hex[digest[i] >> 4];
 		buf[i + i + 1] = hex[digest[i] & 0x0f];
@@ -48,22 +48,22 @@ HASHEnd(HASH_CTX *ctx, char buf[HASH_DIGEST_STRING_LENGTH])
 char *
 HASHFile(char *filename, char buf[HASH_DIGEST_STRING_LENGTH])
 {
-    u_char buffer[BUFSIZ];
-    HASH_CTX ctx;
-    int fd, num, save_errno;
+	u_char buffer[BUFSIZ];
+	HASH_CTX ctx;
+	int fd, num, save_errno;
 
-    HASHInit(&ctx);
+	HASHInit(&ctx);
 
-    if ((fd = open(filename, O_RDONLY)) < 0)
-	    return(NULL);
+	if ((fd = open(filename, O_RDONLY)) < 0)
+		return(NULL);
 
-    while ((num = read(fd, buffer, sizeof(buffer))) > 0)
-	    HASHUpdate(&ctx, buffer, num);
+	while ((num = read(fd, buffer, sizeof(buffer))) > 0)
+		HASHUpdate(&ctx, buffer, num);
 
-    save_errno = errno;
-    close(fd);
-    errno = save_errno;
-    return (num < 0 ? NULL : HASHEnd(&ctx, buf));
+	save_errno = errno;
+	close(fd);
+	errno = save_errno;
+	return (num < 0 ? NULL : HASHEnd(&ctx, buf));
 }
 
 char *
