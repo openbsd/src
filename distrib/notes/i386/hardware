@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.135 2003/10/04 00:09:39 henning Exp $
+dnl	$OpenBSD: hardware,v 1.136 2003/10/16 18:50:44 grange Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PC's and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -729,7 +729,7 @@ Supported hardware {:-include-:}:
 		Hardware monitoring sensors, including: [G]
 		    National Semiconductor LM78, LM78-J, LM79
 		    Winbond W83697HF, W83627HF, W83627THF, W83781D, W83782D
-		    VIA VT82C686A
+		    VIA VT82C686A, VT8231
 		    ITE IT8705F, IT8712F
 		    SiS SiS950
 	Many kinds of ISA Plug-and-Play cards
