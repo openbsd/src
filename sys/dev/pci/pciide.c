@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.123 2003/05/02 09:33:33 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.124 2003/05/17 18:31:54 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -2787,8 +2787,14 @@ cmd0643_9_setup_channel(chp)
 				if (drvp->UDMA_mode > 2 &&
 				    (pciide_pci_read(sc->sc_pc, sc->sc_tag,
 				    CMD_BICSR) &
-				    CMD_BICSR_80(chp->channel)) == 0)
+				    CMD_BICSR_80(chp->channel)) == 0) {
+					WDCDEBUG_PRINT(("%s(%s:%d:%d): "
+					    "80-wire cable not detected\n",
+					    drvp->drive_name,
+					    sc->sc_wdcdev.sc_dev.dv_xname,
+					    chp->channel, drive), DEBUG_PROBE);
 					drvp->UDMA_mode = 2;
+				}
 				if (drvp->UDMA_mode > 2)
 					udma_reg &= ~CMD_UDMATIM_UDMA33(drive);
 				else if (sc->sc_wdcdev.UDMA_cap > 2) 
@@ -3931,6 +3937,9 @@ acer_setup_channel(chp)
 	    DRIVE_UDMA)	{	/* check 80 pins cable */
 		if (pciide_pci_read(sc->sc_pc, sc->sc_tag, ACER_0x4A) &
 		    ACER_0x4A_80PIN(chp->channel)) {
+			WDCDEBUG_PRINT(("%s:%d: 80-wire cable not detected\n",
+			    sc->sc_wdcdev.sc_dev.dv_xname, chp->channel),
+			    DEBUG_PROBE);
 			if (chp->ch_drive[0].UDMA_mode > 2)
 				chp->ch_drive[0].UDMA_mode = 2;
 			if (chp->ch_drive[1].UDMA_mode > 2)
@@ -4202,8 +4211,13 @@ hpt_setup_channel(chp)
 			/* use Ultra/DMA */
 			drvp->drive_flags &= ~DRIVE_DMA;
 			if ((cable & HPT_CSEL_CBLID(chp->channel)) != 0 &&
-			    drvp->UDMA_mode > 2)
+			    drvp->UDMA_mode > 2) {
+				WDCDEBUG_PRINT(("%s(%s:%d:%d): 80-wire "
+				    "cable not detected\n", drvp->drive_name,
+				    sc->sc_wdcdev.sc_dev.dv_xname,
+				    chp->channel, drive), DEBUG_PROBE);
 				drvp->UDMA_mode = 2;
+			}
 			after = (sc->sc_wdcdev.nchannels == 2) ?
 			    ((sc->sc_wdcdev.UDMA_cap == 6) ?
 			    hpt374_udma[drvp->UDMA_mode] :
@@ -4517,9 +4531,22 @@ pdc202xx_setup_channel(chp)
 		scr = bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
 		    PDC262_U66);
 		st = pci_conf_read(sc->sc_pc, sc->sc_tag, PDC2xx_STATE);
+		/* Check cable */
+		if ((st & PDC262_STATE_80P(channel)) != 0 &&
+		    ((chp->ch_drive[0].drive_flags & DRIVE_UDMA &&
+		    chp->ch_drive[0].UDMA_mode > 2) ||
+		    (chp->ch_drive[1].drive_flags & DRIVE_UDMA &&
+		    chp->ch_drive[1].UDMA_mode > 2))) {
+			WDCDEBUG_PRINT(("%s:%d: 80-wire cable not detected\n",
+			    sc->sc_wdcdev.sc_dev.dv_xname, channel),
+			    DEBUG_PROBE);
+			if (chp->ch_drive[0].UDMA_mode > 2)
+				chp->ch_drive[0].UDMA_mode = 2;
+			if (chp->ch_drive[1].UDMA_mode > 2)
+				chp->ch_drive[1].UDMA_mode = 2;
+		}
 		/* Trim UDMA mode */
-		if ((st & PDC262_STATE_80P(channel)) != 0 ||
-		    (chp->ch_drive[0].drive_flags & DRIVE_UDMA &&
+		if ((chp->ch_drive[0].drive_flags & DRIVE_UDMA &&
 		    chp->ch_drive[0].UDMA_mode <= 2) ||
 		    (chp->ch_drive[1].drive_flags & DRIVE_UDMA &&
 		    chp->ch_drive[1].UDMA_mode <= 2)) {
@@ -5073,8 +5100,15 @@ serverworks_setup_channel(chp)
 		    (drvp->drive_flags & DRIVE_UDMA)) {
 			/* use Ultra/DMA, check for 80-pin cable */
 			if (drvp->UDMA_mode > 2 &&
-			    (PCI_PRODUCT(pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_SUBSYS_ID_REG)) & (1 << (14 + channel))) == 0)
+			    (PCI_PRODUCT(pci_conf_read(sc->sc_pc, sc->sc_tag,
+			    PCI_SUBSYS_ID_REG)) &
+			    (1 << (14 + channel))) == 0) {
+				WDCDEBUG_PRINT(("%s(%s:%d:%d): 80-wire "
+				    "cable not detected\n", drvp->drive_name,
+				    sc->sc_wdcdev.sc_dev.dv_xname,
+				    channel, drive), DEBUG_PROBE);
 				drvp->UDMA_mode = 2;
+			}
 			dma_time |= dma_modes[drvp->DMA_mode] << (8 * (unit^1));
 			udma_mode |= drvp->UDMA_mode << (4 * unit + 16);
 			udma_mode |= 1 << unit;
