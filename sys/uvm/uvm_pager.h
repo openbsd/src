@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.h,v 1.10 2001/08/11 10:57:22 art Exp $	*/
+/*	$OpenBSD: uvm_pager.h,v 1.11 2001/08/12 21:36:48 mickey Exp $	*/
 /*	$NetBSD: uvm_pager.h,v 1.15 2000/05/19 03:45:04 thorpej Exp $	*/
 
 /*
@@ -115,6 +115,27 @@ struct uvm_pagerops {
 #define PGO_DONTCARE ((struct vm_page *) -1)	/* [get only] */
 
 #ifdef _KERNEL
+
+/*
+ * get/put return values
+ * OK	   operation was successful
+ * BAD	   specified data was out of the accepted range
+ * FAIL	   specified data was in range, but doesn't exist
+ * PEND	   operations was initiated but not completed
+ * ERROR   error while accessing data that is in range and exists
+ * AGAIN   temporary resource shortage prevented operation from happening
+ * UNLOCK  unlock the map and try again
+ * REFAULT [uvm_fault internal use only!] unable to relock data structures,
+ *         thus the mapping needs to be reverified before we can procede
+ */
+#define	VM_PAGER_OK		0
+#define	VM_PAGER_BAD		1
+#define	VM_PAGER_FAIL		2
+#define	VM_PAGER_PEND		3
+#define	VM_PAGER_ERROR		4
+#define VM_PAGER_AGAIN		5
+#define VM_PAGER_UNLOCK		6
+#define VM_PAGER_REFAULT	7
 
 /*
  * handle inline options

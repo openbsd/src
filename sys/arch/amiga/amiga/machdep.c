@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.49 2001/07/25 13:25:31 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.50 2001/08/12 21:36:47 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.95 1997/08/27 18:31:17 is Exp $	*/
 
 /*
@@ -78,14 +78,9 @@
 #endif
 #include <net/netisr.h>
 #define	MAXMEM	64*1024	/* XXX - from cmap.h */
-#include <vm/vm_param.h>
-#include <vm/pmap.h>
-#include <vm/vm_map.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
-#include <vm/vm_pager.h>
 
-#include <uvm/uvm_extern.h>
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
 
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
