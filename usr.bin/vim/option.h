@@ -1,4 +1,4 @@
-/*	$OpenBSD: option.h,v 1.2 1996/09/21 06:23:15 downsj Exp $	*/
+/*	$OpenBSD: option.h,v 1.3 1996/09/26 14:13:08 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -51,13 +51,14 @@
 #define CPO_BUFOPT		's'
 #define CPO_BUFOPTGLOB	'S'
 #define CPO_TAGPAT		't'
+#define CPO_CW			'w'		/* "cw" only changes one blank */
 #define CPO_ESC			'x'
 #define CPO_DOLLAR		'$'
 #define CPO_FILTER		'!'
 #define CPO_MATCH		'%'
 #define CPO_SPECI		'<'		/* don't recognize <> in mappings */
 #define CPO_DEFAULT		"BceFs"
-#define CPO_ALL			"bBcefFkmorsStx$!%<"
+#define CPO_ALL			"bBcefFkmorsStwx$!%<"
 
 /* characters for p_ww option: */
 #define WW_ALL			"bshl<>[],"

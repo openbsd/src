@@ -1,4 +1,4 @@
-/*	$OpenBSD: normal.c,v 1.3 1996/09/22 01:18:06 downsj Exp $	*/
+/*	$OpenBSD: normal.c,v 1.4 1996/09/26 14:13:07 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -948,21 +948,47 @@ lineop:
 	  case K_S_RIGHT:
 		op_inclusive = FALSE;
 		flag = TRUE;
+
 		/*
-		 * This is a little strange. To match what the real vi does, we
-		 * effectively map 'cw' to 'ce', and 'cW' to 'cE', provided that we
-		 * are not on a space or a TAB. This seems impolite at first, but it's
-		 * really more what we mean when we say 'cw'.
-		 * Another strangeness: When standing on the end of a word "ce" will
-		 * change until the end of the next wordt, but "cw" will change only
-		 * one character! This is done by setting type to 2.
+		 * "cw" and "cW" are a special case.
 		 */
-		if (op_type == CHANGE && (n = gchar_cursor()) != ' ' && n != TAB &&
-																n != NUL)
+		if (op_type == CHANGE)
 		{
-			op_inclusive = TRUE;
-			flag = FALSE;
-			flag2 = TRUE;
+			n = gchar_cursor();
+			if (n != NUL)					/* not an empty line */
+			{
+				op_inclusive = TRUE;
+				if (vim_iswhite(n))
+				{
+					/*
+					 * Reproduce a funny Vi behaviour: "cw" on a blank only
+					 * changes one character, not all blanks until the start
+					 * of the next word.  Only do this when the 'w' flag is
+					 * included in 'cpoptions'.
+					 */
+					if (Prenum1 == 1 && vim_strchr(p_cpo, CPO_CW) != NULL)
+					{
+						op_motion_type = MCHAR;
+						break;
+					}
+				}
+				else
+				{
+					/*
+					 * This is a little strange. To match what the real vi
+					 * does, we effectively map 'cw' to 'ce', and 'cW' to
+					 * 'cE', provided that we are not on a space or a TAB.
+					 * This seems impolite at first, but it's really more what
+					 * we mean when we say 'cw'.
+					 * Another strangeness: When standing on the end of a word
+					 * "ce" will change until the end of the next wordt, but
+					 * "cw" will change only one character! This is done by
+					 * setting flag2.
+					 */
+					flag = FALSE;
+					flag2 = TRUE;
+				}
+			}
 		}
 
 dowrdcmd:
