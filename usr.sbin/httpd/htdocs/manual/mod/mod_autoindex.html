@@ -583,7 +583,8 @@
     <samp>FoldersFirst</samp> and <samp>DescriptionWidth</samp>
     options are only available with Apache 1.3.10 and later; the
     <samp>TrackModified</samp> option is only available with Apache
-    1.3.15 and later 
+    1.3.15 and later; the <samp>IgnoreCase</samp> option is only
+    available with Apache 1.3.24 and later
 
     <p>The IndexOptions directive specifies the behavior of the
     directory indexing. <em>Option</em> can be one of</p>
@@ -677,6 +678,19 @@
       loaded. If no value is given for the option, it defaults to
       the standard width of the icons supplied with the Apache
       software.</dd>
+
+      <dt><a id="indexoptions:ignorecase"
+      name="indexoptions:ignorecase">IgnoreCase</a></dt>
+
+      <dd>
+      If this option is enabled, names are sorted in case-insensitive
+      manner.  For instance, if the sort order is ascending by name,
+      and <samp>IgnoreCase</samp> is enabled, file <samp>Zeta</samp>
+      will be listed after file <samp>alfa</samp> (Note: file
+      <samp>GAMMA</samp> will always be listed before file
+      <samp>gamma</samp>). <b>This option only has an effect if <a
+      href="#indexoptions:fancyindexing"><samp>FancyIndexing</samp></a>
+      is also enabled.</b></dd>
 
       <dt><a id="indexoptions:namewidth"
       name="indexoptions:namewidth">NameWidth=[<em>n</em> | *]

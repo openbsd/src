@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -130,12 +130,7 @@
      * so we also need to know the file extension
      */
 #ifndef NO_DBM_REWRITEMAP
-#if defined(__GLIBC__) && defined(__GLIBC_MINOR__) \
-    && __GLIBC__ >= 2 && __GLIBC_MINOR__ >= 1
-#include <db1/ndbm.h>
-#else
 #include <ndbm.h>
-#endif
 #if defined(DBM_SUFFIX)
 #define NDBM_FILE_SUFFIX DBM_SUFFIX
 #elif defined(__FreeBSD__) || (defined(DB_LOCK) && defined(DB_SHMEM))
@@ -149,12 +144,13 @@
     /* The locking support:
      * Try to determine whether we should use fcntl() or flock().
      * Would be better ap_config.h could provide this... :-(
+     * Small monkey business to ensure that fcntl is preferred,
+     * unless we specified USE_FLOCK_SERIALIZED_ACCEPT during compile.
      */
-#if defined(USE_FCNTL_SERIALIZED_ACCEPT)
+#if defined(HAVE_FCNTL_SERIALIZED_ACCEPT) && !defined(USE_FLOCK_SERIALIZED_ACCEPT)
 #define USE_FCNTL 1
 #include <fcntl.h>
-#endif
-#if defined(USE_FLOCK_SERIALIZED_ACCEPT)
+#elif defined(HAVE_FLOCK_SERIALIZED_ACCEPT)
 #define USE_FLOCK 1
 #include <sys/file.h>
 #endif
@@ -214,6 +210,10 @@
 #define RULEFLAG_GONE               1<<10
 #define RULEFLAG_QSAPPEND           1<<11
 #define RULEFLAG_NOCASE             1<<12
+#define RULEFLAG_NOESCAPE           1<<13
+
+#define ACTION_NORMAL               1<<0
+#define ACTION_NOESCAPE             1<<1
 
 #define MAPTYPE_TXT                 1<<0
 #define MAPTYPE_DBM                 1<<1

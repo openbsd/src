@@ -41,7 +41,7 @@
       Cygwin</a></li>
 
       <li><a href="netware.html">Utilisation d'Apache sur Novell
-      Netware 5</a></li>
+      Netware</a></li>
 
       <li><a href="mpeix.html">Utilisation d'Apache sur HP
       MPE/iX</a></li>

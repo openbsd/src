@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -90,11 +90,6 @@
  * group are the first three arguments to be passed; if not, all three
  * must be NULL.  The query info is split into separate arguments, where
  * "+" is the separator between keyword arguments.
- *
- * XXXX: note that the WIN32 code uses one of the suexec strings 
- * to pass an interpreter name.  Remember this if changing the way they
- * are handled in create_argv.
- *
  */
 static char **create_argv(pool *p, char *path, char *user, char *group,
 			  char *av0, const char *args)
@@ -721,62 +716,23 @@ API_EXPORT(void) ap_send_size(size_t size, request_rec *r)
 	ap_rputs("   1k", r);
     }
     else if (size < 1048576) {
-	ap_rprintf(r, "%4dk", (size + 512) / 1024);
+	ap_rprintf(r, "%4dk", (int)((size + 512) / 1024));
     }
     else if (size < 103809024) {
 	ap_rprintf(r, "%4.1fM", size / 1048576.0);
     }
     else {
-	ap_rprintf(r, "%4dM", (size + 524288) / 1048576);
+	ap_rprintf(r, "%4dM", (int)((size + 524288) / 1048576));
     }
 }
-
-#if defined(WIN32)
-static char **create_argv_cmd(pool *p, char *av0, const char *args, char *path)
-{
-    register int x, n;
-    char **av;
-    char *w;
-
-    for (x = 0, n = 2; args[x]; x++) {
-        if (args[x] == '+') {
-	    ++n;
-	}
-    }
-
-    /* Add extra strings to array. */
-    n = n + 2;
-
-    av = (char **) ap_palloc(p, (n + 1) * sizeof(char *));
-    av[0] = av0;
-
-    /* Now insert the extra strings we made room for above. */
-    av[1] = strdup("/C");
-    av[2] = strdup(path);
-
-    for (x = (1 + 2); x < n; x++) {
-	w = ap_getword(p, &args, '+');
-	ap_unescape_url(w);
-	av[x] = ap_escape_shell_cmd(p, w);
-    }
-    av[n] = NULL;
-    return av;
-}
-#endif
-
 
 API_EXPORT(int) ap_call_exec(request_rec *r, child_info *pinfo, char *argv0,
 			     char **env, int shellcmd)
 {
     int pid = 0;
-#if defined(RLIMIT_CPU)  || defined(RLIMIT_NPROC) || \
-    defined(RLIMIT_DATA) || defined(RLIMIT_VMEM) || defined (RLIMIT_AS)
-
     core_dir_config *conf;
     conf = (core_dir_config *) ap_get_module_config(r->per_dir_config,
 						    &core_module);
-
-#endif
 
 #if !defined(WIN32) && !defined(OS2)
     /* the fd on r->server->error_log is closed, but we need somewhere to
@@ -844,8 +800,11 @@ API_EXPORT(int) ap_call_exec(request_rec *r, child_info *pinfo, char *argv0,
         int env_len, e;
         char *env_block, *env_block_pos;
 
-	if (r->args && r->args[0] && !strchr(r->args, '='))
+	if ((conf->cgi_command_args != AP_FLAG_OFF)
+            && r->args && r->args[0]
+            && !strchr(r->args, '=')) {
 	    args = r->args;
+        }
 	    
 	program = fopen(r->filename, "rt");
 	
@@ -1023,7 +982,9 @@ API_EXPORT(int) ap_call_exec(request_rec *r, child_info *pinfo, char *argv0,
              * Look at the arguments...
              */
             arguments = "";
-            if ((r->args) && (r->args[0]) && !strchr(r->args, '=')) { 
+            if ((conf->cgi_command_args != AP_FLAG_OFF)
+                 && (r->args) && (r->args[0])
+                 && !strchr(r->args, '=')) { 
                 /* If we are in this leg, there are some other arguments
                  * that we must include in the execution of the CGI.
                  * Because CreateProcess is the way it is, we have to
@@ -1055,10 +1016,33 @@ API_EXPORT(int) ap_call_exec(request_rec *r, child_info *pinfo, char *argv0,
        
                 /*
                  * We need to unescape any characters that are 
-                 * in the arguments list.
+                 * in the arguments list.  Truncate to 4000
+                 * characters for safety, being careful of the
+                 * now-escaped characters.
                  */
                 ap_unescape_url(arguments);
                 arguments = ap_escape_shell_cmd(r->pool, arguments);
+                if (strlen(arguments) > 4000)
+                {
+                    int len = 4000;
+                    while (len && arguments[len - 1] == '\\') {
+                        --len;
+                    }
+                    arguments[len] = '\0';
+                }
+
+                /*
+                 * Now that the arguments list is 'shell' escaped with
+                 * backslashes, we need to make cmd.exe/command.com 
+                 * safe from this same set of characters.
+                 */
+                if (fileType == eCommandShell32) {
+                    arguments = ap_caret_escape_args(r->pool, arguments);
+                }
+                else if (fileType == eCommandShell16) {
+                    arguments = ap_pstrcat(r->pool, "\"", 
+                            ap_double_quotes(r->pool, arguments), "\"", NULL);
+                }
             }
 
             /*
@@ -1102,34 +1086,21 @@ API_EXPORT(int) ap_call_exec(request_rec *r, child_info *pinfo, char *argv0,
         else /* shellcmd */
         {
             char *p, *comspec = getenv("COMSPEC");
+            const char *quotecomspec;
+            const char *quoteargv0;
             if (!comspec)
                 comspec = SHELL_PATH;
             p = strchr(comspec, '\0');
-            if ((p - comspec >= 11) && !strcasecmp(p - 11, "command.com")) 
-            {
-                /* Command.com doesn't like long paths
-                 */
-                char shortname[MAX_PATH];
-                DWORD rv = GetShortPathName(r->filename, shortname, MAX_PATH);
-                if (!rv || rv >= MAX_PATH) {
-                    ap_log_rerror(APLOG_MARK, APLOG_ERR|APLOG_NOERRNO, r,
-                                  "%s is not executable; cannot translate "
-                                  "to a short path name.", r->filename);
-                    return (pid);
-                }
-                pCommand = ap_pstrcat(r->pool, "\"", comspec, "\" /C ", 
-                                      shortname, NULL);
-            }
-            else
-            {
-                /* Assume any other shell likes long paths
-                 */
-                pCommand = ap_pstrcat(r->pool, "\"", comspec, "\" /C \"", 
-                                      r->filename, "\"", NULL);
-                for (p = pCommand; *p; ++p) {
-                    if (*p == '/')
-                        *p = '\\';
-                }
+            quotecomspec = (strchr(comspec, ' ') && comspec[0] != '\"')
+                         ? "\"" : "";
+            quoteargv0 = (strchr(argv0, ' ') && argv0[0] != '\"') ? "\"" : "";
+            pCommand = ap_pstrcat(r->pool, quotecomspec, comspec, quotecomspec,
+                                  " /c ", quoteargv0, argv0, quoteargv0, NULL);
+            /* Forward slash argv[0] only */
+            for (p = pCommand + strlen(pCommand) - strlen(argv0) 
+                              - strlen(quoteargv0); *p; ++p) {
+                if (*p == '/')
+                    *p = '\\';
             }
         }
 
@@ -1166,12 +1137,19 @@ API_EXPORT(int) ap_call_exec(request_rec *r, child_info *pinfo, char *argv0,
             i++;
         }
 
+        ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_INFO, r->server,
+                     "Invoking CGI Command '%s'", pCommand);
+        for (i = 0; env[i]; ++i) {
+            ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_DEBUG, r->server,
+                         "  CGI env[%d] = '%s'", i, env[i]);
+        }
+
         if (CreateProcess(NULL, pCommand, NULL, NULL, TRUE, 
                           0,
                           pEnvBlock,
                           ap_make_dirstr_parent(r->pool, r->filename),
                           &si, &pi)) {
-            if (fileType == eFileTypeEXE16) {
+            if (fileType == eFileTypeEXE16 || fileType == eCommandShell16) {
                 /* Hack to get 16-bit CGI's working. It works for all the 
                  * standard modules shipped with Apache. pi.dwProcessId is 0 
                  * for 16-bit CGIs and all the Unix specific code that calls 
@@ -1255,7 +1233,9 @@ API_EXPORT(int) ap_call_exec(request_rec *r, child_info *pinfo, char *argv0,
 		   (char *)NULL, env);
 	}
 
-	else if ((!r->args) || (!r->args[0]) || strchr(r->args, '=')) {
+	else if ((conf->cgi_command_args == AP_FLAG_OFF)
+            || (!r->args) || (!r->args[0])
+            || strchr(r->args, '=')) {
 	    execle(SUEXEC_BIN, SUEXEC_BIN, execuser, grpname, argv0,
 		   (char *)NULL, env);
 	}
@@ -1272,8 +1252,10 @@ API_EXPORT(int) ap_call_exec(request_rec *r, child_info *pinfo, char *argv0,
 	    execle(SHELL_PATH, SHELL_PATH, "-c", argv0, (char *)NULL, env);
 	}
 
-	else if ((!r->args) || (!r->args[0]) || strchr(r->args, '=')) {
-	    execle(r->filename, argv0, (char *)NULL, env);
+	else if ((conf->cgi_command_args == AP_FLAG_OFF)
+            || (!r->args) || (!r->args[0])
+            || strchr(r->args, '=')) {
+	    execle(r->filename, argv0, NULL, env);
 	}
 
 	else {

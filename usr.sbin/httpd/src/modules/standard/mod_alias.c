@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -65,7 +65,9 @@
  */
 
 #include "httpd.h"
+#include "http_core.h"
 #include "http_config.h"
+#include "http_log.h"
 
 typedef struct {
     char *real;
@@ -391,8 +393,27 @@ static int fixup_redir(request_rec *r)
     /* It may have changed since last time, so try again */
 
     if ((ret = try_alias_list(r, dirconf->redirects, 1, &status)) != NULL) {
-	if (ap_is_HTTP_REDIRECT(status))
-	    ap_table_setn(r->headers_out, "Location", ret);
+        if (ap_is_HTTP_REDIRECT(status)) {
+            if (ret[0] == '/') {
+                char *orig_target = ret;
+
+                ret = ap_construct_url(r->pool, ret, r);
+                ap_log_rerror(APLOG_MARK, APLOG_DEBUG|APLOG_NOERRNO, r,
+                              "incomplete redirection target of '%s' for "
+                              "URI '%s' modified to '%s'",
+                              orig_target, r->uri, ret);
+            }
+            if (!ap_is_url(ret)) {
+                status = HTTP_INTERNAL_SERVER_ERROR;
+                ap_log_rerror(APLOG_MARK, APLOG_ERR|APLOG_NOERRNO, r,
+                              "cannot redirect '%s' to '%s'; "
+                              "target is not a valid absoluteURI or abs_path",
+                              r->uri, ret);
+            }
+            else {
+                ap_table_setn(r->headers_out, "Location", ret);
+            }
+        }
 	return status;
     }
 

@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -455,7 +455,7 @@ static int get_directive(FILE *in, char *dest, size_t len, pool *p)
     }
     /* now get directive */
     while (1) {
-	if (d - dest == len) {
+	if (d == len + dest) {
 	    return 1;
 	}
         *d++ = ap_tolower(c);
@@ -552,7 +552,7 @@ static void parse_string(request_rec *r, const char *in, char *out,
 		    /* zero-length variable name causes just the $ to be copied */
 		    l = 1;
 		}
-		l = (l > end_out - next) ? (end_out - next) : l;
+		l = (l + next > end_out) ? (end_out - next) : l;
 		memcpy(next, expansion, l);
 		next += l;
                 break;
@@ -718,7 +718,7 @@ static int handle_include(FILE *in, request_rec *r, const char *error, int noexe
                 for (p = r; p != NULL && !founddupe; p = p->main) {
 		    request_rec *q;
 		    for (q = p; q != NULL; q = q->prev) {
-			if ( (strcmp(q->filename, rr->filename) == 0) ||
+			if ( (q->filename && strcmp(q->filename, rr->filename) == 0) ||
 			     (strcmp(q->uri, rr->uri) == 0) ){
 			    founddupe = 1;
 			    break;
@@ -1959,7 +1959,7 @@ static int handle_if(FILE *in, request_rec *r, const char *error,
     expr = NULL;
     while (1) {
         tag_val = get_tag(r->pool, in, tag, sizeof(tag), 0);
-        if (*tag == '\0') {
+        if (!tag_val || *tag == '\0') {
             return 1;
         }
         else if (!strcmp(tag, "done")) {
@@ -2002,7 +2002,7 @@ static int handle_elif(FILE *in, request_rec *r, const char *error,
     expr = NULL;
     while (1) {
         tag_val = get_tag(r->pool, in, tag, sizeof(tag), 0);
-        if (*tag == '\0') {
+        if (!tag_val || *tag == '\0') {
             return 1;
         }
         else if (!strcmp(tag, "done")) {
@@ -2170,8 +2170,22 @@ static int handle_printenv(FILE *in, request_rec *r, const char *error)
 
 static void send_parsed_content(FILE *f, request_rec *r)
 {
+#ifdef NETWARE
+    /* NetWare has a fixed lengh stack.  Since MAX_STRING_LEN is set
+       to 8k, one call to this function allocates 24k of stack space.
+       During a server-side include evaluation this function is
+       called recusively, allocating 24k each time.  Obviously it 
+       doesn't take long to blow a 64k stack which is the default
+       for Apache for NetWare.  Since MAX_STRING_LEN is used all
+       throughout the Apache code, we should rethink using a default
+       of 8k especially in recursive functions.
+    */
+    char directive[512], error[512];
+    char timefmt[512];
+#else
     char directive[MAX_STRING_LEN], error[MAX_STRING_LEN];
     char timefmt[MAX_STRING_LEN];
+#endif
     int noexec = ap_allow_options(r) & OPT_INCNOEXEC;
     int ret, sizefmt;
     int if_nesting;
@@ -2208,6 +2222,7 @@ static void send_parsed_content(FILE *f, request_rec *r)
                 return;
             }
             if (!strcmp(directive, "if")) {
+                ret = 0;
                 if (!printing) {
                     if_nesting++;
                 }
@@ -2216,23 +2231,23 @@ static void send_parsed_content(FILE *f, request_rec *r)
                                     &printing);
                     if_nesting = 0;
                 }
-                continue;
             }
             else if (!strcmp(directive, "else")) {
+                ret = 0;
                 if (!if_nesting) {
                     ret = handle_else(f, r, error, &conditional_status,
                                       &printing);
                 }
-                continue;
             }
             else if (!strcmp(directive, "elif")) {
+                ret = 0;
                 if (!if_nesting) {
                     ret = handle_elif(f, r, error, &conditional_status,
                                       &printing);
                 }
-                continue;
             }
             else if (!strcmp(directive, "endif")) {
+                ret = 0;
                 if (!if_nesting) {
                     ret = handle_endif(f, r, error, &conditional_status,
                                        &printing);
@@ -2240,12 +2255,11 @@ static void send_parsed_content(FILE *f, request_rec *r)
                 else {
                     if_nesting--;
                 }
+            }
+            else if (!printing) {
                 continue;
             }
-            if (!printing) {
-                continue;
-            }
-            if (!strcmp(directive, "exec")) {
+            else if (!strcmp(directive, "exec")) {
                 if (noexec) {
                     ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r,
 				  "exec used but not allowed in %s",

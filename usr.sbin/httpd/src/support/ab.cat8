@@ -1,0 +1,264 @@
+
+
+
+ab(1)                                                       ab(1)
+
+
+NNAAMMEE
+       ab - Apache HTTP server benchmarking tool
+
+SSYYNNOOPPSSIISS
+       aabb [ --kk ] [ --ee ] [ --qq ] [ --SS ] [ --ii ] [ --ss ] [ --nn _r_e_q_u_e_s_t_s
+       ] [ --tt _t_i_m_e_l_i_m_i_t ] [ --cc _c_o_n_c_u_r_r_e_n_c_y ] [ --pp _P_O_S_T _f_i_l_e  ]  [
+       --AA _A_u_t_h_e_n_t_i_c_a_t_e _u_s_e_r_n_a_m_e_:_p_a_s_s_w_o_r_d ] [ --XX _p_r_o_x_y _[ _:_p_o_r_t _] ]
+       [ --PP _P_r_o_x_y _A_u_t_h_e_n_t_i_c_a_t_e _u_s_e_r_n_a_m_e_:_p_a_s_s_w_o_r_d ]  [  --HH  _C_u_s_t_o_m
+       _h_e_a_d_e_r ] [ --CC _C_o_o_k_i_e _n_a_m_e_=_v_a_l_u_e ] [ --TT _c_o_n_t_e_n_t_-_t_y_p_e ] [ --vv
+       _v_e_r_b_o_s_i_t_y ] ] [ --ww _o_u_t_p_u_t _H_T_M_L ] ] [ --gg _o_u_t_p_u_t _G_N_U_P_L_O_T ] ]
+       [  --ee _o_u_t_p_u_t _C_S_V ] ] [ --xx _<_t_a_b_l_e_> _a_t_t_r_i_b_u_t_e_s ] ] [ --yy _<_t_r_>
+       _a_t_t_r_i_b_u_t_e_s ] ] [ --zz _<_t_d_>  _a_t_t_r_i_b_u_t_e_s  ]  _[_h_t_t_p_[_s_]_:_/_/_]_h_o_s_t_-
+       _n_a_m_e_[_:_p_o_r_t_]_/_p_a_t_h
+
+       aabb [ --VV ] [ --hh ]
+
+
+DDEESSCCRRIIPPTTIIOONN
+       aabb  is  a  tool  for  benchmarking the performance of your
+       Apache HyperText Transfer Protocol (HTTP) server.  It does
+       this  by giving you an indication of how many requests per
+       second your Apache installation can serve.
+
+
+OOPPTTIIOONNSS
+       --kk          Enable the HTTP KeepAlive  feature;  that  is,
+                   perform multiple requests within one HTTP ses-
+                   sion. Default is no KeepAlive.
+
+       --dd          Do not display the "percentage  served  within
+                   XX [ms] table". (legacy support).
+
+       --SS          Do  not display the median and standard devia-
+                   tion values,  nor  display  the  warning/error
+                   messages  when the average and median are more
+                   than one or two times the  standard  deviation
+                   apart.  And default to the min/avg/max values.
+                   (legacy support).
+
+       --ss          When compiled in (bb -h will show you) use the
+                   SSL  protected hhttttppss rather than the hhttttpp pro-
+                   tocol. This feature is experimental  and  vveerryy
+                   rudimentary.  You  propably do not want to use
+                   it.
+
+       --kk          Enable the HTTP KeepAlive  feature;  that  is,
+                   perform multiple requests within one HTTP ses-
+                   sion. Default is no KeepAlive.  --ii Use an HTTP
+                   'HEAD'  instead  of  the GET method. Cannot be
+                   mixed with POST.
+
+       --nn _r_e_q_u_e_s_t_s The number of  requests  to  perform  for  the
+                   benchmarking  session.  The default is to per-
+                   form just one single request, which  will  not
+
+
+
+                           October 1999                         1
+
+
+
+
+
+ab(1)                                                       ab(1)
+
+
+                   give representative benchmarking results.
+
+       --tt _t_i_m_e_l_i_m_i_t
+                   The  number  of seconds to spend benchmarking.
+                   Using this option automatically set the number
+                   of  requests  for  the benchmarking session to
+                   50000.  Use this to benchmark the server for a
+                   fixed period of time.  By default, there is no
+                   timelimit.
+
+       --cc _c_o_n_c_u_r_r_e_n_c_y
+                   The number of simultaneous  requests  to  per-
+                   form.  The  default  is  to  perform  one HTTP
+                   request at at time, that is, no concurrency.
+
+
+       --pp _P_O_S_T _f_i_l_e
+                   A file containing data that the  program  will
+                   send  to  the  Apache  server in any HTTP POST
+                   requests.
+
+
+       --AA _A_u_t_h_o_r_i_z_a_t_i_o_n _u_s_e_r_n_a_m_e_:_p_a_s_s_w_o_r_d
+                   Supply Basic Authentication credentials to the
+                   server.  The  username  and password are sepa-
+                   rated by a single ':', and sent  as  uuencoded
+                   data.    The  string  is  sent  regardless  of
+                   whether the server needs it; that is, has sent
+                   a 401 Authentication needed.
+
+
+       --XX _p_r_o_x_y_[_:_p_o_r_t_]
+                   Route  all  requests  through  the  proxy  (at
+                   optional port).
+
+
+       --PP _P_r_o_x_y_-_A_u_t_h_o_r_i_z_a_t_i_o_n _u_s_e_r_n_a_m_e_:_p_a_s_s_w_o_r_d
+                   Supply Basic Authentication credentials  to  a
+                   proxy  en-route. The username and password are
+                   separated by a single ':', and sent  as  uuen-
+                   coded  data.  The string is sent regardless of
+                   whether the proxy needs it; that is, has  sent
+                   a 407 Proxy authentication needed.
+
+
+       --CC _C_o_o_k_i_e _n_a_m_e_=_v_a_l_u_e
+                   Add a 'Cookie:' line to the request. The argu-
+                   ment is typically a  'name=value'  pair.  This
+                   option may be repeated.
+
+
+       --pp _H_e_a_d_e_r _s_t_r_i_n_g
+                   Append extra headers to the request. The argu-
+                   ment is typically  in  the  form  of  a  valid
+
+
+
+                           October 1999                         2
+
+
+
+
+
+ab(1)                                                       ab(1)
+
+
+                   header  line,  usually a colon separated field
+                   value  pair,  for  example,  'Accept-Encoding:
+                   zip/zop;8bit'.
+
+
+       --TT _c_o_n_t_e_n_t_-_t_y_p_e
+                   The  content-type header to use for POST data.
+
+
+       --gg _g_n_u_p_l_o_t _f_i_l_e
+                   Write all measured values out as  a  'gnuplot'
+                   or  TSV  (Tab separate values) file. This file
+                   can easily be imported into packages like Gnu-
+                   plot,  IDL,  Mathematica, Igor or even Excell.
+                   The labels are on the first line of the  file.
+
+
+       --qq          When processing more than 150 requsts; aabb out-
+                   puts a progress count on ssttddeerrrr every  10%  or
+                   100  requests or so. The --qq flag qill suppress
+                   these messages.
+
+
+       --ee _C_S_V _f_i_l_e Write a Comma separated value (CSV) file which
+                   contains for each percentage (from 1% to 100%)
+                   the time (in milli seconds) it took  to  serve
+                   that  percentage of the requests. This is usu-
+                   ally more usefull than the 'gnuplot' file;  as
+                   the results are already
+
+
+       --vv          Sets  the  verbosity level.  Level 4 and above
+                   prints information on  headers,  level  3  and
+                   above prints response codes (for example, 404,
+                   200), and level 2 and  above  prints  warnings
+                   and informational messages.
+
+
+       --ww          Print out results in HTML tables.  The default
+                   table is two columns wide, with a white  back-
+                   ground.
+
+       --xx _a_t_t_r_i_b_u_t_e_s
+                   The  string  to use as attributes for <table>.
+                   Attributes are inserted <table hheerree >
+
+       --yy _a_t_t_r_i_b_u_t_e_s
+                   The string to use as attributes for <tr>.
+
+       --zz _a_t_t_r_i_b_u_t_e_s
+                   The string to use as attributes for <td>.
+
+       --VV          Display the version number and exit.
+
+
+
+
+                           October 1999                         3
+
+
+
+
+
+ab(1)                                                       ab(1)
+
+
+       --hh          Display usage information.
+
+BBUUGGSS
+       There are various statically  declared  buffers  of  fixed
+       length.  Combined  with inefficient parsing of the command
+       line arguments, the response headers from the server,  and
+       other external inputs, these buffers might overflow.
+
+       AAbb  does  not  implement  HTTP/1.x fully; instead, it only
+       accepts some 'expected' forms of responses.
+
+       The rather heavy use of ssttrrssttrr((33)) by the program may  skew
+       performance   results,   since  it  uses  significant  CPU
+       resources.  Make sure that performance limits are not  hit
+       by aabb before your server's limit is reached.
+
+       The HTML output is not as complete as the text output.
+
+       Up  to version 1.3d aabb has propably reported values way to
+       low for most measurements; as a single timeout  (which  is
+       usually  in the order of seconds) will shift several thou-
+       sands of milli-second responses by a considerable  factor.
+       This  was  further componded by a serious interger overrun
+       which would for realistic run's (i.e. those longer than  a
+       few minutes) produce believable but totally bogus results.
+       Thanks to Sander Temme <sctemme@covalent.net> for  solving
+       this riddle.
+
+
+SSEEEE AALLSSOO
+       hhttttppdd((88))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                           October 1999                         4
+
+

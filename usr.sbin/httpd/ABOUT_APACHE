@@ -3,7 +3,7 @@
 
                         http://httpd.apache.org/
 
-                               July 2000
+                             February 2002
 
 The Apache Project is a collaborative software development effort aimed
 at creating a robust, commercial-grade, featureful, and freely-available
@@ -70,20 +70,23 @@ is today more widely used than all other web servers combined.
 
  ============================================================================
 
-Current Apache Group in alphabetical order as of 2 October 2001:
+Current Apache Group in alphabetical order as of 18 December 2001:
 
+   Greg Ames              IBM Corporation, Research Triangle Park, NC, USA
+   Aaron Bannert          Covalent Technologies, California
    Brian Behlendorf       Collab.Net, California 
    Ryan Bloom             Covalent Technologies, California 
    Ken Coar               IBM Corporation, Research Triangle Park, NC, USA
    Mark J. Cox            Red Hat, England
-   Lars Eilebrecht        Parc Technologies, Munich, Germany 
+   Lars Eilebrecht        Freelance Consultant, Munich, Germany 
    Ralf S. Engelschall    Cable & Wireless Deutschland, Munich, Germany
    Justin Erenkrantz      eBuilt, California
-   Roy T. Fielding        eBuilt, California 
+   Roy T. Fielding        Day Software, California 
    Tony Finch             Covalent Technologies, California
    Dean Gaudet            Transmeta Corporation, California 
    Dirk-Willem van Gulik  Covalent Technologies, California 
    Brian Havard           Australia
+   Ian Holsman            CNET, California
    Ben Hyde               Gensym, Massachusetts
    Jim Jagielski          jaguNET Access Services, Maryland 
    Manoj Kasichainula     Collab.Net, California
@@ -146,10 +149,10 @@ How to become involved in the Apache project
 There are several levels of contributing.  If you just want to send
 in an occasional suggestion/fix, then you can just use the bug reporting
 form at <http://httpd.apache.org/bug_report.html>.  You can also subscribe
-to the announcements mailing list (apache-announce@apache.org) which we
-use to broadcast information about new releases, bugfixes, and upcoming
-events.  There's a lot of information about the development process (much
-of it in serious need of updating) to be found at <http://dev.apache.org/>.
+to the announcements mailing list (announce-subscribe@httpd.apache.org) which
+we use to broadcast information about new releases, bugfixes, and upcoming
+events.  There's a lot of information about the development process (much of
+it in serious need of updating) to be found at <http://httpd.apache.org/dev/>.
 
 If you'd like to become an active contributor to the Apache project (the
 group of volunteers who vote on changes to the distributed server), then
@@ -163,8 +166,9 @@ development.
    a user support forum; it is for people actively working on development
    of the server code and documentation, and for planning future
    directions.  If you have user/configuration questions, send them
-   to the USENET newsgroup "comp.infosystems.www.servers.unix".or for
-   windows users, the newsgroup "comp.infosystems.www.servers.ms-windows".
+   to users list <http://httpd.apache.org/userslist> or to the USENET
+   newsgroup "comp.infosystems.www.servers.unix".or for windows users,
+   the newsgroup "comp.infosystems.www.servers.ms-windows".
 
 There is a core group of contributors (informally called the "core")
 which was formed from the project founders and is augmented from time
@@ -207,7 +211,7 @@ changes and our development/coordination tools improve.
 
  ============================================================================
 
-The Apache Software Foundation (http://www.apache.org/)
+The Apache Software Foundation (www.apache.org)
 
 The Apache Software Foundation exists to provide organizational, legal,
 and financial support for the Apache open-source software projects.

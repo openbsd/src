@@ -23,6 +23,25 @@
       / __/ | (_) |
   __ |_____(_)___/ ___________________________________________
               
+  Changes with mod_ssl 2.8.8 (23-Feb-2002 to 27-Mar-2002)
+
+   *) Upgraded to Apache 1.3.24
+
+   *) Support leading whitespaces in commands of SSLLog "|..."
+      directives.
+
+   *) Fixed timeout handling on connection establishment
+      by correctly resetting the timeout on errors.
+
+   *) Fixed two memory leaks related to CA certificate configuration.
+
+   *) Fixed memory leak related to temporary DH key handling.
+
+   *) Fixed memory leak on shutdown if CRLs are used.
+
+   *) Fixed remaining SIGBUS problems on SPARC inside SHMCB session
+      cache implementation.
+
   Changes with mod_ssl 2.8.7 (01-Feb-2002 to 23-Feb-2002)
 
    *) Support for the latest OpenSSL 0.9.7 snapshots.

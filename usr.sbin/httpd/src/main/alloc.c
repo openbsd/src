@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -594,7 +594,7 @@ static void dump_stats(void)
 }
 #endif
 
-pool *ap_init_alloc(void)
+API_EXPORT(pool *) ap_init_alloc(void)
 {
 #ifdef POOL_DEBUG
     char s;
@@ -1714,8 +1714,8 @@ API_EXPORT(table *) ap_overlay_tables(pool *p, const table *overlay, const table
  * Note that rec is simply passed-on to the comp function, so that the
  * caller can pass additional info for the task.
  */
-API_EXPORT(void) ap_table_do(int (*comp) (void *, const char *, const char *), void *rec,
-	      const table *t,...)
+API_EXPORT_NONSTD(void) ap_table_do(int (*comp) (void *, const char *, const char *), 
+	                            void *rec, const table *t,...)
 {
     va_list vp;
     char *argp;

@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -466,7 +466,7 @@ extern "C" {
 
 #define SERVER_BASEVENDOR   "Apache Group"
 #define SERVER_BASEPRODUCT  "Apache"
-#define SERVER_BASEREVISION "1.3.23"
+#define SERVER_BASEREVISION "1.3.24"
 #define SERVER_BASEVERSION  SERVER_BASEPRODUCT "/" SERVER_BASEREVISION
 
 #define SERVER_PRODUCT  SERVER_BASEPRODUCT
@@ -490,7 +490,7 @@ API_EXPORT(void) ap_add_config_define(const char *define);
  * Always increases along the same track as the source branch.
  * For example, Apache 1.4.2 would be '10402100', 2.5b7 would be '20500007'.
  */
-#define APACHE_RELEASE 10323100
+#define APACHE_RELEASE 10324100
 
 #define SERVER_PROTOCOL "HTTP/1.1"
 #ifndef SERVER_SUPPORT
@@ -1095,9 +1095,13 @@ API_EXPORT(char *) ap_pbase64encode(pool *p, char *string);
 API_EXPORT(char *) ap_uudecode(pool *p, const char *bufcoded);
 API_EXPORT(char *) ap_uuencode(pool *p, char *string); 
 
+#if defined(OS2) || defined(WIN32)
+API_EXPORT(char *) ap_double_quotes(pool *p, const char *str);
+API_EXPORT(char *) ap_caret_escape_args(pool *p, const char *str);
+#endif
+
 #ifdef OS2
 void os2pathname(char *path);
-char *ap_double_quotes(pool *p, char *str);
 #endif
 
 API_EXPORT(int)    ap_regexec(const regex_t *preg, const char *string,
@@ -1172,6 +1176,9 @@ API_EXPORT(char *) ap_os_systemcase_filename(pool *pPool, const char *szFile);
 #elif defined(OS2)
 API_EXPORT(char *) ap_os_case_canonical_filename(pool *pPool, const char *szFile);
 API_EXPORT(char *) ap_os_systemcase_filename(pool *pPool, const char *szFile);
+#elif defined(NETWARE)
+API_EXPORT(char *) ap_os_case_canonical_filename(pool *pPool, const char *szFile);
+#define ap_os_systemcase_filename(p,f) ap_os_case_canonical_filename(p,f)
 #else
 #define ap_os_case_canonical_filename(p,f) ap_os_canonical_filename(p,f)
 #define ap_os_systemcase_filename(p,f) ap_os_canonical_filename(p,f)

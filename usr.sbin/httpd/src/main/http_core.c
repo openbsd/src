@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -57,6 +57,7 @@
  */
 
 #define CORE_PRIVATE
+#define ADD_EBCDICCONVERT_DEBUG_HEADER 0
 #include "httpd.h"
 #include "http_config.h"
 #include "http_core.h"
@@ -158,6 +159,24 @@ static void *create_core_dir_config(pool *a, char *dir)
     conf->add_default_charset = ADD_DEFAULT_CHARSET_UNSET;
     conf->add_default_charset_name = DEFAULT_ADD_DEFAULT_CHARSET_NAME;
 
+#ifdef CHARSET_EBCDIC
+    conf->ebcdicconversion_by_ext_in = ap_make_table(a, 4);
+    conf->ebcdicconversion_by_ext_out = ap_make_table(a, 4);
+    conf->ebcdicconversion_by_type_in = ap_make_table(a, 4);
+    conf->ebcdicconversion_by_type_out = ap_make_table(a, 4);
+    conf->x_ascii_magic_kludge = 0;
+#if ADD_EBCDICCONVERT_DEBUG_HEADER
+    conf->ebcdicconversion_debug_header = 0;
+#endif
+#endif /* CHARSET_EBCDIC */
+
+    /*
+     * Flag for use of inodes in ETags.
+     */
+    conf->etag_bits = ETAG_UNSET;
+    conf->etag_add = ETAG_UNSET;
+    conf->etag_remove = ETAG_UNSET;
+
     return (void *)conf;
 }
 
@@ -182,7 +201,7 @@ static void *merge_core_dir_configs(pool *a, void *basev, void *newv)
     conf->d_is_fnmatch = new->d_is_fnmatch;
     conf->d_components = new->d_components;
     conf->r = new->r;
-    
+
     if (new->opts & OPT_UNSET) {
 	/* there was no explicit setting of new->opts, so we merge
 	 * preserve the invariant (opts_add & opts_remove) == 0
@@ -290,6 +309,45 @@ static void *merge_core_dir_configs(pool *a, void *basev, void *newv)
 	if (new->add_default_charset_name) {
 	    conf->add_default_charset_name = new->add_default_charset_name;
 	}
+    }
+
+#ifdef CHARSET_EBCDIC
+    conf->ebcdicconversion_by_ext_in = ap_overlay_tables(a, new->ebcdicconversion_by_ext_in,
+                                               base->ebcdicconversion_by_ext_in);
+    conf->ebcdicconversion_by_ext_out = ap_overlay_tables(a, new->ebcdicconversion_by_ext_out,
+                                               base->ebcdicconversion_by_ext_out);
+    conf->ebcdicconversion_by_type_in = ap_overlay_tables(a, new->ebcdicconversion_by_type_in,
+                                                base->ebcdicconversion_by_type_in);
+    conf->ebcdicconversion_by_type_out = ap_overlay_tables(a, new->ebcdicconversion_by_type_out,
+                                                base->ebcdicconversion_by_type_out);
+    conf->x_ascii_magic_kludge = new->x_ascii_magic_kludge ? new->x_ascii_magic_kludge : base->x_ascii_magic_kludge;
+#if ADD_EBCDICCONVERT_DEBUG_HEADER
+    conf->ebcdicconversion_debug_header = new->ebcdicconversion_debug_header ? new->ebcdicconversion_debug_header : base->ebcdicconversion_debug_header;
+#endif
+#endif /* CHARSET_EBCDIC */
+
+    /*
+     * Now merge the setting of the FileETag directive.
+     */
+    if (new->etag_bits == ETAG_UNSET) {
+        conf->etag_add =
+            (conf->etag_add & (~ new->etag_remove)) | new->etag_add;
+        conf->etag_remove =
+            (conf->opts_remove & (~ new->etag_add)) | new->etag_remove;
+        conf->etag_bits =
+            (conf->etag_bits & (~ conf->etag_remove)) | conf->etag_add;
+    }
+    else {
+        conf->etag_bits = new->etag_bits;
+        conf->etag_add = new->etag_add;
+        conf->etag_remove = new->etag_remove;
+    }
+    if (conf->etag_bits != ETAG_NONE) {
+        conf->etag_bits &= (~ ETAG_NONE);
+    }
+
+    if (new->cgi_command_args != AP_FLAG_UNSET) {
+        conf->cgi_command_args = new->cgi_command_args;
     }
 
     return (void*)conf;
@@ -430,7 +488,7 @@ static int reorder_sorter(const void *va, const void *vb)
     return a->orig_index - b->orig_index;
 }
 
-void ap_core_reorder_directories(pool *p, server_rec *s)
+CORE_EXPORT(void) ap_core_reorder_directories(pool *p, server_rec *s)
 {
     core_server_config *sconf;
     array_header *sec;
@@ -550,7 +608,7 @@ API_EXPORT(int) ap_satisfies(request_rec *r)
  * modules).
  */
 
-char *ap_response_code_string(request_rec *r, int error_index)
+API_EXPORT(char *) ap_response_code_string(request_rec *r, int error_index)
 {
     core_dir_config *conf;
 
@@ -565,6 +623,19 @@ char *ap_response_code_string(request_rec *r, int error_index)
 
 
 /* Code from Harald Hanche-Olsen <hanche@imf.unit.no> */
+/* Note: the function returns its result in conn->double_reverse:
+ *       +1: forward lookup of the previously reverse-looked-up
+ *           hostname in conn->remote_host succeeded, and at
+ *           least one of its IP addresses matches the client.
+ *       -1: forward lookup of conn->remote_host failed, or
+ *           none of the addresses found matches the client connection
+ *           (possible DNS spoof in the reverse zone!)
+ *       If do_double_reverse() returns -1, then it also invalidates
+ *       conn->remote_host to prevent an invalid name from appearing
+ *       in the log files. Conn->remote_host is set to "", because
+ *       a setting of NULL would allow another reverse lookup,
+ *       depending on the flags given to ap_get_remote_host().
+ */
 static ap_inline void do_double_reverse (conn_rec *conn)
 {
     struct hostent *hptr;
@@ -576,6 +647,7 @@ static ap_inline void do_double_reverse (conn_rec *conn)
     if (conn->remote_host == NULL || conn->remote_host[0] == '\0') {
 	/* single reverse failed, so don't bother */
 	conn->double_reverse = -1;
+        conn->remote_host = ""; /* prevent another lookup */
 	return;
     }
     hptr = gethostbyname(conn->remote_host);
@@ -591,6 +663,8 @@ static ap_inline void do_double_reverse (conn_rec *conn)
 	}
     }
     conn->double_reverse = -1;
+    /* invalidate possible reverse-resolved hostname if forward lookup fails */
+    conn->remote_host = "";
 }
 
 API_EXPORT(const char *) ap_get_remote_host(conn_rec *conn, void *dir_config,
@@ -629,9 +703,6 @@ API_EXPORT(const char *) ap_get_remote_host(conn_rec *conn, void *dir_config,
 	   
 	    if (hostname_lookups == HOSTNAME_LOOKUP_DOUBLE) {
 		do_double_reverse(conn);
-		if (conn->double_reverse != 1) {
-		    conn->remote_host = NULL;
-		}
 	    }
 	}
 	/* if failed, set it to the NULL string to indicate error */
@@ -908,15 +979,11 @@ API_EXPORT (file_type_e) ap_get_win32_interpreter(const  request_rec *r,
     }
     ext = strrchr(exename, '.');
 
-    if (ext && (!strcasecmp(ext,".bat") || !strcasecmp(ext,".cmd")) &&
-        d->script_interpreter_source != INTERPRETER_SOURCE_REGISTRY) 
+    if (ext && (!strcasecmp(ext,".bat") || !strcasecmp(ext,".cmd"))) 
     {
-        /* The registry does these for us unless INTERPRETER_SOURCE_REGISTRY
-         * was not enabled.
-         */
         char *p, *shellcmd = getenv("COMSPEC");
         if (!shellcmd)
-            shellcmd = SHELL_PATH;
+            return eFileTypeUNKNOWN;
         p = strchr(shellcmd, '\0');
         if ((p - shellcmd >= 11) && !strcasecmp(p - 11, "command.com")) 
         {
@@ -925,12 +992,16 @@ API_EXPORT (file_type_e) ap_get_win32_interpreter(const  request_rec *r,
             if (!strcasecmp(ext,".cmd"))
                 return eFileTypeUNKNOWN;
             *interpreter = ap_pstrcat(r->pool, "\"", shellcmd, "\" /C %1", NULL);
+            return eCommandShell16;
         }
-        else
-            /* Assume any other likes long paths, and knows .cmd
+        else {
+            /* Assume any other likes long paths, and knows .cmd,
+             * but the entire /c arg should be double quoted, e.g.
+             * "c:\path\cmd.exe" /c ""prog" "arg" "arg""
              */
-            *interpreter = ap_pstrcat(r->pool, "\"", shellcmd, "\" /C \"%1\"", NULL);
-        return eFileTypeSCRIPT;
+            *interpreter = ap_pstrcat(r->pool, "\"", shellcmd, "\" /C \"\"%1\" %*\"", NULL);
+            return eCommandShell32;
+        }
     }
 
     /* If the file has an extension and it is not .com and not .exe and
@@ -1107,6 +1178,10 @@ static const char *set_add_default_charset(cmd_parms *cmd,
        d->add_default_charset_name = arg;
     }
     return NULL;
+}
+static const char *set_accept_mutex(cmd_parms *cmd, void *dummy, char *arg)
+{
+	return ap_init_mutex_method(arg);
 }
 
 static const char *set_document_root(cmd_parms *cmd, void *dummy, char *arg)
@@ -1877,9 +1952,18 @@ static const char *set_server_alias(cmd_parms *cmd, void *dummy,
 
 static const char *add_module_command(cmd_parms *cmd, void *dummy, char *arg)
 {
+    module *modp;
     const char *err = ap_check_cmd_context(cmd, GLOBAL_ONLY);
     if (err != NULL) {
         return err;
+    }
+
+    for (modp = top_module; modp; modp = modp->next) {
+        if (modp->name != NULL && strcmp(modp->name, arg) == 0) {
+            ap_log_error(APLOG_MARK, APLOG_WARNING|APLOG_NOERRNO, cmd->server,
+                          "module %s is already added, skipping", arg);
+            return NULL;
+        }
     }
 
     if (!ap_add_named_module(arg)) {
@@ -2494,6 +2578,21 @@ static const char *set_threadstacksize(cmd_parms *cmd, void *dummy, char *stacks
 }
 #endif
 
+/* Though the AcceptFilter functionality is not available across
+ * all platforms - we still allow the config directive to appear
+ * on all platforms and do intentionally not tie it to the compile
+ * time flag SO_ACCEPTFILTER. This makes configuration files significantly
+ * more portable; especially as an <IfModule http_core.c> or some
+ * other construct is not possible.
+ */
+static const char *set_acceptfilter(cmd_parms *cmd, void *dummy, int flag)
+{
+#ifdef SO_ACCEPTFILTER
+    ap_acceptfilter = flag;
+#endif
+    return NULL;
+}
+
 static const char *set_listener(cmd_parms *cmd, void *dummy, char *ips)
 {
     listen_rec *new;
@@ -2813,6 +2912,260 @@ static const char *set_interpreter_source(cmd_parms *cmd, core_dir_config *d,
 }
 #endif
 
+static const char *set_cgi_command_args(cmd_parms *cmd,
+                                              void *mconfig,
+                                              int arg)
+{
+    core_dir_config *cfg = (core_dir_config *)mconfig;
+    cfg->cgi_command_args = arg ? AP_FLAG_ON : AP_FLAG_OFF;
+    return NULL;
+}
+
+#ifdef CHARSET_EBCDIC
+
+typedef struct {
+  char conv_out[2];
+  char conv_in[2];
+} parsed_conf_t;
+
+/* Check for conversion syntax:  { On | Off } [ = { In | Out | InOut } ] */
+static parsed_conf_t *
+parse_on_off_in_out(pool *p, char *arg)
+{
+    static parsed_conf_t ret = { { conv_Unset, '\0' }, { conv_Unset, '\0' } };
+    char *onoff = ap_getword_nc(p, &arg, '=');
+    int in = 0, out = 0, inout = 0;
+    char conv_val;
+
+    /* Check for valid syntax:  { On | Off } [ = { In | Out | InOut } ] */
+    if (strcasecmp(onoff, "On") == 0)
+        conv_val = conv_On;
+    else if (strcasecmp(onoff, "Off") == 0)
+        conv_val = conv_Off;
+    else
+        return NULL;
+
+    /* Check the syntax, and at the same time assign the test results */
+    if (!(inout = (*arg == '\0')) &&
+        !(in = (strcasecmp(arg, "In") == 0)) &&
+        !(out = (strcasecmp(arg, "Out") == 0)) &&
+        !(inout = (strcasecmp(arg, "InOut") == 0))) {
+        /* Invalid string, not conforming to syntax! */
+        return NULL;
+    }
+
+    ret.conv_in[0]  = (in || inout)  ? conv_val : conv_Unset;
+    ret.conv_out[0] = (out || inout) ? conv_val : conv_Unset;
+
+    return &ret;
+}
+
+
+/* Handle the EBCDICConvert directive:
+ *   EBCDICConvert {On|Off}[={In|Out|InOut}] ext ...
+ */
+static const char *
+add_conversion_by_ext(cmd_parms *cmd, core_dir_config *m,
+		      char *onoff, char *ext)
+{
+    parsed_conf_t *onoff_code = parse_on_off_in_out(cmd->pool, onoff);
+
+    if (onoff_code == NULL)
+        return "Invalid syntax: use EBCDICConvert {On|Off}[={In|Out|InOut}] ext [...]";
+
+    if (*ext == '.')
+        ++ext;
+
+    if (*onoff_code->conv_in != conv_Unset)
+	ap_table_addn(m->ebcdicconversion_by_ext_in, ext,
+		      ap_pstrndup(cmd->pool, onoff_code->conv_in, 1));
+    if (*onoff_code->conv_out != conv_Unset)
+	ap_table_addn(m->ebcdicconversion_by_ext_out, ext,
+		      ap_pstrndup(cmd->pool, onoff_code->conv_out, 1));
+
+    return NULL;
+}
+
+
+/* Handle the EBCDICConvertByType directive:
+ *   EBCDICConvertByType {On|Off}[={In|Out|InOut}] mimetype ...
+ */
+static const char *
+add_conversion_by_type(cmd_parms *cmd, core_dir_config *m,
+		       char *onoff, char *type)
+{
+    parsed_conf_t *onoff_code = parse_on_off_in_out(cmd->pool, onoff);
+
+    if (onoff_code == NULL)
+        return "Invalid syntax: use EBCDICConvertByType {On|Off}[={In|Out|InOut}] mimetype [...]";
+
+    if (*onoff_code->conv_in != conv_Unset)
+	ap_table_addn(m->ebcdicconversion_by_type_in, type,
+		      ap_pstrndup(cmd->pool, onoff_code->conv_in, 1));
+    if (*onoff_code->conv_out != conv_Unset)
+	ap_table_addn(m->ebcdicconversion_by_type_out, type,
+		      ap_pstrndup(cmd->pool, onoff_code->conv_out, 1));
+
+    return NULL;
+}
+
+
+/* Handle the EBCDICKludge directive:
+ *   EBCDICKludge {On|Off}
+ */
+#ifdef LEGACY_KLUDGE
+static const char *
+set_x_ascii_kludge(cmd_parms *cmd, core_dir_config *m, int arg)
+{
+    m->x_ascii_magic_kludge = arg;
+
+    return NULL;
+}
+#endif
+
+#if ADD_EBCDICCONVERT_DEBUG_HEADER
+/* Handle the EBCDICDebugHeader directive:
+ *   EBCDICDebugHeader {On|Off}
+ */
+static const char *
+set_debug_header(cmd_parms *cmd, core_dir_config *m, int arg)
+{
+    m->ebcdicconversion_debug_header = arg;
+
+    return NULL;
+}
+#endif
+#endif /* CHARSET_EBCDIC */
+
+/*
+ * Note what data should be used when forming file ETag values.
+ * It would be nicer to do this as an ITERATE, but then we couldn't
+ * remember the +/- state properly.
+ */
+static const char *set_etag_bits(cmd_parms *cmd, void *mconfig,
+                                 const char *args_p)
+{
+    core_dir_config *cfg;
+    etag_components_t bit;
+    char action;
+    char *token;
+    const char *args;
+    int valid;
+    int first;
+    int explicit;
+
+    cfg = (core_dir_config *) mconfig;
+
+    args = args_p;
+    first = 1;
+    explicit = 0;
+    while (args[0] != '\0') {
+        action = '*';
+        bit = ETAG_UNSET;
+        valid = 1;
+        token = ap_getword_conf(cmd->pool, &args);
+        if ((*token == '+') || (*token == '-')) {
+            action = *token;
+            token++;
+        }
+        else {
+            /*
+             * The occurrence of an absolute setting wipes
+             * out any previous relative ones.  The first such
+             * occurrence forgets any inherited ones, too.
+             */
+            if (first) {
+                cfg->etag_bits = ETAG_UNSET;
+                cfg->etag_add = ETAG_UNSET;
+                cfg->etag_remove = ETAG_UNSET;
+                first = 0;
+            }
+        }
+
+        if (strcasecmp(token, "None") == 0) {
+            if (action != '*') {
+                valid = 0;
+            }
+            else {
+                cfg->etag_bits = bit = ETAG_NONE;
+                explicit = 1;
+            }
+        }
+        else if (strcasecmp(token, "All") == 0) {
+            if (action != '*') {
+                valid = 0;
+            }
+            else {
+                explicit = 1;
+                cfg->etag_bits = bit = ETAG_ALL;
+            }
+        }
+        else if (strcasecmp(token, "Size") == 0) {
+            bit = ETAG_SIZE;
+        }
+        else if ((strcasecmp(token, "LMTime") == 0)
+                 || (strcasecmp(token, "MTime") == 0)
+                 || (strcasecmp(token, "LastModified") == 0)) {
+            bit = ETAG_MTIME;
+        }
+        else if (strcasecmp(token, "INode") == 0) {
+            bit = ETAG_INODE;
+        }
+        else {
+            return ap_pstrcat(cmd->pool, "Unknown keyword '",
+                              token, "' for ", cmd->cmd->name,
+                              " directive", NULL);
+        }
+
+        if (! valid) {
+            return ap_pstrcat(cmd->pool, cmd->cmd->name, " keyword '",
+                              token, "' cannot be used with '+' or '-'",
+                              NULL);
+        }
+
+        if (action == '+') {
+            /*
+             * Make sure it's in the 'add' list and absent from the
+             * 'subtract' list.
+             */
+            cfg->etag_add |= bit;
+            cfg->etag_remove &= (~ bit);
+        }
+        else if (action == '-') {
+            cfg->etag_remove |= bit;
+            cfg->etag_add &= (~ bit);
+        }
+        else {
+            /*
+             * Non-relative values wipe out any + or - values
+             * accumulated so far.
+             */
+            cfg->etag_bits |= bit;
+            cfg->etag_add = ETAG_UNSET;
+            cfg->etag_remove = ETAG_UNSET;
+            explicit = 1;
+        }
+    }
+
+    /*
+     * Any setting at all will clear the 'None' and 'Unset' bits.
+     */
+
+    if (cfg->etag_add != ETAG_UNSET) {
+        cfg->etag_add &= (~ ETAG_UNSET);
+    }
+    if (cfg->etag_remove != ETAG_UNSET) {
+        cfg->etag_remove &= (~ ETAG_UNSET);
+    }
+    if (explicit) {
+        cfg->etag_bits &= (~ ETAG_UNSET);
+        if ((cfg->etag_bits & ETAG_NONE) != ETAG_NONE) {
+            cfg->etag_bits &= (~ ETAG_NONE);
+        }
+    }
+    return NULL;
+}
+
 /* Note --- ErrorDocument will now work from .htaccess files.  
  * The AllowOverride of Fileinfo allows webmasters to turn it off
  */
@@ -3015,6 +3368,19 @@ static const command_rec core_cmds[] = {
   "to die." },
 { "ListenBacklog", set_listenbacklog, NULL, RSRC_CONF, TAKE1,
   "Maximum length of the queue of pending connections, as used by listen(2)" },
+{ "AcceptFilter", set_acceptfilter, NULL, RSRC_CONF, FLAG,
+  "Switch AcceptFiltering on/off (default is "
+#ifdef AP_ACCEPTFILTER_OFF
+	"off"
+#else
+	"on"
+#endif
+	")."
+#ifndef SO_ACCEPTFILTER
+	"This feature is currently not compiled in; so this directive "
+	"is ignored."
+#endif
+   },
 { "CoreDumpDirectory", set_coredumpdir, NULL, RSRC_CONF, TAKE1,
   "The location of the directory Apache changes to before dumping core" },
 { "Include", include_config, NULL, (RSRC_CONF | ACCESS_CONF), TAKE1,
@@ -3031,6 +3397,8 @@ static const command_rec core_cmds[] = {
 { "ScriptInterpreterSource", set_interpreter_source, NULL, OR_FILEINFO, TAKE1,
   "Where to find interpreter to run Win32 scripts - Registry or Script (shebang line)" },
 #endif
+{ "CGICommandArgs", set_cgi_command_args, NULL, OR_OPTIONS, FLAG,
+  "Allow or Disallow CGI requests to pass args on the command line" },
 { "ServerTokens", set_serv_tokens, NULL, RSRC_CONF, TAKE1,
   "Tokens displayed in the Server: header - Min[imal], OS, Prod[uctOnly], Full" },
 { "LimitRequestLine", set_limit_req_line, NULL, RSRC_CONF, TAKE1,
@@ -3043,6 +3411,56 @@ static const command_rec core_cmds[] = {
   (void*)XtOffsetOf(core_dir_config, limit_req_body),
   OR_ALL, TAKE1,
   "Limit (in bytes) on maximum size of request message body" },
+{ "AcceptMutex", set_accept_mutex, NULL, RSRC_CONF, TAKE1,
+  "Serialized Accept Mutex; the methods " 
+#ifdef HAVE_USLOCK_SERIALIZED_ACCEPT
+    "'uslock' "                           
+#endif
+#ifdef HAVE_PTHREAD_SERIALIZED_ACCEPT
+    "'pthread' "
+#endif
+#ifdef HAVE_SYSVSEM_SERIALIZED_ACCEPT
+    "'sysvsem' "
+#endif
+#ifdef HAVE_FCNTL_SERIALIZED_ACCEPT
+    "'fcntl' "
+#endif
+#ifdef HAVE_FLOCK_SERIALIZED_ACCEPT
+    "'flock' "
+#endif
+#ifdef HAVE_OS2SEM_SERIALIZED_ACCEPT
+    "'os2sem' "
+#endif
+#ifdef HAVE_TPF_CORE_SERIALIZED_ACCEPT
+    "'tpfcore' "
+#endif
+#ifdef HAVE_BEOS_SERIALIZED_ACCEPT
+    "'beos_sem' "
+#endif
+#ifdef HAVE_NONE_SERIALIZED_ACCEPT
+    "'none' "
+#endif
+    "are compiled in"
+},
+
+/* EBCDIC Conversion directives: */
+#ifdef CHARSET_EBCDIC
+{ "EBCDICConvert", add_conversion_by_ext, NULL, OR_FILEINFO, ITERATE2,
+    "{On|Off}[={In|Out|InOut}] followed by one or more file extensions" },
+{ "EBCDICConvertByType", add_conversion_by_type, NULL, OR_FILEINFO, ITERATE2,
+    "{On|Off}[={In|Out|InOut}] followed by one or more MIME types" },
+#ifdef LEGACY_KLUDGE
+{ "EBCDICKludge", set_x_ascii_kludge, NULL, OR_FILEINFO, FLAG,
+    "'On': enable or default='Off': disable the old text/x-ascii-mimetype kludge" },
+#endif
+#if ADD_EBCDICCONVERT_DEBUG_HEADER
+{ "EBCDICDebugHeader", set_debug_header, NULL, OR_FILEINFO, FLAG,
+    "'On': enable or default='Off': disable the EBCDIC Debugging MIME Header" },
+#endif
+#endif /* CHARSET_EBCDIC */
+
+{ "FileETag", set_etag_bits, NULL, OR_FILEINFO, RAW_ARGS,
+  "Specify components used to construct a file's ETag"},
 { NULL }
 };
 
@@ -3095,6 +3513,259 @@ static int core_translate(request_rec *r)
 
 static int do_nothing(request_rec *r) { return OK; }
 
+#ifdef CHARSET_EBCDIC
+struct do_mime_match_parms {
+    request_rec *request;     /* [In] current request_rec */
+    int direction;            /* [In] determine conversion for: dir_In|dir_Out */
+    const char *content_type; /* [In] Content-Type (dir_In: from MIME Header, else r->content_type) */
+    int match_found;          /* [Out] nonzero if a match was found */
+    int conv;                 /* [Out] conversion setting if match was found */
+};
+
+
+/* This routine is called for each mime type configured by the
+ * EBCDICConvertByType directive.
+ */
+static int
+do_mime_match(void *rec, const char *key, const char *val)
+{
+    int conv = (val[0] == conv_On);
+    const char *content_type;
+#if ADD_EBCDICCONVERT_DEBUG_HEADER
+    request_rec *r = ((struct do_mime_match_parms *) rec)->request;
+#endif
+
+    ((struct do_mime_match_parms *) rec)->match_found = 0;
+    ((struct do_mime_match_parms *) rec)->conv = conv_Unset;
+
+    content_type = ((struct do_mime_match_parms *) rec)->content_type;
+
+    /* If no type set: no need to continue */
+    if (content_type == NULL)
+        return 0;
+
+    /* If the MIME type matches, set the conversion flag appropriately */
+    if ((ap_is_matchexp(key) && ap_strcasecmp_match(content_type, key) == 0)
+        || (strcasecmp(key, content_type) == 0)) {
+
+        ((struct do_mime_match_parms *) rec)->match_found = 1;
+        ((struct do_mime_match_parms *) rec)->conv = conv;
+
+#if ADD_EBCDICCONVERT_DEBUG_HEADER
+	ap_table_setn(r->headers_out,
+               ((((struct do_mime_match_parms *) rec)->direction) == dir_In)
+		      ? "X-EBCDIC-Debug-In" : "X-EBCDIC-Debug-Out",
+                       ap_psprintf(r->pool, "EBCDICConversionByType %s %s",
+                                   conv ? "On" : "Off",
+                                   key));
+#endif
+
+        /* the mime type scan stops at the first  match. */
+        return 0;
+    }
+
+    return 1;
+}
+
+static void
+ap_checkconv_dir(request_rec *r, const char **pType, int dir)
+{
+    core_dir_config *conf =
+    (core_dir_config *) ap_get_module_config(r->per_dir_config, &core_module);
+    table *conv_by_ext, *conv_by_type;
+    const char *type, *conversion;
+    char *ext;
+    int conv_valid = 0, conv;
+
+    conv_by_ext  = (dir == dir_In) ? conf->ebcdicconversion_by_ext_in  : conf->ebcdicconversion_by_ext_out;
+    conv_by_type = (dir == dir_In) ? conf->ebcdicconversion_by_type_in : conf->ebcdicconversion_by_type_out;
+
+    type = (*pType == NULL) ? ap_default_type(r) : *pType;
+
+    /* Pseudo "loop" which is executed once only, with break's at individual steps */
+    do {
+        /* Step 0: directories result in redirections or in directory listings.
+	 * Both are EBCDIC text documents.
+	 * @@@ Should we check for the handler instead?
+	 */
+        if (S_ISDIR(r->finfo.st_mode) && dir == dir_Out) {
+            conv = conv_valid = 1;
+            break;
+        }
+
+        /* 1st step: check the binding on file extension. This allows us to
+         * override the conversion default based on a specific name.
+         * For instance, the following would allow some HTML files
+         * to be converted (.html) and others passed unconverted (.ahtml):
+         *     AddType text/html .html .ahtml
+         *     EBCDICConvert Off .ahtml
+         * For uploads, this assumes that the destination file name
+	 * has the correct extension. That may not be true for, e.g.,
+	 * Netscape Communicator roaming profile uploads!
+         */
+        if (r->filename && !ap_is_empty_table(conv_by_ext)) {
+            const char *fn = strrchr(r->filename, '/');
+
+            if (fn == NULL)
+                fn = r->filename;
+
+            /* Parse filename extension */
+            if ((ext = strrchr(fn, '.')) != NULL) {
+                ++ext;
+
+                /* Check for Content-Type */
+                if ((conversion = ap_table_get(conv_by_ext, ext)) != NULL) {
+
+#if ADD_EBCDICCONVERT_DEBUG_HEADER
+		    if (conf->ebcdicconversion_debug_header)
+		        ap_table_setn(r->headers_out,
+				      (dir == dir_In) ? "X-EBCDIC-Debug-In" : "X-EBCDIC-Debug-Out",
+				      ap_psprintf(r->pool, "EBCDICConversion %s .%s",
+						  (conversion[0] == conv_On) ? "On" : "Off",
+						  ext));
+#endif
+
+                    conv = (conversion[0] == conv_On);
+                    conv_valid = 1;
+                    break;
+                }
+            }
+        }
+
+
+        /* 2nd step: test for the old "legacy kludge", that is, a default
+         * conversion=on for text/?* message/?* multipart/?* and the possibility
+         * to override the text/?* conversion with a definition like
+         *    AddType text/x-ascii-plain .atxt
+         *    AddType text/x-ascii-html  .ahtml
+         * where the "x-ascii-" would be removed and the conversion switched
+         * off.
+         * This step must be performed prior to testing wildcard MIME types
+         * like text/?* by the EBCDICConvertByType directive.
+         */
+#ifdef LEGACY_KLUDGE
+        /* This fallback is only used when enabled (default=off) */
+        if (conf->x_ascii_magic_kludge) {
+            char *magic;
+
+            /* If the mime type of a document is set to
+             * "text/x-ascii-anything", it gets changed to
+             * "text/anything" here and the conversion is forced to off
+             * ("binary" or ASCII documents).
+             */
+            if (*pType != NULL
+                && (magic = strstr(*pType, "/x-ascii-")) != NULL) {
+
+#if ADD_EBCDICCONVERT_DEBUG_HEADER
+		if (conf->ebcdicconversion_debug_header)
+		    ap_table_setn(r->headers_out,
+				  (dir == dir_In) ? "X-EBCDIC-Debug-In" : "X-EBCDIC-Debug-Out",
+				  ap_psprintf(r->pool, "EBCDICKludge On (and type is: %s, thus no conversion)",
+					      *pType));
+#endif
+
+                /* the mime type scan stops at the first  match. */
+                magic[1] = '\0';        /* overwrite 'x' */
+
+                /* Fix MIME type: strip out the magic "x-ascii-" substring */
+                *pType = ap_pstrcat(r->pool, *pType, &magic[9], NULL);
+
+                magic[1] = 'x'; /* restore 'x' in old string (just in case) */
+
+                /* Switch conversion to BINARY */
+                conv = 0;       /* do NOT convert this document */
+                conv_valid = 1;
+                break;
+            }
+        }
+#endif /*LEGACY_KLUDGE */
+
+
+        /* 3rd step: check whether a generic conversion was defined for a MIME type,
+         * like in
+         *    EBCDICConvertByType  On  model/vrml application/postscript text/?*
+         */
+        if (!ap_is_empty_table(conv_by_type)) {
+            struct do_mime_match_parms do_par;
+
+            do_par.request = r;
+            do_par.direction = dir;
+	    do_par.content_type = type;
+
+            ap_table_do(do_mime_match, (void *) &do_par, conv_by_type, NULL);
+
+            if ((conv_valid = do_par.match_found) != 0) {
+                conv = do_par.conv;
+                break;
+            }
+        }
+        else /* If no conversion by type was configured, use the default: */
+        {
+            /*
+             * As a final step, mime types starting with "text/", "message/" or
+             * "multipart/" imply a conversion, while all the rest is
+             * delivered unconverted (i.e., binary, e.g. application/octet-stream).
+             */
+
+            /* If no content type is set then treat it as text (conversion=on) */
+            conv =
+                (type == NULL) ||
+                (strncasecmp(type, "text/", 5) == 0) ||
+                (strncasecmp(type, "message/", 8) == 0) ||
+                (strncasecmp(type, "multipart/", 10) == 0) ||
+                (strcasecmp(type, "application/x-www-form-urlencoded") == 0);
+
+#if ADD_EBCDICCONVERT_DEBUG_HEADER
+		if (conf->ebcdicconversion_debug_header)
+		    ap_table_setn(r->headers_out,
+				  (dir == dir_In) ? "X-EBCDIC-Debug-In" : "X-EBCDIC-Debug-Out",
+				  ap_psprintf(r->pool,
+					      "No EBCDICConversion configured (and type is: %s, "
+					      "=> guessed conversion = %s)",
+					      type, conv ? "On" : "Off"));
+#endif
+            conv_valid = 1;
+            break;
+        }
+    } while (0);
+
+    if (conv_valid) {
+        if (dir == dir_In)
+            r->ebcdic.conv_in = conv;
+        else
+            r->ebcdic.conv_out = conv;
+    }
+}
+
+/* This function determines the conversion for uploads (PUT/POST): */
+API_EXPORT(int)
+ap_checkconv_in(request_rec *r)
+{
+    const char *typep;
+
+    /* If nothing is being sent as input anyway, we don't bother about conversion */
+    /* (see ap_should_client_block())*/
+    if (r->read_length || (!r->read_chunked && (r->remaining <= 0)))
+        return r->ebcdic.conv_in;
+
+    typep = ap_table_get(r->headers_in, "Content-Type");
+    ap_checkconv_dir(r, &typep, dir_In);
+
+    return r->ebcdic.conv_in;
+}
+
+
+/* Backward compatibility function */
+API_EXPORT(int)
+ap_checkconv(request_rec *r)
+{
+    ap_checkconv_dir(r, &r->content_type, dir_Out);
+    return r->ebcdic.conv_out;
+}
+
+#endif /* CHARSET_EBCDIC */
+
+
 #ifdef USE_MMAP_FILES
 struct mmap_rec {
     void *mm;
@@ -3129,9 +3800,6 @@ static int default_handler(request_rec *r)
     FILE *f;
 #ifdef USE_MMAP_FILES
     caddr_t mm;
-#endif
-#ifdef CHARSET_EBCDIC
-    int convert_flag;
 #endif
 
     /* This handler has no use for a request body (yet), but we still
@@ -3188,19 +3856,6 @@ static int default_handler(request_rec *r)
         return errstatus;
     }
 
-#ifdef CHARSET_EBCDIC
-    /* To make serving of "raw ASCII text" files easy (they serve faster
-     * since they don't have to be converted from EBCDIC), a new
-     * "magic" type prefix was invented: text/x-ascii-{plain,html,...}
-     * If we detect one of these content types here, we simply correct
-     * the type to the real text/{plain,html,...} type. Otherwise, we
-     * set a flag that translation is required later on.
-     *
-     * Note: convert_flag is not used in the MMAP path;
-     * ap_checkconv() sets a request_req flag based on content_type
-     */ 
-    convert_flag = ap_checkconv(r);
-#endif
 #ifdef USE_MMAP_FILES
     ap_block_alarms();
     if ((r->finfo.st_size >= MMAP_THRESHOLD)
@@ -3226,7 +3881,7 @@ static int default_handler(request_rec *r)
 #ifdef CHARSET_EBCDIC
 	if (d->content_md5 & 1) {
 	    ap_table_setn(r->headers_out, "Content-MD5",
-			  ap_md5digest(r->pool, f, convert_flag));
+			  ap_md5digest(r->pool, f, r->ebcdic.conv_out));
 	}
 #else
 	if (d->content_md5 & 1) {
@@ -3252,8 +3907,8 @@ static int default_handler(request_rec *r)
 		     */
 		    if (fseek(f, offset, SEEK_SET)) {
 			ap_log_error(APLOG_MARK, APLOG_ERR, r->server,
-			      "Failed to fseek for byterange (%ld, %ld)",
-			      offset, length);
+			      "Failed to fseek for byterange (%ld, %ld): %s",
+			      offset, length, r->filename);
 		    }
 		    else {
 			ap_send_fd_length(f, r, length);

@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -389,10 +389,10 @@ static const char *get_entry(pool *p, accept_rec *result,
 
         if (parm[0] == 'q'
             && (parm[1] == '\0' || (parm[1] == 's' && parm[2] == '\0'))) {
-            result->quality = atof(cp);
+            result->quality = (float)atof(cp);
         }
         else if (parm[0] == 'l' && !strcmp(&parm[1], "evel")) {
-            result->level = atof(cp);
+            result->level = (float)atof(cp);
         }
         else if (!strcmp(parm, "charset")) {
             result->charset = cp;
@@ -817,7 +817,7 @@ static int read_type_map(negotiation_state *neg, request_rec *rr)
                 has_content = 1;
             }
             else if (!strncmp(buffer, "content-length:", 15)) {
-                mime_info.bytes = atof(body);
+                mime_info.bytes = (float)atof(body);
                 has_content = 1;
             }
             else if (!strncmp(buffer, "content-language:", 17)) {
@@ -922,10 +922,10 @@ static int read_types_multi(negotiation_state *neg)
     forbidden.all = 1;
 
     while ((dir_entry = readdir(dirp))) {
+        array_header *exception_list;
         request_rec *sub_req;
 
         /* Do we have a match? */
-
         if (strncmp(dir_entry->d_name, filp, prefix_len)) {
             continue;
         }
@@ -955,7 +955,70 @@ static int read_types_multi(negotiation_state *neg)
         else if (sub_req->status == HTTP_FORBIDDEN)
             forbidden.any = 1;
 
-        if (sub_req->status != HTTP_OK || !sub_req->content_type) {
+        /* 
+         * mod_mime will _always_ provide us the base name in the
+         * ap-mime-exception-list, if it processed anything.  If
+         * this list is empty, give up immediately, there was
+         * nothing interesting.  For example, looking at the files
+         * readme.txt and readme.foo, we will throw away .foo if
+         * it's an insignificant file (e.g. did not identify a 
+         * language, charset, encoding, content type or handler,)
+         */
+        exception_list = 
+            (array_header *) ap_table_get(sub_req->notes,
+                                          "ap-mime-exceptions-list");
+        if (!exception_list) {
+            ap_destroy_sub_req(sub_req);
+            continue;
+        }
+
+        /* Each unregonized bit better match our base name, in sequence.
+         * A test of index.html.foo will match index.foo or index.html.foo,
+         * but it will never transpose the segments and allow index.foo.html
+         * because that would introduce too much CPU consumption.  Better that
+         * we don't attempt a many-to-many match here.
+         */
+        {
+            int nexcept = exception_list->nelts;
+            char **cur_except = (char**)exception_list->elts;
+            char *segstart = filp, *segend, saveend;
+
+            while (*segstart && nexcept) {
+                if (!(segend = strchr(segstart, '.')))
+                    segend = strchr(segstart, '\0');
+                saveend = *segend;
+                *segend = '\0';
+
+#ifdef CASE_BLIND_FILESYSTEM
+                if (strcasecmp(segstart, *cur_except) == 0) {
+#else
+                if (strcmp(segstart, *cur_except) == 0) {
+#endif
+                    --nexcept;
+                    ++cur_except;
+                }
+
+                if (!saveend)
+                    break;
+
+                *segend = saveend;
+                segstart = segend + 1;
+            }
+
+            if (nexcept) {
+                /* Something you don't know is, something you don't know...
+                 */
+                ap_destroy_sub_req(sub_req);
+                continue;
+            }
+        }
+
+        /* 
+         * ###: be warned, the _default_ content type is already
+         * picked up here!  If we failed the subrequest, or don't 
+         * know what we are serving, then continue.
+         */
+        if (sub_req->status != HTTP_OK || (!sub_req->content_type)) {
             ap_destroy_sub_req(sub_req);
             continue;
         }
@@ -963,7 +1026,6 @@ static int read_types_multi(negotiation_state *neg)
         /* If it's a map file, we use that instead of the map
          * we're building...
          */
-
         if (((sub_req->content_type) &&
              !strcmp(sub_req->content_type, MAP_FILE_MAGIC_TYPE)) ||
             ((sub_req->handler) &&
@@ -1311,7 +1373,7 @@ static void set_language_quality(negotiation_state *neg, var_rec *variant)
             float fiddle_q = 0.0f;
             int any_match_on_star = 0;
             int i, j, alen, longest_lang_range_len;
-            
+
             for (j = 0; j < variant->content_languages->nelts; ++j) {
                 p = NULL;
                 bestthistag = NULL;
@@ -1354,7 +1416,7 @@ static void set_language_quality(negotiation_state *neg, var_rec *variant)
                     
                     alen = strlen(accs[i].name);
                     
-                    if ((strlen(lang) >= alen) &&
+                    if (((int)strlen(lang) >= alen) &&
                         !strncmp(lang, accs[i].name, alen) &&
                         ((lang[alen] == 0) || (lang[alen] == '-')) ) {
                         
@@ -2648,6 +2710,19 @@ static int handle_multi(request_rec *r)
      */
     ap_pool_join(r->pool, sub_req->pool);
     r->mtime = 0; /* reset etag info for subrequest */
+    /* XXX: uri/args/path_info are all retained from the original request.
+     *      It is entirely possible, but not common, for a handler to choke
+     *      on some expectation based on the uri (or more commonly, args) that 
+     *      the file subrequest was prepared to handle, but a lookup_uri would
+     *      have considered an error.  This leaves an improbable possibility 
+     *      that the user might fail a mod_dir request later, and the server 
+     *      may respond with a mod_autoindex response.  However, this has been
+     *      the behavior throughout much of the Apache 1.3 era with minimal
+     *      side effects, mostly caused by obscure configuration bugs.
+     *  r->uri = sub_req->uri;
+     *  r->args = sub_req->args;
+     *  r->path_info = sub_req->path_info;  
+     */
     r->filename = sub_req->filename;
     r->handler = sub_req->handler;
     r->content_type = sub_req->content_type;

@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -299,6 +299,10 @@ static int status_handler(request_rec *r)
     }
 
     ap_send_http_header(r);
+#ifdef CHARSET_EBCDIC
+    /* Server-generated response, converted */
+    ap_bsetflag(r->connection->client, B_EBCDIC2ASCII, r->ebcdic.conv_out = 1);
+#endif
 
     if (r->header_only)
 	return 0;
@@ -406,12 +410,14 @@ static int status_handler(request_rec *r)
 			(float) count / (float) up_time);
 
 	    if (up_time > 0) {
-		format_byte_out(r, KBYTE * (float) kbcount / (float) up_time);
+		format_byte_out(r, (unsigned long) (KBYTE * (float) kbcount 
+                                                          / (float) up_time));
 		ap_rputs("/second - ", r);
 	    }
 
 	    if (count > 0) {
-		format_byte_out(r, KBYTE * (float) kbcount / (float) count);
+		format_byte_out(r, (unsigned long) (KBYTE * (float) kbcount 
+                                                          / (float) count));
 		ap_rputs("/request", r);
 	    }
 

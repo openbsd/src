@@ -1,9 +1,9 @@
 #!/bin/sh
-# $OpenBSD: Configure,v 1.18 2002/03/22 16:55:44 brad Exp $
+# $OpenBSD: Configure,v 1.19 2002/03/29 02:08:05 beck Exp $
 ## ====================================================================
 ## The Apache Software License, Version 1.1
 ##
-## Copyright (c) 2000 The Apache Software Foundation.  All rights
+## Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
 ## reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -588,7 +588,7 @@ case "$PLAT" in
     	PLATOSVERS=`echo $PLAT | sed 's/^.*solaris2.//'`
 	OS="Solaris $PLATOSVERS"
 	CFLAGS="$CFLAGS -DSOLARIS2=$PLATOSVERS"
-	LIBS="$LIBS -lsocket -lnsl"
+	LIBS="$LIBS -lsocket -lnsl -lpthread"
 	DBM_LIB=""
 	case "$PLATOSVERS" in
 	    2[01234]*)
@@ -1888,7 +1888,7 @@ if [ "x$RULE_EAPI" = "xyes" ]; then
     esac
     #   MM Shared Memory Library support for EAPI
     if [ "x$EAPI_MM" = "x" ]; then
-        EAPI_MM=`egrep '^EAPI_MM=' $file | tail -1 | awk -F= '{print $2}'`
+        EAPI_MM=`egrep '^EAPI_MM=' $file | sed -n -e '$p' | awk -F= '{print $2}'`
     fi
     if [ "x$EAPI_MM" != "x" ]; then
         case $EAPI_MM in
@@ -1951,7 +1951,7 @@ if [ "x$RULE_EXPAT" = "xdefault" ]; then
 fi
 
 if [ "x$RULE_EXPAT" = "xyes" ]; then
-    if ./helpers/TestCompile lib expat; then
+    if ${SHELL} ./helpers/TestCompile lib expat; then
         echo " + using system Expat"
         LIBS="$LIBS -lexpat"
     else
@@ -2005,7 +2005,7 @@ if [ "x$using_shlib" = "x1" ] ; then
 	#    select the special subtarget for shared core generation
 	SUBTARGET=target_shared
 	#    determine additional suffixes for libhttpd.so
-	V=1 R=3 P=23
+	V=1 R=3 P=24
 	if [ "x$SHLIB_SUFFIX_DEPTH" = "x0" ]; then
 	    SHLIB_SUFFIX_LIST=""
 	fi
@@ -2303,13 +2303,13 @@ echo "#endif" >>$AP_CONFIG_AUTO_H
 ##
 ## Check for availability of isinf() and isnan()
 ##
-if ./helpers/TestCompile func isinf ; then
+if ${SHELL} ./helpers/TestCompile func isinf ; then
     echo "" >>$AP_CONFIG_AUTO_H
     echo "/* determine: isinf() found in libc */ " >>$AP_CONFIG_AUTO_H
     echo "#ifndef HAVE_ISINF" >>$AP_CONFIG_AUTO_H
     echo "#define HAVE_ISINF 1" >>$AP_CONFIG_AUTO_H
     echo "#endif" >>$AP_CONFIG_AUTO_H
-elif ./helpers/TestCompile lib m isinf ; then
+elif ${SHELL} ./helpers/TestCompile lib m isinf ; then
     echo "" >>$AP_CONFIG_AUTO_H
     echo "/* determine: isinf() found in libm */ " >>$AP_CONFIG_AUTO_H
     echo "#ifndef HAVE_ISINF" >>$AP_CONFIG_AUTO_H
@@ -2319,13 +2319,13 @@ elif ./helpers/TestCompile lib m isinf ; then
     ADDED_LM="yes"
 fi
 
-if ./helpers/TestCompile func isnan ; then
+if ${SHELL} ./helpers/TestCompile func isnan ; then
     echo "" >>$AP_CONFIG_AUTO_H
     echo "/* determine: isnan() found in libc */ " >>$AP_CONFIG_AUTO_H
     echo "#ifndef HAVE_ISNAN" >>$AP_CONFIG_AUTO_H
     echo "#define HAVE_ISNAN 1" >>$AP_CONFIG_AUTO_H
     echo "#endif" >>$AP_CONFIG_AUTO_H
-elif ./helpers/TestCompile lib m isnan ; then
+elif ${SHELL} ./helpers/TestCompile lib m isnan ; then
     echo "" >>$AP_CONFIG_AUTO_H
     echo "/* determine: isnan() found in libm */ " >>$AP_CONFIG_AUTO_H
     echo "#ifndef HAVE_ISNAN" >>$AP_CONFIG_AUTO_H
@@ -2469,7 +2469,7 @@ else
       echo "** Apache requires an ANSI C Compiler, such as gcc. "
       echo ""
       echo "======== Error Output for sanity check ========"
-      (./helpers/TestCompile -v sanity)
+      (${SHELL} ./helpers/TestCompile -v sanity) 2>&1
       echo "============= End of Error Report ============="
       echo ""
       echo " Aborting!"

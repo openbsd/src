@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -179,6 +179,9 @@ static void unload_module(moduleinfo *modi)
     ap_remove_loaded_module(modi->modp);
 
     /* unload the module space itself */
+#ifdef NETWARE
+    ap_os_dso_unsym((ap_os_dso_handle_t)modi->modp->dynamic_load_handle, modi->name);
+#endif
     ap_os_dso_unload((ap_os_dso_handle_t)modi->modp->dynamic_load_handle);
 
     /* destroy the module information */
@@ -228,8 +231,11 @@ static const char *load_module(cmd_parms *cmd, void *dummy,
     modie = (moduleinfo *)sconf->loaded_modules->elts;
     for (i = 0; i < sconf->loaded_modules->nelts; i++) {
         modi = &modie[i];
-        if (modi->name != NULL && strcmp(modi->name, modname) == 0)
+        if (modi->name != NULL && strcmp(modi->name, modname) == 0) {
+            ap_log_error(APLOG_MARK, APLOG_WARNING|APLOG_NOERRNO, cmd->server,
+                          "module %s is already loaded, skipping", modname);
             return NULL;
+        }
     }
     modi = ap_push_array(sconf->loaded_modules);
     modi->name = modname;

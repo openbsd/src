@@ -262,13 +262,38 @@ typedef struct {
    memcpys can hardly make a dent on the massive memmove operations this
    cache technique avoids, nor the overheads of ASN en/decoding. */
 static unsigned int shmcb_get_safe_uint(unsigned int *);
-static void shmcb_set_safe_uint(unsigned int *, unsigned int);
+static void shmcb_set_safe_uint_ex(unsigned char *, const unsigned char *);
+#define shmcb_set_safe_uint(pdest, src) \
+	do { \
+		unsigned int tmp_uint = src; \
+		shmcb_set_safe_uint_ex((unsigned char *)pdest, \
+			(const unsigned char *)(&tmp_uint)); \
+	} while(0)
 #if 0 /* Unused so far */
 static unsigned long shmcb_get_safe_ulong(unsigned long *);
-static void shmcb_set_safe_ulong(unsigned long *, unsigned long);
+static void shmcb_set_safe_ulong_ex(unsigned char *, const unsigned char *);
+#define shmcb_set_safe_ulong(pdest, src) \
+	do { \
+		unsigned long tmp_ulong = src; \
+		shmcb_set_safe_ulong_ex((unsigned char *)pdest, \
+			(const unsigned char *)(&tmp_ulong)); \
+	} while(0)
 #endif
 static time_t shmcb_get_safe_time(time_t *);
-static void shmcb_set_safe_time(time_t *, time_t);
+static void shmcb_set_safe_time_ex(unsigned char *, const unsigned char *);
+#define shmcb_set_safe_time(pdest, src) \
+	do { \
+		time_t tmp_time = src; \
+		shmcb_set_safe_time_ex((unsigned char *)pdest, \
+			(const unsigned char *)(&tmp_time)); \
+	} while(0)
+
+/* This is necessary simply so that the size passed to memset() is not a
+ * compile-time constant, preventing the compiler from optimising it. */
+static void shmcb_safe_clear(void *ptr, size_t size)
+{
+	memset(ptr, 0, size);
+}
 
 /* Underlying functions for session-caching */
 static BOOL shmcb_init_memory(server_rec *, void *, unsigned int);
@@ -306,61 +331,46 @@ static BOOL shmcb_remove_session_id(server_rec *, SHMCBQueue *, SHMCBCache *, UC
 
 static unsigned int shmcb_get_safe_uint(unsigned int *ptr)
 {
-    unsigned char *from;
     unsigned int ret;
-
-    from = (unsigned char *)ptr;
-    memcpy(&ret, from, sizeof(unsigned int));
+    shmcb_set_safe_uint_ex((unsigned char *)(&ret),
+		    (const unsigned char *)ptr);
     return ret;
 }
 
-static void shmcb_set_safe_uint(unsigned int *ptr, unsigned int val)
+static void shmcb_set_safe_uint_ex(unsigned char *dest,
+				const unsigned char *src)
 {
-    unsigned char *to, *from;
-
-    to = (unsigned char *)ptr;
-    from = (unsigned char *)(&val);
-    memcpy(to, from, sizeof(unsigned int));
+    memcpy(dest, src, sizeof(unsigned int));
 }
 
 #if 0 /* Unused so far */
 static unsigned long shmcb_get_safe_ulong(unsigned long *ptr)
 {
-    unsigned char *from;
     unsigned long ret;
-
-    from = (unsigned char *)ptr;
-    memcpy(&ret, from, sizeof(unsigned long));
+    shmcb_set_safe_ulong_ex((unsigned char *)(&ret),
+		    (const unsigned char *)ptr);
     return ret;
 }
 
-static void shmcb_set_safe_ulong(unsigned long *ptr, unsigned long val)
+static void shmcb_set_safe_ulong_ex(unsigned char *dest,
+				const unsigned char *src)
 {
-    unsigned char *to, *from;
-
-    to = (unsigned char *)ptr;
-    from = (unsigned char *)(&val);
-    memcpy(to, from, sizeof(unsigned long));
+    memcpy(dest, src, sizeof(unsigned long));
 }
 #endif
 
 static time_t shmcb_get_safe_time(time_t * ptr)
 {
-    unsigned char *from;
     time_t ret;
-
-    from = (unsigned char *)ptr;
-    memcpy(&ret, from, sizeof(time_t));
+    shmcb_set_safe_time_ex((unsigned char *)(&ret),
+		    (const unsigned char *)ptr);
     return ret;
 }
 
-static void shmcb_set_safe_time(time_t * ptr, time_t val)
+static void shmcb_set_safe_time_ex(unsigned char *dest,
+				const unsigned char *src)
 {
-    unsigned char *to, *from;
-
-    to = (unsigned char *)ptr;
-    from = (unsigned char *)(&val);
-    memcpy(to, from, sizeof(time_t));
+    memcpy(dest, src, sizeof(time_t));
 }
 
 /*
@@ -1176,7 +1186,7 @@ static BOOL shmcb_insert_encoded_session(
                 "internal error");
         return FALSE;
     }
-    memset(idx, 0, sizeof(SHMCBIndex));
+    shmcb_safe_clear(idx, sizeof(SHMCBIndex));
     shmcb_set_safe_time(&(idx->expires), expiry_time);
     shmcb_set_safe_uint(&(idx->offset), new_offset);
 

@@ -101,7 +101,7 @@ struct nsrec {
  * statistics - obvious
  */
 
-#ifndef h_errno
+#if !defined(h_errno) && !defined(CYGWIN)
 extern int h_errno; /* some machines don't have this in their headers */
 #endif
 
@@ -314,7 +314,7 @@ int main (int argc, char *argv[])
 	if (line[0] == '\0')
 	    continue;
 	entries++;
-	if (!isdigit(line[0])) {	/* short cut */
+	if (!isdigit((int)line[0])) {	/* short cut */
 	    puts(line);
 	    withname++;
 	    continue;

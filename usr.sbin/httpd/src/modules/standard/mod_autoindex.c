@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -98,6 +98,7 @@ module MODULE_VAR_EXPORT autoindex_module;
 #define NO_OPTIONS 256
 #define FOLDERS_FIRST 512
 #define TRACK_MODIFIED 1024
+#define SORT_NOCASE 2048
 
 #define K_PAD 1
 #define K_NOPAD 0
@@ -410,6 +411,9 @@ static const char *add_opts(cmd_parms *cmd, void *d, const char *optstr)
 	}
 	else if (!strcasecmp(w, "TrackModified")) {
             option = TRACK_MODIFIED;
+	}
+	else if (!strcasecmp(w, "IgnoreCase")) {
+            option = SORT_NOCASE;
 	}
         else if (!strcasecmp(w, "None")) {
 	    if (action != '\0') {
@@ -732,6 +736,7 @@ struct ent {
     int ascending;
     int isdir;
     int checkdir;
+    int ignorecase;
     char key;
 };
 
@@ -1222,6 +1227,7 @@ static struct ent *make_autoindex_entry(char *name, int autoindex_opts,
      * rather than CPU.
      */
     p->checkdir = ((d->opts & FOLDERS_FIRST) != 0);
+    p->ignorecase = ((d->opts & SORT_NOCASE) != 0);
     p->key = ap_toupper(keyid);
     p->ascending = (ap_toupper(direction) == D_ASCENDING);
 
@@ -1536,6 +1542,7 @@ static int dsortf(struct ent **e1, struct ent **e2)
     struct ent *c1;
     struct ent *c2;
     int result = 0;
+    int ignorecase;
 
     /*
      * First, see if either of the entries is for the parent directory.
@@ -1592,7 +1599,25 @@ static int dsortf(struct ent **e1, struct ent **e2)
         }
         break;
     }
-    return strcmp(c1->name, c2->name);
+
+    ignorecase = c1->ignorecase;
+    if (ignorecase) {
+        result = strcasecmp(c1->name, c2->name);
+        if (result == 0) {
+            /*
+             * They're identical when treated case-insensitively, so
+             * pretend they weren't and let strcmp() put them in a
+             * deterministic order.  This means that 'ABC' and 'abc'
+             * will always appear in the same order, rather than
+             * unpredictably 'ABC abc' or 'abc ABC'.
+             */
+            ignorecase = 0;
+        }
+    }
+    if (! ignorecase) {
+        result = strcmp(c1->name, c2->name);
+    }
+    return result;
 }
 
 
@@ -1626,6 +1651,11 @@ static int index_directory(request_rec *r,
         ap_set_etag(r);
     }
     ap_send_http_header(r);
+
+#ifdef CHARSET_EBCDIC
+    /* Server-generated response, converted */
+    ap_bsetflag(r->connection->client, B_EBCDIC2ASCII, r->ebcdic.conv_out = 1);
+#endif
 
     if (r->header_only) {
 	ap_pclosedir(r->pool, d);
@@ -1668,8 +1698,8 @@ static int index_directory(request_rec *r,
     else {
 	keyid = *qstring;
 	ap_getword(r->pool, &qstring, '=');
-	if (qstring != '\0') {
-	    direction = *qstring;
+	if (*qstring == D_DESCENDING) {
+	    direction = D_DESCENDING;
 	}
 	else {
 	    direction = D_ASCENDING;

@@ -249,6 +249,8 @@ void ssl_hook_NewConnection(conn_rec *conn)
                 ap_ctx_set(fb->ctx, "ssl", NULL);
                 ap_bsetflag(fb, B_EOF|B_EOUT, 1);
                 conn->aborted = 1;
+                ap_set_callback_and_alarm(NULL, 0);
+                ap_ctx_set(ap_global_ctx, "ssl::handshake::timeout", (void *)FALSE);
                 return;
             }
             else if (ERR_GET_REASON(ERR_peek_error()) == SSL_R_HTTP_REQUEST) {
@@ -290,6 +292,8 @@ void ssl_hook_NewConnection(conn_rec *conn)
                 SSL_smart_shutdown(ssl);
                 SSL_free(ssl);
                 ap_ctx_set(fb->ctx, "ssl", NULL);
+                ap_set_callback_and_alarm(NULL, 0);
+                ap_ctx_set(ap_global_ctx, "ssl::handshake::timeout", (void *)FALSE);
 
                 /* finally: let Apache go on with processing */
                 return;
@@ -304,6 +308,8 @@ void ssl_hook_NewConnection(conn_rec *conn)
                 ap_ctx_set(fb->ctx, "ssl", NULL);
                 ap_bsetflag(fb, B_EOF|B_EOUT, 1);
                 conn->aborted = 1;
+                ap_set_callback_and_alarm(NULL, 0);
+                ap_ctx_set(ap_global_ctx, "ssl::handshake::timeout", (void *)FALSE);
                 return;
             }
             else if (SSL_get_error(ssl, rc) == SSL_ERROR_SYSCALL) {
@@ -323,6 +329,8 @@ void ssl_hook_NewConnection(conn_rec *conn)
                 ap_ctx_set(fb->ctx, "ssl", NULL);
                 ap_bsetflag(fb, B_EOF|B_EOUT, 1);
                 conn->aborted = 1;
+                ap_set_callback_and_alarm(NULL, 0);
+                ap_ctx_set(ap_global_ctx, "ssl::handshake::timeout", (void *)FALSE);
                 return;
             }
             else {
@@ -346,6 +354,8 @@ void ssl_hook_NewConnection(conn_rec *conn)
                 ap_ctx_set(fb->ctx, "ssl", NULL);
                 ap_bsetflag(fb, B_EOF|B_EOUT, 1);
                 conn->aborted = 1;
+                ap_set_callback_and_alarm(NULL, 0);
+                ap_ctx_set(ap_global_ctx, "ssl::handshake::timeout", (void *)FALSE);
                 return;
             }
         }
@@ -365,6 +375,8 @@ void ssl_hook_NewConnection(conn_rec *conn)
             ap_ctx_set(fb->ctx, "ssl", NULL);
             ap_bsetflag(fb, B_EOF|B_EOUT, 1);
             conn->aborted = 1;
+            ap_set_callback_and_alarm(NULL, 0);
+            ap_ctx_set(ap_global_ctx, "ssl::handshake::timeout", (void *)FALSE);
             return;
         }
 
@@ -391,6 +403,8 @@ void ssl_hook_NewConnection(conn_rec *conn)
             ap_ctx_set(fb->ctx, "ssl", NULL);
             ap_bsetflag(fb, B_EOF|B_EOUT, 1);
             conn->aborted = 1;
+            ap_set_callback_and_alarm(NULL, 0);
+            ap_ctx_set(ap_global_ctx, "ssl::handshake::timeout", (void *)FALSE);
             return;
         }
     }

@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -417,7 +417,8 @@ static int directory_walk(request_rec *r)
     ap_no2slash(test_filename);
     num_dirs = ap_count_dirs(test_filename);
 
-    if (!ap_os_is_filename_valid(r->filename)) {
+    if (!ap_os_is_filename_valid(r->filename) &&
+        !(r->method_number == M_OPTIONS && !strcmp(r->uri, "*"))) {
         ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r,
                       "Filename is not valid: %s", r->filename);
         return HTTP_FORBIDDEN;
@@ -782,6 +783,11 @@ static request_rec *make_sub_request(const request_rec *r)
     request_rec *rr = ap_pcalloc(rrp, sizeof(request_rec));
 
     rr->pool = rrp;
+#ifdef CHARSET_EBCDIC
+    /* Assume virgin state (like after reading the request_line): */
+    ap_bsetflag(r->connection->client, B_ASCII2EBCDIC, rr->ebcdic.conv_in  = 1);
+    ap_bsetflag(r->connection->client, B_EBCDIC2ASCII, rr->ebcdic.conv_out = 1);
+#endif   
     return rr;
 }
 
@@ -1007,20 +1013,19 @@ API_EXPORT(request_rec *) ap_sub_req_lookup_file(const char *new_file,
 
 API_EXPORT(int) ap_run_sub_req(request_rec *r)
 {
-#ifndef CHARSET_EBCDIC
     int retval = ap_invoke_handler(r);
-#else /*CHARSET_EBCDIC*/
-    /* Save the EBCDIC conversion setting of the caller across subrequests */
-    int convert = ap_bgetflag(r->connection->client, B_EBCDIC2ASCII);
-    int retval  = ap_invoke_handler(r);
-    ap_bsetflag(r->connection->client, B_EBCDIC2ASCII, convert);
-#endif /*CHARSET_EBCDIC*/
     ap_finalize_sub_req_protocol(r);
     return retval;
 }
 
 API_EXPORT(void) ap_destroy_sub_req(request_rec *r)
 {
+#ifdef CHARSET_EBCDIC
+    if (r->main) {
+        ap_bsetflag(r->connection->client, B_ASCII2EBCDIC, r->main->ebcdic.conv_in);
+        ap_bsetflag(r->connection->client, B_EBCDIC2ASCII, r->main->ebcdic.conv_out);
+    }
+#endif   
     /* Reclaim the space */
     ap_destroy_pool(r->pool);
 }
@@ -1309,7 +1314,7 @@ static void process_request_internal(request_rec *r)
     ap_finalize_request_protocol(r);
 }
 
-void ap_process_request(request_rec *r)
+API_EXPORT(void) ap_process_request(request_rec *r)
 {
     int old_stat;
 
@@ -1408,6 +1413,10 @@ static request_rec *internal_internal_redirect(const char *new_uri, request_rec 
     new->no_local_copy   = r->no_local_copy;
     new->read_length     = r->read_length;     /* We can only read it once */
     new->vlist_validator = r->vlist_validator;
+#ifdef CHARSET_EBCDIC /* @@@ Is this correct? When is it used? */
+    new->ebcdic.conv_out= r->ebcdic.conv_out;
+    new->ebcdic.conv_in = r->ebcdic.conv_in;
+#endif
 
     ap_table_setn(new->subprocess_env, "REDIRECT_STATUS",
 	ap_psprintf(r->pool, "%d", r->status));

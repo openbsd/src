@@ -22,8 +22,6 @@
     <h1 align="CENTER">Apache Server Frequently Asked
     Questions</h1>
 
-    <p>$Revision: 1.9 $ ($Date: 2002/02/12 07:56:47 $)</p>
-
     <p>The latest version of this FAQ is always available from the
     main Apache web site, at &lt;<a
     href="http://httpd.apache.org/docs/misc/FAQ.html"
@@ -397,7 +395,9 @@
 
           <li><a href="#ie-ignores-mime">Why do my files appear
           correctly in Internet Explorer, but show up as source or
-          trigger a save window with Netscape?</a></li>
+          trigger a save window with Netscape; or, Why doesn't
+          Internet Explorer render my text/plain document
+          correctly?</a></li>
 
 	  <li><a href="#canonical-hostnames">My site is accessible
           under many different hostnames; how do I redirect clients
@@ -406,6 +406,13 @@
           <li><a href="#firewall">Why can I access my website from the
           server or from my local network, but I can't access it from
           elsewhere on the Internet?</a></li>
+
+	  <li><a href="#indexes">How do I turn automatic directory listings
+	  on or off?</a></li>
+
+         <li><a href="#options">Why do my Options directives not have
+         the desired effect?</a></li>
+
 
         </ol>
       </li>
@@ -688,7 +695,7 @@
           <li>provides full source code and comes with an
           unrestrictive license</li>
 
-          <li>runs on Windows NT/9x, Netware 5.x, OS/2, and most
+          <li>runs on Windows NT/9x, Netware 5.x and above, OS/2, and most
           versions of Unix, as well as several other operating
           systems</li>
 
@@ -2386,29 +2393,34 @@
         <a id="ie-ignores-mime" name="ie-ignores-mime"><strong>Why
         do my files appear correctly in Internet Explorer, but show
         up as source or trigger a save window with
-        Netscape?</strong></a> 
+        Netscape; or, Why doesn't Internet Explorer render
+        my text/plain document correctly?</strong></a> 
 
-        <p>Internet Explorer (IE) and Netscape handle mime type
+        <p>MS Internet Explorer (MSIE) and Netscape handle mime type
         detection in different ways, and therefore will display the
         document differently. In particular, IE sometimes relies on
-        the file extension to determine the mime type. This can
-        happen when the server specifies a mime type of
-        <code>application/octet-stream</code> or
-        <code>text/plain</code>. (Unfortunately, this behavior
-        makes it impossible to properly send plain text in some
-        situations unless the file extension is <code>txt</code>.)
-        There are more details available on IE's mime type
-        detection behavior in an <a
+        the file extension or the contents of the file to determine
+        the mime type. This can happen when the server specifies a
+        mime type of <code>application/octet-stream</code> or
+        <code>text/plain</code>.  This behavior violates the the HTTP
+        standard and makes it impossible to deliver plain text
+        documents to MSIE clients in some cases.  More details are
+        available on MSIE's mime type detection behavior in an <a
         href="http://msdn.microsoft.com/workshop/networking/moniker/overview/appendix_a.asp">
-        MSDN article</a>.</p>
+        MSDN article</a> and a <a
+        href="http://ppewww.ph.gla.ac.uk/~flavell/www/content-type.html">note</a>
+        by Alan J. Flavell.</p>
 
-        <p>In order to make all browsers work correctly, you should
-        assure that Apache sends the correct mime type for the
-        file. This is accomplished by editing the
-        <code>mime.types</code> file or using an <a
+        <p>The best you can do as a server administrator is to
+        accurately configure the mime type of your documents by editing
+        the <code>mime.types</code> file or using an <a
         href="../mod/mod_mime.html#addtype"><code>AddType</code></a>
-        directive in the Apache configuration files.</p>
-        <hr />
+        directive in the Apache configuration files.  In some cases,
+        you may be able to fool MSIE into rendering text/plain documents
+        correctly by assuring they have a <code>.txt</code> filename
+        extension, but this will not work if MSIE thinks the content
+        looks like another file type.
+</p> <hr />
       </li>
       <li>
 	<a name="canonical-hostnames"><strong>My site is accessible
@@ -2470,6 +2482,59 @@ NameVirtualHost *<br />
 
         <hr /></li>
 
+         <li><a id="indexes" name="indexes"><strong>How do I turn automatic
+         directory listings on or off?</strong></a>
+
+         <p>If a client requests a URL that designates a directory and
+         the directory does not contain a filename that matches the <a
+         href="../mod/mod_dir.html#directoryindex">DirectoryIndex</a>
+         directive, then <a
+         href="../mod/mod_autoindex.html">mod_autoindex</a> can be
+         configured to present a listing of the directory contents.</p>
+
+         <p>To turn on automatic directory indexing, find the 
+         <a href="../mod/core.html#options">Options</a> directive that
+         applies to the directory and add the <code>Indexes</code>
+         keyword.  To turn off automatic directory indexing, remove
+         the <code>Indexes</code> keyword from the appropriate 
+         <code>Options</code> line.</p>
+
+       <hr /></li>
+
+         <li><a id="options" name="options"><strong>Why do my Options
+         directives not have the desired effect?</strong></a>
+
+         <p>Directives placed in the configuration files are applied
+         in a very particular order, as described by <a
+         href="../sections.html">How Directory, Location, and Files
+         sections work</a>.  In addition, each <a
+         href="../mod/core.html#options">Options</a> directive has the
+         effect of resetting the options to <code>none</code> before
+         adding the specified options (unless only "+" and "-" options
+         are used).  The consequence is that <code>Options</code> set
+         in the main server or virtual host context (outside any
+         directory, location, or files section) will usually have no
+         effect, because they are overridden by more specific
+         <code>Options</code> directives.  For example, in the following</p>
+
+<blockquote><code>
+&lt;Directory /usr/local/apache/htdocs&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;Options Indexes<br />
+&lt;/Directory&gt;<br />
+Options Includes ExecCGI<br />
+</code></blockquote>
+    
+         <p><code>Includes</code> and <code>ExecCGI</code> will be 
+         <strong>off</strong> in the <code>/usr/local/apache/htdocs</code>
+         directory.</p>
+
+         <p>You can usually avoid problems by either finding the 
+         <code>Options</code> directive that already applies to a 
+         specific directory and changing it, or by putting your
+         <code>Options</code> directive inside the most specific possible
+         <code>&lt;Directory&gt;</code> section.</p>
+
+       <hr /></li>
 
     </ol>
     

@@ -748,7 +748,7 @@ ServerSignature On
     AddLanguage ltz .lu
     AddLanguage ca .ca
     AddLanguage es .es
-    AddLanguage sv .se
+    AddLanguage sv .sv
     AddLanguage cz .cz
     AddLanguage ru .ru
     AddLanguage zh-tw .tw
@@ -1013,7 +1013,6 @@ SSLPassPhraseDialog  builtin
 
 #   Configure the SSL Session Cache: First the mechanism 
 #   to use and second the expiring timeout (in seconds).
-#   Inter-Process Session Cache:
 #SSLSessionCache        none
 #SSLSessionCache        shmht:logs/ssl_scache(512000)
 #SSLSessionCache        shmcb:logs/ssl_scache(512000)
@@ -1181,7 +1180,7 @@ SSLCertificateKeyFile @@ServerRoot@@/conf/ssl.key/server.key
 #     This enables optimized SSL connection renegotiation handling when SSL
 #     directives are used in per-directory context. 
 #SSLOptions +FakeBasicAuth +ExportCertData +CompatEnvVars +StrictRequire
-<Files ~ "\.(cgi|shtml)$">
+<Files ~ "\.(cgi|shtml|phtml|php3?)$">
     SSLOptions +StdEnvVars
 </Files>
 <Directory "@@ServerRoot@@/cgi-bin">
@@ -1209,7 +1208,12 @@ SSLCertificateKeyFile @@ServerRoot@@/conf/ssl.key/server.key
 #   Notice: Most problems of broken clients are also related to the HTTP
 #   keep-alive facility, so you usually additionally want to disable
 #   keep-alive for those clients, too. Use variable "nokeepalive" for this.
-SetEnvIf User-Agent ".*MSIE.*" nokeepalive ssl-unclean-shutdown
+#   Similarly, one has to force some clients to use HTTP/1.0 to workaround
+#   their broken HTTP/1.1 implementation. Use variables "downgrade-1.0" and
+#   "force-response-1.0" for this.
+SetEnvIf User-Agent ".*MSIE.*" \
+         nokeepalive ssl-unclean-shutdown \
+         downgrade-1.0 force-response-1.0
 
 #   Per-Server Logging:
 #   The home of a custom SSL log file. Use this when you want a

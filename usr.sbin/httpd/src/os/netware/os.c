@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,8 +56,12 @@
  * University of Illinois, Urbana-Champaign.
  */
 
+#define WS_SSL
+
 #include "httpd.h"
 #include "ap_config.h"
+#include "http_config.h"
+#include "http_log.h"
 #include <dirent.h>
 
 extern char ap_server_root[MAX_STRING_LEN];
@@ -97,6 +101,11 @@ void *ap_os_dso_sym(void *handle, const char *symname)
     return ImportSymbol((int)GetNLMHandle(), (char *)symname);
 }
 
+void ap_os_dso_unsym(void *handle, const char *symname)
+{
+    UnimportSymbol((int)GetNLMHandle(), (char *)symname);
+}
+
 const char *ap_os_dso_error(void)
 {
     return NULL;
@@ -128,6 +137,19 @@ char *bslash2slash(char* str)
     return str;
 }
 
+void check_clean_load(module *top_module)
+{
+    if (top_module != NULL) {
+        module *m;
+
+        ap_log_error(APLOG_MARK, APLOG_CRIT, NULL,
+            "abnormal shutdown detected, performing a clean shutdown: please restart apache");
+        for (m = top_module; m; m = m->next)
+            ap_os_dso_unload((ap_os_dso_handle_t)m->dynamic_load_handle);
+        exit(1);
+    }
+}
+
 void init_name_space()
 {
     UnAugmentAsterisk(TRUE);
@@ -140,29 +162,87 @@ void init_name_space()
 	NetWare assumes that all physical paths are fully qualified.  
 	Each file path must include a volume name.
  */
-char *ap_os_canonical_filename(pool *pPool, const char *szFile)
+static char *os_canonical_filename(pool *pPool, const char *szFile)
 {
     char *pNewName = ap_pstrdup(pPool, szFile);
     char *slash_test;
 	
     bslash2slash(pNewName);
-    if ((pNewName[0] == '/') && (strchr (pNewName, ':') == NULL))
-    {
-        char vol[256];
+    /* Don't try to canonicalize a filename that isn't even valid
+        This way we don't mess up proxy requests or other kinds
+        of special filenames.
+    */
+    if (ap_os_is_filename_valid(pNewName)) {
+        if ((pNewName[0] == '/') && (strchr (pNewName, ':') == NULL))
+        {
+            char vol[256];
 
-        _splitpath (ap_server_root, vol, NULL, NULL, NULL);
-        pNewName = ap_pstrcat (pPool, vol, pNewName, NULL);
-    }
-    if ((slash_test = strchr(pNewName, ':')) && (*(slash_test+1) != '/'))
-    {
-        char vol[_MAX_VOLUME+1];
+            _splitpath (ap_server_root, vol, NULL, NULL, NULL);
+            pNewName = ap_pstrcat (pPool, vol, pNewName, NULL);
+        }
+        if ((slash_test = strchr(pNewName, ':')) && (*(slash_test+1) != '/') 
+            && (*(slash_test+1) != '\0'))
+        {
+            char vol[_MAX_VOLUME+1];
         
-        _splitpath (pNewName, vol, NULL, NULL, NULL);
-        pNewName = ap_pstrcat (pPool, vol, "/", pNewName+strlen(vol), NULL);
+            _splitpath (pNewName, vol, NULL, NULL, NULL);
+            pNewName = ap_pstrcat (pPool, vol, "/", pNewName+strlen(vol), NULL);
+        }
     }
+    return pNewName;
+}
+
+char *ap_os_canonical_filename(pool *pPool, const char *szFile)
+{
+    char *pNewName = os_canonical_filename(pPool, szFile);
+
+    /* Lower case the name so that the interal string compares work */
     strlwr(pNewName);
     return pNewName;
 }
+
+
+char *ap_os_case_canonical_filename(pool *pPool, const char *szFile)
+{
+    /* First thing we need to do is get a copy of the 
+        canonicalized path */
+    char *pNewName = os_canonical_filename(pPool, szFile);
+    int	  volnum=0;
+    long  dirnum=0;
+    long  pathcount=0;
+    char *path;
+    char  vol[_MAX_VOLUME+1];
+    int   retval, x, y;
+	    
+    /* See if path exists by trying to get the volume and directory number */
+    retval = FEMapPathVolumeDirToVolumeDir(pNewName, 0, 0, &volnum, &dirnum);
+    if (retval == 0) {
+        /* allocate a buffer and ask the file system for the real name of
+            the directory and file */
+        path = ap_palloc(pPool, strlen(pNewName)+2);
+        FEMapVolumeAndDirectoryToPath (volnum, dirnum, path, &pathcount);
+
+        /* The file system gives it back in a lengh preceded string so we
+            need to convert it to a null terminated string. */
+        x = 0;
+        while (pathcount-- > 0) {
+            y = path[x];
+            path[x] = '/';
+            x += y + 1;
+        }
+        path[x] = '\0';  /* null terminate the full path */
+
+        /* Get the name of the volume so that we can prepend it onto the path */
+        FEMapVolumeNumberToName (volnum, vol);
+        vol[vol[0]+1] = '\0';
+        pNewName = ap_pstrcat (pPool, &(vol[1]), ":", path, NULL);
+    }
+
+    /* At this point we either have a real case accurate canonical path or 
+        the original name canonicalized */
+    return pNewName;
+}
+
 
 /*
  * ap_os_is_filename_valid is given a filename, and returns 0 if the filename
@@ -205,7 +285,7 @@ int ap_os_is_filename_valid(const char *file)
 		"COM4", "LPT1", "LPT2", "LPT3", "PRN", "NUL", NULL 
     };
 
-	// First check to make sure that we have a file so that we don't abend
+	/* First check to make sure that we have a file so that we don't abend */
 	if (file == NULL)
 		return 0;
 
@@ -233,7 +313,8 @@ int ap_os_is_filename_valid(const char *file)
 	pos = ++colonpos;
    	if (!*pos) {
 		/* No path information */
-		return 0;
+		/* Same as specifying volume:\ */
+		return 1;
     }
 
     while (*pos) {
@@ -264,6 +345,14 @@ int ap_os_is_filename_valid(const char *file)
 	    	}
 		}
 
+		/* Test 2.5 */
+		if (seglength == 2) {
+			if ( (segstart[0] == '.') && (segstart[1] == '.') ) {
+					return 1;
+			}
+		
+		}
+
 		/* Test 3 */
 		if (segstart[seglength-1] == '.') {
 		    return 0;
@@ -292,3 +381,124 @@ int ap_os_is_filename_valid(const char *file)
     return 1;
 }
 
+#undef opendir_411
+DIR *os_opendir (const char *pathname)
+{
+	struct stat s;
+	DIR *d = opendir_411 (pathname);
+
+    if (d) {
+        strcpy (d->d_name, "<<**");
+    }
+
+	if (!d) {
+		/* Let's check if this is an empty directory */
+		if (stat(pathname, &s) != 0)
+			return NULL;
+		if (!(S_ISDIR(s.st_mode)))
+			return NULL; 
+		
+		/* If we are here, then this appears to be a directory */
+		/* We allocate a name */
+		d = NULL;
+        d = (DIR *)malloc(sizeof(DIR));
+        if (d) {
+            memset(d, 0, sizeof(DIR));
+            strcpy(d->d_name, "**<<");
+			d->d_cdatetime = 50;
+
+        }    
+
+  	}
+
+    return d;
+
+}
+
+#undef readdir_411
+DIR *os_readdir (DIR *dirP)
+{
+
+/*
+ * First three if statements added for empty directory support.
+ *
+ */
+    if (  (dirP->d_cdatetime == 50) && (dirP->d_name[0] == '*') &&
+       	  (dirP->d_name[2] == '<') )
+    {
+        strcpy (dirP->d_name, ".");
+        strcpy (dirP->d_nameDOS, ".");
+        return (dirP);
+    }
+    else if ((dirP->d_cdatetime == 50) &&
+             (dirP->d_name[0] == '.') &&
+             (dirP->d_name[1] == '\0')) {
+        strcpy (dirP->d_name, "..");
+        strcpy (dirP->d_nameDOS, "..");
+        return (dirP);
+    }
+    else if ( (dirP->d_cdatetime == 50) &&
+             (dirP->d_name[0] == '.') &&
+             (dirP->d_name[1] == '.') &&
+             (dirP->d_name[2] == '\0') ) {
+        return (NULL);
+    }
+    else if ((dirP->d_name[0] == '<') && (dirP->d_name[2] == '*')) {
+        strcpy (dirP->d_name, ".");
+        strcpy (dirP->d_nameDOS, ".");
+        return (dirP);
+    }
+    else if ((dirP->d_name[0] == '.') && (dirP->d_name[1] == '\0')) {
+        strcpy (dirP->d_name, "..");
+        strcpy (dirP->d_nameDOS, "..");
+        return (dirP);
+    }
+    else
+        return readdir_411 (dirP);
+}
+
+
+#undef closedir_510
+int os_closedir (DIR *dirP)
+{
+/*
+ * Modified to handle empty directories.
+ *
+ */
+
+	if (dirP == NULL) {
+		return 0;
+	}
+
+    if (  (  (dirP->d_cdatetime == 50) && (dirP->d_name[0] == '*') &&
+       	  	 (dirP->d_name[2] == '<') 
+       	  ) ||
+       	  (	 (dirP->d_cdatetime == 50) && (dirP->d_name[0] == '.') &&
+       	     (dirP->d_name[1] == '\0')
+       	  ) ||
+       	  (	 (dirP->d_cdatetime == 50) && (dirP->d_name[0] == '.') &&
+       	     (dirP->d_name[1] == '.') && (dirP->d_name[2] == '\0')
+       	  )
+       )
+	{
+
+ 	       free(dirP); 
+ 	       dirP = NULL;
+ 	       return 0;
+ 	}
+ 	else {
+	       return closedir_510(dirP);
+	}
+		
+
+}
+
+char *ap_os_http_method(void *r)
+{
+    int s = ((request_rec*)r)->connection->client->fd;
+    unsigned int optParam;
+
+    if (!WSAIoctl(s, SO_SSL_GET_FLAGS, NULL, 0, &optParam, sizeof(optParam), NULL, NULL, NULL))
+        if (optParam & (SO_SSL_ENABLE | SO_SSL_SERVER)) return "https";
+    return "http";
+}

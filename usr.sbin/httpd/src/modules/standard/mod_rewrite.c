@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -866,6 +866,10 @@ static const char *cmd_rewriterule_setflag(pool *p, rewriterule_entry *cfg,
             cfg->forced_responsecode = status;
         }
     }
+    else if (   strcasecmp(key, "noescape") == 0
+        || strcasecmp(key, "NE") == 0       ) {
+        cfg->flags |= RULEFLAG_NOESCAPE;
+    }
     else if (   strcasecmp(key, "last") == 0
              || strcasecmp(key, "L") == 0   ) {
         cfg->flags |= RULEFLAG_LASTRULE;
@@ -1010,6 +1014,7 @@ static int hook_uri2file(request_rec *r)
     const char *ccp;
     struct stat finfo;
     unsigned int port;
+    int rulestatus;
     int n;
     int l;
 
@@ -1093,7 +1098,8 @@ static int hook_uri2file(request_rec *r)
     /*
      *  now apply the rules ...
      */
-    if (apply_rewrite_list(r, conf->rewriterules, NULL)) {
+    rulestatus = apply_rewrite_list(r, conf->rewriterules, NULL);
+    if (rulestatus) {
 
         if (strlen(r->filename) > 6 &&
             strncmp(r->filename, "proxy:", 6) == 0) {
@@ -1143,16 +1149,28 @@ static int hook_uri2file(request_rec *r)
             for ( ; *cp != '/' && *cp != '\0'; cp++)
                 ;
             if (*cp != '\0') {
-                rewritelog(r, 1, "escaping %s for redirect", r->filename);
-                cp2 = ap_escape_uri(r->pool, cp);
+                if (rulestatus != ACTION_NOESCAPE) {
+                    rewritelog(r, 1, "escaping %s for redirect", r->filename);
+                    cp2 = ap_escape_uri(r->pool, cp);
+                }
+                else {
+                    cp2 = ap_pstrdup(r->pool, cp);
+                }
                 *cp = '\0';
                 r->filename = ap_pstrcat(r->pool, r->filename, cp2, NULL);
             }
 
             /* append the QUERY_STRING part */
             if (r->args != NULL) {
+                char *args;
+                if (rulestatus == ACTION_NOESCAPE) {
+                    args = r->args;
+                }
+                else {
+                    args = ap_escape_uri(r->pool, r->args);
+                }
                 r->filename = ap_pstrcat(r->pool, r->filename, "?", 
-                                         ap_escape_uri(r->pool, r->args), NULL);
+                                         args, NULL);
             }
 
             /* determine HTTP redirect response code */
@@ -1305,6 +1323,7 @@ static int hook_fixup(request_rec *r)
     const char *ccp;
     char *prefix;
     int l;
+    int rulestatus;
     int n;
     char *ofilename;
 
@@ -1358,7 +1377,8 @@ static int hook_fixup(request_rec *r)
     /*
      *  now apply the rules ...
      */
-    if (apply_rewrite_list(r, dconf->rewriterules, dconf->directory)) {
+    rulestatus = apply_rewrite_list(r, dconf->rewriterules, dconf->directory);
+    if (rulestatus) {
 
         if (strlen(r->filename) > 6 &&
             strncmp(r->filename, "proxy:", 6) == 0) {
@@ -1422,17 +1442,29 @@ static int hook_fixup(request_rec *r)
             for ( ; *cp != '/' && *cp != '\0'; cp++)
                 ;
             if (*cp != '\0') {
-                rewritelog(r, 1, "[per-dir %s] escaping %s for redirect",
-                           dconf->directory, r->filename);
-                cp2 = ap_escape_uri(r->pool, cp);
+                if (rulestatus != ACTION_NOESCAPE) {
+                    rewritelog(r, 1, "[per-dir %s] escaping %s for redirect",
+                               dconf->directory, r->filename);
+                    cp2 = ap_escape_uri(r->pool, cp);
+                }
+                else {
+                    cp2 = ap_pstrdup(r->pool, cp);
+                }
                 *cp = '\0';
                 r->filename = ap_pstrcat(r->pool, r->filename, cp2, NULL);
             }
 
             /* append the QUERY_STRING part */
             if (r->args != NULL) {
+                char *args;
+                if (rulestatus == ACTION_NOESCAPE) {
+                    args = r->args;
+                }
+                else {
+                    args = ap_escape_uri(r->pool, r->args);
+                }
                 r->filename = ap_pstrcat(r->pool, r->filename, "?", 
-                                         ap_escape_uri(r->pool, r->args), NULL);
+                                         args, NULL);
             }
 
             /* determine HTTP redirect response code */
@@ -1622,7 +1654,8 @@ static int apply_rewrite_list(request_rec *r, array_header *rewriterules,
              *  Indicate a change if this was not a match-only rule.
              */
             if (rc != 2) {
-                changed = 1;
+                changed = ((p->flags & RULEFLAG_NOESCAPE)
+                           ? ACTION_NOESCAPE : ACTION_NORMAL);
             }
 
             /*
@@ -1636,7 +1669,7 @@ static int apply_rewrite_list(request_rec *r, array_header *rewriterules,
                            "to next API URI-to-filename handler", r->filename);
                 r->filename = ap_pstrcat(r->pool, "passthrough:",
                                          r->filename, NULL);
-                changed = 1;
+                changed = ACTION_NORMAL;
                 break;
             }
 
@@ -1648,7 +1681,7 @@ static int apply_rewrite_list(request_rec *r, array_header *rewriterules,
                 rewritelog(r, 2, "forcing '%s' to be forbidden", r->filename);
                 r->filename = ap_pstrcat(r->pool, "forbidden:",
                                          r->filename, NULL);
-                changed = 1;
+                changed = ACTION_NORMAL;
                 break;
             }
 
@@ -1659,7 +1692,7 @@ static int apply_rewrite_list(request_rec *r, array_header *rewriterules,
             if (p->flags & RULEFLAG_GONE) {
                 rewritelog(r, 2, "forcing '%s' to be gone", r->filename);
                 r->filename = ap_pstrcat(r->pool, "gone:", r->filename, NULL);
-                changed = 1;
+                changed = ACTION_NORMAL;
                 break;
             }
 
@@ -2245,7 +2278,7 @@ static void do_expand(request_rec *r, char *input, char *buffer, int nbuf,
     space = nbuf - 1; /* room for '\0' */
 
     for (;;) {
-	span = strcspn(inp, "$%");
+	span = strcspn(inp, "\\$%");
 	if (span > space) {
 	    span = space;
 	}
@@ -2256,8 +2289,14 @@ static void do_expand(request_rec *r, char *input, char *buffer, int nbuf,
 	if (space == 0 || *inp == '\0') {
 	    break;
 	}
-	/* now we have a '$' or a '%' */
-	if (inp[1] == '{') {
+	/* now we have a '\', '$', or '%' */
+        if (inp[0] == '\\') {
+            if (inp[1] != '\0') {
+                inp++;
+                goto skip;
+            }
+        }
+	else if (inp[1] == '{') {
 	    char *endp;
 	    endp = find_closing_bracket(inp+2, '{', '}');
 	    if (endp == NULL) {
@@ -2288,14 +2327,16 @@ static void do_expand(request_rec *r, char *input, char *buffer, int nbuf,
 		char xkey[MAX_STRING_LEN];
 		char xdflt[MAX_STRING_LEN];
 		key = find_char_in_brackets(inp+2, ':', '{', '}');
-		if (key == NULL)
+		if (key == NULL) {
 		    goto skip;
+                }
 		map  = ap_pstrndup(r->pool, inp+2, key-inp-2);
 		dflt = find_char_in_brackets(key+1, '|', '{', '}');
 		if (dflt == NULL) {
 		    key  = ap_pstrndup(r->pool, key+1, endp-key-1);
 		    dflt = "";
-		} else {
+		}
+                else {
 		    key  = ap_pstrndup(r->pool, key+1, dflt-key-1);
 		    dflt = ap_pstrndup(r->pool, dflt+1, endp-dflt-1);
 		}
@@ -2434,7 +2475,7 @@ static void reduce_uri(request_rec *r)
 
     cp = ap_http_method(r);
     l  = strlen(cp);
-    if (   strlen(r->filename) > l+3 
+    if (   (int)strlen(r->filename) > l+3 
         && strncasecmp(r->filename, cp, l) == 0
         && r->filename[l]   == ':'
         && r->filename[l+1] == '/'
@@ -2972,7 +3013,7 @@ static int rewrite_rand(int l, int h)
      * result. Doing an integer modulus would only use the lower-order bits
      * which may not be as uniformly random.
      */
-    return ((double)(rand() % RAND_MAX) / RAND_MAX) * (h - l + 1) + l;
+    return (int)(((double)(rand() % RAND_MAX) / RAND_MAX) * (h - l + 1) + l);
 }
 
 static char *select_random_value_part(request_rec *r, char *value)
@@ -3374,7 +3415,7 @@ static int rewritemap_program_child(void *cmd, child_info *pinfo)
         }
     }
 #elif defined(NETWARE)
-   // Need something here!!! Spawn????
+   /* Need something here!!! Spawn???? */
 #elif defined(OS2)
     /* IBM OS/2 */
     execl(SHELL_PATH, SHELL_PATH, "/c", (char *)cmd, (char *)NULL);

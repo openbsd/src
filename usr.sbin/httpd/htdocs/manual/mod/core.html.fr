@@ -211,7 +211,7 @@
     l'impl&eacute;mente.</p>
 
     <p>Se r&eacute;f&eacute;rer &agrave; la section concernant les
-    filtres dans la <a href="misc/perf-bsd44.html">documentation
+    filtres dans la <a href="../misc/perf-bsd44.html">documentation
     sur la performance</a> pour de plus amples informations.</p>
 
     <p>L'option de compilation <code>AP_ACCEPTFILTER_OFF</code>

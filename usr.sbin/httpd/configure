@@ -2,7 +2,7 @@
 ## ====================================================================
 ## The Apache Software License, Version 1.1
 ##
-## Copyright (c) 2000 The Apache Software Foundation.  All rights
+## Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
 ## reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -1603,13 +1603,21 @@ rm -f $tplconf 2>/dev/null
 if [ "x$verbose" = "xyes" ]; then
     vflag="-v";
 fi
-if [ "x$quiet" = "xyes" ]; then
-    (cd $src; ${SHELL} ./Configure ${vflag} -file Configuration.apaci >/dev/null);
+rc=`if [ "x$quiet" = "xyes" ]; then
+    (cd $src; ${SHELL} ./Configure ${vflag} -file Configuration.apaci >/dev/null; echo $? >&3; );
 else
-    (cd $src; ${SHELL} ./Configure ${vflag} -file Configuration.apaci |\
+    (cd $src; (${SHELL} ./Configure ${vflag} -file Configuration.apaci; echo $? >&3; ) |\
      sed -e '/^Using config file:.*/d' \
          -e "s:Makefile in :Makefile in $src\\/:" \
          -e "s:Makefile\$:Makefile in $src:")
+fi 3>&1 1>&2`
+
+## Ugly. So far, we've only used -eq, so just in case, use this
+## stupid code unless we're *sure* that -ne is also available
+if [ $rc -eq 0 ]; then
+    :
+else
+    exit 1
 fi
 
 ##

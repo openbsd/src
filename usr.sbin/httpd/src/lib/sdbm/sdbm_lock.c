@@ -9,18 +9,19 @@
     /* The locking support:
      * Try to determine whether we should use fcntl() or flock().
      * Would be better ap_config.h could provide this... :-(
+     * Small monkey business to ensure that fcntl is preferred,
+     * unless we specified USE_FLOCK_SERIALIZED_ACCEPT during compile.
      */
-#if defined(USE_FCNTL_SERIALIZED_ACCEPT)
+#if defined(HAVE_FCNTL_SERIALIZED_ACCEPT) && !defined(USE_FLOCK_SERIALIZED_ACCEPT)
 #define USE_FCNTL 1
 #include <fcntl.h>
-#endif
-#if defined(USE_FLOCK_SERIALIZED_ACCEPT)
+#elif defined(HAVE_FLOCK_SERIALIZED_ACCEPT)
 #define USE_FLOCK 1
 #include <sys/file.h>
 #endif
 #if !defined(USE_FCNTL) && !defined(USE_FLOCK)
 #define USE_FLOCK 1
-#if !defined(MPE) && !defined(WIN32)
+#if !defined(MPE) && !defined(WIN32) && !defined(NETWARE)
 #include <sys/file.h>
 #endif
 #ifndef LOCK_UN
@@ -38,6 +39,12 @@
 #undef USE_FCNTL
 #define USE_LOCKING
 #include <sys/locking.h>
+#endif
+#ifdef NETWARE
+#undef USE_FCNTL
+#define USE_SEM_LOCKING
+#include <nwsemaph.h>
+LONG locking_sem = 0;
 #endif
 
 
@@ -77,6 +84,12 @@ int sdbm_fd_lock(int fd, int readonly)
     lseek(fd, 0, SEEK_SET);
     rc = _locking(fd, _LK_LOCK, 1);
 #endif
+#ifdef USE_SEM_LOCKING
+	if ((locking_sem != 0) && (TimedWaitOnLocalSemaphore (locking_sem, 10000) != 0))
+		rc = -1;
+	else
+		rc = 1;
+#endif
 
     return rc;
 }
@@ -100,6 +113,11 @@ int sdbm_fd_unlock(int fd)
 #ifdef USE_LOCKING
     lseek(fd, 0, SEEK_SET);
     rc = _locking(fd, _LK_UNLCK, 1);
+#endif
+#ifdef USE_SEM_LOCKING
+	if (locking_sem)
+		SignalLocalSemaphore (locking_sem);
+	rc = 1;
 #endif
 
     return rc;

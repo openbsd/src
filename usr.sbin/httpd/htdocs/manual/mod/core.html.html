@@ -75,9 +75,9 @@
 
       <li><a href="#errorlog">ErrorLog</a></li>
 
-      <li><a href="#files">&lt;Files&gt;</a></li>
+      <li><a href="#fileetag">FileETag</a></li>
 
-      <li><a href="#fileetag">&lt;FileETag&gt;</a></li>
+      <li><a href="#files">&lt;Files&gt;</a></li>
 
       <li><a href="#filesmatch">&lt;FilesMatch&gt;</a></li>
 
@@ -205,7 +205,7 @@
      <a href="directive-dict.html#Context"
     rel="Help"><strong>Context:</strong></a> server configt<br />
      <a href="directive-dict.html#Status"
-    rel="Help"><strong>Status:</strong></a> core 
+    rel="Help"><strong>Status:</strong></a> core<br /> 
      <a href="directive-dict.html#Compatibility"
     rel="Help"><strong>Compatibility:</strong></a> AcceptFilter is
     available in Apache 1.3.22 and later
@@ -216,7 +216,7 @@
     SO_ACCEPTFILTER). Currently only FreeBSD supports this.</p>
 
     <p>See the filter section on <a
-    href="misc/perf-bsd44.html">performance hints</a> for more
+    href="../misc/perf-bsd44.html">performance hints</a> for more
     information.</p>
 
     <p>The compile time flag <code>AP_ACCEPTFILTER_OFF</code> can
@@ -224,6 +224,8 @@
     and <code>httpd -L</code> will show compile time defaults and
     whether or not SO_ACCEPTFILTER was defined during the
     compile.</p>
+
+    <hr />
 
     <h2><a id="acceptmutex" name="acceptmutex">AcceptMutex
     directive</a></h2>
@@ -237,7 +239,10 @@
      <a href="directive-dict.html#Context"
     rel="Help"><strong>Context:</strong></a> server config<br />
      <a href="directive-dict.html#Status"
-    rel="Help"><strong>Status:</strong></a> core 
+    rel="Help"><strong>Status:</strong></a> core <br />
+     <a href="directive-dict.html#Compatibility"
+    rel="Help"><strong>Compatibility:</strong></a> AcceptMutex is 
+    available in Apache 1.3.21 and later.
 
     <p><code>AcceptMutex</code> controls which accept() mutex
     method Apache will use. Not all methods are available on all
@@ -252,8 +257,12 @@
     <code>include/ap_config.h</code> file for your particular
     platform.</p>
 
+    <p>This directive has no effect on Microsoft Windows.</p>
+
     <p>See the <a href="../misc/perf-tuning.html">performance tuning
     guide</a> for more information.</p>
+
+    <hr />
 
     <h2><a id="accessconfig" name="accessconfig">AccessConfig
     directive</a></h2>
@@ -272,7 +281,8 @@
      <a href="directive-dict.html#Compatibility"
     rel="Help"><strong>Compatibility:</strong></a> The ability to
     specify a directory, rather than a file name, is only available in
-    Apache 1.3.13 and later.
+    Apache 1.3.13 and later.  This directive will be eliminated in version
+    2.0.
 
     <p>The server will read this file for more directives after
     reading the <a href="#resourceconfig">ResourceConfig</a> file.
@@ -304,7 +314,8 @@
     this directory by mistake, such as temporary files created by your
     editor, for example.</p>
 
-    <p>See also <a href="#resourceconfig">ResourceConfig</a>.</p>
+    <p><strong>See also:</strong> <a href="#include">Include</a> and <a
+    href="#resourceconfig">ResourceConfig</a>.</p>
     <hr />
 
     <h2><a id="accessfilename" name="accessfilename">AccessFileName
@@ -345,7 +356,8 @@
     </blockquote>
 
     <p><strong>See Also:</strong> <a
-    href="#allowoverride">AllowOverride</a></p>
+    href="#allowoverride">AllowOverride</a> and <a
+    href="../configuring.html">Configuration Files</a></p>
     <hr />
 
     <h2><a id="adddefaultcharset"
@@ -372,8 +384,14 @@
     Off</code> disables this functionality. <code>AddDefaultCharset
     On</code> enables Apache's internal default charset of
     <code>iso-8859-1</code> as required by the directive. You can
-    also specify an alternate <em>charset</em> to be used; e.g.
-    <code>AddDefaultCharset utf-8</code>.</p>
+    also specify an alternate <em>charset</em> to be used.</p>
+    
+    <p>For example:</p>
+
+    <blockquote>
+    <code>AddDefaultCharset utf-8</code>
+    </blockquote>
+
     <hr />
 
     <h2><a id="addmodule" name="addmodule">AddModule
@@ -395,6 +413,15 @@
     of those modules. The server comes with a pre-loaded list of
     active modules; this list can be cleared with the <a
     href="#clearmodulelist">ClearModuleList</a> directive.</p>
+
+    <p>For example:</p>
+
+    <blockquote>
+    <code>AddModule mod_include.c</code>
+    </blockquote>
+
+    <p><strong>See also</strong>: <a
+    href="#clearmodulelist">ClearModuleList</a>, 
     <hr />
 
     <h2><a id="allowoverride" name="allowoverride">AllowOverride
@@ -478,8 +505,10 @@
       <dt>Limit</dt>
 
       <dd>
-      Allow use of the directives controlling host access (Allow,
-      Deny and Order).</dd>
+      Allow use of the directives controlling host access (<a
+      href="mod_access.html#allow">Allow</a>,
+      <a href="mod_access.html#deny">Deny</a>
+      and <a href="mod_access.html#order">Order</a>).</dd>
 
       <dt>Options</dt>
 
@@ -489,8 +518,12 @@
       href="mod_include.html#xbithack">XBitHack</a>).</dd>
     </dl>
 
+    <p>Example:</p>
+    <blockquote><code>AllowOverride AuthConfig Indexes</code></blockquote>
+
     <p><strong>See Also:</strong> <a
-    href="#accessfilename">AccessFileName</a></p>
+    href="#accessfilename">AccessFileName</a> and <a
+    href="../configuring.html">Configuration Files</a></p>
     <hr />
 
     <h2><a id="authname" name="authname">AuthName
@@ -517,6 +550,17 @@
     as <a href="mod_auth.html#authuserfile">AuthUserFile</a> and <a
     href="mod_auth.html#authgroupfile">AuthGroupFile</a> to
     work.</p>
+
+    <p>For example:</p>
+
+    <blockquote><code>AuthName "Top Secret"</code></blockquote>
+
+    <p>The string provided for the <code>AuthRealm</code> is what will
+    appear in the password dialog provided by most browsers.</p>
+
+    <p><strong>See also:</strong> <a
+    href="../howto/auth.html">Authentication, Authorization, and
+    Access Control</a></p>
     <hr />
 
     <h2><a id="authtype" name="authtype">AuthType
@@ -542,6 +586,10 @@
     as <a href="mod_auth.html#authuserfile">AuthUserFile</a> and <a
     href="mod_auth.html#authgroupfile">AuthGroupFile</a> to
     work.</p>
+
+    <p><strong>See also:</strong> <a
+    href="../howto/auth.html">Authentication, Authorization, and
+    Access Control</a></p>
     <hr />
 
     <h2><a id="bindaddress" name="bindaddress">BindAddress
@@ -556,7 +604,10 @@
      <a href="directive-dict.html#Context"
     rel="Help"><strong>Context:</strong></a> server config<br />
      <a href="directive-dict.html#Status"
-    rel="Help"><strong>Status:</strong></a> core 
+    rel="Help"><strong>Status:</strong></a> core<br />
+     <a href="directive-dict.html#Compatibility"
+    rel="Help"><strong>Compatibility:</strong></a> BindAddress is
+    deprecated and will be eliminated in Apache 2.0.
 
     <p>A Unix&reg; http server can either listen for connections to
     every IP address of the server machine, or just one IP address
@@ -566,10 +617,17 @@
     <em>IP-address</em> or a fully-qualified Internet
     <em>domain-name</em>.</p>
 
-    <p>Only one <code>BindAddress</code> directive can be used. For
-    more control over which address and ports Apache listens to,
-    use the <code><a href="#listen">Listen</a></code> directive
-    instead of <code>BindAddress</code>.</p>
+    <p>For example:</p>
+
+    <code>BindAddress 192.168.15.48</code><br />
+
+    <p>Only one <code>BindAddress</code> directive can be used.</p>
+    
+    <p>This directive is deprecated and will be eliminated in
+    Apache 2.0.  Equivalent functionality and more control over the
+    address and ports Apache listens to is available using the
+    <code><a href="#listen">Listen</a></code>
+    directive.</p>
 
     <p><code>BindAddress</code> can be used as an alternative
     method for supporting <a href="../vhosts/">virtual hosts</a>
@@ -701,6 +759,13 @@
     dumps won't normally get written. If you want a core dump for
     debugging, you can use this directive to place it in a
     different location.</p>
+
+    <p>For example:</p>
+
+    <blockquote>
+    <code>CoreDumpDirectory /tmp</code>
+    </blockquote>
+
     <hr />
 
     <h2><a id="defaulttype" name="defaulttype">DefaultType
@@ -733,6 +798,11 @@
     </blockquote>
     would be appropriate for a directory which contained many gif
     images with filenames missing the .gif extension. 
+
+    <p><strong>See also:</strong> <a
+    href="mod_mime.html#addtype">AddType</a> and <a
+    href="mod_mime.html#typesconfig">TypesConfig</a>.</p>
+
     <hr />
 
     <h2><a id="directory" name="directory">&lt;Directory&gt;
@@ -858,6 +928,8 @@
     Directory, Location and Files sections work</a> for an
     explanation of how these different sections are combined when a
     request is received</p>
+    <p><strong>See also</strong>: <a
+    href="#directorymatch">DirectoryMatch</a></p>
     <hr />
 
     <h2><a id="directorymatch"
@@ -1217,6 +1289,11 @@
     begins with a pipe (|) then it is assumed to be a command to
     spawn to handle the error log.</p>
 
+    <p>Examples</p>
+
+    <code>ErrorLog logs/vhost1.error</code><br />
+    <code>ErrorLog |/usr/local/bin/errorlog.pl</code>
+
     <p><strong>Apache 1.3 and above:</strong> Using
     <code>syslog</code> instead of a filename enables logging via
     syslogd(8) if the system supports it. The default is to use
@@ -1224,6 +1301,10 @@
     by using the <code>syslog:</code><em>facility</em> syntax where
     <em>facility</em> can be one of the names usually documented in
     syslog(1).</p>
+
+    <p>For example:</p>
+
+    <code>ErrorLog syslog</code>
 
     <p>SECURITY: See the <a
     href="../misc/security_tips.html#serverroot">security tips</a>
@@ -1235,13 +1316,13 @@
     and <a href="../logs.html">Apache Log Files</a></p>
     <hr />
 
-    <h2><a id="fileetag" name="fileetag">&lt;FileETag&gt; directive</a></h2>
+    <h2><a id="fileetag" name="fileetag">FileETag directive</a></h2>
     <a href="directive-dict.html#Syntax"
     rel="Help"><strong>Syntax:</strong></a> FileETag
     <i>component</i> ...<br />
      <a href="directive-dict.html#Context"
     rel="Help"><strong>Context:</strong></a> server config, virtual
-    host, .htaccess<br />
+    host, directory, .htaccess<br />
      <a href="directive-dict.html#Override"
     rel="Help"><strong>Override:</strong></a> FileInfo<br />
      <a href="directive-dict.html#Status"
@@ -1279,7 +1360,7 @@
     The INode, MTime, and Size keywords may be prefixed with either '+'
     or '-', which allow changes to be made to the default setting
     inherited from a broader scope.  Any keyword appearing without
-    such a prefix immediatey and completely cancels the inherited
+    such a prefix immediately and completely cancels the inherited
     setting.
     </p>
     <p>
@@ -1336,7 +1417,22 @@
     href="#location"><code>&lt;Location&gt;</code></a> sections,
     <code>&lt;Files&gt;</code> sections can be used inside
     .htaccess files. This allows users to control access to their
-    own files, at a file-by-file level.</p>
+    own files, at a file-by-file level.
+    For example, to password protect a single file within a
+    particular directory, you might add the following to your
+    <code>.htaccess</code> file:</p>
+
+    <pre>
+    &lt;Files admin.cgi&gt;
+    Require group admin
+    &lt;/Files&gt;</pre>
+
+    <p>Remember that directives apply to subdirectories as well, so this
+    will also protect files called <code>admin.cgi</code> in
+    subdirectories, unless specifically overridden.</p>
+
+    <p>(See <a href="#require">Require</a> for details on using the
+    <code>Require</code> directive</a>)</p>
 
     <p><strong>See also</strong>: <a href="../sections.html">How
     Directory, Location and Files sections work</a> for an
@@ -1597,12 +1693,14 @@
 
     <p>In the former case, the directives between the start and end
     markers are only processed if the module named <em>module
-    name</em> is compiled in to Apache. The second format reverses
-    the test, and only processes the directives if <em>module
-    name</em> is <strong>not</strong> compiled in.</p>
+    name</em> is included in Apache -- either compiled in or
+    dynamically loaded using <a
+    href="mod_so.html#loadmodule">LoadModule</a>. The second format
+    reverses the test, and only processes the directives if <em>module
+    name</em> is <strong>not</strong> included.</p>
 
-    <p>The <em>module name</em> argument is a module name as given
-    as the file name of the module, at the time it was compiled.
+    <p>The <em>module name</em> argument is the file name of the
+    module, at the time it was compiled.
     For example, <code>mod_rewrite.c</code>.</p>
 
     <p>&lt;IfModule&gt; sections are nest-able, which can be used
@@ -1623,10 +1721,54 @@
     <p>This directive allows inclusion of other configuration files
     from within the server configuration files.</p>
 
+    <p>The file path specified may be a fully qualified path (i.e.
+    starting with a slash), or may be relative to the
+    <code>ServerRoot</code> directory.</p>
+
     <p>New in Apache 1.3.13 is the feature that if
     <code>Include</code> points to a directory, rather than a file,
     Apache will read all files in that directory, and any
     subdirectory, and parse those as configuration files.</p>
+
+    <p>Examples:</p>
+
+    <blockquote>
+    <code>Include /usr/local/apache/conf/ssl.conf<br />
+    Include /usr/local/apache/conf/vhosts/
+    </code>
+    </blockquote>
+
+    <p>Or, providing paths relative to your <code>ServerRoot</code>
+    directory:</p>
+
+    <blockquote>
+    <code>Include conf/ssl.conf<br />
+    Include conf/vhosts/
+    </code>
+    </blockquote>
+
+    <p>Make sure that an included directory does not contain any stray
+    files, such as editor temporary files, for example, as Apache will
+    attempt to read them in and use the contents as configuration
+    directives, which may cause the server to fail on start up.
+    Running <code>apachectl configtest</code> will give you a list of
+    the files that are being processed during the configuration  
+    check:<p>
+
+<pre>
+root@host# apachectl configtest
+ Processing config directory: /usr/local/apache/conf/vhosts
+ Processing config file: /usr/local/apache/conf/vhosts/vhost1
+ Processing config file: /usr/local/apache/conf/vhosts/vhost2
+Syntax OK
+</pre>
+
+    <p>This will help in verifying that you are getting only the files
+    that you intended as part of your configuration.</p>
+
+    <p><strong>See also</strong>: <a
+    href="../programs/apachectl.html">apachectl</a></p>
+
     <hr />
 
     <h2><a id="keepalive" name="keepalive">KeepAlive
@@ -3179,6 +3321,16 @@
     host, for use with <a
     href="../vhosts/name-based.html">name-based virtual
     hosts</a>.</p>
+
+    <p>Example:</p>
+
+    <pre>
+    &lt;VirtualHost *&gt;
+    ServerName server.domain.com
+    ServerAlias server server2.domain.com server2
+    ...
+    &lt;/VirtualHost&gt;
+    </pre>
 
     <p><strong>See also:</strong> <a href="../vhosts/">Apache
     Virtual Host documentation</a></p>

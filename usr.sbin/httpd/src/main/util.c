@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -469,7 +469,7 @@ API_EXPORT(void) ap_getparents(char *name)
 {
     int l, w;
 
-    /* Four paseses, as per RFC 1808 */
+    /* Four passes, as per RFC 1808 */
     /* a) remove ./ path segments */
 
     for (l = 0, w = 0; name[l] != '\0';) {
@@ -811,6 +811,9 @@ API_EXPORT(char *) ap_getword_conf(pool *p, const char **line)
 	    ++strend;
     }
     else {
+	if (*str == '#')
+	    ap_log_error(APLOG_MARK, APLOG_WARNING|APLOG_NOERRNO, NULL, 
+			 "Apache does not support line-end comments. Consider using quotes around argument: \"%s\"", str);
 	strend = str;
 	while (*strend && !ap_isspace(*strend))
 	    ++strend;
@@ -1454,10 +1457,13 @@ API_EXPORT(char *) ap_escape_shell_cmd(pool *p, const char *str)
     s = (const unsigned char *)str;
     for (; *s; ++s) {
 
-#if defined(OS2) || defined(WIN32) || defined(NETWARE)
-	/* Don't allow '&' in parameters under OS/2. */
-	/* This can be used to send commands to the shell. */
-	if (*s == '&') {
+#if defined(WIN32) || defined(OS2)
+        /* 
+         * Newlines to Win32/OS2 CreateProcess() are ill advised.
+         * Convert them to spaces since they are effectively white
+         * space to most applications
+         */
+	if (*s == '\r' || *s == '\n') {
 	    *d++ = ' ';
 	    continue;
 	}
@@ -1499,7 +1505,7 @@ static char x2c(const char *what)
  * Failure is due to
  *   bad % escape       returns BAD_REQUEST
  *
- *   decoding %00 -> \0
+ *   decoding %00 -> \0  (the null character)
  *   decoding %2f -> /   (a special character)
  *                      returns NOT_FOUND
  */
@@ -1959,7 +1965,7 @@ API_EXPORT(gid_t) ap_gname2id(const char *name)
  * Parses a host of the form <address>[:port]
  * :port is permitted if 'port' is not NULL
  */
-unsigned long ap_get_virthost_addr(char *w, unsigned short *ports)
+API_EXPORT(unsigned long) ap_get_virthost_addr(char *w, unsigned short *ports)
 {
     struct hostent *hep;
     unsigned long my_addr;
@@ -2013,17 +2019,19 @@ static char *find_fqdn(pool *a, struct hostent *p)
     int x;
 
     if (!strchr(p->h_name, '.')) {
-	for (x = 0; p->h_aliases[x]; ++x) {
-	    if (strchr(p->h_aliases[x], '.') &&
-		(!strncasecmp(p->h_aliases[x], p->h_name, strlen(p->h_name))))
-		return ap_pstrdup(a, p->h_aliases[x]);
-	}
-	return NULL;
+        if (p->h_aliases) {
+        	for (x = 0; p->h_aliases[x]; ++x) {
+                if (p->h_aliases[x] && strchr(p->h_aliases[x], '.') &&
+            		(!strncasecmp(p->h_aliases[x], p->h_name, strlen(p->h_name))))
+		            return ap_pstrdup(a, p->h_aliases[x]);
+            }
+	    }
+	    return NULL;
     }
     return ap_pstrdup(a, (void *) p->h_name);
 }
 
-char *ap_get_local_host(pool *a)
+API_EXPORT(char *) ap_get_local_host(pool *a)
 {
 #ifndef MAXHOSTNAMELEN
 #define MAXHOSTNAMELEN 256
@@ -2040,14 +2048,13 @@ char *ap_get_local_host(pool *a)
 	ap_log_error(APLOG_MARK, APLOG_WARNING, NULL,
 	             "%s: gethostname() failed to determine ServerName\n",
                      ap_server_argv0);
-	server_hostname = ap_pstrdup(a, "127.0.0.1");
     }
     else 
     {
         str[sizeof(str) - 1] = '\0';
         if ((!(p = gethostbyname(str))) 
             || (!(server_hostname = find_fqdn(a, p)))) {
-           if (!p)
+           if (p == NULL || p->h_addr_list == NULL)
               server_hostname=NULL;
            else {
               /* Recovery - return the default servername by IP: */
@@ -2113,6 +2120,72 @@ API_EXPORT(char *) ap_uuencode(pool *p, char *string)
     return ap_pbase64encode(p, string);
 }
 
+#if defined(OS2) || defined(WIN32)
+/* quotes in the string are doubled up.
+ * Used to escape quotes in args passed to OS/2's cmd.exe
+ * and Win32's command.com
+ */
+API_EXPORT(char *) ap_double_quotes(pool *p, const char *str)
+{
+    int num_quotes = 0;
+    int len = 0;
+    char *quote_doubled_str, *dest;
+    
+    while (str[len]) {
+        if (str[len++] == '\"') {
+            num_quotes++;
+        }
+    }
+    
+    quote_doubled_str = ap_palloc(p, len + num_quotes + 1);
+    dest = quote_doubled_str;
+    
+    while (*str) {
+        if (*str == '\"')
+            *(dest++) = '\"';
+        *(dest++) = *(str++);
+    }
+    
+    *dest = 0;
+    return quote_doubled_str;
+}
+
+/*
+ * If ap_caret_escape_args resembles ap_escape_shell_cmd, it aught to.
+ * Taken verbatim so we can trust the integrety of this function.
+ */
+API_EXPORT(char *) ap_caret_escape_args(pool *p, const char *str)
+{
+    char *cmd;
+    unsigned char *d;
+    const unsigned char *s;
+
+    cmd = ap_palloc(p, 2 * strlen(str) + 1);	/* Be safe */
+    d = (unsigned char *)cmd;
+    s = (const unsigned char *)str;
+    for (; *s; ++s) {
+
+        /* 
+         * Newlines to Win32/OS2 CreateProcess() are ill advised.
+         * Convert them to spaces since they are effectively white
+         * space to most applications
+         */
+	if (*s == '\r' || *s == '\n') {
+	    *d++ = ' ';
+            continue;
+	}
+
+	if (TEST_CHAR(*s, T_ESCAPE_SHELL_CMD)) {
+	    *d++ = '^';
+	}
+	*d++ = *s;
+    }
+    *d = '\0';
+
+    return cmd;
+}
+#endif
+
 #ifdef OS2
 void os2pathname(char *path)
 {
@@ -2138,32 +2211,6 @@ void os2pathname(char *path)
 
     strcpy(path, newpath);
 };
-
-/* quotes in the string are doubled up.
- * Used to escape quotes in args passed to OS/2's cmd.exe
- */
-char *ap_double_quotes(pool *p, char *str)
-{
-    int num_quotes = 0;
-    int len = 0;
-    char *quote_doubled_str, *dest;
-    
-    while (str[len]) {
-        num_quotes += str[len++] == '\"';
-    }
-    
-    quote_doubled_str = ap_palloc(p, len + num_quotes + 1);
-    dest = quote_doubled_str;
-    
-    while (*str) {
-        if (*str == '\"')
-            *(dest++) = '\"';
-        *(dest++) = *(str++);
-    }
-    
-    *dest = 0;
-    return quote_doubled_str;
-}
 #endif
 
 

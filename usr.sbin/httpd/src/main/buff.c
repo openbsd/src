@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -59,6 +59,7 @@
 #include "httpd.h"
 #include "http_main.h"
 #include "http_log.h"
+#include "buff.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -121,17 +122,13 @@
  * futher I/O will be done
  */
 
-#if defined(WIN32) || defined(NETWARE)
+#if defined(WIN32) || defined(NETWARE) || defined(CYGWIN_WINSOCK) 
 
 /*
   select() sometimes returns 1 even though the write will block. We must work around this.
 */
 
-#ifdef EAPI
-API_EXPORT(int) sendwithtimeout(int sock, const char *buf, int len, int flags)
-#else /* EAPI */
-int sendwithtimeout(int sock, const char *buf, int len, int flags)
-#endif /* EAPI */
+API_EXPORT(int) ap_sendwithtimeout(int sock, const char *buf, int len, int flags)
 {
     int iostate = 1;
     fd_set fdset;
@@ -140,8 +137,18 @@ int sendwithtimeout(int sock, const char *buf, int len, int flags)
     int rv;
     int retry;
 
-    if (!(tv.tv_sec = ap_check_alarm()))
-	return (send(sock, buf, len, flags));
+    tv.tv_sec = ap_check_alarm();
+
+    /* If ap_sendwithtimeout is called with an invalid timeout
+     * set a default timeout of 300 seconds. This hack is needed
+     * to emulate the non-blocking send() that was removed in 
+     * the previous patch to this function. Network servers
+     * should never make network i/o calls w/o setting a timeout.
+     * (doing otherwise opens a DoS attack exposure)
+     */
+    if (tv.tv_sec <= 0) {
+        tv.tv_sec = 300;
+    }
 
     rv = ioctlsocket(sock, FIONBIO, (u_long*)&iostate);
     iostate = 0;
@@ -177,13 +184,11 @@ int sendwithtimeout(int sock, const char *buf, int len, int flags)
 			if(err == WSAEWOULDBLOCK) {
 			    
 			    retry=1;
-#ifdef NETWARE
                             ap_log_error(APLOG_MARK,APLOG_DEBUG,NULL,
                                          "select claimed we could write, but in fact we couldn't.");
+#ifdef NETWARE
                             ThreadSwitchWithDelay();
 #else
-                            ap_log_error(APLOG_MARK,APLOG_DEBUG,NULL,
-                                         "select claimed we could write, but in fact we couldn't. This is a bug in Windows.");
 			    Sleep(100);
 #endif
 			}
@@ -199,11 +204,8 @@ int sendwithtimeout(int sock, const char *buf, int len, int flags)
     return (rv);
 }
 
-#ifdef EAPI
-API_EXPORT(int) recvwithtimeout(int sock, char *buf, int len, int flags)
-#else /* EAPI */
-int recvwithtimeout(int sock, char *buf, int len, int flags)
-#endif /* EAPI */
+
+API_EXPORT(int) ap_recvwithtimeout(int sock, char *buf, int len, int flags)
 {
     int iostate = 1;
     fd_set fdset;
@@ -212,8 +214,18 @@ int recvwithtimeout(int sock, char *buf, int len, int flags)
     int rv;
     int retry;
 
-    if (!(tv.tv_sec = ap_check_alarm()))
-	return (recv(sock, buf, len, flags));
+    tv.tv_sec = ap_check_alarm();
+
+    /* If ap_recvwithtimeout is called with an invalid timeout
+     * set a default timeout of 300 seconds. This hack is needed
+     * to emulate the non-blocking recv() that was removed in 
+     * the previous patch to this function. Network servers
+     * should never make network i/o calls w/o setting a timeout.
+     * (doing otherwise opens a DoS attack exposure)
+     */
+    if (tv.tv_sec <= 0) {
+        tv.tv_sec = 300;
+    }
 
     rv = ioctlsocket(sock, FIONBIO, (u_long*)&iostate);
     iostate = 0;
@@ -293,12 +305,12 @@ static ap_inline int buff_read(BUFF *fb, void *buf, int nbyte)
 {
     int rv;
 
-#if defined (WIN32) || defined(NETWARE)
+#if defined (WIN32) || defined(NETWARE) || defined(CYGWIN_WINSOCK) 
     if (fb->flags & B_SOCKET) {
 #ifdef EAPI
 	if (!ap_hook_call("ap::buff::recvwithtimeout", &rv, fb, buf, nbyte))
 #endif /* EAPI */
-	rv = recvwithtimeout(fb->fd_in, buf, nbyte, 0);
+	rv = ap_recvwithtimeout(fb->fd_in, buf, nbyte, 0);
 	if (rv == SOCKET_ERROR)
 	    errno = WSAGetLastError();
     }
@@ -372,12 +384,16 @@ static ap_inline int buff_write(BUFF *fb, const void *buf, int nbyte)
 {
     int rv;
 
+    if (fb->filter_callback != NULL) {
+        fb->filter_callback(fb, buf, nbyte);
+    }
+   
 #if defined(WIN32) || defined(NETWARE)
     if (fb->flags & B_SOCKET) {
 #ifdef EAPI
 	if (!ap_hook_call("ap::buff::sendwithtimeout", &rv, fb, buf, nbyte))
 #endif /* EAPI */
-	rv = sendwithtimeout(fb->fd, buf, nbyte, 0);
+	rv = ap_sendwithtimeout(fb->fd, buf, nbyte, 0);
 	if (rv == SOCKET_ERROR)
 	    errno = WSAGetLastError();
     }
@@ -456,6 +472,9 @@ API_EXPORT(BUFF *) ap_bcreate(pool *p, int flags)
     fb->sf_out = sfnew(fb->sf_out, NIL(Void_t *),
 		       (size_t) SF_UNBOUND, 1, SF_WRITE);
 #endif
+
+    fb->callback_data = NULL;
+    fb->filter_callback = NULL;
 
 #ifdef EAPI
     fb->ctx = ap_ctx_new(p);
@@ -1100,6 +1119,12 @@ static int write_it_all(BUFF *fb, const void *buf, int nbyte)
 static int writev_it_all(BUFF *fb, struct iovec *vec, int nvec)
 {
     int i, rv;
+    
+    if (fb->filter_callback != NULL) {
+        for (i = 0; i < nvec; i++) {
+            fb->filter_callback(fb, vec[i].iov_base, vec[i].iov_len);
+        }
+    }
 
     /* while it's nice an easy to build the vector and crud, it's painful
      * to deal with a partial writev()
@@ -1491,7 +1516,7 @@ API_EXPORT(int) ap_bclose(BUFF *fb)
 	rc1 = ap_bflush(fb);
     else
 	rc1 = 0;
-#if defined(WIN32) || defined(NETWARE)
+#if defined(WIN32) || defined(NETWARE) || defined(CYGWIN_WINSOCK) 
     if (fb->flags & B_SOCKET) {
 	rc2 = ap_pclosesocket(fb->pool, fb->fd);
 	if (fb->fd_in != fb->fd) {
@@ -1501,7 +1526,7 @@ API_EXPORT(int) ap_bclose(BUFF *fb)
 	    rc3 = 0;
 	}
     }
-#ifndef NETWARE
+#if !defined(NETWARE) && !defined(CYGWIN_WINSOCK) 
     else if (fb->hFH != INVALID_HANDLE_VALUE) {
         rc2 = ap_pcloseh(fb->pool, fb->hFH);
         rc3 = 0;
@@ -1526,7 +1551,7 @@ API_EXPORT(int) ap_bclose(BUFF *fb)
 	else {
 	    rc3 = 0;
 	}
-#if defined(WIN32) || defined (BEOS) || defined(NETWARE)
+#if defined(WIN32) || defined (BEOS) || defined(NETWARE) || defined(CYGWIN_WINSOCK) 
     }
 #endif
 

@@ -1,0 +1,66 @@
+
+
+
+rotatelogs(8)                                       rotatelogs(8)
+
+
+NNAAMMEE
+       rotatelogs - rotate Apache logs without having to kill the
+       server
+
+SSYYNNOOPPSSIISS
+       rroottaatteellooggss _l_o_g_f_i_l_e _r_o_t_a_t_i_o_n_t_i_m_e _[_o_f_f_s_e_t_]
+
+
+DDEESSCCRRIIPPTTIIOONN
+       rroottaatteellooggss is a simple program for use in conjunction with
+       Apache's  piped  logfile  feature  which  can be used like
+       this:
+
+          TransferLog  "|   rotatelogs   /path/to/logs/access_log
+       86400"
+
+       This creates the files /path/to/logs/access_log.nnnn where
+       nnnn is the system time at which the log nominally  starts
+       (this time will always be a multiple of the rotation time,
+       so you can synchronize cron scripts with it).  At the  end
+       of  each  rotation time (here after 24 hours) a new log is
+       started.
+
+OOPPTTIIOONNSS
+       _l_o_g_f_i_l_e
+              The path plus basename of the logfile.  If  llooggffiillee
+              includes  any %% characters, it is treated as a for-
+              mat string for _s_t_r_f_t_i_m_e_(_3_).  Otherwise, the  suffix
+              .nnnn  is  automatically  added  and is the time at
+              which the logfile was created.
+
+       _r_o_t_a_t_i_o_n_t_i_m_e
+              The rotation time in seconds.
+
+       _o_f_f_s_e_t The number of minutes offset from UTC.  If omitted,
+              zero  is  assumed and UTC is used.  For example, to
+              use local time in the zone UTC -5 hours, specify  a
+              value of _-_3_0_0 for this argument.
+
+SSEEEE AALLSSOO
+       hhttttppdd((88))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                            March 2001                          1
+
+

@@ -80,6 +80,7 @@ void ssl_log_open(server_rec *s_main, server_rec *s, pool *p)
     SSLSrvConfigRec *sc_main = mySrvConfig(s_main);
     SSLSrvConfigRec *sc = mySrvConfig(s);
     piped_log *pl;
+    char *cp;
 
     /* 
      * Short-circuit for inherited logfiles in order to save
@@ -98,7 +99,10 @@ void ssl_log_open(server_rec *s_main, server_rec *s, pool *p)
         if (strEQ(sc->szLogFile, "/dev/null"))
             return;
         else if (sc->szLogFile[0] == '|') {
-            szLogFile = ssl_util_server_root_relative(p, "log", sc->szLogFile+1);
+            cp = sc->szLogFile+1;
+            while (*cp == ' ' || *cp == '\t')
+                cp++;
+            szLogFile = ssl_util_server_root_relative(p, "log", cp);
             if ((pl = ap_open_piped_log(p, szLogFile)) == NULL) {
                 ssl_log(s, SSL_LOG_ERROR|SSL_ADD_ERRNO,
                         "Cannot open reliable pipe to SSL logfile filter %s", szLogFile);

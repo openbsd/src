@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -95,12 +95,17 @@
 #define POP_EBCDIC_INPUTCONVERSION_STATE(_buff) \
         ap_bsetflag(_buff, B_ASCII2EBCDIC, _convert_in);
 
-#define PUSH_EBCDIC_OUTPUTCONVERSION_STATE(_buff, _onoff) \
-        int _convert_out = ap_bgetflag(_buff, B_EBCDIC2ASCII); \
-        ap_bsetflag(_buff, B_EBCDIC2ASCII, _onoff);
+#define PUSH_EBCDIC_INPUTCONVERSION_STATE_r(_req, _onoff) \
+        ap_bsetflag(_req->connection->client, B_ASCII2EBCDIC, _onoff);
 
-#define POP_EBCDIC_OUTPUTCONVERSION_STATE(_buff) \
-        ap_bsetflag(_buff, B_EBCDIC2ASCII, _convert_out);
+#define POP_EBCDIC_INPUTCONVERSION_STATE_r(_req) \
+        ap_bsetflag(_req->connection->client, B_ASCII2EBCDIC, _req->ebcdic.conv_in);
+
+#define PUSH_EBCDIC_OUTPUTCONVERSION_STATE_r(_req, _onoff) \
+        ap_bsetflag(_req->connection->client, B_EBCDIC2ASCII, _onoff);
+
+#define POP_EBCDIC_OUTPUTCONVERSION_STATE_r(_req) \
+        ap_bsetflag(_req->connection->client, B_EBCDIC2ASCII, _req->ebcdic.conv_out);
 
 #endif /*CHARSET_EBCDIC*/
 
@@ -238,7 +243,7 @@ static int byterange_boundary(request_rec *r, long start, long end, int output)
      * set to ON (protocol strings MUST be converted)
      * and reset to original setting before returning
      */
-    PUSH_EBCDIC_OUTPUTCONVERSION_STATE(r->connection->client, 1);
+    PUSH_EBCDIC_OUTPUTCONVERSION_STATE_r(r, 1);
 #endif /*CHARSET_EBCDIC*/
 
     if (start < 0 || end < 0) {
@@ -262,7 +267,7 @@ static int byterange_boundary(request_rec *r, long start, long end, int output)
     }
 
 #ifdef CHARSET_EBCDIC
-    POP_EBCDIC_OUTPUTCONVERSION_STATE(r->connection->client);
+    POP_EBCDIC_OUTPUTCONVERSION_STATE_r(r);
 #endif /*CHARSET_EBCDIC*/
 
     return length;
@@ -356,6 +361,7 @@ API_EXPORT(int) ap_set_byterange(request_rec *r)
 	else {
 	    ap_table_setn(r->headers_out, "Content-Range",
 		ap_psprintf(r->pool, "bytes */%ld", r->clength));
+	    ap_set_content_length(r, 0);			  
 	    r->boundary = NULL;
 	    r->range = range;
 	    r->header_only = 1;
@@ -644,7 +650,15 @@ API_EXPORT(char *) ap_make_etag(request_rec *r, int force_weak)
 {
     char *etag;
     char *weak;
+    core_dir_config *cfg;
+    etag_components_t etag_bits;
 
+    cfg = (core_dir_config *)ap_get_module_config(r->per_dir_config,
+                                                  &core_module);
+    etag_bits = (cfg->etag_bits & (~ cfg->etag_remove)) | cfg->etag_add;
+    if (etag_bits == ETAG_UNSET) {
+        etag_bits = ETAG_BACKWARD;
+    }
     /*
      * Make an ETag header out of various pieces of information. We use
      * the last-modified date and, if we have a real file, the
@@ -661,11 +675,43 @@ API_EXPORT(char *) ap_make_etag(request_rec *r, int force_weak)
     weak = ((r->request_time - r->mtime > 1) && !force_weak) ? "" : "W/";
 
     if (r->finfo.st_mode != 0) {
-        etag = ap_psprintf(r->pool,
-                    "%s\"%lx-%lx-%lx\"", weak,
-                    (unsigned long) r->finfo.st_ino,
-                    (unsigned long) r->finfo.st_size,
-                    (unsigned long) r->mtime);
+        char **ent;
+        array_header *components;
+        int i;
+
+        /*
+         * If it's a file (or we wouldn't be here) and no ETags
+         * should be set for files, return an empty string and
+         * note it for ap_send_header_field() to ignore.
+         */
+        if (etag_bits & ETAG_NONE) {
+            ap_table_setn(r->notes, "no-etag", "omit");
+            return "";
+        }
+
+        components = ap_make_array(r->pool, 4, sizeof(char *));
+        if (etag_bits & ETAG_INODE) {
+            ent = (char **) ap_push_array(components);
+            *ent = ap_psprintf(r->pool, "%lx",
+                               (unsigned long) r->finfo.st_ino);
+        }
+        if (etag_bits & ETAG_SIZE) {
+            ent = (char **) ap_push_array(components);
+            *ent = ap_psprintf(r->pool, "%lx",
+                               (unsigned long) r->finfo.st_size);
+        }
+        if (etag_bits & ETAG_MTIME) {
+            ent = (char **) ap_push_array(components);
+            *ent = ap_psprintf(r->pool, "%lx", (unsigned long) r->mtime);
+        }
+        ent = (char **) components->elts;
+        etag = ap_pstrcat(r->pool, weak, "\"", NULL);
+        for (i = 0; i < components->nelts; ++i) {
+            etag = ap_psprintf(r->pool, "%s%s%s", etag,
+                               (i == 0 ? "" : "-"),
+                               ent[i]);
+        }
+        etag = ap_pstrcat(r->pool, etag, "\"", NULL);
     }
     else {
         etag = ap_psprintf(r->pool, "%s\"%lx\"", weak,
@@ -1015,7 +1061,7 @@ static void get_mime_headers(request_rec *r)
     char *value;
     char *copy;
     int len;
-    unsigned int fields_read = 0;
+    int fields_read = 0;
     table *tmp_headers;
 
     /* We'll use ap_overlap_tables later to merge these into r->headers_in. */
@@ -1068,7 +1114,7 @@ static void get_mime_headers(request_rec *r)
     ap_overlap_tables(r->headers_in, tmp_headers, AP_OVERLAP_TABLES_MERGE);
 }
 
-request_rec *ap_read_request(conn_rec *conn)
+API_EXPORT(request_rec *) ap_read_request(conn_rec *conn)
 {
     request_rec *r;
     pool *p;
@@ -1110,7 +1156,8 @@ request_rec *ap_read_request(conn_rec *conn)
 #endif /* EAPI */
 
 #ifdef CHARSET_EBCDIC
-    ap_bsetflag(r->connection->client, B_ASCII2EBCDIC|B_EBCDIC2ASCII, 1);
+    ap_bsetflag(r->connection->client, B_ASCII2EBCDIC, r->ebcdic.conv_in  = 1);
+    ap_bsetflag(r->connection->client, B_EBCDIC2ASCII, r->ebcdic.conv_out = 1);
 #endif
 
     /* Get the request... */
@@ -1232,7 +1279,7 @@ request_rec *ap_read_request(conn_rec *conn)
  * *someone* has to set the protocol-specific fields...
  */
 
-void ap_set_sub_req_protocol(request_rec *rnew, const request_rec *r)
+API_EXPORT(void) ap_set_sub_req_protocol(request_rec *rnew, const request_rec *r)
 {
     rnew->the_request     = r->the_request;  /* Keep original request-line */
 
@@ -1263,7 +1310,7 @@ void ap_set_sub_req_protocol(request_rec *rnew, const request_rec *r)
 
 }
 
-void ap_finalize_sub_req_protocol(request_rec *sub)
+API_EXPORT(void) ap_finalize_sub_req_protocol(request_rec *sub)
 {
     SET_BYTES_SENT(sub->main);
 }
@@ -1331,8 +1378,8 @@ API_EXPORT(int) ap_get_basic_auth_pw(request_rec *r, const char **pw)
         return AUTH_REQUIRED;
     }
 
-    /* CHARSET_EBCDIC Issue's here ?!? Compare with 32/9 instead
-     * as we are operating on an octed stream ?
+    /* No CHARSET_EBCDIC Issue here because the line has already
+     * been converted to native text.
      */
     while (*auth_line== ' ' || *auth_line== '\t')
         auth_line++;
@@ -1461,14 +1508,21 @@ API_EXPORT(int) ap_index_of_response(int status)
  * It returns true unless there was a write error of some kind.
  */
 API_EXPORT_NONSTD(int) ap_send_header_field(request_rec *r,
-    const char *fieldname, const char *fieldval)
+                                            const char *fieldname,
+                                            const char *fieldval)
 {
+    if (strcasecmp(fieldname, "ETag") == 0) {
+        if (ap_table_get(r->notes, "no-etag") != NULL) {
+            return 1;
+        }
+    }
     return (0 < ap_rvputs(r, fieldname, ": ", fieldval, CRLF, NULL));
 }
 
 API_EXPORT(void) ap_basic_http_header(request_rec *r)
 {
     char *protocol;
+    const char *server;
 
     if (r->assbackwards)
         return;
@@ -1476,12 +1530,10 @@ API_EXPORT(void) ap_basic_http_header(request_rec *r)
     if (!r->status_line)
         r->status_line = status_lines[ap_index_of_response(r->status)];
 
-    /* mod_proxy is only HTTP/1.0, so avoid sending HTTP/1.1 error response;
-     * kluge around broken browsers when indicated by force-response-1.0
+    /* kluge around broken browsers when indicated by force-response-1.0
      */
-    if (r->proxyreq != NOT_PROXY
-        || (r->proto_num == HTTP_VERSION(1,0)
-            && ap_table_get(r->subprocess_env, "force-response-1.0"))) {
+    if (r->proto_num == HTTP_VERSION(1,0)
+       && ap_table_get(r->subprocess_env, "force-response-1.0")) {
 
         protocol = "HTTP/1.0";
         r->connection->keepalive = -1;
@@ -1490,20 +1542,29 @@ API_EXPORT(void) ap_basic_http_header(request_rec *r)
         protocol = SERVER_PROTOCOL;
 
 #ifdef CHARSET_EBCDIC
-    { PUSH_EBCDIC_OUTPUTCONVERSION_STATE(r->connection->client, 1);
+    PUSH_EBCDIC_OUTPUTCONVERSION_STATE_r(r, 1);
 #endif /*CHARSET_EBCDIC*/
 
-    /* Output the HTTP/1.x Status-Line and the Date and Server fields */
-
+    /* output the HTTP/1.x Status-Line */
     ap_rvputs(r, protocol, " ", r->status_line, CRLF, NULL);
 
+    /* output the date header */
     ap_send_header_field(r, "Date", ap_gm_timestr_822(r->pool, r->request_time));
-    ap_send_header_field(r, "Server", ap_get_server_version());
 
+    /* keep a previously set server header (possible from proxy), otherwise
+     * generate a new server header */
+    if (server = ap_table_get(r->headers_out, "Server")) {
+        ap_send_header_field(r, "Server", server);
+    }
+    else {
+        ap_send_header_field(r, "Server", ap_get_server_version());
+    }
+
+    /* unset so we don't send them again */
     ap_table_unset(r->headers_out, "Date");        /* Avoid bogosity */
     ap_table_unset(r->headers_out, "Server");
 #ifdef CHARSET_EBCDIC
-    POP_EBCDIC_OUTPUTCONVERSION_STATE(r->connection->client); }
+    POP_EBCDIC_OUTPUTCONVERSION_STATE_r(r);
 #endif /*CHARSET_EBCDIC*/
 }
 
@@ -1574,6 +1635,10 @@ API_EXPORT(int) ap_send_http_trace(request_rec *r)
 
     r->content_type = "message/http";
     ap_send_http_header(r);
+#ifdef CHARSET_EBCDIC
+    /* Server-generated response, converted */
+    ap_bsetflag(r->connection->client, B_EBCDIC2ASCII, r->ebcdic.conv_out = 1);
+#endif
 
     /* Now we recreate the request, and echo it back */
 
@@ -1587,7 +1652,7 @@ API_EXPORT(int) ap_send_http_trace(request_rec *r)
     return OK;
 }
 
-int ap_send_http_options(request_rec *r)
+API_EXPORT(int) ap_send_http_options(request_rec *r)
 {
     const long int zero = 0L;
 
@@ -1711,6 +1776,11 @@ API_EXPORT(void) ap_send_http_header(request_rec *r)
     int i;
     const long int zero = 0L;
 
+#ifdef CHARSET_EBCDIC
+    /* Use previously determined conversion (output): */
+    ap_bsetflag(r->connection->client, B_EBCDIC2ASCII, ap_checkconv(r));
+#endif /*CHARSET_EBCDIC*/
+
     if (r->assbackwards) {
         if (!r->main)
             ap_bsetopt(r->connection->client, BO_BYTECT, &zero);
@@ -1746,7 +1816,7 @@ API_EXPORT(void) ap_send_http_header(request_rec *r)
     ap_basic_http_header(r);
 
 #ifdef CHARSET_EBCDIC
-    { PUSH_EBCDIC_OUTPUTCONVERSION_STATE(r->connection->client, 1);
+    PUSH_EBCDIC_OUTPUTCONVERSION_STATE_r(r, 1);
 #endif /*CHARSET_EBCDIC*/
 
     ap_set_keepalive(r);
@@ -1799,7 +1869,7 @@ API_EXPORT(void) ap_send_http_header(request_rec *r)
     if (r->chunked)
         ap_bsetflag(r->connection->client, B_CHUNK, 1);
 #ifdef CHARSET_EBCDIC
-    POP_EBCDIC_OUTPUTCONVERSION_STATE(r->connection->client); }
+    POP_EBCDIC_OUTPUTCONVERSION_STATE_r(r);
 #endif /*CHARSET_EBCDIC*/
 }
 
@@ -1812,7 +1882,7 @@ API_EXPORT(void) ap_finalize_request_protocol(request_rec *r)
 {
     if (r->chunked && !r->connection->aborted) {
 #ifdef CHARSET_EBCDIC
-	PUSH_EBCDIC_OUTPUTCONVERSION_STATE(r->connection->client, 1);
+        PUSH_EBCDIC_OUTPUTCONVERSION_STATE_r(r, 1);
 #endif
         /*
          * Turn off chunked encoding --- we can only do this once.
@@ -1827,7 +1897,7 @@ API_EXPORT(void) ap_finalize_request_protocol(request_rec *r)
         ap_kill_timeout(r);
 
 #ifdef CHARSET_EBCDIC
-	POP_EBCDIC_OUTPUTCONVERSION_STATE(r->connection->client);
+        POP_EBCDIC_OUTPUTCONVERSION_STATE_r(r);
 #endif /*CHARSET_EBCDIC*/
     }
 }
@@ -1917,7 +1987,8 @@ API_EXPORT(int) ap_setup_client_block(request_rec *r, int read_policy)
     }
 
     max_body = ap_get_limit_req_body(r);
-    if (max_body && (r->remaining > max_body)) {
+    if (max_body && ((unsigned long)r->remaining > max_body)
+                 && (r->remaining >= 0)) {
         ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r,
           "Request content-length of %s is larger than the configured "
           "limit of %lu", lenp, max_body);
@@ -1926,18 +1997,11 @@ API_EXPORT(int) ap_setup_client_block(request_rec *r, int read_policy)
 
 #ifdef CHARSET_EBCDIC
     {
-        /* @@@ Temporary kludge for guessing the conversion @@@
-         * from looking at the MIME header. 
+        /* Determine the EBCDIC conversion for the uploaded content
+         * by looking at the Content-Type MIME header. 
          * If no Content-Type header is found, text conversion is assumed.
          */
-        const char *typep = ap_table_get(r->headers_in, "Content-Type");
-        int convert_in = (typep == NULL ||
-                          strncasecmp(typep, "text/", 5) == 0 ||
-                          strncasecmp(typep, "message/", 8) == 0 ||
-                          strncasecmp(typep, "multipart/", 10) == 0 ||
-                          strcasecmp (typep, "application/x-www-form-urlencoded") == 0
-                         );
-        ap_bsetflag(r->connection->client, B_ASCII2EBCDIC, convert_in);
+        ap_bsetflag(r->connection->client, B_ASCII2EBCDIC, ap_checkconv_in(r));
     }
 #endif
 
@@ -1968,6 +2032,7 @@ static long get_chunk_size(char *b)
     while (ap_isxdigit(*b)) {
         int xvalue = 0;
 
+	/* This works even on EBCDIC. */
         if (*b >= '0' && *b <= '9')
             xvalue = *b - '0';
         else if (*b >= 'A' && *b <= 'F')
@@ -2031,7 +2096,8 @@ API_EXPORT(long) ap_get_client_block(request_rec *r, char *buffer, int bufsiz)
      * length requests and nobody cares if it goes over by one buffer.
      */
     max_body = ap_get_limit_req_body(r);
-    if (max_body && (r->read_length > max_body)) {
+    if (max_body && ((unsigned long) r->read_length > max_body)
+                 && (r->read_length >= 0)) {
         ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r,
             "Chunked request body is larger than the configured limit of %lu",
             max_body);
@@ -2127,7 +2193,7 @@ API_EXPORT(long) ap_get_client_block(request_rec *r, char *buffer, int bufsiz)
     if (r->remaining == 0) {    /* End of chunk, get trailing CRLF */
 #ifdef CHARSET_EBCDIC
         /* Chunk end is Protocol stuff! Set conversion = 1 to read CR LF: */
-        PUSH_EBCDIC_INPUTCONVERSION_STATE(r->connection->client, 1);
+        PUSH_EBCDIC_INPUTCONVERSION_STATE_r(r, 1);
 #endif /*CHARSET_EBCDIC*/
 
         if ((c = ap_bgetc(r->connection->client)) == CR) {
@@ -2136,7 +2202,7 @@ API_EXPORT(long) ap_get_client_block(request_rec *r, char *buffer, int bufsiz)
 
 #ifdef CHARSET_EBCDIC
         /* restore ASCII->EBCDIC conversion state */
-        POP_EBCDIC_INPUTCONVERSION_STATE(r->connection->client);
+        POP_EBCDIC_INPUTCONVERSION_STATE_r(r);
 #endif /*CHARSET_EBCDIC*/
 
         if (c != LF) {
@@ -2269,13 +2335,16 @@ API_EXPORT(long) ap_send_fb_length(BUFF *fb, request_rec *r, long length)
     long total_bytes_sent = 0;
     register int n, w, o, len, fd;
     fd_set fds;
+#ifdef TPF
+    struct timeval tv;
+#endif 
 
     if (length == 0)
         return 0;
 
     /* Make fb unbuffered and non-blocking */
     ap_bsetflag(fb, B_RD, 0);
-#ifndef TPF    
+#ifndef TPF_NO_NONSOCKET_SELECT
     ap_bnonblock(fb, B_RD);
 #endif
     fd = ap_bfileno(fb, B_RD);
@@ -2334,7 +2403,13 @@ API_EXPORT(long) ap_send_fb_length(BUFF *fb, request_rec *r, long length)
              * we don't care what select says, we might as well loop back
              * around and try another read
              */
+#ifdef TPF_HAVE_NONSOCKET_SELECT
+            tv.tv_sec =  1;
+            tv.tv_usec = 0;
+            ap_select(fd + 1, &fds, NULL, NULL, &tv);
+#else
             ap_select(fd + 1, &fds, NULL, NULL, NULL);
+#endif  
 #ifdef NDELAY_PIPE_RETURNS_ZERO
 	    afterselect = 1;
 #endif
@@ -2513,7 +2588,7 @@ API_EXPORT(int) ap_vrprintf(request_rec *r, const char *fmt, va_list ap)
     return n;
 }
 
-API_EXPORT(int) ap_rprintf(request_rec *r, const char *fmt,...)
+API_EXPORT_NONSTD(int) ap_rprintf(request_rec *r, const char *fmt,...)
 {
     va_list vlist;
     int n;
@@ -2599,6 +2674,10 @@ API_EXPORT(void) ap_send_error_response(request_rec *r, int recursive_error)
     int idx = ap_index_of_response(status);
     char *custom_response;
     const char *location = ap_table_get(r->headers_out, "Location");
+#ifdef CHARSET_EBCDIC
+    /* Error Responses (builtin / string literal / redirection) are TEXT! */
+    ap_bsetflag(r->connection->client, B_EBCDIC2ASCII, r->ebcdic.conv_out = 1);
+#endif
 
     /*
      * It's possible that the Location field might be in r->err_headers_out
@@ -2685,6 +2764,11 @@ API_EXPORT(void) ap_send_error_response(request_rec *r, int recursive_error)
             return;
         }
     }
+
+#ifdef CHARSET_EBCDIC
+    /* Server-generated response, converted */
+    ap_bsetflag(r->connection->client, B_EBCDIC2ASCII, r->ebcdic.conv_out = 1);
+#endif
 
     ap_hard_timeout("send error body", r);
 
@@ -2841,7 +2925,7 @@ API_EXPORT(void) ap_send_error_response(request_rec *r, int recursive_error)
 		      "This indicates a configuration error.<P>\n", NULL);
 	    break;
 	case HTTP_REQUEST_TIME_OUT:
-	    ap_rputs("I'm tired of waiting for your request.\n", r);
+	    ap_rputs("Server timeout waiting for the HTTP request from the client.\n", r);
 	    break;
 	case HTTP_GONE:
 	    ap_rvputs(r, "The requested resource<BR>",

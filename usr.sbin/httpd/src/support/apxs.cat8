@@ -1,0 +1,330 @@
+
+
+
+apxs(8)                                                   apxs(8)
+
+
+NNAAMMEE
+       apxs - APache eXtenSion tool
+
+SSYYNNOOPPSSIISS
+       aappxxss --gg [ --SS _v_a_r_i_a_b_l_e_=_v_a_l_u_e ] --nn _n_a_m_e
+
+       aappxxss --qq [ --SS _v_a_r_i_a_b_l_e_=_v_a_l_u_e ] _q_u_e_r_y ...
+
+       aappxxss --cc [ --SS _v_a_r_i_a_b_l_e_=_v_a_l_u_e ] [ --oo _d_s_o_f_i_l_e ] [ --II _i_n_c_d_i_r ]
+       [ --DD _v_a_r_i_a_b_l_e_[_=_v_a_l_u_e_] ] [ --LL _l_i_b_d_i_r ] [  --ll  _l_i_b_n_a_m_e  ]  [
+       --WWcc,,_c_o_m_p_i_l_e_r_-_f_l_a_g_s ] [ --WWll,,_l_i_n_k_e_r_-_f_l_a_g_s ] _f_i_l_e_s ...
+
+       aappxxss  --ii  [  --SS _v_a_r_i_a_b_l_e_=_v_a_l_u_e ] [ --nn _n_a_m_e ] [ --aa ] [ --AA ]
+       _d_s_o_f_i_l_e ...
+
+       aappxxss --ee [ --SS _v_a_r_i_a_b_l_e_=_v_a_l_u_e ] [ --nn _n_a_m_e ] [ --aa ]  [  --AA  ]
+       _d_s_o_f_i_l_e ...
+
+
+DDEESSCCRRIIPPTTIIOONN
+       aappxxss  is a tool for building and installing extension mod-
+       ules for the Apache  HyperText  Transfer  Protocol  (HTTP)
+       server.  This  is  achieved  by  building a Dynamic Shared
+       Object (DSO) from one or more source or object _f_i_l_e_s which
+       then  can  be  loaded into the Apache server under runtime
+       via the LLooaaddMMoodduullee directive from mmoodd__ssoo..
+
+       So to use this extension mechanism, your platform  has  to
+       support  the  DSO feature and your Apache hhttttppdd binary has
+       to be built with the mmoodd__ssoo module.  The aappxxss  tool  auto-
+       matically  complains  if  this  is  not the case.  You can
+       check this yourself by manually running the command
+
+         $ httpd -l
+
+       The module mmoodd__ssoo should be part of  the  displayed  list.
+       If these requirements are fulfilled, you can easily extend
+       your Apache server's functionality by installing your  own
+       modules  with  the  DSO mechanism by the help of this aappxxss
+       tool:
+
+         $ apxs -i -a -c mod_foo.c
+         gcc -fpic -DSHARED_MODULE -I/path/to/apache/include -c mod_foo.c
+         ld -Bshareable -o mod_foo.so mod_foo.o
+         cp mod_foo.so /path/to/apache/libexec/mod_foo.so
+         chmod 755 /path/to/apache/libexec/mod_foo.so
+         [activating module `foo' in /path/to/apache/etc/httpd.conf]
+         $ apachectl restart
+         /path/to/apache/sbin/apachectl restart: httpd not running, trying to start
+         [Tue Mar 31 11:27:55 1998] [debug] mod_so.c(303): loaded module foo_module
+         /path/to/apache/sbin/apachectl restart: httpd started
+         $ _
+
+       The arguments _f_i_l_e_s can be  any  C  source  file  (.c),  a
+
+
+
+                            April 1998                          1
+
+
+
+
+
+apxs(8)                                                   apxs(8)
+
+
+       object  file (.o) or even a library archive (.a). The aappxxss
+       tool automatically recognizes these extensions  and  auto-
+       matically uses the C source files for compilation while it
+       just uses the object and archive  files  for  the  linking
+       phase. But when using such pre-compiled objects, make sure
+       they are compiled for Position Independend Code  (PIC)  to
+       be  able  to use them for a DSO. For instance with GCC you
+       always just have to use  --ffppiicc.   For  other  C  compilers
+       please consult its manual page or watch for the flags aappxxss
+       uses to compile the object files.
+
+       For more details about DSO support in Apache,  first  read
+       the   background  information  about  DSO  in  htdocs/man-
+       ual/dso.html, then read the documentation of mmoodd__ssoo.
+
+
+
+OOPPTTIIOONNSS
+       Common options:
+
+       --nn _n_a_m_e     This explicitly sets the module name  for  the
+                   --ii  (install)  and  --gg  (template  generation)
+                   option. Use this  to  explicitly  specify  the
+                   module  name.  For option --gg this is required,
+                   for option --ii the aappxxss tool tries to determine
+                   the name from the source or (as a fallback) at
+                   least by guessing it from the filename.
+
+       Query options:
+
+       --qq          Performs a query for  aappxxss's  knowledge  about
+                   certain  settings. The _q_u_e_r_y parameters can be
+                   one or more of the following variable names:
+                     CC              TARGET
+                     CFLAGS          SBINDIR
+                     CFLAGS_SHLIB    INCLUDEDIR
+                     LD_SHLIB        LIBEXECDIR
+                     LDFLAGS_SHLIB   SYSCONFDIR
+                     LIBS_SHLIB      PREFIX
+                   Use this for  manually  determining  settings.
+                   For instance use
+                     INC=-I`apxs -q INCLUDEDIR`
+                   inside  your  own Makefiles if you need manual
+                   access to Apache's C header files.
+
+       Configuration options:
+
+       --SS _v_a_r_i_a_b_l_e_=_v_a_l_u_e
+                   This  option   changes   the   aappxxss   settings
+                   described above.
+
+       Template Generation options:
+
+       --gg          This generates a subdirectory _n_a_m_e (see option
+
+
+
+                            April 1998                          2
+
+
+
+
+
+apxs(8)                                                   apxs(8)
+
+
+                   --nn) and  there  two  files:  A  sample  module
+                   source file named mmoodd___n_a_m_e_._c which can be used
+                   as a template for creating your own modules or
+                   as  a  quick  start  for playing with the aappxxss
+                   mechanism.  And a corresponding  MMaakkeeffiillee  for
+                   even  easier  building  and installing of this
+                   module.
+
+       DSO compilation options:
+
+       --cc          This indicates the compilation  operation.  It
+                   first  compiles  the  C  source  files (.c) of
+                   _f_i_l_e_s into corresponding object files (.o) and
+                   then  builds a DSO in _d_s_o_f_i_l_e by linking these
+                   object files plus the remaining  object  files
+                   (.o and .a) of _f_i_l_e_s If no --oo option is speci-
+                   fied the output file is guessed from the first
+                   filename in _f_i_l_e_s and thus usually defaults to
+                   mmoodd___n_a_m_e_._s_o
+
+       --oo _d_s_o_f_i_l_e  Explicitly specifies the filename of the  cre-
+                   ated  DSO  file. If not specified and the name
+                   cannot be guessed from  the  _f_i_l_e_s  list,  the
+                   fallback name mmoodd__uunnkknnoowwnn..ssoo is used.
+
+       --DD _v_a_r_i_a_b_l_e_[_=_v_a_l_u_e_]
+                   This  option is directly passed through to the
+                   compilation command(s).  Use this to add  your
+                   own defines to the build process.
+
+       --II _i_n_c_d_i_r   This  option is directly passed through to the
+                   compilation command(s).  Use this to add  your
+                   own include directories to search to the build
+                   process.
+
+       --LL _l_i_b_d_i_r   This option is directly passed through to  the
+                   linker  command.   Use  this  to  add your own
+                   library directories to  search  to  the  build
+                   process.
+
+       --ll _l_i_b_n_a_m_e  This  option is directly passed through to the
+                   linker command.  Use  this  to  add  your  own
+                   libraries to search to the build process.
+
+       --WWcc,,_c_o_m_p_i_l_e_r_-_f_l_a_g_s
+                   This  option  passes  _c_o_m_p_i_l_e_r_-_f_l_a_g_s  as addi-
+                   tional flags to  the  compiler  command.   Use
+                   this to add local compiler-specific options.
+
+       --WWll,,_l_i_n_k_e_r_-_f_l_a_g_s
+                   This  option passes _l_i_n_k_e_r_-_f_l_a_g_s as additional
+                   flags to the linker command.  Use this to  add
+                   local linker-specific options.
+
+
+
+
+                            April 1998                          3
+
+
+
+
+
+apxs(8)                                                   apxs(8)
+
+
+       DSO installation and configuration options:
+
+       --ii          This  indicates the installation operation and
+                   installs one or more DSOs  into  the  server's
+                   _l_i_b_e_x_e_c directory.
+
+       --aa          This  activates  the  module  by automatically
+                   adding  a  corresponding  LLooaaddMMoodduullee  line  to
+                   Apache's  hhttttppdd..ccoonnff configuration file, or by
+                   enabling it if it already exists.
+
+       --AA          Same as option --aa but the  created  LLooaaddMMoodduullee
+                   directive  is  prefixed  with a hash sign (#),
+                   i.e. the module is  just  prepared  for  later
+                   activation but initially disabled.
+
+       --ee          This  indicates  the  editing operation, which
+                   can be used with the --aa and --AA  options  simi-
+                   larly  to  the  --ii  operation to edit Apache's
+                   hhttttppdd..ccoonnff configuration file without attempt-
+                   ing to install the module.
+
+EEXXAAMMPPLLEESS
+       Assume you have an Apache module named mod_foo.c available
+       which should  extend  Apache's  server  functionality.  To
+       accomplish  this  you  first  have to compile the C source
+       into a DSO suitable for loading  into  the  Apache  server
+       under runtime via the following command:
+
+         $ apxs -c mod_foo.c
+         gcc -fpic -DSHARED_MODULE -I/path/to/apache/include -c mod_foo.c
+         ld -Bshareable -o mod_foo.so mod_foo.o
+         $ _
+
+       Then you have to update the Apache configuration by making
+       sure a LLooaaddMMoodduullee directive is present to load  this  DSO.
+       To  simplify  this  step aappxxss provides an automatic way to
+       install the DSO in the "libexec"  directory  and  updating
+       the  hhttttppdd..ccoonnff  file accordingly. This can be achieved by
+       running:
+
+         $ apxs -i -a mod_foo.c
+         cp mod_foo.so /path/to/apache/libexec/mod_foo.so
+         chmod 755 /path/to/apache/libexec/mod_foo.so
+         [activating module `foo' in /path/to/apache/etc/httpd.conf]
+         $ _
+
+       This way a line named
+
+         LoadModule foo_module libexec/mod_foo.so
+
+       is added to the configuration file if still  not  present.
+       If you want to have this operation to be disabled, use the
+       --AA option, i.e.
+
+
+
+                            April 1998                          4
+
+
+
+
+
+apxs(8)                                                   apxs(8)
+
+
+         $ apxs -i -A mod_foo.c
+
+       For a quick test of the aappxxss mechanism you  can  create  a
+       sample  Apache  module template plus a corresponding MMaakkee--
+       ffiillee via:
+
+         $ apxs -g -n foo
+         Creating [DIR]  foo
+         Creating [FILE] foo/Makefile
+         Creating [FILE] foo/mod_foo.c
+         $ _
+
+       Then you can immediately compile this sample module into a
+       DSO and load it into the Apache server:
+
+         $ cd foo
+         $ make all reload
+         apxs -c mod_foo.c
+         gcc -fpic -DSHARED_MODULE -I/path/to/apache/include -c mod_foo.c
+         ld -Bshareable -o mod_foo.so mod_foo.o
+         apxs -i -a -n "foo" mod_foo.so
+         cp mod_foo.so /path/to/apache/libexec/mod_foo.so
+         chmod 755 /path/to/apache/libexec/mod_foo.so
+         [activating module `foo' in /path/to/apache/etc/httpd.conf]
+         apachectl restart
+         /path/to/apache/sbin/apachectl restart: httpd not running, trying to start
+         [Tue Mar 31 11:27:55 1998] [debug] mod_so.c(303): loaded module foo_module
+         /path/to/apache/sbin/apachectl restart: httpd started
+         $ _
+
+       You  can  even use aappxxss to compile complex modules outside
+       the Apache source tree, like PHP3, because aappxxss  automati-
+       cally recognized C source files and object files.
+
+         $ cd php3
+         $ ./configure --with-shared-apache=../apache-1.3
+         $ apxs -c -o libphp3.so mod_php3.c libmodphp3-so.a
+         gcc -fpic -DSHARED_MODULE -I/tmp/apache/include  -c mod_php3.c
+         ld -Bshareable -o libphp3.so mod_php3.o libmodphp3-so.a
+         $ _
+
+       Only  C  source  files are compiled while remaining object
+       files are used for the linking phase.
+
+
+SSEEEE AALLSSOO
+       aappaacchheeccttll((11)),, hhttttppdd((88))..
+
+
+
+
+
+
+
+
+
+
+                            April 1998                          5
+
+

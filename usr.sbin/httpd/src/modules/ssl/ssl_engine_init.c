@@ -438,7 +438,7 @@ void ssl_init_TmpKeysHandle(int action, server_rec *s, pool *p)
         asn1->nData  = i2d_DHparams(dh, NULL);
         asn1->cpData = ap_palloc(mc->pPool, asn1->nData);
         ucp = asn1->cpData; i2d_DHparams(dh, &ucp); /* 2nd arg increments */
-        /* no need to free dh, it's static */
+        DH_free(dh);
 
         /* import 1024 bit DH param */
         if ((dh = ssl_dh_GetTmpParam(1024)) == NULL) {
@@ -449,7 +449,7 @@ void ssl_init_TmpKeysHandle(int action, server_rec *s, pool *p)
         asn1->nData  = i2d_DHparams(dh, NULL);
         asn1->cpData = ap_palloc(mc->pPool, asn1->nData);
         ucp = asn1->cpData; i2d_DHparams(dh, &ucp); /* 2nd arg increments */
-        /* no need to free dh, it's static */
+        DH_free(dh);
     }
 
     /* Allocate Keys and Params */
@@ -983,6 +983,7 @@ STACK_OF(X509_NAME) *ssl_init_FindCAList(server_rec *s, pool *pp, char *cpCAfile
     char *cp;
     pool *p;
     int n;
+    char buf[256];
 
     /*
      * Use a subpool so we don't bloat up the server pool which
@@ -1002,13 +1003,14 @@ STACK_OF(X509_NAME) *ssl_init_FindCAList(server_rec *s, pool *pp, char *cpCAfile
      */
     if (cpCAfile != NULL) {
         sk = SSL_load_client_CA_file(cpCAfile);
-        for(n = 0; sk != NULL && n < sk_X509_NAME_num(sk); n++) {
+        for (n = 0; sk != NULL && n < sk_X509_NAME_num(sk); n++) {
             ssl_log(s, SSL_LOG_TRACE,
                     "CA certificate: %s",
-                    X509_NAME_oneline(sk_X509_NAME_value(sk, n), NULL, 0));
+                    X509_NAME_oneline(sk_X509_NAME_value(sk, n), buf, sizeof(buf)));
             if (sk_X509_NAME_find(skCAList, sk_X509_NAME_value(sk, n)) < 0)
                 sk_X509_NAME_push(skCAList, sk_X509_NAME_value(sk, n));
         }
+        sk_X509_NAME_free(sk);
     }
 
     /*
@@ -1019,13 +1021,14 @@ STACK_OF(X509_NAME) *ssl_init_FindCAList(server_rec *s, pool *pp, char *cpCAfile
         while ((direntry = readdir(dir)) != NULL) {
             cp = ap_pstrcat(p, cpCApath, "/", direntry->d_name, NULL);
             sk = SSL_load_client_CA_file(cp);
-            for(n = 0; sk != NULL && n < sk_X509_NAME_num(sk); n++) {
+            for (n = 0; sk != NULL && n < sk_X509_NAME_num(sk); n++) {
                 ssl_log(s, SSL_LOG_TRACE,
                         "CA certificate: %s",
-                        X509_NAME_oneline(sk_X509_NAME_value(sk, n), NULL, 0));
+                        X509_NAME_oneline(sk_X509_NAME_value(sk, n), buf, sizeof(buf)));
                 if (sk_X509_NAME_find(skCAList, sk_X509_NAME_value(sk, n)) < 0)
                     sk_X509_NAME_push(skCAList, sk_X509_NAME_value(sk, n));
             }
+            sk_X509_NAME_free(sk);
         }
         ap_pclosedir(p, dir);
     }
@@ -1074,6 +1077,10 @@ void ssl_init_ModuleKill(void *data)
      */
     for (; s != NULL; s = s->next) {
         sc = mySrvConfig(s);
+        if (sc->pRevocationStore != NULL) {
+            X509_STORE_free(sc->pRevocationStore);
+            sc->pRevocationStore = NULL;
+        }
         if (sc->pPublicCert[SSL_AIDX_RSA] != NULL) {
             X509_free(sc->pPublicCert[SSL_AIDX_RSA]);
             sc->pPublicCert[SSL_AIDX_RSA] = NULL;

@@ -1,0 +1,66 @@
+
+
+
+suexec(8)                                               suexec(8)
+
+
+NNAAMMEE
+       suexec - Switch User For Exec
+
+SSYYNNOOPPSSIISS
+       ssuueexxeecc --VV
+
+       No  other synopsis for usage, because this program is oth-
+       erwise only used internally by the Apache HTTP server.
+
+
+DDEESSCCRRIIPPTTIIOONN
+       ssuueexxeecc is the "wrapper" support  program  for  the  suexec
+       behaviour  for  the  Apache  HTTP  server.  It is run from
+       within the server automatically to switch the user when an
+       external program has to be run under a different user. For
+       more information about suexec,  see  the  online  document
+       `Apache  suexec  Support' on the HTTP server project's Web
+       site at  http://httpd.apache.org/docs/suexec.html .
+
+OOPPTTIIOONNSS
+       -V     Display the list of compile-time settings used when
+              ssuueexxeecc was built.  No other action is taken.
+
+SSEEEE AALLSSOO
+       hhttttppdd((88))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                            March 2001                          1
+
+

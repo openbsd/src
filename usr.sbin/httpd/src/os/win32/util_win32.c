@@ -1,4 +1,63 @@
-#include <windows.h>
+/* ====================================================================
+ * The Apache Software License, Version 1.1
+ *
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
+ * reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. The end-user documentation included with the redistribution,
+ *    if any, must include the following acknowledgment:
+ *       "This product includes software developed by the
+ *        Apache Software Foundation (http://www.apache.org/)."
+ *    Alternately, this acknowledgment may appear in the software itself,
+ *    if and wherever such third-party acknowledgments normally appear.
+ *
+ * 4. The names "Apache" and "Apache Software Foundation" must
+ *    not be used to endorse or promote products derived from this
+ *    software without prior written permission. For written
+ *    permission, please contact apache@apache.org.
+ *
+ * 5. Products derived from this software may not be called "Apache",
+ *    nor may "Apache" appear in their name, without prior written
+ *    permission of the Apache Software Foundation.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE APACHE SOFTWARE FOUNDATION OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+ * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals on behalf of the Apache Software Foundation.  For more
+ * information on the Apache Software Foundation, please see
+ * <http://www.apache.org/>.
+ *
+ * Portions of this software are based upon public domain software
+ * originally written at the National Center for Supercomputing Applications,
+ * University of Illinois, Urbana-Champaign.
+ */
+
+#ifdef WIN32
+
 #include <sys/stat.h>
 #include <stdarg.h>
 #include <time.h>
@@ -24,140 +83,185 @@ static BOOL OnlyDots(char *pString)
     return TRUE;
 }
 
+
 /* Accepts as input a pathname, and tries to match it to an 
  * existing path and return the pathname in the case that
  * is present on the existing path.  This routine also
  * converts alias names to long names.
+ *
+ * WARNING: Folding to systemcase fails when /path/to/foo/../bar
+ * is given and foo does not exist, is not a directory.
  */
 API_EXPORT(char *) ap_os_systemcase_filename(pool *pPool, 
                                              const char *szFile)
 {
-    char buf[HUGE_STRING_LEN];
-    char *pInputName;
-    char *p, *q, *t;
+    char *buf, *t, *r;
+    const char *q, *p;
     BOOL bDone = FALSE;
     BOOL bFileExists = TRUE;
     HANDLE hFind;
     WIN32_FIND_DATA wfd;
+    size_t buflen;
+    int slack = 0;
 
-    if (!szFile || strlen(szFile) == 0 || strlen(szFile) >= sizeof(buf))
+    if (!szFile || strlen(szFile) == 0)
         return ap_pstrdup(pPool, "");
 
-    t = buf;
-    pInputName = ap_pstrdup(pPool, szFile);
+    buflen = strlen(szFile);
+    t = buf = ap_palloc(pPool, buflen + 1);
+    q = szFile;
 
-    /* First convert all slashes to \ so Win32 calls work OK */
-    for (p = pInputName; *p; p++) {
-        if (*p == '/')
-            *p = '\\';
-    }
-    
-    q = p = pInputName;
     /* If there is drive information, copy it over. */ 
-    if (pInputName[1] == ':') {
-        /* This is correct - if systemcase is used for
+    if (szFile[1] == ':') {
+        /* Lowercase, so that when systemcase is used for
          * comparison, d: designations will match
-         */                    
-        *(t++) = tolower(*p++);
-        *(t++) = *p++;
-        q = p;
-
-        /* If all we have is a drive letter, then we are done */
-        if (!*p)
-            bDone = TRUE;
-    }    
-
-    if (*p == '\\') {
-        ++p;
-        if (*p == '\\')  /* UNC name */
+         */                 
+        *(t++) = tolower(*(q++));
+        *(t++) = *(q++);
+    }
+    else if ((*q == '/') || (*q == '\\')) {
+        /* Get past the root path (/ or //foo/bar/) so we can go
+         * on to normalize individual path elements.
+         */
+        *(t++) = '\\', ++q;
+        if ((*q == '/') || (*q == '\\'))  /* UNC name */
         {
-            /* Get past the machine name.  FindFirstFile */
-            /* will not find a machine name only */
-            *(t++) = '\\';
-            ++q;
-            p = strchr(p + 1, '\\'); 
-            if (p)
+                /* Lower-case the machine name, so compares match.
+                 * FindFirstFile won't parse \\machine alone
+                 */
+            *(t++) = '\\', ++q;
+            for (p = q; *p && (*p != '/') && (*p != '\\'); ++p)
+                /* continue */ ;
+            if (*p || p > q) 
             {
-                p++;
-                /* Get past the share name.  FindFirstFile */
-                /* will not find a \\machine\share name only */
-                p = strchr(p, '\\'); 
-                if (p) {
-                    /* This was faulty - as of 1.3.13 \\machine\share 
-                     * name is now always lowercased
-                     */
-                    strncpy(t,q,p-q);
-                    strlwr(t);
-                    t += p - q;
-                    q = p;
-                    p++;
+                /* Lower-case the machine name, so compares match.
+                 * FindFirstFile won't parse \\machine\share alone
+                 */
+                memcpy(t, q, p - q);
+                t[p - q] = '\0';
+                strlwr(t);
+                t += p - q;
+                q = p;
+                if (*p) {
+                    *(t++) = '\\', ++q;
+                    for (p = q; *p && (*p != '/') && (*p != '\\'); ++p)
+                        /* continue */ ;
+                    if (*p || p > q) 
+                    {
+                        /* Copy the lower-cased share name.  FindFirstFile 
+                         * cannot not find a \\machine\share name only 
+                         */
+                        memcpy(t, q, p - q);
+                        t[p - q] = '\0';
+                        strlwr(t);
+                        t += p - q;
+                        q = p;
+                        if (*p)
+                            *(t++) = '\\', ++q;
+                        else
+                            bFileExists = FALSE;
+                    }
+                    else
+                        bFileExists = FALSE;
                 }
+                else
+                    bFileExists = FALSE;
             }
-
-            if (!p) {
+            else
                 bFileExists = FALSE;
-                p = q;
-            }
         }
     }
 
-    p = strchr(p, '\\');
+    while (bFileExists) {
 
-    while (!bDone) {
-        if (p)
-            *p = '\0';
+        /* parse past any leading slashes */
+        for (; (*q == '/') || (*q == '\\'); ++q)
+            *(t++) = '\\';
 
-        if (strchr(q, '*') || strchr(q, '?'))
-            bFileExists = FALSE;
+        /* break on end of string */
+        if (!*q)
+            break;
+
+        /* get to the end of this path segment */
+        for (p = q; *p && (*p != '/') && (*p != '\\'); ++p)
+            /* continue */ ;
+                
+        /* copy the segment */
+        memcpy(t, q, p - q);
+        t[p - q] = '\0';
+
+        /* Test for nasties that can exhibit undesired effects */
+        if (strpbrk(t, "?\"<>*|:")) {
+            t += p - q;
+            q = p;
+            break;
+        }
 
         /* If the path exists so far, call FindFirstFile
          * again.  However, if this portion of the path contains
          * only '.' charaters, skip the call to FindFirstFile
          * since it will convert '.' and '..' to actual names.
-         * Note: in the call to OnlyDots, we may have to skip
-         *       a leading slash.
+         * On win32, '...' is an alias for '..', so we gain 
+         * a bit of slack.
          */
-        if (bFileExists && !OnlyDots((*q == '.' ? q : q+1))) {            
-            hFind = FindFirstFile(pInputName, &wfd);
-            
-            if (hFind == INVALID_HANDLE_VALUE) {
-                bFileExists = FALSE;
+        if (*t == '.' && OnlyDots(t)) {
+            if (p - q == 3) {
+                t += 2;
+                q = p;
+                ++slack;
             }
             else {
-                FindClose(hFind);
-
-                if (*q == '\\')
-                    *(t++) = '\\';
-                t = strchr(strcpy(t, wfd.cFileName), '\0');
+                t += p - q;
+                q = p;
             }
-        }
-        
-        if (!bFileExists || OnlyDots((*q == '.' ? q : q+1))) {
-            /* XXX: Comparison could be faulty ...\unknown
-             * names may not match!
-             */
-            strcpy(t, q);
-            t = strchr(t, '\0');
-        }
-        
-        if (p) {
-            q = p;
-            *p++ = '\\';
-            p = strchr(p, '\\');
+            /* Paths of 4 dots or more are invalid */
+            if (p - q > 3)
+                break;
         }
         else {
-            bDone = TRUE;
+            if ((hFind = FindFirstFile(buf, &wfd)) == INVALID_HANDLE_VALUE) {
+                t += p - q;
+                q = p;
+                break;
+            }
+            else {
+                size_t fnlen = strlen(wfd.cFileName);
+                FindClose(hFind);
+                /* the string length just changed, could have shrunk
+                 * (trailing spaces or dots) or could have grown 
+                 * (longer filename aliases).  Realloc as necessary
+                 */
+                slack -= fnlen - (p - q);
+                if (slack < 0) {
+                    char *n;
+                    slack += buflen + fnlen - (p - q);
+                    buflen += buflen + fnlen - (p - q);
+                    n = ap_palloc(pPool, buflen + 1);
+                    memcpy (n, buf, t - buf);
+                    t = n + (t - buf);
+                    buf = n;
+                }
+                memcpy(t, wfd.cFileName, fnlen);
+                t += fnlen;
+                q = p;
+                if (!(wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+                    break;
+            }
         }
     }
-    *t = '\0';
-    
-    /* Finally, convert all slashes to / so server code handles it ok */
-    for (p = buf; *p; p++) {
-        if (*p == '\\')
-            *p = '/';
+
+    /* Convert all parsed '\'s to '/' for canonical form (doesn't touch
+     * the non-existant portion of the path whatsoever.)
+     */
+    for (r = buf; r < t; ++r) {
+        if (*r == '\\')
+            *r = '/';
     }
 
-    return ap_pstrdup(pPool, buf);
+    /* Copy the non-existant portion (minimally nul-terminates the string) */
+    strcpy(t, q);
+    
+    return buf;
 }
 
 
@@ -234,56 +338,15 @@ API_EXPORT(char *) ap_os_case_canonical_filename(pool *pPool,
      *  simply truncated, with no embedded '~'.  Further, this behavior
      *  can be modified on WinNT volumes.  This was not a safe test,
      *  therefore exclude the '~' pretest.
-     */     
+     */
 #ifdef WIN32_SHORT_FILENAME_INSECURE_BEHAVIOR
      p = strchr(pNewStr, '~');
      if (p != NULL)
 #endif
-     {
-        char *pConvertedName, *pQstr, *pPstr;
-        char buf[HUGE_STRING_LEN];
-        /* We potentially have a short name.  Call 
-         * ap_os_systemcase_filename to examine the filesystem
-         * and possibly extract the long name.
-         */
-        pConvertedName = ap_os_systemcase_filename(pPool, pNewStr);
-
-        /* Since we want to preserve the incoming case as much
-         * as we can, compare for differences in the string and
-         * only substitute in the path names that changed.
-         */
-        if (stricmp(pNewStr, pConvertedName)) {
-            buf[0] = '\0';
-
-            q = pQstr = pConvertedName;
-            p = pPstr = pNewStr;
-            do {
-                q = strchr(q,'/');
-                p = strchr(p,'/');
-
-                if (p != NULL) {
-                    *q = '\0';
-                    *p = '\0';
-                }
-
-                if (stricmp(pQstr, pPstr)) 
-                    strcat(buf, pQstr);   /* Converted name */
-                else 
-                    strcat(buf, pPstr);   /* Original name  */
-
-
-                if (p != NULL) {
-                    pQstr = q;
-                    pPstr = p;
-                    *q++ = '/';
-                    *p++ = '/';
-                }
-
-            } while (p != NULL); 
-
-            pNewStr = ap_pstrdup(pPool, buf);
-        }
-    }
+    /* ap_os_systemcase_filename now changes the case of only
+     * the pathname elements that are found.
+     */
+        pNewStr = ap_os_systemcase_filename(pPool, pNewStr);
 
     return pNewStr;
 }
@@ -298,267 +361,6 @@ API_EXPORT(char *) ap_os_canonical_filename(pool *pPool, const char *szFile)
     return pNewName;
 }
 
-/* Win95 doesn't like trailing /s. NT and Unix don't mind. This works 
- * around the problem.
- * Errr... except if it is UNC and we are referring to the root of 
- * the UNC, we MUST have a trailing \ and we can't use /s. Jeez. 
- * Not sure if this refers to all UNCs or just roots,
- * but I'm going to fix it for all cases for now. (Ben)
- */
-
-#undef stat
-API_EXPORT(int) os_stat(const char *szPath, struct stat *pStat)
-{
-    int n;
-    int len = strlen(szPath);
-    
-    if ((len == 0) || (len >= MAX_PATH)) {
-        return -1;
-    }
-
-    if (szPath[0] == '/' && szPath[1] == '/') {
-	char buf[_MAX_PATH];
-	char *s;
-	int nSlashes = 0;
-
-	strcpy(buf, szPath);
-	for (s = buf; *s; ++s) {
-	    if (*s == '/') {
-		*s = '\\';
-		++nSlashes;
-	    }
-	}
-	/* then we need to add one more to get \\machine\share\ */
-	if (nSlashes == 3) {
-            if (++len >= MAX_PATH) {
-                return -1;
-            }
-	    *s++ = '\\';
-	}
-	*s = '\0';
-	return stat(buf, pStat);
-    }
-
-    /*
-     * Below removes the trailing /, however, do not remove
-     * it in the case of 'x:/' or stat will fail
-     */
-    n = strlen(szPath);
-    if ((szPath[n - 1] == '\\' || szPath[n - 1] == '/') &&
-        !(n == 3 && szPath[1] == ':')) {
-        char buf[_MAX_PATH];
-        
-        ap_assert(n < _MAX_PATH);
-        strcpy(buf, szPath);
-        buf[n - 1] = '\0';
-        
-        return stat(buf, pStat);
-    }
-    return stat(szPath, pStat);
-}
-
-/* Fix two really crap problems with Win32 spawn[lv]e*:
- *
- *  1. Win32 doesn't deal with spaces in argv.
- *  2. Win95 doesn't like / in cmdname.
- */
-
-#undef _spawnv
-API_EXPORT(int) os_spawnv(int mode, const char *cmdname,
-			  const char *const *argv)
-{
-    int n;
-    char **aszArgs;
-    const char *szArg;
-    char *szCmd;
-    char *s;
-    
-    szCmd = _alloca(strlen(cmdname)+1);
-    strcpy(szCmd, cmdname);
-    for (s = szCmd; *s; ++s) {
-        if (*s == '/') {
-            *s = '\\';
-	}
-    }
-
-    for (n = 0; argv[n]; ++n)
-        ;
-
-    aszArgs = _alloca((n + 1) * sizeof(const char *));
-
-    for (n = 0; szArg = argv[n]; ++n) {
-        if (strchr(szArg, ' ')) {
-            int l = strlen(szArg);
-
-            aszArgs[n] = _alloca(l + 2 + 1);
-            aszArgs[n][0] = '"';
-            strcpy(&aszArgs[n][1], szArg);
-            aszArgs[n][l + 1] = '"';
-            aszArgs[n][l + 2] = '\0';
-        }
-        else {
-            aszArgs[n] = (char *)szArg;
-        }
-    }
-
-    aszArgs[n] = NULL;
-
-    return _spawnv(mode, szCmd, aszArgs);
-}
-
-#undef _spawnve
-API_EXPORT(int) os_spawnve(int mode, const char *cmdname,
-			   const char *const *argv, const char *const *envp)
-{
-    int n;
-    char **aszArgs;
-    const char *szArg;
-    char *szCmd;
-    char *s;
-    
-    szCmd = _alloca(strlen(cmdname)+1);
-    strcpy(szCmd, cmdname);
-    for (s = szCmd; *s; ++s) {
-        if (*s == '/') {
-            *s = '\\';
-	}
-    }
-    
-    for (n = 0; argv[n]; ++n)
-        ;
-
-    aszArgs = _alloca((n + 1)*sizeof(const char *));
-
-    for (n = 0; szArg = argv[n]; ++n){
-        if (strchr(szArg, ' ')) {
-            int l = strlen(szArg);
-
-            aszArgs[n] = _alloca(l + 2 + 1);
-            aszArgs[n][0] = '"';
-            strcpy(&aszArgs[n][1], szArg);
-            aszArgs[n][l + 1] = '"';
-            aszArgs[n][l + 2] = '\0';
-        }
-        else {
-            aszArgs[n] = (char *)szArg;
-        }
-    }
-
-    aszArgs[n] = NULL;
-
-    return _spawnve(mode, szCmd, aszArgs, envp);
-}
-
-API_EXPORT_NONSTD(int) os_spawnle(int mode, const char *cmdname, ...)
-{
-    int n;
-    va_list vlist;
-    char **aszArgs;
-    const char *szArg;
-    const char *const *aszEnv;
-    char *szCmd;
-    char *s;
-    
-    szCmd = _alloca(strlen(cmdname)+1);
-    strcpy(szCmd, cmdname);
-    for (s = szCmd; *s; ++s) {
-        if (*s == '/') {
-            *s = '\\';
-	}
-    }
-
-    va_start(vlist, cmdname);
-    for (n = 0; va_arg(vlist, const char *); ++n)
-        ;
-    va_end(vlist);
-
-    aszArgs = _alloca((n + 1) * sizeof(const char *));
-
-    va_start(vlist, cmdname);
-    for (n = 0; szArg = va_arg(vlist, const char *); ++n) {
-        if (strchr(szArg, ' ')) {
-            int l = strlen(szArg);
-
-            aszArgs[n] = _alloca(l + 2 + 1);
-            aszArgs[n][0] = '"';
-            strcpy(&aszArgs[n][1], szArg);
-            aszArgs[n][l + 1] = '"';
-            aszArgs[n][l + 2] = '\0';
-        }
-        else {
-            aszArgs[n] = (char *)szArg;
-        }
-    }
-
-    aszArgs[n] = NULL;
-
-    aszEnv = va_arg(vlist, const char *const *);
-    va_end(vlist);
-    
-    return _spawnve(mode, szCmd, aszArgs, aszEnv);
-}
-
-#undef strftime
-
-/* Partial replacement for strftime. This adds certain expandos to the
- * Windows version
- */
-
-API_EXPORT(int) os_strftime(char *s, size_t max, const char *format,
-                            const struct tm *tm) {
-   /* If the new format string is bigger than max, the result string probably
-    * won't fit anyway. When %-expandos are added, made sure the padding below
-    * is enough.
-    */
-    char *new_format = (char *) _alloca(max + 11);
-    size_t i, j, format_length = strlen(format);
-    int return_value;
-    int length_written;
-
-    for (i = 0, j = 0; (i < format_length && j < max);) {
-        if (format[i] != '%') {
-            new_format[j++] = format[i++];
-            continue;
-        }
-        switch (format[i+1]) {
-            case 'D':
-                /* Is this locale dependent? Shouldn't be...
-                   Also note the year 2000 exposure here */
-                memcpy(new_format + j, "%m/%d/%y", 8);
-                i += 2;
-                j += 8;
-                break;
-            case 'r':
-                memcpy(new_format + j, "%I:%M:%S %p", 11);
-                i += 2;
-                j += 11;
-                break;
-            case 'T':
-                memcpy(new_format + j, "%H:%M:%S", 8);
-                i += 2;
-                j += 8;
-                break;
-            case 'e':
-                length_written = ap_snprintf(new_format + j, max - j, "%2d",
-                    tm->tm_mday);
-                j = (length_written == -1) ? max : (j + length_written);
-                i += 2;
-                break;
-            default:
-                /* We know we can advance two characters forward here. */
-                new_format[j++] = format[i++];
-                new_format[j++] = format[i++];
-        }
-    }
-    if (j >= max) {
-        *s = '\0';  /* Defensive programming, okay since output is undefined */
-        return_value = 0;
-    } else {
-        new_format[j] = '\0';
-        return_value = strftime(s, max, new_format, tm);
-    }
-    return return_value;
-}
 
 /*
  * ap_os_is_filename_valid is given a filename, and returns 0 if the filename
@@ -743,7 +545,7 @@ API_EXPORT(const char *) ap_os_dso_error(void)
      */
     
     nErrorCode = GetLastError();
-    len = ap_snprintf(errstr, sizeof(errstr) - len, "(%d) ", nErrorCode);
+    len = ap_snprintf(errstr, sizeof(errstr), "(%d) ", nErrorCode);
 
     len += FormatMessage( 
             FORMAT_MESSAGE_FROM_SYSTEM,
@@ -766,3 +568,5 @@ API_EXPORT(const char *) ap_os_dso_error(void)
     }
     return errstr;
 }
+
+#endif /* WIN32 */

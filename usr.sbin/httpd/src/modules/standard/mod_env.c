@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -218,6 +218,15 @@ static const char *add_env_module_vars_unset(cmd_parms *cmd,
     sconf->unsetenv = sconf->unsetenv ?
         ap_pstrcat(cmd->pool, sconf->unsetenv, " ", arg, NULL) :
          arg;
+
+    if (sconf->vars_present && !cmd->path) {
+        /* if {Set,Pass}Env FOO, UnsetEnv FOO
+         * are in the base config, merge never happens,
+         * unset never happens, so just unset now
+         */
+        ap_table_unset(sconf->vars, arg);
+    }
+
     return NULL;
 }
 

@@ -1,0 +1,132 @@
+
+
+
+apachectl(1)                                         apachectl(1)
+
+
+NNAAMMEE
+       apachectl - Apache HTTP server control interface
+
+SSYYNNOOPPSSIISS
+       aappaacchheeccttll _c_o_m_m_a_n_d [...]
+
+DDEESSCCRRIIPPTTIIOONN
+       aappaacchheeccttll  is a front end to the Apache HyperText Transfer
+       Protocol (HTTP) server.  It is designed to help the admin-
+       istrator  control the functioning of the Apache hhttttppdd dae-
+       mon.
+
+       NNOOTTEE:: If your Apache installation uses non-standard paths,
+       you  will  need  to  edit  the aappaacchheeccttll script to set the
+       appropriate paths to your PID file and your hhttttppdd  binary.
+       See the comments in the script for details.
+
+       The  aappaacchheeccttll  script  returns a 0 exit value on success,
+       and >0 if an error occurs.  For  more  details,  view  the
+       comments in the script.
+
+       Full    documentation   for   Apache   is   available   at
+       hhttttpp::////hhttttppdd..aappaacchhee..oorrgg//
+
+OOPPTTIIOONNSS
+       The _c_o_m_m_a_n_d can be  any  one  or  more  of  the  following
+       options:
+
+       ssttaarrtt       Start the Apache daemon.  Gives an error if it
+                   is already running.
+
+       ssttoopp        Stops the Apache daemon.
+
+       rreessttaarrtt     Restarts the Apache daemon  by  sending  it  a
+                   SIGHUP.   If  the daemon is not running, it is
+                   started.  This  command  automatically  checks
+                   the  configuration files via ccoonnffiiggtteesstt before
+                   initiating the restart  to  make  sure  Apache
+                   doesn't die.
+
+       ffuullllssttaattuuss  Displays a full status report from mmoodd__ssttaattuuss..
+                   For this to work, you need to have  mod_status
+                   enabled   on  your  server  and  a  text-based
+                   browser such as _l_y_n_x available on your system.
+                   The  URL  used to access the status report can
+                   be set by editing the  SSTTAATTUUSSUURRLL  variable  in
+                   the script.
+
+       ssttaattuuss      Displays  a  brief  status report.  Similar to
+                   the fullstatus option, except that the list of
+                   requests currently being served is omitted.
+
+       ggrraacceeffuull    Gracefully restarts the Apache daemon by send-
+                   ing it  a  SIGUSR1.   If  the  daemon  is  not
+
+
+
+                          September 1997                        1
+
+
+
+
+
+apachectl(1)                                         apachectl(1)
+
+
+                   running,  it  is started.  This differs from a
+                   normal restart in that currently open  connec-
+                   tions  are not aborted.  A side effect is that
+                   old log files will not be closed  immediately.
+                   This  means  that  if  used  in a log rotation
+                   script, a substantial delay may  be  necessary
+                   to  ensure  that  the old log files are closed
+                   before processing them.  This command automat-
+                   ically checks the configuration files via ccoonn--
+                   ffiiggtteesstt before initiating the restart to  make
+                   sure Apache doesn't die.
+
+       ccoonnffiiggtteesstt  Run  a  configuration  file  syntax  test.  It
+                   parses  the  configuration  files  and  either
+                   reports  SSyynnttaaxx  OOkk  or  detailed  information
+                   about the particular syntax error.
+
+       hheellpp        Displays a short help message.
+
+SSEEEE AALLSSOO
+       hhttttppdd((88))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                          September 1997                        2
+
+

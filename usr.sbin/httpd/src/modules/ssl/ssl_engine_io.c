@@ -491,6 +491,7 @@ static int SSL_sendwithtimeout(BUFF *fb, const char *buf, int len)
     int retry;
     int sock = fb->fd;
     SSL *ssl;
+    int retry;
 
     ssl = ap_ctx_get(fb->ctx, "ssl");
 

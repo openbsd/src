@@ -265,7 +265,7 @@
     be specified with or without a leading dot.</p>
 
     <p><strong>See also</strong>: <a href="#multipleext">Files with
-    multiple extensions</a></p>
+    multiple extensions</a>, <a href="#sethandler">SetHandler</a></p>
     <hr />
 
     <h2><a id="addlanguage" name="addlanguage">AddLanguage</a>
@@ -325,7 +325,8 @@
     be specified with or without a leading dot.</p>
 
     <p><strong>See also</strong>: <a href="#multipleext">Files with
-    multiple extensions</a><br />
+    multiple extensions</a>, <a
+    href="#defaultlanguage">DefaultLanguage</a><br />
      <strong>See also</strong>: <a
     href="./mod_negotiation.html">mod_negotiation</a></p>
     <hr />
@@ -403,6 +404,10 @@
     languages, <samp>DefaultLanguage</samp> can only specify a
     single language.</p>
 
+    <p>For example:</p>
+
+    <code>DefaultLanguage fr</code>
+
     <p>If no <samp>DefaultLanguage</samp> directive is in force,
     and a file does not have any language extensions as configured
     by <samp>AddLanguage</samp>, then that file will be considered
@@ -442,6 +447,10 @@
 
     <p>Note that this will override any filename extensions that
     might determine the media type.</p>
+
+     <strong>See also</strong>: <a
+    href="#addtype">AddType</a></p>
+
     <hr />
 
     <h2><a id="removeencoding"
@@ -482,7 +491,8 @@
     unencoded plaintext file.</p>
 
     <p><b>Note:</b>RemoveEncoding directives are processed
-    <i>after</i> any AddEncoding directives, so it is possible they
+    <i>after</i> any <a href="#addencoding">AddEncoding</a>
+    directives, so it is possible they
     may undo the effects of the latter if both occur within the
     same directory configuration.</p>
 
@@ -605,12 +615,15 @@
     <p>Another example: if you wanted to have the server display a
     status report whenever a URL of
     <code>http://servername/status</code> was called, you might put
-    the following into access.conf:</p>
+    the following into access.conf: (See <a
+    href="mod_status.html">mod_status</a> for more details.)</p>
 <pre>
     &lt;Location /status&gt;
     SetHandler server-status
     &lt;/Location&gt;
 </pre>
+
+    <p><strong>See also</strong>: <a href="#addhandler">AddHandler</a></p>
     <hr />
 
     <h2><a id="typesconfig" name="typesconfig">TypesConfig</a>

@@ -1,3 +1,182 @@
+Changes with Apache 1.3.24
+
+  *) Fixed a segfault in mod_include when #if, #elif, #else, or #endif
+     directives were improperly terminated.  [Cliff Woolley]
+
+  *) Introduce proper escaping of command.com and cmd.exe for Win32.
+     These patches close vulnerability CAN-2002-0061, identified and
+     reported by Ory Segal <ory.segal@sanctuminc>, by which any CGI
+     invocation of .bat or .cmd files could comprimize the system 
+     when the .bat or .cmd was parsed the query args as an argument 
+     to either cmd.exe /c or command.com /c.  [William Rowe]
+
+  *) Add % and \r [C/R] to the dangerous Win32 shell character list.
+     Retain the Unix sh escapes list for compatibility.
+     [William Rowe]
+
+  *) Pass the command line to the cmd.exe /c interpreter double quoted.
+     This fixes a bug that CGI args ending in a double-quote would 
+     cause invocation to fail.  Also, treat command.com as a 16-bit 
+     executable.  [William Rowe]
+
+  *) Win32; Never invoke cmd or bat scripts based on the registry, even 
+     for 'ScriptInterpreterSource Registry' enabled.  [William Rowe]
+
+  *) Provide Win32 users a log of the cgi command invoked, to assist
+     in debugging scripts at LogLevel info.  Also provide env vars
+     at LogLevel debug for additional help to admins troubleshooting
+     the ever mysterious "Premature end of script headers" error.
+     [Aaron Bannert]
+
+  *) Added the 'CGICommandArgs off' directive, to allow admins
+     to disable the query argument passing mechanism in Apache,
+     if future CGI argument vulnerabilities should be discovered.
+     This defaults to 'on', meaning isindex-style query arguments
+     are enabled.  [Aaron Bannert]
+
+  *) When a proxied site was being served, Apache was replacing
+     the original site Server header with it's own, which is not
+     allowed by RFC2616. Fixed. [Graham Leggett]
+
+  *) Fixed the previous multiple-cookie fix in the proxy. Cookies
+     are broken in that they contain dates which in turn contain
+     commas - so merging and then unmerging them breaks Set-Cookie
+     headers. Sigh. [Graham Leggett]
+
+  *) Add ap_uuencode to the httpd.exp exports file used by
+     the AIX linker. [Bill Stoddard]
+
+  *) Win32: Ignore AcceptMutex directive if it is present
+     [Bill Stoddard]
+
+  *) mod_rewrite: restored rnd behavior that was broken in 1.3.23.
+     PR 10090, 10185  [Jeroen Boomgaardt <jeroen@swissclue.com>]
+
+  *) NetWare: Added the command line directive -e that forces all
+     fatal configuration error messages to the logger screen rather
+     than the Apache screen before Apache is unloaded.
+     [Brad Nicholes bnicholes@novell.com]
+
+  *) Add the ProxyIOBufferSize option. Previously the size of the
+     buffer used while reading from the remote server in proxy was
+     taken from ProxyReceiveBufferSize. [Graham Leggett]
+
+  *) Fix a NULL variable check in proxy where we were checking the
+     wrong variable. [Geff Hanoian <geff@pier64.com>]
+
+  *) Fix typo in default config files related to Swedish language
+     documents.  PR: 9906, 10040  [Tomas Ögren <stric@ing.umu.se>,
+     Dennis Lundberg <dennis.lundberg@mdh.se>]
+
+  *) apxs didn't get rebuilt when options were changed. This must have
+     caused much puzzlement in the past. Fixed.
+     [Ben Laurie]
+
+  *) No idea why an HTTP/1.1 proxy would send an HTTP/1.0 request
+     to a remote server by default. Fixed.
+     [Graham Leggett, Gabriel Russell <g.russell@ieee.org>]
+
+  *) NetWare: Added the module mod_log_nw to handle log rotation.
+     This module adds LogRotateDaily and LogRotateInterval to allow
+     all of the custom logs to be either rotated on a daily basis or
+     on a specific interval. Based on a patch by Bertrand Demiddelaer.
+     [Brad Nicholes bnicholes@novell.com]
+
+  *) Fix typo in rotatelogs.8.  [Will Lowe <harpo@thebackrow.net>]
+
+  *) Clean up warnings in mod_proxy [Chuck Murcko <chuck@topsail.org>]
+
+  *) TPF: Use the correct subpool when opening the error log.
+     This prevents a possible SIGPIPE in standalone_main.
+     [David McCreedy <McCreedy@us.ibm.com>]
+
+  *) When proxy enabled a slow frontend client to read from an
+     expensive backend server, it would wait until it had delivered
+     the response to the slow frontend client completely before
+     closing the backend connection. The backend connection is now
+     closed as soon as the last byte is read from it, freeing up
+     resources that would have been tied up unnecessarily.
+     [Graham Leggett, Igor Sysoev <is@rambler-co.ru>]
+
+  *) The proxy code read chunks from the backend server in a
+     hardcoded amount of 8k. The existing ProxyReceiveBufferSize
+     parameter has been overloaded to specify the size of this buffer.
+     [Graham Leggett, Igor Sysoev <is@rambler-co.ru>]
+
+  *) [Security] Prevent invalid client hostnames from appearing in
+     the log file. If a double-reverse lookup was performed (e.g.,
+     for an "Allow from .my.domain" directive) but failed, then
+     a spoofed dns-reverse-address could appear in the logs. Now
+     the numeric address is logged instead. Note that
+     reverse-address-spoofing did NOT actually allow access
+     to any protected resource!  [Martin Kraemer]
+
+  *) Some browsers ignore cookies that have been merged into a
+     single Set-Cookie header. Set-Cookie and Set-Cookie2 headers
+     are now unmerged in the http proxy before being sent to the
+     client. [Graham Leggett]
+
+  *) Fix a problem with proxy where each entry of a duplicated
+     header such as Set-Cookie would overwrite and obliterate the
+     previous value of the header, resulting in multiple header
+     values (like cookies) going missing.
+     [Graham Leggett, Joshua Slive]
+
+  *) Fix a problem with proxy where X-Cache headers were
+     overwriting and then obliterating upstream X-Cache headers
+     from other proxies.
+     [Graham Leggett, Jacob Rief <jacob.rief@tiscover.com>]
+
+  *) Win32: Work around a bug in Windows XP that caused data
+     corruption on writes to the network. The WinXP bug
+     is tickled by the combined use of WSADuplicateSocket 
+     and blocking send() calls.
+     [Bill Stoddard, Bill Rowe, Allan Edwards, Szabolcs Szakacsits]
+     
+  *) Add 'IgnoreCase' keyword to the IndexOptions directive;
+     if active, upper- and lower-case letters are insignificant
+     in ordering.  In other words, all A* and a* files will be
+     listed together, rather than the a* ones after all the [A-Z]*
+     ones.  [Tullio Andreatta <tullio@logicom.it>]
+
+  *) NetWare: Implemented the real ap_os_case_canonical_filename()
+     function that retrieves the accurately cased path and file
+     name from the file system. [Brad Nicholes bnicholes@novell.com]
+
+  *) Fix the longstanding bug that errors (returned by src/Configure)
+     would not be noticed by the top level configure script.
+     That was bad for automated configurations. [Martin Kraemer]
+
+  *) Link with -lpthread on Solaris since we reference pthread
+     functions for the accept mutex.  Previously, the link step
+     would succeed but we would link to bogus versions of the
+     pthread functions in libc, apparently breaking accept mutex 
+     serialization when "AcceptMutex pthread" was used and 
+     apparently breaking some third-party modules whether
+     or not "AcceptMutex pthread" was used.  [Jeff Trawick]
+
+  *) The Location: response header field, used for external
+     redirect, *must* be an absoluteURI.  The Redirect directive
+     tested for that, but RedirectMatch didn't -- it would allow
+     almost anything through.  Now it will try to turn an abs_path
+     into an absoluteURI, but it will correctly varf like Redirect
+     if the final redirection target isn't an absoluteURI.  [Ken Coar]
+
+  *) apxs: fix bug that prevented -S option from containing quotes.
+     [Ben Laurie]
+
+  *) ftp proxy: various cosmetic and functional improvements
+     - Allow for /%2f hack (to access the root directory / )
+     - properly escape generated links in dir listing
+     - do directory listings in ASCII, to avoid problems with EBCDIC
+       servers
+     - close data & control channels to server properly
+     [Martin Kraemer]
+
+  *) NetWare: Added mod_auth_dbm to the project file.  
+     [Brad Nicholes bnicholes@novell.com]
+
+
 Changes with Apache 1.3.23
  
   *) Changed the symbol mapping of the following from API_EXPORT

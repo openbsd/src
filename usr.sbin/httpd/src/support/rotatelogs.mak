@@ -47,8 +47,11 @@ ALL : "$(OUTDIR)\rotatelogs.exe"
 !ENDIF 
 
 CLEAN :
+	-@erase "$(INTDIR)\ap_cpystrn.obj"
+	-@erase "$(INTDIR)\ap_snprintf.obj"
+	-@erase "$(INTDIR)\os.obj"
+	-@erase "$(INTDIR)\rotatelogs.idb"
 	-@erase "$(INTDIR)\rotatelogs.obj"
-	-@erase "$(INTDIR)\vc50.idb"
 	-@erase "$(OUTDIR)\rotatelogs.exe"
 	-@erase "$(OUTDIR)\rotatelogs.map"
 
@@ -56,8 +59,9 @@ CLEAN :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
 CPP=cl.exe
-CPP_PROJ=/nologo /MD /W3 /GX /O2 /I "..\include" /I "..\os\win32" /D "WIN32" /D\
- "NDEBUG" /D "_CONSOLE" /D "_MBCS" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_PROJ=/nologo /MD /W3 /O2 /I "..\include" /I "..\os\win32" /D "WIN32" /D\
+ "NDEBUG" /D "_CONSOLE" /D "_MBCS" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\rotatelogs"\
+ /FD /c 
 CPP_OBJS=.\Release/
 CPP_SBRS=.
 
@@ -97,10 +101,13 @@ BSC32_FLAGS=/nologo /o"$(OUTDIR)\rotatelogs.bsc"
 BSC32_SBRS= \
 	
 LINK32=link.exe
-LINK32_FLAGS=/nologo /subsystem:console /incremental:no\
- /pdb:"$(OUTDIR)\rotatelogs.pdb" /map:"$(INTDIR)\rotatelogs.map" /machine:I386\
- /out:"$(OUTDIR)\rotatelogs.exe" 
+LINK32_FLAGS=kernel32.lib wsock32.lib /nologo /subsystem:console\
+ /incremental:no /pdb:"$(OUTDIR)\rotatelogs.pdb" /map:"$(INTDIR)\rotatelogs.map"\
+ /machine:I386 /out:"$(OUTDIR)\rotatelogs.exe" 
 LINK32_OBJS= \
+	"$(INTDIR)\ap_cpystrn.obj" \
+	"$(INTDIR)\ap_snprintf.obj" \
+	"$(INTDIR)\os.obj" \
 	"$(INTDIR)\rotatelogs.obj"
 
 "$(OUTDIR)\rotatelogs.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -127,9 +134,11 @@ ALL : "$(OUTDIR)\rotatelogs.exe"
 !ENDIF 
 
 CLEAN :
+	-@erase "$(INTDIR)\ap_cpystrn.obj"
+	-@erase "$(INTDIR)\ap_snprintf.obj"
+	-@erase "$(INTDIR)\os.obj"
+	-@erase "$(INTDIR)\rotatelogs.idb"
 	-@erase "$(INTDIR)\rotatelogs.obj"
-	-@erase "$(INTDIR)\vc50.idb"
-	-@erase "$(INTDIR)\vc50.pdb"
 	-@erase "$(OUTDIR)\rotatelogs.exe"
 	-@erase "$(OUTDIR)\rotatelogs.map"
 	-@erase "$(OUTDIR)\rotatelogs.pdb"
@@ -138,9 +147,9 @@ CLEAN :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
 CPP=cl.exe
-CPP_PROJ=/nologo /MDd /W3 /Gm /GX /Zi /Od /I "..\include" /I "..\os\win32" /D\
- "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\"\
- /FD /c 
+CPP_PROJ=/nologo /MDd /W3 /GX /Zi /Od /I "..\include" /I "..\os\win32" /D\
+ "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /Fo"$(INTDIR)\\"\
+ /Fd"$(INTDIR)\rotatelogs" /FD /c 
 CPP_OBJS=.\Debug/
 CPP_SBRS=.
 
@@ -180,10 +189,13 @@ BSC32_FLAGS=/nologo /o"$(OUTDIR)\rotatelogs.bsc"
 BSC32_SBRS= \
 	
 LINK32=link.exe
-LINK32_FLAGS=/nologo /subsystem:console /incremental:no\
- /pdb:"$(OUTDIR)\rotatelogs.pdb" /map:"$(INTDIR)\rotatelogs.map" /debug\
- /machine:I386 /out:"$(OUTDIR)\rotatelogs.exe" /pdbtype:sept 
+LINK32_FLAGS=kernel32.lib wsock32.lib /nologo /subsystem:console\
+ /incremental:no /pdb:"$(OUTDIR)\rotatelogs.pdb" /map:"$(INTDIR)\rotatelogs.map"\
+ /debug /machine:I386 /out:"$(OUTDIR)\rotatelogs.exe" 
 LINK32_OBJS= \
+	"$(INTDIR)\ap_cpystrn.obj" \
+	"$(INTDIR)\ap_snprintf.obj" \
+	"$(INTDIR)\os.obj" \
 	"$(INTDIR)\rotatelogs.obj"
 
 "$(OUTDIR)\rotatelogs.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -196,6 +208,63 @@ LINK32_OBJS= \
 
 !IF "$(CFG)" == "rotatelogs - Win32 Release" || "$(CFG)" ==\
  "rotatelogs - Win32 Debug"
+SOURCE=..\ap\ap_cpystrn.c
+DEP_CPP_AP_CP=\
+	"..\include\ap.h"\
+	"..\include\ap_alloc.h"\
+	"..\include\ap_config.h"\
+	"..\include\ap_ctype.h"\
+	"..\include\ap_ebcdic.h"\
+	"..\include\ap_mmn.h"\
+	"..\include\buff.h"\
+	"..\include\hsregex.h"\
+	"..\include\httpd.h"\
+	"..\include\util_uri.h"\
+	"..\os\win32\os.h"\
+	"..\os\win32\readdir.h"\
+	
+NODEP_CPP_AP_CP=\
+	"..\include\ap_config_auto.h"\
+	"..\include\sfio.h"\
+	
+
+"$(INTDIR)\ap_cpystrn.obj" : $(SOURCE) $(DEP_CPP_AP_CP) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\ap\ap_snprintf.c
+DEP_CPP_AP_SN=\
+	"..\include\ap.h"\
+	"..\include\ap_alloc.h"\
+	"..\include\ap_config.h"\
+	"..\include\ap_ctype.h"\
+	"..\include\ap_ebcdic.h"\
+	"..\include\ap_mmn.h"\
+	"..\include\buff.h"\
+	"..\include\hsregex.h"\
+	"..\include\httpd.h"\
+	"..\include\util_uri.h"\
+	"..\os\win32\os.h"\
+	"..\os\win32\readdir.h"\
+	
+NODEP_CPP_AP_SN=\
+	"..\include\ap_config_auto.h"\
+	"..\include\sfio.h"\
+	
+
+"$(INTDIR)\ap_snprintf.obj" : $(SOURCE) $(DEP_CPP_AP_SN) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=..\os\win32\os.c
+DEP_CPP_OS_C4=\
+	"..\os\win32\os.h"\
+	
+
+"$(INTDIR)\os.obj" : $(SOURCE) $(DEP_CPP_OS_C4) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
 SOURCE=.\rotatelogs.c
 DEP_CPP_ROTAT=\
 	"..\include\ap_config.h"\

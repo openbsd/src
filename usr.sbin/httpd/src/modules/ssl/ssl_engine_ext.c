@@ -620,7 +620,7 @@ static int ssl_ext_mp_clientcert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
          * so lets send the first one we came across 
          */   
         xi = sk_X509_INFO_value(pcerts, 0);
-        cp  = X509_NAME_oneline(X509_get_subject_name(xi->x509), NULL, 0);
+        cp = X509_NAME_oneline(X509_get_subject_name(xi->x509), NULL, 0);
         ssl_log(s, SSL_LOG_DEBUG,
                 "SSL Proxy: (%s) no acceptable CA list, sending %s", 
                 servername, cp != NULL ? cp : "-unknown-");

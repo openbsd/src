@@ -1,58 +1,61 @@
 #!/usr/local/bin/perl
 ## ====================================================================
-## Copyright (c) 1998-1999 The Apache Group.  All rights reserved.
+## The Apache Software License, Version 1.1
+##
+## Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
+## reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
 ## modification, are permitted provided that the following conditions
 ## are met:
 ##
 ## 1. Redistributions of source code must retain the above copyright
-##    notice, this list of conditions and the following disclaimer. 
+##    notice, this list of conditions and the following disclaimer.
 ##
 ## 2. Redistributions in binary form must reproduce the above copyright
 ##    notice, this list of conditions and the following disclaimer in
 ##    the documentation and/or other materials provided with the
 ##    distribution.
 ##
-## 3. All advertising materials mentioning features or use of this
-##    software must display the following acknowledgment:
-##    "This product includes software developed by the Apache Group
-##    for use in the Apache HTTP server project (http://www.apache.org/)."
+## 3. The end-user documentation included with the redistribution,
+##    if any, must include the following acknowledgment:
+##       "This product includes software developed by the
+##        Apache Software Foundation (http://www.apache.org/)."
+##    Alternately, this acknowledgment may appear in the software itself,
+##    if and wherever such third-party acknowledgments normally appear.
 ##
-## 4. The names "Apache Server" and "Apache Group" must not be used to
-##    endorse or promote products derived from this software without
-##    prior written permission. For written permission, please contact
-##    apache@apache.org.
+## 4. The names "Apache" and "Apache Software Foundation" must
+##    not be used to endorse or promote products derived from this
+##    software without prior written permission. For written
+##    permission, please contact apache@apache.org.
 ##
-## 5. Products derived from this software may not be called "Apache"
-##    nor may "Apache" appear in their names without prior written
-##    permission of the Apache Group.
+## 5. Products derived from this software may not be called "Apache",
+##    nor may "Apache" appear in their name, without prior written
+##    permission of the Apache Software Foundation.
 ##
-## 6. Redistributions of any form whatsoever must retain the following
-##    acknowledgment:
-##    "This product includes software developed by the Apache Group
-##    for use in the Apache HTTP server project (http://www.apache.org/)."
-##
-## THIS SOFTWARE IS PROVIDED BY THE APACHE GROUP ``AS IS'' AND ANY
-## EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-## IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-## PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE APACHE GROUP OR
+## THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+## WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+## OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+## DISCLAIMED.  IN NO EVENT SHALL THE APACHE SOFTWARE FOUNDATION OR
 ## ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-## SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-## NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-## LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-## HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-## STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-## ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
-## OF THE POSSIBILITY OF SUCH DAMAGE.
+## SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+## LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+## USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+## ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+## OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+## OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+## SUCH DAMAGE.
 ## ====================================================================
 ##
 ## This software consists of voluntary contributions made by many
-## individuals on behalf of the Apache Group and was originally based
-## on public domain software written at the National Center for
-## Supercomputing Applications, University of Illinois, Urbana-Champaign.
-## For more information on the Apache Group and the Apache HTTP server
-## project, please see <http://www.apache.org/>.
+## individuals on behalf of the Apache Software Foundation.  For more
+## information on the Apache Software Foundation, please see
+## <http://www.apache.org/>.
+##
+## Portions of this software are based upon public domain software
+## originally written at the National Center for Supercomputing Applications,
+## University of Illinois, Urbana-Champaign.
+##
 ##
 
 ##
@@ -208,6 +211,7 @@ if (@opt_S) {
                 print STDERR "apxs:Error: no config variable $var\n";
                 &usage;
             }
+	    $val=~s/"/\\"/g;
             eval "\$CFG_${var}=\"${val}\"";
         } else {
             print STDERR "apxs:Error: malformatted -S option\n";
@@ -219,6 +223,7 @@ if (@opt_S) {
 ##
 ##  Initial DSO support check
 ##
+if ($^O ne "MSWin32") {
 if (not -x "$CFG_SBINDIR/$CFG_TARGET") {
     print STDERR "apxs:Error: $CFG_SBINDIR/$CFG_TARGET not found or not executable\n";
     exit(1);
@@ -229,6 +234,7 @@ if (not grep(/mod_so/, `$CFG_SBINDIR/$CFG_TARGET -l`)) {
     print STDERR "apxs:Error: module mod_so is compiled into your server\n";
     print STDERR "apxs:Error: binary `$CFG_SBINDIR/$CFG_TARGET'.\n";
     exit(1);
+}
 }
 
 ##
@@ -356,23 +362,44 @@ if ($opt_c) {
         $opt .= "$1 " if ($opt_Wc =~ m|^\s*c,(.*)$|);
     }
     foreach $opt_I (@opt_I) {
+        $opt_I = '"' . $opt_I . '"' if ($opt_I =~ m|\s|);
         $opt .= "-I$opt_I ";
     }
     foreach $opt_D (@opt_D) {
         $opt .= "-D$opt_D ";
     }
     my $cflags = "$CFG_CFLAGS $CFG_CFLAGS_SHLIB";
+    if ($^O eq "MSWin32") {
+        my $d = $dso_file;
+        $d =~ s|\.so$||;
+        $d = '"' . $d . '"' if ($d =~ m|\s|);
+        $opt .= "-Fd$d ";
+    }
     my $s;
     foreach $s (@srcs) {
         my $o = $s;
-        $o =~ s|\.c$|.o|;
-        $o =~ s|^.*/||;
-        push(@cmds, "$CFG_CC $cflags -I$CFG_INCLUDEDIR $opt -c $s");
+        $s = '"' . $s . '"' if ($s =~ m|\s|);
+        if ($^O ne "MSWin32") {
+            $o =~ s|\.c$|.o|;
+            $o =~ s|^.*/||;
+            $o = '"' . $o . '"' if ($o =~ m|\s|);
+            push(@cmds, "$CFG_CC $cflags -I$CFG_INCLUDEDIR $opt -c $s");
+        } else {
+            $o =~ s|\.c$|.obj|;
+            $o =~ s|^.*/||;
+            $o = '"' . $o . '"' if ($o =~ m|\s|);
+            push(@cmds, "$CFG_CC $cflags -I\"$CFG_INCLUDEDIR\" $opt -c $s -Fo$o");
+        }
         unshift(@objs, $o);
     }
 
     #   create link command
-    my $cmd = "$CFG_LD_SHLIB $CFG_LDFLAGS_SHLIB -o $dso_file";
+    my $cmd;
+    if ($^O ne "MSWin32") {
+        $cmd = "$CFG_LD_SHLIB $CFG_LDFLAGS_SHLIB -o $dso_file";
+    } else {
+        $cmd = "$CFG_LD_SHLIB $CFG_LDFLAGS_SHLIB -out:\"$dso_file\"";
+    }
     my $o;
     foreach $o (@objs) {
         $cmd .= " $o";
@@ -387,10 +414,18 @@ if ($opt_c) {
         }
     }
     foreach $opt_L (@opt_L) {
-        $opt .= " -L$opt_L";
+        if ($^O ne "MSWin32") {
+            $opt .= " -L$opt_L";
+        } else {
+            $opt .= " -libpath:\"$opt_L\"";
+        }
     }
     foreach $opt_l (@opt_l) {
-        $opt .= " -l$opt_l";
+        if ($^O ne "MSWin32") {
+            $opt .= " -l$opt_l";
+        } else {
+            $opt .= " $opt_l";
+        }
     }
     $cmd .= $opt;
     $cmd .= " $CFG_LIBS_SHLIB";
@@ -422,12 +457,20 @@ if ($opt_i or $opt_e) {
             exit(1);
         }
         my $t = $f;
-        $t =~ s|^.+/([^/]+)$|$1|;
-        if ($opt_i) {
-            push(@cmds, "cp $f $CFG_LIBEXECDIR/$t");
-            push(@cmds, "chmod 755 $CFG_LIBEXECDIR/$t");
+        if ($^O ne "MSWin32") {
+            $t =~ s|^.+/([^/]+)$|$1|;
+            if ($opt_i) {
+                push(@cmds, "cp $f $CFG_LIBEXECDIR/$t");
+                push(@cmds, "chmod 755 $CFG_LIBEXECDIR/$t");
+            }
         }
-
+	else {
+            $t =~ s|^.+[/\\]([^/\\]+)$|$1|;
+            if ($opt_i) {
+                push(@cmds, "copy \"$f\" \"$CFG_LIBEXECDIR/$t\"");
+            }
+        }
+        
         #   determine module symbolname and filename
         my $filename = '';
         if ($name eq 'unknown') {
@@ -441,14 +484,16 @@ if ($opt_i or $opt_e) {
                 if ($content =~ m|.*module\s+(?:MODULE_VAR_EXPORT\s+)?([a-zA-Z0-9_]+)_module\s*=\s*.*|s) {
                     $name = "$1";
                     $filename = "$base.c";
-                    $filename =~ s|^[^/]+/||;
+                    $filename =~ s|^.+/||;
+                    $filename =~ s|^.+\\|| if ($^O eq "MSWin32");
                 }
             }
             if ($name eq '') {
                 if ($base =~ m|.*mod_([a-zA-Z0-9_]+)\..+|) {
                     $name = "$1";
                     $filename = $base;
-                    $filename =~ s|^[^/]+/||;
+                    $filename =~ s|^.+/||;
+                    $filename =~ s|^.+\\|| if ($^O eq "MSWin32");
                 }
             }
             if ($name eq '') {
@@ -467,22 +512,20 @@ if ($opt_i or $opt_e) {
         push(@amd, sprintf("AddModule %s", $filename));
     }
 
-    #   execute the commands
-    &execute_cmds(@cmds);
-
     #   activate module via LoadModule/AddModule directive
     if ($opt_a or $opt_A) {
-        if (not -f "$CFG_SYSCONFDIR/$CFG_TARGET.conf") {
-            print STDERR "apxs:Error: Config file $CFG_SYSCONFDIR/$CFG_TARGET.conf not found\n";
+        my $cfgbase = "$CFG_SYSCONFDIR/$CFG_TARGET";
+        if (not -f "$cfgbase.conf") {
+            print STDERR "apxs:Error: Config file $cfgbase.conf not found\n";
             exit(1);
         }
 
-        open(FP, "<$CFG_SYSCONFDIR/$CFG_TARGET.conf") || die;
+        open(FP, "<$cfgbase.conf") || die;
         my $content = join('', <FP>);
         close(FP);
 
         if ($content !~ m|\n#?\s*LoadModule\s+|) {
-            print STDERR "apxs:Error: Activation failed for custom $CFG_SYSCONFDIR/$CFG_TARGET.conf file.\n";
+            print STDERR "apxs:Error: Activation failed for custom $cfgbase.conf file.\n";
             print STDERR "apxs:Error: At least one `LoadModule' directive already has to exist.\n";
             exit(1);
         }
@@ -498,7 +541,7 @@ if ($opt_i or $opt_e) {
                  $content =~ s|^(.*\n)#?\s*$lmd[^\n]*\n|$1$c$lmd\n|sg;
             }
             $lmd =~ m|LoadModule\s+(.+?)_module.*|;
-            print STDERR "[$what module `$1' in $CFG_SYSCONFDIR/$CFG_TARGET.conf]\n";
+            print STDERR "[$what module `$1' in $cfgbase.conf]\n";
         }
         my $amd;
         foreach $amd (@amd) {
@@ -509,17 +552,27 @@ if ($opt_i or $opt_e) {
             }
         }
         if (@lmd or @amd) {
-            if (open(FP, ">$CFG_SYSCONFDIR/$CFG_TARGET.conf.new")) {
+            if (open(FP, ">$cfgbase.conf.new")) {
                 print FP $content;
                 close(FP);
-                system("cp $CFG_SYSCONFDIR/$CFG_TARGET.conf $CFG_SYSCONFDIR/$CFG_TARGET.conf.bak && " .
-                       "cp $CFG_SYSCONFDIR/$CFG_TARGET.conf.new $CFG_SYSCONFDIR/$CFG_TARGET.conf && " .
-                       "rm $CFG_SYSCONFDIR/$CFG_TARGET.conf.new");
+                if ($^O ne "MSWin32") {
+                    push(@cmds, "cp $cfgbase.conf $cfgbase.conf.bak");
+                    push(@cmds, "cp $cfgbase.conf.new $cfgbase.conf");
+                    push(@cmds, "rm $cfgbase.conf.new");
+                } else {
+                    $cfgbase =~ s|/|\\|g;
+                    push(@cmds, "copy \"$cfgbase.conf\" \"$cfgbase.conf.bak\"");
+                    push(@cmds, "copy \"$cfgbase.conf.new\" \"$cfgbase.conf\"");
+                    push(@cmds, "del \"$cfgbase.conf.new\"");
+                }
             } else {
                 print STDERR "apxs:Error: unable to open configuration file\n";
             }
         }
     }
+
+    #   execute the commands
+    &execute_cmds(@cmds);
 }
 
 ##EOF##

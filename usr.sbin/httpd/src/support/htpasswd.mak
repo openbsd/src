@@ -53,8 +53,8 @@ CLEAN :
 	-@erase "$(INTDIR)\ap_md5c.obj"
 	-@erase "$(INTDIR)\ap_sha1.obj"
 	-@erase "$(INTDIR)\ap_snprintf.obj"
+	-@erase "$(INTDIR)\htpasswd.idb"
 	-@erase "$(INTDIR)\htpasswd.obj"
-	-@erase "$(INTDIR)\vc50.idb"
 	-@erase "$(OUTDIR)\htpasswd.exe"
 	-@erase "$(OUTDIR)\htpasswd.map"
 
@@ -62,9 +62,9 @@ CLEAN :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
 CPP=cl.exe
-CPP_PROJ=/nologo /MD /W3 /GX /O2 /I "..\include" /I "..\os\win32" /D "NDEBUG"\
- /D "WIN32" /D "_CONSOLE" /D "_MBCS" /D "WIN32_LEAN_AND_MEAN" /Fo"$(INTDIR)\\"\
- /Fd"$(INTDIR)\\" /FD /c 
+CPP_PROJ=/nologo /MD /W3 /O2 /I "..\include" /I "..\os\win32" /D "NDEBUG" /D\
+ "WIN32" /D "_CONSOLE" /D "_MBCS" /D "WIN32_LEAN_AND_MEAN" /Fo"$(INTDIR)\\"\
+ /Fd"$(INTDIR)\htpasswd" /FD /c 
 CPP_OBJS=.\Release/
 CPP_SBRS=.
 
@@ -148,9 +148,8 @@ CLEAN :
 	-@erase "$(INTDIR)\ap_md5c.obj"
 	-@erase "$(INTDIR)\ap_sha1.obj"
 	-@erase "$(INTDIR)\ap_snprintf.obj"
+	-@erase "$(INTDIR)\htpasswd.idb"
 	-@erase "$(INTDIR)\htpasswd.obj"
-	-@erase "$(INTDIR)\vc50.idb"
-	-@erase "$(INTDIR)\vc50.pdb"
 	-@erase "$(OUTDIR)\htpasswd.exe"
 	-@erase "$(OUTDIR)\htpasswd.map"
 	-@erase "$(OUTDIR)\htpasswd.pdb"
@@ -159,9 +158,9 @@ CLEAN :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
 CPP=cl.exe
-CPP_PROJ=/nologo /MDd /W3 /Gm /GX /Zi /Od /I "..\include" /I "..\os\win32" /D\
+CPP_PROJ=/nologo /MDd /W3 /GX /Zi /Od /I "..\include" /I "..\os\win32" /D\
  "_DEBUG" /D "WIN32" /D "_CONSOLE" /D "_MBCS" /D "WIN32_LEAN_AND_MEAN"\
- /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+ /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\htpasswd" /FD /c 
 CPP_OBJS=.\Debug/
 CPP_SBRS=.
 
@@ -203,7 +202,7 @@ BSC32_SBRS= \
 LINK32=link.exe
 LINK32_FLAGS=ws2_32.lib /nologo /subsystem:console /incremental:no\
  /pdb:"$(OUTDIR)\htpasswd.pdb" /map:"$(INTDIR)\htpasswd.map" /debug\
- /machine:I386 /out:"$(OUTDIR)\htpasswd.exe" /pdbtype:sept 
+ /machine:I386 /out:"$(OUTDIR)\htpasswd.exe" 
 LINK32_OBJS= \
 	"$(INTDIR)\ap_base64.obj" \
 	"$(INTDIR)\ap_checkpass.obj" \
@@ -229,12 +228,12 @@ DEP_CPP_AP_BA=\
 	"..\include\ap.h"\
 	"..\include\ap_config.h"\
 	"..\include\ap_ctype.h"\
+	"..\include\ap_ebcdic.h"\
 	"..\include\ap_mmn.h"\
 	"..\include\hsregex.h"\
 	"..\os\win32\os.h"\
 	
 NODEP_CPP_AP_BA=\
-	"..\ap\ebcdic.h"\
 	"..\include\ap_config_auto.h"\
 	
 
@@ -267,6 +266,7 @@ DEP_CPP_AP_CP=\
 	"..\include\ap_alloc.h"\
 	"..\include\ap_config.h"\
 	"..\include\ap_ctype.h"\
+	"..\include\ap_ebcdic.h"\
 	"..\include\ap_mmn.h"\
 	"..\include\buff.h"\
 	"..\include\hsregex.h"\
@@ -277,7 +277,6 @@ DEP_CPP_AP_CP=\
 	
 NODEP_CPP_AP_CP=\
 	"..\include\ap_config_auto.h"\
-	"..\include\ebcdic.h"\
 	"..\include\sfio.h"\
 	
 
@@ -307,13 +306,13 @@ DEP_CPP_AP_MD=\
 	"..\include\ap.h"\
 	"..\include\ap_config.h"\
 	"..\include\ap_ctype.h"\
+	"..\include\ap_ebcdic.h"\
 	"..\include\ap_md5.h"\
 	"..\include\ap_mmn.h"\
 	"..\include\hsregex.h"\
 	"..\os\win32\os.h"\
 	
 NODEP_CPP_AP_MD=\
-	"..\ap\ebcdic.h"\
 	"..\include\ap_config_auto.h"\
 	
 
@@ -326,13 +325,13 @@ DEP_CPP_AP_SH=\
 	"..\include\ap.h"\
 	"..\include\ap_config.h"\
 	"..\include\ap_ctype.h"\
+	"..\include\ap_ebcdic.h"\
 	"..\include\ap_mmn.h"\
 	"..\include\ap_sha1.h"\
 	"..\include\hsregex.h"\
 	"..\os\win32\os.h"\
 	
 NODEP_CPP_AP_SH=\
-	"..\ap\ebcdic.h"\
 	"..\include\ap_config_auto.h"\
 	
 
@@ -346,6 +345,7 @@ DEP_CPP_AP_SN=\
 	"..\include\ap_alloc.h"\
 	"..\include\ap_config.h"\
 	"..\include\ap_ctype.h"\
+	"..\include\ap_ebcdic.h"\
 	"..\include\ap_mmn.h"\
 	"..\include\buff.h"\
 	"..\include\hsregex.h"\
@@ -356,7 +356,6 @@ DEP_CPP_AP_SN=\
 	
 NODEP_CPP_AP_SN=\
 	"..\include\ap_config_auto.h"\
-	"..\include\ebcdic.h"\
 	"..\include\sfio.h"\
 	
 

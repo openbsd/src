@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -131,8 +131,9 @@
 #include "http_log.h"
 #include "http_protocol.h"
 
+#ifndef WIN32
 #include <utime.h>
-
+#endif
 
 /*
  * data structures and related constants
@@ -497,7 +498,7 @@ typedef struct {
  * configuration functions - called by Apache API routines
  */
 
-module mime_magic_module;
+module MODULE_VAR_EXPORT mime_magic_module;
 
 static void *create_magic_server_config(pool *p, server_rec *d)
 {
@@ -623,7 +624,7 @@ static int magic_rsl_printf(request_rec *r, char *str,...)
     va_end(ap);
 
     /* add the buffer to the list */
-    return magic_rsl_add(r, strdup(buf));
+    return magic_rsl_add(r, ap_pstrdup(r->pool, buf));
 }
 
 /* RSL hook for putchar-type functions */
@@ -1811,7 +1812,7 @@ static int mget(request_rec *r, union VALUETYPE *p, unsigned char *s,
 {
     long offset = m->offset;
 
-    if (offset + sizeof(union VALUETYPE) > nbytes)
+    if (offset + (long)sizeof(union VALUETYPE) > nbytes)
 	          return 0;
 
     memcpy(p, s + offset, sizeof(union VALUETYPE));
@@ -1833,7 +1834,7 @@ static int mget(request_rec *r, union VALUETYPE *p, unsigned char *s,
 	    break;
 	}
 
-	if (offset + sizeof(union VALUETYPE) > nbytes)
+	if (offset + (long)sizeof(union VALUETYPE) > nbytes)
 	              return 0;
 
 	memcpy(p, s + offset, sizeof(union VALUETYPE));
@@ -2146,31 +2147,64 @@ struct uncompress_parms {
 static int uncompress_child(void *data, child_info *pinfo)
 {
     struct uncompress_parms *parm = data;
-	char *new_argv[4];
+#ifndef WIN32
+    char *new_argv[4];
 
-	new_argv[0] = compr[parm->method].argv[0];
-	new_argv[1] = compr[parm->method].argv[1];
-	new_argv[2] = parm->r->filename;
-	new_argv[3] = NULL;
-
-#if defined(WIN32)
-    int child_pid;
-#endif
+    new_argv[0] = compr[parm->method].argv[0];
+    new_argv[1] = compr[parm->method].argv[1];
+    new_argv[2] = parm->r->filename;
+    new_argv[3] = NULL;
 
     if (compr[parm->method].silent) {
 	close(STDERR_FILENO);
     }
 
-#if defined(WIN32)
-    child_pid = spawnvp(compr[parm->method].argv[0],
-			new_argv);
-    return (child_pid);
-#else
     execvp(compr[parm->method].argv[0], new_argv);
     ap_log_rerror(APLOG_MARK, APLOG_ERR, parm->r,
 		MODNAME ": could not execute `%s'.",
 		compr[parm->method].argv[0]);
     return -1;
+#else
+    char *pCommand;
+    STARTUPINFO si;
+    PROCESS_INFORMATION pi;
+    pid_t pid;
+
+    memset(&si, 0, sizeof(si));
+    memset(&pi, 0, sizeof(pi));
+
+    pid = -1;
+
+    /*
+     * Look at the arguments...
+     */
+    pCommand = ap_pstrcat(parm->r->pool, compr[parm->method].argv[0], " ",
+                                         compr[parm->method].argv[1], " \"",
+                                         parm->r->filename, "\"", NULL);
+
+    /*
+     * Make child process use hPipeOutputWrite as standard out,
+     * and make sure it does not show on screen.
+     */
+    si.cb = sizeof(si);
+    si.dwFlags     = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
+    si.wShowWindow = SW_HIDE;
+    si.hStdInput   = pinfo->hPipeInputRead;
+    si.hStdOutput  = pinfo->hPipeOutputWrite;
+    si.hStdError   = pinfo->hPipeErrorWrite;
+
+    if (CreateProcess(NULL, pCommand, NULL, NULL, TRUE, 0, NULL,
+                      ap_make_dirstr_parent(parm->r->pool, parm->r->filename),
+                      &si, &pi)) {
+        pid = pi.dwProcessId;
+        /*
+         * We must close the handles to the new process and its main thread
+         * to prevent handle and memory leaks.
+         */ 
+        CloseHandle(pi.hProcess);
+        CloseHandle(pi.hThread);
+    }
+    return (pid);
 #endif
 }
 
@@ -2451,7 +2485,7 @@ static int magic_find_ct(request_rec *r)
  * Apache API module interface
  */
 
-module mime_magic_module =
+module MODULE_VAR_EXPORT mime_magic_module =
 {
     STANDARD_MODULE_STUFF,
     magic_init,			/* initializer */

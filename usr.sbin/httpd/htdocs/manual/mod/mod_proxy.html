@@ -38,12 +38,17 @@
     This module implements a proxy/cache for Apache. It implements
     proxying capability for <code>FTP</code>, <code>CONNECT</code>
     (for SSL), <code>HTTP/0.9</code>, <code>HTTP/1.0</code>, and
-    <code>HTTP/1.1</code>.
+    (as of Apache 1.3.23) <code>HTTP/1.1</code>.
     The module can be configured to connect to other proxy modules
     for these and other protocols. 
 
     <p>This module was experimental in Apache 1.1.x. As of Apache
     1.2, mod_proxy stability is <em>greatly</em> improved.</p>
+
+    <p><strong>Warning:</strong> Do not enable proxying with <a
+    href="#proxyrequests">ProxyRequests</a> until you have <a
+    href="#access">secured your server</a>.  Open proxy servers are
+    dangerous both to your network and to the Internet at large.</p>
 
     <h2>Directives</h2>
 
@@ -60,8 +65,9 @@
 
       <li><a href="#allowconnect">AllowCONNECT</a></li>
 
-      <li><a
-      href="#proxyreceivebuffersize">ProxyReceiveBufferSize</a></li>
+      <li><a href="#proxyreceivebuffersize">ProxyReceiveBufferSize</a></li>
+
+      <li><a href="#proxyiobuffersize">ProxyIOBufferSize</a></li>
 
       <li><a href="#noproxy">NoProxy</a></li>
 
@@ -105,6 +111,15 @@
       <li><a href="#mimetypes">Why doesn't file type <em>xxx</em>
       download via FTP?</a></li>
 
+      <li><a href="#type">How can I force an FTP ASCII
+      download of File <em>xxx</em>?</a></li>
+
+      <li><a href="#percent2fhack">How can I access
+      FTP files outside of my home directory?</a></li>
+
+      <li><a href="#ftppass">How can I hide the
+      FTP cleartext password in my browser's URL line?</a></li>
+
       <li><a href="#startup">Why does Apache start more slowly when
       using the proxy module?</a></li>
 
@@ -122,14 +137,17 @@
 <pre>
 &lt;Directory proxy:*&gt;
 Order Deny,Allow
-Deny from [machines you'd like *not* to allow by IP address or name]
-Allow from [machines you'd like to allow by IP address or name]
+Deny from all
+Allow from yournetwork.example.com
 &lt;/Directory&gt;
 </pre>
 
     <p>A &lt;Files&gt; block will also work, and is the only method
     known to work for all possible URLs in Apache versions earlier
     than 1.2b10.</p>
+
+    <p>For more information, see <a
+    href="mod_access.html">mod_access</a>.</p>
 
     <h2><a id="shortname" name="shortname">Using Netscape hostname
     shortcuts</a></h2>
@@ -155,7 +173,64 @@ application/octet-stream        bin dms lha lzh exe class tgz taz
     using the FTP <strong>ASCII</strong> transfer method (while the
     default transfer is in <strong>binary</strong> mode), you can
     override mod_proxy's default by suffixing the request with
-    <samp>;type=a</samp> to force an ASCII transfer. 
+    <samp>;type=a</samp> to force an ASCII transfer.
+    (FTP Directory listings are always executed in ASCII mode, however.)
+
+    <h2><a id="percent2fhack" name="percent2fhack">How can I access
+    FTP files outside of my home directory?</a></h2>
+    <p>
+     A FTP URI is interpreted relative to the home directory of
+     the user who is logging in. Alas, to reach higher directory
+     levels you cannot use  /../, as the dots are interpreted by the
+     browser and not actually sent to the FTP server. To address
+     this problem, the so called "Squid %2f hack" was implemented in
+     the Apache FTP proxy; it is is a solution which is also used by
+     other popular proxy servers like the
+     <a href="http://www.squid-cache.org/">Squid Proxy Cache</a>.
+     By prepending /%2f to the path of your request, you can make
+     such a proxy change the FTP starting directory to / (instead
+     of the home directory). <br />
+     <b>Example:</b> To retrieve the file <code>/etc/motd</code>,
+     you would use the URL <blockquote>
+     <code>ftp://<em>user@host</em>/%2f/etc/motd</code></blockquote>
+    </p>
+
+    <h2><a id="ftppass" name="ftppass">How can I hide the FTP
+    cleartext password in my browser's URL line?</a></h2>
+    <p>
+     To log in to an FTP server by username and password, Apache
+     uses different strategies.
+     In absense of a user name and password in the URL altogether,
+     Apache sends an anomymous login to the FTP server, i.e.,
+     <blockquote><code>
+       user: anonymous<br />
+       password: apache_proxy@
+     </code></blockquote>
+     This works for all popular FTP servers which are configured for
+     anonymous access.<br>
+     For a personal login with a specific username, you can embed
+     the user name into the URL, like in:
+     <code>ftp://<em>username@host</em>/myfile</code>. If the FTP server
+     asks for a password when given this username (which it should),
+     then Apache will reply with a [401 Authorization required] response,
+     which causes the Browser to pop up the username/password dialog.
+     Upon entering the password, the connection attempt is retried,
+     and if successful, the requested resource is presented.
+     The advantage of this procedure is that your browser does not
+     display the password in cleartext (which it would if you had used
+     <code>ftp://<em>username:password@host</em>/myfile</code> in
+     the first place).
+     <br />
+     <b>Note</b> that the password which is transmitted in such a way
+     is not encrypted on its way. It travels between your browser and
+     the Apache proxy server in a base64-encoded cleartext string, and
+     between the Apache proxy and the FTP server as plaintext. You should
+     therefore think twice before accessing your FTP server via HTTP
+     (or before accessing your personal files via FTP at all!) When
+     using unsecure channels, an eavesdropper might intercept your
+     password on its way.
+    </p>
+
 
     <h2><a id="startup" name="startup">Why does Apache start more
     slowly when using the proxy module?</a></h2>
@@ -232,6 +307,11 @@ application/octet-stream        bin dms lha lzh exe class tgz taz
     <p>This allows or prevents Apache from functioning as a proxy
     server. Setting ProxyRequests to 'off' does not disable use of
     the <a href="#proxypass">ProxyPass</a> directive.</p>
+
+    <p><strong>Warning:</strong> Do not enable proxying until you have
+    <a href="#access">secured your server</a>.  Open proxy servers are
+    dangerous both to your network and to the Internet at large.</p>
+
     <hr />
 
     <h2><a id="proxyremote" name="proxyremote">ProxyRemote</a>
@@ -486,6 +566,52 @@ ProxyBlock *
     <p>Example:</p>
 <pre>
   ProxyReceiveBufferSize 2048
+</pre>
+    <hr />
+
+    <h2><a id="proxyiobuffersize"
+    name="proxyiobuffersize">ProxyIOBufferSize</a>
+    directive</h2>
+    <a href="directive-dict.html#Syntax"
+    rel="Help"><strong>Syntax:</strong></a> ProxyIOBufferSize
+    <em>bytes</em><br />
+     <a href="directive-dict.html#Default"
+    rel="Help"><strong>Default:</strong></a> <em>8192</em><br />
+     <a href="directive-dict.html#Context"
+    rel="Help"><strong>Context:</strong></a> server config, virtual
+    host<br />
+     <a href="directive-dict.html#Override"
+    rel="Help"><strong>Override:</strong></a> <em>Not
+    applicable</em><br />
+     <a href="directive-dict.html#Status"
+    rel="Help"><strong>Status:</strong></a> Base<br />
+     <a href="directive-dict.html#Module"
+    rel="Help"><strong>Module:</strong></a> mod_proxy<br />
+     <a href="directive-dict.html#Compatibility"
+    rel="Help"><strong>Compatibility:</strong></a>
+    ProxyIOBufferSize is only available in Apache 1.3.24 and
+    later. 
+
+    <p>The ProxyIOBufferSize directive specifies the number of bytes
+    that will be read from a remote HTTP or FTP server at one time.
+    This directive is different from the ProxyReceiveBufferSize
+    directive, which specifies the low level socket buffer size.
+    </p>
+
+    <p>
+    When a response is received which fits entirely within the IO
+    buffer size, the remote HTTP or FTP server socket will be closed
+    before an attempt is made to write the response to the client.
+    This ensures that the remote server does not remain connected
+    unnecessarily while the response is delivered to a slow client.
+    A high value for the IO buffer decreases the load on remote HTTP
+    and FTP servers, at the expense of greater RAM footprint on the
+    proxy.
+    </p>
+
+    <p>Example:</p>
+<pre>
+  ProxyIOBufferSize 131072
 </pre>
     <hr />
 

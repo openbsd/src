@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -155,7 +155,7 @@ static void *create_default_per_dir_config(pool *p)
     return (void *) conf_vector;
 }
 
-void *
+CORE_EXPORT(void *)
      ap_merge_per_dir_configs(pool *p, void *base, void *new)
 {
     void **conf_vector = (void **) ap_palloc(p, sizeof(void *) * total_modules);
@@ -210,7 +210,7 @@ static void merge_server_configs(pool *p, void *base, void *virt)
     }
 }
 
-void *ap_create_request_config(pool *p)
+CORE_EXPORT(void *) ap_create_request_config(pool *p)
 {
     return create_empty_config(p);
 }
@@ -376,37 +376,37 @@ static int run_method(request_rec *r, int offset, int run_all)
     return run_all ? OK : DECLINED;
 }
 
-int ap_translate_name(request_rec *r)
+API_EXPORT(int) ap_translate_name(request_rec *r)
 {
     return run_method(r, offsets_into_method_ptrs.translate_handler, 0);
 }
 
-int ap_check_access(request_rec *r)
+API_EXPORT(int) ap_check_access(request_rec *r)
 {
     return run_method(r, offsets_into_method_ptrs.access_checker, 1);
 }
 
-int ap_find_types(request_rec *r)
+API_EXPORT(int) ap_find_types(request_rec *r)
 {
     return run_method(r, offsets_into_method_ptrs.type_checker, 0);
 }
 
-int ap_run_fixups(request_rec *r)
+API_EXPORT(int) ap_run_fixups(request_rec *r)
 {
     return run_method(r, offsets_into_method_ptrs.fixer_upper, 1);
 }
 
-int ap_log_transaction(request_rec *r)
+API_EXPORT(int) ap_log_transaction(request_rec *r)
 {
     return run_method(r, offsets_into_method_ptrs.logger, 1);
 }
 
-int ap_header_parse(request_rec *r)
+API_EXPORT(int) ap_header_parse(request_rec *r)
 {
     return run_method(r, offsets_into_method_ptrs.header_parser, 1);
 }
 
-int ap_run_post_read_request(request_rec *r)
+API_EXPORT(int) ap_run_post_read_request(request_rec *r)
 {
     return run_method(r, offsets_into_method_ptrs.post_read_request, 1);
 }
@@ -416,12 +416,12 @@ int ap_run_post_read_request(request_rec *r)
  * separate from check_access to make catching some config errors easier.
  */
 
-int ap_check_user_id(request_rec *r)
+API_EXPORT(int) ap_check_user_id(request_rec *r)
 {
     return run_method(r, offsets_into_method_ptrs.ap_check_user_id, 0);
 }
 
-int ap_check_auth(request_rec *r)
+API_EXPORT(int) ap_check_auth(request_rec *r)
 {
     return run_method(r, offsets_into_method_ptrs.auth_checker, 0);
 }
@@ -485,7 +485,7 @@ static void init_handlers(pool *p)
     ph->hr.handler = NULL;
 }
 
-int ap_invoke_handler(request_rec *r)
+API_EXPORT(int) ap_invoke_handler(request_rec *r)
 {
     fast_handler_rec *handp;
     const char *handler;
@@ -725,7 +725,7 @@ API_EXPORT(void) ap_remove_loaded_module(module *mod)
     *m = NULL;
 }
 
-void ap_setup_prelinked_modules(void)
+API_EXPORT(void) ap_setup_prelinked_modules(void)
 {
     module **m;
     module **m2;
@@ -1256,7 +1256,7 @@ static int fname_alphasort(const void *fn1, const void *fn2)
     return strcmp(f1->fname,f2->fname);
 }
 
-void ap_process_resource_config(server_rec *s, char *fname, pool *p, pool *ptemp)
+CORE_EXPORT(void) ap_process_resource_config(server_rec *s, char *fname, pool *p, pool *ptemp)
 {
     const char *errmsg;
     cmd_parms parms;
@@ -1368,7 +1368,7 @@ void ap_process_resource_config(server_rec *s, char *fname, pool *p, pool *ptemp
     ap_cfg_closefile(parms.config_file);
 }
 
-int ap_parse_htaccess(void **result, request_rec *r, int override,
+CORE_EXPORT(int) ap_parse_htaccess(void **result, request_rec *r, int override,
 		   const char *d, const char *access_name)
 {
     configfile_t *f = NULL;
@@ -1624,7 +1624,9 @@ static void default_listeners(pool *p, server_rec *s)
     new = ap_pcalloc(p, sizeof(listen_rec));
     new->local_addr.sin_family = AF_INET;
     new->local_addr.sin_addr = ap_bind_address;
-    new->local_addr.sin_port = htons(s->port ? s->port : DEFAULT_HTTP_PORT);
+    /* Buck ugly cast to get around terniary op bug in some (MS) compilers */
+    new->local_addr.sin_port = htons((unsigned short)(s->port ? s->port 
+                                                        : DEFAULT_HTTP_PORT));
     new->fd = -1;
     new->used = 0;
     new->next = NULL;
@@ -1632,7 +1634,7 @@ static void default_listeners(pool *p, server_rec *s)
 }
 
 
-server_rec *ap_read_config(pool *p, pool *ptemp, char *confname)
+API_EXPORT(server_rec *) ap_read_config(pool *p, pool *ptemp, char *confname)
 {
     server_rec *s = init_server_config(p);
 
@@ -1655,7 +1657,7 @@ server_rec *ap_read_config(pool *p, pool *ptemp, char *confname)
     return s;
 }
 
-void ap_single_module_configure(pool *p, server_rec *s, module *m)
+API_EXPORT(void) ap_single_module_configure(pool *p, server_rec *s, module *m)
 {
     if (m->create_server_config)
         ap_set_module_config(s->module_config, m,
@@ -1665,7 +1667,7 @@ void ap_single_module_configure(pool *p, server_rec *s, module *m)
                              (*m->create_dir_config)(p, NULL));
 }
 
-void ap_init_modules(pool *p, server_rec *s)
+API_EXPORT(void) ap_init_modules(pool *p, server_rec *s)
 {
     module *m;
 
@@ -1676,7 +1678,7 @@ void ap_init_modules(pool *p, server_rec *s)
     init_handlers(p);
 }
 
-void ap_child_init_modules(pool *p, server_rec *s)
+API_EXPORT(void) ap_child_init_modules(pool *p, server_rec *s)
 {
     module *m;
 
@@ -1685,7 +1687,7 @@ void ap_child_init_modules(pool *p, server_rec *s)
 	    (*m->child_init) (s, p);
 }
 
-void ap_child_exit_modules(pool *p, server_rec *s)
+API_EXPORT(void) ap_child_exit_modules(pool *p, server_rec *s)
 {
     module *m;
 
@@ -1780,7 +1782,7 @@ static void show_overrides(const command_rec *pc, module *pm)
  * the directive arguments, in what module they are handled, and in
  * what parts of the configuration they are allowed.  Used for httpd -L.
  */
-void ap_show_directives(void)
+API_EXPORT(void) ap_show_directives(void)
 {
     const command_rec *pc;
     int n;
@@ -1795,7 +1797,7 @@ void ap_show_directives(void)
 }
 
 /* Show the preloaded module names.  Used for httpd -l. */
-void ap_show_modules(void)
+API_EXPORT(void) ap_show_modules(void)
 {
     int n;
 
@@ -1803,7 +1805,7 @@ void ap_show_modules(void)
     for (n = 0; ap_loaded_modules[n]; ++n) {
 	printf("  %s\n", ap_loaded_modules[n]->name);
     }
-#if !defined(WIN32) && !defined(NETWARE)
+#if !defined(WIN32) && !defined(NETWARE) && !defined(TPF)
     printf("suexec: %s\n",
 	   ap_suexec_enabled
 	       ? "enabled; valid wrapper " SUEXEC_BIN

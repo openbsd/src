@@ -104,6 +104,9 @@ _build:
 	 $(MAKE) $(MAKEOPT) -f mod_auth_digest.mak CFG="mod_auth_digest - Win32 $(LONG)" RECURSE=0 $(CTARGET)
 	 $(MAKE) $(MAKEOPT) -f mod_auth_dbm.mak CFG="mod_auth_dbm - Win32 $(LONG)" RECURSE=0 $(CTARGET)
 	 $(MAKE) $(MAKEOPT) -f mod_proxy.mak CFG="mod_proxy - Win32 $(LONG)" RECURSE=0 $(CTARGET)
+	 $(MAKE) $(MAKEOPT) -f mod_unique_id.mak CFG="mod_unique_id - Win32 $(LONG)" RECURSE=0 $(CTARGET)
+	 $(MAKE) $(MAKEOPT) -f mod_vhost_alias.mak CFG="mod_vhost_alias - Win32 $(LONG)" RECURSE=0 $(CTARGET)
+	 $(MAKE) $(MAKEOPT) -f mod_mime_magic.mak CFG="mod_mime_magic - Win32 $(LONG)" RECURSE=0 $(CTARGET)
 	cd ..\..
 
 _install:
@@ -140,6 +143,9 @@ _install:
 	copy os\win32\$(LONG)\mod_auth_digest.so "$(INSTDIR)\modules"
 	copy os\win32\$(LONG)\mod_auth_dbm.so "$(INSTDIR)\modules"
 	copy os\win32\$(LONG)\mod_proxy.so "$(INSTDIR)\modules"
+	copy os\win32\$(LONG)\mod_unique_id.so "$(INSTDIR)\modules"
+	copy os\win32\$(LONG)\mod_vhost_alias.so "$(INSTDIR)\modules"
+	copy os\win32\$(LONG)\mod_mime_magic.so "$(INSTDIR)\modules"
 	copy support\$(LONG)\htpasswd.exe "$(INSTDIR)\bin"
 	copy support\$(LONG)\htdigest.exe "$(INSTDIR)\bin"
 	copy support\$(LONG)\logresolve.exe "$(INSTDIR)\bin"
@@ -207,6 +213,29 @@ A
 	awk -f <<script.awk "support\dbmmanage" >"$(INSTDIR)\bin\dbmmanage.pl"
     { if ( $$0 !~ /^#.*-lsdbm/) {
           gsub( /AnyDBM_File::ISA = qw\(.*\)/, "AnyDBM_File::ISA = qw(SDBM_File)" ); 
+      } 
+      print $$0;
+    }
+<<
+	awk -f <<script2.awk "support\apxs.pl" "$(INSTDIR)" >"$(INSTDIR)\bin\apxs.pl"
+    BEGIN {
+          target = ARGV[2];
+          gsub( /\\/, "/", target );
+          delete ARGV[2];
+    }
+    { if ( $$0 ~ /@/) {
+          gsub( /@TARGET@/,            "httpd" ); 
+          gsub( /@CC@/,                "cl" ); 
+          gsub( /@CFLAGS@/,            "-nologo -MD -W3 -O2 -DNDEBUG -DWIN32 -D_WINDOWS -FD" ); 
+          gsub( /@CFLAGS_SHLIB@/,      "-DSHARED_MODULE" ); 
+          gsub( /@LD_SHLIB@/,          "link" ); 
+          gsub( /@LDFLAGS_MOD_SHLIB@/, "-nologo -subsystem:windows -dll -libpath:\"" target "/libexec\" -incremental:no -map -machine:I386" ); 
+          gsub( /@LIBS_SHLIB@/,        "ApacheCore.lib kernel32.lib advapi32.lib wsock32.lib ws2_32.lib" ); 
+          gsub( /@prefix@/,            target  ); 
+          gsub( /@sbindir@/,           target ); 
+          gsub( /@includedir@/,        target "/include" ); 
+          gsub( /@libexecdir@/,        target "/modules" ); 
+          gsub( /@sysconfdir@/,        target "/conf" ); 
       } 
       print $$0;
     }

@@ -1091,7 +1091,7 @@ allow from address
     board, and you want to keep them out, you could do the
     following: <a id="11494" name="11494"></a></p>
 <pre>
-deny from 205.252.46.165
+deny from 11.22.33.44
 </pre>
 
     <p>Visitors coming from that address will not be able to see
@@ -1099,15 +1099,16 @@ deny from 205.252.46.165
     machine name, rather than an IP address, you can use that. <a
     id="11497" name="11497"></a></p>
 <pre>
-deny from dc.numbersusa.com
+deny from hostname.example.com
 </pre>
 
     <p>And, if you'd like to block access from an entire domain,
+    or even from an entire tld (top level domain, such as .com or .gov)
     you can specify just part of an address or domain name:</p>
 <pre>
 deny from 192.101.205
-deny from cyberthugs.com moreidiots.com
-deny from ke
+deny from exampleone.com exampletwo.com
+deny from tld
 </pre>
 
     <p>Using <tt>Order</tt> will let you be sure that you are

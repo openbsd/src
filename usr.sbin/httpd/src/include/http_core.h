@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -158,7 +158,7 @@ API_EXPORT(const array_header *) ap_requires (request_rec *);
  * CGI Script stuff for Win32...
  */
 typedef enum { eFileTypeUNKNOWN, eFileTypeBIN, eFileTypeEXE16, eFileTypeEXE32, 
-               eFileTypeSCRIPT } file_type_e;
+               eFileTypeSCRIPT, eCommandShell16, eCommandShell32 } file_type_e;
 typedef enum { INTERPRETER_SOURCE_UNSET, INTERPRETER_SOURCE_REGISTRY, 
                INTERPRETER_SOURCE_SHEBANG } interpreter_source_e;
 API_EXPORT(file_type_e) ap_get_win32_interpreter(const request_rec *, char **);
@@ -195,6 +195,12 @@ typedef unsigned long etag_components_t;
 #define ETAG_SIZE  (1 << 3)
 #define ETAG_BACKWARD (ETAG_MTIME | ETAG_INODE | ETAG_SIZE)
 #define ETAG_ALL   (ETAG_MTIME | ETAG_INODE | ETAG_SIZE)
+
+typedef enum {
+    AP_FLAG_UNSET = 0,
+    AP_FLAG_ON = 1,
+    AP_FLAG_OFF = 2
+} ap_flag_e;
 
 typedef struct {
     /* path of the directory/regex/etc.  see also d_is_fnmatch below */
@@ -330,6 +336,12 @@ typedef struct {
     etag_components_t etag_bits;
     etag_components_t etag_add;
     etag_components_t etag_remove;
+
+    /*
+     * Do we allow ISINDEX CGI scripts to pass their query argument as
+     * direct command line parameters or argv elements?
+     */
+    ap_flag_e cgi_command_args;
 
 } core_dir_config;
 

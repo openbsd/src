@@ -412,12 +412,26 @@
       caches can use this information when caching the resource).
       End.</li>
 
-      <li>To get here means no variant was selected (because none
+      <li><p>To get here means no variant was selected (because none
       are acceptable to the browser). Return a 406 status (meaning
       "No acceptable representation") with a response body
       consisting of an HTML document listing the available
       variants. Also set the HTTP Vary header to indicate the
-      dimensions of variance.</li>
+      dimensions of variance.</p>
+
+      <p>You should be aware that the error message returned by Apache is
+   neccessarily rather terse and might confuse some users (even though it
+   lists the available alternatives). If you want to avoid users seeing this
+   error page, you should organize your documents such that a document in a
+   default language (or with a default encoding etc.) is always returned if a
+   document is not available in any of the languages, encodings etc. the
+   browser asked for.</p>
+
+   <p>In particular, if you want a document in a default language to
+   be returned if a document is not available in any of the languages
+   a browser asked for, you should create a document with no language
+   attribute set.  See <a href="#nolanguage">Variants with no
+   Language</a> below for details.</p></li>
     </ol>
 
     <h2><a id="better" name="better">Fiddling with Quality
@@ -473,18 +487,23 @@
     <em>not</em> applied, so requests from browsers which send the
     correct information to start with work as expected.</p>
 
-    <h3>Variants with no Language</h3>
+    <h3><a name="nolanguage">Variants with no Language</a></h3>
 
     <p>If some of the variants for a particular resource have a
     language attribute, and some do not, those variants with no
     language are given a very low language quality factor of
     0.001.</p>
 
-    <p>The reason for setting this language quality factor for
-    variant with no language to a very low value is to allow for a
-    default variant which can be supplied if none of the other
-    variants match the browser's language preferences. For example,
-    consider the situation with three variants:</p>
+    <p>The reason for setting this language quality factor for variant
+    with no language to a very low value is to allow for a default
+    variant which can be supplied if none of the other variants match
+    the browser's language preferences. This allows you to avoid users
+    seeing a "406" error page if their browser is set to only accept
+    languages which you do not offer for the ressource that was
+    requested.</p>
+
+    <p>For example, consider the situation with Multiviews enabled and
+    three variants:</p>
 
     <ul>
       <li>foo.en.html, language en</li>
@@ -494,12 +513,16 @@
       <li>foo.html, no language</li>
     </ul>
 
-    <p>The meaning of a variant with no language is that it is
-    always acceptable to the browser. If the request
-    Accept-Language header includes either en or fr (or both) one
-    of foo.en.html or foo.fr.html will be returned. If the browser
+    <p>The meaning of a variant with no language is that it is always
+    acceptable to the browser. If the request is for <code>foo</code>
+    and the Accept-Language header includes either en or fr (or both)
+    one of foo.en.html or foo.fr.html will be returned. If the browser
     does not list either en or fr as acceptable, foo.html will be
-    returned instead.</p>
+    returned instead.  If the client requests <code>foo.html</code>
+    instead, then no negotation will occur since the exact match
+    will be returned.  To avoid this problem, it is sometimes helpful
+    to name the "no language" variant <code>foo.html.html</code> to assure
+    that Multiviews and language negotiation will come into play.</p>
 
     <h2>Extensions to Transparent Content Negotiation</h2>
     Apache extends the transparent content negotiation protocol

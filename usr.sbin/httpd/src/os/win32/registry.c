@@ -1,3 +1,62 @@
+/* ====================================================================
+ * The Apache Software License, Version 1.1
+ *
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
+ * reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. The end-user documentation included with the redistribution,
+ *    if any, must include the following acknowledgment:
+ *       "This product includes software developed by the
+ *        Apache Software Foundation (http://www.apache.org/)."
+ *    Alternately, this acknowledgment may appear in the software itself,
+ *    if and wherever such third-party acknowledgments normally appear.
+ *
+ * 4. The names "Apache" and "Apache Software Foundation" must
+ *    not be used to endorse or promote products derived from this
+ *    software without prior written permission. For written
+ *    permission, please contact apache@apache.org.
+ *
+ * 5. Products derived from this software may not be called "Apache",
+ *    nor may "Apache" appear in their name, without prior written
+ *    permission of the Apache Software Foundation.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE APACHE SOFTWARE FOUNDATION OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+ * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals on behalf of the Apache Software Foundation.  For more
+ * information on the Apache Software Foundation, please see
+ * <http://www.apache.org/>.
+ *
+ * Portions of this software are based upon public domain software
+ * originally written at the National Center for Supercomputing Applications,
+ * University of Illinois, Urbana-Champaign.
+ */
+
+#ifdef WIN32
 /*
  * Functions to handle interacting with the Win32 registry
  */
@@ -30,6 +89,7 @@
 
 #include "httpd.h"
 #include "http_log.h"
+#include "service.h"
 
 /* Define where the Apache values are stored in the registry. In general
  * VERSION will be the same across all beta releases for a particular
@@ -210,7 +270,7 @@ API_EXPORT(int) ap_registry_get_server_root(pool *p, char *dir, int size)
 	dir[0] = '\0';
     }
 
-    return (rv < -1) ? -1 : 0;
+    return (rv < 0) ? -1 : 0;
 }
 
 API_EXPORT(char *) ap_get_service_key(char *display_name)
@@ -220,9 +280,8 @@ API_EXPORT(char *) ap_get_service_key(char *display_name)
     if (display_name == NULL)
         return strdup("");
 
-    service_name = strdup(display_name);
-    ap_remove_spaces(service_name, display_name);
-
+    service_name = get_service_name(display_name);
+    
     key = malloc(strlen(SERVICEKEYPRE) +
                  strlen(service_name) +
                  strlen(SERVICEKEYPOST) + 1);
@@ -230,20 +289,6 @@ API_EXPORT(char *) ap_get_service_key(char *display_name)
     sprintf(key,"%s%s%s", SERVICEKEYPRE, service_name, SERVICEKEYPOST);
 
     return(key);
-}
-
-API_EXPORT(int) ap_registry_get_service_conf(pool *p, char *dir, int size, char *display_name)
-{
-    int rv;
-    char *key = ap_get_service_key(display_name);
-
-    rv = ap_registry_get_key_int(p, key, "ConfPath", dir, size, NULL);
-    if (rv < 0) {
-    dir[0] = '\0';
-    }
-
-    free(key);
-    return (rv < -1) ? -1 : 0;
 }
 
 /**********************************************************************
@@ -448,23 +493,6 @@ static int ap_registry_store_key_int(char *key, char *name, DWORD type, void *va
 }
 
 /*
- * Sets the service confpath value within the registry. Returns 0 on success
- * or -1 on error. If -1 is return the error will already have been
- * logged via aplog_error().
- */
-
-API_EXPORT(int) ap_registry_set_service_conf(char *conf, char *display_name)
-{
-    int rv;
-    char *key = ap_get_service_key(display_name);
-    
-    rv = ap_registry_store_key_int(key, "ConfPath", REG_SZ, conf, strlen(conf)+1);
-    free(key);
-
-    return rv < 0 ? -1: 0;
-}
-
-/*
  * Sets the serverroot value within the registry. Returns 0 on success
  * or -1 on error. If -1 is return the error will already have been
  * logged via aplog_error().
@@ -479,3 +507,104 @@ int ap_registry_set_server_root(char *dir)
     return rv < 0 ? -1 : 0;
 }
 
+/* Creates and fills array pointed to by parray with the requested registry string
+ *
+ * Returns 0 on success, machine specific error code on error 
+ */
+int ap_registry_get_array(pool *p, char *key, char *name, 
+                          array_header **pparray)
+{
+    char *pValue;
+    char *tmp;
+    char **newelem;
+    int ret;
+    int nSize = 0;
+
+    ret = ap_registry_get_key_int(p, key, name, NULL, 0, &pValue);
+    if (ret < 0)
+        return ret;
+
+    tmp = pValue;
+    if ((ret > 2) && (tmp[0] || tmp[1]))
+        nSize = 1;    /* Element Count */
+    while ((tmp < pValue + ret) && (tmp[0] || tmp[1]))
+    {
+        if (!tmp[0])
+            ++nSize;
+        ++tmp;
+    }
+
+    *pparray = ap_make_array(p, nSize, sizeof(char *));
+    tmp = pValue;
+    if (tmp[0] || tmp[1]) {
+        newelem = (char **) ap_push_array(*pparray);
+        *newelem = tmp;
+    }
+    while ((tmp < pValue + ret) && (tmp[0] || tmp[1]))
+    {
+        if (!tmp[0]) {
+            newelem = (char **) ap_push_array(*pparray);
+            *newelem = tmp + 1;
+        }
+        ++tmp;
+    }
+    
+    return nSize;
+}
+
+int ap_registry_get_service_args(pool *p, int *argc, char ***argv, char *display_name)
+{
+    int ret;
+    array_header *parray;
+    char *key = ap_get_service_key(display_name);
+    ret = ap_registry_get_array(p, key, "ConfigArgs", &parray);
+    if (ret > 0) {
+        *argc = parray->nelts;
+        *argv = (char**) parray->elts;
+    }
+    else {
+        *argc = 0;
+        *argv = NULL;
+    }
+    free(key);
+    return ret;
+}
+
+int ap_registry_store_array(pool *p, char *key, char *name,
+                            int nelts, char **elts)
+{
+    int  bufsize, i;
+    char *buf, *tmp;
+
+    bufsize = 1; /* For trailing second null */
+    for (i = 0; i < nelts; ++i)
+    {
+        bufsize += strlen(elts[i]) + 1;
+    }
+    if (!nelts) 
+        ++bufsize;
+
+    buf = ap_palloc(p, bufsize);
+    tmp = buf;
+    for (i = 0; i < nelts; ++i)
+    {
+        strcpy(tmp, elts[i]);
+        tmp += strlen(elts[i]) + 1;
+    }
+    if (!nelts) 
+        *(tmp++) = '\0';
+    *(tmp++) = '\0'; /* Trailing second null */
+
+    return ap_registry_store_key_int(key, name, REG_MULTI_SZ, buf, tmp - buf);
+}
+
+int ap_registry_set_service_args(pool *p, int argc, char **argv, char *display_name)
+{
+    int ret;
+    char *key = ap_get_service_key(display_name);
+    ret = ap_registry_store_array(p, key, "ConfigArgs", argc, argv);
+    free(key);
+    return ret;
+}
+
+#endif /* WIN32 */

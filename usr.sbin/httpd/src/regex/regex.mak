@@ -27,10 +27,10 @@ NULL=nul
 
 !IF  "$(CFG)" == "regex - Win32 Release"
 
-OUTDIR=.\Release
-INTDIR=.\Release
+OUTDIR=.\LibR
+INTDIR=.\LibR
 # Begin Custom Macros
-OutDir=.\Release
+OutDir=.\LibR
 # End Custom Macros
 
 !IF "$(RECURSE)" == "0" 
@@ -46,9 +46,9 @@ ALL : "$(OUTDIR)\regex.lib"
 CLEAN :
 	-@erase "$(INTDIR)\regcomp.obj"
 	-@erase "$(INTDIR)\regerror.obj"
+	-@erase "$(INTDIR)\regex.idb"
 	-@erase "$(INTDIR)\regexec.obj"
 	-@erase "$(INTDIR)\regfree.obj"
-	-@erase "$(INTDIR)\vc50.idb"
 	-@erase "$(OUTDIR)\regex.lib"
 
 "$(OUTDIR)" :
@@ -56,9 +56,9 @@ CLEAN :
 
 RSC=rc.exe
 CPP=cl.exe
-CPP_PROJ=/nologo /MD /W3 /GX /O2 /I "..\include" /D "WIN32" /D "NDEBUG" /D\
- "_WINDOWS" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
-CPP_OBJS=.\Release/
+CPP_PROJ=/nologo /MD /W3 /O2 /I "..\include" /D "WIN32" /D "NDEBUG" /D\
+ "_WINDOWS" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\regex" /FD /c 
+CPP_OBJS=.\LibR/
 CPP_SBRS=.
 
 .c{$(CPP_OBJS)}.obj::
@@ -110,10 +110,10 @@ LIB32_OBJS= \
 
 !ELSEIF  "$(CFG)" == "regex - Win32 Debug"
 
-OUTDIR=.\Debug
-INTDIR=.\Debug
+OUTDIR=.\LibD
+INTDIR=.\LibD
 # Begin Custom Macros
-OutDir=.\Debug
+OutDir=.\LibD
 # End Custom Macros
 
 !IF "$(RECURSE)" == "0" 
@@ -129,9 +129,10 @@ ALL : "$(OUTDIR)\regex.lib"
 CLEAN :
 	-@erase "$(INTDIR)\regcomp.obj"
 	-@erase "$(INTDIR)\regerror.obj"
+	-@erase "$(INTDIR)\regex.idb"
+	-@erase "$(INTDIR)\regex.pdb"
 	-@erase "$(INTDIR)\regexec.obj"
 	-@erase "$(INTDIR)\regfree.obj"
-	-@erase "$(INTDIR)\vc50.idb"
 	-@erase "$(OUTDIR)\regex.lib"
 
 "$(OUTDIR)" :
@@ -139,9 +140,9 @@ CLEAN :
 
 RSC=rc.exe
 CPP=cl.exe
-CPP_PROJ=/nologo /MDd /W3 /GX /Z7 /Od /I "..\include" /D "WIN32" /D "_DEBUG" /D\
- "_WINDOWS" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
-CPP_OBJS=.\Debug/
+CPP_PROJ=/nologo /MDd /W3 /GX /Zi /Od /I "..\include" /D "WIN32" /D "_DEBUG" /D\
+ "_WINDOWS" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\regex" /FD /c 
+CPP_OBJS=.\LibD/
 CPP_SBRS=.
 
 .c{$(CPP_OBJS)}.obj::

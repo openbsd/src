@@ -1,172 +1,142 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
-<html>
-<head>
-<title>Apache module mod_env</title>
-</head>
-<!-- English revision: 1.17 -->
+<?xml version="1.0" encoding="iso-2022-jp"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ja" lang="ja">
+  <head>
 
-<!-- Background white, links blue (unvisited), navy (visited), red (active) -->
-<body
- bgcolor="#FFFFFF"
- text="#000000"
- link="#0000FF"
- vlink="#000080"
- alink="#FF0000"
->
-    <div align="CENTER">
+    <title>Apache module mod_env</title>
+
+  </head>
+  <!-- English revision: 1.21 -->
+  <!-- Background white, links blue (unvisited), navy (visited), red (active) -->
+  <body bgcolor="#ffffff" text="#000000" link="#0000ff"
+  vlink="#000080" alink="#ff0000">
+        <div align="CENTER">
       <img src="../images/sub.gif" alt="[APACHE DOCUMENTATION]" /> 
 
       <h3>Apache HTTP Server Version 1.3</h3>
     </div>
 
-<h1 align="CENTER">mod_env モジュール</h1>
 
-<p>このモジュールは CGI スクリプト及び SSI ページに渡される環境変数を変更する機能を
-提供します。</p>
+    <h1 align="center">mod_env モジュール</h1>
 
-<p><a
-href="module-dict.html#Status"
-rel="Help"
-><strong>ステータス:</strong></a> Base
-<br>
-<a
-href="module-dict.html#SourceFile"
-rel="Help"
-><strong>ソースファイル:</strong></a> mod_env.c
-<br>
-<a
-href="module-dict.html#ModuleIdentifier"
-rel="Help"
-><strong>モジュール識別子:</strong></a> env_module
-<br>
-<a
-href="module-dict.html#Compatibility"
-rel="Help"
-><strong>互換性:</strong></a> Apache 1.1 以降で使用可能。
-</p>
+    <p>このモジュールは CGI スクリプト及び SSI
+    ページに渡される環境変数を変更する機能を提供します。</p>
 
-<h2>概要</h2>
+    <p><a href="module-dict.html#status"
+    rel="help"><strong>ステータス:</strong></a> Base<br />
+     <a href="module-dict.html#sourcefile"
+    rel="help"><strong>ソースファイル:</strong></a> mod_env.c<br />
+     <a href="module-dict.html#moduleidentifier"
+    rel="help"><strong>モジュール識別子:</strong></a>
+    env_module<br />
+     <a href="module-dict.html#compatibility"
+    rel="help"><strong>互換性:</strong></a>
+    Apache 1.1 以降で使用可能。</p>
 
-<p>このモジュールにより CGI スクリプトと SSI ページに適用される環境変数を
-制御することができるようになります。環境変数は httpd プロセスを起動した
-シェルから渡されます。また、設定ファイルで環境変数を設定したり、
-削除したりすることができます。</p>
+    <h2>概要</h2>
 
-<p>
-詳細は、<a href="../env.html">Apache の環境変数</a>を参照してください。</p>
+    <p>このモジュールにより CGI スクリプトと SSI
+    ページに適用される環境変数を制御することができるようになります。
+    環境変数は httpd プロセスを起動したシェルから渡されます。また、
+    設定ファイルで環境変数を設定したり、削除したりすることができます。
+    </p>
 
-<h2>ディレクティブ</h2>
-<ul>
-<li><a href="#passenv">PassEnv</a>
-<li><a href="#setenv">SetEnv</a>
-<li><a href="#unsetenv">UnsetEnv</a>
-</ul>
+    <p>詳細は、<a href="../env.html">Apache
+    の環境変数</a>を参照してください。</p>
 
-<hr>
+    <h2>ディレクティブ</h2>
 
-<h2><a name="passenv">PassEnv</a> ディレクティブ</h2>
-<a
- href="directive-dict.html#Syntax"
- rel="Help"
-><strong>構文:</strong></a> PassEnv <em>variable</em> 
-    [<em>variable</em>] ...<br>
-<a
- href="directive-dict.html#Context"
- rel="Help"
-><strong>コンテキスト:</strong></a> サーバ設定ファイル、バーチャルホスト<br>
-<a
- href="directive-dict.html#Status"
- rel="Help"
-><strong>ステータス:</strong></a> Base<br>
-<a
- href="directive-dict.html#Module"
- rel="Help"
-><strong>モジュール:</strong></a> mod_env<br>
-<a
- href="directive-dict.html#Compatibility"
- rel="Help"
-><strong>互換性:</strong></a> PassEnv は Apache 1.1 以降でのみ使用可能。<br>
+    <ul>
+      <li><a href="#passenv">PassEnv</a></li>
 
-<p>
-httpd プロセスを起動したシェルの環境から CGI スクリプトと SSI ページに
-渡す環境変数を一つ以上指定します。例:
-</p>
+      <li><a href="#setenv">SetEnv</a></li>
 
+      <li><a href="#unsetenv">UnsetEnv</a></li>
+    </ul>
+    <hr />
+
+    <h2><a id="passenv" name="passenv">PassEnv</a> ディレクティブ</h2>
+
+     <a href="directive-dict.html#syntax"
+    rel="help"><strong>構文:</strong></a> PassEnv
+    <em>env-variable</em> [<em>env-variable</em>] ...<br />
+     <a href="directive-dict.html#context"
+    rel="help"><strong>コンテキスト:</strong></a>サーバ設定ファイル、
+    バーチャルホスト、ディレクトリ、.htaccess<br />
+     <a href="directive-dict.html#Override"
+    rel="Help"><strong>上書き:</strong></a> FileInfo<br />
+     <a href="directive-dict.html#status"
+    rel="help"><strong>ステータス:</strong></a> Base<br />
+     <a href="directive-dict.html#module"
+    rel="help"><strong>モジュール:</strong></a> mod_env<br />
+     <a href="directive-dict.html#compatibility"
+    rel="help"><strong>互換性:</strong></a> PassEnv は Apache 1.1
+    以降でのみ使用可能。ディレクトリ、.htaccess での使用は
+    Apache 1.3.7 以降で使用可能。<br />
+
+    <p>httpd プロセスを起動したシェルの環境から CGI スクリプトと
+    SSI ページに渡す環境変数を一つ以上指定します。例:
+    </p>
 <pre>
     PassEnv LD_LIBRARY_PATH
 </pre>
+    <hr />
 
-<hr>
+    <h2><a id="setenv" name="setenv">SetEnv</a> ディレクティブ</h2>
+     <a href="directive-dict.html#syntax"
+    rel="help"><strong>構文:</strong></a> SetEnv <em>variable
+    value</em><br />
+     <a href="directive-dict.html#context"
+    rel="help"><strong>コンテキスト:</strong></a>サーバ設定ファイル、
+    バーチャルホスト、ディレクトリ、.htaccess<br />
+     <a href="directive-dict.html#Override"
+    rel="Help"><strong>上書き:</strong></a> FileInfo<br />
+     <a href="directive-dict.html#status"
+    rel="help"><strong>ステータス:</strong></a> Base<br />
+     <a href="directive-dict.html#module"
+    rel="help"><strong>モジュール:</strong></a> mod_env<br />
+     <a href="directive-dict.html#compatibility"
+    rel="help"><strong>互換性:</strong></a> SetEnv は Apache 1.1
+    以降でのみ使用可能。ディレクトリ、.htaccess での使用は
+    Apache 1.3.7 以降で使用可能。<br />
 
-<h2><a name="setenv">SetEnv</a> ディレクティブ</h2>
-<a
- href="directive-dict.html#Syntax"
- rel="Help"
-><strong>構文:</strong></a> SetEnv <em>variable value</em><br>
-<a
- href="directive-dict.html#Context"
- rel="Help"
-><strong>コンテキスト:</strong></a> サーバ設定ファイル、バーチャルホスト<br>
-<a
- href="directive-dict.html#Status"
- rel="Help"
-><strong>ステータス:</strong></a> Base<br>
-<a
- href="directive-dict.html#Module"
- rel="Help"
-><strong>モジュール:</strong></a> mod_env<br>
-<a
- href="directive-dict.html#Compatibility"
- rel="Help"
-><strong>互換性:</strong></a> SetEnv は Apache 1.1 以降でのみ使用可能。<br>
-
-<p>
-環境変数を設定し、それを CGI スクリプトと SSI ページに渡すようにします。
-例:</p>
-
+    <p>環境変数を設定し、それを CGI スクリプトと SSI
+    ページに渡すようにします。例:</p>
 <pre>
     SetEnv SPECIAL_PATH /foo/bin
 </pre>
+    <hr />
 
-<hr>
+    <h2><a id="unsetenv" name="unsetenv">UnsetEnv</a>
+    ディレクティブ</h2>
+     <a href="directive-dict.html#syntax"
+    rel="help"><strong>構文:</strong></a> UnsetEnv
+    <em>env-variable</em> [<em>env-variable</em>] ...<br />
+     <a href="directive-dict.html#context"
+    rel="help"><strong>コンテキスト:</strong></a>サーバ設定ファイル、
+    バーチャルホスト、ディレクトリ、.htaccess<br />
+     <a href="directive-dict.html#Override"
+    rel="Help"><strong>上書き:</strong></a> FileInfo<br />
+     <a href="directive-dict.html#status"
+    rel="help"><strong>ステータス:</strong></a> Base<br />
+     <a href="directive-dict.html#module"
+    rel="help"><strong>モジュール:</strong></a> mod_env<br />
+     <a href="directive-dict.html#compatibility"
+    rel="help"><strong>互換性:</strong></a> UnsetEnv は Apache 1.1
+    以降でのみ使用可能。ディレクトリ、.htaccess での使用は
+    Apache 1.3.7 以降で使用可能。<br />
 
-<h2><a name="unsetenv">UnsetEnv</a> ディレクティブ</h2>
-<a
- href="directive-dict.html#Syntax"
- rel="Help"
-><strong>構文:</strong></a> UnsetEnv <em>variable</em> 
-   [<em>variable</em>] ...<br>
-<a
- href="directive-dict.html#Context"
- rel="Help"
-><strong>コンテキスト:</strong></a> サーバ設定ファイル<br>
-<a
- href="directive-dict.html#Status"
- rel="Help"
-><strong>ステータス:</strong></a> Base<br>
-<a
- href="directive-dict.html#Module"
- rel="Help"
-><strong>モジュール:</strong></a> mod_env<br>
-<a
- href="directive-dict.html#Compatibility"
- rel="Help"
-><strong>互換性:</strong></a> UnsetEnv は Apache 1.1 以降でのみ使用可能。<br>
-
-<p>
-CGI スクリプトと SSI ページに渡される環境変数から指定された
-環境変数を取り除きます。例:</p>
-
+    <p>CGI スクリプトと SSI
+    ページに渡される環境変数から指定された環境変数を取り除きます。例:</p>
 <pre>
     UnsetEnv LD_LIBRARY_PATH
 </pre>
-
-    <hr />
+        <hr />
 
     <h3 align="CENTER">Apache HTTP Server Version 1.3</h3>
     <a href="./"><img src="../images/index.gif" alt="Index" /></a>
     <a href="../"><img src="../images/home.gif" alt="Home" /></a>
 
-</body>
+  </body>
 </html>
-

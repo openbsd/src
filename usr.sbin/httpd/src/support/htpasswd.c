@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -193,8 +193,8 @@ static int mkrecord(char *user, char *record, size_t rlen, char *passwd,
         return usage();
 #else
 	if (ap_getpass("New password: ", pwin, sizeof(pwin)) != 0) {
-	    ap_snprintf(record, (rlen - 1), "password too long (>%d)",
-			sizeof(pwin) - 1);
+	    ap_snprintf(record, (rlen - 1), "password too long (>%lu)",
+			(unsigned long) (sizeof(pwin) - 1));
 	    return ERR_OVERFLOW;
 	}
 	ap_getpass("Re-type new password: ", pwv, sizeof(pwv));
@@ -437,6 +437,11 @@ int main(int argc, char *argv[])
     if ((argc - i) != args_left) {
 	return usage();
     }
+#ifdef NETWARE
+    UnAugmentAsterisk(TRUE);
+    SetCurrentNameSpace(NW_NS_LONG);
+    SetTargetNameSpace(NW_NS_LONG);
+#endif
     if (newfile && nofile) {
 	fprintf(stderr, "%s: -c and -n options conflict\n", argv[0]);
 	return ERR_SYNTAX;
@@ -451,8 +456,8 @@ int main(int argc, char *argv[])
 	}
 	strcpy(pwfilename, argv[i]);
 	if (strlen(argv[i + 1]) > (sizeof(user) - 1)) {
-	    fprintf(stderr, "%s: username too long (>%d)\n", argv[0],
-		    sizeof(user) - 1);
+	    fprintf(stderr, "%s: username too long (>%lu)\n", argv[0],
+		    (unsigned long)(sizeof(user) - 1));
 	    return ERR_OVERFLOW;
 	}
     }
@@ -464,8 +469,8 @@ int main(int argc, char *argv[])
     }
     if (noninteractive) {
 	if (strlen(argv[i + 2]) > (sizeof(password) - 1)) {
-	    fprintf(stderr, "%s: password too long (>%d)\n", argv[0],
-		    sizeof(password) - 1);
+	    fprintf(stderr, "%s: password too long (>%lu)\n", argv[0],
+		    (unsigned long)(sizeof(password) - 1));
 	    return ERR_OVERFLOW;
 	}
 	strcpy(password, argv[i + 2]);
