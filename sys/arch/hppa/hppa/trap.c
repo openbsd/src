@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.13 1999/12/17 01:48:45 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.14 1999/12/31 18:27:40 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -342,7 +342,7 @@ if (kdb_trap (type, 0, frame))
 	return;
 #else
 				panic("trap: uvm_fault(%p, %x, %d, %d): %d",
-				    map, va, vftype, FALSE, ret);
+				    map, va, 0, vftype, ret);
 #endif
 			}
 		}
