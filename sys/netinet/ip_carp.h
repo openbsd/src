@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.h,v 1.6 2004/04/28 01:53:45 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.h,v 1.7 2004/05/05 01:20:12 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -52,7 +52,6 @@ struct carp_header {
 
 /* carp_type */
 #define	CARP_ADVERTISEMENT	0x01
-#define	CARP_LEAVE_GROUP	0x02
 
 #define	CARP_KEY_LEN		20	/* a sha1 hash of a passphrase */
 
