@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.8 1998/03/03 21:42:46 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.9 1998/09/20 03:27:18 millert Exp $
 
 IO_DIR=		$(.CURDIR)/../libio
 LIBIBERTY_DIR=	$(.CURDIR)/../libiberty
@@ -422,5 +422,9 @@ ldcomio.so: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
 		$(.CURDIR)/cinst.cc -o ldcomio.so.o
 	@$(LD) -x -r ldcomio.so.o -o ldcomio.so
 	@rm -f ldcomio.so.o
+
+.if defined(DESTDIR)
+CPPFLAGS+= -idirafter ${DESTDIR}/usr/include/g++
+.endif
 
 .include <bsd.lib.mk>
