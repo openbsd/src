@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.99 2001/05/30 12:20:42 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.100 2001/06/05 11:05:08 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -335,7 +335,6 @@ ip_output(m0, va_alist)
 			    sizeof(union sockaddr_union))) {
 				splx(s);
 				sproto = 0; /* mark as no-IPsec-needed */
-				DPRINTF(("ip_output: IPsec loop detected, skipping further IPsec processing for this packet.\n"));
 				goto done_spd;
 			}
 		}
