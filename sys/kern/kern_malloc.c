@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.51 2003/05/03 21:14:59 deraadt Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.52 2003/06/01 16:23:41 art Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -474,6 +474,7 @@ kmeminit_nkmempages()
 void
 kmeminit()
 {
+	vaddr_t base, limit;
 #ifdef KMEMSTATS
 	long indx;
 #endif
@@ -488,10 +489,12 @@ kmeminit()
 	 * done so already.
 	 */
 	kmeminit_nkmempages();
-
-	kmem_map = uvm_km_suballoc(kernel_map, (vaddr_t *)&kmembase,
-		(vaddr_t *)&kmemlimit, (vsize_t)(nkmempages * PAGE_SIZE), 
-			VM_MAP_INTRSAFE, FALSE, &kmem_map_store.vmi_map);
+	base = vm_map_min(kernel_map);
+	kmem_map = uvm_km_suballoc(kernel_map, &base, &limit,
+	    (vsize_t)(nkmempages * PAGE_SIZE), VM_MAP_INTRSAFE, FALSE,
+	    &kmem_map_store.vmi_map);
+	kmembase = (char *)base;
+	kmemlimit = (char *)limit;
 	kmemusage = (struct kmemusage *) uvm_km_zalloc(kernel_map,
 		(vsize_t)(nkmempages * sizeof(struct kmemusage)));
 #ifdef KMEMSTATS
