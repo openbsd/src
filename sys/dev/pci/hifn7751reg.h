@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751reg.h,v 1.10 2000/03/29 22:39:39 jason Exp $	*/
+/*	$OpenBSD: hifn7751reg.h,v 1.11 2000/04/04 20:10:27 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -59,12 +59,12 @@
  * any command the driver implements.
  *
  * MAX_COMMAND = base command + mac command + encrypt command +
- *			mac-key des-iv + 3des-key
+ *			mac-key + des-iv + 3des-key
  * MAX_RESULT  = base result + mac result + mac + encrypt result
  *			
  *
  */
-#define HIFN_MAX_COMMAND	(8 + 8 + 8 + 8 + 64 + 24)
+#define HIFN_MAX_COMMAND	(8 + 8 + 8 + 64 + 8 + 24)
 #define HIFN_MAX_RESULT		(8 + 4 + 20 + 4)
 
 /*
@@ -379,6 +379,7 @@ typedef struct hifn_mac_command {
 #define HIFN_MAC_CMD_ALG_SHA1		(0x0 << 0)
 #define HIFN_MAC_CMD_MODE_HMAC		(0x0 << 2)
 #define HIFN_MAC_CMD_TRUNC		(0x1 << 4)
+#define HIFN_MAC_CMD_RESULT		(0x1 << 5)
 #define HIFN_MAC_CMD_APPEND		(0x1 << 6)
 /*
  * MAC POS IPSec initiates authentication after encryption on encodes
