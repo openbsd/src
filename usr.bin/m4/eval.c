@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.39 2001/09/29 15:43:48 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.40 2001/10/10 11:17:10 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.39 2001/09/29 15:43:48 espie Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.40 2001/10/10 11:17:10 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -614,9 +614,9 @@ dodefn(name)
 
 	if ((p = lookup(name)) != nil) {
 		if (p->defn != null) {
-		pbstr(rquote);
-		pbstr(p->defn);
-		pbstr(lquote);
+			pbstr(rquote);
+			pbstr(p->defn);
+			pbstr(lquote);
 		} else if ((real = builtin_realname(p->type)) != NULL) {
 			pbstr(real);
 			pbstr(BUILTIN_MARKER);
