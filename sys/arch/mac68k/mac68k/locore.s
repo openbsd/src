@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.42 2004/12/24 22:50:30 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.43 2004/12/26 22:36:34 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.103 1998/07/09 06:02:50 scottr Exp $	*/
 
 /*
@@ -726,7 +726,7 @@ Lkbrkpt: | Kernel-mode breakpoint or trace trap. (d0=trap_type)
 	lea	sp@(FR_SIZE),a6		| Save stack pointer
 	movl	a6,sp@(FR_SP)		|  from before trap
 
-	| If were are not on tmpstk switch to it.
+	| If we are not on tmpstk switch to it.
 	| (so debugger can change the stack pointer)
 	movl	a6,d1
 	cmpl	#_ASM_LABEL(tmpstk),d1
