@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.35 2002/12/18 22:07:31 mcbride Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.36 2002/12/19 14:03:06 henning Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -64,19 +64,19 @@
 
 #include "pathnames.h"
 
-int Rule_Action = PF_CHANGE_ADD_TAIL;
-int Nat_Action = PF_CHANGE_ADD_HEAD;
-int Rdr_Action = PF_CHANGE_ADD_HEAD;
-int dev;			/* pf device */
-int Delete_Rules;		/* for parse_rules callbacks */
+int	Rule_Action = PF_CHANGE_ADD_TAIL;
+int	Nat_Action = PF_CHANGE_ADD_HEAD;
+int	Rdr_Action = PF_CHANGE_ADD_HEAD;
+int	dev;			/* pf device */
+int	Delete_Rules;		/* for parse_rules callbacks */
 
-FILE *pidfp;
-char *infile;			/* infile name needed by parse_[rules|nat] */
-char luser[MAXLOGNAME];		/* username */
-char ipsrc[256];		/* ip as a string */
-char pidfile[MAXPATHLEN];	/* we save pid in this file. */
+FILE	*pidfp;
+char	*infile;		/* infile name needed by parse_[rules|nat] */
+char	 luser[MAXLOGNAME];	/* username */
+char	 ipsrc[256];		/* ip as a string */
+char	 pidfile[MAXPATHLEN];	/* we save pid in this file. */
 
-struct timeval Tstart, Tend;	/* start and end times of session */
+struct timeval	Tstart, Tend;	/* start and end times of session */
 
 int	pfctl_add_pool(struct pfctl *, struct pf_pool *, sa_family_t);
 int	pfctl_add_rule(struct pfctl *, struct pf_rule *);
@@ -95,9 +95,9 @@ static int	check_luser(char *, char *);
 static int	changefilter(int, char *, char *);
 static void	authpf_kill_states(void);
 
-volatile sig_atomic_t want_death;
-static void	need_death(int signo);
-static __dead void do_death(int);
+volatile sig_atomic_t	want_death;
+static void		need_death(int signo);
+static __dead void	do_death(int);
 
 /*
  * User shell for authenticating gateways. sole purpose is to allow
@@ -108,12 +108,12 @@ static __dead void do_death(int);
 int
 main(int argc, char *argv[])
 {
-	int lockcnt = 0, n, pidfd;
-	FILE *config;
-	struct in_addr ina;
-	struct passwd *pw;
-	char *cp;
-	uid_t uid;
+	int		 lockcnt = 0, n, pidfd;
+	FILE		*config;
+	struct in_addr	 ina;
+	struct passwd	*pw;
+	char		*cp;
+	uid_t		 uid;
 
 	config = fopen(PATH_CONFFILE, "r");
 	if (config == NULL)
@@ -196,8 +196,8 @@ main(int argc, char *argv[])
 	 */
 
 	do {
-		int save_errno, otherpid = -1;
-		char otherluser[MAXLOGNAME];
+		int	save_errno, otherpid = -1;
+		char	otherluser[MAXLOGNAME];
 
 		if ((pidfd = open(pidfile, O_RDWR|O_CREAT, 0644)) == -1 ||
 		    (pidfp = fdopen(pidfd, "r+")) == NULL) {
@@ -308,14 +308,15 @@ die:
 static int
 read_config(FILE *f)
 {
-	char buf[1024];
-	int i = 0;
+	char	buf[1024];
+	int	i = 0;
 
 	openlog("authpf", LOG_PID | LOG_NDELAY, LOG_DAEMON);
 
 	do {
-		char **ap, *pair[4], *cp, *tp;
-		int len;
+		char	**ap;
+		char	 *pair[4], *cp, *tp;
+		int	  len;
 
 		if (fgets(buf, sizeof(buf), f) == NULL) {
 			fclose(f);
@@ -331,7 +332,7 @@ read_config(FILE *f)
 		buf[len - 1] = '\0';
 
 		for (cp = buf; *cp == ' ' || *cp == '\t'; cp++)
-			;
+			; /* nothing */
 
 		if (!*cp || *cp == '#' || *cp == '\n')
 			continue;
@@ -362,7 +363,6 @@ read_config(FILE *f)
 				Nat_Action = PF_CHANGE_ADD_TAIL;
 			else
 				goto parse_error;
-
 		} else if (strcasecmp(pair[0], "rdr_action") == 0)  {
 			if (strcasecmp(pair[1], "head") == 0)
 				Rdr_Action = PF_CHANGE_ADD_HEAD;
@@ -374,6 +374,7 @@ read_config(FILE *f)
 	} while (!feof(f) && !ferror(f));
 	fclose(f);
 	return (0);
+
 parse_error:
 	fclose(f);
 	syslog(LOG_ERR, "parse error, line %d of %s", i, PATH_CONFFILE);
@@ -389,8 +390,8 @@ parse_error:
 static void
 print_message(char *filename)
 {
-	char buf[1024];
-	FILE *f;
+	char	 buf[1024];
+	FILE	*f;
 
 	if ((f = fopen(filename, "r")) == NULL)
 		return; /* fail silently, we don't care if it isn't there */
@@ -420,10 +421,10 @@ print_message(char *filename)
 static int
 allowed_luser(char *luser)
 {
-	char *buf, *lbuf;
-	int matched;
-	size_t len;
-	FILE *f;
+	char	*buf, *lbuf;
+	int	 matched;
+	size_t	 len;
+	FILE	*f;
 
 	if ((f = fopen(PATH_ALLOWFILE, "r")) == NULL) {
 		if (errno == ENOENT) {
@@ -431,7 +432,7 @@ allowed_luser(char *luser)
 			 * allowfile doesn't exist, thus this gateway
 			 * isn't restricted to certain users...
 			 */
-			return(1);
+			return (1);
 		}
 
 		/*
@@ -441,7 +442,7 @@ allowed_luser(char *luser)
 		 */
 		syslog(LOG_ERR, "Can't open allowed users file %s (%s)",
 		    PATH_ALLOWFILE, strerror(errno));
-		return(0);
+		return (0);
 	} else {
 		/*
 		 * /etc/authpf.allow exists, thus we do a linear
@@ -470,7 +471,7 @@ allowed_luser(char *luser)
 			}
 
 			if (matched)
-				return(1); /* matched an allowed username */
+				return (1); /* matched an allowed username */
 		}
 		syslog(LOG_INFO, "Denied access to %s: not listed in %s",
 		    luser, PATH_ALLOWFILE);
@@ -480,7 +481,7 @@ allowed_luser(char *luser)
 		fputs(buf, stdout);
 	}
 	fflush(stdout);
-	return(0);
+	return (0);
 }
 
 /*
@@ -496,15 +497,15 @@ allowed_luser(char *luser)
 static int
 check_luser(char *luserdir, char *luser)
 {
-	FILE *f;
-	int n;
-	char tmp[MAXPATHLEN];
+	FILE	*f;
+	int	 n;
+	char	 tmp[MAXPATHLEN];
 
 	n = snprintf(tmp, sizeof(tmp), "%s/%s", luserdir, luser);
 	if (n < 0 || (u_int)n >= sizeof(tmp)) {
 		syslog(LOG_ERR, "Provided banned directory line too long (%s)",
 		    luserdir);
-		return(0);
+		return (0);
 	}
 	if ((f = fopen(tmp, "r")) == NULL) {
 		if (errno == ENOENT) {
@@ -512,7 +513,7 @@ check_luser(char *luserdir, char *luser)
 			 * file or dir doesn't exist, so therefore
 			 * this luser isn't banned..  all is well
 			 */
-			return(1);
+			return (1);
 		} else {
 			/*
 			 * luser may in fact be banned, but we can't open the
@@ -521,7 +522,7 @@ check_luser(char *luserdir, char *luser)
 			 */
 			syslog(LOG_ERR, "Can't open banned file %s (%s)",
 			    tmp, strerror(errno));
-			return(0);
+			return (0);
 		}
 	} else {
 		/*
@@ -537,12 +538,12 @@ check_luser(char *luserdir, char *luser)
 		while ((fputs(tmp, stdout) != EOF) && !feof(f)) {
 			if (fgets(tmp, sizeof(tmp), f) == NULL) {
 				fflush(stdout);
-				return(0);
+				return (0);
 			}
 		}
 	}
 	fflush(stdout);
-	return(0);
+	return (0);
 }
 
 
@@ -552,13 +553,13 @@ check_luser(char *luserdir, char *luser)
 static int
 changefilter(int add, char *luser, char *ipsrc)
 {
-	char rulesfile[MAXPATHLEN], buf[1024];
-	char template[] = "/tmp/authpfrules.XXXXXXX";
-	int tmpfile = -1, from_fd = -1, ret = -1;
-	struct pfioc_rule	pr;
-	struct pfctl		pf;
-	int n, rcount, wcount;
-	FILE *fin = NULL;
+	char			 rulesfile[MAXPATHLEN], buf[1024];
+	char			 template[] = "/tmp/authpfrules.XXXXXXX";
+	int			 tmpfile = -1, from_fd = -1, ret = -1;
+	struct pfioc_rule	 pr;
+	struct pfctl		 pf;
+	int			 n, rcount, wcount;
+	FILE			*fin = NULL;
 
 	memset(&pf, 0, sizeof(pf));
 	memset(&pr, 0, sizeof(pr));
@@ -681,7 +682,7 @@ changefilter(int add, char *luser, char *ipsrc)
 		syslog(LOG_INFO, "Removed %s, user %s - duration %ld seconds",
 		    ipsrc, luser, Tend.tv_sec - Tstart.tv_sec);
 	}
-	return(ret);
+	return (ret);
 }
 
 /*
@@ -694,8 +695,8 @@ changefilter(int add, char *luser, char *ipsrc)
 static void
 authpf_kill_states()
 {
-	struct pfioc_state_kill psk;
-	struct in_addr target;
+	struct pfioc_state_kill	psk;
+	struct in_addr		target;
 
 	memset(&psk, 0, sizeof(psk));
 	psk.psk_af = AF_INET;
@@ -729,7 +730,7 @@ need_death(int signo)
 static __dead void
 do_death(int active)
 {
-	int ret = 0;
+	int	ret = 0;
 
 	if (active) {
 		changefilter(0, luser, ipsrc);
@@ -746,7 +747,7 @@ do_death(int active)
 int
 pfctl_add_pool(struct pfctl *pf, struct pf_pool *p, sa_family_t af)
 {
-	struct pf_pooladdr *pa;
+	struct pf_pooladdr	*pa;
 
 	if ((pf->opts & PF_OPT_NOACTION) == 0) {
 		if (ioctl(pf->dev, DIOCBEGINADDRS, &pf->paddr))
@@ -801,7 +802,7 @@ pfctl_compare_pooladdrs(struct pf_pooladdr *a, struct pf_pooladdr *b,
 int
 pfctl_compare_pools(struct pf_pool *a, struct pf_pool *b, sa_family_t af)
 {
-	struct pf_pooladdr *pa_a, *pa_b;
+	struct pf_pooladdr	*pa_a, *pa_b;
 
 	if (a->key.key32[0] != b->key.key32[0] ||
 	    a->key.key32[1] != b->key.key32[1] ||
@@ -811,7 +812,7 @@ pfctl_compare_pools(struct pf_pool *a, struct pf_pool *b, sa_family_t af)
 	    a->proxy_port[1] != b->proxy_port[1] ||
 	    a->port_op != b->port_op ||
 	    a->opts != b->opts)
-		return(1);
+		return (1);
 	pa_a = TAILQ_FIRST(&a->list);
 	pa_b = TAILQ_FIRST(&b->list);
 	while (pa_a != NULL && pa_b != NULL) {
@@ -874,8 +875,8 @@ pfctl_compare_rules(struct pf_rule *a, struct pf_rule *b)
 int
 pfctl_add_rule(struct pfctl *pf, struct pf_rule *r)
 {
-	struct pfioc_rule pcr;
-	u_int32_t mnr, nr, match = 0;
+	struct pfioc_rule	pcr;
+	u_int32_t		mnr, nr, match = 0;
 
 	memset(&pcr, 0, sizeof(pcr));
 	pcr.rule.action = r->action;
@@ -940,7 +941,7 @@ pfctl_add_rule(struct pfctl *pf, struct pf_rule *r)
 		}
 	}
 
-	return 0;
+	return (0);
 }
 
 int
