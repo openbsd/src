@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.3 1996/06/23 14:31:47 deraadt Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.4 1996/10/27 20:55:05 downsj Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.3 1996/06/23 14:31:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.4 1996/10/27 20:55:05 downsj Exp $";
 #endif
 #endif /* not lint */
 
@@ -157,9 +157,7 @@ int	secpercyl;		/* sectors per cylinder */
 int	trackspares = -1;	/* spare sectors per track */
 int	cylspares = -1;		/* spare sectors per cylinder */
 int	sectorsize;		/* bytes/sector */
-#ifdef tahoe
 int	realsectorsize;		/* bytes/sector in hardware */
-#endif
 int	rpm;			/* revolutions/minute of drive */
 int	interleave;		/* hardware sector interleave */
 int	trackskew = -1;		/* sector 0 skew, per track */
@@ -525,9 +523,8 @@ havelabel:
 	sbsize = lp->d_sbsize;
 #endif
 	oldpartition = *pp;
-#ifdef tahoe
 	realsectorsize = sectorsize;
-	if (sectorsize != DEV_BSIZE) {		/* XXX */
+	if (sectorsize < DEV_BSIZE) {
 		int secperblk = DEV_BSIZE / sectorsize;
 
 		sectorsize = DEV_BSIZE;
@@ -536,13 +533,21 @@ havelabel:
 		secpercyl /= secperblk;
 		fssize /= secperblk;
 		pp->p_size /= secperblk;
+	} else if (sectorsize > DEV_BSIZE) {
+		int blkpersec = sectorsize / DEV_BSIZE;
+
+		sectorsize = DEV_BSIZE;
+		nsectors *= blkpersec;
+		nphyssectors *= blkpersec;
+		secpercyl *= blkpersec;
+		fssize *= blkpersec;
+		pp->p_size *= blkpersec;
 	}
-#endif
 	mkfs(pp, special, fsi, fso);
-#ifdef tahoe
-	if (realsectorsize != DEV_BSIZE)
+	if (realsectorsize < DEV_BSIZE)
 		pp->p_size *= DEV_BSIZE / realsectorsize;
-#endif
+	else if (realsectorsize > DEV_BSIZE)
+		pp->p_size /= realsectorsize / DEV_BSIZE;
 	if (!Nflag && memcmp(pp, &oldpartition, sizeof(oldpartition)))
 		rewritelabel(special, fso, lp);
 	if (!Nflag)
