@@ -1,4 +1,4 @@
-.\"	$OpenBSD: doc-syms,v 1.17 1999/01/08 21:17:51 niklas Exp $
+.\"	$OpenBSD: doc-syms,v 1.18 1999/01/08 21:27:56 niklas Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -191,7 +191,7 @@
 .	if "\\$1","    \&\\*(tNOpenBSD\\$1\\*(aa
 .\}
 ..
-vv.\" NS Fx macro -- FreeBSD
+.\" NS Fx macro -- FreeBSD
 .de Fx
 .nr cF \\n(.f
 .nr cZ \\n(.s
