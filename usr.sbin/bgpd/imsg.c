@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.4 2003/12/20 21:14:55 henning Exp $ */
+/*	$OpenBSD: imsg.c,v 1.5 2003/12/20 21:19:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -84,7 +84,7 @@ get_imsg(int fd, struct imsg *imsg)
 }
 
 int
-imsg_compose(int fd, int type, u_int32_t peerid, u_char *data,
+imsg_compose(int fd, int type, u_int32_t peerid, void *data,
     u_int16_t datalen)
 {
 	struct buf	*wbuf;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.13 2003/12/20 20:53:30 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.14 2003/12/20 21:19:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -189,7 +189,7 @@ rde_dispatch_imsg(int fd, int idx)
 		case IMSG_RECONF_PEER:
 			if (idx != PFD_PIPE_MAIN)
 				fatal("reconf request not from parent", 0);
-			pconf = (struct peer_config *)imsg.data;
+			pconf = imsg.data;
 			p = peer_get(pconf->id); /* will always fail atm */
 			if (p == NULL)
 				p = peer_add(pconf->id, pconf);
@@ -505,7 +505,7 @@ rde_update_err(u_int32_t peerid, enum suberr_update errorcode)
 
 	errcode = errorcode;
 	se_queued_writes += imsg_compose(se_sock, IMSG_UPDATE_ERR,
-	    peerid, (u_char *)&errcode, sizeof(errcode));
+	    peerid, &errcode, sizeof(errcode));
 }
 
 
