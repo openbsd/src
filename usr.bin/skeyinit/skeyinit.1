@@ -1,4 +1,4 @@
-.\"	$OpenBSD: skeyinit.1,v 1.27 2004/06/04 18:18:20 otto Exp $
+.\"	$OpenBSD: skeyinit.1,v 1.28 2004/06/06 11:23:25 otto Exp $
 .\"	$NetBSD: skeyinit.1,v 1.4 1995/07/07 22:24:09 jtc Exp $
 .\"	@(#)skeyinit.1	1.1 	10/28/93
 .\"
@@ -53,6 +53,21 @@ When used over an untrusted network, a password of
 should be used.
 The user will then be presented with the standard
 S/Key challenge and allowed to proceed if it is correct.
+.Pp
+.Nm 
+prints a sequence number and a one-time password.
+This password can not be used to log in; one-time passwords should be
+generated using
+.Xr skey 1
+first.
+The one-time password printed by
+.Nm
+can be used to verify if the right passphrase has been given to
+.Xr skey 1 .
+The one-time password with the corresponding sequence number printed by
+.Xr skey 1
+should match the one printed by
+.Nm .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -147,6 +162,28 @@ file containing authentication types
 .It Pa /etc/skey
 directory containing user entries for S/Key
 .El
+.Sh EXAMPLES
+.Bd -literal
+    $ skeyinit
+    Reminder - Only use this method if you are directly connected
+               or have an encrypted channel.  If you are using telnet,
+               hit return now and use skeyinit -s.
+    Password: <enter your regular password here>
+    [Updating user with md5]
+    Old seed: [md5] host12377
+    Enter new secret passphrase: <type a new passphrase here>
+    Again secret passphrase: <again>
+    ID user skey is otp-md5 100 host12378
+    Next login password: CITE BREW IDLE CAIN ROD DOME
+    $ otp-md5 -n 3 100 host12378
+    Reminder - Do not use this program while logged in via telnet.
+    Enter secret passphrase: <type your passphrase here>
+    98: WERE TUG EDDY GEAR GILL TEE  
+    99: NEAR HA TILT FIN LONG SNOW   
+    100: CITE BREW IDLE CAIN ROD DOME
+.Ed
+.Pp
+The one-time password for the next login will have sequence number 99.
 .Sh ERRORS
 .Bl -tag -compact -width "skey disabled"
 .It "skey disabled"
@@ -160,6 +197,8 @@ flag.
 .El
 .Sh SEE ALSO
 .Xr skey 1 ,
-.Xr skeyinfo 1
+.Xr skeyaudit 1 ,
+.Xr skeyinfo 1 ,
+.Xr skeyprune 1
 .Sh AUTHORS
 Phil Karn, Neil M. Haller, John S. Walden, Scott Chasin, Todd Miller
