@@ -1,3 +1,4 @@
+/*	$OpenBSD: isa.c,v 1.3 1996/02/27 10:31:32 niklas Exp $	*/
 /*	$NetBSD: isa.c,v 1.74 1995/06/07 06:46:04 cgd Exp $	*/
 
 /*-
@@ -92,7 +93,7 @@ isa_intr_typename(type)
 {
 
 	switch (type) {
-        case IST_NONE :
+        case IST_NONE:
 		return ("none");
         case IST_PULSE:
 		return ("pulsed");
