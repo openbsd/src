@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.20 1999/12/27 06:40:38 itojun Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.21 2000/01/11 01:13:49 angelos Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -66,9 +66,6 @@
  */
 
 #include <sys/queue.h>
-#if 0	/*KAME IPSEC*/
-#include <netinet6/ipsec.h>
-#endif
 #include <netinet6/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/icmp6.h>
@@ -139,11 +136,6 @@ struct inpcb {
 	int	inp_fflowinfo;          /* Foreign flowlabel & priority */
 	int	inp_csumoffset;
 	struct	icmp6_filter *inp_icmp6filt;
-#if 0 /*KAME IPSEC*/
-	struct secpolicy *inp_sp;	/* security policy. It may not be
-					 * used according to policy selection.
-					 */
-#endif
 };
 
 struct inpcbtable {
