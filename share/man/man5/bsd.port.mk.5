@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.147 2004/09/15 19:05:29 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.148 2004/09/16 20:04:22 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -1504,6 +1504,9 @@ to
 Subdirectory of ${WRKDIR} where the actual build occurs.
 Defaults to ${WRKSRC}, unless SEPARATE_BUILD is involved, in which case
 it is set to an appropriate value.
+.It Ev WRKCONF
+Subdirectory of ${WRKDIR} where the actual configure set occurs.
+Defaults to ${WRKBUILD}.
 .It Ev WRKDIR
 Location where all port activity occurs.
 Apart from the actual port, may
