@@ -1,4 +1,4 @@
-/*	$OpenBSD: acd.c,v 1.34 1998/10/05 17:30:58 millert Exp $	*/
+/*	$OpenBSD: acd.c,v 1.35 1999/03/12 04:09:07 provos Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -837,8 +837,8 @@ acdioctl(dev, cmd, addr, flag, p)
 		}
 		if (acd->ad_link->quirks & AQUIRK_LITTLETOC)
 			bswap((u_int8_t*)&th->len, sizeof(th->len));
-
-		len = min(len, ntohs(th->len) - sizeof(struct ioc_toc_header));
+		len = min(len, ntohs(th->len) - (sizeof(th->starting_track) +
+			sizeof(th->ending_track)));
 		return copyout(toc.tab, te->data, len);
 	}
 
