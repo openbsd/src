@@ -1,4 +1,4 @@
-@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/README,v 1.6 1999/07/28 20:41:34 jakob Exp $ (LBL)
+@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/README,v 1.7 2004/06/14 13:33:41 otto Exp $ (LBL)
 
 TCPDUMP 3.4
 Lawrence Berkeley National Laboratory
@@ -44,7 +44,7 @@ from the Internet Traffic Archive:
 
 Another tool that tcpdump users might find useful is tcpslice:
 
-	ftp://ftp.ee.lbl.gov/tcpslice.tar.Z
+	ftp://ftp.ee.lbl.gov/tcpslice.tar.gz
 
 It is a program that can be used to extract portions of tcpdump binary
 trace files. See the above distribution for further details and
