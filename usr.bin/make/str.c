@@ -1,4 +1,4 @@
-/*	$OpenBSD: str.c,v 1.5 1996/11/30 21:09:04 millert Exp $	*/
+/*	$OpenBSD: str.c,v 1.6 1998/03/07 18:34:50 millert Exp $	*/
 /*	$NetBSD: str.c,v 1.13 1996/11/06 17:59:23 christos Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@
 #if 0
 static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90";
 #else
-static char rcsid[] = "$OpenBSD: str.c,v 1.5 1996/11/30 21:09:04 millert Exp $";
+static char rcsid[] = "$OpenBSD: str.c,v 1.6 1998/03/07 18:34:50 millert Exp $";
 #endif
 #endif				/* not lint */
 
@@ -170,12 +170,12 @@ brk_string(str, store_argc, expand)
 		switch(ch = *p) {
 		case '"':
 		case '\'':
-			if (inquote)
+			if (inquote) {
 				if (inquote == ch)
 					inquote = '\0';
 				else
 					break;
-			else {
+			} else {
 				inquote = (char) ch;
 				/* Don't miss "" or '' */
 				if (start == NULL && p[1] == inquote) {
