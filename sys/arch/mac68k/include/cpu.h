@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.24 2002/03/14 03:15:55 millert Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.25 2002/04/16 20:54:16 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.45 1997/02/10 22:13:40 scottr Exp $	*/
 
 /*
@@ -306,6 +306,7 @@ void	m68881_restore(struct fpframe *);
 void	m68881_save(struct fpframe *);
 void	TBIA(void);
 void	TBIAS(void);
+void	TBIAU(void);
 void	TBIS(vm_offset_t);
 void	DCFP(vm_offset_t);
 void	ICPP(vm_offset_t);
