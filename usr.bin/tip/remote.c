@@ -1,5 +1,5 @@
-/*	$OpenBSD: remote.c,v 1.3 1996/10/15 23:47:21 millert Exp $	*/
-/*	$NetBSD: remote.c,v 1.3 1994/12/08 09:31:03 jtc Exp $	*/
+/*	$OpenBSD: remote.c,v 1.4 1997/04/02 01:47:02 millert Exp $	*/
+/*	$NetBSD: remote.c,v 1.4 1996/12/29 10:34:08 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)remote.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: remote.c,v 1.3 1996/10/15 23:47:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: remote.c,v 1.4 1997/04/02 01:47:02 millert Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -154,29 +154,29 @@ getremcap(host)
 	 * see if uppercase mode should be turned on initially
 	 */
 	if (cgetflag("ra"))
-		boolean(value(RAISE)) = 1;
+		setboolean(value(RAISE), 1);
 	if (cgetflag("ec"))
-		boolean(value(ECHOCHECK)) = 1;
+		setboolean(value(ECHOCHECK), 1);
 	if (cgetflag("be"))
-		boolean(value(BEAUTIFY)) = 1;
+		setboolean(value(BEAUTIFY), 1);
 	if (cgetflag("nb"))
-		boolean(value(BEAUTIFY)) = 0;
+		setboolean(value(BEAUTIFY), 0);
 	if (cgetflag("sc"))
-		boolean(value(SCRIPT)) = 1;
+		setboolean(value(SCRIPT), 1);
 	if (cgetflag("tb"))
-		boolean(value(TABEXPAND)) = 1;
+		setboolean(value(TABEXPAND), 1);
 	if (cgetflag("vb"))
-		boolean(value(VERBOSE)) = 1;
+		setboolean(value(VERBOSE), 1);
 	if (cgetflag("nv"))
-		boolean(value(VERBOSE)) = 0;
+		setboolean(value(VERBOSE), 0);
 	if (cgetflag("ta"))
-		boolean(value(TAND)) = 1;
+		setboolean(value(TAND), 1);
 	if (cgetflag("nt"))
-		boolean(value(TAND)) = 0;
+		setboolean(value(TAND), 0);
 	if (cgetflag("rw"))
-		boolean(value(RAWFTP)) = 1;
+		setboolean(value(RAWFTP), 1);
 	if (cgetflag("hd"))
-		boolean(value(HALFDUPLEX)) = 1;
+		setboolean(value(HALFDUPLEX), 1);
 	if (RE == NOSTR)
 		RE = (char *)"tip.record";
 	if (EX == NOSTR)

@@ -1,5 +1,5 @@
-/*	$OpenBSD: tip.c,v 1.3 1996/06/26 05:40:47 deraadt Exp $	*/
-/*	$NetBSD: tip.c,v 1.8 1995/10/29 00:49:42 pk Exp $	*/
+/*	$OpenBSD: tip.c,v 1.4 1997/04/02 01:47:03 millert Exp $	*/
+/*	$NetBSD: tip.c,v 1.11 1997/02/11 09:24:06 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: tip.c,v 1.3 1996/06/26 05:40:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tip.c,v 1.4 1997/04/02 01:47:03 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -136,7 +136,7 @@ main(argc, argv)
 	for (p = system; *p; p++)
 		*p = '\0';
 	PN = PNbuf;
-	(void)sprintf(sbuf, "tip%d", BR);
+	(void)snprintf(sbuf, sizeof(sbuf), "tip%d", BR);
 	system = sbuf;
 
 notnumber:
@@ -361,7 +361,7 @@ tipin()
 			if (!(gch = escape()))
 				continue;
 		} else if (!cumode && gch == character(value(RAISECHAR))) {
-			boolean(value(RAISE)) = !boolean(value(RAISE));
+			setboolean(value(RAISE), !boolean(value(RAISE)));
 			continue;
 		} else if (gch == '\r') {
 			bol = 1;
@@ -575,7 +575,7 @@ setparity(defparity)
 {
 	register int i, flip, clr, set;
 	char *parity;
-	extern char evenpartab[];
+	extern const unsigned char evenpartab[];
 
 	if (value(PARITY) == NOSTR)
 		value(PARITY) = defparity;

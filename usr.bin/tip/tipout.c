@@ -1,5 +1,5 @@
-/*	$OpenBSD: tipout.c,v 1.3 1996/06/26 05:40:48 deraadt Exp $	*/
-/*	$NetBSD: tipout.c,v 1.4 1995/10/29 00:49:45 pk Exp $	*/
+/*	$OpenBSD: tipout.c,v 1.4 1997/04/02 01:47:04 millert Exp $	*/
+/*	$NetBSD: tipout.c,v 1.5 1996/12/29 10:34:12 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tipout.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: tipout.c,v 1.3 1996/06/26 05:40:48 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tipout.c,v 1.4 1997/04/02 01:47:04 millert Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -84,14 +84,14 @@ intEMT()
 	if (boolean(value(SCRIPT)) && fscript != NULL)
 		fclose(fscript);
 	if (pline == line) {
-		boolean(value(SCRIPT)) = FALSE;
+		setboolean(value(SCRIPT), FALSE);
 		reply = 'y';
 	} else {
 		if ((fscript = fopen(line, "a")) == NULL)
 			reply = 'n';
 		else {
 			reply = 'y';
-			boolean(value(SCRIPT)) = TRUE;
+			setboolean(value(SCRIPT), TRUE);
 		}
 	}
 	write(repdes[1], &reply, 1);
@@ -111,7 +111,7 @@ void
 intSYS()
 {
 
-	boolean(value(BEAUTIFY)) = !boolean(value(BEAUTIFY));
+	setboolean(value(BEAUTIFY), !boolean(value(BEAUTIFY)));
 	longjmp(sigbuf, 1);
 }
 

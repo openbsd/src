@@ -1,5 +1,5 @@
-/*	$OpenBSD: biz22.c,v 1.3 1996/06/26 05:40:51 deraadt Exp $	*/
-/*	$NetBSD: biz22.c,v 1.4 1995/10/29 00:49:47 pk Exp $	*/
+/*	$OpenBSD: biz22.c,v 1.4 1997/04/02 01:47:05 millert Exp $	*/
+/*	$NetBSD: biz22.c,v 1.6 1997/02/11 09:24:11 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)biz22.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: biz22.c,v 1.3 1996/06/26 05:40:51 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: biz22.c,v 1.4 1997/04/02 01:47:05 millert Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -48,6 +48,8 @@ static char rcsid[] = "$OpenBSD: biz22.c,v 1.3 1996/06/26 05:40:51 deraadt Exp $
 static	void sigALRM();
 static	int timeout = 0;
 static	jmp_buf timeoutbuf;
+
+static int cmd(), detect();
 
 /*
  * Dial up on a BIZCOMP Model 1022 with either
@@ -60,7 +62,6 @@ biz_dialer(num, mod)
 {
 	register int connected = 0;
 	char cbuf[40];
-	static int cmd(), detect();
 
 	if (boolean(value(VERBOSE)))
 		printf("\nstarting call...");
@@ -72,15 +73,13 @@ biz_dialer(num, mod)
 		printf("can't initialize bizcomp...");
 		return (0);
 	}
-	strcpy(cbuf, "\02.\r");
+	(void)strcpy(cbuf, "\02.\r");
 	cbuf[1] = *mod;
 	if (cmd(cbuf)) {
 		printf("can't set dialing mode...");
 		return (0);
 	}
-	strcpy(cbuf, "\02D");
-	strcat(cbuf, num);
-	strcat(cbuf, "\r");
+	(void)snprintf(cbuf, sizeof(cbuf), "\02D%s\r", num);
 	write(FD, cbuf, strlen(cbuf));
 	if (!detect("7\r")) {
 		printf("can't get dial tone...");
@@ -98,7 +97,7 @@ biz_dialer(num, mod)
 	if (timeout) {
 		char line[80];
 
-		sprintf(line, "%d second dial timeout",
+		(void)sprintf(line, "%d second dial timeout",
 			number(value(DIALTIMEOUT)));
 		logent(value(HOST), num, "biz1022", line);
 	}

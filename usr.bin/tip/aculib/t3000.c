@@ -1,5 +1,5 @@
-/*	$OpenBSD: t3000.c,v 1.4 1997/01/17 07:13:37 millert Exp $	*/
-/*	$NetBSD: t3000.c,v 1.3 1995/10/29 00:49:57 pk Exp $	*/
+/*	$OpenBSD: t3000.c,v 1.5 1997/04/02 01:47:07 millert Exp $	*/
+/*	$NetBSD: t3000.c,v 1.5 1997/02/11 09:24:18 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)t3000.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: t3000.c,v 1.4 1997/01/17 07:13:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: t3000.c,v 1.5 1997/04/02 01:47:07 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -56,7 +56,8 @@ static	void sigALRM();
 static	int timeout = 0;
 static	int connected = 0;
 static	jmp_buf timeoutbuf, intbuf;
-static	int t3000_sync();
+static	int t3000_sync(), t3000_connect(), t3000_swallow();
+static	void t3000_napx();
 
 t3000_dialer(num, acu)
 	register char *num;
@@ -67,7 +68,6 @@ t3000_dialer(num, acu)
 #ifdef ACULOG
 	char line[80];
 #endif
-	static int t3000_connect(), t3000_swallow();
 
 	if (boolean(value(VERBOSE)))
 		printf("Using \"%s\"\n", acu);
@@ -106,7 +106,7 @@ badsynch:
 	connected = t3000_connect();
 #ifdef ACULOG
 	if (timeout) {
-		sprintf(line, "%d second dial timeout",
+		(void)sprintf(line, "%d second dial timeout",
 			number(value(DIALTIMEOUT)));
 		logent(value(HOST), num, "t3000", line);
 	}
@@ -368,8 +368,6 @@ static int ringring;
 
 t3000_nap()
 {
-
-        static void t3000_napx();
 	int omask;
         struct itimerval itv, oitv;
         register struct itimerval *itp = &itv;

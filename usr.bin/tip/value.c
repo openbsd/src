@@ -1,5 +1,5 @@
-/*	$OpenBSD: value.c,v 1.3 1996/10/15 23:47:22 millert Exp $	*/
-/*	$NetBSD: value.c,v 1.3 1994/12/08 09:31:17 jtc Exp $	*/
+/*	$OpenBSD: value.c,v 1.4 1997/04/02 01:47:04 millert Exp $	*/
+/*	$NetBSD: value.c,v 1.6 1997/02/11 09:24:09 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)value.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: value.c,v 1.3 1996/10/15 23:47:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: value.c,v 1.4 1997/04/02 01:47:04 millert Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -63,14 +63,14 @@ vinit()
 			if (cp = getenv(p->v_name))
 				p->v_value = cp;
 		if (p->v_type&IREMOTE)
-			number(p->v_value) = *address(p->v_value);
+			setnumber(p->v_value, *address(p->v_value));
 	}
 	/*
 	 * Read the .tiprc file in the HOME directory
 	 *  for sets
 	 */
 	if (strlen(value(HOME)) + sizeof("/.tiprc") > sizeof(file)) {
-		fprintf(stderr, "Home directory path too long: %s\n",
+		(void)fprintf(stderr, "Home directory path too long: %s\n",
 			value(HOME));
 	} else {
 		strcpy(file, value(HOME));
@@ -113,41 +113,40 @@ vassign(p, v)
 			return;
 		if (!(p->v_type&(ENVIRON|INIT)))
 			free(p->v_value);
-		if ((p->v_value = malloc(size(v)+1)) == NOSTR) {
+		if ((p->v_value = strdup(v)) == NOSTR) {
 			printf("out of core\r\n");
 			return;
 		}
 		p->v_type &= ~(ENVIRON|INIT);
-		strcpy(p->v_value, v);
 		break;
 
 	case NUMBER:
 		if (number(p->v_value) == number(v))
 			return;
-		number(p->v_value) = number(v);
+		setnumber(p->v_value, number(v));
 		break;
 
 	case BOOL:
 		if (boolean(p->v_value) == (*v != '!'))
 			return;
-		boolean(p->v_value) = (*v != '!');
+		setboolean(p->v_value, (*v != '!'));
 		break;
 
 	case CHAR:
 		if (character(p->v_value) == *v)
 			return;
-		character(p->v_value) = *v;
+		setcharacter(p->v_value, *v);
 	}
 	p->v_access |= CHANGED;
 }
 
 static void vprint();
+static void vtoken();
 
 vlex(s)
 	register char *s;
 {
 	register value_t *p;
-	static void vtoken();
 
 	if (equal(s, "all")) {
 		for (p = vtable; p->v_name; p++)

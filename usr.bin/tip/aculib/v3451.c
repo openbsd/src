@@ -1,5 +1,5 @@
-/*	$OpenBSD: v3451.c,v 1.3 1996/06/26 05:40:55 deraadt Exp $	*/
-/*	$NetBSD: v3451.c,v 1.4 1995/10/29 00:49:59 pk Exp $	*/
+/*	$OpenBSD: v3451.c,v 1.4 1997/04/02 01:47:07 millert Exp $	*/
+/*	$NetBSD: v3451.c,v 1.6 1997/02/11 09:24:20 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)v3451.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: v3451.c,v 1.3 1996/06/26 05:40:55 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: v3451.c,v 1.4 1997/04/02 01:47:07 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -47,6 +47,9 @@ static char rcsid[] = "$OpenBSD: v3451.c,v 1.3 1996/06/26 05:40:55 deraadt Exp $
 #include "tip.h"
 
 static	jmp_buf Sjbuf;
+
+static	int expect(), notin(), prefix();
+static	void vawrite(), alarmtr();
 
 v3451_dialer(num, acu)
 	register char *num;
@@ -60,8 +63,6 @@ v3451_dialer(num, acu)
 #ifdef ACULOG
 	char line[80];
 #endif
-	static int expect();
-	static void vawrite();
 
 	/*
 	 * Get in synch
@@ -89,8 +90,7 @@ v3451_dialer(num, acu)
 #endif
 		return (0);
 	}
-	strcpy(phone, num);
-	strcat(phone, "\r");
+	(void)snprintf(phone, sizeof phone, "%s\r", num);
 	vawrite(phone, 1 + slow);
 	if (!expect(phone)) {
 		printf("Vadic will not accept phone number\n");
@@ -158,8 +158,6 @@ expect(cp)
 	char buf[300];
 	register char *rp = buf;
 	int timeout = 30, online = 0;
-	static int notin();
-	static void alarmtr();
 
 	if (strcmp(cp, "\"\"") == 0)
 		return (1);
@@ -202,7 +200,6 @@ static int
 notin(sh, lg)
 	char *sh, *lg;
 {
-	static int prefix();
 
 	for (; *lg; lg++)
 		if (prefix(sh, lg))

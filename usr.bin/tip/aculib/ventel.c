@@ -1,5 +1,5 @@
-/*	$OpenBSD: ventel.c,v 1.4 1997/01/17 07:13:38 millert Exp $	*/
-/*	$NetBSD: ventel.c,v 1.4 1995/10/29 00:50:04 pk Exp $	*/
+/*	$OpenBSD: ventel.c,v 1.5 1997/04/02 01:47:08 millert Exp $	*/
+/*	$NetBSD: ventel.c,v 1.6 1997/02/11 09:24:21 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ventel.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: ventel.c,v 1.4 1997/01/17 07:13:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: ventel.c,v 1.5 1997/04/02 01:47:08 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -54,6 +54,9 @@ static char rcsid[] = "$OpenBSD: ventel.c,v 1.4 1997/01/17 07:13:38 millert Exp 
 static	void sigALRM();
 static	int timeout = 0;
 static	jmp_buf timeoutbuf;
+
+static	int gobble(), vensync();
+static	void echo();
 
 /*
  * some sleep calls have been replaced by this macro
@@ -72,8 +75,6 @@ ven_dialer(num, acu)
 	register char *cp;
 	register int connected = 0;
 	char *msg, line[80];
-	static int gobble(), vensync();
-	static void echo();
 	struct termios	cntrl;
 
 	/*
@@ -105,7 +106,7 @@ ven_dialer(num, acu)
 	tcflush(FD, TCIOFLUSH);
 #ifdef ACULOG
 	if (timeout) {
-		sprintf(line, "%d second dial timeout",
+		(void)sprintf(line, "%d second dial timeout",
 			number(value(DIALTIMEOUT)));
 		logent(value(HOST), num, "ventel", line);
 	}

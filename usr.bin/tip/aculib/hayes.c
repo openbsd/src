@@ -1,5 +1,5 @@
-/*	$OpenBSD: hayes.c,v 1.5 1997/01/17 07:13:36 millert Exp $	*/
-/*	$NetBSD: hayes.c,v 1.5 1996/11/01 23:56:33 cgd Exp $	*/
+/*	$OpenBSD: hayes.c,v 1.6 1997/04/02 01:47:06 millert Exp $	*/
+/*	$NetBSD: hayes.c,v 1.6 1997/02/11 09:24:17 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)hayes.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: hayes.c,v 1.5 1997/01/17 07:13:36 millert Exp $";
+static char rcsid[] = "$OpenBSD: hayes.c,v 1.6 1997/04/02 01:47:06 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -130,7 +130,7 @@ hay_dialer(num, acu)
 	tcflush(FD, TCIOFLUSH);
 #ifdef ACULOG
 	if (timeout) {
-		sprintf(line, "%d second dial timeout",
+		(void)sprintf(line, "%d second dial timeout",
 			number(value(DIALTIMEOUT)));
 		logent(value(HOST), num, "hayes", line);
 	}

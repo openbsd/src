@@ -1,5 +1,5 @@
-/*	$OpenBSD: tip.h,v 1.4 1996/10/15 23:47:22 millert Exp $	*/
-/*	$NetBSD: tip.h,v 1.4 1995/10/29 00:49:43 pk Exp $	*/
+/*	$OpenBSD: tip.h,v 1.5 1997/04/02 01:47:03 millert Exp $	*/
+/*	$NetBSD: tip.h,v 1.5 1996/12/29 10:34:11 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -144,30 +144,18 @@ typedef
  *   initialize it in vars.c, so we cast it as needed to keep lint
  *   happy.
  */
-typedef
-	union {
-		int	zz_number;
-		short	zz_boolean[2];
-		char	zz_character[4];
-		int	*zz_address;
-	}
-	zzhack;
 
 #define value(v)	vtable[v].v_value
 
-#define number(v)	((((zzhack *)(&(v))))->zz_number)
+#define	number(v)	((long)(v))
+#define	boolean(v)      ((short)(long)(v))
+#define	character(v)    ((char)(long)(v))
+#define	address(v)      ((long *)(v))
 
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define boolean(v)	((((zzhack *)(&(v))))->zz_boolean[0])
-#define character(v)	((((zzhack *)(&(v))))->zz_character[0])
-#endif
-
-#if BYTE_ORDER == BIG_ENDIAN
-#define boolean(v)	((((zzhack *)(&(v))))->zz_boolean[1])
-#define character(v)	((((zzhack *)(&(v))))->zz_character[3])
-#endif
-
-#define address(v)	((((zzhack *)(&(v))))->zz_address)
+#define	setnumber(v,n)		do { (v) = (char *)(long)(n); } while (0)
+#define	setboolean(v,n)		do { (v) = (char *)(long)(n); } while (0)
+#define	setcharacter(v,n)	do { (v) = (char *)(long)(n); } while (0)
+#define	setaddress(v,n)		do { (v) = (char *)(n); } while (0)
 
 /*
  * Escape command table definitions --

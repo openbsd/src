@@ -1,5 +1,5 @@
-/*	$OpenBSD: uucplock.c,v 1.2 1996/06/26 05:40:49 deraadt Exp $	*/
-/*	$NetBSD: uucplock.c,v 1.6 1995/09/26 06:02:14 jtc Exp $	*/
+/*	$OpenBSD: uucplock.c,v 1.3 1997/04/02 01:47:04 millert Exp $	*/
+/*	$NetBSD: uucplock.c,v 1.7 1997/02/11 09:24:08 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)uucplock.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: uucplock.c,v 1.2 1996/06/26 05:40:49 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: uucplock.c,v 1.3 1997/04/02 01:47:04 millert Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -106,7 +106,7 @@ uu_lock(ttyname)
 		/* fall out and finish the locking process */
 	}
 	pid = getpid();
-	sprintf(text_pid, "%10d\n", pid);
+	(void)sprintf(text_pid, "%10d\n", pid);
 	len = strlen(text_pid);
 	if (write(fd, text_pid, len) != len) {
 		(void)close(fd);
