@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.39 2000/07/18 20:17:20 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.40 2000/07/31 21:01:40 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.39 2000/07/18 20:17:20 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.40 2000/07/31 21:01:40 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -679,7 +679,7 @@ main(argc, argv)
 
 	MainParseArgs(argc, argv);
 
-#ifdef NotYet
+#ifdef POSIX
 	Var_AddCmdline(MAKEFLAGS);
 #endif
 
