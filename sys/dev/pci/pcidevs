@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.790 2004/11/06 01:54:12 reyk Exp $
+$OpenBSD: pcidevs,v 1.791 2004/11/19 18:11:31 grange Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -2193,6 +2193,7 @@ product SIGMA DVDMAGICPRO	0x8300	DVDmagic-PRO
 /* Silicon Integrated System products */
 product SIS 86C201		0x0001	86C201 AGP
 product SIS 86C202		0x0002	86C202 VGA
+product SIS 648FX		0x0003	648FX AGP
 product SIS 86C205_1		0x0005	86C205
 product SIS 85C503		0x0008	85C503 System
 product SIS 5595		0x0009	5595 System
