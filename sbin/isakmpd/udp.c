@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp.c,v 1.57 2002/12/03 20:05:10 ho Exp $	*/
+/*	$OpenBSD: udp.c,v 1.58 2003/02/12 15:11:31 markus Exp $	*/
 /*	$EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	*/
 
 /*
@@ -287,8 +287,9 @@ udp_bind (const struct sockaddr *addr)
 /*
  * When looking at a specific network interface address, if it's an INET one,
  * create an UDP server socket bound to it.
+ * Return 0 if successful, -1 otherwise.
  */
-static void
+static int
 udp_bind_if (char *ifname, struct sockaddr *if_addr, void *arg)
 {
   char *port = (char *)arg;
@@ -310,7 +311,7 @@ udp_bind_if (char *ifname, struct sockaddr *if_addr, void *arg)
        || sysdep_sa_len (if_addr) != sizeof (struct sockaddr_in))
       && (if_addr->sa_family != AF_INET6
 	  || sysdep_sa_len (if_addr) != sizeof (struct sockaddr_in6)))
-    return;
+    return 0;
 
   /*
    * Only create sockets for families we should listen to.
@@ -320,14 +321,14 @@ udp_bind_if (char *ifname, struct sockaddr *if_addr, void *arg)
       {
       case AF_INET:
 	if ((bind_family & BIND_FAMILY_INET4) == 0)
-	  return;
+	  return 0;
 	break;
       case AF_INET6:
 	if ((bind_family & BIND_FAMILY_INET6) == 0)
-	  return;
+	  return 0;
 	break;
       default:
-	return;
+	return 0;
       }
 
   /*
@@ -338,7 +339,7 @@ udp_bind_if (char *ifname, struct sockaddr *if_addr, void *arg)
       && (((struct sockaddr_in *)if_addr)->sin_addr.s_addr == INADDR_ANY
 	  || (((struct sockaddr_in *)if_addr)->sin_addr.s_addr
 	      == INADDR_NONE)) )
-    return;
+    return 0;
 
   /*
    * Go through the list of transports and see if we already have this
@@ -361,7 +362,7 @@ udp_bind_if (char *ifname, struct sockaddr *if_addr, void *arg)
   if ((u = udp_listen_lookup (&saddr)) != 0)
     {
       u->transport.flags &= ~TRANSPORT_MARK;
-      return;
+      return 0;
     }
 
   /* Don't bother with interfaces that are down.  */
@@ -370,17 +371,17 @@ udp_bind_if (char *ifname, struct sockaddr *if_addr, void *arg)
     {
       log_error ("udp_bind_if: socket (%d, SOCK_DGRAM, 0) failed",
 		 if_addr->sa_family);
-      return;
+      return -1;
     }
   strlcpy (flags_ifr.ifr_name, ifname, sizeof flags_ifr.ifr_name);
   if (ioctl (s, SIOCGIFFLAGS, (caddr_t)&flags_ifr) == -1)
     {
       log_error ("udp_bind_if: ioctl (%d, SIOCGIFFLAGS, ...) failed", s);
-      return;
+      return -1;
     }
   close (s);
   if (!(flags_ifr.ifr_flags & IFF_UP))
-    return;
+    return 0;
 
   /*
    * Set port.
@@ -391,7 +392,7 @@ udp_bind_if (char *ifname, struct sockaddr *if_addr, void *arg)
     {
       log_print ("udp_bind_if: "
 		 "port string \"%s\" not convertible to in_port_t", port);
-      return;
+      return -1;
     }
 
   switch (if_addr->sa_family)
@@ -444,7 +445,7 @@ udp_bind_if (char *ifname, struct sockaddr *if_addr, void *arg)
        * Maybe this should be the other way round.
        */
       if (!address)
-	return;
+	return 0;
     }
 
   t = udp_bind (if_addr);
@@ -455,9 +456,10 @@ udp_bind_if (char *ifname, struct sockaddr *if_addr, void *arg)
 		 error ? "unknown" : addr_str, port);
       if (!error)
 	free (addr_str);
-      return;
+      return -1;
     }
   LIST_INSERT_HEAD (&udp_listen_list, (struct udp_transport *)t, link);
+  return 0;
 }
 
 /*
@@ -593,6 +595,10 @@ static void
 udp_reinit (void)
 {
   struct udp_transport *u, *u2;
+  char *port;
+
+  /* Initialize the protocol and port numbers.  */
+  port = udp_default_port ? udp_default_port : "500";
 
   /* Mark all UDP transports, except the default ones. */
   for (u = LIST_FIRST (&udp_listen_list); u; u = LIST_NEXT (u, link))
@@ -601,8 +607,9 @@ udp_reinit (void)
        u->transport.flags |= TRANSPORT_MARK;
 
   /* Re-probe interface list.  */
-  /* XXX need to check errors.  */
-  if_map (udp_bind_if, udp_default_port ? udp_default_port : "500");
+  if (if_map (udp_bind_if, port) == -1)
+    log_error ("udp_init: Could not bind the ISAKMP UDP port %s on all "
+	       "interfaces", port);
 
   /*
    * Release listening transports for local addresses that no
@@ -645,8 +652,9 @@ udp_init (void)
   transport_method_add (&udp_transport_vtbl);
 
   /* Bind the ISAKMP UDP port on all network interfaces we have.  */
-  /* XXX need to check errors */
-  if_map (udp_bind_if, port);
+  if (if_map (udp_bind_if, port) == -1)
+      log_fatal ("udp_init: Could not bind the ISAKMP UDP port %s on all "
+		 "interfaces", port);
 
   /*
    * Get port.

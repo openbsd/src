@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.12 2002/08/23 17:24:19 ho Exp $	*/
+/*	$OpenBSD: if.c,v 1.13 2003/02/12 15:11:31 markus Exp $	*/
 /*	$EOM: if.c,v 1.12 1999/10/01 13:45:20 niklas Exp $	*/
 
 /*
@@ -119,8 +119,9 @@ err:
 #endif
 
 int
-if_map (void (*func) (char *, struct sockaddr *, void *), void *arg)
+if_map (int (*func) (char *, struct sockaddr *, void *), void *arg)
 {
+  int err = 0;
 #ifdef HAVE_GETIFADDRS
   struct ifaddrs *ifap, *ifa;
 
@@ -128,11 +129,9 @@ if_map (void (*func) (char *, struct sockaddr *, void *), void *arg)
     return -1;
 
   for (ifa = ifap; ifa; ifa = ifa->ifa_next)
-    {
-      (*func) (ifa->ifa_name, ifa->ifa_addr, arg);
-    }
+    if ((*func) (ifa->ifa_name, ifa->ifa_addr, arg) == -1)
+      err = -1;
   freeifaddrs(ifap);
-  return 0;
 #else
   struct ifconf ifc;
   struct ifreq *ifrp;
@@ -146,11 +145,12 @@ if_map (void (*func) (char *, struct sockaddr *, void *), void *arg)
   for (p = ifc.ifc_buf; p < limit; p += len)
     {
       ifrp = (struct ifreq *)p;
-      (*func) (ifrp->ifr_name, &ifrp->ifr_addr, arg);
+      if ((*func) (ifrp->ifr_name, &ifrp->ifr_addr, arg) == -1)
+	err = -1;
       len = sizeof ifrp->ifr_name
 	+ MAX (sysdep_sa_len (&ifrp->ifr_addr), sizeof ifrp->ifr_addr);
     }
   free (ifc.ifc_buf);
-  return 0;
 #endif
+  return err;
 }
