@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpfdesc.h,v 1.6 2000/06/19 03:00:54 jason Exp $	*/
+/*	$OpenBSD: bpfdesc.h,v 1.7 2001/05/28 19:51:06 dugsong Exp $	*/
 /*	$NetBSD: bpfdesc.h,v 1.11 1995/09/27 18:30:42 thorpej Exp $	*/
 
 /*
@@ -75,6 +75,7 @@ struct bpf_d {
 	u_char		bd_promisc;	/* true if listening promiscuously */
 	u_char		bd_state;	/* idle, waiting, or timed out */
 	u_char		bd_immediate;	/* true to return on packet arrival */
+	int		bd_hdrcmplt;	/* false to fill in src lladdr automatically */
 	int		bd_async;	/* non-zero if packet reception should generate signal */
 	int		bd_sig;		/* signal to send upon packet reception */
 	pid_t		bd_pgid;	/* process or group id for signal */

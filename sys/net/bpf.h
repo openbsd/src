@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.h,v 1.13 2000/06/19 03:00:54 jason Exp $	*/
+/*	$OpenBSD: bpf.h,v 1.14 2001/05/28 19:51:06 dugsong Exp $	*/
 /*	$NetBSD: bpf.h,v 1.15 1996/12/13 07:57:33 mikel Exp $	*/
 
 /*
@@ -113,6 +113,8 @@ struct bpf_version {
 #define BIOCVERSION	_IOR('B',113, struct bpf_version)
 #define BIOCSRSIG	_IOW('B',114, u_int)
 #define BIOCGRSIG	_IOR('B',115, u_int)
+#define BIOCGHDRCMPLT	_IOR('B',116, u_int)
+#define BIOCSHDRCMPLT	_IOW('B',117, u_int)
 
 /*
  * Structure prepended to each packet.

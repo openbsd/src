@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.35 2000/08/13 03:38:45 ericj Exp $	*/
+/*	$OpenBSD: socket.h,v 1.36 2001/05/28 19:51:05 dugsong Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -134,7 +134,9 @@ struct	linger {
 #define	AF_ENCAP	28
 #define	AF_SIP		29		/* Simple Internet Protocol */
 #define AF_KEY		30
-#define	AF_MAX		31
+#define pseudo_AF_HDRCMPLT 31		/* Used by BPF to not rewrite headers
+					   in interface output routine */
+#define	AF_MAX		32
 
 /*
  * Structure used by kernel to store most

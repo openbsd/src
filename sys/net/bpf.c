@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.26 2001/05/16 12:53:34 ho Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.27 2001/05/28 19:51:06 dugsong Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -518,6 +518,9 @@ bpfwrite(dev, uio, ioflag)
 		return (EMSGSIZE);
 	}
 
+	if (d->bd_hdrcmplt)
+		dst.sa_family = pseudo_AF_HDRCMPLT;
+
 	s = splsoftnet();
 	error = (*ifp->if_output)(ifp, m, &dst, (struct rtentry *)0);
 	splx(s);
@@ -560,6 +563,8 @@ bpf_reset_d(d)
  *  BIOCGSTATS		Get packet stats.
  *  BIOCIMMEDIATE	Set immediate mode.
  *  BIOCVERSION		Get filter language version.
+ *  BIOCGHDRCMPLT	Get "header already complete" flag
+ *  BIOCSHDRCMPLT	Set "header already complete" flag
  */
 /* ARGSUSED */
 int
@@ -736,6 +741,14 @@ bpfioctl(dev, cmd, addr, flag, p)
 			bv->bv_minor = BPF_MINOR_VERSION;
 			break;
 		}
+
+	case BIOCGHDRCMPLT:	/* get "header already complete" flag */
+		*(u_int *)addr = d->bd_hdrcmplt;
+		break;
+
+	case BIOCSHDRCMPLT:	/* set "header already complete" flag */
+		d->bd_hdrcmplt = *(u_int *)addr ? 1 : 0;
+		break;
 
 
 	case FIONBIO:		/* Non-blocking I/O */

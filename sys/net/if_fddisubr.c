@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fddisubr.c,v 1.22 2000/02/07 06:09:08 itojun Exp $	*/
+/*	$OpenBSD: if_fddisubr.c,v 1.23 2001/05/28 19:51:06 dugsong Exp $	*/
 /*	$NetBSD: if_fddisubr.c,v 1.5 1996/05/07 23:20:21 christos Exp $	*/
 
 /*
@@ -150,8 +150,8 @@ fddi_output(ifp, m0, dst, rt0)
 	struct rtentry *rt0;
 {
 	u_int16_t type;
-	int s, error = 0;
- 	u_char edst[6];
+	int s, error = 0, hdrcmplt = 0;
+ 	u_char edst[6], esrc[6];
 	register struct mbuf *m = m0;
 	register struct rtentry *rt;
 	struct mbuf *mcopy = (struct mbuf *)0;
@@ -339,6 +339,14 @@ fddi_output(ifp, m0, dst, rt0)
 		} break;
 #endif /* CCITT */	
 
+	case pseudo_AF_HDRCMPLT:
+	{
+		struct fddi_header *fh = (struct fddi_header *)dst->sa_data;
+		hdrcmplt = 1;
+		bcopy((caddr_t)fh->fddi_shost, (caddr_t)esrc, sizeof (esrc));
+		/* FALLTHROUGH */
+	}
+
 	case AF_UNSPEC:
 	{
 		struct ether_header *eh;
@@ -419,8 +427,12 @@ fddi_output(ifp, m0, dst, rt0)
 #if NBPFILTER > 0
   queue_it:
 #endif
- 	bcopy((caddr_t)ac->ac_enaddr, (caddr_t)fh->fddi_shost,
-	    sizeof(fh->fddi_shost));
+	if (hdrcmplt)
+		bcopy((caddr_t)esrc, (caddr_t)fh->fddi_shost,
+		    sizeof(fh->fddi_shost));
+	else
+ 		bcopy((caddr_t)ac->ac_enaddr, (caddr_t)fh->fddi_shost,
+		    sizeof(fh->fddi_shost));
 	s = splimp();
 	/*
 	 * Queue message on interface, and start output if interface

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf.4,v 1.7 2001/03/26 05:36:06 aaron Exp $
+.\"	$OpenBSD: bpf.4,v 1.8 2001/05/28 19:51:06 dugsong Exp $
 .\"     $NetBSD: bpf.4,v 1.7 1995/09/27 18:31:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
@@ -269,6 +269,14 @@ This signal will be sent to the process or process group specified by
 .Dv FIOSETOWN .
 It defaults to
 .Dv SIGIO .
+.It Xo Dv BIOCSHDRCMPLT , Dv BIOCGHDRCMPLT (
+.Li u_int Ns No )
+.Xc
+Set or get the status of the ``header complete'' flag.  Set to zero if
+the link level source address should be filled in automatically by the
+the interface output routine.  Set to one if the link level source
+address will be written, as provided, to the wire.  This flag is
+initialized to zero by default.
 .El
 .Ss Standard ioctls
 .Nm
