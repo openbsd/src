@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.26 2004/05/25 04:59:10 mcbride Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.27 2004/05/29 23:07:48 naddy Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -141,7 +141,6 @@ void bge_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 u_int8_t bge_eeprom_getbyte(struct bge_softc *, int, u_int8_t *);
 int bge_read_eeprom(struct bge_softc *, caddr_t, int, int);
 
-u_int32_t bge_crc(caddr_t);
 void bge_setmulti(struct bge_softc *);
 
 void bge_handle_events(struct bge_softc *);
@@ -925,25 +924,6 @@ bge_init_tx_ring(sc)
 	return(0);
 }
 
-#define BGE_POLY	0xEDB88320
-
-u_int32_t
-bge_crc(addr)
-	caddr_t addr;
-{
-	u_int32_t idx, bit, data, crc;
-
-	/* Compute CRC for the address value. */
-	crc = 0xFFFFFFFF; /* initial value */
-
-	for (idx = 0; idx < 6; idx++) {
-		for (data = *addr++, bit = 0; bit < 8; bit++, data >>= 1)
-			crc = (crc >> 1) ^ (((crc ^ data) & 1) ? BGE_POLY : 0);
-	}
-
-	return(crc & 0x7F);
-}
-
 void
 bge_setmulti(sc)
 	struct bge_softc *sc;
@@ -956,20 +936,25 @@ bge_setmulti(sc)
 	u_int32_t		h;
 	int			i;
 
+	/* First, zot all the existing filters. */
+	for (i = 0; i < 4; i++)
+		CSR_WRITE_4(sc, BGE_MAR0 + (i * 4), 0);
+
+	/* Now program new ones. */
+allmulti:
 	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
 		for (i = 0; i < 4; i++)
 			CSR_WRITE_4(sc, BGE_MAR0 + (i * 4), 0xFFFFFFFF);
 		return;
 	}
 
-	/* First, zot all the existing filters. */
-	for (i = 0; i < 4; i++)
-		CSR_WRITE_4(sc, BGE_MAR0 + (i * 4), 0);
-
-	/* Now program new ones. */
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		h = bge_crc(LLADDR((struct sockaddr_dl *)enm->enm_addrlo));
+		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			ifp->if_flags |= IFF_ALLMULTI;
+			goto allmulti;
+		}
+		h = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN) & 0x7F;
 		hashes[(h & 0x60) >> 5] |= 1 << (h & 0x1F);
 		ETHER_NEXT_MULTI(step, enm);
 	}
@@ -2725,8 +2710,13 @@ bge_ioctl(ifp, command, data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		if (ifp->if_flags & IFF_RUNNING) {
-			bge_setmulti(sc);
+		error = (command == SIOCADDMULTI)
+			? ether_addmulti(ifr, &sc->arpcom)
+			: ether_delmulti(ifr, &sc->arpcom);
+
+		if (error == ENETRESET) {
+			if (ifp->if_flags & IFF_RUNNING)
+				bge_setmulti(sc);
 			error = 0;
 		}
 		break;
