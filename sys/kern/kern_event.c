@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.3 2000/11/17 05:18:44 provos Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.4 2000/11/17 06:34:23 provos Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -518,7 +518,7 @@ kqueue_scan(struct file *fp, int maxevents, struct kevent *ulistp,
 {
 	struct kqueue *kq = (struct kqueue *)fp->f_data;
 	struct kevent *kevp;
-	struct timeval atv, ttv;
+	struct timeval atv;
 	struct knote *kn, marker;
 	int s, count, timeout, nkev = 0, error = 0;
 
@@ -528,16 +528,20 @@ kqueue_scan(struct file *fp, int maxevents, struct kevent *ulistp,
 
 	if (tsp != NULL) {
 		TIMESPEC_TO_TIMEVAL(&atv, tsp);
+		if (tsp->tv_sec == 0 && tsp->tv_nsec == 0) {
+			/* No timeout, just poll */
+			timeout = -1;
+			goto start;
+		}
 		if (itimerfix(&atv)) {
 			error = EINVAL;
 			goto done;
 		}
-		if (tsp->tv_sec == 0 && tsp->tv_nsec == 0)
-			timeout = -1;
-		else
-			timeout = atv.tv_sec > 24 * 60 * 60 ?
-			    24 * 60 * 60 * hz : hzto(&atv);
+
+		s = splclock();
 		timeradd(&atv, &time, &atv);
+		timeout = hzto(&atv);
+		splx(s);
 	} else {
 		atv.tv_sec = 0;
 		atv.tv_usec = 0;
@@ -547,12 +551,9 @@ kqueue_scan(struct file *fp, int maxevents, struct kevent *ulistp,
 
 retry:
 	if (atv.tv_sec || atv.tv_usec) {
-		if (timercmp(&time, &atv, >=))
+		timeout = hzto(&atv);
+		if (timeout <= 0)
 			goto done;
-		ttv = atv;
-		timersub(&ttv, &time, &ttv);
-		timeout = ttv.tv_sec > 24 * 60 * 60 ?
-			24 * 60 * 60 * hz : hzto(&ttv);
 	}
 
 start:
