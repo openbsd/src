@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.41 2003/01/03 10:39:09 cedric Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.42 2003/01/04 00:33:49 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -72,8 +72,6 @@ int			 pfopen(dev_t, int, int, struct proc *);
 int			 pfclose(dev_t, int, int, struct proc *);
 struct pf_pool		*pf_get_pool(char *, char *, u_int32_t,
 			    u_int8_t, u_int8_t, u_int8_t, u_int8_t, u_int8_t);
-int			 pf_add_addr(struct pf_pool *, struct pf_pooladdr *,
-			    u_int8_t);
 int			 pf_get_ruleset_number(u_int8_t);
 void			 pf_init_ruleset(struct pf_ruleset *);
 struct pf_anchor	*pf_find_anchor(const char *);
@@ -186,39 +184,6 @@ pf_get_pool(char *anchorname, char *rulesetname, u_int32_t ticket,
 
 	return (&rule->rpool);
 }
-
-int
-pf_add_addr(struct pf_pool *pool, struct pf_pooladdr *addr, u_int8_t af)
-{
-	struct pf_pooladdr	*pa;
-
-	pa = pool_get(&pf_pooladdr_pl, PR_NOWAIT);
-	if (pa == NULL) {
-		return (ENOMEM);
-	}
-	bcopy(addr, pa, sizeof(struct pf_pooladdr));
-	if (pa->ifname[0]) {
-		pa->ifp = ifunit((char *)&pa->ifname);
-		if (pa->ifp == NULL) {
-			pool_put(&pf_pooladdr_pl, pa);
-			return (EINVAL);
-		}
-	} else
-		pa->ifp = NULL;
-	if (pf_dynaddr_setup(&pa->addr.addr, af)) {
-		pf_dynaddr_remove(&pa->addr.addr);
-		pool_put(&pf_pooladdr_pl, pa);
-		return (EBUSY);
-	}
-	if (TAILQ_EMPTY(&pool->list)) {
-		pool->cur = pa;
-		PF_ACPY(&pool->counter, &pa->addr.addr.addr, af);
-	}
-	TAILQ_INSERT_TAIL(&pool->list, pa, entries);
-
-	return (0);
-}
-
 
 int
 pf_get_ruleset_number(u_int8_t action)
