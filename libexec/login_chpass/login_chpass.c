@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_chpass.c,v 1.12 2004/03/10 21:30:27 millert Exp $	*/
+/*	$OpenBSD: login_chpass.c,v 1.13 2004/09/28 21:52:40 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Berkeley Software Design, Inc. All rights reserved.
@@ -66,9 +66,9 @@
 
 #define BACK_CHANNEL	3
 
+#ifdef  YP
 struct iovec iov[2] = { { BI_SILENT, sizeof(BI_SILENT) - 1 }, { "\n", 1 } };
 
-#ifdef  YP
 int	_yp_check(char **);
 char	*ypgetnewpasswd(struct passwd *, char **);
 struct passwd *ypgetpwnam(char *);
@@ -82,7 +82,9 @@ void	yp_chpass(char *);
 int
 main(int argc, char *argv[])
 {
+#ifdef YP
 	char *username;
+#endif
 	struct rlimit rl;
 	int c;
 
@@ -113,7 +115,9 @@ main(int argc, char *argv[])
 	case 2:
 		/* class is not used */
 	case 1:
+#ifdef YP
 		username = argv[optind];
+#endif
 		break;
 	default:
 		syslog(LOG_ERR, "usage error");
@@ -242,6 +246,7 @@ yp_chpass(char *username)
 	exit(0);
 }
 
+/* ARGSUSED */
 void
 kbintr(int signo)
 {
