@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.257 2003/06/11 23:09:20 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.258 2003/06/12 10:05:15 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -2231,8 +2231,7 @@ load-anchor    = "load" anchorname:rulesetname "from" filename
 queueopts-list = queueopts-list queueopts | queueopts
 queueopts      = [ "bandwidth" bandwidth-spec ] |
                  [ "qlimit" number ] | [ "tbrsize" number ] |
-                 [ "priority" number ] | [ schedulers ] |
-                 [ "qlimit" number ]
+                 [ "priority" number ] | [ schedulers ]
 schedulers     = ( cbq-def | priq-def | hfsc-def )
 bandwidth-spec = "number" ( "b" | "Kb" | "Mb" | "Gb" | "%" )
 
