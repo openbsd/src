@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.16 2001/03/30 16:02:13 jason Exp $ */
+/*	$OpenBSD: if_vlan.c,v 1.17 2001/05/27 11:58:25 angelos Exp $ */
 /*
  * Copyright 1998 Massachusetts Institute of Technology
  *
@@ -250,6 +250,7 @@ vlan_start(struct ifnet *ifp)
 			if (m0->m_flags & M_PKTHDR) {
 				M_COPY_PKTHDR(m0, m);
 				m->m_flags &= ~M_PKTHDR;
+				m_tag_init(m);
 			}
 			m0->m_flags &= ~M_PROTO1;
 			m0->m_next = m;
