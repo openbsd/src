@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.3 2001/08/23 04:06:12 deraadt Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.4 2001/08/23 04:07:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -117,8 +117,8 @@ logmsg(int pri, const char *message, ...)
 void
 usage(void)
 {
-	fprintf(stderr, "usage: pflogd [-a] [-i interface] [-f filename] ");
-	fprintf(stderr, "[-s snaplen] [tcpdump filter expression]\n");
+	fprintf(stderr, "usage: pflogd [-D] [-d delay] [-f filename] [-i interface] ");
+	fprintf(stderr, "[-s snaplen] [expression]\n");
 	exit(1);
 }
 
