@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.274 2003/10/24 19:31:59 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.275 2003/10/30 19:08:07 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1853,7 +1853,7 @@ to local addresses.
 One should pass these explicitly.
 .Sh FRAGMENT HANDLING
 The size of IP datagrams (packets) can be significantly larger than the
-the maximum transmission unit (MTU) of the network.
+maximum transmission unit (MTU) of the network.
 In cases when it is necessary or more efficient to send such large packets,
 the large packet will be fragmented into many smaller packets that will each
 fit onto the wire.
