@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.69 2004/03/02 20:00:14 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.70 2004/03/05 21:52:45 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -144,6 +144,7 @@ number		: STRING			{
 				YYERROR;
 			} else
 				$$ = ulval;
+			free($1);
 		}
 		;
 
@@ -170,6 +171,7 @@ yesno		:  STRING		{
 				$$ = 0;
 			else
 				YYERROR;
+			free($1);
 		}
 		;
 
@@ -178,6 +180,8 @@ varset		: STRING '=' string		{
 				printf("%s = \"%s\"\n", $1, $3);
 			if (symset($1, $3, 0) == -1)
 				fatal("cannot store variable");
+			free($1);
+			free($3);
 		}
 		;
 
@@ -231,6 +235,7 @@ conf_main	: AS asnumber		{
 				conf->log |= BGPD_LOG_UPDATES;
 			else
 				YYERROR;
+			free($2);
 		}
 		| NETWORK prefix filter_set	{
 			struct network	*n;
@@ -252,6 +257,7 @@ conf_main	: AS asnumber		{
 		| DUMP TABLE STRING optnumber		{
 			if (add_mrtconfig(MRT_TABLE_DUMP, $3, $4, NULL) == -1)
 				YYERROR;
+			free($3);
 		}
 		| mrtdump
 		;
@@ -269,6 +275,8 @@ mrtdump		: DUMP STRING inout STRING optnumber	{
 			}
 			if (add_mrtconfig(action, $4, $5, curpeer) == -1)
 				YYERROR;
+			free($2);
+			free($4);
 		}
 		;
 
@@ -292,6 +300,7 @@ address		: STRING		{
 				    len, $$.af == AF_INET ? 32 : 128);
 				YYERROR;
 			}
+			free($1);
 		}
 		;
 
@@ -309,6 +318,7 @@ prefix		: STRING '/' number	{
 			}
 
 			free(s);
+			free($1);
 		}
 		;
 
@@ -356,6 +366,7 @@ group		: GROUP string optnl '{' optnl {
 				yyerror("get_id failed");
 				YYERROR;
 			}
+			free($2);
 		}
 		    groupopts_l '}' {
 			free(curgroup);
@@ -434,6 +445,7 @@ peeropts	: REMOTEAS asnumber	{
 				yyerror("unknown announcement type");
 				YYERROR;
 			}
+			free($2);
 		}
 		| ENFORCE NEIGHBORAS yesno {
 			if ($3)
@@ -452,6 +464,7 @@ peeropts	: REMOTEAS asnumber	{
 				    sizeof(curpeer->conf.tcp_md5_key) - 1);
 				YYERROR;
 			}
+			free($4);
 		}
 		| TCP MD5SIG KEY string {
 			unsigned	i;
@@ -479,6 +492,7 @@ peeropts	: REMOTEAS asnumber	{
 				curpeer->conf.tcp_md5_key[i] =
 				    strtoul(s, NULL, 16);
 			}
+			free($4);
 		}
 		| SET filter_set_opt	{
 			memcpy(&curpeer->conf.attrset, &$2,
