@@ -6,7 +6,7 @@
 
    Kerberos v4 authentication and ticket-passing routines.
 
-   $Id: auth-krb4.c,v 1.6 1999/11/10 22:24:01 markus Exp $
+   $Id: auth-krb4.c,v 1.7 1999/11/14 22:58:44 markus Exp $
 */
 
 #include "includes.h"
@@ -110,6 +110,7 @@ int auth_krb4(const char *server_user, KTEXT auth, char **client)
     packet_send_debug("Kerberos V4 .klogin authorization failed!");
     log("Kerberos V4 .klogin authorization failed for %s to account %s",
 	*client, server_user);
+    xfree(*client);
     return 0;
   }
   /* Increment the checksum, and return it encrypted with the session key. */
