@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.6 1999/07/09 13:35:37 aaron Exp $
+.\" $OpenBSD: ports.7,v 1.7 2000/01/27 19:45:33 espie Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
 .Dd January 25, 1998
@@ -64,11 +64,31 @@ http://www.freebsd.org/handbook/porting.html) as well as the NetBSD
 Package System documentation
 (http://www.netbsd.org/Documentation/netbsd/Packages.txt).
 .Pp
+.Sh PORTS MASTER MAKEFILE
+The ports master Makefile, normally located in
+.Pa /usr/ports/Makefile 
+(but see 
+.Ev PORTSDIR
+below)
+offers a few useful targets.
+.Bl -tag -width configure
+.It Ar index
+rebuild the ports complete index,
+.Pa /usr/ports/INDEX
+.It Ar print-index
+display the contents of the index in a user-friendly way.
+.It Ar search
+invoked with a key, e.g., 
+.Ic make search key=foo ,
+retrieve information relevant to a given port.
 .Sh TARGETS
-Some of the targets work recursively through subdirectories.
+Individual ports are controlled through a few documented targets.
+Some of these targets work recursively through subdirectories.
 This lets you, for example, install all of the net
 ports.  The targets that do this are
-.Ar build , checksum , clean , configure , extract , fetch , install ,
+.Ar build , checksum , clean , configure , extract , fetch , fetch-list , 
+.Ar install , distclean , deinstall, reinstall, mirror-distfiles, obj ,
+.Ar list-distfiles 
 and
 .Ar package .
 .Pp
@@ -98,19 +118,22 @@ and
 Verify that the fetched distfile matches the one the port was tested against.
 Defining
 .Ev NO_CHECKSUM
+to
+.Dv Yes
 will skip this step.
 .It Ar depends
 Install
 .Pq or compile if only compilation is necessary
 any dependencies of the current port.  When called by the
-.Ar extract
+.Ar extract, install
 or
 .Ar fetch
-targets, this is run in piecemeal as
-.Ar fetch-depends ,
-.Ar build-depends ,
-etc.  Defining
+targets, this is run in scattered pieces as
+.Ar fetch-depends , lib-depends , build-depends , run-depends , misc-depends .
+Defining
 .Ev NO_DEPENDS
+to 
+.Dv Yes
 will skip this step.
 .It Ar extract
 Expand the distfile into a work directory.
@@ -134,25 +157,19 @@ is all you really need to do.
 The following targets are not run during the normal install process.
 .Bl -tag -width fetch-list
 .It Ar fetch-list
-Show list of files needed to be fetched in order to build the port.
+Build a script that lists the files needing to be fetched in order to 
+build the port.
 .It Ar depends-list package-depends
-Print a list of all the compile and run dependencies, and dependencies
-of those dependencies.
+Print an ordered list of all the compile and run dependencies.
 .It Ar clean
-Remove the expanded source code.  This recurses to dependencies unless
-.Ev NOCLEANDEPENDS
-is defined.
+Remove the expanded source code.  This does not recurse to dependencies unless
+.Ev CLEANDEPENDS
+is defined to
+.Dv Yes .
 .It Ar distclean
 Remove the port's distfile(s) and perform the
 .Ar clean
-operation.  The
-.Sq clean
-portion recurses to dependencies unless
-.Ev NOCLEANDEPENDS
-is defined, but the
-.Sq distclean
-portion never recurses
-.Pq this is perhaps a bug .
+operation.  This does not recurse to dependencies.
 .It Ar reinstall
 Use this to restore a port after using
 .Xr pkg_delete 1 .
@@ -169,8 +186,24 @@ See
 and
 .Ev PKGFILE .
 .El
-.Sh ENVIRONMENT VARIABLES
-You can change all of these.
+.Sh PORT VARIABLES
+These can be changed in the environment, or in 
+.Pa /etc/mk.conf
+for persistence.  You can also set them on make's command line, e.g.,
+.Ic make VAR_FOO=foo
+.Pp
+Boolean variables should be set to 
+.Dv Yes
+instead of simply being defined, for uniformity and future compatibility.
+.Pp
+.Ss NETWORK CONFIGURATION
+The variables pertaining to network access have been marshalled into
+.Pa ${PORTSDIR}/template/network.conf.template .
+
+To customize that setup, copy that file into
+.Pa ${PORTSDIR}/db/network.conf
+and edit it.
+.Pp
 .Bl -tag -width MASTER_SITES
 .It Ev PORTSDIR
 Location of the ports tree.  This is
@@ -220,15 +253,27 @@ Primary sites for distribution files if not found locally.
 Primary location(s) for distribution patch files if not found
 locally.
 .It Ev MASTER_SITE_OPENBSD
-If set, go to the master OpenBSD site for all files.
+If set to
+.Dv Yes , 
+go to the master OpenBSD site for all files.
 .It Ev MASTER_SITE_FREEBSD
-If set, go to the master FreeBSD site for all files.
+If set to
+.Dv Yes , 
+go to the master FreeBSD site for all files.
 .It Ev MASTER_SITE_OVERRIDE
 Try going to this site for all files and patches, first.
+.It Ev CLEANDEPENDS
+If set to 
+.Dv Yes ,
+let 
+.Sq clean 
+recurse to dependencies.
 .It Ev NOCLEANDEPENDS
 If defined, don't let
 .Sq clean
-recurse to dependencies.
+recurse to dependencies (deprecated, use 
+.Ev CLEANDEPENDS 
+instead).
 .It Ev FETCH_CMD
 Command to use to fetch files.  Normally
 .Xr fetch 1 .
@@ -244,13 +289,21 @@ If defined, only operate on a port if it requires interaction.
 If defined, only operate on a port if it can be installed 100% automatically.
 .El
 .Sh FILES
-.Bl -tag -width /usr/ports/xxxx -compact
+.Bl -tag -width /usr/ports/xxxxxxxx -compact
 .It Pa /usr/ports
 The default ports directory (FreeBSD and OpenBSD).
 .It Pa /usr/pkgsrc
 The default ports directory (NetBSD).
-.It Pa /usr/share/mk/bsd.port.mk
-The big Kahuna.
+.It Pa /usr/ports/Makefile
+Ports master Makefile.
+.It Pa /usr/ports/INDEX
+Ports index.
+.It Pa /usr/ports/infrastructure/mk/bsd.port.mk
+The ports main engine.
+.It Pa /usr/ports/infrastructure/templates/network.conf.template
+Network configuration defaults.
+.It Pa /usr/ports/infrastructure/db/network.conf
+Local network configuration.
 .Sh SEE ALSO
 .Xr make 1 ,
 .Xr pkg_add 1 ,
@@ -261,11 +314,12 @@ The big Kahuna.
 The FreeBSD handbook.
 .Sh AUTHORS
 This man page was originated by
-.An David O'Brien .
-The FreeBSD ports collection is maintained by
-.An Satoshi Asami
-and the awesome ports team.  The OpenBSD ports collection is maintained by
-Marco S Hyman and a host of others found at ports@openbsd.org.
+David O'Brien.
+The FreeBSD ports collection is maintained by Satoshi Asami
+and the awesome ports team.  The OpenBSD ports collection has been maintained by
+Marco S Hyman in the past. It is currently managed by Christopher Turan,
+with much help from Brad Smith
+and a host of others found at ports@openbsd.org.
 .Sh HISTORY
 .Nm The Ports Collection
 appeared in FreeBSD 1.0.
@@ -279,5 +333,3 @@ section of the FreeBSD handbook, the
 section of the FreeBSD handbook, and
 .Xr ports 7 .
 OpenBSD adds a few web pages to further confuse the issue.
-.Pp
-This man page is too long.
