@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.40 2003/08/12 19:44:43 mickey Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.41 2003/10/05 02:32:16 krw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.37 2003/08/12 19:42:37 mickey Exp 
+ *	OpenBSD: miidevs,v 1.38 2003/10/05 02:30:18 krw Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -62,6 +62,7 @@
 #define	MII_OUI_MYSON	0x00c0b4	/* Myson Technology */
 #define	MII_OUI_NATSEMI	0x080017	/* National Semiconductor */
 #define	MII_OUI_QUALSEMI	0x006051	/* Quality Semiconductor */
+#define	MII_OUI_REALTEK	0x000020	/* RealTek Semiconductor */
 #define	MII_OUI_SEEQ	0x00a07d	/* Seeq */
 #define	MII_OUI_SIS	0x00e006	/* Silicon Integrated Systems */
 #define	MII_OUI_TI	0x080028	/* Texas Instruments */
@@ -90,6 +91,9 @@
 
 /* Don't know what's going on here. */
 #define	MII_OUI_xxDAVICOM	0x006040	/* Davicom Semiconductor */
+
+/* This is the oui of the gigE PHY in the RealTek 81695/8110S chips */
+#define	MII_OUI_xxREALTEK	0x000732	/*  */
 
 /* Contrived vendor for dcphy */
 #define	MII_OUI_xxDEC	0x040440	/* Digital Clone */
@@ -125,6 +129,10 @@
 #define	MII_STR_xxBROADCOM_BCM5701	"BCM5701 10/100/1000baseTX PHY"
 #define	MII_MODEL_xxBROADCOM_BCM5703	0x0016
 #define	MII_STR_xxBROADCOM_BCM5703	"BCM5703 10/100/1000baseTX PHY"
+#define	MII_MODEL_xxBROADCOM_BCM5704	0x0019
+#define	MII_STR_xxBROADCOM_BCM5704	"BCM5704 10/100/1000baseTX PHY"
+#define	MII_MODEL_xxBROADCOM_BCM5705	0x001a
+#define	MII_STR_xxBROADCOM_BCM5705	"BCM5705 10/100/1000baseTX PHY"
 #define	MII_MODEL_BROADCOM_BCM5400	0x0004
 #define	MII_STR_BROADCOM_BCM5400	"BCM5400 1000baseTX PHY"
 #define	MII_MODEL_BROADCOM_BCM5401	0x0005
@@ -139,6 +147,8 @@
 #define	MII_STR_BROADCOM_BCM5221	"BCM5221 100baseTX PHY"
 #define	MII_MODEL_BROADCOM_BCM5201	0x0021
 #define	MII_STR_BROADCOM_BCM5201	"BCM5201 10/100 media interface"
+#define	MII_MODEL_BROADCOM_BCM4401_0x0036	BCM4401
+#define	MII_STR_BROADCOM_BCM4401_0x0036	"10/100baseTX PHY"
 
 /* Davicom Semiconductor PHYs */
 #define	MII_MODEL_DAVICOM_DM9102	0x0004
@@ -219,6 +229,12 @@
 /* Quality Semiconductor PHYs */
 #define	MII_MODEL_QUALSEMI_QS6612	0x0000
 #define	MII_STR_QUALSEMI_QS6612	"QS6612 10/100 media interface"
+
+/* RealTek Semiconductor PHYs */
+#define	MII_MODEL_REALTEK_RTL8201L	0x0020
+#define	MII_STR_REALTEK_RTL8201L	"Realtek 10/100 media interface"
+#define	MII_MODEL_xxREALTEK_RTL8169S	0x0011
+#define	MII_STR_xxREALTEK_RTL8169S	"Realtek 10/100/1000 media interface"
 
 /* Seeq PHYs */
 #define	MII_MODEL_xxSEEQ_80220	0x0003
