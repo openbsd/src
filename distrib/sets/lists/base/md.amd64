@@ -634,6 +634,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/mpbiosvar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/mpconfig.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/mtrr.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/mutex.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/param.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/pcb.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/pci_machdep.ph
@@ -1306,6 +1307,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/usb/hid.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/usb/if_auereg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/usb/if_axereg.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/usb/if_cdcereg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/usb/if_cuereg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/usb/if_kuereg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/usb/if_urlreg.ph
@@ -2006,6 +2008,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/msg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/msgbuf.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/mtio.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/sys/mutex.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/namei.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/param.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/pciio.ph

@@ -688,6 +688,7 @@
 ./usr/include/dev/usb/hid.h
 ./usr/include/dev/usb/if_auereg.h
 ./usr/include/dev/usb/if_axereg.h
+./usr/include/dev/usb/if_cdcereg.h
 ./usr/include/dev/usb/if_cuereg.h
 ./usr/include/dev/usb/if_kuereg.h
 ./usr/include/dev/usb/if_urlreg.h
@@ -1329,6 +1330,7 @@
 ./usr/include/sys/msg.h
 ./usr/include/sys/msgbuf.h
 ./usr/include/sys/mtio.h
+./usr/include/sys/mutex.h
 ./usr/include/sys/namei.h
 ./usr/include/sys/param.h
 ./usr/include/sys/pciio.h

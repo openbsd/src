@@ -156,6 +156,7 @@
 ./usr/include/i386/mp.h
 ./usr/include/i386/mpbiosreg.h
 ./usr/include/i386/mpbiosvar.h
+./usr/include/i386/mutex.h
 ./usr/include/i386/npx.h
 ./usr/include/i386/param.h
 ./usr/include/i386/pcb.h

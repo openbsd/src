@@ -1340,6 +1340,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/hid.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/if_auereg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/if_axereg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/if_cdcereg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/if_cuereg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/if_kuereg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/if_urlreg.ph
@@ -2040,6 +2041,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/msg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/msgbuf.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/mtio.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/sys/mutex.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/namei.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/param.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/pciio.ph
