@@ -1,4 +1,4 @@
-/*	$OpenBSD: safe.c,v 1.1 2003/08/12 18:48:13 jason Exp $	*/
+/*	$OpenBSD: safe.c,v 1.2 2003/08/12 20:40:19 jason Exp $	*/
 
 /*-
  * Copyright (c) 2003 Sam Leffler, Errno Consulting
@@ -25,12 +25,11 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * $FreeBSD: /repoman/r/ncvs/src/sys/dev/safe/safe.c,v 1.1 2003/07/21 21:46:07 sam Exp $
  */
 
 #include <sys/cdefs.h>
-#if 0
-__FBSDID("$FreeBSD: /repoman/r/ncvs/src/sys/dev/safe/safe.c,v 1.1 2003/07/21 21:46:07 sam Exp $");
-#endif
 
 /*
  * SafeNet SafeXcel-1141 hardware crypto accelerator
@@ -271,17 +270,14 @@ safe_attach(struct device *parent, struct device *self, void *aux)
 	printf(":");
 
 	devinfo = READ_REG(sc, SAFE_DEVINFO);
-	if (devinfo & SAFE_DEVINFO_RNG) {
-		sc->sc_flags |= SAFE_FLAGS_RNG;
+	if (devinfo & SAFE_DEVINFO_RNG)
 		printf(" rng");
-	}
 
 	bzero(algs, sizeof(algs));
 #if 0
 	/* Key ops not supported yet */
 	if (devinfo & SAFE_DEVINFO_PKEY) {
 		printf(" key");
-		sc->sc_flags |= SAFE_FLAGS_KEY;
 		crypto_kregister(sc->sc_cid, CRK_MOD_EXP, 0,
 			safe_kprocess, sc);
 		crypto_kregister(sc->sc_cid, CRK_MOD_EXP_CRT, 0,
@@ -314,7 +310,7 @@ safe_attach(struct device *parent, struct device *self, void *aux)
 	safe_init_pciregs(sc);		/* init pci settings */
 	safe_init_board(sc);		/* init h/w */
 
-	if (sc->sc_flags & SAFE_FLAGS_RNG) {
+	if (devinfo & SAFE_DEVINFO_RNG) {
 		safe_rng_init(sc);
 
 		timeout_set(&sc->sc_rngto, safe_rng, sc);
@@ -1581,11 +1577,12 @@ safe_dmamap_uniform(const struct safe_operand *op)
 	if (op->nsegs > 0) {
 		int i;
 
-		for (i = 0; i < op->nsegs-1; i++)
+		for (i = 0; i < op->nsegs-1; i++) {
 			if (op->segs[i].ds_len % SAFE_MAX_DSIZE)
 				return (0);
 			if (op->segs[i].ds_len != SAFE_MAX_DSIZE)
 				result = 2;
+		}
 	}
 	return (result);
 }
