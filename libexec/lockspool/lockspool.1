@@ -39,7 +39,9 @@ is useful for a client mail program to attain proper locking.
 obtains a
 .Nm username.lock
 for the calling user and retains it until stdin is closed or a signal
-like SIGINT, SIGTERM, or SIGHUP is received.  If
+like SIGINT, SIGTERM, or SIGHUP is received.
+.Pp
+If
 .Nm lockspool
 is able to create the lock file, ``1'' is written to stdout, otherwise
 ``0'' is written and an error message is written to stderr.
@@ -50,13 +52,8 @@ for a short period in between tries).
 The
 .Nm lockspool
 utility exits 0 on success, and 1 if an error occurs.
-.Sh ENVIRONMENT
-.Bl -tag -width indent
-.It Ev TZ
-Used to set the appropriate time zone on the timestamp.
-.El
 .Sh FILES
-.Bl -tag -width /var/mail/user.lock -compact
+.Bl -tag -width /var/mail/username.lock -compact
 .It Pa /var/mail/username.lock
 user's mail lock file.
 .El
