@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.93 2002/04/09 01:01:19 krw Exp $
+#	$OpenBSD: install.sh,v 1.94 2002/04/12 02:24:40 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -315,7 +315,7 @@ md_questions
 install_sets $THESETS
 
 # Copy in configuration information and make devices in target root.
-cfgfiles="fstab hostname.* hosts myname mygate resolv.conf"
+cfgfiles="fstab hostname.* hosts myname mygate resolv.conf kbdtype"
 
 echo
 if [ -f /etc/dhclient.conf ]; then
