@@ -6,8 +6,6 @@ kerberosV stuff.
 
 To build this stuff, do the following:
 
-# cd /usr/src/kerberosIV/lib/sl
-# make
 # cd /usr/src/kerberosV
 # make build
 
