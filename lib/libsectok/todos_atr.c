@@ -1,4 +1,4 @@
-/* $Id: todos_atr.c,v 1.4 2001/06/08 15:04:05 rees Exp $ */
+/* $Id: todos_atr.c,v 1.5 2001/06/18 16:00:50 rees Exp $ */
 
 /*
 copyright 1997, 1999, 2000
@@ -44,9 +44,11 @@ such damages.
 #include <System/Unix/unix_string.h>
 #include <UI/UIAll.h>
 #include "field.h"
+typedef long int32_t;
 #else
 #include <stdio.h>
 #include <string.h>
+#include <sys/types.h>
 #endif
 
 #include "sectok.h"
@@ -120,7 +122,7 @@ static short Dtab[] = { -1, 1, 2, 4, 8, 16, 32, -1, 12, 20, -1, -1, -1, -1, -1, 
 
 static struct bps {
     unsigned char Fi, Di;
-    long bps;
+    int32_t bps;
 } bps[] = {
     { 0x01, 0x08, 115464 },
     { 0x09, 0x05, 111856 },
@@ -287,7 +289,7 @@ todos_get_atr(int ttyn, int flags, unsigned char *atr, struct scparam *param)
 		pps[3] = 0;
 
 		if (flags & SCRV)
-		    printf("speed %ld\n", bps[i].bps);
+		    printf("speed %ld\n", (long) bps[i].bps);
 
 #ifdef SCPPS
 		/* Compute checksum */
@@ -304,7 +306,7 @@ todos_get_atr(int ttyn, int flags, unsigned char *atr, struct scparam *param)
 		if (todos_scsetspeed(ttyn, bps[i].bps) < 0) {
 		    /* We already sent the pps, can't back out now, so fail. */
 		    if (flags & SCRV)
-			printf("scsetspeed %ld failed\n", bps[i].bps);
+			printf("scsetspeed %ld failed\n", (long) bps[i].bps);
 		    param->t = -1;
 		    return len;
 		}

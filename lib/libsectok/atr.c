@@ -1,4 +1,4 @@
-/* $Id: atr.c,v 1.3 2001/06/08 15:04:02 rees Exp $ */
+/* $Id: atr.c,v 1.4 2001/06/18 16:00:50 rees Exp $ */
 
 /*
 copyright 1997, 1999, 2000, 2001
@@ -41,19 +41,16 @@ such damages.
 #include <System/SysAll.h>
 #include <System/MemoryMgr.h>
 #include <System/Unix/unix_stdlib.h>
-#include <System/Unix/sys_socket.h>
+#include <UI/UIAll.h>
+#include "field.h"
+typedef long int32_t;
 #else
 #include <stdio.h>
-#endif
 #include <string.h>
+#include <sys/types.h>
+#endif
 
 #include "sectok.h"
-
-#ifdef __palmos__
-#undef printf
-#undef sprintf
-#define printf palmprintf
-#endif
 
 /* Global interface bytes */
 #define TA1 (tpb[0][0])
@@ -110,7 +107,7 @@ static short Dtab[] = { -1, 1, 2, 4, 8, 16, 32, -1, 12, 20, -1, -1, -1, -1, -1, 
 
 static struct bps {
     unsigned char Fi, Di;
-    long bps;
+    int32_t bps;
 } bps[] = {
     { 0x01, 0x08, 115464 },
     { 0x09, 0x05, 111856 },
@@ -275,7 +272,7 @@ parse_atr(int ttyn, int flags, unsigned char *atr, int len, struct scparam *para
 	for (i = 0; bps[i].bps; i++) {
 	    if (((TA1 >> 4) & 0xf) >= bps[i].Fi && (TA1 & 0xf) >= bps[i].Di) {
 		if (flags & SCRV)
-		    printf("speed %ld\n", bps[i].bps);
+		    printf("speed %ld\n", (long) bps[i].bps);
 		Fi = bps[i].Fi;
 		Di = bps[i].Di;
 		break;
