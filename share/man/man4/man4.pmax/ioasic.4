@@ -28,7 +28,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"	$NetBSD: ioasic.4,v 1.4 1997/10/31 02:26:09 jonathan Exp $
-.\"	$OpenBSD: ioasic.4,v 1.4 1999/05/16 19:57:14 alex Exp $
+.\"	$OpenBSD: ioasic.4,v 1.5 1999/07/05 03:35:58 aaron Exp $
 .\"
 .Dd August 6, 1996
 .Dt IOASIC 4 pmax
@@ -47,7 +47,7 @@ all DEC TurboChannel machines with MIPS (DECstation 5000 series,
 excluding the 5000/200) and Alpha (3000-series) processors.  On these
 machines (including the 5000/200), all baseboard devices should be
 configured as children of the
-.Nm "" .
+.Nm ioasic .
 The
 .Nm
 provides hardware DMA channels and interrupt support for
