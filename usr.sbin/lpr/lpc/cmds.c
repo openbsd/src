@@ -131,7 +131,7 @@ abortpr(dis)
 {
 	register FILE *fp;
 	struct stat stbuf;
-	int pid, fd, ret;
+	int pid, fd;
 
 	if (cgetstr(bp, "sd", &SD) == -1)
 		SD = _PATH_DEFSPOOL;
@@ -282,7 +282,7 @@ sortq(a, b)
 
 	d1 = (struct dirent **)a;
 	d2 = (struct dirent **)b;
-	if (c1 = strcmp((*d1)->d_name + 3, (*d2)->d_name + 3))
+	if ((c1 = strcmp((*d1)->d_name + 3, (*d2)->d_name + 3)))
 		return(c1);
 	c1 = (*d1)->d_name[0];
 	c2 = (*d2)->d_name[0];
@@ -310,7 +310,7 @@ cleanpr()
 		SD = _PATH_DEFSPOOL;
 	printf("%s:\n", printer);
 
-	for (lp = line, cp = SD; *lp++ = *cp++; )
+	for (lp = line, cp = SD; (*lp++ = *cp++); )
 		;
 	lp[-1] = '/';
 
@@ -608,7 +608,7 @@ putmsg(argc, argv)
 	cp1 = buf;
 	while (--argc >= 0) {
 		cp2 = *argv++;
-		while (*cp1++ = *cp2++)
+		while ((*cp1++ = *cp2++))
 			;
 		cp1[-1] = ' ';
 	}
