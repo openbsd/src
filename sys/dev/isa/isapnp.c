@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnp.c,v 1.19 1998/07/28 13:26:50 csapuntz Exp $	*/
+/*	$OpenBSD: isapnp.c,v 1.20 1998/07/28 15:25:40 csapuntz Exp $	*/
 /*	$NetBSD: isapnp.c,v 1.9.4.3 1997/10/29 00:40:43 thorpej Exp $	*/
 
 /*
@@ -794,9 +794,7 @@ isapnp_configure(sc, ipa)
 
 /*
  * Some BIOSes take the liberty of configuring our ISA cards for us.
- * 
- * Disable this so that ISA scan doesn't detect ISAPNP cards
- *
+ * This code undoes the PNP card configuration.
  */
 
 void
@@ -811,8 +809,6 @@ isapnp_isa_attach_hook(isa_sc)
 
 	if (isapnp_map(&sc))
 		return;
-
-	printf ("isapnp: putting PNP cards to sleep\n");
 
 	isapnp_init(&sc);
 
