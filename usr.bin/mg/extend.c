@@ -1,41 +1,43 @@
 /*
- *	Extended (M-X) commands, rebinding, and
- *	startup file processing.
+ *	Extended (M-X) commands, rebinding, and	startup file processing.
  */
-#include	"def.h"
-#include	"kbd.h"
+
+#include "def.h"
+#include "kbd.h"
 
 #ifndef NO_MACRO
-#include	"macro.h"
-#endif
+#include "macro.h"
+#endif /* !NO_MACRO */
 
 #ifdef	FKEYS
-#include	"key.h"
+#include "key.h"
 #ifndef	NO_STARTUP
 #ifndef	BINDKEY
 #define	BINDKEY			/* bindkey is used by FKEYS startup code */
-#endif
-#endif
-#endif
+#endif /* !BINDKEY */
+#endif /* !NO_STARTUP */
+#endif /* FKEYS */
 
-static KEYMAP *realocmap	__P((KEYMAP *));
-static VOID fixmap		__P((KEYMAP *, KEYMAP*, KEYMAP*));
-static char *skipwhite		__P((char *));
-static char *parsetoken		__P((char *));
-int load			__P((char *));
-int excline			__P((char *));
+static int	 remap		__P((KEYMAP *, int, PF, KEYMAP *));
+static KEYMAP	*realocmap	__P((KEYMAP *));
+static VOID	 fixmap		__P((KEYMAP *, KEYMAP *, KEYMAP *));
+static int	 dobind		__P((KEYMAP *, char *, int));
+static char	*skipwhite	__P((char *));
+static char	*parsetoken	__P((char *));
+static int	 bindkey	__P((KEYMAP **, char *, KCHAR *, int));
 
-/* insert a string, mainly for use from macros (created by selfinsert) */
+/* 
+ * Insert a string, mainly for use from macros (created by selfinsert) 
+ */
 /* ARGSUSED */
 int
 insert(f, n)
 	int f, n;
 {
-	char  *cp;
-	char   buf[128];
+	char	*cp;
+	char	 buf[128];
 #ifndef NO_MACRO
-	int    count;
-	int    c;
+	int	 count, c;
 
 	if (inmacro) {
 		while (--n >= 0) {
@@ -49,9 +51,9 @@ insert(f, n)
 		return TRUE;
 	}
 	if (n == 1)
-		thisflag |= CFINS;	/* CFINS means selfinsert can tack on
-					 * end */
-#endif
+		/* CFINS means selfinsert can tack on the end */
+		thisflag |= CFINS;
+#endif /* !NO_MACRO */
 	if (eread("Insert: ", buf, sizeof(buf), EFNEW) == FALSE)
 		return FALSE;
 	while (--n >= 0) {
@@ -85,28 +87,26 @@ remap(curmap, c, funct, pref_map)
 	PF      funct;		/* function being changed to */
 	KEYMAP *pref_map;	/* if funct==prefix, map to bind to or
 				   NULL for new */
-/* extern MAP_ELEMENT *ele;	must be set before calling */
 {
-	int             i;
-	int             n1, n2, nold;
-	KEYMAP         *mp;
-	PF             *pfp;
-	MAP_ELEMENT    *mep;
+	int		 i, n1, n2, nold;
+	KEYMAP		*mp;
+	PF		*pfp;
+	MAP_ELEMENT	*mep;
 
 	if (ele >= &curmap->map_element[curmap->map_num] || c < ele->k_base) {
 		if (ele > &curmap->map_element[0] && (funct != prefix ||
-					    (ele - 1)->k_prefmap == NULL)) {
+		    (ele - 1)->k_prefmap == NULL))
 			n1 = c - (ele - 1)->k_num;
-		} else
+		else
 			n1 = HUGE;
 		if (ele < &curmap->map_element[curmap->map_num] &&
-		    (funct != prefix || ele->k_prefmap == NULL)) {
+		    (funct != prefix || ele->k_prefmap == NULL))
 			n2 = ele->k_base - c;
-		} else
+		else
 			n2 = HUGE;
 		if (n1 <= MAPELEDEF && n1 <= n2) {
 			ele--;
-			if ((pfp = (PF *) malloc((c - ele->k_base + 1) *
+			if ((pfp = (PF *)malloc((c - ele->k_base + 1) *
 			    sizeof(PF))) == NULL) {
 				ewprintf("Out of memory");
 				return FALSE;
@@ -120,8 +120,8 @@ remap(curmap, c, funct, pref_map)
 			ele->k_num = c;
 			ele->k_funcp = pfp;
 		} else if (n2 <= MAPELEDEF) {
-			if ((pfp = (PF *) malloc((ele->k_num - c + 1)
-			    * sizeof(PF))) == NULL) {
+			if ((pfp = (PF *)malloc((ele->k_num - c + 1) *
+			    sizeof(PF))) == NULL) {
 				ewprintf("Out of memory");
 				return FALSE;
 			}
@@ -137,7 +137,7 @@ remap(curmap, c, funct, pref_map)
 			if (curmap->map_num >= curmap->map_max &&
 			    (curmap = realocmap(curmap)) == NULL)
 				return FALSE;
-			if ((pfp = (PF *) malloc(sizeof(PF))) == NULL) {
+			if ((pfp = (PF *)malloc(sizeof(PF))) == NULL) {
 				ewprintf("Out of memory");
 				return FALSE;
 			}
@@ -159,7 +159,7 @@ remap(curmap, c, funct, pref_map)
 			if (pref_map != NULL) {
 				ele->k_prefmap = pref_map;
 			} else {
-				if (!(mp = (KEYMAP *) malloc(sizeof(KEYMAP) +
+				if (!(mp = (KEYMAP *)malloc(sizeof(KEYMAP) +
 				    (MAPINIT - 1) * sizeof(MAP_ELEMENT)))) {
 					ewprintf("Out of memory");
 					ele->k_funcp[c - ele->k_base] =
@@ -176,17 +176,20 @@ remap(curmap, c, funct, pref_map)
 		n1 = c - ele->k_base;
 		if (ele->k_funcp[n1] == funct && (funct != prefix ||
 		    pref_map == NULL || pref_map == ele->k_prefmap))
-			return TRUE;	/* no change */
+			/* no change */
+			return TRUE;
 		if (funct != prefix || ele->k_prefmap == NULL) {
 			if (ele->k_funcp[n1] == prefix)
 				ele->k_prefmap = (KEYMAP *) NULL;
-			ele->k_funcp[n1] = funct;	/* easy case */
+			/* easy case */
+			ele->k_funcp[n1] = funct;
 			if (funct == prefix) {
 				if (pref_map != NULL)
 					ele->k_prefmap = pref_map;
 				else {
 					if (!(mp = malloc(sizeof(KEYMAP) +
-					    (MAPINIT - 1) * sizeof(MAP_ELEMENT)))) {
+					    (MAPINIT - 1) * 
+					    sizeof(MAP_ELEMENT)))) {
 						ewprintf("Out of memory");
 						ele->k_funcp[c - ele->k_base] =
 						    curmap->map_default;
@@ -200,8 +203,8 @@ remap(curmap, c, funct, pref_map)
 			}
 		} else {
 			/*
-			 * This case is the splits
-			 * determine which side of the break c goes on
+			 * This case is the splits.
+			 * Determine which side of the break c goes on
 			 * 0 = after break; 1 = before break
 			 */
 			n2 = 1;
@@ -210,7 +213,8 @@ remap(curmap, c, funct, pref_map)
 			if (curmap->map_num >= curmap->map_max &&
 			    (curmap = realocmap(curmap)) == NULL)
 				return FALSE;
-			if (!(pfp = malloc((ele->k_num - c + !n2) * sizeof(PF)))) {
+			if ((pfp = malloc((ele->k_num - c + !n2) * 
+			    sizeof(PF))) == NULL) {
 				ewprintf("Out of memory");
 				return FALSE;
 			}
@@ -254,14 +258,14 @@ remap(curmap, c, funct, pref_map)
  */
 static KEYMAP *
 realocmap(curmap)
-	KEYMAP         *curmap;
+	KEYMAP *curmap;
 {
-	KEYMAP         *mp;
-	int             i;
-	extern int      nmaps;
+	KEYMAP	*mp;
+	int	 i;
 
-	if ((mp = (KEYMAP *) malloc((unsigned) (sizeof(KEYMAP) +
-	(curmap->map_max + (MAPGROW - 1)) * sizeof(MAP_ELEMENT)))) == NULL) {
+	if ((mp = (KEYMAP *)malloc((unsigned)(sizeof(KEYMAP) +
+	    (curmap->map_max + (MAPGROW - 1)) * 
+	    sizeof(MAP_ELEMENT)))) == NULL) {
 		ewprintf("Out of memory");
 		return NULL;
 	}
@@ -293,7 +297,7 @@ fixmap(curmap, mp, mt)
 	KEYMAP *curmap;
 	KEYMAP *mp;
 {
-	int     i;
+	int	 i;
 
 	for (i = mt->map_num; i--;) {
 		if (mt->map_element[i].k_prefmap != NULL) {
@@ -315,12 +319,11 @@ dobind(curmap, p, unbind)
 	char   *p;
 	int     unbind;
 {
-	PF      funct;
-	char    prompt[80];
-	char   *pep;
-	int     c;
-	int     s;
-	KEYMAP *pref_map = NULL;
+	KEYMAP	*pref_map = NULL;
+	PF	 funct;
+	char	 prompt[80];
+	char	*pep;
+	int	 c, s;
 
 #ifndef NO_MACRO
 	if (macrodef) {
@@ -336,18 +339,18 @@ dobind(curmap, p, unbind)
 		for (s = 0; s < maclcur->l_used - 1; s++) {
 			if (doscan(curmap, c = CHARMASK(maclcur->l_text[s]))
 			    != prefix) {
-				if (remap(curmap, c, prefix, (KEYMAP *) NULL)
+				if (remap(curmap, c, prefix, (KEYMAP *)NULL)
 				    != TRUE)
 					return FALSE;
 			}
 			curmap = ele->k_prefmap;
 		}
-		(VOID) doscan(curmap, c = maclcur->l_text[s]);
+		(VOID)doscan(curmap, c = maclcur->l_text[s]);
 		maclcur = maclcur->l_fp;
 	} else {
-#endif
-#endif
-		(VOID) strcpy(prompt, p);
+#endif /* !NO_STARTUP */
+#endif /* !NO_MACRO */
+		(VOID)strcpy(prompt, p);
 		pep = prompt + strlen(prompt);
 		for (;;) {
 			ewprintf("%s", prompt);
@@ -361,7 +364,7 @@ dobind(curmap, p, unbind)
 		}
 #ifndef NO_STARTUP
 	}
-#endif
+#endif /* !NO_STARTUP */
 	if (unbind)
 		funct = rescan;
 	else {
@@ -378,39 +381,39 @@ dobind(curmap, p, unbind)
 }
 
 /*
- * bindkey: bind key sequence to a function in
- * the specified map.  Used by excline so it can bind function keys.
- * To close to release to change calling sequence, should just pass
- * KEYMAP *curmap rather than KEYMAP **mapp.
-*/
+ * bindkey: bind key sequence to a function in the specified map.  Used by 
+ * excline so it can bind function keys.  To close to release to change 
+ * calling sequence, should just pass KEYMAP *curmap rather than 
+ * KEYMAP **mapp.
+ */
 #ifdef	BINDKEY
-int
+static int
 bindkey(mapp, fname, keys, kcount)
 	KEYMAP **mapp;
-	char   *fname;
-	KCHAR  *keys;
-	int     kcount;
+	char    *fname;
+	KCHAR   *keys;
+	int      kcount;
 {
-	KEYMAP *curmap = *mapp;
-	PF      funct;
-	int     c;
-	KEYMAP *pref_map = NULL;
+	KEYMAP	*curmap = *mapp;
+	KEYMAP	*pref_map = NULL;
+	PF	 funct;
+	int	 c;
 
 	if (fname == NULL)
 		funct = rescan;
 	else if (((funct = name_function(fname)) == prefix) ?
-		 (pref_map = name_map(fname)) == NULL : funct == NULL) {
+	    (pref_map = name_map(fname)) == NULL : funct == NULL) {
 		ewprintf("[No match: %s]", fname);
 		return FALSE;
 	}
 	while (--kcount) {
 		if (doscan(curmap, c = *keys++) != prefix) {
-			if (remap(curmap, c, prefix, (KEYMAP *) NULL) != TRUE)
+			if (remap(curmap, c, prefix, (KEYMAP *)NULL) != TRUE)
 				return FALSE;
 		}
 		curmap = ele->k_prefmap;
 	}
-	(VOID) doscan(curmap, c = *keys);
+	(VOID)doscan(curmap, c = *keys);
 	return remap(curmap, c, funct, pref_map);
 }
 
@@ -424,7 +427,7 @@ dobindkey(map, func, str)
 	char   *func;
 	char   *str;
 {
-	int     i;
+	int	 i;
 
 	for (i = 0; *str && i < MAXKEY; i++) {
 		/* XXX - convert numbers w/ strol()? */
@@ -455,8 +458,8 @@ dobindkey(map, func, str)
 	key.k_count = i;
 	return (bindkey(&map, func, key.k_chars, key.k_count));
 }
-#endif
-#endif
+#endif /* FKEYS */
+#endif /* BINDKEY */
 
 /*
  * This function modifies the fundamental keyboard map.
@@ -477,9 +480,8 @@ int
 localbind(f, n)
 	int f, n;
 {
-
-	return dobind(curbp->b_modes[curbp->b_nmodes]->p_map, "Local set key: ",
-		      FALSE);
+	return dobind(curbp->b_modes[curbp->b_nmodes]->p_map, 
+	    "Local set key: ", FALSE);
 }
 
 /*
@@ -490,9 +492,8 @@ int
 define_key(f, n)
 	int f, n;
 {
-	static char     buf[48] = "Define key map: ";
-	MAPS           *mp;
-	char           *strncat();
+	static char	 buf[48] = "Define key map: ";
+	MAPS		*mp;
 
 	buf[16] = '\0';
 	if (eread(buf, &buf[16], 48 - 16, EFNEW) != TRUE)
@@ -501,7 +502,7 @@ define_key(f, n)
 		ewprintf("Unknown map %s", &buf[16]);
 		return FALSE;
 	}
-	(VOID) strncat(&buf[16], " key: ", 48 - 16 - 1);
+	(VOID)strncat(&buf[16], " key: ", 48 - 16 - 1);
 	return dobind(mp->p_map, buf, FALSE);
 }
 
@@ -509,7 +510,6 @@ int
 unbindtokey(f, n)
 	int f, n;
 {
-
 	return dobind(map_table[0].p_map, "Global unset key: ", TRUE);
 }
 
@@ -517,25 +517,23 @@ int
 localunbind(f, n)
 	int f, n;
 {
-
 	return dobind(curbp->b_modes[curbp->b_nmodes]->p_map,
 	    "Local unset key: ", TRUE);
 }
 
 /*
- * Extended command. Call the message line
- * routine to read in the command name and apply autocompletion
- * to it. When it comes back, look the name up in the symbol table
- * and run the command if it is found.
- * Print an error if there is anything wrong.
+ * Extended command. Call the message line routine to read in the command 
+ * name and apply autocompletion to it. When it comes back, look the name 
+ * up in the symbol table and run the command if it is found.  Print an 
+ * error if there is anything wrong.
  */
 int
 extend(f, n)
-	int	f, n;
+	int f, n;
 {
-	PF      funct;
-	int     s;
-	char    xname[NXNAME];
+	PF	 funct;
+	int	 s;
+	char	 xname[NXNAME];
 
 	if (!(f & FFARG))
 		s = eread("M-x ", xname, NXNAME, EFNEW | EFFUNC);
@@ -546,14 +544,14 @@ extend(f, n)
 	if ((funct = name_function(xname)) != NULL) {
 #ifndef NO_MACRO
 		if (macrodef) {
-			LINE           *lp = maclcur;
+			LINE	*lp = maclcur;
 			macro[macrocount - 1].m_funct = funct;
 			maclcur = lp->l_bp;
 			maclcur->l_fp = lp->l_fp;
-			free((char *) lp);
+			free((char *)lp);
 		}
-#endif
-		return (*funct) (f, n);
+#endif /* !NO_MACRO */
+		return (*funct)(f, n);
 	}
 	ewprintf("[No match]");
 	return FALSE;
@@ -581,10 +579,10 @@ extend(f, n)
 /* ARGSUSED */
 int
 evalexpr(f, n)
-	int	f, n;
+	int f, n;
 {
-	int     s;
-	char    exbuf[128];
+	int	 s;
+	char	 exbuf[128];
 
 	if ((s = ereply("Eval: ", exbuf, 128)) != TRUE)
 		return s;
@@ -592,24 +590,26 @@ evalexpr(f, n)
 }
 
 /*
- * evalbuffer - evaluate the current buffer as line commands. Useful
- *	for testing startup files.
+ * evalbuffer - evaluate the current buffer as line commands. Useful for 
+ * testing startup files.
  */
 /* ARGSUSED */
 int
 evalbuffer(f, n)
-	int             f, n;
+	int f, n;
 {
-	LINE           *lp;
-	BUFFER         *bp = curbp;
-	int             s;
-	static char     excbuf[128];
+	LINE		*lp;
+	BUFFER		*bp = curbp;
+	int		 s;
+	static char	 excbuf[128];
 
 	for (lp = lforw(bp->b_linep); lp != bp->b_linep; lp = lforw(lp)) {
 		if (llength(lp) >= 128)
 			return FALSE;
-		(VOID) strncpy(excbuf, ltext(lp), llength(lp));
-		excbuf[llength(lp)] = '\0';	/* make sure it's terminated */
+		(VOID)strncpy(excbuf, ltext(lp), llength(lp));
+
+		/* make sure it's terminated */
+		excbuf[llength(lp)] = '\0';
 		if ((s = excline(excbuf)) != TRUE)
 			return s;
 	}
@@ -623,10 +623,10 @@ evalbuffer(f, n)
 /* ARGSUSED */
 int
 evalfile(f, n)
-	int    f, n;
+	int f, n;
 {
-	int    s;
-	char   fname[NFILEN];
+	int	 s;
+	char	 fname[NFILEN];
 
 	if ((s = ereply("Load file: ", fname, NFILEN)) != TRUE)
 		return s;
@@ -638,17 +638,19 @@ evalfile(f, n)
  */
 int
 load(fname)
-	char   *fname;
+	char *fname;
 {
-	int     s = TRUE;
-	int     nbytes;
-	char    excbuf[128];
+	int	 s = TRUE;
+	int	 nbytes;
+	char	 excbuf[128];
 
 	if ((fname = adjustname(fname)) == NULL)
-		return FALSE;	/* just to be careful */
-
-	if (ffropen(fname, (BUFFER *) NULL) != FIOSUC)
+		/* just to be careful */
 		return FALSE;
+
+	if (ffropen(fname, (BUFFER *)NULL) != FIOSUC)
+		return FALSE;
+
 	while ((s = ffgetline(excbuf, sizeof(excbuf) - 1, &nbytes)) == FIOSUC) {
 		excbuf[nbytes] = '\0';
 		if (excline(excbuf) != TRUE) {
@@ -657,7 +659,7 @@ load(fname)
 			break;
 		}
 	}
-	(VOID) ffclose((BUFFER *) NULL);
+	(VOID)ffclose((BUFFER *)NULL);
 	excbuf[nbytes] = '\0';
 	if (s != FIOEOF || (nbytes && excline(excbuf) != TRUE))
 		return FALSE;
@@ -665,33 +667,33 @@ load(fname)
 }
 
 /*
- * excline - run a line from a load file or eval-expression.
- * if FKEYS is defined, duplicate functionallity of dobind so function
- * key values don't have to fit in type char.
+ * excline - run a line from a load file or eval-expression.  if FKEYS is 
+ * defined, duplicate functionallity of dobind so function key values don't 
+ * have to fit in type char.
  */
 int
 excline(line)
-	char   *line;
+	char *line;
 {
-	char   *funcp, *argp = NULL;
-	int     c;
-	int     status;
-	int     f, n;
-	LINE   *lp, *np;
-	PF      fp;
+	PF	 fp;
+	LINE	*lp, *np;
+	int	 status, c, f, n;
+	char	*funcp;
+	char	*argp = NULL;
 #ifdef	FKEYS
-	int     bind;
-	KEYMAP *curmap;
-	MAPS   *mp;
-#define BINDARG		0	/* this arg is key to bind (local/global set
-				 * key) */
-#define	BINDNO		1	/* not binding or non-quoted BINDARG */
-#define BINDNEXT	2	/* next arg " (define-key) */
-#define BINDDO		3	/* already found key to bind */
-#define BINDEXT 1		/* space for trailing \0 */
-#else
-#define BINDEXT 0
-#endif
+	int	 bind;
+	KEYMAP	*curmap;
+	MAPS	*mp;
+#define BINDARG		0  /* this arg is key to bind (local/global set key) */
+#define	BINDNO		1  /* not binding or non-quoted BINDARG */
+#define BINDNEXT	2  /* next arg " (define-key) */
+#define BINDDO		3  /* already found key to bind */
+#define BINDEXT		1  /* space for trailing \0 */
+#else /* FKEYS */
+#define BINDEXT		0
+#endif /* FKEYS */
+
+	lp = NULL;
 
 	if (macrodef || inmacro) {
 		ewprintf("Not now!");
@@ -730,8 +732,8 @@ excline(line)
 		bind = BINDNEXT;
 	else
 		bind = BINDNO;
-#endif
-	/* Pack away all the args now...	 */
+#endif /* FKEYS */
+	/* Pack away all the args now... */
 	if ((np = lalloc(0)) == FALSE)
 		return FALSE;
 	np->l_fp = np->l_bp = maclcur = np;
@@ -747,18 +749,20 @@ excline(line)
 				status = FALSE;
 				goto cleanup;
 			}
-			bcopy(argp, ltext(lp), (int) (line - argp));
+			bcopy(argp, ltext(lp), (int)(line - argp));
 #ifdef	FKEYS
-			lp->l_used--;	/* don't count BINDEXT! */
+			/* don't count BINDEXT */
+			lp->l_used--;
 			if (bind == BINDARG)
 				bind = BINDNO;
-#endif
-		} else {	/* Quoted strings special */
+#endif /* FKEYS */
+		} else {
+			/* quoted strings are special */
 			++argp;
 #ifdef	FKEYS
 			if (bind != BINDARG) {
-#endif
-				lp = lalloc((int) (line - argp) + BINDEXT);
+#endif /* FKEYS */
+				lp = lalloc((int)(line - argp) + BINDEXT);
 				if (lp == NULL) {
 					status = FALSE;
 					goto cleanup;
@@ -768,7 +772,7 @@ excline(line)
 			} else {
 				key.k_count = 0;
 			}
-#endif
+#endif /* FKEYS */
 			while (*argp != '"' && *argp != '\0') {
 				if (*argp != '\\')
 					c = *argp++;
@@ -808,7 +812,8 @@ excline(line)
 					case '6':
 					case '7':
 						c = *argp - '0';
-						if (argp[1] <= '7' && argp[1] >= '0') {
+						if (argp[1] <= '7' && 
+						    argp[1] >= '0') {
 							c <<= 3;
 							c += *++argp - '0';
 							if (argp[1] <= '7' &&
@@ -829,7 +834,7 @@ excline(line)
 						}
 						c += KFIRST;
 						break;
-#endif
+#endif /* FKEYS */
 					default:
 						c = CHARMASK(*argp);
 						break;
@@ -840,7 +845,7 @@ excline(line)
 				if (bind == BINDARG)
 					key.k_chars[key.k_count++] = c;
 				else
-#endif
+#endif /* FKEYS */
 					lp->l_text[lp->l_used++] = c;
 			}
 			if (*line)
@@ -856,22 +861,22 @@ excline(line)
 			if ((mp = name_mode(lp->l_text)) == NULL) {
 				ewprintf("No such mode: %s", lp->l_text);
 				status = FALSE;
-				free((char *) lp);
+				free((char *)lp);
 				goto cleanup;
 			}
 			curmap = mp->p_map;
-			free((char *) lp);
+			free((char *)lp);
 			bind = BINDARG;
 			break;
 		default:
-#endif
+#endif /* FKEYS */
 			lp->l_fp = np->l_fp;
 			lp->l_bp = np;
 			np->l_fp = lp;
 			np = lp;
 #ifdef	FKEYS
 		}
-#endif
+#endif /* FKEYS */
 	}
 #ifdef	FKEYS
 	switch (bind) {
@@ -885,26 +890,26 @@ excline(line)
 			status = bindkey(&curmap, lp->l_text, key.k_chars,
 			    key.k_count);
 		} else
-			status = bindkey(&curmap, (char *) NULL, key.k_chars,
+			status = bindkey(&curmap, (char *)NULL, key.k_chars,
 			    key.k_count);
 		break;
 	case BINDNO:
-#endif
+#endif /* FKEYS */
 		inmacro = TRUE;
 		maclcur = maclcur->l_fp;
-		status = (*fp) (f, n);
+		status = (*fp)(f, n);
 		inmacro = FALSE;
 #ifdef	FKEYS
 	}
-#endif
+#endif /* FKEYS */
 cleanup:
 	lp = maclcur->l_fp;
 	while (lp != maclcur) {
 		np = lp->l_fp;
-		free((char *) lp);
+		free((char *)lp);
 		lp = np;
 	}
-	free((char *) lp);
+	free((char *)lp);
 	return status;
 }
 
@@ -913,9 +918,8 @@ cleanup:
  */
 static char *
 skipwhite(s)
-	char  *s;
+	char *s;
 {
-
 	while (*s == ' ' || *s == '\t' || *s == ')' || *s == '(')
 		s++;
 	if (*s == ';')
@@ -927,18 +931,20 @@ static char *
 parsetoken(s)
 	char  *s;
 {
-
 	if (*s != '"') {
 		while (*s && *s != ' ' && *s != '\t' && *s != ')' && *s != '(')
 			s++;
 		if (*s == ';')
 			*s = '\0';
 	} else
-		do {	/* Strings get special treatment */
-			/* Beware: You can \ out the end of the string! */
+		do {
+			/* 
+			 * Strings get special treatment.  
+			 * Beware: You can \ out the end of the string! 
+			 */
 			if (*s == '\\')
 				++s;
 		} while (*++s != '"' && *s != '\0');
 	return s;
 }
-#endif
+#endif /* !NO_STARTUP */

@@ -1,83 +1,54 @@
 /*
- *		regular expression search commands for Mg
+ *	regular expression search commands for Mg
  *
- * This file contains functions to implement several of gnuemacs'
- * regular expression functions for Mg.  Several of the routines
- * below are just minor rearrangements of the Mg non-regular
- * expression search functions.  Hence some of them date back in
- * essential structure to the original MicroEMACS; others are modifications
- * of Rich Ellison's code.  I, Peter Newton, wrote about half from scratch.
+ * This file contains functions to implement several of gnuemacs's regular
+ * expression functions for Mg.  Several of the routines below are just minor
+ * re-arrangements of Mg's non-regular expression search functions.  Some of
+ * them are similar in structure to the original MicroEMACS, others are 
+ * modifications of Rich Ellison's code.  Peter Newton re-wrote about half of
+ * them from scratch.
  */
 
-
-#ifdef	REGEX
+#ifdef REGEX
 #include <sys/types.h>
 #include <regex.h>
 
-#include	"def.h"
-#include	"macro.h"
+#include "def.h"
+#include "macro.h"
 
-#define SRCH_BEGIN	(0)	/* Search sub-codes.	 */
+#define SRCH_BEGIN	(0)		/* search sub-codes		    */
 #define SRCH_FORW	(-1)
 #define SRCH_BACK	(-2)
 #define SRCH_NOPR	(-3)
 #define SRCH_ACCM	(-4)
 #define SRCH_MARK	(-5)
 
-#define RE_NMATCH	10	/* max number of matches */
+#define RE_NMATCH	10		/* max number of matches	    */
+#define REPLEN		256		/* max length of replacement string */
 
-char            re_pat[NPAT];	/* Regex pattern		 */
-int             re_srch_lastdir = SRCH_NOPR;	/* Last search flags. */
-int             casefoldsearch = TRUE;	/* Does search ignore case ? */
+char	re_pat[NPAT];			/* regex pattern		    */
+int	re_srch_lastdir = SRCH_NOPR;	/* last search flags		    */
+int	casefoldsearch = TRUE;		/* does search ignore case?	    */
 
-/* Indexed by a character, gives the upper case equivalent of the character */
-
-static char     upcase[0400] =
-{000, 001, 002, 003, 004, 005, 006, 007,
-	010, 011, 012, 013, 014, 015, 016, 017,
-	020, 021, 022, 023, 024, 025, 026, 027,
-	030, 031, 032, 033, 034, 035, 036, 037,
-	040, 041, 042, 043, 044, 045, 046, 047,
-	050, 051, 052, 053, 054, 055, 056, 057,
-	060, 061, 062, 063, 064, 065, 066, 067,
-	070, 071, 072, 073, 074, 075, 076, 077,
-	0100, 0101, 0102, 0103, 0104, 0105, 0106, 0107,
-	0110, 0111, 0112, 0113, 0114, 0115, 0116, 0117,
-	0120, 0121, 0122, 0123, 0124, 0125, 0126, 0127,
-	0130, 0131, 0132, 0133, 0134, 0135, 0136, 0137,
-	0140, 0101, 0102, 0103, 0104, 0105, 0106, 0107,
-	0110, 0111, 0112, 0113, 0114, 0115, 0116, 0117,
-	0120, 0121, 0122, 0123, 0124, 0125, 0126, 0127,
-	0130, 0131, 0132, 0173, 0174, 0175, 0176, 0177,
-	0200, 0201, 0202, 0203, 0204, 0205, 0206, 0207,
-	0210, 0211, 0212, 0213, 0214, 0215, 0216, 0217,
-	0220, 0221, 0222, 0223, 0224, 0225, 0226, 0227,
-	0230, 0231, 0232, 0233, 0234, 0235, 0236, 0237,
-	0240, 0241, 0242, 0243, 0244, 0245, 0246, 0247,
-	0250, 0251, 0252, 0253, 0254, 0255, 0256, 0257,
-	0260, 0261, 0262, 0263, 0264, 0265, 0266, 0267,
-	0270, 0271, 0272, 0273, 0274, 0275, 0276, 0277,
-	0300, 0301, 0302, 0303, 0304, 0305, 0306, 0307,
-	0310, 0311, 0312, 0313, 0314, 0315, 0316, 0317,
-	0320, 0321, 0322, 0323, 0324, 0325, 0326, 0327,
-	0330, 0331, 0332, 0333, 0334, 0335, 0336, 0337,
-	0340, 0341, 0342, 0343, 0344, 0345, 0346, 0347,
-	0350, 0351, 0352, 0353, 0354, 0355, 0356, 0357,
-	0360, 0361, 0362, 0363, 0364, 0365, 0366, 0367,
-	0370, 0371, 0372, 0373, 0374, 0375, 0376, 0377
-};
+static int	 re_doreplace	__P((RSIZE, char *, int));
+static int	 re_forwsrch	__P((void));
+static int	 re_backsrch	__P((void));
+static int	 re_readpattern	__P((char *));
+static int	 killmatches	__P((int));
+static int	 countmatches	__P((int));
 
 /*
  * Search forward.
- * Get a search string from the user, and search for it,
- * starting at ".". If found, "." gets moved to just after the
- * matched characters, and display does all the hard stuff.
- * If not found, it just prints a message.
+ * Get a search string from the user and search for it starting at ".".  If 
+ * found, move "." to just after the matched characters.  display does all 
+ * the hard stuff.  If not found, it just prints a message.
  */
 /* ARGSUSED */
+int
 re_forwsearch(f, n)
+	int f, n;
 {
-	register int    s;
+	int	s;
 
 	if ((s = re_readpattern("RE Search")) != TRUE)
 		return (s);
@@ -97,9 +68,11 @@ re_forwsearch(f, n)
  * was matched].
  */
 /* ARGSUSED */
+int
 re_backsearch(f, n)
+	int f, n;
 {
-	register int    s;
+	int	s;
 
 	if ((s = re_readpattern("RE Search backward")) != TRUE)
 		return (s);
@@ -111,22 +84,19 @@ re_backsearch(f, n)
 	return (TRUE);
 }
 
-
-
 /*
- * Search again, using the same search string
- * and direction as the last search command. The direction
- * has been saved in "srch_lastdir", so you know which way
- * to go.
- */
-/* ARGSUSED */
-/*
- * This code has problems-- some incompatibility(?) with extend.c causes
+ * Search again, using the same search string and direction as the last search 
+ * command.  The direction has been saved in "srch_lastdir", so you know which 
+ * way to go.
+ *
+ * XXX: This code has problems -- some incompatibility(?) with extend.c causes
  * match to fail when it should not.
  */
+/* ARGSUSED */
+int
 re_searchagain(f, n)
+	int f, n;
 {
-
 	if (re_srch_lastdir == SRCH_NOPR) {
 		ewprintf("No last search");
 		return (FALSE);
@@ -138,31 +108,32 @@ re_searchagain(f, n)
 		}
 		return (TRUE);
 	}
-	if (re_srch_lastdir == SRCH_BACK) {
+	if (re_srch_lastdir == SRCH_BACK) 
 		if (re_backsrch() == FALSE) {
 			ewprintf("Search failed: \"%s\"", re_pat);
 			return (FALSE);
 		}
-		return (TRUE);
-	}
+
+	return (TRUE);
 }
 
-
 /* Compiled regex goes here-- changed only when new pattern read */
-static regex_t  re_buff;
-static regmatch_t re_match[RE_NMATCH];
+static regex_t		re_buff;
+static regmatch_t	re_match[RE_NMATCH];
 
 /*
  * Re-Query Replace.
  *	Replace strings selectively.  Does a search and replace operation.
  */
 /* ARGSUSED */
+int
 re_queryrepl(f, n)
+	int f, n;
 {
-	register int    s;
-	register int    rcnt = 0;	/* Replacements made so far	 */
-	register int    plen;	/* length of found string	 */
-	char            news[NPAT];	/* replacement string		 */
+	int	s;
+	int	rcnt = 0;	/* replacements made so far	*/
+	int	plen;		/* length of found string	*/
+	char	news[NPAT];	/* replacement string		*/
 
 	/* Casefold check */
 	if (!casefoldsearch)
@@ -170,7 +141,8 @@ re_queryrepl(f, n)
 
 	if ((s = re_readpattern("RE Query replace")) != TRUE)
 		return (s);
-	if ((s = ereply("Query replace %s with: ", news, NPAT, re_pat)) == ABORT)
+	if ((s = 
+	    ereply("Query replace %s with: ", news, NPAT, re_pat)) == ABORT)
 		return (s);
 	if (s == FALSE)
 		news[0] = '\0';
@@ -181,41 +153,39 @@ re_queryrepl(f, n)
 	 * or not.  The "!" case makes the check always true, so it gets put
 	 * into a tighter loop for efficiency.
 	 */
-
 	while (re_forwsrch() == TRUE) {
 retry:
 		update();
 		switch (getkey(FALSE)) {
 		case ' ':
 			plen = re_match[0].rm_eo - re_match[0].rm_so;
-			if (re_doreplace((RSIZE) plen, news, f) == FALSE)
+			if (re_doreplace((RSIZE)plen, news, f) == FALSE)
 				return (FALSE);
 			rcnt++;
 			break;
 
 		case '.':
 			plen = re_match[0].rm_eo - re_match[0].rm_so;
-			if (re_doreplace((RSIZE) plen, news, f) == FALSE)
+			if (re_doreplace((RSIZE)plen, news, f) == FALSE)
 				return (FALSE);
 			rcnt++;
 			goto stopsearch;
 
-		case CCHR('G'):/* ^G */
-			(VOID) ctrlg(FFRAND, 0);
-		case CCHR('['):/* ESC */
+		case CCHR('G'):				/* ^G */
+			(VOID)ctrlg(FFRAND, 0);
+		case CCHR('['):				/* ESC */
 		case '`':
 			goto stopsearch;
-
 		case '!':
 			do {
 				plen = re_match[0].rm_eo - re_match[0].rm_so;
-				if (re_doreplace((RSIZE) plen, news, f) == FALSE)
+				if (re_doreplace((RSIZE)plen, news, f) == FALSE)
 					return (FALSE);
 				rcnt++;
 			} while (re_forwsrch() == TRUE);
 			goto stopsearch;
 
-		case CCHR('?'):/* To not replace */
+		case CCHR('?'):				/* To not replace */
 			break;
 
 		default:
@@ -223,6 +193,7 @@ retry:
 			goto retry;
 		}
 	}
+
 stopsearch:
 	curwp->w_flag |= WFHARD;
 	update();
@@ -237,37 +208,29 @@ stopsearch:
 	return TRUE;
 }
 
-
-
 /*
  * Routine re_doreplace calls lreplace to make replacements needed by
  * re_query replace.  Its reason for existence is to deal with \1, \2. etc.
  */
-
-/* Maximum length of replacement string */
-#define REPLEN 256
-
+static int
 re_doreplace(plen, st, f)
-	register RSIZE  plen;	/* length to remove	     */
-	char           *st;	/* replacement string	     */
-	int             f;	/* case hack disable	     */
+	RSIZE  plen;	/* length to remove	*/
+	char  *st;	/* replacement string	*/
+	int    f;	/* case hack disable	*/
 {
-	int             s;
-	int             num, k;
-	register int    j;
-	int             more, state;
-	LINE           *clp;
-	char            repstr[REPLEN];
+	int	 j, k, s, more, num, state;
+	LINE	*clp;
+	char	 repstr[REPLEN];
 
 	clp = curwp->w_dotp;
 	more = TRUE;
 	j = 0;
 	state = 0;
+	num = 0;
 
 	/* The following FSA parses the replacement string */
 	while (more) {
 		switch (state) {
-
 		case 0:
 			if (*st == '\\') {
 				st++;
@@ -308,7 +271,8 @@ re_doreplace(plen, st, f)
 				k = re_match[num].rm_eo - re_match[num].rm_so;
 				if (j + k >= REPLEN)
 					return (FALSE);
-				bcopy(&(clp->l_text[re_match[num].rm_so]), &repstr[j], k);
+				bcopy(&(clp->l_text[re_match[num].rm_so]), 
+				    &repstr[j], k);
 				j += k;
 				if (*st == '\0')
 					more = FALSE;
@@ -325,39 +289,35 @@ re_doreplace(plen, st, f)
 				}
 			}
 			break;
-		}		/* end case */
-	}			/* end while */
+		}		/* switch (state) */
+	}			/* while (more)   */
 
 	repstr[j] = '\0';
-
 	s = lreplace(plen, repstr, f);
-
 	return (s);
 }
 
 
 
 /*
- * This routine does the real work of a
- * forward search. The pattern is sitting in the external
- * variable "pat". If found, dot is updated, the window system
- * is notified of the change, and TRUE is returned. If the
+ * This routine does the real work of a forward search.  The pattern is 
+ * sitting in the external variable "pat".  If found, dot is updated, the 
+ * window system is notified of the change, and TRUE is returned.  If the
  * string isn't found, FALSE is returned.
  */
+static int
 re_forwsrch()
 {
-
-	register LINE  *clp;
-	register int    tbo;
-	int             error, plen;
+	int	 tbo, error;
+	LINE	*clp;
 
 	clp = curwp->w_dotp;
 	tbo = curwp->w_doto;
 
 	if (tbo == clp->l_used)
 		/*
-		 * Don't start matching off end of line-- must move to
-		 * beginning of next line, unless at end
+		 * Don't start matching past end of line -- must move to
+		 * beginning of next line, unless at end of file.
 		 */
 		if (clp != curbp->b_linep) {
 			clp = lforw(clp);
@@ -367,14 +327,12 @@ re_forwsrch()
 	 * Note this loop does not process the last line, but this editor
 	 * always makes the last line empty so this is good.
 	 */
-
 	while (clp != (curbp->b_linep)) {
-
 		re_match[0].rm_so = tbo;
 		re_match[0].rm_eo = llength(clp);
-		error = regexec(&re_buff, ltext(clp), RE_NMATCH, re_match, REG_STARTEND);
-
-		if (error) {
+		error = regexec(&re_buff, ltext(clp), RE_NMATCH, re_match, 
+		    REG_STARTEND);
+		if (error != 0) {
 			clp = lforw(clp);
 			tbo = 0;
 		} else {
@@ -383,28 +341,23 @@ re_forwsrch()
 			curwp->w_flag |= WFMOVE;
 			return (TRUE);
 		}
-
 	}
-
 	return (FALSE);
-
 }
 
 
 /*
- * This routine does the real work of a
- * backward search. The pattern is sitting in the external
- * variable "re_pat". If found, dot is updated, the window system
- * is notified of the change, and TRUE is returned. If the
- * string isn't found, FALSE is returned.
+ * This routine does the real work of a backward search.  The pattern is sitting
+ * in the external variable "re_pat".  If found, dot is updated, the window 
+ * system is notified of the change, and TRUE is returned.  If the string isn't 
+ * found, FALSE is returned.
  */
+static int
 re_backsrch()
 {
-
-	register LINE  *clp;
-	register int    tbo;
-	regmatch_t      lastmatch;
-	char            m[1];
+	LINE		*clp;
+	int		 tbo;
+	regmatch_t	 lastmatch;
 
 	clp = curwp->w_dotp;
 	tbo = curwp->w_doto;
@@ -416,13 +369,12 @@ re_backsrch()
 		clp = lback(clp);
 		tbo = llength(clp);
 	}
+
 	/*
 	 * Note this loop does not process the last line, but this editor
 	 * always makes the last line empty so this is good.
 	 */
-
 	while (clp != (curbp->b_linep)) {
-
 		re_match[0].rm_so = 0;
 		re_match[0].rm_eo = llength(clp);
 		lastmatch.rm_so = -1;
@@ -438,7 +390,6 @@ re_backsrch()
 			re_match[0].rm_so++;
 			re_match[0].rm_eo = llength(clp);
 		}
-
 		if (lastmatch.rm_so == -1) {
 			clp = lback(clp);
 			tbo = llength(clp);
@@ -449,11 +400,8 @@ re_backsrch()
 			curwp->w_flag |= WFMOVE;
 			return (TRUE);
 		}
-
 	}
-
 	return (FALSE);
-
 }
 
 
@@ -465,14 +413,13 @@ re_backsrch()
  * Display the old pattern, in the style of Jeff Lomicka. There is
  * some do-it-yourself control expansion.
  */
+static int
 re_readpattern(prompt)
-	char           *prompt;
+	char *prompt;
 {
-	int             s;
-	int             flags;
-	int             error;
-	char            tpat[NPAT];
-	static int      dofree = 0;
+	int		s, flags, error;
+	char		tpat[NPAT];
+	static int	dofree = 0;
 
 	if (re_pat[0] == '\0')
 		s = ereply("%s: ", tpat, NPAT, prompt);
@@ -481,7 +428,7 @@ re_readpattern(prompt)
 
 	if (s == TRUE) {
 		/* New pattern given */
-		(VOID) strcpy(re_pat, tpat);
+		(VOID)strcpy(re_pat, tpat);
 		if (casefoldsearch)
 			flags = REG_EXTENDED | REG_ICASE;
 		else
@@ -489,8 +436,8 @@ re_readpattern(prompt)
 		if (dofree)
 			regfree(&re_buff);
 		error = regcomp(&re_buff, re_pat, flags);
-		if (error) {
-			char            message[256];
+		if (error != 0) {
+			char	message[256];
 			regerror(error, &re_buff, message, sizeof(message));
 			ewprintf("Regex Error: %s", message);
 			re_pat[0] = '\0';
@@ -503,15 +450,14 @@ re_readpattern(prompt)
 	return (s);
 }
 
-
-
 /*
  * Cause case to not matter in searches.  This is the default.	If called
  * with argument cause case to matter.
  */
+int
 setcasefold(f, n)
+	int f, n;
 {
-
 	if (f & FFARG) {
 		casefoldsearch = FALSE;
 		ewprintf("Case-fold-search unset");
@@ -524,56 +470,55 @@ setcasefold(f, n)
 	 * Invalidate the regular expression pattern since I'm too lazy to
 	 * recompile it.
 	 */
-
 	re_pat[0] = '\0';
-
 	return (TRUE);
-
-}				/* end setcasefold */
+}
 
 
 /*
  * Delete all lines after dot that contain a string matching regex
  */
+int
 delmatchlines(f, n)
+	int f, n;
 {
-	int             s;
+	int	s;
 
-	if ((s = re_readpattern("Flush lines (containing match for regexp)")) != TRUE)
+	if ((s = re_readpattern("Flush lines (containing match for regexp)")) 
+	    != TRUE)
 		return (s);
 
 	s = killmatches(TRUE);
-
 	return (s);
 }
-
-
 
 /*
  * Delete all lines after dot that don't contain a string matching regex
  */
+int
 delnonmatchlines(f, n)
+	int f, n;
 {
-	int             s;
+	int	s;
 
-
-	if ((s = re_readpattern("Keep lines (containing match for regexp)")) != TRUE)
+	if ((s = re_readpattern("Keep lines (containing match for regexp)")) 
+	    != TRUE)
 		return (s);
 
 	s = killmatches(FALSE);
-
 	return (s);
 }
 
-
-
-/* This function does the work of deleting matching lines */
+/* 
+ * This function does the work of deleting matching lines 
+ */
+static int
 killmatches(cond)
-	int             cond;
+	int	cond;
 {
-	int             s, error;
-	int             count = 0;
-	LINE           *clp;
+	int	 s, error;
+	int	 count = 0;
+	LINE	*clp;
 
 	clp = curwp->w_dotp;
 	if (curwp->w_doto == llength(clp))
@@ -581,11 +526,11 @@ killmatches(cond)
 		clp = lforw(clp);
 
 	while (clp != (curbp->b_linep)) {
-
 		/* see if line matches */
 		re_match[0].rm_so = 0;
 		re_match[0].rm_eo = llength(clp);
-		error = regexec(&re_buff, ltext(clp), RE_NMATCH, re_match, REG_STARTEND);
+		error = regexec(&re_buff, ltext(clp), RE_NMATCH, re_match, 
+		    REG_STARTEND);
 
 		/* Delete line when appropriate */
 		if ((cond == FALSE && error) || (cond == TRUE && !error)) {
@@ -608,46 +553,29 @@ killmatches(cond)
 	return (TRUE);
 }
 
-
-petersfunc(f, n)
-{
-
-	int             s;
-	LINE           *clp;
-	char            c;
-
-	curwp->w_doto = 0;
-	s = ldelete(llength(curwp->w_dotp) + 1, KNONE);
-	curwp->w_flag |= WFMOVE;
-	return (s);
-
-}
-
-
 /*
  * Count lines matching regex
  */
+int
 cntmatchlines(f, n)
+	int f, n;
 {
-	int             s;
+	int	s;
 
 	if ((s = re_readpattern("Count lines (matching regexp)")) != TRUE)
 		return (s);
-
 	s = countmatches(TRUE);
-
 	return (s);
 }
-
-
 
 /*
  * Count lines that fail to match regex
  */
+int
 cntnonmatchlines(f, n)
+	int f, n;
 {
-	int             s;
-
+	int	s;
 
 	if ((s = re_readpattern("Count lines (not matching regexp)")) != TRUE)
 		return (s);
@@ -657,15 +585,16 @@ cntnonmatchlines(f, n)
 	return (s);
 }
 
-
-
-/* This function does the work of counting matching lines */
+/*
+ * This function does the work of counting matching lines.
+ */
+int
 countmatches(cond)
-	int             cond;
+	int cond;
 {
-	int             s, error;
-	int             count = 0;
-	LINE           *clp;
+	int	 error;
+	int	 count = 0;
+	LINE	*clp;
 
 	clp = curwp->w_dotp;
 	if (curwp->w_doto == llength(clp))
@@ -673,11 +602,11 @@ countmatches(cond)
 		clp = lforw(clp);
 
 	while (clp != (curbp->b_linep)) {
-
 		/* see if line matches */
 		re_match[0].rm_so = 0;
 		re_match[0].rm_eo = llength(clp);
-		error = regexec(&re_buff, ltext(clp), RE_NMATCH, re_match, REG_STARTEND);
+		error = regexec(&re_buff, ltext(clp), RE_NMATCH, re_match, 
+		    REG_STARTEND);
 
 		/* Count line when appropriate */
 		if ((cond == FALSE && error) || (cond == TRUE && !error))
@@ -692,4 +621,4 @@ countmatches(cond)
 
 	return (TRUE);
 }
-#endif
+#endif	/* REGEX */

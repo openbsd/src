@@ -1,4 +1,6 @@
-/* Help functions for Mg 2 */
+/*
+ * Help functions for Mg 2 
+ */
 
 #include "def.h"
 
@@ -7,11 +9,16 @@
 #include "key.h"
 #ifndef NO_MACRO
 #include "macro.h"
-#endif
+#endif /* !NO_MACRO */
 
-static int showall	__P((char *ind, KEYMAP *map));
-static VOID findbind	__P((PF, char *, KEYMAP *));
-static VOID bindfound	__P((void));
+static int	showall		__P((char *ind, KEYMAP *map));
+static VOID	findbind	__P((PF, char *, KEYMAP *));
+static VOID	bindfound	__P((void));
+
+static BUFFER  *bp;
+static char     buf[80];	/* used by showall and findbind */
+static char     buf2[128];
+static char    *buf2p;
 
 /*
  * Read a key from the keyboard, and look it up in the keymap.
@@ -20,21 +27,19 @@ static VOID bindfound	__P((void));
 /* ARGSUSED */
 int
 desckey(f, n)
-	int     f, n;
+	int f, n;
 {
-	KEYMAP *curmap;
-	PF      funct;
-	char   *pep;
-	char    prompt[80];
-	int     c;
-	int     m;
-	int     i;
+	KEYMAP	*curmap;
+	PF	 funct;
+	int	 c, m, i;
+	char	*pep;
+	char	 prompt[80];
 
 #ifndef NO_MACRO
 	if (inmacro)
 		return TRUE;	/* ignore inside keyboard macro */
-#endif
-	(VOID) strcpy(prompt, "Describe key briefly: ");
+#endif /* !NO_MACRO */
+	(VOID)strcpy(prompt, "Describe key briefly: ");
 	pep = prompt + strlen(prompt);
 	key.k_count = 0;
 	m = curbp->b_nmodes;
@@ -97,22 +102,21 @@ found:
  * keys and their current bindings, and stores the table in the
  * *help* pop-up buffer.  This lets Mg produce it's own wall chart.
  */
-static BUFFER  *bp;
-static char     buf[80];	/* used by showall and findbind */
-
 /* ARGSUSED */
 int
 wallchart(f, n)
+	int f, n;
 {
-	int             m;
-	static char     locbind[80] = "Local keybindings for mode ";
+	int		 m;
+	static char	 locbind[80] = "Local keybindings for mode ";
 
 	bp = bfind("*help*", TRUE);
 	if (bclear(bp) != TRUE)
-		return FALSE;	/* Clear it out.	 */
+		/* clear it out */
+		return FALSE;
 	for (m = curbp->b_nmodes; m > 0; m--) {
-		(VOID) strcpy(&locbind[27], curbp->b_modes[m]->p_name);
-		(VOID) strcat(&locbind[27], ":");
+		(VOID)strcpy(&locbind[27], curbp->b_modes[m]->p_name);
+		(VOID)strcat(&locbind[27], ":");
 		if ((addline(bp, locbind) == FALSE) ||
 		    (showall(buf, curbp->b_modes[m]->p_map) == FALSE) ||
 		    (addline(bp, "") == FALSE))
@@ -126,31 +130,29 @@ wallchart(f, n)
 
 static int
 showall(ind, map)
-	char           *ind;
-	KEYMAP         *map;
+	char   *ind;
+	KEYMAP *map;
 {
-	MAP_ELEMENT    *ele;
-	int             i;
-	PF              functp;
-	char           *cp;
-	char           *cp2;
-	int             last;
+	MAP_ELEMENT	*ele;
+	PF		 functp;
+	int		 i, last;
+	char		*cp, *cp2;
 
 	if (addline(bp, "") == FALSE)
 		return FALSE;
 	last = -1;
-	for (ele = &map->map_element[0]; ele < &map->map_element[map->map_num];
-	    ele++) {
+	for (ele = &map->map_element[0]; 
+	    ele < &map->map_element[map->map_num]; ele++) {
 		if (map->map_default != rescan && ++last < ele->k_base) {
 			cp = keyname(ind, last);
 			if (last < ele->k_base - 1) {
-				(VOID) strcpy(cp, " .. ");
+				(VOID)strcpy(cp, " .. ");
 				cp = keyname(cp + 4, ele->k_base - 1);
 			}
 			do {
 				*cp++ = ' ';
 			} while (cp < &buf[16]);
-			(VOID) strcpy(cp, function_name(map->map_default));
+			(VOID)strcpy(cp, function_name(map->map_default));
 			if (addline(bp, buf) == FALSE)
 				return FALSE;
 		}
@@ -167,19 +169,20 @@ showall(ind, map)
 					do {
 						*cp++ = ' ';
 					} while (cp < &buf[16]);
-					(VOID) strcpy(cp, cp2);
+					(VOID)strcpy(cp, cp2);
 					if (addline(bp, buf) == FALSE)
 						return FALSE;
 				}
 			}
 		}
 	}
-	for (ele = &map->map_element[0]; ele < &map->map_element[map->map_num];
-	    ele++) {
+	for (ele = &map->map_element[0]; 
+	    ele < &map->map_element[map->map_num]; ele++) {
 		if (ele->k_prefmap != NULL) {
 			for (i = ele->k_base;
 			    ele->k_funcp[i - ele->k_base] != prefix; i++) {
-				if (i >= ele->k_num)	/* damaged map */
+				if (i >= ele->k_num)
+					/* damaged map */
 					return FALSE;
 			}
 			cp = keyname(ind, i);
@@ -193,10 +196,10 @@ showall(ind, map)
 
 int
 help_help(f, n)
-	int             f, n;
+	int f, n;
 {
-	KEYMAP         *kp;
-	PF              funct;
+	KEYMAP	*kp;
+	PF	 funct;
 
 	if ((kp = name_map("help")) == NULL)
 		return FALSE;
@@ -207,22 +210,19 @@ help_help(f, n)
 #ifndef NO_MACRO
 	if (macrodef && macrocount < MAXMACRO)
 		macro[macrocount - 1].m_funct = funct;
-#endif
-	return (*funct) (f, n);
+#endif /* !NO_MACRO */
+	return (*funct)(f, n);
 }
-
-static char     buf2[128];
-static char    *buf2p;
 
 /* ARGSUSED */
 int
 apropos_command(f, n)
-	int             f, n;
+	int f, n;
 {
-	char           *cp1, *cp2;
-	char            string[32];
-	FUNCTNAMES     *fnp;
-	BUFFER         *bp;
+	BUFFER		*bp;
+	FUNCTNAMES	*fnp;
+	char		*cp1, *cp2;
+	char		 string[32];
 
 	if (eread("apropos: ", string, sizeof(string), EFNEW) == ABORT)
 		return ABORT;
@@ -236,7 +236,7 @@ apropos_command(f, n)
 			while (*cp2 && *cp1 == *cp2)
 				cp1++, cp2++;
 			if (!*cp2) {
-				(VOID) strcpy(buf2, fnp->n_name);
+				(VOID)strcpy(buf2, fnp->n_name);
 				buf2p = &buf2[strlen(buf2)];
 				findbind(fnp->n_funct, buf, map_table[0].p_map);
 				if (addline(bp, buf2) == FALSE)
@@ -251,23 +251,22 @@ apropos_command(f, n)
 
 static VOID
 findbind(funct, ind, map)
-	PF              funct;
-	char           *ind;
-	KEYMAP         *map;
+	KEYMAP *map;
+	PF      funct;
+	char   *ind;
 {
-	MAP_ELEMENT    *ele;
-	int             i;
-	char           *cp;
-	int             last;
+	MAP_ELEMENT	*ele;
+	int		 i, last;
+	char		*cp;
 
 	last = -1;
-	for (ele = &map->map_element[0]; ele < &map->map_element[map->map_num];
-	    ele++) {
+	for (ele = &map->map_element[0]; 
+	    ele < &map->map_element[map->map_num]; ele++) {
 		if (map->map_default == funct && ++last < ele->k_base) {
 			cp = keyname(ind, last);
 			if (last < ele->k_base - 1) {
-				(VOID) strcpy(cp, " .. ");
-				(VOID) keyname(cp + 4, ele->k_base - 1);
+				(VOID)strcpy(cp, " .. ");
+				(VOID)keyname(cp + 4, ele->k_base - 1);
 			}
 			bindfound();
 		}
@@ -280,18 +279,19 @@ findbind(funct, ind, map)
 					    strncmp(cp, buf2, strlen(cp)) != 0)
 						continue;
 				}
-				(VOID) keyname(ind, i);
+				(VOID)keyname(ind, i);
 				bindfound();
 			}
 		}
 	}
-	for (ele = &map->map_element[0]; ele < &map->map_element[map->map_num];
-	    ele++) {
+	for (ele = &map->map_element[0]; 
+	    ele < &map->map_element[map->map_num]; ele++) {
 		if (ele->k_prefmap != NULL) {
 			for (i = ele->k_base;
 			    ele->k_funcp[i - ele->k_base] != prefix; i++) {
 				if (i >= ele->k_num)
-					return;	/* damaged */
+					/* damaged */
+					return;
 			}
 			cp = keyname(ind, i);
 			*cp++ = ' ';
@@ -303,7 +303,6 @@ findbind(funct, ind, map)
 static VOID
 bindfound()
 {
-
 	if (buf2p < &buf2[32]) {
 		do {
 			*buf2p++ = ' ';
@@ -312,7 +311,7 @@ bindfound()
 		*buf2p++ = ',';
 		*buf2p++ = ' ';
 	}
-	(VOID) strcpy(buf2p, buf);
+	(VOID)strcpy(buf2p, buf);
 	buf2p += strlen(buf);
 }
-#endif
+#endif /* !NO_HELP */

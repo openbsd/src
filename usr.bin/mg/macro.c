@@ -1,4 +1,6 @@
-/* keyboard macros for Mg 2 */
+/*
+ *	Keyboard macros.
+ */
 
 #ifndef NO_MACRO
 #include "def.h"
@@ -8,35 +10,40 @@
 #include "macro.h"
 
 /* ARGSUSED */
+int
 definemacro(f, n)
-	int             f, n;
+	int	f, n;
 {
-	register LINE  *lp1;
-	LINE           *lp2;
+	LINE	*lp1, *lp2;
 
 	macrocount = 0;
+
 	if (macrodef) {
 		ewprintf("already defining macro");
 		return macrodef = FALSE;
 	}
+
 	/* free lines allocated for string arguments */
 	if (maclhead != NULL) {
 		for (lp1 = maclhead->l_fp; lp1 != maclhead; lp1 = lp2) {
 			lp2 = lp1->l_fp;
-			free((char *) lp1);
+			free((char *)lp1);
 		}
-		free((char *) lp1);
+		free((char *)lp1);
 	}
+
 	if ((maclhead = lp1 = lalloc(0)) == NULL)
 		return FALSE;
+
 	ewprintf("Defining Keyboard Macro...");
 	maclcur = lp1->l_fp = lp1->l_bp = lp1;
 	return macrodef = TRUE;
 }
 
 /* ARGSUSED */
+int
 finishmacro(f, n)
-	int             f, n;
+	int	f, n;
 {
 	macrodef = FALSE;
 	ewprintf("End Keyboard Macro Definition");
@@ -44,20 +51,22 @@ finishmacro(f, n)
 }
 
 /* ARGSUSED */
+int
 executemacro(f, n)
-	int             f, n;
+	int f, n;
 {
-	int             i, j;
-	PF              funct;
-	int             universal_argument();
-	int             flag, num;
+	int	 i, j, flag, num;
+	PF	 funct;
 
-	if (macrodef ||
-	 (macrocount >= MAXMACRO && macro[MAXMACRO].m_funct != finishmacro))
+	if (macrodef || 
+	    (macrocount >= MAXMACRO && macro[MAXMACRO].m_funct != finishmacro))
 		return FALSE;
+
 	if (macrocount == 0)
 		return TRUE;
+
 	inmacro = TRUE;
+
 	for (i = n; i > 0; i--) {
 		maclcur = maclhead->l_fp;
 		flag = 0;
@@ -69,7 +78,7 @@ executemacro(f, n)
 				num = macro[++j].m_count;
 				continue;
 			}
-			if ((*funct) (flag, num) != TRUE) {
+			if ((*funct)(flag, num) != TRUE) {
 				inmacro = FALSE;
 				return FALSE;
 			}
@@ -82,4 +91,4 @@ executemacro(f, n)
 	inmacro = FALSE;
 	return TRUE;
 }
-#endif
+#endif	/* NO_MACRO */

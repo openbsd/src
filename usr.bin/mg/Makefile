@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2000/02/28 23:45:21 millert Exp $
+# $OpenBSD: Makefile,v 1.6 2000/09/01 14:59:08 millert Exp $
 
 PROG=	mg
 
@@ -16,7 +16,7 @@ DPADD+=	${LIBCURSES}
 #	PREFIXREGION	-- enable function "prefix-region"
 #	REGEX		-- create regular expression functions
 #
-CFLAGS+=-DDO_METAKEY -DPREFIXREGION -DXKEYS -DFKEYS -DBACKUP -DREGEX
+CFLAGS+=-Wall -DDO_METAKEY -DPREFIXREGION -DXKEYS -DFKEYS -DBACKUP -DREGEX
 
 SRCS=	cinfo.c fileio.c spawn.c ttyio.c tty.c ttykbd.c \
 	basic.c dir.c dired.c file.c line.c match.c paragraph.c \

@@ -1,34 +1,34 @@
 /*
- *		Echo line reading and writing.
+ *	Echo line reading and writing.
  *
- * Common routines for reading
- * and writing characters in the echo line area
- * of the display screen. Used by the entire
- * known universe.
+ * Common routines for reading and writing characters in the echo line area
+ * of the display screen. Used by the entire known universe.
  */
-#include	"def.h"
-#include	"key.h"
-#ifdef	__STDC__
-#include	<stdarg.h>
-#else
-#include	<varargs.h>
-#endif
-#ifndef NO_MACRO
-#include	"macro.h"
-#endif
 
-static VOID     eformat		__P((const char *, va_list));
+#include "def.h"
+#include "key.h"
+#ifndef NO_MACRO
+#include "macro.h"
+#endif /* !NO_MACRO */
+
+#ifdef	__STDC__
+#include <stdarg.h>
+#else /* __STDC__ */
+#include <varargs.h>
+#endif /* __STDC__ */
+
 static int	veread		__P((const char *, char *buf, int, int, va_list));
+static int      complt		__P((int, int, char *, int));
+static int      complt_list	__P((int, int, char *, int));
+static VOID     eformat		__P((const char *, va_list));
 static VOID     eputi		__P((int, int));
 static VOID     eputl		__P((long, int));
 static VOID     eputs		__P((char *));
 static VOID     eputc		__P((char));
-static int      complt		__P((int, int, char *, int));
-static int      complt_list	__P((int, int, char *, int));
-static LIST    *copy_list	__P((LIST *));
 static VOID	free_file_list	__P((LIST *));
+static LIST    *copy_list	__P((LIST *));
 
-int             epresf = FALSE;		/* Stuff in echo line flag.	 */
+int             epresf = FALSE;		/* stuff in echo line flag */
 
 /*
  * Erase the echo line.
@@ -36,7 +36,6 @@ int             epresf = FALSE;		/* Stuff in echo line flag.	 */
 VOID
 eerase()
 {
-
 	ttcolor(CTEXT);
 	ttmove(nrow - 1, 0);
 	tteeol();
@@ -45,22 +44,21 @@ eerase()
 }
 
 /*
- * Ask "yes" or "no" question.
- * Return ABORT if the user answers the question
- * with the abort ("^G") character. Return FALSE
- * for "no" and TRUE for "yes". No formatting
- * services are available. No newline required.
+ * Ask a "yes" or "no" question.  Return ABORT if the user answers the 
+ * question with the abort ("^G") character.  Return FALSE for "no" and 
+ * TRUE for "yes".  No formatting services are available.  No newline 
+ * required.
  */
 int
 eyorn(sp)
-	char  *sp;
+	char *sp;
 {
-	int    s;
+	int	 s;
 
 #ifndef NO_MACRO
 	if (inmacro)
 		return TRUE;
-#endif
+#endif /* !NO_MACRO */
 	ewprintf("%s? (y or n) ", sp);
 	for (;;) {
 		s = getkey(FALSE);
@@ -76,20 +74,20 @@ eyorn(sp)
 }
 
 /*
- * Like eyorn, but for more important question. User must type either all of
- * "yes" or "no", and the trainling newline.
+ * Like eyorn, but for more important questions.  User must type all of
+ * "yes" or "no" and the trainling newline.
  */
 int
 eyesno(sp)
-	char  *sp;
+	char *sp;
 {
-	int    s;
-	char   buf[64];
+	int	 s;
+	char	 buf[64];
 
 #ifndef NO_MACRO
 	if (inmacro)
 		return TRUE;
-#endif
+#endif /* !NO_MACRO */
 	s = ereply("%s? (yes or no) ", buf, sizeof(buf), sp);
 	for (;;) {
 		if (s == ABORT)
@@ -97,13 +95,13 @@ eyesno(sp)
 		if (s != FALSE) {
 #ifndef NO_MACRO
 			if (macrodef) {
-				LINE           *lp = maclcur;
+				LINE	*lp = maclcur;
 
 				maclcur = lp->l_bp;
 				maclcur->l_fp = lp->l_fp;
-				free((char *) lp);
+				free((char *)lp);
 			}
-#endif
+#endif /* !NO_MACRO */
 			if ((buf[0] == 'y' || buf[0] == 'Y')
 			    && (buf[1] == 'e' || buf[1] == 'E')
 			    && (buf[2] == 's' || buf[2] == 'S')
@@ -115,81 +113,76 @@ eyesno(sp)
 				return FALSE;
 		}
 		s = ereply("Please answer yes or no.  %s? (yes or no) ",
-			   buf, sizeof(buf), sp);
+		    buf, sizeof(buf), sp);
 	}
 	/* NOTREACHED */
 }
 
 /*
- * Write out a prompt, and read back a
- * reply. The prompt is now written out with full "ewprintf"
- * formatting, although the arguments are in a rather strange
- * place. This is always a new message, there is no auto
+ * Write out a prompt and read back a reply.  The prompt is now written 
+ * out with full "ewprintf" formatting, although the arguments are in a 
+ * rather strange place.  This is always a new message, there is no auto
  * completion, and the return is echoed as such.
  */
 /* VARARGS */
 int
 #ifdef __STDC__
 ereply(const char *fmt, char *buf, int nbuf, ...)
-#else
+#else /* __STDC__ */
 ereply(va_alist)
 	va_dcl
-#endif
+#endif /* __STDC__ */
 {
-	va_list         ap;
-	int    i;
+	va_list	 ap;
+	int	 i;
 #ifdef __STDC__
 	va_start(ap, nbuf);
-#else
-	char  *fmt, *buf;
-	int    nbuf;
+#else /* __STDC__ */
+	char	*fmt, *buf;
+	int	 nbuf;
 
 	va_start(ap);
 	fmt = va_arg(ap, char *);
 	buf = va_arg(ap, char *);
 	nbuf = va_arg(ap, int);
-#endif
+#endif /* __STDC__ */
 	i = veread(fmt, buf, nbuf, EFNEW | EFCR, ap);
 	va_end(ap);
 	return i;
 }
 
 /*
- * This is the general "read input from the
- * echo line" routine. The basic idea is that the prompt
- * string "prompt" is written to the echo line, and a one
- * line reply is read back into the supplied "buf" (with
- * maximum length "len"). The "flag" contains EFNEW (a
- * new prompt), an EFFUNC (autocomplete), or EFCR (echo
- * the carriage return as CR).
+ * This is the general "read input from the echo line" routine.  The basic 
+ * idea is that the prompt string "prompt" is written to the echo line, and
+ * a one line reply is read back into the supplied "buf" (with maximum 
+ * length "len"). The "flag" contains EFNEW (a new prompt), an EFFUNC 
+ * (autocomplete), or EFCR (echo the carriage return as CR).
  */
 /* VARARGS */
 int
 #ifdef __STDC__
 eread(const char *fmt, char *buf, int nbuf, int flag, ...)
-#else
+#else /* __STDC__ */
 eread(va_alist)
-	char *fmt;
-	char *buf;
-	int nbuf;
-	int flag;
+	char *fmt, *buf;
+	int   buf, flag;
 	va_dcl
-#endif
+#endif /* __STDC__ */
 {
-	int 		i;
-	va_list         ap;
+	int	 i;
+	va_list	 ap;
 #ifdef __STDC__
 	va_start(ap, flag);
-#else
-	char  *fmt, *buf;
-	int    nbuf;
+#else /* __STDC__ */
+	char	*fmt, *buf;
+	int	 nbuf;
 
 	va_start(ap);
 	fmt = va_arg(ap, char *);
 	buf = va_arg(ap, char *);
 	nbuf = va_arg(ap, int);
 	flag = va_arg(ap, int);
-#endif
+#endif /* __STDC__ */
 	i = veread(fmt, buf, nbuf, flag, ap);
 	va_end(ap);
 	return i;
@@ -199,13 +192,12 @@ static int
 veread(fp, buf, nbuf, flag, ap)
 	const char *fp;
 	char       *buf;
-	int	    nbuf;
-	int	    flag;
+	int         nbuf, flag;
 	va_list     ap;
 {
-	int         cpos;
-	int         i;
-	int         c;
+	int	 cpos;
+	int	 i;
+	int	 c;
 
 #ifndef NO_MACRO
 	if (inmacro) {
@@ -214,7 +206,7 @@ veread(fp, buf, nbuf, flag, ap)
 		maclcur = maclcur->l_fp;
 		return TRUE;
 	}
-#endif
+#endif /* !NO_MACRO */
 	cpos = 0;
 	if ((flag & EFNEW) != 0 || ttrow != nrow - 1) {
 		ttcolor(CTEXT);
@@ -237,8 +229,9 @@ veread(fp, buf, nbuf, flag, ap)
 		}
 		switch (c) {
 		case CCHR('J'):
-			c = CCHR('M');	/* and continue		 */
-		case CCHR('M'):/* Return, done.	 */
+			c = CCHR('M');
+			/* and continue */
+		case CCHR('M'):			/* return, done */
 			if ((flag & EFFUNC) != 0) {
 				if ((i = complt(flag, c, buf, cpos)) == 0)
 					continue;
@@ -252,7 +245,7 @@ veread(fp, buf, nbuf, flag, ap)
 			}
 #ifndef NO_MACRO
 			if (macrodef) {
-				LINE           *lp;
+				LINE	*lp;
 
 				if ((lp = lalloc(cpos)) == NULL)
 					return FALSE;
@@ -262,17 +255,15 @@ veread(fp, buf, nbuf, flag, ap)
 				maclcur = lp;
 				bcopy(buf, lp->l_text, cpos);
 			}
-#endif
+#endif /* !NO_MACRO */
 			goto done;
-
-		case CCHR('G'):	/* Bell, abort.		 */
+		case CCHR('G'):			/* bell, abort */
 			eputc(CCHR('G'));
-			(VOID) ctrlg(FFRAND, 0);
+			(VOID)ctrlg(FFRAND, 0);
 			ttflush();
 			return ABORT;
-
-		case CCHR('H'):
-		case CCHR('?'):	/* Rubout, erase.	 */
+		case CCHR('H'):			/* rubout, erase */
+		case CCHR('?'):	
 			if (cpos != 0) {
 				ttputc('\b');
 				ttputc(' ');
@@ -287,9 +278,8 @@ veread(fp, buf, nbuf, flag, ap)
 				ttflush();
 			}
 			break;
-
-		case CCHR('X'):	/* C-X			 */
-		case CCHR('U'):	/* C-U, kill line.	 */
+		case CCHR('X'):			/* kill line */
+		case CCHR('U'):
 			while (cpos != 0) {
 				ttputc('\b');
 				ttputc(' ');
@@ -304,10 +294,7 @@ veread(fp, buf, nbuf, flag, ap)
 			}
 			ttflush();
 			break;
-
-		case CCHR('W'):	/* C-W, kill to beginning of */
-			/* previous word	 */
-			/* back up to first word character or beginning */
+		case CCHR('W'):			/* kill to beginning of word */
 			while ((cpos > 0) && !ISWORD(buf[cpos - 1])) {
 				ttputc('\b');
 				ttputc(' ');
@@ -334,14 +321,14 @@ veread(fp, buf, nbuf, flag, ap)
 			}
 			ttflush();
 			break;
-
 		case CCHR('\\'):
-		case CCHR('Q'):	/* C-Q, quote next	 */
-			c = getkey(FALSE);	/* and continue		 */
-		default:	/* All the rest.	 */
+		case CCHR('Q'):			/* quote next */
+			c = getkey(FALSE);
+			/* and continue */
+		default:			/* all the rest */
 			if (cpos < nbuf - 1) {
-				buf[cpos++] = (char) c;
-				eputc((char) c);
+				buf[cpos++] = (char)c;
+				eputc((char)c);
 				ttflush();
 			}
 		}
@@ -354,18 +341,16 @@ done:	return buf[0] != '\0';
  */
 static int
 complt(flags, c, buf, cpos)
-	int    flags;
-	int    c;
-	char  *buf;
-	int    cpos;
+	int   flags, c, cpos;
+	char *buf;
 {
-	LIST  *lh, *lh2;
-	LIST  *wholelist = NULL;
-	int    i, nxtra;
-	int    nhits, bxtra;
-	int    wflag = FALSE;
-	int    msglen, nshown;
-	char  *msg;
+	LIST	*lh, *lh2;
+	LIST	*wholelist = NULL;
+	int	 i, nxtra, nhits, bxtra, msglen, nshown;
+	int	 wflag = FALSE;
+	char	*msg;
+
+	lh = lh2 = NULL;
 
 	if ((flags & EFFUNC) != 0) {
 		buf[cpos] = '\0';
@@ -431,7 +416,7 @@ complt(flags, c, buf, cpos)
 			msg = " [No match]";
 		else if (nhits > 1 && nxtra == 0)
 			msg = " [Ambiguous]";
-		else {		/* Got a match, do it to it */
+		else {
 			/*
 			 * Being lazy - ought to check length, but all things
 			 * autocompleted have known types/lengths.
@@ -449,11 +434,13 @@ complt(flags, c, buf, cpos)
 			return nxtra;
 		}
 	}
+
 	/*
 	 * wholelist is null if we are doing buffers.  want to free lists
 	 * that were created for us, but not the buffer list!
 	 */
 	free_file_list(wholelist);
+
 	/* Set up backspaces, etc., being mindful of echo line limit */
 	msglen = strlen(msg);
 	nshown = (ttcol + msglen + 2 > ncol) ?
@@ -464,7 +451,7 @@ complt(flags, c, buf, cpos)
 		ttputc('\b');
 	ttflush();		/* display to user		 */
 	i = nshown;
-	while (i--)		/* blank out	on next flush	 */
+	while (i--)		/* blank out on next flush	 */
 		eputc(' ');
 	ttcol -= (i = nshown);	/* update ttcol on BS's		 */
 	while (i--)
@@ -477,21 +464,23 @@ complt(flags, c, buf, cpos)
  */
 static int
 complt_list(flags, c, buf, cpos)
-	int     flags;
-	int     c;
-	char   *buf;
-	int     cpos;
+	int   flags;
+	int   c;
+	char *buf;
+	int   cpos;
 {
-	LIST   *lh, *lh2, *lh3;
-	LIST   *wholelist = NULL;
-	int     i, maxwidth, width;
-	int     preflen = 0;
-	BUFFER *bp;
-	int     oldrow = ttrow;
-	int     oldcol = ttcol;
-	int     oldhue = tthue;
-	char    linebuf[NCOL + 1];
-	char   *cp;
+	LIST	*lh, *lh2, *lh3;
+	LIST	*wholelist = NULL;
+	BUFFER	*bp;
+	int	 i, maxwidth, width;
+	int	 preflen = 0;
+	int	 oldrow = ttrow;
+	int	 oldcol = ttcol;
+	int	 oldhue = tthue;
+	char	 linebuf[NCOL + 1];
+	char	*cp;
+
+	lh = NULL;
 
 	ttflush();
 
@@ -621,19 +610,18 @@ complt_list(flags, c, buf, cpos)
 }
 
 /*
- * The "lp1" and "lp2" point to list structures. The
- * "cpos" is a horizontal position in the name.
- * Return the longest block of characters that can be
- * autocompleted at this point. Sometimes the two
- * symbols are the same, but this is normal.
+ * The "lp1" and "lp2" point to list structures.  The "cpos" is a horizontal
+ * position in the name.  Return the longest block of characters that can be 
+ * autocompleted at this point.  Sometimes the two symbols are the same, but 
+ * this is normal.
  */
 int
 getxtra(lp1, lp2, cpos, wflag)
-	LIST  *lp1, *lp2;
-	int    cpos;
-	int    wflag;
+	LIST *lp1, *lp2;
+	int   cpos;
+	int   wflag;
 {
-	int    i;
+	int	i;
 
 	i = cpos;
 	for (;;) {
@@ -649,36 +637,35 @@ getxtra(lp1, lp2, cpos, wflag)
 }
 
 /*
- * Special "printf" for the echo line.
- * Each call to "ewprintf" starts a new line in the
- * echo area, and ends with an erase to end of the
- * echo line. The formatting is done by a call
- * to the standard formatting routine.
+ * Special "printf" for the echo line.  Each call to "ewprintf" starts a 
+ * new line in the echo area, and ends with an erase to end of the echo 
+ * line.  The formatting is done by a call to the standard formatting 
+ * routine.
  */
 /* VARARGS */
 VOID
 #ifdef __STDC__
 ewprintf(const char *fmt, ...)
-#else
+#else /* __STDC__ */
 ewprintf(va_alist)
 	va_dcl
-#endif
+#endif /* __STDC__ */
 {
-	va_list         ap;
+	va_list	 ap;
 #ifndef __STDC__
-	char	      *fmt;
-#endif
+	char	*fmt;
+#endif /* !__STDC__ */
 
 #ifndef NO_MACRO
 	if (inmacro)
 		return;
-#endif
+#endif /* !NO_MACRO */
 #ifdef __STDC__
 	va_start(ap, fmt);
-#else
+#else /* __STDC__ */
 	va_start(ap);
 	fmt = va_arg(ap, char *);
-#endif
+#endif /* __STDC__ */
 	ttcolor(CTEXT);
 	ttmove(nrow - 1, 0);
 	eformat(fmt, ap);
@@ -689,22 +676,21 @@ ewprintf(va_alist)
 }
 
 /*
- * Printf style formatting. This is
- * called by both "ewprintf" and "ereply" to provide
- * formatting services to their clients. The move to the
- * start of the echo line, and the erase to the end of
- * the echo line, is done by the caller.
+ * Printf style formatting. This is called by both "ewprintf" and "ereply" 
+ * to provide formatting services to their clients.  The move to the start 
+ * of the echo line, and the erase to the end of the echo line, is done by 
+ * the caller.
  * Note: %c works, and prints the "name" of the character.
  * %k prints the name of a key (and takes no arguments).
  */
 static VOID
 eformat(fp, ap)
-	const char  *fp;
-	va_list ap;
+	const char *fp;
+	va_list     ap;
 {
-	int    c;
-	char   kname[NKNAME];
-	char  *cp;
+	int	 c;
+	char	 kname[NKNAME];
+	char	*cp;
 
 	while ((c = *fp++) != '\0') {
 		if (c != '%')
@@ -713,7 +699,7 @@ eformat(fp, ap)
 			c = *fp++;
 			switch (c) {
 			case 'c':
-				(VOID) keyname(kname, va_arg(ap, int));
+				(VOID)keyname(kname, va_arg(ap, int));
 				eputs(kname);
 				break;
 
@@ -739,11 +725,12 @@ eformat(fp, ap)
 				eputs(va_arg(ap, char *));
 				break;
 
-			case 'l':	/* explicit longword */
+			case 'l':
+				/* explicit longword */
 				c = *fp++;
 				switch (c) {
 				case 'd':
-					eputl((long) va_arg(ap, long), 10);
+					eputl((long)va_arg(ap, long), 10);
 					break;
 				default:
 					eputc(c);
@@ -763,10 +750,9 @@ eformat(fp, ap)
  */
 static VOID
 eputi(i, r)
-	int    i;
-	int    r;
+	int i, r;
 {
-	int    q;
+	int	 q;
 
 	if (i < 0) {
 		eputc('-');
@@ -782,10 +768,10 @@ eputi(i, r)
  */
 static VOID
 eputl(l, r)
-	long   l;
-	int    r;
+	long l;
+	int  r;
 {
-	long   q;
+	long	 q;
 
 	if (l < 0) {
 		eputc('-');
@@ -793,7 +779,7 @@ eputl(l, r)
 	}
 	if ((q = l / r) != 0)
 		eputl(q, r);
-	eputc((int) (l % r) + '0');
+	eputc((int)(l % r) + '0');
 }
 
 /*
@@ -801,24 +787,22 @@ eputl(l, r)
  */
 static VOID
 eputs(s)
-	char  *s;
+	char *s;
 {
-	int    c;
+	int	 c;
 
 	while ((c = *s++) != '\0')
 		eputc(c);
 }
 
 /*
- * Put character. Watch for
- * control characters, and for the line
- * getting too long.
+ * Put character.  Watch for control characters, and for the line getting 
+ * too long.
  */
 static VOID
 eputc(c)
-	char   c;
+	char	 c;
 {
-
 	if (ttcol + 2 < ncol) {
 		if (ISCTRL(c)) {
 			eputc('^');
@@ -833,7 +817,7 @@ static VOID
 free_file_list(lp)
 	LIST *lp;
 {
-	LIST *next;
+	LIST	*next;
 
 	while (lp) {
 		next = lp->l_next;
@@ -846,14 +830,14 @@ static LIST *
 copy_list(lp)
 	LIST *lp;
 {
-	LIST *current, *last;
+	LIST	*current, *last;
 
 	last = NULL;
 	while (lp) {
-		current = (LIST *) malloc(sizeof(LIST));
+		current = (LIST *)malloc(sizeof(LIST));
 		current->l_next = last;
 		current->l_name = lp->l_name;
-		last = (LIST *) current;
+		last = (LIST *)current;
 		lp = lp->l_next;
 	}
 	return (last);

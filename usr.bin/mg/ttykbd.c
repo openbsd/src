@@ -4,10 +4,11 @@
  * Created:	22-Nov-1987 Mic Kaczmarczik (mic@emx.cc.utexas.edu)
  */
 
-#include	"def.h"
-#include	"kbd.h"
+#include "def.h"
+#include "kbd.h"
+
 #ifdef	XKEYS
-#include	<term.h>
+#include <term.h>
 
 #ifdef  FKEYS
 /*
@@ -18,19 +19,18 @@
  */
 
 char           *keystrings[] = {NULL};
-#endif
+#endif /* FKEYS */
 
 /*
  * Turn on function keys using keypad_xmit, then load a keys file, if
  * available.  The keys file is located in the same manner as the startup
  * file is, depending on what startupfile() does on your system.
  */
-extern int      ttputc();
-
+void
 ttykeymapinit()
 {
-	extern int      dobindkey();	/* XXX */
-	char           *cp;
+	char	*cp;
+
 #ifdef FKEYS
 	/* Bind keypad function keys. */
 	if (key_left)
@@ -51,27 +51,28 @@ ttykeymapinit()
 		dobindkey(map_table[0].p_map, "scroll-up", key_npage);
 	if (key_ppage)
 		dobindkey(map_table[0].p_map, "scroll-down", key_ppage);
-#endif
+#endif /* FKEYS */
+
 #ifndef	NO_STARTUP
-	if (cp = gettermtype()) {
-		extern char    *startupfile();
-		if (((cp = startupfile(cp)) != NULL)
-		    && (load(cp) != TRUE))
+	if ((cp = gettermtype())) {
+		if (((cp = startupfile(cp)) != NULL) && (load(cp) != TRUE))
 			ewprintf("Error reading key initialization file");
 	}
-#endif
-	if (keypad_xmit)	/* turn on keypad	 */
+#endif /* !NO_STARTUP */
+	if (keypad_xmit)
+		/* turn on keypad */
 		putpad(keypad_xmit, 1);
 }
 
 /*
  * Clean up the keyboard -- called by tttidy()
  */
+void
 ttykeymaptidy()
 {
-
 	if (keypad_local)
-		putpad(keypad_local, 1);	/* turn off keypad	 */
+		/* turn off keypad */
+		putpad(keypad_local, 1);
 }
 
-#endif
+#endif /* XKEYS */

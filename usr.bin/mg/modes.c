@@ -1,22 +1,25 @@
 /*
- * Commands to toggle modes. Without an argument, toggle mode.
- * Negitive or zero argument, mode off.	 Positive argument, mode on.
+ * Commands to toggle modes.   Without an argument, these functions will 
+ * toggle the given mode.  A negative or zero argument will turn the mode 
+ * off.  A positive argument will turn the mode on.
  */
 
 #include "def.h"
 #include "kbd.h"
 
-int             defb_nmodes = 0;
-MAPS           *defb_modes[PBMODES] = {&map_table[0]};
-int             defb_flag = 0;
+static int	changemode	__P((int, int, char *));
+
+int	 defb_nmodes = 0;
+MAPS	*defb_modes[PBMODES] = { &map_table[0] };
+int	 defb_flag = 0;
 
 static int
 changemode(f, n, mode)
-	int             f, n;
-	char           *mode;
+	int   f, n;
+	char *mode;
 {
-	register int    i;
-	MAPS           *m;
+	int	 i;
+	MAPS	*m;
 
 	if ((m = name_mode(mode)) == NULL) {
 		ewprintf("Can't find mode %s", mode);
@@ -25,14 +28,16 @@ changemode(f, n, mode)
 	if (!(f & FFARG)) {
 		for (i = 0; i <= curbp->b_nmodes; i++)
 			if (curbp->b_modes[i] == m) {
-				n = 0;	/* mode already set */
+				/* mode already set */
+				n = 0;
 				break;
 			}
 	}
 	if (n > 0) {
 		for (i = 0; i <= curbp->b_nmodes; i++)
 			if (curbp->b_modes[i] == m)
-				return TRUE;	/* mode already set */
+				/* mode already set */
+				return TRUE;
 		if (curbp->b_nmodes >= PBMODES - 1) {
 			ewprintf("Too many modes");
 			return FALSE;
@@ -40,8 +45,8 @@ changemode(f, n, mode)
 		curbp->b_modes[++(curbp->b_nmodes)] = m;
 	} else {
 		/* fundamental is b_modes[0] and can't be unset */
-		for (i = 1; i <= curbp->b_nmodes && m != curbp->b_modes[i]; i++) {
-		}
+		for (i = 1; i <= curbp->b_nmodes && m != curbp->b_modes[i]; 
+		    i++);
 		if (i > curbp->b_nmodes)
 			return TRUE;	/* mode wasn't set */
 		for (; i < curbp->b_nmodes; i++)
@@ -52,12 +57,16 @@ changemode(f, n, mode)
 	return TRUE;
 }
 
+int
 indentmode(f, n)
+	int f, n;
 {
 	return changemode(f, n, "indent");
 }
 
+int
 fillmode(f, n)
+	int f, n;
 {
 	return changemode(f, n, "fill");
 }
@@ -65,13 +74,17 @@ fillmode(f, n)
 /*
  * Fake the GNU "blink-matching-paren" variable.
  */
+int
 blinkparen(f, n)
+	int f, n;
 {
 	return changemode(f, n, "blink");
 }
 
-#ifdef	NOTAB
+#ifdef NOTAB
+int
 notabmode(f, n)
+	int f, n;
 {
 	if (changemode(f, n, "notab") == FALSE)
 		return FALSE;
@@ -84,10 +97,11 @@ notabmode(f, n)
 		curbp->b_flag ^= BFNOTAB;
 	return TRUE;
 }
-#endif
+#endif	/* NOTAB */
 
+int
 overwrite(f, n)
-	int             f, n;
+	int f, n;
 {
 	if (changemode(f, n, "overwrite") == FALSE)
 		return FALSE;
@@ -101,12 +115,13 @@ overwrite(f, n)
 	return TRUE;
 }
 
+int
 set_default_mode(f, n)
-	int             f, n;
+	int f, n;
 {
-	register int    i;
-	register MAPS  *m;
-	char            mode[32];
+	int	 i;
+	MAPS	*m;
+	char	 mode[32];
 
 	if (eread("Set Default Mode: ", mode, 32, EFNEW) != TRUE)
 		return ABORT;
@@ -117,14 +132,16 @@ set_default_mode(f, n)
 	if (!(f & FFARG)) {
 		for (i = 0; i <= defb_nmodes; i++)
 			if (defb_modes[i] == m) {
-				n = 0;	/* mode already set */
+				/* mode already set */
+				n = 0;
 				break;
 			}
 	}
 	if (n > 0) {
 		for (i = 0; i <= defb_nmodes; i++)
 			if (defb_modes[i] == m)
-				return TRUE;	/* mode already set */
+				/* mode already set */
+				return TRUE;
 		if (defb_nmodes >= PBMODES - 1) {
 			ewprintf("Too many modes");
 			return FALSE;
@@ -132,25 +149,26 @@ set_default_mode(f, n)
 		defb_modes[++defb_nmodes] = m;
 	} else {
 		/* fundamental is defb_modes[0] and can't be unset */
-		for (i = 1; i <= defb_nmodes && m != defb_modes[i]; i++) {
-		}
+		for (i = 1; i <= defb_nmodes && m != defb_modes[i]; i++);
 		if (i > defb_nmodes)
-			return TRUE;	/* mode wasn't set */
+			/* mode was not set */
+			return TRUE;
 		for (; i < defb_nmodes; i++)
 			defb_modes[i] = defb_modes[i + 1];
 		defb_nmodes--;
 	}
-	if (strcmp(mode, "overwrite") == 0)
-		if (n <= 0)
+	if (strcmp(mode, "overwrite") == 0) {
+		if (n <= 0) 
 			defb_flag &= ~BFOVERWRITE;
-		else
+		else 
 			defb_flag |= BFOVERWRITE;
+	}
 #ifdef NOTAB
 	if (strcmp(mode, "notab") == 0)
 		if (n <= 0)
 			defb_flag &= ~BFNOTAB;
 		else
 			defb_flag |= BFNOTAB;
-#endif
+#endif	/* NOTAB */
 	return TRUE;
 }

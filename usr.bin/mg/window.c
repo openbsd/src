@@ -1,61 +1,64 @@
 /*
  *		Window handling.
  */
-#include	"def.h"
+
+#include "def.h"
 
 /*
- * Reposition dot in the current
- * window to line "n". If the argument is
- * positive, it is that line. If it is negative it
- * is that line from the bottom. If it is 0 the window
- * is centered (this is what the standard redisplay code
- * does).  If GOSREC is undefined, default is 0, so it acts like GNU.
- * If GOSREC is defined, with no argument it defaults to 1
- * and works like in Gosling.
+ * Reposition dot in the current window to line "n".  If the argument is 
+ * positive, it is that line.  If it is negative it is that line from the 
+ * bottom.  If it is 0 the window is centered (this is what the standard 
+ * redisplay code does).  If GOSREC is undefined, default is 0, so it acts 
+ * like GNU.  If GOSREC is defined, with no argument it defaults to 1 and 
+ * works like in Gosling.
  */
 /* ARGSUSED */
+int
 reposition(f, n)
+	int f, n;
 {
 #ifndef GOSREC
 	curwp->w_force = (f & FFARG) ? (n >= 0 ? n + 1 : n) : 0;
-#else
+#else /* !GOSREC */
 	curwp->w_force = n;
-#endif
+#endif /* !GOSREC */
 	curwp->w_flag |= WFFORCE;
 	sgarbf = TRUE;
 	return TRUE;
 }
 
 /*
- * Refresh the display. A call is made to the
- * "ttresize" entry in the terminal handler, which tries
- * to reset "nrow" and "ncol". They will, however, never
- * be set outside of the NROW or NCOL range. If the display
- * changed size, arrange that everything is redone, then
- * call "update" to fix the display. We do this so the
- * new size can be displayed. In the normal case the
- * call to "update" in "main.c" refreshes the screen,
- * and all of the windows need not be recomputed.
- * Note that when you get to the "display unusable"
- * message, the screen will be messed up. If you make
- * the window bigger again, and send another command,
- * everything will get fixed!
+ * Refresh the display.  A call is made to the "ttresize" entry in the 
+ * terminal handler, which tries to reset "nrow" and "ncol".  They will, 
+ * however, never be set outside of the NROW or NCOL range.  If the display
+ * changed size, arrange that everything is redone, then call "update" to 
+ * fix the display.  We do this so the new size can be displayed.  In the 
+ * normal case the call to "update" in "main.c" refreshes the screen, and 
+ * all of the windows need not be recomputed.  Note that when you get to the 
+ * "display unusable" message, the screen will be messed up. If you make the 
+ * window bigger again, and send another command, everything will get fixed!
  */
 /* ARGSUSED */
+int
 refresh(f, n)
+	int f, n;
 {
-	register MGWIN *wp;
-	register int    oldnrow;
-	register int    oldncol;
+	MGWIN	*wp;
+	int	 oldnrow;
+	int	 oldncol;
 
 	oldnrow = nrow;
 	oldncol = ncol;
 	ttresize();
 	if (nrow != oldnrow || ncol != oldncol) {
-		wp = wheadp;	/* Find last.		 */
+
+		/* find last */
+		wp = wheadp;
 		while (wp->w_wndp != NULL)
 			wp = wp->w_wndp;
-		if (nrow < wp->w_toprow + 3) {	/* Check if too small.	 */
+
+		/* check if too small */
+		if (nrow < wp->w_toprow + 3) {
 			ewprintf("Display unusable");
 			return (FALSE);
 		}
@@ -69,17 +72,16 @@ refresh(f, n)
 }
 
 /*
- * The command to make the next
- * window (next => down the screen)
- * the current window. There are no real
- * errors, although the command does
- * nothing if there is only 1 window on
- * the screen.
+ * The command to make the next window (next => down the screen) the current 
+ * window. There are no real errors, although the command does nothing if 
+ * there is only 1 window on the screen.
  */
 /* ARGSUSED */
+int
 nextwind(f, n)
+	int f, n;
 {
-	register MGWIN *wp;
+	MGWIN	*wp;
 
 	if ((wp = curwp->w_wndp) == NULL)
 		wp = wheadp;
@@ -89,19 +91,19 @@ nextwind(f, n)
 }
 
 #ifdef	GOSMACS
+
 /* not in Gnu Emacs */
 /*
- * This command makes the previous
- * window (previous => up the screen) the
- * current window. There arn't any errors,
- * although the command does not do a lot
- * if there is 1 window.
+ * This command makes the previous window (previous => up the screen) the
+ * current window. There are no errors, although the command does not do 
+ * a lot if there is only 1 window.
  */
 /* ARGSUSED */
+int
 prevwind(f, n)
+	int f, n;
 {
-	register MGWIN *wp1;
-	register MGWIN *wp2;
+	MGWIN	*wp1, *wp2;
 
 	wp1 = wheadp;
 	wp2 = curwp;
@@ -113,25 +115,23 @@ prevwind(f, n)
 	curbp = wp1->w_bufp;
 	return TRUE;
 }
-#endif
+#endif /* GOSEMACS */
 
 /*
- * This command makes the current
- * window the only window on the screen.
- * Try to set the framing
- * so that "." does not have to move on
- * the display. Some care has to be taken
- * to keep the values of dot and mark
- * in the buffer structures right if the
- * distruction of a window makes a buffer
- * become undisplayed.
+ * This command makes the current window the only window on the screen.  Try 
+ * to set the framing so that "." does not have to move on the display.  Some 
+ * care has to be taken to keep the values of dot and mark in the buffer 
+ * structures right if the distruction of a window makes a buffer become 
+ * undisplayed.
  */
 /* ARGSUSED */
+int
 onlywind(f, n)
+	int f, n;
 {
-	register MGWIN *wp;
-	register LINE  *lp;
-	register int    i;
+	MGWIN	*wp;
+	LINE	*lp;
+	int	 i;
 
 	while (wheadp != curwp) {
 		wp = wheadp;
@@ -142,7 +142,7 @@ onlywind(f, n)
 			wp->w_bufp->b_markp = wp->w_markp;
 			wp->w_bufp->b_marko = wp->w_marko;
 		}
-		free((char *) wp);
+		free((char *)wp);
 	}
 	while (curwp->w_wndp != NULL) {
 		wp = curwp->w_wndp;
@@ -153,7 +153,7 @@ onlywind(f, n)
 			wp->w_bufp->b_markp = wp->w_markp;
 			wp->w_bufp->b_marko = wp->w_marko;
 		}
-		free((char *) wp);
+		free((char *)wp);
 	}
 	lp = curwp->w_linep;
 	i = curwp->w_toprow;
@@ -162,38 +162,39 @@ onlywind(f, n)
 		lp = lback(lp);
 	}
 	curwp->w_toprow = 0;
-	curwp->w_ntrows = nrow - 2;	/* 2 = mode, echo.	 */
+
+	/* 2 = mode, echo */
+	curwp->w_ntrows = nrow - 2;
 	curwp->w_linep = lp;
 	curwp->w_flag |= WFMODE | WFHARD;
 	return TRUE;
 }
 
 /*
- * Split the current window. A window
- * smaller than 3 lines cannot be split.
- * The only other error that is possible is
- * a "malloc" failure allocating the structure
- * for the new window.
+ * Split the current window.  A window smaller than 3 lines cannot be split.
+ * The only other error that is possible is a "malloc" failure allocating the 
+ * structure for the new window.
  */
 /* ARGSUSED */
+int
 splitwind(f, n)
+	int f, n;
 {
-	register MGWIN *wp;
-	register LINE  *lp;
-	register int    ntru;
-	register int    ntrd;
-	int             ntrl;
-	MGWIN          *wp1, *wp2;
+	MGWIN	*wp, *wp1, *wp2;
+	LINE	*lp;
+	int	 ntru, ntrd, ntrl;
 
 	if (curwp->w_ntrows < 3) {
 		ewprintf("Cannot split a %d line window", curwp->w_ntrows);
 		return (FALSE);
 	}
-	if ((wp = (MGWIN *) malloc(sizeof(MGWIN))) == NULL) {
+	if ((wp = (MGWIN *)malloc(sizeof(MGWIN))) == NULL) {
 		ewprintf("Can't get %d", sizeof(MGWIN));
 		return (FALSE);
 	}
-	++curbp->b_nwnd;	/* Displayed twice.	 */
+
+	/* displayed twice */
+	++curbp->b_nwnd;
 	wp->w_bufp = curbp;
 	wp->w_dotp = curwp->w_dotp;
 	wp->w_doto = curwp->w_doto;
@@ -210,15 +211,19 @@ splitwind(f, n)
 		lp = lforw(lp);
 	}
 	lp = curwp->w_linep;
-	if (ntrd <= ntru) {	/* Old is upper window. */
-		if (ntrd == ntru)	/* Hit mode line.	 */
+
+	/* old is upper window */
+	if (ntrd <= ntru) {
+		/* hit mode line */
+		if (ntrd == ntru)
 			lp = lforw(lp);
 		curwp->w_ntrows = ntru;
 		wp->w_wndp = curwp->w_wndp;
 		curwp->w_wndp = wp;
 		wp->w_toprow = curwp->w_toprow + ntru + 1;
 		wp->w_ntrows = ntrl;
-	} else {		/* Old is lower window	 */
+	/* old is lower window */
+	} else {
 		wp1 = NULL;
 		wp2 = wheadp;
 		while (wp2 != curwp) {
@@ -232,33 +237,38 @@ splitwind(f, n)
 		wp->w_wndp = curwp;
 		wp->w_toprow = curwp->w_toprow;
 		wp->w_ntrows = ntru;
-		++ntru;		/* Mode line.		 */
+
+		/* mode line */
+		++ntru;
 		curwp->w_toprow += ntru;
 		curwp->w_ntrows = ntrl;
 		while (ntru--)
 			lp = lforw(lp);
 	}
-	curwp->w_linep = lp;	/* Adjust the top lines */
-	wp->w_linep = lp;	/* if necessary.	 */
+
+	/* adjust the top lines if necessary */
+	curwp->w_linep = lp;
+	wp->w_linep = lp;
+
 	curwp->w_flag |= WFMODE | WFHARD;
 	wp->w_flag |= WFMODE | WFHARD;
 	return TRUE;
 }
 
 /*
- * Enlarge the current window.
- * Find the window that loses space. Make
- * sure it is big enough. If so, hack the window
- * descriptions, and ask redisplay to do all the
- * hard work. You don't just set "force reframe"
- * because dot would move.
+ * Enlarge the current window.  Find the window that loses space.  Make sure 
+ * it is big enough.  If so, hack the window descriptions, and ask redisplay 
+ * to do all the hard work.  You don't just set "force reframe" because dot 
+ * would move.
  */
 /* ARGSUSED */
+int
 enlargewind(f, n)
+	int f, n;
 {
-	register MGWIN *adjwp;
-	register LINE  *lp;
-	register int    i;
+	MGWIN	*adjwp;
+	LINE	*lp;
+	int	 i;
 
 	if (n < 0)
 		return shrinkwind(f, -n);
@@ -275,13 +285,16 @@ enlargewind(f, n)
 		ewprintf("Impossible change");
 		return FALSE;
 	}
-	if (curwp->w_wndp == adjwp) {	/* Shrink below.	 */
+
+	/* shrink below */
+	if (curwp->w_wndp == adjwp) {
 		lp = adjwp->w_linep;
 		for (i = 0; i < n && lp != adjwp->w_bufp->b_linep; ++i)
 			lp = lforw(lp);
 		adjwp->w_linep = lp;
 		adjwp->w_toprow += n;
-	} else {		/* Shrink above.	 */
+	/* shrink above */
+	} else {
 		lp = curwp->w_linep;
 		for (i = 0; i < n && lback(lp) != curbp->b_linep; ++i)
 			lp = lback(lp);
@@ -296,16 +309,16 @@ enlargewind(f, n)
 }
 
 /*
- * Shrink the current window.
- * Find the window that gains space. Hack at
- * the window descriptions. Ask the redisplay to
- * do all the hard work.
+ * Shrink the current window.  Find the window that gains space.  Hack at the 
+ * window descriptions. Ask the redisplay to do all the hard work.
  */
+int
 shrinkwind(f, n)
+	int f, n;
 {
-	register MGWIN *adjwp;
-	register LINE  *lp;
-	register int    i;
+	MGWIN	*adjwp;
+	LINE	*lp;
+	int	 i;
 
 	if (n < 0)
 		return enlargewind(f, -n);
@@ -326,13 +339,16 @@ shrinkwind(f, n)
 		while (adjwp->w_wndp != curwp)
 			adjwp = adjwp->w_wndp;
 	}
-	if (curwp->w_wndp == adjwp) {	/* Grow below.		 */
+
+	/* grow below */
+	if (curwp->w_wndp == adjwp) {
 		lp = adjwp->w_linep;
 		for (i = 0; i < n && lback(lp) != adjwp->w_bufp->b_linep; ++i)
 			lp = lback(lp);
 		adjwp->w_linep = lp;
 		adjwp->w_toprow -= n;
-	} else {		/* Grow above.		 */
+	/* grow above */
+	} else {
 		lp = curwp->w_linep;
 		for (i = 0; i < n && lp != curbp->b_linep; ++i)
 			lp = lforw(lp);
@@ -347,15 +363,18 @@ shrinkwind(f, n)
 }
 
 /*
- * Delete current window. Call shrink-window to do the screen
- * updating, then throw away the window.
+ * Delete current window. Call shrink-window to do the screen updating, then 
+ * throw away the window.
  */
 /* ARGSUSED */
+int
 delwind(f, n)
+	int f, n;
 {
-	register MGWIN *wp, *nwp;
+	MGWIN	*wp, *nwp;
 
 	wp = curwp;		/* Cheap...		 */
+
 	/* shrinkwind returning false means only one window... */
 	if (shrinkwind(FFRAND, wp->w_ntrows + 1) == FALSE)
 		return FALSE;
@@ -365,6 +384,7 @@ delwind(f, n)
 		wp->w_bufp->b_markp = wp->w_markp;
 		wp->w_bufp->b_marko = wp->w_marko;
 	}
+
 	/* since shrinkwind did't crap out, we know we have a second window */
 	if (wp == wheadp)
 		wheadp = curwp = wp->w_wndp;
@@ -376,26 +396,27 @@ delwind(f, n)
 			nwp->w_wndp = wp->w_wndp;
 			break;
 		}
-	free((char *) wp);
+	free((char *)wp);
 	return TRUE;
 }
+
 /*
- * Pick a window for a pop-up.
- * Split the screen if there is only
- * one window. Pick the uppermost window that
- * isn't the current window. An LRU algorithm
- * might be better. Return a pointer, or
- * NULL on error.
+ * Pick a window for a pop-up.  Split the screen if there is only one window. 
+ * Pick the uppermost window that isn't the current window. An LRU algorithm
+ * might be better. Return a pointer, or NULL on error.
  */
 MGWIN *
 wpopup()
 {
-	register MGWIN *wp;
+	MGWIN	*wp;
 
 	if (wheadp->w_wndp == NULL
 	    && splitwind(FFRAND, 0) == FALSE)
 		return NULL;
-	wp = wheadp;		/* Find window to use	 */
+
+	/* find a window to use */
+	wp = wheadp;
+
 	while (wp != NULL && wp == curwp)
 		wp = wp->w_wndp;
 	return wp;

@@ -22,28 +22,20 @@
  * Using scrolling region vs insert/delete line should probably be based on cost
  * rather than the assuption that scrolling region operations look better.
  */
-#include	"def.h"
 
-#include	<term.h>
+#include "def.h"
 
-extern int      ttrow;
-extern int      ttcol;
-extern int      tttop;
-extern int      ttbot;
-extern int      tthue;
-
-extern int      ttputc();
-
-int             tceeol;		/* Costs are set later */
-int             tcinsl;
-int             tcdell;
-
-static int      insdel;		/* Do we have both insert & delete line? */
-static char    *scroll_fwd;	/* How to scroll forward. */
+#include <term.h>
 
 #ifdef NO_RESIZE
-static          setttysize();
-#endif
+static int	 setttysize	__P((void));
+#endif /* NO_RESIZE */
+
+static int	 charcost	__P((char *));
+
+static int	 cci;
+static int	 insdel;	/* Do we have both insert & delete line? */
+static char	*scroll_fwd;	/* How to scroll forward. */
 
 /*
  * Initialize the terminal when the editor
@@ -52,29 +44,34 @@ static          setttysize();
 VOID
 ttinit()
 {
-	char           *tv_stype;
-	char           *t, *p;
-#ifndef gettermtype		/* (avoid declaration if #define) */
-	char           *gettermtype();	/* system dependent function to
-					 * determin terminal type */
-#endif
+	char	*tv_stype, *p;
+
+/* system dependent function to determine terminal type, if necessary. */
+#ifndef gettermtype
+	char	*gettermtype();
+#endif /* gettermtype */
 
 	if ((tv_stype = gettermtype()) == NULL)
-		panic("Could not determine terminal type");
+		panic("Could not determine terminal type!");
+
 	if (setupterm(tv_stype, 1, NULL)) {
-		(void) asprintf(&p, "Unknown terminal type: %s", tv_stype);
+		(void)asprintf(&p, "Unknown terminal type: %s", tv_stype);
 		panic(p);
 	}
+
 	scroll_fwd = scroll_forward;
-	if (!scroll_fwd || !*scroll_fwd) {
+	if (scroll_fwd == NULL || *scroll_fwd == '\0') {
 		/* this is what GNU Emacs does */
 		scroll_fwd = parm_down_cursor;
-		if (!scroll_fwd || !*scroll_fwd)
+		if (scroll_fwd == NULL || *scroll_fwd == '\0')
 			scroll_fwd = "\n";
 	}
-	if (!cursor_address || !cursor_up)
-		panic("This terminal is to stupid to run mg");
-	ttresize();		/* set nrow & ncol	 */
+
+	if (cursor_address == NULL || cursor_up == NULL)
+		panic("This terminal is too stupid to run mg");
+
+	/* set nrow & ncol */
+	ttresize();
 
 	if (!clr_eol)
 		tceeol = ncol;
@@ -84,30 +81,34 @@ ttinit()
 	/* Estimate cost of inserting a line */
 	if (change_scroll_region && scroll_reverse)
 		tcinsl = charcost(change_scroll_region) * 2 +
-			charcost(scroll_reverse);
+		    charcost(scroll_reverse);
 	else if (parm_insert_line)
 		tcinsl = charcost(parm_insert_line);
 	else if (insert_line)
 		tcinsl = charcost(insert_line);
 	else
-		tcinsl = NROW * NCOL;	/* make this cost high enough */
+		/* make this cost high enough */
+		tcinsl = NROW * NCOL;
 
 	/* Estimate cost of deleting a line */
 	if (change_scroll_region)
 		tcdell = charcost(change_scroll_region) * 2 +
-			charcost(scroll_fwd);
+		    charcost(scroll_fwd);
 	else if (parm_delete_line)
 		tcdell = charcost(parm_delete_line);
 	else if (delete_line)
 		tcdell = charcost(delete_line);
 	else
-		tcdell = NROW * NCOL;	/* make this cost high enough */
+		/* make this cost high enough */
+		tcdell = NROW * NCOL;
 
 	/* Flag to indicate that we can both insert and delete lines */
-	insdel = (insert_line || parm_insert_line) && (delete_line || parm_delete_line);
+	insdel = (insert_line || parm_insert_line) && 
+	    (delete_line || parm_delete_line);
 
 	if (enter_ca_mode)
-		putpad(enter_ca_mode, 1);	/* enter application mode */
+		/* enter application mode */
+		putpad(enter_ca_mode, 1);
 
 	setttysize();
 }
@@ -120,45 +121,42 @@ VOID
 ttreinit()
 {
 	if (enter_ca_mode)
-		putpad(enter_ca_mode, 1);	/* enter application mode */
+		/* enter application mode */
+		putpad(enter_ca_mode, 1);
 	if (keypad_xmit)
-		putpad(keypad_xmit, 1);		/* turn on keypad */
+		/* turn on keypad */
+		putpad(keypad_xmit, 1);
 
 	setttysize();
 }
 
 /*
- * Clean up the terminal, in anticipation of
- * a return to the command interpreter. This is a no-op
- * on the ANSI display. On the SCALD display, it sets the
- * window back to half screen scrolling. Perhaps it should
- * query the display for the increment, and put it
- * back to what it was.
+ * Clean up the terminal, in anticipation of a return to the command 
+ * interpreter. This is a no-op on the ANSI display. On the SCALD display, 
+ * it sets the window back to half screen scrolling. Perhaps it should
+ * query the display for the increment, and put it back to what it was.
  */
 VOID
 tttidy()
 {
-
 #ifdef	XKEYS
 	ttykeymaptidy();
-#endif
+#endif /* XKEYS */
+
 	/* set the term back to normal mode */
 	if (exit_ca_mode)
 		putpad(exit_ca_mode, 1);
 }
 
 /*
- * Move the cursor to the specified
- * origin 0 row and column position. Try to
- * optimize out extra moves; redisplay may
- * have left the cursor in the right
+ * Move the cursor to the specified origin 0 row and column position. Try to
+ * optimize out extra moves; redisplay may have left the cursor in the right
  * location last time!
  */
 VOID
 ttmove(row, col)
+	int row, col;
 {
-	char           *tgoto();
-
 	if (ttrow != row || ttcol != col) {
 		putpad(tgoto(cursor_address, col, row), 1);
 		ttrow = row;
@@ -172,11 +170,12 @@ ttmove(row, col)
 VOID
 tteeol()
 {
+	int	i;
 
 	if (clr_eol)
 		putpad(clr_eol, 1);
 	else {
-		int             i = ncol - ttcol;
+		i = ncol - ttcol;
 		while (i--)
 			ttputc(' ');
 		ttrow = ttcol = HUGE;
@@ -189,7 +188,7 @@ tteeol()
 VOID
 tteeop()
 {
-	int             line;
+	int	line;
 
 	if (clr_eos)
 		putpad(clr_eos, nrow - ttrow);
@@ -197,7 +196,8 @@ tteeop()
 		putpad(clr_eol, 1);
 		if (insdel)
 			ttdell(ttrow + 1, lines, lines - ttrow - 1);
-		else {		/* do it by hand */
+		else {
+			/* do it by hand */
 			for (line = ttrow + 1; line <= lines; ++line) {
 				ttmove(line, 0);
 				tteeol();
@@ -218,20 +218,20 @@ ttbeep()
 }
 
 /*
- * Insert nchunk blank line(s) onto the
- * screen, scrolling the last line on the
- * screen off the bottom.  Use the scrolling
- * region if possible for a smoother display.
- * If no scrolling region, use a set
- * of insert and delete line sequences
+ * Insert nchunk blank line(s) onto the screen, scrolling the last line on 
+ * the screen off the bottom.  Use the scrolling region if possible for a 
+ * smoother display.  If there is no scrolling region, use a set of insert 
+ * and delete line sequences.
  */
 VOID
 ttinsl(row, bot, nchunk)
+	int row, bot, nchunk;
 {
-	int             i, nl;
+	int	i, nl;
 
-	if (row == bot) {	/* Case of one line insert is	 */
-		ttmove(row, 0);	/* special			 */
+	/* Case of one line insert is special. */
+	if (row == bot) {
+		ttmove(row, 0);
 		tteeol();
 		return;
 	}
@@ -250,11 +250,14 @@ ttinsl(row, bot, nchunk)
 		if (parm_delete_line)
 			putpad(tgoto(parm_delete_line, 0, nchunk), nl);
 		else
-			/* For all lines in the chunk	 */
+			/* For all lines in the chunk... */
 			for (i = 0; i < nchunk; i++)
 				putpad(delete_line, nl);
 		ttmove(row, 0);
-		nl = nrow - ttrow;	/* ttmove() changes ttrow */
+
+		/* ttmove() changes ttrow */
+		nl = nrow - ttrow;
+
 		if (parm_insert_line)
 			putpad(tgoto(parm_insert_line, 0, nchunk), nl);
 		else
@@ -268,32 +271,34 @@ ttinsl(row, bot, nchunk)
 }
 
 /*
- * Delete nchunk line(s) from "row", replacing the
- * bottom line on the screen with a blank line.
- * Unless we're using the scrolling region, this is
- * done with a crafty sequences of insert and delete
- * lines.  The presence of the echo area makes a
- * boundry condition go away.
+ * Delete nchunk line(s) from "row", replacing the bottom line on the 
+ * screen with a blank line.  Unless we're using the scrolling region, 
+ * this is done with crafty sequences of insert and delete lines.  The 
+ * presence of the echo area makes a boundry condition go away.
  */
 VOID
 ttdell(row, bot, nchunk)
+	int row, bot, nchunk;
 {
-	int             i, nl;
+	int	i, nl;
 
-	if (row == bot) {	/* One line special case	 */
+	/* One line special cases */
+	if (row == bot) {
 		ttmove(row, 0);
 		tteeol();
 		return;
 	}
-	if (change_scroll_region) {	/* scrolling region		 */
+	/* scrolling region */
+	if (change_scroll_region) {
 		nl = bot - row;
 		ttwindow(row, bot);
 		ttmove(bot, 0);
 		while (nchunk--)
 			putpad(scroll_fwd, nl);
 		ttnowindow();
+	/* else use insert/delete line */
 	} else if (insdel) {
-		ttmove(row, 0);	/* Else use insert/delete line	 */
+		ttmove(row, 0);
 		nl = nrow - ttrow;
 		if (parm_delete_line)
 			putpad(tgoto(parm_delete_line, 0, nchunk), nl);
@@ -302,7 +307,9 @@ ttdell(row, bot, nchunk)
 			for (i = 0; i < nchunk; i++)
 				putpad(delete_line, nl);
 		ttmove(1 + bot - nchunk, 0);
-		nl = nrow - ttrow;	/* ttmove() changes ttrow */
+
+		/* ttmove() changes ttrow */
+		nl = nrow - ttrow;
 		if (parm_insert_line)
 			putpad(tgoto(parm_insert_line, 0, nchunk), nl);
 		else
@@ -316,19 +323,16 @@ ttdell(row, bot, nchunk)
 }
 
 /*
- * This routine sets the scrolling window
- * on the display to go from line "top" to line
- * "bot" (origin 0, inclusive). The caller checks
- * for the pathalogical 1 line scroll window that
- * doesn't work right, and avoids it. The "ttrow"
- * and "ttcol" variables are set to a crazy value
- * to ensure that the next call to "ttmove" does
- * not turn into a no-op (the window adjustment
- * moves the cursor).
- *
+ * This routine sets the scrolling window on the display to go from line 
+ * "top" to line "bot" (origin 0, inclusive).  The caller checks for the 
+ * pathological 1-line scroll window which doesn't work right and avoids 
+ * it.  The "ttrow" and "ttcol" variables are set to a crazy value to 
+ * ensure that the next call to "ttmove" does not turn into a no-op (the 
+ * window adjustment moves the cursor).
  */
 VOID
 ttwindow(top, bot)
+	int top, bot;
 {
 	if (change_scroll_region && (tttop != top || ttbot != bot)) {
 		putpad(tgoto(change_scroll_region, bot, top), nrow - ttrow);
@@ -340,14 +344,12 @@ ttwindow(top, bot)
 }
 
 /*
- * Switch to full screen scroll. This is
- * used by "spawn.c" just before is suspends the
- * editor, and by "display.c" when it is getting ready
- * to exit.  This function gets to full screen scroll
- * by telling the terminal to set a scrolling regin
- * that is lines or nrow rows high, whichever is larger.
- * This behavior seems to work right on systems
- * where you can set your terminal size.
+ * Switch to full screen scroll. This is used by "spawn.c" just before it 
+ * suspends the editor and by "display.c" when it is getting ready to 
+ * exit.  This function does a full screen scroll by telling the terminal 
+ * to set a scrolling region that is lines or nrow rows high, whichever is 
+ * larger.  This behavior seems to work right on systems where you can set 
+ * your terminal size.
  */
 VOID
 ttnowindow()
@@ -363,44 +365,43 @@ ttnowindow()
 }
 
 /*
- * Set the current writing color to the
- * specified color. Watch for color changes that are
- * not going to do anything (the color is already right)
- * and don't send anything to the display.
- * The rainbow version does this in putline.s on a
- * line by line basis, so don't bother sending
- * out the color shift.
+ * Set the current writing color to the specified color. Watch for color 
+ * changes that are not going to do anything (the color is already right)
+ * and don't send anything to the display.  The rainbow version does this 
+ * in putline.s on a line by line basis, so don't bother sending out the 
+ * color shift.
  */
 VOID
 ttcolor(color)
-	int             color;
+	int color;
 {
-
 	if (color != tthue) {
-		if (color == CTEXT)	/* Normal video.	 */
+		if (color == CTEXT)
+			/* normal video */
 			putpad(exit_standout_mode, 1);
-		else if (color == CMODE)	/* Reverse video.	 */
+		else if (color == CMODE)
+			/* reverse video */
 			putpad(enter_standout_mode, 1);
-		tthue = color;	/* Save the color.	 */
+		/* save the color */
+		tthue = color;
 	}
 }
 
 /*
- * This routine is called by the
- * "refresh the screen" command to try and resize
- * the display. The new size, which must be deadstopped
- * to not exceed the NROW and NCOL limits, it stored
- * back into "nrow" and "ncol". Display can always deal
- * with a screen NROW by NCOL. Look in "window.c" to
- * see how the caller deals with a change.
+ * This routine is called by the "refresh the screen" command to try 
+ * to resize the display. The new size, which must not exceed the NROW 
+ * and NCOL limits, is stored back into "nrow" and * "ncol". Display can 
+ * always deal with a screen NROW by NCOL. Look in "window.c" to see how 
+ * the caller deals with a change.
  */
 VOID
 ttresize()
 {
+	/* found in "ttyio.c" */
+	setttysize();
 
-	setttysize();		/* found in "ttyio.c",	 */
-	/* ask OS for tty size	 */
-	if (nrow < 1)		/* Check limits.	 */
+	/* ask OS for tty size and check limits */
+	if (nrow < 1)
 		nrow = 1;
 	else if (nrow > NROW)
 		nrow = NROW;
@@ -417,23 +418,26 @@ setttysize()
 	nrow = lines;
 	ncol = columns;
 }
-#endif
+#endif /* NO_RESIZE */
 
-static int      cci;
-
+/*
+ * fake char output for charcost() 
+ */
 /* ARGSUSED */
-static int			/* fake char output for charcost() */
+static int
 fakec(c)
-	char            c;
+	char c;
 {
 	cci++;
+	return 0;
 }
 
 /* calculate the cost of doing string s */
+static int
 charcost(s)
-	char           *s;
+	char *s;
 {
-	cci = 0;
+	int	cci = 0;
 
 	tputs(s, nrow, fakec);
 	return (cci);

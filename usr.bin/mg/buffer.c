@@ -1,8 +1,9 @@
 /*
  *		Buffer handling.
  */
-#include	"def.h"
-#include	"kbd.h"		/* needed for modes */
+
+#include "def.h"
+#include "kbd.h"		/* needed for modes */
 
 static RSIZE    itor		__P((char *, int, RSIZE));
 static BUFFER  *makelist	__P((void));
@@ -54,7 +55,6 @@ poptobuffer(f, n)
 	MGWIN  *wp;
 	int     s;
 	char    bufn[NBUFN];
-	MGWIN  *popbuf();
 
 	/* Get buffer to use from user */
 	if ((curbp->b_altb == NULL)
@@ -168,7 +168,6 @@ int
 savebuffers(f, n)
 	int f, n;
 {
-
 	if (anycb(f) == ABORT)
 		return ABORT;
 	return TRUE;
@@ -184,7 +183,7 @@ savebuffers(f, n)
 /* ARGSUSED */
 int
 listbuffers(f, n)
-	int     f, n;
+	int f, n;
 {
 	BUFFER *bp;
 	MGWIN  *wp;
@@ -380,15 +379,12 @@ anycb(f)
  */
 BUFFER *
 bfind(bname, cflag)
-	char           *bname;
-	int             cflag;
+	char *bname;
+	int   cflag;
 {
-	BUFFER         *bp;
-	LINE           *lp;
-	int             i;
-	extern int      defb_nmodes;
-	extern MAPS    *defb_modes[PBMODES];
-	extern int      defb_flag;
+	BUFFER	*bp;
+	LINE	*lp;
+	int	 i; 
 
 	bp = bheadp;
 	while (bp != NULL) {

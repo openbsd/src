@@ -2,22 +2,24 @@
  * Spawn.  Actually just suspends Mg.
  * Assumes POSIX job control.
  */
-#include	"def.h"
 
-#include	<signal.h>
-#include	<termios.h>
-#include	<term.h>
+#include "def.h"
+
+#include <signal.h>
+#include <termios.h>
+#include <term.h>
 
 /*
- * This causes mg to send itself a stop signal.
- * Assumes the parent shell supports POSIX job control.
- * If the terminal supports an alternate screen, we will sitch to it.
+ * This causes mg to send itself a stop signal.  It assumes the parent 
+ * shell supports POSIX job control.  If the terminal supports an alternate 
+ * screen, we will switch to it.
  */
 /* ARGSUSED */
+int
 spawncli(f, n)
+	int f, n;
 {
-	sigset_t oset;
-	int ttputc __P((int)); /* XXX */
+	sigset_t	oset;
 
 	/* Very similar to what vttidy() does. */
 	ttcolor(CTEXT);
@@ -28,13 +30,17 @@ spawncli(f, n)
 		epresf = FALSE;
 	}
 	if (ttcooked() == FALSE)
-		return (FALSE);
-	tttidy();		/* Exit application mode and tidy. */
+		return(FALSE);
+
+	/* Exit application mode and tidy. */
+	tttidy();
 	ttflush();
-	(void) sigprocmask(SIG_SETMASK, NULL, &oset);
-	(void) kill(0, SIGTSTP);
-	(void) sigprocmask(SIG_SETMASK, &oset, NULL);
+	(void)sigprocmask(SIG_SETMASK, NULL, &oset);
+	(void)kill(0, SIGTSTP);
+	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
 	ttreinit();
-	sgarbf = TRUE;		/* Force repaint.	 */
+
+	/* Force repaint. */
+	sgarbf = TRUE;
 	return ttraw();
 }

@@ -1,20 +1,19 @@
 /*
  *		Word mode commands.
- * The routines in this file
- * implement commands that work word at
- * a time. There are all sorts of word mode
- * commands.
+ * The routines in this file implement commands that work word at a time. 
+ * There are all sorts of word mode commands.
  */
-#include	"def.h"
+
+#include "def.h"
 
 /*
- * Move the cursor backward by
- * "n" words. All of the details of motion
- * are performed by the "backchar" and "forwchar"
- * routines.
+ * Move the cursor backward by "n" words. All of the details of motion are 
+ * performed by the "backchar" and "forwchar" routines.
  */
 /* ARGSUSED */
+int
 backword(f, n)
+	int f, n;
 {
 	if (n < 0)
 		return forwword(f | FFRAND, -n);
@@ -34,12 +33,13 @@ backword(f, n)
 }
 
 /*
- * Move the cursor forward by
- * the specified number of words. All of the
+ * Move the cursor forward by the specified number of words.  All of the
  * motion is done by "forwchar".
  */
 /* ARGSUSED */
+int
 forwword(f, n)
+	int f, n;
 {
 	if (n < 0)
 		return backword(f | FFRAND, -n);
@@ -57,14 +57,15 @@ forwword(f, n)
 }
 
 /*
- * Move the cursor forward by
- * the specified number of words. As you move,
+ * Move the cursor forward by the specified number of words.  As you move,
  * convert any characters to upper case.
  */
 /* ARGSUSED */
+int
 upperword(f, n)
+	int f, n;
 {
-	register int    c;
+	int	c;
 
 	if (n < 0)
 		return FALSE;
@@ -88,14 +89,15 @@ upperword(f, n)
 }
 
 /*
- * Move the cursor forward by
- * the specified number of words. As you move
+ * Move the cursor forward by the specified number of words.  As you move
  * convert characters to lower case.
  */
 /* ARGSUSED */
+int
 lowerword(f, n)
+	int f, n;
 {
-	register int    c;
+	int	c;
 
 	if (n < 0)
 		return FALSE;
@@ -119,17 +121,17 @@ lowerword(f, n)
 }
 
 /*
- * Move the cursor forward by
- * the specified number of words. As you move
- * convert the first character of the word to upper
- * case, and subsequent characters to lower case. Error
- * if you try and move past the end of the buffer.
+ * Move the cursor forward by the specified number of words.  As you move
+ * convert the first character of the word to upper case, and subsequent 
+ * characters to lower case.  Error if you try to move past the end of the 
+ * buffer.
  */
 /* ARGSUSED */
+int
 capword(f, n)
+	int f, n;
 {
-	register int    c;
-	VOID            lchange();
+	int	c;
 
 	if (n < 0)
 		return FALSE;
@@ -166,29 +168,37 @@ capword(f, n)
  * Kill forward by "n" words.
  */
 /* ARGSUSED */
+int
 delfword(f, n)
+	int f, n;
 {
-	register RSIZE  size;
-	register LINE  *dotp;
-	register int    doto;
+	RSIZE	 size;
+	LINE	*dotp;
+	int	 doto;
 
 	if (n < 0)
 		return FALSE;
-	if ((lastflag & CFKILL) == 0)	/* Purge kill buffer.	 */
+
+	/* purge kill buffer */
+	if ((lastflag & CFKILL) == 0)
 		kdelete();
+
 	thisflag |= CFKILL;
 	dotp = curwp->w_dotp;
 	doto = curwp->w_doto;
 	size = 0;
+
 	while (n--) {
 		while (inword() == FALSE) {
 			if (forwchar(FFRAND, 1) == FALSE)
-				goto out;	/* Hit end of buffer.	 */
+				/* hit the end of the buffer */
+				goto out;
 			++size;
 		}
 		while (inword() != FALSE) {
 			if (forwchar(FFRAND, 1) == FALSE)
-				goto out;	/* Hit end of buffer.	 */
+				/* hit the end of the buffer */
+				goto out;
 			++size;
 		}
 	}
@@ -199,56 +209,62 @@ out:
 }
 
 /*
- * Kill backwards by "n" words. The rules
- * for success and failure are now different, to prevent
- * strange behavior at the start of the buffer. The command
- * only fails if something goes wrong with the actual delete
- * of the characters. It is successful even if no characters
- * are deleted, or if you say delete 5 words, and there are
- * only 4 words left. I considered making the first call
- * to "backchar" special, but decided that that would just
- * be wierd. Normally this is bound to "M-Rubout" and
- * to "M-Backspace".
+ * Kill backwards by "n" words.  The rules for success and failure are now 
+ * different, to prevent strange behavior at the start of the buffer.  The 
+ * command only fails if something goes wrong with the actual delete of the 
+ * characters.  It is successful even if no characters are deleted, or if you 
+ * say delete 5 words, and there are only 4 words left.  I considered making 
+ * the first call to "backchar" special, but decided that that would just be 
+ * weird. Normally this is bound to "M-Rubout" and to "M-Backspace".
  */
 /* ARGSUSED */
+int
 delbword(f, n)
+	int f, n;
 {
-	register RSIZE  size;
-	VOID            kdelete();
+	RSIZE	size;
 
 	if (n < 0)
 		return FALSE;
-	if ((lastflag & CFKILL) == 0)	/* Purge kill buffer.	 */
+
+	/* purge kill buffer */
+	if ((lastflag & CFKILL) == 0)
 		kdelete();
 	thisflag |= CFKILL;
 	if (backchar(FFRAND, 1) == FALSE)
-		return (TRUE);	/* Hit buffer start.	 */
-	size = 1;		/* One deleted.		 */
+		/* hit buffer start */
+		return (TRUE);
+
+	/* one deleted */
+	size = 1;
 	while (n--) {
 		while (inword() == FALSE) {
 			if (backchar(FFRAND, 1) == FALSE)
-				goto out;	/* Hit buffer start.	 */
+				/* hit buffer start */
+				goto out;
 			++size;
 		}
 		while (inword() != FALSE) {
 			if (backchar(FFRAND, 1) == FALSE)
-				goto out;	/* Hit buffer start.	 */
+				/* hit buffer start */
+				goto out;
 			++size;
 		}
 	}
 	if (forwchar(FFRAND, 1) == FALSE)
 		return FALSE;
-	--size;			/* Undo assumed delete. */
+
+	/* undo assumed delete */
+	--size;
 out:
 	return ldelete(size, KBACK);
 }
 
 /*
- * Return TRUE if the character at dot
- * is a character that is considered to be
- * part of a word. The word character list is hard
- * coded. Should be setable.
+ * Return TRUE if the character at dot is a character that is considered to be
+ * part of a word. The word character list is hard coded. Should be setable.
  */
+int
 inword()
 {
 	/* can't use lgetc in ISWORD due to bug in OSK cpp */
