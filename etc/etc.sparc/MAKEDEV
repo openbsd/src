@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.56 1999/02/01 00:35:53 jason Exp $
+#	$OpenBSD: MAKEDEV,v 1.57 1999/05/26 21:56:13 jason Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -307,6 +307,10 @@ audio*)
 	mknod $audioctl	c $major `add $unit 192`
 	chown root.wheel $audio $sound $mixer $audioioctl
 	chmod 666 $audio $sound $mixer $audioctl
+	[ -e audio ] || ln -s $audio audio
+	[ -e mixer ] || ln -s $mixer mixer
+	[ -e sound ] || ln -s $sound sound
+	[ -e audioctl ] || ln -s $audioctl audioctl
 	;;
 
 xfs*)
