@@ -1,4 +1,4 @@
-.\" $OpenBSD: usbhidctl.1,v 1.7 2003/07/02 09:11:51 jmc Exp $
+.\" $OpenBSD: usbhidctl.1,v 1.8 2004/04/03 21:01:25 jmc Exp $
 .\" $NetBSD: usbhidctl.1,v 1.14 2001/12/28 17:49:32 augustss Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,29 +45,23 @@
 .Nm
 .Fl f Ar device
 .Op Fl t Ar table
-.Op Fl l
-.Op Fl v
+.Op Fl lv
 .Fl a
-.Pp
 .Nm
 .Fl f Ar device
 .Op Fl t Ar table
 .Op Fl v
 .Fl r
-.Pp
 .Nm
 .Fl f Ar device
 .Op Fl t Ar table
-.Op Fl l
-.Op Fl n
-.Op Fl v
-.Op Ar item ...
-.Pp
+.Op Fl lnv
+.Op Ar name ...
 .Nm
 .Fl f Ar device
 .Op Fl t Ar table
 .Fl w
-.Op Ar item=value ...
+.Op Ar name Ns = Ns Ar value ...
 .Sh DESCRIPTION
 .Nm
 can be used to output or modify the state of a USB HID (Human Interface Device).
@@ -110,9 +104,6 @@ Repeating this option increases verbosity.
 Change item values.
 Only 'output' and 'feature' kinds can be set with this option.
 .El
-.Sh FILES
-.Pa /usr/share/misc/usb_hid_usages
-The default HID usage table.
 .Sh SYNTAX
 .Nm
 parses the names of items specified on the command line against the human
@@ -143,9 +134,16 @@ As an alternative notation in items on the command line, the native numeric
 value for the page name or usage can be used instead of the full human
 readable page name or usage name.
 Numeric values can be specified in decimal, octal or hexadecimal.
+.Sh FILES
+.Bl -tag -width "/usr/share/misc/usb_hid_usages"
+.It Pa /usr/share/misc/usb_hid_usages
+The default HID usage table.
+.El
 .Sh EXAMPLES
 On a standard USB mouse the item
+.Pp
 .Dl Generic_Desktop:Mouse.Generic_Desktop:Pointer.Button:Button_2
+.Pp
 reflects the current status of button 2.
 The
 .Qq button 2
@@ -168,6 +166,7 @@ An item can generally be named by omitting one or more of the page names.
 For example the
 .Qq button 2
 item would usually just be referred to on the command line as:
+.Pp
 .Dl $ usbhidctl -f /dev/mouse Mouse.Pointer.Button_2
 .Pp
 Items can also be named by referring to parts of the item name with the
@@ -180,6 +179,7 @@ page is 1, and the usage identifier for the usage
 is 2, so the following can be used to refer to the
 .Qq button 2
 item:
+.Pp
 .Dl $ usbhidctl -f /dev/mouse 1:Mouse.1:Pointer.Button:2
 .Pp
 Devices with human interface outputs can be manipulated with the
@@ -190,6 +190,7 @@ control as usage 2 under page 0xffff, in the
 .Qq Mouse
 collection.
 The following can be used to switch this LED off:
+.Pp
 .Dl $ usbhidctl -f /dev/mouse -w Mouse.0xffff:2=0
 .Sh SEE ALSO
 .Xr usbhidaction 1 ,

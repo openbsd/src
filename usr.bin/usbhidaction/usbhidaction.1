@@ -1,4 +1,4 @@
-.\" $OpenBSD: usbhidaction.1,v 1.4 2003/06/10 09:12:12 jmc Exp $
+.\" $OpenBSD: usbhidaction.1,v 1.5 2004/04/03 21:01:25 jmc Exp $
 .\" $NetBSD: usbhidaction.1,v 1.6 2002/01/18 14:38:59 augustss Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,11 +43,9 @@
 .Nd perform actions according to USB HID controls
 .Sh SYNOPSIS
 .Nm
+.Op Fl div
 .Fl c Ar config-file
-.Op Fl d
-.Op Fl i
 .Fl f Ar device
-.Op Fl v
 .Ar arg ...
 .Sh DESCRIPTION
 .Nm
@@ -63,8 +61,6 @@ The options are as follows:
 Specify a path name for the config file.
 .It Fl d
 Toggle the daemon flag.
-.It Fl i
-Ignore HID items in the config file that do not exist in the device.
 .It Fl f Ar device
 Specify a path name for the device to operate on.
 If
@@ -73,6 +69,8 @@ is numeric, it is taken to be the USB HID device number.
 If it is a relative path, it is taken to be the name of the device under
 .Pa /dev .
 An absolute path is taken to be the literal device pathname.
+.It Fl i
+Ignore HID items in the config file that do not exist in the device.
 .It Fl v
 Be verbose, and do not become a daemon.
 .El

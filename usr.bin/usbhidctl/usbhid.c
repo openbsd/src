@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbhid.c,v 1.4 2002/05/10 00:09:17 nate Exp $	*/
+/*	$OpenBSD: usbhid.c,v 1.5 2004/04/03 21:01:25 jmc Exp $	*/
 /*      $NetBSD: usbhid.c,v 1.22 2002/02/20 20:30:42 christos Exp $ */
 
 /*
@@ -759,15 +759,15 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "Usage: %s -f device [-t tablefile] [-l] [-v] -a\n",
+	fprintf(stderr, "Usage: %s -f device [-t table] [-lv] -a\n",
 	    __progname);
-	fprintf(stderr, "       %s -f device [-t tablefile] [-v] -r\n",
-	    __progname);
-	fprintf(stderr,
-	    "       %s -f device [-t tablefile] [-l] [-n] [-v] name ...\n",
+	fprintf(stderr, "       %s -f device [-t table] [-v] -r\n",
 	    __progname);
 	fprintf(stderr,
-	    "       %s -f device [-t tablefile] -w name=value ...\n",
+	    "       %s -f device [-t table] [-lnv] name ...\n",
+	    __progname);
+	fprintf(stderr,
+	    "       %s -f device [-t table] -w name=value ...\n",
 	    __progname);
 	exit(1);
 }
