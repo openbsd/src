@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.175 2003/02/04 01:35:08 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.176 2003/02/06 16:34:51 henning Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -16,7 +16,7 @@ BIN1=	bootptab changelist ccd.conf csh.cshrc csh.login csh.logout \
 	daily dhcpd.conf dhcpd.interfaces exports ftpusers \
 	ftpchroot gettytab group hosts hosts.lpd inetd.conf \
 	ksh.kshrc locate.rc man.conf monthly motd mrouted.conf \
-	myname netstart networks newsyslog.conf pf.conf \
+	myname netstart networks newsyslog.conf \
 	phones printcap protocols rbootd.conf rc rc.conf rc.local \
 	rc.securelevel rc.shutdown remote rpc security services \
 	shells syslog.conf weekly etc.${MACHINE}/disktab dhclient.conf \
@@ -31,6 +31,7 @@ BIN1+=	wsconsctl.conf
 # -rw-rw-r--
 BIN2=	motd
 
+NAMEDB=	localhost.rev localhost.v6.rev localhost.zone root.cache
 PCS=	pcs750.bin
 WCS1=	wcs fppwcs poc poc1 poc2 fppoc
 WCS2=	fpevent fppwcs fppwcs_dual hdcwcs load_diags start_fpp wcs wcs_dual
@@ -76,6 +77,7 @@ distribution-etc-root-var: distrib-dirs
 	${INSTALL} -c -o root -g wheel -m 600 master.passwd ${DESTDIR}/etc
 	pwd_mkdb -p -d ${DESTDIR}/etc /etc/master.passwd
 	${INSTALL} -c -o root -g wheel -m 644 moduli ${DESTDIR}/etc
+	${INSTALL} -c -o root -g wheel -m 600 pf.conf ${DESTDIR}/etc
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 555 \
 	    etc.${MACHINE}/MAKEDEV ${DESTDIR}/dev
 	cd root; \
