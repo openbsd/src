@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.128 2003/08/01 17:55:54 deraadt Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.129 2003/08/08 02:55:17 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -1381,7 +1381,7 @@ ubsec_callback2(struct ubsec_softc *sc, struct ubsec_q2 *q)
 		    rng->rng_buf.dma_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
 		p = (u_int32_t *)rng->rng_buf.dma_vaddr;
 		for (i = 0; i < UBSEC_RNG_BUFSIZ; p++, i++)
-			add_true_randomness(letoh32(*p));
+			add_true_randomness(*p);
 		rng->rng_used = 0;
 		timeout_add(&sc->sc_rngto, sc->sc_rnghz);
 		break;
