@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Check.pm,v 1.1 2004/08/06 12:05:08 espie Exp $
+# $OpenBSD: Check.pm,v 1.2 2005/03/05 11:02:35 espie Exp $
 # Copyright (c) 2000-2004 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -46,7 +46,7 @@ sub found($$)
 #
 #   reparse the subject we're about to add, and check whether it makes
 #   sense, e.g., is there a man page around.
-sub verify_subject
+sub verify_subject($$)
 {
     local $_ = shift;
     my $filename = shift;

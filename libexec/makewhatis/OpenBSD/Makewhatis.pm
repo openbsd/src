@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Makewhatis.pm,v 1.4 2004/08/07 07:52:10 espie Exp $
+# $OpenBSD: Makewhatis.pm,v 1.5 2005/03/05 11:02:35 espie Exp $
 # Copyright (c) 2000-2004 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -22,11 +22,11 @@ package OpenBSD::Makewhatis;
 my ($picky, $testmode);
 
 
-# $subjects = scan_manpages($list)
+# $subjects = scan_manpages(\@list)
 #
 #   scan a set of manpages, return list of subjects
 #
-sub scan_manpages
+sub scan_manpages($)
 {
     my $list = shift;
     local $_;
@@ -84,7 +84,7 @@ sub scan_manpages
 #
 #   build index for $dir
 #
-sub build_index
+sub build_index($)
 {
     require OpenBSD::Makewhatis::Find;
     require OpenBSD::Makewhatis::Whatis;
@@ -95,7 +95,11 @@ sub build_index
     OpenBSD::Makewhatis::Whatis::write($subjects, $dir);
 }
 
-sub merge
+# merge($dir, \@pages)
+#
+#   merge set of pages into directory index
+#
+sub merge($$)
 {
 	require OpenBSD::Makewhatis::Whatis;
 
@@ -107,16 +111,20 @@ sub merge
 	my $whatis = "$mandir/whatis.db";
 	my $subjects = scan_manpages($args);
 	if (open(my $old, '<', $whatis)) {
-		while (<$old>) {
-		    chomp;
-		    push(@$subjects, $_);
+		while (my $l = <$old>) {
+		    chomp $l;
+		    push(@$subjects, $l);
 		}
 		close($old);
 	}
 	OpenBSD::Makewhatis::Whatis::write($subjects, $mandir);
 }
 
-sub remove
+# remove(dir, \@pages)
+#
+#   remove set of pages from directory index
+#
+sub remove($$)
 {
 	require OpenBSD::Makewhatis::Whatis;
 
@@ -126,33 +134,40 @@ sub remove
 	}
 	my $whatis = "$mandir/whatis.db";
 	open(my $old, '<', $whatis) or
-	    die "$0 $whatis to merge with";
+	    die "$0: can't open $whatis to merge with: $!";
 	my $subjects = scan_manpages($args);
 	my %remove = map {$_ => 1 } @$subjects;
 	$subjects = [];
-	while (<$old>) {
-	    chomp;
-	    push(@$subjects, $_) unless defined $remove{$_};
+	while (my $l = <$old>) {
+	    chomp $l;
+	    push(@$subjects, $l) unless defined $remove{$l};
 	}
 	close($old);
 	OpenBSD::Makewhatis::Whatis::write($subjects, $mandir);
 }
 
-sub default_dirs
+# $dirs = default_dirs()
+#
+#   read list of default directories from man.conf
+#
+sub default_dirs()
 {
-	local $_;
 	my $args=[];
 	open(my $conf, '<', '/etc/man.conf') or 
 	    die "$0: Can't open /etc/man.conf";
-	while (<$conf>) {
-	    chomp;
-	    push(@$args, $1) if /^_whatdb\s+(.*)\/whatis\.db\s*$/;
+	while (my $l = <$conf>) {
+	    chomp $l;
+	    push(@$args, $1) if $l =~ m/^_whatdb\s+(.*)\/whatis\.db\s*$/;
 	}
 	close $conf;
 	return $args;
 }
 
-sub makewhatis
+# makewhatis(\@args, \%opts)
+#
+#   glue for front-end, see makewhatis(8)
+#
+sub makewhatis($$)
 {
 	my ($args, $opts) = @_;
 	if (defined $opts->{'p'}) {

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Find.pm,v 1.1 2004/08/06 12:05:08 espie Exp $
+# $OpenBSD: Find.pm,v 1.2 2005/03/05 11:02:35 espie Exp $
 # Copyright (c) 2000-2004 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -25,19 +25,19 @@ use File::Find;
 #
 #   find all manpages under $dir, trim some duplicates.
 #
-sub find_manpages
+sub find_manpages($)
 {
     my $dir = shift;
     my ($list, %nodes);
     $list=[];
     find(
 	sub {
-	return unless /\.[\dln]\w*(?:\.Z|\.gz)?$/;
-	return unless -f $_;
-	my $unique = (stat _)[0]."/".(stat _)[1];
-	return if defined $nodes{$unique};
-	$nodes{$unique} = 1;
-	push(@$list, $File::Find::name);
+	    return unless m/\.[\dln]\w*(?:\.Z|\.gz)?$/;
+	    return unless -f $_;
+	    my $unique = (stat _)[0]."/".(stat _)[1];
+	    return if defined $nodes{$unique};
+	    $nodes{$unique} = 1;
+	    push(@$list, $File::Find::name);
 	}, $dir);
     return $list;
 }

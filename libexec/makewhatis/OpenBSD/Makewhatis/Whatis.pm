@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Whatis.pm,v 1.2 2004/08/24 08:29:30 espie Exp $
+# $OpenBSD: Whatis.pm,v 1.3 2005/03/05 11:02:35 espie Exp $
 # Copyright (c) 2000-2004 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -33,7 +33,6 @@ sub write
 {
     my ($list, $dir) = @_;
     my $f = "$dir/whatis.db";
-    local $_;
 
     my ($out, $tempname);
     ($out, $tempname) = tempfile('/tmp/makewhatis.XXXXXXXXXX') or die "$0: Can't open temporary file";
@@ -41,10 +40,10 @@ sub write
     my @sorted = sort @$list;
     my $last;
 
-    while ($_ = shift @sorted) {
-    	next if length > MAXLINELEN;
-	print $out $_, "\n" unless defined $last and $_ eq $last;
-	$last = $_;
+    while (my $l = shift @sorted) {
+    	next if length $l > MAXLINELEN;
+	print $out $l, "\n" unless defined $last and $l eq $last;
+	$last = $l;
     }
     close $out;
     if (compare($tempname, $f) == 0) {

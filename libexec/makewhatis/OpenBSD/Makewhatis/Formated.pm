@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Formated.pm,v 1.2 2004/12/24 00:00:04 espie Exp $
+# $OpenBSD: Formated.pm,v 1.3 2005/03/05 11:02:35 espie Exp $
 # Copyright (c) 2000-2004 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -18,7 +18,7 @@ use strict;
 use warnings;
 package OpenBSD::Makewhatis::Formated;
 
-# add_formated_subject($subjects, $_, $section):
+# add_formated_subject($subjects, $_, $section, $filename, $picky):
 #   add subject $_ to the list of current $subjects, in section $section.
 #
 sub add_formated_subject
@@ -73,7 +73,7 @@ sub handle
     my $foundname = 0;
     while (<$file>) {
 	chomp;
-	if (/^$/) {
+	if (m/^$/) {
 	    # perl aggregates several subjects in one manpage
 	    # so we don't stop after we've got one subject
 	    add_formated_subject(\@lines, $subject, $section, $filename, $picky) 
