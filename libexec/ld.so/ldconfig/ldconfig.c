@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldconfig.c,v 1.10 2002/05/24 04:17:00 deraadt Exp $	*/
+/*	$OpenBSD: ldconfig.c,v 1.11 2002/05/24 19:00:17 drahn Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -368,11 +368,11 @@ buildhints()
 
 		/* Insert strings in string table */
 		bp->hi_namex = str_index;
-		strcpy(strtab + str_index, shp->name);
+		strlcpy(strtab + str_index, shp->name, strtab_sz - str_index);
 		str_index += 1 + strlen(shp->name);
 
 		bp->hi_pathx = str_index;
-		strcpy(strtab + str_index, shp->path);
+		strlcpy(strtab + str_index, shp->path, strtab_sz - str_index);
 		str_index += 1 + strlen(shp->path);
 
 		/* Copy versions */
@@ -381,7 +381,7 @@ buildhints()
 	}
 
 	/* Copy search directories */
-	strcpy(strtab + str_index, dir_list);
+	strlcpy(strtab + str_index, dir_list, strtab_sz - str_index);
 	str_index += 1 + strlen(dir_list);
 
 	/* Sanity check */
