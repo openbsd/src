@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipnat.c,v 1.13 1997/02/14 11:02:05 niklas Exp $	*/
+/*	$OpenBSD: ipnat.c,v 1.14 1997/06/17 10:42:08 provos Exp $	*/
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
  *
@@ -704,9 +704,12 @@ int opts;
 	FILE	*fp;
 	int	linenum = 1;
 
-	if (strcmp(file, "-"))
-		fp = fopen(file, "r");
-	else
+	if (strcmp(file, "-")) {
+		if ((fp = fopen(file, "r")) == NULL) {
+			perror("fopen");
+			exit(-1);
+		}
+	} else
 		fp = stdin;
 
 	while (fgets(line, sizeof(line) - 1, fp)) {
