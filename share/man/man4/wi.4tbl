@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.5 2002/04/05 19:00:50 millert Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.6 2002/04/05 20:33:33 mickey Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -245,6 +245,7 @@ command.
 .Xr an 4 ,
 .Xr arp 4 ,
 .Xr netintro 4 ,
+.Xr ifmedia 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8 ,
 .Xr wicontrol 8
