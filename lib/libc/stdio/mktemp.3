@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mktemp.3,v 1.10 1998/03/16 22:32:31 deraadt Exp $
+.\"	$OpenBSD: mktemp.3,v 1.11 1998/06/30 23:03:11 deraadt Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,6 +43,8 @@
 .Fn mktemp "char *template"
 .Ft int
 .Fn mkstemp "char *template"
+.Ft int
+.Fn mkstemps "char *template, int suffixlen"
 .Ft char *
 .Fn mkdtemp "char *template"
 .Sh DESCRIPTION
@@ -83,6 +85,16 @@ makes the same replacement to the template and creates the template file,
 mode 0600, returning a file descriptor opened for reading and writing.
 This avoids the race between testing for a file's existence and opening it
 for use.
+.Pp
+The
+.Fn mkstemps
+function acts the same as
+.Fn mkstemp ,
+except it permits a suffix to exist in the template.  The template
+should be of the form
+.Pa /tmp/tmpXXXXXXsuffix .
+.Fn mkstemps
+is told the length of the suffix string, ie. strlen("suffix");
 .Pp
 The
 .Fn mkdtemp
@@ -138,6 +150,19 @@ to any value specified by the
 function.
 .Pp
 The
+.Fn mkstemps
+function
+may also set
+.Va errno
+to any value specified by the
+.Xr open 2
+function or,
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The suffix length is longer than the template length.
+.El
+.Pp
+The
 .Fn mkdtemp
 function
 may also set
@@ -177,7 +202,9 @@ will output a warning message whenever it links code that uses the
 .Pp
 The
 .Fn mkdtemp
-function is nonstandard and should not be used if portability
+and
+.Fn mkstemps
+functions are nonstandard and should not be used if portability
 is required.
 .Sh SEE ALSO
 .Xr chmod 2 ,
@@ -198,3 +225,7 @@ The
 .Fn mkdtemp
 function appeared in
 .Ox 2.2 .
+The
+.Fn mkstemps
+function appeared in
+.Ox 2.3 .

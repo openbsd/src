@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.21 1998/05/13 08:50:52 deraadt Exp $ */
+/*	$OpenBSD: unistd.h,v 1.22 1998/06/30 23:03:09 deraadt Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -133,6 +133,7 @@ int	 iruserok __P((u_int32_t, int, const char *, const char *));
 int	 lchown __P((const char *, uid_t, gid_t));
 char	*mkdtemp __P((char *));
 int	 mkstemp __P((char *));
+int	 mkstemps __P((char *, int));
 char	*mktemp __P((char *));
 int	 nfssvc __P((int, void *));
 int	 nice __P((int));
