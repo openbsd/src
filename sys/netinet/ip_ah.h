@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.h,v 1.2 1997/02/24 14:06:37 niklas Exp $	*/
+/*	$OpenBSD: ip_ah.h,v 1.3 1997/02/24 19:42:32 angelos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -78,11 +78,11 @@ struct ahstat
 struct ahhmacmd5
 {
         u_int8_t        ah_nh;                  /* Next header (protocol) */
-        u_int8_t        ah_hl;                 /* AH length, in 32-bit words */
+        u_int8_t        ah_hl;                  /* AH length, in 32-bit words */
         u_int16_t       ah_rv;                  /* reserved, must be 0 */
         u_int32_t       ah_spi;                 /* Security Parameters Index */
         u_int64_t       ah_rpl;                 /* Replay prevention */
-        u_int8_t        ah_data[AHHMACMD5_AMAX];/*  Authenticator */
+        u_int8_t        ah_data[AHHMACMD5_AMAX];/* Authenticator */
 };
 
 struct ahhmacmd5_xencap
@@ -115,12 +115,12 @@ struct ahhmacmd5_xdata
 
 struct ahhmacsha1
 {
-        u_int8_t        ah_nh;                  /* Next header (protocol) */
+        u_int8_t        ah_nh;                 /* Next header (protocol) */
         u_int8_t        ah_hl;                 /* AH length, in 32-bit words */
-        u_int16_t       ah_rv;                  /* reserved, must be 0 */
-        u_int32_t       ah_spi;                 /* Security Parameters Index */
-        u_int64_t       ah_rpl;                 /* Replay prevention */
-        u_int8_t        ah_data[AHHMACSHA1_AMAX];/*  Authenticator */
+        u_int16_t       ah_rv;                 /* reserved, must be 0 */
+        u_int32_t       ah_spi;                /* Security Parameters Index */
+        u_int64_t       ah_rpl;                /* Replay prevention */
+        u_int8_t        ah_data[AHHMACSHA1_AMAX];/* Authenticator */
 };
 
 struct ahhmacsha1_xencap
@@ -146,7 +146,7 @@ struct ahhmacsha1_xdata
 struct ahmd5
 {
         u_int8_t        ah_nh;                  /* Next header (protocol) */
-        u_int8_t        ah_hl;          /* AH length, in 32-bit words */
+        u_int8_t        ah_hl; 		        /* AH length, in 32-bit words */
         u_int16_t       ah_rv;                  /* reserved, must be 0 */
         u_int32_t       ah_spi;                 /* Security Parameters Index */
         u_int8_t        ah_data[AHMD5_AMAX];    /*  */
