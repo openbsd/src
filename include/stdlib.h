@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.10 1999/06/11 22:47:48 espie Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.11 1999/11/27 13:20:25 espie Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -50,7 +50,10 @@ typedef	_BSD_SIZE_T_	size_t;
 #endif
 
 #ifdef	_BSD_WCHAR_T_
+/* in C++, wchar_t is a built-in type */
+#ifndef __cplusplus
 typedef	_BSD_WCHAR_T_	wchar_t;
+#endif
 #undef	_BSD_WCHAR_T_
 #endif
 
