@@ -2021,6 +2021,7 @@
 ./usr/local/libdata/perl5/site_perl/hppa-openbsd
 ./usr/mdec/boot
 ./usr/mdec/boot.lif
+./usr/mdec/cdboot
 ./usr/mdec/mkboot
 ./usr/mdec/sdboot
 ./usr/mdec/stboot
