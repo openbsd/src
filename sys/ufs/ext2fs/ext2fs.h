@@ -1,5 +1,5 @@
-/*	$OpenBSD: ext2fs.h,v 1.4 2000/04/26 23:24:39 jasoni Exp $	*/
-/*	$NetBSD: ext2fs.h,v 1.1 1997/06/11 09:33:37 bouyer Exp $	*/
+/*	$OpenBSD: ext2fs.h,v 1.5 2001/09/18 00:06:21 art Exp $	*/
+/*	$NetBSD: ext2fs.h,v 1.10 2000/01/28 16:00:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -38,6 +38,8 @@
  *  Modified for ext2fs by Manuel Bouyer.
  */
 
+#include <machine/endian.h>
+
 /*
  * Each disk drive contains some number of file systems.
  * A file system consists of a number of cylinder groups.
@@ -57,8 +59,8 @@
 #define SBSIZE		1024
 #define	BBOFF		((off_t)(0))
 #define	SBOFF		((off_t)(BBOFF + BBSIZE))
-#define	BBLOCK		((daddr_t)(0))
-#define	SBLOCK		((daddr_t)(BBLOCK + BBSIZE / DEV_BSIZE))
+#define	BBLOCK		((ufs_daddr_t)(0))
+#define	SBLOCK		((ufs_daddr_t)(BBLOCK + BBSIZE / DEV_BSIZE))
 
 /*
  * Addresses stored in inodes are capable of addressing blocks
@@ -147,18 +149,18 @@ struct ext2fs {
 struct m_ext2fs {
 	struct ext2fs e2fs;
 	u_char	e2fs_fsmnt[MAXMNTLEN];	/* name mounted on */
-	int8_t	e2fs_ronly;		/* mounted read-only flag */
-	int8_t	e2fs_fmod;		/* super block modified flag */
-	int32_t	e2fs_bsize;		/* block size */
-	int32_t e2fs_bshift;		/* ``lblkno'' calc of logical blkno */
-	int32_t e2fs_bmask;		/* ``blkoff'' calc of blk offsets */
-	int64_t e2fs_qbmask;		/* ~fs_bmask - for use with quad size */
-	int32_t	e2fs_fsbtodb;		/* fsbtodb and dbtofsb shift constant */
-	int32_t	e2fs_ncg;		/* number of cylinder groups */
-	int32_t	e2fs_ngdb;		/* number of group descriptor block */
-	int32_t	e2fs_ipb;		/* number of inodes per block */
-	int32_t	e2fs_itpg;		/* number of inode table per group */
-	struct	ext2_gd *e2fs_gd;	/* group descripors */
+	int8_t	e2fs_ronly;	/* mounted read-only flag */
+	int8_t	e2fs_fmod;	/* super block modified flag */
+	int32_t	e2fs_bsize;	/* block size */
+	int32_t e2fs_bshift;	/* ``lblkno'' calc of logical blkno */
+	int32_t e2fs_bmask;	/* ``blkoff'' calc of blk offsets */
+	int64_t e2fs_qbmask;	/* ~fs_bmask - for use with quad size */
+	int32_t	e2fs_fsbtodb;	/* fsbtodb and dbtofsb shift constant */
+	int32_t	e2fs_ncg;	/* number of cylinder groups */
+	int32_t	e2fs_ngdb;	/* number of group descriptor block */
+	int32_t	e2fs_ipb;	/* number of inodes per block */
+	int32_t	e2fs_itpg;	/* number of inode table per group */
+	struct	ext2_gd *e2fs_gd; /* group descripors */
 };
 
 
@@ -167,8 +169,8 @@ struct m_ext2fs {
  * Filesystem identification
  */
 #define	E2FS_MAGIC	0xef53	/* the ext2fs magic number */
-#define E2FS_REV0	0	/* revision level */
-#define E2FS_REV1	1	/* revision level */
+#define E2FS_REV0	0	/* revision levels */
+#define E2FS_REV1	1	/* revision levels */
 
 /* compatible/imcompatible features */
 #define EXT2F_COMPAT_PREALLOC		0x0001
@@ -235,17 +237,27 @@ cg_has_sb(i)
 }
 
 /*
- * EXT2FS metadatas are stored in little-endian byte order.  These macros
- * should aide in support for big-endian machines.
+ * EXT2FS metadatas are stored in little-endian byte order. These macros
+ * helps reading theses metadatas
  */
-#define h2fs16(x) (x)
-#define h2fs32(x) (x)
-#define fs2h16(x) (x)
-#define fs2h32(x) (x)
-#define e2fs_sbload(old, new) bcopy((old), (new), SBSIZE);
-#define e2fs_cgload(old, new, size) bcopy((old), (new), (size));
-#define e2fs_sbsave(old, new) bcopy((old), (new), SBSIZE);
-#define e2fs_cgsave(old, new, size) bcopy((old), (new), (size));
+
+#define h2fs16(x) htole16(x)
+#define h2fs32(x) htole32(x)
+#define fs2h16(x) letoh16(x)
+#define fs2h32(x) letoh32(x)
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define e2fs_sbload(old, new) memcpy((new), (old), SBSIZE);
+#define e2fs_cgload(old, new, size) memcpy((new), (old), (size));
+#define e2fs_sbsave(old, new) memcpy((new), (old), SBSIZE);
+#define e2fs_cgsave(old, new, size) memcpy((new), (old), (size));
+#else
+void e2fs_sb_bswap __P((struct ext2fs *, struct ext2fs *));
+void e2fs_cg_bswap __P((struct ext2_gd *, struct ext2_gd *, int));
+#define e2fs_sbload(old, new) e2fs_sb_bswap((old), (new))
+#define e2fs_cgload(old, new, size) e2fs_cg_bswap((old), (new), (size));
+#define e2fs_sbsave(old, new) e2fs_sb_bswap((old), (new))
+#define e2fs_cgsave(old, new, size) e2fs_cg_bswap((old), (new), (size));
+#endif
 
 /*
  * Turn file system block numbers into disk block addresses.

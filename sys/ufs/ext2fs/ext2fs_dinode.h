@@ -1,5 +1,4 @@
-/*	$OpenBSD: ext2fs_dinode.h,v 1.4 2000/04/26 23:24:40 jasoni Exp $	*/
-/*	$NetBSD: ext2fs_dinode.h,v 1.1 1997/06/11 09:33:48 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_dinode.h,v 1.6 2000/01/26 16:21:33 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -15,17 +14,17 @@
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *	notice, this list of conditions and the following disclaimer.
+ *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
- *	notice, this list of conditions and the following disclaimer in the
- *	documentation and/or other materials provided with the distribution.
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *	must display the following acknowledgement:
+ *    must display the following acknowledgement:
  *	This product includes software developed by the University of
  *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
- *	may be used to endorse or promote products derived from this software
- *	without specific prior written permission.
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -76,16 +75,16 @@ struct ext2fs_dinode {
 	u_int32_t	e2di_dtime;	/*	20: Deletion time */
 	u_int16_t	e2di_gid;	/*  24: Owner GID */
 	u_int16_t	e2di_nlink;	/*  26: File link count */
-	u_int32_t	e2di_nblock;/*  28: Blocks count */
+	u_int32_t	e2di_nblock;	/*  28: Blocks count */
 	u_int32_t	e2di_flags;	/*  32: Status flags (chflags) */
 	u_int32_t	e2di_linux_reserved1; /* 36 */
 	u_int32_t	e2di_blocks[NDADDR+NIADDR]; /* 40: disk blocks */
-	u_int32_t	e2di_gen;		/* 100: generation number (file version) */
-	u_int32_t	e2di_facl;		/* 104: file ACL (not implemented) */
-	u_int32_t	e2di_dacl;		/* 108: dir ACL (not implemented) */
-	u_int32_t	e2di_faddr;		/* 112: fragment address */
-	u_int8_t	e2di_nfrag;		/* 116: fragment number */
-	u_int8_t	e2di_fsize;		/* 117: fragment size */
+	u_int32_t	e2di_gen;	/* 100: generation number */
+	u_int32_t	e2di_facl;	/* 104: file ACL (not implemented) */
+	u_int32_t	e2di_dacl;	/* 108: dir ACL (not implemented) */
+	u_int32_t	e2di_faddr;	/* 112: fragment address */
+	u_int8_t	e2di_nfrag;	/* 116: fragment number */
+	u_int8_t	e2di_fsize;	/* 117: fragment size */
 	u_int16_t	e2di_linux_reserved2; /* 118 */
 	u_int32_t	e2di_linux_reserved3[2]; /* 120 */
 };
@@ -117,7 +116,7 @@ struct ext2fs_dinode {
 #define EXT2_UNRM		0x00000002	/* Undelete */
 #define EXT2_COMPR		0x00000004	/* Compress file */
 #define EXT2_SYNC		0x00000008	/* Synchronous updates */
-#define EXT2_IMMUTABLE		0x00000010	/* Immutable file */
+#define EXT2_IMMUTABLE	0x00000010	/* Immutable file */
 #define EXT2_APPEND		0x00000020	/* writes to file may only append */
 #define EXT2_NODUMP		0x00000040	/* do not dump file */
 
@@ -133,11 +132,14 @@ struct ext2fs_dinode {
  */
 
 #define e2di_rdev		e2di_blocks[0]
-#define e2di_shortlink		e2di_blocks
+#define e2di_shortlink	e2di_blocks
 
-/*
- * e2fs needs byte swapping on big-endian systems.  Use macros here to 
- * aide in big-endian support.
- */
-#define e2fs_iload(old, new) bcopy((old),(new),sizeof(struct ext2fs_dinode))
-#define e2fs_isave(old, new) bcopy((old),(new),sizeof(struct ext2fs_dinode))
+/* e2fs needs byte swapping on big-endian systems */
+#if BYTE_ORDER == LITTLE_ENDIAN
+#	define e2fs_iload(old, new) memcpy((new),(old),sizeof(struct ext2fs_dinode))
+#	define e2fs_isave(old, new) memcpy((new),(old),sizeof(struct ext2fs_dinode))
+#else
+void e2fs_i_bswap __P((struct ext2fs_dinode *, struct ext2fs_dinode *));
+#	define e2fs_iload(old, new) e2fs_i_bswap((old), (new))
+#	define e2fs_isave(old, new) e2fs_i_bswap((old), (new))
+#endif
