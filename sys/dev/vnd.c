@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.45 2004/03/04 01:22:50 tedu Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.46 2004/05/22 18:26:52 otto Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -840,8 +840,8 @@ vndioctl(dev, cmd, addr, flag, p)
 		vnd->sc_flags |= VNF_INITED;
 #ifdef DEBUG
 		if (vnddebug & VDB_INIT)
-			printf("vndioctl: SET vp %p size %x\n",
-			    vnd->sc_vp, vnd->sc_size);
+			printf("vndioctl: SET vp %p size %llx\n",
+			    vnd->sc_vp, (unsigned long long)vnd->sc_size);
 #endif
 
 		/* Attach the disk. */
@@ -974,7 +974,7 @@ vndsetcred(vnd, cred)
 
 	/* XXX: Horrible kludge to establish credentials for NFS */
 	aiov.iov_base = tmpbuf;
-	aiov.iov_len = min(DEV_BSIZE, dbtob(vnd->sc_size));
+	aiov.iov_len = MIN(DEV_BSIZE, dbtob((off_t)vnd->sc_size));
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_offset = 0;
