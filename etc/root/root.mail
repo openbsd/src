@@ -1,9 +1,9 @@
-From deraadt@do-not-reply.openbsd.org Tue Dec  1 04:50:00 MDT 1999
+From deraadt@do-not-reply.openbsd.org Tue May  2 04:50:00 MDT 2000
 Return-Path: root
-Date: Tue Dec  1 04:50:00 MDT 1999
+Date: Tue May  2 04:50:00 MDT 2000
 From: deraadt@do-not-reply.openbsd.org (Theo de Raadt)
 To: root
-Subject: Welcome to OpenBSD 2.6!  Secure by Default!
+Subject: Welcome to OpenBSD 2.7!  Secure by Default!
 
 This message attempts to describe the most basic initial questions that a
 system administrator of an OpenBSD box might have.  You are urged to save
@@ -23,38 +23,129 @@ further information regarding configuration in the file /usr/X11R6/README.
 
 Several popular binary packages (pre-compiled applications) are available
 for most architectures.  If you installed from a CD-ROM the packages
-are on the same CD-ROM you installed from in the directory 2.6/packages.
+are on the same CD-ROM you installed from in the directory 2.7/packages.
 
 CD-ROM Space permitted us to include the following packages for the most common
 architectures:
 
-    Xaw3d-1.5.tgz	    aalib-1.2.tgz	autoconf-2.13.tgz
-    bash-2.03.tgz	    bison-1.27.tgz	bzip2-0.9.5d.tgz
-    compface-1.0.tgz	    emacs-20.3.tgz	enscript-1.6.1.tgz
-    ethereal-0.7.4.tgz	    fetchmail-5.1.0.tgz	gettext-0.10.35.tgz
-    ghostscript-5.10.tgz    gimp-1.1.9.tgz	glib-1.2.4.tgz
-    gmake-3.77.tgz	    gnuplot-3.7.tgz	gtk+-1.2.4.tgz
-    gv-3.5.8.tgz	    id-utils-3.2d.tgz	iozone-3.9.tgz
-    jpeg-6b.tgz		    m4-1.4.tgz		ircii-2.8.2-epic3.004.tgz
-    metamail-2.7.tgz	    mm-1.0.11.tgz	mpeg_lib-1.2.1.tgz
-    nmh-1.0.tgz		    pine-4.10.tgz	netpipes-4.1.1-export.tgz
-    png-1.0.3.tgz	    screen-3.7.6.tgz	sharutils-4.2.tgz
-    sniffit-0.3.5.tgz	    tar-1.13.tgz	tcl-8.0.5.tgz
-    tcsh-6.09.00.tgz	    tiff-3.4b37.tgz	tk-8.0.5.tgz
-    unzip-5.40.tgz	    wget-1.5.3.tgz	xcolors-1.3.tgz
-    xntp3-5.93e-export.tgz	
+   ADMfzap-0.1.tgz         gsm-1.0.10.tgz             png-1.0.3.tgz
+   ADMsmb-0.2.tgz          gtk+-1.2.7.tgz             pngcrush-1.4.1.tgz
+   ADMsnmp-0.1.tgz         gtkglarea-1.2.2.tgz        pop3gwd-1.2.tgz
+   CDDB-1.02.tgz           guavac-1.2.tgz             popa3d-0.4.tgz
+   MIME-Base64-2.11.tgz    gv-3.5.8.tgz               popclient-3.0b6.tgz
+   MPEG-MP3Info-0.71.tgz   ha-0.999b.tgz              poppassd-4.0.tgz
+   Mesa-3.0.tgz            hackdata.tgz               postfix-19991231-pl06.tgz
+   PGPlib.tgz              hexedit-1.1.0.tgz          postgresql-6.5.3.tgz
+   XPostitPlus-2.3.tgz     hoc-1.1.tgz                prc-tools-0.5.0.tgz
+   Xaw3d-1.5.tgz           hping-2.0b53.tgz           procmail-3.14.tgz
+   aalib-1.2.tgz           html-4.0b.tgz              proxy-suite-1.7.tgz
+   abuse-2.0.tgz           httptunnel-3.0.tgz         psutils-1.17-a4.tgz
+   ac3dec-0.5.6.tgz        icmpinfo-1.11.tgz          publicfile-0.52.tgz
+   adcomplain-3.49.tgz     id-utils-3.2d.tgz          qmail-1.03.tgz
+   afterstep-1.8.0.tgz     idiff-1.0.tgz              qmailanalog-0.70.tgz
+   apc-upsd.tgz            indent-2.2.2.tgz           queso-980922.tgz
+   arpcatch.tgz            info2html-1.1.tgz          remind-0.3.tgz
+   arpwatch-2.1a4.tgz      isic-0.05.tgz              rplay-3.3.0.tgz
+   asmail-0.50.tgz         iso12083-1993.tgz          rsync-2.4.1.tgz
+   aterm-0.3.6.tgz         iso8879-1986.tgz           rsynth-2.0.tgz
+   aub-2.0.5.tgz           ispell-3.1.20.tgz          rtty-3.2.tgz
+   autoconf-2.13.tgz       ja-kterm-6.2.0.tgz         rxp-1.1.tgz
+   automake-1.4.tgz        ja-less-3.32p2.48.tgz      rxvt-2.7.2.tgz
+   axe-6.1.2.tgz           ja-nkf-1.62.tgz            samba-2.0.6.tgz
+   bash-1.14.7-static.tgz  jbigkit-1.1.tgz            screen-3.9.5.tgz
+   bash-2.04-static.tgz    jed-0.99.10.tgz            sdd-1.22.tgz
+   beav-1.40-13.tgz        jive-1.1.tgz               serialmail-0.75.tgz
+   bibview-2.2.tgz         joe-2.8.tgz                setquota-0.1.tgz
+   bing-1.0.4.tgz          john-1.6.tgz               sharity-light-1.2.tgz
+   bison-1.27.tgz          jpeg-6b.tgz                sharutils-4.2.tgz
+   blackbox-0.51.3.1.tgz   jpilot-0.98.tgz            shtool-1.4.7.tgz
+   bladeenc-0.92.tgz       kaffe-1.0.5.tgz            slash-3.2.2-e8-x11.tgz
+   blast-1.0.tgz           kakasi-2.3.1.tgz           slash-3.2.2-e8.tgz
+   boehm-gc-4.12.tgz       lclint-2.4b.tgz            slirp-1.0c.tgz
+   bonnie-1.0.tgz          lesstif-0.89.9.tgz         slrn-0.9.6.2.tgz
+   bounix-1.21.tgz         lha-1.14f.tgz              smurflog-2.1.tgz
+   bricons-3.0.tgz         libIDL-0.6.5.tgz           snort-1.5.1.tgz
+   buffer-1.17.1.tgz       libaudiofile-0.1.9.tgz     socket-1.1.tgz
+   bulk_mailer-1.5.tgz     libghttp-1.0.4.tgz         sox-12.15.tgz
+   bvi-1.2.0.tgz           libgii-0.1.tgz             splitvt-1.6.3.tgz
+   bzip2-0.9.5d.tgz        libicq-0.33.tgz            squid-2.2.tgz
+   c2html-0.9.tgz          libident-0.22.tgz          star-1.2.tgz
+   calc-2.11.1t3.0.tgz     libnet-1.0.tgz             starlanes-1.2.2.tgz
+   catdoc-0.90b4.tgz       libnids-1.13.tgz           stat-1.3.tgz
+   cdrecord-1.6.1.tgz      libproplist-0.10.1.tgz     strobe-1.06.tgz
+   cfs-1.3.3.tgz           libslang-1.4.0.tgz         stunnel-3.8.tgz
+   cgichk-3.0.tgz          libtool-1.3.3.tgz          swisswatch-0.06.tgz
+   cgiparse-0.8e.tgz       libxml-1.0.0.tgz           tar-1.13.tgz
+   checkpassword-0.81.tgz  links-0.84.tgz             tcl-8.0.5.tgz
+   clog-1.6.tgz            linux_lib-2.6.1.tgz        tcl-8.3.0.tgz
+   cops-1.04.tgz           linuxdoc-1.1.tgz           tcpblast-1.0.tgz
+   crack-5.0.tgz           logsurfer-1.5.tgz          tcpflow-0.12.tgz
+   ctm.tgz                 lupe-0.07.tgz              tcpreplay-1.0.1.tgz
+   ctwm-3.5.tgz            lzo-1.06.tgz               tcptrace-5.2.1.tgz
+   curl-6.5.2.tgz          m4-1.4.tgz                 tcsh-6.09.00-static.tgz
+   daemontools-0.70.tgz    magicpoint-1.05a.tgz       teTeX_base-1.0.7.tgz
+   dante-1.1.1.tgz         malsync-1.6.tgz            teTeX_texmf-1.0.2.tgz
+   deco-3.8.3.tgz          mawk-1.3.3.tgz             tidy-13jan00.tgz
+   dejagnu-1.3.tgz         mess822-0.58.tgz           tiff-3.5.4.tgz
+   delay-1.4.tgz           metamail-2.7.tgz           tintin-1.5.6.tgz
+   detex-2.6.tgz           mgdiff-1.0.tgz             tircproxy-0.4.3.tgz
+   dgpsip-1.32.tgz         micq-0.4.5.tgz             tk-8.0.5.tgz
+   dialog-0.6z.tgz         mirror-2.9.tgz             tk-8.3.0.tgz
+   dot-forward-0.71.tgz    mm-1.0.12.tgz              tosha-0.6.tgz
+   dxpc-3.8.0.tgz          movemail-1.0.tgz           tracker-5.3.tgz
+   electricfence-2.0.5.tgz mp3cddb.tgz                trafshow-3.1.tgz
+   emacs-20.3-no_x11.tgz   mp3encode-1.10.tgz         transfig-3.2.3.tgz
+   emacs-20.3.tgz          mp3info-0.2.16.tgz         tvtwm-pl11.tgz
+   enscript-1.6.1.tgz      mpage-2.5-a4.tgz           ucspi-tcp-0.88.tgz
+   epic4-pre2.507.tgz      mpage-2.5-legal.tgz        unace-1.2b.tgz
+   es-0.9a1.tgz            mpage-2.5-us-letter.tgz    unzip-5.40.tgz
+   esound-0.2.16.tgz       mpeg_lib-1.3.1.tgz         usbutil-0.4.tgz
+   ethereal-0.8.7.tgz      mpeg_play-2.4.tgz          viewfax-2.3.tgz
+   expect-5.31.tgz         mpegaudio-3.9.tgz          viz-1.1.1.tgz
+   ezmlm-0.53.tgz          mpg123-0.59r.tgz           vrfy-99.05.22.tgz
+   fastforward-0.51.tgz    mrtg-2.8.12.tgz            waveplay-1.0.tgz
+   fetchmail-5.3.8.tgz     mtr-0.41.tgz               wdiff-0.5.tgz
+   figlet-2.2.tgz          mutt-1.0.1i-curses.tgz     weblint-1.020.tgz
+   firewalk-0.8.tgz        mysql-3.22.32.tgz          webmin-0.79.tgz
+   fltk-1.0.7.tgz          nbaudit-1.0.tgz            wget-1.5.3.tgz
+   flwm-0.25.tgz           ncftp-2.4.3.tgz            wide-dhcp-1.4.0.3.tgz
+   fping-1.20.tgz          nedit-5.0.2.tgz            windowmaker-0.62.1.tgz
+   fragrouter-1.6.tgz      nemesis-1.0.tgz            wmx-6pre1.tgz
+   freeciv-1.10.0.tgz      nessus-0.98.3.tgz          wterm-6.2.6.tgz
+   freefonts-0.10.tgz      netatalk-990130.tgz        xcoloredit-1.2.tgz
+   freetype-1.3.tgz        nethack-3.3.0-x11.tgz      xcolors-1.3.tgz
+   freeze-2.5.tgz          nethack-3.3.0.tgz          xemacs-20.4-mule.tgz
+   fxtv-0.48.tgz           netpipe-2.3.tgz            xfig-3.2.3a.tgz
+   gd-1.8.1.tgz            netpipes-4.1.1-export.tgz  xfm-1.3.2.tgz
+   gdbm-1.8.0.tgz          netris-0.5.tgz             xforms-0.88.tgz
+   getbdf-1.0.tgz          newsfetch-1.21.tgz         xkobo-1.11-harder.tgz
+   gettext-0.10.35.tgz     nmap-2.3b18.tgz            xkobo-1.11.tgz
+   ghostscript-5.50.tgz    nmapfe-0.9.5.tgz           xmahjongg-3.3.tgz
+   ghostview-1.5.tgz       nmh-1.0.4.tgz              xmysql-1.9.tgz
+   gicq-0.33.tgz           nsping-0.8.tgz             xmysqladmin-1.0.tgz
+   gif2png-2.3.2.tgz       nspmod-0.1.tgz             xntp3-5.93e-export.tgz
+   giflib-4.1.0.tgz        ntop-1.1.tgz               xpat2-1.04.tgz
+   gifsicle-1.17.tgz       nvi-m17n-1.79.19991117.tgz xpdf-0.90.tgz
+   gimp-1.1.17.tgz         otcl-1.0a4.tgz             xspread-2.1.tgz
+   glib-1.2.7.tgz          par-1.51.tgz               ytalk-3.1.1.tgz
+   gmake-3.78.1.tgz        pchar-1.1.1.tgz            zap-1.1.tgz
+   gnuls-4.0.tgz           php3-3.0.16.tgz            zoo-2.10.1.tgz
+   gnupg-1.0.1.tgz         pilot-link-0.9.3.tgz       zsh-3.0.7-static.tgz
+   gperf-2.7.19981006.tgz  pilot_makedoc-0.7.tgz      zsh-3.1.6-static.tgz
+   gracula-3.0.tgz         pkfonts300-1.0.tgz
+   gsl-0.3b.tgz            plor-0.3.2.tgz
 
 These and many other packages are also available via ftp at
-	ftp://ftp.openbsd.org/pub/OpenBSD/2.6/packages/
+	ftp://ftp.openbsd.org/pub/OpenBSD/2.7/packages/
 If you do not find a package you want on the CD, please go look at your
 nearest FTP mirror site.
 
 Select your architecture and download the tarballs of your choice.  For example
 to install the emacs package for i386, execute
   # mount /dev/cd0a /cdrom
-  # pkg_add /cdrom/2.6/packages/i386/emacs-20.3.tgz
+  # pkg_add -v /cdrom/2.7/packages/i386/emacs-20.3.tgz
 or alternatively install them via FTP thus
-  # pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/2.6/packages/i386/emacs-20.3.tgz
+  # pkg_add -v ftp://ftp.openbsd.org/pub/OpenBSD/2.7/packages/i386/emacs-20.3.tgz
 
 Other important packages which are not permitted on the CD (due to patents) are
 available on our FTP servers (as described above).  In particular, we provide
@@ -70,8 +161,8 @@ which have had a few troublesome routines removed -- the programs listed above
 will not be fully functional as a result.  Libraries which _include_ the
 troublesome routines are available and can be FTP installed, as long as you meet
 the follow (legal) criteria:
-  (1) Outside the USA, no restrictions apply. Use ssl26.tar.gz.
-  (2) Inside the USA, non-commercial entities may install sslUSA26.tar.gz.
+  (1) Outside the USA, no restrictions apply. Use ssl27.tgz.
+  (2) Inside the USA, non-commercial entities may install sslUSA27.tgz.
   (3) Commercial entities in the USA are left in the cold, due to how the
       licences work.  (This is how the USA crypto export policy feels to the
       rest of the world.)
@@ -81,15 +172,31 @@ If you did not install the ssl package yet, it is easily installed at any time
 You are STRONGLY urged to use ssh instead of telnet, rlogin, or rsh!
 
 ssh is included in OpenBSD systems which have shared libraries (i386, sparc,
-mips, m68k), and relies on the ssl26.tar.gz package, which contains the
+mips, m68k), and relies on the ssl27.tgz package, which contains the
 patented RSA code.  This package is available on all our FTP servers, but NOT
 included on the CD. During the system install, this package was probably
-already installed (use pkg_info(1) to see if ssl26 or sslUSA26 are installed).
+already installed (use pkg_info(1) to see if ssl27 or sslUSA27 are installed).
 
-On non-shared library systems (powerpc, m88k, alpha) you should install one
+As of OpenBSD 2.7, the provided ssh implementation (ie. OpenSSH) contains
+support for ssh 2.0 protocol.  This protocol uses the freely-useable DSA
+public key algorithm for key exchange instead of the patented RSA algorithm.
+Full DSA support is included in OpenBSD, and the server is started by default.
+ ssh will therefore work fine as long as you connect to/from a server/client
+which also supports the 2.0 protocol.
+
+The RSA patent expires on September 21, 2000.  After this date, you may use
+either of the previously mentioned ssl27 packages in any environment,
+commercial or otherwise.  After that date, we recommend that you use the
+ssl27 package instead of the sslUSA27, not because there is any real outward
+difference between them, but we feel more comfortable with the quality of the
+non-USA code.
+
+On non-shared library systems (powerpc, m88k, alpha) you could install one
 of the ssh packages provided on the FTP sites:
 	ssh-intl-1.2.27.tgz
 	ssh-usa-1.2.27.tgz
+or you may see if the developer for that architecture has compiled a static
+version of OpenSSH.
 
 Significant efforts were made to centralize all system configuration in the
 /etc directory.  You should be able to find each of the configuration files
@@ -111,8 +218,7 @@ developers who have made OpenBSD what it is, and thus make it possible for this
 wonderful process to continue.  For more information on how you can help,
 please see www.OpenBSD.org/goals.html and visit www.OpenBSD.org/donations.html
 to see a list of those who have donated money, equipment, or other resources
-to ensure OpenBSD continues.  (Thus far, most of those who have donated have
-been developers themselves).
+to ensure OpenBSD continues.
 
 If you wish to ensure that OpenBSD runs better on your machines, please do us
 a favor (after you have your mail system setup!) and type something like:
@@ -122,7 +228,7 @@ including a bit of information about your machine in the subject or the body
 can help us even further.  We will use this information to improve device driver
 support in future releases.  (Please do this using the supplied GENERIC kernel,
 not for a custom compiled kernel, unless you're unable to boot the GENERIC
-kernel).  The device driver  information we get from this helps us fix existing
+kernel).  The device driver information we get from this helps us fix existing
 drivers. Thank you!
 
 (If you used 'mail' to read this message and it scrolled by too quickly,
