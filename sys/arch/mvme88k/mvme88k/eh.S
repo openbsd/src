@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh.S,v 1.42 2003/09/20 13:57:37 miod Exp $   */
+/*   $OpenBSD: eh.S,v 1.43 2003/10/05 20:31:24 miod Exp $   */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -301,10 +301,10 @@ ASLOCAL(Lbadcpupanic)
  * #define PREP(NAME, NUM, BIT, SSBR_STUFF, FLAG_CHECK)
  *
  * This is the "exception processing preparaton" common to all exception
- * processing.  It is used in the following manor:
+ * processing.  It is used in the following manner:
  *
  *	ASGLOBAL(foo_handler)
- *		PREP("foo", 11, DEBUG_FOO_BIT, No_SSBR_Stuff, No_Precheck)
+ *		PREP("foo", 11, DEBUG_FOO_BIT, SSBR_Stuff, Precheck_Stuff)
  *		CALL(_C_LABEL(trapXXX), T_FOO_FAULT, r31)
  *		DONE(DEBUG_FOO_BIT)
  *
@@ -383,10 +383,8 @@ ASLOCAL(Lbadcpupanic)
 #endif
 
 /* Some defines for use with PREP() */
-#define	No_SSBR_Stuff		/* empty */
 #define	Clear_SSBR_Dest \
 	bsr	_ASM_LABEL(clear_dest_ssbr_bit)
-#define	No_Precheck		/* empty */
 #define	Data_Precheck \
 	bb1.n	FLAG_IGNORE_DATA_EXCEPTION, FLAGS, \
 		_ASM_LABEL(ignore_data_exception)
@@ -474,19 +472,19 @@ ASGLOBAL(eh_debug)
 
 /* unknown exception handler */
 GLOBAL(unknown_handler)
-	PREP("unknown", 0, DEBUG_UNKNOWN_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP("unknown", 0, DEBUG_UNKNOWN_BIT,,)
 	CALL(_C_LABEL(m88100_trap), T_UNKNOWNFLT, r30)
 	DONE(DEBUG_UNKNOWN_BIT)
 
 /* interrupt exception handler */
 GLOBAL(interrupt_handler)
-	PREP("interrupt", 1, DEBUG_INTERRUPT_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP("interrupt", 1, DEBUG_INTERRUPT_BIT,,)
 	CALL(_C_LABEL(m88100_trap), T_INT, r30)
 	DONE(DEBUG_INTERRUPT_BIT)
 
 /* instruction access exception handler */
 GLOBAL(instruction_access_handler)
-	PREP("inst", 2, DEBUG_INSTRUCTION_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP("inst", 2, DEBUG_INSTRUCTION_BIT,,)
 	CALL(_C_LABEL(m88100_trap), T_INSTFLT, r30)
 	DONE(DEBUG_INSTRUCTION_BIT)
 
@@ -495,19 +493,19 @@ GLOBAL(instruction_access_handler)
  *  See badaddr() below for info about Data_Precheck.
  */
 GLOBAL(data_exception_handler)
-	PREP("data", 3, DEBUG_DATA_BIT, No_SSBR_Stuff, Data_Precheck)
+	PREP("data", 3, DEBUG_DATA_BIT,, Data_Precheck)
 	/* No need to call m88100_trap(T_DATAFLT) as PREP will do this for us */
 	DONE(DEBUG_DATA_BIT)
 
 /* misaligned access exception handler */
 GLOBAL(misaligned_handler)
-	PREP("misalign", 4, DEBUG_MISALIGN_BIT, Clear_SSBR_Dest, No_Precheck)
+	PREP("misalign", 4, DEBUG_MISALIGN_BIT, Clear_SSBR_Dest,)
 	CALL(_C_LABEL(m88100_trap), T_MISALGNFLT, r30)
 	DONE(DEBUG_MISALIGN_BIT)
 
 /* unimplemented opcode exception handler */
 GLOBAL(unimplemented_handler)
-	PREP("unimp", 5, DEBUG_UNIMPLEMENTED_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP("unimp", 5, DEBUG_UNIMPLEMENTED_BIT,,)
 	CALL(_C_LABEL(m88100_trap), T_ILLFLT, r30)
 	DONE(DEBUG_UNIMPLEMENTED_BIT)
 
@@ -522,25 +520,25 @@ GLOBAL(privilege_handler)
 	bb1.n	RTE_VALID_BIT, r1, 1f	/* skip over if a valid exception */
 	 ldcr	r1, SR2		/* restore r1 */
 	RTE
-1:	PREP("privilege", 6, DEBUG_PRIVILEGE_BIT, Clear_SSBR_Dest, No_Precheck)
+1:	PREP("privilege", 6, DEBUG_PRIVILEGE_BIT, Clear_SSBR_Dest,)
 	CALL(_C_LABEL(m88100_trap), T_PRIVINFLT, r30)
 	DONE(DEBUG_PRIVILEGE_BIT)
 
 /* bounds checking exception handler */
 GLOBAL(bounds_handler)
-	PREP("bounds", 7, DEBUG_BOUNDS_BIT, Clear_SSBR_Dest, No_Precheck)
+	PREP("bounds", 7, DEBUG_BOUNDS_BIT, Clear_SSBR_Dest,)
 	CALL(_C_LABEL(m88100_trap), T_BNDFLT, r30)
 	DONE(DEBUG_BOUNDS_BIT)
 
 /* integer divide-by-zero exception handler */
 GLOBAL(divide_handler)
-	PREP("divide", 8, DEBUG_DIVIDE_BIT, Clear_SSBR_Dest, No_Precheck)
+	PREP("divide", 8, DEBUG_DIVIDE_BIT, Clear_SSBR_Dest,)
 	CALL(_C_LABEL(m88100_trap), T_ZERODIV, r30)
 	DONE(DEBUG_DIVIDE_BIT)
 
 /* integer overflow exception handler */
 GLOBAL(overflow_handler)
-	PREP("overflow", 9, DEBUG_OVERFLOW_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP("overflow", 9, DEBUG_OVERFLOW_BIT,,)
 	CALL(_C_LABEL(m88100_trap), T_OVFFLT, r30)
 	DONE(DEBUG_OVERFLOW_BIT)
 
@@ -548,7 +546,7 @@ GLOBAL(overflow_handler)
 #define	FPp_SSBR_STUFF \
 	bsr	_ASM_LABEL(clear_FPp_ssbr_bit)
 GLOBAL(fp_precise_handler)
-	PREP("FPU precise", 114, DEBUG_FPp_BIT, FPp_SSBR_STUFF, No_Precheck)
+	PREP("FPU precise", 114, DEBUG_FPp_BIT, FPp_SSBR_STUFF,)
 	CALL(_ASM_LABEL(m88100_Xfp_precise), r0, r30)
 	DONE(DEBUG_FPp_BIT)
 
@@ -556,72 +554,72 @@ GLOBAL(fp_precise_handler)
 #define	FPi_SSBR_STUFF \
 	bsr	_ASM_LABEL(clear_FPi_ssbr_bit)
 GLOBAL(fp_imprecise_handler)
-	PREP("FPU imprecise", 115, DEBUG_FPi_BIT, FPi_SSBR_STUFF, No_Precheck)
+	PREP("FPU imprecise", 115, DEBUG_FPi_BIT, FPi_SSBR_STUFF,)
 	CALL(_ASM_LABEL(Xfp_imprecise), r0, r30)
 	DONE(DEBUG_FPi_BIT)
 
 /* All standard system calls.  */
 GLOBAL(syscall_handler)
-	PREP("syscall", 128, DEBUG_SYSCALL_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP("syscall", 128, DEBUG_SYSCALL_BIT,,)
 	ld	r13, r30, GENREG_OFF(13)
 	CALL(_C_LABEL(m88100_syscall), r13, r30)
 	DONE(DEBUG_SYSCALL_BIT)
 
 /* trap 496 comes here */
 GLOBAL(bugtrap)
-	PREP("bugsyscall", 496, DEBUG_BUGCALL_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP("bugsyscall", 496, DEBUG_BUGCALL_BIT,,)
 	ld	r9, r30, GENREG_OFF(9)
 	CALL(_C_LABEL(bugsyscall), r9, r30)
 	DONE(DEBUG_BUGCALL_BIT)
 
 GLOBAL(sigsys)
-	PREP("sigsys", 501, DEBUG_SIGSYS_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP("sigsys", 501, DEBUG_SIGSYS_BIT,,)
 	CALL(_C_LABEL(m88100_trap), T_SIGSYS, r30)
 	DONE(DEBUG_SIGSYS_BIT)
 
 GLOBAL(sigtrap)
-	PREP("sigtrap", 510, DEBUG_SIGTRAP_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP("sigtrap", 510, DEBUG_SIGTRAP_BIT,,)
 	CALL(_C_LABEL(m88100_trap), T_SIGTRAP, r30)
 	DONE(DEBUG_SIGTRAP_BIT)
 
 GLOBAL(stepbpt)
-	PREP("stepbpt", 504, DEBUG_SIGTRAP_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP("stepbpt", 504, DEBUG_SIGTRAP_BIT,,)
 	CALL(_C_LABEL(m88100_trap), T_STEPBPT, r30)
 	DONE(DEBUG_SIGTRAP_BIT)
 
 GLOBAL(userbpt)
-	PREP("userbpt", 511, DEBUG_SIGTRAP_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP("userbpt", 511, DEBUG_SIGTRAP_BIT,,)
 	CALL(_C_LABEL(m88100_trap), T_USERBPT, r30)
 	DONE(DEBUG_SIGTRAP_BIT)
 
 #ifdef DDB
 GLOBAL(break)
-	PREP("break", 130, DEBUG_BREAK_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP("break", 130, DEBUG_BREAK_BIT,,)
 	CALL(_C_LABEL(m88100_trap), T_KDB_BREAK, r30)
 	DONE(DEBUG_BREAK_BIT)
 
 GLOBAL(trace)
-	PREP("trace", 131, DEBUG_TRACE_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP("trace", 131, DEBUG_TRACE_BIT,,)
 	CALL(_C_LABEL(m88100_trap), T_KDB_TRACE, r30)
 	DONE(DEBUG_TRACE_BIT)
 
 GLOBAL(entry)
-	PREP("kdb", 132, DEBUG_KDB_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP("kdb", 132, DEBUG_KDB_BIT,,)
 	CALL(_C_LABEL(m88100_trap), T_KDB_ENTRY, r30)
 	DONE(DEBUG_KDB_BIT)
 #else
 GLOBAL(break)
-	PREP("break", 130, DEBUG_BREAK_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP("break", 130, DEBUG_BREAK_BIT,,)
 	CALL(_C_LABEL(m88100_trap), T_UNKNOWNFLT, r30)
 	DONE(DEBUG_BREAK_BIT)
 
 GLOBAL(trace)
-	PREP("trace", 131, DEBUG_TRACE_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP("trace", 131, DEBUG_TRACE_BIT,,)
 	CALL(_C_LABEL(m88100_trap), T_UNKNOWNFLT, r30)
 	DONE(DEBUG_TRACE_BIT)
 
 GLOBAL(entry)
-	PREP("unknown", 132, DEBUG_KDB_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP("unknown", 132, DEBUG_KDB_BIT,,)
 	CALL(_C_LABEL(m88100_trap), T_UNKNOWNFLT, r30)
 	DONE(DEBUG_KDB_BIT)
 #endif
@@ -769,13 +767,15 @@ GLOBAL(reset_handler)
 	stcr	r1, PSR
 	FLUSH_PIPELINE
 
-ASLOCAL(error_loop)
-	br	_ASM_LABEL(error_loop)
-	/* never returns*/
+1:
+	br	1b
+	/* NOTREACHED */
+#endif	/* M88100 */
 
 /*
  * This is part of baddadr (below).
  */
+#ifdef M88100
 ASLOCAL(ignore_data_exception)
 	/*
 	 * SR1: previous FLAGS reg
@@ -799,14 +799,11 @@ ASLOCAL(ignore_data_exception)
 	or.u	r2, r0, hi16(_ASM_LABEL(badaddr__return_nonzero) + 2)
 	or	r2, r2, lo16(_ASM_LABEL(badaddr__return_nonzero) + 2)
 	stcr	r2, SNIP	/* Make it the next instruction to execute */
-
 	addu	r2, r2, 4
 	stcr	r2, SFIP	/* and the next one after that, too. */
 	stcr	r0, SSBR	/* make the scoreboard happy. */
-1:
-	/* the following jumps to "badaddr__return_nonzero" in below */
 	RTE
-#endif /* m88100 */
+#endif /* M88100 */
 
 #ifdef M88110
 /*
@@ -834,9 +831,6 @@ ASLOCAL(m88110_ignore_data_exception)
 	or.u	r2, r0, hi16(_ASM_LABEL(m88110_badaddr__return_nonzero))
 	or	r2, r2, lo16(_ASM_LABEL(m88110_badaddr__return_nonzero))
 	stcr	r2, EXIP	/* Make it the next instruction to execute */
-
-	/* the following jumps to "m88110_badaddr__return_nonzero" below */
-	NOP
 	RTE
 #endif /* M88110 */
 
@@ -918,9 +912,11 @@ ASLOCAL(badaddr__maybe_halfword)
 	 or	r2, r0, r0
 
 ASLOCAL(badaddr__maybe_byte)
+#ifdef DEBUG
 	/* More or less like the code for checking a word above */
 	sub	r6, r3, 1
 	bcnd	ne0, r6, _ASM_LABEL(badaddr__unknown_size)
+#endif
 	FLUSH_PIPELINE
 	ld.b	r5, r2, 0
 	FLUSH_PIPELINE
@@ -940,11 +936,25 @@ ASLOCAL(badaddr__unknown_size)
 	/*NOTREACHED*/
 #endif
 
-ASGLOBAL(badaddr__return_nonzero)
+#ifdef M88110
+ASLOCAL(m88110_badaddr__return_nonzero)
+	/*
+	 * On mc88110, we possibly took an exception and we have to clear
+	 * DSR before the rte instruction clears the EFRZ bit in the PSR.
+	 */
+	stcr	r0, DSR
+	stcr	r0, DLAR
+	stcr	r0, DPAR
+	/* FALLTHROUGH */
+#endif
+#ifdef M88100
+ASLOCAL(badaddr__return_nonzero)
+#endif
 	or	r2, r0, 1
-	/* fall through to badaddr__return */
+	/* FALLTHROUGH */
+#endif
 
-ASGLOBAL(badaddr__return)
+ASLOCAL(badaddr__return)
 	ldcr	r4, SR1
 	clr	r4, r4, 1<FLAG_IGNORE_DATA_EXCEPTION>
 	stcr	r4, SR1
@@ -960,20 +970,7 @@ ASGLOBAL(badaddr__return)
 	FLUSH_PIPELINE
 	jmp	r1
 
-ASLOCAL(m88110_badaddr__return_nonzero)
-	/*
-	 * On mc88110, we possibly took an exception
-	 * and we have to clear DSR after the rte
-	 * instruction clears the EFRZ bit in
-	 * the PSR.
-	 */
-	stcr	r0, DSR	/* Clear DSR reg on mc88110 */
-	stcr	r0, DLAR	/* Clear DLAR reg on mc88110 */
-	br.n	_ASM_LABEL(badaddr__return_nonzero)
-	 stcr	r0, DPAR	/* Clear DPAR reg on mc88110 */
-
 #ifdef M88100
-
 ASLOCAL(setup_phase_one)
 	/*
 	 * SR1: saved copy of exception-time register now holding FLAGS
@@ -1996,19 +1993,19 @@ ASLOCAL(no_ast)
 
 /* unknown exception handler */
 GLOBAL(m88110_unknown_handler)
-	PREP2("unknown", 0, DEBUG_UNKNOWN_BIT, No_Precheck)
+	PREP2("unknown", 0, DEBUG_UNKNOWN_BIT,)
 	CALL(_C_LABEL(m88110_trap), T_UNKNOWNFLT, r30)
 	DONE2(DEBUG_UNKNOWN_BIT)
 
 /* interrupt exception handler */
 GLOBAL(m88110_interrupt_handler)
-	PREP2("interrupt", 1, DEBUG_INTERRUPT_BIT, No_Precheck)
+	PREP2("interrupt", 1, DEBUG_INTERRUPT_BIT,)
 	CALL(_C_LABEL(m88110_trap), T_INT, r30)
 	DONE2(DEBUG_INTERRUPT_BIT)
 
 /* instruction access exception handler */
 GLOBAL(m88110_instruction_access_handler)
-	PREP2("inst", 2, DEBUG_INSTRUCTION_BIT, No_Precheck)
+	PREP2("inst", 2, DEBUG_INSTRUCTION_BIT,)
 	CALL(_C_LABEL(m88110_trap), T_INSTFLT, r30)
 	DONE2(DEBUG_INSTRUCTION_BIT)
 /*
@@ -2022,19 +2019,19 @@ GLOBAL(m88110_data_exception_handler)
 
 /* misaligned access exception handler */
 GLOBAL(m88110_misaligned_handler)
-	PREP2("misalign", 4, DEBUG_MISALIGN_BIT, No_Precheck)
+	PREP2("misalign", 4, DEBUG_MISALIGN_BIT,)
 	CALL(_C_LABEL(m88110_trap), T_MISALGNFLT, r30)
 	DONE2(DEBUG_MISALIGN_BIT)
 
 /* unimplemented opcode exception handler */
 GLOBAL(m88110_unimplemented_handler)
-	PREP2("unimp", 5, DEBUG_UNIMPLEMENTED_BIT, No_Precheck)
+	PREP2("unimp", 5, DEBUG_UNIMPLEMENTED_BIT,)
 	CALL(_C_LABEL(m88110_trap), T_ILLFLT, r30)
 	DONE2(DEBUG_UNIMPLEMENTED_BIT)
 
 /* privilege exception handler */
 GLOBAL(m88110_privilege_handler)
-	PREP2("privilege", 6, DEBUG_PRIVILEGE_BIT, No_Precheck)
+	PREP2("privilege", 6, DEBUG_PRIVILEGE_BIT,)
 	CALL(_C_LABEL(m88110_trap), T_PRIVINFLT, r30)
 	DONE2(DEBUG_PRIVILEGE_BIT)
 
@@ -2043,114 +2040,114 @@ GLOBAL(m88110_privilege_handler)
  * a signal to the process...
  */
 GLOBAL(m88110_bounds_handler)
-	PREP2("bounds", 7, DEBUG_BOUNDS_BIT, No_Precheck)
+	PREP2("bounds", 7, DEBUG_BOUNDS_BIT,)
 	CALL(_C_LABEL(m88110_trap), T_BNDFLT, r30)
 	DONE2(DEBUG_BOUNDS_BIT)
 
 /* integer divide-by-zero exception handler */
 GLOBAL(m88110_divide_handler)
-	PREP2("divide", 8, DEBUG_DIVIDE_BIT, No_Precheck)
+	PREP2("divide", 8, DEBUG_DIVIDE_BIT,)
 	CALL(_C_LABEL(m88110_trap), T_ZERODIV, r30)
 	DONE2(DEBUG_DIVIDE_BIT)
 
 /* integer overflow exception handler */
 GLOBAL(m88110_overflow_handler)
-	PREP2("overflow", 9, DEBUG_OVERFLOW_BIT, No_Precheck)
+	PREP2("overflow", 9, DEBUG_OVERFLOW_BIT,)
 	CALL(_C_LABEL(m88110_trap), T_OVFFLT, r30)
 	DONE2(DEBUG_OVERFLOW_BIT)
 
 /* Floating-point precise handler */
 GLOBAL(m88110_fp_precise_handler)
-	PREP2("FPU precise", 114, DEBUG_FPp_BIT, No_Precheck)
+	PREP2("FPU precise", 114, DEBUG_FPp_BIT,)
 	CALL(_ASM_LABEL(m88110_Xfp_precise), r0, r30)
 	DONE2(DEBUG_FPp_BIT)
 
 /* MVME197 non-maskable interrupt handler (ABORT button) */
 GLOBAL(m88110_nonmaskable)
-	PREP2("MVME197 non-mask", 11, DEBUG_NON_MASK_BIT, No_Precheck)
+	PREP2("MVME197 non-mask", 11, DEBUG_NON_MASK_BIT,)
 	CALL(_C_LABEL(m88110_trap), T_NON_MASK, r30)
 	DONE2(DEBUG_NON_MASK_BIT)
 
 /* MVME197 data MMU read miss handler */
 GLOBAL(m88110_data_read_miss)
-	PREP2("MVME197 read miss", 12, DEBUG_197_READ_BIT, No_Precheck)
+	PREP2("MVME197 read miss", 12, DEBUG_197_READ_BIT,)
 	CALL(_C_LABEL(m88110_trap), T_197_READ, r30)
 	DONE2(DEBUG_197_READ_BIT)
 
 /* MVME197 data MMU write miss handler */
 GLOBAL(m88110_data_write_miss)
-	PREP2("MVME197 write miss", 13, DEBUG_197_WRITE_BIT, No_Precheck)
+	PREP2("MVME197 write miss", 13, DEBUG_197_WRITE_BIT,)
 	CALL(_C_LABEL(m88110_trap), T_197_WRITE, r30)
 	DONE2(DEBUG_197_WRITE_BIT)
 
 /* MVME197 inst MMU ATC miss handler */
 GLOBAL(m88110_inst_atc_miss)
-	PREP2("MVME197 inst miss", 14, DEBUG_197_INST_BIT, No_Precheck)
+	PREP2("MVME197 inst miss", 14, DEBUG_197_INST_BIT,)
 	CALL(_C_LABEL(m88110_trap), T_197_INST, r30)
 	DONE2(DEBUG_197_INST_BIT)
 
 /* All standard system calls.  */
 GLOBAL(m88110_syscall_handler)
-	PREP2("syscall", 128, DEBUG_SYSCALL_BIT, No_Precheck)
+	PREP2("syscall", 128, DEBUG_SYSCALL_BIT,)
 	ld	r13, r30, GENREG_OFF(13)
 	CALL(_C_LABEL(m88110_syscall), r13, r30)
 	DONE2(DEBUG_SYSCALL_BIT)
 
 /* trap 496 comes here */
 GLOBAL(m88110_bugtrap)
-	PREP2("bugsyscall", 496, DEBUG_BUGCALL_BIT, No_Precheck)
+	PREP2("bugsyscall", 496, DEBUG_BUGCALL_BIT,)
 	ld	r9,  r30, GENREG_OFF(9)
 	CALL(_C_LABEL(bugsyscall), r9, r30)
 	DONE2(DEBUG_BUGCALL_BIT)
 
 GLOBAL(m88110_sigsys)
-	PREP2("sigsys", 501, DEBUG_SIGSYS_BIT, No_Precheck)
+	PREP2("sigsys", 501, DEBUG_SIGSYS_BIT,)
 	CALL(_C_LABEL(m88110_trap), T_SIGSYS, r30)
 	DONE2(DEBUG_SIGSYS_BIT)
 
 GLOBAL(m88110_sigtrap)
-	PREP2("sigtrap", 510, DEBUG_SIGTRAP_BIT, No_Precheck)
+	PREP2("sigtrap", 510, DEBUG_SIGTRAP_BIT,)
 	CALL(_C_LABEL(m88110_trap), T_SIGTRAP, r30)
 	DONE2(DEBUG_SIGTRAP_BIT)
 
 GLOBAL(m88110_stepbpt)
-	PREP2("stepbpt", 504, DEBUG_SIGTRAP_BIT, No_Precheck)
+	PREP2("stepbpt", 504, DEBUG_SIGTRAP_BIT,)
 	CALL(_C_LABEL(m88110_trap), T_STEPBPT, r30)
 	DONE2(DEBUG_SIGTRAP_BIT)
 
 GLOBAL(m88110_userbpt)
-	PREP2("userbpt", 511, DEBUG_SIGTRAP_BIT, No_Precheck)
+	PREP2("userbpt", 511, DEBUG_SIGTRAP_BIT,)
 	CALL(_C_LABEL(m88110_trap), T_USERBPT, r30)
 	DONE2(DEBUG_SIGTRAP_BIT)
 
 #ifdef DDB
 GLOBAL(m88110_break)
-	PREP2("break", 130, DEBUG_BREAK_BIT, No_Precheck)
+	PREP2("break", 130, DEBUG_BREAK_BIT,)
 	CALL(_C_LABEL(m88110_trap), T_KDB_BREAK, r30)
 	DONE2(DEBUG_BREAK_BIT)
 
 GLOBAL(m88110_trace)
-	PREP2("trace", 131, DEBUG_TRACE_BIT, No_Precheck)
+	PREP2("trace", 131, DEBUG_TRACE_BIT,)
 	CALL(_C_LABEL(m88110_trap), T_KDB_TRACE, r30)
 	DONE2(DEBUG_TRACE_BIT)
 
 GLOBAL(m88110_entry)
-	PREP2("kdb", 132, DEBUG_KDB_BIT, No_Precheck)
+	PREP2("kdb", 132, DEBUG_KDB_BIT,)
 	CALL(_C_LABEL(m88110_trap), T_KDB_ENTRY, r30)
 	DONE2(DEBUG_KDB_BIT)
 #else
 GLOBAL(m88110_break)
-	PREP2("break", 130, DEBUG_BREAK_BIT, No_Precheck)
+	PREP2("break", 130, DEBUG_BREAK_BIT,)
 	CALL(_C_LABEL(m88110_trap), T_UNKNOWNFLT, r30)
 	DONE2(DEBUG_BREAK_BIT)
 
 GLOBAL(m88110_trace)
-	PREP2("trace", 131, DEBUG_TRACE_BIT, No_Precheck)
+	PREP2("trace", 131, DEBUG_TRACE_BIT,)
 	CALL(_C_LABEL(m88110_trap), T_UNKNOWNFLT, r30)
 	DONE2(DEBUG_TRACE_BIT)
 
 GLOBAL(m88110_entry)
-	PREP2("unknown", 132, DEBUG_KDB_BIT, No_Precheck)
+	PREP2("unknown", 132, DEBUG_KDB_BIT,)
 	CALL(_C_LABEL(m88110_trap), T_UNKNOWNFLT, r30)
 	DONE2(DEBUG_KDB_BIT)
 #endif
@@ -2315,9 +2312,9 @@ GLOBAL(m88110_reset_handler)
 	stcr	r1, PSR
 	FLUSH_PIPELINE
 
-ASLOCAL(m88110_error_loop)
-	br	_ASM_LABEL(m88110_error_loop)
-	/* never returns*/
+1:
+	br	1b
+	/* NOTREACHED */
 
 ASLOCAL(m88110_setup_phase_one)
 	/*
