@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.37 1999/03/02 06:23:26 millert Exp $
+#	$OpenBSD: Makefile,v 1.38 1999/05/11 16:21:05 millert Exp $
 
 # Uncomment this to enable tracing in libcurses
 #CURSESTRACE=-DTRACE
@@ -176,7 +176,7 @@ includes:
 	@cmp -s ${DESTDIR}/usr/include/ncurses.h ${.CURDIR}/curses.h || \
 	  ${INSTALL} ${INSTALL_COPY} -m 444 -o $(BINOWN) -g $(BINGRP) \
 	  ${.CURDIR}/curses.h ${DESTDIR}/usr/include/ncurses.h
-	@cd ${.CURDIR}; for i in unctrl.h term.h; do \
+	@cd ${.CURDIR}; for i in unctrl.h term.h termcap.h; do \
 	  cmp -s $$i ${DESTDIR}/usr/include/$$i || \
 	  ${INSTALL} ${INSTALL_COPY} -m 444 -o $(BINOWN) -g $(BINGRP) $$i \
 	  ${DESTDIR}/usr/include; done
