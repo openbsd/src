@@ -1,4 +1,4 @@
-/*	$OpenBSD: syn.c,v 1.14 2003/10/22 07:40:38 jmc Exp $	*/
+/*	$OpenBSD: syn.c,v 1.15 2004/12/18 20:55:52 millert Exp $	*/
 
 /*
  * shell parser (C version)
@@ -12,37 +12,36 @@ struct nesting_state {
 	int	start_line;	/* line nesting began on */
 };
 
-static void	yyparse		ARGS((void));
-static struct op *pipeline	ARGS((int cf));
-static struct op *andor		ARGS((void));
-static struct op *c_list	ARGS((int multi));
-static struct ioword *synio	ARGS((int cf));
-static void	musthave	ARGS((int c, int cf));
-static struct op *nested	ARGS((int type, int smark, int emark));
-static struct op *get_command	ARGS((int cf));
-static struct op *dogroup	ARGS((void));
-static struct op *thenpart	ARGS((void));
-static struct op *elsepart	ARGS((void));
-static struct op *caselist	ARGS((void));
-static struct op *casepart	ARGS((int endtok));
-static struct op *function_body	ARGS((char *name, int ksh_func));
-static char **	wordlist	ARGS((void));
-static struct op *block		ARGS((int type, struct op *t1, struct op *t2,
-				      char **wp));
-static struct op *newtp		ARGS((int type));
-static void	syntaxerr	ARGS((const char *what))
+static void	yyparse(void);
+static struct op *pipeline(int cf);
+static struct op *andor(void);
+static struct op *c_list(int multi);
+static struct ioword *synio(int cf);
+static void	musthave(int c, int cf);
+static struct op *nested(int type, int smark, int emark);
+static struct op *get_command(int cf);
+static struct op *dogroup(void);
+static struct op *thenpart(void);
+static struct op *elsepart(void);
+static struct op *caselist(void);
+static struct op *casepart(int endtok);
+static struct op *function_body(char *name, int ksh_func);
+static char **	wordlist(void);
+static struct op *block(int type, struct op *t1, struct op *t2,
+				      char **wp);
+static struct op *newtp(int type);
+static void	syntaxerr(const char *what)
 						GCC_FUNC_ATTR(noreturn);
-static void	nesting_push ARGS((struct nesting_state *save, int tok));
-static void	nesting_pop ARGS((struct nesting_state *saved));
-static int	assign_command ARGS((char *s));
-static int	inalias ARGS((struct source *s));
+static void	nesting_push(struct nesting_state *save, int tok);
+static void	nesting_pop(struct nesting_state *saved);
+static int	assign_command(char *s);
+static int	inalias(struct source *s);
 #ifdef KSH
-static int	dbtestp_isa ARGS((Test_env *te, Test_meta meta));
-static const char *dbtestp_getopnd ARGS((Test_env *te, Test_op op,
-					int do_eval));
-static int	dbtestp_eval ARGS((Test_env *te, Test_op op, const char *opnd1,
-				const char *opnd2, int do_eval));
-static void	dbtestp_error ARGS((Test_env *te, int offset, const char *msg));
+static int	dbtestp_isa(Test_env *te, Test_meta meta);
+static const char *dbtestp_getopnd(Test_env *te, Test_op op, int do_eval);
+static int	dbtestp_eval(Test_env *te, Test_op op, const char *opnd1,
+				const char *opnd2, int do_eval);
+static void	dbtestp_error(Test_env *te, int offset, const char *msg);
 #endif /* KSH */
 
 static	struct	op	*outtree; /* yyparse output */

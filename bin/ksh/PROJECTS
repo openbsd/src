@@ -1,4 +1,4 @@
-$OpenBSD: PROJECTS,v 1.5 1999/07/14 13:37:23 millert Exp $
+$OpenBSD: PROJECTS,v 1.6 2004/12/18 20:55:52 millert Exp $
 
 Things to be done in pdksh (see also the NOTES file):
 
@@ -109,3 +109,6 @@ Things to be done in pdksh (see also the NOTES file):
 
 	* teach shf_vfprintf() about long long's (%lld); also make %p use
 	  long longs if appropriate.
+
+	* decide wether to keep currently disabled FP stuff in shf.c; if
+	  not, eliminate ksh_limval.h (moving BITS to var.c).

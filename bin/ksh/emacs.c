@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.28 2003/10/22 07:40:38 jmc Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.29 2004/12/18 20:55:52 millert Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -12,8 +12,7 @@
 #ifdef EMACS
 
 #include "sh.h"
-#include "ksh_stat.h"
-#include "ksh_dir.h"
+#include <sys/stat.h>
 #include <ctype.h>
 #include <locale.h>
 #include "edit.h"
@@ -21,7 +20,6 @@
 static	Area	aedit;
 #define	AEDIT	&aedit		/* area for kill ring and macro defns */
 
-#undef CTRL			/* _BSD brain damage */
 #define	CTRL(x)		((x) == '?' ? 0x7F : (x) & 0x1F)	/* ASCII */
 #define	UNCTRL(x)	((x) == 0x7F ? '?' : (x) | 0x40)	/* ASCII */
 #define	META(x)		((x) & 0x7f)
@@ -34,7 +32,7 @@ static	Area	aedit;
 #define	KINTR	2		/* ^G, ^C */
 
 struct	x_ftab  {
-	int		(*xf_func) ARGS((int c));
+	int		(*xf_func)(int c);
 	const char	*xf_name;
 	short		xf_flags;
 };
@@ -56,17 +54,8 @@ struct x_defbindings {
 #define	is_cfs(c)	(c == ' ' || c == '\t' || c == '"' || c == '\'')
 #define	is_mfs(c)	(!(isalnum(c) || c == '_' || c == '$'))  /* Separator for motion */
 
-#ifdef OS2
-  /* Deal with 8 bit chars & an extra prefix for function key (these two
-   * changes increase memory usage from 9,216 bytes to 24,416 bytes...)
-   */
-# define CHARMASK	0xFF		/* 8-bit ASCII character mask */
-# define X_NTABS	4		/* normal, meta1, meta2, meta3 */
-static int	x_prefix3 = 0xE0;
-#else /* OS2 */
 # define CHARMASK	0xFF		/* 8-bit character mask */
 # define X_NTABS	3		/* normal, meta1, meta2 */
-#endif /* OS2 */
 #define X_TABSZ		(CHARMASK+1)	/* size of keydef tables etc */
 
 /* Arguments for do_complete()
@@ -120,34 +109,34 @@ static	int	x_curprefix;
 static	char    *macroptr;
 static	int	prompt_skip;
 
-static int      x_ins       ARGS((char *cp));
-static void     x_delete    ARGS((int nc, int push));
-static int	x_bword     ARGS((void));
-static int	x_fword     ARGS((void));
-static void     x_goto      ARGS((char *cp));
-static void     x_bs        ARGS((int c));
-static int      x_size_str  ARGS((char *cp));
-static int      x_size      ARGS((int c));
-static void     x_zots      ARGS((char *str));
-static void     x_zotc      ARGS((int c));
-static void     x_load_hist ARGS((char **hp));
-static int      x_search    ARGS((char *pat, int sameline, int offset));
-static int      x_match     ARGS((char *str, char *pat));
-static void	x_redraw    ARGS((int limit));
-static void     x_push      ARGS((int nchars));
-static char *   x_mapin     ARGS((const char *cp));
-static char *   x_mapout    ARGS((int c));
-static void     x_print     ARGS((int prefix, int key));
-static void	x_adjust    ARGS((void));
-static void	x_e_ungetc  ARGS((int c));
-static int	x_e_getc    ARGS((void));
-static void	x_e_putc    ARGS((int c));
-static void	x_e_puts    ARGS((const char *s));
-static int	x_comment   ARGS((int c));
-static int	x_fold_case ARGS((int c));
-static char	*x_lastcp ARGS((void));
-static void	do_complete ARGS((int flags, Comp_type type));
-static int	x_emacs_putbuf	ARGS((const char *s, size_t len));
+static int      x_ins(char *cp);
+static void     x_delete(int nc, int push);
+static int	x_bword(void);
+static int	x_fword(void);
+static void     x_goto(char *cp);
+static void     x_bs(int c);
+static int      x_size_str(char *cp);
+static int      x_size(int c);
+static void     x_zots(char *str);
+static void     x_zotc(int c);
+static void     x_load_hist(char **hp);
+static int      x_search(char *pat, int sameline, int offset);
+static int      x_match(char *str, char *pat);
+static void	x_redraw(int limit);
+static void     x_push(int nchars);
+static char *   x_mapin(const char *cp);
+static char *   x_mapout(int c);
+static void     x_print(int prefix, int key);
+static void	x_adjust(void);
+static void	x_e_ungetc(int c);
+static int	x_e_getc(void);
+static void	x_e_putc(int c);
+static void	x_e_puts(const char *s);
+static int	x_comment(int c);
+static int	x_fold_case(int c);
+static char	*x_lastcp(void);
+static void	do_complete(int flags, Comp_type type);
+static int	x_emacs_putbuf(const char *s, size_t len);
 
 
 /* The lines between START-FUNC-TAB .. END-FUNC-TAB are run through a
@@ -227,11 +216,7 @@ static const struct x_ftab x_ftab[] = {
 #else
 	{ 0, 0, 0 },
 #endif
-#ifdef OS2
-	{ x_meta3,		"prefix-3",			XF_PREFIX },
-#else
 	{ 0, 0, 0 },
-#endif
 /* @END-FUNC-TAB@ */
     };
 
@@ -270,7 +255,7 @@ static	struct x_defbindings const x_defbindings[] = {
 	{ XFUNC_meta_yank,		1,      'y'  },
 	{ XFUNC_literal,		0, CTRL('^') },
         { XFUNC_comment,		1,	'#'  },
-#if defined(BRL) && defined(TIOCSTI)
+#if defined(TIOCSTI)
 	{ XFUNC_stuff,			0, CTRL('T') },
 #else
 	{ XFUNC_transpose,		0, CTRL('T') },
@@ -309,13 +294,6 @@ static	struct x_defbindings const x_defbindings[] = {
         { XFUNC_fold_lower,		1,	'l'  },
         { XFUNC_fold_capitalize,	1,	'C'  },
         { XFUNC_fold_capitalize,	1,	'c'  },
-#ifdef OS2
-	{ XFUNC_meta3,			0,	0xE0 },
-	{ XFUNC_mv_back,		3,	'K'  },
-	{ XFUNC_mv_forw,		3,	'M'  },
-	{ XFUNC_next_com,		3,	'P'  },
-	{ XFUNC_prev_com,		3,	'H'  },
-#endif /* OS2 */
 	/* These for ansi arrow keys: arguablely shouldn't be here by
 	 * default, but its simpler/faster/smaller than using termcap
 	 * entries.
@@ -1197,16 +1175,6 @@ x_meta2(c)
 	return KSTD;
 }
 
-#ifdef OS2
-static int
-x_meta3(c)
-	int c;
-{
-	x_curprefix = 3;
-	return KSTD;
-}
-#endif /* OS2 */
-
 static int
 x_kill(c)
 	int c;
@@ -1323,7 +1291,7 @@ static int
 x_stuff(c)
 	int c;
 {
-#if 0 || defined TIOCSTI
+#ifdef TIOCSTI
 	char	ch = c;
 	bool_t	savmode = x_mode(FALSE);
 
@@ -1345,11 +1313,6 @@ x_mapin(cp)
 		/* XXX -- should handle \^ escape? */
 		if (*cp == '^')  {
 			cp++;
-#ifdef OS2
-			if (*cp == '0')	/* To define function keys */
-				*op++ = 0xE0;
-			else
-#endif /* OS2 */
 			if (*cp >= '?')	/* includes '?'; ASCII */
 				*op++ = CTRL(*cp);
 			else  {
@@ -1372,12 +1335,6 @@ x_mapout(c)
 	static char buf[8];
 	register char *p = buf;
 
-#ifdef OS2
-	if (c == 0xE0) {
-		*p++ = '^';
-		*p++ = '0';
-	} else
-#endif /* OS2 */
 	if (iscntrl(c))  {
 		*p++ = '^';
 		*p++ = UNCTRL(c);
@@ -1395,10 +1352,6 @@ x_print(prefix, key)
 		shprintf("%s", x_mapout(x_prefix1));
 	if (prefix == 2)
 		shprintf("%s", x_mapout(x_prefix2));
-#ifdef OS2
-	if (prefix == 3)
-		shprintf("%s", x_mapout(x_prefix3));
-#endif /* OS2 */
 	shprintf("%s = ", x_mapout(key));
 	if (x_tab[prefix][key] != XFUNC_ins_string)
 		shprintf("%s\n", x_ftab[x_tab[prefix][key]].xf_name);
@@ -1451,10 +1404,6 @@ x_bind(a1, a2, macro, list)
 			prefix = 1;
 		else if (x_tab[prefix][key] == XFUNC_meta2)
 			prefix = 2;
-#ifdef OS2
-		else if (x_tab[prefix][key] == XFUNC_meta3)
-			prefix = 3;
-#endif /* OS2 */
 		else
 			break;
 	}
@@ -1833,7 +1782,7 @@ do_complete(flags, type)
 		completed = 1;
 	}
 	/* add space if single non-dir match */
-	if ((nwords == 1) && (!ISDIRSEP(words[0][nlen - 1]))) {
+	if (nwords == 1 && words[0][nlen - 1] != '/') {
 		x_ins(space);
 		completed = 1;
 	}

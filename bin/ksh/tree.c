@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.10 2002/02/27 19:37:09 dhartmei Exp $	*/
+/*	$OpenBSD: tree.c,v 1.11 2004/12/18 20:55:52 millert Exp $	*/
 
 /*
  * command tree climbing
@@ -9,13 +9,13 @@
 #define INDENT	4
 
 #define tputc(c, shf)	shf_putchar(c, shf);
-static void 	ptree ARGS((struct op *t, int indent, struct shf *f));
-static void 	pioact ARGS((struct shf *f, int indent, struct ioword *iop));
-static void	tputC ARGS((int c, struct shf *shf));
-static void	tputS ARGS((char *wp, struct shf *shf));
-static void	vfptreef ARGS((struct shf *shf, int indent, const char *fmt, va_list va));
-static struct ioword **iocopy ARGS((struct ioword **iow, Area *ap));
-static void     iofree ARGS((struct ioword **iow, Area *ap));
+static void 	ptree(struct op *t, int indent, struct shf *f);
+static void 	pioact(struct shf *f, int indent, struct ioword *iop);
+static void	tputC(int c, struct shf *shf);
+static void	tputS(char *wp, struct shf *shf);
+static void	vfptreef(struct shf *shf, int indent, const char *fmt, va_list va);
+static struct ioword **iocopy(struct ioword **iow, Area *ap);
+static void     iofree(struct ioword **iow, Area *ap);
 
 /*
  * print a command tree
@@ -369,19 +369,11 @@ tputS(wp, shf)
  */
 /* VARARGS */
 int
-#ifdef HAVE_PROTOTYPES
 fptreef(struct shf *shf, int indent, const char *fmt, ...)
-#else
-fptreef(shf, indent, fmt, va_alist)
-  struct shf *shf;
-  int indent;
-  const char *fmt;
-  va_dcl
-#endif
 {
   va_list	va;
 
-  SH_VA_START(va, fmt);
+  va_start(va, fmt);
 
   vfptreef(shf, indent, fmt, va);
   va_end(va);
@@ -390,22 +382,14 @@ fptreef(shf, indent, fmt, va_alist)
 
 /* VARARGS */
 char *
-#ifdef HAVE_PROTOTYPES
 snptreef(char *s, int n, const char *fmt, ...)
-#else
-snptreef(s, n, fmt, va_alist)
-  char *s;
-  int n;
-  const char *fmt;
-  va_dcl
-#endif
 {
   va_list va;
   struct shf shf;
 
   shf_sopen(s, n, SHF_WR | (s ? 0 : SHF_DYNAMIC), &shf);
 
-  SH_VA_START(va, fmt);
+  va_start(va, fmt);
   vfptreef(&shf, 0, fmt, va);
   va_end(va);
 

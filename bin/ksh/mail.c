@@ -1,4 +1,4 @@
-/*	$OpenBSD: mail.c,v 1.9 1999/06/15 01:18:35 millert Exp $	*/
+/*	$OpenBSD: mail.c,v 1.10 2004/12/18 20:55:52 millert Exp $	*/
 
 /*
  * Mailbox checking code by Robert J. Gibson, adapted for PD ksh by
@@ -9,8 +9,8 @@
 
 #ifdef KSH
 #include "sh.h"
-#include "ksh_stat.h"
-#include "ksh_time.h"
+#include <sys/stat.h>
+#include <time.h>
 
 #define MBMESSAGE	"you have mail in $_"
 
@@ -32,9 +32,9 @@ static mbox_t	mbox;
 static time_t	mlastchkd;	/* when mail was last checked */
 static time_t	mailcheck_interval;
 
-static void     munset      ARGS((mbox_t *mlist)); /* free mlist and mval */
-static mbox_t * mballoc     ARGS((char *p, char *m)); /* allocate a new mbox */
-static void     mprintit    ARGS((mbox_t *mbp));
+static void     munset(mbox_t *mlist); /* free mlist and mval */
+static mbox_t * mballoc(char *p, char *m); /* allocate a new mbox */
+static void     mprintit(mbox_t *mbp);
 
 void
 mcheck()
@@ -119,7 +119,7 @@ mpset(mptoparse)
 	mval = str_save(mptoparse, APERM);
 	while (mval) {
 		mpath = mval;
-		if ((mval = strchr(mval, PATHSEP)) != NULL) {
+		if ((mval = strchr(mval, ':')) != NULL) {
 			*mval = '\0', mval++;
 		}
 		/* POSIX/bourne-shell say file%message */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.13 2003/11/10 21:26:39 millert Exp $	*/
+/*	$OpenBSD: io.c,v 1.14 2004/12/18 20:55:52 millert Exp $	*/
 
 /*
  * shell buffered IO and formatted output
@@ -6,7 +6,7 @@
 
 #include <ctype.h>
 #include "sh.h"
-#include "ksh_stat.h"
+#include <sys/stat.h>
 
 static int initio_done;
 
@@ -17,13 +17,7 @@ static int initio_done;
 
 /* A shell error occurred (eg, syntax error, etc.) */
 void
-#ifdef HAVE_PROTOTYPES
 errorf(const char *fmt, ...)
-#else
-errorf(fmt, va_alist)
-	const char *fmt;
-	va_dcl
-#endif
 {
 	va_list va;
 
@@ -31,7 +25,7 @@ errorf(fmt, va_alist)
 	exstat = 1;
 	if (*fmt) {
 		error_prefix(TRUE);
-		SH_VA_START(va, fmt);
+		va_start(va, fmt);
 		shf_vfprintf(shl_out, fmt, va);
 		va_end(va);
 		shf_putchar('\n', shl_out);
@@ -42,19 +36,12 @@ errorf(fmt, va_alist)
 
 /* like errorf(), but no unwind is done */
 void
-#ifdef HAVE_PROTOTYPES
 warningf(int fileline, const char *fmt, ...)
-#else
-warningf(fileline, fmt, va_alist)
-	int fileline;
-	const char *fmt;
-	va_dcl
-#endif
 {
 	va_list va;
 
 	error_prefix(fileline);
-	SH_VA_START(va, fmt);
+	va_start(va, fmt);
 	shf_vfprintf(shl_out, fmt, va);
 	va_end(va);
 	shf_putchar('\n', shl_out);
@@ -65,13 +52,7 @@ warningf(fileline, fmt, va_alist)
  * (also unwinds environments for special builtins).
  */
 void
-#ifdef HAVE_PROTOTYPES
 bi_errorf(const char *fmt, ...)
-#else
-bi_errorf(fmt, va_alist)
-	const char *fmt;
-	va_dcl
-#endif
 {
 	va_list va;
 
@@ -82,7 +63,7 @@ bi_errorf(fmt, va_alist)
 		/* not set when main() calls parse_args() */
 		if (builtin_argv0)
 			shf_fprintf(shl_out, "%s: ", builtin_argv0);
-		SH_VA_START(va, fmt);
+		va_start(va, fmt);
 		shf_vfprintf(shl_out, fmt, va);
 		va_end(va);
 		shf_putchar('\n', shl_out);
@@ -102,20 +83,13 @@ bi_errorf(fmt, va_alist)
 
 /* Called when something that shouldn't happen does */
 void
-#ifdef HAVE_PROTOTYPES
 internal_errorf(int jump, const char *fmt, ...)
-#else
-internal_errorf(jump, fmt, va_alist)
-	int jump;
-	const char *fmt;
-	va_dcl
-#endif
 {
 	va_list va;
 
 	error_prefix(TRUE);
 	shf_fprintf(shl_out, "internal error: ");
-	SH_VA_START(va, fmt);
+	va_start(va, fmt);
 	shf_vfprintf(shl_out, fmt, va);
 	va_end(va);
 	shf_putchar('\n', shl_out);
@@ -142,19 +116,13 @@ error_prefix(fileline)
 
 /* printf to shl_out (stderr) with flush */
 void
-#ifdef HAVE_PROTOTYPES
 shellf(const char *fmt, ...)
-#else
-shellf(fmt, va_alist)
-	const char *fmt;
-	va_dcl
-#endif
 {
 	va_list va;
 
 	if (!initio_done) /* shl_out may not be set up yet... */
 		return;
-	SH_VA_START(va, fmt);
+	va_start(va, fmt);
 	shf_vfprintf(shl_out, fmt, va);
 	va_end(va);
 	shf_flush(shl_out);
@@ -162,19 +130,13 @@ shellf(fmt, va_alist)
 
 /* printf to shl_stdout (stdout) */
 void
-#ifdef HAVE_PROTOTYPES
 shprintf(const char *fmt, ...)
-#else
-shprintf(fmt, va_alist)
-	const char *fmt;
-	va_dcl
-#endif
 {
 	va_list va;
 
 	if (!shl_stdout_ok)
 		internal_errorf(1, "shl_stdout not valid");
-	SH_VA_START(va, fmt);
+	va_start(va, fmt);
 	shf_vfprintf(shl_stdout, fmt, va);
 	va_end(va);
 }
@@ -198,19 +160,13 @@ kshdebug_init_()
 
 /* print to debugging log */
 void
-# ifdef HAVE_PROTOTYPES
 kshdebug_printf_(const char *fmt, ...)
-# else
-kshdebug_printf_(fmt, va_alist)
-	const char *fmt;
-	va_dcl
-# endif
 {
 	va_list va;
 
 	if (!kshdebug_shf)
 		return;
-	SH_VA_START(va, fmt);
+	va_start(va, fmt);
 	shf_fprintf(kshdebug_shf, "[%d] ", getpid());
 	shf_vfprintf(kshdebug_shf, fmt, va);
 	va_end(va);
@@ -277,12 +233,6 @@ ksh_dup2(ofd, nfd, errok)
 	if (ret < 0 && errno != EBADF && !errok)
 		errorf("too many files open in shell");
 
-#ifdef DUP2_BROKEN
-	/* Ultrix systems like to preserve the close-on-exec flag */
-	if (ret >= 0)
-		(void) fcntl(nfd, F_SETFD, 0);
-#endif /* DUP2_BROKEN */
-
 	return ret;
 }
 
@@ -298,7 +248,7 @@ savefd(fd, noclose)
 	int nfd;
 
 	if (fd < FDBASE) {
-		nfd = ksh_dupbase(fd, FDBASE);
+		nfd = fcntl(fd, F_DUPFD, FDBASE);
 		if (nfd < 0) {
 			if (errno == EBADF)
 				return -1;
@@ -364,20 +314,6 @@ check_fd(name, mode, emsgp)
 			return -1;
 		}
 		fl &= O_ACCMODE;
-#ifdef OS2
-		if (mode == W_OK ) {
-		       if (setmode(fd, O_TEXT) == -1) {
-				if (emsgp)
-					*emsgp = "couldn't set write mode";
-				return -1;
-			}
-		 } else if (mode == R_OK)
-	      		if (setmode(fd, O_BINARY) == -1) {
-				if (emsgp)
-					*emsgp = "couldn't set read mode";
-				return -1;
-			}
-#else /* OS2 */
 		/* X_OK is a kludge to disable this check for dups (x<&1):
 		 * historical shells never did this check (XXX don't know what
 		 * posix has to say).
@@ -392,7 +328,6 @@ check_fd(name, mode, emsgp)
 					      : "fd not open for writing";
 			return -1;
 		}
-#endif /* OS2 */
 		return fd;
 	}
 #ifdef KSH
@@ -519,38 +454,10 @@ maketemp(ap, type, tlist)
 	tp->name = path = (char *) &tp[1];
 	tp->shf = (struct shf *) 0;
 	tp->type = type;
-#ifdef __OpenBSD__
 	shf_snprintf(path, len, "%s/shXXXXXXXX", dir);
 	fd = mkstemp(path);
 	if (fd >= 0)
 		tp->shf = shf_fdopen(fd, SHF_WR, (struct shf *) 0);
-#else
-	while (1) {
-		/* Note that temp files need to fit 8.3 DOS limits */
-		shf_snprintf(path, len, "%s/sh%05u.%03x",
-			     dir, (unsigned) procpid, inc++);
-		/* Mode 0600 to be paranoid, O_TRUNC in case O_EXCL isn't
-		 * really there.
-		 */
-		fd = open(path, O_RDWR|O_CREAT|O_EXCL|O_TRUNC, 0600);
-		if (fd >= 0) {
-			tp->shf = shf_fdopen(fd, SHF_WR, (struct shf *) 0);
-			break;
-		}
-		if (errno != EINTR
-#ifdef EEXIST
-		    && errno != EEXIST
-#endif /* EEXIST */
-#ifdef EISDIR
-		    && errno != EISDIR
-#endif /* EISDIR */
-			)
-			/* Error must be printed by caller: don't know here if
-			 * errorf() or bi_errorf() should be used.
-			 */
-			break;
-	}
-#endif /* __OpenBSD__ */
 	tp->pid = procpid;
 
 	tp->next = *tlist;

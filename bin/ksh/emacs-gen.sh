@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: emacs-gen.sh,v 1.1.1.1 1996/08/14 06:19:10 downsj Exp $
+#	$OpenBSD: emacs-gen.sh,v 1.2 2004/12/18 20:55:52 millert Exp $
 
 case $# in
 1)	file=$1;;
@@ -36,7 +36,7 @@ sed -e '1,/@START-FUNC-TAB@/d' -e '/@END-FUNC-TAB@/,$d' < $file |
 			fname = substr(fname, 1, length(fname) - 1);
 		if (fname != "0") {
 			printf "#define XFUNC_%s %d\n", substr(fname, 3, length(fname) - 2), nfunc;
-			printf "static int %s ARGS((int c));\n", fname;
+			printf "static int %s (int c);\n", fname;
 			nfunc++;
 		}
 	    }' || exit 1

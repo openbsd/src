@@ -1,11 +1,11 @@
-/*	$OpenBSD: shf.c,v 1.8 2003/02/28 09:45:09 jmc Exp $	*/
+/*	$OpenBSD: shf.c,v 1.9 2004/12/18 20:55:52 millert Exp $	*/
 
 /*
  *  Shell file I/O routines
  */
 
 #include "sh.h"
-#include "ksh_stat.h"
+#include <sys/stat.h>
 #include "ksh_limval.h"
 
 
@@ -19,8 +19,8 @@
  * file descriptors.
  */
 
-static int	shf_fillbuf	ARGS((struct shf *shf));
-static int	shf_emptybuf	ARGS((struct shf *shf, int flags));
+static int	shf_fillbuf(struct shf *shf);
+static int	shf_emptybuf(struct shf *shf, int flags);
 
 /* Open a file.  First three args are for open(), last arg is flags for
  * this package.  Returns NULL if file could not be opened, or if a dup
@@ -53,7 +53,7 @@ shf_open(name, oflags, mode, sflags)
 	if ((sflags & SHF_MAPHI) && fd < FDBASE) {
 		int nfd;
 
-		nfd = ksh_dupbase(fd, FDBASE);
+		nfd = fcntl(fd, F_DUPFD, FDBASE);
 		close(fd);
 		if (nfd < 0) {
 			afree(shf, shf->areap);
@@ -571,14 +571,6 @@ shf_getse(buf, bsize, shf)
 		shf->rnleft -= ncopy;
 		buf += ncopy;
 		bsize -= ncopy;
-#ifdef OS2
-		if (end && buf > orig_buf + 1 && buf[-2] == '\r') {
-			buf--;
-			bsize++;
-			buf[-1] = '\n';
-		}
-#endif
-
 	} while (!end && bsize);
 	*buf = '\0';
 	return buf;
@@ -759,19 +751,12 @@ shf_write(buf, nbytes, shf)
 }
 
 int
-#ifdef HAVE_PROTOTYPES
 shf_fprintf(struct shf *shf, const char *fmt, ...)
-#else
-shf_fprintf(shf, fmt, va_alist)
-	struct shf *shf;
-	const char *fmt;
-	va_dcl
-#endif
 {
 	va_list args;
 	int n;
 
-	SH_VA_START(args, fmt);
+	va_start(args, fmt);
 	n = shf_vfprintf(shf, fmt, args);
 	va_end(args);
 
@@ -779,15 +764,7 @@ shf_fprintf(shf, fmt, va_alist)
 }
 
 int
-#ifdef HAVE_PROTOTYPES
 shf_snprintf(char *buf, int bsize, const char *fmt, ...)
-#else
-shf_snprintf(buf, bsize, fmt, va_alist)
-	char *buf;
-	int bsize;
-	const char *fmt;
-	va_dcl
-#endif
 {
 	struct shf shf;
 	va_list args;
@@ -798,7 +775,7 @@ shf_snprintf(buf, bsize, fmt, va_alist)
 			(long) buf, bsize);
 
 	shf_sopen(buf, bsize, SHF_WR, &shf);
-	SH_VA_START(args, fmt);
+	va_start(args, fmt);
 	n = shf_vfprintf(&shf, fmt, args);
 	va_end(args);
 	shf_sclose(&shf); /* null terminates */
@@ -806,19 +783,13 @@ shf_snprintf(buf, bsize, fmt, va_alist)
 }
 
 char *
-#ifdef HAVE_PROTOTYPES
 shf_smprintf(const char *fmt, ...)
-#else
-shf_smprintf(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	struct shf shf;
 	va_list args;
 
 	shf_sopen((char *) 0, 0, SHF_WR|SHF_DYNAMIC, &shf);
-	SH_VA_START(args, fmt);
+	va_start(args, fmt);
 	shf_vfprintf(&shf, fmt, args);
 	va_end(args);
 	return shf_sclose(&shf); /* null terminates */
@@ -888,7 +859,7 @@ shf_vfprintf(shf, fmt, args)
 	va_list args;
 {
 	char		c, *s;
-	int		UNINITIALIZED(tmp);
+	int		tmp = 0;
 	int		field, precision;
 	int		len;
 	int		flags;

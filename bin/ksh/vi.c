@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.13 2004/05/10 16:28:47 pvalchev Exp $	*/
+/*	$OpenBSD: vi.c,v 1.14 2004/12/18 20:55:52 millert Exp $	*/
 
 /*
  *	vi command editing
@@ -11,7 +11,7 @@
 
 #include "sh.h"
 #include <ctype.h>
-#include "ksh_stat.h"		/* completion */
+#include <sys/stat.h>		/* completion */
 #include "edit.h"
 
 #define CMDLEN		2048
@@ -27,45 +27,45 @@ struct edstate {
 };
 
 
-static int	vi_hook	ARGS((int ch));
-static void 	vi_reset ARGS((char *buf, size_t len));
-static int	nextstate ARGS((int ch));
-static int	vi_insert ARGS((int ch));
-static int	vi_cmd ARGS((int argcnt, const char *cmd));
-static int	domove ARGS((int argcnt, const char *cmd, int sub));
-static int	redo_insert ARGS((int count));
-static void	yank_range ARGS((int a, int b));
-static int	bracktype ARGS((int ch));
-static void	save_cbuf ARGS((void));
-static void	restore_cbuf ARGS((void));
-static void	edit_reset ARGS((char *buf, size_t len));
-static int	putbuf ARGS((const char *buf, int len, int repl));
-static void	del_range ARGS((int a, int b));
-static int	findch ARGS((int ch, int cnt, int forw, int incl));
-static int	forwword ARGS((int argcnt));
-static int	backword ARGS((int argcnt));
-static int	endword ARGS((int argcnt));
-static int	Forwword ARGS((int argcnt));
-static int	Backword ARGS((int argcnt));
-static int	Endword ARGS((int argcnt));
-static int	grabhist ARGS((int save, int n));
-static int	grabsearch ARGS((int save, int start, int fwd, char *pat));
-static void	redraw_line ARGS((int newline));
-static void	refresh ARGS((int leftside));
-static int	outofwin ARGS((void));
-static void	rewindow ARGS((void));
-static int	newcol ARGS((int ch, int col));
-static void	display ARGS((char *wb1, char *wb2, int leftside));
-static void	ed_mov_opt ARGS((int col, char *wb));
-static int	expand_word ARGS((int command));
-static int	complete_word ARGS((int command, int count));
-static int	print_expansions ARGS((struct edstate *e, int command));
-static int 	char_len ARGS((int c));
-static void 	x_vi_zotc ARGS((int c));
-static void	vi_pprompt ARGS((int full));
-static void	vi_error ARGS((void));
-static void	vi_macro_reset ARGS((void));
-static int	x_vi_putbuf	ARGS((const char *s, size_t len));
+static int	vi_hook(int ch);
+static void 	vi_reset(char *buf, size_t len);
+static int	nextstate(int ch);
+static int	vi_insert(int ch);
+static int	vi_cmd(int argcnt, const char *cmd);
+static int	domove(int argcnt, const char *cmd, int sub);
+static int	redo_insert(int count);
+static void	yank_range(int a, int b);
+static int	bracktype(int ch);
+static void	save_cbuf(void);
+static void	restore_cbuf(void);
+static void	edit_reset(char *buf, size_t len);
+static int	putbuf(const char *buf, int len, int repl);
+static void	del_range(int a, int b);
+static int	findch(int ch, int cnt, int forw, int incl);
+static int	forwword(int argcnt);
+static int	backword(int argcnt);
+static int	endword(int argcnt);
+static int	Forwword(int argcnt);
+static int	Backword(int argcnt);
+static int	Endword(int argcnt);
+static int	grabhist(int save, int n);
+static int	grabsearch(int save, int start, int fwd, char *pat);
+static void	redraw_line(int newline);
+static void	refresh(int leftside);
+static int	outofwin(void);
+static void	rewindow(void);
+static int	newcol(int ch, int col);
+static void	display(char *wb1, char *wb2, int leftside);
+static void	ed_mov_opt(int col, char *wb);
+static int	expand_word(int command);
+static int	complete_word(int command, int count);
+static int	print_expansions(struct edstate *e, int command);
+static int 	char_len(int c);
+static void 	x_vi_zotc(int c);
+static void	vi_pprompt(int full);
+static void	vi_error(void);
+static void	vi_macro_reset(void);
+static int	x_vi_putbuf(const char *s, size_t len);
 
 #define C_	0x1		/* a valid command that isn't a M_, E_, U_ */
 #define M_	0x2		/* movement command (h, l, etc.) */
@@ -141,9 +141,9 @@ const unsigned char	classify[128] = {
 
 static char		undocbuf[CMDLEN];
 
-static struct edstate 	*save_edstate ARGS((struct edstate *old));
-static void		restore_edstate ARGS((struct edstate *old, struct edstate *new));
-static void 		free_edstate ARGS((struct edstate *old));
+static struct edstate 	*save_edstate(struct edstate *old);
+static void		restore_edstate(struct edstate *old, struct edstate *new);
+static void 		free_edstate(struct edstate *old);
 
 static struct edstate	ebuf;
 static struct edstate	undobuf = { 0, undocbuf, CMDLEN, 0, 0 };
@@ -268,32 +268,8 @@ vi_hook(ch)
 			}
 			switch (vi_insert(ch)) {
 			case -1:
-#ifdef OS2
-				/* Arrow keys generate 0xe0X, where X is H.. */
-				state = VCMD;
-				argc1 = 1;
-				switch (x_getc()) {
-				  case 'H':
-					*curcmd='k';
-					break;
-				  case 'K':
-					*curcmd='h';
-					break;
-				  case 'P':
-					*curcmd='j';
-					break;
-				  case 'M':
-					*curcmd='l';
-					break;
-				  default:
-					vi_error();
-					state = VNORMAL;
-				}
-				break;
-#else /* OS2 */
 				vi_error();
 				state = VNORMAL;
-#endif /* OS2 */
 				break;
 			case 0:
 				if (state == VLIT) {
@@ -650,10 +626,6 @@ vi_insert(ch)
 	if (first_insert && ch != Ctrl('['))
 		saved_inslen = 0;
 	switch (ch) {
-
-#ifdef OS2
-	case 224:	 /* function key prefix */
-#endif /* OS2 */
 	case '\0':
 		return -1;
 
@@ -1175,8 +1147,8 @@ domove(argcnt, cmd, sub)
 	const char *cmd;
 	int	sub;
 {
-	int	bcount, UNINITIALIZED(i), t;
-	int	UNINITIALIZED(ncursor);
+	int	bcount, i = 0, t;
+	int	ncursor = 0;
 
 	switch (*cmd) {
 
@@ -1734,8 +1706,8 @@ grabsearch(save, start, fwd, pat)
 	anchored = *pat == '^' ? (++pat, 1) : 0;
 	if ((hist = findhist(start, fwd, pat, anchored)) < 0) {
 		/* if (start != 0 && fwd && match(holdbuf, pat) >= 0) { */
-		/* XXX should FILECMP be strncmp? */
-		if (start != 0 && fwd && FILECMP(holdbuf, pat) >= 0) {
+		/* XXX should strcmp be strncmp? */
+		if (start != 0 && fwd && strcmp(holdbuf, pat) >= 0) {
 			restore_cbuf();
 			return 0;
 		} else
@@ -1837,7 +1809,7 @@ display(wb1, wb2, leftside)
 	unsigned char ch;
 	char	*twb1, *twb2, mc;
 	int	cur, col, cnt;
-	int	UNINITIALIZED(ncol);
+	int	ncol = 0;
 	int	moreright;
 
 	col = 0;
@@ -2067,7 +2039,7 @@ complete_word(command, count)
 			/* If more than one possible match, use full path */
 			for (i = 0; i < nwords; i++)
 				if (i != count &&
-				    FILECMP(words[i]
+				    strcmp(words[i]
 					    + x_basename(words[i], (char *) 0),
 					    match) == 0)
 				{
@@ -2101,7 +2073,7 @@ complete_word(command, count)
 		expanded = NONE;
 
 		/* If not a directory, add a space to the end... */
-		if (match_len > 0 && !ISDIRSEP(match[match_len - 1]))
+		if (match_len > 0 && match[match_len - 1] != '/')
 			rval = putbuf(space, 1, 0);
 	}
 	x_free_words(nwords, words);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.9 2003/10/22 07:40:38 jmc Exp $	*/
+/*	$OpenBSD: expr.c,v 1.10 2004/12/18 20:55:52 millert Exp $	*/
 
 /*
  * Korn expression evaluation
@@ -128,16 +128,16 @@ struct expr_state {
 enum error_type { ET_UNEXPECTED, ET_BADLIT, ET_RECURSIVE,
 		  ET_LVALUE, ET_RDONLY, ET_STR };
 
-static void        evalerr  ARGS((Expr_state *es, enum error_type type,
-				  const char *str)) GCC_FUNC_ATTR(noreturn);
-static struct tbl *evalexpr ARGS((Expr_state *es, enum prec prec));
-static void        token    ARGS((Expr_state *es));
-static struct tbl *do_ppmm  ARGS((Expr_state *es, enum token op,
-				  struct tbl *vasn, bool_t is_prefix));
-static void	   assign_check ARGS((Expr_state *es, enum token op,
-				      struct tbl *vasn));
-static struct tbl *tempvar  ARGS((void));
-static struct tbl *intvar   ARGS((Expr_state *es, struct tbl *vp));
+static void        evalerr(Expr_state *es, enum error_type type,
+				  const char *str) GCC_FUNC_ATTR(noreturn);
+static struct tbl *evalexpr(Expr_state *es, enum prec prec);
+static void        token(Expr_state *es);
+static struct tbl *do_ppmm(Expr_state *es, enum token op,
+				  struct tbl *vasn, bool_t is_prefix);
+static void	   assign_check(Expr_state *es, enum token op,
+				      struct tbl *vasn);
+static struct tbl *tempvar(void);
+static struct tbl *intvar(Expr_state *es, struct tbl *vp);
 
 /*
  * parse and evaluate expression
@@ -178,7 +178,7 @@ v_evaluate(vp, expr, error_ok)
 	curstate.evaling = (struct tbl *) 0;
 
 	newenv(E_ERRH);
-	i = ksh_sigsetjmp(e->jbuf, 0);
+	i = sigsetjmp(e->jbuf, 0);
 	if (i) {
 		/* Clear EXPRINEVAL in of any variables we were playing with */
 		if (curstate.evaling)
@@ -280,9 +280,9 @@ evalexpr(es, prec)
 	Expr_state *es;
 	enum prec prec;
 {
-	struct tbl *vl, UNINITIALIZED(*vr), *vasn;
+	struct tbl *vl, *vr = NULL, *vasn;
 	enum token op;
-	long UNINITIALIZED(res);
+	long res = 0;
 
 	if (prec == P_PRIMARY) {
 		op = es->tok;

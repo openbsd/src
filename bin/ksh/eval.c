@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.18 2004/12/13 16:37:06 millert Exp $	*/
+/*	$OpenBSD: eval.c,v 1.19 2004/12/18 20:55:52 millert Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -6,8 +6,8 @@
 
 #include "sh.h"
 #include <pwd.h>
-#include "ksh_dir.h"
-#include "ksh_stat.h"
+#include <dirent.h>
+#include <sys/stat.h>
 
 /*
  * string expansion
@@ -41,19 +41,19 @@ typedef struct Expand {
 #define IFS_WS		1	/* have seen IFS white-space */
 #define IFS_NWS		2	/* have seen IFS non-white-space */
 
-static	int	varsub ARGS((Expand *xp, char *sp, char *word, int *stypep, int *slenp));
-static	int	comsub ARGS((Expand *xp, char *cp));
-static	char   *trimsub ARGS((char *str, char *pat, int how));
-static	void	glob ARGS((char *cp, XPtrV *wp, int markdirs));
-static	void	globit ARGS((XString *xs, char **xpp, char *sp, XPtrV *wp,
-			     int check));
-static char	*maybe_expand_tilde ARGS((char *p, XString *dsp, char **dpp,
-					  int isassign));
-static	char   *tilde ARGS((char *acp));
-static	char   *homedir ARGS((char *name));
+static	int	varsub(Expand *xp, char *sp, char *word, int *stypep, int *slenp);
+static	int	comsub(Expand *xp, char *cp);
+static	char   *trimsub(char *str, char *pat, int how);
+static	void	glob(char *cp, XPtrV *wp, int markdirs);
+static	void	globit(XString *xs, char **xpp, char *sp, XPtrV *wp,
+			     int check);
+static char	*maybe_expand_tilde(char *p, XString *dsp, char **dpp,
+					  int isassign);
+static	char   *tilde(char *acp);
+static	char   *homedir(char *name);
 #ifdef BRACE_EXPAND
-static void	alt_expand ARGS((XPtrV *wp, char *start, char *exp_start,
-				 char *end, int fdo));
+static void	alt_expand(XPtrV *wp, char *start, char *exp_start,
+				 char *end, int fdo);
 #endif
 
 /* compile and expand word */
@@ -89,17 +89,10 @@ eval(ap, f)
 		return ap;
 	XPinit(w, 32);
 	XPput(w, NULL);		/* space for shell name */
-#ifdef	SHARPBANG
-	XPput(w, NULL);		/* and space for one arg */
-#endif
 	while (*ap != NULL)
 		expand(*ap++, &w, f);
 	XPput(w, NULL);
-#ifdef	SHARPBANG
-	return (char **) XPclose(w) + 2;
-#else
 	return (char **) XPclose(w) + 1;
-#endif
 }
 
 /*
@@ -164,7 +157,7 @@ expand(cp, wp, f)
 	register XPtrV *wp;	/* output words */
 	int f;			/* DO* flags */
 {
-	register int UNINITIALIZED(c);
+	register int c = 0;
 	register int type;	/* expansion type */
 	register int quote = 0;	/* quoted */
 	XString ds;		/* destination string */
@@ -173,7 +166,7 @@ expand(cp, wp, f)
 	int doblank;		/* field splitting of parameter/command subst */
 	Expand x;		/* expansion variables */
 	SubType st_head, *st;
-	int UNINITIALIZED(newlines); /* For trailing newlines in COMSUB */
+	int newlines = 0; /* For trailing newlines in COMSUB */
 	int saw_eq, tilde_ok;
 	int make_magic;
 	size_t len;
@@ -651,7 +644,7 @@ expand(cp, wp, f)
 						tilde_ok = 1;
 					}
 					break;
-				  case PATHSEP: /* : */
+				  case ':': /* : */
 					/* Note unquoted : for ~ */
 					if (!(f & DOTEMP_) && (f & DOASNTILDE))
 						tilde_ok = 1;
@@ -1040,12 +1033,10 @@ globit(xs, xpp, sp, wp, check)
 			 * SunOS 4.1.3 does this...
 			 */
 			if ((check & GF_EXCHECK) && xp > Xstring(*xs, xp)
-			    && ISDIRSEP(xp[-1]) && !S_ISDIR(lstatb.st_mode)
-#ifdef S_ISLNK
+			    && xp[-1] == '/' && !S_ISDIR(lstatb.st_mode)
 			    && (!S_ISLNK(lstatb.st_mode)
 				|| stat_check() < 0
 				|| !S_ISDIR(statb.st_mode))
-#endif /* S_ISLNK */
 				)
 				return;
 			/* Possibly tack on a trailing / if there isn't already
@@ -1053,43 +1044,31 @@ globit(xs, xpp, sp, wp, check)
 			 * directory
 			 */
 			if (((check & GF_MARKDIR) && (check & GF_GLOBBED))
-			    && xp > Xstring(*xs, xp) && !ISDIRSEP(xp[-1])
+			    && xp > Xstring(*xs, xp) && xp[-1] != '/'
 			    && (S_ISDIR(lstatb.st_mode)
-#ifdef S_ISLNK
 				|| (S_ISLNK(lstatb.st_mode)
 				    && stat_check() > 0
 				    && S_ISDIR(statb.st_mode))
-#endif /* S_ISLNK */
 				    ))
 			{
-				*xp++ = DIRSEP;
+				*xp++ = '/';
 				*xp = '\0';
 			}
 		}
-#ifdef OS2 /* Done this way to avoid bug in gcc 2.7.2... */
-    /* Ugly kludge required for command
-     * completion - see how search_access()
-     * is implemented for OS/2...
-     */
-# define KLUDGE_VAL	4
-#else /* OS2 */
-# define KLUDGE_VAL	0
-#endif /* OS2 */
-		XPput(*wp, str_nsave(Xstring(*xs, xp), Xlength(*xs, xp)
-			+ KLUDGE_VAL, ATEMP));
+		XPput(*wp, str_nsave(Xstring(*xs, xp), Xlength(*xs, xp), ATEMP));
 		return;
 	}
 
 	if (xp > Xstring(*xs, xp))
-		*xp++ = DIRSEP;
-	while (ISDIRSEP(*sp)) {
+		*xp++ = '/';
+	while (*sp == '/') {
 		Xcheck(*xs, xp);
 		*xp++ = *sp++;
 	}
-	np = ksh_strchr_dirsep(sp);
+	np = strchr(sp, '/');
 	if (np != NULL) {
 		se = np;
-		odirsep = *np;	/* don't assume DIRSEP, can be multiple kinds */
+		odirsep = *np;	/* don't assume '/', can be multiple kinds */
 		*np++ = '\0';
 	} else {
 		odirsep = '\0'; /* keep gcc quiet */
@@ -1119,7 +1098,7 @@ globit(xs, xpp, sp, wp, check)
 		/* xp = *xpp;	   copy_non_glob() may have re-alloc'd xs */
 		*xp = '\0';
 		prefix_len = Xlength(*xs, xp);
-		dirp = ksh_opendir(prefix_len ? Xstring(*xs, xp) : ".");
+		dirp = opendir(prefix_len ? Xstring(*xs, xp) : ".");
 		if (dirp == NULL)
 			goto Nodir;
 		while ((d = readdir(dirp)) != NULL) {
@@ -1131,7 +1110,7 @@ globit(xs, xpp, sp, wp, check)
 			    || !gmatch(name, sp, TRUE))
 				continue;
 
-			len = NLENGTH(d) + 1;
+			len = strlen(d->d_name) + 1;
 			XcheckN(*xs, xp, len);
 			memcpy(xp, name, len);
 			*xpp = xp + len - 1;
@@ -1152,7 +1131,7 @@ globit(xs, xpp, sp, wp, check)
 /* Check if p contains something that needs globbing; if it does, 0 is
  * returned; if not, p is copied into xs/xp after stripping any MAGICs
  */
-static int	copy_non_glob ARGS((XString *xs, char **xpp, char *p));
+static int	copy_non_glob(XString *xs, char **xpp, char *p);
 static int
 copy_non_glob(xs, xpp, p)
 	XString *xs;
@@ -1239,8 +1218,7 @@ maybe_expand_tilde(p, dsp, dpp, isassign)
 
 	Xinit(ts, tp, 16, ATEMP);
 	/* : only for DOASNTILDE form */
-	while (p[0] == CHAR && !ISDIRSEP(p[1])
-	       && (!isassign || p[1] != PATHSEP))
+	while (p[0] == CHAR && p[1] != '/' && (!isassign || p[1] != ':'))
 	{
 		Xcheck(ts, tp);
 		*tp++ = p[1];
@@ -1303,10 +1281,6 @@ homedir(name)
 
 	ap = tenter(&homedirs, name, hash(name));
 	if (!(ap->flag & ISSET)) {
-#ifdef OS2
-		/* No usernames in OS2 - punt */
-		return NULL;
-#else /* OS2 */
 		struct passwd *pw;
 
 		pw = getpwnam(name);
@@ -1314,7 +1288,6 @@ homedir(name)
 			return NULL;
 		ap->val.s = str_save(pw->pw_dir, APERM);
 		ap->flag |= DEFINED|ISSET|ALLOC;
-#endif /* OS2 */
 	}
 	return ap->val.s;
 }
@@ -1327,8 +1300,8 @@ alt_expand(wp, start, exp_start, end, fdo)
 	char *end;
 	int fdo;
 {
-	int UNINITIALIZED(count);
-	char *brace_start, *brace_end, *UNINITIALIZED(comma);
+	int count = 0;
+	char *brace_start, *brace_end, *comma = NULL;
 	char *field_start;
 	char *p;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.5 1999/01/10 17:55:03 millert Exp $	*/
+/*	$OpenBSD: table.c,v 1.6 2004/12/18 20:55:52 millert Exp $	*/
 
 /*
  * dynamic hashed associative table for commands and variables
@@ -8,8 +8,8 @@
 
 #define	INIT_TBLS	8	/* initial table size (power of 2) */
 
-static void     texpand     ARGS((struct table *tp, int nsize));
-static int      tnamecmp    ARGS((void *p1, void *p2));
+static void     texpand(struct table *tp, int nsize);
+static int      tnamecmp(void *p1, void *p2);
 
 
 unsigned int
@@ -193,7 +193,7 @@ tsort(tp)
 
 #ifdef PERF_DEBUG /* performance debugging */
 
-void tprintinfo ARGS((struct table *tp));
+void tprintinfo(struct table *tp);
 
 void
 tprintinfo(tp)

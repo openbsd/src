@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.23 2004/12/12 06:53:13 deraadt Exp $	*/
+/*	$OpenBSD: lex.c,v 1.24 2004/12/18 20:55:52 millert Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -53,16 +53,16 @@ struct State_info {
 };
 
 
-static void	readhere ARGS((struct ioword *iop));
-static int	getsc__ ARGS((void));
-static void	getsc_line ARGS((Source *s));
-static int	getsc_bn ARGS((void));
-static char	*get_brace_var ARGS((XString *wsp, char *wp));
-static int	arraysub ARGS((char **strp));
-static const char *ungetsc ARGS((int c));
-static void	gethere ARGS((void));
-static Lex_state *push_state_ ARGS((State_info *si, Lex_state *old_end));
-static Lex_state *pop_state_ ARGS((State_info *si, Lex_state *old_end));
+static void	readhere(struct ioword *iop);
+static int	getsc__(void);
+static void	getsc_line(Source *s);
+static int	getsc_bn(void);
+static char	*get_brace_var(XString *wsp, char *wp);
+static int	arraysub(char **strp);
+static const char *ungetsc(int c);
+static void	gethere(void);
+static Lex_state *push_state_(State_info *si, Lex_state *old_end);
+static Lex_state *pop_state_(State_info *si, Lex_state *old_end);
 
 static int backslash_skip;
 static int ignore_backslash_newline;
@@ -275,12 +275,6 @@ yylex(cf)
 			switch (c) {
 			  case '\\':
 				c = getsc();
-#ifdef OS2
-				if (isalnum(c)) {
-					*wp++ = CHAR, *wp++ = '\\';
-					*wp++ = CHAR, *wp++ = c;
-				} else
-#endif
 				if (c) /* trailing \ is lost */
 					*wp++ = QCHAR, *wp++ = c;
 				break;
@@ -903,13 +897,7 @@ readhere(iop)
 }
 
 void
-#ifdef HAVE_PROTOTYPES
 yyerror(const char *fmt, ...)
-#else
-yyerror(fmt, va_alist)
-	const char *fmt;
-	va_dcl
-#endif
 {
 	va_list va;
 
@@ -919,7 +907,7 @@ yyerror(fmt, va_alist)
 	source->str = null;	/* zap pending input */
 
 	error_prefix(TRUE);
-	SH_VA_START(va, fmt);
+	va_start(va, fmt);
 	shf_vfprintf(shl_out, fmt, va);
 	va_end(va);
 	errorf(null);
@@ -1152,15 +1140,8 @@ getsc_line(s)
 			while (*p && ctype(*p, C_IFS) && ctype(*p, C_IFSWS))
 				p++;
 		if (*p) {
-# ifdef EASY_HISTORY
-			if (cur_prompt == PS2)
-				histappend(Xstring(s->xs, xp), 1);
-			else
-# endif /* EASY_HISTORY */
-			{
-				s->line++;
-				histsave(s->line, s->str, 1);
-			}
+			s->line++;
+			histsave(s->line, s->str, 1);
 		}
 #endif /* HISTORY */
 	}
@@ -1191,7 +1172,7 @@ set_prompt(to, s)
 			ps1 = shf_sclose(shf);
 			saved_atemp = ATEMP;
 			newenv(E_ERRH);
-			if (ksh_sigsetjmp(e->jbuf, 0)) {
+			if (sigsetjmp(e->jbuf, 0)) {
 				prompt = safe_prompt;
 				/* Don't print an error - assume it has already
 				 * been printed.  Reason is we may have forked
@@ -1632,7 +1613,7 @@ ungetsc(c)
 
 /* Called to get a char that isn't a \newline sequence. */
 static int
-getsc_bn ARGS((void))
+getsc_bn(void)
 {
 	int c, c2;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.31 2003/12/15 05:25:52 otto Exp $	*/
+/*	$OpenBSD: exec.c,v 1.32 2004/12/18 20:55:52 millert Exp $	*/
 
 /*
  * execute command tree
@@ -7,7 +7,7 @@
 #include "sh.h"
 #include "c_test.h"
 #include <ctype.h>
-#include "ksh_stat.h"
+#include <sys/stat.h>
 
 /* Does ps4 get parameter substitutions done? */
 #ifdef KSH
@@ -16,38 +16,24 @@
 # define PS4_SUBSTITUTE(s)	(s)
 #endif /* KSH */
 
-static int	comexec	 ARGS((struct op *t, struct tbl *volatile tp, char **ap,
-			      int volatile flags));
-static void	scriptexec ARGS((struct op *tp, char **ap));
-static int	call_builtin ARGS((struct tbl *tp, char **wp));
-static int	iosetup ARGS((struct ioword *iop, struct tbl *tp));
-static int	herein ARGS((const char *content, int sub));
+static int	comexec(struct op *t, struct tbl *volatile tp, char **ap,
+			      int volatile flags);
+static void	scriptexec(struct op *tp, char **ap);
+static int	call_builtin(struct tbl *tp, char **wp);
+static int	iosetup(struct ioword *iop, struct tbl *tp);
+static int	herein(const char *content, int sub);
 #ifdef KSH
-static char 	*do_selectargs ARGS((char **ap, bool_t print_menu));
+static char 	*do_selectargs(char **ap, bool_t print_menu);
 #endif /* KSH */
 #ifdef KSH
-static int	dbteste_isa ARGS((Test_env *te, Test_meta meta));
-static const char *dbteste_getopnd ARGS((Test_env *te, Test_op op,
-					 int do_eval));
-static int	dbteste_eval ARGS((Test_env *te, Test_op op, const char *opnd1,
-				const char *opnd2, int do_eval));
-static void	dbteste_error ARGS((Test_env *te, int offset, const char *msg));
+static int	dbteste_isa(Test_env *te, Test_meta meta);
+static const char *dbteste_getopnd(Test_env *te, Test_op op,
+					 int do_eval);
+static int	dbteste_eval(Test_env *te, Test_op op, const char *opnd1,
+				const char *opnd2, int do_eval);
+static void	dbteste_error(Test_env *te, int offset, const char *msg);
 #endif /* KSH */
-#ifdef OS2
-static int	search_access1 ARGS((const char *path, int mode, int *errnop));
-#endif /* OS2 */
 
-
-/*
- * handle systems that don't have F_SETFD
- */
-#ifndef F_SETFD
-# ifndef MAXFD
-#   define  MAXFD 64
-# endif
-/* a bit field would be smaller, but this will work */
-static char clexec_tab[MAXFD+1];
-#endif
 
 /*
  * we now use this function always.
@@ -56,15 +42,7 @@ int
 fd_clexec(fd)
     int fd;
 {
-#ifndef F_SETFD
-	if (fd >= 0 && fd < sizeof(clexec_tab)) {
-		clexec_tab[fd] = 1;
-		return 0;
-	}
-	return -1;
-#else
 	return fcntl(fd, F_SETFD, 1);
-#endif
 }
 
 
@@ -200,24 +178,20 @@ execute(t, flags)
 #ifdef KSH
 	  case TCOPROC:
 	  {
-# ifdef JOB_SIGS
 		sigset_t	omask;
-# endif /* JOB_SIGS */
 
-# ifdef JOB_SIGS
 		/* Block sigchild as we are using things changed in the
 		 * signal handler
 		 */
 		sigprocmask(SIG_BLOCK, &sm_sigchld, &omask);
 		e->type = E_ERRH;
-		i = ksh_sigsetjmp(e->jbuf, 0);
+		i = sigsetjmp(e->jbuf, 0);
 		if (i) {
 			sigprocmask(SIG_SETMASK, &omask, (sigset_t *) 0);
 			quitenv();
 			unwind(i);
 			/*NOTREACHED*/
 		}
-# endif /* JOB_SIGS */
 		/* Already have a (live) co-process? */
 		if (coproc.job && coproc.write >= 0)
 			errorf("coprocess already exists");
@@ -248,10 +222,8 @@ execute(t, flags)
 			/* create new coprocess id */
 			++coproc.id;
 		}
-# ifdef JOB_SIGS
 		sigprocmask(SIG_SETMASK, &omask, (sigset_t *) 0);
 		e->type = E_EXEC; /* no more need for error handler */
-# endif /* JOB_SIGS */
 
 		/* exchild() closes coproc.* in child after fork,
 		 * will also increment coproc.njobs when the
@@ -313,7 +285,7 @@ execute(t, flags)
 			: e->loc->argv + 1;
 		e->type = E_LOOP;
 		while (1) {
-			i = ksh_sigsetjmp(e->jbuf, 0);
+			i = sigsetjmp(e->jbuf, 0);
 			if (!i)
 				break;
 			if ((e->flags&EF_BRKCONT_PASS)
@@ -353,7 +325,7 @@ execute(t, flags)
 	  case TUNTIL:
 		e->type = E_LOOP;
 		while (1) {
-			i = ksh_sigsetjmp(e->jbuf, 0);
+			i = sigsetjmp(e->jbuf, 0);
 			if (!i)
 				break;
 			if ((e->flags&EF_BRKCONT_PASS)
@@ -410,17 +382,9 @@ execute(t, flags)
 	  case TEXEC:		/* an eval'd TCOM */
 		s = t->args[0];
 		ap = makenv();
-#ifndef F_SETFD
-		for (i = 0; i < sizeof(clexec_tab); i++)
-			if (clexec_tab[i]) {
-				close(i);
-				clexec_tab[i] = 0;
-			}
-#endif
 		restoresigs();
 		cleanup_proc_env();
-		/* XINTACT bit is for OS2 */
-		ksh_execve(t->str, t->args, ap, (flags & XINTACT) ? 1 : 0);
+		execve(t->str, t->args, ap);
 		if (errno == ENOEXEC)
 			scriptexec(t, ap);
 		else
@@ -577,7 +541,7 @@ comexec(t, tp, ap, flags)
 		rv = subst_exstat;
 		goto Leave;
 	} else if (!tp) {
-		if (Flag(FRESTRICTED) && ksh_strchr_dirsep(cp)) {
+		if (Flag(FRESTRICTED) && strchr(cp, '/')) {
 			warningf(TRUE, "%s: restricted", cp);
 			rv = 1;
 			goto Leave;
@@ -659,7 +623,7 @@ comexec(t, tp, ap, flags)
 		tp->flag |= FINUSE;
 
 		e->type = E_FUNC;
-		i = ksh_sigsetjmp(e->jbuf, 0);
+		i = sigsetjmp(e->jbuf, 0);
 		if (i == 0) {
 			/* seems odd to pass XERROK here, but at&t ksh does */
 			exstat = execute(tp->val.t, flags & XERROK);
@@ -764,101 +728,9 @@ scriptexec(tp, ap)
 		shell = EXECSHELL;
 
 	*tp->args-- = tp->str;
-#ifdef	SHARPBANG
-	{
-		char buf[LINE];
-		register char *cp;
-		register int fd, n;
-
-		buf[0] = '\0';
-		if ((fd = open(tp->str, O_RDONLY)) >= 0) {
-			if ((n = read(fd, buf, LINE - 1)) > 0)
-				buf[n] = '\0';
-			(void) close(fd);
-		}
-		if ((buf[0] == '#' && buf[1] == '!' && (cp = &buf[2]))
-# ifdef OS2
-		    || (strncmp(buf, "extproc", 7) == 0 && isspace(buf[7])
-			&& (cp = &buf[7]))
-# endif /* OS2 */
-		    )
-		{
-			while (*cp && (*cp == ' ' || *cp == '\t'))
-				cp++;
-			if (*cp && *cp != '\n') {
-				char *a0 = cp, *a1 = (char *) 0;
-# ifdef OS2
-				char *a2 = cp;
-# endif /* OS2 */
-
-				while (*cp && *cp != '\n' && *cp != ' '
-				       && *cp != '\t')
-				{
-# ifdef OS2
-			/* Allow shell search without prepended path
-			 * if shell with / in pathname cannot be found.
-			 * Use / explicitly so \ can be used if explicit
-			 * needs to be forced.
-			 */
-					if (*cp == '/')
-						a2 = cp + 1;
-# endif /* OS2 */
-					cp++;
-				}
-				if (*cp && *cp != '\n') {
-					*cp++ = '\0';
-					while (*cp
-					       && (*cp == ' ' || *cp == '\t'))
-						cp++;
-					if (*cp && *cp != '\n') {
-						a1 = cp;
-						/* all one argument */
-						while (*cp && *cp != '\n')
-							cp++;
-					}
-				}
-				if (*cp == '\n') {
-					*cp = '\0';
-					if (a1)
-						*tp->args-- = a1;
-# ifdef OS2
-					if (a0 != a2) {
-						char *tmp_a0 = str_nsave(a0,
-							strlen(a0) + 5, ATEMP);
-						if (search_access(tmp_a0, X_OK,
-								(int *) 0))
-							a0 = a2;
-						afree(tmp_a0, ATEMP);
-					}
-# endif /* OS2 */
-					shell = a0;
-				}
-			}
-# ifdef OS2
-		} else {
-		        /* Use ksh documented shell default if present
-			 * else use OS2_SHELL which is assumed to need
-			 * the /c option and '\' as dir separator.
-			 */
-		         char *p = shell;
-
-			 shell = str_val(global("EXECSHELL"));
-			 if (shell && *shell)
-				 shell = search(shell, path, X_OK, (int *) 0);
-			 if (!shell || !*shell) {
-				 shell = p;
-				 *tp->args-- = "/c";
-				 for (p = tp->str; *p; p++)
-					 if (*p == '/')
-						 *p = '\\';
-			 }
-# endif /* OS2 */
-		}
-	}
-#endif	/* SHARPBANG */
 	*tp->args = shell;
 
-	ksh_execve(tp->args[0], tp->args, ap, 0);
+	execve(tp->args[0], tp->args, ap);
 
 	/* report both the program that was run and the bogus shell */
 	errorf("%s: %s: %s", tp->str, shell, strerror(errno));
@@ -956,7 +828,7 @@ define(name, t)
 void
 builtin(name, func)
 	const char *name;
-	int (*func) ARGS((char **));
+	int (*func)(char **);
 {
 	register struct tbl *tp;
 	Tflag flag;
@@ -995,7 +867,7 @@ findcom(name, flags)
 	char *fpath;			/* for function autoloading */
 	char *npath;
 
-	if (ksh_strchr_dirsep(name) != NULL) {
+	if (strchr(name, '/') != NULL) {
 		insert = 0;
 		/* prevent FPATH search below */
 		flags &= ~FC_FUNC;
@@ -1032,7 +904,7 @@ findcom(name, flags)
 		tp = tbi;
 	if (!tp && (flags & FC_PATH) && !(flags & FC_DEFPATH)) {
 		tp = tsearch(&taliases, name, h);
-		if (tp && (tp->flag & ISSET) && eaccess(tp->val.s, X_OK) != 0) {
+		if (tp && (tp->flag & ISSET) && access(tp->val.s, X_OK) != 0) {
 			if (tp->flag & ALLOC) {
 				tp->flag &= ~ALLOC;
 				afree(tp->val.s, APERM);
@@ -1090,7 +962,7 @@ flushcom(all)
 	struct tstate ts;
 
 	for (twalk(&ts, &taliases); (tp = tnext(&ts)) != NULL; )
-		if ((tp->flag&ISSET) && (all || !ISDIRSEP(tp->val.s[0]))) {
+		if ((tp->flag&ISSET) && (all || tp->val.s[0] != '/')) {
 			if (tp->flag&ALLOC) {
 				tp->flag &= ~(ALLOC|ISSET);
 				afree(tp->val.s, APERM);
@@ -1106,13 +978,12 @@ search_access(path, mode, errnop)
 	int mode;
 	int *errnop;		/* set if candidate found, but not suitable */
 {
-#ifndef OS2
 	int ret, err = 0;
 	struct stat statb;
 
 	if (stat(path, &statb) < 0)
 		return -1;
-	ret = eaccess(path, mode);
+	ret = access(path, mode);
 	if (ret < 0)
 		err = errno; /* File exists, but we can't access it */
 	else if (mode == X_OK
@@ -1126,73 +997,7 @@ search_access(path, mode, errnop)
 	if (err && errnop && !*errnop)
 		*errnop = err;
 	return ret;
-#else /* !OS2 */
-	/*
-	 * NOTE: ASSUMES path can be modified and has enough room at the
-	 *       end of the string for a suffix (ie, 4 extra characters).
-	 *	 Certain code knows this (eg, eval.c(globit()),
-	 *	 exec.c(search())).
-	 */
-	static char *xsuffixes[] = { ".ksh", ".exe", ".", ".sh", ".cmd",
-				     ".com", ".bat", (char *) 0
-				   };
-	static char *rsuffixes[] = { ".ksh", ".", ".sh", ".cmd", ".bat",
-				      (char *) 0
-				   };
-	int i;
-	char *mpath = (char *) path;
-	char *tp = mpath + strlen(mpath);
-	char *p;
-	char **sfx;
-
-	/* If a suffix has been specified, check if it is one of the
-	 * suffixes that indicate the file is executable - if so, change
-	 * the access test to R_OK...
-	 * This code assumes OS/2 files can have only one suffix...
-	 */
-	if ((p = strrchr((p = ksh_strrchr_dirsep(mpath)) ? p : mpath, '.'))) {
-		if (mode == X_OK)
-			mode = R_OK;
-		return search_access1(mpath, mode, errnop);
-	}
-	/* Try appending the various suffixes.  Different suffixes for
-	 * read and execute 'cause we don't want to read an executable...
-	 */
-	sfx = mode == R_OK ? rsuffixes : xsuffixes;
-	for (i = 0; sfx[i]; i++) {
-		strcpy(tp, p = sfx[i]);
-		if (search_access1(mpath, R_OK, errnop) == 0)
-			return 0;
-		*tp = '\0';
-	}
-	return -1;
-#endif /* !OS2 */
 }
-
-#ifdef OS2
-static int
-search_access1(path, mode, errnop)
-	const char *path;
-	int mode;
-	int *errnop;		/* set if candidate found, but not suitable */
-{
-	int ret, err = 0;
-	struct stat statb;
-
-	if (stat(path, &statb) < 0)
-		return -1;
-	ret = eaccess(path, mode);
-	if (ret < 0)
-		err = errno; /* File exists, but we can't access it */
-	else if (!S_ISREG(statb.st_mode)) {
-		ret = -1;
-		err = S_ISDIR(statb.st_mode) ? EISDIR : EACCES;
-	}
-	if (err && errnop && !*errnop)
-		*errnop = err;
-	return ret;
-}
-#endif /* OS2 */
 
 /*
  * search for command with PATH
@@ -1211,26 +1016,7 @@ search(name, path, mode, errnop)
 
 	if (errnop)
 		*errnop = 0;
-#ifdef OS2
-	/* Xinit() allocates 8 additional bytes, so appended suffixes won't
-	 * overflow the memory.
-	 */
-	namelen = strlen(name) + 1;
-	Xinit(xs, xp, namelen, ATEMP);
-	memcpy(Xstring(xs, xp), name, namelen);
-
- 	if (ksh_strchr_dirsep(name)) {
-		if (search_access(Xstring(xs, xp), mode, errnop) >= 0)
-			return Xstring(xs, xp); /* not Xclose() - see above */
-		Xfree(xs, xp);
-		return NULL;
-	}
-
-	/* Look in current context always. (os2 style) */
-	if (search_access(Xstring(xs, xp), mode, errnop) == 0)
-		return Xstring(xs, xp); /* not Xclose() - xp may be wrong */
-#else /* OS2 */
-	if (ksh_strchr_dirsep(name)) {
+	if (strchr(name, '/')) {
 		if (search_access(name, mode, errnop) == 0)
 			return (char *) name;
 		return NULL;
@@ -1238,28 +1024,23 @@ search(name, path, mode, errnop)
 
 	namelen = strlen(name) + 1;
 	Xinit(xs, xp, 128, ATEMP);
-#endif /* OS2 */
 
 	sp = path;
 	while (sp != NULL) {
 		xp = Xstring(xs, xp);
-		if (!(p = strchr(sp, PATHSEP)))
+		if (!(p = strchr(sp, ':')))
 			p = sp + strlen(sp);
 		if (p != sp) {
 			XcheckN(xs, xp, p - sp);
 			memcpy(xp, sp, p - sp);
 			xp += p - sp;
-			*xp++ = DIRSEP;
+			*xp++ = '/';
 		}
 		sp = p;
 		XcheckN(xs, xp, namelen);
 		memcpy(xp, name, namelen);
  		if (search_access(Xstring(xs, xp), mode, errnop) == 0)
-#ifdef OS2
- 			return Xstring(xs, xp); /* Not Xclose() - see above */
-#else /* OS2 */
 			return Xclose(xs, xp + namelen);
-#endif /* OS2 */
 		if (*sp++ == '\0')
 			sp = NULL;
 	}
@@ -1298,7 +1079,7 @@ iosetup(iop, tp)
 	register int u = -1;
 	char *cp = iop->name;
 	int iotype = iop->flag & IOTYPE;
-	int do_open = 1, do_close = 0, UNINITIALIZED(flags);
+	int do_open = 1, do_close = 0, flags = 0;
 	struct ioword iotmp;
 	struct stat statb;
 
@@ -1372,10 +1153,6 @@ iosetup(iop, tp)
 			return -1;
 		}
 		u = open(cp, flags, 0666);
-#ifdef OS2
-		if (u < 0 && strcmp(cp, "/dev/null") == 0)
-			u = open("nul", flags, 0666);
-#endif /* OS2 */
 	}
 	if (u < 0) {
 		/* herein() may already have printed message */
@@ -1468,7 +1245,7 @@ herein(content, sub)
 
 	osource = source;
 	newenv(E_ERRH);
-	i = ksh_sigsetjmp(e->jbuf, 0);
+	i = sigsetjmp(e->jbuf, 0);
 	if (i) {
 		source = osource;
 		quitenv();
@@ -1544,7 +1321,7 @@ struct select_menu_info {
 	int	num_width;
 } info;
 
-static char *select_fmt_entry ARGS((void *arg, int i, char *buf, int buflen));
+static char *select_fmt_entry(void *arg, int i, char *buf, int buflen);
 
 /* format a single select menu item */
 static char *
@@ -1606,7 +1383,7 @@ pr_menu(ap)
 
 /* XXX: horrible kludge to fit within the framework */
 
-static char *plain_fmt_entry ARGS((void *arg, int i, char *buf, int buflen));
+static char *plain_fmt_entry(void *arg, int i, char *buf, int buflen);
 
 static char *
 plain_fmt_entry(arg, i, buf, buflen)

@@ -1,15 +1,14 @@
-/*	$OpenBSD: c_sh.c,v 1.17 2003/03/13 09:03:07 deraadt Exp $	*/
+/*	$OpenBSD: c_sh.c,v 1.18 2004/12/18 20:55:52 millert Exp $	*/
 
 /*
  * built-in Bourne commands
  */
 
 #include "sh.h"
-#include "ksh_stat.h" 	/* umask() */
-#include "ksh_time.h"
-#include "ksh_times.h"
+#include <sys/stat.h>	/* umask() */
+#include <sys/times.h>
 
-static	char *clocktos ARGS((clock_t t));
+static	char *clocktos(clock_t t);
 
 
 /* :, false and true */
@@ -215,7 +214,7 @@ int
 c_wait(wp)
 	char **wp;
 {
-	int UNINITIALIZED(rv);
+	int rv = 0;
 	int sig;
 
 	if (ksh_getopt(wp, &builtin_opt, null) == '?')
@@ -249,7 +248,7 @@ c_read(wp)
 	const char *emsg;
 	XString cs, xs;
 	struct tbl *vp;
-	char UNINITIALIZED(*xp);
+	char *xp = NULL;
 
 	while ((optc = ksh_getopt(wp, &builtin_opt, "prsu,")) != EOF)
 		switch (optc) {
@@ -323,11 +322,7 @@ c_read(wp)
 				break;
 			while (1) {
 				c = shf_getc(shf);
-				if (c == '\0'
-#ifdef OS2
-				    || c == '\r'
-#endif /* OS2 */
-				    )
+				if (c == '\0')
 					continue;
 				if (c == EOF && shf_error(shf)
 				    && shf_errno(shf) == EINTR)
@@ -476,7 +471,7 @@ c_trap(wp)
 	if (*wp == NULL) {
 		int anydfl = 0;
 
-		for (p = sigtraps, i = SIGNALS+1; --i >= 0; p++) {
+		for (p = sigtraps, i = NSIG+1; --i >= 0; p++) {
 			if (p->trap == NULL)
 				anydfl = 1;
 			else {
@@ -491,7 +486,7 @@ c_trap(wp)
 		 */
 		if (anydfl) {
 			shprintf("trap -- -");
-			for (p = sigtraps, i = SIGNALS+1; --i >= 0; p++)
+			for (p = sigtraps, i = NSIG+1; --i >= 0; p++)
 				if (p->trap == NULL && p->name)
 					shprintf(" %s", p->name);
 			shprintf(newline);
@@ -698,7 +693,7 @@ c_times(wp)
 {
 	struct tms all;
 
-	(void) ksh_times(&all);
+	(void) times(&all);
 	shprintf("Shell: %8ss user ", clocktos(all.tms_utime));
 	shprintf("%8ss system\n", clocktos(all.tms_stime));
 	shprintf("Kids:  %8ss user ", clocktos(all.tms_cutime));
@@ -725,7 +720,7 @@ timex(t, f)
 	extern clock_t j_usrtime, j_systime; /* computed by j_wait */
 	char opts[1];
 
-	t0t = ksh_times(&t0);
+	t0t = times(&t0);
 	if (t->left) {
 		/*
 		 * Two ways of getting cpu usage of a command: just use t0
@@ -741,7 +736,7 @@ timex(t, f)
 		opts[0] = 0;
 		rv = execute(t->left, f | XTIME);
 		tf |= opts[0];
-		t1t = ksh_times(&t1);
+		t1t = times(&t1);
 	} else
 		tf = TF_NOARGS;
 
@@ -863,8 +858,8 @@ c_builtin(wp)
 	return 0;
 }
 
-extern	int c_test ARGS((char **wp));		/* in c_test.c */
-extern	int c_ulimit ARGS((char **wp));		/* in c_ulimit.c */
+extern	int c_test(char **wp);			/* in c_test.c */
+extern	int c_ulimit(char **wp);		/* in c_ulimit.c */
 
 /* A leading = means assignments before command are kept;
  * a leading * means a POSIX special builtin;
@@ -894,13 +889,5 @@ const struct builtin shbuiltins [] = {
 	{"ulimit", c_ulimit},
 	{"+umask", c_umask},
 	{"*=unset", c_unset},
-#ifdef OS2
-	/* In OS2, the first line of a file can be "extproc name", which
-	 * tells the command interpreter (cmd.exe) to use name to execute
-	 * the file.  For this to be useful, ksh must ignore commands
-	 * starting with extproc and this does the trick...
-	 */
-	{"extproc", c_label},
-#endif /* OS2 */
 	{NULL, NULL}
 };

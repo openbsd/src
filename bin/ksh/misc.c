@@ -1,25 +1,18 @@
-/*	$OpenBSD: misc.c,v 1.21 2004/12/12 06:53:13 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.22 2004/12/18 20:55:52 millert Exp $	*/
 
 /*
  * Miscellaneous functions
  */
 
 #include "sh.h"
-#include <ctype.h>	/* for FILECHCONV */
-#ifdef HAVE_LIMITS_H
-# include <limits.h>
-#endif
-
-#ifndef UCHAR_MAX
-# define UCHAR_MAX	0xFF
-#endif
+#include <ctype.h>	/* ??? Removing this changes generated code! */
+#include <sys/param.h>	/* for MAXPATHLEN */
 
 short ctypes [UCHAR_MAX+1];	/* type bits for unsigned char */
 
-static int	do_gmatch ARGS((const unsigned char *s, const unsigned char *p,
-			const unsigned char *se, const unsigned char *pe,
-			int isfile));
-static const unsigned char *cclass ARGS((const unsigned char *p, int sub));
+static int	do_gmatch(const unsigned char *s, const unsigned char *p,
+			const unsigned char *se, const unsigned char *pe);
+static const unsigned char *cclass(const unsigned char *p, int sub);
 
 /*
  * Fast character classes
@@ -213,8 +206,8 @@ struct options_info {
 	} opts[NELEM(options)];
 };
 
-static char *options_fmt_entry ARGS((void *arg, int i, char *buf, int buflen));
-static void printoptions ARGS((int verbose));
+static char *options_fmt_entry(void *arg, int i, char *buf, int buflen);
+static void printoptions(int verbose);
 
 /* format a single select menu item */
 static char *
@@ -319,14 +312,10 @@ change_flag(f, what, newval)
 #endif /* EDIT */
 	/* Turning off -p? */
 	if (f == FPRIVILEGED && oldval && !newval) {
-#ifdef OS2
-		;
-#else /* OS2 */
 		seteuid(ksheuid = getuid());
 		setuid(ksheuid);
 		setegid(getgid());
 		setgid(getgid());
-#endif /* OS2 */
 	} else if (f == FPOSIX && newval) {
 #ifdef BRACE_EXPAND
 		Flag(FBRACEEXPAND) = 0
@@ -384,7 +373,7 @@ parse_args(argv, what, setargsp)
 		 * flag using +l.
 		 */
 		Flag(FLOGIN) = (argv[0][0] == '-'
-				|| ((p = ksh_strrchr_dirsep(argv[0]))
+				|| ((p = strrchr(argv[0], '/'))
 				     && *++p == '-'));
 		opts = cmd_opts;
 	} else
@@ -546,8 +535,7 @@ gmatch(s, p, isfile)
 		return !strcmp(t, s);
 	}
 	return do_gmatch((const unsigned char *) s, (const unsigned char *) se,
-			 (const unsigned char *) p, (const unsigned char *) pe,
-			 isfile);
+			 (const unsigned char *) p, (const unsigned char *) pe);
 }
 
 /* Returns if p is a syntacticly correct globbing pattern, false
@@ -622,10 +610,9 @@ has_globbing(xp, xpe)
 
 /* Function must return either 0 or 1 (assumed by code for 0x80|'!') */
 static int
-do_gmatch(s, se, p, pe, isfile)
+do_gmatch(s, se, p, pe)
 	const unsigned char *s, *p;
 	const unsigned char *se, *pe;
-	int isfile;
 {
 	register int sc, pc;
 	const unsigned char *prest, *psub, *pnext;
@@ -637,10 +624,6 @@ do_gmatch(s, se, p, pe, isfile)
 		pc = *p++;
 		sc = s < se ? *s : '\0';
 		s++;
-		if (isfile) {
-			sc = FILECHCONV(sc);
-			pc = FILECHCONV(pc);
-		}
 		if (!ISMAGIC(pc)) {
 			if (sc != pc)
 				return 0;
@@ -662,7 +645,7 @@ do_gmatch(s, se, p, pe, isfile)
 				return 1;
 			s--;
 			do {
-				if (do_gmatch(s, se, p, pe, isfile))
+				if (do_gmatch(s, se, p, pe))
 					return 1;
 			} while (s++ < se);
 			return 0;
@@ -679,18 +662,18 @@ do_gmatch(s, se, p, pe, isfile)
 			s--;
 			/* take care of zero matches */
 			if (p[-1] == (0x80 | '*')
-			    && do_gmatch(s, se, prest, pe, isfile))
+			    && do_gmatch(s, se, prest, pe))
 				return 1;
 			for (psub = p; ; psub = pnext) {
 				pnext = pat_scan(psub, pe, 1);
 				for (srest = s; srest <= se; srest++) {
 					if (do_gmatch(s, srest,
-						psub, pnext - 2, isfile)
+						psub, pnext - 2)
 					    && (do_gmatch(srest, se,
-							  prest, pe, isfile)
+							  prest, pe)
 						|| (s != srest
 						    && do_gmatch(srest, se,
-							p - 2, pe, isfile))))
+							p - 2, pe))))
 						return 1;
 				}
 				if (pnext == prest)
@@ -706,16 +689,16 @@ do_gmatch(s, se, p, pe, isfile)
 			s--;
 			/* Take care of zero matches */
 			if (p[-1] == (0x80 | '?')
-			    && do_gmatch(s, se, prest, pe, isfile))
+			    && do_gmatch(s, se, prest, pe))
 				return 1;
 			for (psub = p; ; psub = pnext) {
 				pnext = pat_scan(psub, pe, 1);
 				srest = prest == pe ? se : s;
 				for (; srest <= se; srest++) {
 					if (do_gmatch(s, srest,
-						      psub, pnext - 2, isfile)
+						      psub, pnext - 2)
 					    && do_gmatch(srest, se,
-							 prest, pe, isfile))
+							 prest, pe))
 						return 1;
 				}
 				if (pnext == prest)
@@ -733,7 +716,7 @@ do_gmatch(s, se, p, pe, isfile)
 				for (psub = p; ; psub = pnext) {
 					pnext = pat_scan(psub, pe, 1);
 					if (do_gmatch(s, srest,
-						      psub, pnext - 2, isfile))
+						      psub, pnext - 2))
 					{
 						matched = 1;
 						break;
@@ -742,7 +725,7 @@ do_gmatch(s, se, p, pe, isfile)
 						break;
 				}
 				if (!matched && do_gmatch(srest, se,
-							  prest, pe, isfile))
+							  prest, pe))
 					return 1;
 			}
 			return 0;
@@ -829,13 +812,13 @@ pat_scan(p, pe, match_sep)
 /*
  * quick sort of array of generic pointers to objects.
  */
-static void qsort1 ARGS((void **base, void **lim, int (*f)(void *, void *)));
+static void qsort1(void **base, void **lim, int (*f)(void *, void *));
 
 void
 qsortp(base, n, f)
 	void **base;				/* base address */
 	size_t n;				/* elements */
-	int (*f) ARGS((void *, void *));	/* compare function */
+	int (*f)(void *, void *);		/* compare function */
 {
 	qsort1(base, base + n, f);
 }
@@ -850,7 +833,7 @@ qsortp(base, n, f)
 static void
 qsort1(base, lim, f)
 	void **base, **lim;
-	int (*f) ARGS((void *, void *));
+	int (*f)(void *, void *);
 {
 	register void **i, **j;
 	register void **lptr, **hptr;
@@ -1105,7 +1088,7 @@ void
 print_columns(shf, n, func, arg, max_width, prefcol)
 	struct shf *shf;
 	int n;
-	char *(*func) ARGS((void *, int, char *, int));
+	char *(*func)(void *, int, char *, int);
 	void *arg;
 	int max_width;
 	int prefcol;
@@ -1216,12 +1199,7 @@ blocking_read(fd, buf, nbytes)
 	int tried_reset = 0;
 
 	while ((ret = read(fd, buf, nbytes)) < 0) {
-		if (!tried_reset && (errno == EAGAIN
-#ifdef EWOULDBLOCK
-				     || errno == EWOULDBLOCK
-#endif /* EWOULDBLOCK */
-				    ))
-		{
+		if (!tried_reset && errno == EAGAIN) {
 			int oerrno = errno;
 			if (reset_nonblock(fd) > 0) {
 				tried_reset = 1;
@@ -1243,56 +1221,17 @@ reset_nonblock(fd)
 	int fd;
 {
 	int flags;
-	int blocking_flags;
 
 	if ((flags = fcntl(fd, F_GETFL, 0)) < 0)
 		return -1;
-	/* With luck, the C compiler will reduce this to a constant */
-	blocking_flags = 0;
-#ifdef O_NONBLOCK
-	blocking_flags |= O_NONBLOCK;
-#endif /* O_NONBLOCK */
-#ifdef O_NDELAY
-	blocking_flags |= O_NDELAY;
-#else /* O_NDELAY */
-# ifndef O_NONBLOCK
-	blocking_flags |= FNDELAY; /* hope this exists... */
-# endif /* O_NONBLOCK */
-#endif /* O_NDELAY */
-	if (!(flags & blocking_flags))
+	if (!(flags & O_NONBLOCK))
 		return 0;
-	flags &= ~blocking_flags;
+	flags &= ~O_NONBLOCK;
 	if (fcntl(fd, F_SETFL, flags) < 0)
 		return -1;
 	return 1;
 }
 
-
-#ifdef HAVE_SYS_PARAM_H
-# include <sys/param.h>
-#endif /* HAVE_SYS_PARAM_H */
-#ifndef MAXPATHLEN
-# define MAXPATHLEN PATH
-#endif /* MAXPATHLEN */
-
-#ifdef HPUX_GETWD_BUG
-# include "ksh_dir.h"
-
-/*
- * Work around bug in hpux 10.x C library - getwd/getcwd dump core
- * if current directory is not readable.  Done in macro 'cause code
- * is needed in GETWD and GETCWD cases.
- */
-# define HPUX_GETWD_BUG_CODE \
-	{ \
-	    DIR *d = ksh_opendir("."); \
-	    if (!d) \
-		return (char *) 0; \
-	    closedir(d); \
-	}
-#else /* HPUX_GETWD_BUG */
-# define HPUX_GETWD_BUG_CODE
-#endif /* HPUX_GETWD_BUG */
 
 /* Like getcwd(), except bsize is ignored if buf is 0 (MAXPATHLEN is used) */
 char *
@@ -1300,13 +1239,11 @@ ksh_get_wd(buf, bsize)
 	char *buf;
 	int bsize;
 {
-#ifdef HAVE_GETCWD
 	char *b;
 	char *ret;
 
-	/* Before memory allocated */
-	HPUX_GETWD_BUG_CODE
-
+	/* Note: we could just use plain getcwd(), but then we'd had to
+	 * inject possibly allocated space into the ATEMP area. */
 	/* Assume getcwd() available */
 	if (!buf) {
 		bsize = MAXPATHLEN;
@@ -1324,37 +1261,4 @@ ksh_get_wd(buf, bsize)
 	}
 
 	return ret;
-#else /* HAVE_GETCWD */
-	extern char *getwd ARGS((char *));
-	char *b;
-	int len;
-
-	/* Before memory allocated */
-	HPUX_GETWD_BUG_CODE
-
-	if (buf && bsize > MAXPATHLEN)
-		b = buf;
-	else
-		b = alloc(MAXPATHLEN + 1, ATEMP);
-	if (!getwd(b)) {
-		errno = EACCES;
-		if (b != buf)
-			afree(b, ATEMP);
-		return (char *) 0;
-	}
-	len = strlen(b) + 1;
-	if (!buf)
-		b = aresize(b, len, ATEMP);
-	else if (buf != b) {
-		if (len > bsize) {
-			errno = ERANGE;
-			return (char *) 0;
-		}
-		memcpy(buf, b, len);
-		afree(b, ATEMP);
-		b = buf;
-	}
-
-	return b;
-#endif /* HAVE_GETCWD */
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.19 2004/11/04 19:20:07 deraadt Exp $	*/
+/*	$OpenBSD: edit.c,v 1.20 2004/12/18 20:55:52 millert Exp $	*/
 
 /*
  * Command line editing - common code
@@ -13,28 +13,22 @@
 #define EXTERN
 #include "edit.h"
 #undef EXTERN
-#ifdef OS_SCO	/* SCO Unix 3.2v4.1 */
-# include <sys/stream.h>	/* needed for <sys/ptem.h> */
-# include <sys/ptem.h>		/* needed for struct winsize */
-#endif /* OS_SCO */
 #include <sys/ioctl.h>
 #include <ctype.h>
 #include <libgen.h>
-#include "ksh_stat.h"
+#include <sys/stat.h>
 
 
-#if defined(TIOCGWINSZ)
-static RETSIGTYPE x_sigwinch ARGS((int sig));
+static void x_sigwinch(int sig);
 static int got_sigwinch;
-static void check_sigwinch ARGS((void));
-#endif /* TIOCGWINSZ */
+static void check_sigwinch(void);
 
-static int	x_file_glob ARGS((int flags, const char *str, int slen,
-				  char ***wordsp));
-static int	x_command_glob ARGS((int flags, const char *str, int slen,
-				     char ***wordsp));
-static int	x_locate_word ARGS((const char *buf, int buflen, int pos,
-				    int *startp, int *is_command));
+static int	x_file_glob(int flags, const char *str, int slen,
+				  char ***wordsp);
+static int	x_command_glob(int flags, const char *str, int slen,
+				     char ***wordsp);
+static int	x_locate_word(const char *buf, int buflen, int pos,
+				    int *startp, int *is_command);
 
 static char vdisable_c;
 
@@ -49,48 +43,27 @@ x_init()
 	/* default value for deficient systems */
 	edchars.werase = 027;	/* ^W */
 
-#ifdef TIOCGWINSZ
-# ifdef SIGWINCH
 	if (setsig(&sigtraps[SIGWINCH], x_sigwinch, SS_RESTORE_ORIG|SS_SHTRAP))
 		sigtraps[SIGWINCH].flags |= TF_SHELL_USES;
-# endif /* SIGWINCH */
 	got_sigwinch = 1; /* force initial check */
 	check_sigwinch();
-#endif /* TIOCGWINSZ */
 
 #ifdef EMACS
 	x_init_emacs();
 #endif /* EMACS */
 
-	/* Bizarreness to figure out how to disable
-	 * a struct termios.c_cc[] char
-	 */
-#ifdef _POSIX_VDISABLE
-	if (_POSIX_VDISABLE >= 0)
-		vdisable_c = (char) _POSIX_VDISABLE;
-	else
-		/* `feature not available' */
-		vdisable_c = (char) 0377;
-#else
-# if defined(HAVE_PATHCONF) && defined(_PC_VDISABLE)
-	vdisable_c = fpathconf(tty_fd, _PC_VDISABLE);
-# else
-	vdisable_c = (char) 0377;	/* default to old BSD value */
-# endif
-#endif /* _POSIX_VDISABLE */
+	vdisable_c = (char) _POSIX_VDISABLE;
 }
 
-#if defined(TIOCGWINSZ)
-static RETSIGTYPE
+static void
 x_sigwinch(sig)
     	int sig;
 {
 	got_sigwinch = 1;
-	return RETSIGVAL;
 }
 
 static void
-check_sigwinch ARGS((void))
+check_sigwinch(void)
 {
 	if (got_sigwinch) {
 		struct winsize ws;
@@ -118,7 +91,6 @@ check_sigwinch ARGS((void))
 		}
 	}
 }
-#endif /* TIOCGWINSZ */
 
 /*
  * read an edited command line
@@ -130,10 +102,8 @@ x_read(buf, len)
 {
 	int	i;
 
-#if defined(TIOCGWINSZ)
 	if (got_sigwinch)
 		check_sigwinch();
-#endif /* TIOCGWINSZ */
 
 	x_mode(TRUE);
 #ifdef EMACS
@@ -156,10 +126,6 @@ x_read(buf, len)
 int
 x_getc()
 {
-#ifdef OS2
-	unsigned char c = _read_kbd(0, 1, 0);
-	return c == 0 ? 0xE0 : c;
-#else /* OS2 */
 	char c;
 	int n;
 
@@ -172,7 +138,6 @@ x_getc()
 	if (n != 1)
 		return -1;
 	return (int) (unsigned char) c;
-#endif /* OS2 */
 }
 
 void
@@ -215,83 +180,22 @@ x_mode(onoff)
 		oldchars = edchars;
 		cb = tty_state;
 
-#if defined(HAVE_TERMIOS_H) || defined(HAVE_TERMIO_H)
 		edchars.erase = cb.c_cc[VERASE];
 		edchars.kill = cb.c_cc[VKILL];
 		edchars.intr = cb.c_cc[VINTR];
 		edchars.quit = cb.c_cc[VQUIT];
 		edchars.eof = cb.c_cc[VEOF];
-# ifdef VWERASE
 		edchars.werase = cb.c_cc[VWERASE];
-# endif
-# ifdef _CRAY2		/* brain-damaged terminal handler */
-		cb.c_lflag &= ~(ICANON|ECHO);
-		/* rely on print routine to map '\n' to CR,LF */
-# else
 		cb.c_iflag &= ~(INLCR|ICRNL);
-#  ifdef _BSD_SYSV	/* need to force CBREAK instead of RAW (need CRMOD on output) */
-		cb.c_lflag &= ~(ICANON|ECHO);
-#  else
-#   ifdef SWTCH	/* need CBREAK to handle swtch char */
-		cb.c_lflag &= ~(ICANON|ECHO);
-		cb.c_lflag |= ISIG;
-		cb.c_cc[VINTR] = vdisable_c;
-		cb.c_cc[VQUIT] = vdisable_c;
-#   else
 		cb.c_lflag &= ~(ISIG|ICANON|ECHO);
-#   endif
-#  endif
-#  ifdef VLNEXT
 		/* osf/1 processes lnext when ~icanon */
 		cb.c_cc[VLNEXT] = vdisable_c;
-#  endif /* VLNEXT */
-#  ifdef VDISCARD
 		/* sunos 4.1.x & osf/1 processes discard(flush) when ~icanon */
 		cb.c_cc[VDISCARD] = vdisable_c;
-#  endif /* VDISCARD */
 		cb.c_cc[VTIME] = 0;
 		cb.c_cc[VMIN] = 1;
-# endif	/* _CRAY2 */
-#else
-	/* Assume BSD tty stuff. */
-		edchars.erase = cb.sgttyb.sg_erase;
-		edchars.kill = cb.sgttyb.sg_kill;
-		cb.sgttyb.sg_flags &= ~ECHO;
-		cb.sgttyb.sg_flags |= CBREAK;
-#  ifdef TIOCGATC
-		edchars.intr = cb.lchars.tc_intrc;
-		edchars.quit = cb.lchars.tc_quitc;
-		edchars.eof = cb.lchars.tc_eofc;
-		edchars.werase = cb.lchars.tc_werasc;
-		cb.lchars.tc_suspc = -1;
-		cb.lchars.tc_dsuspc = -1;
-		cb.lchars.tc_lnextc = -1;
-		cb.lchars.tc_statc = -1;
-		cb.lchars.tc_intrc = -1;
-		cb.lchars.tc_quitc = -1;
-		cb.lchars.tc_rprntc = -1;
-#  else
-		edchars.intr = cb.tchars.t_intrc;
-		edchars.quit = cb.tchars.t_quitc;
-		edchars.eof = cb.tchars.t_eofc;
-		cb.tchars.t_intrc = -1;
-		cb.tchars.t_quitc = -1;
-#   ifdef TIOCGLTC
-		edchars.werase = cb.ltchars.t_werasc;
-		cb.ltchars.t_suspc = -1;
-		cb.ltchars.t_dsuspc = -1;
-		cb.ltchars.t_lnextc = -1;
-		cb.ltchars.t_rprntc = -1;
-#   endif
-#  endif /* TIOCGATC */
-#endif /* HAVE_TERMIOS_H || HAVE_TERMIO_H */
 
 		set_tty(tty_fd, &cb, TF_WAIT);
-
-#ifdef __CYGWIN__
-		if (edchars.eof == '\0')
-			edchars.eof = '\4';
-#endif /* __CYGWIN__ */
 
 		/* Convert unset values to internal `unset' value */
 		if (edchars.erase == vdisable_c)
@@ -334,7 +238,7 @@ set_editmode(ed)
 	char *rcp;
 	int i;
 
-	if ((rcp = ksh_strrchr_dirsep(ed)))
+	if ((rcp = strrchr(ed, '/')))
 		ed = ++rcp;
 	for (i = 0; i < NELEM(edit_flags); i++)
 		if (strstr(ed, options[(int) edit_flags[i]].name)) {
@@ -402,14 +306,14 @@ x_do_comment(buf, bsize, lenp)
 /*           Common file/command completion code for vi/emacs	             */
 
 
-static char	*add_glob ARGS((const char *str, int slen));
-static void	glob_table ARGS((const char *pat, XPtrV *wp, struct table *tp));
-static void	glob_path ARGS((int flags, const char *pat, XPtrV *wp,
-				const char *path));
+static char	*add_glob(const char *str, int slen);
+static void	glob_table(const char *pat, XPtrV *wp, struct table *tp);
+static void	glob_path(int flags, const char *pat, XPtrV *wp,
+				const char *path);
 
 #if 0 /* not used... */
-int	x_complete_word ARGS((const char *str, int slen, int is_command,
-			      int *multiple, char **ret));
+int	x_complete_word(const char *str, int slen, int is_command,
+			      int *multiple, char **ret);
 int
 x_complete_word(str, slen, is_command, nwordsp, ret)
 	const char *str;
@@ -466,7 +370,7 @@ x_print_expansions(nwords, words, is_command)
 		/* All in same directory? */
 		if (i == nwords) {
 			while (prefix_len > 0
-			       && !ISDIRSEP(words[0][prefix_len - 1]))
+			       && words[0][prefix_len - 1] != '/')
 				prefix_len--;
 			use_copy = 1;
 			XPinit(l, nwords + 1);
@@ -590,7 +494,7 @@ path_order_cmp(aa, bb)
 	const struct path_order_info *b = (const struct path_order_info *) bb;
 	int t;
 
-	t = FILECMP(a->word + a->base, b->word + b->base);
+	t = strcmp(a->word + a->base, b->word + b->base);
 	return t ? t : a->path_order - b->path_order;
 }
 
@@ -652,7 +556,7 @@ x_command_glob(flags, str, slen, wordsp)
 			info[i].word = words[i];
 			info[i].base = x_basename(words[i], (char *) 0);
 			if (!last_info || info[i].base != last_info->base
-			    || FILENCMP(words[i],
+			    || strncmp(words[i],
 					last_info->word, info[i].base) != 0)
 			{
 				last_info = &info[i];
@@ -737,7 +641,7 @@ x_locate_word(buf, buflen, pos, startp, is_commandp)
 			 * like file globbing.
 			 */
 			for (p = start; p < end; p++)
-				if (ISDIRSEP(buf[p]))
+				if (buf[p] == '/')
 					break;
 			iscmd = p == end;
 		}
@@ -820,7 +724,7 @@ add_glob(str, slen)
 		else if (*s == '*' || *s == '[' || *s == '?' || *s == '$'
 			 || (s[1] == '(' /*)*/ && strchr("*+?@!", *s)))
 			break;
-		else if (ISDIRSEP(*s))
+		else if (*s == '/')
 			saw_slash = TRUE;
 	}
 	if (!*s && (*toglob != '~' || saw_slash)) {
@@ -849,7 +753,7 @@ x_longest_prefix(nwords, words)
 	prefix_len = strlen(words[0]);
 	for (i = 1; i < nwords; i++)
 		for (j = 0, p = words[i]; j < prefix_len; j++)
-			if (FILECHCONV(p[j]) != FILECHCONV(words[0][j])) {
+			if (p[j] != words[0][j]) {
 				prefix_len = j;
 				break;
 			}
@@ -894,11 +798,11 @@ x_basename(s, se)
 		return 0;
 
 	/* Skip trailing slashes */
-	for (p = se - 1; p > s && ISDIRSEP(*p); p--)
+	for (p = se - 1; p > s && *p == '/'; p--)
 		;
-	for (; p > s && !ISDIRSEP(*p); p--)
+	for (; p > s && *p != '/'; p--)
 		;
-	if (ISDIRSEP(*p) && p + 1 < se)
+	if (*p == '/' && p + 1 < se)
 		p++;
 
 	return p - s;
@@ -944,7 +848,7 @@ glob_path(flags, pat, wp, path)
 	Xinit(xs, xp, patlen + 128, ATEMP);
 	while (sp) {
 		xp = Xstring(xs, xp);
-		if (!(p = strchr(sp, PATHSEP)))
+		if (!(p = strchr(sp, ':')))
 			p = sp + strlen(sp);
 		pathlen = p - sp;
 		if (pathlen) {
@@ -959,7 +863,7 @@ glob_path(flags, pat, wp, path)
 					*xp++ = MAGIC;
 				*xp++ = *s++;
 			}
-			*xp++ = DIRSEP;
+			*xp++ = '/';
 			pathlen++;
 		}
 		sp = p;
@@ -1001,7 +905,7 @@ int
 x_escape(s, len, putbuf_func)
 	const char *s;
 	size_t len;
-	int putbuf_func ARGS((const char *s, size_t len));
+	int putbuf_func(const char *s, size_t len);
 {
 	size_t add, wlen;
 	const char *ifs = str_val(local("IFS", 0));

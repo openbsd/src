@@ -1,16 +1,13 @@
-/*	$OpenBSD: c_ksh.c,v 1.18 2004/02/10 13:03:36 jmc Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.19 2004/12/18 20:55:52 millert Exp $	*/
 
 /*
  * built-in Korn commands: c_*
  */
 
 #include "sh.h"
-#include "ksh_stat.h"
+#include <sys/stat.h>
 #include <ctype.h>
 
-#ifdef __CYGWIN__
-#include <sys/cygwin.h>
-#endif /* __CYGWIN__ */
 
 int
 c_cd(wp)
@@ -107,11 +104,9 @@ c_cd(wp)
 	cdpath = str_val(global("CDPATH"));
 	do {
 		cdnode = make_path(current_wd, dir, &cdpath, &xs, &phys_path);
-#ifdef S_ISLNK
 		if (physical)
 			rval = chdir(try = Xstring(xs, xp) + phys_path);
 		else
-#endif /* S_ISLNK */
 		{
 			simplify_path(Xstring(xs, xp));
 			rval = chdir(try = Xstring(xs, xp));
@@ -136,30 +131,15 @@ c_cd(wp)
 		/* Ignore failure (happens if readonly or integer) */
 		setstr(oldpwd_s, current_wd, KSH_RETURN_ERROR);
 
-	if (!ISABSPATH(Xstring(xs, xp))) {
-#ifdef OS2
-		/* simplify_path() doesn't know about os/2's drive contexts,
-		 * so it can't set current_wd when changing to a:foo.
-		 * Handle this by calling getcwd()...
-		 */
-		pwd = ksh_get_wd((char *) 0, 0);
-#else /* OS2 */
+	if (Xstring(xs, xp)[0] != '/') {
 		pwd = (char *) 0;
-#endif /* OS2 */
 	} else
-#ifdef S_ISLNK
 	if (!physical || !(pwd = get_phys_path(Xstring(xs, xp))))
-#endif /* S_ISLNK */
 		pwd = Xstring(xs, xp);
 
 	/* Set PWD */
 	if (pwd) {
-#ifdef __CYGWIN__
-		char ptmp[PATH];  /* larger than MAX_PATH */
-		cygwin_conv_to_full_posix_path(pwd, ptmp);
-#else /* __CYGWIN__ */
 		char *ptmp = pwd;
-#endif /* __CYGWIN__ */
 		set_current_wd(ptmp);
 		/* Ignore failure (happens if readonly or integer) */
 		setstr(pwd_s, ptmp, KSH_RETURN_ERROR);
@@ -199,13 +179,9 @@ c_pwd(wp)
 		bi_errorf("too many arguments");
 		return 1;
 	}
-#ifdef S_ISLNK
 	p = current_wd[0] ? (physical ? get_phys_path(current_wd) : current_wd)
 			  : (char *) 0;
-#else /* S_ISLNK */
-	p = current_wd[0] ? current_wd : (char *) 0;
-#endif /* S_ISLNK */
-	if (p && eaccess(p, R_OK) < 0)
+	if (p && access(p, R_OK) < 0)
 		p = (char *) 0;
 	if (!p) {
 		p = ksh_get_wd((char *) 0, 0);
@@ -228,7 +204,6 @@ c_print(wp)
 #define PO_PMINUSMINUS	BIT(2)	/* print a -- argument */
 #define PO_HIST		BIT(3)	/* print to history instead of stdout */
 #define PO_COPROC	BIT(4)	/* printing to coprocess: block SIGPIPE */
-#define PO_FSLASH	BIT(5)  /* swap slash for backslash (for os2 ) */
 	int fd = 1;
 	int flags = PO_EXPAND|PO_NL;
 	char *s;
@@ -269,11 +244,7 @@ c_print(wp)
 		}
 	} else {
 		int optc;
-#if OS2
-		const char *options = "Rnpfrsu,"; /* added f flag */
-#else
 		const char *options = "Rnprsu,";
-#endif
 		while ((optc = ksh_getopt(wp, &builtin_opt, options)) != EOF)
 			switch (optc) {
 			  case 'R': /* fake BSD echo command */
@@ -284,11 +255,6 @@ c_print(wp)
 			  case 'e':
 				flags |= PO_EXPAND;
 				break;
-#ifdef OS2
-			  case 'f':
-				flags |= PO_FSLASH;
-				break;
-#endif
 			  case 'n':
 				flags &= ~PO_NL;
 				break;
@@ -334,13 +300,6 @@ c_print(wp)
 		s = *wp;
 		while ((c = *s++) != '\0') {
 			Xcheck(xs, xp);
-#ifdef OS2
-			if ((flags & PO_FSLASH) && c == '\\')
-				if (*s == '\\')
-					*s++;
-				else
-					c = '/';
-#endif /* OS2 */
 			if ((flags & PO_EXPAND) && c == '\\') {
 				int i;
 
@@ -392,7 +351,7 @@ c_print(wp)
 		Xfree(xs, xp);
 	} else {
 		int n, len = Xlength(xs, xp);
-		int UNINITIALIZED(opipe);
+		int opipe = 0;
 #ifdef KSH
 
 		/* Ensure we aren't killed by a SIGPIPE while writing to
@@ -1129,7 +1088,7 @@ c_fgbg(wp)
 	char **wp;
 {
 	int bg = strcmp(*wp, "bg") == 0;
-	int UNINITIALIZED(rv);
+	int rv = 0;
 
 	if (!Flag(FMONITOR)) {
 		bi_errorf("job control not enabled");
@@ -1154,7 +1113,7 @@ struct kill_info {
 	int num_width;
 	int name_width;
 };
-static char *kill_fmt_entry ARGS((void *arg, int i, char *buf, int buflen));
+static char *kill_fmt_entry(void *arg, int i, char *buf, int buflen);
 
 /* format a single kill item */
 static char *
@@ -1231,16 +1190,16 @@ c_kill(wp)
 			for (; wp[i]; i++) {
 				if (!bi_getn(wp[i], &n))
 					return 1;
-				if (n > 128 && n < 128 + SIGNALS)
+				if (n > 128 && n < 128 + NSIG)
 					n -= 128;
-				if (n > 0 && n < SIGNALS && sigtraps[n].name)
+				if (n > 0 && n < NSIG && sigtraps[n].name)
 					shprintf("%s\n", sigtraps[n].name);
 				else
 					shprintf("%d\n", n);
 			}
 		} else if (Flag(FPOSIX)) {
 			p = null;
-			for (i = 1; i < SIGNALS; i++, p = space)
+			for (i = 1; i < NSIG; i++, p = space)
 				if (sigtraps[i].name)
 					shprintf("%s%s", p, sigtraps[i].name);
 			shprintf(newline);
@@ -1249,10 +1208,10 @@ c_kill(wp)
 			int mess_width;
 			struct kill_info ki;
 
-			for (i = SIGNALS, ki.num_width = 1; i >= 10; i /= 10)
+			for (i = NSIG, ki.num_width = 1; i >= 10; i /= 10)
 				ki.num_width++;
 			ki.name_width = mess_width = 0;
-			for (i = 0; i < SIGNALS; i++) {
+			for (i = 0; i < NSIG; i++) {
 				w = sigtraps[i].name ? strlen(sigtraps[i].name)
 						     : ki.num_width;
 				if (w > ki.name_width)
@@ -1262,7 +1221,7 @@ c_kill(wp)
 					mess_width = w;
 			}
 
-			print_columns(shl_stdout, SIGNALS - 1,
+			print_columns(shl_stdout, NSIG - 1,
 				kill_fmt_entry, (void *) &ki,
 				ki.num_width + ki.name_width + mess_width + 3, 1);
 		}

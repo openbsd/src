@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.25 2004/12/12 06:53:13 deraadt Exp $	*/
+/*	$OpenBSD: history.c,v 1.26 2004/12/18 20:55:52 millert Exp $	*/
 
 /*
  * command history
@@ -9,33 +9,18 @@
 /*
  *	This file contains
  *	a)	the original in-memory history  mechanism
- *	b)	a simple file saving history mechanism done by  sjg@zen
- *		define EASY_HISTORY to get this
- *	c)	a more complicated mechanism done by  pc@hillside.co.uk
+ *	b)	a more complicated mechanism done by  pc@hillside.co.uk
  *		that more closely follows the real ksh way of doing
  *		things. You need to have the mmap system call for this
  *		to work on your system
  */
 
 #include "sh.h"
-#include "ksh_stat.h"
+#include <sys/stat.h>
 
 #ifdef HISTORY
-# ifdef EASY_HISTORY
-
-#  ifndef HISTFILE
-#   ifdef OS2
-#    define HISTFILE "history.ksh"
-#   else /* OS2 */
-#    define HISTFILE ".pdksh_history"
-#   endif /* OS2 */
-#  endif
-
-# else
-/*	Defines and includes for the complicated case */
-
-#  include <sys/file.h>
-#  include <sys/mman.h>
+# include <sys/file.h>
+# include <sys/mman.h>
 
 /*
  *	variables for handling the data file
@@ -43,28 +28,20 @@
 static int	histfd;
 static int	hsize;
 
-static int hist_count_lines ARGS((unsigned char *, int));
-static int hist_shrink ARGS((unsigned char *, int));
-static unsigned char *hist_skip_back ARGS((unsigned char *,int *,int));
-static void histload ARGS((Source *, unsigned char *, int));
-static void histinsert ARGS((Source *, int, unsigned char *));
-static void writehistfile ARGS((int, char *));
-static int sprinkle ARGS((int));
+static int hist_count_lines(unsigned char *, int);
+static int hist_shrink(unsigned char *, int);
+static unsigned char *hist_skip_back(unsigned char *,int *,int);
+static void histload(Source *, unsigned char *, int);
+static void histinsert(Source *, int, unsigned char *);
+static void writehistfile(int, char *);
+static int sprinkle(int);
 
-#  ifdef MAP_FILE
-#   define MAP_FLAGS	(MAP_FILE|MAP_PRIVATE)
-#  else
-#   define MAP_FLAGS	MAP_PRIVATE
-#  endif
-
-# endif	/* of EASY_HISTORY */
-
-static int	hist_execute ARGS((char *cmd));
-static int	hist_replace ARGS((char **hp, const char *pat, const char *rep,
-				   int global));
-static char   **hist_get ARGS((const char *str, int approx, int allow_cur));
-static char   **hist_get_oldest ARGS((void));
-static void	histbackup ARGS((void));
+static int	hist_execute(char *cmd);
+static int	hist_replace(char **hp, const char *pat, const char *rep,
+				   int global);
+static char   **hist_get(const char *str, int approx, int allow_cur);
+static char   **hist_get_oldest(void);
+static void	histbackup(void);
 
 static char   **current;	/* current position in history[] */
 static int	curpos;		/* current index in history[] */
@@ -78,7 +55,7 @@ c_fc(wp)
 	char **wp;
 {
 	struct shf *shf;
-	struct temp UNINITIALIZED(*tf);
+	struct temp *tf = NULL;
 	char *p, *editor = (char *) 0;
 	int gflag = 0, lflag = 0, nflag = 0, sflag = 0, rflag = 0;
 	int optc;
@@ -307,12 +284,7 @@ hist_execute(cmd)
 			if (!*q) /* ignore trailing newline */
 				q = (char *) 0;
 		}
-#ifdef EASY_HISTORY
-		if (p != cmd)
-			histappend(p, TRUE);
-		else
-#endif /* EASY_HISTORY */
-			histsave(++(hist_source->line), p, 1);
+		histsave(++(hist_source->line), p, 1);
 
 		shellf("%s\n", p); /* POSIX doesn't say this is done... */
 		if ((p = q)) /* restore \n (trailing \n not restored) */
@@ -590,12 +562,6 @@ sethistfile(name)
 	/*
 	 * its a new name - possibly
 	 */
-# ifdef EASY_HISTORY
-	if (hname) {
-		afree(hname, APERM);
-		hname = NULL;
-	}
-# else
 	if (histfd) {
 		/* yes the file is open */
 		(void) close(histfd);
@@ -607,7 +573,6 @@ sethistfile(name)
 		histptr = history - 1;
 		hist_source->line = 0;
 	}
-# endif
 
 	hist_init(hist_source);
 }
@@ -625,156 +590,6 @@ init_histvec()
 	}
 }
 
-# ifdef EASY_HISTORY
-/*
- * save command in history
- */
-void
-histsave(lno, cmd, dowrite)
-	int lno;	/* ignored (compatibility with COMPLEX_HISTORY) */
-	const char *cmd;
-	int dowrite;	/* ignored (compatibility with COMPLEX_HISTORY) */
-{
-	register char **hp = histptr;
-	char *cp;
-
-	if (++hp >= history + histsize) { /* remove oldest command */
-		afree((void*)history[0], APERM);
-		memmove(history, history + 1,
-			sizeof(history[0]) * (histsize - 1));
-		hp = &history[histsize - 1];
-	}
-	*hp = str_save(cmd, APERM);
-	/* trash trailing newline but allow imbedded newlines */
-	cp = *hp + strlen(*hp);
-	if (cp > *hp && cp[-1] == '\n')
-		cp[-1] = '\0';
-	histptr = hp;
-}
-
-/*
- * Append an entry to the last saved command. Used for multiline
- * commands
- */
-void
-histappend(cmd, nl_separate)
-	const char *cmd;
-	int	nl_separate;
-{
-	int	hlen, clen;
-	char	*p;
-
-	hlen = strlen(*histptr);
-	clen = strlen(cmd);
-	if (clen > 0 && cmd[clen-1] == '\n')
-		clen--;
-	p = *histptr = (char *) aresize(*histptr, hlen + clen + 2, APERM);
-	p += hlen;
-	if (nl_separate)
-		*p++ = '\n';
-	memcpy(p, cmd, clen);
-	p[clen] = '\0';
-}
-
-/*
- * 92-04-25 <sjg@zen>
- * A simple history file implementation.
- * At present we only save the history when we exit.
- * This can cause problems when there are multiple shells are
- * running under the same user-id.  The last shell to exit gets
- * to save its history.
- */
-void
-hist_init(s)
-	Source *s;
-{
-	char *f;
-	FILE *fh;
-
-	if (Flag(FTALKING) == 0)
-		return;
-
-	hstarted = 1;
-
-	hist_source = s;
-
-	if ((f = str_val(global("HISTFILE"))) == NULL || *f == '\0') {
-# if 1 /* Don't use history file unless the user asks for it */
-		hname = NULL;
-		return;
-# else
-		char *home = str_val(global("HOME"));
-		int len;
-
-		if (home == NULL)
-			home = null;
-		f = HISTFILE;
-		hname = alloc(len = strlen(home) + strlen(f) + 2, APERM);
-		shf_snprintf(hname, len, "%s/%s", home, f);
-# endif
-	} else
-		hname = str_save(f, APERM);
-
-	if ((fh = fopen(hname, "r"))) {
-		int pos = 0, nread = 0;
-		int contin = 0;		/* continuation of previous command */
-		char *end;
-		char hline[LINE + 1];
-
-		while (1) {
-			if (pos >= nread) {
-				pos = 0;
-				nread = fread(hline, 1, LINE, fh);
-				if (nread <= 0)
-					break;
-				hline[nread] = '\0';
-			}
-			end = strchr(hline + pos, 0); /* will always succeed */
-			if (contin)
-				histappend(hline + pos, 0);
-			else {
-				hist_source->line++;
-				histsave(0, hline + pos, 0);
-			}
-			pos = end - hline + 1;
-			contin = end == &hline[nread];
-		}
-		fclose(fh);
-	}
-}
-
-/*
- * save our history.
- * We check that we do not have more than we are allowed.
- * If the history file is read-only we do nothing.
- * Handy for having all shells start with a useful history set.
- */
-
-void
-hist_finish()
-{
-  static int once;
-  FILE *fh;
-  register int i;
-  register char **hp;
-
-  if (once++)
-    return;
-  /* check how many we have */
-  i = histptr - history;
-  if (i >= histsize)
-    hp = &histptr[-histsize];
-  else
-    hp = history;
-  if (hname && (fh = fopen(hname, "w")))
-  {
-    for (i = 0; hp + i <= histptr && hp[i]; i++)
-      fprintf(fh, "%s%c", hp[i], '\0');
-    fclose(fh);
-  }
-}
-
-# else /* EASY_HISTORY */
 
 /*
  *	Routines added by Peter Collinson BSDI(Europe)/Hillside Systems to
@@ -835,9 +650,9 @@ histsave(lno, cmd, dowrite)
  *	Each command is
  *	<command byte><command number(4 bytes)><bytes><null>
  */
-# define HMAGIC1		0xab
-# define HMAGIC2		0xcd
-# define COMMAND		0xff
+#define HMAGIC1		0xab
+#define HMAGIC2		0xcd
+#define COMMAND		0xff
 
 void
 hist_init(s)
@@ -881,7 +696,7 @@ hist_init(s)
 		/*
 		 * we have some data
 		 */
-		base = (unsigned char *)mmap(0, hsize, PROT_READ, MAP_FLAGS, histfd, 0);
+		base = (unsigned char *)mmap(0, hsize, PROT_READ, MAP_FILE|MAP_PRIVATE, histfd, 0);
 		/*
 		 * check on its validity
 		 */
@@ -1131,7 +946,7 @@ writehistfile(lno, cmd)
 		if (sizenow > hsize) {
 			/* someone has added some lines */
 			bytes = sizenow - hsize;
-			base = (unsigned char *)mmap(0, sizenow, PROT_READ, MAP_FLAGS, histfd, 0);
+			base = (unsigned char *)mmap(0, sizenow, PROT_READ, MAP_FILE|MAP_PRIVATE, histfd, 0);
 			if (base == MAP_FAILED)
 				goto bad;
 			new = base + hsize;
@@ -1189,7 +1004,6 @@ sprinkle(fd)
 	return(write(fd, mag, 2) != 2);
 }
 
-# endif
 #else /* HISTORY */
 
 /* No history to be compiled in: dummy routines to avoid lots more ifdefs */
