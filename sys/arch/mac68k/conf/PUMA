@@ -1,13 +1,14 @@
-#	$OpenBSD: PUMA,v 1.13 1997/06/23 02:26:36 gene Exp $
+#	$OpenBSD: PUMA,v 1.14 1997/06/23 02:56:29 gene Exp $
 #	$NetBSD: PUMA,v 1.13 1996/08/05 01:52:15 scottr Exp $
 #
 # PUMA
 
-include	"arch/mac68k/conf/std.mac68k"
-
+machine		mac68k m68k
 maxusers	16
 
 option         MAXFDESCS=2048
+option		SWAPPAGER
+option		DEVPAGER
 
 # Filesystem option
 option		FIFO		# POSIX fifo support (in all filesystems)
