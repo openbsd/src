@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcd.c,v 1.9 1996/04/21 22:24:21 deraadt Exp $ */
+/*	$OpenBSD: mcd.c,v 1.10 1996/04/24 16:51:16 mickey Exp $ */
 /*	$NetBSD: mcd.c,v 1.47 1996/04/11 22:29:43 cgd Exp $	*/
 
 /*
@@ -78,6 +78,7 @@
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/mcdreg.h>
+#include <dev/isa/opti.h>
 
 #ifndef MCDDEBUG
 #define MCD_TRACE(fmt,a,b,c,d)
@@ -752,6 +753,9 @@ mcdprobe(parent, match, aux)
 	struct mcd_mbox mbx;
 
 	sc->iobase = iobase;
+
+	if( !opti_cd_setup( OPTI_MITSUMI, iobase, ia->ia_irq, ia->ia_drq ) )
+		/* printf("mcdprobe: could not setup OPTi chipset.\n") */;
 
 	/* Send a reset. */
 	outb(iobase + MCD_RESET, 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wss.c,v 1.8 1996/04/21 22:24:49 deraadt Exp $	*/
+/*	$OpenBSD: wss.c,v 1.9 1996/04/24 16:51:15 mickey Exp $	*/
 /*	$NetBSD: wss.c,v 1.11 1996/04/11 22:30:46 cgd Exp $	*/
 
 /*
@@ -57,6 +57,7 @@
 #include <dev/ic/ad1848reg.h>
 #include <dev/isa/ad1848var.h>
 #include <dev/isa/wssreg.h>
+#include <dev/isa/opti.h>
 
 /*
  * Mixer devices
@@ -194,11 +195,16 @@ wssprobe(parent, match, aux)
 	return 0;
     }
 
+    if( !opti_snd_setup( OPTI_WSS, iobase, ia->ia_irq, ia->ia_drq ) )
+       printf("ad_detect_A: could not setup OPTi chipset.\n");
+
     sc->sc_ad1848.sc_iobase = iobase;
 
     /* Is there an ad1848 chip at the WSS iobase ? */
-    if (ad1848_probe(&sc->sc_ad1848) == 0)
+    if (ad1848_probe(&sc->sc_ad1848) == 0) {
+	printf("ad_detect_A: no ad1848 found.\n");
 	return 0;
+    }
 	
     ia->ia_iosize = WSS_NPORT;
 
