@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: mkdep.gcc.sh,v 1.7 1997/12/12 09:19:59 deraadt Exp $
+#	$OpenBSD: mkdep.gcc.sh,v 1.8 1998/09/02 06:40:07 deraadt Exp $
 #	$NetBSD: mkdep.gcc.sh,v 1.9 1994/12/23 07:34:59 jtc Exp $
 #
 # Copyright (c) 1991, 1993
@@ -79,7 +79,7 @@ if ! mkdir $DTMP ; then
 fi
 
 umask $um
-trap 'rm -rf $DTMP ; exit 1' 1 2 3 13 15
+trap 'rm -rf $DTMP ; trap 2 ; kill -2 $$' 1 2 3 13 15
 
 if [ x$pflag = x ]; then
 	${CC:-cc} -M "$@" | sed -e 's; \./; ;g' > $TMP
