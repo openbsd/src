@@ -1,4 +1,4 @@
-/* $OpenBSD: xf_grp.c,v 1.5 1997/07/11 23:50:25 provos Exp $ */
+/* $OpenBSD: xf_grp.c,v 1.6 1997/07/14 09:04:23 provos Exp $ */
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
  * 	(except when noted otherwise).
@@ -83,7 +83,7 @@ char **argv;
 
 	     em->em_rel_spi2 = htonl(strtoul(argv[3*i+5], NULL, 16));
 	     em->em_rel_dst2.s_addr = inet_addr(argv[3*i+4]);
-	     em->em_rel_sproto = atoi(argv[3*i+6]) ? IPPROTO_ESP : IPPROTO_AH;
+	     em->em_rel_sproto2 = atoi(argv[3*i+6]) ? IPPROTO_ESP : IPPROTO_AH;
 	
 	     if (!xf_set(em))
 		  break;
