@@ -1,4 +1,4 @@
-/*	$OpenBSD: rs.c,v 1.10 2003/10/16 16:57:14 tedu Exp $	*/
+/*	$OpenBSD: rs.c,v 1.11 2004/03/13 20:08:21 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -123,7 +123,7 @@ getfile(void)
 {
 	char *p;
 	char *endp;
-	char **ep = 0;
+	char **ep = NULL;
 	int multisep = (flags & ONEISEPONLY ? 0 : 1);
 	int nullpad = flags & NULLPAD;
 	char **padto;
@@ -180,7 +180,7 @@ getfile(void)
 			}
 		}
 	} while (getline() != EOF);
-	*ep = 0;				/* mark end of pointers */
+	*ep = NULL;				/* mark end of pointers */
 	nelem = ep - elem;
 }
 
