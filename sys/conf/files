@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.170 2000/06/18 17:32:42 itojun Exp $
+#	$OpenBSD: files,v 1.171 2000/06/19 03:21:18 tholo Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -245,7 +245,6 @@ file adosfs/adlookup.c			adosfs
 file adosfs/adutil.c			adosfs
 file adosfs/advfsops.c			adosfs
 file adosfs/advnops.c			adosfs
-file crypto/rijndael.c			uvm_swap_encrypt
 file ddb/db_access.c			ddb
 file ddb/db_aout.c			ddb
 file ddb/db_break.c			ddb
@@ -555,6 +554,7 @@ file netinet/ip_ether.c			inet & ipsec
 file netinet/ipsec_input.c		(inet | inet6) & ipsec
 file netinet/ip_esp.c			inet & ipsec
 file netinet/ip_ah.c			inet & ipsec
+file crypto/rijndael.c			(inet & ipsec) | crypto | uvm_swap_encrypt
 file crypto/rmd160.c			(inet & ipsec) | crypto
 file crypto/sha1.c			(inet & ipsec) | crypto
 file crypto/blf.c			(inet & ipsec) | crypto
