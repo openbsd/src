@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlphy.c,v 1.12 2004/10/01 04:08:45 jsg Exp $	*/
+/*	$OpenBSD: tlphy.c,v 1.13 2004/10/02 06:46:41 mcbride Exp $	*/
 /*	$NetBSD: tlphy.c,v 1.26 2000/07/04 03:29:00 thorpej Exp $	*/
 
 /*-
@@ -148,7 +148,7 @@ tlphyattach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_mii.mii_inst = mii->mii_instance;
 	sc->sc_mii.mii_phy = ma->mii_phyno;
-	sc->mii_funcs = &tlphy_funcs;
+	sc->sc_mii.mii_funcs = &tlphy_funcs;
 	sc->sc_mii.mii_pdata = mii;
 	sc->sc_mii.mii_flags = mii->mii_flags;
 
