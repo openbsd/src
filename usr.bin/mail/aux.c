@@ -1,4 +1,4 @@
-/*	$OpenBSD: aux.c,v 1.16 2001/01/16 05:36:08 millert Exp $	*/
+/*	$OpenBSD: aux.c,v 1.17 2001/09/16 15:27:32 millert Exp $	*/
 /*	$NetBSD: aux.c,v 1.5 1997/05/13 06:15:52 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: aux.c,v 1.16 2001/01/16 05:36:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: aux.c,v 1.17 2001/09/16 15:27:32 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -519,7 +519,7 @@ skin(name)
 				*cp2++ = ' ';
 			}
 			*cp2++ = c;
-			if (c == ',' && !gotlt) {
+			if (c == ',' && *cp == ' ' && !gotlt) {
 				*cp2++ = ' ';
 				for (; *cp == ' '; cp++)
 					;
@@ -530,8 +530,8 @@ skin(name)
 	}
 	*cp2 = 0;
 
-	if ((nbuf = (char *)realloc(nbuf, strlen(nbuf) + 1)) == NULL)
-		errx(1, "Out of memory");
+	if ((cp = (char *)realloc(nbuf, strlen(nbuf) + 1)) != NULL)
+		nbuf = cp;
 	return(nbuf);
 }
 
