@@ -1,11 +1,11 @@
-/*	$OpenBSD: hack.invent.c,v 1.4 2001/01/28 23:41:44 niklas Exp $	*/
+/*	$OpenBSD: hack.invent.c,v 1.5 2001/08/06 22:59:13 pjanzen Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.invent.c,v 1.4 2001/01/28 23:41:44 niklas Exp $";
+static char rcsid[] = "$OpenBSD: hack.invent.c,v 1.5 2001/08/06 22:59:13 pjanzen Exp $";
 #endif /* not lint */
 
 #include	"hack.h"
@@ -19,7 +19,7 @@ static char *xprname();
 #ifndef NOWORM
 #include	"def.wseg.h"
 extern struct wseg *wsegs[32];
-#endif NOWORM
+#endif /* NOWORM */
 
 #define	NOINVSYM	'#'
 
@@ -181,7 +181,7 @@ register x,y;
 	register struct monst *mtmp;
 #ifndef NOWORM
 	register struct wseg *wtmp;
-#endif NOWORM
+#endif /* NOWORM */
 
 	m_atseg = 0;
 	for(mtmp = fmon; mtmp; mtmp = mtmp->nmon){
@@ -195,7 +195,7 @@ register x,y;
 			return(mtmp);
 		    }
 		}
-#endif NOWORM
+#endif /* NOWORM */
 	}
 	return(0);
 }

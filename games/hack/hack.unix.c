@@ -1,11 +1,11 @@
-/*	$OpenBSD: hack.unix.c,v 1.7 2001/01/28 23:41:46 niklas Exp $	*/
+/*	$OpenBSD: hack.unix.c,v 1.8 2001/08/06 22:59:13 pjanzen Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.unix.c,v 1.7 2001/01/28 23:41:46 niklas Exp $";
+static char rcsid[] = "$OpenBSD: hack.unix.c,v 1.8 2001/08/06 22:59:13 pjanzen Exp $";
 #endif /* not lint */
 
 /* This file collects some Unix dependencies; hack.pager.c contains some more */
@@ -29,7 +29,7 @@ static char rcsid[] = "$OpenBSD: hack.unix.c,v 1.7 2001/01/28 23:41:46 niklas Ex
 #include	<sys/time.h>
 #else
 #include	<time.h>
-#endif BSD
+#endif /* BSD */
 
 extern char *getenv();
 extern time_t time();
@@ -297,7 +297,7 @@ getmailstatus() {
 		mailbox = 0;
 #else
 		omstat.st_mtime = 0;
-#endif PERMANENT_MAILBOX
+#endif /* PERMANENT_MAILBOX */
 	}
 }
 
@@ -305,7 +305,7 @@ ckmailstatus() {
 	if(!mailbox
 #ifdef MAILCKFREQ
 		    || moves < laststattime + MAILCKFREQ
-#endif MAILCKFREQ
+#endif /* MAILCKFREQ */
 							)
 		return;
 	laststattime = moves;
@@ -315,7 +315,7 @@ ckmailstatus() {
 		mailbox = 0;
 #else
 		nmstat.st_mtime = 0;
-#endif PERMANENT_MAILBOX
+#endif /* PERMANENT_MAILBOX */
 	} else if(nmstat.st_mtime > omstat.st_mtime) {
 		if(nmstat.st_size)
 			newmail();
@@ -415,14 +415,14 @@ readmail() {
 		execl(mr, mr, (char *) 0);
 		exit(1);
 	}
-#else DEF_MAILREADER
+#else /* DEF_MAILREADER */
 	(void) page_file(mailbox, FALSE);
-#endif DEF_MAILREADER
+#endif /* DEF_MAILREADER */
 	/* get new stat; not entirely correct: there is a small time
 	   window where we do not see new mail */
 	getmailstatus();
 }
-#endif MAIL
+#endif /* MAIL */
 
 regularize(s)	/* normalize file name - we don't like ..'s or /'s */
 register char *s;

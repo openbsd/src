@@ -1,11 +1,11 @@
-/*	$OpenBSD: hack.mkshop.c,v 1.2 2001/01/28 23:41:44 niklas Exp $	*/
+/*	$OpenBSD: hack.mkshop.c,v 1.3 2001/08/06 22:59:13 pjanzen Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.mkshop.c,v 1.2 2001/01/28 23:41:44 niklas Exp $";
+static char rcsid[] = "$OpenBSD: hack.mkshop.c,v 1.3 2001/08/06 22:59:13 pjanzen Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -53,7 +53,7 @@ register struct monst *shk;
 		}
 	}
 gottype:
-#endif WIZARD
+#endif /* WIZARD */
 	for(sroom = &rooms[0], roomno = 0; ; sroom++, roomno++){
 		if(sroom->hx < 0) return;
 		if(sroom - rooms >= nroom) {
@@ -66,7 +66,7 @@ gottype:
 		if(
 #ifdef WIZARD
 		   (wizard && getenv("SHOPTYPE") && sroom->doorct != 0) ||
-#endif WIZARD
+#endif /* WIZARD */
 			sroom->doorct <= 2 && sroom->doorct > 0) break;
 	}
 
@@ -104,7 +104,7 @@ gottype:
 		}
 		more();
 	    }
-#endif WIZARD
+#endif /* WIZARD */
 	    return;
 	}
 	if(!(shk = makemon(PM_SHK,sx,sy))) return;
@@ -278,4 +278,4 @@ dist2(x0,y0,x1,y1){
 sq(a) int a; {
 	return(a*a);
 }
-#endif QUEST
+#endif /* QUEST */

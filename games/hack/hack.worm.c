@@ -1,11 +1,11 @@
-/*	$OpenBSD: hack.worm.c,v 1.2 2001/01/28 23:41:46 niklas Exp $	*/
+/*	$OpenBSD: hack.worm.c,v 1.3 2001/08/06 22:59:13 pjanzen Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.worm.c,v 1.2 2001/01/28 23:41:46 niklas Exp $";
+static char rcsid[] = "$OpenBSD: hack.worm.c,v 1.3 2001/08/06 22:59:13 pjanzen Exp $";
 #endif /* not lint */
 
 #include "hack.h"
@@ -187,4 +187,4 @@ remseg(wtmp) register struct wseg *wtmp; {
 		newsym(wtmp->wx, wtmp->wy);
 	free((char *) wtmp);
 }
-#endif NOWORM
+#endif /* NOWORM */

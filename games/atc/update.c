@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.3 1998/09/21 07:36:07 pjanzen Exp $	*/
+/*	$OpenBSD: update.c,v 1.4 2001/08/06 22:59:13 pjanzen Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -49,9 +49,9 @@
 #if 0
 static char sccsid[] = "@(#)update.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: update.c,v 1.3 1998/09/21 07:36:07 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: update.c,v 1.4 2001/08/06 22:59:13 pjanzen Exp $";
 #endif
-#endif not lint
+#endif /* not lint */
 
 #include "include.h"
 

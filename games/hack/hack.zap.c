@@ -1,11 +1,11 @@
-/*	$OpenBSD: hack.zap.c,v 1.3 2001/01/28 23:41:46 niklas Exp $	*/
+/*	$OpenBSD: hack.zap.c,v 1.4 2001/08/06 22:59:13 pjanzen Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.zap.c,v 1.3 2001/01/28 23:41:46 niklas Exp $";
+static char rcsid[] = "$OpenBSD: hack.zap.c,v 1.4 2001/08/06 22:59:13 pjanzen Exp $";
 #endif /* not lint */
 
 #include "hack.h"
@@ -69,7 +69,7 @@ register struct obj *otmp;
 	case WAN_PROBING:
 		mstatusline(mtmp);
 		break;
-#endif WAN_PROBING
+#endif /* WAN_PROBING */
 	default:
 		impossible("What an interesting wand (%u)", otmp->otyp);
 	}
@@ -116,7 +116,7 @@ register struct obj *obj, *otmp;	/* returns TRUE if sth was done */
 	case WAN_SPEED_MONSTER:
 #ifdef WAN_PROBING
 	case WAN_PROBING:
-#endif WAN_PROBING
+#endif /* WAN_PROBING */
 		res = FALSE;
 		break;
 	default:

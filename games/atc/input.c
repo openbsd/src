@@ -1,4 +1,4 @@
-/*	$OpenBSD: input.c,v 1.5 1998/09/21 07:36:06 pjanzen Exp $	*/
+/*	$OpenBSD: input.c,v 1.6 2001/08/06 22:59:13 pjanzen Exp $	*/
 /*	$NetBSD: input.c,v 1.4 1995/04/27 21:22:24 mycroft Exp $	*/
 
 /*-
@@ -50,9 +50,9 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: input.c,v 1.5 1998/09/21 07:36:06 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: input.c,v 1.6 2001/08/06 22:59:13 pjanzen Exp $";
 #endif
-#endif not lint
+#endif /* not lint */
 
 #include "include.h"
 #include "pathnames.h"

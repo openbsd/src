@@ -1,11 +1,11 @@
-/*	$OpenBSD: hack.end.c,v 1.3 2001/01/28 23:41:43 niklas Exp $	*/
+/*	$OpenBSD: hack.end.c,v 1.4 2001/08/06 22:59:13 pjanzen Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.end.c,v 1.3 2001/01/28 23:41:43 niklas Exp $";
+static char rcsid[] = "$OpenBSD: hack.end.c,v 1.4 2001/08/06 22:59:13 pjanzen Exp $";
 #endif /* not lint */
 
 #include "hack.h"
@@ -85,7 +85,7 @@ register char *st1;
 		flags.botl = 1;
 		return;
 	}
-#endif WIZARD
+#endif /* WIZARD */
 	(void) signal(SIGINT, done_intr);
 	(void) signal(SIGQUIT, done_intr);
 	(void) signal(SIGHUP, done_hangup);
@@ -104,7 +104,7 @@ register char *st1;
 	if(strchr("bcds", *st1)){
 #ifdef WIZARD
 	    if(!wizard)
-#endif WIZARD
+#endif /* WIZARD */
 		savebones();
 		if(!flags.notombstone)
 			outrip();
@@ -196,7 +196,7 @@ register char *st1;
 	}
 #ifdef WIZARD
 	if(!wizard)
-#endif WIZARD
+#endif /* WIZARD */
 		topten();
 	if(done_stopprint) printf("\n\n");
 	exit(0);
@@ -299,7 +299,7 @@ topten(){
 	     t1->uid == t0->uid &&
 #else
 	     strncmp(t1->name, t0->name, NAMSZ) == 0 &&
-#endif PERS_IS_UID
+#endif /* PERS_IS_UID */
 	     t1->plchar == t0->plchar && --occ_cnt <= 0){
 		if(rank0 < 0){
 			rank0 = 0;
@@ -354,7 +354,7 @@ topten(){
 				  t1->uid != t0->uid ))
 #else
 				  strncmp(t1->name, t0->name, NAMSZ)))
-#endif PERS_IS_UID
+#endif /* PERS_IS_UID */
 	  	continue;
 	  if(rank == rank0-flags.end_around &&
 	     rank0 > flags.end_top+flags.end_around+1 &&
@@ -487,7 +487,7 @@ hangup()
 	clearlocks();
 	exit(1);
 }
-#endif NOSAVEONHANGUP
+#endif /* NOSAVEONHANGUP */
 
 char *
 eos(s)
@@ -523,13 +523,13 @@ prscore(argc,argv) int argc; char **argv; {
 	long total_score = 0L;
 	char totchars[10];
 	int totcharct = 0;
-#endif nonsense
+#endif /* nonsense */
 	int outflg = (argc >= -1);
 #ifdef PERS_IS_UID
 	int uid = -1;
 #else
 	char *player0;
-#endif PERS_IS_UID
+#endif /* PERS_IS_UID */
 
 	if(!(rfile = fopen(recfile,"r"))){
 		puts("Cannot open record file!");
@@ -555,7 +555,7 @@ prscore(argc,argv) int argc; char **argv; {
 			player0 = "hackplayer";
 		playerct = 1;
 		players = &player0;
-#endif PERS_IS_UID
+#endif /* PERS_IS_UID */
 	} else {
 		playerct = --argc;
 		players = ++argv;
@@ -575,7 +575,7 @@ prscore(argc,argv) int argc; char **argv; {
 	  if(!playerct && t1->uid == uid)
 		flg++;
 	  else
-#endif PERS_IS_UID
+#endif /* PERS_IS_UID */
 	  for(i = 0; i < playerct; i++){
 		if(strcmp(players[i], "all") == 0 ||
 		   strncmp(t1->name, players[i], NAMSZ) == 0 ||
@@ -610,7 +610,7 @@ prscore(argc,argv) int argc; char **argv; {
 		if(!playerct && t1->uid == uid)
 			goto outwithit;
 		else
-#endif PERS_IS_UID
+#endif /* PERS_IS_UID */
 		for(i = 0; i < playerct; i++){
 			if(strcmp(players[i], "all") == 0 ||
 			   strncmp(t1->name, players[i], NAMSZ) == 0 ||
@@ -625,7 +625,7 @@ prscore(argc,argv) int argc; char **argv; {
 				total_score += t1->points;
 				if(totcharct < sizeof(totchars)-1)
 				    totchars[totcharct++] = t1->plchar;
-#endif nonsense
+#endif /* nonsense */
 				break;
 			}
 		}
@@ -645,5 +645,5 @@ prscore(argc,argv) int argc; char **argv; {
 		if(!pl_character[0]) pl_character[0] = "CFKSTWX"[i];
 		break;
 	}
-#endif nonsense
+#endif /* nonsense */
 }

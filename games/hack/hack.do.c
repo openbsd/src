@@ -1,11 +1,11 @@
-/*	$OpenBSD: hack.do.c,v 1.3 2001/01/28 23:41:43 niklas Exp $	*/
+/*	$OpenBSD: hack.do.c,v 1.4 2001/08/06 22:59:13 pjanzen Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.do.c,v 1.3 2001/01/28 23:41:43 niklas Exp $";
+static char rcsid[] = "$OpenBSD: hack.do.c,v 1.4 2001/08/06 22:59:13 pjanzen Exp $";
 #endif /* not lint */
 
 /* Contains code for 'd', 'D' (drop), '>', '<' (up, down) and 't' (throw) */
@@ -353,7 +353,7 @@ dothrow()
 				  /* mon still alive */
 #ifndef NOWORM
 				  cutworm(mon,bhitpos.x,bhitpos.y,obj->otyp);
-#endif NOWORM
+#endif /* NOWORM */
 				} else mon = 0;
 				/* weapons thrown disappear sometimes */
 				if(obj->otyp < BOOMERANG && rn2(3)) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.rm.h,v 1.2 2001/01/28 23:41:43 niklas Exp $*/
+/*	$OpenBSD: def.rm.h,v 1.3 2001/08/06 22:59:13 pjanzen Exp $*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -37,7 +37,7 @@
 #define	CORR_SYM	':'
 #else
 #define	CORR_SYM	'#'
-#endif QUEST
+#endif /* QUEST */
 #define	POOL_SYM	'}'
 
 #define	ERRCHAR	'{'

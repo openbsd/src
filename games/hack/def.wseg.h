@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.wseg.h,v 1.2 2001/01/28 23:41:43 niklas Exp $*/
+/*	$OpenBSD: def.wseg.h,v 1.3 2001/08/06 22:59:13 pjanzen Exp $*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -15,4 +15,4 @@ struct wseg {
 };
 
 #define newseg()	(struct wseg *) alloc(sizeof(struct wseg))
-#endif NOWORM
+#endif /* NOWORM */

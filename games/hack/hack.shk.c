@@ -1,11 +1,11 @@
-/*	$OpenBSD: hack.shk.c,v 1.5 2001/01/28 23:41:45 niklas Exp $	*/
+/*	$OpenBSD: hack.shk.c,v 1.6 2001/08/06 22:59:13 pjanzen Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.shk.c,v 1.5 2001/01/28 23:41:45 niklas Exp $";
+static char rcsid[] = "$OpenBSD: hack.shk.c,v 1.6 2001/08/06 22:59:13 pjanzen Exp $";
 #endif /* not lint */
 
 #include "hack.h"
@@ -30,7 +30,7 @@ shk_move(){ return(0); }
 replshk(mtmp,mtmp2) struct monst *mtmp, *mtmp2; {}
 char *shkname(){ return(""); }
 
-#else QUEST
+#else /* QUEST */
 #include	"hack.mfndpos.h"
 #include	"def.mkroom.h"
 #include	"def.eshk.h"
@@ -722,7 +722,7 @@ register int tmp, ac;
 #ifdef MAIL
 		if(obj->otyp == SCR_MAIL)
 			tmp = rnd(5);
-#endif MAIL
+#endif /* MAIL */
 		break;
 	case POTION_SYM:
 		tmp = 10*rnd(50);
@@ -911,7 +911,7 @@ register struct monst *shkp;
 #ifdef STUPID
 		    /* cater for stupid compilers */
 		    register int zz;
-#endif STUPID
+#endif /* STUPID */
 		    if(uondoor && (ib = sobj_at(ICE_BOX, nx, ny))) {
 			nix = nx; niy = ny; chi = i; break;
 		    }
@@ -922,7 +922,7 @@ register struct monst *shkp;
 			(appr && (zz = GDIST(nix,niy)) && zz > GDIST(nx,ny))
 #else
 			(appr && GDIST(nx,ny) < GDIST(nix,niy))
-#endif STUPID
+#endif /* STUPID */
 			) {
 			    nix = nx;
 			    niy = ny;
@@ -976,7 +976,7 @@ register int fall;
 	}
     }
 }
-#endif QUEST
+#endif /* QUEST */
 
 online(x,y) {
 	return(x==u.ux || y==u.uy ||
@@ -990,6 +990,6 @@ register struct monst *mtmp;
 	return( mtmp->mtame || strchr("1TVWZi&, ", mtmp->data->mlet)
 #ifndef QUEST
 		|| (mtmp->isshk && ESHK(mtmp)->following)
-#endif QUEST
+#endif /* QUEST */
 		);
 }

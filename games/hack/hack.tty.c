@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.tty.c,v 1.4 2001/01/28 23:41:46 niklas Exp $	*/
+/*	$OpenBSD: hack.tty.c,v 1.5 2001/08/06 22:59:13 pjanzen Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)hack.tty.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: hack.tty.c,v 1.4 2001/01/28 23:41:46 niklas Exp $";
+static char rcsid[] = "$OpenBSD: hack.tty.c,v 1.5 2001/08/06 22:59:13 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,7 +56,7 @@ static char rcsid[] = "$OpenBSD: hack.tty.c,v 1.4 2001/01/28 23:41:46 niklas Exp
  */
 #ifndef BSD
 #define	NR_OF_EOFS	20
-#endif BSD
+#endif /* BSD */
 
 extern speed_t ospeed;
 static char erase_char, kill_char;
@@ -247,7 +247,7 @@ parse()
 		inputline[1] = getchar();
 #ifdef QUEST
 		if(inputline[1] == foo) inputline[2] = getchar(); else
-#endif QUEST
+#endif /* QUEST */
 		inputline[2] = 0;
 	}
 	if(foo == 'm' || foo == 'M'){
@@ -280,7 +280,7 @@ readchar() {
 	}
 #else
 		end_of_input();
-#endif NR_OF_EOFS
+#endif /* NR_OF_EOFS */
 	if(flags.toplin == 1)
 		flags.toplin = 2;
 	return((char) sym);

@@ -1,11 +1,11 @@
-/*	$OpenBSD: hack.fight.c,v 1.3 2001/01/28 23:41:44 niklas Exp $	*/
+/*	$OpenBSD: hack.fight.c,v 1.4 2001/08/06 22:59:13 pjanzen Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.fight.c,v 1.3 2001/01/28 23:41:44 niklas Exp $";
+static char rcsid[] = "$OpenBSD: hack.fight.c,v 1.4 2001/08/06 22:59:13 pjanzen Exp $";
 #endif /* not lint */
 
 #include	"hack.h"
@@ -340,7 +340,7 @@ register struct monst *mtmp;
 			if(mtmp->wormno)
 				cutworm(mtmp, u.ux+u.dx, u.uy+u.dy,
 					uwep ? uwep->otyp : 0);
-#endif NOWORM
+#endif /* NOWORM */
 		}
 		if(mdat->mlet == 'a') {
 			if(rn2(2)) {

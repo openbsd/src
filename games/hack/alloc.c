@@ -1,7 +1,7 @@
-/*	$OpenBSD: alloc.c,v 1.2 2001/01/28 23:41:42 niklas Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.3 2001/08/06 22:59:13 pjanzen Exp $	*/
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: alloc.c,v 1.2 2001/01/28 23:41:42 niklas Exp $";
+static char rcsid[] = "$OpenBSD: alloc.c,v 1.3 2001/08/06 22:59:13 pjanzen Exp $";
 #endif /* not lint */
 
 #ifdef LINT
@@ -49,4 +49,4 @@ register unsigned lth;
 	return((long *) nptr);
 }
 
-#endif LINT
+#endif /* LINT */

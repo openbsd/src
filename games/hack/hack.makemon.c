@@ -1,11 +1,11 @@
-/*	$OpenBSD: hack.makemon.c,v 1.3 2001/01/28 23:41:44 niklas Exp $	*/
+/*	$OpenBSD: hack.makemon.c,v 1.4 2001/08/06 22:59:13 pjanzen Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.makemon.c,v 1.3 2001/01/28 23:41:44 niklas Exp $";
+static char rcsid[] = "$OpenBSD: hack.makemon.c,v 1.4 2001/08/06 22:59:13 pjanzen Exp $";
 #endif /* not lint */
 
 #include	"hack.h"
@@ -94,7 +94,7 @@ gotmon:
 #ifndef NOWORM
 	if(ptr->mlet == 'w' && getwn(mtmp))
 		initworm(mtmp);
-#endif NOWORM
+#endif /* NOWORM */
 
 	if(anything) if(ptr->mlet == 'O' || ptr->mlet == 'k') {
 		coord enexto();
@@ -170,7 +170,7 @@ struct monst *mtmp;
 
 #ifndef NOWORM
 	if(ch == 'w' && mtmp->mx) return;	/* do not relocate worms */
-#endif NOWORM
+#endif /* NOWORM */
 	do {
 		tx = rn1(COLNO-3,2);
 		ty = rn2(ROWNO);

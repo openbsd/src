@@ -1,11 +1,11 @@
-/*	$OpenBSD: hack.monst.c,v 1.2 2001/01/28 23:41:44 niklas Exp $	*/
+/*	$OpenBSD: hack.monst.c,v 1.3 2001/08/06 22:59:13 pjanzen Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.monst.c,v 1.2 2001/01/28 23:41:44 niklas Exp $";
+static char rcsid[] = "$OpenBSD: hack.monst.c,v 1.3 2001/08/06 22:59:13 pjanzen Exp $";
 #endif /* not lint */
 
 #include "hack.h"
@@ -51,7 +51,7 @@ struct permonst mons[CMNUM+2] = {
 	{ "wumpus",		'w',8,3,2,3,6,0 },
 #else
 	{ "long worm",		'w',8,3,5,1,4,0 },
-#endif NOWORM
+#endif /* NOWORM */
 	{ "large dog",		'd',6,15,4,2,4,0 },
 	{ "leocrotta",		'l',6,18,4,3,6,0 },
 	{ "mimic",		'M',7,3,7,3,4,0 },
@@ -82,5 +82,5 @@ struct permonst pm_wizard = {
 };
 #ifdef MAIL
 struct permonst pm_mail_daemon = { "mail daemon", '2', 100, 1, 10, 0, 0, 0 };
-#endif MAIL
+#endif /* MAIL */
 struct permonst pm_eel = { "giant eel", ';', 15, 6, -3, 3, 6, 0 };

@@ -1,11 +1,11 @@
-/*	$OpenBSD: hack.ioctl.c,v 1.2 2001/01/28 23:41:44 niklas Exp $	*/
+/*	$OpenBSD: hack.ioctl.c,v 1.3 2001/08/06 22:59:13 pjanzen Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.ioctl.c,v 1.2 2001/01/28 23:41:44 niklas Exp $";
+static char rcsid[] = "$OpenBSD: hack.ioctl.c,v 1.3 2001/08/06 22:59:13 pjanzen Exp $";
 #endif /* not lint */
 
 /* This cannot be part of hack.tty.c (as it was earlier) since on some
@@ -38,9 +38,9 @@ dosuspend() {
 	} else {
 		pline("I don't think your shell has job control.");
 	}
-#else SIGTSTP
+#else /* SIGTSTP */
 	pline("Sorry, it seems we have no SIGTSTP here. Try ! or S.");
-#endif SIGTSTP
+#endif /* SIGTSTP */
 	return(0);
 }
-#endif SUSPEND
+#endif /* SUSPEND */

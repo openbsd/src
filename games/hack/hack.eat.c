@@ -1,11 +1,11 @@
-/*	$OpenBSD: hack.eat.c,v 1.3 2001/01/28 23:41:43 niklas Exp $	*/
+/*	$OpenBSD: hack.eat.c,v 1.4 2001/08/06 22:59:13 pjanzen Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.eat.c,v 1.3 2001/01/28 23:41:43 niklas Exp $";
+static char rcsid[] = "$OpenBSD: hack.eat.c,v 1.4 2001/08/06 22:59:13 pjanzen Exp $";
 #endif /* not lint */
 
 #include	"hack.h"
@@ -232,7 +232,7 @@ gotit:
 				setsee();
 				pline("Your vision improves.");
 			} else
-#endif QUEST
+#endif /* QUEST */
 			if(otmp->otyp == FORTUNE_COOKIE) {
 			  if(Blind) {
 			    pline("This cookie has a scrap of paper inside!");
@@ -421,7 +421,7 @@ register tp = 0;
 	case 'y':
 #ifdef QUEST
 		u.uhorizon++;
-#endif QUEST
+#endif /* QUEST */
 		/* fall into next case */
 	case 'B':
 		Confusion = 50;

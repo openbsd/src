@@ -1,11 +1,11 @@
-/*	$OpenBSD: hack.bones.c,v 1.3 2001/01/28 23:41:43 niklas Exp $	*/
+/*	$OpenBSD: hack.bones.c,v 1.4 2001/08/06 22:59:13 pjanzen Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.bones.c,v 1.3 2001/01/28 23:41:43 niklas Exp $";
+static char rcsid[] = "$OpenBSD: hack.bones.c,v 1.4 2001/08/06 22:59:13 pjanzen Exp $";
 #endif /* not lint */
 
 #include "hack.h"
@@ -93,7 +93,7 @@ register fd,x,y,ok;
 	(void) close(fd);
 #ifdef WIZARD
 	if(!wizard)	/* duvel!frans: don't remove bones while debugging */
-#endif WiZARD
+#endif /* WiZARD */
 	    if(unlink(bones) < 0){
 		pline("Cannot unlink %s .", bones);
 		return(0);
