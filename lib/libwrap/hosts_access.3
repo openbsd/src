@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hosts_access.3,v 1.9 2002/06/22 08:26:52 fgsch Exp $
+.\"	$OpenBSD: hosts_access.3,v 1.10 2003/05/24 18:30:32 jmc Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -76,8 +76,8 @@ The client host name.
 .It "RQ_CLIENT_ADDR (char *)"
 A printable representation of the client network address.
 .It "RQ_CLIENT_SIN (struct sockaddr_in *)"
-An internal representation of the client network address and port.  The
-contents of the structure are not copied.
+An internal representation of the client network address and port.
+The contents of the structure are not copied.
 .It "RQ_SERVER_NAME (char *)"
 The hostname associated with the server endpoint address.
 .It "RQ_SERVER_ADDR (char *)"

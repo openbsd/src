@@ -1,4 +1,4 @@
-.\" $OpenBSD: skey.3,v 1.7 2003/03/19 00:33:54 millert Exp $
+.\" $OpenBSD: skey.3,v 1.8 2003/05/24 18:30:32 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -29,30 +29,30 @@
 .Dt SKEY 3
 .Os
 .Sh NAME
-.Nm atob8,
-.Nm backspace,
-.Nm btoa8,
-.Nm btoe,
-.Nm etob,
-.Nm f,
-.Nm htoi,
-.Nm keycrunch,
-.Nm put8,
-.Nm readpass,
-.Nm readskey,
-.Nm rip,
-.Nm sevenbit,
-.Nm skey_authenticate,
-.Nm skey_get_algorithm
-.Nm skey_haskey,
-.Nm skey_keyinfo,
-.Nm skey_passcheck,
-.Nm skey_set_algorithm,
-.Nm skey_unlock,
-.Nm skeychallenge,
-.Nm skeygetnext,
-.Nm skeylookup,
-.Nm skeyverify,
+.Nm atob8 ,
+.Nm backspace ,
+.Nm btoa8 ,
+.Nm btoe ,
+.Nm etob ,
+.Nm f ,
+.Nm htoi ,
+.Nm keycrunch ,
+.Nm put8 ,
+.Nm readpass ,
+.Nm readskey ,
+.Nm rip ,
+.Nm sevenbit ,
+.Nm skey_authenticate ,
+.Nm skey_get_algorithm ,
+.Nm skey_haskey ,
+.Nm skey_keyinfo ,
+.Nm skey_passcheck ,
+.Nm skey_set_algorithm ,
+.Nm skey_unlock ,
+.Nm skeychallenge ,
+.Nm skeygetnext ,
+.Nm skeylookup ,
+.Nm skeyverify ,
 .Nm skipspace
 .Nd S/Key library functions
 .Sh SYNOPSIS
@@ -144,7 +144,7 @@ The
 .Fn btoe
 function encodes the 8 bytes in
 .Fa c
-into a string of 6 english words, stored in
+into a string of 6 English words, stored in
 .Fa engout .
 The caller must supply enough space (30 bytes including the final NUL)
 to store the words.
@@ -155,7 +155,7 @@ function returns
 .Pp
 The
 .Fn etob
-function converts the 6 english words in
+function converts the 6 English words in
 .Fa e
 into an 8-byte binary representation.
 The
@@ -276,7 +276,7 @@ overwritten by subsequent calls to
 .Pp
 The
 .Fn skey_passcheck
-function check a
+function checks a
 .Fa user
 and
 .Fa passwd

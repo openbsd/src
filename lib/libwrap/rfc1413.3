@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rfc1413.3,v 1.9 2003/04/03 07:45:17 jmc Exp $
+.\"	$OpenBSD: rfc1413.3,v 1.10 2003/05/24 18:30:32 jmc Exp $
 .\"
 .\" Copyright (c) 2001, Bob Beck.  All rights reserved.
 .\"
@@ -58,7 +58,7 @@ for the local end.
 .Nm dest
 should be allocated by the caller to store the found username,
 and must be of length at least
-.Nm dsize.
+.Nm dsize .
 .Nm ident_timeout_time
 is a timeout in seconds on the entire ident query, used to ensure
 that you don't wait forever for a slow or unresponsive remote host
@@ -69,7 +69,7 @@ When username lookup is successful,
 strips the trailing CRLF from the returned value and stores up to
 .Nm "dsize - 1"
 bytes of the returned username into
-.Nm dest,
+.Nm dest ,
 always terminating with a NUL byte.
 In this case 0 is returned.
 .Fn rfc1413

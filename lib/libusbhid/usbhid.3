@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usbhid.3,v 1.5 2003/05/06 09:09:00 jmc Exp $
+.\"	$OpenBSD: usbhid.3,v 1.6 2003/05/24 18:30:32 jmc Exp $
 .\"	$NetBSD: usbhid.3,v 1.5 2002/02/07 07:00:52 ross Exp $
 .\"
 .\" Copyright (c) 1999, 2001 Lennart Augustsson <augustss@netbsd.org>
@@ -81,7 +81,7 @@ The
 .Nm
 library provides routines to extract data from USB Human Interface Devices.
 .Ss INTRODUCTION
-USB HID devices send and receive data layed out in a device dependent way.
+USB HID devices send and receive data laid out in a device dependent way.
 The
 .Nm
 library contains routines to extract the
@@ -120,7 +120,7 @@ where
 .Fa k
 is an item of type
 .Fa hid_kind_t .
-The report id (if present) is given by
+The report ID (if present) is given by
 .Fa id .
 The function returns
 .Fa NULL
@@ -130,10 +130,10 @@ After parsing the
 .Fn hid_end_parse
 function should be called to free internal data structures.
 .Pp
-To iterate through all the items in the report descriptor
+To iterate through all the items in the report descriptor,
 .Fn hid_get_item
 should be called while it returns a value greater than 0.
-When the report descriptor ends it will returns 0; a syntax
+When the report descriptor ends it will return 0; a syntax
 error within the report descriptor will cause a return value less
 than 0.
 The struct pointed to by
@@ -142,7 +142,7 @@ will be filled with the relevant data for the item.
 The definition of
 .Fa hid_item_t
 can be found in
-.Pa \*[Lt]usbhid.h\*[Gt]
+.Aq Pa usbhid.h
 and the meaning of the components in the USB HID documentation.
 .Pp
 Data should be read/written to the device in the size of
