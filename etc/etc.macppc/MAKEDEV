@@ -4,10 +4,10 @@
 # generated from:
 #
 #	OpenBSD: etc.macppc/MAKEDEV.md,v 1.5 2002/02/23 17:02:03 matthieu Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.42 2002/03/31 21:49:12 fgsch Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.43 2002/04/11 20:28:49 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.25 2002/03/31 21:51:38 fgsch Exp $
+#	$OpenBSD: MAKEDEV,v 1.26 2002/04/11 20:29:42 deraadt Exp $
 #
 # Copyright (c) 2001,2002 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -225,7 +225,7 @@ ttyE*)
 	;;
 
 pci)
-	M pci c 71 0 664
+	M pci c 71 0 600
 	;;
 
 usbs)

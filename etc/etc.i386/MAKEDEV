@@ -4,10 +4,10 @@
 # generated from:
 #
 #	OpenBSD: etc.i386/MAKEDEV.md,v 1.11 2002/04/09 01:57:53 deraadt Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.42 2002/03/31 21:49:12 fgsch Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.43 2002/04/11 20:28:49 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.128 2002/04/09 01:58:03 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.129 2002/04/11 20:29:41 deraadt Exp $
 #
 # Copyright (c) 2001,2002 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -270,7 +270,7 @@ iop*)
 	;;
 
 pci)
-	M pci c 72 0 664
+	M pci c 72 0 600
 	;;
 
 pctr)
