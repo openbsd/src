@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.26 2001/06/27 05:46:25 art Exp $
+#	$OpenBSD: RAMDISK,v 1.27 2001/06/27 07:32:52 drahn Exp $
 #
 # PPC GENERIC config file
 #
@@ -137,6 +137,8 @@ ukbd*		at uhub? port ? configuration ?	# USB HID Keyboard devices
 #ugen*		at uhub? port ? configuration ? # USB Generic driver
 umass*		at uhub? port ? configuration ? # USB Mass Storage devices
 scsibus*	at umass?
+kue*		at uhub? port ?			# Kawasaki KL5KUSB101B
+aue*		at uhub? port ?			# USB EtherNet 
 
 wsdisplay*	at vgafb?
 wskbd*		at ukbd? console ?
