@@ -1,4 +1,4 @@
-/*	$OpenBSD: ui.c,v 1.26 2001/12/11 01:43:54 ho Exp $	*/
+/*	$OpenBSD: ui.c,v 1.27 2002/03/17 21:48:06 angelos Exp $	*/
 /*	$EOM: ui.c,v 1.43 2000/10/05 09:25:12 niklas Exp $	*/
 
 /*
@@ -62,6 +62,11 @@
 
 /* from isakmpd.c */
 void daemon_shutdown_now (int);
+
+/* Report all SA configuration information. */
+void ui_report_sa (char *cmd);
+/* Issue SIGHUP. */
+void ui_sighup (char *cmd);
 
 char *ui_fifo = FIFO;
 int ui_socket;
@@ -131,6 +136,14 @@ ui_teardown (char *cmd)
   connection_teardown (name);
   while ((sa = sa_lookup_by_name (name, 2)) != 0)
     sa_delete (sa, 1);
+}
+
+/* Tear down all phase 2 connections.  */
+static void
+ui_teardown_all (char *cmd)
+{
+  /* Skip 'cmd' as arg. */
+  sa_teardown_all();
 }
 
 /*
@@ -307,6 +320,14 @@ ui_report (char *cmd)
   conf_report ();
 }
 
+/* Report all SA configuration information.  */
+void
+ui_report_sa (char *cmd)
+{
+  /* Skip 'cmd' as arg? */
+  sa_report_all ();
+}
+
 /*
  * Call the relevant command handler based on the first character of the
  * line (the command).
@@ -347,12 +368,20 @@ ui_handle_command (char *line)
       reinit ();
       break;
 
+    case 'S':
+      ui_report_sa (line);
+      break;
+
     case 'r':
       ui_report (line);
       break;
 
     case 't':
       ui_teardown (line);
+      break;
+
+    case 'T':
+      ui_teardown_all (line);
       break;
 
     default:

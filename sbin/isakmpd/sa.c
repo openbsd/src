@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.c,v 1.52 2002/01/25 13:46:22 ho Exp $	*/
+/*	$OpenBSD: sa.c,v 1.53 2002/03/17 21:48:06 angelos Exp $	*/
 /*	$EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	*/
 
 /*
@@ -46,6 +46,7 @@
 
 #include "sysdep.h"
 
+#include "connection.h"
 #include "cookie.h"
 #include "doi.h"
 #include "exchange.h"
@@ -59,6 +60,11 @@
 #include "cert.h"
 #include "policy.h"
 #include "key.h"
+#include "ipsec.h"
+#include "ipsec_num.h"
+
+/* Outfile for detailed SA information. */
+#define SA_FILE "/var/run/isakmpd_sa"
 
 /* Initial number of bits from the cookies used as hash.  */
 #define INITIAL_BUCKET_BITS 6
@@ -448,6 +454,144 @@ sa_dump (int cls, int level, char *header, struct sa *sa)
     }
 }
 
+/*
+ * Display the SA's two SPI values.
+ */
+static void
+report_spi (FILE *fd, const u_int8_t *buf, size_t sz, int index)
+{
+  char s[73];
+  int i, j;
+
+  {
+    for (i = j = 0; i < sz;)
+      {
+	sprintf (s + j, "%02x", buf[i++]);
+	j += 2;
+	if (i % 4 == 0)
+	  {
+	    if (i % 32 == 0)
+	      {
+		s[j] = '\0';
+		fprintf(fd, "%s", s);
+		j = 0;
+	      }
+	    else
+	      s[j++] = ' ';
+	  }
+      }
+      if (j)
+	{
+	  s[j] = '\0';
+	  fprintf(fd, "SPI %d: %s\n", index, s);
+	}
+  }
+}
+
+
+/*
+ * Display the transform names to file SA_FILE.
+ * Structure is taken from pf_key_v2.c, pf_key_v2_set_spi.
+ * Transform names are taken from /usr/src/sys/crypto/xform.c.
+ */
+static void
+report_proto (FILE *fd, struct proto *proto)
+{
+  int keylen, hashlen;
+  struct ipsec_proto *iproto = proto->data;
+
+  switch (proto->proto)
+    {
+    case IPSEC_PROTO_IPSEC_ESP:
+      keylen = ipsec_esp_enckeylength (proto);
+      hashlen = ipsec_esp_authkeylength (proto);
+      fprintf(fd, "Transform: IPsec ESP\n");
+      fprintf(fd, "Encryption key length: %d\n", keylen);
+      fprintf(fd, "Authentication key length: %d\n", hashlen);
+
+      switch (proto->id)
+	{
+	case IPSEC_ESP_DES:
+	case IPSEC_ESP_DES_IV32:
+	case IPSEC_ESP_DES_IV64:
+	  fprintf(fd, "Encryption algorithm: DES\n");
+	  break;
+
+	case IPSEC_ESP_3DES:
+	  fprintf(fd, "Encryption algorithm: 3DES\n");
+	  break;
+
+	case IPSEC_ESP_AES:
+	  fprintf(fd, "Encryption algorithm: Rijndael-128/AES\n");
+	  break;
+
+	case IPSEC_ESP_CAST:
+	  fprintf(fd, "Encryption algorithm: Cast-128\n");
+	  break;
+
+	case IPSEC_ESP_BLOWFISH:
+	  fprintf(fd, "Encryption algorithm: Blowfish\n");
+	  break;
+
+	default:
+	  fprintf(fd, "Unknown encryption algorithm %d\n", proto->id);
+	}
+
+      switch (iproto->auth)
+	{
+	case IPSEC_AUTH_HMAC_MD5:
+	  fprintf(fd, "Authentication algorithm: HMAC-MD5\n");
+	  break;
+
+	case IPSEC_AUTH_HMAC_SHA:
+	  fprintf(fd, "Authentication algorithm: HMAC-SHA1\n");
+	  break;
+
+        case IPSEC_AUTH_HMAC_RIPEMD:
+	  fprintf(fd, "Authentication algorithm: HMAC-RIPEMD-160\n");
+	  break;
+
+	case IPSEC_AUTH_DES_MAC:
+	case IPSEC_AUTH_KPDK:
+	  /* XXX We should be supporting KPDK */
+	  fprintf(fd, "Unknown authentication algorithm: %d", iproto->auth); 
+	  break;
+
+	default:
+	  fprintf(fd, "Authentication algorithm not used.\n");
+	}
+      break;
+
+    case IPSEC_PROTO_IPSEC_AH:
+      hashlen = ipsec_ah_keylength (proto);
+      fprintf(fd, "Transform: IPsec AH\n");
+      fprintf(fd, "Encryption not used.\n");
+      fprintf(fd, "Authentication key length: %d\n", hashlen);
+
+      switch (proto->id)
+	{
+	case IPSEC_AH_MD5:
+	  fprintf(fd, "Authentication algorithm: HMAC-MD5\n");
+	  break;
+
+	case IPSEC_AH_SHA:
+	  fprintf(fd, "Authentication algorithm: HMAC-SHA1\n");
+	  break;
+
+	case IPSEC_AH_RIPEMD:
+	  fprintf(fd, "Authentication algorithm: HMAC-RIPEMD-160\n");
+	  break;
+
+	default:
+	  fprintf(fd, "Unknown authentication algorithm: %d\n", proto->id);
+	}
+      break;
+
+    default:
+      fprintf(fd, "report_proto: invalid proto %d\n", proto->proto);
+    }
+}
+
 /* Report all the SAs to the report channel.  */
 void
 sa_report (void)
@@ -458,6 +602,67 @@ sa_report (void)
   for (i = 0; i <= bucket_mask; i++)
     for (sa = LIST_FIRST (&sa_tab[i]); sa; sa = LIST_NEXT (sa, link))
       sa_dump (LOG_REPORT, 0, "sa_report", sa);
+}
+
+
+/*
+ * Print an SA's connection details to file SA_FILE.
+ */
+static void
+sa_dump_all (FILE *fd, struct sa *sa)
+{
+  struct proto *proto;
+  int i;
+
+  /* SA name and phase. */
+  fprintf(fd, "SA name: %s", sa->name ? sa->name : "<unnamed>");
+  fprintf(fd, " (Phase %d)\n", sa->phase);
+
+  /* Source and destination IPs. */
+  fprintf(fd, sa->transport == NULL ? "<no transport>" :
+      sa->transport->vtbl->decode_ids (sa->transport));
+  fprintf(fd, "\n");
+
+  /* Transform information. */
+  for (proto = TAILQ_FIRST (&sa->protos); proto;
+      proto = TAILQ_NEXT (proto, link))
+    {
+      /* SPI values. */
+      for (i = 0; i < 2; i++)
+	if (proto->spi[i])
+	  report_spi(fd, proto->spi[i], proto->spi_sz[i], i);
+	else
+	  fprintf(fd, "SPI %d not defined.", i);
+
+        /* Proto values. */
+	report_proto(fd, proto);
+
+	/* SA separator. */
+	fprintf(fd, "\n");
+    }
+}
+
+/* Report info of all SAs to file SA_FILE.  */
+void
+sa_report_all (void)
+{
+  int i;
+  FILE *fd;
+  struct sa *sa;
+
+  /* Open SA_FILE. */
+  fd = fopen(SA_FILE, "w");
+
+  /* Start sa_config_report. */
+  for (i = 0; i <= bucket_mask; i++)
+    for (sa = LIST_FIRST (&sa_tab[i]); sa; sa = LIST_NEXT (sa, link))
+      if (sa->phase == 1)
+	fprintf(fd, "SA name: none (phase 1)\n\n");
+      else
+	sa_dump_all (fd, sa);
+
+  /* End sa_config_report. */
+  fclose(fd);
 }
 
 /* Free the protocol structure pointed to by PROTO.  */
@@ -693,6 +898,28 @@ sa_delete (struct sa *sa, int notify)
   if (sa->phase != 1 && notify)
     message_send_delete (sa);
   sa_free (sa);
+}
+
+
+/* Teardown all SAs.  */
+void
+sa_teardown_all (void)
+{
+  int i;
+  struct sa *sa;
+
+  LOG_DBG((LOG_MISC, 70, "sa_teardown_all.a"));
+  /* Get Phase 2 SAs. */
+  for (i = 0; i <= bucket_mask; i++)
+    for (sa = LIST_FIRST (&sa_tab[i]); sa; sa = LIST_NEXT (sa, link))
+      if (sa->phase == 2)
+	{
+	  /* Teardown the phase 2 SAs by name, similar to ui_teardown. */
+	  LOG_DBG((LOG_MISC, 70, "sa_teardown_all: tearing down SA %s",
+	      sa->name));
+	  connection_teardown (sa->name);
+	  sa_delete (sa, 1);
+	}
 }
 
 /*

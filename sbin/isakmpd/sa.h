@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.h,v 1.25 2002/01/25 13:46:22 ho Exp $	*/
+/*	$OpenBSD: sa.h,v 1.26 2002/03/17 21:48:06 angelos Exp $	*/
 /*	$EOM: sa.h,v 1.58 2000/10/10 12:39:01 provos Exp $	*/
 
 /*
@@ -211,6 +211,7 @@ extern int sa_add_transform (struct sa *, struct payload *, int,
 extern int sa_create (struct exchange *, struct transport *);
 extern int sa_enter (struct sa *);
 extern void sa_delete (struct sa *, int);
+extern void sa_teardown_all (void);
 extern struct sa *sa_find (int (*) (struct sa *, void *), void *);
 extern int sa_flag (char *);
 extern void sa_free (struct sa *);
@@ -229,5 +230,6 @@ extern void sa_release (struct sa *);
 extern void sa_remove (struct sa *);
 extern void sa_report (void);
 extern void sa_dump (int, int, char *, struct sa *);
+extern void sa_report_all (void);
 extern int sa_setup_expirations (struct sa *);
 #endif /* _SA_H_ */

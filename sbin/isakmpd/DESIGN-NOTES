@@ -1,4 +1,4 @@
-$OpenBSD: DESIGN-NOTES,v 1.16 2001/06/27 03:31:39 angelos Exp $
+$OpenBSD: DESIGN-NOTES,v 1.17 2002/03/17 21:48:06 angelos Exp $
 $EOM: DESIGN-NOTES,v 1.48 1999/08/12 22:34:25 niklas Exp $
 
 General coding conventions
@@ -218,6 +218,10 @@ d	delete		Delete an SA given cookies and message-IDs
 D	debug		Change logging level for a debug class
 r	report		Report status information of the daemon
 t	teardown	Teardown a connection
+Q       quit            Quit the isakmpd process
+R       reinitialize    Reinitialize isakmpd (re-read configuration file)
+S       report SA       Report SA information to file /var/run/isakmp_sa
+T       teardown all    Teardown all Phase 2 connections
 
 For example you can do:
 
