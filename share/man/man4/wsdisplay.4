@@ -1,4 +1,4 @@
-.\" $OpenBSD: wsdisplay.4,v 1.5 2001/03/27 22:44:55 aaron Exp $
+.\" $OpenBSD: wsdisplay.4,v 1.6 2001/05/11 23:03:04 mickey Exp $
 .\" $NetBSD: wsdisplay.4,v 1.5 2000/05/13 15:22:19 mycroft Exp $
 .\"
 .Dd March 20, 1999
@@ -16,12 +16,10 @@
 (generic PC (ISA) display)
 .Cd wsdisplay* at tga? console ?
 (DEC TGA display, alpha only)
-.Cd wsdisplay* at pfb? console ?
-(PCI framebuffer, bebox only)
-.Cd wsdisplay0 at ofb? console ?
-(Open Firmware framebuffer, macppc only)
 .Cd wsdisplay* at nextdisplay? console ?
 (NeXT display)
+.Cd wsdisplay* at sti? console ?
+(HP CRX and Visualize series framebuffers)
 .Cd wsdisplay0 at smg0
 (VAXstation small monochrome display)
 .Cd options WSDISPLAY_DEFAULTSCREENS=N
@@ -36,7 +34,7 @@ makes it available as text terminal or graphics interface.
 .Pp
 A display device can have the ability to display characters on it
 (without help of an X server), either directly by hardware or through
-software putting pixel data into the display memory.
+software drawing pixel data into the display memory.
 Such displays are called
 .Dq emulating ,
 the
@@ -92,6 +90,39 @@ Alternatively, the compile-time option
 .Cm WSDISPLAY_DEFAULTSCREENS=N
 will set up N screens of the display driver's default type and using
 the system's default terminal emulator at autoconfiguration time.
+.Pp
+In addition and with help from backend drivers the following features
+are also provided:
+.Bl -bullet
+.It
+Loading, deleteing and listing the loaded fonts.
+.It
+Browsing backwards in the screen output, the size of the
+buffer for saved text is defined by the particular hardware driver.
+.It
+Blanking the scrren by timing out on inactivity in the
+screen holding the input focus.
+Awakenning activities consist of:
+.Pp
+.Bl -bullet -compact
+.It
+pressing any keys on the keyboard;
+.It
+moving or clicking the mouse;
+.It
+any output to the screen.
+.El
+.Pp
+Blanking the screen is usually done by disabling the horizontal sync
+signal on video output, but may also include blanking the vertical
+sync in which case most monitors go into power saving mode.
+See
+.Xr wsconsctl 8
+for controlling variables.
+.El
+.Pp
+Consult the back-end drivers' documentaion for which features are supported
+for each particular hardware type.
 .Sh FILES
 .Bl -tag -width /usr/include/dev/wscons/wsconsio.h -compact
 .It Pa /dev/ttyC*
@@ -104,6 +135,7 @@ control device
 .Xr ega 4 ,
 .Xr pcdisplay 4 ,
 .Xr tty 4 ,
+.Xr tga 4 ,
 .Xr vga 4 ,
 .Xr wscons 4 ,
 .Xr wsconscfg 8 ,
