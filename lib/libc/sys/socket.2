@@ -116,6 +116,10 @@ must be specified in this manner.  The protocol number to use is
 particular to the \*(lqcommunication domain\*(rq in which communication
 is to take place; see
 .Xr protocols 5 .
+A value of 0 for
+.Fa protocol
+will let the system select an appropriate protocol for the requested
+socket type.
 .Pp
 Sockets of type
 .Dv SOCK_STREAM
