@@ -1,4 +1,4 @@
-/* $OpenBSD: if_wi_pcmcia.c,v 1.35 2002/06/22 22:10:38 fgsch Exp $ */
+/* $OpenBSD: if_wi_pcmcia.c,v 1.36 2002/06/25 15:13:09 millert Exp $ */
 /* $NetBSD: if_wi_pcmcia.c,v 1.14 2001/11/26 04:34:56 ichiro Exp $ */
 
 /*
@@ -375,8 +375,7 @@ wi_pcmcia_attach(parent, self, aux)
 	CSR_WRITE_2(sc, WI_EVENT_ACK, 0xffff);
 
 	/* Establish the interrupt. */
-	sc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_NET, wi_intr, psc,
-	    sc->sc_dev.dv_xname);
+	sc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_NET, wi_intr, psc, "");
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n",
 		    sc->sc_dev.dv_xname);
