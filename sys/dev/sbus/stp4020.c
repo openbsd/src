@@ -1,4 +1,4 @@
-/*	$OpenBSD: stp4020.c,v 1.11 2004/03/02 23:10:18 miod Exp $	*/
+/*	$OpenBSD: stp4020.c,v 1.12 2004/03/03 21:47:39 miod Exp $	*/
 /*	$NetBSD: stp4020.c,v 1.23 2002/06/01 23:51:03 lukem Exp $	*/
 
 /*-
@@ -308,7 +308,8 @@ stp4020_event_thread(arg)
 	void *arg;
 {
 	struct stp4020_softc *sc = arg;
-	int s, sense, socket;
+	int s, sense;
+	unsigned int socket;
 
 	for (;;) {
 		struct stp4020_socket *h;
@@ -323,7 +324,7 @@ stp4020_event_thread(arg)
 		sc->events &= ~(1 << socket);
 		splx(s);
 
-		if (socket < 0 || socket >= STP4020_NSOCK) {
+		if (socket >= STP4020_NSOCK) {
 #ifdef DEBUG
 			printf("stp4020_event_thread: wayward socket number %d\n",
 			    socket);
