@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fddisubr.c,v 1.14 1997/09/27 02:35:58 deraadt Exp $	*/
+/*	$OpenBSD: if_fddisubr.c,v 1.15 1998/06/30 21:51:06 beck Exp $	*/
 /*	$NetBSD: if_fddisubr.c,v 1.5 1996/05/07 23:20:21 christos Exp $	*/
 
 /*
@@ -178,7 +178,7 @@ fddi_output(ifp, m0, dst, rt0)
 #ifdef IPX
 	case AF_IPX:
 		type = htons(ETHERTYPE_IPX);
- 		bcopy((caddr_t)&(((struct sockaddr_ipx*)dst)->sipx_addr.x_host),
+ 		bcopy((caddr_t)&(((struct sockaddr_ipx*)dst)->sipx_addr.ipx_host),
 		    (caddr_t)edst, sizeof (edst));
 		if (!bcmp((caddr_t)edst, (caddr_t)&ipx_thishost, sizeof(edst)))
 			return (looutput(ifp, m, dst, rt));
