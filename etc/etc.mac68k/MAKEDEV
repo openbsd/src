@@ -3,11 +3,11 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.mac68k/MAKEDEV.md,v 1.4 2002/02/14 13:29:20 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.42 2002/03/31 21:49:12 fgsch Exp 
+#	OpenBSD: etc.mac68k/MAKEDEV.md,v 1.5 2002/04/18 22:13:04 miod Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.44 2002/04/17 22:53:04 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.54 2002/03/31 21:51:38 fgsch Exp $
+#	$OpenBSD: MAKEDEV,v 1.55 2002/04/18 22:13:24 miod Exp $
 #
 # Copyright (c) 2001,2002 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -313,8 +313,8 @@ pty*)
 	;;
 
 vnd*)
-	dodisk vnd $U 8 19 $U 0 8
-	dodisk svnd $U 8 19 $U 128 8
+	dodisk vnd $U 8 19 $U 0
+	dodisk svnd $U 8 19 $U 128
 	;;
 
 ch*)
@@ -322,7 +322,7 @@ ch*)
 	;;
 
 cd*)
-	dodisk2 cd $U 6 15 $U 0 8
+	dodisk2 cd $U 6 15 $U 0
 	;;
 
 st*)
@@ -359,8 +359,8 @@ all)
 
 sd*|ccd*)
 	case $i in
-	sd*) dodisk sd $U 4 13 $U 0 8;;
-	ccd*) dodisk ccd $U 9 20 $U 0 8;;
+	sd*) dodisk sd $U 4 13 $U 0;;
+	ccd*) dodisk ccd $U 9 20 $U 0;;
 	esac
 	;;
 
