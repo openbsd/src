@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.11 1996/10/19 13:25:58 mickey Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.12 1996/12/28 19:06:28 niklas Exp $	*/
 
 /*
  * random.c -- A strong random number generator
@@ -402,10 +402,10 @@ randomattach(void)
 	random_state.entropy_count = 0;
 	random_state.pool = random_pool;
 	blkdev_timer_state = malloc(nblkdev*sizeof(*blkdev_timer_state),
-				    M_DEVBUF, M_WAITOK);
+	    M_DEVBUF, M_WAITOK);
 	bzero(blkdev_timer_state, nblkdev*sizeof(*blkdev_timer_state));
 	tty_timer_state = malloc(nchrdev*sizeof(*tty_timer_state),
-				    M_DEVBUF, M_WAITOK);
+	    M_DEVBUF, M_WAITOK);
 	bzero(tty_timer_state, nchrdev*sizeof(*tty_timer_state));
 	extract_timer_state.dont_count_entropy = 1;
 
@@ -570,8 +570,17 @@ void
 add_blkdev_randomness(dev)
 	dev_t	dev;
 {
-	if (major(dev) <= nblkdev || blkdev_timer_state == NULL)
+	/*
+	 * Happens before randomattach() has been run and then later
+	 * when NODEV buffers get fed to biodone().  XXX Howcome?
+	 */
+	if (dev == NODEV || blkdev_timer_state == NULL)
 		return;
+
+#ifdef DIAGNOSTIC
+	if (major(dev) >= nblkdev)
+		panic("add_blkdev_randomness(dev = 0x%x): bad device", dev);
+#endif
 
 	add_timer_randomness(&random_state, &blkdev_timer_state[major(dev)],
 	    ENT_BLKDEV + major(dev));
@@ -582,8 +591,19 @@ add_tty_randomness(dev, c)
 	dev_t	dev;
 	int	c;
 {
-	if (major(dev) <= nchrdev || tty_timer_state == NULL)
+	/*
+	 * XXX does this routine ever get called before randomattach?
+	 * Well, this is a safety belt against that condition.  Should
+	 * we check for NODEV too, like in the block device case?
+	 */
+	if (tty_timer_state == NULL)
 		return;
+
+#ifdef DIAGNOSTIC
+	if (major(dev) >= nchrdev)
+		panic("add_tty_randomness(dev = 0x%x, c = %d): bad device",
+		    dev, c);
+#endif
 
 	add_timer_randomness(&random_state, &tty_timer_state[major(dev)],
 	    ENT_TTY + c);
