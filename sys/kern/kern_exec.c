@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.72 1995/10/07 06:28:11 mycroft Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.73 1995/12/09 04:11:00 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994 Christopher G. Demetriou
@@ -508,6 +508,8 @@ exec_abort:
 	 */
 	vm_deallocate(&vm->vm_map, VM_MIN_ADDRESS,
 		VM_MAXUSER_ADDRESS - VM_MIN_ADDRESS);
+	if (pack.ep_emul_arg)
+		FREE(pack.ep_emul_arg, M_TEMP);
 	FREE(nid.ni_cnd.cn_pnbuf, M_NAMEI);
 	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
 	vput(pack.ep_vp);
