@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.50 2001/06/23 21:54:44 fgsch Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.51 2001/06/24 20:30:24 fgsch Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -1270,7 +1270,6 @@ epread(sc)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mbuf *m;
-	struct ether_header *eh;
 	int len;
 
 	len = bus_space_read_2(iot, ioh, ep_w1_reg(sc, EP_W1_RX_STATUS));
@@ -1320,9 +1319,6 @@ again:
 
 	++ifp->if_ipackets;
 
-	/* We assume the header fit entirely in one mbuf. */
-	eh = mtod(m, struct ether_header *);
-
 #if NBPFILTER > 0
 	/*
 	 * Check if there's a BPF listener on this interface.
@@ -1332,9 +1328,7 @@ again:
 		bpf_mtap(ifp->if_bpf, m);
 #endif
 
-	/* We assume the header fit entirely in one mbuf. */
-	m_adj(m, sizeof(struct ether_header));
-	ether_input(ifp, eh, m);
+	ether_input_mbuf(ifp, m);
 
 	/*
 	 * In periods of high traffic we can actually receive enough
