@@ -1,4 +1,4 @@
-/*	$OpenBSD: reverse.c,v 1.13 2003/06/03 02:56:17 millert Exp $	*/
+/*	$OpenBSD: reverse.c,v 1.14 2003/07/01 11:12:59 henning Exp $	*/
 /*	$NetBSD: reverse.c,v 1.6 1994/11/23 07:42:10 jtc Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)reverse.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: reverse.c,v 1.13 2003/06/03 02:56:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: reverse.c,v 1.14 2003/07/01 11:12:59 henning Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -57,6 +57,18 @@ static char rcsid[] = "$OpenBSD: reverse.c,v 1.13 2003/06/03 02:56:17 millert Ex
 static void r_buf(FILE *);
 static int r_reg(FILE *, enum STYLE, long, struct stat *);
 
+#define COPYCHAR(fp, ch)				\
+	do {						\
+		if ((ch = getc(fp)) == EOF) {		\
+			ierr();				\
+			return (0);			\
+		}					\
+		if (putchar(ch) == EOF) {		\
+			oerr();				\
+			return (0);			\
+		}					\
+	} while (0)
+
 /*
  * reverse -- display input in reverse order by line.
  *
@@ -64,15 +76,15 @@ static int r_reg(FILE *, enum STYLE, long, struct stat *);
  * files by bytes, lines or the whole file.
  *
  * BYTES	display N bytes
- *	REG	mmap the file and display the lines
+ *	REG	reverse scan and display the lines
  *	NOREG	cyclically read characters into a wrap-around buffer
  *
  * LINES	display N lines
- *	REG	mmap the file and display the lines
+ *	REG	reverse scan and display the lines
  *	NOREG	cyclically read lines into a wrap-around array of buffers
  *
  * FILE		display the entire file
- *	REG	mmap the file and display the lines
+ *	REG	reverse scan and display the lines
  *	NOREG	cyclically read input into a linked list of buffers
  */
 void
@@ -105,46 +117,49 @@ reverse(fp, style, off, sbp)
  * r_reg -- display a regular file in reverse order by line.
  */
 static int
-r_reg(fp, style, off, sbp)
-	FILE *fp;
-	enum STYLE style;
-	long off;
-	struct stat *sbp;
+r_reg(FILE *fp, enum STYLE style, long off, struct stat *sbp)
 {
-	off_t size;
-	int llen;
-	char *p;
-	char *start;
+	off_t start, pos, end;
+	int ch;
 
-	if (!(size = sbp->st_size))
+	end = sbp->st_size;
+	if (end == 0)
 		return (0);
 
-	if (size > SIZE_T_MAX)
-		return (1);
+	/* Position before char, ignore last char whether newline or not */
+	pos = end-2;
+	ch = EOF;
+	start = 0;
 
-	if ((start = mmap(NULL, (size_t)size, PROT_READ, MAP_PRIVATE,
-	    fileno(fp), (off_t)0)) == MAP_FAILED)
-		return (1);
-	p = start + size - 1;
+	if (style == RBYTES && off < end)
+		start = end - off;
 
-	if (style == RBYTES && off < size)
-		size = off;
-
-	/* Last char is special, ignore whether newline or not. */
-	for (llen = 1; --size; ++llen)
-		if (*--p == '\n') {
-			WR(p + 1, llen);
-			llen = 0;
-			if (style == RLINES && !--off) {
-				++p;
-				break;
-			}
+	for (; pos >= start; pos--) {
+		/* A seek per char isn't a problem with a smart stdio */
+		if (fseeko(fp, pos, SEEK_SET) != 0) {
+			ierr();
+			return (0);
 		}
-	if (llen)
-		WR(p, llen);
-	if (munmap(start, (size_t)sbp->st_size))
-		ierr();
-
+		if ((ch = getc(fp)) == '\n') {
+			while (--end > pos) 
+				COPYCHAR(fp, ch);
+			end++;
+			if (style == RLINES && --off == 0)
+				break;
+		}
+		else if (ch == EOF) {
+			ierr();
+			return (0);
+		}
+	}
+	if (pos < start) {
+		if (ch != EOF && ungetc(ch, fp) == EOF) {
+			ierr();
+			return (0);
+		}
+		while (--end >= start)
+			COPYCHAR(fp, ch);
+	}
 	return (0);
 }
 

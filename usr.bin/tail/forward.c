@@ -1,4 +1,4 @@
-/*	$OpenBSD: forward.c,v 1.15 2003/06/03 02:56:17 millert Exp $	*/
+/*	$OpenBSD: forward.c,v 1.16 2003/07/01 11:12:59 henning Exp $	*/
 /*	$NetBSD: forward.c,v 1.7 1996/02/13 16:49:10 ghudson Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)forward.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: forward.c,v 1.15 2003/06/03 02:56:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: forward.c,v 1.16 2003/07/01 11:12:59 henning Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -77,7 +77,7 @@ static int rlines(FILE *, long, struct stat *);
  *	NOREG	cyclically read characters into a wrap-around buffer
  *
  * RLINES
- *	REG	mmap the file and step back until reach the correct offset.
+ *	REG	step back until the correct offset is reached.
  *	NOREG	cyclically read lines into a wrap-around array of buffers
  */
 void
@@ -249,40 +249,47 @@ kq_retry:
  * rlines -- display the last offset lines of the file.
  */
 static int
-rlines(fp, off, sbp)
-	FILE *fp;
-	long off;
-	struct stat *sbp;
+rlines(FILE *fp, long off, struct stat *sbp)
 {
-	off_t size;
-	char *p;
-	char *start;
+	off_t pos;
+	int ch;
 
-	if (!(size = sbp->st_size))
+	pos = sbp->st_size;
+	if (pos == 0)
 		return (0);
 
-	if (size > SIZE_T_MAX)
-		return (1);
-
-	if ((start = mmap(NULL, (size_t)size, PROT_READ, MAP_PRIVATE,
-	    fileno(fp), (off_t)0)) == MAP_FAILED)
-		return (1);
-
-	/* Last char is special, ignore whether newline or not. */
-	for (p = start + size - 1; --size;)
-		if (*--p == '\n' && !--off) {
-			++p;
+	/*
+	 * Position before char.
+	 * Last char is special, ignore if whether newline or not.
+	 */
+	pos -= 2;
+	ch = EOF;
+	for (; off > 0 && pos >= 0; pos--) {
+		/* A seek per char isn't a problem with a smart stdio */
+		if (fseeko(fp, pos, SEEK_SET) == -1) {
+			ierr();
+			return (1);
+		}
+		if ((ch = getc(fp)) == '\n')
+			off--;
+		else if (ch == EOF) {
+			if (ferror(fp)) {
+				ierr();
+				return (1);
+			}
 			break;
 		}
-
-	/* Set the file pointer to reflect the length displayed. */
-	size = sbp->st_size - size;
-	WR(p, size);
-	if (fseek(fp, (long)sbp->st_size, SEEK_SET) == -1) {
+	}
+	/* If we read until start of file, put back last read char */
+	if (pos < 0 && off > 0 && ch != EOF && ungetc(ch, fp) == EOF) {
 		ierr();
 		return (1);
 	}
-	if (munmap(start, (size_t)sbp->st_size)) {
+
+	while (!feof(fp) && (ch = getc(fp)) != EOF)
+		if (putchar(ch) == EOF)
+			oerr();
+	if (ferror(fp)) {
 		ierr();
 		return (1);
 	}
