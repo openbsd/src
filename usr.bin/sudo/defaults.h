@@ -31,7 +31,11 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Sudo: defaults.h,v 1.23 2001/12/14 19:54:56 millert Exp $
+ * Sponsored in part by the Defense Advanced Research Projects
+ * Agency (DARPA) and Air Force Research Laboratory, Air Force
+ * Materiel Command, USAF, under agreement number F39502-99-1-0512.
+ *
+ * $Sudo: defaults.h,v 1.24 2003/04/16 00:42:09 millert Exp $
  */
 
 #ifndef _SUDO_DEFAULTS_H

@@ -149,9 +149,9 @@ Q) When I run "visudo" it says "sudoers file busy, try again later."
 A) Someone else is currently editing the sudoers file with visudo.
 
 Q) When I try to use "cd" with sudo it says "cd: command not found".
-A) "cd" is a shell builtin, you can't run it as a command since
-   a child process (sudo) cannot affect the current working directory
-   of the parent (your shell).
+A) "cd" is a shell built-in command, you can't run it as a command
+   since a child process (sudo) cannot affect the current working
+   directory of the parent (your shell).
 
 Q) When I try to use "cd" with sudo the command completes without
    errors but nothing happens.

@@ -31,7 +31,11 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Sudo: compat.h,v 1.66 2003/04/02 18:25:19 millert Exp $
+ * Sponsored in part by the Defense Advanced Research Projects
+ * Agency (DARPA) and Air Force Research Laboratory, Air Force
+ * Materiel Command, USAF, under agreement number F39502-99-1-0512.
+ *
+ * $Sudo: compat.h,v 1.67 2003/04/16 00:42:09 millert Exp $
  */
 
 #ifndef _SUDO_COMPAT_H
@@ -211,10 +215,10 @@ int sigprocmask __P((int, const sigset_t *, sigset_t *));
 # ifndef HAVE_SIGACTION_T
 typedef struct sigaction sigaction_t;
 # endif
-# ifndef SA_INTERRUPT 
+# ifndef SA_INTERRUPT
 #  define SA_INTERRUPT	0
 # endif
-# ifndef SA_RESTART 
+# ifndef SA_RESTART
 #  define SA_RESTART	0
 # endif
 #endif

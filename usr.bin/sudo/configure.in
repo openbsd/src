@@ -1,15 +1,15 @@
 dnl
 dnl Process this file with GNU autoconf to produce a configure script.
-dnl $Sudo: configure.in,v 1.382 2003/04/04 17:45:24 millert Exp $
+dnl $Sudo: configure.in,v 1.383 2003/04/13 19:48:15 millert Exp $
 dnl
 dnl Copyright (c) 1994-1996,1998-2003 Todd C. Miller <Todd.Miller@courtesan.com>
 dnl
-AC_INIT(sudo, 1.6.7p3)
+AC_INIT(sudo, 1.6.7p4)
 AC_CONFIG_HEADER(config.h pathnames.h)
 dnl
 dnl This won't work before AC_INIT()
 dnl
-AC_MSG_NOTICE([Configuring Sudo version 1.6.7p3])
+AC_MSG_NOTICE([Configuring Sudo version 1.6.7p4])
 dnl
 dnl Variables that get substituted in the Makefile and man pages
 dnl
@@ -911,9 +911,9 @@ if test "$insults" = "on"; then
 fi
 
 AC_MSG_CHECKING(whether to override the user's path)
-AC_ARG_WITH(secure-path, [  --with-secure-path      override the user's path with a builtin one],
+AC_ARG_WITH(secure-path, [  --with-secure-path      override the user's path with a built-in one],
 [case $with_secure_path in  
-    yes)	AC_DEFINE_UNQUOTED(SECURE_PATH, "/bin:/usr/ucb:/usr/bin:/usr/sbin:/sbin:/usr/etc:/etc", [Define to override the user's path with a builtin one.])
+    yes)	AC_DEFINE_UNQUOTED(SECURE_PATH, "/bin:/usr/ucb:/usr/bin:/usr/sbin:/sbin:/usr/etc:/etc", [Define to override the user's path with a built-in one.])
 		AC_MSG_RESULT([:/usr/ucb:/usr/bin:/usr/sbin:/sbin:/usr/etc:/etc])
 		;;
     no)		AC_MSG_RESULT(no)

@@ -404,7 +404,7 @@
 /* The user sudo should run commands as by default. */
 #undef RUNAS_DEFAULT
 
-/* Define to override the user's path with a builtin one. */
+/* Define to override the user's path with a built-in one. */
 #undef SECURE_PATH
 
 /* Define to send mail when the user is not allowed to run a command. */

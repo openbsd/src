@@ -49,7 +49,7 @@ Cmnd_Alias	VIPW = /usr/sbin/vipw, /usr/bin/passwd, /usr/bin/chsh, \
 		       /usr/bin/chfn
 
 ##
-# Override builtin defaults
+# Override built-in defaults
 ##
 Defaults               syslog=auth
 Defaults:FULLTIMERS    !lecture

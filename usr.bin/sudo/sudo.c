@@ -31,6 +31,10 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
+ * Sponsored in part by the Defense Advanced Research Projects
+ * Agency (DARPA) and Air Force Research Laboratory, Air Force
+ * Materiel Command, USAF, under agreement number F39502-99-1-0512.
+ *
  * For a brief history of sudo, please see the HISTORY file included
  * with this distribution.
  */
@@ -103,7 +107,7 @@
 #include "version.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: sudo.c,v 1.335 2003/04/02 18:25:19 millert Exp $";
+static const char rcsid[] = "$Sudo: sudo.c,v 1.337 2003/04/16 00:42:10 millert Exp $";
 #endif /* lint */
 
 /*
@@ -138,7 +142,7 @@ uid_t timestamp_uid;
 extern int errorlineno;
 #if defined(RLIMIT_CORE) && !defined(SUDO_DEVEL)
 static struct rlimit corelimit;
-#endif /* RLIMIT_CORE */
+#endif /* RLIMIT_CORE && !SUDO_DEVEL */
 #ifdef HAVE_LOGIN_CAP_H
 login_cap_t *lc;
 #endif /* HAVE_LOGIN_CAP_H */
@@ -391,7 +395,7 @@ main(argc, argv, envp)
 	/* Restore coredumpsize resource limit. */
 #if defined(RLIMIT_CORE) && !defined(SUDO_DEVEL)
 	(void) setrlimit(RLIMIT_CORE, &corelimit);
-#endif /* RLIMIT_CORE */
+#endif /* RLIMIT_CORE && !SUDO_DEVEL */
 
 	/* Become specified user or root. */
 	set_perms(PERM_RUNAS);
@@ -862,9 +866,10 @@ initial_setup()
      * Turn off core dumps.
      */
     (void) getrlimit(RLIMIT_CORE, &corelimit);
-    rl.rlim_cur = rl.rlim_max = 0;
+    memcpy(&rl, &corelimit, sizeof(struct rlimit));
+    rl.rlim_cur = 0;
     (void) setrlimit(RLIMIT_CORE, &rl);
-#endif /* RLIMIT_CORE */
+#endif /* RLIMIT_CORE && !SUDO_DEVEL */
 
     /*
      * Close any open fd's other than stdin, stdout and stderr.
