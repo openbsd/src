@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_strip.c,v 1.12 2000/06/26 22:51:01 art Exp $	*/
+/*	$OpenBSD: if_strip.c,v 1.13 2000/12/30 01:02:55 angelos Exp $	*/
 /*	$NetBSD: if_strip.c,v 1.2.4.3 1996/08/03 00:58:32 jtc Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
@@ -385,7 +385,7 @@ stripinit(sc)
 		if (p)
 			sc->sc_ep = (u_char *)p + SLBUFSIZE;
 		else {
-			printf("%s: can't allocate buffer\n",
+			addlog("%s: can't allocate buffer\n",
 			       sc->sc_if.if_xname);
 			sc->sc_if.if_flags &= ~IFF_UP;
 			return (0);
@@ -398,7 +398,7 @@ stripinit(sc)
 		if (p)
 			sc->sc_rxbuf = (u_char *)p + SLBUFSIZE - SLMAX;
 		else {
-			printf("%s: can't allocate input buffer\n",
+			addlog("%s: can't allocate input buffer\n",
 			       sc->sc_if.if_xname);
 			sc->sc_if.if_flags &= ~IFF_UP;
 			return (0);
@@ -411,7 +411,7 @@ stripinit(sc)
 		if (p)
 			sc->sc_txbuf = (u_char *)p + SLBUFSIZE - SLMAX;
 		else {
-			printf("%s: can't allocate buffer\n",
+			addlog("%s: can't allocate buffer\n",
 				sc->sc_if.if_xname);
 			
 			sc->sc_if.if_flags &= ~IFF_UP;
@@ -772,7 +772,7 @@ stripoutput(ifp, m, dst, rt)
 		 * `Cannot happen' (see stripioctl).  Someday we will extend
 		 * the line protocol to support other address families.
 		 */
-		printf("%s: af %d not supported\n", sc->sc_if.if_xname,
+		addlog("%s: af %d not supported\n", sc->sc_if.if_xname,
 			dst->sa_family);
 		m_freem(m);
 		sc->sc_if.if_noproto++;
@@ -1167,7 +1167,7 @@ stripinput(c, tp)
 
 #ifdef XDEBUG
  	if (len < 15 || sc->sc_flags & SC_ERROR)
-	  	printf("stripinput: end of pkt, len %d, err %d\n",
+	  	addlog("stripinput: end of pkt, len %d, err %d\n",
 			 len, sc->sc_flags & SC_ERROR); /*XXX*/
 #endif
 	if(sc->sc_flags & SC_ERROR) {
@@ -1323,7 +1323,7 @@ stripioctl(ifp, cmd, data)
 	default:
 
 #ifdef DEBUG
-	  printf("stripioctl: unknown request 0x%lx\n", cmd);
+	  addlog("stripioctl: unknown request 0x%lx\n", cmd);
 #endif
 		error = EINVAL;
 	}
@@ -1358,8 +1358,11 @@ strip_resetradio(sc, tp)
 	 * XXX Perhaps flush  tty output queue?
 	 */
 
+	if (tp == NULL)
+		return;
+
 	if ((i = b_to_q(InitString, sizeof(InitString) - 1, &tp->t_outq))) {
-		printf("resetradio: %d chars didn't fit in tty queue\n", i);
+		addlog("resetradio: %d chars didn't fit in tty queue\n", i);
 		return;
 	}
 	sc->sc_if.if_obytes += sizeof(InitString) - 1;
@@ -1402,6 +1405,11 @@ strip_proberadio(sc, tp)
 	if (sc->sc_if.if_flags & IFF_DEBUG)
 		addlog("%s: attempting to probe radio\n", sc->sc_if.if_xname);
 
+	if (tp == NULL) {
+		addlog("%s: no tty attached\n", sc->sc_if.if_xname);
+		return;
+	}
+
 	overflow = b_to_q((ttychar_t *)strip_probestr, 2, &tp->t_outq);
 	if (overflow == 0) {
 		if (sc->sc_if.if_flags & IFF_DEBUG)
@@ -1430,7 +1438,7 @@ static char *strip_statenames[] = {
  * Timeout routine -- try to start more output.
  * Will be needed to make strip work on ptys.
  */
-static void
+void
 strip_timeout(x)
     void *x;
 {
@@ -1499,6 +1507,8 @@ strip_watchdog(ifp)
 		 * A probe is due but we haven't piggybacked one on a packet.
 		 * Send a probe now.
 		 */
+		if (tp == NULL)
+			break;
 		strip_proberadio(sc, sc->sc_ttyp);
 		(*tp->t_oproc)(tp);
 		break;
@@ -1568,7 +1578,7 @@ strip_newpacket(sc, ptr, end)
 
 	/* Catch 'OK' responses which show radio has fallen out of starmode */
 	if (len >= 2 && ptr[0] == 'O' && ptr[1] == 'K') {
-		printf("%s: Radio is back in AT command mode: will reset\n",
+		addlog("%s: Radio is back in AT command mode: will reset\n",
 			sc->sc_if.if_xname);
 		FORCE_RESET(sc);		/* Do reset ASAP */
 	return 0;
@@ -1629,10 +1639,10 @@ strip_newpacket(sc, ptr, end)
 	packetlen = ((u_short)sc->sc_rxbuf[2] << 8) | sc->sc_rxbuf[3];
 
 #ifdef DIAGNOSTIC
-/*	printf("Packet %02x.%02x.%02x.%02x\n",
+/*	addlog("Packet %02x.%02x.%02x.%02x\n",
 		sc->sc_rxbuf[0], sc->sc_rxbuf[1],
 		sc->sc_rxbuf[2], sc->sc_rxbuf[3]);
-	printf("Got %d byte packet\n", packetlen); */
+	addlog("Got %d byte packet\n", packetlen); */
 #endif
 
 	/* Decode remainder of the IP packer */
@@ -1999,14 +2009,14 @@ RecvErr_Message(strip_info, sendername, msg)
 		 *	command mode.
 		 */
 		RecvErr("radio error message:", strip_info);
-		printf("%s: Error! Packet size too big for radio.",
+		addlog("%s: Error! Packet size too big for radio.",
 			if_name);
 		FORCE_RESET(strip_info);
 	}
 	else if (!strncmp(msg, ERR_008, sizeof(ERR_008)-1))
 	{
 		RecvErr("radio error message:", strip_info);
-		printf("%s: Radio name contains illegal character\n",
+		addlog("%s: Radio name contains illegal character\n",
 			if_name);
 	}
 	else if (!strncmp(msg, ERR_009, sizeof(ERR_009)-1))
