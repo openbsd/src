@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.92 2002/06/09 04:32:18 angelos Exp $
+.\"	$OpenBSD: sysctl.3,v 1.93 2002/06/11 08:54:36 angelos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -317,6 +317,7 @@ information.
 .It Dv KERN_VERSION No "	string	no"
 .It Dv KERN_VNODE No "	struct vnode	no"
 .It Dv KERN_STACKGAPRANDOM No "	integer	yes"
+.It Dv KERN_USERASYMCRYPTO No "	integer	yes"
 .It Dv KERN_USERCRYPTO No "	integer	yes"
 .It Dv KERN_CRYPTODEVALLOWSOFT No "	integer	yes"
 .It Dv KERN_PROC_ARGS No "	node not applicable"
@@ -642,6 +643,12 @@ The random value is added to make buffer overflow exploitation slightly
 harder.
 The bigger the number, the harder it is to brute force this added protection,
 but it also means bigger waste of memory.
+.It Dv KERN_USERASYMCRYPTO
+Permits userland to use
+.Pa /dev/crypto
+for cryptographic support for asymmetric (public) key operations via hardware
+cryptographic devices.
+kern.usercrypto must also be set.
 .It Dv KERN_USERCRYPTO
 Permits userland to use
 .Pa /dev/crypto

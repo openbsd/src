@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.87 2002/06/09 04:33:33 angelos Exp $
+.\"	$OpenBSD: sysctl.8,v 1.88 2002/06/11 08:55:20 angelos Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -149,6 +149,7 @@ privilege can change the value.
 .It kern.ccpu	u_int	no
 .It kern.nprocs	integer	no
 .It kern.stackgap_random	integer	yes
+.It kern.userasymcrypto	integer	yes
 .It kern.usercrypto	integer	yes
 .It kern.cryptodevallowsoft	integer	yes
 .It kern.nfiles	integer	no
