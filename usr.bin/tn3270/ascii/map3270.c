@@ -1,4 +1,4 @@
-/*	$OpenBSD: map3270.c,v 1.4 2001/11/19 19:02:16 mpech Exp $	*/
+/*	$OpenBSD: map3270.c,v 1.5 2003/04/04 22:13:10 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)map3270.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: map3270.c,v 1.4 2001/11/19 19:02:16 mpech Exp $";
+static char rcsid[] = "$OpenBSD: map3270.c,v 1.5 2003/04/04 22:13:10 deraadt Exp $";
 #endif /* not lint */
 
 /*	This program reads a description file, somewhat like /etc/termcap,
@@ -147,7 +147,7 @@ GetC()
 		char envname[9];
 		extern char *getenv();
 
-		(void) sprintf(envname, "MAP3270%c", suffix++);
+		(void) snprintf(envname, sizeof envname, "MAP3270%c", suffix++);
 		environPointer = getenv(envname);
 	    } else {
 		whichkey++;			/* default map */
@@ -831,14 +831,7 @@ char *
 strsave(string)
 char *string;
 {
-    char *p;
-    extern char *malloc();
-
-    p = malloc((unsigned int)strlen(string)+1);
-    if (p != 0) {
-	strcpy(p, string);
-    }
-    return(p);
+    return (strdup(string));
 }
 
 

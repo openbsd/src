@@ -1,4 +1,4 @@
-/*	$OpenBSD: mset.c,v 1.3 2001/11/19 19:02:16 mpech Exp $	*/
+/*	$OpenBSD: mset.c,v 1.4 2003/04/04 22:13:10 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mset.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: mset.c,v 1.3 2001/11/19 19:02:16 mpech Exp $";
+static char rcsid[] = "$OpenBSD: mset.c,v 1.4 2003/04/04 22:13:10 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -221,7 +221,7 @@ char *begin, *tc_name;
     else {
 	printf("'");
     }
-    (void) strcpy(savename, tc_name);
+    (void) strlcpy(savename, tc_name, sizeof savename);
     while (st1 != string) {
 	if (toshell && numbchars >= 1016) { /* leave room for ctrl and delim */
 	   numbchars = 0;

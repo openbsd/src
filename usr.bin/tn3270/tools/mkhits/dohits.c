@@ -1,4 +1,4 @@
-/*	$OpenBSD: dohits.c,v 1.4 2001/11/19 19:02:17 mpech Exp $	*/
+/*	$OpenBSD: dohits.c,v 1.5 2003/04/04 22:13:10 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)dohits.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: dohits.c,v 1.4 2001/11/19 19:02:17 mpech Exp $";
+static char rcsid[] = "$OpenBSD: dohits.c,v 1.5 2003/04/04 22:13:10 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -121,7 +121,7 @@ char *file,		/* Name of file to scan for whitespace prefix */
     char what[100], value[100];
     char line[200];
 
-    sprintf(compare, " %s%%[^,\t \n]", prefix);
+    snprintf(compare, sizeof compare, " %s%%[^,\t \n]", prefix);
     if ((ourfile = fopen(file, "r")) == NULL) {
 	perror("fopen");
 	exit(1);
@@ -152,7 +152,7 @@ char *file,		/* Name of file to scan for #define prefix */
     char line[200];
     int whatitis;
 
-    sprintf(compare, "#define %s%%s %%s", prefix);
+    snprintf(compare, sizeof compare, "#define %s%%s %%s", prefix);
     if ((ourfile = fopen(file, "r")) == NULL) {
 	perror("fopen");
 	exit(1);

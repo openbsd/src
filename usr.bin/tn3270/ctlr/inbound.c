@@ -1,4 +1,4 @@
-/*	$OpenBSD: inbound.c,v 1.4 2001/11/19 19:02:17 mpech Exp $	*/
+/*	$OpenBSD: inbound.c,v 1.5 2003/04/04 22:13:10 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inbound.c	4.3 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: inbound.c,v 1.4 2001/11/19 19:02:17 mpech Exp $";
+static char rcsid[] = "$OpenBSD: inbound.c,v 1.5 2003/04/04 22:13:10 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -373,8 +373,9 @@ char	character;
 	} else {
 	    char buffer[100];
 
-	    sprintf(buffer, "File %s, line %d:  No room in network buffer!\n",
-				__FILE__, __LINE__);
+	    snprintf(buffer, sizeof buffer,
+		"File %s, line %d:  No room in network buffer!\n",
+		__FILE__, __LINE__);
 	    ExitString(buffer, 1);
 	    /*NOTREACHED*/
 	}

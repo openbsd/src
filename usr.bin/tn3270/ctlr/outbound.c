@@ -1,4 +1,4 @@
-/*	$OpenBSD: outbound.c,v 1.3 2001/11/19 19:02:17 mpech Exp $	*/
+/*	$OpenBSD: outbound.c,v 1.4 2003/04/04 22:13:10 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)outbound.c	4.3 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: outbound.c,v 1.3 2001/11/19 19:02:17 mpech Exp $";
+static char rcsid[] = "$OpenBSD: outbound.c,v 1.4 2003/04/04 22:13:10 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -225,7 +225,7 @@ int	control;				/* this buffer ended block? */
 		{
 		    char s_buffer[100];
 
-		    sprintf(s_buffer,
+		    snprintf(s_buffer, sizeof s_buffer,
 			"Unexpected read command code 0x%x received.\n",
 								    Command);
 		    ExitString(s_buffer, 1);
@@ -324,7 +324,7 @@ int	control;				/* this buffer ended block? */
 	    {
 		char s_buffer[100];
 
-		sprintf(s_buffer,
+		snprintf(s_buffer, sizeof s_buffer,
 			"Unexpected write command code 0x%x received.\n",
 								Command);
 		ExitString(s_buffer, 1);
@@ -414,7 +414,8 @@ int	control;				/* this buffer ended block? */
 		if ((i < 0) || (i > HighestScreen())) {
 		    char s_buffer[200];
 
-		    sprintf(s_buffer, "tn3270:  %s%d.\n\t%s%d%s%d%s\n",
+		    snprintf(s_buffer, sizeof s_buffer,
+			"tn3270:  %s%d.\n\t%s%d%s%d%s\n",
 			"Invalid 3270 order 'Repeat to Address' to address ",
 			i,
 			"(Screen currently set to ",
@@ -452,7 +453,8 @@ int	control;				/* this buffer ended block? */
 		if ((i < 0) || (i > HighestScreen())) {
 		    char s_buffer[200];
 
-		    sprintf(s_buffer, "tn3270:  %s%d.\n\t%s%d%s%d%s\n",
+		    snprintf(s_buffer, sizeof s_buffer,
+			"tn3270:  %s%d.\n\t%s%d%s%d%s\n",
 			"Invalid 3270 order 'Erase Unprotected to Address' to address ",
 			i,
 			"(Screen currently set to ",
@@ -506,7 +508,7 @@ int	control;				/* this buffer ended block? */
 			    break;
 			}
 		    }
-		    sprintf(s_buffer,
+		    snprintf(s_buffer, sizeof s_buffer,
 			"Unsupported order '%s' (%s, 0x%x) received.\n",
 			porder->long_name, porder->short_name, c);
 		    ExitString(s_buffer, 1);

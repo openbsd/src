@@ -1,4 +1,4 @@
-/*	$OpenBSD: termout.c,v 1.8 2001/11/19 19:02:17 mpech Exp $	*/
+/*	$OpenBSD: termout.c,v 1.9 2003/04/04 22:13:10 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)termout.c	4.3 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: termout.c,v 1.8 2001/11/19 19:02:17 mpech Exp $";
+static char rcsid[] = "$OpenBSD: termout.c,v 1.9 2003/04/04 22:13:10 deraadt Exp $";
 #endif /* not lint */
 
 #if defined(unix)
@@ -156,7 +156,7 @@ int	where;		/* cursor address */
 {
 	char foo[100];
 
-	sprintf(foo, "ERR from %s at %d (%d, %d)\n",
+	snprintf(foo, sizeof foo, "ERR from %s at %d (%d, %d)\n",
 		from, where, ScreenLine(where), ScreenLineOffset(where));
 	OurExitString(foo, 1);
 	/* NOTREACHED */

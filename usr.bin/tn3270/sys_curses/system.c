@@ -1,4 +1,4 @@
-/*	$OpenBSD: system.c,v 1.11 2002/06/12 06:07:16 mpech Exp $	*/
+/*	$OpenBSD: system.c,v 1.12 2003/04/04 22:13:10 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)system.c	4.5 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: system.c,v 1.11 2002/06/12 06:07:16 mpech Exp $";
+static char rcsid[] = "$OpenBSD: system.c,v 1.12 2003/04/04 22:13:10 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -214,7 +214,8 @@ doassociate()
 	if ((pwent = getpwuid((int)geteuid())) == 0) {
 	    return -1;
 	}
-	sprintf(promptbuf, "Enter password for user %s:", pwent->pw_name);
+	snprintf(promptbuf, sizeof promptbuf,
+		"Enter password for user %s:", pwent->pw_name);
 	if (api_exch_outcommand(EXCH_CMD_SEND_AUTH) == -1) {
 	    return -1;
 	}
@@ -658,7 +659,7 @@ char	*argv[];
     do {
 	ikey = random();
     } while (ikey == 0);
-    sprintf(key, "%lu\n", (unsigned long) ikey);
+    snprintf(key, sizeof key, "%lu\n", (unsigned long) ikey);
     if (write(fd, key, strlen(key)) != strlen(key)) {
 	perror("write");
 	return 0;
@@ -690,11 +691,11 @@ char	*argv[];
     }
     listen(serversock, 1);
     /* Get name to advertise in address list */
-    strcpy(sockNAME, "API3270=");
+    strlcpy(sockNAME, "API3270=", sizeof sockNAME);
     gethostname(sockNAME+strlen(sockNAME), sizeof sockNAME-strlen(sockNAME));
     if (strlen(sockNAME) > (sizeof sockNAME-(10+strlen(keyname)))) {
 	fprintf(stderr, "Local hostname too large; using 'localhost'.\n");
-	strcpy(sockNAME, "localhost");
+	strlcpy(sockNAME, "localhost", sizeof sockNAME);
     }
     sprintf(sockNAME+strlen(sockNAME), ":%u", ntohs(server.sin_port));
     sprintf(sockNAME+strlen(sockNAME), ":%s", keyname);

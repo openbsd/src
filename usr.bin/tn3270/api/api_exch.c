@@ -1,4 +1,4 @@
-/*	$OpenBSD: api_exch.c,v 1.2 1996/06/26 05:41:00 deraadt Exp $	*/
+/*	$OpenBSD: api_exch.c,v 1.3 2003/04/04 22:13:10 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)api_exch.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: api_exch.c,v 1.2 1996/06/26 05:41:00 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: api_exch.c,v 1.3 2003/04/04 22:13:10 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -153,7 +153,7 @@ int exch;			/* opcode to decode */
 	{
 	    static char unknown[40];
 
-	    sprintf(unknown, "(Unknown exchange 0x%02x)", exch&0xff);
+	    snprintf(unknown, sizeof unknown, "(Unknown exchange 0x%02x)", exch&0xff);
 	    return unknown;
 	}
     }
@@ -416,8 +416,6 @@ api_exch_init(sock_number, ourname)
 int sock_number;
 char *ourname;
 {
-    extern char *strcpy();
-
     sock = sock_number;
     (void) strcpy(whoarewe, ourname);		/* For error messages */
 
