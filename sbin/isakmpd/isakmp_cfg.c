@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmp_cfg.c,v 1.31 2004/06/14 09:55:41 ho Exp $	 */
+/* $OpenBSD: isakmp_cfg.c,v 1.32 2004/06/15 15:53:13 hshoexer Exp $	 */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist.  All rights reserved.
@@ -684,6 +684,9 @@ cfg_verify_hash(struct message *msg)
 
 	/* Mark the HASH as handled.  */
 	hashp->flags |= PL_MARK;
+
+	/* Mark message authenticated. */
+	msg->flags |= MSG_AUTHENTICATED;
 
 	return 0;
 }

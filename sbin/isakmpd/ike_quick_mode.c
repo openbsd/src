@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_quick_mode.c,v 1.81 2004/06/14 09:55:41 ho Exp $	 */
+/* $OpenBSD: ike_quick_mode.c,v 1.82 2004/06/15 15:53:13 hshoexer Exp $	 */
 /* $EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	 */
 
 /*
@@ -1077,6 +1077,9 @@ initiator_recv_HASH_SA_NONCE(struct message *msg)
 	}
 	/* Mark the HASH as handled.  */
 	hashp->flags |= PL_MARK;
+
+	/* Mark message as authenticated. */
+	msg->flags |= MSG_AUTHENTICATED;
 
 	/*
 	 * As we are getting an answer on our transform offer, only one
