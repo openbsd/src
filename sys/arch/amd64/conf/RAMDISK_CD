@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.19 2004/10/05 02:01:17 jsg Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.20 2004/11/03 08:29:30 xsa Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -162,8 +162,8 @@ scsibus* at mpt?
 #scsibus* at adv?
 #adw*	at pci?			# AdvanSys ULTRA WIDE SCSI
 #scsibus* at adw?
-#pcscp*	at pci?			# AMD 53c974 PCscsi-PCI SCSI
-#scsibus* at pcscp?
+pcscp*	at pci?			# AMD 53c974 PCscsi-PCI SCSI
+scsibus* at pcscp?
 #trm*	at pci?			# Tekram DC-3x5U SCSI Controllers
 #scsibus* at trm?
 
