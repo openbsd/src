@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.83 2004/05/30 22:13:27 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.84 2004/06/24 20:47:50 henning Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -168,14 +168,6 @@ The host number may be omitted on Ethernet interfaces,
 which use the hardware physical address,
 and on interfaces other than the first.
 .Pp
-For the
-.Tn ISO
-family, addresses are specified as a long hexadecimal string,
-as in the Xerox family.
-However, two consecutive dots imply a zero
-byte, and the dots are optional, if the user wishes to (carefully)
-count out long strings of digits in network byte order.
-.Pp
 .Tn AppleTalk
 (LLAP) addresses are specified as
 .Dq nn.na
@@ -201,7 +193,6 @@ supported are
 .Dq inet ,
 .Dq inet6 ,
 .Dq atalk ,
-.Dq iso ,
 .Dq ipx ,
 and
 .Dq ns .
@@ -426,7 +417,7 @@ Set the MTU for this device to the given
 .Ar value .
 Cloned routes will inherit this value as a default.
 .It Cm netmask Ar mask
-(inet, inet6 and iso)
+(inet and inet6)
 Specify how much of the address to reserve for subdividing
 networks into subnetworks.
 The mask includes the network part of the local address
@@ -443,33 +434,6 @@ and the subnet field should be contiguous with the network
 portion.
 .\" see
 .\" Xr eon 5 .
-.It Cm nsellength Ar n
-.Pf ( Tn ISO
-only)
-This specifies a trailing number of bytes for a received
-.Tn NSAP
-used for local identification, the remaining leading part of which is
-taken to be the
-.Tn NET
-(Network Entity Title).
-The default value is 1, which is conformant to US
-.Tn GOSIP .
-When an ISO address is set in an
-.Nm
-command,
-it is really the
-.Tn NSAP
-which is being specified.
-For example, in
-.Tn US GOSIP ,
-20 hex digits should be
-specified in the
-.Tn ISO NSAP
-to be assigned to the interface.
-There is some evidence that a number different from 1 may be useful
-for
-.Tn AFI
-37 type addresses.
 .It Cm nwid Ar id
 (IEEE 802.11 devices only)
 Configure network ID for IEEE 802.11-based wireless network interfaces.
@@ -561,11 +525,6 @@ AppleTalk uses this scheme instead of
 netmasks though
 .Ox
 implements it internally as a set of netmasks.
-.It Cm snpaoffset Ar n
-.Pf ( Tn ISO
-only)
-This is used to specify the subnetwork point of attachment offset for
-CLNP packets.
 .It Cm state Ar state
 Explicitly force the
 .Xr carp 4
@@ -732,7 +691,6 @@ tried to alter an interface's configuration.
 .Xr gre 4 ,
 .Xr ifmedia 4 ,
 .Xr inet 4 ,
-.Xr iso 4 ,
 .Xr lo 4 ,
 .Xr netintro 4 ,
 .Xr pfsync 4 ,
