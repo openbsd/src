@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.16 1997/05/14 15:41:08 niklas Exp $
+#	$OpenBSD: MAKEDEV,v 1.17 1997/05/14 18:31:15 niklas Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
@@ -68,7 +68,8 @@ do
 case $i in
 
 all)
-	sh MAKEDEV std fd fd0 wd0 wd1 wd2 wd3 sd0 sd1 sd2 st0 acd0 cd0 ss0 tty00 tty01 pty0 pty1
+	sh MAKEDEV std fd fd0 wd0 wd1 wd2 wd3 sd0 sd1 sd2 st0 acd0 cd0 ss0
+	sh MAKEDEV vnd0 vnd1 vnd2 vnd3 tty00 tty01 pty0 pty1
 	sh MAKEDEV ttyC0 lpt0 pms0 random bpf0 local
 	;;
 
