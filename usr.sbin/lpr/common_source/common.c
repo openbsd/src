@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.26 2003/09/26 06:01:41 pvalchev Exp $	*/
+/*	$OpenBSD: common.c,v 1.27 2004/09/28 15:54:50 otto Exp $	*/
 /*	$NetBSD: common.c,v 1.21 2000/08/09 14:28:50 itojun Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 #if 0
 static const char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: common.c,v 1.26 2003/09/26 06:01:41 pvalchev Exp $";
+static const char rcsid[] = "$OpenBSD: common.c,v 1.27 2004/09/28 15:54:50 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -164,8 +164,10 @@ retryport:
 		if (s < 0) {
 			/* fall back to non-privileged port */
 			if (errno != EACCES ||
-			    (s = socket(r->ai_family, SOCK_STREAM, 0)) < 0)
+			    (s = socket(r->ai_family, SOCK_STREAM, 0)) < 0) {
+				freeaddrinfo(res);
 				return(-1);
+			}
 		}
 		siginterrupt(SIGINT, 1);
 		if (connect(s, r->ai_addr, r->ai_addrlen) < 0) {
@@ -238,8 +240,8 @@ int
 getq(struct queue ***namelist)
 {
 	struct dirent *d;
-	struct queue *q, **queue;
-	size_t nitems, arraysz;
+	struct queue *q, **queue = NULL;
+	size_t nitems = 0, arraysz;
 	struct stat stbuf;
 	DIR *dirp;
 
@@ -260,7 +262,6 @@ getq(struct queue ***namelist)
 	if (queue == NULL)
 		goto errdone;
 
-	nitems = 0;
 	while ((d = readdir(dirp)) != NULL) {
 		if (d->d_name[0] != 'c' || d->d_name[1] != 'f')
 			continue;	/* daemon control files only */
@@ -280,20 +281,19 @@ getq(struct queue ***namelist)
 		 * Check to make sure the array has space left and
 		 * realloc the maximum size.
 		 */
-		if (++nitems > arraysz) {
+		if (nitems == arraysz) {
 			struct queue **newqueue;
 			size_t newarraysz = arraysz * 2;
 			newqueue = (struct queue **)realloc(queue,
 				newarraysz * sizeof(struct queue *));
 			if (newqueue == NULL) {
-				free(queue);
-				queue = NULL;
+				free(q);
 				goto errdone;
 			}
 			queue = newqueue;
 			arraysz = newarraysz;
 		}
-		queue[nitems-1] = q;
+		queue[nitems++] = q;
 	}
 	closedir(dirp);
 	if (nitems)
@@ -302,6 +302,13 @@ getq(struct queue ***namelist)
 	return(nitems);
 
 errdone:
+	if (queue != NULL) {
+		size_t i;
+
+		for (i = 0; i < nitems; i++)
+			free(queue[i]);
+		free(queue);
+	}
 	closedir(dirp);
 	return(-1);
 }
