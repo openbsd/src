@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.274 2002/11/28 00:44:56 krw Exp $
+#	$OpenBSD: install.sub,v 1.275 2002/11/28 01:11:05 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -95,8 +95,6 @@ set_term() {
 }
 
 welcome() {
-	local _query
-
 	cat << __EOT
 
 Welcome to the OpenBSD/${ARCH} ${VERSION_MAJOR}.${VERSION_MINOR} ${MODE} program.
@@ -117,39 +115,39 @@ __EOT
 
 IS YOUR DATA BACKED UP? As with anything that modifies disk contents, this 
 program can cause SIGNIFICANT data loss.
+
 __EOT
 
 	case $MODE in
 	upgrade)
 		cat << __EOT
-
 NOTE: once your system has been upgraded, you must manually merge any changes
 to files in the 'etc' set into the files already on your system.
+
 __EOT
-		_query="Proceed with upgrade?"
+		ask "Proceed with upgrade?" n
 		;;
 
 	install)
 		cat << __EOT
-
 It is often helpful to have the installation notes handy. For complex disk
 configurations, relevant disk hardware manuals and a calculator are useful.
+
 __EOT
 
 		if [ -f /etc/fstab ]; then
 			cat << __EOT
-
 You seem to be trying to restart an interrupted installation! You can skip
 the disk preparation steps and continue, or you can reboot and start over.
+
 __EOT
-			_query="Skip disk initialization?"
+			ask "Skip disk initialization?" n
 		else
-			_query="Proceed with install?"
+			ask "Proceed with install?" n
 		fi
 		;;
 	esac
 
-	ask "\n$_query" n
 	case $resp in
 	y*|Y*)	echo "Cool!  Let's get to it..."
 		;;
@@ -172,7 +170,7 @@ get_cddevs() {
 }
 
 get_ifdevs() {
-	/sbin/ifconfig -a | egrep -v '^([[:space:]]|(lo|enc|gre|ppp|sl|tun|bridge|pflog|vlan|gif)[[:digit:]])' | cutword -t: 1
+	ifconfig -a | egrep -v '^([[:space:]]|(lo|enc|gre|ppp|sl|tun|bridge|pflog|vlan|gif)[[:digit:]])' | cutword -t: 1
 }
 
 # Ask for a password, saving the input in $resp.
