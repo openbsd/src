@@ -1,4 +1,4 @@
-/*	$OpenBSD: sb_isa.c,v 1.3 1998/04/28 00:03:24 deraadt Exp $	*/
+/*	$OpenBSD: sb_isa.c,v 1.4 1999/01/02 01:33:39 niklas Exp $	*/
 /*	$NetBSD: sb_isa.c,v 1.15 1997/11/30 15:32:25 drochner Exp $	*/
 
 /*
@@ -47,6 +47,7 @@
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
+#include <dev/midi_if.h>
 #include <dev/mulaw.h>
 
 #include <dev/isa/isavar.h>
@@ -162,9 +163,12 @@ sb_isa_attach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 
 	if (!sbfind(parent, sc, ia) || 
-	    bus_space_map(sc->sc_iot, ia->ia_iobase, ia->ia_iosize, 
-			  0, &sc->sc_ioh))
+	    bus_space_map(sc->sc_iot, ia->ia_iobase, ia->ia_iosize, 0,
+	    &sc->sc_ioh)) {
+		printf("%s: sbfind failed\n", sc->sc_dev.dv_xname);
 		return;
+	}
+	sc->sc_ic = ia->ia_ic;
 	sc->sc_isa = parent;
 	sbattach(sc);
 }
