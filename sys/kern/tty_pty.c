@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.13 2003/07/21 22:44:50 tedu Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.14 2003/07/22 01:03:12 mickey Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -642,7 +642,7 @@ ptckqfilter(dev_t dev, struct knote *kn)
 		return (1);
 	}
 
-	kn->kn_hook = pti;
+	kn->kn_hook = (caddr_t)pti;
 
 	s = spltty();
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
