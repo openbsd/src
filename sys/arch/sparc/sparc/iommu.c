@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.5 1999/11/05 18:07:11 art Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.6 2000/01/01 19:41:00 deraadt Exp $	*/
 /*	$NetBSD: iommu.c,v 1.13 1997/07/29 09:42:04 fair Exp $ */
 
 /*
@@ -45,6 +45,8 @@
 #if defined(UVM)
 #include <uvm/uvm.h>
 #endif
+
+#include <machine/pmap.h>
 
 #include <machine/autoconf.h>
 #include <machine/ctlreg.h>
