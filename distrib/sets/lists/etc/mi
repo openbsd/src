@@ -109,8 +109,9 @@
 ./etc/sliphome/slip.hosts
 ./etc/sliphome/slip.login
 ./etc/spwd.db
-./etc/ssh_config
-./etc/sshd_config
+./etc/ssh
+./etc/ssh/ssh_config
+./etc/ssh/sshd_config
 ./etc/ssl/openssl.cnf
 ./etc/ssl/x509v3.cnf
 ./etc/sudoers
