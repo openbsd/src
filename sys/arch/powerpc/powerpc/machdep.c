@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.76 2001/08/19 20:02:22 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.77 2001/08/21 03:07:02 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -1210,7 +1210,7 @@ bus_mem_add_mapping(bpa, size, cacheable, bshp)
 		bus_size_t alloc_size;
 
 		/* need to steal vm space before kernel vm is initialized */
-		alloc_size = trunc_page(size + PAGE_SIZE-1);
+		alloc_size = round_page(size);
 		ppc_kvm_size -= alloc_size;
 
 		vaddr = VM_MIN_KERNEL_ADDRESS + ppc_kvm_size;
