@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_extern.h,v 1.17 2000/03/13 14:30:19 art Exp $	*/
+/*	$OpenBSD: vm_extern.h,v 1.18 2000/03/13 14:33:42 art Exp $	*/
 /*	$NetBSD: vm_extern.h,v 1.20 1996/04/23 12:25:23 christos Exp $	*/
 
 /*-
@@ -152,8 +152,8 @@ int		vsunlock __P((caddr_t, u_int));
 #endif /* !UVM */
 
 /* Machine dependent portion */
-void		vmapbuf __P((struct buf *, vm_size_t));
-void		vunmapbuf __P((struct buf *, vm_size_t));
+void		vmapbuf __P((struct buf *, vsize_t));
+void		vunmapbuf __P((struct buf *, vsize_t));
 void		pagemove __P((caddr_t, caddr_t, size_t));
 #ifdef __FORK_BRAINDAMAGE
 int		cpu_fork __P((struct proc *, struct proc *, void *, size_t));
