@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.65 2004/08/14 00:14:11 niklas Exp $	*/
+/*	$OpenBSD: trap.c,v 1.66 2004/09/07 10:12:35 niklas Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -775,6 +775,7 @@ syscall(frame)
 	else
 		error = 0;
 	orig_error = error;
+	KERNEL_PROC_LOCK(p);
 #ifdef SYSCALL_DEBUG
 	scdebug_call(p, code, args);
 #endif
@@ -782,11 +783,12 @@ syscall(frame)
 	if (KTRPOINT(p, KTR_SYSCALL))
 		ktrsyscall(p, code, argsize, args);
 #endif
-	if (error)
+	if (error) {
+		KERNEL_PROC_UNLOCK(p);
 		goto bad;
+	}
 	rval[0] = 0;
 	rval[1] = frame.tf_edx;
-	KERNEL_PROC_LOCK(p);
 #if NSYSTRACE > 0
 	if (ISSET(p->p_flag, P_SYSTRACE))
 		orig_error = error = systrace_redirect(code, p, args, rval);
@@ -826,7 +828,9 @@ syscall(frame)
 	}
 
 #ifdef SYSCALL_DEBUG
+	KERNEL_PROC_LOCK(p);
 	scdebug_ret(p, code, orig_error, rval);
+	KERNEL_PROC_UNLOCK(p);
 #endif
 	userret(p, frame.tf_eip, sticks);
 #ifdef KTRACE
