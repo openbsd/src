@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvsd.c,v 1.4 2004/08/02 15:59:38 jfb Exp $	*/
+/*	$OpenBSD: cvsd.c,v 1.5 2004/08/06 20:09:22 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -111,6 +111,7 @@ sighup_handler(int signo)
 void
 sigint_handler(int signo)
 {
+	running = 0;
 }
 
 
