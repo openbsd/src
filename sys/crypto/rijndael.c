@@ -1,4 +1,4 @@
-/*	$OpenBSD: rijndael.c,v 1.14 2004/02/05 18:55:20 deraadt Exp $ */
+/*	$OpenBSD: rijndael.c,v 1.15 2004/02/08 00:45:15 deraadt Exp $ */
 
 /**
  * rijndael-alg-fst.c
@@ -31,7 +31,7 @@
 
 #include <crypto/rijndael.h>
 
-#define FULL_UNROLL
+#undef FULL_UNROLL
 
 /*
 Te0[x] = S [x].[02, 01, 01, 03];
