@@ -1,5 +1,5 @@
+/*	$OpenBSD: rcp.c,v 1.20 2001/05/11 18:43:40 mickey Exp $	*/
 /*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
-/*	$OpenBSD: rcp.c,v 1.19 2001/04/06 16:46:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -80,7 +80,7 @@ static char rcsid[] = "$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $";
 char	dst_realm_buf[REALM_SZ];
 char	*dest_realm = NULL;
 int	use_kerberos = 1;
-CREDENTIALS 	cred;
+CREDENTIALS	cred;
 Key_schedule	schedule;
 extern	char	*krb_realmofhost();
 int	doencrypt = 0;
@@ -134,8 +134,7 @@ main(argc, argv)
 #ifdef	KERBEROS
 		case 'k':
 			dest_realm = dst_realm_buf;
-			(void)strncpy(dst_realm_buf, optarg, REALM_SZ-1);
-			dst_realm_buf[REALM_SZ-1] = '\0';
+			strlcpy(dst_realm_buf, optarg, sizeof(dst_realm_buf));
 			break;
 		case 'x':
 			doencrypt = 1;

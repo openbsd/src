@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_df.c,v 1.6 2001/01/28 23:04:55 niklas Exp $	*/
+/*	$OpenBSD: ext2fs_df.c,v 1.7 2001/05/11 18:40:46 mickey Exp $	*/
 
 /*
  * This file is substantially derived from src/sys/ufs/ext2fs/ext2fs_vfsops.c:e2fs_statfs().
@@ -108,7 +108,6 @@ e2fs_df(rfd, file, sfsp)
 		mntpt = "";
 	memmove(&sfsp->f_mntonname[0], mntpt, MNAMELEN);
 	memmove(&sfsp->f_mntfromname[0], file, MNAMELEN);
-	strncpy(sfsp->f_fstypename, MOUNT_EXT2FS, MFSNAMELEN-1);
-	sfsp->f_fstypename[MFSNAMELEN-1] = '\0';
+	strlcpy(sfsp->f_fstypename, MOUNT_EXT2FS, MFSNAMELEN);
 	return (0);
 }

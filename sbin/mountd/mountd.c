@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.35 2001/01/17 19:27:11 deraadt Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.36 2001/05/11 18:35:21 mickey Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -259,11 +259,7 @@ main(argc, argv)
 	exphead = NULL;
 	mlhead = NULL;
 
-	if (argc == 1)
-		strncpy(exname, *argv, sizeof(exname)-1);
-	else
-		strncpy(exname, _PATH_EXPORTS, sizeof exname-1);
-	exname[sizeof(exname)-1] = '\0';
+	strlcpy(exname, argc == 1? *argv : _PATH_EXPORTS, sizeof(exname));
 
 	openlog("mountd", LOG_PID, LOG_DAEMON);
 	if (debug)
@@ -1941,10 +1937,8 @@ get_mountlist()
 		if (host == NULL || dirp == NULL)
 			continue;
 		mlp = (struct mountlist *)malloc(sizeof (*mlp));
-		strncpy(mlp->ml_host, host, RPCMNT_NAMELEN);
-		mlp->ml_host[RPCMNT_NAMELEN] = '\0';
-		strncpy(mlp->ml_dirp, dirp, RPCMNT_PATHLEN);
-		mlp->ml_dirp[RPCMNT_PATHLEN] = '\0';
+		strlcpy(mlp->ml_host, host, sizeof(mlp->ml_host));
+		strlcpy(mlp->ml_dirp, dirp, sizeof(mlp->ml_dirp));
 		mlp->ml_next = NULL;
 		*mlpp = mlp;
 		mlpp = &mlp->ml_next;
@@ -2006,10 +2000,8 @@ add_mlist(hostp, dirp)
 		mlp = mlp->ml_next;
 	}
 	mlp = (struct mountlist *)malloc(sizeof (*mlp));
-	strncpy(mlp->ml_host, hostp, RPCMNT_NAMELEN);
-	mlp->ml_host[RPCMNT_NAMELEN] = '\0';
-	strncpy(mlp->ml_dirp, dirp, RPCMNT_PATHLEN);
-	mlp->ml_dirp[RPCMNT_PATHLEN] = '\0';
+	strlcpy(mlp->ml_host, hostp, sizeof(mlp->ml_host));
+	strlcpy(mlp->ml_dirp, dirp, sizeof(mlp->ml_dirp, dirp));
 	mlp->ml_next = NULL;
 	*mlpp = mlp;
 	if ((mlfile = fopen(_PATH_RMOUNTLIST, "a")) == NULL) {

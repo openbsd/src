@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.c,v 1.6 1998/08/26 08:00:07 deraadt Exp $	*/
+/*	$OpenBSD: sem.c,v 1.7 2001/05/11 18:38:44 mickey Exp $	*/
 /*	$NetBSD: sem.c,v 1.9 1995/09/27 00:38:50 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sem.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: sem.c,v 1.6 1998/08/26 08:00:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: sem.c,v 1.7 2001/05/11 18:38:44 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -167,7 +167,7 @@ execute(t, wanttty, pipein, pipeout)
 	     * Check if we have a builtin function and remember which one.
 	     */
 	    bifunc = isbfunc(t);
- 	    if (noexec) {
+	    if (noexec) {
 		/*
 		 * Continue for builtins that are part of the scripting language
 		 */
@@ -452,7 +452,7 @@ execute(t, wanttty, pipein, pipeout)
     }
     /*
      * Fall through for all breaks from switch
-     * 
+     *
      * If there will be no more executions of this command, flush all file
      * descriptors. Places that turn on the F_REPEAT bit are responsible for
      * doing donefds after the last re-execution
@@ -490,7 +490,7 @@ int i;
  *
  * I don't know what is best to do. I think that Ambiguous is better
  * than restructuring the command vector, because the user can get
- * unexpected results. In any case, the command vector restructuring 
+ * unexpected results. In any case, the command vector restructuring
  * code is present and the user can choose it by setting noambiguous
  */
 static Char *
@@ -558,8 +558,7 @@ doio(t, pipein, pipeout)
 	    (void) dcopy(SHOUT, 1);
 	    (void) dcopy(SHERR, 2);
 	    cp = splicepipe(t, t->t_dlef);
-	    (void) strncpy(tmp, short2str(cp), sizeof tmp-1);
-	    tmp[sizeof tmp-1] = '\0';
+	    strlcpy(tmp, short2str(cp), sizeof tmp);
 	    xfree((ptr_t) cp);
 	    if ((fd = open(tmp, O_RDONLY)) < 0)
 		stderror(ERR_SYSTEM, tmp, strerror(errno));
@@ -585,8 +584,7 @@ doio(t, pipein, pipeout)
 	char    tmp[MAXPATHLEN];
 
 	cp = splicepipe(t, t->t_drit);
-	(void) strncpy(tmp, short2str(cp), sizeof tmp-1);
-	tmp[sizeof tmp-1] = '\0';
+	strlcpy(tmp, short2str(cp), sizeof tmp);
 	xfree((ptr_t) cp);
 	/*
 	 * so > /dev/std{out,err} work
