@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.50 2004/12/15 12:24:21 dtucker Exp $ */
+/*	$OpenBSD: client.c,v 1.51 2004/12/15 12:29:25 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -215,8 +215,13 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime)
 		return (0);
 
 	if ((msg.status & LI_ALARM) == LI_ALARM || msg.stratum == 0 ||
-	    msg.stratum > NTP_MAXSTRATUM)
+	    msg.stratum > NTP_MAXSTRATUM) {
+		interval = scale_interval(INTERVAL_QUERY_PATHETIC, 0.0);
+		set_next(p, interval);
+		log_info("reply from %s: not synced, next query %ds",
+		    log_sockaddr((struct sockaddr *)&p->addr->ss), interval);
 		return (0);
+	}
 
 	/*
 	 * From RFC 2030 (with a correction to the delay math):
