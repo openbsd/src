@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.24 2002/09/26 22:09:53 miod Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.25 2002/10/14 19:05:43 millert Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -37,7 +37,7 @@
 .Os
 .Sh NAME
 .Nm wi
-.Nd WaveLAN/IEEE, PRISM-II and Spectrum24 802.11DS wireless network driver
+.Nd WaveLAN/IEEE, PRISM 2-3 and Spectrum24 802.11DS wireless network driver
 .Sh SYNOPSIS
 .Cd "# i386/macppc/sparc64"
 .Cd "wi* at pci? dev ? function ?"
@@ -49,16 +49,16 @@
 The
 .Nm
 driver provides support for wireless network adapters based around
-the Lucent Hermes, Intersil PRISM-II, Intersil PRISM-2.5, and Symbol
-Spectrum24 chipsets.
-All four chipsets provide a similar interface to the driver.
+the Lucent Hermes, Intersil PRISM-2, Intersil PRISM-2.5, Intersil PRISM-3
+and Symbol Spectrum24 chipsets.
+All five chipsets provide a similar interface to the driver.
 .Pp
 All host/device interaction is via programmed I/O.
 Supported features include 802.11 and 802.3 frames, power management, BSS,
 IBSS, WDS and ad-hoc operation modes.
-Cards based on the Intersil PRISM-II and PRISM-2.5 chips also support a
-host-based access point mode which allows a card to act as a normal access
-point (with some assistance from the
+Cards based on the Intersil chips also support a host-based access point
+mode which allows a card to act as a normal access point (with some
+assistance from the
 .Nm
 driver).
 The Lucent Hermes and Symbol Spectrum24 chipsets do not contain this
@@ -100,9 +100,8 @@ with cards from other vendors.
 The standardized ad-hoc mode, also known as IBSS mode, is not
 supported by cards with very old firmware revisions.
 .Pp
-Cards based on the Intersil PRISM-II and PRISM-2.5 chips also
-have a host-based access point mode which allows the card to
-act as an access point (base station).
+Cards based on the Intersil chipsets also have a host-based access point
+mode which allows the card to act as an access point (base station).
 .Pp
 For more information on configuring this device, see
 .Xr ifconfig 8 .
@@ -138,54 +137,54 @@ _ _ _
 l l l .
 Card:Chip:Bus
 3Com AirConnect 3CRWE737A:Spectrum24:PCMCIA
-3Com AirConnect 3CRWE777A:Prism-II:PCI
+3Com AirConnect 3CRWE777A:Prism-2:PCI
 ACTIONTEC HWC01170:Prism-2.5:PCMCIA
-Addtron AWP-100:Prism-II:PCMCIA
+Addtron AWP-100:Prism-2:PCMCIA
 Agere Orinoco:Hermes:PCMCIA
 Apple Airport:Hermes:macobio
-Buffalo AirStation:Prism-II:PCMCIA
-Buffalo AirStation:Prism-II:CF
+Buffalo AirStation:Prism-2:PCMCIA
+Buffalo AirStation:Prism-2:CF
 Cabletron RoamAbout:Hermes:PCMCIA
-Compaq Agency NC5004:Prism-II:PCMCIA
-Contec FLEXLAN/FX-DS110-PCC:Prism-II:PCMCIA
-Corega PCC-11:Prism-II:PCMCIA
-Corega PCCA-11:Prism-II:PCMCIA
-Corega PCCB-11:Prism-II:PCMCIA
-Corega CGWLPCIA11:Prism-II:PCI
+Compaq Agency NC5004:Prism-2:PCMCIA
+Contec FLEXLAN/FX-DS110-PCC:Prism-2:PCMCIA
+Corega PCC-11:Prism-2:PCMCIA
+Corega PCCA-11:Prism-2:PCMCIA
+Corega PCCB-11:Prism-2:PCMCIA
+Corega CGWLPCIA11:Prism-2:PCI
 Dlink DWL520:Prism-2.5:PCI
 Dlink DWL650:Prism-2.5:PCMCIA
-ELSA XI300:Prism-II:PCMCIA
+ELSA XI300:Prism-2:PCMCIA
 ELSA XI325:Prism-2.5:PCMCIA
 ELSA XI325H:Prism-2.5:PCMCIA
-ELSA XI800:Prism-II:CF
-EMTAC A2424i:Prism-II:PCMCIA
+ELSA XI800:Prism-2:CF
+EMTAC A2424i:Prism-2:PCMCIA
 Ericsson Wireless LAN CARD C11:Spectrum24:PCMCIA
 Gemtek WL-311:Prism-2.5:PCMCIA
 Hawking Technology WE110P:Prism-2.5:PCMCIA
-I-O DATA WN-B11/PCM:Prism-II:PCMCIA
+I-O DATA WN-B11/PCM:Prism-2:PCMCIA
 Intel PRO/Wireless 2011:Spectrum24:PCMCIA
-Intersil Prism II:Prism-II:PCMCIA
+Intersil Prism II:Prism-2:PCMCIA
 Intersil Mini-PCI:Prism-2.5:PCI
-Linksys Instant Wireless WPC11:Prism-II:PCMCIA
+Linksys Instant Wireless WPC11:Prism-2:PCMCIA
 Linksys Instant Wireless WPC11 2.5:Prism-2.5:PCMCIA
-Linksys Instant Wireless WPC11 3.0:Prism-2.5:PCMCIA
+Linksys Instant Wireless WPC11 3.0:Prism-3:PCMCIA
 Lucent WaveLAN:Hermes:PCMCIA
-NANOSPEED ROOT-RZ2000:Prism-II:PCMCIA
-NDC/Sohoware NCP130:Prism-II:PCI
-NEC CMZ-RT-WP:Prism-II:PCMCIA
-Netgear MA401:Prism-II:PCMCIA
+NANOSPEED ROOT-RZ2000:Prism-2:PCMCIA
+NDC/Sohoware NCP130:Prism-2:PCI
+NEC CMZ-RT-WP:Prism-2:PCMCIA
+Netgear MA401:Prism-2:PCMCIA
 Netgear MA401RA:Prism-2.5:PCMCIA
 Nokia C020 Wireless LAN:Prism-I:PCMCIA
-Nokia C110/C111 Wireless LAN:Prism-II:PCMCIA
-NTT-ME 11Mbps Wireless LAN:Prism-II:PCMCIA
-Proxim Harmony:Prism-II:PCMCIA
-Proxim RangeLAN-DS:Prism-II:PCMCIA
-Samsung MagicLAN SWL-2000N:Prism-II:PCMCIA
+Nokia C110/C111 Wireless LAN:Prism-2:PCMCIA
+NTT-ME 11Mbps Wireless LAN:Prism-2:PCMCIA
+Proxim Harmony:Prism-2:PCMCIA
+Proxim RangeLAN-DS:Prism-2:PCMCIA
+Samsung MagicLAN SWL-2000N:Prism-2:PCMCIA
 Symbol Spectrum24:Spectrum24:PCMCIA
-SMC 2632 EZ Connect:Prism-II:PCMCIA
-TDK LAK-CD011WL:Prism-II:PCMCIA
-US Robotics 2410:Prism-II:PCMCIA
-US Robotics 2445:Prism-II:PCMCIA
+SMC 2632 EZ Connect:Prism-2:PCMCIA
+TDK LAK-CD011WL:Prism-2:PCMCIA
+US Robotics 2410:Prism-2:PCMCIA
+US Robotics 2445:Prism-2:PCMCIA
 .TE
 .in -\n(dIu
 .Pp
@@ -326,5 +325,6 @@ PCMCIA cards work.
 .Pp
 IBSS creation does not currently work with Symbol cards.
 .Pp
-Prism2 host-based access point mode has bugs for firmware versions
-prior to 0.8.3.
+The host-based access point mode on the Intersil PRISM cards has
+bugs when used with firmware versions prior to 0.8.3 and is completely
+unusable with firmware versions 0.7.5 and 1.4.0-1.4.2.
