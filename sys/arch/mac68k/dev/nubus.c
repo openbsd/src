@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.14 1995/08/04 02:55:17 briggs Exp $	*/
+/*	$NetBSD: nubus.c,v 1.15 1996/01/12 04:16:43 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -168,7 +168,7 @@ probe_slot(slot, fmt)
 
 #ifdef DEBUG
 	if (nubus_debug & NDB_PROBE) {
-		phys = pmap_extract(pmap_kernel(), rom_probe-1);
+		phys = pmap_extract(pmap_kernel(), (vm_offset_t)rom_probe-1);
 		printf("probing slot %d, first probe at 0x%x (phys 0x%x).\n",
 			slot, rom_probe-1, phys);
 	}
