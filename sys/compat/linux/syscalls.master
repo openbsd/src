@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.13 1997/12/10 11:55:28 deraadt Exp $
+	$OpenBSD: syscalls.master,v 1.14 1999/12/06 19:36:42 aaron Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -73,7 +73,7 @@
 22	STD		{ int linux_sys_umount(char *specialfile); }
 23	NOARGS		{ int sys_setuid(uid_t uid); }
 24	NOARGS		{ uid_t sys_getuid(void); }
-25	UNIMPL		stime
+25	STD		{ int linux_sys_stime(linux_time_t *t); }
 26	UNIMPL		ptrace
 27	STD		{ int linux_sys_alarm(unsigned int secs); }
 28	OBSOL		ofstat
