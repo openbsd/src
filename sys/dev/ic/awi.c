@@ -1,4 +1,4 @@
-/*	$OpenBSD: awi.c,v 1.17 2005/02/21 11:15:59 dlg Exp $	*/
+/*	$OpenBSD: awi.c,v 1.18 2005/04/02 23:21:33 uwe Exp $	*/
 /*	$NetBSD: awi.c,v 1.26 2000/07/21 04:48:55 onoe Exp $	*/
 
 /*-
@@ -540,6 +540,8 @@ awi_ioctl(ifp, cmd, data)
 			ifp->if_mtu = ifr->ifr_mtu;
 		break;
 	case SIOCS80211NWID:
+		if ((error = suser(curproc, 0)) != 0)
+			break;
 		error = copyin(ifr->ifr_data, &nwid, sizeof(nwid));
 		if (error)
 			break;
@@ -569,6 +571,8 @@ awi_ioctl(ifp, cmd, data)
 		error = copyout(p + 1, ifr->ifr_data, 1 + IEEE80211_NWID_LEN);
 		break;
 	case SIOCS80211NWKEY:
+		if ((error = suser(curproc, 0)) != 0)
+			break;
 		error = awi_wep_setnwkey(sc, (struct ieee80211_nwkey *)data);
 		break;
 	case SIOCG80211NWKEY:
