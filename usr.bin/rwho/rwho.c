@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwho.c,v 1.11 2001/01/31 20:12:49 deraadt Exp $	*/
+/*	$OpenBSD: rwho.c,v 1.12 2001/02/17 17:35:14 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1983 The Regents of the University of California.
@@ -41,9 +41,10 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rwho.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$OpenBSD: rwho.c,v 1.11 2001/01/31 20:12:49 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rwho.c,v 1.12 2001/02/17 17:35:14 pjanzen Exp $";
 #endif /* not lint */
 
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/file.h>
 #include <dirent.h>
@@ -52,6 +53,7 @@ static char rcsid[] = "$OpenBSD: rwho.c,v 1.11 2001/01/31 20:12:49 deraadt Exp $
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <time.h>
 #include <utmp.h>
 #include <vis.h>
 #include <err.h>
@@ -75,7 +77,6 @@ int	utmpcmp __P((struct myutmp *, struct myutmp *));
  */
 #define	down(w,now)	((now) - (w)->wd_recvtime > 11 * 60)
 
-char	*ctime();
 time_t	now;
 int	aflg;
 
@@ -100,7 +101,6 @@ main(argc, argv)
 	register struct whoent *we;
 	register struct myutmp *mp;
 	int f, n, i;
-	time_t time();
 	int nhosts = 0;
 
 	while ((ch = getopt(argc, argv, "a")) != -1)
@@ -146,10 +146,8 @@ main(argc, argv)
 				we++;
 				continue;
 			}
-			if (nusers >= NUSERS) {
-				printf("too many users\n");
-				exit(1);
-			}
+			if (nusers >= NUSERS)
+				errx(1, "too many users");
 			mp->myutmp = we->we_utmp; mp->myidle = we->we_idle;
 			(void) strncpy(mp->myhost, w->wd_hostname,
 			    sizeof(mp->myhost)-1);
@@ -178,8 +176,7 @@ main(argc, argv)
 		strvis(vis_user, mp->myutmp.out_name, VIS_CSTYLE);
 		printf("%-*.*s %-*s %.12s",
 		   UT_NAMESIZE, UT_NAMESIZE, vis_user,
-		   width,
-		   buf,
+		   width, buf,
 		   ctime((time_t *)&mp->myutmp.out_time)+4);
 		mp->myidle /= 60;
 		if (mp->myidle) {
