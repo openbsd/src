@@ -109,9 +109,14 @@ char *sfile;
 
 	if (sfile[0] == '~') {
 		if (hptr = md_getenv("HOME")) {
-			(void) strcpy(name_buffer, hptr);
-			(void) strcat(name_buffer, sfile+1);
-			sfile = name_buffer;
+			if (strlen(hptr) + strlen(sfile+1) < sizeof(name_buffer)) {
+				(void) strcpy(name_buffer, hptr);
+				(void) strcat(name_buffer, sfile+1);
+				sfile = name_buffer;
+			} else {
+				message("homedir is too long", 0);
+				return;
+			}
 		}
 	}
 	if (	((fp = fopen(sfile, "w")) == NULL) ||
