@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.1 1995/11/23 02:39:02 cgd Exp $ */
+/*	$NetBSD: installboot.c,v 1.2 1995/12/20 00:17:49 cgd Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -301,8 +301,8 @@ int	devfd;
 	if (fstatfs(fd, &statfsbuf) != 0)
 		err(1, "statfs: %s", boot);
 
-	if (strncmp(statfsbuf.f_fstypename, "ufs", MFSNAMELEN))
-		errx(1, "%s: must be on a UFS filesystem", boot);
+	if (strncmp(statfsbuf.f_fstypename, MOUNT_FFS, MFSNAMELEN))
+		errx(1, "%s: must be on a FFS filesystem", boot);
 
 	if (fsync(fd) != 0)
 		err(1, "fsync: %s", boot);
