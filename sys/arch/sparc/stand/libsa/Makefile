@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.2 2003/06/01 17:00:39 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 2004/07/13 21:03:39 marc Exp $
 
 LIB=	sa
 
 .PATH:	${.CURDIR}/../../../../lib/libsa
 
-CFLAGS= -O2 -D__INTERNAL_LIBSA_CREAD \
+CFLAGS= -O2 -D__INTERNAL_LIBSA_CREAD -Derrno=errno \
 	-I${.CURDIR} -I${.CURDIR}/../include -I${.CURDIR}/../.. \
 	-I${.CURDIR}/../../.. -I${.CURDIR}/../../../.. \
 	-I${.CURDIR}/../../../../lib/libsa

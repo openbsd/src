@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.11 2002/12/02 09:00:25 miod Exp $
+#	$OpenBSD: Makefile.inc,v 1.12 2004/07/13 21:03:38 marc Exp $
 #	$NetBSD: Makefile.inc,v 1.5 1996/02/01 22:33:01 mycroft Exp $
 
 BINDIR=	/usr/mdec
@@ -15,6 +15,7 @@ RELOC2!=	perl -e 'printf "0x%x", ${RELOC_TEST} + 0x40000'
 CFLAGS+=	-fno-stack-protector
 
 DEFS=		-DSTANDALONE -DRELOC=${RELOC} -DSUN4 -DSUN4C -DSUN_BOOTPARAMS
+DEFS+=		-Derrno=errno
 
 ### Figure out what to use for libkern
 LIBKERNDIR=		${.CURDIR}/../libkern

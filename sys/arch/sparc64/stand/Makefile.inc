@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.4 2004/01/10 09:35:42 pvalchev Exp $
+#	$OpenBSD: Makefile.inc,v 1.5 2004/07/13 21:03:38 marc Exp $
 #	$NetBSD: Makefile.inc,v 1.7 2000/08/20 14:57:16 mrg Exp $
 
 .ifndef __INCLUDED_STAND_MAKEFILE_INC
@@ -14,6 +14,7 @@ STANDALONE?=	-D_STANDALONE
 .if ${MACHINE} == "sparc64"
 CPPFLAGS+=	${STANDALONE} -DSUN4U
 CPPFLAGS+=	-I.
+CPPFLAGS+=	-Derrno=errno
 
 CFLAGS+=	-fno-stack-protector
 CFLAGS+=	-msoft-float

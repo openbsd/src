@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.4 2004/01/09 16:50:30 drahn Exp $
+#	$OpenBSD: Makefile.inc,v 1.5 2004/07/13 21:03:38 marc Exp $
 #	$NetBSD: Makefile.inc,v 1.1 1996/09/30 16:34:59 ws Exp $
 
 .if !defined(__stand_makefile_inc)
@@ -20,7 +20,7 @@ ENTRY?=	_start
 
 INCLUDES+=	-I. -I$(.OBJDIR) -I$(.CURDIR)/.. -I$(S)/arch -I$(S)
 INCLUDES+=	-I$(S)/lib/libsa
-DEFS+=		-DSTANDALONE -DFIREPOWERBUGS
+DEFS+=		-DSTANDALONE -DFIREPOWERBUGS -Derrno=errno
 CFLAGS+=	$(INCLUDES) $(DEFS) $(EXTRACFLAGS)
 CFLAGS+=	-fno-stack-protector
 CFLAGS+=	-fno-builtin-vprintf -fno-builtin-printf -fno-builtin-putchar
