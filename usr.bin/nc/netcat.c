@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.40 2002/02/16 21:27:50 millert Exp $ */
+/* $OpenBSD: netcat.c,v 1.41 2002/02/17 02:04:57 ericj Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -468,7 +468,7 @@ readwrite(int nfd)
 		}
 
 		if (pfd[1].revents & POLLIN) {
-			if ((n = read(wfd, buf, sizeof(buf))) <= 0) {
+			if ((n = read(wfd, buf, sizeof(buf))) < 0) {
 				return;
 			} else
 				if((ret = atomicio(write, nfd, buf, n)) != n)
