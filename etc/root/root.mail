@@ -58,7 +58,7 @@ to ensure OpenBSD continues.  (Thus far, most of those who have donated have
 been developers themselves.)
 
 If you wish ensure that OpenBSD runs better on your machines, please do us
-a favor (after have your mail system setup!) and type
+a favor (after you have your mail system setup!) and type
 	dmesg | mail dmesg@openbsd.org
 So that we can see what kinds of configurations people are running.  We will
 use this information to improve device driver support in future releases.
