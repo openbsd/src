@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.174 2003/08/22 21:52:11 itojun Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.175 2003/09/18 20:27:58 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -852,6 +852,8 @@ check_netmask(struct node_host *h, sa_family_t af)
 	struct pf_addr	*m;
 
 	for (n = h; n != NULL; n = n->next) {
+		if (h->addr.type == PF_ADDR_TABLE)
+			continue;
 		m = &h->addr.v.a.mask;
 		/* fix up netmask for dynaddr */
 		if (af == AF_INET && h->addr.type == PF_ADDR_DYNIFTL &&
