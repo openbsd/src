@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.c,v 1.9 1997/08/02 00:13:49 millert Exp $	*/
+/*	$OpenBSD: fts.c,v 1.10 1997/08/29 22:43:08 imp Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-static char rcsid[] = "$OpenBSD: fts.c,v 1.9 1997/08/02 00:13:49 millert Exp $";
+static char rcsid[] = "$OpenBSD: fts.c,v 1.10 1997/08/29 22:43:08 imp Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -261,8 +261,8 @@ fts_close(sp)
  * appended which would cause paths to be written as "....//foo".
  */
 #define	NAPPEND(p)							\
-	(p->fts_path[p->fts_pathlen-1] == '/'				\
-	    ? p->fts_pathlen-1 : p->fts_pathlen)
+	(p->fts_path[p->fts_pathlen - 1] == '/'				\
+	    ? p->fts_pathlen - 1 : p->fts_pathlen)
 
 FTSENT *
 fts_read(sp)
@@ -1020,34 +1020,28 @@ fts_safe_changedir(sp, p, fd)
 	FTSENT *p;
 	int fd;
 {
-	int ret, oerrno, newfd = fd;
+	int ret, oerrno, newfd;
 	struct stat sb;
 
+	newfd = fd;
 	if (ISSET(FTS_NOCHDIR))
 		return (0);
-
 	if (fd < 0 && (newfd = open(p->fts_accpath, O_RDONLY, 0)) < 0)
 		return (-1);
-
 	if (fstat(newfd, &sb)) {
 		ret = -1;
 		goto bail;
 	}
-
 	if (p->fts_dev != sb.st_dev || p->fts_ino != sb.st_ino) {
 		errno = ENOENT;		/* disinformation */
 		ret = -1;
 		goto bail;
 	}
-
 	ret = fchdir(newfd);
-
 bail:
 	oerrno = errno;
-
 	if (fd < 0)
-		(void) close(newfd);
-
+		(void)close(newfd);
 	errno = oerrno;
-	return(ret);
+	return (ret);
 }
