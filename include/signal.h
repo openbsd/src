@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.2 1996/03/18 19:15:53 niklas Exp $	*/
+/*	$OpenBSD: signal.h,v 1.3 1996/09/20 07:27:50 deraadt Exp $	*/
 /*	$NetBSD: signal.h,v 1.8 1996/02/29 00:04:57 jtc Exp $	*/
 
 /*-
@@ -39,7 +39,6 @@
 #ifndef _USER_SIGNAL_H
 #define _USER_SIGNAL_H
 
-#include <sys/cdefs.h>
 #include <sys/signal.h>
 
 #if !defined(_ANSI_SOURCE)
