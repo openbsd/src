@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx.h,v 1.7 2000/01/11 19:31:54 fgsch Exp $	*/
+/*	$OpenBSD: ipx.h,v 1.8 2000/01/11 20:54:59 fgsch Exp $	*/
 
 /*-
  *
@@ -222,6 +222,7 @@ void	ipx_input __P((struct mbuf *, ...));
 void	ipxintr __P((void));
 int	ipx_output __P((struct mbuf *m0, ...));
 int	ipx_outputfl __P((struct mbuf *m0, struct route *ro, int flags));
+int	ipx_output_type20 __P((struct mbuf *m));
 int	ipx_raw_usrreq __P((struct socket *so, int req, struct mbuf *m,
 			    struct mbuf *nam, struct mbuf *control));
 void	ipx_undo_route __P((struct route *ro));
