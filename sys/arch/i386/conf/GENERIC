@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.122 1999/08/10 17:43:57 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.123 1999/08/13 05:45:16 fgsch Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -47,6 +47,7 @@ pci*	at mainbus0 bus ?
 option		PCIVERBOSE
 option		EISAVERBOSE
 #option		PCMCIAVERBOSE
+#option		USBVERBOSE
 
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
@@ -60,6 +61,24 @@ pcic1	at isa? port 0x3e2 iomem 0xd4000 iosiz 0x4000
 
 # PCMCIA bus support
 pcmcia*	at pcic? controller ? socket ?
+
+# PCI USB Controllers
+#uhci*	at pci?				# Universal Host Controller (Intel)
+#ohci*	at pci?				# Open Host Controller
+
+# USB bus support
+#usb*	at uhci?
+#usb*	at ohci?
+
+# USB Hubs
+#uhub*	at usb?
+#uhub*	at uhub? port ? configuration ? interface ?
+
+# USB Generic HID devices
+#uhid*	at uhub? port ? configuration ? interface ?
+
+# USB Generic driver
+#ugen*	at uhub? port ? configuration ? interface ?
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 isadma0	at isa?
