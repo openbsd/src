@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.10 1998/09/08 02:01:06 jason Exp $	*/
+/*	$OpenBSD: be.c,v 1.11 1998/09/08 03:05:52 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -172,9 +172,9 @@ beattach(parent, self, aux)
 		return;
 
 	if (bmsr & PHY_BMSR_10BASET_HALF) {
+		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_10_T, 0, NULL);
 		ifmedia_add(&sc->sc_ifmedia,
 		    IFM_ETHER | IFM_10_T | IFM_HDX, 0, NULL);
-		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_10_T, 0, NULL);
 		sc->sc_ifmedia.ifm_media = IFM_ETHER | IFM_10_T | IFM_HDX;
 	}
 
@@ -185,9 +185,9 @@ beattach(parent, self, aux)
 	}
 
 	if (bmsr & PHY_BMSR_100BASETX_HALF) {
+		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_100_TX, 0, NULL);
 		ifmedia_add(&sc->sc_ifmedia,
 		    IFM_ETHER | IFM_100_TX | IFM_HDX, 0, NULL);
-		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_100_TX, 0, NULL);
 		sc->sc_ifmedia.ifm_media = IFM_ETHER | IFM_100_TX | IFM_HDX;
 	}
 
