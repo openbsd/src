@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.72 2001/04/14 18:42:43 mjacob Exp $
+#	$OpenBSD: GENERIC,v 1.73 2001/04/16 03:19:41 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -21,7 +21,7 @@ option		DEC_EB164	# EB164:	AlphaPC 164
 option		DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
 option		DEC_550		# Miata:	Digital Personal Workstation
 option		DEC_6600	# EV6:		264DP OEM Board
-option		API_UP1000	# EV6:		Alpha Processor, Inc. UP1000
+option		API_UP1000	# EV6:		Alpha Processor UP1000
 
 option		COMPAT_OSF1	# OSF/1 binary compatibility
 option		COMPAT_NETBSD	# NetBSD compatibility
