@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.61 2003/02/18 19:01:50 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.62 2003/02/25 14:04:09 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -171,12 +171,12 @@ trap(type, frame)
 	if (frame->tf_flags & TFF_LAST)
 		p->p_md.md_regs = frame;
 
-#ifdef TRAPDEBUG
 	if (trapnum > trap_types)
 		tts = "reserved";
 	else
 		tts = trap_type[trapnum];
 
+#ifdef TRAPDEBUG
 	if (trapnum != T_INTERRUPT && trapnum != T_IBREAK)
 		db_printf("trap: %x, %s for %x:%x at %x:%x, fl=%x, fp=%p\n",
 		    type, tts, space, va, frame->tf_iisq_head,
