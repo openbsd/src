@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.18 1997/04/17 12:31:46 provos Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.19 1997/07/06 18:19:29 niklas Exp $	*/
 /*	$NetBSD: fdisk.c,v 1.11 1995/10/04 23:11:19 ghudson Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fdisk.c,v 1.18 1997/04/17 12:31:46 provos Exp $";
+static char rcsid[] = "$OpenBSD: fdisk.c,v 1.19 1997/07/06 18:19:29 niklas Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -72,7 +72,7 @@ struct mboot {
 } mboot;
 
 #define ACTIVE		0x80
-#define BOOT_MAGIC	0xAA55
+#define BOOT_MAGIC	(u_int16_t)0xAA55
 
 int	dos_cylinders;
 int	dos_heads;
@@ -271,7 +271,7 @@ print_s0(which)
 
 static struct dos_partition mtpart = { 0 };
 
-static inline unsigned short
+static inline u_int16_t
 getshort(p)
 	void *p;
 {
@@ -283,7 +283,7 @@ getshort(p)
 static inline void
 putshort(p, l)
 	void *p;
-	unsigned short l;
+	u_int16_t l;
 {
 	unsigned char *cp = p;
 
@@ -303,7 +303,7 @@ getlong(p)
 static inline void
 putlong(p, l)
 	void *p;
-	unsigned long l;
+	u_int32_t l;
 {
 	unsigned char *cp = p;
 
