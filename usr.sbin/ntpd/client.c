@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.49 2004/12/14 23:44:20 dtucker Exp $ */
+/*	$OpenBSD: client.c,v 1.50 2004/12/15 12:24:21 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -29,6 +29,7 @@
 int	client_update(struct ntp_peer *);
 void	set_next(struct ntp_peer *, time_t);
 void	set_deadline(struct ntp_peer *, time_t);
+time_t	scale_interval(time_t, double);
 
 void
 set_next(struct ntp_peer *p, time_t t)
@@ -42,6 +43,20 @@ set_deadline(struct ntp_peer *p, time_t t)
 {
 	p->deadline = time(NULL) + t;
 	p->next = 0;
+}
+
+time_t
+scale_interval(time_t requested, double offset)
+{
+	if (offset < 0)
+		offset = -offset;
+
+	if (offset > QSCALE_OFF_MAX)
+		return (requested);
+	else if (offset < QSCALE_OFF_MIN)
+		return (requested * (QSCALE_OFF_MAX / QSCALE_OFF_MIN));
+	else
+		return (requested * (QSCALE_OFF_MAX / offset));
 }
 
 int
@@ -176,7 +191,6 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime)
 	ssize_t			 size;
 	struct ntp_msg		 msg;
 	double			 T1, T2, T3, T4;
-	double			 abs_offset;
 	time_t			 interval;
 
 	if ((size = recvfrom(p->query->fd, &buf, sizeof(buf), 0,
@@ -185,8 +199,7 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime)
 		    errno == ENETDOWN || errno == ECONNREFUSED) {
 			log_warn("recvfrom %s",
 			    log_sockaddr((struct sockaddr *)&p->addr->ss));
-			interval = INTERVAL_QUERY_PATHETIC *
-			    (QSCALE_OFF_MAX / QSCALE_OFF_MIN);
+			interval = scale_interval(INTERVAL_QUERY_PATHETIC, 0.0);
 			set_next(p, interval);
 			return (0);
 		} else
@@ -243,21 +256,9 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime)
 		interval = INTERVAL_QUERY_PATHETIC;
 	else if (p->trustlevel < TRUSTLEVEL_AGRESSIVE)
 		interval = INTERVAL_QUERY_AGRESSIVE;
-	else {
-		if (p->reply[p->shift].offset < 0)
-			abs_offset = -p->reply[p->shift].offset;
-		else
-			abs_offset = p->reply[p->shift].offset;
-
-		if (abs_offset > QSCALE_OFF_MAX)
-			interval = INTERVAL_QUERY_NORMAL;
-		else if (abs_offset < QSCALE_OFF_MIN)
-			interval = INTERVAL_QUERY_NORMAL *
-			    (QSCALE_OFF_MAX / QSCALE_OFF_MIN);
-		else
-			interval = INTERVAL_QUERY_NORMAL *
-			    (QSCALE_OFF_MAX / abs_offset);
-	}
+	else
+		interval = scale_interval(INTERVAL_QUERY_NORMAL,
+		    p->reply[p->shift].offset);
 
 	set_next(p, interval);
 	p->state = STATE_REPLY_RECEIVED;
