@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.36 2001/04/06 04:42:08 csapuntz Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.37 2001/05/11 17:20:11 aaron Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -277,7 +277,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
     /* Fix IPv4 header */
     if (tdbp->tdb_dst.sa.sa_family == AF_INET)
     {
-        if ((m->m_len < skip) && ((m = m_pullup(m, skip)) == 0))
+        if ((m->m_len < skip) && ((m = m_pullup(m, skip)) == NULL))
         {
 	    DPRINTF(("ipsec_common_input_cb(): processing failed for SA %s/%08x\n", ipsp_address(tdbp->tdb_dst), ntohl(tdbp->tdb_spi)));
             IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops);
@@ -365,7 +365,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
     if (af == INET6)
     {
         if ((m->m_len < sizeof(struct ip6_hdr)) &&
-            ((m = m_pullup(m, sizeof(struct ip6_hdr))) == 0))
+            ((m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL))
         {
 	    DPRINTF(("ipsec_common_input_cb(): processing failed for SA %s/%08x\n", ipsp_address(tdbp->tdb_dst), ntohl(tdbp->tdb_spi)));
             IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops);

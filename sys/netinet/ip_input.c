@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.67 2001/05/01 09:55:49 provos Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.68 2001/05/11 17:20:11 aaron Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -330,7 +330,7 @@ ipv4_input(struct mbuf *m, ...)
 		goto bad;
 	ipstat.ips_total++;
 	if (m->m_len < sizeof (struct ip) &&
-	    (m = m_pullup(m, sizeof (struct ip))) == 0) {
+	    (m = m_pullup(m, sizeof (struct ip))) == NULL) {
 		ipstat.ips_toosmall++;
 		return;
 	}
@@ -345,7 +345,7 @@ ipv4_input(struct mbuf *m, ...)
 		goto bad;
 	}
 	if (hlen > m->m_len) {
-		if ((m = m_pullup(m, hlen)) == 0) {
+		if ((m = m_pullup(m, hlen)) == NULL) {
 			ipstat.ips_badhlen++;
 			return;
 		}
@@ -436,7 +436,7 @@ ipv4_input(struct mbuf *m, ...)
 		extern struct socket *ip_mrouter;
 
 		if (m->m_flags & M_EXT) {
-			if ((m = m_pullup(m, hlen)) == 0) {
+			if ((m = m_pullup(m, hlen)) == NULL) {
 				ipstat.ips_toosmall++;
 				return;
 			}
@@ -534,7 +534,7 @@ ours:
 	 */
 	if (ip->ip_off &~ (IP_DF | IP_RF)) {
 		if (m->m_flags & M_EXT) {		/* XXX */
-			if ((m = m_pullup(m, hlen)) == 0) {
+			if ((m = m_pullup(m, hlen)) == NULL) {
 				ipstat.ips_toosmall++;
 				return;
 			}

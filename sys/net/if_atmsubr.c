@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_atmsubr.c,v 1.13 2000/09/12 04:09:11 itojun Exp $       */
+/*      $OpenBSD: if_atmsubr.c,v 1.14 2001/05/11 17:20:10 aaron Exp $       */
 
 /*
  *
@@ -298,7 +298,8 @@ atm_input(ifp, ah, m, rxhand)
 	   */
 	  if (ATM_PH_FLAGS(ah) & ATM_PH_LLCSNAP) {
 	    struct atmllc *alc;
-	    if (m->m_len < sizeof(*alc) && (m = m_pullup(m, sizeof(*alc))) == 0)
+	    if (m->m_len < sizeof(*alc) &&
+		(m = m_pullup(m, sizeof(*alc))) == NULL)
 		  return; /* failed */
 	    alc = mtod(m, struct atmllc *);
 	    if (bcmp(alc, ATMLLC_HDR, 6)) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.56 2001/03/28 20:03:07 angelos Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.57 2001/05/11 17:20:12 aaron Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -223,7 +223,8 @@ udp_input(m, va_alist)
 	 * Get IP and UDP header together in first mbuf.
 	 */
 	if (m->m_len < iphlen + sizeof(struct udphdr)) {
-		if ((m = m_pullup2(m, iphlen + sizeof(struct udphdr))) == 0) {
+		if ((m = m_pullup2(m, iphlen + sizeof(struct udphdr))) ==
+		    NULL) {
 			udpstat.udps_hdrops++;
 			return;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.33 2001/03/28 20:03:03 angelos Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.34 2001/05/11 17:20:11 aaron Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -259,7 +259,7 @@ icmp_input(m, va_alist)
 		goto freeit;
 	}
 	i = hlen + min(icmplen, ICMP_ADVLENMIN);
-	if (m->m_len < i && (m = m_pullup(m, i)) == 0)  {
+	if (m->m_len < i && (m = m_pullup(m, i)) == NULL)  {
 		icmpstat.icps_tooshort++;
 		return;
 	}
@@ -392,8 +392,8 @@ icmp_input(m, va_alist)
 				icmpstat.icps_badlen++;
 				goto freeit;
 			} else {
-				if (!(m = m_pullup(m, (ip->ip_hl << 2) +
-				    ICMP_V6ADVLEN(icp)))) {
+				if ((m = m_pullup(m, (ip->ip_hl << 2) +
+				    ICMP_V6ADVLEN(icp))) == NULL) {
 					icmpstat.icps_tooshort++;
 					return;
 				}

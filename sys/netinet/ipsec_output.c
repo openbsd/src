@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.6 2001/04/14 00:30:59 angelos Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.7 2001/05/11 17:20:11 aaron Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -156,7 +156,7 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready,
 	    /* Bring the network header in the first mbuf */
 	    if (m->m_len < i)
 	    {
-		if ((m = m_pullup(m, i)) == 0)
+		if ((m = m_pullup(m, i)) == NULL)
 		  return ENOBUFS;
 	    }
 
@@ -191,7 +191,7 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready,
 	    if (af == AF_INET)
 	    {
 		if (m->m_len < sizeof(struct ip))
-		  if ((m = m_pullup(m, sizeof(struct ip))) == 0)
+		  if ((m = m_pullup(m, sizeof(struct ip))) == NULL)
 		    return ENOBUFS;
 
 		ip = mtod(m, struct ip *);
@@ -206,7 +206,7 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready,
 	    if (af == AF_INET6)
 	    {
 		if (m->m_len < sizeof(struct ip6_hdr))
-		  if ((m = m_pullup(m, sizeof(struct ip6_hdr))) == 0)
+		  if ((m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL)
 		    return ENOBUFS;
 
 		if (m->m_pkthdr.len - sizeof(*ip6) > IPV6_MAXPACKET) {

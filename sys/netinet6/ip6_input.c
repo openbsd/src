@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.29 2001/03/30 11:09:01 itojun Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.30 2001/05/11 17:20:12 aaron Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -260,7 +260,7 @@ ip6_input(m)
 	if (m->m_len < sizeof(struct ip6_hdr)) {
 		struct ifnet *inifp;
 		inifp = m->m_pkthdr.rcvif;
-		if ((m = m_pullup(m, sizeof(struct ip6_hdr))) == 0) {
+		if ((m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL) {
 			ip6stat.ip6s_toosmall++;
 			in6_ifstat_inc(inifp, ifs6_in_hdrerr);
 			return;

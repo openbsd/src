@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.9 2001/03/25 07:10:47 csapuntz Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.10 2001/05/11 17:20:10 aaron Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -196,7 +196,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 			if (m->m_len < sizeof(struct ip))
 			{
 			        m = m_pullup(m, sizeof(struct ip));
-			        if (m == 0) {
+			        if (m == NULL) {
 					IF_DROP(&ifp->if_snd);
 					recursions = 0;
 					return (ENOBUFS);
@@ -207,7 +207,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 				if (m->m_len < inp->ip_hl << 2) {
 				        m = m_pullup(m,
 						     sizeof(inp->ip_hl << 2));
-					if (m == 0) {
+					if (m == NULL) {
 					        IF_DROP(&ifp->if_snd);
 						recursions = 0;
 						return (ENOBUFS);
@@ -292,7 +292,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		case AF_INET:
 		        if (m->m_len < sizeof(struct ip)) {
 			        m = m_pullup(m, sizeof(struct ip));
-				if (m == 0) {
+				if (m == NULL) {
 				        IF_DROP(&ifp->if_snd);
 					recursions = 0;
 					return (ENOBUFS);

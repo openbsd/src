@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.85 2001/05/01 01:13:05 aaron Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.86 2001/05/11 17:20:11 aaron Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -472,7 +472,7 @@ tcp_input(m, va_alist)
 
 	if (m->m_len < iphlen + sizeof(struct tcphdr)) {
 		m = m_pullup2(m, iphlen + sizeof(struct tcphdr));
-		if (m == 0) {
+		if (m == NULL) {
 			tcpstat.tcps_rcvshort++;
 			return;
 		}
@@ -559,7 +559,7 @@ tcp_input(m, va_alist)
 	tlen -= off;
 	if (off > sizeof(struct tcphdr)) {
 		if (m->m_len < iphlen + off) {
-			if ((m = m_pullup2(m, iphlen + off)) == 0) {
+			if ((m = m_pullup2(m, iphlen + off)) == NULL) {
 				tcpstat.tcps_rcvshort++;
 				return;
 			}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_arcsubr.c,v 1.5 1997/02/24 13:33:57 niklas Exp $	*/
+/*	$OpenBSD: if_arcsubr.c,v 1.6 2001/05/11 17:20:09 aaron Exp $	*/
 /*	$NetBSD: if_arcsubr.c,v 1.8 1996/05/07 02:40:29 thorpej Exp $	*/
 
 /*
@@ -248,7 +248,7 @@ arc_output(ifp, m0, dst, rt0)
 			if (m == 0)
 				senderr(ENOBUFS);
 			m = m_pullup(m, ARC_HDRNEWLEN);
-			if (m == 0)
+			if (m == NULL)
 				senderr(ENOBUFS);
 			ah = mtod(m, struct arc_header *);
 			ah->arc_type = atype;

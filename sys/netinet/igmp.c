@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.8 2000/04/25 19:05:43 aaron Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.9 2001/05/11 17:20:11 aaron Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -153,7 +153,7 @@ igmp_input(m, va_alist)
 	}
 	minlen = iphlen + IGMP_MINLEN;
 	if ((m->m_flags & M_EXT || m->m_len < minlen) &&
-	    (m = m_pullup(m, minlen)) == 0) {
+	    (m = m_pullup(m, minlen)) == NULL) {
 		++igmpstat.igps_rcv_tooshort;
 		return;
 	}
