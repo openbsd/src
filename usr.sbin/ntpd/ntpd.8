@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.8,v 1.11 2004/12/06 20:57:17 mickey Exp $
+.\" $OpenBSD: ntpd.8,v 1.12 2004/12/07 10:06:12 jmc Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -43,12 +43,13 @@ uses the
 system call to correct the local system time without causing time jumps.
 Adjustments larger then 128ms are logged using
 .Xr syslog 3 .
-The threshold value is chosen to avoid local clock drift thrash the log files.
+The threshold value is chosen to avoid having local clock drift
+thrash the log files.
 Should
 .Nm
-be started with
+be started with the
 .Fl d
-option all calls to
+option, all calls to
 .Xr adjtime 2
 will be logged.
 .Pp
