@@ -1,27 +1,8 @@
-#	from: @(#)Makefile	5.8 (Berkeley) 7/28/90
-#	$Id: Makefile,v 1.1.1.1 1995/10/18 08:47:49 deraadt Exp $
+#	$NetBSD: Makefile,v 1.7 1996/02/02 15:25:33 mrg Exp $
+# from $Id: Makefile,v 8.1 1994/12/15 06:23:43 vixie Exp 
 
-### -DALLOW_T_UNSPEC -Dmalloc=rt_malloc -Dfree=rt_free
-### ALLOC=storage.o
-PROG=	named
-MAN=	named.8
-CFLAGS+=-DDEBUG -DSTATS
-SRCS=	db_dump.c db_glue.c db_load.c db_lookup.c db_reload.c db_save.c \
-	db_update.c ns_forw.c ns_init.c ns_main.c ns_maint.c ns_req.c \
-	ns_resp.c ns_sort.c ns_stats.c
-OBJS+=	version.o
-CLEANFILES+=version.c version.o
-SUBDIR=	tools xfer
+SUBDIR= named named-xfer ndc reload restart dig nslookup host dnsquery
 
-version.c: ${.CURDIR}/Version.c
-	(u=$${USER-root} d=`pwd |sed -e 's|/obj/|/src/|'` \
-	 h=`hostname` t=`date`; \
-	sed -e "s|%WHEN%|$${t}|" \
-	    -e "s|%WHOANDWHERE%|$${u}@$${h}:$${d}|" \
-	    < ${.CURDIR}/Version.c > version.c)
+VER= 4.9.3-P1
 
-afterinstall:
-	install -c -o ${BINOWN} -g ${BINGRP} -m 555 ${.CURDIR}/named.restart \
-	    ${.CURDIR}/named.reload ${DESTDIR}${BINDIR}
-
-.include <bsd.prog.mk>
+.include <bsd.subdir.mk>

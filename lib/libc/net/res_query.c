@@ -1,4 +1,4 @@
-/*	$NetBSD: res_query.c,v 1.9 1995/02/25 06:58:58 cgd Exp $	*/
+/*	$NetBSD: res_query.c,v 1.10 1996/02/02 15:22:34 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -56,9 +56,9 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
-static char rcsid[] = "$Id: res_query.c,v 1.1 1993/06/01 09:42:14 vixie Exp vixie ";
+static char rcsid[] = "$Id: res_query.c,v 8.6 1995/06/29 09:26:28 vixie Exp ";
 #else
-static char rcsid[] = "$NetBSD: res_query.c,v 1.9 1995/02/25 06:58:58 cgd Exp $";
+static char rcsid[] = "$NetBSD: res_query.c,v 1.10 1996/02/02 15:22:34 mrg Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -90,27 +90,33 @@ int h_errno;
  * if no error is indicated and the answer count is nonzero.
  * Return the size of the response on success, -1 on error.
  * Error number is left in h_errno.
+ *
  * Caller must parse answer and determine whether it answers the question.
  */
+int
 res_query(name, class, type, answer, anslen)
-	char *name;		/* domain name */
+	const char *name;	/* domain name */
 	int class, type;	/* class and type of query */
 	u_char *answer;		/* buffer to put answer */
 	int anslen;		/* size of answer buffer */
 {
-	char buf[MAXPACKET];
-	HEADER *hp;
+	u_char buf[MAXPACKET];
+	register HEADER *hp = (HEADER *) answer;
 	int n;
 
-	if ((_res.options & RES_INIT) == 0 && res_init() == -1)
+	hp->rcode = NOERROR;	/* default */
+
+	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
+		h_errno = NETDB_INTERNAL;
 		return (-1);
+	}
 #ifdef DEBUG
 	if (_res.options & RES_DEBUG)
 		printf(";; res_query(%s, %d, %d)\n", name, class, type);
 #endif
-	n = res_mkquery(QUERY, name, class, type, (char *)NULL, 0, NULL,
-	    buf, sizeof(buf));
 
+	n = res_mkquery(QUERY, name, class, type, NULL, 0, NULL,
+	    buf, sizeof(buf));
 	if (n <= 0) {
 #ifdef DEBUG
 		if (_res.options & RES_DEBUG)
@@ -119,7 +125,7 @@ res_query(name, class, type, answer, anslen)
 		h_errno = NO_RECOVERY;
 		return (n);
 	}
-	n = res_send(buf, n, (char *)answer, anslen);
+	n = res_send(buf, n, answer, anslen);
 	if (n < 0) {
 #ifdef DEBUG
 		if (_res.options & RES_DEBUG)
@@ -174,10 +180,15 @@ res_search(name, class, type, answer, anslen)
 	int anslen;		/* size of answer */
 {
 	register char *cp, **domain;
-	int dots, trailing_dot, ret, got_nodata, saved_herrno, tried_as_is;
+	HEADER *hp = (HEADER *) answer;
+	u_int dots;
+	int trailing_dot, ret, saved_herrno;
+	int got_nodata = 0, got_servfail = 0, tried_as_is = 0;
 
-	if ((_res.options & RES_INIT) == 0 && res_init() == -1)
+	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
+		h_errno = NETDB_INTERNAL;
 		return (-1);
+	}
 
 	got_nodata = 0;
 	errno = 0;
@@ -188,13 +199,13 @@ res_search(name, class, type, answer, anslen)
 			dots++;
 	}
 	trailing_dot = 0;
-	if ((cp > name) && (*--cp == '.'))
+	if (cp > name && *--cp == '.')
 		trailing_dot++;
 
 	/*
 	 * if there aren't any dots, it could be a user-level alias
 	 */
-	if (!dots && (cp = __hostalias(name)))
+	if (!dots && (cp = __hostalias(name)) != NULL)
 		return (res_query(cp, class, type, answer, anslen));
 
 	/*
@@ -251,6 +262,13 @@ res_search(name, class, type, answer, anslen)
 			case HOST_NOT_FOUND:
 				/* keep trying */
 				break;
+			case TRY_AGAIN:
+				if (hp->rcode == SERVFAIL) {
+					/* try next search element, if any */
+					got_servfail++;
+					break;
+				}
+				/* FALLTHROUGH */
 			default:
 				/* anything else implies that we're done */
 				done++;
@@ -291,6 +309,8 @@ res_search(name, class, type, answer, anslen)
 		h_errno = saved_herrno;
 	else if (got_nodata)
 		h_errno = NO_DATA;
+	else if (got_servfail)
+		h_errno = TRY_AGAIN;
 	return (-1);
 }
 
@@ -298,20 +318,25 @@ res_search(name, class, type, answer, anslen)
  * Perform a call on res_query on the concatenation of name and domain,
  * removing a trailing dot from name if domain is NULL.
  */
+int
 res_querydomain(name, domain, class, type, answer, anslen)
-	char *name, *domain;
+	const char *name, *domain;
 	int class, type;	/* class and type of query */
 	u_char *answer;		/* buffer to put answer */
 	int anslen;		/* size of answer */
 {
 	char nbuf[2*MAXDNAME+2];
-	char *longname = nbuf;
+	const char *longname = nbuf;
 	int n;
 
+	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
+		h_errno = NETDB_INTERNAL;
+		return (-1);
+	}
 #ifdef DEBUG
 	if (_res.options & RES_DEBUG)
 		printf(";; res_querydomain(%s, %s, %d, %d)\n",
-		    name, domain, class, type);
+			name, domain?domain:"<Nil>", class, type);
 #endif
 	if (domain == NULL) {
 		/*
@@ -337,24 +362,30 @@ __hostalias(name)
 {
 	register char *cp1, *cp2;
 	FILE *fp;
-	char *file, *getenv(), *strcpy(), *strncpy();
+	char *file;
 	char buf[BUFSIZ];
 	static char abuf[MAXDNAME];
 
+	if (_res.options & RES_NOALIASES)
+		return (NULL);
 	file = getenv("HOSTALIASES");
 	if (file == NULL || (fp = fopen(file, "r")) == NULL)
 		return (NULL);
+	setbuf(fp, NULL);
 	buf[sizeof(buf) - 1] = '\0';
 	while (fgets(buf, sizeof(buf), fp)) {
-		for (cp1 = buf; *cp1 && !isspace(*cp1); ++cp1);
+		for (cp1 = buf; *cp1 && !isspace(*cp1); ++cp1)
+			;
 		if (!*cp1)
 			break;
 		*cp1 = '\0';
 		if (!strcasecmp(buf, name)) {
-			while (isspace(*++cp1));
+			while (isspace(*++cp1))
+				;
 			if (!*cp1)
 				break;
-			for (cp2 = cp1 + 1; *cp2 && !isspace(*cp2); ++cp2);
+			for (cp2 = cp1 + 1; *cp2 && !isspace(*cp2); ++cp2)
+				;
 			abuf[sizeof(abuf) - 1] = *cp2 = '\0';
 			(void)strncpy(abuf, cp1, sizeof(abuf) - 1);
 			fclose(fp);

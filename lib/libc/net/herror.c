@@ -1,4 +1,4 @@
-/*	$NetBSD: herror.c,v 1.5 1995/02/25 06:20:39 cgd Exp $	*/
+/*	$NetBSD: herror.c,v 1.6 1996/02/02 15:22:22 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1987, 1993
@@ -56,9 +56,9 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)herror.c	8.1 (Berkeley) 6/4/93";
-static char rcsid[] = "$Id: herror.c,v 4.9.1.1 1993/05/02 23:14:35 vixie Rel ";
+static char rcsid[] = "$Id: herror.c,v 8.2 1995/06/19 08:35:01 vixie Exp ";
 #else
-static char rcsid[] = "$NetBSD: herror.c,v 1.5 1995/02/25 06:20:39 cgd Exp $";
+static char rcsid[] = "$NetBSD: herror.c,v 1.6 1996/02/02 15:22:22 mrg Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -68,14 +68,14 @@ static char rcsid[] = "$NetBSD: herror.c,v 1.5 1995/02/25 06:20:39 cgd Exp $";
 #include <unistd.h>
 #include <string.h>
 
-char	*h_errlist[] = {
-	"Error 0",
+const char	*h_errlist[] = {
+	"Resolver Error 0 (no error)",
 	"Unknown host",				/* 1 HOST_NOT_FOUND */
 	"Host name lookup failure",		/* 2 TRY_AGAIN */
 	"Unknown server error",			/* 3 NO_RECOVERY */
 	"No address associated with name",	/* 4 NO_ADDRESS */
 };
-int	h_nerr = { sizeof(h_errlist)/sizeof(h_errlist[0]) };
+int	h_nerr = { sizeof h_errlist / sizeof h_errlist[0] };
 
 extern int	h_errno;
 
@@ -98,8 +98,7 @@ herror(s)
 		v->iov_len = 2;
 		v++;
 	}
-	v->iov_base = (u_int)h_errno < h_nerr ?
-	    h_errlist[h_errno] : "Unknown error";
+	v->iov_base = (char *)hstrerror(h_errno);
 	v->iov_len = strlen(v->iov_base);
 	v++;
 	v->iov_base = "\n";
@@ -107,9 +106,13 @@ herror(s)
 	writev(STDERR_FILENO, iov, (v - iov) + 1);
 }
 
-char *
+const char *
 hstrerror(err)
 	int err;
 {
-	return (u_int)err < h_nerr ? h_errlist[err] : "Unknown resolver error";
+	if (err < 0)
+		return ("Resolver internal error");
+	else if (err < h_nerr)
+		return (h_errlist[err]);
+	return ("Unknown resolver error");
 }
