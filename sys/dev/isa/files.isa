@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.19 1996/06/08 09:12:44 downsj Exp $
+#	$OpenBSD: files.isa,v 1.20 1996/06/16 10:31:25 deraadt Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
@@ -15,9 +15,12 @@ device	isa {[port = -1], [size = 0],
 attach	isa at isabus
 file	dev/isa/isa.c			isa needs-flag
 
-# ISA DMA controller
-define	isadma
-file	dev/isa/isadma.c		isadma needs-flag
+#
+# ISA DMA capability, if it exists on this ISA bus
+#
+define	isa_dma
+device  isadma
+attach  isadma at isa: isa_dma
 
 #
 # 8250/16[45]50-based multi-port serial boards
@@ -67,32 +70,32 @@ file	dev/isa/lpt.c			lpt needs-flag
 #
 
 # BusLogic BT-74x EISA family (XXX; should be EISA.  it's special)
-device	bt: scsi, isadma
+device	bt: scsi, isa_dma
 attach	bt at isa
 file	dev/isa/bt.c			bt needs-count
 
 # Adaptec AIC-6[32]60 ICs
-device	aic: scsi, isadma
+device	aic: scsi
 attach	aic at isa
 file	dev/isa/aic6360.c		aic
 
 # Adaptec AHA-154x family
-device	aha: scsi, isadma
+device	aha: scsi, isa_dma
 attach	aha at isa
 file	dev/isa/aha.c			aha needs-count
 
 # Seagate ST0[12] ICs
-device	sea: scsi, isadma
+device	sea: scsi
 attach	sea at isa
 file	dev/isa/seagate.c		sea
 
 # UltraStor UHA-[13]4f boards
-device	uha: scsi, isadma
+device	uha: scsi, isa_dma
 attach	uha at isa
 file	dev/isa/ultra14f.c		uha
 
 # Western Digital WD7000 and Future Domain TMC-7000 boards
-device	wds: scsi, isadma
+device	wds: scsi, isa_dma
 attach	wds at isa
 file	dev/isa/wds.c			wds
 
@@ -123,13 +126,13 @@ file	dev/isa/pcd.c			pcd needs-flag
 define       ata {drive = -1}
 device       wdc {drive = -1}: atapi, ata
 attach       wdc at isa
-device       wd: disk, isadma
+device       wd: disk
 attach       wd at wdc
 file dev/isa/wdc.c                   wdc needs-flag
 file dev/isa/wd.c                    wd needs-flag
 
 # Wangtek- and Archive-compatible tape controller boards
-device	wt: tape, isadma
+device	wt: tape, isa_dma
 attach	wt at isa
 file	dev/isa/wt.c			wt needs-flag
 
@@ -196,7 +199,7 @@ file    dev/isa/if_iy.c			iy
 # AMD am7990 (Lance) -based boards
 # (BICC Isolan, NE2100, DEPCA)
 # device declaration in sys/conf/files
-attach	le at isa with le_isa: isadma
+attach	le at isa with le_isa
 file	dev/isa/if_le_isa.c		le_isa
 
 #
@@ -208,7 +211,7 @@ define	sbdsp
 file	dev/isa/sbdsp.c			sbdsp
 
 # SoundBlaster family
-device	sb: audio, isadma, sbdsp, mulaw, opti
+device	sb: audio, isa_dma, sbdsp, mulaw, opti
 attach	sb at isa
 file	dev/isa/sb.c			sb needs-flag
 
@@ -220,7 +223,7 @@ attach	aria at isa
 file	dev/isa/aria.c			aria needs-flag
 
 # ProAudio Spectrum
-device	pas: audio, isadma, sbdsp, mulaw
+device	pas: audio, isa_dma, sbdsp, mulaw
 attach	pas at isa
 file	dev/isa/pas.c			pas needs-flag
 
@@ -238,19 +241,19 @@ device	pss {[port = -1], [size = 0],
 	     [iomem = -1], [iosiz = 0],
 	     [irq = -1], [drq = -1]}
 attach	pss at isa
-device	sp: audio, isadma, ad1848
+device	sp: audio, isa_dma, ad1848
 attach	sp at pss
 file	dev/isa/pss.c			pss needs-flag
 
 # Microsoft Windows Sound System
-device	wss: audio, isadma, ad1848, opti
+device	wss: audio, isa_dma, ad1848, opti
 attach	wss at isa
 file	dev/isa/wss.c			wss needs-flag
 
 # Gravis UltraSound & UltraSound MAX.
 # Use the "flags" keyword in a config file to specify an extra DMA
 # channel for full-duplex operation. 
-device	gus: audio, isadma, ics2101, ad1848, mulaw
+device	gus: audio, isa_dma, ics2101, ad1848, mulaw
 attach	gus at isa
 file	dev/isa/gus.c			gus needs-flag
 

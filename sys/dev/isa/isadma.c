@@ -1,8 +1,9 @@
-/*	$OpenBSD: isadma.c,v 1.6 1996/05/07 07:37:10 deraadt Exp $	*/
+/*	$OpenBSD: isadma.c,v 1.7 1996/06/16 10:31:27 deraadt Exp $	*/
 /*	$NetBSD: isadma.c,v 1.19 1996/04/29 20:03:26 christos Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 #include <sys/file.h>
 #include <sys/buf.h>
 #include <sys/syslog.h>
@@ -14,6 +15,7 @@
 #include <machine/pio.h>
 
 #include <dev/isa/isareg.h>
+#include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
 #include <dev/isa/isadmareg.h>
 
@@ -40,6 +42,37 @@ static u_int8_t dmamode[4] = {
 	DMA37MD_READ | DMA37MD_LOOP,
 	DMA37MD_WRITE | DMA37MD_LOOP
 };
+
+int isadmamatch __P((struct device *, void *, void *));
+void isadmaattach __P((struct device *, struct device *, void *));
+int isadmaprint __P((void *, char *));
+
+struct cfattach isadma_ca = {
+	sizeof(struct device), isadmamatch, isadmaattach
+};
+
+struct cfdriver isadma_cd = {
+	NULL, "isadma", DV_DULL, 1
+};
+
+isadmamatch(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
+{
+	struct isa_attach_args *ia = aux;
+
+	/* Sure we exist */
+	ia->ia_iosize = 0;
+	return (1);
+}
+
+void
+isadmaattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	printf("\n");
+}
 
 /*
  * isadma_cascade(): program 8237 DMA controller channel to accept
