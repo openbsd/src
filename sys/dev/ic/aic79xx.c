@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.12 2004/10/24 23:03:01 krw Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.13 2004/11/13 04:22:54 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -270,22 +270,10 @@ int		ahd_handle_target_cmd(struct ahd_softc *ahd,
 #endif
 
 /************************** Added for porting to NetBSD ***********************/
-int ahd_createdmamem(bus_dma_tag_t tag,
-				int size,
-				int flags,
-				bus_dmamap_t *mapp,
-				caddr_t *vaddr,
-				bus_addr_t *baddr,
-				bus_dma_segment_t *seg,
-				int *nseg,
-				const char *myname, const char *what);
+int ahd_createdmamem(struct ahd_softc *, size_t, struct map_node *,
+    const char *);
 
-void ahd_freedmamem(bus_dma_tag_t tag,
-				int size,
-				bus_dmamap_t map,
-				caddr_t vaddr,
-				bus_dma_segment_t *seg,
-				int nseg);
+void ahd_freedmamem(struct ahd_softc *, struct map_node *);
 
 /******************************** Private Inlines *****************************/
 __inline void	ahd_assert_atn(struct ahd_softc *ahd);
@@ -5334,10 +5322,7 @@ ahd_free(struct ahd_softc *ahd)
 		TAILQ_REMOVE(&ahd_tailq, ahd, links);
 		/* FALLTHROUGH */
 	case 1:
-		bus_dmamap_unload(ahd->parent_dmat, ahd->shared_data_map.dmamap);
-                bus_dmamap_destroy(ahd->parent_dmat, ahd->shared_data_map.dmamap);
-                bus_dmamem_unmap(ahd->parent_dmat, (caddr_t)ahd->qoutfifo, ahd->shared_data_size);
-                bus_dmamem_free(ahd->parent_dmat, &ahd->shared_data_map.dmasegs, ahd->shared_data_map.nseg);
+		ahd_freedmamem(ahd, &ahd->shared_data_map);
 		break;
 	case 0:
 		break;
@@ -5668,9 +5653,7 @@ ahd_fini_scbdata(struct ahd_softc *ahd)
 
 		while ((sns_map = SLIST_FIRST(&scb_data->sense_maps)) != NULL) {
 			SLIST_REMOVE_HEAD(&scb_data->sense_maps, links);
-			ahd_freedmamem(ahd->parent_dmat, PAGE_SIZE,
-				       sns_map->dmamap, (caddr_t)sns_map->vaddr,
-				       &sns_map->dmasegs, sns_map->nseg);
+			ahd_freedmamem(ahd, sns_map);
 			free(sns_map, M_DEVBUF);
 		}
 		/* FALLTHROUGH */
@@ -5681,9 +5664,7 @@ ahd_fini_scbdata(struct ahd_softc *ahd)
 
 		while ((sg_map = SLIST_FIRST(&scb_data->sg_maps)) != NULL) {
 			SLIST_REMOVE_HEAD(&scb_data->sg_maps, links);
-			ahd_freedmamem(ahd->parent_dmat, ahd_sglist_allocsize(ahd),
-				       sg_map->dmamap, (caddr_t)sg_map->vaddr,
-				       &sg_map->dmasegs, sg_map->nseg);
+			ahd_freedmamem(ahd, sg_map);
 			free(sg_map, M_DEVBUF);
 		}
 		/* FALLTHROUGH */
@@ -5694,9 +5675,7 @@ ahd_fini_scbdata(struct ahd_softc *ahd)
 
 		while ((hscb_map = SLIST_FIRST(&scb_data->hscb_maps)) != NULL) {
 			SLIST_REMOVE_HEAD(&scb_data->hscb_maps, links);
-			ahd_freedmamem(ahd->parent_dmat, PAGE_SIZE,
-				       hscb_map->dmamap,(caddr_t)hscb_map->vaddr,
-				       &hscb_map->dmasegs, hscb_map->nseg);
+			ahd_freedmamem(ahd, hscb_map);
 			free(hscb_map, M_DEVBUF);
 		}
 		/* FALLTHROUGH */
@@ -5932,16 +5911,9 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		if (hscb_map == NULL)
 			return;
 	
-		memset(hscb_map, 0, sizeof(*hscb_map));
-
 		/* Allocate the next batch of hardware SCBs */
-		if (ahd_createdmamem(ahd->parent_dmat, PAGE_SIZE,
-				     ahd->sc_dmaflags, &hscb_map->dmamap,
-				     (caddr_t *)&hscb_map->vaddr,
-				     &hscb_map->busaddr,
-				     &hscb_map->dmasegs, &hscb_map->nseg,
-				     ahd_name(ahd),
-				     "hardware SCB structures") < 0) {
+		if (ahd_createdmamem(ahd, PAGE_SIZE, hscb_map,
+		    "hardware SCB structures") < 0) {
 			free(hscb_map, M_DEVBUF);
 			return;
 		}
@@ -5969,14 +5941,9 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		if (sg_map == NULL)
 			return;
 
-		bzero(sg_map, sizeof(*sg_map));
-
 		/* Allocate the next batch of S/G lists */
-		if (ahd_createdmamem(ahd->parent_dmat, ahd_sglist_allocsize(ahd), ahd->sc_dmaflags,
-				     &sg_map->dmamap, (caddr_t *)&sg_map->vaddr,
-				     &sg_map->busaddr, &sg_map->dmasegs,
-				     &sg_map->nseg, ahd_name(ahd),
-				     "SG data structures") < 0) {
+		if (ahd_createdmamem(ahd, ahd_sglist_allocsize(ahd), sg_map,
+		    "SG data structures") < 0) {
 			free(sg_map, M_DEVBUF);
 			return;
 		}
@@ -6008,14 +5975,9 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		if (sense_map == NULL)
 			return;
 
-		bzero(sense_map, sizeof(*sense_map));
-
 		/* Allocate the next batch of sense buffers */
-		if (ahd_createdmamem(ahd->parent_dmat, PAGE_SIZE, ahd->sc_dmaflags,
-                                     &sense_map->dmamap, (caddr_t *)&sense_map->vaddr,
-                                     &sense_map->busaddr, &sense_map->dmasegs,
-                                     &sense_map->nseg, ahd_name(ahd),
-                                     "Sense Data structures") < 0) {
+		if (ahd_createdmamem(ahd, PAGE_SIZE, sense_map,
+		    "Sense Data structures") < 0) {
 			free(sense_map, M_DEVBUF);
 			return;
 		}
@@ -6085,9 +6047,8 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		next_scb->flags = SCB_FLAG_NONE;
 
 		error = bus_dmamap_create(ahd->parent_dmat,
-                                          AHD_MAXTRANSFER_SIZE, AHD_NSEG, MAXBSIZE, 0,
-                                          BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW|ahd->sc_dmaflags,
-                                          &next_scb->dmamap);
+		    AHD_MAXTRANSFER_SIZE, AHD_NSEG, MAXBSIZE, 0,
+		    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &next_scb->dmamap);
 
 		if (error != 0) {
 			free(next_scb, M_DEVBUF);
@@ -6196,16 +6157,9 @@ ahd_init(struct ahd_softc *ahd)
                 driver_data_size += AHD_TMODE_CMDS * sizeof(struct target_cmd);
         if ((ahd->bugs & AHD_PKT_BITBUCKET_BUG) != 0)
                 driver_data_size += PKT_OVERRUN_BUFSIZE;
-        ahd->shared_data_size = driver_data_size;
 
-        memset(&ahd->shared_data_map, 0, sizeof(ahd->shared_data_map));
-        ahd->sc_dmaflags = BUS_DMA_NOWAIT;
-
-        if (ahd_createdmamem(ahd->parent_dmat, ahd->shared_data_size,
-                             ahd->sc_dmaflags,
-                             &ahd->shared_data_map.dmamap, (caddr_t *)&ahd->shared_data_map.vaddr,
-                             &ahd->shared_data_map.busaddr, &ahd->shared_data_map.dmasegs,
-                             &ahd->shared_data_map.nseg, ahd_name(ahd), "shared data") < 0)
+        if (ahd_createdmamem(ahd, driver_data_size, &ahd->shared_data_map,
+	    "shared data") < 0)
                 return (ENOMEM);
 
 	ahd->qoutfifo = (struct ahd_completion *)ahd->shared_data_map.vaddr;
@@ -10140,63 +10094,60 @@ ahd_handle_target_cmd(struct ahd_softc *ahd, struct target_cmd *cmd)
 #endif
 
 int
-ahd_createdmamem(tag, size, flags, mapp, vaddr, baddr, seg, nseg, myname, what)
-	bus_dma_tag_t tag;
-	int size;
-	int flags;
-	bus_dmamap_t *mapp;
-	caddr_t *vaddr;
-	bus_addr_t *baddr;
-	bus_dma_segment_t *seg;
-	int *nseg;
-	const char *myname, *what;
+ahd_createdmamem(struct ahd_softc *ahd, size_t size, struct map_node *map,
+    const char *what)
 {
-	int error, level = 0;
+	bus_dma_tag_t tag = ahd->parent_dmat;
+	bus_dma_segment_t seg;
+	uint8_t *vaddr;
+	int nseg, error, level = 0;
 
-	if ((error = bus_dmamem_alloc(tag, size, PAGE_SIZE, 0,
-					seg, 1, nseg, BUS_DMA_NOWAIT)) != 0) {
+        bzero(map, sizeof(*map));
+
+	if ((error = bus_dmamem_alloc(tag, size, PAGE_SIZE, 0, &seg, 1, &nseg,
+	    BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: failed to allocate DMA mem for %s, error = %d\n",
-			myname, what, error);
+		    ahd_name(ahd), what, error);
 		goto out;
 	}
 	level++;
 
-	if ((error = bus_dmamem_map(tag, seg, *nseg, size, vaddr,
-				BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+	if ((error = bus_dmamem_map(tag, &seg, nseg, size, (caddr_t *)&vaddr,
+	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf("%s: failed to map DMA mem for %s, error = %d\n",
-			myname, what, error);
+		    ahd_name(ahd), what, error);
 		goto out;
 	}
+	map->vaddr = vaddr;
 	level++;
 
-	if ((error = bus_dmamap_create(tag, size, 1, size, 0,
-				BUS_DMA_NOWAIT | flags, mapp)) != 0) {
+	if ((error = bus_dmamap_create(tag, size, 1, size, 0, BUS_DMA_NOWAIT,
+	    &map->dmamap)) != 0) {
 		printf("%s: failed to create DMA map for %s, error = %d\n",
-			myname, what, error);
+		    ahd_name(ahd), what, error);
 		goto out;
 	}
 	level++;
-	if ((error = bus_dmamap_load(tag, *mapp, *vaddr, size, NULL,
-				BUS_DMA_NOWAIT)) != 0) {
+
+	if ((error = bus_dmamap_load(tag, map->dmamap, vaddr, size, NULL,
+	    BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: failed to load DMA map for %s, error = %d\n",
-			myname, what, error);
+		    ahd_name(ahd), what, error);
 		goto out;
 	}
-
-	*baddr = (*mapp)->dm_segs[0].ds_addr;
+	map->busaddr = map->dmamap->dm_segs[0].ds_addr;
 
 	return 0;
 out:
-	printf("ahd_createdmamem error (%d)\n", level);
 	switch (level) {
 	case 3:
-		bus_dmamap_destroy(tag, *mapp);
+		bus_dmamap_destroy(tag, map->dmamap);
 		/* FALLTHROUGH */
 	case 2:
-		bus_dmamem_unmap(tag, *vaddr, size);
+		bus_dmamem_unmap(tag, vaddr, size);
 		/* FALLTHROUGH */
 	case 1:
-		bus_dmamem_free(tag, seg, *nseg);
+		bus_dmamem_free(tag, &seg, nseg);
 		break;
 	default:
 		break;
@@ -10206,19 +10157,20 @@ out:
 }
 
 void
-ahd_freedmamem(tag, size, map, vaddr, seg, nseg)
-	bus_dma_tag_t tag;
-	int size;
-	bus_dmamap_t map;
-	caddr_t vaddr;
-	bus_dma_segment_t *seg;
-	int nseg;
+ahd_freedmamem(struct ahd_softc* ahd, struct map_node *map)
 {
+	bus_dma_tag_t tag = ahd->parent_dmat;
+	bus_dmamap_t dmamap = map->dmamap;
+	size_t size = 0;
+	int i;
 
-	bus_dmamap_unload(tag, map);
-	bus_dmamap_destroy(tag, map);
-	bus_dmamem_unmap(tag, vaddr, size);
-	bus_dmamem_free(tag, seg, nseg);
+	for(i = 0; i < dmamap->dm_nsegs; i++)
+		size += dmamap->dm_segs[i].ds_len;
+
+	bus_dmamap_unload(tag, dmamap);
+	bus_dmamem_unmap(tag, map->vaddr, size);
+	bus_dmamem_free(tag, dmamap->dm_segs, dmamap->dm_nsegs);
+	bus_dmamap_destroy(tag, dmamap);
 }
 
 char *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.h,v 1.9 2004/10/24 23:03:01 krw Exp $	*/
+/*	$OpenBSD: aic79xx.h,v 1.10 2004/11/13 04:22:54 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -584,9 +584,7 @@ struct ahd_dma64_seg {
 struct map_node {
 	bus_dmamap_t		 dmamap;
 	bus_addr_t		 busaddr;
-	uint8_t			*vaddr; 
-	bus_dma_segment_t	dmasegs;
-	int			nseg;
+	uint8_t			*vaddr;
 	SLIST_ENTRY(map_node)	 links;
 };
 
@@ -1265,7 +1263,6 @@ struct ahd_softc {
 	bus_dma_tag_t		  parent_dmat;
 	struct map_node		  shared_data_map;
 	int			  shared_data_size;
-	int			  sc_dmaflags;
 
 	/* Information saved through suspend/resume cycles */
 	struct ahd_suspend_state  suspend_state;
