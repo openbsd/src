@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.4 1996/05/07 07:21:36 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.5 1996/06/01 09:34:30 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -39,13 +39,22 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
+#include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/syslog.h>
+#include <sys/disk.h>
 
 #define	b_cylin	b_resid
 
 int fat_types[] = { DOSPTYP_FAT12, DOSPTYP_FAT16S,
 		    DOSPTYP_FAT16B, DOSPTYP_FAT16C, -1 };
+
+void
+dk_establish(dk, dev)
+	struct disk *dk;
+	struct device *dev;
+{
+}
 
 /*
  * Attempt to read a disk label from a device
