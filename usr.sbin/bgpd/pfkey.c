@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.27 2004/04/28 04:59:32 markus Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.28 2004/05/06 14:41:47 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -44,7 +44,7 @@ int	pfkey_send(int, uint8_t, uint8_t, uint8_t,
     struct bgpd_addr *, struct bgpd_addr *,
     u_int32_t, uint8_t, int, char *, uint8_t, int, char *,
     uint16_t, uint16_t);
-int	pfkey_sa_add(struct bgpd_addr *, struct bgpd_addr *, char *,
+int	pfkey_sa_add(struct bgpd_addr *, struct bgpd_addr *, u_int8_t, char *,
 	    u_int32_t *);
 int	pfkey_sa_remove(struct bgpd_addr *, struct bgpd_addr *, u_int32_t *);
 int	pfkey_md5sig_establish(struct peer *);
@@ -469,8 +469,8 @@ pfkey_reply(int sd, u_int32_t *spip)
 }
 
 int
-pfkey_sa_add(struct bgpd_addr *src, struct bgpd_addr *dst, char *key,
-    u_int32_t *spi)
+pfkey_sa_add(struct bgpd_addr *src, struct bgpd_addr *dst, u_int8_t keylen,
+    char *key, u_int32_t *spi)
 {
 	if (pfkey_send(fd, SADB_X_SATYPE_TCPSIGNATURE, SADB_GETSPI, 0,
 	    src, dst, 0, 0, 0, NULL, 0, 0, NULL, 0, 0) < 0)
@@ -478,7 +478,7 @@ pfkey_sa_add(struct bgpd_addr *src, struct bgpd_addr *dst, char *key,
 	if (pfkey_reply(fd, spi) < 0)
 		return (-1);
 	if (pfkey_send(fd, SADB_X_SATYPE_TCPSIGNATURE, SADB_UPDATE, 0,
-		src, dst, *spi, 0, strlen(key), key, 0, 0, NULL, 0, 0) < 0)
+		src, dst, *spi, 0, keylen, key, 0, 0, NULL, 0, 0) < 0)
 		return (-1);
 	if (pfkey_reply(fd, NULL) < 0)
 		return (-1);
@@ -502,11 +502,13 @@ pfkey_md5sig_establish(struct peer *p)
 {
 	if (!p->conf.auth.spi_out)
 		if (pfkey_sa_add(&p->conf.local_addr, &p->conf.remote_addr,
-		    p->conf.auth.md5key, &p->conf.auth.spi_out) == -1)
+		    p->conf.auth.md5key_len, p->conf.auth.md5key,
+		    &p->conf.auth.spi_out) == -1)
 			return (-1);
 	if (!p->conf.auth.spi_in)
 		if (pfkey_sa_add(&p->conf.remote_addr, &p->conf.local_addr,
-		    p->conf.auth.md5key, &p->conf.auth.spi_in) == -1)
+		    p->conf.auth.md5key_len, p->conf.auth.md5key,
+		    &p->conf.auth.spi_in) == -1)
 			return (-1);
 
 	p->auth_established = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.100 2004/05/04 11:34:01 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.101 2004/05/06 14:41:47 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -520,6 +520,7 @@ peeropts	: REMOTEAS asnumber	{
 				YYERROR;
 			}
 			curpeer->conf.auth.method = AUTH_MD5SIG;
+			curpeer->conf.auth.md5key_len = strlen($4);
 			free($4);
 		}
 		| TCP MD5SIG KEY string {
@@ -556,6 +557,7 @@ peeropts	: REMOTEAS asnumber	{
 				    strtoul(s, NULL, 16);
 			}
 			curpeer->conf.auth.method = AUTH_MD5SIG;
+			curpeer->conf.auth.md5key_len = strlen($4) / 2;
 			free($4);
 		}
 		| IPSEC ESP IKE {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.120 2004/05/06 11:57:55 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.121 2004/05/06 14:41:47 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -158,6 +158,7 @@ enum auth_method {
 struct peer_auth {
 	enum auth_method	method;
 	char			md5key[TCP_MD5_KEY_LEN];
+	u_int8_t		md5key_len;
 	u_int32_t		spi_in;
 	u_int32_t		spi_out;
 	u_int8_t		auth_alg_in;
