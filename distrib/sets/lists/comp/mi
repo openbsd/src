@@ -580,6 +580,15 @@
 ./usr/include/net/slcompress.h
 ./usr/include/net/slip.h
 ./usr/include/net/zlib.h
+./usr/include/netatalk
+./usr/include/netatalk/aarp.h
+./usr/include/netatalk/at.h
+./usr/include/netatalk/at_extern.h
+./usr/include/netatalk/at_var.h
+./usr/include/netatalk/ddp.h
+./usr/include/netatalk/ddp_var.h
+./usr/include/netatalk/endian.h
+./usr/include/netatalk/phase2.h
 ./usr/include/netccitt/dll.h
 ./usr/include/netccitt/hd_var.h
 ./usr/include/netccitt/hdlc.h

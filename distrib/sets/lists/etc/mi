@@ -86,7 +86,7 @@
 ./etc/uucp/passwd
 ./etc/uucp/port
 ./etc/uucp/sys
-./etc/virc
+./etc/photuris
 ./etc/weekly
 ./root/.cshrc
 ./root/.klogin

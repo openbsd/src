@@ -167,7 +167,6 @@
 ./usr/share/man/cat1/encrypt.0
 ./usr/share/man/cat1/env.0
 ./usr/share/man/cat1/error.0
-./usr/share/man/cat1/ex.0
 ./usr/share/man/cat1/expand.0
 ./usr/share/man/cat1/expr.0
 ./usr/share/man/cat1/false.0
@@ -272,12 +271,10 @@
 ./usr/share/man/cat1/nc.0
 ./usr/share/man/cat1/netstat.0
 ./usr/share/man/cat1/newaliases.0
-./usr/share/man/cat1/nex.0
 ./usr/share/man/cat1/nfsstat.0
 ./usr/share/man/cat1/nice.0
 ./usr/share/man/cat1/nm.0
 ./usr/share/man/cat1/nohup.0
-./usr/share/man/cat1/nvi.0
 ./usr/share/man/cat1/od.0
 ./usr/share/man/cat1/oldrdist.0
 ./usr/share/man/cat1/olf2elf.0
@@ -420,8 +417,6 @@
 ./usr/share/man/cat1/uux.0
 ./usr/share/man/cat1/vacation.0
 ./usr/share/man/cat1/vi.0
-./usr/share/man/cat1/view.0
-./usr/share/man/cat1/vim.0
 ./usr/share/man/cat1/vis.0
 ./usr/share/man/cat1/w.0
 ./usr/share/man/cat1/wait.0
@@ -866,3 +861,12 @@
 ./usr/share/man/cat3/SHA1Update.0
 ./usr/share/man/cat3/sha1.0
 ./usr/share/man/cat3/rmd160.0
+./usr/share/man/cat3/localeconv.0
+./usr/share/man/cat3/setlocale.0
+./usr/share/man/cat8/mkalias.0
+./usr/share/man/cat1/photurisd.0
+./usr/share/man/cat1/startkey.0
+./usr/share/man/cat3/inet_ntop.0
+./usr/share/man/cat3/inet_pton.0
+./usr/share/man/cat8/fsck_ext2fs.0
+./usr/share/man/cat8/e2fsck.0
