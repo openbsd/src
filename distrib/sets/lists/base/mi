@@ -1695,6 +1695,7 @@
 ./usr/sbin/netgroup_mkdb
 ./usr/sbin/nslookup
 ./usr/sbin/nsupdate
+./usr/sbin/ntpd
 ./usr/sbin/openssl
 ./usr/sbin/pac
 ./usr/sbin/pkg

@@ -1709,6 +1709,7 @@
 ./usr/share/man/cat5/netid.0
 ./usr/share/man/cat5/networks.0
 ./usr/share/man/cat5/newsyslog.conf.0
+./usr/share/man/cat5/ntpd.conf.0
 ./usr/share/man/cat5/passwd.0
 ./usr/share/man/cat5/passwd.conf.0
 ./usr/share/man/cat5/pf.conf.0
@@ -2062,6 +2063,7 @@
 ./usr/share/man/cat8/nslookup.0
 ./usr/share/man/cat8/nsupdate.0
 ./usr/share/man/cat8/ntalkd.0
+./usr/share/man/cat8/ntpd.0
 ./usr/share/man/cat8/pac.0
 ./usr/share/man/cat8/pfctl.0
 ./usr/share/man/cat8/pflogd.0
