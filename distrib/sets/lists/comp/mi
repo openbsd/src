@@ -19,6 +19,7 @@
 ./usr/bin/lint
 ./usr/bin/lorder
 ./usr/bin/mkstr
+./usr/bin/pmdb
 ./usr/bin/protoize
 ./usr/bin/ranlib
 ./usr/bin/rpcgen
@@ -1761,6 +1762,7 @@
 ./usr/share/man/cat1/lint.0
 ./usr/share/man/cat1/lorder.0
 ./usr/share/man/cat1/mkstr.0
+./usr/share/man/cat1/pmdb.0
 ./usr/share/man/cat1/protoize.0
 ./usr/share/man/cat1/ranlib.0
 ./usr/share/man/cat1/rpcgen.0
