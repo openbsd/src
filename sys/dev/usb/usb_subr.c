@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.9 2000/03/30 16:19:33 aaron Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.10 2000/04/08 20:55:41 aaron Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.71 2000/03/29 18:24:53 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -283,7 +283,7 @@ usbd_devinfo(dev, showclass, cp)
 	int bcdDevice, bcdUSB;
 
 	usbd_devinfo_vp(dev, vendor, product);
-	cp += sprintf(cp, "%s %s", vendor, product);
+	cp += sprintf(cp, "%s%s%s", vendor, *vendor ? " " : "", product);
 	if (showclass)
 		cp += sprintf(cp, ", class %d/%d",
 			      udd->bDeviceClass, udd->bDeviceSubClass);
