@@ -1,5 +1,5 @@
-/*	$OpenBSD: frame.h,v 1.2 1996/04/19 06:18:14 niklas Exp $	*/
-/*	$NetBSD: frame.h,v 1.11 1996/03/12 22:21:51 is Exp $	*/
+/*	$OpenBSD: frame.h,v 1.3 1996/05/29 11:31:24 niklas Exp $	*/
+/*	$NetBSD: frame.h,v 1.12 1996/05/16 16:51:30 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -202,8 +202,11 @@ struct switchframe {
 #define FSLW_MA		0x08000000
 #define FSLW_LK		0x02000000
 #define FSLW_RW		0x01800000
-#define FSLW_SIZE	0x00600000
 
+#define FSLW_RW_R	0x01000000
+#define FSLW_RW_W	0x00800000
+
+#define FSLW_SIZE	0x00600000
 /*
  * We better define the FSLW_SIZE values here, as the table given in the 
  * MC68060UM/AD rev. 0/1 p. 8-23 is wrong, and was corrected in the errata 
@@ -216,6 +219,9 @@ struct switchframe {
 
 #define FLSW_TT		0x00180000
 #define FSLW_TM		0x00070000
+#define FSLW_TM_SV	0x00040000
+
+
 
 #define FSLW_IO		0x00008000
 #define FSLW_PBE	0x00004000
