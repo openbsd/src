@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.20 2001/11/28 16:13:29 art Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.21 2001/11/29 11:29:58 art Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.33 1997/07/29 17:55:38 fair Exp $	*/
 
 /*-
@@ -153,7 +153,7 @@ Mode of operation:
 #include <sparc/dev/i82586.h>
 
 static struct mbuf *last_not_for_us;
-struct struct vm_map *ie_map; /* for obio */
+struct vm_map *ie_map; /* for obio */
 
 #define	IED_RINT	0x01
 #define	IED_TINT	0x02
