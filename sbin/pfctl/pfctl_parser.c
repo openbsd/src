@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.138 2003/02/02 18:32:35 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.139 2003/02/02 19:25:06 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -62,10 +62,10 @@ void		 print_flags (u_int8_t);
 void		 print_fromto(struct pf_rule_addr *, struct pf_rule_addr *,
 		    u_int8_t, u_int8_t, int);
 
-struct node_host	*host_if(const char *, const int);
+struct node_host	*host_if(const char *, int);
 struct node_host	*host_v4(const char *);
-struct node_host	*host_v6(const char *, const int);
-struct node_host	*host_dns(const char *, const int, const int);
+struct node_host	*host_v6(const char *, int);
+struct node_host	*host_dns(const char *, int, int);
 
 char *tcpflags = "FSRPAUEW";
 
@@ -1204,7 +1204,7 @@ host(const char *s, int mask)
 }
 
 struct node_host *
-host_if(const char *s, const int mask)
+host_if(const char *s, int mask)
 {
 	struct node_host	*n, *h = NULL;
 	char			*p, *ps;
@@ -1263,7 +1263,7 @@ host_v4(const char *s)
 }
 
 struct node_host *
-host_v6(const char *s, const int mask)
+host_v6(const char *s, int mask)
 {
 	struct addrinfo		 hints, *res;
 	struct node_host	*h = NULL;
@@ -1293,7 +1293,7 @@ host_v6(const char *s, const int mask)
 }
 
 struct node_host *
-host_dns(const char *s, const int v4mask, const int v6mask)
+host_dns(const char *s, int v4mask, int v6mask)
 {
 	struct addrinfo		 hints, *res0, *res;
 	struct node_host	*n, *h = NULL;
