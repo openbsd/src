@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.31 2004/04/16 04:47:19 henning Exp $ */
+/*	$OpenBSD: log.c,v 1.32 2004/04/25 01:52:11 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -23,6 +23,7 @@
 
 #include <err.h>
 #include <errno.h>
+#include <netdb.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -368,7 +369,8 @@ log_conn_attempt(const struct peer *peer, struct sockaddr *sa)
 
 
 	if (peer == NULL) {	/* connection from non-peer, drop */
-		if (inet_ntop(sa->sa_family, sa, buf, sizeof(buf)) == NULL)
+		if (getnameinfo(sa, sa->sa_len, buf, sizeof(buf), NULL, 0,
+		    NI_NUMERICHOST))
 			strlcpy(buf, "(unknown)", sizeof(buf));
 		logit(LOG_INFO, "connection from non-peer %s refused", buf);
 	} else {
