@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxki.c,v 1.2 2001/10/24 15:09:28 brad Exp $	*/
+/*	$OpenBSD: emuxki.c,v 1.3 2001/10/24 23:23:44 ho Exp $	*/
 /*	$NetBSD: emuxki.c,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -437,7 +437,7 @@ emuxki_attach(struct device *parent, struct device *self, void *aux)
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 		return;
 	}
-	printf(": %s\n", sc->sc_dev.dv_xname, intrstr);
+	printf(": %s\n", intrstr);
 
 	if (emuxki_scinit(sc) || emuxki_ac97_init(sc) ||
 	    (sc->sc_audev = audio_attach_mi(&emuxki_hw_if, sc, self)) == NULL)
