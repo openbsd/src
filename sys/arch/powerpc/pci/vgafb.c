@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.7 2001/01/15 19:50:43 art Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.8 2001/02/01 23:51:07 drahn Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -109,7 +109,7 @@ struct wsdisplay_emulops vgafb_emulops = {
 };
 
 int vgafb_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-int vgafb_mmap __P((void *, off_t, int));
+paddr_t vgafb_mmap __P((void *, off_t, int));
 int vgafb_alloc_screen __P((void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *));
 void vgafb_free_screen __P((void *, void *));
@@ -389,7 +389,7 @@ vgafb_ioctl(v, cmd, data, flag, p)
         return -1;
 }
 
-int
+paddr_t
 vgafb_mmap(v, offset, prot)
 	void *v;
 	off_t offset;
