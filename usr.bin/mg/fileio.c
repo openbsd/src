@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.11 2001/05/01 13:26:59 art Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.12 2001/05/03 12:57:22 art Exp $	*/
 
 /*
  *	POSIX fileio.c
@@ -343,8 +343,6 @@ adjustname(fn)
 }
 
 #ifndef NO_STARTUP
-#include <sys/file.h>
-
 /*
  * Find a startup file for the user and return its name. As a service
  * to other pieces of code that may want to find a startup file (like
@@ -355,35 +353,39 @@ char *
 startupfile(suffix)
 	char           *suffix;
 {
-	char           *file;
-	static char     home[NFILEN];
+	static char     file[NFILEN];
+	char           *home;
 
-	if ((file = getenv("HOME")) == NULL || *file == '\0')
-		goto notfound;
-	if (strlen(file) + 7 >= NFILEN - 1)
-		goto notfound;
-	(VOID) strcpy(home, file);
-	(VOID) strcat(home, "/.mg");
-	if (suffix != NULL) {
-		(VOID) strcat(home, "-");
-		(VOID) strcat(home, suffix);
-	}
-	if (access(home, F_OK) == 0)
-		return home;
+	if ((home = getenv("HOME")) == NULL || *home == '\0')
+		goto nohome;
 
-notfound:
-#ifdef	STARTUPFILE
-	file = STARTUPFILE;
-	if (suffix != NULL) {
-		(VOID) strcpy(home, file);
-		(VOID) strcat(home, "-");
-		(VOID) strcat(home, suffix);
-		file = home;
+	if (suffix == NULL) {
+		if (snprintf(file, sizeof(file), "%s/.mg", home)
+			    >= sizeof(file))
+			return NULL;
+	} else {
+		if (snprintf(file, sizeof(file), "%s/.mg-%s", home, suffix)
+			    >= sizeof(file))
+			return NULL;
 	}
-	if (access(file, F_OK) == 0)
+
+	if (access(file, R_OK) == 0)
+		return file;
+nohome:
+#ifdef STARTUPFILE
+	if (suffix == NULL)
+		if (snprintf(file, sizeof(file), "%s", STARTUPFILE)
+			    >= sizeof(file))
+			return NULL;
+	} else {
+		if (snprintf(file, sizeof(file), "%s%s", STARTUPFILE, suffix)
+			    >= sizeof(file))
+			return NULL;
+	}
+
+	if (access(file, R_OK) == 0)
 		return file;
 #endif
-
 	return NULL;
 }
 #endif
@@ -406,8 +408,8 @@ copy(frname, toname)
 		execl("/bin/cp", "cp", frname, toname, (char *) NULL);
 		_exit(1);	/* shouldn't happen */
 	}
-	while (wait(&status) != pid);
-	return status == 0;
+	waitpid(pid, &status, 0);
+	return (WIFEXITED(status) && WEXITSTATUS(status) == 0);
 }
 
 BUFFER *
@@ -480,16 +482,11 @@ struct filelist {
 
 /*
  * return list of file names that match the name in buf.
- * System V version.  listing is a flag indicating whether the
- * list is being used for printing a listing rather than
- * completion.  In that case, trailing * and / are put on
- * for executables and directories.  The list is not sorted.
  */
 
 LIST *
-make_file_list(buf, listing)
+make_file_list(buf)
 	char           *buf;
-	int             listing;
 {
 	char           *dir, *file, *cp;
 	int             len, preflen;
@@ -558,8 +555,6 @@ make_file_list(buf, listing)
 	 */
 	if ((preflen + MAXNAMLEN) > NFILEN)
 		return (NULL);
-	if ((strlen(dir) + MAXNAMLEN) > NFILEN)
-		listing = 0;
 
 	/* loop over the specified directory, making up the list of files */
 
@@ -580,6 +575,8 @@ make_file_list(buf, listing)
 			continue;
 
 		current = (struct filelist *) malloc(sizeof(struct filelist));
+		if (current == NULL)
+			break;
 		if (snprintf(current->fl_name, sizeof(current->fl_name),
 		    "%s%s", prefixx, dent->d_name) > sizeof(current->fl_name)) {
 			free(current);
@@ -588,23 +585,21 @@ make_file_list(buf, listing)
 		current->fl_l.l_next = last;
 		current->fl_l.l_name = current->fl_name;
 		last = (LIST *) current;
-		if (listing) {
-			if (dent->d_type == DT_DIR) {
-				strcat(current->fl_name, "/");
-				continue;
-			} else if (dent->d_type != DT_UNKNOWN)
-				continue;
+		if (dent->d_type == DT_DIR) {
+			strcat(current->fl_name, "/");
+			continue;
+		} else if (dent->d_type != DT_UNKNOWN)
+			continue;
 
-			statbuf.st_mode = 0;
-			if (snprintf(statname, sizeof(statname), "%s/%s",
-			    dir, dent->d_name) > sizeof(statname) - 1) {
-				continue;
-			}
-			if (stat(statname, &statbuf) < 0)
-				continue;
-			if (statbuf.st_mode & 040000)
-				strcat(current->fl_name, "/");
+		statbuf.st_mode = 0;
+		if (snprintf(statname, sizeof(statname), "%s/%s",
+		    dir, dent->d_name) > sizeof(statname) - 1) {
+			continue;
 		}
+		if (stat(statname, &statbuf) < 0)
+			continue;
+		if (statbuf.st_mode & 040000)
+			strcat(current->fl_name, "/");
 	}
 	closedir(dirp);
 

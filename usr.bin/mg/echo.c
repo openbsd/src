@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.4 2001/01/29 01:58:07 niklas Exp $	*/
+/*	$OpenBSD: echo.c,v 1.5 2001/05/03 12:57:22 art Exp $	*/
 
 /*
  *	Echo line reading and writing.
@@ -382,7 +382,7 @@ complt(flags, c, buf, cpos)
 			lh = &(bheadp->b_list);
 		else if ((flags & EFFILE) != 0) {
 			buf[cpos] = '\0';
-			wholelist = lh = make_file_list(buf, 0);
+			wholelist = lh = make_file_list(buf);
 		} else
 			panic("broken complt call: flags");
 
@@ -394,25 +394,20 @@ complt(flags, c, buf, cpos)
 		nhits = 0;
 		nxtra = HUGE;
 
-		while (lh != NULL) {
-			for (i = 0; i < cpos; ++i) {
-				if (buf[i] != lh->l_name[i])
-					break;
+		for (; lh != NULL; lh = lh->l_next) {
+			if (memcmp(buf, lh->l_name, cpos) != 0)
+				continue;
+			if (nhits == 0)
+				lh2 = lh;
+			++nhits;
+			if (lh->l_name[cpos] == '\0')
+				nxtra = -1;
+			else {
+				bxtra = getxtra(lh, lh2, cpos, wflag);
+				if (bxtra < nxtra)
+					nxtra = bxtra;
+				lh2 = lh;
 			}
-			if (i == cpos) {
-				if (nhits == 0)
-					lh2 = lh;
-				++nhits;
-				if (lh->l_name[i] == '\0')
-					nxtra = -1;
-				else {
-					bxtra = getxtra(lh, lh2, cpos, wflag);
-					if (bxtra < nxtra)
-						nxtra = bxtra;
-					lh2 = lh;
-				}
-			}
-			lh = lh->l_next;
 		}
 		if (nhits == 0)
 			msg = " [No match]";
@@ -511,7 +506,7 @@ complt_list(flags, c, buf, cpos)
 			wholelist = lh = complete_function_list(buf, c);
 		} else if ((flags & EFFILE) != 0) {
 			buf[cpos] = '\0';
-			wholelist = lh = make_file_list(buf, 1);
+			wholelist = lh = make_file_list(buf);
 			/*
 			 * We don't want to display stuff up to the / for file
 			 * names preflen is the list of a prefix of what the
