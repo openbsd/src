@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9100.c,v 1.21 2003/06/13 21:04:45 miod Exp $	*/
+/*	$OpenBSD: p9100.c,v 1.22 2003/06/13 23:40:12 miod Exp $	*/
 
 /*
  * Copyright (c) 2003, Miodrag Vallat.
@@ -901,6 +901,7 @@ p9100_ras_eraserows(void *v, int row, int n, long int attr)
 	sc->sc_cmd->de.raster = P9100_RASTER_PATTERN & P9100_RASTER_MASK;
 	sc->sc_cmd->de.color0 = P9100_COLOR8(bg);
 
+	P9100_SELECT_COORD(sc,lc.rect);
 	if (n == ri->ri_rows && ISSET(ri->ri_flg, RI_FULLCLEAR)) {
 		sc->sc_cmd->lc.rect.abs_x16y16 = P9100_COORDS(0, 0);
 		sc->sc_cmd->lc.rect.abs_x16y16 =
