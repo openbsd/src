@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.49 2004/04/13 22:55:01 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.50 2004/04/16 04:41:49 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -281,8 +281,8 @@ int
 show_neighbor_msg(struct imsg *imsg, enum neighbor_views nv)
 {
 	struct peer		*p;
-	struct sockaddr_in	*sa_in;
 	struct in_addr		 ina;
+	char			 buf[48];
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_NEIGHBOR:
@@ -325,18 +325,30 @@ show_neighbor_msg(struct imsg *imsg, enum neighbor_views nv)
 			break;
 		}
 		printf("\n");
-		if (p->sa_local.ss_family == AF_INET) {
-			sa_in = (struct sockaddr_in *)&p->sa_local;
+		if (inet_ntop(p->sa_local.ss_family, &p->sa_local,
+		    buf, sizeof(buf)) == NULL)
+			strlcpy(buf, "????????", sizeof(buf));
+		if (p->sa_local.ss_family == AF_INET)
 			printf("  Local host:   %20s, Local port:   %5u\n",
-			    inet_ntoa(sa_in->sin_addr),
-			    ntohs(sa_in->sin_port));
-		}
-		if (p->sa_remote.ss_family == AF_INET) {
-			sa_in = (struct sockaddr_in *)&p->sa_remote;
-			printf("  Foreign host: %20s, Foreign port: %5u\n",
-			    inet_ntoa(sa_in->sin_addr),
-			    ntohs(sa_in->sin_port));
-		}
+			    buf, ntohs(((struct sockaddr_in *)
+			    &p->sa_local)->sin_port));
+		if (p->sa_local.ss_family == AF_INET6)
+			printf("  Local host:   %20s, Local port:   %5u\n",
+			    buf, ntohs(((struct sockaddr_in6 *)
+			    &p->sa_local)->sin6_port));
+
+		if (inet_ntop(p->sa_remote.ss_family, &p->sa_remote,
+		    buf, sizeof(buf)) == NULL)
+			strlcpy(buf, "????????", sizeof(buf));
+		if (p->sa_remote.ss_family == AF_INET)
+			printf("  Remote host: %20s, Remote port: %5u\n",
+			    buf, ntohs(((struct sockaddr_in *)
+			    &p->sa_remote)->sin_port));
+		if (p->sa_remote.ss_family == AF_INET6)
+			printf("  Remote host: %20s, Remote port: %5u\n",
+			    buf, ntohs(((struct sockaddr_in6 *)
+			    &p->sa_remote)->sin6_port));
+
 		printf("\n");
 		break;
 	case IMSG_CTL_END:
