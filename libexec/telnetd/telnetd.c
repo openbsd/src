@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnetd.c,v 1.26 2000/10/24 21:52:37 millert Exp $	*/
+/*	$OpenBSD: telnetd.c,v 1.27 2000/11/16 19:00:19 millert Exp $	*/
 /*	$NetBSD: telnetd.c,v 1.6 1996/03/20 04:25:57 tls Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static char copyright[] =
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: telnetd.c,v 1.5 1996/02/28 20:38:23 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: telnetd.c,v 1.26 2000/10/24 21:52:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: telnetd.c,v 1.27 2000/11/16 19:00:19 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -817,7 +817,6 @@ doit(who)
 #else
 	for (;;) {
 		char *lp;
-		extern char *line, *getpty();
 
 		if ((lp = getpty()) == NULL)
 			fatal(net, "Out of ptys");
