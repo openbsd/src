@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.69 2005/02/15 11:03:46 jsg Exp $g
+#	$OpenBSD: GENERIC,v 1.70 2005/02/16 20:07:24 martin Exp $g
 #
 # PPC GENERIC config file
 #
@@ -50,7 +50,9 @@ vgafb0		at pci?		# PCI VGA graphics
 ahc*		at pci?		# Adaptec 294x, aic78x0 SCSI
 #bha*		at pci?		# BusLogic 9xx SCSI
 #ami*		at pci?
-#pcscp*		at pci?		# AMD Am53c974 PCscsi-PCI SCSI
+pcscp*		at pci?		# AMD Am53c974 PCscsi-PCI SCSI
+isp*		at pci?		# Qlogic ISP [12]0x0 SCSI/FibreChannel
+option		ISP_COMPILE_FW
 pciide*		at pci?
 kauaiata*	at pci?		# Apple ATA 100
 wdc*		at kauaiata?
@@ -59,6 +61,7 @@ gem*		at pci?		# GMAC ethernet
 hme*		at pci?		# HME ethernet
 dc*		at pci?		# DEC Tulip 21143 clones
 xl*		at pci?		# 3C9xx ethernet
+rl*		at pci?		# RealTek 81[23]9 ethernet
 em*		at pci?		# Intel Pro/1000 ethernet
 ti*		at pci?		# Alteon Tigon 1Gb ethernet
 re*		at pci?		# Realtek 8169/8169S/8110S
@@ -89,6 +92,7 @@ bmtphy*		at mii?		# Broadcom 10/100 PHYs
 eephy*		at mii?		# Marvell 88E1000 Gigabit PHYs
 urlphy*		at mii?		# Realtek RTL8150L internal PHY
 rgephy*		at mii?		# Realtek 8169S/8110S PHY
+rlphy*		at mii?		# Realtek 8139 internal PHYs
 ukphy*		at mii?		# generic unknown PHYs
 
 # crypto
@@ -156,7 +160,8 @@ scsibus*	at ahc?
 #scsibus*	at mesh?
 scsibus*	at ioprbs?
 scsibus*	at iopsp?
-#scsibus*	at pcscp?
+scsibus*	at pcscp?
+scsibus*	at isp?
 scsibus*	at siop?
 #scsibus*	at fwscsi?
 

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.41 2004/12/05 04:03:54 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.42 2005/02/16 20:07:24 martin Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, and G4 Cube, as well
 as PowerBook and iBook machines.
 
@@ -45,6 +45,9 @@ Supported devices {:-include-:}:
 			AHA-39160
 		Symbios Logic (NCR) 53C8xx-based PCI SCSI host adapters
 		    (53c810 and 53c825) (siop)
+		AMD Am53c974 PCscsi-PCI host adapters including the Tekram
+		    DC-390 (pcscp)
+		QLogic PCI SCSI controllers (isp)
 
 	RAID controllers
 		Adaptec SCSI RAID (I2O) controllers (ASR-2100S, ASR-3200S,
@@ -122,6 +125,20 @@ Supported devices {:-include-:}:
 			3Com 3cSOHO adapter
 			3Com 3c900B-FL and 3c900B-FL/FX fiber optic adapters
 			3Com 3c555/3c556/3c556B MiniPCI adapters
+		RealTek 8129/8139-based adapters (rl), including:
+			Accton MPX 5030/5038
+			Allied Telesyn AT2550
+			D-Link DFE530TX+
+			D-Link DFE538TX
+			Encore ENL832-TX 10/100 M PCI
+			Genius GF100TXR
+			KTX-9130TX 10/100 Fast Ethernet
+			Longshine LCS-8038TX-R
+			NDC NE100TX-E
+			Netronix EA-1210 Net Ether 10/100
+			Nortel BayStack 21
+			OvisLink LEF-8129TX, LEF-8139TX
+			SMC EZ Card 10/100 PCI 1211-TX
 
 	Wireless Ethernet Adapters
 		PCMCIA Adapters

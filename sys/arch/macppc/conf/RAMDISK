@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.38 2005/02/15 11:03:46 jsg Exp $
+#	$OpenBSD: RAMDISK,v 1.39 2005/02/16 20:07:24 martin Exp $
 #
 # PPC GENERIC config file
 #
@@ -53,7 +53,9 @@ vgafb0		at pci?		# PCI VGA graphics
 #adv*		at pci?		# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 ahc*		at pci?		# Adaptec 294x, aic78x0 SCSI
 #bha*		at pci?		# BusLogic 9xx SCSI
-#pcscp*		at pci?		# AMD Am53c974 PCscsi-PCI SCSI
+pcscp*		at pci?		# AMD Am53c974 PCscsi-PCI SCSI
+isp*		at pci?		# Qlogic ISP [12]0x0 SCSI/FibreChannel
+option		ISP_COMPILE_FW
 pciide*		at pci?
 kauaiata*	at pci?		# Apple ATA 100
 wdc*		at kauaiata?
@@ -65,6 +67,7 @@ xl*		at pci?		# 3C9xx ethernet
 em*		at pci?		# Intel Pro/1000 ethernet
 ti*		at pci?		# Alteon Tigon 1Gb ethernet
 re*		at pci?		# Realtek 8169/8169S/8110S
+rl*		at pci?		# Realtek 81[23]9 ethernet
 an*		at pci?		# Cisco/Aironet 802.11DS
 wi*		at pci?		# WaveLAN IEEE 802.11DS
 
@@ -90,6 +93,7 @@ bmtphy*		at mii?		# Broadcom 10/100 PHYs
 eephy*		at mii?		# Marvell 88E1000 Gigabit PHYs
 urlphy*		at mii?		# Realtek RTL8150L internal PHY
 rgephy*		at mii?		# Realtek 8169S/8110S PHY
+rlphy*		at mii?		# Realtek 8139 internal PHYs
 ukphy*		at mii?		# generic unknown PHYs
 
 macintr0	at macobio?	# old interrupt controller
@@ -119,7 +123,8 @@ scsibus*	at ahc?
 #scsibus*	at bha?
 #scsibus*	at esp?
 #scsibus*	at mesh?
-#scsibus*	at pcscp?
+scsibus*	at pcscp?
+scsibus*	at isp?
 
 mediabay*	at macobio?
 wdc*		at mediabay?
