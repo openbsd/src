@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.50 2001/08/11 23:21:13 art Exp $	*/
+/* $OpenBSD: machdep.c,v 1.51 2001/08/23 08:47:34 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1858,6 +1858,32 @@ cpu_exec_aout_makecmds(p, epp)
 struct proc *p;
 struct exec_package *epp;
 {
+#if 1
+	/*
+	 * Keep compatibility with older OpenBSD/mvme88k binaries
+	 * for a while, to make transition easier.
+	 */
+	u_long midmag, magic;
+	u_short mid;
+	int error;
+	struct exec *execp = epp->ep_hdr;
+
+	midmag = ntohl(execp->a_midmag);
+	mid = (midmag >> 16) & 0x3ff;
+	magic = midmag & 0xffff;
+
+	midmag = mid << 16 | magic;
+
+	switch (midmag) {
+	case (OLD_MID_MACHINE << 16) | ZMAGIC:
+		return exec_aout_prep_zmagic(p, epp);
+	case (OLD_MID_MACHINE << 16) | NMAGIC:
+		return exec_aout_prep_nmagic(p, epp);
+	case (OLD_MID_MACHINE << 16) | OMAGIC:
+		return exec_aout_prep_omagic(p, epp);
+	}
+#endif
+
 	return ENOEXEC;
 }
 

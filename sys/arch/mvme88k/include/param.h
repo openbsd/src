@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.19 2001/07/06 02:07:42 provos Exp $ */
+/*	$OpenBSD: param.h,v 1.20 2001/08/23 08:47:32 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1988 University of Utah.
@@ -40,7 +40,7 @@
  * from: Utah $Hdr: machparam.h 1.11 89/08/14$
  *
  *	@(#)param.h	7.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.19 2001/07/06 02:07:42 provos Exp $
+ *	$Id: param.h,v 1.20 2001/08/23 08:47:32 miod Exp $
  */
 #ifndef _MACHINE_PARAM_H_
 #define _MACHINE_PARAM_H_
@@ -57,6 +57,8 @@
 #define  _MACHINE_ARCH  m88k
 #define  MACHINE_ARCH   "m88k"
 #define  MID_MACHINE    MID_M88K
+/* Older value for MID_MACHINE */
+#define	OLD_MID_MACHINE	151
 
 /*
  * Round p (pointer or byte index) down to a correctly-aligned value
