@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_cam.h,v 1.4 2004/10/24 04:28:33 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_cam.h,v 1.5 2004/10/24 14:36:59 krw Exp $	*/
 /*	$NetBSD: aic7xxx_cam.h,v 1.3 2003/04/20 11:17:20 fvdl Exp $	*/
 
 /*
@@ -42,14 +42,12 @@
 
 #define SCSI_REV_2	2
 
-
 #define	CAM_BUS_WILDCARD ((u_int)~0)
 #define	CAM_TARGET_WILDCARD ((u_int)~0)
 #define	CAM_LUN_WILDCARD -1
 
 /*
- * XXX translate FreeBSD SCSI status byte values to NetBSD, and define
- * a few more.
+ * Translate FreeBSD names for SCSI status byte values to OpenBSD names.
  */
 #define SCSI_STATUS_OK                  SCSI_OK
 #define SCSI_STATUS_CHECK_COND          SCSI_CHECK
@@ -61,12 +59,8 @@
 #define SCSI_STATUS_CMD_TERMINATED      SCSI_TERMINATED
 #define SCSI_STATUS_QUEUE_FULL          SCSI_QUEUE_FULL
 
-#define XS_STS_DONE		ITSDONE
 #define XS_CTL_DATA_IN		SCSI_DATA_IN
-#define XS_CTL_DATA_OUT		SCSI_DATA_OUT
 #define XS_CTL_POLL		SCSI_POLL
-#define XS_CTL_SILENT		SCSI_SILENT
-#define XS_CTL_NOSLEEP		SCSI_NOSLEEP
 #define XS_CTL_RESET		SCSI_RESET
 
 #define MSG_EXT_PPR_QAS_REQ	MSG_EXT_PPR_PROT_QAS
@@ -82,14 +76,6 @@
 #define scsipi_sense_data	scsi_sense_data
 #define scsipi_sense		scsi_sense
 #define scsipi_periph		scsi_link
-#define	scsipi_adapter_req_t	int
-
-#define scsipi_periph_freeze(a, b)
-#define scsipi_periph_thaw(a, b)
-#define scsipi_channel_freeze(a, b)
-#define scsipi_channel_thaw(a, b)
-#define	scsipi_printaddr(sc_link)	sc_print_addr(sc_link)
-#define scsipi_done(xs)			scsi_done(xs)
 
 #define	callout_reset(timer, timeout, func, arg) do {	\
 	if (!timeout_initialized((timer)))		\
@@ -116,19 +102,6 @@
 #define xs_control	flags
 #define xs_callout	stimeout
 #define xs_status	status
-#define xs_periph	sc_link
-
-#define periph_target	target
-#define periph_lun	lun
-
-#define chan_ntargets	adapter_buswidth
-#define chan_nluns	luns
-#define chan_id		adapter_target
-
-#define	adapt_request	scsi_cmd
-#define adapt_minphys	scsi_minphys
-#define adapt_ioctl	ioctl
-#define adapt_openings	openings
 
 /* CAM Status field values */
 typedef enum {
@@ -175,8 +148,8 @@ typedef enum {
 } cam_status;
 
 typedef enum {
-  	CAM_DIR_IN		= XS_CTL_DATA_IN,
-	CAM_DIR_OUT		= XS_CTL_DATA_OUT,
+  	CAM_DIR_IN		= SCSI_DATA_IN,
+	CAM_DIR_OUT		= SCSI_DATA_OUT,
 } ccb_flags;
 
 typedef enum {
