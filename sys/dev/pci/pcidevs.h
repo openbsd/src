@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.32 1998/03/10 08:26:08 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.33 1998/03/10 08:43:50 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -491,6 +491,7 @@
 #define	PCI_VENDOR_STALLION	0x124d		/* Stallion Technologies */
 #define	PCI_VENDOR_LINEARSYS	0x1254		/* Linear Systems */
 #define	PCI_VENDOR_AURORA	0x125c		/* Aurora Technologies */
+#define	PCI_VENDOR_ENSONIQ	0x1274		/* Ensoniq */
 #define	PCI_VENDOR_NETAPP	0x1275		/* Network Appliance */
 #define	PCI_VENDOR_ROCKWELL	0x127a		/* Rockwell Semiconductor Systems */
 #define	PCI_VENDOR_KOFAX	0x1296		/* Kofax Image Products */
@@ -575,6 +576,7 @@
 #define	PCI_PRODUCT_ARC_1000PV	0xa091		/* 1000PV */
 #define	PCI_PRODUCT_ARC_2000PV	0xa099		/* 2000PV */
 #define	PCI_PRODUCT_ARC_2000MT	0xa0a1		/* 2000MT */
+#define	PCI_PRODUCT_ARC_2000MI	0xa0a9		/* 2000MI */
 
 /* ATI products */
 #define	PCI_PRODUCT_ATI_MACH32	0x4158		/* Mach32 */
@@ -811,6 +813,9 @@
 #define	PCI_PRODUCT_NS_DP83810	0x0001		/* DP83810 10/100 Ethernet */
 #define	PCI_PRODUCT_NS_NS87410	0xd001		/* NS87410 */
 
+/* NeoMagic */
+#define	PCI_PRODUCT_NEOMAGIC_NM3160	0x0004		/* NM3160 */
+
 /* NCR/Symbios Logic products */
 #define	PCI_PRODUCT_SYMBIOS_810	0x0001		/* 53c810 */
 #define	PCI_PRODUCT_SYMBIOS_820	0x0002		/* 53c820 */
@@ -871,7 +876,7 @@
 #define	PCI_PRODUCT_S3_AURORA64P	0x8812		/* Aurora64V+ */
 #define	PCI_PRODUCT_S3_TRIO64UVP	0x8814		/* Trio64UV+ */
 #define	PCI_PRODUCT_S3_868	0x8880		/* 868 */
-#define	PCI_PRODUCT_S3_VIRGE_VX	0x883d		/* ViRGE/VX */
+#define	PCI_PRODUCT_S3_VIRGE_VX	0x883d		/* ViRGE VX */
 #define	PCI_PRODUCT_S3_928	0x88b0		/* 86C928 */
 #define	PCI_PRODUCT_S3_864_0	0x88c0		/* 86C864-0 (Vision864) */
 #define	PCI_PRODUCT_S3_864_1	0x88c1		/* 86C864-1 (Vision864) */
@@ -886,10 +891,15 @@
 #define	PCI_PRODUCT_S3_968_2	0x88f2		/* 86C968-2 (Vision968) */
 #define	PCI_PRODUCT_S3_968_3	0x88f3		/* 86C968-3 (Vision968) */
 #define	PCI_PRODUCT_S3_TRIO64V2_DX	0x8901		/* Trio64V2/DX */
+#define	PCI_PRODUCT_S3_PLATO	0x8902		/* Plato */
+#define	PCI_PRODUCT_S3_VIRGE_DX_GX	0x8a01		/* ViRGE DX/GX */
 
 /* SGS Thomson products */
 #define	PCI_PRODUCT_SGSTHOMSON_2000	0x0008		/* STG 2000X */
 #define	PCI_PRODUCT_SGSTHOMSON_1764	0x1746		/* STG 1764X */
+
+/* Sigma Designs */
+#define	PCI_PRODUCT_SIGMA_64GX	0x6401		/* 64GX */
 
 /* Silicon Integrated System products */
 #define	PCI_PRODUCT_SIS_86C201	0x0001		/* 86C201 */

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.32 1998/03/10 08:26:08 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.33 1998/03/10 08:43:50 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -253,6 +253,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ARC Logic",
 	    "2000MT",
+	},
+	{
+	    PCI_VENDOR_ARC, PCI_PRODUCT_ARC_2000MI,
+	    0,
+	    "ARC Logic",
+	    "2000MI",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH32,
@@ -773,7 +779,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_ENSONIQ, PCI_PRODUCT_ENSONIQ_AUDIOPCI,
 	    0,
-	    "",
+	    "Ensoniq",
 	    "AudioPCI",
 	},
 	{
@@ -1197,6 +1203,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "NS87410",
 	},
 	{
+	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NM3160,
+	    0,
+	    "Neomagic",
+	    "NM3160",
+	},
+	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_810,
 	    0,
 	    "Symbios Logic",
@@ -1410,7 +1422,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_S3, PCI_PRODUCT_S3_VIRGE_VX,
 	    0,
 	    "S3",
-	    "ViRGE/VX",
+	    "ViRGE VX",
 	},
 	{
 	    PCI_VENDOR_S3, PCI_PRODUCT_S3_928,
@@ -1497,6 +1509,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Trio64V2/DX",
 	},
 	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_PLATO,
+	    0,
+	    "S3",
+	    "Plato",
+	},
+	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_VIRGE_DX_GX,
+	    0,
+	    "S3",
+	    "ViRGE DX/GX",
+	},
+	{
 	    PCI_VENDOR_SGSTHOMSON, PCI_PRODUCT_SGSTHOMSON_2000,
 	    0,
 	    "SGS Thomson Microelectric",
@@ -1507,6 +1531,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "SGS Thomson Microelectric",
 	    "STG 1764X",
+	},
+	{
+	    PCI_VENDOR_SIGMA, PCI_PRODUCT_SIGMA_64GX,
+	    0,
+	    "Sigma Designs",
+	    "64GX",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_86C201,
@@ -4716,6 +4746,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_AURORA, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Aurora Technologies",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_ENSONIQ, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Ensoniq",
 	    NULL,
 	},
 	{
