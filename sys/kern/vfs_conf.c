@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_conf.c,v 1.15 2000/06/17 17:16:05 provos Exp $	*/
+/*	$OpenBSD: vfs_conf.c,v 1.16 2003/02/24 02:17:22 deraadt Exp $	*/
 /*	$NetBSD: vfs_conf.c,v 1.21.4.1 1995/11/01 00:06:26 jtc Exp $	*/
 
 /*
@@ -151,10 +151,6 @@ extern	struct vfsops ext2fs_vfsops;
 extern  struct vfsops xfs_vfsops;
 #endif
 
-#ifdef TCFS
-extern  struct vfsops tcfs_vfsops;
-#endif
-
 /*
  * Set up the filesystem operations for vnodes.
  */
@@ -241,10 +237,6 @@ static struct vfsconf vfsconflist[] = {
         /* Kernel Information Filesystem */
 #ifdef KERNFS
         { &kernfs_vfsops, MOUNT_KERNFS, 11, 0, 0, NULL, NULL },
-#endif
-
-#ifdef TCFS
-        { &tcfs_vfsops, MOUNT_TCFS, 22, 0, 0, NULL, NULL },
 #endif
 
 };
@@ -369,9 +361,6 @@ struct vnodeopv_desc *vfs_opv_descs[] = {
 #endif
 #ifdef XFS
 	&xfs_vnodeop_opv_desc,
-#endif
-#ifdef TCFS
-        &tcfs_vnodeop_opv_desc,
 #endif
 
 	NULL
