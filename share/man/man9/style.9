@@ -22,9 +22,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: style.9,v 1.16 2001/04/10 17:31:55 millert Exp $
+.\"	$OpenBSD: style.9,v 1.17 2001/06/18 15:17:04 millert Exp $
 .\"
-.Dd August 19, 1999
+.Dd June 18, 2001
 .Dt STYLE 9
 .Os
 .Sh NAME
@@ -122,17 +122,22 @@ Functions that are used locally in more than one module go into a
 separate header file, e.g.,
 .Pa extern.h .
 .Pp
-When declaring a prototype, use the
+Only use the
 .Li __P
 macro from the include file
-.Pa Aq sys/cdefs.h .
+.Pa Aq sys/cdefs.h
+if the source file in general is (to be) compilable with a K&R compiler.
+Use of the
+.Li __P
+macro in new code is discouraged, although modifications to existing
+files should be consistent with that file's conventions.
 Only the kernel has a name associated with the types; i.e., in the kernel use:
 .Bd -literal -offset 0i
-void	function __P((int a));
+void	function (int a);
 .Ed
 and in user land use:
 .Bd -literal -offset 0i
-void	function __P((int));
+void	function (int);
 .Ed
 .Pp
 Prototypes may have an extra space after a tab to enable function names
@@ -397,16 +402,14 @@ The function type should be on a line by itself
 preceding the function.
 .Bd -literal -offset 0i
 static char *
-function(a1, a2, fl, a4)
-	int a1, a2, a4;	/* Declare ints too, don't default them. */
-	float fl;	/* List in order declared, as much as possible. */
+function(int a1, int a2, float fl, int a4)
 {
 .Ed
 .Pp
 When declaring variables in functions declare them sorted by size (largest to
 smallest), then in alphabetical order; multiple ones per line are okay.
-Old style function declarations can go on the same line.
-ANSI style function declarations should go in the include file
+Old style function declarations should be avoided.
+ANSI style function declarations should go in an include file such as
 .Dq Pa extern.h .
 If a line overflows reuse the type keyword.
 .Pp
@@ -488,41 +491,30 @@ don't roll your own!
 }
 .Ed
 .Pp
-Don't use ANSI function declarations unless you absolutely have to,
-i.e., you're declaring functions with variable numbers of arguments.
-.Pp
-ANSI function declarations look like this:
+Old-style function declarations look like this:
 .Bd -literal -offset 0i
-void
-function(int a1, int a2)
+static char *
+function(a1, a2, fl, a4)
+	int a1, a2;	/* Declare ints, too, don't default them. */
+	float fl;	/* Beware double vs. float prototype differences. */
+	int a4;		/* List in order declared. */
 {
 	...
 }
 .Ed
 .Pp
+Use ANSI function declarations unless you explicitly need K&R compatibility.
+Long parameter lists are wrapped with a normal four space indent.
+.Pp
 Variable numbers of arguments should look like this:
 .Bd -literal -offset 0i
-#if __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 void
-#if __STDC__
 vaf(const char *fmt, ...)
-#else
-vaf(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
-#if __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 
 	STUFF;
 
