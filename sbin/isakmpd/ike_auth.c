@@ -1,8 +1,8 @@
-/*	$OpenBSD: ike_auth.c,v 1.11 1999/03/24 14:42:49 niklas Exp $	*/
-/*	$EOM: ike_auth.c,v 1.25 1999/03/24 10:59:29 niklas Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.12 1999/04/19 21:08:44 niklas Exp $	*/
+/*	$EOM: ike_auth.c,v 1.29 1999/04/18 15:17:51 niklas Exp $	*/
 
 /*
- * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -45,6 +45,7 @@
 #include "asn.h"
 #include "cert.h"
 #include "conf.h"
+#include "constants.h"
 #include "exchange.h"
 #include "gmp.h"
 #include "gmp_util.h"
@@ -71,16 +72,26 @@ static int rsa_sig_encode_hash (struct message *);
 static int ike_auth_hash (struct exchange *, u_int8_t *);
 
 static struct ike_auth ike_auth[] = {
-  { IKE_AUTH_PRE_SHARED, pre_shared_gen_skeyid, pre_shared_decode_hash,
-    pre_shared_encode_hash},
-  { IKE_AUTH_DSS, sig_gen_skeyid, pre_shared_decode_hash,
-    pre_shared_encode_hash},
-  { IKE_AUTH_RSA_SIG, sig_gen_skeyid, rsa_sig_decode_hash,
-    rsa_sig_encode_hash},
-  { IKE_AUTH_RSA_ENC, enc_gen_skeyid, pre_shared_decode_hash,
-    pre_shared_encode_hash},
-  { IKE_AUTH_RSA_ENC_REV, enc_gen_skeyid, pre_shared_decode_hash,
-    pre_shared_encode_hash},
+  {
+    IKE_AUTH_PRE_SHARED, pre_shared_gen_skeyid, pre_shared_decode_hash,
+    pre_shared_encode_hash
+  },
+  {
+    IKE_AUTH_DSS, sig_gen_skeyid, pre_shared_decode_hash,
+    pre_shared_encode_hash
+  },
+  {
+    IKE_AUTH_RSA_SIG, sig_gen_skeyid, rsa_sig_decode_hash,
+    rsa_sig_encode_hash
+  },
+  {
+    IKE_AUTH_RSA_ENC, enc_gen_skeyid, pre_shared_decode_hash,
+    pre_shared_encode_hash
+  },
+  {
+    IKE_AUTH_RSA_ENC_REV, enc_gen_skeyid, pre_shared_decode_hash,
+    pre_shared_encode_hash
+  },
 };
 
 struct ike_auth *
@@ -94,6 +105,47 @@ ike_auth_get (u_int16_t id)
   return 0;
 }
 
+/*
+ * Find and decode the configured key (pre-shared or public) for the
+ * peer denoted by ID.  Stash the len in KEYLEN.
+ */
+static char *
+ike_auth_get_key (char *id, size_t *keylen)
+{
+  char *key, *buf;
+
+  /* Get the pre-shared key for our peer.  */
+  key = conf_get_str (id, "Authentication");
+  if (!key)
+    {
+      log_print ("ike_auth_get_key: no key found for peer \"%s\"", id);
+      return 0;
+    }
+
+  /* If the key starts with 0x it is in hex format.  */
+  if (strncasecmp (key, "0x", 2) == 0)
+    {
+      *keylen = (strlen (key) - 1) / 2;
+      buf = malloc (*keylen);
+      if (!buf)
+	{
+	  log_print ("ike_auth_get_key: malloc (%d) failed", *keylen);
+	  return 0;
+	}
+      if (hex2raw (key + 2, buf, *keylen))
+	{
+	  free (buf);
+	  log_print ("ike_auth_get_key: invalid hex key %s", key);
+	  return 0;
+	}
+      key = buf;
+    }
+  else
+    *keylen = strlen (key);
+
+  return key;
+}
+
 static u_int8_t *
 pre_shared_gen_skeyid (struct exchange *exchange, size_t *sz)
 {
@@ -105,34 +157,9 @@ pre_shared_gen_skeyid (struct exchange *exchange, size_t *sz)
   size_t keylen;
 
   /* Get the pre-shared key for our peer.  */
-  key = conf_get_str (exchange->name, "Authentication");
+  key = ike_auth_get_key (exchange->name, &keylen);
   if (!key)
-    {
-      log_print ("pre_shared_gen_skeyid: no key found for peer \"%s\"",
-		 exchange->name);
-      return 0;
-    }
-
-  /* If the key starts with 0x it is in hex format.  */
-  if (strncasecmp (key, "0x", 2) == 0)
-    {
-      keylen = (strlen (key) - 1) / 2;
-      buf = malloc (keylen);
-      if (!buf)
-	{
-	  log_print ("pre_shared_gen_skeyid: malloc (%d) failed", keylen);
-	  return 0;
-	}
-      if (hex2raw (key + 2, buf, keylen))
-	{
-	  free (buf);
-	  log_print ("pre_shared_gen_skeyid: invalid hex key");
-	  return 0;
-	}
-      key = buf;
-    }
-  else
-    keylen = strlen (key);
+    return 0;
 
   prf = prf_alloc (ie->prf_type, ie->hash->type, key, keylen);
   if (buf)
@@ -144,6 +171,7 @@ pre_shared_gen_skeyid (struct exchange *exchange, size_t *sz)
   skeyid = malloc (*sz);
   if (!skeyid)
     {
+      log_error ("pre_shared_gen_skeyid: malloc (%d) failed", *sz);
       prf_free (prf);
       return 0;
     }
@@ -181,6 +209,7 @@ sig_gen_skeyid (struct exchange *exchange, size_t *sz)
   skeyid = malloc (*sz);
   if (!skeyid)
     {
+      log_error ("sig_gen_skeyid: malloc (%d) failed", *sz);
       prf_free (prf);
       return 0;
     }
@@ -217,6 +246,7 @@ enc_gen_skeyid (struct exchange *exchange, size_t *sz)
   skeyid = malloc (*sz);
   if (!skeyid)
     {
+      log_error ("enc_gen_skeyid: malloc (%d) failed", *sz);
       prf_free (prf);
       return 0;
     }
@@ -254,7 +284,10 @@ pre_shared_decode_hash (struct message *msg)
   /* XXX Need this hash be in the SA?  */
   *hash_p = malloc (hashsize);
   if (!*hash_p)
-    return -1;
+    {
+      log_error ("pre_shared_decode_hash: malloc (%d) failed", hashsize);
+      return -1;
+    }
 
   memcpy (*hash_p, payload->p + ISAKMP_HASH_DATA_OFF, hashsize);
   snprintf (header, 80, "pre_shared_decode_hash: HASH_%c",
@@ -266,10 +299,7 @@ pre_shared_decode_hash (struct message *msg)
   return 0;
 }
 
-/*
- * Decrypt the HASH in SIG, we already need a parsed ID payload
- */
-
+/* Decrypt the HASH in SIG, we already need a parsed ID payload.  */
 static int
 rsa_sig_decode_hash (struct message *msg)
 {
@@ -285,13 +315,14 @@ rsa_sig_decode_hash (struct message *msg)
   u_int16_t len;
   u_int32_t id_cert_len;
   size_t id_len;
+  int found = 0;
 
   /* Choose the right fields to fill-in.  */
   hash_p = initiator ? &ie->hash_r : &ie->hash_i;
   id = initiator ? exchange->id_r : exchange->id_i;
   id_len = initiator ? exchange->id_r_len : exchange->id_i_len;
 
-  if (id == NULL || id_len == 0)
+  if (!id || id_len == 0)
     {
       log_print ("rsa_sig_decode_hash: no ID in sa");
       return -1;
@@ -301,48 +332,74 @@ rsa_sig_decode_hash (struct message *msg)
   id += ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ;
   id_len -= ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ;
 
-  p = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_CERT]);
-  if (!p)
-    return -1;
-
-  if ((handler = cert_get (GET_ISAKMP_CERT_ENCODING(p->p))) == NULL)
+  for (p = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_CERT]); p;
+       p = TAILQ_NEXT (p, link))
     {
-      log_print ("rsa_sig_decode_hash: no handler for CERT encoding");
-      return -1;
-    }
+      p->flags |= PL_MARK;
+
+      /* When we have found a key, just walk over the rest, marking them.  */
+      if (found)
+	continue;
+
+      handler = cert_get (GET_ISAKMP_CERT_ENCODING (p->p));
+      if (!handler)
+	{
+	  log_debug (LOG_MISC, 30,
+		     "rsa_sig_decode_hash: no handler for %s CERT encoding",
+		     constant_lookup (isakmp_certenc_cst,
+				      GET_ISAKMP_CERT_ENCODING (p->p)));
+	  continue;
+	}
   
-  /* XXX - this assumes IPv4 here */
-  if (!handler->cert_get_subject (p->p + ISAKMP_CERT_DATA_OFF, 
-				  GET_ISAKMP_GEN_LENGTH(p->p) - 
-				  ISAKMP_CERT_DATA_OFF,
-				  &id_cert, &id_cert_len))
-    {
-      log_print ("rsa_sig_decode_hash: can not get subject from CERT");
-      return -1;
-    }
+      if (!handler->cert_get_subject (p->p + ISAKMP_CERT_DATA_OFF, 
+				      GET_ISAKMP_GEN_LENGTH (p->p) - 
+				      ISAKMP_CERT_DATA_OFF,
+				      &id_cert, &id_cert_len))
+	{
+	  log_print ("rsa_sig_decode_hash: can not get subject from CERT");
+	  continue;
+	}
 
-  if (id_cert_len != id_len || memcmp (id, id_cert, id_len))
-    {
-      log_print ("rsa_sig_decode_hash: CERT subject does not match ID");
+      if (id_cert_len != id_len || memcmp (id, id_cert, id_len) != 0)
+	{
+	  log_print ("rsa_sig_decode_hash: CERT subject does not match ID");
+	  free (id_cert);
+	  continue;
+	}
       free (id_cert);
-      return -1;
-    }
-  free (id_cert);
 
-  if (!handler->cert_get_key (p->p + ISAKMP_CERT_DATA_OFF, 
-			      GET_ISAKMP_GEN_LENGTH(p->p) -
-			      ISAKMP_CERT_DATA_OFF,
-			      &key))
+      if (!handler->cert_get_key (p->p + ISAKMP_CERT_DATA_OFF, 
+				  GET_ISAKMP_GEN_LENGTH (p->p) -
+				  ISAKMP_CERT_DATA_OFF,
+				  &key))
+	{
+	  log_print ("rsa_sig_decode_hash: decoding payload CERT failed");
+	  continue;
+	}
+
+      found++;
+    }
+
+  /* If no certificate provided a key, try the config file.  */
+  if (!found)
     {
-      log_print ("rsa_sig_decode_hash: decoding payload CERT failed");
+#ifdef notyet
+    rawkey = ike_auth_get_key (exchange->name, &keylen);
+    if (!rawkey)
+      {
+	log_print ("rsa_sig_decode_hash: no public key found");
+	return -1;
+      }
+#else
+      log_print ("rsa_sig_decode_hash: no public key found");
       return -1;
+#endif
     }
-
-  p->flags |= PL_MARK;
 
   p = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_SIG]);
   if (!p)
     {
+      log_print ("rsa_sig_decode_hash: missing signature payload");
       pkcs_free_public_key (&key);
       return -1;
     }
@@ -351,13 +408,13 @@ rsa_sig_decode_hash (struct message *msg)
   if (GET_ISAKMP_GEN_LENGTH (p->p) - ISAKMP_SIG_SZ != mpz_sizeinoctets (key.n))
     {
       pkcs_free_public_key (&key);
-      log_print ("rsa_sig_decode_hash: SIG payload length does not match "
-		 "public key");
+      log_print ("rsa_sig_decode_hash: "
+		 "SIG payload length does not match public key");
       return -1;
     }
 
-  if (!pkcs_rsa_decrypt (PKCS_PRIVATE, &key, NULL,
-			 p->p + ISAKMP_SIG_DATA_OFF, hash_p, &len))
+  if (!pkcs_rsa_decrypt (PKCS_PRIVATE, &key, 0, p->p + ISAKMP_SIG_DATA_OFF,
+			 hash_p, &len))
     {
       pkcs_free_public_key (&key);
       return -1;
@@ -368,7 +425,7 @@ rsa_sig_decode_hash (struct message *msg)
   if (len != hashsize)
     {
       free (*hash_p);
-      *hash_p = NULL;
+      *hash_p = 0;
       return -1;
     }
 
@@ -390,11 +447,12 @@ pre_shared_encode_hash (struct message *msg)
   int initiator = exchange->initiator;
   u_int8_t *buf;
 
-  /* XXX - hashsize is not necessarily prf->blocksize */
+  /* XXX - hashsize is not necessarily prf->blocksize.  */
   buf = malloc (ISAKMP_HASH_SZ + hashsize);
   if (!buf)
     {
-      /* XXX Log?  */
+      log_error ("pre_shared_encode_hash: malloc (%d) failed",
+		 ISAKMP_HASH_SZ + hashsize);
       return -1;
     }
   
@@ -411,7 +469,6 @@ pre_shared_encode_hash (struct message *msg)
   if (message_add_payload (msg, ISAKMP_PAYLOAD_HASH, buf,
 			   ISAKMP_HASH_SZ + hashsize, 1))
     {
-      /* XXX Log?  */
       free (buf);
       return -1;
     }
@@ -419,9 +476,7 @@ pre_shared_encode_hash (struct message *msg)
   return 0;
 }
 
-
-/* Encrypt the HASH into a SIG type */
-
+/* Encrypt the HASH into a SIG type.  */
 static int
 rsa_sig_encode_hash (struct message *msg)
 {
@@ -436,24 +491,25 @@ rsa_sig_encode_hash (struct message *msg)
   u_int32_t asnlen, datalen;
   char *keyfile;
 
-  /* XXX - this needs to be configureable */
+  /* XXX This needs to be configureable.  */
   handler = cert_get (ISAKMP_CERTENC_X509_SIG);
-  if (handler == NULL)
+  if (!handler)
     {
-      /* XXX - Log? */
+      /* XXX Log? */
       return -1;
     }
-  /* XXX - implicitly uses exchange->id_{i,r} */
-  if (!handler->cert_obtain (exchange, NULL, &data, &datalen))
+  /* XXX Implicitly uses exchange->id_{i,r}.  */
+  if (!handler->cert_obtain (exchange, 0, &data, &datalen))
     {
-      /* XXX - Log? */
+      /* XXX Log? */
       return -1;
     }
 
   buf = realloc (data, ISAKMP_CERT_SZ + datalen);
-  if (buf == NULL)
+  if (!buf)
     {
-      /* XXX Log? */
+      log_error ("rsa_sig_encode_hash: realloc (%p, %d) failed", data,
+		 ISAKMP_CERT_SZ + datalen);
       free (data);
       return -1;
     }
@@ -462,13 +518,12 @@ rsa_sig_encode_hash (struct message *msg)
   if (message_add_payload (msg, ISAKMP_PAYLOAD_CERT, buf,
 			   ISAKMP_CERT_SZ + datalen, 1))
     {
-      /* XXX Log?  */
       free (buf);
       return -1;
     }
 
   /* XXX - do we want to store our files in ASN.1 ? */
-  keyfile = conf_get_str ("rsa_sig", "privkey");
+  keyfile = conf_get_str ("RSA_sig", "privkey");
   if (!asn_get_from_file (keyfile, &asn, &asnlen))
     {
       /* XXX Log? */
@@ -503,8 +558,8 @@ rsa_sig_encode_hash (struct message *msg)
   snprintf (header, 80, "rsa_sig_encode_hash: HASH_%c", initiator ? 'I' : 'R');
   log_debug_buf (LOG_MISC, 80, header, buf, hashsize);
 
-  if (!pkcs_rsa_encrypt (PKCS_PRIVATE, NULL, &key, buf, hashsize,
-			 &data, &datalen))
+  if (!pkcs_rsa_encrypt (PKCS_PRIVATE, 0, &key, buf, hashsize, &data,
+			 &datalen))
     {
       free (buf);
       pkcs_free_private_key (&key);
@@ -516,7 +571,8 @@ rsa_sig_encode_hash (struct message *msg)
   buf = realloc (data, ISAKMP_SIG_SZ + datalen);
   if (!buf)
     {
-      /* XXX Log?  */
+      log_error ("rsa_sig_encode_hash: realloc (%p, %d) failed", data,
+		 ISAKMP_SIG_SZ + datalen);
       free (data);
       return -1;
     }
@@ -527,7 +583,6 @@ rsa_sig_encode_hash (struct message *msg)
   if (message_add_payload (msg, ISAKMP_PAYLOAD_SIG, buf,
 			   ISAKMP_SIG_SZ + datalen, 1))
     {
-      /* XXX Log?  */
       free (buf);
       return -1;
     }
