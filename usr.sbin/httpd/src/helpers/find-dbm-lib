@@ -5,7 +5,7 @@
 # two -ldbm -ldbm into the LIBS variable.
 
 if [ "x$found_dbm" = "x" ]; then
-    if ./helpers/TestCompile func dbm_open; then
+    if sh helpers/TestCompile func dbm_open; then
 	found_dbm=1
     else
 	found_dbm=0
@@ -13,9 +13,9 @@ if [ "x$found_dbm" = "x" ]; then
 	    *-linux*)
 		# many systems don't have -ldbm
 		DBM_LIB=""
-		if ./helpers/TestCompile lib dbm dbm_open; then
+		if sh helpers/TestCompile lib dbm dbm_open; then
 		    DBM_LIB="-ldbm"
-		elif ./helpers/TestCompile lib ndbm dbm_open; then
+		elif sh helpers/TestCompile lib ndbm dbm_open; then
 		    DBM_LIB="-lndbm"
 		fi
 		if [ "x$DBM_LIB" != "x" ]; then
@@ -27,7 +27,7 @@ if [ "x$found_dbm" = "x" ]; then
 		if [ "x$DBM_LIB" != "x" ]; then
 		    oldLIBS="$LIBS"
 		    LIBS="$LIBS $DBM_LIB"
-		    if ./helpers/TestCompile func dbm_open; then
+		    if sh helpers/TestCompile func dbm_open; then
 			found_dbm=1
 		    else
 			found_dbm=0
@@ -37,7 +37,7 @@ if [ "x$found_dbm" = "x" ]; then
 		    for dblib in dbm ndbm db
 		    do
 			DBM_LIB=""
-			if ./helpers/TestCompile lib $dblib dbm_open; then
+			if sh helpers/TestCompile lib $dblib dbm_open; then
 			    DBM_LIB="-l${dblib}"
 			    LIBS="$LIBS $DBM_LIB"
 			    found_dbm=1

@@ -1,4 +1,5 @@
 #!/bin/sh
+# $OpenBSD: Configure,v 1.10 2000/01/28 18:39:57 beck Exp $
 ## ====================================================================
 ## Copyright (c) 1995-1999 The Apache Group.  All rights reserved.
 ##
@@ -79,6 +80,7 @@ awkfile=$tmpfile.4
 tmpconfig=$tmpfile.5
 SUBDIRS="ap main"
 APLIBDIRS=""
+SHELL=/bin/sh
 
 ####################################################################
 ## Now handle any arguments, which, for now, is -file
@@ -202,7 +204,7 @@ fi
 ## then fold in the modules that were included in Configuration
 ##
 echo "Creating Makefile"
-./helpers/mfhead . $file > Makefile
+${SHELL} helpers/mfhead . $file > Makefile
 
 ####################################################################
 ## Now we create a stub file, called Makefile.config, which
@@ -222,16 +224,16 @@ awk >Makefile.config <$tmpfile '
 ####################################################################
 ## Extract the rules.
 ##
-RULE_WANTHSREGEX=`./helpers/CutRule WANTHSREGEX $file`
-RULE_STATUS=`./helpers/CutRule STATUS $file`
-RULE_SOCKS4=`./helpers/CutRule SOCKS4 $file`
-RULE_SOCKS5=`./helpers/CutRule SOCKS5 $file`
-RULE_IRIXNIS=`./helpers/CutRule IRIXNIS $file`
-RULE_IRIXN32=`./helpers/CutRule IRIXN32 $file`
-RULE_PARANOID=`./helpers/CutRule PARANOID $file`
-RULE_EXPAT=`./helpers/CutRule EXPAT $file`
-RULE_SHARED_CORE=`./helpers/CutRule SHARED_CORE $file`
-RULE_SHARED_CHAIN=`./helpers/CutRule SHARED_CHAIN $file`
+RULE_WANTHSREGEX=`${SHELL} helpers/CutRule WANTHSREGEX $file`
+RULE_STATUS=`${SHELL} helpers/CutRule STATUS $file`
+RULE_SOCKS4=`${SHELL} helpers/CutRule SOCKS4 $file`
+RULE_SOCKS5=`${SHELL} helpers/CutRule SOCKS5 $file`
+RULE_IRIXNIS=`${SHELL} helpers/CutRule IRIXNIS $file`
+RULE_IRIXN32=`${SHELL} helpers/CutRule IRIXN32 $file`
+RULE_PARANOID=`${SHELL} helpers/CutRule PARANOID $file`
+RULE_EXPAT=`${SHELL} helpers/CutRule EXPAT $file`
+RULE_SHARED_CORE=`${SHELL} helpers/CutRule SHARED_CORE $file`
+RULE_SHARED_CHAIN=`${SHELL} helpers/CutRule SHARED_CHAIN $file`
 
 ####################################################################
 ## Rule SHARED_CORE implies required DSO support
@@ -266,8 +268,8 @@ CAT="cat"
 ## As more PLATFORMs are added to Configuration.tmpl, be sure to
 ## add the required lines below.
 ##
-PLAT=`./helpers/GuessOS`
 SHELL="/bin/sh"
+PLAT=`${SHELL} helpers/GuessOS`
 OSDIR="os/unix"
 
 case "$PLAT" in
@@ -874,7 +876,7 @@ if [ "x$TCC" = "x" ]; then
 	for compilers in "gcc" "cc" "acc" "c89"
 	do
 	    lookedfor="$lookedfor $compilers"
-	    if ./helpers/PrintPath -s $compilers; then
+	    if ${SHELL} helpers/PrintPath -s $compilers; then
 		COMPILER="$compilers"
 		break
 	    fi
@@ -908,9 +910,9 @@ fi
 ##
 TCPP=`egrep '^CPP=' Makefile.config | tail -1 | awk -F= '{print $2}'`
 if [ "x$TCPP" != "x" ]; then
-    CPP=`CPP="$TCPP"; export CPP CC; ./helpers/findcpp.sh`
+    CPP=`CPP="$TCPP"; export CPP CC; ${SHELL} ./helpers/findcpp.sh`
 else
-    CPP=`export CC; ./helpers/findcpp.sh`
+    CPP=`export CC; ${SHELL} ./helpers/findcpp.sh`
 fi
 if [ "x$TCPP" = "x" ]; then
     echo "CPP=$CPP" >> Makefile.config
@@ -938,7 +940,7 @@ for header in $CHECK_FOR_HEADERS; do
     echo "" >>$AP_CONFIG_AUTO_H
     echo "/* check: #include <$header> */" >>$AP_CONFIG_AUTO_H
     name="`echo $header | sed -e 's:/:_:g' -e 's:\.:_:g' | tr '[a-z]' '[A-Z]'`"
-    ./helpers/checkheader.sh $header
+    ${SHELL} ./helpers/checkheader.sh $header
     if [ $? -eq 0 ]; then
 	echo "#ifndef HAVE_${name}" >>$AP_CONFIG_AUTO_H
 	echo "#define HAVE_${name} 1" >>$AP_CONFIG_AUTO_H
@@ -956,7 +958,7 @@ done
 # to decide whether the Processor Binding can be used or not
 case "$PLAT" in
     *-ibm-aix*)
-	CPP=$CPP ./helpers/checkheader.sh sys/processor.h
+	CPP=$CPP ${SHELL} helpers/checkheader.sh sys/processor.h
 	if [ $? -eq 0 ]; then
 	    CFLAGS="$CFLAGS -DAIX_BIND_PROCESSOR"
 	fi
@@ -1453,7 +1455,7 @@ if [ "x$RANLIB" = "x" ]; then
     if [ "x$TRANLIB" != "x" ]; then
 	RANLIB=$TRANLIB
     else
-	if ./helpers/PrintPath -s ranlib; then
+	if ${SHELL} helpers/PrintPath -s ranlib; then
 	    RANLIB="ranlib"
 	else
 	    RANLIB="true"
@@ -1469,7 +1471,7 @@ fi
 case "$PLAT" in
     *-linux*)
 	# newer systems using glibc 2.x need -lcrypt
-	if ./helpers/TestCompile lib crypt; then
+	if ${SHELL} helpers/TestCompile lib crypt; then
 	    LIBS="$LIBS -lcrypt"
 	fi
 	;;
@@ -1477,11 +1479,11 @@ case "$PLAT" in
     *-dg-dgux*)
 	# R4.11MU02 requires -lsocket -lnsl ... no idea if it's earlier or
 	# later than what we already knew about.  PR#732
-	if ./helpers/TestCompile lib nsl; then
+	if ${SHELL} helpers/TestCompile lib nsl; then
 	    LIBS="$LIBS -lnsl"
 	    TLIB='-lnsl'
 	fi
-	if TLIB=$TLIB ./helpers/TestCompile lib socket; then
+	if TLIB=$TLIB ${SHELL} helpers/TestCompile lib socket; then
 	    LIBS="-lsocket $LIBS"
 	fi
 	;;
@@ -1499,14 +1501,14 @@ case "$PLAT" in
 	# -lnsl may be available (or may be not).
 	# In standard SVR4 systems, -lsocket relies on some symbols
 	# from -lnsl, so the test for -lnsl must appear first.
-	if ./helpers/TestCompile lib nsl; then
+	if ${SHELL} helpers/TestCompile lib nsl; then
 	    LIBS="$LIBS -lnsl"
 	    TLIB='-lnsl'
 	fi
-	if TLIB=$TLIB ./helpers/TestCompile lib socket; then
+	if TLIB=$TLIB ${SHELL} helpers/TestCompile lib socket; then
 	    LIBS="-lsocket $LIBS"
 	fi
-	if ./helpers/TestCompile func initgroups; then
+	if ${SHELL} helpers/TestCompile func initgroups; then
 	    :
 	else
 	    CFLAGS="$CFLAGS -DNEED_INITGROUPS"
@@ -1723,7 +1725,7 @@ fi
 ## Extended API (EAPI) support:
 ##
 if [ "x$RULE_EAPI" = "x" ]; then
-    RULE_EAPI=`./helpers/CutRule EAPI $file`
+    RULE_EAPI=`${SHELL} helpers/CutRule EAPI $file`
 fi
 if [ "x$RULE_EAPI" = "xyes" ]; then
     echo " + enabling Extended API (EAPI)"
@@ -1819,7 +1821,7 @@ if [ "x$using_shlib" = "x1" ] ; then
 	#   to our DSO files, i.e. PIC libraries and shared libraries
 	extra_ldflags="`grep EXTRA_LDFLAGS= Makefile.config`"
 	extra_libs="`grep EXTRA_LIBS= Makefile.config`"
-	eval "`./helpers/slo.sh $LDFLAGS $LIBS $extra_ldflags $extra_libs`"
+	eval "`${SHELL} helpers/slo.sh $LDFLAGS $LIBS $extra_ldflags $extra_libs`"
 	LIBS_SHLIB="$SLO_DIRS_PIC $SLO_LIBS_PIC $SLO_DIRS_DSO $SLO_LIBS_DSO"
     fi
 fi
@@ -2087,19 +2089,19 @@ if [ "x$using_shlib" = "x1" ] ; then
 	    esac
 	    ;;
 	*-hp-hpux*)
-	    if ./helpers/TestCompile func shl_load; then
+	    if ${SHELL} helpers/TestCompile func shl_load; then
 		:
 	    else
-		if ./helpers/TestCompile lib dld; then
+		if ${SHELL} helpers/TestCompile lib dld; then
 		    DL_LIB="-ldld"
 		fi
 	    fi
 	    ;;
 	* )
-	    if ./helpers/TestCompile func dlopen; then
+	    if ${SHELL} helpers/TestCompile func dlopen; then
 		:
 	    else
-		if ./helpers/TestCompile lib dl; then
+		if ${SHELL} helpers/TestCompile lib dl; then
 		    DL_LIB="-ldl"
 		fi
 	    fi
@@ -2117,7 +2119,7 @@ fi
 ## We check the sizeof various data types
 ##
 echo " + checking sizeof various data types"
-AP_TYPE_QUAD=`./helpers/TestCompile -r sizeof 'long long'`
+AP_TYPE_QUAD=`${SHELL} helpers/TestCompile -r sizeof 'long long'`
 if [ "x$AP_TYPE_QUAD" = "x" ]; then
     AP_TYPE_QUAD="unknown_quad"
     AP_LONGEST_LONG="long"
@@ -2136,7 +2138,7 @@ echo "#endif" >>$AP_CONFIG_AUTO_H
 ##
 ## We check for the endianess of the machine
 ##
-AP_BYTE_ORDER=`./helpers/TestCompile -r byteorder`
+AP_BYTE_ORDER=`${SHELL} helpers/TestCompile -r byteorder`
 if [ "x$AP_BYTE_ORDER" = "x21" ]; then
     AP_BYTE_ORDER="21" # big endian
 else
@@ -2152,12 +2154,12 @@ echo "#endif" >>$AP_CONFIG_AUTO_H
 ##
 ## Now compare the sizes of off_t to long
 ##
-AP_TYPE_OFF_T=`./helpers/TestCompile -r sizeof off_t`
+AP_TYPE_OFF_T=`${SHELL} helpers/TestCompile -r sizeof off_t`
 if [ "x$AP_TYPE_OFF_T" = "x" ]; then
     AP_TYPE_OFF_T="unknown_off_t"
 fi
 
-AP_TYPE_LONG=`./helpers/TestCompile -r sizeof long`
+AP_TYPE_LONG=`${SHELL} helpers/TestCompile -r sizeof long`
 if [ "x$AP_TYPE_LONG" = "x" ]; then
     AP_TYPE_LONG="unknown_long"
 fi
@@ -2179,7 +2181,7 @@ fi
 ##
 ## Now see of void * is as big as a quad (long long)
 ##
-AP_TYPE_VOID_P=`./helpers/TestCompile -r sizeof 'void *'`
+AP_TYPE_VOID_P=`${SHELL} helpers/TestCompile -r sizeof 'void *'`
 if [ "x$AP_TYPE_VOID_P" = "x" ]; then
     AP_TYPE_VOID_P="unknown_void_p"
 fi
@@ -2253,7 +2255,7 @@ if [ "x$OS" = "xTPF" ] ; then
     :
 else
    echo " + doing sanity check on compiler and options"
-   if ./helpers/TestCompile $vflag sanity; then
+   if ${SHELL} ./helpers/TestCompile $vflag sanity; then
       :
    else
       if [ "x$vflag" = "x-v" ] ; then
@@ -2288,15 +2290,15 @@ sed -e "s#@@Configuration@@#$file#" "Makefile.tmpl" >>Makefile
 MAKEDIRS="support $SUBDIRS"
 for dir in $MAKEDIRS ; do
 	echo Creating Makefile in $dir
-	./helpers/mfhead $dir $file > $dir/Makefile
+	${SHELL} helpers/mfhead $dir $file > $dir/Makefile
 	$CAT Makefile.config $dir/Makefile.tmpl |\
-	sed -e "s:^SRCDIR=.*:SRCDIR=`./helpers/fp2rp $dir`:" >> $dir/Makefile
+	sed -e "s:^SRCDIR=.*:SRCDIR=`${SHELL} helpers/fp2rp $dir`:" >> $dir/Makefile
 done
 
 ####################################################################
 ## Now create the lib/Makefile
 ##
-./helpers/mfhead modules $file > lib/Makefile
+${SHELL} helpers/mfhead modules $file > lib/Makefile
 $CAT Makefile.config | sed -e 's:^SRCDIR=.*:SRCDIR=..:' >> lib/Makefile
 
 $CAT << EOF >> lib/Makefile
@@ -2322,15 +2324,15 @@ EOF
 
 for dir in $APLIBDIRS ; do
 	echo Creating Makefile in lib/$dir
-	./helpers/mfhead lib/$dir $file > lib/$dir/Makefile
+	${SHELL} helpers/mfhead lib/$dir $file > lib/$dir/Makefile
 	$CAT Makefile.config lib/$dir/Makefile.tmpl |\
-	sed -e "s:^SRCDIR=.*:SRCDIR=`./helpers/fp2rp lib/$dir`:" >> lib/$dir/Makefile
+	sed -e "s:^SRCDIR=.*:SRCDIR=`${SHELL} helpers/fp2rp lib/$dir`:" >> lib/$dir/Makefile
 done
 
 ####################################################################
 ## Now create the modules/Makefile
 ##
-./helpers/mfhead modules $file > modules/Makefile
+${SHELL} helpers/mfhead modules $file > modules/Makefile
 $CAT Makefile.config | sed -e 's:^SRCDIR=.*:SRCDIR=..:' >> modules/Makefile
 
 $CAT << EOF >> modules/Makefile
@@ -2359,9 +2361,9 @@ EOF
 for moddir in $AUTODIRS ; do
 	echo "Creating Makefile in $moddir"
 
-    ./helpers/mfhead $moddir $file > $moddir/Makefile
+    ${SHELL} helpers/mfhead $moddir $file > $moddir/Makefile
 	$CAT Makefile.config |\
-	sed -e "s:^SRCDIR=.*:SRCDIR=`./helpers/fp2rp $moddir`:" >> $moddir/Makefile
+	sed -e "s:^SRCDIR=.*:SRCDIR=`${SHELL} helpers/fp2rp $moddir`:" >> $moddir/Makefile
 	$CAT << 'EOF' >> $moddir/Makefile
 ##
 ##  Default Makefile options from Configure script

@@ -216,7 +216,7 @@ eval "${MAKE-make} ${TARGET} $ERRDIR >&2"
 # Use our PrintPath helper script using the "-p" option to
 # have PrintPath just search this directory.
 
-if ./PrintPath -s -p`pwd` $TARGET ; then
+if sh PrintPath -s -p`pwd` $TARGET ; then
     if [ "x$OS" = "xMPE/iX" ]; then
 	# clever hack to check for unresolved externals without actually
 	# executing the test program 

@@ -8,8 +8,8 @@
 # See http://www.apache.org/docs/LICENSE
 
 # First we try 'id'
-if `./src/helpers/PrintPath -s id` ; then
-    AP_IDPATH=`./src/helpers/PrintPath id`
+if `sh src/helpers/PrintPath -s id` ; then
+    AP_IDPATH=`sh src/helpers/PrintPath id`
     # See if it's a POSIX 'id'
     if `$AP_IDPATH -u >/dev/null 2>&1` ; then
 	AP_RETVAL=`$AP_IDPATH -u` 
@@ -31,8 +31,8 @@ fi
 # Try 'whoami' first, then 'who am i' (making sure to strip away
 # the who crud) and finally just copy $LOGNAME
 #
-if `./src/helpers/PrintPath -s whoami` ; then
-    AP_WAIPATH=`./src/helpers/PrintPath whoami`
+if `sh src/helpers/PrintPath -s whoami` ; then
+    AP_WAIPATH=`sh src/helpers/PrintPath whoami`
     AP_LOGNAME=`$AP_WAIPATH`
 else
     AP_LOGNAME=`who am i | tail -1 | sed -e 's/[ 	][ 	]*.*$//'`

@@ -45,9 +45,9 @@ else
         my_error=`grep -v '^ *+' conftest.out`
         if [ "x$my_error" != "x" ]; then
             #   3. try a standalone cpp command in $PATH and lib dirs
-            CPP="`./helpers/PrintPath cpp`"
+            CPP="`sh helpers/PrintPath cpp`"
             if [ "x$CPP" = "x" ]; then
-                CPP="`./helpers/PrintPath -p/lib:/usr/lib:/usr/local/lib cpp`"
+                CPP="`sh helpers/PrintPath -p/lib:/usr/lib:/usr/local/lib cpp`"
             fi
             if [ "x$CPP" != "x" ]; then
                 (eval "$CPP conftest.c >/dev/null") 2>conftest.out
