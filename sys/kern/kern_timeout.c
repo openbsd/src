@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.18 2003/06/03 12:05:25 art Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.19 2004/07/20 20:20:52 art Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -29,6 +29,7 @@
 #include <sys/systm.h>
 #include <sys/lock.h>
 #include <sys/timeout.h>
+#include <sys/mutex.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -69,15 +70,12 @@ struct circq timeout_todo;		/* Worklist */
         &timeout_wheel[MASKWHEEL((wheel), (time)) + (wheel)*WHEELSIZE])
 
 /*
- * All wheels are locked with the same lock (which must also block out all
- * interrupts).
+ * All wheels are locked with the same mutex.
+ *
+ * We need locking since the timeouts are manipulated from hardclock that's
+ * not behind the big lock.
  */
-struct simplelock _timeout_lock;
-
-#define timeout_wheel_lock(s) \
-	do { *(s) = splhigh(); simple_lock(&_timeout_lock); } while (0)
-#define timeout_wheel_unlock(s) \
-	do { simple_unlock(&_timeout_lock); splx(s); } while (0)
+struct mutex timeout_mutex = MUTEX_INITIALIZER(IPL_HIGH);
 
 /*
  * Circular queue definitions.
@@ -137,7 +135,6 @@ timeout_startup(void)
 	CIRCQ_INIT(&timeout_todo);
 	for (b = 0; b < BUCKETS; b++)
 		CIRCQ_INIT(&timeout_wheel[b]);
-	simple_lock_init(&_timeout_lock);
 }
 
 void
@@ -152,7 +149,6 @@ timeout_set(struct timeout *new, void (*fn)(void *), void *arg)
 void
 timeout_add(struct timeout *new, int to_ticks)
 {
-	int s;
 	int old_time;
 
 #ifdef DIAGNOSTIC
@@ -162,7 +158,7 @@ timeout_add(struct timeout *new, int to_ticks)
 		panic("timeout_add: to_ticks < 0");
 #endif
 
-	timeout_wheel_lock(&s);
+	mtx_enter(&timeout_mutex);
 	/* Initialize the time here, it won't change. */
 	old_time = new->to_time;
 	new->to_time = to_ticks + ticks;
@@ -182,33 +178,29 @@ timeout_add(struct timeout *new, int to_ticks)
 		new->to_flags |= TIMEOUT_ONQUEUE;
 		CIRCQ_INSERT(&new->to_list, &timeout_todo);
 	}
-
-	timeout_wheel_unlock(s);
+	mtx_leave(&timeout_mutex);
 }
 
 void
 timeout_del(struct timeout *to)
 {
-	int s;
-
-	timeout_wheel_lock(&s);
+	mtx_enter(&timeout_mutex);
 	if (to->to_flags & TIMEOUT_ONQUEUE) {
 		CIRCQ_REMOVE(&to->to_list);
 		to->to_flags &= ~TIMEOUT_ONQUEUE;
 	}
 	to->to_flags &= ~TIMEOUT_TRIGGERED;
-	timeout_wheel_unlock(s);
+	mtx_leave(&timeout_mutex);
 }
 
 /*
  * This is called from hardclock() once every tick.
  * We return !0 if we need to schedule a softclock.
- *
- * We don't need locking in here.
  */
 int
 timeout_hardclock_update(void)
 {
+	mtx_enter(&timeout_mutex);
 	MOVEBUCKET(0, ticks);
 	if (MASKWHEEL(0, ticks) == 0) {
 		MOVEBUCKET(1, ticks);
@@ -218,6 +210,7 @@ timeout_hardclock_update(void)
 				MOVEBUCKET(3, ticks);
 		}
 	}
+	mtx_leave(&timeout_mutex);
 	return (!CIRCQ_EMPTY(&timeout_todo));
 }
 
@@ -225,11 +218,10 @@ void
 softclock(void)
 {
 	struct timeout *to;
-	int s;
 	void (*fn)(void *);
 	void *arg;
 
-	timeout_wheel_lock(&s);
+	mtx_enter(&timeout_mutex);
 	while (!CIRCQ_EMPTY(&timeout_todo)) {
 
 		to = (struct timeout *)CIRCQ_FIRST(&timeout_todo); /* XXX */
@@ -251,12 +243,12 @@ softclock(void)
 			fn = to->to_func;
 			arg = to->to_arg;
 
-			timeout_wheel_unlock(s);
+			mtx_leave(&timeout_mutex);
 			fn(arg);
-			timeout_wheel_lock(&s);
+			mtx_enter(&timeout_mutex);
 		}
 	}
-	timeout_wheel_unlock(s);
+	mtx_leave(&timeout_mutex);
 }
 
 #ifdef DDB
@@ -283,18 +275,15 @@ db_show_callout_bucket(struct circq *bucket)
 void
 db_show_callout(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 {
-	int s;
 	int b;
 
 	db_printf("ticks now: %d\n", ticks);
 	db_printf("    ticks  wheel       arg  func\n");
 
-	timeout_wheel_lock(&s);
-
+	mtx_enter(&timeout_mutex);
 	db_show_callout_bucket(&timeout_todo);
 	for (b = 0; b < BUCKETS; b++)
 		db_show_callout_bucket(&timeout_wheel[b]);
-
-	timeout_wheel_unlock(s);
+	mtx_leave(&timeout_mutex);
 }
 #endif
