@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 1998/03/26 23:47:29 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.14 2000/03/01 18:33:56 deraadt Exp $
 
 PROG=	login
 SRCS=	login.c failedlogin.c
@@ -22,7 +22,7 @@ DPADD+=	${LIBKRB5} ${LIBCRYPTO}
 .elif (${KERBEROS} == "yes")
 CFLAGS+= -DKERBEROS
 SRCS+=	klogin.c
-LDADD+=	-lkrb -ldes -lkafs
+LDADD+=	-lkafs -lkrb -ldes
 DPADD+=	${LIBKRB} ${LIBDES} ${LIBKAFS}
 .endif
 
