@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.45 2001/02/20 13:50:53 itojun Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.46 2001/03/01 08:34:37 itojun Exp $	*/
 /*      $NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $      */
 
 /*
@@ -81,7 +81,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.45 2001/02/20 13:50:53 itojun Exp $";
+static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.46 2001/03/01 08:34:37 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -767,12 +767,13 @@ gifsettunnel(src, dst)
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = afp->af_af;
+	hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
 
-	if ((ecode = getaddrinfo(src, NULL, NULL, &srcres)) != 0)
+	if ((ecode = getaddrinfo(src, NULL, &hints, &srcres)) != 0)
 		errx(1, "error in parsing address string: %s",
 		    gai_strerror(ecode));
 
-	if ((ecode = getaddrinfo(dst, NULL, NULL, &dstres)) != 0)  
+	if ((ecode = getaddrinfo(dst, NULL, &hints, &dstres)) != 0)
 		errx(1, "error in parsing address string: %s",
 		    gai_strerror(ecode));
 
@@ -2003,7 +2004,7 @@ in6_getaddr(s, which)
 	if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr) &&
 	    *(u_int16_t *)&sin6->sin6_addr.s6_addr[2] == 0 &&
 	    sin6->sin6_scope_id) {
-		*(u_int16_t *)&sin6->sin6_addr.s6_addr[2] = 
+		*(u_int16_t *)&sin6->sin6_addr.s6_addr[2] =
 		    htons(sin6->sin6_scope_id & 0xffff);
 		sin6->sin6_scope_id = 0;
 	}
