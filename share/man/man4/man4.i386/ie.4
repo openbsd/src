@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ie.4,v 1.4 1999/05/26 02:34:13 aaron Exp $
+.\"	$OpenBSD: ie.4,v 1.5 1999/05/27 18:42:30 aaron Exp $
 .\"
 .\" Copyright (c) 1994 James A. Jegers
 .\" All rights reserved.
@@ -37,10 +37,11 @@ device driver supports Intel 82586-based Ethernet cards. This includes the
 following network adapters:
 .Pp
 .Bl -tag -width -offset indent -compact
+.It 3Com 3C507
 .It AT&T StarLAN 10
 .It AT&T EN100
 .It AT&T StarLan Fiber
-.It 3Com 3C507
+.It Intel EtherExpress 16
 .El
 .Pp
 Other models of 3Com network cards are supported by the
@@ -50,6 +51,11 @@ Other models of 3Com network cards are supported by the
 .Xr ep 4 ,
 and
 .Xr xl 4
+drivers.
+Other models of Intel network cards are supported by the
+.Xr fxp 4
+and
+.Xr iy 4
 drivers.
 .Pp
 For more information on configuring this device, see
@@ -63,6 +69,8 @@ For example,
 .Xr eg 4 ,
 .Xr el 4 ,
 .Xr ep 4 ,
+.Xr fxp 4 ,
 .Xr ifmedia 4 ,
+.Xr iy 4 ,
 .Xr xl 4 ,
 .Xr ifconfig 8
