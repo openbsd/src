@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pfsync.4,v 1.8 2003/11/08 07:58:19 jmc Exp $
+.\"	$OpenBSD: pfsync.4,v 1.9 2003/12/16 03:27:36 mcbride Exp $
 .\"
 .\" Copyright (c) 2002 Michael Shalayeff
 .\" All rights reserved.
@@ -51,6 +51,50 @@ interface (see
 .Xr pf.conf 5
 for details).
 .Pp
+States can be synchronised between two or more firewalls using this
+interface, by specifying a synchronisation interface using
+.Xr ifconfig 8 .
+For example, the following command sets fxp0 as the synchronisation
+interface.
+.Bd -literal -offset indent
+# ifconfig pfsync0 syncif fxp0 
+.Ed
+.Pp
+State change messages are sent out on the synchronisation
+interface using IP multicast packets.
+The protocol is IP protocol 136, PFSYNC, and the multicast group
+used is 224.0.0.136.
+.Pp
+It is important that the synchronisation interface be on a trusted
+network as there is no authentication on the protocol and it would
+be trivial to spoof packets which create states, bypassing the pf
+ruleset. Ideally, this is a network dedicated to pfsync messages,
+ie. a crossover cable between two firewalls.
+.Pp
+There is a one-to-one correspondence between packets seen by
+.Xr bpf 4
+on the
+.Nm
+interface, and packets sent out on the synchronisation interface, i.e.
+a packet with 4 state deletion messages on
+.Nm
+means that the same 4 deletions were sent out on the synchronisation
+interface.
+However, the actual packet contents may differ as the messages
+sent over the network are "compressed" where possible, containing
+only the necessary information.
+.Pp
+The
+.Nm
+interface will also attempt to collapse multiple updates of the same
+state into one message where possible. The maximum number of times 
+this can be done before the update is sent out is controlled by the
+.Ar maxupd
+to ifconfig.
+(see
+.Xr ifconfig 8
+and the example below for more details)
+.Pp
 Each packet retrieved on this interface has a header associated
 with it of length
 .Dv PFSYNC_HDRLEN .
@@ -70,15 +114,17 @@ struct pfsync_header {
 .Ed
 .Sh EXAMPLES
 .Bd -literal -offset indent
-# ifconfig pfsync0 up
+# ifconfig pfsync0 up syncif fxp0 maxupd 64
 # tcpdump -s1500 -evtni pfsync0
 .Ed
 .Sh SEE ALSO
+.Xr bpf 4 ,
 .Xr inet 4 ,
 .Xr inet6 4 ,
 .Xr netintro 4 ,
 .Xr pf 4 ,
 .Xr pf.conf 5 ,
+.Xr protocols 5 ,
 .Xr ifconfig 8 ,
 .Xr tcpdump 8
 .Sh HISTORY
