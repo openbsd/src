@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2000/09/03 18:41:16 espie Exp $
+#	$OpenBSD: Makefile,v 1.8 2001/06/27 06:16:46 art Exp $
 
 PROG=	sysctl
 MAN=	sysctl.8
@@ -9,7 +9,3 @@ afterinstall:
 	(cd ${DESTDIR}/usr/sbin; ln -sf ../../sbin/sysctl .)
 
 .include <bsd.prog.mk>
-
-.if (${UVM:L} == "yes")
-CFLAGS+=-DUVM
-.endif

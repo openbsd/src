@@ -1,4 +1,4 @@
-/*	$OpenBSD: rstat_proc.c,v 1.13 2001/01/24 11:42:37 deraadt Exp $	*/
+/*	$OpenBSD: rstat_proc.c,v 1.14 2001/06/27 06:16:46 art Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -31,7 +31,7 @@
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";*/
 /*static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char rcsid[] = "$OpenBSD: rstat_proc.c,v 1.13 2001/01/24 11:42:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rstat_proc.c,v 1.14 2001/06/27 06:16:46 art Exp $";
 #endif
 
 /*
@@ -62,11 +62,9 @@ static char rcsid[] = "$OpenBSD: rstat_proc.c,v 1.13 2001/01/24 11:42:37 deraadt
 #endif
 #include <net/if.h>
 
-#if defined(UVM)
 #include <vm/vm.h>
 #include <sys/sysctl.h>
 #include <uvm/uvm_extern.h>
-#endif
 
 #undef FSHIFT			 /* Use protocol's shift and scale values */
 #undef FSCALE
@@ -99,10 +97,6 @@ struct nlist nl[] = {
 #define	X_CNT		5
 	{ "_cnt" },
 #else
-#ifndef UVM
-#define	X_CNT		2
-	{ "_cnt" },
-#endif
 #endif
 	{ NULL },
 };
@@ -214,13 +208,9 @@ updatestat()
 {
 	long off;
 	int i, save_errno = errno;
-#ifdef UVM
 	struct uvmexp uvmexp;
 	int mib[2];
 	size_t len;
-#else
-	struct vmmeter cnt;
-#endif
 	struct ifnet ifnet;
 	double avrun[3];
 	struct timeval tm, btm;
@@ -291,7 +281,6 @@ updatestat()
 	    stats_all.s1.cp_time[3]);
 #endif
 
-#ifdef UVM
 	mib[0] = CTL_VM;
 	mib[1] = VM_UVMEXP;
 	len = sizeof(uvmexp);
@@ -308,22 +297,6 @@ updatestat()
 	gettimeofday(&tm, (struct timezone *) 0);
 	stats_all.s1.v_intr -= hz*(tm.tv_sec - btm.tv_sec) +
 	    hz*(tm.tv_usec - btm.tv_usec)/1000000;
-#else
- 	if (kvm_read(kfd, (long)nl[X_CNT].n_value, (char *)&cnt, sizeof cnt) !=
-	    sizeof cnt) {
-		syslog(LOG_ERR, "can't read cnt from kmem");
-		exit(1);
-	}
-	stats_all.s1.v_pgpgin = cnt.v_pgpgin;
-	stats_all.s1.v_pgpgout = cnt.v_pgpgout;
-	stats_all.s1.v_pswpin = cnt.v_pswpin;
-	stats_all.s1.v_pswpout = cnt.v_pswpout;
-	stats_all.s1.v_intr = cnt.v_intr;
-	gettimeofday(&tm, (struct timezone *) 0);
-	stats_all.s1.v_intr -= hz*(tm.tv_sec - btm.tv_sec) +
-	    hz*(tm.tv_usec - btm.tv_usec)/1000000;
-	stats_all.s2.v_swtch = cnt.v_swtch;
-#endif
 
 #ifndef BSD
  	if (kvm_read(kfd, (long)nl[X_DKXFER].n_value,

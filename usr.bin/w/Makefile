@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2001/03/25 20:11:08 millert Exp $
+#	$OpenBSD: Makefile,v 1.5 2001/06/27 06:16:51 art Exp $
 
 PROG=	w
 SRCS=	fmt.c pr_time.c proc_compare.c w.c
@@ -13,6 +13,3 @@ LINKS=	${BINDIR}/w ${BINDIR}/uptime
 
 .include <bsd.prog.mk>
 
-.if (${UVM:L} == "yes")
-CFLAGS+=-DUVM
-.endif

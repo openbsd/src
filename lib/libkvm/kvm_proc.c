@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.7 2001/05/18 09:08:38 art Exp $	*/
+/*	$OpenBSD: kvm_proc.c,v 1.8 2001/06/27 06:16:45 art Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.7 2001/05/18 09:08:38 art Exp $";
+static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.8 2001/06/27 06:16:45 art Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -104,12 +104,8 @@ static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.7 2001/05/18 09:08:38 art Exp $";
 #include <vm/vm.h>
 #include <vm/vm_param.h>
 
-#ifdef UVM
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_amap.h>
-#else
-#include <vm/swap_pager.h>
-#endif
 
 #include <sys/sysctl.h>
 
@@ -122,10 +118,6 @@ static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.7 2001/05/18 09:08:38 art Exp $";
 #define KREAD(kd, addr, obj) \
 	(kvm_read(kd, addr, (void *)(obj), sizeof(*obj)) != sizeof(*obj))
 
-#ifndef UVM
-int		_kvm_readfromcore __P((kvm_t *, u_long, u_long));
-int		_kvm_readfrompager __P((kvm_t *, struct vm_object *, u_long));
-#endif
 ssize_t		kvm_uread __P((kvm_t *, const struct proc *, u_long, char *,
 		    size_t));
 
@@ -150,15 +142,10 @@ _kvm_uread(kd, p, va, cnt)
 	u_long addr, head;
 	u_long offset;
 	struct vm_map_entry vme;
-#ifdef UVM
 	struct vm_amap amap;
 	struct vm_anon *anonp, anon;
 	struct vm_page pg;
 	u_long slot;
-#else
-	struct vm_object vmo;
-	int rv;
-#endif
 
 	if (kd->swapspc == 0) {
 		kd->swapspc = (char *)_kvm_malloc(kd, kd->nbpg);
@@ -177,22 +164,15 @@ _kvm_uread(kd, p, va, cnt)
 		if (KREAD(kd, addr, &vme))
 			return (0);
 
-#ifdef UVM
 		if (va >= vme.start && va < vme.end && 
 		    vme.aref.ar_amap != NULL)
 			break;
-#else
-		if (va >= vme.start && va < vme.end && 
-		    vme.object.vm_object != 0)
-			break;
-#endif
 
 		addr = (u_long)vme.next;
 		if (addr == head)
 			return (0);
 	}
 
-#ifdef UVM
 	/*
 	 * we found the map entry, now to find the object...
 	 */
@@ -230,189 +210,12 @@ _kvm_uread(kd, p, va, cnt)
 			return NULL;
 		}
 	}
- 
-#else
-	/*
-	 * We found the right object -- follow shadow links.
-	 */
-	offset = va - vme.start + vme.offset;
-	addr = (u_long)vme.object.vm_object;
-
-	while (1) {
-		/* Try reading the page from core first. */
-		if ((rv = _kvm_readfromcore(kd, addr, offset)))
-			break;
-
-		if (KREAD(kd, addr, &vmo))
-			return (0);
-
-		/* If there is a pager here, see if it has the page. */
-		if (vmo.pager != 0 &&
-		    (rv = _kvm_readfrompager(kd, &vmo, offset)))
-			break;
-
-		/* Move down the shadow chain. */
-		addr = (u_long)vmo.shadow;
-		if (addr == 0)
-			return (0);
-		offset += vmo.shadow_offset;
-	}
-
-	if (rv == -1)
-		return (0);
-#endif
 
 	/* Found the page. */
 	offset %= kd->nbpg;
 	*cnt = kd->nbpg - offset;
 	return (&kd->swapspc[offset]);
 }
-
-#ifndef UVM
-
-#define	vm_page_hash(kd, object, offset) \
-	(((u_long)object + (u_long)(offset / kd->nbpg)) & kd->vm_page_hash_mask)
-
-int
-_kvm_coreinit(kd)
-	kvm_t *kd;
-{
-	struct nlist nlist[3];
-
-	nlist[0].n_name = "_vm_page_buckets";
-	nlist[1].n_name = "_vm_page_hash_mask";
-	nlist[2].n_name = 0;
-	if (kvm_nlist(kd, nlist) != 0)
-		return (-1);
-
-	if (KREAD(kd, nlist[0].n_value, &kd->vm_page_buckets) ||
-	    KREAD(kd, nlist[1].n_value, &kd->vm_page_hash_mask))
-		return (-1);
-
-	return (0);
-}
-
-int
-_kvm_readfromcore(kd, object, offset)
-	kvm_t *kd;
-	u_long object, offset;
-{
-	u_long addr;
-	struct pglist bucket;
-	struct vm_page mem;
-	off_t seekpoint;
-
-	if (kd->vm_page_buckets == 0 &&
-	    _kvm_coreinit(kd))
-		return (-1);
-
-	addr = (u_long)&kd->vm_page_buckets[vm_page_hash(kd, object, offset)];
-	if (KREAD(kd, addr, &bucket))
-		return (-1);
-
-	addr = (u_long)bucket.tqh_first;
-	offset &= ~(kd->nbpg -1);
-	while (1) {
-		if (addr == 0)
-			return (0);
-
-		if (KREAD(kd, addr, &mem))
-			return (-1);
-
-		if ((u_long)mem.object == object &&
-		    (u_long)mem.offset == offset)
-			break;
-
-		addr = (u_long)mem.hashq.tqe_next;
-	}
-
-	seekpoint = mem.phys_addr;
-
-	if (_kvm_pread(kd, kd->pmfd, kd->swapspc, kd->nbpg, (off_t)seekpoint) != kd->nbpg) {
-		return (-1);
-	}
-
-	return (1);
-}
-
-int
-_kvm_readfrompager(kd, vmop, offset)
-	kvm_t *kd;
-	struct vm_object *vmop;
-	u_long offset;
-{
-	u_long addr;
-	struct pager_struct pager;
-	struct swpager swap;
-	int ix;
-	struct swblock swb;
-	off_t seekpoint;
-
-	/* Read in the pager info and make sure it's a swap device. */
-	addr = (u_long)vmop->pager;
-	if (KREAD(kd, addr, &pager) || pager.pg_type != PG_SWAP)
-		return (-1);
-
-	/* Read in the swap_pager private data. */
-	addr = (u_long)pager.pg_data;
-	if (KREAD(kd, addr, &swap))
-		return (-1);
-
-	/*
-	 * Calculate the paging offset, and make sure it's within the
-	 * bounds of the pager.
-	 */
-	offset += vmop->paging_offset;
-	ix = offset / dbtob(swap.sw_bsize);
-#if 0
-	if (swap.sw_blocks == 0 || ix >= swap.sw_nblocks)
-		return (-1);
-#else
-	if (swap.sw_blocks == 0 || ix >= swap.sw_nblocks) {
-		int i;
-		printf("BUG BUG BUG BUG:\n");
-		printf("object %x offset %x pgoffset %x pager %x swpager %x\n",
-		    vmop, offset - vmop->paging_offset, vmop->paging_offset,
-		    vmop->pager, pager.pg_data);
-		printf("osize %x bsize %x blocks %x nblocks %x\n",
-		    swap.sw_osize, swap.sw_bsize, swap.sw_blocks,
-		    swap.sw_nblocks);
-		for (ix = 0; ix < swap.sw_nblocks; ix++) {
-			addr = (u_long)&swap.sw_blocks[ix];
-			if (KREAD(kd, addr, &swb))
-				return (0);
-			printf("sw_blocks[%d]: block %x mask %x\n", ix,
-			    swb.swb_block, swb.swb_mask);
-		}
-		return (-1);
-	}
-#endif
-
-	/* Read in the swap records. */
-	addr = (u_long)&swap.sw_blocks[ix];
-	if (KREAD(kd, addr, &swb))
-		return (-1);
-
-	/* Calculate offset within pager. */
-	offset %= dbtob(swap.sw_bsize);
-
-	/* Check that the page is actually present. */
-	if ((swb.swb_mask & (1 << (offset / kd->nbpg))) == 0)
-		return (0);
-
-	if (!ISALIVE(kd))
-		return (-1);
-
-	/* Calculate the physical address and read the page. */
-	seekpoint = dbtob(swb.swb_block) + (offset & ~(kd->nbpg -1));
-
-	if (_kvm_pread(kd, kd->swfd, kd->swapspc, kd->nbpg, (off_t)seekpoint) != kd->nbpg) {
-		return (-1);
-	}
-
-	return (1);
-}
-#endif /* UVM */
 
 /*
  * Read proc's from memory file into buffer bp, which has space to hold

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2001/01/28 19:34:31 niklas Exp $
+#	$OpenBSD: Makefile,v 1.6 2001/06/27 06:16:46 art Exp $
 
 PROG =	rpc.rstatd
 .PATH: ${.CURDIR}/../../usr.bin/vmstat
@@ -12,8 +12,4 @@ DPADD=	${LIBRPCSVC} ${LIBKVM}
 LDADD=	-lrpcsvc -lkvm
 
 .include <bsd.prog.mk>
-
-.if (${UVM:L} == "yes")
-CFLAGS+=-DUVM
-.endif
 

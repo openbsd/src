@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.24 2001/06/20 11:49:24 mpech Exp $
+#	$OpenBSD: bsd.README,v 1.25 2001/06/27 06:16:48 art Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -262,10 +262,6 @@ GLOBAL_AUTOCONF_CACHE
 		test results will be saved in.	Reduces redundant tests.
 		Be careful!  Redundant tests may not be redundant if you
 		are installing substantially updated gnu programs.
-
-UVM
-		Set to yes on machines that switched to the new unified
-		vm. Temporary, until everything supports uvm.
 
 bsd.own.mk is generally useful when building your own Makefiles so that
 they use the same default owners etc. as the rest of the tree.

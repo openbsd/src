@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2000/09/03 18:41:17 espie Exp $
+#	$OpenBSD: Makefile,v 1.8 2001/06/27 06:16:49 art Exp $
 
 PROG=	fstat
 DPADD=	${LIBKVM}
@@ -11,6 +11,3 @@ CFLAGS+=-DINET6
 
 .include <bsd.prog.mk>
 
-.if (${UVM:L} == "yes")
-CFLAGS+=-DUVM
-.endif

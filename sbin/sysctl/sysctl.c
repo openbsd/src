@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.72 2001/06/22 23:17:27 art Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.73 2001/06/27 06:16:47 art Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.72 2001/06/22 23:17:27 art Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.73 2001/06/27 06:16:47 art Exp $";
 #endif
 #endif /* not lint */
 
@@ -88,9 +88,7 @@ static char *rcsid = "$OpenBSD: sysctl.c,v 1.72 2001/06/22 23:17:27 art Exp $";
 #include <netinet6/pim6_var.h>
 #endif
 
-#ifdef UVM
 #include <uvm/uvm_swap_encrypt.h>
-#endif
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
@@ -450,7 +448,6 @@ parse(string, flags)
 			(void)printf("%p\n", _ps.val);
 			return;
 		}
-#ifdef UVM
 		else if (mib[1] == VM_SWAPENCRYPT) {
 			len = sysctl_swpenc(string, &bufp, mib, flags, &type);
 			if (len < 0)
@@ -458,7 +455,6 @@ parse(string, flags)
 
 			break;
 		}
-#endif
 		if (flags == 0)
 			return;
 		warnx("use vmstat or systat to view %s information", string);
@@ -1178,7 +1174,6 @@ sysctl_bios(string, bufpp, mib, flags, typep)
 }
 #endif
 
-#ifdef UVM
 struct ctlname swpencname[] = CTL_SWPENC_NAMES;
 struct list swpenclist = { swpencname, SWPENC_MAXID };
 
@@ -1205,7 +1200,6 @@ sysctl_swpenc(string, bufpp, mib, flags, typep)
 	*typep = swpenclist.list[indx].ctl_type;
 	return(3);
 }
-#endif
 
 struct ctlname inetname[] = CTL_IPPROTO_NAMES;
 struct ctlname ipname[] = IPCTL_NAMES;

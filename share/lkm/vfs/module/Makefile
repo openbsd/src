@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2000/09/03 18:41:17 espie Exp $
+#	$OpenBSD: Makefile,v 1.7 2001/06/27 06:16:47 art Exp $
 #
 # Makefile for newsyscall
 #
@@ -68,10 +68,6 @@ $(MODOBJ): $(OBJS) $(KOBJS)
 	$(LD) -r -o $(MODOBJ) $(OBJS) $(KOBJS)
 
 .include <bsd.own.mk>
-
-.if (${UVM:L} == "yes")
-CFLAGS+=-DUVM
-.endif
 
 #
 # EOF -- This file has not been truncated.
