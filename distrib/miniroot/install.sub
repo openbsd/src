@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.138 1999/10/15 16:55:00 millert Exp $
+#	$OpenBSD: install.sub,v 1.139 1999/10/16 17:37:36 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -1048,9 +1048,9 @@ eval echo "\\\\n"\
 "	\$_${_url_type}_server_ip:\$_${_url_type}_server_dir\\\\n"\
 "You can also enter \'all\' to install all the standard sets, or \'list\' to list\\\\n"\
 "the files available.  When you are done selecting files, enter \'done\'. Some of\\\\n"\
-"these sets are required for your ${MODE} and some are optional -- you will want at\\\\n"\
-"least the base and bsd sets.  Consult the installation notes if you are not sure\\\\n"\
-"which sets are required!"
+"these sets are required for your ${MODE} and some are optional -- you will want\\\\n"\
+"at least the base and bsd sets.  Consult the installation notes if you are not\\\\n"\
+"sure which sets are required!"
 _osetsdone="$_setsdone"
 # Set the minimal default
 for _f in $_sets $_kernel; do
