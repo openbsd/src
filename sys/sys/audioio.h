@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioio.h,v 1.11 2000/04/25 23:33:58 csapuntz Exp $	*/
+/*	$OpenBSD: audioio.h,v 1.12 2001/01/28 09:45:26 aaron Exp $	*/
 /*	$NetBSD: audioio.h,v 1.24 1998/08/13 06:28:41 mrg Exp $	*/
 
 /*
@@ -232,6 +232,7 @@ typedef struct mixer_devinfo {
 		struct audio_mixer_value {
 			audio_mixer_name_t units;
 			int num_channels;
+			int delta;
 		} v;
 	} un;
 } mixer_devinfo_t;
