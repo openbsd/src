@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.18 2002/05/16 21:11:14 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.19 2002/05/16 21:40:12 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -157,7 +157,7 @@ struct cdevsw   cdevsw[] =
 	cdev_notdef(),			/* 32 */
 #endif
 	cdev_altq_init(NALTQ,altq),	/* 33: ALTQ control interface */
-	cdev_systrace_init(NSYSTRACE,systrace)	/* 34: system call tracing */
+	cdev_systrace_init(NSYSTRACE,systrace),	/* 34: system call tracing */
 	cdev_lkm_dummy(),		/* 35 */
 	cdev_lkm_dummy(),		/* 36 */
 	cdev_lkm_dummy(),		/* 37 */
