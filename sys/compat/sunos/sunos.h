@@ -1,5 +1,5 @@
-/*	$OpenBSD: sunos.h,v 1.2 1996/04/18 21:21:42 niklas Exp $	*/
-/*	$NetBSD: sunos.h,v 1.6 1996/02/18 14:46:28 pk Exp $	*/
+/*	$OpenBSD: sunos.h,v 1.3 1996/05/10 12:50:22 deraadt Exp $	*/
+/*	$NetBSD: sunos.h,v 1.8 1996/05/05 16:07:43 veego Exp $	*/
 
 #define	SUNM_RDONLY	0x01	/* mount fs read-only */
 #define	SUNM_NOSUID	0x02	/* mount fs with setuid disallowed */
@@ -158,3 +158,9 @@ struct sunos_audio_info {
 #define SUNOS_AUDIO_DEV_SPEAKERBOX		2
 #define SUNOS_AUDIO_DEV_CODEC			3
 
+__BEGIN_DECLS
+/* Defined in arch/m68k/m68k/sunos_machdep.c -- sparc uses regular sendsig() */
+#ifndef sparc
+void	sunos_sendsig __P((sig_t, int, int, u_long));
+#endif
+__END_DECLS
