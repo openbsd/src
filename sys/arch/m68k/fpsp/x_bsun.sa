@@ -1,4 +1,4 @@
-*	$OpenBSD: x_bsun.sa,v 1.2 1996/05/29 21:05:46 niklas Exp $
+*	$OpenBSD: x_bsun.sa,v 1.3 2002/01/23 19:16:09 fgsch Exp $
 *	$NetBSD: x_bsun.sa,v 1.2 1994/10/26 07:50:22 cgd Exp $
 
 *	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
@@ -36,7 +36,7 @@
 *
 *	fpsp_bsun --- FPSP handler for branch/set on unordered exception
 *
-*	Copy the PC to FPIAR to maintain 881/882 compatability
+*	Copy the PC to FPIAR to maintain 881/882 compatibility
 *
 *	The real_bsun handler will need to perform further corrective
 *	measures as outlined in the 040 User's Manual on pages

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.12 2001/12/07 15:22:35 art Exp $
+#	$OpenBSD: RAMDISK,v 1.13 2002/01/23 19:16:09 fgsch Exp $
 
 #
 # A ramdisk kernel
@@ -31,10 +31,10 @@ option		FPU_EMULATE	# FPU emulation
 option		ADOSFS		# AmigaDOS file system
 
 #
-# Compatability options for various existing systems
+# Compatibility options for various existing systems
 #
 #option		COMPAT_SUNOS	# Support to run Sun (m68k) executables
-#option		COMPAT_HPUX	# HP300 compatability
+#option		COMPAT_HPUX	# HP300 compatibility
 
 #
 # Support for various kernel options

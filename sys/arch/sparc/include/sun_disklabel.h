@@ -1,4 +1,4 @@
-/*	$OpenBSD: sun_disklabel.h,v 1.6 1996/12/11 13:36:11 deraadt Exp $	*/
+/*	$OpenBSD: sun_disklabel.h,v 1.7 2002/01/23 19:16:09 fgsch Exp $	*/
 /*	$NetBSD: sun_disklabel.h,v 1.6 1996/01/07 22:03:09 thorpej Exp $ */
 
 /*
@@ -117,6 +117,6 @@ struct sun_disklabel {			/* total size = 512 bytes */
 /* reads sun label in sector at [cp..cp+511] and sets *lp to BSD label */
 int	sun_disklabel __P((caddr_t, struct disklabel *)); /* true on success */
 
-/* compatability dk ioctl's */
+/* compatibility dk ioctl's */
 int	sun_dkioctl __P((struct disk *, u_long, caddr_t, int));
 #endif

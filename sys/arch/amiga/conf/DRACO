@@ -1,4 +1,4 @@
-#	$OpenBSD: DRACO,v 1.17 2001/12/07 15:22:35 art Exp $
+#	$OpenBSD: DRACO,v 1.18 2002/01/23 19:16:09 fgsch Exp $
 #	$NetBSD: DRACO,v 1.7 1996/12/20 19:18:16 veego Exp $
 
 #
@@ -60,13 +60,13 @@ option		MSDOSFS		# MS-DOS filesystem
 
 
 #
-# Compatability options for various existing systems
+# Compatibility options for various existing systems
 #
 option		COMPAT_12
 #option		COMPAT_SUNOS	# Support to run Sun (m68k) executables
 #option		"TCP_COMPAT_42"	# Use 4.2 BSD style TCP
 option		"COMPAT_NOMID"	# allow nonvalid machine id executables
-#option		COMPAT_HPUX	# HP300 compatability
+#option		COMPAT_HPUX	# HP300 compatibility
 
 #
 # Support for System V IPC facilities.

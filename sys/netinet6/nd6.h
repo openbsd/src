@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.14 2001/02/23 08:01:15 itojun Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.15 2002/01/23 19:16:09 fgsch Exp $	*/
 /*	$KAME: nd6.h,v 1.52 2001/02/19 04:40:37 itojun Exp $	*/
 
 /*
@@ -202,7 +202,7 @@ struct nd_prefix {
  */
 struct inet6_ndpr_msghdr {
 	u_short	inpm_msglen;	/* to skip over non-understood messages */
-	u_char	inpm_version;	/* future binary compatability */
+	u_char	inpm_version;	/* future binary compatibility */
 	u_char	inpm_type;	/* message type */
 	struct in6_addr inpm_prefix;
 	u_long	prm_vltim;

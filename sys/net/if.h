@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.31 2001/07/05 08:34:46 angelos Exp $	*/
+/*	$OpenBSD: if.h,v 1.32 2002/01/23 19:16:09 fgsch Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -323,7 +323,7 @@ struct ifprefix {
  */
 struct if_msghdr {
 	u_short	ifm_msglen;	/* to skip over non-understood messages */
-	u_char	ifm_version;	/* future binary compatability */
+	u_char	ifm_version;	/* future binary compatibility */
 	u_char	ifm_type;	/* message type */
 	int	ifm_addrs;	/* like rtm_addrs */
 	int	ifm_flags;	/* value of if_flags */
@@ -337,7 +337,7 @@ struct if_msghdr {
  */
 struct ifa_msghdr {
 	u_short	ifam_msglen;	/* to skip over non-understood messages */
-	u_char	ifam_version;	/* future binary compatability */
+	u_char	ifam_version;	/* future binary compatibility */
 	u_char	ifam_type;	/* message type */
 	int	ifam_addrs;	/* like rtm_addrs */
 	int	ifam_flags;	/* value of ifa_flags */
