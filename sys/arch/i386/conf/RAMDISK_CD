@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.56 2002/03/30 20:11:03 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.57 2002/04/02 17:14:47 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -289,7 +289,7 @@ wb*	at pci? dev ? function ?		# Winbond W89C840F ethernet
 ti*	at pci? dev ? function ?		# Alteon Tigon 1Gb ethernet
 skc*	at pci? dev ? function ?		# SysKonnect GEnesis 984x
 sk*	at skc?					#  each port of above
-wx*	at pci? dev ? function ?		# Intel Pro/1000 ethernet
+gx*	at pci? dev ? function ?		# Intel Pro/1000 ethernet
 txp*	at pci? dev ? function ?		# 3com 3CR990
 nge*	at pci? dev ? function ?		# NS DP83820/DP83821 GigE
 bge*	at pci? dev ? function ?		# Broadcom BCM570x (aka Tigon3)

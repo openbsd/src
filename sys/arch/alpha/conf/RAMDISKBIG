@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKBIG,v 1.23 2002/04/01 18:50:12 nate Exp $
+#	$OpenBSD: RAMDISKBIG,v 1.24 2002/04/02 17:14:48 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -177,7 +177,7 @@ ste*	at pci? dev ? function ?	# Sundance ST201 ethernet
 ti*	at pci? dev ? function ?	# Alteon Tigon 1Gb ethernet
 skc*	at pci? dev ? function ?	# SysKonnect GEnesis 984x
 sk*	at skc?				#  each port of above
-wx*	at pci? dev ? function ?	# Intel Pro/1000 ethernet
+gx*	at pci? dev ? function ?	# Intel Pro/1000 ethernet
 
 #BROKEN:  The following two drivers have 64-bit issues
 #tx*	at pci? dev ? function ?	# SMC 83C170 EPIC ethernet

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.292 2002/04/02 13:06:56 nate Exp $
+#	$OpenBSD: GENERIC,v 1.293 2002/04/02 17:14:47 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -336,13 +336,12 @@ dc*	at cardbus? dev ? function ?		# 21143, "tulip" clone ethernet
 ti*	at pci? dev ? function ?		# Alteon Tigon 1Gb ethernet
 skc*	at pci? dev ? function ?		# SysKonnect GEnesis 984x
 sk*	at skc?					#  each port of above
-wx*	at pci? dev ? function ?		# Intel Pro/1000 ethernet
+gx*	at pci? dev ? function ?		# Intel Pro/1000 ethernet
 txp*	at pci? dev ? function ?		# 3com 3CR990
 nge*	at pci? dev ? function ?		# NS DP83820/DP83821 GigE
 bge*	at pci? dev ? function ?		# Broadcom BCM570x (aka Tigon3)
 stge*	at pci? dev ? function ?		# Sundance TC9021 GigE
 #lge*	at pci? dev ? function ?		# Level1 LXT1001 GigE
-#gx*	at pci? dev ? function ?		# Intel Pro/1000 ethernet
 
 # Wireless network cards
 wi*	at pci? dev ? function ?		# WaveLAN IEEE 802.11DS
