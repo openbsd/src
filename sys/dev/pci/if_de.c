@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.63 2005/01/15 05:24:11 brad Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.64 2005/03/29 00:37:50 martin Exp $	*/
 /*	$NetBSD: if_de.c,v 1.45 1997/06/09 00:34:18 thorpej Exp $	*/
 
 /*-
@@ -268,8 +268,10 @@ tulip_txprobe(
     /*
      * Construct a LLC TEST message which will point to ourselves.
      */
-    bcopy(sc->tulip_enaddr, mtod(m, struct ether_header *)->ether_dhost, 6);
-    bcopy(sc->tulip_enaddr, mtod(m, struct ether_header *)->ether_shost, 6);
+    bcopy(sc->tulip_enaddr, mtod(m, struct ether_header *)->ether_dhost,
+       ETHER_ADDR_LEN);
+    bcopy(sc->tulip_enaddr, mtod(m, struct ether_header *)->ether_shost,
+       ETHER_ADDR_LEN);
     mtod(m, struct ether_header *)->ether_type = htons(3);
     mtod(m, unsigned char *)[14] = 0;
     mtod(m, unsigned char *)[15] = 0;
@@ -305,13 +307,36 @@ tulip_media_set(
     if (mi == NULL)
 	return;
 
-    /*
+    /* Reset the SIA first
+     */
+    if (mi->mi_type == TULIP_MEDIAINFO_SIA || (sc->tulip_features & TULIP_HAVE_SIANWAY)) {
+	TULIP_CSR_WRITE(sc, csr_sia_connectivity, TULIP_SIACONN_RESET);
+    }
+
+    /* Next, set full duplex if needed.
+     */
+    if (sc->tulip_flags & TULIP_FULLDUPLEX) {
+#ifdef TULIP_DEBUG
+       if (TULIP_CSR_READ(sc, csr_command) & (TULIP_CMD_RXRUN|TULIP_CMD_TXRUN)) {
+	printf(TULIP_PRINTF_FMT ": warning: board is running (FD).\n",
+		TULIP_PRINTF_ARGS);
+	}
+	if ((TULIP_CSR_READ(sc, csr_command) & TULIP_CMD_FULLDUPLEX) == 0) {
+	    loudprintf(TULIP_PRINTF_FMT ": setting full duplex.\n",
+		       TULIP_PRINTF_ARGS);
+	}
+#endif
+	sc->tulip_cmdmode |= TULIP_CMD_FULLDUPLEX;
+	TULIP_CSR_WRITE(sc, csr_command, sc->tulip_cmdmode & ~(TULIP_CMD_RXRUN|TULIP_CMD_TXRUN));
+    }
+
+    /* Now setup the media.
+     *
      * If we are switching media, make sure we don't think there's
      * any stale RX activity
      */
     sc->tulip_flags &= ~TULIP_RXACT;
     if (mi->mi_type == TULIP_MEDIAINFO_SIA) {
-	TULIP_CSR_WRITE(sc, csr_sia_connectivity, TULIP_SIACONN_RESET);
 	TULIP_CSR_WRITE(sc, csr_sia_tx_rx,        mi->mi_sia_tx_rx);
 	if (sc->tulip_features & TULIP_HAVE_SIAGP) {
 	    TULIP_CSR_WRITE(sc, csr_sia_general,  mi->mi_sia_gp_control|mi->mi_sia_general|TULIP_SIAGEN_WATCHDOG);
@@ -374,6 +399,14 @@ tulip_media_set(
 		TULIP_CSR_WRITE(sc, csr_gp, sc->tulip_rombuf[mi->mi_gpr_offset + idx]);
 	    }
 	}
+
+	if (sc->tulip_features & TULIP_HAVE_SIANWAY) {
+	    /* Set the SIA port into MII mode */
+	    TULIP_CSR_WRITE(sc, csr_sia_general, 1);
+	    TULIP_CSR_WRITE(sc, csr_sia_tx_rx, 0);
+	    TULIP_CSR_WRITE(sc, csr_sia_status, 0);
+	}
+
 	if (sc->tulip_flags & TULIP_TRYNWAY) {
 	    tulip_mii_autonegotiate(sc, sc->tulip_phyaddr);
 	} else if ((sc->tulip_flags & TULIP_DIDNWAY) == 0) {
@@ -418,9 +451,9 @@ tulip_linkup(
 	sc->tulip_media = media;
 	sc->tulip_flags |= TULIP_PRINTMEDIA;
 	if (TULIP_IS_MEDIA_FD(sc->tulip_media)) {
-	    sc->tulip_cmdmode |= TULIP_CMD_FULLDUPLEX;
+	    sc->tulip_flags |= TULIP_FULLDUPLEX;
 	} else if (sc->tulip_chipid != TULIP_21041 || (sc->tulip_flags & TULIP_DIDNWAY) == 0) {
-	    sc->tulip_cmdmode &= ~TULIP_CMD_FULLDUPLEX;
+	    sc->tulip_flags &= ~TULIP_FULLDUPLEX;
 	}
     }
     /*
@@ -558,7 +591,8 @@ tulip_media_link_monitor(
 	/*
 	 * Read the PHY status register.
 	 */
-	status = tulip_mii_readreg(sc, sc->tulip_phyaddr, PHYREG_STATUS);
+	status = tulip_mii_readreg(sc, sc->tulip_phyaddr, PHYREG_STATUS)
+		| tulip_mii_readreg(sc, sc->tulip_phyaddr, PHYREG_STATUS);
 	if (status & PHYSTS_AUTONEG_DONE) {
 	    /*
 	     * If the PHY has completed autonegotiation, see the if the
@@ -1270,6 +1304,17 @@ static const tulip_phy_attr_t tulip_mii_phy_attrlist[] = {
       "Seeq 80C240"
 #endif
     },
+    { 0x0281F400, 3,	/* 00-A0-7D */
+      {
+	{ 0x12, 0x0080, 0x0000 },	/* 10T */
+	{ 0x12, 0x0080, 0x0080 },	/* 100TX */
+	{ },				/* 100T4 */
+	{ 0x12, 0x0040, 0x0040 },	/* FULL_DUPLEX */
+      },
+#if defined(TULIP_DEBUG)
+      "Seeq 80225"
+#endif
+    },
 #if 0
     { 0x0015F420, 0,	/* 00-A0-7D */
       {
@@ -1330,7 +1375,8 @@ tulip_mii_phy_readspecific(
     /*
      * Don't read phy specific registers if link is not up.
      */
-    data = tulip_mii_readreg(sc, sc->tulip_phyaddr, PHYREG_STATUS);
+    data = tulip_mii_readreg(sc, sc->tulip_phyaddr, PHYREG_STATUS)
+	   | tulip_mii_readreg(sc, sc->tulip_phyaddr, PHYREG_STATUS);
     if ((data & (PHYSTS_LINK_UP|PHYSTS_EXTENDED_REGS)) != (PHYSTS_LINK_UP|PHYSTS_EXTENDED_REGS))
 	return TULIP_MEDIA_UNKNOWN;
 
@@ -1449,7 +1495,8 @@ tulip_mii_autonegotiate(
 		sc->tulip_if.if_flags &= ~(IFF_UP|IFF_RUNNING);
 		return;
 	    }
-	    status = tulip_mii_readreg(sc, phyaddr, PHYREG_STATUS);
+	    status = tulip_mii_readreg(sc, phyaddr, PHYREG_STATUS)
+		    | tulip_mii_readreg(sc, phyaddr, PHYREG_STATUS);
 	    if ((status & PHYSTS_CAN_AUTONEG) == 0) {
 #if defined(TULIP_DEBUG)
 		loudprintf(TULIP_PRINTF_FMT "(phy%d): autonegotiation disabled\n",
@@ -1468,8 +1515,9 @@ tulip_mii_autonegotiate(
 		loudprintf(TULIP_PRINTF_FMT "(phy%d): oops: enable autonegotiation failed: 0x%04x\n",
 			   TULIP_PRINTF_ARGS, phyaddr, data);
 	    else
-		loudprintf(TULIP_PRINTF_FMT "(phy%d): autonegotiation restarted: 0x%04x\n",
-			   TULIP_PRINTF_ARGS, phyaddr, data);
+		loudprintf(TULIP_PRINTF_FMT "(phy%d): autonegotiation restarted: 0x%04x (ad=0x%04x)\n",
+			   TULIP_PRINTF_ARGS, phyaddr, data,
+			   tulip_mii_readreg(sc, phyaddr, PHYREG_AUTONEG_ADVERTISEMENT));
 	    sc->tulip_dbg.dbg_nway_starts++;
 #endif
 	    sc->tulip_probe_state = TULIP_PROBE_PHYAUTONEG;
@@ -1477,7 +1525,8 @@ tulip_mii_autonegotiate(
 	    /* FALL THROUGH */
 	}
         case TULIP_PROBE_PHYAUTONEG: {
-	    u_int32_t status = tulip_mii_readreg(sc, phyaddr, PHYREG_STATUS);
+	    u_int32_t status = tulip_mii_readreg(sc, phyaddr, PHYREG_STATUS)
+			    | tulip_mii_readreg(sc, phyaddr, PHYREG_STATUS);
 	    u_int32_t data;
 	    if ((status & PHYSTS_AUTONEG_DONE) == 0) {
 		if (sc->tulip_probe_timeout > 0) {
@@ -1493,10 +1542,11 @@ tulip_mii_autonegotiate(
 		sc->tulip_probe_state = TULIP_PROBE_MEDIATEST;
 		return;
 	    }
-	    data = tulip_mii_readreg(sc, phyaddr, PHYREG_AUTONEG_ABILITIES);
+	    data = tulip_mii_readreg(sc, phyaddr, PHYREG_AUTONEG_ABILITIES)
+		| tulip_mii_readreg(sc, phyaddr, PHYREG_AUTONEG_ABILITIES);
 #if defined(TULIP_DEBUG)
-	    loudprintf(TULIP_PRINTF_FMT "(phy%d): autonegotiation complete: 0x%04x\n",
-		       TULIP_PRINTF_ARGS, phyaddr, data);
+	    loudprintf(TULIP_PRINTF_FMT "(phy%d): autonegotiation complete: 0x%04x (sts=0x%04x)\n",
+		       TULIP_PRINTF_ARGS, phyaddr, data, status);
 #endif
 	    data = (data << 6) & status;
 	    if (!tulip_mii_map_abilities(sc, data))
@@ -1529,8 +1579,9 @@ tulip_2114x_media_preset(
     else
 	media = sc->tulip_probe_media;
 
-    sc->tulip_cmdmode &= ~TULIP_CMD_PORTSELECT;
-    sc->tulip_flags &= ~TULIP_SQETEST;
+    sc->tulip_cmdmode &= ~(TULIP_CMD_PORTSELECT|TULIP_CMD_NOHEARTBEAT
+		|TULIP_CMD_FULLDUPLEX|TULIP_CMD_TXTHRSHLDCTL);
+    sc->tulip_flags &= ~(TULIP_SQETEST|TULIP_FULLDUPLEX);
     if (media != TULIP_MEDIA_UNKNOWN && media != TULIP_MEDIA_MAX) {
 #if defined(TULIP_DEBUG)
 	if (media < TULIP_MEDIA_MAX && sc->tulip_mediums[media] != NULL) {
@@ -1556,7 +1607,6 @@ tulip_2114x_media_preset(
 	case TULIP_MEDIA_BNC:
 	case TULIP_MEDIA_AUI:
 	case TULIP_MEDIA_10BASET: {
-	    sc->tulip_cmdmode &= ~TULIP_CMD_FULLDUPLEX;
 	    sc->tulip_cmdmode |= TULIP_CMD_TXTHRSHLDCTL;
 	    sc->tulip_if.if_baudrate = 10000000;
 	    sc->tulip_flags |= TULIP_SQETEST;
@@ -1564,22 +1614,31 @@ tulip_2114x_media_preset(
 	}
 	case TULIP_MEDIA_10BASET_FD: {
 	    sc->tulip_cmdmode |= TULIP_CMD_FULLDUPLEX|TULIP_CMD_TXTHRSHLDCTL;
+	    sc->tulip_flags |= TULIP_FULLDUPLEX;
+	    sc->tulip_cmdmode |= TULIP_CMD_TXTHRSHLDCTL|TULIP_CMD_FULLDUPLEX;
 	    sc->tulip_if.if_baudrate = 10000000;
 	    break;
 	}
 	case TULIP_MEDIA_100BASEFX:
 	case TULIP_MEDIA_100BASET4:
 	case TULIP_MEDIA_100BASETX: {
-	    sc->tulip_cmdmode &= ~(TULIP_CMD_FULLDUPLEX|TULIP_CMD_TXTHRSHLDCTL);
 	    sc->tulip_cmdmode |= TULIP_CMD_PORTSELECT;
 	    sc->tulip_if.if_baudrate = 100000000;
+	    if (mi->mi_type == TULIP_MEDIAINFO_SYM
+		    || mi->mi_type == TULIP_MEDIAINFO_MII) {
+		sc->tulip_cmdmode |= TULIP_CMD_NOHEARTBEAT;
+	    }
 	    break;
 	}
 	case TULIP_MEDIA_100BASEFX_FD:
 	case TULIP_MEDIA_100BASETX_FD: {
-	    sc->tulip_cmdmode |= TULIP_CMD_FULLDUPLEX|TULIP_CMD_PORTSELECT;
-	    sc->tulip_cmdmode &= ~TULIP_CMD_TXTHRSHLDCTL;
+	    sc->tulip_flags |= TULIP_FULLDUPLEX;
+	    sc->tulip_cmdmode |= TULIP_CMD_PORTSELECT|TULIP_CMD_FULLDUPLEX;
 	    sc->tulip_if.if_baudrate = 100000000;
+	    if (mi->mi_type == TULIP_MEDIAINFO_SYM
+		    || mi->mi_type == TULIP_MEDIAINFO_MII) {
+		sc->tulip_cmdmode |= TULIP_CMD_NOHEARTBEAT;
+	    }
 	    break;
 	}
 	default: {
@@ -2412,7 +2471,8 @@ tulip_srom_decode(
     /*
      * Save the hardware address.
      */
-    bcopy((caddr_t) shp->sh_ieee802_address, (caddr_t) sc->tulip_enaddr, 6);
+    bcopy((caddr_t) shp->sh_ieee802_address, (caddr_t) sc->tulip_enaddr,
+       ETHER_ADDR_LEN);
     /*
      * If this is a multiple port card, add the adapter index to the last
      * byte of the hardware address.  (if it isn't multiport, adding 0
@@ -2888,7 +2948,7 @@ tulip_read_macaddr(
 	if (sc->tulip_rombuf[0] == 0 && sc->tulip_rombuf[1] == 0
 		&& sc->tulip_rombuf[2] == 0)
 	    return -4;
-	bcopy(sc->tulip_rombuf, sc->tulip_enaddr, 6);
+	bcopy(sc->tulip_rombuf, sc->tulip_enaddr, ETHER_ADDR_LEN);
 	sc->tulip_features |= TULIP_HAVE_OKROM;
 	goto check_oui;
     } else {
@@ -2928,7 +2988,8 @@ tulip_read_macaddr(
 		    if (!tulip_srom_decode(sc))
 			return -5;
 		} else {
-		    bcopy(root_sc->tulip_enaddr, sc->tulip_enaddr, 6);
+		    bcopy(root_sc->tulip_enaddr, sc->tulip_enaddr,
+		       ETHER_ADDR_LEN);
 		    sc->tulip_enaddr[5] += sc->tulip_unit - root_sc->tulip_unit;
 		}
 		/*
@@ -2962,7 +3023,7 @@ tulip_read_macaddr(
     if (bcmp(&sc->tulip_rombuf[0], tmpbuf, 8) != 0)
 	return -2;
 
-    bcopy(sc->tulip_rombuf, sc->tulip_enaddr, 6);
+    bcopy(sc->tulip_rombuf, sc->tulip_enaddr, ETHER_ADDR_LEN);
 
     cksum = *(u_int16_t *) &sc->tulip_enaddr[0];
     cksum *= 2;
@@ -4507,7 +4568,7 @@ tulip_ifioctl(
     case SIOCGIFADDR: {
 	bcopy((caddr_t) sc->tulip_enaddr,
 	      (caddr_t) ((struct sockaddr *)&ifr->ifr_data)->sa_data,
-	      6);
+	      ETHER_ADDR_LEN);
 	break;
     }
 
@@ -5273,16 +5334,11 @@ tulip_pci_attach(
     tulip_softc_t * const sc = (tulip_softc_t *) self;
     struct pci_attach_args * const pa = (struct pci_attach_args *) aux;
     const int unit = sc->tulip_dev.dv_unit;
-    bus_space_tag_t iot, memt;
-    bus_space_handle_t ioh, memh;
-    int ioh_valid, memh_valid;
 #define	PCI_CONF_WRITE(r, v)	pci_conf_write(pa->pa_pc, pa->pa_tag, (r), (v))
 #define	PCI_CONF_READ(r)	pci_conf_read(pa->pa_pc, pa->pa_tag, (r))
 #define	PCI_GETBUSDEVINFO(sc)	do { \
-	int busno, devno, funcno; \
-	pci_decompose_tag(pa->pa_pc, pa->pa_tag, &busno, &devno, &funcno); \
-	(sc)->tulip_pci_busno = busno; \
-	(sc)->tulip_pci_devno = devno; \
+	(sc)->tulip_pci_busno = parent; \
+	(sc)->tulip_pci_devno = pa->pa_device; \
     } while (0)
 #endif /* __NetBSD__ */
 
@@ -5453,35 +5509,27 @@ tulip_pci_attach(
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
     csr_base = 0;
+    {
+	bus_space_tag_t iot, memt;
+	bus_space_handle_t ioh, memh;
+	int ioh_valid, memh_valid;
 
-    ioh_valid = (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
+    	ioh_valid = (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
 		 &iot, &ioh, NULL, NULL, 0) == 0);
-    memh_valid = (pci_mapreg_map(pa, PCI_CBMA,
+    	memh_valid = (pci_mapreg_map(pa, PCI_CBMA,
 		  PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
 		  &memt, &memh, NULL, NULL, 0) == 0);
-#endif
 
-#if defined(__OpenBSD__) || defined(__NetBSD__)
-#if defined(TULIP_IOMAPPED)
-    if (ioh_valid) {
-	sc->tulip_bustag = iot;
-	sc->tulip_bushandle = ioh;
-    } else if (memh_valid) {
-	sc->tulip_bustag = memt;
-	sc->tulip_bushandle = memh;
-    }
-#else /* defined(TULIP_IOMAPPED) */
-    if (memh_valid) {
-	sc->tulip_bustag = memt;
-	sc->tulip_bushandle = memh;
-    } else if (ioh_valid) {
-	sc->tulip_bustag = iot;
-	sc->tulip_bushandle = ioh;
-    }
-#endif /* TULIP_IOMAPPED */
-    else {
-        printf(": unable to map device registers\n");
-        return;
+	if (memh_valid) {
+	    sc->tulip_bustag = memt;
+	    sc->tulip_bushandle = memh;
+	} else if (ioh_valid) {
+	    sc->tulip_bustag = iot;
+	    sc->tulip_bushandle = ioh;
+	} else {
+	   printf(": unable to map device registers\n");
+           return;
+	}
     }
 #endif /* __NetBSD__ */
 
@@ -5576,10 +5624,6 @@ tulip_pci_attach(
 	s = TULIP_RAISESPL();
 	tulip_reset(sc);
 	tulip_attach(sc);
-#if defined(__alpha__) && defined(__NetBSD__)
-	if (media != TULIP_MEDIA_UNKNOWN)
-	    tulip_linkup(sc, media);
-#endif
 	TULIP_RESTORESPL(s);
     }
 }

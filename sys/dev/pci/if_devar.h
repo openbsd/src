@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_devar.h,v 1.15 2004/11/08 21:16:47 deraadt Exp $	*/
+/*	$OpenBSD: if_devar.h,v 1.16 2005/03/29 00:37:50 martin Exp $	*/
 /*	$NetBSD: if_devar.h,v 1.13 1997/06/08 18:46:36 thorpej Exp $	*/
 
 /*-
@@ -550,7 +550,7 @@ struct _tulip_softc_t {
 #define	TULIP_INRESET		0x00000200
 #define	TULIP_NEEDRESET		0x00000400
 #define	TULIP_SQETEST		0x00000800
-#define	TULIP_xxxxxx0		0x00001000
+#define	TULIP_FULLDUPLEX	0x00001000
 #define	TULIP_xxxxxx1		0x00002000
 #define	TULIP_WANTTXSTART	0x00004000
 #define	TULIP_NEWTXTHRESH	0x00008000
@@ -697,10 +697,10 @@ struct _tulip_softc_t {
     u_int32_t tulip_setupdata[192/sizeof(u_int32_t)];
     char tulip_boardid[16];		/* buffer for board ID */
     u_int8_t tulip_rombuf[128];
-#if defined(__NetBSD__)
-    struct device *tulip_pci_busno;	/* needed for multiport boards */
-#else
+#ifndef __OpenBSD__
     u_int8_t tulip_pci_busno;		/* needed for multiport boards */
+#else
+    struct device *tulip_pci_busno;	/* needed for multiport boards */
 #endif
     u_int8_t tulip_pci_devno;		/* needed for multiport boards */
     u_int8_t tulip_connidx;
