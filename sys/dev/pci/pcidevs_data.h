@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.796 2004/11/20 23:07:18 brad Exp 
+ *	OpenBSD: pcidevs,v 1.797 2004/11/20 23:20:10 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -3503,7 +3503,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82801BA SMBus",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_USB,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_USB2,
 	    "82801BA USB",
 	},
 	{
@@ -3823,7 +3823,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "6300ESB APIC",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_USB,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_USB2,
 	    "6300ESB USB",
 	},
 	{
@@ -4779,7 +4779,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Firewire",
 	},
 	{
-	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_USB,
+	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_USB2,
 	    "USB",
 	},
 	{
