@@ -1,4 +1,4 @@
-/* $OpenBSD: in6.c,v 1.8 1999/12/10 08:53:17 angelos Exp $ */
+/* $OpenBSD: in6.c,v 1.9 2000/02/02 17:01:50 itojun Exp $ */
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -1972,65 +1972,4 @@ in6_setmaxmtu()
 	if (maxmtu)	/* update only when maxmtu is positive */
 		in6_maxmtu = maxmtu;
 }
-
-#ifdef MAPPED_ADDR_ENABLED
-/* 
- * Convert sockaddr_in6 to sockaddr_in. Original sockaddr_in6 must be
- * v4 mapped addr or v4 compat addr
- */
-void
-in6_sin6_2_sin(struct sockaddr_in *sin, struct sockaddr_in6 *sin6)
-{
-	bzero(sin, sizeof(*sin));
-	sin->sin_len = sizeof(struct sockaddr_in);
-	sin->sin_family = AF_INET;
-	sin->sin_port = sin6->sin6_port;
-	sin->sin_addr.s_addr = sin6->sin6_addr.s6_addr32[3];	
-}
-
-/* Convert sockaddr_in to sockaddr_in6 in v4 mapped addr format. */
-void
-in6_sin_2_v4mapsin6(struct sockaddr_in *sin, struct sockaddr_in6 *sin6)
-{
-	bzero(sin6, sizeof(*sin6));
-	sin6->sin6_len = sizeof(struct sockaddr_in6);
-	sin6->sin6_family = AF_INET6;
-	sin6->sin6_port = sin->sin_port;
-	sin6->sin6_addr.s6_addr32[0] = 0;
-	sin6->sin6_addr.s6_addr32[1] = 0;
-	sin6->sin6_addr.s6_addr32[2] = IPV6_ADDR_INT32_SMP;
-	sin6->sin6_addr.s6_addr32[3] = sin->sin_addr.s_addr;
-}
-
-/* Convert sockaddr_in6 into sockaddr_in. */
-void
-in6_sin6_2_sin_in_sock(struct sockaddr *nam)
-{
-	struct sockaddr_in *sin_p;
-	struct sockaddr_in6 sin6;
-
-	/*
-	 * Save original sockaddr_in6 addr and convert it
-	 * to sockaddr_in.
-	 */
-	sin6 = *(struct sockaddr_in6 *)nam;
-	sin_p = (struct sockaddr_in *)nam;
-	in6_sin6_2_sin(sin_p, &sin6);
-}
-
-/* Convert sockaddr_in into sockaddr_in6 in v4 mapped addr format. */
-void
-in6_sin_2_v4mapsin6_in_sock(struct sockaddr **nam)
-{
-	struct sockaddr_in *sin_p;
-	struct sockaddr_in6 *sin6_p;
-
-	MALLOC(sin6_p, struct sockaddr_in6 *, sizeof *sin6_p, M_SONAME,
-	       M_WAITOK);
-	sin_p = (struct sockaddr_in *)*nam;
-	in6_sin_2_v4mapsin6(sin_p, sin6_p);
-	FREE(*nam, M_SONAME);
-	*nam = (struct sockaddr *)sin6_p;
-}
-#endif /* MAPPED_ADDR_ENABLED */
 
