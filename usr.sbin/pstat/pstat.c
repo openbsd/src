@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.44 2003/06/02 23:36:54 millert Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.45 2003/09/08 23:31:55 deraadt Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.44 2003/06/02 23:36:54 millert Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.45 2003/09/08 23:31:55 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -755,7 +755,7 @@ ttymode(void)
 {
 	struct ttylist_head tty_head;
 	struct tty *tp, tty;
-	int mib[2], ntty, i;
+	int mib[3], ntty, i;
 	struct itty itty, *itp;
 	size_t nlen;
 
