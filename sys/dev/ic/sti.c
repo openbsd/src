@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.23 2003/02/18 09:39:45 miod Exp $	*/
+/*	$OpenBSD: sti.c,v 1.24 2003/04/03 23:09:36 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -215,13 +215,12 @@ sti_attach_common(sc)
 	size = dd->dd_pacode[i] - dd->dd_pacode[STI_BEGIN];
 	if (sc->sc_devtype == STI_DEVTYPE1)
 		size = (size + 3) / 4;
-	if (!(sc->sc_code = uvm_km_kmemalloc(kernel_map,
-	    uvm.kernel_object, round_page(size), UVM_KMF_NOWAIT))) {
+	if (!(sc->sc_code = uvm_km_alloc1(kernel_map, round_page(size), 0))) {
 		printf(": cannot allocate %u bytes for code\n", size);
 		return;
 	}
 #ifdef STIDEBUG
-	printf("code=0x%x\n", sc->sc_code);
+	printf("code=0x%x[%x]\n", sc->sc_code, size);
 #endif
 
 	/* copy code into memory */
@@ -255,10 +254,11 @@ sti_attach_common(sc)
 	sc->pmgr	= (sti_pmgr_t)	O(STI_PROC_MGR);
 	sc->util	= (sti_util_t)	O(STI_UTIL);
 
-	/* assuming d/i caches are coherent or pmap_protect
-	 * will take care of that */
-	pmap_protect(pmap_kernel(), sc->sc_code,
-	    sc->sc_code + round_page(size), UVM_PROT_RX);
+	if ((error = uvm_map_protect(kernel_map, sc->sc_code,
+	    sc->sc_code + round_page(size), UVM_PROT_RX, FALSE))) {
+		printf(": uvm_map_protect failed (%d)\n", error);
+		return;
+	}
 
 	cc = &sc->sc_cfg;
 	bzero(cc, sizeof (*cc));
