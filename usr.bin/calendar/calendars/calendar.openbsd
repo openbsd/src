@@ -1,7 +1,7 @@
 /*
  * OpenBSD-related dates to celebrate
  *
- * $OpenBSD: calendar.openbsd,v 1.17 2004/04/22 03:54:46 mickey Exp $
+ * $OpenBSD: calendar.openbsd,v 1.18 2004/06/27 16:39:41 mickey Exp $
  */
 
 #ifndef _calendar_openbsd_
@@ -24,7 +24,7 @@ Mar 10	OpenBSD/WWW translation started -- German, Spanish, Dutch, 2000
 Apr 16	OpenBSD/i386 is ELF, 2003
 Apr 21	OpenBSD/luna88k port is added, 2004
 May 01	OpenBSD 3.3 released, exploiting W^X, 2003
-May 10	c2k3 hackathon, Calgary, Canada, 62 developers, 2003
+May 10	c2k3 hackathon, Calgary, Canada, 51 developers, 2003
 May 19	OpenBSD 2.3 released, including ``ports'' system, 1998
 May 29	IPF is removed for license incompatibility, 2001
 Jun 01	OpenBSD 2.1 released, first time on CD (double set), 1997
@@ -32,6 +32,7 @@ Jun 04	First hackathon, Calgary, Canada, 10 developers, 1999
 Jun 04	c2k2 hackathon, "Shutup and Hack", Calgary, Canada, 42 developers, 2002
 Jun 15	c2k hackathon, Calgary, Canada, 18 developers, 2000
 Jun 15	OpenBSD 2.7 released, including OpenSSH, 2000
+Jun 19	c2k4 hackathon, Calgary, Canada, 46 developers, 2004
 Jun 21	!c2k1 hackathon, Cambridge, MA, 35 developers, 2001
 Jun 23	OpenBSD/hppa started, based on Utah Lites and OSF MkLinux, 1998
 Jun 24	PF added. Insane amounts of work done by dhartmei@, 2001
