@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.229 2003/11/18 16:37:34 henning Exp $
+#	$OpenBSD: rc,v 1.230 2003/12/05 00:52:16 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -286,7 +286,7 @@ fi
 
 # run rdate before timed
 if [ X"${rdate_flags}" != X"NO" ]; then
-        echo -n ' rdate';     rdate -s ${rdate_flags}
+	echo -n ' rdate';	rdate -s ${rdate_flags}
 fi
 
 # $timed_flags is imported from /etc/rc.conf;
@@ -594,7 +594,7 @@ echo -n standard daemons:
 # $apmd_flags is imported from /etc/rc.conf;
 # don't run daemon if $apmd_flags == NO or /usr/sbin/apmd doesn't exist
 if [ "X${apmd_flags}" != X"NO" -a -x /usr/sbin/apmd ]; then
-        echo -n ' apmd';        /usr/sbin/apmd ${apmd_flags}
+	echo -n ' apmd';	/usr/sbin/apmd ${apmd_flags}
 fi
 
 if [ X"${sensorsd_flags}" != X"NO" ]; then
