@@ -1,4 +1,4 @@
-.\" $OpenBSD: photurisd.1,v 1.6 1997/07/24 23:47:18 provos Exp $
+.\" $OpenBSD: photurisd.1,v 1.7 1997/12/02 10:57:37 provos Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -186,14 +186,11 @@ Exchanges are separated by newlines.
 .Sh EXAMPLE
 A sample photuris.startup entry:
 .Pp
-.Bl -item -width foo -compact
-.It
+.Bd -literal
 dst=134.100.106.2 port=468 options=auth
-.It	
 tsrc=134.100.104.0/255.255.255.255
-.It	
 tdst=134.100.106.0/255.255.255.255
-.El
+.Ed
 .Pp
 .Sh SEE ALSO
 .Xr startkey 1 .
