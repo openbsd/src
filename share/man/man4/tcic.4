@@ -1,4 +1,4 @@
-.\" $OpenBSD: tcic.4,v 1.1 2000/05/15 04:17:29 jason Exp $
+.\" $OpenBSD: tcic.4,v 1.2 2000/07/05 13:50:35 aaron Exp $
 .\" $NetBSD: tcic.4,v 1.1 2000/02/12 11:14:14 fair Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,8 +42,9 @@
 .Cd "tcic0   at isa? port 0x240 iomem 0xd0000 iosiz 0x4000"
 .Cd "pcmcia* at tcic? controller ? socket ?"
 .Sh DESCRIPTION
-.Nx
-provides support for the
+The
+.Nm
+driver provides support for the
 .Tn Databook
 DB86082, DB86084, DB86184, and DB86072
 .Tn PCMCIA
@@ -56,8 +57,7 @@ controllers.
 The
 .Nm
 driver appeared in
-.Nx 1.4 ,
-and
+.Nx 1.4 .
 .Ox
 support first appeared in
 .Ox 2.8 .
