@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.82 2002/01/04 16:26:04 mickey Exp $
+	$OpenBSD: pcmciadevs,v 1.83 2002/01/04 17:41:44 mickey Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -80,6 +80,7 @@ vendor SYMBOL			0x026c	Symbol
 vendor BUFFALO			0x026f	BUFFALO (Melco Corporation)
 vendor LINKSYS2			0x0274	The Linksys Group
 vendor IODATA2			0x028a	I-O DATA
+vendor NWN			0x0602	No Wires Needed
 vendor BREEZECOM		0x0a02	BreezeCOM
 vendor NEWMEDIA2		0x10cd	NewMedia
 vendor LASAT			0x3401	Lasat
@@ -252,6 +253,10 @@ product NETGEAR FA411		0x0411 Netgear FA411
 
 /* Nokia */
 product NOKIA C020_WLAN		0x20c0 Nokia C020
+
+/* No Wires Needed */
+product NWN WLAN_550		0x0002 NWN 550 WLAN
+product NWN WLAN_1148		0x0003 NWN 1148 WLAN
 
 /* Panasonic */
 product PANASONIC KXLC002	0x0304 Panasonic 4X CD-ROM Interface
