@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.23 1999/03/02 21:55:53 deraadt Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.24 1999/09/10 10:09:28 millert Exp $	*/
 /*	$NetBSD: skeyinit.c,v 1.6 1995/06/05 19:50:48 pk Exp $	*/
 
 /* S/KEY v1.1b (skeyinit.c)
@@ -341,7 +341,6 @@ main(argc, argv)
 		(void)fprintf(skey.keyfile, "%s %s %04d %-16s %s %-21s\n",
 		    pp->pw_name, skey_get_algorithm(), n, seed, skey.val, tbuf);
 
-	(void)flock(fileno(skey.keyfile), LOCK_UN);
 	(void)fclose(skey.keyfile);
 
 	(void)printf("\nID %s skey is otp-%s %d %s\n", pp->pw_name,
