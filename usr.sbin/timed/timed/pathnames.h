@@ -1,3 +1,5 @@
+/*	$OpenBSD: pathnames.h,v 1.2 2001/04/07 20:00:16 ho Exp $	*/
+
 /*-
  * Copyright (c) 1985 The Regents of the University of California.
  * All rights reserved.

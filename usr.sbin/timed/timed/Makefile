@@ -1,3 +1,5 @@
+#	$OpenBSD: Makefile,v 1.6 2001/04/07 20:00:15 ho Exp $
+#
 #	@(#)Makefile	5.12 (Berkeley) 5/7/93
 #
 # optional flags are: MEASURE TESTING DEBUG
