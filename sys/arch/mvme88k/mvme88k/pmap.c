@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.71 2003/08/01 23:15:31 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.72 2003/08/08 21:36:33 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -1287,7 +1287,7 @@ pmap_release(pmap_t pmap)
 
 	/* Segment table Loop */
 	for (; i < j; i++) {
-		sdt_va = PDT_TABLE_GROUP_VA_SPACE*i;
+		sdt_va = PDT_TABLE_GROUP_VA_SPACE * i;
 		if ((gdttbl = pmap_pte(pmap, (vaddr_t)sdt_va)) != PT_ENTRY_NULL) {
 #ifdef DEBUG
 			if ((pmap_con_dbg & (CD_FREE | CD_FULL)) == (CD_FREE | CD_FULL))
@@ -2317,11 +2317,10 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
  * module deals with a single table at a time.]
  */
 void
-pmap_collect( pmap_t pmap)
+pmap_collect(pmap_t pmap)
 {
 	vaddr_t sdt_va;		/* outer loop index */
 	vaddr_t sdt_vt;		/* end of segment */
-	sdt_entry_t *sdttbl;	/* ptr to first entry in seg table */
 	sdt_entry_t *sdtp;	/* ptr to index into segment table */
 	sdt_entry_t *sdt;	/* ptr to index into segment table */
 	pt_entry_t *gdttbl;	/* ptr to first entry in a page table */
@@ -2340,8 +2339,7 @@ pmap_collect( pmap_t pmap)
 
 	PMAP_LOCK(pmap, spl);
 
-	sdttbl = pmap->pm_stab; /* addr of segment table */
-	sdtp = sdttbl;
+	sdtp = pmap->pm_stab; /* addr of segment table */
 
 	/*
 	  This contortion is here instead of the natural loop
@@ -2355,7 +2353,7 @@ pmap_collect( pmap_t pmap)
 
 	/* Segment table loop */
 	for (; i < j; i++, sdtp += PDT_TABLE_GROUP_SIZE) {
-		sdt_va = VM_MIN_ADDRESS + PDT_TABLE_GROUP_VA_SPACE * i;
+		sdt_va = PDT_TABLE_GROUP_VA_SPACE * i;
 
 		gdttbl = pmap_pte(pmap, sdt_va);
 
