@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: bt_open.c,v 1.3 1996/08/19 08:20:07 tholo Exp $";
+static char rcsid[] = "$OpenBSD: bt_open.c,v 1.4 1996/08/26 00:17:14 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -388,10 +388,11 @@ tmp()
 {
 	sigset_t set, oset;
 	int fd;
-	char *envtmp;
+	char *envtmp = NULL;
 	char path[MAXPATHLEN];
 
-	envtmp = getenv("TMPDIR");
+	if (issetugid() == 0)
+		envtmp = getenv("TMPDIR");
 	(void)snprintf(path,
 	    sizeof(path), "%s/bt.XXXXXX", envtmp ? envtmp : "/tmp");
 

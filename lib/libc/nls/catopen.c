@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: catopen.c,v 1.5 1996/08/19 08:30:09 tholo Exp $";
+static char rcsid[] = "$OpenBSD: catopen.c,v 1.6 1996/08/26 00:17:20 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #define _NLS_PRIVATE
@@ -72,15 +72,13 @@ _catopen(name, oflag)
 		return (nl_catd) -1;
 
 	/* absolute or relative path? */
-	if (strchr (name, '/'))
+	if (strchr(name, '/'))
 		return load_msgcat(name);
 
-	if ((nlspath = getenv ("NLSPATH")) == NULL) {
+	if (issetugid() != 0 || (nlspath = getenv("NLSPATH")) == NULL)
 		nlspath = NLS_DEFAULT_PATH;
-	}
-	if ((lang = getenv ("LANG")) == NULL) {
+	if ((lang = getenv("LANG")) == NULL)
 		lang = NLS_DEFAULT_LANG;
-	}
 
 	s = nlspath;
 	t = tmppath;	
@@ -135,7 +133,7 @@ load_msgcat(path)
 	void *data;
 	int fd;
 
-	if ((fd = open (path, O_RDONLY)) == -1)
+	if ((fd = open(path, O_RDONLY)) == -1)
 		return (nl_catd) -1;
 
 	if (fstat(fd, &st) != 0) {
@@ -156,7 +154,7 @@ load_msgcat(path)
 		return (nl_catd) -1;
 	}
 
-	if ((catd = malloc (sizeof (*catd))) == 0) {
+	if ((catd = malloc(sizeof (*catd))) == 0) {
 		munmap(data, (size_t) st.st_size);
 		return (nl_catd) -1;
 	}
