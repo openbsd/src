@@ -1,3 +1,4 @@
+/*	$OpenBSD: dm.c,v 1.9 1998/09/01 05:05:01 pjanzen Exp $	*/
 /*    $NetBSD: dm.c,v 1.5 1996/02/06 22:47:20 jtc Exp $       */
 
 /*
@@ -43,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dm.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: dm.c,v 1.8 1998/07/03 23:28:21 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: dm.c,v 1.9 1998/09/01 05:05:01 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,6 +57,7 @@ static char rcsid[] = "$OpenBSD: dm.c,v 1.8 1998/07/03 23:28:21 pjanzen Exp $";
 #include <nlist.h>
 #include <pwd.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
@@ -83,6 +85,7 @@ main(argc, argv)
 		exit(0);
 
 	gametty = ttyname(0);
+	unsetenv("TZ");
 	(void)time(&now);
 	read_config();
 #ifdef LOG
