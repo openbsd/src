@@ -1,4 +1,4 @@
-/*	$OpenBSD: icu.s,v 1.16 2001/11/12 20:28:20 niklas Exp $	*/
+/*	$OpenBSD: icu.s,v 1.17 2001/11/18 20:46:49 aaron Exp $	*/
 /*	$NetBSD: icu.s,v 1.45 1996/01/07 03:59:34 mycroft Exp $	*/
 
 /*-
@@ -45,7 +45,7 @@ _C_LABEL(imen):
 
 	ALIGN_TEXT
 _C_LABEL(splhigh):
-	movl	$IPL_HIGH,%eax
+	movl	$-1,%eax
 	xchgl	%eax,_C_LABEL(cpl)
 	ret
 
@@ -72,9 +72,8 @@ IDTVEC(spllower)
 	pushl	%edi
 	movl	_C_LABEL(cpl),%ebx	# save priority
 	movl	$1f,%esi		# address to resume loop at
-1:	movl	%ebx,%eax		# get cpl
-	shrl	$4,%eax			# find its mask.
-	movl	_C_LABEL(iunmask)(,%eax,4),%eax
+1:	movl	%ebx,%eax
+	notl	%eax
 	andl	_C_LABEL(ipending),%eax
 	jz	2f
 	bsfl	%eax,%eax
@@ -98,9 +97,8 @@ IDTVEC(doreti)
 	popl	%ebx			# get previous priority
 	movl	%ebx,_C_LABEL(cpl)
 	movl	$1f,%esi		# address to resume loop at
-1:	movl	%ebx,%eax		# get cpl
-	shrl	$4,%eax			# find its mask
-	movl	_C_LABEL(iunmask)(,%eax,4),%eax
+1:	movl	%ebx,%eax
+	notl	%eax
 	andl	_C_LABEL(ipending),%eax
 	jz	2f
 	bsfl    %eax,%eax               # slow, but not worth optimizing
@@ -134,7 +132,7 @@ IDTVEC(doreti)
 
 IDTVEC(softtty)
 #if NPCCOM > 0
-	movl	$IPL_SOFTTTY,%eax
+	leal	SIR_TTYMASK(%ebx),%eax
 	movl	%eax,_C_LABEL(cpl)
 	call	_C_LABEL(comsoft)
 	movl	%ebx,_C_LABEL(cpl)
@@ -149,7 +147,7 @@ IDTVEC(softtty)
 1:
 
 IDTVEC(softnet)
-	movl	$IPL_SOFTNET,%eax
+	leal	SIR_NETMASK(%ebx),%eax
 	movl	%eax,_C_LABEL(cpl)
 	xorl	%edi,%edi
 	xchgl	_C_LABEL(netisr),%edi
@@ -159,7 +157,7 @@ IDTVEC(softnet)
 #undef DONETISR
 
 IDTVEC(softclock)
-	movl	$IPL_SOFTCLOCK,%eax
+	leal	SIR_CLOCKMASK(%ebx),%eax
 	movl	%eax,_C_LABEL(cpl)
 	call	_C_LABEL(softclock)
 	movl	%ebx,_C_LABEL(cpl)

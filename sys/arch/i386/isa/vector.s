@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.s,v 1.12 2001/11/12 20:28:20 niklas Exp $	*/
+/*	$OpenBSD: vector.s,v 1.13 2001/11/18 20:46:49 aaron Exp $	*/
 /*	$NetBSD: vector.s,v 1.32 1996/01/07 21:29:47 mycroft Exp $	*/
 
 /*
@@ -218,15 +218,13 @@ _Xintr/**/irq_num/**/:							;\
 	MASK(irq_num, icu)		/* mask it in hardware */	;\
 	ack(irq_num)			/* and allow other intrs */	;\
 	incl	MY_COUNT+V_INTR		/* statistical info */		;\
-	movl	_C_LABEL(ilevel) + (irq_num) * 4, %eax			;\
-	movzbl	_C_LABEL(cpl),%ebx					;\
-	cmpl	%eax,%ebx						;\
-	jae	_C_LABEL(Xhold/**/irq_num)/* currently masked; hold it */;\
+	testb	$IRQ_BIT(irq_num),_cpl + IRQ_BYTE(irq_num)		;\
+	jnz	_Xhold/**/irq_num	/* currently masked; hold it */	;\
 _Xresume/**/irq_num/**/:						;\
-	movzbl	_C_LABEL(cpl),%eax	/* cpl to restore on exit */	;\
+	movl	_cpl,%eax		/* cpl to restore on exit */	;\
 	pushl	%eax							;\
-	movl	_C_LABEL(ilevel) + (irq_num) * 4,%eax			;\
-	movl	%eax,_C_LABEL(cpl)	/* block enough for this irq */	;\
+	orl	_intrmask + (irq_num) * 4,%eax				;\
+	movl	%eax,_cpl		/* add in this intr's mask */	;\
 	sti				/* safe to take intrs now */	;\
 	movl	_intrhand + (irq_num) * 4,%ebx	/* head of chain */	;\
 	testl	%ebx,%ebx						;\

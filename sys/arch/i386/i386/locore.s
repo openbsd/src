@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.60 2001/11/12 20:28:20 niklas Exp $	*/
+/*	$OpenBSD: locore.s,v 1.61 2001/11/18 20:46:49 aaron Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -1653,7 +1653,7 @@ ENTRY(cpu_switch)
 	 */
 	movl	$0,_C_LABEL(curproc)
 
-	movl	$IPL_NONE,_C_LABEL(cpl)	# spl0()
+	movl	$0,_C_LABEL(cpl)	# spl0()
 	call	_C_LABEL(Xspllower)	# process pending interrupts
 
 switch_search:

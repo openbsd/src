@@ -1,4 +1,4 @@
-/*	$OpenBSD: icu.h,v 1.5 2001/11/12 20:28:20 niklas Exp $	*/
+/*	$OpenBSD: icu.h,v 1.6 2001/11/18 20:46:49 aaron Exp $	*/
 /*	$NetBSD: icu.h,v 1.19 1996/02/01 22:31:21 mycroft Exp $	*/
 
 /*-
@@ -65,9 +65,6 @@ extern	unsigned imen;		/* interrupt mask enable */
 
 /*
  * Interrupt Control offset into Interrupt descriptor table (IDT)
- * XXX ICU_OFFSET is actually a property of our architecture not of the ICU
- * XXX and therefore ought to use the architecture manifest constant IDTVECOFF
- * XXX for its definition instead.
  */
 #define	ICU_OFFSET	32		/* 0-31 are processor exceptions */
 #define	ICU_LEN		16		/* 32-47 are ISA interrupts */
