@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.6 2002/06/19 16:31:07 provos Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.7 2002/06/21 15:26:06 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -362,6 +362,41 @@ intercept_read(int fd)
 	return (intercept.read(fd));
 }
 
+int
+intercept_replace_init(struct intercept_replace *repl)
+{
+	memset(repl, 0, sizeof(struct intercept_replace));
+
+	return (0);
+}
+
+int
+intercept_replace_add(struct intercept_replace *repl, int off,
+    u_char *addr, size_t len)
+{
+	int ind = repl->num;
+
+	if (ind >= INTERCEPT_MAXSYSCALLARGS)
+		return (-1);
+
+	repl->ind[ind] = off;
+	repl->address[ind] = addr;
+	repl->len[ind] = len;
+
+	repl->num++;
+
+	return (0);
+}
+
+int
+intercept_replace(int fd, pid_t pid, struct intercept_replace *repl)
+{
+	if (repl->num == 0)
+		return (0);
+
+	return (intercept.replace(fd, pid, repl));
+}
+
 char *
 intercept_get_string(int fd, pid_t pid, void *addr)
 {
@@ -391,7 +426,7 @@ intercept_get_string(int fd, pid_t pid, void *addr)
 }
 
 char *
-intercept_filename(int fd, pid_t pid, void *addr)
+intercept_filename(int fd, pid_t pid, void *addr, int userp)
 {
 	static char cwd[2*MAXPATHLEN];
 	char *name;
@@ -400,10 +435,10 @@ intercept_filename(int fd, pid_t pid, void *addr)
 	if (name == NULL)
 		err(1, "%s: getstring", __func__);
 
-	if (name[0] != '/') {
-		if (intercept.getcwd(fd, pid, cwd, sizeof(cwd)) == NULL)
-			err(1, "%s: getcwd", __func__);
+	if (intercept.getcwd(fd, pid, cwd, sizeof(cwd)) == NULL)
+		err(1, "%s: getcwd", __func__);
 
+	if (name[0] != '/') {
 		if (strlcat(cwd, "/", sizeof(cwd)) >= sizeof(cwd))
 			goto error;
 		if (strlcat(cwd, name, sizeof(cwd)) >= sizeof(cwd))
@@ -413,9 +448,20 @@ intercept_filename(int fd, pid_t pid, void *addr)
 			goto error;
 	}
 
-	simplify_path(cwd);
+	name = cwd;
+	if (userp) {
+		/* If realpath fails then the filename does not exist */
+		if (realpath(cwd, cwd) == NULL)
+			name = "<non-existent filename>";
+	} else
+		simplify_path(cwd);
 
-	return (cwd);
+
+	/* Restore working directory and change root space after realpath */
+	if (intercept.restcwd(fd) == -1)
+		err(1, "%s: restcwd", __func__);
+
+	return (name);
 
  error:
 	errx(1, "%s: filename too long", __func__);
@@ -447,7 +493,7 @@ intercept_syscall(int fd, pid_t pid, int policynr, char *name, int code,
 			free(icpid->newname);
 
 		intercept.getarg(0, args, argsize, &addr);
-		icpid->newname = strdup(intercept_filename(fd, pid, addr));
+		icpid->newname = strdup(intercept_filename(fd, pid, addr, 0));
 		if (icpid->newname == NULL)
 			err(1, "%s:%d: strdup", __func__, __LINE__);
 

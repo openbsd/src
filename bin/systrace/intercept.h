@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.h,v 1.2 2002/06/10 19:16:26 provos Exp $	*/
+/*	$OpenBSD: intercept.h,v 1.3 2002/06/21 15:26:06 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -34,6 +34,7 @@
 #include <sys/queue.h>
 
 struct intercept_pid;
+struct intercept_replace;
 
 struct intercept_system {
 	char *name;
@@ -45,12 +46,14 @@ struct intercept_system {
 	int (*read)(int);
 	int (*getsyscallnumber)(char *, char *);
 	char *(*getcwd)(int, pid_t, char *, size_t);
+	int (*restcwd)(int);
 	int (*io)(int, pid_t, int, void *, u_char *, size_t);
 	int (*getarg)(int, void *, int, void **);
 	int (*answer)(int, pid_t, short, int, short);
 	int (*newpolicy)(int);
 	int (*assignpolicy)(int, pid_t, int);
 	int (*policy)(int, int, int, short);
+	int (*replace)(int, pid_t, struct intercept_replace *);
 	void (*clonepid)(struct intercept_pid *, struct intercept_pid *);
 	void (*freepid)(struct intercept_pid *);
 };
@@ -97,6 +100,13 @@ struct intercept_translate {
 	TAILQ_ENTRY(intercept_translate) next;
 };
 
+struct intercept_replace {
+	int num;
+	int ind[INTERCEPT_MAXSYSCALLARGS];
+	u_char *address[INTERCEPT_MAXSYSCALLARGS];
+	size_t len[INTERCEPT_MAXSYSCALLARGS];
+};
+
 TAILQ_HEAD(intercept_tlq, intercept_translate);
 
 int intercept_init(void);
@@ -109,6 +119,10 @@ int intercept_read(int);
 int intercept_newpolicy(int);
 int intercept_assignpolicy(int, pid_t, int);
 int intercept_modifypolicy(int, int, char *, char *, short);
+
+int intercept_replace_init(struct intercept_replace *);
+int intercept_replace_add(struct intercept_replace *, int, u_char *, size_t);
+int intercept_replace(int, pid_t, struct intercept_replace *);
 
 int intercept_register_sccb(char *, char *,
     short (*)(int, pid_t, int, char *, int, char *, void *, int,
@@ -141,6 +155,6 @@ struct intercept_pid *intercept_getpid(pid_t);
 int intercept_existpids(void);
 
 char *intercept_get_string(int, pid_t, void *);
-char *intercept_filename(int, pid_t, void *);
+char *intercept_filename(int, pid_t, void *, int);
 
 #endif /* _INTERCEPT_H_ */

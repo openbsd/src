@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept-translate.c,v 1.3 2002/06/19 16:31:07 provos Exp $	*/
+/*	$OpenBSD: intercept-translate.c,v 1.4 2002/06/21 15:26:06 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -121,26 +121,20 @@ int
 ic_get_filename(struct intercept_translate *trans, int fd, pid_t pid,
     void *addr)
 {
-	char buf[MAXPATHLEN];
-	char *path, *name;
+	char *name;
 	int len;
 
-	name = intercept_filename(fd, pid, addr);
+	name = intercept_filename(fd, pid, addr, 1);
 	if (name == NULL)
 		return (-1);
 
-	/* If realpath fails then the filename does not exist */
-	path = buf;
-	if (realpath(name, path) == NULL)
-		path = "<non-existant filename>";
-
-	len = strlen(path) + 1;
+	len = strlen(name) + 1;
 	trans->trans_data = malloc(len);
 	if (trans->trans_data == NULL)
 		return (-1);
 
 	trans->trans_size = len;
-	memcpy(trans->trans_data, path, len);
+	memcpy(trans->trans_data, name, len);
 
 	return (0);
 }
@@ -173,7 +167,7 @@ ic_get_linkname(struct intercept_translate *trans, int fd, pid_t pid,
 	char *name;
 	int len;
 
-	name = intercept_filename(fd, pid, addr);
+	name = intercept_filename(fd, pid, addr, 0);
 	if (name == NULL)
 		return (-1);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.18 2002/06/19 16:31:07 provos Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.19 2002/06/21 15:26:06 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -67,6 +67,7 @@ trans_cb(int fd, pid_t pid, int policynr,
 	struct policy *policy;
 	struct intercept_translate *tl;
 	struct intercept_pid *ipid;
+	struct intercept_replace repl;
 	struct filterq *pflq = NULL;
 	char output[_POSIX2_LINE_MAX], *p, *line;
 	int size;
@@ -92,20 +93,25 @@ trans_cb(int fd, pid_t pid, int policynr,
 	p = output + strlen(output);
 	size = sizeof(output) - strlen(output);
 
+	intercept_replace_init(&repl);
 	TAILQ_FOREACH(tl, tls, next) {
 		if (!tl->trans_valid)
 			break;
 		line = intercept_translate_print(tl);
-		if (line != NULL) {
-			snprintf(p, size, ", %s: %s", tl->name, line);
-			p = output + strlen(output);
-			size = sizeof(output) - strlen(output);
-		}
+		if (line == NULL)
+			continue;
+
+		snprintf(p, size, ", %s: %s", tl->name, line);
+		p = output + strlen(output);
+		size = sizeof(output) - strlen(output);
+
+		intercept_replace_add(&repl, tl->off,
+		    tl->trans_data, tl->trans_size);
 	}
 
 	action = filter_evaluate(tls, pflq, &ipid->uflags);
 	if (action != ICPOLICY_ASK)
-		goto out;
+		goto replace;
 	if (policy->flags & POLICY_UNSUPERVISED) {
 		action = ICPOLICY_NEVER;
 		syslog(LOG_WARNING, "user: %s, prog: %s", username, output);
@@ -123,6 +129,12 @@ trans_cb(int fd, pid_t pid, int policynr,
 	} else if (action == ICPOLICY_KILL) {
 		kill(pid, SIGKILL);
 		action = ICPOLICY_NEVER;
+	}
+ replace:
+	if (action != ICPOLICY_NEVER) {
+		/* If we can not rewrite the arguments, system call fails */
+		if (intercept_replace(fd, pid, &repl) == -1)
+			action = ICPOLICY_NEVER;
 	}
  out:
 	return (action);

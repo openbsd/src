@@ -1,4 +1,4 @@
-/*	$OpenBSD: openbsd-syscalls.c,v 1.5 2002/06/10 19:16:26 provos Exp $	*/
+/*	$OpenBSD: openbsd-syscalls.c,v 1.6 2002/06/21 15:26:06 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -393,6 +393,48 @@ obsd_modifypolicy(int fd, int num, int code, short policy)
 }
 
 int
+obsd_replace(int fd, pid_t pid, struct intercept_replace *repl)
+{
+	struct systrace_replace replace;
+	size_t len, off;
+	int i, ret;
+
+	for (i = 0, len = 0; i < repl->num; i++) {
+		len += repl->len[i];
+	}
+
+	replace.strr_pid = pid;
+	replace.strr_nrepl = repl->num;
+	replace.strr_base = malloc(len);
+	replace.strr_len = len;
+	if (replace.strr_base == NULL)
+		err(1, "%s: malloc", __func__);
+
+	for (i = 0, off = 0; i < repl->num; i++) {
+		replace.strr_argind[i] = repl->ind[i];
+		replace.strr_offlen[i] = repl->len[i];
+		if (repl->len[i] == 0) {
+			replace.strr_off[i] = (size_t)repl->address[i];
+			continue;
+		}
+
+		replace.strr_off[i] = off;
+		memcpy(replace.strr_base + off,
+		    repl->address[i], repl->len[i]);
+
+		off += repl->len[i];
+	}
+
+	ret = ioctl(fd, STRIOCREPLACE, &replace);
+	if (ret == -1)
+		warn("%s: ioctl", __func__);
+
+	free(replace.strr_base);
+	
+	return (ret);
+}
+
+int
 obsd_io(int fd, pid_t pid, int op, void *addr, u_char *buf, size_t size)
 {
 	struct systrace_io io;
@@ -418,11 +460,17 @@ obsd_getcwd(int fd, pid_t pid, char *buf, size_t size)
 		return (NULL);
 
 	path = getcwd(buf, size);
+	return (path);
+}
 
-	if (ioctl(fd, STRIOCRESCWD, 0) == -1)
+int
+obsd_restcwd(int fd)
+{
+	int res;
+	if ((res = ioctl(fd, STRIOCRESCWD, 0)) == -1)
 		warn("%s: ioctl", __func__); /* XXX */
 
-	return (path);
+	return (res);
 }
 
 int
@@ -530,12 +578,14 @@ struct intercept_system intercept = {
 	obsd_read,
 	obsd_syscall_number,
 	obsd_getcwd,
+	obsd_restcwd,
 	obsd_io,
 	obsd_argument,
 	obsd_answer,
 	obsd_newpolicy,
 	obsd_assignpolicy,
 	obsd_modifypolicy,
+	obsd_replace,
 	obsd_clonepid,
 	obsd_freepid,
 };
