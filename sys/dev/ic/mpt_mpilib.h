@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_mpilib.h,v 1.4 2004/11/03 00:59:56 marco Exp $	*/
+/*	$OpenBSD: mpt_mpilib.h,v 1.5 2004/11/21 04:49:25 marco Exp $	*/
 /*	$NetBSD: mpt_mpilib.h,v 1.2 2003/04/16 23:24:01 thorpej Exp $	*/
 
 /*
@@ -1097,7 +1097,7 @@ typedef struct _MSG_CONFIG_REPLY
 
 typedef struct _CONFIG_PAGE_MANUFACTURING_0
 {
-    fCONFIG_PAGE_HEADER      Header;                     /* 00h */
+    fCONFIG_PAGE_HEADER     Header;                     /* 00h */
     U8                      ChipName[16];               /* 04h */
     U8                      ChipRevision[8];            /* 14h */
     U8                      BoardName[16];              /* 1Ch */
@@ -1112,7 +1112,7 @@ typedef struct _CONFIG_PAGE_MANUFACTURING_0
 
 typedef struct _CONFIG_PAGE_MANUFACTURING_1
 {
-    fCONFIG_PAGE_HEADER      Header;                     /* 00h */
+    fCONFIG_PAGE_HEADER     Header;                     /* 00h */
     U8                      VPD[256];                   /* 04h */
 } fCONFIG_PAGE_MANUFACTURING_1, MPI_POINTER PTR_CONFIG_PAGE_MANUFACTURING_1,
   ManufacturingPage1_t, MPI_POINTER pManufacturingPage1_t;
@@ -1134,12 +1134,14 @@ typedef struct _MPI_CHIP_REVISION_ID
  * one and check Header.PageLength at runtime.
  */
 #ifndef MPI_MAN_PAGE_2_HW_SETTINGS_WORDS
-#define MPI_MAN_PAGE_2_HW_SETTINGS_WORDS    (1)
+/*#define MPI_MAN_PAGE_2_HW_SETTINGS_WORDS    (1)*/
+/* MP: is this right? */
+#define MPI_MAN_PAGE_2_HW_SETTINGS_WORDS    (16)
 #endif
 
 typedef struct _CONFIG_PAGE_MANUFACTURING_2
 {
-    fCONFIG_PAGE_HEADER      Header;                                 /* 00h */
+    fCONFIG_PAGE_HEADER     Header;                                 /* 00h */
     MPI_CHIP_REVISION_ID    ChipId;                                 /* 04h */
     U32                     HwSettings[MPI_MAN_PAGE_2_HW_SETTINGS_WORDS];/* 08h */
 } fCONFIG_PAGE_MANUFACTURING_2, MPI_POINTER PTR_CONFIG_PAGE_MANUFACTURING_2,
@@ -1153,12 +1155,14 @@ typedef struct _CONFIG_PAGE_MANUFACTURING_2
  * one and check Header.PageLength at runtime.
  */
 #ifndef MPI_MAN_PAGE_3_INFO_WORDS
-#define MPI_MAN_PAGE_3_INFO_WORDS           (1)
+/*#define MPI_MAN_PAGE_3_INFO_WORDS           (1)*/
+/* MP: is this right? */
+#define MPI_MAN_PAGE_3_INFO_WORDS           (16)
 #endif
 
 typedef struct _CONFIG_PAGE_MANUFACTURING_3
 {
-    fCONFIG_PAGE_HEADER                  Header;                     /* 00h */
+    fCONFIG_PAGE_HEADER                 Header;                     /* 00h */
     MPI_CHIP_REVISION_ID                ChipId;                     /* 04h */
     U32                                 Info[MPI_MAN_PAGE_3_INFO_WORDS];/* 08h */
 } fCONFIG_PAGE_MANUFACTURING_3, MPI_POINTER PTR_CONFIG_PAGE_MANUFACTURING_3,
@@ -1169,7 +1173,7 @@ typedef struct _CONFIG_PAGE_MANUFACTURING_3
 
 typedef struct _CONFIG_PAGE_MANUFACTURING_4
 {
-    fCONFIG_PAGE_HEADER              Header;             /* 00h */
+    fCONFIG_PAGE_HEADER             Header;             /* 00h */
     U32                             Reserved1;          /* 04h */
     U8                              InfoOffset0;        /* 08h */
     U8                              InfoSize0;          /* 09h */
@@ -1194,7 +1198,7 @@ typedef struct _CONFIG_PAGE_MANUFACTURING_4
 
 typedef struct _CONFIG_PAGE_IO_UNIT_0
 {
-    fCONFIG_PAGE_HEADER      Header;                     /* 00h */
+    fCONFIG_PAGE_HEADER     Header;                     /* 00h */
     U64                     UniqueValue;                /* 04h */
 } fCONFIG_PAGE_IO_UNIT_0, MPI_POINTER PTR_CONFIG_PAGE_IO_UNIT_0,
   IOUnitPage0_t, MPI_POINTER pIOUnitPage0_t;
@@ -1204,7 +1208,7 @@ typedef struct _CONFIG_PAGE_IO_UNIT_0
 
 typedef struct _CONFIG_PAGE_IO_UNIT_1
 {
-    fCONFIG_PAGE_HEADER      Header;                     /* 00h */
+    fCONFIG_PAGE_HEADER     Header;                     /* 00h */
     U32                     Flags;                      /* 04h */
 } fCONFIG_PAGE_IO_UNIT_1, MPI_POINTER PTR_CONFIG_PAGE_IO_UNIT_1,
   IOUnitPage1_t, MPI_POINTER pIOUnitPage1_t;
@@ -1234,7 +1238,7 @@ typedef struct _MPI_ADAPTER_INFO
 
 typedef struct _CONFIG_PAGE_IO_UNIT_2
 {
-    fCONFIG_PAGE_HEADER      Header;                     /* 00h */
+    fCONFIG_PAGE_HEADER     Header;                     /* 00h */
     U32                     Flags;                      /* 04h */
     U32                     BiosVersion;                /* 08h */
     MPI_ADAPTER_INFO        AdapterOrder[4];            /* 0Ch */
@@ -1329,12 +1333,14 @@ typedef struct _CONFIG_PAGE_IOC_2_RAID_VOL
  * one and check Header.PageLength at runtime.
  */
 #ifndef MPI_IOC_PAGE_2_RAID_VOLUME_MAX
-#define MPI_IOC_PAGE_2_RAID_VOLUME_MAX      (1)
+/* #define MPI_IOC_PAGE_2_RAID_VOLUME_MAX      (1) */
+/* MP: is this the right way of doing this? */
+#define MPI_IOC_PAGE_2_RAID_VOLUME_MAX      (16)
 #endif
 
 typedef struct _CONFIG_PAGE_IOC_2
 {
-    fCONFIG_PAGE_HEADER          Header;                              /* 00h */
+    fCONFIG_PAGE_HEADER         Header;                              /* 00h */
     U32                         CapabilitiesFlags;                   /* 04h */
     U8                          NumActiveVolumes;                    /* 08h */
     U8                          MaxVolumes;                          /* 09h */
@@ -1376,7 +1382,9 @@ typedef struct _IOC_3_PHYS_DISK
  * one and check Header.PageLength at runtime.
  */
 #ifndef MPI_IOC_PAGE_3_PHYSDISK_MAX
-#define MPI_IOC_PAGE_3_PHYSDISK_MAX         (1)
+/* #define MPI_IOC_PAGE_3_PHYSDISK_MAX         (1) */
+/* MP: is this the right way of doing this? */
+#define MPI_IOC_PAGE_3_PHYSDISK_MAX         (16)
 #endif
 
 typedef struct _CONFIG_PAGE_IOC_3
@@ -1404,13 +1412,15 @@ typedef struct _IOC_4_SEP
  * Host code (drivers, BIOS, utilities, etc.) should leave this define set to
  * one and check Header.PageLength at runtime.
  */
-#ifndef MPI_IOC_PAGE_4_SEP_MAX
-#define MPI_IOC_PAGE_4_SEP_MAX              (1)
+#ifndef MPI_IOC_PAGE_4_SEP_MAX 
+/* #define MPI_IOC_PAGE_4_SEP_MAX              (1) */
+/* MP: is this the right way of doing this? */
+#define MPI_IOC_PAGE_4_SEP_MAX              (16)
 #endif
 
 typedef struct _CONFIG_PAGE_IOC_4
 {
-    fCONFIG_PAGE_HEADER          Header;                         /* 00h */
+    fCONFIG_PAGE_HEADER		Header;                         /* 00h */
     U8                          ActiveSEP;                      /* 04h */
     U8                          MaxSEP;                         /* 05h */
     U16                         Reserved1;                      /* 06h */
@@ -1427,9 +1437,9 @@ typedef struct _CONFIG_PAGE_IOC_4
 
 typedef struct _CONFIG_PAGE_SCSI_PORT_0
 {
-    fCONFIG_PAGE_HEADER      Header;                     /* 00h */
-    U32                     Capabilities;               /* 04h */
-    U32                     PhysicalInterface;          /* 08h */
+    fCONFIG_PAGE_HEADER		Header;                     /* 00h */
+    U32				Capabilities;               /* 04h */
+    U32				PhysicalInterface;          /* 08h */
 } fCONFIG_PAGE_SCSI_PORT_0, MPI_POINTER PTR_CONFIG_PAGE_SCSI_PORT_0,
   SCSIPortPage0_t, MPI_POINTER pSCSIPortPage0_t;
 
@@ -1451,9 +1461,9 @@ typedef struct _CONFIG_PAGE_SCSI_PORT_0
 
 typedef struct _CONFIG_PAGE_SCSI_PORT_1
 {
-    fCONFIG_PAGE_HEADER      Header;                     /* 00h */
-    U32                     Configuration;              /* 04h */
-    U32                     OnBusTimerValue;            /* 08h */
+    fCONFIG_PAGE_HEADER		Header;                     /* 00h */
+    U32				Configuration;              /* 04h */
+    U32				OnBusTimerValue;            /* 08h */
 } fCONFIG_PAGE_SCSI_PORT_1, MPI_POINTER PTR_CONFIG_PAGE_SCSI_PORT_1,
   SCSIPortPage1_t, MPI_POINTER pSCSIPortPage1_t;
 
@@ -2014,7 +2024,9 @@ typedef struct _RAID_VOL0_SETTINGS
  * one and check Header.PageLength at runtime.
  */
 #ifndef MPI_RAID_VOL_PAGE_0_PHYSDISK_MAX
-#define MPI_RAID_VOL_PAGE_0_PHYSDISK_MAX        (1)
+/* #define MPI_RAID_VOL_PAGE_0_PHYSDISK_MAX        (1) */
+/* MP: is this the right way of doing this? */
+#define MPI_RAID_VOL_PAGE_0_PHYSDISK_MAX        (16)
 #endif
 
 typedef struct _CONFIG_PAGE_RAID_VOL_0
