@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cksum.1,v 1.2 1996/06/26 05:32:01 deraadt Exp $
+.\"	$OpenBSD: cksum.1,v 1.3 1997/01/27 20:14:21 bitblt Exp $
 .\"	$NetBSD: cksum.1,v 1.8 1995/09/02 05:45:15 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -157,6 +157,14 @@ The
 and
 .Nm sum
 utilities exit 0 on success, and >0 if an error occurs.
+.Sh WARNING
+Do not use
+.Nm sum 
+or 
+.Nm cksum
+to detect hostile binary modifications.  An attacker
+can trivially produce backdoored daemons which have the same CRC as the
+standard versions.  Use a cryptographic checksum, such as MD5 instead.
 .Sh SEE ALSO
 The default calculation is identical to that given in pseudo-code
 in the following
