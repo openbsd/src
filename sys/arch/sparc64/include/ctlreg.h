@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctlreg.h,v 1.2 2001/08/20 20:23:52 jason Exp $	*/
+/*	$OpenBSD: ctlreg.h,v 1.3 2001/09/20 21:08:50 jason Exp $	*/
 /*	$NetBSD: ctlreg.h,v 1.28 2001/08/06 23:55:34 eeh Exp $ */
 
 /*
@@ -268,15 +268,7 @@
 #define	SFSR_FV			0x00001	/* Fault is valid */
 #define	SFSR_FT	(SFSR_FT_VA_OOR_2|SFSR_FT_VA_OOR_1|SFSR_FT_NFO|SFSR_ILL_ASI|SFSR_FT_IO_ATOMIC|SFSR_FT_ILL_NF|SFSR_FT_PRIV)
 
-#if 0
-/* Old bits */
-#define	SFSR_BITS "\40\16VAT\15VAD\14NFO\13ASI\12A\11NF\10PRIV\7E\6NUCLEUS\5SECONDCTX\4PRIV\3W\2OW\1FV"
-#else
-/* New bits */
-#define	SFSR_BITS "\177\20" \
-	"f\20\30ASI\0" "b\16VAT\0" "b\15VAD\0" "b\14NFO\0" "b\13ASI\0" "b\12A\0" "b\11NF\0" "b\10PRIV\0" \
-	 "b\7E\0" "b\6NUCLEUS\0" "b\5SECONDCTX\0" "b\4PRIV\0" "b\3W\0" "b\2OW\0" "b\1FV\0"
-#endif
+#define	SFSR_BITS "\20\16VAT\15VAD\14NFO\13ASI\12A\11NF\10PRIV\7E\6NUCLEUS\5SECONDCTX\4PRIV\3W\2OW\1FV"
 
 /* ASFR bits */
 #define	ASFR_ME			0x100000000LL
@@ -295,11 +287,9 @@
 #define	ASFR_ETS		0x0000f0000LL
 #define	ASFT_P_SYND		0x00000ffffLL
 
-#define	AFSR_BITS "\177\20" \
-        "b\40ME\0"      "b\37PRIV\0"    "b\36ISAP\0"    "b\35ETP\0" \
-        "b\34IVUE\0"    "b\33TO\0"      "b\32BERR\0"    "b\31LDP\0" \
-        "b\30CP\0"      "b\27WP\0"      "b\26EDP\0"     "b\25UE\0" \
-        "b\24CE\0"      "f\20\4ETS\0"   "f\0\20P_SYND\0"
+#define	AFSR_BITS "\20" \
+    "\20ME\37PRIV\36ISAP\35ETP\34IVUE\33TO\32BERR\31LDP\30CP\27WP\26EDP" \
+    "\25UE\24CE"
 
 /*  
  * Here's the spitfire TSB control register bits.
