@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.c,v 1.49 2001/10/26 13:29:26 ho Exp $	*/
+/*	$OpenBSD: sa.c,v 1.50 2001/11/21 09:59:26 ho Exp $	*/
 /*	$EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	*/
 
 /*
@@ -422,6 +422,8 @@ sa_dump (char *header, struct sa *sa)
 	    decode_32 (sa->cookies + 8), decode_32 (sa->cookies + 12)));
   LOG_DBG ((LOG_REPORT, 0, "%s: msgid %08x refcnt %d", header,
 	    decode_32 (sa->message_id), sa->refcnt));
+  LOG_DBG ((LOG_REPORT, 0, "%s: life secs %llu kb %llu", header,
+	    sa->seconds, sa->kilobytes));
   for (proto = TAILQ_FIRST (&sa->protos); proto;
        proto = TAILQ_NEXT (proto, link))
     {
