@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.3 2000/03/20 07:05:53 rahnds Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.4 2000/07/28 13:03:24 rahnds Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -119,10 +119,11 @@ mbattach(parent, self, aux)
 		int node;
 		for (node = OF_child(OF_peer(0)); node; node= OF_peer(node)) {
 			bzero (name, sizeof(name));
-			if (OF_getprop(node, "name", name, sizeof(name)) <= 0)
+			if (OF_getprop(node, "device_type", name, sizeof(name)) <= 0)
 			{
-				printf ("name not found on node %x\n");
-				continue;
+				if (OF_getprop(node, "name", name, sizeof(name)) <= 0)
+					printf ("name not found on node %x\n");
+					continue;
 			}
 			if (strcmp(name, "pci") == 0) {
 				nca.ca_name = "mpcpcibr";
