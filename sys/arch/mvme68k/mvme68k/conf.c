@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.35 2003/09/23 16:51:11 millert Exp $ */
+/*	$OpenBSD: conf.c,v 1.36 2003/09/26 06:58:04 miod Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -202,7 +202,7 @@ struct cdevsw	cdevsw[] =
 	cdev_uk_init(NUK,uk),		/* 41: unknown SCSI */
 	cdev_ss_init(NSS,ss),           /* 42: SCSI scanner */
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 43: Kernel symbols device */
-	cdev_lkm_dummy(),		/* 44 */
+	cdev_ch_init(NCH,ch),		/* 44: SCSI autochanger */
 	cdev_lkm_dummy(),		/* 45 */
 	cdev_lkm_dummy(),		/* 46 */
 	cdev_lkm_dummy(),		/* 47 */
