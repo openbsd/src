@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_nfs.c,v 1.25 2001/11/05 07:39:16 mpech Exp $	*/
+/*	$OpenBSD: mount_nfs.c,v 1.26 2001/12/01 19:13:48 deraadt Exp $	*/
 /*	$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl Exp $	*/
 
 /*
@@ -185,8 +185,7 @@ main(argc, argv)
 	int c;
 	struct nfs_args *nfsargsp;
 	struct nfs_args nfsargs;
-	struct nfsd_cargs ncd;
-	int mntflags, altflags, i, nfssvc_flag, num;
+	int mntflags, altflags, num;
 	char *name, *p, *spec;
 
 	retrycnt = DEF_RETRY;
