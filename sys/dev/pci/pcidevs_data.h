@@ -1143,6 +1143,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Rage 128 PK",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_AIW,
+	    0,
+	    "ATI",
+	    "AIW Radeon",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_MAGNUM,
 	    0,
 	    "ATI",
