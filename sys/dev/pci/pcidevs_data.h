@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.52 1998/05/16 00:44:34 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.53 1998/05/20 08:38:18 downsj Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -2061,6 +2061,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "VT82C586 (Apollo VP) PCI-ISA Bridge",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C597AGP,
+	    0,
+	    "VIA Technologies",
+	    "VT82C597 (Apollo VP3) AGP Controller",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C926,
 	    0,
 	    "VIA Technologies",
@@ -2095,6 +2101,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "VIA Technologies",
 	    "VT83C572 USB Controller",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C597,
+	    0,
+	    "VIA Technologies",
+	    "VT82C597 (Apollo VP3) Host-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6000B,
