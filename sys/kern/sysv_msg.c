@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_msg.c,v 1.16 2004/06/21 23:50:36 tholo Exp $	*/
+/*	$OpenBSD: sysv_msg.c,v 1.17 2004/07/14 23:40:27 millert Exp $	*/
 /*	$NetBSD: sysv_msg.c,v 1.19 1996/02/09 19:00:18 christos Exp $	*/
 
 /*
@@ -167,45 +167,50 @@ sys_msgctl(p, v, retval)
 		syscallarg(int) cmd;
 		syscallarg(struct msqid_ds *) buf;
 	} */ *uap = v;
-	int msqid = SCARG(uap, msqid);
-	int cmd = SCARG(uap, cmd);
-	struct msqid_ds *user_msqptr = SCARG(uap, buf);
+
+	return (msgctl1(p, SCARG(uap, msqid), SCARG(uap, cmd),
+	    (caddr_t)SCARG(uap, buf), copyin, copyout));
+}
+
+int
+msgctl1(p, msqid, cmd, buf, ds_copyin, ds_copyout)
+	struct proc *p;
+	int msqid;
+	int cmd;
+	caddr_t buf;
+	int (*ds_copyin)(const void *, void *, size_t);
+	int (*ds_copyout)(const void *, void *, size_t);
+{
 	struct ucred *cred = p->p_ucred;
-	int rval, eval;
-	struct msqid_ds msqbuf;
-	register struct msqid_ds *msqptr;
+	struct msqid_ds msqbuf, *msqptr;
+	struct msg *msghdr;
+	int ix, error = 0;
 
-	DPRINTF(("call to msgctl(%d, %d, %p)\n", msqid, cmd, user_msqptr));
+	DPRINTF(("call to msgctl(%d, %d, %p)\n", msqid, cmd, buf));
 
-	msqid = IPCID_TO_IX(msqid);
+	ix = IPCID_TO_IX(msqid);
 
-	if (msqid < 0 || msqid >= msginfo.msgmni) {
-		DPRINTF(("msqid (%d) out of range (0<=msqid<%d)\n", msqid,
+	if (ix < 0 || ix >= msginfo.msgmni) {
+		DPRINTF(("msqid (%d) out of range (0<=msqid<%d)\n", ix,
 		    msginfo.msgmni));
 		return (EINVAL);
 	}
 
-	msqptr = &msqids[msqid];
+	msqptr = &msqids[ix];
 
 	if (msqptr->msg_qbytes == 0) {
 		DPRINTF(("no such msqid\n"));
 		return (EINVAL);
 	}
-	if (msqptr->msg_perm.seq != IPCID_TO_SEQ(SCARG(uap, msqid))) {
+	if (msqptr->msg_perm.seq != IPCID_TO_SEQ(msqid)) {
 		DPRINTF(("wrong sequence number\n"));
 		return (EINVAL);
 	}
 
-	eval = 0;
-	rval = 0;
-
 	switch (cmd) {
-
 	case IPC_RMID:
-	{
-		struct msg *msghdr;
-		if ((eval = ipcperm(cred, &msqptr->msg_perm, IPC_M)) != 0)
-			return (eval);
+		if ((error = ipcperm(cred, &msqptr->msg_perm, IPC_M)) != 0)
+			return (error);
 		/* Free the message headers */
 		msghdr = msqptr->msg_first;
 		while (msghdr != NULL) {
@@ -225,20 +230,17 @@ sys_msgctl(p, v, retval)
 		if (msqptr->msg_qnum != 0)
 			panic("sys_msgctl: msg_qnum is screwed up");
 #endif
-
 		msqptr->msg_qbytes = 0;	/* Mark it as free */
-
 		wakeup(msqptr);
-	}
-
 		break;
 
 	case IPC_SET:
-		if ((eval = ipcperm(cred, &msqptr->msg_perm, IPC_M)))
-			return (eval);
-		if ((eval = copyin(user_msqptr, &msqbuf, sizeof(msqbuf))) != 0)
-			return (eval);
-		if (msqbuf.msg_qbytes > msqptr->msg_qbytes && cred->cr_uid != 0)
+		if ((error = ipcperm(cred, &msqptr->msg_perm, IPC_M)))
+			return (error);
+		if ((error = ds_copyin(buf, &msqbuf, sizeof(msqbuf))) != 0)
+			return (error);
+		if (msqbuf.msg_qbytes > msqptr->msg_qbytes &&
+		    cred->cr_uid != 0)
 			return (EPERM);
 		if (msqbuf.msg_qbytes > msginfo.msgmnb) {
 			DPRINTF(("can't increase msg_qbytes beyond %d "
@@ -250,8 +252,8 @@ sys_msgctl(p, v, retval)
 			DPRINTF(("can't reduce msg_qbytes to 0\n"));
 			return (EINVAL);	/* non-standard errno! */
 		}
-		msqptr->msg_perm.uid = msqbuf.msg_perm.uid;	/* change owner */
-		msqptr->msg_perm.gid = msqbuf.msg_perm.gid;	/* change owner */
+		msqptr->msg_perm.uid = msqbuf.msg_perm.uid;
+		msqptr->msg_perm.gid = msqbuf.msg_perm.gid;
 		msqptr->msg_perm.mode = (msqptr->msg_perm.mode & ~0777) |
 		    (msqbuf.msg_perm.mode & 0777);
 		msqptr->msg_qbytes = msqbuf.msg_qbytes;
@@ -259,22 +261,18 @@ sys_msgctl(p, v, retval)
 		break;
 
 	case IPC_STAT:
-		if ((eval = ipcperm(cred, &msqptr->msg_perm, IPC_R))) {
+		if ((error = ipcperm(cred, &msqptr->msg_perm, IPC_R))) {
 			DPRINTF(("requester doesn't have read access\n"));
-			return (eval);
+			return (error);
 		}
-		eval = copyout(msqptr, user_msqptr,
-		    sizeof(struct msqid_ds));
+		error = ds_copyout(msqptr, buf, sizeof(struct msqid_ds));
 		break;
 
 	default:
 		DPRINTF(("invalid command %d\n", cmd));
 		return (EINVAL);
 	}
-
-	if (eval == 0)
-		*retval = rval;
-	return (eval);
+	return (error);
 }
 
 int

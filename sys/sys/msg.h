@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.h,v 1.10 2002/12/10 21:30:09 pvalchev Exp $	*/
+/*	$OpenBSD: msg.h,v 1.11 2004/07/14 23:40:27 millert Exp $	*/
 /*	$NetBSD: msg.h,v 1.9 1996/02/09 18:25:18 christos Exp $	*/
 
 /*
@@ -184,8 +184,13 @@ int msgsnd(int, const void *, size_t, int);
 int msgrcv(int, void *, size_t, long, int);
 __END_DECLS
 #else
-void msginit(void);
-void msqid_n2o(struct msqid_ds *, struct omsqid_ds *);
+struct proc;
+
+void	msginit(void);
+void	msqid_n2o(struct msqid_ds *, struct omsqid_ds *);
+int	msgctl1(struct proc *, int, int, caddr_t,
+	    int (*)(const void *, void *, size_t),
+	    int (*)(const void *, void *, size_t));
 #endif /* !_KERNEL */
 
 #endif /* !_SYS_MSG_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: shm.h,v 1.16 2004/05/03 17:38:47 millert Exp $	*/
+/*	$OpenBSD: shm.h,v 1.17 2004/07/14 23:40:27 millert Exp $	*/
 /*	$NetBSD: shm.h,v 1.20 1996/04/09 20:55:35 cgd Exp $	*/
 
 /*
@@ -149,14 +149,18 @@ extern struct shmid_ds **shmsegs;
 extern int shmseg;
 extern int shmmaxpgs;
 
+struct proc;
 struct vmspace;
 
-void shminit(void);
-void shmfork(struct vmspace *, struct vmspace *);
-void shmexit(struct vmspace *);
-void shmid_n2o(struct shmid_ds *, struct oshmid_ds *);
-int sysctl_sysvshm(int *, u_int, void *, size_t *, void *, size_t);
-int sys_shmat1(struct proc *, void *, register_t *, int);
+void	shminit(void);
+void	shmfork(struct vmspace *, struct vmspace *);
+void	shmexit(struct vmspace *);
+void	shmid_n2o(struct shmid_ds *, struct oshmid_ds *);
+int	sysctl_sysvshm(int *, u_int, void *, size_t *, void *, size_t);
+int	sys_shmat1(struct proc *, void *, register_t *, int);
+int	shmctl1(struct proc *, int, int, caddr_t,
+	    int (*)(const void *, void *, size_t),
+	    int (*)(const void *, void *, size_t));
 
 #else /* !_KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.44 2004/06/21 23:50:36 tholo Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.45 2004/07/14 23:40:27 millert Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -300,28 +300,35 @@ sys_shmctl(struct proc *p, void *v, register_t *retval)
 		syscallarg(int) cmd;
 		syscallarg(struct shmid_ds *) buf;
 	} */ *uap = v;
-	int error;
-	struct ucred *cred = p->p_ucred;
-	struct shmid_ds inbuf;
-	struct shmid_ds *shmseg;
 
-	shmseg = shm_find_segment_by_shmid(SCARG(uap, shmid), 1);
+	return (shmctl1(p, SCARG(uap, shmid), SCARG(uap, cmd),
+	    (caddr_t)SCARG(uap, buf), copyin, copyout));
+}
+
+int
+shmctl1(struct proc *p, int shmid, int cmd, caddr_t buf,
+    int (*ds_copyin)(const void *, void *, size_t),
+    int (*ds_copyout)(const void *, void *, size_t))
+{
+	struct ucred *cred = p->p_ucred;
+	struct shmid_ds inbuf, *shmseg;
+	int error;
+
+	shmseg = shm_find_segment_by_shmid(shmid, 1);
 	if (shmseg == NULL)
 		return (EINVAL);
-	switch (SCARG(uap, cmd)) {
+	switch (cmd) {
 	case IPC_STAT:
 		if ((error = ipcperm(cred, &shmseg->shm_perm, IPC_R)) != 0)
 			return (error);
-		error = copyout((caddr_t)shmseg, SCARG(uap, buf),
-				sizeof(inbuf));
+		error = ds_copyout(shmseg, buf, sizeof(inbuf));
 		if (error)
 			return (error);
 		break;
 	case IPC_SET:
 		if ((error = ipcperm(cred, &shmseg->shm_perm, IPC_M)) != 0)
 			return (error);
-		error = copyin(SCARG(uap, buf), (caddr_t)&inbuf,
-		    sizeof(inbuf));
+		error = ds_copyin(buf, &inbuf, sizeof(inbuf));
 		if (error)
 			return (error);
 		shmseg->shm_perm.uid = inbuf.shm_perm.uid;
@@ -338,7 +345,7 @@ sys_shmctl(struct proc *p, void *v, register_t *retval)
 		shmseg->shm_perm.mode |= SHMSEG_REMOVED;
 		if (shmseg->shm_nattch <= 0) {
 			shm_deallocate_segment(shmseg);
-			shm_last_free = IPCID_TO_IX(SCARG(uap, shmid));
+			shm_last_free = IPCID_TO_IX(shmid);
 			shmsegs[shm_last_free] = NULL;
 		}
 		break;

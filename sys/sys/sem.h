@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.h,v 1.15 2004/05/03 17:38:47 millert Exp $	*/
+/*	$OpenBSD: sem.h,v 1.16 2004/07/14 23:40:27 millert Exp $	*/
 /*	$NetBSD: sem.h,v 1.8 1996/02/09 18:25:29 christos Exp $	*/
 
 /*
@@ -195,17 +195,20 @@ extern struct	semid_ds **sema;	/* semaphore id list */
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int semctl(int, int, int, ...);
-int __semctl(int, int, int, union semun *);
-int semget(key_t, int, int);
-int semop(int, struct sembuf *, size_t);
-int semconfig(int);
+int	semctl(int, int, int, ...);
+int	__semctl(int, int, int, union semun *);
+int	semget(key_t, int, int);
+int	semop(int, struct sembuf *, size_t);
+int	semconfig(int);
 __END_DECLS
 #else
-void seminit(void);
-void semexit(struct proc *);
-void semid_n2o(struct semid_ds *, struct osemid_ds *);
-int sysctl_sysvsem(int *, u_int, void *, size_t *, void *, size_t);
+void	seminit(void);
+void	semexit(struct proc *);
+void	semid_n2o(struct semid_ds *, struct osemid_ds *);
+int	sysctl_sysvsem(int *, u_int, void *, size_t *, void *, size_t);
+int	semctl1(struct proc *, int, int, int, union semun *, register_t *,
+	    int (*)(const void *, void *, size_t),
+	    int (*)(const void *, void *, size_t));
 #endif /* !_KERNEL */
 
 #endif /* !_SEM_H_ */
