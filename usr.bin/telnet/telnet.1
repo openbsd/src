@@ -1,4 +1,4 @@
-.\"	$OpenBSD: telnet.1,v 1.7 1997/06/05 01:07:46 deraadt Exp $
+.\"	$OpenBSD: telnet.1,v 1.8 1997/11/11 18:15:28 deraadt Exp $
 .\"	$NetBSD: telnet.1,v 1.5 1996/02/28 21:04:12 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -150,13 +150,13 @@ Sets the initial value of the
 .Ic debug
 toggle to
 .Dv TRUE
-.It Fl e Ar escape char 
+.It Fl e Ar escapechar 
 Sets the initial
 .Nm
 escape character to
-.Ar escape char.
+.Ar escapechar.
 If
-.Ar escape char
+.Ar escapechar
 is omitted, then
 there will be no escape character.
 .It Fl f
@@ -167,7 +167,9 @@ option allows the local credentials to be forwarded to the remote system.
 If Kerberos authentication is being used, the
 .Fl k
 option requests that telnet obtain tickets for the remote host in
-realm realm instead of the remote host's realm, as determined
+realm
+.Ar realm
+instead of the remote host's realm, as determined
 by
 .Xr krb_realmofhost 3 .
 .It Fl l Ar user 
@@ -195,7 +197,9 @@ Specifies a user interface similar to
 .Xr rlogin 1 .
 In this
 mode, the escape character is set to the tilde (~) character,
-unless modified by the -e option.
+unless modified by the
+.Fl e
+option.
 .It Fl x
 Turns on encryption of the data stream if possible.  This
 option is not available outside of the United States and
@@ -275,7 +279,7 @@ and
 is sent as a 
 .Dv TELNET ABORT
 instead of 
-.Dv BREAK
+.Dv BREAK .
 There are options (see
 .Ic toggle
 .Ic autoflush
@@ -411,7 +415,7 @@ commands.
 The
 .Ic environ
 command is used to manipulate the
-the variables that my be sent through the
+the variables that may be sent through the
 .Dv TELNET ENVIRON
 option.
 The initial set of variables is taken from the users
