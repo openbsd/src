@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)SYS.h	8.1 (Berkeley) 6/4/93
- *      $Id: SYS.h,v 1.5 1999/03/12 04:37:20 rahnds Exp $ 
+ *      $Id: SYS.h,v 1.6 1999/06/15 02:12:13 rahnds Exp $ 
  */
 
 #include <sys/syscall.h>
@@ -73,9 +73,14 @@
 
 #define RSYSCALL(x)		PSEUDO(x,x)
 #else /* _THREAD_SAFE */
-#define PREFIX(x)		PSEUDO_PREFIX(_thread_sys_,x,x)
-#define PREFIX2(x,y)		PSEUDO_PREFIX(_thread_sys_,x,y)
-#define	PSEUDO(x,y)		PSEUDO_PREFIX(_thread_sys_,x,y) ; \
+#define ALIAS(x,y)		.weak y; .set y,_CONCAT(x,y);
+		
+#define PREFIX(x)		ALIAS(_thread_sys_,x) \
+				PSEUDO_PREFIX(_thread_sys_,x,x)
+#define PREFIX2(x,y)		ALIAS(_thread_sys_,x) \
+				PSEUDO_PREFIX(_thread_sys_,x,y)
+#define	PSEUDO(x,y)		ALIAS(_thread_sys_,x) \
+				PSEUDO_PREFIX(_thread_sys_,x,y) ; \
 				sc ; \
 				PSEUDO_SUFFIX
 
