@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.34 1995/09/28 04:11:18 briggs Exp $	*/
+/*	$NetBSD: via.c,v 1.36 1996/02/03 22:50:19 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -102,9 +102,6 @@ void	*slotptab[6];
 void
 VIA_initialize()
 {
-	/* Sanity. */
-	if(via_inited){printf("WARNING: Initializing VIA's again.\n");return;}
-
 	/* Initialize VIA1 */
 	/* set all timers to 0 */
 	via_reg(VIA1, vT1L) = 0;
@@ -117,7 +114,6 @@ VIA_initialize()
 	/* turn off timer latch */
 	via_reg(VIA1, vACR) &= 0x3f;
 
-	Via2Base = Via1Base + VIA2 * 0x2000;
 	if (VIA2 == VIA2OFF) {
 		/* Initialize VIA2 */
 		via2_reg(vT1L) = 0;
@@ -382,4 +378,14 @@ mac68k_register_scsi_irq(irq_func, client_data)
  		via2itab[3] = via2_noint;
 		via2iarg[3] = (void *) 3;
 	}
+}
+
+extern void
+mac68k_register_via1_t1_irq(irq_func)
+	void	(*irq_func)(void *);
+{
+	if (irq_func)
+ 		via1itab[6] = irq_func;
+	else
+ 		via1itab[6] = rtclock_intr;
 }

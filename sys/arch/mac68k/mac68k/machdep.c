@@ -221,6 +221,8 @@ consinit(void)
 		ddb_init();
 #endif
 		init = 1;
+	} else {
+		mac68k_calibrate_delay();
 	}
 }
 

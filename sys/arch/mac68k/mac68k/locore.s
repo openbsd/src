@@ -820,6 +820,7 @@ start:
 
 	.globl	_initenv, _getenvvars	| in machdep.c
 	.globl	_setmachdep		| in machdep.c
+	.globl	_VIA_initialize		| in via.c
 
 	/* Initialize source/destination control registers for movs */
 	moveq	#FC_USERD,d0		| user space
@@ -834,6 +835,7 @@ start:
 	jbsr	_getenvvars		| Parse the environment buffer
 
 	jbsr	_setmachdep		| Set some machine-dep stuff
+	jbsr	_VIA_initialize		| Initialize the VIAs
 
 	jbsr	_vm_set_page_size	| Set the vm system page size, now.
 	jbsr	_consinit		| XXX Should only be if graybar on
@@ -2106,3 +2108,10 @@ _mac68k_vrsrc_vec:
 	.word	0, 0, 0, 0, 0, 0
 _mac68k_buserr_addr:
 	.long	0
+	.globl	_SONICSPACE, _SONICSPACE_size
+_SONICSPACE:
+	.space	108123
+/* size is figured out in if_sn.c.
+   This should be dynamically allocated at some point. */
+_SONICSPACE_size:
+	.long	108123

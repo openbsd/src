@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.17 1996/01/29 04:10:00 briggs Exp $	*/
+/*	$NetBSD: clock.c,v 1.19 1996/02/03 22:49:58 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -78,14 +78,14 @@
  */
 
 #if !defined(STANDALONE)
-#include "param.h"
-#include "kernel.h"
+#include <sys/param.h>
+#include <sys/kernel.h>
 
-#include "machine/psl.h"
-#include "machine/cpu.h"
+#include <machine/psl.h>
+#include <machine/cpu.h>
 
 #if defined(GPROF) && defined(PROFTIMER)
-#include "sys/gprof.h"
+#include <sys/gprof.h>
 #endif
 
 #else				/* STANDALONE */
@@ -407,38 +407,108 @@ resettodr(void)
  */
 #define	CLK_RATE	12766
 
+#define	DELAY_CALIBRATE	(0xffffff << 7)	/* Large value for calibration */
+#define	LARGE_DELAY	0x40000		/* About 335 msec */
+
+int delay_factor = DELAY_CALIBRATE;
+volatile int delay_flag = 1;
+
 /*
  * delay(usec)
- *	Delay usec microseconds.  This is inaccurate because it
- * assumes that it takes no time to actually execute.  We should
- * try to compensate for this sometime because access to the via
- * is hardly cheap.
+ *	Delay usec microseconds.
  *
- * It would probably be worthwhile to invent a version of this that
- * didn't depend on the VIA.
+ * The delay_factor is scaled up by a factor of 128 to avoid loss
+ * of precision for small delays.  As a result of this, note that
+ * delays larger that LARGE_DELAY will be up to 128 usec too short,
+ * due to adjustments for calculations involving 32 bit values.
  */
 void
 delay(int usec)
 {
-	register int	ticks, t;
+	register unsigned int cycles;
 
-	if (usec <= 0)
-		usec = 1;
-
-	if (usec < 200000)
-		ticks = (usec * 10000) / CLK_RATE;
+	if (usec > LARGE_DELAY)
+		cycles = (usec >> 7) * delay_factor;
 	else
-		ticks = (usec / CLK_RATE) * 10000;
+		cycles = ((usec > 0 ? usec : 1) * delay_factor) >> 7;
 
-	while (ticks) {
-		t = min(ticks, 65535);
+	while ((cycles-- > 0) && delay_flag)
+		;
+}
 
-		via_reg(VIA1, vT2C) = (t & 0xff);
-		via_reg(VIA1, vT2CH) = ((t >> 8) & 0xff);
+/*
+ * Dummy delay calibration.  Functionally identical to delay(), but
+ * returns the number of times through the loop.
+ */
+static int
+dummy_delay(usec)
+	int usec;
+{
+	register unsigned int cycles;
 
-		while (!(via_reg(VIA1, vIFR) & V1IF_T2))
-			;
+	if (usec > LARGE_DELAY)
+		cycles = (usec >> 7) * delay_factor;
+	else
+		cycles = ((usec > 0 ? usec : 1) * delay_factor) >> 7;
 
-		ticks -= t;
+	while ((cycles-- > 0) && delay_flag)
+		;
+
+	return ((delay_factor >> 7) - cycles);
+}
+
+static void
+delay_timer1_irq()
+{
+	delay_flag = 0;
+}
+
+/*
+ * Calibrate delay_factor with VIA1 timer T1.
+ */
+void
+mac68k_calibrate_delay()
+{
+	int n;
+	int sum;
+
+	mac68k_register_via1_t1_irq(delay_timer1_irq);
+	via_reg(VIA1, vIER) = 0x80 | V1IF_T1;
+
+	for (sum = 0, n = 8; n > 0; n--) {
+		delay_flag = 1;
+		via_reg(VIA1, vT1C) = 0;	/* 1024 clock ticks */
+		via_reg(VIA1, vT1CH) = 4;	/* (approx 1.3 msec) */
+		sum += dummy_delay(1);
 	}
+
+	via_reg(VIA1, vIER) = V1IF_T1;
+	via_reg(VIA1, vT1C) = 0;
+	via_reg(VIA1, vT1CH) = 0;
+	mac68k_register_via1_t1_irq(NULL);
+
+	/*
+	 * If this weren't integer math, the following would look
+	 * a lot prettier.  It should really be something like
+	 * this:
+	 *	delay_factor = ((sum / 8) / (1024 * 1.2766)) * 128;
+	 * That is, average the sum, divide by the number of usec,
+	 * and multiply by a scale factor of 128.
+	 * 
+	 * We can accomplish the same thing by simplifying and using
+	 * shifts, being careful to avoid as much loss of precision
+	 * as possible.  (If the sum exceeds (2^31-1)/10000, we need
+	 * to rearrange the calculation slightly to do this.)
+	 */
+	if (sum > 214748)	/* This is a _fast_ machine! */
+		delay_factor = (((sum >> 3) * 10000) / CLK_RATE) >> 3;
+	else
+		delay_factor = (((sum * 10000) >> 3) / CLK_RATE) >> 3;
+
+	/* Reset the delay_flag for normal use */
+	delay_flag = 1;
+
+#ifdef DEBUG
+	printf("delay calibrated, factor = %d\n", delay_factor);
+#endif
 }

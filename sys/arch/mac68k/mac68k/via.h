@@ -1,4 +1,4 @@
-/*	$NetBSD: via.h,v 1.14 1995/09/04 05:06:00 briggs Exp $	*/
+/*	$NetBSD: via.h,v 1.15 1996/02/03 22:50:22 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -177,6 +177,7 @@ int		rbv_vidstatus    (void);
 int		add_nubus_intr   (int addr, void (*func)(), void *client_data);
 void		mac68k_register_scsi_irq(void (*irq_func)(void *), void *clnt);
 void		mac68k_register_scsi_drq(void (*drq_func)(void *), void *clnt);
+void		mac68k_register_via1_t1_irq(void (*irq_func)(void *));
 
 extern void	(*via1itab[7])();
 extern void	(*via2itab[7])();
