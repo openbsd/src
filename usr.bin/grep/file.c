@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.6 2005/02/02 06:17:17 tedu Exp $	*/
+/*	$OpenBSD: file.c,v 1.7 2005/02/07 08:47:18 otto Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -45,6 +45,7 @@ static size_t	 lnbuflen;
 
 struct file {
 	int	 type;
+	int	 noseek;
 	FILE	*f;
 	mmf_t	*mmf;
 	gzFile	*gzf;
@@ -103,12 +104,14 @@ grep_fdopen(int fd, char *mode)
 #ifndef NOZ
 	if (Zflag) {
 		f->type = FILE_GZIP;
+		f->noseek = lseek(fd, 0L, SEEK_SET) == -1;
 		if ((f->gzf = gzdopen(fd, mode)) != NULL)
 			return f;
 	} else
 #endif
 	{
 		f->type = FILE_STDIO;
+		f->noseek = isatty(fd);
 		if ((f->f = fdopen(fd, mode)) != NULL)
 			return f;
 	}
@@ -125,6 +128,7 @@ grep_open(char *path, char *mode)
 	snprintf(fname, sizeof fname, "%s", path);
 
 	f = grep_malloc(sizeof *f);
+	f->noseek = 0;
 
 #ifndef NOZ
 	if (Zflag) {
@@ -151,6 +155,9 @@ grep_open(char *path, char *mode)
 int
 grep_bin_file(file_t *f)
 {
+	if (f->noseek)
+		return 0;
+
 	switch (f->type) {
 	case FILE_STDIO:
 		return bin_file(f->f);
