@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.12 2001/07/16 06:29:44 pvalchev Exp $	*/
+/*	$OpenBSD: main.c,v 1.13 2001/11/07 11:42:53 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/03/19 03:21:38 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	5.5 (Berkeley) 5/24/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.12 2001/07/16 06:29:44 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.13 2001/11/07 11:42:53 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -123,13 +123,20 @@ void getargs __P((int, register char *[]));
 void create_file_names __P((void));
 void open_files __P((void));
 
+volatile sig_atomic_t sigdie;
+
 void
 done(k)
 int k;
 {
-    if (action_file) { fclose(action_file); unlink(action_file_name); }
-    if (text_file) { fclose(text_file); unlink(text_file_name); }
-    if (union_file) { fclose(union_file); unlink(union_file_name); }
+    if (action_file)
+	unlink(action_file_name);
+    if (text_file)
+	unlink(text_file_name);
+    if (union_file)
+	unlink(union_file_name);
+    if (sigdie)
+	_exit(k);
     exit(k);
 }
 
@@ -138,7 +145,8 @@ void
 onintr(signo)
 	int signo;
 {
-    done(1);	/* XXX signal race */
+    sigdie = 1;
+    done(1);
 }
 
 
