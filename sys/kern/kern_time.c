@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.16 2000/01/22 23:41:42 millert Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.17 2000/03/17 22:24:26 jakob Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -593,4 +593,33 @@ expire:
 	} else
 		itp->it_value.tv_usec = 0;		/* sec is already 0 */
 	return (0);
+}
+
+/*
+ * ratecheck(): simple time-based rate-limit checking.  see ratecheck(9)
+ * for usage and rationale.
+ */
+int
+ratecheck(lasttime, mininterval)
+	struct timeval *lasttime;
+	const struct timeval *mininterval;
+{
+	struct timeval delta;
+	int s, rv = 0;
+
+	s = splclock(); 
+	timersub(&mono_time, lasttime, &delta);
+
+	/*
+	 * check for 0,0 is so that the message will be seen at least once,
+	 * even if interval is huge.
+	 */
+	if (timercmp(&delta, mininterval, >=) ||
+	    (lasttime->tv_sec == 0 && lasttime->tv_usec == 0)) {
+		*lasttime = mono_time;
+		rv = 1;
+	}
+	splx(s);
+
+	return (rv);
 }
