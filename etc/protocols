@@ -1,9 +1,10 @@
 #
 # Internet (IP) protocols
 #
-#	$OpenBSD: protocols,v 1.5 1997/02/22 04:32:53 angelos Exp $
+#	$OpenBSD: protocols,v 1.6 1997/12/20 12:00:00 deraadt Exp $
 #
 # Updated based on RFC 1340, Assigned Numbers (July 1992).
+# See also http://www.iana.org/in-notes/iana/assignments/protocol-numbers
 #
 ip	0	IP		# internet protocol, pseudo protocol number
 icmp	1	ICMP		# internet control message protocol
@@ -60,6 +61,7 @@ sipp-ah	51	SIPP-AH		# SIPP Authentication Header
 i-nlsp	52	I-NLSP		# Integrated Net Layer Security TUBA
 swipe	53	SWIPE		# IP with Encryption
 nhrp	54	NHRP		# NBMA Next Hop Resolution Protocol
+skip	57	SKIP		# SKIP
 any	61	any		# host internal protocol
 cftp	62	CFTP		# CFTP
 any	63	any		# local network
