@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.1 2004/02/07 06:00:49 drahn Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.2 2004/02/09 16:47:19 drahn Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -41,7 +41,6 @@ ENTRY(_dl_start)
 	mov	r0, fp				@ original stack
 	mov	r1, r7				@ dl_data
 
-
 	bl	_dl_boot_bind
 
 	add	r0, r5, #4			@ argv
@@ -60,19 +59,25 @@ ENTRY(_dl_start)
 
 
 ENTRY(_dl_bind_start)
+
 	/* STUB */
 
 
 /* ld.so SYSCALLS */
 
+#define DL_SYSCALL(n) DL_SYSCALL2(n,n)
+#define DL_SYSCALL2(n,c)					\
+	.global		__CONCAT(_dl_,n)		;\
+	.type		__CONCAT(_dl_,n)%function	;\
+__CONCAT(_dl_,n):					;\
+	swi	SWI_OS_NETBSD|__CONCAT(SYS_,c)		;\
+	bcs	.L_cerr					;\
+	mov	pc, lr
+
 	.section	".text"
 	.align		4
-	.global		_dl_close
-	.type		_dl_close%function
-_dl_close:
-	swi	SWI_OS_NETBSD|SYS_close
-	bcs	.L_cerr
-	mov	pc, lr
+DL_SYSCALL(close)
+
 	
 	.global		_dl_exit
 	.type		_dl_exit%function
@@ -81,90 +86,19 @@ _dl_exit:
 	1:
 		b 1b
 
-	.global		_dl_issetugid
-	.type		_dl_issetugid%function
-_dl_issetugid:
-	swi	SWI_OS_NETBSD|SYS_issetugid
-	bcs	.L_cerr
-	mov	pc, lr
-	
+DL_SYSCALL(issetugid)
+DL_SYSCALL2(_syscall,__syscall)
+DL_SYSCALL(munmap)
+DL_SYSCALL(mprotect)
+DL_SYSCALL(open)
+DL_SYSCALL(read)
+DL_SYSCALL(write)
+DL_SYSCALL(stat)
+DL_SYSCALL(fstat)
+DL_SYSCALL(fcntl)
+DL_SYSCALL2(sysctl,__sysctl)
 
-	.global		_dl__syscall
-	.type		_dl__syscall%function
-_dl__syscall:
-	swi	SWI_OS_NETBSD|SYS___syscall
-	bcs	.L_cerr
-	mov	pc, lr
-	
-	.global		_dl_munmap
-	.type		_dl_munmap%function
-_dl_munmap:
-	swi	SWI_OS_NETBSD|SYS_munmap
-	bcs	.L_cerr
-	mov	pc, lr
-	
-	.global		_dl_mprotect
-	.type		_dl_mprotect%function
-_dl_mprotect:
-	swi	SWI_OS_NETBSD|SYS_mprotect
-	bcs	.L_cerr
-	mov	pc, lr
-	
-	.global		_dl_open
-	.type		_dl_open%function
-_dl_open:
-	swi	SWI_OS_NETBSD|SYS_open
-	bcs	.L_cerr
-	mov	pc, lr
-	
-	.global		_dl_read
-	.type		_dl_read%function
-_dl_read:
-	swi	SWI_OS_NETBSD|SYS_read
-	bcs	.L_cerr
-	mov	pc, lr
-	
-	.global		_dl_write
-	.type		_dl_write%function
-_dl_write:
-	swi	SWI_OS_NETBSD|SYS_write
-	bcs	.L_cerr
-	mov	pc, lr
-	
-	.global		_dl_stat
-	.type		_dl_stat%function
-_dl_stat:
-	swi	SWI_OS_NETBSD|SYS_stat
-	bcs	.L_cerr
-	mov	pc, lr
-	
-	.global		_dl_fstat
-	.type		_dl_fstat%function
-_dl_fstat:
-	swi	SWI_OS_NETBSD|SYS_fstat
-	bcs	.L_cerr
-	mov	pc, lr
-	
-	.global		_dl_fcntl
-	.type		_dl_fcntl%function
-_dl_fcntl:
-	swi	SWI_OS_NETBSD|SYS_fcntl
-	bcs	.L_cerr
-	mov	pc, lr
-
-	.global		_dl_sysctl
-	.type		_dl_sysctl%function
-_dl_sysctl:
-	swi	SWI_OS_NETBSD|SYS___sysctl
-	bcs	.L_cerr
-	mov	pc, lr
-	
-	.global		_dl_getdirentries
-	.type		_dl_getdirentries%function
-_dl_getdirentries:
-	swi	SWI_OS_NETBSD|SYS_getdirentries
-	bcs	.L_cerr
-	mov	pc, lr
+DL_SYSCALL(getdirentries)
 	
 	.global		_dl_sigprocmask
 	.type		_dl_sigprocmask%function
