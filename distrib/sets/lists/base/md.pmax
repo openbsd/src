@@ -627,6 +627,7 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/midisynvar.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/midivar.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/mii
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/mii/brgphyreg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/mii/dmphyreg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/mii/icsphyreg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/mii/inphyreg.ph
@@ -644,6 +645,7 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/mii/tlphyvar.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/mii/tqphyreg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/mii/txphyreg.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/mii/xmphyreg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/mulaw.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/ofw
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/ofw/openfirm.ph
@@ -873,7 +875,6 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/frame.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/fstab.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/fts.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/g2c.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/g++
 ./usr/libdata/perl5/site_perl/mips-openbsd/g++/FlexLexer.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/g++/PlotFile.ph
@@ -985,6 +986,7 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/g++/tree.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/g++/type_traits.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/g++/vector.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/g2c.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/glob.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/gmp.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/grp.ph
@@ -1753,6 +1755,3 @@
 ./usr/share/info/ld.info-1
 ./usr/share/info/ld.info-2
 ./usr/share/info/ld.info-3
-./usr/libdata/perl5/site_perl/mips-openbsd/dev/mii/brgphyreg.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/dev/mii/xmphyreg.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/i386/pcvt_mouse.ph

@@ -433,7 +433,9 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/ramdac.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/stireg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/stivar.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/mii/brgphyreg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/mii/dmphyreg.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/mii/xmphyreg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/auviavar.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cmpcireg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cmpcivar.ph
@@ -483,6 +485,3 @@
 ./usr/mipsel-unknown-openbsd2.8/bin
 ./usr/mipsel-unknown-openbsd2.8/lib
 ./usr/mipsel-unknown-openbsd2.8/lib/ldscripts
-./usr/libdata/perl5/site_perl/mips-openbsd/dev/mii/brgphyreg.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/dev/mii/xmphyreg.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/i386/pcvt_mouse.ph

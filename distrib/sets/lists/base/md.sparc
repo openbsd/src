@@ -313,6 +313,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/midisynvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/midivar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/mii
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/mii/brgphyreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/mii/dmphyreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/mii/icsphyreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/mii/inphyreg.ph
@@ -330,6 +331,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/mii/tlphyvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/mii/tqphyreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/mii/txphyreg.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/mii/xmphyreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/mulaw.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ofw
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ofw/openfirm.ph
@@ -1722,6 +1724,3 @@
 ./usr/sbin/eeprom
 ./usr/sbin/fdformat
 ./usr/sbin/screenblank
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/mii/brgphyreg.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/mii/xmphyreg.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/i386/pcvt_mouse.ph
