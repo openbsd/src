@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.43 2004/11/30 19:28:37 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.44 2005/04/05 12:13:16 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -1429,9 +1429,8 @@ st_mode_sense(st, flags)
 	struct st_softc *st;
 	int flags;
 {
-	u_int scsi_sense_len;
+	size_t scsi_sense_len;
 	int error;
-	struct scsi_mode_sense cmd;
 	struct scsi_sense {
 		struct scsi_mode_header header;
 		struct scsi_blk_desc blk_desc;
@@ -1442,21 +1441,10 @@ st_mode_sense(st, flags)
 	scsi_sense_len = 12 + st->page_0_size;
 
 	/*
-	 * Set up a mode sense
+	 * Ask for page 0 mode sense data.
 	 */
-	bzero(&cmd, sizeof(cmd));
-	cmd.opcode = MODE_SENSE;
-	cmd.length = scsi_sense_len;
-
-	/*
-	 * do the command, but we don't need the results
-	 * just print them for our interest's sake, if asked,
-	 * or if we need it as a template for the mode select
-	 * store it away.
-	 */
-	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *) &cmd,
-	    sizeof(cmd), (u_char *) &scsi_sense, scsi_sense_len,
-	    ST_RETRIES, ST_CTL_TIME, NULL, flags | SCSI_DATA_IN);
+	error = scsi_mode_sense(sc_link, 0, 0, (u_char *)&scsi_sense,
+	    scsi_sense_len, flags, ST_CTL_TIME);
 	if (error)
 		return error;
 
@@ -1490,7 +1478,6 @@ st_mode_select(st, flags)
 	int flags;
 {
 	u_int scsi_select_len;
-	struct scsi_mode_select cmd;
 	struct scsi_select {
 		struct scsi_mode_header header;
 		struct scsi_blk_desc blk_desc;
@@ -1518,10 +1505,6 @@ st_mode_select(st, flags)
 	/*
 	 * Set up for a mode select
 	 */
-	bzero(&cmd, sizeof(cmd));
-	cmd.opcode = MODE_SELECT;
-	cmd.length = scsi_select_len;
-
 	bzero(&scsi_select, scsi_select_len);
 	scsi_select.header.blk_desc_len = sizeof(struct scsi_blk_desc);
 	scsi_select.header.dev_spec &= ~SMH_DSP_BUFF_MODE;
@@ -1538,9 +1521,8 @@ st_mode_select(st, flags)
 	/*
 	 * do the command
 	 */
-	return scsi_scsi_cmd(sc_link, (struct scsi_generic *) &cmd,
-	    sizeof(cmd), (u_char *) &scsi_select, scsi_select_len,
-	    ST_RETRIES, ST_CTL_TIME, NULL, flags | SCSI_DATA_OUT);
+	return scsi_mode_select(st->sc_link, 0, (u_char *)&scsi_select,
+	    scsi_select_len, flags, ST_CTL_TIME); 
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.48 2004/11/30 19:28:37 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.49 2005/04/05 12:13:16 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -330,6 +330,10 @@ int	scsi_test_unit_ready(struct scsi_link *, int, int);
 int	scsi_inquire(struct scsi_link *, struct scsi_inquiry_data *, int);
 int	scsi_prevent(struct scsi_link *, int, int);
 int	scsi_start(struct scsi_link *, int, int);
+int	scsi_mode_sense(struct scsi_link *, int, int, u_char *, size_t,
+	    int, int);
+int	scsi_mode_select(struct scsi_link *, int, u_char *, size_t, int,
+	    int);
 void	scsi_done(struct scsi_xfer *);
 void	scsi_user_done(struct scsi_xfer *);
 int	scsi_scsi_cmd(struct scsi_link *, struct scsi_generic *,

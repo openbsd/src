@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd_scsi.c,v 1.5 2004/05/09 14:08:11 krw Exp $	*/
+/*	$OpenBSD: cd_scsi.c,v 1.6 2005/04/05 12:13:16 krw Exp $	*/
 /*	$NetBSD: cd_scsi.c,v 1.14 1998/08/31 22:28:06 cgd Exp $	*/
 
 /*-
@@ -104,25 +104,8 @@ cd_scsibus_get_mode(cd, data, page, len, flags)
 	struct scsi_cd_mode_data *data;
 	int page, len, flags;
 {
-	struct scsi_mode_sense scsi_cmd;
-
-#ifdef DIAGNOSTIC
-	if (len == 0 || len > 256) {
-		printf ("cd_scsibus_get_mode: Mode page %02x request "
-		    "bad size: %d bytes\n", page, len);
-		return (EINVAL);
-	}
-#endif
-
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
-	bzero(data, sizeof(*data));
-	scsi_cmd.opcode = MODE_SENSE;
-	scsi_cmd.page = page;
-	scsi_cmd.length = len & 0xff;
-	return (scsi_scsi_cmd(cd->sc_link,
-	    (struct scsi_generic *)&scsi_cmd, sizeof(scsi_cmd),
-	    (u_char *)data, len, CDRETRIES, 20000, NULL,
-	    SCSI_DATA_IN));
+	return scsi_mode_sense(cd->sc_link, 0, page, (u_char *)data,
+	    len, flags, 20000);
 }
 
 /*
@@ -134,30 +117,13 @@ cd_scsibus_set_mode(cd, data, len, flags)
 	struct scsi_cd_mode_data *data;
 	int len, flags;
 {
-	struct scsi_mode_select scsi_cmd;
-
-#ifdef DIAGNOSTIC
-	if (len == 0 || len > 256) {
-		printf ("cd_scsibus_set_mode: Set mode request "
-		    "bad size: %d bytes\n", len);
-		return (EINVAL);
-	}
-#endif
-
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
-	scsi_cmd.opcode = MODE_SELECT;
-	scsi_cmd.byte2 |= SMS_PF;
-	scsi_cmd.length = len & 0xff;
-
 	/* SPC-2 revision 16, section 8.3: Mode parameters
 	   When used with the [MODE SELECT command], the data
 	   length field is reserved. */
 	data->header.data_length = 0;
 
-	return (scsi_scsi_cmd(cd->sc_link,
-	    (struct scsi_generic *)&scsi_cmd, sizeof(scsi_cmd),
-	    (u_char *)data, len, CDRETRIES, 20000, NULL,
-	    SCSI_DATA_OUT));
+	return scsi_mode_select(cd->sc_link, SMS_PF, (u_char *)data, len, flags,
+	    20000); 
 }
 
 int

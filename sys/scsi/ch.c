@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.17 2004/11/30 19:28:36 krw Exp $	*/
+/*	$OpenBSD: ch.c,v 1.18 2005/04/05 12:13:16 krw Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -609,11 +609,10 @@ ch_getelemstatus(sc, first, count, data, datalen)
  * softc.
  */
 int
-ch_get_params(sc, scsiflags)
+ch_get_params(sc, flags)
 	struct ch_softc *sc;
-	int scsiflags;
+	int flags;
 {
-	struct scsi_mode_sense cmd;
 	struct scsi_mode_sense_data {
 		struct scsi_mode_header header;
 		union {
@@ -626,17 +625,10 @@ ch_get_params(sc, scsiflags)
 	u_int8_t *moves, *exchanges;
 
 	/*
-	 * Grab info from the element address assignment page.
+	 * Grab info from the element address assignment page (0x1d).
 	 */
-	bzero(&cmd, sizeof(cmd));
-	bzero(&sense_data, sizeof(sense_data));
-	cmd.opcode = MODE_SENSE;
-	cmd.byte2 |= 0x08;	/* disable block descriptors */
-	cmd.page = 0x1d;
-	cmd.length = (sizeof(sense_data) & 0xff);
-	error = scsi_scsi_cmd(sc->sc_link, (struct scsi_generic *)&cmd,
-	    sizeof(cmd), (u_char *)&sense_data, sizeof(sense_data), CHRETRIES,
-	    6000, NULL, scsiflags | SCSI_DATA_IN);
+	error = scsi_mode_sense(sc->sc_link, SMS_DBD, 0x1d,
+	    (u_char *)&sense_data, sizeof(sense_data), flags, 6000);
 	if (error) {
 		printf("%s: could not sense element address page\n",
 		    sc->sc_dev.dv_xname);
@@ -655,17 +647,10 @@ ch_get_params(sc, scsiflags)
 	/* XXX ask for page trasport geom */
 
 	/*
-	 * Grab info from the capabilities page.
+	 * Grab info from the capabilities page (0x1f).
 	 */
-	bzero(&cmd, sizeof(cmd));
-	bzero(&sense_data, sizeof(sense_data));
-	cmd.opcode = MODE_SENSE;
-	cmd.byte2 |= 0x08;	/* disable block descriptors */
-	cmd.page = 0x1f;
-	cmd.length = (sizeof(sense_data) & 0xff);
-	error = scsi_scsi_cmd(sc->sc_link, (struct scsi_generic *)&cmd,
-	    sizeof(cmd), (u_char *)&sense_data, sizeof(sense_data), CHRETRIES,
-	    6000, NULL, scsiflags | SCSI_DATA_IN);
+	error = scsi_mode_sense(sc->sc_link, SMS_DBD, 0x1f,
+	    (u_char *)&sense_data, sizeof(sense_data), flags, 6000);
 	if (error) {
 		printf("%s: could not sense capabilities page\n",
 		    sc->sc_dev.dv_xname);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_mustek.c,v 1.9 2002/03/14 01:27:13 millert Exp $	*/
+/*	$OpenBSD: ss_mustek.c,v 1.10 2005/04/05 12:13:16 krw Exp $	*/
 /*	$NetBSD: ss_mustek.c,v 1.4 1996/05/05 19:52:57 christos Exp $	*/
 
 /*
@@ -254,7 +254,6 @@ int
 mustek_trigger_scanner(ss)
 	struct ss_softc *ss;
 {
-	struct mustek_mode_select_cmd mode_cmd;
 	struct mustek_mode_select_data mode_data;
 	struct mustek_set_window_cmd window_cmd;
 	struct mustek_set_window_data window_data;
@@ -311,10 +310,6 @@ mustek_trigger_scanner(ss)
 	/*
 	 * do what it takes to actualize the mode
 	 */
-	bzero(&mode_cmd, sizeof(mode_cmd));
-	mode_cmd.opcode = MUSTEK_MODE_SELECT;
-	_lto2b(sizeof(mode_data), mode_cmd.length);
-
 	bzero(&mode_data, sizeof(mode_data));
 	mode_data.mode =
 	    MUSTEK_MODE_MASK | MUSTEK_HT_PATTERN_BUILTIN | MUSTEK_UNIT_SPEC;
@@ -341,9 +336,8 @@ mustek_trigger_scanner(ss)
 
 	SC_DEBUG(sc_link, SDEV_DB1, ("mustek_trigger_scanner: mode_select\n"));
 	/* send the command to the scanner */
-	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *) &mode_cmd,
-	    sizeof(mode_cmd), (u_char *) &mode_data, sizeof(mode_data),
-	    MUSTEK_RETRIES, 5000, NULL, SCSI_DATA_OUT);
+	error = scsi_mode_select(sc_link, 0, (u_char *)&mode_data,
+	    sizeof(mode_data), 0, 5000);
 	if (error)
 		return (error);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd_scsi.c,v 1.6 2003/06/25 02:18:35 krw Exp $	*/
+/*	$OpenBSD: sd_scsi.c,v 1.7 2005/04/05 12:13:16 krw Exp $	*/
 /*	$NetBSD: sd_scsi.c,v 1.8 1998/10/08 20:21:13 thorpej Exp $	*/
 
 /*-
@@ -95,27 +95,8 @@ sd_scsibus_mode_sense(sd, scsi_sense, page, flags)
 	struct sd_scsibus_mode_sense_data *scsi_sense;
 	int page, flags;
 {
-	struct scsi_mode_sense scsi_cmd;
-
-	/*
-	 * Make sure the sense buffer is clean before we do
-	 * the mode sense, so that checks for bogus values of
-	 * 0 will work in case the mode sense fails.
-	 */
-	bzero(scsi_sense, sizeof(*scsi_sense));
-
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
-	scsi_cmd.opcode = MODE_SENSE;
-	scsi_cmd.page = page;
-	scsi_cmd.length = sizeof(*scsi_sense);
-	/*
-	 * If the command worked, use the results to fill out
-	 * the parameter structure
-	 */
-	return (scsi_scsi_cmd(sd->sc_link,
-	    (struct scsi_generic *)&scsi_cmd, sizeof(scsi_cmd),
-	    (u_char *)scsi_sense, sizeof(*scsi_sense),
-	    SDRETRIES, 6000, NULL, flags | SCSI_DATA_IN | SCSI_SILENT));
+	return scsi_mode_sense(sd->sc_link, 0, page, (u_char *)scsi_sense,
+	    sizeof(*scsi_sense), flags | SCSI_SILENT, 6000);
 }
 
 int
@@ -124,7 +105,6 @@ sd_scsibus_get_optparms(sd, dp, flags)
 	struct disk_parms *dp;
 	int flags;
 {
-	struct scsi_mode_sense scsi_cmd;
 	struct sd_scsibus_mode_sense_data scsi_sense;
 	int error;
 
@@ -137,18 +117,11 @@ sd_scsibus_get_optparms(sd, dp, flags)
 	 * It is better to get the following params from the
 	 * mode sense page 6 only (optical device parameter page).
 	 * However, there are stupid optical devices which does NOT
-	 * support the page 6. Ghaa....
+	 * support the page 6. Ask for all (0x3f) pages. Ghaa....
 	 */
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
-	scsi_cmd.opcode = MODE_SENSE;
-	scsi_cmd.page = 0x3f;	/* all pages */
-	scsi_cmd.length = sizeof(struct scsi_mode_header) +
-	    sizeof(struct scsi_blk_desc);
-
-	if ((error = scsi_scsi_cmd(sd->sc_link,  
-	    (struct scsi_generic *)&scsi_cmd, sizeof(scsi_cmd),  
-	    (u_char *)&scsi_sense, sizeof(scsi_sense), SDRETRIES,
-	    6000, NULL, flags | SCSI_DATA_IN)) != 0)
+	error = scsi_mode_sense(sd->sc_link, 0, 0x3f, (u_char *)&scsi_sense,
+	    sizeof(scsi_sense), flags, 6000);
+	if (error != 0)
 		return (SDGP_RESULT_OFFLINE);		/* XXX? */
 
 	dp->blksize = _3btol(scsi_sense.blk_desc.blklen);
