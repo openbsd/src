@@ -1,6 +1,5 @@
-dnl	$OpenBSD: hardware,v 1.1 2004/05/16 21:52:22 miod Exp $
-OpenBSD/MACHINE OSREV runs on the OMRON Luna-88K2 workstations. It should
-also run on the older Luna-88K models, but this has not been tested yet.
+dnl	$OpenBSD: hardware,v 1.2 2004/08/30 20:44:49 miod Exp $
+OpenBSD/MACHINE OSREV runs on the OMRON Luna-88K workstations family.
 
 The minimal configuration requires 16MB of RAM and ~250MB of disk space.
 To install the entire system requires much more disk space, and to

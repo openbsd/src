@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.1 2004/05/16 21:52:22 miod Exp $
+dnl	$OpenBSD: prep,v 1.2 2004/08/30 20:44:49 miod Exp $
 
 Luna-88K do not require any specific preparation prior to the OpenBSD
 installation. However, you might want to get familiar with the PROM
@@ -9,13 +9,18 @@ The first set of DIP switches in the front panel (DIP SW1) is used to
 select the machine behaviour upon powerup, as well as the preferred
 console device.
 
-If the leftmost switch in SW1, #1, is up (off), the system will auto-boot
-from the boot device saved in nvram. If it is down (on), the boot process
+The meaning of these switches will depend upon your particular machine.
+On the Luna-88k, the 'down' position is 'off', and the 'up' position is
+'on', while the Luna-88k2 uses the opposite convention (i.e. 'up' is 'off'
+and 'down' is 'on').
+
+If the leftmost switch in SW1, #1, is in the ´off' position, the system will
+auto-boot from the boot device saved in nvram. Otherwise, the boot process
 will stop at the PROM prompt.
 
-The second switch in SW1, #2, selects the console device. When down (on),
-it selects the serial console port as the console; otherwise, the graphics
-display and keyboard are used as the console.
+The second switch in SW1, #2, selects the console device. When in the 'on'
+position, it selects the serial console port as the console; otherwise,
+the graphics display and keyboard are used as the console.
 
 While the Luna-88K2 uses ``standard'' serial ports, the earlier Luna-88K
 have a specific connector. Wiring information for this connector can be
