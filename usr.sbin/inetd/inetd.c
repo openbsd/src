@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.105 2002/07/15 23:05:17 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.106 2002/07/20 18:01:18 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.105 2002/07/15 23:05:17 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.106 2002/07/20 18:01:18 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -2001,10 +2001,12 @@ spawn(struct servtab *sep, int ctrl)
 					tmpint |= LOGIN_SETGROUP;
 				}
 				if (setusercontext(NULL, pwd, pwd->pw_uid,
-				    tmpint) < 0)
+				    tmpint) < 0) {
 					syslog(LOG_ERR,
 					    "%s/%s: setusercontext: %m",
 					    sep->se_service, sep->se_proto);
+					exit(1);
+				}
 			}
 			if (debug)
 				fprintf(stderr, "%ld execl %s\n",
