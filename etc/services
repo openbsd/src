@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.18 1998/11/15 00:06:01 niklas Exp $
+#	$OpenBSD: services,v 1.19 1999/01/08 17:06:23 art Exp $
 #
 # Network services, Internet style
 #
@@ -214,6 +214,7 @@ afs3-rmtsys         	7009/udp	# ?
 # Unofficial services
 #
 supfilesrv	871/tcp			# SUP server
+rsync		873/tcp			# rsync server
 cddb		888/tcp			# Audio CD Database
 supfiledbg	1127/tcp		# SUP debugging
 radius		1645/udp		# radius authentication
