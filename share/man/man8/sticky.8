@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sticky.8,v 1.7 2003/06/06 19:28:06 jmc Exp $
+.\"	$OpenBSD: sticky.8,v 1.8 2003/12/20 09:09:46 jmc Exp $
 .\"	$NetBSD: sticky.8,v 1.3 1994/11/30 19:36:27 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -40,38 +40,30 @@
 A special file mode, called the
 .Em sticky bit
 (mode S_ISVTX),
-is used to indicate special treatment
-for shareable executable files and directories.
+is used to indicate special treatment for files and directories.
 See
 .Xr chmod 2
 or
 the file
 .Pa /usr/include/sys/stat.h
 for an explanation of file modes.
-.Sh STICKY TEXT EXECUTABLE FILES
-An executable shareable file whose sticky bit is set
-will not be immediately discarded from swap space after execution.
-The kernel will hoard the text segment of the file for future
-reuse and avoid having to reload the program.
-Shareable text segments are normally placed
-in a least-frequently used cache after use,
-and thus the `sticky bit' has little effect on commonly used text images.
+.Sh STICKY FILES
+Historically, an executable shareable file which had the sticky bit set
+was not immediately discarded from swap space after execution.
+The kernel hoarded the text segment of the file for future reuse,
+thus avoiding having to reload the program.
+This is no longer true on modern systems;
+the current virtual memory system keeps track of recently used executables,
+making the sticky bit for files redundant.
+The sticky bit can still be set on files, but without any effect.
 .Pp
-Sharable executable files are created with the
-.Fl n
-and
-.Fl z
-options of
-the loader
-.Xr ld 1 .
-.Pp
-Only the superuser can set the sticky bit
-on a sharable executable file.
+Only the superuser can set the sticky bit on a file,
+though the owner of the file may clear the sticky bit.
 .Sh STICKY DIRECTORIES
-A directory whose `sticky bit' is set
-becomes an append-only directory, or, more accurately,
-a directory in which the deletion of files is restricted.
-A file in a sticky directory may only be removed or renamed
+A directory with the
+.Sq sticky bit
+set places restrictions on file deletion:
+a file in a sticky directory may only be removed or renamed
 by a user if the user has write permission for the directory and
 the user is the owner of the file, the owner of the directory,
 or the superuser.
@@ -90,9 +82,6 @@ A
 .Nm
 command appeared in Version 32V AT&T UNIX.
 .Sh BUGS
-Since the text areas of sticky text executables are stashed in the swap area,
-abuse of the feature can cause a system to run out of swap.
-.Pp
 Neither
 .Xr open 2
 nor
