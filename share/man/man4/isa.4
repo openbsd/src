@@ -1,4 +1,4 @@
-.\"	$OpenBSD: isa.4,v 1.13 2001/12/05 11:27:44 mickey Exp $
+.\"	$OpenBSD: isa.4,v 1.14 2001/12/07 11:27:07 mickey Exp $
 .\"	$NetBSD: isa.4,v 1.19 2000/03/18 16:54:37 augustss Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -212,9 +212,13 @@ compatible chips.
 .El
 .Ss Radio receiver devices
 .Bl -tag -width sf24xx -offset ind
-.It az 4
+.It Xr az 4
 Aztech/PackardBell radio card devices.
-.It sf2r 4
+.It Xr rt 4
+AIMS Lab Radiotrack FM radio device driver.
+.It Xr rtii 4
+AIMS Lab Radiotrack II FM radio device driver.
+.It Xr sf2r 4
 SoundForte RadioLink SF16-FMR2 FM radio devices.
 .El
 .Pp
