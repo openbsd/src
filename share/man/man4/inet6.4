@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet6.4,v 1.22 2001/06/24 19:42:23 itojun Exp $
+.\"	$OpenBSD: inet6.4,v 1.23 2002/06/07 17:33:14 itojun Exp $
 .\"	$KAME: inet6.4,v 1.19 2000/11/24 10:13:18 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -270,6 +270,14 @@ message protocol is accessible from a raw socket.
 .\" .Tn IP
 .\" packets, whether locally-generated or forwarded, will not.
 .Ss Interaction between IPv4/v6 sockets
+.Ox
+does not route IPv4 traffic to
+.Dv AF_INET6
+socket.
+The particular behavior in RFC2553 is intentionally omitted for security
+reasons presented above.
+If you need to accept both IPv4 and IPv6 traffic, listen to two sockets.
+.Pp
 The behavior of
 .Dv AF_INET6
 TCP/UDP socket is documented in RFC2553.
@@ -343,15 +351,6 @@ Users are advised to take caution handling connections
 from IPv4 mapped address to
 .Dv AF_INET6
 sockets.
-.Pp
-Because of the above,
-.Ox
-does not route IPv4 traffic to
-.Dv AF_INET6
-socket.
-The particular behavior in RFC2553 is intentionally omitted for security
-reasons presented above.
-If you need to accept both IPv4 and IPv6 traffic, listen to two sockets.
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr socket 2 ,
