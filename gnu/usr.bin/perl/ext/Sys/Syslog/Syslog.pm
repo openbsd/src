@@ -274,7 +274,7 @@ sub connect {
         socket(SYSLOG,AF_INET,SOCK_DGRAM,$udp)           || croak "socket: $!";
         connect(SYSLOG,$that)                            || croak "connect: $!";
     } else {
-        my $syslog = &_PATH_LOG                          || croak "_PATH_LOG not found in syslog.ph";
+        my $syslog = _PATH_LOG()                         || croak "_PATH_LOG not found in syslog.ph";
         my $that = sockaddr_un($syslog)                  || croak "Can't locate $syslog";
         socket(SYSLOG,AF_UNIX,SOCK_STREAM,0)             || croak "socket: $!";
         if (!connect(SYSLOG,$that)) {
