@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.4 1996/05/07 05:52:01 deraadt Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.5 1996/05/18 08:53:09 deraadt Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -53,6 +53,7 @@
 #include <sys/kernel.h>
 #include <sys/stat.h>
 #include <sys/malloc.h>
+#include <sys/poll.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
@@ -62,6 +63,7 @@
 
 int selscan __P((struct proc *, fd_set *, fd_set *, int, register_t *));
 int seltrue __P((dev_t, int, struct proc *));
+void pollscan __P((struct proc *, struct pollfd *, int, register_t *));
 
 /*
  * Read system call.
@@ -756,4 +758,124 @@ selwakeup(sip)
 			p->p_flag &= ~P_SELECT;
 		splx(s);
 	}
+}
+
+void
+pollscan(p, pl, nfd, retval)
+	struct proc *p;
+	struct pollfd *pl;
+	int nfd;
+	register_t *retval;
+{
+	register struct filedesc *fdp = p->p_fd;
+	register int msk, i;
+	struct file *fp;
+	int n = 0;
+	static int flag[3] = { FREAD, FWRITE, 0 };
+	static int pflag[3] = { POLLIN|POLLRDNORM, POLLOUT, POLLERR };
+
+	/* 
+	 * XXX: We need to implement the rest of the flags.
+	 */
+	for (i = 0; i < nfd; i++) {
+		fp = fdp->fd_ofiles[pl[i].fd];
+		if (fp == NULL) {
+			if (pl[i].events & POLLNVAL) {
+				pl[i].revents |= POLLNVAL;
+				n++;
+			}
+			continue;
+		}
+		for (msk = 0; msk < 3; msk++) {
+			if (pl[i].events & pflag[msk]) {
+				if ((*fp->f_ops->fo_select)(fp, flag[msk], p)) {
+					pl[i].revents |= pflag[msk] &
+					    pl[i].events;
+					n++;
+				}
+			}
+		}
+	}
+	*retval = n;
+}
+
+/*
+ * We are using the same mechanism as select only we encode/decode args
+ * differently.
+ */
+int
+sys_poll(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sys_poll_args *uap = v;
+	size_t sz = sizeof(struct pollfd) * SCARG(uap, nfds);
+	struct pollfd *pl;
+	int msec = SCARG(uap, timeout);
+	struct timeval atv;
+	int timo, ncoll, i, s, error, error2;
+	extern int nselcoll, selwait;
+
+	pl = (struct pollfd *) malloc(sz, M_TEMP, M_WAITOK);
+
+	if ((error = copyin(SCARG(uap, fds), pl, sz)) != 0)
+		goto bad;
+
+	for (i = 0; i < SCARG(uap, nfds); i++)
+		pl[i].revents = 0;
+
+	if (msec != -1) {
+		atv.tv_sec = msec / 1000;
+		atv.tv_usec = (msec - (atv.tv_sec * 1000)) * 1000;
+
+		if (itimerfix(&atv)) {
+			error = EINVAL;
+			goto done;
+		}
+		s = splclock();
+		timeradd(&atv, &time, &atv);
+		timo = hzto(&atv);
+		/*
+		 * Avoid inadvertently sleeping forever.
+		 */
+		if (timo == 0)
+			timo = 1;
+		splx(s);
+	} else
+		timo = 0;
+
+retry:
+	ncoll = nselcoll;
+	p->p_flag |= P_SELECT;
+	pollscan(p, pl, SCARG(uap, nfds), retval);
+	if (*retval)
+		goto done;
+	s = splhigh();
+	if (timo && timercmp(&time, &atv, >=)) {
+		splx(s);
+		goto done;
+	}
+	if ((p->p_flag & P_SELECT) == 0 || nselcoll != ncoll) {
+		splx(s);
+		goto retry;
+	}
+	p->p_flag &= ~P_SELECT;
+	error = tsleep((caddr_t)&selwait, PSOCK | PCATCH, "poll", timo);
+	splx(s);
+	if (error == 0)
+		goto retry;
+
+done:
+	p->p_flag &= ~P_SELECT;
+	/* poll is not restarted after signals... */
+	if (error == ERESTART)
+		error = EINTR;
+	if (error == EWOULDBLOCK)
+		error = 0;
+	if ((error2 = copyout(pl, SCARG(uap, fds), sz)) != 0)
+		error = error2;
+bad:
+	free((char *) pl, M_TEMP);
+	return (error);
 }

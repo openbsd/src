@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.8 1996/05/02 13:09:50 deraadt Exp $
+	$OpenBSD: syscalls.master,v 1.9 1996/05/18 08:53:10 deraadt Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -37,6 +37,7 @@
 #include <sys/signal.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <sys/poll.h>
 
 ; Reserved/unimplemented system calls in the range 0-150 inclusive
 ; are reserved for use in future Berkeley releases.
@@ -452,3 +453,5 @@
 250	STD		{ int sys_minherit(caddr_t addr, size_t len, \
 			    int inherit); }
 251	STD		{ int sys_rfork(int flags); }
+252	STD		{ int sys_poll(struct pollfd *fds, unsigned long nfds, \
+			    int timeout); }
