@@ -107,7 +107,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Send ""Are You There""",      ID_TELNET_SEND_AYT
         MENUITEM "Send ""Break""",              ID_TELNET_SEND_BRK
-        MENUITEM "Send ""Interupt Process""",   ID_TELNET_SEND_IP
+        MENUITEM "Send ""Interrupt Process""",   ID_TELNET_SEND_IP
         MENUITEM "Send ""Abort Output""",       ID_TELNET_SEND_AO
         MENUITEM "Send ""Erase Character""",    ID_TELNET_SEND_EC
         MENUITEM "Send ""Erase Line""",         ID_TELNET_SEND_EL
