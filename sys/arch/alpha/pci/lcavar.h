@@ -1,5 +1,5 @@
-/*	$OpenBSD: lcavar.h,v 1.7 2001/02/16 05:17:32 jason Exp $	*/
-/*	$NetBSD: lcavar.h,v 1.5 1996/11/25 03:49:38 cgd Exp $	*/
+/*	$OpenBSD: lcavar.h,v 1.8 2001/02/16 16:02:54 jason Exp $	*/
+/* $NetBSD: lcavar.h,v 1.7 1997/06/06 23:54:32 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.

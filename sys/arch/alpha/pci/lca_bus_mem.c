@@ -1,5 +1,5 @@
-/*	$OpenBSD: lca_bus_mem.c,v 1.3 2001/02/06 19:26:39 art Exp $	*/
-/*	$NetBSD: lca_bus_mem.c,v 1.1 1996/11/25 03:42:15 cgd Exp $	*/
+/* $OpenBSD: lca_bus_mem.c,v 1.4 2001/02/16 16:02:53 jason Exp $ */
+/* $NetBSD: lca_bus_mem.c,v 1.8 1997/09/02 13:19:32 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -33,6 +33,7 @@
 #include <sys/malloc.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
+
 #include <vm/vm.h>
 
 #include <machine/bus.h>
@@ -71,4 +72,4 @@
 #define CHIP_S_MEM_W2_SYS_END(v)					\
     (LCA_PCI_SPARSE + (0x08000000UL << 5) - 1)
 
-#include "pci_swiz_bus_mem_chipdep.c"
+#include <alpha/pci/pci_swiz_bus_mem_chipdep.c>

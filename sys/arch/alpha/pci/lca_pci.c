@@ -1,5 +1,5 @@
-/*	$OpenBSD: lca_pci.c,v 1.5 1997/01/24 19:57:44 niklas Exp $	*/
-/*	$NetBSD: lca_pci.c,v 1.7 1996/11/13 21:13:28 cgd Exp $	*/
+/*	$OpenBSD: lca_pci.c,v 1.6 2001/02/16 16:02:54 jason Exp $	*/
+/* $NetBSD: lca_pci.c,v 1.13 1997/09/02 13:19:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -32,6 +32,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+
 #include <vm/vm.h>
 
 #include <machine/autoconf.h>	/* badaddr proto */
@@ -118,12 +119,10 @@ lca_conf_read(cpv, tag, offset)
 	pcireg_t *datap, data;
 	int s, secondary, device, ba;
 
-#ifdef DIAGNOSTIC
 	s = 0;					/* XXX gcc -Wuninitialized */
-#endif
 
 	/* secondary if bus # != 0 */
-	pci_decompose_tag(&lcp->lc_pc, tag, &secondary, &device, 0);
+	alpha_pci_decompose_tag(&lcp->lc_pc, tag, &secondary, &device, 0);
 	if (secondary) {
 		s = splhigh();
 		alpha_mb();
@@ -174,12 +173,10 @@ lca_conf_write(cpv, tag, offset, data)
 	pcireg_t *datap;
 	int s, secondary, device;
 
-#ifdef DIAGNOSTIC
 	s = 0;					/* XXX gcc -Wuninitialized */
-#endif
 
 	/* secondary if bus # != 0 */
-	pci_decompose_tag(&lcp->lc_pc, tag, &secondary, &device, 0);
+	alpha_pci_decompose_tag(&lcp->lc_pc, tag, &secondary, &device, 0);
 	if (secondary) {
 		s = splhigh();
 		alpha_mb();
