@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.86 2001/06/10 01:45:04 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.87 2001/06/27 18:30:30 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -535,29 +535,18 @@ void	pv_unlink4_4c __P((struct pvlist *, struct pmap *, vaddr_t));
 
 /* function pointer declarations */
 /* from pmap.h: */
-#ifdef PMAP_NEW
 boolean_t	(*pmap_clear_modify_p) __P((struct vm_page *));
 boolean_t	(*pmap_clear_reference_p) __P((struct vm_page *));
-#else
-void		(*pmap_clear_modify_p) __P((paddr_t pa));
-void		(*pmap_clear_reference_p) __P((paddr_t pa));
-#endif
 void		(*pmap_copy_page_p) __P((paddr_t, paddr_t));
 void		(*pmap_enter_p) __P((pmap_t, vaddr_t, paddr_t, vm_prot_t,
 				     boolean_t, vm_prot_t));
 boolean_t	(*pmap_extract_p) __P((pmap_t, vaddr_t, paddr_t *));
-#ifdef PMAP_NEW
 boolean_t	(*pmap_is_modified_p) __P((struct vm_page *));
 boolean_t	(*pmap_is_referenced_p) __P((struct vm_page *));
 void		(*pmap_kenter_pa_p) __P((vaddr_t, paddr_t, vm_prot_t));
 void		(*pmap_kenter_pgs_p) __P((vaddr_t, struct vm_page **, int));
 void		(*pmap_kremove_p) __P((vaddr_t, vsize_t));
 void		(*pmap_page_protect_p) __P((struct vm_page *, vm_prot_t));
-#else
-boolean_t	(*pmap_is_modified_p) __P((paddr_t pa));
-boolean_t	(*pmap_is_referenced_p) __P((paddr_t pa));
-void		(*pmap_page_protect_p) __P((paddr_t, vm_prot_t));
-#endif
 void		(*pmap_protect_p) __P((pmap_t, vaddr_t, vaddr_t, vm_prot_t));
 void            (*pmap_zero_page_p) __P((paddr_t));
 void	       	(*pmap_changeprot_p) __P((pmap_t, vaddr_t, vm_prot_t, int));
@@ -2679,11 +2668,9 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	pmap_extract_p 		=	pmap_extract4_4c;
 	pmap_is_modified_p 	=	pmap_is_modified4_4c;
 	pmap_is_referenced_p	=	pmap_is_referenced4_4c;
-#ifdef PMAP_NEW
 	pmap_kenter_pa_p	=	pmap_kenter_pa4_4c;
 	pmap_kenter_pgs_p	=	pmap_kenter_pgs4_4c;
 	pmap_kremove_p		=	pmap_kremove4_4c;
-#endif
 	pmap_page_protect_p	=	pmap_page_protect4_4c;
 	pmap_protect_p		=	pmap_protect4_4c;
 	pmap_zero_page_p	=	pmap_zero_page4_4c;
@@ -2995,11 +2982,9 @@ pmap_bootstrap4m(void)
 	pmap_extract_p 		=	pmap_extract4m;
 	pmap_is_modified_p 	=	pmap_is_modified4m;
 	pmap_is_referenced_p	=	pmap_is_referenced4m;
-#ifdef PMAP_NEW
 	pmap_kenter_pa_p	=	pmap_kenter_pa4m;
 	pmap_kenter_pgs_p	=	pmap_kenter_pgs4m;
 	pmap_kremove_p		=	pmap_kremove4m;
-#endif
 	pmap_page_protect_p	=	pmap_page_protect4m;
 	pmap_protect_p		=	pmap_protect4m;
 	pmap_zero_page_p	=	pmap_zero_page4m;
@@ -3462,19 +3447,10 @@ pmap_map(va, pa, endpa, prot)
  * If size is nonzero, the map is useless. (ick)
  */
 struct pmap *
-#ifdef PMAP_NEW
 pmap_create()
-#else
-pmap_create(size)
-	vsize_t size;
-#endif
 {
 	struct pmap *pm;
 
-#ifndef PMAP_NEW
-	if (size)
-		return (NULL);
-#endif
 	pm = (struct pmap *)malloc(sizeof *pm, M_VMPMAP, M_WAITOK);
 #ifdef DEBUG
 	if (pmapdebug & PDB_CREATE)
@@ -4217,13 +4193,8 @@ pmap_rmu4m(pm, va, endva, vr, vs)
 
 #if defined(SUN4) || defined(SUN4C)
 void
-#ifdef PMAP_NEW
 pmap_page_protect4_4c(pg, prot)
 	struct vm_page *pg;
-#else
-pmap_page_protect4_4c(pa, prot)
-	paddr_t pa;
-#endif
 	vm_prot_t prot;
 {
 	struct pvlist *pv, *pv0, *npv;
@@ -4232,9 +4203,7 @@ pmap_page_protect4_4c(pa, prot)
 	int flags, nleft, i, s, ctx;
 	struct regmap *rp;
 	struct segmap *sp;
-#ifdef PMAP_NEW
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-#endif
 
 #ifdef DEBUG
 	if (!pmap_pa_exists(pa))
@@ -4623,13 +4592,8 @@ useless:
  * to read-only (in which case pv_changepte does the trick).
  */
 void
-#ifdef PMAP_NEW
 pmap_page_protect4m(pg, prot)
 	struct vm_page *pg;
-#else
-pmap_page_protect4m(pa, prot)
-	paddr_t pa;
-#endif
 	vm_prot_t prot;
 {
 	struct pvlist *pv, *pv0, *npv;
@@ -4638,9 +4602,7 @@ pmap_page_protect4m(pa, prot)
 	int flags, s, ctx;
 	struct regmap *rp;
 	struct segmap *sp;
-#ifdef PMAP_NEW
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-#endif
 
 #ifdef DEBUG
 	if (!pmap_pa_exists(pa))
@@ -5254,7 +5216,6 @@ printf("%s[%d]: pmap_enu: changing existing va(0x%x)=>pa entry\n",
 	splx(s);
 }
 
-#ifdef PMAP_NEW
 void
 pmap_kenter_pa4_4c(va, pa, prot)
 	vaddr_t va;
@@ -5287,7 +5248,6 @@ pmap_kremove4_4c(va, len)
 		pmap_remove(pmap_kernel(), va, va + PAGE_SIZE);
 	}
 }
-#endif
 
 #endif /*sun4,4c*/
 
@@ -5604,7 +5564,6 @@ printf("%s[%d]: pmap_enu: changing existing va(0x%x)=>pa(pte=0x%x) entry\n",
 	splx(s);
 }
 
-#ifdef PMAP_NEW
 void
 pmap_kenter_pa4m(va, pa, prot)
 	vaddr_t va;
@@ -5680,7 +5639,6 @@ pmap_kremove4m(va, len)
 {
 	pmap_remove(pmap_kernel(), va, va + len);
 }
-#endif /* PMAP_NEW */
 
 #endif /* sun4m */
 
@@ -5940,52 +5898,33 @@ pmap_collect(pm)
 /*
  * Clear the modify bit for the given physical page.
  */
-#ifdef PMAP_NEW
 boolean_t
 pmap_clear_modify4_4c(pg)
 	struct vm_page *pg;
-#else
-void
-pmap_clear_modify4_4c(pa)
-	paddr_t pa;
-#endif
 {
 	struct pvlist *pv;
-#ifdef PMAP_NEW
 	paddr_t pa;
 	boolean_t ret = 0;
-#endif
 
 	pv = pvhead(atop(pa));
 	if ((pa & (PMAP_TNC_4 & ~PMAP_NC)) == 0 && pv) {
 		(void) pv_syncflags4_4c(pv);
-#ifdef PMAP_NEW
 		ret = pv->pv_flags & PV_MOD;
-#endif
 		pv->pv_flags &= ~PV_MOD;
 	}
-#ifdef PMAP_NEW
+
 	return ret;
-#endif
 }
 
 /*
  * Tell whether the given physical page has been modified.
  */
-#ifdef PMAP_NEW
 boolean_t
 pmap_is_modified4_4c(pg)
 	struct vm_page *pg;
-#else
-int
-pmap_is_modified4_4c(pa)
-	paddr_t pa;
-#endif
 {
 	struct pvlist *pv;
-#ifdef PMAP_NEW
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-#endif
 
 	pv = pvhead(atop(pa));
 	if ((pa & (PMAP_TNC_4 & ~PMAP_NC)) == 0 && pv) {
@@ -5998,52 +5937,33 @@ pmap_is_modified4_4c(pa)
 /*
  * Clear the reference bit for the given physical page.
  */
-#ifdef PMAP_NEW
 boolean_t
 pmap_clear_reference4_4c(pg)
 	struct vm_page *pg;
-#else
-void
-pmap_clear_reference4_4c(pa)
-	paddr_t pa;
-#endif
 {
 	struct pvlist *pv;
-#ifdef PMAP_NEW
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	boolean_t ret = 0;
-#endif
 
 	pv = pvhead(atop(pa));
 	if ((pa & (PMAP_TNC_4 & ~PMAP_NC)) == 0 && pv) {
 		(void) pv_syncflags4_4c(pv);
-#ifdef PMAP_NEW
 		ret = pv->pv_flags & PV_REF;
-#endif
 		pv->pv_flags &= ~PV_REF;
 	}
-#ifdef PMAP_NEW
+
 	return ret;
-#endif
 }
 
 /*
  * Tell whether the given physical page has been referenced.
  */
-#ifdef PMAP_NEW
 boolean_t
 pmap_is_referenced4_4c(pg)
 	struct vm_page *pg;
-#else
-int
-pmap_is_referenced4_4c(pa)
-	paddr_t pa;
-#endif
 {
 	struct pvlist *pv;
-#ifdef PMAP_NEW
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-#endif
 
 	pv = pvhead(atop(pa));
 	if ((pa & (PMAP_TNC_4 & ~PMAP_NC)) == 0 && pv) {
@@ -6068,52 +5988,33 @@ pmap_is_referenced4_4c(pa)
 /*
  * Clear the modify bit for the given physical page.
  */
-#ifdef PMAP_NEW
 boolean_t
 pmap_clear_modify4m(pg)
 	struct vm_page *pg;
-#else
-void
-pmap_clear_modify4m(pa)	   /* XXX %%%: Should service from swpagetbl for 4m */
-	paddr_t pa;
-#endif
 {
 	struct pvlist *pv;
-#ifdef PMAP_NEW
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	boolean_t ret = 0;
-#endif
 
 	pv = pvhead(atop(pa));
 	if ((pa & (PMAP_TNC_SRMMU & ~PMAP_NC)) == 0 && pv) {
 		(void) pv_syncflags4m(pv);
-#ifdef PMAP_NEW
 		ret = pv->pv_flags & PV_MOD4M;
-#endif
 		pv->pv_flags &= ~PV_MOD4M;
 	}
-#ifdef PMAP_NEW
+
 	return ret;
-#endif
 }
 
 /*
  * Tell whether the given physical page has been modified.
  */
-#ifdef PMAP_NEW
 boolean_t
 pmap_is_modified4m(pg)
 	struct vm_page *pg;
-#else
-int
-pmap_is_modified4m(pa) /* Test performance with SUN4M && SUN4/4C. XXX */
-	paddr_t pa;
-#endif
 {
 	struct pvlist *pv;
-#ifdef PMAP_NEW
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-#endif
 
 	pv = pvhead(atop(pa));
 	if ((pa & (PMAP_TNC_SRMMU & ~PMAP_NC)) == 0 && pv) {
@@ -6126,52 +6027,33 @@ pmap_is_modified4m(pa) /* Test performance with SUN4M && SUN4/4C. XXX */
 /*
  * Clear the reference bit for the given physical page.
  */
-#ifdef PMAP_NEW
 boolean_t
 pmap_clear_reference4m(pg)
 	struct vm_page *pg;
-#else
-void
-pmap_clear_reference4m(pa)
-	paddr_t pa;
-#endif
 {
 	struct pvlist *pv;
-#ifdef PMAP_NEW
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	boolean_t ret = 0;
-#endif
 
 	pv = pvhead(atop(pa));
 	if ((pa & (PMAP_TNC_SRMMU & ~PMAP_NC)) == 0 && pv) {
 		(void) pv_syncflags4m(pv);
-#ifdef PMAP_NEW
 		ret = pv->pv_flags & PV_REF4M;
-#endif
 		pv->pv_flags &= ~PV_REF4M;
 	}
-#ifdef PMAP_NEW
+
 	return ret;
-#endif
 }
 
 /*
  * Tell whether the given physical page has been referenced.
  */
-#ifdef PMAP_NEW
 boolean_t
 pmap_is_referenced4m(pg)
 	struct vm_page *pg;
-#else
-int
-pmap_is_referenced4m(pa)
-	paddr_t pa;
-#endif
 {
 	struct pvlist *pv;
-#ifdef PMAP_NEW
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-#endif
 
 	pv = pvhead(atop(pa));
 	if ((pa & (PMAP_TNC_SRMMU & ~PMAP_NC)) == 0 && pv) {
