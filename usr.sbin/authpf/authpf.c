@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.19 2002/06/08 04:57:34 beck Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.20 2002/06/11 04:45:32 kjell Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -524,9 +524,8 @@ check_luser(char *luserdir, char *luser)
 static int
 changefilter(int add, char *luser, char *ipsrc)
 {
-	char rulesfile[MAXPATHLEN], natfile[MAXPATHLEN], buf[1024];
+	char rulesfile[MAXPATHLEN], buf[1024];
 	char template[] = "/tmp/authpfrules.XXXXXXX";
-	char template2[] = "/tmp/authpfnat.XXXXXXX";
 	int tmpfile = -1, from_fd = -1, ret = -1;
 	struct pfioc_nat	pn;
 	struct pfioc_binat	pb;
@@ -631,104 +630,13 @@ changefilter(int add, char *luser, char *ipsrc)
 	/* add/delete rules, using parse_rule */
 	memset(&pf, 0, sizeof(pf));
 	pf.dev = dev;
+	pf.pnat = &pn;
+	pf.pbinat = &pb;
+	pf.prdr = &pd;
 	pf.prule = &pr;
 	if (parse_rules(fin, &pf) < 0) {
 		syslog(LOG_ERR,
 		    "syntax error in rule file: authpf rules not loaded");
-		goto error;
-	}
-
-	if (snprintf(natfile, sizeof natfile, "%s/%s/authpf.nat",
-	    PATH_USER_DIR, luser) >= sizeof natfile) {
-		syslog(LOG_ERR, "user dir path too long, exiting");
-		goto error;
-	}
-	if ((from_fd = open(natfile, O_RDONLY, 0)) == -1) {
-		/* if it doesn't exist, we try /etc */
-		if (errno != ENOENT) {
-			syslog(LOG_ERR, "can't open %s (%m)", natfile);
-			if (unlink(template) == -1)
-				syslog(LOG_ERR, "can't unlink %s", template);
-			goto error;
-		}
-	}
-	if (from_fd == -1) {
-		snprintf(natfile, sizeof natfile, PATH_NATRULES);
-		if ((from_fd = open(natfile, O_RDONLY, 0)) == -1) {
-			if (errno == ENOENT) {
-				ret = 0;
-				goto out; /* NAT is optional */
-			}
-			else {
-				syslog(LOG_ERR, "can't open %s (%m)", natfile);
-				if (unlink(template) == -1)
-					syslog(LOG_ERR, "can't unlink %s",
-					    template);
-				goto error;
-			}
-		}
-	}
-
-	tmpfile = mkstemp(template2);
-	if (tmpfile == -1) {
-		syslog(LOG_ERR, "Can't open temp file %s (%m)",
-		    template2);
-		goto error;
-	}
-
-	fin = fdopen(tmpfile, "r+");
-	if (fin == NULL) {
-		syslog(LOG_ERR, "Can't open %s (%m)", template2);
-		goto error;
-	}
-
-	/* write the variable to the start of the file */
-	fprintf(fin, "user_ip = \"%s\"\n", ipsrc);
-	fflush(fin);
-
-	while ((rcount = read(from_fd, buf, sizeof(buf))) > 0) {
-		wcount = write(tmpfile, buf, rcount);
-		if (rcount != wcount || wcount == -1) {
-			syslog(LOG_INFO, "nat copy failed");
-			goto error;
-		}
-	}
-
-	if (rcount == -1) {
-		syslog(LOG_INFO, "read for nat copy failed");
-		goto error;
-	}
-
-	fclose(fin);
-	fin = NULL;
-	close(tmpfile);
-	tmpfile = -1;
-	close(from_fd);
-	from_fd = -1;
-
-	fin = fopen(template2, "r");
-
-	if (fin == NULL) {
-		syslog(LOG_INFO, "can't open %s (%m)", template2);
-		goto error;
-	}
-
-	infile = template;
-
-	if (unlink(template2) == -1) {
-		syslog(LOG_INFO, "can't unlink %s (%m)", template2);
-		goto error;
-	}
-
-	/* add/delete rules, using parse_nat */
-	memset(&pf, 0, sizeof(pf));
-	pf.dev = dev;
-	pf.pnat = &pn;
-	pf.pbinat = &pb;
-	pf.prdr = &pd;
-	if (parse_nat(fin, &pf) < 0) {
-		syslog(LOG_INFO,
-		    "syntax error in nat file: nat rules not loaded");
 		goto error;
 	}
 	ret = 0;
@@ -837,7 +745,7 @@ pfctl_add_rule(struct pfctl *pf, struct pf_rule *r)
 }
 
 /*
- * callback for nat add, used by parser in parse_nat
+ * callback for nat add, used by parser in parse_rules
  */
 int
 pfctl_add_nat(struct pfctl *pf, struct pf_nat *n)
@@ -860,7 +768,7 @@ pfctl_add_nat(struct pfctl *pf, struct pf_nat *n)
 }
 
 /*
- * callback for rdr add, used by parser in parse_nat
+ * callback for rdr add, used by parser in parse_rules
  */
 int
 pfctl_add_rdr(struct pfctl *pf, struct pf_rdr *r)
