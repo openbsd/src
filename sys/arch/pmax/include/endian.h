@@ -1,3 +1,4 @@
+/*	$OpenBSD: endian.h,v 1.4 1996/11/25 13:11:34 niklas Exp $	*/
 /*	$NetBSD: endian.h,v 1.5.4.1 1996/06/05 23:53:20 jonathan Exp $	*/
 
 /*
@@ -56,7 +57,7 @@
  */
 #define	LITTLE_ENDIAN	1234	/* LSB first: i386, vax */
 #define	BIG_ENDIAN	4321	/* MSB first: 68000, ibm, net */
-#define	PDP_ENDIAN	3412	/* LSB first in word, MSW first in long */
+#define	PDP_ENDIAN	3412	/* LSB first in word, MSW first in int32_t */
 
 #define	BYTE_ORDER	LITTLE_ENDIAN
 
@@ -65,8 +66,6 @@
 
 __BEGIN_DECLS
 u_int32_t	htonl __P((u_int32_t));
-
-
 u_int16_t	htons __P((u_int16_t));
 u_int32_t	ntohl __P((u_int32_t));
 u_int16_t	ntohs __P((u_int16_t));
