@@ -10,7 +10,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect.c,v 1.61 2000/04/04 21:37:27 markus Exp $");
+RCSID("$OpenBSD: sshconnect.c,v 1.62 2000/04/12 06:36:48 markus Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -1496,12 +1496,13 @@ ssh_kex2(char *host, struct sockaddr *hostaddr)
 	packet_write_wait();
 	debug("done: send SSH2_MSG_NEWKEYS.");
 
+#ifdef DEBUG_KEXDH
 	/* send 1st encrypted/maced/compressed message */
 	packet_start(SSH2_MSG_IGNORE);
 	packet_put_cstring("markus");
 	packet_send();
 	packet_write_wait();
-
+#endif
 	debug("done: KEX2.");
 }
 /*
@@ -1516,6 +1517,7 @@ ssh_userauth2(int host_key_valid, RSA *own_host_key,
 	unsigned int dlen;
 	int partial;
 	struct passwd *pw;
+	char prompt[80];
 	char *server_user, *local_user;
 	char *auths;
 	char *password;
@@ -1567,7 +1569,9 @@ ssh_userauth2(int host_key_valid, RSA *own_host_key,
 			fatal("passwd auth not supported: %s", auths);
 		xfree(auths);
 		/* try passwd */
-		password = read_passphrase("password: ", 0);
+		snprintf(prompt, sizeof(prompt), "%.30s@%.40s's password: ",
+		    server_user, host);
+		password = read_passphrase(prompt, 0);
 		packet_start(SSH2_MSG_USERAUTH_REQUEST);
 		packet_put_cstring(server_user);
 		packet_put_cstring(service);
