@@ -1,4 +1,4 @@
-.\"	$OpenBSD: config.8,v 1.36 2003/06/21 13:35:22 jmc Exp $
+.\"	$OpenBSD: config.8,v 1.37 2003/07/14 13:09:13 jmc Exp $
 .\"	$NetBSD: config.8,v 1.10 1996/08/31 20:58:16 mycroft Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -204,7 +204,6 @@ directive at the beginning of the system configuration file.
 .Pp
 The configuration files consists of various statements which
 include the following:
-.Pp
 .Bl -tag -offset indent -width indent
 .It machine Ar var
 Required.
@@ -263,7 +262,6 @@ Modifications are made to the currently running kernel and can be written to
 a new kernel binary so changes are preserved during subsequent system restarts.
 .Pp
 When invoked, the kernel identification is first shown.
-.Pp
 .Bd -literal
 # config -e -o bsd.new /bsd
 OpenBSD 2.6-beta (GENERIC.rz0) #0: Mon Oct  4 03:57:22 MEST 1999
@@ -285,7 +283,6 @@ nor
 .Fl o
 option has been specified.
 Changes will be ignored.
-.Pp
 .Bd -literal -offset indent
 WARNING this kernel doesn't contain all information needed!
 WARNING the commands add and change might not work.
@@ -296,7 +293,6 @@ The kernel is too old (pre
 and cannot support all of the functionality needed by the
 .Fl e
 option.
-.Pp
 .Bd -literal -offset indent
 WARNING kernel mismatch. -u ignored.
 WARNING the running kernel version:
@@ -313,8 +309,7 @@ in the running kernel is kernel-specific, the
 option is ignored.
 .Pp
 The commands are as follows:
-.Pp
-.Bl -tag -width "disable attr val | devno | dev" indent
+.Bl -tag -width "disable attr val | devno | dev"
 .It Ic add Ar dev
 Add a device through copying another.
 .It Ic base Ar 8 | 10 | 16
@@ -424,7 +419,6 @@ e.g., wrong IRQ in OpenBSD/i386.
 The Ethernet card is supposed to use the
 .Xr ne 4
 driver.
-.Pp
 .Bd -literal
 .No ukc> Ic find ne
 24 ne0 at isa0 port 0x240 size 0 iomem 0xd8000 iosiz 0 irq 9 drq -1 drq2 -1 flags 0x0
@@ -440,7 +434,6 @@ So the irq on ne1 should be changed via the
 .Ic change
 command.
 The device can be specified by either name or number.
-.Pp
 .Bd -literal
 .No ukc> Ic change ne1
 25 ne1 at isa0 port 0x300 size 0 iomem -1 iosiz 0 irq 10 drq -1 drq2 -1
@@ -463,7 +456,6 @@ device at the probed location.
 One known case is the Mitsumi
 CD-ROM in OpenBSD/i386.
 The simplest thing to solve that problem is to disable mcd0.
-.Pp
 .Bd -literal
 .No ukc> Ic find mcd0
  29 mcd0 at isa0 port 0x300 size 0 iomem -1 iosiz 0 irq 10 drq -1 drq2 -1 flags 0x0
@@ -474,7 +466,6 @@ The simplest thing to solve that problem is to disable mcd0.
 .Ed
 .Pp
 It's also possible to disable all devices with a common attribute. e.g.,
-.Pp
 .Bd -literal
 .No ukc> Ic disable port 0x300
  25 ne1 disabled
@@ -508,7 +499,6 @@ ukc>
 It is possible to add new devices, but only devices that were linked into the
 kernel.
 If a new device is added, following devices will be renumbered.
-.Pp
 .Bd -literal
 .No ukc> Ic find ep
  11 ep0 at isa0 port -1 size 0 iomem -1 iosiz 0 irq -1 drq -1 drq2 -1 flags 0x0
@@ -549,7 +539,6 @@ writes the changes to
 or
 .Fl f
 was given, else ignore changes).
-.Pp
 .Bd -literal
 .No ukc> Ic quit
 .Ed
