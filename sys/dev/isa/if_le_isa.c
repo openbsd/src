@@ -40,6 +40,7 @@
  */
 
 #include "bpfilter.h"
+#include "isadma.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,6 +121,13 @@ le_isa_probe(parent, match, aux)
 {
 	struct le_softc *lesc = match;
 	struct isa_attach_args *ia = aux;
+
+#if NISADMA == 0
+	if (ia->ia_drq != DRQUNK) {
+		printf("cannot support dma lance devices\n");
+		return 0;
+	}
+#endif
 
 	if (bicc_isa_probe(lesc, ia))
 		return (1);
@@ -345,8 +353,10 @@ le_isa_attach(parent, self, aux)
 	printf("%s", sc->sc_dev.dv_xname);
 	am7990_config(sc);
 
+#if NISADMA > 0
 	if (ia->ia_drq != DRQUNK)
 		isa_dmacascade(ia->ia_drq);
+#endif
 
 	lesc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_NET, le_isa_intredge, sc, sc->sc_dev.dv_xname);
