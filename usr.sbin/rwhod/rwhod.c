@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: rwhod.c,v 1.16 2001/02/08 15:03:20 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rwhod.c,v 1.17 2001/03/31 20:07:56 fgsch Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -255,8 +255,11 @@ handleread(s)
 		    ntohs(from.sin_port), inet_ntoa(from.sin_addr));
 		return;
 	}
-	if (cc < WHDRSIZE)
+	if (cc < WHDRSIZE) {
+		syslog(LOG_WARNING, "short packet from %s",
+		    inet_ntoa(from.sin_addr));
 		return;
+	}
 	if (wd.wd_vers != WHODVERSION)
 		return;
 	if (wd.wd_type != WHODTYPE_STATUS)
