@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.14 2002/09/06 13:56:51 drahn Exp $
+#	$OpenBSD: files.macppc,v 1.15 2002/09/06 19:30:12 drahn Exp $
 
 #
 # macppc-specific configuration info
@@ -120,10 +120,6 @@ file	arch/macppc/dev/mesh.c				mesh
 device	bm: ether, ifnet, ifmedia, mii, mii_bitbang
 attach	bm at macobio
 file	arch/macppc/dev/if_bm.c				bm
-
-device	gm: ether, ifnet, ifmedia, mii
-attach	gm at pci
-file	arch/macppc/dev/if_gm.c				gm needs-flag
 
 device	macintr {}
 attach	macintr at macobio
