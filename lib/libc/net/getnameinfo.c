@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnameinfo.c,v 1.9 2000/02/16 12:53:35 itojun Exp $	*/
+/*	$OpenBSD: getnameinfo.c,v 1.10 2000/02/17 17:09:41 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -235,7 +235,7 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 				if (scopelen + 1 + numaddrlen + 1 > hostlen)
 					return ENI_MEMORY;
 
-#if 1
+#if 0
 				/*
 				 * construct <scopeid><delim><numeric-addr>
 				 */
