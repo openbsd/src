@@ -1,4 +1,4 @@
-/*	$OpenBSD: execve.c,v 1.3 2003/07/31 21:48:04 deraadt Exp $	*/
+/*	$OpenBSD: execve.c,v 1.4 2003/09/18 01:59:58 henning Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -46,7 +46,7 @@
 #include "test.h"
 
 extern char **environ;
-char *argv[] = {
+char *new_argv[] = {
 	"/bin/echo",
 	"This line should appear after the execve",
 	NULL
@@ -77,6 +77,6 @@ main(int argc, char *argv[])
 	CHECKe(dup2(fd, STDOUT_FILENO));
 	CHECKe(write(STDOUT_FILENO, should_succeed,
 	    (size_t)strlen(should_succeed)));
-	CHECKe(execve(argv[0], argv, environ));
-	DIE(errno, "execve %s", argv[0]);
+	CHECKe(execve(new_argv[0], new_argv, environ));
+	DIE(errno, "execve %s", new_argv[0]);
 }
