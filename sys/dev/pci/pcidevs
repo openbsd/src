@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.487 2002/02/16 17:24:19 krw Exp $
+	$OpenBSD: pcidevs,v 1.488 2002/02/17 19:24:10 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -527,6 +527,7 @@ vendor PCTEL		0x134d	PCTEL
 vendor KAWASAKI		0x136b	Kawasaki
 vendor LMC		0x1376	LAN Media Corp
 vendor NETGEAR		0x1385	Netgear
+vendor MOXA		0x1393	Moxa
 vendor LEVEL1		0x1394	Level 1
 vendor HIFN		0x13a3	Hifn
 vendor TRIWARE		0x13c1	3ware
@@ -547,6 +548,7 @@ vendor TOPIC		0x151f	Topic/SmartLink
 vendor BLUESTEEL	0x15ab	Bluesteel Networks
 vendor VMWARE		0x15ad	VMware
 vendor COREGA		0x15e8	Corega
+vendor SYBA		0x1592	Syba
 vendor EUMITCOM		0x1638	Eumitcom
 vendor NETSEC		0x1660	NetSec
 vendor GLOBALSUN	0x16ab	Global Sun
@@ -573,6 +575,7 @@ vendor KTI		0x8e2e	KTI
 vendor ADP		0x9004	Adaptec
 vendor ADP2		0x9005	Adaptec
 vendor ATRONICS		0x907f	Atronics
+vendor NETMOS		0x9710	NetMos
 vendor ARC		0xedd8	ARC Logic
 vendor CHRYSALIS	0xcafe	Chrysalis-ITS
 vendor INVALID		0xffff	INVALID VENDOR ID
@@ -1502,6 +1505,10 @@ product MOT MPC106		0x0002	MPC106 Host-PCI
 product MOT SM56		0x5600	SM56
 product MOT RAVEN		0x4801	Raven Host-PCI
 
+/* Moxa */
+product MOXA CP114 		0x1141	CP-114
+product MOXA C168H		0x1680	C168H
+
 /* Mylex products */
 product MYLEX 960P		0x0001	DAC960P RAID
 product MYLEX ACCELERAID	0x0050	AcceleRAID
@@ -1541,6 +1548,9 @@ product NEOMAGIC NM256ZX	0x8006	MagicMedia 256ZX
 product NETGEAR MA301		0x4100	MA301
 product NETGEAR GA620		0x620a	GA620
 product NETGEAR GA620T		0x630a	GA620T
+
+/* NetMos */
+product NETMOS 2S1P		0x9835	2S1P
 
 /* Network Security Technologies, Inc. */
 product NETSEC 7751		0x7751	7751
@@ -1909,6 +1919,9 @@ product SUNDANCE ST2021		0x2021	ST2021 Gigabit Ethernet
 
 /* Surecom products */
 product SURECOM NE34		0x0e34	Surecom NE-34
+
+/* Syba */
+product SYBA 4S2P		0x0781	4S2P
 
 /* Symphony Labs products */
 product SYMPHONY 82C101		0x0001	82C101
