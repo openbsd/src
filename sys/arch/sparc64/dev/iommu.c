@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.10 2002/02/22 20:21:46 deraadt Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.11 2002/02/22 21:53:21 jason Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -83,6 +83,7 @@ int iommu_dvmamap_sync_seg(bus_dma_tag_t, struct iommu_state *,
 	} while (0)
 
 static	int iommu_strbuf_flush_done __P((struct iommu_state *));
+static	int iommu_tv_comp(struct timeval *, struct timeval *);
 
 /*
  * initialise the UltraSPARC IOMMU (SBUS or PCI):
@@ -351,22 +352,27 @@ iommu_remove(is, va, len)
 	}
 }
 
+static int
+iommu_tv_comp(t1, t2)
+	struct timeval *t1, *t2;
+{
+	if (t1->tv_sec < t2->tv_sec)
+		return (-1);
+	if (t1->tv_sec > t2->tv_sec)
+		return (1);
+	/* t1->tv_sec == t2->tv_sec */
+	if (t1->tv_usec < t2->tv_usec)
+		return (-1);
+	if (t1->tv_usec > t2->tv_usec)
+		return (1);
+	return (0);
+}
+
 static int 
 iommu_strbuf_flush_done(is)
 	struct iommu_state *is;
 {
 	struct timeval cur, flushtimeout;
-
-#define BUMPTIME(t, usec) { \
-	register volatile struct timeval *tp = (t); \
-	register long us; \
- \
-	tp->tv_usec = us = tp->tv_usec + (usec); \
-	if (us >= 1000000) { \
-		tp->tv_usec = us - 1000000; \
-		tp->tv_sec++; \
-	} \
-}
 
 	if (!is->is_sb[0] && !is->is_sb[1])
 		return (0);
@@ -403,9 +409,13 @@ iommu_strbuf_flush_done(is)
 		    BUS_SPACE_BARRIER_WRITE);
 	}
 
-	microtime(&flushtimeout); 
-	cur = flushtimeout;
-	BUMPTIME(&flushtimeout, 500000); /* 1/2 sec */
+	microtime(&cur);
+	flushtimeout.tv_usec = cur.tv_usec + 500000; /* 1/2 sec */
+	if (flushtimeout.tv_usec >= 1000000) {
+		flushtimeout.tv_usec -= 1000000;
+		flushtimeout.tv_sec = cur.tv_sec + 1;
+	} else
+		flushtimeout.tv_sec = cur.tv_sec;
 	
 	DPRINTF(IDB_IOMMU, ("iommu_strbuf_flush_done: flush = %lx at va = %lx pa = %lx now=%lx:%lx until = %lx:%lx\n", 
 		       (long)is->is_flush, (long)&is->is_flush, 
@@ -415,7 +425,7 @@ iommu_strbuf_flush_done(is)
 	/* Bypass non-coherent D$ */
 	while (((ldxa(is->is_flushpa, ASI_PHYS_CACHED) == 0) ||
 	        (ldxa(is->is_flushpa + 8, ASI_PHYS_CACHED) == 0)) &&
-	       ((cur.tv_sec <= flushtimeout.tv_sec) && (cur.tv_usec <= flushtimeout.tv_usec))) {
+	       (iommu_tv_comp(&cur, &flushtimeout) <= 0)) {
 		microtime(&cur);
 	}
 
