@@ -1,0 +1,46 @@
+.\"	$OpenBSD: esp.4,v 1.1 1998/03/07 23:34:08 johns Exp $
+.\"
+.\" Copyright (c) 1998 The OpenBSD Project 
+.\" All rights reserved.
+.\"
+.\"
+.Dd March 4, 1998
+.Dt ESP 4 sparc
+.Os
+.Sh NAME
+.Nm esp 
+.Nd ESP NCR 53c94 on-board or SBus SCSI controller
+.Sh SYNOPSIS
+.Cd "dma0 at obio0 addr 0xfa001000 level 4             " Pq sun4/300
+.Cd "esp0 at obio0 addr 0xfa000000 level 4 flags 0xff0f"  
+.Cd ""
+.Cd "dma0 at sbus0 slot ? offset ?                     " Pq on-board
+.Cd "esp0 at sbus0 slot ? offset ? flags 0xff0f        " Pq sun4c
+.Cd "esp0 at dma0 flags 0xff0f                         " Pq sun4m
+.Cd ""
+.Cd "dma* at sbus? slot ? offset ?                     " Pq "SBus SCSI"
+.Cd "esp* at sbus? slot ? offset ? flags 0xff0f        " Pq "two flavours"
+.Cd "esp* at dma? flags 0xff0f                         " Pq "depending on model"
+.Sh DESCRIPTION
+The 
+.Nm
+is an on-board or SBus SCSI controller based on the NCR 53c94 chip, found 
+on Sun 4/300, sun4c and sun4m workstations.  
+
+.Sh DEVICE FLAGS
+.Bl -tag -width speaker -compact
+.It Bits 0-7 disable disconnect/reselect for the corresponding target
+.It ""
+.It Bits 8-15 disable synchronous negotiation for target "[bit - 8]"
+.El
+.Pp
+The 
+.Nm 
+device flags may be OR'd together to enable any combination of
+the features listed above.  Targets 4 through 7 typically have 
+disconnect/reselect enabled on the premise that tape devices normally
+have one of these targets.  Tape devices should be allowed to disconnect
+for the SCSI bus to operate acceptably.
+.Sh SEE ALSO
+.Xr si 4
+.Xr sw 4

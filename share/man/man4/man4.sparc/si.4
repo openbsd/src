@@ -1,0 +1,43 @@
+.\"	$OpenBSD: si.4,v 1.1 1998/03/07 23:34:09 johns Exp $
+.\"
+.\" Copyright (c) 1998 The OpenBSD Project 
+.\" All rights reserved.
+.\"
+.\"
+.Dd March 4, 1998
+.Dt SI 4 sparc
+.Os
+.Sh NAME
+.Nm si 
+.Nd NCR 5380 "Sun SCSI 3" VME SCSI controller
+.Sh SYNOPSIS
+.Cd "si0     at vmes0 addr 0xff200000 level 3 vect 0x40           " Pq sun4
+.Cd "si0     at vmes0 addr 0xff200000 level 3 vect 0x40 flags 0x07" Pq sun4
+.Sh DESCRIPTION
+The 
+.Nm
+is a VME SCSI controller based on the NCR 5380 chip, found in sun3 and sun4 
+systems with the VME bus.
+.Sh DEVICE FLAGS
+.Bl -tag -width speaker -compact
+.It 0x01
+Use DMA (may be polled)
+.It 0x02
+Use DMA completion interrupts
+.It 0x04
+Allow disconnect/reconnect
+.El
+.Pp
+The 
+.Nm 
+device flags may be OR'd together to enable any combination of
+the features listed above.  If no flags are specified, the device will
+use DMA by default.
+
+.Sh SEE ALSO
+.Xr sw 4
+.Xr esp 4
+.Sh HISTORY
+The 
+.Nm
+driver first appeared in NetBSD. 

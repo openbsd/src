@@ -1,0 +1,49 @@
+.\"	$OpenBSD: sw.4,v 1.1 1998/03/07 23:34:09 johns Exp $
+.\"
+.\" Copyright (c) 1998 The OpenBSD Project 
+.\" All rights reserved.
+.\"
+.\"
+.Dd March 4, 1998
+.Dt SW 4 sparc
+.Os
+.Sh NAME
+.Nm sw 
+.Nd NCR 5380 "SCSI Weird" Sun 4/100 on-board SCSI controller
+.Sh SYNOPSIS
+.Cd "sw0     at obio0 addr 0x0a000000 level 3" Pq sun4/100
+.Sh DESCRIPTION
+The 
+.Nm
+is the Sun 4/100 on-board SCSI controller based on the NCR 5380 chip, found 
+only on Sun 4/100 workstations.  The 
+.Nm 
+driver is actually implemented as part of the 
+.Xr si 4
+driver.
+.Sh DEVICE FLAGS
+.Bl -tag -width speaker -compact
+.It 0x01
+Use DMA (polled)
+.It 0x02
+Use DMA completion interrupts
+.It 0x04
+Allow disconnect/reconnect
+.El
+.Pp
+The 
+.Nm 
+device flags may be OR'd together to enable any combination of
+the features listed above.  If no flags are specified, the device will
+use polled DMA by default.
+.Sh BUGS
+The 
+.Nm 
+driver only supports polled DMA at this time.
+.Sh SEE ALSO
+.Xr si 4
+.Xr esp 4
+.Sh HISTORY
+The 
+.Nm
+driver first appeared in NetBSD. 
