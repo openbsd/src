@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.19 1999/02/24 04:39:39 cmetz Exp $	*/
+/*	$OpenBSD: in.h,v 1.20 1999/03/24 02:31:03 cmetz Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -149,7 +149,6 @@ struct in6_addr {
 #define s6_addr8 s6_u.s6u_addr8
 #define s6_addr16 s6_u.s6u_addr16
 #define s6_addr32 s6_u.s6u_addr32
-#define in6a_words s6_u.s6u_addr32
 };
 
 /*
