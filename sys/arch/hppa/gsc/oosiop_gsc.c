@@ -1,9 +1,9 @@
-/*	$OpenBSD: osiop_gsc.c,v 1.11 2004/03/12 00:04:57 miod Exp $	*/
-/*	$NetBSD: osiop_gsc.c,v 1.6 2002/10/02 05:17:50 thorpej Exp $	*/
+/*	$OpenBSD: oosiop_gsc.c,v 1.1 2004/03/12 00:04:57 miod Exp $	*/
+/*	$NetBSD: oosiop_gsc.c,v 1.2 2003/07/15 02:29:25 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Fredette.  All rights reserved.
- * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
+ * Copyright (c) 2001,2002 Izumi Tsutsui.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -72,125 +72,98 @@
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 
-#include <dev/ic/osiopreg.h>
-#include <dev/ic/osiopvar.h>
+#include <dev/ic/oosiopreg.h>
+#include <dev/ic/oosiopvar.h>
 
 #include <hppa/dev/cpudevs.h>
 #include <hppa/gsc/gscbusvar.h>
-/* #include <hppa/hppa/machdep.h> */
 
-#define	OSIOP_GSC_RESET		0x0000
-#define	OSIOP_GSC_OFFSET	0x0100
+#define	OOSIOP_GSC_RESET	0x0000
+#define	OOSIOP_GSC_OFFSET	0x0100
 
-int osiop_gsc_match(struct device *, void *, void *);
-void osiop_gsc_attach(struct device *, struct device *, void *);
-int osiop_gsc_intr(void *);
+int oosiop_gsc_match(struct device *, void *, void *);
+void oosiop_gsc_attach(struct device *, struct device *, void *);
+int oosiop_gsc_intr(void *);
 
-struct cfattach osiop_gsc_ca = {
-	sizeof(struct osiop_softc), osiop_gsc_match, osiop_gsc_attach
+struct cfattach oosiop_gsc_ca = {
+	sizeof(struct oosiop_softc), oosiop_gsc_match, oosiop_gsc_attach
 };
 
 int
-osiop_gsc_match(parent, match, aux)
+oosiop_gsc_match(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
 	struct gsc_attach_args *ga = aux;
 
 	if (ga->ga_type.iodc_type != HPPA_TYPE_FIO ||
-	    ga->ga_type.iodc_sv_model != HPPA_FIO_GSCSI)
+	     ga->ga_type.iodc_sv_model != HPPA_FIO_SCSI)
 		return 0;
 
 	return 1;
 }
 
 void
-osiop_gsc_attach(parent, self, aux)
+oosiop_gsc_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct osiop_softc *sc = (void *)self;
+	struct oosiop_softc *sc = (void *)self;
 	struct gsc_attach_args *ga = aux;
 	bus_space_handle_t ioh;
 
 	sc->sc_bst = ga->ga_iot;
 	sc->sc_dmat = ga->ga_dmatag;
 	if (bus_space_map(sc->sc_bst, ga->ga_hpa,
-	    OSIOP_GSC_OFFSET + OSIOP_NREGS, 0, &ioh))
-		panic("osiop_gsc_attach: couldn't map I/O ports");
+	    OOSIOP_GSC_OFFSET + OOSIOP_NREGS, 0, &ioh))
+		panic("oosiop_gsc_attach: couldn't map I/O ports");
 	if (bus_space_subregion(sc->sc_bst, ioh, 
-	    OSIOP_GSC_OFFSET, OSIOP_NREGS, &sc->sc_reg))
-		panic("osiop_gsc_attach: couldn't get chip ports");
+	    OOSIOP_GSC_OFFSET, OOSIOP_NREGS, &sc->sc_bsh))
+		panic("oosiop_gsc_attach: couldn't get chip ports");
 
-	sc->sc_clock_freq = ga->ga_ca.ca_pdc_iodc_read->filler2[14] / 1000000;
-	if (!sc->sc_clock_freq)
-		sc->sc_clock_freq = 50;
+	sc->sc_freq = ga->ga_ca.ca_pdc_iodc_read->filler2[14];
+	if (!sc->sc_freq)
+		sc->sc_freq = 50 * 1000000;
 
-	sc->sc_dcntl = OSIOP_DCNTL_EA;
-	/* XXX set burst mode to 8 words (32 bytes) */
-	sc->sc_ctest7 = OSIOP_CTEST7_CDIS;
-	sc->sc_dmode = OSIOP_DMODE_BL8; /* | OSIOP_DMODE_FC2 */
-	sc->sc_flags = 0;
+	sc->sc_chip = OOSIOP_700;
 	sc->sc_id = 7;	/* XXX */
 
 	/*
 	 * Reset the SCSI subsystem.
 	 */
-	bus_space_write_1(sc->sc_bst, ioh, OSIOP_GSC_RESET, 0);
+	bus_space_write_1(sc->sc_bst, ioh, OOSIOP_GSC_RESET, 0);
 	DELAY(1000);
 
 	/*
 	 * Call common attachment
 	 */
-#ifdef OSIOP_DEBUG
+#ifdef OOSIOP_DEBUG
 	{
-		extern int osiop_debug;
-		osiop_debug = -1;
+		extern int oosiop_debug;
+		oosiop_debug = -1;
 	}
-#endif /* OSIOP_DEBUG */
-	osiop_attach(sc);
+#endif /* OOSIOP_DEBUG */
+	oosiop_attach(sc);
 
 	(void)gsc_intr_establish((struct gsc_softc *)parent,
-	    ga->ga_irq, IPL_BIO, osiop_gsc_intr, sc, sc->sc_dev.dv_xname);
+	    ga->ga_irq, IPL_BIO, oosiop_gsc_intr, sc, sc->sc_dev.dv_xname);
 }
 
 /*
  * interrupt handler
  */
 int
-osiop_gsc_intr(arg)
+oosiop_gsc_intr(arg)
 	void *arg;
 {
-	struct osiop_softc *sc = arg;
-	u_int8_t istat;
+	struct oosiop_softc *sc = arg;
+	int rv;
 
-	/* This is potentially nasty, since the IRQ is level triggered... */
-	if (sc->sc_flags & OSIOP_INTSOFF)
-		return (0);
-
-	istat = osiop_read_1(sc, OSIOP_ISTAT);
-
-	if ((istat & (OSIOP_ISTAT_SIP | OSIOP_ISTAT_DIP)) == 0)
-		return (0);
-
-	/* Save interrupt details for the back-end interrupt handler */
-	sc->sc_sstat0 = osiop_read_1(sc, OSIOP_SSTAT0);
-	sc->sc_istat = istat;
-	/*
-	 * Per page 4-18 of the LSI 53C710 Technical Manual,
-	 * "insert a delay equivalent to 12 BCLK periods between
-	 * the reads [of DSTAT and SSTAT0] to ensure that the
-	 * interrupts clear properly." 1 BCLK = 40ns. Pg. 6-10.
-	 */
-	DELAY(25);
-	sc->sc_dstat = osiop_read_1(sc, OSIOP_DSTAT);
-
-	/* Deal with the interrupt */
-	osiop_intr(sc);
+	rv = oosiop_intr(sc);
 
 #ifdef USELEDS
 	ledctl(PALED_DISK, 0, 0);
 #endif
 
-	return (1);
+	return (rv);
 }

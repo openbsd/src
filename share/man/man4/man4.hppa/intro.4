@@ -1,4 +1,4 @@
-.\" $OpenBSD: intro.4,v 1.2 2004/01/15 15:10:00 mickey Exp $
+.\" $OpenBSD: intro.4,v 1.3 2004/03/12 00:04:56 miod Exp $
 .\"
 .\" Copyright (c) 2002,2003 Paul Weissmann
 .\" All rights reserved.
@@ -247,10 +247,12 @@ The Centronics printer port.
 The
 .Xr eisa 4
 bus controller on most of the older 700 machines.
+.It Xr oosiop 4
+.Tn Symbios/NCR
+53C700 SCSI I/O processor.
 .It Xr osiop 4
-The
-.Tn NCR 53c7x0 SCSI
-I/O processor.
+.Tn Symbios/NCR
+53C710 SCSI I/O processor.
 .It Xr pdc 4
 The PROM interface, allows to call the routines in the machine's
 PROM for things like initial console output and such.
@@ -258,8 +260,8 @@ PROM for things like initial console output and such.
 The power button interface allowing graceful shutdown of the
 system should being depressed on the running system.
 .It Xr siop 4
-.Tn LSI/Symbios Logic/NCR 53c8xx SCSI
-I/O processor.
+.Tn LSI/Symbios Logic/NCR
+53C8xx SCSI I/O processor.
 .It Xr sti 4
 The system graphics driver.
 .It Xr wax 4

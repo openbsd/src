@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scsi.4,v 1.15 2004/03/08 18:24:35 miod Exp $
+.\"	$OpenBSD: scsi.4,v 1.16 2004/03/12 00:04:51 miod Exp $
 .\"
 .\" Copyright (c) 1996
 .\"	Julian Elischer <julian@freebsd.org>.  All rights reserved.
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd August 4, 1996
+.Dd March 12, 2004
 .Dt SCSI 4
 .Os
 .Sh NAME
@@ -51,6 +51,8 @@
 .Cd "scsibus at isp?"
 .Cd "scsibus at mpt?"
 .Cd "scsibus at ncr?"
+.Cd "scsibus at oosiop?"
+.Cd "scsibus at osiop?"
 .Cd "scsibus at pcscp?"
 .Cd "scsibus at siop?"
 .Cd "scsibus at trm?"
@@ -221,6 +223,8 @@ shows more detailed information including DMA scatter-gather logs.
 .Xr isp 4 ,
 .Xr mpt 4 ,
 .Xr ncr 4 ,
+.Xr oosiop 4 ,
+.Xr osiop 4 ,
 .Xr pcscp 4 ,
 .Xr sd 4 ,
 .Xr ses 4 ,

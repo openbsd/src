@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gsc.4,v 1.17 2003/06/19 20:27:19 deraadt Exp $
+.\"	$OpenBSD: gsc.4,v 1.18 2004/03/12 00:04:56 miod Exp $
 .\"
 .\"
 .\" Copyright (c) 1999 Michael Shalayeff
@@ -78,8 +78,12 @@ Human Interface Loop, for HP-proprietary input devices like keyboard and mice.
 Intel i82596 DX/CA 32-bit LAN coprocessor.
 .It Xr lpt 4
 Centronics printer port.
+.It Xr oosiop 4
+.Tn Symbios/NCR
+53C700 SCSI I/O Processor.
 .It Xr osiop 4
-SCSI I/O processor.
+.Tn Symbios/NCR
+53C710 SCSI I/O Processor.
 .El
 .Pp
 Some of these

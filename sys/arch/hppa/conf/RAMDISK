@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.26 2003/12/29 23:27:04 mickey Exp $
+#	$OpenBSD: RAMDISK,v 1.27 2004/03/12 00:04:57 miod Exp $
 #
 # Diskless kernel config
 #
@@ -112,9 +112,11 @@ ie0	at gsc0 irq 8			# 82C596DX/CA ether
 #ie*	at isa? port 0x300 irq 10
 #ie*	at pci? dev ? function ?
 #tms*	at gsc? irq 10			# TMS380C26 Network Controller
-osiop*	at gsc? irq 9			# NCR 53C700/710 (Narrow SE)
+osiop*	at gsc? irq 9			# NCR 53C710 (Narrow SE)
 #osiop* at eisa? slot ?
 scsibus* at osiop?
+oosiop*	at gsc? disable irq 9			# NCR 53C700 (Narrow SE)
+scsibus* at oosiop?
 #harmony* at gsc? irq 13		# Audio Type 2 (CS4215/AD1849)
 #audio*	at harmony?
 gsckbc*	at gsc? irq 26

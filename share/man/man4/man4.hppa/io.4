@@ -1,4 +1,4 @@
-.\" $OpenBSD: io.4,v 1.4 2004/01/15 19:37:52 jmc Exp $
+.\" $OpenBSD: io.4,v 1.5 2004/03/12 00:04:56 miod Exp $
 .\"
 .\" Copyright (c) 2003,2004 Paul Weissmann
 .\" All rights reserved.
@@ -92,9 +92,11 @@ SCSI bus configuration:
 .Pp
 .Bl -tag -width XXXX -compact -offset indent
 .It SE
+.Xr oosiop 4
+or
 .Xr osiop 4 ;
-.Tn NCR53C700/710
-8-bit (fast) single-ended,
+.Tn Symbios/NCR
+53C700/710 8-bit (fast) single-ended,
 .It FWD
 .Xr siop 4 ;
 .Tn NCR53C720
@@ -135,6 +137,7 @@ Formac+ FDDI,
 .Xr ie 4 ,
 .Xr intro 4 ,
 .Xr lasi 4 ,
+.Xr oosiop 4 ,
 .Xr osiop 4 ,
 .Xr siop 4 ,
 .Xr sti 4 ,

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.47 2004/02/26 02:29:56 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.48 2004/03/12 00:04:56 miod Exp $
 
 # Machine architecture; required by config(8)
 machine		hppa
@@ -97,9 +97,11 @@ ie0	at gsc0 irq 8			# 82C596DX/CA ether
 #ie*	at isa? port 0x300 irq 10
 #ie*	at pci? dev ? function ?
 #tms*	at gsc? irq 10			# TMS380C26 Network Controller
-osiop*	at gsc? irq 9			# NCR 53C700/710 (Narrow SE)
+osiop*	at gsc? irq 9			# NCR 53C710 (Narrow SE)
 #osiop* at eisa? slot ?
 scsibus* at osiop?
+oosiop*	at gsc? disable irq 9			# NCR 53C700 (Narrow SE)
+scsibus* at oosiop?
 harmony* at gsc? irq 13			# Audio Type 2 (CS4215/AD1849)
 audio*	at harmony?
 gsckbc*	at gsc? irq 26
