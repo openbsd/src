@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-static char rcsid[] = "$OpenBSD: glob.c,v 1.10 2001/03/19 13:45:30 millert Exp $";
+static char rcsid[] = "$OpenBSD: glob.c,v 1.11 2001/03/28 06:33:55 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -135,9 +135,6 @@ static void	 g_Ctoc __P((const Char *, char *));
 static int	 g_lstat __P((Char *, struct stat *, glob_t *));
 static DIR	*g_opendir __P((Char *, glob_t *));
 static Char	*g_strchr __P((Char *, int));
-#ifdef notdef
-static Char	*g_strcat __P((Char *, const Char *));
-#endif
 static int	 g_stat __P((Char *, struct stat *, glob_t *));
 static int	 glob0 __P((const Char *, glob_t *));
 static int	 glob1 __P((Char *, glob_t *, size_t *));
@@ -178,8 +175,8 @@ glob(pattern, flags, errfunc, pglob)
 	bufnext = patbuf;
 	bufend = bufnext + MAXPATHLEN;
 	if (flags & GLOB_NOESCAPE)
-	    while (bufnext < bufend && (c = *patnext++) != EOS)
-		    *bufnext++ = c;
+		while (bufnext < bufend && (c = *patnext++) != EOS)
+			*bufnext++ = c;
 	else {
 		/* Protect the quoted characters. */
 		while (bufnext < bufend && (c = *patnext++) != EOS)
@@ -273,7 +270,7 @@ static int globexp2(ptr, pattern, pglob, rv)
 		return 0;
 	}
 
-	for (i = 0, pl = pm = ptr; pm <= pe; pm++)
+	for (i = 0, pl = pm = ptr; pm <= pe; pm++) {
 		switch (*pm) {
 		case LBRACKET:
 			/* Ignore everything between [] */
@@ -294,8 +291,8 @@ static int globexp2(ptr, pattern, pglob, rv)
 
 		case RBRACE:
 			if (i) {
-			    i--;
-			    break;
+				i--;
+				break;
 			}
 			/* FALLTHROUGH */
 		case COMMA:
@@ -326,6 +323,7 @@ static int globexp2(ptr, pattern, pglob, rv)
 		default:
 			break;
 		}
+	}
 	*rv = 0;
 	return 0;
 }
@@ -455,7 +453,7 @@ glob0(pattern, pglob)
 			 * to avoid exponential behavior
 			 */
 			if (bufnext == patbuf || bufnext[-1] != M_ALL)
-			    *bufnext++ = M_ALL;
+				*bufnext++ = M_ALL;
 			break;
 		default:
 			*bufnext++ = CHAR(c);
@@ -537,8 +535,8 @@ glob2(pathbuf, pathend, pattern, pglob, limitp)
 				return(0);
 
 			if (((pglob->gl_flags & GLOB_MARK) &&
-			    pathend[-1] != SEP) && (S_ISDIR(sb.st_mode)
-			    || (S_ISLNK(sb.st_mode) &&
+			    pathend[-1] != SEP) && (S_ISDIR(sb.st_mode) ||
+			    (S_ISLNK(sb.st_mode) &&
 			    (g_stat(pathbuf, &sb, pglob) == 0) &&
 			    S_ISDIR(sb.st_mode)))) {
 				*pathend++ = SEP;
@@ -562,7 +560,8 @@ glob2(pathbuf, pathend, pattern, pglob, limitp)
 			pattern = p;
 			while (*pattern == SEP)
 				*pathend++ = *pattern++;
-		} else			/* Need expansion, recurse. */
+		} else
+			/* Need expansion, recurse. */
 			return(glob3(pathbuf, pathend, pattern, p, pglob,
 			    limitp));
 	}
@@ -827,24 +826,6 @@ g_strchr(str, ch)
 	} while (*str++);
 	return (NULL);
 }
-
-#ifdef notdef
-static Char *
-g_strcat(dst, src)
-	Char *dst;
-	const Char* src;
-{
-	Char *sdst = dst;
-
-	while (*dst++)
-		continue;
-	--dst;
-	while((*dst++ = *src++) != EOS)
-		continue;
-
-	return (sdst);
-}
-#endif
 
 static void
 g_Ctoc(str, buf)
