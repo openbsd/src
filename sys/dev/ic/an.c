@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.3 2000/06/18 03:26:51 aaron Exp $	*/
+/*	$OpenBSD: an.c,v 1.4 2000/06/18 03:56:07 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -97,6 +97,7 @@
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
+#include <sys/proc.h>
 #include <sys/socket.h>
 #include <sys/timeout.h>
 #ifdef ANCACHE
@@ -879,6 +880,7 @@ int an_ioctl(ifp, command, data)
 	struct an_softc		*sc;
 	struct an_req		areq;
 	struct ifreq		*ifr;
+	struct proc		*p = curproc;
 	struct ifaddr		*ifa = (struct ifaddr *)data;
 
 	s = splimp();
@@ -960,6 +962,9 @@ int an_ioctl(ifp, command, data)
 		error = copyout(&areq, ifr->ifr_data, sizeof(areq));
 		break;
 	case SIOCSAIRONET:
+		error = suser(p->p_ucred, &p->p_acflag);
+		if (error)
+			break;
 		error = copyin(ifr->ifr_data, &areq, sizeof(areq));
 		if (error)
 			break;
