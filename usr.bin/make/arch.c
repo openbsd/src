@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.4 1996/03/27 19:32:35 niklas Exp $	*/
+/*	$OpenBSD: arch.c,v 1.5 1996/07/31 00:01:04 niklas Exp $	*/
 /*	$NetBSD: arch.c,v 1.14 1996/03/12 18:04:27 christos Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
 static char sccsid[] = "@(#)arch.c	5.7 (Berkeley) 12/28/90";
 static char rcsid[] = "$NetBSD: arch.c,v 1.14 1996/03/12 18:04:27 christos Exp $";
 #else
-static char rcsid[] = "$OpenBSD: arch.c,v 1.4 1996/03/27 19:32:35 niklas Exp $";
+static char rcsid[] = "$OpenBSD: arch.c,v 1.5 1996/07/31 00:01:04 niklas Exp $";
 #endif
 #endif /* not lint */
 
@@ -102,7 +102,7 @@ static char rcsid[] = "$OpenBSD: arch.c,v 1.4 1996/03/27 19:32:35 niklas Exp $";
 #include    <sys/param.h>
 #include    <ctype.h>
 #include    <ar.h>
-#if !defined(__svr4__) && !defined(__SVR4) 
+#if !defined(__svr4__) && !defined(__SVR4) && !defined(__alpha__)
 #include    <ranlib.h>
 #endif
 #include    <utime.h>

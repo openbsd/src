@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.3 1996/06/26 05:36:28 deraadt Exp $	*/
+/*	$OpenBSD: config.h,v 1.4 1996/07/31 00:01:03 niklas Exp $	*/
 /*	$NetBSD: config.h,v 1.5 1996/02/04 20:34:43 christos Exp $	*/
 
 /*
@@ -89,7 +89,7 @@
 #define	LIBSUFF	".a"
 #define	RECHECK
 
-#if !defined(__svr4__) && !defined(__SVR4)
+#if !defined(__svr4__) && !defined(__SVR4) && !defined(__alpha__)
 # ifndef RANLIBMAG
 #  define RANLIBMAG "__.SYMDEF"
 # endif
