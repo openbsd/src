@@ -3,9 +3,9 @@
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	OpenBSD: vnode_if.src,v 1.20 2003/05/01 21:13:05 tedu Exp 
+ *	OpenBSD: vnode_if.src,v 1.22 2003/07/21 22:44:50 tedu Exp 
  * by the script:
- *	OpenBSD: vnode_if.sh,v 1.12 2003/05/01 21:41:35 tedu Exp 
+ *	OpenBSD: vnode_if.sh,v 1.13 2003/06/02 23:28:07 millert Exp 
  */
 
 /*
@@ -461,7 +461,7 @@ struct vnodeop_desc vop_ioctl_desc = {
 int VOP_IOCTL(vp, command, data, fflag, cred, p)
 	struct vnode *vp;
 	u_long command;
-	caddr_t data;
+	void *data;
 	int fflag;
 	struct ucred *cred;
 	struct proc *p;
@@ -1147,7 +1147,7 @@ struct vnodeop_desc vop_advlock_desc = {
 
 int VOP_ADVLOCK(vp, id, op, fl, flags)
 	struct vnode *vp;
-	caddr_t id;
+	void *id;
 	int op;
 	struct flock *fl;
 	int flags;

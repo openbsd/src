@@ -3,9 +3,9 @@
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	OpenBSD: vnode_if.src,v 1.20 2003/05/01 21:13:05 tedu Exp 
+ *	OpenBSD: vnode_if.src,v 1.22 2003/07/21 22:44:50 tedu Exp 
  * by the script:
- *	OpenBSD: vnode_if.sh,v 1.12 2003/05/01 21:41:35 tedu Exp 
+ *	OpenBSD: vnode_if.sh,v 1.13 2003/06/02 23:28:07 millert Exp 
  */
 
 /*
@@ -163,13 +163,13 @@ struct vop_ioctl_args {
 	struct vnodeop_desc *a_desc;
 	struct vnode *a_vp;
 	u_long a_command;
-	caddr_t a_data;
+	void *a_data;
 	int a_fflag;
 	struct ucred *a_cred;
 	struct proc *a_p;
 };
 extern struct vnodeop_desc vop_ioctl_desc;
-int VOP_IOCTL(struct vnode *, u_long, caddr_t, int, struct ucred *, 
+int VOP_IOCTL(struct vnode *, u_long, void *, int, struct ucred *, 
     struct proc *);
 
 struct vop_select_args {
@@ -366,13 +366,13 @@ int VOP_PATHCONF(struct vnode *, int, register_t *);
 struct vop_advlock_args {
 	struct vnodeop_desc *a_desc;
 	struct vnode *a_vp;
-	caddr_t a_id;
+	void *a_id;
 	int a_op;
 	struct flock *a_fl;
 	int a_flags;
 };
 extern struct vnodeop_desc vop_advlock_desc;
-int VOP_ADVLOCK(struct vnode *, caddr_t, int, struct flock *, int);
+int VOP_ADVLOCK(struct vnode *, void *, int, struct flock *, int);
 
 struct vop_reallocblks_args {
 	struct vnodeop_desc *a_desc;
