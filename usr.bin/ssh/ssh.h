@@ -13,7 +13,7 @@ Generic header file for ssh.
 
 */
 
-/* RCSID("$Id: ssh.h,v 1.1 1999/09/26 20:53:38 deraadt Exp $"); */
+/* RCSID("$Id: ssh.h,v 1.2 1999/09/26 21:47:55 deraadt Exp $"); */
 
 #ifndef SSH_H
 #define SSH_H
@@ -53,6 +53,9 @@ Generic header file for ssh.
    port if present. */
 #define SSH_SERVICE_NAME	"ssh"
 
+#define ETCDIR			"/etc"
+#define PIDDIR			"/var/run"
+
 /* System-wide file containing host keys of known hosts.  This file should be
    world-readable. */
 #define SSH_SYSTEM_HOSTFILE	ETCDIR "/ssh_known_hosts"
@@ -62,6 +65,12 @@ Generic header file for ssh.
 and HOST_CONFIG_FILE		/etc/ssh_config
 are all defined in Makefile.in.  Of these, ssh_host_key should be readable
 only by root, whereas ssh_config should be world-readable. */
+
+#define HOST_KEY_FILE		"/etc/ssh_host_key"
+#define SERVER_CONFIG_FILE	"/etc/sshd_config"
+#define HOST_CONFIG_FILE	"/etc/ssh_config"
+
+#define SSH_PROGRAM		"/usr/bin/ssh"
 
 /* Random seed file for the daemon.  This file should be readable only by 
    root. */
