@@ -1,7 +1,7 @@
 #
 #	GANDALF -- Dual Tyan P5/133 PCI/EISA bus
 #
-#	$OpenBSD: GANDALF,v 1.27 1998/07/11 15:31:18 todd Exp $
+#	$OpenBSD: GANDALF,v 1.28 1998/08/10 18:51:47 provos Exp $
 #
 
 machine		i386		# architecture, used by config; REQUIRED
@@ -130,7 +130,7 @@ acd*	at atapibus? drive?
 
 ep*	at eisa? slot ?			# 3C579 ethernet card
 
-gus0	at isa? port 0x220 irq 12 drq 5 flags 6 # Gravis UltraSound (flags is record drq)
+gus0	at isa? port 0x220 irq 12 drq 5 drq2 6 # Gravis UltraSound (drq2 is record drq)
 spkr0	at pckbd?			# PC speaker
 
 pseudo-device	loop		1	# network loopback

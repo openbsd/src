@@ -1,4 +1,4 @@
-#	$OpenBSD: PETRA,v 1.12 1998/07/11 15:31:26 todd Exp $
+#	$OpenBSD: PETRA,v 1.13 1998/08/10 18:51:51 provos Exp $
 #
 #	PETRA -- everything that's currently supported with certain
 #		 changes for Applitron's fileserver petra, a 128 MB
@@ -189,7 +189,7 @@ sb0	at isa? port 0x220 irq 7 drq 1		# SoundBlaster
 sb*	at isapnp?
 wss0	at isa? port 0x530 irq 10 drq 0		# Windows Sound System
 pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
-gus0	at isa? port 0x220 irq 7 drq 1 flags 6	# Gravis UltraSound (flags is record drq)
+gus0	at isa? port 0x220 irq 7 drq 1 drq2 6	# Gravis UltraSound (drq2 is record drq)
 #spkr0	at pckbd? port 0x61
 
 # Joystick driver. Probe is a little strange; add only if you have one.
