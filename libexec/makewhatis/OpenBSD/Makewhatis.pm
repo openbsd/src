@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Makewhatis.pm,v 1.1 2004/08/06 12:05:08 espie Exp $
+# $OpenBSD: Makewhatis.pm,v 1.2 2004/08/06 14:09:35 espie Exp $
 # Copyright (c) 2000-2004 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -104,8 +104,6 @@ sub merge
 	unless (-d $mandir) {
 	    die "$0: $mandir: not a directory"
 	}
-	chdir $mandir;
-
 	my $whatis = "$mandir/whatis.db";
 	open(my $old, '<', $whatis) or
 	    die "$0 $whatis to merge with";
@@ -126,8 +124,6 @@ sub remove
 	unless (-d $mandir) {
 	    die "$0: $mandir: not a directory"
 	}
-	chdir $mandir;
-
 	my $whatis = "$mandir/whatis.db";
 	open(my $old, '<', $whatis) or
 	    die "$0 $whatis to merge with";
