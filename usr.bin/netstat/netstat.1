@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstat.1,v 1.33 2003/08/26 08:33:12 itojun Exp $
+.\"	$OpenBSD: netstat.1,v 1.34 2003/11/28 10:05:43 jmc Exp $
 .\"	$NetBSD: netstat.1,v 1.11 1995/10/03 21:42:43 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
@@ -58,10 +58,9 @@
 .Op Fl N Ar system
 .Op Fl p Ar protocol
 .Nm netstat
-.Op Fl s
+.Op Fl a
 .Op Fl f Ar address_family
-.Op Fl i
-.Op Fl I Ar Interface
+.Op Fl i | I Ar interface
 .Sh DESCRIPTION
 The
 .Nm
@@ -94,14 +93,24 @@ for debugging.
 With the default display,
 show the state of all sockets; normally sockets used by
 server processes are not shown.
+With the interface display (options
+.Fl I
+or
+.Fl i ) ,
+show multicast addresses.
 .It Fl b
-With the interface display (option
+With the interface display (options
+.Fl I
+or
 .Fl i ) ,
 show bytes in and out, instead of packet statistics.
 .It Fl d
-With either interface display (option
-.Fl i
-or an interval, as described below),
+With either the interface display (options
+.Fl I
+or
+.Fl i )
+or an interval (option
+.Fl w ) ,
 show the number of dropped packets.
 .It Fl f Ar address_family
 Limit statistics or address control block reports to those
@@ -125,7 +134,7 @@ The following address families are recognized:
 .Pp
 .It Fl g
 Show information related to multicast (group address) routing.
-By default, show the IP Multicast virtual-interface and routing tables.
+By default, show the IP multicast virtual-interface and routing tables.
 If the
 .Fl s
 option is also present, show multicast routing statistics.
@@ -135,6 +144,13 @@ Show information about the specified
 used with a
 .Ar wait
 interval as described below.
+.Pp
+If the
+.Fl a
+option is also present, multicast addresses currently in use are shown
+for the given interface and for each IP interface address.
+Multicast addresses are shown on separate lines following the interface
+address with which they are associated.
 .Pp
 If the
 .Fl f Ar address_family
@@ -198,7 +214,7 @@ is unknown or if there is no statistics routine for it.
 .It Fl q
 Only show interfaces that have seen packets (or bytes if
 .Fl b
-is specified)
+is specified).
 .It Fl r
 Show the routing tables.
 If the
@@ -248,10 +264,10 @@ For more information regarding the Internet
 .Dq dot format ,
 refer to
 .Xr inet 3 .
-Unspecified, or
+Unspecified or
 .Dq wildcard
 addresses and ports appear as a single
-.Dq \&* .
+.Sq * .
 If a local port number is registered as being in use for RPC by
 .Xr portmap 8 ,
 its RPC service name or RPC service number will be printed in
@@ -283,7 +299,7 @@ The mapping between letters and flags is:
 3	RTF_PROTO3	Protocol specific routing flag #3.
 B	RTF_BLACKHOLE	Just discard pkts (during updates).
 C	RTF_CLONING	Generate new routes on use.
-c	RTF_CLONED	Cloned routes (generated from RTF_CLONING)
+c	RTF_CLONED	Cloned routes (generated from RTF_CLONING).
 D	RTF_DYNAMIC	Created dynamically (by redirect).
 G	RTF_GATEWAY	Destination requires forwarding by intermediary.
 H	RTF_HOST	Host entry (net otherwise).
@@ -304,8 +320,10 @@ sending to the same destination.
 The use field provides a count of the number of packets sent using that route.
 The MTU entry shows the MTU associated with that route.
 This MTU value is used as the basis for the TCP maximum segment size (MSS).
-The 'L' flag appended to the mtu value indicates that the value is
-locked, and that path mtu discovery is turned off for that route.
+The
+.Sq L
+flag appended to the MTU value indicates that the value is
+locked, and that path MTU discovery is turned off for that route.
 A
 .Sq -
 indicates that the MTU for this route has not been set, and a default
@@ -334,12 +352,16 @@ Subsequent lines of output show values accumulated over the preceding interval.
 .Sh SEE ALSO
 .Xr nfsstat 1 ,
 .Xr ps 1 ,
+.Xr inet 3 ,
 .Xr netintro 4 ,
+.Xr route 4 ,
 .Xr hosts 5 ,
 .Xr networks 5 ,
 .Xr protocols 5 ,
 .Xr services 5 ,
 .Xr iostat 8 ,
+.Xr portmap 8 ,
+.Xr route 8 ,
 .Xr trpt 8 ,
 .Xr vmstat 8
 .Sh HISTORY
