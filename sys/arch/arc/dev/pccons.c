@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.21 1998/03/17 05:33:13 deraadt Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	$NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp $	*/
 
 /*-
@@ -1923,6 +1923,15 @@ pcmmap(dev, offset, nprot)
 			return mips_btop(PICA_P_LOCAL_VIDEO_CTRL + offset);
 		if (offset >= 0x40000000 && offset < 0x40800000)
 			return mips_btop(PICA_P_LOCAL_VIDEO + offset - 0x40000000);
+		return -1;
+
+	case DESKSTATION_RPC44:
+		if (offset >= 0xa0000 && offset < 0xc0000)
+			return mips_btop(RPC44_P_ISA_MEM + offset);
+		if (offset >= 0x0000 && offset < 0x10000)
+			return mips_btop(RPC44_P_ISA_IO + offset);
+		if (offset >= 0x40000000 && offset < 0x40800000)
+			return mips_btop(RPC44_P_ISA_MEM + offset - 0x40000000);
 		return -1;
 
 	case DESKSTATION_TYNE:

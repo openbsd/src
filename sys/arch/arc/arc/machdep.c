@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.34 1998/10/15 21:29:59 imp Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.35 1999/01/30 22:39:31 imp Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.34 1998/10/15 21:29:59 imp Exp $
+ *      $Id: machdep.c,v 1.35 1999/01/30 22:39:31 imp Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -226,8 +226,8 @@ mips_init(argc, argv, envv)
 
 	case DESKSTATION_RPC44:
 		strcpy(cpu_model, "Deskstation rPC44");
-		arc_bus_io.bus_base = 0xb0000000;		/*XXX*/
-		arc_bus_mem.bus_base = 0xa0000000;		/*XXX*/
+		arc_bus_io.bus_base = RPC44_V_ISA_IO;
+		arc_bus_mem.bus_base = RPC44_V_ISA_MEM;
 		CONADDR = 0; /* Don't screew the mouse... */
 		break;
 
@@ -570,19 +570,19 @@ tlb_init_pica()
 	tlb.tlb_lo0 = vad_to_pfn(PICA_P_LOCAL_VIDEO_CTRL) | PG_IOPAGE;
 	tlb.tlb_lo1 = vad_to_pfn(PICA_P_LOCAL_VIDEO_CTRL + PICA_S_LOCAL_VIDEO_CTRL/2) | PG_IOPAGE;
 	R4K_TLBWriteIndexed(2, &tlb);
-	
+
 	tlb.tlb_mask = PG_SIZE_1M;
 	tlb.tlb_hi = vad_to_vpn(PICA_V_EXTND_VIDEO_CTRL);
 	tlb.tlb_lo0 = vad_to_pfn(PICA_P_EXTND_VIDEO_CTRL) | PG_IOPAGE;
 	tlb.tlb_lo1 = vad_to_pfn(PICA_P_EXTND_VIDEO_CTRL + PICA_S_EXTND_VIDEO_CTRL/2) | PG_IOPAGE;
 	R4K_TLBWriteIndexed(3, &tlb);
-	
+
 	tlb.tlb_mask = PG_SIZE_4M;
 	tlb.tlb_hi = vad_to_vpn(PICA_V_LOCAL_VIDEO);
 	tlb.tlb_lo0 = vad_to_pfn(PICA_P_LOCAL_VIDEO) | PG_IOPAGE;
 	tlb.tlb_lo1 = vad_to_pfn(PICA_P_LOCAL_VIDEO + PICA_S_LOCAL_VIDEO/2) | PG_IOPAGE;
 	R4K_TLBWriteIndexed(4, &tlb);
-	
+
 	tlb.tlb_mask = PG_SIZE_16M;
 	tlb.tlb_hi = vad_to_vpn(PICA_V_ISA_IO);
 	tlb.tlb_lo0 = vad_to_pfn(PICA_P_ISA_IO) | PG_IOPAGE;
@@ -618,7 +618,6 @@ tlb_init_tyne()
 	tlb.tlb_lo0 = 0x03ffc000 | PG_IOPAGE;
 	tlb.tlb_lo1 = PG_G;
 	R4K_TLBWriteIndexed(4, &tlb);
-
 }
 
 /*
