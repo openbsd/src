@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sti.4,v 1.13 2003/06/06 10:29:41 jmc Exp $
+.\"	$OpenBSD: sti.4,v 1.14 2004/06/08 02:54:53 mickey Exp $
 .\"
 .\" Copyright (c) 2001 Michael Shalayeff
 .\" All rights reserved.
@@ -40,6 +40,36 @@ The
 .Nm
 was created by HP to provide uniform frame-buffer access operations
 for their 9000/300 and 9000/700 series of workstations.
+.Pp
+The following models are supported
+(though not all features or frame buffer depths may be available):
+.Bl -column "Visualize FX10pro" "Bits" "Mem" "3D" "machines" -offset left
+.It "Model" Ta "Bits" Ta "Mem" Ta "3D" Ta "Machines/Cards"
+.\" .It "Timber" Ta "8" Ta "2" Ta "" Ta "HP9000/705/710"
+.It "GRX" Ta "8g" Ta "2" Ta "" Ta "SGC"
+.It "CRX" Ta "8" Ta "2" Ta "" Ta "SGC"
+.It "Tomcat" Ta "8" Ta "2" Ta "" Ta "SGC"
+.It "Stinger" Ta "8" Ta "2" Ta "" Ta "HP9000/7[12]5/74[257]i"
+.It "Artist" Ta "8" Ta "2" Ta "" Ta "HP9000/712/7[12]5/74[38]i"
+.It "CRX-24" Ta "24" Ta "16" Ta "" Ta "SGC"
+.\" .It "CRX-24Z" Ta "24" Ta "16" Ta "y" Ta "SGC"
+.\" .It "CRX-48Z" Ta "24" Ta "16" Ta "y" Ta "SGC/GSC"
+.It "HCRX-8" Ta "8" Ta "2" Ta "" Ta "GSC"
+.\" .It "HCRX-8Z" Ta "8" Ta "2" Ta "y" Ta "GSC"
+.It "HCRX-24" Ta "24" Ta "16" Ta "" Ta "GSC"
+.\" .It "HCRX-24Z" Ta "24" Ta "16" Ta "y" Ta "GSC"
+.\" .It "Visualize 8" Ta "8" Ta "2" Ta "y" Ta "GSC"
+.It "Visualize EG" Ta "16" Ta "2" Ta "" Ta "HP B/C-class, GSC/PCI"
+.\" .It "Visualize 24" Ta "24" Ta "16" Ta "y" Ta "GSC"
+.\" .It "Visualize 48" Ta "24" Ta "16" Ta "y" Ta "GSC"
+.\" .It "Visualize 48XP" Ta "24" Ta "16" Ta "y" Ta "GSC"
+.\" .It "Visualize FXE" Ta "24" Ta "24" Ta "y" Ta "PCI 32/66"
+.\" .It "Visualize FX2" Ta "24" Ta "24" Ta "y" Ta "PCI 64/66"
+.\" .It "Visualize FX4/FX6" Ta "24" Ta "32" Ta "y" Ta "PCI 64/66"
+.\" .It "Visualize FX5pro" Ta "24" Ta "64" Ta "y" Ta "PCI 64/66"
+.\" .It "Visualize FX10pro" Ta "24" Ta "128" Ta "y" Ta "PCI 64/66"
+.El
+.Pp
 Implementation consists of a set of functions burnt in to the PROM
 on the card and providing the following set of functions (see below
 for PROM revision history on functions supported by particular PROM
@@ -108,7 +138,8 @@ Restore display.
 Implement
 .Nm curr_mon
 function.
-.\" friendly boot
+.It
+Graphical boot screen.
 .\" sti_mem_addr
 .\" dd
 .\" word mode
