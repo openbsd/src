@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.13 2002/02/17 19:42:32 millert Exp $	*/
+/*	$OpenBSD: expand.c,v 1.14 2003/05/07 20:39:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -143,7 +143,7 @@ glob(as)
 					goto endit;
 				memmove(path, path + 1, strlen(path));
 			} else
-				strlcpy(path, home, sizeof path);
+				strlcpy(path, home, sizeof pathbuf);
 			pathp = path + strlen(path);
 		}
 	}

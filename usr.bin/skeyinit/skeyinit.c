@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.43 2003/04/07 21:13:54 deraadt Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.44 2003/05/07 20:39:29 deraadt Exp $	*/
 
 /* OpenBSD S/Key (skeyinit.c)
  *
@@ -39,7 +39,7 @@
 #endif
 
 void	usage(void);
-void	secure_mode(int *, char *, char *, char *, size_t);
+void	secure_mode(int *, char *, char *, size_t, char *, size_t);
 void	normal_mode(char *, int, char *, char *);
 void	timedout(int);
 void	convert_db(void);
@@ -298,7 +298,7 @@ purpose of using S/Key in the fist place.\n");
 
 	alarm(180);
 	if (!defaultsetup)
-		secure_mode(&n, key, seed, buf, sizeof(buf));
+		secure_mode(&n, key, seed, sizeof seed, buf, sizeof(buf));
 	else
 		normal_mode(pp->pw_name, n, key, seed);
 	alarm(0);
@@ -321,7 +321,8 @@ purpose of using S/Key in the fist place.\n");
 }
 
 void
-secure_mode(int *count, char *key, char *seed, char *buf, size_t bufsiz)
+secure_mode(int *count, char *key, char *seed, size_t seedlen,
+    char *buf, size_t bufsiz)
 {
 	char *p, newseed[SKEY_MAX_SEED_LEN + 2];
 	int i, n;
@@ -373,7 +374,7 @@ secure_mode(int *count, char *key, char *seed, char *buf, size_t bufsiz)
 			break;  /* Valid seed */
 	}
 	if (newseed[0] != '\0')
-		(void)strlcpy(seed, newseed, sizeof seed);
+		(void)strlcpy(seed, newseed, seedlen);
 
 	for (i = 0; ; i++) {
 		if (i >= 2)

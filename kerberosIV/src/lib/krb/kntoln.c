@@ -61,7 +61,7 @@ krb_kntoln(AUTH_DAT *ad, char *lname)
         return(KFAILURE);
     if (strcmp(ad->prealm, lrealm))
         return(KFAILURE);
-    strlcpy(lname, ad->pname, sizeof lname);
+    strlcpy(lname, ad->pname, ANAME_SZ);
     return(KSUCCESS);
 }
 
