@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa.c,v 1.27 1997/12/25 13:33:03 downsj Exp $	*/
+/*	$OpenBSD: isa.c,v 1.28 1998/01/20 18:40:28 niklas Exp $	*/
 /*	$NetBSD: isa.c,v 1.85 1996/05/14 00:31:04 thorpej Exp $	*/
 
 /*
@@ -74,9 +74,12 @@
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
+#include <dev/isa/isadmareg.h>
 
 int isamatch __P((struct device *, void *, void *));
 void isaattach __P((struct device *, struct device *, void *));
+
+extern int autoconf_verbose;
 
 struct cfattach isa_ca = {
 	sizeof(struct isa_softc), isamatch, isaattach
@@ -115,14 +118,36 @@ isaattach(parent, self, aux)
 
 	sc->sc_iot = iba->iba_iot;
 	sc->sc_memt = iba->iba_memt;
+#if NISADMA > 0
+	sc->sc_dmat = iba->iba_dmat;
+#endif /* NISADMA > 0 */
 	sc->sc_ic = iba->iba_ic;
 
+#if NISADMA > 0
 	/*
-	 * Map port 0x84, which causes a 1.25us delay when read.
-	 * We do this now, since several drivers need it.
+	 * Map the registers used by the ISA DMA controller.
+	 * XXX Should be done in the isadmaattach routine.. but the delay
+	 * XXX port makes it troublesome.  Note that these aren't really
+	 * XXX valid on ISA busses without DMA.
+	 */
+	if (bus_space_map(sc->sc_iot, IO_DMA1, DMA1_IOSIZE, 0, &sc->sc_dma1h))
+		panic("isaattach: can't map DMA controller #1");
+	if (bus_space_map(sc->sc_iot, IO_DMA2, DMA2_IOSIZE, 0, &sc->sc_dma2h))
+		panic("isaattach: can't map DMA controller #2");
+	if (bus_space_map(sc->sc_iot, IO_DMAPG, 0xf, 0, &sc->sc_dmapgh))
+		panic("isaattach: can't map DMA page registers");
+
+	/*
+  	 * Map port 0x84, which causes a 1.25us delay when read.
+  	 * We do this now, since several drivers need it.
 	 * XXX this port doesn't exist on all ISA busses...
 	 */
-	if (bus_space_map(sc->sc_iot, 0x84, 1, 0, &sc->sc_delaybah))
+	if (bus_space_subregion(sc->sc_iot, sc->sc_dmapgh, 0x04, 1,
+	    &sc->sc_delaybah))
+#else /* NISADMA > 0 */
+	if (bus_space_map(sc->sc_iot, IO_DMAPG + 0x4, 0x1, 0,
+	    &sc->sc_delaybah))
+#endif /* NISADMA > 0 */
 		panic("isaattach: can't map `delay port'");	/* XXX */
 
 	TAILQ_INIT(&sc->sc_subdevs);
@@ -163,6 +188,9 @@ isascan(parent, match)
 
 	ia.ia_iot = sc->sc_iot;
 	ia.ia_memt = sc->sc_memt;
+#if NISADMA > 0
+	ia.ia_dmat = sc->sc_dmat;
+#endif /* NISADMA > 0 */
 	ia.ia_ic = sc->sc_ic;
 	ia.ia_iobase = cf->cf_loc[0];
 	ia.ia_iosize = 0x666;
@@ -175,7 +203,14 @@ isascan(parent, match)
 	if (cf->cf_fstate == FSTATE_STAR) {
 		struct isa_attach_args ia2 = ia;
 
+		if (autoconf_verbose)
+			printf(">>> probing for %s*\n",
+			    cf->cf_driver->cd_name);
 		while ((*cf->cf_attach->ca_match)(parent, dev, &ia2) > 0) {
+			if (autoconf_verbose)
+				printf(">>> probe for %s* clone into %s%d\n",
+				    cf->cf_driver->cd_name,
+				    cf->cf_driver->cd_name, cf->cf_unit);
 			if (ia2.ia_iosize == 0x666) {
 				printf("%s: iosize not repaired by driver\n",
 				    sc->sc_dev.dv_xname);
@@ -185,20 +220,35 @@ isascan(parent, match)
 			dev = config_make_softc(parent, cf);
 			ia2 = ia;
 
+#if NISADMA > 0
 			if (ia.ia_drq != DRQUNK)
-				isa_drq_alloc(sc, ia.ia_drq);
+				ISA_DRQ_ALLOC((struct device *)sc, ia.ia_drq);
+#endif /* NISAMDA > 0 */
 		}
+		if (autoconf_verbose)
+			printf(">>> probing for %s* finished\n",
+			    cf->cf_driver->cd_name);
 		free(dev, M_DEVBUF);
 		return;
 	}
 
+	if (autoconf_verbose)
+		printf(">>> probing for %s%d\n", cf->cf_driver->cd_name,
+		    cf->cf_unit);
 	if ((*cf->cf_attach->ca_match)(parent, dev, &ia) > 0) {
+		printf(">>> probing for %s%d succeeded\n",
+		    cf->cf_driver->cd_name, cf->cf_unit);
 		config_attach(parent, dev, &ia, isaprint);
 
+#if NISADMA > 0
 		if (ia.ia_drq != DRQUNK)
-			isa_drq_alloc(sc, ia.ia_drq);
-	} else
+			ISA_DRQ_ALLOC((struct device *)sc, ia.ia_drq);
+#endif /* NISAMDA > 0 */
+	} else {
+		printf(">>> probing for %s%d failed\n",
+		    cf->cf_driver->cd_name, cf->cf_unit);
 		free(dev, M_DEVBUF);
+	}
 }
 
 char *
@@ -219,44 +269,3 @@ isa_intr_typename(type)
 		panic("isa_intr_typename: invalid type %d", type);
 	}
 }
-
-#ifdef DIAGNOSTIC
-void
-isa_drq_alloc(vsp, drq)
-	void *vsp;
-	int drq;
-{
-	struct isa_softc *sc = vsp;
-
-	if (drq < 0 || drq > 7)
-		panic("isa_drq_alloc: drq %d out of range\n", drq);
-
-	sc->sc_drq |= (1 << drq);
-}
-
-void
-isa_drq_free(vsp, drq)
-	void *vsp;
-	int drq;
-{
-	struct isa_softc *sc = vsp;
-
-	if (drq < 0 || drq > 7)
-		panic("isa_drq_free: drq %d out of range\n", drq);
-
-	sc->sc_drq &= ~(1 << drq);
-}
-
-int
-isa_drq_isfree(vsp, drq)
-	void *vsp;
-	int drq;
-{
-	struct isa_softc *sc = vsp;
-
-	if (drq < 0 || drq > 7)
-		panic("isa_drq_isfree: drq %d out of range\n", drq);
-
-	return (!((sc->sc_drq << drq) & 1));
-}
-#endif	/* DIAGNOSTIC */

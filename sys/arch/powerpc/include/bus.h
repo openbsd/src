@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
+/*	$OpenBSD: bus.h,v 1.2 1998/01/20 18:40:24 niklas Exp $	*/
 
 /*
  * Copyright (c) 1997 Per Fogelstrom.  All rights reserved.
@@ -160,5 +160,9 @@ bus_space_write_raw_multi(4,32,2)
 
 #define	bus_space_write_raw_multi_8 \
     !!! bus_space_write_raw_multi_8 not implemented !!!
+
+/* XXX placeholders */
+typedef void *bus_dma_tag_t;
+typedef void *bus_dmamap_t;
 
 #endif /* _MACHINE_BUS_H_ */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: pci.c,v 1.10 1998/01/07 11:03:32 deraadt Exp $	*/
-/*	$NetBSD: pci.c,v 1.26 1996/12/05 01:25:30 cgd Exp $	*/
+/*	$OpenBSD: pci.c,v 1.11 1998/01/20 18:40:34 niklas Exp $	*/
+/*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
@@ -153,6 +153,7 @@ pciattach(parent, self, aux)
 
 			pa.pa_iot = iot;
 			pa.pa_memt = memt;
+			pa.pa_dmat = pba->pba_dmat;
 			pa.pa_pc = pc;
 			pa.pa_device = device;
 			pa.pa_function = function;

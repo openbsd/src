@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnp.c,v 1.16 1997/12/30 07:00:39 deraadt Exp $	*/
+/*	$OpenBSD: isapnp.c,v 1.17 1998/01/20 18:40:31 niklas Exp $	*/
 /*	$NetBSD: isapnp.c,v 1.9.4.3 1997/10/29 00:40:43 thorpej Exp $	*/
 
 /*
@@ -838,6 +838,7 @@ isapnp_attach(parent, self, aux)
 
 	sc->sc_iot = ia->ia_iot;
 	sc->sc_memt = ia->ia_memt;
+	sc->sc_dmat = ia->ia_dmat;
 	sc->sc_ncards = 0;
 
 	if (isapnp_map(sc))
@@ -888,6 +889,7 @@ isapnp_attach(parent, self, aux)
 			lpa->ia_ic = ia->ia_ic;
 			lpa->ia_iot = ia->ia_iot;
 			lpa->ia_memt = ia->ia_memt;
+			lpa->ia_dmat = ia->ia_dmat;
 			lpa->ia_delaybah = ia->ia_delaybah;
 
 			isapnp_write_reg(sc, ISAPNP_ACTIVATE, 1);

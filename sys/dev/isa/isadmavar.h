@@ -1,12 +1,52 @@
-/*	$OpenBSD: isadmavar.h,v 1.10 1997/12/25 12:06:48 downsj Exp $	*/
-/*	$NetBSD: isadmavar.h,v 1.4 1996/03/01 04:08:46 mycroft Exp $	*/
+/*	$OpenBSD: isadmavar.h,v 1.11 1998/01/20 18:40:31 niklas Exp $	*/
+/*	$NetBSD: isadmavar.h,v 1.10 1997/08/04 22:13:33 augustss Exp $	*/
 
-#define	DMAMODE_WRITE	0
-#define	DMAMODE_READ	1
-#define	DMAMODE_LOOP	2
+/*-
+ * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
-#define ISADMA_START_READ	DMAMODE_READ	/* read from device */
-#define ISADMA_START_WRITE	DMAMODE_WRITE	/* write to device */
+/* XXX for now... */
+#ifndef __ISADMA_COMPAT
+#define __ISADMA_COMPAT
+#endif /* __ISADMA_COMPAT */
+
+#ifdef __ISADMA_COMPAT
+
+/* XXX ugly.. but it's a deprecated API that uses it so it will go.. */
+extern struct device *isa_dev;
 
 #define	ISADMA_MAP_WAITOK	0x0001	/* OK for isadma_map to sleep */
 #define	ISADMA_MAP_BOUNCE	0x0002	/* use bounce buffer if necessary */
@@ -17,6 +57,7 @@
 struct isadma_seg {		/* a physical contiguous segment */
 	vm_offset_t addr;	/* address of this segment */
 	vm_size_t length;	/* length of this segment (bytes) */
+	bus_dmamap_t dmam;	/* DMA handle for bus_dma routines. */
 };
 
 int isadma_map __P((caddr_t, vm_size_t, struct isadma_seg *, int));
@@ -24,22 +65,48 @@ void isadma_unmap __P((caddr_t, vm_size_t, int, struct isadma_seg *));
 void isadma_copytobuf __P((caddr_t, vm_size_t, int, struct isadma_seg *));
 void isadma_copyfrombuf __P((caddr_t, vm_size_t, int, struct isadma_seg *));
 
-int isadma_acquire __P((int));
-void isadma_release __P((int));
-void isadma_cascade __P((int));
-void isadma_start __P((caddr_t, vm_size_t, int, int));
-void isadma_abort __P((int));
-int isadma_finished __P((int));
-void isadma_done __P((int));
+#define isadma_acquire(c)		isa_dma_acquire(isa_dev, (c))
+#define isadma_release(c)		isa_dma_release(isa_dev, (c))
+#define isadma_cascade(c)		isa_dmacascade(isa_dev, (c))
+#define isadma_start(a, s, c, f) \
+    isa_dmastart(isa_dev, (c), (a), (s), 0, (f), BUS_DMA_WAITOK|BUS_DMA_BUS1)
+#define isadma_abort(c)			isa_dmaabort(isa_dev, (c))
+#define isadma_finished(c)		isa_dmafinished(isa_dev, (c))
+#define isadma_done(c)			isa_dmadone(isa_dev, (c))
 
-/*
- * XXX these are needed until all drivers have been cleaned up
- */
+#endif /* __ISADMA_COMPAT */
 
-#define isa_dma_acquire(c)       isadma_acquire(c)
-#define isa_dma_release(c)       isadma_release(c)
-#define isa_dmacascade(c)	isadma_cascade((c))
-#define isa_dmastart(f, a, s, c)	isadma_start((a), (s), (c), (f))
-#define isa_dmaabort(c)		isadma_abort((c))
-#define isa_dmafinished(c)	isadma_finished((c))
-#define isa_dmadone(f, a, s, c)	isadma_done((c))
+#define MAX_ISADMA	65536
+
+#define	DMAMODE_WRITE	0
+#define	DMAMODE_READ	1
+#define	DMAMODE_LOOP	2
+
+struct proc;
+
+void	   isa_dmacascade __P((struct device *, int));
+
+int	   isa_dmamap_create __P((struct device *, int, bus_size_t, int));
+void	   isa_dmamap_destroy __P((struct device *, int));
+
+int	   isa_dmastart __P((struct device *, int, void *, bus_size_t,
+	       struct proc *, int, int));
+void	   isa_dmaabort __P((struct device *, int));
+bus_size_t isa_dmacount __P((struct device *, int));
+int	   isa_dmafinished __P((struct device *, int));
+void	   isa_dmadone __P((struct device *, int));
+
+int	   isa_dmamem_alloc __P((struct device *, int, bus_size_t,
+	       bus_addr_t *, int));
+void	   isa_dmamem_free __P((struct device *, int, bus_addr_t, bus_size_t));
+int	   isa_dmamem_map __P((struct device *, int, bus_addr_t, bus_size_t,
+	       caddr_t *, int));
+void	   isa_dmamem_unmap __P((struct device *, int, caddr_t, size_t));
+int	   isa_dmamem_mmap __P((struct device *, int, bus_addr_t, bus_size_t,
+	       int, int, int));
+
+int	   isa_drq_isfree __P((struct device *, int));
+
+void      *isa_malloc __P((struct device *, int, size_t, int, int));
+void	   isa_free __P((void *, int));
+int	   isa_mappage __P((void *, int, int));

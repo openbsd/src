@@ -1,5 +1,5 @@
-/*	$OpenBSD: pcivar.h,v 1.12 1997/10/11 11:14:16 pefo Exp $	*/
-/*	$NetBSD: pcivar.h,v 1.18 1996/12/01 21:02:18 leo Exp $	*/
+/*	$OpenBSD: pcivar.h,v 1.13 1998/01/20 18:40:36 niklas Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.23 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -80,6 +80,7 @@ struct pcibus_attach_args {
 	char	*pba_busname;		/* XXX should be common */
 	bus_space_tag_t pba_iot;	/* pci i/o space tag */
 	bus_space_tag_t pba_memt;	/* pci mem space tag */
+	bus_dma_tag_t pba_dmat;		/* DMA tag */
 	pci_chipset_tag_t pba_pc;
 
 	int		pba_bus;	/* PCI bus number */
@@ -98,6 +99,7 @@ struct pcibus_attach_args {
 struct pci_attach_args {
 	bus_space_tag_t pa_iot;		/* pci i/o space tag */
 	bus_space_tag_t pa_memt;	/* pci mem space tag */
+	bus_dma_tag_t pa_dmat;		/* DMA tag */
 	pci_chipset_tag_t pa_pc;
 
 	u_int		pa_device;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.9 1997/10/09 08:48:33 jtc Exp $	*/
+/*	$NetBSD: pchb.c,v 1.6 1997/06/06 23:29:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -122,6 +122,7 @@ pchbattach(parent, self, aux)
 				pba.pba_busname = "pci";
 				pba.pba_iot = pa->pa_iot;
 				pba.pba_memt = pa->pa_memt;
+				pba.pba_dmat = pa->pa_dmat;
 				pba.pba_bus = pbnum;
 				pba.pba_pc = pa->pa_pc;
 				config_found(self, &pba, pchb_print);

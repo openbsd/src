@@ -1,5 +1,5 @@
-/*	$OpenBSD: pci_machdep.h,v 1.4 1997/06/18 19:07:02 dm Exp $	*/
-/*	$NetBSD: pci_machdep.h,v 1.5 1996/03/27 04:01:16 cgd Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.5 1998/01/20 18:40:23 niklas Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.7 1997/06/06 23:29:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -54,6 +54,8 @@ union i386_pci_tag_u {
 		u_int8_t forward;
 	} mode2;
 };
+
+extern struct i386_bus_dma_tag pci_bus_dma_tag;
 
 /*
  * Types provided to machine-independent PCI code

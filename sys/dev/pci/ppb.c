@@ -1,5 +1,5 @@
-/*	$OpenBSD: ppb.c,v 1.6 1998/01/05 13:35:26 deraadt Exp $	*/
-/*	$NetBSD: ppb.c,v 1.12 1996/10/21 22:57:00 thorpej Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.7 1998/01/20 18:40:36 niklas Exp $	*/
+/*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -120,6 +120,7 @@ ppbattach(parent, self, aux)
 	pba.pba_busname = "pci";
 	pba.pba_iot = pa->pa_iot;
 	pba.pba_memt = pa->pa_memt;
+	pba.pba_dmat = pa->pa_dmat;
 	pba.pba_pc = pc;
 	pba.pba_bus = PPB_BUSINFO_SECONDARY(busdata);
 	pba.pba_intrswiz = pa->pa_intrswiz;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: eisa_machdep.h,v 1.2 1996/04/21 22:16:19 deraadt Exp $	*/
-/*	$NetBSD: eisa_machdep.h,v 1.2 1996/04/09 23:00:27 cgd Exp $	*/
+/*	$OpenBSD: eisa_machdep.h,v 1.3 1998/01/20 18:40:13 niklas Exp $	*/
+/*	$NetBSD: eisa_machdep.h,v 1.4 1997/06/06 23:12:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -42,6 +42,8 @@
 #define	EISA_ID			"EISA"
 #define	EISA_ID_LEN		(sizeof(EISA_ID) - 1)
 #define	EISA_ID_PADDR		0xfffd9
+
+extern struct i386_bus_dma_tag eisa_bus_dma_tag;
 
 /*
  * Types provided to machine-independent EISA code.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.9 1997/06/05 23:21:30 deraadt Exp $	*/
+/*	$OpenBSD: bus.h,v 1.10 1998/01/20 18:40:09 niklas Exp $	*/
 /*	$NetBSD: bus.h,v 1.10 1996/12/02 22:19:32 cgd Exp $	*/
 
 /*
@@ -379,5 +379,9 @@ struct alpha_bus_space {
 	__abs_copy(4, t, h1, o1, h2, o2, c)
 #define	bus_space_copy_8(t, h1, o1, h2, o2, c)				\
 	__abs_copy(8, t, h1, o1, h2, o2, c)
+
+/* XXX placeholders */
+typedef void *bus_dma_tag_t;
+typedef void *bus_dmamap_t;
 
 #endif /* _ALPHA_BUS_H_ */

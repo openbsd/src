@@ -1,5 +1,5 @@
-/*	$OpenBSD: mainbus.c,v 1.12 1997/12/25 06:09:52 downsj Exp $	*/
-/*	$NetBSD: mainbus.c,v 1.8 1996/04/11 22:13:37 cgd Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.13 1998/01/20 18:40:15 niklas Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.21 1997/06/06 23:14:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -45,6 +45,8 @@
 #include <i386/isa/isa_machdep.h>
 
 #include "pci.h"
+#include "eisa.h"
+#include "isa.h"
 #include "apm.h"
 #include "bios.h"
 
@@ -125,6 +127,7 @@ mainbus_attach(parent, self, aux)
 		mba.mba_pba.pba_busname = "pci";
 		mba.mba_pba.pba_iot = I386_BUS_SPACE_IO;
 		mba.mba_pba.pba_memt = I386_BUS_SPACE_MEM;
+		mba.mba_pba.pba_dmat = &pci_bus_dma_tag;
 		mba.mba_pba.pba_bus = 0;
 		config_found(self, &mba.mba_pba, mainbus_print);
 	}
@@ -134,6 +137,9 @@ mainbus_attach(parent, self, aux)
 		mba.mba_eba.eba_busname = "eisa";
 		mba.mba_eba.eba_iot = I386_BUS_SPACE_IO;
 		mba.mba_eba.eba_memt = I386_BUS_SPACE_MEM;
+#if NEISA > 0
+		mba.mba_eba.eba_dmat = &eisa_bus_dma_tag;
+#endif
 		config_found(self, &mba.mba_eba, mainbus_print);
 	}
 
@@ -141,6 +147,9 @@ mainbus_attach(parent, self, aux)
 		mba.mba_iba.iba_busname = "isa";
 		mba.mba_iba.iba_iot = I386_BUS_SPACE_IO;
 		mba.mba_iba.iba_memt = I386_BUS_SPACE_MEM;
+#if NISA > 0
+		mba.mba_iba.iba_dmat = &isa_bus_dma_tag;
+#endif
 		config_found(self, &mba.mba_iba, mainbus_print);
 	}
 }
