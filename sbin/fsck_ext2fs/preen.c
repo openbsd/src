@@ -1,4 +1,4 @@
-/*	$OpenBSD: preen.c,v 1.7 2002/05/26 09:24:35 deraadt Exp $	*/
+/*	$OpenBSD: preen.c,v 1.8 2003/04/06 08:51:24 avsm Exp $	*/
 /*	$NetBSD: preen.c,v 1.2 1997/09/14 14:27:30 lukem Exp $	*/
 
 /*
@@ -362,9 +362,9 @@ rawname(name)
 	if ((dp = strrchr(name, '/')) == 0)
 		return (0);
 	*dp = 0;
-	(void)strcpy(rawbuf, name);
+	(void)strlcpy(rawbuf, name, sizeof(rawbuf));
 	*dp = '/';
-	(void)strcat(rawbuf, "/r");
-	(void)strcat(rawbuf, &dp[1]);
+	(void)strlcat(rawbuf, "/r", sizeof(rawbuf));
+	(void)strlcat(rawbuf, &dp[1], sizeof(rawbuf));
 	return (rawbuf);
 }
