@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.11 1996/11/06 01:45:18 deraadt Exp $ */
+/*	$OpenBSD: conf.c,v 1.12 1996/11/11 20:35:01 kstailey Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -76,19 +76,15 @@ int	ttselect	__P((dev_t, int, struct proc *));
 
 bdev_decl(sw);
 #include "st.h"
-bdev_decl(st);
 #include "sd.h"
-bdev_decl(sd);
 #include "cd.h"
-bdev_decl(cd);
 #include "ch.h"
-bdev_decl(ch);
+#include "ss.h"
+#include "uk.h"
 #include "xd.h"
 bdev_decl(xd);
 #include "vnd.h"
-bdev_decl(vnd);
 #include "ccd.h"
-bdev_decl(ccd);
 #include "rd.h"
 bdev_decl(rd);
 
@@ -116,8 +112,6 @@ struct bdevsw	bdevsw[] =
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
-cdev_decl(cn);
-cdev_decl(ctty);
 #define mmread  mmrw
 #define mmwrite mmrw
 cdev_decl(mm);
@@ -139,13 +133,6 @@ cdev_decl(nvram);
 cdev_decl(flash);
 
 #include "pty.h"
-#define ptstty		ptytty
-#define	ptsioctl	ptyioctl
-cdev_decl(pts);
-#define ptctty		ptytty
-#define	ptcioctl	ptyioctl
-cdev_decl(ptc);
-cdev_decl(log);
 cdev_decl(fd);
 
 #include "zs.h"
@@ -173,29 +160,13 @@ cdev_decl(lp);
 #include "lptwo.h"
 cdev_decl(lptwo);
 
-cdev_decl(st);
-cdev_decl(sd);
-cdev_decl(cd);
 cdev_decl(xd);
-cdev_decl(vnd);
-cdev_decl(ccd);
 
 dev_decl(filedesc,open);
 
 #include "bpfilter.h"
-cdev_decl(bpf);
 
 #include "tun.h"
-cdev_decl(tun);
-cdev_decl(random);
-
-#ifdef LKM
-#define NLKM 1
-#else
-#define NLKM 0
-#endif
-
-cdev_decl(lkm);
 
 /* open, close, read, ioctl */
 cdev_decl(ipl);
@@ -248,6 +219,8 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 38 */
 	cdev_gen_ipf(NIPF,ipl),         /* 39: IP filter */
 	cdev_random_init(1,random),	/* 40: random data source */
+	cdev_uk_init(NUK,uk),		/* 41: unknown SCSI */
+	cdev_ss_init(NSS,ss),           /* 42: SCSI scanner */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
