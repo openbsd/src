@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.65 1999/12/10 10:41:44 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.66 2000/01/14 20:58:21 ericj Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -623,7 +623,7 @@ lostconn(signo)
 
 	if (debug)
 		syslog(LOG_DEBUG, "lost connection");
-	dologout(-1);
+	dologout(1);
 }
 
 static void
@@ -632,7 +632,7 @@ sigquit(signo)
 {
 	syslog(LOG_ERR, "got signal %s", strsignal(signo));
 
-	dologout(-1);
+	dologout(1);
 }
 
 /*
