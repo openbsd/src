@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.7 2000/11/15 20:00:39 aaron Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.8 2000/11/15 21:23:48 aaron Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.37.4.1 2000/06/30 16:27:53 simonb Exp $ */
 
 /*
@@ -1812,8 +1812,10 @@ wsscrollback(arg, op)
 	if (op == WSCONS_SCROLL_BACKWARD)
 		lines = -lines;
 
-	(*sc->sc_accessops->scrollback)(sc->sc_accesscookie,
-	    sc->sc_focus->scr_dconf->emulcookie, lines);
+	if (sc->sc_accessops->scrollback) {
+		(*sc->sc_accessops->scrollback)(sc->sc_accesscookie,
+		    sc->sc_focus->scr_dconf->emulcookie, lines);
+	}
 }
 
 /*
