@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_id.c,v 1.11 2003/12/12 06:57:12 itojun Exp $ */
+/* $OpenBSD: ip_id.c,v 1.12 2004/03/22 04:37:20 deraadt Exp $ */
 
 /*
  * Copyright 1998 Niels Provos <provos@citi.umich.edu>
@@ -45,7 +45,7 @@
  * The transaction id is determined by:
  * id[n] = seed xor (g^X[n] mod n)
  *
- * Effectivly the id is restricted to the lower 15 bits, thus
+ * Effectively the id is restricted to the lower 15 bits, thus
  * yielding two different cycles by toggling the msb on and off.
  * This avoids reuse issues caused by reseeding.
  */
