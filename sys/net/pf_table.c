@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_table.c,v 1.6 2003/01/01 14:16:56 cedric Exp $ */
+/*      $OpenBSD: pf_table.c,v 1.7 2003/01/01 15:26:17 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -501,7 +501,7 @@ pfr_get_astats(struct pfr_table *tbl, struct pfr_astats *addr, int *size,
 	int			 rv, s;
 	long			 tzero = time.tv_sec;
 
-	ACCEPT_FLAGS(PFR_FLAG_ATOMIC+PFR_FLAG_CLSTATS);
+	ACCEPT_FLAGS(PFR_FLAG_ATOMIC); /* XXX PFR_FLAG_CLSTATS disabled */
 	kt = pfr_lookup_table(tbl);
 	if (kt == NULL)
 		return (ESRCH);
@@ -1059,7 +1059,7 @@ pfr_get_tstats(struct pfr_tstats *tbl, int *size, int flags)
 	int			 s, n = pfr_ktable_cnt;
 	long			 tzero = time.tv_sec;
 
-	ACCEPT_FLAGS(PFR_FLAG_ATOMIC+PFR_FLAG_CLSTATS+PFR_FLAG_RECURSE);
+	ACCEPT_FLAGS(PFR_FLAG_ATOMIC); /* XXX PFR_FLAG_CLSTATS disabled */
 	if (n > *size) {
 		*size = n;
 		return (0);
