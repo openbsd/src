@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disk.9,v 1.4 1997/07/09 18:28:15 kstailey Exp $
+.\"	$OpenBSD: disk.9,v 1.5 1998/09/05 17:41:49 deraadt Exp $
 .\"	$NetBSD: disk.9,v 1.2 1996/04/08 20:41:25 jtc Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
@@ -79,7 +79,7 @@ struct disk {
 	int	  dk_busy;	/* busy counter */
 	u_int64_t dk_xfer;	/* total number of transfers */
 	u_int64_t dk_seek;	/* total independent seek operations */
-	u_int64_t dk_bytes;	/* total bytes transfered */
+	u_int64_t dk_bytes;	/* total bytes transferred */
 	struct timeval	dk_attachtime;	/* time disk was attached */
 	struct timeval	dk_timestamp;	/* timestamp of last unbusy */
 	struct timeval	dk_time;	/* total time spent busy */
@@ -291,7 +291,7 @@ foodone(xfer)
 	[ . . . ]
 
 	/*
-	 * Get number of bytes transfered.  If there is no buf
+	 * Get number of bytes transferred.  If there is no buf
 	 * associated with the xfer, we are being called at the
 	 * end of a non-I/O command.
 	 */

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.4,v 1.7 1998/06/02 09:04:30 provos Exp $
+.\"	$OpenBSD: audio.4,v 1.8 1998/09/05 17:41:48 deraadt Exp $
 .\"	$NetBSD: audio.4,v 1.20 1998/05/28 17:27:15 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@ On a full-duplex device, reads and writes may operate
 concurrently without interference.
 If a full-duplex capable audio device is opened for both reading and writing
 it will start in half-duplex play mode; full-duplex mode has to be set
-explicitely.
+explicitly.
 On either type of device, if the playback mode is paused then silence is
 played instead of the provided samples, and if recording is paused then
 the process blocks in
@@ -185,7 +185,7 @@ argument.
 There is no information regarding when in the sample stream
 they were dropped.
 .It Dv AUDIO_WSEEK (int)
-This command fetches the count of samples are queued ahead of the
+This command fetches the count of samples queued ahead of the
 first sample in the most recent sample block written into its integer argument.
 .It Dv AUDIO_DRAIN
 This command suspends the calling process until all queued playback
@@ -201,7 +201,7 @@ typedef struct audio_device {
 } audio_device_t;
 .Ed
 .It Dv AUDIO_GETFD (int)
-The command returns the current setting of the full duplex mode.
+This command returns the current setting of the full-duplex mode.
 .It Dv AUDIO_GETENC (audio_encoding_t)
 This command is used iteratively to fetch sample encoding names and
 format_ids into the input/output audio_encoding_t argument.
@@ -232,7 +232,7 @@ has a certain property the corresponding bit is set, otherwise it is not.
 The properties can have the following values:
 .Bl -tag -width indent -compact
 .It Dv AUDIO_PROP_FULLDUPLEX
-the device admits full duplex operation.
+the device admits full-duplex operation.
 .It Dv AUDIO_PROP_MMAP
 the device can be used with
 .Xr mmap 2 .
@@ -326,7 +326,7 @@ Normally the
 is calculated to correspond to 50ms of sound and it is recalculated
 when the encoding parameter changes, but if the
 .Va blocksize
-is set explicitely this value becomes sticky, i.e., it is remains
+is set explicitly this value becomes sticky, i.e., it is remains
 even when the encoding is changed. 
 The stickyness can be cleared by reopening the device or setting the
 .Va blocksize
@@ -382,7 +382,7 @@ two's complement signed linear encoding with big endian byte order
 .It Dv AUDIO_ENCODING_ULINEAR_LE
 unsigned linear encoding with little endian byte order
 .It Dv AUDIO_ENCODING_ULINEAR_BE
-unsigned linear encoding with little big byte order
+unsigned linear encoding with big endian byte order
 .El
 .Pp
 The
@@ -396,7 +396,7 @@ The gain should be in the range
 .Bq Dv AUDIO_MIN_GAIN , Dv AUDIO_MAX_GAIN
 and the balance in the range
 .Bq Dv AUDIO_LEFT_BALANCE , Dv AUDIO_RIGHT_BALANCE
-withe the normal setting at
+with the normal setting at
 .Dv AUDIO_MID_BALANCE .
 .br
 The input port should be a combination of

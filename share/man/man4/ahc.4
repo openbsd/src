@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ahc.4,v 1.4 1998/03/16 23:30:56 gene Exp $
+.\"	$OpenBSD: ahc.4,v 1.5 1998/09/05 17:41:48 deraadt Exp $
 .\"	$NetBSD: ahc.4,v 1.1.2.1 1996/08/25 17:22:14 thorpej Exp $
 .\"
 .\" Copyright (c) 1995, 1996 
@@ -55,7 +55,7 @@ For one or more PCI cards:
 \{For PCI cards:
 .Cd ahc*	at pci? dev ? function ?\}
 .Pp
-To enable tagged queueing:
+To enable tagged queuing:
 .Cd option AHC_TAGENABLE
 .Pp
 To enable SCB paging:
@@ -82,13 +82,13 @@ host adapter chips.
 Features include support for twin and wide busses,
 ultra
 .Tn SCSI,
-two active commands at a time per non-tagged queueing target,
+two active commands at a time per non-tagged queuing target,
 tagged queuing,
 and SCB paging which allows up to 255 active commands on all adapters
 except those using 
 .Tn AIC7770
 chips prior to revision E.
-Tagged queueing is enabled with the
+Tagged queuing is enabled with the
 .Dq Dv AHC_TAGENABLE
 configuration option.
 SCB paging is enabled with the
@@ -97,7 +97,7 @@ configuration option.
 .Pp
 Per target configuration performed in the 
 .Tn SCSI-Select
-menu, accesible at boot
+menu, accessible at boot
 in 
 .No non- Ns Tn EISA
 models or through an 
@@ -136,7 +136,7 @@ utility
 will allow normal function.
 .if 1 \{
 .Pp
-There are four problems known this version of this driver as follows.
+There are four problems known in this version of this driver as follows.
 All of these problems relate to MI SCSI system.
 .Pp
 Cannot handle SCSI ID greater than 7 with WIDE SCSI adapter.

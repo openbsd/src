@@ -125,7 +125,7 @@ the same format as those used by
 .B tcpdump(8) .
 .\" and
 .\" .BR tcpslice(1) .
-The name "-" in a synonym for
+The name "-" is a synonym for
 .BR stdin .
 .I ebuf
 is used to return error text and is only set when
@@ -134,7 +134,7 @@ fails and returns
 .BR NULL .
 .PP
 .B pcap_dump_open()
-is called to open a ``savefile'' for writing. The name "-" in a synonym
+is called to open a ``savefile'' for writing. The name "-" is a synonym
 for
 .BR stdin .
 .B NULL
@@ -163,7 +163,7 @@ If there is an error,
 .B NULL
 is returned and
 .I errbuf
-is filled in with with an appropriate error message.
+is filled in with an appropriate error message.
 .PP
 .B pcap_lookupnet()
 is used to determine the network number and mask
@@ -225,7 +225,7 @@ to inject a raw packet through the network interface.
 .PP
 .B pcap_immediate()
 sets ``immediate'' mode.
-If this isn't supported by the under lying packet capture, -1 is
+If this isn't supported by the underlying packet capture, -1 is
 returned and the error text can be obtained with
 .B pcap_perror()
 or
@@ -297,7 +297,7 @@ returns the name of the ``savefile.''
 .B int pcap_stats()
 returns 0 and fills in a
 .B pcap_stat
-struct with packet statistics. If there is an error or the under lying
+struct with packet statistics. If there is an error or the underlying
 packet capture doesn't support packet statistics, -1 is returned and
 the error text can be obtained with
 .B pcap_perror()

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ccd.4,v 1.9 1998/07/23 10:51:28 deraadt Exp $
+.\"	$OpenBSD: ccd.4,v 1.10 1998/09/05 17:41:48 deraadt Exp $
 .\"	$NetBSD: ccd.4,v 1.5 1995/10/09 06:09:09 thorpej Exp $
 .\"
 .\" Copyright (c) 1994 Jason Downs.
@@ -85,7 +85,7 @@ If a
 is interleaved correctly, a
 .Dq striping
 effect is achieved, which can increase performance.  Finding the optimum
-interleave factor is a hard problem.  Some things to think about is the
+interleave factor is a hard problem.  Some things to think about are the
 number of disks in the ccd, the typical readahead opportunities, the
 filesystem blocksize and if it's possible to use the optimized ccd I/O
 protocol.  The optimized protocol allows smaller interleave factors for a

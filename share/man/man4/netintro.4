@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netintro.4,v 1.7 1998/09/03 23:08:10 jason Exp $
+.\"	$OpenBSD: netintro.4,v 1.8 1998/09/05 17:41:49 deraadt Exp $
 .\"	$NetBSD: netintro.4,v 1.4 1995/10/19 08:03:40 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -125,7 +125,7 @@ information regarding the support for each protocol family.
 Associated with each protocol family is an address
 format.  All network addresses adhere to a general structure,
 called a sockaddr, described below. However, each protocol
-imposes finer and more specific structure, generally renaming
+imposes a finer, more specific structure, generally renaming
 the variant, which is discussed in the protocol family manual
 page alluded to above.
 .Bd -literal -offset indent
@@ -138,7 +138,7 @@ struct sockaddr {
 .Pp
 The field
 .Ar sa_len
-contains the total length of the of the structure,
+contains the total length of the structure,
 which may exceed 16 bytes.
 The following address values for
 .Ar sa_family
@@ -150,7 +150,7 @@ are known to the system
 #define    AF_NS        6    /* Xerox NS protocols */
 #define    AF_CCITT     10   /* CCITT protocols, X.25 etc */
 #define    AF_HYLINK    15   /* NSC Hyperchannel */
-#define    AF_APPLETALK 16   /* Apple Talk */
+#define    AF_APPLETALK 16   /* AppleTalk */
 #define    AF_ISO       18   /* ISO protocols */
 #define    AF_IPX       23   /* Novell Internet Protocol */
 #define    AF_INET6     24   /* IPv6 */
@@ -283,7 +283,7 @@ default size, one needs to modify the
 identifier itself to include the total size, as described in
 .Xr ioctl .
 .It Dv SIOCDIFADDR
-This requests deletes the specified address from the list
+This request deletes the specified address from the list
 associated with an interface.  It also uses the
 .Ar if_aliasreq
 structure to allow for the possibility of protocols allowing

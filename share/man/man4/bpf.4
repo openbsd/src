@@ -145,7 +145,7 @@ The name is returned in the ifr_name field of
 All other fields are undefined.
 .TP 10
 .B BIOCSETIF (struct ifreq)
-Sets the hardware interface associate with the file.  This
+Sets the hardware interface associated with the file.  This
 command must be performed before any packets can be read.
 The device is indicated by name using the
 .I ifr_name
@@ -278,7 +278,7 @@ overrides the timeout set by BIOCSRTIMEOUT.
 .B FIOASYNC (int)
 Enable or disable async I/O.  When enabled (arg is non-zero), the process or
 process group specified by FIOSETOWN will start receiving SIGIO's when packets
-arrive.  Note that you must do an FIOSETOWN in order for this to take affect, as
+arrive.  Note that you must do an FIOSETOWN in order for this to take effect, as
 the system will not default this for you.
 The signal may be changed via BIOCSRSIG.
 .TP 10
@@ -326,7 +326,7 @@ field exists to account for
 padding between the header and the link level protocol.
 The purpose here is to guarantee proper alignment of the packet
 data structures, which is required on alignment sensitive 
-architectures and and improves performance on many other architectures.
+architectures and improves performance on many other architectures.
 The packet filter insures that the 
 .I bpf_hdr
 and the \fInetwork layer\fR header will be word aligned.  Suitable precautions

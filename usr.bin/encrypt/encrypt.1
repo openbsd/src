@@ -1,4 +1,4 @@
-.\"	$OpenBSD: encrypt.1,v 1.6 1998/03/10 04:50:58 millert Exp $
+.\"	$OpenBSD: encrypt.1,v 1.7 1998/09/05 17:41:47 deraadt Exp $
 .\"
 .\" Copyright (c) 1996, Jason Downs.  All rights reserved.
 .\"
@@ -66,7 +66,7 @@ If no
 .Ar string
 is specified,
 .Nm encrypt
-reads one string per line from standard input, encrypting each one with
+reads one string per line from standard input, encrypting each one
 with the chosen algorithm from above. In case that no specific algorithm
 was given as command line option, the default will be looked up from
 .Ar passwd.conf(5) .
@@ -74,7 +74,7 @@ was given as command line option, the default will be looked up from
 For MD5 and Blowfish a new random salt is automatically generated for each
 password.
 .Pp
-Specifing the 
+Specifying the 
 .Ar string
 on the command line should be discouraged; using the
 standard input is more secure.
