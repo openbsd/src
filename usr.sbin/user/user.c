@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.36 2002/07/25 15:41:39 millert Exp $ */
+/* $OpenBSD: user.c,v 1.37 2002/11/07 21:49:31 millert Exp $ */
 /* $NetBSD: user.c,v 1.45 2001/08/17 08:29:00 joda Exp $ */
 
 /*
@@ -551,7 +551,9 @@ valid_login(char *login)
 	char	*cp;
 
 	for (cp = login ; *cp ; cp++) {
-		if (!isalnum(*cp) && *cp != '.' && *cp != '_' && *cp != '-') {
+		/* We allow '$' as the last character for samba */
+		if (!isalnum(*cp) && *cp != '.' && *cp != '_' && *cp != '-' &&
+		    !(*cp == '$' && *(cp + 1) == '\0')) {
 			return 0;
 		}
 	}
