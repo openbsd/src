@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vfork.2,v 1.11 1999/06/29 14:10:28 aaron Exp $
+.\"	$OpenBSD: vfork.2,v 1.12 1999/09/27 02:00:13 aaron Exp $
 .\"	$NetBSD: vfork.2,v 1.8 1997/07/10 07:54:13 mikel Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -51,32 +51,37 @@ space of the old process, which is horrendously inefficient in a paged
 environment.  It was useful when the purpose of
 .Xr fork 2
 would have been to create a new system context for an
-.Xr execve .
-It is the case that
-.Xr fork
-is now efficient, even in the above case, so that the need for
+.Xr execve 2 .
+Since
+.Xr fork 2
+is now efficient, even in the above case, the need for
 .Fn vfork
-is diminished.
+has diminished.
 .Fn vfork
 differs from
-.Xr fork
+.Xr fork 2
 in that the parent is suspended until the child makes a call to
 .Xr execve 2
 or an exit (either by a call to
 .Xr _exit 2
-or abnormally.)
+or abnormally).
 .Pp
 .Fn vfork
-returns 0 in the child's context and (later) the pid of the child in
+returns 0 in the child's context and (later) the PID of the child in
 the parent's context.
+.Sh RETURN VALUES
+Same as for
+.Xr fork 2 .
 .Sh SEE ALSO
 .Xr execve 2 ,
 .Xr fork 2 ,
 .Xr sigaction 2 ,
 .Xr wait 2
-.Sh RETURN VALUES
-Same as for
-.Xr fork 2 .
+.Sh HISTORY
+The
+.Fn vfork
+function call appeared in
+.Bx 2.9 .
 .Sh BUGS
 To avoid a possible deadlock situation,
 processes that are children in the middle
@@ -92,8 +97,3 @@ output or
 calls
 are allowed
 and input attempts result in an end-of-file indication.
-.Sh HISTORY
-The
-.Fn vfork
-function call appeared in
-.Bx 2.9 .
