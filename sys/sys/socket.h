@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.34 2000/07/02 09:47:59 fgsch Exp $	*/
+/*	$OpenBSD: socket.h,v 1.35 2000/08/13 03:38:45 ericj Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -424,7 +424,8 @@ int	socketpair __P((int, int, int, int *));
 __END_DECLS
 #else
 # if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_LINUX) || \
-     defined(COMPAT_HPUX) || defined(COMPAT_FREEBSD) || defined(COMPAT_BSDOS)
+     defined(COMPAT_HPUX) || defined(COMPAT_FREEBSD) || defined(COMPAT_BSDOS) \
+     || defined(COMPAT_OSF1)
 #  define COMPAT_OLDSOCK
 #  define MSG_COMPAT	0x8000
 # endif
