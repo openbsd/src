@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.37 2003/12/17 17:43:03 jason Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.38 2004/03/09 20:39:56 matthieu Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -172,7 +172,8 @@ int sk_marv_miibus_readreg(struct device *, int, int);
 void sk_marv_miibus_writereg(struct device *, int, int, int);
 void sk_marv_miibus_statchg(struct device *);
 
-u_int32_t sk_calchash(caddr_t);
+u_int32_t xmac_calchash (caddr_t);
+u_int32_t gmac_calchash (caddr_t);
 void sk_setfilt(struct sk_if_softc *, caddr_t, int);
 void sk_setmulti(struct sk_if_softc *);
 void sk_tick(void *);
@@ -530,11 +531,12 @@ sk_marv_miibus_statchg(dev)
 		     SK_YU_READ_2(((struct sk_if_softc *)dev), YUKON_GPCR)));
 }
 
-#define SK_BITS		6
-#define SK_POLY	0xEDB88320
-
+#define XMAC_POLY	0xEDB88320
+#define GMAC_POLY	0x04C11DB7L
+#define HASH_BITS	6
+  
 u_int32_t
-sk_calchash(caddr_t addr)
+xmac_calchash(caddr_t addr)
 {
 	u_int32_t		idx, bit, data, crc;
 
@@ -543,10 +545,47 @@ sk_calchash(caddr_t addr)
 
 	for (idx = 0; idx < 6; idx++) {
 		for (data = *addr++, bit = 0; bit < 8; bit++, data >>= 1)
-			crc = (crc >> 1) ^ (((crc ^ data) & 1) ? SK_POLY : 0);
+			crc = (crc >> 1) ^ (((crc ^ data) & 1) ? XMAC_POLY : 0);
 	}
 
-	return (~crc & ((1 << SK_BITS) - 1));
+	return (~crc & ((1 << HASH_BITS) - 1));
+}
+
+u_int32_t
+gmac_calchash(caddr_t addr)
+{
+	u_int32_t               idx, bit, crc, tmpData, data;
+
+	/* Compute CRC for the address value. */
+	crc = 0xFFFFFFFF; /* initial value */
+	
+	for (idx = 0; idx < 6; idx++) {
+		data = *addr++;
+		
+		/* Change bit order in byte. */
+		tmpData = data;
+		for (bit = 0; bit < 8; bit++) {
+			if (tmpData & 1) {
+				data |=  1 << (7 - bit);
+			}
+			else {
+				data &= ~(1 << (7 - bit));
+			}
+			
+			tmpData >>= 1;
+		}
+		
+		crc ^= (data << 24);
+		for (bit = 0; bit < 8; bit++) {
+			if (crc & 0x80000000) {
+				crc = (crc << 1) ^ GMAC_POLY;
+			} else {
+				crc <<= 1;
+			}
+		}
+	}
+	
+	return (crc & ((1 << HASH_BITS) - 1));
 }
 
 void
@@ -613,7 +652,15 @@ allmulti:
 				i++;
 			}
 			else {
-				h = sk_calchash(enm->enm_addrlo);
+				switch(sc->sk_type) {
+				case SK_GENESIS:
+					h = xmac_calchash(enm->enm_addrlo);
+					break;
+					
+				case SK_YUKON:
+					h = gmac_calchash(enm->enm_addrlo);
+					break;
+				}
 				if (h < 32)
 					hashes[0] |= (1 << h);
 				else
