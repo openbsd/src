@@ -1,5 +1,5 @@
-/*	$OpenBSD: pf_key_v2.c,v 1.6 1999/04/05 20:59:22 niklas Exp $	*/
-/*	$EOM: pf_key_v2.c,v 1.9 1999/04/05 20:36:45 niklas Exp $	*/
+/*	$OpenBSD: pf_key_v2.c,v 1.7 1999/04/19 20:58:30 niklas Exp $	*/
+/*	$EOM: pf_key_v2.c,v 1.11 1999/04/15 18:55:08 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -1161,7 +1161,7 @@ pf_key_v2_delete_spi (struct sa *sa, struct proto *proto, int incoming)
   struct pf_key_v2_msg *delete = 0, *ret = 0;
 
   /*
-   * If the SA was incoming and it has not yet been replaced, remove the
+   * If the SA was outbound and it has not yet been replaced, remove the
    * flow associated with it.
    * We ignore any errors from the disabling of the flow, it does not matter.
    */
@@ -1275,7 +1275,7 @@ pf_key_v2_delete_spi (struct sa *sa, struct proto *proto, int incoming)
 }
 
 static void
-pf_key_v2_stayalive (void *vconn, int fail)
+pf_key_v2_stayalive (struct exchange *exchange, void *vconn, int fail)
 {
   char *conn = vconn;
   struct sa *sa;
@@ -1393,15 +1393,7 @@ pf_key_v2_expire (struct pf_key_v2_msg *pmsg)
    */
   if ((sa->flags & (SA_FLAG_STAYALIVE | SA_FLAG_REPLACED))
       == SA_FLAG_STAYALIVE)
-    {
-      /* If we are already renegotiating, don't start over.  */
-      if (!exchange_lookup_by_name (sa->name, 2))
-	{
-	  sa_reference (sa);
-	  exchange_establish (sa->name,
-			      (void (*) (void *, int))sa_mark_replaced, sa);
-	}
-    }
+    exchange_establish (sa->name, 0, 0);
 
   if (life->sadb_lifetime_exttype == SADB_EXT_LIFETIME_HARD)
     {
