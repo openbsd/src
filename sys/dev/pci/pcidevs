@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.21 1997/11/07 08:07:30 niklas Exp $
+$OpenBSD: pcidevs,v 1.22 1998/01/02 08:34:31 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -490,6 +490,7 @@ vendor NETAPP		0x1275	Network Appliance
 vendor ROCKWELL		0x127a	Rockwell Semiconductor Systems
 vendor KOFAX		0x1296	Kofax Image Products
 vendor PICTUREEL	0x12c5	Picture Elements
+vendor STB		0x12d2	STB (2nd PCI Vendor ID)
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
 vendor 3DLABS		0x3d3d	3D Labs
@@ -964,4 +965,7 @@ product ZEINET 1221	0x0001	1221
 
 /* Ziatech products */
 product ZIATECH ZT8905	0x8905 PCI-ST32 Bridge
+
+/* STB products */
+product STB RIVA128	0x0018 Velocity128
 
