@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.96 1998/10/21 01:51:36 deraadt Exp $
+$OpenBSD: pcidevs,v 1.97 1998/10/21 01:54:49 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -881,7 +881,7 @@ product LEADTEK S3_805		0x0000	S3 805
 product LITEON	PNIC		0x0002	PNIC
 
 /* Macronix */
-product MACRONIX MX98713	0x0512	PMAC 100/10base PCI MAC controller
+product MACRONIX MX98713	0x0512	PMAC
 
 /* Madge Networks products */
 product MADGE COLLAGE25		0x1000	Collage 25 ATM adapter
@@ -898,7 +898,7 @@ product MATROX MYSTIQUE		0x102B	MGA 1064SG
 product MATROX PRODUCTIVA	0x1001	MGA Productiva G100 AGP
 
 /* Mylex products */
-product MYLEX 960P		0x0001	DAC960P RAID controller
+product MYLEX 960P		0x0001	DAC960P RAID
 
 /* Mutech products */
 product MUTECH MV1000		0x0001	MV1000
@@ -1023,7 +1023,7 @@ product SIGMA 64GX		0x6401	64GX
 
 /* Silicon Integrated System products */
 product SIS 86C201		0x0001	86C201 Host-AGP Bridge
-product SIS 86C202		0x0002	86C202 VGA Controller
+product SIS 86C202		0x0002	86C202 VGA
 product SIS 86C205		0x0005	86C205
 product SIS 85C503		0x0008	85C503 ISA Bridge
 product SIS 5595		0x0009	5595 PCI System I/O Chipset
