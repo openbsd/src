@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.66 2004/10/05 18:08:41 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.67 2004/10/06 03:56:08 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -494,11 +494,11 @@ carp_input_c(struct mbuf *m, struct carp_header *ch, sa_family_t af)
 		 * try to free it or keep a pointer to it).
 		 */
 		struct mbuf m0;
-		u_int32_t af = htonl(af);
+		u_int32_t af0 = htonl(af);
 
 		m0.m_next = m;
-		m0.m_len = sizeof(af);
-		m0.m_data = (char *)&af;
+		m0.m_len = sizeof(af0);
+		m0.m_data = (char *)&af0;
 		bpf_mtap(sc->sc_ac.ac_if.if_bpf, &m0);
 	}
 #endif
