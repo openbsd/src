@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_mkquery.c,v 1.12 2002/08/28 03:19:38 itojun Exp $	*/
+/*	$OpenBSD: res_mkquery.c,v 1.13 2003/01/28 04:58:00 marc Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)res_mkquery.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_mkquery.c,v 8.5 1996/08/27 08:33:28 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_mkquery.c,v 1.12 2002/08/28 03:19:38 itojun Exp $";
+static char rcsid[] = "$OpenBSD: res_mkquery.c,v 1.13 2003/01/28 04:58:00 marc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -73,6 +73,8 @@ static char rcsid[] = "$OpenBSD: res_mkquery.c,v 1.12 2002/08/28 03:19:38 itojun
 #include <netdb.h>
 #include <resolv.h>
 #include <string.h>
+
+#include "thread_private.h"
 
 /*
  * Form all types of queries.
@@ -90,17 +92,18 @@ res_mkquery(op, dname, class, type, data, datalen, newrr_in, buf, buflen)
 	u_char *buf;		/* buffer to put query */
 	int buflen;		/* size of buffer */
 {
+	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 	register HEADER *hp;
 	register u_char *cp, *ep;
 	register int n;
 	u_char *dnptrs[20], **dpp, **lastdnptr;
 
-	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
+	if ((_resp->options & RES_INIT) == 0 && res_init() == -1) {
 		h_errno = NETDB_INTERNAL;
 		return (-1);
 	}
 #ifdef DEBUG
-	if (_res.options & RES_DEBUG)
+	if (_resp->options & RES_DEBUG)
 		printf(";; res_mkquery(%d, %s, %d, %d)\n",
 		       op, dname, class, type);
 #endif
@@ -116,10 +119,10 @@ res_mkquery(op, dname, class, type, data, datalen, newrr_in, buf, buflen)
 		return (-1);
 	bzero(buf, HFIXEDSZ);
 	hp = (HEADER *) buf;
-	_res.id = res_randomid();
-	hp->id = htons(_res.id);
+	_resp->id = res_randomid();
+	hp->id = htons(_resp->id);
 	hp->opcode = op;
-	hp->rd = (_res.options & RES_RECURSE) != 0;
+	hp->rd = (_resp->options & RES_RECURSE) != 0;
 	hp->rcode = NOERROR;
 	cp = buf + HFIXEDSZ;
 	ep = buf + buflen;
@@ -203,6 +206,7 @@ res_opt(n0, buf, buflen, anslen)
 	int buflen;		/* size of buffer */
 	int anslen;		/* answer buffer length */
 {
+	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 	register HEADER *hp;
 	register u_char *cp, *ep;
 
@@ -223,9 +227,9 @@ res_opt(n0, buf, buflen, anslen)
 	cp += INT16SZ;
 	*cp++ = NOERROR;	/* extended RCODE */
 	*cp++ = 0;		/* EDNS version */
-	if (_res.options & RES_USE_DNSSEC) {
+	if (_resp->options & RES_USE_DNSSEC) {
 #ifdef DEBUG
-		if (_res.options & RES_DEBUG)
+		if (_resp->options & RES_DEBUG)
 			printf(";; res_opt()... ENDS0 DNSSEC OK\n");
 #endif /* DEBUG */
 		__putshort(DNS_MESSAGEEXTFLAG_DO, cp);	/* EDNS Z field */

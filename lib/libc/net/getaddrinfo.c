@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.43 2002/08/27 08:53:13 itojun Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.44 2003/01/28 04:58:00 marc Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.31 2000/08/31 17:36:43 itojun Exp $	*/
 
 /*
@@ -499,8 +499,6 @@ getaddrinfo(hostname, servname, hints, res)
  * FQDN hostname, DNS lookup
  */
 
-_THREAD_PRIVATE_MUTEX(getaddrinfo_explore_fqdn);
-
 static int
 explore_fqdn(pai, hostname, servname, res)
 	const struct addrinfo *pai;
@@ -508,13 +506,13 @@ explore_fqdn(pai, hostname, servname, res)
 	const char *servname;
 	struct addrinfo **res;
 {
+	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 	struct addrinfo *result;
 	struct addrinfo *cur;
 	int error = 0;
 	char lookups[MAXDNSLUS];
 	int i;
-
-	_THREAD_PRIVATE_MUTEX_LOCK(getaddrinfo_explore_fqdn);
+	_THREAD_PRIVATE_MUTEX(_explore_mutex);
 
 	result = NULL;
 
@@ -525,7 +523,6 @@ explore_fqdn(pai, hostname, servname, res)
 	 * XXX does not handle PF_UNSPEC case, should filter final result
 	 */
 	if ((pai->ai_flags & AI_ADDRCONFIG) != 0 && !addrconfig(pai)) {
-		_THREAD_PRIVATE_MUTEX_UNLOCK(getaddrinfo_explore_fqdn);
 		return 0;
 	}
 #endif
@@ -534,18 +531,22 @@ explore_fqdn(pai, hostname, servname, res)
 	 * if the servname does not match socktype/protocol, ignore it.
 	 */
 	if (get_portmatch(pai, servname) != 0) {
-		_THREAD_PRIVATE_MUTEX_UNLOCK(getaddrinfo_explore_fqdn);
 		return 0;
 	}
 
-	if ((_res.options & RES_INIT) == 0 && res_init() == -1)
+	if ((_resp->options & RES_INIT) == 0 && res_init() == -1)
 		strlcpy(lookups, "f", sizeof lookups);
 	else {
-		bcopy(_res.lookups, lookups, sizeof lookups);
+		bcopy(_resp->lookups, lookups, sizeof lookups);
 		if (lookups[0] == '\0')
 			strlcpy(lookups, "bf", sizeof lookups);
 	}
 
+	/*
+	 * The yp/dns/files getaddrinfo functions are not thread safe.
+	 * Protect them with a mutex.
+	 */
+	_THREAD_PRIVATE_MUTEX_LOCK(_explore_mutex);
 	for (i = 0; i < MAXDNSLUS && result == NULL && lookups[i]; i++) {
 		switch (lookups[i]) {
 #ifdef YP
@@ -561,13 +562,13 @@ explore_fqdn(pai, hostname, servname, res)
 			break;
 		}
 	}
+	_THREAD_PRIVATE_MUTEX_UNLOCK(_explore_mutex);
 	if (result) {
 		for (cur = result; cur; cur = cur->ai_next) {
 			GET_PORT(cur, servname);
 			/* canonname should be filled already */
 		}
 		*res = result;
-		_THREAD_PRIVATE_MUTEX_UNLOCK(getaddrinfo_explore_fqdn);
 		return 0;
 	} else {
 		/* translate error code */
@@ -599,7 +600,6 @@ explore_fqdn(pai, hostname, servname, res)
 free:
 	if (result)
 		freeaddrinfo(result);
-	_THREAD_PRIVATE_MUTEX_UNLOCK(getaddrinfo_explore_fqdn);
 	return error;
 }
 
@@ -867,6 +867,7 @@ get_port(ai, servname, matchonly)
 	struct servent *sp;
 	int port;
 	int allownumeric;
+	_THREAD_PRIVATE_MUTEX(serv_mutex);
 
 	if (servname == NULL)
 		return 0;
@@ -914,7 +915,10 @@ get_port(ai, servname, matchonly)
 			break;
 		}
 
-		if ((sp = getservbyname(servname, proto)) == NULL)
+		_THREAD_PRIVATE_MUTEX_LOCK(serv_mutex);
+		sp = getservbyname(servname, proto);
+		_THREAD_PRIVATE_MUTEX_UNLOCK(serv_mutex);
+		if (sp == NULL)
 			return EAI_SERVICE;
 		port = sp->s_port;
 	}
@@ -1563,18 +1567,26 @@ res_queryN(name, target)
 	const char *name;	/* domain name */
 	struct res_target *target;
 {
-	u_char buf[MAXPACKET];
+	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
+	u_char *buf;
 	HEADER *hp;
 	int n;
 	struct res_target *t;
 	int rcode;
 	int ancount;
 
+	buf = malloc(MAXPACKET);
+	if (buf == NULL) {
+		h_errno = NETDB_INTERNAL;
+		return (-1);
+	}
+
 	rcode = NOERROR;
 	ancount = 0;
 
-	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
+	if ((_resp->options & RES_INIT) == 0 && res_init() == -1) {
 		h_errno = NETDB_INTERNAL;
+		free(buf);
 		return (-1);
 	}
 
@@ -1592,30 +1604,32 @@ res_queryN(name, target)
 		answer = t->answer;
 		anslen = t->anslen;
 #ifdef DEBUG
-		if (_res.options & RES_DEBUG)
+		if (_resp->options & RES_DEBUG)
 			printf(";; res_query(%s, %d, %d)\n", name, class, type);
 #endif
 
 		n = res_mkquery(QUERY, name, class, type, NULL, 0, NULL,
-		    buf, sizeof(buf));
-		if (n > 0 && (_res.options & RES_USE_EDNS0) != 0)
-			n = res_opt(n, buf, sizeof(buf), anslen);
+		    buf, MAXPACKET);
+		if (n > 0 && (_resp->options & RES_USE_EDNS0) != 0)
+			n = res_opt(n, buf, MAXPACKET, anslen);
 		if (n <= 0) {
 #ifdef DEBUG
-			if (_res.options & RES_DEBUG)
+			if (_resp->options & RES_DEBUG)
 				printf(";; res_query: mkquery failed\n");
 #endif
 			h_errno = NO_RECOVERY;
+			free(buf);
 			return (n);
 		}
 		n = res_send(buf, n, answer, anslen);
 #if 0
 		if (n < 0) {
 #ifdef DEBUG
-			if (_res.options & RES_DEBUG)
+			if (_resp->options & RES_DEBUG)
 				printf(";; res_query: send error\n");
 #endif
 			h_errno = TRY_AGAIN;
+			free(buf);
 			return (n);
 		}
 #endif
@@ -1623,7 +1637,7 @@ res_queryN(name, target)
 		if (n < 0 || hp->rcode != NOERROR || ntohs(hp->ancount) == 0) {
 			rcode = hp->rcode;	/* record most recent error */
 #ifdef DEBUG
-			if (_res.options & RES_DEBUG)
+			if (_resp->options & RES_DEBUG)
 				printf(";; rcode = %u, ancount=%u\n", hp->rcode,
 				    ntohs(hp->ancount));
 #endif
@@ -1653,8 +1667,10 @@ res_queryN(name, target)
 			h_errno = NO_RECOVERY;
 			break;
 		}
+		free(buf);
 		return (-1);
 	}
+	free(buf);
 	return (ancount);
 }
 
@@ -1669,13 +1685,14 @@ res_searchN(name, target)
 	const char *name;	/* domain name */
 	struct res_target *target;
 {
+	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 	const char *cp, * const *domain;
 	HEADER *hp = (HEADER *)(void *)target->answer;	/*XXX*/
 	u_int dots;
 	int trailing_dot, ret, saved_herrno;
 	int got_nodata = 0, got_servfail = 0, tried_as_is = 0;
 
-	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
+	if ((_resp->options & RES_INIT) == 0 && res_init() == -1) {
 		h_errno = NETDB_INTERNAL;
 		return (-1);
 	}
@@ -1700,7 +1717,7 @@ res_searchN(name, target)
 	 * 'as is'.  The threshold can be set with the "ndots" option.
 	 */
 	saved_herrno = -1;
-	if (dots >= _res.ndots) {
+	if (dots >= _resp->ndots) {
 		ret = res_querydomainN(name, NULL, target);
 		if (ret > 0)
 			return (ret);
@@ -1714,11 +1731,11 @@ res_searchN(name, target)
 	 *	- there is at least one dot, there is no trailing dot,
 	 *	  and RES_DNSRCH is set.
 	 */
-	if ((!dots && (_res.options & RES_DEFNAMES)) ||
-	    (dots && !trailing_dot && (_res.options & RES_DNSRCH))) {
+	if ((!dots && (_resp->options & RES_DEFNAMES)) ||
+	    (dots && !trailing_dot && (_resp->options & RES_DNSRCH))) {
 		int done = 0;
 
-		for (domain = (const char * const *)_res.dnsrch;
+		for (domain = (const char * const *)_resp->dnsrch;
 		   *domain && !done;
 		   domain++) {
 
@@ -1766,7 +1783,7 @@ res_searchN(name, target)
 			 * if we got here for some reason other than DNSRCH,
 			 * we only wanted one iteration of the loop, so stop.
 			 */
-			if (!(_res.options & RES_DNSRCH))
+			if (!(_resp->options & RES_DNSRCH))
 			        done++;
 		}
 	}
@@ -1808,16 +1825,17 @@ res_querydomainN(name, domain, target)
 	const char *name, *domain;
 	struct res_target *target;
 {
+	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 	char nbuf[MAXDNAME];
 	const char *longname = nbuf;
 	size_t n, d;
 
-	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
+	if ((_resp->options & RES_INIT) == 0 && res_init() == -1) {
 		h_errno = NETDB_INTERNAL;
 		return (-1);
 	}
 #ifdef DEBUG
-	if (_res.options & RES_DEBUG)
+	if (_resp->options & RES_DEBUG)
 		printf(";; res_querydomain(%s, %s)\n",
 			name, domain?domain:"<Nil>");
 #endif

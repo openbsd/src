@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnameinfo.c,v 1.25 2002/06/27 09:24:28 itojun Exp $	*/
+/*	$OpenBSD: getnameinfo.c,v 1.26 2003/01/28 04:58:00 marc Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -59,6 +59,8 @@
 #include <string.h>
 #include <stddef.h>
 
+#include "thread_private.h"
+
 static const struct afd {
 	int a_af;
 	int a_addrlen;
@@ -106,6 +108,7 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 	int h_error;
 	char numserv[512];
 	char numaddr[512];
+	_THREAD_PRIVATE_MUTEX(serv_mutex);
 
 	if (sa == NULL)
 		return EAI_FAIL;
@@ -140,8 +143,10 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 		if (flags & NI_NUMERICSERV)
 			sp = NULL;
 		else {
+			_THREAD_PRIVATE_MUTEX_LOCK(serv_mutex);
 			sp = getservbyport(port,
 			    (flags & NI_DGRAM) ? "udp" : "tcp");
+			_THREAD_PRIVATE_MUTEX_UNLOCK(serv_mutex);
 		}
 		if (sp) {
 			if (strlen(sp->s_name) + 1 > servlen)
@@ -228,7 +233,9 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 			break;
 		}
 	} else {
+		_THREAD_PRIVATE_MUTEX_LOCK(serv_mutex);
 		hp = gethostbyaddr(addr, afd->a_addrlen, afd->a_af);
+		_THREAD_PRIVATE_MUTEX_UNLOCK(serv_mutex);
 		h_error = h_errno;
 
 		if (hp) {

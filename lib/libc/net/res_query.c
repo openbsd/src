@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_query.c,v 1.19 2002/06/27 09:55:49 itojun Exp $	*/
+/*	$OpenBSD: res_query.c,v 1.20 2003/01/28 04:58:00 marc Exp $	*/
 
 /*
  * ++Copyright++ 1988, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_query.c,v 8.9 1996/09/22 00:13:28 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_query.c,v 1.19 2002/06/27 09:55:49 itojun Exp $";
+static char rcsid[] = "$OpenBSD: res_query.c,v 1.20 2003/01/28 04:58:00 marc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -78,6 +78,8 @@ static char rcsid[] = "$OpenBSD: res_query.c,v 1.19 2002/06/27 09:55:49 itojun E
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "thread_private.h"
 
 #if PACKETSZ > 1024
 #define MAXPACKET	PACKETSZ
@@ -106,31 +108,32 @@ res_query(name, class, type, answer, anslen)
 	u_char *answer;		/* buffer to put answer */
 	int anslen;		/* size of answer buffer */
 {
+	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 	u_char buf[MAXPACKET];
 	register HEADER *hp = (HEADER *) answer;
 	int n;
 
 	hp->rcode = NOERROR;	/* default */
 
-	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
+	if ((_resp->options & RES_INIT) == 0 && res_init() == -1) {
 		h_errno = NETDB_INTERNAL;
 		return (-1);
 	}
 #ifdef DEBUG
-	if (_res.options & RES_DEBUG)
+	if (_resp->options & RES_DEBUG)
 		printf(";; res_query(%s, %d, %d)\n", name, class, type);
 #endif
 
 	n = res_mkquery(QUERY, name, class, type, NULL, 0, NULL,
 			buf, sizeof(buf));
-	if (n > 0 && ((_res.options & RES_USE_EDNS0) ||
-	    (_res.options & RES_USE_DNSSEC))) {
+	if (n > 0 && ((_resp->options & RES_USE_EDNS0) ||
+	    (_resp->options & RES_USE_DNSSEC))) {
 		n = res_opt(n, buf, sizeof(buf), anslen);
 	}
 
 	if (n <= 0) {
 #ifdef DEBUG
-		if (_res.options & RES_DEBUG)
+		if (_resp->options & RES_DEBUG)
 			printf(";; res_query: mkquery failed\n");
 #endif
 		h_errno = NO_RECOVERY;
@@ -139,7 +142,7 @@ res_query(name, class, type, answer, anslen)
 	n = res_send(buf, n, answer, anslen);
 	if (n < 0) {
 #ifdef DEBUG
-		if (_res.options & RES_DEBUG)
+		if (_resp->options & RES_DEBUG)
 			printf(";; res_query: send error\n");
 #endif
 		h_errno = TRY_AGAIN;
@@ -148,7 +151,7 @@ res_query(name, class, type, answer, anslen)
 
 	if (hp->rcode != NOERROR || ntohs(hp->ancount) == 0) {
 #ifdef DEBUG
-		if (_res.options & RES_DEBUG)
+		if (_resp->options & RES_DEBUG)
 			printf(";; rcode = %u, ancount=%u\n", hp->rcode,
 			    ntohs(hp->ancount));
 #endif
@@ -188,12 +191,13 @@ res_search(name, class, type, answer, anslen)
 	int anslen;		/* size of answer */
 {
 	register const char *cp, * const *domain;
+	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 	HEADER *hp = (HEADER *) answer;
 	u_int dots;
 	int trailing_dot, ret, saved_herrno;
 	int got_nodata = 0, got_servfail = 0, tried_as_is = 0;
 
-	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
+	if ((_resp->options & RES_INIT) == 0 && res_init() == -1) {
 		h_errno = NETDB_INTERNAL;
 		return (-1);
 	}
@@ -217,7 +221,7 @@ res_search(name, class, type, answer, anslen)
 	 * 'as is'.  The threshold can be set with the "ndots" option.
 	 */
 	saved_herrno = -1;
-	if (dots >= _res.ndots) {
+	if (dots >= _resp->ndots) {
 		ret = res_querydomain(name, NULL, class, type, answer, anslen);
 		if (ret > 0)
 			return (ret);
@@ -231,11 +235,11 @@ res_search(name, class, type, answer, anslen)
 	 *	- there is at least one dot, there is no trailing dot,
 	 *	  and RES_DNSRCH is set.
 	 */
-	if ((!dots && (_res.options & RES_DEFNAMES)) ||
-	    (dots && !trailing_dot && (_res.options & RES_DNSRCH))) {
+	if ((!dots && (_resp->options & RES_DEFNAMES)) ||
+	    (dots && !trailing_dot && (_resp->options & RES_DNSRCH))) {
 		int done = 0;
 
-		for (domain = (const char * const *)_res.dnsrch;
+		for (domain = (const char * const *)_resp->dnsrch;
 		     *domain && !done;
 		     domain++) {
 
@@ -284,7 +288,7 @@ res_search(name, class, type, answer, anslen)
 			/* if we got here for some reason other than DNSRCH,
 			 * we only wanted one iteration of the loop, so stop.
 			 */
-			if (!(_res.options & RES_DNSRCH))
+			if (!(_resp->options & RES_DNSRCH))
 				done++;
 		}
 	}
@@ -326,16 +330,17 @@ res_querydomain(name, domain, class, type, answer, anslen)
 	u_char *answer;		/* buffer to put answer */
 	int anslen;		/* size of answer */
 {
+	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 	char nbuf[MAXDNAME*2+1+1];
 	const char *longname = nbuf;
 	int n;
 
-	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
+	if ((_resp->options & RES_INIT) == 0 && res_init() == -1) {
 		h_errno = NETDB_INTERNAL;
 		return (-1);
 	}
 #ifdef DEBUG
-	if (_res.options & RES_DEBUG)
+	if (_resp->options & RES_DEBUG)
 		printf(";; res_querydomain(%s, %s, %d, %d)\n",
 		       name, domain?domain:"<Nil>", class, type);
 #endif
@@ -361,6 +366,7 @@ const char *
 hostalias(name)
 	register const char *name;
 {
+	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 	register char *cp1, *cp2;
 	FILE *fp;
 	char *file;
@@ -368,7 +374,7 @@ hostalias(name)
 	static char abuf[MAXDNAME];
 	size_t len;
 
-	if (_res.options & RES_NOALIASES)
+	if (_resp->options & RES_NOALIASES)
 		return (NULL);
 	file = getenv("HOSTALIASES");
 	if (issetugid() != 0 || file == NULL || (fp = fopen(file, "r")) == NULL)

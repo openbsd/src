@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: sethostent.c,v 1.4 1997/03/15 21:53:50 pefo Exp $";
+static char rcsid[] = "$OpenBSD: sethostent.c,v 1.5 2003/01/28 04:58:00 marc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -41,20 +41,25 @@ static char rcsid[] = "$OpenBSD: sethostent.c,v 1.4 1997/03/15 21:53:50 pefo Exp
 #include <netdb.h>
 #include <resolv.h>
 
+#include "thread_private.h"
+
 void
 sethostent(stayopen)
 	int stayopen;
 {
+	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 
-	if ((_res.options & RES_INIT) == 0 && res_init() == -1)
+	if ((_resp->options & RES_INIT) == 0 && res_init() == -1)
 		return;
 	if (stayopen)
-		_res.options |= RES_STAYOPEN | RES_USEVC;
+		_resp->options |= RES_STAYOPEN | RES_USEVC;
 }
 
 void
 endhostent()
 {
-	_res.options &= ~(RES_STAYOPEN | RES_USEVC);
+	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
+
+	_resp->options &= ~(RES_STAYOPEN | RES_USEVC);
 	res_close();
 }

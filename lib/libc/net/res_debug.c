@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_debug.c,v 1.14 2002/07/25 21:55:30 deraadt Exp $	*/
+/*	$OpenBSD: res_debug.c,v 1.15 2003/01/28 04:58:00 marc Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1990, 1993
@@ -82,7 +82,7 @@
 static char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_debug.c,v 8.19 1996/11/26 10:11:23 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_debug.c,v 1.14 2002/07/25 21:55:30 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: res_debug.c,v 1.15 2003/01/28 04:58:00 marc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -101,6 +101,8 @@ static char rcsid[] = "$OpenBSD: res_debug.c,v 1.14 2002/07/25 21:55:30 deraadt 
 
 #include <stdlib.h>
 #include <string.h>
+
+#include "thread_private.h"
 
 extern const char *_res_opcodes[];
 extern const char *_res_resultcodes[];
@@ -200,19 +202,20 @@ do_rrset(msg, len, cp, cnt, pflag, file, hs)
 	const char *hs;
 	FILE *file;
 {
+	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 	int n;
 	int sflag;
 
 	/*
 	 * Print answer records.
 	 */
-	sflag = (_res.pfcode & pflag);
+	sflag = (_resp->pfcode & pflag);
 	if ((n = ntohs(cnt))) {
-		if ((!_res.pfcode) ||
-		    ((sflag) && (_res.pfcode & RES_PRF_HEAD1)))
+		if ((!_resp->pfcode) ||
+		    ((sflag) && (_resp->pfcode & RES_PRF_HEAD1)))
 			fprintf(file, "%s", hs);
 		while (--n >= 0) {
-			if ((!_res.pfcode) || sflag) {
+			if ((!_resp->pfcode) || sflag) {
 				cp = p_rr(cp, msg, file);
 			} else {
 				unsigned int dlen;
@@ -227,8 +230,8 @@ do_rrset(msg, len, cp, cnt, pflag, file, hs)
 			if ((cp - msg) > len)
 				return (NULL);
 		}
-		if ((!_res.pfcode) ||
-		    ((sflag) && (_res.pfcode & RES_PRF_HEAD1)))
+		if ((!_resp->pfcode) ||
+		    ((sflag) && (_resp->pfcode & RES_PRF_HEAD1)))
 			putc('\n', file);
 	}
 	return (cp);
@@ -271,11 +274,12 @@ __fp_nquery(msg, len, file)
 	int len;
 	FILE *file;
 {
+	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 	register const u_char *cp, *endMark;
 	register const HEADER *hp;
 	register int n;
 
-	if ((_res.options & RES_INIT) == 0 && res_init() == -1)
+	if ((_resp->options & RES_INIT) == 0 && res_init() == -1)
 		return;
 
 #define TruncTest(x) if (x > endMark) goto trunc
@@ -287,16 +291,16 @@ __fp_nquery(msg, len, file)
 	hp = (HEADER *)msg;
 	cp = msg + HFIXEDSZ;
 	endMark = msg + len;
-	if ((!_res.pfcode) || (_res.pfcode & RES_PRF_HEADX) || hp->rcode) {
+	if ((!_resp->pfcode) || (_resp->pfcode & RES_PRF_HEADX) || hp->rcode) {
 		fprintf(file, ";; ->>HEADER<<- opcode: %s, status: %s, id: %u",
 			_res_opcodes[hp->opcode],
 			_res_resultcodes[hp->rcode],
 			ntohs(hp->id));
 		putc('\n', file);
 	}
-	if ((!_res.pfcode) || (_res.pfcode & RES_PRF_HEADX))
+	if ((!_resp->pfcode) || (_resp->pfcode & RES_PRF_HEADX))
 		putc(';', file);
-	if ((!_res.pfcode) || (_res.pfcode & RES_PRF_HEAD2)) {
+	if ((!_resp->pfcode) || (_resp->pfcode & RES_PRF_HEAD2)) {
 		fprintf(file, "; flags:");
 		if (hp->qr)
 			fprintf(file, " qr");
@@ -315,13 +319,13 @@ __fp_nquery(msg, len, file)
 		if (hp->cd)
 			fprintf(file, " cd");
 	}
-	if ((!_res.pfcode) || (_res.pfcode & RES_PRF_HEAD1)) {
+	if ((!_resp->pfcode) || (_resp->pfcode & RES_PRF_HEAD1)) {
 		fprintf(file, "; Ques: %u", ntohs(hp->qdcount));
 		fprintf(file, ", Ans: %u", ntohs(hp->ancount));
 		fprintf(file, ", Auth: %u", ntohs(hp->nscount));
 		fprintf(file, ", Addit: %u", ntohs(hp->arcount));
 	}
-	if ((!_res.pfcode) || (_res.pfcode & 
+	if ((!_resp->pfcode) || (_resp->pfcode & 
 		(RES_PRF_HEADX | RES_PRF_HEAD2 | RES_PRF_HEAD1))) {
 		putc('\n',file);
 	}
@@ -329,13 +333,13 @@ __fp_nquery(msg, len, file)
 	 * Print question records.
 	 */
 	if ((n = ntohs(hp->qdcount))) {
-		if ((!_res.pfcode) || (_res.pfcode & RES_PRF_QUES))
+		if ((!_resp->pfcode) || (_resp->pfcode & RES_PRF_QUES))
 			fprintf(file, ";; QUESTIONS:\n");
 		while (--n >= 0) {
-			if ((!_res.pfcode) || (_res.pfcode & RES_PRF_QUES))
+			if ((!_resp->pfcode) || (_resp->pfcode & RES_PRF_QUES))
 				fprintf(file, ";;\t");
 			TruncTest(cp);
-			if ((!_res.pfcode) || (_res.pfcode & RES_PRF_QUES))
+			if ((!_resp->pfcode) || (_resp->pfcode & RES_PRF_QUES))
 				cp = p_cdnname(cp, msg, len, file);
 			else {
 				int n;
@@ -349,16 +353,16 @@ __fp_nquery(msg, len, file)
 			}
 			ErrorTest(cp);
 			TruncTest(cp);
-			if ((!_res.pfcode) || (_res.pfcode & RES_PRF_QUES))
+			if ((!_resp->pfcode) || (_resp->pfcode & RES_PRF_QUES))
 				fprintf(file, ", type = %s",
 					__p_type(_getshort((u_char*)cp)));
 			cp += INT16SZ;
 			TruncTest(cp);
-			if ((!_res.pfcode) || (_res.pfcode & RES_PRF_QUES))
+			if ((!_resp->pfcode) || (_resp->pfcode & RES_PRF_QUES))
 				fprintf(file, ", class = %s\n",
 					__p_class(_getshort((u_char*)cp)));
 			cp += INT16SZ;
-			if ((!_res.pfcode) || (_res.pfcode & RES_PRF_QUES))
+			if ((!_resp->pfcode) || (_resp->pfcode & RES_PRF_QUES))
 				putc('\n', file);
 		}
 	}
@@ -478,6 +482,7 @@ __p_rr(cp, msg, file)
 	const u_char *cp, *msg;
 	FILE *file;
 {
+	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 	int type, class, dlen, n, c;
 	struct in_addr inaddr;
 	const u_char *cp1, *cp2;
@@ -487,7 +492,7 @@ __p_rr(cp, msg, file)
 	char rrname[MAXDNAME];		/* The fqdn of this RR */
 	char base64_key[MAX_KEY_BASE64];
 
-	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
+	if ((_resp->options & RES_INIT) == 0 && res_init() == -1) {
 		h_errno = NETDB_INTERNAL;
 		return (NULL);
 	}
@@ -505,9 +510,9 @@ __p_rr(cp, msg, file)
 	dlen = _getshort((u_char*)cp);
 	cp += INT16SZ;
 	cp1 = cp;
-	if ((!_res.pfcode) || (_res.pfcode & RES_PRF_TTLID))
+	if ((!_resp->pfcode) || (_resp->pfcode & RES_PRF_TTLID))
 		fprintf(file, "\t%lu", (u_long)tmpttl);
-	if ((!_res.pfcode) || (_res.pfcode & RES_PRF_CLASS))
+	if ((!_resp->pfcode) || (_resp->pfcode & RES_PRF_CLASS))
 		fprintf(file, "\t%s", __p_class(class));
 	fprintf(file, "\t%s", __p_type(type));
 	/*

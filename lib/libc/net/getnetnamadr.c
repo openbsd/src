@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetnamadr.c,v 1.19 2002/11/14 02:48:00 millert Exp $	*/
+/*	$OpenBSD: getnetnamadr.c,v 1.20 2003/01/28 04:58:00 marc Exp $	*/
 
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)getnetbyaddr.c	8.1 (Berkeley) 6/4/93";
 static char sccsid_[] = "from getnetnamadr.c	1.4 (Coimbra) 93/06/03";
 static char rcsid[] = "$From: getnetnamadr.c,v 8.7 1996/08/05 08:31:35 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: getnetnamadr.c,v 1.19 2002/11/14 02:48:00 millert Exp $";
+static char rcsid[] = "$OpenBSD: getnetnamadr.c,v 1.20 2003/01/28 04:58:00 marc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -95,6 +95,8 @@ static char rcsid[] = "$OpenBSD: getnetnamadr.c,v 1.19 2002/11/14 02:48:00 mille
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
+
+#include "thread_private.h"
 
 extern int h_errno;
 
@@ -262,6 +264,7 @@ getnetbyaddr(net, net_type)
 	register in_addr_t net;
 	register int net_type;
 {
+	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 	unsigned int netbr[4];
 	int nn, anslen;
 	querybuf *buf;
@@ -271,10 +274,10 @@ getnetbyaddr(net, net_type)
 	char lookups[MAXDNSLUS];
 	int i;
 
-	if ((_res.options & RES_INIT) == 0 && res_init() == -1)
+	if ((_resp->options & RES_INIT) == 0 && res_init() == -1)
 		return(_getnetbyaddr(net, net_type));
 
-	bcopy(_res.lookups, lookups, sizeof lookups);
+	bcopy(_resp->lookups, lookups, sizeof lookups);
 	if (lookups[0] == '\0')
 		strlcpy(lookups, "bf", sizeof lookups);
 
@@ -320,7 +323,7 @@ getnetbyaddr(net, net_type)
 			if (anslen < 0) {
 				free(buf);
 #ifdef DEBUG
-				if (_res.options & RES_DEBUG)
+				if (_resp->options & RES_DEBUG)
 					printf("res_query failed\n");
 #endif
 				break;
@@ -352,6 +355,7 @@ struct netent *
 getnetbyname(net)
 	register const char *net;
 {
+	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 	int anslen;
 	querybuf *buf;
 	char qbuf[MAXDNAME];
@@ -359,10 +363,10 @@ getnetbyname(net)
 	char lookups[MAXDNSLUS];
 	int i;
 
-	if ((_res.options & RES_INIT) == 0 && res_init() == -1)
+	if ((_resp->options & RES_INIT) == 0 && res_init() == -1)
 		return (_getnetbyname(net));
 
-	bcopy(_res.lookups, lookups, sizeof lookups);
+	bcopy(_resp->lookups, lookups, sizeof lookups);
 	if (lookups[0] == '\0')
 		strlcpy(lookups, "bf", sizeof lookups);
 
@@ -383,7 +387,7 @@ getnetbyname(net)
 			if (anslen < 0) {
 				free(buf);
 #ifdef DEBUG
-				if (_res.options & RES_DEBUG)
+				if (_resp->options & RES_DEBUG)
 					printf("res_query failed\n");
 #endif
 				break;

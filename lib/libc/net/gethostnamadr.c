@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.53 2002/08/27 08:53:13 itojun Exp $";
+static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.54 2003/01/28 04:58:00 marc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -160,6 +160,7 @@ getanswer(answer, anslen, qname, qtype)
 	const char *qname;
 	int qtype;
 {
+	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 	register const HEADER *hp;
 	register const u_char *cp;
 	register int n;
@@ -339,7 +340,7 @@ getanswer(answer, anslen, qname, qtype)
 			break;
 #else
 			host.h_name = bp;
-			if (_res.options & RES_USE_INET6) {
+			if (_resp->options & RES_USE_INET6) {
 				n = strlen(bp) + 1;	/* for the \0 */
 				bp += n;
 				map_v4v6_hostent(&host, &bp, ep);
@@ -379,7 +380,7 @@ getanswer(answer, anslen, qname, qtype)
 
 			if (bp + n >= &hostbuf[sizeof hostbuf]) {
 #ifdef DEBUG
-				if (_res.options & RES_DEBUG)
+				if (_resp->options & RES_DEBUG)
 					printf("size (%d) too big\n", n);
 #endif
 				had_error++;
@@ -388,7 +389,7 @@ getanswer(answer, anslen, qname, qtype)
 			if (hap >= &h_addr_ptrs[MAXADDRS-1]) {
 				if (!toobig++)
 #ifdef DEBUG
-					if (_res.options & RES_DEBUG)
+					if (_resp->options & RES_DEBUG)
 						printf("Too many addresses (%d)\n", MAXADDRS);
 #endif
 				cp += n;
@@ -411,7 +412,7 @@ getanswer(answer, anslen, qname, qtype)
 		 * in its return structures - should give it the "best"
 		 * address in that case, not some random one
 		 */
-		if (_res.nsort && haveanswer > 1 && qtype == T_A)
+		if (_resp->nsort && haveanswer > 1 && qtype == T_A)
 			addrsort(h_addr_ptrs, haveanswer);
 # endif /*RESOLVSORT*/
 		if (!host.h_name) {
@@ -422,7 +423,7 @@ getanswer(answer, anslen, qname, qtype)
 			host.h_name = bp;
 			bp += n;
 		}
-		if (_res.options & RES_USE_INET6)
+		if (_resp->options & RES_USE_INET6)
 			map_v4v6_hostent(&host, &bp, ep);
 		h_errno = NETDB_SUCCESS;
 		return (&host);
@@ -484,27 +485,24 @@ gethostbyaddr_r(addr, len, af, he, buf, buflen, errorp)
 /* XXX RFC2133 expects a gethostbyname2_r() -- unimplemented */
 #endif
 
-_THREAD_PRIVATE_MUTEX(gethostnamadr);
-
 struct hostent *
 gethostbyname(name)
 	const char *name;
 {
+	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 	struct hostent *hp;
 	extern struct hostent *_gethtbyname2();
 
-	_THREAD_PRIVATE_MUTEX_LOCK(gethostnamadr);
-	if ((_res.options & RES_INIT) == 0 && res_init() == -1)
+	if ((_resp->options & RES_INIT) == 0 && res_init() == -1)
 		hp = _gethtbyname2(name, AF_INET);
 
-	else if (_res.options & RES_USE_INET6) {
+	else if (_resp->options & RES_USE_INET6) {
 		hp = gethostbyname2(name, AF_INET6);
 		if (hp == NULL)
 			hp = gethostbyname2(name, AF_INET);
 	}
 	else
 		hp = gethostbyname2(name, AF_INET);
-	_THREAD_PRIVATE_MUTEX_UNLOCK(gethostnamadr);
 	return hp;
 }
 
@@ -513,6 +511,7 @@ gethostbyname2(name, af)
 	const char *name;
 	int af;
 {
+	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 	querybuf *buf;
 	register const char *cp;
 	char *bp, *ep;
@@ -521,7 +520,7 @@ gethostbyname2(name, af)
 	register struct hostent *hp;
 	char lookups[MAXDNSLUS];
 
-	if ((_res.options & RES_INIT) == 0 && res_init() == -1)
+	if ((_resp->options & RES_INIT) == 0 && res_init() == -1)
 		return (_gethtbyname2(name, af));
 
 	switch (af) {
@@ -577,7 +576,7 @@ gethostbyname2(name, af)
 				h_addr_ptrs[0] = (char *)host_addr;
 				h_addr_ptrs[1] = NULL;
 				host.h_addr_list = h_addr_ptrs;
-				if (_res.options & RES_USE_INET6)
+				if (_resp->options & RES_USE_INET6)
 					map_v4v6_hostent(&host, &bp, ep);
 				h_errno = NETDB_SUCCESS;
 				return (&host);
@@ -616,7 +615,7 @@ gethostbyname2(name, af)
 				break;
 		}
 
-	bcopy(_res.lookups, lookups, sizeof lookups);
+	bcopy(_resp->lookups, lookups, sizeof lookups);
 	if (lookups[0] == '\0')
 		strlcpy(lookups, "bf", sizeof lookups);
 
@@ -638,7 +637,7 @@ gethostbyname2(name, af)
 			    sizeof(buf->buf))) < 0) {
 				free(buf);
 #ifdef DEBUG
-				if (_res.options & RES_DEBUG)
+				if (_resp->options & RES_DEBUG)
 					printf("res_search failed\n");
 #endif
 				break;
@@ -660,6 +659,7 @@ gethostbyaddr(addr, len, af)
 	const char *addr;	/* XXX should have been def'd as u_char! */
 	int len, af;
 {
+	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 	const u_char *uaddr = (const u_char *)addr;
 	int n, size, i;
 	querybuf *buf;
@@ -669,10 +669,8 @@ gethostbyaddr(addr, len, af)
 	char lookups[MAXDNSLUS];
 	struct hostent *res;
 	
-	_THREAD_PRIVATE_MUTEX_LOCK(gethostnamadr);
-	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
+	if ((_resp->options & RES_INIT) == 0 && res_init() == -1) {
 		res = _gethtbyaddr(addr, len, af);
-		_THREAD_PRIVATE_MUTEX_UNLOCK(gethostnamadr);
 		return (res);
 	}
 
@@ -701,13 +699,11 @@ gethostbyaddr(addr, len, af)
 	default:
 		errno = EAFNOSUPPORT;
 		h_errno = NETDB_INTERNAL;
-		_THREAD_PRIVATE_MUTEX_UNLOCK(gethostnamadr);
 		return (NULL);
 	}
 	if (size != len) {
 		errno = EINVAL;
 		h_errno = NETDB_INTERNAL;
-		_THREAD_PRIVATE_MUTEX_UNLOCK(gethostnamadr);
 		return (NULL);
 	}
 	switch (af) {
@@ -725,7 +721,7 @@ gethostbyaddr(addr, len, af)
 		break;
 	}
 
-	bcopy(_res.lookups, lookups, sizeof lookups);
+	bcopy(_resp->lookups, lookups, sizeof lookups);
 	if (lookups[0] == '\0')
 		strlcpy(lookups, "bf", sizeof lookups);
 
@@ -755,7 +751,7 @@ gethostbyaddr(addr, len, af)
 			if (n < 0) {
 				free(buf);
 #ifdef DEBUG
-				if (_res.options & RES_DEBUG)
+				if (_resp->options & RES_DEBUG)
 					printf("res_query failed\n");
 #endif
 				break;
@@ -770,7 +766,7 @@ gethostbyaddr(addr, len, af)
 			bcopy(addr, host_addr, len);
 			h_addr_ptrs[0] = (char *)host_addr;
 			h_addr_ptrs[1] = NULL;
-			if (af == AF_INET && (_res.options & RES_USE_INET6)) {
+			if (af == AF_INET && (_resp->options & RES_USE_INET6)) {
 				map_v4v6_address((char*)host_addr,
 				    (char*)host_addr);
 				hp->h_addrtype = AF_INET6;
@@ -783,7 +779,6 @@ gethostbyaddr(addr, len, af)
 			break;
 		}
 	}
-	_THREAD_PRIVATE_MUTEX_UNLOCK(gethostnamadr);
 	/* XXX h_errno not correct in all cases... */
 	return (hp);
 }
@@ -811,6 +806,7 @@ _endhtent()
 struct hostent *
 _gethtent()
 {
+	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 	char *p;
 	register char *cp, **q;
 	int af;
@@ -842,7 +838,7 @@ _gethtent()
 		af = AF_INET6;
 		len = IN6ADDRSZ;
 	} else if (inet_pton(AF_INET, p, host_addr) > 0) {
-		if (_res.options & RES_USE_INET6) {
+		if (_resp->options & RES_USE_INET6) {
 			map_v4v6_address((char*)host_addr, (char*)host_addr);
 			af = AF_INET6;
 			len = IN6ADDRSZ;
@@ -880,7 +876,7 @@ _gethtent()
 			*cp++ = '\0';
 	}
 	*q = NULL;
-	if (_res.options & RES_USE_INET6) {
+	if (_resp->options & RES_USE_INET6) {
 		char *bp = hostbuf;
 		char *ep = hostbuf + sizeof hostbuf;
 
@@ -894,10 +890,11 @@ struct hostent *
 _gethtbyname(name)
 	const char *name;
 {
+	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 	extern struct hostent *_gethtbyname2();
 	struct hostent *hp;
 
-	if (_res.options & RES_USE_INET6) {
+	if (_resp->options & RES_USE_INET6) {
 		hp = _gethtbyname2(name, AF_INET6);
 		if (hp)
 			return (hp);
@@ -1136,6 +1133,7 @@ addrsort(ap, num)
 	char **ap;
 	int num;
 {
+	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 	int i, j;
 	char **p;
 	short aval[MAXADDRS];
@@ -1143,9 +1141,9 @@ addrsort(ap, num)
 
 	p = ap;
 	for (i = 0; i < num; i++, p++) {
-		for (j = 0 ; (unsigned)j < _res.nsort; j++)
-			if (_res.sort_list[j].addr.s_addr == 
-			    (((struct in_addr *)(*p))->s_addr & _res.sort_list[j].mask))
+		for (j = 0 ; (unsigned)j < _resp->nsort; j++)
+			if (_resp->sort_list[j].addr.s_addr == 
+			    (((struct in_addr *)(*p))->s_addr & _resp->sort_list[j].mask))
 				break;
 		aval[i] = j;
 		if (needsort == 0 && i > 0 && j < aval[i-1])

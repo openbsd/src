@@ -1,4 +1,4 @@
-/* $OpenBSD: thread_private.h,v 1.14 2002/11/05 22:19:55 marc Exp $ */
+/* $OpenBSD: thread_private.h,v 1.15 2003/01/28 04:58:00 marc Exp $ */
 
 #ifndef _THREAD_PRIVATE_H_
 #define _THREAD_PRIVATE_H_
@@ -85,6 +85,15 @@ void *	_libc_private_storage(volatile struct _thread_private_key_struct *,
 #define _THREAD_PRIVATE(keyname, storage, error) 			\
 	_libc_private_storage(&__THREAD_KEY_NAME(keyname),		\
 			      &(storage), sizeof (storage), error)
+
+/*
+ * Keys used to access the per thread instances of resolver global data.
+ * These are not static as they are referenced in several places.
+ */
+extern volatile struct _thread_private_key_struct __THREAD_KEY_NAME(_res);
+#ifdef INET6
+extern volatile struct _thread_private_key_struct __THREAD_KEY_NAME(_res_ext);
+#endif
 
 /*
  * File descriptor locking definitions.
