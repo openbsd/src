@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.11 2004/03/15 16:29:00 hshoexer Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.12 2004/03/15 16:34:28 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -103,9 +103,8 @@ monitor_init (void)
   /* The child process should drop privileges now.  */
   if (!m_state.pid)
     {
-      if (chroot (pw->pw_dir) != 0)
-	log_fatal ("monitor_init: chroot(\"%s\") failed", pw->pw_dir);
-      chdir ("/");
+      if (chroot (pw->pw_dir) != 0 || chdir("/") != 0)
+	log_fatal ("monitor_init: chroot failed");
 
       if (setgid (pw->pw_gid) != 0)
 	log_fatal ("monitor_init: setgid(%d) failed", pw->pw_gid);
