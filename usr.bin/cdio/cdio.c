@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.7 1997/03/19 03:21:49 angelos Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.8 1997/05/01 12:40:28 downsj Exp $	*/
 /*
  * Compact Disc Control Utility by Serge V. Vakulenko <vak@cronyx.ru>.
  * Based on the non-X based CD player by Jean-Marc Zucconi and
@@ -377,14 +377,8 @@ int run (cmd, arg)
 		if (! strncasecmp (arg, "mono", strlen(arg)))
 			return ioctl (fd, CDIOCSETMONO);
 
-#if defined(CDIOCSETSTERIO)
 		if (! strncasecmp (arg, "stereo", strlen(arg)))
-			return ioctl (fd, CDIOCSETSTERIO);
-#else
-			printf ("%s: Command argument not yet supported\n",
-				__progname);
-			return (0);
-#endif
+			return ioctl (fd, CDIOCSETSTEREO);
 
 		if (! strncasecmp (arg, "mute", strlen(arg)))
 			return ioctl (fd, CDIOCSETMUTE);
