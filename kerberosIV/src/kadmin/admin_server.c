@@ -265,7 +265,8 @@ kadm_listen(void)
     int found;
     int admin_fd;
     int peer_fd;
-    fd_set mask, readfds;
+    struct pollfd pfd[1];
+    int nfds;
     struct sockaddr_in peer;
     int addrlen;
     int pid;
@@ -293,8 +294,10 @@ kadm_listen(void)
 	     sizeof(struct sockaddr_in)) < 0)
 	return KADM_NO_BIND;
     listen(admin_fd, 1);
-    FD_ZERO(&mask);
-    FD_SET(admin_fd, &mask);
+
+    pfd[0].fd = admin_fd;
+    pfd[0].events = POLLIN;
+    pfd[0].revents = 0;
 
     for (;;) {				/* loop nearly forever */
 	if (exit_now) {
@@ -302,9 +305,7 @@ kadm_listen(void)
 	    kill_children();
 	    return(0);
 	}
-	readfds = mask;
-	if ((found = select(admin_fd+1, &readfds, 0,
-			    0, (struct timeval *)0)) == 0)
+	if ((found = poll(pfd, 1, 0) == 0)
 	    continue;			/* no things read */
 	if (found < 0) {
 	    if (errno != EINTR)
