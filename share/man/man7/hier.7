@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.11 1999/07/09 13:35:37 aaron Exp $
+.\"	$OpenBSD: hier.7,v 1.12 1999/10/07 18:43:24 aaron Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -49,6 +49,8 @@ Root directory.
 Alternate (backup) location for the root user's home directory.
 .It Li /bin/
 User utilities fundamental to both single and multi-user environments.
+These programs are statically compiled and therefore do not depend on any
+system libraries to run.
 .It Li /bsd
 Pure kernel executable (the operating system loaded into memory
 at boot-time).
@@ -68,9 +70,11 @@ Base directory for alternate areas searched first when system call
 emulation is in effect (see
 .Xr compat_bsdos 8 ,
 .Xr compat_freebsd 8 ,
+.Xr compat_ibcs2 8 ,
 .Xr compat_linux 8 ,
 .Xr compat_sunos 8 ,
-.Xr compat_svr4 8 ) .
+.Xr compat_svr4 8 ,
+.Xr compat_ultrix 8 ) .
 .It Li /etc/
 System configuration files and scripts.
 .Pp
@@ -181,6 +185,9 @@ tree.
 .It Li old/
 Programs from past lives of BSD which may disappear in future
 releases.
+.It Li ports/
+The OpenBSD ports collection (see
+.Xr ports 7 ) .
 .It Li sbin/
 System daemons and utilities (executed by users).
 .It Li share/
