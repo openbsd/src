@@ -1,4 +1,4 @@
-/*	$OpenBSD: hyper.c,v 1.8 2005/01/22 22:26:47 miod Exp $	*/
+/*	$OpenBSD: hyper.c,v 1.9 2005/01/24 21:36:39 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat.
@@ -90,6 +90,7 @@
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
+#include <dev/rasops/rasops.h>
 
 #include <hp300/dev/diofbreg.h>
 #include <hp300/dev/diofbvar.h>
@@ -101,18 +102,17 @@ struct	hyper_softc {
 	struct diofb		sc_fb_store;
 };
 
-int	hyper_dio_match(struct device *, void *, void *);
-void	hyper_dio_attach(struct device *, struct device *, void *);
+int	hyper_match(struct device *, void *, void *);
+void	hyper_attach(struct device *, struct device *, void *);
 
-struct cfattach hyper_dio_ca = {
-	sizeof(struct hyper_softc), hyper_dio_match, hyper_dio_attach
+struct cfattach hyper_ca = {
+	sizeof(struct hyper_softc), hyper_match, hyper_attach
 };
 
 struct cfdriver hyper_cd = {
 	NULL, "hyper", DV_DULL
 };
 
-void	hyper_fontunpack(struct diofb *);
 int	hyper_reset(struct diofb *, int, struct diofbreg *);
 void	hyper_windowmove(struct diofb *, u_int16_t, u_int16_t,
 	    u_int16_t, u_int16_t, u_int16_t, u_int16_t, int);
@@ -137,7 +137,7 @@ struct	wsdisplay_accessops hyper_accessops = {
  */
 
 int
-hyper_dio_match(struct device *parent, void *match, void *aux)
+hyper_match(struct device *parent, void *match, void *aux)
 {
 	struct dio_attach_args *da = aux;
 
@@ -149,7 +149,7 @@ hyper_dio_match(struct device *parent, void *match, void *aux)
 }
 
 void
-hyper_dio_attach(struct device *parent, struct device *self, void *aux)
+hyper_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct hyper_softc *sc = (struct hyper_softc *)self;
 	struct dio_attach_args *da = aux;
@@ -172,7 +172,7 @@ hyper_dio_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	diofb_end_attach(self, &hyper_accessops, sc->sc_fb,
-	    scode == conscode, 0, NULL);
+	    scode == conscode, NULL);
 }
 
 /*
@@ -187,16 +187,12 @@ hyper_reset(struct diofb *fb, int scode, struct diofbreg *fbr)
 	if ((rc = diofb_fbinquire(fb, scode, fbr)) != 0)
 		return (rc);
 
-	fb->planes = hy->num_planes;
-	fb->planemask = (1 << fb->planes) - 1;
-
 	fb->bmv = hyper_windowmove;
-	diofb_fbsetup(fb);
-	hyper_fontunpack(fb);
 
-	/*
-	 * Enable display.
-	 */
+	fb->ri.ri_depth = 1;	/* do not fake a 8bpp frame buffer */
+	diofb_fbsetup(fb);
+
+	/* enable display */
 	hy->nblank = DISP_VIDEO_ENABLE | DISP_SYNC_ENABLE;
 
 	return (0);
@@ -212,15 +208,18 @@ hyper_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 	case WSDISPLAYIO_GTYPE:
 		*(u_int *)data = WSDISPLAY_TYPE_HYPERION;
 		break;
+	case WSDISPLAYIO_SMODE:
+		fb->mapmode = *(u_int *)data;
+		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (void *)data;
-		wdf->height = fb->dheight;
-		wdf->width = fb->dwidth;
-		wdf->depth = fb->planes;
+		wdf->width = fb->ri.ri_width;
+		wdf->height = fb->ri.ri_height;
+		wdf->depth = fb->ri.ri_depth;
 		wdf->cmsize = 0;
 		break;
 	case WSDISPLAYIO_LINEBYTES:
-		*(u_int *)data = (fb->fbwidth * fb->planes) >> 3;
+		*(u_int *)data = fb->ri.ri_stride;
 		break;
 	case WSDISPLAYIO_GVIDEO:
 	case WSDISPLAYIO_SVIDEO:
@@ -253,43 +252,6 @@ hyper_burner(void *v, u_int on, u_int flags)
 /*
  * Display routines
  */
-
-void
-hyper_fontunpack(struct diofb *fb)
-{
-	u_char *fbmem, *dp;
-	int c, l, b;
-	int stride, width;
-
-	/*
-	 * The PROM font is packed more tightly on the Hyperion than on
-	 * other DIO framebuffers.
-	 * Compensate the diofb_fontsetup() computations and unpack.
-	 */
-
-	fb->ftscale = roundup(fb->ftwidth, 8);
-	fb->cpl = (fb->fbwidth - fb->dwidth) / fb->ftscale;
-	fb->cblanky = fb->fonty + ((FONTMAXCHAR / fb->cpl) + 1) * fb->ftheight;
-
-	dp = (u_char *)(getword(fb, getword(fb, FONTROM) + FONTADDR) +
-	    fb->regkva) + FONTDATA;
-
-	stride = fb->fbwidth >> 3;
-	width = (fb->ftwidth + 7) >> 3;
-	for (c = 0; c < FONTMAXCHAR; c++) {
-		fbmem = (u_char *)FBBASE(fb) +
-		    (fb->fonty + (c / fb->cpl) * fb->ftheight) * stride +
-		    (fb->fontx >> 3) + (c % fb->cpl) * width;
-		for (l = 0; l < fb->ftheight; l++) {
-			for (b = 0; b < width; b++) {
-				*fbmem++ = *dp;
-				dp += 2;
-			}
-			fbmem -= width;
-			fbmem += stride;
-		}
-	}
-}
 
 #include <hp300/dev/maskbits.h>
 
@@ -535,7 +497,7 @@ hyper_console_scan(int scode, caddr_t va, void *arg)
 	struct consdev *cp = arg;
 	int force = 0, pri;
 
-	if (fbr->id != GRFHWID || fbr->id2 != GID_HYPERION)
+	if (fbr->id != GRFHWID || fbr->fbid != GID_HYPERION)
 		return (0);
 
 	pri = CN_INTERNAL;
@@ -591,9 +553,6 @@ hypercnprobe(struct consdev *cp)
 void
 hypercninit(struct consdev *cp)
 {
-	long defattr;
-
 	hyper_reset(&diofb_cn, conscode, (struct diofbreg *)conaddr);
-	diofb_alloc_attr(NULL, 0, 0, 0, &defattr);
-	wsdisplay_cnattach(&diofb_cn.wsd, &diofb_cn, 0, 0, defattr);
+	diofb_cnattach(&diofb_cn);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diofbreg.h,v 1.1 2005/01/14 22:39:25 miod Exp $	*/
+/*	$OpenBSD: diofbreg.h,v 1.2 2005/01/24 21:36:39 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,29 +61,33 @@
 #ifndef	_LOCORE
 struct	diofbreg {
 	u_int8_t	:8;
-	u_int8_t	id;		/* +0x01 */
-	u_int8_t	pad1[0x3];
-	u_int8_t	fbwmsb;		/* +0x05 */
+	u_int8_t	id;		/* id and reset register	0x01 */
+	u_int8_t 	sec_interrupt;	/* secondary interrupt register	0x02 */
+	u_int8_t	interrupt;	/* interrupt register		0x03 */
 	u_int8_t	:8;
-	u_int8_t	fbwlsb;		/* +0x07 */
+	u_int8_t	fbwmsb;		/* frame buffer width MSB	0x05 */
 	u_int8_t	:8;
-	u_int8_t	fbhmsb;		/* +0x09 */
+	u_int8_t	fbwlsb;		/* frame buffer height LSB	0x07 */
 	u_int8_t	:8;
-	u_int8_t	fbhlsb;		/* +0x0B */
+	u_int8_t	fbhmsb;		/* frame buffer height MSB	0x09 */
 	u_int8_t	:8;
-	u_int8_t	dwmsb;		/* +0x0D */
+	u_int8_t	fbhlsb;		/* frame buffer height LSB	0x0b */
 	u_int8_t	:8;
-	u_int8_t	dwlsb;		/* +0x0F */
+	u_int8_t	dwmsb;		/* display width MSB		0x0d */
 	u_int8_t	:8;
-	u_int8_t	dhmsb;		/* +0x11 */
+	u_int8_t	dwlsb;		/* display width LSB		0x0f */
 	u_int8_t	:8;
-	u_int8_t	dhlsb;		/* +0x13 */
+	u_int8_t	dhmsb;		/* display height MSB		0x11 */
 	u_int8_t	:8;
-	u_int8_t	id2;		/* +0x15 */
-	u_int8_t	pad2[0x47];
-	u_int8_t	fbomsb;		/* +0x5d */
+	u_int8_t	dhlsb;		/* display height LSB		0x13 */
 	u_int8_t	:8;
-	u_int8_t	fbolsb;		/* +0x5f */
+	u_int8_t	fbid;		/* frame buffer id		0x15 */
+	u_int8_t	pad2[0x45];
+	u_int8_t	num_planes;	/* number of color planes	0x5b */
+	u_int8_t	:8;
+	u_int8_t	fbomsb;		/* frame buffer offset MSB	0x5d */
+	u_int8_t	:8;
+	u_int8_t	fbolsb;		/* frame buffer offset LSB	0x5f */
 };
 #endif
 

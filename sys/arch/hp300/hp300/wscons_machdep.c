@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.1 2005/01/14 22:39:28 miod Exp $	*/
+/*	$OpenBSD: wscons_machdep.c,v 1.2 2005/01/24 21:36:39 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -39,11 +39,11 @@
 
 #include <dev/cons.h>
 
-#include "wsdisplay.h"
-#if NWSDISPLAY > 0
+#include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
-#endif
+#include <dev/rasops/rasops.h>
 
+#include "wsdisplay.h"
 #include "wskbd.h"
 #if NWSKBD > 0
 #include <dev/wscons/wskbdvar.h>

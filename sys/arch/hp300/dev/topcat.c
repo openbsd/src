@@ -1,4 +1,4 @@
-/*	$OpenBSD: topcat.c,v 1.8 2005/01/21 16:24:12 miod Exp $	*/
+/*	$OpenBSD: topcat.c,v 1.9 2005/01/24 21:36:39 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat.
@@ -89,6 +89,7 @@
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
+#include <dev/rasops/rasops.h>
 
 #include <hp300/dev/diofbreg.h>
 #include <hp300/dev/diofbvar.h>
@@ -119,7 +120,6 @@ struct cfdriver topcat_cd = {
 };
 
 void	topcat_end_attach(struct topcat_softc *, u_int8_t);
-int	topcat_getcmap(struct diofb *, struct wsdisplay_cmap *);
 int	topcat_reset(struct diofb *, int, struct diofbreg *);
 void	topcat_restore(struct diofb *);
 int	topcat_setcmap(struct diofb *, struct wsdisplay_cmap *);
@@ -158,7 +158,7 @@ topcat_intio_match(struct device *parent, void *match, void *aux)
 		return (0);
 
 	if (fbr->id == GRFHWID) {
-		switch (fbr->id2) {
+		switch (fbr->fbid) {
 		case GID_TOPCAT:
 		case GID_LRCATSEYE:
 		case GID_HRCCATSEYE:
@@ -190,7 +190,7 @@ topcat_intio_attach(struct device *parent, struct device *self, void *aux)
 		topcat_reset(sc->sc_fb, sc->sc_scode, fbr);
 	}
 
-	topcat_end_attach(sc, fbr->id2);
+	topcat_end_attach(sc, fbr->fbid);
 }
 
 int
@@ -236,7 +236,7 @@ topcat_dio_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	topcat_end_attach(sc, fbr->id2);
+	topcat_end_attach(sc, fbr->fbid);
 }
 
 void
@@ -262,7 +262,7 @@ topcat_end_attach(struct topcat_softc *sc, u_int8_t id)
 		}
 		break;
 	case GID_HRCCATSEYE:
-		fbname = "HP98550 catseye";	/* A1416 kathmandu */
+		fbname = "HP98550 catseye";	/* also A1416 kathmandu */
 		break;
 	case GID_LRCATSEYE:
 		fbname = "HP98549 catseye";
@@ -273,7 +273,7 @@ topcat_end_attach(struct topcat_softc *sc, u_int8_t id)
 	}
 
 	diofb_end_attach(sc, &topcat_accessops, sc->sc_fb,
-	    sc->sc_scode == conscode, 0, fbname);
+	    sc->sc_scode == conscode, fbname);
 }
 
 /*
@@ -284,19 +284,17 @@ topcat_reset(struct diofb *fb, int scode, struct diofbreg *fbr)
 {
 	volatile struct tcboxfb *tc = (struct tcboxfb *)fbr;
 	int rc;
+	u_int i;
 
 	if ((rc = diofb_fbinquire(fb, scode, fbr)) != 0)
 		return (rc);
-
-	fb->planes = tc->num_planes;
-	fb->planemask = (1 << fb->planes) - 1;
 
 	/*
 	 * If we could not get a valid number of planes, determine it
 	 * by writing to the first frame buffer display location,
 	 * then reading it back.
 	 */
-	if (fb->planes == 0) {	/* gee, no planes reported above */
+	if (fb->planes == 0) {
 		volatile u_int8_t *fbp;
 		u_int8_t save;
 
@@ -311,14 +309,17 @@ topcat_reset(struct diofb *fb, int scode, struct diofbreg *fbr)
 		*fbp = save;
 
 		for (fb->planes = 1; fb->planemask >= (1 << fb->planes);
-			fb->planes++);
+		    fb->planes++);
+		if (fb->planes > 8)
+			fb->planes = 8;
+		fb->planemask = (1 << fb->planes) - 1;
 	}
-
-	if (fb->planes > 8)
-		fb->planes = 8;
 
 	fb->bmv = topcat_windowmove;
 	topcat_restore(fb);
+	diofb_fbsetup(fb);
+	for (i = 0; i <= fb->planemask; i++)
+		topcat_setcolor(fb, i);
 
 	return (0);
 }
@@ -332,7 +333,7 @@ topcat_restore(struct diofb *fb)
 	 * Catseye looks a lot like a topcat, but not completely.
 	 * So, we set some bits to make it work.
 	 */
-	if (tc->fbid != GID_TOPCAT) {
+	if (tc->regs.fbid != GID_TOPCAT) {
 		while ((tc->catseye_status & 1))
 			;
 		tc->catseye_status = 0x0;
@@ -351,21 +352,7 @@ topcat_restore(struct diofb *fb)
 	tc->ren  = fb->planemask;
 	tc->prr  = RR_COPY;
 
-	diofb_fbsetup(fb);
-	diofb_fontunpack(fb);
-
-	/*
-	 * Initialize color map for color displays
-	 */
-	if (fb->planes > 1) {
-		topcat_setcolor(fb, 0);
-		topcat_setcolor(fb, 1);
-		topcat_setcolor(fb, (1 << fb->planes) - 1);
-	}
-
-	/*
-	 * Enable display.
-	 */
+	/* Enable display */
 	tc->nblank = 0xff;
 }
 
@@ -374,23 +361,32 @@ topcat_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	struct diofb *fb = v;
 	struct wsdisplay_fbinfo *wdf;
+	u_int i;
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
 		*(u_int *)data = WSDISPLAY_TYPE_TOPCAT;
 		break;
+	case WSDISPLAYIO_SMODE:
+		fb->mapmode = *(u_int *)data;
+		if (fb->mapmode == WSDISPLAYIO_MODE_EMUL) {
+			topcat_restore(fb);
+			for (i = 0; i <= fb->planemask; i++)
+				topcat_setcolor(fb, i);
+		}
+		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (void *)data;
-		wdf->height = fb->dheight;
-		wdf->width = fb->dwidth;
-		wdf->depth = fb->planes;
+		wdf->width = fb->ri.ri_width;
+		wdf->height = fb->ri.ri_height;
+		wdf->depth = fb->ri.ri_depth;
 		wdf->cmsize = 1 << fb->planes;
 		break;
 	case WSDISPLAYIO_LINEBYTES:
-		*(u_int *)data = (fb->fbwidth * fb->planes) >> 3;
+		*(u_int *)data = fb->ri.ri_stride;
 		break;
 	case WSDISPLAYIO_GETCMAP:
-		return (topcat_getcmap(fb, (struct wsdisplay_cmap *)data));
+		return (diofb_getcmap(fb, (struct wsdisplay_cmap *)data));
 	case WSDISPLAYIO_PUTCMAP:
 		return (topcat_setcmap(fb, (struct wsdisplay_cmap *)data));
 	case WSDISPLAYIO_GVIDEO:
@@ -421,38 +417,32 @@ topcat_setcolor(struct diofb *fb, u_int index)
 {
 	volatile struct tcboxfb *tc = (struct tcboxfb *)fb->regkva;
 
-	tccm_waitbusy(tc);
-	tc->rdata  = fb->cmap.r[index];
-	tc->gdata  = fb->cmap.g[index];
-	tc->bdata  = fb->cmap.b[index];
-	tc->cindex = 255 - index;
-	tc->strobe = 0xff;
+	if (tc->regs.fbid != GID_TOPCAT) {
+		tccm_waitbusy(tc);
+		tc->plane_mask = 0xff;
+		tc->cindex = ~index;
+		tc->rdata  = fb->cmap.r[index];
+		tc->gdata  = fb->cmap.g[index];
+		tc->bdata  = fb->cmap.b[index];
+		tc->strobe = 0xff;
 
-	tccm_waitbusy(tc);
-	tc->rdata  = 0;
-	tc->gdata  = 0;
-	tc->bdata  = 0;
-	tc->cindex = 0;
-}
+		tccm_waitbusy(tc);
+		tc->cindex = 0;
+	} else {
+		tccm_waitbusy(tc);
+		tc->plane_mask = 0xff;
+		tc->rdata  = fb->cmap.r[index];
+		tc->gdata  = fb->cmap.g[index];
+		tc->bdata  = fb->cmap.b[index];
+		tc->cindex = ~index;
+		tc->strobe = 0xff;
 
-int
-topcat_getcmap(struct diofb *fb, struct wsdisplay_cmap *cm)
-{
-	u_int index = cm->index, count = cm->count;
-	u_int colcount = 1 << fb->planes;
-	int error;
-
-	if (index >= colcount || count > colcount - index)
-		return (EINVAL);
-
-	if ((error = copyout(fb->cmap.r + index, cm->red, count)) != 0)
-		return (error);
-	if ((error = copyout(fb->cmap.g + index, cm->green, count)) != 0)
-		return (error);
-	if ((error = copyout(fb->cmap.b + index, cm->blue, count)) != 0)
-		return (error);
-
-	return (0);
+		tccm_waitbusy(tc);
+		tc->rdata  = 0;
+		tc->gdata  = 0;
+		tc->bdata  = 0;
+		tc->cindex = 0;
+	}
 }
 
 int
@@ -503,6 +493,8 @@ topcat_windowmove(struct diofb *fb, u_int16_t sx, u_int16_t sy,
 	tc->wheight = cy;
 	tc->wwidth = cx;
 	tc->wmove = fb->planemask;
+
+	tc_waitbusy(tc, fb->planemask);
 }
 
 /*
@@ -522,7 +514,7 @@ topcat_console_scan(int scode, caddr_t va, void *arg)
 	if (fbr->id != GRFHWID)
 		return (0);
 
-	switch (fbr->id2) {
+	switch (fbr->fbid) {
 	case GID_TOPCAT:
 	case GID_LRCATSEYE:
 	case GID_HRCCATSEYE:
@@ -587,7 +579,7 @@ topcatcnprobe(struct consdev *cp)
 	va = (caddr_t)IIOV(GRFIADDR);
 	fbr = (struct diofbreg *)va;
 	if (!badaddr(va) && (fbr->id == GRFHWID)) {
-		switch (fbr->id2) {
+		switch (fbr->fbid) {
 		case GID_TOPCAT:
 		case GID_LRCATSEYE:
 		case GID_HRCCATSEYE:
@@ -625,9 +617,6 @@ topcatcnprobe(struct consdev *cp)
 void
 topcatcninit(struct consdev *cp)
 {
-	long defattr;
-
 	topcat_reset(&diofb_cn, conscode, (struct diofbreg *)conaddr);
-	diofb_alloc_attr(NULL, 0, 0, 0, &defattr);
-	wsdisplay_cnattach(&diofb_cn.wsd, &diofb_cn, 0, 0, defattr);
+	diofb_cnattach(&diofb_cn);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvboxreg.h,v 1.1 2005/01/14 22:39:25 miod Exp $	*/
+/*	$OpenBSD: dvboxreg.h,v 1.2 2005/01/24 21:36:39 miod Exp $	*/
 /*	$NetBSD: grf_dvreg.h,v 1.5 1994/10/26 07:23:50 cgd Exp $	*/
 
 /*
@@ -58,32 +58,7 @@ struct rgb {
 };
 
 struct dvboxfb {
-	u_int8_t :8;
-	u_int8_t reset;			/* reset register		0x01 */
-	u_int8_t fb_address;		/* frame buffer address 	0x02 */
-	u_int8_t interrupt;		/* interrupt register		0x03 */
-	u_int8_t :8;
-	u_int8_t fbwmsb;		/* frame buffer width MSB	0x05 */
-	u_int8_t :8;
-	u_int8_t fbwlsb;		/* frame buffer width MSB	0x07 */
-	u_int8_t :8;
-	u_int8_t fbhmsb;		/* frame buffer height MSB	0x09 */
-	u_int8_t :8;
-	u_int8_t fbhlsb;		/* frame buffer height MSB	0x0b */
-	u_int8_t :8;
-	u_int8_t dwmsb;			/* display width MSB		0x0d */
-	u_int8_t :8;
-	u_int8_t dwlsb;			/* display width MSB		0x0f */
-	u_int8_t :8;
-	u_int8_t dhmsb;			/* display height MSB		0x11 */
-	u_int8_t :8;
-	u_int8_t dhlsb;			/* display height MSB		0x13 */
-	u_int8_t :8;
-	u_int8_t fbid;			/* frame buffer id		0x15 */
-	u_int8_t f1[0x47];
-	u_int8_t fbomsb;		/* frame buffer offset MSB	0x5d */
-	u_int8_t :8;
-	u_int8_t fbolsb;		/* frame buffer offset LSB	0x5f */
+	struct diofbreg	regs;
 	u_int8_t f2[16359];
 	u_int8_t wbusy;			/* Window move in progress    0x4047 */
 	u_int8_t f3[0x405b-0x4047-1];

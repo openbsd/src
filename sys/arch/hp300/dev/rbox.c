@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbox.c,v 1.6 2005/01/21 16:24:12 miod Exp $	*/
+/*	$OpenBSD: rbox.c,v 1.7 2005/01/24 21:36:39 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -87,6 +87,7 @@
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
+#include <dev/rasops/rasops.h>
 
 #include <hp300/dev/diofbreg.h>
 #include <hp300/dev/diofbvar.h>
@@ -117,6 +118,7 @@ struct cfdriver rbox_cd = {
 };
 
 int	rbox_reset(struct diofb *, int, struct diofbreg *);
+void	rbox_restore(struct diofb *);
 void	rbox_setcolor(struct diofb *, u_int,
 	    u_int8_t, u_int8_t, u_int8_t);
 void	rbox_windowmove(struct diofb *, u_int16_t, u_int16_t,
@@ -152,7 +154,7 @@ rbox_intio_match(struct device *parent, void *match, void *aux)
 	if (badaddr((caddr_t)fbr))
 		return (0);
 
-	if (fbr->id == GRFHWID && fbr->id2 == GID_RENAISSANCE) {
+	if (fbr->id == GRFHWID && fbr->fbid == GID_RENAISSANCE) {
 		ia->ia_addr = (caddr_t)GRFIADDR;
 		return (1);
 	}
@@ -177,7 +179,7 @@ rbox_intio_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	diofb_end_attach(sc, &rbox_accessops, sc->sc_fb,
-	    sc->sc_scode == conscode, 4 /* XXX */, NULL);
+	    sc->sc_scode == conscode, NULL);
 }
 
 int
@@ -215,7 +217,7 @@ rbox_dio_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	diofb_end_attach(sc, &rbox_accessops, sc->sc_fb,
-	    sc->sc_scode == conscode, 4 /* XXX */, NULL);
+	    sc->sc_scode == conscode, NULL);
 }
 
 /*
@@ -224,37 +226,47 @@ rbox_dio_attach(struct device *parent, struct device *self, void *aux)
 int
 rbox_reset(struct diofb *fb, int scode, struct diofbreg *fbr)
 {
-	volatile struct rboxfb *rb = (struct rboxfb *)fbr;
 	int rc;
-	int i;
 
 	if ((rc = diofb_fbinquire(fb, scode, fbr)) != 0)
 		return (rc);
 
-	fb->planes = 8;
-	fb->planemask = (1 << fb->planes) - 1;
+	/*
+	 * Restrict the framebuffer to a monochrome view for now, until
+	 * I know better how to detect and frob overlay planes, and
+	 * setup a proper colormap. -- miod
+	 */
+	fb->planes = fb->planemask = 1;
+
+	fb->bmv = rbox_windowmove;
+	rbox_restore(fb);
+	diofb_fbsetup(fb);
+
+	return (0);
+}
+
+void
+rbox_restore(struct diofb *fb)
+{
+	volatile struct rboxfb *rb = (struct rboxfb *)fb->regkva;
+	u_int i;
 
 	rb_waitbusy(rb);
 
-	rb->reset = GRFHWID;
+	rb->regs.id = GRFHWID;		/* trigger reset */
 	DELAY(1000);
 
-	rb->interrupt = 0x04;
+	rb->regs.interrupt = 0x04;
 	rb->video_enable = 0x01;
 	rb->drive = 0x01;
 	rb->vdrive = 0x0;
 
 	rb->opwen = 0xFF;
 
-	fb->bmv = rbox_windowmove;
-	diofb_fbsetup(fb);
-	diofb_fontunpack(fb);
-
-	rb_waitbusy(fb->regkva);
-
 	/*
 	 * Clear color map
 	 */
+	rb_waitbusy(fb->regkva);
 	for (i = 0; i < 16; i++) {
 		*(fb->regkva + 0x63c3 + i*4) = 0x0;
 		*(fb->regkva + 0x6403 + i*4) = 0x0;
@@ -291,12 +303,8 @@ rbox_reset(struct diofb *fb, int scode, struct diofbreg *fbr)
 	rb->write_enable = 0x01;
 	rb->opwen = 0x00;
 
-	/*
-	 * Enable display.
-	 */
+	/* enable display */
 	rb->display_enable = 0x01;
-
-	return (0);
 }
 
 int
@@ -309,19 +317,24 @@ rbox_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 	case WSDISPLAYIO_GTYPE:
 		*(u_int *)data = WSDISPLAY_TYPE_RBOX;
 		break;
+	case WSDISPLAYIO_SMODE:
+		fb->mapmode = *(u_int *)data;
+		if (fb->mapmode == WSDISPLAYIO_MODE_EMUL)
+			rbox_restore(fb);
+		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (void *)data;
-		wdf->height = fb->dheight;
-		wdf->width = fb->dwidth;
-		wdf->depth = fb->planes;
-		wdf->cmsize = 1 << fb->planes;
+		wdf->width = fb->ri.ri_width;
+		wdf->height = fb->ri.ri_height;
+		wdf->depth = fb->ri.ri_depth;
+		wdf->cmsize = 0;	/* XXX */
 		break;
 	case WSDISPLAYIO_LINEBYTES:
-		*(u_int *)data = (fb->fbwidth * fb->planes) >> 3;
+		*(u_int *)data = fb->ri.ri_stride;
 		break;
 	case WSDISPLAYIO_GETCMAP:
 	case WSDISPLAYIO_PUTCMAP:
-		/* XXX TBD */
+		break;		/* XXX until color support is implemented */
 		break;
 	case WSDISPLAYIO_GVIDEO:
 	case WSDISPLAYIO_SVIDEO:
@@ -377,7 +390,7 @@ rbox_console_scan(int scode, caddr_t va, void *arg)
 	struct consdev *cp = arg;
 	int force = 0, pri;
 
-	if (fbr->id != GRFHWID || fbr->id2 != GID_RENAISSANCE)
+	if (fbr->id != GRFHWID || fbr->fbid != GID_RENAISSANCE)
 		return (0);
 
 	pri = CN_INTERNAL;
@@ -434,7 +447,7 @@ rboxcnprobe(struct consdev *cp)
 	va = (caddr_t)IIOV(GRFIADDR);
 	fbr = (struct diofbreg *)va;
 	if (!badaddr(va) &&
-	    fbr->id == GRFHWID && fbr->id2 == GID_RENAISSANCE) {
+	    fbr->id == GRFHWID && fbr->fbid == GID_RENAISSANCE) {
 		cp->cn_pri = CN_INTERNAL;
 
 #ifdef CONSCODE
@@ -467,9 +480,6 @@ rboxcnprobe(struct consdev *cp)
 void
 rboxcninit(struct consdev *cp)
 {
-	long defattr;
-
 	rbox_reset(&diofb_cn, conscode, (struct diofbreg *)conaddr);
-	diofb_alloc_attr(NULL, 0, 0, 0, &defattr);
-	wsdisplay_cnattach(&diofb_cn.wsd, &diofb_cn, 0, 0, defattr);
+	diofb_cnattach(&diofb_cn);
 }

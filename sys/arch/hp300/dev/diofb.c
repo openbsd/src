@@ -1,4 +1,4 @@
-/*	$OpenBSD: diofb.c,v 1.5 2005/01/18 21:53:23 miod Exp $	*/
+/*	$OpenBSD: diofb.c,v 1.6 2005/01/24 21:36:39 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -72,39 +72,17 @@
 #include <hp300/dev/dioreg.h>
 #include <hp300/dev/diovar.h>
 
+#include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
+#include <dev/rasops/rasops.h>
 
 #include <hp300/dev/diofbreg.h>
 #include <hp300/dev/diofbvar.h>
 
-/*
- * X and Y location of character 'c' in the framebuffer, in pixels.
- */
-#define	charX(fb,c)	\
-	(((c) % (fb)->cpl) * (fb)->ftscale + (fb)->fontx)
-#define	charY(fb,c)	\
-	(((c) / (fb)->cpl) * (fb)->ftheight + (fb)->fonty)
-
-void diofb_fontcopy(struct diofb *, char *, char *);
-
-int	diofb_mapchar(void *, int, unsigned int *);
-void	diofb_cursor(void *, int, int, int);
-void	diofb_putchar(void *, int, int, u_int, long);
 void	diofb_copycols(void *, int, int, int, int);
 void	diofb_erasecols(void *, int, int, int, long);
 void	diofb_copyrows(void *, int, int, int);
 void	diofb_eraserows(void *, int, int, long);
-
-const struct wsdisplay_emulops	diofb_emulops = {
-	diofb_cursor,
-	diofb_mapchar,
-	diofb_putchar,
-	diofb_copycols,
-	diofb_erasecols,
-	diofb_copyrows,
-	diofb_eraserows,
-	diofb_alloc_attr
-};
 
 /*
  * Frame buffer geometry initialization
@@ -126,26 +104,25 @@ diofb_fbinquire(struct diofb *fb, int scode, struct diofbreg *fbr)
 	}
 	fb->fbsize = fb->fbwidth * fb->fbheight;
 
+	fb->regkva = (caddr_t)fbr;
 	fboff = (fbr->fbomsb << 8) | fbr->fbolsb;
 	fb->fbaddr = (caddr_t) (*((u_char *)fbr + fboff) << 16);
 
 	if (fb->regaddr >= (caddr_t)DIOII_BASE) {
 		/*
-		 * For DIO II space the fbaddr just computed is
+		 * For DIO-II space the fbaddr just computed is
 		 * the offset from the select code base (regaddr)
 		 * of the framebuffer.  Hence it is also implicitly
 		 * the size of the set.
 		 */
 		regsize = (int)fb->fbaddr;
 		fb->fbaddr += (int)fb->regaddr;
-		fb->regkva = (caddr_t)fbr;
 		fb->fbkva = (caddr_t)fbr + regsize;
 	} else {
 		/*
-		 * For DIO space we need to map the separate
+		 * For internal or DIO-I space we need to map the separate
 		 * framebuffer.
 		 */
-		fb->regkva = (caddr_t)fbr;
 		fb->fbkva = iomap(fb->fbaddr, fb->fbsize);
 		if (fb->fbkva == NULL)
 			return (ENOMEM);
@@ -164,136 +141,153 @@ diofb_fbinquire(struct diofb *fb, int scode, struct diofbreg *fbr)
 	if (fb->dheight > fb->fbheight)
 		fb->dheight = fb->fbheight;
 
+	fb->planes = fbr->num_planes;
+	if (fb->planes > 8)
+		fb->planes = 8;
+	fb->planemask = (1 << fb->planes) - 1;
+
+	fb->mapmode = WSDISPLAYIO_MODE_DUMBFB;
+
 	return (0);
 }
 
 /*
- * PROM font setup
+ * Frame buffer rasops and colormap setup
  */
 
 void
 diofb_fbsetup(struct diofb *fb)
 {
-	u_long fontaddr = getword(fb, getword(fb, FONTROM) + FONTADDR);
+	struct rasops_info *ri = &fb->ri;
 
 	/*
-	 * Get font metrics.
+	 * Pretend we are an 8bpp frame buffer, unless ri_depth is already
+	 * initialized, since this is how it is supposed to be addressed.
+	 * (Hyperion forces 1bpp because it is really 1bpp addressed).
 	 */
-	fb->ftheight = getbyte(fb, fontaddr + FONTHEIGHT);
-	fb->ftwidth = getbyte(fb, fontaddr + FONTWIDTH);
-	fb->ftscale = fb->ftwidth;
-	fb->rows = fb->dheight / fb->ftheight;
-	fb->cols = fb->dwidth / fb->ftwidth;
+	if (ri->ri_depth == 0)
+		ri->ri_depth = 8;
+	ri->ri_stride = (fb->fbwidth * ri->ri_depth) / 8;
+
+	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
+	ri->ri_bits = fb->fbkva;
+	ri->ri_width = fb->dwidth;
+	ri->ri_height = fb->dheight;
+	ri->ri_hw = fb;
 
 	/*
-	 * Decide where to put the font in off-screen memory.
+	 * Ask for an unholy big display, rasops will trim this to more
+	 * reasonable values.
 	 */
-	if (fb->fbwidth > fb->dwidth) {
-		/* Unpacked font will be to the right of the display */
-		fb->fontx = fb->dwidth;
-		fb->fonty = 0;
-		fb->cpl = (fb->fbwidth - fb->dwidth) / fb->ftwidth;
-		fb->cblankx = fb->dwidth;
-	} else {
-		/* Unpacked font will be below the display */
-		fb->fontx = 0;
-		fb->fonty = fb->dheight;
-		fb->cpl = fb->fbwidth / fb->ftwidth;
-		fb->cblankx = 0;
-	}
-	fb->cblanky = fb->fonty + ((FONTMAXCHAR / fb->cpl) + 1) * fb->ftheight;
+	rasops_init(ri, 160, 160);
 
-	/*
-	 * Clear display
-	 */
+	diofb_resetcmap(fb);
+
+	if (fb->planes <= 4)
+		ri->ri_caps &= ~WSSCREEN_HILIT;
+	if (fb->planes < 4)
+		ri->ri_caps &= ~WSSCREEN_WSCOLORS;
+		
+	ri->ri_ops.copycols = diofb_copycols;
+	ri->ri_ops.copyrows = diofb_copyrows;
+	ri->ri_ops.erasecols = diofb_erasecols;
+	ri->ri_ops.eraserows = diofb_eraserows;
+
+	/* Clear entire display, including non visible areas */
 	(*fb->bmv)(fb, 0, 0, 0, 0, fb->fbwidth, fb->fbheight, RR_CLEAR);
-	fb->curvisible = 0;
-
-	/*
-	 * Setup inverted cursor.
-	 */
-	(*fb->bmv)(fb, charX(fb, ' '), charY(fb, ' '),
-	    fb->cblankx, fb->cblanky, fb->ftwidth, fb->ftheight,
-	    RR_COPYINVERTED);
-
-	/*
-	 * Default colormap
-	 */
-	bzero(&fb->cmap, sizeof(fb->cmap));
-	fb->cmap.r[1] = 0xff;
-	fb->cmap.g[1] = 0xff;
-	fb->cmap.b[1] = 0xff;
-	fb->cmap.r[(1 << fb->planes) - 1] = 0xff;
-	fb->cmap.g[(1 << fb->planes) - 1] = 0xff;
-	fb->cmap.b[(1 << fb->planes) - 1] = 0xff;
 
 	strlcpy(fb->wsd.name, "std", sizeof(fb->wsd.name));
-	fb->wsd.ncols = fb->cols;
-	fb->wsd.nrows = fb->rows;
-	fb->wsd.textops = &diofb_emulops;
-	fb->wsd.fontwidth = fb->ftwidth;
-	fb->wsd.fontheight = fb->ftheight;
-	fb->wsd.capabilities = WSSCREEN_REVERSE;
+	fb->wsd.ncols = ri->ri_cols;
+	fb->wsd.nrows = ri->ri_rows;
+	fb->wsd.textops = &ri->ri_ops;
+	fb->wsd.fontwidth = ri->ri_font->fontwidth;
+	fb->wsd.fontheight = ri->ri_font->fontheight;
+	fb->wsd.capabilities = ri->ri_caps;
 }
 
+/*
+ * Setup default emulation mode colormap
+ */
 void
-diofb_fontunpack(struct diofb *fb)
+diofb_resetcmap(struct diofb *fb)
 {
-	char fontbuf[500];		/* XXX malloc not initialized yet */
-	char *dp, *fbmem;
-	int bytewidth, glyphsize;
-	int c, i, romp;
+	const u_char *color;
+	u_int i;
+
+	/* start with the rasops colormap */
+	color = (const u_char *)rasops_cmap;
+	for (i = 0; i < 256; i++) {
+		fb->cmap.r[i] = *color++;
+		fb->cmap.g[i] = *color++;
+		fb->cmap.b[i] = *color++;
+	}
 
 	/*
-	 * Unpack PROM font to the off-screen location.
+	 * Tweak colormap
+	 *
+	 * Due to the way rasops cursor work, we need to provide
+	 * copies of the 8 or 16 basic colors at extra locations
+	 * in 4bpp and 6bpp mode. This is because missing planes
+	 * accept writes but read back as zero.
+	 *
+	 * So, in 6bpp mode:
+	 *   00 gets inverted to ff, read back as 3f
+	 *   3f gets inverted to c0, read back as 00
+	 * and in 4bpp mode:
+	 *   00 gets inverted to ff, read back as 0f
+	 *   0f gets inverted to f0, read back as 00
 	 */
-	bytewidth = (((fb->ftwidth - 1) / 8) + 1);
-	glyphsize = bytewidth * fb->ftheight;
-	romp = getword(fb, getword(fb, FONTROM) + FONTADDR) + FONTDATA;
-	for (c = 0; c < FONTMAXCHAR; c++) {
-		fbmem = (char *)(FBBASE(fb) +
-		     (fb->fonty + (c / fb->cpl) * fb->ftheight) * fb->fbwidth +
-		     (fb->fontx + (c % fb->cpl) * fb->ftwidth));
-		dp = fontbuf;
-		for (i = 0; i < glyphsize; i++) {
-			*dp++ = getbyte(fb, romp);
-			romp += 2;
-		}
-		diofb_fontcopy(fb, fbmem, fontbuf);
-	}
-}
 
-void
-diofb_fontcopy(struct diofb *fb, char *fbmem, char *glyphp)
-{
-	int bn;
-	int l, b;
-
-	for (l = 0; l < fb->ftheight; l++) {
-		bn = 7;
-		for (b = 0; b < fb->ftwidth; b++) {
-			if ((1 << bn) & *glyphp)
-				*fbmem++ = 1;
-			else
-				*fbmem++ = 0;
-			if (--bn < 0) {
-				bn = 7;
-				glyphp++;
-			}
-		}
-		if (bn < 7)
-			glyphp++;
-		fbmem -= fb->ftwidth;
-		fbmem += fb->fbwidth;
+	switch (fb->planes) {
+	case 6:
+		/*
+		 * 00-0f normal colors
+		 * 30-3f inverted colors
+		 * c0-cf normal colors
+		 * f0-ff inverted colors
+		 */
+		bcopy(fb->cmap.r + 0x00, fb->cmap.r + 0xc0, 0x10);
+		bcopy(fb->cmap.g + 0x00, fb->cmap.g + 0xc0, 0x10);
+		bcopy(fb->cmap.b + 0x00, fb->cmap.b + 0xc0, 0x10);
+		bcopy(fb->cmap.r + 0xf0, fb->cmap.r + 0x30, 0x10);
+		bcopy(fb->cmap.g + 0xf0, fb->cmap.g + 0x30, 0x10);
+		bcopy(fb->cmap.b + 0xf0, fb->cmap.b + 0x30, 0x10);
+		break;
+	case 4:
+		/*
+		 * 00-07 normal colors
+		 * 08-0f inverted colors
+		 * highlighted colors are not available.
+		 */
+		bcopy(fb->cmap.r + 0xf8, fb->cmap.r + 0x08, 0x08);
+		bcopy(fb->cmap.g + 0xf8, fb->cmap.g + 0x08, 0x08);
+		bcopy(fb->cmap.b + 0xf8, fb->cmap.b + 0x08, 0x08);
+		break;
 	}
 }
 
 /*
- * Attachment helper
+ * Attachment helpers
  */
+
+void
+diofb_cnattach(struct diofb *fb)
+{
+	long defattr;
+	struct rasops_info *ri;
+
+	ri = &fb->ri;
+	if (ri->ri_caps & WSSCREEN_WSCOLORS)
+		ri->ri_ops.alloc_attr(ri, WSCOL_WHITE, WSCOL_BLACK,
+		    WSATTR_WSCOLORS, &defattr);
+	else
+		ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
+	wsdisplay_cnattach(&fb->wsd, ri, 0, 0, defattr);
+}
+
 void
 diofb_end_attach(void *sc, struct wsdisplay_accessops *accessops,
-    struct diofb *fb, int console, int planes, const char *descr)
+    struct diofb *fb, int console, const char *descr)
 {
 	struct wsemuldisplaydev_attach_args waa;
 	struct wsscreen_descr *scrlist[1];
@@ -301,12 +295,10 @@ diofb_end_attach(void *sc, struct wsdisplay_accessops *accessops,
 
 	printf(": %dx%d", fb->dwidth, fb->dheight);
 
-	if (planes == 0)
-		planes = fb->planes;
-	if (planes == 1)
+	if (fb->planes == 1)
 		printf(" monochrome");
 	else
-		printf("x%d", planes);
+		printf("x%d", fb->planes);
 
 	if (descr != NULL)
 		printf(" %s", descr);
@@ -328,107 +320,93 @@ diofb_end_attach(void *sc, struct wsdisplay_accessops *accessops,
  * Common wsdisplay emulops for DIO frame buffers
  */
 
-/* the cursor is just an inverted space */
-#define flip_cursor(fb)							\
-do {									\
-	(*fb->bmv)((fb), (fb)->cblankx, (fb)->cblanky,			\
-	    (fb)->cursorx * (fb)->ftwidth,				\
-	    (fb)->cursory * (fb)->ftheight,				\
-	    (fb)->ftwidth, (fb)->ftheight, RR_XOR);			\
-} while (0)
-
-int
-diofb_alloc_attr(void *cookie, int fg, int bg, int flag, long *attrp)
-{
-	*attrp = flag & WSATTR_REVERSE;
-	return (0);
-}
-
-int
-diofb_mapchar(void *cookie, int c, unsigned int *cp)
-{
-	if (c < (int)' ' || c >= FONTMAXCHAR) {
-		*cp = ' ';
-		return (0);
-	}
-
-	*cp = c;
-	return (5);
-}
-
-void
-diofb_cursor(void *cookie, int on, int row, int col)
-{
-	struct diofb *fb = cookie;
-
-	/* Turn old cursor off if necessary */
-	if (fb->curvisible != 0)
-		flip_cursor(fb);
-
-	fb->cursorx = col;
-	fb->cursory = row;
-
-	if ((fb->curvisible = on) != 0)
-		flip_cursor(fb);
-}
-
-void
-diofb_putchar(void *cookie, int row, int col, u_int uc, long attr)
-{
-	struct diofb *fb = cookie;
-	int wmrr;
-
-	wmrr = (attr & WSATTR_REVERSE) ? RR_COPYINVERTED : RR_COPY;
-
-	(*fb->bmv)(fb, charX(fb, uc), charY(fb, uc),
-	    col * fb->ftwidth, row * fb->ftheight,
-	    fb->ftwidth, fb->ftheight, wmrr);
-}
-
 void
 diofb_copycols(void *cookie, int row, int src, int dst, int n)
 {
-	struct diofb *fb = cookie;
+	struct rasops_info *ri = cookie;
+	struct diofb *fb = ri->ri_hw;
 
-	n *= fb->ftwidth;
-	src *= fb->ftwidth;
-	dst *= fb->ftwidth;
-	row *= fb->ftheight;
+	n *= ri->ri_font->fontwidth;
+	src *= ri->ri_font->fontwidth;
+	dst *= ri->ri_font->fontwidth;
+	row *= ri->ri_font->fontheight;
 
-	(*fb->bmv)(fb, src, row, dst, row, n, fb->ftheight, RR_COPY);
+	(*fb->bmv)(fb, ri->ri_xorigin + src, ri->ri_yorigin + row,
+	    ri->ri_xorigin + dst, ri->ri_yorigin + row,
+	    n, ri->ri_font->fontheight, RR_COPY);
 }
 
 void
 diofb_copyrows(void *cookie, int src, int dst, int n)
 {
-	struct diofb *fb = cookie;
+	struct rasops_info *ri = cookie;
+	struct diofb *fb = ri->ri_hw;
 
-	n *= fb->ftheight;
-	src *= fb->ftheight;
-	dst *= fb->ftheight;
+	n *= ri->ri_font->fontheight;
+	src *= ri->ri_font->fontheight;
+	dst *= ri->ri_font->fontheight;
 
-	(*fb->bmv)(fb, 0, src, 0, dst, fb->dwidth, n, RR_COPY);
+	(*fb->bmv)(fb, ri->ri_xorigin, ri->ri_yorigin + src,
+	    ri->ri_xorigin, ri->ri_yorigin + dst,
+	    ri->ri_emuwidth, n, RR_COPY);
 }
 
 void
 diofb_erasecols(void *cookie, int row, int col, int num, long attr)
 {
-	struct diofb *fb = cookie;
+	struct rasops_info *ri = cookie;
+	struct diofb *fb = ri->ri_hw;
+	int fg, bg, uline;
 
-	num *= fb->ftwidth;
-	col *= fb->ftwidth;
-	row *= fb->ftheight;
-	(*fb->bmv)(fb, col, row, col, row, num, fb->ftheight, RR_CLEAR);
+	rasops_unpack_attr(attr, &fg, &bg, &uline);
+
+	/*
+	 * If the background color is not black, this is a bit too tricky
+	 * for the simple raster ops engine, so pass the fun to rasops.
+	 */
+	if (ri->ri_devcmap[bg] != 0) {
+		rasops_erasecols(cookie, row, col, num, attr);
+		return;
+	}
+
+	num *= ri->ri_font->fontwidth;
+	col *= ri->ri_font->fontwidth;
+	row *= ri->ri_font->fontheight;
+
+	(*fb->bmv)(fb, ri->ri_xorigin + col, ri->ri_yorigin + row,
+	    ri->ri_xorigin + col, ri->ri_yorigin + row,
+	    num, ri->ri_font->fontheight, RR_CLEAR);
 }
 
 void
 diofb_eraserows(void *cookie, int row, int num, long attr)
 {
-	struct diofb *fb = cookie;
+	struct rasops_info *ri = cookie;
+	struct diofb *fb = ri->ri_hw;
+	int fg, bg, uline;
 
-	row *= fb->ftheight;
-	num *= fb->ftheight;
-	(*fb->bmv)(fb, 0, row, 0, row, fb->dwidth, num, RR_CLEAR);
+	rasops_unpack_attr(attr, &fg, &bg, &uline);
+
+	/*
+	 * If the background color is not black, this is a bit too tricky
+	 * for the simple raster ops engine, so pass the fun to rasops.
+	 */
+	if (ri->ri_devcmap[bg] != 0) {
+		rasops_eraserows(cookie, row, num, attr);
+		return;
+	}
+
+	/* As an exception, hunt the mouse all over the screen if necessary */
+	if (num == ri->ri_rows && (ri->ri_flg & RI_FULLCLEAR)) {
+		(*fb->bmv)(fb, 0, 0, 0, 0,
+		    ri->ri_width, ri->ri_height, RR_CLEAR);
+	} else {
+		row *= ri->ri_font->fontheight;
+		num *= ri->ri_font->fontheight;
+		(*fb->bmv)(fb, ri->ri_xorigin, ri->ri_yorigin + row,
+		    ri->ri_xorigin, ri->ri_yorigin + row,
+		    ri->ri_emuwidth, num, RR_CLEAR);
+	}
 }
 
 /*
@@ -440,13 +418,18 @@ diofb_alloc_screen(void *v, const struct wsscreen_descr *type,
     void **cookiep, int *curxp, int *curyp, long *attrp)
 {
 	struct diofb *fb = v;
+	struct rasops_info *ri = &fb->ri;
 
 	if (fb->nscreens > 0)
 		return (ENOMEM);
 
-	*cookiep = fb;
+	*cookiep = ri;
 	*curxp = *curyp = 0;
-	diofb_alloc_attr(fb, 0, 0, 0, attrp);
+	if (ri->ri_caps & WSSCREEN_WSCOLORS)
+		ri->ri_ops.alloc_attr(ri, WSCOL_WHITE, WSCOL_BLACK,
+		    WSATTR_WSCOLORS, attrp);
+	else
+		ri->ri_ops.alloc_attr(ri, 0, 0, 0, attrp);
 	fb->nscreens++;
 
 	return (0);
@@ -472,11 +455,40 @@ diofb_mmap(void * v, off_t offset, int prot)
 {
 	struct diofb *fb = v;
 
-	if (offset & PGOFSET)
+	if ((offset & PAGE_MASK) != 0)
 		return (-1);
 
-	if (offset < 0 || offset >= fb->fbsize)
-		return (-1);
+	switch (fb->mapmode) {
+	case WSDISPLAYIO_MODE_MAPPED:
+		if (offset >= 0 && offset < DIOFB_REGSPACE)
+			return (((paddr_t)fb->regaddr + offset) >> PGSHIFT);
+		offset -= DIOFB_REGSPACE;
+		/* FALLTHROUGH */
+	case WSDISPLAYIO_MODE_DUMBFB:
+		if (offset >= 0 && offset < fb->fbsize)
+			return (((paddr_t)fb->fbaddr + offset) >> PGSHIFT);
+		break;
+	}
 
-	return (((paddr_t)fb->fbaddr + offset) >> PGSHIFT);
+	return (-1);
+}
+
+int
+diofb_getcmap(struct diofb *fb, struct wsdisplay_cmap *cm)
+{
+	u_int index = cm->index, count = cm->count;
+	u_int colcount = 1 << fb->planes;
+	int error;
+
+	if (index >= colcount || count > colcount - index)
+		return (EINVAL);
+
+	if ((error = copyout(fb->cmap.r + index, cm->red, count)) != 0)
+		return (error);
+	if ((error = copyout(fb->cmap.g + index, cm->green, count)) != 0)
+		return (error);
+	if ((error = copyout(fb->cmap.b + index, cm->blue, count)) != 0)
+		return (error);
+
+	return (0);
 }

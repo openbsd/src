@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbox.c,v 1.7 2005/01/21 16:24:12 miod Exp $	*/
+/*	$OpenBSD: gbox.c,v 1.8 2005/01/24 21:36:39 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -91,6 +91,7 @@
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
+#include <dev/rasops/rasops.h>
 
 #include <hp300/dev/diofbreg.h>
 #include <hp300/dev/diofbvar.h>
@@ -121,6 +122,9 @@ struct cfdriver gbox_cd = {
 };
 
 int	gbox_reset(struct diofb *, int, struct diofbreg *);
+void	gbox_restore(struct diofb *);
+int	gbox_setcmap(struct diofb *, struct wsdisplay_cmap *);
+void	gbox_setcolor(struct diofb *, u_int);
 void	gbox_windowmove(struct diofb *, u_int16_t, u_int16_t,
 	     u_int16_t, u_int16_t, u_int16_t, u_int16_t, int);
 
@@ -153,7 +157,7 @@ gbox_intio_match(struct device *parent, void *match, void *aux)
 	if (badaddr((caddr_t)fbr))
 		return (0);
 
-	if (fbr->id == GRFHWID && fbr->id2 == GID_GATORBOX) {
+	if (fbr->id == GRFHWID && fbr->fbid == GID_GATORBOX) {
 		ia->ia_addr = (caddr_t)GRFIADDR;
 		return (1);
 	}
@@ -178,7 +182,7 @@ gbox_intio_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	diofb_end_attach(sc, &gbox_accessops, sc->sc_fb,
-	    sc->sc_scode == conscode, 0, NULL);
+	    sc->sc_scode == conscode, NULL);
 }
 
 int
@@ -220,7 +224,7 @@ gbox_dio_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	diofb_end_attach(sc, &gbox_accessops, sc->sc_fb,
-	    sc->sc_scode == conscode, 0, NULL);
+	    sc->sc_scode == conscode, NULL);
 }
 
 /*
@@ -235,10 +239,8 @@ const u_int8_t crtc_init_data[] = {
 int
 gbox_reset(struct diofb *fb, int scode, struct diofbreg *fbr)
 {
-	volatile struct gboxfb *gb = (struct gboxfb *)fbr;
-	u_int8_t *fbp, save;
 	int rc;
-	int i;
+	u_int i;
 
 	/* XXX don't trust hardware, force defaults */
 	fb->fbwidth = 1024;
@@ -248,11 +250,49 @@ gbox_reset(struct diofb *fb, int scode, struct diofbreg *fbr)
 	if ((rc = diofb_fbinquire(fb, scode, fbr)) != 0)
 		return (rc);
 
+	fb->bmv = gbox_windowmove;
+	gbox_restore(fb);
+
+	/*
+	 * Find out how many colors are available by determining
+	 * which planes are installed.  That is, write all ones to
+	 * a frame buffer location, see how many ones are read back.
+	 */
+	if (1 /* fb->planes == 0 */) {
+		volatile u_int8_t *fbp;
+		u_int8_t save;
+
+		fbp = (u_int8_t *)fb->fbkva;
+		save = *fbp;
+		*fbp = 0xff;
+		fb->planemask = *fbp;
+		*fbp = save;
+
+		for (fb->planes = 1; fb->planemask >= (1 << fb->planes);
+		    fb->planes++);
+		if (fb->planes > 8)
+			fb->planes = 8;
+		fb->planemask = (1 << fb->planes) - 1;
+	}
+
+	diofb_fbsetup(fb);
+	for (i = 0; i <= fb->planemask; i++)
+		gbox_setcolor(fb, i);
+
+	return (0);
+}
+
+void
+gbox_restore(struct diofb *fb)
+{
+	volatile struct gboxfb *gb = (struct gboxfb *)fb->regkva;
+	u_int i;
+
 	/*
 	 * The minimal info here is from the Gatorbox X driver.
 	 */
 	gb->write_protect = 0x0;
-	gb->interrupt = 0x4;
+	gb->regs.interrupt = 0x4;
 	gb->rep_rule = RR_COPY;
 	gb->blink1 = 0xff;
 	gb->blink2 = 0xff;
@@ -265,58 +305,10 @@ gbox_reset(struct diofb *fb, int scode, struct diofbreg *fbr)
 		gb->crtc_data = crtc_init_data[i];
 	}
 
-	/*
-	 * Find out how many colors are available by determining
-	 * which planes are installed.  That is, write all ones to
-	 * a frame buffer location, see how many ones are read back.
-	 */
-	fbp = (u_int8_t *)fb->fbkva;
-	save = *fbp;
-	*fbp = 0x0ff;
-	fb->planemask = *fbp;
-	*fbp = save;
-	for (fb->planes = 1; fb->planemask >= (1 << fb->planes);
-	    fb->planes++);
-
-	/*
-	 * Set up the color map entries. We use three entries in the
-	 * color map. The first, is for black, the second is for
-	 * white, and the very last entry is for the inverted cursor.
-	 */
-	gb->creg_select = 0x00;
-	gb->cmap_red    = 0x00;
-	gb->cmap_grn    = 0x00;
-	gb->cmap_blu    = 0x00;
-	gb->cmap_write  = 0x00;
-	gbcm_waitbusy(gb);
-
-	gb->creg_select = 0x01;
-	gb->cmap_red    = 0xFF;
-	gb->cmap_grn    = 0xFF;
-	gb->cmap_blu    = 0xFF;
-	gb->cmap_write  = 0x01;
-	gbcm_waitbusy(gb);
-
-	/* XXX is the cursors entry necessary??? */
-	gb->creg_select = 0xFF;
-	gb->cmap_red    = 0xFF;
-	gb->cmap_grn    = 0xFF;
-	gb->cmap_blu    = 0xFF;
-	gb->cmap_write  = 0x01;
-	gbcm_waitbusy(gb);
-
-	fb->bmv = gbox_windowmove;
-	diofb_fbsetup(fb);
-	diofb_fontunpack(fb);
-
 	tile_mover_waitbusy(gb);
 
-	/*
-	 * Enable display.
-	 */
-	gb->sec_interrupt = 0x01;
-
-	return (0);
+	/* Enable display */
+	gb->regs.sec_interrupt = 0x01;
 }
 
 int
@@ -324,25 +316,34 @@ gbox_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	struct diofb *fb = v;
 	struct wsdisplay_fbinfo *wdf;
+	u_int i;
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
 		*(u_int *)data = WSDISPLAY_TYPE_GBOX;
 		break;
+	case WSDISPLAYIO_SMODE:
+		fb->mapmode = *(u_int *)data;
+		if (fb->mapmode == WSDISPLAYIO_MODE_EMUL) {
+			gbox_restore(fb);
+			for (i = 0; i <= fb->planemask; i++)
+				gbox_setcolor(fb, i);
+		}
+		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (void *)data;
-		wdf->height = fb->dheight;
-		wdf->width = fb->dwidth;
-		wdf->depth = fb->planes;
+		wdf->width = fb->ri.ri_width;
+		wdf->height = fb->ri.ri_height;
+		wdf->depth = fb->ri.ri_depth;
 		wdf->cmsize = 1 << fb->planes;
 		break;
 	case WSDISPLAYIO_LINEBYTES:
-		*(u_int *)data = (fb->fbwidth * fb->planes) >> 3;
+		*(u_int *)data = fb->ri.ri_stride;
 		break;
 	case WSDISPLAYIO_GETCMAP:
+		return (diofb_getcmap(fb, (struct wsdisplay_cmap *)data));
 	case WSDISPLAYIO_PUTCMAP:
-		/* XXX TBD */
-		break;
+		return (gbox_setcmap(fb, (struct wsdisplay_cmap *)data));
 	case WSDISPLAYIO_GVIDEO:
 	case WSDISPLAYIO_SVIDEO:
 		break;
@@ -360,9 +361,50 @@ gbox_burner(void *v, u_int on, u_int flags)
 	volatile struct gboxfb *gb = (struct gboxfb *)fb->regkva;
 
 	if (on)
-		gb->sec_interrupt = 0x01;
+		gb->regs.sec_interrupt = 0x01;
 	else
-		gb->sec_interrupt = 0x00;
+		gb->regs.sec_interrupt = 0x00;
+}
+
+void
+gbox_setcolor(struct diofb *fb, u_int index)
+{
+	volatile struct gboxfb *gb = (struct gboxfb *)fb->regkva;
+
+	gb->creg_select = index;
+	gb->cmap_red = fb->cmap.r[index];
+	gb->cmap_grn = fb->cmap.g[index];
+	gb->cmap_blu = fb->cmap.b[index];
+	gb->cmap_write = !!index;
+	gbcm_waitbusy(gb);
+}
+
+int
+gbox_setcmap(struct diofb *fb, struct wsdisplay_cmap *cm)
+{
+	u_int8_t r[256], g[256], b[256];
+	u_int index = cm->index, count = cm->count;
+	u_int colcount = 1 << fb->planes;
+	int error;
+
+	if (index >= colcount || count > colcount - index)
+		return (EINVAL);
+
+	if ((error = copyin(cm->red, r, count)) != 0)
+		return (error);
+	if ((error = copyin(cm->green, g, count)) != 0)
+		return (error);
+	if ((error = copyin(cm->blue, b, count)) != 0)
+		return (error);
+
+	bcopy(r, fb->cmap.r + index, count);
+	bcopy(g, fb->cmap.g + index, count);
+	bcopy(b, fb->cmap.b + index, count);
+
+	while (count-- != 0)
+		gbox_setcolor(fb, index++);
+
+	return (0);
 }
 
 void
@@ -405,7 +447,7 @@ gbox_console_scan(int scode, caddr_t va, void *arg)
 	struct consdev *cp = arg;
 	int force = 0, pri;
 
-	if (fbr->id != GRFHWID || fbr->id2 != GID_GATORBOX)
+	if (fbr->id != GRFHWID || fbr->fbid != GID_GATORBOX)
 		return (0);
 
 	pri = CN_NORMAL;
@@ -462,7 +504,7 @@ gboxcnprobe(struct consdev *cp)
 	va = (caddr_t)IIOV(GRFIADDR);
 	fbr = (struct diofbreg *)va;
 	if (!badaddr(va) &&
-	    fbr->id == GRFHWID && fbr->id2 == GID_GATORBOX) {
+	    fbr->id == GRFHWID && fbr->fbid == GID_GATORBOX) {
 		cp->cn_pri = CN_INTERNAL;
 
 #ifdef CONSCODE
@@ -496,9 +538,6 @@ void
 gboxcninit(cp)
 	struct consdev *cp;
 {
-	long defattr;
-
 	gbox_reset(&diofb_cn, conscode, (struct diofbreg *)conaddr);
-	diofb_alloc_attr(NULL, 0, 0, 0, &defattr);
-	wsdisplay_cnattach(&diofb_cn.wsd, &diofb_cn, 0, 0, defattr);
+	diofb_cnattach(&diofb_cn);
 }

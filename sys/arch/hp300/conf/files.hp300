@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hp300,v 1.25 2005/01/14 22:39:23 miod Exp $
+#	$OpenBSD: files.hp300,v 1.26 2005/01/24 21:36:37 miod Exp $
 #	$NetBSD: files.hp300,v 1.28 1997/05/12 08:23:28 thorpej Exp $
 #
 # hp300-specific configuration info
@@ -59,7 +59,9 @@ attach	apci at frodo
 file	arch/hp300/dev/apci.c		apci	needs-flag
 
 # "workstation console" routines
+include	"dev/rasops/files.rasops"
 include	"dev/wscons/files.wscons"
+include	"dev/wsfont/files.wsfont"
 file	arch/hp300/hp300/wscons_machdep.c	wsdisplay
 
 #
@@ -68,26 +70,26 @@ file	arch/hp300/hp300/wscons_machdep.c	wsdisplay
 define	diofb
 file	arch/hp300/dev/diofb.c		diofb
 
-device	dvbox: wsemuldisplaydev, diofb
+device	dvbox: wsemuldisplaydev, diofb, rasops8
 attach	dvbox at intio with dvbox_intio
 attach	dvbox at dio with dvbox_dio
 file	arch/hp300/dev/dvbox.c		dvbox	needs-flag
 
-device	gbox: wsemuldisplaydev, diofb
+device	gbox: wsemuldisplaydev, diofb, rasops8
 attach	gbox at intio with gbox_intio
 attach	gbox at dio with gbox_dio
 file	arch/hp300/dev/gbox.c		gbox	needs-flag
 
-device	hyper: wsemuldisplaydev, diofb
-attach	hyper at dio with hyper_dio
+device	hyper: wsemuldisplaydev, diofb, rasops1
+attach	hyper at dio
 file	arch/hp300/dev/hyper.c		hyper	needs-flag
 
-device	rbox: wsemuldisplaydev, diofb
+device	rbox: wsemuldisplaydev, diofb, rasops8
 attach	rbox at intio with rbox_intio
 attach	rbox at dio with rbox_dio
 file	arch/hp300/dev/rbox.c		rbox	needs-flag
 
-device	topcat: wsemuldisplaydev, diofb
+device	topcat: wsemuldisplaydev, diofb, rasops8
 attach	topcat at intio with topcat_intio
 attach	topcat at dio with topcat_dio
 file	arch/hp300/dev/topcat.c		topcat	needs-flag

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diofbvar.h,v 1.3 2005/01/18 19:17:03 miod Exp $	*/
+/*	$OpenBSD: diofbvar.h,v 1.4 2005/01/24 21:36:39 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -58,6 +58,8 @@
  * SUCH DAMAGE.
  */
 
+#ifdef	_KERNEL
+
 struct diocmap {
 	u_int8_t r[256], g[256], b[256];
 };
@@ -71,26 +73,18 @@ struct diofb {
 
 	caddr_t	regaddr;		/* control registers physaddr */
 	caddr_t	fbaddr;			/* frame buffer physaddr */
-	int	fbsize;			/* frame buffer size */
 
-	u_int	planes;			/* number of planes */
-	u_int	planemask;		/* and related mask */
-
+	u_int	fbsize;			/* frame buffer size */
 	u_int	fbwidth;		/* frame buffer width */
 	u_int	fbheight;		/* frame buffer height */
 	u_int	dwidth;			/* displayed part width */
 	u_int	dheight;		/* displayed part height */
 
-	/* font information */
-	u_int	rows, cols;		/* display size, in chars */
-	u_int   cpl;			/* chars per line off screen */
-	u_int	ftheight, ftwidth, ftscale;	/* font metrics */
-	u_int	fontx, fonty;		/* off screen font position */
+	u_int	planes;			/* number of planes */
+	u_int	planemask;		/* and related mask */
 
-	/* cursor information */
-	int	curvisible;
-	u_int   cursorx, cursory;	/* cursor position */
-	u_int   cblankx, cblanky;	/* off screen cursor shape */
+	/* rasops information */
+	struct rasops_info ri;
 
 	/* color information */
 	struct diocmap cmap;
@@ -98,6 +92,7 @@ struct diofb {
 	/* wsdisplay information */
 	struct wsscreen_descr wsd;
 	int	nscreens;
+	u_int	mapmode;
 
 	/* blockmove routine */
 	void	(*bmv)(struct diofb *, u_int16_t, u_int16_t,
@@ -110,19 +105,13 @@ struct diofb {
 #define RR_XOR			0x6
 #define RR_COPYINVERTED  	0xc
 
-#define	getbyte(fb, disp)						\
-	((u_char) *((u_char *)(fb)->regkva + (disp)))
-
-#define getword(fb, offset) \
-	((getbyte((fb), offset) << 8) | getbyte((fb), (offset) + 2))
-
-#define	FONTMAXCHAR	128
-
+void	diofb_cnattach(struct diofb *);
 void	diofb_end_attach(void *, struct wsdisplay_accessops *, struct diofb *,
-	    int, int, const char *);
+	    int, const char *);
 int	diofb_fbinquire(struct diofb *, int, struct diofbreg *);
 void	diofb_fbsetup(struct diofb *);
-void	diofb_fontunpack(struct diofb *);
+int	diofb_getcmap(struct diofb *, struct wsdisplay_cmap *);
+void	diofb_resetcmap(struct diofb *);
 
 int	diofb_alloc_attr(void *, int, int, int, long *);
 int	diofb_alloc_screen(void *, const struct wsscreen_descr *, void **,
@@ -133,3 +122,12 @@ int	diofb_show_screen(void *, void *, int, void (*)(void *, int, int),
 	    void *);
 
 extern	struct diofb diofb_cn;		/* struct diofb for console device */
+
+#endif
+
+/*
+ * In mapped mode, mmap() will provide the following layout:
+ * 0 - (DIOFB_REGSPACE - 1)	frame buffer registers
+ * DIOFB_REGSPACE onwards	frame buffer memory
+ */
+#define	DIOFB_REGSPACE	0x020000

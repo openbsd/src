@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvbox.c,v 1.6 2005/01/21 16:24:12 miod Exp $	*/
+/*	$OpenBSD: dvbox.c,v 1.7 2005/01/24 21:36:39 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -87,6 +87,7 @@
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
+#include <dev/rasops/rasops.h>
 
 #include <hp300/dev/diofbreg.h>
 #include <hp300/dev/diofbvar.h>
@@ -117,6 +118,7 @@ struct cfdriver dvbox_cd = {
 };
 
 int	dvbox_reset(struct diofb *, int, struct diofbreg *);
+void	dvbox_restore(struct diofb *);
 void	dvbox_setcolor(struct diofb *, u_int,
 	    u_int8_t, u_int8_t, u_int8_t);
 void	dvbox_windowmove(struct diofb *, u_int16_t, u_int16_t,
@@ -152,7 +154,7 @@ dvbox_intio_match(struct device *parent, void *match, void *aux)
 	if (badaddr((caddr_t)fbr))
 		return (0);
 
-	if (fbr->id == GRFHWID && fbr->id2 == GID_DAVINCI) {
+	if (fbr->id == GRFHWID && fbr->fbid == GID_DAVINCI) {
 		ia->ia_addr = (caddr_t)GRFIADDR;
 		return (1);
 	}
@@ -177,7 +179,7 @@ dvbox_intio_attach(struct device *parent, struct device *self, void *aux)
         }
 
 	diofb_end_attach(sc, &dvbox_accessops, sc->sc_fb,
-	    sc->sc_scode == conscode, 4 /* XXX */, NULL);
+	    sc->sc_scode == conscode, NULL);
 }
 
 int
@@ -215,7 +217,7 @@ dvbox_dio_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	diofb_end_attach(sc, &dvbox_accessops, sc->sc_fb,
-	    sc->sc_scode == conscode, 4 /* XXX */, NULL);
+	    sc->sc_scode == conscode, NULL);
 }
 
 /*
@@ -224,58 +226,72 @@ dvbox_dio_attach(struct device *parent, struct device *self, void *aux)
 int
 dvbox_reset(struct diofb *fb, int scode, struct diofbreg *fbr)
 {
-	volatile struct dvboxfb *db = (struct dvboxfb *)fbr;
 	int rc;
-	int i;
 
 	if ((rc = diofb_fbinquire(fb, scode, fbr)) != 0)
 		return (rc);
 
-	fb->planes = 8;
-	fb->planemask = (1 << fb->planes) - 1;
-
 	/*
-	 * Magic initialization code.
+	 * Restrict the framebuffer to a monochrome view for now, until
+	 * I know better how to detect and frob overlay planes, and
+	 * setup a proper colormap. -- miod
 	 */
+	fb->planes = fb->planemask = 1;
 
-  	db->reset = 0x80;
+	fb->bmv = dvbox_windowmove;
+	dvbox_restore(fb);
+	diofb_fbsetup(fb);
+
+	return (0);
+}
+
+/*
+ * Magic initialization code.
+ */
+void
+dvbox_restore(struct diofb *fb)
+{
+	volatile struct dvboxfb *db = (struct dvboxfb *)fb->regkva;
+	u_int i;
+
+  	db->regs.id = 0x80;
 	DELAY(100);
 
-	db->interrupt = 0x04;
-	db->en_scan   = 0x01;
-	db->fbwen     = ~0;
-	db->opwen     = ~0;
-	db->fold      = 0x01;	/* 8bpp */
-	db->drive     = 0x01;	/* use FB plane */
-	db->rep_rule  = DVBOX_DUALROP(RR_COPY);
-	db->alt_rr    = DVBOX_DUALROP(RR_COPY);
-	db->zrr       = DVBOX_DUALROP(RR_COPY);
+	db->regs.interrupt = 0x04;
+	db->en_scan = 0x01;
+	db->fbwen = ~0;
+	db->opwen = ~0;
+	db->fold = 0x01;	/* 8bpp */
+	db->drive = 0x01;	/* use FB plane */
+	db->rep_rule = DVBOX_DUALROP(RR_COPY);
+	db->alt_rr = DVBOX_DUALROP(RR_COPY);
+	db->zrr = DVBOX_DUALROP(RR_COPY);
 
-	db->fbvenp    = 0xFF;	/* enable video */
-	db->dispen    = 0x01;	/* enable display */
-	db->fbvens    = 0x0;
-	db->fv_trig   = 0x01;
+	db->fbvenp = 0xFF;	/* enable video */
+	db->dispen = 0x01;	/* enable display */
+	db->fbvens = 0x0;
+	db->fv_trig = 0x01;
 	DELAY(100);
-	db->vdrive    = 0x0;
-	db->zconfig   = 0x0;
+	db->vdrive = 0x0;
+	db->zconfig = 0x0;
 
 	while (db->wbusy & 0x01)
 		DELAY(10);
 
 	db->cmapbank = 0;
 
-	db->red0   = 0;
-	db->red1   = 0;
+	db->red0 = 0;
+	db->red1 = 0;
 	db->green0 = 0;
 	db->green1 = 0;
-	db->blue0  = 0;
-	db->blue1  = 0;
+	db->blue0 = 0;
+	db->blue1 = 0;
 
-	db->panxh   = 0;
-	db->panxl   = 0;
-	db->panyh   = 0;
-	db->panyl   = 0;
-	db->zoom    = 0;
+	db->panxh = 0;
+	db->panxl = 0;
+	db->panyh = 0;
+	db->panyl = 0;
+	db->zoom = 0;
 	db->cdwidth = 0x50;
 	db->chstart = 0x52;
 	db->cvwidth = 0x22;
@@ -287,14 +303,14 @@ dvbox_reset(struct diofb *fb, int scode, struct diofbreg *fbr)
 	 * buffer planes, set byte per pixel, and display frame buffer 0.
 	 * Lastly, turn on the box.
 	 */
-	db->interrupt = 0x04;
-	db->drive     = 0x10;
- 	db->rep_rule  = DVBOX_DUALROP(RR_COPY);
-	db->opwen     = 0x01;
-	db->fbwen     = 0x0;
-	db->fold      = 0x01;
-	db->vdrive    = 0x0;
-	db->dispen    = 0x01;
+	db->regs.interrupt = 0x04;
+	db->drive = 0x10;
+ 	db->rep_rule = DVBOX_DUALROP(RR_COPY);
+	db->opwen = 0x01;
+	db->fbwen = 0x0;
+	db->fold = 0x01;
+	db->vdrive = 0x0;
+	db->dispen = 0x01;
 
 	/*
 	 * Video enable top overlay plane.
@@ -305,37 +321,29 @@ dvbox_reset(struct diofb *fb, int scode, struct diofbreg *fbr)
 	/*
 	 * Make sure that overlay planes override frame buffer planes.
 	 */
-	db->ovly0p  = 0x0;
-	db->ovly0s  = 0x0;
-	db->ovly1p  = 0x0;
-	db->ovly1s  = 0x0;
+	db->ovly0p = 0x0;
+	db->ovly0s = 0x0;
+	db->ovly1p = 0x0;
+	db->ovly1s = 0x0;
 	db->fv_trig = 0x1;
 	DELAY(100);
-
-	fb->bmv = dvbox_windowmove;
-
-	diofb_fbsetup(fb);
-	diofb_fontunpack(fb);
 
 	/*
 	 * Setup the overlay colormaps. Need to set the 0,1 (black/white)
 	 * color for both banks.
 	 */
-
 	db_waitbusy(db);
 	for (i = 0; i <= 1; i++) {
 		db->cmapbank = i;
-		db->rgb[0].red   = 0x00;
+		db->rgb[0].red = 0x00;
 		db->rgb[0].green = 0x00;
-		db->rgb[0].blue  = 0x00;
-		db->rgb[1].red   = 0xFF;
-		db->rgb[1].green = 0xFF;
-		db->rgb[1].blue  = 0xFF;
+		db->rgb[0].blue = 0x00;
+		db->rgb[1].red = 0xff;
+		db->rgb[1].green = 0xff;
+		db->rgb[1].blue = 0xff;
 	}
 	db->cmapbank = 0;
 	db_waitbusy(db);
-
-	return (0);
 }
 
 int
@@ -348,20 +356,24 @@ dvbox_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 	case WSDISPLAYIO_GTYPE:
 		*(u_int *)data = WSDISPLAY_TYPE_DVBOX;
 		break;
+	case WSDISPLAYIO_SMODE:
+		fb->mapmode = *(u_int *)data;
+		if (fb->mapmode == WSDISPLAYIO_MODE_EMUL)
+			dvbox_restore(fb);
+		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (void *)data;
-		wdf->height = fb->dheight;
-		wdf->width = fb->dwidth;
-		wdf->depth = fb->planes;
-		wdf->cmsize = 8;	/* XXX 16 because of overlay? */
+		wdf->width = fb->ri.ri_width;
+		wdf->height = fb->ri.ri_height;
+		wdf->depth = fb->ri.ri_depth;
+		wdf->cmsize = 0;	/* XXX */
 		break;
 	case WSDISPLAYIO_LINEBYTES:
-		*(u_int *)data = (fb->fbwidth * fb->planes) >> 3;
+		*(u_int *)data = fb->ri.ri_stride;
 		break;
 	case WSDISPLAYIO_GETCMAP:
 	case WSDISPLAYIO_PUTCMAP:
-		/* XXX TBD */
-		break;
+		break;		/* XXX until color support is implemented */
 	case WSDISPLAYIO_GVIDEO:
 	case WSDISPLAYIO_SVIDEO:
 		break;
@@ -394,11 +406,11 @@ dvbox_windowmove(struct diofb *fb, u_int16_t sx, u_int16_t sy,
 	db->rep_rule = DVBOX_DUALROP(rop);
 	db->source_y = sy;
 	db->source_x = sx;
-	db->dest_y   = dy;
-	db->dest_x   = dx;
-	db->wheight  = cy;
-	db->wwidth   = cx;
-	db->wmove    = 1;
+	db->dest_y = dy;
+	db->dest_x = dx;
+	db->wheight = cy;
+	db->wwidth = cx;
+	db->wmove = 1;
 }
 
 /*
@@ -415,7 +427,7 @@ dvbox_console_scan(int scode, caddr_t va, void *arg)
 	struct consdev *cp = arg;
 	int force = 0, pri;
 
-	if (fbr->id != GRFHWID || fbr->id2 != GID_DAVINCI)
+	if (fbr->id != GRFHWID || fbr->fbid != GID_DAVINCI)
 		return (0);
 
 	pri = CN_NORMAL;
@@ -472,7 +484,7 @@ dvboxcnprobe(struct consdev *cp)
 	va = (caddr_t)IIOV(GRFIADDR);
 	fbr = (struct diofbreg *)va;
 	if (!badaddr(va) &&
-	    fbr->id == GRFHWID && fbr->id2 == GID_DAVINCI) {
+	    fbr->id == GRFHWID && fbr->fbid == GID_DAVINCI) {
 		cp->cn_pri = CN_INTERNAL;
 
 #ifdef CONSCODE
@@ -505,9 +517,6 @@ dvboxcnprobe(struct consdev *cp)
 void
 dvboxcninit(struct consdev *cp)
 {
-	long defattr;
-
 	dvbox_reset(&diofb_cn, conscode, (struct diofbreg *)conaddr);
-	diofb_alloc_attr(NULL, 0, 0, 0, &defattr);
-	wsdisplay_cnattach(&diofb_cn.wsd, &diofb_cn, 0, 0, defattr);
+	diofb_cnattach(&diofb_cn);
 }
