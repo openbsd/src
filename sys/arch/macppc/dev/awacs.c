@@ -1,4 +1,4 @@
-/*	$OpenBSD: awacs.c,v 1.7 2002/01/20 23:10:34 ericj Exp $	*/
+/*	$OpenBSD: awacs.c,v 1.8 2002/01/30 06:53:56 drahn Exp $	*/
 /*	$NetBSD: awacs.c,v 1.4 2001/02/26 21:07:51 wiz Exp $	*/
 
 /*-
@@ -290,14 +290,8 @@ awacs_attach(parent, self, aux)
 		sc, "awacs");
 	mac_intr_establish(parent, oirq, oirq_type, IPL_AUDIO, awacs_tx_intr,
 		sc, "awacs/tx");
-#if 0
-	/* do not use this for now, since both are tied to same freq
-	 * we can service both in the same interrupt, lowering
-	 * interrupt load by half
-	 */
-	mac_intr_establish(parent, iirq, irq_type, IPL_AUDIO, awacs_intr,
+	mac_intr_establish(parent, iirq, iirq_type, IPL_AUDIO, awacs_rx_intr,
 		sc, "awacs/rx");
-#endif
 
 	printf(": irq %d,%d,%d",
 		cirq, oirq, iirq);
@@ -444,6 +438,35 @@ awacs_tx_intr(v)
 		if (status)	/* status == 0x8400 */
 			if (sc->sc_ointr)
 				(*sc->sc_ointr)(sc->sc_oarg);
+	}
+
+	return (1);
+}
+int
+awacs_rx_intr(v)
+	void *v;
+{
+	struct awacs_softc *sc = v;
+	struct dbdma_command *cmd = sc->sc_idmap;
+	u_int16_t c, status;
+
+	/* if not set we are not running */
+	if (!cmd)
+		return (0);
+
+	c = in16rb(&cmd->d_command);
+	status = in16rb(&cmd->d_status);
+
+	if (c >> 12 == DBDMA_CMD_IN_LAST)
+		sc->sc_idmap = sc->sc_idmacmd;
+	else
+		sc->sc_idmap++;
+
+	if (c & (DBDMA_INT_ALWAYS << 4)) {
+		cmd->d_status = 0;
+		if (status)	/* status == 0x8400 */
+			if (sc->sc_iintr)
+				(*sc->sc_iintr)(sc->sc_iarg);
 	}
 
 	return (1);
@@ -701,20 +724,13 @@ awacs_set_port(h, mc)
 		/* no change necessary? */
 		if (mc->un.mask == sc->sc_output_mask)
 			return 0;
-		switch(mc->un.mask) {
-		case 1<<0: /* speaker */
+		sc->sc_codecctl1 |= AWACS_MUTE_SPEAKER | AWACS_MUTE_HEADPHONE;
+		if (mc->un.mask & 1 << 0)
 			sc->sc_codecctl1 &= ~AWACS_MUTE_SPEAKER;
-			sc->sc_codecctl1 |= AWACS_MUTE_HEADPHONE;
-			awacs_write_codec(sc, sc->sc_codecctl1);
-			break;
-		case 1<<1: /* headphones */
-			sc->sc_codecctl1 |= AWACS_MUTE_SPEAKER;
+		if (mc->un.mask & 1 << 1)
 			sc->sc_codecctl1 &= ~AWACS_MUTE_HEADPHONE;
-			awacs_write_codec(sc, sc->sc_codecctl1);
-			break;
-		default: /* invalid argument */
-			return -1;
-		}
+
+		awacs_write_codec(sc, sc->sc_codecctl1);
 		sc->sc_output_mask = mc->un.mask;
 		return 0;
 
@@ -859,8 +875,8 @@ awacs_query_devinfo(h, dip)
 		return 0;
 
 	case AWACS_INPUT_SELECT:
-		dip->mixer_class = AWACS_MONITOR_CLASS;
-		strcpy(dip->label.name, AudioNinput);
+		dip->mixer_class = AWACS_RECORD_CLASS;
+		strcpy(dip->label.name, AudioNsource);
 		dip->type = AUDIO_MIXER_SET;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
 		dip->un.s.num_mem = 3;
@@ -873,7 +889,7 @@ awacs_query_devinfo(h, dip)
 		return 0;
 
 	case AWACS_VOL_INPUT:
-		dip->mixer_class = AWACS_INPUT_CLASS;
+		dip->mixer_class = AWACS_RECORD_CLASS;
 		strcpy(dip->label.name, AudioNmaster);
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
@@ -898,13 +914,6 @@ awacs_query_devinfo(h, dip)
 	case AWACS_RECORD_CLASS:
 		dip->mixer_class = AWACS_MONITOR_CLASS;
 		strcpy(dip->label.name, AudioCrecord);
-		dip->type = AUDIO_MIXER_CLASS;
-		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		return 0;
-
-	case AWACS_INPUT_CLASS:
-		dip->mixer_class = AWACS_INPUT_CLASS;
-		strcpy(dip->label.name, AudioCinputs);
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
 		return 0;
@@ -1066,9 +1075,41 @@ awacs_trigger_input(h, start, end, bsize, intr, arg, param)
 	void *arg;
 	struct audio_params *param;
 {
-	printf("awacs_trigger_input called\n");
+	struct awacs_softc *sc = h;
+	struct awacs_dma *p;
+	struct dbdma_command *cmd = sc->sc_idmacmd;
+	vaddr_t spa, pa, epa;
+	int c;
 
-	return 1;
+	printf("trigger_input %p %p 0x%x\n", start, end, bsize);
+
+	for (p = sc->sc_dmas; p && p->addr != start; p = p->next);
+	if (!p)
+		return -1;
+
+	sc->sc_iintr = intr;
+	sc->sc_iarg = arg;
+	sc->sc_idmap = sc->sc_idmacmd;
+
+	spa = p->segs[0].ds_addr;
+	c = DBDMA_CMD_IN_MORE;
+	for (pa = spa, epa = spa + (end - start);
+	    pa < epa; pa += bsize, cmd++) {
+
+		if (pa + bsize == epa)
+			c = DBDMA_CMD_IN_LAST;
+
+		DBDMA_BUILD(cmd, c, 0, bsize, pa, DBDMA_INT_ALWAYS,
+			DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
+	}
+
+	DBDMA_BUILD(cmd, DBDMA_CMD_NOP, 0, 0, 0,
+		DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_ALWAYS);
+	dbdma_st32(&cmd->d_cmddep, sc->sc_idbdma->d_paddr);
+
+	dbdma_start(sc->sc_idma, sc->sc_idbdma);
+
+	return 0;
 }
 
 void
