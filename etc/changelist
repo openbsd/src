@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.5 1997/09/15 09:58:00 deraadt Exp $
+#	$OpenBSD: changelist,v 1.6 1998/02/19 01:49:07 gene Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -10,16 +10,19 @@
 /etc/csh.cshrc
 /etc/csh.login
 /etc/daily
+/etc/daily.local
 /etc/distfile
 /etc/exports
 /etc/fstab
 /etc/ftpusers
 /etc/group
 /etc/hosts.equiv
+/etc/ipf.rules
 /etc/mail.rc
 /etc/master.passwd
 /etc/monthly
 /etc/named.boot
+/etc/ipnat.rules
 /etc/netstart
 /etc/networks
 /etc/passwd
@@ -39,8 +42,10 @@
 /etc/slip.hosts
 /etc/slip.login
 /etc/syslog.conf
+/etc/sysctl.conf
 /etc/ttys
 /etc/weekly
+/etc/weekly.local
 /root/.cshrc
 /root/.klogin
 /root/.login
