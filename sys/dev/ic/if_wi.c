@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.18 2001/12/21 15:48:19 mickey Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.19 2002/02/19 01:24:58 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -87,6 +87,8 @@
 #include <netinet/if_ether.h>
 #endif
 
+#include <net/if_ieee80211.h>
+
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
@@ -120,7 +122,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.18 2001/12/21 15:48:19 mickey Exp $";
+	"$OpenBSD: if_wi.c,v 1.19 2002/02/19 01:24:58 mickey Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -147,9 +149,23 @@ STATIC int wi_write_data	__P((struct wi_softc *, int,
 STATIC int wi_seek		__P((struct wi_softc *, int, int, int));
 STATIC int wi_alloc_nicmem	__P((struct wi_softc *, int, int *));
 STATIC void wi_inquire		__P((void *));
-STATIC void wi_setdef		__P((struct wi_softc *, struct wi_req *));
+STATIC int wi_setdef		__P((struct wi_softc *, struct wi_req *));
 STATIC int wi_mgmt_xmit		__P((struct wi_softc *, caddr_t, int));
 STATIC void wi_get_id		__P((struct wi_softc *, int));
+
+STATIC int wi_media_change __P((struct ifnet *));
+STATIC void wi_media_status __P((struct ifnet *, struct ifmediareq *));
+
+STATIC int wi_set_ssid __P((struct ieee80211_nwid *, u_int8_t *, int));
+STATIC void wi_request_fill_ssid __P((struct wi_req *,
+    struct ieee80211_nwid *));
+STATIC int wi_write_ssid __P((struct wi_softc *, int, struct wi_req *,
+    struct ieee80211_nwid *));
+STATIC int wi_set_nwkey __P((struct wi_softc *, struct ieee80211_nwkey *));
+STATIC int wi_get_nwkey __P((struct wi_softc *, struct ieee80211_nwkey *));
+STATIC int wi_sync_media __P((struct wi_softc *, int, int));
+STATIC int wi_set_pm __P((struct wi_softc *, struct ieee80211_power *));
+STATIC int wi_get_pm __P((struct wi_softc *, struct ieee80211_power *));
 
 int	wi_intr			__P((void *));
 int	wi_attach		__P((struct wi_softc *, int));
@@ -199,16 +215,11 @@ wi_attach(sc, print_cis)
 	ifp->if_baudrate = 10000000;
 	IFQ_SET_READY(&ifp->if_snd);
 
-	bzero(sc->wi_node_name, sizeof(sc->wi_node_name));
-	bcopy(WI_DEFAULT_NODENAME, sc->wi_node_name,
+	(void)wi_set_ssid(&sc->wi_node_name, WI_DEFAULT_NODENAME,
 	    sizeof(WI_DEFAULT_NODENAME) - 1);
-
-	bzero(sc->wi_net_name, sizeof(sc->wi_net_name));
-	bcopy(WI_DEFAULT_NETNAME, sc->wi_net_name,
+	(void)wi_set_ssid(&sc->wi_net_name, WI_DEFAULT_NETNAME,
 	    sizeof(WI_DEFAULT_NETNAME) - 1);
-
-	bzero(sc->wi_ibss_name, sizeof(sc->wi_ibss_name));
-	bcopy(WI_DEFAULT_IBSS, sc->wi_ibss_name,
+	(void)wi_set_ssid(&sc->wi_ibss_name, WI_DEFAULT_IBSS,
 	    sizeof(WI_DEFAULT_IBSS) - 1);
 
 	sc->wi_portnum = WI_DEFAULT_PORT;
@@ -246,6 +257,28 @@ wi_attach(sc, print_cis)
 	timeout_set(&sc->sc_timo, wi_inquire, sc);
 
 	bzero((char *)&sc->wi_stats, sizeof(sc->wi_stats));
+
+	ifmedia_init(&sc->sc_media, 0, wi_media_change, wi_media_status);
+#define	ADD(m, c)	ifmedia_add(&sc->sc_media, (m), (c), NULL)
+	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO, 0, 0), 0);
+	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO,
+	    IFM_IEEE80211_ADHOC, 0), 0);
+	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS1, 0, 0), 0);
+	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS1,
+	    IFM_IEEE80211_ADHOC, 0), 0);
+	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS2, 0, 0), 0);
+	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS2,
+	    IFM_IEEE80211_ADHOC, 0), 0);
+	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS5, 0, 0), 0);
+	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS5,
+	    IFM_IEEE80211_ADHOC, 0), 0);
+	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS11, 0, 0), 0);
+	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS11,
+	    IFM_IEEE80211_ADHOC, 0), 0);
+	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_MANUAL, 0, 0), 0);
+#undef ADD
+	ifmedia_set(&sc->sc_media,
+	    IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO, 0, 0));
 
 	/*
 	 * Call MI attach routines.
@@ -962,7 +995,7 @@ wi_setmulti(sc)
 	return;
 }
 
-STATIC void
+STATIC int
 wi_setdef(sc, wreq)
 	struct wi_softc		*sc;
 	struct wi_req		*wreq;
@@ -971,6 +1004,7 @@ wi_setdef(sc, wreq)
 	struct ifaddr		*ifa;
 	struct ifnet		*ifp;
 	extern struct ifaddr	**ifnet_addrs;
+	int error = 0;
 
 	ifp = &sc->arpcom.ac_if;
 
@@ -983,10 +1017,12 @@ wi_setdef(sc, wreq)
 		    ETHER_ADDR_LEN);
 		break;
 	case WI_RID_PORTTYPE:
-		sc->wi_ptype = letoh16(wreq->wi_val[0]);
+		error = wi_sync_media(sc, letoh16(wreq->wi_val[0]),
+		    sc->wi_tx_rate);
 		break;
 	case WI_RID_TX_RATE:
-		sc->wi_tx_rate = letoh16(wreq->wi_val[0]);
+		error = wi_sync_media(sc, sc->wi_ptype,
+		    letoh16(wreq->wi_val[0]));
 		break;
 	case WI_RID_MAX_DATALEN:
 		sc->wi_max_data_len = letoh16(wreq->wi_val[0]);
@@ -1004,16 +1040,16 @@ wi_setdef(sc, wreq)
 		sc->wi_channel = letoh16(wreq->wi_val[0]);
 		break;
 	case WI_RID_NODENAME:
-		bzero(sc->wi_node_name, sizeof(sc->wi_node_name));
-		bcopy((char *)&wreq->wi_val[1], sc->wi_node_name, 30);
+		error = wi_set_ssid(&sc->wi_node_name,
+		    (u_int8_t *)&wreq->wi_val[1], letoh16(wreq->wi_val[0]));
 		break;
 	case WI_RID_DESIRED_SSID:
-		bzero(sc->wi_net_name, sizeof(sc->wi_net_name));
-		bcopy((char *)&wreq->wi_val[1], sc->wi_net_name, 30);
+		error = wi_set_ssid(&sc->wi_net_name,
+		    (u_int8_t *)&wreq->wi_val[1], letoh16(wreq->wi_val[0]));
 		break;
 	case WI_RID_OWN_SSID:
-		bzero(sc->wi_ibss_name, sizeof(sc->wi_ibss_name));
-		bcopy((char *)&wreq->wi_val[1], sc->wi_ibss_name, 30);
+		error = wi_set_ssid(&sc->wi_ibss_name,
+		    (u_int8_t *)&wreq->wi_val[1], letoh16(wreq->wi_val[0]));
 		break;
 	case WI_RID_PM_ENABLED:
 		sc->wi_pm_enabled = letoh16(wreq->wi_val[0]);
@@ -1041,13 +1077,11 @@ wi_setdef(sc, wreq)
 		    sizeof(struct wi_ltv_keys));
 		break;
 	default:
+		error = EINVAL;
 		break;
 	}
 
-	/* Reinitialize WaveLAN. */
-	wi_init(sc);
-
-	return;
+	return (error);
 }
 
 STATIC int
@@ -1062,6 +1096,7 @@ wi_ioctl(ifp, command, data)
 	struct ifreq		*ifr;
 	struct proc		*p = curproc;
 	struct ifaddr		*ifa = (struct ifaddr *)data;
+	struct ieee80211_nwid	nwid;
 
 	s = splimp();
 
@@ -1140,6 +1175,10 @@ wi_ioctl(ifp, command, data)
 			error = 0;
 		}
 		break;
+	case SIOCSIFMEDIA:
+	case SIOCGIFMEDIA:
+		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, command);
+		break;
 	case SIOCGWAVELAN:
 		error = copyin(ifr->ifr_data, &wreq, sizeof(wreq));
 		if (error)
@@ -1181,8 +1220,57 @@ wi_ioctl(ifp, command, data)
 		} else {
 			error = wi_write_record(sc, (struct wi_ltv_gen *)&wreq);
 			if (!error)
-				wi_setdef(sc, &wreq);
+				error = wi_setdef(sc, &wreq);
+			if (!error && ifp->if_flags & IFF_UP)
+				wi_init(ifp);
 		}
+		break;
+	case SIOCG80211NWID:
+		if (ifp->if_flags & IFF_UP) {
+			/* Return the desired ID */
+			error = copyout(&sc->wi_net_name, ifr->ifr_data,
+			    sizeof(sc->wi_net_name));
+		} else {
+			wreq.wi_type = htole16(WI_RID_CURRENT_SSID);
+			wreq.wi_len = htole16(WI_MAX_DATALEN);
+			if (wi_read_record(sc, (struct wi_ltv_gen *)&wreq) ||
+			    letoh16(wreq.wi_val[0]) > IEEE80211_NWID_LEN)
+				error = EINVAL;
+			else {
+				wi_set_ssid(&nwid, (u_int8_t *)&wreq.wi_val[1],
+				    letoh16(wreq.wi_val[0]));
+				error = copyout(&nwid, ifr->ifr_data,
+				    sizeof(nwid));
+			}
+		}
+		break;
+	case SIOCS80211NWID:
+		error = copyin(ifr->ifr_data, &nwid, sizeof(nwid));
+		if (error != 0)
+			break;
+		if (nwid.i_len > IEEE80211_NWID_LEN) {
+			error = EINVAL;
+			break;
+		}
+		if (sc->wi_net_name.i_len == nwid.i_len &&
+		    memcmp(sc->wi_net_name.i_nwid, nwid.i_nwid, nwid.i_len) == 0)
+			break;
+		wi_set_ssid(&sc->wi_net_name, nwid.i_nwid, nwid.i_len);
+		if (ifp->if_flags & IFF_UP)
+			/* Reinitialize WaveLAN. */
+			wi_init(ifp);
+		break;
+	case SIOCS80211NWKEY:
+		error = wi_set_nwkey(sc, (struct ieee80211_nwkey *)data);
+		break;
+	case SIOCG80211NWKEY:
+		error = wi_get_nwkey(sc, (struct ieee80211_nwkey *)data);
+		break;
+	case SIOCS80211POWER:
+		error = wi_set_pm(sc, (struct ieee80211_power *)data);
+		break;
+	case SIOCG80211POWER:
+		error = wi_get_pm(sc, (struct ieee80211_power *)data);
 		break;
 	default:
 		error = EINVAL;
@@ -1603,4 +1691,249 @@ wi_get_id(sc, print_cis)
 	}
 
 	return;
+}
+
+STATIC int
+wi_sync_media(sc, ptype, txrate)
+	struct wi_softc *sc;
+	int ptype;
+	int txrate;
+{
+	int media = sc->sc_media.ifm_cur->ifm_media;
+	int options = IFM_OPTIONS(media);
+	int subtype;
+
+	switch (txrate) {
+	case 1:
+		subtype = IFM_IEEE80211_DS1;
+		break;
+	case 2:
+		subtype = IFM_IEEE80211_DS2;
+		break;
+	case 3:
+		subtype = IFM_AUTO;
+		break;
+	case 5:
+		subtype = IFM_IEEE80211_DS5;
+		break;
+	case 11:
+		subtype = IFM_IEEE80211_DS11;
+		break;
+	default:
+		subtype = IFM_MANUAL;           /* Unable to represent */
+		break;
+	}
+
+	switch (ptype) {
+	case WI_PORTTYPE_ADHOC:
+		options |= IFM_IEEE80211_ADHOC;
+		break;
+	case WI_PORTTYPE_BSS:
+		options &= ~IFM_IEEE80211_ADHOC;
+		break;
+	default:
+		subtype = IFM_MANUAL;           /* Unable to represent */
+		break;
+	}
+	media = IFM_MAKEWORD(IFM_TYPE(media), subtype, options,
+	IFM_INST(media));
+	if (ifmedia_match(&sc->sc_media, media, sc->sc_media.ifm_mask) == NULL)
+		return (EINVAL);
+	ifmedia_set(&sc->sc_media, media);
+	sc->wi_ptype = ptype;
+	sc->wi_tx_rate = txrate;
+	return (0);
+}
+
+STATIC int
+wi_media_change(ifp)
+	struct ifnet *ifp;
+{
+	struct wi_softc *sc = ifp->if_softc;
+	int otype = sc->wi_ptype;
+	int orate = sc->wi_tx_rate;
+
+	if ((sc->sc_media.ifm_cur->ifm_media & IFM_IEEE80211_ADHOC) != 0)
+		sc->wi_ptype = WI_PORTTYPE_ADHOC;
+	else
+		sc->wi_ptype = WI_PORTTYPE_BSS;
+
+	switch (IFM_SUBTYPE(sc->sc_media.ifm_cur->ifm_media)) {
+	case IFM_IEEE80211_DS1:
+		sc->wi_tx_rate = 1;
+		break;
+	case IFM_IEEE80211_DS2:
+		sc->wi_tx_rate = 2;
+		break;
+	case IFM_AUTO:
+		sc->wi_tx_rate = 3;
+		break;
+	case IFM_IEEE80211_DS5:
+		sc->wi_tx_rate = 5;
+		break;
+	case IFM_IEEE80211_DS11:
+		sc->wi_tx_rate = 11;
+		break;
+	}
+
+	if (sc->arpcom.ac_if.if_flags & IFF_UP) {
+		if (otype != sc->wi_ptype ||
+		    orate != sc->wi_tx_rate)
+			wi_init(ifp);
+	}
+
+	ifp->if_baudrate = ifmedia_baudrate(sc->sc_media.ifm_cur->ifm_media);
+
+	return (0);
+}
+
+STATIC void
+wi_media_status(ifp, imr)
+	struct ifnet *ifp;
+	struct ifmediareq *imr;
+{
+	struct wi_softc *sc = ifp->if_softc;
+
+	if (!(sc->arpcom.ac_if.if_flags & IFF_UP)) {
+		imr->ifm_active = IFM_IEEE80211|IFM_NONE;
+		imr->ifm_status = 0;
+		return;
+	}
+
+	imr->ifm_active = sc->sc_media.ifm_cur->ifm_media;
+	imr->ifm_status = IFM_AVALID|IFM_ACTIVE;
+}
+
+STATIC int
+wi_set_nwkey(sc, nwkey)
+	struct wi_softc *sc;
+	struct ieee80211_nwkey *nwkey;
+{
+	int i, len, error;
+	struct wi_req wreq;
+	struct wi_ltv_keys *wk = (struct wi_ltv_keys *)&wreq;
+
+	if (!sc->wi_has_wep)
+		return ENODEV;
+	if (nwkey->i_defkid <= 0 ||
+	    nwkey->i_defkid > IEEE80211_WEP_NKID)
+		return EINVAL;
+	memcpy(wk, &sc->wi_keys, sizeof(*wk));
+	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
+		if (nwkey->i_key[i].i_keydat == NULL)
+			continue;
+		len = nwkey->i_key[i].i_keylen;
+		if (len > sizeof(wk->wi_keys[i].wi_keydat))
+			return EINVAL;
+		error = copyin(nwkey->i_key[i].i_keydat,
+		    wk->wi_keys[i].wi_keydat, len);
+		if (error)
+			return error;
+		wk->wi_keys[i].wi_keylen = htole16(len);
+	}
+
+	wk->wi_len = (sizeof(*wk) / 2) + 1;
+	wk->wi_type = WI_RID_DEFLT_CRYPT_KEYS;
+	if (sc->arpcom.ac_if.if_flags & IFF_UP) {
+		error = wi_write_record(sc, (struct wi_ltv_gen *)&wreq);
+		if (error)
+			return error;
+	}
+	if ((error = wi_setdef(sc, &wreq)))
+		return (error);
+
+	wreq.wi_len = 2;
+	wreq.wi_type = WI_RID_TX_CRYPT_KEY;
+	wreq.wi_val[0] = htole16(nwkey->i_defkid - 1);
+	if (sc->arpcom.ac_if.if_flags & IFF_UP) {
+		error = wi_write_record(sc, (struct wi_ltv_gen *)&wreq);
+		if (error)
+			return error;
+	}
+	if ((error = wi_setdef(sc, &wreq)))
+		return (error);
+
+	wreq.wi_type = WI_RID_ENCRYPTION;
+	wreq.wi_val[0] = htole16(nwkey->i_wepon);
+	if (sc->arpcom.ac_if.if_flags & IFF_UP) {
+		error = wi_write_record(sc, (struct wi_ltv_gen *)&wreq);
+		if (error)
+			return error;
+	}
+	if ((error = wi_setdef(sc, &wreq)))
+		return (error);
+
+	if (sc->arpcom.ac_if.if_flags & IFF_UP)
+		wi_init(&sc->arpcom.ac_if);
+	return 0;
+}
+
+STATIC int
+wi_get_nwkey(sc, nwkey)
+	struct wi_softc *sc;
+	struct ieee80211_nwkey *nwkey;
+{
+	int i, len, error;
+	struct wi_ltv_keys *wk = &sc->wi_keys;
+
+	if (!sc->wi_has_wep)
+		return ENODEV;
+	nwkey->i_wepon = sc->wi_use_wep;
+	nwkey->i_defkid = sc->wi_tx_key + 1;
+
+	/* do not show any keys to non-root user */
+	error = suser(curproc->p_ucred, &curproc->p_acflag);
+	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
+		if (nwkey->i_key[i].i_keydat == NULL)
+			continue;
+		/* error holds results of suser() for the first time */
+		if (error)
+			return error;
+		len = letoh16(wk->wi_keys[i].wi_keylen);
+		if (nwkey->i_key[i].i_keylen < len)
+			return ENOSPC;
+		nwkey->i_key[i].i_keylen = len;
+		error = copyout(wk->wi_keys[i].wi_keydat,
+		    nwkey->i_key[i].i_keydat, len);
+		if (error)
+			return error;
+	}
+	return 0;
+}
+
+STATIC int
+wi_set_pm(struct wi_softc *sc, struct ieee80211_power *power)
+{
+
+	sc->wi_pm_enabled = power->i_enabled;
+	sc->wi_max_sleep = power->i_maxsleep;
+
+	if (sc->arpcom.ac_if.if_flags & IFF_UP)
+		wi_init(&sc->arpcom.ac_if);
+
+	return (0);
+}
+
+STATIC int
+wi_get_pm(struct wi_softc *sc, struct ieee80211_power *power)
+{
+
+	power->i_enabled = sc->wi_pm_enabled;
+	power->i_maxsleep = sc->wi_max_sleep;
+
+	return (0);
+}
+
+STATIC int
+wi_set_ssid(ws, id, len)
+	struct ieee80211_nwid *ws;
+	u_int8_t *id;
+	int len;
+{
+
+	if (len > IEEE80211_NWID_LEN)
+		return (EINVAL);
+	ws->i_len = len;
+	memcpy(ws->i_nwid, id, len);
+	return (0);
 }

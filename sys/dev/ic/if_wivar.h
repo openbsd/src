@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wivar.h,v 1.4 2001/12/20 17:48:25 mickey Exp $	*/
+/*	$OpenBSD: if_wivar.h,v 1.5 2002/02/19 01:24:58 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -39,7 +39,7 @@ struct wi_softc	{
 	struct device		sc_dev;
 #endif	/* !__FreeBSD__ */
 	struct arpcom		arpcom;
-	struct ifmedia		ifmedia;
+	struct ifmedia		sc_media;
 	bus_space_handle_t	wi_bhandle;
 	bus_space_tag_t		wi_btag;
 	int			wi_tx_data_id;
@@ -60,9 +60,9 @@ struct wi_softc	{
 	u_int16_t		wi_authtype;
 	u_int16_t		wi_roaming;
 
-	char			wi_node_name[32];
-	char			wi_net_name[32];
-	char			wi_ibss_name[32];
+	struct ieee80211_nwid	wi_node_name;
+	struct ieee80211_nwid	wi_net_name;
+	struct ieee80211_nwid	wi_ibss_name;
 
 	u_int8_t		wi_txbuf[1596];
 	int			wi_has_wep;
