@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.36 2003/10/10 19:02:24 jason Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.37 2003/10/12 02:35:53 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -113,12 +113,7 @@ struct cfdriver vr_cd = {
 	0, "vr", DV_IFNET
 };
 
-int vr_newbuf(struct vr_softc *,
-				     struct vr_chain_onefrag *,
-				     struct mbuf *);
-int vr_encap(struct vr_softc *, struct vr_chain *,
-				     struct mbuf * );
-
+int vr_encap(struct vr_softc *, struct vr_chain *, struct mbuf *);
 void vr_rxeof(struct vr_softc *);
 void vr_rxeoc(struct vr_softc *);
 void vr_txeof(struct vr_softc *);
@@ -923,15 +918,35 @@ vr_list_rx_init(sc)
 	struct vr_chain_data	*cd;
 	struct vr_list_data	*ld;
 	int			i;
+	struct vr_desc		*d;
 
 	cd = &sc->vr_cdata;
 	ld = sc->vr_ldata;
 
 	for (i = 0; i < VR_RX_LIST_CNT; i++) {
-		cd->vr_rx_chain[i].vr_ptr =
-			(struct vr_desc *)&ld->vr_rx_list[i];
-		if (vr_newbuf(sc, &cd->vr_rx_chain[i], NULL) == ENOBUFS)
-			return(ENOBUFS);
+		d = (struct vr_desc *)&ld->vr_rx_list[i];
+		cd->vr_rx_chain[i].vr_ptr = d;
+
+		cd->vr_rx_chain[i].vr_buf =
+		    (u_int8_t *)malloc(MCLBYTES, M_DEVBUF, M_NOWAIT);
+		if (cd->vr_rx_chain[i].vr_buf == NULL)
+			return (ENOBUFS);
+
+		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES, 
+		    0, BUS_DMA_NOWAIT | BUS_DMA_READ,
+		    &cd->vr_rx_chain[i].vr_map))
+			return (ENOBUFS);
+
+		if (bus_dmamap_load(sc->sc_dmat, cd->vr_rx_chain[i].vr_map,
+		    cd->vr_rx_chain[i].vr_buf, MCLBYTES, NULL, BUS_DMA_NOWAIT))
+			return (ENOBUFS);
+
+		d->vr_status = htole32(VR_RXSTAT);
+		d->vr_data =
+		    htole32(cd->vr_rx_chain[i].vr_map->dm_segs[0].ds_addr +
+		    sizeof(u_int64_t));
+		d->vr_ctl = htole32(VR_RXCTL | VR_RXLEN);
+
 		if (i == (VR_RX_LIST_CNT - 1)) {
 			cd->vr_rx_chain[i].vr_nextdesc =
 			    &cd->vr_rx_chain[0];
@@ -953,48 +968,6 @@ vr_list_rx_init(sc)
 }
 
 /*
- * Initialize an RX descriptor and attach an MBUF cluster.
- * Note: the length fields are only 11 bits wide, which means the
- * largest size we can specify is 2047. This is important because
- * MCLBYTES is 2048, so we have to subtract one otherwise we'll
- * overflow the field and make a mess.
- */
-int
-vr_newbuf(sc, c, m)
-	struct vr_softc		*sc;
-	struct vr_chain_onefrag	*c;
-	struct mbuf		*m;
-{
-	struct mbuf		*m_new = NULL;
-
-	if (m == NULL) {
-		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-		if (m_new == NULL)
-			return(ENOBUFS);
-
-		MCLGET(m_new, M_DONTWAIT);
-		if (!(m_new->m_flags & M_EXT)) {
-			m_freem(m_new);
-			return(ENOBUFS);
-		}
-		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
-	} else {
-		m_new = m;
-		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
-		m_new->m_data = m_new->m_ext.ext_buf;
-	}
-
-	m_adj(m_new, sizeof(u_int64_t));
-
-	c->vr_mbuf = m_new;
-	c->vr_ptr->vr_status = VR_RXSTAT;
-	c->vr_ptr->vr_data = vtophys(mtod(m_new, caddr_t));
-	c->vr_ptr->vr_ctl = VR_RXCTL | VR_RXLEN;
-
-	return(0);
-}
-
-/*
  * A frame has been uploaded: pass the resulting mbuf chain up to
  * the higher level protocols.
  */
@@ -1002,7 +975,6 @@ void
 vr_rxeof(sc)
 	struct vr_softc		*sc;
 {
-	struct mbuf		*m;
 	struct ifnet		*ifp;
 	struct vr_chain_onefrag	*cur_rx;
 	int			total_len = 0;
@@ -1016,7 +988,6 @@ vr_rxeof(sc)
 
 		cur_rx = sc->vr_cdata.vr_rx_head;
 		sc->vr_cdata.vr_rx_head = cur_rx->vr_nextdesc;
-		m = cur_rx->vr_mbuf;
 
 		/*
 		 * If an error occurs, update stats, clear the
@@ -1043,7 +1014,13 @@ vr_rxeof(sc)
 			if (rxstat & VR_RXSTAT_BUFFERR)
 				printf(" rx buffer error");
 			printf("\n");
-			vr_newbuf(sc, cur_rx, m);
+
+			/* Reinitialize descriptor */
+			cur_rx->vr_ptr->vr_status = htole32(VR_RXSTAT);
+			cur_rx->vr_ptr->vr_data =
+			    htole32(cur_rx->vr_map->dm_segs[0].ds_addr +
+			    sizeof(u_int64_t));
+			cur_rx->vr_ptr->vr_ctl = htole32(VR_RXCTL | VR_RXLEN);
 			continue;
 		}
 
@@ -1059,15 +1036,21 @@ vr_rxeof(sc)
 		 */
 		total_len -= ETHER_CRC_LEN;
 
-		m0 = m_devget(mtod(m, char *) - ETHER_ALIGN,
+		m0 = m_devget(cur_rx->vr_buf + sizeof(u_int64_t) - ETHER_ALIGN,
 		    total_len + ETHER_ALIGN, 0, ifp, NULL);
-		vr_newbuf(sc, cur_rx, m);
+
+		/* Reinitialize descriptor */
+		cur_rx->vr_ptr->vr_status = htole32(VR_RXSTAT);
+		cur_rx->vr_ptr->vr_data =
+		    htole32(cur_rx->vr_map->dm_segs[0].ds_addr +
+		    sizeof(u_int64_t));
+		cur_rx->vr_ptr->vr_ctl = htole32(VR_RXCTL | VR_RXLEN);
+
 		if (m0 == NULL) {
 			ifp->if_ierrors++;
 			continue;
 		}
 		m_adj(m0, ETHER_ALIGN);
-		m = m0;
 
 		ifp->if_ipackets++;
 
@@ -1076,10 +1059,10 @@ vr_rxeof(sc)
 		 * Handle BPF listeners. Let the BPF user see the packet.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m0);
 #endif
 		/* pass it on. */
-		ether_input_mbuf(ifp, m);
+		ether_input_mbuf(ifp, m0);
 	}
 
 	return;
@@ -1712,8 +1695,9 @@ void
 vr_stop(sc)
 	struct vr_softc		*sc;
 {
-	register int		i;
-	struct ifnet		*ifp;
+	int		i;
+	struct ifnet	*ifp;
+	bus_dmamap_t	map;
 
 	ifp = &sc->arpcom.ac_if;
 	ifp->if_timer = 0;
@@ -1731,9 +1715,18 @@ vr_stop(sc)
 	 * Free data in the RX lists.
 	 */
 	for (i = 0; i < VR_RX_LIST_CNT; i++) {
-		if (sc->vr_cdata.vr_rx_chain[i].vr_mbuf != NULL) {
-			m_freem(sc->vr_cdata.vr_rx_chain[i].vr_mbuf);
-			sc->vr_cdata.vr_rx_chain[i].vr_mbuf = NULL;
+
+		if (sc->vr_cdata.vr_rx_chain[i].vr_buf != NULL) {
+			free(sc->vr_cdata.vr_rx_chain[i].vr_buf, M_DEVBUF);
+			sc->vr_cdata.vr_rx_chain[i].vr_buf = NULL;
+		}
+
+		map = sc->vr_cdata.vr_rx_chain[i].vr_map;
+		if (map != NULL) {
+			if (map->dm_segs > 0)
+				bus_dmamap_unload(sc->sc_dmat, map);
+			bus_dmamap_destroy(sc->sc_dmat, map);
+			sc->vr_cdata.vr_rx_chain[i].vr_map = NULL;
 		}
 	}
 	bzero((char *)&sc->vr_ldata->vr_rx_list,
