@@ -1,4 +1,4 @@
-/*	$OpenBSD: errno.h,v 1.6 1997/02/27 01:00:54 millert Exp $	*/
+/*	$OpenBSD: errno.h,v 1.7 1997/02/28 07:15:58 millert Exp $	*/
 /*	$NetBSD: errno.h,v 1.10 1996/01/20 01:33:53 jtc Exp $	*/
 
 /*
@@ -40,9 +40,6 @@
  *
  *	@(#)errno.h	8.5 (Berkeley) 1/21/94
  */
-
-#ifndef _SYS_ERRNO_H_
-#define _SYS_ERRNO_H_
 
 #ifndef _KERNEL
 extern int errno;			/* global error number */
@@ -173,6 +170,4 @@ extern char *sys_errlist[];
 /* pseudo-errors returned inside kernel to modify return to process */
 #define	ERESTART	-1		/* restart syscall */
 #define	EJUSTRETURN	-2		/* don't modify regs, just return */
-#endif
-
 #endif
