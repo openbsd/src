@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.37 2001/01/30 23:58:50 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.38 2001/02/05 01:42:49 deraadt Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -140,7 +140,7 @@ unt()
 for i
 do
 
-unit=`unt $1`
+unit=`unt $i`
 [ "$unit" ] || unit=0
 
 case $i in
