@@ -1,5 +1,5 @@
-/*	$OpenBSD: log.h,v 1.7 2000/02/25 17:23:41 niklas Exp $	*/
-/*	$EOM: log.h,v 1.18 2000/02/20 19:58:40 niklas Exp $	*/
+/*	$OpenBSD: log.h,v 1.8 2000/04/07 22:05:08 niklas Exp $	*/
+/*	$EOM: log.h,v 1.19 2000/03/30 14:27:23 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -81,5 +81,6 @@ extern void log_error (const char *, ...);
 extern void log_fatal (const char *, ...);
 extern void log_print (const char *, ...);
 extern void log_to (FILE *);
+extern void log_init (void);
 
 #endif /* _LOG_H_ */

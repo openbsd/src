@@ -1,5 +1,5 @@
-/*	$OpenBSD: init.c,v 1.14 2000/02/19 19:32:53 niklas Exp $	*/
-/*	$EOM: init.c,v 1.24 2000/02/19 07:58:55 niklas Exp $	*/
+/*	$OpenBSD: init.c,v 1.15 2000/04/07 22:05:08 niklas Exp $	*/
+/*	$EOM: init.c,v 1.25 2000/03/30 14:27:24 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -50,6 +50,7 @@
 #include "ipsec.h"
 #include "isakmp_doi.h"
 #include "libcrypto.h"
+#include "log.h"
 #include "math_group.h"
 #include "sa.h"
 #include "timer.h"
@@ -64,6 +65,7 @@
 void
 init ()
 {
+  log_init ();
   app_init ();
   doi_init ();
   exchange_init ();
