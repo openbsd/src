@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_misc.c,v 1.32 2001/06/27 04:58:42 art Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.33 2001/08/22 10:29:42 niklas Exp $	 */
 /*	$NetBSD: svr4_misc.c,v 1.42 1996/12/06 03:22:34 christos Exp $	 */
 
 /*
@@ -42,6 +42,7 @@
 #include <sys/namei.h>
 #include <sys/dirent.h>
 #include <sys/proc.h>
+#include <sys/sched.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -1029,23 +1030,22 @@ svr4_setinfo(p, st, s)
 
 
 int
-svr4_sys_waitsys(p, v, retval) 
-	register struct proc *p;
+svr4_sys_waitsys(q, v, retval) 
+	struct proc *q;
 	void *v;
 	register_t *retval;
 {
 	struct svr4_sys_waitsys_args *uap = v;
 	int nfound;
 	int error;
-	struct proc *q, *t;
-
+	struct proc *p, *t;
 
 	switch (SCARG(uap, grp)) {
 	case SVR4_P_PID:	
 		break;
 
 	case SVR4_P_PGID:
-		SCARG(uap, id) = -p->p_pgid;
+		SCARG(uap, id) = -q->p_pgid;
 		break;
 
 	case SVR4_P_ALL:
@@ -1053,117 +1053,81 @@ svr4_sys_waitsys(p, v, retval)
 		break;
 
 	default:
-		return EINVAL;
+		return (EINVAL);
 	}
 
-	DPRINTF(("waitsys(%d, %d, %p, %x)\n", 
-	         SCARG(uap, grp), SCARG(uap, id),
-		 SCARG(uap, info), SCARG(uap, options)));
+	DPRINTF(("waitsys(%d, %d, %p, %x)\n", SCARG(uap, grp), SCARG(uap, id),
+	    SCARG(uap, info), SCARG(uap, options)));
 
 loop:
 	nfound = 0;
-	for (q = p->p_children.lh_first; q != 0; q = q->p_sibling.le_next) {
+	for (p = q->p_children.lh_first; p != 0; p = p->p_sibling.le_next) {
 		if (SCARG(uap, id) != WAIT_ANY &&
-		    q->p_pid != SCARG(uap, id) &&
-		    q->p_pgid != -SCARG(uap, id)) {
-			DPRINTF(("pid %d pgid %d != %d\n", q->p_pid,
-				 q->p_pgid, SCARG(uap, id)));
+		    p->p_pid != SCARG(uap, id) &&
+		    p->p_pgid != -SCARG(uap, id)) {
+			DPRINTF(("pid %d pgid %d != %d\n", p->p_pid,
+				 p->p_pgid, SCARG(uap, id)));
 			continue;
 		}
 		nfound++;
-		if (q->p_stat == SZOMB && 
+		if (p->p_stat == SZOMB && 
 		    ((SCARG(uap, options) & (SVR4_WEXITED|SVR4_WTRAPPED)))) {
 			*retval = 0;
-			DPRINTF(("found %d\n", q->p_pid));
-			if ((error = svr4_setinfo(q, q->p_xstat,
-						  SCARG(uap, info))) != 0)
-				return error;
+			DPRINTF(("found %d\n", p->p_pid));
+			error = svr4_setinfo(p, p->p_xstat, SCARG(uap, info));
+			if (error)
+				return (error);
 
-
-		        if ((SCARG(uap, options) & SVR4_WNOWAIT)) {
+			if ((SCARG(uap, options) & SVR4_WNOWAIT)) {
 				DPRINTF(("Don't wait\n"));
-				return 0;
+				return (0);
 			}
 
 			/*
 			 * If we got the child via a ptrace 'attach',
 			 * we need to give it back to the old parent.
 			 */
-			if (q->p_oppid && (t = pfind(q->p_oppid))) {
-				q->p_oppid = 0;
-				proc_reparent(q, t);
+			if (p->p_oppid && (t = pfind(p->p_oppid))) {
+				p->p_oppid = 0;
+				proc_reparent(p, t);
 				psignal(t, SIGCHLD);
 				wakeup((caddr_t)t);
-				return 0;
-			}
-			q->p_xstat = 0;
-			ruadd(&p->p_stats->p_cru, q->p_ru);
-			FREE(q->p_ru, M_ZOMBIE);
-
-			/*
-			 * Decrement the count of procs running with this uid.
-			 */
-			(void)chgproccnt(q->p_cred->p_ruid, -1);
-
-			/*
-			 * Free up credentials.
-			 */
-			if (--q->p_cred->p_refcnt == 0) {
-				crfree(q->p_cred->pc_ucred);
-				FREE(q->p_cred, M_SUBPROC);
+				return (0);
 			}
 
-			/*
-			 * Release reference to text vnode
-			 */
-			if (q->p_textvp)
-				vrele(q->p_textvp);
+			scheduler_wait_hook(q, p);
+			p->p_xstat = 0;
+			ruadd(&q->p_stats->p_cru, p->p_ru);
 
-			/*
-			 * Finally finished with old proc entry.
-			 * Unlink it from its process group and free it.
-			 */
-			leavepgrp(q);
-			LIST_REMOVE(q, p_list);	/* off zombproc */
-			LIST_REMOVE(q, p_sibling);
-
-			/*
-			 * Give machine-dependent layer a chance
-			 * to free anything that cpu_exit couldn't
-			 * release while still running in process context.
-			 */
-			cpu_wait(q);
-			pool_put(&proc_pool, q);
-			nprocs--;
-			return 0;
+			proc_zap(p);
+			return (0);
 		}
-		if (q->p_stat == SSTOP && (q->p_flag & P_WAITED) == 0 &&
-		    (q->p_flag & P_TRACED ||
-		     (SCARG(uap, options) & (SVR4_WSTOPPED|SVR4_WCONTINUED)))) {
-			DPRINTF(("jobcontrol %d\n", q->p_pid));
-		        if (((SCARG(uap, options) & SVR4_WNOWAIT)) == 0)
-				q->p_flag |= P_WAITED;
+		if (p->p_stat == SSTOP && (p->p_flag & P_WAITED) == 0 &&
+		    (p->p_flag & P_TRACED ||
+		    (SCARG(uap, options) & (SVR4_WSTOPPED|SVR4_WCONTINUED)))) {
+			DPRINTF(("jobcontrol %d\n", p->p_pid));
+			if (((SCARG(uap, options) & SVR4_WNOWAIT)) == 0)
+				p->p_flag |= P_WAITED;
 			*retval = 0;
-			return svr4_setinfo(q, W_STOPCODE(q->p_xstat),
-					    SCARG(uap, info));
+			return (svr4_setinfo(p, W_STOPCODE(p->p_xstat),
+			   SCARG(uap, info)));
 		}
 	}
 
 	if (nfound == 0)
-		return ECHILD;
+		return (ECHILD);
 
 	if (SCARG(uap, options) & SVR4_WNOHANG) {
 		*retval = 0;
 		if ((error = svr4_setinfo(NULL, 0, SCARG(uap, info))) != 0)
-			return error;
-		return 0;
+			return (error);
+		return (0);
 	}
 
-	if ((error = tsleep((caddr_t)p, PWAIT | PCATCH, "svr4_wait", 0)) != 0)
-		return error;
+	if ((error = tsleep((caddr_t)q, PWAIT | PCATCH, "svr4_wait", 0)) != 0)
+		return (error);
 	goto loop;
 }
-
 
 static void
 bsd_statfs_to_svr4_statvfs(bfs, sfs)

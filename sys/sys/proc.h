@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.47 2001/08/07 22:57:15 art Exp $	*/
+/*	$OpenBSD: proc.h,v 1.48 2001/08/22 10:29:42 niklas Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -385,5 +385,6 @@ void	cpu_wait __P((struct proc *));
 void	cpu_exit __P((struct proc *));
 
 int	proc_cansugid __P((struct proc *));
+void	proc_zap __P((struct proc *));
 #endif	/* _KERNEL */
 #endif	/* !_SYS_PROC_H_ */
