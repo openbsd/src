@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.141 2005/03/29 11:33:18 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.142 2005/04/03 10:36:12 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -379,7 +379,9 @@ static void pmap_page_upload(paddr_t);
 void pmap_pinit(pmap_t);
 void pmap_release(pmap_t);
 
+#if defined(SUN4) || defined(SUN4C)
 int mmu_has_hole;
+#endif
 
 vaddr_t prom_vstart;	/* For /dev/kmem */
 vaddr_t prom_vend;
@@ -509,7 +511,6 @@ boolean_t	(*pmap_extract_p)(pmap_t, vaddr_t, paddr_t *);
 boolean_t	(*pmap_is_modified_p)(struct vm_page *);
 boolean_t	(*pmap_is_referenced_p)(struct vm_page *);
 void		(*pmap_kenter_pa_p)(vaddr_t, paddr_t, vm_prot_t);
-void		(*pmap_kremove_p)(vaddr_t, vsize_t);
 void		(*pmap_page_protect_p)(struct vm_page *, vm_prot_t);
 void		(*pmap_protect_p)(pmap_t, vaddr_t, vaddr_t, vm_prot_t);
 void		(*pmap_copy_page_p)(struct vm_page *, struct vm_page *);
@@ -864,13 +865,6 @@ mmu_reservemon4_4c(nrp, nsp)
 	int mmureg;
 #endif
 	struct regmap *rp;
-
-#if defined(SUN4M)
-	if (CPU_ISSUN4M) {
-		panic("mmu_reservemon4_4c called on Sun4M machine");
-		return;
-	}
-#endif
 
 #if defined(SUN4)
 	if (CPU_ISSUN4) {
@@ -2680,7 +2674,6 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	pmap_is_modified_p 	=	pmap_is_modified4_4c;
 	pmap_is_referenced_p	=	pmap_is_referenced4_4c;
 	pmap_kenter_pa_p	=	pmap_kenter_pa4_4c;
-	pmap_kremove_p		=	pmap_kremove4_4c;
 	pmap_page_protect_p	=	pmap_page_protect4_4c;
 	pmap_protect_p		=	pmap_protect4_4c;
 	pmap_zero_page_p	=	pmap_zero_page4_4c;
@@ -2993,7 +2986,6 @@ pmap_bootstrap4m(void)
 	pmap_is_modified_p 	=	pmap_is_modified4m;
 	pmap_is_referenced_p	=	pmap_is_referenced4m;
 	pmap_kenter_pa_p	=	pmap_kenter_pa4m;
-	pmap_kremove_p		=	pmap_kremove4m;
 	pmap_page_protect_p	=	pmap_page_protect4m;
 	pmap_protect_p		=	pmap_protect4m;
 	pmap_zero_page_p	=	pmap_zero_page4m;
@@ -3436,6 +3428,8 @@ struct pmap *
 pmap_create()
 {
 	struct pmap *pm;
+	int size;
+	void *urp;
 
 	pm = (struct pmap *)malloc(sizeof *pm, M_VMPMAP, M_WAITOK);
 #ifdef DEBUG
@@ -3443,25 +3437,6 @@ pmap_create()
 		printf("pmap_create: created %p\n", pm);
 #endif
 	bzero((caddr_t)pm, sizeof *pm);
-	pmap_pinit(pm);
-	return (pm);
-}
-
-/*
- * Initialize a preallocated and zeroed pmap structure,
- * such as one in a vmspace structure.
- */
-void
-pmap_pinit(pm)
-	struct pmap *pm;
-{
-	int size;
-	void *urp;
-
-#ifdef DEBUG
-	if (pmapdebug & PDB_CREATE)
-		printf("pmap_pinit(%p)\n", pm);
-#endif
 
 	size = NUREG * sizeof(struct regmap);
 
@@ -3515,7 +3490,7 @@ pmap_pinit(pm)
 
 	pm->pm_gap_end = VA_VREG(VM_MAXUSER_ADDRESS);
 
-	return;
+	return (pm);
 }
 
 /*
@@ -3683,6 +3658,40 @@ pmap_remove(pm, va, endva)
 			(*rm)(pm, va, nva, vr, vs);
 	}
 	simple_unlock(&pm->pm_lock);
+	splx(s);
+	setcontext(ctx);
+}
+
+void
+pmap_kremove(va, len)
+	vaddr_t va;
+	vsize_t len;
+{
+	struct pmap *pm = pmap_kernel();
+	vaddr_t nva, endva = va + len;
+	int vr, vs, s, ctx;
+
+#ifdef DEBUG
+	if (pmapdebug & PDB_REMOVE)
+		printf("pmap_kremove(0x%lx, 0x%lx)\n", va, len);
+#endif
+
+	ctx = getcontext();
+	s = splvm();		/* XXX conservative */
+	simple_lock(pm->pm_lock);
+
+	for (; va < endva; va = nva) {
+		/* do one virtual segment at a time */
+		vr = VA_VREG(va);
+		vs = VA_VSEG(va);
+		nva = VSTOVA(vr, vs + 1);
+		if (nva == 0 || nva > endva)
+			nva = endva;
+		if (pm->pm_regmap[vr].rg_nsegmap != 0)
+			pmap_rmk(pm, va, nva, vr, vs);
+	}
+
+	simple_unlock(pm->pm_lock);
 	splx(s);
 	setcontext(ctx);
 }
@@ -5229,14 +5238,6 @@ pmap_kenter_pa4_4c(va, pa, prot)
 	setcontext4(ctx);
 }
 
-void
-pmap_kremove4_4c(va, len)
-	vaddr_t va;
-	vsize_t len;
-{
-	pmap_remove(pmap_kernel(), va, va + len);
-}
-
 #endif /*sun4,4c*/
 
 #if defined(SUN4M)		/* Sun4M versions of enter routines */
@@ -5563,14 +5564,6 @@ pmap_kenter_pa4m(va, pa, prot)
 	setcontext4m(ctx);
 }
 
-void
-pmap_kremove4m(va, len)
-	vaddr_t va;
-	vsize_t len;
-{
-	pmap_remove(pmap_kernel(), va, va + len);
-}
-
 #endif /* sun4m */
 
 /*
@@ -5727,21 +5720,6 @@ pmap_extract4m(pm, va, pa)
 	return (TRUE);
 }
 #endif /* sun4m */
-
-/*
- * Garbage collects the physical map system for
- * pages which are no longer used.
- * Success need not be guaranteed -- that is, there
- * may well be pages which are not referenced, but
- * others may be collected.
- * Called by the pageout daemon when pages are scarce.
- */
-/* ARGSUSED */
-void
-pmap_collect(pm)
-	struct pmap *pm;
-{
-}
 
 #if defined(SUN4) || defined(SUN4C)
 
@@ -6044,19 +6022,6 @@ pmap_copy_page4m(struct vm_page *srcpg, struct vm_page *dstpg)
 #endif /* Sun4M */
 
 /*
- * Turn a cdevsw d_mmap value into a byte address for pmap_enter.
- * XXX	this should almost certainly be done differently, and
- *	elsewhere, or even not at all
- */
-paddr_t
-pmap_phys_address(x)
-	int x;
-{
-
-	return (x);
-}
-
-/*
  * Turn on/off cache for a given (va, number of pages).
  *
  * We just assert PG_NC for each PTE; the addresses must reside
@@ -6171,8 +6136,10 @@ pmap_prefer(foff, vap)
 	vaddr_t va = *vap;
 	long d, m;
 
+#if defined(SUN4) || defined(SUN4C)
 	if (VA_INHOLE(va))
 		va = MMU_HOLE_END;
+#endif
 
 	m = CACHE_ALIAS_DIST;
 	if (m == 0)		/* m=0 => no cache aliasing */
@@ -6230,15 +6197,6 @@ pmap_activate(p)
 		}
 	}
 	splx(s);
-}
-
-/*
- * Deactivate the address space of the specified process.
- */
-void
-pmap_deactivate(p)
-	struct proc *p;
-{
 }
 
 #ifdef DEBUG

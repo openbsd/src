@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.37 2004/05/20 09:20:41 kettenis Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.38 2005/04/03 10:36:10 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.30 1997/08/04 20:00:47 pk Exp $ */
 
 /*
@@ -269,21 +269,18 @@ int             pmap_dumpmmu(int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t);
 
 struct proc;
 void		pmap_activate(struct proc *);
-void		pmap_deactivate(struct proc *);
 void		pmap_bootstrap(int nmmu, int nctx, int nregion);
 int		pmap_count_ptes(struct pmap *);
 void		pmap_prefer(vaddr_t, vaddr_t *);
 int		pmap_pa_exists(paddr_t);
 void		*pmap_bootstrap_alloc(int);
 void		pmap_unwire(pmap_t, vaddr_t);
-void		pmap_collect(pmap_t);
 void		pmap_copy(pmap_t, pmap_t, vaddr_t, vsize_t, vaddr_t);
 pmap_t		pmap_create(void);
 void		pmap_destroy(pmap_t);
 void		pmap_init(void);
+void		pmap_kremove(vaddr_t, vsize_t);
 vaddr_t		pmap_map(vaddr_t, paddr_t, paddr_t, int);
-vaddr_t		pmap_phys_address(int);
-void		pmap_pinit(pmap_t);
 void		pmap_reference(pmap_t);
 void		pmap_release(pmap_t);
 void		pmap_remove(pmap_t, vaddr_t, vaddr_t);
@@ -300,10 +297,12 @@ void		switchexit(struct proc *);
 int		mmu_pagein(struct pmap *pm, vaddr_t, int);
 void		pmap_writetext(unsigned char *, int);
 
-#define		pmap_update(pm)		/* nothing */
-#define		pmap_copy(DP,SP,D,L,S)	/* nothing */
-
-#define		pmap_proc_iflush(p,va,len)	/* nothing */
+#define		pmap_collect(pm)		do { /* nothing */ } while (0)
+#define		pmap_copy(DP,SP,D,L,S)		do { /* nothing */ } while (0)
+#define		pmap_deactivate(p)		do { /* nothing */ } while (0)
+#define		pmap_phys_address(frame)	(frame)
+#define		pmap_proc_iflush(p,va,len)	do { /* nothing */ } while (0)
+#define		pmap_update(pm)			do { /* nothing */ } while (0)
 
 /* SUN4/SUN4C SPECIFIC DECLARATIONS */
 
@@ -315,7 +314,6 @@ boolean_t	pmap_extract4_4c(pmap_t, vaddr_t, paddr_t *);
 boolean_t	pmap_is_modified4_4c(struct vm_page *);
 boolean_t	pmap_is_referenced4_4c(struct vm_page *);
 void		pmap_kenter_pa4_4c(vaddr_t, paddr_t, vm_prot_t);
-void		pmap_kremove4_4c(vaddr_t, vsize_t);
 void		pmap_page_protect4_4c(struct vm_page *, vm_prot_t);
 void		pmap_protect4_4c(pmap_t, vaddr_t, vaddr_t, vm_prot_t);
 void		pmap_copy_page4_4c(struct vm_page *, struct vm_page *);
@@ -333,7 +331,6 @@ boolean_t	pmap_extract4m(pmap_t, vaddr_t, paddr_t *);
 boolean_t	pmap_is_modified4m(struct vm_page *);
 boolean_t	pmap_is_referenced4m(struct vm_page *);
 void		pmap_kenter_pa4m(vaddr_t, paddr_t, vm_prot_t);
-void		pmap_kremove4m(vaddr_t, vsize_t);
 void		pmap_page_protect4m(struct vm_page *, vm_prot_t);
 void		pmap_protect4m(pmap_t, vaddr_t, vaddr_t, vm_prot_t);
 void		pmap_copy_page4m(struct vm_page *, struct vm_page *);
@@ -351,7 +348,6 @@ void		pmap_changeprot4m(pmap_t, vaddr_t, vm_prot_t, int);
 #define		pmap_is_modified	pmap_is_modified4_4c
 #define		pmap_is_referenced	pmap_is_referenced4_4c
 #define		pmap_kenter_pa		pmap_kenter_pa4_4c
-#define		pmap_kremove		pmap_kremove4_4c
 #define		pmap_page_protect	pmap_page_protect4_4c
 #define		pmap_protect		pmap_protect4_4c
 #define		pmap_zero_page		pmap_zero_page4_4c
@@ -367,7 +363,6 @@ void		pmap_changeprot4m(pmap_t, vaddr_t, vm_prot_t, int);
 #define		pmap_is_modified	pmap_is_modified4m
 #define		pmap_is_referenced	pmap_is_referenced4m
 #define		pmap_kenter_pa		pmap_kenter_pa4m
-#define		pmap_kremove		pmap_kremove4m
 #define		pmap_page_protect	pmap_page_protect4m
 #define		pmap_protect		pmap_protect4m
 #define		pmap_zero_page		pmap_zero_page4m
@@ -383,7 +378,6 @@ extern boolean_t	(*pmap_extract_p)(pmap_t, vaddr_t, paddr_t *);
 extern boolean_t	(*pmap_is_modified_p)(struct vm_page *);
 extern boolean_t	(*pmap_is_referenced_p)(struct vm_page *);
 extern void		(*pmap_kenter_pa_p)(vaddr_t, paddr_t, vm_prot_t);
-extern void		(*pmap_kremove_p)(vaddr_t, vsize_t);
 extern void		(*pmap_page_protect_p)(struct vm_page *, 
 						    vm_prot_t);
 extern void		(*pmap_protect_p)(pmap_t, vaddr_t, vaddr_t,
@@ -401,7 +395,6 @@ extern void		(*pmap_changeprot_p)(pmap_t, vaddr_t,
 #define		pmap_is_modified	(*pmap_is_modified_p)
 #define		pmap_is_referenced	(*pmap_is_referenced_p)
 #define		pmap_kenter_pa		(*pmap_kenter_pa_p)
-#define		pmap_kremove		(*pmap_kremove_p)
 #define		pmap_page_protect	(*pmap_page_protect_p)
 #define		pmap_protect		(*pmap_protect_p)
 #define		pmap_zero_page		(*pmap_zero_page_p)
