@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nge.4,v 1.5 2001/07/27 03:23:21 nate Exp $
+.\"	$OpenBSD: nge.4,v 1.6 2001/09/05 20:20:09 nate Exp $
 .\" Copyright (c) 2001 Wind River Systems
 .\" Copyright (c) 1997, 1998, 1999, 2000, 2001
 .\"	Bill Paul <wpaul@bsdi.com>. All rights reserved.
@@ -39,8 +39,7 @@
 .Nm nge
 .Nd "National Semiconductor PCI gigabit ethernet adapter driver"
 .Sh SYNOPSIS
-.Cd "device miibus"
-.Cd "device nge"
+.Cd "nge* at pci? dev ? function ?"
 .Sh DESCRIPTION
 The
 .Nm
