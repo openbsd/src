@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.26 1998/11/19 08:18:57 dugsong Exp $
+#	$OpenBSD: MAKEDEV,v 1.27 1998/11/25 04:58:54 millert Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -33,7 +33,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$OpenBSD: MAKEDEV,v 1.26 1998/11/19 08:18:57 dugsong Exp $
+#	$OpenBSD: MAKEDEV,v 1.27 1998/11/25 04:58:54 millert Exp $
 #
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices,
@@ -361,7 +361,6 @@ pty*)
 	1) offset=16 name=q;;
 	2) offset=32 name=r;;
 	3) offset=48 name=s;;
-# Note that telnetd, rlogind, and xterm (at least) only look at p-s.
 	4) offset=64 name=t;;
 	5) offset=80 name=u;;
 	6) offset=96 name=v;;

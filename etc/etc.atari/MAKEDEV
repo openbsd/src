@@ -394,7 +394,6 @@ pty*)
 	1) offset=16 name=q;;
 	2) offset=32 name=r;;
 	3) offset=48 name=s;;
-# Note that telnetd, rlogind, and xterm (at least) only look at p-s.
 	4) offset=64 name=t;;
 	5) offset=80 name=u;;
 	6) offset=96 name=v;;

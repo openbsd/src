@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.11 1998/11/19 08:18:59 dugsong Exp $
+#	$OpenBSD: MAKEDEV,v 1.12 1998/11/25 04:58:55 millert Exp $
 #	$NetBSD: MAKEDEV,v 1.1.1.1.4.1 1996/06/17 02:36:16 oki Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -34,7 +34,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: MAKEDEV,v 1.11 1998/11/19 08:18:59 dugsong Exp $
+#	$Id: MAKEDEV,v 1.12 1998/11/25 04:58:55 millert Exp $
 #
 #	from:
 #	hp300/MAKEDEV (1/15/94), from:
@@ -406,7 +406,6 @@ kbd)
 # 	1) offset=16 name=q;;
 # 	2) offset=32 name=r;;
 # 	3) offset=48 name=s;;
-# # Note that telnetd, rlogind, and xterm (at least) only look at p-s.
 # 	4) offset=64 name=t;;
 # 	*) echo bad unit for pty in: $i;;
 # 	esac
