@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.57 2005/03/24 14:35:18 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.58 2005/03/26 08:09:54 tedu Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -832,6 +832,7 @@ cvs_file_alloc(const char *path, u_int type)
 	cfp->cf_name = cvs_strdup(basename(path));
 	if (cfp->cf_name == NULL) {
 		cvs_log(LP_ERR, "failed to copy file name");
+		cvs_file_free(cfp);
 		return (NULL);
 	}
 	cfp->cf_type = type;

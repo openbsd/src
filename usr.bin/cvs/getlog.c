@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.14 2005/02/27 00:22:08 jfb Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.15 2005/03/26 08:09:54 tedu Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -195,7 +195,8 @@ cvs_getlog_file(CVSFILE *cf, void *arg)
 
 		rf = rcs_open(fpath, RCS_READ);
 		if (rf == NULL) {
-			cvs_ent_free(entp);
+			if (entp != NULL)
+				cvs_ent_free(entp);
 			return (-1);
 		}
 

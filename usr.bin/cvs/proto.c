@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.43 2005/03/13 19:56:14 joris Exp $	*/
+/*	$OpenBSD: proto.c,v 1.44 2005/03/26 08:09:54 tedu Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -461,7 +461,7 @@ cvs_resp_getbyid(int respid)
 {
 	u_int i;
 
-	for (i = 0; i < CVS_NBREQ; i++)
+	for (i = 0; i < CVS_NBRESP; i++)
 		if (cvs_responses[i].resp_id == (u_int)respid)
 			return &(cvs_responses[i]);
 
@@ -477,7 +477,7 @@ cvs_resp_getbyname(const char *rname)
 {
 	u_int i;
 
-	for (i = 0; i < CVS_NBREQ; i++)
+	for (i = 0; i < CVS_NBRESP; i++)
 		if (strcmp(cvs_responses[i].resp_str, rname) == 0)
 			return &(cvs_responses[i]);
 
@@ -615,6 +615,7 @@ cvs_recvfile(struct cvsroot *root, mode_t *mode)
 
 	if ((cvs_getln(root, buf, sizeof(buf)) < 0) ||
 	    (cvs_strtomode(buf, mode) < 0)) {
+		cvs_buf_free(fbuf);
 		return (NULL);
 	}
 
@@ -623,6 +624,7 @@ cvs_recvfile(struct cvsroot *root, mode_t *mode)
 	fsz = (off_t)strtol(buf, &ep, 10);
 	if (*ep != '\0') {
 		cvs_log(LP_ERR, "parse error in file size transmission");
+		cvs_buf_free(fbuf);
 		return (NULL);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.36 2005/03/13 22:50:34 jfb Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.37 2005/03/26 08:09:54 tedu Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1127,7 +1127,7 @@ rcs_kflag_get(const char *flags)
 const char*
 rcs_errstr(int code)
 {
-	if ((code < 0) || (code > (int)RCS_NERR))
+	if ((code < 0) || (code >= (int)RCS_NERR))
 		return (NULL);
 	return (rcs_errstrs[code]);
 }
@@ -1486,12 +1486,14 @@ rcs_parse_delta(RCSFILE *rfp)
 				cvs_log(LP_ERR,
 				    "missing semi-colon after RCS `%s' key",
 				    rk->rk_str);
+				free(tokstr);
 				rcs_freedelta(rdp);
 				return (-1);
 			}
 
 			if (tok == RCS_TOK_DATE) {
 				if ((datenum = rcsnum_parse(tokstr)) == NULL) {
+					free(tokstr);
 					rcs_freedelta(rdp);
 					return (-1);
 				}
@@ -1501,7 +1503,10 @@ rcs_parse_delta(RCSFILE *rfp)
 					    "fields",
 					    (datenum->rn_len > 6) ? "too many" :
 					    "missing");
+					free(tokstr);
 					rcs_freedelta(rdp);
+					rcsnum_free(datenum);
+					return (-1);
 				}
 				rdp->rd_date.tm_year = datenum->rn_id[0];
 				if (rdp->rd_date.tm_year >= 1900)
@@ -1691,6 +1696,7 @@ rcs_parse_symbols(RCSFILE *rfp)
 		symp->rs_num = rcsnum_alloc();
 		if (symp->rs_num == NULL) {
 			cvs_log(LP_ERRNO, "failed to allocate rcsnum info");
+			free(symp->rs_name);
 			free(symp);
 			return (-1);
 		}
@@ -1768,6 +1774,7 @@ rcs_parse_locks(RCSFILE *rfp)
 		if (type != RCS_TOK_COLON) {
 			cvs_log(LP_ERR, "unexpected token `%s' in symbol list",
 			    RCS_TOKSTR(rfp));
+			rcsnum_free(lkp->rl_num);
 			free(lkp);
 			return (-1);
 		}
@@ -1776,6 +1783,7 @@ rcs_parse_locks(RCSFILE *rfp)
 		if (type != RCS_TOK_NUM) {
 			cvs_log(LP_ERR, "unexpected token `%s' in symbol list",
 			    RCS_TOKSTR(rfp));
+			rcsnum_free(lkp->rl_num);
 			free(lkp);
 			return (-1);
 		}
@@ -1783,6 +1791,7 @@ rcs_parse_locks(RCSFILE *rfp)
 		if (rcsnum_aton(RCS_TOKSTR(rfp), NULL, lkp->rl_num) < 0) {
 			cvs_log(LP_ERR, "failed to parse RCS NUM `%s'",
 			    RCS_TOKSTR(rfp));
+			rcsnum_free(lkp->rl_num);
 			free(lkp);
 			return (-1);
 		}

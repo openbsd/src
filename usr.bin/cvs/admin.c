@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.5 2005/03/11 16:23:34 joris Exp $	*/
+/*	$OpenBSD: admin.c,v 1.6 2005/03/26 08:09:54 tedu Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -380,7 +380,8 @@ cvs_admin_file(CVSFILE *cfp, void *arg)
 
 		rf = rcs_open(rcspath, RCS_READ);
 		if (rf == NULL) {
-			cvs_ent_free(entp);
+			if (entp != NULL)
+				cvs_ent_free(entp);
 			return (-1);
 		}
 
