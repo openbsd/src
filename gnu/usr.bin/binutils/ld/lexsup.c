@@ -212,6 +212,9 @@ static const struct ld_option ld_options[] =
   { {"omagic", no_argument, NULL, 'N'},
       'N', NULL, N_("Do not page align data, do not make text readonly"),
       EXACTLY_TWO_DASHES },
+  { {"Zmagic", no_argument, NULL, 'Z'},
+      'Z', NULL, N_("Do not page align got/plt, old style executable"),
+      EXACTLY_TWO_DASHES },
   { {"output", required_argument, NULL, 'o'},
       'o', N_("FILE"), N_("Set output file name"), EXACTLY_TWO_DASHES },
   { {NULL, required_argument, NULL, '\0'},
@@ -734,6 +737,9 @@ parse_args (argc, argv)
 	case 'n':
 	  config.magic_demand_paged = false;
 	  config.dynamic_link = false;
+	  break;
+	case 'Z':
+	  /* compatibility flag, unused */
 	  break;
 	case OPTION_NO_DEMANGLE:
 	  demangling = false;
