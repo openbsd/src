@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.242 2000/04/12 06:20:32 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.243 2000/04/13 00:06:15 jason Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -2527,6 +2527,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Netgear",
 	    "GA620",
+	},
+	{
+	    PCI_VENDOR_NETSEC, PCI_PRODUCT_NETSEC_7751,
+	    0,
+	    "NetSec",
+	    "7751",
 	},
 	{
 	    PCI_VENDOR_CMI, PCI_PRODUCT_CMI_CMI8338A,
@@ -7500,6 +7506,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_DELTA, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Delta",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_NETSEC, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "NetSec",
 	    NULL,
 	},
 	{

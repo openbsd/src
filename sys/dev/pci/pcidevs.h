@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.242 2000/04/12 06:20:32 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.243 2000/04/13 00:06:15 jason Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -521,6 +521,7 @@
 #define	PCI_VENDOR_INVERTEX	0x14e1		/* Invertex */
 #define	PCI_VENDOR_AIRONET	0x14b9		/* Aironet */
 #define	PCI_VENDOR_DELTA	0x1500		/* Delta */
+#define	PCI_VENDOR_NETSEC	0x1660		/* NetSec */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs(2) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology(2) */
 #define	PCI_VENDOR_3DLABS	0x3d3d		/* 3D Labs */
@@ -1139,6 +1140,9 @@
 
 /* Netgear products */
 #define	PCI_PRODUCT_NETGEAR_GA620	0x620a		/* GA620 */
+
+/* Network Security Technologies, Inc. */
+#define	PCI_PRODUCT_NETSEC_7751	0x7751		/* 7751 */
 
 /* C-Media Electronics Inc */
 #define	PCI_PRODUCT_CMI_CMI8338A	0x0100		/* CMI8338A Audio */
