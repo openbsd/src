@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl_pci.c,v 1.1 2001/04/10 22:52:00 aaron Exp $ */
+/*	$OpenBSD: if_rl_pci.c,v 1.2 2001/04/13 15:58:44 aaron Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -73,6 +73,16 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+
+/*
+ * Default to using PIO access for this driver. On SMP systems,
+ * there appear to be problems with memory mapped mode: it looks like
+ * doing too many memory mapped access back to back in rapid succession
+ * can hang the bus. I'm inclined to blame this on crummy design/construction
+ * on the part of RealTek. Memory mapped mode does appear to work on
+ * uniprocessor systems though.
+ */
+#define RL_USEIOSPACE
 
 #include <dev/ic/rtl81x9reg.h>
 
