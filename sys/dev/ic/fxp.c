@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.43 2003/10/21 18:58:49 jmc Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.44 2003/12/23 15:16:44 mickey Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -612,7 +612,7 @@ fxp_read_eeprom(sc, data, offset, words)
 			CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
 			DELAY(1);
 		}
-		data[i] = htole16(data[i]);
+		data[i] = letoh16(data[i]);
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, 0);
 		DELAY(1);
 	}
