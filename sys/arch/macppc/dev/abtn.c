@@ -1,4 +1,4 @@
-/*	$OpenBSD: abtn.c,v 1.6 2003/07/02 22:00:29 drahn Exp $	*/
+/*	$OpenBSD: abtn.c,v 1.7 2003/07/07 22:05:40 pvalchev Exp $	*/
 /*	$NetBSD: abtn.c,v 1.1 1999/07/12 17:48:26 tsubai Exp $	*/
 
 /*-
@@ -119,7 +119,6 @@ abtn_adbcomplete(buffer, data, adb_command)
 		of_setbrightness(brightness);
 		break;
 
-#define DEBUG
 #ifdef DEBUG
 	case 0x08:	/* mute */
 	case 0x01:	/* mute, AV hardware */
