@@ -24,24 +24,33 @@ as `the entire disk', or the `raw partition'.)
 		   Ramdisk installation via network or CD-ROM
 	           ------------------------------------------
 NOTE:  BOOTING SYS_UBOOT VIA THE NETWORK IS ONLY POSSIBLE IF YOUR BOOTROM
-IS `REV. C' OR LATER.
+IS `REV. C' OR LATER.  (This only applies to the 320/350 era machines.)
 
 In order to complete this process, you will need the following from the
 `OSREV/hp300' directory of the distribution:
 
 	SYS_UBOOT	The unified boot block file.
 
-	bsd.rd		The gzipped RAMDISK kernel image.
+	bsd.rd		The uncompressed RAMDISK kernel image.
+
+	bsd.rd.gz	The gzipped RAMDISK kernel image.
 
 To boot SYS_UBOOT via the network, you will need a system capable of
 handling boot requests for an hp300.  If you will use this method, see
 the special note below.
 
 To boot from SCSI CD-ROM, simply insert the CD that is hp300 bootable into
-the drive before power up, then during the client's self-test cycle,
+the drive before power up, then during the computer's self-test cycle,
 press the space bar.  Shortly, you should see a menu of possible boot
-options appear.  Select the option corresponding to SYS_CDROM.
-SYS_UBOOT will then load and prompt you for a kernel name.
+options appear.  Select the option corresponding to SYS_CDBOOT.
+SYS_CDBOOT will then load and begin loading bsd.rd from the CD; depending
+on your ROM revision and hardware configuration, you may or may not see
+any messages on the console while this happens.
+
+Please note that booting from CD-ROM may not be supported by all models of
+hp300.  You will also need a CD-ROM drive which uses 512 byte blocks;
+anything which shipped with an hp300 or is known to boot a SPARC or black
+NeXTStation should work.
 
 -- The following section is specific for loading SYS_UBOOT via the network. --
 
