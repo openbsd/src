@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.4 1999/01/06 06:10:12 d Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.5 2001/06/13 11:42:10 art Exp $	*/
 /*	$NetBSD: SYS.h,v 1.4 1996/10/17 03:03:53 cgd Exp $	*/
 
 /*
@@ -85,7 +85,7 @@ __END(p,label);
 # define PSEUDO(x,y)		__PSEUDO(_thread_sys_,x,y)
 # define SYSLEAF(x,e)		__LEAF(_thread_sys_,x,e)
 # define SYSEND(x)		__END(_thread_sys_,x)
-#else _THREAD_SAFE
+#else /* _THREAD_SAFE */
 /*
  * The non-threaded library defaults to traditional syscalls where
  * the function name matches the syscall name.
@@ -97,4 +97,4 @@ __END(p,label);
 # define PSEUDO(x,y)		__PSEUDO(,x,y)
 # define SYSLEAF(x,e)		__LEAF(,x,e)
 # define SYSEND(x)		__END(,x)
-#endif _THREAD_SAFE
+#endif /* _THREAD_SAFE */
