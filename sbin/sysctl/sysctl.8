@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.116 2004/02/02 05:25:56 jmc Exp $
+.\"	$OpenBSD: sysctl.8,v 1.117 2004/02/10 20:23:48 millert Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -142,6 +142,9 @@ privilege can change the value.
 .It kern.tty.tk_nout	int64_t	no
 .It kern.tty.tk_rawcc	int64_t	no
 .It kern.tty.tk_cancc	int64_t	no
+.It kern.tty.ttyinfo	struct	no
+.It kern.tty.maxptys	integer	yes
+.It kern.tty.nptys	integer	yes
 .It kern.ccpu	u_int	no
 .It kern.fscale	integer	no
 .It kern.nprocs	integer	no
