@@ -1,4 +1,4 @@
-/*      $OpenBSD: bus_dma.c,v 1.7 2001/11/06 19:53:15 miod Exp $        */
+/*      $OpenBSD: bus_dma.c,v 1.8 2001/11/09 15:14:13 art Exp $        */
 /*      $NetBSD: bus_dma.c,v 1.2 2001/06/10 02:31:25 briggs Exp $        */
 
 /*-
@@ -418,7 +418,7 @@ _bus_dmamap_sync(t, map, offset, len, op)
 	case BUS_DMASYNC_PREWRITE:
 	case BUS_DMASYNC_PREREAD:
 		for (i = map->dm_nsegs; i--; )
-			invdcache(map->dm_segs[i].ds_addr, 
+			invdcache((void *)map->dm_segs[i].ds_addr, 
 			    len);
 		break;
 	}
