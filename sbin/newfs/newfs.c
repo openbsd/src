@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.22 2000/04/30 05:07:46 bjc Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.23 2001/04/03 22:59:35 millert Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.22 2000/04/30 05:07:46 bjc Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.23 2001/04/03 22:59:35 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -218,7 +218,7 @@ main(argc, argv)
 		fatal("insane maxpartitions value %d", maxpartitions);
 
 	opstring = mfs ?
-	    "NT:Ua:b:c:d:e:f:i:m:o:s:" :
+	    "NT:a:b:c:d:e:f:i:m:o:s:" :
 	    "NOS:UT:a:b:c:d:e:f:i:k:l:m:n:o:p:qr:s:t:u:x:z:";
 	while ((ch = getopt(argc, argv, opstring)) != -1) {
 		switch (ch) {
@@ -713,8 +713,43 @@ fatal(fmt, va_alist)
 	/*NOTREACHED*/
 }
 
+struct fsoptions {
+	char *str;
+	int mfs_too;
+} fsopts[] = {
+	{ "-N do not create file system, just print out parameters", 1 },
+	{ "-O create a 4.3BSD format filesystem", 0 },
+	{ "-S sector size", 0 },
+#ifdef COMPAT
+	{ "-T disktype", 0 },
+#endif
+	{ "-U enable soft updates", 0 },
+	{ "-a maximum contiguous blocks", 1 },
+	{ "-b block size", 1 },
+	{ "-c cylinders/group", 1 },
+	{ "-d rotational delay between contiguous blocks", 1 },
+	{ "-e maximum blocks per file in a cylinder group", 1 },
+	{ "-f frag size", 1 },
+	{ "-i number of bytes per inode", 1 },
+	{ "-k sector 0 skew, per track", 0 },
+	{ "-l hardware sector interleave", 0 },
+	{ "-m minimum free space %%", 1 },
+	{ "-n number of distinguished rotational positions", 0 },
+	{ "-o optimization preference (`space' or `time')", 1 },
+	{ "-p spare sectors per track", 0 },
+	{ "-r revolutions/minute", 0 },
+	{ "-s file system size (sectors)", 1 },
+	{ "-t file system type", 0 },
+	{ "-u sectors/track", 0 },
+	{ "-x spare sectors per cylinder", 0 },
+	{ "-z tracks/cylinder", 0 },
+	{ NULL, NULL }
+};
+
 usage()
 {
+	struct fsoptions *fsopt;
+
 	if (mfs) {
 		fprintf(stderr,
 		    "usage: %s [ -fsoptions ] special-device mount-point\n",
@@ -724,32 +759,9 @@ usage()
 		    "usage: %s [ -fsoptions ] special-device\n", __progname);
 	}
 	fprintf(stderr, "where fsoptions are:\n");
-	fprintf(stderr,
-	    "\t-N do not create file system, just print out parameters\n");
-	fprintf(stderr, "\t-O create a 4.3BSD format filesystem\n");
-	fprintf(stderr, "\t-S sector size\n");
-#ifdef COMPAT
-	fprintf(stderr, "\t-T disktype\n");
-#endif
-	fprintf(stderr, "\t-U enable soft updates\n");
-	fprintf(stderr, "\t-a maximum contiguous blocks\n");
-	fprintf(stderr, "\t-b block size\n");
-	fprintf(stderr, "\t-c cylinders/group\n");
-	fprintf(stderr, "\t-d rotational delay between contiguous blocks\n");
-	fprintf(stderr, "\t-e maximum blocks per file in a cylinder group\n");
-	fprintf(stderr, "\t-f frag size\n");
-	fprintf(stderr, "\t-i number of bytes per inode\n");
-	fprintf(stderr, "\t-k sector 0 skew, per track\n");
-	fprintf(stderr, "\t-l hardware sector interleave\n");
-	fprintf(stderr, "\t-m minimum free space %%\n");
-	fprintf(stderr, "\t-n number of distinguished rotational positions\n");
-	fprintf(stderr, "\t-o optimization preference (`space' or `time')\n");
-	fprintf(stderr, "\t-p spare sectors per track\n");
-	fprintf(stderr, "\t-r revolutions/minute\n");
-	fprintf(stderr, "\t-s file system size (sectors)\n");
-	fprintf(stderr, "\t-t file system type\n");
-	fprintf(stderr, "\t-u sectors/track\n");
-	fprintf(stderr, "\t-x spare sectors per cylinder\n");
-	fprintf(stderr, "\t-z tracks/cylinder\n");
+	for (fsopt = fsopts; fsopt->str; fsopt++) {
+		if (!mfs || fsopt->mfs_too)
+			fprintf(stderr, "\t%s\n", fsopt->str);
+	}
 	exit(1);
 }
