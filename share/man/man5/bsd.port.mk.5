@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.155 2004/12/02 21:52:58 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.156 2004/12/02 21:55:23 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -49,13 +49,13 @@ decided yet how to define it.
 .Pp
 This documentation covers the current targets, variables and paths used by
 .Nm bsd.port.mk ,
-followed by sections on obsolete constructs that a porter may need 
+followed by sections on obsolete constructs that a porter may need
 when converting from other ports systems.
 There is a separate section covering the frame framework, a section
-explaining flavors and multi-packages, and a section covering 
+explaining flavors and multi-packages, and a section covering
 the generation of packing-lists.
 .Pp
-Selected common user activity such as the building of every package in 
+Selected common user activity such as the building of every package in
 the system is covered by
 .Xr ports 7
 instead.
@@ -446,7 +446,7 @@ to
 Update an existing installation to a newer package:
 scan the installation for a package with the same
 .Ev FULLPKGPATH ,
-and update it using 
+and update it using
 .Sq pkg_add -r
 if a newer package is available.
 See
@@ -2167,8 +2167,8 @@ Detect the existence of ${PKGDIR}/{REQ,INSTALL,DEINSTALL}${SUBPACKAGE}.
 Modify PKG_ARGS accordingly, to use the generated files, and add
 dependencies to regenerate the files if the templates change.
 .It
-Generate the actual DESCR, and if needed, MESSAGE, UNMESSAGE, 
-REQ, INSTALL, DEINSTALL from the templates in ${DESCR}, ${MESSAGE}, 
+Generate the actual DESCR, and if needed, MESSAGE, UNMESSAGE,
+REQ, INSTALL, DEINSTALL from the templates in ${DESCR}, ${MESSAGE},
 ${UNMESSAGE}, ${PKGDIR}/REQ${SUBPACKAGE},
 ${PKGDIR}/INSTALL${SUBPACKAGE}, ${PKGDIR}/DEINSTALL${SUBPACKAGE}, by
 substituting the variables in ${SUBST_VARS}, and by substituting
@@ -2177,7 +2177,7 @@ e.g., if FLAVORS=no_map gfx qt2, if FLAVOR=gfx no_map, this is
 .Sq -no_map-gfx .
 .It
 Generate the actual PLIST from the template ${PLIST},
-by inserting shared/no-shared fragments, merging other fragments, 
+by inserting shared/no-shared fragments, merging other fragments,
 and applying the same variable substitutions as other packing information.
 .El
 .Pp
@@ -2243,12 +2243,12 @@ situation, where all these files will automatically default to the
 non-flavor version if there is no flavor-specific file around.
 .Sh SEE ALSO
 .Xr ftp 1 ,
-.Xr pkg_create 1 ,
 .Xr pkg_add 1 ,
+.Xr pkg_create 1 ,
 .Xr library-specs 7 ,
 .Xr mirroring-ports 7 ,
-.Xr packages-specs 7
-.Xr ports 7 .
+.Xr packages-specs 7 ,
+.Xr ports 7
 .Sh HISTORY
 The ports mechanism originally came from
 .Fx .
