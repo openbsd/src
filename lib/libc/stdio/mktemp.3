@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mktemp.3,v 1.12 1998/12/15 19:19:50 deraadt Exp $
+.\"	$OpenBSD: mktemp.3,v 1.13 1998/12/15 19:31:17 deraadt Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -254,14 +254,16 @@ code which calls
 .Xr open 2
 or
 .Xr fopen 3
-on that filename will occur much later.  Modifying such code for
-.Fn mkstemp
-can be difficult.
-(In almost all cases, the use of of
+on that filename will occur much later.
+(In almost all cases, the use of
 .Xr fopen 3
 will mean that the flags
-.Dv O_CREAT | O_EXCL
-are not open, and thus a symbolic link race becomes possible; hence making
+.Dv O_CREAT
+|
+.Dv O_EXCL
+are not given to
+.Xr open 2 ,
+and thus a symbolic link race becomes possible; hence making
 neccessary the use of
 .Xr fdopen 3
 as seen above).
@@ -269,6 +271,19 @@ Furthermore, one must be careful about code which opens, closes, and then
 re-opens the file in question.
 Finally, one must ensure that upon error the temporary file is
 removed correctly.
+.Pp
+There are also cases where modifying the code to use
+.Fn mktemp
+in concert with
+.Xr open 2
+using the flags
+.Dv O_CREAT
+|
+.Dv O_EXCL
+is better, as long as the code retries a new template when
+.Xr open 2
+fails with an errno of
+.Dv EEXIST .
 .Sh SEE ALSO
 .Xr chmod 2 ,
 .Xr getpid 2 ,
