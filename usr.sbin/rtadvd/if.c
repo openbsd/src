@@ -1,5 +1,5 @@
-/*	$OpenBSD: if.c,v 1.5 2000/07/06 10:14:46 itojun Exp $	*/
-/*	$KAME: if.c,v 1.11 2000/07/06 08:20:04 jinmei Exp $	*/
+/*	$OpenBSD: if.c,v 1.6 2000/09/01 01:24:04 itojun Exp $	*/
+/*	$KAME: if.c,v 1.12 2000/08/31 16:35:29 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -147,7 +147,7 @@ if_nametosdl(char *name)
 int
 if_getmtu(char *name)
 {
-#if 0
+#ifdef SIOCGIFMTU
 	struct ifreq ifr;
 	int s;
 
