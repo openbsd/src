@@ -1,8 +1,13 @@
-/*	$OpenBSD: dma.c,v 1.2 2000/03/31 04:12:58 rahnds Exp $	*/
+/*	$OpenBSD: dma.c,v 1.3 2000/08/03 03:02:50 rahnds Exp $	*/
+/*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
-/*
- * Copyright (c) 1998 Michael Shalayeff
+/*-
+ * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,20 +19,23 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Michael Shalayeff.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/param.h>
@@ -53,9 +61,13 @@
 
 #include <machine/bus.h>
 
+/*
+ * Common function for DMA map creation.  May be called by bus-specific
+ * DMA map creation functions.
+ */
 int
-_dmamap_create(v, size, nsegments, maxsegsz, boundary, flags, dmamp)
-	void *v;
+_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
+	bus_dma_tag_t t;
 	bus_size_t size;
 	int nsegments;
 	bus_size_t maxsegsz;
@@ -63,32 +75,51 @@ _dmamap_create(v, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	int flags;
 	bus_dmamap_t *dmamp;
 {
-	register struct powerpc_bus_dmamap *map;
-	register size_t mapsize;
+	struct powerpc_bus_dmamap *map;
+	void *mapstore;
+	size_t mapsize;
 
+	/*
+	 * Allocate and initialize the DMA map.  The end of the map
+	 * is a variable-sized array of segments, so we allocate enough
+	 * room for them in one shot.
+	 *
+	 * Note we don't preserve the WAITOK or NOWAIT flags.  Preservation
+	 * of ALLOCNOW notifies others that we've reserved these resources,
+	 * and they are not to be freed.
+	 *
+	 * The bus_dmamap_t includes one bus_dma_segment_t, hence
+	 * the (nsegments - 1).
+	 */
 	mapsize = sizeof(struct powerpc_bus_dmamap) +
 	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
-	MALLOC(map, struct powerpc_bus_dmamap *, mapsize, M_DEVBUF,
-		(flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK);
-	if (!map)
+	if ((mapstore = malloc(mapsize, M_DEVBUF,
+	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
 		return (ENOMEM);
 
-	bzero(map, mapsize);
+	bzero(mapstore, mapsize);
+	map = (struct powerpc_bus_dmamap *)mapstore;
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;
 	map->_dm_maxsegsz = maxsegsz;
 	map->_dm_boundary = boundary;
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
+	map->dm_nsegs = 0;		/* no valid mappings */
 
 	*dmamp = map;
 	return (0);
 }
 
+/*
+ * Common function for DMA map destruction.  May be called by bus-specific
+ * DMA map destruction functions.
+ */
 void
-_dmamap_destroy(v, map)
-	void *v;
+_dmamap_destroy(t, map)
+	bus_dma_tag_t t;
 	bus_dmamap_t map;
 {
+
 	free(map, M_DEVBUF);
 }
 
@@ -98,7 +129,7 @@ _dmamap_destroy(v, map)
  */
 int
 _dmamap_load(t, map, buf, buflen, p, flags)
-	void * t;
+	bus_dma_tag_t t;
 	bus_dmamap_t map;
 	void *buf;
 	bus_size_t buflen;
@@ -115,6 +146,7 @@ _dmamap_load(t, map, buf, buflen, p, flags)
 	 * Make sure that on error condition we return "no valid mappings".
 	 */
 	map->dm_nsegs = 0;
+
 	if (buflen > map->_dm_size)
 		return (EINVAL);
 
@@ -187,151 +219,309 @@ _dmamap_load(t, map, buf, buflen, p, flags)
 	return (0);
 }
 
+/*
+ * Like _bus_dmamap_load(), but for mbufs.
+ */
 int
-_dmamap_load_mbuf(v, map, m, flags)
-	void *v;
+_dmamap_load_mbuf(t, map, m, flags)
+	bus_dma_tag_t t;
 	bus_dmamap_t map;
 	struct mbuf *m;
 	int flags;
 {
-	panic("_dmamap_load_mbuf: not implemented");
+
+	panic("_bus_dmamap_load: not implemented");
 }
 
+/*
+ * Like _bus_dmamap_load(), but for uios.
+ */
 int
-_dmamap_load_uio(v, map, uio, flags)
-	void *v;
+_dmamap_load_uio(t, map, uio, flags)
+	bus_dma_tag_t t;
 	bus_dmamap_t map;
 	struct uio *uio;
 	int flags;
 {
-	panic("_dmamap_load_uio: not implemented");
+
+	panic("_bus_dmamap_load_uio: not implemented");
 }
 
+/*
+ * Like _bus_dmamap_load(), but for raw memory allocated with
+ * bus_dmamem_alloc().
+ */
 int
-_dmamap_load_raw(v, map, segs, nsegs, size, flags)
-	void *v;
+_dmamap_load_raw(t, map, segs, nsegs, size, flags)
+	bus_dma_tag_t t;
 	bus_dmamap_t map;
 	bus_dma_segment_t *segs;
 	int nsegs;
 	bus_size_t size;
 	int flags;
 {
-	panic("_dmamap_load_raw: not implemented");
+
+	panic("_bus_dmamap_load_raw: not implemented");
 }
 
+/*
+ * Common function for unloading a DMA map.  May be called by
+ * bus-specific DMA map unload functions.
+ */
 void
-_dmamap_unload(v, map)
-	void *v;
+_dmamap_unload(t, map)
+	bus_dma_tag_t t;
 	bus_dmamap_t map;
 {
-	panic("_dmamap_unload: not implemented");
+
+	/*
+	 * No resources to free; just mark the mappings as
+	 * invalid.
+	 */
+	map->dm_nsegs = 0;
 }
 
+/*
+ * Common function for DMA map synchronization.  May be called
+ * by bus-specific DMA map synchronization functions.
+ */
 void
-_dmamap_sync(v, map, ops)
-	void *v;
+_dmamap_sync(t, map, op)
+	bus_dma_tag_t t;
 	bus_dmamap_t map;
-	bus_dmasync_op_t ops;
+	bus_dmasync_op_t op;
 {
-#if 0
-	__asm __volatile ("syncdma");
-#endif
+
+	/* Nothing to do here. */
 }
 
+/*
+ * Common function for DMA-safe memory allocation.  May be called
+ * by bus-specific DMA memory allocation functions.
+ */
 int
-_dmamem_alloc(v, size, alignment, boundary, segs, nsegs, rsegs, flags)
-	void *v;
+_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
+	bus_dma_tag_t t;
 	bus_size_t size, alignment, boundary;
 	bus_dma_segment_t *segs;
 	int nsegs;
 	int *rsegs;
 	int flags;
 {
-	vaddr_t va;
-	paddr_t spa, epa;
+	extern int avail_end;
 
-	size = round_page(size);
-
-#if defined(UVM)
-	va = uvm_pagealloc_contig(size, VM_MIN_KERNEL_ADDRESS,
-					VM_MAX_KERNEL_ADDRESS, NBPG);
-#else
-# if 0
-	vm_page_alloc_memory(size, VM_MIN_KERNEL_ADDRESS,
-		VM_MAX_KERNEL_ADDRESS,
-	    alignment, boundary, (void *)&va, nsegs, (flags & BUS_DMA_NOWAIT));
-# else
-	va = kmem_alloc_wait(phys_map, NBPG); /* XXX */
-# endif
-#endif
-	if (va == NULL)
-		return (ENOMEM);
-
-	segs[0].ds_addr = va;
-	segs[0].ds_len = size;
-	*rsegs = nsegs;
-
-#if 0
-	/* XXX for now */
-	for (epa = size + (spa = kvtop((caddr_t)va)); spa < epa; spa += NBPG)
-		pmap_changebit(spa, TLB_UNCACHEABLE, 0);
-#endif
-
-	return 0;
-
+	return (_dmamem_alloc_range(t, size, alignment, boundary,
+	    segs, nsegs, rsegs, flags, 0, 0xf0000000));
 }
 
+/*
+ * Common function for freeing DMA-safe memory.  May be called by
+ * bus-specific DMA memory free functions.
+ */
 void
-_dmamem_free(v, segs, nsegs)
-	void *v;
+_dmamem_free(t, segs, nsegs)
+	bus_dma_tag_t t;
 	bus_dma_segment_t *segs;
 	int nsegs;
 {
-#if defined (UVM)
-	uvm_km_free(kmem_map, segs[0].ds_addr, M_DEVBUF);
+	vm_page_t m;
+	bus_addr_t addr;
+	struct pglist mlist;
+	int curseg;
+
+	/*
+	 * Build a list of pages to free back to the VM system.
+	 */
+	TAILQ_INIT(&mlist);
+	for (curseg = 0; curseg < nsegs; curseg++) {
+		for (addr = segs[curseg].ds_addr;
+		    addr < (segs[curseg].ds_addr + segs[curseg].ds_len);
+		    addr += PAGE_SIZE) {
+			m = PHYS_TO_VM_PAGE(addr);
+			TAILQ_INSERT_TAIL(&mlist, m, pageq);
+		}
+	}
+
+#if defined(UVM)
+	uvm_pglistfree(&mlist);
 #else
-	kmem_free(kernel_map, segs[0].ds_addr, segs[0].ds_len);
+	vm_page_free_memory(&mlist);
 #endif
 }
 
+/*
+ * Common function for mapping DMA-safe memory.  May be called by
+ * bus-specific DMA memory map functions.
+ */
 int
-_dmamem_map(v, segs, nsegs, size, kvap, flags)
-	void *v;
+_dmamem_map(t, segs, nsegs, size, kvap, flags)
+	bus_dma_tag_t t;
 	bus_dma_segment_t *segs;
 	int nsegs;
 	size_t size;
 	caddr_t *kvap;
 	int flags;
 {
-	*kvap = (caddr_t)segs[0].ds_addr;
-	return 0;
+	vm_offset_t va;
+	bus_addr_t addr;
+	int curseg;
+
+	size = round_page(size);
+#if defined(UVM)
+	va = uvm_km_valloc(kmem_map, size);
+#else
+	va = kmem_alloc_pageable(kmem_map, size);
+#endif
+	if (va == 0)
+		return (ENOMEM);
+
+	*kvap = (caddr_t)va;
+
+	for (curseg = 0; curseg < nsegs; curseg++) {
+		for (addr = segs[curseg].ds_addr;
+		    addr < (segs[curseg].ds_addr + segs[curseg].ds_len);
+		    addr += NBPG, va += NBPG, size -= NBPG) {
+			if (size == 0)
+				panic("_bus_dmamem_map: size botch");
+			pmap_enter(pmap_kernel(), va, addr,
+			    VM_PROT_READ | VM_PROT_WRITE, TRUE,
+			    VM_PROT_READ | VM_PROT_WRITE);
+		}
+	}
+
+	return (0);
 }
 
+/*
+ * Common function for unmapping DMA-safe memory.  May be called by
+ * bus-specific DMA memory unmapping functions.
+ */
 void
-_dmamem_unmap(v, kva, size)
-	void *v;
+_dmamem_unmap(t, kva, size)
+	bus_dma_tag_t t;
 	caddr_t kva;
 	size_t size;
 {
+
+#ifdef DIAGNOSTIC
+	if ((u_long)kva & PGOFSET)
+		panic("_bus_dmamem_unmap");
+#endif
+
+	size = round_page(size);
+#if defined(UVM)
+	uvm_km_free(kmem_map, (vm_offset_t)kva, size);
+#else
+	kmem_free(kmem_map, (vm_offset_t)kva, size);
+#endif
 }
 
+/*
+ * Common functin for mmap(2)'ing DMA-safe memory.  May be called by
+ * bus-specific DMA mmap(2)'ing functions.
+ */
 int
-_dmamem_mmap(v, segs, nsegs, off, prot, flags)
-	void *v;
+_dmamem_mmap(t, segs, nsegs, off, prot, flags)
+	bus_dma_tag_t t;
 	bus_dma_segment_t *segs;
 	int nsegs, off, prot, flags;
 {
-	panic("_dmamem_mmap: not implemented");
+	int i;
+
+	for (i = 0; i < nsegs; i++) {
+#ifdef DIAGNOSTIC
+		if (off & PGOFSET)
+			panic("_bus_dmamem_mmap: offset unaligned");
+		if (segs[i].ds_addr & PGOFSET)
+			panic("_bus_dmamem_mmap: segment unaligned");
+		if (segs[i].ds_len & PGOFSET)
+			panic("_bus_dmamem_mmap: segment size not multiple"
+			    " of page size");
+#endif
+		if (off >= segs[i].ds_len) {
+			off -= segs[i].ds_len;
+			continue;
+		}
+
+		return (powerpc_btop((caddr_t)segs[i].ds_addr + off));
+	}
+
+	/* Page not found. */
+	return (-1);
 }
 
+/**********************************************************************
+ * DMA utility functions
+ **********************************************************************/
+
+/*
+ * Allocate physical memory from the given physical address range.
+ * Called by DMA-safe memory allocation methods.
+ */
 int
-dma_cachectl(p, size)
-	caddr_t p;
-	int size;
+_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
+    flags, low, high)
+	bus_dma_tag_t t;
+	bus_size_t size, alignment, boundary;
+	bus_dma_segment_t *segs;
+	int nsegs;
+	int *rsegs;
+	int flags;
+	vm_offset_t low;
+	vm_offset_t high;
 {
-#if 0
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)p, size);
-	sync_caches();
+	vm_offset_t curaddr, lastaddr;
+	vm_page_t m;
+	struct pglist mlist;
+	int curseg, error;
+
+	/* Always round the size. */
+	size = round_page(size);
+
+	/*
+	 * Allocate pages from the VM system.
+	 */
+	TAILQ_INIT(&mlist);
+#if defined(UVM)
+	error = uvm_pglistalloc(size, low, high,
+	    alignment, boundary, &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
+#else
+	error = vm_page_alloc_memory(size, low, high,
+	    alignment, boundary, &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
 #endif
-	return 0;
+	if (error)
+		return (error);
+
+	/*
+	 * Compute the location, size, and number of segments actually
+	 * returned by the VM code.
+	 */
+	m = mlist.tqh_first;
+	curseg = 0;
+	lastaddr = segs[curseg].ds_addr = VM_PAGE_TO_PHYS(m);
+	segs[curseg].ds_len = PAGE_SIZE;
+	m = m->pageq.tqe_next;
+
+	for (; m != NULL; m = m->pageq.tqe_next) {
+		curaddr = VM_PAGE_TO_PHYS(m);
+#ifdef DIAGNOSTIC
+		if (curaddr < low || curaddr >= high) {
+			printf("vm_page_alloc_memory returned non-sensical"
+			    " address 0x%lx\n", curaddr);
+			panic("dmamem_alloc_range");
+		}
+#endif
+		if (curaddr == (lastaddr + PAGE_SIZE))
+			segs[curseg].ds_len += PAGE_SIZE;
+		else {
+			curseg++;
+			segs[curseg].ds_addr = curaddr;
+			segs[curseg].ds_len = PAGE_SIZE;
+		}
+		lastaddr = curaddr;
+	}
+
+	*rsegs = curseg + 1;
+
+	return (0);
 }
