@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.40 1999/02/24 22:33:07 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.41 1999/02/24 23:45:52 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -358,9 +358,6 @@ ip_output(m0, va_alist)
 				RTFREE(re->re_rt);
 				return ENXIO;
 			}
-
-			DPRINTF(("ip_output(): calling %s\n",
-				tdb->tdb_xform->xf_name));
 
 			/* Register first use, setup expiration timer */
 			if (tdb->tdb_first_use == 0) {

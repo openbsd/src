@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah_old.c,v 1.19 1999/02/24 22:33:00 angelos Exp $	*/
+/*	$OpenBSD: ip_ah_old.c,v 1.20 1999/02/24 23:45:48 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -14,8 +14,10 @@
  * Additional transforms and features in 1997 and 1998 by Angelos D. Keromytis
  * and Niels Provos.
  *
- * Copyright (C) 1995, 1996, 1997, 1998 by John Ioannidis, Angelos D. Keromytis
- * and Niels Provos.
+ * Additional features in 1999 by Angelos D. Keromytis.
+ *
+ * Copyright (C) 1995, 1996, 1997, 1998, 1999 by John Ioannidis,
+ * Angelos D. Keromytis and Niels Provos.
  *	
  * Permission to use, copy, and modify this software without fee
  * is hereby granted, provided that this entire notice is included in

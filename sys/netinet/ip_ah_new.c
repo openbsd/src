@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah_new.c,v 1.22 1999/02/24 22:32:59 angelos Exp $	*/
+/*	$OpenBSD: ip_ah_new.c,v 1.23 1999/02/24 23:45:47 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -14,8 +14,10 @@
  * Additional transforms and features in 1997 and 1998 by Angelos D. Keromytis
  * and Niels Provos.
  *
- * Copyright (C) 1995, 1996, 1997, 1998 by John Ioannidis, Angelos D. Keromytis
- * and Niels Provos.
+ * Additional features in 1999 by Angelos D. Keromytis.
+ *
+ * Copyright (C) 1995, 1996, 1997, 1998, 1999 by John Ioannidis,
+ * Angelos D. Keromytis and Niels Provos.
  *	
  * Permission to use, copy, and modify this software without fee
  * is hereby granted, provided that this entire notice is included in
@@ -517,8 +519,6 @@ ah_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     /* Save options */
     m_copydata(m, sizeof(struct ip), (ip->ip_hl << 2) - sizeof(struct ip),
 	       (caddr_t) opts);
-
-    DPRINTF(("ah_new_output(): using hash algorithm %s\n", ahx->name));
 
     ilen = ntohs(ip->ip_len);
 
