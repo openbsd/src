@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_maint.c,v 1.4 2002/02/16 21:28:06 millert Exp $	*/
+/*	$OpenBSD: ns_maint.c,v 1.5 2002/05/28 01:23:13 deraadt Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_maint.c	4.39 (Berkeley) 3/2/91";
 static char rcsid[] = "$From: ns_maint.c,v 8.18 1996/09/22 00:13:10 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_maint.c,v 1.4 2002/02/16 21:28:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: ns_maint.c,v 1.5 2002/05/28 01:23:13 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -502,7 +502,7 @@ startxfer(zp)
 	/* Parent. */
 	xferstatus[i].xfer_pid = pid;  /* XXX - small race condition here if we
 					* can't hold signals */
-	dprintf(1, (ddt, "started xfer child %d\n", pid));
+	dprintf(1, (ddt, "started xfer child %ld\n", (long)pid));
 	zp->z_flags &= ~Z_NEED_XFER;
 	zp->z_flags |= Z_XFER_RUNNING;
 	zp->z_xferpid = pid;
@@ -818,17 +818,17 @@ abortxfer(zp)
 
 		if (zp->z_flags & Z_XFER_GONE)
 			syslog(LOG_WARNING,
-			   "zone transfer timeout for \"%s\"; pid %lu missing",
-			       zp->z_origin, (u_long)zp->z_xferpid);
+			   "zone transfer timeout for \"%s\"; pid %ld missing",
+			       zp->z_origin, (long)zp->z_xferpid);
 		else if (kill(zp->z_xferpid, SIGKILL) == -1)
 			syslog(LOG_WARNING,
-			  "zone transfer timeout for \"%s\"; kill pid %lu: %m",
-			       zp->z_origin, (u_long)zp->z_xferpid);
+			  "zone transfer timeout for \"%s\"; kill pid %ld: %m",
+			       zp->z_origin, (long)zp->z_xferpid);
 		else
 			syslog(LOG_WARNING,
 "zone transfer timeout for \"%s\"; second kill\
-pid %lu - forgetting, processes may accumulate",
-			       zp->z_origin, (u_long)zp->z_xferpid);
+pid %ld - forgetting, processes may accumulate",
+			       zp->z_origin, (long)zp->z_xferpid);
 
 		zp->z_xferpid = 0;
 		xfers_running--;
@@ -840,14 +840,14 @@ pid %lu - forgetting, processes may accumulate",
 			zp->z_flags |= Z_XFER_GONE;
 		else {
 			syslog(LOG_WARNING,
-		    "zone transfer timeout for \"%s\"; pid %lu kill failed %m",
-			       zp->z_origin, (u_long)zp->z_xferpid);
+		    "zone transfer timeout for \"%s\"; pid %ld kill failed %m",
+			       zp->z_origin, (long)zp->z_xferpid);
 			zp->z_flags |= Z_XFER_ABORTED;
 		}
 	} else {
 		syslog(LOG_NOTICE,
-		       "zone transfer timeout for \"%s\"; pid %lu killed",
-		       zp->z_origin, (u_long)zp->z_xferpid);
+		       "zone transfer timeout for \"%s\"; pid %ld killed",
+		       zp->z_origin, (long)zp->z_xferpid);
 		zp->z_flags |= Z_XFER_ABORTED;
 	}
 }
@@ -859,7 +859,8 @@ pid %lu - forgetting, processes may accumulate",
 SIG_FN
 reapchild()
 {
-	int pid, i, save_errno;
+	int i, save_errno;
+	pid_t pid;
 #if defined(sequent)
 	union wait status;
 #else
@@ -896,7 +897,8 @@ void
 endxfer()
 {
     	register struct zoneinfo *zp;   
-	int exitstatus, pid, i;
+	int exitstatus, i;
+	pid_t pid;
 #if defined(sequent)
 	union wait status;
 #else
@@ -921,8 +923,8 @@ endxfer()
 			zp->z_flags &=
 				~(Z_XFER_RUNNING|Z_XFER_ABORTED|Z_XFER_GONE);
 			dprintf(1, (ddt,
-		 "\nendxfer: child %d zone %s returned status=%d termsig=%d\n",
-				    pid, zp->z_origin, exitstatus,
+		 "\nendxfer: child %ld zone %s returned status=%d termsig=%d\n",
+				    (long)pid, zp->z_origin, exitstatus,
 				    WIFSIGNALED(status) ?WTERMSIG(status) :-1
 				    )
 				);

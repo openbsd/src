@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_req.c,v 1.9 2002/02/17 19:42:37 millert Exp $	*/
+/*	$OpenBSD: ns_req.c,v 1.10 2002/05/28 01:23:13 deraadt Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_req.c	4.47 (Berkeley) 7/1/91";
 static char rcsid[] = "$From: ns_req.c,v 8.30 1998/05/11 04:19:45 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_req.c,v 1.9 2002/02/17 19:42:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: ns_req.c,v 1.10 2002/05/28 01:23:13 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -2017,8 +2017,8 @@ startxfr(qsp, np, soa, soalen, class, dname)
 		break;
 	default:
 		/* parent */
-		syslog(LOG_DEBUG, "zone transfer of \"%s\" to %s (pid %lu)",
-		       dname, sin_ntoa(&qsp->s_from), (u_long)pid);
+		syslog(LOG_DEBUG, "zone transfer of \"%s\" to %s (pid %ld)",
+		       dname, sin_ntoa(&qsp->s_from), (long)pid);
 		close(pipefd[0]);	/* close the read end */
 		sqrm(qsp);
 		/* close the write end to release the child */
@@ -2052,7 +2052,7 @@ startxfr(qsp, np, soa, soalen, class, dname)
 #ifdef RENICE
 	nice(-40);  nice(20);  nice(0);		/* back to "normal" */
 #endif
-	dprintf(5, (ddt, "startxfr: child pid %lu\n", (u_long)pid));
+	dprintf(5, (ddt, "startxfr: child pid %ld\n", (long)pid));
 
 	if (!(rfp = fdopen(qsp->s_rfd, "w"))) {
 		syslog(LOG_ERR, "fdopen: %m");
