@@ -1,4 +1,4 @@
-/*	$OpenBSD: expl.c,v 1.4 1999/02/01 06:53:56 d Exp $	*/
+/*	$OpenBSD: expl.c,v 1.5 1999/08/30 23:30:08 d Exp $	*/
 /*	$NetBSD: expl.c,v 1.2 1997/10/10 16:33:18 lukem Exp $	*/
 /*
  *  Hunt
@@ -34,6 +34,10 @@ showexpl(y, x, type)
 	if (x < 0 || x >= WIDTH)
 		return;
 	ep = (EXPL *) malloc(sizeof (EXPL));	/* NOSTRICT */
+	if (ep == NULL) {
+		log(LOG_ERR, "malloc");
+		return;
+	}
 	ep->e_y = y;
 	ep->e_x = x;
 	ep->e_char = type;
