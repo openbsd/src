@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.c,v 1.10 2000/04/27 01:10:13 bjc Exp $	*/
+/*	$OpenBSD: locore.c,v 1.11 2000/10/10 18:21:28 bjc Exp $	*/
 /*	$NetBSD: locore.c,v 1.43 2000/03/26 11:39:45 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -69,6 +69,7 @@ extern struct cpu_dep ka43_calls;
 extern struct cpu_dep ka46_calls;
 extern struct cpu_dep ka48_calls;
 extern struct cpu_dep ka49_calls;
+extern struct cpu_dep ka53_calls;
 extern struct cpu_dep ka410_calls;
 extern struct cpu_dep ka630_calls;
 extern struct cpu_dep ka650_calls;
@@ -123,6 +124,7 @@ start()
 #if VAX410
 	case VAX_BTYP_420: /* They are very similar */
 		dep_call = &ka410_calls;
+		strcat(cpu_model, "3100");
 		if (((vax_siedata >> 8) & 0xff) == 1)
 			strcat(cpu_model, "/m{38,48}");
 		else if (((vax_siedata >> 8) & 0xff) == 0)
@@ -149,13 +151,22 @@ start()
 #if VAX48
 	case VAX_BTYP_48:
 		dep_call = &ka48_calls;
-		strcat(cpu_model, "4000 VLC");
+		if (vax_confdata & 0x80)
+			strcat(cpu_model, "3100/m{30,40}");
+		else
+			strcat(cpu_model, "4000 VLC");
 		break;
 #endif
 #if VAX49
 	case VAX_BTYP_49:
 		dep_call = &ka49_calls;
 		strcat(cpu_model, "4000/90");
+		break;
+#endif
+#if VAX53
+	case VAX_BTYP_1303:	
+		dep_call = &ka53_calls;
+		strcat(cpu_model, "4000/{100,105A}");
 		break;
 #endif
 #if VAX630
@@ -224,7 +235,8 @@ start()
 
         avail_end = TRUNC_PAGE(avail_end); /* be sure */
 
-	proc0.p_addr = (void *)proc0paddr; /* XXX */
+	proc0.p_addr = (struct user *)proc0paddr; /* XXX */
+	bzero((struct user *)proc0paddr, sizeof(struct user));
 
 	/* Clear the used parts of the uarea except for the pcb */
 	bzero(&proc0.p_addr->u_stats, sizeof(struct user) - sizeof(struct pcb));
