@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: ELBERETH,v 1.19 1999/01/13 20:03:37 kstailey Exp $
+#	$OpenBSD: ELBERETH,v 1.20 1999/08/18 18:13:20 kstailey Exp $
 #
 #
 #	ELBERETH -- 166MHz Pentium PCI
@@ -17,7 +17,7 @@ option		INTELLIMOUSE	# pms support for MS IntelliMouse
 
 maxusers	16		# estimated number of users
 option		TIMEZONE=300	# time zone to adjust RTC time by
-option		DST=0		# daylight savings time used by RTC
+option		DST=1		# daylight savings time used by RTC
 option		NTP		# High precision timekeeping support 
 
 option		SWAPPAGER	# paging; REQUIRED
@@ -92,6 +92,10 @@ npx0	at isa? port 0xf0 irq 13	# math coprocessor
 pc0	at isa? port 0x60 irq 1		# generic PC console device
 #vt0	at isa? port 0x60 irq 1
 
+pcppi0  at isa?
+sysbeep0        at pcppi?
+
+
 com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
 
@@ -100,12 +104,11 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
 fd*	at fdc? drive ?
 
-wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
-wdc1	at isa? port 0x170 irq 15
-wd*	at wdc? drive ?
+pciide*	at pci ? dev ? function ? flags 0x0000
+wd*	at pciide? channel ? drive ? flags 0x0000
 
-atapibus* at wdc?
-acd*	at atapibus? drive?
+atapiscsi* at pciide? channel ?
+scsibus* at atapiscsi?
 
 sb*     at isapnp?
 audio*  at sb?
@@ -121,7 +124,7 @@ sd*	at scsibus? target ? lun ?	# SCSI disk drives
 #st*	at scsibus? target ? lun ?	# SCSI tape drives
 #ss*	at scsibus? target ? lun ?	# SCSI scanners
 #uk*	at scsibus? target ? lun ?	# unknown SCSI
-#cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 #ch*	at scsibus? target ? lun ?	# SCSI autochangers
 
 pseudo-device	loop	1		# network loopback
