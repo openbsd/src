@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.14 1997/09/06 20:59:48 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.15 1997/09/08 09:37:06 deraadt Exp $
 
 # gen sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/gen ${.CURDIR}/gen
@@ -53,7 +53,7 @@ MAN+=	alarm.3 basename.3 clock.3 confstr.3 ctermid.3 ctype.3 daemon.3 \
 	ldexp.3 modf.3 nice.3 nlist.3 pause.3 popen.3 psignal.3 pwcache.3 \
 	raise.3 scandir.3 setjmp.3 setmode.3 setproctitle.3 siginterrupt.3 \
 	signal.3 sigsetops.3 sleep.3 sysconf.3 sysctl.3 syslog.3 \
-	time.3 times.3 timezone.3 \
+	time.3 times.3 timezone.3 toascii.3 \
 	tolower.3 toupper.3 ttyname.3 ualarm.3 uname.3 unvis.3 \
 	usleep.3 utime.3 valloc.3 vis.3
 
