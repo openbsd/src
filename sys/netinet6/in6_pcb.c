@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.37 2003/10/01 21:41:05 itojun Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.38 2003/11/04 22:39:38 markus Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -291,10 +291,10 @@ in6_pcbbind(inp, nam)
 		error = in6_pcbsetport(&inp->inp_laddr6, inp, p);
 		if (error != 0)
 			return error;
-	} else
+	} else {
 		inp->inp_lport = lport;
-
-	in_pcbrehash(inp);
+		in_pcbrehash(inp);
+	}
 
 	return 0;
 }
