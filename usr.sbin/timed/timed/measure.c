@@ -1,4 +1,4 @@
-/*	$OpenBSD: measure.c,v 1.12 2003/08/19 19:41:21 deraadt Exp $	*/
+/*	$OpenBSD: measure.c,v 1.13 2003/11/19 20:14:58 millert Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -98,8 +98,7 @@ measure(u_long maxmsec, u_long wmsec, char *hname, struct sockaddr_in *addr,
 	pfd[0].fd = sock_raw;
 	pfd[0].events = POLLIN;
 	for (;;) {
-		tout.tv_sec = tout.tv_usec = 0;
-		if (poll(pfd, 1, tout.tv_sec * 1000)) {
+		if (poll(pfd, 1, 0)) {
 			length = sizeof(struct sockaddr_in);
 			siginterrupt(SIGINT, 1);
 			cc = recvfrom(sock_raw, (char *)packet, PACKET_IN, 0,
@@ -176,7 +175,8 @@ measure(u_long maxmsec, u_long wmsec, char *hname, struct sockaddr_in *addr,
 			if (tout.tv_sec < 0)
 				tout.tv_sec = 0;
 
-			count = poll(pfd, 1, tout.tv_sec * 1000);
+			count = poll(pfd, 1,
+			    tout.tv_sec * 1000 + tout.tv_usec / 1000);
 			(void)gettimeofday(&tcur, (struct timezone *)0);
 			if (count <= 0)
 				break;
