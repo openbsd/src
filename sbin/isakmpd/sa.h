@@ -1,9 +1,10 @@
-/*	$OpenBSD: sa.h,v 1.33 2004/02/27 09:01:19 ho Exp $	*/
+/*	$OpenBSD: sa.h,v 1.34 2004/02/27 10:16:26 ho Exp $	*/
 /*	$EOM: sa.h,v 1.58 2000/10/10 12:39:01 provos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2001 Niklas Hallqvist.  All rights reserved.
  * Copyright (c) 1999, 2001 Angelos D. Keromytis.  All rights reserved.
+ * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
