@@ -147,6 +147,11 @@ Supported hardware:
                3Com 3c980/3c980C server adapters
                3Com 3cSOHO adapter
                3Com 3c900B-FL and 3c900B-FL/FX fiber optic adapters
+          3Com 3c990 3XP Typhoon/Sidewinder PCI adapters, including:
+               3CR990-TX-95
+               3CR990-TX-97
+               3CR990-TX-SVR95
+               3CR990-TX-SVR97
           Intel i8255x-based (except the i82556) PCI adapters (fxp), 
             including:
                Intel EtherExpress PRO/10+
