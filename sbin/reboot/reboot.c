@@ -1,4 +1,4 @@
-/*	$OpenBSD: reboot.c,v 1.2 1996/06/23 14:32:12 deraadt Exp $	*/
+/*	$OpenBSD: reboot.c,v 1.3 1996/07/11 23:29:09 weingart Exp $	*/
 /*	$NetBSD: reboot.c,v 1.8 1995/10/05 05:36:22 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: reboot.c,v 1.2 1996/06/23 14:32:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: reboot.c,v 1.3 1996/07/11 23:29:09 weingart Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,15 @@ main(argc, argv)
 	int ch, howto, lflag, nflag, qflag, sverrno;
 	char *p, *user;
 
-	if (!strcmp((p = rindex(*argv, '/')) ? p + 1 : *argv, "halt")) {
+	/* Get our name */
+	p = rindex(*argv, '/');
+	if(p == NULL) p = *argv;
+	else p++;
+
+	/* Nuke login shell */
+	if(*p == '-') p++;
+
+	if (!strcmp(p, "halt")) {
 		dohalt = 1;
 		howto = RB_HALT;
 	} else
