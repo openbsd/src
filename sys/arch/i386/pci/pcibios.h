@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibios.h,v 1.5 2000/08/17 20:15:40 mickey Exp $	*/
+/*	$OpenBSD: pcibios.h,v 1.6 2000/09/04 16:58:41 mickey Exp $	*/
 /*	$NetBSD: pcibios.h,v 1.2 2000/04/28 17:15:16 uch Exp $	*/
 
 /*
@@ -117,3 +117,5 @@ extern int pcibiosverbose;
 
 void pci_device_foreach __P((pci_chipset_tag_t, int,
     void (*) __P((pci_chipset_tag_t, pcitag_t))));
+
+int pcibios_flags;

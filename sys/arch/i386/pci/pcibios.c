@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibios.c,v 1.7 2000/08/17 20:15:40 mickey Exp $	*/
+/*	$OpenBSD: pcibios.c,v 1.8 2000/09/04 16:58:41 mickey Exp $	*/
 /*	$NetBSD: pcibios.c,v 1.4 2000/07/18 11:15:25 soda Exp $	*/
 
 /*
@@ -174,6 +174,8 @@ pcibiosprobe(parent, match, aux)
 	        &scmech1, &scmech2, &maxbus) == PCIBIOS_SUCCESS);
 }
 
+int pcibios_flags;
+
 void
 pcibiosattach(parent, self, aux)
 	struct device *parent, *self;
@@ -182,7 +184,8 @@ pcibiosattach(parent, self, aux)
 	struct pcibios_softc *sc = (struct pcibios_softc *)self;
 	struct bios32_entry_info ei;
 	u_int32_t rev_maj, rev_min, mech1, mech2, scmech1, scmech2;
-	int flags = sc->sc_dev.dv_cfdata->cf_flags;
+
+	pcibios_flags = sc->sc_dev.dv_cfdata->cf_flags;
 
 	bios32_service(PCIBIOS_SIGNATURE, &pcibios_entry, &ei);
 	pcibios_get_status(&rev_maj, &rev_min, &mech1, &mech2,
@@ -213,7 +216,7 @@ pcibiosattach(parent, self, aux)
 	 */
 	pcibios_pir_init();
 
-	if (!(flags & PCIBIOS_INTR_FIXUP) &&
+	if (!(pcibios_flags & PCIBIOS_INTR_FIXUP) &&
 	    pcibios_pir_table != NULL) {
 		int rv;
 		u_int16_t pciirq;
@@ -241,12 +244,12 @@ pcibiosattach(parent, self, aux)
 		 */
 	}
 
-	if (!(flags & PCIBIOS_BUS_FIXUP)) {
+	if (!(pcibios_flags & PCIBIOS_BUS_FIXUP)) {
 		pcibios_max_bus = pci_bus_fixup(NULL, 0);
 		printf("PCI bus #%d is the last bus\n", pcibios_max_bus);
 	}
 
-	if (!(flags & PCIBIOS_ADDR_FIXUP))
+	if (!(pcibios_flags & PCIBIOS_ADDR_FIXUP))
 		pci_addr_fixup(NULL, pcibios_max_bus);
 }
 
