@@ -43,6 +43,7 @@ Supported devices {:-include-:}:
 			ST01/02
 			Future Domain TMC-885
 			Future Domain TMC-950
+		Initio Speedway INI-9100 PCI U/UW
 	RAID controllers:
 		3ware Escalade 3W-5x00, 3W-6x00
 		Compaq Smart ARRAY PCI/EISA adapters
