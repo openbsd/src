@@ -285,15 +285,7 @@
 ./usr/share/man/cat1/hpftodit.0
 ./usr/share/man/cat1/htdigest.0
 ./usr/share/man/cat1/htpasswd.0
-./usr/share/man/cat1/i386/cursor.0
 ./usr/share/man/cat1/i386/fdformat.0
-./usr/share/man/cat1/i386/fed.0
-./usr/share/man/cat1/i386/fontedit.0
-./usr/share/man/cat1/i386/kcon.0
-./usr/share/man/cat1/i386/loadfont.0
-./usr/share/man/cat1/i386/scon.0
-./usr/share/man/cat1/i386/vt220keys.0
-./usr/share/man/cat1/i386/vttest.0
 ./usr/share/man/cat1/id.0
 ./usr/share/man/cat1/ident.0
 ./usr/share/man/cat1/indent.0
@@ -396,7 +388,6 @@
 ./usr/share/man/cat1/paste.0
 ./usr/share/man/cat1/patch.0
 ./usr/share/man/cat1/pax.0
-./usr/share/man/cat1/pctr.0
 ./usr/share/man/cat1/perl.0
 ./usr/share/man/cat1/perl5004delta.0
 ./usr/share/man/cat1/perl5005delta.0
@@ -969,7 +960,6 @@
 ./usr/share/man/cat4/i386/mtrr.0
 ./usr/share/man/cat4/i386/npx.0
 ./usr/share/man/cat4/i386/pctr.0
-./usr/share/man/cat4/i386/pcvt.0
 ./usr/share/man/cat4/i386/pms.0
 ./usr/share/man/cat4/i386/psm.0
 ./usr/share/man/cat4/i386/pss.0
@@ -979,7 +969,6 @@
 ./usr/share/man/cat4/i386/speaker.0
 ./usr/share/man/cat4/i386/spkr.0
 ./usr/share/man/cat4/i386/uha.0
-./usr/share/man/cat4/i386/vt.0
 ./usr/share/man/cat4/i386/wdt.0
 ./usr/share/man/cat4/i386/wss.0
 ./usr/share/man/cat4/i386/wt.0
@@ -1391,12 +1380,8 @@
 ./usr/share/man/cat8/i386/apm.0
 ./usr/share/man/cat8/i386/apmd.0
 ./usr/share/man/cat8/i386/bad144.0
-./usr/share/man/cat8/i386/biosboot.0
-./usr/share/man/cat8/i386/boot.0
 ./usr/share/man/cat8/i386/boot.com.0
-./usr/share/man/cat8/i386/boot.conf.0
 ./usr/share/man/cat8/i386/fdisk.0
-./usr/share/man/cat8/i386/ispcvt.0
 ./usr/share/man/cat8/i386/makedev.0
 ./usr/share/man/cat8/i386/memconfig.0
 ./usr/share/man/cat8/i386/wicontrol.0
@@ -1406,7 +1391,6 @@
 ./usr/share/man/cat8/ifmcstat.0
 ./usr/share/man/cat8/inetd.0
 ./usr/share/man/cat8/init.0
-./usr/share/man/cat8/installboot.0
 ./usr/share/man/cat8/intro.0
 ./usr/share/man/cat8/iostat.0
 ./usr/share/man/cat8/ipf.0
