@@ -1644,6 +1644,9 @@ struct tree_type GTY(())
    where it is called.  */
 #define DECL_INLINE(NODE) (FUNCTION_DECL_CHECK (NODE)->decl.inline_flag)
 
+/* Nonzero in a VAR_DECL means this variable is skipped by propolice. */
+#define DECL_VAR_INLINE(NODE) (VAR_DECL_CHECK (NODE)->decl.inline_flag)
+
 /* Nonzero in a FUNCTION_DECL means this function has been found inlinable
    only by virtue of -finline-functions  */
 #define DID_INLINE_FUNC(NODE) \

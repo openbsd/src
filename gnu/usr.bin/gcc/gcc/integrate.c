@@ -403,7 +403,7 @@ copy_decl_for_inlining (decl, from_fn, to_fn)
 
   /* The inlined variable is marked as INLINE not to sweep by propolice */
   if (flag_propolice_protection && TREE_CODE (copy) == VAR_DECL)
-    DECL_INLINE (copy) = 1;
+    DECL_VAR_INLINE (copy) = 1;
 
   /* Set the context for the new declaration.  */
   if (!DECL_CONTEXT (decl))

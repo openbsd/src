@@ -948,7 +948,7 @@ arrange_var_order (block)
 	  if (! DECL_EXTERNAL (types) && ! TREE_STATIC (types)
 	      && TREE_CODE (types) == VAR_DECL
 	      && ! DECL_ARTIFICIAL (types)
-	      && ! DECL_INLINE (types)	/* don't sweep inlined string */
+	      && ! DECL_VAR_INLINE (types)	/* don't sweep inlined string */
 	      && DECL_RTL_SET_P (types)
 	      && GET_CODE (DECL_RTL (types)) == MEM
 	      && GET_MODE (DECL_RTL (types)) == BLKmode
