@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 1998/05/27 13:33:36 mickey Exp $
+#	$OpenBSD: Makefile,v 1.21 1998/05/28 20:52:36 mickey Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -6,7 +6,6 @@ PROG=	boot
 LD?=	ld
 SIZE?=	size
 LDFLAGS+=-nostdlib -Bstatic
-CLEANFILES+=	i386 machine
 
 .if defined(DEBUGFLAGS) && !empty(DEBUGFLAGS:M-D_TEST)
 CLEANFILES+=	srt0.o
@@ -27,13 +26,6 @@ LDADD=	${LIBSA} ${LIBZ}
 DPADD=	${LIBSA} ${LIBZ}
 
 .PATH:	${S}/stand/boot
-
-all:	machine-links
-
-machine-links:
-	@rm -f machine i386
-	@ln -fs ${.CURDIR}/../.. i386
-	@ln -fs ${.CURDIR}/../../include machine
 
 ${PROG}: $(OBJS) $(DPADD)
 	$(LD) $(LDFLAGS) -o $(PROG) $(OBJS) $(LDADD)

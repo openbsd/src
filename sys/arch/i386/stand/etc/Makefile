@@ -1,17 +1,9 @@
-#	$OpenBSD: Makefile,v 1.8 1998/05/25 19:04:54 mickey Exp $
+#	$OpenBSD: Makefile,v 1.9 1998/05/28 20:52:37 mickey Exp $
 
 S=	${.CURDIR}/../../../..
 I386=	${.CURDIR}/../..
-CLEANFILES=	i386 machine
 
-all:	machine-links assym.h
-
-machine-links:
-	@rm -f machine i386
-	@ln -fs ${.CURDIR}/../.. i386
-	@ln -fs ${.CURDIR}/../../include machine
-
-depend:: machine-links assym.h
+all depend:: assym.h
 
 assym.h: $S/kern/genassym.sh ${.CURDIR}/genassym.cf
 	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
@@ -21,7 +13,7 @@ assym.h: $S/kern/genassym.sh ${.CURDIR}/genassym.cf
 cleandir: clean
 
 clean:
-	@rm -f isa.h apm.h assym.h
+	@rm -f isa.h apm.h assym.h machine
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>

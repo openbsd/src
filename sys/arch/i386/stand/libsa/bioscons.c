@@ -1,4 +1,4 @@
-/*	$OpenBSD: bioscons.c,v 1.15 1998/05/16 07:32:17 deraadt Exp $	*/
+/*	$OpenBSD: bioscons.c,v 1.16 1998/05/28 20:52:39 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -39,7 +39,7 @@
 #include <dev/ic/mc146818reg.h>
 #include <dev/ic/comreg.h>
 #include <dev/ic/ns16450reg.h>
-#include <i386/isa/nvram.h>
+/* #include <i386/isa/nvram.h> */
 #include <dev/cons.h>
 #include <lib/libsa/stand.h>
 #include "debug.h"
