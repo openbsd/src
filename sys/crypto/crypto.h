@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.h,v 1.17 2001/05/15 02:40:35 deraadt Exp $	*/
+/*	$OpenBSD: crypto.h,v 1.18 2001/06/01 00:16:01 angelos Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -72,7 +72,6 @@ struct cryptoini
     int                cri_rnd;     /* Algorithm rounds, where relevant */
     caddr_t            cri_key;     /* key to use */
     u_int8_t           cri_iv[EALG_MAX_BLOCK_LEN];      /* IV to use */
-    int		       cri_insert;  /* XXX Number of bytes MAC "uses" */
     struct cryptoini  *cri_next;
 };
 
