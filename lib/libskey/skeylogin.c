@@ -12,7 +12,7 @@
  *
  * S/KEY verification check, lookups, and authentication.
  * 
- * $OpenBSD: skeylogin.c,v 1.33 1999/11/26 19:26:17 deraadt Exp $
+ * $OpenBSD: skeylogin.c,v 1.34 1999/12/06 19:04:58 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -498,6 +498,7 @@ skey_authenticate(username)
 			    SEEK_SET) != -1 && read(fd, hseed,
 			    SKEY_MAX_SEED_LEN) == SKEY_MAX_SEED_LEN) {
 				close(fd);
+				fd = -1;
 				secret = hseed;
 				secretlen = SKEY_MAX_SEED_LEN;
 				flg = 0;
@@ -507,6 +508,8 @@ skey_authenticate(username)
 				secretlen = strlen(secret);
 				flg = 0;
 			}
+			if (fd != -1)
+				close(fd);
 		}
 
 		/* Put that in your pipe and smoke it */
