@@ -77,7 +77,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: rfc1938.c,v 1.11 2003/03/15 20:37:44 millert Exp $";
+static const char rcsid[] = "$Sudo: rfc1938.c,v 1.12 2003/03/16 02:18:34 millert Exp $";
 #endif /* lint */
 
 int
@@ -137,10 +137,10 @@ rfc1938_setup(pw, promptp, auth)
     }
 
     if (def_flag(I_LONG_OTP_PROMPT))
-	(void) sprintf(new_prompt, "%s\n%s", challenge, orig_prompt);
+	(void) snprintf(new_prompt, np_size, "%s\n%s", challenge, orig_prompt);
     else
-	(void) sprintf(new_prompt, "%.*s [ %s ]:", op_len, orig_prompt,
-	    challenge);
+	(void) snprintf(new_prompt, np_size, "%.*s [ %s ]:", op_len,
+	    orig_prompt, challenge);
 
     *promptp = new_prompt;
     return(AUTH_SUCCESS);

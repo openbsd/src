@@ -68,7 +68,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: securid.c,v 1.8 2001/12/14 19:52:53 millert Exp $";
+static const char rcsid[] = "$Sudo: securid.c,v 1.9 2003/03/16 03:03:32 millert Exp $";
 #endif /* lint */
 
 union config_record configure;
@@ -99,7 +99,8 @@ securid_setup(pw, promptp, auth)
 
     /* Re-initialize SecurID every time. */
     if (sd_init(sd) == 0) {
-	strcpy(sd->username, pw->pw_name);
+	/* The programmer's guide says username is 32 bytes */
+	strlcpy(sd->username, pw->pw_name, 32);
 	return(AUTH_SUCCESS);
     } else {
 	(void) fprintf(stderr, "%s: Cannot contact SecurID server\n", Argv[0]);
