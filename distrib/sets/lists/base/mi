@@ -1298,7 +1298,6 @@
 ./usr/sbin/mailwrapper
 ./usr/sbin/makedbm
 ./usr/sbin/makemap
-./usr/sbin/mk-amd-map
 ./usr/sbin/mkalias
 ./usr/sbin/mkhybrid
 ./usr/sbin/mknetid

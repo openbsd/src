@@ -1780,7 +1780,6 @@
 ./usr/share/man/cat8/makemap.0
 ./usr/share/man/cat8/makewhatis.0
 ./usr/share/man/cat8/mfs.0
-./usr/share/man/cat8/mk-amd-map.0
 ./usr/share/man/cat8/mkalias.0
 ./usr/share/man/cat8/mkhybrid.0
 ./usr/share/man/cat8/mknetid.0
