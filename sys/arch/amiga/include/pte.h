@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.3 2001/11/30 23:20:09 miod Exp $	*/
+/*	$OpenBSD: pte.h,v 1.4 2001/12/06 22:33:18 miod Exp $	*/
 /*	$NetBSD: pte.h,v 1.14 1995/09/29 13:52:09 chopps Exp $	*/
 
 /*
@@ -65,9 +65,10 @@
  * AMIGA_MAX_KPTSIZE	the most number of bytes for kpt pages
  * AMIGA_MAX_PTSIZE	the number of bytes to map everything
  */
+extern vaddr_t amiga_uptbase;
 #define AMIGA_MAX_COREUPT	1024
 #define AMIGA_UPTSIZE		roundup(VM_MAXUSER_ADDRESS / NPTEPG, NBPG)
-#define AMIGA_UPTBASE		0x10000000
+#define AMIGA_UPTBASE		amiga_uptbase
 #define AMIGA_UPTMAXSIZE \
     roundup((AMIGA_MAX_COREUPT * AMIGA_UPTSIZE), NBPG)
 #define AMIGA_MAX_KPTSIZE \
