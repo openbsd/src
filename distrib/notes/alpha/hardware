@@ -133,15 +133,15 @@ Supported hardware:
                
     SCSI Host Adapters
           Adaptec AIC-7770-based SCSI host adapters (including the
-            Adaptec AHA-274x and AHA-284x families). (ahc)
-          Adaptec AHA-[23]94x[W] cards. (ahc)
-          Adaptec AHA-[23]9[34]xU[2W] cards . (ahc)
+            Adaptec AHA-274x and AHA-284x families). (ahc) [*]
+          Adaptec AHA-[23]94x[W] cards. (ahc) [*]
+          Adaptec AHA-[23]9[34]xU[2W] cards . (ahc) [*]
           Adaptec AIC-789[29] chips and products like the AHA-29160
-            based upon it which do 160MB/sec SCSI. (ahc)
+            based upon it which do 160MB/sec SCSI. (ahc) [*]
           QLogic PCI SCSI controllers (isp)
           Symbios Logic (NCR) 53C8xx-based PCI SCSI host adapters
             (Including generic/no name cards, old ASUS cards, the
-            DTC-3130 series, Diamond Fireport series, etc.) (ncr)
+            DTC-3130 series, Diamond Fireport series, etc.) (siop)
     PCI IDE Controllers (pciide)
           Acer Labs M5229
           CMD Tech PCI0640, PCI0643, PCI0646, PCI0648, and PCI0649
@@ -149,18 +149,18 @@ Supported hardware:
        Any other PCI IDE-compliant controller should work, but are   
        untested at this point
     Ethernet Adapters
-          3Com 3c9xx EtherLink XL adapters (xl), including:
+          3Com 3c9xx EtherLink XL adapters (xl), including: [*]
                3Com 3c900/3c900B PCI adapters
                3Com 3c905/3c905B/3c905C PCI adapters
                3Com 3c980/3c980C server adapters
                3Com 3cSOHO adapter
                3Com 3c900B-FL and 3c900B-FL/FX fiber optic adapters
-          3Com 3c990 3XP Typhoon/Sidewinder PCI adapters, including:
+          3Com 3c990 3XP Typhoon/Sidewinder PCI adapters, including: [-]
                3CR990-TX-95
                3CR990-TX-97
                3CR990-TX-SVR95
                3CR990-TX-SVR97
-          Intel i8255x-based (except the i82556) PCI adapters (fxp), 
+          Intel i8255x-based (except the i82556) PCI adapters (fxp), [C]
             including:
                Intel EtherExpress PRO/10+
                Intel EtherExpress PRO/100, PRO/100B, and PRO/100+
@@ -177,16 +177,16 @@ Supported hardware:
                Asante
                Almost all other variants work.
     FDDI Adapters
-          Digital DEFPA PCI FDDI adapters (fpa)
+          Digital DEFPA PCI FDDI adapters (fpa) [-]
     Cryptography Accelerators
-          Hi/Fn 7751-based boards (hifn), including:
+          Hi/Fn 7751-based boards (hifn), including: [*]
                GTGI PowerCrypt Encryption Accelerator
                NETSEC 7751
                HiFn reference board
                Invertex AEON
     Sound Devices
-          Ensoniq AudioPCI (eap)
-          SoundBlaster PCI128 (eap)
+          Ensoniq AudioPCI (eap) [*]
+          SoundBlaster PCI128 (eap) [*]
                
     Untested Peripherals:
                
@@ -195,31 +195,31 @@ Supported hardware:
    appreciated.
     SCSI Host Adapters
           AdvanSys ABP940UW, ASB3940UW-00, ASB3940U2W-00 and
-            ASB3950U160 PCI SCSI controlers. (adw)
+            ASB3950U160 PCI SCSI controlers. (adw) [C]
     RAID and Cache Controllers
           DPT SmartCache and SmartRaid III/IV PCI/EISA adapters (dpt)
-          ICP-Vortex GDT 6xxxR[DNPS] series (gdt)
+          ICP-Vortex GDT 6xxxR[DNPS] series (gdt) [C]
     Serial Ports
-          Cyclades PCI Cyclom-{4, 8, 16}Y serial boards (cy)
+          Cyclades PCI Cyclom-{4, 8, 16}Y serial boards (cy) [C]
     Communications Controllers
           Universal Serial Bus host controllers, including:
                USB Universal Host Controller (uhci)
                USB Open Host Controller (ohci)
     Ethernet Adapters
-          3Com 3c503 (ec)
-          3Com 3c509, 3c579, and 3c59x (ep)
+          3Com 3c503 (ec) [C]
+          3Com 3c509, 3c579, and 3c59x (ep) [C]
           Adaptec "Starfire" AIC-6915 based PCI adapters (sf),
-            including:
+            including: [C]
                Adaptec Single32 ANA-69011
                Adaptec Single64 ANA-62011 and ANA-62020
                Adaptec Duo64 ANA-62022
                Adaptec Quartet64 ANA-62044 
           ADMtek AL981 ("Comet") and AN983 ("Centaur-P") based PCI
-            adapters (dc), including:
+            adapters (dc), including: [C]
                Accton EN2242 MiniPCI
                Linksys LNE100TX v4.x
                Mototech ME316
-          ADMtek AN986-based USB adapters (aue), including:
+          ADMtek AN986-based USB adapters (aue), including: [C]
                Billionton Systems USB100
                Corega FEther USB-TX
                D-Link DSB-650TX
@@ -229,24 +229,24 @@ Supported hardware:
                SMC 2202USB
                SOHOware NUB100
                Kingston KNU101TX
-          AMD LANCE and PCnet-based PCI adapters (le), including:
+          AMD LANCE and PCnet-based PCI adapters (le), including: [C]
                BOCALANcard/PCI
                AT&T StarLAN 10, EN100, and StarLAN Fiber
-          ASIX 88140A/88141-based PCI adapters (dc), including:
+          ASIX 88140A/88141-based PCI adapters (dc), including: [C]
                CNet Pro110B
                Alfa Inc. GFC2204
-          CATC USB-EL1210A-based USB adapters (cue), including:  
+          CATC USB-EL1210A-based USB adapters (cue), including: [C]
                CATC Netmate and Netmate II
                Belkin F5U011/F5U111
           Davicom DM9100, DM9102, and DM9102A based PCI adapters (dc),
-            including:
+            including: [C]
                Jaton XpressNet
           Digital DC2114x-based four port cards, (de) including:
                Adaptec ANA-6944A
                Cogent EM400
                Compex 400TX
                Znyx ZX346
-          Kawasaki LSI KL5KUSB101B-based USB adapters (kue), including:
+          Kawasaki LSI KL5KUSB101B-based USB adapters (kue), including: [C]
                3Com 3C19250
                3Com 3c460 HomeConnect
                ADS Technologies USB-10BT
@@ -261,22 +261,22 @@ Supported hardware:
                Peracom USB
                SMC 2102/2104USB
                I/O Data USB-ET/T
-          Lite-On PNIC/PNIC-II-based adapters (dc), including:
+          Lite-On PNIC/PNIC-II-based adapters (dc), including: [C]
                Kingston KNE110TX
                LinkSys LNE100TX
                Matrox Networks FastNIC 10/100
                Netgear FA310TX
-          Macronix 98713/98715/98725-based adapters (dc), including:
+          Macronix 98713/98715/98725-based adapters (dc), including: [C]
                Accton EN1217   
                Addtron AEF-320TX/AEF-330TX
                NDC Communications SOHOware SFA110A 
                SVEC PN102-TX Fast Ethernet card
           National Semiconductor DP83815-based PCI adapters (sis),
-            including:
+            including: [C]
                NetGear FA311
                NetGear FA312
-          Novell NE1000, NE2000 (ISA, and PCI variants thereof) (ne)
-          RealTek 8129/8139-based adapters (rl), including:
+          Novell NE1000, NE2000 (ISA, and PCI variants thereof) (ne) [C]
+          RealTek 8129/8139-based adapters (rl), including: [C]
                Accton MPX 5030/5038
                Allied Telesyn AT2550  
                D-Link DFE530TX+
@@ -290,13 +290,13 @@ Supported hardware:
                Nortel BayStack 21  
                OvisLink LEF-8129TX, LEF-8139TX
                SMC EZ Card 10/100 PCI 1211-TX
-          SiS 900 and SiS 7016-based PCI adapters (sis), including:
+          SiS 900 and SiS 7016-based PCI adapters (sis), including: [C]
                Mototech ME313
                NetSurf NS-KFE30D
-          SMC/WD 8003, 8013, and the SMC "Elite16" ISA boards (we)
+          SMC/WD 8003, 8013, and the SMC "Elite16" ISA boards (we) [C]
           Sundance ST201-based PCI adapters (ste), including:
                D-Link DFE-550TX
-          Texas Instruments ThunderLAN PCI adapters (tl), including:
+          Texas Instruments ThunderLAN PCI adapters (tl), including: [C]
                Compaq Netelligent PCI Adapters
                Compaq NetFlex 3/P
                Compaq Deskpro integrated adapter
@@ -304,52 +304,60 @@ Supported hardware:
                Olicom OC2135, OC2183, OC2325, OC2326
                Racore 8165 and 8148
                TI ThunderLAN adapters
-          Winbond W89C840F-based adapters (wb), including:
+          Winbond W89C840F-based adapters (wb), including: [C]
                Trendware TE100-PCIE
                Compex RL100-ATX 10/100
        Please be aware that many NE2000 adapters fail or perform very
        poorly. We do not recommend using them, but your mileage may vary.
     Gigabit Ethernet Adapters
-          Alteon Tigon I/II-based adapters (ti), including:
+          Alteon Tigon I/II-based adapters (ti), including: [C]
                3Com 3c985 and 3c985B
                Alteon ACEnic V (fiber and copper)
                Digital EtherWORKS 1000SX
                Farallon PN9000SX
                Netgear GA620 and GA620T
                SGI Tigon   
-          Intel i82452-based adapters (wx), including:
+          Intel i82452-based adapters (wx), including: [C]
                Intel Pro/1000 Gigabit Server Adapter
-          SysKonnect SK-984x (9841/9842/9843/9844) based adapters (sk)
+          SysKonnect SK-984x (9841/9842/9843/9844) based adapters (sk) [C]
     ATM Adapters
           Efficient Networks EN-155 and Adaptec ANA-590x ATM interfaces
-            (en)
+            (en) [C]
     FDDI Adapters
-          Digital DEFEA EISA FDDI adapters (fea)
+          Digital DEFEA EISA FDDI adapters (fea) [C]
     WAN Adapters
           Lan Media Corporation SSI (T1)/HSSI/DS1/DS3 WAN interfaces
             (lmc)
     Universal Serial Bus (USB) Devices
-          USB Audio (uaudio)  
-          USB Diamond MultiMedia Rio MP3 players (urio)
+          USB Audio (uaudio) [*] 
+          USB Diamond MultiMedia Rio MP3 players (urio) [*]
           USB Ethernet adapters (aue, cue, kue), see above
-          USB Generic Human Interface Devices (catch-all) (uhid)
-          USB Handspring Visor (uvisor)
-          USB Hubs (uhub)
-          USB Keyboards (ukbd)
+          USB Generic Human Interface Devices (catch-all) (uhid) [C]
+          USB Handspring Visor (uvisor) [*]
+          USB Hubs (uhub) [C]
+          USB Keyboards (ukbd) [*]
           USB Mass Storage devices, i.e., USB floppy drives and USB
-            memory stick controllers (umass)
-          USB Mice (umouse) 
-          USB Modems (umodem)
-          USB Printers (ulpt)
-          USB Scanners (uscanner, usscanner)
-          USB-USB cables (upl)
+            memory stick controllers (umass) [C]
+          USB Mice (umouse) [-]
+          USB Modems (umodem) [*]
+          USB Printers (ulpt) [*]
+          USB Scanners (uscanner, usscanner) [*]
+          USB-USB cables (upl) [*]
     Sound Devices
-          C-Media CMI8[37]38 (cmpci)
-          ESS Solo-1 PCI AudioDrive (eso)   
-          Forte Media FM801 audio (fms)
-          VIA VT82C686A SouthBridge integrated AC'97 audio (auvia)
-          S3 SonicVibes (sv)
+          C-Media CMI8[37]38 (cmpci) [*]
+          ESS Solo-1 PCI AudioDrive (eso)    [*]
+          Forte Media FM801 audio (fms) [*]
+          VIA VT82C686A SouthBridge integrated AC'97 audio (auvia) [*]
+          S3 SonicVibes (sv) [*]
 
+Drivers for hardware marked with "[C]" are NOT included on the distribution
+floppies, but are available in the cdrom installation kernel as well as the
+"generic" default kernel which will be installed.
+Drivers for hardware marked with "[*]" are NOT available on the distribution
+floppies, or the cdrom installation kernel, but are available in the "generic"
+default kernel which will be installed.
+Drivers for hardware marked with "[-]" are NOT available in any provided
+kernel image, you will have to recompile your kernel to enable them.
 
 Console frame buffers and keyboards are only supported on systems
 explicitely mentioned above.  On other systems, including all
