@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.57 2002/05/30 05:07:17 itojun Exp $	*/
+/*	$OpenBSD: if.c,v 1.58 2002/06/08 11:53:29 itojun Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -253,6 +253,9 @@ if_attachdomain1(ifp)
 	struct ifnet *ifp;
 {
 	struct domain *dp;
+	int s;
+
+	s = splnet();
 
 	/* address family dependent data region */
 	bzero(ifp->if_afdata, sizeof(ifp->if_afdata));
@@ -261,6 +264,8 @@ if_attachdomain1(ifp)
 			ifp->if_afdata[dp->dom_family] =
 			    (*dp->dom_ifattach)(ifp);
 	}
+
+	splx(s);
 }
 
 void
