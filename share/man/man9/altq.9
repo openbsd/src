@@ -1,4 +1,4 @@
-.\"	$OpenBSD: altq.9,v 1.5 2001/07/12 13:09:27 itojun Exp $
+.\"	$OpenBSD: altq.9,v 1.6 2001/07/13 05:00:14 kjc Exp $
 .\"
 .\" Copyright (C) 2001
 .\" Sony Computer Science Laboratories Inc.  All rights reserved.
@@ -74,15 +74,14 @@ macros for ease of transition.
 .Pp
 .Fn IFQ_ENQUEUE
 enqueues a packet
-.Fa m ,
-to the queue 
+.Fa m
+to the queue
 .Fa ifq .
 The underlying queueing discipline may discard the packet.
-0 is set to
 .Fa error
-on success and 
+is set to 0 on success, or
 .Dv ENOBUFS
-is set if the packet is discarded.
+if the packet is discarded.
 .Fa m
 will be freed by the device driver on success or by the queueing discipline on
 failure so that the caller should not touch
@@ -92,11 +91,13 @@ after calling
 .Pp
 .Fn IFQ_DEQUEUE
 dequeues a packet from the queue.
-The dequeued packet is set to
+The dequeued packet is returned in
 .Fa m ,
 or
+.Fa m
+is set to
 .Dv NULL
-is set if no packet is dequeued.
+if no packet is dequeued.
 The caller must always check
 .Fa m
 since a non-empty queue could return
@@ -117,7 +118,7 @@ The purge operation is needed since a non-work conserving queue cannot be
 emptied by a dequeue loop.
 .Pp
 .Fn IFQ_CLASSIFY
-classifies a packet to a scheduling class, and set the result to
+classifies a packet to a scheduling class, and returns the result in
 .Fa pktattr .
 .Pp
 .Fn IFQ_IS_EMPTY
@@ -153,7 +154,7 @@ output queue structure
 has the same fields.
 The traditional
 .Fn IF_XXX
-macros and the code directly referencing to the fields within
+macros and the code directly referencing the fields within
 .Dv if_snd
 still work with
 .Dv ifaltq .
@@ -206,7 +207,7 @@ macros looks like:
 .Ss Enqueue operation
 The semantics of the enqueue operation is changed.
 In the new style,
-the enqueue and packet drop are combined since they cannot be easily
+enqueue and packet drop are combined since they cannot be easily
 separated in many queueing disciplines.
 The new enqueue operation corresponds to the following macro that is
 written with the old macros.
@@ -232,11 +233,11 @@ queue a packet
 .It
 drop (and free) a packet if the enqueue operation fails
 .El
-If the enqueue operation fails, an error
-.Dv ENOBUFS
+If the enqueue operation fails,
+.Fa error 
 is set to
-.Dv error .
-.Dv mbuf
+.Dv ENOBUFS .
+.Fa mbuf
 is freed by the queueing discipline.
 The caller should not touch mbuf after calling
 .Fn IFQ_ENQUEUE
@@ -255,7 +256,7 @@ looks as follows:
 .Bd -literal
             ##old-style##                           ##new-style##
                                        |
- int                                   | int 
+ int                                   | int
  ether_output(ifp, m0, dst, rt0)       | ether_output(ifp, m0, dst, rt0)
  {                                     | {
      ......                            |     ......
@@ -354,7 +355,7 @@ is
 could still return
 .Dv NULL
 if the queue is under rate-limiting.
-.Ss Dequeue operaion
+.Ss Dequeue operation
 Replace
 .Fn IF_DEQUEUE
 by
@@ -459,12 +460,14 @@ Note that a non-work conserving queue cannot be emptied by a dequeue loop.
 .Ss Attach routine
 Use
 .Fn IFQ_SET_MAXLEN
-to set a value to
-.Fa ifq_maxlen .
+to set
+.Fa ifq_maxlen
+to
+.Fa len .
 Add
 .Fn IFQ_SET_READY
 to show this driver is converted to the new style.
-(this is used to distinguish new-style drivers.)
+(This is used to distinguish new-style drivers.)
 .Bd -literal
             ##old-style##                           ##new-style##
                                        |
@@ -482,7 +485,7 @@ The new macros for statistics:
                                        |
  ifp->if_snd.ifq_len++;                | IFQ_INC_LEN(&ifp->if_snd);
                                        |
- ifp->if_snd.ifq_len--;                | IFQ_INC_LEN(&ifp->if_snd);
+ ifp->if_snd.ifq_len--;                | IFQ_DEC_LEN(&ifp->if_snd);
                                        |
 .Ed
 Some drivers instruct the hardware to invoke transmission complete
@@ -541,7 +544,7 @@ The enqueue operation looks like:
  }                                     |         error = 0;
  IF_ENQUEUE(ifq, m);                   |     }
                                        | } else
-                                       |     IFQ_ENQUEUE(&sc->sc_if.if_snd, 
+                                       |     IFQ_ENQUEUE(&sc->sc_if.if_snd,
                                        |                 m, error);
                                        |
                                        | if (error) {
@@ -568,7 +571,7 @@ The dequeue operations looks like:
 .Ed
 .Sh QUEUEING DISCIPLINES
 Queueing disciplines need to maintain
-.Fa ifq_len .
+.Fa ifq_len
 .Po
 used by
 .Fn IFQ_IS_EMPTY
