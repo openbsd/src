@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.36 2004/07/28 17:10:15 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.37 2004/08/05 18:44:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -132,10 +132,10 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 		return (asp1->flags.lpref - asp2->flags.lpref);
 
 	/* 3. aspath count, the shorter the better */
-	if ((asp2->flags.aspath->hdr.as_cnt -
-	    asp1->flags.aspath->hdr.as_cnt) != 0)
-		return (asp2->flags.aspath->hdr.as_cnt -
-		    asp1->flags.aspath->hdr.as_cnt);
+	if ((asp2->flags.aspath->ascnt -
+	    asp1->flags.aspath->ascnt) != 0)
+		return (asp2->flags.aspath->ascnt -
+		    asp1->flags.aspath->ascnt);
 
 	/* 4. origin, the lower the better */
 	if ((asp2->flags.origin - asp1->flags.origin) != 0)

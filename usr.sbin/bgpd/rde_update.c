@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.25 2004/08/05 16:26:56 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.26 2004/08/05 18:44:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -283,7 +283,7 @@ up_generate_updates(struct rde_peer *peer,
 			 * pass only prefix that have a aspath count
 			 * of zero this is equal to the ^$ regex.
 			 */
-			if (old->aspath->flags.aspath->hdr.as_cnt != 0)
+			if (old->aspath->flags.aspath->ascnt != 0)
 				return;
 			break;
 		}
@@ -385,7 +385,7 @@ up_generate_updates(struct rde_peer *peer,
 			 * pass only prefix that have a aspath count
 			 * of zero this is equal to the ^$ regex.
 			 */
-			if (new->aspath->flags.aspath->hdr.as_cnt != 0) {
+			if (new->aspath->flags.aspath->ascnt != 0) {
 				up_generate_updates(peer, NULL, old);
 				return;
 			}
@@ -455,7 +455,8 @@ up_generate_updates(struct rde_peer *peer,
 		 * use aspath_hash as attr_hash, this may be unoptimal
 		 * but currently I don't care.
 		 */
-		a->attr_hash = aspath_hash(attrs.aspath);
+		a->attr_hash = aspath_hash(attrs.aspath->data,
+		    attrs.aspath->len);
 		p->prefix = addr;
 		p->prefixlen = new->prefix->prefixlen;
 
@@ -480,7 +481,7 @@ up_generate_default(struct rde_peer *peer, sa_family_t af)
 	bzero(&addr, sizeof(addr));
 	bzero(&nexthop, sizeof(nexthop));
 
-	attrs.aspath = aspath_create(NULL, 0);
+	attrs.aspath = aspath_get(NULL, 0);
 	attrs.nexthop.s_addr = INADDR_ANY;
 	/* med = 0 */
 	attrs.lpref = DEFAULT_LPREF;
@@ -521,7 +522,7 @@ up_generate_default(struct rde_peer *peer, sa_family_t af)
 	 * use aspath_hash as attr_hash, this may be unoptimal
 	 * but currently I don't care.
 	 */
-	a->attr_hash = aspath_hash(attrs.aspath);
+	a->attr_hash = aspath_hash(attrs.aspath->data, attrs.aspath->len);
 	p->prefix = addr;
 	p->prefixlen = 0; /* default route */
 
@@ -539,6 +540,7 @@ int
 up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
     struct attr_flags *a, struct nexthop *nh)
 {
+	struct aspath	*path;
 	struct attr	*oa;
 	u_int32_t	 tmp32;
 	in_addr_t	 nexthop, mask;
@@ -552,9 +554,11 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 	wlen += r; len -= r;
 
 	/* aspath */
-	if ((r = aspath_write(up_attr_buf + wlen, len, a->aspath,
-	    rde_local_as(), peer->conf.ebgp)) == -1)
+	path = aspath_prepend(a->aspath, rde_local_as(), peer->conf.ebgp);
+	if ((r = attr_write(up_attr_buf + wlen, len, ATTR_WELL_KNOWN,
+	    ATTR_ASPATH, path->data, path->len)) == -1)
 		return (-1);
+	aspath_put(path);
 	wlen += r; len -= r;
 
 	/* nexthop, already network byte order */

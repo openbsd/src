@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.39 2004/07/28 16:02:14 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.40 2004/08/05 18:44:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -112,7 +112,7 @@ attr_parse(u_char *p, u_int16_t len, struct attr_flags *a, int ebgp,
 		if (aspath_verify(p, attr_len) != 0)
 			return (-1);
 		WFLAG(a->wflags, F_ATTR_ASPATH);
-		a->aspath = aspath_create(p, attr_len);
+		a->aspath = aspath_get(p, attr_len);
 		if (enforce_as == ENFORCE_AS_ON &&
 		    remote_as != aspath_neighbor(a->aspath))
 			return (-1);
@@ -448,7 +448,7 @@ attr_copy(struct attr_flags *t, struct attr_flags *s)
 	 * a own copy.
 	 */
 	memcpy(t, s, sizeof(struct attr_flags));
-	t->aspath = aspath_create(s->aspath->data, s->aspath->hdr.len);
+	t->aspath = aspath_get(s->aspath->data, s->aspath->len);
 	TAILQ_INIT(&t->others);
 	TAILQ_FOREACH(os, &s->others, entry)
 		attr_optadd(t, os->flags, os->type, os->data, os->len);
@@ -476,7 +476,7 @@ attr_free(struct attr_flags *a)
 	 * free the aspath and all optional path attributes
 	 * but not the attr_flags struct.
 	 */
-	aspath_destroy(a->aspath);
+	aspath_put(a->aspath);
 	a->aspath = NULL;
 	attr_optfree(a);
 }
@@ -667,25 +667,17 @@ attr_mp_nexthop(const struct attr_flags *attrs)
 
 /* aspath specific functions */
 
-static u_int16_t	aspath_extract(void *, int);
+u_int32_t	 aspath_hash(const void *, u_int16_t);
+u_int16_t	 aspath_extract(const void *, int);
+struct aspath	*aspath_lookup(const void *, u_int16_t);
 
-/*
- * Extract the asnum out of the as segment at the specified position.
- * Direct access is not possible because of non-aligned reads.
- * ATTENTION: no bounds check are done.
- */
-static u_int16_t
-aspath_extract(void *seg, int pos)
-{
-	u_char		*ptr = seg;
-	u_int16_t	 as = 0;
+struct aspath_table {
+	struct aspath_list	*hashtbl;
+	u_int32_t		 hashmask;
+} astable;
 
-	ptr += 2 + 2 * pos;
-	as = *ptr++;
-	as <<= 8;
-	as |= *ptr;
-	return (as);
-}
+#define ASPATH_HASH(x)				\
+	&astable.hashtbl[(x) & astable.hashmask]
 
 int
 aspath_verify(void *data, u_int16_t len)
@@ -719,115 +711,63 @@ aspath_verify(void *data, u_int16_t len)
 	return (0);	/* aspath is valid but probably not loop free */
 }
 
-struct aspath *
-aspath_create(void *data, u_int16_t len)
+void
+aspath_init(u_int32_t hashsize)
 {
-	struct aspath	*aspath;
+	u_int32_t	hs, i;
+
+	for (hs = 1; hs < hashsize; hs <<= 1)
+		;
+	astable.hashtbl = calloc(hs, sizeof(struct aspath_list));
+	if (astable.hashtbl == NULL)
+		fatal("path_init");
+
+	for (i = 0; i < hs; i++)
+		LIST_INIT(&astable.hashtbl[i]);
+
+	astable.hashmask = hs - 1;
+}
+
+struct aspath *
+aspath_get(void *data, u_int16_t len)
+{
+	struct aspath_list	*head;
+	struct aspath		*aspath;
 
 	/* The aspath must already have been checked for correctness. */
-	aspath = malloc(ASPATH_HEADER_SIZE + len);
-	if (aspath == NULL)
-		fatal("aspath_create");
-	aspath->hdr.len = len;
-	memcpy(aspath->data, data, len);
+	aspath = aspath_lookup(data, len);
+	if (aspath == NULL) {
+		aspath = malloc(ASPATH_HEADER_SIZE + len);
+		if (aspath == NULL)
+			fatal("aspath_get");
 
-	aspath->hdr.as_cnt = aspath_count(aspath);
-	aspath->hdr.prepend = 0;
+		aspath->refcnt = 0;
+		aspath->len = len;
+		aspath->ascnt = aspath_count(data, len);
+		memcpy(aspath->data, data, len);
+
+		/* link */
+		head = ASPATH_HASH(aspath_hash(aspath->data, aspath->len));
+		LIST_INSERT_HEAD(head, aspath, entry);
+	}
+	aspath->refcnt++;
 
 	return (aspath);
 }
 
-int
-aspath_write(void *p, u_int16_t len, struct aspath *aspath, u_int16_t myAS,
-    int ebgp)
-{
-	u_char		*b = p;
-	int		 tot_len, as_len, prepend, size, wpos = 0;
-	u_int16_t	 tmp;
-	u_int8_t	 type, attr_flag = ATTR_WELL_KNOWN;
-
-	prepend = aspath->hdr.prepend + (ebgp ? 1 : 0);
-
-	if (prepend > 255)
-		/* lunatic prepends need to be blocked in the parser */
-		return (-1);
-
-	/* first calculate new size */
-	if (aspath->hdr.len > 0) {
-		if (aspath->hdr.len < 2)
-			return (-1);
-		type = aspath->data[0];
-		size = aspath->data[1];
-	} else {
-		/* empty as path */
-		type = AS_SET;
-		size = 0;
-	}
-	if (prepend == 0)
-		as_len = aspath->hdr.len;
-	else if (type == AS_SET || size + prepend > 255)
-		/* need to attach a new AS_SEQUENCE */
-		as_len = 2 + prepend * 2 + aspath->hdr.len;
-	else
-		as_len = prepend * 2 + aspath->hdr.len;
-
-	/* check buffer size */
-	tot_len = 2 + as_len;
-	if (as_len > 255) {
-		attr_flag |= ATTR_EXTLEN;
-		tot_len += 2;
-	} else
-		tot_len += 1;
-
-	if (tot_len > len)
-		return (-1);
-
-	/* header */
-	b[wpos++] = attr_flag;
-	b[wpos++] = ATTR_ASPATH;
-	if (as_len > 255) {
-		tmp = as_len;
-		tmp = htons(tmp);
-		memcpy(b, &tmp, 2);
-		wpos += 2;
-	} else
-		b[wpos++] = (u_char)(as_len & 0xff);
-
-	/* first prepends */
-	myAS = htons(myAS);
-	if (type == AS_SET) {
-		b[wpos++] = AS_SEQUENCE;
-		b[wpos++] = prepend;
-		for (; prepend > 0; prepend--) {
-			memcpy(b + wpos, &myAS, 2);
-			wpos += 2;
-		}
-		memcpy(b + wpos, aspath->data, aspath->hdr.len);
-	} else {
-		if (size + prepend > 255) {
-			b[wpos++] = AS_SEQUENCE;
-			b[wpos++] = size + prepend - 255;
-			for (; prepend + size > 255; prepend--) {
-				memcpy(b + wpos, &myAS, 2);
-				wpos += 2;
-			}
-		}
-		b[wpos++] = AS_SEQUENCE;
-		b[wpos++] = size + prepend;
-		for (; prepend > 0; prepend--) {
-			memcpy(b + wpos, &myAS, 2);
-			wpos += 2;
-		}
-		memcpy(b + wpos, aspath->data + 2, aspath->hdr.len - 2);
-	}
-	return (tot_len);
-}
-
 void
-aspath_destroy(struct aspath *aspath)
+aspath_put(struct aspath *aspath)
 {
-	/* only the aspath needs to be freed */
-	if (aspath == NULL) return;
+	if (aspath == NULL)
+		return;
+
+	if (--aspath->refcnt > 0)
+		/* somebody still holds a reference */
+		return;
+
+	/* unlink */
+	LIST_REMOVE(aspath, entry);
+
 	free(aspath);
 }
 
@@ -840,19 +780,19 @@ aspath_dump(struct aspath *aspath)
 u_int16_t
 aspath_length(struct aspath *aspath)
 {
-	return (aspath->hdr.len);
+	return (aspath->len);
 }
 
 u_int16_t
-aspath_count(struct aspath *aspath)
+aspath_count(const void *data, u_int16_t len)
 {
-	u_int8_t	*seg;
-	u_int16_t	 cnt, len, seg_size;
+	const u_int8_t	*seg;
+	u_int16_t	 cnt, seg_size;
 	u_int8_t	 seg_type, seg_len;
 
 	cnt = 0;
-	seg = aspath->data;
-	for (len = aspath->hdr.len; len > 0; len -= seg_size, seg += seg_size) {
+	seg = data;
+	for (; len > 0; len -= seg_size, seg += seg_size) {
 		seg_type = seg[0];
 		seg_len = seg[1];
 		seg_size = 2 + 2 * seg_len;
@@ -861,6 +801,9 @@ aspath_count(struct aspath *aspath)
 			cnt += 1;
 		else
 			cnt += seg_len;
+
+		if (seg_size > len)
+			fatalx("aspath_count: bula bula");
 	}
 	return (cnt);
 }
@@ -874,7 +817,7 @@ aspath_neighbor(struct aspath *aspath)
 	 * That should not break anything.
 	 */
 
-	if (aspath->hdr.len == 0)
+	if (aspath->len == 0)
 		return (0);
 
 	return (aspath_extract(aspath->data, 0));
@@ -888,7 +831,7 @@ aspath_loopfree(struct aspath *aspath, u_int16_t myAS)
 	u_int8_t	 i, seg_len, seg_type;
 
 	seg = aspath->data;
-	for (len = aspath->hdr.len; len > 0; len -= seg_size, seg += seg_size) {
+	for (len = aspath->len; len > 0; len -= seg_size, seg += seg_size) {
 		seg_type = seg[0];
 		seg_len = seg[1];
 		seg_size = 2 + 2 * seg_len;
@@ -897,23 +840,43 @@ aspath_loopfree(struct aspath *aspath, u_int16_t myAS)
 			if (myAS == aspath_extract(seg, i))
 				return (0);
 		}
+
+		if (seg_size > len)
+			fatalx("aspath_loopfree: bula bula");
 	}
 	return (1);
+}
+
+int
+aspath_compare(struct aspath *a1, struct aspath *a2)
+{
+	int r;
+
+	if (a1->len > a2->len)
+		return (1);
+	if (a1->len < a2->len)
+		return (-1);
+	r = memcmp(a1->data, a2->data, a1->len);
+	if (r > 0)
+		return (1);
+	if (r < 0)
+		return (-1);
+	return (0);
 }
 
 #define AS_HASH_INITIAL 8271
 
 u_int32_t
-aspath_hash(struct aspath *aspath)
+aspath_hash(const void *data, u_int16_t len)
 {
-	u_int8_t	*seg;
+	const u_int8_t	*seg;
 	u_int32_t	 hash;
-	u_int16_t	 len, seg_size;
+	u_int16_t	 seg_size;
 	u_int8_t	 i, seg_len, seg_type;
 
 	hash = AS_HASH_INITIAL;
-	seg = aspath->data;
-	for (len = aspath->hdr.len; len > 0; len -= seg_size, seg += seg_size) {
+	seg = data;
+	for (; len > 0; len -= seg_size, seg += seg_size) {
 		seg_type = seg[0];
 		seg_len = seg[1];
 		seg_size = 2 + 2 * seg_len;
@@ -922,25 +885,117 @@ aspath_hash(struct aspath *aspath)
 			hash += (hash << 5);
 			hash ^= aspath_extract(seg, i);
 		}
+
+		if (seg_size > len)
+			fatalx("aspath_hash: bula bula");
 	}
 	return (hash);
 }
 
-int
-aspath_compare(struct aspath *a1, struct aspath *a2)
+/*
+ * Extract the asnum out of the as segment at the specified position.
+ * Direct access is not possible because of non-aligned reads.
+ * ATTENTION: no bounds check are done.
+ */
+u_int16_t
+aspath_extract(const void *seg, int pos)
 {
-	int r;
+	const u_char	*ptr = seg;
+	u_int16_t	 as = 0;
 
-	if (a1->hdr.len > a2->hdr.len)
-		return (1);
-	if (a1->hdr.len < a2->hdr.len)
-		return (-1);
-	r = memcmp(a1->data, a2->data, a1->hdr.len);
-	if (r > 0)
-		return (1);
-	if (r < 0)
-		return (-1);
-	return (0);
+	ptr += 2 + 2 * pos;
+	as = *ptr++;
+	as <<= 8;
+	as |= *ptr;
+	return (as);
+}
+
+struct aspath *
+aspath_lookup(const void *data, u_int16_t len)
+{
+	struct aspath_list	*head;
+	struct aspath		*aspath;
+	u_int32_t		 hash;
+
+	hash = aspath_hash(data, len);
+	head = ASPATH_HASH(hash);
+
+	LIST_FOREACH(aspath, head, entry) {
+		if (len == aspath->len && memcmp(data, aspath->data, len) == 0)
+			return (aspath);
+	}
+	return (NULL);
+}
+
+
+/*
+ * Returns a new prepended aspath. Old needs to be freed by caller.
+ */
+struct aspath *
+aspath_prepend(struct aspath *asp, u_int16_t as, int quantum)
+{
+	u_char		*p;
+	int		 len, overflow = 0, shift = 0, size, wpos = 0;
+	u_int8_t	 type;
+
+	/* lunatic prepends are blocked in the parser and limited */
+
+	/* first calculate new size */
+	if (asp->len > 0) {
+		if (asp->len < 2)
+			fatalx("aspath_prepend: bula bula");
+		type = asp->data[0];
+		size = asp->data[1];
+	} else {
+		/* empty as path */
+		type = AS_SET;
+		size = 0;
+	}
+
+	if (quantum == 0) {
+		/* no change needed but increase refcnt as we return a copy */
+		asp->refcnt++;
+		return (asp);
+	} else if (type == AS_SET || size + quantum > 255) {
+		/* need to attach a new AS_SEQUENCE */
+		len = 2 + quantum * 2 + asp->len;
+		overflow = type == AS_SET ? quantum : (size + quantum) & 0xff;
+	} else
+		len = quantum * 2 + asp->len;
+
+	quantum -= overflow;
+
+	p = malloc(len);
+	if (p == NULL)
+		fatal("aspath_prepend");
+
+	/* first prepends */
+	as = htons(as);
+	if (overflow > 0) {
+		p[wpos++] = AS_SEQUENCE;
+		p[wpos++] = overflow;
+
+		for (; overflow > 0; overflow--) {
+			memcpy(p + wpos, &as, 2);
+			wpos += 2;
+		}
+	}
+	if (quantum > 0) {
+		shift = 2;
+		p[wpos++] = AS_SEQUENCE;
+		p[wpos++] = quantum + size;
+
+		for (; quantum > 0; quantum--) {
+			memcpy(p + wpos, &as, 2);
+			wpos += 2;
+		}
+	}
+	memcpy(p + wpos, asp->data + shift, asp->len - shift);
+
+	asp = aspath_get(p, len);
+	free(p);
+
+	return (asp);
 }
 
 int
@@ -1073,7 +1128,7 @@ aspath_match(struct aspath *a, enum as_spec type, u_int16_t as)
 	u_int8_t	 i, seg_type, seg_len;
 
 	if (type == AS_EMPTY) {
-		if (a->hdr.len == 0)
+		if (a->len == 0)
 			return (1);
 		else
 			return (0);
@@ -1081,7 +1136,7 @@ aspath_match(struct aspath *a, enum as_spec type, u_int16_t as)
 
 	final = 0;
 	seg = a->data;
-	for (len = a->hdr.len; len > 0; len -= seg_size, seg += seg_size) {
+	for (len = a->len; len > 0; len -= seg_size, seg += seg_size) {
 		seg_type = seg[0];
 		seg_len = seg[1];
 		seg_size = 2 + 2 * seg_len;
@@ -1149,6 +1204,7 @@ community_set(struct attr *attr, int as, int type)
 		attr->len += 4;
 		if ((p = realloc(attr->data, attr->len)) == NULL)
 			return (0);
+
 		attr->data = p;
 		p = attr->data + attr->len - 4;
 	}

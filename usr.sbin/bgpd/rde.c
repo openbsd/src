@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.134 2004/08/05 16:26:56 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.135 2004/08/05 18:44:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -172,6 +172,7 @@ rde_main(struct bgpd_config *config, struct network_head *net_l,
 
 	pt_init();
 	path_init(pathhashsize);
+	aspath_init(pathhashsize);
 	nexthop_init(nexthophashsize);
 	peer_init(peerhashsize);
 	rules_l = rules;
@@ -644,9 +645,6 @@ rde_update_dispatch(struct imsg *imsg)
 
 	/* aspath needs to be loop free nota bene this is not a hard error */
 	if (peer->conf.ebgp && !aspath_loopfree(attrs.aspath, conf->as)) {
-		char *s;
-		aspath_asprint(&s, attrs.aspath->data, attrs.aspath->hdr.len);
-		free(s);
 		attr_free(&attrs);
 		return (0);
 	}
@@ -1481,7 +1479,7 @@ network_add(struct network_config *nc, int flagstatic)
 
 	bzero(&attrs, sizeof(attrs));
 
-	attrs.aspath = aspath_create(NULL, 0);
+	attrs.aspath = aspath_get(NULL, 0);
 	attrs.nexthop.s_addr = INADDR_ANY;
 	/* med = 0 */
 	attrs.lpref = DEFAULT_LPREF;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.48 2004/08/05 15:58:21 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.49 2004/08/05 18:44:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -67,25 +67,16 @@ struct rde_peer {
 
 #define AS_SET			1
 #define AS_SEQUENCE		2
-#define ASPATH_HEADER_SIZE	sizeof(struct aspath_hdr)
+#define ASPATH_HEADER_SIZE	sizeof(struct aspath)
 
-struct aspath_hdr {
-	u_int16_t			len;	/* total length of aspath
-						   in octets */
-	u_int16_t			as_cnt;	/* number of AS's in data */
-	u_int16_t			prepend;
-};
+LIST_HEAD(aspath_list, aspath);
 
 struct aspath {
-	struct aspath_hdr		hdr;
-	u_char				data[1];
-	/*
-	 * data consists of multiple struct aspath_segment with a length of
-	 * len octets. In zebra data is a pointer to some memory location with
-	 * the aspath segments. We could do it like this but then we should
-	 * remove the pointer from rde_aspath and store the aspath header
-	 * directly there.
-	 */
+	LIST_ENTRY(aspath)	entry;
+	int			refcnt;	/* reference count */
+	u_int16_t		len;	/* total length of aspath in octets */
+	u_int16_t		ascnt;	/* number of AS hops in data */
+	u_char			data[0]; /* placeholder for actual data */
 };
 
 enum attrtypes {
@@ -264,17 +255,17 @@ int		 aspath_verify(void *, u_int16_t);
 #define		 AS_ERR_LEN	-1
 #define		 AS_ERR_TYPE	-2
 #define		 AS_ERR_BAD	-3
-struct aspath	*aspath_create(void *, u_int16_t);
-void		 aspath_destroy(struct aspath *);
-int		 aspath_write(void *, u_int16_t, struct aspath *, u_int16_t,
-		     int);
+void		 aspath_init(u_int32_t);
+struct aspath	*aspath_get(void *, u_int16_t);
+void		 aspath_put(struct aspath *);
 u_char		*aspath_dump(struct aspath *);
 u_int16_t	 aspath_length(struct aspath *);
-u_int16_t	 aspath_count(struct aspath *);
+u_int16_t	 aspath_count(const void *, u_int16_t);
 u_int16_t	 aspath_neighbor(struct aspath *);
-u_int32_t	 aspath_hash(struct aspath *);
 int		 aspath_loopfree(struct aspath *, u_int16_t);
 int		 aspath_compare(struct aspath *, struct aspath *);
+u_int32_t	 aspath_hash(const void *, u_int16_t);
+struct aspath	*aspath_prepend(struct aspath *, u_int16_t, int);
 int		 aspath_snprint(char *, size_t, void *, u_int16_t);
 int		 aspath_asprint(char **, void *, u_int16_t);
 size_t		 aspath_strlen(void *, u_int16_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.14 2004/08/05 15:58:21 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.15 2004/08/05 18:44:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -58,6 +58,9 @@ rde_filter(struct rde_peer *peer, struct attr_flags *attrs,
 void
 rde_apply_set(struct attr_flags *attrs, struct filter_set *set)
 {
+	struct aspath	*new;
+	u_int16_t	 as;
+
 	if (attrs == NULL)
 		return;
 
@@ -72,13 +75,10 @@ rde_apply_set(struct attr_flags *attrs, struct filter_set *set)
 	if (set->flags & SET_NEXTHOP_BLACKHOLE)
 		attrs->nexthop_blackhole = 1;
 	if (set->flags & SET_PREPEND) {
-		/*
-		 * The actual prepending is done afterwards because
-		 * This could overflow but somebody that uses that many
-		 * prepends is loony and needs professional help.
-		 */
-		attrs->aspath->hdr.prepend += set->prepend;
-		attrs->aspath->hdr.as_cnt += set->prepend;
+		as = rde_local_as();
+		new = aspath_prepend(attrs->aspath, as, set->prepend);
+		aspath_put(attrs->aspath);
+		attrs->aspath = new;
 	}
 	if (set->flags & SET_PFTABLE)
 		strlcpy(attrs->pftable, set->pftable, sizeof(attrs->pftable));
