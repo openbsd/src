@@ -1,4 +1,4 @@
-/* $NetBSD: div.S,v 1.1 1996/02/16 20:48:16 mark Exp $ */
+/* $NetBSD: div.S,v 1.2 1996/05/12 20:52:09 mark Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -27,22 +27,8 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Id: div.S,v 1.1 1996/05/01 12:51:17 deraadt Exp $
  */
 
-a1	.req	r0
-a2	.req	r1
-a3	.req	r2
-a4	.req	r3
-v1	.req	r4
-v2	.req	r5
-v3	.req	r6
-v4	.req	r7
-v5	.req	r8
-v6	.req	r9
-v7	.req	r10
-fp	.req	r11
 ip	.req	r12
 sp	.req	r13
 lr	.req	r14
@@ -60,30 +46,30 @@ __rt_udiv:
 
 	.global	___umodsi3
 ___umodsi3:
-	MOV	a3, a1
-	MOV	a1, a2
-	MOV	a2, a3
+	MOV	r2, r0
+	MOV	r0, r1
+	MOV	r1, r2
 	B	x_uremainder
 
 	.global	___udivsi3
 ___udivsi3:
-	MOV	a3, a1
-	MOV	a1, a2
-	MOV	a2, a3
+	MOV	r2, r0
+	MOV	r0, r1
+	MOV	r1, r2
 	B	x_udivide
 
 	.global	___modsi3
 ___modsi3:
-	MOV	a3, a1
-	MOV	a1, a2
-	MOV	a2, a3
+	MOV	r2, r0
+	MOV	r0, r1
+	MOV	r1, r2
 	B	x_remainder
 
 	.global	___divsi3
 ___divsi3:
-	MOV	a3, a1
-	MOV	a1, a2
-	MOV	a2, a3
+	MOV	r2, r0
+	MOV	r0, r1
+	MOV	r1, r2
 	B	x_divide
 
 	.global	x_divtest
@@ -94,262 +80,262 @@ x_divtest:
 x_remainder:
 	STMFD	sp!,{lr}
 	BL	x_divide
-	MOV	a1,a2
+	MOV	r0,r1
 	LDMFD	sp!,{pc}
 
 	.global	x_uremainder
 x_uremainder:
 	STMFD	sp!,{lr}
 	BL	x_udivide
-	MOV	a1,a2
+	MOV	r0,r1
 	LDMFD	sp!,{pc}
 
 x_overflow:
-	MVN	a1,#0
+	MVN	r0,#0
 	MOV	pc,lr
 
-	.global	x_udivide		/* a1 = a2 / a1; a2 = a2 % a1 */
+	.global	x_udivide		/* r0 = r1 / r0; r1 = r1 % r0 */
 x_udivide:
-	CMP	a1,#1
+	CMP	r0,#1
 	BCC	x_overflow
 	BEQ	x_divide_l0
 	MOV	ip,#0
-	MOVS	a2,a2
+	MOVS	r1,r1
 	BPL	x_divide_l1
-	ORR	ip,ip,#0x20000000	/* ip bit 0x20000000 = -ve a2 */
-	MOVS	a2,a2,lsr #1
-	ORRCS	ip,ip,#0x10000000	/* ip bit 0x10000000 = bit 0 of a2 */
+	ORR	ip,ip,#0x20000000	/* ip bit 0x20000000 = -ve r1 */
+	MOVS	r1,r1,lsr #1
+	ORRCS	ip,ip,#0x10000000	/* ip bit 0x10000000 = bit 0 of r1 */
 	B	x_divide_l1
 
-x_divide_l0:				/* a1 == 1 */
-	MOV	a1,a2
-	MOV	a2,#0
+x_divide_l0:				/* r0 == 1 */
+	MOV	r0,r1
+	MOV	r1,#0
 	MOV	pc,lr
 
-	.global	x_divide		/* a1 = a2 / a1; a2 = a2 % a1 */
+	.global	x_divide		/* r0 = r1 / r0; r1 = r1 % r0 */
 x_divide:
-	CMP	a1,#1
+	CMP	r0,#1
 	BCC	x_overflow
 	BEQ	x_divide_l0
-	ANDS	ip,a1,#0x80000000
-	RSBMI	a1,a1,#0
-	ANDS	a3,a2,#0x80000000
-	EOR	ip,ip,a3
-	RSBMI	a2,a2,#0
-	ORR	ip,a3,ip,lsr #1	/* ip bit 0x40000000 = -ve division */
+	ANDS	ip,r0,#0x80000000
+	RSBMI	r0,r0,#0
+	ANDS	r2,r1,#0x80000000
+	EOR	ip,ip,r2
+	RSBMI	r1,r1,#0
+	ORR	ip,r2,ip,lsr #1	/* ip bit 0x40000000 = -ve division */
 				/* ip bit 0x80000000 = -ve remainder */
 
 x_divide_l1:
-	MOV	a3,#1
-	MOV	a4,#0
+	MOV	r2,#1
+	MOV	r3,#0
 
-	CMP	a2,a1
+	CMP	r1,r0
 	BCC	x_divide_b0
-	CMP	a2,a1,lsl #1
+	CMP	r1,r0,lsl #1
 	BCC	x_divide_b1
-	CMP	a2,a1,lsl #2
+	CMP	r1,r0,lsl #2
 	BCC	x_divide_b2
-	CMP	a2,a1,lsl #3
+	CMP	r1,r0,lsl #3
 	BCC	x_divide_b3
-	CMP	a2,a1,lsl #4
+	CMP	r1,r0,lsl #4
 	BCC	x_divide_b4
-	CMP	a2,a1,lsl #5
+	CMP	r1,r0,lsl #5
 	BCC	x_divide_b5
-	CMP	a2,a1,lsl #6
+	CMP	r1,r0,lsl #6
 	BCC	x_divide_b6
-	CMP	a2,a1,lsl #7
+	CMP	r1,r0,lsl #7
 	BCC	x_divide_b7
-	CMP	a2,a1,lsl #8
+	CMP	r1,r0,lsl #8
 	BCC	x_divide_b8
-	CMP	a2,a1,lsl #9
+	CMP	r1,r0,lsl #9
 	BCC	x_divide_b9
-	CMP	a2,a1,lsl #10
+	CMP	r1,r0,lsl #10
 	BCC	x_divide_b10
-	CMP	a2,a1,lsl #11
+	CMP	r1,r0,lsl #11
 	BCC	x_divide_b11
-	CMP	a2,a1,lsl #12
+	CMP	r1,r0,lsl #12
 	BCC	x_divide_b12
-	CMP	a2,a1,lsl #13
+	CMP	r1,r0,lsl #13
 	BCC	x_divide_b13
-	CMP	a2,a1,lsl #14
+	CMP	r1,r0,lsl #14
 	BCC	x_divide_b14
-	CMP	a2,a1,lsl #15
+	CMP	r1,r0,lsl #15
 	BCC	x_divide_b15
-	CMP	a2,a1,lsl #16
+	CMP	r1,r0,lsl #16
 	BCC	x_divide_b16
-	CMP	a2,a1,lsl #17
+	CMP	r1,r0,lsl #17
 	BCC	x_divide_b17
-	CMP	a2,a1,lsl #18
+	CMP	r1,r0,lsl #18
 	BCC	x_divide_b18
-	CMP	a2,a1,lsl #19
+	CMP	r1,r0,lsl #19
 	BCC	x_divide_b19
-	CMP	a2,a1,lsl #20
+	CMP	r1,r0,lsl #20
 	BCC	x_divide_b20
-	CMP	a2,a1,lsl #21
+	CMP	r1,r0,lsl #21
 	BCC	x_divide_b21
-	CMP	a2,a1,lsl #22
+	CMP	r1,r0,lsl #22
 	BCC	x_divide_b22
-	CMP	a2,a1,lsl #23
+	CMP	r1,r0,lsl #23
 	BCC	x_divide_b23
-	CMP	a2,a1,lsl #24
+	CMP	r1,r0,lsl #24
 	BCC	x_divide_b24
-	CMP	a2,a1,lsl #25
+	CMP	r1,r0,lsl #25
 	BCC	x_divide_b25
-	CMP	a2,a1,lsl #26
+	CMP	r1,r0,lsl #26
 	BCC	x_divide_b26
-	CMP	a2,a1,lsl #27
+	CMP	r1,r0,lsl #27
 	BCC	x_divide_b27
-	CMP	a2,a1,lsl #28
+	CMP	r1,r0,lsl #28
 	BCC	x_divide_b28
-	CMP	a2,a1,lsl #29
+	CMP	r1,r0,lsl #29
 	BCC	x_divide_b29
-	CMP	a2,a1,lsl #30
+	CMP	r1,r0,lsl #30
 	BCC	x_divide_b30
-	CMP	a2,a1,lsl #31
-	SUBHS	a2,a2,a1,lsl #31
-	ADDHS	a4,a4,a3,lsl #31
-	CMP	a2,a1,lsl #30
-	SUBHS	a2,a2,a1,lsl #30
-	ADDHS	a4,a4,a3,lsl #30
+	CMP	r1,r0,lsl #31
+	SUBHS	r1,r1,r0,lsl #31
+	ADDHS	r3,r3,r2,lsl #31
+	CMP	r1,r0,lsl #30
+	SUBHS	r1,r1,r0,lsl #30
+	ADDHS	r3,r3,r2,lsl #30
 x_divide_b30:
-	CMP	a2,a1,lsl #29
-	SUBHS	a2,a2,a1,lsl #29
-	ADDHS	a4,a4,a3,lsl #29
+	CMP	r1,r0,lsl #29
+	SUBHS	r1,r1,r0,lsl #29
+	ADDHS	r3,r3,r2,lsl #29
 x_divide_b29:
-	CMP	a2,a1,lsl #28
-	SUBHS	a2,a2,a1,lsl #28
-	ADDHS	a4,a4,a3,lsl #28
+	CMP	r1,r0,lsl #28
+	SUBHS	r1,r1,r0,lsl #28
+	ADDHS	r3,r3,r2,lsl #28
 x_divide_b28:
-	CMP	a2,a1,lsl #27
-	SUBHSS	a2,a2,a1,lsl #27
-	ADDHS	a4,a4,a3,lsl #27
+	CMP	r1,r0,lsl #27
+	SUBHSS	r1,r1,r0,lsl #27
+	ADDHS	r3,r3,r2,lsl #27
 x_divide_b27:
-	CMP	a2,a1,lsl #26
-	SUBHS	a2,a2,a1,lsl #26
-	ADDHS	a4,a4,a3,lsl #26
+	CMP	r1,r0,lsl #26
+	SUBHS	r1,r1,r0,lsl #26
+	ADDHS	r3,r3,r2,lsl #26
 x_divide_b26:
-	CMP	a2,a1,lsl #25
-	SUBHS	a2,a2,a1,lsl #25
-	ADDHS	a4,a4,a3,lsl #25
+	CMP	r1,r0,lsl #25
+	SUBHS	r1,r1,r0,lsl #25
+	ADDHS	r3,r3,r2,lsl #25
 x_divide_b25:
-	CMP	a2,a1,lsl #24
-	SUBHS	a2,a2,a1,lsl #24
-	ADDHS	a4,a4,a3,lsl #24
+	CMP	r1,r0,lsl #24
+	SUBHS	r1,r1,r0,lsl #24
+	ADDHS	r3,r3,r2,lsl #24
 x_divide_b24:
-	CMP	a2,a1,lsl #23
-	SUBHS	a2,a2,a1,lsl #23
-	ADDHS	a4,a4,a3,lsl #23
+	CMP	r1,r0,lsl #23
+	SUBHS	r1,r1,r0,lsl #23
+	ADDHS	r3,r3,r2,lsl #23
 x_divide_b23:
-	CMP	a2,a1,lsl #22
-	SUBHS	a2,a2,a1,lsl #22
-	ADDHS	a4,a4,a3,lsl #22
+	CMP	r1,r0,lsl #22
+	SUBHS	r1,r1,r0,lsl #22
+	ADDHS	r3,r3,r2,lsl #22
 x_divide_b22:
-	CMP	a2,a1,lsl #21
-	SUBHS	a2,a2,a1,lsl #21
-	ADDHS	a4,a4,a3,lsl #21
+	CMP	r1,r0,lsl #21
+	SUBHS	r1,r1,r0,lsl #21
+	ADDHS	r3,r3,r2,lsl #21
 x_divide_b21:
-	CMP	a2,a1,lsl #20
-	SUBHS	a2,a2,a1,lsl #20
-	ADDHS	a4,a4,a3,lsl #20
+	CMP	r1,r0,lsl #20
+	SUBHS	r1,r1,r0,lsl #20
+	ADDHS	r3,r3,r2,lsl #20
 x_divide_b20:
-	CMP	a2,a1,lsl #19
-	SUBHS	a2,a2,a1,lsl #19
-	ADDHS	a4,a4,a3,lsl #19
+	CMP	r1,r0,lsl #19
+	SUBHS	r1,r1,r0,lsl #19
+	ADDHS	r3,r3,r2,lsl #19
 x_divide_b19:
-	CMP	a2,a1,lsl #18
-	SUBHS	a2,a2,a1,lsl #18
-	ADDHS	a4,a4,a3,lsl #18
+	CMP	r1,r0,lsl #18
+	SUBHS	r1,r1,r0,lsl #18
+	ADDHS	r3,r3,r2,lsl #18
 x_divide_b18:
-	CMP	a2,a1,lsl #17
-	SUBHS	a2,a2,a1,lsl #17
-	ADDHS	a4,a4,a3,lsl #17
+	CMP	r1,r0,lsl #17
+	SUBHS	r1,r1,r0,lsl #17
+	ADDHS	r3,r3,r2,lsl #17
 x_divide_b17:
-	CMP	a2,a1,lsl #16
-	SUBHS	a2,a2,a1,lsl #16
-	ADDHS	a4,a4,a3,lsl #16
+	CMP	r1,r0,lsl #16
+	SUBHS	r1,r1,r0,lsl #16
+	ADDHS	r3,r3,r2,lsl #16
 x_divide_b16:
-	CMP	a2,a1,lsl #15
-	SUBHS	a2,a2,a1,lsl #15
-	ADDHS	a4,a4,a3,lsl #15
+	CMP	r1,r0,lsl #15
+	SUBHS	r1,r1,r0,lsl #15
+	ADDHS	r3,r3,r2,lsl #15
 x_divide_b15:
-	CMP	a2,a1,lsl #14
-	SUBHS	a2,a2,a1,lsl #14
-	ADDHS	a4,a4,a3,lsl #14
+	CMP	r1,r0,lsl #14
+	SUBHS	r1,r1,r0,lsl #14
+	ADDHS	r3,r3,r2,lsl #14
 x_divide_b14:
-	CMP	a2,a1,lsl #13
-	SUBHS	a2,a2,a1,lsl #13
-	ADDHS	a4,a4,a3,lsl #13
+	CMP	r1,r0,lsl #13
+	SUBHS	r1,r1,r0,lsl #13
+	ADDHS	r3,r3,r2,lsl #13
 x_divide_b13:
-	CMP	a2,a1,lsl #12
-	SUBHS	a2,a2,a1,lsl #12
-	ADDHS	a4,a4,a3,lsl #12
+	CMP	r1,r0,lsl #12
+	SUBHS	r1,r1,r0,lsl #12
+	ADDHS	r3,r3,r2,lsl #12
 x_divide_b12:
-	CMP	a2,a1,lsl #11
-	SUBHS	a2,a2,a1,lsl #11
-	ADDHS	a4,a4,a3,lsl #11
+	CMP	r1,r0,lsl #11
+	SUBHS	r1,r1,r0,lsl #11
+	ADDHS	r3,r3,r2,lsl #11
 x_divide_b11:
-	CMP	a2,a1,lsl #10
-	SUBHS	a2,a2,a1,lsl #10
-	ADDHS	a4,a4,a3,lsl #10
+	CMP	r1,r0,lsl #10
+	SUBHS	r1,r1,r0,lsl #10
+	ADDHS	r3,r3,r2,lsl #10
 x_divide_b10:
-	CMP	a2,a1,lsl #9
-	SUBHS	a2,a2,a1,lsl #9
-	ADDHS	a4,a4,a3,lsl #9
+	CMP	r1,r0,lsl #9
+	SUBHS	r1,r1,r0,lsl #9
+	ADDHS	r3,r3,r2,lsl #9
 x_divide_b9:
-	CMP	a2,a1,lsl #8
-	SUBHS	a2,a2,a1,lsl #8
-	ADDHS	a4,a4,a3,lsl #8
+	CMP	r1,r0,lsl #8
+	SUBHS	r1,r1,r0,lsl #8
+	ADDHS	r3,r3,r2,lsl #8
 x_divide_b8:
-	CMP	a2,a1,lsl #7
-	SUBHS	a2,a2,a1,lsl #7
-	ADDHS	a4,a4,a3,lsl #7
+	CMP	r1,r0,lsl #7
+	SUBHS	r1,r1,r0,lsl #7
+	ADDHS	r3,r3,r2,lsl #7
 x_divide_b7:
-	CMP	a2,a1,lsl #6
-	SUBHS	a2,a2,a1,lsl #6
-	ADDHS	a4,a4,a3,lsl #6
+	CMP	r1,r0,lsl #6
+	SUBHS	r1,r1,r0,lsl #6
+	ADDHS	r3,r3,r2,lsl #6
 x_divide_b6:
-	CMP	a2,a1,lsl #5
-	SUBHS	a2,a2,a1,lsl #5
-	ADDHS	a4,a4,a3,lsl #5
+	CMP	r1,r0,lsl #5
+	SUBHS	r1,r1,r0,lsl #5
+	ADDHS	r3,r3,r2,lsl #5
 x_divide_b5:
-	CMP	a2,a1,lsl #4
-	SUBHS	a2,a2,a1,lsl #4
-	ADDHS	a4,a4,a3,lsl #4
+	CMP	r1,r0,lsl #4
+	SUBHS	r1,r1,r0,lsl #4
+	ADDHS	r3,r3,r2,lsl #4
 x_divide_b4:
-	CMP	a2,a1,lsl #3
-	SUBHS	a2,a2,a1,lsl #3
-	ADDHS	a4,a4,a3,lsl #3
+	CMP	r1,r0,lsl #3
+	SUBHS	r1,r1,r0,lsl #3
+	ADDHS	r3,r3,r2,lsl #3
 x_divide_b3:
-	CMP	a2,a1,lsl #2
-	SUBHS	a2,a2,a1,lsl #2
-	ADDHS	a4,a4,a3,lsl #2
+	CMP	r1,r0,lsl #2
+	SUBHS	r1,r1,r0,lsl #2
+	ADDHS	r3,r3,r2,lsl #2
 x_divide_b2:
-	CMP	a2,a1,lsl #1
-	SUBHS	a2,a2,a1,lsl #1
-	ADDHS	a4,a4,a3,lsl #1
+	CMP	r1,r0,lsl #1
+	SUBHS	r1,r1,r0,lsl #1
+	ADDHS	r3,r3,r2,lsl #1
 x_divide_b1:
-	CMP	a2,a1
-	SUBHS	a2,a2,a1
-	ADDHS	a4,a4,a3
+	CMP	r1,r0
+	SUBHS	r1,r1,r0
+	ADDHS	r3,r3,r2
 x_divide_b0:
 
 	TST	ip,#0x20000000
 	BNE	x_udivide_l1
-	MOV	a1,a4
+	MOV	r0,r3
 	CMP	ip,#0
-	RSBMI	a2,a2,#0
+	RSBMI	r1,r1,#0
 	MOVS	ip,ip,lsl #1
-	RSBMI	a1,a1,#0
+	RSBMI	r0,r0,#0
 	MOV	pc,lr
 
 x_udivide_l1:
 	TST	ip,#0x10000000
-	MOV	a2,a2,lsl #1
-	ORRNE	a2,a2,#1
-	MOV	a4,a4,lsl #1
-	CMP	a2,a1
-	SUBHS	a2,a2,a1
-	ADDHS	a4,a4,a3
-	MOV	a1,a4
+	MOV	r1,r1,lsl #1
+	ORRNE	r1,r1,#1
+	MOV	r3,r3,lsl #1
+	CMP	r1,r0
+	SUBHS	r1,r1,r0
+	ADDHS	r3,r3,r2
+	MOV	r0,r3
 	MOV	pc,lr
 

@@ -1,11 +1,8 @@
-/* $NetBSD: setlogin.S,v 1.1 1996/02/16 20:49:00 mark Exp $ */
+/* $NetBSD: setlogin.S,v 1.2 1996/05/12 19:55:27 mark Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * William Jolitz.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)setlogin.s	5.2 (Berkeley) 4/12/91
- *	$Id: setlogin.S,v 1.1 1996/05/01 12:51:32 deraadt Exp $
+ *	$Id: setlogin.S,v 1.2 1996/05/22 11:39:23 deraadt Exp $
  */
 
 #include "SYS.h"

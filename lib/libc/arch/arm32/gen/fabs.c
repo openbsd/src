@@ -1,8 +1,7 @@
-/* $NetBSD: sigreturn.S,v 1.2 1996/05/12 19:55:35 mark Exp $ */
+/* $NetBSD: fabs.c,v 1.1 1996/05/12 20:29:41 mark Exp $ */
 
-/*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+/*
+ * Copyright (c) 1996 Mark Brinicombe
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,16 +13,15 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
+ *	This product includes software developed by Mark Brinicombe
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -31,27 +29,20 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	from: @(#)sigreturn.s	5.2 (Berkeley) 12/17/90"
- *	$Id: sigreturn.S,v 1.2 1996/05/22 11:39:24 deraadt Exp $
  */
-
-#include "SYS.h"
 
 /*
- * We must preserve the state of the registers as the user has set them up.
+ * fabs(x) returns the absolute value of x.
  */
 
-/* I must code this bit ... - mark */
-
-#if 0
-#ifdef PROF
-#undef ENTRY
-#define	ENTRY(x) \
-	.globl _/**/x; .align 2; _/**/x:  pusha ; \
-	.data; 1:; .long 0; .text; movl $1b,%eax; call mcount; popa ; nop
-#endif /* PROF */
+#ifdef __STDC__
+	double fabs(double x)
+#else
+	double fabs(x)
+	double x;
 #endif
-
-SYSCALL(sigreturn)
-	mov	r15, r14
+{
+	if (x < 0)
+		x = -x;
+	return(x);
+}

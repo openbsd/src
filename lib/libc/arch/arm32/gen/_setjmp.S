@@ -1,4 +1,4 @@
-/* $NetBSD: _setjmp.S,v 1.1 1996/02/16 20:48:12 mark Exp $ */
+/* $NetBSD: _setjmp.S,v 1.2 1996/05/12 20:25:39 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: _setjmp.S,v 1.1 1996/05/01 12:51:16 deraadt Exp $
+ *	$Id: _setjmp.S,v 1.2 1996/05/22 11:39:10 deraadt Exp $
  */
 
 # include "DEFS.h"

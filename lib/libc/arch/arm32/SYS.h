@@ -1,4 +1,4 @@
-/* $NetBSD: SYS.h,v 1.1 1996/02/16 20:48:02 mark Exp $ */
+/* $NetBSD: SYS.h,v 1.2 1996/05/12 20:01:54 mark Exp $ */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)SYS.h	5.5 (Berkeley) 5/7/91
- *	$Id: SYS.h,v 1.1 1996/05/01 12:51:14 deraadt Exp $
+ *	$Id: SYS.h,v 1.2 1996/05/22 11:39:09 deraadt Exp $
  */
 
 #include <machine/asm.h>

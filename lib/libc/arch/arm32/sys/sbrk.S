@@ -1,11 +1,8 @@
-/* $NetBSD: sbrk.S,v 1.1 1996/02/16 20:48:57 mark Exp $ */
+/* $NetBSD: sbrk.S,v 1.2 1996/05/12 19:55:24 mark Exp $ */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * William Jolitz.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sbrk.s	5.1 (Berkeley) 4/23/90
- *	$Id: sbrk.S,v 1.1 1996/05/01 12:51:31 deraadt Exp $
+ *	$Id: sbrk.S,v 1.2 1996/05/22 11:39:23 deraadt Exp $
  */
 
 #include "SYS.h"

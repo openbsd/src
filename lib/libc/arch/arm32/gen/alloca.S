@@ -1,4 +1,4 @@
-/* $NetBSD: alloca.S,v 1.1 1996/02/16 20:48:15 mark Exp $ */
+/* $NetBSD: alloca.S,v 1.2 1996/05/12 20:25:46 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: alloca.S,v 1.1 1996/05/01 12:51:17 deraadt Exp $
+ *	$Id: alloca.S,v 1.2 1996/05/22 11:39:11 deraadt Exp $
  */
 
 /* like alloc, but automatic automatic free in return */

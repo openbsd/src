@@ -1,6 +1,13 @@
-/* $NetBSD: s_fabs.c,v 1.1 1996/02/16 20:48:21 mark Exp $ */
+/* $NetBSD: frexp.c,v 1.1 1996/05/12 20:29:46 mark Exp $ */
 
 /*
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * This software was developed by the Computer Systems Engineering group
+ * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
+ * contributed to Berkeley.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -11,15 +18,16 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Mark Brinicombe
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -28,21 +36,45 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: s_fabs.c,v 1.1 1996/05/01 12:51:19 deraadt Exp $
+ * from: frexp.c,v 1.1 1993/10/07 00:21:33 cgd Exp $
  */
+
+#if defined(LIBC_SCCS) && !defined(lint)
+static char sccsid[] = "@(#)frexp.c	8.1 (Berkeley) 6/4/93";
+#endif /* LIBC_SCCS and not lint */
+
+#include <sys/types.h>
+#include <machine/ieee.h>
 
 /*
- * fabs(x) returns the absolute value of x.
+ * Split the given value into a fraction in the range [0.5, 1.0) and
+ * an exponent, such that frac * (2^exp) == value.  If value is 0,
+ * return 0.
  */
-
-#ifdef __STDC__
-	double fabs(double x)
-#else
-	double fabs(x)
-	double x;
-#endif
+double
+frexp(value, eptr)
+	double value;
+	int *eptr;
 {
-	if (x < 0)
-	  x = -x;
-	return(x);
+	union {
+                double v;
+		struct ieee_double s;
+	} u;
+
+	if (value) {
+		/*
+		 * Fractions in [0.5..1.0) have an exponent of 2^-1.
+		 * Leave Inf and NaN alone, however.
+		 * WHAT ABOUT DENORMS?
+		 */
+		u.v = value;
+		if (u.s.dbl_exp != DBL_EXP_INFNAN) {
+			*eptr = u.s.dbl_exp - (DBL_EXP_BIAS - 1);
+			u.s.dbl_exp = DBL_EXP_BIAS - 1;
+		}
+		return (u.v);
+	} else {
+		*eptr = 0;
+		return ((double)0);
+	}
 }

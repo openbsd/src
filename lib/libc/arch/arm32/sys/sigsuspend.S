@@ -1,11 +1,8 @@
-/* $NetBSD: sigsuspend.S,v 1.1 1996/02/16 20:49:13 mark Exp $ */
+/* $NetBSD: sigsuspend.S,v 1.2 1996/05/12 19:55:38 mark Exp $ */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * William Jolitz.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sigsuspend.s	5.2 (Berkeley) 12/17/90
- *	$Id: sigsuspend.S,v 1.1 1996/05/01 12:51:35 deraadt Exp $
+ *	$Id: sigsuspend.S,v 1.2 1996/05/22 11:39:25 deraadt Exp $
  */
 
 #include "SYS.h"
