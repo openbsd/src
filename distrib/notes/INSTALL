@@ -9,7 +9,7 @@ OpenBSD is a Berkeley Networking Release 2 (Net/2) and 4.4BSD-Lite
 which runs on many architectures and is being ported to more.
 
 Continuing the multi-platform tradition, OpenBSD has added ports to
-mvme68k and arc machines.  Kernel interfaces have continued to
+mvme68k, powerpc and arc machines.  Kernel interfaces have continued to
 be refined, and now several subsystems and device drivers are shared
 among the different ports.  You can look for this trend to continue.
 
@@ -26,7 +26,8 @@ aimed at making the emulation as accurate as possible.
 
 Cryptography components are part of OpenBSD. OpenBSD is from Canada,
 and export of these pieces (such as kerberosIV) to the world is not
-restricted.
+restricted. Note that it can not be re-exported from the US once it
+has entered US.
 
 Many new user programs have been added in OpenBSD 2.1, as well,
 bringing it closer to our goal of supplying a complete UN*X-like
@@ -197,13 +198,7 @@ Use of 'sendbug' is encouraged, however, because bugs reported with it
 are entered into the OpenBSD bugs database, and thus can't slip through
 the cracks.
 
-There are also port-specific mailing lists, to discuss aspects of
-each port of OpenBSD.  Use majordomo to find their addresses.  If
-you're interested in doing a serious amount of work on a specific
-port, you probably should contact the "owner" of that port (listed
-below).
-
-As a favor, please avoid mailing huge documents or files to these
+As a favor, please avoid mailing huge documents or files to the
 mailing lists.  Instead, put the material you would have sent up
 for FTP somewhere, then mail the appropriate list about it, or, if
 you'd rather not do that, mail the list saying you'll send the data
