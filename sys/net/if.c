@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.103 2005/01/18 22:10:10 claudio Exp $	*/
+/*	$OpenBSD: if.c,v 1.104 2005/02/07 15:00:16 mcbride Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1102,6 +1102,21 @@ if_up(struct ifnet *ifp)
 #ifdef INET6
 	in6_if_up(ifp);
 #endif
+}
+
+/*
+ * Process a link state change.
+ * NOTE: must be called at splsoftnet or equivalent.
+ * XXX Should be converted to dohooks().
+ */
+void
+if_link_state_change(struct ifnet *ifp)
+{
+	rt_ifmsg(ifp);
+#if NCARP > 0           
+	if (ifp->if_carp)
+		carp_carpdev_state(ifp);
+#endif          
 }
 
 /*

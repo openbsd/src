@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.63 2005/01/14 11:49:01 henning Exp $	*/
+/*	$OpenBSD: if.h,v 1.64 2005/02/07 15:00:17 mcbride Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -650,6 +650,7 @@ void	if_attachtail(struct ifnet *);
 void	if_attachhead(struct ifnet *);
 void	if_detach(struct ifnet *);
 void	if_down(struct ifnet *);
+void	if_link_state_change(struct ifnet *);
 void	if_qflush(struct ifqueue *);
 void	if_slowtimo(void *);
 void	if_up(struct ifnet *);
