@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.21 1998/08/06 19:34:26 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.22 1998/08/30 23:34:36 csapuntz Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -587,7 +587,12 @@ loop:
 		}
 		break;
 	}
-	if (vp == NULL || vp->v_tag != VT_NON || vp->v_type != VBLK) {
+
+	
+	/* 
+	 * Common case is actually in the if statement
+	 */
+	if (vp == NULL || !(vp->v_tag == VT_NON && vp->v_type == VBLK)) {
 		MALLOC(nvp->v_specinfo, struct specinfo *,
 			sizeof(struct specinfo), M_VNODE, M_WAITOK);
 		nvp->v_rdev = nvp_rdev;
@@ -604,6 +609,18 @@ loop:
 		}
 		return (NULLVP);
 	}
+
+	/* 
+	 * This code is the uncommon case. It is called in case
+	 * we found an alias that was VT_NON && vtype of VBLK
+	 * This means we found a block device that was created
+	 * using bdevvp.
+	 * An example of such a vnode is the root partition device vnode
+	 * craeted in ffs_mountroot.
+	 * 
+	 * The vnodes created by bdevvp should not be aliased (why?).
+	 */
+
 	simple_unlock(&spechash_slock);
 	VOP_UNLOCK(vp, 0, p);
 	simple_lock(&vp->v_interlock);
@@ -695,7 +712,18 @@ vputonfreelist(vp)
 	/*
 	 * insert at tail of LRU list
 	 */
-	
+#ifdef DIAGNOSTIC
+	if (vp->v_usecount != 0) {
+		panic("Use count is not zero!");
+	}
+
+	if (vp->v_flag & VONFREELIST) {
+		vprint ("vnode already on free list: ", vp);
+		panic ("vnode already on free list");
+		return;
+	}
+#endif
+
 	vp->v_flag |= VONFREELIST;
 
 	simple_lock(&vnode_free_list_slock);
@@ -712,7 +740,6 @@ vputonfreelist(vp)
 		TAILQ_INSERT_TAIL(lst, vp, v_freelist);		
 
 	simple_unlock(&vnode_free_list_slock);
-
 }
 
 /*
@@ -744,7 +771,7 @@ vput(vp)
 	VOP_INACTIVE(vp, p);
 
 	if (vp->v_usecount == 0)
-	  vputonfreelist(vp);
+		vputonfreelist(vp);
 
 	simple_unlock(&vp->v_interlock);
 }
@@ -779,7 +806,7 @@ vrele(vp)
 		VOP_INACTIVE(vp, p);
 
 	if (vp->v_usecount == 0)
-	  vputonfreelist(vp);
+		vputonfreelist(vp);
 
 	simple_unlock(&vp->v_interlock);
 }
