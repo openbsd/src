@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.4 1996/06/10 07:23:24 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.5 1996/06/18 16:26:20 deraadt Exp $
 #	$NetBSD: Makefile,v 1.3 1996/05/10 21:54:24 cgd Exp $
 
 LIB=	pcap
 MAN=	pcap.3
 
-CFLAGS+=-I. -I${.CURDIR}
+CFLAGS+=-I. -I${.CURDIR} -Dyylval=pcap_yylval
 
 HDRS=	pcap.h pcap-namedb.h
 SRCS=	pcap.c inet.c gencode.c optimize.c nametoaddr.c etherent.c \
@@ -12,7 +12,14 @@ SRCS=	pcap.c inet.c gencode.c optimize.c nametoaddr.c etherent.c \
 	pcap-bpf.c
 .PATH:	${.CURDIR}/../../sys/net
 
-CLEANFILES+= grammar.c scanner.c y.tab.h
+CLEANFILES+= grammar.c scanner.c grammar.tab.h
+
+grammar.c:	grammar.y
+	${YACC.y} -ppcap_yy -b ${.TARGET:R} ${.IMPSRC}
+	mv ${.TARGET:R}.tab.c ${.TARGET}
+
+scanner.c:	scanner.l grammar.c
+	${LEX.l} -Ppcap_yy -o${.TARGET} ${.IMPSRC}
 
 includes:
 	@cd ${.CURDIR}; for i in $(HDRS); do \

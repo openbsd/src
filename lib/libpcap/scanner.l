@@ -36,7 +36,7 @@ static char rcsid[] =
 #include <pcap-namedb.h>
 
 #include "gencode.h"
-#include "y.tab.h"
+#include "grammar.tab.h"
 
 #ifndef __GNUC__
 #define inline
