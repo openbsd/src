@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 1998/11/15 00:43:47 niklas Exp $
+#	$OpenBSD: Makefile,v 1.3 1998/11/15 01:01:29 niklas Exp $
 
 #
 # Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -34,14 +34,14 @@
 #
 
 PROG=		isakmpd
-SRCS=		app.c asn.c asn_useful.c attribute.c cert.c constants.c \
+SRCS=		app.c attribute.c constants.c \
 		conf.c cookie.c crypto.c dh.c doi.c exchange.c exchange_num.c \
 		field.c gmp_util.c hash.c if.c ike_auth.c ike_main_mode.c \
 		ike_quick_mode.c init.c ipsec.c ipsec_fld.c ipsec_num.c \
 		isakmpd.c isakmp_doi.c isakmp_fld.c isakmp_num.c log.c \
 		message.c math_2n.c math_ec2n.c math_group.c pf_encap.c \
-		pkcs.c prf.c sa.c sysdep.c timer.c transport.c udp.c ui.c \
-		util.c x509.c
+		prf.c sa.c sysdep.c timer.c transport.c udp.c ui.c \
+		util.c
 CLEANFILES=	exchange_num.c exchange_num.h ipsec_num.c ipsec_num.h \
 		isakmp_num.c isakmp_num.h ipsec_fld.c ipsec_fld.h \
 		isakmp_fld.c isakmp_fld.h
