@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_file.c,v 1.15 2004/07/09 21:33:44 mickey Exp $	*/
+/*	$OpenBSD: hpux_file.c,v 1.16 2005/02/15 21:12:44 aaron Exp $	*/
 /*	$NetBSD: hpux_file.c,v 1.5 1997/04/27 21:40:48 thorpej Exp $	*/
 
 /*
@@ -307,9 +307,10 @@ hpux_sys_fcntl(p, v, retval)
 		/* NOTREACHED */
 
 	case F_GETLK:
-		if (fp->f_type != DTYPE_VNODE)
-		error = EBADF;
-		goto out;
+		if (fp->f_type != DTYPE_VNODE) {
+			error = EBADF;
+			goto out;
+		}
 
 		vp = (struct vnode *)fp->f_data;
 
