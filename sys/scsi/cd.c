@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.31 1998/07/12 01:20:18 deraadt Exp $	*/
+/*	$OpenBSD: cd.c,v 1.32 1998/07/13 00:21:16 csapuntz Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -825,26 +825,36 @@ cdioctl(dev, cmd, addr, flag, p)
 	case CDIOREADTOCENTRYS: {
 		struct cd_toc {
 			struct ioc_toc_header header;
-			struct cd_toc_entry entries[65];
-		} data;
+			struct cd_toc_entry entries[100];
+		} * data;
 		struct ioc_read_toc_entry *te =
 		(struct ioc_read_toc_entry *)addr;
 		struct ioc_toc_header *th;
 		int len = te->data_len;
-		th = &data.header;
+		int res;
 
-		if (len > sizeof(data.entries) ||
+		if (len > sizeof(data->entries) ||
 		    len < sizeof(struct cd_toc_entry))
 			return EINVAL;
+
+		MALLOC (data, struct cd_toc *, sizeof (struct cd_toc),
+			M_DEVBUF, M_WAITOK);
+			       
+		th = &data->header;
+
 		error = cd_read_toc(cd, te->address_format,
 				    te->starting_track,
-				    (struct cd_toc_entry *)&data,
+				    (struct cd_toc_entry *)data,
 				    len + sizeof(struct ioc_toc_header));
-		if (error)
+		if (error) {
+			FREE(data, M_DEVBUF);
 			return error;
+		}
 		len = min(len, ntohs(th->len) - (sizeof(th->starting_track) +
 			       sizeof(th->ending_track)));
-		return copyout(data.entries, te->data, len);
+		res = copyout(data->entries, te->data, len);
+		FREE(data, M_DEVBUF);
+		return (res);
 	}
 	case CDIOCSETPATCH: {
 		struct ioc_patch *arg = (struct ioc_patch *)addr;
