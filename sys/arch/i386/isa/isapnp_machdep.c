@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnp_machdep.c,v 1.1 1997/12/21 14:44:33 downsj Exp $	*/
+/*	$OpenBSD: isapnp_machdep.c,v 1.2 1997/12/25 09:19:37 downsj Exp $	*/
 /*	$NetBSD: isapnp_machdep.c,v 1.5 1997/10/04 17:32:30 thorpej Exp $	*/
 
 /*-
@@ -88,10 +88,9 @@
 
 #include <machine/bus.h>
 
-#include <dev/isa/isavar.h>
-
 #include <dev/isa/isapnpreg.h>
-#include <dev/isa/isapnpvar.h>
+
+#include <dev/isa/isavar.h>
 
 /* isapnp_map():
  *	Map I/O regions used by PnP

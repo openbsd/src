@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.14 1997/12/21 14:44:34 downsj Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.15 1997/12/25 09:19:39 downsj Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*-
@@ -61,8 +61,6 @@
 
 #include <dev/cons.h>
 #include <dev/isa/isavar.h>
-#include <dev/isa/isapnpreg.h>
-#include <dev/isa/isapnpvar.h>
 #include <dev/ic/comreg.h>
 #include <dev/ic/ns16550reg.h>
 #ifdef COM_HAYESP
@@ -485,24 +483,17 @@ comprobe(parent, match, aux)
 	 * XXX for commulti probe, with a helper function that contains
 	 * XXX most of the interesting stuff.
 	 */
-#if NPCCOM_ISA || NPCCOM_PCMCIA
-	if (IS_ISA(parent)) {
+#if NPCCOM_ISA || NPCCOM_PCMCIA || NPCCOM_ISAPNP
+	if (IS_ISA(parent) || IS_ISAPNP(parent)) {
 		struct isa_attach_args *ia = aux;
 
 		iot = ia->ia_iot;
 		iobase = ia->ia_iobase;
-		needioh = 1;
-	} else
-#endif
-#if NPCCOM_ISAPNP
-	if (IS_ISAPNP(parent)) {
-		struct isapnp_attach_args *ipa = aux;
-
-		/* XXX: is the modem always on region 0? */
-		iot = ipa->ipa_iot;
-		iobase = ipa->ipa_io[0].base;
-		ioh = ipa->ipa_io[0].h;
-		needioh = 0;
+		if (IS_ISAPNP(parent)) {
+			ioh = ia->ia_ioh;
+			needioh = 0;
+		} else
+			needioh = 1;
 	} else
 #endif
 #if NPCCOM_COMMULTI
@@ -572,8 +563,8 @@ comattach(parent, self, aux)
 	} else
 	    sc->sc_hwflags = 0;
 	sc->sc_swflags = 0;
-#if NPCCOM_ISA || NPCCOM_PCMCIA
-	if (IS_ISA(parent)) {
+#if NPCCOM_ISA || NPCCOM_PCMCIA || NPCCOM_ISAPNP
+	if (IS_ISA(parent) || IS_ISAPNP(parent)) {
 		struct isa_attach_args *ia = aux;
 
 		/*
@@ -581,25 +572,17 @@ comattach(parent, self, aux)
 		 */
 		iobase = ia->ia_iobase;
 		iot = ia->ia_iot;
-	       	if (iobase != comconsaddr) {
-			if (bus_space_map(iot, iobase, COM_NPORTS, 0, &ioh))
-				panic("comattach: io mapping failed");
-		} else
-			ioh = comconsioh;
+		if (IS_ISAPNP(parent)) {
+			/* No console support! */
+			ioh = ia->ia_ioh;
+		} else {
+	       		if (iobase != comconsaddr) {
+				if (bus_space_map(iot, iobase, COM_NPORTS, 0, &ioh))
+					panic("comattach: io mapping failed");
+			} else
+				ioh = comconsioh;
+		}
 		irq = ia->ia_irq;
-	} else
-#endif
-#if NPCCOM_ISAPNP
-	if (IS_ISAPNP(parent)) {
-		struct isapnp_attach_args *ipa = aux;
-
-		/*
-		 * We're living on ISA PnP.  No console support.
-		 */
-		iobase = ipa->ipa_io[0].base;
-		iot = ipa->ipa_iot;
-		ioh = ipa->ipa_io[0].h;
-		irq = ipa->ipa_irq[0].num;
 	} else
 #endif
 #if NPCCOM_COMMULTI
@@ -683,20 +666,11 @@ comattach(parent, self, aux)
 	bus_space_write_1(iot, ioh, com_mcr, 0);
 
 	if (irq != IRQUNK) {
-#if NPCCOM_ISA || NPCCOM_PCMCIA
-		if (IS_ISA(parent)) {
+#if NPCCOM_ISA || NPCCOM_PCMCIA || NPCCOM_ISAPNP
+		if (IS_ISA(parent) || IS_ISAPNP(parent)) {
 			struct isa_attach_args *ia = aux;
 
 			sc->sc_ih = isa_intr_establish(ia->ia_ic, irq,
-			    IST_EDGE, IPL_HIGH, comintr, sc,
-			    sc->sc_dev.dv_xname);
-		} else
-#endif
-#if NPCCOM_ISAPNP
-		if (IS_ISAPNP(parent)) {
-			struct isapnp_attach_args *ipa = aux;
-
-			sc->sc_ih = isa_intr_establish(ipa->ipa_ic, irq,
 			    IST_EDGE, IPL_HIGH, comintr, sc,
 			    sc->sc_dev.dv_xname);
 		} else
