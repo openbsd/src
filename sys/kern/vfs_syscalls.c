@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.10 1996/08/02 19:59:01 tholo Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.11 1996/08/08 04:23:03 tholo Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1487,6 +1487,7 @@ sys_chown(p, v, retval)
 	struct vattr vattr;
 	int error;
 	struct nameidata nd;
+	u_short mode;
 
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	if ((error = namei(&nd)) != 0)
@@ -1497,11 +1498,23 @@ sys_chown(p, v, retval)
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		error = EROFS;
 	else {
+		error = VOP_GETATTR(vp, &vattr, p->p_ucred, p);
+		if (error)
+			goto out;
+		mode = vattr.va_mode;
+		if (vattr.va_uid != SCARG(uap, uid))
+			mode &= ~VSUID;
+		if (vattr.va_gid != SCARG(uap, gid))
+			mode &= ~VSGID;
+		if (mode == vattr.va_mode)
+			mode = VNOVAL;
 		VATTR_NULL(&vattr);
 		vattr.va_uid = SCARG(uap, uid);
 		vattr.va_gid = SCARG(uap, gid);
+		vattr.va_mode = mode;
 		error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
 	}
+out:
 	vput(vp);
 	return (error);
 }
@@ -1525,6 +1538,7 @@ sys_fchown(p, v, retval)
 	struct vattr vattr;
 	int error;
 	struct file *fp;
+	u_short mode;
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
@@ -1534,11 +1548,23 @@ sys_fchown(p, v, retval)
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		error = EROFS;
 	else {
+		error = VOP_GETATTR(vp, &vattr, p->p_ucred, p);
+		if (error)
+			goto out;
+		mode = vattr.va_mode;
+		if (vattr.va_uid != SCARG(uap, uid))
+			mode &= ~VSUID;
+		if (vattr.va_gid != SCARG(uap, gid))
+			mode &= ~VSGID;
+		if (mode == vattr.va_mode)
+			mode = VNOVAL;
 		VATTR_NULL(&vattr);
 		vattr.va_uid = SCARG(uap, uid);
 		vattr.va_gid = SCARG(uap, gid);
+		vattr.va_mode = mode;
 		error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
 	}
+out:
 	VOP_UNLOCK(vp);
 	return (error);
 }
