@@ -1,4 +1,4 @@
-/*	$OpenBSD: m18x_cmmu.c,v 1.11 2001/08/24 19:26:15 miod Exp $	*/
+/*	$OpenBSD: m18x_cmmu.c,v 1.12 2001/08/24 22:48:26 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -630,9 +630,9 @@ m18x_cmmu_dump_config()
 #endif /* defined(MVME187) */
 #ifdef MVME188
 	case CPU_188:
-		DEBUG_MSG("VME188 address decoder: PCNFA = 0x%1x, PCNFB = 0x%1x\n\n", *pcnfa & 0xf, *pcnfb & 0xf);
 		pcnfa = (volatile unsigned long *)MVME188_PCNFA;
 		pcnfb = (volatile unsigned long *)MVME188_PCNFB;
+		DEBUG_MSG("VME188 address decoder: PCNFA = 0x%1x, PCNFB = 0x%1x\n\n", *pcnfa & 0xf, *pcnfb & 0xf);
 		for (cmmu_num = 0; cmmu_num < max_cmmus; cmmu_num++) {
 			DEBUG_MSG("CMMU #%d: %s CMMU for CPU %d:\n Strategy: %s\n %s access addr 0x%08x mask 0x%08x match %s\n",
 				  cmmu_num,
