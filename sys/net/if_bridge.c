@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.35 2000/06/26 23:16:37 art Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.36 2000/10/09 17:01:10 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -615,7 +615,7 @@ bridge_brlconf(sc, bc)
 	struct brl_node *n;
 	struct ifbrlreq req;
 	int error = 0;
-	u_int32_t i, total;
+	u_int32_t i, total = 0;
 
 	ifp = ifunit(bc->ifbrl_ifsname);
 	if (ifp == NULL)
