@@ -1,9 +1,7 @@
-# $OpenBSD: Makefile.inc,v 1.1 2001/05/25 08:24:13 hin Exp $
+# $OpenBSD: Makefile.inc,v 1.2 2001/05/25 13:01:23 hin Exp $
 
 CFLAGS+=	-g
 LDFLAGS+=	-g
-
-KRB5VERSION = "heimdal-0.3b"
 
 KRB5DIR	= ${.CURDIR}/${KRBDEPTH}
 KRB5SRC	= ${.CURDIR}/${KRBDEPTH}/src
