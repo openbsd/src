@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_ioctl.h,v 1.13 1999/11/25 20:24:21 aaron Exp $	*/
+/*	$OpenBSD: pcvt_ioctl.h,v 1.14 2000/01/18 19:34:41 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -434,7 +434,6 @@ struct pcvtinfo {			/* compile time option values */
 
 	u_long compile_opts;		/* PCVT_xxxxxxxxxxxxxxx */
 
-#define CONF_VT220KEYB		0x00000001
 #define CONF_SCREENSAVER	0x00000002
 #define CONF_PRETTYSCRNS	0x00000004
 #define CONF_CTRL_ALT_DEL	0x00000008

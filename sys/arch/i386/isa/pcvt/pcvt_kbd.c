@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_kbd.c,v 1.31 1999/11/27 21:39:29 aaron Exp $	*/
+/*	$OpenBSD: pcvt_kbd.c,v 1.32 2000/01/18 19:34:41 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -1607,449 +1607,6 @@ vt_keyappl(struct video_state *svsp)
 	update_led();
 }
 
-#if !PCVT_VT220KEYB	/* !PCVT_VT220KEYB, HP-like Keyboard layout */
-
-/*---------------------------------------------------------------------------*
- *	function bound to function key 1
- *---------------------------------------------------------------------------*/
-static void
-fkey1(void)
-{
-	if (!meta_down)
-		more_chars = (u_char *)"\033[17~";	/* F6 */
-	else
-		more_chars = (u_char *)"\033[26~";	/* F14 */
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to function key 2
- *---------------------------------------------------------------------------*/
-static void
-fkey2(void)
-{
-	if (!meta_down)
-		more_chars = (u_char *)"\033[18~";	/* F7 */
-	else
-		more_chars = (u_char *)"\033[28~";	/* HELP */
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to function key 3
- *---------------------------------------------------------------------------*/
-static void
-fkey3(void)
-{
-	if (!meta_down)
-		more_chars = (u_char *)"\033[19~";	/* F8 */
-	else
-		more_chars = (u_char *)"\033[29~";	/* DO */
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to function key 4
- *---------------------------------------------------------------------------*/
-static void
-fkey4(void)
-{
-	if (!meta_down)
-		more_chars = (u_char *)"\033[20~";	/* F9 */
-	else
-		more_chars = (u_char *)"\033[31~";	/* F17 */
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to function key 5
- *---------------------------------------------------------------------------*/
-static void
-fkey5(void)
-{
-	if (!meta_down)
-		more_chars = (u_char *)"\033[21~";	/* F10 */
-	else
-		more_chars = (u_char *)"\033[32~";	/* F18 */
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to function key 6
- *---------------------------------------------------------------------------*/
-static void
-fkey6(void)
-{
-	if (!meta_down)
-		more_chars = (u_char *)"\033[23~";	/* F11 */
-	else
-		more_chars = (u_char *)"\033[33~";	/* F19 */
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to function key 7
- *---------------------------------------------------------------------------*/
-static void
-fkey7(void)
-{
-	if (!meta_down)
-		more_chars = (u_char *)"\033[24~";	/* F12 */
-	else
-		more_chars = (u_char *)"\033[34~";	/* F20 */
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to function key 8
- *---------------------------------------------------------------------------*/
-static void
-fkey8(void)
-{
-	if (!meta_down)
-		more_chars = (u_char *)"\033[25~";	/* F13 */
-	else
-		more_chars = (u_char *)"\033[35~";	/* F21 ??!! */
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to function key 9
- *---------------------------------------------------------------------------*/
-static void
-fkey9(void)
-{
-	if (meta_down)
-		return;
-	else
-		do_vgapage(0);
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to function key 10
- *---------------------------------------------------------------------------*/
-static void
-fkey10(void)
-{
-	if (!meta_down)
-		do_vgapage(1);
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to function key 11
- *---------------------------------------------------------------------------*/
-static void
-fkey11(void)
-{
-	do_vgapage(2);
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to function key 12
- *---------------------------------------------------------------------------*/
-static void
-fkey12(void)
-{
-	if (meta_down) {
-		if (current_video_screen + 1 > totalscreens-1)
-			do_vgapage(0);
-		else
-			do_vgapage(current_video_screen + 1);
-	}
-	else {
-		do_vgapage(3);
-	}
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to SHIFTED function key 1
- *---------------------------------------------------------------------------*/
-static void
-sfkey1(void)
-{
-	if (!meta_down) {
-		if (vsp->ukt.length[0])	/* entry available ? */
-			more_chars = (u_char *)
-				&(vsp->udkbuf[vsp->ukt.first[0]]);
-	}
-	else {
-		if (vsp->ukt.length[9])	/* entry available ? */
-			more_chars = (u_char *)
-				&(vsp->udkbuf[vsp->ukt.first[9]]);
-	}
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to SHIFTED function key 2
- *---------------------------------------------------------------------------*/
-static void
-sfkey2(void)
-{
-	if (!meta_down) {
-		if (vsp->ukt.length[1])	/* entry available ? */
-			more_chars = (u_char *)
-				&(vsp->udkbuf[vsp->ukt.first[1]]);
-	}
-	else {
-		if (vsp->ukt.length[11])	/* entry available ? */
-			more_chars = (u_char *)
-				&(vsp->udkbuf[vsp->ukt.first[11]]);
-	}
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to SHIFTED function key 3
- *---------------------------------------------------------------------------*/
-static void
-sfkey3(void)
-{
-	if (!meta_down) {
-		if (vsp->ukt.length[2])	/* entry available ? */
-			more_chars = (u_char *)
-				&(vsp->udkbuf[vsp->ukt.first[2]]);
-	}
-	else {
-		if (vsp->ukt.length[12])	/* entry available ? */
-			more_chars = (u_char *)
-				&(vsp->udkbuf[vsp->ukt.first[12]]);
-	}
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to SHIFTED function key 4
- *---------------------------------------------------------------------------*/
-static void
-sfkey4(void)
-{
-	if (!meta_down) {
-		if (vsp->ukt.length[3])	/* entry available ? */
-			more_chars = (u_char *)
-				&(vsp->udkbuf[vsp->ukt.first[3]]);
-	}
-	else {
-		if (vsp->ukt.length[13])	/* entry available ? */
-			more_chars = (u_char *)
-				&(vsp->udkbuf[vsp->ukt.first[13]]);
-	}
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to SHIFTED function key 5
- *---------------------------------------------------------------------------*/
-static void
-sfkey5(void)
-{
-	if (!meta_down) {
-		if (vsp->ukt.length[4])	/* entry available ? */
-			more_chars = (u_char *)
-				&(vsp->udkbuf[vsp->ukt.first[4]]);
-	}
-	else {
-		if (vsp->ukt.length[14])	/* entry available ? */
-			more_chars = (u_char *)
-				&(vsp->udkbuf[vsp->ukt.first[14]]);
-	}
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to SHIFTED function key 6
- *---------------------------------------------------------------------------*/
-static void
-sfkey6(void)
-{
-	if (!meta_down) {
-		if (vsp->ukt.length[6])	/* entry available ? */
-			more_chars = (u_char *)
-				&(vsp->udkbuf[vsp->ukt.first[6]]);
-	}
-	else {
-		if (vsp->ukt.length[15])	/* entry available ? */
-			more_chars = (u_char *)
-				&(vsp->udkbuf[vsp->ukt.first[15]]);
-	}
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to SHIFTED function key 7
- *---------------------------------------------------------------------------*/
-static void
-sfkey7(void)
-{
-	if (!meta_down) {
-		if (vsp->ukt.length[7])	/* entry available ? */
-			more_chars = (u_char *)
-				&(vsp->udkbuf[vsp->ukt.first[7]]);
-	}
-	else {
-		if (vsp->ukt.length[16])	/* entry available ? */
-			more_chars = (u_char *)
-				&(vsp->udkbuf[vsp->ukt.first[16]]);
-	}
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to SHIFTED function key 8
- *---------------------------------------------------------------------------*/
-static void
-sfkey8(void)
-{
-	if (!meta_down) {
-		if (vsp->ukt.length[8])	/* entry available ? */
-			more_chars = (u_char *)
-				&(vsp->udkbuf[vsp->ukt.first[8]]);
-	}
-	else {
-		if (vsp->ukt.length[17])	/* entry available ? */
-			more_chars = (u_char *)
-				&(vsp->udkbuf[vsp->ukt.first[17]]);
-	}
-}
-/*---------------------------------------------------------------------------*
- *	function bound to SHIFTED function key 9
- *---------------------------------------------------------------------------*/
-static void
-sfkey9(void)
-{
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to SHIFTED function key 10
- *---------------------------------------------------------------------------*/
-static void
-sfkey10(void)
-{
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to SHIFTED function key 11
- *---------------------------------------------------------------------------*/
-static void
-sfkey11(void)
-{
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to SHIFTED function key 12
- *---------------------------------------------------------------------------*/
-static void
-sfkey12(void)
-{
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to control function key 1
- *---------------------------------------------------------------------------*/
-static void
-cfkey1(void)
-{
-	if (meta_down)
-		do_vgapage(0);
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to control function key 2
- *---------------------------------------------------------------------------*/
-static void
-cfkey2(void)
-{
-	if (meta_down)
-		do_vgapage(1);
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to control function key 3
- *---------------------------------------------------------------------------*/
-static void
-cfkey3(void)
-{
-	if (meta_down)
-		do_vgapage(2);
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to control function key 4
- *---------------------------------------------------------------------------*/
-static void
-cfkey4(void)
-{
-	if (meta_down)
-		do_vgapage(3);
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to control function key 5
- *---------------------------------------------------------------------------*/
-static void
-cfkey5(void)
-{
-	if (meta_down)
-		do_vgapage(4);
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to control function key 6
- *---------------------------------------------------------------------------*/
-static void
-cfkey6(void)
-{
-	if (meta_down)
-		do_vgapage(5);
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to control function key 7
- *---------------------------------------------------------------------------*/
-static void
-cfkey7(void)
-{
-	if (meta_down)
-		do_vgapage(6);
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to control function key 8
- *---------------------------------------------------------------------------*/
-static void
-cfkey8(void)
-{
-	if (meta_down)
-		do_vgapage(7);
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to control function key 9
- *---------------------------------------------------------------------------*/
-static void
-cfkey9(void)
-{
-	if (meta_down)
-		do_vgapage(8);
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to control function key 10
- *---------------------------------------------------------------------------*/
-static void
-cfkey10(void)
-{
-	if (meta_down)
-		do_vgapage(9);
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to control function key 11
- *---------------------------------------------------------------------------*/
-static void
-cfkey11(void)
-{
-	if (meta_down)
-		do_vgapage(10);
-}
-
-/*---------------------------------------------------------------------------*
- *	function bound to control function key 12
- *---------------------------------------------------------------------------*/
-static void
-cfkey12(void)
-{
-	if (meta_down)
-		do_vgapage(11);
-}
-
-#else	/* PCVT_VT220  -  VT220-like Keyboard layout */
-
 /*---------------------------------------------------------------------------*
  *	function bound to function key 1
  *---------------------------------------------------------------------------*/
@@ -2059,7 +1616,7 @@ fkey1(void)
 	if (meta_down)
 		more_chars = (u_char *)"\033[23~"; /* F11 */
 	else
-		do_vgapage(0);
+		more_chars = (u_char *)"\033OP"; /* F1 */
 }
 
 /*---------------------------------------------------------------------------*
@@ -2071,7 +1628,7 @@ fkey2(void)
 	if (meta_down)
 		more_chars = (u_char *)"\033[24~"; /* F12 */
 	else
-		do_vgapage(1);
+		more_chars = (u_char *)"\033OQ"; /* F2 */
 }
 
 /*---------------------------------------------------------------------------*
@@ -2083,7 +1640,7 @@ fkey3(void)
 	if (meta_down)
 		more_chars = (u_char *)"\033[25~"; /* F13 */
 	else
-		do_vgapage(2);
+		more_chars = (u_char *)"\033OR"; /* F3 */
 }
 
 /*---------------------------------------------------------------------------*
@@ -2095,7 +1652,7 @@ fkey4(void)
 	if (meta_down)
 		more_chars = (u_char *)"\033[26~"; /* F14 */
 	else
-		do_vgapage(3);
+		more_chars = (u_char *)"\033OS"; /* F4 */
 }
 
 /*---------------------------------------------------------------------------*
@@ -2106,12 +1663,8 @@ fkey5(void)
 {
 	if (meta_down)
 		more_chars = (u_char *)"\033[28~"; /* Help */
-	else {
-		if ((current_video_screen + 1) > totalscreens-1)
-			do_vgapage(0);
-		else
-			do_vgapage(current_video_screen + 1);
-	}
+	else
+		more_chars = (u_char *)"\033[17~"; /* F5 */
 }
 
 /*---------------------------------------------------------------------------*
@@ -2123,7 +1676,7 @@ fkey6(void)
 	if (meta_down)
 		more_chars = (u_char *)"\033[29~"; /* DO */
 	else
-		more_chars = (u_char *)"\033[17~"; /* F6 */
+		more_chars = (u_char *)"\033[18~"; /* F6 */
 }
 
 /*---------------------------------------------------------------------------*
@@ -2135,7 +1688,7 @@ fkey7(void)
 	if (meta_down)
 		more_chars = (u_char *)"\033[31~"; /* F17 */
 	else
-		more_chars = (u_char *)"\033[18~"; /* F7 */
+		more_chars = (u_char *)"\033[19~"; /* F7 */
 }
 
 /*---------------------------------------------------------------------------*
@@ -2147,7 +1700,7 @@ fkey8(void)
 	if (meta_down)
 		more_chars = (u_char *)"\033[32~"; /* F18 */
 	else
-		more_chars = (u_char *)"\033[19~"; /* F8 */
+		more_chars = (u_char *)"\033[20~"; /* F8 */
 }
 
 /*---------------------------------------------------------------------------*
@@ -2159,7 +1712,7 @@ fkey9(void)
 	if (meta_down)
 		more_chars = (u_char *)"\033[33~"; /* F19 */
 	else
-		more_chars = (u_char *)"\033[20~"; /* F9 */
+		more_chars = (u_char *)"\033[21~"; /* F9 */
 }
 
 /*---------------------------------------------------------------------------*
@@ -2171,7 +1724,7 @@ fkey10(void)
 	if (meta_down)
 		more_chars = (u_char *)"\033[34~"; /* F20 */
 	else
-		more_chars = (u_char *)"\033[21~"; /* F10 */
+		more_chars = (u_char *)"\033[29~"; /* F10 */
 }
 
 /*---------------------------------------------------------------------------*
@@ -2417,7 +1970,127 @@ sfkey12(void)
 	}
 }
 
-#endif	/* NVT > 0 */
+/*---------------------------------------------------------------------------*
+ *	function bound to control function key 1
+ *---------------------------------------------------------------------------*/
+static void
+cfkey1(void)
+{
+	if (meta_down)
+		do_vgapage(0);
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to control function key 2
+ *---------------------------------------------------------------------------*/
+static void
+cfkey2(void)
+{
+	if (meta_down)
+		do_vgapage(1);
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to control function key 3
+ *---------------------------------------------------------------------------*/
+static void
+cfkey3(void)
+{
+	if (meta_down)
+		do_vgapage(2);
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to control function key 4
+ *---------------------------------------------------------------------------*/
+static void
+cfkey4(void)
+{
+	if (meta_down)
+		do_vgapage(3);
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to control function key 5
+ *---------------------------------------------------------------------------*/
+static void
+cfkey5(void)
+{
+	if (meta_down)
+		do_vgapage(4);
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to control function key 6
+ *---------------------------------------------------------------------------*/
+static void
+cfkey6(void)
+{
+	if (meta_down)
+		do_vgapage(5);
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to control function key 7
+ *---------------------------------------------------------------------------*/
+static void
+cfkey7(void)
+{
+	if (meta_down)
+		do_vgapage(6);
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to control function key 8
+ *---------------------------------------------------------------------------*/
+static void
+cfkey8(void)
+{
+	if (meta_down)
+		do_vgapage(7);
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to control function key 9
+ *---------------------------------------------------------------------------*/
+static void
+cfkey9(void)
+{
+	if (meta_down)
+		do_vgapage(8);
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to control function key 10
+ *---------------------------------------------------------------------------*/
+static void
+cfkey10(void)
+{
+	if (meta_down)
+		do_vgapage(9);
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to control function key 11
+ *---------------------------------------------------------------------------*/
+static void
+cfkey11(void)
+{
+	if (meta_down)
+		do_vgapage(10);
+}
+
+/*---------------------------------------------------------------------------*
+ *	function bound to control function key 12
+ *---------------------------------------------------------------------------*/
+static void
+cfkey12(void)
+{
+	if (meta_down)
+		do_vgapage(11);
+}
+
+/* #endif */	/* NVT > 0 */
 
 static void
 scrollback_save_screen(void)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_sup.c,v 1.14 1999/11/25 21:00:36 aaron Exp $	*/
+/*	$OpenBSD: pcvt_sup.c,v 1.15 2000/01/18 19:34:42 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -289,9 +289,6 @@ vgapcvtinfo(struct pcvtinfo *data)
 
 	data->compile_opts = (0
 
-#if PCVT_VT220KEYB
-	| CONF_VT220KEYB
-#endif
 #if PCVT_SCREENSAVER
 	| CONF_SCREENSAVER
 #endif

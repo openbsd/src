@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_conf.h,v 1.14 1999/11/25 20:24:20 aaron Exp $	*/
+/*	$OpenBSD: pcvt_conf.h,v 1.15 2000/01/18 19:34:42 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -91,14 +91,6 @@
 				/* ber...; the value is intented to be	*/
 				/* compile-time overridable by a config	*/
 				/* options "PCVT_NSCREENS=x" line	*/
-
-#if !defined PCVT_VT220KEYB	/* ---------- DEFAULT: OFF ------------ */
-# define PCVT_VT220KEYB 0	/* this compiles a more vt220-like	*/
-#elif PCVT_VT220KEYB != 0	/* keyboardlayout as described in the	*/
-# undef PCVT_VT220KEYB		/* file Keyboard.VT220.			*/
-# define PCVT_VT220KEYB 1	/* if undefined, a more HP-like         */
-#endif				/* keyboardlayout is compiled		*/
-				/* try to find out what YOU like !	*/
 
 #if !defined PCVT_SCREENSAVER	/* ---------- DEFAULT: ON ------------- */
 # define PCVT_SCREENSAVER 1	/* enable screen saver feature - this	*/
