@@ -1,4 +1,4 @@
-.\"	$OpenBSD: doshutdownhooks.9,v 1.4 1999/09/02 17:28:06 espie Exp $
+.\"	$OpenBSD: doshutdownhooks.9,v 1.5 2001/03/09 14:04:19 aaron Exp $
 .\"	$NetBSD: doshutdownhooks.9,v 1.1 1995/11/25 21:24:49 perry Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
@@ -44,7 +44,8 @@ The
 .Fn doshutdownhooks
 function invokes all shutdown hooks established using the
 .Xr shutdownhook_establish 9
-function.  Shutdown hooks are called in reverse order, i.e.
+function.
+Shutdown hooks are called in reverse order, i.e.,
 the shutdown hook established last will be called first.
 .Pp
 This function is called from
