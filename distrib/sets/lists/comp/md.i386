@@ -35,6 +35,7 @@
 ./usr/include/i386/limits.h
 ./usr/include/i386/linux_machdep.h
 ./usr/include/i386/loadfile_machdep.h
+./usr/include/i386/longrun.h
 ./usr/include/i386/mouse.h
 ./usr/include/i386/npx.h
 ./usr/include/i386/param.h
