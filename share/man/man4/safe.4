@@ -1,4 +1,4 @@
-.\"	$OpenBSD: safe.4,v 1.1 2003/08/12 19:03:05 jason Exp $
+.\"	$OpenBSD: safe.4,v 1.2 2003/08/15 20:09:48 jason Exp $
 .\\"-
 .\\" Copyright (c) 2003	Sam Leffler, Errno Consulting
 .\\" All rights reserved.
@@ -50,7 +50,7 @@ A faster version of the 1141.
 The
 .Nm
 driver registers itself to accelerate DES, Triple-DES, AES, MD5-HMAC,
-SHA1-HMAC, and NULL operations for
+and SHA1-HMAC operations for
 .Xr ipsec 4
 and
 .Xr crypto 4 .
@@ -58,6 +58,12 @@ and
 On all models, the driver registers itself to provide random data to the
 .Xr random 4
 subsystem.
+.Sh DIAGNOSTICS
+.Bl -diag
+.It "safe%d: Reduce max DMA size to %u words for rev %u.%u"
+The 1.0 silicon has major PCI bugs and may lock the bus completely.
+There is no easy workaround.
+.El
 .Sh SEE ALSO
 .Xr crypt 3 ,
 .Xr crypto 4 ,
@@ -66,4 +72,5 @@ subsystem.
 .Xr random 4 ,
 .Xr crypto 9
 .Sh BUGS
-Public key support is not implemented.
+Public key support is not implemented and early silicon revisions can
+wedge the PCI bus.
