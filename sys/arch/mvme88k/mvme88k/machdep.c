@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.161 2004/11/09 12:01:19 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.162 2004/11/09 18:25:24 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -112,26 +112,19 @@ int	slave_main(void);
 void	vector_init(m88k_exception_vector_area *, unsigned *);
 void	_doboot(void);
 
-#ifdef MVME188
-extern unsigned int m188_curspl[];		/* XXX temporary */
-#endif
-
 extern void load_u_area(struct proc *);
 extern void save_u_area(struct proc *, vaddr_t);
 extern void setlevel(unsigned int);
 
 extern void m187_bootstrap(void);
-extern void m187_ext_int(u_int, struct trapframe *);
 extern vaddr_t m187_memsize(void);
 extern void m187_setupiackvectors(void);
 extern void m187_startup(void);
 extern void m188_bootstrap(void);
-extern void m188_ext_int(u_int, struct trapframe *);
 extern vaddr_t m188_memsize(void);
 extern void m188_setupiackvectors(void);
 extern void m188_startup(void);
 extern void m197_bootstrap(void);
-extern void m197_ext_int(u_int, struct trapframe *);
 extern vaddr_t m197_memsize(void);
 extern void m197_setupiackvectors(void);
 extern void m197_startup(void);
