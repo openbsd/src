@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.86 2004/12/20 20:59:19 otto Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.87 2004/12/21 23:09:32 danh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.86 2004/12/20 20:59:19 otto Exp $";
+static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.87 2004/12/21 23:09:32 danh Exp $";
 #endif
 #endif /* not lint */
 
@@ -855,8 +855,18 @@ fprintlog(struct filed *f, int flags, char *msg)
 		if (sendto(pfd[PFD_INET].fd, line, l, 0,
 		    (struct sockaddr *)&f->f_un.f_forw.f_addr,
 		    f->f_un.f_forw.f_addr.ss_len) != l) {
-			f->f_type = F_UNUSED;
-			logerror("sendto");
+			switch (errno) {
+			case EHOSTDOWN:
+			case EHOSTUNREACH:
+			case ENETDOWN:
+			case ENOBUFS:
+				/* silently dropped */
+				break;
+			default:
+				f->f_type = F_UNUSED;
+				logerror("sendto");
+				break;
+			}
 		}
 		break;
 
