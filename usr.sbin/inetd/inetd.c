@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.103 2002/07/04 12:36:56 itojun Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.104 2002/07/15 22:26:31 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.103 2002/07/04 12:36:56 itojun Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.104 2002/07/15 22:26:31 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -298,8 +298,10 @@ void	freeconfig(struct servtab *);
 void	print_service(char *, struct servtab *);
 void	setup(struct servtab *);
 struct servtab *getconfigent(void);
+int	bump_nofile(void);
 struct servtab *enter(struct servtab *);
 int	matchconf(struct servtab *, struct servtab *);
+int	dg_broadcast(struct in_addr *in);
 
 #define NUMINT	(sizeof(intab) / sizeof(struct inent))
 char	*CONFIG = _PATH_INETDCONF;
@@ -328,9 +330,7 @@ fd_grow(fd_set **fdsp, int *bytes, int fd)
 struct sigaction sa, sapipe;
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	fd_set *fdsrp = NULL;
 	int readablen = 0, ch;
@@ -503,8 +503,7 @@ main(argc, argv)
 }
 
 int
-gettcp(sep)
-	struct servtab *sep;
+gettcp(struct servtab *sep)
 {
 	int ctrl;
 
@@ -543,8 +542,7 @@ gettcp(sep)
 
 
 int
-dg_badinput(sa)
-	struct sockaddr *sa;
+dg_badinput(struct sockaddr *sa)
 {
 	struct in_addr in;
 	struct in6_addr *in6;
@@ -596,8 +594,7 @@ bad:
 }
 
 int
-dg_broadcast(in)
-	struct in_addr *in;
+dg_broadcast(struct in_addr *in)
 {
 	struct ifaddrs *ifa, *ifap;
 	struct sockaddr_in *sin;
@@ -949,11 +946,8 @@ dodie(void)
 	exit(0);
 }
 
-int bump_nofile(void);
-
 void
-setup(sep)
-	struct servtab *sep;
+setup(struct servtab *sep)
 {
 	int on = 1;
 	int r;
@@ -1026,8 +1020,7 @@ setsockopt(fd, SOL_SOCKET, opt, (char *)&on, sizeof (on))
 }
 
 void
-register_rpc(sep)
-	struct servtab *sep;
+register_rpc(struct servtab *sep)
 {
 	socklen_t n;
 	struct sockaddr_in sin;
@@ -1060,8 +1053,7 @@ register_rpc(sep)
 }
 
 void
-unregister_rpc(sep)
-	struct servtab *sep;
+unregister_rpc(struct servtab *sep)
 {
 	int n;
 
@@ -1077,8 +1069,7 @@ unregister_rpc(sep)
 
 
 struct servtab *
-enter(cp)
-	struct servtab *cp;
+enter(struct servtab *cp)
 {
 	struct servtab *sep;
 	sigset_t omask;
@@ -1099,9 +1090,7 @@ enter(cp)
 }
 
 int
-matchconf (old, new)
-	struct servtab	*old;
-	struct servtab	*new;
+matchconf(struct servtab *old, struct servtab *new)
 {
 	if (strcmp(old->se_service, new->se_service) != 0)
 		return (0);
@@ -1147,7 +1136,7 @@ char		*newstr(char *);
 struct servtab	*dupconfig(struct servtab *);
 
 int
-setconfig()
+setconfig(void)
 {
 	if (defhost) free(defhost);
 	defhost = newstr("*");
@@ -1160,7 +1149,7 @@ setconfig()
 }
 
 void
-endconfig()
+endconfig(void)
 {
 	if (fconfig) {
 		(void) fclose(fconfig);
@@ -1173,7 +1162,7 @@ endconfig()
 }
 
 struct servtab *
-getconfigent()
+getconfigent(void)
 {
 	struct servtab *sep;
 	int argc;
@@ -1471,8 +1460,7 @@ skip:
 }
 
 void
-freeconfig(cp)
-	struct servtab *cp;
+freeconfig(struct servtab *cp)
 {
 	int i;
 
@@ -1494,9 +1482,7 @@ freeconfig(cp)
 }
 
 char *
-skip(cpp, report)
-	char **cpp;
-	int report;
+skip(char **cpp, int report)
 {
 	char *cp = *cpp;
 	char *start;
@@ -1534,8 +1520,7 @@ again:
 }
 
 char *
-nextline(fd)
-	FILE *fd;
+nextline(FILE *fd)
 {
 	char *cp;
 
@@ -1548,8 +1533,7 @@ nextline(fd)
 }
 
 char *
-newstr(cp)
-	char *cp;
+newstr(char *cp)
 {
 	if ((cp = strdup(cp ? cp : "")))
 		return(cp);
@@ -1558,8 +1542,7 @@ newstr(cp)
 }
 
 struct servtab *
-dupconfig(sep)
-	struct servtab *sep;
+dupconfig(struct servtab *sep)
 {
 	struct servtab *newtab;
 	int argc;
@@ -1595,9 +1578,7 @@ dupconfig(sep)
 }
 
 void
-inetd_setproctitle(a, s)
-	char *a;
-	int s;
+inetd_setproctitle(char *a, int s)
 {
 	socklen_t size;
 	struct sockaddr_storage ss;
@@ -1615,7 +1596,7 @@ inetd_setproctitle(a, s)
 }
 
 void
-logpid()
+logpid(void)
 {
 	FILE *fp;
 
@@ -1626,7 +1607,7 @@ logpid()
 }
 
 int
-bump_nofile()
+bump_nofile(void)
 {
 #define FD_CHUNK	32
 
@@ -1661,9 +1642,7 @@ bump_nofile()
 
 /* ARGSUSED */
 void
-echo_stream(s, sep)		/* Echo service -- echo data back */
-	int s;
-	struct servtab *sep;
+echo_stream(int s, struct servtab *sep)
 {
 	char buffer[BUFSIZE];
 	int i;
@@ -1677,9 +1656,7 @@ echo_stream(s, sep)		/* Echo service -- echo data back */
 
 /* ARGSUSED */
 void
-echo_dg(s, sep)			/* Echo service -- echo data back */
-	int s;
-	struct servtab *sep;
+echo_dg(int s, struct servtab *sep)
 {
 	char buffer[BUFSIZE];
 	int i, size;
@@ -1696,9 +1673,7 @@ echo_dg(s, sep)			/* Echo service -- echo data back */
 
 /* ARGSUSED */
 void
-discard_stream(s, sep)		/* Discard service -- ignore data */
-	int s;
-	struct servtab *sep;
+discard_stream(int s, struct servtab *sep)
 {
 	char buffer[BUFSIZE];
 
@@ -1711,9 +1686,7 @@ discard_stream(s, sep)		/* Discard service -- ignore data */
 
 /* ARGSUSED */
 void
-discard_dg(s, sep)		/* Discard service -- ignore data */
-	int s;
-	struct servtab *sep;
+discard_dg(int s, struct servtab *sep)
 {
 	char buffer[BUFSIZE];
 
@@ -1726,7 +1699,7 @@ char ring[128];
 char *endring;
 
 void
-initring()
+initring(void)
 {
 	int i;
 
@@ -1739,9 +1712,7 @@ initring()
 
 /* ARGSUSED */
 void
-chargen_stream(s, sep)		/* Character generator */
-	int s;
-	struct servtab *sep;
+chargen_stream(int s, struct servtab *sep)
 {
 	char *rs;
 	int len;
@@ -1773,9 +1744,7 @@ chargen_stream(s, sep)		/* Character generator */
 
 /* ARGSUSED */
 void
-chargen_dg(s, sep)		/* Character generator */
-	int s;
-	struct servtab *sep;
+chargen_dg(int s, struct servtab *sep)
 {
 	struct sockaddr_storage ss;
 	static char *rs;
@@ -1814,9 +1783,8 @@ chargen_dg(s, sep)		/* Character generator */
  * we must add 2208988800 seconds to this figure to make up for
  * some seventy years Bell Labs was asleep.
  */
-
 u_int32_t
-machtime()
+machtime(void)
 {
 	struct timeval tv;
 
@@ -1840,9 +1808,7 @@ machtime_stream(s, sep)
 
 /* ARGSUSED */
 void
-machtime_dg(s, sep)
-	int s;
-	struct servtab *sep;
+machtime_dg(int s, struct servtab *sep)
 {
 	u_int32_t result;
 	struct sockaddr_storage ss;
@@ -1859,11 +1825,10 @@ machtime_dg(s, sep)
 	    (struct sockaddr *)&ss, size);
 }
 
+/* Return human-readable time of day */
 /* ARGSUSED */
 void
-daytime_stream(s, sep)		/* Return human-readable time of day */
-	int s;
-	struct servtab *sep;
+daytime_stream(int s, struct servtab *sep)
 {
 	char buffer[256];
 	time_t time(), clock;
@@ -1874,11 +1839,10 @@ daytime_stream(s, sep)		/* Return human-readable time of day */
 	(void) write(s, buffer, strlen(buffer));
 }
 
+/* Return human-readable time of day */
 /* ARGSUSED */
 void
-daytime_dg(s, sep)		/* Return human-readable time of day */
-	int s;
-	struct servtab *sep;
+daytime_dg(int s, struct servtab *sep)
 {
 	char buffer[256];
 	time_t time(), clock;
@@ -1903,9 +1867,7 @@ daytime_dg(s, sep)		/* Return human-readable time of day */
  *	Dump relevant information to stderr
  */
 void
-print_service(action, sep)
-	char *action;
-	struct servtab *sep;
+print_service(char *action, struct servtab *sep)
 {
 	if (strcmp(sep->se_hostaddr, "*") == 0)
 		fprintf(stderr, "%s: %s ", action, sep->se_service);
@@ -1928,9 +1890,7 @@ print_service(action, sep)
 }
 
 void
-spawn(sep, ctrl)
-	struct servtab *sep;
-	int ctrl;
+spawn(struct servtab *sep, int ctrl)
 {
 	struct passwd *pwd;
 	int tmpint, dofork;
