@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsksymdef.h,v 1.16 2002/04/04 21:24:34 mickey Exp $	*/
+/*	$OpenBSD: wsksymdef.h,v 1.17 2002/04/09 19:07:14 mickey Exp $	*/
 /*	$NetBSD: wsksymdef.h,v 1.34.4.1 2000/07/07 09:49:54 hannken Exp $ */
 
 /*-
@@ -354,6 +354,67 @@
 #define KS_Cyrillic_GHEUKR	0xbd
 #define KS_Cyrillic_yeukr	0xa4
 #define KS_Cyrillic_YEUKR	0xb4
+
+ /*
+ * Group Latin-7 (iso8859-13)
+ */
+
+#define KS_L7_rightdblquot     0xa1
+#define KS_L7_dbllow9quot      0xa5
+#define KS_L7_Ostroke          0xa8
+#define KS_L7_Rcedilla         0xaa
+#define KS_L7_AE               0xaf
+#define KS_L7_leftdblquot      0xb4
+#define KS_L7_ostroke          0xb8
+#define KS_L7_rcedilla         0xba
+#define KS_L7_ae               0xbf
+#define KS_L7_Aogonek          0xc0
+#define KS_L7_Iogonek          0xc1
+#define KS_L7_Amacron          0xc2
+#define KS_L7_Cacute           0xc3
+#define KS_L7_Eogonek          0xc6
+#define KS_L7_Emacron          0xc7
+#define KS_L7_Ccaron           0xc8
+#define KS_L7_Zacute           0xca
+#define KS_L7_Edot             0xcb
+#define KS_L7_Gcedilla         0xcc
+#define KS_L7_Kcedilla         0xcd
+#define KS_L7_Imacron          0xce
+#define KS_L7_Lcedilla         0xcf
+#define KS_L7_Scaron           0xd0
+#define KS_L7_Nacute           0xd1
+#define KS_L7_Ncedilla         0xd2
+#define KS_L7_Omacron          0xd4
+#define KS_L7_Uogonek          0xd8
+#define KS_L7_Lstroke          0xd9
+#define KS_L7_Sacute           0xda
+#define KS_L7_Umacron          0xdb
+#define KS_L7_Zdot             0xdd
+#define KS_L7_Zcaron           0xde
+#define KS_L7_aogonek          0xe0
+#define KS_L7_iogonek          0xe1
+#define KS_L7_amacron          0xe2
+#define KS_L7_cacute           0xe3
+#define KS_L7_eogonek          0xe6
+#define KS_L7_emacron          0xe7
+#define KS_L7_ccaron           0xe8
+#define KS_L7_zacute           0xea
+#define KS_L7_edot             0xeb
+#define KS_L7_gcedilla         0xec
+#define KS_L7_kcedilla         0xed
+#define KS_L7_imacron          0xee
+#define KS_L7_lcedilla         0xef
+#define KS_L7_scaron           0xf0
+#define KS_L7_nacute           0xf1
+#define KS_L7_ncedilla         0xf2
+#define KS_L7_omacron          0xf4
+#define KS_L7_uogonek          0xf8
+#define KS_L7_lstroke          0xf9
+#define KS_L7_sacute           0xfa
+#define KS_L7_umacron          0xfb
+#define KS_L7_zdot             0xfd
+#define KS_L7_zcaron           0xfe
+#define KS_L7_rightsnglquot    0xff
 
 /*
  * Group 1 (modifiers)

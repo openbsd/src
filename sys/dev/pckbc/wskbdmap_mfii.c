@@ -1,4 +1,4 @@
-/*	$OpenBSD: wskbdmap_mfii.c,v 1.15 2002/04/04 21:24:33 mickey Exp $ */
+/*	$OpenBSD: wskbdmap_mfii.c,v 1.16 2002/04/09 19:07:14 mickey Exp $ */
 /*	$NetBSD: wskbdmap_mfii.c,v 1.15 2000/05/19 16:40:04 drochner Exp $	*/
 
 /*-
@@ -384,15 +384,15 @@ static const keysym_t pckbd_keydesc_es[] = {
 
 static const keysym_t pckbd_keydesc_lt[] = {
 /*  pos      normal		shifted		altgr		shift-altgr */
-    KC(2),   KS_1,		KS_exclam,	KS_agrave,	KS_Agrave,
-    KC(3),   KS_2,		KS_at,		KS_egrave,	KS_Egrave,
-    KC(3),   KS_2,		KS_numbersign,	KS_ae,		KS_AE,
-    KC(3),   KS_2,		KS_dollar,	KS_ediaeresis,	KS_Ediaeresis,
-    KC(3),   KS_2,		KS_percent,	KS_aacute,	KS_Aacute,
-    KC(3),   KS_2,		KS_asciicircum,	KS_eth,		KS_ETH,
-    KC(3),   KS_2,		KS_ampersand,	KS_oslash,	KS_Ooblique,
-    KC(3),   KS_2,		KS_asterisk,	KS_ucircumflex,	KS_Ucircumflex,
-    KC(13),  KS_equal,		KS_plus,	KS_thorn,	KS_THORN,
+    KC(2),   KS_1,		KS_exclam,	KS_L7_aogonek,	KS_L7_Aogonek,
+    KC(3),   KS_2,		KS_at,		KS_L7_ccaron,	KS_L7_Ccaron,
+    KC(4),   KS_3,		KS_numbersign,	KS_L7_eogonek,	KS_L7_Eogonek,
+    KC(5),   KS_4,		KS_dollar,	KS_L7_edot,	KS_L7_Edot,
+    KC(6),   KS_5,		KS_percent,	KS_L7_iogonek,	KS_L7_Iogonek,
+    KC(7),   KS_6,		KS_asciicircum,	KS_L7_scaron,	KS_L7_Scaron,
+    KC(8),   KS_7,		KS_ampersand,	KS_L7_uogonek,	KS_L7_Uogonek,
+    KC(9),   KS_8,		KS_asterisk,	KS_L7_umacron,	KS_L7_Umacron,
+    KC(13),  KS_equal,		KS_plus,	KS_L7_zcaron,	KS_L7_Zcaron,
     KC(184), KS_Mode_switch,	KS_Multi_key,
 };
 
