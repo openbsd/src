@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.17 2000/06/13 04:12:02 chris Exp $     */
+/*      $OpenBSD: wdc.c,v 1.18 2000/06/30 01:03:41 art Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -506,6 +506,7 @@ wdcattach(chp)
 		inited++;
 	}
 	TAILQ_INIT(&chp->ch_queue->sc_xfer);
+	timeout_set(&chp->ch_timo, wdctimeout, chp);
 	
 	for (i = 0; i < 2; i++) {
 		chp->ch_drive[i].chnl_softc = chp;
@@ -759,7 +760,7 @@ wdcintr(arg)
 	}
 
 	WDCDEBUG_PRINT(("wdcintr\n"), DEBUG_INTR);
-	untimeout(wdctimeout, chp);
+	timeout_del(&chp->ch_timo);
 	chp->ch_flags &= ~WDCF_IRQ_WAIT;
 	xfer = chp->ch_queue->sc_xfer.tqh_first;
         ret = xfer->c_intr(chp, xfer, 1);
@@ -1408,7 +1409,7 @@ __wdccommand_start(chp, xfer)
 	    wdc_c->r_sector, wdc_c->r_count, wdc_c->r_precomp);
 	if ((wdc_c->flags & AT_POLL) == 0) {
 		chp->ch_flags |= WDCF_IRQ_WAIT; /* wait for interrupt */
-		timeout(wdctimeout, chp, wdc_c->timeout / 1000 * hz);
+		timeout_add(&chp->ch_timo, wdc_c->timeout / 1000 * hz);
 		return;
 	}
 	/*

@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcvar.h,v 1.8 2000/04/10 07:06:15 csapuntz Exp $     */
+/*      $OpenBSD: wdcvar.h,v 1.9 2000/06/30 01:03:41 art Exp $     */
 /*	$NetBSD: wdcvar.h,v 1.17 1999/04/11 20:50:29 bouyer Exp $	*/
 
 /*-
@@ -36,6 +36,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/timeout.h>
 
 #define	WAITTIME    (10 * hz)    /* time to wait for a completion */
 	/* this is a lot for hard drives, but not for cdroms */
@@ -76,6 +78,7 @@ struct channel_softc { /* Per channel data */
 	 * are not independants
 	 */
 	struct channel_queue *ch_queue;
+	struct timeout ch_timo;
 };
 
 /*

@@ -167,7 +167,7 @@ wdc_ata_bio_start(chp, xfer)
 
 	/* start timeout machinery */
 	if ((ata_bio->flags & ATA_POLL) == 0)
-		timeout(wdctimeout, chp, ATA_DELAY / 1000 * hz);
+		timeout_add(&chp->ch_timo, ATA_DELAY / 1000 * hz);
 	_wdc_ata_bio_start(chp, xfer);
 }
 
@@ -517,7 +517,7 @@ wdc_ata_bio_kill_xfer(chp, xfer)
 {
 	struct ata_bio *ata_bio = xfer->cmd;
 
-	untimeout(wdctimeout, chp);
+	timeout_del(&chp->ch_timo);
 	/* remove this command from xfer queue */
 	wdc_free_xfer(chp, xfer);
 
@@ -544,7 +544,7 @@ wdc_ata_bio_done(chp, xfer)
 	    (u_int)xfer->c_flags),
 	    DEBUG_XFERS);
 
-	untimeout(wdctimeout, chp);
+	timeout_del(&chp->ch_timo);
 	if (ata_bio->error == NOERROR)
 		drvp->n_dmaerrs = 0;
 	else if (drvp->n_dmaerrs >= NERRS_MAX) {
