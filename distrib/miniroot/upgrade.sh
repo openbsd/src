@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.9 1998/09/11 22:45:53 millert Exp $
+#	$OpenBSD: upgrade.sh,v 1.10 1999/08/15 09:53:36 millert Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #	In a perfect world, this would be a nice C program, with a reasonable
 #	user interface.
 
-ROOTDISK=""				# filled in below
+ROOTDISK=				# filled in below
 
 trap "unmount_fs -check /tmp/fstab.shadow > /dev/null 2>&1; rm -f /tmp/fstab.shadow" 0
 
@@ -49,7 +49,6 @@ MODE="upgrade"
 
 # include machine-dependent functions
 # The following functions must be provided:
-#	md_copy_kernel()	- copy a kernel to the installed disk
 #	md_get_diskdevs()	- return available disk devices
 #	md_get_cddevs()		- return available CD-ROM devices
 #	md_get_partition_range() - return range of valid partition letters
@@ -103,14 +102,14 @@ done
 
 # Assume partition 'a' of $ROOTDISK is for the root filesystem.  Confirm
 # this with the user.  Check and mount the root filesystem.
-resp=""			# force one iteration
+resp=			# force one iteration
 while [ "X${resp}" = "X" ]; do
 	echo -n	"Root filesystem? [${ROOTDISK}a] "
 	getresp "${ROOTDISK}a"
 	_root_filesystem="/dev/`basename $resp`"
 	if [ ! -b ${_root_filesystem} ]; then
 		echo "Sorry, ${resp} is not a block device."
-		resp=""	# force loop to repeat
+		resp=	# force loop to repeat
 	fi
 done
 
@@ -295,8 +294,6 @@ esac
 	sh MAKEDEV all
 	#kill $_pid
 	echo "done."
-
-	md_copy_kernel
 
 	md_installboot ${ROOTDISK}
 )

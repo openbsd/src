@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.126 1999/08/10 23:07:24 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.127 1999/08/15 09:53:36 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -68,7 +68,7 @@
 
 #	OpenBSD installation/upgrade script - common subroutines.
 
-ROOTDISK=""				# filled in below
+ROOTDISK=				# filled in below
 VERSION=24
 VERSION_MAJOR=$(( $VERSION / 10 ))
 VERSION_MINOR=$(( $VERSION % 10 ))
@@ -82,7 +82,7 @@ SNAPSETS="bin dev etc games man misc sbin \
 THESETS=					# one of the above
 
 # Path searched for sets by install_sets on the local filesystems
-local_sets_dir=""
+local_sets_dir=
 
 # decide upon an editor
 if [ X$EDITOR = X ]; then
@@ -97,13 +97,30 @@ fi
 # Please don't use the 1 of n form below, good idea, wrong implementation!
 # get a reponse with default[s]
 getresp() {
+	local _shell_aware=0
+
+	# -s option means exit after a shell (caller is shell-aware)
+	if [ "$1" = "-s" ]; then
+		_shell_aware=1
+		shift
+	fi
+
 	set -o noglob
 	valid="false"
 	while [ "X$valid" = "Xfalse" ]; do
 		read resp
-		if [ "X$resp" = "X" ]; then
-			resp=$1
-		fi
+		case "$resp" in
+			"")	resp=$1
+				;;
+			!)	echo "Type 'exit' to return to install."
+				sh
+				test $_shell_aware -eq 0 && continue
+				;;
+			!*)
+				eval ${resp#?}
+				test $_shell_aware -eq 0 && continue
+				;;
+		esac
 		if [ $# -gt 1 ]; then
 			for i in $@; do
 				if [ "X$resp" = "X$i" ]; then
@@ -135,7 +152,7 @@ isin() {
 addel() {
 # add first argument to list formed by the remaining arguments
 # adds to the tail if the element does not already exist
-	local	_a=$1 _seen=""
+	local	_a=$1 _seen=
 
 	shift
 	while [ $# != 0 ]; do
@@ -298,7 +315,7 @@ __ptf
 
 get_localdir() {
 	# $1 is relative mountpoint
-	local _mp=$1 _dir=""
+	local _mp=$1 _dir=
 
 	while : ; do
 	    echo -n "Enter the pathname where the sets are stored [$_dir] "
@@ -334,7 +351,7 @@ __EOT
 			y*|Y*)
 				;;
 			*)
-				local_sets_dir=""
+				local_sets_dir=
 				break
 				;;
 		esac
@@ -363,7 +380,7 @@ __EOT
 	else
 		echo
 		echo "The disk $resp does not exist."
-		DISK=""
+		DISK=
 	fi
 }
 
@@ -381,7 +398,7 @@ __EOT
 	_DKDEVS=`md_get_diskdevs`
 	_defdsk=`echo $_DKDEVS | cutlast`
 	if [ "${_defdsk}" != "${_DKDEVS}" ]; then
-		_defdsk=""
+		_defdsk=
 	fi
 	echo	"$_DKDEVS"
 	echo
@@ -392,7 +409,7 @@ __EOT
 	else
 		echo
 		echo "The disk $resp does not exist."
-		ROOTDISK=""
+		ROOTDISK=
 	fi
 }
 
@@ -431,10 +448,10 @@ addifconfig() {
 }
 
 configurenetwork() {
-	local _ifsdone="" _ifs _ouranswer="" _reprompt=1
+	local _ifsdone= _ifs _ouranswer= _reprompt=1
 
 	_IFS=`get_ifdevs`
-	resp=""		# force at least one iteration
+	resp=		# force at least one iteration
 	while [ "X${resp}" != X"done" ]; do
 		if [ $_reprompt = 1 ]; then
 			cat << __EOT
@@ -472,7 +489,7 @@ __EOT
 				if configure_ifs $_ifs ; then
 					_ifsdone="$_ifs $_ifsdone"
 				else
-				_ouranswer=""
+				_ouranswer=
 				fi
 			else
 				echo "Invalid response: \"$resp\" is not in list"
@@ -508,7 +525,7 @@ configure_ifs() {
 	fi
 
 	# Get IP address
-	resp=""		# force one iteration
+	resp=		# force one iteration
 	while [ "X${resp}" = X"" ]; do
 		echo -n "IP address (or 'dhcp') ? [$_if_ip] "
 		getresp "$_if_ip"
@@ -517,7 +534,7 @@ configure_ifs() {
 
 	# Get symbolic name
 	_hostname=`hostname`
-	resp=""		# force one iteration
+	resp=		# force one iteration
 	while [ "X${resp}" = X"" ]; do
 		echo -n "Symbolic (host) name? [$_hostname] "
 		getresp "$_hostname"
@@ -526,7 +543,7 @@ configure_ifs() {
 
 	# Get netmask
 	if [ "$_if_ip" != "dhcp" ]; then
-		resp=""
+		resp=
 		if [ "X${_if_mask}" = X"" ]; then
 			_if_mask=255.255.255.0
 		fi
@@ -711,12 +728,12 @@ enable_network() {
 # Print the selector and get a response
 # The list of sets is passed in as $1, sets $resp 
 get_selection() {
-	local _next="" _f _sets=$1
+	local _next= _f _sets=$1
 
 	for _f in $_sets ; do
 		if isin $_f $_setsdone ; then
 			echo -n "	[X] "
-			_next=""
+			_next=
 		else
 			echo -n "	[ ] "
 			if [ -z "$_next" ]; then
@@ -855,7 +872,7 @@ n*|N*)	_ftp_getlist=n
 esac
 
 # Get server IP address
-resp=""		# force one iteration
+resp=		# force one iteration
 while [ "X${resp}" = X"" ]; do
 	if [ -f /tmp/ftplist ]; then
 		eval echo -n "Server IP address, hostname, or list#? [\$_${_url_type}_server_ip]\ "
@@ -865,14 +882,14 @@ while [ "X${resp}" = X"" ]; do
 	eval getresp "\$_${_url_type}_server_ip"
 	if [ "X$resp" = "X?" -a -f /tmp/ftplist ]; then
 		cat /tmp/ftplist | grep "^${_url_type}:" | cat -n | less -XE
-		resp=""
+		resp=
 	elif [ -n "$resp" -a `isnumeric $resp` -eq 1 -a ${resp:-0} -ge 1 \
 	    -a -f /tmp/ftplist ]; then
 		maxlines=`grep "^${_url_type}:" /tmp/ftplist | cat -n |
 		    sed -n -e '$p' | cutword 1`
 		if [ $maxlines -lt $resp ]; then
 			echo "There is no ${resp}th line in the list."
-			resp=""
+			resp=
 			continue
 		fi
 		tline=`grep "^${_url_type}:" /tmp/ftplist | sed -n -e "${resp}p"`
@@ -883,7 +900,7 @@ while [ "X${resp}" = X"" ]; do
 		path="${path}/${VERSION_MAJOR}.${VERSION_MINOR}/${ARCH}"
 		eval _${_url_type}_server_ip=$host
 		eval _${_url_type}_server_dir=$path
-		resp=""		# do it again, just to double check
+		resp=		# do it again, just to double check
 		echo "Using	$tline"
 	else
 		eval _${_url_type}_server_ip="$resp"
@@ -895,7 +912,7 @@ if [ "${_url_type}" = "ftp" -a "X${_ftp_server_dir}" = X"" ]; then
 	# Default ftp dir
 	_ftp_server_dir="pub/OpenBSD/${VERSION_MAJOR}.${VERSION_MINOR}/${ARCH}"
 fi
-resp=""		# force one iteration
+resp=		# force one iteration
 while [ "X${resp}" = X"" ]; do
 	eval echo -n "Server directory? [\$_${_url_type}_server_dir]\ "
 	eval getresp "\$_${_url_type}_server_dir"
@@ -912,7 +929,7 @@ if [ "${_url_type}" = "ftp" ]; then
 	fi
 
 	# Get login name
-	resp=""		# force one iteration
+	resp=		# force one iteration
 	while [ "X${resp}" = X"" ]; do
 		echo -n "Login? [${_ftp_server_login}] "
 		getresp "${_ftp_server_login}"
@@ -921,7 +938,7 @@ if [ "${_url_type}" = "ftp" ]; then
 
 	# Get password unless anonymous
 	if [ ${_ftp_server_login} != "anonymous" ]; then
-		resp=""		# force one iteration
+		resp=		# force one iteration
 		while [ "X${resp}" = X"" ]; do
 			echo -n "Password (will not echo): "
 			stty -echo
@@ -937,7 +954,7 @@ if [ "${_url_type}" = "ftp" ]; then
 			echo
 			if [ "${_ftp_server_password}" != "${resp}" ]; then
 				echo "Passwords do not match, try again."
-				resp=""
+				resp=
 			fi
 		done
 	else
@@ -963,7 +980,7 @@ else
 	_file_list=`ftp -o - -V ${_url_base}/index.txt | sed 's///'`
 fi
 
-_sets=""
+_sets=
 if list_has_sets "$_file_list" $THESETS; then
 	for _f in $THESETS ; do
 		if [ "X${_f}" = "Xkernel" ]; then
@@ -985,8 +1002,8 @@ else
 		*)	;;
 	esac
 	# *.tar.gz and *.tgz are possible sets
-	_sets=""
-	_kernel=""
+	_sets=
+	_kernel=
 	for _f in ${_file_list} ; do
 		case "$_f" in
 		    *.tar.gz|*.tgz)	_sets="$_sets ${_f}"
@@ -1074,7 +1091,7 @@ esac
 
 # Download the files one at a time and keep track of which ones failed
 while test -n "${_get_files}" ; do
-	_failed_files=""
+	_failed_files=
 	echo
 	for _f in $_get_files ; do
 		echo "Getting ${_f} ..."
@@ -1091,7 +1108,7 @@ while test -n "${_get_files}" ; do
 	done
 
 	# Give them the option of refetching failed files.
-	_get_files=""
+	_get_files=
 	while test -n "${_failed_files}" ; do
 		echo
 		echo "The following files failed to transfer and extract correctly:"
@@ -1117,7 +1134,7 @@ done
 
 install_from_mounted_fs() {
 # $1 - directory containing installation sets
-local _sets="" _kernel _f _get_files _failed_files _osetsdone
+local _sets= _kernel _f _get_files _failed_files _osetsdone
 
 if [ ! -d $1 ]; then
 	echo "No such directory: $1"
@@ -1145,8 +1162,8 @@ else
 		*)	;;
 	esac
 	# *.tar.gz and *.tgz are possible sets
-	_sets=""
-	_kernel=""
+	_sets=
+	_kernel=
 	_sets=`cd $1 ; echo *.tar.gz *.tgz`
 	if [ "X${_sets}" = X'*.tar.gz *.tgz' ]; then
 		echo "There are no *.tar.gz or *.tgz files in that dir."
@@ -1227,7 +1244,7 @@ esac
 
 # Extract the files one at a time and keep track of which ones failed
 while test -n "${_get_files}" ; do
-	_failed_files=""
+	_failed_files=
 	echo
 	for _f in $_get_files ; do
 		echo "$1/${_f}:"
@@ -1244,7 +1261,7 @@ while test -n "${_get_files}" ; do
 	done
 
 	# Give them the option of retrying failed files.
-	_get_files=""
+	_get_files=
 	while test -n "${_failed_files}" ; do
 		echo
 		echo "The following files failed to extract correctly:"
@@ -1303,7 +1320,7 @@ esac
 
 # Get partition
 _partition_range=`md_get_partition_range`
-resp=""		# force one iteration
+resp=		# force one iteration
 while [ "X${resp}" = X"" ]; do
 	echo -n "CDROM partition to mount (normally \"c\")? [c] "
 	getresp "c"
@@ -1314,7 +1331,7 @@ while [ "X${resp}" = X"" ]; do
 
 		*)
 			echo "Invalid response: $resp"
-			resp=""		# force loop to repeat
+			resp=		# force loop to repeat
 			;;
 	esac
 done
@@ -1327,7 +1344,7 @@ cd9660		ISO-9660
 ffs		Berkeley Fast Filesystem
 
 __EOT
-resp=""		# force one iteration
+resp=		# force one iteration
 while [ "X${resp}" = X"" ]; do
 	echo -n "Which filesystem type (Official OpenBSD CDROM is cd9660)? [cd9660] "
 	getresp "cd9660"
@@ -1338,7 +1355,7 @@ while [ "X${resp}" = X"" ]; do
 
 		*)
 			echo "Invalid response: $resp"
-			resp=""		# force loop to repeat
+			resp=		# force loop to repeat
 			;;
 	esac
 done
@@ -1354,7 +1371,7 @@ fi
 if [ "X${_directory}" = X"" ]; then
 	_directory="/${VERSION_MAJOR}.${VERSION_MINOR}/${ARCH}"
 fi
-resp=""		# force one iteration
+resp=		# force one iteration
 while [ "X${resp}" = X"" ]; do
 	echo "Enter the directory relative to the mount point that"
 	echo -n "contains the file. [${_directory}] "
@@ -1418,7 +1435,7 @@ if [ -z "$_def_partition" ]; then
 		return 0
 	fi
 fi 
-resp=""		# force one iteration
+resp=		# force one iteration
 while [ "X${resp}" = X"" ]; do
 	echo -n "Partition? [$_def_partition] "
 	getresp "$_def_partition"
@@ -1429,7 +1446,7 @@ while [ "X${resp}" = X"" ]; do
 
 		*)
 			echo "Invalid response: $resp"
-			resp=""		# force loop to repeat
+			resp=		# force loop to repeat
 			;;
 	esac
 done
@@ -1448,13 +1465,13 @@ if [ ! -z "$_md_fstype" ]; then
 else
 	_md_fstype="_undefined_"
 fi
-resp=""		# force one iteration
+resp=		# force one iteration
 while [ "X${resp}" = X"" ]; do
 	echo -n "Which filesystem type? [default] "
 	getresp "default"
 	case "$resp" in
 		default)
-			_fstype=""
+			_fstype=
 			_fsopts="ro"
 			;;
 		ffs)
@@ -1467,7 +1484,7 @@ while [ "X${resp}" = X"" ]; do
 			;;
 		*)
 			echo "Invalid response: $resp"
-			resp=""		# force loop to repeat
+			resp=		# force loop to repeat
 			;;
 	esac
 done
@@ -1499,7 +1516,7 @@ if mount_a_disk ; then
 fi
 
 # Get the directory where the file lives
-resp=""		# force one iteration
+resp=		# force one iteration
 while [ "X${resp}" = X"" ]; do
 	echo "Enter the directory relative to the mount point that"
 	echo -n "contains the file. [${_directory}] "
@@ -1513,7 +1530,7 @@ umount -f /mnt2 > /dev/null 2>&1
 
 install_nfs() {
 # Get the IP address of the server
-resp=""		# force one iteration
+resp=		# force one iteration
 while [ "X${resp}" = X"" ]; do
 	echo -n "Server IP address or hostname? [${_nfs_server_ip}] "
 	getresp "${_nfs_server_ip}"
@@ -1521,7 +1538,7 @@ done
 _nfs_server_ip=$resp
 
 # Get server path to mount
-resp=""		# force one iteration
+resp=		# force one iteration
 while [ "X${resp}" = X"" ]; do
 	echo -n "Filesystem on server to mount? [${_nfs_server_path}] "
 	getresp "${_nfs_server_path}"
@@ -1537,7 +1554,7 @@ case "$resp" in
 		;;
 
 	*)
-		_nfs_tcp=""
+		_nfs_tcp=
 		;;
 esac
 
@@ -1550,7 +1567,7 @@ if ! mount_nfs $_nfs_tcp ${_nfs_server_ip}:${_nfs_server_path} \
 fi
 
 # Get the directory where the file lives
-resp=""		# force one iteration
+resp=		# force one iteration
 while [ "X${resp}" = X"" ]; do
 	echo "Enter the directory relative to the mount point that"
 	echo -n "contains the file. [${_nfs_directory}] "
@@ -1573,7 +1590,7 @@ sure you use a "no rewind on close" device.
 
 __EOT
 _tape=`basename $TAPE`
-resp=""		# force one iteration
+resp=		# force one iteration
 while [ "X${resp}" = X"" ]; do
 	echo -n "Name of tape device? [${_tape}]"
 	getresp "${_tape}"
@@ -1597,7 +1614,7 @@ fi
 echo "done."
 
 # Get the file number
-resp=""		# force one iteration
+resp=		# force one iteration
 while [ "X${resp}" = X"" ]; do
 	echo -n "File number? "
 	getresp ""
@@ -1608,7 +1625,7 @@ while [ "X${resp}" = X"" ]; do
 
 		*)
 			echo "Invalid file number ${resp}."
-			resp=""		# fore loop to repeat
+			resp=		# force loop to repeat
 			;;
 	esac
 done
@@ -1631,7 +1648,7 @@ There are 2 different ways the file can be stored on tape:
 2) a standard tar image
 
 __EOT
-resp=""		# force one iteration
+resp=		# force one iteration
 while [ "X${resp}" = X"" ]; do
 	echo -n "Which way is it? [1] "
 	getresp "1"
@@ -1646,7 +1663,7 @@ while [ "X${resp}" = X"" ]; do
 
 	*)
 		echo "Invalid response: $resp."
-		resp=""		# force loop to repeat
+		resp=		# force loop to repeat
 		;;
 	esac
 	( cd /mnt; dd if=$TAPE | $_xcmd )
@@ -1668,7 +1685,7 @@ fi
 if [ ! -d /usr/share/zoneinfo ]; then
 	_zonepath=/mnt
 else
-	_zonepath=""
+	_zonepath=
 fi
 	
 cat << __EOT
@@ -1726,6 +1743,41 @@ while : ; do
 done
 }
 
+sane_install() {
+	if [ ! -s /mnt/bsd ]; then
+		cat << __EOT
+
+Warning, no kernel (/mnt/bsd) installed!  You did not unpack a file set
+containing a kernel--this is needed to boot.  Please note that the install
+kernel is *not* suitable for general use.
+__EOT
+	elif [ ! -f /mnt/bin/cat ]; then
+		cat << __EOT
+
+You still do not have a /bin/cat in your filesystem (ie. a sample random file
+which you probably want).  This seems to indicate that you are still missing
+important distribution files.
+__EOT
+	elif [ ! -d /mnt/etc -o ! -d /mnt/usr/share/zoneinfo -o ! -d /mnt/dev ]; then
+		cat << __EOT
+
+Something needed to complete the installation seems to be missing, did you
+forget to extract a required set?
+__EOT
+	else
+		return 0;
+	fi
+
+	cat << __EOT
+
+You will now be given the chance to install the missing set(s).  You can can
+enter '!' at the prompt to escape to a shell and fix things by hand if you wish.
+
+__EOT
+
+	return 1
+}
+
 install_sets() {
 local _yup="FALSE" _have_nfs
 
@@ -1751,7 +1803,7 @@ if [ "X$local_sets_dir" != "X" ]; then
 fi
 
 # Go on prodding for alternate locations
-resp=""		# force at least one iteration
+resp=		# force at least one iteration
 while [ X"${resp}" = X ]; do
 	# If _yup is not FALSE, it means that we extracted sets above.
 	# If that's the case, bypass the menu the first time.
@@ -1787,51 +1839,38 @@ while [ X"${resp}" = X ]; do
 				resp=n
 			else
 				echo "Invalid response: $resp"
-				resp=""
+				resp=
 			fi
 			;;
 		*)
 			echo "Invalid response: $resp"
-			resp=""
+			resp=
 			;;
 		esac
 	else
 		_yup="FALSE"	# So we'll ask next time
 	fi
 
-	if [ ! -f /mnt/bsd ]; then
-		cat << __EOT
+	# Perform sanity checks...
+	if sane_install; then
+		# Give the user the opportunity to extract more sets. They
+		# don't necessarily have to come from the same media.
+		echo
+		echo -n	"Extract more sets? [n] "
+		getresp "n"
+		case "$resp" in
+		y*|Y*)
+			# Force loop to repeat
+			resp=
+			;;
 
-You still do not have a /bsd in your filesystem (ie. the kernel), which
-seems to indicate that you are still missing important distribution files.
-So please continue installing...
-__EOT
-		resp=""
+		*)
+			;;
+		esac
+	else
+		# Not sane, don't exit loop.
+		resp=
 	fi
-	if [ ! -f /mnt/bin/cat ]; then
-		cat << __EOT
-
-You still do not have a /bin/cat in your filesystem (ie. a sample random file
-which you probably want). This seems to indicate that you are still missing
-important distribution files. So please continue installing...
-__EOT
-		resp=""
-	fi
-
-	# Give the user the opportunity to extract more sets. They
-	# don't necessarily have to come from the same media.
-	echo
-	echo -n	"Extract more sets? [n] "
-	getresp "n"
-	case "$resp" in
-	y*|Y*)
-		# Force loop to repeat
-		resp=""
-		;;
-
-	*)
-		;;
-	esac
 done
 }
 
@@ -1920,8 +1959,8 @@ if [ ! \( -f $_fstab -a -s $_fstab \) ]; then
 fi
 
 (
-	_devs=""
-	_mps=""
+	_devs=
+	_mps=
 	# maintain reverse order
 	while read line; do
 		set -- $line
@@ -1967,8 +2006,8 @@ check_fs() {
 local _fstab=$1
 
 (
-	_devs=""
-	_mps=""
+	_devs=
+	_mps=
 	while read line; do
 		set -- $line
 		_devs="$1 ${_devs}"
@@ -1982,24 +2021,4 @@ local _fstab=$1
 	done
 	echo "Done."
 ) < $_fstab
-}
-
-check_kernel() {
-	if [ ! -s /mnt/bsd ]; then
-		echo
-		echo	"Warning, no kernel installed!"
-		echo	"You did not unpack a file set containing a kernel."
-		echo	"This is needed to boot.  Please note that the install"
-		echo	"kernel is not suitable for general use."
-		echo -n	"Escape to shell add /mnt/bsd by hand? [y] "
-		getresp "y"
-		case "$resp" in
-			y*|Y*)
-				echo "Type 'exit' to return to install."
-				sh
-				;;
-			*)
-				;;
-		esac
-	fi
 }

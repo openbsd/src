@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.55 1999/07/30 00:31:27 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.56 1999/08/15 09:53:36 millert Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -71,7 +71,7 @@
 #	user interface.
 
 FILESYSTEMS="/tmp/filesystems"		# used thoughout
-FQDN=""					# domain name
+FQDN=					# domain name
 
 trap "umount /tmp > /dev/null 2>&1" 0
 
@@ -79,7 +79,6 @@ MODE="install"
 
 # include machine-dependent functions
 # The following functions must be provided:
-#	md_copy_kernel()	- copy a kernel to the installed disk
 #	md_get_diskdevs()	- return available disk devices
 #	md_get_cddevs()		- return available CD-ROM devices
 #	md_get_partition_range() - return range of valid partition letters
@@ -118,7 +117,11 @@ getresp "n"
 case "$resp" in
 	y*|Y*)
 		echo
-		echo	"Cool!  Let's get to it..."
+		echo "Cool!  Let's get to it..."
+		echo
+		echo "You can run a shell command at any prompt via '!foo'"
+		echo "or escape to a shell by simply typing '!'."
+		echo
 		;;
 	*)
 		md_not_going_to_install
@@ -159,7 +162,7 @@ if [ "`df /`" = "`df /mnt`" ]; then
 			done
 			DISK=$ROOTDISK
 		else
-			DISK=""
+			DISK=
 			while [ "X${DISK}" = "X" ]; do
 				getanotherdisk
 			done
@@ -246,7 +249,7 @@ __get_filesystems_1
 		while test $_i -lt $_npartitions; do
 			if [ -n "${_mount_points[${_i}]}" ]; then
 				echo "${DISK}${_partitions[${_i}]} ${_mount_points[${_i}]}" >> ${FILESYSTEMS}
-				_mount_points[${_i}]=""
+				_mount_points[${_i}]=
 			fi
 			_i=$(( ${_i} + 1 ))
 		done
@@ -321,8 +324,8 @@ echo -n	"Configure the network? [y] "
 getresp "y"
 case "$resp" in
 	y*|Y*)
-		resp=""		# force at least one iteration
-		_nam=""
+		resp=		# force at least one iteration
+		_nam=
 		if [ -f /tmp/myname ]; then
 			_nam=`cat /tmp/myname`
 		fi
@@ -333,7 +336,7 @@ case "$resp" in
 		hostname $resp
 		echo $resp > /tmp/myname
 
-		resp=""		# force at least one iteration
+		resp=		# force at least one iteration
 		if [ -f /tmp/resolv.conf ]; then
 			FQDN=`grep '^domain ' /tmp/resolv.conf | \
 			    sed -e 's/^domain //'`
@@ -375,7 +378,7 @@ case "$resp" in
 
 		resp="none"
 		if [ -f /etc/resolv.conf ]; then
-			resp=""
+			resp=
 			for n in `grep '^nameserver ' /etc/resolv.conf | \
 			    sed -e 's/^nameserver //'`; do
 				if [ "X${resp}" = "X" ]; then
@@ -385,7 +388,7 @@ case "$resp" in
 				fi
 			done
 		elif [ -f /tmp/resolv.conf ]; then
-			resp=""
+			resp=
 			for n in `grep '^nameserver ' /tmp/resolv.conf | \
 			    sed -e 's/^nameserver //'`; do
 				if [ "X${resp}" = "X" ]; then
@@ -521,7 +524,7 @@ mount | while read line; do
 	fi
 done
 
-resp=""		# force one iteration
+resp=		# force one iteration
 echo
 echo 'Please enter the initial password that the root account will have.'
 while [ "X${resp}" = X"" ]; do
@@ -539,27 +542,13 @@ while [ "X${resp}" = X"" ]; do
 	echo
 	if [ "${_password}" != "${resp}" ]; then
 		echo "Passwords do not match, try again."
-		resp=""
+		resp=
 	fi
 done
 
 install_sets $THESETS
 
-md_copy_kernel
-
 # Copy in configuration information and make devices in target root.
-
-if [ ! -d /mnt/etc -o ! -d /mnt/usr/share/zoneinfo -o ! -d /mnt/dev ]; then
-	echo "Something needed to complete the installation seems"
-	echo "to be missing, did you forget to extract a required set?"
-	echo
-	echo "Please review the installation notes and try again..."
-	echo
-	echo "You *may* be able to correct the problem and type 'install'"
-	echo "without having to extract all of the distribution sets again."
-	exit
-fi
-
 cd /tmp
 for file in fstab hostname.* hosts myname mygate resolv.conf; do
 	if [ -f $file ]; then
