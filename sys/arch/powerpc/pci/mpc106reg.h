@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpc106reg.h,v 1.1 1997/10/11 11:29:29 pefo Exp $ */
+/*	$OpenBSD: mpc106reg.h,v 1.2 1998/08/25 07:40:47 pefo Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -38,27 +38,25 @@
 #ifndef _MACHINE_MPC106REG_H_
 #define _MACHINE_MPC106REG_H_
 
-/* Where we map the config space */
-#define MPC106_PCI_CONF_SPACE	0x80800000
-
 /* Where we map the PCI memory space */
 #define MPC106_V_PCI_MEM_SPACE	0xc0000000	/* Viritual */
 #define MPC106_P_PCI_MEM_SPACE	0xc0000000	/* Physical */
 
 /* Where we map the PCI I/O space */
-#define MPC106_PCI_IO_SPACE	0x81000000
+#define MPC106_P_ISA_IO_SPACE	0x80000000
+#define MPC106_V_ISA_IO_SPACE	0x80000000
+#define MPC106_V_PCI_IO_SPACE	(MPC106_V_ISA_IO_SPACE + 0x01000000)
+
+/* Where we map the config space */
+#define MPC106_PCI_CONF_SPACE	(MPC106_V_ISA_IO_SPACE + 0x00800000)
 
 /* offsets from base pointer */
-#define MPC106_CONF_BASE	0x80000cf8
-#define MPC106_CONF_DATA	0x80000cfc
+#define MPC106_CONF_BASE	(MPC106_V_ISA_IO_SPACE + 0x0cf8)
+#define MPC106_CONF_DATA	(MPC106_V_ISA_IO_SPACE + 0x0cfc)
 #define	MPC106_REGOFFS(x)	((x << 24) | 0x80)
 
 /* Where PCI devices sees CPU memory. */
 #define	MPC106_PCI_CPUMEM	0x80000000
-
-#define	SWAP32(x)	\
-			(((x) << 24) | ((x) >> 24) | \
-			(((x) >> 8) & 0xff00) | (((x) & 0xff00) << 8))
 
 static __inline void
 mpc_cfg_write_1(reg, val)
