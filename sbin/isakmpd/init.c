@@ -1,4 +1,4 @@
-/* $OpenBSD: init.c,v 1.32 2004/06/25 00:58:39 hshoexer Exp $	 */
+/* $OpenBSD: init.c,v 1.33 2004/09/17 13:46:34 ho Exp $	 */
 /* $EOM: init.c,v 1.25 2000/03/30 14:27:24 ho Exp $	 */
 
 /*
@@ -32,6 +32,8 @@
  */
 
 /* XXX This file could easily be built dynamically instead.  */
+
+#include <stdlib.h>
 
 #include "sysdep.h"
 
