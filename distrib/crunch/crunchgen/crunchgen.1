@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crunchgen.1,v 1.8 2000/06/13 20:55:01 angelos Exp $
+.\"	$OpenBSD: crunchgen.1,v 1.9 2003/03/31 07:52:56 jmc Exp $
 .\"
 .\"
 .\" Copyright (c) 1994 University of Maryland
@@ -239,7 +239,7 @@ input conf file, named
 .fi
 .Pp
 This conf file specifies a small crunched binary consisting of some
-basic system utilities plus a homegrown install program ``myinstall'',
+basic system utilities plus a home-grown install program ``myinstall'',
 for which no source directory is specified, but its object file is
 specified directly with the
 .Nm special
@@ -249,7 +249,7 @@ The crunched binary ``kcopy'' can be built as follows:
 .Pp
 .nf
 	% crunchgen -m Makefile kcopy.conf    # gen Makefile and kcopy.c
-	% make objs		# build the component progams' .o files
+	% make objs		# build the component programs' .o files
 	% make			# build the crunched binary kcopy
 	% kcopy sh		# test that this invokes a sh shell
 	$			# it works!
