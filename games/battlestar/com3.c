@@ -1,4 +1,4 @@
-/*	$OpenBSD: com3.c,v 1.8 2000/09/23 03:02:35 pjanzen Exp $	*/
+/*	$OpenBSD: com3.c,v 1.9 2000/09/24 21:55:23 pjanzen Exp $	*/
 /*	$NetBSD: com3.c,v 1.3 1995/03/21 15:07:00 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com3.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: com3.c,v 1.8 2000/09/23 03:02:35 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: com3.c,v 1.9 2000/09/24 21:55:23 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -114,7 +114,8 @@ bury()
 	int     value;
 
 	if (TestBit(inven, SHOVEL)) {
-		while (wordtype[++wordnumber] != OBJECT && wordtype[wordnumber] != NOUNS && wordnumber <= wordcount);
+		while (wordtype[++wordnumber] != OBJECT && wordtype[wordnumber] != NOUNS && wordnumber <= wordcount)
+			;
 		value = wordvalue[wordnumber];
 		if (wordtype[wordnumber] == NOUNS && (TestBit(location[position].objects, value) || value == BODY))
 			switch (value) {

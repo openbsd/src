@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.8 2000/09/23 03:02:38 pjanzen Exp $	*/
+/*	$OpenBSD: parse.c,v 1.9 2000/09/24 21:55:26 pjanzen Exp $	*/
 /*	$NetBSD: parse.c,v 1.3 1995/03/21 15:07:48 cgd Exp $	*/
 
 /*
@@ -38,11 +38,21 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: parse.c,v 1.8 2000/09/23 03:02:38 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.9 2000/09/24 21:55:26 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
 #include "extern.h"
+
+#define HASHSIZE	256
+#define HASHMUL		81
+#define HASHMASK	(HASHSIZE - 1)
+
+static int hash __P((const char *));
+static void install __P((struct wlist *));
+static struct wlist *lookup __P((const char *));
+
+struct wlist *hashtab[HASHSIZE];
 
 void
 wordinit()
@@ -53,7 +63,7 @@ wordinit()
 		install(w);
 }
 
-int
+static int
 hash(s)
 	const char   *s;
 {
@@ -67,7 +77,7 @@ hash(s)
 	return hashval;
 }
 
-struct wlist *
+static struct wlist *
 lookup(s)
 	const char   *s;
 {
@@ -79,7 +89,7 @@ lookup(s)
 	return NULL;
 }
 
-void
+static void
 install(wp)
 	struct wlist *wp;
 {
@@ -110,13 +120,6 @@ parse()
 			wordtype[n] = wp->article;
 		}
 	}
-	/* Don't let a comma mean AND if followed by a verb. */
-	for (n = 0; n < wordcount; n++)
-		if (wordvalue[n] == AND && words[n][0] == ','
-		    && wordtype[n + 1] == VERB) {
-			wordvalue[n] = -1;
-			wordtype[n] = -1;
-		}
 	/* We never use adjectives, so yank them all; disambiguation
 	 * code would need to go before this.
 	 */
@@ -129,6 +132,13 @@ parse()
 				strlcpy(words[i - 1], words[i], WORDLEN);
 			}
 			wordcount--;
+		}
+	/* Don't let a comma mean AND if followed by a verb. */
+	for (n = 0; n < wordcount; n++)
+		if (wordvalue[n] == AND && words[n][0] == ','
+		    && wordtype[n + 1] == VERB) {
+			wordvalue[n] = -1;
+			wordtype[n] = -1;
 		}
 	/* Trim "AND AND" which can happen naturally at the end of a
 	 * comma-delimited list.

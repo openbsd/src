@@ -1,4 +1,4 @@
-/*	$OpenBSD: fly.c,v 1.7 1999/09/25 20:30:45 pjanzen Exp $	*/
+/*	$OpenBSD: fly.c,v 1.8 2000/09/24 21:55:25 pjanzen Exp $	*/
 /*	$NetBSD: fly.c,v 1.3 1995/03/21 15:07:28 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fly.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: fly.c,v 1.7 1999/09/25 20:30:45 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: fly.c,v 1.8 2000/09/24 21:55:25 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -46,19 +46,26 @@ static char rcsid[] = "$OpenBSD: fly.c,v 1.7 1999/09/25 20:30:45 pjanzen Exp $";
 #undef UP
 #include <curses.h>
 
-#define abs(a)	((a) < 0 ? -(a) : (a))
 #define MIDR  (LINES/2 - 1)
 #define MIDC  (COLS/2 - 1)
 
-int     row, column;
-int     dr = 0, dc = 0;
-char    destroyed;
 int     ourclock = 120;	/* time for all the flights in the game */
-char    cross = 0;
-sig_t   oldsig;
 
+static int     row, column;
+static int     dr = 0, dc = 0;
+static char    destroyed;
+static char    cross = 0;
+static sig_t   oldsig;
 
-void
+static void blast __P((void));
+static void endfly __P((void));
+static void moveenemy __P((int));
+static void notarget __P((void));
+static void screen __P((void));
+static void succumb __P((int));
+static void target __P((void));
+
+static void
 succumb(sigraised)
 	int     sigraised;
 {
@@ -179,7 +186,7 @@ visual()
 	}
 }
 
-void
+static void
 screen()
 {
 	int     r, c, n;
@@ -196,7 +203,7 @@ screen()
 	refresh();
 }
 
-void
+static void
 target()
 {
 	int     n;
@@ -209,7 +216,7 @@ target()
 	}
 }
 
-void
+static void
 notarget()
 {
 	int     n;
@@ -222,7 +229,7 @@ notarget()
 	}
 }
 
-void
+static void
 blast()
 {
 	int     n;
@@ -244,7 +251,7 @@ blast()
 	alarm(1);
 }
 
-void
+static void
 moveenemy(sigraised)
 	int     sigraised;
 {
@@ -284,7 +291,7 @@ moveenemy(sigraised)
 	alarm(1);
 }
 
-void
+static void
 endfly()
 {
 	alarm(0);

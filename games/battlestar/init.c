@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.6 1999/09/25 20:30:46 pjanzen Exp $	*/
+/*	$OpenBSD: init.c,v 1.7 2000/09/24 21:55:25 pjanzen Exp $	*/
 /*	$NetBSD: init.c,v 1.4 1995/03/21 15:07:35 cgd Exp $	*/
 
 /*
@@ -38,11 +38,15 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.4 (Berkeley) 4/30/95";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.6 1999/09/25 20:30:46 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.7 2000/09/24 21:55:25 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
 #include "extern.h"
+
+static int checkout __P((const char *));
+static const char *getutmp __P((void));
+static int wizard __P((const char *));
 
 void
 initialize(filename)
@@ -56,7 +60,7 @@ initialize(filename)
 	puts("Admiral D.W. Riggle\n");
 	location = dayfile;
 	srandom(getpid());
-	getutmp(username);
+	username = getutmp();
 	wordinit();
 	if (filename == NULL) {
 		direction = NORTH;
@@ -77,17 +81,20 @@ initialize(filename)
 	signal(SIGINT, die);
 }
 
-void
-getutmp(username)
-	char   *username;
+static const char *
+getutmp()
 {
 	struct passwd *ptr;
 
 	ptr = getpwuid(getuid());
-	strcpy(username, ptr ? ptr->pw_name : "");
+	if (ptr == NULL)
+		return("");
+	else
+		return(strdup(ptr->pw_name));
 }
 
-const char   *const list[] = {	/* hereditary wizards */
+/* Hereditary wizards.  A configuration file might make more sense. */
+static const char *const list[] = {
 	"riggle",
 	"chris",
 	"edward",
@@ -98,14 +105,14 @@ const char   *const list[] = {	/* hereditary wizards */
 	0
 };
 
-const char   *const badguys[] = {
+static const char *const badguys[] = {
 	"wnj",
 	"root",
 	"ted",
 	0
 };
 
-int
+static int
 wizard(username)
 	const char   *username;
 {
@@ -116,7 +123,7 @@ wizard(username)
 	return flag;
 }
 
-int
+static int
 checkout(username)
 	const char   *username;
 {

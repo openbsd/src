@@ -1,4 +1,4 @@
-/*	$OpenBSD: com1.c,v 1.9 2000/07/24 01:02:43 pjanzen Exp $	*/
+/*	$OpenBSD: com1.c,v 1.10 2000/09/24 21:55:22 pjanzen Exp $	*/
 /*	$NetBSD: com1.c,v 1.3 1995/03/21 15:06:51 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com1.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: com1.c,v 1.9 2000/07/24 01:02:43 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: com1.c,v 1.10 2000/09/24 21:55:22 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -212,11 +212,17 @@ news()
 				WEIGHT = 0;
 		}
 	if (injuries[ARM] == 2) {
-		CUMBER -= 5;
+		if (CUMBER > 5)
+			CUMBER -= 5;
+		else
+			CUMBER = 0;
 		injuries[ARM]++;
 	}
 	if (injuries[RIBS] == 2) {
-		CUMBER -= 2;
+		if (CUMBER > 2)
+			CUMBER -= 2;
+		else
+			CUMBER = 0;
 		injuries[RIBS]++;
 	}
 	if (injuries[SPINE] == 2) {

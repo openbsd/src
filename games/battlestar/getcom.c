@@ -1,4 +1,4 @@
-/*	$OpenBSD: getcom.c,v 1.8 2000/09/23 02:58:40 pjanzen Exp $	*/
+/*	$OpenBSD: getcom.c,v 1.9 2000/09/24 21:55:25 pjanzen Exp $	*/
 /*	$NetBSD: getcom.c,v 1.3 1995/03/21 15:07:30 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getcom.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: getcom.c,v 1.8 2000/09/23 02:58:40 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: getcom.c,v 1.9 2000/09/24 21:55:25 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,7 +68,7 @@ getcom(buf, size, prompt, error)
 	/* If we didn't get to the end of the line, don't read it in next time */
 	if (buf[strlen(buf) - 1] != '\n') {
 		int i;
-		while ((i = fgetc(stdin)) != '\n' && i != EOF)
+		while ((i = getchar()) != '\n' && i != EOF)
 			;
 	}
 	return (buf);

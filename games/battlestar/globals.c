@@ -1,4 +1,4 @@
-/*	$OpenBSD: globals.c,v 1.8 2000/09/23 03:02:36 pjanzen Exp $	*/
+/*	$OpenBSD: globals.c,v 1.9 2000/09/24 21:55:25 pjanzen Exp $	*/
 /*	$NetBSD: globals.c,v 1.3 1995/03/21 15:07:32 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)globals.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: globals.c,v 1.8 2000/09/23 03:02:36 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: globals.c,v 1.9 2000/09/24 21:55:25 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -118,7 +118,7 @@ const char   *const objdes[NUMOFOBJECTS] = {
 const char   *const objsht[NUMOFOBJECTS] = {
 	"knife",
 	"fine sword",
-	NULL,
+	NULL,			/* can land from here */
 	"Woodsman",
 	"two-handed sword",
 	"meat cleaver",
@@ -130,7 +130,7 @@ const char   *const objsht[NUMOFOBJECTS] = {
 	"viper",
 	"lantern",
 	"shoes",
-	NULL,
+	NULL,			/* cylon */
 	"pajamas",
 	"robe",
 	"amulet",
@@ -139,8 +139,8 @@ const char   *const objsht[NUMOFOBJECTS] = {
 	"woodsman's body",
 	"wooden mallet",
 	"laser",
-	NULL,
-	NULL,
+	NULL,			/* bathing goddess */
+	NULL,			/* goddess */
 	"grenade",
 	"chain",
 	"rope",
@@ -149,12 +149,12 @@ const char   *const objsht[NUMOFOBJECTS] = {
 	"shovel",
 	"halberd",
 	"compass",
-	NULL,
+	NULL,			/* crash debris */
 	"Elf",
-	NULL,
+	NULL,			/* footsteps */
 	"coins",
 	"match book",
-	NULL,
+	NULL,			/* man and dwarf */
 	"papayas",
 	"pineapple",
 	"kiwi",
@@ -163,18 +163,18 @@ const char   *const objsht[NUMOFOBJECTS] = {
 	"ring",
 	"potion",
 	"bracelet",
-	NULL,
-	NULL,
+	NULL,			/* swarthy woman */
+	NULL,			/* swarthy woman (with message) */
 	"Dark Lord",
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+	NULL,			/* old-timer */
+	NULL,			/* asteroid field */
+	NULL,			/* nearby planet */
+	NULL,			/* charred ground */
 	"warhead",
 	"goddess's body",
 	"old-timer's body",
 	"girl's body",
-	NULL,
+	NULL,			/* native girl */
 	"stallion",
 	"car",
 	"pot of jewels",
@@ -269,6 +269,4 @@ char    beenthere[NUMOFROOMS + 1];
 char    injuries[NUMOFINJURIES];
 int     verbose = 0;
 
-char    username[LOGIN_NAME_MAX + 1];
-
-struct wlist *hashtab[HASHSIZE];
+const char *username;

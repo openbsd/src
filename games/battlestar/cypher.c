@@ -1,4 +1,4 @@
-/*	$OpenBSD: cypher.c,v 1.10 2000/09/23 03:02:36 pjanzen Exp $	*/
+/*	$OpenBSD: cypher.c,v 1.11 2000/09/24 21:55:23 pjanzen Exp $	*/
 /*	$NetBSD: cypher.c,v 1.3 1995/03/21 15:07:15 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cypher.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: cypher.c,v 1.10 2000/09/23 03:02:36 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: cypher.c,v 1.11 2000/09/24 21:55:23 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -299,8 +299,18 @@ cypher()
 				for (n = 0; n < NUMOFOBJECTS; n++)
 					if (TestBit(inven, n))
 						printf("\t%s\n", objsht[n]);
-				printf("\n= %d kilogram%s (%d%%)\n", carrying, (carrying == 1 ? "." : "s."), (WEIGHT ? carrying * 100 / WEIGHT : -1));
-				printf("Your arms are %d%% full.\n", encumber * 100 / CUMBER);
+				printf("\n= %d kilogram%s ", carrying,
+				    (carrying == 1 ?  "." : "s."));
+				if (WEIGHT)
+					printf("(%d%%)\n", carrying * 100 / WEIGHT);
+				else
+					printf("(can't lift any weight%s)\n",
+					    (carrying ? " or move with what you have" : ""));
+				if (CUMBER)
+					printf("Your arms are %d%% full.\n",
+					    encumber * 100 / CUMBER);
+				else
+					printf("You can't pick anything up.\n");
 			} else
 				puts("You aren't carrying anything.");
 

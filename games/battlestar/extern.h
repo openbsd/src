@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.9 2000/09/23 03:02:36 pjanzen Exp $	*/
+/*	$OpenBSD: extern.h,v 1.10 2000/09/24 21:55:24 pjanzen Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1995/04/24 12:22:18 cgd Exp $	*/
 
 /*
@@ -305,17 +305,13 @@ extern char    beenthere[NUMOFROOMS+1];
 extern char    injuries[NUMOFINJURIES];
 extern int     verbose;
 
-extern char    username[LOGIN_NAME_MAX + 1];
+extern const char *username;
 
 struct wlist {
 	const char   *string;
 	int     value, article;
 	struct wlist *next;
 };
-#define HASHSIZE	256
-#define HASHMUL		81
-#define HASHMASK	(HASHSIZE - 1)
-extern struct wlist *hashtab[HASHSIZE];
 extern struct wlist wlist[];
 
 struct objs {
@@ -325,10 +321,8 @@ struct objs {
 extern const struct objs dayobjs[];
 extern const struct objs nightobjs[];
 
-void blast __P((void));
 void bury __P((void));
 int card __P((const char *, int));
-int checkout __P((const char *));
 void chime __P((void));
 void convert __P((int));
 void crash __P((void));
@@ -341,30 +335,23 @@ void drink __P((void));
 int drive __P((void));
 int drop __P((const char *));
 int eat __P((void));
-void endfly __P((void));
 int fight __P((int, int));
 int follow __P((void));
 char *getcom __P((char *, int, const char *, const char *));
-void getutmp __P((char *));
 char *getword __P((char *, char *, int));
 int give __P((void));
-int hash __P((const char *));
 void initialize __P((const char *));
-void install __P((struct wlist *));
 int jump __P((void));
 void kiss __P((void));
 int land __P((void));
 int launch __P((void));
 void light __P((void));
 void live __P((void));
-struct wlist *lookup __P((const char *));
 void love __P((void));
-void moveenemy __P((int));
 int moveplayer __P((int, int));
 void murder __P((void));
 void news __P((void));
 void newway __P((int));
-void notarget __P((void));
 void open_score_file __P((void));
 void parse __P((void));
 void post __P((char));
@@ -377,12 +364,9 @@ void restore __P((const char *));
 int ride __P((void));
 void save __P((const char *));
 char *save_file_name __P((const char *, size_t));
-void screen __P((void));
 int shoot __P((void));
-void succumb __P((int));
 int take __P((unsigned int[]));
 int takeoff __P((void));
-void target __P((void));
 int throw __P((const char *));
 const char *truedirec __P((int, char));
 int ucard __P((const unsigned int *));
@@ -390,7 +374,6 @@ int use __P((void));
 int visual __P((void));
 int wearit __P((void));
 void whichway __P((struct room));
-int wizard __P((const char *));
 void wordinit __P((void));
 void writedes __P((void));
 int zzz __P((void));

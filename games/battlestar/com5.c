@@ -1,4 +1,4 @@
-/*	$OpenBSD: com5.c,v 1.7 2000/09/23 03:02:36 pjanzen Exp $	*/
+/*	$OpenBSD: com5.c,v 1.8 2000/09/24 21:55:23 pjanzen Exp $	*/
 /*	$NetBSD: com5.c,v 1.3 1995/03/21 15:07:07 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com5.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: com5.c,v 1.7 2000/09/23 03:02:36 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: com5.c,v 1.8 2000/09/24 21:55:23 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -275,7 +275,8 @@ give()
 
 	last1 = last2 = wordcount + 2;
 	firstnumber = wordnumber;
-	while (wordtype[++wordnumber] != OBJECT && wordvalue[wordnumber] != AMULET && wordvalue[wordnumber] != MEDALION && wordvalue[wordnumber] != TALISMAN && wordnumber <= wordcount);
+	while (wordtype[++wordnumber] != OBJECT && wordvalue[wordnumber] != AMULET && wordvalue[wordnumber] != MEDALION && wordvalue[wordnumber] != TALISMAN && wordnumber <= wordcount)
+		;
 	if (wordnumber <= wordcount) {
 		obj = wordvalue[wordnumber];
 		if (obj == EVERYTHING)
@@ -283,7 +284,8 @@ give()
 		last1 = wordnumber;
 	}
 	wordnumber = firstnumber;
-	while ((wordtype[++wordnumber] != NOUNS || wordvalue[wordnumber] == obj) && wordnumber <= wordcount);
+	while ((wordtype[++wordnumber] != NOUNS || wordvalue[wordnumber] == obj) && wordnumber <= wordcount)
+		;
 	if (wordtype[wordnumber] == NOUNS) {
 		person = wordvalue[wordnumber];
 		last2 = wordnumber;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: com2.c,v 1.10 2000/09/23 03:02:35 pjanzen Exp $	*/
+/*	$OpenBSD: com2.c,v 1.11 2000/09/24 21:55:22 pjanzen Exp $	*/
 /*	$NetBSD: com2.c,v 1.3 1995/03/21 15:06:55 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com2.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: com2.c,v 1.10 2000/09/23 03:02:35 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: com2.c,v 1.11 2000/09/24 21:55:22 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -279,7 +279,8 @@ murder()
 void
 ravage()
 {
-	while (wordtype[++wordnumber] != NOUNS && wordnumber <= wordcount);
+	while (wordtype[++wordnumber] != NOUNS && wordnumber <= wordcount)
+		;
 	if (wordtype[wordnumber] == NOUNS && (TestBit(location[position].objects, wordvalue[wordnumber])
 	    || (wordvalue[wordnumber] == NORMGOD && TestBit(location[position].objects, BATHGOD)))) {
 		ourtime++;
