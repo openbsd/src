@@ -50,9 +50,17 @@ ld \- the GNU linker
 .RB "[\|" \-embedded\-relocs "\|]"
 .RB "[\|" \-E "\|]" 
 .RB "[\|" \-export\-dynamic "\|]"
-.RB "[\|" \-F "\|]" 
+.RB "[\|" "\-f\ "\c
+.I name\c
+\&\|]
+.RB "[\|" "\-\-auxiliary\ "\c
+.I name\c
+\&\|]
 .RB "[\|" "\-F\ "\c
-.I format\c
+.I name\c
+\&\|]
+.RB "[\|" "\-\-filter\ "\c
+.I name\c
 \&\|]
 .RB "[\|" "\-format\ "\c
 .I input-format\c
@@ -60,6 +68,12 @@ ld \- the GNU linker
 .RB "[\|" \-g "\|]" 
 .RB "[\|" \-G
 .I size\c
+\&\|]
+.RB "[\|" "\-h\ "\c
+.I name\c
+\&\|]
+.RB "[\|" "\-soname\ "\c
+.I name\c
 \&\|]
 .RB "[\|" \-\-help "\|]"
 .RB "[\|" \-i "\|]"
@@ -505,28 +519,24 @@ by a dynamic object.  This option is needed for some uses of
 .I dlopen.
 
 .TP
-.B \-F
+.BI "-f " "name"
 .TP
-.BI "-F" "format"
-Some older linkers used this option throughout a compilation toolchain
-for specifying object-file format for both input and output object
-files.  \c
-.B ld\c
-\&'s mechanisms (the \c
-.B \-b\c
-\& or \c
-.B \-format\c
-\& options
-for input files, the \c
-.B TARGET\c
-\& command in linker scripts for output
-files, the \c
-.B GNUTARGET\c
-\& environment variable) are more flexible, but
-but it accepts (and ignores) the \c
-.B \-F\c
-\& option flag for compatibility
-with scripts written to call the old linker.
+.BI "--auxiliary " "name"
+When creating an ELF shared object, set the internal DT_AUXILIARY field
+to the specified name.  This tells the dynamic linker that the symbol
+table of the shared object should be used as an auxiliary filter on the
+symbol table of the shared object
+.I name.
+
+.TP
+.BI "-F " "name"
+.TP
+.BI "--filter " "name"
+When creating an ELF shared object, set the internal DT_FILTER field to
+the specified name.  This tells the dynamic linker that the symbol table
+of the shared object should be used as a filter on the symbol table of
+the shared object
+.I name.
 
 .TP
 .BI "\-format " "input\-format"
@@ -546,6 +556,16 @@ Set the maximum size of objects to be optimized using the GP register
 to
 .I size
 under MIPS ECOFF.  Ignored for other object file formats.
+
+.TP
+.BI "-h " "name"
+.TP
+.BI "-soname " "name"
+When creating an ELF shared object, set the internal DT_SONAME field to
+the specified name.  When an executable is linked with a shared object
+which has a DT_SONAME field, then when the executable is run the dynamic
+linker will attempt to load the shared object specified by the DT_SONAME
+field rather than the using the file name given to the linker.
 
 .TP
 .B \-\-help

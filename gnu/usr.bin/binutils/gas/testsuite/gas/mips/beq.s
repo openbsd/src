@@ -21,3 +21,8 @@ text_label:
 	.space	0x20000
 	b	text_label
 	bal	text_label
+
+# Round to a 16 byte boundary, for ease in testing multiple targets.
+	nop
+	nop
+	nop

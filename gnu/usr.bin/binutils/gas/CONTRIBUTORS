@@ -94,6 +94,7 @@ Solutions.  Richard Henderson then rewrote much of the Alpha support.
 Ian Dall updated the support code for the National Semiconductor 32000
 series, and added support for Mach 3 and NetBSD running on the PC532.
 
+Klaus Kaempf ported the assembler and the binutils to openVMS/Alpha.
 
 Steve Haworth contributed the support for the Texas Instruction c30
 (tms320c30).

@@ -1,5 +1,5 @@
 /* Target definitions for 32/64-bit NLM (NetWare Loadable Module)
-   Copyright (C) 1993, 1994 Free Software Foundation, Inc.
+   Copyright (C) 1993, 94, 95, 1997 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define nlm_make_empty_symbol nlmNAME(make_empty_symbol)
 #define nlm_print_symbol nlmNAME(print_symbol)
 #define nlm_get_symbol_info nlmNAME(get_symbol_info)
-#define nlm_bfd_is_local_label bfd_generic_is_local_label
+#define nlm_bfd_is_local_label_name bfd_generic_is_local_label_name
 #define nlm_get_lineno _bfd_nosymbols_get_lineno
 #define nlm_find_nearest_line _bfd_nosymbols_find_nearest_line
 #define nlm_bfd_make_debug_symbol _bfd_nosymbols_bfd_make_debug_symbol

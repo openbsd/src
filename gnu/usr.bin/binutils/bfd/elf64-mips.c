@@ -74,7 +74,7 @@ static long mips_elf64_get_reloc_upper_bound PARAMS ((bfd *, asection *));
 static boolean mips_elf64_slurp_one_reloc_table
   PARAMS ((bfd *, asection *, asymbol **, const Elf_Internal_Shdr *));
 static boolean mips_elf64_slurp_reloc_table
-  PARAMS ((bfd *, asection *, asymbol **));
+  PARAMS ((bfd *, asection *, asymbol **, boolean));
 static void mips_elf64_write_relocs PARAMS ((bfd *, asection *, PTR));
 static boolean mips_elf64_slurp_armap PARAMS ((bfd *));
 static boolean mips_elf64_write_armap
@@ -1625,12 +1625,19 @@ mips_elf64_slurp_one_reloc_table (abfd, asect, symbols, rel_hdr)
    associated with a single data section.  */
 
 static boolean
-mips_elf64_slurp_reloc_table (abfd, asect, symbols)
+mips_elf64_slurp_reloc_table (abfd, asect, symbols, dynamic)
      bfd *abfd;
      asection *asect;
      asymbol **symbols;
+     boolean dynamic;
 {
   struct bfd_elf_section_data * const d = elf_section_data (asect);
+
+  if (dynamic)
+    {
+      bfd_set_error (bfd_error_invalid_operation);
+      return false;
+    }
 
   if (asect->relocation != NULL
       || (asect->flags & SEC_RELOC) == 0

@@ -1,5 +1,5 @@
 /* BFD back-end for Zilog Z800n COFF binaries.
-   Copyright 1992, 1993, 1994 Free Software Foundation, Inc.
+   Copyright 1992, 93, 94, 95, 1997 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
    Written by Steve Chamberlain, <sac@cygnus.com>.
 
@@ -21,7 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #include "bfd.h"
 #include "sysdep.h"
-#include "obstack.h"
 #include "libbfd.h"
 #include "bfdlink.h"
 #include "coff/z8k.h"
@@ -112,7 +111,7 @@ rtype2howto (internal, dst)
 #define RTYPE2HOWTO(internal, relocentry) rtype2howto(internal,relocentry)
 
 
-/* Perform any necessaru magic to the addend in a reloc entry */
+/* Perform any necessary magic to the addend in a reloc entry */
 
 
 #define CALC_ADDEND(abfd, symbol, ext_reloc, cache_ptr) \

@@ -1,6 +1,6 @@
 #objdump: -dr --prefix-addresses -mmips:3000
 #name: MIPS ld-empic
-#as: -mips1 -membedded-pic
+#as: -mips1 -membedded-pic --defsym EMPIC=1
 #source: ld-pic.s
 
 # Test the ld macro with -membedded-pic.

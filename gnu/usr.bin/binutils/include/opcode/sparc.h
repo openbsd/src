@@ -1,5 +1,6 @@
 /* Definitions for opcode table for the sparc.
-   Copyright (C) 1989, 1991, 1992, 1995, 1996 Free Software Foundation, Inc.
+   Copyright (C) 1989, 91, 92, 93, 94, 95, 96, 1997
+   Free Software Foundation, Inc.
 
 This file is part of GAS, the GNU Assembler, GDB, the GNU debugger, and
 the GNU Binutils.
@@ -18,6 +19,8 @@ You should have received a copy of the GNU General Public License
 along with GAS or GDB; see the file COPYING.	If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
+
+#include <ansidecl.h>
 
 /* The SPARC opcode table (and other related data) is defined in
    the opcodes library in sparc-opc.c.  If you change anything here, make
@@ -70,7 +73,8 @@ struct sparc_opcode_arch {
 extern const struct sparc_opcode_arch sparc_opcode_archs[];
 
 /* Given architecture name, look up it's sparc_opcode_arch_val value.  */
-extern enum sparc_opcode_arch_val sparc_opcode_lookup_arch ();
+extern enum sparc_opcode_arch_val sparc_opcode_lookup_arch
+  PARAMS ((const char *));
 
 /* Return the bitmask of supported architectures for ARCH.  */
 #define SPARC_OPCODE_SUPPORTED(ARCH) (sparc_opcode_archs[ARCH].supported)
@@ -217,14 +221,14 @@ The following chars are unused: (note: ,[] are used as punctuation)
 extern const struct sparc_opcode sparc_opcodes[];
 extern const int sparc_num_opcodes;
 
-int sparc_encode_asi ();
-char *sparc_decode_asi ();
-int sparc_encode_membar ();
-char *sparc_decode_membar ();
-int sparc_encode_prefetch ();
-char *sparc_decode_prefetch ();
-int sparc_encode_sparclet_cpreg ();
-char *sparc_decode_sparclet_cpreg ();
+extern int sparc_encode_asi PARAMS ((const char *));
+extern const char *sparc_decode_asi PARAMS ((int));
+extern int sparc_encode_membar PARAMS ((const char *));
+extern const char *sparc_decode_membar PARAMS ((int));
+extern int sparc_encode_prefetch PARAMS ((const char *));
+extern const char *sparc_decode_prefetch PARAMS ((int));
+extern int sparc_encode_sparclet_cpreg PARAMS ((const char *));
+extern const char *sparc_decode_sparclet_cpreg PARAMS ((int));
 
 /*
  * Local Variables:

@@ -267,7 +267,7 @@ struct external_reloc {
    and L2.  */
 #define R_SH_SWITCH8	33		/* 8 bit switch table entry */
 #define R_SH_SWITCH16	25		/* 16 bit switch table entry */
-#define R_SH_SWITCH32	26		/* 16 bit switch table entry */
+#define R_SH_SWITCH32	26		/* 32 bit switch table entry */
 
 /* The USES reloc type is used for relaxing.  The compiler will
    generate .uses pseudo-ops when it finds a function call which it
@@ -279,7 +279,7 @@ struct external_reloc {
 /* The COUNT reloc type is used for relaxing.  The assembler will
    generate COUNT relocs for addresses referred to by the register
    loads associated with USES relocs.  The r_offset field of the COUNT
-   reloc holds the number of times the address is references in the
+   reloc holds the number of times the address is referenced in the
    object file.  */
 #define R_SH_COUNT	28		/* Count of constant pool uses */
 

@@ -31,7 +31,7 @@ SECTIONS
     *(.fini)
     ${RELOCATING+ etext  =  .;}
   }
-  .data ${RELOCATING+${DATA_ADDR-0x40000 + (. & 0xffc00fff)}} : {
+  .data ${RELOCATING+${DATA_ADDR-0x40000 + (. & 0xfffc0fff)}} : {
     ${RELOCATING+  __data_start__ = . ;}
     *(.data)
     ${RELOCATING+ __data_end__ = . ;}

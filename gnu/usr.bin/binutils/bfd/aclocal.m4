@@ -23,7 +23,6 @@ esac])dnl
 dnl Get a default for CC_FOR_BUILD to put into Makefile.
 AC_DEFUN(BFD_CC_FOR_BUILD,
 [# Put a plausible default for CC_FOR_BUILD in Makefile.
-AC_REQUIRE([AC_C_CROSS])dnl
 if test -z "$CC_FOR_BUILD"; then
   if test "x$cross_compiling" = "xno"; then
     CC_FOR_BUILD='$(CC)'

@@ -1,6 +1,6 @@
 #objdump: -dr --prefix-addresses -mmips:3000
 #name: MIPS ulh-svr4pic
-#as: -mips1 -KPIC
+#as: -mips1 -KPIC -EB
 #source: ulh-pic.s
 
 # Test the unaligned load and store macros with -KPIC.

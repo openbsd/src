@@ -393,7 +393,12 @@ convert_sym_type (sym_pointer, cache_ptr, abfd)
 	    default:
 	      abort ();
 	    case N_UNDF | N_EXT:
-	      new_type = N_WEAKU;
+	      /* If the value is nonzero, then just treat this as a
+                 common symbol.  I don't know if this is correct in
+                 all cases, but it is more correct than treating it as
+                 a weak undefined symbol.  */
+	      if (cache_ptr->symbol.value == 0)
+		new_type = N_WEAKU;
 	      break;
 	    case N_ABS | N_EXT:
 	      new_type = N_WEAKA;

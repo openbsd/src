@@ -68,6 +68,10 @@ macro_entry;
 
 extern int macro_defined;
 
+/* The macro nesting level.  */
+
+extern int macro_nest;
+
 extern int buffer_and_nest
   PARAMS ((const char *, const char *, sb *, int (*) PARAMS ((sb *))));
 extern void macro_init

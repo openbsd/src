@@ -984,7 +984,7 @@ parse_ieee_bb (info, pp)
   bfd_vma size;
   const char *name;
   unsigned long namlen;
-  char *namcopy;
+  char *namcopy = NULL;
   unsigned int fnindx;
   boolean skip;
 
@@ -2767,7 +2767,7 @@ ieee_read_cxx_class (info, pp, count)
 	    char *fieldcopy;
 	    boolean staticp;
 	    debug_type ftype;
-	    const debug_field *pf;
+	    const debug_field *pf = NULL;
 	    enum debug_visibility visibility;
 	    debug_field field;
 
@@ -5435,7 +5435,7 @@ ieee_enum_type (p, tag, names, vals)
   struct ieee_defined_enum *e;
   boolean localp, simple;
   unsigned int indx;
-  int i;
+  int i = 0;
 
   localp = false;
   indx = (unsigned int) -1;

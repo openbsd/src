@@ -27,7 +27,7 @@ if [istarget m68*-*-*] then {
 	verbose "$comp_output" 3
 	fail $testname
     } else {
-	if [regexp_diff "err.out" "$srcdir$subdir/op68000.d"] then {
+	if [regexp_diff "err.out" "$srcdir/$subdir/op68000.d"] then {
 	    fail $testname
 	} else {
 	    pass $testname

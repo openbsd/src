@@ -34,7 +34,7 @@ directory (one directory above this one).
 Porting to a new target
 =======================
 
-See the Porting chapter in the ldint.texinfo manual.
+See the ldint.texinfo manual.
 
 Reporting bugs etc
 ===========================

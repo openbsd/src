@@ -219,6 +219,9 @@ cisco_core_file_validate (abfd, crash_info_loc)
 	  /* NAN                 */
 	case 54: abfd->tdata.cisco_core_data->sig = SIGFPE;  break;
 	default:
+#ifndef SIGEMT
+#define SIGEMT SIGTRAP
+#endif
 	  /* "software generated"*/
 	  abfd->tdata.cisco_core_data->sig = SIGEMT;
 	}

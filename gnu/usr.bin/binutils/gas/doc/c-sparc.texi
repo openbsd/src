@@ -14,6 +14,7 @@
 @cindex SPARC support
 @menu
 * Sparc-Opts::                  Options
+* Sparc-Aligned-Data::		Option to enforce aligned data
 * Sparc-Float::                 Floating Point
 * Sparc-Directives::            Sparc Machine Directives
 @end menu
@@ -85,6 +86,27 @@ Select the word size, either 32 bits or 64 bits.
 These options are only available with the ELF object file format,
 and require that the necessary BFD support has been included.
 @end table
+
+@node Sparc-Aligned-Data
+@section Enforcing aligned data
+
+@cindex data alignment on SPARC
+@cindex SPARC data alignment
+SPARC GAS normally permits data to be misaligned.  For example, it
+permits the @code{.long} pseudo-op to be used on a byte boundary.
+However, the native SunOS and Solaris assemblers issue an error when
+they see misaligned data.
+
+@kindex --enforce-aligned-data
+You can use the @code{--enforce-aligned-data} option to make SPARC GAS
+also issue an error about misaligned data, just as the SunOS and Solaris
+assemblers do.
+
+The @code{--enforce-aligned-data} option is not the default because gcc
+issues misaligned data pseudo-ops when it initializes certain packed
+data structures (structures defined using the @code{packed} attribute).
+You may have to assemble with GAS in order to initialize packed data
+structures in your own code.
 
 @ignore
 @c FIXME: (sparc) Fill in "syntax" section!

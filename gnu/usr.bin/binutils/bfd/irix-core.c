@@ -1,5 +1,5 @@
 /* BFD back-end for Irix core files.
-   Copyright 1993, 1994 Free Software Foundation, Inc.
+   Copyright 1993, 94, 95, 96, 1997 Free Software Foundation, Inc.
    Written by Stu Grossman, Cygnus Support.
    Converted to back-end form by Ian Lance Taylor, Cygnus Support
 
@@ -92,7 +92,10 @@ irix_core_core_file_p (abfd)
       return 0;
     }
 
-  if (coreout.c_magic != CORE_MAGIC
+#ifndef CORE_MAGICN32
+#define CORE_MAGICN32 CORE_MAGIC
+#endif
+  if ((coreout.c_magic != CORE_MAGIC && coreout.c_magic != CORE_MAGICN32)
       || coreout.c_version != CORE_VERSION1)
     return 0;
 
@@ -203,7 +206,8 @@ irix_core_make_empty_symbol (abfd)
 #define irix_core_get_symtab _bfd_nosymbols_get_symtab
 #define irix_core_print_symbol _bfd_nosymbols_print_symbol
 #define irix_core_get_symbol_info _bfd_nosymbols_get_symbol_info
-#define irix_core_bfd_is_local_label _bfd_nosymbols_bfd_is_local_label
+#define irix_core_bfd_is_local_label_name \
+  _bfd_nosymbols_bfd_is_local_label_name
 #define irix_core_get_lineno _bfd_nosymbols_get_lineno
 #define irix_core_find_nearest_line _bfd_nosymbols_find_nearest_line
 #define irix_core_bfd_make_debug_symbol _bfd_nosymbols_bfd_make_debug_symbol

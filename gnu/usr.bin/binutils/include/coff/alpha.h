@@ -122,9 +122,11 @@ struct external_reloc {
 #define ALPHA_R_OP_PRSHIFT     15
 #define ALPHA_R_GPVALUE	       16
 #define ALPHA_R_GPRELHIGH      17
-#define ALPHA_R_LITERALSLEAZY  17 /* The *BSD ELF uses this */
 #define ALPHA_R_GPRELLOW       18
 #define ALPHA_R_IMMED          19
+
+/* Overloaded reloc value used by Net- and OpenBSD.  */
+#define ALPHA_R_LITERALSLEAZY  17
 
 /* With ALPHA_R_LITUSE, the r_size field is one of the following values.  */
 #define ALPHA_R_LU_BASE         1

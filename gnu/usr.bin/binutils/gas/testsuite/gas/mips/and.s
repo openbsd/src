@@ -21,3 +21,8 @@ foo:
 	or	$4,$5,0
 
 	xor	$4,$5,0
+
+	# Round to a 16 byte boundary, for ease in testing multiple targets.
+	nop
+	nop
+	nop

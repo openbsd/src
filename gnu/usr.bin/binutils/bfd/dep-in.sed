@@ -14,7 +14,6 @@ s/ libbfd.h//g
 s/ config.h//g
 s! \$(INCDIR)/fopen-[^ ]*\.h!!g
 s! \$(INCDIR)/ansidecl\.h!!g
-s! \$(INCDIR)/obstack\.h!!g
 
 s/\\\n */ /g
 

@@ -30,6 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "sysdep.h"
 #include "libiberty.h"
 #include "getopt.h"
+#include "obstack.h"
 #include "bfdlink.h"
 
 #include <ctype.h>
@@ -829,8 +830,12 @@ gld${EMULATION_NAME}_read_file (filename, import)
 		       filename, lineno);
 	    }
 
-	  if (strcasecmp (s, "svc") == 0
-	      || strcasecmp (s, "syscall") == 0)
+	  if (s == se)
+	    {
+	      /* There was no address after all.  */
+	    }
+	  else if (strcasecmp (s, "svc") == 0
+		   || strcasecmp (s, "syscall") == 0)
 	    syscall = true;
 	  else
 	    {

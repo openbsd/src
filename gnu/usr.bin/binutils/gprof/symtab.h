@@ -106,4 +106,6 @@ extern void sym_init PARAMS ((Sym * sym));
 extern void symtab_finalize PARAMS ((Sym_Table * symtab));
 extern Sym *sym_lookup PARAMS ((Sym_Table * symtab, bfd_vma address));
 
+extern void find_call PARAMS ((Sym *, bfd_vma, bfd_vma));
+
 #endif /* symtab_h */

@@ -1,4 +1,4 @@
-#objdump: -d
+#objdump: -d --prefix-addresses
 #name: fmoveml
 
 # Test handling of fmoveml and fmovemx instructions.

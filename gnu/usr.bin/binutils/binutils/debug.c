@@ -3196,6 +3196,11 @@ debug_type_samep (info, t1, t2)
   struct debug_type_compare_list top;
   boolean ret;
 
+  if (t1 == NULL)
+    return t2 == NULL;
+  if (t2 == NULL)
+    return false;
+
   while (t1->kind == DEBUG_KIND_INDIRECT)
     {
       t1 = *t1->u.kindirect->slot;

@@ -242,9 +242,33 @@ struct external_reloc {
   char pad[2];
 };
 
+/* r_type values for the i960.  */
 
-/* Relevent values for r_type and i960.  Would someone please document them */
+/* The i960 uses R_RELLONG, which is defined in internal.h as 0x11.
+   It is an absolute 32 bit relocation.  */
 
+#define R_IPRMED 	(0x19)	/* 24-bit ip-relative relocation */
+#define R_OPTCALL	(0x1b)	/* 32-bit optimizable call (leafproc/sysproc) */
+#define R_OPTCALLX	(0x1c)	/* 64-bit optimizable call (leafproc/sysproc) */
+
+/* The following relocation types are defined use by relaxing linkers,
+   which convert 32 bit calls (which require a 64 bit instruction)
+   into 24 bit calls (which require a 32 bit instruction) when
+   possible.  It will be possible whenever the target of the call is
+   within a 24 bit range of the call instruction.
+
+   It is always safe to ignore these relocations.  They only serve to
+   mark points which the relaxing linker will have to consider.  The
+   assembler must ensure that the correct code is generated even if
+   the relocations are ignored.  In particular, this means that the
+   R_IPR13 relocation may not appear with an external symbol.  */
+
+#define R_IPR13		(0x1d)	/* 13 bit ip-relative branch */
+#define R_ALIGN		(0x1e)  /* alignment marker.  This has no
+				   associated symbol.  Instead, the
+				   r_symndx field indicates the
+				   require alignment at this point in
+				   the file.  It must be a power of 2.  */
 
 #define RELOC struct external_reloc
 #define RELSZ 12

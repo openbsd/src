@@ -32,6 +32,7 @@ SECTIONS
 	{
 	    ${RELOCATING+ *(.init);}
 	    *(.text)
+	    *(.gcc_except_table)
 	    ${CONSTRUCTING+ ___CTOR_LIST__ = .; __CTOR_LIST__ = . ; 
 		        LONG (-1); *(.ctors); *(.ctor); LONG (0); }
             ${CONSTRUCTING+ ___DTOR_LIST__ = .; __DTOR_LIST__ = . ; 

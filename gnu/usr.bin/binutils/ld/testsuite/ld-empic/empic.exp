@@ -1,5 +1,5 @@
 # Expect script for ld-empic tests
-#   Copyright (C) 1994,1995 Free Software Foundation
+#   Copyright (C) 1994,1995, 1996, 1997 Free Software Foundation
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -38,15 +38,15 @@ if { [which $CC] == 0 } {
 # (by experimentation) to force the linker to relax twice--that is,
 # the first relaxation pass will force another call to be out of
 # range, requiring a second relaxation pass.
-if { ![ld_compile "$CC $CFLAGS -membedded-pic" $srcdir$subdir/relax1.c tmpdir/relax1.o]
-     || ![ld_compile "$CC $CFLAGS -membedded-pic" $srcdir$subdir/relax2.c tmpdir/relax2.o]
-     || ![ld_compile "$CC $CFLAGS -membedded-pic" $srcdir$subdir/relax3.c tmpdir/relax3.o]
-     || ![ld_compile "$CC $CFLAGS -membedded-pic" $srcdir$subdir/relax4.c tmpdir/relax4.o] } {
+if { ![ld_compile "$CC $CFLAGS -membedded-pic" $srcdir/$subdir/relax1.c tmpdir/relax1.o]
+     || ![ld_compile "$CC $CFLAGS -membedded-pic" $srcdir/$subdir/relax2.c tmpdir/relax2.o]
+     || ![ld_compile "$CC $CFLAGS -membedded-pic" $srcdir/$subdir/relax3.c tmpdir/relax3.o]
+     || ![ld_compile "$CC $CFLAGS -membedded-pic" $srcdir/$subdir/relax4.c tmpdir/relax4.o] } {
     unresolved $testname
     return
 }
 
-if ![ld_simple_link $ld tmpdir/relax "--relax -T $srcdir$subdir/relax.t tmpdir/relax1.o tmpdir/relax2.o tmpdir/relax3.o tmpdir/relax4.o"] {
+if ![ld_simple_link $ld tmpdir/relax "--relax -T $srcdir/$subdir/relax.t tmpdir/relax1.o tmpdir/relax2.o tmpdir/relax3.o tmpdir/relax4.o"] {
     fail $testname
 } else {
     # Check that the relaxation produced the correct result.  Check
@@ -227,9 +227,9 @@ set testname "run embedded PIC code"
 
 # Compile the program which will run the test.  This code must be
 # compiled for the host, not the target.
-send_log "$CC_FOR_HOST $CFLAGS_FOR_HOST -o tmpdir/run $srcdir$subdir/run.c\n"
-verbose "$CC_FOR_HOST $CFLAGS_FOR_HOST -o tmpdir/run $srcdir$subdir/run.c"
-catch "exec $CC_FOR_HOST $CFLAGS_FOR_HOST -o tmpdir/run $srcdir$subdir/run.c" exec_output
+send_log "$CC_FOR_HOST $CFLAGS_FOR_HOST -o tmpdir/run $srcdir/$subdir/run.c\n"
+verbose "$CC_FOR_HOST $CFLAGS_FOR_HOST -o tmpdir/run $srcdir/$subdir/run.c"
+catch "exec $CC_FOR_HOST $CFLAGS_FOR_HOST -o tmpdir/run $srcdir/$subdir/run.c" exec_output
 if ![string match "" $exec_output] {
     send_log "$exec_output\n"
     verbose "$exec_output"
@@ -238,9 +238,9 @@ if ![string match "" $exec_output] {
 }
 
 # Compile and link the test.
-if { ![ld_compile "$CC $CFLAGS -membedded-pic" $srcdir$subdir/runtesti.s tmpdir/runtesti.o]
-     || ![ld_compile "$CC $CFLAGS -membedded-pic" $srcdir$subdir/runtest1.c tmpdir/runtest1.o]
-     || ![ld_compile "$CC $CFLAGS -membedded-pic" $srcdir$subdir/runtest2.c tmpdir/runtest2.o] } {
+if { ![ld_compile "$CC $CFLAGS -membedded-pic" $srcdir/$subdir/runtesti.s tmpdir/runtesti.o]
+     || ![ld_compile "$CC $CFLAGS -membedded-pic" $srcdir/$subdir/runtest1.c tmpdir/runtest1.o]
+     || ![ld_compile "$CC $CFLAGS -membedded-pic" $srcdir/$subdir/runtest2.c tmpdir/runtest2.o] } {
     unresolved $testname
     return
 }

@@ -267,7 +267,7 @@ proc run_srec_test { test objs } {
     send_log "$objcopy -O srec tmpdir/sr1 tmpdir/sr1.sr\n"
     verbose "$objcopy -O srec tmpdir/sr1 tmpdir/sr1.sr"
     catch "exec $objcopy -O srec tmpdir/sr1 tmpdir/sr1.sr" exec_output
-    set exec_output [prune_system_crud $host_triplet $exec_output]
+    set exec_output [prune_warnings $exec_output]
     if ![string match "" $exec_output] {
 	send_log "$exec_output\n"
 	verbose "$exec_output"
@@ -315,10 +315,10 @@ if { ![ld_compile $CC $srcdir/$subdir/sr1.c tmpdir/sr1.o] \
 # sections where objdump finds them.  I don't know which is wrong.
 setup_xfail "i*86-*-aout*"
 
-# These tests fail on the MIPS ELF target because the GP value in the
-# .reginfo section is not updated when the S-record version is written
-# out.
-setup_xfail "mips*-*-elf*" "mips*-*-irix5*" "mips*-*-irix6*"
+# These tests fail on the native MIPS ELF targets because the GP value
+# in the .reginfo section is not updated when the S-record version is
+# written out.  The mips-elf target itself does not use a .reginfo section.
+setup_xfail "mips*-*-irix5*" "mips*-*-irix6*"
 
 # The S-record linker doesn't do the magic TOC handling that XCOFF
 # linkers do.
@@ -367,7 +367,7 @@ if ![ld_compile "$CXX $CXXFLAGS -fgnu-linker" $srcdir/$subdir/sr3.cc tmpdir/sr3.
 
 # See above.
 setup_xfail "i*86-*-aout*"
-setup_xfail "mips*-*-elf*" "mips*-*-irix5*" "mips*-*-irix6*"
+setup_xfail "mips*-*-irix5*" "mips*-*-irix6*"
 setup_xfail "*-*-aix*" "*-*-xcoff*"
 setup_xfail "arm*-*-*"
 setup_xfail "strongarm*-*-*"

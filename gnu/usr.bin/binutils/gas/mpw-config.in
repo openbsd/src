@@ -43,13 +43,13 @@ Else If "{target_canonical}" =~ /m68k-\Option-x-coff/
 
 Else If "{target_canonical}" =~ /mips-idt-ecoff/
 	Set bfd_gas yes
-	Set TDEFINES '-d TARGET_BYTES_BIG_ENDIAN'
+	Set TDEFINES '-d TARGET_BYTES_BIG_ENDIAN=1'
 
 Else If "{target_canonical}" =~ /mips-\Option-x-\Option-x/
 	# Assume other OSes etc use ELF
 	Set obj_format "elf"
 	Set bfd_gas yes
-	Set TDEFINES '-d TARGET_BYTES_BIG_ENDIAN'
+	Set TDEFINES '-d TARGET_BYTES_BIG_ENDIAN=1'
 	forward-include "{srcroot}"bfd:elf-bfd.h 'bfd/elf-bfd.h'
 
 Else If "{target_canonical}" =~ /sh-\Option-x-hms/

@@ -1099,7 +1099,8 @@ stab_array_type (p, low, high, stringp)
       sprintf (buf, "%ld=@S;", index);
     }
 
-  sprintf (buf + strlen (buf), "ar%s;%ld;%ld;%s", range, low, high, element);
+  sprintf (buf + strlen (buf), "ar%s;%ld;%ld;%s",
+	   range, (long) low, (long) high, element);
   free (range);
   free (element);
 

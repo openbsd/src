@@ -2,6 +2,10 @@ This is basic information about the Macintosh(tm) MPW(tm) port of the
 GNU tools.  The information below applies to both native and cross
 compilers.
 
+(Please note that there are two versions of this file; "mpw-README"
+is the source form, and "Read Me for MPW" is the distribution form.
+"Read Me for MPW" has 8-bit chars such as \Option-d embedded in it.)
+
 INSTALLING GNU TOOLS
 
 * System Requirements
@@ -10,20 +14,29 @@ To use these tools, you will need a Mac with a 68020 or better or else
 any PowerMac, System 7.1 or later, and MPW 3.3 or 3.4.  You will *not*
 need any other MPW compiler unless you want to rebuild from sources,
 nor even any include files, unless you are building actual Mac
-applications.  For PowerMac native you will need PPCLink, however.
+applications.  For PowerMac native you will need PPCLink, however;
+also the executables are PowerPC-only.
 
 * Automated Installation
 
-The simplest way to install GNU tools is to run the Install script
-that should be in the same directory as this file.  The script will
-copy things to where you want to keep them, will build a UserStartup
-file with settings corresponding to where things were copied, and
-offer to put the UserStartup in your MPW folder.
+The simplest way to install GNU tools is to run the Install script.
+The script will copy things to where you want to keep them, will build
+a UserStartup file with settings corresponding to where things were
+copied, and offer to put that UserStartup file in your MPW folder.
+
+The Install script does not alter anything in the System Folder, and
+it does not take any action without confirmation.
+
+The Install script will be at the top level of the binary
+distribution, or at the top level of the object directory if
+rebuilding from source.  (The sources include a file called
+"mpw-install" at the top level, but it is the source to the Install
+script and cannot be run directly.)
 
 * Manual Installation
 
 If you don't want to run the Install script, you can do installation
-manually; this section describes the steps that you must do.`
+manually; this section describes the steps involved.
 
 The GNU tools can go in any directory that is in your {Commands} list.
 We generally put all the tools somewhere like {Boot}Cygnus:latest:bin,
@@ -37,7 +50,7 @@ and organized by target and version underneath, with names like
 
 	:lib:gcc-lib:<target>:cygnus-<version>:
 
-If you built and installed everything yourself according to the build
+If you build and install everything yourself according to the build
 instructions below, then you will not have any problems.  However, you
 may discover that GCC seems unable to find the right cpp and cc1;
 usually this will be because directory names have changed.  (Even
@@ -52,56 +65,15 @@ GCC_EXEC_PREFIX to point to the library directory:
 	set GCC_EXEC_PREFIX MyDisk:Stuff:lib:gcc-lib:
 	export GCC_EXEC_PREFIX
 
-When native GCC is built using itself, it uses a special stack
-allocator function alloca().  While this is very efficient, it means
-that GCC will need considerable stack space to run, especially when
-compiling large programs with optimization turned on.  You do this by
-editing the HEXA 128 resource of the MPW Shell.  A value of "0008
+You may also want to edit MPW's HEXA 128 resource.  When GCC is built
+using a native GCC, it is compiled to use a special stack allocator
+function alloca().  While this is very efficient, it means that GCC
+will need considerable stack space to run, especially when compiling
+large programs with optimization turned on.  You give MPW more stack
+by editing the HEXA 128 resource of the MPW Shell.  A value of "0008
 0000" gives 512K of stack size, which is usually sufficient.
 
 USING GNU TOOLS
-
-* Using GCC
-
-If you have a cross-compiler, and you have all of the correct
-target-side crt0 and libraries available, then to compile and link a
-file "foo.c", you can say just
-
-	gC foo.c
-
-In general this port of GCC supports the same option syntax and
-behavior as its Unix counterpart.  It also has similar compilation
-rules, so it will run the assembler on .s files and so forth.  For the
-example above, the output file will be an MPW binary file named
-"a.out"; the format of the contents will depend on which target is in
-use, so for instance an SH-targeting GCC will produce COFF
-executables.
-
-The GCC manual includes full information on the available options.
-One option that may be especially useful is "-v", which shows you what
-tools and options are being used; unlike most Mac C compilers, GCC
-directs assembly and linking in addition to compilation.
-
-MPW GCC does feature two extensions to the option syntax; '-d macro=name'
-works just as '-Dmacro=name' does in Unix, and '-i directory' works the
-same as '-Idirectory'.
-
-To find standard include files you can set the variable GCCIncludes:
-
-	set GCCIncludes MyDisk:MyIncludes:
-	export GCCIncludes
-
-GCCIncludes is similar to MPW's CIncludes or CW's MWCIncludes.  In
-order to use MPW's usual include files, just say:
-
-	set GCCIncludes "{CIncludes}"
-	export GCCIncludes
-
-The assembler ("as") and linker ("ld") are faithful ports of their
-Unix counterparts.  Similarly, the binutils "ar", "cplusfilt", "nm",
-"objcopy", "objdump", "ranlib", "size", "strings", and "strip" are all
-like they are under Unix.  (Note that "cplusfilt" is usually called
-"c++filt" under Unix.)
 
 * Using Native PowerMac GCC
 
@@ -126,7 +98,7 @@ setfile -t 'MPST' -c 'MPS ' hello
 
 The same sequence works to build a MacOS application, but you set the file
 type to 'APPL' and don't link in PPCToolLibs.o.  For further details on
-using MPW to build Mac applications, see the MPW documentation.
+using MPW to build Mac applications, see the general MPW documentation.
 
 Recent versions of PPCLink have an option to generate the code
 fragment resource and automatically set creator and file type;
@@ -145,6 +117,55 @@ resource 'cfrg' (0) {
                 APPNAME // must be defined on Rez command line with -d option
         }
 };
+
+In general this port of GCC supports the same option syntax and
+behavior as its Unix counterpart.  It also has similar compilation
+rules, so it will run the assembler on .s files and so forth.
+
+The GCC manual includes full information on the available options.
+One option that may be especially useful is "-v", which shows you what
+tools and options are being used; unlike most Mac C compilers, GCC
+directs assembly and linking in addition to compilation.
+
+MPW GCC does feature two extensions to the option syntax; '-d macro=name'
+works just as '-Dmacro=name' does in Unix, and '-i directory' works the
+same as '-Idirectory'.
+
+MPW GCC supports the usual Pascal-style strings and alignment pragmas.
+
+To find standard include files you can set the variable GCCIncludes:
+
+	set GCCIncludes MyDisk:MyIncludes:
+	export GCCIncludes
+
+GCCIncludes is similar to MPW's CIncludes or CW's MWCIncludes.  In
+order to use MPW's usual include files, just say:
+
+	set GCCIncludes "{CIncludes}"
+	export GCCIncludes
+
+* Using GCC as a Cross-Compiler
+
+If you have a cross-compiler, and you have all of the correct
+target-side crt0 and libraries available, then to compile and link a
+file "foo.c", you can say just
+
+	gC foo.c
+
+The output file will be an MPW binary file named "a.out"; the format
+of the contents will depend on which target is in use, so for instance
+a MIPS-targeting GCC will produce ECOFF or ELF executables.
+
+Note that using MPW include files with a cross-compiler is somewhat
+dangerous.
+
+* Using the Assembler and Friends
+
+The assembler ("as") and linker ("ld") are faithful ports of their
+Unix counterparts.  Similarly, the binutils "ar", "cplusfilt", "nm",
+"objcopy", "objdump", "ranlib", "size", "strings", and "strip" are all
+like they are under Unix.  (Note that "cplusfilt" is usually called
+"c++filt" under Unix.)
 
 * Using GDB
 
@@ -168,7 +189,7 @@ different from the "source" directory.  In the example commands below,
 we will assume that we are currently in the object directory, and that
 the source directory is "{Boot}Cygnus:src:".
 
-* Requirements to Rebuild
+* Requirements for Building
 
 In addition to the sources, you will need a set of tools that the
 configure and build scripts assume to be available.  These tools
@@ -180,6 +201,7 @@ configure and build scripts assume to be available.  These tools
 	MoveIfChange script
 	mpw-touch script
 	mpw-true script
+	NewFolderRecursive script
 	null-command script
 	open-brace script
 	sed (1.13) tool
@@ -193,13 +215,13 @@ will usually be a set of these available at ftp.cygnus.com, in pub/mac.
 
 You may put the build tools in your usual Tools or Scripts
 directories, or keep them in a separate directories.  We prefer to
-make a directory called "buildtools" and we put this in our
-UserStartup:
+make a directory called "buildtools" and we put this in one of our
+UserStartup files:
 
 	set Commands "{Boot}Cygnus:buildtools:,{Commands}"
 
 Flex uses an environment variable FLEX_SKELETON to locate its skeleton
-file, so you need to do something like this, preferably in UserStartup:
+file, so you need to do something like this, preferably in a UserStartup:
 
 	Set FLEX_SKELETON "{Boot}"Cygnus:buildtools:Flex.skel
 	Export FLEX_SKELETON
@@ -212,7 +234,7 @@ to that directory and do a configure command:
 
 	{Boot}Cygnus:src:mpw-configure --target <name> --cc <compiler> --srcdir {Boot}Cygnus:src: --prefix <whatever>
 
-If the the source directory is not in your {Commands} list, then you must
+If the source directory is not in your {Commands} list, then you must
 supply a full pathname to mpw-configure, since mpw-configure invokes
 itself after switching into each subdirectory.  Using a relative
 pathname, even something like ':mpw-configure', will therefore not work.
@@ -266,17 +288,29 @@ The command
 
 	mpw-build
 
-will build everything, and
-
-	mpw-build install
-
-will install it.  Building will take over an hour on a Quadra 800
-or PowerMac 8100/110.
+will build everything. Building will take over an hour on a Quadra 800
+or PowerMac 8100/110, longer if the sources are on a shared volume.
 
 You may see some warnings; these are mostly likely benign, typically
 disagreements about declarations of library and system functions.
 
-* Known Problems With Using Various Compilers to Rebuild
+* Installing
+
+To install the just-built tools, use the command
+
+	mpw-build install
+
+This part of the installation procedure just copies files to the
+location specified at configure time by <prefix>, and, in some cases,
+renames them from temporary internal names to their usual names. This
+install process is *not* the same as what the Install script does;
+Install can copy tools from the installation location chosen at
+configuration time to a user-chosen place, and sets up a UserStartup
+file.  Note that while the Install script is optional, the install
+build action performs some tasks would be very hard to replicate
+manually, so you should always do it before using the tools.
+
+* Known Problems With Using Various Compilers to Build
 
 Most versions of MPW C have problems with compiling GNU software.
 

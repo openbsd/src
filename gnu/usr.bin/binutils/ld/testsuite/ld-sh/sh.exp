@@ -1,5 +1,5 @@
 # Expect script for ld-sh tests
-#   Copyright (C) 1995, 1996 Free Software Foundation
+#   Copyright (C) 1995, 1996, 1997 Free Software Foundation
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ if ![istarget sh*-*-*] {
 
 set testsimple "SH simple relaxing"
 
-if ![ld_assemble $as "-relax $srcdir$subdir/sh1.s" tmpdir/sh1.o] {
+if ![ld_assemble $as "-relax $srcdir/$subdir/sh1.s" tmpdir/sh1.o] {
     unresolved $testsimple
 } else { if ![ld_simple_link $ld tmpdir/sh1 "-relax tmpdir/sh1.o"] {
     fail $testsimple
@@ -81,7 +81,7 @@ if ![ld_simple_link $ld tmpdir/sh1.s1 "-relax -oformat srec tmpdir/sh1.o"] {
 	    send_log "cmp tmpdir/sh1.s1 tmpdir/sh1.s2\n"
 	    verbose "cmp tmpdir/sh1.s1 tmpdir/sh1.s2"
 	    catch "exec cmp tmpdir/sh1.s1 tmpdir/sh1.s2" exec_output
-	    set exec_output [prune_system_crud $host_triplet $exec_output]
+	    set exec_output [prune_warnings $exec_output]
 	    if ![string match "" $exec_output] {
 		send_log "$exec_output\n"
 		verbose "$exec_output"
@@ -104,8 +104,8 @@ if { [which $CC] == 0 } {
     return
 }
 
-if {![ld_assemble $as "-relax $srcdir$subdir/start.s" tmpdir/start.o] \
-     || ![ld_compile $CC "-O -mrelax $srcdir$subdir/sh2.c" tmpdir/sh2.o]} {
+if {![ld_assemble $as "-relax $srcdir/$subdir/start.s" tmpdir/start.o] \
+     || ![ld_compile $CC "-O -mrelax $srcdir/$subdir/sh2.c" tmpdir/sh2.o]} {
     unresolved $testlink
     unresolved $testjsr
     unresolved $testrun

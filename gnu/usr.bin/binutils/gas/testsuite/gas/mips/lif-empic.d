@@ -1,6 +1,6 @@
 #objdump: -dr --prefix-addresses -mmips:3000
 #name: MIPS lifloat-empic
-#as: -mips1 -membedded-pic
+#as: -mips1 -membedded-pic --defsym EMPIC=1
 #source: lifloat.s
 
 # Test the li.d and li.s macros with -membedded-pic.

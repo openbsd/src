@@ -12,6 +12,7 @@ Echo forward-include is `Which forward-include`
 Echo MoveIfChange is `Which MoveIfChange`
 Echo mpw-touch is `Which mpw-touch`
 Echo mpw-true is `Which mpw-true`
+Echo NewFolderRecursive is `Which NewFolderRecursive`
 Echo null-command is `Which null-command`
 Echo open-brace is `Which open-brace`
 Echo sed is `Which sed`

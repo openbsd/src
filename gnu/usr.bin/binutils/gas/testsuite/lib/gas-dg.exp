@@ -40,9 +40,7 @@ proc gas-dg-test { prog do_what tool_flags } {
     }
 
     # FIXME: This should be gas_start but it doesn't set comp_output.
-    gas_run $prog $tool_flags ""
-
-    return $output_file
+    return [gas_run $prog $tool_flags ""]
 }
 
 proc gas-dg-prune { system text } {

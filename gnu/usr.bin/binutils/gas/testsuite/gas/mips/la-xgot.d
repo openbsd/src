@@ -1,6 +1,6 @@
 #objdump: -dr --prefix-addresses -mmips:3000
 #name: MIPS la-xgot
-#as: -mips1 -KPIC -xgot
+#as: -mips1 -KPIC -xgot --defsym KPIC=1
 #source: la.s
 
 # Test the la macro with -KPIC -xgot.

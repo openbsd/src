@@ -3,6 +3,7 @@
 # look for the statements which should fail.
 
 .*operands.s: Assembler messages:
+.*statement `tstl %a0' ignored
 .*statement `tstl %a0@\(8,%d0:w:2\)' ignored
 .*statement `tstl %a0@\(8,%d0:w:4\)' ignored
 .*statement `tstl %a0@\(8,%d0:w:8\)' ignored

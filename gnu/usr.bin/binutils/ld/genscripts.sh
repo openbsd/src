@@ -129,5 +129,5 @@ for i in $EMULATION_LIBPATH ; do
   test "$i" = "$EMULATION_NAME" && COMPILE_IN=true
 done
 
-# Generate em_${EMULATION_NAME}.c.
+# Generate e${EMULATION_NAME}.c.
 . ${srcdir}/emultempl/${TEMPLATE_NAME-generic}.em

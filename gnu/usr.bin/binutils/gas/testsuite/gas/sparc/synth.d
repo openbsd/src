@@ -1,5 +1,5 @@
 #as: -Av7
-#objdump: -dr
+#objdump: -dr --prefix-addresses
 #name: sparc synth
 
 .*: +file format .*
