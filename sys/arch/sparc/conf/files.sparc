@@ -62,7 +62,7 @@ file	arch/sparc/dev/dma.c		dma espdma ledma needs-flag
 device esp at sbus, espdma, obio: scsi
 file	arch/sparc/dev/esp.c		esp
 
-device bwtwo at sbus, obio, vmes, vmel
+device bwtwo at sbus, obio, vmes, vmel, pfour
 file	arch/sparc/dev/bwtwo.c		bwtwo needs-flag
 
 device cgtwo at sbus, obio, vmes

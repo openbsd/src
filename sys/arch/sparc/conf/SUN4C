@@ -133,6 +133,7 @@ cgsix* at sbus? slot ? offset ?
 
 #pfour0	at obio0 addr 0xfb000000
 #pfour0	at obio0 addr 0x0b000000                        # 4/100
+#bwtwo0	at pfour0
 #cgfour0 at pfour0
 #cgeight0 at pfour0
 #cgsix0	at pfour0
