@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.74 2004/05/24 20:16:12 drahn Exp $ */
+/*	$OpenBSD: loader.c,v 1.75 2004/05/24 20:24:54 mickey Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -337,15 +337,22 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	_dl_add_object(dyn_obj);
 	dyn_obj->status |= STAT_RELOC_DONE;
 
-	if (_dl_traceld == NULL)
-		_dl_fixup_user_env();
-
 	/*
 	 * Everything should be in place now for doing the relocation
 	 * and binding. Call _dl_rtld to do the job. Fingers crossed.
 	 */
 	if (_dl_traceld == NULL)
 		_dl_rtld(_dl_objects);
+
+	if (_dl_debug || _dl_traceld)
+		_dl_show_objects();
+
+	DL_DEB(("dynamic loading done.\n"));
+
+	if (_dl_traceld)
+		_dl_exit(0);
+
+	_dl_fixup_user_env();
 
 	/*
 	 * The first object is the executable itself,
@@ -354,28 +361,9 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	 * the shared libraries which follow.
 	 * Do not run init code if run from ldd.
 	 */
-	if ((_dl_traceld == NULL) && (_dl_objects->next != NULL)) {
+	if (_dl_objects->next != NULL) {
 		_dl_objects->status |= STAT_INIT_DONE;
 		_dl_call_init(_dl_objects);
-	}
-
-	/*
-	 * Schedule a routine to be run at shutdown, by using atexit.
-	 * Cannot call atexit directly from ld.so?
-	 * Do not schedule destructors if run from ldd.
-	 */
-	if (_dl_traceld == NULL) {
-		const Elf_Sym *sym;
-		Elf_Addr ooff;
-
-		sym = NULL;
-		ooff = _dl_find_symbol("atexit", _dl_objects, &sym,
-		    SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|SYM_PLT, 0, dyn_obj);
-		if (sym == NULL)
-			_dl_printf("cannot find atexit, destructors will not be run!\n");
-		else
-			(*(void (*)(Elf_Addr))(sym->st_value + ooff))
-			    ((Elf_Addr)_dl_dtors);
 	}
 
 	/*
@@ -408,12 +396,24 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 
 	_dl_debug_state();
 
-	if (_dl_debug || _dl_traceld) {
-		_dl_show_objects();
-		DL_DEB(("dynamic loading done.\n"));
+	/*
+	 * Schedule a routine to be run at shutdown, by using atexit.
+	 * Cannot call atexit directly from ld.so?
+	 * Do not schedule destructors if run from ldd.
+	 */
+	{
+		const Elf_Sym *sym;
+		Elf_Addr ooff;
+
+		sym = NULL;
+		ooff = _dl_find_symbol("atexit", _dl_objects, &sym,
+		    SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|SYM_PLT, 0, dyn_obj);
+		if (sym == NULL)
+			_dl_printf("cannot find atexit, destructors will not be run!\n");
+		else
+			(*(void (*)(Elf_Addr))(sym->st_value + ooff))
+			    ((Elf_Addr)_dl_dtors);
 	}
-	if (_dl_traceld)
-		_dl_exit(0);
 
 	DL_DEB(("entry point: 0x%lx\n", dl_data[AUX_entry]));
 
