@@ -1,4 +1,4 @@
-/*	$OpenBSD: union_subr.c,v 1.3 1996/12/07 13:00:16 deraadt Exp $	*/
+/*	$OpenBSD: union_subr.c,v 1.4 1997/01/02 12:20:43 mickey Exp $	*/
 /*	$NetBSD: union_subr.c,v 1.18 1996/02/09 22:41:10 christos Exp $	*/
 
 /*
@@ -80,6 +80,66 @@ int union_vn_close __P((struct vnode *, int, struct ucred *, struct proc *));
 static void union_dircache_r __P((struct vnode *, struct vnode ***, int *));
 struct vnode *union_dircache __P((struct vnode *));
 
+/*
+ * This variable is used to hold a pointer to a function
+ * that is called from vfs_syscalls.c and vfs_syscalls_43.c 
+ * - by keeping a pointer to the function we enable the real
+ * union filesystem code to replace the stub value provided
+ * by vfs_syscalls.c and thus vfs_syscalls.c no longer needs
+ * to know if UNION is built in, lkm'ed, or not even there.
+ */
+extern
+int (*union_check_p) __P((struct proc *, struct vnode **, 
+			   struct file *, struct uio, int *));
+
+int union_check(struct proc *, struct vnode **, struct file *,
+		 struct uio, int *);
+
+int union_check(p, vpp, fp, auio, error)
+	struct proc	*p;
+	struct vnode	**vpp;
+	struct file	*fp;
+	struct uio	auio;
+	int		*error;
+{
+	if ((*vpp)->v_op == union_vnodeop_p) {
+		struct vnode *lvp;
+
+		lvp = union_dircache(*vpp);
+		if (lvp != NULLVP) {
+			struct vattr va;
+
+			/*
+			 * If the directory is opaque,
+			 * then don't show lower entries
+			 */
+			*error = VOP_GETATTR(*vpp, &va, fp->f_cred, p);
+			if (va.va_flags & OPAQUE) {
+				vput(lvp);
+				lvp = NULL;
+			}
+		}
+
+		if (lvp != NULLVP) {
+			*error = VOP_OPEN(lvp, FREAD, fp->f_cred, p);
+			VOP_UNLOCK(lvp);
+
+			if (*error) {
+				vrele(lvp);
+				return (0);
+			}
+			fp->f_data = (caddr_t) lvp;
+			fp->f_offset = 0;
+			*error = vn_close(*vpp, FREAD, fp->f_cred, p);
+			if (*error)
+				return (0);
+			*vpp = lvp;
+			return (1);
+		}
+	}
+	return (0);
+};
+
 void
 union_init()
 {
@@ -88,6 +148,7 @@ union_init()
 	for (i = 0; i < NHASH; i++)
 		LIST_INIT(&unhead[i]);
 	bzero((caddr_t) unvplock, sizeof(unvplock));
+	union_check_p = union_check;
 }
 
 static int

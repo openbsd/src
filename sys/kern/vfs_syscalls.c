@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.17 1996/10/27 08:02:32 tholo Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.18 1997/01/02 12:20:40 mickey Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -67,6 +67,17 @@ static int change_dir __P((struct nameidata *, struct proc *));
 
 void checkdirs __P((struct vnode *));
 int dounmount __P((struct mount *, int, struct proc *));
+
+/*
+ * Redirection info so we don't have to include the union fs routines in 
+ * the kernel directly.  This way, we can build unionfs as an LKM.  The
+ * pointer gets filled in later, when we modload the LKM, or when the
+ * compiled-in unionfs code gets initialized.  For now, we just set
+ * it to a stub routine.
+ */
+
+int (*union_check_p) __P((struct proc *, struct vnode **, 
+			   struct file *, struct uio, int *)) = NULL;
 
 /*
  * Virtual File System System Calls
@@ -1992,7 +2003,7 @@ sys_getdirentries(p, v, retval)
 		syscallarg(u_int) count;
 		syscallarg(long *) basep;
 	} */ *uap = v;
-	register struct vnode *vp;
+	struct vnode *vp;
 	struct file *fp;
 	struct uio auio;
 	struct iovec aiov;
@@ -2022,50 +2033,12 @@ unionread:
 	VOP_UNLOCK(vp);
 	if (error)
 		return (error);
-
-#ifdef UNION
-{
-	extern int (**union_vnodeop_p) __P((void *));
-	extern struct vnode *union_dircache __P((struct vnode *));
-
 	if ((SCARG(uap, count) == auio.uio_resid) &&
-	    (vp->v_op == union_vnodeop_p)) {
-		struct vnode *lvp;
-
-		lvp = union_dircache(vp);
-		if (lvp != NULLVP) {
-			struct vattr va;
-
-			/*
-			 * If the directory is opaque,
-			 * then don't show lower entries
-			 */
-			error = VOP_GETATTR(vp, &va, fp->f_cred, p);
-			if (va.va_flags & OPAQUE) {
-				vput(lvp);
-				lvp = NULL;
-			}
-		}
-		
-		if (lvp != NULLVP) {
-			error = VOP_OPEN(lvp, FREAD, fp->f_cred, p);
-			VOP_UNLOCK(lvp);
-
-			if (error) {
-				vrele(lvp);
-				return (error);
-			}
-			fp->f_data = (caddr_t) lvp;
-			fp->f_offset = 0;
-			error = vn_close(vp, FREAD, fp->f_cred, p);
-			if (error)
-				return (error);
-			vp = lvp;
-			goto unionread;
-		}
-	}
-}
-#endif /* UNION */
+	    union_check_p &&
+	    (union_check_p(p, &vp, fp, auio, &error) != 0))
+		goto unionread;
+	if (error)
+		return (error);
 
 	if ((SCARG(uap, count) == auio.uio_resid) &&
 	    (vp->v_flag & VROOT) &&
