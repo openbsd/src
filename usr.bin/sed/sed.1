@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sed.1,v 1.20 2004/01/23 23:08:47 jmc Exp $
+.\"	$OpenBSD: sed.1,v 1.21 2004/01/29 21:19:04 jmc Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -100,9 +100,9 @@ option suppresses this behavior.
 The form of a
 .Nm
 command is as follows:
-.sp
+.Pp
 .Dl [address[,address]]function[arguments]
-.sp
+.Pp
 Whitespace may be inserted before the first address and the function
 portions of the command.
 .Pp
@@ -110,7 +110,7 @@ Normally,
 .Nm
 cyclically copies a line of input, not including its terminating newline
 character, into a
-.Em "pattern space" ,
+.Em pattern space ,
 (unless there is something left after a
 .Sq D
 function),
@@ -119,14 +119,14 @@ copies the pattern space to the standard output, appending a newline, and
 deletes the pattern space.
 .Pp
 Some of the functions use a
-.Em "hold space"
+.Em hold space
 to save all or part of the pattern space for subsequent retrieval.
-.Sh "Sed Addresses"
+.Sh SED ADDRESSES
 An address is not required, but if specified must be a number (that counts
 input lines
-cumulatively across input files), a dollar
+cumulatively across input files), a dollar character
 .Pq Ql $
-character that addresses the last line of input, or a context address
+that addresses the last line of input, or a context address
 (which consists of a regular expression preceded and followed by a
 delimiter).
 .Pp
@@ -148,16 +148,16 @@ Editing commands can be applied to non-selected pattern spaces by use
 of the exclamation character
 .Pq Ql \&!
 function.
-.Sh "Sed Regular Expressions"
+.Sh SED REGULAR EXPRESSIONS
 The
 .Nm
-regular expressions are basic regular expressions (BRE's, see
+regular expressions are basic regular expressions (BRE's; see
 .Xr re_format 7
 for more information).
 In addition,
 .Nm
 has the following two additions to BRE's:
-.sp
+.Pp
 .Bl -enum -compact
 .It
 In a context address, any character other than a backslash
@@ -172,7 +172,7 @@ and the second
 .Sq x
 stands for itself, so that the regular expression is
 .Dq abcxdef .
-.sp
+.Pp
 .It
 The escape sequence \en matches a newline character embedded in the
 pattern space.
@@ -195,7 +195,7 @@ will substitute
 .Dq XXX
 for the pattern
 .Dq abc .
-.Sh "Sed Functions"
+.Sh SED FUNCTIONS
 In the following list of commands, the maximum number of permissible
 addresses for each command is indicated by [0addr], [1addr], or [2addr],
 representing zero, one, or two addresses.
@@ -250,73 +250,73 @@ The function can be preceded by whitespace as well.
 The terminating
 .Ql }
 must be preceded by a newline or optional whitespace.
-.sp
-.Bl -tag -width "XXXXXX" -compact
+.Pp
+.Bl -tag -width "XXXXXXXX" -compact
 .It [2addr] Em function-list
 Execute
 .Em function-list
 only when the pattern space is selected.
-.sp
+.Pp
 .It [1addr] Ns Em a Ns \e
 .It Em text
-.br
+.Pp
 Write
 .Em text
 to standard output immediately before each attempt to read a line of input,
 whether by executing the
 .Sq N
 function or by beginning a new cycle.
-.sp
+.Pp
 .It [2addr] Ns Em b Ns [label]
 Branch to the
 .Sq \&:
 function with the specified label.
 If the label is not specified, branch to the end of the script.
-.sp
+.Pp
 .It [2addr] Ns Em c Ns \e
 .It Em text
-.br
+.Pp
 Delete the pattern space.
 With 0 or 1 address or at the end of a 2-address range,
 .Em text
 is written to the standard output.
-.sp
+.Pp
 .It [2addr] Ns Em d
 Delete the pattern space and start the next cycle.
-.sp
+.Pp
 .It [2addr] Ns Em D
 Delete the initial segment of the pattern space through the first
 newline character and start the next cycle.
-.sp
+.Pp
 .It [2addr] Ns Em g
 Replace the contents of the pattern space with the contents of the
 hold space.
-.sp
+.Pp
 .It [2addr] Ns Em G
 Append a newline character followed by the contents of the hold space
 to the pattern space.
-.sp
+.Pp
 .It [2addr] Ns Em h
 Replace the contents of the hold space with the contents of the
 pattern space.
-.sp
+.Pp
 .It [2addr] Ns Em H
 Append a newline character followed by the contents of the pattern space
 to the hold space.
-.sp
+.Pp
 .It [1addr] Ns Em i Ns \e
 .It Em text
-.br
+.Pp
 Write
 .Em text
 to the standard output.
-.sp
+.Pp
 .It [2addr] Ns Em l
 (The letter ell.)
 Write the pattern space to the standard output in a visually unambiguous
 form.
 This form is as follows:
-.sp
+.Pp
 .Bl -tag -width "carriage-returnXX" -offset indent -compact
 .It backslash
 \e\e
@@ -341,28 +341,28 @@ Long lines are folded, with the point of folding indicated by displaying
 a backslash followed by a newline.
 The end of each line is marked with a
 .Ql $ .
-.sp
+.Pp
 .It [2addr] Ns Em n
 Write the pattern space to the standard output if the default output has
 not been suppressed, and replace the pattern space with the next line of
 input.
-.sp
+.Pp
 .It [2addr] Ns Em N
 Append the next line of input to the pattern space, using an embedded
 newline character to separate the appended material from the original
 contents.
 Note that the current line number changes.
-.sp
+.Pp
 .It [2addr] Ns Em p
 Write the pattern space to standard output.
-.sp
+.Pp
 .It [2addr] Ns Em P
 Write the pattern space, up to the first newline character to the
 standard output.
-.sp
+.Pp
 .It [1addr] Ns Em q
 Branch to the end of the script and quit without starting a new cycle.
-.sp
+.Pp
 .It [1addr] Ns Em r file
 Copy the contents of
 .Em file
@@ -372,7 +372,7 @@ If
 .Em file
 cannot be read for any reason, it is silently ignored and no error
 condition is set.
-.sp
+.Pp
 .It [2addr] Ns Em s Ns /re/replacement/flags
 Substitute the replacement string for the first instance of the regular
 expression in the pattern space.
@@ -403,7 +403,7 @@ The value of
 .Em flags
 in the substitute function is zero or more of the following:
 .Bl -tag -width "XXXXXX" -offset indent
-.It "0 ... 9"
+.It 0 ... 9
 Make the substitution only for the N'th occurrence of the regular
 expression in the pattern space.
 .It g
@@ -420,7 +420,7 @@ if a replacement was made.
 If the replacement string is identical to that which it replaces, it
 is still considered to have been a replacement.
 .El
-.sp
+.Pp
 .It [2addr] Ns Em t Ns [label]
 Branch to the
 .Ql \&:
@@ -429,14 +429,14 @@ most recent reading of an input line or execution of a
 .Sq t
 function.
 If no label is specified, branch to the end of the script.
-.sp
+.Pp
 .It [2addr] Ns Em w file
 Append the pattern space to the
 .Em file .
-.sp
+.Pp
 .It [2addr] Ns Em x
 Swap the contents of the pattern and hold spaces.
-.sp
+.Pp
 .It [2addr] Ns Em y Ns /string1/string2/
 Replace all occurrences of characters in
 .Em string1
@@ -452,29 +452,29 @@ a backslash followed by any character other than a newline is that literal
 character, and a backslash followed by an
 .Sq n
 is replaced by a newline character.
-.sp
+.Pp
 .Sm off
-.It Xo [2addr] Em !function No ,\ [2addr]
+.It Xo [2addr] Em !function No ,\ \&[2addr]
 .Em !function-list
 .Xc
 .Sm on
 Apply the function or function-list only to the lines that are
 .Em not
 selected by the address(es).
-.sp
-.It [0addr] Ns Em : Ns label
+.Pp
+.It [0addr] Ns Em \&: Ns label
 This function does nothing; it bears a label to which the
 .Sq b
 and
 .Sq t
 commands may branch.
-.sp
+.Pp
 .It [1addr] Ns Em =
 Write the line number to the standard output followed by a newline character.
-.sp
+.Pp
 .It [0addr]
 Empty lines are ignored.
-.sp
+.Pp
 .It [0addr] Ns Em #
 The
 .Ql #
@@ -496,6 +496,8 @@ utility exits 0 on success or >0 if an error occurred.
 .Xr grep 1 ,
 .Xr regex 3 ,
 .Xr re_format 7
+.Pp
+.Pa /usr/share/doc/usd/15.sed/
 .Sh STANDARDS
 The
 .Nm
