@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthreads.3,v 1.12 2001/05/31 03:01:49 deraadt Exp $
+.\" $OpenBSD: pthreads.3,v 1.13 2001/10/28 01:52:11 marc Exp $
 .\" David Leonard <d@openbsd.org>, 1998. Public domain.
 .Dd August 17, 1998
 .Dt PTHREADS 3
@@ -30,9 +30,12 @@ state (see
 .Sx Thread states ) ,
 current priority,
 flags (see
-.Sx Thread flags )
-and name (as set by
+.Sx Thread flags ) ,
+signal mask, and name (as set by
 .Xr pthread_set_name_np 3 ) .
+If the environment variable 
+.Ev PTHREAD_DEBUG
+is defined additional information is displayed.
 .Pp
 .Ss Thread states
 Threads can be in one of these states:
@@ -104,28 +107,37 @@ Executing
 or similar.
 .El
 .Ss Thread flags
-The meaning of thread flags are as follows:
+The first three flags are one of:
 .Bl -tag -offset indent -width 3en -compact
-.It p
+.It "p"
 Private, system thread (e.g., the garbage collector).
-.It E
-Thread is exiting.
-.It C
-Thread has an cancellation pending (see
-.Xr pthread_cancel 3 ) .
-.It c
-Thread is at a cancellation point.
-.It t
+.It "E, C, or c"
+Thread is exiting (E), has a cancellation pending (C) (see
+.Xr pthread_cancel 3 ) ,
+or is at a cancellation point (c).
+.It "t"
 Thread is being traced.
 .El
-The other flags refer to thread attributes:
+The next 7 flags refer to thread attributes:
 .Bl -tag -offset indent -width 3en -compact
-.It d
+.It "C"
+Thread is in the
+.Dv CONDQ .
+.It "R"
+Thread is in the
+.Dv WORKQ .
+.It "W"
+Thread is in the
+.Dv WAITQ .
+.It "p"
+Thread is in the
+.Dv PRIOQ .
+.It "d"
 Thread has been detached (see
 .Xr pthread_detach 3 ) .
-.It i
+.It "i"
 Thread inherits scheduler properties.
-.It f
+.It "f"
 Thread will save floating point context.
 .El
 .Ss Scheduling algorithm
@@ -166,6 +178,19 @@ signal, you should make use of
 .Xr sigaltstack 2
 or
 .Xr sigprocmask 2 .
+.Sh ENVIRONMENT
+.Bl -tag -width "PTHREAD_DEBUG"
+.It Ev PTHREAD_DEBUG
+Enables verbose
+.Dv SIGINFO
+signal output.
+.It Ev LIBC_R_DEBUG
+Display thread status every time the garbage collection thread runs,
+approximately once every 10 seconds.   The status display verbosity is
+controled by the
+.Ev PTHREAD_DEBUG
+environment variable.
+.El
 .Sh SEE ALSO
 .Xr pthread_cleanup_pop 3 ,
 .Xr pthread_cleanup_push 3 ,
