@@ -40,7 +40,7 @@
 #define EXEC_ECOFF
 #endif
 
-#if defined(COMPAT_SVR4) || defined(COMPAT_LINUX)
+#if defined(COMPAT_SVR4) || defined(COMPAT_LINUX) || defined(pica)
 #undef EXEC_ELF
 #define EXEC_ELF
 #endif
