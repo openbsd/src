@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: sshd.8,v 1.59 2000/08/02 16:27:16 provos Exp $
+.\" $Id: sshd.8,v 1.60 2000/08/02 17:27:04 provos Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSHD 8
@@ -386,7 +386,7 @@ is yes, the password provided by the user will be validated through
 the Kerberos KDC.  To use this option, the server needs a 
 Kerberos servtab which allows the verification of the KDC's identity.
 Default is
-.Dq no .
+.Dq yes .
 .It Cm KerberosOrLocalPasswd
 If set then if password authentication through Kerberos fails then
 the password will be validated via any additional local mechanism

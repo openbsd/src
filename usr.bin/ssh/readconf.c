@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: readconf.c,v 1.44 2000/08/02 16:27:16 provos Exp $");
+RCSID("$OpenBSD: readconf.c,v 1.45 2000/08/02 17:27:04 provos Exp $");
 
 #include "ssh.h"
 #include "cipher.h"
@@ -724,7 +724,7 @@ fill_default_options(Options * options)
 		options->skey_authentication = 0;
 #ifdef KRB4
 	if (options->kerberos_authentication == -1)
-		options->kerberos_authentication = 0;
+		options->kerberos_authentication = 1;
 #endif /* KRB4 */
 #ifdef AFS
 	if (options->kerberos_tgt_passing == -1)
