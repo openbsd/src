@@ -1,5 +1,5 @@
 /*      $NetBSD: bus.h,v 1.1 2001/06/06 17:37:37 matt Exp $        */
-/*      $OpenBSD: bus_mi.h,v 1.1 2001/06/26 21:57:43 smurph Exp $        */
+/*      $OpenBSD: bus_mi.h,v 1.2 2001/09/23 01:42:38 miod Exp $        */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -105,13 +105,6 @@
 #define _POWERPC_BUS_H_
 
 #include <machine/pio.h>
-
-typedef enum {
-	BUS_DMASYNC_POSTREAD,
-	BUS_DMASYNC_POSTWRITE,
-	BUS_DMASYNC_PREREAD,
-	BUS_DMASYNC_PREWRITE
-} bus_dmasync_op_t;
 
 /*
  * Bus access types.
@@ -987,10 +980,12 @@ struct uio;
 /*
  * Operations performed by bus_dmamap_sync().
  */
-#define BUS_DMASYNC_PREREAD        0x01        /* pre-read synchronization */
-#define BUS_DMASYNC_POSTREAD        0x02        /* post-read synchronization */
-#define BUS_DMASYNC_PREWRITE        0x04        /* pre-write synchronization */
-#define BUS_DMASYNC_POSTWRITE        0x08        /* post-write synchronization */
+typedef enum {
+	BUS_DMASYNC_PREREAD	= 0x01,	/* pre-read synchronization */
+	BUS_DMASYNC_POSTREAD	= 0x02,	/* post-read synchronization */
+	BUS_DMASYNC_PREWRITE	= 0x04,	/* pre-write synchronization */
+	BUS_DMASYNC_POSTWRITE	= 0x08	/* post-write synchronization */
+} bus_dmasync_op_t;
 
 typedef struct powerpc_bus_dma_tag              *bus_dma_tag_t;
 typedef struct powerpc_bus_dmamap               *bus_dmamap_t;
