@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.8 2001/05/23 21:42:34 art Exp $	*/
+/*	$OpenBSD: echo.c,v 1.9 2001/05/23 22:01:44 art Exp $	*/
 
 /*
  *	Echo line reading and writing.
@@ -357,9 +357,9 @@ complt(flags, c, buf, cpos)
 	if ((flags & EFFUNC) != 0) {
 		buf[cpos] = '\0';
 		wholelist = lh = complete_function_list(buf, c);
-	} else if ((flags & EFBUF) != 0)
+	} else if ((flags & EFBUF) != 0) {
 		lh = &(bheadp->b_list);
-	else if ((flags & EFFILE) != 0) {
+	} else if ((flags & EFFILE) != 0) {
 		buf[cpos] = '\0';
 		wholelist = lh = make_file_list(buf);
 	} else
