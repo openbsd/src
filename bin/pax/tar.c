@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.20 2001/06/26 14:55:13 lebel Exp $	*/
+/*	$OpenBSD: tar.c,v 1.21 2001/12/19 19:47:50 millert Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: tar.c,v 1.20 2001/06/26 14:55:13 lebel Exp $";
+static char rcsid[] = "$OpenBSD: tar.c,v 1.21 2001/12/19 19:47:50 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -628,15 +628,16 @@ tar_wr(arcn)
 	}
 
 	/*
-	 * copy the data out of the ARCHD into the tar header based on the type
-	 * of the file. Remember many tar readers want the unused fields to be
-	 * padded with zero. We set the linkflag field (type), the linkname
+	 * Copy the data out of the ARCHD into the tar header based on the type
+	 * of the file. Remember, many tar readers want all fields to be
+	 * padded with zero.  We set the linkflag field (type), the linkname
 	 * (or zero if not used),the size, and set the padding (if any) to be
 	 * added after the file data (0 for all other types, as they only have
 	 * a header)
 	 */
 	hd = (HD_TAR *)hdblk;
-	strlcpy(hd->name, arcn->name, sizeof(hd->name));
+	strncpy(hd->name, arcn->name, sizeof(hd->name) - 1);	/* zero pad */
+	hd->name[sizeof(hd->name) - 1] = '\0';
 	arcn->pad = 0;
 
 	if (arcn->type == PAX_DIR) {
