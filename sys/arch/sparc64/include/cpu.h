@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.28 2004/06/21 23:12:14 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.29 2004/08/09 10:13:21 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -232,7 +232,7 @@ void	switchtoctx(int);
 /* locore2.c */
 void	remrq(struct proc *);
 /* trap.c */
-void	kill_user_windows(struct proc *);
+void	pmap_unuse_final(struct proc *);
 int	rwindow_save(struct proc *);
 /* amd7930intr.s */
 void	amd7930_trap(void);

@@ -164,7 +164,6 @@ int pmap_count_res(pmap_t pmap);
 #define	pmap_update(pm)			/* nothing (yet) */
 
 #define pmap_proc_iflush(p,va,len)	/* nothing */
-#define pmap_unuse_final(p)		/* nothing */
 
 void pmap_bootstrap(u_long kernelstart, u_long kernelend, u_int numctx);
 /* make sure all page mappings are modulo 16K to prevent d$ aliasing */
