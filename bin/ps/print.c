@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.4 1997/07/23 19:18:19 kstailey Exp $	*/
+/*	$OpenBSD: print.c,v 1.5 1997/08/01 09:48:44 deraadt Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.4 1997/07/23 19:18:19 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.5 1997/08/01 09:48:44 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -425,7 +425,7 @@ lstarted(k, ve)
 		return;
 	}
 	startt = k->ki_u.u_start.tv_sec;
-	(void)strftime(buf, sizeof(buf) -1, "%C",
+	(void)strftime(buf, sizeof(buf) -1, "%c",
 	    localtime(&startt));
 	(void)printf("%-*s", v->width, buf);
 }
