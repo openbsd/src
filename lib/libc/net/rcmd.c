@@ -133,7 +133,13 @@ rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 		sigsetmask(oldmask);
 		return (-1);
 	}
+#if 0
+	/*
+	 * try to rresvport() to the same port. This will make rresvport()
+	 * fail it's first bind, resulting in it choosing a random port.
+	 */
 	lport--;
+#endif
 	if (fd2p == 0) {
 		write(s, "", 1);
 		lport = 0;
