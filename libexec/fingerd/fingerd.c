@@ -1,4 +1,4 @@
-/*	$OpenBSD: fingerd.c,v 1.10 1997/08/16 21:38:21 millert Exp $	*/
+/*	$OpenBSD: fingerd.c,v 1.11 1997/11/17 00:43:25 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)fingerd.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: fingerd.c,v 1.10 1997/08/16 21:38:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: fingerd.c,v 1.11 1997/11/17 00:43:25 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,12 +70,10 @@ main(argc, argv)
 {
 	register FILE *fp;
 	register int ch, ac = 2;
-	register char *lp;
-	struct hostent *hp;
-	struct sockaddr_in sin;
-	int p[2], logging, secure, user_required, short_list, sval;
+	int p[2], logging, secure, user_required, short_list;
+	size_t linesiz;
 #define	ENTRIES	50
-	char **ap, *av[ENTRIES + 1], **comp, line[1024], *prog;
+	char **ap, *av[ENTRIES + 1], **comp, *line, *prog, *lp, *hname;
 
 	prog = _PATH_FINGER;
 	logging = secure = user_required = short_list = 0;
@@ -114,20 +112,50 @@ main(argc, argv)
 		}
 
 	if (logging) {
+		struct hostent *hp;
+		struct sockaddr_in sin;
+		int sval;
+
 		sval = sizeof(sin);
 		if (getpeername(0, (struct sockaddr *)&sin, &sval) < 0)
 			err("getpeername: %s", strerror(errno));
 		if ((hp = gethostbyaddr((char *)&sin.sin_addr.s_addr,
 		    sizeof(sin.sin_addr.s_addr), AF_INET)))
-			lp = hp->h_name;
+			hname = strdup(hp->h_name);
 		else
-			lp = inet_ntoa(sin.sin_addr);
-		syslog(LOG_NOTICE, "query from %s", lp);
+			hname = strdup(inet_ntoa(sin.sin_addr));
+		if (hname == NULL)
+			err("Out of memory");
 	}
 
-	if (!fgets(line, sizeof(line), stdin))
+	if ((lp = fgetln(stdin, &linesiz)) == NULL) {
+		if (logging)
+			syslog(LOG_NOTICE, "query from %s: %s", hname,
+			    feof(stdin) ? "EOF" : strerror(errno));
 		exit(1);
-	
+	}
+	if ((line = malloc(linesiz + 1)) == NULL)
+		err("Out of memory");
+	memcpy(line, lp, linesiz);
+	line[linesiz] = '\0';
+
+	if (logging) {
+		char *tline;
+
+		if ((tline = strdup(line)) == NULL)
+			err("Out of memory");
+		/* Replace NULL, \r and \n with ' ' */
+		for (ch = 0; ch < linesiz; ch++) {
+			if (tline[ch] == '\0' || tline[ch] == '\r' ||
+			    tline[ch] == '\n')
+				tline[ch] = ' ';
+		}
+		for (lp = tline + linesiz - 1; lp >= tline && *lp == ' '; lp--)
+			*lp = '\0';
+		syslog(LOG_NOTICE, "query from %s: `%s'", hname, tline);
+		free(tline);
+	}
+
 	/*
 	 * Note: we assume that finger(1) will treat "--" as end of
 	 * command args (ie: that it uses getopt(3)).
@@ -139,7 +167,7 @@ main(argc, argv)
 			break;
 		lp = NULL;
 		if (secure && strchr(*ap, '@')) {
-			(void) puts("fowarding service denied\r\n");
+			(void) puts("fowarding service denied\r");
 			exit(1);
 		}
 
@@ -170,7 +198,7 @@ main(argc, argv)
 	if (user_required) {
 		for (ap = comp + 1; strcmp("--", *(ap++)); );
 		if (*ap == NULL) {
-			(void) puts("must provide username\r\n");
+			(void) puts("must provide username\r");
 			exit(1);
 		}
 	}
