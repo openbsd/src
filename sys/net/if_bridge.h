@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.15 2001/06/09 06:16:37 angelos Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.16 2001/12/15 08:40:56 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -46,10 +46,12 @@ struct ifbreq {
 	u_int8_t	ifbr_portno;		/* member port number */
 };
 /* SIOCBRDGIFFLGS, SIOCBRDGIFFLGS */
-#define	IFBIF_LEARNING		0x01	/* ifs can learn */
-#define	IFBIF_DISCOVER		0x02	/* ifs sends packets w/unknown dest */
-#define	IFBIF_BLOCKNONIP 	0x04	/* ifs blocks non-IP/ARP in/out */
-#define	IFBIF_STP		0x08	/* ifs participates in spanning tree */
+#define	IFBIF_LEARNING		0x0001	/* ifs can learn */
+#define	IFBIF_DISCOVER		0x0002	/* ifs sends packets w/unknown dest */
+#define	IFBIF_BLOCKNONIP 	0x0004	/* ifs blocks non-IP/ARP in/out */
+#define	IFBIF_STP		0x0008	/* ifs participates in spanning tree */
+#define	IFBIF_SPAN		0x0100	/* ifs is a span port (ro) */
+#define	IFBIF_RO_MASK		0xff00	/* read only bits */
 /* SIOCBRDGFLUSH */
 #define	IFBF_FLUSHDYN	0x0	/* flush dynamic addresses only */
 #define	IFBF_FLUSHALL	0x1	/* flush all addresses from cache */
@@ -254,6 +256,7 @@ struct bridge_softc {
 	struct timeout			sc_bstptimeout;	/* stp timeout */
 	LIST_HEAD(, bridge_iflist)	sc_iflist;	/* interface list */
 	LIST_HEAD(bridge_rthead, bridge_rtnode)	*sc_rts;/* hash table */
+	LIST_HEAD(, bridge_iflist)	sc_spanlist;	/* span ports */
 };
 
 extern u_int8_t bstp_etheraddr[];

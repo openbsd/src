@@ -1,6 +1,6 @@
-.\"	$OpenBSD: brconfig.8,v 1.30 2001/12/13 20:16:48 mpech Exp $
+.\"	$OpenBSD: brconfig.8,v 1.31 2001/12/15 08:40:56 jason Exp $
 .\"
-.\" Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
+.\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -104,6 +104,15 @@ removed from the bridge.
 .It Cm del
 Alias for
 .Cm delete .
+.It Cm addspan Ar interface-name
+Add the interface named by
+.Ar interface-name
+as a span port on the bridge.
+See the SPAN PORTS section for more details.
+.It Cm delspan Ar interface-name
+Delete the interface named by
+.Ar interface-name
+from the list of span ports of the bridge.
 .It Cm maxaddr Ar size
 Set the address cache size to
 .Ar size .
@@ -364,6 +373,16 @@ STP can be enabled or disabled on each port.
 STP will not work on
 .Xr gif 4
 members because they lack a hardware MAC address.
+.Sh SPAN PORTS
+The bridge can have interfaces added to it as span ports.
+Span ports transmit a copy of every frame received by the bridge.
+This is most useful for snooping a bridged network passively on
+another host connected to one of the span ports of the bridge.
+Span ports cannot be bridge members, instead the
+.Cm addspan
+and
+.Cm delspan
+commands are used to add and delete span ports to and from a bridge.
 .Sh SEE ALSO
 .Xr bridge 4 ,
 .Xr gif 4 ,

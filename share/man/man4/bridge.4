@@ -1,6 +1,6 @@
-.\"	$OpenBSD: bridge.4,v 1.38 2001/12/05 16:08:23 hugh Exp $
+.\"	$OpenBSD: bridge.4,v 1.39 2001/12/15 08:40:56 jason Exp $
 .\"
-.\" Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
+.\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -163,6 +163,18 @@ to the bridge named in
 Delete the interface named in
 .Fa ifbr_ifsname
 from the bridge named in
+.Fa ifbr_name .
+.It Dv SIOCBRDGADDS
+.Pq Li "struct ifbreq"
+Add the interface named in
+.Fa ifbr_ifsname
+as a span port to the bridge named in
+.Fa ifbr_name .
+.It Dv SIOCBRDGDELS
+.Pq Li "struct ifbreq"
+Delete the interface named in
+.Fa ifbr_ifsname
+from the list of span ports of the bridge named in
 .Fa ifbr_name .
 .It Dv SIOCBRDGSIFFLGS
 .Pq Li "struct ifbreq"

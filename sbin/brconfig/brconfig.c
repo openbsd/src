@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.14 2001/12/05 09:57:20 deraadt Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.15 2001/12/15 08:40:56 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -72,6 +72,8 @@ int bridge_flush __P((int, char *));
 int bridge_flushall __P((int, char *));
 int bridge_add __P((int, char *, char *));
 int bridge_delete __P((int, char *, char *));
+int bridge_addspan __P((int, char *, char *));
+int bridge_delspan __P((int, char *, char *));
 int bridge_status __P((int, char *));
 int is_bridge __P((int, char *));
 int bridge_show_all __P((int));
@@ -89,7 +91,7 @@ int bridge_rulefile __P((int, char *, char *));
 \11PROMISC\12ALLMULTI\13OACTIVE\14SIMPLEX\15LINK0\16LINK1\17LINK2\20MULTICAST"
 
 #define	IFBAFBITS	"\020\1STATIC"
-#define	IFBIFBITS	"\020\1LEARNING\2DISCOVER\3BLOCKNONIP\4STP"
+#define	IFBIFBITS	"\020\1LEARNING\2DISCOVER\3BLOCKNONIP\4STP\11SPAN"
 
 char *stpstates[] = {
 	"disabled",
@@ -159,6 +161,26 @@ main(argc, argv)
 				return (EX_USAGE);
 			}
 			error = bridge_delete(sock, brdg, argv[0]);
+			if (error)
+				return (error);
+		}
+		else if (strcmp("addspan", argv[0]) == 0) {
+			argc--; argv++;
+			if (argc == 0) {
+				warnx("addspan requires an argument");
+				return (EX_USAGE);
+			}
+			error = bridge_addspan(sock, brdg, argv[0]);
+			if (error)
+				return (error);
+		}
+		else if (strcmp("delspan", argv[0]) == 0) {
+			argc--; argv++;
+			if (argc == 0) {
+				warnx("delspan requires an argument");
+				return (EX_USAGE);
+			}
+			error = bridge_delspan(sock, brdg, argv[0]);
 			if (error)
 				return (error);
 		}
@@ -683,7 +705,10 @@ bridge_list(s, brdg, delim)
 		strlcpy(buf, reqp->ifbr_ifsname, sizeof(buf));
 		printf("%s%s ", delim, buf);
 		printb("flags", reqp->ifbr_ifsflags, IFBIFBITS);
-		printf("\n\t\t\t");
+		printf("\n");
+		if (reqp->ifbr_ifsflags & IFBIF_SPAN)
+			continue;
+		printf("\t\t\t");
 		printf("port %u priority %u",
 		    reqp->ifbr_portno, reqp->ifbr_priority);
 		if (reqp->ifbr_ifsflags & IFBIF_STP)
@@ -723,6 +748,42 @@ bridge_delete(s, brdg, ifn)
 	strlcpy(req.ifbr_name, brdg, sizeof(req.ifbr_name));
 	strlcpy(req.ifbr_ifsname, ifn, sizeof(req.ifbr_ifsname));
 	if (ioctl(s, SIOCBRDGDEL, &req) < 0) {
+		warn("%s: %s", brdg, ifn);
+		if (errno == EPERM)
+			return (EX_NOPERM);
+		return (EX_IOERR);
+	}
+	return (0);
+}
+
+int
+bridge_addspan(s, brdg, ifn)
+	int s;
+	char *brdg, *ifn;
+{
+	struct ifbreq req;
+
+	strlcpy(req.ifbr_name, brdg, sizeof(req.ifbr_name));
+	strlcpy(req.ifbr_ifsname, ifn, sizeof(req.ifbr_ifsname));
+	if (ioctl(s, SIOCBRDGADDS, &req) < 0) {
+		warn("%s: %s", brdg, ifn);
+		if (errno == EPERM)
+			return (EX_NOPERM);
+		return (EX_IOERR);
+	}
+	return (0);
+}
+
+int
+bridge_delspan(s, brdg, ifn)
+	int s;
+	char *brdg, *ifn;
+{
+	struct ifbreq req;
+
+	strlcpy(req.ifbr_name, brdg, sizeof(req.ifbr_name));
+	strlcpy(req.ifbr_ifsname, ifn, sizeof(req.ifbr_ifsname));
+	if (ioctl(s, SIOCBRDGDELS, &req) < 0) {
 		warn("%s: %s", brdg, ifn);
 		if (errno == EPERM)
 			return (EX_NOPERM);

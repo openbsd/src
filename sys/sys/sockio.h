@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.19 2001/02/20 13:50:53 itojun Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.20 2001/12/15 08:40:56 jason Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -100,12 +100,15 @@
 #define	SIOCGLIFPHYADDR	_IOWR('i', 75, struct if_laddrreq) /* get gif addrs */
 
 #define	SIOCBRDGADD	 _IOW('i', 60, struct ifbreq)	/* add bridge ifs */
+#define	SIOCBRDGGSIFS	_IOWR('i', 60, struct ifbreq)	/* get span ifs */
 #define	SIOCBRDGDEL	 _IOW('i', 61, struct ifbreq)	/* del bridge ifs */
 #define	SIOCBRDGGIFFLGS	_IOWR('i', 62, struct ifbreq)	/* get brdg if flags */
 #define	SIOCBRDGSIFFLGS	 _IOW('i', 63, struct ifbreq)	/* set brdg if flags */
 #define	SIOCBRDGSCACHE	 _IOW('i', 64, struct ifbrparam)/* set cache size */
 #define	SIOCBRDGGCACHE	_IOWR('i', 65, struct ifbrparam)/* get cache size */
+#define	SIOCBRDGADDS	 _IOW('i', 65, struct ifbreq)	/* add span port */
 #define	SIOCBRDGIFS	_IOWR('i', 66, struct ifbreq)	/* get member ifs */
+#define	SIOCBRDGDELS	 _IOW('i', 66, struct ifbreq)	/* del span port */
 #define	SIOCBRDGRTS	_IOWR('i', 67, struct ifbaconf)	/* get addresses */
 #define	SIOCBRDGSADDR	_IOWR('i', 68, struct ifbareq)	/* set addr flags */
 #define	SIOCBRDGSTO	 _IOW('i', 69, struct ifbrparam)/* cache timeout */
