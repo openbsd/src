@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.1 2003/02/25 22:29:33 markus Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.2 2003/02/26 09:41:43 markus Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -38,25 +38,25 @@
 
 #define PFKEY2_CHUNK sizeof(u_int64_t)
 
-void	print_sa(struct sadb_ext *, u_int8_t);
-void	print_addr(struct sadb_ext *, u_int8_t);
-void	print_key(struct sadb_ext *, u_int8_t);
-void	print_life(struct sadb_ext *, u_int8_t);
-void	print_proto(struct sadb_ext *, u_int8_t);
-void	print_flow(struct sadb_ext *, u_int8_t);
-void	print_supp(struct sadb_ext *, u_int8_t);
-void	print_prop(struct sadb_ext *, u_int8_t);
-void	print_sens(struct sadb_ext *, u_int8_t);
-void	print_spir(struct sadb_ext *, u_int8_t);
-void	print_ident(struct sadb_ext *, u_int8_t);
-void	print_policy(struct sadb_ext *, u_int8_t);
-void	print_cred(struct sadb_ext *, u_int8_t);
-void	print_auth(struct sadb_ext *, u_int8_t);
+void	print_sa(struct sadb_ext *, struct sadb_msg *);
+void	print_addr(struct sadb_ext *, struct sadb_msg *);
+void	print_key(struct sadb_ext *, struct sadb_msg *);
+void	print_life(struct sadb_ext *, struct sadb_msg *);
+void	print_proto(struct sadb_ext *, struct sadb_msg *);
+void	print_flow(struct sadb_ext *, struct sadb_msg *);
+void	print_supp(struct sadb_ext *, struct sadb_msg *);
+void	print_prop(struct sadb_ext *, struct sadb_msg *);
+void	print_sens(struct sadb_ext *, struct sadb_msg *);
+void	print_spir(struct sadb_ext *, struct sadb_msg *);
+void	print_ident(struct sadb_ext *, struct sadb_msg *);
+void	print_policy(struct sadb_ext *, struct sadb_msg *);
+void	print_cred(struct sadb_ext *, struct sadb_msg *);
+void	print_auth(struct sadb_ext *, struct sadb_msg *);
 
 struct idname {
 	u_int8_t id;
 	char *name;
-	void (*func)(struct sadb_ext *, u_int8_t);
+	void (*func)(struct sadb_ext *, struct sadb_msg *);
 };
 
 struct idname ext_types[] = {
@@ -228,7 +228,7 @@ lookup_name(struct idname tab[], u_int8_t id)
 }
 
 void
-print_ext(struct sadb_ext *ext, u_int8_t mtype)
+print_ext(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct idname *entry;
 
@@ -239,7 +239,7 @@ print_ext(struct sadb_ext *ext, u_int8_t mtype)
 	}
 	printf("\t%s: ", entry->name);
 	if (entry->func != NULL)
-		(*entry->func)(ext, mtype);
+		(*entry->func)(ext, msg);
 	else
 		printf("type %u len %u\n",
 		    ext->sadb_ext_type, ext->sadb_ext_len);
@@ -269,26 +269,31 @@ print_msg(struct sadb_msg *msg, int promisc)
 	    msg->sadb_msg_len * PFKEY2_CHUNK;
 	    ext = (struct sadb_ext *)((u_int8_t *)ext +
 	    ext->sadb_ext_len * PFKEY2_CHUNK))
-		print_ext(ext, msg->sadb_msg_type);
+		print_ext(ext, msg);
 	fflush(stdout);
 }
 
 void
-print_sa(struct sadb_ext *ext, u_int8_t mtype)
+print_sa(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct sadb_sa *sa = (struct sadb_sa *) ext;
 
-	printf("spi 0x%8.8x auth %s enc %s\n",
-            ntohl(sa->sadb_sa_spi), 
-	    lookup_name(auth_types, sa->sadb_sa_auth),
-	    lookup_name(enc_types, sa->sadb_sa_encrypt));
+	if (msg->sadb_msg_satype == SADB_X_SATYPE_IPCOMP)
+		printf("cpi 0x%8.8x comp %s\n",
+		    ntohl(sa->sadb_sa_spi), 
+		    lookup_name(comp_types, sa->sadb_sa_encrypt));
+	else
+		printf("spi 0x%8.8x auth %s enc %s\n",
+		    ntohl(sa->sadb_sa_spi), 
+		    lookup_name(auth_types, sa->sadb_sa_auth),
+		    lookup_name(enc_types, sa->sadb_sa_encrypt));
 	printf("\t\tstate %s replay %u flags %u\n",
 	    lookup_name(states, sa->sadb_sa_state),
             sa->sadb_sa_replay, sa->sadb_sa_flags);
 }
 
 void
-print_addr(struct sadb_ext *ext, u_int8_t mtype)
+print_addr(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct sadb_address *addr = (struct sadb_address *) ext;
 	struct sockaddr *sa;
@@ -320,7 +325,7 @@ print_addr(struct sadb_ext *ext, u_int8_t mtype)
 }
 
 void
-print_key(struct sadb_ext *ext, u_int8_t mtype)
+print_key(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct sadb_key *key = (struct sadb_key *) ext;
 	u_int8_t *data;
@@ -336,7 +341,7 @@ print_key(struct sadb_ext *ext, u_int8_t mtype)
 }
 
 void
-print_life(struct sadb_ext *ext, u_int8_t mtype)
+print_life(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct sadb_lifetime *life = (struct sadb_lifetime *) ext;
 
@@ -348,12 +353,12 @@ print_life(struct sadb_ext *ext, u_int8_t mtype)
 }
 
 void
-print_proto(struct sadb_ext *ext, u_int8_t mtype)
+print_proto(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct sadb_protocol *proto = (struct sadb_protocol *) ext;
 
 	/* overloaded */
-	if (mtype == SADB_X_GRPSPIS)
+	if (msg->sadb_msg_type == SADB_X_GRPSPIS)
 		printf("satype %s flags %u\n",
 		    lookup_name(sa_types, proto->sadb_protocol_proto),
 		    proto->sadb_protocol_flags);
@@ -363,7 +368,7 @@ print_proto(struct sadb_ext *ext, u_int8_t mtype)
 }
 
 void
-print_flow(struct sadb_ext *ext, u_int8_t mtype)
+print_flow(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct sadb_protocol *proto = (struct sadb_protocol *) ext;
 	char *dir = "unknown";
@@ -404,7 +409,7 @@ print_alg(struct sadb_alg *alg, u_int8_t ext_type)
 }
 
 void
-print_supp(struct sadb_ext *ext, u_int8_t mtype)
+print_supp(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct sadb_supported *supported = (struct sadb_supported *) ext;
 	struct sadb_alg *alg;
@@ -418,7 +423,7 @@ print_supp(struct sadb_ext *ext, u_int8_t mtype)
 }
 
 void
-print_comb(struct sadb_comb *comb, u_int8_t mtype)
+print_comb(struct sadb_comb *comb, struct sadb_msg *msg)
 {
 	printf("\t\tauth %s min %u max %u\n"
 	    "\t\tenc %s min %u max %u\n"
@@ -445,7 +450,7 @@ print_comb(struct sadb_comb *comb, u_int8_t mtype)
 }
 
 void
-print_prop(struct sadb_ext *ext, u_int8_t mtype)
+print_prop(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct sadb_prop *prop = (struct sadb_prop *) ext;
 	struct sadb_comb *comb;
@@ -455,11 +460,11 @@ print_prop(struct sadb_ext *ext, u_int8_t mtype)
 	    (u_int8_t *)comb - (u_int8_t *)ext <
 	    ext->sadb_ext_len * PFKEY2_CHUNK;
 	    comb++)
-		print_comb(comb, mtype);
+		print_comb(comb, msg);
 }
 
 void
-print_sens(struct sadb_ext *ext, u_int8_t mtype)
+print_sens(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct sadb_sens *sens = (struct sadb_sens *) ext;
 
@@ -470,7 +475,7 @@ print_sens(struct sadb_ext *ext, u_int8_t mtype)
 }
 
 void
-print_spir(struct sadb_ext *ext, u_int8_t mtype)
+print_spir(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct sadb_spirange *spirange = (struct sadb_spirange *) ext;
 
@@ -479,7 +484,7 @@ print_spir(struct sadb_ext *ext, u_int8_t mtype)
 }
 
 void
-print_ident(struct sadb_ext *ext, u_int8_t mtype)
+print_ident(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct sadb_ident *ident = (struct sadb_ident *) ext;
 
@@ -489,7 +494,7 @@ print_ident(struct sadb_ext *ext, u_int8_t mtype)
 }
 
 void
-print_policy(struct sadb_ext *ext, u_int8_t mtype)
+print_policy(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct sadb_x_policy *x_policy = (struct sadb_x_policy *) ext;
 
@@ -497,7 +502,7 @@ print_policy(struct sadb_ext *ext, u_int8_t mtype)
 }
 
 void
-print_cred(struct sadb_ext *ext, u_int8_t mtype)
+print_cred(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct sadb_x_cred *x_cred = (struct sadb_x_cred *) ext;
 
@@ -506,7 +511,7 @@ print_cred(struct sadb_ext *ext, u_int8_t mtype)
 }
 
 void
-print_auth(struct sadb_ext *ext, u_int8_t mtype)
+print_auth(struct sadb_ext *ext, struct sadb_msg *msg)
 {
 	struct sadb_x_cred *x_cred = (struct sadb_x_cred *) ext;
 
