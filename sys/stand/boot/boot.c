@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.8 1997/04/26 17:50:07 mickey Exp $	*/
+/*	$OpenBSD: boot.c,v 1.9 1997/05/31 15:48:24 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -49,7 +49,7 @@ extern	const char version[];
 int	boothowto;
 u_int	cnvmem, extmem;
 struct cmd_state cmd = {
-	"", "bsd", "/etc/boot.conf", "/", (void *)0x100000, 50, ""
+	"", "bsd", "/etc/boot.conf", "/", (void *)0x100000, 5, ""
 };
 
 void
@@ -91,7 +91,7 @@ boot(bootdev)
 		else
 			bootfile = kernels[i];
 
-		cmd.timeout += 20;
+		cmd.timeout++;
 		printf(" failed(%d). will try %s\n", errno, bootfile);
 		strncpy(cmd.image, bootfile, sizeof(cmd.image));
 	}

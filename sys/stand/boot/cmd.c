@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.14 1997/05/31 01:35:58 mickey Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.15 1997/05/31 15:48:25 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -63,6 +63,7 @@ static int Xset __P((register struct cmd_state *));
 static int Xhowto __P((register struct cmd_state *));
 static int Xtty __P((register struct cmd_state *));
 static int Xtime __P((register struct cmd_state *));
+static int Xdmesg __P((register struct cmd_state *));
 
 struct cmd_table {
 	char *cmd_name;
@@ -86,6 +87,7 @@ static const struct cmd_table cmd_table[] = {
 	{"boot",   Xboot}, /* XXX must be first */
 	{"cd",     Xcd},
 	{"cp",     Xcp},
+	{"dmesg",  Xdmesg},
 	{"help",   Xhelp},
 	{"ls",     Xls},
 	{"nope",   Xnope},
@@ -130,7 +132,7 @@ read_conf(cmd)
 	int fd, eof = 0;
 
 	if ((fd = open(qualify(cmd, cmd->conf), 0)) < 0) {
-		if (errno != ENOENT) {
+		if (errno != ENOENT && errno != ENXIO) {
 			printf("open(%s): %s\n", cmd->path, strerror(errno));
 			return 0;
 		}
@@ -240,12 +242,12 @@ readline(buf, to)
 	register char *buf;
 	int	to;
 {
-	char *p = buf, *pe = buf, ch;
-	int i;
+	register char *p = buf, *pe = buf, ch;
+	register int i;
 
 	for (i = to; i-- && !ischar(); )
 #ifndef _TEST
-		usleep(100000);
+		sleep(1);
 #else
 		;
 #endif
@@ -418,6 +420,13 @@ Xtime(cmd)
 	else {
 	}
 
+	return 0;
+}
+
+static int
+Xdmesg(cmd)
+	register struct cmd_state *cmd;
+{
 	return 0;
 }
 
