@@ -1,4 +1,4 @@
-.\"	$OpenBSD: readpassphrase.3,v 1.7 2001/12/15 15:37:51 millert Exp $
+.\"	$OpenBSD: readpassphrase.3,v 1.8 2002/05/09 16:47:07 millert Exp $
 .\"
 .\" Copyright (c) 2000 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -127,8 +127,10 @@ memset(passbuf, 0, sizeof(passbuf));
 will catch the following signals:
 .Pp
 .Bd -literal -offset indent -compact
-SIGINT
+SIGALRM
 SIGHUP
+SIGINT
+SIGPIPE
 SIGQUIT
 SIGTERM
 SIGTSTP
