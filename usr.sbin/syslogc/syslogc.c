@@ -1,4 +1,4 @@
-/* $OpenBSD: syslogc.c,v 1.3 2004/01/12 21:18:39 djm Exp $ */
+/* $OpenBSD: syslogc.c,v 1.4 2004/03/15 01:07:21 djm Exp $ */
 
 /*
  * Copyright (c) 2004 Damien Miller
@@ -101,6 +101,7 @@ main(int argc, char **argv)
 			errx(1, "Specified log name is too long");
 	}
 
+	memset(&ctl, '\0', sizeof(ctl));
 	strlcpy(ctl.sun_path, ctlsock_path, sizeof(ctl.sun_path));
 	ctl.sun_family = AF_UNIX;
 
