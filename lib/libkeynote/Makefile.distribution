@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.distribution,v 1.7 1999/08/13 22:24:15 angelos Exp $
+# $OpenBSD: Makefile.distribution,v 1.8 1999/08/13 22:25:54 angelos Exp $
 #
 # The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 #
@@ -18,7 +18,7 @@
 # MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 # PURPOSE.
 
-VERSION = 2-beta3
+VERSION = 2-beta4
 DISTFILE = keynote-${VERSION}.tar.gz
 KNSUBDIR = KeyNote-${VERSION}
 
