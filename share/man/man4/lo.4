@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lo.4,v 1.6 1998/02/14 18:55:04 mickey Exp $
+.\"	$OpenBSD: lo.4,v 1.7 1998/02/14 20:44:40 deraadt Exp $
 .\"	$NetBSD: lo.4,v 1.3 1994/11/30 16:22:23 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -61,13 +61,18 @@ The loopback should
 be configured first unless no hardware
 interfaces exist.
 .Pp
-Configuring loopback interface for
+Configuring a loopback interface for
 .Xr inet 4
-with
+with the
 .Em link1
-flag set you achieve a functionality such as equivalent to setting
-the whole set of addresses wich belongs to the sub/super-net of the
-address and netmask configured on the interface.
+flag set will make the interface answer to the whole set of
+addresses identified as being in super-net which is specified
+by the address and netmask. Obviously you should not set the
+.Em link1
+flag on interface
+.Nm lo0 Ns ,
+but instead use another interface like
+.Nm lo1 Ns .
 .Sh DIAGNOSTICS
 .Bl -diag
 .It lo%d: can't handle af%d.
@@ -77,10 +82,11 @@ family; the packet was dropped.
 .El
 .Sh EXAMPLES
 ifconfig lo1 inet 192.168.1.1 netmask 255.255.255.0 link1
-this would configure lo1 the way equivalent to:
+.Pp
+is equivalent to:
 .Pp
 awk 'BEGIN {for(i=1;i<255;i++) \
-print "ifconfig lo1 inet 192.168.1."i" netmask 255.255.255.255"}'|sh
+print "ifconfig lo1 inet 192.168.1."i" netmask 255.255.255.255 alias"}'|sh
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr inet 4 ,
@@ -96,9 +102,13 @@ The wildcard functionality first appeared in
 .Ox 2.3 .
 .Sh BUGS
 Previous versions of the system enabled the loopback interface
-automatically, using a nonstandard Internet address (127.1).
+automatically, using a nonstandard Internet address (127.0.0.1).
 Use of that address is now discouraged; a reserved host address
 for the local network should be used instead.
 .Pp
-You should be carefull using ipnat with link1 set about the
-packets coming from loopback interfaces.
+You should be careful using
+.Xr ipnat 8
+with
+.Em link1
+set on an interface, because it may believe the packets are coming
+from a loopback address.
