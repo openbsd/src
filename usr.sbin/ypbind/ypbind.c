@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.36 1998/08/15 17:24:17 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.37 1999/02/16 05:54:08 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997,1998 Theo de Raadt <deraadt@OpenBSD.org>
@@ -35,7 +35,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypbind.c,v 1.36 1998/08/15 17:24:17 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypbind.c,v 1.37 1999/02/16 05:54:08 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -793,7 +793,9 @@ broadcast(ypdb, buf, outlen)
 	for (i = 0; i < ifc.ifc_len; i += len,
 	    ifr = (struct ifreq *)((caddr_t)ifr + len)) {
 #if defined(BSD) && BSD >= 199103
-		len = sizeof ifr->ifr_name + ifr->ifr_addr.sa_len;
+		len = sizeof(ifr->ifr_name) +
+		    (ifr->ifr_addr.sa_len > sizeof(struct sockaddr) ?
+		    ifr->ifr_addr.sa_len : sizeof(struct sockaddr));
 #else
 		len = sizeof ifc.ifc_len / sizeof(struct ifreq);
 #endif
