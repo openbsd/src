@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pfsync.4,v 1.11 2003/12/16 11:12:58 jmc Exp $
+.\"	$OpenBSD: pfsync.4,v 1.12 2003/12/24 19:49:00 mcbride Exp $
 .\"
 .\" Copyright (c) 2002 Michael Shalayeff
 .\" All rights reserved.
@@ -102,8 +102,8 @@ interface.
 .Pp
 State change messages are sent out on the synchronisation
 interface using IP multicast packets.
-The protocol is IP protocol 136, PFSYNC, and the multicast group
-used is 224.0.0.136.
+The protocol is IP protocol 240, PFSYNC, and the multicast group
+used is 224.0.0.240.
 .Pp
 It is important that the synchronisation interface be on a trusted
 network as there is no authentication on the protocol and it would
