@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.6 1997/01/04 12:59:49 niklas Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.7 1997/04/13 11:53:26 pefo Exp $	*/
 /*
  * Copyright (c) 1996 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -41,7 +41,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.6 1997/01/04 12:59:49 niklas Exp $
+ *      $Id: autoconf.c,v 1.7 1997/04/13 11:53:26 pefo Exp $
  */
 
 /*
@@ -177,7 +177,7 @@ parsedisk(str, len, defpart, devp)
 		return (NULL);
 	cp = str + len - 1;
 	c = *cp;
-	if (c >= 'a' && c <= 'h') {
+	if (c >= 'a' && (c - 'a') < MAXPARTITIONS) {
 		part = c - 'a';
 		*cp = '\0';
 	} else
@@ -189,8 +189,7 @@ parsedisk(str, len, defpart, devp)
 			majdev = findblkmajor(dv);
 			if (majdev < 0)
 				panic("parsedisk");
-			mindev = (dv->dv_unit << PARTITIONSHIFT) + part;
-			*devp = makedev(majdev, mindev);
+			*devp = MAKEDISKDEV(majdev, dv->dv_unit, part);
 			break;
 		}
 #ifdef NFSCLIENT
@@ -287,9 +286,8 @@ setroot()
 					nswapdev = NODEV;
 					break;
 				case DV_DISK:
-					nswapdev = makedev(major(nrootdev),
-					    (minor(nrootdev) & ~ PARTITIONMASK)
-| 1);
+					nswapdev = MAKEDISKDEV(major(nrootdev),
+					    DISKUNIT(nrootdev), 1);
 					break;
 				case DV_TAPE:
 				case DV_TTY:
@@ -360,8 +358,9 @@ gotswap:
 		mountroot = dk_mountroot;
 		majdev = major(rootdev);
 		mindev = minor(rootdev);
-		printf("root on %s%c\n", bootdv->dv_xname,
-		    (mindev & PARTITIONMASK) + 'a');
+		unit = DISKUNIT(rootdev);
+		part = DISKPART(rootdev);
+		printf("root on %s%c\n", bootdv->dv_xname, part + 'a');
 		break;
 	default:
 		printf("can't figure root, hope your kernel is right\n");
@@ -371,11 +370,10 @@ gotswap:
 	/*
 	 * XXX: What is this doing?
 	 */
-	mindev &= ~PARTITIONMASK;
 	temp = NODEV;
 	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
 		if (majdev == major(swp->sw_dev) &&
-		    mindev == (minor(swp->sw_dev) & ~PARTITIONMASK)) {
+		    unit == DISKUNIT(swp->sw_dev)) {
 			temp = swdevt[0].sw_dev;
 			swdevt[0].sw_dev = swp->sw_dev;
 			swp->sw_dev = temp;
