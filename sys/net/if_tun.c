@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.30 2000/12/05 07:22:59 hugh Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.31 2001/02/06 03:32:02 mickey Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -14,9 +14,6 @@
  * UCL. This driver is based much more on read/write/select mode of
  * operation though.
  */
-
-#include "tun.h"
-#if NTUN > 0
 
 /* #define	TUN_DEBUG	9 */
 
@@ -81,8 +78,8 @@
 #include <net/if_tun.h>
 
 struct tun_softc {
-	u_short	tun_flags;		/* misc flags */
 	struct	ifnet tun_if;		/* the interface */
+	u_short	tun_flags;		/* misc flags */
 	pid_t	tun_pgid;		/* the process group - if any */
 	uid_t	tun_siguid;		/* uid for process that set tun_pgid */
 	uid_t	tun_sigeuid;		/* euid for process that set tun_pgid */
@@ -97,7 +94,8 @@ int	tundebug = TUN_DEBUG;
 #define TUNDEBUG(a)	/* (tundebug? printf a : 0) */
 #endif
 
-struct tun_softc tunctl[NTUN];
+struct tun_softc *tunctl;
+int ntun;
 
 extern int ifqmaxlen;
 
@@ -116,13 +114,18 @@ int	tunselect __P((dev_t, int, struct proc *));
 static int tuninit __P((struct tun_softc *));
 
 void
-tunattach(unused)
-	int unused;
+tunattach(n)
+	int n;
 {
 	register int i;
 	struct ifnet *ifp;
 
-	for (i = 0; i < NTUN; i++) {
+	ntun = n;
+	tunctl = malloc(ntun * sizeof(*tunctl), M_DEVBUF, M_WAITOK);
+	if (!tunctl)
+		return;
+	bzero(tunctl, ntun * sizeof(*tunctl));
+	for (i = 0; i < ntun; i++) {
 		tunctl[i].tun_flags = TUN_INITED;
 
 		ifp = &tunctl[i].tun_if;
@@ -166,7 +169,7 @@ tunopen(dev, flag, mode, p)
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
 
-	if ((unit = minor(dev)) >= NTUN)
+	if ((unit = minor(dev)) >= ntun)
 		return (ENXIO);
 
 	tp = &tunctl[unit];
@@ -195,7 +198,7 @@ tunclose(dev, flag, mode, p)
 	struct ifnet	*ifp;
 	struct mbuf	*m;
 
-	if ((unit = minor(dev)) >= NTUN)
+	if ((unit = minor(dev)) >= ntun)
 		return (ENXIO);
 
 	tp = &tunctl[unit];
@@ -392,7 +395,7 @@ tunioctl(dev, cmd, data, flag, p)
 	struct tun_softc *tp;
 	struct tuninfo *tunp;
 
-	if ((unit = minor(dev)) >= NTUN)
+	if ((unit = minor(dev)) >= ntun)
 		return (ENXIO);
 
 	tp = &tunctl[unit];
@@ -473,7 +476,7 @@ tunread(dev, uio, ioflag)
 	struct mbuf	*m, *m0;
 	int		error = 0, len, s;
 
-	if ((unit = minor(dev)) >= NTUN)
+	if ((unit = minor(dev)) >= ntun)
 		return (ENXIO);
 
 	tp = &tunctl[unit];
@@ -547,7 +550,7 @@ tunwrite(dev, uio, ioflag)
 	int		isr;
 	int		error=0, s, tlen, mlen;
 
-	if ((unit = minor(dev)) >= NTUN)
+	if ((unit = minor(dev)) >= ntun)
 		return (ENXIO);
 
 	ifp = &tunctl[unit].tun_if;
@@ -675,7 +678,7 @@ tunselect(dev, rw, p)
 	struct tun_softc *tp;
 	struct ifnet	*ifp;
 
-	if ((unit = minor(dev)) >= NTUN)
+	if ((unit = minor(dev)) >= ntun)
 		return (ENXIO);
 
 	tp = &tunctl[unit];
@@ -701,5 +704,3 @@ tunselect(dev, rw, p)
 	TUNDEBUG(("%s: tunselect waiting\n", ifp->if_xname));
 	return 0;
 }
-
-#endif  /* NTUN */
