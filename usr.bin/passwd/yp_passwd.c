@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_passwd.c,v 1.2 1996/06/26 05:37:48 deraadt Exp $	*/
+/*	$OpenBSD: yp_passwd.c,v 1.3 1996/07/22 03:53:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,7 +34,7 @@
  */
 #ifndef lint
 /*static char sccsid[] = "from: @(#)yp_passwd.c	1.0 2/2/93";*/
-static char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.2 1996/06/26 05:37:48 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.3 1996/07/22 03:53:21 deraadt Exp $";
 #endif /* not lint */
 
 #ifdef	YP
@@ -171,13 +171,15 @@ yp_passwd(username)
 	tv.tv_sec = 2;
 	tv.tv_usec = 0;
 	r = clnt_call(client, YPPASSWDPROC_UPDATE,
-		      xdr_yppasswd, &yppasswd, xdr_int, &status, tv);
+	    xdr_yppasswd, &yppasswd, xdr_int, &status, tv);
 	if (r)
 		fprintf(stderr, "%s: rpc to yppasswdd failed.\n", progname);
-	else if (status)
+	else if (status) {
 		printf("Couldn't change YP password.\n");
-	else
-		printf("The YP password has been changed on %s, the master YP passwd server.\n", master);
+		exit(1);
+	}
+	printf("The YP password has been changed on %s, the master YP passwd server.\n",
+	    master);
 	exit(0);
 }
 
@@ -191,39 +193,39 @@ getnewpasswd(pw, old_pass)
 	int tries;
 	char salt[9], *crypt(), *getpass();
 	
-	(void)printf("Changing YP password for %s.\n", pw->pw_name);
+	printf("Changing YP password for %s.\n", pw->pw_name);
 
 	if (old_pass) {
 		*old_pass = NULL;
 	
 		if (pw->pw_passwd[0]) {
-			if (strcmp(crypt(p = getpass("Old password:"),
-					 pw->pw_passwd),  pw->pw_passwd)) {
-				   errno = EACCES;
-				   pw_error(NULL, 1, 1);
+			p = getpass("Old password:");
+			if (strcmp(crypt(p, pw->pw_passwd), pw->pw_passwd)) {
+				errno = EACCES;
+				pw_error(NULL, 1, 1);
 			}
-		} else {
+		} else
 			p = "";
-		}
-
 		*old_pass = strdup(p);
 	}
+
 	for (buf[0] = '\0', tries = 0;;) {
 		p = getpass("New password:");
 		if (!*p) {
-			(void)printf("Password unchanged.\n");
+			printf("Password unchanged.\n");
 			pw_error(NULL, 0, 0);
 		}
 		if (strlen(p) <= 5 && ++tries < 2) {
-			(void)printf("Please enter a longer password.\n");
+			printf("Please enter a longer password.\n");
 			continue;
 		}
-		for (t = p; *t && islower(*t); ++t);
+		for (t = p; *t && islower(*t); ++t)
+			;
 		if (!*t && ++tries < 2) {
-			(void)printf("Please don't use an all-lower case password.\nUnusual capitalization, control characters or digits are suggested.\n");
+			printf("Please don't use an all-lower case password.\nUnusual capitalization, control characters or digits are suggested.\n");
 			continue;
 		}
-		(void)strcpy(buf, p);
+		strcpy(buf, p);
 		if (!strcmp(buf, getpass("Retype new password:")))
 			break;
 		(void)printf("Mismatch; try again, EOF to quit.\n");
@@ -267,7 +269,7 @@ interpret(struct passwd *pwent, char *line)
 	pwent->pw_class = "";
 	
 	/* line without colon separators is no good, so ignore it */
-	if(!strchr(p,':'))
+	if(!strchr(p, ':'))
 		return(NULL);
 
 	pwent->pw_name = p;
@@ -299,7 +301,7 @@ ypgetpwnam(nam)
 	int reason, vallen;
 	
 	reason = yp_match(domain, "passwd.byname", nam, strlen(nam),
-			  &val, &vallen);
+	    &val, &vallen);
 	switch(reason) {
 	case 0:
 		break;
