@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.145 2003/02/25 12:22:25 cedric Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.146 2003/03/19 15:56:08 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -63,7 +63,7 @@ void		 print_fromto(struct pf_rule_addr *, struct pf_rule_addr *,
 		    u_int8_t, u_int8_t, int);
 
 struct node_host	*host_if(const char *, int);
-struct node_host	*host_v4(const char *);
+struct node_host	*host_v4(const char *, int);
 struct node_host	*host_v6(const char *, int);
 struct node_host	*host_dns(const char *, int, int);
 
@@ -1149,7 +1149,7 @@ host(const char *s, int mask)
 		cont = 0;
 
 	/* IPv4 address? */
-	if (cont && (h = host_v4(buf)) != NULL)
+	if (cont && (h = host_v4(buf, mask)) != NULL)
 		cont = 0;
 	free(buf);
 
@@ -1206,7 +1206,7 @@ host_if(const char *s, int mask)
 }
 
 struct node_host *
-host_v4(const char *s)
+host_v4(const char *s, int mask)
 {
 	struct node_host	*h = NULL;
 	struct in_addr		 ina;
@@ -1220,6 +1220,10 @@ host_v4(const char *s)
 		h->ifname = NULL;
 		h->af = AF_INET;
 		h->addr.v.a.addr.addr32[0] = ina.s_addr;
+		/* inet_net_pton acts strange w/ multicast addresses, RFC1112 */
+		if (mask == -1 && h->addr.v.a.addr.addr8[0] >= 224 &&
+		    h->addr.v.a.addr.addr8[0] < 240)
+			bits = 32;
 		set_ipmask(h, bits);
 		h->next = NULL;
 		h->tail = h;
