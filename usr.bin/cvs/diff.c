@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.5 2004/07/30 20:55:35 jfb Exp $	*/
+/*	$OpenBSD: diff.c,v 1.6 2004/08/06 13:08:39 jfb Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -351,7 +351,6 @@ int
 cvs_diff(int argc, char **argv)
 {
 	int ch, recurse, flags;
-	struct cvs_file *files;
 	struct diff_arg darg;
 	struct cvsroot *root;
 
@@ -413,16 +412,16 @@ cvs_diff(int argc, char **argv)
 	argv += optind;
 
 	if (argc == 0) {
-		files = cvs_file_get(".", flags);
+		cvs_files = cvs_file_get(".", flags);
 	}
 	else
-		files = cvs_file_getspec(argv, argc, 0);
+		cvs_files = cvs_file_getspec(argv, argc, 0);
 
-	cvs_file_examine(files, cvs_diff_file, &darg);
+	cvs_file_examine(cvs_files, cvs_diff_file, &darg);
 
-	root = files->cf_ddat->cd_root;
+	root = cvs_files->cf_ddat->cd_root;
 	if (root->cr_method != CVS_METHOD_LOCAL) {
-		cvs_senddir(root, files);
+		cvs_senddir(root, cvs_files);
 		cvs_sendreq(root, CVS_REQ_DIFF, NULL);
 	}
 
