@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbdmap.h,v 1.5 2002/06/17 07:04:33 avsm Exp $	*/
+/*	$OpenBSD: akbdmap.h,v 1.6 2002/06/28 20:10:15 miod Exp $	*/
 /*	$NetBSD: akbdmap.h,v 1.3 2000/09/01 16:00:39 tsubai Exp $	*/
 
 /*-
@@ -131,6 +131,11 @@ static const keysym_t akbd_keydesc_us[] = {
     KC(95),			KS_comma,	/* XXX KS_KP_comma */
 
     KC(106),			KS_KP_Enter,
+
+    KC(115),			KS_KP_Home,
+    KC(116),			KS_KP_Prior,
+    KC(119),			KS_KP_End,
+    KC(121),			KS_KP_Next,
 
     KC(127),  KS_Cmd_Debugger,
 };
