@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: getopt.3,v 1.14 2000/12/15 14:15:27 aaron Exp $
+.\"	$OpenBSD: getopt.3,v 1.15 2002/02/23 19:50:01 miod Exp $
 .\"
 .Dd April 19, 1994
 .Dt GETOPT 3
@@ -128,8 +128,6 @@ argument),
 returns \-1.
 .Sh EXAMPLES
 .Bd -literal -compact
-extern char *optarg;
-extern int optind;
 int bflag, ch, fd;
 
 bflag = 0;
@@ -194,6 +192,16 @@ The
 .Fn getopt
 function appeared in
 .Bx 4.3 .
+.Sh CAVEATS
+Some software use the very bad practice of affecting the return value of
+.Fn getopt
+to a
+.Ft char
+variable.
+On platforms where
+.Ft char
+is unsigned by default, a comparison of this variable to \-1 to detect the
+end of the argument list will never succeed.
 .Sh BUGS
 The
 .Fn getopt
@@ -247,9 +255,9 @@ while ((c = getopt(argc, argv, "0123456789")) != -1) {
 	case '5': case '6': case '7': case '8': case '9':
 		p = argv[optind - 1];
 		if (p[0] == '-' && p[1] == ch && !p[2])
-			length = atoi(++p);
+			length = ch - '0';
 		else
-			length = atoi(argv[optind] + 1);
+			length = strtol(argv[optind] + 1, NULL, 10);
 		break;
 	}
 }
