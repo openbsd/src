@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.21 2000/12/06 17:18:47 deraadt Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.22 2001/08/15 23:50:34 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -832,7 +832,7 @@ void    _thread_kern_sched(struct sigcontext *);
 void    _thread_kern_sched_state(enum pthread_state,const char *fname,int lineno);
 void	_thread_kern_sched_state_unlock(enum pthread_state state,
 	    spinlock_t *lock, char *fname, int lineno);
-void    _thread_kern_set_timeout(struct timespec *);
+void    _thread_kern_set_timeout(const struct timespec *);
 void    _thread_kern_sig_defer(void);
 void    _thread_kern_sig_undefer(void);
 void    _thread_sig_handler(int, int, struct sigcontext *);
@@ -1034,6 +1034,12 @@ pid_t   _thread_sys_wait4(pid_t, int *, int, struct rusage *);
 /* #include <poll.h> */
 #ifdef _SYS_POLL_H_
 int 	_thread_sys_poll(struct pollfd *, unsigned, int);
+#endif
+
+/* #include <sys/event.h> */
+#ifdef _SYS_EVENT_H_
+int     _thread_sys_kevent(int, const struct kevent *, int, struct kevent *,
+	int, const struct timespec *);
 #endif
 
 /* #include <sys/mman.h> */

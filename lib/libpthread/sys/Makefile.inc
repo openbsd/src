@@ -1,5 +1,5 @@
-#	$Id: Makefile.inc,v 1.6 2000/10/04 05:55:35 d Exp $
-#	$OpenBSD: Makefile.inc,v 1.6 2000/10/04 05:55:35 d Exp $
+#	$Id: Makefile.inc,v 1.7 2001/08/15 23:50:34 fgsch Exp $
+#	$OpenBSD: Makefile.inc,v 1.7 2001/08/15 23:50:34 fgsch Exp $
 
 .PATH:	 ${LIBC_RSRCDIR}/sys ${LIBC_RSRCDIR}/arch/${MACHINE_ARCH}
 
@@ -23,9 +23,9 @@ SRCS+=	uthread_machdep.c
 HIDDEN_SYSCALLS= accept.o bind.o close.o connect.o dup.o dup2.o \
 	execve.o fchflags.o fchmod.o fchown.o fcntl.o \
 	flock.o fpathconf.o fstat.o fstatfs.o fsync.o getdirentries.o \
-	getlogin.o getpeername.o getsockname.o getsockopt.o ioctl.o listen.o \
-	msync.o nanosleep.o open.o pipe.o poll.o read.o readv.o recvfrom.o \
-	recvmsg.o sched_yield.o select.o sendmsg.o sendto.o \
+	getlogin.o getpeername.o getsockname.o getsockopt.o ioctl.o kevent.o \
+	listen.o msync.o nanosleep.o open.o pipe.o poll.o read.o readv.o \
+	recvfrom.o recvmsg.o sched_yield.o select.o sendmsg.o sendto.o \
 	setsockopt.o shutdown.o sigaction.o sigaltstack.o \
 	sigprocmask.o sigsuspend.o \
 	socket.o socketpair.o wait4.o write.o writev.o \
