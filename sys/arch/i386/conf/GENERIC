@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.191 2000/06/21 22:29:55 niklas Exp $
+#	$OpenBSD: GENERIC,v 1.192 2000/07/04 11:37:30 fgsch Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -112,6 +112,9 @@ pcmcia*	at pcic? controller ? socket ?
 
 # Diamond Multimedia Rio 500
 #urio*	at uhub? port ?
+
+# Handspring Visor
+#uvisor*	at uhub? port ?
 
 # USB Generic driver
 #ugen*	at uhub? port ? configuration ? interface ?
@@ -323,6 +326,7 @@ sv*	at pci? dev ? function ?		# S3 SonicVibes (S3 617)
 neo*	at pci? dev ? function ?		# NeoMagic 256AV/ZX
 cmpci*	at pci? dev ? function ?		# C-Media CMI8338/8738
 ich*	at pci? dev ? function ?		# i82801 ICH AC'97 audio
+#clcs*	at pci? dev ? function ?		# CS4280 CrystalClear audio
 sb0	at isa? port 0x220 irq 5 drq 1		# SoundBlaster
 sb*	at isapnp?
 ess*	at isapnp?				# ESS Tech ES188[78], ES888
@@ -362,6 +366,7 @@ audio*	at eso?
 audio*  at sv?
 audio*	at neo?
 audio*	at cmpci?
+#audio	at clcs?
 #audio*	at uaudio?
 
 bktr0   at pci? dev ? function ?
