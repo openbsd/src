@@ -1,6 +1,6 @@
-/* $OpenBSD: byte.c,v 1.4 2003/11/07 04:43:14 mickey Exp $ */
+/* $OpenBSD: byte.c,v 1.5 2004/01/28 18:05:10 deraadt Exp $ */
 /*
- * Copyright (c) 1999  
+ * Copyright (c) 1999
  *	Marc Espie.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -10,15 +10,14 @@
  *    notice, this list of conditions and the following disclaimer.
  */
 
-/* a set of routines to read object files and compensate for host
+/*
+ * A set of routines to read object files and compensate for host
  * endianness
  */
-
-
-static int byte_sex(mid)
-	int mid;
+static int
+byte_sex(int mid)
 {
-	switch(mid) {
+	switch (mid) {
 	case MID_I386:
 	case MID_VAX:
 	case MID_ALPHA:
@@ -39,7 +38,8 @@ static int byte_sex(mid)
 	case MID_SPARC64:
 	case MID_POWERPC:
 		return BIG_ENDIAN;
-	default:	/* we don't know what this is, so we don't want to process it */
+	default:
+		/* we don't know what this is, so we don't want to process it */
 		return 0;
 	}
 }
@@ -47,9 +47,8 @@ static int byte_sex(mid)
 #define BAD_OBJECT(h)  (N_BADMAG(h) || !byte_sex(N_GETMID(h)))
 
 /* handles endianess swaps */
-static void swap_u32s(h, n)
-	u_int32_t *h;
-	size_t n;
+static void
+swap_u32s(u_int32_t *h, size_t n)
 {
 	size_t i;
 
@@ -57,16 +56,15 @@ static void swap_u32s(h, n)
 		h[i] = swap32(h[i]);
 }
 
-static void fix_header_order(h)
-	struct exec *h;
+static void
+fix_header_order(struct exec *h)
 {
 	if (byte_sex(N_GETMID(*h)) != BYTE_ORDER)
 		swap_u32s( ((u_int32_t *)(h))+1, sizeof *h/sizeof(u_int32_t) - 1);
 }
 
-static long fix_long_order(l, mid)
-	long l;
-	int mid;
+static long
+fix_long_order(long l, int mid)
 {
 	if (byte_sex(mid) != BYTE_ORDER)
 		return swap32(l);
@@ -74,26 +72,23 @@ static long fix_long_order(l, mid)
 		return l;
 }
 
-static void swap_nlist(p)
-	struct nlist *p;
+static void
+swap_nlist(struct nlist *p)
 {
 	p->n_un.n_strx = swap32(p->n_un.n_strx);
 	p->n_desc = swap16(p->n_desc);
 	p->n_value = swap32(p->n_value);
 }
 
-static void fix_nlist_order(p, mid)
-	struct nlist *p;
-	int mid;
+static void
+fix_nlist_order(struct nlist *p, int mid)
 {
 	if (byte_sex(mid) != BYTE_ORDER)
 		swap_nlist(p);
 }
 
-static void fix_nlists_order(p, n, mid)
-	struct nlist *p;
-	size_t n;
-	int mid;
+static void
+fix_nlists_order(struct nlist *p, size_t n, int mid)
 {
 	size_t i;
 
@@ -102,9 +97,8 @@ static void fix_nlists_order(p, n, mid)
 			swap_nlist(p+i);
 }
 
-static void fix_ranlib_order(r, mid)
-	struct ranlib *r;
-	int mid;
+static void
+fix_ranlib_order(struct ranlib *r, int mid)
 {
 	if (byte_sex(mid) != BYTE_ORDER) {
 		r->ran_un.ran_strx = swap32(r->ran_un.ran_strx);
