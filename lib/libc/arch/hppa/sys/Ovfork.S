@@ -1,4 +1,4 @@
-/*	$OpenBSD: Ovfork.S,v 1.4 2000/01/12 00:08:41 mickey Exp $	*/
+/*	$OpenBSD: Ovfork.S,v 1.5 2000/01/24 20:43:04 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -36,15 +36,15 @@
 #ifdef SYSLIBC_SCCS
 	.space .text
 	.subspa $code$
-	.asciz "$OpenBSD: Ovfork.S,v 1.4 2000/01/12 00:08:41 mickey Exp $"
+	.asciz "$OpenBSD: Ovfork.S,v 1.5 2000/01/24 20:43:04 mickey Exp $"
 	.align	4
 #endif
 
 ENTRY(vfork)
 	SYSCALL(vfork)
-	ldo	-1(arg1), arg1
+	ldo	-1(ret1), ret1
 	bv	r0(rp)
-	and	arg1, arg0, arg0
+	and	ret1, ret0, ret0
 EXIT(vfork)
 
 	.end
