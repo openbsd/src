@@ -31,11 +31,11 @@
 extern int nbufs;
 extern int bufspace;
 extern int pr_type;
+extern int nohelp;
 extern int plusoption;
 extern int swindow;
 extern int sc_height;
 extern int secure;
-extern int dohelp;
 extern int any_display;
 extern char openquote;
 extern char closequote;
@@ -572,6 +572,8 @@ opt_query(type, s)
 	int type;
 	char *s;
 {
+	if (nohelp)
+		return;
 	switch (type)
 	{
 	case QUERY:
@@ -579,7 +581,20 @@ opt_query(type, s)
 		error("Use \"h\" for help", NULL_PARG);
 		break;
 	case INIT:
-		dohelp = 1;
+		/*
+		 * This is "less -?".
+		 * It rather ungracefully grabs control,
+		 * does the initializations normally done in main,
+		 * shows the help file and exits.
+		 */
+		raw_mode(1);
+		get_term();
+		open_getchr();
+		init();
+		any_display = TRUE;
+		help(1);
+		quit(QUIT_OK);
+		/*NOTREACHED*/
 	}
 }
 

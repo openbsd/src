@@ -404,11 +404,8 @@ struct textlist
 #define	CH_CANSEEK	001
 #define	CH_KEEPOPEN	002
 #define	CH_POPENED	004
-#define	CH_HELPFILE	010
 
 #define	ch_zero()	((POSITION)0)
-
-#define	FAKE_HELPFILE	"@/\\less/\\help/\\file/\\@"
 
 #include "funcs.h"
 

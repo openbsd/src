@@ -33,6 +33,7 @@ extern int swindow;
 extern int jump_sline;
 extern int quitting;
 extern int wscroll;
+extern int nohelp;
 extern int top_scroll;
 extern int ignore_eoi;
 extern int secure;
@@ -603,8 +604,7 @@ prompt()
 	 * If the -E flag is set and we've hit EOF on the last file, quit.
 	 */
 	if ((quit_at_eof == OPT_ONPLUS || quit_if_one_screen) &&
-	    hit_eof && !(ch_getflags() & CH_HELPFILE) && 
-	    next_ifile(curr_ifile) == NULL_IFILE)
+	    hit_eof && next_ifile(curr_ifile) == NULL_IFILE)
 		quit(QUIT_OK);
 	quit_if_one_screen = FALSE;
 #if 0 /* This doesn't work well because some "te"s clear the screen. */
@@ -617,13 +617,6 @@ prompt()
 		quit(QUIT_OK);
 #endif
 
-#if MSDOS_COMPILER==WIN32C
-	/* 
-	 * In Win32, display the file name in the window title.
-	 */
-	if (!(ch_getflags() & CH_HELPFILE))
-		SetConsoleTitle(pr_expand("Less?f - %f.", 0));
-#endif
 	/*
 	 * Select the proper prompt and display it.
 	 */
@@ -1079,8 +1072,6 @@ commands()
 			/*
 			 * Forward forever, ignoring EOF.
 			 */
-			if (ch_getflags() & CH_HELPFILE)
-				break;
 			cmd_exec();
 			jump_forw();
 			ignore_eoi = 1;
@@ -1189,8 +1180,6 @@ commands()
 			/*
 			 * Print file name, etc.
 			 */
-			if (ch_getflags() & CH_HELPFILE)
-				break;
 			cmd_exec();
 			parg.p_string = eq_message();
 			error("%s", &parg);
@@ -1208,17 +1197,6 @@ commands()
 			/*
 			 * Exit.
 			 */
-			if (curr_ifile != NULL_IFILE && 
-			    ch_getflags() & CH_HELPFILE)
-			{
-				/*
-				 * Quit while viewing the help file
-				 * just means return to viewing the
-				 * previous file.
-				 */
-				if (edit_prev(1) == 0)
-					break;
-			}
 			if (extra != NULL)
 				quit(*extra);
 			quit(QUIT_OK);
@@ -1302,10 +1280,15 @@ commands()
 			/*
 			 * Help.
 			 */
-			if (ch_getflags() & CH_HELPFILE)
+			if (nohelp)
+			{
+				bell();
 				break;
+			}
+			clear_bot();
+			putstr(" help");
 			cmd_exec();
-			(void) edit(FAKE_HELPFILE);
+			help(0);
 			break;
 
 		case A_EXAMINE:
@@ -1336,8 +1319,6 @@ commands()
 				error("Command not available", NULL_PARG);
 				break;
 			}
-			if (ch_getflags() & CH_HELPFILE)
-				break;
 			if (strcmp(get_filename(curr_ifile), "-") == 0)
 			{
 				error("Cannot edit standard input", NULL_PARG);
@@ -1380,8 +1361,7 @@ commands()
 				number = 1;
 			if (edit_next((int) number))
 			{
-				if (quit_at_eof && hit_eof && 
-				    !(ch_getflags() & CH_HELPFILE))
+				if (quit_at_eof && hit_eof)
 					quit(QUIT_OK);
 				parg.p_string = (number > 1) ? "(N-th) " : "";
 				error("No %snext file", &parg);
@@ -1461,8 +1441,6 @@ commands()
 			break;
 
 		case A_REMOVE_FILE:
-			if (ch_getflags() & CH_HELPFILE)
-				break;
 			old_ifile = curr_ifile;
 			new_ifile = getoff_ifile(curr_ifile);
 			if (new_ifile == NULL_IFILE)
@@ -1525,8 +1503,6 @@ commands()
 			/*
 			 * Set a mark.
 			 */
-			if (ch_getflags() & CH_HELPFILE)
-				break;
 			start_mca(A_SETMARK, "mark: ", (void*)NULL, 0);
 			c = getcc();
 			if (c == erase_char || c == kill_char ||

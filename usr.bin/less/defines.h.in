@@ -22,27 +22,35 @@
 #define	SECURE		0
 
 /*
+ * SMALL is 1 if you wish to disable a bunch of features in order to
+ * build a smaller less binary.
+ */
+#ifndef SMALL
+#define	SMALL		0
+#endif
+
+/*
  * SHELL_ESCAPE is 1 if you wish to allow shell escapes.
  * (This is possible only if your system supplies the system() function.)
  */
-#define	SHELL_ESCAPE	(!SECURE)
+#define	SHELL_ESCAPE	(!SECURE && !SMALL)
 
 /*
  * EXAMINE is 1 if you wish to allow examining files by name from within less.
  */
-#define	EXAMINE		(!SECURE)
+#define	EXAMINE		(!SECURE && !SMALL)
 
 /*
  * TAB_COMPLETE_FILENAME is 1 if you wish to allow the TAB key
  * to complete filenames at prompts.
  */
-#define	TAB_COMPLETE_FILENAME	(!SECURE)
+#define	TAB_COMPLETE_FILENAME	(!SECURE && !SMALL)
 
 /*
  * CMD_HISTORY is 1 if you wish to allow keys to cycle through
  * previous commands at prompts.
  */
-#define	CMD_HISTORY	1
+#define	CMD_HISTORY	(!SMALL)
 
 /*
  * HILITE_SEARCH is 1 if you wish to have search targets to be 
@@ -55,42 +63,42 @@
  * (This is possible only if your system supplies the system() function.)
  * EDIT_PGM is the name of the (default) editor to be invoked.
  */
-#define	EDITOR		(!SECURE)
+#define	EDITOR		(!SECURE && !SMALL)
 
 /*
  * TAGS is 1 if you wish to support tag files.
  */
-#define	TAGS		(!SECURE)
+#define	TAGS		(!SECURE && !SMALL)
 
 /*
  * USERFILE is 1 if you wish to allow a .less file to specify 
  * user-defined key bindings.
  */
-#define	USERFILE	(!SECURE)
+#define	USERFILE	(!SECURE && !SMALL)
 
 /*
  * GLOB is 1 if you wish to have shell metacharacters expanded in filenames.
  * This will generally work if your system provides the "popen" function
  * and the "echo" shell command.
  */
-#define	GLOB		(!SECURE)
+#define	GLOB		(!SECURE && !SMALL)
 
 /*
  * PIPEC is 1 if you wish to have the "|" command
  * which allows the user to pipe data into a shell command.
  */
-#define	PIPEC		(!SECURE)
+#define	PIPEC		(!SECURE && !SMALL)
 
 /*
  * LOGFILE is 1 if you wish to allow the -l option (to create log files).
  */
-#define	LOGFILE		(!SECURE)
+#define	LOGFILE		(!SECURE && !SMALL)
 
 /*
  * GNU_OPTIONS is 1 if you wish to support the GNU-style command
  * line options --help and --version.
  */
-#define	GNU_OPTIONS	1
+#define	GNU_OPTIONS	(!SMALL)
 
 /*
  * ONLY_RETURN is 1 if you want RETURN to be the only input which

@@ -237,14 +237,6 @@ edit_ifile(ifile)
 	{
 		chflags = ch_getflags();
 		close_file();
-		if ((chflags & CH_HELPFILE) && held_ifile(was_curr_ifile) <= 1)
-		{
-			/*
-			 * Don't keep the help file in the ifile list.
-			 */
-			del_ifile(was_curr_ifile);
-			was_curr_ifile = old_ifile;
-		}
 	}
 
 	if (ifile == NULL_IFILE)
@@ -299,10 +291,6 @@ edit_ifile(ifile)
 		 */
 		__djgpp_set_ctrl_c(1);
 #endif
-	} else if (strcmp(open_filename, FAKE_HELPFILE) == 0)
-	{
-		f = -1;
-		chflags |= CH_HELPFILE;
 	} else if ((parg.p_string = bad_file(open_filename)) != NULL)
 	{
 		/*
@@ -371,15 +359,12 @@ edit_ifile(ifile)
 	new_file = TRUE;
 	ch_init(f, chflags);
 
-	if (!(chflags & CH_HELPFILE))
-	{
 #if LOGFILE
-		if (namelogfile != NULL && is_tty)
-			use_logfile(namelogfile);
+	if (namelogfile != NULL && is_tty)
+		use_logfile(namelogfile);
 #endif
-		if (every_first_cmd != NULL)
-			ungetsc(every_first_cmd);
-	}
+	if (every_first_cmd != NULL)
+		ungetsc(every_first_cmd);
 
 	no_display = !any_display;
 	flush();

@@ -165,8 +165,6 @@ lastmark()
 {
 	struct scrpos scrpos;
 
-	if (ch_getflags() & CH_HELPFILE)
-		return;
 	get_scrpos(&scrpos);
 	if (scrpos.pos == NULL_POSITION)
 		return;

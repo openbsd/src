@@ -553,9 +553,7 @@ pr_string()
 {
 	char *prompt;
 
-	prompt = pr_expand((ch_getflags() & CH_HELPFILE) ?
-				hproto : prproto[pr_type],
-			sc_width-so_s_width-so_e_width-2);
+	prompt = pr_expand(prproto[pr_type], sc_width-so_s_width-so_e_width-2);
 	new_file = 0;
 	return (prompt);
 }

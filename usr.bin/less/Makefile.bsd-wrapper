@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.19 2003/04/13 18:26:25 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.20 2003/04/14 14:33:57 millert Exp $
 
 #
 # less config
@@ -7,6 +7,7 @@ PREFIX=		/usr
 BINDIR=		${PREFIX}/bin
 DATADIR=	${PREFIX}/share/misc
 LIBS=		-lcurses
+LESS_HLP=	more.help
 LINKS=		${BINDIR}/less ${BINDIR}/more ${BINDIR}/less ${BINDIR}/page
 MAN=		less.1 lesskey.1
 MLINKS=		less.1 more.1 less.1 page.1
@@ -36,7 +37,7 @@ OBJS=	main.o screen.o brac.o ch.o charset.o cmdbuf.o \
 .SUFFIXES: .o .c
 .c.o: config.status
 	@$(MAKE) ${XCFLAGS} LIBS=${LIBS} \
-		 datadir=${DATADIR} ${.TARGET}
+		 datadir=${DATADIR} LESS_HLP=${LESS_HLP} ${.TARGET}
 
 .FORCE: .IGNORE
 
@@ -53,25 +54,25 @@ config: .FORCE
 	-rm -f config.cache
 .endif
 	${XCFLAGS} PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
-	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+		INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
 		TERMLIBS=-lcurses /bin/sh ${.CURDIR}/configure \
 		--prefix=/usr --mandir=/usr/share/man --sysconfdir=/etc ${CF}
 
 config.status:
 	${XCFLAGS} PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
-	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+		INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
 		TERMLIBS=-lcurses /bin/sh ${.CURDIR}/configure \
 		--prefix=/usr --mandir=/usr/share/man --sysconfdir=/etc ${CF}
 
 gnu_build:
-	${MAKE} ${XCFLAGS} LIBS=${LIBS} datadir=${DATADIR}
+	${MAKE} ${XCFLAGS} LIBS=${LIBS} datadir=${DATADIR} LESS_HLP=${LESS_HLP}
 
 .ifdef NOMAN
 maninstall:
 	@echo NOMAN is set
 .endif
 
-install: gnu_install maninstall _SUBDIRUSE
+install: gnu_install maninstall afterinstall _SUBDIRUSE
 .if defined(LINKS) && !empty(LINKS)
 	@set ${LINKS}; \
 	while test $$# -ge 2; do \
@@ -87,7 +88,7 @@ install: gnu_install maninstall _SUBDIRUSE
 
 gnu_install:
 	${MAKE} ${XCFLAGS} LIBS=${LIBS} \
-		bindir=${DESTDIR}${BINDIR} \
+		LESS_HLP=${LESS_HLP} bindir=${DESTDIR}${BINDIR} \
 		datadir=${DESTDIR}${PREFIX}/share/misc \
 		INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE}" \
 		INSTALL_DATA="${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444" \
@@ -96,6 +97,10 @@ gnu_install:
 clean cleandir:
 	rm -f ${CLEANFILES}
 	-@if [ -e Makefile ]; then ${MAKE} distclean; fi
+
+afterinstall:
+	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
+		${.CURDIR}/less.hlp ${DESTDIR}${DATADIR}/${LESS_HLP}
 
 #
 # Fix less manpage suffix 

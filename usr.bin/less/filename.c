@@ -302,6 +302,25 @@ homefile(filename)
 	return (NULL);
 }
 
+#ifdef HELPFILE
+/*
+ * Find out where the help file is.
+ */
+	public char *
+find_helpfile()
+{
+	char *helpfile;
+	
+	if ((helpfile = getenv("LESSHELP")) != NULL && *helpfile != '\0')
+		return (save(helpfile));
+#if MSDOS_COMPILER || OS2
+	return (homefile(HELPFILE));
+#else
+	return (save(HELPFILE));
+#endif
+}
+#endif
+
 /*
  * Expand a string, substituting any "%" with the current filename,
  * and any "#" with the previous filename.

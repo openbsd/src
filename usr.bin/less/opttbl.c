@@ -36,6 +36,7 @@ public int forw_scroll;		/* Repaint screen on forward movement */
 public int caseless;		/* Do "caseless" searches */
 public int linenums;		/* Use line numbers */
 public int autobuf;		/* Automatically allocate buffers as needed */
+public int nohelp;		/* Disable the HELP command */
 public int bufspace;		/* Max buffer space per file (K) */
 public int ctldisp;		/* Send control chars to screen untranslated */
 public int force_open;		/* Open the file even if not regular file */
@@ -213,6 +214,14 @@ static struct loption option[] =
 		{
 			"Backwards scroll limit: ",
 			"Backwards scroll limit is %d lines",
+			NULL
+		}
+	},
+	{ 'H',  NULL,
+		BOOL|NO_TOGGLE, OPT_OFF, &nohelp, NULL,
+		{
+			"Allow help command",
+			"Don't allow help command",
 			NULL
 		}
 	},

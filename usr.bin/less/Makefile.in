@@ -17,6 +17,8 @@ O=o
 
 LIBS = @LIBS@
 
+LESS_HLP=less.hlp
+
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 
@@ -58,6 +60,9 @@ lessecho: lessecho.${O} version.${O}
 	${CC} ${LDFLAGS} -o $@ lessecho.${O} version.${O}
 
 ${OBJ}: ${srcdir}/less.h ${srcdir}/funcs.h defines.h 
+
+filename.${O}: ${srcdir}/filename.c
+	${CC} -I. ${CFLAGS_COMPILE_ONLY} -DHELPFILE=\"${datadir}/${LESS_HLP}\" ${CPPFLAGS} ${CFLAGS} ${srcdir}/filename.c
 
 install: all ${srcdir}/lesskey.nro
 	${INSTALL_PROGRAM} less ${bindir}/${binprefix}less

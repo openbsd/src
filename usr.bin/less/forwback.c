@@ -331,7 +331,7 @@ forward(n, force, only_last)
 {
 	POSITION pos;
 
-	if (quit_at_eof && hit_eof && !(ch_getflags() & CH_HELPFILE))
+	if (quit_at_eof && hit_eof)
 	{
 		/*
 		 * If the -e flag is set and we're trying to go
