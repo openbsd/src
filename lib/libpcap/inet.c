@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.4 1996/07/12 13:19:09 mickey Exp $	*/
+/*	$OpenBSD: inet.c,v 1.5 1996/07/19 07:52:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996
@@ -112,7 +112,7 @@ pcap_lookupdev(errbuf)
 	mp = NULL;
 	minunit = 666;
 	for (; ifrp < ifend; ifrp = ifnext) {
-#ifdef HAVE_SOCKADDR_SA_LEN
+#if BSD - 0 >= 199006
 		n = ifrp->ifr_addr.sa_len + sizeof(ifrp->ifr_name);
 		if (n < sizeof(*ifrp))
 			ifnext = ifrp + 1;
