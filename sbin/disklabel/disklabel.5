@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.5,v 1.2 1996/06/23 14:30:04 deraadt Exp $
+.\"	$OpenBSD: disklabel.5,v 1.3 1998/07/11 22:42:56 angelos Exp $
 .\"	$NetBSD: disklabel.5,v 1.3 1995/03/18 14:54:36 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
@@ -130,7 +130,11 @@ is
 
 #define DISKMAGIC	((u_long) 0x82564557)	/* The disk magic number */
 #ifndef MAXPARTITIONS
-#define	MAXPARTITIONS	8
+#if amiga
+#define MAXPARTITIONS	8
+#else
+#define	MAXPARTITIONS	16
+#endif
 #endif
 
 #ifndef LOCORE
