@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.6 2002/01/11 00:11:41 jason Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.7 2002/01/11 16:28:43 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -102,7 +102,7 @@
 
 int	cs4231_match	__P((struct device *, void *, void *));
 void	cs4231_attach	__P((struct device *, struct device *, void *));
-int	cs4231_hwintr	__P((void *));
+int	cs4231_intr	__P((void *));
 
 void	cs4231_wait		__P((struct cs4231_softc *));
 int	cs4231_set_speed	__P((struct cs4231_softc *, u_long *));
@@ -225,9 +225,9 @@ cs4231_attach(parent, self, aux)
 
 	sbus_establish(&sc->sc_sd, &sc->sc_dev);
 
-	sc->sc_hwih.ih_fun = cs4231_hwintr;
-	sc->sc_hwih.ih_arg = sc;
-	intr_establish(ca->ca_ra.ra_intr[0].int_pri, &sc->sc_hwih);
+	sc->sc_ih.ih_fun = cs4231_intr;
+	sc->sc_ih.ih_arg = sc;
+	intr_establish(ca->ca_ra.ra_intr[0].int_pri, &sc->sc_ih);
 
 	printf(" pri %d, softpri %d\n", pri, PIL_AUSOFT);
 
@@ -246,7 +246,7 @@ cs4231_attach(parent, self, aux)
  * Hardware interrupt handler
  */
 int
-cs4231_hwintr(v)
+cs4231_intr(v)
 	void *v;
 {
 	struct cs4231_softc *sc = (struct cs4231_softc *)v;
@@ -257,46 +257,55 @@ cs4231_hwintr(v)
 	int r = 0;
 
 	csr = regs->dma_csr;
-	status = regs->status;
-	if (status & (CS_STATUS_INT | CS_STATUS_SER)) {
-		regs->iar = CS_IAR_AFS;
-		reg = regs->idr;
-		if (reg & CS_AFS_PI) {
-			regs->iar = CS_IAR_PBLB;
-			regs->idr = 0xff;
-			regs->iar = CS_IAR_PBUB;
-			regs->idr = 0xff;
-		}
-		regs->status = 0;
-	}
-
 	regs->dma_csr = csr;
 
-	if (sc->sc_playing) {
-		if (csr & (CS_DMACSR_PI|CS_DMACSR_PMI|CS_DMACSR_PIE|CS_DMACSR_PD))
-			r = 1;
+	if ((csr & CS_DMACSR_EIE) && (csr & CS_DMACSR_EI)) {
+		printf("%s: error interrupt\n", sc->sc_dev.dv_xname);
+		r = 1;
+	}
 
-		if (csr & CS_DMACSR_PM) {
-			u_int32_t nextaddr, togo;
+	if ((csr & CS_DMACSR_PIE) && (csr & CS_DMACSR_PI)) {
+		/* playback interrupt */
+		r = 1;
+	}
 
-			p = sc->sc_nowplaying;
-			togo = sc->sc_playsegsz - sc->sc_playcnt;
-			if (togo == 0) {
-				nextaddr = (u_int32_t)p->addr_dva;
-				sc->sc_playcnt = togo = sc->sc_blksz;
-			} else {
-				nextaddr = regs->dma_pnva + sc->sc_blksz;
-				if (togo > sc->sc_blksz)
-					togo = sc->sc_blksz;
-				sc->sc_playcnt += togo;
+	if ((csr & CS_DMACSR_GIE) && (csr & CS_DMACSR_GI)) {
+		/* general interrupt */
+		status = regs->status;
+		if (status & (CS_STATUS_INT | CS_STATUS_SER)) {
+			regs->iar = CS_IAR_AFS;
+			reg = regs->idr;
+			if (reg & CS_AFS_PI) {
+				regs->iar = CS_IAR_PBLB;
+				regs->idr = 0xff;
+				regs->iar = CS_IAR_PBUB;
+				regs->idr = 0xff;
 			}
-
-			regs->dma_pnva = nextaddr;
-			regs->dma_pnc = togo;
-			if (sc->sc_pintr != NULL)
-				(*sc->sc_pintr)(sc->sc_parg);
-			r = 1;
+			regs->status = 0;
 		}
+		r = 1;
+	}
+
+	if ((csr & CS_DMACSR_PMIE) && (csr & CS_DMACSR_PMI)) {
+		u_int32_t nextaddr, togo;
+
+		p = sc->sc_nowplaying;
+		togo = sc->sc_playsegsz - sc->sc_playcnt;
+		if (togo == 0) {
+			nextaddr = (u_int32_t)p->addr_dva;
+			sc->sc_playcnt = togo = sc->sc_blksz;
+		} else {
+			nextaddr = regs->dma_pnva + sc->sc_blksz;
+			if (togo > sc->sc_blksz)
+				togo = sc->sc_blksz;
+			sc->sc_playcnt += togo;
+		}
+
+		regs->dma_pnva = nextaddr;
+		regs->dma_pnc = togo;
+		if (sc->sc_pintr != NULL)
+			(*sc->sc_pintr)(sc->sc_parg);
+		r = 1;
 	}
 
 #if 0
@@ -498,6 +507,9 @@ cs4231_open(addr, flags)
 	regs->iar = ~(CS_IAR_MCE);
 	cs4231_wait(sc);
 
+	regs->iar = CS_IAR_PC;
+	regs->idr |= CS_PC_IEN;
+
 	regs->iar = CS_IAR_MCE | CS_IAR_IC;
 	reg = regs->idr;
 	regs->iar = CS_IAR_MCE | CS_IAR_IC;
@@ -557,9 +569,12 @@ cs4231_close(addr)
 	void *addr;
 {
 	struct cs4231_softc *sc = addr;
+	struct cs4231_regs *regs = sc->sc_regs;
 
 	cs4231_halt_input(sc);
 	cs4231_halt_output(sc);
+	regs->iar = CS_IAR_PC;
+	regs->idr |= CS_PC_IEN;
 	sc->sc_open = 0;
 }
 
@@ -792,7 +807,6 @@ cs4231_halt_output(addr)
 	regs->iar = CS_IAR_IC;
 	regs->idr = r;
 	sc->sc_locked = 0;
-	sc->sc_playing = 0;
 	return (0);
 }
 
@@ -1445,7 +1459,6 @@ cs4231_trigger_output(addr, start, end, blksize, intr, arg, param)
 	sc->sc_locked = 1;
 	sc->sc_pintr = intr;
 	sc->sc_parg = arg;
-	sc->sc_playing = 1;
 
 	p = sc->sc_dmas;
 	while (p != NULL && p->addr != start)
