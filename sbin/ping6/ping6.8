@@ -1,5 +1,5 @@
-.\"	$OpenBSD: ping6.8,v 1.14 2001/03/12 03:45:30 itojun Exp $
-.\"	$KAME: ping6.8,v 1.36 2001/03/12 03:38:56 itojun Exp $
+.\"	$OpenBSD: ping6.8,v 1.15 2001/03/19 06:54:15 itojun Exp $
+.\"	$KAME: ping6.8,v 1.37 2001/03/19 06:54:22 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -387,6 +387,34 @@ option of
 .Nm
 returns 0 on success (the host is alive),
 and non-zero if the arguments are incorrect or the host is not responding.
+.Sh EXAMPLES
+Normally,
+.Xr ping6 8
+works just like
+.Xr ping 8
+would work; the following will send ICMPv6 echo request to
+.Li dst.foo.com .
+.Bd -literal -offset indent
+ping6 -n dst.foo.com
+.Ed
+.Pp
+The following will probe hostnames for all nodes on the network link attached to
+.Li wi0
+interface.
+The address
+.Li ff02::1
+is named the link-local all-node multicast address, and the packet would
+reach every node on the network link.
+.Bd -literal -offset indent
+ping6 -w ff02::1%wi0
+.Ed
+.Pp
+The following will probe addresses assigned to the destination node,
+.Li dst.foo.com .
+.Bd -literal -offset indent
+ping6 -a agl dst.foo.com
+.Ed
+.Pp
 .Sh SEE ALSO
 .Xr netstat 1 ,
 .Xr ifconfig 8 ,
