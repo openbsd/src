@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.18 1997/12/28 23:39:28 niklas Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.19 1997/12/29 14:31:16 deraadt Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -108,6 +108,9 @@ int	consintr = 1;	/* ok to handle console interrupts? */
 extern	int log_open;	/* subr_log: is /dev/klog open? */
 const	char *panicstr; /* arg to first call to panic (used as a flag
 			   to indicate that panic has already been called). */
+#ifdef DDB
+int	db_panic_ddb = 1;
+#endif
 
 /*
  * v_putc: routine to putc on virtual console
@@ -188,7 +191,8 @@ panic(fmt, va_alist)
 		kdbpanic();
 #endif
 #ifdef DDB
-	Debugger();
+	if (db_panic_ddb)
+		Debugger();
 #endif
 	boot(bootopt);
 }

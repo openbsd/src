@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_usrreq.c,v 1.1 1996/03/30 04:51:31 mickey Exp $	*/
+/*	$OpenBSD: db_usrreq.c,v 1.2 1997/12/29 14:31:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff.  All rights reserved.
@@ -62,6 +62,8 @@ ddb_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return sysctl_int(oldp, oldlenp, newp, newlen, &db_tab_stop_width);
 	case DBCTL_MAXLINE:
 		return sysctl_int(oldp, oldlenp, newp, newlen, &db_max_line);
+	case DBCTL_PANICDDB:
+		return sysctl_int(oldp, oldlenp, newp, newlen, &db_panic_ddb);
 	default:
 		return (EOPNOTSUPP);
 	}
