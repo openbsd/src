@@ -68,19 +68,8 @@
  * this list is used in sequence, to find a kernel.
  */
 char *kernels[] = {
-	"netbsd ",
-	"netbsd.gz ",
-	"netbsd.old ",
-	"netbsd.old.gz ",
-	"onetbsd ",
-	"onetbsd.gz ",
-	"vmunix ",
-#ifdef notyet
-	"netbsd.pl ",
-	"netbsd.pl.gz ",
-	"netbsd.el ",
-	"netbsd.el.gz ",
-#endif
+	"bsd ",
+	"obsd ",
 	NULL
 };
 
