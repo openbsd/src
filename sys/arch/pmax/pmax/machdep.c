@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.28 2001/05/05 22:34:09 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.29 2001/05/12 22:47:08 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.67 1996/10/23 20:04:40 mhitch Exp $	*/
 
 /*
@@ -348,13 +348,13 @@ mach_init(argc, argv, code, cv)
 	 * Init mapping for u page(s) for proc[0], pm_tlbpid 1.
 	 */
 	start = v;
-	curproc->p_addr = proc0paddr = (struct user *)v;
-	curproc->p_md.md_regs = proc0paddr->u_pcb.pcb_regs;
+	proc0.p_addr = proc0paddr = (struct user *)v;
+	proc0.p_md.md_regs = proc0paddr->u_pcb.pcb_regs;
 	firstaddr = MIPS_KSEG0_TO_PHYS(v);
 	for (i = 0; i < UPAGES; i++) {
 		MachTLBWriteIndexed(i,
 			(UADDR + (i << PGSHIFT)) | (1 << MIPS_TLB_PID_SHIFT),
-			curproc->p_md.md_upte[i] = firstaddr | PG_V | PG_M);
+			proc0.p_md.md_upte[i] = firstaddr | PG_V | PG_M);
 		firstaddr += NBPG;
 	}
 	v += UPAGES * NBPG;
