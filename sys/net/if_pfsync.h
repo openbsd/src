@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.16 2004/08/03 05:32:28 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.17 2004/11/16 20:07:56 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -84,6 +84,9 @@ struct pfsync_state {
 	u_int8_t	 sync_flags;
 	u_int8_t	 updates;
 } __packed;
+
+#define PFSYNC_FLAG_COMPRESS 	0x01
+#define PFSYNC_FLAG_STALE	0x02
 
 struct pfsync_state_upd {
 	u_int32_t		id[2];
@@ -271,12 +274,14 @@ int pfsync_pack_state(u_int8_t, struct pf_state *, int);
 } while (0)
 #define pfsync_update_state(st) do {				\
 	if (!st->sync_flags)					\
-		pfsync_pack_state(PFSYNC_ACT_UPD, (st), 1);	\
+		pfsync_pack_state(PFSYNC_ACT_UPD, (st), 	\
+		    PFSYNC_FLAG_COMPRESS);			\
 	st->sync_flags &= ~PFSTATE_FROMSYNC;			\
 } while (0)
 #define pfsync_delete_state(st) do {				\
 	if (!st->sync_flags)					\
-		pfsync_pack_state(PFSYNC_ACT_DEL, (st), 1);	\
+		pfsync_pack_state(PFSYNC_ACT_DEL, (st),		\
+		    PFSYNC_FLAG_COMPRESS);			\
 	st->sync_flags &= ~PFSTATE_FROMSYNC;			\
 } while (0)
 #endif

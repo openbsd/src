@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.38 2004/09/17 21:49:15 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.39 2004/11/16 20:07:56 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -388,6 +388,8 @@ pfsync_input(struct mbuf *m, ...)
 		s = splsoftnet();
 		for (i = 0, sp = (struct pfsync_state *)(mp->m_data + offp);
 		    i < count; i++, sp++) {
+			int flags = PFSYNC_FLAG_STALE;
+
 			/* check for invalid values */
 			if (sp->timeout >= PFTM_MAX ||
 			    sp->src.state > PF_TCPS_PROXY_DST ||
@@ -420,12 +422,21 @@ pfsync_input(struct mbuf *m, ...)
 				    (st->src.state < PF_TCPS_PROXY_SRC ||
 				    sp->src.state >= PF_TCPS_PROXY_SRC))
 					sfail = 1;
-				else if (st->dst.state > sp->dst.state)
-					sfail = 2;
 				else if (SEQ_GT(st->src.seqlo,
 				    ntohl(sp->src.seqlo)))
 					sfail = 3;
-				else if (st->dst.state >= TCPS_SYN_SENT &&
+				else if (st->dst.state > sp->dst.state) {
+					/* There might still be useful
+					 * information about the src state here,
+					 * so import that part of the update,
+					 * then "fail" so we send the updated
+					 * state back to the peer who is missing
+					 * our what we know. */
+					pf_state_peer_ntoh(&sp->src, &st->src);
+					/* XXX do anything with timeouts? */
+					sfail = 7;
+					flags = 0;
+				} else if (st->dst.state >= TCPS_SYN_SENT &&
 				    SEQ_GT(st->dst.seqlo, ntohl(sp->dst.seqlo)))
 					sfail = 4;
 			} else {
@@ -440,18 +451,23 @@ pfsync_input(struct mbuf *m, ...)
 			}
 			if (sfail) {
 				if (pf_status.debug >= PF_DEBUG_MISC)
-					printf("pfsync: ignoring stale update "
+					printf("pfsync: %s stale update "
 					    "(%d) id: %016llx "
-					    "creatorid: %08x\n", sfail,
+					    "creatorid: %08x\n",
+					    (sfail < 7 ?  "ignoring"
+					     : "partial"), sfail,
 					    betoh64(st->id),
 					    ntohl(st->creatorid));
 				pfsyncstats.pfsyncs_badstate++;
 
-				/* we have a better state, send it out */
-				if (sc->sc_mbuf != NULL && !stale)
-					pfsync_sendout(sc);
-				stale++;
-				pfsync_pack_state(PFSYNC_ACT_UPD, st, 0);
+				if (!(sp->sync_flags & PFSTATE_STALE)) {
+					/* we have a better state, send it */
+					if (sc->sc_mbuf != NULL && !stale)
+						pfsync_sendout(sc);
+					stale++;
+					pfsync_pack_state(PFSYNC_ACT_UPD, st,
+					    flags);
+				}
 				continue;
 			}
 			pf_state_peer_ntoh(&sp->src, &st->src);
@@ -575,7 +591,8 @@ pfsync_input(struct mbuf *m, ...)
 					update_requested = 0;
 				}
 				stale++;
-				pfsync_pack_state(PFSYNC_ACT_UPD, st, 0);
+				pfsync_pack_state(PFSYNC_ACT_UPD, st,
+				    PFSYNC_FLAG_STALE);
 				continue;
 			}
 			pf_state_peer_ntoh(&up->src, &st->src);
@@ -939,7 +956,7 @@ pfsync_get_mbuf(struct pfsync_softc *sc, u_int8_t action, void **sp)
 }
 
 int
-pfsync_pack_state(u_int8_t action, struct pf_state *st, int compress)
+pfsync_pack_state(u_int8_t action, struct pf_state *st, int flags)
 {
 	struct ifnet *ifp = &pfsyncif.sc_if;
 	struct pfsync_softc *sc = ifp->if_softc;
@@ -1057,6 +1074,8 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st, int compress)
 		sp->timeout = st->timeout;
 
 		sp->sync_flags = st->sync_flags & PFSTATE_NOSYNC;
+		if (flags & PFSYNC_FLAG_STALE)
+			sp->sync_flags = st->sync_flags & PFSTATE_STALE;
 	}
 
 	pf_state_peer_hton(&st->src, &sp->src);
@@ -1068,7 +1087,7 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st, int compress)
 		sp->expire = htonl(st->expire - secs);
 
 	/* do we need to build "compressed" actions for network transfer? */
-	if (sc->sc_sync_ifp && compress) {
+	if (sc->sc_sync_ifp && flags & PFSYNC_FLAG_COMPRESS) {
 		switch (action) {
 		case PFSYNC_ACT_UPD:
 			newaction = PFSYNC_ACT_UPD_C;
