@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.19 1999/12/21 11:11:16 itojun Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.20 2000/01/02 09:06:11 angelos Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -149,9 +149,6 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 
 #ifdef MROUTING
 #include <netinet/ip_mroute.h>
-#ifndef IPSEC
-#include <netinet/ip_ip4.h>
-#endif
 #endif /* MROUTING */
 
 #ifdef IPFILTER
@@ -167,9 +164,10 @@ void	iplinit __P((void));
 #include <netinet/ip_ipsp.h>
 #include <netinet/ip_ah.h>
 #include <netinet/ip_esp.h>
-#include <netinet/ip_ip4.h>
 #include <netinet/ip_ether.h>
 #endif
+
+#include <netinet/ip_ip4.h>
 
 extern	struct domain inetdomain;
 
