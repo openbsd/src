@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.10 2004/12/23 17:26:51 henning Exp $ */
+/*	$OpenBSD: parser.c,v 1.11 2004/12/23 17:45:47 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -268,7 +268,7 @@ match_token(const char *word, const struct token table[])
 			}
 			break;
 		case PEERDESC:
-			if (word != NULL && strlen(word) > 0) {
+			if (!match && word != NULL && strlen(word) > 0) {
 				if (strlcpy(res.peerdesc, word,
 				    sizeof(res.peerdesc)) >=
 				    sizeof(res.peerdesc))
