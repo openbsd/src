@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_te1.c,v 1.5 2004/12/07 06:10:24 mcbride Exp $	*/
+/*	$OpenBSD: if_san_te1.c,v 1.6 2005/01/18 21:47:23 claudio Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -2337,7 +2337,7 @@ sdla_te_config(void* card_id)
 		EnableAllChannels(card);
 	} else {
 		for (i = 1; i <= channel_range; i++) {
-			if (te_cfg->active_ch & (1 << (i - 1))) {
+			if (te_cfg->active_ch & (1 << i)) {
 #ifdef DEBUG_INIT
 				log(LOG_DEBUG, "%s: Enable channel %d\n",
 						card->devname, i);
