@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.11 2001/12/05 00:11:51 millert Exp $ */
+/* $OpenBSD: pmap.h,v 1.12 2002/07/24 00:33:50 art Exp $ */
 /* $NetBSD: pmap.h,v 1.37 2000/11/19 03:16:35 thorpej Exp $ */
 
 /*-
@@ -210,8 +210,7 @@ paddr_t vtophys(vaddr_t);
 
 /* Machine-specific functions. */
 void	pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids);
-void	pmap_emulate_reference(struct proc *p, vaddr_t v,
-		int user, int write);
+int	pmap_emulate_reference(struct proc *p, vaddr_t v, int user, int type);
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
 int	pmap_uses_prom_console(void);
 #endif
