@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.72 2005/03/25 05:07:43 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.73 2005/03/30 02:40:42 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -350,7 +350,7 @@ sdzeroref(self)
 }
 
 /*
- * open the device. Make sure the partition info is a up-to-date as can be.
+ * Open the device. Make sure the partition info is as up-to-date as can be.
  */
 int
 sdopen(dev, flag, fmt, p)
@@ -366,7 +366,7 @@ sdopen(dev, flag, fmt, p)
 	unit = SDUNIT(dev);
 	sd = sdlookup(unit);
 	if (sd == NULL)
-		return ENXIO;
+		return (ENXIO);
 
 	sc_link = sd->sc_link;
 	part = SDPART(dev);
@@ -377,7 +377,7 @@ sdopen(dev, flag, fmt, p)
 
 	if ((error = sdlock(sd)) != 0) {
 		device_unref(&sd->sc_dev);
-		return error;
+		return (error);
 	}
 
 	if (sd->sc_dk.dk_openmask != 0) {
@@ -392,8 +392,7 @@ sdopen(dev, flag, fmt, p)
 	} else {
 		/* Check that it is still responding and ok. */
 		error = scsi_test_unit_ready(sc_link,
-		    TEST_READY_RETRIES_DEFAULT,
-		    SCSI_IGNORE_ILLEGAL_REQUEST |
+		    TEST_READY_RETRIES_DEFAULT, SCSI_IGNORE_ILLEGAL_REQUEST |
 		    SCSI_IGNORE_MEDIA_CHANGE);
 
 		/* Try to start the unit if it wasn't ready. */
@@ -411,7 +410,7 @@ sdopen(dev, flag, fmt, p)
 		if ((sc_link->flags & SDEV_REMOVABLE) != 0) {
 			error = scsi_prevent(sc_link, PR_PREVENT,
 			    SCSI_IGNORE_ILLEGAL_REQUEST |
-			        SCSI_IGNORE_MEDIA_CHANGE);
+			    SCSI_IGNORE_MEDIA_CHANGE);
 			if (error)
 				goto bad;
 		}
@@ -456,24 +455,24 @@ sdopen(dev, flag, fmt, p)
 	SC_DEBUG(sc_link, SDEV_DB3, ("open complete\n"));
 	sdunlock(sd);
 	device_unref(&sd->sc_dev);
-	return 0;
+	return (0);
 
 bad2:
 	sc_link->flags &= ~SDEV_MEDIA_LOADED;
 
 bad:
 	if (sd->sc_dk.dk_openmask == 0) {
-	    if ((sd->sc_link->flags & SDEV_REMOVABLE) != 0)
-		scsi_prevent(sc_link, PR_ALLOW,
-		    SCSI_IGNORE_ILLEGAL_REQUEST |
-		    SCSI_IGNORE_MEDIA_CHANGE);
-	    sc_link->flags &= ~SDEV_OPEN;
+		if ((sd->sc_link->flags & SDEV_REMOVABLE) != 0)
+			scsi_prevent(sc_link, PR_ALLOW,
+			    SCSI_IGNORE_ILLEGAL_REQUEST |
+			    SCSI_IGNORE_MEDIA_CHANGE);
+		sc_link->flags &= ~SDEV_OPEN;
 	}
 
 bad3:
 	sdunlock(sd);
 	device_unref(&sd->sc_dev);
-	return error;
+	return (error);
 }
 
 /*

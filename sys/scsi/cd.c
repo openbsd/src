@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.75 2004/05/09 04:01:59 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.76 2005/03/30 02:40:42 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -327,7 +327,7 @@ cdopen(dev, flag, fmt, p)
 	unit = CDUNIT(dev);
 	cd = cdlookup(unit);
 	if (cd == NULL)
-		return ENXIO;
+		return (ENXIO);
 
 	sc_link = cd->sc_link;
 
@@ -337,7 +337,7 @@ cdopen(dev, flag, fmt, p)
 
 	if ((error = cdlock(cd)) != 0) {
 		device_unref(&cd->sc_dev);
-		return error;
+		return (error);
 	}
 
 	part = CDPART(dev);
@@ -355,9 +355,9 @@ cdopen(dev, flag, fmt, p)
 		}
 	} else {
 		/*
-		 * Check that it is still responding and ok.
-		 * Drive can be in progress of loading media so use
-		 * increased retries number and don't ignore NOT_READY.
+		 * Check that it is still responding and ok.  Drive can be in
+		 * progress of loading media so use increased retries number
+		 * and don't ignore NOT_READY.
 		 */
 		error = scsi_test_unit_ready(sc_link, TEST_READY_RETRIES_CD,
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
@@ -427,7 +427,7 @@ out:	/* Insure only one open at a time. */
 	SC_DEBUG(sc_link, SDEV_DB3, ("open complete\n"));
 	cdunlock(cd);
 	device_unref(&cd->sc_dev);
-	return 0;
+	return (0);
 
 bad2:
 	sc_link->flags &= ~SDEV_MEDIA_LOADED;
@@ -442,7 +442,7 @@ bad:
 bad3:
 	cdunlock(cd);
 	device_unref(&cd->sc_dev);
-	return error;
+	return (error);
 }
 
 /*
