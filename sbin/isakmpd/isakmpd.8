@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.49 2003/02/22 06:56:20 kjell Exp $
+.\" $OpenBSD: isakmpd.8,v 1.50 2003/04/27 11:17:14 ho Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -373,12 +373,15 @@ command-specific options. Available commands are:
 Start the named connection, if stopped or inactive.
 .Pp
 .It Ic "C set [section]:tag=value"
+.It Ic "C set [section]:tag=value force"
 .It Ic "C rm  [section]:tag"
 .It Ic "C rms [section]"
 Update the running
 .Nm
 configuration atomically. 'set' sets a configuration value consisting
-of a section, tag and value triplet. 'rm' removes a tag in a
+of a section, tag and value triplet. 'set' will fail if the
+configuration already contains a section with the named tag, use
+the 'force' option to change this behaviour. 'rm' removes a tag in a 
 section. 'rms' removes an entire section.
 .Pp
 .It Ic "d <cookies> <msgid>"
