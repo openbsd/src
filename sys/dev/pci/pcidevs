@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.701 2003/12/20 19:17:26 grange Exp $
+$OpenBSD: pcidevs,v 1.702 2004/01/06 17:22:46 tom Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -35,8 +35,7 @@ $OpenBSD: pcidevs,v 1.701 2003/12/20 19:17:26 grange Exp $
 /*
  * NOTE: a fairly complete list of PCI codes can be found at:
  *
- *	http://members.hyperlink.net.au/~chart/pci.htm
- *	http://www.yourvote.com/pci/
+ *	http://www.pcidatabase.com/
  *
  * There is a Vendor ID search engine available at:
  *
@@ -1988,7 +1987,7 @@ product SIS 86C205_2		0x0205	86C205
 product SIS 300			0x0300	300/305/630 VGA
 product SIS 85C501		0x0406	85C501
 product SIS 85C496		0x0496	85C496
-product SIS 85C596		0x0496	85C596
+product SIS 85C596		0x0596	SiS596
 product SIS 530			0x0530	530 PCI
 product SIS 540			0x0540	540 PCI
 product SIS 550			0x0550	550 PCI
