@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 1995/03/18 14:55:02 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.7 1996/02/05 23:59:40 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 4/15/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.6 1995/03/18 14:55:02 cgd Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.7 1996/02/05 23:59:40 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -111,7 +111,8 @@ main(argc, argv)
 	(void)time((time_t *)&spcl.c_date);
 
 	tsize = 0;	/* Default later, based on 'c' option for cart tapes */
-	tape = _PATH_DEFTAPE;
+	if ((tape = getenv("TAPE")) == NULL)
+		tape = _PATH_DEFTAPE;
 	dumpdates = _PATH_DUMPDATES;
 	temp = _PATH_DTMP;
 	if (TP_BSIZE / DEV_BSIZE == 0 || TP_BSIZE % DEV_BSIZE != 0)
