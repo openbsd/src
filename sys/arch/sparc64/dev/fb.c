@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.2 2003/06/17 17:35:40 miod Exp $	*/
+/*	$OpenBSD: fb.c,v 1.3 2003/06/28 14:26:17 miod Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -149,7 +149,7 @@ fbwscons_init(struct sunfb *sf, int flags)
 	int cols, rows;
 
 	/* ri_hw and ri_bits must have already been setup by caller */
-	sf->sf_ro.ri_flg = RI_CENTER | flags;
+	sf->sf_ro.ri_flg = RI_CENTER | RI_FULLCLEAR | flags;
 	sf->sf_ro.ri_depth = sf->sf_depth;
 	sf->sf_ro.ri_stride = sf->sf_linebytes;
 	sf->sf_ro.ri_width = sf->sf_width;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.24 2003/06/02 23:27:54 millert Exp $	*/
+/*	$OpenBSD: fb.c,v 1.25 2003/06/28 14:26:16 miod Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -309,7 +309,7 @@ fbwscons_init(sf, isconsole)
 	int cols, rows;
 
 	/* ri_hw and ri_bits must have already been setup by caller */
-	sf->sf_ro.ri_flg = RI_CENTER;
+	sf->sf_ro.ri_flg = RI_CENTER | RI_FULLCLEAR;
 	if (!isconsole)
 		sf->sf_ro.ri_flg |= RI_CLEAR;
 	sf->sf_ro.ri_depth = sf->sf_depth;
