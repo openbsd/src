@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.21 2000/07/05 22:20:02 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.22 2000/11/08 16:22:36 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Michael Shalayeff
@@ -416,46 +416,8 @@ return;
 			__asm __volatile ("ldcws 0(%1), %0"
 					  : "=r" (ni) : "r" (&netisr));
 			splnet();
-#define	DONET(m,c) if (ni & (1 << (m))) c()
-#include "ether.h"
-#if NETHER > 0
-			DONET(NETISR_ARP, arpintr);
-#endif
-#ifdef INET
-			DONET(NETISR_IP, ipintr);
-#endif
-#ifdef INET6
-			DONET(NETISR_IPV6, ip6intr);
-#endif
-#ifdef NETATALK
-			DONET(NETISR_ATALK, atintr);
-#endif
-#ifdef IMP
-			DONET(NETISR_IMP, impintr);
-#endif
-#ifdef IPX
-			DONET(NETISR_IPX, ipxintr);
-#endif
-#ifdef NS
-			DONET(NETISR_NS, nsintr);
-#endif
-#ifdef ISO
-			DONET(NETISR_ISO, clnlintr);
-#endif
-#ifdef CCITT
-			DONET(NETISR_CCITT, ccittintr);
-#endif
-#ifdef NATM
-			DONET(NETISR_NATM, natmintr);
-#endif
-#include "ppp.h"
-#if NPPP > 0
-			DONET(NETISR_PPP, pppintr);
-#endif
-#include "bridge.h"
-#if NBRIDGE > 0
-			DONET(NETISR_BRIDGE, bridgeintr);
-#endif
+#define	DONETISR(m,c) if (ni & (1 << (m))) c()
+#include <net/netisr_dispatch.h>
 		}
 		splx(s);
 		break;
