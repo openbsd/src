@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.4 2002/05/13 07:22:43 espie Exp $
+#	$OpenBSD: Makefile.inc,v 1.5 2002/06/13 15:09:08 hugh Exp $
 #
 #	etc.vax/Makefile.inc -- vax-specific etc Makefile targets
 #
@@ -14,7 +14,6 @@ bsd:
 	    ${MAKE} clean && ${MAKE} depend && exec ${MAKE}
 
 bootblocks:
-	cp ${DESTDIR}/usr/mdec/boot ${DESTDIR}/snapshot
 	mopa.out ${DESTDIR}/usr/mdec/boot ${DESTDIR}/snapshot/boot.mop
 
 .PHONY: bsd bootblocks
