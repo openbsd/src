@@ -74,7 +74,7 @@ options		ISO,TPIP	# OSI
 options		EON		# OSI tunneling over IP
 options		CCITT,LLC,HDLC	# X.25
 
-config		netbsd	swap generic
+config		bsd	swap generic
 options		GENERIC
 
 isa0	at root
