@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.44 2002/01/23 00:39:47 art Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.45 2002/02/02 17:52:27 art Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -296,9 +296,9 @@ sys_fcntl(p, v, retval)
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
 	struct vnode *vp;
-	int i, tmp, error, flg = F_POSIX;
+	int i, tmp, newmin, flg = F_POSIX;
 	struct flock fl;
-	int newmin;
+	int error = 0;
 
 restart:
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
@@ -308,31 +308,33 @@ restart:
 	case F_DUPFD:
 		newmin = (long)SCARG(uap, arg);
 		if ((u_int)newmin >= p->p_rlimit[RLIMIT_NOFILE].rlim_cur ||
-		    (u_int)newmin >= maxfiles)
-			return (EINVAL);
+		    (u_int)newmin >= maxfiles) {
+			error = EINVAL;
+			break;
+		}
 		if ((error = fdalloc(p, newmin, &i)) != 0) {
 			if (error == ENOSPC) {
 				fdexpand(p);
 				goto restart;
 			}
-			return (error);
+			break;
 		}
 		return (finishdup(p, fd, i, retval));
 
 	case F_GETFD:
 		*retval = fdp->fd_ofileflags[fd] & UF_EXCLOSE ? 1 : 0;
-		return (0);
+		break;
 
 	case F_SETFD:
 		if ((long)SCARG(uap, arg) & 1)
 			fdp->fd_ofileflags[fd] |= UF_EXCLOSE;
 		else
 			fdp->fd_ofileflags[fd] &= ~UF_EXCLOSE;
-		return (0);
+		break;
 
 	case F_GETFL:
 		*retval = OFLAGS(fp->f_flag);
-		return (0);
+		break;
 
 	case F_SETFL:
 		fp->f_flag &= ~FCNTLFLAGS;
@@ -340,25 +342,25 @@ restart:
 		tmp = fp->f_flag & FNONBLOCK;
 		error = (*fp->f_ops->fo_ioctl)(fp, FIONBIO, (caddr_t)&tmp, p);
 		if (error)
-			return (error);
+			break;
 		tmp = fp->f_flag & FASYNC;
 		error = (*fp->f_ops->fo_ioctl)(fp, FIOASYNC, (caddr_t)&tmp, p);
 		if (!error)
-			return (0);
+			break;
 		fp->f_flag &= ~FNONBLOCK;
 		tmp = 0;
 		(void) (*fp->f_ops->fo_ioctl)(fp, FIONBIO, (caddr_t)&tmp, p);
-		return (error);
+		break;
 
 	case F_GETOWN:
 		if (fp->f_type == DTYPE_SOCKET) {
 			*retval = ((struct socket *)fp->f_data)->so_pgid;
-			return (0);
+			break;
 		}
 		error = (*fp->f_ops->fo_ioctl)
 			(fp, TIOCGPGRP, (caddr_t)retval, p);
 		*retval = -*retval;
-		return (error);
+		break;
 
 	case F_SETOWN:
 		if (fp->f_type == DTYPE_SOCKET) {
@@ -367,32 +369,37 @@ restart:
 			so->so_pgid = (long)SCARG(uap, arg);
 			so->so_siguid = p->p_cred->p_ruid;
 			so->so_sigeuid = p->p_ucred->cr_uid;
-			return (0);
+			break;
 		}
 		if ((long)SCARG(uap, arg) <= 0) {
 			SCARG(uap, arg) = (void *)(-(long)SCARG(uap, arg));
 		} else {
 			struct proc *p1 = pfind((long)SCARG(uap, arg));
-			if (p1 == 0)
-				return (ESRCH);
+			if (p1 == 0) {
+				error = ESRCH;
+				break;
+			}
 			SCARG(uap, arg) = (void *)(long)p1->p_pgrp->pg_id;
 		}
-		return ((*fp->f_ops->fo_ioctl)
+		error = ((*fp->f_ops->fo_ioctl)
 			(fp, TIOCSPGRP, (caddr_t)&SCARG(uap, arg), p));
+		break;
 
 	case F_SETLKW:
 		flg |= F_WAIT;
 		/* FALLTHROUGH */
 
 	case F_SETLK:
-		if (fp->f_type != DTYPE_VNODE)
-			return (EBADF);
+		if (fp->f_type != DTYPE_VNODE) {
+			error = EBADF;
+			break;
+		}
 		vp = (struct vnode *)fp->f_data;
 		/* Copy in the lock structure */
 		error = copyin((caddr_t)SCARG(uap, arg), (caddr_t)&fl,
 		    sizeof (fl));
 		if (error)
-			return (error);
+			break;
 		if (fl.l_whence == SEEK_CUR) {
 			if (fl.l_start == 0 && fl.l_len < 0) {
 				/* lockf(3) compliance hack */
@@ -404,34 +411,44 @@ restart:
 		switch (fl.l_type) {
 
 		case F_RDLCK:
-			if ((fp->f_flag & FREAD) == 0)
-				return (EBADF);
+			if ((fp->f_flag & FREAD) == 0) {
+				error = EBADF;
+				goto out;
+			}
 			p->p_flag |= P_ADVLOCK;
-			return (VOP_ADVLOCK(vp, (caddr_t)p, F_SETLK, &fl, flg));
+			error = (VOP_ADVLOCK(vp, (caddr_t)p, F_SETLK, &fl, flg));
+			goto out;
 
 		case F_WRLCK:
-			if ((fp->f_flag & FWRITE) == 0)
-				return (EBADF);
+			if ((fp->f_flag & FWRITE) == 0) {
+				error = EBADF;
+				goto out;
+			}
 			p->p_flag |= P_ADVLOCK;
-			return (VOP_ADVLOCK(vp, (caddr_t)p, F_SETLK, &fl, flg));
+			error = (VOP_ADVLOCK(vp, (caddr_t)p, F_SETLK, &fl, flg));
+			goto out;
 
 		case F_UNLCK:
-			return (VOP_ADVLOCK(vp, (caddr_t)p, F_UNLCK, &fl,
+			error = (VOP_ADVLOCK(vp, (caddr_t)p, F_UNLCK, &fl,
 				F_POSIX));
+			goto out;
 
 		default:
-			return (EINVAL);
+			error = EINVAL;
+			goto out;
 		}
 
 	case F_GETLK:
-		if (fp->f_type != DTYPE_VNODE)
-			return (EBADF);
+		if (fp->f_type != DTYPE_VNODE) {
+			error = EBADF;
+			break;
+		}
 		vp = (struct vnode *)fp->f_data;
 		/* Copy in the lock structure */
 		error = copyin((caddr_t)SCARG(uap, arg), (caddr_t)&fl,
 		    sizeof (fl));
 		if (error)
-			return (error);
+			break;
 		if (fl.l_whence == SEEK_CUR) {
 			if (fl.l_start == 0 && fl.l_len < 0) {
 				/* lockf(3) compliance hack */
@@ -443,18 +460,23 @@ restart:
 		if (fl.l_type != F_RDLCK &&
 		    fl.l_type != F_WRLCK &&
 		    fl.l_type != F_UNLCK &&
-		    fl.l_type != 0)
-			return (EINVAL);
+		    fl.l_type != 0) {
+			error = EINVAL;
+			break;
+		}
 		error = VOP_ADVLOCK(vp, (caddr_t)p, F_GETLK, &fl, F_POSIX);
 		if (error)
-			return (error);
-		return (copyout((caddr_t)&fl, (caddr_t)SCARG(uap, arg),
+			break;
+		error = (copyout((caddr_t)&fl, (caddr_t)SCARG(uap, arg),
 		    sizeof (fl)));
+		break;
 
 	default:
-		return (EINVAL);
+		error = EINVAL;
+		break;
 	}
-	/* NOTREACHED */
+out:
+	return (error);	
 }
 
 /*
