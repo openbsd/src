@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uk.4,v 1.1 1997/03/28 22:53:43 millert Exp $
+.\"	$OpenBSD: uk.4,v 1.2 1997/05/28 22:13:30 deraadt Exp $
 .\"	$NetBSD: uk.4,v 1.3 1996/10/20 23:15:26 explorer Exp $
 .\"
 .\" Copyright (c) 1996
@@ -61,7 +61,7 @@ ioctls. These are described in
 
 
 .Sh FILES
-.Bl -tag -width /dev/uk0XXX -compact
+.Bl -tag -width /dev/uk[0-255] -compact
 .It Pa /dev/uk[0-255]
 uk{x} is the  'xth'unknown device found.
 .El
@@ -72,11 +72,11 @@ debug ioctls work on
 .Nm
 devices.
 .Sh SEE ALSO
-.Xr sd 4
-.Xr st 4
-.Xr cd 4
-.Xr ch 4
-.Xr su 4
+.Xr sd 4 ,
+.Xr st 4 ,
+.Xr cd 4 ,
+.Xr ch 4 ,
+.Xr su 4 ,
 .Xr scsi 4
 .Sh HISTORY
 The
