@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.h,v 1.2 1996/06/24 03:35:03 downsj Exp $	*/
+/*	$OpenBSD: inode.h,v 1.3 1996/06/24 10:23:22 downsj Exp $	*/
 /*	$NetBSD: inode.h,v 1.8 1995/06/15 23:22:50 cgd Exp $	*/
 
 /*
@@ -89,6 +89,10 @@ struct inode {
 	 * Directory operations pointers.
 	 */
 	struct ufs_dirops 	*i_dirops;
+	/*
+	 * Ext2fs inode extensions.
+	 */
+	struct ext2_inode_info	*i_e2ext;
 	/*
 	 * The on-disk dinode itself.
 	 */

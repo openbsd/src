@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2_vfsops.c,v 1.1 1996/06/24 03:34:58 downsj Exp $	*/
+/*	$OpenBSD: ext2_vfsops.c,v 1.2 1996/06/24 10:23:21 downsj Exp $	*/
 
 /*
  *  modified for EXT2FS support in Lites 1.1
@@ -886,6 +886,7 @@ ext2_vget(mp, ino, vpp)
 {
 	register struct ext2_sb_info *fs;
 	register struct inode *ip;
+	register struct ext2_inode_info *e2ip;
 	struct ufsmount *ump;
 	struct buf *bp;
 	struct vnode *vp;
@@ -925,12 +926,17 @@ restart:
 	type = ump->um_devvp->v_tag == VT_MFS ? M_MFSNODE : M_FFSNODE; /* XXX */
 	MALLOC(ip, struct inode *, sizeof(struct inode), type, M_WAITOK);
 	bzero((caddr_t)ip, sizeof(struct inode));
+	MALLOC(e2ip, struct ext2_inode_info *, sizeof(struct ext2_inode_info),
+		type, M_WAITOK);
+	bzero((caddr_t)e2ip, sizeof(struct ext2_inode_info));
+
 	vp->v_data = ip;
 	ip->i_vnode = vp;
 	ip->i_e2fs = fs = ump->um_e2fs;
 	ip->i_dev = dev;
 	ip->i_number = ino;
 	ip->i_dirops = &ext2fs_dirops;
+	ip->i_e2ext = e2ip;
 #if QUOTA
 	for (i = 0; i < MAXQUOTAS; i++)
 		ip->i_dquot[i] = NODQUOT;
@@ -969,10 +975,12 @@ printf("ext2_vget(%d) dbn= %d ", ino, fsbtodb(fs, ino_to_fsba(fs, ino)));
 	ext2_ei2di((struct ext2_inode *) ((char *)bp->b_data + EXT2_INODE_SIZE *
 			ino_to_fsbo(fs, ino)), &ip->i_din);
 	ip->i_block_group = ino_to_cg(fs, ino);
+#if 0
 	ip->i_next_alloc_block = 0;
 	ip->i_next_alloc_goal = 0;
 	ip->i_prealloc_count = 0;
 	ip->i_prealloc_block = 0;
+#endif
         /* now we want to make sure that block pointers for unused
            blocks are zeroed out - ext2_balloc depends on this 
 	   although for regular files and directories only

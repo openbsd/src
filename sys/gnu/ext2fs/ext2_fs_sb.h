@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2_fs_sb.h,v 1.1 1996/06/24 03:34:55 downsj Exp $	*/
+/*	$OpenBSD: ext2_fs_sb.h,v 1.2 1996/06/24 10:23:20 downsj Exp $	*/
 
 /*
  *  modified for EXT2FS support in Lites 1.1
@@ -83,8 +83,6 @@ struct ext2_sb_info {
 	char    s_dirt;                         /* fs modified flag */
 
 	char    fs_fsmnt[MAXMNTLEN];            /* name mounted on */
-
-	struct	ext2_inode_info	i_info;		/* HACK! */
 };
 
 #endif	/* _LINUX_EXT2_FS_SB */

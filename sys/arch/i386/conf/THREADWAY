@@ -1,0 +1,126 @@
+#
+#	THREADWAY: threadway.teeny.org
+#
+#	$OpenBSD: THREADWAY,v 1.1 1996/06/24 10:23:16 downsj Exp $
+#
+
+machine		i386
+options		I586_CPU
+
+options		XSERVER,UCONSOLE
+options		EXTMEM_SIZE=39936
+options		PCVT_USL_VT_COMPAT=1,PCVT_SCREENSAVER=1,PCVT_PRETTYSCRNS=0
+
+maxusers	32
+options		TIMEZONE=480
+options		DST=0
+
+options		SWAPPAGER
+options		VNODEPAGER
+options		DEVPAGER
+
+#options	DDB
+#makeoptions	DEBUG="-g"
+#options	DIAGNOSTIC
+options		KTRACE
+
+options		SYSVMSG
+options		SYSVSEM
+options		SYSVSHM
+#options	SHMMAXPGS=1024
+
+options		COMPAT_NOMID
+options		COMPAT_09
+options		COMPAT_10
+options		COMPAT_11
+options		COMPAT_43
+options		TCP_COMPAT_42
+
+options		COMPAT_SVR4
+options		COMPAT_IBCS2
+options		COMPAT_LINUX
+options		COMPAT_FREEBSD
+
+options		VM86
+options		USER_LDT
+options		LKM
+
+options		FFS
+options		QUOTA
+options		MFS
+options		EXT2FS
+
+options		PPP_BSDCOMP,PPP_DEFLATE
+options		IPFILTER
+
+options		NFSCLIENT
+options		NFSSERVER
+
+options		CD9660
+options		MSDOSFS
+options		FDESC
+options		FIFO
+options		KERNFS
+options		NULLFS
+options		PROCFS
+options		UMAPFS
+options		UNION
+
+options		GATEWAY
+options		INET
+
+config		bsd root on wd0 swap on wd0 and wd2
+
+mainbus0 at root
+
+isa0	at mainbus0
+eisa0	at mainbus0
+pci0	at mainbus0 bus ?
+
+ppb*    at pci? dev ? function ?	# PCI-PCI bridges
+pci*	at ppb? bus ?
+
+npx0	at isa? port 0xf0 irq 13
+isadma0 at isa?
+
+#pc0	at isa? port 0x60 irq 1
+vt0	at isa? port 0x60 irq 1
+
+com0	at isa? port 0x3f8 irq 4
+com1	at isa? port 0x3e8 irq 2
+com2	at isa? port 0x2f8 irq 3
+
+lpt0	at isa? port 0x378 irq 7
+
+pms0	at pckbd? irq 12		# PS/2 auxiliary port mouse
+
+ed0	at isa? port 0x300 irq 10
+
+de0	at pci? dev ? function ?
+
+ncr*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
+scsibus* at ncr?
+
+sd*	at scsibus? target ? lun ?	# SCSI disk drives
+st*	at scsibus? target ? lun ?	# SCSI tape drives
+cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+ch*	at scsibus? target ? lun ?	# SCSI autochangers
+
+fdc0	at isa? port 0x3f0 irq 6 drq 2
+fd*	at fdc? drive ?
+
+wdc0	at isa? port 0x1f0 irq 14
+wdc1	at isa? port 0x170 irq 15
+wd*	at wdc? drive ?
+
+atapibus* at wdc?
+acd*	at atapibus? drive?
+
+
+pseudo-device	loop	1
+pseudo-device	bpfilter 8
+pseudo-device	ppp	4
+pseudo-device	tun	2
+
+pseudo-device	pty	64
+pseudo-device	vnd	8

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2_fs.h,v 1.1 1996/06/24 03:34:54 downsj Exp $	*/
+/*	$OpenBSD: ext2_fs.h,v 1.2 1996/06/24 10:23:19 downsj Exp $	*/
 
 /*
  *  modified for EXT2FS support in Lites 1.1
@@ -50,11 +50,11 @@ struct ext2_inode_info {
 	int32_t		info_prealloc_count;
 };
 
-#define i_block_group		i_e2fs->i_info.info_block_group
-#define i_next_alloc_block	i_e2fs->i_info.info_next_alloc_block
-#define i_next_alloc_goal	i_e2fs->i_info.info_next_alloc_goal
-#define i_prealloc_block	i_e2fs->i_info.info_prealloc_block
-#define i_prealloc_count	i_e2fs->i_info.info_prealloc_count
+#define i_block_group		i_e2ext->info_block_group
+#define i_next_alloc_block	i_e2ext->info_next_alloc_block
+#define i_next_alloc_goal	i_e2ext->info_next_alloc_goal
+#define i_prealloc_block	i_e2ext->info_prealloc_block
+#define i_prealloc_count	i_e2ext->info_prealloc_count
 
 /*
  * The second extended filesystem constants/structures
