@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.6 2003/07/02 21:57:52 drahn Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.7 2003/07/02 22:09:29 drahn Exp $	*/
 /*	$NetBSD: fpu.c,v 1.1 1996/09/30 16:34:44 ws Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ void
 save_fpu(p)
 	struct proc *p;
 {
-	int msr, scratch;
+	int msr;
 	struct pcb *pcb;
 
 	if (p == NULL)
