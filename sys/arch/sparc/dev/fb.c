@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.30 2005/02/22 10:00:58 miod Exp $	*/
+/*	$OpenBSD: fb.c,v 1.31 2005/02/27 22:25:34 miod Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -90,11 +90,6 @@
 
 #include "wsdisplay.h"
 
-#if defined(SUN4C) || defined(SUN4M)
-static int a2int(char *, int);
-#endif
-static void fb_initwsd(struct sunfb *);
-
 /*
  * emergency unblank code
  * XXX should be somewhat moved to wscons MI code
@@ -111,6 +106,11 @@ fb_unblank()
 }
 
 #if NWSDISPLAY > 0
+
+#if defined(SUN4C) || defined(SUN4M)
+static int a2int(char *, int);
+#endif
+static void fb_initwsd(struct sunfb *);
 
 void
 fb_setsize(struct sunfb *sf, int def_depth, int def_width, int def_height,
