@@ -1,7 +1,7 @@
-/*	$OpenBSD: chap.h,v 1.2 1996/03/25 15:55:36 niklas Exp $	*/
+/*	$OpenBSD: chap.h,v 1.3 1996/06/16 14:35:49 deraadt Exp $	*/
 
 /*
- * chap.h - Cryptographic Handshake Authentication Protocol definitions.
+ * chap.h - Challenge-Handshake Authentication Protocol definitions.
  *
  * Copyright (c) 1991 Gregory M. Christy
  * All rights reserved.
