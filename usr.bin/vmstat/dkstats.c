@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkstats.c,v 1.4 1997/02/04 04:51:20 kstailey Exp $	*/
+/*	$OpenBSD: dkstats.c,v 1.5 1997/06/23 22:11:07 millert Exp $	*/
 /*	$NetBSD: dkstats.c,v 1.1 1996/05/10 23:19:27 thorpej Exp $	*/
 
 /*
@@ -97,9 +97,6 @@ char		**dr_name;
 #define timerset(tvp, uvp) ((uvp)->tv_sec = (tvp)->tv_sec);		\
 			   ((uvp)->tv_usec = (tvp)->tv_usec)
 
-void dkswap __P((void));
-void dkreadstats __P((void));
-int dkinit __P((int));
 static void deref_kptr __P((void *, void *, size_t));
 
 /*
