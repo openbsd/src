@@ -3545,8 +3545,10 @@ init_decl_processing ()
       builtin_function ("memset", memset_ftype, BUILT_IN_MEMSET, NULL_PTR);
       builtin_function ("strcmp", int_ftype_string_string, BUILT_IN_STRCMP,
 			NULL_PTR);
+#ifndef NO_UNSAFE_BUILTINS
       builtin_function ("strcpy", string_ftype_ptr_ptr, BUILT_IN_STRCPY,
 			NULL_PTR);
+#endif
       builtin_function ("strlen", strlen_ftype, BUILT_IN_STRLEN, NULL_PTR);
       builtin_function ("sqrtf", float_ftype_float, BUILT_IN_FSQRT, NULL_PTR);
       builtin_function ("sqrt", double_ftype_double, BUILT_IN_FSQRT, NULL_PTR);

@@ -308,3 +308,7 @@ do {									 \
    as this depends on a few other details as well...  */
 #define HANDLE_SYSV_PRAGMA
 
+/* Disable the use of unsafe builtin functions, (strcpy), making
+ * them easier to spot in the object files. 
+ */
+#define NO_UNSAFE_BUILTINS
