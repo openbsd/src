@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.12 1997/07/25 17:31:38 mickey Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.13 1997/08/21 05:17:37 deraadt Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -543,6 +543,7 @@ fdalloc(p, want, result)
 			nfiles = NDEXTENT;
 		else
 			nfiles = 2 * fdp->fd_nfiles;
+		nfiles = min(lim, nfiles);
 		MALLOC(newofile, struct file **, nfiles * OFILESIZE,
 		    M_FILEDESC, M_WAITOK);
 		newofileflags = (char *) &newofile[nfiles];
