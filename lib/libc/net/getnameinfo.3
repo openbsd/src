@@ -30,11 +30,11 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     From: @(#)gethostbyname.3	8.4 (Berkeley) 5/25/95
-.\"     $Id: getnameinfo.3,v 1.1 1999/07/03 20:26:55 deraadt Exp $
+.\"     $Id: getnameinfo.3,v 1.2 1999/07/05 04:40:59 aaron Exp $
 .\"
 .Dd May 25, 1995
 .Dt GETNAMEINFO 3
-.Os KAME
+.Os
 .Sh NAME
 .Nm getnameinfo
 .Nd address-to-nodename translation in protocol-independent manner
@@ -64,16 +64,16 @@ a non-zero return value indicates failure.
 The first argument,
 .Fa sa ,
 points to either a
-.Fa sockaddr_in
+.Li sockaddr_in
 structure (for IPv4) or a
-.Fa sockaddr_in6
+.Li sockaddr_in6
 structure (for IPv6) that holds the IP address and port number.
 The
 .Fa salen
 argument gives the length of the
-.Fa sockaddr_in
+.Li sockaddr_in
 or
-.Fa sockaddr_in6
+.Li sockaddr_in6
 structure.
 .Pp
 The function returns the nodename associated with the IP address in
@@ -102,7 +102,7 @@ Unfortunately most systems do not provide constants that specify the
 maximum size of either a fully-qualified domain name or a service name.
 Therefore to aid the application in allocating buffers for these two
 returned strings the following constants are defined in
-.Li <netdb.h> :
+.Aq Pa netdb.h :
 .Bd -literal -offset
 #define NI_MAXHOST  1025
 #define NI_MAXSERV    32
@@ -111,11 +111,8 @@ returned strings the following constants are defined in
 The first value is actually defined as the constant
 .Dv MAXDNAME
 in recent versions of BIND's
-.Li <arpa/nameser.h>
-header
-.Po
-older versions of BIND define this constant to be 256
-.Pc
+.Aq Pa arpa/nameser.h
+header (older versions of BIND define this constant to be 256)
 and the second is a guess based on the services listed in the current
 Assigned Numbers RFC.
 .Pp
@@ -154,21 +151,24 @@ instead of its name.
 The two
 .Dv NI_NUMERICxxx
 flags are required to support the
-.Li "-n"
+.Fl n
 flag that many commands provide.
 .Pp
 A fifth flag bit,
 .Dv NI_DGRAM ,
 specifies that the service is a datagram service, and causes
 .Fn getservbyport
-to be called with a second argument of "udp" instead of its default of "tcp".
+to be called with a second argument of
+.Qq udp
+instead of its default of
+.Qq tcp .
 This is required for the few ports (512-514)
 that have different services for UDP and TCP.
 .Pp
 These
 .Dv NI_xxx
 flags are defined in
-.Li <netdb.h> .
+.Aq Pa netdb.h .
 .Sh FILES
 .Bl -tag -width /etc/resolv.conf -compact
 .It Pa /etc/hosts
@@ -193,7 +193,8 @@ R. Gilligan, S.  Thomson, J. Bound, and W. Stevens,
 The
 .Fn getaddrinfo
 function is defined IEEE POSIX 1003.1g draft specification,
-and documented in ``Basic Socket Interface Extensions for IPv6''
+and documented in
+.Dq Basic Socket Interface Extensions for IPv6
 .Pq RFC2533 .
 .Sh BUGS
 The text was shamelessly copied from RFC2553.

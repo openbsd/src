@@ -1,4 +1,4 @@
-.\"	$OpenBSD: link_addr.3,v 1.5 1999/05/23 14:11:02 aaron Exp $
+.\"	$OpenBSD: link_addr.3,v 1.6 1999/07/05 04:40:59 aaron Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -50,12 +50,11 @@
 .Ft char *
 .Fn link_ntoa "const struct sockaddr_dl *sdl"
 .Sh DESCRIPTION
-The routine
+The
 .Fn link_addr
-interprets character strings representing
+function interprets character strings representing
 link-level addresses, returning binary information suitable
 for use in system calls.
-The routine
 .Fn link_ntoa
 takes
 a link-level
@@ -73,7 +72,7 @@ the string
 .Fa addr
 may contain
 an optional network interface identifier of the form
-.Dq "name unit-number" ,
+.Dq name unit-number ,
 suitable for the first argument to
 .Xr ifconfig 8 ,
 followed in all cases by a colon and
@@ -95,7 +94,7 @@ represents an Ethernet address
 to be transmitted on the first Lance Ethernet interface.
 .Sh RETURN VALUES
 .Fn link_ntoa
-always returns a null terminated string.
+always returns a null-terminated string.
 .Fn link_addr
 has no return value.
 (See
@@ -108,7 +107,7 @@ The
 .Fn link_addr
 and
 .Fn link_ntoa
-functions appeared in 
+functions appeared in
 .Bx 4.3 Reno  .
 .Sh BUGS
 The returned values for link_ntoa
@@ -120,7 +119,7 @@ should diagnose improperly formed input, and there should be an unambiguous
 way to recognize this.
 .Pp
 If the
-.Va sdl_len
+.Fa sdl_len
 field of the link socket address
 .Fa sdl
 is 0,

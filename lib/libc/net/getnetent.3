@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getnetent.3,v 1.7 1999/05/25 01:50:58 aaron Exp $
+.\"	$OpenBSD: getnetent.3,v 1.8 1999/07/05 04:40:59 aaron Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -79,9 +79,10 @@ The members of this structure are:
 .It Fa n_name
 The official name of the network.
 .It Fa n_aliases
-A zero terminated list of alternate names for the network.
+A zero-terminated list of alternate names for the network.
 .It Fa n_addrtype
-The type of the network number returned; currently only AF_INET.
+The type of the network number returned; currently only
+.Dv AF_INET .
 .It Fa n_net
 The network number.  Network numbers are returned in machine byte
 order.
@@ -98,7 +99,7 @@ function
 opens and rewinds the file.  If the
 .Fa stayopen
 flag is non-zero,
-the net data base will not be closed after each call to 
+the net data base will not be closed after each call to
 .Fn getnetbyname
 or
 .Fn getnetbyaddr .
@@ -140,7 +141,7 @@ The
 .Fn setnetent ,
 and
 .Fn endnetent
-functions appeared in 
+functions appeared in
 .Bx 4.2 .
 .Sh BUGS
 The data space used by these functions is static; if future use

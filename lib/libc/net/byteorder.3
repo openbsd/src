@@ -1,4 +1,4 @@
-.\"	$OpenBSD: byteorder.3,v 1.6 1999/05/23 14:11:01 aaron Exp $
+.\"	$OpenBSD: byteorder.3,v 1.7 1999/07/05 04:40:59 aaron Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -82,56 +82,86 @@
 .Ft u_int16_t
 .Fn swap16 "u_int16_t val16"
 .Sh DESCRIPTION
-These routines convert 16 and 32 bit quantities between different
-byte orderings.  The "swap" functions reverse the byte ordering of
+These routines convert 16- and 32-bit quantities between different
+byte orderings.  The
+.Dq swap
+functions reverse the byte ordering of
 the given quantity, the others converts either from/to the native
 byte order used by the host to/from either little- or big-endian (a.k.a
 network) order.
 .Pp
-Apart from the "swap" functions, the names can be described by this form:
+Apart from the swap functions, the names can be described by this form:
 {src-order}to{dst-order}{size}.
 Both {src-order} and {dst-order} can take the following forms:
-.Bl -tag -width "be "
-.It Em h
-host order
-.It Em n
-network order (big-endian)
-.It Em be
-big-endian (Most significant byte first)
-.It Em le
-little-endian (Least significant byte first)
+.Pp
+.Bl -tag -width "be " -offset indent -compact
+.It h
+Host order.
+.It n
+Network order (big-endian).
+.It be
+Big-endian (most significant byte first).
+.It le
+Little-endian (least significant byte first).
 .El
 .Pp
-One of the specified orderings must be "h".
-{Size} will take these forms:
-.Bl -tag -width "32 "
-.It Em l
-long (32-bit, used in conjunction with forms involving "n")
-.It Em s
-short (16-bit, used in conjunction with forms involving "n")
-.It Em 16
-16-bit
-.It Em 32
-32-bit
+One of the specified orderings must be
+.Sq h .
+{size} will take these forms:
+.Pp
+.Bl -tag -width "32 " -offset indent -compact
+.It l
+Long (32-bit, used in conjunction with forms involving
+.Sq n ) .
+.It s
+Short (16-bit, used in conjunction with forms involving
+.Sq n ) .
+.It 16
+16-bit.
+.It 32
+32-bit.
 .El
 .Pp
-The "swap" functions are of the form: swap{size}.
+The swap functions are of the form: swap{size}.
 .Pp
-Names involving "n" convert quantities between network
-byte order and host byte order.  The last letter (s/l) is a mnemonic
-for the traditional names for such quantities, short and long,
-respectively.  Today, the C concept of "short"/"long" integers
-need not coincide with this traditional misunderstanding.
+Names involving
+.Sq n
+convert quantities between network
+byte order and host byte order.  The last letter
+.Pf ( Sq s
+or
+.Sq l )
+is a mnemonic
+for the traditional names for such quantities,
+.Li short
+and
+.Li long ,
+respectively.  Today, the C concept of
+.Li short
+and
+.Li long
+integers need not coincide with this traditional misunderstanding.
 On machines which have a byte order which is the same as the network
 order, routines are defined as null macros.
 .Pp
-The functions involving either "be", "le" or "swap" use the numbers
-(16/32) for specifying the bitwidth of the quantities they operate on.
+The functions involving either
+.Dq be ,
+.Dq le ,
+or
+.Dq swap
+use the numbers
+16 and 32 for specifying the bitwidth of the quantities they operate on.
 Currently all supported architectures are either big- or little-endian
-so either the "be" or the "le" variants are implemented as null macros.
+so either the
+.Dq be
+or
+.Dq le
+variants are implemented as null macros.
 .Pp
 The routines mentioned above which have either {src-order} or {dst-order}
-set to "n" are most often used in
+set to
+.Sq n
+are most often used in
 conjunction with Internet addresses and ports as returned by
 .Xr gethostbyname 3
 and
@@ -142,14 +172,9 @@ and
 .Sh HISTORY
 The
 .Nm byteorder
-functions appeared in 
+functions appeared in
 .Bx 4.2 .
 .Sh BUGS
-On the
-.Tn vax ,
-.Tn alpha ,
-.Tn i386 ,
-and so far
-.Tn mips
+On the vax, alpha, i386, and so far mips,
 bytes are handled backwards from most everyone else in
 the world.  This is not expected to be fixed in the near future.

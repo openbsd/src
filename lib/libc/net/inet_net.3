@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet_net.3,v 1.3 1999/07/02 20:58:00 aaron Exp $
+.\"	$OpenBSD: inet_net.3,v 1.4 1999/07/05 04:40:59 aaron Exp $
 .\"	$NetBSD: inet_net.3,v 1.1 1997/06/18 02:25:27 lukem Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -54,14 +54,16 @@
 The
 .Fn inet_net_ntop
 function converts an Internet network number from network format (usually a
-.Ft struct in_addr
+.Li struct in_addr
 or some other binary form, in network byte order) to CIDR presentation format
 (suitable for external display purposes).
 .Fa bits
 is the number of bits in
 .Fa src
 that are the network number.
-It returns NULL if a system error occurs (in which case,
+It returns
+.Dv NULL
+if a system error occurs (in which case,
 .Va errno
 will have been set), or it returns a pointer to the destination string.
 .Pp
@@ -69,10 +71,10 @@ The
 .Fn inet_net_pton
 function converts a presentation format Internet network number (that is,
 printable form as held in a character string) to network format (usually a
-.Ft struct in_addr
+.Li struct in_addr
 or some other internal binary representation, in network byte order).
 It returns the number of bits (either computed based on the class, or
-specified with /CIDR), or -1 if a failure occurred
+specified with /CIDR), or \-1 if a failure occurred
 (in which case
 .Va errno
 will have been set.
@@ -80,9 +82,10 @@ It will be set to
 .Er ENOENT
 if the Internet network number was not valid).
 .Pp
-The currently supported value for
+The only value for
 .Fa af
-is: AF_INET.
+currently supported is
+.Dv AF_INET .
 .Fa size
 is the size of the result buffer
 .Fa dst .
@@ -101,11 +104,8 @@ as a byte of data and assigned, from left to right,
 to the four bytes of an Internet network number.  Note
 that when an Internet network number is viewed as a 32-bit
 integer quantity on a system that uses little-endian
-byte order (such as the 
-.Tn Intel 386, 486
-and
-.Tn Pentium
-processors) the bytes referred to above appear as
+byte order (such as the Intel 386, 486, and Pentium processors)
+the bytes referred to above appear as
 .Dq Li d.c.b.a .
 That is, little-endian bytes are ordered from right to left.
 .Pp

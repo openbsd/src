@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcmd.3,v 1.12 1999/05/23 14:11:02 aaron Exp $
+.\"	$OpenBSD: rcmd.3,v 1.13 1999/07/05 04:41:00 aaron Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -56,15 +56,15 @@ The
 function
 is used by the super-user to execute a command on a remote
 machine using an authentication scheme based on reserved
-port numbers.  If the calling process is not setuid and the
-.Li RSH
-environment variable is set and
+port numbers.  If the calling process is not setuid, the
+.Ev RSH
+environment variable is set, and
 .Fa inport
 is
-.Li shell/tcp ,
+.Dq shell/tcp ,
 .Xr rcmdsh 3
 is called instead with the value of
-.Li RSH .
+.Ev RSH .
 Alternately, if the user is not the super-user,
 .Fn rcmd
 will invoke
@@ -103,17 +103,14 @@ and a connection is established to a server
 residing at the well-known Internet port
 .Fa inport .
 If the user is not the super-user, the only valid port is
-.Li shell/tcp ,
+.Dq shell/tcp
 (usually port 514).
 .Pp
 If the connection succeeds,
 a socket in the Internet domain of type
 .Dv SOCK_STREAM
 is returned to the caller, and given to the remote
-command as 
-.Em stdin
-and
-.Em stdout .
+command as stdin and stdout.
 If
 .Fa fd2p
 is non-zero, then an auxiliary channel to a control
@@ -128,10 +125,10 @@ signal numbers, to be
 forwarded to the process group of the command.
 If
 .Fa fd2p
-is 0, then the 
+is 0, then the
 .Em stderr
 (unit 2 of the remote
-command) will be made the same as the 
+command) will be made the same as the
 .Em stdout
 and no
 provision is made for sending arbitrary signals to the remote process,
@@ -147,7 +144,7 @@ The
 .Fn rresvport
 function is used to obtain a socket with a privileged
 address bound to it.  This socket is suitable for use
-by 
+by
 .Fn rcmd
 and several other functions.  Privileged Internet ports are those
 in the range 0 to 1023.  Only the super-user
@@ -164,7 +161,7 @@ functions take a remote host's IP address or name, respectively,
 two user names and a flag indicating whether the local user's
 name is that of the super-user.
 Then, if the user is
-.Em NOT
+.Em not
 the super-user, it checks the
 .Pa /etc/hosts.equiv
 file.
@@ -177,9 +174,9 @@ If this file does not exist, is not a regular file, is owned by anyone
 other than the user or the super-user, or is writeable by anyone other
 than the owner, the check automatically fails.
 Zero is returned if the machine name is listed in the
-.Dq Pa hosts.equiv
+.Pa hosts.equiv
 file, or the host and remote user name are found in the
-.Dq Pa .rhosts
+.Pa .rhosts
 file; otherwise
 .Fn iruserok
 and
@@ -209,8 +206,9 @@ It returns \-1 on error with the global value
 .Va errno
 set according to the reason for failure.
 The error code
-.Dv EAGAIN
-is overloaded to mean ``All network ports in use.''
+.Er EAGAIN
+is overloaded to mean
+.Dq all network ports in use .
 .Sh SEE ALSO
 .Xr rlogin 1 ,
 .Xr rsh 1 ,
@@ -223,5 +221,5 @@ is overloaded to mean ``All network ports in use.''
 .Xr rshd 8
 .Sh HISTORY
 These
-functions appeared in 
+functions appeared in
 .Bx 4.2 .

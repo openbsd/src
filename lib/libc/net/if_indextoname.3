@@ -30,11 +30,11 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     From: @(#)rcmd.3	8.1 (Berkeley) 6/4/93
-.\"	$Id: if_indextoname.3,v 1.2 1999/07/03 21:43:12 deraadt Exp $
+.\"	$Id: if_indextoname.3,v 1.3 1999/07/05 04:40:59 aaron Exp $
 .\"
 .Dd May 21, 1998
 .Dt IF_NAMETOINDEX 3
-.Os KAME
+.Os
 .Sh NAME
 .Nm if_nametoindex ,
 .Nm if_indextoname ,
@@ -52,33 +52,32 @@
 .Ft "void"
 .Fn if_freenameindex "struct if_nameindex *ptr"
 .Sh DESCRIPTION
-The functions map interface index to readable interface name
-.Po
-such as
-.Li ``lo0''
-.Pc
-, and vice versa.
+These functions map interface indexes to interface names (such as
+.Dq lo0 ) ,
+and vice versa.
 .Pp
+The
 .Fn if_nametoindex
-converts readable interface name to interface index
-.Pp positive integer value .
+function converts an interface name specified by the
+.Fa ifname
+argument to an interface index (positive integer value).
 If the specified interface does not exist, 0 will be returned.
 .Pp
 .Fn if_indextoname
-converts interface index to readable interface name.
+converts an interface index specified by the
+.Fa ifindex
+argument to an interface name.
 The
 .Fa ifname
 argument must point to a buffer of at least
 .Dv IF_NAMESIZE
 bytes into which the interface name corresponding to the specified index is
 returned.
-.Po
-.Dv IF_NAMESIZE
+.Pf ( Dv IF_NAMESIZE
 is also defined in
-.Li <net/if.h>
+.Aq Pa net/if.h
 and its value includes a terminating null byte at the end of the
-interface name.
-.Pc
+interface name.)
 This pointer is also the return value of the function.
 If there is no interface corresponding to the specified index,
 .Dv NULL
@@ -90,7 +89,7 @@ returns an array of
 structures.
 .Fa if_nametoindex
 is also defined in
-.Li <net/if.h> ,
+.Aq Pa net/if.h ,
 and is as follows:
 .Bd -literal -offset
 struct if_nameindex {
@@ -106,9 +105,7 @@ of 0 and an
 .Fa if_name
 of
 .Dv NULL .
-The function returns a
-.Dv NULL
-pointer upon an error.
+The function returns a null pointer on error.
 The memory used for this array of structures along with the interface
 names pointed to by the
 .Fa if_name

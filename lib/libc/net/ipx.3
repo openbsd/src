@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipx.3,v 1.4 1999/05/23 14:11:01 aaron Exp $
+.\"	$OpenBSD: ipx.3,v 1.5 1999/07/05 04:40:59 aaron Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
 .Fd #include <netipx/ipx.h>
-.Ft struct ipx_addr 
+.Ft struct ipx_addr
 .Fn ipx_addr "char *cp"
 .Ft char *
 .Fn ipx_ntoa "struct ipx_addr ipx"
@@ -65,11 +65,11 @@ notation in common use:
 .Ed
 .Pp
 Trailing zero fields are suppressed, and each number is printed in hexadecimal,
-in a format suitable for input to 
+in a format suitable for input to
 .Fn ipx_addr .
 Any fields lacking super-decimal digits will have a
 trailing
-.Ql H
+.Sq H
 appended.
 .Pp
 An effort has been made to insure that
@@ -78,11 +78,11 @@ be compatible with most formats in common use.
 It will first separate an address into 1 to 3 fields using a single delimiter
 chosen from
 period
-.Ql \&. ,
+.Pq Ql \&. ,
 colon
-.Ql \&:
+.Pq Ql \&: ,
 or pound-sign
-.Ql \&# .
+.Pq Ql # .
 Each field is then examined for byte separators (colon or period).
 If there are byte separators, each subfield separated is taken to be
 a small hexadecimal number, and the entirety is taken as a network-byte-ordered
@@ -96,7 +96,7 @@ as hexadecimal if there is a leading
 .Ql 0x
 (as in C),
 a trailing
-.Ql H
+.Sq H
 (as in Mesa), or there are any super-decimal digits present.
 It is interpreted as octal is there is a leading
 .Ql 0
@@ -114,7 +114,7 @@ The precursor
 .Fn ns_addr
 and
 .Fn ns_ntoa
-functions appeared in 
+functions appeared in
 .Bx 4.3 .
 .Sh BUGS
 The string returned by

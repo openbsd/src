@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gethostbyname.3,v 1.11 1999/05/21 18:18:09 deraadt Exp $
+.\"	$OpenBSD: gethostbyname.3,v 1.12 1999/07/05 04:40:59 aaron Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -72,11 +72,11 @@ functions
 each return a pointer to an object with the
 following structure describing an internet host
 referenced by name or by address, respectively.
-This structure contains either information obtained from the name server (ie.
+This structure contains either information obtained from the name server (i.e.,
 .Xr resolver 3
 and
-.Xr named 8 ), Ns
-broken-out fields from a line in 
+.Xr named 8 ),
+broken-out fields from a line in
 .Pa /etc/hosts ,
 or database entries supplied by the
 .Xr yp 8
@@ -99,13 +99,13 @@ The members of this structure are:
 .It Fa h_name
 Official name of the host.
 .It Fa h_aliases
-A zero terminated array of alternate names for the host.
+A zero-terminated array of alternate names for the host.
 .It Fa h_addrtype
 The type of address being returned.
 .It Fa h_length
 The length, in bytes, of the address.
 .It Fa h_addr_list
-A zero terminated array of network addresses for the host.
+A zero-terminated array of network addresses for the host.
 Host addresses are returned in network byte order.
 .It Fa h_addr
 The first address in
@@ -132,9 +132,9 @@ for example
 The
 .Fn gethostbyaddr
 function will search for the specified address of length
-.Dv len
+.Fa len
 in the address family
-.Dv af .
+.Fa af .
 The only address family currently supported is
 .Dv AF_INET .
 .Pp
@@ -149,7 +149,7 @@ If the
 flag is non-zero,
 this sets the option to send all queries to the name server using
 .Tn TCP
-and to retain the connection after each call to 
+and to retain the connection after each call to
 .Fn gethostbyname
 or
 .Fn gethostbyaddr .
@@ -168,11 +168,11 @@ The
 .Fn herror
 function prints an error message describing the failure.  If its argument
 .Fa string
-is
-.Pf non Dv -NULL ,
+is non-null,
 it is prepended to the message string and separated from it by a colon
+.Pq Ql \&:
 and a space.  The error message is printed with a trailing newline.
-The contents of the error message is the same as that returned by 
+The contents of the error message is the same as that returned by
 .Fn hstrerror
 with argument
 .Fa h_errno .
@@ -182,7 +182,7 @@ with argument
 .It Pa /etc/resolv.conf
 .El
 .Sh DIAGNOSTICS
-Error return status from 
+Error return status from
 .Fn gethostbyname ,
 .Fn gethostbyname2 ,
 and
@@ -208,8 +208,8 @@ A retry at some later time may succeed.
 Some unexpected server failure was encountered.
 This is a non-recoverable error.
 .It Dv NO_DATA
-The requested name is valid but does not have an IP address; 
-this is not a temporary error.  
+The requested name is valid but does not have an IP address;
+this is not a temporary error.
 This means that the name is known to the name server but there is no address
 associated with this name.
 Another type of request to the name server using this domain name
@@ -254,7 +254,7 @@ closes the file.
 .Sh HISTORY
 The
 .Fn herror
-function appeared in 
+function appeared in
 .Bx 4.3 .
 The
 .Fn endhostent ,
@@ -272,7 +272,7 @@ copied before any subsequent calls overwrite it.
 Only the Internet
 address formats are currently understood.
 .Pp
-YP does not support any address families other than 
+YP does not support any address families other than
 .Dv AF_INET
 and uses
 the traditional database format.

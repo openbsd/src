@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolver.3,v 1.11 1999/05/25 13:06:45 aaron Exp $
+.\"	$OpenBSD: resolver.3,v 1.12 1999/07/05 04:41:00 aaron Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -101,20 +101,21 @@
 .Fa "int length"
 .Fc
 .Sh DESCRIPTION
-These routines are used for making, sending and interpreting
+These routines are used for making, sending, and interpreting
 query and reply messages with Internet domain name servers.
 .Pp
 Global configuration and state information that is used by the
 resolver routines is kept in the structure
-.Em _res .
+.Li _res .
 Most of the values have reasonable defaults and can be ignored.
 Options
 stored in
-.Em _res.options
+.Li _res.options
 are defined in
-.Pa resolv.h
+.Aq Pa resolv.h
 and are as follows.
-Options are stored as a simple bit mask containing the bitwise ``or''
+Options are stored as a simple bit mask containing the bitwise
+.Tn OR
 of the options enabled.
 .Bl -tag -width RES_USE_INET6
 .It Dv RES_INIT
@@ -326,7 +327,7 @@ The size of compressed name is returned or \-1 if there was an error.
 .Sh FILES
 .Bl -tag -width Pa
 /etc/resolv.conf
-The configuration file
+configuration file
 see
 .Xr resolv.conf 5 .
 .El
@@ -348,5 +349,5 @@ see
 .Sh HISTORY
 The
 .Nm
-function appeared in 
+function appeared in
 .Bx 4.3 .

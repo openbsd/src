@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet.3,v 1.7 1999/06/05 19:29:43 deraadt Exp $
+.\"	$OpenBSD: inet.3,v 1.8 1999/07/05 04:40:59 aaron Exp $
 .\"	$NetBSD: inet.3,v 1.7 1997/06/18 02:25:24 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -84,14 +84,17 @@ The
 .Fn inet_pton
 function converts a presentation format address (that is, printable form
 as held in a character string) to network format (usually a
-.Ft struct in_addr
+.Li struct in_addr
 or some other internal binary representation, in network byte order).  It
 returns 1 if the address was valid for the specified address family, or
-0 if the address wasn't parseable in the specified address family, or -1
+0 if the address wasn't parseable in the specified address family, or \-1
 if some system error occurred (in which case
 .Va errno
-will have been set).  This function is presently valid for AF_INET and
-AF_INET6.  The
+will have been set).  This function is presently valid for
+.Dv AF_INET
+and
+.Dv AF_INET6 .
+The
 .Fn inet_aton
 routine interprets the specified character string as an Internet address,
 placing the address into the structure provided.
@@ -108,9 +111,11 @@ numbers, respectively.
 The function
 .Fn inet_ntop
 converts an address from network format (usually a
-.Ft struct in_addr
+.Li struct in_addr
 or some other binary form, in network byte order) to presentation format
-(suitable for external display purposes).  It returns NULL if a system
+(suitable for external display purposes).  It returns
+.Dv NULL
+if a system
 error occurs (in which case,
 .Va errno
 will have been set), or it returns a pointer to the destination string.
@@ -153,7 +158,7 @@ as a byte of data and assigned, from left to right,
 to the four bytes of an Internet address.  Note
 that when an Internet address is viewed as a 32-bit
 integer quantity on a system that uses little-endian
-byte order (such as the 
+byte order (such as the
 .Tn Intel 386, 486
 and
 .Tn Pentium
@@ -212,10 +217,15 @@ addresses, it will be common for addresses to contain long
 strings of zero bits.  In order to make writing addresses
 .Pp
 containing zero bits easier a special syntax is available to
-compress the zeros.  The use of ``::'' indicates multiple groups
-of 16-bits of zeros.  The ``::'' can only appear once in an
-address.  The ``::'' can also be used to compress the leading
-and/or trailing zeros in an address.
+compress the zeros.  The use of
+.Dq \&:\&:
+indicates multiple groups
+of 16 bits of zeros.  The
+.Dq \&:\&:
+can only appear once in an
+address.  The
+.Dq \&:\&:
+can also be used to compress the leading and/or trailing zeros in an address.
 .Pp
 For example the following addresses:
 .Bd -literal -offset indent
@@ -277,7 +287,7 @@ does not accept 1-, 2-, or 3-part  dotted addresses; all four parts
 must be specified.  This is a narrower input set than that accepted by
 .Nm inet_aton .
 .Sh HISTORY
-The 
+The
 .Nm inet_addr ,
 .Nm inet_network ,
 .Nm inet_makeaddr ,
@@ -306,7 +316,7 @@ cannot return that value without indicating failure.
 Also,
 .Fn inet_addr
 should have been designed to return a
-.Fa "struct in_addr" .
+.Li struct in_addr .
 The newer
 .Fn inet_aton
 function does not share these problems, and almost all existing code
