@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uuencode.1,v 1.15 2004/07/28 08:19:40 jmc Exp $
+.\"	$OpenBSD: uuencode.1,v 1.16 2005/01/11 18:30:28 jmc Exp $
 .\"	$FreeBSD: uuencode.1,v 1.26 2003/03/18 14:24:47 fanf Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -193,7 +193,7 @@ $ uudecode -c \*(Lt $MAIL
 The following example extracts a compressed tar
 archive from your mailbox
 .Bd -literal -offset indent
-$ uudecode -o /dev/stdout \*(Gt $MAIL | zcat | tar xfv -
+$ uudecode -o /dev/stdout \*(Lt $MAIL | zcat | tar xfv -
 .Ed
 .Sh SEE ALSO
 .Xr basename 1 ,
