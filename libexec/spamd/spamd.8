@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.42 2004/01/21 01:55:10 deraadt Exp $
+.\"	$OpenBSD: spamd.8,v 1.43 2004/02/26 07:28:55 beck Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -31,8 +31,9 @@
 .Sh SYNOPSIS
 .Nm spamd
 .Bk -words
-.Op Fl 45dv
+.Op Fl 45dgv
 .Op Fl c Ar maxcon
+.Op Fl G Ar passtime:greyexp:whiteexp
 .Op Fl n Ar name
 .Op Fl p Ar port
 .Op Fl r Ar reply
@@ -64,6 +65,14 @@ Debug mode.
 does not
 .Xr fork 2
 into the background.
+.It Fl g
+Greylisting mode; see
+.Sx GREYLISTING
+below.
+.It Fl G Ar passtime:greyexp:whiteexp
+Adjust the three time parameters for greylisting; see
+.Sx GREYLISTING
+below.
 .It Fl n Ar name
 The SMTP version banner that is reported upon initial connection.
 .It Fl p Ar port
@@ -138,7 +147,7 @@ The rules can be loaded into a
 to simplify handling.
 .Bd -literal -offset 4n
 table <spamd> persist
-rdr pass inet proto tcp from <spamd> to any \\
+rdr pass inet proto tcp from <spamd> to any \e
     port smtp -> 127.0.0.1 port 8025
 .Ed
 .Pp
@@ -200,6 +209,112 @@ will reject mail by displaying all the messages from all blacklists in which
 a connecting address is matched.
 .Xr spamd-setup 8
 is normally used to configure this information.
+.Sh GREYLISTING
+When run in greylisting mode,
+.Nm
+will run in the normal mode for any addresses blacklisted by
+.Xr spamd-setup 8 .
+Connections from addresses not blacklisted by
+.Xr spamd-setup 8
+will be considered for greylisting.
+Such connections will not be stuttered at or delayed,
+and will receive the pleasantly innocuous temporary failure of:
+.Bd -literal -offset 4n
+450 Temporary failure, please try again later.
+.Ed
+.Pp
+in the SMTP dialogue immediately after the recipient is specified.
+.Nm
+will use the db file in
+.Pa /var/db/spamd
+to track these non-blacklisted connections to
+.Nm
+by connecting IP address, envelope-from, and envelope-to, or "tuple" for
+short.
+.Pp
+A previously unseen tuple is added to the
+.Pa /var/db/spamd
+database, recording the time an initial connection attempt was seen.
+After
+.Em passtime
+minutes (by default 30) if
+.Nm
+sees a retried attempt to deliver mail for the same tuple,
+.Nm
+will whitelist the connecting address by adding it as a
+whitelist entry to to
+.Pa /var/db/spamd .
+.Pp
+.Nm
+regularly scans the
+.Pa /var/db/spamd
+database and configures all whitelist addresses as the
+.Em spamd-white
+.Xr pf 4
+table.
+The
+.Em spamd-white
+table must be used to allow connections to pass to the
+real MTA as in the following
+.Xr pf.conf 5
+example:
+.Bd -literal -offset 4n
+table <spamd> persist
+table <spamd-white> persist
+rdr pass inet proto tcp from <spamd> to any \e
+    port smtp -> 127.0.0.1 port 8025
+rdr pass inet proto tcp from !<spamd-white> to any port smtp \e
+    -> 127.0.0.1 port 8025
+.Ed
+.Pp
+With this configuration,
+.Xr spamd-setup 8
+should be used to configure blacklists in
+.Nm
+and add them to the
+.Em spamd
+.Xr pf 4
+table.
+These connections will be stuttered at by
+.Nm .
+All other connections not in the
+.Em spamd-white
+table are redirected to
+.Nm
+but will not be stuttered at.
+Such connections will be
+considered for greylisting and eventual whitelisting (by addition
+to the
+.Em spamd-white
+table so they are not redirected) if they retry mail delivery.
+.Pp
+.Nm
+removes tuple entries from the
+.Pa /var/db/spamd
+database if delivery has not been retried within
+.Em greyexp
+hours (by default 4) from the initial time a connection is seen.
+The default is 4 hours as this is the most common setting after which
+MTA's will give up attempting to retry delivery of a message.
+.Pp
+.Nm
+removes whitelist entries from the
+.Pa /var/db/spamd
+database if no mail delivery activity has been seen from the
+whitelisted address by
+.Xr spamlogd 8
+within
+.Em whiteexp
+hours (by default 864, or 36 days) from the initial time an address
+is whitelisted.
+The default is 36 days to allow for the delivery of
+monthly mailing list digests without greylist delays every time.
+.Xr spamlogd 8
+should be used to update the whitelist entries in
+.Pa /var/db/spamd
+when connections are seen to pass to the real MTA on the
+.Em smtp
+port.
 .Sh LOGGING
 .Nm
 sends log messages to
@@ -225,6 +340,8 @@ daemon.err;daemon.warn;daemon.info	/var/log/spamd
 .Xr syslog.conf 5 ,
 .Xr pfctl 8 ,
 .Xr spamd-setup 8 ,
+.Xr spamdb 8 ,
+.Xr spamlog 8 ,
 .Xr syslogd 8
 .Sh HISTORY
 The
@@ -232,3 +349,17 @@ The
 command
 appeared in
 .Ox 3.3 .
+.Sh BUGS
+.Nm
+currently uses the user
+.Dq _spamd
+outside a chroot jail when running in greylisting mode, and requires
+the greylisting database in
+.Pa /var/db/spamd
+to be owned by the
+.Dq _spamd
+user.
+This is wrong and should change to a distinct user from the
+one used by the chrooted
+.Nm
+process.

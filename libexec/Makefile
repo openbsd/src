@@ -1,12 +1,12 @@
 #	from: @(#)Makefile	5.7 (Berkeley) 4/1/91
-#	$OpenBSD: Makefile,v 1.37 2003/07/22 17:15:13 brad Exp $
+#	$OpenBSD: Makefile,v 1.38 2004/02/26 07:28:54 beck Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR=	comsat fingerd ftpd ftp-proxy getNAME getty identd lockspool \
 	mail.local makewhatis \
 	rpc.rquotad rpc.rstatd rpc.rusersd rpc.rwalld rpc.sprayd spamd \
-	spamd-setup rshd talkd tcpd telnetd tftpd uucpd
+	spamlogd spamd-setup rshd talkd tcpd telnetd tftpd uucpd
 SUBDIR+=login_passwd login_skey login_reject \
 	login_chpass login_lchpass login_token login_radius
 

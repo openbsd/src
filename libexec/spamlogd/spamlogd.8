@@ -1,0 +1,78 @@
+.\"	$OpenBSD: spamlogd.8,v 1.1 2004/02/26 07:28:55 beck Exp $
+.\"
+.\" Copyright (c) 2004 Bob Beck.  All rights reserved.
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd February 16, 2004
+.Dt SPAMLOGD 8
+.Os
+.Sh NAME
+.Nm spamlogd
+.Nd spamd whitelist updating daemon
+.Sh SYNOPSIS
+.Nm spamlogd
+.Op Fl i Ar interface
+.Sh DESCRIPTION
+.Nm
+manipulates the
+.Xr spamd 8
+database in
+.Pa /var/db/spamd
+used for
+.Xr spamd 8
+greylisting.
+.Nm
+updates the
+.Pa /var/db/spamd
+whitelist entries whenever a connection
+to port 25 is logged to the
+.Xr pflog 4
+interface.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl i Ar interface
+Specify a network interface on which packets must arrive.
+The default is to watch for connections logged from any interfaces.
+.El
+.Pp
+It is important to be sure to log any connections to your real
+MTA in order for
+.Nm
+to update the whitelist entries.
+An example
+.Xr pf.conf 5
+configuration for logging such connections is as follows:
+.Bd -literal -offset 4n
+$EXT_IF = "fxp0"
+$MAILHOSTS = "{129.128.11.10, 129.128.11.43}"
+pass in log on $EXT_IF inet proto tcp to $MAILHOSTS \e
+	port smtp keep state
+.Ed
+.Sh FILES
+/var/db/spamd
+.Sh SEE ALSO
+.Xr pflog 4 ,
+.Xr spamd.conf 5 ,
+.Xr pflogd 8 ,
+.Xr spamd 8 ,
+.Xr spamd-setup 8 ,
+.Xr spamdb 8 ,
+.Xr tcpdump 8
+.Sh HISTORY
+The
+.Nm
+command
+appeared in
+.Ox 3.5 .

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdl.c,v 1.10 2003/09/26 16:07:29 deraadt Exp $ */
+/*	$OpenBSD: sdl.c,v 1.11 2004/02/26 07:28:55 beck Exp $ */
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
  *
@@ -188,13 +188,13 @@ match_addr(struct sdaddr *a, struct sdaddr *m, struct sdaddr *b,
 		break;
 	case AF_INET6:
 		if (((a->addr32[0]) ==
-		     (b->addr32[0] & m->addr32[0])) &&
+		    (b->addr32[0] & m->addr32[0])) &&
 		    ((a->addr32[1]) ==
-		     (b->addr32[1] & m->addr32[1])) &&
+		    (b->addr32[1] & m->addr32[1])) &&
 		    ((a->addr32[2]) ==
-		     (b->addr32[2] & m->addr32[2])) &&
+		    (b->addr32[2] & m->addr32[2])) &&
 		    ((a->addr32[3]) ==
-		     (b->addr32[3] & m->addr32[3])))
+		    (b->addr32[3] & m->addr32[3])))
 			match++;
 		break;
 	}
@@ -213,8 +213,8 @@ sdl_lookup(struct sdlist *head, int af, void * src)
 	struct sdlist *sdl;
 	struct sdentry *sda;
 	struct sdaddr *source = (struct sdaddr *) src;
-	static int sdnewlen = 0;
-	static struct sdlist **sdnew = NULL;
+	int sdnewlen = 0;
+	struct sdlist **sdnew = NULL;
 
 	if (head == NULL)
 		return (NULL);
@@ -229,7 +229,7 @@ sdl_lookup(struct sdlist *head, int af, void * src)
 
 					tmp = realloc(sdnew,
 					    (sdnewlen + 128) *
-					     sizeof(struct sdlist *));
+					    sizeof(struct sdlist *));
 					if (tmp == NULL)
 						/*
 						 * XXX out of memory -
