@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dmc.4,v 1.7 2001/11/13 13:54:26 mpech Exp $
+.\"	$OpenBSD: dmc.4,v 1.8 2003/03/06 09:17:02 jmc Exp $
 .\"	$NetBSD: dmc.4,v 1.3 1996/03/03 17:13:22 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991 Regents of the University of California.
@@ -84,17 +84,6 @@ The configuration flags specify how to set up the device,
 2	DDCMP Half Duplex, primary station
 3	DDCMP Half Duplex, secondary station
 .El
-.Pp
-Several device error counters are available via
-.Xr adb 1 ,
-for
-more information see the
-.Em adb
-script
-.Pa /usr/lib/adb/dmcstats ,
-or the
-.Tn DMC-11
-technical manual.
 .Pp
 The host's address must be specified with an
 .Dv SIOCSIFADDR
