@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.53 2002/08/28 15:43:03 pefo Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.54 2003/01/25 15:27:29 markus Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -220,7 +220,7 @@ tcp_output(tp)
 	register struct tcpcb *tp;
 {
 	register struct socket *so = tp->t_inpcb->inp_socket;
-	register long len, win;
+	register long len, win, txmaxseg;
 	int off, flags, error;
 	register struct mbuf *m;
 	register struct tcphdr *th;
@@ -383,8 +383,17 @@ again:
 				tcp_setpersist(tp);
 		}
 	}
-	if (len > tp->t_maxseg) {
-		len = tp->t_maxseg;
+
+        /*
+         * Never send more than half a buffer full.  This insures that we can
+         * always keep 2 packets on the wire, no matter what SO_SNDBUF is, and
+         * therefore acks will never be delayed unless we run out of data to
+         * transmit.
+         */
+	txmaxseg = ulmin(so->so_snd.sb_hiwat / 2, tp->t_maxseg);
+
+	if (len > txmaxseg) {
+		len = txmaxseg;
 		sendalot = 1;
 	}
 	if (off + len < so->so_snd.sb_cc)
@@ -403,7 +412,7 @@ again:
 	 * to send into a small window), then must resend.
 	 */
 	if (len) {
-		if (len == tp->t_maxseg)
+		if (len == txmaxseg)
 			goto send;
 		if ((idle || tp->t_flags & TF_NODELAY) &&
 		    len + off >= so->so_snd.sb_cc)
