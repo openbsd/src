@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_napms.c,v 1.3 1999/11/28 17:49:54 millert Exp $	*/
+/*	$OpenBSD: lib_napms.c,v 1.4 2000/02/06 07:10:51 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -46,8 +46,6 @@
 #if HAVE_NANOSLEEP
 #include <time.h>
 #elif USE_FUNC_POLL
-#include <stropts.h>
-#include <poll.h>
 #if HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
@@ -60,7 +58,7 @@
 #endif
 #endif
 
-MODULE_ID("$From: lib_napms.c,v 1.6 1999/10/21 23:01:41 tom Exp $")
+MODULE_ID("$From: lib_napms.c,v 1.7 2000/02/06 01:57:10 tom Exp $")
 
 int napms(int ms)
 {

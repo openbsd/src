@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_twait.c,v 1.2 1999/11/28 17:49:54 millert Exp $	*/
+/*	$OpenBSD: lib_twait.c,v 1.3 2000/02/06 07:10:51 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -49,8 +49,6 @@
 #include <curses.priv.h>
 
 #if USE_FUNC_POLL
-# include <stropts.h>
-# include <poll.h>
 # if HAVE_SYS_TIME_H
 #  include <sys/time.h>
 # endif
@@ -63,7 +61,7 @@
 # endif
 #endif
 
-MODULE_ID("$From: lib_twait.c,v 1.34 1999/10/16 21:25:10 tom Exp $")
+MODULE_ID("$From: lib_twait.c,v 1.35 2000/02/06 01:57:16 tom Exp $")
 
 static long _nc_gettime(bool first)
 {

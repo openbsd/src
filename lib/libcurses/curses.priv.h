@@ -1,4 +1,4 @@
-/*	$OpenBSD: curses.priv.h,v 1.23 2000/01/09 05:06:01 millert Exp $	*/
+/*	$OpenBSD: curses.priv.h,v 1.24 2000/02/06 07:10:50 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -35,7 +35,7 @@
 
 
 /*
- * $From: curses.priv.h,v 1.149 2000/01/08 17:17:39 tom Exp $
+ * $From: curses.priv.h,v 1.151 2000/02/06 01:57:01 tom Exp $
  *
  *	curses.priv.h
  *
@@ -99,8 +99,13 @@ extern int errno;
 #include <nc_panel.h>
 
 /* Some systems have a broken 'select()', but workable 'poll()'.  Use that */
-#if HAVE_POLL && HAVE_SYS_STROPTS_H && HAVE_POLL_H
+#if HAVE_WORKING_POLL
 #define USE_FUNC_POLL 1
+#ifdef HAVE_POLL_H
+#include <poll.h>
+#else
+#include <sys/poll.h>
+#endif
 #else
 #define USE_FUNC_POLL 0
 #endif

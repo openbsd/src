@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_update.c,v 1.5 2000/01/16 01:35:18 millert Exp $	*/
+/*	$OpenBSD: tty_update.c,v 1.6 2000/02/06 07:10:51 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998-2000 Free Software Foundation, Inc.                   *
@@ -65,8 +65,6 @@
 #endif
 
 #if USE_FUNC_POLL
-#include <stropts.h>
-#include <poll.h>
 #elif HAVE_SELECT
 #if HAVE_SYS_SELECT_H
 #include <sys/select.h>
@@ -75,7 +73,7 @@
 
 #include <term.h>
 
-MODULE_ID("$From: tty_update.c,v 1.123 2000/01/15 23:49:36 tom Exp $")
+MODULE_ID("$From: tty_update.c,v 1.124 2000/02/06 01:57:25 tom Exp $")
 
 /*
  * This define controls the line-breakout optimization.  Every once in a
