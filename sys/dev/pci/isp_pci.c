@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_pci.c,v 1.32 2003/02/28 15:36:39 mickey Exp $	*/
+/*	$OpenBSD: isp_pci.c,v 1.33 2003/03/03 18:27:11 mjacob Exp $	*/
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -225,6 +225,10 @@ static struct ispmdvec mdvec_2300 = {
 #define	PCI_PRODUCT_QLOGIC_ISP1280	0x1280
 #endif
 
+#ifndef	PCI_PRODUCT_QLOGIC_ISP10160
+#define	PCI_PRODUCT_QLOGIC_ISP10160	0x1016
+#endif
+
 #ifndef	PCI_PRODUCT_QLOGIC_ISP12160
 #define	PCI_PRODUCT_QLOGIC_ISP12160	0x1216
 #endif
@@ -255,6 +259,9 @@ static struct ispmdvec mdvec_2300 = {
 
 #define	PCI_QLOGIC_ISP1280	\
 	((PCI_PRODUCT_QLOGIC_ISP1280 << 16) | PCI_VENDOR_QLOGIC)
+
+#define	PCI_QLOGIC_ISP10160	\
+	((PCI_PRODUCT_QLOGIC_ISP10160 << 16) | PCI_VENDOR_QLOGIC)
 
 #define	PCI_QLOGIC_ISP12160	\
 	((PCI_PRODUCT_QLOGIC_ISP12160 << 16) | PCI_VENDOR_QLOGIC)
@@ -318,49 +325,51 @@ const char vstring[] =
     "Qlogic ISP Driver, NetBSD (pci) Platform Version %d.%d Core Version %d.%d";
 #endif
 
+const struct pci_matchid ispdev[] = {
+#ifndef	ISP_DISABLE_1020_SUPPORT
+	{ PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP1020 },
+#endif
+#ifndef	ISP_DISABLE_1080_SUPPORT
+	{ PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP1080 },
+	{ PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP1240 },
+	{ PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP1280 },
+#endif
+#ifndef	ISP_DISABLE_12160_SUPPORT
+	{ PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP10160 },
+	{ PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP12160 },
+#endif
+#ifndef	ISP_DISABLE_2100_SUPPORT
+	{ PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP2100 },
+#endif
+#ifndef	ISP_DISABLE_2200_SUPPORT
+	{ PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP2200 },
+#endif
+#ifndef	ISP_DISABLE_2300_SUPPORT
+	{ PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP2300 },
+	{ PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP2312 },
+#endif
+	{ 0, 0 }
+};
+
 static int
 isp_pci_probe(struct device *parent, void *match, void *aux)
 {
         struct pci_attach_args *pa = aux;
 
-        switch (pa->pa_id) {
-#ifndef	ISP_DISABLE_1020_SUPPORT
-	case PCI_QLOGIC_ISP:
-		return (1);
-#endif
-#ifndef	ISP_DISABLE_1080_SUPPORT
-	case PCI_QLOGIC_ISP1080:
-	case PCI_QLOGIC_ISP1240:
-	case PCI_QLOGIC_ISP1280:
-		return (1);
-#endif
 #ifndef	ISP_DISABLE_12160_SUPPORT
-	case PCI_QLOGIC_ISP12160:
-	{
-		pcireg_t subvid = 
-			pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBVEND_0);
+	/*
+	 * Sigh. Check for subvendor id match here. Too bad we
+	 * can't give an exclude mask in matchbyid.
+	 */
+        if (pa->pa_id == PCI_QLOGIC_ISP12160) {
+		pcireg_t subvid =
+		    pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBVEND_0);
 		if (subvid == AMI_RAID_SUBVENDOR_ID) {
 			return (0);
                 }
-		return (1);
 	}
 #endif
-#ifndef	ISP_DISABLE_2100_SUPPORT
-	case PCI_QLOGIC_ISP2100:
-		return (1);
-#endif
-#ifndef	ISP_DISABLE_2200_SUPPORT
-	case PCI_QLOGIC_ISP2200:
-		return (1);
-#endif
-#ifndef	ISP_DISABLE_2300_SUPPORT
-	case PCI_QLOGIC_ISP2300:
-	case PCI_QLOGIC_ISP2312:
-		return (1);
-#endif
-	default:
-		return (0);
-	}
+	return (pci_matchbyid(pa, ispdev, sizeof(ispdev)/sizeof(ispdev[0])));
 }
 
 
@@ -506,6 +515,18 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 #endif
 #ifndef	ISP_DISABLE_12160_SUPPORT
+	if (pa->pa_id == PCI_QLOGIC_ISP10160) {
+		isp->isp_mdvec = &mdvec_12160;
+		isp->isp_type = ISP_HA_SCSI_10160;
+		isp->isp_param = malloc(sizeof (sdparam), M_DEVBUF, M_NOWAIT);
+		if (isp->isp_param == NULL) {
+			printf(nomem);
+			return;
+		}
+		bzero(isp->isp_param, sizeof (sdparam));
+		pcs->pci_poff[DMA_BLOCK >> _BLK_REG_SHFT] =
+		    ISP1080_DMA_REGS_OFF;
+	}
 	if (pa->pa_id == PCI_QLOGIC_ISP12160) {
 		isp->isp_mdvec = &mdvec_12160;
 		isp->isp_type = ISP_HA_SCSI_12160;
@@ -515,7 +536,7 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 			printf(nomem);
 			return;
 		}
-		bzero(isp->isp_param, sizeof (sdparam));
+		bzero(isp->isp_param, 2 * sizeof (sdparam));
 		pcs->pci_poff[DMA_BLOCK >> _BLK_REG_SHFT] =
 		    ISP1080_DMA_REGS_OFF;
 	}
