@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.11 2003/08/15 08:00:51 otto Exp $	*/
+/*	$OpenBSD: util.h,v 1.12 2003/10/31 20:20:45 millert Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -26,7 +26,8 @@
  * behaviour
  */
 
-char		*fetchname(const char *, int, int);
+char		*fetchname(const char *, bool *, int);
+char		*checked_in(char *);
 int		backup_file(const char *);
 int		move_file(const char *, const char *);
 int		copy_file(const char *, const char *);

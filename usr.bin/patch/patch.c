@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.37 2003/08/10 21:28:48 otto Exp $	*/
+/*	$OpenBSD: patch.c,v 1.38 2003/10/31 20:20:45 millert Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: patch.c,v 1.37 2003/08/10 21:28:48 otto Exp $";
+static const char rcsid[] = "$OpenBSD: patch.c,v 1.38 2003/10/31 20:20:45 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -86,6 +86,7 @@ bool		check_only = false;
 int		diff_type = 0;
 char		*revision = NULL;	/* prerequisite revision, if any */
 LINENUM		input_lines = 0;	/* how long is input file in lines */
+int		posix = 0;		/* strict POSIX mode? */
 
 static void	reinitialize_almost_everything(void);
 static void	get_some_switches(void);
@@ -196,10 +197,9 @@ main(int argc, char *argv[])
 	get_some_switches();
 
 	if (backup_type == none) {
-		v = getenv("VERSION_CONTROL");
-#ifdef notyet
-		if (v != NULL)
-#endif
+		if ((v = getenv("PATCH_VERSION_CONTROL")) == NULL)
+			v = getenv("VERSION_CONTROL");
+		if (v != NULL || !posix)
 			backup_type = get_version(v);	/* OK to pass NULL. */
 	}
 
@@ -465,6 +465,7 @@ get_some_switches(void)
 		{"unified",		no_argument,		0,	'u'},
 		{"version",		no_argument,		0,	'v'},
 		{"version-control",	required_argument,	0,	'V'},
+		{"posix",		no_argument,		&posix,	1},
 		{NULL,			0,			0,	0}
 	};
 	int ch;
@@ -478,10 +479,8 @@ get_some_switches(void)
 	while ((ch = getopt_long(Argc, Argv, options, longopts, NULL)) != -1) {
 		switch (ch) {
 		case 'b':
-#ifdef notyet
 			if (backup_type == none)
 				backup_type = numbered_existing;
-#endif
 			if (optarg == NULL)
 				break;
 			if (verbose)
@@ -578,7 +577,8 @@ get_some_switches(void)
 			break;
 #endif
 		default:
-			usage();
+			if (ch != '\0')
+				usage();
 			break;
 		}
 	}
@@ -595,6 +595,9 @@ get_some_switches(void)
 			Argc--;
 		}
 	}
+
+	if (getenv("POSIXLY_CORRECT") != NULL)
+		posix = 1;
 }
 
 static __dead void

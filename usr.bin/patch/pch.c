@@ -1,4 +1,4 @@
-/*	$OpenBSD: pch.c,v 1.31 2003/09/28 07:55:19 otto Exp $	*/
+/*	$OpenBSD: pch.c,v 1.32 2003/10/31 20:20:45 millert Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -27,13 +27,15 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: pch.c,v 1.31 2003/09/28 07:55:19 otto Exp $";
+static const char rcsid[] = "$OpenBSD: pch.c,v 1.32 2003/10/31 20:20:45 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
 
 #include <ctype.h>
+#include <libgen.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -75,7 +77,9 @@ static int	intuit_diff_type(void);
 static void	next_intuit_at(LINENUM, LINENUM);
 static void	skip_to(LINENUM, LINENUM);
 static char	*pgets(char *, int, FILE *);
-
+static char	*best_name(const struct file_name *, bool);
+static char	*posix_name(const struct file_name *, bool);
+static size_t	num_components(const char *);
 
 /*
  * Prepare to look for the next patch in the patch file.
@@ -180,6 +184,8 @@ grow_hunkmax(void)
 bool
 there_is_another_patch(void)
 {
+	bool exists = false;
+
 	if (p_base != 0L && p_base >= p_filesize) {
 		if (verbose)
 			say("done\n");
@@ -219,15 +225,16 @@ there_is_another_patch(void)
 		if (*buf != '\n') {
 			free(bestguess);
 			bestguess = savestr(buf);
-			filearg[0] = fetchname(buf, 0, false);
+			filearg[0] = fetchname(buf, &exists, 0);
 		}
-		if (filearg[0] == NULL) {
+		if (!exists) {
+			free(filearg[0]);
 			ask("No file found--skip this patch? [n] ");
 			if (*buf != 'y')
 				continue;
 			if (verbose)
 				say("Skipping patch...\n");
-			filearg[0] = fetchname(bestguess, 0, true);
+			filearg[0] = fetchname(bestguess, &exists, 0);
 			skip_rest_of_patch = true;
 			return true;
 		}
@@ -246,15 +253,10 @@ intuit_diff_type(void)
 	bool	last_line_was_command = false, this_is_a_command = false;
 	bool	stars_last_line = false, stars_this_line = false;
 	char	*s, *t;
-	char	*indtmp = NULL;
-	char	*oldtmp = NULL;
-	char	*newtmp = NULL;
-	char	*indname = NULL;
-	char	*oldname = NULL;
-	char	*newname = NULL;
 	int	indent, retval;
-	bool	no_filearg = (filearg[0] == NULL);
+	struct file_name names[MAX_FILE];
 
+	memset(names, 0, sizeof(names));
 	ok_to_create_file = false;
 	fseek(pfp, p_base, SEEK_SET);
 	p_input_line = p_bline - 1;
@@ -295,13 +297,18 @@ intuit_diff_type(void)
 			p_indent = indent;	/* assume this for now */
 		}
 		if (!stars_last_line && strnEQ(s, "*** ", 4))
-			oldtmp = savestr(s + 4);
+			names[OLD_FILE].path = fetchname(s + 4,
+			    &names[OLD_FILE].exists, strippath);
 		else if (strnEQ(s, "--- ", 4))
-			newtmp = savestr(s + 4);
+			names[NEW_FILE].path = fetchname(s + 4,
+			    &names[NEW_FILE].exists, strippath);
 		else if (strnEQ(s, "+++ ", 4))
-			oldtmp = savestr(s + 4); /* pretend it is the old name */
+			/* pretend it is the old name */
+			names[OLD_FILE].path = fetchname(s + 4,
+			    &names[OLD_FILE].exists, strippath);
 		else if (strnEQ(s, "Index:", 6))
-			indtmp = savestr(s + 6);
+			names[INDEX_FILE].path = fetchname(s + 6,
+			    &names[INDEX_FILE].exists, strippath);
 		else if (strnEQ(s, "Prereq:", 7)) {
 			for (t = s + 7; isspace(*t); t++)
 				;
@@ -324,7 +331,7 @@ intuit_diff_type(void)
 			goto scan_exit;
 		}
 		if ((!diff_type || diff_type == UNI_DIFF) && strnEQ(s, "@@ -", 4)) {
-			if (!atol(s + 3))
+			if (strnEQ(s + 4, "0,0", 3))
 				ok_to_create_file = true;
 			p_indent = indent;
 			p_start = this_line;
@@ -335,13 +342,12 @@ intuit_diff_type(void)
 		stars_this_line = strnEQ(s, "********", 8);
 		if ((!diff_type || diff_type == CONTEXT_DIFF) && stars_last_line &&
 		    strnEQ(s, "*** ", 4)) {
-			if (!atol(s + 4))
+			if (atol(s + 4) == 0)
 				ok_to_create_file = true;
 			/*
-			 * if this is a new context diff the character just
-			 * before
+			 * If this is a new context diff the character just
+			 * before the newline is a '*'.
 			 */
-			/* the newline is a '*'. */
 			while (*s != '\n')
 				s++;
 			p_indent = indent;
@@ -361,54 +367,44 @@ intuit_diff_type(void)
 		}
 	}
 scan_exit:
-	if (no_filearg) {
-		if (indtmp != NULL)
-			indname = fetchname(indtmp, strippath, ok_to_create_file);
-		if (oldtmp != NULL)
-			oldname = fetchname(oldtmp, strippath, ok_to_create_file);
-		if (newtmp != NULL)
-			newname = fetchname(newtmp, strippath, ok_to_create_file);
-		if (indname)
-			filearg[0] = savestr(indname);
-		else if (oldname && newname) {
-			if (strlen(oldname) < strlen(newname))
-				filearg[0] = savestr(oldname);
-			else
-				filearg[0] = savestr(newname);
-		} else if (oldname)
-			filearg[0] = savestr(oldname);
-		else if (newname)
-			filearg[0] = savestr(newname);
+	if (retval == UNI_DIFF) {
+		/* unswap old and new */
+		struct file_name tmp = names[OLD_FILE];
+		names[OLD_FILE] = names[NEW_FILE];
+		names[NEW_FILE] = tmp;
+	}
+	if (filearg[0] == NULL) {
+		if (posix)
+			filearg[0] = posix_name(names, ok_to_create_file);
+		else {
+			/* Ignore the Index: name for context diffs, like GNU */
+			if (names[OLD_FILE].path != NULL ||
+			    names[NEW_FILE].path != NULL) {
+				free(names[INDEX_FILE].path);
+				names[INDEX_FILE].path = NULL;
+			}
+			filearg[0] = best_name(names, ok_to_create_file);
+		}
 	}
 
 	free(bestguess);
 	bestguess = NULL;
-
 	if (filearg[0] != NULL)
 		bestguess = savestr(filearg[0]);
-	else if (indtmp != NULL)
-		bestguess = fetchname(indtmp, strippath, true);
-	else {
-		if (oldtmp != NULL)
-			oldname = fetchname(oldtmp, strippath, true);
-		if (newtmp != NULL)
-			newname = fetchname(newtmp, strippath, true);
-		if (oldname && newname) {
-			if (strlen(oldname) < strlen(newname))
-				bestguess = savestr(oldname);
-			else
-				bestguess = savestr(newname);
-		} else if (oldname)
-			bestguess = savestr(oldname);
-		else if (newname)
-			bestguess = savestr(newname);
+	else if (!ok_to_create_file) {
+		/*
+		 * We don't want to create a new file but we need a
+		 * filename to set bestguess.  Avoid setting filearg[0]
+		 * so the file is not created automatically.
+		 */
+		if (posix)
+			bestguess = posix_name(names, true);
+		else
+			bestguess = best_name(names, true);
 	}
-	free(indtmp);
-	free(oldtmp);
-	free(newtmp);
-	free(indname);
-	free(oldname);
-	free(newname);
+	free(names[OLD_FILE].path);
+	free(names[NEW_FILE].path);
+	free(names[INDEX_FILE].path);
 	return retval;
 }
 
@@ -1420,4 +1416,128 @@ do_ed_script(void)
 			chmod(outname, filemode);
 	}
 	set_signals(1);
+}
+
+/*
+ * Choose the name of the file to be patched based on POSIX rules.
+ * NOTE: the POSIX rules are amazingly stupid and we only follow them
+ *       if the user specified --posix or set POSIXLY_CORRECT.
+ */
+static char *
+posix_name(const struct file_name *names, bool assume_exists)
+{
+	char *path = NULL;
+	int i;
+
+	/*
+	 * POSIX states that the filename will be chosen from one
+	 * of the old, new and index names (in that order) if
+	 * the file exists relative to CWD after -p stripping.
+	 */
+	for (i = 0; i < MAX_FILE; i++) {
+		if (names[i].path != NULL && names[i].exists) {
+			path = names[i].path;
+			break;
+		}
+	}
+	if (path == NULL && !assume_exists) {
+		/*
+		 * No files found, look for something we can checkout from
+		 * RCS/SCCS dirs.  Same order as above.
+		 */
+		for (i = 0; i < MAX_FILE; i++) {
+			if (names[i].path != NULL &&
+			    (path = checked_in(names[i].path)) != NULL)
+				break;
+		}
+		/*
+		 * Still no match?  Check to see if the diff could be creating
+		 * a new file.
+		 */
+		if (path == NULL && ok_to_create_file &&
+		    names[NEW_FILE].path != NULL)
+			path = names[NEW_FILE].path;
+	}
+
+	return path ? savestr(path) : NULL;
+}
+
+/*
+ * Choose the name of the file to be patched based the "best" one
+ * available.
+ */
+static char *
+best_name(const struct file_name *names, bool assume_exists)
+{
+	size_t min_components, min_baselen, min_len, tmp;
+	char *best = NULL;
+	int i;
+
+	/*
+	 * The "best" name is the one with the fewest number of path
+	 * components, the shortest basename length, and the shortest
+	 * overall length (in that order).  We only use the Index: file
+	 * if neither of the old or new files could be intuited from
+	 * the diff header.
+	 */
+	min_components = min_baselen = min_len = SIZE_MAX;
+	for (i = INDEX_FILE; i >= OLD_FILE; i--) {
+		if (names[i].path == NULL ||
+		    (!names[i].exists && !assume_exists))
+			continue;
+		if ((tmp = num_components(names[i].path)) > min_components)
+			continue;
+		min_components = tmp;
+		if ((tmp = strlen(basename(names[i].path))) > min_baselen)
+			continue;
+		min_baselen = tmp;
+		if ((tmp = strlen(names[i].path)) > min_len)
+			continue;
+		min_len = tmp;
+		best = names[i].path;
+	}
+	if (best == NULL) {
+		/*
+		 * No files found, look for something we can checkout from
+		 * RCS/SCCS dirs.  Logic is identical to that above...
+		 */
+		min_components = min_baselen = min_len = SIZE_MAX;
+		for (i = INDEX_FILE; i >= OLD_FILE; i--) {
+			if (names[i].path == NULL ||
+			    checked_in(names[i].path) == NULL)
+				continue;
+			if ((tmp = num_components(names[i].path)) > min_components)
+				continue;
+			min_components = tmp;
+			if ((tmp = strlen(basename(names[i].path))) > min_baselen)
+				continue;
+			min_baselen = tmp;
+			if ((tmp = strlen(names[i].path)) > min_len)
+				continue;
+			min_len = tmp;
+			best = names[i].path;
+		}
+		/*
+		 * Still no match?  Check to see if the diff could be creating
+		 * a new file.
+		 */
+		if (best == NULL && ok_to_create_file &&
+		    names[NEW_FILE].path != NULL)
+			best = names[NEW_FILE].path;
+	}
+
+	return best ? savestr(best) : NULL;
+}
+
+static size_t
+num_components(const char *path)
+{
+	size_t n;
+	const char *cp;
+
+	for (n = 0, cp = path; (cp = strchr(cp, '/')) != NULL; n++, cp++) {
+		while (*cp == '/')
+			cp++;		/* skip consecutive slashes */
+	}
+	return n;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.26 2003/08/15 08:00:51 otto Exp $	*/
+/*	$OpenBSD: util.c,v 1.27 2003/10/31 20:20:45 millert Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char     rcsid[] = "$OpenBSD: util.c,v 1.26 2003/08/15 08:00:51 otto Exp $";
+static const char     rcsid[] = "$OpenBSD: util.c,v 1.27 2003/10/31 20:20:45 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -330,9 +330,9 @@ makedirs(const char *filename, bool striplast)
  * Make filenames more reasonable.
  */
 char *
-fetchname(const char *at, int strip_leading, int assume_exists)
+fetchname(const char *at, bool *exists, int strip_leading)
 {
-	char		*fullname, *name, *t, tmpbuf[200];
+	char		*fullname, *name, *t;
 	int		sleading;
 	struct stat	filestat;
 
@@ -342,7 +342,7 @@ fetchname(const char *at, int strip_leading, int assume_exists)
 		at++;
 #ifdef DEBUGGING
 	if (debug & 128)
-		say("fetchname %s %d %d\n", at, strip_leading, assume_exists);
+		say("fetchname %s %d\n", at, strip_leading);
 #endif
 	/* So files can be created by diffing against /dev/null.  */
 	if (strnEQ(at, _PATH_DEVNULL, sizeof(_PATH_DEVNULL) - 1))
@@ -372,23 +372,34 @@ fetchname(const char *at, int strip_leading, int assume_exists)
 	name = savestr(name);
 	free(fullname);
 
-	if (stat(name, &filestat) && !assume_exists) {
-		char	*filebase = basename(name);
-		char	*filedir = dirname(name);
+	*exists = stat(name, &filestat) == 0;
+	return name;
+}
+
+/*
+ * Takes the name returned by fetchname and looks in RCS/SCCS directories
+ * for a checked in version.
+ */
+char *
+checked_in(char *file)
+{
+	char		*filebase, *filedir, tmpbuf[MAXPATHLEN];
+	struct stat	filestat;
+
+	filebase = basename(file);
+	filedir = dirname(file);
 
 #define try(f, a1, a2, a3) \
-	(snprintf(tmpbuf, sizeof tmpbuf, f, a1, a2, a3), stat(tmpbuf, &filestat) == 0)
+(snprintf(tmpbuf, sizeof tmpbuf, f, a1, a2, a3), stat(tmpbuf, &filestat) == 0)
 
-		if (try("%s/RCS/%s%s", filedir, filebase, RCSSUFFIX) ||
-		    try("%s/RCS/%s%s", filedir, filebase, "") ||
-		    try("%s/%s%s", filedir, filebase, RCSSUFFIX) ||
-		    try("%s/SCCS/%s%s", filedir, SCCSPREFIX, filebase) ||
-		    try("%s/%s%s", filedir, SCCSPREFIX, filebase))
-			return name;
-		free(name);
-		name = NULL;
-	}
-	return name;
+	if (try("%s/RCS/%s%s", filedir, filebase, RCSSUFFIX) ||
+	    try("%s/RCS/%s%s", filedir, filebase, "") ||
+	    try("%s/%s%s", filedir, filebase, RCSSUFFIX) ||
+	    try("%s/SCCS/%s%s", filedir, SCCSPREFIX, filebase) ||
+	    try("%s/%s%s", filedir, SCCSPREFIX, filebase))
+		return file;
+
+	return NULL;
 }
 
 void

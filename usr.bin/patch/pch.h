@@ -1,4 +1,4 @@
-/*	$OpenBSD: pch.h,v 1.8 2003/08/15 08:00:51 otto Exp $	*/
+/*	$OpenBSD: pch.h,v 1.9 2003/10/31 20:20:45 millert Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -25,6 +25,16 @@
  * -C option added in 1998, original code by Marc Espie, based on FreeBSD
  * behaviour
  */
+
+#define OLD_FILE	0
+#define NEW_FILE	1
+#define INDEX_FILE	2
+#define MAX_FILE	3
+
+struct file_name {
+	char *path;
+	bool exists;
+};
 
 void		re_patch(void);
 void		open_patch_file(const char *);
