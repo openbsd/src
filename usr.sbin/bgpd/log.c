@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.2 2003/12/17 18:11:31 henning Exp $ */
+/*	$OpenBSD: log.c,v 1.3 2003/12/20 18:32:22 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -101,6 +101,12 @@ static const char *suberr_update_names[] = {
 	"AS-Path unacceptable"
 };
 
+static const char *procnames[] = {
+	"parent",
+	"SE",
+	"RDE"
+};
+
 int	debug;
 
 char	*log_fmt_peer(struct peer *);
@@ -193,16 +199,20 @@ void
 fatal(const char *emsg, int error)
 {
 	if (emsg == NULL)
-		logit(LOG_CRIT, "%s", strerror(error));
+		logit(LOG_CRIT, "fatal in %s: %s", procnames[bgpd_process],
+		    strerror(error));
 	else
 		if (error)
-			logit(LOG_CRIT, "%s: %s", emsg, strerror(error));
+			logit(LOG_CRIT, "fatal in %s: %s: %s",
+			    procnames[bgpd_process], emsg, strerror(error));
 		else
-			logit(LOG_CRIT, "%s", emsg);
+			logit(LOG_CRIT, "fatal in %s: %s",
+			    procnames[bgpd_process], emsg);
 
-	/* XXX check which process we are and notify others! */
-	sleep(10);
-	_exit(1);
+	if (bgpd_process == PROC_MAIN)
+		exit(1);
+	else				/* parent copes via SIGCHLD */
+		_exit(1);
 }
 
 void

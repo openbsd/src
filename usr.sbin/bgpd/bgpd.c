@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.3 2003/12/20 14:33:09 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.4 2003/12/20 18:32:22 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -100,6 +100,7 @@ main(int argc, char *argv[])
 	int			 m2r_writes_queued = 0;
 
 	conffile = CONFFILE;
+	bgpd_process = PROC_MAIN;
 
 	log_init(1);		/* log to stderr until daemonized */
 

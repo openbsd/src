@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.2 2003/12/20 14:33:09 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.3 2003/12/20 18:32:22 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -37,6 +37,12 @@
 
 #define BGPD_OPT_VERBOSE		0x0001
 #define BGPD_OPT_VERBOSE2		0x0002
+
+enum {
+	PROC_MAIN,
+	PROC_SE,
+	PROC_RDE
+} bgpd_process;
 
 enum session_state {
 	STATE_NONE,
