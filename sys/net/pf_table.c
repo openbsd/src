@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.54 2004/06/02 22:18:25 tedu Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.55 2004/06/07 13:16:19 cedric Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -317,7 +317,7 @@ pfr_del_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	struct pfr_kentryworkq	 workq;
 	struct pfr_kentry	*p;
 	struct pfr_addr		 ad;
-	int			 i, rv, s, xdel = 0;
+	int			 i, rv, s, xdel = 0, log = 1;
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC+PFR_FLAG_DUMMY+PFR_FLAG_FEEDBACK);
 	if (pfr_validate_table(tbl, 0, flags & PFR_FLAG_USERIOCTL))
@@ -327,7 +327,34 @@ pfr_del_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 		return (ESRCH);
 	if (kt->pfrkt_flags & PFR_TFLAG_CONST)
 		return (EPERM);
-	pfr_mark_addrs(kt);
+	/*
+	 * there are two algorithms to choose from here.
+	 * with:
+	 *   n: number of addresses to delete
+	 *   N: number of addresses in the table
+	 *
+	 * one is O(N) and is better for large 'n'
+	 * one is O(n*LOG(N)) and is better for small 'n'
+	 * 
+	 * following code try to decide which one is best.
+	 */
+	for (i = kt->pfrkt_cnt; i > 0; i >>= 1)
+		log++;
+	if (size > kt->pfrkt_cnt/log) {
+		/* full table scan */
+		pfr_mark_addrs(kt);
+	} else {
+		/* iterate over addresses to delete */
+		for (i = 0; i < size; i++) {
+			if (COPYIN(addr+i, &ad, sizeof(ad)))
+				return (EFAULT);
+			if (pfr_validate_addr(&ad))
+				return (EINVAL);
+			p = pfr_lookup_addr(kt, &ad, 1);
+			if (p != NULL)
+				p->pfrke_mark = 0;
+		}
+	}
 	SLIST_INIT(&workq);
 	for (i = 0; i < size; i++) {
 		if (COPYIN(addr+i, &ad, sizeof(ad)))
