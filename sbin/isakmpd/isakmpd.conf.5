@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.52 2001/05/05 00:49:38 angelos Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.53 2001/06/05 11:20:28 angelos Exp $
 .\" $EOM: isakmpd.conf.5,v 1.57 2000/12/21 14:43:17 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -936,11 +936,6 @@ LIFE_DURATION=		32768,16384:65536
 LIFE_TYPE=		KILOBYTES
 LIFE_DURATION=		4608000,4096000:8192000
 .Ed
-.Sh BUGS
-.Nm
-does not currently verify the Remote-ID as specified in the
-ISAKMP-peer section.
-It is still possible to verify this through the policy file.
 .Sh FILES
 .Bl -tag -width /etc/isakmpd/isakmpd.conf
 .It Pa /etc/isakmpd/isakmpd.conf
