@@ -23,7 +23,7 @@ TESTS = test_create test_pthread_join test_switch test_sleep test_readdir \
 	test_fork test_execve test_preemption \
 	test_sock_1 test_sock_2 test_stdio_1 test_pthread_mutex \
 	test_pthread_cond_timedwait test_netdb test_pw test_cwd \
-	test_sock_2a test_cancel
+	test_sock_2a test_cancel test_sigsuspend test_sigwait
 
 SRCS =		${TESTS:=.c}
 CLEANFILES +=	${TESTS} 
