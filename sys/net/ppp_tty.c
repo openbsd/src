@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp_tty.c,v 1.7 1997/09/05 04:27:03 millert Exp $	*/
+/*	$OpenBSD: ppp_tty.c,v 1.8 1999/07/04 20:39:28 deraadt Exp $	*/
 /*	$NetBSD: ppp_tty.c,v 1.12 1997/03/24 21:23:10 christos Exp $	*/
 
 /*
@@ -776,7 +776,7 @@ pppgetm(sc)
 /*
  * tty interface receiver interrupt.
  */
-static unsigned paritytab[8] = {
+static unsigned int paritytab[8] = {
     0x96696996, 0x69969669, 0x69969669, 0x96696996,
     0x69969669, 0x96696996, 0x96696996, 0x69969669
 };

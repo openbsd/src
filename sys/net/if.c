@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.18 1998/08/05 19:51:06 millert Exp $	*/
+/*	$OpenBSD: if.c,v 1.19 1999/07/04 20:39:28 deraadt Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -84,7 +84,7 @@ static void
 if_attachsetup(ifp)
 	struct ifnet *ifp;
 {
-	unsigned socksize, ifasize;
+	unsigned int socksize, ifasize;
 	int namelen, masklen;
 	register struct sockaddr_dl *sdl;
 	register struct ifaddr *ifa;
@@ -92,7 +92,7 @@ if_attachsetup(ifp)
 
 	ifp->if_index = ++if_index;
 	if (ifnet_addrs == 0 || if_index >= if_indexlim) {
-		unsigned n = (if_indexlim <<= 1) * sizeof(ifa);
+		unsigned int n = (if_indexlim <<= 1) * sizeof(ifa);
 		struct ifaddr **q = (struct ifaddr **)
 					malloc(n, M_IFADDR, M_WAITOK);
 		if (ifnet_addrs) {
