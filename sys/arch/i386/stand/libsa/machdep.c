@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.9 1997/08/13 03:23:39 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.10 1997/08/13 04:32:43 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -31,7 +31,12 @@
  * SUCH DAMAGE.
  *
  */
-
+/*
+ * APM derived from: apm_init.S, LP (Laptop Package)
+ * wich contained this:
+ * Copyright (C) 1994 by HOSOKAWA, Tatsumi <hosokawa@mt.cs.keio.ac.jp>
+ *
+ */
 /*
  * If you want to know the specification of APM BIOS, see the following
  * documentations,
