@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.s,v 1.15 2001/08/25 13:33:37 hugh Exp $     */
+/*	$OpenBSD: subr.s,v 1.16 2002/01/23 23:24:40 miod Exp $     */
 /*	$NetBSD: subr.s,v 1.32 1999/03/25 00:41:48 mrg Exp $	   */
 
 /*
@@ -343,11 +343,17 @@ ENTRY(cpu_exit,0)
 # copy/fetch/store routines. 
 #
 	.align 2,1
-ALTENTRY(copyin)
-ENTRY(copyout, R2|R3|R4|R5|R6)
-	movab	1f,*pcbtrap
+ENTRY(copyin, R2|R3|R4|R5|R6)
 	movl	4(ap), r0
+	blss	3f		# kernel space
 	movl	8(ap), r1
+	brb	2f
+
+ENTRY(copyout, R2|R3|R4|R5|R6)
+	movl	8(ap), r1
+	blss	3f		# kernel space
+	movl	4(ap), r0
+2:	movab	1f,*pcbtrap
 	movzwl	12(ap), r2
 	movzwl	14(ap), r6
 
@@ -360,6 +366,9 @@ ENTRY(copyout, R2|R3|R4|R5|R6)
 	sobgtr	r6,0b
 	
 1:	clrl	*pcbtrap
+	ret
+
+3:	movl	$EFAULT, r0
 	ret
 
 /* kcopy:  just like bcopy, except return -1 upon failure */	
@@ -393,16 +402,32 @@ ENTRY(kcopy,R2|R3|R4|R5|R6)
 	movl	r1,r0
 	ret
 
-_copystr:	.globl	_copystr
-_copyinstr:	.globl	_copyinstr
-_copyoutstr:	.globl	_copyoutstr
-	.word	0
-	movl	4(ap),r4	# from
-	movl	8(ap),r5	# to
-	movl	12(ap),r2	# len
-	movl	16(ap),r3	# copied
+ENTRY(copyinstr,0)
+	tstl	4(ap)		# is from a kernel address?
+	bgeq	8f		# no, continue
 
-	movab	2f,*pcbtrap
+6:	movl	$EFAULT,r0
+	ret
+
+ENTRY(copyoutstr,0)
+	tstl	8(ap)		# is to a kernel address?
+	bgeq	8f		# no, continue
+	brb	6b
+
+ENTRY(copystr,0)
+8:	movl	4(ap),r4	# from
+	movl	8(ap),r5	# to
+	movl	16(ap),r3	# copied
+	movl	12(ap),r2	# len
+
+	bneq	1f		# nothing to copy?
+	movl	$ENAMETOOLONG,r0
+	tstl	r3
+	beql	0f
+	movl	$0,(r3)
+0:	ret
+
+1:	movab	2f,*pcbtrap
 
 /*
  * This routine consists of two parts: One is for MV2 that doesn't have
@@ -415,8 +440,8 @@ _copyoutstr:	.globl	_copyoutstr
 
 9:	movl	r2,r0
 7:	movb	(r4)+,(r5)+
-	beql	6f
-	sobgtr	r0,7b
+	beql	6f		# end of string
+	sobgtr	r0,7b		# no null byte in the len first bytes?
 	brb 1f
 
 6:	tstl	r3
@@ -444,15 +469,25 @@ _copyoutstr:	.globl	_copyoutstr
 	beql	3f
 	movl	r1,(r3)		# save len copied
 3:	movc3	r1,(r4),(r5)
-	brb	2f
+	brb	4f
 
 1:	movl	$ENAMETOOLONG,r0
-2:	clrl	*pcbtrap
+2:	movab	4f,*pcbtrap	# if we fault again, don't resume there
+	subl3	8(ap),r5,r1	# did we write to the string?
+	beql	3f
+	decl	r5
+3:	movb	$0,(r5)		# null terminate the output string
+	tstl	r3
+	beql	4f
+	incl	r1		# null byte accounts for outlen...
+	movl	r1,(r3)		# save len copied
+4:	clrl	*pcbtrap
 	ret
 
 ENTRY(subyte,0)
-	movab	1f,*pcbtrap
 	movl	4(ap),r0
+	blss	3f		# illegal space
+	movab	1f,*pcbtrap
 	movb	8(ap),(r0)
 	clrl	r1
 1:	clrl	*pcbtrap
@@ -460,8 +495,9 @@ ENTRY(subyte,0)
 	ret
 
 ENTRY(suword,0)
-	movab	1f,*pcbtrap
 	movl	4(ap),r0
+	blss	3f		# illegal space
+	movab	1f,*pcbtrap
 	movl	8(ap),(r0)
 	clrl	r1
 1:	clrl	*pcbtrap
@@ -469,17 +505,22 @@ ENTRY(suword,0)
 	ret
 
 ENTRY(suswintr,0)
-	movab	1f,*pcbtrap
 	movl	4(ap),r0
+	blss	3f		# illegal space
+	movab	1f,*pcbtrap
 	movw	8(ap),(r0)
 	clrl	r1
 1:	clrl	*pcbtrap
 	movl	r1,r0
 	ret
 
+3:	mnegl	$1,r0
+	ret
+
 ENTRY(fuswintr,0)
-	movab	1f,*pcbtrap
 	movl	4(ap),r0
+	blss	3b		# illegal space
+	movab	1f,*pcbtrap
 	movzwl	(r0),r1
 1:	clrl	*pcbtrap
 	movl	r1,r0
