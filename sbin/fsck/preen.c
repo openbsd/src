@@ -1,4 +1,4 @@
-/*	$OpenBSD: preen.c,v 1.5 1999/01/11 20:59:29 niklas Exp $	*/
+/*	$OpenBSD: preen.c,v 1.6 2001/11/05 07:39:16 mpech Exp $	*/
 /*	$NetBSD: preen.c,v 1.15 1996/09/28 19:21:42 christos Exp $	*/
 
 /*
@@ -323,11 +323,11 @@ addpart(type, devname, mntpt, auxarg)
 
 static int
 startdisk(d, checkit)
-	register struct diskentry *d;
+	struct diskentry *d;
 	int (*checkit) __P((const char *, const char *, const char *, void *,
 	    pid_t *));
 {
-	register struct partentry *p = d->d_part.tqh_first;
+	struct partentry *p = d->d_part.tqh_first;
 	int rv;
 
 	while ((rv = (*checkit)(p->p_type, p->p_devname, p->p_mntpt,

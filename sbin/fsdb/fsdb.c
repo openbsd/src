@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsdb.c,v 1.7 1999/08/06 20:41:06 deraadt Exp $	*/
+/*	$OpenBSD: fsdb.c,v 1.8 2001/11/05 07:39:16 mpech Exp $	*/
 /*	$NetBSD: fsdb.c,v 1.7 1997/01/11 06:50:53 lukem Exp $	*/
 
 /*-
@@ -203,7 +203,7 @@ helpfn(argc, argv)
 	int argc;
 	char *argv[];
 {
-    register struct cmdtable *cmdtp;
+    struct cmdtable *cmdtp;
 
     printf("Commands are:\n%-10s %5s %5s   %s\n",
 	   "command", "min argc", "max argc", "what");
@@ -393,7 +393,7 @@ static int
 scannames(idesc)
 	struct inodesc *idesc;
 {
-	register struct direct *dirp = idesc->id_dirp;
+	struct direct *dirp = idesc->id_dirp;
 
 	printf("slot %d ino %d reclen %d: %s, `%.*s'\n",
 	       slot++, dirp->d_ino, dirp->d_reclen, typename[dirp->d_type],
@@ -512,7 +512,7 @@ static int
 chinumfunc(idesc)
 	struct inodesc *idesc;
 {
-	register struct direct *dirp = idesc->id_dirp;
+	struct direct *dirp = idesc->id_dirp;
 
 	if (slotcount++ == desired) {
 	    dirp->d_ino = idesc->id_parent;
@@ -556,7 +556,7 @@ static int
 chnamefunc(idesc)
 	struct inodesc *idesc;
 {
-	register struct direct *dirp = idesc->id_dirp;
+	struct direct *dirp = idesc->id_dirp;
 	struct direct testdir;
 
 	if (slotcount++ == desired) {

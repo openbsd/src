@@ -1,4 +1,4 @@
-/*	$OpenBSD: quotacheck.c,v 1.10 1997/06/25 18:29:07 kstailey Exp $	*/
+/*	$OpenBSD: quotacheck.c,v 1.11 2001/11/05 07:39:17 mpech Exp $	*/
 /*	$NetBSD: quotacheck.c,v 1.12 1996/03/30 22:34:25 mark Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.3 (Berkeley) 1/29/94";
 #else
-static char rcsid[] = "$OpenBSD: quotacheck.c,v 1.10 1997/06/25 18:29:07 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: quotacheck.c,v 1.11 2001/11/05 07:39:17 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -135,9 +135,9 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register struct fstab *fs;
-	register struct passwd *pw;
-	register struct group *gr;
+	struct fstab *fs;
+	struct passwd *pw;
+	struct group *gr;
 	struct quotaname *auxdata;
 	int i, argnum, maxrun, errs;
 	long done = 0;
@@ -223,9 +223,9 @@ usage()
 
 void *
 needchk(fs)
-	register struct fstab *fs;
+	struct fstab *fs;
 {
-	register struct quotaname *qnp;
+	struct quotaname *qnp;
 	char *qfnp;
 
 	if (fs->fs_passno == 0)
@@ -264,9 +264,9 @@ chkquota(vfstype, fsname, mntpt, auxarg, pidp)
 	void *auxarg;
 	pid_t *pidp;
 {
-	register struct quotaname *qnp = auxarg;
-	register struct fileusage *fup;
-	register struct dinode *dp;
+	struct quotaname *qnp = auxarg;
+	struct fileusage *fup;
+	struct dinode *dp;
 	int cg, i, mode, errs = 0, status;
 	ino_t ino;
 	pid_t pid;
@@ -359,11 +359,11 @@ chkquota(vfstype, fsname, mntpt, auxarg, pidp)
 int
 update(fsname, quotafile, type)
 	const char *fsname, *quotafile;
-	register int type;
+	int type;
 {
-	register struct fileusage *fup;
-	register FILE *qfi, *qfo;
-	register u_long id, lastid;
+	struct fileusage *fup;
+	FILE *qfi, *qfo;
+	u_long id, lastid;
 	struct dqblk dqbuf;
 	static int warned = 0;
 	static struct dqblk zerodqbuf;
@@ -457,10 +457,10 @@ update(fsname, quotafile, type)
  */
 int
 oneof(target, list, cnt)
-	register char *target, *list[];
+	char *target, *list[];
 	int cnt;
 {
-	register int i;
+	int i;
 
 	for (i = 0; i < cnt; i++)
 		if (strcmp(target, list[i]) == 0)
@@ -486,11 +486,11 @@ getquotagid()
  */
 int
 hasquota(fs, type, qfnamep)
-	register struct fstab *fs;
+	struct fstab *fs;
 	int type;
 	char **qfnamep;
 {
-	register char *opt;
+	char *opt;
 	char *cp;
 	static char initname, usrname[100], grpname[100];
 	static char buf[BUFSIZ];
@@ -533,7 +533,7 @@ lookup(id, type)
 	u_long id;
 	int type;
 {
-	register struct fileusage *fup;
+	struct fileusage *fup;
 
 	for (fup = fuhead[type][id & (FUHASH-1)]; fup != 0; fup = fup->fu_next)
 		if (fup->fu_id == id)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1b.c,v 1.4 1999/03/01 07:45:18 d Exp $	*/
+/*	$OpenBSD: pass1b.c,v 1.5 2001/11/05 07:39:16 mpech Exp $	*/
 /*	$NetBSD: pass1b.c,v 1.10 1996/09/23 16:18:37 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1b.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: pass1b.c,v 1.4 1999/03/01 07:45:18 d Exp $";
+static char rcsid[] = "$OpenBSD: pass1b.c,v 1.5 2001/11/05 07:39:16 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,8 +69,8 @@ pass1b_info(buf, buflen)
 void
 pass1b()
 {
-	register int c, i;
-	register struct dinode *dp;
+	int c, i;
+	struct dinode *dp;
 	struct inodesc idesc;
 	ino_t inumber;
 
@@ -99,9 +99,9 @@ pass1b()
 
 static int
 pass1bcheck(idesc)
-	register struct inodesc *idesc;
+	struct inodesc *idesc;
 {
-	register struct dups *dlp;
+	struct dups *dlp;
 	int nfrags, res = KEEPON;
 	daddr_t blkno = idesc->id_blkno;
 

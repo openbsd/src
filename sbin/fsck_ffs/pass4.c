@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass4.c,v 1.4 1999/03/01 07:45:18 d Exp $	*/
+/*	$OpenBSD: pass4.c,v 1.5 2001/11/05 07:39:16 mpech Exp $	*/
 /*	$NetBSD: pass4.c,v 1.11 1996/09/27 22:45:17 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass4.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: pass4.c,v 1.4 1999/03/01 07:45:18 d Exp $";
+static char rcsid[] = "$OpenBSD: pass4.c,v 1.5 2001/11/05 07:39:16 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,8 +68,8 @@ pass4_info(buf, buflen)
 void
 pass4()
 {
-	register ino_t inumber;
-	register struct zlncnt *zlnp;
+	ino_t inumber;
+	struct zlncnt *zlnp;
 	struct dinode *dp;
 	struct inodesc idesc;
 	int n;
@@ -129,9 +129,9 @@ pass4()
 
 int
 pass4check(idesc)
-	register struct inodesc *idesc;
+	struct inodesc *idesc;
 {
-	register struct dups *dlp;
+	struct dups *dlp;
 	int nfrags, res = KEEPON;
 	daddr_t blkno = idesc->id_blkno;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumpfs.c,v 1.11 2001/04/13 02:39:06 gluk Exp $	*/
+/*	$OpenBSD: dumpfs.c,v 1.12 2001/11/05 07:39:16 mpech Exp $	*/
 /*	$NetBSD: dumpfs.c,v 1.12 1997/04/26 05:41:33 lukem Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.2 (Berkeley) 2/2/94";
 #else
-static char rcsid[] = "$OpenBSD: dumpfs.c,v 1.11 2001/04/13 02:39:06 gluk Exp $";
+static char rcsid[] = "$OpenBSD: dumpfs.c,v 1.12 2001/11/05 07:39:16 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -87,7 +87,7 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register struct fstab *fs;
+	struct fstab *fs;
 	int ch, eval;
 
 	while ((ch = getopt(argc, argv, "")) != -1)
@@ -330,11 +330,11 @@ dumpcg(name, fd, c)
 
 void
 pbits(vp, max)
-	register void *vp;
+	void *vp;
 	int max;
 {
-	register int i;
-	register char *p;
+	int i;
+	char *p;
 	int count, j;
 
 	for (count = i = 0, p = vp; i < max; i++)

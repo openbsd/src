@@ -1,4 +1,4 @@
-/*	$OpenBSD: dmesg.c,v 1.13 2001/07/07 18:26:11 deraadt Exp $	*/
+/*	$OpenBSD: dmesg.c,v 1.14 2001/11/05 07:39:16 mpech Exp $	*/
 /*	$NetBSD: dmesg.c,v 1.8 1995/03/18 14:54:49 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: dmesg.c,v 1.13 2001/07/07 18:26:11 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: dmesg.c,v 1.14 2001/11/05 07:39:16 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -80,8 +80,8 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register int ch, newl, skip, i;
-	register char *p;
+	int ch, newl, skip, i;
+	char *p;
 	struct msgbuf cur;
 	char *memf, *nlistf, *bufdata;
 	char buf[5];

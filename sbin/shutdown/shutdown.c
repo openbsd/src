@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.22 2001/07/09 07:04:47 deraadt Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.23 2001/11/05 07:39:17 mpech Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: shutdown.c,v 1.22 2001/07/09 07:04:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: shutdown.c,v 1.23 2001/11/05 07:39:17 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -122,7 +122,7 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register char *p, *endp;
+	char *p, *endp;
 	struct passwd *pw;
 	int arglen, ch, len, readstdin;
 
@@ -439,10 +439,10 @@ die_you_gravy_sucking_pig_dog()
 
 void
 getoffset(timearg)
-	register char *timearg;
+	char *timearg;
 {
-	register struct tm *lt;
-	register char *p;
+	struct tm *lt;
+	char *p;
 	time_t now;
 	int this_year;
 

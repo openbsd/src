@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.18 2001/03/02 08:33:55 art Exp $	*/
+/*	$OpenBSD: main.c,v 1.19 2001/11/05 07:39:16 mpech Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1996/10/11 20:15:48 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.18 2001/03/02 08:33:55 art Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.19 2001/11/05 07:39:16 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -168,7 +168,7 @@ argtoi(flag, req, str, base)
  */
 int
 docheck(fsp)
-	register struct fstab *fsp;
+	struct fstab *fsp;
 {
 
 	if ((strcmp(fsp->fs_vfstype, "ufs") &&

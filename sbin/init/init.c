@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.22 2001/07/09 07:04:45 deraadt Exp $	*/
+/*	$OpenBSD: init.c,v 1.23 2001/11/05 07:39:16 mpech Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.22 2001/07/09 07:04:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.23 2001/11/05 07:39:16 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -905,8 +905,8 @@ char **
 construct_argv(command)
 	char *command;
 {
-	register int argc = 0;
-	register char **argv = (char **) malloc(((strlen(command) + 1) / 2 + 1)
+	int argc = 0;
+	char **argv = (char **) malloc(((strlen(command) + 1) / 2 + 1)
 						* sizeof (char *));
 	static const char separators[] = " \t";
 
@@ -922,7 +922,7 @@ construct_argv(command)
  */
 void
 free_session(sp)
-	register session_t *sp;
+	session_t *sp;
 {
 	free(sp->se_device);
 	if (sp->se_getty) {
@@ -943,9 +943,9 @@ session_t *
 new_session(sprev, session_index, typ)
 	session_t *sprev;
 	int session_index;
-	register struct ttyent *typ;
+	struct ttyent *typ;
 {
-	register session_t *sp;
+	session_t *sp;
 
 	if ((typ->ty_status & TTY_ON) == 0 ||
 	    typ->ty_name == 0 ||
@@ -1023,8 +1023,8 @@ state_func_t
 read_ttys()
 {
 	int session_index = 0;
-	register session_t *sp, *snext;
-	register struct ttyent *typ;
+	session_t *sp, *snext;
+	struct ttyent *typ;
 
 	/*
 	 * Destroy any previous session state.
@@ -1187,7 +1187,7 @@ collect_child(pid)
 	pid_t pid;
 #endif
 {
-	register session_t *sp, *sprev, *snext;
+	session_t *sp, *sprev, *snext;
 
 	if (! sessions)
 		return;
@@ -1256,7 +1256,7 @@ state_func_t
 multi_user()
 {
 	pid_t pid;
-	register session_t *sp;
+	session_t *sp;
 
 	requested_transition = 0;
 
@@ -1295,10 +1295,10 @@ multi_user()
 state_func_t
 clean_ttys()
 {
-	register session_t *sp, *sprev;
-	register struct ttyent *typ;
-	register int session_index = 0;
-	register int devlen;
+	session_t *sp, *sprev;
+	struct ttyent *typ;
+	int session_index = 0;
+	int devlen;
 
 	for (sp = sessions; sp; sp = sp->se_next)
 		sp->se_flags &= ~SE_PRESENT;
@@ -1355,7 +1355,7 @@ clean_ttys()
 state_func_t
 catatonia()
 {
-	register session_t *sp;
+	session_t *sp;
 
 	for (sp = sessions; sp; sp = sp->se_next)
 		sp->se_flags |= SE_SHUTDOWN;
@@ -1379,8 +1379,8 @@ alrm_handler(sig)
 state_func_t
 nice_death()
 {
-	register session_t *sp;
-	register int i;
+	session_t *sp;
+	int i;
 	pid_t pid;
 	static const int death_sigs[3] = { SIGHUP, SIGTERM, SIGKILL };
 	int howto = RB_HALT;
@@ -1457,8 +1457,8 @@ die:
 state_func_t
 death()
 {
-	register session_t *sp;
-	register int i;
+	session_t *sp;
+	int i;
 	pid_t pid;
 	static const int death_sigs[3] = { SIGHUP, SIGTERM, SIGKILL };
 

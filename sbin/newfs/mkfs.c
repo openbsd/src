@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.19 2001/07/07 18:26:16 deraadt Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.20 2001/11/05 07:39:17 mpech Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$OpenBSD: mkfs.c,v 1.19 2001/07/07 18:26:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mkfs.c,v 1.20 2001/11/05 07:39:17 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -150,7 +150,7 @@ mkfs(pp, fsys, fi, fo)
 	char *fsys;
 	int fi, fo;
 {
-	register long i, mincpc, mincpg, inospercg;
+	long i, mincpc, mincpg, inospercg;
 	long cylno, rpos, blk, j, warn = 0;
 	long used, mincpgcnt, bpcg;
 	long mapcramped, inodecramped;
@@ -726,7 +726,7 @@ initcg(cylno, utime)
 {
 	daddr_t cbase, d, dlower, dupper, dmax, blkno;
 	long i, j;
-	register struct csum *cs;
+	struct csum *cs;
 
 	/*
 	 * Determine block bounds for cylinder group.
@@ -1054,8 +1054,8 @@ goth:
  */
 void
 iput(ip, ino)
-	register struct dinode *ip;
-	register ino_t ino;
+	struct dinode *ip;
+	ino_t ino;
 {
 	struct dinode *buf =
 	   (struct dinode *)malloc(MAXINOPB * sizeof (struct dinode));

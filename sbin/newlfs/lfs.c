@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs.c,v 1.3 1996/07/01 11:02:54 downsj Exp $	*/
+/*	$OpenBSD: lfs.c,v 1.4 2001/11/05 07:39:17 mpech Exp $	*/
 /*	$NetBSD: lfs.c,v 1.8 1995/06/19 21:30:36 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-static char rcsid[] = "$OpenBSD: lfs.c,v 1.3 1996/07/01 11:02:54 downsj Exp $";
+static char rcsid[] = "$OpenBSD: lfs.c,v 1.4 2001/11/05 07:39:17 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -671,7 +671,7 @@ make_dinode(ino, dip, nblocks, saddr, lfsp)
 static void
 make_dir(bufp, protodir, entries)
 	void *bufp;
-	register struct direct *protodir;
+	struct direct *protodir;
 	int entries;
 {
 	char *cp;

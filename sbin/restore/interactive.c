@@ -1,4 +1,4 @@
-/*	$OpenBSD: interactive.c,v 1.12 2001/07/07 18:26:19 deraadt Exp $	*/
+/*	$OpenBSD: interactive.c,v 1.13 2001/11/05 07:39:17 mpech Exp $	*/
 /*	$NetBSD: interactive.c,v 1.10 1997/03/19 08:42:52 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)interactive.c	8.3 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$OpenBSD: interactive.c,v 1.12 2001/07/07 18:26:19 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: interactive.c,v 1.13 2001/11/05 07:39:17 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -102,7 +102,7 @@ static void	 printlist __P((char *, char *));
 void
 runcmdshell()
 {
-	register struct entry *np;
+	struct entry *np;
 	ino_t ino;
 	struct arglist arglist;
 	char curdir[MAXPATHLEN];
@@ -312,7 +312,7 @@ getcmd(curdir, cmd, name, ap)
 	char *curdir, *cmd, *name;
 	struct arglist *ap;
 {
-	register char *cp;
+	char *cp;
 	static char input[BUFSIZ];
 	char output[BUFSIZ];
 #	define rawname input	/* save space by reusing input buffer */
@@ -416,7 +416,7 @@ static char *
 copynext(input, output)
 	char *input, *output;
 {
-	register char *cp, *bp;
+	char *cp, *bp;
 	char quote;
 
 	for (cp = input; *cp == ' ' || *cp == '\t'; cp++)
@@ -466,7 +466,7 @@ void
 canon(rawname, canonname)
 	char *rawname, *canonname;
 {
-	register char *cp, *np;
+	char *cp, *np;
 
 	if (strcmp(rawname, ".") == 0 || strncmp(rawname, "./", 2) == 0)
 		(void)strcpy(canonname, "");
@@ -517,8 +517,8 @@ printlist(name, basename)
 	char *name;
 	char *basename;
 {
-	register struct afile *fp, *list, *listp = NULL;
-	register struct direct *dp;
+	struct afile *fp, *list, *listp = NULL;
+	struct direct *dp;
 	struct afile single;
 	RST_DIR *dirp;
 	int entries, len, namelen;
@@ -600,7 +600,7 @@ static void
 mkentry(name, dp, fp)
 	char *name;
 	struct direct *dp;
-	register struct afile *fp;
+	struct afile *fp;
 {
 	char *cp;
 	struct entry *np;
@@ -661,10 +661,10 @@ mkentry(name, dp, fp)
  */
 static void
 formatf(list, nentry)
-	register struct afile *list;
+	struct afile *list;
 	int nentry;
 {
-	register struct afile *fp, *endlist;
+	struct afile *fp, *endlist;
 	int width, bigino, haveprefix, havepostfix;
 	int i, j, w, precision = 0, columns, lines;
 
@@ -761,7 +761,7 @@ glob_stat(name, stp)
 	const char *name;
 	struct stat *stp;
 {
-	register struct direct *dp;
+	struct direct *dp;
 
 	dp = pathsearch(name);
 	if (dp == NULL || (!dflag && TSTINO(dp->d_ino, dumpmap) == 0) ||
@@ -779,7 +779,7 @@ glob_stat(name, stp)
  */
 static int
 fcmp(f1, f2)
-	register const void *f1, *f2;
+	const void *f1, *f2;
 {
 	return (strcmp(((struct afile *)f1)->fname,
 	    ((struct afile *)f2)->fname));

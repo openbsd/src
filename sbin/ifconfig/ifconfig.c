@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.53 2001/10/30 22:00:15 millert Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.54 2001/11/05 07:39:16 mpech Exp $	*/
 /*      $NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $      */
 
 /*
@@ -81,7 +81,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.53 2001/10/30 22:00:15 millert Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.54 2001/11/05 07:39:16 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -372,7 +372,7 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register const struct afswtch *rafp = NULL;
+	const struct afswtch *rafp = NULL;
 	int aflag = 0;
 	int ifaliases = 0;
 	int i;
@@ -434,7 +434,7 @@ main(argc, argv)
 	if (getinfo(&ifr) < 0)
 		exit(1);
 	while (argc > 0) {
-		register const struct cmd *p;
+		const struct cmd *p;
 
 		for (p = cmds; p->c_name; p++)
 			if (strcmp(*argv, p->c_name) == 0)
@@ -626,7 +626,7 @@ printif(ifrm, ifaliases)
 		}
 
 		if (!namep || !strcmp(namep, ifa->ifa_name)) {
-			register const struct afswtch *p;
+			const struct afswtch *p;
 
 			if (ifa->ifa_addr->sa_family == AF_INET &&
 			    ifaliases == 0 && noinet == 0)
@@ -704,7 +704,7 @@ printif(ifrm, ifaliases)
 		}
 		if (!strncmp(ifreq.ifr_name, ifrp->ifr_name,
 		    sizeof(ifrp->ifr_name))) {
-			register const struct afswtch *p;
+			const struct afswtch *p;
 
 			if (ifrp->ifr_addr.sa_family == AF_INET &&
 			    ifaliases == 0 && noinet == 0)
@@ -1353,7 +1353,7 @@ void
 status(link)
 	int link;
 {
-	register const struct afswtch *p = afp;
+	const struct afswtch *p = afp;
 	struct ifmediareq ifmr;
 	int *media_list, i;
 
@@ -1902,7 +1902,7 @@ in_getaddr(s, which)
 	char *s;
 	int which;
 {
-	register struct sockaddr_in *sin = sintab[which];
+	struct sockaddr_in *sin = sintab[which];
 	struct hostent *hp;
 	struct netent *np;
 
@@ -1925,8 +1925,8 @@ in_getprefix(plen, which)
 	char *plen;
 	int which;
 {
-	register struct sockaddr_in *sin = sintab[which];
-	register u_char *cp;
+	struct sockaddr_in *sin = sintab[which];
+	u_char *cp;
 	int len = strtol(plen, (char **)NULL, 10);
 
 	if ((len < 0) || (len > 32))
@@ -1951,11 +1951,11 @@ in_getprefix(plen, which)
 void
 printb(s, v, bits)
 	char *s;
-	register char *bits;
-	register unsigned short v;
+	char *bits;
+	unsigned short v;
 {
-	register int i, any = 0;
-	register char c;
+	int i, any = 0;
+	char c;
 
 	if (bits && *bits == 8)
 		printf("%s=%o", s, v);
@@ -2031,8 +2031,8 @@ in6_getprefix(plen, which)
 	char *plen;
 	int which;
 {
-	register struct sockaddr_in6 *sin = sin6tab[which];
-	register u_char *cp;
+	struct sockaddr_in6 *sin = sin6tab[which];
+	u_char *cp;
 	int len = strtol(plen, (char **)NULL, 10);
 
 	if ((len < 0) || (len > 128))
@@ -2056,8 +2056,8 @@ prefix(val, size)
 	void *val;
 	int size;
 {
-	register u_char *name = (u_char *)val;
-	register int byte, bit, plen = 0;
+	u_char *name = (u_char *)val;
+	int byte, bit, plen = 0;
 
 	for (byte = 0; byte < size; byte++, plen += 8)
 		if (name[byte] != 0xff)
@@ -2196,7 +2196,7 @@ iso_getaddr(addr, which)
 	char *addr;
 	int which;
 {
-	register struct sockaddr_iso *siso = sisotab[which];
+	struct sockaddr_iso *siso = sisotab[which];
 	struct iso_addr *iso_addr();
 	siso->siso_addr = *iso_addr(addr);
 
@@ -2229,7 +2229,7 @@ setnsellength(val)
 
 void
 fixnsel(s)
-	register struct sockaddr_iso *s;
+	struct sockaddr_iso *s;
 {
 	if (s->siso_family == 0)
 		return;

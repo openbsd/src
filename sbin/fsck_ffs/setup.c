@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.13 2001/07/07 18:26:12 deraadt Exp $	*/
+/*	$OpenBSD: setup.c,v 1.14 2001/11/05 07:39:16 mpech Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-static char rcsid[] = "$OpenBSD: setup.c,v 1.13 2001/07/07 18:26:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: setup.c,v 1.14 2001/11/05 07:39:16 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -531,11 +531,11 @@ int
 calcsb(dev, devfd, fs)
 	char *dev;
 	int devfd;
-	register struct fs *fs;
+	struct fs *fs;
 {
-	register struct disklabel *lp;
-	register struct partition *pp;
-	register char *cp;
+	struct disklabel *lp;
+	struct partition *pp;
+	char *cp;
 	int i;
 
 	cp = strchr(dev, '\0') - 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass3.c,v 1.5 2001/07/07 18:26:12 deraadt Exp $	*/
+/*	$OpenBSD: pass3.c,v 1.6 2001/11/05 07:39:16 mpech Exp $	*/
 /*	$NetBSD: pass3.c,v 1.8 1995/03/18 14:55:54 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass3.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: pass3.c,v 1.5 2001/07/07 18:26:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: pass3.c,v 1.6 2001/11/05 07:39:16 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ pass3_info(buf, buflen)
 void
 pass3()
 {
-	register struct inoinfo **inpp, *inp, *pinp;
+	struct inoinfo **inpp, *inp, *pinp;
 	ino_t orphan;
 	int loopcnt;
 

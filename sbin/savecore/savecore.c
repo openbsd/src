@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.26 2001/07/07 18:26:21 deraadt Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.27 2001/11/05 07:39:17 mpech Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: savecore.c,v 1.26 2001/07/07 18:26:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: savecore.c,v 1.27 2001/11/05 07:39:17 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -307,8 +307,8 @@ kmem_setup()
 void
 check_kmem()
 {
-	register char	*cp;
-	register int	panicloc;
+	char	*cp;
+	int	panicloc;
 	char core_vers[1024];
 
 	if (kvm_read(kd_dump, dump_nl[X_VERSION].n_value, core_vers,
@@ -394,8 +394,8 @@ char buf[1024 * 1024];
 void
 save_core()
 {
-	register FILE *fp;
-	register int bounds, ifd, nr, nw, ofd = -1;
+	FILE *fp;
+	int bounds, ifd, nr, nw, ofd = -1;
 	char *rawp, path[MAXPATHLEN];
 	mode_t um;
 
@@ -526,10 +526,10 @@ err2:			syslog(LOG_WARNING,
 
 char *
 find_dev(dev, type)
-	register dev_t dev;
-	register int type;
+	dev_t dev;
+	int type;
 {
-	register DIR *dfd;
+	DIR *dfd;
 	struct dirent *dir;
 	struct stat sb;
 	char *dp, devname[MAXPATHLEN + 1];
@@ -603,7 +603,7 @@ get_crashtime()
 int
 check_space()
 {
-	register FILE *fp;
+	FILE *fp;
 	char *tkernel;
 	off_t minfree, spacefree, kernelsize, needed;
 	struct stat st;
@@ -678,7 +678,7 @@ Create(file, mode)
 	char *file;
 	int mode;
 {
-	register int fd;
+	int fd;
 
 	fd = open(file, O_WRONLY | O_CREAT | O_TRUNC, mode);
 	if (fd < 0) {

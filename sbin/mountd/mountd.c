@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.38 2001/10/03 18:54:29 hin Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.39 2001/11/05 07:39:16 mpech Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -535,7 +535,7 @@ xdr_fhs(xdrsp, cp)
 	XDR *xdrsp;
 	caddr_t cp;
 {
-	register struct fhreturn *fhrp = (struct fhreturn *)cp;
+	struct fhreturn *fhrp = (struct fhreturn *)cp;
 	long ok = 0, len, auth;
 
 	if (!xdr_long(xdrsp, &ok))

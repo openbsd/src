@@ -1,4 +1,4 @@
-/*	$OpenBSD: traverse.c,v 1.6 2000/01/22 20:24:55 deraadt Exp $	*/
+/*	$OpenBSD: traverse.c,v 1.7 2001/11/05 07:39:16 mpech Exp $	*/
 /*	$NetBSD: traverse.c,v 1.17 1997/06/05 11:13:27 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.2 (Berkeley) 9/23/93";
 #else
-static char rcsid[] = "$OpenBSD: traverse.c,v 1.6 2000/01/22 20:24:55 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: traverse.c,v 1.7 2001/11/05 07:39:16 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -92,7 +92,7 @@ static	int searchdir __P((ino_t ino, daddr_t blkno, long size, long filesize));
  */
 long
 blockest(dp)
-	register struct dinode *dp;
+	struct dinode *dp;
 {
 	long blkest, sizeest;
 
@@ -281,10 +281,10 @@ mapdirs(maxino, tapesize)
 	ino_t maxino;
 	u_int64_t *tapesize;
 {
-	register struct	dinode *dp;
-	register int i, isdir;
-	register char *map;
-	register ino_t ino;
+	struct	dinode *dp;
+	int i, isdir;
+	char *map;
+	ino_t ino;
 	long filesize;
 	int ret, change = 0;
 
@@ -342,7 +342,7 @@ dirindir(ino, blkno, ind_level, filesize)
 	long *filesize;
 {
 	int ret = 0;
-	register int i;
+	int i;
 	daddr_t	idblk[MAXNINDIR];
 
 	bread(fsbtodb(sblock, blkno), (char *)idblk, (int)sblock->fs_bsize);
@@ -377,11 +377,11 @@ static int
 searchdir(ino, blkno, size, filesize)
 	ino_t ino;
 	daddr_t blkno;
-	register long size;
+	long size;
 	long filesize;
 {
-	register struct direct *dp;
-	register long loc, ret = 0;
+	struct direct *dp;
+	long loc, ret = 0;
 	char dblk[MAXBSIZE];
 
 	bread(fsbtodb(sblock, blkno), dblk, (int)size);
@@ -423,7 +423,7 @@ searchdir(ino, blkno, size, filesize)
  */
 void
 dumpino(dp, ino)
-	register struct dinode *dp;
+	struct dinode *dp;
 	ino_t ino;
 {
 	int ind_level, cnt;
@@ -541,7 +541,7 @@ blksout(blkp, frags, ino)
 	int frags;
 	ino_t ino;
 {
-	register daddr_t *bp;
+	daddr_t *bp;
 	int i, j, count, blks, tbperdb;
 
 	blks = howmany(frags * sblock->fs_fsize, TP_BSIZE);
@@ -579,7 +579,7 @@ dumpmap(map, type, ino)
 	int type;
 	ino_t ino;
 {
-	register int i;
+	int i;
 	char *cp;
 
 	spcl.c_type = type;
@@ -596,7 +596,7 @@ void
 writeheader(ino)
 	ino_t ino;
 {
-	register int32_t sum, cnt, *lp;
+	int32_t sum, cnt, *lp;
 
 	spcl.c_inumber = ino;
 	spcl.c_magic = NFS_MAGIC;

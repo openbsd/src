@@ -1,4 +1,4 @@
-/*	$OpenBSD: tunefs.c,v 1.14 2001/10/05 14:35:42 jakob Exp $	*/
+/*	$OpenBSD: tunefs.c,v 1.15 2001/11/05 07:39:17 mpech Exp $	*/
 /*	$NetBSD: tunefs.c,v 1.10 1995/03/18 15:01:31 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.2 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: tunefs.c,v 1.14 2001/10/05 14:35:42 jakob Exp $";
+static char rcsid[] = "$OpenBSD: tunefs.c,v 1.15 2001/11/05 07:39:17 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -289,7 +289,7 @@ usage()
 
 void
 getsb(fs, file)
-	register struct fs *fs;
+	struct fs *fs;
 	char *file;
 {
 

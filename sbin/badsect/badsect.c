@@ -1,4 +1,4 @@
-/*	$OpenBSD: badsect.c,v 1.5 2001/07/07 18:26:10 deraadt Exp $	*/
+/*	$OpenBSD: badsect.c,v 1.6 2001/11/05 07:39:16 mpech Exp $	*/
 /*	$NetBSD: badsect.c,v 1.10 1995/03/18 14:54:28 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)badsect.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: badsect.c,v 1.5 2001/07/07 18:26:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: badsect.c,v 1.6 2001/11/05 07:39:16 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -99,7 +99,7 @@ main(argc, argv)
 {
 	daddr_t number;
 	struct stat stbuf, devstat;
-	register struct direct *dp;
+	struct direct *dp;
 	DIR *dirp;
 	char name[BUFSIZ];
 	int len;

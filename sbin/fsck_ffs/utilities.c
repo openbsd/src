@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.12 2001/04/13 02:39:05 gluk Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.13 2001/11/05 07:39:16 mpech Exp $	*/
 /*	$NetBSD: utilities.c,v 1.18 1996/09/27 22:45:20 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: utilities.c,v 1.12 2001/04/13 02:39:05 gluk Exp $";
+static char rcsid[] = "$OpenBSD: utilities.c,v 1.13 2001/11/05 07:39:16 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -132,7 +132,7 @@ reply(question)
 void
 bufinit()
 {
-	register struct bufarea *bp;
+	struct bufarea *bp;
 	long bufcnt, i;
 	char *bufp;
 
@@ -172,7 +172,7 @@ getdatablk(blkno, size)
 	daddr_t blkno;
 	long size;
 {
-	register struct bufarea *bp;
+	struct bufarea *bp;
 
 	for (bp = bufhead.b_next; bp != &bufhead; bp = bp->b_next)
 		if (bp->b_bno == fsbtodb(&sblock, blkno))
@@ -198,7 +198,7 @@ foundit:
 
 void
 getblk(bp, blk, size)
-	register struct bufarea *bp;
+	struct bufarea *bp;
 	daddr_t blk;
 	long size;
 {
@@ -217,9 +217,9 @@ getblk(bp, blk, size)
 void
 flush(fd, bp)
 	int fd;
-	register struct bufarea *bp;
+	struct bufarea *bp;
 {
-	register int i, j;
+	int i, j;
 
 	if (!bp->b_dirty)
 		return;
@@ -257,7 +257,7 @@ void
 ckfini(markclean)
 	int markclean;
 {
-	register struct bufarea *bp, *nbp;
+	struct bufarea *bp, *nbp;
 	int cnt = 0;
 
 	if (fswritefd < 0) {
@@ -445,7 +445,7 @@ getpathname(namebuf, curdir, ino)
 	ino_t curdir, ino;
 {
 	int len;
-	register char *cp;
+	char *cp;
 	struct inodesc idesc;
 	static int busy = 0;
 
@@ -542,7 +542,7 @@ voidquit(n)
  */
 int
 dofix(idesc, msg)
-	register struct inodesc *idesc;
+	struct inodesc *idesc;
 	char *msg;
 {
 

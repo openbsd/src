@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.12 2001/02/27 20:51:21 jason Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.13 2001/11/05 07:39:16 mpech Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1336,8 +1336,8 @@ printb(s, v, bits)
 	char *bits;
 	unsigned short v;
 {
-	register int i, any = 0;
-	register char c;
+	int i, any = 0;
+	char c;
 
 	if (bits && *bits == 8)
 		printf("%s=%o", s, v);

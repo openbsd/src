@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.18 2001/07/07 18:26:20 deraadt Exp $	*/
+/*	$OpenBSD: tape.c,v 1.19 2001/11/05 07:39:17 mpech Exp $	*/
 /*	$NetBSD: tape.c,v 1.26 1997/04/15 07:12:25 lukem Exp $	*/
 
 /*
@@ -645,7 +645,7 @@ getfile(fill, skip)
 	void	(*fill) __P((char *, long));
 	void	(*skip) __P((char *, long));
 {
-	register int i;
+	int i;
 	volatile int curblk = 0;
 	volatile long size = spcl.c_dinode.di_size;
 	static char clearedbuf[MAXBSIZE];
@@ -923,7 +923,7 @@ getmore:
 static void
 findtapeblksize()
 {
-	register long i;
+	long i;
 
 	for (i = 0; i < ntrec; i++)
 		((struct s_spcl *)&tapebuf[i * TP_BSIZE])->c_magic = 0;
@@ -1242,9 +1242,9 @@ findinode(header)
 
 static int
 checksum(buf)
-	register int *buf;
+	int *buf;
 {
-	register int i, j;
+	int i, j;
 
 	j = sizeof(union u_spcl) / sizeof(int);
 	i = 0;
@@ -1297,8 +1297,8 @@ msg(fmt, va_alist)
 
 static u_char *
 swabshort(sp, n)
-	register u_char *sp;
-	register int n;
+	u_char *sp;
+	int n;
 {
 	char c;
 
@@ -1311,8 +1311,8 @@ swabshort(sp, n)
 
 static u_char *
 swablong(sp, n)
-	register u_char *sp;
-	register int n;
+	u_char *sp;
+	int n;
 {
 	char c;
 
@@ -1326,7 +1326,7 @@ swablong(sp, n)
 
 void
 swabst(cp, sp)
-	register u_char *cp, *sp;
+	u_char *cp, *sp;
 {
 	int n = 0;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_nfs.c,v 1.24 2001/10/03 18:50:07 hin Exp $	*/
+/*	$OpenBSD: mount_nfs.c,v 1.25 2001/11/05 07:39:16 mpech Exp $	*/
 /*	$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl Exp $	*/
 
 /*
@@ -182,8 +182,8 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register int c;
-	register struct nfs_args *nfsargsp;
+	int c;
+	struct nfs_args *nfsargsp;
 	struct nfs_args nfsargs;
 	struct nfsd_cargs ncd;
 	int mntflags, altflags, i, nfssvc_flag, num;
@@ -393,7 +393,7 @@ getnfsargs(spec, nfsargsp)
 	char *spec;
 	struct nfs_args *nfsargsp;
 {
-	register CLIENT *clp;
+	CLIENT *clp;
 	struct hostent *hp;
 	static struct sockaddr_in saddr;
 #ifdef ISO
@@ -583,9 +583,9 @@ xdr_dir(xdrsp, dirp)
 int
 xdr_fh(xdrsp, np)
 	XDR *xdrsp;
-	register struct nfhret *np;
+	struct nfhret *np;
 {
-	register int i;
+	int i;
 	long auth, authcnt, authfnd = 0;
 
 	if (!xdr_u_long(xdrsp, &np->stat))

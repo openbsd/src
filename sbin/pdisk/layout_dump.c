@@ -151,7 +151,7 @@ dump_using_layout(void *buffer, layout *desc)
 void
 DumpRawBuffer(unsigned char *bufferPtr, int length )
 {
-	register int            i;
+	int                     i;
 	int                     lineStart;
 	int                     lineLength;
 	short                   c;

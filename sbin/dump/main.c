@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.29 2000/10/09 23:19:26 mickey Exp $	*/
+/*	$OpenBSD: main.c,v 1.30 2001/11/05 07:39:16 mpech Exp $	*/
 /*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
 
 /*-
@@ -104,12 +104,12 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register ino_t ino;
-	register int dirty;
-	register struct dinode *dp;
-	register struct	fstab *dt;
-	register char *map;
-	register int ch;
+	ino_t ino;
+	int dirty;
+	struct dinode *dp;
+	struct	fstab *dt;
+	char *map;
+	int ch;
 	struct tm then;
 	struct statfs fsbuf;
 	int i, anydirskipped, bflag = 0, Tflag = 0, honorlevel = 1;

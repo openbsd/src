@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.3 1997/07/25 19:13:09 mickey Exp $	*/
+/*	$OpenBSD: misc.c,v 1.4 2001/11/05 07:39:17 mpech Exp $	*/
 /*	$NetBSD: misc.c,v 1.2 1995/03/18 14:58:51 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.3 1997/07/25 19:13:09 mickey Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.4 2001/11/05 07:39:17 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,7 +53,7 @@ u_int
 log2(num)
         u_int num;
 {
-        register u_int i, limit;
+        u_int i, limit;
 
         limit = 1;
         for (i = 0; limit < num; limit = limit << 1, i++);

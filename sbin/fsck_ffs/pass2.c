@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass2.c,v 1.10 2001/07/07 18:26:12 deraadt Exp $	*/
+/*	$OpenBSD: pass2.c,v 1.11 2001/11/05 07:39:16 mpech Exp $	*/
 /*	$NetBSD: pass2.c,v 1.17 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$OpenBSD: pass2.c,v 1.10 2001/07/07 18:26:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: pass2.c,v 1.11 2001/11/05 07:39:16 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,8 +85,8 @@ pass2_info2(buf, buflen)
 void
 pass2()
 {
-	register struct dinode *dp;
-	register struct inoinfo **inpp, *inp, *pinp;
+	struct dinode *dp;
+	struct inoinfo **inpp, *inp, *pinp;
 	struct inoinfo **inpend;
 	struct inodesc curino;
 	struct dinode dino;
@@ -259,8 +259,8 @@ static int
 pass2check(idesc)
 	struct inodesc *idesc;
 {
-	register struct direct *dirp = idesc->id_dirp;
-	register struct inoinfo *inp;
+	struct direct *dirp = idesc->id_dirp;
+	struct inoinfo *inp;
 	int n, entrysize, ret = 0;
 	struct dinode *dp;
 	char *errmsg;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: optr.c,v 1.18 2001/06/13 20:13:28 markus Exp $	*/
+/*	$OpenBSD: optr.c,v 1.19 2001/11/05 07:39:16 mpech Exp $	*/
 /*	$NetBSD: optr.c,v 1.11 1997/05/27 08:34:36 mrg Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-static char rcsid[] = "$OpenBSD: optr.c,v 1.18 2001/06/13 20:13:28 markus Exp $";
+static char rcsid[] = "$OpenBSD: optr.c,v 1.19 2001/11/05 07:39:16 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -319,9 +319,9 @@ quit(fmt, va_alist)
 
 struct fstab *
 allocfsent(fs)
-	register struct fstab *fs;
+	struct fstab *fs;
 {
-	register struct fstab *new;
+	struct fstab *new;
 
 	new = (struct fstab *)malloc(sizeof(*fs));
 	if (new == NULL ||
@@ -344,8 +344,8 @@ static	struct pfstab *table;
 void
 getfstab()
 {
-	register struct fstab *fs;
-	register struct pfstab *pf;
+	struct fstab *fs;
+	struct pfstab *pf;
 
 	if (setfsent() == 0) {
 		msg("Can't open %s for dump table information: %s\n",
@@ -385,8 +385,8 @@ struct fstab *
 fstabsearch(key)
 	char *key;
 {
-	register struct pfstab *pf;
-	register struct fstab *fs;
+	struct pfstab *pf;
+	struct fstab *fs;
 	char *rn;
 
 	for (pf = table; pf != NULL; pf = pf->pf_next) {
@@ -416,9 +416,9 @@ void
 lastdump(arg)
 	char	arg;	/* w ==> just what to do; W ==> most recent dumps */
 {
-	register int i;
-	register struct fstab *dt;
-	register struct dumpdates *dtwalk;
+	int i;
+	struct fstab *dt;
+	struct dumpdates *dtwalk;
 	char *lastname, *date;
 	int dumpme;
 	time_t tnow;

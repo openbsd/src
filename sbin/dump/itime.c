@@ -1,4 +1,4 @@
-/*	$OpenBSD: itime.c,v 1.5 1998/08/07 17:29:24 millert Exp $	*/
+/*	$OpenBSD: itime.c,v 1.6 2001/11/05 07:39:16 mpech Exp $	*/
 /*	$NetBSD: itime.c,v 1.4 1997/04/15 01:09:50 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)itime.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: itime.c,v 1.5 1998/08/07 17:29:24 millert Exp $";
+static char rcsid[] = "$OpenBSD: itime.c,v 1.6 2001/11/05 07:39:16 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -114,8 +114,8 @@ static void
 readdumptimes(df)
 	FILE *df;
 {
-	register int i;
-	register struct	dumptime *dtwalk;
+	int i;
+	struct	dumptime *dtwalk;
 
 	for (;;) {
 		dtwalk = (struct dumptime *)calloc(1, sizeof(struct dumptime));
@@ -141,8 +141,8 @@ readdumptimes(df)
 void
 getdumptime()
 {
-	register struct dumpdates *ddp;
-	register int i;
+	struct dumpdates *ddp;
+	int i;
 	char *fname;
 
 	fname = disk;
@@ -174,8 +174,8 @@ void
 putdumptime()
 {
 	FILE *df;
-	register struct dumpdates *dtwalk;
-	register int i;
+	struct dumpdates *dtwalk;
+	int i;
 	int fd;
 	char *fname;
 

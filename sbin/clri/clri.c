@@ -1,4 +1,4 @@
-/*	$OpenBSD: clri.c,v 1.5 2001/06/04 14:59:47 mickey Exp $	*/
+/*	$OpenBSD: clri.c,v 1.6 2001/11/05 07:39:16 mpech Exp $	*/
 /*	$NetBSD: clri.c,v 1.9 1995/03/18 14:54:33 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)clri.c	8.2 (Berkeley) 9/23/93";
 #else
-static char rcsid[] = "$OpenBSD: clri.c,v 1.5 2001/06/04 14:59:47 mickey Exp $";
+static char rcsid[] = "$OpenBSD: clri.c,v 1.6 2001/11/05 07:39:16 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,9 +70,9 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register struct fs *sbp;
-	register struct dinode *ip;
-	register int fd;
+	struct fs *sbp;
+	struct dinode *ip;
+	int fd;
 	struct dinode ibuf[MAXBSIZE / sizeof (struct dinode)];
 	int32_t generation;
 	off_t offset;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: slattach.c,v 1.9 2001/06/01 21:35:20 mickey Exp $	*/
+/*	$OpenBSD: slattach.c,v 1.10 2001/11/05 07:39:17 mpech Exp $	*/
 /*	$NetBSD: slattach.c,v 1.17 1996/05/19 21:57:39 jonathan Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)slattach.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: slattach.c,v 1.9 2001/06/01 21:35:20 mickey Exp $";
+static char rcsid[] = "$OpenBSD: slattach.c,v 1.10 2001/11/05 07:39:17 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -94,8 +94,8 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register int fd;
-	register char *dev;
+	int fd;
+	char *dev;
 	struct termios tty;
 	tcflag_t cflag = HUPCL;
 	int ch;

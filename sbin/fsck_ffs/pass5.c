@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass5.c,v 1.12 2001/07/07 18:26:12 deraadt Exp $	*/
+/*	$OpenBSD: pass5.c,v 1.13 2001/11/05 07:39:16 mpech Exp $	*/
 /*	$NetBSD: pass5.c,v 1.16 1996/09/27 22:45:18 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.6 (Berkeley) 11/30/94";
 #else
-static char rcsid[] = "$OpenBSD: pass5.c,v 1.12 2001/07/07 18:26:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: pass5.c,v 1.13 2001/11/05 07:39:16 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,8 +73,8 @@ pass5()
 {
 	int c, blk, frags, basesize, sumsize, mapsize, savednrpos=0;
 	int inomapsize, blkmapsize;
-	register struct fs *fs = &sblock;
-	register struct cg *cg = &cgrp;
+	struct fs *fs = &sblock;
+	struct cg *cg = &cgrp;
 	daddr_t dbase, dmax;
 	daddr_t d;
 	long i, j, k;
@@ -82,7 +82,7 @@ pass5()
 	struct csum cstotal;
 	struct inodesc idesc[3];
 	char buf[MAXBSIZE];
-	register struct cg *newcg = (struct cg *)buf;
+	struct cg *newcg = (struct cg *)buf;
 	struct ocg *ocg = (struct ocg *)buf;
 
 	statemap[WINO] = USTATE;

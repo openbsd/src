@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.46 2001/10/04 07:37:24 jakob Exp $	*/
+/*	$OpenBSD: ping.c,v 1.47 2001/11/05 07:39:17 mpech Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.46 2001/10/04 07:37:24 jakob Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.47 2001/11/05 07:39:17 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -195,7 +195,7 @@ main(argc, argv)
 	struct sockaddr_in *to;
 	struct protoent *proto;
 	struct in_addr saddr;
-	register int i;
+	int i;
 	int ch, hold = 1, packlen, preload;
 	int maxsize, maxsizelen, fdmasks;
 	u_char *datap, *packet;
@@ -496,7 +496,7 @@ main(argc, argv)
 
 	for (;;) {
 		struct sockaddr_in from;
-		register int cc;
+		int cc;
 		int fromlen;
 		sigset_t omask, nmask;
 
@@ -589,8 +589,8 @@ prtsig()
 void
 pinger()
 {
-	register struct icmp *icp;
-	register int cc;
+	struct icmp *icp;
+	int cc;
 	int i;
 	char *packet = outpack;
 
@@ -653,10 +653,10 @@ pr_pack(buf, cc, from)
 	int cc;
 	struct sockaddr_in *from;
 {
-	register struct icmp *icp;
-	register in_addr_t l;
-	register u_int i, j;
-	register u_char *cp, *dp;
+	struct icmp *icp;
+	in_addr_t l;
+	u_int i, j;
+	u_char *cp, *dp;
 	static int old_rrlen;
 	static char old_rr[MAX_IPOPTLEN];
 	struct ip *ip, *ip2;
@@ -873,9 +873,9 @@ in_cksum(addr, len)
 	u_short *addr;
 	int len;
 {
-	register int nleft = len;
-	register u_short *w = addr;
-	register int sum = 0;
+	int nleft = len;
+	u_short *w = addr;
+	int sum = 0;
 	u_short answer = 0;
 
 	/*
@@ -1259,7 +1259,7 @@ void
 fill(bp, patp)
 	char *bp, *patp;
 {
-	register int ii, jj, kk;
+	int ii, jj, kk;
 	int pat[16];
 	char *cp;
 
