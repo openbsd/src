@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.22 2001/06/08 03:53:47 angelos Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.23 2002/01/02 20:35:40 deraadt Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -284,6 +284,7 @@ tcp_timers(tp, timer)
 				rtfree(rt);
 			}
 			out:
+				;
 		}
 
 		/*
