@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.30 2004/03/30 08:55:56 espie Exp $
+# $OpenBSD: pkg_add,v 1.31 2004/04/28 06:53:17 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -514,7 +514,7 @@ sub really_add($$)
 	add_installed($pkgname);
 	if ($plist->has(DISPLAY)) {
 		my $pager = $ENV{'PAGER'} || "/usr/bin/more";
-		system($pager, $dir.DISPLAY);
+		system("$pager $dir".DISPLAY);
 	}
 }
 
