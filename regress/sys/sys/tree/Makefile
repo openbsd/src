@@ -1,5 +1,7 @@
-#	$OpenBSD: Makefile,v 1.2 2002/06/11 22:10:22 provos Exp $
+#	$OpenBSD: Makefile,v 1.3 2002/08/21 15:10:06 miod Exp $
 
-SUBDIRS= splay rb
+SUBDIR= splay rb
 
-.include <bsd.regress.mk>
+install:
+
+.include <bsd.subdir.mk>
