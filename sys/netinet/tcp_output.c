@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.12 1998/11/17 19:23:02 provos Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.13 1998/11/18 21:13:06 provos Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -440,7 +440,7 @@ send:
 			 */
 			if (!tp->sack_disable && ((flags & TH_ACK) == 0 ||
 			    (tp->t_flags & TF_SACK_PERMIT))) {
-				*((u_long *) (opt + optlen)) =
+				*((u_int32_t *) (opt + optlen)) =
 				    htonl(TCPOPT_SACK_PERMIT_HDR);
 				optlen += 4;
 			}
@@ -486,13 +486,13 @@ send:
 	if (!tp->sack_disable && tp->t_state == TCPS_ESTABLISHED &&
 	    (tp->t_flags & (TF_SACK_PERMIT|TF_NOOPT)) == TF_SACK_PERMIT &&
 	    tp->rcv_numsacks) {
-		u_long *lp = (u_long *) (opt + optlen);
-		u_long *olp = lp++;
+		u_int32_t *lp = (u_int32_t *)(opt + optlen);
+		u_int32_t *olp = lp++;
 		int count = 0;  /* actual number of SACKs inserted */
 		int maxsack = (MAX_TCPOPTLEN - (optlen + 4))/TCPOLEN_SACK;
 
 		maxsack = min(maxsack, TCP_MAX_SACK);
-		for (i=0; (i < tp->rcv_numsacks && count < maxsack); i++) {
+		for (i = 0; (i < tp->rcv_numsacks && count < maxsack); i++) {
 			struct sackblk sack = tp->sackblks[i];
 			if (sack.start == 0 && sack.end == 0)
 				continue;
