@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile.inc,v 1.10 1997/10/19 20:25:08 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.11 1997/10/19 20:36:13 deraadt Exp $
 #	etc.hp300/Makefile.inc -- hp300-specific etc Makefile targets
 
 .ifdef DESTDIR
-snap_md: bsd bsd-dl bootblocks
+snap_md: bsd bsd-dl bootblocks distrib
 
 bsd:
 	cd ${.CURDIR}/../sys/arch/hp300/conf && config GENERIC
@@ -20,5 +20,9 @@ bsd-dl:
 
 bootblocks:
 	-cp -R ${DESTDIR}/usr/mdec/uboot.raw ${DESTDIR}/snapshot
+
+distrib:
+	cd ${.CURDIR}/../distrib && make cleandir && \
+	    make && make install
 
 .endif	# DESTDIR check
