@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.28 1999/04/28 09:28:17 art Exp $	*/
+/*	$OpenBSD: systm.h,v 1.29 1999/05/06 15:33:57 mickey Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -108,8 +108,12 @@ extern struct sysent {		/* system call table */
 				/* implementing function */
 	int	(*sy_call) __P((struct proc *, void *, register_t *));
 } sysent[];
-extern int nsysent;
 #define	SCARG(p,k)	((p)->k.datum)	/* get arg from args pointer */
+
+#if defined(_KERNEL) && defined(SYSCALL_DEBUG)
+void scdebug_call __P((struct proc *p, register_t code, register_t retval[]));
+void scdebug_ret __P((struct proc *p, register_t code, int error, register_t retval[]));
+#endif /* _KERNEL && SYSCALL_DEBUG */
 
 extern int boothowto;		/* reboot flags, from console subsystem */
 
