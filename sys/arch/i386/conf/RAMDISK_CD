@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.63 2003/08/12 19:51:18 mickey Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.64 2003/08/20 00:07:04 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -296,6 +296,7 @@ txp*	at pci? dev ? function ?		# 3com 3CR990
 nge*	at pci? dev ? function ?		# NS DP83820/DP83821 GigE
 bge*	at pci? dev ? function ?		# Broadcom BCM570x (aka Tigon3)
 #lge*	at pci? dev ? function ?		# Level1 LXT1001 GigE
+mtd*	at pci? dev ? function ?		# Myson MTD803
 
 # Wireless network cards
 wi*	at pci? dev ? function ?		# WaveLAN IEEE 802.11DS
@@ -316,7 +317,7 @@ nsphyter*	at mii? phy ?			# NS and compatible PHYs
 qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
 sqphy*	at mii? phy ?				# Seeq 8x220 PHYs
 rlphy* at mii? phy ?				# RealTek 8139 internal PHYs
-#mtdphy*	at mii? phy ?			# Myson MTD972 PHYs
+mtdphy*	at mii? phy ?				# Myson MTD972 PHYs
 dcphy*	at mii? phy ?				# Digital Clone PHYs
 acphy*	at mii? phy ?				# Altima AC101 PHYs
 amphy*	at mii? phy ?				# AMD 79C873 PHYs
