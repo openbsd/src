@@ -42,7 +42,7 @@ static char sccsid[] = "@(#)timed.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.2 $"
+#ident "$Revision: 1.3 $"
 #endif /* sgi */
 
 #define TSPTYPES
@@ -92,7 +92,7 @@ static struct nets {
 struct hosttbl hosttbl[NHOSTS+1];	/* known hosts */
 
 static struct goodhost {		/* hosts that we trust */
-	char	name[MAXHOSTNAMELEN+1];
+	char	name[MAXHOSTNAMELEN];
 	struct goodhost *next;
 	char	perm;
 } *goodhosts;
@@ -589,7 +589,8 @@ suppress(struct sockaddr_in *addr,
 	if (trace)
 		fprintf(fd, "suppress: %s\n", name);
 	tgt = *addr;
-	(void)strcpy(tname, name);
+	(void)strncpy(tname, name, sizeof tname-1);
+	tname[sizeof tname-1] = '\0';
 
 	while (0 != readmsg(TSP_ANY, ANYADDR, &wait, net)) {
 		if (trace)
@@ -599,7 +600,8 @@ suppress(struct sockaddr_in *addr,
 
 	syslog(LOG_NOTICE, "suppressing false master %s", tname);
 	msg.tsp_type = TSP_QUIT;
-	(void)strcpy(msg.tsp_name, hostname);
+	(void)strncpy(msg.tsp_name, hostname, sizeof msg.tsp_name-1);
+	msg.tsp_name[sizeof msg.tsp_name-1] = '\0';
 	(void)acksend(&msg, &tgt, tname, TSP_ACK, 0, 1);
 }
 
@@ -616,7 +618,8 @@ lookformaster(struct netinfo *ntp)
 
 	/* look for master */
 	resp.tsp_type = TSP_MASTERREQ;
-	(void)strcpy(resp.tsp_name, hostname);
+	(void)strncpy(resp.tsp_name, hostname, sizeof resp.tsp_name-1);
+	resp.tsp_name[sizeof resp.tsp_name-1] = '\0';
 	answer = acksend(&resp, &ntp->dest_addr, ANYADDR,
 			 TSP_MASTERACK, ntp, 0);
 	if (answer != 0 && !good_host_name(answer->tsp_name)) {
@@ -671,7 +674,8 @@ lookformaster(struct netinfo *ntp)
 	}
 
 	ntp->status = SLAVE;
-	(void)strcpy(mastername, answer->tsp_name);
+	(void)strncpy(mastername, answer->tsp_name, sizeof mastername-1);
+	mastername[sizeof mastername-1] = '\0';
 	masteraddr = from;
 
 	/*
@@ -689,7 +693,9 @@ lookformaster(struct netinfo *ntp)
 	if (answer != NULL &&
 	    strcmp(answer->tsp_name, mastername) != 0) {
 		conflict.tsp_type = TSP_CONFLICT;
-		(void)strcpy(conflict.tsp_name, hostname);
+		(void)strncpy(conflict.tsp_name, hostname,
+		    sizeof conflict.tsp_name-1);
+		conflict.tsp_name[sizeof conflict.tsp_name-1] = '\0';
 		if (!acksend(&conflict, &masteraddr, mastername,
 			     TSP_ACK, 0, 0)) {
 			syslog(LOG_ERR,

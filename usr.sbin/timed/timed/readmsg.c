@@ -36,7 +36,7 @@ static char sccsid[] = "@(#)readmsg.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.1.1.1 $"
+#ident "$Revision: 1.2 $"
 #endif
 
 #include "globals.h"
@@ -390,7 +390,8 @@ masterack()
 
 	resp = msgin;
 	resp.tsp_vers = TSPVERSION;
-	(void)strcpy(resp.tsp_name, hostname);
+	(void)strncpy(resp.tsp_name, hostname, sizeof resp.tsp_name-1);
+	resp.tsp_name[sizeof resp.tsp_name-1] = '\0';
 
 	switch(msgin.tsp_type) {
 

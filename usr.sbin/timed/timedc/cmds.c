@@ -36,7 +36,7 @@ static char sccsid[] = "@(#)cmds.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.2 $"
+#ident "$Revision: 1.3 $"
 #endif
 
 #include "timedc.h"
@@ -306,7 +306,8 @@ msite(int argc, char *argv[])
 		}
 		bcopy(hp->h_addr, &dest.sin_addr.s_addr, hp->h_length);
 
-		(void)strcpy(msg.tsp_name, myname);
+		(void)strncpy(msg.tsp_name, myname, sizeof msg.tsp_name-1);
+		msg.tsp_name[sizeof msg.tsp_name-1] = '\0';
 		msg.tsp_type = TSP_MSITE;
 		msg.tsp_vers = TSPVERSION;
 		bytenetorder(&msg);
@@ -445,7 +446,8 @@ tracing(int argc, char *argv[])
 		onflag = OFF;
 	}
 
-	(void)strcpy(msg.tsp_name, myname);
+	(void)strncpy(msg.tsp_name, myname, sizeof msg.tsp_name-1);
+	msg.tsp_name[sizeof msg.tsp_name-1] = '\0';
 	msg.tsp_vers = TSPVERSION;
 	bytenetorder(&msg);
 	if (sendto(sock, &msg, sizeof(struct tsp), 0,

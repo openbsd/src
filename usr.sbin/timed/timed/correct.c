@@ -36,7 +36,7 @@ static char sccsid[] = "@(#)correct.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.2 $"
+#ident "$Revision: 1.3 $"
 #endif
 
 #include "globals.h"
@@ -89,7 +89,9 @@ correct(long avdelta)
 				to.tsp_time.tv_usec = tmptv.tv_usec;
 				to.tsp_type = TSP_ADJTIME;
 			}
-			(void)strcpy(to.tsp_name, hostname);
+			(void)strncpy(to.tsp_name, hostname,
+			    sizeof to.tsp_name-1);
+			to.tsp_name[sizeof to.tsp_name-1] = '\0';
 			answer = acksend(&to, &htp->addr, htp->name,
 					 TSP_ACK, 0, 0);
 			if (!answer) {
