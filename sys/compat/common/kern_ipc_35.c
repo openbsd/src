@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ipc_35.c,v 1.2 2004/07/14 23:45:11 millert Exp $	*/
+/*	$OpenBSD: kern_ipc_35.c,v 1.3 2004/07/15 11:00:12 millert Exp $	*/
 
 /*
  * Copyright (c) 2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -83,7 +83,7 @@ compat_35_sys_semop(struct proc *p, void *v, register_t *retval)
  * Convert between new and old struct {msq,sem,shm}id_ds (both ways)
  */
 #if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
-#define cvt_ds(to, from, type) do {					\
+#define cvt_ds(to, from, type, base) do {				\
 	(to)->type##_perm.cuid = (from)->type##_perm.cuid;		\
 	(to)->type##_perm.cgid = (from)->type##_perm.cgid;		\
 	(to)->type##_perm.uid = (from)->type##_perm.uid;		\
@@ -91,9 +91,8 @@ compat_35_sys_semop(struct proc *p, void *v, register_t *retval)
 	(to)->type##_perm.mode = (from)->type##_perm.mode & 0xffffU;	\
 	(to)->type##_perm.seq = (from)->type##_perm.seq;		\
 	(to)->type##_perm.key = (from)->type##_perm.key;		\
-	bcopy((caddr_t)(from) + sizeof((from)->type##_perm),		\
-	    (caddr_t)(to) + sizeof((to)->type##_perm),			\
-	    sizeof(*(to)) - sizeof((to)->type##_perm));			\
+	bcopy((caddr_t)&(from)->base, (caddr_t)&(to)->base,		\
+	    sizeof(*(to)) - ((caddr_t)&(to)->base - (caddr_t)to));	\
 } while (0)
 #endif /* SYSVMSG || SYSVSEM || SYSVSHM */
 
@@ -111,7 +110,7 @@ msqid_copyin(const void *uaddr, void *kaddr, size_t len)
 	if (len != sizeof(struct msqid_ds))
 		return (EFAULT);
 	if ((error = copyin(uaddr, &omsqbuf, sizeof(omsqbuf))) == 0)
-		cvt_ds(msqbuf, &omsqbuf, msg);
+		cvt_ds(msqbuf, &omsqbuf, msg, msg_first);
 	return (error);
 }
 
@@ -126,7 +125,7 @@ msqid_copyout(const void *kaddr, void *uaddr, size_t len)
 
 	if (len != sizeof(struct msqid_ds))
 		return (EFAULT);
-	cvt_ds(&omsqbuf, msqbuf, msg);
+	cvt_ds(&omsqbuf, msqbuf, msg, msg_first);
 	return (copyout(&omsqbuf, uaddr, sizeof(omsqbuf)));
 }
 
@@ -161,7 +160,7 @@ semid_copyin(const void *uaddr, void *kaddr, size_t len)
 	if (len != sizeof(struct semid_ds))
 		return (EFAULT);
 	if ((error = copyin(uaddr, &osembuf, sizeof(osembuf))) == 0)
-		cvt_ds(sembuf, &osembuf, sem);
+		cvt_ds(sembuf, &osembuf, sem, sem_base);
 	return (error);
 }
 
@@ -176,7 +175,7 @@ semid_copyout(const void *kaddr, void *uaddr, size_t len)
 
 	if (len != sizeof(struct semid_ds))
 		return (EFAULT);
-	cvt_ds(&osembuf, sembuf, sem);
+	cvt_ds(&osembuf, sembuf, sem, sem_base);
 	return (copyout(&osembuf, uaddr, sizeof(osembuf)));
 }
 
@@ -226,7 +225,7 @@ shmid_copyin(const void *uaddr, void *kaddr, size_t len)
 	if (len != sizeof(struct shmid_ds))
 		return (EFAULT);
 	if ((error = copyin(uaddr, &oshmbuf, sizeof(oshmbuf))) == 0)
-		cvt_ds(shmbuf, &oshmbuf, shm);
+		cvt_ds(shmbuf, &oshmbuf, shm, shm_segsz);
 	return (error);
 }
 
@@ -241,7 +240,7 @@ shmid_copyout(const void *kaddr, void *uaddr, size_t len)
 
 	if (len != sizeof(struct shmid_ds))
 		return (EFAULT);
-	cvt_ds(&oshmbuf, shmbuf, shm);
+	cvt_ds(&oshmbuf, shmbuf, shm, shm_segsz);
 	return (copyout(&oshmbuf, uaddr, sizeof(oshmbuf)));
 }
 
