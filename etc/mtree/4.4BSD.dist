@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.165 2004/05/03 15:18:19 drahn Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.166 2004/06/05 18:26:28 grange Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -41,6 +41,11 @@ authpf		uname=root mode=0755
 # ./etc/disklabels
 disklabels
 # ./etc/disklabels
+..
+
+# ./etc/hotplug
+hotplug
+# ./etc/hotplug
 ..
 
 # ./etc/isakmpd
