@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.10 2002/06/08 08:36:39 jason Exp $
+#	$OpenBSD: Makefile,v 1.11 2003/01/19 23:09:59 deraadt Exp $
 
-SUBDIR+= libc libc_r csu libssl libm
+SUBDIR+= libc libpthread csu libssl libm
 
 install:
 
