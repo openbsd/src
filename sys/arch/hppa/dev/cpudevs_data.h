@@ -1,7 +1,7 @@
 /*
  * THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT.
  * generated from:
- *	OpenBSD: cpudevs,v 1.17 2000/07/10 17:40:01 mickey Exp 
+ *	OpenBSD: cpudevs,v 1.18 2001/03/20 08:15:22 mickey Exp 
  */
 
 static const struct hppa_mod_info hppa_knownmods[] = {
@@ -117,11 +117,11 @@ static const struct hppa_mod_info hppa_knownmods[] = {
 	{HPPA_TYPE_BOARD,	HPPA_BOARD_HP800V2,	"800/V2500 (SPP2500)" },
 	{HPPA_TYPE_BOARD,	HPPA_BOARD_HP782,	"782/J2240 (SummitHawk U+)" },
 	{HPPA_TYPE_BOARD,	HPPA_BOARD_HP800K,	"800/K380 (DragonHawk U+ 240 DC3)" },
-	{HPPA_TYPE_BOARD,	HPPA_BOARD_HP821,	"821/D350/R350 (UltraLight 1-way U+/240)" },
-	{HPPA_TYPE_BOARD,	HPPA_BOARD_HP800D,	"800/D390/R390 (UltraLight 2-way U+/240)" },
+	{HPPA_TYPE_BOARD,	HPPA_BOARD_HP821,	"821/D350/R350 (UltraLight 1w U+/240)" },
+	{HPPA_TYPE_BOARD,	HPPA_BOARD_HP800D,	"800/D390/R390 (UltraLight 2w U+/240)" },
 	{HPPA_TYPE_BOARD,	HPPA_BOARD_HP785C,	"785/C3000 (AllegroHigh W)" },
 	{HPPA_TYPE_BOARD,	HPPA_BOARD_HP785B,	"785/B1000 (AllegroLow W)" },
-	{HPPA_TYPE_BOARD,	HPPA_BOARD_HP785J,	"785/J5000 (Forte W 2-way)" },
+	{HPPA_TYPE_BOARD,	HPPA_BOARD_HP785J,	"785/J5000 (Forte W 2w)" },
 	{HPPA_TYPE_BOARD,	HPPA_BOARD_HP800N,	"800/N4000-36 (Prelude W)" },
 	{HPPA_TYPE_BOARD,	HPPA_BOARD_HP800L2,	"800/L2000-44 (Rhapsody 440)" },
 	{HPPA_TYPE_BOARD,	HPPA_BOARD_HP785C_1,	"780/C360 (Raven W 360)" },
