@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.10 1996/06/01 11:54:31 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.11 1996/06/16 01:14:56 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -244,8 +244,6 @@ struct	genericconf {
 	{ 0 }
 };
 
-void	gets __P((char *));
-
 void
 setconf()
 {
@@ -262,7 +260,7 @@ setconf()
 		char name[128];
 retry:
 		printf("root device? ");
-		gets(name);
+		getsn(name, sizeof name);
 		if (*name == '\0')
 			goto noask;
 		for (gc = genericconf; gc->gc_driver; gc++)
@@ -327,42 +325,4 @@ doswap:
 	if (swaponroot)
 		rootdev = dumpdev;
 #endif
-}
-
-void
-gets(cp)
-	char *cp;
-{
-	register char *lp;
-	register c;
-
-	lp = cp;
-	for (;;) {
-		c = cngetc() & 0177;
-		switch (c) {
-		case '\n':
-		case '\r':
-			printf("\n");
-			*lp++ = '\0';
-			return;
-		case '\010':
-		case '\177':
-			if (lp > cp) {
-				printf("\b \b");
-				lp--;
-			}
-			break;
-		case 'u' & 037:
-			while (lp > cp) {
-				printf("\b \b");
-				lp--;
-			}
-			break;
-		case '\t':
-			c = ' ';
-		default:
-			printf("%c", c);
-			*lp++ = c;
-		}
-	}
 }
