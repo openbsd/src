@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ipsec.c,v 1.6 2001/06/27 03:34:44 angelos Exp $	*/
+/*	$OpenBSD: print-ipsec.c,v 1.7 2003/02/20 23:39:20 jason Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -28,7 +28,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ipsec.c,v 1.6 2001/06/27 03:34:44 angelos Exp $ (XXX)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ipsec.c,v 1.7 2003/02/20 23:39:20 jason Exp $ (XXX)";
 #endif
 
 #include <sys/param.h>
@@ -67,15 +67,21 @@ esp_print (register const u_char *bp, register u_int len,
 {
 	const struct ip *ip;
 	const struct esp_hdr *esp;
-
+	u_int plen = len;
+ 
 	ip = (const struct ip *)bp2;
+
+	printf("esp %s > %s",
+	    ipaddr_string(&ip->ip_src), ipaddr_string(&ip->ip_dst));
+
+	if (plen < sizeof(struct esp_hdr)) {
+		printf("[|esp]");
+		return;
+	}
 	esp = (const struct esp_hdr *)bp;
 
-	(void)printf("esp %s > %s spi 0x%08X seq %d len %d",
-		     ipaddr_string(&ip->ip_src),
-		     ipaddr_string(&ip->ip_dst),
-		     ntohl(esp->esp_spi), ntohl(esp->esp_seq), len);
-
+	printf(" spi 0x%08X seq %d len %d",
+	    ntohl(esp->esp_spi), ntohl(esp->esp_seq), len);
 }
 
 /*
@@ -95,15 +101,21 @@ ah_print (register const u_char *bp, register u_int len,
 {
 	const struct ip *ip;
 	const struct ah_hdr *ah;
-	u_int pl_len;
+	u_int pl_len = len;
 
 	ip = (const struct ip *)bp2;
+
+	printf("ah %s > %s",
+	    ipaddr_string(&ip->ip_src), ipaddr_string(&ip->ip_dst));
+
+	if (pl_len < sizeof(struct ah_hdr)) {
+		printf("[|esp]");
+		return;
+	}
 	ah = (const struct ah_hdr *)bp;
 
-	(void)printf("ah %s > %s spi 0x%08X seq %d len %d",
-		     ipaddr_string(&ip->ip_src),
-		     ipaddr_string(&ip->ip_dst),
-		     ntohl(ah->ah_spi), ntohl(ah->ah_seq), len);
+	printf(" spi 0x%08X seq %d len %d",
+	    ntohl(ah->ah_spi), ntohl(ah->ah_seq), len);
 
 	if (vflag) {
 	        (void)printf("\n\t[ ");
@@ -153,4 +165,33 @@ out:
 		(void)printf(" ]");
 	}
 
+}
+
+struct ipcomp_hdr {
+	u_char  ipcomp_nxt_hdr;
+	u_char	ipcomp_flags;
+	u_short	ipcomp_cpi;
+};
+
+void
+ipcomp_print (register const u_char *bp, register u_int len,
+	  register const u_char *bp2)
+{
+	const struct ip *ip;
+	const struct ipcomp_hdr *ipc;
+	u_int plen = len;
+ 
+	ip = (const struct ip *)bp2;
+
+	printf("ipcomp %s > %s",
+	    ipaddr_string(&ip->ip_src), ipaddr_string(&ip->ip_dst));
+
+	if (plen < sizeof(struct ipcomp_hdr)) {
+		printf("[|ipcomp]");
+		return;
+	}
+	ipc = (const struct ipcomp_hdr *)bp;
+
+	printf(" cpi 0x%04X flags %x next %x",
+	    ntohs(ipc->ipcomp_cpi), ipc->ipcomp_flags, ipc->ipcomp_nxt_hdr);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.h,v 1.35 2002/11/30 13:56:23 mickey Exp $	*/
+/*	$OpenBSD: interface.h,v 1.36 2003/02/20 23:39:20 jason Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/interface.h,v 1.35 2002/11/30 13:56:23 mickey Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/interface.h,v 1.36 2003/02/20 23:39:20 jason Exp $ (LBL)
  */
 
 #ifndef tcpdump_interface_h
@@ -251,6 +251,7 @@ extern void radius_print(const u_char *, u_int);
 extern void lwres_print(const u_char *, u_int);
 extern void ether_print(const u_char *, u_int);
 extern void etherip_print(const u_char *, u_int, const u_char *);
+extern void ipcomp_print(const u_char *, u_int, const u_char *);
 
 #ifdef INET6
 extern void ip6_print(const u_char *, int);
