@@ -67,7 +67,14 @@ talk()
 	char buf[BUFSIZ];
 	struct timeval wait;
 
+#ifdef NCURSES_VERSION
+	message("Connection established");
+	beep();
+	beep();
+	beep();
+#else
 	message("Connection established\007\007\007");
+#endif
 	current_line = 0;
 	sockt_mask = (1<<sockt);
 
