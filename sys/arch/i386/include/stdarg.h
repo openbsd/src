@@ -45,8 +45,13 @@ typedef _BSD_VA_LIST_	va_list;
 #define	__va_size(type) \
 	(((sizeof(type) + sizeof(long) - 1) / sizeof(long)) * sizeof(long))
 
+#ifdef __GNUC__
+#define va_start(ap, last) \
+	((ap) = (va_list)__builtin_next_arg(last))
+#else
 #define	va_start(ap, last) \
 	((ap) = (va_list)&(last) + __va_size(last))
+#endif
 
 #define	va_arg(ap, type) \
 	(*(type *)((ap) += __va_size(type), (ap) - __va_size(type)))
