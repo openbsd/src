@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.37 2005/01/08 21:16:02 alek Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.38 2005/01/09 11:02:32 alek Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -382,6 +382,11 @@ run(int cmd, char *arg)
 			(void) ioctl(fd, CDIOCALLOW);
 			close(fd);
 			fd = -1;
+		}
+
+		if (strlen(arg) == 0) {
+			printf("%s: Invalid parameter\n", __progname);
+			return (0);
 		}
 
 		/* open new device */
