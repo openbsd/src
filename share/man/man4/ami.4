@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ami.4,v 1.14 2004/02/10 15:10:49 mickey Exp $
+.\"	$OpenBSD: ami.4,v 1.15 2004/02/28 02:14:24 mickey Exp $
 .\"
 .\" Michael Shalayeff, 2001. Public Domain.
 .\"
-.Dd March 9, 2001
+.Dd February 27, 2004
 .Dt AMI 4
 .Os
 .Sh NAME
@@ -14,7 +14,14 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for MegaRAID family of RAID controllers.
+driver provides support for MegaRAID family of RAID controllers, including:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It AMI MegaRAID
+.It Dell PERC 3Si and 4Di
+.It Hewlett-Packard 438, 466 and T[567]
+.It LSI/Symbios 523 SATA
+.El
 .Pp
 These controllers support RAID 0, RAID 1, RAID 5, JBOD
 and superpositions of those configurations.
