@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.48 1998/04/25 20:31:05 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.49 1998/04/27 02:26:06 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -775,10 +775,10 @@
 #define	PCI_PRODUCT_INTEL_PCMC	0x04a3		/* 82434LX/NX (Mercury/Neptune) PCI/Cache/DRAM Controller */
 #define	PCI_PRODUCT_INTEL_82092AA	0x1222		/* 82092AA IDE controller */
 #define	PCI_PRODUCT_INTEL_SAA7116	0x1223		/* SAA7116 */
-#define	PCI_PRODUCT_INTEL_82596	0x1226		/* 82596 LAN Controller */
+#define	PCI_PRODUCT_INTEL_82596	0x1226		/* 82596 Ethernet */
 #define	PCI_PRODUCT_INTEL_EEPRO100	0x1227		/* EE Pro 100 10/100 Fast Ethernet */
 #define	PCI_PRODUCT_INTEL_EEPRO100S	0x1228		/* EE Pro 100 Smart 10/100 Fast Ethernet */
-#define	PCI_PRODUCT_INTEL_82557	0x1229		/* 82557 Fast Ethernet LAN Controller */
+#define	PCI_PRODUCT_INTEL_82557	0x1229		/* 82557 Fast Ethernet */
 #define	PCI_PRODUCT_INTEL_82437FX	0x122d		/* 82437FX (Triton) PCI, Cache, and DRAM Controller */
 #define	PCI_PRODUCT_INTEL_82371	0x122e		/* 82371FB (Triton) PCI-ISA Bridge */
 #define	PCI_PRODUCT_INTEL_82438	0x1230		/* 82438 (Triton) IDE controller */
@@ -1071,10 +1071,10 @@
 
 /* Winbond Electronics products */
 #define	PCI_PRODUCT_WINBOND_W83769F	0x0001		/* W83769F */
-#define	PCI_PRODUCT_WINBOND_W89C940F	0x0940		/* Linksys EtherPCI LAN Card II */
+#define	PCI_PRODUCT_WINBOND_W89C940F	0x0940		/* Linksys EtherPCI II */
 
 /* Winbond Electronics products (PCI products set 2) */
-#define	PCI_PRODUCT_WINBOND2_W89C940	0x1980		/* Linksys EtherPCI LAN Card */
+#define	PCI_PRODUCT_WINBOND2_W89C940	0x1980		/* Linksys EtherPCI */
 
 /* Zeinet products */
 #define	PCI_PRODUCT_ZEINET_1221	0x0001		/* 1221 */

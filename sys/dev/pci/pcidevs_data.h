@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.48 1998/04/25 20:31:05 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.49 1998/04/27 02:26:06 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1008,7 +1008,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82596,
 	    0,
 	    "Intel",
-	    "82596 LAN Controller",
+	    "82596 Ethernet",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EEPRO100,
@@ -1026,7 +1026,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82557,
 	    0,
 	    "Intel",
-	    "82557 Fast Ethernet LAN Controller",
+	    "82557 Fast Ethernet",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82437FX,
@@ -2232,13 +2232,13 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W89C940F,
 	    0,
 	    "Winbond Electronics",
-	    "Linksys EtherPCI LAN Card II",
+	    "Linksys EtherPCI II",
 	},
 	{
 	    PCI_VENDOR_WINBOND2, PCI_PRODUCT_WINBOND2_W89C940,
 	    0,
 	    "Winbond Electronics (2nd PCI Vendor ID)",
-	    "Linksys EtherPCI LAN Card",
+	    "Linksys EtherPCI",
 	},
 	{
 	    PCI_VENDOR_ZEINET, PCI_PRODUCT_ZEINET_1221,
