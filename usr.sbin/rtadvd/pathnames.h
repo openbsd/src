@@ -1,3 +1,3 @@
-/*	$OpenBSD: pathnames.h,v 1.2 1999/12/11 10:33:28 itojun Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.3 2000/01/05 19:53:12 angelos Exp $	*/
 
-#define _PATH_RTADVDCONF "/usr/local/v6/etc/rtadvd.conf"
+#define _PATH_RTADVDCONF "/etc/rtadvd.conf"
