@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_old.c,v 1.14 1998/02/22 01:23:32 niklas Exp $	*/
+/*	$OpenBSD: ip_esp_old.c,v 1.15 1998/03/07 21:30:26 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -296,10 +296,10 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
     struct esp_old_xdata *xd;
     struct ip *ip, ipo;
     u_char iv[ESP_3DES_IVS], niv[ESP_3DES_IVS], blk[ESP_3DES_BLKS], opts[40];
-    u_char *idat, *odat;
+    u_char *idat, *odat, *ivp, *ivn, *lblk;
     struct esp_old *esp;
-    int ohlen, plen, ilen, olen, i, blks;
-    struct mbuf *mi, *mo;
+    int ohlen, plen, ilen, i, blks, rest;
+    struct mbuf *mi;
 
     xd = (struct esp_old_xdata *) tdb->tdb_xdata;
 
@@ -382,10 +382,7 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
 	idat += 4;
     }
 
-    olen = ilen;
-    odat = idat;
-    mi = mo = m;
-    i = 0;
+    mi = m;
 
     /*
      * At this point:
@@ -393,65 +390,104 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
      *   ilen is # of octets left in this mbuf
      *   idat is first encapsulated payload octed in this mbuf
      *   same for olen and odat
-     *   iv contains the IV.
-     *   mi and mo point to the first mbuf
+     *   ivp points to the IV, ivn buffers the next IV.
+     *   mi points to the first mbuf
      *
      * From now on until the end of the mbuf chain:
-     *   . move the next eight octets of the chain into blk[]
-     *     (ilen, idat, and mi are adjusted accordingly)
-     *     and save it back into iv[]
-     *   . decrypt blk[], xor with iv[], put back into chain
-     *     (olen, odat, amd mo are adjusted accordingly)
+     *   . move the next eight octets of the chain into ivn
+     *   . decrypt idat and xor with ivp
+     *   . swap ivp and ivn.
      *   . repeat
      */
 
+    ivp = iv;
+    ivn = niv;
+    rest = ilen % blks;
     while (plen > 0)		/* while not done */
     {
-	while (ilen == 0)	/* we exhausted previous mbuf */
+	if (ilen < blks) 
 	{
-	    mi = mi->m_next;
-	    if (mi == NULL)
-	      panic("esp_old_input(): bad chain (i)\n");
-
-	    ilen = mi->m_len;
-	    idat = (u_char *) mi->m_data;
-	}
-
-	blk[i] = niv[i] = *idat++;
-	i++;
-	ilen--;
-
-	if (i == blks)
-	{
-	    xd->edx_xform->decrypt(xd, blk);
-
-	    for (i = 0; i < blks; i++)
+	    if (rest)
 	    {
-		while (olen == 0)
-		{
-		    mo = mo->m_next;
-		    if (mo == NULL)
-		      panic("esp_old_input(): bad chain (o)\n");
-
-		    olen = mo->m_len;
-		    odat = (u_char *) mo->m_data;
-		}
-
-		*odat = blk[i] ^ iv[i];
-		iv[i] = niv[i];
-		blk[i] = *odat++; /* needed elsewhere */
-		olen--;
+		bcopy(idat, blk, rest);
+		odat = idat;
 	    }
 
-	    i = 0;
+	    do {
+		mi = mi->m_next;
+		if (mi == NULL)
+		    panic("esp_old_output(): bad chain (i)\n");
+	    } while (mi->m_len == 0);
+
+	    if (mi->m_len < blks - rest)
+	    {
+		if ((mi = m_pullup(mi, blks - rest)) == NULL)
+		{
+#ifdef ENCDEBUG
+		    if (encdebug)
+			printf("esp_old_input(): m_pullup() failed, SA %x/%08x\n",
+			       tdb->tdb_dst, ntohl(tdb->tdb_spi));
+#endif /* ENCDEBUG */
+		    espstat.esps_hdrops++;
+		    return NULL;
+		}
+	    }
+		    
+	    ilen = mi->m_len;
+	    idat = mtod(mi, u_char *);
+
+	    if (rest)
+	    {
+		bcopy(idat, blk + rest, blks - rest);
+		bcopy(blk, ivn, blks);
+		    
+		xd->edx_xform->decrypt(xd, blk);
+
+		for (i=0; i<blks; i++)
+		    blk[i] ^= ivp[i];
+
+		ivp = ivn;
+		ivn = (ivp == iv) ? niv : iv;
+
+		bcopy(blk, odat, rest);
+		bcopy(blk + rest, idat, blks - rest);
+
+		lblk = blk;   /* last block touched */
+		
+		idat += blks - rest;
+		ilen -= blks - rest;
+		plen -= blks;
+	    }
+
+	    rest = ilen % blks;
 	}
 
-	plen--;
+	while (ilen >= blks && plen > 0)
+	{
+	    bcopy(idat, ivn, blks);
+
+	    xd->edx_xform->decrypt(xd, idat);
+
+	    for (i=0; i<blks; i++)
+		idat[i] ^= ivp[i];
+
+	    ivp = ivn;
+	    ivn = (ivp == iv) ? niv : iv;
+
+	    lblk = idat;   /* last block touched */
+	    idat += blks;
+
+	    ilen -= blks;
+	    plen -= blks;
+	}
     }
 
     /* Save the options */
     m_copydata(m, sizeof(struct ip), (ipo.ip_hl << 2) - sizeof(struct ip),
 	       (caddr_t) opts);
+
+    if (lblk != blk)
+	bcopy(lblk, blk, blks);
 
     /*
      * Now, the entire chain has been decrypted. As a side effect,
@@ -541,10 +577,10 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 {
     struct esp_old_xdata *xd;
     struct ip *ip, ipo;
-    int i, ilen, olen, ohlen, nh, rlen, plen, padding;
+    int i, ilen, ohlen, nh, rlen, plen, padding, rest;
     u_int32_t spi;
-    struct mbuf *mi, *mo;
-    u_char *pad, *idat, *odat;
+    struct mbuf *mi;
+    u_char *pad, *idat, *odat, *ivp;
     u_char iv[ESP_3DES_IVS], blk[ESP_3DES_IVS], opts[40];
     int iphlen, blks;
 
@@ -616,10 +652,9 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     pad[padding - 1] = nh;
 
     plen = rlen + padding;
-    mi = mo = m;
-    ilen = olen = m->m_len - iphlen;
-    idat = odat = mtod(m, u_char *) + iphlen;
-    i = 0;
+    mi = m;
+    ilen = m->m_len - iphlen;
+    idat = mtod(m, u_char *) + iphlen;
 
     /*
      * We are now ready to encrypt the payload. 
@@ -645,48 +680,74 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 	iv[7] = xd->edx_iv[7];
     }
 
+    ivp = iv;
+    rest = ilen % blks;
     while (plen > 0)		/* while not done */
     {
-	while (ilen == 0)	/* we exhausted previous mbuf */
+	if (ilen < blks)	/* we exhausted previous mbuf */
 	{
-	    mi = mi->m_next;
-	    if (mi == NULL)
-	      panic("esp_old_output(): bad chain (i)\n");
-
-	    ilen = mi->m_len;
-	    idat = (u_char *) mi->m_data;
-	}
-
-	blk[i] = *idat++ ^ iv[i];
-		
-	i++;
-	ilen--;
-
-	if (i == blks)
-	{
-	    xd->edx_xform->encrypt(xd, blk);
-
-	    for (i = 0; i < blks; i++)
+	    if (rest)
 	    {
-		while (olen == 0)
-		{
-		    mo = mo->m_next;
-		    if (mo == NULL)
-		      panic("esp_old_output(): bad chain (o)\n");
-
-		    olen = mo->m_len;
-		    odat = (u_char *) mo->m_data;
-		}
-
-		*odat++ = blk[i];
-		iv[i] = blk[i];
-		olen--;
+		bcopy(idat, blk, rest);
+		odat = idat;
 	    }
 
-	    i = 0;
+	    do {
+		mi = mi->m_next;
+		if (mi == NULL)
+		    panic("esp_old_output(): bad chain (i)\n");
+	    } while (mi->m_len == 0);
+
+	    if (mi->m_len < blks - rest)
+	    {
+		if ((mi = m_pullup(mi, blks - rest)) == NULL)
+		{
+#ifdef ENCDEBUG
+		    if (encdebug)
+			printf("esp_old_output(): m_pullup() failed, SA %x/%08x\n",
+			       tdb->tdb_dst, ntohl(tdb->tdb_spi));
+#endif /* ENCDEBUG */
+		    return ENOBUFS;
+		}
+	    }
+		    
+	    ilen = mi->m_len;
+	    idat = (u_char *) mi->m_data;
+	    if (rest)
+	    {
+		bcopy(idat, blk + rest, blks - rest);
+		    
+		for (i=0; i<blks; i++)
+		    blk[i] ^= ivp[i];
+
+		xd->edx_xform->encrypt(xd, blk);
+
+		ivp = blk;
+
+		bcopy(blk, odat, rest);
+		bcopy(blk + rest, idat, blks - rest);
+		
+		idat += blks - rest;
+		ilen -= blks - rest;
+		plen -= blks;
+	    }
+
+	    rest = ilen % blks;
 	}
 
-	plen--;
+	while (ilen >= blks && plen > 0)
+	{
+	    for (i=0; i<blks; i++)
+		idat[i] ^= ivp[i];
+
+	    xd->edx_xform->encrypt(xd, idat);
+
+	    ivp = idat;
+	    idat += blks;
+
+	    ilen -= blks;
+	    plen -= blks;
+	}
     }
 
     /*
@@ -733,7 +794,7 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     }
 
     /* Save the last encrypted block, to be used as the next IV */
-    bcopy(blk, xd->edx_iv, xd->edx_ivlen);
+    bcopy(ivp, xd->edx_iv, xd->edx_ivlen);
 
     m_copyback(m, 0, sizeof(struct ip), (caddr_t) &ipo);
 
