@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffdir.c,v 1.24 2003/07/21 23:28:00 millert Exp $	*/
+/*	$OpenBSD: diffdir.c,v 1.25 2003/10/07 23:37:27 millert Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,7 +21,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffdir.c,v 1.24 2003/07/21 23:28:00 millert Exp $";
+static const char rcsid[] = "$OpenBSD: diffdir.c,v 1.25 2003/10/07 23:37:27 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -118,8 +118,7 @@ diffdir(char *p1, char *p2)
 			else if (lflag)
 				dent1->d_status |= D_ONLY;
 			else
-				printf("Only in %.*s: %s\n", (int)(dirlen1 - 1),
-				    path1, dent1->d_name);
+				print_only(path1, dirlen1, dent1->d_name);
 			dp1++;
 		} else {
 			/* file only in second dir, only diff if -N or -P */
@@ -128,8 +127,7 @@ diffdir(char *p1, char *p2)
 			else if (lflag)
 				dent2->d_status |= D_ONLY;
 			else
-				printf("Only in %.*s: %s\n", (int)(dirlen2 - 1),
-				    path2, dent2->d_name);
+				print_only(path2, dirlen2, dent2->d_name);
 			dp2++;
 		}
 	}
