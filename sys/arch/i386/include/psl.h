@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.25 1996/01/07 03:59:32 mycroft Exp $	*/
+/*	$NetBSD: psl.h,v 1.26 1996/01/07 21:48:35 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -175,12 +175,21 @@ spllower(ncpl)
 
 /*
  * Software interrupt registration
+ *
+ * We hand-code this to ensure that it's atomic.
  */
-#define	softintr(n)	(ipending |= (1 << (n)))
+static __inline void
+softintr(mask)
+	register int mask;
+{
+
+	__asm __volatile("orl %0,_ipending" : : "ir" (mask));
+}
+
 #define	setsoftast()	(astpending = 1)
-#define	setsoftclock()	softintr(SIR_CLOCK)
-#define	setsoftnet()	softintr(SIR_NET)
-#define	setsofttty()	softintr(SIR_TTY)
+#define	setsoftclock()	softintr(1 << SIR_CLOCK)
+#define	setsoftnet()	softintr(1 << SIR_NET)
+#define	setsofttty()	softintr(1 << SIR_TTY)
 
 #endif /* !LOCORE */
 #endif /* _KERNEL */
