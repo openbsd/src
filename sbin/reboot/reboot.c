@@ -1,4 +1,4 @@
-/*	$OpenBSD: reboot.c,v 1.25 2003/06/02 20:06:16 millert Exp $	*/
+/*	$OpenBSD: reboot.c,v 1.26 2004/07/09 18:49:57 deraadt Exp $	*/
 /*	$NetBSD: reboot.c,v 1.8 1995/10/05 05:36:22 mycroft Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: reboot.c,v 1.25 2003/06/02 20:06:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: reboot.c,v 1.26 2004/07/09 18:49:57 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,8 +62,10 @@ static char rcsid[] = "$OpenBSD: reboot.c,v 1.25 2003/06/02 20:06:16 millert Exp
 #include <paths.h>
 #include <util.h>
 
-void usage(void);
+void	usage(void);
 extern char *__progname;
+
+int	dohalt;
 
 #define _PATH_RC	"/etc/rc"
 
@@ -72,13 +74,14 @@ main(int argc, char *argv[])
 {
 	int i;
 	struct passwd *pw;
-	int ch, howto, dohalt, lflag, nflag, pflag, qflag, sverrno;
+	int ch, howto, lflag, nflag, pflag, qflag;
 	char *p, *user;
 
 	p = __progname;
 
 	/* Nuke login shell */
-	if(*p == '-') p++;
+	if (*p == '-')
+		p++;
 
 	howto = dohalt = lflag = nflag = pflag = qflag = 0;
 	if (!strcmp(p, "halt")) {
@@ -87,11 +90,11 @@ main(int argc, char *argv[])
 	}
 
 	while ((ch = getopt(argc, argv, "dlnpq")) != -1)
-		switch(ch) {
+		switch (ch) {
 		case 'd':
 			howto |= RB_DUMP;
 			break;
-		case 'l':		/* Undocumented; used by shutdown. */
+		case 'l':	/* Undocumented; used by shutdown. */
 			lflag = 1;
 			break;
 		case 'n':
@@ -108,12 +111,14 @@ main(int argc, char *argv[])
 		case 'q':
 			qflag = 1;
 			break;
-		case '?':
 		default:
 			usage();
 		}
 	argc -= optind;
 	argv += optind;
+
+	if (argc)
+		usage();
 
 	if (geteuid())
 		errx(1, "%s", strerror(EPERM));
@@ -238,7 +243,6 @@ main(int argc, char *argv[])
 	/* FALLTHROUGH */
 
 restart:
-	sverrno = errno;
 	errx(1, kill(1, SIGHUP) == -1 ? "(can't restart init): " : "");
 	/* NOTREACHED */
 }
@@ -246,6 +250,7 @@ restart:
 void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: %s [-dlnpq]\n", __progname);
+	fprintf(stderr, "usage: %s [-dn%sq]\n", __progname,
+	    dohalt ? "p" : "");
 	exit(1);
 }
