@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ip4.c,v 1.47 2000/01/13 06:02:31 angelos Exp $	*/
+/*	$OpenBSD: ip_ip4.c,v 1.48 2000/01/17 05:35:23 itojun Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -147,14 +147,25 @@ ip4_input(m, va_alist)
 
     ip4stat.ip4s_ipackets++;
 
-    /* Bring the IP(v4) header in the first mbuf, if not there already */
-    if (m->m_len < sizeof(struct ip))
+    m_copydata(m, 0, 1, &v);
+    if ((v >> 4) == 4)
+	hlen = sizeof(struct ip);
+#ifdef INET6
+    else if ((v >> 4) == 6)
+	hlen = sizeof(struct ip6_hdr);
+#endif
+    else {
+	m_freem(m);
+	return /*EAFNOSUPPORT*/;
+    }
+
+    /* Bring the outer IP(v4) header in the first mbuf, if not there already */
+    if (m->m_len < hlen)
     {
-	if ((m = m_pullup(m, sizeof(struct ip))) == 0)
+	if ((m = m_pullup(m, hlen)) == 0)
 	{
 	    DPRINTF(("ip4_input(): m_pullup() failed\n"));
 	    ip4stat.ip4s_hdrops++;
-	    m_freem(m);
 	    return;
 	}
     }
@@ -173,7 +184,14 @@ ip4_input(m, va_alist)
 #endif MROUTING
 
     /* keep outer ecn field */
-    otos = ipo->ip_tos;
+    if ((v >> 4) == 4)
+	otos = ipo->ip_tos;
+#ifdef INET6
+    else if ((v >> 4) == 6)
+	otos = (ntohl(mtod(m, struct ip6_hdr *)->ip6_flow) >> 20) & 0xff;
+#endif
+    else
+	otos = 0;
 
     /* If we do not accept IP4 explicitly, drop.  */
     if (!ip4_allow && (m->m_flags & (M_AUTH|M_CONF)) == 0)
