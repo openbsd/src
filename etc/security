@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.37 2000/06/18 06:33:34 todd Exp $
+#	$OpenBSD: security,v 1.38 2000/07/23 19:49:17 rohee Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -609,6 +609,8 @@ if [ -d /etc/mtree ] ; then
 	mtree -e -p / -f /etc/mtree/special > $OUTPUT
 	if [ -s $OUTPUT ] ; then
 		printf "\nChecking special files and directories.\n"
+		printf "Output format is:\n\tfilename:\n"
+		printf "\t\tcriteria (shouldbe, reallyis)\n"
 		cat $OUTPUT
 	fi
 
