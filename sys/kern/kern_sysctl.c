@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.97 2004/01/07 21:30:59 markus Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.98 2004/01/07 21:51:30 millert Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1233,6 +1233,8 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 		ki->p_eflag |= EPROC_CTTY;
 	if (SESS_LEADER(p))
 		ki->p_eflag |= EPROC_SLEADER;
+	if (p->p_rlimit)
+		ki->p_rlim_rss_cur = p->p_rlimit[RLIMIT_RSS].rlim_cur;
 
 	/* XXX Is this double check necessary? */
 	if (P_ZOMBIE(p)) {

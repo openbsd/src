@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.70 2004/01/07 04:13:02 millert Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.71 2004/01/07 21:51:30 millert Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -445,6 +445,7 @@ struct kinfo_proc2 {
 	u_int32_t p_svuid;		/* UID_T: saved user id */
 	u_int32_t p_svgid;		/* GID_T: saved group id */
 	char    p_emul[KI_EMULNAMELEN];	/* syscall emulation name */
+	u_int64_t p_rlim_rss_cur;	/* RLIM_T: soft limit for rss */
 };
 
 /*
