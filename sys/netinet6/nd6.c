@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.32 2001/03/30 11:09:03 itojun Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.33 2001/05/29 01:08:15 angelos Exp $	*/
 /*	$KAME: nd6.c,v 1.137 2001/03/21 21:52:06 jinmei Exp $	*/
 
 /*
@@ -62,6 +62,7 @@
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
+#include <netinet/ip_ipsp.h>
 
 #include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
@@ -1793,6 +1794,9 @@ nd6_output(ifp, origifp, m0, dst, rt0)
 	struct llinfo_nd6 *ln = NULL;
 	int error = 0;
 	long time_second = time.tv_sec;
+#ifdef IPSEC
+	struct m_tag *mtag;
+#endif /* IPSEC */
 
 	if (IN6_IS_ADDR_MULTICAST(&dst->sin6_addr))
 		goto sendpkt;
@@ -1954,11 +1958,36 @@ nd6_output(ifp, origifp, m0, dst, rt0)
 	return(0);
 	
   sendpkt:
+#ifdef IPSEC
+	/*
+	 * If the packet needs outgoing IPsec crypto processing and the
+	 * interface doesn't support it, drop it.
+	 */
+	mtag = m_tag_find(m, PACKET_TAG_IPSEC_OUT_CRYPTO_NEEDED, NULL);
+#endif /* IPSEC */
 
 	if ((ifp->if_flags & IFF_LOOPBACK) != 0) {
+#ifdef IPSEC
+		if (mtag != NULL &&
+		    (origifp->if_capabilities & IFCAP_IPSEC) == 0) {
+			/* Tell IPsec to do its own crypto. */
+			ipsp_skipcrypto_unmark((struct tdb_ident *)(mtag + 1));
+			error = EACCES;
+			goto bad;
+		}
+#endif /* IPSEC */
 		return((*ifp->if_output)(origifp, m, (struct sockaddr *)dst,
 					 rt));
 	}
+#ifdef IPSEC
+	if (mtag != NULL &&
+	    (ifp->if_capabilities & IFCAP_IPSEC) == 0) {
+		/* Tell IPsec to do its own crypto. */
+		ipsp_skipcrypto_unmark((struct tdb_ident *)(mtag + 1));
+		error = EACCES;
+		goto bad;
+	}
+#endif /* IPSEC */
 	return((*ifp->if_output)(ifp, m, (struct sockaddr *)dst, rt));
 
   bad:
