@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: rusers_proc.c,v 1.6 1999/06/16 10:15:14 espie Exp $";
+static char rcsid[] = "$Id: rusers_proc.c,v 1.7 2001/01/17 19:23:27 deraadt Exp $";
 #endif /* not lint */
 
 #include <signal.h>
@@ -97,7 +97,7 @@ static sigjmp_buf openAbort;
 static void
 abortOpen()
 {
-	siglongjmp(openAbort, 1);
+	siglongjmp(openAbort, 1);	/* XXX signal/longjmp resource leaks */
 }
 
 XqueryIdle(display)

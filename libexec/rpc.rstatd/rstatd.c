@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: rstatd.c,v 1.3 1997/07/23 20:36:32 kstailey Exp $";
+static char rcsid[] = "$Id: rstatd.c,v 1.4 2001/01/17 19:23:26 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -49,10 +49,10 @@ int closedown = 20;	/* how long to wait before going dormant */
 void
 cleanup()
 {
-	(void) pmap_unset(RSTATPROG, RSTATVERS_TIME);
+	(void) pmap_unset(RSTATPROG, RSTATVERS_TIME);	/* XXX signal races */
 	(void) pmap_unset(RSTATPROG, RSTATVERS_SWTCH);
 	(void) pmap_unset(RSTATPROG, RSTATVERS_ORIG);
-	exit(0);
+	_exit(0);
 }
 
 main(argc, argv)

@@ -27,11 +27,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: sprayd.c,v 1.1.1.1 1995/10/18 08:43:22 deraadt Exp $
+ *	$Id: sprayd.c,v 1.2 2001/01/17 19:23:28 deraadt Exp $
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: sprayd.c,v 1.1.1.1 1995/10/18 08:43:22 deraadt Exp $";
+static char rcsid[] = "$Id: sprayd.c,v 1.2 2001/01/17 19:23:28 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -50,14 +50,14 @@ static int from_inetd = 1;
 void
 cleanup()
 {
-	(void) pmap_unset(SPRAYPROG, SPRAYVERS);
-	exit(0);
+	(void) pmap_unset(SPRAYPROG, SPRAYVERS);	/* XXX signal race */
+	_exit(0);
 }
 
 void
 die()
 {
-	exit(0);
+	_exit(0);
 }
 
 int

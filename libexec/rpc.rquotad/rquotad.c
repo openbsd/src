@@ -1,4 +1,4 @@
-/*	$OpenBSD: rquotad.c,v 1.7 2000/10/19 01:56:05 pjanzen Exp $	*/
+/*	$OpenBSD: rquotad.c,v 1.8 2001/01/17 19:23:26 deraadt Exp $	*/
 /*
  * by Manuel Bouyer (bouyer@ensta.fr)
  * 
@@ -53,8 +53,8 @@ int from_inetd = 1;
 void 
 cleanup()
 {
-	(void) pmap_unset(RQUOTAPROG, RQUOTAVERS);
-	exit(0);
+	(void) pmap_unset(RQUOTAPROG, RQUOTAVERS);	/* XXX signal races */
+	_exit(0);
 }
 
 int

@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: rusersd.c,v 1.3 1997/09/19 09:28:03 deraadt Exp $";
+static char rcsid[] = "$Id: rusersd.c,v 1.4 2001/01/17 19:23:27 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -49,10 +49,10 @@ int from_inetd = 1;
 void
 cleanup()
 {
-	(void) pmap_unset(RUSERSPROG, RUSERSVERS_3);
+	(void) pmap_unset(RUSERSPROG, RUSERSVERS_3);	/* XXX signal races */
 	(void) pmap_unset(RUSERSPROG, RUSERSVERS_IDLE);
 	(void) pmap_unset(RUSERSPROG, RUSERSVERS_ORIG);
-	exit(0);
+	_exit(0);
 }
 
 int

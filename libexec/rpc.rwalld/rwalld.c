@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: rwalld.c,v 1.2 1996/12/22 03:41:18 tholo Exp $";
+static char rcsid[] = "$Id: rwalld.c,v 1.3 2001/01/17 19:23:27 deraadt Exp $";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -57,8 +57,8 @@ int from_inetd = 1;
 void
 cleanup()
 {
-	(void) pmap_unset(WALLPROG, WALLVERS);
-	exit(0);
+	(void) pmap_unset(WALLPROG, WALLVERS);		/* XXX signal race */
+	_exit(0);
 }
 
 main(argc, argv)
