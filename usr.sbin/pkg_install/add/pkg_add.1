@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.9 1999/06/05 22:17:48 aaron Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.10 1999/10/07 22:09:20 aaron Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -22,13 +22,13 @@
 .Os
 .Sh NAME
 .Nm pkg_add
-.Nd a utility for installing software package distributions
+.Nd install software package distributions
 .Sh SYNOPSIS
 .Nm pkg_add
 .Op Fl vInfRMS
 .Op Fl t Ar template
 .Op Fl p Ar prefix
-.Ar pkg-name Op Ar pkg-name ...
+.Ar pkg-name Op Ar ...
 .Sh DESCRIPTION
 The
 .Nm
@@ -36,46 +36,47 @@ command is used to extract packages that have been previously created
 with the
 .Xr pkg_create 1
 command.
-.Sh WARNING
-.Bf -emphasis
+Selected packages containing pre-compiled applications from the
+.Pa /usr/ports
+tree can be found on the
+.Ox
+FTP site or on the official
+.Ox
+CD.
+These packages are provided as a convenience for quickly installing software
+that would otherwise need to be built manually.
+.Pp
+Package names may be specified as filenames (which normally consist of the
+package name itself plus the
+.Dq .tgz
+suffix) or an FTP location in the form of an URL. For example, the following
+is valid:
+.Pp
+.Ic pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/2.6/packages/i386/zsh-3.0.6.tgz
+.Pp
+If the given package names are not found in the current working directory,
+.Nm
+will search for them in each directory named by the
+.Ev PKG_PATH
+environment variable.
+Specifying
+.Ql -
+as a package name causes
+.Nm
+to read from the standard input.
+.Pp
+.Sy Warning:
 Since the
 .Nm
 command may execute scripts or programs contained within a package file,
-your system may be susceptible to ``trojan horses'' or other subtle
-attacks from miscreants who create dangerous package files.
+your system may be susceptible to
+.Dq trojan horses
+or other subtle attacks from miscreants who create dangerous packages.
+Be sure the specified package(s) are from trusted sources.
 .Pp
-You are advised to verify the competence and identity of those who
-provide installable package files.  For extra protection, use the
-.Fl M
-flag to extract the package file, and inspect its contents and scripts
-to insure it poses no danger to your system's integrity.  Pay particular
-attention to any +INSTALL, +DEINSTALL, +REQUIRE or +MTREE_DIRS files,
-and inspect the +CONTENTS file for
-.Cm @cwd ,
-.Cm @mode
-(check for setuid),
-.Cm @dirrm ,
-.Cm @exec ,
-and
-.Cm @unexec
-directives, and/or use the
-.Xr pkg_info 1
-command to examine the package file.
-.Ef
-
-.Sh OPTIONS
-The following command line arguments are supported:
-.Bl -tag -width indent
-.It Ar pkg-name Op Ar ... pkg-name
-The named packages are installed.  A package name of
-.Dq \&-
-will cause
-.Nm
-to read from stdin. If the packages are not found in the current
-working directory,
-.Nm
-will search them in each directory named by
-.Ev PKG_PATH .
+The options are as follows:
+.Pp
+.Bl -tag -width Ds
 .It Fl v
 Turn on verbose output.
 .It Fl I
@@ -152,7 +153,7 @@ does no work beyond extracting the package into a temporary staging
 area (see the
 .Fl t
 option), reading in the packing list, and then dumping it (prefaced by
-the current staging area) to stdout where it may be filtered by a
+the current staging area) to the standard output where it may be filtered by a
 program such as
 .Xr sed 1 .
 When used in conjunction with
@@ -170,36 +171,19 @@ mode.  When run in this mode,
 .Nm
 expects the release contents to be already extracted and waiting
 in the staging area, the location of which is read as a string
-from stdin.  The complete packing list is also read from stdin,
+from the standard input.  The complete packing list is also read from stdin,
 and the contents then acted on as normal.
 .El
 .Pp
-One or more
-.Ar pkg-name
-arguments may be specified, each being either a file containing the
-package (these usually ending with the
-.Dq .tgz
-suffix) or a
-URL pointing at a file available on an ftp site.  Thus you may
-extract files directly from their anonymous ftp locations (e.g.
-.Nm
-ftp://ftp.freebsd.org/pub/FreeBSD/packages/shells/bash-1.14.4.tgz).
-Note:  If you wish to use
-.Bf -emphasis
-active mode
-.Ef
-ftp in such transfers, set
-the variable
-.Ev FTPMODE
-to
-.Dq active
-in your environment.  Otherwise, the more flexible
-.Dq passive
-mode may be used (see
+By default, when adding packages via FTP, the
 .Xr ftp 1
-for more info on the
+program operates in
+.Dq passive
+mode. If you wish to use active mode instead, set the
 .Ev FTPMODE
-environment variable).  If
+environment variable to
+.Qq active .
+If
 .Nm
 consistently fails to fetch a package from a site known to work,
 it may be because the site does not support
@@ -207,7 +191,7 @@ passive mode ftp correctly. This is very rare since
 .Nm
 will try active mode ftp if the server refuses a passive mode
 connection.
-.Sh TECHNICAL DETAILS
+.Ss Technical details
 .Nm
 extracts each package's
 .Dq packing list
@@ -365,17 +349,18 @@ is installed, even if the user might change it with the
 flag to
 .Cm pkg_add .
 .Sh ENVIRONMENT
-.Ss PKG_PATH
-The value of the
+.Bl -tag -width PKG_DBDIR
+.It Ev PKG_PATH
+If a given package name cannot be found,
+the directories named by
 .Ev PKG_PATH
-is used if a given package can't be found; it's usually set to
-.Pa /usr/pkgsrc/packages/All .
-The environment variable
-should be a series of entries separated by colons.  Each entry
+are searched.
+It should contain a series of entries separated by colons.  Each entry
 consists of a directory name. The current directory may be indicated
 implicitly by an empty directory name, or explicitly by a single
-period.
-.Ss PKG_DBDIR
+period
+.Pq Ql \&. .
+.It Ev PKG_DBDIR
 Where to register packages instead of
 .Pa /var/db/pkg .
 .Sh SEE ALSO
@@ -385,7 +370,7 @@ Where to register packages instead of
 .Xr mkdtemp 3 ,
 .Xr sysconf 3 ,
 .Xr mtree 8
-.Sh AUTHORS
+.Sh AUTHOR
 .Bl -tag -width indent -compact
 .It "Jordan Hubbard"
 Initial work and ongoing development.
@@ -400,9 +385,9 @@ all the links to the file, or (2) all the links to the file are bracketed by
 directives in the contents file,
 .Em and
 the link names are extracted with a single
-.Cm tar
+.Xr tar 1
 command (not split between
-invocations due to exec argument-space limitations--this depends on the
+invocations due to exec argument-space limitations; this depends on the
 value returned by
 .Fn sysconf _SC_ARG_MAX ) .
 .Pp
