@@ -185,11 +185,8 @@ HDRS=	asn1.h asn1_mac.h bio.h blowfish.h bn.h buffer.h cast.h \
 	opensslv.h pem.h pem2.h pkcs12.h pkcs7.h rand.h rc2.h rc4.h \
 	rc5.h ripemd.h rsa.h safestack.h sha.h ssl.h ssl2.h ssl23.h \
 	ssl3.h stack.h symhacks.h tls1.h tmdiff.h txt_db.h x509.h \
-	x509_vfy.h ossl_typ.h x509v3.h asn1t.h des_old.h ossl_typ.h \
+	x509_vfy.h x509v3.h asn1t.h des_old.h ossl_typ.h \
 	ui.h ui_compat.h aes.h ec.h ocsp.h
-
-SRC_HDRS= e_os.h
-
 
 .PATH:	${LCRYPTO_SRC}/md2 ${LCRYPTO_SRC}/md5 ${LCRYPTO_SRC}/sha \
 	${LCRYPTO_SRC}/mdc2 ${LCRYPTO_SRC}/hmac ${LCRYPTO_SRC}/ripemd \
@@ -219,18 +216,6 @@ includes:
 		echo $$j; \
 		eval "$$j"; \
 	done; \
-	cd ${LCRYPTO_SRC}/../; for i in $(SRC_HDRS); do \
-		f=`basename $$i`; \
-		j="sed 's/<openssl/<ssl/' \
-		       ${LCRYPTO_SRC}/../$$i >$$d/$$f && \
-		(cmp -s $$d/$$f ${DESTDIR}/usr/include/ssl/$$f || \
-		${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 \
-			   $$d/$$f ${DESTDIR}/usr/include/ssl)"; \
-		echo $$j; \
-		eval "$$j"; \
-	done; \
 	rm -rf $$d
 
-
 .include <bsd.lib.mk>
-
