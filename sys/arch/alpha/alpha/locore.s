@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.5 1996/10/30 22:38:13 niklas Exp $	*/
+/*	$OpenBSD: locore.s,v 1.6 1996/11/14 13:17:06 niklas Exp $	*/
 /*	$NetBSD: locore.s,v 1.26 1996/10/17 02:50:38 cgd Exp $	*/
 
 /*
@@ -924,10 +924,16 @@ NESTED(copyoutstr, 4, 16, ra, 0, 0)
  * case; that's that ovbcopy() is for.  However, it doesn't hurt
  * to do both in bcopy, and it does provide a measure of safety.
  *
+ * void memcpy(char *to, char*from, size_t len);
  * void bcopy(char *from, char *to, size_t len);
  * void ovbcopy(char *from, char *to, size_t len);
  */
-LEAF(bcopy,3)
+LEAF(memcpy,3)
+	cmoveq	zero,a0,t5
+	cmoveq	zero,a1,a0
+	cmoveq	zero,t5,a1
+
+XLEAF(bcopy,3)
 XLEAF(ovbcopy,3)
 
 	/* Check for negative length */
