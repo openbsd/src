@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERICMAC,v 1.3 2000/01/14 05:35:31 rahnds Exp $
+#	$OpenBSD: GENERICMAC,v 1.4 2000/01/22 16:36:00 rahnds Exp $
 #
 # PPC GENERIC config file
 #
@@ -35,14 +35,14 @@ mpcpcibr*	at mainbus0	# MPC106 PCI Bridge.
 #### PCI Bus devices.
 
 pci*		at mpcpcibr?
-pci*		at ppb? bus ?
 ppb*		at pci? dev ? function ?	# PCI-PCI bridges
+pci*		at ppb? bus ?
 
 ncr*		at pci? dev ? function ?
 de*		at pci? dev ? function ?
 #vme*		at pci? dev ? function ?
-vga*		at pci? dev ? function ?	# PCI VGA graphics 
-vgafb0		at pci? dev ? function ?	# PCI VGA graphics 
+#vga*		at pci? dev ? function ?	# PCI VGA graphics 
+#vgafb0		at pci? dev ? function ?	# PCI VGA graphics 
 #ep*		at pci? dev ? function ?        # 3Com 3c59x
 #ne*		at pci? dev ? function ?        # NE2000-compatible Ethernet
 #adv*	at pci? dev ? function ?        # AdvanSys 1200[A,B], 9xx[U,UA] SCSI
@@ -107,8 +107,8 @@ scsibus* at atapiscsi?
 
 #### Workstation Console attachments
 
-wscons*		at vga?
-wscons*		at vgafb?
+#wscons*		at vga?
+#wscons*		at vgafb?
 
 #### SCSI Bus devices
  
