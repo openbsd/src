@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)krb_passwd.c	5.4 (Berkeley) 3/1/91";*/
-static char rcsid[] = "$Id: krb_passwd.c,v 1.2 1995/12/16 22:20:29 tholo Exp $";
+static char rcsid[] = "$Id: krb_passwd.c,v 1.3 1996/04/17 07:17:30 tholo Exp $";
 #endif /* not lint */
 
 #ifdef KERBEROS
@@ -168,7 +168,7 @@ krb_passwd()
 
 	(void)des_string_to_key(pass, &okey);
 	(void)des_key_sched(&okey, osched);
-	(void)des_set_key(&okey, osched);
+	(void)desrw_set_key(&okey, osched);
 
 	/* wait on the verification string */
 
@@ -212,7 +212,7 @@ krb_passwd()
 	}
 
 	(void)des_key_sched(&proto_data.random_key, random_schedule);
-	(void)des_set_key(&proto_data.random_key, random_schedule);
+	(void)desrw_set_key(&proto_data.random_key, random_schedule);
 	(void)bzero(pass, sizeof(pass));
 
 	if (des_read_pw_string(pass,
