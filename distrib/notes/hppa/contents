@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.9 2004/06/07 11:14:15 mickey Exp $
+dnl	$OpenBSD: contents,v 1.10 2004/06/07 20:04:34 mickey Exp $
 TopPart
 
 OpenBSDdistsets
@@ -28,12 +28,12 @@ OpenBSDman(7202111,27484160)
 
 OpenBSDmisc(2154743,7413760)
 
-OpenBSDxbase(9109113,24064000)
+OpenBSDxbase(8688529,23316480)
 
-OpenBSDxfont(33472794,40878080)
+OpenBSDxfont(33473489,40878080)
 
 dnl Do not list xserv, on purpose. No X11 support yet.
-dnl OpenBSDxserv(6682014,15800320)
+dnl OpenBSDxserv(6682003,15800320)
 dnl
-OpenBSDxshare(1660954,9687040)
+OpenBSDxshare(1660865,9687040)
 
