@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.130 2003/01/18 17:20:41 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.131 2003/01/18 17:39:37 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -197,10 +197,11 @@ const struct pf_timeout pf_timeouts[] = {
 const struct icmptypeent *
 geticmptypebynumber(u_int8_t type, sa_family_t af)
 {
-	unsigned int i;
+	unsigned int	i;
 
 	if (af != AF_INET6) {
-		for (i=0; i < (sizeof (icmp_type) / sizeof(icmp_type[0])); i++) {
+		for (i=0; i < (sizeof (icmp_type) / sizeof(icmp_type[0]));
+		    i++) {
 			if (type == icmp_type[i].type)
 				return (&icmp_type[i]);
 		}
@@ -217,10 +218,11 @@ geticmptypebynumber(u_int8_t type, sa_family_t af)
 const struct icmptypeent *
 geticmptypebyname(char *w, sa_family_t af)
 {
-	unsigned int i;
+	unsigned int	i;
 
 	if (af != AF_INET6) {
-		for (i=0; i < (sizeof (icmp_type) / sizeof(icmp_type[0])); i++) {
+		for (i=0; i < (sizeof (icmp_type) / sizeof(icmp_type[0]));
+		    i++) {
 			if (!strcmp(w, icmp_type[i].name))
 				return (&icmp_type[i]);
 		}
@@ -237,10 +239,11 @@ geticmptypebyname(char *w, sa_family_t af)
 const struct icmpcodeent *
 geticmpcodebynumber(u_int8_t type, u_int8_t code, sa_family_t af)
 {
-	unsigned int i;
+	unsigned int	i;
 
 	if (af != AF_INET6) {
-		for (i=0; i < (sizeof (icmp_code) / sizeof(icmp_code[0])); i++) {
+		for (i=0; i < (sizeof (icmp_code) / sizeof(icmp_code[0]));
+		    i++) {
 			if (type == icmp_code[i].type &&
 			    code == icmp_code[i].code)
 				return (&icmp_code[i]);
@@ -259,10 +262,11 @@ geticmpcodebynumber(u_int8_t type, u_int8_t code, sa_family_t af)
 const struct icmpcodeent *
 geticmpcodebyname(u_long type, char *w, sa_family_t af)
 {
-	unsigned int i;
+	unsigned int	i;
 
 	if (af != AF_INET6) {
-		for (i=0; i < (sizeof (icmp_code) / sizeof(icmp_code[0])); i++) {
+		for (i=0; i < (sizeof (icmp_code) / sizeof(icmp_code[0]));
+		    i++) {
 			if (type == icmp_code[i].type &&
 			    !strcmp(w, icmp_code[i].name))
 				return (&icmp_code[i]);
@@ -302,9 +306,10 @@ print_op(u_int8_t op, const char *a1, const char *a2)
 void
 print_port(u_int8_t op, u_int16_t p1, u_int16_t p2, char *proto)
 {
-	char a1[6], a2[6];
-	struct servent *s = getservbyport(p1, proto);
+	char		 a1[6], a2[6];
+	struct servent	*s;
 
+	s = getservbyport(p1, proto);
 	p1 = ntohs(p1);
 	p2 = ntohs(p2);
 	snprintf(a1, sizeof(a1), "%u", p1);
@@ -319,7 +324,7 @@ print_port(u_int8_t op, u_int16_t p1, u_int16_t p2, char *proto)
 void
 print_uid(u_int8_t op, uid_t u1, uid_t u2, const char *t)
 {
-	char a1[11], a2[11];
+	char	a1[11], a2[11];
 
 	snprintf(a1, sizeof(a1), "%u", u1);
 	snprintf(a2, sizeof(a2), "%u", u2);
@@ -333,7 +338,7 @@ print_uid(u_int8_t op, uid_t u1, uid_t u2, const char *t)
 void
 print_gid(u_int8_t op, gid_t g1, gid_t g2, const char *t)
 {
-	char a1[11], a2[11];
+	char	a1[11], a2[11];
 
 	snprintf(a1, sizeof(a1), "%u", g1);
 	snprintf(a2, sizeof(a2), "%u", g2);
@@ -347,7 +352,7 @@ print_gid(u_int8_t op, gid_t g1, gid_t g2, const char *t)
 void
 print_flags(u_int8_t f)
 {
-	int i;
+	int	i;
 
 	for (i = 0; tcpflags[i]; ++i)
 		if (f & (1 << i))
@@ -431,7 +436,7 @@ void
 print_pool(struct pf_pool *pool, u_int16_t p1, u_int16_t p2,
     sa_family_t af, int id)
 {
-	struct pf_pooladdr *pooladdr;
+	struct pf_pooladdr	*pooladdr;
 
 	if ((TAILQ_FIRST(&pool->list) != NULL) &&
 	    TAILQ_NEXT(TAILQ_FIRST(&pool->list), entries) != NULL)
@@ -527,9 +532,9 @@ print_nat(struct pf_rule *n, int verbose)
 			printf("inet6 ");
 	}
 	if (n->proto) {
-		struct protoent *p = getprotobynumber(n->proto);
+		struct protoent	*p;
 
-		if (p != NULL)
+		if ((p = getprotobynumber(n->proto)) != NULL)
 			printf("proto %s ", p->p_name);
 		else
 			printf("proto %u ", n->proto);
@@ -566,9 +571,9 @@ print_binat(struct pf_rule *b, int verbose)
 			printf("inet6 ");
 	}
 	if (b->proto) {
-		struct protoent *p = getprotobynumber(b->proto);
+		struct protoent	*p;
 
-		if (p != NULL)
+		if ((p = getprotobynumber(b->proto)) != NULL)
 			printf("proto %s ", p->p_name);
 		else
 			printf("proto %u ", b->proto);
@@ -621,9 +626,9 @@ print_rdr(struct pf_rule *r, int verbose)
 			printf("inet6 ");
 	}
 	if (r->proto) {
-		struct protoent *p = getprotobynumber(r->proto);
+		struct protoent	*p;
 
-		if (p != NULL)
+		if ((p = getprotobynumber(r->proto)) != NULL)
 			printf("proto %s ", p->p_name);
 		else
 			printf("proto %u ", r->proto);
@@ -660,20 +665,20 @@ print_rdr(struct pf_rule *r, int verbose)
 	printf("\n");
 }
 
-char *pf_reasons[PFRES_MAX+1] = PFRES_NAMES;
-char *pf_fcounters[FCNT_MAX+1] = FCNT_NAMES;
+char	*pf_reasons[PFRES_MAX+1] = PFRES_NAMES;
+char	*pf_fcounters[FCNT_MAX+1] = FCNT_NAMES;
 
 void
 print_status(struct pf_status *s)
 {
-	time_t runtime;
-	int i;
-	char statline[80];
+	char	statline[80];
+	time_t	runtime;
+	int	i;
 
 	runtime = time(NULL) - s->since;
 
 	if (s->running) {
-		unsigned sec, min, hrs, day = runtime;
+		unsigned	sec, min, hrs, day = runtime;
 
 		sec = day % 60;
 		day /= 60;
@@ -746,7 +751,7 @@ print_status(struct pf_status *s)
 void
 print_filter(struct pf_rule *r, int verbose)
 {
-	int i, opts;
+	int	i, opts;
 
 	if (verbose)
 		printf("@%d ", r->nr);
@@ -764,7 +769,7 @@ print_filter(struct pf_rule *r, int verbose)
 			else
 				printf("return-rst(ttl %d) ", r->return_ttl);
 		} else if (r->rule_flag & PFRULE_RETURNICMP) {
-			const struct icmpcodeent *ic, *ic6;
+			const struct icmpcodeent	*ic, *ic6;
 
 			ic = geticmpcodebynumber(r->return_icmp >> 8,
 			    r->return_icmp & 255, AF_INET);
@@ -839,9 +844,9 @@ print_filter(struct pf_rule *r, int verbose)
 			printf("inet6 ");
 	}
 	if (r->proto) {
-		struct protoent *p = getprotobynumber(r->proto);
+		struct protoent	*p;
 
-		if (p != NULL)
+		if ((p = getprotobynumber(r->proto)) != NULL)
 			printf("proto %s ", p->p_name);
 		else
 			printf("proto %u ", r->proto);
@@ -859,7 +864,7 @@ print_filter(struct pf_rule *r, int verbose)
 		printf(" ");
 	}
 	if (r->type) {
-		const struct icmptypeent *it;
+		const struct icmptypeent	*it;
 
 		it = geticmptypebynumber(r->type-1, r->af);
 		if (r->af != AF_INET6)
@@ -871,7 +876,7 @@ print_filter(struct pf_rule *r, int verbose)
 		else
 			printf(" %u ", r->type-1);
 		if (r->code) {
-			const struct icmpcodeent *ic;
+			const struct icmpcodeent	*ic;
 
 			ic = geticmpcodebynumber(r->type-1, r->code-1, r->af);
 			if (ic != NULL)
@@ -939,8 +944,8 @@ print_filter(struct pf_rule *r, int verbose)
 int
 parse_flags(char *s)
 {
-	char *p, *q;
-	u_int8_t f = 0;
+	char		*p, *q;
+	u_int8_t	 f = 0;
 
 	for (p = s; *p; p++) {
 		if ((q = strchr(tcpflags, *p)) == NULL)
