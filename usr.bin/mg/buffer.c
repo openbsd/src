@@ -43,10 +43,10 @@ usebuffer(f, n)
 poptobuffer(f, n)
 {
 	register BUFFER *bp;
-	register WINDOW *wp;
+	register MGWIN *wp;
 	register int	s;
 	char		bufn[NBUFN];
-	WINDOW	*popbuf();
+	MGWIN	*popbuf();
 
 	/* Get buffer to use from user */
 	if ((curbp->b_altb == NULL)
@@ -80,7 +80,7 @@ killbuffer(f, n)
 	register BUFFER *bp;
 	register BUFFER *bp1;
 	register BUFFER *bp2;
-	WINDOW		*wp;
+	MGWIN		*wp;
 	register int	s;
 	char		bufn[NBUFN];
 
@@ -160,9 +160,9 @@ savebuffers(f, n)
 listbuffers(f, n)
 {
 	register BUFFER *bp;
-	register WINDOW *wp;
+	register MGWIN *wp;
 	BUFFER		*makelist();
-	WINDOW		*popbuf();
+	MGWIN		*popbuf();
 
 	if ((bp=makelist()) == NULL || (wp=popbuf(bp)) == NULL)
 		return FALSE;
@@ -423,9 +423,9 @@ bclear(bp) register BUFFER *bp; {
  * Display the given buffer in the given window. Flags indicated
  * action on redisplay.
  */
-showbuffer(bp, wp, flags) register BUFFER *bp; register WINDOW *wp; {
+showbuffer(bp, wp, flags) register BUFFER *bp; register MGWIN *wp; {
 	register BUFFER *obp;
-	WINDOW		*owp;
+	MGWIN		*owp;
 
 	if (wp->w_bufp == bp) {			/* Easy case!	*/
 		wp->w_flag |= flags;
@@ -468,9 +468,9 @@ showbuffer(bp, wp, flags) register BUFFER *bp; register WINDOW *wp; {
  * Pop the buffer we got passed onto the screen.
  * Returns a status.
  */
-WINDOW *
+MGWIN *
 popbuf(bp) register BUFFER *bp; {
-	register WINDOW *wp;
+	register MGWIN *wp;
 
 	if (bp->b_nwnd == 0) {		/* Not on screen yet.	*/
 		if ((wp=wpopup()) == NULL) return NULL;
@@ -545,7 +545,7 @@ bufferinsert(f, n)
 /*ARGSUSED*/
 notmodified(f, n)
 {
-	register WINDOW *wp;
+	register MGWIN *wp;
 
 	curbp->b_flag &= ~BFCHG;
 	wp = wheadp;				/* Update mode lines.	*/
@@ -567,7 +567,7 @@ notmodified(f, n)
 popbuftop(bp)
 register BUFFER *bp;
 {
-    register WINDOW *wp;
+    register MGWIN *wp;
 
     bp->b_dotp = lforw(bp->b_linep);
     bp->b_doto = 0;

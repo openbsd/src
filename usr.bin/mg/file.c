@@ -59,7 +59,7 @@ filevisit(f, n)
 poptofile(f, n)
 {
 	register BUFFER *bp;
-	register WINDOW *wp;
+	register MGWIN *wp;
 	int	s;
 	char	fname[NFILEN];
 	char	*adjf;
@@ -126,7 +126,7 @@ unsigned num;
  */
 readin(fname) char *fname; {
 	register int		status;
-	register WINDOW		*wp;
+	register MGWIN		*wp;
 
 	if (bclear(curbp) != TRUE)		/* Might be old.	*/
 		return TRUE;
@@ -166,7 +166,7 @@ static int linesize = 0;
 insertfile(fname, newname, needinfo) char fname[], newname[]; {
 	register LINE	*lp1;
 	register LINE	*lp2;
-	register WINDOW *wp;
+	register MGWIN *wp;
 	int		nbytes;
 	LINE		*olp;			/* Line we started at */
 	int		opos;			/* and offset into it */
@@ -475,7 +475,7 @@ writeout(bp, fn) register BUFFER *bp; char *fn; {
  */
 VOID
 upmodes(bp) register BUFFER *bp; {
-	register WINDOW *wp;
+	register MGWIN *wp;
 
 	for (wp = wheadp; wp != NULL; wp = wp->w_wndp)
 		if (bp == NULL || curwp->w_bufp == bp) wp->w_flag |= WFMODE;

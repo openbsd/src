@@ -44,7 +44,7 @@ reposition(f, n)
 /*ARGSUSED*/
 refresh(f, n)
 {
-	register WINDOW *wp;
+	register MGWIN *wp;
 	register int	oldnrow;
 	register int	oldncol;
 
@@ -79,7 +79,7 @@ refresh(f, n)
 /*ARGSUSED*/
 nextwind(f, n)
 {
-	register WINDOW *wp;
+	register MGWIN *wp;
 
 	if ((wp=curwp->w_wndp) == NULL)
 		wp = wheadp;
@@ -100,8 +100,8 @@ nextwind(f, n)
 /*ARGSUSED*/
 prevwind(f, n)
 {
-	register WINDOW *wp1;
-	register WINDOW *wp2;
+	register MGWIN *wp1;
+	register MGWIN *wp2;
 
 	wp1 = wheadp;
 	wp2 = curwp;
@@ -129,7 +129,7 @@ prevwind(f, n)
 /*ARGSUSED*/
 onlywind(f, n)
 {
-	register WINDOW *wp;
+	register MGWIN *wp;
 	register LINE	*lp;
 	register int	i;
 
@@ -178,19 +178,19 @@ onlywind(f, n)
 /*ARGSUSED*/
 splitwind(f, n)
 {
-	register WINDOW *wp;
+	register MGWIN *wp;
 	register LINE	*lp;
 	register int	ntru;
 	register int	ntrd;
 	int		ntrl;
-	WINDOW		*wp1, *wp2;
+	MGWIN		*wp1, *wp2;
 
 	if (curwp->w_ntrows < 3) {
 		ewprintf("Cannot split a %d line window", curwp->w_ntrows);
 		return (FALSE);
 	}
-	if ((wp = (WINDOW *)malloc(sizeof(WINDOW))) == NULL) {
-		ewprintf("Can't get %d", sizeof(WINDOW));
+	if ((wp = (MGWIN *)malloc(sizeof(MGWIN))) == NULL) {
+		ewprintf("Can't get %d", sizeof(MGWIN));
 		return (FALSE);
 	}
 	++curbp->b_nwnd;			/* Displayed twice.	*/
@@ -256,7 +256,7 @@ splitwind(f, n)
 /*ARGSUSED*/
 enlargewind(f, n)
 {
-	register WINDOW *adjwp;
+	register MGWIN *adjwp;
 	register LINE	*lp;
 	register int	i;
 
@@ -303,7 +303,7 @@ enlargewind(f, n)
  */
 shrinkwind(f, n)
 {
-	register WINDOW *adjwp;
+	register MGWIN *adjwp;
 	register LINE	*lp;
 	register int	i;
 
@@ -353,7 +353,7 @@ shrinkwind(f, n)
 /*ARGSUSED*/
 delwind(f, n)
 {
-	register WINDOW *wp, *nwp;
+	register MGWIN *wp, *nwp;
 
 	wp = curwp;			/* Cheap...		*/
 	/* shrinkwind returning false means only one window... */
@@ -385,9 +385,9 @@ delwind(f, n)
  * might be better. Return a pointer, or
  * NULL on error.
  */
-WINDOW	*
+MGWIN	*
 wpopup() {
-	register WINDOW *wp;
+	register MGWIN *wp;
 
 	if (wheadp->w_wndp == NULL
 	&& splitwind(FFRAND, 0) == FALSE)

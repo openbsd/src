@@ -28,7 +28,7 @@
 #endif
 
 #ifdef	STANDOUT_GLITCH
-extern int SG;				/* number of standout glitches	*/
+#include <term.h>
 #endif
 
 /*
@@ -262,7 +262,7 @@ vteeol() {
 VOID
 update() {
 	register LINE	*lp;
-	register WINDOW *wp;
+	register MGWIN *wp;
 	register VIDEO	*vp1;
 	VIDEO		*vp2;
 	register int	i;
@@ -547,16 +547,18 @@ VOID uline(row, vvp, pvp) VIDEO *vvp; VIDEO *pvp; {
 	if (vvp->v_color != pvp->v_color) {	/* Wrong color, do a	*/
 		ttmove(row, 0);			/* full redraw.		*/
 #ifdef	STANDOUT_GLITCH
-		if (pvp->v_color != CTEXT && SG >= 0) tteeol();
+		if (pvp->v_color != CTEXT && magic_cookie_glitch >= 0)
+			tteeol();
 #endif
 		ttcolor(vvp->v_color);
 #ifdef	STANDOUT_GLITCH
-		cp1 = &vvp->v_text[SG > 0 ? SG : 0];
-		/* the odd code for SG==0 is to avoid putting the invisable
+		cp1 = &vvp->v_text[magic_cookie_glitch > 0 ? magic_cookie_glitch : 0];
+		/* the odd code for magic_cookie_glitch==0
+		 * is to avoid putting the invisable
 		 * glitch character on the next line.
 		 * (Hazeltine executive 80 model 30)
 		 */
-		cp2 = &vvp->v_text[ncol - (SG >= 0 ? (SG!=0 ? SG : 1) : 0)];
+		cp2 = &vvp->v_text[ncol - (magic_cookie_glitch >= 0 ? (magic_cookie_glitch!=0 ? magic_cookie_glitch : 1) : 0)];
 #else
 		cp1 = &vvp->v_text[0];
 		cp2 = &vvp->v_text[ncol];
@@ -598,10 +600,10 @@ VOID uline(row, vvp, pvp) VIDEO *vvp; VIDEO *pvp; {
 	/* Alcyon hack */
 	ttmove(row, (int)(cp1-&vvp->v_text[0]));
 #ifdef	STANDOUT_GLITCH
-	if (vvp->v_color != CTEXT && SG > 0) {
-		if(cp1 < &vvp->v_text[SG]) cp1 = &vvp->v_text[SG];
-		if(cp5 > &vvp->v_text[ncol-SG]) cp5 = &vvp->v_text[ncol-SG];
-	} else if (SG < 0)
+	if (vvp->v_color != CTEXT && magic_cookie_glitch > 0) {
+		if(cp1 < &vvp->v_text[magic_cookie_glitch]) cp1 = &vvp->v_text[magic_cookie_glitch];
+		if(cp5 > &vvp->v_text[ncol-magic_cookie_glitch]) cp5 = &vvp->v_text[ncol-magic_cookie_glitch];
+	} else if (magic_cookie_glitch < 0)
 #endif
 		ttcolor(vvp->v_color);
 	while (cp1 != cp5) {
@@ -621,11 +623,11 @@ VOID uline(row, vvp, pvp) VIDEO *vvp; VIDEO *pvp; {
  * change the modeline format by hacking at
  * this routine. Called by "update" any time
  * there is a dirty window.
- * Note that if STANDOUT_GLITCH is defined, first and last SG characters
- * may never be seen.
+ * Note that if STANDOUT_GLITCH is defined, first and last
+ * magic_cookie_glitch characters may never be seen.
  */
 VOID
-modeline(wp) register WINDOW *wp; {
+modeline(wp) register MGWIN *wp; {
 	register int	n;
 	register BUFFER *bp;
 	int	mode;

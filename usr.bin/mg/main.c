@@ -10,9 +10,9 @@ int	thisflag;			/* Flags, this command		*/
 int	lastflag;			/* Flags, last command		*/
 int	curgoal;			/* Goal column			*/
 BUFFER	*curbp;				/* Current buffer		*/
-WINDOW	*curwp;				/* Current window		*/
+MGWIN	*curwp;				/* Current window		*/
 BUFFER	*bheadp;			/* BUFFER listhead		*/
-WINDOW	*wheadp = (WINDOW *)NULL;	/* WINDOW listhead		*/
+MGWIN	*wheadp = (MGWIN *)NULL;	/* MGWIN listhead		*/
 char	pat[NPAT];			/* Pattern			*/
 #ifndef NO_DPROMPT
 extern char prompt[], *promptp;		/* delayed prompting		*/
@@ -85,11 +85,11 @@ char **argv;
 static VOID
 edinit() {
 	register BUFFER *bp;
-	register WINDOW *wp;
+	register MGWIN *wp;
 
 	bheadp = NULL;
 	bp = bfind("*scratch*", TRUE);		/* Text buffer.		*/
-	wp = (WINDOW *)malloc(sizeof(WINDOW));	/* Initial window.	*/
+	wp = (MGWIN *)malloc(sizeof(MGWIN));	/* Initial window.	*/
 	if (bp==NULL || wp==NULL) panic("edinit");
 	curbp  = bp;				/* Current ones.	*/
 	wheadp = wp;

@@ -96,7 +96,7 @@ int used;
 VOID
 lfree(lp) register LINE *lp; {
 	register BUFFER *bp;
-	register WINDOW *wp;
+	register MGWIN *wp;
 
 	for(wp = wheadp; wp != NULL; wp = wp->w_wndp) {
 		if (wp->w_linep == lp)
@@ -139,7 +139,7 @@ lfree(lp) register LINE *lp; {
  */
 VOID
 lchange(flag) register int flag; {
-	register WINDOW *wp;
+	register MGWIN *wp;
 
 	if ((curbp->b_flag&BFCHG) == 0) {	/* First change, so	*/
 		flag |= WFMODE;			/* update mode lines.	*/
@@ -175,7 +175,7 @@ int n;
 	LINE		*lp3;
 	register int	doto;
 	register RSIZE	i;
-	WINDOW		*wp;
+	MGWIN		*wp;
 
 	lchange(WFEDIT);
 	lp1 = curwp->w_dotp;			/* Current line		*/
@@ -267,7 +267,7 @@ lnewline()
 	register LINE	*lp2;
 	register int	doto;
 	register int	nlen;
-	WINDOW		*wp;
+	MGWIN		*wp;
 
 	lchange(WFHARD);
 	lp1  = curwp->w_dotp;			/* Get the address and	*/
@@ -320,7 +320,7 @@ ldelete(n, kflag) RSIZE n; {
 	register LINE	*dotp;
 	register int	doto;
 	register RSIZE	chunk;
-	WINDOW		*wp;
+	MGWIN		*wp;
 
 	/*
 	 * HACK - doesn't matter, and fixes back-over-nl bug for empty
@@ -396,7 +396,7 @@ ldelete(n, kflag) RSIZE n; {
 ldelnewline() {
 	register LINE	*lp1;
 	register LINE	*lp2;
-	register WINDOW *wp;
+	register MGWIN *wp;
 	LINE		*lp3;
 
 	lp1 = curwp->w_dotp;

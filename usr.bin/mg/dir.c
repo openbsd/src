@@ -8,9 +8,6 @@
 #include "def.h"
 
 #ifndef NO_DIR
-#ifndef	getwd			/* may be a #define */
-char	*getwd();
-#endif
 char	*wdir;
 static char cwd[NFILEN];
 
@@ -19,7 +16,7 @@ static char cwd[NFILEN];
  */
 dirinit()
 {
-	if (!(wdir = getwd(cwd)))
+	if (!(wdir = getcwd(cwd, sizeof(cwd))))
 		panic("Can't get current directory!");
 }
 
@@ -40,7 +37,7 @@ changedir(f, n)
 		ewprintf("Can't change dir to %s", bufc);
 		return(FALSE);
 	} else {
-		if (!(wdir = getwd(cwd)))
+		if (!(wdir = getcwd(cwd, sizeof(cwd))))
 			panic("Can't get current directory!");
 		ewprintf("Current directory is now %s", wdir);
 		return(TRUE);

@@ -338,7 +338,7 @@ int f, n;
  */
 pagenext(f, n)
 {
-	register WINDOW *wp;
+	register MGWIN *wp;
 
 	if (wheadp->w_wndp == NULL) {
 		ewprintf("No other window");

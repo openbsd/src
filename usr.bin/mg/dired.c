@@ -28,7 +28,7 @@ int f, n;
 {
     char dirname[NFILEN];
     BUFFER *bp;
-    WINDOW *wp;
+    MGWIN *wp;
 
     dirname[0] = '\0';
     if(eread("Dired other window: ", dirname, NFILEN, EFNEW | EFCR) == ABORT)
@@ -112,7 +112,7 @@ int f, n;
     char fname[NFILEN];
     register BUFFER *bp;
     register int s;
-    register WINDOW *wp;
+    register MGWIN *wp;
     BUFFER *findbuffer();
 
     if((s = d_makename(curwp->w_dotp, fname)) == ABORT) return FALSE;

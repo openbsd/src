@@ -1,5 +1,5 @@
 /*
- *		System V system header file
+ *		POSIX system header file
  */
 #include <stdio.h>
 #include <unistd.h>

@@ -9,6 +9,7 @@ DPADD+=	${LIBCURSES}
 #
 #	DO_METAKEY	-- if bit 7 is set for a key, treat like a META key
 #	STARTUP		-- look for and handle initialization file
+#	FKEYS		-- add support for function key sequences.
 #	XKEYS		-- use termcap function key definitions. Warning -
 #				XKEYS and bsmap mode do _not_ get along.
 #	BACKUP		-- enable "make-backup-files"
@@ -16,7 +17,7 @@ DPADD+=	${LIBCURSES}
 #	REGEX		-- create regular expression functions
 #
 CDEFS	=  -DDO_METAKEY
-CDEFS+=	-DDO_METAKEY -DPREFIXREGION -DXKEYS -DBACKUP
+CDEFS+=	-DDO_METAKEY -DPREFIXREGION -DXKEYS -DFKEYS -DBACKUP
 CFLAGS+=$(CDEFS)
 
 SRCS=	cinfo.c fileio.c spawn.c ttyio.c tty.c ttykbd.c \

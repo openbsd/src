@@ -1,6 +1,6 @@
 /*
  * Name:	MicroEMACS
- *		System V terminal I/O.
+ *		POSIX terminal I/O.
  * Version:	0
  * Last edit:	Tue Aug 26 23:57:57 PDT 1986
  * By:		gonzo!daveb
@@ -11,15 +11,14 @@
  * keyboard characters, and write characters to
  * the display in a barely buffered fashion.
  *
- * This version goes along with tty/termcap/tty.c.
- * Terminal size is determined there, rather than here, and
- * this does not open the termcap file
+ * This version goes along with the terminfo tty.c.
  */
 #include	"def.h"
 
 #include	<sys/types.h>
 #include	<fcntl.h>
 #include	<termios.h>
+#include	<term.h>
 
 #define	NOBUF	512			/* Output buffer size.		*/
 
@@ -77,42 +76,9 @@ ttopen()
 	if (tcsetattr(0, TCSAFLUSH, &nt) < 0)
 		abort();
 
-	/* This really belongs in tty/termcap... */
-
-	if ((cp=getenv("TERMCAP")) == NULL
-	|| (nrow=getvalue(cp, "li")) <= 0
-	|| (ncol=getvalue(cp, "co")) <= 0) {
-		nrow = 24;
-		ncol = 80;
-	}
-	if (nrow > NROW)			/* Don't crash if the	*/
-		nrow = NROW;			/* termcap entry is	*/
-	if (ncol > NCOL)			/* too big.		*/
-		ncol = NCOL;
+	setttysize();
 
 	ttyactivep = TRUE;
-}
-
-/*
- * This routine scans a string, which is
- * actually the return value of a getenv call for the TERMCAP
- * variable, looking for numeric parameter "name". Return the value
- * if found. Return -1 if not there. Assume that "name" is 2
- * characters long. This limited use of the TERMCAP lets us find
- * out the size of a window on the X display.
- */
-getvalue(cp, name)
-register char	*cp;
-register char	*name;
-{
-	for (;;) {
-		while (*cp!=0 && *cp!=':')
-			++cp;
-		if (*cp++ == 0)			/* Not found.		*/
-			return (-1);
-		if (cp[0]==name[0] && cp[1]==name[1] && cp[2]=='#')
-			return (atoi(cp+3));	/* Stops on ":".	*/
-	}
 }
 
 /*
@@ -223,14 +189,15 @@ setttysize()
 		ncol = winsize . ws_col;
 	} else
 #endif
-	if ((nrow=tgetnum ("li")) <= 0
-	|| (ncol=tgetnum ("co")) <= 0) {
+	if ((nrow = lines) <= 0 || (ncol = columns) <= 0) {
 		nrow = 24;
 		ncol = 80;
 	}
-	if (nrow > NROW)			/* Don't crash if the	*/
-		nrow = NROW;			/* termcap entry is	*/
-	if (ncol > NCOL)			/* too big.		*/
+
+	/* Enforce maximum screen size. */
+	if (nrow > NROW)
+		nrow = NROW;
+	if (ncol > NCOL)
 		ncol = NCOL;
 }
 

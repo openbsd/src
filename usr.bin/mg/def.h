@@ -170,7 +170,7 @@ typedef struct	LINE {
  */
 typedef struct LIST {
 	union {
-		struct WINDOW	*l_wp;
+		struct MGWIN	*l_wp;
 		struct BUFFER	*x_bp;	/* l_bp is used by LINE */
 		struct LIST	*l_nxt;
 	} l_p;
@@ -192,7 +192,7 @@ typedef struct LIST {
  * terms of decoupling, the full blown redisplay is just too
  * expensive to run for every input character.
  */
-typedef struct	WINDOW {
+typedef struct	MGWIN {
 	LIST	w_list;			/* List header		       */
 	struct	BUFFER *w_bufp;		/* Buffer displayed in window	*/
 	struct	LINE *w_linep;		/* Top line in the window	*/
@@ -204,7 +204,7 @@ typedef struct	WINDOW {
 	char	w_ntrows;		/* # of rows of text in window	*/
 	char	w_force;		/* If NZ, forcing row.		*/
 	char	w_flag;			/* Flags.			*/
-}	WINDOW;
+}	MGWIN;
 #define w_wndp	w_list.l_p.l_wp
 #define w_name	w_list.l_name
 
@@ -279,14 +279,14 @@ extern	int	curgoal;
 extern	int	epresf;
 extern	int	sgarbf;
 extern	int	mode;
-extern	WINDOW	*curwp;
+extern	MGWIN	*curwp;
 extern	BUFFER	*curbp;
-extern	WINDOW	*wheadp;
+extern	MGWIN	*wheadp;
 extern	BUFFER	*bheadp;
 extern	char	pat[];
 extern	BUFFER	*bfind();
-extern	WINDOW	*popbuf();
-extern	WINDOW	*wpopup();
+extern	MGWIN	*popbuf();
+extern	MGWIN	*wpopup();
 extern	LINE	*lalloc();
 extern	LINE	*lallocx();
 extern	VOID	ewprintf();
