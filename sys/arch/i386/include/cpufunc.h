@@ -1,3 +1,4 @@
+/*	$OpenBSD: cpufunc.h,v 1.4 1999/10/26 03:44:17 downsj Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.8 1994/10/27 04:15:59 cgd Exp $	*/
 
 /*
@@ -40,38 +41,82 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 
+static __inline void invlpg __P((u_int));
+static __inline void lidt __P((void *));
+static __inline void lldt __P((u_short));
+static __inline void ltr __P((u_short));
+static __inline void lcr0 __P((u_int));
+static __inline u_int rcr0 __P((void));
+static __inline u_int rcr2 __P((void));
+static __inline void lcr3 __P((u_int));
+static __inline u_int rcr3 __P((void));
+static __inline void lcr4 __P((u_int));
+static __inline u_int rcr4 __P((void));
+static __inline void tlbflush __P((void));
+static __inline void disable_intr __P((void));
+static __inline void enable_intr __P((void));
+
 static __inline void 
+#ifdef __cplusplus
 invlpg(u_int addr)
+#else
+invlpg(addr)
+	u_int addr;
+#endif
 { 
         __asm __volatile("invlpg (%0)" : : "r" (addr) : "memory");
 }  
 
 static __inline void
+#ifdef __cplusplus
 lidt(void *p)
+#else
+lidt(p)
+	void *p;
+#endif
 {
 	__asm __volatile("lidt (%0)" : : "r" (p));
 }
 
 static __inline void
+#ifdef __cplusplus
 lldt(u_short sel)
+#else
+lldt(sel)
+	u_short sel;
+#endif
 {
 	__asm __volatile("lldt %0" : : "r" (sel));
 }
 
 static __inline void
+#ifdef __cplusplus
 ltr(u_short sel)
+#else
+ltr(sel)
+	u_short sel;
+#endif
 {
 	__asm __volatile("ltr %0" : : "r" (sel));
 }
 
 static __inline void
+#ifdef __cplusplus
 lcr0(u_int val)
+#else
+lcr0(val)
+	u_int val;
+#endif
 {
 	__asm __volatile("movl %0,%%cr0" : : "r" (val));
 }
 
 static __inline u_int
+#ifdef __cplusplus
 rcr0(void)
+#else
+rcr0()
+#endif
 {
 	u_int val;
 	__asm __volatile("movl %%cr0,%0" : "=r" (val));
@@ -79,7 +124,11 @@ rcr0(void)
 }
 
 static __inline u_int
+#ifdef __cplusplus
 rcr2(void)
+#else
+rcr2()
+#endif
 {
 	u_int val;
 	__asm __volatile("movl %%cr2,%0" : "=r" (val));
@@ -87,13 +136,22 @@ rcr2(void)
 }
 
 static __inline void
+#ifdef __cplusplus
 lcr3(u_int val)
+#else
+lcr3(val)
+	u_int val;
+#endif
 {
 	__asm __volatile("movl %0,%%cr3" : : "r" (val));
 }
 
 static __inline u_int
+#ifdef __cplusplus
 rcr3(void)
+#else
+rcr3()
+#endif
 {
 	u_int val;
 	__asm __volatile("movl %%cr3,%0" : "=r" (val));
@@ -101,13 +159,22 @@ rcr3(void)
 }
 
 static __inline void
+#ifdef __cplusplus
 lcr4(u_int val)
+#else
+lcr4(val)
+	u_int val;
+#endif
 {
 	__asm __volatile("movl %0,%%cr4" : : "r" (val));
 }
 
 static __inline u_int
+#ifdef __cplusplus
 rcr4(void)
+#else
+rcr4()
+#endif
 {
 	u_int val;
 	__asm __volatile("movl %%cr4,%0" : "=r" (val));
@@ -115,7 +182,11 @@ rcr4(void)
 }
 
 static __inline void
+#ifdef __cplusplus
 tlbflush(void)
+#else
+tlbflush()
+#endif
 {
 	u_int val;
 	__asm __volatile("movl %%cr3,%0" : "=r" (val));
@@ -130,13 +201,21 @@ void	setidt	__P((int idx, /*XXX*/caddr_t func, int typ, int dpl));
 /* XXXX ought to be in psl.h with spl() functions */
 
 static __inline void
+#ifdef __cplusplus
 disable_intr(void)
+#else
+disable_intr()
+#endif
 {
 	__asm __volatile("cli");
 }
 
 static __inline void
+#ifdef __cplusplus
 enable_intr(void)
+#else
+enable_intr()
+#endif
 {
 	__asm __volatile("sti");
 }
