@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.local,v 1.19 1998/02/02 00:29:14 dima Exp $
+#	$OpenBSD: rc.local,v 1.20 1998/03/25 07:25:22 deraadt Exp $
 
 # site-specific startup actions, daemons, and other things which
 # can be done AFTER your system goes into securemode.  For actions
@@ -9,10 +9,6 @@
 # Add your local changes additions to this file
 
 echo -n 'starting local daemons:'
-
-if [ -x /usr/local/etc/httpd/httpd ]; then
-	echo -n ' httpd';	/usr/local/etc/httpd/httpd
-fi
 
 if [ -x /usr/local/sbin/sshd ]; then
 	echo -n ' sshd';	/usr/local/sbin/sshd

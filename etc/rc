@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.68 1998/03/11 18:08:09 millert Exp $
+#	$OpenBSD: rc,v 1.69 1998/03/25 07:25:20 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -332,6 +332,10 @@ fi
 # SIGHUP works.
 if [ "X${sendmail_flags}" != X"NO" -a -s /etc/sendmail.cf ]; then
 	echo -n ' sendmail';		/usr/sbin/sendmail ${sendmail_flags}
+fi
+
+if [ "X${httpd_flags}" != X"NO"  ]; then
+	echo -n ' httpd';		/usr/sbin/httpd ${httpd_flags}
 fi
 
 # $smtpfwdd_flags is imported from /etc/rc.conf;
