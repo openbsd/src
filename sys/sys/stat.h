@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat.h,v 1.7 1998/02/16 21:56:25 millert Exp $	*/
+/*	$OpenBSD: stat.h,v 1.8 2000/07/23 21:30:06 pjanzen Exp $	*/
 /*	$NetBSD: stat.h,v 1.20 1996/05/16 22:17:49 cgd Exp $	*/
 
 /*-
@@ -161,7 +161,7 @@ struct stat {
 							/* 0666 */
 #define	DEFFILEMODE	(S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH)
 
-#define S_BLKSIZE	512		/* block size used in the stat struct */
+#define	S_BLKSIZE	512		/* block size used in the stat struct */
 
 /*
  * Definitions of flags stored in file flags word.
@@ -172,7 +172,7 @@ struct stat {
 #define	UF_NODUMP	0x00000001	/* do not dump file */
 #define	UF_IMMUTABLE	0x00000002	/* file may not be changed */
 #define	UF_APPEND	0x00000004	/* writes to file may only append */
-#define UF_OPAQUE	0x00000008	/* directory is opaque wrt. union */
+#define	UF_OPAQUE	0x00000008	/* directory is opaque wrt. union */
 /*
  * Super-user changeable flags.
  */
