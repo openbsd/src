@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_procfs.8,v 1.3 1997/05/31 06:04:35 deraadt Exp $
+.\"	$OpenBSD: mount_procfs.8,v 1.4 1997/11/04 19:19:18 kstailey Exp $
 .\"	$NetBSD: mount_procfs.8,v 1.6 1995/03/18 14:58:10 cgd Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -229,21 +229,6 @@ immediately after the call to exec (see
 .Xr mount 2 ,
 .Xr unmount 2
 .Sh CAVEATS
-No
-.Pa .
-and
-.Pa ..
-entries appear when listing the contents of the
-.Pa /proc
-directory.
-This makes sense in the context of this filesystem, but is inconsistent
-with usual filesystem conventions.
-However, it is still possible to refer to both
-.Pa .
-and 
-.Pa ..
-in a pathname.
-.Pp
 This filesystem may not be NFS-exported
 since most of the functionality of
 .Dv procfs
