@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.49 2002/01/25 15:50:22 art Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.50 2002/02/04 20:50:42 jason Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -902,10 +902,10 @@ m_zero(m)
 {
 	while (m) {
 		if (m->m_flags & M_PKTHDR)
-			memset((void *)(m + sizeof(struct m_hdr) +
-			    sizeof(struct pkthdr)), 0, MHLEN);
+			memset((caddr_t)m + sizeof(struct m_hdr) +
+			    sizeof(struct pkthdr), 0, MHLEN);
 		else
-			memset((void *)(m + sizeof(struct m_hdr)), 0, MLEN);
+			memset((caddr_t)m + sizeof(struct m_hdr), 0, MLEN);
 		if ((m->m_flags & M_EXT) &&
 		    (m->m_ext.ext_free == NULL) &&
 		    !MCLISREFERENCED(m))
