@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.102 2004/07/05 02:13:44 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.103 2004/07/05 16:54:53 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -200,12 +200,21 @@ kr_change(struct kroute *kroute)
 		kr->r.prefix.s_addr = kroute->prefix.s_addr;
 		kr->r.prefixlen = kroute->prefixlen;
 		kr->r.nexthop.s_addr = kroute->nexthop.s_addr;
-		kr->r.flags = F_BGPD_INSERTED;
+		kr->r.flags = kroute->flags | F_BGPD_INSERTED;
 
 		if (kroute_insert(kr) == -1)
 			free(kr);
-	} else
+	} else {
 		kr->r.nexthop.s_addr = kroute->nexthop.s_addr;
+		if (kroute->flags & F_BLACKHOLE)
+			kr->r.flags |= F_BLACKHOLE;
+		else
+			kr->r.flags &= ~F_BLACKHOLE;
+		if (kroute->flags & F_REJECT)
+			kr->r.flags |= F_REJECT;
+		else
+			kr->r.flags &= ~F_REJECT;
+	}
 
 	return (0);
 }
@@ -1061,15 +1070,23 @@ send_rtmsg(int fd, int action, struct kroute *kroute)
 	r.hdr.rtm_msglen = sizeof(r);
 	r.hdr.rtm_version = RTM_VERSION;
 	r.hdr.rtm_type = action;
-	r.hdr.rtm_flags = RTF_GATEWAY|RTF_PROTO1;
+	r.hdr.rtm_flags = RTF_PROTO1;
+	if (kroute->flags & F_BLACKHOLE)
+		r.hdr.rtm_flags |= RTF_BLACKHOLE;
+	if (kroute->flags & F_REJECT)
+		r.hdr.rtm_flags |= RTF_REJECT;
 	r.hdr.rtm_seq = kr_state.rtseq++;	/* overflow doesn't matter */
 	r.hdr.rtm_addrs = RTA_DST|RTA_GATEWAY|RTA_NETMASK;
 	r.prefix.sin_len = sizeof(r.prefix);
 	r.prefix.sin_family = AF_INET;
 	r.prefix.sin_addr.s_addr = kroute->prefix.s_addr;
+
 	r.nexthop.sin_len = sizeof(r.nexthop);
 	r.nexthop.sin_family = AF_INET;
 	r.nexthop.sin_addr.s_addr = kroute->nexthop.s_addr;
+	if (kroute->nexthop.s_addr != 0)
+		r.hdr.rtm_flags |= RTF_GATEWAY;
+
 	r.mask.sin_len = sizeof(r.mask);
 	r.mask.sin_family = AF_INET;
 	r.mask.sin_addr.s_addr = htonl(prefixlen2mask(kroute->prefixlen));

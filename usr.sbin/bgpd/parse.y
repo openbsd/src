@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.117 2004/07/03 17:19:59 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.118 2004/07/05 16:54:53 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -122,7 +122,7 @@ typedef struct {
 %token	QUICK
 %token	FROM TO ANY
 %token	PREFIX PREFIXLEN SOURCEAS TRANSITAS COMMUNITY
-%token	SET LOCALPREF MED NEXTHOP PREPEND PFTABLE
+%token	SET LOCALPREF MED NEXTHOP PREPEND PFTABLE REJECT BLACKHOLE
 %token	ERROR
 %token	IPSEC ESP AH SPI IKE
 %token	<v.string>		STRING
@@ -929,6 +929,12 @@ filter_set_opt	: LOCALPREF number		{
 				YYERROR;
 			}
 		}
+		| NEXTHOP BLACKHOLE		{
+			$$.flags |= SET_NEXTHOP_BLACKHOLE;
+		}
+		| NEXTHOP REJECT		{
+			$$.flags |= SET_NEXTHOP_REJECT;
+		}
 		| PREPEND number		{
 			$$.flags = SET_PREPEND;
 			$$.prepend = $2;
@@ -1038,6 +1044,7 @@ lookup(char *s)
 		{ "allow",		ALLOW},
 		{ "announce",		ANNOUNCE},
 		{ "any",		ANY},
+		{ "blackhole",		BLACKHOLE},
 		{ "capabilities",	CAPABILITIES},
 		{ "community",		COMMUNITY},
 		{ "deny",		DENY},
@@ -1076,6 +1083,7 @@ lookup(char *s)
 		{ "prefixlen",		PREFIXLEN},
 		{ "prepend-self",	PREPEND},
 		{ "quick",		QUICK},
+		{ "reject",		REJECT},
 		{ "remote-as",		REMOTEAS},
 		{ "route-collector",	ROUTECOLL},
 		{ "route-reflector",	REFLECTOR},

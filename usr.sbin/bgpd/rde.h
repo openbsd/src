@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.43 2004/06/24 23:15:58 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.44 2004/07/05 16:54:53 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -130,6 +130,8 @@ TAILQ_HEAD(attr_list, attr);
 struct attr_flags {
 	struct aspath			*aspath;
 	struct in_addr			 nexthop;	/* exit nexthop */
+	u_int8_t			 nexthop_reject;
+	u_int8_t			 nexthop_blackhole;
 	char				 pftable[PFTABLE_LEN];
 	u_int32_t			 med;		/* multi exit disc */
 	u_int32_t			 lpref;		/* local pref */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.134 2004/07/05 02:13:44 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.135 2004/07/05 16:54:53 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -37,7 +37,7 @@
 #define	PFTABLE_LEN			16
 #define	TCP_MD5_KEY_LEN			80
 #define	IPSEC_ENC_KEY_LEN		32
-#define IPSEC_AUTH_KEY_LEN		20
+#define	IPSEC_AUTH_KEY_LEN		20
 
 #define	MAX_PKTSIZE			4096
 #define	MIN_HOLDTIME			3
@@ -52,17 +52,19 @@
 #define	BGPD_FLAG_NO_EVALUATE		0x0002
 #define	BGPD_FLAG_REFLECTOR		0x0004
 
-#define BGPD_LOG_UPDATES		0x0001
+#define	BGPD_LOG_UPDATES		0x0001
 
 #define	SOCKET_NAME			"/var/run/bgpd.sock"
 
-#define	F_BGPD_INSERTED		0x01
-#define	F_KERNEL		0x02
-#define	F_CONNECTED		0x04
-#define	F_NEXTHOP		0x08
-#define	F_DOWN			0x10
-#define	F_STATIC		0x20
-#define	F_LONGER		0x40
+#define	F_BGPD_INSERTED		0x0001
+#define	F_KERNEL		0x0002
+#define	F_CONNECTED		0x0004
+#define	F_NEXTHOP		0x0008
+#define	F_DOWN			0x0010
+#define	F_STATIC		0x0020
+#define	F_LONGER		0x0040
+#define	F_REJECT		0x0080
+#define	F_BLACKHOLE		0x0100
 
 enum {
 	PROC_MAIN,
@@ -102,15 +104,15 @@ struct bgpd_addr {
 		u_int32_t		addr32[4];
 	} ba;		    /* 128-bit address */
 	u_int32_t	scope_id;	/* iface scope id for v6 */
-#define v4	ba.v4
-#define v6	ba.v6
-#define addr8	ba.addr8
-#define addr16	ba.addr16
-#define addr32	ba.addr32
+#define	v4	ba.v4
+#define	v6	ba.v6
+#define	addr8	ba.addr8
+#define	addr16	ba.addr16
+#define	addr32	ba.addr32
 };
 
-#define DEFAULT_LISTENER	0x01
-#define LISTENER_LISTENING	0x02
+#define	DEFAULT_LISTENER	0x01
+#define	LISTENER_LISTENING	0x02
 
 struct listen_addr {
 	TAILQ_ENTRY(listen_addr)	 entry;
@@ -154,7 +156,7 @@ enum enforce_as {
 };
 
 struct filter_set {
-	u_int8_t	flags;
+	u_int16_t	flags;
 	u_int32_t	localpref;
 	u_int32_t	med;
 	struct in_addr	nexthop;
@@ -351,7 +353,7 @@ struct kroute {
 	struct in_addr	prefix;
 	u_int8_t	prefixlen;
 	struct in_addr	nexthop;
-	u_int8_t	flags;
+	u_int16_t	flags;
 	u_short		ifindex;
 };
 
@@ -359,7 +361,7 @@ struct kroute6 {
 	struct in6_addr	prefix;
 	u_int8_t	prefixlen;
 	struct in6_addr	nexthop;
-	u_int8_t	flags;
+	u_int16_t	flags;
 	u_short		ifindex;
 };
 
@@ -402,10 +404,10 @@ struct ctl_show_nexthop {
 	u_int8_t		valid;
 };
 
-#define F_RIB_ELIGIBLE	0x01
-#define F_RIB_ACTIVE	0x02
-#define F_RIB_INTERNAL	0x04
-#define F_RIB_ANNOUNCE	0x08
+#define	F_RIB_ELIGIBLE	0x01
+#define	F_RIB_ACTIVE	0x02
+#define	F_RIB_INTERNAL	0x04
+#define	F_RIB_ANNOUNCE	0x08
 
 struct ctl_show_rib {
 	time_t			lastchange;
@@ -473,13 +475,15 @@ enum comp_ops {
 };
 
 /* set flags */
-#define	SET_LOCALPREF	0x01
-#define	SET_MED		0x02
-#define	SET_NEXTHOP	0x04
-#define	SET_NEXTHOP6	0x08
-#define	SET_PREPEND	0x10
-#define	SET_PFTABLE	0x20
-#define	SET_COMMUNITY	0x40
+#define	SET_LOCALPREF		0x0001
+#define	SET_MED			0x0002
+#define	SET_NEXTHOP		0x0004
+#define	SET_NEXTHOP6		0x0008
+#define	SET_PREPEND		0x0010
+#define	SET_PFTABLE		0x0020
+#define	SET_COMMUNITY		0x0040
+#define	SET_NEXTHOP_REJECT	0x0080
+#define	SET_NEXTHOP_BLACKHOLE	0x0100
 
 struct filter_peers {
 	u_int32_t	peerid;
@@ -487,13 +491,13 @@ struct filter_peers {
 };
 
 /* special community type */
-#define COMMUNITY_ERROR			-1
-#define COMMUNITY_ANY			-2
-#define COMMUNITY_WELLKNOWN		0xffff
-#define COMMUNITY_NO_EXPORT		0xff01
-#define COMMUNITY_NO_ADVERTISE		0xff02
-#define COMMUNITY_NO_EXPSUBCONFED	0xff03
-#define COMMUNITY_NO_PEER		0xff04	/* rfc3765 */
+#define	COMMUNITY_ERROR			-1
+#define	COMMUNITY_ANY			-2
+#define	COMMUNITY_WELLKNOWN		0xffff
+#define	COMMUNITY_NO_EXPORT		0xff01
+#define	COMMUNITY_NO_ADVERTISE		0xff02
+#define	COMMUNITY_NO_EXPSUBCONFED	0xff03
+#define	COMMUNITY_NO_PEER		0xff04	/* rfc3765 */
 
 struct filter_match {
 	struct {
@@ -531,15 +535,15 @@ struct rrefresh {
 };
 
 /* Address Family Numbers as per rfc1700 */
-#define AFI_IPv4	1
-#define AFI_IPv6	2
-#define AFI_ALL		0xffff
+#define	AFI_IPv4	1
+#define	AFI_IPv6	2
+#define	AFI_ALL		0xffff
 
 /* Subsequent Address Family Identifier as per rfc2858 */
-#define SAFI_UNICAST	1
-#define SAFI_MULTICAST	2
-#define SAFI_BOTH	3
-#define SAFI_ALL	0xff
+#define	SAFI_UNICAST	1
+#define	SAFI_MULTICAST	2
+#define	SAFI_BOTH	3
+#define	SAFI_ALL	0xff
 
 /* prototypes */
 /* bgpd.c */

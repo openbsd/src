@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.125 2004/07/05 02:13:44 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.126 2004/07/05 16:54:53 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1109,12 +1109,13 @@ rde_send_kroute(struct prefix *new, struct prefix *old)
 	    new->aspath->nexthop->flags & NEXTHOP_ANNOUNCE))
 		return;
 
+	bzero(&kr, sizeof(kr));
+
 	if (new == NULL || new->aspath->nexthop == NULL ||
 	    new->aspath->nexthop->state != NEXTHOP_REACH ||
 	    new->aspath->nexthop->flags & NEXTHOP_ANNOUNCE) {
 		type = IMSG_KROUTE_DELETE;
 		p = old;
-		kr.nexthop.s_addr = 0;
 	} else {
 		type = IMSG_KROUTE_CHANGE;
 		p = new;
@@ -1124,6 +1125,10 @@ rde_send_kroute(struct prefix *new, struct prefix *old)
 	pt_getaddr(p->prefix, &addr);
 	kr.prefix.s_addr = addr.v4.s_addr;
 	kr.prefixlen = p->prefix->prefixlen;
+	if (p->aspath->flags.nexthop_reject)
+		kr.flags |= F_REJECT;
+	if (p->aspath->flags.nexthop_blackhole)
+		kr.flags |= F_BLACKHOLE;
 
 	if (imsg_compose(&ibuf_main, type, 0, &kr, sizeof(kr)) == -1)
 		fatal("imsg_compose error");

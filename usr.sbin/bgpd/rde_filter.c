@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.11 2004/06/24 23:15:58 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.12 2004/07/05 16:54:53 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -67,6 +67,10 @@ rde_apply_set(struct attr_flags *attrs, struct filter_set *set)
 		attrs->med = set->med;
 	if (set->flags & SET_NEXTHOP)
 		attrs->nexthop = set->nexthop;
+	if (set->flags & SET_NEXTHOP_REJECT)
+		attrs->nexthop_reject = 1;
+	if (set->flags & SET_NEXTHOP_BLACKHOLE)
+		attrs->nexthop_blackhole = 1;
 	if (set->flags & SET_PREPEND) {
 		/*
 		 * The actual prepending is done afterwards because
