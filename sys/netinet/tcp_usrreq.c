@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.26 1998/06/27 02:09:46 angelos Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.27 1998/06/27 02:31:58 deraadt Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -199,8 +199,7 @@ tcp_usrreq(so, req, m, nam, control)
 		sin = mtod(nam, struct sockaddr_in *);
 
 		/* Disallow connects to a multicast address */
-		if (IN_MULTICAST(sin->sin_addr.s_addr))
-		{
+		if (IN_MULTICAST(sin->sin_addr.s_addr)) {
 			error = EINVAL;
 			break;
 		}
