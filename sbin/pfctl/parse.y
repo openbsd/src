@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.155 2002/10/05 21:17:57 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.156 2002/10/05 22:25:33 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -77,11 +77,13 @@ struct node_if {
 	u_int8_t		 not;
 	u_int			 ifa_flags;
 	struct node_if		*next;
+	struct node_if		*tail;
 };
 
 struct node_proto {
 	u_int8_t		 proto;
 	struct node_proto	*next;
+	struct node_proto	*tail;
 };
 
 struct node_host {
@@ -91,28 +93,32 @@ struct node_host {
 	u_int8_t		 af;
 	u_int8_t		 not;
 	u_int8_t		 noroute;
-	struct node_host	*next;
 	u_int32_t		 ifindex;	/* link-local IPv6 addrs */
 	char			*ifname;
 	u_int			 ifa_flags;
+	struct node_host	*next;
+	struct node_host	*tail;
 };
 
 struct node_port {
 	u_int16_t		 port[2];
 	u_int8_t		 op;
 	struct node_port	*next;
+	struct node_port	*tail;
 };
 
 struct node_uid {
 	uid_t			 uid[2];
 	u_int8_t		 op;
 	struct node_uid		*next;
+	struct node_uid		*tail;
 };
 
 struct node_gid {
 	gid_t			 gid[2];
 	u_int8_t		 op;
 	struct node_gid		*next;
+	struct node_gid		*tail;
 };
 
 struct node_icmp {
@@ -120,6 +126,7 @@ struct node_icmp {
 	u_int8_t		 type;
 	u_int8_t		 proto;
 	struct node_icmp	*next;
+	struct node_icmp	*tail;
 };
 
 enum	{ PF_STATE_OPT_MAX=0, PF_STATE_OPT_TIMEOUT=1 };
@@ -133,6 +140,7 @@ struct node_state_opt {
 		}		 timeout;
 	}			 data;
 	struct node_state_opt	*next;
+	struct node_state_opt	*tail;
 };
 
 struct peer {
@@ -426,9 +434,13 @@ antispoof_ifspc	: FOR if_item			{ $$ = $2; }
 		| FOR '{' antispoof_iflst '}'	{ $$ = $3; }
 		;
 
-
 antispoof_iflst	: if_item			{ $$ = $1; }
-		| antispoof_iflst comma if_item	{ $3->next = $1; $$ = $3; }
+		| antispoof_iflst comma if_item	{
+			$1->tail->next = $3;
+			$1->tail = $3;
+			$$ = $1;
+		}
+		;
 
 pfrule		: action dir logquick interface route af proto fromto
 		  uids gids flags icmpspec tos keep fragment allowopts label
@@ -621,7 +633,11 @@ interface	: /* empty */			{ $$ = NULL; }
 		;
 
 if_list		: if_item_not			{ $$ = $1; }
-		| if_list comma if_item_not	{ $3->next = $1; $$ = $3; }
+		| if_list comma if_item_not	{
+			$1->tail->next = $3;
+			$1->tail = $3;
+			$$ = $1;
+		}
 		;
 
 if_item_not	: '!' if_item			{ $$ = $2; $$->not = 1; }
@@ -641,6 +657,7 @@ if_item		: STRING			{
 			$$->ifa_flags = n->ifa_flags;
 			$$->not = 0;
 			$$->next = NULL;
+			$$->tail = $$;
 		}
 		;
 
@@ -654,7 +671,11 @@ proto		: /* empty */			{ $$ = NULL; }
 		;
 
 proto_list	: proto_item			{ $$ = $1; }
-		| proto_list comma proto_item	{ $3->next = $1; $$ = $3; }
+		| proto_list comma proto_item	{
+			$1->tail->next = $3;
+			$1->tail = $3;
+			$$ = $1;
+		}
 		;
 
 proto_item	: STRING			{
@@ -675,6 +696,7 @@ proto_item	: STRING			{
 				err(1, "proto_item: malloc");
 			$$->proto = p->p_proto;
 			$$->next = NULL;
+			$$->tail = $$;
 		}
 		;
 
@@ -704,15 +726,10 @@ ipspec		: ANY				{ $$ = NULL; }
 
 host_list	: xhost				{ $$ = $1; }
 		| host_list comma xhost		{
-			if ($3 == NULL)
-				$$ = $1;
-			else {
-				/* both $1 and $3 may be lists, so join them */
-				$$ = $3;
-				while ($3->next)
-					$3 = $3->next;
-				$3->next = $1;
-			}
+			/* $3 may be a list, so use its tail pointer */
+			$1->tail->next = $3->tail;
+			$1->tail = $3->tail;
+			$$ = $1;
 		}
 		;
 
@@ -728,6 +745,8 @@ xhost		: '!' host			{
 			if ($$ == NULL)
 				err(1, "xhost: calloc");
 			$$->noroute = 1;
+			$$->next = NULL;
+			$$->tail = $$;
 		}
 		;
 
@@ -786,7 +805,11 @@ portspec	: port_item			{ $$ = $1; }
 		;
 
 port_list	: port_item			{ $$ = $1; }
-		| port_list comma port_item	{ $3->next = $1; $$ = $3; }
+		| port_list comma port_item	{
+			$1->tail->next = $3;
+			$1->tail = $3;
+			$$ = $1;
+		}
 		;
 
 port_item	: port				{
@@ -797,6 +820,7 @@ port_item	: port				{
 			$$->port[1] = $1;
 			$$->op = PF_OP_EQ;
 			$$->next = NULL;
+			$$->tail = $$;
 		}
 		| PORTUNARY port		{
 			$$ = malloc(sizeof(struct node_port));
@@ -806,6 +830,7 @@ port_item	: port				{
 			$$->port[1] = $2;
 			$$->op = $1;
 			$$->next = NULL;
+			$$->tail = $$;
 		}
 		| port PORTBINARY port		{
 			$$ = malloc(sizeof(struct node_port));
@@ -815,6 +840,7 @@ port_item	: port				{
 			$$->port[1] = $3;
 			$$->op = $2;
 			$$->next = NULL;
+			$$->tail = $$;
 		}
 		;
 
@@ -847,7 +873,11 @@ uids		: /* empty */			{ $$ = NULL; }
 		;
 
 uid_list	: uid_item			{ $$ = $1; }
-		| uid_list comma uid_item	{ $3->next = $1; $$ = $3; }
+		| uid_list comma uid_item	{
+			$1->tail->next = $3;
+			$1->tail = $3;
+			$$ = $1;
+		}
 		;
 
 uid_item	: uid				{
@@ -858,6 +888,7 @@ uid_item	: uid				{
 			$$->uid[1] = $1;
 			$$->op = PF_OP_EQ;
 			$$->next = NULL;
+			$$->tail = $$;
 		}
 		| PORTUNARY uid			{
 			if ($2 == UID_MAX && $1 != PF_OP_EQ && $1 != PF_OP_NE) {
@@ -871,6 +902,7 @@ uid_item	: uid				{
 			$$->uid[1] = $2;
 			$$->op = $1;
 			$$->next = NULL;
+			$$->tail = $$;
 		}
 		| uid PORTBINARY uid		{
 			if ($1 == UID_MAX || $3 == UID_MAX) {
@@ -884,6 +916,7 @@ uid_item	: uid				{
 			$$->uid[1] = $3;
 			$$->op = $2;
 			$$->next = NULL;
+			$$->tail = $$;
 		}
 		;
 
@@ -918,7 +951,11 @@ gids		: /* empty */			{ $$ = NULL; }
 		;
 
 gid_list	: gid_item			{ $$ = $1; }
-		| gid_list comma gid_item	{ $3->next = $1; $$ = $3; }
+		| gid_list comma gid_item	{
+			$1->tail->next = $3;
+			$1->tail = $3;
+			$$ = $1;
+		}
 		;
 
 gid_item	: gid				{
@@ -929,6 +966,7 @@ gid_item	: gid				{
 			$$->gid[1] = $1;
 			$$->op = PF_OP_EQ;
 			$$->next = NULL;
+			$$->tail = $$;
 		}
 		| PORTUNARY gid			{
 			if ($2 == GID_MAX && $1 != PF_OP_EQ && $1 != PF_OP_NE) {
@@ -942,6 +980,7 @@ gid_item	: gid				{
 			$$->gid[1] = $2;
 			$$->op = $1;
 			$$->next = NULL;
+			$$->tail = $$;
 		}
 		| gid PORTBINARY gid		{
 			if ($1 == GID_MAX || $3 == GID_MAX) {
@@ -955,6 +994,7 @@ gid_item	: gid				{
 			$$->gid[1] = $3;
 			$$->op = $2;
 			$$->next = NULL;
+			$$->tail = $$;
 		}
 		;
 
@@ -1008,11 +1048,19 @@ icmpspec	: /* empty */			{ $$ = NULL; }
 		;
 
 icmp_list	: icmp_item			{ $$ = $1; }
-		| icmp_list comma icmp_item	{ $3->next = $1; $$ = $3; }
+		| icmp_list comma icmp_item	{
+			$1->tail->next = $3;
+			$1->tail = $3;
+			$$ = $1;
+		}
 		;
 
 icmp6_list	: icmp6_item			{ $$ = $1; }
-		| icmp6_list comma icmp6_item	{ $3->next = $1; $$ = $3; }
+		| icmp6_list comma icmp6_item	{
+			$1->tail->next = $3;
+			$1->tail = $3;
+			$$ = $1;
+		}
 		;
 
 icmp_item	: icmptype		{
@@ -1023,6 +1071,7 @@ icmp_item	: icmptype		{
 			$$->code = 0;
 			$$->proto = IPPROTO_ICMP;
 			$$->next = NULL;
+			$$->tail = $$;
 		}
 		| icmptype CODE STRING	{
 			const struct icmpcodeent *p;
@@ -1048,6 +1097,7 @@ icmp_item	: icmptype		{
 			$$->code = ulval + 1;
 			$$->proto = IPPROTO_ICMP;
 			$$->next = NULL;
+			$$->tail = $$;
 		}
 		;
 
@@ -1059,6 +1109,7 @@ icmp6_item	: icmp6type		{
 			$$->code = 0;
 			$$->proto = IPPROTO_ICMPV6;
 			$$->next = NULL;
+			$$->tail = $$;
 		}
 		| icmp6type CODE STRING	{
 			const struct icmpcodeent *p;
@@ -1084,6 +1135,7 @@ icmp6_item	: icmp6type		{
 			$$->code = ulval + 1;
 			$$->proto = IPPROTO_ICMPV6;
 			$$->next = NULL;
+			$$->tail = $$;
 		}
 		;
 
@@ -1166,10 +1218,9 @@ state_opt_spec	: /* empty */			{ $$ = NULL; }
 
 state_opt_list	: state_opt_item		{ $$ = $1; }
 		| state_opt_list comma state_opt_item {
+			$1->tail->next = $3;
+			$1->tail = $3;
 			$$ = $1;
-			while ($1->next)
-				$1 = $1->next;
-			$1->next = $3;
 		}
 		;
 
@@ -1184,6 +1235,7 @@ state_opt_item	: MAXIMUM number		{
 			$$->type = PF_STATE_OPT_MAX;
 			$$->data.max_states = $2;
 			$$->next = NULL;
+			$$->tail = $$;
 		}
 		| STRING number			{
 			int i;
@@ -1209,6 +1261,7 @@ state_opt_item	: MAXIMUM number		{
 			$$->data.timeout.number = pf_timeouts[i].timeout;
 			$$->data.timeout.seconds = $2;
 			$$->next = NULL;
+			$$->tail = $$;
 		}
 		;
 
@@ -2674,8 +2727,14 @@ ifa_load(void)
 			yyerror("malloc failed");
 			exit(1);
 		}
-		n->next = h;
-		h = n;
+		n->next = NULL;
+		n->tail = n;
+		if (h == NULL)
+			h = n;
+		else {
+			h->tail->next = n;
+			h->tail = n;
+		}
 	}
 	iftab = h;
 	freeifaddrs(ifap);
@@ -2736,8 +2795,15 @@ ifa_lookup(char *ifa_name, enum pfctl_iflookup_mode mode)
 				ipmask(&n->mask, 128);
 		}
 		n->ifindex = p->ifindex;
-		n->next = h;
-		h = n;
+
+		n->next = NULL;
+		n->tail = n;
+		if (h == NULL)
+			h = n;
+		else {
+			h->tail->next = n;
+			h->tail = n;
+		}
 	}
 	if (h == NULL && mode == PFCTL_IFLOOKUP_HOST) {
 		yyerror("no IP address found for %s", ifa_name);
@@ -2768,6 +2834,11 @@ ifa_pick_ip(struct node_host *nh, u_int8_t af)
 	if (n == NULL)
 		yyerror("no translation address with matching address family "
 		    "found.");
+	else {
+		n->next = NULL;
+		n->tail = n;
+	}
+
 	return (n);
 }
 
@@ -2783,8 +2854,11 @@ host(char *s)
 		/* interface with this name exists */
 		if ((h = ifa_lookup(s, PFCTL_IFLOOKUP_HOST)) == NULL)
 			return (NULL);
-		else
+		else {
+			h->next = NULL;
+			h->tail = h;
 			return (h);
+		}
 	}
 
 	if (inet_aton(s, &ina) == 1) {
@@ -2795,6 +2869,8 @@ host(char *s)
 		h->addr.addr_dyn = NULL;
 		h->addr.addr.addr32[0] = ina.s_addr;
 		ipmask(&h->mask, 32);
+		h->next = NULL;
+		h->tail = h;
 		return (h);
 	}
 
@@ -2814,6 +2890,8 @@ host(char *s)
 		n->ifindex = ((struct sockaddr_in6 *)res->ai_addr)->sin6_scope_id;
 		ipmask(&n->mask, 128);
 		freeaddrinfo(res);
+		n->next = NULL;
+		n->tail = n;
 		return (n);
 	}
 
@@ -2848,8 +2926,14 @@ host(char *s)
 			    ((struct sockaddr_in6 *)res->ai_addr)->sin6_scope_id;
 			ipmask(&n->mask, 128);
 		}
-		n->next = h;
-		h = n;
+		n->next = NULL;
+		n->tail = n;
+		if (h == NULL)
+			h = n;
+		else {
+			h->tail->next = n;
+			h->tail = n;
+		}
 	}
 	freeaddrinfo(res0);
 	if (h == NULL) {
