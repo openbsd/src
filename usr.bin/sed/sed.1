@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sed.1,v 1.8 1999/07/04 12:00:04 aaron Exp $
+.\"	$OpenBSD: sed.1,v 1.9 2000/03/04 22:19:26 aaron Exp $
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -215,7 +215,7 @@ The
 and
 .Sq w
 functions take an optional file parameter, which should be separated
-from the function letter by white space.
+from the function letter by whitespace.
 Each file given as an argument to
 .Nm
 is created (or its contents truncated) before any input processing begins.
@@ -232,7 +232,7 @@ and
 .Ql \&:
 functions all accept additional arguments.
 The following synopses indicate which arguments have to be separated from
-the function letters by white space characters.
+the function letters by whitespace characters.
 .Pp
 Two of the functions take a function-list.
 This is a list of
@@ -248,11 +248,11 @@ functions separated by newlines, as follows:
 .Pp
 The
 .Ql {
-can be preceded by white space and can be followed by white space.
-The function can be preceded by white space.
+can be preceded or followed by whitespace.
+The function can be preceded by whitespace as well.
 The terminating
 .Ql }
-must be preceded by a newline or optional white space.
+must be preceded by a newline or optional whitespace.
 .sp
 .Bl -tag -width "XXXXXX" -compact
 .It [2addr] function-list

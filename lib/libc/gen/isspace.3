@@ -1,4 +1,4 @@
-.\"	$OpenBSD: isspace.3,v 1.6 1999/07/09 13:35:18 aaron Exp $
+.\"	$OpenBSD: isspace.3,v 1.7 2000/03/04 22:19:31 aaron Exp $
 .\"
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .Os
 .Sh NAME
 .Nm isspace
-.Nd white-space character test
+.Nd whitespace character test
 .Sh SYNOPSIS
 .Fd #include <ctype.h>
 .Ft int
@@ -48,13 +48,13 @@
 .Sh DESCRIPTION
 The
 .Fn isspace
-function tests for the standard white-space characters
+function tests for the standard whitespace characters
 .\" or for any
 .\" of an implementation-defined set of characters
 for which
 .Xr isalnum 3
 is false.
-The standard white-space characters are the following:
+The standard whitespace characters are the following:
 .Pp
 .Bl -tag -width xxxxx -offset indent -compact
 .It Sq \0
@@ -73,7 +73,7 @@ And vertical tab.
 .Pp
 In the C locale,
 .Fn isspace
-returns true only for the standard white-space characters.
+returns true only for the standard whitespace characters.
 .Sh RETURN VALUES
 The
 .Fn isspace

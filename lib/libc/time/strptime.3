@@ -1,4 +1,4 @@
-.\"	$OpenBSD: strptime.3,v 1.5 1999/07/07 10:50:04 aaron Exp $
+.\"	$OpenBSD: strptime.3,v 1.6 2000/03/04 22:19:32 aaron Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,12 +56,12 @@ using the format specified by
 The
 .Fa format
 string consists of zero or more directives. A directive is composed
-of either one or more white-space as defined by
+of either one or more whitespace as defined by
 .Fn isspace ,
-an ordinary character (neither `%' nor a white-space), or a conversion
+an ordinary character (neither `%' nor a whitespace), or a conversion
 specification. A conversion specification consists of a percent sign `%'
 followed by one or two conversion characters which specify the
-replacement required.  There must be white-space or other
+replacement required.  There must be whitespace or other
 non-alphanumeric characters between any two conversion specifications.
 .Pp
 The LC_TIME category defines the locale values for the conversion
@@ -118,7 +118,7 @@ leading zeros are permitted but not required.
 the minute [0,59];
 leading zeros are permitted but not required.
 .It Cm \&%n
-any white-space
+any whitespace
 .It Cm \&%p
 the locale's equivalent of a.m. or p.m..
 .It Cm \&%r
@@ -129,7 +129,7 @@ the time as %H:%M.
 the seconds [0,61];
 leading zeros are permitted but not required.
 .It Cm \&%t
-any white-space
+any whitespace
 .It Cm \&%T
 the time as %H:%M:%S.
 .It Cm \&%U

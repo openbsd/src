@@ -1,4 +1,4 @@
-.\"	$OpenBSD: telnet.1,v 1.20 1999/12/11 09:08:09 itojun Exp $
+.\"	$OpenBSD: telnet.1,v 1.21 2000/03/04 22:19:26 aaron Exp $
 .\"	$NetBSD: telnet.1,v 1.5 1996/02/28 21:04:12 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -612,10 +612,10 @@ After establishing a connection, the file
 in the
 user's home directory is opened.  Lines beginning with a ``#'' are
 comment lines.  Blank lines are ignored.  Lines that begin
-without white space are the start of a machine entry.  The
+without whitespace are the start of a machine entry.  The
 first thing on the line is the name of the machine that is
 being connected to.  The rest of the line, and successive
-lines that begin with white space are assumed to be
+lines that begin with whitespace are assumed to be
 .Nm telnet
 commands and are processed as if they had been typed
 in manually to the

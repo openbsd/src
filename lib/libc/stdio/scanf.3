@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scanf.3,v 1.4 1999/07/02 20:58:00 aaron Exp $
+.\"	$OpenBSD: scanf.3,v 1.5 2000/03/04 22:19:31 aaron Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -120,7 +120,7 @@ string
 may also contain other characters.
 White space (such as blanks, tabs, or newlines) in the
 .Fa format
-string match any amount of white space, including none, in the input.
+string match any amount of whitespace, including none, in the input.
 Everything else
 matches only itself.
 Scanning stops
@@ -190,8 +190,8 @@ a default of `infinity' is used (with one exception, below);
 otherwise at most this many characters are scanned
 in processing the conversion.
 Before conversion begins,
-most conversions skip white space;
-this white space is not counted against the field width.
+most conversions skip whitespace;
+this whitespace is not counted against the field width.
 .Pp
 The following conversions are available:
 .Bl -tag -width XXXX
@@ -257,14 +257,14 @@ Equivalent to
 Equivalent to
 .Cm f .
 .It Cm s
-Matches a sequence of non-white-space characters;
+Matches a sequence of non-whitespace characters;
 the next pointer must be a pointer to
 .Em char ,
 and the array must be large enough to accept all the sequence and the
 terminating
 .Dv NUL
 character.
-The input string stops at white space
+The input string stops at whitespace
 or at the maximum field width, whichever occurs first.
 .It Cm c
 Matches a sequence of
@@ -277,8 +277,8 @@ and there must be enough room for all the characters
 (no terminating
 .Dv NUL
 is added).
-The usual skip of leading white space is suppressed.
-To skip white space first, use an explicit space in the format.
+The usual skip of leading whitespace is suppressed.
+To skip whitespace first, use an explicit space in the format.
 .It Cm \&[
 Matches a nonempty sequence of characters from the specified set
 of accepted characters;
@@ -288,7 +288,7 @@ and there must be enough room for all the characters in the string,
 plus a terminating
 .Dv NUL
 character.
-The usual skip of leading white space is suppressed.
+The usual skip of leading whitespace is suppressed.
 The string is to be made up of characters in
 (or not in)
 a particular set;
