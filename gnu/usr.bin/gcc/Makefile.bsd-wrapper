@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.39 2003/11/29 14:24:49 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.40 2003/11/29 14:55:05 espie Exp $
 
 #MAN=		cccp.1 gcc.1 gcc-local.1 protoize.1 gcov.1
 MAN=		gcc.1 cpp.1 gcov.1
@@ -42,7 +42,8 @@ MAKE_FLAGS+=	HOST_CFLAGS="${VAXHOST_CFLAGS}"
 GXX_INCDIR=	/usr/include/g++
 CLEANFILES=	.gdbinit */.gdbinit *.info* \
 		c-parse.c c-parse.h c-parse.y cexp.c cp/parse.c cp/parse.h \
-		f/*.info* objc-parse.c objc-parse.y target_path \
+		f/*.info* objc/objc-parse.c objc/objc-parse.y target_path \
+		print-rtl1.c gengtype-lex.c gengtype-yacc.c gengtype-yacc.h \
 		genrtl.c genrtl.h fixinc.sh fixinc/Makefile \
 		po/Makefile  po/Makefile.in  po/POTFILES
 
