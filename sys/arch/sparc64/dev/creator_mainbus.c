@@ -1,7 +1,8 @@
-/*	$OpenBSD: creator_mainbus.c,v 1.1 2002/06/11 06:53:03 fgsch Exp $	*/
+/*	$OpenBSD: creator_mainbus.c,v 1.2 2002/06/15 01:32:01 fgsch Exp $	*/
 
 /*
- * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
+ * Copyright (c) 2002 Jason L. Wright (jason@thought.net),
+ *  Federico G. Schwindt (fgsch@openbsd.org)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
