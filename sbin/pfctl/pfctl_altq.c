@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.57 2003/04/12 19:07:42 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.58 2003/04/12 19:08:40 henning Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -85,7 +85,7 @@ static double		 sc_x2y(struct service_curve *, double);
 u_int32_t	 getifspeed(char *);
 u_long		 getifmtu(char *);
 
-static u_int32_t	 max_qid = 0;
+static u_int32_t	 max_qid = 1;
 
 void
 pfaltq_store(struct pf_altq *a)
