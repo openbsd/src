@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.308 2004/07/16 06:02:47 david Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.309 2004/08/24 05:15:50 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2465,7 +2465,7 @@ dumpsys()
  * for HZ=100.
  */
 void
-microtime(tvp)
+i8254_microtime(tvp)
 	register struct timeval *tvp;
 {
 	int s = splhigh();
