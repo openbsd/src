@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd.h,v 1.5 1997/02/16 20:54:28 provos Exp $	*/
+/*	$OpenBSD: pwd.h,v 1.6 1998/07/15 00:50:40 millert Exp $	*/
 /*	$NetBSD: pwd.h,v 1.9 1996/05/15 21:36:45 jtc Exp $	*/
 
 /*-
@@ -78,8 +78,8 @@
 struct passwd {
 	char	*pw_name;		/* user name */
 	char	*pw_passwd;		/* encrypted password */
-	int	pw_uid;			/* user uid */
-	int	pw_gid;			/* user gid */
+	uid_t	pw_uid;			/* user uid */
+	uid_t	pw_gid;			/* user gid */
 	time_t	pw_change;		/* password change time */
 	char	*pw_class;		/* user access class */
 	char	*pw_gecos;		/* Honeywell login info */
