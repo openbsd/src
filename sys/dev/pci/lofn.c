@@ -1,4 +1,4 @@
-/*	$OpenBSD: lofn.c,v 1.3 2001/06/26 05:16:45 jason Exp $	*/
+/*	$OpenBSD: lofn.c,v 1.4 2001/06/26 05:52:53 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -113,7 +113,7 @@ lofn_attach(parent, self, aux)
 
 	if (pci_mapreg_map(pa, LOFN_BAR0, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->sc_st, &sc->sc_sh, NULL, &iosize, 0)) {
-		printf(": can't map mem space %d\n", 0);
+		printf(": can't map mem space\n");
 		return;
 	}
 
@@ -122,7 +122,7 @@ lofn_attach(parent, self, aux)
 	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
 	    pa->pa_intrline, &ih)) {
 		printf(": couldn't map interrupt\n");
-		goto fail_io;
+		goto fail;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, lofn_intr, sc,
@@ -132,7 +132,7 @@ lofn_attach(parent, self, aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
-		goto fail_io;
+		goto fail;
 	}
 
 	/* Enable RNG */
@@ -141,12 +141,11 @@ lofn_attach(parent, self, aux)
 	WRITE_REG_0(sc, LOFN_REL_CFG2,
 	    READ_REG_0(sc, LOFN_REL_CFG2) | LOFN_CFG2_RNGENA);
 
-	printf(": %s\n", intrstr);
+	printf(": %s [XXX bar 0x%08x]\n", intrstr, sc->sc_sh);
 
 	return;
 
-	pci_intr_disestablish(pc, sc->sc_ih);
-fail_io:
+fail:
 	bus_space_unmap(sc->sc_st, sc->sc_sh, iosize);
 }
 
