@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.38 1999/12/11 08:32:20 itojun Exp $";
+static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.39 1999/12/11 08:40:17 itojun Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -664,8 +664,6 @@ gethostbyaddr(addr, len, af)
 	int len, af;
 {
 	const u_char *uaddr = (const u_char *)addr;
-	static const u_char mapped[] = { 0,0, 0,0, 0,0, 0,0, 0,0, 0xff,0xff };
-	static const u_char tunnelled[] = { 0,0, 0,0, 0,0, 0,0, 0,0, 0,0 };
 	int n, size, i;
 	querybuf buf;
 	register struct hostent *hp;
@@ -682,11 +680,11 @@ gethostbyaddr(addr, len, af)
 	}
 
 	if (af == AF_INET6 && len == IN6ADDRSZ &&
-	    (!bcmp(uaddr, mapped, sizeof mapped) ||
-	     !bcmp(uaddr, tunnelled, sizeof tunnelled))) {
+	    (IN6_IS_ADDR_V4MAPPED((struct in6_addr *)uaddr) ||
+	     IN6_IS_ADDR_V4COMPAT((struct in6_addr *)uaddr))) {
 		/* Unmap. */
-		addr += sizeof mapped;
-		uaddr += sizeof mapped;
+		addr += IN6ADDRSZ - INADDRSZ;
+		uaddr += IN6ADDRSZ - INADDRSZ;
 		af = AF_INET;
 		len = INADDRSZ;
 	}
