@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiopvar.h,v 1.2 2003/04/06 20:24:31 krw Exp $	*/
+/*	$OpenBSD: osiopvar.h,v 1.3 2003/04/08 18:03:46 krw Exp $	*/
 /*	$NetBSD: osiopvar.h,v 1.3 2002/05/14 02:58:35 matt Exp $	*/
 
 /*
@@ -153,9 +153,7 @@ struct osiop_acb {
 
 	int	xsflags;	/* copy of xs->flags */
 	int	datalen;
-#ifdef OSIOP_DEBUG
 	void *data;		/* transfer data buffer ptr */
-#endif
 
 	bus_addr_t curaddr;	/* current transfer data buffer */
 	bus_size_t curlen;	/* current transfer data length */

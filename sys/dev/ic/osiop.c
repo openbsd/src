@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.4 2003/04/06 20:24:31 krw Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.5 2003/04/08 18:03:46 krw Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -423,10 +423,14 @@ osiop_scsicmd(xs)
 	acb->xsflags = xs->flags;
 	bcopy(xs->cmd, &acb->ds->scsi_cmd, xs->cmdlen);
 	acb->ds->cmd.count = xs->cmdlen;
-	acb->datalen = xs->datalen;
+	acb->datalen = 0;
+#ifdef OSIOP_DEBUG
+	acb->data = xs->data;
+#endif
 
 	/* Setup DMA map for data buffer */
 	if (acb->xsflags & (SCSI_DATA_IN | SCSI_DATA_OUT)) {
+		acb->datalen = xs->datalen;
 		err = bus_dmamap_load(sc->sc_dmat, acb->datadma,
 		    xs->data, acb->datalen, NULL,
 		    BUS_DMA_NOWAIT | BUS_DMA_STREAMING |
@@ -734,6 +738,10 @@ FREE:
 		/* Setup DMA map for data buffer */
 		acb->xsflags &= SCSI_POLL | SCSI_NOSLEEP;
 		acb->xsflags |= SCSI_DATA_IN;
+		acb->datalen  = sizeof xs->sense;
+#ifdef OSIOP_DEBUG
+		acb->data = &xs->sense;
+#endif
 		err = bus_dmamap_load(sc->sc_dmat, acb->datadma,
 		    &xs->sense, sizeof(xs->sense), NULL,
 		    BUS_DMA_NOWAIT | BUS_DMA_STREAMING | BUS_DMA_READ);
@@ -1987,8 +1995,8 @@ osiop_dump_acb(acb)
 	for (i = acb->ds->cmd.count; i > 0; i--)
 		printf(" %02x", *b++);
 	printf("\n");
-	printf("  xs: %p data %p:%04x ", acb->xs, acb->xs->data,
-	    acb->xs->datalen);
+	printf("  xs: %p data %p:%04x ", acb->xs, acb->data,
+	    acb->datalen);
 	printf("cur %lx:%lx\n", acb->curaddr, acb->curlen);
 }
 
