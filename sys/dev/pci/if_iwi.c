@@ -1,7 +1,7 @@
-/*	$OpenBSD: if_iwi.c,v 1.23 2005/01/05 09:07:15 jsg Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.24 2005/01/09 16:47:50 damien Exp $	*/
 
 /*-
- * Copyright (c) 2004
+ * Copyright (c) 2004, 2005
  *      Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -177,7 +177,7 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	int error, i;
 
 	sc->sc_pct = pa->pa_pc;
-	sc->sc_pcitag = pa->pa_tag,
+	sc->sc_pcitag = pa->pa_tag;
 
 	/* clear device specific PCI configuration register 0x41 */
 	data = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
@@ -505,7 +505,7 @@ iwi_dma_alloc(struct iwi_softc *sc)
 		    mtod(sc->rx_buf[i].m, void *), MCLBYTES, NULL,
 		    BUS_DMA_NOWAIT);
 		if (error != 0) {
-			printf("%s: could not load rx buffer DMA map\n",
+			printf("%s: could not load rx buf DMA map\n",
 			    sc->sc_dev.dv_xname);
 			goto fail;
 		}
@@ -647,9 +647,13 @@ iwi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		iwi_auth_and_assoc(sc);
 		break;
 
-	case IEEE80211_S_INIT:
 	case IEEE80211_S_RUN:
+		if (ic->ic_opmode == IEEE80211_M_IBSS)
+			ieee80211_new_state(ic, IEEE80211_S_AUTH, -1);
+		break;
+
 	case IEEE80211_S_ASSOC:
+	case IEEE80211_S_INIT:
 		break;
 	}
 
@@ -658,7 +662,7 @@ iwi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 }
 
 /*
- * Read 16 bits at address 'addr' from the Microwire EEPROM.
+ * Read 16 bits at address 'addr' from the serial EEPROM.
  * DON'T PLAY WITH THIS CODE UNLESS YOU KNOW *EXACTLY* WHAT YOU'RE DOING!
  */
 u_int16_t
@@ -725,11 +729,17 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_buf *buf, int i,
 	int error;
 
 	DPRINTFN(5, ("RX!DATA!%u!%u!%u\n", letoh16(frame->len), frame->chan,
-	    IWI_RSSI2DBM(frame->rssi, frame->agc)));
+	    frame->rssi_dbm));
 
 	bus_dmamap_sync(sc->sc_dmat, buf->map, sizeof (struct iwi_hdr),
 	    sizeof (struct iwi_frame) + letoh16(frame->len),
 	    BUS_DMASYNC_POSTREAD);
+
+	if (letoh16(frame->len) < sizeof (struct ieee80211_frame_min) ||
+	    letoh16(frame->len) > MCLBYTES) {
+		printf("%s: bad frame length\n", sc->sc_dev.dv_xname);
+		return;
+	}
 
 	bus_dmamap_unload(sc->sc_dmat, buf->map);
 
@@ -782,39 +792,40 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_buf *buf, int i,
 
 	ni = ieee80211_find_rxnode(ic, wh);
 
-	/* Send it up to the upper layer */
-	ieee80211_input(ifp, m, ni, IWI_RSSI2DBM(frame->rssi, frame->agc), 0);
+	/* Send the frame to the upper layer */
+	ieee80211_input(ifp, m, ni, IWI_RSSIDBM2RAW(frame->rssi_dbm), 0);
 
 	if (ni == ic->ic_bss)
 		ieee80211_unref_node(&ni);
 	else
 		ieee80211_free_node(ic, ni);
 
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL) {
+	MGETHDR(buf->m, M_DONTWAIT, MT_DATA);
+	if (buf->m == NULL) {
 		printf("%s: could not allocate rx mbuf\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
 
-	MCLGET(m, M_DONTWAIT);
-	if (!(m->m_flags & M_EXT)) {
-		m_freem(m);
+	MCLGET(buf->m, M_DONTWAIT);
+	if (!(buf->m->m_flags & M_EXT)) {
 		printf("%s: could not allocate rx mbuf cluster\n",
 		    sc->sc_dev.dv_xname);
+		m_freem(buf->m);
+		buf->m = NULL;
 		return;
 	}
 
-	error = bus_dmamap_load(sc->sc_dmat, buf->map, mtod(m, void *),
+	error = bus_dmamap_load(sc->sc_dmat, buf->map, mtod(buf->m, void *),
 	    MCLBYTES, NULL, BUS_DMA_NOWAIT);
 	if (error != 0) {
-		printf("%s: could not map buffer dma memory\n",
+		printf("%s: could not load rx buf DMA map\n",
 		    sc->sc_dev.dv_xname);
-		m_freem(m);
+		m_freem(buf->m);
+		buf->m = NULL;
 		return;
 	}
 
-	buf->m = m;
 	CSR_WRITE_4(sc, IWI_CSR_RX_BASE + i * 4, buf->map->dm_segs[0].ds_addr);
 }
 
@@ -824,12 +835,10 @@ iwi_notification_intr(struct iwi_softc *sc, struct iwi_rx_buf *buf,
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
+	struct iwi_notif_scan_channel *chan;
 	struct iwi_notif_scan_complete *scan;
 	struct iwi_notif_authentication *auth;
 	struct iwi_notif_association *assoc;
-
-	DPRINTFN(2, ("RX!NOTIFICATION!%u!%u\n", notif->type,
-	    letoh16(notif->len)));
 
 	bus_dmamap_sync(sc->sc_dmat, buf->map, sizeof (struct iwi_hdr),
 	    sizeof (struct iwi_notif) + letoh16(notif->len),
@@ -837,6 +846,9 @@ iwi_notification_intr(struct iwi_softc *sc, struct iwi_rx_buf *buf,
 
 	switch (notif->type) {
 	case IWI_NOTIF_TYPE_SCAN_CHANNEL:
+		chan = (struct iwi_notif_scan_channel *)(notif + 1);
+
+		DPRINTFN(2, ("Scan channel (%u)\n", chan->nchan));
 		break;
 
 	case IWI_NOTIF_TYPE_SCAN_COMPLETE:
@@ -859,7 +871,6 @@ iwi_notification_intr(struct iwi_softc *sc, struct iwi_rx_buf *buf,
 			break;
 
 		case IWI_DEAUTHENTICATED:
-			/*ieee80211_begin_scan(ifp);*/
 			break;
 
 		default:
@@ -891,6 +902,8 @@ iwi_notification_intr(struct iwi_softc *sc, struct iwi_rx_buf *buf,
 
 	case IWI_NOTIF_TYPE_CALIBRATION:
 	case IWI_NOTIF_TYPE_BEACON:
+	case IWI_NOTIF_TYPE_NOISE:
+		DPRINTFN(5, ("Notification (%u)\n", notif->type));
 		break;
 
 	default:
@@ -958,17 +971,14 @@ iwi_tx_intr(struct iwi_softc *sc)
 		bus_dmamap_unload(sc->sc_dmat, buf->map);
 		m_freem(buf->m);
 		buf->m = NULL;
+		if (buf->ni != ic->ic_bss)
+			ieee80211_free_node(ic, buf->ni);
+		buf->ni = NULL;
 
-		if (buf->ni != NULL) {
-			if (buf->ni != ic->ic_bss)
-				ieee80211_free_node(ic, buf->ni);
-			buf->ni = NULL;
-		}
+		sc->tx_queued--;
 
 		/* kill watchdog timer */
 		sc->sc_tx_timer = 0;
-
-		sc->tx_free++;
 	}
 
 	/* Remember what the firmware has processed */
@@ -1001,6 +1011,11 @@ iwi_intr(void *arg)
 	if (r & IWI_INTR_FW_INITED) {
 		if (!(r & (IWI_INTR_FATAL_ERROR | IWI_INTR_PARITY_ERROR)))
 			wakeup(sc);
+	}
+
+	if (r & IWI_INTR_RADIO_OFF) {
+		DPRINTF(("radio transmitter off\n"));
+		iwi_stop(&sc->sc_ic.ic_if, 1);
 	}
 
 	if (r & IWI_INTR_RX_TRANSFER)
@@ -1047,7 +1062,7 @@ iwi_cmd(struct iwi_softc *sc, u_int8_t type, void *data, u_int8_t len,
 }
 
 int
-iwi_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
+iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 {
 	struct iwi_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -1066,28 +1081,28 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 		tap->wt_chan_freq = htole16(ic->ic_bss->ni_chan->ic_freq);
 		tap->wt_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
 
-		M_DUP_PKTHDR(&mb, m);
+		M_DUP_PKTHDR(&mb, m0);
 		mb.m_data = (caddr_t)tap;
 		mb.m_len = sc->sc_txtap_len;
-		mb.m_next = m;
+		mb.m_next = m0;
 		mb.m_pkthdr.len += mb.m_len;
 		bpf_mtap(sc->sc_drvbpf, &mb);
 	}
 #endif
 
-	wh = mtod(m, struct ieee80211_frame *);
-
-	/* trim IEEE802.11 header */
-	m_adj(m, sizeof (struct ieee80211_frame));
-
 	buf = &sc->tx_buf[sc->tx_cur];
 	desc = &sc->tx_desc[sc->tx_cur];
 
-	error = bus_dmamap_load_mbuf(sc->sc_dmat, buf->map, m, BUS_DMA_NOWAIT);
+	wh = mtod(m0, struct ieee80211_frame *);
+
+	/* trim IEEE802.11 header */
+	m_adj(m0, sizeof (struct ieee80211_frame));
+
+	error = bus_dmamap_load_mbuf(sc->sc_dmat, buf->map, m0, BUS_DMA_NOWAIT);
 	if (error != 0 && error != EFBIG) {
 		printf("%s: could not map mbuf (error %d)\n",
 		    sc->sc_dev.dv_xname, error);
-		m_freem(m);
+		m_freem(m0);
 		return error;
 	}
 	if (error != 0) {
@@ -1095,42 +1110,46 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 
 		MGETHDR(mnew, M_DONTWAIT, MT_DATA);
 		if (mnew == NULL) {
-			m_freem(m);
+			m_freem(m0);
 			return ENOMEM;
 		}
 
-		M_DUP_PKTHDR(mnew, m);
+		M_DUP_PKTHDR(mnew, m0);
 		MCLGET(mnew, M_DONTWAIT);
 		if (!(mnew->m_flags & M_EXT)) {
-			m_freem(m);
+			m_freem(m0);
 			m_freem(mnew);
 			return ENOMEM;
 		}
 
-		m_copydata(m, 0, m->m_pkthdr.len, mtod(mnew, caddr_t));
-		m_freem(m);
+		m_copydata(m0, 0, m0->m_pkthdr.len, mtod(mnew, caddr_t));
+		m_freem(m0);
 		mnew->m_len = mnew->m_pkthdr.len;
-		m = mnew;
+		m0 = mnew;
 
-		error = bus_dmamap_load_mbuf(sc->sc_dmat, buf->map, m,
+		error = bus_dmamap_load_mbuf(sc->sc_dmat, buf->map, m0,
 		    BUS_DMA_NOWAIT);
 		if (error != 0) {
 			printf("%s: could not map mbuf (error %d)\n",
 			    sc->sc_dev.dv_xname, error);
-			m_freem(m);
+			m_freem(m0);
 			return error;
 		}
 	}
 
-	buf->m = m;
+	buf->m = m0;
 	buf->ni = ni;
 
 	desc->hdr.type = IWI_HDR_TYPE_DATA;
 	desc->hdr.flags = IWI_HDR_FLAG_IRQ;
 	desc->cmd = IWI_DATA_CMD_TX;
-	desc->len = htole16(m->m_pkthdr.len);
-	desc->flags = IEEE80211_IS_MULTICAST(wh->i_addr1) ? 0 :
-	    IWI_DATA_FLAG_NEED_ACK;
+	desc->len = htole16(m0->m_pkthdr.len);
+	desc->flags = 0;
+	if (ic->ic_opmode == IEEE80211_M_IBSS) {
+		if (!IEEE80211_IS_MULTICAST(wh->i_addr1))
+			desc->flags |= IWI_DATA_FLAG_NEED_ACK;
+	} else if (!IEEE80211_IS_MULTICAST(wh->i_addr3))
+		desc->flags |= IWI_DATA_FLAG_NEED_ACK;
 
 	if (ic->ic_flags & IEEE80211_F_WEPON) {
 		wh->i_fc[1] |= IEEE80211_FC1_WEP;
@@ -1158,10 +1177,9 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 	DPRINTFN(5, ("TX!DATA!%u!%u\n", desc->len, desc->nseg));
 
 	/* Inform firmware about this new packet */
+	sc->tx_queued++;
 	sc->tx_cur = (sc->tx_cur + 1) % IWI_TX_RING_SIZE;
 	CSR_WRITE_4(sc, IWI_CSR_TX1_WRITE_INDEX, sc->tx_cur);
-
-	sc->tx_free--;
 
 	return 0;
 }
@@ -1171,38 +1189,38 @@ iwi_start(struct ifnet *ifp)
 {
 	struct iwi_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct mbuf *m;
+	struct mbuf *m0;
 	struct ieee80211_node *ni;
 
 	if (ic->ic_state != IEEE80211_S_RUN)
 		return;
 
 	for (;;) {
-		IF_DEQUEUE(&ifp->if_snd, m);
-		if (m == NULL)
+		IF_DEQUEUE(&ifp->if_snd, m0);
+		if (m0 == NULL)
 			break;
 
-		if (sc->tx_free <= 2) {
-			IF_PREPEND(&ifp->if_snd, m);
+		if (sc->tx_queued >= IWI_TX_RING_SIZE - 4) {
+			IF_PREPEND(&ifp->if_snd, m0);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf != NULL)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m0);
 #endif
 
-		m = ieee80211_encap(ifp, m, &ni);
-		if (m == NULL)
+		m0 = ieee80211_encap(ifp, m0, &ni);
+		if (m0 == NULL)
 			continue;
 
 #if NBPFILTER > 0
 		if (ic->ic_rawbpf != NULL)
-			bpf_mtap(ic->ic_rawbpf, m);
+			bpf_mtap(ic->ic_rawbpf, m0);
 #endif
 
-		if (iwi_tx_start(ifp, m, ni) != 0) {
+		if (iwi_tx_start(ifp, m0, ni) != 0) {
 			if (ni != NULL && ni != ic->ic_bss)
 				ieee80211_free_node(ic, ni);
 			break;
@@ -1386,7 +1404,7 @@ iwi_reset(struct iwi_softc *sc)
 	CSR_WRITE_4(sc, IWI_CSR_CTL, CSR_READ_4(sc, IWI_CSR_CTL) |
 	    IWI_CTL_INIT);
 
-	/* clear NIC memory */
+	/* Clear NIC memory */
 	CSR_WRITE_4(sc, IWI_CSR_AUTOINC_ADDR, 0);
 	for (i = 0; i < 0xc000; i++)
 		CSR_WRITE_4(sc, IWI_CSR_AUTOINC_DATA, 0);
@@ -1455,7 +1473,7 @@ iwi_load_ucode(struct iwi_softc *sc, const char *name)
 	for (ntries = 0; ntries < 100; ntries++) {
 		if (MEM_READ_1(sc, 0x200000) & 1)
 			break;
-		DELAY(1000);
+		DELAY(100);
 	}
 	if (ntries == 100) {
 		printf("%s: timeout waiting for ucode to initialize\n",
@@ -1507,7 +1525,7 @@ iwi_load_firmware(struct iwi_softc *sc, const char *name)
 	error = bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
 	    BUS_DMA_NOWAIT, &map);
 	if (error != 0) {
-		printf("%s: could not create fw dma map\n",
+		printf("%s: could not create firmware DMA map\n",
 		    sc->sc_dev.dv_xname);
 		goto fail2;
 	}
@@ -1519,7 +1537,7 @@ iwi_load_firmware(struct iwi_softc *sc, const char *name)
 	error = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &seg, 1,
 	    &nsegs, BUS_DMA_NOWAIT);
 	if (error != 0) {
-		printf("%s: could allocate fw dma memory\n",
+		printf("%s: could allocate firmware DMA memory\n",
 		    sc->sc_dev.dv_xname);
 		goto fail3;
 	}
@@ -1527,7 +1545,7 @@ iwi_load_firmware(struct iwi_softc *sc, const char *name)
 	error = bus_dmamem_map(sc->sc_dmat, &seg, nsegs, size, &virtaddr,
 	    BUS_DMA_NOWAIT);
 	if (error != 0) {
-		printf("%s: could not map fw dma memory\n",
+		printf("%s: could not map firmware DMA memory\n",
 		    sc->sc_dev.dv_xname);
 		goto fail4;
 	}
@@ -1535,7 +1553,8 @@ iwi_load_firmware(struct iwi_softc *sc, const char *name)
 	error = bus_dmamap_load(sc->sc_dmat, map, virtaddr, size, NULL,
 	    BUS_DMA_NOWAIT);
 	if (error != 0) {
-		printf("%s: could not load fw dma map\n", sc->sc_dev.dv_xname);
+		printf("%s: could not load firmware DMA map\n",
+		    sc->sc_dev.dv_xname);
 		goto fail5;
 	}
 
@@ -1621,7 +1640,8 @@ iwi_load_firmware(struct iwi_softc *sc, const char *name)
 		goto fail6;
 	}
 
-fail6:	bus_dmamap_unload(sc->sc_dmat, map);
+fail6:	bus_dmamap_sync(sc->sc_dmat, map, 0, size, BUS_DMASYNC_POSTWRITE);
+	bus_dmamap_unload(sc->sc_dmat, map);
 fail5:	bus_dmamem_unmap(sc->sc_dmat, virtaddr, size);
 fail4:	bus_dmamem_free(sc->sc_dmat, &seg, 1);
 fail3:	bus_dmamap_destroy(sc->sc_dmat, map);
@@ -1643,9 +1663,8 @@ iwi_config(struct iwi_softc *sc)
 	u_int32_t data;
 	int error, i;
 
+	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
 	DPRINTF(("Setting MAC address to %s\n", ether_sprintf(ic->ic_myaddr)));
-	IEEE80211_ADDR_COPY(((struct arpcom *)ifp)->ac_enaddr, ic->ic_myaddr);
-	IEEE80211_ADDR_COPY(LLADDR(ifp->if_sadl), ic->ic_myaddr);
 	error = iwi_cmd(sc, IWI_CMD_SET_MAC_ADDRESS, ic->ic_myaddr,
 	    IEEE80211_ADDR_LEN, 0);
 	if (error != 0)
@@ -1653,8 +1672,8 @@ iwi_config(struct iwi_softc *sc)
 
 	bzero(&config, sizeof config);
 	config.bluetooth_coexistence = 1;
-	config.enable_multicast = 1;
-	config.pass_noise = 1;
+	config.multicast_enabled = 1;
+	config.noise_reported = 1;
 	DPRINTF(("Configuring adapter\n"));
 	error = iwi_cmd(sc, IWI_CMD_SET_CONFIGURATION, &config, sizeof config,
 	    0);
@@ -1752,7 +1771,7 @@ iwi_scan(struct iwi_softc *sc)
 
 	bzero(&scan, sizeof scan);
 	scan.type = IWI_SCAN_TYPE_BROADCAST;
-	scan.intval = htole16(100);
+	scan.intval = htole16(40);
 
 	p = scan.channels;
 	count = 0;
@@ -1794,9 +1813,9 @@ iwi_auth_and_assoc(struct iwi_softc *sc)
 		/* enable b/g autodection */
 		bzero(&config, sizeof config);
 		config.bluetooth_coexistence = 1;
-		config.enable_multicast = 1;
-		config.bg_autodetect = 1;
-		config.pass_noise = 1;
+		config.multicast_enabled = 1;
+		config.bg_autodetection = 1;
+		config.noise_reported = 1;
 		DPRINTF(("Configuring adapter\n"));
 		error = iwi_cmd(sc, IWI_CMD_SET_CONFIGURATION, &config,
 		    sizeof config, 1);
@@ -1806,7 +1825,7 @@ iwi_auth_and_assoc(struct iwi_softc *sc)
 
 #ifdef IWI_DEBUG
 	if (iwi_debug > 0) {
-		printf("Setting adapter ESSID to ");
+		printf("Setting ESSID to ");
 		ieee80211_print_essid(ni->ni_essid, ni->ni_esslen);
 		printf("\n");
 	}
@@ -1826,8 +1845,8 @@ iwi_auth_and_assoc(struct iwi_softc *sc)
 	if (error != 0)
 		return error;
 
-	data = htole32(0);
-	DPRINTF(("Setting sensitivity to %d\n", letoh32(data)));
+	data = htole32(ni->ni_rssi);
+	DPRINTF(("Setting sensitivity to %d\n", (int8_t)ni->ni_rssi));
 	error = iwi_cmd(sc, IWI_CMD_SET_SENSITIVITY, &data, sizeof data, 1);
 	if (error != 0)
 		return error;
@@ -1844,6 +1863,7 @@ iwi_auth_and_assoc(struct iwi_softc *sc)
 	assoc.intval = htole16(ni->ni_intval);
 	IEEE80211_ADDR_COPY(assoc.bssid, ni->ni_bssid);
 	IEEE80211_ADDR_COPY(assoc.dst, ni->ni_bssid);
+
 	DPRINTF(("Trying to associate to %s channel %u auth %u\n",
 	    ether_sprintf(assoc.bssid), assoc.chan, assoc.auth));
 	return iwi_cmd(sc, IWI_CMD_ASSOCIATE, &assoc, sizeof assoc, 1);
@@ -1853,7 +1873,7 @@ int
 iwi_init(struct ifnet *ifp)
 {
 	struct iwi_softc *sc = ifp->if_softc;
-	const char *name;
+	const char *ucode, *main;
 	int i, error;
 
 	if ((error = iwi_reset(sc)) != 0) {
@@ -1867,7 +1887,26 @@ iwi_init(struct ifnet *ifp)
 		goto fail;
 	}
 
-	if ((error = iwi_load_ucode(sc, "iwi-ucode")) != 0) {
+	switch (sc->sc_ic.ic_opmode) {
+	case IEEE80211_M_STA:
+	case IEEE80211_M_HOSTAP:
+		ucode = "iwi-ucode-bss";
+		main = "iwi-bss";
+		break;
+
+	case IEEE80211_M_IBSS:
+	case IEEE80211_M_AHDEMO:
+		ucode = "iwi-ucode-ibss";
+		main = "iwi-ibss";
+		break;
+
+	case IEEE80211_M_MONITOR:
+		ucode = "iwi-ucode-monitor";
+		main = "iwi-monitor";
+		break;
+	}
+
+	if ((error = iwi_load_ucode(sc, ucode)) != 0) {
 		printf("%s: could not load microcode\n", sc->sc_dev.dv_xname);
 		goto fail;
 	}
@@ -1875,8 +1914,8 @@ iwi_init(struct ifnet *ifp)
 	iwi_stop_master(sc);
 
 	sc->tx_cur = 0;
+	sc->tx_queued = 0;
 	sc->tx_old = IWI_TX_RING_SIZE - 1;
-	sc->tx_free = IWI_TX_RING_SIZE;
 	sc->cmd_cur = 0;
 	sc->rx_cur = IWI_RX_RING_SIZE - 1;
 
@@ -1915,23 +1954,7 @@ iwi_init(struct ifnet *ifp)
 	CSR_WRITE_4(sc, IWI_CSR_RX_WRITE_INDEX, sc->rx_cur);
 	CSR_WRITE_4(sc, IWI_CSR_RX_READ_INDEX, 0);
 
-	switch (sc->sc_ic.ic_opmode) {
-	case IEEE80211_M_STA:
-	case IEEE80211_M_HOSTAP:
-		name = "iwi-bss";
-		break;
-
-	case IEEE80211_M_IBSS:
-	case IEEE80211_M_AHDEMO:
-		name = "iwi-ibss";
-		break;
-
-	case IEEE80211_M_MONITOR:
-		name = "iwi-monitor";
-		break;
-	}
-
-	if ((error = iwi_load_firmware(sc, name)) != 0) {
+	if ((error = iwi_load_firmware(sc, main)) != 0) {
 		printf("%s: could not load main firmware\n",
 		    sc->sc_dev.dv_xname);
 		goto fail;

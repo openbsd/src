@@ -1,7 +1,7 @@
-/*	$OpenBSD: if_iwireg.h,v 1.10 2005/01/05 09:07:16 jsg Exp $	*/
+/*	$OpenBSD: if_iwireg.h,v 1.11 2005/01/09 16:47:50 damien Exp $	*/
 
 /*-
- * Copyright (c) 2004
+ * Copyright (c) 2004, 2005
  *      Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -76,6 +76,7 @@
 #define IWI_INTR_TX3_TRANSFER	0x00004000
 #define IWI_INTR_TX4_TRANSFER	0x00008000
 #define IWI_INTR_FW_INITED	0x01000000
+#define IWI_INTR_RADIO_OFF	0x04000000
 #define IWI_INTR_FATAL_ERROR	0x40000000
 #define IWI_INTR_PARITY_ERROR	0x80000000
 
@@ -83,8 +84,8 @@
 	(IWI_INTR_RX_TRANSFER |	IWI_INTR_CMD_TRANSFER |			\
 	 IWI_INTR_TX1_TRANSFER | IWI_INTR_TX2_TRANSFER |		\
 	 IWI_INTR_TX3_TRANSFER | IWI_INTR_TX4_TRANSFER |		\
-	 IWI_INTR_FW_INITED | IWI_INTR_FATAL_ERROR |			\
-	 IWI_INTR_PARITY_ERROR)
+	 IWI_INTR_FW_INITED | IWI_INTR_RADIO_OFF |			\
+	 IWI_INTR_FATAL_ERROR | IWI_INTR_PARITY_ERROR)
 
 /* possible flags for register IWI_CSR_RST */
 #define IWI_RST_PRINCETON_RESET	0x00000001
@@ -151,6 +152,7 @@ struct iwi_notif {
 #define IWI_NOTIF_TYPE_SCAN_COMPLETE	13
 #define IWI_NOTIF_TYPE_BEACON		17
 #define IWI_NOTIF_TYPE_CALIBRATION	20
+#define IWI_NOTIF_TYPE_NOISE		25
 	u_int8_t	flags;
 	u_int16_t	len;
 } __attribute__((__packed__));
@@ -173,6 +175,12 @@ struct iwi_notif_association {
 	u_int16_t		associd;
 } __attribute__((__packed__));
 
+/* structure for notification IWI_NOTIF_TYPE_SCAN_CHANNEL */
+struct iwi_notif_scan_channel {
+	u_int8_t	nchan;
+	u_int8_t	reserved[47];
+} __attribute__((__packed__));
+
 /* structure for notification IWI_NOTIF_TYPE_SCAN_COMPLETE */
 struct iwi_notif_scan_complete {
 	u_int8_t	type;
@@ -189,16 +197,12 @@ struct iwi_frame {
 	u_int8_t	rate;
 	u_int8_t	rssi;	/* receiver signal strength indicator */
 	u_int8_t	agc;	/* automatic gain control */
-#define IWI_RSSI2DBM(rssi, agc)						\
-	((u_int8_t)((rssi) -						\
-	 ((((agc) & 0x2e) >> 1) + ((((agc) | 0x8c) & 0xcc) >> 2) +	\
-	 ((agc) & 0x0f))))
-	u_int8_t	reserved2;
+	u_int8_t	rssi_dbm;
 	u_int16_t	signal;
 	u_int16_t	noise;
 	u_int8_t	antenna;
 	u_int8_t	control;
-	u_int8_t	reserved3[2];
+	u_int8_t	reserved2[2];
 	u_int16_t	len;
 } __attribute__((__packed__));
 
@@ -260,7 +264,7 @@ struct iwi_cmd_desc {
 #define IWI_MODE_11G	2
 
 /* macro for command IWI_CMD_SET_SENSITIVITY */
-#define IWI_RSSI2SENS(rssi)	((rssi) + 112)
+#define IWI_RSSIDBM2RAW(rssi)	((rssi) - 112)
 
 /* possible values for command IWI_CMD_SET_POWER_MODE */
 #define IWI_POWER_MODE_CAM	0
@@ -327,21 +331,21 @@ struct iwi_configuration {
 	u_int8_t	reserved1;
 	u_int8_t	answer_broadcast_probe_req;
 	u_int8_t	allow_invalid_frames;
-	u_int8_t	enable_multicast;
+	u_int8_t	multicast_enabled;
 	u_int8_t	exclude_unicast_unencrypted;
 	u_int8_t	disable_unicast_decryption;
 	u_int8_t	exclude_multicast_unencrypted;
 	u_int8_t	disable_multicast_decryption;
 	u_int8_t	antenna;
 	u_int8_t	reserved2;
-	u_int8_t	bg_autodetect;
+	u_int8_t	bg_autodetection;
 	u_int8_t	reserved3;
 	u_int8_t	enable_multicast_filtering;
 	u_int8_t	bluetooth_threshold;
 	u_int8_t	reserved4;
 	u_int8_t	allow_beacon_and_probe_resp;
 	u_int8_t	allow_mgt;
-	u_int8_t	pass_noise;
+	u_int8_t	noise_reported;
 	u_int8_t	reserved5;
 } __attribute__((__packed__));
 

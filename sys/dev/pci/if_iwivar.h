@@ -1,7 +1,7 @@
-/*	$OpenBSD: if_iwivar.h,v 1.5 2005/01/05 09:07:16 jsg Exp $	*/
+/*	$OpenBSD: if_iwivar.h,v 1.6 2005/01/09 16:47:50 damien Exp $	*/
 
 /*-
- * Copyright (c) 2004
+ * Copyright (c) 2004, 2005
  *      Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -81,7 +81,7 @@ struct iwi_softc {
 
 	int			tx_cur;
 	int			tx_old;
-	int			tx_free;
+	int			tx_queued;
 
 	struct iwi_cmd_desc	*cmd_desc;
 	bus_dmamap_t		cmd_ring_map;
