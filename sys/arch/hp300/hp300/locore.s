@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.30 2001/08/26 00:15:37 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.31 2001/09/19 21:32:56 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.91 1998/11/11 06:41:25 thorpej Exp $	*/
 
 /*
@@ -1998,9 +1998,6 @@ GLOBAL(CLKbase)
 
 GLOBAL(MMUbase)
 	.long	0		| KVA of base of HP MMU registers
-
-GLOBAL(pagezero)
-	.long	0		| PA of first page of kernel text
 
 #ifdef USELEDS
 ASLOCAL(heartbeat)
