@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.16 1996/08/31 09:24:08 pefo Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.17 1996/09/04 22:35:27 niklas Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -112,11 +112,12 @@ int	boothowto;
 struct	timeval boottime;
 struct	timeval runtime;
 
-static void start_init __P((struct proc *));
-static void start_pagedaemon __P((struct proc *));
-static void start_update __P((struct proc *));
 /* XXX return int so gcc -Werror won't complain */
-int main __P((void *));
+int	main __P((void *));
+void	check_console __P((struct proc *));
+void	start_init __P((struct proc *));
+void	start_pagedaemon __P((struct proc *));
+void	start_update __P((struct proc *));
 
 #ifdef cpu_set_init_frame
 void *initframep;				/* XXX should go away */
@@ -429,7 +430,7 @@ check_console(p)
  * Start the initial user process; try exec'ing each pathname in "initpaths".
  * The program is invoked with one argument containing the boot flags.
  */
-static void
+void
 start_init(p)
 	struct proc *p;
 {
@@ -544,7 +545,7 @@ start_init(p)
 	panic("no init");
 }
 
-static void
+void
 start_pagedaemon(p)
 	struct proc *p;
 {
@@ -559,7 +560,7 @@ start_pagedaemon(p)
 	/* NOTREACHED */
 }
 
-static void
+void
 start_update(p)
 	struct proc *p;
 {
