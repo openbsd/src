@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKBIG,v 1.34 2002/09/23 04:37:31 deraadt Exp $
+#	$OpenBSD: RAMDISKBIG,v 1.35 2002/09/24 19:08:14 nate Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -174,7 +174,7 @@ bge*	at pci? dev ? function ?	# Broadcom BCM570x (aka Tigon3)
 stge*	at pci? dev ? function ?	# Sundance TC9021 GigE
 rl*	at pci? dev ? function ?	# RealTek 81[23]9 ethernet
 vr*	at pci? dev ? function ?	# VIA Rhine ethernet
-gx*	at pci? dev ? function ?	# Intel Pro/1000 ethernet
+em*	at pci? dev ? function ?	# Intel Pro/1000 ethernet
 sis*	at pci? dev ? function ?	# SiS 900/7016 ethernet
 
 #UNTESTED:  the following section of drivers is untested on alpha.

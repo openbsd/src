@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.17 2002/09/13 22:01:04 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.18 2002/09/24 19:08:14 nate Exp $
 #
 # PPC GENERIC config file
 #
@@ -59,6 +59,7 @@ macobio0	at pci? dev ? function ?
 gem*		at pci? dev ? function ?	# GMAC ethernet
 hme*		at pci? dev ? function ?	# HME ethernet
 dc*		at pci? dev ? function ?	# DEC Tulip 21143 clones
+em*		at pci? dev ? function ?	# Intel Pro/1000 ethernet
 an*		at pci? dev ? function ?	# Cisco/Aironet 802.11DS
 wi*		at pci? dev ? function ?	# WaveLAN IEEE 802.11DS
 
