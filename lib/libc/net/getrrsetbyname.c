@@ -1,4 +1,4 @@
-/* $OpenBSD: getrrsetbyname.c,v 1.2 2001/08/06 15:00:48 jakob Exp $ */
+/* $OpenBSD: getrrsetbyname.c,v 1.3 2001/08/07 10:16:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Jakob Schlyter. All rights reserved.
@@ -43,7 +43,6 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/nameser.h>
@@ -53,7 +52,6 @@
 #include <string.h>
 
 #define ANSWER_BUFFER_SIZE 1024*64
-
 
 struct dns_query {
 	char			*name;
@@ -94,15 +92,15 @@ static int count_dns_rr(struct dns_rr *, u_int16_t, u_int16_t);
 
 int
 getrrsetbyname(const char *hostname, unsigned int rdclass,
-	       unsigned int rdtype, unsigned int flags,
-	       struct rrsetinfo **res)
+    unsigned int rdtype, unsigned int flags,
+    struct rrsetinfo **res)
 {
 	int result;
 	struct rrsetinfo *rrset = NULL;
 	struct dns_response *response;
 	struct dns_rr *rr;
 	struct rdatainfo *rdata;
-	unsigned length, index_ans, index_sig;
+	unsigned int length, index_ans, index_sig;
 	char answer[ANSWER_BUFFER_SIZE];
 
 	/* check for invalid class and type */
@@ -124,7 +122,7 @@ getrrsetbyname(const char *hostname, unsigned int rdclass,
 	}
 
 	/* initialize resolver */
-        if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
+	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
 		result = ERRSET_FAIL;
 		goto fail;
 	}
@@ -162,7 +160,7 @@ getrrsetbyname(const char *hostname, unsigned int rdclass,
 		goto fail;
 	}
 
-	if (response->header.qdcount != 1 ) {
+	if (response->header.qdcount != 1) {
 		result = ERRSET_FAIL;
 		goto fail;
 	}
@@ -216,7 +214,7 @@ getrrsetbyname(const char *hostname, unsigned int rdclass,
 	for (rr = response->answer, index_ans = 0, index_sig = 0;
 	    rr; rr = rr->next) {
 
-	  	rdata = NULL;
+		rdata = NULL;
 
 		if (rr->class == rrset->rri_rdclass &&
 		    rr->type  == rrset->rri_rdtype)
@@ -229,7 +227,7 @@ getrrsetbyname(const char *hostname, unsigned int rdclass,
 		if (rdata) {
 			rdata->rdi_length = rr->size;
 			rdata->rdi_data   = malloc(rr->size);
-	    
+
 			if (rdata->rdi_data == NULL) {
 				result = ERRSET_NOMEMORY;
 				goto fail;
@@ -252,9 +250,8 @@ freerrset(struct rrsetinfo *rrset)
 {
 	u_int16_t i;
 
-	if (rrset == NULL) {
+	if (rrset == NULL)
 		return;
-	}
 
 	for (i = 0; i < rrset->rri_nrdatas; i++) {
 		if (rrset->rri_rdatas[i].rdi_data == NULL)
@@ -269,17 +266,13 @@ freerrset(struct rrsetinfo *rrset)
 		free(rrset->rri_sigs[i].rdi_data);
 	}
 	free(rrset->rri_sigs);
-
 	free(rrset->rri_name);
-
 	free(rrset);
 }
 
-
-/* 
+/*
  * DNS response parsing routines
  */
-
 static struct dns_response *
 parse_dns_response(const char *answer, int size)
 {
@@ -381,11 +374,11 @@ parse_dns_qsection(const char *answer, int size, const char **cp, int count)
 
 		/* type */
 		curr->type = _getshort(*cp);
- 		*cp += INT16SZ;
+		*cp += INT16SZ;
 
 		/* class */
 		curr->class = _getshort(*cp);
- 		*cp += INT16SZ;
+		*cp += INT16SZ;
 	}
 
 	return (head);
@@ -427,15 +420,15 @@ parse_dns_rrsection(const char *answer, int size, const char **cp, int count)
 
 		/* type */
 		curr->type = _getshort(*cp);
- 		*cp += INT16SZ;
+		*cp += INT16SZ;
 
 		/* class */
 		curr->class = _getshort(*cp);
- 		*cp += INT16SZ;
+		*cp += INT16SZ;
 
 		/* ttl */
 		curr->ttl = _getlong(*cp);
- 		*cp += INT32SZ;
+		*cp += INT32SZ;
 
 		/* rdata size */
 		curr->size = _getshort(*cp);
@@ -453,7 +446,6 @@ parse_dns_rrsection(const char *answer, int size, const char **cp, int count)
 
 	return (head);
 }
-
 
 static void
 free_dns_query(struct dns_query *p)
@@ -500,7 +492,7 @@ count_dns_rr(struct dns_rr *p, u_int16_t class, u_int16_t type)
 		if (p->class == class && p->type == type)
 			n++;
 		p = p->next;
-	};
+	}
 
 	return (n);
 }
