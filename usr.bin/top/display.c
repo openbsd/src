@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.5 2001/07/27 17:13:42 deraadt Exp $	*/
+/*	$OpenBSD: display.c,v 1.6 2001/08/24 20:16:35 art Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -988,8 +988,7 @@ register char **names;
 	/* get the number to format */
 	num = *numbers++;
 
-	/* display only non-zero numbers */
-	if (num > 0)
+	if (num >= 0)
 	{
 	    /* is this number in kilobytes? */
 	    if (thisname[0] == 'K')
