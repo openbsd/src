@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.17 1999/12/09 03:46:59 angelos Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.18 1999/12/21 09:00:52 itojun Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -196,11 +196,11 @@ struct protosw inetsw[] = {
   rip_usrreq,
   0,		0,		0,		0,		icmp_sysctl
 },
-#if NGIF > 0 && !defined(IPSEC)
+#if NGIF > 0
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPV4,	PR_ATOMIC|PR_ADDR,
-  in_gif_input,	0,	 	0,		0,
+  in_gif_input,	rip_output, 	0,		rip_ctloutput,
   0,	  
-  0,		0,		0,		0,
+  0,		0,		0,		0,		ip4_sysctl
 },
 #ifdef INET6
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPV6,	PR_ATOMIC|PR_ADDR,
@@ -210,20 +210,18 @@ struct protosw inetsw[] = {
 },
 #endif /* INET6 */
 #else /* NGIF */
-#if defined(IPSEC) || defined(MROUTING)
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPIP,	PR_ATOMIC|PR_ADDR,
   ip4_input,	rip_output,	0,		rip_ctloutput,
   rip_usrreq,	/* XXX */
   0,		0,		0,		0,		ip4_sysctl
 },
-#if NGIF > 0 && defined(INET6)
+#ifdef INET6
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPV6,	PR_ATOMIC|PR_ADDR,
-  in_gif_input,	0,	 	0,		0,
+  ip4_input,	rip_output, 	0,		rip_ctloutput,
   0,	  
   0,		0,		0,		0,
 },
-#endif /* NGIF && INET6 */
-#endif /* MROUTING || IPSEC */
+#endif /* INET6 */
 #endif /*NGIF*/
 { SOCK_RAW,	&inetdomain,	IPPROTO_IGMP,	PR_ATOMIC|PR_ADDR,
   igmp_input,	rip_output,	0,		rip_ctloutput,

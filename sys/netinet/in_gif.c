@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_gif.c,v 1.2 1999/12/09 03:45:21 angelos Exp $	*/
+/*	$OpenBSD: in_gif.c,v 1.3 1999/12/21 09:00:50 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -52,6 +52,7 @@
 #include <netinet/ip_var.h>
 #include <netinet/in_gif.h>
 #include <netinet/ip_ecn.h>
+#include <netinet/ip_ipsp.h>
 
 #ifdef INET6
 #include <netinet/ip6.h>
@@ -75,6 +76,10 @@ int ip_gif_ttl = GIF_TTL;
 int ip_gif_ttl = 0;
 #endif
 
+#ifndef offsetof
+#define offsetof(s, e) ((int)&((s *)0)->e)
+#endif
+
 int
 in_gif_output(ifp, family, m, rt)
 	struct ifnet	*ifp;
@@ -83,12 +88,13 @@ in_gif_output(ifp, family, m, rt)
 	struct rtentry *rt;
 {
 	register struct gif_softc *sc = (struct gif_softc*)ifp;
-	struct sockaddr_in *dst = (struct sockaddr_in *)&sc->gif_ro.ro_dst;
 	struct sockaddr_in *sin_src = (struct sockaddr_in *)sc->gif_psrc;
 	struct sockaddr_in *sin_dst = (struct sockaddr_in *)sc->gif_pdst;
-	struct ip iphdr;	/* capsule IP header, host byte ordered */
-	int proto;
-	u_int8_t tos;
+	struct tdb tdb;
+	struct xformsw xfs;
+	int error;
+	int hlen, poff;
+	struct mbuf *mp;
 
 	if (sin_src == NULL || sin_dst == NULL ||
 	    sin_src->sin_family != AF_INET ||
@@ -97,125 +103,68 @@ in_gif_output(ifp, family, m, rt)
 		return EAFNOSUPPORT;
 	}
 
-	switch (family) {
-#ifdef INET
-	case AF_INET:
-	    {
-		struct ip *ip;
+	/* multi-destination mode is not supported */
+	if (ifp->if_flags & IFF_LINK0) {
+		m_freem(m);
+		return ENETUNREACH;
+	}
 
-		proto = IPPROTO_IPV4;
-		if (m->m_len < sizeof(*ip)) {
-			m = m_pullup(m, sizeof(*ip));
-			if (!m)
+	/* setup dummy tdb.  it highly depends on ipe4_output() code. */
+	memset(&tdb, 0, sizeof(tdb));
+	memset(&xfs, 0, sizeof(xfs));
+	tdb.tdb_src.sin.sin_family = AF_INET;
+	tdb.tdb_src.sin.sin_len = sizeof(struct sockaddr_in);
+	tdb.tdb_src.sin.sin_addr = sin_src->sin_addr;
+	tdb.tdb_dst.sin.sin_family = AF_INET;
+	tdb.tdb_dst.sin.sin_len = sizeof(struct sockaddr_in);
+	tdb.tdb_dst.sin.sin_addr = sin_dst->sin_addr;
+	tdb.tdb_xform = &xfs;
+	xfs.xf_type = -1;	/* not XF_IP4 */
+
+	switch (family) {
+	case AF_INET:
+		if (m->m_len < sizeof(struct ip)) {
+			m = m_pullup(m, sizeof(struct ip));
+			if (m == NULL)
 				return ENOBUFS;
 		}
-		ip = mtod(m, struct ip *);
-		tos = ip->ip_tos;
+		hlen = (mtod(m, struct ip *)->ip_hl) << 2;
+		poff = offsetof(struct ip, ip_p);
 		break;
-	    }
-#endif /*INET*/
 #ifdef INET6
 	case AF_INET6:
-	    {
-		struct ip6_hdr *ip6;
-		proto = IPPROTO_IPV6;
-		if (m->m_len < sizeof(*ip6)) {
-			m = m_pullup(m, sizeof(*ip6));
-			if (!m)
-				return ENOBUFS;
-		}
-		ip6 = mtod(m, struct ip6_hdr *);
-		tos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
+		hlen = sizeof(struct ip6_hdr);
+		poff = offsetof(struct ip6_hdr, ip6_nxt);
 		break;
-	    }
-#endif /*INET6*/
-	default:
-#ifdef DIAGNOSTIC
-		printf("in_gif_output: warning: unknown family %d passed\n",
-			family);
 #endif
+	default:
 		m_freem(m);
 		return EAFNOSUPPORT;
 	}
 
-	bzero(&iphdr, sizeof(iphdr));
-	iphdr.ip_src = sin_src->sin_addr;
-	if (ifp->if_flags & IFF_LINK0) {
-		/* multi-destination mode */
-		if (sin_dst->sin_addr.s_addr != INADDR_ANY)
-			iphdr.ip_dst = sin_dst->sin_addr;
-		else if (rt) {
-			if (family != AF_INET) {
-				m_freem(m);
-				return EINVAL;	/*XXX*/
-			}
-			iphdr.ip_dst = ((struct sockaddr_in *)
-					(rt->rt_gateway))->sin_addr;
-		} else {
-			m_freem(m);
-			return ENETUNREACH;
-		}
-	} else {
-		/* bidirectional configured tunnel mode */
-		if (sin_dst->sin_addr.s_addr != INADDR_ANY)
-			iphdr.ip_dst = sin_dst->sin_addr;
-		else {
-			m_freem(m);
-			return ENETUNREACH;
-		}
-	}
-	iphdr.ip_p = proto;
-	/* version will be set in ip_output() */
-	iphdr.ip_ttl = ip_gif_ttl;
-	iphdr.ip_len = m->m_pkthdr.len + sizeof(struct ip);
-	if (ifp->if_flags & IFF_LINK1)
-		ip_ecn_ingress(ECN_ALLOWED, &iphdr.ip_tos, &tos);
+	/* encapsulate into IPv4 packet */
+	mp = NULL;
+	error = ipe4_output(m, &tdb, &mp, hlen, poff);
+	if (error)
+		return error;
+	else if (mp == NULL)
+		return EFAULT;
 
-	/* prepend new IP header */
-	M_PREPEND(m, sizeof(struct ip), M_DONTWAIT);
-	if (m && m->m_len < sizeof(struct ip))
+	m = mp;
+
+    {
+	/* ip_output needs host-order length.  it should be nuked */
+	struct ip *ip;
+	if (m->m_len < sizeof(struct ip)) {
 		m = m_pullup(m, sizeof(struct ip));
-	if (m == NULL) {
-		printf("ENOBUFS in in_gif_output %d\n", __LINE__);
-		return ENOBUFS;
+		if (m == NULL)
+			return ENOBUFS;
 	}
+	ip = mtod(m, struct ip *);
+	ip->ip_len = ntohs(ip->ip_len);
+    }
 
-	*(mtod(m, struct ip *)) = iphdr;
-
-	if (dst->sin_family != sin_dst->sin_family ||
-	    dst->sin_addr.s_addr != sin_dst->sin_addr.s_addr) {
-		/* cache route doesn't match */
-		dst->sin_family = sin_dst->sin_family;
-		dst->sin_len = sizeof(struct sockaddr_in);
-		dst->sin_addr = sin_dst->sin_addr;
-		if (sc->gif_ro.ro_rt) {
-			RTFREE(sc->gif_ro.ro_rt);
-			sc->gif_ro.ro_rt = NULL;
-		}
-#if 0
-		sc->gif_if.if_mtu = GIF_MTU;
-#endif
-	}
-
-	if (sc->gif_ro.ro_rt == NULL) {
-		rtalloc(&sc->gif_ro);
-		if (sc->gif_ro.ro_rt == NULL) {
-			m_freem(m);
-			return ENETUNREACH;
-		}
-#if 0
-		ifp->if_mtu = sc->gif_ro.ro_rt->rt_ifp->if_mtu
-			- sizeof(struct ip);
-#endif 
-	}
-	
-#ifdef IPSEC
-#ifndef __OpenBSD__	/*KAME IPSEC*/
-	m->m_pkthdr.rcvif = NULL;
-#endif
-#endif /*IPSEC*/
-
-	return ip_output(m, NULL, &sc->gif_ro, 0, NULL, NULL);
+	return ip_output(m, NULL, NULL, 0, NULL, NULL);
 }
 
 void
@@ -231,14 +180,20 @@ in_gif_input(m, va_alist)
 	struct gif_softc *sc;
 	struct ifnet *gifp = NULL;
 	struct ip *ip;
-	int i, af;
+	int i;
 	va_list ap;
-	u_int8_t otos;
 
 	va_start(ap, m);
 	off = va_arg(ap, int);
 	proto = va_arg(ap, int);
 	va_end(ap);
+
+	/*
+	 * XXX
+	 * what if we run transport-mode IPsec to protect gif tunnel?
+	 */
+	if (m->m_flags & (M_AUTH | M_CONF))
+		goto inject;
 
 	ip = mtod(m, struct ip *);
 
@@ -270,64 +225,10 @@ in_gif_input(m, va_alist)
 		}
 	}
 
-	if (gifp == NULL) {
-#ifdef MROUTING
-		/* for backward compatibility */
-		if (proto == IPPROTO_IPV4) {
-			ipip_input(m, off, proto);
-			return;
-		}
-#endif /*MROUTING*/
-		m_freem(m);
-		ipstat.ips_nogif++;
-		return;
-	}
+	if (gifp && (m->m_flags & (M_AUTH | M_CONF)) == 0)
+		m->m_pkthdr.rcvif = gifp;
 
-	otos = ip->ip_tos;
-	m_adj(m, off);
-
-	switch (proto) {
-#ifdef INET
-	case IPPROTO_IPV4:
-	    {
-		struct ip *ip;
-		af = AF_INET;
-		if (m->m_len < sizeof(*ip)) {
-			m = m_pullup(m, sizeof(*ip));
-			if (!m)
-				return;
-		}
-		ip = mtod(m, struct ip *);
-		if (gifp->if_flags & IFF_LINK1)
-			ip_ecn_egress(ECN_ALLOWED, &otos, &ip->ip_tos);
-		break;
-	    }
-#endif
-#ifdef INET6
-	case IPPROTO_IPV6:
-	    {
-		struct ip6_hdr *ip6;
-		u_int8_t itos;
-		af = AF_INET6;
-		if (m->m_len < sizeof(*ip6)) {
-			m = m_pullup(m, sizeof(*ip6));
-			if (!m)
-				return;
-		}
-		ip6 = mtod(m, struct ip6_hdr *);
-		itos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
-		if (gifp->if_flags & IFF_LINK1)
-			ip_ecn_egress(ECN_ALLOWED, &otos, &itos);
-		ip6->ip6_flow &= ~htonl(0xff << 20);
-		ip6->ip6_flow |= htonl((u_int32_t)itos << 20);
-		break;
-	    }
-#endif /* INET6 */
-	default:
-		ipstat.ips_nogif++;
-		m_freem(m);
-		return;
-	}
-	gif_input(m, af, gifp);
+inject:
+	ip4_input(m, off, proto);
 	return;
 }

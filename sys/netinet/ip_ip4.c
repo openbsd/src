@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ip4.c,v 1.41 1999/12/09 20:38:35 angelos Exp $	*/
+/*	$OpenBSD: ip_ip4.c,v 1.42 1999/12/21 09:00:52 itojun Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -116,8 +116,17 @@ ip4_input(m, va_alist)
     register struct ifaddr *ifa;
     struct ifqueue *ifq = NULL;
     struct ip *ipo;
+#ifdef INET6
+    register struct sockaddr_in6 *sin6;
+    struct ip6_hdr *ip6 = NULL;
+#endif
+    u_int8_t nxt;
     int s, iphlen;
     va_list ap;
+    int isr;
+    u_int8_t otos, itos;
+    u_int8_t v;
+    int hlen;
 
     va_start(ap, m);
     iphlen = va_arg(ap, int);
@@ -125,7 +134,6 @@ ip4_input(m, va_alist)
 
     ip4stat.ip4s_ipackets++;
 
-#ifdef MROUTING
     /* Bring the IP(v4) header in the first mbuf, if not there already */
     if (m->m_len < sizeof(struct ip))
     {
@@ -140,7 +148,8 @@ ip4_input(m, va_alist)
 
     ipo = mtod(m, struct ip *);
 
-    if (ipo->ip_v == IPVERSION)
+#ifdef MROUTING
+    if (ipo->ip_v == IPVERSION && ipo->ip_p == IPPROTO_IPV4)
     {
 	if (IN_MULTICAST(((struct ip *)((char *)ipo + iphlen))->ip_dst.s_addr))
 	{
@@ -149,6 +158,9 @@ ip4_input(m, va_alist)
 	}
     }
 #endif MROUTING
+
+    /* keep outer ecn field */
+    otos = ipo->ip_tos;
 
     /* If we do not accept IP4 explicitly, drop.  */
     if (!ip4_allow && (m->m_flags & (M_AUTH|M_CONF)) == 0)
@@ -162,10 +174,22 @@ ip4_input(m, va_alist)
     /* Remove outter IP header */
     m_adj(m, iphlen);
 
+    m_copydata(m, 0, 1, &v);
+    if ((v >> 4) == 4)
+	hlen = sizeof(struct ip);
+#ifdef INET6
+    else if ((v >> 4) == 6)
+	hlen = sizeof(struct ip6_hdr);
+#endif
+    else {
+	m_freem(m);
+	return /*EAFNOSUPPORT*/;
+    }
+
     /* Bring the inner IP(v4) header in the first mbuf, if not there already */
-    if (m->m_len < sizeof(struct ip))
+    if (m->m_len < hlen)
     {
-	if ((m = m_pullup(m, sizeof(struct ip))) == 0)
+	if ((m = m_pullup(m, hlen)) == 0)
 	{
 	    DPRINTF(("ip4_input(): m_pullup() failed\n"));
 	    ip4stat.ip4s_hdrops++;
@@ -174,6 +198,7 @@ ip4_input(m, va_alist)
     }
 
     ipo = mtod(m, struct ip *);
+    v = ipo->ip_v;
 
     /*
      * RFC 1853 specifies that the inner TTL should not be touched on
@@ -182,8 +207,18 @@ ip4_input(m, va_alist)
      */
 
     /* Some sanity checks in the inner IPv4 header */
-    if (ipo->ip_v != IPVERSION)
-    {
+    switch (v) {
+    case IPVERSION:
+	nxt = ipo->ip_p;
+	break;
+#ifdef INET6
+    case 6:
+	ip6 = (struct ip6_hdr *)ipo;
+	ipo = NULL;
+	nxt = ip6->ip6_nxt;
+	break;
+#endif
+    default:
 	DPRINTF(("ip4_input(): wrong version %d on packet from %s to %s (%s->%s)\n", ipo->ip_v, inet_ntoa4(ipo->ip_src), inet_ntoa4(ipo->ip_dst), inet_ntoa4(ipo->ip_src), inet_ntoa4(ipo->ip_dst)));
 	ip4stat.ip4s_family++;
 	m_freem(m);
@@ -195,8 +230,7 @@ ip4_input(m, va_alist)
      * not accept a packet with double ip4 headers neither.
      */
  
-    if (!ip4_allow && ((ipo->ip_p == IPPROTO_IPIP) ||
-	 (ipo->ip_p == IPPROTO_IPV6)))
+    if (!ip4_allow && ((nxt == IPPROTO_IPIP) || (nxt == IPPROTO_IPV6)))
     {
 	DPRINTF(("ip4_input(): dropped due to policy\n"));
 	ip4stat.ip4s_pdrops++;
@@ -204,32 +238,68 @@ ip4_input(m, va_alist)
 	return;
     }
 
+    /* update inner ecn field. */
+    switch (v) {
+    case IPVERSION:
+	ip_ecn_egress(ECN_ALLOWED, &otos, &ipo->ip_tos);
+	break;
+#ifdef INET6
+    case 6:
+	itos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
+	ip_ecn_egress(ECN_ALLOWED, &otos, &itos);
+	ip6->ip6_flow &= ~htonl(0xff << 20);
+	ip6->ip6_flow |= htonl((u_int32_t)itos << 20);
+	break;
+#endif
+    }
+
     /* Check for local address spoofing. */
     if (m->m_pkthdr.rcvif == NULL ||
 	!(m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK))
     {
         for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next)
-	  for (ifa = ifp->if_addrlist.tqh_first;
-	       ifa != 0;
-	       ifa = ifa->ifa_list.tqe_next)
-	  {
-	      if (ifa->ifa_addr->sa_family != AF_INET)
-		continue;
+	{
+	    for (ifa = ifp->if_addrlist.tqh_first;
+		 ifa != 0;
+		 ifa = ifa->ifa_list.tqe_next)
+	    {
+		if (ipo)
+		{
+		    if (ifa->ifa_addr->sa_family != AF_INET)
+		      continue;
 
-	      sin = (struct sockaddr_in *) ifa->ifa_addr;
+		    sin = (struct sockaddr_in *) ifa->ifa_addr;
 
-	      if (sin->sin_addr.s_addr == ipo->ip_src.s_addr)
-	      {
-		  DPRINTF(("ip_input(): possible local address spoofing detected on packet from %s to %s (%s->%s)\n", inet_ntoa4(ipo->ip_src), inet_ntoa4(ipo->ip_dst), inet_ntoa4(ipo->ip_src), inet_ntoa4(ipo->ip_dst)));
-		  ip4stat.ip4s_spoof++;
-		  m_freem(m);
-		  return;
-	      }
-	  }
+		    if (sin->sin_addr.s_addr == ipo->ip_src.s_addr)
+		    {
+			DPRINTF(("ip4_input(): possible local address spoofing detected on packet from %s to %s (%s->%s)\n", inet_ntoa4(ipo->ip_src), inet_ntoa4(ipo->ip_dst), inet_ntoa4(ipo->ip_src), inet_ntoa4(ipo->ip_dst)));
+			ip4stat.ip4s_spoof++;
+			m_freem(m);
+			return;
+		    }
+		}
+		else if (ip6)
+		{
+		    if (ifa->ifa_addr->sa_family != AF_INET6)
+		      continue;
+
+		    sin6 = (struct sockaddr_in6 *) ifa->ifa_addr;
+
+		    if (IN6_ARE_ADDR_EQUAL(&sin6->sin6_addr, &ip6->ip6_src))
+		    {
+			DPRINTF(("ip4_input(): possible local address spoofing detected on packet\n"));
+			m_freem(m);
+			return;
+		    }
+
+		}
+	    }
+	}
     }
     
     /* Statistics */
-    ip4stat.ip4s_ibytes += m->m_pkthdr.len - iphlen;
+    if (ipo)
+      ip4stat.ip4s_ibytes += m->m_pkthdr.len - iphlen;
 
     /* tdbi is only set in ESP or AH, if the next protocol is UDP or TCP */
     if (m->m_flags & (M_CONF|M_AUTH))
@@ -243,14 +313,31 @@ ip4_input(m, va_alist)
      * untrusted packets.
      */
 
-    ifq = &ipintrq;
+    if (ipo)
+    {
+	ifq = &ipintrq;
+	isr = NETISR_IP;
+    }
+    else if (ip6)
+    {
+	ifq = &ip6intrq;
+	isr = NETISR_IPV6;
+    }
+    else
+    {
+	/* just in case */
+	m_freem(m);
+	return;
+    }
 
     s = splimp();			/* isn't it already? */
     if (IF_QFULL(ifq))
     {
 	IF_DROP(ifq);
 	m_freem(m);
-	ip4stat.ip4s_qfull++;
+	if (ipo)
+	    ip4stat.ip4s_qfull++;
+
 	splx(s);
 
 	DPRINTF(("ip4_input(): packet dropped because of full queue\n"));
@@ -258,7 +345,7 @@ ip4_input(m, va_alist)
     }
 
     IF_ENQUEUE(ifq, m);
-    schednetisr(NETISR_IP);
+    schednetisr(isr);
     splx(s);
 
     return;
@@ -296,6 +383,8 @@ ipe4_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	    {
 		DPRINTF(("ipe4_output(): unspecified tunnel endpoind address in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 		ip4stat.ip4s_unspec++;
+		m_freem(m);
+		*mp = NULL;
 		return ENOBUFS;
 	    }
 
@@ -304,6 +393,7 @@ ipe4_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	    {
 		DPRINTF(("ipe4_output(): M_PREPEND failed\n"));
 		ip4stat.ip4s_hdrops++;
+		*mp = NULL;
 		return ENOBUFS;
 	    }
 	    
@@ -340,21 +430,28 @@ ipe4_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 			   sizeof(u_int16_t), (caddr_t) &ipo->ip_off);
 		ipo->ip_off &= ~(IP_DF | IP_MF | IP_OFFMASK);
 	    }
-
 #ifdef INET6
-	    if (tp == IPPROTO_IPV6)
+	    else if (tp == (IPV6_VERSION >> 4))
 	    {
+		u_int32_t itos32;
 		/* Save ECN notification */
 		m_copydata(m, sizeof(struct ip) +
 			   offsetof(struct ip6_hdr, ip6_flow),
-			   sizeof(u_int32_t), (caddr_t) &itos);
-		itos = ntohl(itos) >> 20;
+			   sizeof(u_int32_t), (caddr_t) &itos32);
+		itos = ntohl(itos32) >> 20;
 
 		ipo->ip_p = IPPROTO_IPV6;
 		ipo->ip_off = 0;
 	    }
 #endif /* INET6 */
+	    else
+	    {
+		m_freem(m);
+		*mp = NULL;
+		return EAFNOSUPPORT;
+	    }
 
+	    otos = 0;
 	    ip_ecn_ingress(ECN_ALLOWED, &otos, &itos);
 	    ipo->ip_tos = otos;
 	    break;
@@ -368,6 +465,8 @@ ipe4_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	    {
 		DPRINTF(("ipe4_output(): unspecified tunnel endpoind address in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 		ip4stat.ip4s_unspec++;
+		m_freem(m);
+		*mp = NULL;
 		return ENOBUFS;
 	    }
 
@@ -376,13 +475,15 @@ ipe4_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	    {
 		DPRINTF(("ipe4_output(): M_PREPEND failed\n"));
 		ip4stat.ip4s_hdrops++;
+		*mp = NULL;
 		return ENOBUFS;
 	    }
 
 	    /* Initialize IPv6 header */
 	    ip6o = mtod(m, struct ip6_hdr *);
 	    ip6o->ip6_flow = 0;
-	    ip6o->ip6_vfc = IPV6_VERSION;
+	    ip6o->ip6_vfc &= ~IPV6_VERSION_MASK;
+	    ip6o->ip6_vfc |= IPV6_VERSION;
 	    ip6o->ip6_plen = htons(m->m_pkthdr.len);
 	    ip6o->ip6_hlim = ip_defttl;
 	    ip6o->ip6_dst = tdb->tdb_dst.sin6.sin6_addr;
@@ -398,19 +499,27 @@ ipe4_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 
 		ip6o->ip6_nxt = IPPROTO_IPIP; /* This is really IPVERSION */
 	    }
+	    else
 #endif /* INET */
-
-	    if (tp == IPPROTO_IPV6)
+	    if (tp == (IPV6_VERSION >> 4))
 	    {
+		u_int32_t itos32;
 		/* Save ECN notification */
 		m_copydata(m, sizeof(struct ip6_hdr) +
 			   offsetof(struct ip6_hdr, ip6_flow),
-			   sizeof(u_int32_t), (caddr_t) &itos);
-		itos = ntohl(itos) >> 20;
+			   sizeof(u_int32_t), (caddr_t) &itos32);
+		itos = ntohl(itos32) >> 20;
 
 		ip6o->ip6_nxt = IPPROTO_IPV6;
 	    }
+	    else
+	    {
+		m_freem(m);
+		*mp = NULL;
+		return EAFNOSUPPORT;
+	    }
 
+	    otos = 0;
 	    ip_ecn_ingress(ECN_ALLOWED, &otos, &itos);
 	    ip6o->ip6_flow |= htonl((u_int32_t) otos << 20);
 	    break;
@@ -420,6 +529,7 @@ ipe4_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	    DPRINTF(("ipe4_output(): unsupported protocol family %d\n",
 		     tdb->tdb_dst.sa.sa_family));
 	    m_freem(m);
+	    *mp = NULL;
 	    ip4stat.ip4s_family++;
 	    return ENOBUFS;
     }
