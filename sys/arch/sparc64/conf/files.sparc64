@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.26 2002/01/24 15:54:37 jason Exp $
+#	$OpenBSD: files.sparc64,v 1.27 2002/01/25 03:24:53 jason Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -98,7 +98,10 @@ file	arch/sparc64/dev/ce4231.c		audioce
 attach com at ebus with com_ebus
 file	arch/sparc64/dev/com_ebus.c		com_ebus
 
-device comkbd: tty, wskbddev
+define sunkbd
+file	dev/sun/sunkbd.c			sunkbd
+
+device comkbd: tty, wskbddev, sunkbd
 attach comkbd at ebus
 file	arch/sparc64/dev/comkbd_ebus.c		comkbd
 
@@ -112,8 +115,7 @@ device zstty: tty
 attach zstty at zs
 file arch/sparc64/dev/z8530tty.c		zstty needs-flag
 
-define zskbd {}
-device zskbd: tty, wskbddev
+device zskbd: tty, wskbddev, sunkbd
 attach zskbd at zs
 file arch/sparc64/dev/z8530kbd.c		zskbd needs-flag
 
