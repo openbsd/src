@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.13 1996/12/11 20:15:43 deraadt Exp $ */
+/*	$OpenBSD: conf.c,v 1.14 1997/01/27 19:50:04 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -271,7 +271,7 @@ static int chrtoblktbl[] = {
 	/*  6 */	NODEV,
 	/*  7 */	NODEV,
 	/*  8 */	4,		/* SCSI disk */
-	/*  9 */	6,		/* SCSI CD-ROM */
+	/*  9 */	8,		/* SCSI CD-ROM */
 	/* 10 */	NODEV,
 	/* 11 */	NODEV,
 	/* 12 */	NODEV,
@@ -281,7 +281,7 @@ static int chrtoblktbl[] = {
 	/* 16 */	NODEV,
 	/* 17 */	NODEV,
 	/* 18 */	NODEV,
-	/* 19 */	8,		/* vnode disk */
+	/* 19 */	6,		/* vnode disk */
 	/* 20 */	NODEV,
 	/* 21 */	NODEV,
 	/* 22 */	NODEV,
