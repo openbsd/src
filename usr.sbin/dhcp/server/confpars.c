@@ -84,6 +84,7 @@ int readconf ()
 						 declaration);
 	} while (1);
 	token = next_token (&val, cfile); /* Clear the peek buffer */
+	fclose(cfile);
 
 	return !warnings_occurred;
 }
@@ -134,6 +135,7 @@ void read_leases ()
 		}
 
 	} while (1);
+	fclose(cfile);
 }
 
 /* statement :== parameter | declaration
