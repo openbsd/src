@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.1,v 1.15 1998/08/01 06:12:19 angelos Exp $
+.\" $OpenBSD: ipsecadm.1,v 1.16 1998/08/01 06:21:53 angelos Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -229,6 +229,10 @@ or
 to uniquely specify the SA.
 The default value is 50 which means
 .Nm IPPROTO_ESP .
+Other accepted values are 51
+.Nm ( IPPROTO_AH ),
+and 4
+.Nm ( IPPROTO_IP ) .
 One can also specify the symbolic names "esp", "ah", and "ip4",
 case insensitive.
 .It chain
@@ -244,6 +248,10 @@ The second security protocol used by
 .Nm group .
 It defaults to
 .Nm IPPROTO_AH .
+Other accepted values are 50
+.Nm ( IPPROTO_ESP ),
+and 4
+.Nm ( IPPROTO_IP ) .
 One can also specify the symbolic names "esp", "ah", and "ip4",
 case insensitive.
 .It addr
