@@ -1,0 +1,11 @@
+set block-policy drop
+set block-policy return
+@0 block return in on lo0 all 
+@1 block return in on lo0 inet all 
+@2 block return in on lo0 inet6 all 
+@3 block in on lo0 all 
+@4 block in on lo0 inet all 
+@5 block in on lo0 inet6 all 
+@6 block return in on lo0 all 
+@7 block return in on lo0 inet all 
+@8 block return in on lo0 inet6 all 
