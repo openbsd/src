@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.48 2002/02/08 13:53:28 art Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.49 2002/02/08 16:32:27 art Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -825,24 +825,6 @@ restart:
 }
 
 /*
- * Free a file descriptor.
- */
-void
-ffree(fp)
-	register struct file *fp;
-{
-	LIST_REMOVE(fp, f_list);
-	crfree(fp->f_cred);
-#ifdef DIAGNOSTIC
-	fp->f_count = 0;
-	if (fp->f_usecount != 0)
-		panic("ffree: usecount != 0");
-#endif
-	nfiles--;
-	pool_put(&file_pool, fp);
-}
-
-/*
  * Build a new filedesc structure.
  */
 struct filedesc *
@@ -1091,8 +1073,17 @@ closef(struct file *fp, struct proc *p)
 		error = (*fp->f_ops->fo_close)(fp, p);
 	else
 		error = 0;
-	fp->f_usecount--;
-	ffree(fp);
+
+	/* Free fp */
+	LIST_REMOVE(fp, f_list);
+	crfree(fp->f_cred);
+#ifdef DIAGNOSTIC
+	if (fp->f_count != 0 || fp->f_usecount != 1)
+		panic("closef: count: %d/%d", fp->f_count, fp->f_usecount);
+#endif
+	nfiles--;
+	pool_put(&file_pool, fp);
+
 	return (error);
 }
 
