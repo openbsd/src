@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.17 2001/06/14 21:30:45 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.18 2001/08/15 21:27:20 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -397,15 +397,15 @@ _LABEL(_spin_cpu)
 
 	data
 	.align 4096		  /* VBR points to page aligned list */
-	global _vector_list, _vector_list_end
 #if defined(MVME187) || defined(MVME188)	
+	global _vector_list, _vector_list_end
 _vector_list:     		  /* references memory BELOW this line */
 #include "machine/exception_vectors.h"
 _vector_list_end:
 	word END_OF_VECTOR_LIST
 #endif /* defined(MVME187) || defined(MVME188) */	
 #ifdef MVME197	
-	global _vector_list, _vector_list_end
+	global _m197_vector_list, _m197_vector_list_end
 _m197_vector_list:     		  /* references memory BELOW this line */
 #include "machine/exception_vectors2.h"
 _m197_vector_list_end:
