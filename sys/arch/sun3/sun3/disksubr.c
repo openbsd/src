@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.8 1997/01/16 04:04:18 kstailey Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.9 1997/02/04 01:31:33 kstailey Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.14 1996/09/26 18:10:21 gwr Exp $	*/
 
 /*
@@ -126,11 +126,11 @@ readdisklabel(dev, strat, lp, clp)
 		return(disklabel_sun_to_bsd(clp->cd_block, lp));
 	}
 
-	/* Check for a NetBSD disk label (PROM can not boot it). */
+	/* Check for a OpenBSD disk label (PROM can not boot it). */
 	dlp = (struct disklabel *) (clp->cd_block + LABELOFFSET);
 	if (dlp->d_magic == DISKMAGIC) {
 		if (dkcksum(dlp))
-			return("NetBSD disk label corrupted");
+			return("OpenBSD disk label corrupted");
 		*lp = *dlp; 	/* struct assignment */
 		return(NULL);
 	}
@@ -204,7 +204,7 @@ writedisklabel(dev, strat, lp, clp)
 	if (error)
 		return(error);
 
-#if 0	/* XXX - Allow writing NetBSD disk labels? */
+#if 0	/* XXX - Allow writing OpenBSD disk labels? */
 	{
 		struct disklabel *dlp;
 		dlp = (struct disklabel *)(clp->cd_block + LABELOFFSET);

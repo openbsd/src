@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.9 1997/02/03 21:30:13 kstailey Exp $	*/
+/*	$OpenBSD: locore.s,v 1.10 1997/02/04 01:31:34 kstailey Exp $	*/
 /*	$NetBSD: locore.s,v 1.40 1996/11/06 20:19:54 cgd Exp $	*/
 
 /*
@@ -442,7 +442,7 @@ _trap0:
 
 /*
  * Trap 1 is either:
- * sigreturn (native NetBSD executable)
+ * sigreturn (native OpenBSD executable)
  * breakpoint (HPUX executable)
  */
 _trap1:
@@ -491,7 +491,7 @@ Lsigr1:
 
 /*
  * Trap 2 is one of:
- * NetBSD: not used (ignore)
+ * OpenBSD: not used (ignore)
  * SunOS:  Some obscure FPU operation
  * HPUX:   sigreturn
  */
@@ -500,7 +500,7 @@ _trap2:
 	/* XXX:	If HPUX, this is a user breakpoint. */
 	jne	sigreturn
 #endif
-	/* fall into trace (NetBSD or SunOS) */
+	/* fall into trace (OpenBSD or SunOS) */
 
 /*
  * Trace (single-step) trap.  Kernel-mode is special.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.12 1997/02/03 23:32:22 kstailey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.13 1997/02/04 01:31:35 kstailey Exp $	*/
 /*	$NetBSD: trap.c,v 1.63-1.65ish 1997/01/16 15:41:40 gwr Exp $	*/
 
 /*
@@ -385,7 +385,7 @@ trap(type, code, v, frame)
 	 * XXX: Trace traps are a nightmare.
 	 *
 	 *	HP-UX uses trap #1 for breakpoints,
-	 *	NetBSD/m68k uses trap #2,
+	 *	OpenBSD/m68k uses trap #2,
 	 *	SUN 3.x uses trap #15,
 	 *	KGDB uses trap #15 (for kernel breakpoints; handled elsewhere).
 	 *
