@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.6 2000/07/28 13:09:01 rahnds Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.7 2000/09/06 02:04:50 rahnds Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -162,7 +162,7 @@ openpic_attach(parent, self, aux)
 	openpic_base = (vaddr_t) mapiodev (ca->ca_baseaddr +
 			ca->ca_reg[0], 0x22000);
 
-	printf("version %x", openpic_read(OPENPIC_VENDOR_ID));
+	printf(": version 0x%x", openpic_read(OPENPIC_VENDOR_ID));
 
 	openpic_init();
 
@@ -181,6 +181,7 @@ openpic_attach(parent, self, aux)
 	mac_intr_establish(parent, 0x37, IST_LEVEL,
 		IPL_HIGH, prog_switch, 0x37, "prog button");
 #endif
+	ppc_intr_enable(1);
 
 	printf("\n");
 }
