@@ -7,8 +7,11 @@ Before you begin, you should know the geometry of your hard disk, i.e.
 the sector size (note that sector sizes other than 512 bytes are not
 currently supported), the number of sectors per track, the number of
 tracks per cylinder (also known as the number of heads), and the
-number of cylinders on the disk.  The OpenBSD kernel will provide limited
-information for SCSI disks, but not much.
+number of cylinders on the disk.  The OpenBSD kernel will try to
+discover these parameters on its own, and if it can it will print them
+at boot time.  If possible, you should use the parameters it prints.
+(You might not be able to if your disk is so old that the
+kernel can't figure out its geometry.)
 
 You should now be ready to install OpenBSD.
 
@@ -19,10 +22,9 @@ question.  If you wish to stop the installation, you may hit Control-C
 at any time, but if you do, you'll have to begin the installation
 process again from scratch.
 
-	Boot your machine from the CDROM or from the network.  When
-	presented with the boot prompt, enter the path of your kernel.
-	(`bsd.rd' is a likely choice if you are booting over the network,
-	otherwise check the CDROM insert for the pathname of the kernel.)
+	Boot your machine from the network.  When presented with
+	the boot prompt, enter the path of your kernel (`bsd.rd'
+	is a likely choice if you are booting over the network).
 
 	You will then be presented with the OpenBSD kernel boot
 	messages.  You will want to read them, to determine your
@@ -41,31 +43,38 @@ process again from scratch.
 	completely normal.  When you reach the prompt asking you for a
 	shell name, just hit return.
 
-	You will be presented with a welcome message and a prompt.  At
-	this time you should enter the command "install" to start the
-	installation process.
-
-	You will be asked which terminal type to use.  There are only
+	You will next be asked for your terminal type.  There are only
 	a few specific terminal types supported.  If you are using a
 	graphics display, just hit return to select the default (hp300h).
 	If you are using an ASCII terminal, it should either be an HP
-	or vt100 compatible terminal; nothing else is supported.
+	or vt100 compatible terminal; nothing else is supported.  (If
+	your terminal type is xterm, just use vt100).  After entering
+	the terminal type you will be asked whether you wish to do an
+	"install" or an "upgrade".  Enter 'i' for a fresh install or 'u'
+	to upgrade an existing installation.
 
-	The install program will then tell you which disks of that
-	type it can install on, and ask you which it should use.  The
-	name of the disk is typically "hd0" for HPIB/CS80 drives or
-	"sd0" for SCSI drives.  If you do not wish to install on the
-	first disk, you should use the appropriate number in place of "0".
-	Reply with the name of your disk.
+	You will be presented with a welcome message and asked if
+	you really wish to install (or upgrade).  Assuming you
+	answered yes, the install program will then tell you which
+	disks of that type it can install on, and ask you which it
+	should use.  The name of the disk is typically "hd0" for
+	HPIB/CS80 drives or "sd0" for SCSI drives.  Reply with the
+	name of your disk.
 
-	Next you will have to edit or create a disklabel for the disk
-	OpenBSD is being installed on.  The installation script will invoke
-	an editor allowing you to do this.  Note that partition 'c' inside
-	this disk label should ALWAYS reflect the entire disk, including
-	any non-OpenBSD portions.  The root file system should be in
-	partition 'a', and swap is usually in partition 'b'.  It is
-	recommended that you create separate partitions for /usr and /var,
-	and if you have room for it, also for /home.
+	Next the disk label which defines the layout of the OpenBSD
+	file systems must be set up.  The installation script will
+	invoke an interactive editor allowing you to do this.  Note
+	that partition 'c' inside this disk label should ALWAYS
+	reflect the entire disk, including any non-OpenBSD portions.
+	If you are labeling a new disk, you will probably start
+	out with an 'a' partition that spans the disk.  In this
+	case You should delete 'a' before adding new partitions.
+	The root file system should be in partition 'a', and swap
+	is usually in partition 'b'.  It is recommended that you
+	create separate partitions for /usr and /var, and if you
+	have room for it, one for /home.  For help in the disk
+	label editor, enter '?' or 'M' to view the manual page (see
+	the info on the ``-E'' flag).
 
 	The swap partition (usually 'b') should have a type of "swap", all
 	other native OpenBSD partitions should have a type of "4.2BSD".
@@ -80,7 +89,7 @@ process again from scratch.
 	"hd0") with the letter identifying the partition (eg. "d")
 	appended (eg. "hd0d").  Then it will ask where this partition is
 	to be mounted, eg. /usr.  This process will be repeated until
-	you just hit return.
+	you enter "done".
 
 	At this point you will be asked to confirm that the file system
 	information you have entered is correct, and given an opportunity
@@ -132,13 +141,13 @@ process again from scratch.
 		       You need to define a proxy if you are behind a
 		       firewall that blocks outgoing ftp (assuming you
 		       have a proxy available to use).
-		    2) Do you need to use passive mode ftp?  Most modern
-		       ftp servers are capable of dealing with passive
-		       ftp connections.  You only need to enable this
-		       option if you are behind a firewall that allows
-		       outgoing ftp but blocks incoming tcp ports > 1023.
-		       If in doubt say yes to this option.
-		       Note that you will not be asked about passive
+		    2) Do you need to use active mode ftp?  By default,
+		       ftp will attempt to use passive mode and fall
+		       back to an active connection if the server does
+		       not support passive mode.  You only need to enable
+		       this option if you are connecting to a buggy ftp
+		       daemon that implements passive ftp incorrectly.
+		       Note that you will not be asked about active
 		       ftp if you are using a proxy.
 		    3) The IP address (or hostname if you enabled
 		       DNS earlier in the install) of an ftp server
@@ -196,10 +205,11 @@ process again from scratch.
 
 	To install from CD-ROM:
 		When installing from a CD-ROM, you will be asked which
-		device holds the distribution sets.  This will be "cd0"
-		for the first CD-ROM drive.  Next you will be asked which
-		partition on the CD-ROM the distribution is to be loaded
-		from.  This is normally partition "a".
+		device holds the distribution sets.  For the hp300, this
+		will show up as a normal scsi device, lile "sd4" for a
+		CD-ROM at SCSI id 4.  Next you will be asked which partition
+		on the CD-ROM the distribution is to be loaded from.  This
+		is normally partition "a".
 
 		Next you will have to identify the file system type that
 		has been used to create the distribution on the CD-ROM,
@@ -213,7 +223,7 @@ process again from scratch.
 		For instructions on how to complete the installation from
 		the CD-ROM distribution, see the section named "Common
 		file system installations" below.
-		
+
 	To install from a NFS mounted directory:
 		When installing from a NFS-mounted directory, you must
 		have completed network configuration above, and also
@@ -246,9 +256,9 @@ process again from scratch.
 		this is a single letter between 'a' and 'p'.
 
 		You will also have to identify the type of file system
-		residing in the partition identified.  Currently you can
-		install from partitions that has been formatted as fast
-		file system (ffs) or MS-DOS.
+		residing in the partition identified.  Currently, you can
+		only install from partitions that use the fast file system
+		(ffs).
 
 		You will also have to provide the relative path to the
 		directory on the file system where the distribution sets
@@ -257,17 +267,28 @@ process again from scratch.
 
 		For instructions on how to complete the installation from
 		the a local disk partition, see the next section.
-		
+
 	Common file system installations:
 		The following instructions are common to installations
 		from local disk partitions, NFS mounted directories and
 		CD-ROMs.
 
-		A list of available distribution sets will be listed.  If
-		any sets has already been extracted, those will be marked
-		with an X.  Enter the name of one distribution set at a
-		time, until all desired distribution sets has been
-		installed on your system.
+		A list of available distribution sets will be listed.
+		You may individually select distribution sets to install
+		or enter `all' to install all of the sets (which is what
+		most users will want to do).  You may also enter `list'
+		to get a file list or `done' when you are done selecting
+		distribution sets.  You may also use wildcards in place of
+		a file name, eg `*.tar.gz' or even `base*|comp*'.  It is
+		also possible to enter an arbitrary filename and have it
+		treated as a file set.
+
+		Once you have selected the file sets you want to install
+		and entered `done' you will be prompted to verify that
+		you really do want to extract file sets.  Assuming you
+		acquiesce, the files will begin to extract.  If not, you
+		will be given the option of installing sets via one of
+		the other install methods.
 
 	Common URL installations:
 		Once you have entered the required information, the
@@ -279,15 +300,16 @@ process again from scratch.
 		none were found.)
 
 		At this point you may individually select distribution
-		sets to install or enter "all" to install all of
-		the sets (which is what most users will want to do).
-		You may also enter "list" to get a file list or
-		"done" when you are done selecting distribution sets.
-		(It is also possible to enter an arbitrary filename
-		and have it treated as a file set).
+		sets to install or enter `all' to install all of the
+		sets (which is what most users will want to do).  You
+		may also enter `list' to get a file list or `done' when
+		you are done selecting distribution sets.  You may also
+		use wildcards in place of a file name, eg `*.tar.gz' or
+		even `base*|comp*'.  It is also possible to enter an
+		arbitrary filename and have it treated as a file set.
 
 		Once you have selected the file sets you want to install
-		and entered "done" you will be prompted to verify that
+		and entered `done' you will be prompted to verify that
 		you really do want to download and install the files.
 		Assuming you acquiesce, the files will begin to download
 		and unpack.  If not, you will be given the option of
