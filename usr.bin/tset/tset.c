@@ -1,4 +1,4 @@
-/*	$OpenBSD: tset.c,v 1.23 2001/02/28 22:58:52 millert Exp $	*/
+/*	$OpenBSD: tset.c,v 1.24 2001/07/16 06:14:31 pvalchev Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -90,7 +90,7 @@ char *ttyname(int fd);
 #endif
 
 /* this is just to stifle a missing-prototype warning */
-#ifdef linux
+#if defined(linux) || defined(__OpenBSD__)
 # include <sys/ioctl.h>
 #endif
 

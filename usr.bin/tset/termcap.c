@@ -1,4 +1,4 @@
-/*	$OpenBSD: termcap.c,v 1.2 2000/08/02 04:10:50 millert Exp $	*/
+/*	$OpenBSD: termcap.c,v 1.3 2001/07/16 06:14:31 pvalchev Exp $	*/
 /*	$NetBSD: termcap.c,v 1.7 1995/06/05 19:45:52 pk Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: termcap.c,v 1.2 2000/08/02 04:10:50 millert Exp $";
+static char rcsid[] = "$OpenBSD: termcap.c,v 1.3 2001/07/16 06:14:31 pvalchev Exp $";
 #endif /* not lint */
 
 #define	PVECSIZ		32	/* max number of names in path */
@@ -45,6 +45,7 @@ static char rcsid[] = "$OpenBSD: termcap.c,v 1.2 2000/08/02 04:10:50 millert Exp
 #include <sys/types.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <err.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -67,7 +68,6 @@ tcgetent(bp, name)
 	char  *pathvec[PVECSIZ];	/* to point to names in pathbuf */
 	char **pvec;			/* holds usable tail of path vector */
 	char  *termpath;
-	char  *ttype;
 
 	fname = pathvec;
 	pvec = pathvec;
@@ -162,7 +162,7 @@ wrtermcap(bp)
 
 	/* Find the end of the terminal names. */
 	if ((t = strchr(bp, ':')) == NULL)
-		err("termcap names not colon terminated");
+		err(1, "termcap names not colon terminated");
 	*t++ = '\0';
 
 	/* Output terminal names that don't have whitespace. */
