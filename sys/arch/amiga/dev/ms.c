@@ -1,4 +1,4 @@
-/*	$OpenBSD: ms.c,v 1.4 1997/01/16 09:25:03 niklas Exp $	*/
+/*	$OpenBSD: ms.c,v 1.5 2001/09/13 13:34:53 jj Exp $	*/
 /*	$NetBSD: ms.c,v 1.14 1996/12/23 09:10:25 veego Exp $	*/
 
 /*
@@ -91,6 +91,7 @@ struct ms_softc {
 	int	ms_dy;		   /* delta-y */
 	volatile int ms_ready;	   /* event queue is ready */
 	struct	evvar ms_events;   /* event queue state */
+	struct	timeout ms_intr_to; /* interrupt timeout */
 };
 
 struct cfattach ms_ca = {
@@ -120,6 +121,10 @@ msattach(pdp, dp, auxp)
 	struct device *pdp, *dp;
 	void *auxp;
 {
+	struct ms_softc *sc = (struct ms_softc *)dp;
+		
+	timeout_set(&sc->ms_intr_to, msintr, sc);
+
 	printf("\n");
 }
 
@@ -149,7 +154,7 @@ ms_enable(dev)
 	 */
 	ms->ms_ready = 1;
 
-	timeout(msintr, (void *)minor(dev), 2);
+	timeout_add(&ms->ms_intr_to, 2);
 }
 
 /*
@@ -189,9 +194,9 @@ msintr(arg)
 	u_char pra, *horc, *verc;
 	u_short pot, count;
 	short dx, dy;
-	
-	unit = (int)arg;
-	ms = (struct ms_softc *)getsoftc(ms_cd, unit);
+
+	ms = (struct ms_softc *)arg;
+	unit = ms->sc_dev.dv_unit;
 
 	horc = ((u_char *) &count) + 1;
 	verc = (u_char *) &count;
@@ -329,7 +334,7 @@ out:
 	 * handshake with ms_disable
 	 */
 	if (ms->ms_ready)
-		timeout(msintr, (void *)unit, 2);
+		timeout_add(&ms->ms_intr_to, 2);
 	else
 		wakeup(ms);
 }
