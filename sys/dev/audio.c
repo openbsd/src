@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.40 2002/08/26 16:20:04 mickey Exp $	*/
+/*	$OpenBSD: audio.c,v 1.41 2003/01/26 23:16:14 jason Exp $	*/
 /*	$NetBSD: audio.c,v 1.105 1998/09/27 16:43:56 christos Exp $	*/
 
 /*
@@ -924,7 +924,7 @@ audio_calcwater(sc)
 	sc->sc_pr.usedlow = sc->sc_pr.usedhigh * 3 / 4;	/* set lowater at 75% */
 	if (sc->sc_pr.usedlow == sc->sc_pr.usedhigh)
 		sc->sc_pr.usedlow -= sc->sc_pr.blksize;
-	sc->sc_rr.usedhigh = sc->sc_pr.end - sc->sc_pr.start - sc->sc_pr.blksize;
+	sc->sc_rr.usedhigh = sc->sc_rr.end - sc->sc_rr.start - sc->sc_rr.blksize;
 	sc->sc_rr.usedlow = 0;
 }
 
