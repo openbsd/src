@@ -41,7 +41,7 @@
 #include <ctype.h>
 
 #if !defined(lint) && defined(LIBC_SCCS)
-static	char	rcsid[] = "$Id: ipmon.c,v 1.7 1997/02/11 22:24:10 kstailey Exp $";
+static	char	rcsid[] = "$Id: ipmon.c,v 1.8 1997/06/09 09:52:33 niklas Exp $";
 #endif
 
 #include "ip_fil_compat.h"
@@ -267,7 +267,7 @@ int	len;
 		if (j && !(j & 0xf)) {
 			*t++ = '\n';
 			*t = '\0';
-			fputs(line, stdout);
+			fputs(line, log);
 			t = (u_char *)line;
 			*t = '\0';
 		}
@@ -300,8 +300,8 @@ int	len;
 		*t++ = '\n';
 		*t = '\0';
 	}
-	fputs(line, stdout);
-	fflush(stdout);
+	fputs(line, log);
+	fflush(log);
 }
 
 
