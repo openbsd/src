@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot.9,v 1.4 1999/09/02 17:28:06 espie Exp $
+.\"	$OpenBSD: boot.9,v 1.5 2000/10/12 18:05:58 aaron Exp $
 .\"	$NetBSD: boot.9,v 1.1 1995/11/25 21:24:48 perry Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
@@ -44,8 +44,8 @@
 The
 .Fn boot
 function handles final system shutdown, and either halts or reboots
-the system.  The exact action to be taken is determined by the
-flags passed in
+the system.
+The exact action to be taken is determined by the flags passed in
 .Fa howto
 and by whether or not the system has finished autoconfiguration.
 .Pp
@@ -73,7 +73,7 @@ and sets the time of day clock by calling
 .It
 Disables interrupts.
 .It
-If rebooting after a crash (i.e. if
+If rebooting after a crash (i.e., if
 .Dv RB_DUMP
 is set in
 .Fa howto ,

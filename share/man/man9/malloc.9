@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.9,v 1.12 2000/06/25 13:46:06 pjanzen Exp $
+.\"	$OpenBSD: malloc.9,v 1.13 2000/10/12 18:06:00 aaron Exp $
 .\"	$NetBSD: malloc.9,v 1.2 1996/10/30 05:29:54 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -78,7 +78,8 @@ free((caddr_t)(addr), type)
 .Pp
 Unlike its standard C library counterpart
 .Pq Xr malloc 3 ,
-the kernel version takes two more arguments.  The
+the kernel version takes two more arguments.
+The
 .Fa flags
 argument further qualifies
 .Fn malloc No Ns 's

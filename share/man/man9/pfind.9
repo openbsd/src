@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pfind.9,v 1.1 1999/09/02 17:24:35 espie Exp $
+.\"	$OpenBSD: pfind.9,v 1.2 2000/10/12 18:06:01 aaron Exp $
 .\"
 .\" Copyright (c) 1999 Marc Espie
 .\" All rights reserved.
@@ -44,11 +44,11 @@
 .Ft "struct pgrp *"
 .Fn pgfind "pid_t pgid"
 .Sh DESCRIPTION
-The 
+The
 .Fn pfind
-and 
+and
 .Fn pgfind
-functions retrieve process and progress group structures from process and 
+functions retrieve process and progress group structures from process and
 process group ids.
 .Pp
 Both functions return NULL if the requested id can't be found.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shutdownhook_establish.9,v 1.8 2000/07/01 14:48:24 aaron Exp $
+.\"	$OpenBSD: shutdownhook_establish.9,v 1.9 2000/10/12 18:06:02 aaron Exp $
 .\"	$NetBSD: shutdownhook_establish.9,v 1.1 1995/11/25 21:24:52 perry Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
@@ -49,7 +49,8 @@ function adds
 .Fa fn
 to the list of hooks invoked by
 .Xr doshutdownhooks 9
-at shutdown.  When invoked, the hook function
+at shutdown.
+When invoked, the hook function
 .Fa fn
 will be passed
 .Fa arg
@@ -59,15 +60,16 @@ The
 .Fn shutdownhook_disestablish
 function removes the hook described by the opaque pointer
 .Fa cookie
-from the list of hooks to be invoked at shutdown.  If
+from the list of hooks to be invoked at shutdown.
+If
 .Fa cookie
 is invalid, the result of
 .Fn shutdownhook_disestablish
 is undefined.
 .Pp
 Shutdown hooks should be used to perform one-time activities
-that must happen immediately before the kernel exits.  Because
-of the environment in which they are run, shutdown hooks cannot
+that must happen immediately before the kernel exits.
+Because of the environment in which they are run, shutdown hooks cannot
 rely on many system services (including file systems, timeouts,
 and other interrupt-driven services) or even basic system
 integrity (because the system could be rebooting after a crash).
@@ -75,7 +77,8 @@ integrity (because the system could be rebooting after a crash).
 If successful,
 .Fn shutdownhook_establish
 returns an opaque pointer describing the newly established
-shutdown hook.  Otherwise, it returns 
+shutdown hook.
+Otherwise, it returns
 .Dv NULL .
 .Sh EXAMPLES
 It may be appropriate to use a shutdown hook to

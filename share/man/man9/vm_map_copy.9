@@ -1,30 +1,30 @@
-.\" 
-.\"	$OpenBSD: vm_map_copy.9,v 1.2 1998/09/06 22:23:21 aaron Exp $
+.\"
+.\"	$OpenBSD: vm_map_copy.9,v 1.3 2000/10/12 18:06:04 aaron Exp $
 .\"
 .\" Mach Operating System
 .\" Copyright (c) 1991,1990 Carnegie Mellon University
 .\" All Rights Reserved.
-.\" 
+.\"
 .\" Permission to use, copy, modify and distribute this software and its
 .\" documentation is hereby granted, provided that both the copyright
 .\" notice and this permission notice appear in all copies of the
 .\" software, derivative works or modified versions, and any portions
 .\" thereof, and that both notices appear in supporting documentation.
-.\" 
+.\"
 .\" CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
 .\" CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
 .\" ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
-.\" 
+.\"
 .\" Carnegie Mellon requests users of this software to return to
-.\" 
+.\"
 .\"  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
 .\"  School of Computer Science
 .\"  Carnegie Mellon University
 .\"  Pittsburgh PA 15213-3890
-.\" 
+.\"
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
-.\" 
+.\"
 .TH vm_map_copy 9 9/19/93
 .CM 4
 .SH NAME
@@ -92,7 +92,7 @@ Either the destination region was
 not writable, or the source region was not readable.
 .TP 25
 KERN_INVALID_ADDRESS
-Illegal or non-allocated address specified or 
+Illegal or non-allocated address specified or
 insufficient memory allocated at one of the addresses.
 .SH BUGS
 The current implementation requires that \fBsrc_addr\fR,

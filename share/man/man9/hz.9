@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hz.9,v 1.2 1999/09/10 05:00:48 tholo Exp $
+.\"	$OpenBSD: hz.9,v 1.3 2000/10/12 18:05:59 aaron Exp $
 .\"
 .\" Copyright (c) 1999 Marc Espie
 .\" All rights reserved.
@@ -37,7 +37,7 @@
 .Nm tick ,
 .Nm tickadj ,
 .Nm stathz ,
-.Nm profhz 
+.Nm profhz
 .Nd system time model.
 .Sh SYNOPSIS
 .Va extern int hz;
@@ -58,13 +58,13 @@ frequency, and are used to keep track of real time.
 .Pp
 On systems where another independent clock is available, it is set at
 .Va stathz
-frequency, and used to gather timing statistics.  Ideally, it would be
-better to drive
+frequency, and used to gather timing statistics.
+Ideally, it would be better to drive
 .Va stathz
 with a slightly randomized clock, that is still a fixed number on average,
-as this would prevent malicious processes from working around the
-scheduler.  If a separate clock is not available,
-.Va stathz 
+as this would prevent malicious processes from working around the scheduler.
+If a separate clock is not available,
+.Va stathz
 is set to
 .Va hz .
 .Pp
@@ -76,15 +76,15 @@ which must be a multiple of
 .Va stathz .
 This will give higher resolution profiling information.
 .Pp
-Normally, 
+Normally,
 .Xr hardclock 9
 increments
 .Va time
-by 
+by
 .Va tick
 each time it is called.
-If the system clock has drifted, 
-.Xr adjtime 2 
+If the system clock has drifted,
+.Xr adjtime 2
 may be used to skew this increment, but by no more
 than ten times
 .Va tickadj .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: panic.9,v 1.4 1999/09/05 16:23:11 espie Exp $
+.\"	$OpenBSD: panic.9,v 1.5 2000/10/12 18:06:01 aaron Exp $
 .\"     $NetBSD: panic.9,v 1.2 1996/10/09 17:20:04 explorer Exp $
 .\"
 .\" Copyright (c) 1996 Michael Graff.
@@ -44,11 +44,15 @@
 .Sh DESCRIPTION
 The
 .Fn panic
-function makes the OpenBSD system terminate.  The message
+function makes the
+.Ox
+system terminate.
+The message
 .Fa fmt
 is a
 .Xr printf 9
-style format string.  The message is printed to the console and the location
+style format string.
+The message is printed to the console and the location
 pointed to by the global char pointer
 .Fa panicstr
 is set to the address of the message text for retrieval from the OS

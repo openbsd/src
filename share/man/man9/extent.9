@@ -1,4 +1,4 @@
-.\"	$OpenBSD: extent.9,v 1.3 1999/09/22 09:54:38 espie Exp $
+.\"	$OpenBSD: extent.9,v 1.4 2000/10/12 18:05:59 aaron Exp $
 .\"	$NetBSD: extent.9,v 1.15 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -26,7 +26,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -66,8 +66,8 @@
 .Fn extent_print "struct extent *ex"
 .Sh DESCRIPTION
 The extent manager provides management of areas of memory or
-other enumerable spaces (such as I/O ports).  An opaque structure
-called an
+other enumerable spaces (such as I/O ports).
+An opaque structure called an
 .Nm extent map
 keeps track of allocated regions within the enumerable space.
 .Pp
@@ -76,7 +76,8 @@ creates an extent map managing the space from
 .Fa start
 to
 .Fa end
-inclusive.  All memory allocation will use the memory type
+inclusive.
+All memory allocation will use the memory type
 .Fa mtype
 .Po
 see
@@ -84,12 +85,12 @@ see
 .Pc .
 The extent map will have the name
 .Fa name ,
-used for identification in case of errors or in 
-.Xr ddb 4 
+used for identification in case of errors or in
+.Xr ddb 4
 .Ic show extents .
 If the flag
 .Dv EX_NOCOALESCE
-is set, internal coalescing of regions is disabled, 
+is set, internal coalescing of regions is disabled,
 and only entire regions may be freed within the extent map, so that
 .Fn extent_free
 will never have to allocate a region descriptor.
@@ -125,23 +126,25 @@ The caller should pass the flag
 .Dv EX_WAITOK
 or
 .Dv EX_NOWAIT
-to extent functions that have a memory overhead, to specify whether 
-it is okay to wait.  These functions are
+to extent functions that have a memory overhead, to specify whether
+it is okay to wait.
+These functions are
 .Fn extent_create
 (non fixed extents),
 .Fn extent_free
 (unless
-.Dv EX_NOCOALESCE 
+.Dv EX_NOCOALESCE
 is set),
 .Fn extent_alloc ,
-.Fn extent_alloc_subregion 
-and 
+.Fn extent_alloc_subregion
+and
 .Fn extent_alloc_region .
 .Pp
 .Fn extent_destroy
 destroys the extent map
 .Fa ex ,
-freeing all allocated regions.  If the extent is not a fixed extent,
+freeing all allocated regions.
+If the extent is not a fixed extent,
 the region and internal extent descriptors themselves are freed.
 This function always succeeds.
 .Pp
@@ -150,8 +153,8 @@ allocates a region in the extent map
 .Fa ex
 of size
 .Fa size
-that fits the provided parameters.  There are two distinct allocation
-policies, which are selected by the
+that fits the provided parameters.
+There are two distinct allocation policies, which are selected by the
 .Fa flags
 argument:
 .Bl -tag -offset indent -width "XXXXXXXXX"
@@ -163,7 +166,7 @@ Allocate the smallest region that is capable of holding the request,
 thus minimizing fragmentation of the extent.
 .El
 .Pp
-The caller may specify that it is okay to wait for space to become free in the 
+The caller may specify that it is okay to wait for space to become free in the
 extent by setting the flag
 .Dv EX_WAITSPACE .
 If
@@ -173,36 +176,40 @@ satisfied without sleeping.
 .Pp
 The request will be aligned to a multiple of
 .Fa alignment .
-That value must be a power of 2.  If no alignment
-is necessary, the value 
+That value must be a power of 2.
+If no alignment is necessary, the value
 .Dv EX_NOALIGN
-should be specified.  If
+should be specified.
+If
 .Fa boundary
 is not
-.Dv EX_NOBOUNDARY , 
+.Dv EX_NOBOUNDARY ,
 the allocated region will not cross any boundary lines, spaced
-.Fa boundary 
-apart.  If the caller specifies the
-.Dv EX_BOUNDZERO
-flag, boundary lines begin at zero.  Otherwise, boundary lines
-begin at the beginning of the extent.  The allocated region may begin on a
-boundary line, but the end of the region will not touch nor cross a 
-boundary line.  A 
 .Fa boundary
-argument smaller than the size of the request is
-invalid.  Upon successful completion,
+apart.
+If the caller specifies the
+.Dv EX_BOUNDZERO
+flag, boundary lines begin at zero.
+Otherwise, boundary lines begin at the beginning of the extent.
+The allocated region may begin on a
+boundary line, but the end of the region will not touch nor cross a
+boundary line.
+A
+.Fa boundary
+argument smaller than the size of the request is invalid.
+Upon successful completion,
 .Fa *result
 will contain the start of the allocated region.
 .Pp
 .Fn extent_alloc_subregion
 is a generalized version of
-.Fn extent_alloc 
+.Fn extent_alloc
 that also allows the caller to specify that the allocated region must
 fall within the subregion from
 .Fa substart
 to
 .Fa subend
-inclusive.  
+inclusive.
 .Pp
 .Fn extent_alloc_region
 allocates the specific region in the extent map
@@ -223,28 +230,29 @@ satisfied without sleeping.
 frees a region of
 .Fa size
 bytes starting at
-.Fa start 
+.Fa start
 in the extent map
 .Fa ex .
 If the extent has the
 .Dv EX_NOCOALESCE
-property, only entire regions may be freed.  If the extent has the
+property, only entire regions may be freed.
+If the extent has the
 .Dv EX_NOCOALESCE
 property and the caller attempts to free a partial region, behavior is
-undefined.  
+undefined.
 .Pp
 .Fn extent_print
 Prints out information about extent
 .Fa ex .
-This function always succeeds.  
+This function always succeeds.
 .Sh RETURN VALUES
 The behavior of all extent manager functions is undefined if given
 invalid arguments.
 .Fn extent_create
 returns the extent map on success, or
 .Dv NULL
-if it fails to allocate storage for the extent map.  It always
-succeeds when creating a fixed extent or when given the flag
+if it fails to allocate storage for the extent map.
+It always succeeds when creating a fixed extent or when given the flag
 .Dv EX_WAITOK .
 .Fn extent_alloc ,
 .Fn extent_alloc_region ,
@@ -267,7 +275,7 @@ Requested region is not available and
 was not specified.
 .It Dv EINTR
 Process received a signal while waiting for the requested region to
-become available in the extent.  
+become available in the extent.
 .El
 .Sh EXAMPLES
 Here is an example of a (useless) function that uses several of the
@@ -301,7 +309,7 @@ func()
 	/*
 	 * Give up the extent.
 	 */
-	extent_destroy(foo_ex); 
+	extent_destroy(foo_ex);
 }
 .Ed
 .\"
@@ -311,21 +319,22 @@ func()
 .\" The flag
 .\" .Dv EX_CATCH
 .\" cannot be used to catch signals in all circumstances since
-.\" .Xr malloc 9 
+.\" .Xr malloc 9
 .\" does not provide such a functionality.
 .Sh CODE REFERENCES
 The extent manager itself is implemented within the file
 .Pa sys/kern/subr_extent.c .
 .Pp
 The i386 bus management code uses the extent manager for managing I/O
-ports and I/O memory.  See
+ports and I/O memory.
+See
 .Pa sys/arch/i386/i386/machdep.c .
 .Sh AUTHOR
 The extent manager was designed and implemented by Jason
-R. Thorpe <thorpej@NetBSD.ORG>.  Matthias Drochner
-<drochner@zelux6.zel.kfa-juelich.de> contributed to the initial
-testing and optimization of the implementation.  Chris Demetriou
-<cgd@NetBSD.ORG> contributed many architectural suggestions.
+R. Thorpe <thorpej@NetBSD.ORG>.
+Matthias Drochner <drochner@zelux6.zel.kfa-juelich.de> contributed to the
+initial testing and optimization of the implementation.
+Chris Demetriou <cgd@NetBSD.ORG> contributed many architectural suggestions.
 .Sh SEE ALSO
 .Xr ddb 4 ,
 .Xr malloc 9

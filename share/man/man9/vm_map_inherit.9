@@ -1,35 +1,35 @@
-.\" 
-.\"	$OpenBSD: vm_map_inherit.9,v 1.2 1999/03/11 01:35:06 pjanzen Exp $
+.\"
+.\"	$OpenBSD: vm_map_inherit.9,v 1.3 2000/10/12 18:06:04 aaron Exp $
 .\"
 .\" Mach Operating System
 .\" Copyright (c) 1991,1990 Carnegie Mellon University
 .\" All Rights Reserved.
-.\" 
+.\"
 .\" Permission to use, copy, modify and distribute this software and its
 .\" documentation is hereby granted, provided that both the copyright
 .\" notice and this permission notice appear in all copies of the
 .\" software, derivative works or modified versions, and any portions
 .\" thereof, and that both notices appear in supporting documentation.
-.\" 
+.\"
 .\" CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
 .\" CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
 .\" ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
-.\" 
+.\"
 .\" Carnegie Mellon requests users of this software to return to
-.\" 
+.\"
 .\"  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
 .\"  School of Computer Science
 .\"  Carnegie Mellon University
 .\"  Pittsburgh PA 15213-3890
-.\" 
+.\"
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
-.\" 
+.\"
 .TH vm_map_inherit 9 9/19/93
 .CM 4
 .SH NAME
 .nf
-vm_map_inherit  \-  specifies inheritence of address space 
+vm_map_inherit  \-  specifies inheritence of address space
 .SH SYNOPSIS
 .nf
 .ft B
@@ -54,16 +54,16 @@ Virtual memory map to be affected.
 .B
 start
 Starting address (will be rounded down to a page
-boundary). 
+boundary).
 .TP 15
 .B
 end
 Ending address (will be rounded down to a page
-boundary). 
+boundary).
 .TP 15
 .B
 new_inheritance
-How this memory is to be inherited in child maps.  
+How this memory is to be inherited in child maps.
 Inheritance is specified by using one of these following three values:
 .TP 15
 .B
@@ -86,15 +86,15 @@ Inheritance is an attribute of virtual pages; thus the addresses
 and size of memory to be set will be rounded out to refer to
 whole pages.
 
-Setting 
+Setting
 .B vm_map_inherit
-to 
+to
 .B VM_INHERIT_SHARE
 and forking a child
 map is the only way two
 .B tasks
 can share physical memory.
-Remember that all the 
+Remember that all the
 .B theads
 of a given task share all the same
 memory.

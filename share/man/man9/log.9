@@ -1,4 +1,4 @@
-.\"	$OpenBSD: log.9,v 1.4 2000/04/26 21:28:00 mickey Exp $
+.\"	$OpenBSD: log.9,v 1.5 2000/10/12 18:06:00 aaron Exp $
 .\"     $NetBSD: log.9,v 1.6 1999/08/17 05:24:06 enami Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -26,7 +26,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -57,7 +57,7 @@ device
 .Sh DESCRIPTION
 The
 .Fn log
-function allows the kernel to send formatted messages to user processes 
+function allows the kernel to send formatted messages to user processes
 listening on
 .Pa /dev/klog .
 Usually
@@ -73,7 +73,7 @@ logged using facility
 and priority level
 .Fa level .
 .Pp
-The 
+The
 .Fn addlog
 function is used to build a log message in steps, by adding information
 to an initial call to

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.9,v 1.4 2000/04/26 21:28:00 mickey Exp $
+.\"	$OpenBSD: printf.9,v 1.5 2000/10/12 18:06:02 aaron Exp $
 .\"     $NetBSD: kprintf.9,v 1.6 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -26,7 +26,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -39,11 +39,11 @@
 .Dt PRINTF 9
 .Os
 .Sh NAME
-.Nm printf , 
-.Nm sprintf , 
-.Nm vprintf, 
-.Nm uprintf, 
-.Nm ttyprintf, 
+.Nm printf ,
+.Nm sprintf ,
+.Nm vprintf ,
+.Nm uprintf ,
+.Nm ttyprintf ,
 .Nm db_printf
 .Nd kernel formatted output conversion
 .Sh SYNOPSIS
@@ -85,7 +85,7 @@ The
 .Fn vprintf ,
 .Fn uprintf ,
 .Fn ttyprintf ,
-and 
+and
 .Fn db_printf
 functions allow the kernel to send formatted messages to various output
 devices.
@@ -107,14 +107,15 @@ sends formatted strings to the ddb console, and is only used to implement
 .Xr ddb 4 .
 .Pp
 Since each of these kernel functions is a variant of its user space
-counterpart,
-this page describes only the differences between the user space and kernel
-versions. Refer to
+counterpart, this page describes only the differences between the user
+space and kernel versions.
+Refer to
 .Xr printf 3
 for functional details.
 .Ss FORMAT OPTIONS
 The kernel functions don't support any floating point formatting
-specifiers.  In addition to other formatting specifiers common with the user 
+specifiers.
+In addition to other formatting specifiers common with the user
 space functions, the kernel functions accept the following format specifiers
 in the format string
 .Fa format :
@@ -127,7 +128,7 @@ It displays an integer using a specified radix
 .Pq base
 and an interpretation of
 the bits within that integer as though they were flags.
-It requires two arguments from the argument vector, the first argument being 
+It requires two arguments from the argument vector, the first argument being
 the bit field to be decoded
 .Pq "as an integer"
 and the second being a decoding directive string.
@@ -173,7 +174,7 @@ argument vector from which to obtain the data to be formatted.
 Displays an integer using the current
 .Tn DDB
 radix.
-This non-standard interpretation of 
+This non-standard interpretation of
 .Li %r
 is only available to
 .Fn db_printf .

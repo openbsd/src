@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disk.9,v 1.12 2000/04/26 20:29:06 mickey Exp $
+.\"	$OpenBSD: disk.9,v 1.13 2000/10/12 18:05:58 aaron Exp $
 .\"	$NetBSD: disk.9,v 1.2 1996/04/08 20:41:25 jtc Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
@@ -56,12 +56,12 @@
 .Ft struct disk *
 .Fn disk_find "char *"
 .Sh DESCRIPTION
-The 
+The
 .Ox
 generic disk framework is designed to provide flexible,
 scalable, and consistent handling of disk state and metrics information.
 The fundamental component of this framework is the
-.Nm 
+.Nm
 structure, which is defined as follows:
 .Bd -literal
 struct disk {
@@ -100,10 +100,12 @@ struct disk {
 .Ed
 .Pp
 The system maintains a global linked-list of all disks attached to the
-system.  This list, called
+system.
+This list, called
 .Nm disklist ,
 may grow or shrink over time as disks are dynamically added and removed
-from the system.  Drivers which currently make use of the detachment
+from the system.
+Drivers which currently make use of the detachment
 capability of the framework are the
 .Nm ccd
 and
@@ -124,19 +126,20 @@ timestamp, insert the disk into the disklist, and intrement the
 system disk count.
 .It Fn disk_detach
 Detatch a disk; free storage for the disklabel, remove the disk
-from the disklist, and decrement the system disk count.  If the count
-drops below zero, panic.
+from the disklist, and decrement the system disk count.
+If the count drops below zero, panic.
 .It Fn disk_busy
 Increment the disk's
 .Dq busy counter .
 If this counter goes from 0 to 1, set the timestamp corresponding to
 this transfer.
 .It Fn disk_unbusy
-Decrement a disk's busy counter.  If the count drops below zero, print
-a warning message.
+Decrement a disk's busy counter.
+If the count drops below zero, print a warning message.
 Get the current time, subtract it from the disk's timestamp, and add
-the difference to the disk's running total.  Set the disk's timestamp
-to the current time.  If the provided byte count is greater than 0,
+the difference to the disk's running total.
+Set the disk's timestamp to the current time.
+If the provided byte count is greater than 0,
 add it to the disk's running total and increment the number of transfers
 performed by the disk.
 .It Fn disk_resetstat
@@ -158,21 +161,24 @@ The function
 is provided as a utility function.
 .Sh USING THE FRAMEWORK
 This section includes a description on basic use of the framework
-and example usage of its functions.  Actual implementation of
+and example usage of its functions.
+Actual implementation of
 a device driver which utilizes the framework may vary.
 .Pp
 A special routine,
 .Fn disk_init ,
 is provided to perform basic initialization of data structures used by
-the framework.  It is called exactly once by the system, in
+the framework.
+It is called exactly once by the system, in
 .Fn main ,
 before device autoconfiguration.
 .Pp
 Each device in the system uses a
 .Dq softc
 structure which contains autoconfiguration and state information for that
-device.  In the case of disks, the softc should also contain one instance
-of the disk stucture, eg:
+device.
+In the case of disks, the softc should also contain one instance
+of the disk stucture, e.g.:
 .Bd -literal
 struct foo_softc {
 	struct	device *sc_dev;		/* generic device information */
@@ -182,17 +188,21 @@ struct foo_softc {
 .Ed
 .Pp
 In order for the system to gather metrics data about a disk, the disk must
-be registered with the system.  The
+be registered with the system.
+The
 .Fn disk_attach
 routine performs all of the functions currently required to register a disk
 with the system including allocation of disklabel storage space,
 recording of the time since boot that the disk was attached, and insertion
-into the disklist.  Note that since this function allocates storage space
+into the disklist.
+Note that since this function allocates storage space
 for the disklabel, it must be called before the disklabel is read from the
-media or used in any other way.  Before
+media or used in any other way.
+Before
 .Fn disk_attach
 is called, a portions of the disk structure must be initialized with
-data specific to that disk.  For example, in the
+data specific to that disk.
+For example, in the
 .Dq foo
 disk driver, the following would be performed in the autoconfiguration
 .Dq attach
@@ -220,25 +230,28 @@ The
 .Nm foodkdriver
 above is the disk's
 .Dq driver
-switch.  This switch currently includes a pointer to the disk's
+switch.
+This switch currently includes a pointer to the disk's
 .Dq strategy
-routine.  This switch needs to have global scope and sould be initialized
-as follows:
+routine.
+This switch needs to have global scope and sould be initialized as follows:
 .Bd -literal
 void	foostrategy __P((struct buf *));
 struct	dkdriver foodkdriver = { foostrategy };
 .Ed
 .Pp
-Once the disk is attached, metrics may be gathered on that disk.  In order
-to gather metrics data, the driver must tell the framework when the disk
-starts and stops operations.  This functionality is provided by the
+Once the disk is attached, metrics may be gathered on that disk.
+In order to gather metrics data, the driver must tell the framework
+when the disk starts and stops operations.
+This functionality is provided by the
 .Fn disk_busy
 and
 .Fn disk_unbusy
-routines.  The
+routines.
+The
 .Fn disk_busy
 routine should be called immediately before a command to the disk is
-sent, eg:
+sent, e.g.:
 .Bd -literal
 void
 foostart(sc)
@@ -270,15 +283,18 @@ must be called at
 .Fn splbio .
 At the end of a transaction, the
 .Fn disk_unbusy
-routine should be called.  This routine performs some consistency checks,
+routine should be called.
+This routine performs some consistency checks,
 such as ensuring that the calls to
 .Fn disk_busy
 and
 .Fn disk_unbusy
-are balanced.  This routine also performs the actual metrics calculation.
+are balanced.
+This routine also performs the actual metrics calculation.
 A timestamp is taken, and the difference from the timestamp taken in
 .Fn disk_busy
-is added to the disk's total running time.  The disk's timestamp is then
+is added to the disk's total running time.
+The disk's timestamp is then
 updated in case there is more than one pending transfer on the disk.
 A byte count is also added to the disk's running total, and if greater than
 zero, the number of transfers the disk has performed is incremented.
@@ -318,7 +334,8 @@ must be called at
 .Fn splbio .
 .Pp
 At some point a driver may wish to reset the metrics data gathered on a
-particular disk.  For this function, the
+particular disk.
+For this function, the
 .Fn disk_resetstat
 routine is provided.
 .Sh CODE REFERENCES
@@ -327,10 +344,10 @@ The disk framework itself is implemented within the file
 Data structures and function prototypes for the framework are located in
 .Pa sys/sys/disk.h .
 .Pp
-The 
+The
 .Ox
-machine-independent SCSI disk and CD-ROM drivers utilize the
-disk framework.  They are located in
+machine-independent SCSI disk and CD-ROM drivers utilize the disk framework.
+They are located in
 .Pa sys/scsi/sd.c
 and
 .Pa sys/scsi/cd.c .
@@ -348,9 +365,9 @@ They are located in
 and
 .Pa sys/dev/vnd.c .
 .Sh AUTHOR
-The 
+The
 .Ox
-generic disk framework was architected and implemented within 
+generic disk framework was architected and implemented within
 .Nx
 by Jason R. Thorpe <thorpej@NetBSD.ORG>.
 .Sh SEE ALSO
@@ -359,7 +376,7 @@ by Jason R. Thorpe <thorpej@NetBSD.ORG>.
 .Xr vnd 4 ,
 .Xr spl 9 .
 .Sh HISTORY
-The 
+The
 .Ox
-generic disk framework first appeared in 
+generic disk framework first appeared in
 .Nx 1.2 .

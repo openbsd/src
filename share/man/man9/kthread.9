@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kthread.9,v 1.2 1999/09/05 16:23:11 espie Exp $
+.\"	$OpenBSD: kthread.9,v 1.3 2000/10/12 18:06:00 aaron Exp $
 .\"
 .\" Copyright (c) 1999 Marc Espie
 .\" All rights reserved.
@@ -35,7 +35,7 @@
 .Sh NAME
 .Nm kthread_create ,
 .Nm kthread_exit ,
-.Nm kthread_create_deferred  
+.Nm kthread_create_deferred
 .Nd kernel threads.
 .Sh SYNOPSIS
 .Fd #include <sys/kthread.h>
@@ -48,19 +48,20 @@
 .Sh DESCRIPTION
 Kernel threads are system light-weight processes: cloned from process 0
 (the swapper), sharing its memory map and limits, but with a copy of its
-file descriptor table.  They don't receive broadcast nor group signals and
-they can't be swapped.
+file descriptor table.
+They don't receive broadcast nor group signals and they can't be swapped.
 .Pp
 Any process can call
 .Fn kthread_create
-to create a kernel thread.  The new process starts up executing
+to create a kernel thread.
+The new process starts up executing
 .Fa func
 with argument
 .Fa arg .
-If 
-.Fa newpp 
-is not 
-.Dv NULL , 
+If
+.Fa newpp
+is not
+.Dv NULL ,
 it is filled with the address of the new process.
 .Fa fmt
 and the remaining arguments are used to name the process.
@@ -72,21 +73,22 @@ with exit code
 .Pp
 Since the system has to be up and running for creating
 new processes, device drivers that want to create kernel threads early
-(eg, at attach time) may use
-.Fn kthread_create_deferred 
-instead.  The system will call back the function
+(e.g., at attach time) may use
+.Fn kthread_create_deferred
+instead.
+The system will call back the function
 .Fa func
 with argument
 .Fa arg
 when it can create threads, so it is up to
 .Fa func
 to call
-.Fn kthread_create 
+.Fn kthread_create
 at that point.
 .Sh SEE ALSO
 .Xr fork1 9
 .Sh BUGS
-There is currently no way to use 
+There is currently no way to use
 .Va ecode
 to any sensible purpose from
 .Fn kthread_exit .

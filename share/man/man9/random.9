@@ -1,4 +1,4 @@
-.\"	$OpenBSD: random.9,v 1.8 2000/04/26 19:15:13 mickey Exp $
+.\"	$OpenBSD: random.9,v 1.9 2000/10/12 18:06:02 aaron Exp $
 .\"
 .\" Copyright (c) 1996,2000 Michael Shalayeff
 .\" All rights reserved.
@@ -36,25 +36,25 @@
 .Nd device kernel interface
 .Sh SYNOPSIS
 .Fd #include <dev/rndvar.h>
-.Ft void 
+.Ft void
 .Fn add_true_randomness "int"
-.Ft void 
+.Ft void
 .Fn add_timer_randomness "int"
-.Ft void 
+.Ft void
 .Fn add_mouse_randomness "int"
 .Ft void
 .Fn add_tty_randomness "int"
-.Ft void 
+.Ft void
 .Fn add_net_randomness "int"
-.Ft void 
+.Ft void
 .Fn add_disk_randomness "int"
-.Ft void 
+.Ft void
 .Fn add_audio_randomness "int"
 .Ft void
 .Fn get_random_bytes "void *buf" "size_t nbytes"
-.Ft u_int8_t 
+.Ft u_int8_t
 .Fn arc4random_8 "void"
-.Ft u_int32_t 
+.Ft u_int32_t
 .Fn arc4random "void"
 .br
 .Sh DESCRIPTION

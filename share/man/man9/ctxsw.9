@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ctxsw.9,v 1.5 2000/04/26 21:27:59 mickey Exp $
+.\"	$OpenBSD: ctxsw.9,v 1.6 2000/10/12 18:05:58 aaron Exp $
 .\"	$NetBSD: ctxsw.9,v 1.9 1999/03/06 22:09:29 mycroft Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -26,7 +26,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -68,7 +68,7 @@ voluntarily relinquishes the CPU to wait for some resource to become
 available.
 .It
 After handling a trap
-.Pq e.g. a system call or device interrupt
+.Pq e.g., a system call or device interrupt
 when the kernel prepares a return to user-mode execution.
 This case is typically handled by machine-dependent trap-handling code after
 detection of a change in the signal disposition of the current process, or
@@ -115,7 +115,7 @@ a process quickly.
 .Fn cpu_switch
 must remove the first process from the list on the queue
 with the highest priority
-(lower indices in 
+(lower indices in
 .Va qs
 indicate higher priority),
 and assign the address of its process structure to the global variable

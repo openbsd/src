@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fork1.9,v 1.3 2000/02/07 04:38:38 art Exp $
+.\"	$OpenBSD: fork1.9,v 1.4 2000/10/12 18:05:59 aaron Exp $
 .\"	$NetBSD: fork1.9,v 1.3 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,18 +46,18 @@
 .Fd #include <sys/types.h>
 .Fd #include <sys/proc.h>
 .Ft int
-.Fn "fork1" "struct proc *p1" "int flags" "void *stack" "size_t stacksize" "register_t *retval" 
+.Fn "fork1" "struct proc *p1" "int flags" "void *stack" "size_t stacksize" "register_t *retval"
 .Sh DESCRIPTION
 .Fn fork1
 creates a new process out of
 .Ar p1 ,
-which should be the current process.  This function is used primarily
-to implement the
+which should be the current process.
+This function is used primarily to implement the
 .Xr fork 2 ,
 .Xr rfork 2 ,
 .Xr vfork 2
 system calls, as well as the
-.Xr create_kthread 9 
+.Xr create_kthread 9
 function.
 .Pp
 The
@@ -68,15 +68,18 @@ a bitwise-OR of the following values:
 .It Dv FORK_FORK
 The call is done by the
 .Xr fork 2
-system call. Used only for statistics.
+system call.
+Used only for statistics.
 .It Dv FORK_VFORK
 The call is done by the
 .Xr vfork 2
-system call. Used only for statistics.
+system call.
+Used only for statistics.
 .It Dv FORK_RFORK
 The call is done by the
 .Xr rfork 2
-system call. Used only for statistics.
+system call.
+Used only for statistics.
 .It Dv FORK_PPWAIT
 Suspend the parent process until the child is terminated (by calling
 .Xr _exit 2
@@ -92,17 +95,19 @@ The child starts with a clean file descriptor table created by
 .Xr fdinit 9 .
 .It Dv FORK_NOZOMBIE
 The child will be dissociated from the parent and will not leave a status
-for the parent to collect. See
+for the parent to collect.
+See
 .Xr wait 2 .
 .It Dv FORK_SHAREVM
-The child will share the parent's address space. The default behavior is
+The child will share the parent's address space.
+The default behavior is
 that the child gets a copy-on-write copy of the address space.
 .El
 .Pp
 If
 .Fa stack
-is not 
-.Dv NULL , 
+is not
+.Dv NULL ,
 the area starting at
 .Fa stack
 of extent
@@ -112,20 +117,21 @@ stack.
 .Pp
 If
 .Fa retval
-is not 
-.Dv NULL , 
+is not
+.Dv NULL ,
 it will hold the following values after successful completion
 of the fork operation:
 .Bl -tag -width retval[0]
 .It Fa retval[0]
 This will contain the pid of the child process.
 .It Fa retval[1]
-In the parent process, this will contain the value 0.  In the child process,
-this will contain 1.
+In the parent process, this will contain the value 0.
+In the child process, this will contain 1.
 .Sh RETURN VALUES
 Upon successful completion of the fork operation,
 .Fn fork1
-returns 0.  Otherwise, the following error values are returned:
+returns 0.
+Otherwise, the following error values are returned:
 .Bl -tag -width [EAGAIN]
 .It Bq Er EAGAIN
 The limit on the total number of system processes would be exceeded.
@@ -138,12 +144,12 @@ user id would be exceeded.
 .Sh CAVEATS
 The
 .Nm
-function semantics are specific to 
+function semantics are specific to
 .Ox .
 Other BSD systems have different semantics.
 .Pp
 The system never uses
-.Fn fork1 
+.Fn fork1
 with a non-null
 .Fa stack ,
 so that feature is not even tested.

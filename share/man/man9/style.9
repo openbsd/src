@@ -1,4 +1,4 @@
-.\" Copyright (c) 1995 FreeBSD Inc. 
+.\" Copyright (c) 1995 FreeBSD Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: style.9,v 1.7 2000/03/06 21:46:56 aaron Exp $
+.\"	$OpenBSD: style.9,v 1.8 2000/10/12 18:06:03 aaron Exp $
 .\"
 .Dd August 19, 1999
 .Dt STYLE 9
@@ -33,12 +33,14 @@
 .Sh DESCRIPTION
 This file specifies the preferred style for kernel source files in the
 .Ox
-source tree.  It is also a guide for preferred user land code style.
+source tree.
+It is also a guide for preferred user land code style.
 These guidelines should be followed for all new code.
 In general, code can be considered
 .Dq new code
-when it makes up about 50% or more of the file(s) involved.  This is enough
-to break precedents in the existing code and use the current style guidelines.
+when it makes up about 50% or more of the file(s) involved.
+This is enough to break precedents in the existing code and use the
+current style guidelines.
 .Bd -literal -offset 0i
 /*
  * Style guide for the OpenBSD KNF (Kernel Normal Form).
@@ -56,7 +58,7 @@ to break precedents in the existing code and use the current style guidelines.
  */
 .Ed
 .Pp
-Kernel include files (i.e.
+Kernel include files (i.e.,
 .Pa Aq sys/*.h )
 come first; normally, you'll need
 .Pa Aq sys/types.h
@@ -106,9 +108,9 @@ Then, there's a blank line, and the user include files.
 .Pp
 All functions are prototyped somewhere.
 .Pp
-Function prototypes for private functions (i.e. functions not used
-elsewhere) go at the top of the first source module.  In user land,
-functions local to one source module should be declared
+Function prototypes for private functions (i.e., functions not used
+elsewhere) go at the top of the first source module.
+In user land, functions local to one source module should be declared
 .Ql static .
 This should not be done in kernel land since it makes it impossible
 to use the kernel debugger.
@@ -117,7 +119,7 @@ Functions used from other parts of the kernel are prototyped in the
 relevant include file.
 .Pp
 Functions that are used locally in more than one module go into a
-separate header file, e.g.
+separate header file, e.g.,
 .Pa extern.h .
 .Pp
 When declaring a prototype, use the
@@ -144,20 +146,21 @@ Use
 .Li __dead
 from
 .Pa Aq sys/cdefs.h
-for functions that don't return, e.g.
+for functions that don't return, e.g.,
 .Bd -literal -offset 0i
 __dead void	abort __P((void));
 .Ed
 .Pp
 In header files, put function prototypes within
 .Dv __BEGIN_DECLS / __END_DECLS
-matching pairs.  This makes the header file usable from C++.
+matching pairs.
+This makes the header file usable from C++.
 .Pp
 Macros are capitalized and parenthesized, and should avoid side-effects.
 If they are an inline expansion of a function, the function is defined
-all in lowercase; the macro has the same name all in uppercase.  If the
-macro needs more than a single line, use braces.  Right-justify the
-backslashes, as the resulting definition is easier to read.
+all in lowercase; the macro has the same name all in uppercase.
+If the macro needs more than a single line, use braces.
+Right-justify the backslashes, as the resulting definition is easier to read.
 If the macro encapsulates a compound statement, enclose it in a
 .Dq Li do
 loop,
@@ -180,17 +183,18 @@ enum enumtype { ONE, TWO } et;
 .Ed
 .Pp
 When declaring variables in structures, declare them sorted by use, then
-by size, and then by alphabetical order.  The first category normally
-doesn't apply, but there are exceptions.  Each one gets its own line.
-Put a tab after the first word, i.e. use
+by size, and then by alphabetical order.
+The first category normally doesn't apply, but there are exceptions.
+Each one gets its own line.
+Put a tab after the first word, i.e., use
 .Ql int^Ix;
 and
 .Ql struct^Ifoo *x; .
 .Pp
 Major structures should be declared at the top of the file in which they
 are used, or in separate header files if they are used in multiple
-source files.  Use of the structures should be by separate declarations
-and should be
+source files.
+Use of the structures should be by separate declarations and should be
 .Dq Li extern
 if they are declared in a header file.
 .Bd -literal -offset 0i
@@ -204,8 +208,8 @@ struct foo *foohead;		/* Head of global foo list */
 .Pp
 Use
 .Xr queue 3
-macros rather than rolling your own lists, whenever possible.  Thus,
-the previous example would be better written:
+macros rather than rolling your own lists, whenever possible.
+Thus, the previous example would be better written:
 .Bd -literal -offset 0i
 #include <sys/queue.h>
 struct	foo {
@@ -216,11 +220,12 @@ struct	foo {
 LIST_HEAD(, foo) foohead;	/* Head of global foo list */
 .Ed
 .Pp
-Avoid using typedefs for structure types.  This makes it impossible
+Avoid using typedefs for structure types.
+This makes it impossible
 for applications to use pointers to such a structure opaquely, which
 is both possible and beneficial when using an ordinary struct tag.
-When convention requires a typedef, make its name match the struct
-tag.  Avoid typedefs ending in
+When convention requires a typedef, make its name match the struct tag.
+Avoid typedefs ending in
 .Dq Li \&_t ,
 except as specified in Standard C or by
 .Tn POSIX .
@@ -250,14 +255,14 @@ main(int argc, char *argv[])
 .Pp
 For consistency,
 .Xr getopt 3
-should be used to parse options.  Options
-should be sorted in the
+should be used to parse options.
+Options should be sorted in the
 .Xr getopt 3
 call and the switch statement, unless
-parts of the switch cascade.  Elements in a switch statement that
-cascade should have a FALLTHROUGH comment.  Numerical arguments
-should be checked for accuracy.  Code that cannot be reached should
-have a NOTREACHED comment.
+parts of the switch cascade.
+Elements in a switch statement that cascade should have a FALLTHROUGH comment.
+Numerical arguments should be checked for accuracy.
+Code that cannot be reached should not have a NOTREACHED comment.
 .Bd -literal -offset 0i
 	while ((ch = getopt(argc, argv, "abn")) != -1)
 		switch (ch) {		/* Indent the switch. */
@@ -314,8 +319,9 @@ not
 	}
 .Ed
 .Pp
-Parts of a for loop may be left empty.  Don't put declarations
-inside blocks unless the routine is unusually complicated.
+Parts of a for loop may be left empty.
+Don't put declarations inside blocks unless the routine is
+unusually complicated.
 .Bd -literal -offset 0i
 	for (; cnt < 15; cnt++) {
 		stmt1;
@@ -333,8 +339,8 @@ Second level indents are four spaces.
 .Ed
 .Pp
 Do not add whitespace at the end of a line, and only use tabs
-followed by spaces
-to form the indentation.  Do not use more spaces than a tab will produce
+followed by spaces to form the indentation.
+Do not use more spaces than a tab will produce
 and do not use spaces in front of tabs.
 .Pp
 Closing and opening braces go on the same line as the else.
@@ -350,9 +356,9 @@ a compiler warning.
 		stmt;
 .Ed
 .Pp
-Do not use spaces after function names.  Commas have a space after them.
-Do not use spaces
-after
+Do not use spaces after function names.
+Commas have a space after them.
+Do not use spaces after
 .Sq \&(
 or
 .Sq \&[
@@ -366,10 +372,10 @@ characters.
 		exit(error);
 .Ed
 .Pp
-Unary operators don't require spaces, binary operators do.  Don't
-use parentheses unless they're required for precedence, the statement
-is confusing without them, or the compiler generates a warning without
-them.  Remember that other people may be confused more easily than you.
+Unary operators don't require spaces, binary operators do.
+Don't use parentheses unless they're required for precedence, the statement
+is confusing without them, or the compiler generates a warning without them.
+Remember that other people may be confused more easily than you.
 Do YOU understand the following?
 .Bd -literal -offset 0i
 	a = b->c[0] + ~d == (e || f) || g && h ? i : j >> 1;
@@ -398,14 +404,15 @@ function(a1, a2, fl, a4)
 .Ed
 .Pp
 When declaring variables in functions declare them sorted by size,
-then in alphabetical order; multiple ones per line are okay.  Old
-style function declarations can go on the same line.  ANSI style
-function declarations should go in the include file
+then in alphabetical order; multiple ones per line are okay.
+Old style function declarations can go on the same line.
+ANSI style function declarations should go in the include file
 .Dq Pa extern.h .
 If a line overflows reuse the type keyword.
 .Pp
 Be careful to not obfuscate the code by initializing variables in
-the declarations.  Use this feature only thoughtfully.
+the declarations.
+Use this feature only thoughtfully.
 DO NOT use function calls in initializers!
 .Bd -literal -offset 0i
 	struct foo one, *two;
@@ -418,24 +425,26 @@ DO NOT use function calls in initializers!
 .Pp
 Do not declare functions inside other functions; ANSI C says that
 such declarations have file scope regardless of the nesting of the
-declaration.  Hiding file declarations in what appears to be a local
-scope is undesirable and will elicit complaints from a good compiler,
-such as
+declaration.
+Hiding file declarations in what appears to be a local scope is
+undesirable and will elicit complaints from a good compiler, such as
 .Dq Li gcc -Wtraditional .
 .Pp
-Casts and sizeof's are not followed by a space.  Note that
+Casts and sizeof's are not followed by a space.
+Note that
 .Xr indent 1
 does not understand this rule.
 .Pp
 .Dv NULL
-is the preferred null pointer constant.  Use
+is the preferred null pointer constant.
+Use
 .Dv NULL
 instead of
 (type\ *)0 or (type\ *)NULL in contexts where the compiler knows the
-type, e.g., in assignments.  Use (type\ *)NULL in other contexts,
-in particular for all function args.  (Casting is essential for
-variadic args and is necessary for other args if the function prototype
-might not be in scope.)
+type, e.g., in assignments.
+Use (type\ *)NULL in other contexts, in particular for all function args.
+(Casting is essential for variadic args and is necessary for other args
+if the function prototype might not be in scope.)
 Test pointers
 against
 .Dv NULL ,
@@ -451,7 +460,7 @@ not:
 .Pp
 Don't use
 .Ql \&!
-for tests unless it's a boolean, e.g. use
+for tests unless it's a boolean, e.g., use
 .Bd -literal -offset 0i
 if (*p == '\e0')
 .Ed
@@ -480,7 +489,7 @@ don't roll your own!
 .Ed
 .Pp
 Don't use ANSI function declarations unless you absolutely have to,
-i.e. you're declaring functions with variable numbers of arguments.
+i.e., you're declaring functions with variable numbers of arguments.
 .Pp
 ANSI function declarations look like this:
 .Bd -literal -offset 0i
@@ -533,12 +542,14 @@ Use
 not fputs/puts/putchar/whatever; it's faster and usually cleaner, not
 to mention helpful in avoiding stupid bugs.
 .Pp
-Usage statements should look like the manual pages.  Options without
+Usage statements should look like the manual pages.
+Options without
 operands come first, in alphabetical order inside a single set of
 braces, followed by options with operands, in alphabetical order,
 each in braces, followed by required arguments in the order they
 are specified, followed by optional arguments in the order they
-are specified.  A bar
+are specified.
+A bar
 .Pq Sq \&|
 separates either-or options/arguments,
 and multiple options/arguments which are specified together are
@@ -563,16 +574,15 @@ The guidelines for third-party maintained modules and device drivers are more
 relaxed but at a minimum should be internally consistent with their style.
 .Pp
 Stylistic changes (including whitespace changes) are hard on the source
-repository and are to be avoided without good reason.  Code that is
-approximately KNF compliant in the repository must not diverge from
-compliance.
+repository and are to be avoided without good reason.
+Code that is approximately KNF compliant in the repository must not diverge
+from compliance.
 .Pp
 Whenever possible, code should be run through a code checker
 (e.g.,
 .Dq Li gcc -Wall -W -Wtraditional -Wpointer-arith -Wbad-function-cast ... ,
 .Xr lint 1
 or lclint from the ports tree) and produce minimal warnings.
-
 .Sh SEE ALSO
 .Xr indent 1 ,
 .Xr err 3 ,
