@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.19 2005/04/05 17:10:43 reyk Exp $  */
+/*      $OpenBSD: ath.c,v 1.20 2005/04/06 00:42:59 kevlo Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -49,7 +49,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/types.h>
 #include <sys/sysctl.h>
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
