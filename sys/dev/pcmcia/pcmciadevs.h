@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.96 2002/08/08 20:35:26 fgsch Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.97 2002/08/17 21:55:36 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.94 2002/08/08 20:34:46 fgsch Exp 
+ *		OpenBSD: pcmciadevs,v 1.95 2002/08/17 21:55:10 fgsch Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -487,6 +487,7 @@
 #define	PCMCIA_VENDOR_ADDTRON	-1	/* Addtron */
 #define	PCMCIA_VENDOR_AMBICOM	-1	/* AmbiCom */
 #define	PCMCIA_VENDOR_AMD	-1	/* AMD */
+#define	PCMCIA_VENDOR_AROWANA	-1	/* Arowana */
 #define	PCMCIA_VENDOR_BILLIONTON	-1	/* Billionton Systems Inc. */
 #define	PCMCIA_VENDOR_CNET	-1	/* CNet */
 #define	PCMCIA_VENDOR_DIGITAL	-1	/* Digital */
@@ -638,3 +639,5 @@
 #define	PCMCIA_PRODUCT_GEMTEK_WLAN	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_SIMPLETECH_SPECTRUM24_ALT	{ "Symbol Technologies", "LA4111 Spectrum24 Wireless LAN PC Card", NULL, NULL }
 #define	PCMCIA_PRODUCT_SIMPLETECH_SPECTRUM24_ALT	PCMCIA_PRODUCT_INVALID
+#define	PCMCIA_CIS_AROWANA_FE	{ "PCMCIA", "Fast-Ethernet", NULL, NULL }
+#define	PCMCIA_PRODUCT_AROWANA_FE	PCMCIA_PRODUCT_INVALID
