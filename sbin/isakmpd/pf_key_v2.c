@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.122 2003/02/24 12:01:04 markus Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.123 2003/04/14 10:14:16 ho Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -3744,7 +3744,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 	{
 	  struct cert_handler *handler = 0;
 	  void *cert;
-	  char num[10], *certprint;
+	  char num[12], *certprint;
 
 	  /* Convert to bytes in-place. */
 	  cred->sadb_x_cred_len *= PF_KEY_V2_CHUNK;
@@ -3760,11 +3760,11 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 	  switch (cred->sadb_x_cred_type)
 	    {
 	    case SADB_X_CREDTYPE_X509:
-	      snprintf (num, 10, "%d", ISAKMP_CERTENC_X509_SIG);
+	      snprintf (num, sizeof num, "%d", ISAKMP_CERTENC_X509_SIG);
 	      handler = cert_get (ISAKMP_CERTENC_X509_SIG);
 	      break;
 	    case SADB_X_CREDTYPE_KEYNOTE:
-	      snprintf (num, 10, "%d", ISAKMP_CERTENC_KEYNOTE);
+	      snprintf (num, sizeof num, "%d", ISAKMP_CERTENC_KEYNOTE);
 	      handler = cert_get (ISAKMP_CERTENC_KEYNOTE);
 	      break;
 	    default:
