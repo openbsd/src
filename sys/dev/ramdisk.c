@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramdisk.c,v 1.5 1996/04/21 22:19:53 deraadt Exp $	*/
+/*	$OpenBSD: ramdisk.c,v 1.6 1997/02/06 04:30:35 rahnds Exp $	*/
 /*	$NetBSD: ramdisk.c,v 1.8 1996/04/12 08:30:09 leo Exp $	*/
 
 /*
@@ -52,9 +52,12 @@
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/device.h>
+#include <sys/file.h>
 #include <sys/disk.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
+#include <sys/disklabel.h>
+#include <sys/dkio.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -80,8 +83,12 @@ extern vm_offset_t	 kmem_alloc __P((vm_map_t, vm_size_t));
  * XXX Assumption: 16 RAM-disks are enough!
  */
 #define RD_MAX_UNITS	0x10
-#define RD_IS_CTRL(unit) (unit & 0x10)
-#define RD_UNIT(unit)    (unit &  0xF)
+#define RD_UNIT(unit)    (unit / MAXPARTITIONS)
+#define RD_PART(unit)    (unit % MAXPARTITIONS)
+#define RD_IS_CTRL(unit) (RD_PART(unit) == RAW_PART)
+#define	MAKERDDEV(maj, unit, part)	MAKEDISKDEV(maj, unit, part)
+
+#define	RDLABELDEV(dev)	(MAKERDDEV(major(dev), RD_UNIT(dev), RAW_PART))
 
 /* autoconfig stuff... */
 
@@ -102,6 +109,7 @@ struct rd_softc {
 
 void rdattach __P((int));
 static void rd_attach __P((struct device *, struct device *, void *));
+struct disklabel *rdgetdisklabel __P((dev_t dev, struct rd_softc *sc));
 
 /*
  * Some ports (like i386) use a swapgeneric that wants to
@@ -393,25 +401,68 @@ rdioctl(dev, cmd, data, flag, proc)
 	int md, unit;
 	struct rd_softc *sc;
 	struct rd_conf *urd;
+	struct cpu_disklabel clp;
+	struct disklabel lp, *lpp;
+	int error;
 
 	md = minor(dev);
 	unit = RD_UNIT(md);
 	sc = ramdisk_devs[unit];
 
-	/* If this is not the control device, punt! */
-	if (RD_IS_CTRL(md) == 0)
-		return ENOTTY;
-
 	urd = (struct rd_conf *)data;
 	switch (cmd) {
+	case DIOCGDINFO:
+		if (sc->sc_type == RD_UNCONFIGURED) {
+			break;
+		}
+		lpp = rdgetdisklabel(dev, sc);
+		if (lpp)
+			*(struct disklabel *)data = *lpp;
+		return 0;
+
+	case DIOCWDINFO:
+	case DIOCSDINFO:
+		if (sc->sc_type == RD_UNCONFIGURED) {
+			break;
+		}
+		if ((flag & FWRITE) == 0)
+			return EBADF;
+
+		error = setdisklabel(&lp, (struct disklabel *)data,
+		    /*sd->sc_dk.dk_openmask : */0, &clp);
+		if (error == 0) {
+			if (cmd == DIOCWDINFO)
+				error = writedisklabel(RDLABELDEV(dev),
+				    rdstrategy, &lp, &clp);
+		}
+
+		return error;
+
+	case DIOCWLABEL:
+		if (sc->sc_type == RD_UNCONFIGURED) {
+			break;
+		}
+		if ((flag & FWRITE) == 0)
+			return EBADF;
+		return 0;
+
 	case RD_GETCONF:
+		/* If this is not the control device, punt! */
+		if (RD_IS_CTRL(md) == 0) {
+			break;
+		}
 		*urd = sc->sc_rd;
 		return 0;
 
 	case RD_SETCONF:
-		/* Can only set it once. */
-		if (sc->sc_type != RD_UNCONFIGURED)
+		/* If this is not the control device, punt! */
+		if (RD_IS_CTRL(md) == 0) {
 			break;
+		}
+		/* Can only set it once. */
+		if (sc->sc_type != RD_UNCONFIGURED) {
+			break;
+		}
 		switch (urd->rd_type) {
 		case RD_KMEM_ALLOCATED:
 			return rd_ioctl_kalloc(sc, urd, proc);
@@ -425,6 +476,57 @@ rdioctl(dev, cmd, data, flag, proc)
 		break;
 	}
 	return EINVAL;
+}
+
+struct disklabel *
+rdgetdisklabel(dev, sc)
+	dev_t dev;
+	struct rd_softc *sc;
+{
+	static struct disklabel lp;
+	struct cpu_disklabel clp;
+	char *errstring;
+
+	bzero(&lp, sizeof(struct disklabel));
+	bzero(&clp, sizeof(struct cpu_disklabel));
+
+	lp.d_secsize = 1 << DEV_BSHIFT;
+	lp.d_ntracks = 1;
+	lp.d_nsectors = sc->sc_size >> DEV_BSHIFT;
+	lp.d_ncylinders = 1;
+	lp.d_secpercyl = lp.d_nsectors;
+	if (lp.d_secpercyl == 0) {
+		lp.d_secpercyl = 100;
+		/* as long as it's not 0 - readdisklabel divides by it (?) */
+	}
+
+	strncpy(lp.d_typename, "RAM disk", 16);
+	lp.d_type = DTYPE_SCSI;
+	strncpy(lp.d_packname, "fictitious", 16);
+	lp.d_secperunit = lp.d_nsectors;
+	lp.d_rpm = 3600;
+	lp.d_interleave = 1;
+	lp.d_flags = 0;
+
+	lp.d_partitions[RAW_PART].p_offset = 0;
+	lp.d_partitions[RAW_PART].p_size =
+	    lp.d_secperunit * (lp.d_secsize / DEV_BSIZE);
+	lp.d_partitions[RAW_PART].p_fstype = FS_UNUSED;
+	lp.d_npartitions = RAW_PART + 1;
+
+	lp.d_magic = DISKMAGIC;
+	lp.d_magic2 = DISKMAGIC;
+	lp.d_checksum = dkcksum(&lp);
+
+	/*
+	 * Call the generic disklabel extraction routine
+	 */
+	errstring = readdisklabel(RDLABELDEV(dev), rdstrategy, &lp, &clp);
+	if (errstring) {
+		printf("%s: %s\n", sc->sc_dev.dv_xname, errstring);
+		return NULL;
+	}
+	return &lp;
 }
 
 /*
