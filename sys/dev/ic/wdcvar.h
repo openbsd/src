@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcvar.h,v 1.13 2001/01/29 00:20:16 csapuntz Exp $     */
+/*      $OpenBSD: wdcvar.h,v 1.14 2001/03/05 16:04:11 ho Exp $     */
 /*	$NetBSD: wdcvar.h,v 1.17 1999/04/11 20:50:29 bouyer Exp $	*/
 
 /*-
@@ -218,6 +218,7 @@ struct wdc_xfer {
 	int timeout;
 	int endticks;
 	int delay;
+	struct timeout atapi_poll_to;
 	unsigned int expect_irq:1;
 	unsigned int claim_irq:1;
 

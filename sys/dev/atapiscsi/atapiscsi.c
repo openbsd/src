@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.36 2001/01/30 03:16:09 csapuntz Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.37 2001/03/05 16:04:12 ho Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -50,6 +50,7 @@
 #include <sys/reboot.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
+#include <sys/timeout.h>
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_disk.h>
 #include <scsi/scsi_tape.h>
@@ -443,6 +444,8 @@ wdc_atapi_send_cmd(sc_xfer)
 	xfer->c_start = wdc_atapi_start;
 	xfer->c_intr = wdc_atapi_intr;
 
+	timeout_set(&xfer->atapi_poll_to, wdc_atapi_timer_handler, xfer);
+
 	s = splbio();
 
 	if (drvp->atapi_cap & ACAP_DSC) {
@@ -738,7 +741,7 @@ wdc_atapi_the_machine(chp, xfer, ctxt)
 
 	case DONE:
 		if (xfer->c_flags & C_POLL_MACHINE)
-			untimeout(wdc_atapi_timer_handler, xfer);
+			timeout_del(&xfer->atapi_poll_to);
 
 		wdc_free_xfer(chp, xfer);
 		wdcstart(chp);
@@ -746,7 +749,7 @@ wdc_atapi_the_machine(chp, xfer, ctxt)
 		return (claim_irq);
 	}
 
-	timeout(wdc_atapi_timer_handler, xfer, timeout_delay);
+	timeout_add(&xfer->atapi_poll_to, timeout_delay);
 	xfer->c_flags |= C_POLL_MACHINE;
 	return (claim_irq);
 }
