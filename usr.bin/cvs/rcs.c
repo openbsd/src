@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.7 2004/07/14 20:07:28 jfb Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.8 2004/08/02 22:59:58 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -440,7 +440,6 @@ rcs_patch_lines(struct rcs_foo *dlines, struct rcs_foo *plines)
 {
 	char op, *ep;
 	struct rcs_line *lp, *dlp, *ndlp;
-	FILE *fp;
 	int i, lineno, nbln;
 
 	dlp = TAILQ_FIRST(&(dlines->rl_lines));
