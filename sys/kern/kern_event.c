@@ -1,7 +1,7 @@
-/*	$OpenBSD: kern_event.c,v 1.6 2000/11/21 21:49:57 provos Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.7 2001/03/01 20:54:33 provos Exp $	*/
 
 /*-
- * Copyright (c) 1999,2000 Jonathan Lemon <jlemon@FreeBSD.org>
+ * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/kern/kern_event.c,v 1.15 2000/08/07 16:45:42 jlemon Exp $
+ * $FreeBSD: src/sys/kern/kern_event.c,v 1.22 2001/02/23 20:32:42 jlemon Exp $
  */
 
 #include <sys/param.h>
@@ -49,15 +49,6 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-int	filt_nullattach(struct knote *kn);
-int	filt_rwtypattach(struct knote *kn);
-int	filt_kqattach(struct knote *kn);
-void	filt_kqdetach(struct knote *kn);
-int	filt_kqueue(struct knote *kn, long hint);
-int	filt_procattach(struct knote *kn);
-void	filt_procdetach(struct knote *kn);
-int	filt_proc(struct knote *kn, long hint);
-
 int	kqueue_scan(struct file *fp, int maxevents,
 		    struct kevent *ulistp, const struct timespec *timeout,
 		    struct proc *p, int *retval);
@@ -69,8 +60,18 @@ int	kqueue_write(struct file *fp, off_t *poff, struct uio *uio,
 int	kqueue_ioctl(struct file *fp, u_long com, caddr_t data,
 		    struct proc *p);
 int	kqueue_select(struct file *fp, int which, struct proc *p);
+int 	kqueue_kqfilter(struct file *fp, struct knote *kn);
 int	kqueue_close(struct file *fp, struct proc *p);
 void	kqueue_wakeup(struct kqueue *kq);
+
+struct fileops kqueueops = {
+	kqueue_read,
+	kqueue_write,
+	kqueue_ioctl,
+	kqueue_select,
+	kqueue_kqfilter,
+	kqueue_close
+};
 
 void	knote_attach(struct knote *kn, struct filedesc *fdp);
 void	knote_drop(struct knote *kn, struct proc *p);
@@ -78,6 +79,20 @@ void	knote_enqueue(struct knote *kn);
 void	knote_dequeue(struct knote *kn);
 struct	knote *knote_alloc(void);
 void	knote_free(struct knote *kn);
+
+void	filt_kqdetach(struct knote *kn);
+int	filt_kqueue(struct knote *kn, long hint);
+int	filt_procattach(struct knote *kn);
+void	filt_procdetach(struct knote *kn);
+int	filt_proc(struct knote *kn, long hint);
+int	filt_fileattach(struct knote *kn);
+
+struct filterops kqread_filtops =
+	{ 1, NULL, filt_kqdetach, filt_kqueue };
+struct filterops proc_filtops =
+	{ 0, filt_procattach, filt_procdetach, filt_proc };
+struct filterops file_filtops =
+	{ 1, filt_fileattach, NULL, NULL };
 
 #define KNOTE_ACTIVATE(kn) do {						\
 	kn->kn_status |= KN_ACTIVE;					\
@@ -88,88 +103,40 @@ void	knote_free(struct knote *kn);
 #define	KN_HASHSIZE		64		/* XXX should be tunable */
 #define KN_HASH(val, mask)	(((val) ^ (val >> 8)) & (mask))
 
-struct fileops kqueueops = {
-	kqueue_read,
-	kqueue_write,
-	kqueue_ioctl,
-	kqueue_select,
-	kqueue_close
-};
-
-extern struct filterops so_rwfiltops[];
-extern struct filterops pipe_rwfiltops[];
-#ifdef notyet
-extern struct filterops fifo_rwfiltops[];
-#endif
-extern struct filterops vn_rwfiltops[];
-
-struct filterops kq_rwfiltops[] = {
-    { 1, filt_kqattach, filt_kqdetach, filt_kqueue },
-    { 1, filt_nullattach, NULL, NULL },
-};
-
 extern struct filterops sig_filtops;
 #ifdef notyet
 extern struct filterops aio_filtops;
 #endif
-extern struct filterops vn_filtops;
-
-struct filterops rwtype_filtops =
-	{ 1, filt_rwtypattach, NULL, NULL };
-struct filterops proc_filtops =
-	{ 0, filt_procattach, filt_procdetach, filt_proc };
 
 /*
- * XXX
- * These must match the order of defines in <sys/file.h>
- */
-struct filterops *rwtypfilt_sw[] = {
-	NULL,				/* 0 */
-	vn_rwfiltops,			/* DTYPE_VNODE */
-	so_rwfiltops,			/* DTYPE_SOCKET */
-	pipe_rwfiltops,			/* DTYPE_PIPE */
-	/* fifo_rwfiltops, */		/* DTYPE_FIFO */
-	kq_rwfiltops,			/* DTYPE_KQUEUE */
-};
-
-/*
- * table for all system-defined filters.
+ * Table for for all system-defined filters.
  */
 struct filterops *sysfilt_ops[] = {
-	&rwtype_filtops,		/* EVFILT_READ */
-	&rwtype_filtops,		/* EVFILT_WRITE */
+	&file_filtops,			/* EVFILT_READ */
+	&file_filtops,			/* EVFILT_WRITE */
 	NULL, /*&aio_filtops,*/		/* EVFILT_AIO */
-	&vn_filtops,			/* EVFILT_VNODE */
+	&file_filtops,			/* EVFILT_VNODE */
 	&proc_filtops,			/* EVFILT_PROC */
 	&sig_filtops,			/* EVFILT_SIGNAL */
 };
 
 int
-filt_nullattach(struct knote *kn)
+filt_fileattach(struct knote *kn)
 {
-	return (ENXIO);
-}
+	struct file *fp = kn->kn_fp;
 
-/*
- * file-type specific attach routine for read/write filters
- */
-int
-filt_rwtypattach(struct knote *kn)
-{
-	struct filterops *fops;
-
-	fops = rwtypfilt_sw[kn->kn_fp->f_type];
-	if (fops == NULL)
-		return (EINVAL);
-	kn->kn_fop = &fops[~kn->kn_filter];	/* convert to 0-base index */
-	return (kn->kn_fop->f_attach(kn));
+	return ((*fp->f_ops->fo_kqfilter)(fp, kn));
 }
 
 int
-filt_kqattach(struct knote *kn)
+kqueue_kqfilter(struct file *fp, struct knote *kn)
 {
 	struct kqueue *kq = (struct kqueue *)kn->kn_fp->f_data;
 
+	if (kn->kn_filter != EVFILT_READ)
+		return (1);
+
+	kn->kn_fop = &kqread_filtops;
 	SLIST_INSERT_HEAD(&kq->kq_sel.si_note, kn, kn_selnext);
 	return (0);
 }
@@ -338,7 +305,7 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	struct kevent *kevp;
 	struct kqueue *kq;
-	struct file *fp;
+	struct file *fp = NULL;
 	struct timespec ts;
 	int i, n, nerrors, error;
 
@@ -347,10 +314,12 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 	    (fp->f_type != DTYPE_KQUEUE))
 		return (EBADF);
 
+	fp->f_count++;
+
 	if (SCARG(uap, timeout) != NULL) {
 		error = copyin(SCARG(uap, timeout), &ts, sizeof(ts));
 		if (error)
-			return error;
+			goto done;
 		SCARG(uap, timeout) = &ts;
 	}
 
@@ -363,7 +332,7 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 		error = copyin(SCARG(uap, changelist), kq->kq_kev,
 		    n * sizeof(struct kevent));
 		if (error)
-			return (error);
+			goto done;
 		for (i = 0; i < n; i++) {
 			kevp = &kq->kq_kev[i];
 			kevp->flags &= ~EV_SYSFLAGS;
@@ -379,7 +348,7 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 					SCARG(uap, nevents)--;
 					nerrors++;
 				} else {
-					return (error);
+					goto done;
 				}
 			}
 		}
@@ -388,12 +357,16 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 	}
 	if (nerrors) {
 		*retval = nerrors;
-		return (0);
+		error = 0;
+		goto done;
 	}
 
 	error = kqueue_scan(fp, SCARG(uap, nevents), SCARG(uap, eventlist),
 			    SCARG(uap, timeout), p, &n);
 	*retval = n;
+ done:
+	if (fp != NULL)
+		closef(fp, p);
 	return (error);
 }
 
@@ -427,6 +400,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 		if ((u_int)kev->ident >= fdp->fd_nfiles ||
 		    (fp = fdp->fd_ofiles[kev->ident]) == NULL)
 			return (EBADF);
+		fp->f_count++;
 
 		if (kev->ident < fdp->fd_knlistsize) {
 			SLIST_FOREACH(kn, &fdp->fd_knlist[kev->ident], kn_link)
@@ -448,8 +422,10 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 		}
 	}
 
-	if (kn == NULL && ((kev->flags & EV_ADD) == 0))
-		return (ENOENT);
+	if (kn == NULL && ((kev->flags & EV_ADD) == 0)) {
+		error = ENOENT;
+		goto done;
+	}
 
 	/*
 	 * kn now contains the matching knote, or NULL if no match
@@ -458,13 +434,19 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 
 		if (kn == NULL) {
 			kn = knote_alloc();
-			if (kn == NULL)
-				return (ENOMEM);
-			if (fp != NULL)
-				fp->f_count++;
+			if (kn == NULL) {
+				error = ENOMEM;
+				goto done;
+			}
 			kn->kn_fp = fp;
 			kn->kn_kq = kq;
 			kn->kn_fop = fops;
+
+			/*
+			 * apply reference count to knote structure, and
+			 * do not release it at the end of this routine.
+			 */
+			fp = NULL;
 
 			kn->kn_sfflags = kev->fflags;
 			kn->kn_sdata = kev->data;
@@ -516,6 +498,8 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 	}
 
 done:
+	if (fp != NULL)
+		closef(fp, p);
 	return (error);
 }
 

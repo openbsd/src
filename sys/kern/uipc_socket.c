@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.30 2001/02/07 12:20:42 itojun Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.31 2001/03/01 20:54:34 provos Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -51,21 +51,19 @@
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
 
-int 	filt_sorattach(struct knote *kn);
 void 	filt_sordetach(struct knote *kn);
 int 	filt_soread(struct knote *kn, long hint);
-int 	filt_sowattach(struct knote *kn);
 void 	filt_sowdetach(struct knote *kn);
 int	filt_sowrite(struct knote *kn, long hint);
 int	filt_solisten(struct knote *kn, long hint);
 
 struct filterops solisten_filtops = 
-	{ 1, filt_sorattach, filt_sordetach, filt_solisten };
+	{ 1, NULL, filt_sordetach, filt_solisten };
+struct filterops soread_filtops =
+	{ 1, NULL, filt_sordetach, filt_soread };
+struct filterops sowrite_filtops = 
+	{ 1, NULL, filt_sowdetach, filt_sowrite };
 
-struct filterops so_rwfiltops[] = {
-	{ 1, filt_sorattach, filt_sordetach, filt_soread },
-	{ 1, filt_sowattach, filt_sowdetach, filt_sowrite },
-};
 
 #ifndef SOMINCONN
 #define SOMINCONN 80
@@ -1114,15 +1112,31 @@ sohasoutofband(so)
 }
 
 int
-filt_sorattach(struct knote *kn)
+soo_kqfilter(struct file *fp, struct knote *kn)
 {
 	struct socket *so = (struct socket *)kn->kn_fp->f_data;
-	int s = splnet();
+	struct sockbuf *sb;
+	int s;
 
-	if (so->so_options & SO_ACCEPTCONN)
-		kn->kn_fop = &solisten_filtops;
-	SLIST_INSERT_HEAD(&so->so_rcv.sb_sel.si_note, kn, kn_selnext);
-	so->so_rcv.sb_flags |= SB_KNOTE;
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		if (so->so_options & SO_ACCEPTCONN)
+			kn->kn_fop = &solisten_filtops;
+		else
+			kn->kn_fop = &soread_filtops;
+		sb = &so->so_rcv;
+		break;
+	case EVFILT_WRITE:
+		kn->kn_fop = &sowrite_filtops;
+		sb = &so->so_snd;
+		break;
+	default:
+		return (1);
+	}
+
+	s = splnet();
+	SLIST_INSERT_HEAD(&sb->sb_sel.si_note, kn, kn_selnext);
+	sb->sb_flags |= SB_KNOTE;
 	splx(s);
 	return (0);
 }
@@ -1148,23 +1162,14 @@ filt_soread(struct knote *kn, long hint)
 	kn->kn_data = so->so_rcv.sb_cc;
 	if (so->so_state & SS_CANTRCVMORE) {
 		kn->kn_flags |= EV_EOF; 
+		kn->kn_fflags = so->so_error;
 		return (1);
 	}
 	if (so->so_error)	/* temporary udp error */
 		return (1);
+	if (kn->kn_sfflags & NOTE_LOWAT)
+		return (kn->kn_data >= kn->kn_sdata);
 	return (kn->kn_data >= so->so_rcv.sb_lowat);
-}
-
-int
-filt_sowattach(struct knote *kn)
-{
-	struct socket *so = (struct socket *)kn->kn_fp->f_data;
-	int s = splnet();
-
-	SLIST_INSERT_HEAD(&so->so_snd.sb_sel.si_note, kn, kn_selnext);
-	so->so_snd.sb_flags |= SB_KNOTE;
-	splx(s);
-	return (0);
 }
 
 void
@@ -1188,6 +1193,7 @@ filt_sowrite(struct knote *kn, long hint)
 	kn->kn_data = sbspace(&so->so_snd);
 	if (so->so_state & SS_CANTSENDMORE) {
 		kn->kn_flags |= EV_EOF; 
+		kn->kn_fflags = so->so_error;
 		return (1);
 	}
 	if (so->so_error)	/* temporary udp error */
@@ -1195,6 +1201,8 @@ filt_sowrite(struct knote *kn, long hint)
 	if (((so->so_state & SS_ISCONNECTED) == 0) &&
 	    (so->so_proto->pr_flags & PR_CONNREQUIRED))
 		return (0);
+	if (kn->kn_sfflags & NOTE_LOWAT)
+		return (kn->kn_data >= kn->kn_sdata);
 	return (kn->kn_data >= so->so_snd.sb_lowat);
 }
 

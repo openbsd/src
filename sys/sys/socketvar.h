@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.19 2000/11/16 20:02:20 provos Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.20 2001/03/01 20:54:35 provos Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -215,6 +215,7 @@ struct sockaddr;
 struct proc;
 struct msghdr;
 struct stat;
+struct knote;
 
 /*
  * File operations on sockets.
@@ -226,6 +227,7 @@ int	soo_write __P((struct file *fp, off_t *, struct uio *uio,
 int	soo_ioctl __P((struct file *fp, u_long cmd, caddr_t data,
 	    struct proc *p));
 int	soo_select __P((struct file *fp, int which, struct proc *p));
+int	soo_kqfilter __P((struct file *fp, struct knote *kn));
 int 	soo_close __P((struct file *fp, struct proc *p));
 int	soo_stat __P((struct socket *, struct stat *));
 int	uipc_usrreq __P((struct socket *, int , struct mbuf *,

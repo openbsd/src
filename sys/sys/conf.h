@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.38 2000/09/26 14:03:51 art Exp $	*/
+/*	$OpenBSD: conf.h,v 1.39 2001/03/01 20:54:35 provos Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -50,6 +50,7 @@ struct proc;
 struct tty;
 struct uio;
 struct vnode;
+struct knote;
 
 /*
  * Types for d_type
@@ -57,6 +58,11 @@ struct vnode;
 #define	D_TAPE	1
 #define	D_DISK	2
 #define	D_TTY	3
+
+/*
+ * Flags for d_type
+ */
+#define D_KQFILTER	0x00010000	/* has kqfilter entry */
 
 #ifdef _KERNEL
 
@@ -156,7 +162,8 @@ struct cdevsw {
 		(*d_tty)	__P((dev_t dev));
 	int	(*d_select)	__P((dev_t dev, int which, struct proc *p));
 	int	(*d_mmap)	__P((dev_t, int, int));
-	int	d_type;
+	u_int	d_type;
+	int	(*d_kqfilter)	__P((dev_t dev, struct knote *kn));
 };
 
 #ifdef _KERNEL
@@ -170,11 +177,13 @@ extern struct cdevsw cdevsw[];
 #define	dev_type_tty(n)		struct tty *n __P((dev_t))
 #define	dev_type_select(n)	int n __P((dev_t, int, struct proc *))
 #define	dev_type_mmap(n)	int n __P((dev_t, int, int))
+#define dev_type_kqfilter(n)	int n __P((dev_t, struct knote *))
 
 #define	cdev_decl(n) \
 	dev_decl(n,open); dev_decl(n,close); dev_decl(n,read); \
 	dev_decl(n,write); dev_decl(n,ioctl); dev_decl(n,stop); \
-	dev_decl(n,tty); dev_decl(n,select); dev_decl(n,mmap)
+	dev_decl(n,tty); dev_decl(n,select); dev_decl(n,mmap); \
+	dev_decl(n,kqfilter)
 
 /* open, close, read, write, ioctl */
 #define	cdev_disk_init(c,n) { \
@@ -199,7 +208,8 @@ extern struct cdevsw cdevsw[];
 #define	cdev_tty_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
-	dev_init(c,n,tty), ttselect, (dev_type_mmap((*))) enodev, D_TTY }
+	dev_init(c,n,tty), ttselect, (dev_type_mmap((*))) enodev, \
+	D_TTY | D_KQFILTER, ttkqfilter }
 
 /* open, close, read, ioctl, select */
 #define	cdev_mouse_init(c,n) { \
@@ -231,13 +241,15 @@ extern struct cdevsw cdevsw[];
 #define	cdev_cn_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
-	0, dev_init(c,n,select), (dev_type_mmap((*))) enodev, D_TTY }
+	0, dev_init(c,n,select), (dev_type_mmap((*))) enodev, \
+	D_TTY | D_KQFILTER, dev_init(c,n,kqfilter) }
 
 /* open, read, write, ioctl, select -- XXX should be a tty */
 #define cdev_ctty_init(c,n) { \
 	dev_init(c,n,open), (dev_type_close((*))) nullop, dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) nullop, \
-	0, dev_init(c,n,select), (dev_type_mmap((*))) enodev, D_TTY }
+	0, dev_init(c,n,select), (dev_type_mmap((*))) enodev, \
+	D_TTY | D_KQFILTER, ttkqfilter }
 
 /* open, close, read, write, ioctl, mmap */
 #define cdev_mm_init(c,n) { \
@@ -257,7 +269,7 @@ extern struct cdevsw cdevsw[];
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) nullop, \
 	dev_init(c,n,tty), dev_init(c,n,select), (dev_type_mmap((*))) enodev, \
-	D_TTY }
+	D_TTY | D_KQFILTER, ttkqfilter }
 
 /* open, close, read, ioctl, select -- XXX should be a generic device */
 #define cdev_log_init(c,n) { \
@@ -366,7 +378,8 @@ extern struct cdevsw cdevsw[];
 #define	cdev_wsdisplay_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
-	dev_init(c,n,tty), ttselect, dev_init(c,n,mmap) }
+	dev_init(c,n,tty), ttselect, dev_init(c,n,mmap), \
+	D_KQFILTER, dev_init(c,n,kqfilter) }
 
 /* open, close, read, write, ioctl, select */
 #define	cdev_random_init(c,n) { \

@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.14 2001/02/25 23:24:19 aaron Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.15 2001/03/01 20:54:33 provos Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.37.4.1 2000/06/30 16:27:53 simonb Exp $ */
 
 /*
@@ -1177,6 +1177,25 @@ wsdisplayselect(dev, events, p)
 		return (ttselect(dev, events, p));
 	else
 		return (0);
+}
+
+int
+wsdisplaykqfilter(dev, kn)
+	dev_t dev;
+	struct knote *kn;
+{
+	struct wsdisplay_softc *sc = wsdisplay_cd.cd_devs[WSDISPLAYUNIT(dev)];
+	struct wsscreen *scr;
+
+	if (ISWSDISPLAYCTL(dev))
+		return (1);
+
+	scr = sc->sc_scr[WSDISPLAYSCREEN(dev)];
+
+	if (WSSCREEN_HAS_TTY(scr))
+		return (ttkqfilter(dev, kn));
+	else
+		return (1);
 }
 
 void

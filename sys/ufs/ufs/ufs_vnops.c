@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.29 2001/02/21 23:24:32 csapuntz Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.30 2001/03/01 20:54:36 provos Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -77,6 +77,9 @@
 static int ufs_chmod __P((struct vnode *, int, struct ucred *, struct proc *));
 static int ufs_chown
 	__P((struct vnode *, uid_t, gid_t, struct ucred *, struct proc *));
+int filt_ufsread __P((struct knote *kn, long hint));
+int filt_ufsvnode __P((struct knote *kn, long hint));
+void filt_ufsdetach __P((struct knote *kn));
 
 union _qcvt {
 	int64_t	qcvt;
@@ -2204,5 +2207,86 @@ bad:
 
 	return (error);
 }
+
+struct filterops ufsread_filtops = 
+	{ 1, NULL, filt_ufsdetach, filt_ufsread };
+struct filterops ufsvnode_filtops = 
+	{ 1, NULL, filt_ufsdetach, filt_ufsvnode };
+
+int
+ufs_kqfilter(v)
+	void *v;
+{
+	struct vop_kqfilter_args /* {
+		struct vnode *a_vp;
+		struct knote *a_kn;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct knote *kn = ap->a_kn;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		kn->kn_fop = &ufsread_filtops;
+		break;
+	case EVFILT_VNODE:
+		kn->kn_fop = &ufsvnode_filtops;
+		break;
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = (caddr_t)vp;
+
+	simple_lock(&vp->v_selectinfo.vsi_lock);
+	SLIST_INSERT_HEAD(&vp->v_selectinfo.vsi_selinfo.si_note, kn, kn_selnext);
+	simple_unlock(&vp->v_selectinfo.vsi_lock);
+
+	return (0);
+}
+
+void
+filt_ufsdetach(struct knote *kn)
+{
+	struct vnode *vp = (struct vnode *)kn->kn_hook;
+
+	simple_lock(&vp->v_selectinfo.vsi_lock);
+	SLIST_REMOVE(&vp->v_selectinfo.vsi_selinfo.si_note,
+	    kn, knote, kn_selnext);
+	simple_unlock(&vp->v_selectinfo.vsi_lock);
+}
+
+/*ARGSUSED*/
+int
+filt_ufsread(struct knote *kn, long hint)
+{
+	struct vnode *vp = (struct vnode *)kn->kn_hook;
+	struct inode *ip = VTOI(vp);
+
+	/*
+	 * filesystem is gone, so set the EOF flag and schedule 
+	 * the knote for deletion.
+	 */
+	if (hint == NOTE_REVOKE) {
+		kn->kn_flags |= (EV_EOF | EV_ONESHOT);
+		return (1);
+	}
+
+        kn->kn_data = ip->i_ffs_size - kn->kn_fp->f_offset;
+        return (kn->kn_data != 0);
+}
+
+int
+filt_ufsvnode(struct knote *kn, long hint)
+{
+
+	if (kn->kn_sfflags & hint)
+		kn->kn_fflags |= hint;
+	if (hint == NOTE_REVOKE) {
+		kn->kn_flags |= EV_EOF;
+		return (1);
+	}
+	return (kn->kn_fflags != 0);
+}
+
 
 

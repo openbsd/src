@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.9 2000/11/16 20:02:20 provos Exp $	*/
+/*	$OpenBSD: file.h,v 1.10 2001/03/01 20:54:35 provos Exp $	*/
 /*	$NetBSD: file.h,v 1.11 1995/03/26 20:24:13 jtc Exp $	*/
 
 /*
@@ -44,6 +44,7 @@
 
 struct proc;
 struct uio;
+struct knote;
 
 /*
  * Kernel descriptor table.
@@ -71,6 +72,8 @@ struct file {
 					    caddr_t data, struct proc *p));
 		int	(*fo_select)	__P((struct file *fp, int which,
 					    struct proc *p));
+		int	(*fo_kqfilter)	__P((struct file *fp,
+					    struct knote *kn));
 		int	(*fo_close)	__P((struct file *fp, struct proc *p));
 	} *f_ops;
 	off_t	f_offset;

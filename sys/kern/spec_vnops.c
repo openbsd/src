@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.17 2001/02/24 19:07:10 csapuntz Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.18 2001/03/01 20:54:35 provos Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -81,6 +81,7 @@ struct vnodeopv_entry_desc spec_vnodeop_entries[] = {
 	{ &vop_lease_desc, spec_lease_check },		/* lease */
 	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */
 	{ &vop_select_desc, spec_select },		/* select */
+	{ &vop_kqfilter_desc, spec_kqfilter },		/* kqfilter */
 	{ &vop_revoke_desc, spec_revoke },              /* revoke */
 	{ &vop_mmap_desc, spec_mmap },			/* mmap */
 	{ &vop_fsync_desc, spec_fsync },		/* fsync */
@@ -472,6 +473,24 @@ spec_select(v)
 		return (*cdevsw[major(dev)].d_select)(dev, ap->a_which, ap->a_p);
 	}
 }
+/* ARGSUSED */
+int
+spec_kqfilter(v)
+	void *v;
+{
+	struct vop_kqfilter_args /* {
+		struct vnode *a_vp;
+		struct knote *a_kn;
+	} */ *ap = v;
+
+	dev_t dev;
+
+	dev = ap->a_vp->v_rdev;
+	if (cdevsw[major(dev)].d_type & D_KQFILTER)
+		return (*cdevsw[major(dev)].d_kqfilter)(dev, ap->a_kn);
+	return (1);
+}
+
 /*
  * Synch buffers associated with a block device
  */

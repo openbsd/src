@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.27 2000/11/21 21:49:57 provos Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.28 2001/03/01 20:54:34 provos Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -61,39 +61,18 @@
 #include <uvm/uvm_extern.h>
 #endif
 
-#include <ufs/ufs/quota.h>
-#include <ufs/ufs/inode.h>
-
 int	vn_read __P((struct file *fp, off_t *off, struct uio *uio, 
 	    struct ucred *cred));
 int	vn_write __P((struct file *fp, off_t *off, struct uio *uio, 
             struct ucred *cred));
 int	vn_select __P((struct file *fp, int which, struct proc *p));
+int	vn_kqfilter __P((struct file *fp, struct knote *kn));
 int 	vn_closefile __P((struct file *fp, struct proc *p));
 int	vn_ioctl __P((struct file *fp, u_long com, caddr_t data,
 	    struct proc *p));
 
 struct 	fileops vnops =
-	{ vn_read, vn_write, vn_ioctl, vn_select, vn_closefile };
-
-static int	filt_nullattach(struct knote *kn);
-static int	filt_vnattach(struct knote *kn);
-static void	filt_vndetach(struct knote *kn);
-static int	filt_vnode(struct knote *kn, long hint);
-static int	filt_vnread(struct knote *kn, long hint);
-
-struct filterops vn_filtops =
-	{ 1, filt_vnattach, filt_vndetach, filt_vnode };
-
-/*
- * XXX
- * filt_vnread is ufs-specific, so the attach routine should really
- * switch out to different filterops based on the vn filetype
- */
-struct filterops vn_rwfiltops[] = {
-	{ 1, filt_vnattach, filt_vndetach, filt_vnread },
-	{ 1, filt_nullattach, NULL, NULL },
-};
+	{ vn_read, vn_write, vn_ioctl, vn_select, vn_kqfilter, vn_closefile };
 
 /*
  * Common code for vnode open operations.
@@ -531,63 +510,9 @@ vn_closefile(fp, p)
 		fp->f_cred, p));
 }
 
-static int
-filt_vnattach(struct knote *kn)
-{
-	struct vnode *vp;
-
-	if (kn->kn_fp->f_type != DTYPE_VNODE)
-		return (EBADF);
-
-	vp = (struct vnode *)kn->kn_fp->f_data;
-
-	/*
-	 * XXX
-	 * this is a hack simply to cause the filter attach to fail
-	 * for non-ufs filesystems, until the support for them is done.
-	 */
-	if ((vp)->v_tag != VT_UFS || (vp)->v_type == VFIFO)
-		return (EOPNOTSUPP);
-
-	simple_lock(&vp->v_selectinfo.vsi_lock);
-	SLIST_INSERT_HEAD(&vp->v_selectinfo.vsi_selinfo.si_note, kn, kn_selnext);
-	simple_unlock(&vp->v_selectinfo.vsi_lock);
-
-	return (0);
-}
-
-static void
-filt_vndetach(struct knote *kn)
-{
-	struct vnode *vp = (struct vnode *)kn->kn_fp->f_data;
-
-	simple_lock(&vp->v_selectinfo.vsi_lock);
-	SLIST_REMOVE(&vp->v_selectinfo.vsi_selinfo.si_note,
-	    kn, knote, kn_selnext);
-	simple_unlock(&vp->v_selectinfo.vsi_lock);
-}
-
-static int
-filt_vnode(struct knote *kn, long hint)
-{
-	if (kn->kn_sfflags & hint)
-		kn->kn_fflags |= hint;
-	return (kn->kn_fflags != 0);
-}
-
-static int
-filt_nullattach(struct knote *kn)
-{
-	return (ENXIO);
-}
-
 /*ARGSUSED*/
-static int
-filt_vnread(struct knote *kn, long hint)
+int
+vn_kqfilter(struct file *fp, struct knote *kn)
 {
-	struct vnode *vp = (struct vnode *)kn->kn_fp->f_data;
-	struct inode *ip = VTOI(vp);
-
-	kn->kn_data = ip->i_ffs_size - kn->kn_fp->f_offset;
-	return (kn->kn_data != 0);
+	return (VOP_KQFILTER(((struct vnode *)fp->f_data), kn));
 }
