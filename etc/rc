@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.147 2000/07/13 13:15:36 itojun Exp $
+#	$OpenBSD: rc,v 1.148 2000/07/13 16:26:13 millert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -253,7 +253,7 @@ if [ X${amd} = X"YES" -a -d ${amd_dir} -a -e ${amd_master} ]; then
 fi
 
 # run rdate before timed
-if [ $securelevel -le 1 -a X"${rdate_flags}" != X"NO" ]; then
+if [ X"${rdate_flags}" != X"NO" ]; then
         echo -n ' rdate';     rdate -s ${rdate_flags}
 fi
 
