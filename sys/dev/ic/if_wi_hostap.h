@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_hostap.h,v 1.4 2002/04/08 18:43:26 mickey Exp $	*/
+/*	$OpenBSD: if_wi_hostap.h,v 1.5 2002/04/26 22:19:07 millert Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -91,6 +91,7 @@ struct wihap_sta_info {
 	u_int8_t	rates;
 	u_int8_t	tx_curr_rate;
 	u_int8_t	tx_max_rate;
+	u_int32_t	*challenge;
 };
 
 #define WI_SIFLAGS_ASSOC	HOSTAP_FLAGS_ASSOC
