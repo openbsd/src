@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.sh,v 1.1.1.1 2001/08/18 04:16:37 jason Exp $
+#	$OpenBSD: genassym.sh,v 1.2 2003/02/08 10:15:07 pvalchev Exp $
 #	$NetBSD: genassym.sh,v 1.1 2000/08/20 14:58:45 mrg Exp $
 
 #
@@ -36,6 +36,13 @@
 # compile it and execute the result.
 
 awk=${AWK:-awk}
+TMP1=`mktemp /tmp/genassym1.XXXXXX` || exit 1
+TMP2=`mktemp /tmp/genassym2.XXXXXX` || {
+	rm -f $TMP1
+	exit 1
+}
+
+trap 'rm -f $TMP1 $TMP2' 0 1 2 3 13 15
 
 if [ $1 = '-c' ] ; then
 	shift
@@ -43,8 +50,6 @@ if [ $1 = '-c' ] ; then
 else
 	ccode=0
 fi
-
-#trap "rm -f /tmp/$$.c /tmp/genassym.$$" 0 1 2 3 15
 
 $awk '
 BEGIN {
@@ -158,13 +163,13 @@ END {
 		printf("return(0); }\n");
 	}
 }
-' ccode=$ccode > /tmp/$$.c || exit 1
+' ccode=$ccode > $TMP1 || exit 1
 
 if [ $ccode = 1 ] ; then
-	"$@" /tmp/$$.c -o /tmp/genassym.$$ && /tmp/genassym.$$
+	"$@" -x c $TMP1 -o $TMP2 && $TMP2
 else
 	# Kill all of the "#" and "$" modifiers; locore.s already
 	# prepends the correct "constant" modifier.
-	"$@" -S /tmp/$$.c -o -| sed -e 's/\$//g' | \
-	    sed -n 's/.*XYZZY//gp'
+	"$@" -x c -S ${TMP1} -o ${TMP2} || exit 1
+	sed 's/\$//g' ${TMP2} | sed -n 's/.*XYZZY//gp'
 fi
