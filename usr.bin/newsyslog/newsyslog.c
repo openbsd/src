@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.39 2001/11/19 19:02:15 mpech Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.40 2001/11/23 04:20:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -88,7 +88,7 @@ provided "as is" without express or implied warranty.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.39 2001/11/19 19:02:15 mpech Exp $";
+static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.40 2001/11/23 04:20:56 deraadt Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -284,15 +284,15 @@ do_entry(ent)
 		if (monitormode && ent->flags & CE_MONITOR)
 			domonitor(ent->log, ent->whom);
 		if (!monitormode && (((ent->size > 0) && (size >= ent->size)) ||
-		    ((ent->hours > 0) && ((modtime >= ent->hours)
-					|| (modtime < 0))))) {
+		    ((ent->hours > 0) && ((modtime >= ent->hours) ||
+		    (modtime < 0))))) {
 			if (verbose)
 				printf("--> trimming log....\n");
 			if (noaction && !verbose)
 				printf("%s <%d%s>: ", ent->log, ent->numlogs,
 					(ent->flags & CE_COMPACT) ? "Z" : "");
 			dotrim(ent->log, ent->numlogs, ent->flags,
-			       ent->permissions, ent->uid, ent->gid);
+			    ent->permissions, ent->uid, ent->gid);
 			ent->flags |= CE_ROTATED;
 		} else if (verbose)
 			printf("--> skipping\n");
@@ -317,25 +317,38 @@ send_signal(pidfile, signal)
 	char	*pidfile;
 	int	signal;
 {
-	FILE	*f;
 	char    line[BUFSIZ];
 	pid_t	pid = 0;
+	FILE	*f;
+	unsigned long ulval;
+	char *ep;
+	char *err;
 
 	if ((f = fopen(pidfile, "r")) == NULL) {
 		warn("can't open %s", pidfile);
 		return;
 	}
 
-	if (fgets(line, sizeof(line), f))
-		pid = atoi(line);
+	if (fgets(line, sizeof(line), f)) {
+		errno = 0;
+		ulval = strtoul(line, &ep, 10);
+		if (line[0] == '\0' || *ep != '\0')
+			err = "invalid number in";
+		else if (errno == ERANGE && ulval == ULONG_MAX)
+			err = "out of range number in";
+		else if (ulval == 0)
+			err = "no number in";
+		else if (ulval < MIN_PID)
+			err = "preposterous process number in";
+		else
+			pid = ulval;
+	}
 	(void)fclose(f);
 
-	if (noaction)
-		(void)printf("kill -%s %d\n", sys_signame[signal], pid);
-	else if (pid == 0)
-		warnx("empty pid file: %s", pidfile);
-	else if (pid < MIN_PID)
-		warnx("preposterous process number: %d", pid);
+	if (err)
+		warnx("%s pid file: %s", err, pidfile);
+	else if (noaction)
+		(void)printf("kill -%s %u\n", sys_signame[signal], pid);
 	else if (kill(pid, signal))
 		warnx("warning - could not send SIG%s to daemon",
 		    sys_signame[signal]);
@@ -521,7 +534,7 @@ parse_file(nentries)
 				q++;
 			}
 		} else
-		    parse--;	/* no flags so undo */
+			parse--;	/* no flags so undo */
 
 		working->whom = NULL;
 		if (working->flags & CE_MONITOR) {	/* Optional field */
@@ -638,8 +651,8 @@ dotrim(log, numdays, flags, perm, owner_uid, group_gid)
 		if (noaction) {
 			printf("mv %s %s\n", zfile1, zfile2);
 			printf("chmod %o %s\n", perm, zfile2);
-			printf("chown %d:%d %s\n",
-			       owner_uid, group_gid, zfile2);
+			printf("chown %u:%u %s\n",
+			    owner_uid, group_gid, zfile2);
 		} else {
 			if (rename(zfile1, zfile2))
 				warn("can't mv %s to %s", zfile1, zfile2);
@@ -696,7 +709,7 @@ log_trim(log)
 
 	if ((f = fopen(log, "a")) == NULL)
 		return(-1);
-	(void)fprintf(f, "%s %s newsyslog[%d]: logfile turned over\n",
+	(void)fprintf(f, "%s %s newsyslog[%u]: logfile turned over\n",
 	    daytime, hostname, getpid());
 	if (fclose(f) == EOF)
 		err(1, "log_trim: fclose");
