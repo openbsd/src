@@ -1,4 +1,3 @@
-#	$OpenBSD: solar88,v 1.3 1997/01/14 04:36:56 millert Exp $
 # @(#)solar88	7.3
 
 # Apparent noon times below are for Riyadh; they're a bit off for other places.

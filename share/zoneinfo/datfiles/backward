@@ -1,5 +1,4 @@
-#	$OpenBSD: backward,v 1.4 1997/01/14 04:36:50 millert Exp $
-# @(#)backward	7.13
+# @(#)backward	7.14
 
 # This file provides links between current names for time zones
 # and their old names.  Many names changed in late 1993.

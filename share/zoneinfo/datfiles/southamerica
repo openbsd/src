@@ -1,5 +1,4 @@
-#	$OpenBSD: southamerica,v 1.4 1997/01/14 04:36:57 millert Exp $
-# @(#)southamerica	7.16
+# @(#)southamerica	7.22
 
 # This data is by no means authoritative; if you think you know better,
 # go ahead and edit the file (and please send any changes to
@@ -29,7 +28,6 @@
 #	-4:00	AST	ADT	Atlantic
 #	-5:00	AST	ADT	Acre
 #
-# See the `africa' file for time zone naming and abbreviation conventions.
 # Earlier editions of these tables used the North American style (e.g. ARST and
 # ARDT for Argentine Standard and Daylight Time), but the following quote
 # suggests that it's better to use European style (e.g. ART and ARST).
@@ -191,7 +189,7 @@ Zone	America/La_Paz	-4:32:36 -	LMT	1890
 # ending dates, giving them as "estimated date(s) based on previous year".  We
 # infer a rule here from one example, always a dangerous practice....  Yes,
 # they really do switch on Saturday, according to the OAG.
-# "[America/Porto_Acre]" is for the Territory of Acre;
+# "[America/Porto_Acre]" is for the [State] of Acre;
 # "[America/Noronha]" is for Fernando De Noronha.
 
 # From Paul Eggert <eggert@twinsun.com> (1993-11-18):
@@ -244,6 +242,11 @@ Zone	America/La_Paz	-4:32:36 -	LMT	1890
 # Sao Paulo (UTC-3) and Cuiaba (UTC-4) always observed DST.
 # Porto Acre (UTC-5) stopped observing DST in mid-1988.
 
+# From Rodrigo Feher <feher@pobox.com> (1998-01-17):
+# Reading "southamerica" file in timezone 7.55 I've found an
+# error. Line 193 say "Territory of Acre". It is not a territory anymore
+# but a state.
+
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Brazil	1931	only	-	Oct	 3	11:00	1:00	D
 Rule	Brazil	1932	1933	-	Apr	 1	 0:00	0	S
@@ -268,10 +271,11 @@ Rule	Brazil	1988	1989	-	Oct	Sun>=10	 0:00	1:00	D
 Rule	Brazil	1990	1991	-	Feb	Sun>=11	 0:00	0	S
 Rule	Brazil	1990	1992	-	Oct	Sun>=20	 0:00	1:00	D
 Rule	Brazil	1992	only	-	Feb	 9	 0:00	0	S
-Rule	Brazil	1993	max	-	Oct	Sun>=11	 0:00	1:00	D
+Rule	Brazil	1993	1995	-	Oct	Sun>=11	 0:00	1:00	D
 Rule	Brazil	1993	only	-	Jan	31	 0:00	0	S
 Rule	Brazil	1994	1995	-	Feb	Sun>=15	 0:00	0	S
 Rule	Brazil	1996	max	-	Feb	Sun>=11	 0:00	0	S
+Rule	Brazil	1996	max	-	Oct	Sun>=1	 0:00	1:00	D
 
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 #
@@ -435,9 +439,11 @@ Rule	Para	1991	only	-	Oct	 6	0:00	1:00	S
 Rule	Para	1992	only	-	Mar	 1	0:00	0	-
 Rule	Para	1992	only	-	Oct	 5	0:00	1:00	S
 Rule	Para	1993	only	-	Mar	31	0:00	0	-
-Rule	Para	1993	max	-	Oct	 1	0:00	1:00	S
+Rule	Para	1993	1995	-	Oct	 1	0:00	1:00	S
 Rule	Para	1994	1995	-	Feb	lastSun	0:00	0	-
 Rule	Para	1996	max	-	Mar	 1	0:00	0	-
+Rule	Para	1996	only	-	Oct	 6	0:00	1:00	S
+Rule	Para	1997	max	-	Oct	 1	0:00	1:00	S
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone America/Asuncion	-3:50:40 -	LMT	1890
 			-3:50:40 -	AMT	1931 Oct 10 # Asuncion Mean Time
@@ -531,7 +537,9 @@ Rule	Uruguay	1989	only	-	Mar	12	 0:00	0	-
 Rule	Uruguay	1989	only	-	Oct	29	 0:00	1:00	S
 Rule	Uruguay	1990	1992	-	Mar	Sun>=1	 0:00	0	-
 Rule	Uruguay	1990	1991	-	Oct	Sun>=21	 0:00	1:00	S
-Rule	Uruguay	1992	1993	-	Oct	Sun>=15	 0:00	1:00	S
+# Shanks's 4th edition (1995) says no DST was observed in 1990/1 and 1991/2,
+# and that 1992/3's DST was from 10-25 to 03-01.  Go with IATA.
+Rule	Uruguay	1992	only	-	Oct	18	 0:00	1:00	S
 Rule	Uruguay	1993	only	-	Feb	28	 0:00	0	-
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone America/Montevideo	-3:44:44 -	LMT	1898 Jun 28

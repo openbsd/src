@@ -1,5 +1,4 @@
-#	$OpenBSD: leapseconds,v 1.2 1997/01/14 04:36:54 millert Exp $
-# @(#)leapseconds	7.8
+# @(#)leapseconds	7.10
 
 # Allowance for leapseconds added to each timezone file.
 
@@ -18,7 +17,7 @@
 #	Leap	YEAR	MON	DAY	23:59:59	-	R/S
 
 # If the leapsecond is Rolling (R) the given time is local time
-# If the leapsecond is Stationary (S) the given time is GMT
+# If the leapsecond is Stationary (S) the given time is UTC
 
 # Leap	YEAR	MONTH	DAY	HH:MM:SS	CORR	R/S
 Leap	1972	Jun	30	23:59:60	+	S
@@ -41,3 +40,4 @@ Leap	1992	Jun	30	23:59:60	+	S
 Leap	1993	Jun	30	23:59:60	+	S
 Leap	1994	Jun	30	23:59:60	+	S
 Leap	1995	Dec	31	23:59:60	+	S
+Leap	1997	Jun	30	23:59:60	+	S

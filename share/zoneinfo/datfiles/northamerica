@@ -1,5 +1,4 @@
-#	$OpenBSD: northamerica,v 1.5 1997/01/14 04:36:54 millert Exp $
-# @(#)northamerica	7.30
+# @(#)northamerica	7.39
 # also includes Central America and the Caribbean
 
 # This data is by no means authoritative; if you think you know better,
@@ -482,8 +481,6 @@ Link	Pacific/Honolulu	HST
 # I found in the UCLA library.
 #
 # See the `europe' file for Greenland.
-#
-# See the `africa' file for time zone naming and abbreviation conventions.
 
 # Canada
 
@@ -653,6 +650,20 @@ Zone America/Glace_Bay	-3:59:48 -	LMT	1902 Jun 15
 # Many smaller locales did not observe peacetime DST until 1974;
 # Nipigon (EST) and Rainy River (CST) are the largest that we know of.
 # Far west Ontario is like Winnipeg; far east Quebec is like Halifax.
+
+# From Paul Eggert (1997-10-17):
+# msb@sq.com writes that an article in the 1997-10-14 Toronto Star
+# says that Atikokan, Ontario currently does not observe DST,
+# but will vote on 11-10 whether to use EST/EDT.
+# He also writes that the
+# <a href="http://www.gov.on.ca/MBS/english/publications/statregs/conttext.html">
+# Ontario Time Act (1990, Chapter T.9)
+# </a>
+# says that Ontario east of 90W uses EST/EDT, and west of 90W uses CST/CDT.
+# Officially Atikokan is therefore on CST/CDT, and most likely this report
+# concerns a non-official time observed as a matter of local practice.
+# For what it's worth, Shanks (1995) says that Atikokan has agreed with
+# Rainy River ever since standard time was introduced.
 
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Mont	1917	only	-	Mar	25	2:00	1:00	D
@@ -896,7 +907,7 @@ Zone America/Dawson	-9:17:40 -	LMT	1900 Aug 20
 
 # From Guy Harris:
 # Rules are from the Official Airline Guide, Worldwide Edition, for 1987.
-# Rules prior to 1987 are unknown.
+# Rules [before] 1987 are unknown.
 # The comments in the OAG say "Only Ensenada, Mexicale, San Felipe and Tijuana
 # observe DST."  This is presumably Baja California Norte, above 28th parallel,
 # as listed there; [there is also] "Baja California Sur and N. Pacific
@@ -974,9 +985,10 @@ Zone America/Dawson	-9:17:40 -	LMT	1900 Aug 20
 # 
 # -------------- End Forwarded Message --------------
 # From Paul Eggert (1996-06-12):
-# For an English translation of the decree,
-# see ``Diario Oficial: Time Zone Changeover'',
-# <URL:http://mexico-travel.com/extra/timezone_eng.html> (1996-01-04).
+# For an English translation of the decree, see
+# <a href="http://mexico-travel.com/extra/timezone_eng.html">
+# ``Diario Oficial: Time Zone Changeover'' (1996-01-04).
+# </a>
 
 # From Shanks (1991):
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
@@ -1142,14 +1154,14 @@ Rule	Cuba	1969	1971	-	Oct	lastSun	0:00	0	S
 Rule	Cuba	1972	1974	-	Oct	8	0:00	0	S
 Rule	Cuba	1975	1977	-	Oct	lastSun	0:00	0	S
 Rule	Cuba	1978	only	-	May	7	0:00	1:00	D
-Rule	Cuba	1978	1980	-	Oct	Sun>=8	0:00	0	S
+Rule	Cuba	1978	1990	-	Oct	Sun>=8	0:00	0	S
 Rule	Cuba	1979	1980	-	Mar	Sun>=15	0:00	1:00	D
 Rule	Cuba	1981	1985	-	May	Sun>=5	0:00	1:00	D
-Rule	Cuba	1981	1990	-	Oct	Sun>=8	0:00	0	S
 Rule	Cuba	1986	1989	-	Mar	Sun>=14	0:00	1:00	D
 Rule	Cuba	1990	max	-	Apr	Sun>=1	0:00	1:00	D
 Rule	Cuba	1991	1995	-	Oct	Sun>=8	0:00s	0	S
-Rule	Cuba	1996	max	-	Oct	Sun>=1	0:00s	0	S
+Rule	Cuba	1996	only	-	Oct	Sun>=1	0:00s	0	S
+Rule	Cuba	1997	max	-	Oct	Sun>=8	0:00s	0	S
 
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	America/Havana	-5:29:28 -	LMT	1890
@@ -1250,8 +1262,11 @@ Zone America/Martinique	-4:04:20 -      LMT	1890		# Fort-de-France
 			-4:00	-	AST
 
 # Montserrat
+# From Paul Eggert (1997-08-31):
+# Recent volcanic eruptions have forced evacuation of Plymouth, the capital.
+# Luckily, Olveston, the current de facto capital, has the same longitude.
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
-Zone America/Montserrat	-4:08:52 -	LMT	1911 Jul 1 0:01   # Plymouth
+Zone America/Montserrat	-4:08:52 -	LMT	1911 Jul 1 0:01   # Olveston
 			-4:00	-	AST
 
 # Nicaragua
