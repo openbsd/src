@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.456 2001/10/24 17:29:27 millert Exp 
+ *		OpenBSD: pcidevs,v 1.457 2001/10/25 16:43:02 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -504,6 +504,7 @@
 #define	PCI_VENDOR_ASIX	0x125b		/* ASIX */
 #define	PCI_VENDOR_AURORA	0x125c		/* Aurora Technologies */
 #define	PCI_VENDOR_ESSTECH	0x125d		/* ESS */
+#define	PCI_VENDOR_INTERSIL	0x126c		/* Intersil */
 #define	PCI_VENDOR_NORTEL	0x126c		/* Nortel Networks */
 #define	PCI_VENDOR_ENSONIQ	0x1274		/* Ensoniq */
 #define	PCI_VENDOR_NETAPP	0x1275		/* Network Appliance */
@@ -1338,6 +1339,9 @@
 
 /* Intergraph products */
 #define	PCI_PRODUCT_INTERGRAPH_4D50T	0x00e4		/* Powerstorm 4D50T */
+
+/* Intersil products */
+#define	PCI_PRODUCT_INTERSIL_MINI_PCI_WLAN	0x3873		/* PRISM2.5 Mini-PCI WLAN */
 
 /* Invertex */
 #define	PCI_PRODUCT_INVERTEX_AEON	0x0005		/* AEON */

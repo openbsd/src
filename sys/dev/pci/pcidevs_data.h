@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.456 2001/10/24 17:29:27 millert Exp 
+ *		OpenBSD: pcidevs,v 1.457 2001/10/25 16:43:02 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2421,6 +2421,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTERGRAPH, PCI_PRODUCT_INTERGRAPH_4D50T,
 	    "Powerstorm 4D50T",
+	},
+	{
+	    PCI_VENDOR_INTERSIL, PCI_PRODUCT_INTERSIL_MINI_PCI_WLAN,
+	    "PRISM2.5 Mini-PCI WLAN",
 	},
 	{
 	    PCI_VENDOR_INVERTEX, PCI_PRODUCT_INVERTEX_AEON,
@@ -6661,6 +6665,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_ESSTECH,
 	    "ESS",
+	},
+	{
+	    PCI_VENDOR_INTERSIL,
+	    "Intersil",
 	},
 	{
 	    PCI_VENDOR_NORTEL,
