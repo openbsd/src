@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.31 2002/05/30 06:18:00 deraadt Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.32 2002/12/01 16:59:20 margarida Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -207,7 +207,7 @@ Print day and month in timestamp.
 For example, the time to live
 and type of service information in an
 .Tn IP
-packet is printed.
+packet are printed.
 .It Fl vv
 Even more verbose output.
 For example, additional fields are printed from
@@ -993,7 +993,7 @@ On the packet filter logging interface
 .Pa pflog ,
 logging reason (rule match, bad-offset, fragment, short,
 normalize, memory), action taken (pass/block), direction (in/out) and interface
-information is printed out for each packet.
+information are printed out for each packet.
 .Pp
 On
 .Tn FDDI
@@ -1897,7 +1897,7 @@ to compute the right length for the higher level protocol.
 .Pp
 Name server inverse queries are not dumped correctly: The
 .Pq empty
-question section is printed rather than real query in the answer
+question section is printed rather than the real query in the answer
 section.
 Some believe that inverse queries are themselves a bug and
 prefer to fix the program generating them rather than
