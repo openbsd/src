@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.21 1997/04/18 20:15:43 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.22 1997/04/30 08:40:11 provos Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -112,12 +112,15 @@ readdisklabel(dev, strat, lp, osdep)
 		unsigned long extoff = 0;
 		int wander = 1;
 		int n = 0;
+		int loop = 0;
 
 		/*
 		 * Read dos partition table, follow extended partitions.
 		 * Map the partitions to disklabel entries i-p
 		 */
-		while (wander && n < 8) {
+		while (wander && n < 8 && loop < 8) {
+		        loop++;
+
 			/* on finding a extended partition wander further */
 			wander = 0;
 
