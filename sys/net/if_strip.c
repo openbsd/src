@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_strip.c,v 1.18 2002/03/14 03:16:10 millert Exp $	*/
+/*	$OpenBSD: if_strip.c,v 1.19 2002/06/24 00:17:29 itojun Exp $	*/
 /*	$NetBSD: if_strip.c,v 1.2.4.3 1996/08/03 00:58:32 jtc Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
@@ -751,9 +751,7 @@ stripoutput(ifp, m, dst, rt)
 	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
 
 	switch (dst->sa_family) {
-
-            case AF_INET:
-
+	case AF_INET:
                 if (rt != NULL && rt->rt_gwroute != NULL)
                         rt = rt->rt_gwroute;
 
@@ -769,7 +767,7 @@ stripoutput(ifp, m, dst, rt)
                 dldst = LLADDR(SDL(rt->rt_gateway));
                 break;
 
-            case AF_LINK:
+	case AF_LINK:
 		/*bcopy(LLADDR(SDL(rt->rt_gateway)), dldst, ifp->if_addrlen);*/
 		dldst = LLADDR(SDL(dst));
 		break;
