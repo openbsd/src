@@ -1,4 +1,4 @@
-/* $OpenBSD: http_main.c,v 1.21 2002/07/29 16:47:22 henning Exp $ */
+/* $OpenBSD: http_main.c,v 1.22 2002/07/31 09:02:28 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -5199,7 +5199,9 @@ static void standalone_main(int argc, char **argv)
 		}
 
 		/* initialize /dev/crypto, XXX check for -DSSL option */
+#ifdef MOD_SSL
 		OpenSSL_add_all_algorithms();
+#endif
 
 		if (chroot(ap_server_root) < 0) {
 		    ap_log_error(APLOG_MARK, APLOG_EMERG, server_conf,
