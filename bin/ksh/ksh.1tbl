@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ksh.1tbl,v 1.78 2004/11/08 23:42:02 jmc Exp $
+.\"	$OpenBSD: ksh.1tbl,v 1.79 2004/12/04 07:05:13 jaredy Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"     The Regents of the University of California.  All rights reserved.
@@ -1539,14 +1539,16 @@ can be put in the prompt by placing
 .Ql !!
 in
 .Ev PS1 .
+.Pp
 Note that since the command-line editors try to figure out how long the prompt
 is (so they know how far it is to the edge of the screen), escape codes in
 the prompt tend to mess things up.
 You can tell the shell not to count certain
-sequences (such as escape codes) by prefixing your prompt with a non-printing
+sequences (such as escape codes) by using the
+.Li \e[ Ns Ar ... Ns Li \e]
+substitution (see below) or by prefixing your prompt with a non-printing
 character (such as control-A) followed by a carriage return and then delimiting
 the escape codes with this non-printing character.
-If you don't have any non-printing characters, you're out of luck.
 By the way, don't blame me for
 this hack; it's in the original
 .Xr ksh .
@@ -1626,10 +1628,10 @@ if
 contains a history list from a previous session.
 .It Li \e$
 The default prompt i.e.\&
-.Sq #
+.Dq # \&
 if the effective UID is 0,
 otherwise
-.Sq $ .
+.Dq $ \& .
 Note: this sequence is not yet implemented.
 .It Li \e Ns Ar nnn
 The octal character
@@ -1651,7 +1653,7 @@ either escape the backslash itself,
 or use double quotes.
 The latter is more practical:
 .Bd -literal -offset indent
-$ export PS1="\eu "
+$ PS1="\eu "
 .Ed
 .Pp
 This is a more complex example,
@@ -1668,7 +1670,7 @@ Secondary prompt string, by default
 .Dq \&>\ \& ,
 used when more input is needed to complete a command.
 .It Ev PS3
-Prompt used by
+Prompt used by the
 .Ic select
 statement when reading a menu selection.
 Default is
@@ -5252,6 +5254,7 @@ deleted and a new prompt to be printed.
 .Xr getopt 3 ,
 .Xr rand 3 ,
 .Xr signal 3 ,
+.Xr strftime 3 ,
 .Xr system 3 ,
 .Xr environ 7
 .Pp
