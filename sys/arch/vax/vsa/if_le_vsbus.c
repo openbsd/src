@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_le_vsbus.c,v 1.1 2000/04/27 02:34:50 bjc Exp $	*/
-/*	$NetBSD: if_le_vsbus.c,v 1.2 1999/08/27 20:05:08 ragge Exp $	*/
+/*	$OpenBSD: if_le_vsbus.c,v 1.2 2000/10/11 06:19:19 bjc Exp $	*/
+/*	$NetBSD: if_le_vsbus.c,v 1.10 2000/06/29 07:14:18 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -103,10 +103,17 @@
 
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
-#include <dev/tc/if_levar.h>
 
-int	le_vsbus_match __P((struct device *, struct cfdata *, void *));
-void	le_vsbus_attach __P((struct device *, struct device *, void *));
+struct le_softc {
+	struct	am7990_softc sc_am7990; /* Must be first */
+	struct	evcnt sc_intrcnt;
+	bus_dmamap_t sc_dm;
+	volatile u_short *sc_rap;
+	volatile u_short *sc_rdp;
+};
+
+static	int	le_vsbus_match __P((struct device *, struct cfdata *, void *));
+static	void	le_vsbus_attach __P((struct device *, struct device *, void *));
 static	void	lewrcsr __P((struct am7990_softc *, u_int16_t, u_int16_t));
 static	u_int16_t lerdcsr __P((struct am7990_softc *, u_int16_t));
 
@@ -114,39 +121,60 @@ struct cfattach le_vsbus_ca = {
 	sizeof(struct le_softc), (cfmatch_t)le_vsbus_match, le_vsbus_attach
 };
 
-void
-lewrcsr(sc, port, val)
-	struct am7990_softc *sc;
+static void
+lewrcsr(ls, port, val)
+	struct am7990_softc *ls;
 	u_int16_t port, val;
 {
-	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
+	struct le_softc *sc = (void *)ls;
 
-	ler1->ler1_rap = port;
-	ler1->ler1_rdp = val;
+	*sc->sc_rap = port;
+	*sc->sc_rdp = val;
 }
 
-u_int16_t
-lerdcsr(sc, port)
-	struct am7990_softc *sc;
+static u_int16_t
+lerdcsr(ls, port)
+	struct am7990_softc *ls;
 	u_int16_t port;
 {
-	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
+	struct le_softc *sc = (void *)ls;
 
-	ler1->ler1_rap = port;
-	return ler1->ler1_rdp;
+	*sc->sc_rap = port;
+	return *sc->sc_rdp;
 }
 
-int
+static int
 le_vsbus_match(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
 {
-	struct  vsbus_attach_args *va = aux;
+	struct vsbus_attach_args *va = aux;
 	volatile short *rdp, *rap;
+	struct leinit initblock;
+	bus_dmamap_t map;
+	int i;
+	int rv = 0;
+	int error;
 
 	if (vax_boardtype == VAX_BTYP_49)
 		return 0;
+
+	error = bus_dmamap_create(va->va_dmat, sizeof(initblock), 1,
+	    sizeof(initblock), 0, BUS_DMA_NOWAIT, &map);
+	if (error) {
+		return 0;
+	}
+
+	error = bus_dmamap_load(va->va_dmat, map, &initblock, 
+	    sizeof(initblock), NULL, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
+	if (error) {
+		bus_dmamap_destroy(va->va_dmat, map);
+		return 0;
+	}
+
+	memset(&initblock, 0, sizeof(initblock));
+
 	rdp = (short *)va->va_addr;
 	rap = rdp + 2;
 
@@ -154,35 +182,42 @@ le_vsbus_match(parent, cf, aux)
 	*rap = LE_CSR0;
 	*rdp = LE_C0_STOP;
 	DELAY(100);
+	*rap = LE_CSR1;
+	*rdp = map->dm_segs->ds_addr & 0xffff;
+	*rap = LE_CSR2;
+	*rdp = (map->dm_segs->ds_addr >> 16) & 0xffff;
+	*rap = LE_CSR0;
 	*rdp = LE_C0_INIT|LE_C0_INEA;
 
 	/* Wait for initialization to finish. */
-	DELAY(100000);
-	va->va_ivec = vsbus_intr;		/* we do our own scb stuff */
+	for (i = 100; i >= 0; i--) {
+		DELAY(1000);
+		/* Should have interrupted by now */
+		if (*rdp & LE_C0_IDON)
+			rv = 1;
+	} 
+	*rap = LE_CSR0;
+	*rdp = LE_C0_STOP;
 
-	/* Should have interrupted by now */
-	if (*rdp & LE_C0_IDON)
-		return 1;
-	return 0;
+	bus_dmamap_unload(va->va_dmat, map);
+	bus_dmamap_destroy(va->va_dmat, map);
+	return rv;
 }
 
-void
+static void
 le_vsbus_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
 	struct vsbus_attach_args *va = aux;
-	struct le_softc *sc = (void *)self;
 	struct vsbus_softc *vsc = (struct vsbus_softc *)parent;
+	struct le_softc *sc = (void *)self;
 	bus_dma_segment_t seg;
 	int *lance_addr;
 	int i, err, rseg;
-	struct lereg1 *ler1; 
 
-	ler1 = sc->sc_r1 = (void *)vax_map_physmem(NI_BASE, 1);
-
-	/* Prettier printout */
-	printf("\n%s", self->dv_xname);
+	sc->sc_rdp = (short *)vax_map_physmem(NI_BASE, 1);
+	sc->sc_rap = sc->sc_rdp + 2;
 
 	/*
 	 * MD functions.
@@ -192,6 +227,7 @@ le_vsbus_attach(parent, self, aux)
 	sc->sc_am7990.sc_nocarrier = NULL;
 
 	scb_vecalloc(va->va_cvec, (void (*)(void *)) am7990_intr, sc, SCB_ISTACK);
+
         /*
          * Allocate a (DMA-safe) block for all descriptors and buffers.
          */
@@ -211,18 +247,35 @@ le_vsbus_attach(parent, self, aux)
                 bus_dmamem_free(va->va_dmat, &seg, rseg);
                 return;
         }
-	sc->sc_am7990.sc_addr =
-	    (paddr_t)sc->sc_am7990.sc_mem & 0xffffff;
-	sc->sc_am7990.sc_memsize = ALLOCSIZ;
+	err = bus_dmamap_create(va->va_dmat, ALLOCSIZ, rseg, ALLOCSIZ, 
+	    0, BUS_DMA_NOWAIT, &sc->sc_dm);
+        if (err) {
+                printf(": unable to create dma map: err %d\n", err);
+                bus_dmamem_free(va->va_dmat, &seg, rseg);
+                return;
+        }
+	err = bus_dmamap_load(va->va_dmat, sc->sc_dm, sc->sc_am7990.sc_mem,
+	    ALLOCSIZ, NULL, BUS_DMA_NOWAIT);
+        if (err) {
+                printf(": unable to load dma map: err %d\n", err);
+                bus_dmamap_destroy(va->va_dmat, sc->sc_dm);
+                bus_dmamem_free(va->va_dmat, &seg, rseg);
+                return;
+        }
+	printf(" buf 0x%lx-0x%lx", sc->sc_dm->dm_segs->ds_addr,
+	    sc->sc_dm->dm_segs->ds_addr + sc->sc_dm->dm_segs->ds_len - 1);
+	sc->sc_am7990.sc_addr = sc->sc_dm->dm_segs->ds_addr & 0xffffff;
+	sc->sc_am7990.sc_memsize = sc->sc_dm->dm_segs->ds_len;
 
-	sc->sc_am7990.sc_conf3 = 0;
-	sc->sc_am7990.sc_hwinit = NULL;
 	sc->sc_am7990.sc_copytodesc = am7990_copytobuf_contig;
 	sc->sc_am7990.sc_copyfromdesc = am7990_copyfrombuf_contig;
 	sc->sc_am7990.sc_copytobuf = am7990_copytobuf_contig;
 	sc->sc_am7990.sc_copyfrombuf = am7990_copyfrombuf_contig;
 	sc->sc_am7990.sc_zerobuf = am7990_zerobuf_contig;
 
+#ifdef LEDEBUG
+	sc->sc_am7990.sc_debug = 1;
+#endif
 	/*
 	 * Get the ethernet address out of rom
 	 */
@@ -233,15 +286,9 @@ le_vsbus_attach(parent, self, aux)
 
 	bcopy(self->dv_xname, sc->sc_am7990.sc_arpcom.ac_if.if_xname,
 	    IFNAMSIZ);
-	am7990_config(&sc->sc_am7990);
+	/* Prettier printout */
+	printf("\n%s", self->dv_xname);
 
-	/*
-	 * Register this device as boot device if we booted from it.
-	 * This will fail if there are more than one le in a machine,
-	 * fortunately there may be only one.
-	 */
-	if (B_TYPE(bootdev) == BDEV_LE)
-		booted_from = self;
-	
 	vsc->sc_mask |= 1 << (va->va_maskno-1);
+	am7990_config(&sc->sc_am7990);
 }

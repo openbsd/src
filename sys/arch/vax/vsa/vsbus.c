@@ -1,5 +1,5 @@
-/*	$OpenBSD: vsbus.c,v 1.4 2000/04/27 00:52:07 bjc Exp $ */
-/*	$NetBSD: vsbus.c,v 1.20 1999/10/22 21:10:12 ragge Exp $ */
+/*	$OpenBSD: vsbus.c,v 1.5 2000/10/11 06:19:19 bjc Exp $ */
+/*	$NetBSD: vsbus.c,v 1.29 2000/06/29 07:14:37 mrg Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -49,6 +49,7 @@
 #include <sys/stat.h>
 
 #include <vm/vm.h>
+#include <vm/vm_kern.h>
 
 #define	_VAX_BUS_DMA_PRIVATE
 #include <machine/bus.h>
@@ -96,6 +97,9 @@ struct vax_bus_dma_tag vsbus_bus_dma_tag = {
 	_bus_dmamem_mmap,
 };
 
+extern struct vax_bus_space vax_mem_bus_space;
+static SIMPLEQ_HEAD(, vsbus_dma) vsbus_dma;
+
 struct	cfattach vsbus_ca = { 
 	sizeof(struct vsbus_softc), (cfmatch_t)vsbus_match, vsbus_attach
 };
@@ -141,27 +145,55 @@ vsbus_attach(parent, self, aux)
 	void	*aux;
 {
 	struct	vsbus_softc *sc = (void *)self;
+	int dbase, dsize;
 	int		discard;
-	vaddr_t temp;
 
 	printf("\n");
 
-	switch (vax_boardtype) {
-	case VAX_BTYP_49:
-		temp = vax_map_physmem(0x25c00000, 1);
-		sc->sc_intreq = (char *)temp + 12;
-		sc->sc_intclr = (char *)temp + 12;
-		sc->sc_intmsk = (char *)temp + 8;
-		break;
+	sc->sc_dmatag = vsbus_bus_dma_tag;
 
+	switch (vax_boardtype) {
+#if VAX49
+	case VAX_BTYP_49:
+		sc->sc_vsregs = vax_map_physmem(0x25c00000, 1);
+		sc->sc_intreq = (char *)sc->sc_vsregs + 12;
+		sc->sc_intclr = (char *)sc->sc_vsregs + 12;
+		sc->sc_intmsk = (char *)sc->sc_vsregs + 8;
+		vsbus_dma_init(sc, 8192);
+		break;
+#endif
+
+#if VAX46 || VAX48
+    case VAX_BTYP_48:
+    case VAX_BTYP_46:
+        sc->sc_vsregs = vax_map_physmem(VS_REGS, 1);
+        sc->sc_intreq = (char *)sc->sc_vsregs + 15;
+        sc->sc_intclr = (char *)sc->sc_vsregs + 15;
+        sc->sc_intmsk = (char *)sc->sc_vsregs + 12;
+        vsbus_dma_init(sc, 32768);
+#endif
+
+		
 	default:
-		temp = vax_map_physmem(VS_REGS, 1);
-		sc->sc_intreq = (char *)temp + 15;
-		sc->sc_intclr = (char *)temp + 15;
-		sc->sc_intmsk = (char *)temp + 12;
+		sc->sc_vsregs = vax_map_physmem(VS_REGS, 1);
+		sc->sc_intreq = (char *)sc->sc_vsregs + 15;
+		sc->sc_intclr = (char *)sc->sc_vsregs + 15;
+		sc->sc_intmsk = (char *)sc->sc_vsregs + 12;
+		if (vax_boardtype == VAX_BTYP_410) {
+			dbase = KA410_DMA_BASE;
+			dsize = KA410_DMA_SIZE;
+		} else {
+			dbase = KA420_DMA_BASE;
+			dsize = KA420_DMA_SIZE;
+			*(char *)(sc->sc_vsregs + 0xe0) = 1; /* Big DMA */
+		}
+		sc->sc_dmasize = dsize;
+		sc->sc_dmaaddr = uvm_km_valloc(kernel_map, dsize);
+		ioaccess(sc->sc_dmaaddr, dbase, dsize/VAX_NBPG);
 		break;
 	}
 
+	SIMPLEQ_INIT(&vsbus_dma);
 	/*
 	 * First: find which interrupts we won't care about.
 	 * There are interrupts that interrupt on a periodic basic
@@ -196,7 +228,8 @@ vsbus_search(parent, cfd, aux)
 
 	va.va_paddr = cf->cf_loc[0];
 	va.va_addr = vax_map_physmem(va.va_paddr, 1);
-	va.va_dmat = &vsbus_bus_dma_tag;
+	va.va_dmat = &sc->sc_dmatag;
+	va.va_iot = &vax_mem_bus_space;
 
 	*sc->sc_intmsk = 0;
 	*sc->sc_intclr = 0xff;
@@ -229,6 +262,8 @@ vsbus_search(parent, cfd, aux)
 	va.va_br = br;
 	va.va_cvec = vec;
 	va.confargs = aux;		
+	va.va_dmaaddr = sc->sc_dmaaddr;
+	va.va_dmasize = sc->sc_dmasize;
 
 	config_attach(parent, cf, &va, vsbus_print);
 	return 1;
@@ -241,6 +276,7 @@ forgetit:
 	return 0;
 }
 
+#if 0
 static volatile struct dma_lock {
     int dl_locked;
     int dl_wanted;
@@ -288,6 +324,7 @@ vsbus_unlockDMA(ca)
     }
     return (0);
 }
+#endif
 
 
 /*
@@ -331,6 +368,10 @@ vsbus_copytoproc(p, from, to, len)
 	struct pte *pte;
 	paddr_t pa;
 
+    if ((long)to & KERNBASE) { /* In kernel space */
+        bcopy(from, to, len);
+        return;
+    }
 	pte = uvtopte(TRUNC_PAGE(to), (&p->p_addr->u_pcb));
 	if ((vaddr_t)to & PGOFSET) {
 		int cz = ROUND_PAGE(to) - (vaddr_t)to;
@@ -361,6 +402,10 @@ vsbus_copyfromproc(p, from, to, len)
 	struct pte *pte;
 	paddr_t pa;
 
+    if ((long)from & KERNBASE) { /* In kernel space */
+        bcopy(from, to, len);
+        return;
+    }
 	pte = uvtopte(TRUNC_PAGE(from), (&p->p_addr->u_pcb));
 	if ((vaddr_t)from & PGOFSET) {
 		int cz = ROUND_PAGE(from) - (vaddr_t)from;
@@ -381,3 +426,34 @@ vsbus_copyfromproc(p, from, to, len)
 		pte += 8; /* XXX */
 	}
 }
+
+/* 
+ * There can only be one user of the DMA area on VS2k/VS3100 at one
+ * time, so keep track of it here.
+ */ 
+static int vsbus_active = 0;
+
+void
+vsbus_dma_start(struct vsbus_dma *vd)
+{
+	SIMPLEQ_INSERT_TAIL(&vsbus_dma, vd, vd_q);
+
+	if (vsbus_active == 0)
+		vsbus_dma_intr();
+}
+ 
+void
+vsbus_dma_intr(void)
+{	
+	struct vsbus_dma *vd;
+	
+	vd = SIMPLEQ_FIRST(&vsbus_dma); 
+	if (vd == NULL) {
+		vsbus_active = 0;
+		return;
+	}
+	vsbus_active = 1;
+	SIMPLEQ_REMOVE_HEAD(&vsbus_dma, vd, vd_q);
+	(*vd->vd_go)(vd->vd_arg);
+}
+

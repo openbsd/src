@@ -1,4 +1,5 @@
-/*	$NetBSD: ncr.c,v 1.26 2000/03/25 15:27:57 tsutsui Exp $	*/
+/* $OpenBSD: ncr.c,v 1.7 2000/10/11 06:19:19 bjc Exp $ */
+/*	$NetBSD: ncr.c,v 1.32 2000/06/25 16:00:43 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,9 +41,6 @@
  * This file contains the machine-dependent parts of the NCR-5380
  * controller. The machine-independent parts are in ncr5380sbc.c.
  *
- * Note: Only PIO transfers for now which implicates very bad
- * performance. DMA support will come soon.
- *
  * Jens A. Nilsson.
  *
  * Credits:
@@ -78,6 +76,7 @@
 #include <machine/bus.h>
 #include <machine/sid.h>
 #include <machine/scb.h>
+#include <machine/clock.h>
 
 #define MIN_DMA_LEN 128
 
@@ -103,7 +102,11 @@ struct si_softc {
 	bus_space_handle_t  sc_regh;
 
 	struct	si_dma_handle ncr_dma[SCI_OPENINGS];
+	struct	vsbus_dma sc_vd;
+	int	onlyscsi;	/* This machine needs no queueing */
 };
+
+static int ncr_dmasize;
 
 static	int si_match __P((struct device *, void *, void *));
 static	void si_attach __P((struct device *, struct device *, void *));
@@ -116,6 +119,7 @@ static	void si_dma_start __P((struct ncr5380_softc *));
 static	void si_dma_poll __P((struct ncr5380_softc *));
 static	void si_dma_eop __P((struct ncr5380_softc *));
 static	void si_dma_stop __P((struct ncr5380_softc *));
+static	void si_dma_go __P((void *));
 
 #define NCR5380_READ(sc, reg)	bus_space_read_1(sc->sc_regt,		\
 	0, sc->ncr_sc.reg)
@@ -155,7 +159,8 @@ si_match(parent, cf, aux)
 	struct vsbus_attach_args *va = aux;
 	volatile char *si_csr = (char *) va->va_addr;
 
-	if (vax_boardtype == VAX_BTYP_49)
+	if (vax_boardtype == VAX_BTYP_49 || vax_boardtype == VAX_BTYP_46
+	    || vax_boardtype == VAX_BTYP_48)
 		return 0;
 	/* This is the way Linux autoprobes the interrupt MK-990321 */
 	si_csr[12] = 0;
@@ -175,8 +180,7 @@ si_attach(parent, self, aux)
 	struct vsbus_softc *vsc = (struct vsbus_softc *)parent;
 	struct si_softc *sc = (struct si_softc *) self;
 	struct ncr5380_softc *ncr_sc = &sc->ncr_sc;
-
-	printf("\n");
+	int tweak, target;
 
 	/* enable interrupts on vsbus too */
 	scb_vecalloc(va->va_cvec, (void (*)(void *)) ncr5380_intr, sc, SCB_ISTACK);
@@ -188,30 +192,29 @@ si_attach(parent, self, aux)
 	 * On VS2000, don't care for now.
 	 */
 #define DMASIZE (64*1024)
-	if (vax_boardtype != VAX_BTYP_410) {
-		if (va->va_paddr & 0x100) /* Magic */
-			sc->ncr_off = DMASIZE;
-		sc->ncr_addr = (caddr_t)uvm_km_valloc(kernel_map, DMASIZE);
-		
-		ioaccess((vaddr_t)sc->ncr_addr,
-		    0x202d0000 + sc->ncr_off, DMASIZE/VAX_NBPG);
-
-		/*
-		 * MD function pointers used by the MI code.
-		 */
-		ncr_sc->sc_dma_alloc = si_dma_alloc;
-		ncr_sc->sc_dma_free  = si_dma_free;
-		ncr_sc->sc_dma_setup = si_dma_setup;
-		ncr_sc->sc_dma_start = si_dma_start;
-		ncr_sc->sc_dma_poll  = si_dma_poll;
-		ncr_sc->sc_dma_eop   = si_dma_eop;
-		ncr_sc->sc_dma_stop  = si_dma_stop;
-
-		/* DMA control register offsets */
-		sc->ncr_dmaaddr = 32;	/* DMA address in buffer, longword */
-		sc->ncr_dmacount = 64;	/* DMA count register */
-		sc->ncr_dmadir = 68;	/* Direction of DMA transfer */
+	if (va->va_paddr & 0x100) { /* Secondary SCSI controller */
+		sc->ncr_off = DMASIZE;
+		sc->onlyscsi = 1;
 	}
+	sc->ncr_addr = (caddr_t)va->va_dmaaddr;
+	ncr_dmasize = min(va->va_dmasize, MAXPHYS);
+
+	/*
+	 * MD function pointers used by the MI code.
+	 */
+	ncr_sc->sc_dma_alloc = si_dma_alloc;
+	ncr_sc->sc_dma_free  = si_dma_free;
+	ncr_sc->sc_dma_setup = si_dma_setup;
+	ncr_sc->sc_dma_start = si_dma_start;
+	ncr_sc->sc_dma_poll  = si_dma_poll;
+	ncr_sc->sc_dma_eop   = si_dma_eop;
+	ncr_sc->sc_dma_stop  = si_dma_stop;
+
+	/* DMA control register offsets */
+	sc->ncr_dmaaddr = 32;	/* DMA address in buffer, longword */
+	sc->ncr_dmacount = 64;	/* DMA count register */
+	sc->ncr_dmadir = 68;	/* Direction of DMA transfer */
+
 	ncr_sc->sc_pio_out = ncr5380_pio_out;
 	ncr_sc->sc_pio_in =  ncr5380_pio_in;
 
@@ -224,7 +227,7 @@ si_attach(parent, self, aux)
 	sc->sc_regh = vax_map_physmem(va->va_paddr, 1);
 
 	/* Register offsets */
-	ncr_sc->sci_r0 = (void *)sc->sc_regh;
+	ncr_sc->sci_r0 = (void *)sc->sc_regh+0;
 	ncr_sc->sci_r1 = (void *)sc->sc_regh+4;
 	ncr_sc->sci_r2 = (void *)sc->sc_regh+8;
 	ncr_sc->sci_r3 = (void *)sc->sc_regh+12;
@@ -235,11 +238,28 @@ si_attach(parent, self, aux)
 
 	ncr_sc->sc_no_disconnect = 0xff;
 
+	/*
+	 * Get the SCSI chip target address out of NVRAM.
+	 * This do not apply to the VS2000.
+	 */
+	tweak = clk_tweak + (va->va_paddr & 0x100 ? 3 : 0);
+	if (vax_boardtype == VAX_BTYP_410)
+		target = 7;
+	else
+		target = (clk_page[0xbc/2] >> tweak) & 7;
+
+	printf("\n%s: NCR5380, SCSI ID %d\n", ncr_sc->sc_dev.dv_xname, target);
+
 	ncr_sc->sc_link.adapter_softc =	sc;
-	ncr_sc->sc_link.adapter_target = 7;
+	ncr_sc->sc_link.adapter_target = target;
 	ncr_sc->sc_link.adapter = &si_ops;
 	ncr_sc->sc_link.device = &si_dev;
 	ncr_sc->sc_link.openings = 4;
+
+	/*
+	 * Init the vsbus DMA resource queue struct */
+	sc->sc_vd.vd_go = si_dma_go;
+	sc->sc_vd.vd_arg = sc;
 
 	/*
 	 * Initialize si board itself.
@@ -247,6 +267,7 @@ si_attach(parent, self, aux)
 	ncr5380_init(ncr_sc);
 	ncr5380_reset_scsibus(ncr_sc);
 	config_found(&(ncr_sc->sc_dev), &(ncr_sc->sc_link), scsiprint);
+
 }
 
 /*
@@ -256,10 +277,8 @@ static void
 si_minphys(bp)
 	struct buf *bp;
 {
-	if ((vax_boardtype == VAX_BTYP_410) && (bp->b_bcount > (16*1024)))
-		bp->b_bcount = (16*1024);
-	else if (bp->b_bcount > MAXPHYS)
-		bp->b_bcount = MAXPHYS;
+	if (bp->b_bcount > ncr_dmasize)
+		bp->b_bcount = ncr_dmasize;
 }
 
 void
@@ -285,7 +304,7 @@ si_dma_alloc(ncr_sc)
 
 	/* Make sure our caller checked sc_min_dma_len. */
 	if (xlen < MIN_DMA_LEN)
-		panic("si_dma_alloc: len=0x%x\n", xlen);
+		panic("si_dma_alloc: len=0x%x", xlen);
 
 	/*
 	 * Find free PDMA handle.  Guaranteed to find one since we
@@ -296,7 +315,7 @@ si_dma_alloc(ncr_sc)
 		if ((sc->ncr_dma[i].dh_flags & SIDH_BUSY) == 0)
 			goto found;
 	}
-	panic("sbc: no free PDMA handles");
+	panic("ncr: no free PDMA handles");
 found:
 	dh = &sc->ncr_dma[i];
 	dh->dh_flags = SIDH_BUSY;
@@ -318,6 +337,14 @@ si_dma_free(ncr_sc)
 	struct sci_req *sr = ncr_sc->sc_current;
 	struct si_dma_handle *dh = sr->sr_dma_hand;
 
+#ifdef DIAGNOSTIC
+	if (dh == NULL)
+		panic("si_dma_free: no DMA handle");
+#endif
+
+	if (ncr_sc->sc_state & NCR_DOINGDMA)
+		panic("si_dma_free: free while DMA in progress");
+
 	if (dh->dh_flags & SIDH_BUSY)
 		dh->dh_flags = 0;
 	else
@@ -338,6 +365,23 @@ si_dma_start(ncr_sc)
 	struct ncr5380_softc *ncr_sc;
 {
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
+
+	/* Just put on queue; will call go() from below */
+	if (sc->onlyscsi)
+		si_dma_go(ncr_sc);
+	else
+		vsbus_dma_start(&sc->sc_vd);
+}
+
+/*
+ * go() routine called when another transfer somewhere is finished.
+ */
+void
+si_dma_go(arg)
+	void *arg;
+{
+	struct ncr5380_softc *ncr_sc = arg;
+	struct si_softc *sc = (struct si_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
 	struct si_dma_handle *dh = sr->sr_dma_hand;
 
@@ -346,10 +390,7 @@ si_dma_start(ncr_sc)
 	 * it is directed "outbound".
 	 */
 	if (dh->dh_flags & SIDH_OUT) {
-		if ((vaddr_t)dh->dh_addr & KERNBASE)
-			bcopy(dh->dh_addr, sc->ncr_addr, dh->dh_len);
-		else
-			vsbus_copyfromproc(dh->dh_proc, dh->dh_addr,
+		vsbus_copyfromproc(dh->dh_proc, dh->dh_addr,
 			    sc->ncr_addr, dh->dh_len);
 		bus_space_write_1(sc->sc_regt, sc->sc_regh,
 		    sc->ncr_dmadir, 0);
@@ -426,12 +467,8 @@ si_dma_stop(ncr_sc)
 	}
 	if (count == 0) {
 		if (((dh->dh_flags & SIDH_OUT) == 0)) {
-			if ((vaddr_t)dh->dh_addr & KERNBASE)
-				bcopy(sc->ncr_addr, dh->dh_addr, dh->dh_len);
-			else
-				vsbus_copytoproc(dh->dh_proc, sc->ncr_addr,
-				    dh->dh_addr, dh->dh_len);
-
+			vsbus_copytoproc(dh->dh_proc, sc->ncr_addr,
+			    dh->dh_addr, dh->dh_len);
 		}
 		ncr_sc->sc_dataptr += dh->dh_len;
 		ncr_sc->sc_datalen -= dh->dh_len;
@@ -440,6 +477,8 @@ si_dma_stop(ncr_sc)
 	NCR5380_WRITE(sc, sci_mode, NCR5380_READ(sc, sci_mode) &
 	    ~(SCI_MODE_DMA | SCI_MODE_DMA_IE));
 	NCR5380_WRITE(sc, sci_icmd, 0);
+	if (sc->onlyscsi == 0)
+		vsbus_dma_intr(); /* Try to start more transfers */
 }
 
 int 
