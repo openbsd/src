@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpc.3,v 1.32 2003/05/30 22:12:43 jmc Exp $
+.\"	$OpenBSD: rpc.3,v 1.33 2003/06/29 13:42:40 jmc Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
 .\" All rights reserved.
@@ -394,8 +394,10 @@ identifies the name of the remote host where the server
 is located.
 .Fa proto
 indicates which kind of transport protocol to use.
-The currently supported values for this field are \(lqudp\(rq
-and \(lqtcp\(rq.
+The currently supported values for this field are
+.Qq udp
+and
+.Qq tcp .
 Default timeouts are set, but can be modified using
 .Fn clnt_control .
 .Pp
@@ -694,7 +696,7 @@ address
 This routine can return
 .Tn NULL .
 The command
-.Pa ` "rpcinfo \-p" '
+.Qq Li rpcinfo \-p
 uses this routine.
 .Pp
 .Fn pmap_getport
@@ -748,8 +750,9 @@ The definitions of other parameters are discussed in
 .Fn callrpc
 and
 .Fn clnt_call .
-This procedure should be used for a \(lqping\(rq and nothing
-else.
+This procedure should be used for a
+.Qq ping
+and nothing else.
 See also
 .Fn clnt_broadcast .
 .Pp
