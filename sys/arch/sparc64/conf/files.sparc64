@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.49 2004/09/16 09:14:04 mickey Exp $
+#	$OpenBSD: files.sparc64,v 1.50 2004/09/22 21:48:18 jason Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -14,6 +14,21 @@ file	arch/sparc64/dev/upa.c			upa
 define upa {}
 device upa
 attach upa at mainbus
+
+define central {}
+device central
+attach central at mainbus
+file	arch/sparc64/dev/central.c		central
+
+define fhc {}
+device fhc
+file	arch/sparc64/dev/fhc.c			fhc
+
+attach fhc at central with fhc_central
+file	arch/sparc64/dev/fhc_central.c		fhc_central
+
+attach fhc at mainbus with fhc_mainbus
+file	arch/sparc64/dev/fhc_mainbus.c		fhc_mainbus
 
 device pcons
 attach pcons at mainbus
@@ -94,6 +109,7 @@ file	arch/sparc64/dev/uperf_ebus.c		uperf_ebus
 device clock: mk48txx
 attach clock at mainbus, sbus with clock_sbus
 attach clock at ebus with clock_ebus
+attach clock at fhc with clock_fhc
 
 device rtc
 attach rtc at ebus with  rtc_ebus
