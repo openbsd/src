@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.4 1996/10/15 23:22:35 millert Exp $	*/
+/*	$OpenBSD: at.c,v 1.5 1996/10/26 20:06:50 millert Exp $	*/
 /*	$NetBSD: at.c,v 1.4 1995/03/25 18:13:31 glass Exp $	*/
 
 /*
@@ -65,7 +65,7 @@
 
 /* File scope variables */
 #ifndef lint
-static char rcsid[] = "$OpenBSD: at.c,v 1.4 1996/10/15 23:22:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: at.c,v 1.5 1996/10/26 20:06:50 millert Exp $";
 #endif
 
 char *no_export[] =
@@ -262,12 +262,12 @@ writefile(runtimer, queue)
 		panic("Cannot reopen atjob file");
 
 	/*
-	 * Get the userid to mail to, first by trying getlogin(), which
-	 * reads /etc/utmp, then from LOGNAME, finally from getpwuid().
+	 * Get the userid to mail to, first by trying getlogin(), which reads
+	 * /etc/utmp, then from $LOGNAME or $USER, finally from getpwuid().
 	 */
 	mailname = getlogin();
-	if (mailname == NULL)
-		mailname = getenv("LOGNAME");
+	if (mailname == NULL && (mailname = getenv("LOGNAME")) == NULL)
+		mailname = getenv("USER");
 
 	if ((mailname == NULL) || (mailname[0] == '\0')
 	    || (strlen(mailname) > 8)) {
