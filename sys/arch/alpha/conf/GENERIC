@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.126 2004/09/16 09:35:36 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.127 2004/09/18 07:12:13 pvalchev Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 
 machine	alpha
@@ -302,6 +302,9 @@ scsibus* at atapiscsi?
 
 # Audio devices
 eap*	at pci?				# Ensoniq AudioPCI S5016
+
+puc*	at pci?				# PCI "universal" comm device
+com*	at puc? port ?
 
 # UNTESTED.  The following drivers are untested
 eso*	at pci?				# ESS Solo-1 PCI AudioDrive

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.61 2004/09/16 09:14:03 mickey Exp $
+#	$OpenBSD: files.alpha,v 1.62 2004/09/18 07:12:14 pvalchev Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -122,6 +122,8 @@ define	pcmcia {}
 include "dev/pci/files.pci"	# XXX some ISA devs are 'at pci' too.
 include "dev/isa/files.isa"
 major { wd = 0 }
+
+include "dev/puc/files.puc"
 
 #
 # ISA Bus devices
