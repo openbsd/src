@@ -1,7 +1,7 @@
 #
 #	THREADWAY: threadway.teeny.org
 #
-#	$OpenBSD: THREADWAY,v 1.10 1996/08/09 04:15:27 downsj Exp $
+#	$OpenBSD: THREADWAY,v 1.11 1996/08/27 10:46:50 downsj Exp $
 #
 
 machine		i386
@@ -14,6 +14,9 @@ option		PCVT_USL_VT_COMPAT=1,PCVT_SCREENSAVER=1,PCVT_PRETTYSCRNS=0
 maxusers	32
 option		TIMEZONE=480
 option		DST=0
+
+option		GPL_MATH_EMULATE
+option		ALWAYS_MATH_EMULATE
 
 option		SWAPPAGER
 option		VNODEPAGER

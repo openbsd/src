@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.6 1996/05/30 09:30:07 deraadt Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.7 1996/08/27 10:46:52 downsj Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.22 1996/05/03 19:42:25 christos Exp $	*/
 
 /*
@@ -97,7 +97,7 @@ process_fpframe(p)
 	struct proc *p;
 {
 
-	return (&p->p_addr->u_pcb.pcb_savefpu);
+	return (&p->p_addr->u_pcb.pcb_savefpu.npx);
 }
 
 int

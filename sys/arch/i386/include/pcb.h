@@ -67,7 +67,7 @@ struct pcb {
         union	descriptor *pcb_ldt;	/* per process (user) LDT */
         int	pcb_ldt_len;		/*      number of LDT entries */
 	int	pcb_cr0;		/* saved image of CR0 */
-	struct	save87 pcb_savefpu;	/* floating point state for 287/387 */
+	union	fsave87 pcb_savefpu;	/* floating point state for 287/387 */
 	struct	emcsts pcb_saveemc;	/* Cyrix EMC state */
 /*
  * Software pcb (extension)

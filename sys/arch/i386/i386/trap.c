@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.10 1996/05/10 12:44:49 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.11 1996/08/27 10:46:52 downsj Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 #undef DEBUG
@@ -298,7 +298,7 @@ trap(frame)
 		goto out;
 
 	case T_DNA|T_USER: {
-#ifdef MATH_EMULATE
+#if defined(MATH_EMULATE) || defined(GPL_MATH_EMULATE)
 		int rv;
 		if ((rv = math_emulate(&frame)) == 0) {
 			if (frame.tf_eflags & PSL_T)
@@ -434,7 +434,7 @@ trap(frame)
 
 	case T_BPTFLT|T_USER:		/* bpt instruction fault */
 	case T_TRCTRAP|T_USER:		/* trace trap */
-#ifdef MATH_EMULATE
+#if defined(MATH_EMULATE) || defined(GPL_MATH_EMULATE)
 	trace:
 #endif
 		trapsignal(p, SIGTRAP, type &~ T_USER);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: freebsd_machdep.c,v 1.6 1996/05/07 07:21:37 deraadt Exp $	*/
+/*	$OpenBSD: freebsd_machdep.c,v 1.7 1996/08/27 10:46:51 downsj Exp $	*/
 /*	$NetBSD: freebsd_machdep.c,v 1.10 1996/05/03 19:42:05 christos Exp $	*/
 
 /*-
@@ -284,6 +284,7 @@ netbsd_to_freebsd_ptrace_regs(nregs, nfpregs, fregs)
 	      sizeof(fregs->freebsd_ptrace_fpregs.sv_ac));
 	fregs->freebsd_ptrace_fpregs.sv_ex_sw = 
 		nframe->sv_ex_sw;
+#if 0
 	/*
 	 * fortunately, sizeof(freebsd_save87) >= sizeof(save87)
 	 */
@@ -294,8 +295,10 @@ netbsd_to_freebsd_ptrace_regs(nregs, nfpregs, fregs)
 		      "sizeof(freebsd_save87) >= sizeof(save87)");
 	}
 #endif
+#endif
 	bcopy(&nframe->sv_ex_tw, fregs->freebsd_ptrace_fpregs.sv_pad,
 	      sizeof(nframe->sv_ex_tw));
+#if 0
 	bcopy(nframe->sv_pad,
 	      (caddr_t)fregs->freebsd_ptrace_fpregs.sv_pad +
 	      sizeof(nframe->sv_ex_tw),
@@ -304,6 +307,7 @@ netbsd_to_freebsd_ptrace_regs(nregs, nfpregs, fregs)
 	      sizeof(nframe->sv_ex_tw) + sizeof(nframe->sv_pad),
 	      sizeof(fregs->freebsd_ptrace_fpregs.sv_pad) -
 	      sizeof(nframe->sv_ex_tw) - sizeof(nframe->sv_pad));
+#endif
 }
 
 void
@@ -342,9 +346,11 @@ freebsd_to_netbsd_ptrace_regs(fregs, nregs, nfpregs)
 	 */
 	bcopy(fregs->freebsd_ptrace_fpregs.sv_pad, &nframe->sv_ex_tw,
 	      sizeof(nframe->sv_ex_tw));
+#if 0
 	bcopy((caddr_t)fregs->freebsd_ptrace_fpregs.sv_pad +
 	      sizeof(nframe->sv_ex_tw),
 	      nframe->sv_pad, sizeof(nframe->sv_pad));
+#endif
 }
 
 /* random value, except FREEBSD_U_AR0_OFFSET..., FREEBSD_U_SAVEFP_OFFSET... */

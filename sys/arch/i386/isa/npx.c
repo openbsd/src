@@ -172,6 +172,7 @@ static inline int
 npxprobe1(ia)
 	struct isa_attach_args *ia;
 {
+#ifndef ALWAYS_MATH_EMULATE
 	int control;
 	int status;
 
@@ -228,6 +229,7 @@ npxprobe1(ia)
 			return 1;
 		}
 	}
+#endif
 	/*
 	 * Probe failed.  There is no usable FPU.
 	 */
@@ -397,7 +399,7 @@ npxintr(arg)
 	 * Find the address of npxproc's savefpu.  This is not necessarily
 	 * the one in curpcb.
 	 */
-	addr = &p->p_addr->u_pcb.pcb_savefpu;
+	addr = &p->p_addr->u_pcb.pcb_savefpu.npx;
 	/*
 	 * Save state.  This does an implied fninit.  It had better not halt
 	 * the cpu or we'll hang.

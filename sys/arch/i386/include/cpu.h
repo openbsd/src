@@ -165,7 +165,7 @@ void	startrtclock __P((void));
 void	npxdrop __P((void));
 void	npxsave __P((void));
 
-#ifdef MATH_EMULATE
+#if defined(MATH_EMULATE) || defined(GPL_MATH_EMULATE)
 /* math_emulate.c */
 int	math_emulate __P((struct trapframe *));
 #endif

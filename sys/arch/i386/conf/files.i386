@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.23 1996/08/08 18:47:13 dm Exp $
+#	$OpenBSD: files.i386,v 1.24 1996/08/27 10:46:51 downsj Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -103,6 +103,9 @@ file	arch/i386/isa/clock.c		isabus
 device	npx
 attach	npx at isa
 file	arch/i386/isa/npx.c		npx needs-flag
+
+# Linux/GNU i387 floating point emulator
+include "../../../gnu/arch/i386/fpemul/files.fpemul"
 
 # attribute used to represent the "keyboard controller"
 # XXX should be a real device
