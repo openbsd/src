@@ -1,5 +1,5 @@
-/*	$OpenBSD: vga_pcivar.h,v 1.2 1997/11/06 12:26:56 niklas Exp $	*/
-/*	$NetBSD: vga_pcivar.h,v 1.1 1996/11/19 04:38:36 cgd Exp $	*/
+/* $OpenBSD: vga_pcivar.h,v 1.3 2000/11/15 20:17:38 aaron Exp $ */
+/* $NetBSD: vga_pcivar.h,v 1.1 1998/03/22 15:16:19 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -34,5 +34,5 @@
 	     (PCI_CLASS(class) == PCI_CLASS_PREHISTORIC &&		\
 	      PCI_SUBCLASS(class) == PCI_SUBCLASS_PREHISTORIC_VGA)) ? 1 : 0)
 
-void    vga_pci_console __P((bus_space_tag_t, bus_space_tag_t,
-	    pci_chipset_tag_t, int, int, int));
+int vga_pci_cnattach __P((bus_space_tag_t, bus_space_tag_t,
+			  pci_chipset_tag_t, int, int, int));

@@ -1,5 +1,5 @@
-/*	$OpenBSD: vga_isavar.h,v 1.2 1997/11/06 12:26:55 niklas Exp $	*/
-/*	$NetBSD: vga_isavar.h,v 1.2 1996/11/23 06:06:45 cgd Exp $	*/
+/* $OpenBSD: vga_isavar.h,v 1.3 2000/11/15 20:17:38 aaron Exp $ */
+/* $NetBSD: vga_isavar.h,v 1.1 1998/03/22 15:14:36 drochner Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,5 +28,4 @@
  * rights to redistribute these changes.
  */
 
-int	vga_isa_console_match __P((bus_space_tag_t, bus_space_tag_t));
-void	vga_isa_console_attach __P((bus_space_tag_t, bus_space_tag_t));
+int	vga_isa_cnattach __P((bus_space_tag_t, bus_space_tag_t));
