@@ -1,21 +1,14 @@
-#	$OpenBSD: Makefile,v 1.9 1998/09/05 16:33:25 millert Exp $
+#	$OpenBSD: Makefile,v 1.10 1998/09/11 04:08:59 millert Exp $
 
 PROG=	savecore
 
-# XXX Temporary, until other ports use new libkvm
-.if	(${MACHINE} == "alpha") || \
-	(${MACHINE} == "amiga") || \
-	(${MACHINE} == "atari") || \
-	(${MACHINE} == "powerpc") || \
-	(${MACHINE} == "mvme88k") || \
-	(${MACHINE} == "sparc") || \
-	(${MACHINE} == "sun3") || \
-	(${MACHINE} == "hp300")
+# XXX Temporary, until i386 uses new libkvm
+.if	(${MACHINE} == "i386")
+SRCS=	savecore_old.c
+.else
 SRCS=	savecore.c
 LDADD=	-lkvm
 DPADD=	${LIBKVM}
-.else
-SRCS=	savecore_old.c
 .endif
 SRCS+=	zopen.c nlist.c
 CFLAGS+=-D_NLIST_DO_GZIP
