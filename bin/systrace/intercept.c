@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.44 2003/10/18 19:26:00 jmc Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.45 2004/01/30 17:21:16 sturm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -612,6 +612,13 @@ normalize_filename(int fd, pid_t pid, char *name, int userp)
 {
 	static char cwd[2*MAXPATHLEN];
 	int havecwd = 0;
+
+	/*
+	 * The empty filename does not receive normalization.
+	 * System calls are supposed to fail on it.
+	 */
+	if (strcmp(name, "") == 0)
+		return (name);
 
 	if (fd != -1 && intercept.setcwd(fd, pid) == -1) {
 		if (errno == EBUSY)
