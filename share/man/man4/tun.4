@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tun.4,v 1.29 2004/06/25 04:12:52 claudio Exp $
+.\"	$OpenBSD: tun.4,v 1.30 2004/06/26 12:24:28 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Marcus D. Watts  All rights reserved.
 .\"
@@ -68,9 +68,9 @@ Each read returns at most one packet; if insufficient
 buffer space is provided, the packet is truncated.
 Each write supplies exactly one packet.
 Each packet read or written is prefixed with a tunnel header consisting of
-a 4 byte network byte order integer containing the address family in the case
+a 4-byte network byte order integer containing the address family in the case
 of layer 3 tunneling.
-In layer 2 mode the 4 byte tunnel header is replaced with a Ethernet header.
+In layer 2 mode the 4-byte tunnel header is replaced with an Ethernet header.
 On the last close of the device, all packets are discarded,
 the device is marked down, and all routes via the device
 are removed.
@@ -140,7 +140,7 @@ via
 Gets the byte count of the next packet available to be read.
 .It Dv SIOCGIFADDR Fa struct ether_addr *addr
 .It Dv SIOCSIFADDR Fa struct ether_addr *addr
-Get or set the ethernet address of the device in layer 2 mode.
+Get or set the Ethernet address of the device in layer 2 mode.
 .El
 .Sh FILES
 .Bl -tag -width /dev/tun* -compact
@@ -184,7 +184,7 @@ Attempt to set both
 and
 .Dv IFF_BROADCAST
 with
-.Dv TUNSIFMODE 
+.Dv TUNSIFMODE
 or using
 .Dv SIOCGIFADDR
 or
