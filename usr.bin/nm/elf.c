@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf.c,v 1.8 2004/08/20 04:42:51 mickey Exp $	*/
+/*	$OpenBSD: elf.c,v 1.9 2004/10/09 20:17:52 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -53,6 +53,7 @@
 #error "Unsupported ELF class"
 #endif
 
+#define	ELF_SDATA	".sdata"
 #define	ELF_SBSS	".sbss"
 #define	ELF_PLT		".plt"
 
@@ -143,6 +144,57 @@ elf_fix_sym(Elf_Ehdr *eh, Elf_Sym *sym)
 	return (1);
 }
 
+int
+elf_shn2type(u_int shn, const char *sn)
+{
+	switch (shn) {
+#ifdef SHN_MIPS_SUNDEFINED
+	case SHN_MIPS_SUNDEFINED:
+#endif
+	case SHN_UNDEF:
+		return (N_UNDF | N_EXT);
+	case SHN_ABS:
+		return (N_ABS);
+#ifdef SHN_MIPS_ACOMMON
+	case SHN_MIPS_ACOMMON:
+#endif
+#ifdef SHN_MIPS_SCOMMON
+	case SHN_MIPS_SCOMMON:
+#endif
+	case SHN_COMMON:
+		return (N_COMM);
+#ifdef SHN_MIPS_TEXT
+	case SHN_MIPS_TEXT:
+		return (N_TEXT);
+#endif
+#ifdef SHN_MIPS_DATA
+	case SHN_MIPS_DATA:
+		return (N_DATA);
+#endif
+	default:
+		/* beyond 8 a table-driven binsearch shall be used */
+		if (sn == NULL)
+			return (-1);
+		else if (!strcmp(sn, ELF_TEXT))
+			return (N_TEXT);
+		else if (!strcmp(sn, ELF_RODATA))
+			return (N_SIZE);
+		else if (!strcmp(sn, ELF_DATA))
+			return (N_DATA);
+		else if (!strcmp(sn, ELF_SDATA))
+			return (N_DATA);
+		else if (!strcmp(sn, ELF_BSS))
+			return (N_BSS);
+		else if (!strcmp(sn, ELF_SBSS))
+			return (N_BSS);
+		else if (!strncmp(sn, ELF_GOT, sizeof(ELF_GOT) - 1))
+			return (N_DATA);
+		else if (!strncmp(sn, ELF_PLT, sizeof(ELF_PLT) - 1))
+			return (N_DATA);
+		return (-1);
+	}
+}
+
 /*
  * Devise nlist's type from Elf_Sym.
  * XXX this task is done as well in libc and kvm_mkdb.
@@ -150,102 +202,60 @@ elf_fix_sym(Elf_Ehdr *eh, Elf_Sym *sym)
 int
 elf2nlist(Elf_Sym *sym, Elf_Ehdr *eh, Elf_Shdr *shdr, char *shstr, struct nlist *np)
 {
+	u_char stt;
 	const char *sn;
+	int type;
 
 	if (sym->st_shndx < eh->e_shnum)
 		sn = shstr + shdr[sym->st_shndx].sh_name;
 	else
-		sn = "";
+		sn = NULL;
 #if 0
 	{
 		extern char *stab;
-		printf("%d:%s %d %s\n", sym->st_shndx, sn,
+		printf("%d:%s %d %s\n", sym->st_shndx, sn? sn : "",
 		    ELF_ST_TYPE(sym->st_info), stab + sym->st_name);
 	}
 #endif
-	switch(ELF_ST_TYPE(sym->st_info)) {
-	case STT_NOTYPE:
-		switch (sym->st_shndx) {
-		case SHN_UNDEF:
-			np->n_type = N_UNDF | N_EXT;
-			break;
-		case SHN_ABS:
-			np->n_type = N_ABS;
-			break;
-		case SHN_COMMON:
-			np->n_type = N_COMM;
-			break;
-		default:
-			if (sym->st_shndx >= eh->e_shnum)
-				np->n_type = N_COMM | N_EXT;
-			else if (!strcmp(sn, ELF_TEXT))
-				np->n_type = N_TEXT;
-			else if (!strcmp(sn, ELF_RODATA)) {
-				np->n_type = N_DATA;
-				np->n_other = 'r';
-			} else if (!strcmp(sn, ELF_DATA))
-				np->n_type = N_DATA;
-			else if (!strncmp(sn, ELF_GOT, sizeof(ELF_GOT) - 1))
-				np->n_type = N_DATA;
-			else if (!strncmp(sn, ELF_PLT, sizeof(ELF_PLT) - 1))
-				np->n_type = N_DATA;
-			else if (!strcmp(sn, ELF_BSS))
-				np->n_type = N_BSS;
-			else if (!strcmp(sn, ELF_SBSS))
-				np->n_type = N_BSS;
-			else
-				np->n_other = '?';
-			break;
-		}
-		break;
 
+	switch (stt = ELF_ST_TYPE(sym->st_info)) {
+	case STT_NOTYPE:
 	case STT_OBJECT:
-		np->n_type = N_DATA;
-		switch (sym->st_shndx) {
-		case SHN_ABS:
-			np->n_type = N_ABS;
-			break;
-		case SHN_COMMON:
-			np->n_type = N_COMM;
-			break;
-		default:
-			if (sym->st_shndx >= eh->e_shnum)
-				break;
-			else if (!strcmp(sn, ELF_SBSS))
-				np->n_type = N_BSS;
-			else if (!strcmp(sn, ELF_BSS))
-				np->n_type = N_BSS;
-			else if (!strcmp(sn, ELF_RODATA))
+		type = elf_shn2type(sym->st_shndx, sn);
+		if (type < 0) {
+			if (sn == NULL)
+				np->n_other = '?';
+			else
+				np->n_type = stt == STT_NOTYPE? N_COMM : N_DATA;
+		} else {
+			/* a hack for .rodata check (; */
+			if (type == N_SIZE) {
+				np->n_type = N_DATA;
 				np->n_other = 'r';
+			} else
+				np->n_type = type;
 		}
 		break;
 
 	case STT_FUNC:
-		np->n_type = N_TEXT;
+		type = elf_shn2type(sym->st_shndx, NULL);
+		np->n_type = type < 0? N_TEXT : type;
 		if (ELF_ST_BIND(sym->st_info) == STB_WEAK) {
 			np->n_type = N_INDR;
 			np->n_other = 'W';
-		} else if (sym->st_shndx == SHN_ABS)
-			np->n_type = N_ABS;
-		else if (sym->st_shndx == SHN_UNDEF)
-			np->n_type = N_UNDF | N_EXT;
-		else if (strcmp(sn, ELF_INIT) &&
+		} else if (sn != NULL &&
+		    strcmp(sn, ELF_INIT) &&
 		    strcmp(sn, ELF_TEXT) &&
 		    strcmp(sn, ELF_FINI))	/* XXX GNU compat */
 			np->n_other = '?';
 		break;
 
 	case STT_SECTION:
-		switch (sym->st_shndx) {
-		case SHN_ABS:
-			np->n_type = N_ABS;
-			break;
-		case SHN_COMMON:
-			np->n_type = N_COMM;
-			break;
-		default:
+		type = elf_shn2type(sym->st_shndx, NULL);
+		if (type < 0)
 			np->n_other = '?';
-		}
+		else
+			np->n_type = type;
 		break;
 
 	case STT_FILE:
