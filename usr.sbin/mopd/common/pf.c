@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.4 2000/02/20 17:45:33 bitblt Exp $ */
+/*	$OpenBSD: pf.c,v 1.5 2002/07/13 10:13:27 deraadt Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: pf.c,v 1.4 2000/02/20 17:45:33 bitblt Exp $";
+static char rcsid[] = "$OpenBSD: pf.c,v 1.5 2002/07/13 10:13:27 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -116,7 +116,7 @@ pfInit(interface, mode, protocol, typ)
 	
   	/* Go through all the minors and find one that isn't in use. */
 	do {
-		(void) sprintf(device, "/dev/bpf%d", n++);
+		(void) snprintf(device, sizeof device, "/dev/bpf%d", n++);
 		fd = open(device, mode);
 	} while (fd < 0 && errno == EBUSY);
 

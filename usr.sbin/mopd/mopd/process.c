@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.8 2000/07/04 23:46:23 maja Exp $ */
+/*	$OpenBSD: process.c,v 1.9 2002/07/13 10:13:27 deraadt Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: process.c,v 1.8 2000/07/04 23:46:23 maja Exp $";
+static char rcsid[] = "$OpenBSD: process.c,v 1.9 2002/07/13 10:13:27 deraadt Exp $";
 #endif
 
 #include "os.h"
@@ -502,8 +502,9 @@ mopProcessDL(fd, ii, pkt, index, dst, src, trans, len)
 			/* to ask. My solution is to use the ethernet addr */
 			/* as filename. Implementing a database would be   */
 			/* overkill.					   */
-			sprintf(pfile,"%02x%02x%02x%02x%02x%02x%c",
-				src[0],src[1],src[2],src[3],src[4],src[5],0);
+			snprintf(pfile,sizeof pfile,
+			    "%02x%02x%02x%02x%02x%02x%c",
+			    src[0],src[1],src[2],src[3],src[4],src[5],0);
 		}
 		
 		tmpc = mopGetChar(pkt,index);		/* Processor */
