@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.25 2003/02/20 00:57:07 avsm Exp $
+.\"	$OpenBSD: release.8,v 1.26 2003/03/20 18:37:42 millert Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"
@@ -39,6 +39,13 @@ Make the third party packages.
 .El
 .Pp
 The following sections describe each of the required steps in detail.
+.Pp
+Commands to be run as a user with write permissions on the source tree,
+.Pa /usr/src ,
+are preceded by a percent sign
+.Pq Sq % .
+Commands that must be run as the superuser are preceded by a hash mark
+.Pq Sq # .
 .Ss "1. Update sources"
 A
 .Nm
@@ -83,13 +90,10 @@ contains errata, no new features.
 To update your sources to the versions identified by one of the above
 tags use the commands:
 .Pp
-.Bl -bullet -offset indent -compact
-.It
-.Li "cd /usr/src && cvs up -r TAG -Pd"
-.It
-.Li "cd XF4SRC && cvs up -r TAG -Pd"
-.It
-.Li "cd PORTSPATH && cvs up -r TAG -Pd"
+.Bl -tag -width 3n -offset indent -compact
+.It Li "% cd /usr/src && cvs up -r TAG -Pd"
+.It Li "% cd XF4SRC && cvs up -r TAG -Pd"
+.It Li "% cd PORTSPATH && cvs up -r TAG -Pd"
 .El
 .Pp
 Replace
@@ -104,7 +108,7 @@ The above commands assume an existing source tree.
 See
 .Pa http://www.openbsd.org/anoncvs.html
 for instructions on fetching the sources for the first time.
-.Bd -offset indent
+.Pp
 .Sy Warning :
 .Tn CVS
 tags are
@@ -112,7 +116,6 @@ tags are
 See
 .Xr cvs 1
 for more information.
-.Ed
 .Ss "2. Build and install a new kernel"
 For safety, you should always build and install a new kernel before
 building the programs that will use the kernel.
@@ -120,17 +123,13 @@ This ensures that any new system calls, for example, will be present
 when needed.
 To build a kernel the steps are:
 .Pp
-.Bl -bullet -offset indent -compact
-.It
-.Li "cd /sys/arch/${ARCH}/conf"
-.br
+.Bl -tag -width 3n -offset indent -compact
+.It Li "% cd /sys/arch/${ARCH}/conf"
 where
 .Va ${ARCH}
 is the architecture of your machine, e.g.,
 .Li i386 .
-.It
-.Li "vi ${NAME}"
-.br
+.It Li "% vi ${NAME}"
 where
 .Va ${NAME}
 is your kernel configuration file.
@@ -143,24 +142,18 @@ If using
 .Li GENERIC
 you can skip this step.
 And yes, you may use
-.Li emacs
+.Li vi ,
+.Li mg ,
 or any other editor you choose.
-.It
-.Li "config ${NAME}"
-.It
-.Li "cd ../compile/${NAME}"
-.It
-.Li "make clean && make depend && make"
-.br
+.It Li "% config ${NAME}"
+.It Li "% cd ../compile/${NAME}"
+.It Li "% make clean depend bsd"
 In this instance
 .Li "make clean"
 is your friend.
-.It
-.Li su
-.It
-.Li "mv /bsd /bsd.old && mv bsd / && chown root.wheel /bsd"
-.It
-.Li "shutdown -r now"
+.It Li "% su"
+.It Li "# mv /bsd /bsd.old && mv bsd / && chown root.wheel /bsd"
+.It Li "# shutdown -r now"
 .El
 .Pp
 If the system does not come up you can boot using
@@ -171,35 +164,29 @@ It's safer (but slower) to remove your object directories and re-create
 them before the build.
 The steps are:
 .Pp
-.Bl -bullet -offset indent -compact
-.It
-.Li "cd /usr/obj && mkdir -p .old && sudo mv * .old && sudo rm -rf .old &"
-.br
+.Bl -tag -width 3n -offset indent -compact
+.It Li "% cd /usr/obj && mkdir -p .old && sudo mv * .old && sudo rm -rf .old &"
 This moves all your existing object files out of the way and then removes
 them in the background.
-.It
-.Li "cd /usr/src && nice make obj"
-.br
+.It Li "% cd /usr/src && nice make obj"
 This re-builds your obj directories.
-.It
-.Li su
-.It
-.Li "nice make build"
-.br
+.It Li "% su"
+.It Li "# nice make build"
 If you have set
 .Xr sudo 8
 up, you can combine this with the previous step using the command
 .Bd -literal -offset indent -compact
 nice make SUDO=sudo build
 .Ed
-.It
+.El
+.Bd -filled -offset indent -compact
 Update
 .Pa /etc ,
 .Pa /var ,
 and
 .Pa /dev/MAKEDEV
 by hand.
-.El
+.Ed
 .Pp
 At this point your system is up-to-date and running the code that you
 are going to make into a release.
@@ -242,40 +229,30 @@ The floppy and
 images require a special tool which is created first.
 The release process is:
 .Pp
-.Bl -bullet -offset indent -compact
-.It
-.Li su
-.br
+.Bl -tag -width 3n -offset indent -compact
+.It Li "% su"
 You must be root to create a release.
-.It
-.Li "cd /usr/src/distrib/crunch && make clean && make && make install"
-.br
+.It Li "# cd /usr/src/distrib/crunch && make obj depend all install"
 Create the special tools needed to build the release.
-.It
-.Li "export DESTDIR=your-destdir RELEASEDIR=your-releasedir"
-.It
-.Li "test -d ${DESTDIR} && mv ${DESTDIR} ${DESTDIR}- && rm -rf ${DESTDIR}- &"
-.It
-.Li "mkdir -p ${DESTDIR} ${RELEASEDIR}"
-.br
-These two steps ensure
+.It Li "# cd /usr/src/distrib/sparc64/mksuncd && make obj depend all install"
+On the sparc64 platform only, this tool is needed to create the bootable ISO.
+.It Li "# setenv DESTDIR your-destdir RELEASEDIR=your-releasedir"
+.It Li "# test -d ${DESTDIR} && mv ${DESTDIR} ${DESTDIR}- && rm -rf ${DESTDIR}- &"
+.It Li "# mkdir -p ${DESTDIR} ${RELEASEDIR}"
+The last two steps ensure
 .Va ${DESTDIR}
 exists as an empty directory and
 .Va ${RELEASEDIR}
 exists.
 .Va ${RELEASEDIR}
 need not be empty.
-.It
-.Li "cd /usr/src/etc && nice make release"
-.It
-.Li "cd /usr/src/distrib/sets && sh checkflist"
-.br
+.It Li "# cd /usr/src/etc && nice make release"
+.It Li "# cd /usr/src/distrib/sets && sh checkflist"
 This checks that the contents of
 .Va ${DESTDIR}
 pretty much match the contents of the release
 .Sq tarballs .
-.It
-.Li "unset RELEASEDIR DESTDIR"
+.It Li "# unsetenv RELEASEDIR DESTDIR"
 .El
 .Pp
 At this point you have most of an
@@ -304,15 +281,11 @@ Once you've selected
 .Va XF4BLD
 the build process is:
 .Pp
-.Bl -bullet -offset indent -compact
-.It
-.Li su
-.It
-.Li "test -d XF4BLD && mv XF4BLD XF4BLD- && rm -rf XF4BLD- &"
-.It
-.Li "mkdir -p XF4BLD"
-.It
-.Li "cd XF4BLD && lndir XF4SRC && nice make build"
+.Bl -tag -width 3n -offset indent -compact
+.It Li "% su"
+.It Li "# test -d XF4BLD && mv XF4BLD XF4BLD- && rm -rf XF4BLD- &"
+.It Li "# mkdir -p XF4BLD"
+.It Li "# cd XF4BLD && lndir XF4SRC && nice make build"
 .El
 .Pp
 .Sy Note (only for i386) :
@@ -373,17 +346,12 @@ needs to be emptied for release checklist processing.)
 The steps to build the release are (assuming you are still root, and still in
 .Va XF4BLD ) :
 .Pp
-.Bl -bullet -offset indent -compact
-.It
-.Li "export DESTDIR=your-destdir RELEASEDIR=your-releasedir"
-.It
-.Li "test -d ${DESTDIR} && mv ${DESTDIR} ${DESTDIR}- && rm -rf ${DESTDIR}- &"
-.It
-.Li "mkdir -p ${DESTDIR} ${RELEASEDIR}"
-.It
-.Li "nice make release"
-.It
-.Li "unset RELEASEDIR DESTDIR"
+.Bl -tag -width 3n -offset indent -compact
+.It Li "# setenv DESTDIR your-destdir RELEASEDIR=your-releasedir"
+.It Li "# test -d ${DESTDIR} && mv ${DESTDIR} ${DESTDIR}- && rm -rf ${DESTDIR}- &"
+.It Li "# mkdir -p ${DESTDIR} ${RELEASEDIR}"
+.It Li "# nice make release"
+.It Li "# unsetenv RELEASEDIR DESTDIR"
 .El
 .Pp
 At this point you have both
@@ -400,18 +368,14 @@ For ease of installation ports can be pre-compiled into
 .Sq packages
 which can then be installed on multiple machines using
 .Xr pkg_add 1 .
-Packages are created by:
+Packages are created by selecting an application to build
+(we'll call this one CATEGORY/PORT) and then running the following:
+as root:
 .Pp
-.Bl -bullet -offset indent -compact
-.It
-Select an application to build, we'll call it
-.Va CATEGORY/PORT .
-.It
-.Li "cd /usr/ports/CATEGORY/PORT"
-.It
-.Li su
-.It
-.Li "make package"
+.Bl -tag -width 3n -offset indent -compact
+.It Li "% cd /usr/ports/CATEGORY/PORT"
+.It Li "% su"
+.It Li "# make package"
 .El
 .Pp
 That's all there is to it.
