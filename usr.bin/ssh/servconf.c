@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: servconf.c,v 1.26 1999/11/24 00:26:03 deraadt Exp $");
+RCSID("$Id: servconf.c,v 1.27 1999/11/24 19:53:50 markus Exp $");
 
 #include "ssh.h"
 #include "servconf.h"
@@ -212,8 +212,10 @@ static struct {
 	{ NULL, 0 }
 };
 
-/* Returns the number of the token pointed to by cp of length len.
-   Never returns if the token is not known. */
+/*
+ * Returns the number of the token pointed to by cp of length len. Never
+ * returns if the token is not known.
+ */
 
 static ServerOpCodes 
 parse_token(const char *cp, const char *filename,

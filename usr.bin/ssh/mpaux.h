@@ -13,14 +13,16 @@
  * precision integers.
  */
 
-/* RCSID("$Id: mpaux.h,v 1.4 1999/11/24 00:26:02 deraadt Exp $"); */
+/* RCSID("$Id: mpaux.h,v 1.5 1999/11/24 19:53:48 markus Exp $"); */
 
 #ifndef MPAUX_H
 #define MPAUX_H
 
-/* Computes a 16-byte session id in the global variable session_id.
-   The session id is computed by concatenating the linearized, msb
-   first representations of host_key_n, session_key_n, and the cookie. */
+/*
+ * Computes a 16-byte session id in the global variable session_id. The
+ * session id is computed by concatenating the linearized, msb first
+ * representations of host_key_n, session_key_n, and the cookie.
+ */
 void 
 compute_session_id(unsigned char session_id[16],
     unsigned char cookie[8],

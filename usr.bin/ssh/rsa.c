@@ -35,7 +35,7 @@
 */
 
 #include "includes.h"
-RCSID("$Id: rsa.c,v 1.10 1999/11/24 00:26:03 deraadt Exp $");
+RCSID("$Id: rsa.c,v 1.11 1999/11/24 19:53:50 markus Exp $");
 
 #include "rsa.h"
 #include "ssh.h"
@@ -55,9 +55,11 @@ rsa_alive()
 	return (1);
 }
 
-/* Generates RSA public and private keys.  This initializes the data
-   structures; they should be freed with rsa_clear_private_key and
-   rsa_clear_public_key. */
+/*
+ * Generates RSA public and private keys.  This initializes the data
+ * structures; they should be freed with rsa_clear_private_key and
+ * rsa_clear_public_key.
+ */
 
 void
 rsa_generate_key(RSA *prv, RSA *pub, unsigned int bits)

@@ -13,7 +13,7 @@
  * 
  */
 
-/* RCSID("$Id: servconf.h,v 1.13 1999/11/24 00:26:03 deraadt Exp $"); */
+/* RCSID("$Id: servconf.h,v 1.14 1999/11/24 19:53:51 markus Exp $"); */
 
 #ifndef SERVCONF_H
 #define SERVCONF_H
@@ -84,12 +84,16 @@ typedef struct {
 	unsigned int num_deny_groups;
 	char   *deny_groups[MAX_DENY_GROUPS];
 }       ServerOptions;
-/* Initializes the server options to special values that indicate that they
-   have not yet been set. */
+/*
+ * Initializes the server options to special values that indicate that they
+ * have not yet been set.
+ */
 void    initialize_server_options(ServerOptions * options);
 
-/* Reads the server configuration file.  This only sets the values for those
-   options that have the special value indicating they have not been set. */
+/*
+ * Reads the server configuration file.  This only sets the values for those
+ * options that have the special value indicating they have not been set.
+ */
 void    read_server_config(ServerOptions * options, const char *filename);
 
 /* Sets values for those values that have not yet been set. */

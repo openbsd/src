@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: authfile.c,v 1.9 1999/11/24 00:26:00 deraadt Exp $");
+RCSID("$Id: authfile.c,v 1.10 1999/11/24 19:53:44 markus Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -27,10 +27,12 @@ RCSID("$Id: authfile.c,v 1.9 1999/11/24 00:26:00 deraadt Exp $");
 /* Version identification string for identity files. */
 #define AUTHFILE_ID_STRING "SSH PRIVATE KEY FILE FORMAT 1.1\n"
 
-/* Saves the authentication (private) key in a file, encrypting it with
-   passphrase.  The identification of the file (lowest 64 bits of n)
-   will precede the key to provide identification of the key without
-   needing a passphrase. */
+/*
+ * Saves the authentication (private) key in a file, encrypting it with
+ * passphrase.  The identification of the file (lowest 64 bits of n) will
+ * precede the key to provide identification of the key without needing a
+ * passphrase.
+ */
 
 int
 save_private_key(const char *filename, const char *passphrase,
@@ -43,9 +45,10 @@ save_private_key(const char *filename, const char *passphrase,
 	int cipher_type;
 	u_int32_t rand;
 
-	/* If the passphrase is empty, use SSH_CIPHER_NONE to ease
-	   converting to another cipher; otherwise use
-	   SSH_AUTHFILE_CIPHER. */
+	/*
+	 * If the passphrase is empty, use SSH_CIPHER_NONE to ease converting
+	 * to another cipher; otherwise use SSH_AUTHFILE_CIPHER.
+	 */
 	if (strcmp(passphrase, "") == 0)
 		cipher_type = SSH_CIPHER_NONE;
 	else
@@ -62,9 +65,11 @@ save_private_key(const char *filename, const char *passphrase,
 	buf[3] = buf[1];
 	buffer_append(&buffer, buf, 4);
 
-	/* Store the private key (n and e will not be stored because they
-	   will be stored in plain text, and storing them also in
-	   encrypted format would just give known plaintext). */
+	/*
+	 * Store the private key (n and e will not be stored because they
+	 * will be stored in plain text, and storing them also in encrypted
+	 * format would just give known plaintext).
+	 */
 	buffer_put_bignum(&buffer, key->d);
 	buffer_put_bignum(&buffer, key->iqmp);
 	buffer_put_bignum(&buffer, key->q);	/* reverse from SSL p */
@@ -106,11 +111,9 @@ save_private_key(const char *filename, const char *passphrase,
 	memset(buf, 0, sizeof(buf));
 	buffer_free(&buffer);
 
-	/* Write to a file. */
 	f = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0600);
 	if (f < 0)
 		return 0;
-
 	if (write(f, buffer_ptr(&encrypted), buffer_len(&encrypted)) !=
 	    buffer_len(&encrypted)) {
 		debug("Write to key file %.200s failed: %.100s", filename,
@@ -125,9 +128,11 @@ save_private_key(const char *filename, const char *passphrase,
 	return 1;
 }
 
-/* Loads the public part of the key file.  Returns 0 if an error
-   was encountered (the file does not exist or is not readable), and
-   non-zero otherwise. */
+/*
+ * Loads the public part of the key file.  Returns 0 if an error was
+ * encountered (the file does not exist or is not readable), and non-zero
+ * otherwise.
+ */
 
 int
 load_public_key(const char *filename, RSA * pub,
@@ -138,11 +143,9 @@ load_public_key(const char *filename, RSA * pub,
 	Buffer buffer;
 	char *cp;
 
-	/* Read data from the file into the buffer. */
 	f = open(filename, O_RDONLY);
 	if (f < 0)
 		return 0;
-
 	len = lseek(f, (off_t) 0, SEEK_END);
 	lseek(f, (off_t) 0, SEEK_SET);
 
@@ -164,8 +167,10 @@ load_public_key(const char *filename, RSA * pub,
 		buffer_free(&buffer);
 		return 0;
 	}
-	/* Make sure it begins with the id string.  Consume the id string
-	   from the buffer. */
+	/*
+	 * Make sure it begins with the id string.  Consume the id string
+	 * from the buffer.
+	 */
 	for (i = 0; i < (unsigned int) strlen(AUTHFILE_ID_STRING) + 1; i++)
 		if (buffer_get_char(&buffer) != (unsigned char) AUTHFILE_ID_STRING[i]) {
 			debug("Bad key file %.200s.", filename);
@@ -191,9 +196,12 @@ load_public_key(const char *filename, RSA * pub,
 	return 1;
 }
 
-/* Loads the private key from the file.  Returns 0 if an error is encountered
-   (file does not exist or is not readable, or passphrase is bad).
-   This initializes the private key. */
+/*
+ * Loads the private key from the file.  Returns 0 if an error is encountered
+ * (file does not exist or is not readable, or passphrase is bad). This
+ * initializes the private key.
+ * Assumes we are called under uid of the owner of the file.
+ */
 
 int
 load_private_key(const char *filename, const char *passphrase,
@@ -208,12 +216,11 @@ load_private_key(const char *filename, const char *passphrase,
 	BIGNUM *aux;
 	struct stat st;
 
-	/* Read the file into the buffer. */
 	f = open(filename, O_RDONLY);
 	if (f < 0)
 		return 0;
 
-	/* We assume we are called under uid of the owner of the file */
+	/* check owner and modes */
 	if (fstat(f, &st) < 0 ||
 	    (st.st_uid != 0 && st.st_uid != getuid()) ||
 	    (st.st_mode & 077) != 0) {
@@ -246,8 +253,10 @@ load_private_key(const char *filename, const char *passphrase,
 		buffer_free(&buffer);
 		return 0;
 	}
-	/* Make sure it begins with the id string.  Consume the id string
-	   from the buffer. */
+	/*
+	 * Make sure it begins with the id string.  Consume the id string
+	 * from the buffer.
+	 */
 	for (i = 0; i < (unsigned int) strlen(AUTHFILE_ID_STRING) + 1; i++)
 		if (buffer_get_char(&buffer) != (unsigned char) AUTHFILE_ID_STRING[i]) {
 			debug("Bad key file %.200s.", filename);
