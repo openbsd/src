@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: dot.profile,v 1.5 1997/10/20 22:23:59 millert Exp $
+#	$OpenBSD: dot.profile,v 1.6 1997/10/25 04:35:33 deraadt Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -46,6 +46,7 @@ set -o emacs # emacs-style command line editing
 # This assumes a *small* termcap file.
 TERMS=`grep '^[A-z]' /usr/share/misc/termcap | sed -e 's/|[^|]*$//' -e 's/|/ /g'`
 TERM=sun
+PAGER=more
 
 if [ "X${DONEPROFILE}" = "X" ]; then
 	DONEPROFILE=YES
