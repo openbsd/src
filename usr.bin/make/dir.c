@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.14 1999/12/19 00:04:25 espie Exp $	*/
+/*	$OpenBSD: dir.c,v 1.15 2000/01/25 20:52:15 espie Exp $	*/
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: dir.c,v 1.14 1999/12/19 00:04:25 espie Exp $";
+static char rcsid[] = "$OpenBSD: dir.c,v 1.15 2000/01/25 20:52:15 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -1019,7 +1019,12 @@ Dir_MTime (gn)
 	}
 	stb.st_mtime = (time_t)(long)Hash_GetValue(entry);
 	Hash_DeleteEntry(&mtimes, entry);
-    } else if (stat (fullName, &stb) < 0) {
+    } else if (stat (fullName, &stb) == 0) {
+    	/* XXX forces make to differentiate between the epoch and
+	 * non-existent files by kludging the timestamp slightly. */
+    	if (stb.st_mtime == 0)
+		stb.st_mtime = 1;
+    } else {
 	if (gn->type & OP_MEMBER) {
 	    if (fullName != gn->path)
 		free(fullName);
