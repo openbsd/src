@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ip4.c,v 1.40 1999/12/09 17:55:35 downsj Exp $	*/
+/*	$OpenBSD: ip_ip4.c,v 1.41 1999/12/09 20:38:35 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -269,7 +269,7 @@ int
 ipe4_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	    int protoff)
 {
-    u_int8_t tp;
+    u_int8_t tp, otos;
 
 #ifdef INET
     u_int8_t itos;
@@ -278,7 +278,6 @@ ipe4_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 
 #ifdef INET6    
     struct ip6_hdr *ip6o;
-    u_int8_t otos;
 #endif /* INET6 */
 
     /* Deal with empty TDB source/destination addresses */
@@ -356,7 +355,8 @@ ipe4_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	    }
 #endif /* INET6 */
 
-	    ip_ecn_ingress(ECN_ALLOWED, &ipo->ip_tos, &itos);
+	    ip_ecn_ingress(ECN_ALLOWED, &otos, &itos);
+	    ipo->ip_tos = otos;
 	    break;
 #endif /* INET */
 
