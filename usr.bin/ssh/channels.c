@@ -16,7 +16,7 @@ arbitrary tcp/ip connections, and the authentication agent connection.
 */
 
 #include "includes.h"
-RCSID("$Id: channels.c,v 1.2 1999/09/28 04:45:36 provos Exp $");
+RCSID("$Id: channels.c,v 1.3 1999/09/28 07:56:47 deraadt Exp $");
 
 #ifndef HAVE_GETHOSTNAME
 #include <sys/utsname.h>
@@ -27,6 +27,7 @@ RCSID("$Id: channels.c,v 1.2 1999/09/28 04:45:36 provos Exp $");
 #include "buffer.h"
 #include "authfd.h"
 #include "uidswap.h"
+#include "servconf.h"
 
 /* Maximum number of fake X11 displays to try. */
 #define MAX_DISPLAYS  1000
@@ -1052,6 +1053,7 @@ void channel_input_port_open(int payload_len)
 
 char *x11_create_display_inet(int screen_number)
 {
+  extern ServerOptions options;
   int display_number, port, sock;
   struct sockaddr_in sin;
   char buf[512];
@@ -1061,7 +1063,7 @@ char *x11_create_display_inet(int screen_number)
   struct utsname uts;
 #endif
 
-  for (display_number = 1; display_number < MAX_DISPLAYS; display_number++)
+  for (display_number = options.x11_display_offset; display_number < MAX_DISPLAYS; display_number++)
     {
       port = 6000 + display_number;
       memset(&sin, 0, sizeof(sin));

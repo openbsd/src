@@ -12,7 +12,7 @@ Created: Mon Aug 21 15:48:58 1995 ylo
 */
 
 #include "includes.h"
-RCSID("$Id: servconf.c,v 1.1 1999/09/26 20:53:37 deraadt Exp $");
+RCSID("$Id: servconf.c,v 1.2 1999/09/28 07:56:47 deraadt Exp $");
 
 #include "ssh.h"
 #include "servconf.h"
@@ -36,6 +36,7 @@ void initialize_server_options(ServerOptions *options)
   options->fascist_logging = -1;
   options->print_motd = -1;
   options->x11_forwarding = -1;
+  options->x11_display_offset = -1;
   options->strict_modes = -1;
   options->keepalives = -1;
   options->log_facility = (SyslogFacility)-1;
@@ -96,6 +97,8 @@ void fill_default_server_options(ServerOptions *options)
     options->print_motd = 1;
   if (options->x11_forwarding == -1)
     options->x11_forwarding = 1;
+  if (options->x11_display_offset == -1)
+    options->x11_display_offset = 1;
   if (options->strict_modes == -1)
     options->strict_modes = 1;
   if (options->keepalives == -1)
@@ -153,7 +156,7 @@ typedef enum
   sAFSTokenPassing,
 #endif
   sPasswordAuthentication, sAllowHosts, sDenyHosts, sListenAddress,
-  sPrintMotd, sIgnoreRhosts, sX11Forwarding,
+  sPrintMotd, sIgnoreRhosts, sX11Forwarding, sX11DisplayOffset,
   sStrictModes, sEmptyPasswd, sRandomSeedFile, sKeepAlives
 } ServerOpCodes;
 
@@ -196,6 +199,7 @@ static struct
   { "printmotd", sPrintMotd },
   { "ignorerhosts", sIgnoreRhosts },
   { "x11forwarding", sX11Forwarding },
+  { "x11displayoffset", sX11DisplayOffset },
   { "strictmodes", sStrictModes },
   { "permitemptypasswords", sEmptyPasswd },
   { "randomseed", sRandomSeedFile },
@@ -423,6 +427,10 @@ void read_server_config(ServerOptions *options, const char *filename)
 	case sX11Forwarding:
 	  intptr = &options->x11_forwarding;
 	  goto parse_flag;
+
+	case sX11DisplayOffset:
+	  intptr = &options->x11_display_offset;
+	  goto parse_int;
 
 	case sStrictModes:
 	  intptr = &options->strict_modes;
