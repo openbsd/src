@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.323 2000/09/22 18:01:33 aaron Exp $
+	$OpenBSD: pcidevs,v 1.324 2000/09/22 18:03:52 aaron Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -902,6 +902,9 @@ product COMPAQ NF3P_BNC		0xf150	NetFlex 3/PB
 product COMPEX COMPEXE		0x1401	Ethernet
 product COMPEX RL100ATX		0x2011	RL100-ATX 10/100
 product COMPEX 98713		0x9881	PMAC 98713
+
+/* Conexant products */
+product CONEXANT SOFTK56_PCI	0x2443	SoftK56 PCI
 
 /* Contaq Microsystems products */
 product CONTAQ 82C599		0x0600	82C599 PCI-VLB
