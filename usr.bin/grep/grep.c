@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.10 2003/06/23 02:02:41 tedu Exp $	*/
+/*	$OpenBSD: grep.c,v 1.11 2003/06/23 03:23:40 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -165,11 +165,10 @@ add_pattern(char *pat, size_t len)
 		pattern_sz *= 2;
 		pattern = grep_realloc(pattern, ++pattern_sz);
 	}
-	if (pat[len-1] == '\n')
+	if (pat[len - 1] == '\n')
 		--len;
-	pattern[patterns] = grep_malloc(len+1);
-	strncpy(pattern[patterns], pat, len);
-	pattern[patterns][len] = '\0';
+	pattern[patterns] = grep_malloc(len + 1);
+	strlcpy(pattern[patterns], pat, len + 1);
 	++patterns;
 }
 
