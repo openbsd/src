@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.3 2004/07/23 05:40:32 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.4 2004/07/25 03:18:52 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -87,6 +87,9 @@ static const char *cvs_ign_std[] = {
 };
 
 
+static RCSNUM *cvs_addedrev;
+
+
 TAILQ_HEAD(, cvs_ignpat)  cvs_ign_pats;
 
 
@@ -112,6 +115,9 @@ cvs_file_init(void)
 	struct passwd *pwd;
 
 	TAILQ_INIT(&cvs_ign_pats);
+
+	cvs_addedrev = rcsnum_alloc();
+	rcsnum_aton("0", NULL, cvs_addedrev);
 
 	/* standard patterns to ignore */
 	for (i = 0; i < sizeof(cvs_ign_std)/sizeof(char *); i++)
@@ -274,6 +280,15 @@ cvs_file_getv(const char *dir, int *nfiles, int recurse)
  *
  * Load a cvs_file structure with all the information pertaining to the file
  * <path>.
+ * The <flags> parameter specifies various flags that alter the behaviour of
+ * the function.  The CF_STAT flag is used to keep stat information of the
+ * file in the structure after it is used (it is lost otherwise).  The
+ * CF_RECURSE flag causes the function to recursively load subdirectories
+ * when <path> is a directory.  The CF_SORT flag causes the files to be
+ * sorted in alphabetical order upon loading.
+ * The special case of "." as a path specification generates recursion for
+ * a single level and is equivalent to calling cvs_file_get() on all files
+ * of that directory.
  * Returns a pointer to the cvs file structure, which must later be freed
  * with cvs_file_free().
  */
@@ -281,14 +296,21 @@ cvs_file_getv(const char *dir, int *nfiles, int recurse)
 struct cvs_file*
 cvs_file_get(const char *path, int flags)
 {
+	int cwd;
 	size_t dlen;
 	struct stat st;
 	struct cvs_file *cfp;
+	struct cvs_ent *ent;
 
 	printf("cvs_file_get(%s)\n", path);
 
+	if (strcmp(path, ".") == 0)
+		cwd = 1;
+	else
+		cwd = 0;
+
 	if (stat(path, &st) == -1) {
-		cvs_log(LP_ERRNO, "failed to stat file");
+		cvs_log(LP_ERRNO, "failed to stat %s", path);
 		return (NULL);
 	}
 
@@ -299,8 +321,22 @@ cvs_file_get(const char *path, int flags)
 	}
 	memset(cfp, 0, sizeof(*cfp));
 
+	ent = cvs_ent_getent(path);
+	if (ent == NULL)
+		cfp->cf_cvstat = (cwd == 1) ?
+		    CVS_FST_UPTODATE : CVS_FST_UNKNOWN;
+	else {
+		if (rcsnum_cmp(ent->ce_rev, cvs_addedrev, 2) == 0)
+			cfp->cf_cvstat = CVS_FST_ADDED;
+		else
+			cfp->cf_cvstat = CVS_FST_UPTODATE;
+
+		cvs_ent_free(ent);
+	}
+
 	cfp->cf_path = strdup(path);
 	if (cfp->cf_path == NULL) {
+		cvs_log(LP_ERRNO, "failed to allocate file path");
 		free(cfp);
 		return (NULL);
 	}
@@ -313,11 +349,15 @@ cvs_file_get(const char *path, int flags)
 
 	/* convert from stat mode to dirent values */
 	cfp->cf_type = IFTODT(st.st_mode);
-	if (cfp->cf_type == DT_DIR) {
-		cfp->cf_ddat = cvs_file_getdir(cfp, flags);
-		if (cfp->cf_ddat == NULL) {
-			cvs_file_free(cfp);
-			return (NULL);
+	if ((cfp->cf_type == DT_DIR) && ((flags & CF_RECURSE) || cwd)) {
+		if ((flags & CF_KNOWN) && (cfp->cf_cvstat == CVS_FST_UNKNOWN))
+			cfp->cf_ddat = NULL;
+		else {
+			cfp->cf_ddat = cvs_file_getdir(cfp, flags);
+			if (cfp->cf_ddat == NULL) {
+				cvs_file_free(cfp);
+				return (NULL);
+			}
 		}
 	}
 
@@ -361,15 +401,12 @@ cvs_file_getdir(struct cvs_file *cf, int flags)
 	memset(cdp, 0, sizeof(*cdp));
 	LIST_INIT(&(cdp->cd_files));
 
-	if (cvs_readrepo(cf->cf_path, pbuf, sizeof(pbuf)) < 0) {
-		free(cdp);
-		return (NULL);
-	}
-
-	cdp->cd_repo = strdup(pbuf);
-	if (cdp->cd_repo == NULL) {
-		free(cdp);
-		return (NULL);
+	if (cvs_readrepo(cf->cf_path, pbuf, sizeof(pbuf)) == 0) {
+		cdp->cd_repo = strdup(pbuf);
+		if (cdp->cd_repo == NULL) {
+			free(cdp);
+			return (NULL);
+		}
 	}
 
 	cdp->cd_root = cvsroot_get(cf->cf_path);
@@ -403,8 +440,10 @@ cvs_file_getdir(struct cvs_file *cf, int flags)
 
 		snprintf(pbuf, sizeof(pbuf), "%s/%s", cf->cf_path, ent->d_name);
 		cfp = cvs_file_get(pbuf, flags);
-
-		LIST_INSERT_HEAD(&(cdp->cd_files), cfp, cf_list);
+		if (cfp != NULL) {
+			cfp->cf_parent = cf;
+			LIST_INSERT_HEAD(&(cdp->cd_files), cfp, cf_list);
+		}
 	}
 
 	if (flags & CF_SORT)
@@ -477,7 +516,6 @@ cvs_file_sort(struct cvs_flist *flp)
 
 	i = 0;
 	LIST_FOREACH(cf, flp, cf_list) {
-		printf("adding `%s'\n", cf->cf_path);
 		cfvec[i++] = cf;
 		if (i == sizeof(cfvec)/sizeof(struct cvs_file *)) {
 			cvs_log(LP_WARN, "too many files to sort");
@@ -494,13 +532,7 @@ cvs_file_sort(struct cvs_flist *flp)
 	LIST_INIT(flp);
 	nb = (size_t)i;
 
-	printf("Before: \n");
-	for (i = 0; i < (int)nb; i++)
-		printf("[%d] = `%s'\n", i, cfvec[i]->cf_name);
 	heapsort(cfvec, nb, sizeof(cf), cvs_file_cmp);
-	printf("===================================\nAfter: \n");
-	for (i = 0; i < (int)nb; i++)
-		printf("[%d] = `%s'\n", i, cfvec[i]->cf_name);
 
 	/* rebuild the list from the bottom up */
 	for (i = (int)nb - 1; i >= 0; i--)

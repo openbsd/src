@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.4 2004/07/14 19:03:00 jfb Exp $	*/
+/*	$OpenBSD: entries.c,v 1.5 2004/07/25 03:18:53 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -90,6 +90,8 @@ cvs_ent_open(const char *dir, int flags)
 		(void)fclose(fp);
 		return (NULL);
 	}
+	memset(ep, 0, sizeof(*ep));
+
 	ep->cef_path = strdup(dir);
 	if (ep->cef_path == NULL) {
 		cvs_log(LP_ERRNO, "failed to copy Entries path");
@@ -125,12 +127,26 @@ cvs_ent_open(const char *dir, int flags)
 /*
  * cvs_ent_close()
  *
- * Close the Entries file <ep>.
+ * Close the Entries file <ep> and free all data.  Any reference to entries
+ * structure within that file become invalid.
  */
 
 void
 cvs_ent_close(CVSENTRIES *ep)
 {
+	struct cvs_ent *ent;
+
+	if (ep->cef_file != NULL)
+		(void)fclose(ep);
+	if (ep->cef_path != NULL)
+		free(ep->cef_path);
+
+	while (!TAILQ_EMPTY(&(ep->cef_ent))) {
+		ent = TAILQ_FIRST(&(ep->cef_ent));
+		TAILQ_REMOVE(&(ep->cef_ent), ent, ce_list);
+		cvs_ent_free(ent);
+	}
+
 	free(ep);
 }
 
@@ -228,12 +244,11 @@ cvs_ent_get(CVSENTRIES *ef, const char *file)
 struct cvs_ent*
 cvs_ent_next(CVSENTRIES *ef)
 {
-	if (ef->cef_cur == NULL) {
+	if (ef->cef_cur == NULL)
 		ef->cef_cur = TAILQ_FIRST(&(ef->cef_ent));
-		return (ef->cef_cur);
-	}
-
-	return TAILQ_NEXT(ef->cef_cur, ce_list);
+	else
+		ef->cef_cur = TAILQ_NEXT(ef->cef_cur, ce_list);
+	return (ef->cef_cur);
 }
 
 
@@ -256,6 +271,7 @@ cvs_ent_parse(const char *entry)
 		cvs_log(LP_ERRNO, "failed to allocate CVS entry");
 		return (NULL);
 	}
+	memset(entp, 0, sizeof(*entp));
 
 	entp->ce_rev = rcsnum_alloc();
 	if (entp->ce_rev == NULL) {
@@ -265,14 +281,13 @@ cvs_ent_parse(const char *entry)
 
 	entp->ce_line = strdup(entry);
 	if (entp->ce_line == NULL) {
-		free(entp);
+		cvs_ent_free(entp);
 		return (NULL);
 	}
 
 	entp->ce_buf = strdup(entry);
 	if (entp->ce_buf == NULL) {
-		free(entp->ce_line);
-		free(entp);
+		cvs_ent_free(entp);
 		return (NULL);
 	}
 	sp = entp->ce_buf;
@@ -309,4 +324,55 @@ cvs_ent_parse(const char *entry)
 	}
 
 	return (entp);
+}
+
+
+/*
+ * cvs_ent_free()
+ *
+ * Free a single CVS entries structure.
+ */
+
+void
+cvs_ent_free(struct cvs_ent *ent)
+{
+	if (ent->ce_rev != NULL)
+		rcsnum_free(ent->ce_rev);
+	if (ent->ce_line != NULL)
+		free(ent->ce_line);
+	if (ent->ce_buf != NULL)
+		free(ent->ce_buf);
+	free(ent);
+}
+
+
+/*
+ * cvs_ent_getent()
+ *
+ * Get a single entry from the CVS/Entries file of the basename portion of
+ * path <path> and return that entry.  That entry must later be freed using
+ * cvs_ent_free().
+ */
+
+struct cvs_ent*
+cvs_ent_getent(const char *path)
+{
+	char base[MAXPATHLEN], file[MAXPATHLEN];
+	CVSENTRIES *entf;
+	struct cvs_ent *ep;
+
+	cvs_splitpath(path, base, sizeof(base), file, sizeof(file));
+
+	entf = cvs_ent_open(base, O_RDONLY);
+	if (entf == NULL)
+		return (NULL);
+
+	ep = cvs_ent_get(entf, file);
+	if (ep != NULL) {
+		/* take it out of the queue so it doesn't get freed */
+		TAILQ_REMOVE(&(entf->cef_ent), ep, ce_list);
+	}
+
+	cvs_ent_close(entf);
+	return (ep);
 }

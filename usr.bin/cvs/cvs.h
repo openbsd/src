@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.7 2004/07/23 05:40:32 jfb Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.8 2004/07/25 03:18:53 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -28,7 +28,7 @@
 #define CVS_H
 
 #include <sys/param.h>
-
+#include <stdio.h>
 #include "rcs.h"
 
 #define CVS_VERSION    "OpenCVS 0.1"
@@ -46,6 +46,7 @@
 
 
 /* operations */
+#define CVS_OP_ANY          0     /* all operations */
 #define CVS_OP_ADD          1
 #define CVS_OP_ANNOTATE     2
 #define CVS_OP_COMMIT       3
@@ -240,6 +241,7 @@ struct cvsroot {
 #define CF_IGNORE   0x02    /* apply regular ignore rules */
 #define CF_RECURSE  0x04    /* recurse on directory operations */
 #define CF_SORT     0x08    /* all files are sorted alphabetically */
+#define CF_KNOWN    0x10    /* only recurse in directories known to CVS */
 
 
 /*
@@ -249,18 +251,28 @@ struct cvsroot {
  * points back to the parent node in the directory tree structure (it is
  * NULL if the directory is at the wd of the command).
  *
+ * The <cf_cvstat> field gives the file's status with regards to the CVS
+ * repository.  The file can be in any one of the CVS_FST_* states.
  * If the file's type is DT_DIR, then the <cf_ddat> pointer will point to
  * a cvs_dir structure containing data specific to the directory (such as
  * the contents of the directory's CVS/Entries, CVS/Root, etc.).
  */
 
+#define CVS_FST_UNKNOWN   0
+#define CVS_FST_UPTODATE  1
+#define CVS_FST_MODIFIED  2
+#define CVS_FST_ADDED     3
+#define CVS_FST_REMOVED   4
+#define CVS_FST_CONFLICT  5
+
 struct cvs_file {
 	char            *cf_path;
 	struct cvs_file *cf_parent;  /* parent directory (NULL if none) */
 	char            *cf_name;
-	u_int            cf_type;    /* uses values from dirent.h */
-	struct stat     *cf_stat;
-	struct cvs_dir  *cf_ddat;   /* only for directories */
+	u_int16_t        cf_cvstat;  /* cvs status of the file */
+	u_int16_t        cf_type;    /* uses values from dirent.h */
+	struct stat     *cf_stat;    /* only available with CF_STAT flag */
+	struct cvs_dir  *cf_ddat;    /* only for directories */
 
 	LIST_ENTRY(cvs_file)  cf_list;
 };
@@ -401,6 +413,8 @@ int              cvs_ent_addln  (CVSENTRIES *, const char *);
 int              cvs_ent_remove (CVSENTRIES *, const char *);
 struct cvs_ent*  cvs_ent_parse  (const char *);
 void             cvs_ent_close  (CVSENTRIES *);
+void             cvs_ent_free   (struct cvs_ent *);
+struct cvs_ent*  cvs_ent_getent (const char *);
 
 /* history API */
 CVSHIST*         cvs_hist_open    (const char *);
