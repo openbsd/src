@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.527 2002/07/10 18:07:49 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.528 2002/07/13 22:36:16 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1267,8 +1267,12 @@ static const struct pci_known_product pci_known_products[] = {
 	    "BT879",
 	},
 	{
-	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT878_DEV2,
-	    "BT878 (2nd device)",
+	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT878_AU,
+	    "BT878 Audio",
+	},
+	{
+	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT879_AU,
+	    "BT879 Audio",
 	},
 	{
 	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT8474,
@@ -2025,6 +2029,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_GEMTEK, PCI_PRODUCT_GEMTEK_PR103,
 	    "PR103",
+	},
+	{
+	    PCI_VENDOR_HAUPPAUGE, PCI_PRODUCT_HAUPPAUGE_WINTV,
+	    "WinTV",
 	},
 	{
 	    PCI_VENDOR_HP, PCI_PRODUCT_HP_A4977A,
@@ -2953,6 +2961,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_LEADTEK, PCI_PRODUCT_LEADTEK_S3_805,
 	    "S3 805",
+	},
+	{
+	    PCI_VENDOR_LEADTEK, PCI_PRODUCT_LEADTEK_WINFAST,
+	    "Leadtek WinFast TV 2000",
 	},
 	{
 	    PCI_VENDOR_LEVEL1, PCI_PRODUCT_LEVEL1_LXT1001,
@@ -4715,6 +4727,18 @@ static const struct pci_known_product pci_known_products[] = {
 	    "DC-3x5U",
 	},
 	{
+	    PCI_VENDOR_TERRATEC, PCI_PRODUCT_TERRATEC_TVALUE_PLUS,
+	    "Terratec TV+",
+	},
+	{
+	    PCI_VENDOR_TERRATEC, PCI_PRODUCT_TERRATEC_TVALUE,
+	    "Terratec TValue",
+	},
+	{
+	    PCI_VENDOR_TERRATEC, PCI_PRODUCT_TERRATEC_TVALUER,
+	    "Terratec TValue Radio",
+	},
+	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TLAN,
 	    "TLAN",
 	},
@@ -5753,6 +5777,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_MARTINMARIETTA,
 	    "Martin-Marietta",
+	},
+	{
+	    PCI_VENDOR_HAUPPAUGE,
+	    "Hauppauge Computer Works Inc",
 	},
 	{
 	    PCI_VENDOR_COMPAQ,
@@ -7711,6 +7739,14 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "Tamarack Microelectronics",
 	},
 	{
+	    PCI_VENDOR_ASKEY,
+	    "Askey Computer Corp.",
+	},
+	{
+	    PCI_VENDOR_AVERMEDIA,
+	    "Avermedia Technologies",
+	},
+	{
 	    PCI_VENDOR_OXFORD,
 	    "Oxford",
 	},
@@ -7741,6 +7777,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_TOPIC,
 	    "Topic/SmartLink",
+	},
+	{
+	    PCI_VENDOR_TERRATEC,
+	    "TerraTec Electronic Gmbh",
 	},
 	{
 	    PCI_VENDOR_BLUESTEEL,

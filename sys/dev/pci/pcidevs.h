@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.527 2002/07/10 18:07:49 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.528 2002/07/13 22:36:16 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -53,6 +53,7 @@
  */
 
 #define	PCI_VENDOR_MARTINMARIETTA	0x003d		/* Martin-Marietta */
+#define	PCI_VENDOR_HAUPPAUGE	0x0070		/* Hauppauge Computer Works Inc */
 #define	PCI_VENDOR_COMPAQ	0x0e11		/* Compaq */
 #define	PCI_VENDOR_SYMBIOS	0x1000		/* Symbios Logic */
 #define	PCI_VENDOR_ATI	0x1002		/* ATI */
@@ -542,6 +543,8 @@
 #define	PCI_VENDOR_SUNIX	0x1409		/* Sunix */
 #define	PCI_VENDOR_OXFORD2	0x1415		/* Oxford */
 #define	PCI_VENDOR_TAMARACK	0x143d		/* Tamarack Microelectronics */
+#define	PCI_VENDOR_ASKEY	0x144f		/* Askey Computer Corp. */
+#define	PCI_VENDOR_AVERMEDIA	0x1461		/* Avermedia Technologies */
 #define	PCI_VENDOR_OXFORD	0x14d2		/* Oxford */
 #define	PCI_VENDOR_AIRONET	0x14b9		/* Aironet */
 #define	PCI_VENDOR_COMPAL	0x14c0		/* COMPAL */
@@ -550,6 +553,7 @@
 #define	PCI_VENDOR_CONEXANT	0x14f1		/* Conexant */
 #define	PCI_VENDOR_DELTA	0x1500		/* Delta */
 #define	PCI_VENDOR_TOPIC	0x151f		/* Topic/SmartLink */
+#define	PCI_VENDOR_TERRATEC	0x153b		/* TerraTec Electronic Gmbh */
 #define	PCI_VENDOR_BLUESTEEL	0x15ab		/* Bluesteel Networks */
 #define	PCI_VENDOR_VMWARE	0x15ad		/* VMware */
 #define	PCI_VENDOR_SYBA	0x1592		/* Syba */
@@ -971,7 +975,8 @@
 #define	PCI_PRODUCT_BROOKTREE_BT849	0x0351		/* BT849 */
 #define	PCI_PRODUCT_BROOKTREE_BT878	0x036e		/* BT878 */
 #define	PCI_PRODUCT_BROOKTREE_BT879	0x036f		/* BT879 */
-#define	PCI_PRODUCT_BROOKTREE_BT878_DEV2	0x0878		/* BT878 (2nd device) */
+#define	PCI_PRODUCT_BROOKTREE_BT878_AU	0x0878		/* BT878 Audio */
+#define	PCI_PRODUCT_BROOKTREE_BT879_AU	0x0879		/* BT879 Audio */
 #define	PCI_PRODUCT_BROOKTREE_BT8474	0x8474		/* Bt8474 Multichannel HDLC Controller */
 
 /* BusLogic products */
@@ -1238,6 +1243,9 @@
 
 /* Guillemot products */
 #define	PCI_PRODUCT_GEMTEK_PR103	0x1001		/* PR103 */
+
+/* Hauppauge Computer Works Inc */
+#define	PCI_PRODUCT_HAUPPAUGE_WINTV	0x13eb		/* WinTV */
 
 /* Hewlett-Packard products */
 #define	PCI_PRODUCT_HP_A4977A	0x1005		/* A4977A Visualize EG */
@@ -1508,6 +1516,7 @@
 
 /* LeadTek Research */
 #define	PCI_PRODUCT_LEADTEK_S3_805	0x0000		/* S3 805 */
+#define	PCI_PRODUCT_LEADTEK_WINFAST	0x6606		/* Leadtek WinFast TV 2000 */
 
 /* Level 1 (Intel) */
 #define	PCI_PRODUCT_LEVEL1_LXT1001	0x0001		/* LXT1001 */
@@ -2093,6 +2102,11 @@
 /* Tekram Technology products(2) */
 #define	PCI_PRODUCT_TEKRAM2_DC690C	0x690c		/* DC-690C */
 #define	PCI_PRODUCT_TEKRAM2_DC3X5U	0x0391		/* DC-3x5U */
+
+/* TerraTec Electronic Gmbh */
+#define	PCI_PRODUCT_TERRATEC_TVALUE_PLUS	0x1127		/* Terratec TV+ */
+#define	PCI_PRODUCT_TERRATEC_TVALUE	0x1134		/* Terratec TValue */
+#define	PCI_PRODUCT_TERRATEC_TVALUER	0x1135		/* Terratec TValue Radio */
 
 /* Texas Instruments products */
 #define	PCI_PRODUCT_TI_TLAN	0x0500		/* TLAN */
