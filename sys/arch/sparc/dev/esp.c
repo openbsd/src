@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp.c,v 1.12 1998/01/14 18:30:10 jason Exp $	*/
+/*	$OpenBSD: esp.c,v 1.13 1998/01/28 17:21:47 jason Exp $	*/
 /*	$NetBSD: esp.c,v 1.69 1997/08/27 11:24:18 bouyer Exp $	*/
 
 /*
@@ -211,7 +211,6 @@ espattach(parent, self, aux)
 	struct ncr53c9x_softc *sc = &esc->sc_ncr53c9x;
 	struct bootpath *bp;
 	int dmachild = strncmp(parent->dv_xname, "dma", 3) == 0;
-	int use_dmaselect = strncmp(parent->dv_xname, "obio", 4);
 
 	/*
 	 * Set up glue for MI code early; we use some of it here.
@@ -402,10 +401,7 @@ espattach(parent, self, aux)
 	ncr53c9x_attach(sc, &esp_switch, &esp_dev);
 
 	/* Turn on target selection using the `dma' method */
-	/* XXX The Sun 4/300 doesn't handle this very well, so it is */
-	/* XXX disabled if the parent device == "obio" */
-	/* XXX More research to do here... */
-	ncr53c9x_dmaselect = use_dmaselect;
+	ncr53c9x_dmaselect = 1;
 
 	bootpath_store(1, NULL);
 }

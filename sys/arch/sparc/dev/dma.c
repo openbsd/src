@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.9 1997/09/17 06:47:08 downsj Exp $	*/
+/*	$OpenBSD: dma.c,v 1.10 1998/01/28 17:21:46 jason Exp $	*/
 /*	$NetBSD: dma.c,v 1.46 1997/08/27 11:24:16 bouyer Exp $ */
 
 /*
@@ -285,6 +285,9 @@ espsearch:
 } while (0)
 
 #define DMA_DRAIN(sc, dontpanic) do {					\
+									\
+	if (sc->sc_rev == DMAREV_0)					\
+		DMACSR(sc) |= D_INVALIDATE;				\
 	/*								\
 	 * DMA rev0 & rev1: we are not allowed to touch the DMA "flush"	\
 	 *     and "drain" bits while it is still thinking about a	\
