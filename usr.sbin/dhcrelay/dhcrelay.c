@@ -71,7 +71,7 @@ main(int argc, char *argv[])
 
 	/* Initially, log errors to stderr as well as to syslogd. */
 	openlog(__progname, LOG_NDELAY, DHCPD_LOG_FACILITY);
-	setlogmask (LOG_UPTO (LOG_INFO));
+	setlogmask(LOG_UPTO(LOG_INFO));
 
 	while ((ch = getopt(argc, argv, "di:p:q")) != -1) {
 		switch (ch) {
@@ -114,17 +114,16 @@ main(int argc, char *argv[])
 		else {
 			he = gethostbyname(argv[0]);
 			if (!he)
-				warn ("%s: host unknown", argv[0]);
+				warn("%s: host unknown", argv[0]);
 			else
-				iap =
-				   ((struct in_addr *)he->h_addr_list[0]);
+				iap = ((struct in_addr *)he->h_addr_list[0]);
 		}
 		if (iap) {
 			if ((sp = calloc(1, sizeof *sp)) == NULL)
 				error("calloc");
 			sp->next = servers;
 			servers = sp;
-			memcpy (&sp->to.sin_addr, iap, sizeof *iap);
+			memcpy(&sp->to.sin_addr, iap, sizeof *iap);
 		}
 		argc--;
 		argv++;
@@ -175,7 +174,7 @@ main(int argc, char *argv[])
 	dispatch();
 	/* not reached */
 
-	exit (0);
+	exit(0);
 }
 
 void
@@ -222,16 +221,14 @@ relay(struct interface_info *ip, struct dhcp_packet *packet, int length,
 				break;
 		}
 		if (!out) {
-			warn ("packet to bogus giaddr %s.",
-			      inet_ntoa (packet->giaddr));
+			warn("packet to bogus giaddr %s.",
+			    inet_ntoa(packet->giaddr));
 			return;
 		}
 
-		if (send_packet (out,
-				  (struct packet *)0,
-				  packet, length, out->primary_address,
-				  &to, &hto) != -1)
-			debug ("forwarded BOOTREPLY for %s to %s",
+		if (send_packet(out, NULL, packet, length, out->primary_address,
+		    &to, &hto) != -1)
+			debug("forwarded BOOTREPLY for %s to %s",
 			    print_hw_addr(packet->htype, packet->hlen,
 			    packet->chaddr), inet_ntoa (to.sin_addr));
 /* XXX */
@@ -271,7 +268,7 @@ usage(void)
 
 	fprintf(stderr, "Usage: %s [-q] [-d] [-p <port>] ", __progname);
 	fprintf(stderr, "-i interface server1 [... serverN]\n");
-	exit (1);
+	exit(1);
 }
 
 char *
@@ -294,13 +291,13 @@ print_hw_addr(int htype, int hlen, unsigned char *data)
 
 			s += strlen (s);
 			slen -= (strlen(s) + 1);
- 			*s++ = ':';
+			*s++ = ':';
 		}
 		*--s = 0;
 	}
 	return habuf;
 bad:
-	strlcpy (habuf, "<null>", sizeof habuf);
+	strlcpy(habuf, "<null>", sizeof habuf);
 	return habuf;
 
 }
