@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.37 2004/02/25 13:43:19 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.38 2004/04/01 10:34:13 djm Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -5382,7 +5382,8 @@ which it can be seen agrees with the recovered value above.
 .Nm openssl s_client
 .Bk -words
 .Oo
-.Fl connect Ar host : Ns Ar port
+.Fl connect Ar host : Ns Ar port |
+.Ar host Ns / Ns Ar port
 .Oc
 .Op Fl verify Ar depth
 .Op Fl cert Ar file
@@ -5413,6 +5414,7 @@ which it can be seen agrees with the recovered value above.
 .Op Fl starttls Ar protocol
 .Op Fl engine Ar id
 .Op Fl rand Ar file ...
+.Op Fl 4 | 6
 .Ek
 .Pp
 The
@@ -5426,7 +5428,8 @@ useful diagnostic tool for SSL servers.
 The options are as follows:
 .Bl -tag -width "XXXX"
 .It Xo
-.Fl connect Ar host : Ns Ar port
+.Fl connect Ar host : Ns Ar port |
+.Ar host Ns / Ns Ar port
 .Xc
 This specifies the
 .Ar host
@@ -5435,6 +5438,9 @@ and optional
 to connect to.
 If not specified, then an attempt is made to connect to the local host
 on port 4433.
+Alternatively, the host and port pair may be separated using a forward-slash
+character.
+This form is useful for numeric IPv6 addresses.
 .It Fl cert Ar certname
 The certificate to use, if one is requested by the server.
 The default is not to use a certificate.
@@ -5556,6 +5562,14 @@ or an EGD socket (see
 .Xr RAND_egd 3 ) .
 Multiple files can be specified separated by a
 .Sq \&: .
+.It Fl 4
+Specify that
+.Nm s_client
+should attempt connections using IPv4 only.
+.It Fl 6
+Specify that
+.Nm s_client
+should attempt connections using IPv6 only.
 .El
 .Sh S_CLIENT CONNECTED COMMANDS
 If a connection is established with an SSL server, then any data received
