@@ -11,22 +11,22 @@ OpenBSDrd
 
 DistributionDescription(ten)
 
-OpenBSDbase(25.2,72.3,shared)
+OpenBSDbase(25.2,76.5,shared)
 
-OpenBSDcomp(21.2,70.6,shared)
+OpenBSDcomp(21.9,72.2,shared)
 
-OpenBSDetc(1.1,3.3)
+OpenBSDetc(1.2,4.2)
 
-OpenBSDgame(2.8,6.3)
+OpenBSDgame(2.8,6.4)
 
-OpenBSDman(5.8,21.0)
+OpenBSDman(5.7,21.6)
 
-OpenBSDmisc(1.7,5.6)
+OpenBSDmisc(1.7,5.7)
 
-OpenBSDxbase(6.5,18.6)
+OpenBSDxbase(8.4,24.8)
 
-OpenBSDxfont(31.4,34.1)
+OpenBSDxfont(31.6,37.7)
 
-OpenBSDxserv(11.2,31.4)
+OpenBSDxserv(7.5,21.3)
 
-OpenBSDxshare(1.8,9.1)
+OpenBSDxshare(1.8,10.2)
