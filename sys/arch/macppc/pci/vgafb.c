@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.4 2001/11/06 19:53:15 miod Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.5 2001/12/14 03:08:54 jason Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -72,7 +72,6 @@ void	vgafb_eraserows __P((void *, int, int));
 void	vgafb_alloc_attr __P((void *c, int fg, int bg, int flags, long *));
 
 void vgafb_setcolor __P((unsigned int index, u_int8_t r, u_int8_t g, u_int8_t b));
-extern const char fontdata_8x16[];
 
 struct vgafb_devconfig {
 	struct rcons dc_ri;
@@ -119,7 +118,6 @@ struct wsdisplay_accessops vgafb_accessops = {
 	0 /* load_font */
 };
 
-int	vgafb_print __P((void *, const char *));
 int	vgafb_getcmap __P((struct vgafb_config *vc, struct wsdisplay_cmap *cm));
 int	vgafb_putcmap __P((struct vgafb_config *vc, struct wsdisplay_cmap *cm));
 
@@ -326,18 +324,6 @@ vgafb_wsdisplay_attach(parent, vc, console)
         config_found(parent, &aa, wsemuldisplaydevprint);
 }
 
-
-int
-vgafb_print(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-
-	if (pnp)
-		printf("wsdisplay at %s", pnp);
-	return (UNCONF);
-}
-
 int
 vgafb_ioctl(v, cmd, data, flag, p)
 	void *v;
@@ -462,7 +448,6 @@ vgafb_cnprobe(cp)
 
 }
 
-extern struct raster_font fontdata8x16;
 void
 vgafb_cnattach(iot, memt, pc, bus, device, function)
 	void * pc;
