@@ -398,6 +398,7 @@
 ./usr/share/man/cat1/perl583delta.0
 ./usr/share/man/cat1/perl584delta.0
 ./usr/share/man/cat1/perl585delta.0
+./usr/share/man/cat1/perl586delta.0
 ./usr/share/man/cat1/perl58delta.0
 ./usr/share/man/cat1/perlapi.0
 ./usr/share/man/cat1/perlapio.0
@@ -710,6 +711,7 @@
 ./usr/share/man/cat3p/B::Lint.0
 ./usr/share/man/cat3p/B::Showlex.0
 ./usr/share/man/cat3p/B::Stackobj.0
+./usr/share/man/cat3p/B::Stash.0
 ./usr/share/man/cat3p/B::Terse.0
 ./usr/share/man/cat3p/B::Xref.0
 ./usr/share/man/cat3p/Benchmark.0
