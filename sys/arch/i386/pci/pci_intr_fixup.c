@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_intr_fixup.c,v 1.31 2004/02/13 13:53:16 mickey Exp $	*/
+/*	$OpenBSD: pci_intr_fixup.c,v 1.32 2004/02/24 19:30:00 markus Exp $	*/
 /*	$NetBSD: pci_intr_fixup.c,v 1.10 2000/08/10 21:18:27 soda Exp $	*/
 
 /*
@@ -642,9 +642,11 @@ pci_intr_header_fixup(pc, tag, ihp)
 		return 1;
 	}
 
-	if (irq == 14 || irq == 15)
+	ihp->link = l;
+	if (irq == 14 || irq == 15) {
 		p = " WARNING: ignored";
-	else if (l->irq == I386_PCI_INTERRUPT_LINE_NO_CONNECTION) {
+		ihp->link = NULL;
+	} else if (l->irq == I386_PCI_INTERRUPT_LINE_NO_CONNECTION) {
 
 		/* Appropriate interrupt was not found. */
 		if (pciintr_icu_tag == NULL && ihp->line != 0 &&
@@ -661,7 +663,6 @@ pci_intr_header_fixup(pc, tag, ihp)
 
 		p = " fixed up";
 		ihp->line = l->irq;
-		ihp->link = l;
 
 	} else {
 		/* routed by BIOS, but inconsistent */
@@ -669,7 +670,6 @@ pci_intr_header_fixup(pc, tag, ihp)
 		/* believe PCI IRQ Routing table */
 		p = " WARNING: overriding";
 		ihp->line = l->irq;
-		ihp->link = l;
 #else
 		/* believe PCI Interrupt Configuration Register (default) */
 		p = " WARNING: preserving";
