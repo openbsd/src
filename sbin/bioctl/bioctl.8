@@ -1,0 +1,81 @@
+.\"	$OpenBSD: bioctl.8,v 1.1 2005/03/29 22:04:21 marco Exp $
+.\"
+.\" Copyright (c) 2004 Marco Peereboom
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd Dec 27, 2004
+.Dt BIOCTL 8
+.Os
+.Sh NAME
+.Nm bioctl
+.Nd "RAID management interface"
+.Sh SYNOPSIS
+.Nm bioctl
+.Op Fl Dehpt
+.Op Fl a Ar function
+.Op Fl l Ar device-list
+.Op Fl u Ar function
+.Fl d Ar device
+.Sh DESCRIPTION
+.Nm
+provides a generic interface for RAID management.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl D
+Enable debug output.
+.It Fl e
+Enumerate drives.
+.It Fl h
+Online help.
+.It Fl p
+Verify that adapter accepts bioctl commands.  This is a sort of a "device ping".
+.It Fl t
+Issue a pass-through function to <device-list>.  Supported functions are: read
+capacity, inquiry and test unit ready (TUR).  Or use the first letter of the
+function name.
+.It Fl a Ar function
+Get or set alarm state.  Supported functions are: silence/quiet, enable,
+disable, get and test.  Or use the first letter of the function.
+.It Fl d Ar device
+Select RAID device.
+.It Fl l Ar device-list
+Device list to what the operation/function applies to.  The format is
+channel:target,channel:target etc.  i.e. 0:1,1:3
+.It Fl u Ar function
+Start or stop physical disk.  Supported functions are: go and stop.  Or use the
+first letter of the function.
+.El
+.Sh SEE ALSO
+.Xr bio 4
+.Xr scsi 4
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Ox 3.7 .
+.Sh AUTHORS
+The
+.Nm
+interface was written by
+.An Marco Peereboom Aq marco@openbsd.org .
