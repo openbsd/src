@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.27 2001/08/03 23:31:52 chris Exp $	*/
+/*	$OpenBSD: xl.c,v 1.28 2001/08/12 20:12:12 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -143,7 +143,6 @@
 #endif
 
 #include <vm/vm.h>              /* for vtophys */
-#include <vm/pmap.h>            /* for vtophys */
 
 #include <dev/ic/xlreg.h>
 
