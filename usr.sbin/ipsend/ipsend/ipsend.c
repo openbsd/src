@@ -261,7 +261,7 @@ char	**argv;
 			usage(name);
 		}
 
-	if (argc - optind < 2)
+	if (argc - optind < 1)
 		usage(name);
 	dst = argv[optind++];
 
