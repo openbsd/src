@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.13 2002/07/07 08:54:50 jufi Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.14 2002/08/11 16:51:04 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -111,7 +111,8 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 		this = NULL;
 		switch (ELF64_R_TYPE(relas->r_info)) {
 		case R_TYPE(REFQUAD):
-			ooff = _dl_find_symbol(symn, _dl_objects, &this, 0, 1);
+			ooff = _dl_find_symbol(symn, _dl_objects, &this, 0, 1,
+			    0);
 			if (this == NULL)
 				goto resolve_failed;
 			*r_addr += ooff + this->st_value + relas->r_addend;
@@ -134,13 +135,15 @@ _dl_printf("unaligned RELATIVE: %p type: %d %s 0x%lx -> 0x%lx\n", r_addr,
 				*r_addr += loff;
 			break;
 		case R_TYPE(JMP_SLOT):
-			ooff = _dl_find_symbol(symn, _dl_objects, &this, 0, 1);
+			ooff = _dl_find_symbol(symn, _dl_objects, &this, 0, 1,
+			    1);
 			if (this == NULL)
 				goto resolve_failed;
 			*r_addr = ooff + this->st_value + relas->r_addend;
 			break;
 		case R_TYPE(GLOB_DAT):
-			ooff = _dl_find_symbol(symn, _dl_objects, &this, 0, 1);
+			ooff = _dl_find_symbol(symn, _dl_objects, &this, 0, 1,
+			    0);
 			if (this == NULL)
 				goto resolve_failed;
 			*r_addr = ooff + this->st_value + relas->r_addend;
@@ -191,7 +194,7 @@ _dl_bind(elf_object_t *object, Elf_Word reloff)
 	symn = object->dyn.strtab + sym->st_name;
 
 	addr = (Elf_Addr *)(object->load_offs + rela->r_offset);
-	ooff = _dl_find_symbol(symn, _dl_objects, &this, 0, 1);
+	ooff = _dl_find_symbol(symn, _dl_objects, &this, 0, 1, 1);
 	if (this == NULL) {
 		_dl_printf("lazy binding failed!\n");
 		*((int *)0) = 0;	/* XXX */

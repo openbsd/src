@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.17 2002/07/12 20:18:30 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.18 2002/08/11 16:51:04 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -277,7 +277,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 			} else {
 				this = NULL;
 				ooff = _dl_find_symbol(symn, _dl_objects,
-				    &this, 0, 1);
+				    &this, 0, 1, type == R_TYPE(JMP_SLOT));
 				if (this == NULL) {
 resolve_failed:
 					_dl_printf("%s: %s: can't resolve "
@@ -318,7 +318,7 @@ resolve_failed:
 			Elf_Addr soff;
 
 			soff = _dl_find_symbol(symn, object->next, &srcsym,
-				0, 2);
+				0, 2, 0);
 			if (srcsym == NULL)
 				goto resolve_failed;
 
@@ -643,7 +643,7 @@ _dl_bind(elf_object_t *object, int index)
 	symn = object->dyn.strtab + sym->st_name;
 
 	addr = (Elf_Word *)(object->load_offs + rela->r_offset);
-	ooff = _dl_find_symbol(symn, _dl_objects, &this, 0, 1);
+	ooff = _dl_find_symbol(symn, _dl_objects, &this, 0, 1, 1);
 	if (this == NULL) {
 		_dl_printf("lazy binding failed!\n");
 		*((int *)0) = 0;	/* XXX */

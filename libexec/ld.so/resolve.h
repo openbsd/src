@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.15 2002/07/24 04:11:10 deraadt Exp $ */
+/*	$OpenBSD: resolve.h,v 1.16 2002/08/11 16:51:04 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -134,7 +134,7 @@ extern int  _dl_md_reloc(elf_object_t *object, int rel, int relsz);
 extern void _dl_md_reloc_got(elf_object_t *object, int lazy);
 
 Elf_Addr _dl_find_symbol(const char *name, elf_object_t *startlook,
-	    const Elf_Sym **ref, int myself, int warnnotfound);
+	    const Elf_Sym **ref, int myself, int warnnotfound, int inplt);
 
 void _dl_rtld(elf_object_t *object);
 void _dl_call_init(elf_object_t *object);

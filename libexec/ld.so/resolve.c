@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.11 2002/07/07 08:54:50 jufi Exp $ */
+/*	$OpenBSD: resolve.c,v 1.12 2002/08/11 16:51:04 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -175,7 +175,7 @@ _dl_lookup_object(const char *name)
 
 Elf_Addr
 _dl_find_symbol(const char *name, elf_object_t *startlook,
-    const Elf_Sym **ref, int myself, int warnnotfound)
+    const Elf_Sym **ref, int myself, int warnnotfound, int inplt)
 {
 	const Elf_Sym *weak_sym = 0;
 	Elf_Addr weak_offs = 0;
@@ -200,8 +200,7 @@ _dl_find_symbol(const char *name, elf_object_t *startlook,
 		    si != STN_UNDEF; si = object->chains[si]) {
 			const Elf_Sym *sym = symt + si;
 
-			if (sym->st_value == 0 ||
-			    sym->st_shndx == SHN_UNDEF)
+			if (sym->st_value == 0)
 				continue;
 
 			if (ELF_ST_TYPE(sym->st_info) != STT_NOTYPE &&
@@ -212,6 +211,13 @@ _dl_find_symbol(const char *name, elf_object_t *startlook,
 			if (sym != *ref &&
 			    _dl_strcmp(strt + sym->st_name, name))
 				continue;
+
+			if (sym->st_shndx == SHN_UNDEF)  {
+				if ((inplt || sym->st_value == 0 ||
+				    ELF_ST_TYPE(sym->st_info) != STT_FUNC)) {
+					continue;
+				}
+			}
 
 			if (ELF_ST_BIND(sym->st_info) == STB_GLOBAL) {
 				*ref = sym;

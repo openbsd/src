@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.12 2002/07/12 20:18:30 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.13 2002/08/11 16:51:04 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -139,6 +139,7 @@ _dl_printf("object relocation size %x, numrela %x\n",
 		Elf32_Addr ooff;
 		const Elf32_Sym *sym, *this;
 		const char *symn;
+		int inplt;
 
 		if (ELF32_R_SYM(relas->r_info) == 0xffffff)
 			continue;
@@ -153,7 +154,8 @@ _dl_printf("object relocation size %x, numrela %x\n",
 		if (ELF32_R_SYM(relas->r_info) &&
 		    !(ELF32_ST_BIND(sym->st_info) == STB_LOCAL &&
 		    ELF32_ST_TYPE (sym->st_info) == STT_NOTYPE)) {
-			ooff = _dl_find_symbol(symn, _dl_objects, &this, 0, 0);
+			inplt = (ELF32_R_TYPE(relas->r_info) == RELOC_JMP_SLOT);
+			ooff = _dl_find_symbol(symn, _dl_objects, &this, 0, 0, inplt);
 			if (!this && ELF32_ST_BIND(sym->st_info) == STB_GLOBAL) {
 				_dl_printf("%s: %s :can't resolve reference '%s'\n",
 				    _dl_progname, object->load_name, symn);
@@ -356,7 +358,7 @@ _dl_dcbf(r_addr);
 				if (object != cobj) {
 					/* only look in this object */
 					src_loff = _dl_find_symbol(symn, cobj,
-					    &cpysrc, 1, 1);
+					    &cpysrc, 1, 1, 0);
 				}
 			}
 			if (cpysrc == NULL) {
