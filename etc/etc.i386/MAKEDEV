@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.27 1996/09/28 18:28:01 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.28 1996/10/13 00:53:52 downsj Exp $
 #	$NetBSD: MAKEDEV,v 1.40 1996/03/31 00:50:47 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -334,16 +334,25 @@ lkm)
 	chmod 640 lkm
 	;;
 
-mms*|lms*|pms*)
+mms*|lms*)
 	unit=`expr $i : '.ms\(.*\)'`
 	case $i in
 	mms*) name=mms; chr=35;;
 	lms*) name=lms; chr=36;;
-	pms*) name=pms; chr=37;;
 	esac
 	rm -f $name$unit
 	mknod $name$unit c $chr $unit
 	chown root.wheel $name$unit
+	;;
+
+pms*)
+	unit=`expr $i : '.ms\(.*\)'`
+	rm -f pms${unit}
+	rm -f pms${unit}?
+	mknod pms${unit} c 37 0
+	mknod pms${unit}r c 37 1
+	chown root.wheel pms${unit}
+	chown root.wheel pms${unit}?
 	;;
 
 mouse*)						# (XXX)
