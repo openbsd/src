@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.5 2001/09/24 23:51:12 art Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.6 2001/09/25 06:34:31 art Exp $	*/
 /*	$NetBSD: rtld_start.S,v 1.5 2001/08/14 22:17:48 eeh Exp $	*/
 	
 /*
@@ -90,7 +90,8 @@
 	
 /* Offset of ARGC from bottom of stack */
 #define	ARGC	(16*8)
-#define DL_DATA_SIZE (16*9)
+/* XXX - DL_DATA_SIZE should be (9*8), but I can't think right now. */
+#define DL_DATA_SIZE (16*8)
 
 	.section	".text"
 	.align	16
@@ -99,21 +100,21 @@
 _dl_start:
 	sub	%g0, %g0, %fp		! clear frame
 	mov	%g1, %l1		! save ps_strings
-	sub	%sp, DL_DATA_SIZE, %sp	! make room for return args
-	add	%sp, BIAS, %o3
+	sub	%sp, DL_DATA_SIZE, %sp	! make room for dl_data
+	add	%sp, BIAS + ARGC, %l3
 
-	add	%o3, DL_DATA_SIZE + ARGC, %l0
+	add	%l3, DL_DATA_SIZE, %o0
 	mov	0, %o2			! dynp = 0
-	call	_dl_boot_bind		! _dl_boot(argv,envp,loff,dynp,dl_data)
-	 mov	%l0, %o0
+	mov	%o0, %l0
+	call	_dl_boot_bind		! _dl_boot_bind(sp,loff,dynp,dl_data)
+	 mov	%l3, %o3
 
+	mov	%l3, %o4
 	ldx	[%l0], %l3		! argc = *sp
 	sllx	%l3, 3, %l3		! argc *= sizeof(long)
 	addx	%l0, 8, %o0		! argv = [sp + argc]
 	addx	%l0, 16, %o1		! envp = sp + 16 +
 	addx	%o1, %l3, %o1		!	+ argc
-
-	subx	%l0, DL_DATA_SIZE+ARGC, %o4 ! dl_data = sp
 
 	addx	%o4, (7*8), %l2
 	ldx	[%l2], %o2		! loff = dl_data[AUX_base];
