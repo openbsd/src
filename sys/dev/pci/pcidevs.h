@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.319 2000/09/15 17:46:49 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.321 2000/09/19 08:37:30 niklas Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -930,9 +930,9 @@
 #define	PCI_PRODUCT_CYRIX_GXMISA	0x0002		/* GXm PCI-ISA */
 
 /* Dell Computer products */
-#define	PCI_PRODUCT_DELL_DELL_PERC_2SI	0x0001		/* PERC 2/Si */
-#define	PCI_PRODUCT_DELL_DELL_PERC_3DI	0x0002		/* PERC 3/Di */
-#define	PCI_PRODUCT_DELL_DELL_PERC_3SI	0x0003		/* PERC 3/Si */
+#define	PCI_PRODUCT_DELL_PERC_2SI	0x0001		/* PERC 2/Si */
+#define	PCI_PRODUCT_DELL_PERC_3DI	0x0002		/* PERC 3/Di */
+#define	PCI_PRODUCT_DELL_PERC_3SI	0x0003		/* PERC 3/Si */
 
 /* D-Link products */
 #define	PCI_PRODUCT_DLINK_550TX	0x1002		/* 550TX */

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.319 2000/09/15 17:46:49 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.321 2000/09/19 08:37:30 niklas Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1695,19 +1695,19 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "GXm PCI-ISA",
 	},
 	{
-	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_DELL_PERC_2SI,
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_2SI,
 	    0,
 	    "Dell Computer",
 	    "PERC 2/Si",
 	},
 	{
-	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_DELL_PERC_3DI,
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI,
 	    0,
 	    "Dell Computer",
 	    "PERC 3/Di",
 	},
 	{
-	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_DELL_PERC_3SI,
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3SI,
 	    0,
 	    "Dell Computer",
 	    "PERC 3/Si",
