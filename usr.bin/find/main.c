@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.4 1997/01/15 23:42:27 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.5 1997/06/17 05:26:17 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: main.c,v 1.4 1997/01/15 23:42:27 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.5 1997/06/17 05:26:17 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -68,14 +68,15 @@ main(argc, argv)
 	char *argv[];
 {
 	struct sigaction sa = {	show_path, SA_RESTART, NULL };
-	register char **p, **start;
+	char **p, **paths;
 	int ch;
 
 	(void)time(&now);	/* initialize the time-of-day */
 
+	p = paths = (char **) emalloc(sizeof(char *) * argc);
+
 	sigaction(SIGINFO, &sa, NULL);
 
-	p = start = argv;
 	ftsoptions = FTS_NOSTAT|FTS_PHYSICAL;
 	while ((ch = getopt(argc, argv, "Hdf:hXx")) != -1)
 		switch(ch) {
@@ -118,14 +119,16 @@ main(argc, argv)
 		*p++ = *argv++;
 	}
 
-	if (p == start)
-		usage();
 	*p = NULL;
+	if (paths[0] == NULL)		/* we must have at least one path */
+		usage();
+	if (!(paths = realloc(paths, sizeof(char *) * (p - paths + 1))))
+		err(1, NULL);
 
 	if ((dotfd = open(".", O_RDONLY, 0)) < 0)
 		err(1, ".:");
 
-	find_execute(find_formplan(argv), start);
+	find_execute(find_formplan(argv), paths);
 	exit(0);
 }
 
