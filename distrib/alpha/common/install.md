@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.12 2002/07/15 23:17:54 krw Exp $
+#       $OpenBSD: install.md,v 1.13 2002/08/25 19:33:45 krw Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -40,6 +40,7 @@
 
 # Machine-dependent install sets
 MDSETS=kernel
+MDXAPERTURE=1
 ARCH=ARCH
 
 md_set_term() {
