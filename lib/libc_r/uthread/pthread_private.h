@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.23 2001/08/21 19:24:53 fgsch Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.24 2001/08/26 00:49:03 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -42,6 +42,7 @@
  * Include files.
  */
 #include <signal.h>
+#include <stdio.h>
 #include <sys/queue.h>
 #include <sys/types.h>
 #include <sys/time.h>
@@ -216,7 +217,6 @@ union pthread_mutex_data {
 	int	m_count;
 };
 
-
 struct pthread_mutex {
 	enum pthread_mutextype		m_type;
 	int				m_protocol;
@@ -263,7 +263,7 @@ struct pthread_mutex {
  */
 #define PTHREAD_MUTEX_STATIC_INITIALIZER   \
 	{ PTHREAD_MUTEX_DEFAULT, PTHREAD_PRIO_NONE, TAILQ_INITIALIZER, \
-	NULL, { NULL }, 0, 0, 0, 0, TAILQ_INITIALIZER, \
+	NULL, { NULL }, MUTEX_FLAGS_PRIVATE, 0, 0, 0, TAILQ_INITIALIZER, \
 	_SPINLOCK_INITIALIZER }
 
 struct pthread_mutex_attr {
@@ -272,6 +272,9 @@ struct pthread_mutex_attr {
 	int			m_ceiling;
 	long			m_flags;
 };
+
+#define PTHREAD_MUTEXATTR_STATIC_INITIALIZER \
+	{ PTHREAD_MUTEX_DEFAULT, PTHREAD_PRIO_NONE, 0, MUTEX_FLAGS_PRIVATE }
 
 /* 
  * Condition variable definitions.
@@ -312,7 +315,19 @@ struct pthread_cond_attr {
  */
 #define PTHREAD_COND_STATIC_INITIALIZER    \
 	{ COND_TYPE_FAST, TAILQ_INITIALIZER, NULL, NULL, \
-	0, _SPINLOCK_INITIALIZER }
+	0, 0, _SPINLOCK_INITIALIZER }
+
+/*
+ * Semaphore definitions.
+ */
+struct sem {
+#define	SEM_MAGIC	((u_int32_t) 0x09fa4012)
+	u_int32_t	magic;
+	pthread_mutex_t	lock;
+	pthread_cond_t	gtzero;
+	u_int32_t	count;
+	u_int32_t	nwaiters;
+};
 
 /*
  * Cleanup definitions.
@@ -344,6 +359,18 @@ struct pthread_attr {
 #define PTHREAD_CREATE_SUSPENDED		1
 
 /*
+ * Additional state for a thread suspended with pthread_suspend_np().
+ */
+enum pthread_susp {
+	SUSP_NO,	/* Not suspended. */
+	SUSP_YES,	/* Suspended. */
+	SUSP_JOIN,	/* Suspended, joining. */
+	SUSP_NOWAIT,	/* Suspended, was in a mutex or condition queue. */
+	SUSP_MUTEX_WAIT,/* Suspended, still in a mutex queue. */
+	SUSP_COND_WAIT	/* Suspended, still in a condition queue. */
+};
+
+/*
  * Miscellaneous definitions.
  */
 #define PTHREAD_STACK_DEFAULT			65536
@@ -353,11 +380,33 @@ struct pthread_attr {
  * almost entirely on this stack.
  */
 #define PTHREAD_STACK_INITIAL			0x100000
+
 /* Address immediately beyond the beginning of the initial thread stack. */
-#define PTHREAD_DEFAULT_PRIORITY		64
-#define PTHREAD_MAX_PRIORITY			126
-#define PTHREAD_MIN_PRIORITY			0
 #define _POSIX_THREAD_ATTR_STACKSIZE
+
+/*
+ * Define the different priority ranges.  All applications have thread
+ * priorities constrained within 0-31.  The threads library raises the
+ * priority when delivering signals in order to ensure that signal
+ * delivery happens (from the POSIX spec) "as soon as possible".
+ * In the future, the threads library will also be able to map specific
+ * threads into real-time (cooperating) processes or kernel threads.
+ * The RT and SIGNAL priorities will be used internally and added to
+ * thread base priorities so that the scheduling queue can handle both
+ * normal and RT priority threads with and without signal handling.
+ *
+ * The approach taken is that, within each class, signal delivery
+ * always has priority over thread execution.
+ */
+#define PTHREAD_DEFAULT_PRIORITY		15
+#define PTHREAD_MIN_PRIORITY			0
+#define PTHREAD_MAX_PRIORITY			31	/* 0x1F */
+#define PTHREAD_SIGNAL_PRIORITY			32	/* 0x20 */
+#define PTHREAD_RT_PRIORITY			64	/* 0x40 */
+#define PTHREAD_FIRST_PRIORITY			PTHREAD_MIN_PRIORITY
+#define PTHREAD_LAST_PRIORITY	\
+	(PTHREAD_MAX_PRIORITY + PTHREAD_SIGNAL_PRIORITY + PTHREAD_RT_PRIORITY)
+#define PTHREAD_BASE_PRIORITY(prio)	((prio) & PTHREAD_MAX_PRIORITY)
 
 /*
  * Clock resolution in nanoseconds.
@@ -368,6 +417,18 @@ struct pthread_attr {
  * Time slice period in microseconds.
  */
 #define TIMESLICE_USEC				100000
+
+/*
+ * Define a thread-safe macro to get the current time of day
+ * which is updated at regular intervals by the scheduling signal
+ * handler.
+ */
+#define	GET_CURRENT_TOD(tv)				\
+	do {						\
+		tv.tv_sec = _sched_tod.tv_sec;		\
+		tv.tv_usec = _sched_tod.tv_usec;	\
+	} while (tv.tv_sec != _sched_tod.tv_sec)
+
 
 struct pthread_key {
 	spinlock_t	lock;
@@ -459,10 +520,12 @@ union pthread_wait_data {
 	struct {
 		short	fd;		/* Used when thread waiting on fd */
 		short	branch;		/* Line number, for debugging.    */
-		const char *fname;	/* Source file name for debugging.*/
+		char	*fname;		/* Source file name for debugging.*/
 	} fd;
-	struct pthread_poll_data * poll_data;
+	FILE		*fp;
+	struct pthread_poll_data *poll_data;
 	spinlock_t	*spinlock;
+	struct pthread	*thread;
 };
 
 /* Spare thread stack. */
@@ -473,6 +536,12 @@ struct stack {
 	void			*redzone;	/* Red zone location */
 	void 			*storage;	/* allocated storage */
 };
+
+/*
+ * Define a continuation routine that can be used to perform a
+ * transfer of control:
+ */
+typedef void	(*thread_continuation_t) (void *);
 
 typedef V_TAILQ_ENTRY(pthread) pthread_entry_t;
 
@@ -532,10 +601,25 @@ struct pthread {
 	int	canceltype;
 
 	/*
+	 * Cancelability flags - the lower 2 bits are used by cancel
+	 * definitions in pthread.h
+	 */
+#define PTHREAD_AT_CANCEL_POINT		0x0004
+#define PTHREAD_CANCELLING		0x0008
+#define PTHREAD_CANCEL_NEEDED		0x0010
+	int	cancelflags;
+
+	enum pthread_susp	suspended;
+
+	thread_continuation_t	continuation;
+
+	/*
 	 * Current signal mask and pending signals.
 	 */
 	sigset_t	sigmask;
 	sigset_t	sigpend;
+	int		sigmask_seqno;
+	int		check_pending;
 
 	/* Thread state: */
 	enum pthread_state	state;
@@ -680,7 +764,7 @@ struct pthread {
 
 	/* Cleanup handlers Link List */
 	struct pthread_cleanup *cleanup;
-	const char		*fname;	/* Ptr to source file name  */
+	char			*fname;	/* Ptr to source file name  */
 	int			lineno;	/* Source line number.      */
 };
 
