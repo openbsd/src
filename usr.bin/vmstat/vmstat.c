@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.44 2001/01/04 06:50:21 angelos Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.45 2001/01/04 07:08:18 angelos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -374,16 +374,21 @@ dovmstat(interval, reps)
 	time_t uptime, halfuptime;
 	void needhdr();
 	int mib[2];
+        struct clockinfo clkinfo;
 	size_t size;
 
 	uptime = getuptime();
 	halfuptime = uptime / 2;
 	(void)signal(SIGCONT, needhdr);
 
-	if (namelist[X_STATHZ].n_type != 0 && namelist[X_STATHZ].n_value != 0)
-		kread(X_STATHZ, &hz, sizeof(hz));
-	if (!hz)
-		kread(X_HZ, &hz, sizeof(hz));
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_CLOCKRATE;
+	size = sizeof(clkinfo);
+	if (sysctl(mib, 2, &clkinfo, &size, NULL, 0) < 0) {
+		printf("Can't get kerninfo: %s\n", strerror(errno));
+		return;
+	}
+	hz = clkinfo.stathz;
 
 	for (hdrcnt = 1;;) {
 		if (!--hdrcnt)
