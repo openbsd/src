@@ -1,5 +1,5 @@
-/*	$OpenBSD: svr4_ipc.c,v 1.2 1996/08/02 20:35:39 niklas Exp $	*/
-/*	$NetBSD: svr4_ipc.c,v 1.1 1995/10/14 20:24:30 christos Exp $	*/
+/*	$OpenBSD: svr4_ipc.c,v 1.3 1997/02/13 19:45:18 niklas Exp $	*/
+/*	$NetBSD: svr4_ipc.c,v 1.2 1996/10/28 08:46:35 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Christos Zoulas.  All rights reserved.
@@ -349,7 +349,8 @@ bsd_to_svr4_msqid_ds(bds, sds)
 
 	/* use the padding for the rest of the fields */
 	{
-		short *pad = (short *) bds->msg_pad4;
+		const short *pad = (const short *)bds->msg_pad4;
+
 		sds->msg_cv = pad[0];
 		sds->msg_qnum_cv = pad[1];
 	}

@@ -1,5 +1,5 @@
-/*	$OpenBSD: svr4_misc.c,v 1.7 1997/01/27 01:16:51 deraadt Exp $	 */
-/*	$NetBSD: svr4_misc.c,v 1.36 1996/03/30 22:38:02 christos Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.8 1997/02/13 19:45:19 niklas Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.42 1996/12/06 03:22:34 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -80,6 +80,7 @@
 #include <compat/svr4/svr4_wait.h>
 #include <compat/svr4/svr4_statvfs.h>
 #include <compat/svr4/svr4_sysconfig.h>
+#include <compat/svr4/svr4_acl.h>
 
 #include <vm/vm.h>
 
@@ -137,17 +138,20 @@ svr4_sys_execv(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct svr4_sys_execv_args *uap = v;
-	struct sys_execve_args ex;
-
+	struct svr4_sys_execv_args /* {
+		syscallarg(char *) path;
+		syscallarg(char **) argv;
+	} */ *uap = v;
+	struct sys_execve_args ap;
 	caddr_t sg = stackgap_init(p->p_emul);
+
 	SVR4_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
-	SCARG(&ex, path) = SCARG(uap, path);
-	SCARG(&ex, argp) = SCARG(uap, argp);
-	SCARG(&ex, envp) = NULL;
+	SCARG(&ap, path) = SCARG(uap, path);
+	SCARG(&ap, argp) = SCARG(uap, argp);
+	SCARG(&ap, envp) = NULL;
 
-	return sys_execve(p, &ex, retval);
+	return sys_execve(p, &ap, retval);
 }
 
 
@@ -157,8 +161,13 @@ svr4_sys_execve(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sys_execve_args *uap = v;
+	struct sys_execve_args /* {
+		syscallarg(char *) path;
+		syscallarg(char **) argv;
+		syscallarg(char **) envp;
+	} */ *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
+
 	SVR4_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	return sys_execve(p, uap, retval);
@@ -319,6 +328,9 @@ svr4_sys_mmap(p, v, retval)
          */
 	if (SCARG(uap, prot) & ~(PROT_READ | PROT_WRITE | PROT_EXEC))
 		return EINVAL;	/* XXX still needed? */
+
+	if (SCARG(uap, len) == 0)
+		return EINVAL;
 
 	SCARG(&mm, prot) = SCARG(uap, prot);
 	SCARG(&mm, len) = SCARG(uap, len);
@@ -1090,8 +1102,8 @@ bsd_statfs_to_svr4_statvfs(bfs, sfs)
 	const struct statfs *bfs;
 	struct svr4_statvfs *sfs;
 {
-	sfs->f_bsize = bfs->f_bsize;
-	sfs->f_frsize = bfs->f_bsize / 8; /* XXX */
+	sfs->f_bsize = bfs->f_iosize; /* XXX */
+	sfs->f_frsize = bfs->f_bsize;
 	sfs->f_blocks = bfs->f_blocks;
 	sfs->f_bfree = bfs->f_bfree;
 	sfs->f_bavail = bfs->f_bavail;
@@ -1226,4 +1238,57 @@ svr4_sys_gettimeofday(p, v, retval)
 	}
 
 	return 0;
+}
+
+int
+svr4_sys_facl(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct svr4_sys_facl_args *uap = v;
+
+	*retval = 0;
+
+	switch (SCARG(uap, cmd)) {
+	case SVR4_SYS_SETACL:
+		/* We don't support acls on any filesystem */
+		return ENOSYS;
+
+	case SVR4_SYS_GETACL:
+		return copyout(retval, &SCARG(uap, num),
+		    sizeof(SCARG(uap, num)));
+
+	case SVR4_SYS_GETACLCNT:
+		return 0;
+
+	default:
+		return EINVAL;
+	}
+}
+
+int
+svr4_sys_acl(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	return svr4_sys_facl(p, v, retval);	/* XXX: for now the same */
+}
+
+int
+svr4_sys_memcntl(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct svr4_sys_memcntl_args *uap = v;
+	struct sys_mprotect_args ap;
+
+	SCARG(&ap, addr) = SCARG(uap, addr);
+	SCARG(&ap, len) = SCARG(uap, len);
+	SCARG(&ap, prot) = SCARG(uap, attr);
+
+	/* XXX: no locking, invalidating, or syncing supported */
+	return sys_mprotect(p, &ap, retval);
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: svr4_socket.c,v 1.1 1996/04/21 22:18:24 deraadt Exp $	*/
-/*	$NetBSD: svr4_socket.c,v 1.1 1996/04/11 12:43:30 christos Exp $	*/
+/*	$OpenBSD: svr4_socket.c,v 1.2 1997/02/13 19:45:22 niklas Exp $	*/
+/*	$NetBSD: svr4_socket.c,v 1.3 1996/10/28 08:46:36 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -78,6 +78,8 @@ svr4_find_socket(p, fp, dev, ino)
 	void *cookie = ((struct socket *) fp->f_data)->so_internal;
 
 	if (!initialized) {
+		DPRINTF(("svr4_find_socket: uninitialized [%p,%d,%d]\n",
+		    p, dev, ino));
 		TAILQ_INIT(&svr4_head);
 		initialized = 1;
 		return NULL;
@@ -146,7 +148,7 @@ svr4_add_socket(p, path, st)
 	e->ino = st->st_ino;
 	e->p = p;
 
-	if ((error = copyinstr((char *) path, e->sock.sun_path,
+	if ((error = copyinstr(path, e->sock.sun_path,
 	    sizeof(e->sock.sun_path), &len)) != 0) {
 		DPRINTF(("svr4_add_socket: copyinstr failed %d\n", error));
 		free(e, M_TEMP);

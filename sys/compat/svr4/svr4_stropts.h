@@ -1,5 +1,5 @@
-/*	$OpenBSD: svr4_stropts.h,v 1.3 1996/08/01 00:50:55 niklas Exp $	*/
-/*	$NetBSD: svr4_stropts.h,v 1.6 1996/04/11 12:50:31 christos Exp $	 */
+/*	$OpenBSD: svr4_stropts.h,v 1.4 1997/02/13 19:45:25 niklas Exp $	*/
+/*	$NetBSD: svr4_stropts.h,v 1.9 1996/10/28 08:46:38 fvdl Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -74,6 +74,13 @@ struct svr4_strbuf {
 #define SVR4_I_GETCLTIME     (SVR4_STR|33)
 #define SVR4_I_CANPUT        (SVR4_STR|34)
 
+/*
+ * The following two ioctls are OS specific and
+ * undocumented.
+ */
+#define SVR4__I_BIND_RSVD    (SVR4_STR|242)
+#define SVR4__I_RELE_RSVD    (SVR4_STR|243)
+
 /* Struct passed for SVR4_I_STR */
 struct svr4_strioctl {
 	u_long	 cmd;
@@ -91,6 +98,7 @@ struct svr4_strioctl {
 struct svr4_strm {
 	int	s_family;	/* socket family */
 	int	s_cmd;		/* last getmsg reply or putmsg request */
+	int	s_afd;		/* last accepted fd; [for fd_insert]	*/
 };
 
 /*
@@ -117,6 +125,14 @@ struct svr4_infocmd {
 	long	provider;
 };
 
+struct svr4_strfdinsert {
+	struct svr4_strbuf	ctl;
+	struct svr4_strbuf	data;
+	long			flags;
+	int 			fd;
+	int			offset;
+};
+
 struct svr4_netaddr_in {
 	u_short	family;
 	u_short	port;
@@ -129,6 +145,7 @@ struct svr4_netaddr_un {
 };
 
 #define SVR4_ADDROF(sc) (void *) (((char *) (sc)) + (sc)->offs)
+#define SVR4_C_ADDROF(sc) (const void *) (((const char *) (sc)) + (sc)->offs)
 
 struct svr4_strm *svr4_stream_get __P((struct file *fp));
 
