@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.42 2003/06/02 23:28:06 millert Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.43 2003/06/23 04:26:53 deraadt Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -924,7 +924,12 @@ sys_poll(struct proc *p, void *v, register_t *retval)
 	struct timeval atv;
 	int timo, ncoll, i, s, error, error2;
 	extern int nselcoll, selwait;
-	u_int nfds = SCARG(uap, nfds);
+	u_int nfds;
+
+	if (SCARG(uap, nfds) < 0)
+		return (EINVAL);
+
+	nfds = SCARG(uap, nfds);
 
 	/* Standards say no more than MAX_OPEN; this is possibly better. */
 	if (nfds > min((int)p->p_rlimit[RLIMIT_NOFILE].rlim_cur, maxfiles))
