@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.37 2002/09/23 04:11:31 nate Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.38 2003/01/08 01:46:07 mickey Exp $	*/
 /*	$NetBSD: pchb.c,v 1.6 1997/06/06 23:29:16 thorpej Exp $	*/
 
 /*
@@ -136,6 +136,11 @@ pchbmatch(parent, match, aux)
 	void *match, *aux;
 {
 	struct pci_attach_args *pa = aux;
+
+	/* XXX work around broken via82x866 chipsets */
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_VIATECH &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_VIATECH_VT82C686A_SMB)
+		return (0);
 
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_HOST)
