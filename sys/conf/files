@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.241 2002/03/14 00:42:25 miod Exp $
+#	$OpenBSD: files,v 1.242 2002/03/14 19:20:03 jason Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -257,7 +257,7 @@ file	dev/ic/cy.c		cy & (cy_isa | cy_pci)	needs-flag
 
 # PC parallel ports (IEEE 1284)
 device	lpt
-file	dev/ic/lpt.c		lpt & (lpt_isa | lpt_pica | lpt_algor | lpt_gsc | lpt_puc) needs-flag
+file	dev/ic/lpt.c		lpt & (lpt_isa | lpt_pica | lpt_algor | lpt_gsc | lpt_puc | lpt_apio) needs-flag
 
 # STI (hp graphics)
 device	sti: wsemuldisplaydev
