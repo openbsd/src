@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.24 2003/10/05 20:23:53 miod Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.25 2003/12/21 13:23:34 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -84,7 +84,7 @@
 #define ENTRY_ASM       	"tb0 0, r0, 132"
 
 typedef	vaddr_t		db_addr_t;
-typedef	int		db_expr_t;
+typedef	long		db_expr_t;
 typedef	struct m88100_saved_state db_regs_t;
 extern db_regs_t	ddb_regs;	/* register state */
 #define	DDB_REGS	(&ddb_regs)
@@ -113,7 +113,7 @@ int ddb_entry_trap(int level, db_regs_t *eframe);
 #define DB_NO_COFF 1
 
 #ifdef INTERNAL_SSTEP
-extern register_t getreg_val(db_regs_t *, int);
+db_expr_t getreg_val(db_regs_t *, int);
 void db_set_single_step(db_regs_t *);
 void db_clear_single_step(db_regs_t *);
 #else

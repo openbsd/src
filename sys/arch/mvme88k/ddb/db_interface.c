@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.32 2003/12/19 22:30:17 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.33 2003/12/21 13:23:32 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -355,7 +355,7 @@ void
 m88k_db_registers(addr, have_addr, count, modif)
 	db_expr_t addr;
 	int have_addr;
-	int count;
+	db_expr_t count;
 	char *modif;
 {
 	m88k_db_print_frame((db_expr_t)DDB_REGS, TRUE, 0, modif);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sstep.c,v 1.12 2003/10/11 22:08:57 miod Exp $	*/
+/*	$OpenBSD: db_sstep.c,v 1.13 2003/12/21 13:23:32 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -268,7 +268,7 @@ branch_taken(inst, pc, func, func_data)
  *              frame. Only makes sense for general registers.
  */
 
-register_t
+db_expr_t
 getreg_val(frame, regno)
 	db_regs_t *frame;
 	int regno;
@@ -277,10 +277,8 @@ getreg_val(frame, regno)
 		return 0;
 	else if (regno < 31)
 		return frame->r[regno];
-	else {
+	else
 		panic("bad register number (%d) to getreg_val.", regno);
-		return 0;/*to make compiler happy */
-	}
 }
 
 #ifdef INTERNAL_SSTEP

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.20 2003/12/19 22:30:17 miod Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.21 2003/12/21 13:23:32 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -559,13 +559,13 @@ static int next_address_likely_wrong = 0;
  *
  */
 static int
-stack_decode(unsigned addr, unsigned *stack, int (*pr)(const char *, ...))
+stack_decode(db_addr_t addr, unsigned *stack, int (*pr)(const char *, ...))
 {
 	db_sym_t proc;
-	unsigned offset_from_proc;
+	db_expr_t offset_from_proc;
 	unsigned instructions_to_search;
-	unsigned check_addr;
-	unsigned function_addr;	    /* start of function */
+	db_addr_t check_addr;
+	db_addr_t function_addr;    /* start of function */
 	unsigned r31 = *stack;	    /* the r31 of the function */
 	unsigned inst;		    /* text of an instruction */
 	unsigned ret_addr;	    /* address to which we return */
