@@ -1,0 +1,81 @@
+#	$NetBSD: files.pxaarm,v 1.17 2003/02/17 20:51:53 ichiro Exp $
+#
+# First try for arm-specific configuration info
+#
+
+maxpartitions	8
+maxusers	2 8 64
+
+include "../../../scsi/files.scsi"
+include "../../../dev/atapiscsi/files.atapiscsi"
+major	{wd = 16}
+major	{sd = 24}
+major	{cd = 26}
+major	{rd = 18}
+
+file	arch/arm/arm/conf.c
+
+file	arch/zaurus/zaurus/zaurus_machdep.c
+
+# CPU support and integrated peripherals
+include "arch/arm/xscale/files.pxa2x0"
+
+# LUBBOCK on-board devices (including CPLD)
+device	obio {[addr = -1], [size = -1], [width = -1], [intr = -1]}: bus_space_generic
+attach	obio at pxaip
+file	arch/zaurus/zaurus/obio.c			obio
+
+#device	sacpcic: pcmciabus
+#attach	sacpcic at sacc
+#file	arch/arm/sa11x0/sa11x1_pcic.c			sacpcic needs-flag
+#file	arch/arm/sa11x0/sa11xx_pcic.c			sacpcic
+#file	arch/zaurus/zaurus/zaurus_pcic.c		sacpcic
+
+
+# LCD frame buffer
+attach lcd at obio with lcd_obio
+file arch/zaurus/zaurus/zaurus_lcd.c			lcd_obio
+
+#
+# Machine-independent ATA drivers
+#
+include "dev/ata/files.ata"
+
+#
+# Machine-independent SCSI drivers
+#
+
+
+# Generic MD files
+file	arch/zaurus/zaurus/autoconf.c
+
+file	arch/arm/arm/disksubr.c			disk
+
+# ARM FPE
+file	arch/arm/fpe-arm/armfpe_glue.S	armfpe
+file	arch/arm/fpe-arm/armfpe_init.c	armfpe
+file	arch/arm/fpe-arm/armfpe.s		armfpe
+
+# Machine-independent I2O drivers.
+include "dev/i2o/files.i2o"
+
+#
+# Include PCI config
+#
+include "dev/mii/files.mii"
+include "dev/pci/files.pci"
+
+device	pcib: isabus
+attach	pcib at pci
+file	arch/zaurus/pci/pcib.c			pcib
+
+file	arch/zaurus/pci/pciide_machdep.c	pciide
+
+# Include USB stuff
+include "dev/usb/files.usb"
+
+# Include WSCONS stuff
+include "dev/wscons/files.wscons"
+include "dev/rasops/files.rasops"
+include "dev/wsfont/files.wsfont"
+include "dev/pckbc/files.pckbc"
