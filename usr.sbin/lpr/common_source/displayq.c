@@ -1,4 +1,4 @@
-/*	$OpenBSD: displayq.c,v 1.21 2002/06/09 21:42:02 millert Exp $	*/
+/*	$OpenBSD: displayq.c,v 1.22 2002/06/09 21:58:46 millert Exp $	*/
 /*	$NetBSD: displayq.c,v 1.21 2001/08/30 00:51:50 itojun Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)displayq.c	8.4 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: displayq.c,v 1.21 2002/06/09 21:42:02 millert Exp $";
+static const char rcsid[] = "$OpenBSD: displayq.c,v 1.22 2002/06/09 21:58:46 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -97,7 +97,7 @@ void
 displayq(int format)
 {
 	struct queue *q;
-	int i, nitems, fd, ret, len;
+	int i, rank, nitems, fd, ret, len;
 	char *cp, *ecp, *p;
 	struct queue **queue;
 	struct winsize win;
@@ -229,18 +229,13 @@ displayq(int format)
 		 */
 		if (!lflag)
 			header();
-		for (i = 0; i < nitems; i++) {
+		/* The currently printed job is treated specially. */
+		if (!remote && current[0] != '\0')
+			inform(current, 0);
+		for (i = 0, rank = 1; i < nitems; i++) {
 			q = queue[i];
-			/*
-			 * If this is a local job that is currently
-			 * printing, use job #0 which inform() will
-			 * convert to "active".  Otherwise, we start
-			 * counting from 1...
-			 */
-			if (!remote && strcmp(current, q->q_name) == 0)
-				inform(q->q_name, 0);
-			else
-				inform(q->q_name, i + 1);
+			if (remote || strcmp(current, q->q_name) != 0)
+				inform(q->q_name, rank++);
 			free(q);
 		}
 		free(queue);
