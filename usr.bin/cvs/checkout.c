@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.5 2004/07/30 01:49:22 jfb Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.6 2004/07/30 18:14:07 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -35,6 +35,7 @@
 
 #include "cvs.h"
 #include "log.h"
+#include "file.h"
 #include "proto.h"
 
 
@@ -50,6 +51,7 @@ int
 cvs_checkout(int argc, char **argv)
 {
 	int ch;
+	CVSFILE *dir;
 	struct cvsroot *root;
 
 	while ((ch = getopt(argc, argv, "")) != -1) {
@@ -68,17 +70,20 @@ cvs_checkout(int argc, char **argv)
 		return (EX_USAGE);
 	}
 
-	root = cvsroot_get(".");
+	dir = cvs_file_get(".", CF_IGNORE|CF_MKADMIN);
+	root = CVS_DIR_ROOT(dir);
 	if (root->cr_method != CVS_METHOD_LOCAL) {
 		cvs_connect(root);
 	}
 
 	cvs_sendarg(root, argv[0], 0);
-	cvs_senddir(root, ".");
+	cvs_senddir(root, dir);
 	cvs_sendreq(root, CVS_REQ_XPANDMOD, NULL);
 
+	/* XXX not too sure why we have to send this arg */
+	cvs_sendarg(root, "-N", 0);
 	cvs_sendarg(root, argv[0], 0);
-	cvs_senddir(root, ".");
+	cvs_senddir(root, dir);
 	cvs_sendreq(root, CVS_REQ_CO, NULL);
 
 	return (0);
