@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.48 1999/03/29 22:09:58 niklas Exp $
+#	$OpenBSD: netstart,v 1.49 1999/08/09 21:49:04 angelos Exp $
 
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
@@ -90,6 +90,12 @@ for hn in /etc/hostname.*; do
     # configuring backup or temp files, and to catch the "*" case.
     if ! isalphanumeric "$if"; then
         continue
+    fi
+
+    # If the interface does not exist, just skip processing the file
+    /sbin/ifconfig $if > /dev/null 2>&1
+    if [ "$?" != "0" ]; then
+	continue
     fi
 
     # Now parse the hostname.* file
