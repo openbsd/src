@@ -1,9 +1,11 @@
+/*	$OpenBSD: rdsetroot.c,v 1.1 1997/10/13 15:35:48 pefo Exp $	*/
 /*	$NetBSD: rdsetroot.c,v 1.2 1995/10/13 16:38:39 gwr Exp $	*/
 
 /*
- * Copyright (c) 1997 Dale Rahn
  * Copyright (c) 1994 Gordon W. Ross
  * All rights reserved.
+ *
+ * ELF modifications Copyright (c) 1997 Per Fogelstrom.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,8 +28,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: elfrdsetroot.c,v 1.1 1997/01/31 05:04:44 rahnds Exp $
  */
 
 /*
@@ -35,18 +35,13 @@
  * Kernel variables: rd_root_size, rd_root_image
  */
 
-/*
- * ELF version by Dale Rahn
- */
-
 #include <sys/types.h>
 #include <sys/file.h>
 #include <sys/mman.h>
 
-#include <sys/stat.h>
 #include <stdio.h>
-#include <sys/exec_elf.h>
 #include <nlist.h>
+#include <sys/exec_elf.h>
 
 extern off_t lseek();
 
@@ -62,29 +57,22 @@ long rd_root_image_off, rd_root_size_off;
 int rd_root_size_val;
 
 /* pointers to pieces of mapped file */
-char *baseptr;
+char *dataseg;
 
-/* and lengths */
-int data_len;
-int data_off;
-int data_pgoff;
-
-
-
-char *pexe;
+/* parameters to mmap digged out from program header */
+int mmap_offs;
+int mmap_size;
 
 main(argc,argv)
 	char **argv;
 {
 	int fd, n;
+	int found;
 	int *ip;
 	char *cp;
-	struct stat sb;
-	Elf32_Ehdr *pehdr;                    
-	Elf32_Shdr *pshdr;                                     
-	Elf32_Phdr *pphdr;
-	int i;
-
+	Elf32_Ehdr eh;
+	Elf32_Phdr *ph;
+	int phsize;
 
 	if (argc < 2) {
 		printf("%s: missing file name\n", argv[0]);
@@ -98,39 +86,54 @@ main(argc,argv)
 		exit(1);
 	}
 
-	fstat(fd, &sb);
-	pexe = mmap(0, sb.st_size, PROT_READ|PROT_WRITE,
-		MAP_FILE | MAP_SHARED, fd, 0);
+	n = read(fd, &eh, sizeof(eh));
+	if (n < sizeof(eh)) {
+		printf("%s: reading header\n", file);
+		exit(1);
+	}
 
-	pehdr = (Elf32_Ehdr *)pexe;
+	if (!IS_ELF(eh)) {
+		printf("%s: not elf\n", file);
+		exit(1);
+	}
 
-#ifdef	DEBUG
-	printf("elf header\n");
-	printf("e_type %x\n", pehdr->e_type);
-	printf("e_machine %x\n", pehdr->e_machine);
-	printf("e_version %x\n", pehdr->e_version);
-	printf("e_entry %x\n", pehdr->e_entry);
-	printf("e_phoff %x\n", pehdr->e_phoff);
-	printf("e_shoff %x\n", pehdr->e_shoff);
-	printf("e_flags %x\n", pehdr->e_flags);
-	printf("e_ehsize %x\n", pehdr->e_ehsize);
-	printf("e_phentsize %x\n", pehdr->e_phentsize);
-	printf("e_phnum %x\n", pehdr->e_phnum);
-	printf("e_shentsize %x\n", pehdr->e_shentsize);
-	printf("e_shnum %x\n", pehdr->e_shnum);
-	printf("e_shstrndx %x\n", pehdr->e_shstrndx);
-#endif
+	phsize = eh.e_phnum * sizeof(Elf32_Phdr);
+	ph = (Elf32_Phdr *)malloc(phsize);
+	lseek(fd,  eh.e_phoff, 0);
+	if(read(fd, (char *)ph, phsize) != phsize) {
+		printf("%s: can't read phdr area\n", file);
+		exit(1);
+	}
+	found = 0;
+	for(n = 0; n < eh.e_phnum && !found; n++) {
+		if(ph[n].p_type == PT_LOAD) {
+			found = find_rd_root_image(file, &eh, &ph[n]);
+		}
+	}
+	if(!found) {
+		printf("%s: can't locate space for rd_root_image!", file);
+		exit(1);
+	}
 
-
-	find_rd_root_image(file);
-
-
-	baseptr = pexe;
+	/*
+	 * Map in the whole data segment.
+	 * The file offset needs to be page aligned.
+	 */
+	dataseg = mmap(NULL,	/* any address is ok */
+				   mmap_size, /* length */
+				   PROT_READ | PROT_WRITE,
+				   MAP_SHARED,
+				   fd, mmap_offs);
+	if ((long)dataseg == -1) {
+		printf("%s: can not map data seg\n", file);
+		perror(file);
+		exit(1);
+	}
 
 	/*
 	 * Find value in the location: rd_root_size
 	 */
-	ip = (int*) (baseptr + rd_root_size_off);
+	ip = (int*) (dataseg + rd_root_size_off);
 	rd_root_size_val = *ip;
 #ifdef	DEBUG
 	printf("rd_root_size  val: 0x%08X (%d blocks)\n",
@@ -143,7 +146,7 @@ main(argc,argv)
 #ifdef	DEBUG
 	printf("copying root image...\n");
 #endif
-	n = read(0, baseptr + rd_root_image_off,
+	n = read(0, dataseg + rd_root_image_off,
 			 rd_root_size_val);
 	if (n < 0) {
 		perror("read");
@@ -151,11 +154,7 @@ main(argc,argv)
 	}
 
 #if 0
-	msync(baseptr, data_len
-#ifdef	sun
-		  ,0
-#endif
-		  );
+	msync(dataseg, mmap_size);
 #endif
 
 #ifdef	DEBUG
@@ -175,84 +174,43 @@ struct nlist wantsyms[] = {
 	{ NULL, 0 },
 };
 
-find_rd_root_image(file)
+int
+find_rd_root_image(file, eh, ph)
 	char *file;
+	Elf32_Ehdr *eh;
+	Elf32_Phdr *ph;
 {
 	int data_va;
 	int std_entry;
+	int kernel_start;
+	int kernel_size;
 
 	if (nlist(file, wantsyms)) {
 		printf("%s: no rd_root_image symbols?\n", file);
 		exit(1);
 	}
-#if 0
-	std_entry = N_TXTADDR(head) +
-	    (head.a_entry & (N_PAGSIZ(head)-1));
-	data_va = N_DATADDR(head);
-	if (head.a_entry != std_entry) {
-		printf("%s: warning: non-standard entry point: 0x%08x\n",
-			   file, head.a_entry);
-		printf("\texpecting entry=0x%X\n", std_entry);
-		data_va += (head.a_entry - std_entry);
-	}
-#endif
-	{
+	kernel_start = ph->p_paddr;
+	kernel_size = ph->p_filesz;
 
-		Elf32_Ehdr *pehdr;
-		Elf32_Phdr *phdr;
-		int i;
-		pehdr = (Elf32_Ehdr *)pexe;
-		phdr = (Elf32_Phdr *)(pexe + pehdr->e_phoff);
-		printf("sections:\n");
-		for (i = 1; i <= pehdr->e_phnum; i++, phdr++) {
-			fprintf(stderr, "phseg %d addr %x  size %x"
-			" offset %x\n",
-			i, phdr->p_vaddr, phdr->p_memsz, phdr->p_offset );
-			if (wantsyms[0].n_value > phdr->p_vaddr &&
-				(wantsyms[0].n_value <
-				phdr->p_vaddr + phdr->p_filesz))
-			{
-				data_va = - (phdr->p_offset - phdr->p_vaddr);
-			}
-		}
-		printf("esections:\n");
+	rd_root_size_off = wantsyms[0].n_value - kernel_start;
+	rd_root_image_off     = wantsyms[1].n_value - kernel_start;
 
-	}
-
-	rd_root_size_off = wantsyms[0].n_value - data_va;
-	rd_root_image_off     = wantsyms[1].n_value - data_va;
-#ifdef	DEBUG
-	printf(".data segment  va: 0x%08X\n", data_va);
-	printf("rd_root_size   va: 0x%08X\n", wantsyms[0].n_value);
-	printf("rd_root_image  va: 0x%08X\n", wantsyms[1].n_value);
-	printf("rd_root_size  off: 0x%08X\n", rd_root_size_off);
-	printf("rd_root_image off: 0x%08X\n", rd_root_image_off);
-
-	{
-		char *base;
-		int *iptr;
-		base= (char *)pexe + rd_root_size_off;
-		iptr = (int *) base;
-		base= (char *)pexe + rd_root_image_off;
-		printf("size %x\n", *iptr);
-		printf("string [%s]\n", base);
-
-	}
-
+#ifdef DEBUG
+	printf("rd_root_size_off = 0x%x\n", rd_root_size_off);
+	printf("rd_root_image_off = 0x%x\n", rd_root_image_off);
 #endif
 
-#if 0
 	/*
 	 * Sanity check locations of db_* symbols
 	 */
-	if (rd_root_image_off < 0 || rd_root_image_off >= head.a_data) {
-		printf("%s: rd_root_image not in data segment?\n", file);
-		exit(1);
+	if (rd_root_image_off < 0 || rd_root_image_off >= kernel_size) {
+		return(0);
 	}
-	if (rd_root_size_off < 0 || rd_root_size_off >= head.a_data) {
+	if (rd_root_size_off < 0 || rd_root_size_off >= kernel_size) {
 		printf("%s: rd_root_size not in data segment?\n", file);
-		exit(1);
+		return(0);
 	}
-#endif
+	mmap_offs = ph->p_offset;
+	mmap_size =  kernel_size;
+	return(1);
 }
-
