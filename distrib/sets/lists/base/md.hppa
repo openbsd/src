@@ -7,8 +7,8 @@
 ./etc/firmware/atu-rfmd2958-int
 ./etc/firmware/atu-rfmd2958smc-ext
 ./etc/firmware/atu-rfmd2958smc-int
-./etc/firmware/eprimsym
-./etc/firmware/esecsym
+./etc/firmware/symbol-eprim
+./etc/firmware/symbol-esec
 ./etc/firmware/kue
 ./etc/firmware/kue-license
 ./etc/firmware/symbol-license

@@ -1,5 +1,5 @@
-./etc/firmware/eprimsym
-./etc/firmware/esecsym
+./etc/firmware/symbol-eprim
+./etc/firmware/symbol-esec
 ./etc/firmware/symbol-license
 ./sbin/kbd
 ./sbin/ldconfig
