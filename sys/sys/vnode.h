@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.57 2004/01/06 04:22:59 tedu Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.58 2004/01/09 03:01:03 tedu Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -112,7 +112,6 @@ struct vnode {
 	struct	lock v_lock;
 	struct  lock *v_vnlock;			/* used for non-locking fs's */
 	enum	vtagtype v_tag;			/* type of underlying data */
-	struct	vnode *v_parent;		/* parent directory */
 	void	*v_data;			/* private data for fs */
 	struct {
 		struct	simplelock vsi_lock;	/* lock to protect below */
