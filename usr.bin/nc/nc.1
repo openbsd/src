@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nc.1,v 1.10 2000/07/10 21:52:35 ian Exp $
+.\"	$OpenBSD: nc.1,v 1.11 2000/09/26 01:41:44 ericj Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
 .\" All rights reserved.
@@ -85,13 +85,6 @@ and much, much more
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl e Ar command
-Execute the specified command, using data from the network for stdin,
-and sending stdout and stderr to the network.
-This option is only present if
-.Nm
-was compiled with the GAPING_SECURITY_HOLE compile time option, since it
-allows users to make arbitrary programs available to anyone on the network.
 .It Fl g Ar intermediate-host
 Specifies a hop along a loose source routed path.
 Can be used more than once to build a chain of hop points.
