@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.10 1997/05/12 18:00:29 deraadt Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.11 1997/06/10 19:46:41 deraadt Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -914,28 +914,34 @@ trimthenstep6:
 	 *    CLOSING, LAST_ACK, TIME_WAIT STATES
 	 *	Close the tcb.
 	 */
-	if (tiflags&TH_RST) switch (tp->t_state) {
+	if (tiflags&TH_RST) {
 
-	case TCPS_SYN_RECEIVED:
-		so->so_error = ECONNREFUSED;
-		goto close;
+		if ((ti->ti_seq != tp->rcv_nxt) ||
+		    (ti->ti_ack && ((SEQ_LEQ(ti->ti_ack, tp->iss) ||
+		      SEQ_GT(ti->ti_ack, tp->snd_max)))))
+			goto drop;
 
-	case TCPS_ESTABLISHED:
-	case TCPS_FIN_WAIT_1:
-	case TCPS_FIN_WAIT_2:
-	case TCPS_CLOSE_WAIT:
-		so->so_error = ECONNRESET;
-	close:
-		tp->t_state = TCPS_CLOSED;
-		tcpstat.tcps_drops++;
-		tp = tcp_close(tp);
-		goto drop;
+		switch (tp->t_state) {
+		case TCPS_SYN_RECEIVED:
+			so->so_error = ECONNREFUSED;
+			goto close;
 
-	case TCPS_CLOSING:
-	case TCPS_LAST_ACK:
-	case TCPS_TIME_WAIT:
-		tp = tcp_close(tp);
-		goto drop;
+		case TCPS_ESTABLISHED:
+		case TCPS_FIN_WAIT_1:
+		case TCPS_FIN_WAIT_2:
+		case TCPS_CLOSE_WAIT:
+			so->so_error = ECONNRESET;
+		close:
+			tp->t_state = TCPS_CLOSED;
+			tcpstat.tcps_drops++;
+			tp = tcp_close(tp);
+			goto drop;
+		case TCPS_CLOSING:
+		case TCPS_LAST_ACK:
+		case TCPS_TIME_WAIT:
+			tp = tcp_close(tp);
+			goto drop;
+		}
 	}
 
 	/*
