@@ -138,9 +138,50 @@ map ppp0 10.0.0.0/8 -> 209.1.2.0/24
 That will cut the number down from ~16,000,000 addresses short to only 527,566.
 .Pp
 .Em bimap
-is not documented, because kjell@openbsd.org and aaron@openbsd.org
-have not gotten around to documenting it.
-You can mail them and express your distaste... especially to kjell!
+is used to create static, bidirectional NAT mappings. Standard 
+.Em map
+rules only create NAT mappings when the connection is initiated from the
+internal IP address. For example, using the following rule:
+.Pp
+.Bd -unfilled -offset indent -compact
+map ppp0 10.0.0.3/32 -> 209.1.2.3/32
+.Ed
+.Pp
+NAT mappings will only be created if the machine at 10.0.0.3 initiates the
+connection. To create a truly bidirectional NAT entry,
+.Em bimap
+is necessary. Using the following rule, for example, clients on the
+ppp0 side of the NAT box can initiate requests to 209.1.2.3. This
+traffic will be mapped to 10.0.0.3 as expected:
+.Pp
+.Bd -unfilled -offset indent -compact
+bimap ppp0 10.0.0.3/32 -> 209.1.2.3/32
+.Ed
+.Pp
+To be genuinely useful,
+.Em bimap
+should be used in conjunction with either proxy arp, or
+.Xr ifconfig 8
+aliases. For example, if we create two bimap entries such as:
+.Pp
+.Bd -unfilled -offset indent -compact
+bimap fxp0 10.0.0.3/32 -> 209.1.2.3/32
+bimap fxp0 10.0.0.4/32 -> 209.1.2.4/32
+.Ed
+.Pp
+It is necessary to do either:
+.Pp
+.Bd -unfilled -offset indent -compact
+arp -s 209.1.2.3 00:40:aa:bb:cc:dd pub
+arp -s 209.1.2.4 00:40:aa:bb:cc:dd pub
+.Ed
+.Pp
+(where 00:40:aa:bb:cc:dd is the MAC address of fxp0) or
+.Pp
+.Bd -unfilled -offset indent -compact
+ifconfig fxp0 alias 209.1.2.3 netmask 255.255.255.255
+ifconfig fxp0 alias 209.1.2.4 netmask 255.255.255.255
+.Ed
 .Pp
 .Em rdr
 tells the NAT how to redirect incoming packets. It is useful if one wishes to
@@ -185,6 +226,11 @@ system requirements for use of the NAT
 .It Pa /etc/ipnat.rules
 actual rule list
 .El
+.Sh BUGS
+.Em bimap
+should really only be used with single IP addresses (x.x.x.x/32). Bimapping
+other CIDR ranges will result in unexpected, and possibly random mappings
+into the destination address block.
 .Sh SEE ALSO
 .Xr ipf 4 ,
 .Xr ipnat 4 ,
