@@ -1,4 +1,4 @@
-/*	$OpenBSD: anreg.h,v 1.5 2001/02/27 06:41:11 tholo Exp $	*/
+/*	$OpenBSD: anreg.h,v 1.6 2001/04/06 19:14:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -36,7 +36,7 @@
 
 #define AN_TIMEOUT	65536
 
-/* Default network name: ANY */
+/* Default network name: empty string */
 #define AN_DEFAULT_NETNAME	""
 
 /* The nodename must be less than 16 bytes */
