@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 1998/03/28 23:40:47 millert Exp $
+#	$OpenBSD: Makefile,v 1.13 1999/04/02 06:17:00 millert Exp $
 #	$NetBSD: Makefile,v 1.1 1995/07/18 04:13:06 briggs Exp $
 
 TOP=		${.CURDIR}/..
@@ -36,7 +36,6 @@ NEWFSARGS= -m 0 -o space -c 16 -i 3072
 bsd.rd: ${IMAGE} bsd rdsetroot
 	${.OBJDIR}/rdsetroot bsd < ${IMAGE}
 	${GZIP} -c ${GZIPFLAGS} bsd > bsd.rd
-	rm bsd
 
 bsd:
 	cd ${.CURDIR}/../../../sys/arch/hp300/conf && config RAMDISK
