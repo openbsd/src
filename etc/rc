@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.60 1998/01/23 08:38:31 art Exp $
+#	$OpenBSD: rc,v 1.61 1998/02/05 09:54:36 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -113,10 +113,6 @@ if [ X"${ipfilter}" = X"YES" -a X"${ipmon_flags}" != X"NO" ]; then
 	echo 'starting ipmon';		ipmon ${ipmon_flags}
 fi
 
-if [ X"${rfc1323}" = X"NO" ]; then
-	echo 'disabling rfc1323'; 	sysctl -w net.inet.tcp.rfc1323=0
-fi
-
 # $photurisd_flags is imported from /etc/rc.conf;
 # If $photurisd_flags == NO or /etc/photuris/photuris.conf doesn't exist, then
 # photurisd isn't run.
@@ -229,6 +225,16 @@ echo clearing /tmp
 (cd /tmp && rm -rf [a-km-pr-zA-Z]* &&
     find . ! -name . ! -name lost+found ! -name quota.user \
 	! -name quota.group -exec rm -rf -- {} \; -type d -prune)
+
+if [ -f /etc/sysctl.conf ]; then
+	# delete comments and blank lines
+	set -- `sed -e 's/#.*$//' /etc/sysctl.conf | grep -v '^$'`
+	while [ $# -ge 1 ] ; do
+		sysctl -w $1
+		shift 1
+	done
+)	
+fi
 
 test -f /etc/rc.securelevel && . /etc/rc.securelevel
 if [ X${securelevel} != X"" ]; then
