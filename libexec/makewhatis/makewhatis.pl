@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # ex:ts=8 sw=4:
 
-# $OpenBSD: makewhatis.pl,v 1.26 2004/02/10 18:54:57 espie Exp $
+# $OpenBSD: makewhatis.pl,v 1.27 2004/02/11 18:48:43 espie Exp $
 #
 # Copyright (c) 2000 Marc Espie.
 # 
@@ -243,7 +243,7 @@ sub handle_unformated
 	    next;
 	}
 	    # Some cross-refs just link to another manpage
-	$so_found = 1 if m/\.so/;
+	$so_found = 1 if m/^\.\s*so/;
 	if (m/^\.\s*TH/ || m/^\.\s*th/) {
 		# in pricky mode, we should try to match these
 	    # ($name2, $section2) = m/^\.(?:TH|th)\s+(\S+)\s+(\S+)/;
