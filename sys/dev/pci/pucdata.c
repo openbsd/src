@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.21 2002/05/27 07:08:12 deraadt Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.22 2002/06/02 10:08:38 deraadt Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -728,6 +728,7 @@ const struct puc_device_description puc_devices[] = {
 	    {	PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI800L,	0, 0	},
 	    {	0xffff, 0xffff,						0, 0	},
 	    {
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ * 8 },
 		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 8 },
 		{ PUC_PORT_TYPE_COM, 0x20, 0x00, COM_FREQ * 8 },
 		{ PUC_PORT_TYPE_COM, 0x20, 0x08, COM_FREQ * 8 },
