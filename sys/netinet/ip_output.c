@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.155 2003/08/14 19:00:12 jason Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.156 2003/08/15 20:32:20 tedu Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1088,7 +1088,7 @@ ip_ctloutput(op, so, level, optname, mp)
 			switch (optname) {
 			case IP_AUTH_LEVEL:
 				if (optval < ipsec_auth_default_level &&
-				    suser(p->p_ucred, &p->p_acflag)) {
+				    suser(p, 0)) {
 					error = EACCES;
 					break;
 				}
@@ -1097,7 +1097,7 @@ ip_ctloutput(op, so, level, optname, mp)
 
 			case IP_ESP_TRANS_LEVEL:
 				if (optval < ipsec_esp_trans_default_level &&
-				    suser(p->p_ucred, &p->p_acflag)) {
+				    suser(p, 0)) {
 					error = EACCES;
 					break;
 				}
@@ -1106,7 +1106,7 @@ ip_ctloutput(op, so, level, optname, mp)
 
 			case IP_ESP_NETWORK_LEVEL:
 				if (optval < ipsec_esp_network_default_level &&
-				    suser(p->p_ucred, &p->p_acflag)) {
+				    suser(p, 0)) {
 					error = EACCES;
 					break;
 				}
@@ -1114,7 +1114,7 @@ ip_ctloutput(op, so, level, optname, mp)
 				break;
 			case IP_IPCOMP_LEVEL:
 				if (optval < ipsec_ipcomp_default_level &&
-				    suser(p->p_ucred, &p->p_acflag)) {
+				    suser(p, 0)) {
 					error = EACCES;
 					break;
 				}

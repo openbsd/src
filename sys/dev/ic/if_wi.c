@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.96 2003/06/07 21:14:42 mickey Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.97 2003/08/15 20:32:17 tedu Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.96 2003/06/07 21:14:42 mickey Exp $";
+	"$OpenBSD: if_wi.c,v 1.97 2003/08/15 20:32:17 tedu Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -1515,7 +1515,7 @@ wi_ioctl(ifp, command, data)
 	case SIOCS80211NWID:
 	case SIOCS80211NWKEY:
 	case SIOCS80211POWER:
-		error = suser(p->p_ucred, &p->p_acflag);
+		error = suser(p, 0);
 		if (error) {
 			splx(s);
 			return (error);
@@ -1603,7 +1603,7 @@ wi_ioctl(ifp, command, data)
 			break;
 		case WI_RID_DEFLT_CRYPT_KEYS:
 			/* For non-root user, return all-zeroes keys */
-			if (suser(p->p_ucred, &p->p_acflag))
+			if (suser(p, 0))
 				bzero((char *)&wreq,
 					sizeof(struct wi_ltv_keys));
 			else
@@ -2755,7 +2755,7 @@ wi_get_nwkey(sc, nwkey)
 	nwkey->i_defkid = sc->wi_tx_key + 1;
 
 	/* do not show any keys to non-root user */
-	error = suser(curproc->p_ucred, &curproc->p_acflag);
+	error = suser(curproc, 0);
 	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
 		if (nwkey->i_key[i].i_keydat == NULL)
 			continue;

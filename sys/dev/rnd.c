@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.62 2002/11/25 10:09:24 mickey Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.63 2003/08/15 20:32:16 tedu Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -1163,7 +1163,7 @@ randomioctl(dev, cmd, data, flag, p)
 		splx(s);
 		break;
 	case RNDADDTOENTCNT:
-		if (suser(p->p_ucred, &p->p_acflag) != 0)
+		if (suser(p, 0) != 0)
 			ret = EPERM;
 		else {
 			cnt = *(u_int *)data;
@@ -1175,7 +1175,7 @@ randomioctl(dev, cmd, data, flag, p)
 		}
 		break;
 	case RNDZAPENTCNT:
-		if (suser(p->p_ucred, &p->p_acflag) != 0)
+		if (suser(p, 0) != 0)
 			ret = EPERM;
 		else {
 			s = splhigh();
@@ -1184,7 +1184,7 @@ randomioctl(dev, cmd, data, flag, p)
 		}
 		break;
 	case RNDSTIRARC4:
-		if (suser(p->p_ucred, &p->p_acflag) != 0)
+		if (suser(p, 0) != 0)
 			ret = EPERM;
 		else if (random_state.entropy_count < 64)
 			ret = EAGAIN;
@@ -1195,7 +1195,7 @@ randomioctl(dev, cmd, data, flag, p)
 		}
 		break;
 	case RNDCLRSTATS:
-		if (suser(p->p_ucred, &p->p_acflag) != 0)
+		if (suser(p, 0) != 0)
 			ret = EPERM;
 		else {
 			s = splhigh();

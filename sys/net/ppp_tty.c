@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp_tty.c,v 1.16 2003/03/09 12:03:22 kjc Exp $	*/
+/*	$OpenBSD: ppp_tty.c,v 1.17 2003/08/15 20:32:19 tedu Exp $	*/
 /*	$NetBSD: ppp_tty.c,v 1.12 1997/03/24 21:23:10 christos Exp $	*/
 
 /*
@@ -187,7 +187,7 @@ pppopen(dev, tp)
     register struct ppp_softc *sc;
     int error, s;
 
-    if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+    if ((error = suser(p, 0)) != 0)
 	return (error);
 
     s = spltty();
@@ -416,7 +416,7 @@ ppptioctl(tp, cmd, data, flag, p)
     error = 0;
     switch (cmd) {
     case PPPIOCSASYNCMAP:
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = suser(p, 0)) != 0)
 	    break;
 	sc->sc_asyncmap[0] = *(u_int *)data;
 	break;
@@ -426,7 +426,7 @@ ppptioctl(tp, cmd, data, flag, p)
 	break;
 
     case PPPIOCSRASYNCMAP:
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = suser(p, 0)) != 0)
 	    break;
 	sc->sc_rasyncmap = *(u_int *)data;
 	break;
@@ -436,7 +436,7 @@ ppptioctl(tp, cmd, data, flag, p)
 	break;
 
     case PPPIOCSXASYNCMAP:
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = suser(p, 0)) != 0)
 	    break;
 	s = spltty();
 	bcopy(data, sc->sc_asyncmap, sizeof(sc->sc_asyncmap));

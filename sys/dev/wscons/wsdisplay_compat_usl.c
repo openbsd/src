@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay_compat_usl.c,v 1.13 2003/08/11 17:43:05 millert Exp $ */
+/* $OpenBSD: wsdisplay_compat_usl.c,v 1.14 2003/08/15 20:32:18 tedu Exp $ */
 /* $NetBSD: wsdisplay_compat_usl.c,v 1.12 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -432,7 +432,7 @@ wsdisplay_usl_ioctl2(sc, scr, cmd, data, flag, p)
 		return (0);
 
 	    case KDENABIO:
-		if (suser(p->p_ucred, &p->p_acflag) || securelevel > 1)
+		if (suser(p, 0) || securelevel > 1)
 			return (EPERM);
 		/* FALLTHRU */
 	    case KDDISABIO:

@@ -74,7 +74,11 @@ int
 xfs_suser(d_thread_t *p)
 {
 #if defined(HAVE_TWO_ARGUMENT_SUSER)
+#ifdef __OpenBSD__
+    return suser (p, SUSER_NOACCT);
+#else
     return suser (xfs_proc_to_cred(p), NULL);
+#endif
 #else
     return suser (p);
 #endif

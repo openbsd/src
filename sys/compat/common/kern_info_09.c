@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_info_09.c,v 1.10 2003/06/02 23:27:59 millert Exp $	*/
+/*	$OpenBSD: kern_info_09.c,v 1.11 2003/08/15 20:32:15 tedu Exp $	*/
 /*	$NetBSD: kern_info_09.c,v 1.5 1996/02/21 00:10:59 cgd Exp $	*/
 
 /*
@@ -84,7 +84,7 @@ compat_09_sys_setdomainname(p, v, retval)
 	int name;
 	int error;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = suser(p, 0)) != 0)
 		return (error);
 	name = KERN_DOMAINNAME;
 	return (kern_sysctl(&name, 1, 0, 0, SCARG(uap, domainname),

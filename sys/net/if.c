@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.67 2003/07/23 22:48:00 itojun Exp $	*/
+/*	$OpenBSD: if.c,v 1.68 2003/08/15 20:32:19 tedu Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -932,7 +932,7 @@ ifioctl(so, cmd, data, p)
 		break;
 
 	case SIOCSIFFLAGS:
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = suser(p, 0)) != 0)
 			return (error);
 		if (ifp->if_flags & IFF_UP && (ifr->ifr_flags & IFF_UP) == 0) {
 			int s = splimp();
@@ -951,7 +951,7 @@ ifioctl(so, cmd, data, p)
 		break;
 
 	case SIOCSIFMETRIC:
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = suser(p, 0)) != 0)
 			return (error);
 		ifp->if_metric = ifr->ifr_metric;
 		break;
@@ -962,7 +962,7 @@ ifioctl(so, cmd, data, p)
 		int oldmtu = ifp->if_mtu;
 #endif
 
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = suser(p, 0)) != 0)
 			return (error);
 		if (ifp->if_ioctl == NULL)
 			return (EOPNOTSUPP);
@@ -987,7 +987,7 @@ ifioctl(so, cmd, data, p)
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 	case SIOCSIFMEDIA:
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = suser(p, 0)) != 0)
 			return (error);
 		/* FALLTHROUGH */
 	case SIOCGIFPSRCADDR:

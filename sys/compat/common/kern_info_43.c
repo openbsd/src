@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_info_43.c,v 1.14 2003/06/02 23:27:59 millert Exp $	*/
+/*	$OpenBSD: kern_info_43.c,v 1.15 2003/08/15 20:32:15 tedu Exp $	*/
 /*	$NetBSD: kern_info_43.c,v 1.5 1996/02/04 02:02:22 christos Exp $	*/
 
 /*
@@ -344,7 +344,7 @@ compat_43_sys_sethostid(p, v, retval)
 	} */ *uap = v;
 	int error;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = suser(p, 0)) != 0)
 		return (error);
 	hostid = SCARG(uap, hostid);
 	return (0);
@@ -362,7 +362,7 @@ compat_43_sys_sethostname(p, v, retval)
 	int name;
 	int error;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = suser(p, 0)) != 0)
 		return (error);
 	name = KERN_HOSTNAME;
 	return (kern_sysctl(&name, 1, 0, 0, SCARG(uap, hostname),

@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_machdep.c,v 1.28 2003/05/13 03:49:04 art Exp $	*/
+/*	$OpenBSD: linux_machdep.c,v 1.29 2003/08/15 20:32:13 tedu Exp $	*/
 /*	$NetBSD: linux_machdep.c,v 1.29 1996/05/03 19:42:11 christos Exp $	*/
 
 /*
@@ -635,7 +635,7 @@ linux_sys_iopl(p, v, retval)
 #endif
 	struct trapframe *fp = p->p_md.md_regs;
 
-	if (suser(p->p_ucred, &p->p_acflag) != 0)
+	if (suser(p, 0) != 0)
 		return EPERM;
 	if (securelevel > 0)
 		return EPERM;
@@ -661,7 +661,7 @@ linux_sys_ioperm(p, v, retval)
 	} */ *uap = v;
 	struct trapframe *fp = p->p_md.md_regs;
 
-	if (suser(p->p_ucred, &p->p_acflag) != 0)
+	if (suser(p, 0) != 0)
 		return EPERM;
 	if (securelevel > 0)
 		return EPERM;

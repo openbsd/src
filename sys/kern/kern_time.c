@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.35 2003/08/11 05:38:05 kevlo Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.36 2003/08/15 20:32:18 tedu Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -158,7 +158,7 @@ sys_clock_settime(p, v, retval)
 	struct timespec ats;
 	int error;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = suser(p, 0)) != 0)
 		return (error);
 
 	clock_id = SCARG(uap, clock_id);
@@ -176,6 +176,8 @@ sys_clock_settime(p, v, retval)
 
 	if ((error = copyin(SCARG(uap, tp), &ats, sizeof(ats))) != 0)
 		return (error);
+
+	TIMESPEC_TO_TIMEVAL(&atv,&ats);
 
 	return (0);
 }
@@ -319,7 +321,7 @@ sys_settimeofday(p, v, retval)
 	struct timezone atz;
 	int error;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)))
+	if ((error = suser(p, 0)))
 		return (error);
 	/* Verify all parameters before changing time. */
 	if (SCARG(uap, tv) && (error = copyin((void *)SCARG(uap, tv),
@@ -356,7 +358,7 @@ sys_adjtime(p, v, retval)
 	register long ndelta, ntickdelta, odelta;
 	int s, error;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)))
+	if ((error = suser(p, 0)))
 		return (error);
 	if ((error = copyin((void *)SCARG(uap, delta), (void *)&atv,
 	    sizeof(struct timeval))))

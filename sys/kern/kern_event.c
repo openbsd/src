@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.19 2003/06/27 16:20:58 nate Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.20 2003/08/15 20:32:18 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -195,8 +195,7 @@ filt_procattach(struct knote *kn)
 	 * setuid/setgid privs (unless you're root).
 	 */
 	if ((p->p_cred->p_ruid != curproc->p_cred->p_ruid ||
-	        (p->p_flag & P_SUGID)) &&
-	    suser(curproc->p_ucred, &curproc->p_acflag) != 0)
+	    (p->p_flag & P_SUGID)) && suser(curproc, 0) != 0)
 		return (EACCES);
 
 	kn->kn_ptr.p_proc = p;

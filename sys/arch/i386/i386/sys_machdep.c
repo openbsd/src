@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.21 2003/06/02 23:27:47 millert Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.22 2003/08/15 20:32:13 tedu Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.28 1996/05/03 19:42:29 christos Exp $	*/
 
 /*-
@@ -317,7 +317,7 @@ i386_iopl(p, args, retval)
 	struct trapframe *tf = p->p_md.md_regs;
 	struct i386_iopl_args ua;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = suser(p, 0)) != 0)
 		return error;
 #ifdef APERTURE
 	if (!allowaperture && securelevel > 0)
@@ -364,7 +364,7 @@ i386_set_ioperm(p, args, retval)
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	struct i386_set_ioperm_args ua;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = suser(p, 0)) != 0)
 		return error;
 
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)

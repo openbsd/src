@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.105 2003/07/18 16:43:32 tedu Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.106 2003/08/15 20:32:18 tedu Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -108,7 +108,7 @@ sys_mount(p, v, retval)
 	struct vfsconf *vfsp;
 	struct timeval tv;
 
-	if (usermount == 0 && (error = suser(p->p_ucred, &p->p_acflag)))
+	if (usermount == 0 && (error = suser(p, 0)))
 		return (error);
 
 	/*
@@ -148,7 +148,7 @@ sys_mount(p, v, retval)
 		 * permitted to update it.
 		 */
 		if (mp->mnt_stat.f_owner != p->p_ucred->cr_uid &&
-		    (error = suser(p->p_ucred, &p->p_acflag))) {
+		    (error = suser(p, 0))) {
 			vput(vp);
 			return (error);
 		}
@@ -176,7 +176,7 @@ sys_mount(p, v, retval)
 	 */
 	if ((error = VOP_GETATTR(vp, &va, p->p_ucred, p)) ||
 	    (va.va_uid != p->p_ucred->cr_uid &&
-	    (error = suser(p->p_ucred, &p->p_acflag)))) {
+	    (error = suser(p, 0)))) {
 		vput(vp);
 		return (error);
 	}
@@ -397,7 +397,7 @@ sys_unmount(p, v, retval)
 	 * permitted to unmount this filesystem.
 	 */
 	if ((mp->mnt_stat.f_owner != p->p_ucred->cr_uid) &&
-	    (error = suser(p->p_ucred, &p->p_acflag))) {
+	    (error = suser(p, 0))) {
 		vput(vp);
 		return (error);
 	}
@@ -600,7 +600,7 @@ sys_statfs(p, v, retval)
 		sp->f_eflags = STATFS_SOFTUPD;
 #endif
 	/* Don't let non-root see filesystem id (for NFS security) */
-	if (suser(p->p_ucred, &p->p_acflag)) {
+	if (suser(p, 0)) {
 		bcopy((caddr_t)sp, (caddr_t)&sb, sizeof(sb));
 		sb.f_fsid.val[0] = sb.f_fsid.val[1] = 0;
 		sp = &sb;
@@ -646,7 +646,7 @@ sys_fstatfs(p, v, retval)
 		sp->f_eflags = STATFS_SOFTUPD;
 #endif
 	/* Don't let non-root see filesystem id (for NFS security) */
-	if (suser(p->p_ucred, &p->p_acflag)) {
+	if (suser(p, 0)) {
 		bcopy((caddr_t)sp, (caddr_t)&sb, sizeof(sb));
 		sb.f_fsid.val[0] = sb.f_fsid.val[1] = 0;
 		sp = &sb;
@@ -705,7 +705,7 @@ sys_getfsstat(p, v, retval)
 			if (mp->mnt_flag & MNT_SOFTDEP)
 				sp->f_eflags = STATFS_SOFTUPD;
 #endif
-			if (suser(p->p_ucred, &p->p_acflag)) {
+			if (suser(p, 0)) {
 				bcopy((caddr_t)sp, (caddr_t)&sb, sizeof(sb));
 				sb.f_fsid.val[0] = sb.f_fsid.val[1] = 0;
 				sp = &sb;
@@ -823,7 +823,7 @@ sys_chroot(p, v, retval)
 	int error;
 	struct nameidata nd;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = suser(p, 0)) != 0)
 		return (error);
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
 	    SCARG(uap, path), p);
@@ -994,7 +994,7 @@ sys_getfh(p, v, retval)
 	/*
 	 * Must be super user
 	 */
-	error = suser(p->p_ucred, &p->p_acflag);
+	error = suser(p, 0);
 	if (error)
 		return (error);
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
@@ -1043,7 +1043,7 @@ sys_fhopen(p, v, retval)
 	/*
 	 * Must be super user
 	 */
-	if ((error = suser(p->p_ucred, &p->p_acflag)))
+	if ((error = suser(p, 0)))
 		return (error);
 
 	flags = FFLAGS(SCARG(uap, flags));
@@ -1162,7 +1162,7 @@ sys_fhstat(p, v, retval)
 	/*
 	 * Must be super user
 	 */
-	if ((error = suser(p->p_ucred, &p->p_acflag)))
+	if ((error = suser(p, 0)))
 		return (error);
 
 	if ((error = copyin(SCARG(uap, fhp), &fh, sizeof(fhandle_t))) != 0)
@@ -1200,7 +1200,7 @@ sys_fhstatfs(p, v, retval)
 	/*
 	 * Must be super user
 	 */
-	if ((error = suser(p->p_ucred, &p->p_acflag)))
+	if ((error = suser(p, 0)))
 		return (error);
 
 	if ((error = copyin(SCARG(uap, fhp), &fh, sizeof(fhandle_t))) != 0)
@@ -1239,7 +1239,7 @@ sys_mknod(p, v, retval)
 	int whiteout = 0;
 	struct nameidata nd;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = suser(p, 0)) != 0)
 		return (error);
 	if (p->p_fd->fd_rdir)
 		return (EINVAL);
@@ -1654,7 +1654,7 @@ sys_stat(p, v, retval)
 	if (error)
 		return (error);
 	/* Don't let non-root see generation numbers (for NFS security) */
-	if (suser(p->p_ucred, &p->p_acflag))
+	if (suser(p, 0))
 		sb.st_gen = 0;
 	error = copyout((caddr_t)&sb, (caddr_t)SCARG(uap, ub), sizeof (sb));
 	return (error);
@@ -1687,7 +1687,7 @@ sys_lstat(p, v, retval)
 	if (error)
 		return (error);
 	/* Don't let non-root see generation numbers (for NFS security) */
-	if (suser(p->p_ucred, &p->p_acflag))
+	if (suser(p, 0))
 		sb.st_gen = 0;
 	error = copyout((caddr_t)&sb, (caddr_t)SCARG(uap, ub), sizeof (sb));
 	return (error);
@@ -1794,7 +1794,7 @@ sys_chflags(p, v, retval)
 	else if (SCARG(uap, flags) == VNOVAL)
 		error = EINVAL;
 	else {
-		if (suser(p->p_ucred, &p->p_acflag)) {
+		if (suser(p, 0)) {
 			if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, p)) != 0)
 				goto out;
 			if (vattr.va_type == VCHR || vattr.va_type == VBLK) {
@@ -1840,7 +1840,7 @@ sys_fchflags(p, v, retval)
 	else if (SCARG(uap, flags) == VNOVAL)
 		error = EINVAL;
 	else {
-		if (suser(p->p_ucred, &p->p_acflag)) {
+		if (suser(p, 0)) {
 			if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, p))
 			    != 0)
 				goto out;
@@ -1968,7 +1968,7 @@ sys_chown(p, v, retval)
 		error = EROFS;
 	else {
 		if ((SCARG(uap, uid) != -1 || SCARG(uap, gid) != -1) &&
-		    (suser(p->p_ucred, &p->p_acflag) || suid_clear)) {
+		    (suser(p, 0) || suid_clear)) {
 			error = VOP_GETATTR(vp, &vattr, p->p_ucred, p);
 			if (error)
 				goto out;
@@ -2020,7 +2020,7 @@ sys_lchown(p, v, retval)
 		error = EROFS;
 	else {
 		if ((SCARG(uap, uid) != -1 || SCARG(uap, gid) != -1) &&
-		    (suser(p->p_ucred, &p->p_acflag) || suid_clear)) {
+		    (suser(p, 0) || suid_clear)) {
 			error = VOP_GETATTR(vp, &vattr, p->p_ucred, p);
 			if (error)
 				goto out;
@@ -2071,7 +2071,7 @@ sys_fchown(p, v, retval)
 		error = EROFS;
 	else {
 		if ((SCARG(uap, uid) != -1 || SCARG(uap, gid) != -1) &&
-		    (suser(p->p_ucred, &p->p_acflag) || suid_clear)) {
+		    (suser(p, 0) || suid_clear)) {
 			error = VOP_GETATTR(vp, &vattr, p->p_ucred, p);
 			if (error)
 				goto out;
@@ -2629,7 +2629,7 @@ sys_revoke(p, v, retval)
 	if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, p)) != 0)
 		goto out;
 	if (p->p_ucred->cr_uid != vattr.va_uid &&
-	    (error = suser(p->p_ucred, &p->p_acflag)))
+	    (error = suser(p, 0)))
 		goto out;
 	if (vp->v_usecount > 1 || (vp->v_flag & (VALIASED | VLAYER)))
 		VOP_REVOKE(vp, REVOKEALL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wl.c,v 1.11 2003/06/03 21:09:01 deraadt Exp $ */
+/*	$OpenBSD: wl.c,v 1.12 2003/08/15 20:32:14 tedu Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -789,7 +789,7 @@ wlioctl(dev, cmd, data, flag, p)
 		*(int *)data = cl->cl_swflags;
 		break;
 	case TIOCSFLAGS:
-		error = suser(p->p_ucred, &p->p_acflag); 
+		error = suser(p, 0); 
 		if (error != 0)
 			return(EPERM); 
 

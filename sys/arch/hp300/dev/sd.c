@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.30 2003/06/02 23:27:45 millert Exp $	*/
+/*	$OpenBSD: sd.c,v 1.31 2003/08/15 20:32:13 tedu Exp $	*/
 /*	$NetBSD: sd.c,v 1.34 1997/07/10 18:14:10 kleink Exp $	*/
 
 /*
@@ -1109,7 +1109,7 @@ sdioctl(dev, cmd, data, flag, p)
 
 	case SDIOCSFORMAT:
 		/* take this device into or out of "format" mode */
-		if (suser(p->p_ucred, &p->p_acflag))
+		if (suser(p, 0))
 			return(EPERM);
 
 		if (*(int *)data) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.66 2003/08/04 16:27:01 millert Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.67 2003/08/15 20:32:18 tedu Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1290,7 +1290,7 @@ coredump(p)
 	 * group privileges.
 	 */
 	if ((p->p_flag & P_SUGID) &&
-	    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	    (error = suser(p, 0)) != 0)
 		return (error);
 	if ((p->p_flag & P_SUGID) && nosuidcoredump)
 		return (EPERM);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.66 2003/06/02 23:28:13 millert Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.67 2003/08/15 20:32:20 tedu Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -255,7 +255,7 @@ in_pcbbind(v, nam)
 
 			/* GROSS */
 			if (ntohs(lport) < IPPORT_RESERVED &&
-			    (error = suser(p->p_ucred, &p->p_acflag)))
+			    (error = suser(p, 0)))
 				return (EACCES);
 			if (so->so_euid) {
 				t = in_pcblookup(table, &zeroin_addr, 0,
@@ -279,7 +279,7 @@ in_pcbbind(v, nam)
 			first = ipport_hifirstauto;	/* sysctl */
 			last = ipport_hilastauto;
 		} else if (inp->inp_flags & INP_LOWPORT) {
-			if ((error = suser(p->p_ucred, &p->p_acflag)))
+			if ((error = suser(p, 0)))
 				return (EACCES);
 			first = IPPORT_RESERVED-1; /* 1023 */
 			last = 600;		   /* not IPPORT_RESERVED/2 */

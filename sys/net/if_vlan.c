@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.40 2003/08/14 19:00:12 jason Exp $ */
+/*	$OpenBSD: if_vlan.c,v 1.41 2003/08/15 20:32:19 tedu Exp $ */
 /*
  * Copyright 1998 Massachusetts Institute of Technology
  *
@@ -563,7 +563,7 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSETVLAN:
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = suser(p, 0)) != 0)
 			break;
 		if ((error = copyin(ifr->ifr_data, &vlr, sizeof vlr)))
 			break;

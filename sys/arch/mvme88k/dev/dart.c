@@ -1,4 +1,4 @@
-/*	$OpenBSD: dart.c,v 1.19 2003/08/12 19:32:45 miod Exp $	*/
+/*	$OpenBSD: dart.c,v 1.20 2003/08/15 20:32:14 tedu Exp $	*/
 
 /*
  * Mach Operating System
@@ -598,7 +598,7 @@ dartioctl(dev, cmd, data, flag, p)
 		*(int *)data = dart->dart_swflags;
 		break;
 	case TIOCSFLAGS:
-		error = suser(p->p_ucred, &p->p_acflag); 
+		error = suser(p, 0); 
 		if (error != 0)
 			return(EPERM); 
 

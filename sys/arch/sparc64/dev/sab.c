@@ -1,4 +1,4 @@
-/*	$OpenBSD: sab.c,v 1.13 2003/06/24 21:54:39 henric Exp $	*/
+/*	$OpenBSD: sab.c,v 1.14 2003/08/15 20:32:15 tedu Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -696,7 +696,7 @@ sabttyopen(dev, flags, mode, p)
 		else
 			tp->t_state &= ~TS_CARR_ON;
 	} else if ((tp->t_state & TS_XCLUDE) &&
-	    (!suser(p->p_ucred, &p->p_acflag))) {
+	    (!suser(p, 0))) {
 		return (EBUSY);
 	} else {
 		s = spltty();
@@ -862,7 +862,7 @@ sabttyioctl(dev, cmd, data, flags, p)
 		*((int *)data) = sc->sc_openflags;
 		break;
 	case TIOCSFLAGS:
-		if (suser(p->p_ucred, &p->p_acflag))
+		if (suser(p, 0))
 			error = EPERM;
 		else
 			sc->sc_openflags = *((int *)data) &

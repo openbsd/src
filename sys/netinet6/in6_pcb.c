@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.34 2003/06/02 23:28:15 millert Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.35 2003/08/15 20:32:20 tedu Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -273,7 +273,7 @@ in6_pcbbind(inp, nam)
 			 * curproc?  (Marked with BSD's {in,}famous XXX ?
 			 */
 			if (ntohs(lport) < IPPORT_RESERVED &&
-			    (error = suser(p->p_ucred, &p->p_acflag)))
+			    (error = suser(p, 0)))
 				return error;
 
 			t = in_pcblookup(head,
@@ -331,7 +331,7 @@ in6_pcbsetport(laddr, inp, p)
 		first = ipport_hifirstauto;	/* sysctl */
 		last = ipport_hilastauto;
 	} else if (inp->inp_flags & INP_LOWPORT) {
-		if ((error = suser(p->p_ucred, &p->p_acflag)))
+		if ((error = suser(p, 0)))
 			return (EACCES);
 		first = IPPORT_RESERVED-1; /* 1023 */
 		last = 600;		   /* not IPPORT_RESERVED/2 */

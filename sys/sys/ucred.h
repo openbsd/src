@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucred.h,v 1.5 2003/06/02 23:28:22 millert Exp $	*/
+/*	$OpenBSD: ucred.h,v 1.6 2003/08/15 20:32:20 tedu Exp $	*/
 /*	$NetBSD: ucred.h,v 1.12 1995/06/01 22:44:50 jtc Exp $	*/
 
 /*
@@ -51,11 +51,15 @@ struct ucred {
 #ifdef _KERNEL
 #define	crhold(cr)	(cr)->cr_ref++
 
+#define SUSER_NOACCT	0x1	/* don't mark accounting flags */
+
 struct ucred	*crcopy(struct ucred *cr);
 struct ucred	*crdup(struct ucred *cr);
 void		crfree(struct ucred *cr);
 struct ucred	*crget(void);
-int		suser(struct ucred *cred, u_short *acflag);
+int		suser(struct proc *p, u_int flags);
+int		suser_ucred(struct ucred *cred);
+
 #endif /* _KERNEL */
 
 #endif /* !_SYS_UCRED_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: awi_wep.c,v 1.8 2002/03/14 01:26:54 millert Exp $	*/
+/*	$OpenBSD: awi_wep.c,v 1.9 2003/08/15 20:32:16 tedu Exp $	*/
 /*	$NetBSD: awi_wep.c,v 1.2 2000/07/04 14:47:58 onoe Exp $	*/
 
 /*
@@ -206,6 +206,9 @@ awi_wep_getnwkey(sc, nwkey)
 	/* do not show any keys to non-root user */
 #ifdef __FreeBSD__
 	suerr = suser(curproc);
+#else
+#ifdef __OpenBSD__
+	suerr = suser(curproc, 0);
 #else
 	suerr = suser(curproc->p_ucred, &curproc->p_acflag);
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: magma.c,v 1.10 2003/07/15 03:47:43 jason Exp $	*/
+/*	$OpenBSD: magma.c,v 1.11 2003/08/15 20:32:17 tedu Exp $	*/
 /*
  * magma.c
  *
@@ -1065,7 +1065,7 @@ mttyioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 		break;
 
 	case TIOCSFLAGS:
-		if (suser(p->p_ucred, &p->p_acflag))
+		if (suser(p, 0))
 			error = EPERM;
 		else
 			mp->mp_openflags = *((int *)data) &

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.84 2003/08/06 21:08:07 millert Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.85 2003/08/15 20:32:18 tedu Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -134,7 +134,7 @@ sys___sysctl(p, v, retval)
 	int name[CTL_MAXNAME];
 
 	if (SCARG(uap, new) != NULL &&
-	    (error = suser(p->p_ucred, &p->p_acflag)))
+	    (error = suser(p, 0)))
 		return (error);
 	/*
 	 * all top-level sysctl names are non-terminal

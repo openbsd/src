@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls_25.c,v 1.5 2003/06/02 23:27:59 millert Exp $	*/
+/*	$OpenBSD: vfs_syscalls_25.c,v 1.6 2003/08/15 20:32:15 tedu Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -76,7 +76,7 @@ statfs_to_ostatfs(p, mp, sp, osp)
 	osp->f_files = sp->f_files;
 	osp->f_ffree = sp->f_ffree;
 	/* Don't let non-root see filesystem id (for NFS security) */
-	if (suser(p->p_ucred, &p->p_acflag))
+	if (suser(p, 0))
 		osp->f_fsid.val[0] = osp->f_fsid.val[1] = 0;
 	else
 		bcopy(&sp->f_fsid, &osp->f_fsid, sizeof(osp->f_fsid));

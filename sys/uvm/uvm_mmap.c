@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.50 2003/08/06 21:08:07 millert Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.51 2003/08/15 20:32:21 tedu Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -1031,7 +1031,7 @@ sys_mlock(p, v, retval)
 			p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur)
 		return (EAGAIN);
 #else
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = suser(p, 0)) != 0)
 		return (error);
 #endif
 
@@ -1078,7 +1078,7 @@ sys_munlock(p, v, retval)
 		return (EINVAL);
 
 #ifndef pmap_wired_count
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = suser(p, 0)) != 0)
 		return (error);
 #endif
 
@@ -1109,7 +1109,7 @@ sys_mlockall(p, v, retval)
 		return (EINVAL);
 
 #ifndef pmap_wired_count
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = suser(p, 0)) != 0)
 		return (error);
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sl.c,v 1.20 2003/06/02 23:28:12 millert Exp $	*/
+/*	$OpenBSD: if_sl.c,v 1.21 2003/08/15 20:32:19 tedu Exp $	*/
 /*	$NetBSD: if_sl.c,v 1.39.4.1 1996/06/02 16:26:31 thorpej Exp $	*/
 
 /*
@@ -260,7 +260,7 @@ slopen(dev, tp)
 	register struct sl_softc *sc;
 	int i, error, s;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = suser(p, 0)) != 0)
 		return (error);
 
 	if (tp->t_line == SLIPDISC)

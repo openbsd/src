@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_strip.c,v 1.25 2003/06/02 23:28:12 millert Exp $	*/
+/*	$OpenBSD: if_strip.c,v 1.26 2003/08/15 20:32:19 tedu Exp $	*/
 /*	$NetBSD: if_strip.c,v 1.2.4.3 1996/08/03 00:58:32 jtc Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
@@ -447,7 +447,7 @@ stripopen(dev, tp)
 	int s;
 #endif
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = suser(p, 0)) != 0)
 		return (error);
 
 	if (tp->t_line == STRIPDISC)

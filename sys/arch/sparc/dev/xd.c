@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.24 2002/06/08 18:52:45 art Exp $	*/
+/*	$OpenBSD: xd.c,v 1.25 2003/08/15 20:32:14 tedu Exp $	*/
 /*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
@@ -899,7 +899,7 @@ xdioctl(dev, command, addr, flag, p)
 
 	case DIOSXDCMD:
 		xio = (struct xd_iocmd *) addr;
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = suser(p, 0)) != 0)
 			return (error);
 		return (xdc_ioctlcmd(xd, dev, xio));
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.53 2003/08/15 14:02:22 fgsch Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.54 2003/08/15 20:32:16 tedu Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*-
@@ -1452,7 +1452,7 @@ linux_sys_stime(p, v, retval)
 	linux_time_t tt;
 	int error;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = suser(p, 0)) != 0)
 		return (error);
 
 	if ((error = copyin(SCARG(uap, t), &tt, sizeof(tt))) != 0)

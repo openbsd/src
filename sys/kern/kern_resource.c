@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.22 2003/06/02 23:28:05 millert Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.23 2003/08/15 20:32:18 tedu Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -194,7 +194,7 @@ donice(curp, chgp, n)
 	if (n < PRIO_MIN)
 		n = PRIO_MIN;
 	n += NZERO;
-	if (n < chgp->p_nice && suser(pcred->pc_ucred, &curp->p_acflag))
+	if (n < chgp->p_nice && suser(curp, 0))
 		return (EACCES);
 	chgp->p_nice = n;
 	(void)resetpriority(chgp);
@@ -241,7 +241,7 @@ dosetrlimit(p, which, limp)
 	alimp = &p->p_rlimit[which];
 	if (limp->rlim_cur > alimp->rlim_max ||
 	    limp->rlim_max > alimp->rlim_max)
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = suser(p, 0)) != 0)
 			return (error);
 	if (p->p_limit->p_refcnt > 1 &&
 	    (p->p_limit->p_lflags & PL_SHAREMOD) == 0) {

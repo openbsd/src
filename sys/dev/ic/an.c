@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.27 2003/06/25 22:28:14 mickey Exp $	*/
+/*	$OpenBSD: an.c,v 1.28 2003/08/15 20:32:16 tedu Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1062,7 +1062,7 @@ an_ioctl(ifp, command, data)
 			break;
 #ifdef ANCACHE
 		if (areq.an_type == AN_RID_ZERO_CACHE) {
-			error = suser(p->p_ucred, &p->p_acflag);
+			error = suser(p, 0);
 			if (error)
 				break;
 			sc->an_sigitems = sc->an_nextitem = 0;
@@ -1086,7 +1086,7 @@ an_ioctl(ifp, command, data)
 		error = copyout(&areq, ifr->ifr_data, sizeof(areq));
 		break;
 	case SIOCSAIRONET:
-		error = suser(p->p_ucred, &p->p_acflag);
+		error = suser(p, 0);
 		if (error)
 			break;
 		error = copyin(ifr->ifr_data, &areq, sizeof(areq));

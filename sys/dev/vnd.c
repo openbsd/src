@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.38 2003/06/02 23:28:01 millert Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.39 2003/08/15 20:32:16 tedu Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -757,7 +757,7 @@ vndioctl(dev, cmd, addr, flag, p)
 		printf("vndioctl(%x, %lx, %p, %x, %p): unit %d\n",
 		    dev, cmd, addr, flag, p, unit);
 #endif
-	error = suser(p->p_ucred, &p->p_acflag);
+	error = suser(p, 0);
 	if (error)
 		return (error);
 	if (unit >= numvnd)

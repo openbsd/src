@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.28 2003/08/11 21:53:10 tedu Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.29 2003/08/15 20:32:20 tedu Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -289,7 +289,7 @@ ext2fs_setattr(v)
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
 		if (cred->cr_uid != ip->i_e2fs_uid &&
-			(error = suser(cred, &p->p_acflag)))
+			(error = suser_ucred(cred)))
 			return (error);
 #ifdef EXT2FS_SYSTEM_FLAGS
 		if (cred->cr_uid == 0) {
@@ -349,7 +349,7 @@ ext2fs_setattr(v)
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
 		if (cred->cr_uid != ip->i_e2fs_uid &&
-			(error = suser(cred, &p->p_acflag)) &&
+			(error = suser_ucred(cred)) &&
 			((vap->va_vaflags & VA_UTIMES_NULL) == 0 || 
 			(error = VOP_ACCESS(vp, VWRITE, cred, p))))
 			return (error);
@@ -385,8 +385,7 @@ ext2fs_chmod(vp, mode, cred, p)
 	register struct inode *ip = VTOI(vp);
 	int error;
 
-	if (cred->cr_uid != ip->i_e2fs_uid &&
-		(error = suser(cred, &p->p_acflag)))
+	if (cred->cr_uid != ip->i_e2fs_uid && (error = suser_ucred(cred)))
 		return (error);
 	if (cred->cr_uid) {
 		if (vp->v_type != VDIR && (mode & S_ISTXT))
@@ -430,7 +429,7 @@ ext2fs_chown(vp, uid, gid, cred, p)
 	 */
 	if ((cred->cr_uid != ip->i_e2fs_uid || uid != ip->i_e2fs_uid ||
 		(gid != ip->i_e2fs_gid && !groupmember((gid_t)gid, cred))) &&
-		(error = suser(cred, &p->p_acflag)))
+		(error = suser_ucred(cred)))
 		return (error);
 	ogid = ip->i_e2fs_gid;
 	ouid = ip->i_e2fs_uid;
@@ -1272,7 +1271,7 @@ ext2fs_makeinode(mode, dvp, vpp, cnp)
 	ip->i_e2fs_nlink = 1;
 	if ((ip->i_e2fs_mode & ISGID) &&
 		!groupmember(ip->i_e2fs_gid, cnp->cn_cred) &&
-	    suser(cnp->cn_cred, NULL))
+	    suser_ucred(cnp->cn_cred))
 		ip->i_e2fs_mode &= ~ISGID;
 
 	/*

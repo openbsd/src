@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.35 2003/06/02 23:28:19 millert Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.36 2003/08/15 20:32:20 tedu Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -1343,7 +1343,7 @@ nfsrv_create(nfsd, slp, procp, mrq)
 			if (va.va_type == VCHR && rdev == 0xffffffff)
 				va.va_type = VFIFO;
 			if (va.va_type != VFIFO &&
-			    (error = suser(cred, (u_short *)0))) {
+			    (error = suser_ucred(cred))) {
 				vrele(nd.ni_startdir);
 				free(nd.ni_cnd.cn_pnbuf, M_NAMEI);
 				VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
@@ -1540,7 +1540,7 @@ nfsrv_mknod(nfsd, slp, procp, mrq)
 			FREE(nd.ni_cnd.cn_pnbuf, M_NAMEI);
 	} else {
 		if (va.va_type != VFIFO &&
-		    (error = suser(cred, (u_short *)0))) {
+		    (error = suser_ucred(cred))) {
 			vrele(nd.ni_startdir);
 			free((caddr_t)nd.ni_cnd.cn_pnbuf, M_NAMEI);
 			VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
@@ -1652,7 +1652,7 @@ nfsrv_remove(nfsd, slp, procp, mrq)
 	if (!error) {
 		vp = nd.ni_vp;
 		if (vp->v_type == VDIR &&
-		    (error = suser(cred, (u_short *)0)) != 0)
+		    (error = suser_ucred(cred)) != 0)
 			goto out;
 		/*
 		 * The root of a mounted filesystem cannot be deleted.
@@ -1908,7 +1908,7 @@ nfsrv_link(nfsd, slp, procp, mrq)
 		nfsm_srvwcc_data(dirfor_ret, &dirfor, diraft_ret, &diraft);
 		return (0);
 	}
-	if (vp->v_type == VDIR && (error = suser(cred, (u_short *)0)) != 0)
+	if (vp->v_type == VDIR && (error = suser_ucred(cred)) != 0)
 		goto out1;
 	nd.ni_cnd.cn_cred = cred;
 	nd.ni_cnd.cn_nameiop = CREATE;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.64 2003/08/06 20:37:38 millert Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.65 2003/08/15 20:32:18 tedu Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -613,7 +613,7 @@ sys_fstat(p, v, retval)
 	if (error == 0) {
 		/* Don't let non-root see generation numbers
 		   (for NFS security) */
-		if (suser(p->p_ucred, &p->p_acflag))
+		if (suser(p, 0))
 			ub.st_gen = 0;
 		error = copyout((caddr_t)&ub, (caddr_t)SCARG(uap, sb),
 		    sizeof (ub));

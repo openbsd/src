@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.55 2002/10/12 01:09:45 krw Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.56 2003/08/15 20:32:21 tedu Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -715,7 +715,7 @@ sys_swapctl(p, v, retval)
 	/*
 	 * all other requests require superuser privs.   verify.
 	 */
-	if ((error = suser(p->p_ucred, &p->p_acflag)))
+	if ((error = suser(p, 0)))
 		goto out;
 
 	/*

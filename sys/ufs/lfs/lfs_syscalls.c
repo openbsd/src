@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_syscalls.c,v 1.8 2003/06/02 23:28:23 millert Exp $	*/
+/*	$OpenBSD: lfs_syscalls.c,v 1.9 2003/08/15 20:32:20 tedu Exp $	*/
 /*	$NetBSD: lfs_syscalls.c,v 1.10 1996/02/09 22:28:56 christos Exp $	*/
 
 /*-
@@ -110,7 +110,7 @@ lfs_markv(p, v, retval)
 	u_long bsize;
 	int cnt, error;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = suser(p, 0)) != 0)
 		return (error);
 
 	if ((error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t))) != 0)
@@ -285,7 +285,7 @@ lfs_bmapv(p, v, retval)
 	ufs_daddr_t daddr;
 	int cnt, error, step;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = suser(p, 0)) != 0)
 		return (error);
 
 	error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t));
@@ -354,7 +354,7 @@ lfs_segclean(p, v, retval)
 	fsid_t fsid;
 	int error;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = suser(p, 0)) != 0)
 		return (error);
 
 	if ((error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t))) != 0)
@@ -415,7 +415,7 @@ lfs_segwait(p, v, retval)
 	u_long timeout;
 	int error, s;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0) {
+	if ((error = suser(p, 0)) != 0) {
 		return (error);
 	}
 #ifdef WHEN_QUADS_WORK

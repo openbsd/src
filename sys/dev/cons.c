@@ -1,4 +1,4 @@
-/*	$OpenBSD: cons.c,v 1.12 2003/06/16 18:44:11 millert Exp $	*/
+/*	$OpenBSD: cons.c,v 1.13 2003/08/15 20:32:16 tedu Exp $	*/
 /*	$NetBSD: cons.c,v 1.30 1996/04/08 19:57:30 jonathan Exp $	*/
 
 /*
@@ -179,7 +179,7 @@ cnioctl(dev, cmd, data, flag, p)
 	 * output from the "virtual" console.
 	 */
 	if (cmd == TIOCCONS && constty != NULL) {
-		error = suser(p->p_ucred, (u_short *) NULL);
+		error = suser(p, SUSER_NOACCT);
 		if (error)
 			return (error);
 		constty = NULL;

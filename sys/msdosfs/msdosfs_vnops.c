@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.40 2003/05/07 22:16:26 deraadt Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.41 2003/08/15 20:32:19 tedu Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -368,7 +368,7 @@ msdosfs_setattr(v)
 	}
 	if (vap->va_atime.tv_sec != VNOVAL || vap->va_mtime.tv_sec != VNOVAL) {
 		if (cred->cr_uid != dep->de_pmp->pm_uid &&
-		    (error = suser(cred, &ap->a_p->p_acflag)) &&
+		    (error = suser_ucred(cred)) &&
 		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
 		    (error = VOP_ACCESS(ap->a_vp, VWRITE, cred, ap->a_p))))
 			return (error);
@@ -387,7 +387,7 @@ msdosfs_setattr(v)
 	 */
 	if (vap->va_mode != (mode_t)VNOVAL) {
 		if (cred->cr_uid != dep->de_pmp->pm_uid &&
-		    (error = suser(cred, &ap->a_p->p_acflag)))
+		    (error = suser_ucred(cred)))
 			return (error);
 		/* We ignore the read and execute bits. */
 		if (vap->va_mode & VWRITE)
@@ -401,7 +401,7 @@ msdosfs_setattr(v)
 	 */
 	if (vap->va_flags != VNOVAL) {
 		if (cred->cr_uid != dep->de_pmp->pm_uid &&
-		    (error = suser(cred, &ap->a_p->p_acflag)))
+		    (error = suser_ucred(cred)))
 			return (error);
 		if (vap->va_flags & SF_ARCHIVED)
 			dep->de_Attributes &= ~ATTR_ARCHIVE;

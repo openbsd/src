@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_hostap.c,v 1.25 2003/05/16 02:30:40 millert Exp $	*/
+/*	$OpenBSD: if_wi_hostap.c,v 1.26 2003/08/15 20:32:17 tedu Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -1203,7 +1203,7 @@ wihap_ioctl(struct wi_softc *sc, u_long command, caddr_t data)
 
 	switch (command) {
 	case SIOCHOSTAP_DEL:
-		if ((error = suser(p->p_ucred, &p->p_acflag)))
+		if ((error = suser(p, 0)))
 			break;
 		if ((error = copyin(ifr->ifr_data, &reqsta, sizeof(reqsta))))
 			break;
@@ -1247,7 +1247,7 @@ wihap_ioctl(struct wi_softc *sc, u_long command, caddr_t data)
 		break;
 
 	case SIOCHOSTAP_ADD:
-		if ((error = suser(p->p_ucred, &p->p_acflag)))
+		if ((error = suser(p, 0)))
 			break;
 		if ((error = copyin(ifr->ifr_data, &reqsta, sizeof(reqsta))))
 			break;
@@ -1270,7 +1270,7 @@ wihap_ioctl(struct wi_softc *sc, u_long command, caddr_t data)
 		break;
 
 	case SIOCHOSTAP_SFLAGS:
-		if ((error = suser(p->p_ucred, &p->p_acflag)))
+		if ((error = suser(p, 0)))
 			break;
 		if ((error = copyin(ifr->ifr_data, &flag, sizeof(int))))
 			break;

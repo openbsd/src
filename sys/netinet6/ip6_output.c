@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.75 2003/06/11 02:54:02 itojun Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.76 2003/08/15 20:32:20 tedu Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1373,7 +1373,7 @@ do { \
 				switch (optname) {
 				case IPV6_AUTH_LEVEL:
 				        if (optval < ipsec_auth_default_level &&
-					    suser(p->p_ucred, &p->p_acflag)) {
+					    suser(p, 0)) {
 						error = EACCES;
 						break;
 					}
@@ -1382,7 +1382,7 @@ do { \
 
 				case IPV6_ESP_TRANS_LEVEL:
 				        if (optval < ipsec_esp_trans_default_level &&
-					    suser(p->p_ucred, &p->p_acflag)) {
+					    suser(p, 0)) {
 						error = EACCES;
 						break;
 					}
@@ -1391,7 +1391,7 @@ do { \
 
 				case IPV6_ESP_NETWORK_LEVEL:
 				        if (optval < ipsec_esp_network_default_level &&
-					    suser(p->p_ucred, &p->p_acflag)) {
+					    suser(p, 0)) {
 						error = EACCES;
 						break;
 					}
@@ -1400,7 +1400,7 @@ do { \
 
 				case IPV6_IPCOMP_LEVEL:
 				        if (optval < ipsec_ipcomp_default_level &&
-					    suser(p->p_ucred, &p->p_acflag)) {
+					    suser(p, 0)) {
 						error = EACCES;
 						break;
 					}
@@ -1708,7 +1708,7 @@ ip6_pcbopts(pktopt, m, so)
 	}
 
 	/*  set options specified by user. */
-	if (p && !suser(p->p_ucred, &p->p_acflag))
+	if (p && !suser(p, 0))
 		priv = 1;
 	if ((error = ip6_setpktoptions(m, opt, priv)) != 0) {
 		(void)m_free(m);
@@ -1831,7 +1831,7 @@ ip6_setmoptions(optname, im6op, m)
 			 * all multicast addresses. Only super user is allowed
 			 * to do this.
 			 */
-			if (suser(p->p_ucred, &p->p_acflag))
+			if (suser(p, 0))
 			{
 				error = EACCES;
 				break;
@@ -1931,7 +1931,7 @@ ip6_setmoptions(optname, im6op, m)
 		}
 		mreq = mtod(m, struct ipv6_mreq *);
 		if (IN6_IS_ADDR_UNSPECIFIED(&mreq->ipv6mr_multiaddr)) {
-			if (suser(p->p_ucred, &p->p_acflag))
+			if (suser(p, 0))
 			{
 				error = EACCES;
 				break;

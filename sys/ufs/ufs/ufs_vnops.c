@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.48 2003/08/11 21:53:10 tedu Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.49 2003/08/15 20:32:21 tedu Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -363,7 +363,7 @@ ufs_setattr(v)
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
 		if (cred->cr_uid != ip->i_ffs_uid &&
-		    (error = suser(cred, &p->p_acflag)))
+		    (error = suser_ucred(cred)))
 			return (error);
 		if (cred->cr_uid == 0) {
 			if ((ip->i_ffs_flags & (SF_IMMUTABLE | SF_APPEND)) &&
@@ -417,7 +417,7 @@ ufs_setattr(v)
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
 		if (cred->cr_uid != ip->i_ffs_uid &&
-		    (error = suser(cred, &p->p_acflag)) &&
+		    (error = suser_ucred(cred)) &&
 		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 || 
 		    (error = VOP_ACCESS(vp, VWRITE, cred, p))))
 			return (error);
@@ -454,7 +454,7 @@ ufs_chmod(vp, mode, cred, p)
 	int error;
 
 	if (cred->cr_uid != ip->i_ffs_uid &&
-	    (error = suser(cred, &p->p_acflag)))
+	    (error = suser_ucred(cred)))
 		return (error);
 	if (cred->cr_uid) {
 		if (vp->v_type != VDIR && (mode & S_ISTXT))
@@ -500,7 +500,7 @@ ufs_chown(vp, uid, gid, cred, p)
 	 */
 	if ((cred->cr_uid != ip->i_ffs_uid || uid != ip->i_ffs_uid ||
 	    (gid != ip->i_ffs_gid && !groupmember((gid_t)gid, cred))) &&
-	    (error = suser(cred, &p->p_acflag)))
+	    (error = suser_ucred(cred)))
 		return (error);
 	ogid = ip->i_ffs_gid;
 	ouid = ip->i_ffs_uid;
@@ -2109,7 +2109,7 @@ ufs_makeinode(mode, dvp, vpp, cnp)
 		softdep_change_linkcnt(ip);
 	if ((ip->i_ffs_mode & ISGID) &&
 		!groupmember(ip->i_ffs_gid, cnp->cn_cred) &&
-	    suser(cnp->cn_cred, NULL))
+	    suser_ucred(cnp->cn_cred))
 		ip->i_ffs_mode &= ~ISGID;
 
 	if (cnp->cn_flags & ISWHITEOUT)

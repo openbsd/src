@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdt.c,v 1.4 2002/03/14 01:27:00 millert Exp $	*/
+/*	$OpenBSD: wdt.c,v 1.5 2003/08/15 20:32:17 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1998,1999 Alex Nash
@@ -579,7 +579,7 @@ wdt_sched (struct wdt_softc *wdt, struct proc *p)
 	 * if the counters aren't reloaded within wdt->timeout_secs
 	 * seconds.
 	 */
-	if ((error = suser(p->p_ucred, &p->p_acflag)))
+	if ((error = suser(p, 0)))
 		return(error);
 
 	/* block out the timeout handler */

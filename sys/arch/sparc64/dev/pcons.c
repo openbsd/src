@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcons.c,v 1.5 2002/03/14 03:16:00 millert Exp $	*/
+/*	$OpenBSD: pcons.c,v 1.6 2003/08/15 20:32:15 tedu Exp $	*/
 /*	$NetBSD: pcons.c,v 1.7 2001/05/02 10:32:20 scw Exp $	*/
 
 /*-
@@ -191,7 +191,7 @@ pconsopen(dev, flag, mode, p)
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		pconsparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if ((tp->t_state&TS_XCLUDE) && suser(p->p_ucred, &p->p_acflag))
+	} else if ((tp->t_state&TS_XCLUDE) && suser(p, 0))
 		return EBUSY;
 	tp->t_state |= TS_CARR_ON;
 	

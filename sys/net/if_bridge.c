@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.123 2003/07/28 00:58:08 itojun Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.124 2003/08/15 20:32:19 tedu Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -239,7 +239,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	s = splnet();
 	switch (cmd) {
 	case SIOCBRDGADD:
-		if ((error = suser(prc->p_ucred, &prc->p_acflag)) != 0)
+		if ((error = suser(prc, 0)) != 0)
 			break;
 
 		ifs = ifunit(req->ifbr_ifsname);
@@ -331,7 +331,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifs->if_bridge = (caddr_t)sc;
 		break;
 	case SIOCBRDGDEL:
-		if ((error = suser(prc->p_ucred, &prc->p_acflag)) != 0)
+		if ((error = suser(prc, 0)) != 0)
 			break;
 
 		LIST_FOREACH(p, &sc->sc_iflist, next) {
@@ -357,7 +357,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = bridge_bifconf(sc, bifconf);
 		break;
 	case SIOCBRDGADDS:
-		if ((error = suser(prc->p_ucred, &prc->p_acflag)) != 0)
+		if ((error = suser(prc, 0)) != 0)
 			break;
 		ifs = ifunit(req->ifbr_ifsname);
 		if (ifs == NULL) {			/* no such interface */
@@ -393,7 +393,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		LIST_INSERT_HEAD(&sc->sc_spanlist, p, next);
 		break;
 	case SIOCBRDGDELS:
-		if ((error = suser(prc->p_ucred, &prc->p_acflag)) != 0)
+		if ((error = suser(prc, 0)) != 0)
 			break;
 		LIST_FOREACH(p, &sc->sc_spanlist, next) {
 			if (strncmp(p->ifp->if_xname, req->ifbr_ifsname,
@@ -433,7 +433,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		req->ifbr_portno = p->ifp->if_index & 0xff;
 		break;
 	case SIOCBRDGSIFFLGS:
-		if ((error = suser(prc->p_ucred, &prc->p_acflag)) != 0)
+		if ((error = suser(prc, 0)) != 0)
 			break;
 		ifs = ifunit(req->ifbr_ifsname);
 		if (ifs == NULL) {
@@ -465,7 +465,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCBRDGSIFPRIO:
 	case SIOCBRDGSIFCOST:
-		if ((error = suser(prc->p_ucred, &prc->p_acflag)) != 0)
+		if ((error = suser(prc, 0)) != 0)
 			break;
 		ifs = ifunit(req->ifbr_ifsname);
 		if (ifs == NULL) {
@@ -497,13 +497,13 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = bridge_rtfind(sc, baconf);
 		break;
 	case SIOCBRDGFLUSH:
-		if ((error = suser(prc->p_ucred, &prc->p_acflag)) != 0)
+		if ((error = suser(prc, 0)) != 0)
 			break;
 
 		error = bridge_rtflush(sc, req->ifbr_ifsflags);
 		break;
 	case SIOCBRDGSADDR:
-		if ((error = suser(prc->p_ucred, &prc->p_acflag)) != 0)
+		if ((error = suser(prc, 0)) != 0)
 			break;
 
 		ifs = ifunit(bareq->ifba_ifsname);
@@ -524,7 +524,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			error = ENOMEM;
 		break;
 	case SIOCBRDGDADDR:
-		if ((error = suser(prc->p_ucred, &prc->p_acflag)) != 0)
+		if ((error = suser(prc, 0)) != 0)
 			break;
 		error = bridge_rtdaddr(sc, &bareq->ifba_dst);
 		break;
@@ -532,13 +532,13 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		bparam->ifbrp_csize = sc->sc_brtmax;
 		break;
 	case SIOCBRDGSCACHE:
-		if ((error = suser(prc->p_ucred, &prc->p_acflag)) != 0)
+		if ((error = suser(prc, 0)) != 0)
 			break;
 		sc->sc_brtmax = bparam->ifbrp_csize;
 		bridge_rttrim(sc);
 		break;
 	case SIOCBRDGSTO:
-		if ((error = suser(prc->p_ucred, &prc->p_acflag)) != 0)
+		if ((error = suser(prc, 0)) != 0)
 			break;
 		if (bparam->ifbrp_ctime < 0 ||
 		    bparam->ifbrp_ctime > INT_MAX / hz) {
@@ -562,7 +562,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 		break;
 	case SIOCBRDGARL:
-		if ((error = suser(prc->p_ucred, &prc->p_acflag)) != 0)
+		if ((error = suser(prc, 0)) != 0)
 			break;
 		ifs = ifunit(brlreq->ifbr_ifsname);
 		if (ifs == NULL) {
@@ -600,7 +600,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		break;
 	case SIOCBRDGFRL:
-		if ((error = suser(prc->p_ucred, &prc->p_acflag)) != 0)
+		if ((error = suser(prc, 0)) != 0)
 			break;
 		ifs = ifunit(brlreq->ifbr_ifsname);
 		if (ifs == NULL) {
@@ -634,7 +634,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCBRDGSFD:
 	case SIOCBRDGSMA:
 	case SIOCBRDGSHT:
-		error = suser(prc->p_ucred, &prc->p_acflag);
+		error = suser(prc, 0);
 		break;
 	default:
 		error = EINVAL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xy.c,v 1.21 2002/06/08 18:52:45 art Exp $	*/
+/*	$OpenBSD: xy.c,v 1.22 2003/08/15 20:32:14 tedu Exp $	*/
 /*	$NetBSD: xy.c,v 1.26 1997/07/19 21:43:56 pk Exp $	*/
 
 /*
@@ -860,7 +860,7 @@ xyioctl(dev, command, addr, flag, p)
 
 	case DIOSXDCMD:
 		xio = (struct xd_iocmd *) addr;
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = suser(p, 0)) != 0)
 			return (error);
 		return (xyc_ioctlcmd(xy, dev, xio));
 

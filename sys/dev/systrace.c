@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.30 2003/06/16 06:36:40 itojun Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.31 2003/08/15 20:32:16 tedu Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -533,7 +533,7 @@ systraceioctl(dev, cmd, data, flag, p)
 		TAILQ_INIT(&fst->messages);
 		TAILQ_INIT(&fst->policies);
 
-		if (suser(p->p_ucred, &p->p_acflag) == 0)
+		if (suser(p, 0) == 0)
 			fst->issuser = 1;
 		fst->p_ruid = p->p_cred->p_ruid;
 		fst->p_rgid = p->p_cred->p_rgid;
@@ -1155,7 +1155,7 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 	 */
 	if ((proc->p_cred->p_ruid != p->p_cred->p_ruid ||
 		ISSET(proc->p_flag, P_SUGID)) &&
-	    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	    (error = suser(p, 0)) != 0)
 		goto out;
 
 	/*
