@@ -1,4 +1,4 @@
-/*	$OpenBSD: crunchgen.c,v 1.7 1997/01/09 04:09:40 rahnds Exp $	*/
+/*	$OpenBSD: crunchgen.c,v 1.8 1997/01/26 12:57:14 niklas Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -519,14 +519,17 @@ void fillin_program(prog_t *p)
         }
     }
 
-    /* We have a sourcedir and no explict objs, try */
-    /* to find makefile and get objs from it. */
-    if (p->srcdir && !p->objs) {
+    /*
+     * We have a sourcedir try to find a makefile and get objs from it,
+     * unless we already have objs cached.
+     */
+    if (p->srcdir) {
         for (i = 0; mf_name[i] != NULL; i++) {
             sprintf(path, "%s/%s", p->srcdir, mf_name[i]);
             if (is_nonempty_file(path)) {
 		p->mf_name = mf_name[i];
-                fillin_program_objs(p, path);
+                if (!p->objs)
+			fillin_program_objs(p, path);
                 break;
             }
         }
