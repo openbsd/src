@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.53 1999/12/09 14:26:04 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.54 1999/12/09 16:11:48 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -2762,14 +2762,6 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 			break;
 		}
 	}
-
-#if defined(UVM)
-	uvmexp.pagesize = NBPG;
-	uvm_setpagesize();
-#else
-	cnt.v_page_size = NBPG;
-	vm_set_page_size();
-#endif
 
 #if defined(SUN4)
 	/*
@@ -5741,8 +5733,8 @@ pmap_kenter_pa4m(va, pa, prot)
 	int pteproto, ctx;
 
 	pteproto = ((pa & PMAP_NC) == 0 ? SRMMU_PG_C : 0) |
-		PMAP_T2PTE_SRMMU(pa) | SRMMU_TEPTE | PPROT_RX_RX | PPROT_S |
-		((prot & VM_PROT_WRITE) ? PPROT_WRITE : 0);
+		PMAP_T2PTE_SRMMU(pa) | SRMMU_TEPTE |
+		((prot & VM_PROT_WRITE) ? PPROT_N_RWX : PPROT_N_RX);
 
 	pa &= ~PMAP_TNC_SRMMU;
 
@@ -5768,7 +5760,7 @@ pmap_kenter_pgs4m(va, pgs, npgs)
 	 * The pages will always be "normal" so they can always be
 	 * cached.
 	 */
-	pteproto = SRMMU_PG_C |	SRMMU_TEPTE | PPROT_RX_RX | PPROT_S;
+	pteproto = SRMMU_PG_C |	SRMMU_TEPTE | PPROT_N_RX;
 #if 0
 	/*
 	 * XXX - make the pages read-only until we know what protection they
@@ -6508,15 +6500,16 @@ pmap_phys_address(x)
 }
 
 /*
- * Turn off cache for a given (va, number of pages).
+ * Turn on/off cache for a given (va, number of pages).
  *
  * We just assert PG_NC for each PTE; the addresses must reside
  * in locked kernel space.  A cache flush is also done.
  */
 void
-kvm_uncache(va, npages)
+kvm_setcache(va, npages, cached)
 	caddr_t va;
 	int npages;
+	int cached;
 {
 	int pte;
 	struct pvlist *pv;
@@ -6535,9 +6528,15 @@ kvm_uncache(va, npages)
 			pv = pvhead((pte & SRMMU_PPNMASK) >> SRMMU_PPNSHIFT);
 			/* XXX - we probably don't need check for OBMEM */
 			if ((pte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM && pv) {
-				pv_changepte4m(pv, 0, SRMMU_PG_C);
+				if (cached)
+					pv_changepte4m(pv, SRMMU_PG_C, 0);
+				else
+					pv_changepte4m(pv, 0, SRMMU_PG_C);
 			}
-			pte &= ~SRMMU_PG_C;
+			if (cached)
+				pte |= SRMMU_PG_C;
+			else
+				pte &= ~SRMMU_PG_C;
 			setpte4m((vaddr_t) va, pte);
 
 			if ((pte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM)
@@ -6557,9 +6556,15 @@ kvm_uncache(va, npages)
 			pv = pvhead(pte & PG_PFNUM);
 			/* XXX - we probably don't need to check for OBMEM */
 			if ((pte & PG_TYPE) == PG_OBMEM && pv) {
-				pv_changepte4_4c(pv, PG_NC, 0);
+				if (cached)
+					pv_changepte4_4c(pv, 0, PG_NC);
+				else
+					pv_changepte4_4c(pv, PG_NC, 0);
 			}
-			pte |= PG_NC;
+			if (cached)
+				pte &= ~PG_NC;
+			else
+				pte |= PG_NC;
 			setpte4(va, pte);
 			if ((pte & PG_TYPE) == PG_OBMEM)
 				cache_flush_page((int)va);
