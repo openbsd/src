@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.13 1997/10/25 04:35:41 deraadt Exp $
+#       $OpenBSD: install.md,v 1.14 1997/10/25 04:51:14 deraadt Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -170,11 +170,12 @@ md_prep_disklabel()
 
 	# display example
 	cat << \__md_prep_disklabel_1
-If you are unsure of how to use multiple partitions
-properly (ie. seperating /,  /usr, /tmp, /var, /usr/local, and other things)
-just split the space into a root and swap partition for now.
 
+If you are unsure of how to use multiple partitions properly
+(ie. seperating /, /usr, /tmp, /var, /usr/local, and other things)
+just split the space into a root and swap partition for now.
 __md_prep_disklabel_1
+
 	disklabel -W ${_disk}
 	disklabel -E ${_disk}
 }
