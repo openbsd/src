@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.248 2002/12/09 13:17:48 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.249 2002/12/11 13:23:38 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1906,9 +1906,6 @@ hashkey		: /* empty */
 		}
 		| string
 		{
-			char buf[11] = "0x";
-			int i;
-
 			if (!strncmp((char *)$1, "0x", 2)) {
 				if (strlen((char *)$1) != 34) {
 					yyerror("hex key must be 128 bits "
@@ -1919,17 +1916,12 @@ hashkey		: /* empty */
 				if ($$ == NULL)
 					err(1, "hashkey: calloc");
 
-				/* convert to binary */
-				for (i = 0; i < 4; i++) {
-					strncpy((char *)(buf + 2),
-					    (char *)($1 + 2 + (i * 8)), 8);
-					if (atoul(buf,
-					    (u_long *)&$$->key32[i]) == -1) {
-						/* not hex */
-						free($$);
-						yyerror("invalid hex key");
-						YYERROR;
-					}
+				if (sscanf($1, "0x%8x%8x%8x%8x",
+				    &$$->key32[0], &$$->key32[1],
+				    &$$->key32[2], &$$->key32[3]) != 4) {
+					free($$);
+					yyerror("invalid hex key");
+					YYERROR;
 				}
 			} else {
 				MD5_CTX context;
