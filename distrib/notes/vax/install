@@ -1,6 +1,6 @@
 OpenBSDInstallPrelude
 
-At the moment, the only way to install OpenBSD/vax is via diskless 
+At the moment, the only way to install OpenBSD/vax OSREV is via diskless 
 booting over an Ethernet network.  You will need both the "boot.mop" 
 image and the "bsd.rd" kernel to boot.  You will also need a machine 
 configured as a rarp, MOP, bootparam, and NFS server.  
@@ -21,7 +21,7 @@ If this is your first time installing over a network it is STRONGLY
 suggested you read this guide.
 
 Configuring the Server:
----------------------
+-----------------------
 
 When you turn on your VAX, it will run a set of self-diagnostic ROM routines.
 Depending on the model of VAX you have, it may take quite a while.  When 
@@ -59,17 +59,20 @@ Typing "B <DEVICE>", where <DEVICE> is your VAX's ethernet device, at the
 chevron prompt should then load the OpenBSD booter.  A countdown should begin;
 type any key on the console and type "boot bsd.rd".  
 
-OpenBSDBootMsgs
-
 OpenBSDInstallPart2
+
+OpenBSDBootMsgs
 
 OpenBSDFTPInstall
 
+OpenBSDHTTPInstall
+
 OpenBSDNFSInstall
+
+OpenBSDDISKInstall(,{:-only-:})
 
 OpenBSDCommonFS
 
 OpenBSDCommonURL
 
 OpenBSDCongratulations
- 

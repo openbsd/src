@@ -1,0 +1,6 @@
+VAX machines need no specific preparation before installing OpenBSD on
+them.
+
+However, since OpenBSD/vax currently only runs with a serial console,
+you might have to flip a switch on some VAXens (such as the VAXstations)
+to ensure this behaviour.
