@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.11 2003/08/04 17:06:44 deraadt Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.12 2004/12/19 13:26:48 deraadt Exp $	*/
 
 /*
  * Pentium performance counter control program for OpenBSD.
@@ -128,7 +128,7 @@ struct ctrfn p6fn[] = {
 	 "Number of modified lines removed from the L2 for any reason."},
 	{0x28, CFL_MESI, "L2_IFETCH",
 	 "Number of L2 instruction fetches."},
-	{0x29, CFL_MESI, "L2_LD", 
+	{0x29, CFL_MESI, "L2_LD",
 	 "Number of L2 data loads."},
 	{0x2a, CFL_MESI, "L2_ST",
 	 "Number of L2 data stores."},
@@ -161,7 +161,7 @@ struct ctrfn p6fn[] = {
 	 "Number of burst read transactions."},
 	{0x66, CFL_SA, "BUS_TRAN_RFO",
 	 "Number of read for ownership transactions."},
-	{0x67, CFL_SA, "BUS_TRANS_WB", 
+	{0x67, CFL_SA, "BUS_TRANS_WB",
 	 "Number of write back transactions."},
 	{0x68, CFL_SA, "BUS_TRAN_IFETCH",
 	 "Number of instruction fetch transactions."},
@@ -277,7 +277,7 @@ list(int fam)
 		cfnp = p6fn;
 	else {
 		fprintf(stderr, "Unknown CPU family %d\n", fam);
-		exit (1);
+		exit(1);
 	}
 	printf("Hardware counter functions for the %s:\n\n",
 	fam == 5 ? "Pentium" : "Pentium Pro");
@@ -326,7 +326,7 @@ fn2str(int family, u_int sel)
 
 	if (family == 5) {
 		fn = sel & 0x3f;
-		cfnp = fn2cfnp (family, fn);
+		cfnp = fn2cfnp(family, fn);
 		snprintf(buf, sizeof buf, "%c%c%c %02x %s",
 		    sel & P5CTR_C ? 'c' : '-',
 		    sel & P5CTR_U ? 'u' : '-',
@@ -334,7 +334,7 @@ fn2str(int family, u_int sel)
 		    fn, cfnp ? cfnp->name : "unknown function");
 	} else if (family == 6) {
 		fn = sel & 0xff;
-		cfnp = fn2cfnp (family, fn);
+		cfnp = fn2cfnp(family, fn);
 		if (cfnp && cfnp->flags & CFL_MESI)
 			snprintf(um, sizeof um, "/%c%c%c%c",
 			    sel & P6CTR_UM_M ? 'm' : '-',
@@ -351,7 +351,7 @@ fn2str(int family, u_int sel)
 		    sel & P6CTR_E ? 'e' : '-',
 		    sel & P6CTR_K ? 'k' : '-',
 		    sel & P6CTR_U ? 'u' : '-',
-		    fn, cm, um, 7 - (strlen (cm) + strlen (um)), "",
+		    fn, cm, um, 7 - (strlen(cm) + strlen(um)), "",
 		    cfnp ? cfnp->name : "unknown function");
 	} else
 		return (NULL);
@@ -365,17 +365,17 @@ readst(void)
 	int fd, i;
 	struct pctrst st;
 
-	fd = open (_PATH_PCTR, O_RDONLY);
+	fd = open(_PATH_PCTR, O_RDONLY);
 	if (fd < 0)
-		err (1, _PATH_PCTR);
-	if (ioctl (fd, PCIOCRD, &st) < 0)
-		err (1, "PCIOCRD");
-	close (fd);
+		err(1, _PATH_PCTR);
+	if (ioctl(fd, PCIOCRD, &st) < 0)
+		err(1, "PCIOCRD");
+	close(fd);
 
 	if (usep5ctr || usep6ctr) {
 		for (i = 0; i < PCTR_NUM; i++)
 			printf(" ctr%d = %16qd  [%s]\n", i, st.pctr_hwc[i],
-			    fn2str (cpufamily, st.pctr_fn[i]));
+			    fn2str(cpufamily, st.pctr_fn[i]));
 	}
 	printf("  tsc = %16qd\n  idl = %16qd\n", st.pctr_tsc, st.pctr_idl);
 }
@@ -385,59 +385,56 @@ setctr(int ctr, u_int val)
 {
 	int fd;
 
-	fd = open (_PATH_PCTR, O_WRONLY);
+	fd = open(_PATH_PCTR, O_WRONLY);
 	if (fd < 0)
-		err (1, _PATH_PCTR);
-	if (ioctl (fd, PCIOCS0 + ctr, &val) < 0)
-		err (1, "PCIOCSn");
-	close (fd);
+		err(1, _PATH_PCTR);
+	if (ioctl(fd, PCIOCS0 + ctr, &val) < 0)
+		err(1, "PCIOCSn");
+	close(fd);
 }
 
 static void
 usage(void)
 {
 	fprintf(stderr,
-	   "usage:\n"
-	   "  %s\n"
-	   "    Read the counters.\n"
-	   "  %s -l [5|6]\n"
-	   "    List all possible counter functions for P5/P6.\n",
-	   __progname, __progname);
+	    "usage:\n"
+	    "  %s\n"
+	    "    Read the counters.\n"
+	    "  %s -l [5|6]\n"
+	    "    List all possible counter functions for P5/P6.\n",
+	    __progname, __progname);
 	if (usep5ctr)
 		fprintf(stderr,
-	     "  %s -s {0|1} [-[c][u][k]] function\n"
-	     "    Configure counter.\n"
-	     "      0/1 - counter to configure\n"
-	     "        c - count cycles not events\n"
-	     "        u - count events in user mode (ring 3)\n"
-	     "        k - count events in kernel mode (rings 0-2)\n",
-	     __progname);
+		    "  %s -s {0|1} [-[c][u][k]] function\n"
+		    "    Configure counter.\n"
+		    "      0/1 - counter to configure\n"
+		    "        c - count cycles not events\n"
+		    "        u - count events in user mode (ring 3)\n"
+		    "        k - count events in kernel mode (rings 0-2)\n",
+		    __progname);
 	else if (usep6ctr)
 		fprintf(stderr,
-	     "  %s -s {0|1} [-[i][e][k][u]] "
-	     "function[+cm][/{[m][e][s][i]|[a]}]\n"
-	     "    Configure counter.\n"
-	     "       0/1 - counter number to configure\n"
-	     "         i - invert cm\n"
-	     "         e - edge detect\n"
-	     "         k - count events in kernel mode (rings 0-2)\n"
-	     "         u - count events in user mode (ring 3)\n"
-	     "        cm - # events/cycle required to bump ctr\n"
-	     "      mesi - Modified/Exclusive/Shared/Invalid in cache\n"
-	     "       s/a - self generated/all events\n", __progname);
-	exit (1);
+		    "  %s -s {0|1} [-[i][e][k][u]] "
+		    "function[+cm][/{[m][e][s][i]|[a]}]\n"
+		    "    Configure counter.\n"
+		    "       0/1 - counter number to configure\n"
+		    "         i - invert cm\n"
+		    "         e - edge detect\n"
+		    "         k - count events in kernel mode (rings 0-2)\n"
+		    "         u - count events in user mode (ring 3)\n"
+		    "        cm - # events/cycle required to bump ctr\n"
+		    "      mesi - Modified/Exclusive/Shared/Invalid in cache\n"
+		    "       s/a - self generated/all events\n", __progname);
+	exit(1);
 }
 
 int
 main(int argc, char **argv)
 {
-	u_int ctr;
-	char *cp;
-	u_int fn, fl = 0;
-	char **ap;
-	int ac;
+	char *cp, **ap;
+	u_int ctr, fn, fl = 0;
 	struct ctrfn *cfnp;
-	int mib[2];
+	int mib[2], ac;
 	size_t len;
 
 	/* Get the kernel cpuid return values. */
@@ -463,20 +460,20 @@ main(int argc, char **argv)
 	pctr_isintel = (strcmp(cpu_vendor, "GenuineIntel") == 0);
 
 	if (argc <= 1)
-		readst ();
-	else if (argc == 2 && !strcmp (argv[1], "-l"))
-		list (cpufamily);
-	else if (argc == 3 && !strcmp (argv[1], "-l"))
-		list (atoi (argv[2]));
-	else if (!strcmp (argv[1], "-s") && argc >= 4) {
-		ctr = atoi (argv[2]);
+		readst();
+	else if (argc == 2 && !strcmp(argv[1], "-l"))
+		list(cpufamily);
+	else if (argc == 3 && !strcmp(argv[1], "-l"))
+		list(atoi(argv[2]));
+	else if (!strcmp(argv[1], "-s") && argc >= 4) {
+		ctr = atoi(argv[2]);
 		if (ctr >= PCTR_NUM)
-			usage ();
+			usage();
 		ap = &argv[3];
 		ac = argc - 3;
 
 		if (usep6ctr)
-		fl |= P6CTR_EN;
+			fl |= P6CTR_EN;
 		if (**ap == '-') {
 			cp = *ap;
 			if (usep6ctr) {
@@ -495,9 +492,9 @@ main(int argc, char **argv)
 						fl |= P6CTR_U;
 						break;
 					default:
-						usage ();
+						usage();
 					}
-			} else if(usep5ctr) {
+			} else if (usep5ctr) {
 				while (*++cp)
 					switch (*cp) {
 					case 'c':
@@ -510,7 +507,7 @@ main(int argc, char **argv)
 						fl |= P5CTR_U;
 						break;
 					default:
-						usage ();
+						usage();
 					}
 			}
 			ap++;
@@ -523,21 +520,21 @@ main(int argc, char **argv)
 		}
 
 		if (!ac)
-			usage ();
+			usage();
 
-		fn = strtoul (*ap, NULL, 16);
+		fn = strtoul(*ap, NULL, 16);
 		if ((usep6ctr && (fn & ~0xff)) || (!usep6ctr && (fn & ~0x3f)))
-			usage ();
+			usage();
 		fl |= fn;
-		if (usep6ctr && (cp = strchr (*ap, '+'))) {
+		if (usep6ctr && (cp = strchr(*ap, '+'))) {
 			cp++;
-			fn = strtol (cp, NULL, 0);
+			fn = strtol(cp, NULL, 0);
 			if (fn & ~0xff)
-				usage ();
+				usage();
 			fl |= (fn << 24);
 		}
-		cfnp = fn2cfnp (6, fl);
-		if (usep6ctr && cfnp && (cp = strchr (*ap, '/'))) {
+		cfnp = fn2cfnp(6, fl);
+		if (usep6ctr && cfnp && (cp = strchr(*ap, '/'))) {
 			if (cfnp->flags & CFL_MESI) {
 				while (*++cp)
 					switch (*cp) {
@@ -554,7 +551,7 @@ main(int argc, char **argv)
 						fl |= P6CTR_UM_I;
 						break;
 					default:
-						usage ();
+						usage();
 					}
 			} else if (cfnp->flags & CFL_SA) {
 				while (*++cp)
@@ -563,23 +560,23 @@ main(int argc, char **argv)
 						fl |= P6CTR_UM_A;
 						break;
 					default:
-						usage ();
+						usage();
 					}
 			} else
-				usage ();
+				usage();
 		} else if (cfnp && (cfnp->flags & CFL_MESI))
 			fl |= P6CTR_UM_MESI;
 		ap++;
 		ac--;
 
 		if (ac)
-			usage ();
+			usage();
 
 		if (usep6ctr && ! (fl & 0xff))
 			fl = 0;
-		setctr (ctr, fl);
+		setctr(ctr, fl);
 	} else
-		usage ();
+		usage();
 
 	return 0;
 }
