@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)system.3	6.5 (Berkeley) 6/29/91
-.\"	$Id: system.3,v 1.1.1.1 1995/10/18 08:42:20 deraadt Exp $
+.\"	$Id: system.3,v 1.2 1995/11/01 16:43:27 deraadt Exp $
 .\"
 .Dd June 29, 1991
 .Dt SYSTEM 3
@@ -72,7 +72,7 @@ will return non-zero.
 Otherwise,
 .Fn system
 returns the termination status of the shell in the format specified by 
-.Xr waitpid 3 .
+.Xr waitpid 2 .
 .Sh RETURN VALUES 
 If a child process cannot be created, or the termination status of
 the shell cannot be obtained, 
