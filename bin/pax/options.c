@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.17 1997/03/26 01:14:13 millert Exp $	*/
+/*	$OpenBSD: options.c,v 1.18 1997/04/02 17:48:53 millert Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.17 1997/03/26 01:14:13 millert Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.18 1997/04/02 17:48:53 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -1270,6 +1270,10 @@ opt_add(str)
 		paxwarn(0, "Invalid option name");
 		return(-1);
 	}
+	if ((str = strdup(str)) == NULL) {
+		paxwarn(0, "Unable to allocate space for option list");
+		return(-1);
+	}
 	frpt = endpt = str;
 
 	/*
@@ -1282,10 +1286,12 @@ opt_add(str)
 			*endpt = '\0';
 		if ((pt = strchr(frpt, '=')) == NULL) {
 			paxwarn(0, "Invalid options format");
+			free(str);
 			return(-1);
 		}
 		if ((opt = (OPLIST *)malloc(sizeof(OPLIST))) == NULL) {
 			paxwarn(0, "Unable to allocate space for option list");
+			free(str);
 			return(-1);
 		}
 		*pt++ = '\0';
