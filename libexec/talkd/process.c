@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.2 1996/04/28 23:56:20 mickey Exp $	*/
+/*	$OpenBSD: process.c,v 1.3 1996/04/29 00:46:56 mickey Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)process.c	5.10 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: process.c,v 1.2 1996/04/28 23:56:20 mickey Exp $";
+static char rcsid[] = "$Id: process.c,v 1.3 1996/04/29 00:46:56 mickey Exp $";
 #endif /* not lint */
 
 /*
@@ -58,6 +58,8 @@ static char rcsid[] = "$Id: process.c,v 1.2 1996/04/28 23:56:20 mickey Exp $";
 #include <string.h>
 #include <paths.h>
 #include "talkd.h"
+
+#define	satosin(sa)	((struct sockaddr_in *)(sa))
 
 void
 process_request(mp, rp)
