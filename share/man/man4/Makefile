@@ -1,8 +1,9 @@
-#	$OpenBSD: Makefile,v 1.108 2000/04/04 06:42:06 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.109 2000/04/11 14:12:27 aaron Exp $
 #	$NetBSD: Makefile,v 1.22.4.2 1996/07/18 00:51:10 jtc Exp $
 
 MAN=	ac97.4 an.4 atalk.4 atapiscsi.4 audio.4 adv.4 ahc.4 aue.4 bpf.4 \
-	bridge.4 ccd.4 cd.4 ch.4 clnp.4 cltp.4 cnw.4 cue.4 dc.4 ddb.4 de.4 \
+	bridge.4 \
+	cardbus.4 ccd.4 cd.4 ch.4 clnp.4 cltp.4 cnw.4 cue.4 dc.4 ddb.4 de.4 \
 	dpt.4 drum.4 eap.4 ec.4 ef.4 enc.4 ep.4 esis.4 eso.4 ess.4 exphy.4 \
 	fd.4 ffs_softupdates.4 fpa.4 fxp.4 gdt.4 gre.4 hifn.4 icmp.4 icsphy.4 \
 	idp.4 ifmedia.4 inet.4 inphy.4 iophy.4 ip.4 ipl.4 ipsec.4 isa.4 \
@@ -22,7 +23,7 @@ MAN+=	faith.4 gif.4 icmp6.4 inet6.4 ip6.4
 
 MLINKS+=fd.4 stderr.4 fd.4 stdin.4 fd.4 stdout.4
 MLINKS+=netintro.4 networking.4
-MLINKS+=random.4 srandom.4 random.4 urandom.4 random.4 prandom.4 
+MLINKS+=random.4 srandom.4 random.4 urandom.4 random.4 prandom.4
 MLINKS+=random.4 arandom.4
 MLINKS+=scsi.4 scsibus.4
 MLINKS+=tty.4 cua.4
