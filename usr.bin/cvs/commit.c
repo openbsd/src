@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.4 2004/11/09 21:11:37 krapht Exp $	*/
+/*	$OpenBSD: commit.c,v 1.5 2004/11/09 22:22:47 krapht Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -37,10 +37,11 @@
 
 #include "cvs.h"
 #include "log.h"
+#include "buf.h"
 #include "proto.h"
 
 
-#define CVS_COMMIT_BIGMSG     8000
+#define CVS_COMMIT_BIGMSG     32000
 #define CVS_COMMIT_FTMPL      "/tmp/cvsXXXXXXXXXX"
 #define CVS_COMMIT_LOGPREFIX  "CVS:"
 #define CVS_COMMIT_LOGLINE \
@@ -68,9 +69,7 @@ cvs_commit(int argc, char **argv)
 	mfile = NULL;
 	msg = NULL;
 
-#if 0
 	cvs_commit_getmsg(".");
-#endif
 
 	while ((ch = getopt(argc, argv, "F:flm:R")) != -1) {
 		switch (ch) {
@@ -121,10 +120,12 @@ cvs_commit(int argc, char **argv)
 static char*
 cvs_commit_openmsg(const char *path)
 {
-	int fd, ch;
-	size_t sz;
-	char buf[32], *msg;
+	int ch;
+	size_t len;
+	char lbuf[256], *msg;
 	struct stat st;
+	FILE *fp;
+	BUF *bp;
 
 	if (stat(path, &st) == -1) {
 		cvs_log(LP_ERRNO, "failed to stat `%s'", path);
@@ -141,21 +142,21 @@ cvs_commit_openmsg(const char *path)
 			fprintf(stderr,
 			    "The specified message file seems big.  "
 			    "Proceed anyways? (y/n) ");
-			if (fgets(buf, sizeof(buf), stdin) == NULL) {
+			if (fgets(lbuf, sizeof(lbuf), stdin) == NULL) {
 				cvs_log(LP_ERRNO,
 				    "failed to read from standard input");
 				return (NULL);
 			}
 
-			sz = strlen(buf);
-			if ((sz == 0) || (sz > 2) ||
-			    ((buf[sz] != 'y') && (buf[sz] != 'n'))) {
+			len = strlen(lbuf);
+			if ((len == 0) || (len > 2) ||
+			    ((lbuf[0] != 'y') && (lbuf[0] != 'n'))) {
 				fprintf(stderr, "invalid input\n");
 				continue;
 			}
-			else if (buf[sz] == 'y') 
+			else if (lbuf[0] == 'y') 
 				break;
-			else if (buf[sz] == 'n') {
+			else if (lbuf[0] == 'n') {
 				cvs_log(LP_ERR, "aborted by user");
 				return (NULL);
 			}
@@ -163,25 +164,31 @@ cvs_commit_openmsg(const char *path)
 		} while (1);
 	}
 
-	sz = st.st_size + 1;
-
-	msg = (char *)malloc(sz);
-	if (msg == NULL) {
-		cvs_log(LP_ERRNO, "failed to allocate message buffer");
-		return (NULL);
-	}
-
-	fd = open(path, O_RDONLY, 0);
-	if (fd == -1) {
+	if ((fp = fopen(path, "r")) == NULL) {
 		cvs_log(LP_ERRNO, "failed to open message file `%s'", path);
 		return (NULL);
 	}
 
-	if (read(fd, msg, sz - 1) == -1) {
-		cvs_log(LP_ERRNO, "failed to read CVS commit message");
+	bp = cvs_buf_alloc(128, BUF_AUTOEXT);
+	if (bp == NULL) {
 		return (NULL);
 	}
-	msg[sz - 1] = '\0';
+
+	while (fgets(lbuf, sizeof(lbuf), fp) != NULL) {
+		len = strlen(lbuf);
+		if (len == 0)
+			continue;
+
+		/* skip lines starting with the prefix */
+		if (strncmp(lbuf, CVS_COMMIT_LOGPREFIX,
+		    strlen(CVS_COMMIT_LOGPREFIX)) == 0)
+			continue;
+
+		cvs_buf_append(bp, lbuf, strlen(lbuf));
+	}
+	cvs_buf_putc(bp, '\0');
+
+	msg = (char *)cvs_buf_release(bp);
 
 	return (msg);
 }
@@ -199,9 +206,12 @@ static char*
 cvs_commit_getmsg(const char *dir)
 {
 	int ret, fd, argc, fds[3];
-	char *argv[4], path[MAXPATHLEN], *msg;
+	size_t len;
+	char *argv[4], buf[16], path[MAXPATHLEN], *msg;
 	FILE *fp;
+	struct stat st1, st2;
 
+	msg = NULL;
 	fds[0] = -1;
 	fds[1] = -1;
 	fds[2] = -1;
@@ -219,7 +229,6 @@ cvs_commit_getmsg(const char *dir)
 	fp = fdopen(fd, "w");
 	if (fp == NULL) {
 		cvs_log(LP_ERRNO, "failed to fdopen");
-		exit(1);
 	} else {
 		fprintf(fp,
 		    "\n%s %s\n%s Enter Log.  Lines beginning with `%s' are "
@@ -236,42 +245,63 @@ cvs_commit_getmsg(const char *dir)
 		    CVS_COMMIT_LOGLINE);
 	}
 	(void)fflush(fp);
-	(void)fclose(fp);
 
-	do {
+	if (fstat(fd, &st1) == -1) {
+		cvs_log(LP_ERRNO, "failed to stat log message file");
+
+		(void)fclose(fp);
+		if (unlink(path) == -1)
+			cvs_log(LP_ERRNO, "failed to unlink log file %s", path);
+		return (NULL);
+	}
+
+	for (;;) {
 		ret = cvs_exec(argc, argv, fds);
-		if (ret == -1) {
-			fprintf(stderr,
-			    "Log message unchanged or not specified\n"
-			    "a)bort, c)ontinue, e)dit, !)reuse this message "
-			    "unchanged for remaining dirs\nAction: () ");
-
-			ret = getchar();
-			if (ret == 'a') {
-				cvs_log(LP_ERR, "aborted by user");
-				break;
-			} else if (ret == 'c') {
-			} else if (ret == 'e') {
-			} else if (ret == '!') {
-			}
-				
+		if (ret == -1)
+			break;
+		if (fstat(fd, &st2) == -1) {
+			cvs_log(LP_ERRNO, "failed to stat log message file");
+			break;
 		}
-	} while (0);
 
+		if (st2.st_mtime != st1.st_mtime)
+			break;
+
+		/* nothing was entered */
+		fprintf(stderr,
+		    "Log message unchanged or not specified\na)bort, "
+		    "c)ontinue, e)dit, !)reuse this message unchanged "
+		    "for remaining dirs\nAction: (continue) ");
+
+		if (fgets(buf, sizeof(buf), stdin) == NULL) {
+			cvs_log(LP_ERRNO, "failed to read from standard input");
+			break;
+		}
+
+		len = strlen(buf);
+		if ((len == 0) || (len > 2)) {
+			fprintf(stderr, "invalid input\n");
+			continue;
+		}
+		else if (buf[0] == 'a') { 
+			cvs_log(LP_ERR, "aborted by user");
+			break;
+		} else if ((buf[0] == '\n') || (buf[0] == 'c')) {
+			/* empty message */
+			msg = strdup("");
+			break;
+		} else if (ret == 'e')
+			continue;
+		else if (ret == '!') {
+			/* XXX do something */
+		}
+	}
+
+	(void)fclose(fp);
 	(void)close(fd);
 
+	if (unlink(path) == -1)
+		cvs_log(LP_ERRNO, "failed to unlink log file %s", path);
+
 	return (msg);
-}
-
-
-/*
- * cvs_commit_gettmpl()
- *
- * Get the template to display when invoking the editor to get a commit
- * message.
- */
-
-cvs_commit_gettmpl(void)
-{
-
 }
