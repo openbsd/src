@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 1997/05/14 20:52:44 pefo Exp $
+#	$OpenBSD: Makefile,v 1.2 1997/05/14 21:25:14 niklas Exp $
 
 # NOTE! We don't do crunched yet!
 
@@ -13,7 +13,7 @@ LISTS=		${.CURDIR}/list
 MOUNT_POINT=	/mnt
 MTREE=		${.CURDIR}/mtree.conf
 
-VND?=		vnd0
+VND?=		svnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 VND_CRDEV=	/dev/r${VND}c
@@ -50,9 +50,6 @@ rd_setup:
 
 rd_teardown:
 	@df -i ${MOUNT_POINT}
-	sync
-	cat /*bin/* > /dev/null
-	sync
 	-umount ${MOUNT_POINT}
 	-vnconfig -u ${VND}
 	cp ${REALIMAGE} ${IMAGE}
