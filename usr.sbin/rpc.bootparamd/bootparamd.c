@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootparamd.c,v 1.11 2002/02/16 21:28:08 millert Exp $	*/
+/*	$OpenBSD: bootparamd.c,v 1.12 2002/06/11 18:49:18 hin Exp $	*/
 
 /*
  * This code is not copyright, and is placed in the public domain.
@@ -13,13 +13,20 @@
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
+
 #include <rpc/rpc.h>
 #include <rpcsvc/bootparam_prot.h>
+#include <rpcsvc/ypclnt.h>
+#include <rpcsvc/yp_prot.h>
 #include <stdio.h>
 #include <netdb.h>
 #include <ctype.h>
 #include <syslog.h>
 #include <string.h>
+#include <unistd.h>
+#include <err.h>
+#include <stdlib.h>
+
 #include "pathnames.h"
 
 #define MAXLEN 800

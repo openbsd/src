@@ -39,11 +39,14 @@
 
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/mman.h>
 #include <sys/param.h>
+#include <sys/ioctl.h>
 
 #include <dev/ramdisk.h>
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;

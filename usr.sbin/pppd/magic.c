@@ -1,4 +1,4 @@
-/*	$OpenBSD: magic.c,v 1.6 2002/05/26 09:25:21 deraadt Exp $	*/
+/*	$OpenBSD: magic.c,v 1.7 2002/06/11 18:49:18 hin Exp $	*/
 
 /*
  * magic.c - PPP Magic Number routines.
@@ -23,7 +23,7 @@
 #if 0
 static char rcsid[] = "Id: magic.c,v 1.7 1998/03/25 03:07:49 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: magic.c,v 1.6 2002/05/26 09:25:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: magic.c,v 1.7 2002/06/11 18:49:18 hin Exp $";
 #endif
 #endif
 
@@ -31,6 +31,7 @@ static char rcsid[] = "$OpenBSD: magic.c,v 1.6 2002/05/26 09:25:21 deraadt Exp $
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/time.h>
+#include <stdlib.h>
 
 #include "pppd.h"
 #include "magic.h"
