@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.88 2004/02/26 14:00:33 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.89 2004/02/26 16:16:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -45,6 +45,10 @@ int		 rde_update_get_prefix(u_char *, u_int16_t, struct bgpd_addr *,
 		     u_int8_t *);
 void		 rde_update_err(struct rde_peer *, u_int8_t , u_int8_t,
 		     void *, u_int16_t);
+void		 rde_dump_rib(struct prefix *, pid_t);
+void		 rde_dump_prefix(struct prefix *, pid_t);
+void		 rde_dump_upcall(struct pt_entry *, void *);
+void		 rde_dump_as(struct as_filter *, pid_t);
 void		 rde_update_log(const char *,
 		     const struct rde_peer *, const struct attr_flags *,
 		     const struct bgpd_addr *, u_int8_t);
@@ -189,6 +193,7 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 {
 	struct imsg		 imsg;
 	struct session_up	 sup;
+	pid_t			 pid;
 	int			 n;
 
 	if ((n = imsg_read(ibuf)) == -1)
@@ -214,6 +219,25 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 			break;
 		case IMSG_SESSION_DOWN:
 			peer_down(imsg.hdr.peerid);
+			break;
+		case IMSG_CTL_SHOW_RIB:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE) {
+				log_warnx("rde_dispatch: wrong imsg len");
+				break;
+			}
+			pid = imsg.hdr.pid;
+			pt_dump(rde_dump_upcall, &pid);
+			imsg_compose_pid(&ibuf_se, IMSG_CTL_END, pid, NULL, 0);
+			break;
+		case IMSG_CTL_SHOW_RIB_AS:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
+			    sizeof(struct as_filter)) {
+				log_warnx("rde_dispatch: wrong imsg len");
+				break;
+			}
+			pid = imsg.hdr.pid;
+			rde_dump_as(imsg.data, pid);
+			imsg_compose_pid(&ibuf_se, IMSG_CTL_END, pid, NULL, 0);
 			break;
 		default:
 			break;
@@ -568,6 +592,110 @@ rde_update_log(const char *message,
 	    nexthop ? nexthop : "");
 
 	free(nexthop);
+}
+
+/*
+ * control specific functions
+ */
+void
+rde_dump_rib(struct prefix *p, pid_t pid)
+{
+	struct ctl_show_rib	 rib;
+	struct buf		*wbuf;
+
+	rib.lastchange = p->lastchange;
+	rib.local_pref = p->aspath->flags.lpref;
+	rib.med = p->aspath->flags.med;
+	rib.prefix_cnt = p->aspath->prefix_cnt;
+	rib.active_cnt = p->aspath->active_cnt;
+	memcpy(&rib.nexthop, &p->aspath->nexthop->true_nexthop,
+	    sizeof(rib.nexthop));
+	memcpy(&rib.prefix, &p->prefix->prefix, sizeof(rib.prefix));
+	rib.prefixlen = p->prefix->prefixlen;
+	rib.origin = p->aspath->flags.origin;
+	rib.flags = 0;
+	if (p->aspath->nexthop->state == NEXTHOP_REACH)
+		rib.flags |= F_RIB_ELIGIBLE;
+	if (p->prefix->active == p)
+		rib.flags |= F_RIB_ACTIVE;
+	if (p->peer->conf.ebgp == 0)
+		rib.flags |= F_RIB_INTERNAL;
+	if (p->aspath->nexthop->flags & NEXTHOP_ANNOUNCE)
+		rib.flags |= F_RIB_ANNOUNCE;
+	rib.aspath_len = aspath_length(p->aspath->flags.aspath);
+
+	if ((wbuf = imsg_create_pid(&ibuf_se, IMSG_CTL_SHOW_RIB, pid,
+	    sizeof(rib) + rib.aspath_len)) == NULL) {
+		log_warnx("rde_dump_upcall: imsg_create error");
+		return;
+	}
+	if (imsg_add(wbuf, &rib, sizeof(rib)) == -1 ||
+	    imsg_add(wbuf, aspath_dump(p->aspath->flags.aspath),
+	    rib.aspath_len) == -1) {
+		log_warnx("rde_dump_upcall: imsg_add error");
+		return;
+	}
+	if (imsg_close(&ibuf_se, wbuf) == -1) {
+		log_warnx("rde_dump_upcall: imsg_close error");
+		return;
+	}
+}
+
+void
+rde_dump_prefix(struct prefix *p, pid_t pid)
+{
+	struct ctl_show_rib_prefix	 prefix;
+
+	prefix.lastchange = p->lastchange;
+	memcpy(&prefix.prefix, &p->prefix->prefix, sizeof(prefix.prefix));
+	prefix.prefixlen = p->prefix->prefixlen;
+	prefix.flags = 0;
+	if (p->aspath->nexthop->state == NEXTHOP_REACH)
+		prefix.flags |= F_RIB_ELIGIBLE;
+	if (p->prefix->active == p)
+		prefix.flags |= F_RIB_ACTIVE;
+	if (p->peer->conf.ebgp == 0)
+		prefix.flags |= F_RIB_INTERNAL;
+	if (p->aspath->nexthop->flags & NEXTHOP_ANNOUNCE)
+		prefix.flags |= F_RIB_ANNOUNCE;
+	if (imsg_compose_pid(&ibuf_se, IMSG_CTL_SHOW_RIB_PREFIX, pid,
+	    &prefix, sizeof(prefix)) == -1)
+		log_warnx("rde_dump_as: imsg_compose error");
+}
+
+void
+rde_dump_upcall(struct pt_entry *pt, void *ptr)
+{
+	struct prefix		*p;
+	pid_t			 pid;
+
+	memcpy(&pid, ptr, sizeof(pid));
+
+	LIST_FOREACH(p, &pt->prefix_h, prefix_l)
+	    rde_dump_rib(p, pid);
+}
+
+void
+rde_dump_as(struct as_filter *a, pid_t pid)
+{
+	extern struct path_table	 pathtable;
+	struct rde_aspath		*asp;
+	struct prefix			*p;
+	u_long				 i;
+
+	i = pathtable.path_hashmask;
+	do {
+		LIST_FOREACH(asp, &pathtable.path_hashtbl[i], path_l) {
+			if (!aspath_match(asp->flags.aspath, a->type, a->as))
+				continue;
+			/* match found */
+			ENSURE(!LIST_EMPTY(&asp->prefix_h));
+			rde_dump_rib(LIST_FIRST(&asp->prefix_h), pid);
+			for (p = LIST_NEXT(LIST_FIRST(&asp->prefix_h), path_l);
+			    p != NULL; p = LIST_NEXT(p, path_l))
+				rde_dump_prefix(p, pid);
+		}
+	} while (i-- != 0);
 }
 
 /*

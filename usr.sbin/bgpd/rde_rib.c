@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.35 2004/02/19 23:07:00 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.36 2004/02/26 16:16:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -77,10 +77,7 @@ static void	path_unlink(struct rde_aspath *);
 static struct rde_aspath	*path_alloc(void);
 static void	path_free(struct rde_aspath *);
 
-struct path_table {
-	struct aspath_head	*path_hashtbl;
-	u_int32_t		 path_hashmask;
-} pathtable;
+struct path_table pathtable;
 
 #define PATH_HASH(x)				\
 	&pathtable.path_hashtbl[aspath_hash((x)) & pathtable.path_hashmask]

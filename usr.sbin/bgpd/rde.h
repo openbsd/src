@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.30 2004/02/26 14:00:33 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.31 2004/02/26 16:16:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -166,6 +166,11 @@ struct nexthop {
 	u_int8_t		flags;
 #define NEXTHOP_CONNECTED	0x1
 #define NEXTHOP_ANNOUNCE	0x2
+};
+
+struct path_table {
+	struct aspath_head	*path_hashtbl;
+	u_int32_t		 path_hashmask;
 };
 
 LIST_HEAD(prefix_head, prefix);

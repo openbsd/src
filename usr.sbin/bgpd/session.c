@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.120 2004/02/25 19:48:18 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.121 2004/02/26 16:16:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1577,9 +1577,17 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 		case IMSG_CTL_KROUTE_ADDR:
 		case IMSG_CTL_SHOW_NEXTHOP:
 		case IMSG_CTL_SHOW_INTERFACE:
-		case IMSG_CTL_END:
 			if (idx != PFD_PIPE_MAIN)
 				fatalx("ctl kroute request not from parent");
+			control_imsg_relay(&imsg);
+			break;
+		case IMSG_CTL_SHOW_RIB:
+		case IMSG_CTL_SHOW_RIB_PREFIX:
+			if (idx != PFD_PIPE_ROUTE)
+				fatalx("ctl rib request not from RDE");
+			control_imsg_relay(&imsg);
+			break;
+		case IMSG_CTL_END:
 			control_imsg_relay(&imsg);
 			break;
 		case IMSG_UPDATE:
@@ -1714,6 +1722,12 @@ int
 imsg_compose_parent(int type, pid_t pid, void *data, u_int16_t datalen)
 {
 	return (imsg_compose_pid(&ibuf_main, type, pid, data, datalen));
+}
+
+int
+imsg_compose_rde(int type, pid_t pid, void *data, u_int16_t datalen)
+{
+	return (imsg_compose_pid(&ibuf_rde, type, pid, data, datalen));
 }
 
 static struct sockaddr *

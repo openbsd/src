@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.100 2004/02/26 14:00:33 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.101 2004/02/26 16:16:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -215,7 +215,10 @@ enum imsg_type {
 	IMSG_CTL_KROUTE,
 	IMSG_CTL_KROUTE_ADDR,
 	IMSG_CTL_SHOW_NEXTHOP,
-	IMSG_CTL_SHOW_INTERFACE
+	IMSG_CTL_SHOW_INTERFACE,
+	IMSG_CTL_SHOW_RIB,
+	IMSG_CTL_SHOW_RIB_AS,
+	IMSG_CTL_SHOW_RIB_PREFIX
 };
 
 struct imsg_hdr {
@@ -306,6 +309,46 @@ struct ctl_show_nexthop {
 	u_int8_t		valid;
 };
 
+#define F_RIB_ELIGIBLE	0x01
+#define F_RIB_ACTIVE	0x02
+#define F_RIB_INTERNAL	0x04
+#define F_RIB_ANNOUNCE	0x08
+
+struct ctl_show_rib {
+	time_t			lastchange;
+	u_int32_t		local_pref;
+	u_int32_t		med;
+	u_int16_t		prefix_cnt;
+	u_int16_t		active_cnt;
+	struct bgpd_addr	nexthop;
+	struct bgpd_addr	prefix;
+	u_int8_t		prefixlen;
+	u_int8_t		origin;
+	u_int8_t		flags;
+	u_int16_t		aspath_len;
+	/* plus a aspath_len bytes long aspath */
+};
+
+struct ctl_show_rib_prefix {
+	time_t			lastchange;
+	struct bgpd_addr	prefix;
+	u_int8_t		prefixlen;
+	u_int8_t		flags;
+};
+
+enum as_spec {
+	AS_NONE,
+	AS_ALL,
+	AS_SOURCE,
+	AS_TRANSIT,
+	AS_EMPTY
+};
+
+struct as_filter {
+	u_int16_t	as;
+	enum as_spec	type;
+};
+
 enum filter_actions {
 	ACTION_NONE,
 	ACTION_ALLOW,
@@ -322,13 +365,6 @@ enum from_spec {
 	FROM_ADDRESS,
 	FROM_DESCR,
 	FROM_GROUP
-};
-
-enum as_spec {
-	AS_NONE,
-	AS_ALL,
-	AS_SOURCE,
-	AS_TRANSIT
 };
 
 enum comp_ops {
@@ -366,10 +402,7 @@ struct filter_match {
 		u_int8_t		len_min;
 		u_int8_t		len_max;
 	} prefixlen;
-	struct {
-		u_int16_t		as;
-		enum as_spec		type;
-	} as;
+	struct as_filter		as;
 };
 
 TAILQ_HEAD(filter_head, filter_rule);
