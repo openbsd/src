@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.39 2003/07/23 17:42:09 tedu Exp $
+	$OpenBSD: syscalls.master,v 1.40 2003/08/02 18:37:06 deraadt Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -317,17 +317,17 @@
 190	STD		{ int sys_vfork(void); }
 191	STD		{ int linux_sys_ugetrlimit(u_int which, \
 			    struct linux_rlimit *rlp); }
-192     STD		{ linux_off_t linux_sys_mmap2(unsigned long addr, \
+192	STD		{ linux_off_t linux_sys_mmap2(unsigned long addr, \
 			   size_t len, int prot, int flags, int fd, \
 			   linux_off_t offset); }
-193     STD        	{ int linux_sys_truncate64(char *path, \
+193	STD        	{ int linux_sys_truncate64(char *path, \
 			    off_t length); }
-194	NOARGS		linux_ftruncate64 { int sys_ftruncate(int fd, off_t length); }
-195     STD        	{ int linux_sys_stat64(char *path, \
+194	STD		{ int linux_sys_ftruncate64(int fd, off_t length); }
+195	STD        	{ int linux_sys_stat64(char *path, \
 			    struct linux_stat64 *sp); }
-196     STD        	{ int linux_sys_lstat64(char *path, \
+196	STD        	{ int linux_sys_lstat64(char *path, \
 			    struct linux_stat64 *sp); }
-197     STD        	{ int linux_sys_fstat64(int fd, \
+197	STD        	{ int linux_sys_fstat64(int fd, \
 			    struct linux_stat64 *sp); }
 198	NOARGS		{ int linux_sys_lchown(void); }
 199	STD		{ uid_t linux_sys_getuid(void); }

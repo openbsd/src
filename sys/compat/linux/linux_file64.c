@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_file64.c,v 1.4 2002/12/16 16:27:41 fgsch Exp $	*/
+/*	$OpenBSD: linux_file64.c,v 1.5 2003/08/02 18:37:06 deraadt Exp $	*/
 /*	$NetBSD: linux_file64.c,v 1.2 2000/12/12 22:24:56 jdolecek Exp $	*/
 
 /*-
@@ -226,6 +226,27 @@ linux_sys_truncate64(p, v, retval)
 	LINUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	return sys_truncate(p, uap, retval);
+}
+
+/*
+ * This is needed due to padding in OpenBSD's sys_ftruncate_args
+ */
+int
+linux_sys_ftruncate64(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_ftruncate64_args /* {
+		syscallarg(int) fd;
+		syscallarg(off_t) length;
+        } */ *uap = v;
+	struct sys_ftruncate_args fta;
+
+	SCARG(&fta, fd) = SCARG(uap, fd);
+	SCARG(&fta, length) = SCARG(uap, length);
+
+	return sys_ftruncate(p, &fta, retval);
 }
 
 /*
