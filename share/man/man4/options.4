@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.118 2003/03/18 12:53:57 david Exp $
+.\"	$OpenBSD: options.4,v 1.119 2003/03/30 12:14:31 jmc Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -454,7 +454,7 @@ to allow metadata updates in FFS to happen asynchronously, increasing write
 performance significantly.
 Normally, the FFS filesystem writes metadata updates synchronously which exacts
 a performance penalty in favor of filesystem integrity.
-With soft updates, you gain the performance of asynchronous writes while
+With soft updates, the performance of asynchronous writes is gained while
 retaining the safety of synchronous metadata updates.
 .Pp
 Soft updates must be enabled on a per-filesystem basis.
@@ -730,7 +730,9 @@ This option requires
 .Em INET
 at this moment, but it should not.
 .It Cd option ND6_DEBUG
-The option sets the default value of net.inet6.icmp6.nd6_debug to 1,
+The option sets the default value of
+.Em net.inet6.icmp6.nd6_debug
+to 1,
 for debugging IPv6 neighbor discovery protocol handling.
 See
 .Xr sysctl 3
@@ -877,7 +879,7 @@ See
 .Xr altq 9
 for details on ALTQ.
 .It Cd option ALTQ_RIO
-Enables ALTQ's RIO (RED with In/Oout) module.
+Enables ALTQ's RIO (RED with In/Out) module.
 The original RIO has 2 sets of RED parameters; one for in-profile
 packets and the other for out-of-profile packets.
 At the ingress of the network, profile meters tag packets as IN or
@@ -944,7 +946,7 @@ Number of semaphore identifiers (also called semaphore handles
 and semaphore sets) available in the system.
 Default value is 10.
 The kernel allocates memory for the control structures at startup,
-so you should avoid arbitrarily large values. 
+so arbitrarily large values should be avoided. 
 .It Cd option SEMMNS=value
 Maximum number of semaphores in all sets in the system.
 Default value is 60.
@@ -1008,7 +1010,7 @@ Their default value is a machine dependent value, often calculated as
 between 5% and 10% of total available RAM.
 .It Cd option APM_NOPRINT
 This option is supported on the i386 architecture.
-When enabled kernel messages regarding the status of the automatic power
+When enabled, kernel messages regarding the status of the automatic power
 management system
 .Tn ( APM )
 are suppressed.
@@ -1022,7 +1024,7 @@ and/or
 indicates the timezone offset of hardware realtime clock device, in minutes,
 from UTC.
 It is useful when hardware realtime clock device is configured with local time,
-when you dual-boot
+when dual-booting
 .Ox
 with other operating systems on a single machine.
 For instance, if hardware realtime clock is set to Tokyo time,

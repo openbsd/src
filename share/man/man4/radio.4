@@ -1,5 +1,5 @@
 .\"	$RuOBSD: radio.4,v 1.4 2001/10/26 05:38:43 form Exp $
-.\"	$OpenBSD: radio.4,v 1.16 2003/03/06 21:05:45 jmc Exp $
+.\"	$OpenBSD: radio.4,v 1.17 2003/03/30 12:14:31 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Vladimir Popov
 .\" All rights reserved.
@@ -118,33 +118,35 @@ field is the frequency in kHz the card is tuned to.
 The
 .Va caps
 field is read-only and describes the card capabilities.
-The capabilities can have following values:
+The capabilities can have the following values:
+.Pp
 .Bl -tag -width indent -compact
 .It Dv RADIO_CAPS_DETECT_STEREO
-The device can determine is it tuned to a stereo signal.
+The device can determine if it is tuned to a stereo signal.
 .It Dv RADIO_CAPS_DETECT_SIGNAL
-The device can determine is it tuned or not.
+The device can determine if it is tuned or not.
 .It Dv RADIO_CAPS_SET_MONO
-The device capable to forcible set its output to mono.
+The device is capable of forcibly setting its output to mono.
 .It Dv RADIO_CAPS_HW_SEARCH
 The device can do hardware search.
 .It Dv RADIO_CAPS_HW_AFC
 The device has an internal hardware automatic frequency control.
 .It Dv RADIO_CAPS_REFERENCE_FREQ
-The device allow to change the reference frequency of a received signal.
+The device allows changing the reference frequency of a received signal.
 .It Dv RADIO_CAPS_LOCK_SENSITIVITY
-The device allow to change the station lock sensitivity used during search
+The device allows changing the station lock sensitivity used during search
 operation.
 .It Dv RADIO_CAPS_CARD_TYPE
 Some cards have several different incarnations.
-This allow to determine the variant of the card.
+This allows the variant of the card to be determined.
 Currently not used.
 .El
 .Pp
 The
 .Va info
-field is read-only and describes current state of the card - tuned/not tuned,
-stereo signal/mono signal.
+field is read-only and describes the current state of the card -
+tuned/not tuned, stereo signal/mono signal.
+.Pp
 .Bl -tag -width indent -compact
 .It Dv RADIO_INFO_SIGNAL
 Informs whether the device receives a valid signal or noise.
@@ -173,7 +175,7 @@ The TEA5757 is used in FM-standards in which the local oscillator frequency
 is above the radio frequency (e.g. European and American standards).
 The TEA5759 is the version in which the oscillator frequency is below
 the radio frequency (e.g. Japanese standards).
-To conform with the Japanese standards it is needed to set the flags least
+To conform with the Japanese standards, it is necessary to set the flags' least
 significant bit to 1.
 The TEA5757; TEA5759 has a 25-bit read-write shift register.
 The TEA5757 chips are used in

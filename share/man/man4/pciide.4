@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pciide.4,v 1.31 2003/03/06 11:50:59 grange Exp $
+.\"	$OpenBSD: pciide.4,v 1.32 2003/03/30 12:14:31 jmc Exp $
 .\"	$NetBSD: pciide.4,v 1.8 1999/03/16 01:19:17 garbled Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
@@ -133,7 +133,9 @@ For proper operation of UltraDMA 3
 or 5
 .Pq 100 MB/sec ,
 a 40-pin, 80-conductor cable must be used.
-On some controllers, the pciide driver can probe the chip and see if it
+On some controllers, the
+.Nm
+driver can probe the chip and see if it
 detects that an 80-conductor or 40-conductor cable was used.
 If not, it will down-grade to UltraDMA 2 mode.
 On other controllers, no such capability exists, and the driver assumes
