@@ -681,6 +681,7 @@
 ./usr/share/man/cat3/simpleq_next.0
 ./usr/share/man/cat3/simpleq_remove_head.0
 ./usr/share/man/cat3/store.0
+./usr/share/man/cat3/strtok_r.0
 ./usr/share/man/cat3/tailq_end.0
 ./usr/share/man/cat3/tailq_first.0
 ./usr/share/man/cat3/tailq_head_initializer.0
@@ -853,6 +854,7 @@
 ./usr/share/man/cat4/advansys.0
 ./usr/share/man/cat4/adw.0
 ./usr/share/man/cat4/ahc.0
+./usr/share/man/cat4/al.0
 ./usr/share/man/cat4/alpha
 ./usr/share/man/cat4/alpha/com.0
 ./usr/share/man/cat4/alpha/cy.0
@@ -1087,6 +1089,7 @@
 ./usr/share/man/cat4/scsi.0
 ./usr/share/man/cat4/scsibus.0
 ./usr/share/man/cat4/sd.0
+./usr/share/man/cat4/sf.0
 ./usr/share/man/cat4/sk.0
 ./usr/share/man/cat4/sl.0
 ./usr/share/man/cat4/sm.0
@@ -1701,4 +1704,4 @@
 ./usr/share/man/man4/alpha
 ./usr/share/man/man4/pmax
 ./usr/share/man/man4/powerpc
-./usr/share/man/cat4/al.0
+./usr/share/man/cat4/zero.0
