@@ -90,7 +90,7 @@ In the bootup file
 having the line
 .RS
 
-/etc/ldconfig -v
+/sbin/ldconfig -v
 
 .RE
 will set up the correct links for the shared binaries and rebuild
@@ -99,7 +99,7 @@ the cache.
 On the command line
 .RS
 
-# /etc/ldconfig -n /lib
+# /sbin/ldconfig -n /lib
 
 .RE
 as root after the installation of a new DLL, will properly update the
@@ -108,14 +108,14 @@ shared library symbolic links in /lib.
 .SH FILES
 .PD 0
 .TP 20
-.B /lib/ld.so
+.B /usr/libexec/ld.so
 execution time linker/loader
 .TP 20
 .B /etc/ld.so.conf
 File containing a list of colon, space, tab, newline, or comma spearated
 directories in which to search for libraries.
 .TP 20
-.B /var/run/ld.so.cache
+.B /etc/ld.so.cache
 File containing an ordered list of libraries found in the directories
 specified in
 .BR /etc/ld.so.conf .
@@ -128,10 +128,8 @@ shared libraries
 .BR ld.so (8).
 .SH BUGS
 .LP
-.BR ldconfig 's
-functionality, in conjunction with
-.BR ld.so ,
-is only available for executables compiled using libc version 4.4.3 or greater.
+.BR ldconfig ,
+is a temporary solution that lacks much. It will eventually be replaced.
 .PP
 .BR ldconfig ,
 being a user process, must be run manually and has no means of dynamically

@@ -11,6 +11,7 @@
  *        -X: don't update the library links
  *        -l: library mode, manually link libraries
  *        -p: print the current library cache
+ *        -P: add path before open. used by install scripts.
  *        dir ...: directories to process
  *        lib ...: libraries to link
  *
@@ -57,6 +58,8 @@ int verbose = 0;		/* verbose mode */
 int libmode = 0;		/* library mode */
 int nocache = 0;		/* don't build cache */
 int nolinks = 0;		/* don't update links */
+int Pswitch = 0;
+char *Ppath = "";
 
 char *cachefile = LDSO_CACHE;	/* default cache file */
 void cache_print(void);
@@ -136,7 +139,7 @@ char *is_shlib(char *dir, char *name, int *type)
 	    cp = cp + strlen(cp);
 
 	/* construct the full path name */
-	sprintf(buff, "%s%s%s", dir, (*dir && strcmp(dir, "/")) ?
+	sprintf(buff, "%s%s%s%s", Ppath, dir, (*dir && strcmp(dir, "/")) ?
 		"/" : "", name);
 
 	/* first, make sure it's a regular file */
@@ -193,7 +196,7 @@ void link_shlib(char *dir, char *file, char *so)
     struct stat linkstat;
 
     /* construct the full path names */
-    sprintf(libname, "%s/%s", dir, file);
+    sprintf(libname, "%s%s/%s", Ppath, dir, file);
     sprintf(linkname, "%s/%s", dir, so);
 
     /* see if a link already exists */
@@ -265,15 +268,19 @@ void scan_dir(char *name)
     char *so;
     struct lib *lp, *libs = NULL;
     int libtype;
+    char *op = malloc(strlen(Ppath) + strlen(name));
 
     /* let 'em know what's going on */
     if (verbose)
 	printf("%s:\n", name);
 
     /* if we can't open it, we can't do anything */
-    if ((dir = opendir(name)) == NULL)
+    strcpy(op, Ppath);
+    strcat(op, name);
+    if ((dir = opendir(op)) == NULL)
     {
 	warn("can't open %s (%s), skipping", name, strerror(errno));
+	free(op);
 	return;
     }
 
@@ -322,7 +329,7 @@ void scan_dir(char *name)
     /* now we have all the latest libs, update the links */
     for (lp = libs; lp; lp = lp->next)
     {
-	link_shlib(name, lp->name, lp->so);
+	link_shlib(op, lp->name, lp->so);
 	if (strcmp(lp->name, lp->so) != 0)
 	    cache_rmlib(name, lp->so);
     }
@@ -336,6 +343,7 @@ void scan_dir(char *name)
 	free(libs);
 	libs = lp;
     }
+    free(op);
 
     return;
 }
@@ -346,8 +354,11 @@ char *get_extpath(void)
     char *cp = NULL;
     FILE *file;
     struct stat stat;
+    char *op = malloc(strlen(Ppath) + strlen(LDSO_CONF));
 
-    if ((file = fopen(LDSO_CONF, "r")) != NULL)
+    strcpy(op, Ppath);
+    strcat(op, LDSO_CONF);
+    if ((file = fopen(op, "r")) != NULL)
     {
 	fstat(fileno(file), &stat);
 	cp = xmalloc(stat.st_size + 1);
@@ -355,6 +366,7 @@ char *get_extpath(void)
 	fclose(file);
 	cp[stat.st_size] = '\0';
     }
+    free(op);
 
     return cp;
 }
@@ -371,7 +383,7 @@ int main(int argc, char **argv)
     prog = argv[0];
     opterr = 0;
 
-    while ((c = getopt(argc, argv, "DvnNXlpf:")) != EOF)
+    while ((c = getopt(argc, argv, "DvnNXlpf:P:")) != EOF)
 	switch (c)
 	{
 	case 'D':
@@ -398,6 +410,10 @@ int main(int argc, char **argv)
 	    break;
 	case 'p':
 	    printcache = 1;	/* print cache */
+	    break;
+	case 'P':
+	    Pswitch = 1;	/* add path before names. INSTALL */
+	    Ppath = optarg;
 	    break;
 	default:
 	    fprintf(stderr, "usage: %s [-DvnNX] dir ...\n", prog);
