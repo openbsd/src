@@ -12,6 +12,6 @@ pass in proto tcp from any to any port 25 \
 pass in proto tcp from any to any port 80 \
 	keep state (source-track rule, max-src-nodes 1000, max-src-states 3)
 pass in proto tcp from any to any port 123 \
-	keep state (source-track global, max-src-nodes 1000)
+	keep state (source-track, max-src-nodes 1000)
 pass in proto tcp from any to any port 321 \
 	keep state (source-track, max-src-states 3)
