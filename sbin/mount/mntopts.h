@@ -1,4 +1,4 @@
-/*	$OpenBSD: mntopts.h,v 1.8 2002/02/16 21:27:35 millert Exp $	*/
+/*	$OpenBSD: mntopts.h,v 1.9 2002/11/18 20:22:45 millert Exp $	*/
 /*	$NetBSD: mntopts.h,v 1.3 1995/03/18 14:56:59 cgd Exp $	*/
 
 /*-
@@ -65,7 +65,7 @@ struct mntopt {
 #define MOPT_RO			{ "ro",		0, MNT_RDONLY }
 #define MOPT_RW			{ "rw",		1, MNT_RDONLY }
 
-/* This is parse by mount(8), but is ignored by specific mount_*(8)s. */
+/* This is parsed by mount(8), but is ignored by specific mount_*(8)s. */
 #define MOPT_AUTO		{ "auto",	0, 0 }
 
 #define MOPT_FSTAB_COMPAT						\

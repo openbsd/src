@@ -1,4 +1,4 @@
-/*	$OpenBSD: getmntopts.c,v 1.2 1996/06/23 14:31:10 deraadt Exp $	*/
+/*	$OpenBSD: getmntopts.c,v 1.3 2002/11/18 20:22:45 millert Exp $	*/
 /*	$NetBSD: getmntopts.c,v 1.3 1995/03/18 14:56:58 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getmntopts.c	8.1 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: getmntopts.c,v 1.2 1996/06/23 14:31:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: getmntopts.c,v 1.3 2002/11/18 20:22:45 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,7 @@ getmntopts(options, m0, flagp)
 		 * ignore the assignment as it's handled elsewhere
 		 */
 		p = strchr(opt, '=');
-		if (p)
+		if (p != NULL)
 			 *p = '\0';
 
 		/* Scan option table. */
