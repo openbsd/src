@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvmeppc,v 1.5 2002/03/23 14:14:25 deraadt Exp $
+#	$OpenBSD: files.mvmeppc,v 1.6 2002/06/08 16:02:13 miod Exp $
 
 #
 # powerpc-specific configuration info
@@ -9,10 +9,7 @@ maxusers 2 8 64
 
 file	dev/cons.c
 file	dev/cninit.c
-file    arch/mvmeppc/ddb/db_memrw.c		ddb
-file    arch/mvmeppc/ddb/db_disasm.c		ddb
-file    arch/mvmeppc/ddb/db_interface.c		ddb
-file    arch/mvmeppc/ddb/db_trace.c		ddb
+file	arch/mvmeppc/mvmeppc/db_interface.c
 
 file    arch/mvmeppc/dev/bugio.c
 file	arch/mvmeppc/dev/clock.c

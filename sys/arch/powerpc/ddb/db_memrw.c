@@ -1,5 +1,5 @@
-/*	$OpenBSD: db_memrw.c,v 1.3 2002/03/14 03:15:58 millert Exp $	*/
-/*	$NetBSD: db_memrw.c,v 1.1 1996/02/22 23:23:35 gwr Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.4 2001/05/18 20:38:27 matt Exp $	*/
+/*	$OpenBSD: db_memrw.c,v 1.1 2002/06/08 16:02:14 miod Exp $	*/
 
 /* 
  * Mach Operating System
@@ -40,10 +40,12 @@
 
 #include <sys/param.h>
 #include <sys/proc.h>
+#include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <machine/db_machdep.h>
+#include <machine/pcb.h>
 
 #include <ddb/db_access.h>
 
@@ -52,26 +54,29 @@
  */
 void
 db_read_bytes(addr, size, data)
-	vm_offset_t	addr;
+	vaddr_t		addr;
 	register size_t	size;
 	register char	*data;
 {
 	register char	*src = (char *)addr;
+	faultbuf env;
+	faultbuf *old_onfault = curpcb->pcb_onfault;
+	if (setfault(env)) {
+		curpcb->pcb_onfault = old_onfault;
+		return;
+	}
 
 	if (size == 4) {
 		*((int *)data) = *((int *)src);
-		return;
-	}
-
-	if (size == 2) {
+	} else if (size == 2) {
 		*((short *)data) = *((short *)src);
-		return;
+	} else {
+		while (size > 0) {
+			--size;
+			*data++ = *src++;
+		}
 	}
-
-	while (size > 0) {
-		--size;
-		*data++ = *src++;
-	}
+	curpcb->pcb_onfault = old_onfault;
 }
 
 /*
@@ -79,25 +84,30 @@ db_read_bytes(addr, size, data)
  */
 void
 db_write_bytes(addr, size, data)
-	vm_offset_t	addr;
+	vaddr_t		addr;
 	register size_t	size;
 	register char	*data;
 {
 	register char	*dst = (char *)addr;
+	faultbuf env;
+	faultbuf *old_onfault = curpcb->pcb_onfault;
+
+	if (setfault(env)) {
+		curpcb->pcb_onfault = old_onfault;
+		return;
+	}
 
 	if (size == 4) {
 		*((int *)dst) = *((int *)data);
-		return;
-	}
-
-	if (size == 2) {
+	} else if (size == 2) {
 		*((short *)dst) = *((short *)data);
-		return;
+	} else  {
+		while (size > 0) {
+			--size;
+			*dst++ = *data++;
+		}
 	}
-
-	while (size > 0) {
-		--size;
-		*dst++ = *data++;
-	}
+	syncicache((void *)addr, size);
+	curpcb->pcb_onfault = old_onfault;
 }
 
