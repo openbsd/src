@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.16 1997/11/23 03:19:18 mickey Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.17 1999/11/17 04:31:22 d Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -471,6 +471,7 @@ dk_mountroot()
 		break;
 #endif
 	default:
+#ifdef FFS
 		{ 
 		extern int ffs_mountroot __P((void));
 
@@ -478,6 +479,10 @@ dk_mountroot()
 		    dl.d_partitions[part].p_fstype);
 		mountrootfn = ffs_mountroot;
 		}
+#else
+		panic("disk 0x%x/0x%x filesystem type %d not known", 
+		    rootdev, rrootdev, dl.d_partitions[part].p_fstype);
+#endif
 	}
 	return (*mountrootfn)();
 }
