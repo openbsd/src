@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.13 1996/10/14 10:22:22 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.14 1996/11/28 23:28:11 niklas Exp 
  */
 /*	$NetBSD: pcidevs,v 1.20 1996/10/19 13:01:49 jonathan Exp $	*/
 
@@ -531,6 +531,11 @@
 #define	PCI_PRODUCT_INTEL_82437	0x122d		/* 82437 Triton */
 #define	PCI_PRODUCT_INTEL_82471	0x122e		/* 82471 Triton */
 #define	PCI_PRODUCT_INTEL_82438	0x1230		/* 82438 */
+#define	PCI_PRODUCT_INTEL_82440FX	0x1237		/* 82440FX Natoma, PCI and memory controller */
+#define	PCI_PRODUCT_INTEL_82371SBa	0x7000		/* 82371SB PCI-ISA bridge */
+#define	PCI_PRODUCT_INTEL_82371SBb	0x7010		/* 82371SB IDE interface */
+#define	PCI_PRODUCT_INTEL_82450KX	0x84c4		/* 82450KX Orion, PCI memory controller */
+#define	PCI_PRODUCT_INTEL_82454GX	0x84c5		/* 82454GX Orion, host to PCI bridge */
 
 /* I. T. T. products */
 #define	PCI_PRODUCT_ITT_AGX016	0x0001		/* AGX016 */

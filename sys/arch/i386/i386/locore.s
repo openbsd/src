@@ -445,6 +445,9 @@ try586:	/* Use the `cpuid' instruction. */
 	cmpl	$5,%eax
 	jb	is486			# less than a Pentium
 	movl	$CPU_586,RELOC(_cpu)
+	je	3f			# Pentium
+	movl	$CPU_686,RELOC(_cpu)	# else Pentium Pro
+3:
 
 	xorl %eax,%eax
 	xorl %edx,%edx

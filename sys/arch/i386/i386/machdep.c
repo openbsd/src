@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.28 1996/11/28 23:37:36 niklas Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.29 1996/12/05 18:08:06 dm Exp $	*/
 /*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
 
 /*-
@@ -408,6 +408,7 @@ struct cpu_nameclass i386_cpus[] = {
 	{ "i486DX",	CPUCLASS_486 },	/* CPU_486   */
 	{ "Pentium",	CPUCLASS_586 },	/* CPU_586   */
 	{ "Cx486DLC",	CPUCLASS_486 },	/* CPU_486DLC (Cyrix) */
+	{ "Pentium Pro",CPUCLASS_686 },	/* CPU_686   */
 };
 
 void
@@ -437,6 +438,9 @@ identifycpu()
 	case CPUCLASS_586:
 		strcat(cpu_model, "586");
 		break;
+	case CPUCLASS_686:
+		strcat(cpu_model, "686");
+		break;
 	default:
 		strcat(cpu_model, "unknown");	/* will panic below... */
 		break;
@@ -444,7 +448,7 @@ identifycpu()
 	strcat(cpu_model, "-class CPU)");
 	printf("%s", cpu_model);
 #if defined(I586_CPU)
-	if (cpu_class == CPUCLASS_586) {
+	if (cpu_class >= CPUCLASS_586) {
 		calibrate_cyclecounter();
 		printf(" %d MHz", pentium_mhz);
 	}
@@ -460,6 +464,7 @@ identifycpu()
 #error No CPU classes configured.
 #endif
 #ifndef I586_CPU
+	case CPUCLASS_686:
 	case CPUCLASS_586:
 		printf("NOTICE: this kernel does not support Pentium CPU class\n");
 #ifdef I486_CPU

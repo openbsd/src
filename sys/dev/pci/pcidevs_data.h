@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.13 1996/10/14 10:22:22 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.14 1996/11/28 23:28:11 niklas Exp 
  */
 /*	$NetBSD: pcidevs,v 1.20 1996/10/19 13:01:49 jonathan Exp $	*/
 
@@ -463,6 +463,36 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82438",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440FX,
+	    0,
+	    "Intel",
+	    "82440FX Natoma, PCI and memory controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371SBa,
+	    0,
+	    "Intel",
+	    "82371SB PCI-ISA bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371SBb,
+	    0,
+	    "Intel",
+	    "82371SB IDE interface",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82450KX,
+	    0,
+	    "Intel",
+	    "82450KX Orion, PCI memory controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82454GX,
+	    0,
+	    "Intel",
+	    "82454GX Orion, host to PCI bridge",
 	},
 	{
 	    PCI_VENDOR_ITT, PCI_PRODUCT_ITT_AGX016,

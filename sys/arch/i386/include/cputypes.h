@@ -34,6 +34,7 @@
 #define	CPUCLASS_386	0
 #define	CPUCLASS_486	1
 #define	CPUCLASS_586	2
+#define	CPUCLASS_686	3
 
 /*
  *	Kinds of Processor
@@ -45,3 +46,4 @@
 #define	CPU_486		3	/* Intel 80486DX */
 #define	CPU_586		4	/* Intel P.....m (I hate lawyers; it's TM) */
 #define	CPU_486DLC	5	/* Cyrix 486DLC */
+#define	CPU_686		6	/* Intel P.....m Pro */
