@@ -86,7 +86,7 @@ __panic(type, errstr, filenm, lineno, fmt)
 	int _x; \
 	_x = (x); \
 	if (!(_x rhs)) { \
-	    if (_x == -1) \
+	    if (_x > 0) \
 		__panic("assert failed", strerror(_x), __FILE__, __LINE__,  \
 		    "%s %s", #x, #rhs); \
 	    else \
