@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.76 2002/05/20 06:13:00 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.77 2002/07/17 22:08:07 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -716,9 +716,9 @@ pmap_enter(pmap, va, pa, prot, flags)
 		    ("pmap_enter: remapping 0x%x -> 0x%x\n", pte, pa));
 
 		if (pte & PTE_PROT(TLB_EXECUTE))
-			ficache(pmap->pm_space, va, NBPG);
+			ficache(pmap->pm_space, va, PAGE_SIZE);
 		pitlb(pmap->pm_space, va);
-		fdcache(pmap->pm_space, va, NBPG);
+		fdcache(pmap->pm_space, va, PAGE_SIZE);
 		pdtlb(pmap->pm_space, va);
 
 		if (wired && !(pte & PTE_PROT(TLB_WIRED)) == 0)
@@ -1235,9 +1235,9 @@ pmap_kremove(va, size)
 		}
 
 		if (pte & PTE_PROT(TLB_EXECUTE))
-			ficache(HPPA_SID_KERNEL, va, NBPG);
+			ficache(HPPA_SID_KERNEL, va, PAGE_SIZE);
 		pitlb(HPPA_SID_KERNEL, va);
-		fdcache(HPPA_SID_KERNEL, va, NBPG);
+		fdcache(HPPA_SID_KERNEL, va, PAGE_SIZE);
 		pdtlb(HPPA_SID_KERNEL, va);
 
 		pmap_pte_set(pde, va, 0);
