@@ -1,0 +1,5 @@
+altq on lo0 tbrsize 1824 bandwidth 10Mb cbq queue { bloody germans }
+altq on tun0 tbrsize 1824 bandwidth 10Mb cbq queue { bloody toads }
+queue bloody cbq(default) bandwidth 50%
+queue germans bandwidth 50%
+queue toads bandwidth 50%
