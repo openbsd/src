@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.57 2005/01/27 12:58:22 otto Exp $	*/
+/*	$OpenBSD: main.c,v 1.58 2005/02/07 08:37:28 otto Exp $	*/
 
 #ifndef SMALL
 static const char copyright[] =
@@ -36,7 +36,7 @@ static const char license[] =
 #endif /* SMALL */
 
 #ifndef SMALL
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.57 2005/01/27 12:58:22 otto Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.58 2005/02/07 08:37:28 otto Exp $";
 #endif
 
 #include <sys/param.h>
@@ -383,7 +383,7 @@ main(int argc, char *argv[])
 
 		if (cat)
 			strlcpy(outfile, "/dev/stdout", sizeof outfile);
-		else if (!oflag && !testmode) {
+		else if (!oflag) {
 			if (decomp) {
 				if (set_outfile(infile, outfile,
 				    sizeof outfile) == NULL) {
