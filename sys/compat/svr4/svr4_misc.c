@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_misc.c,v 1.25 1999/10/07 17:23:53 brad Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.26 2000/06/24 21:00:30 fgsch Exp $	 */
 /*	$NetBSD: svr4_misc.c,v 1.42 1996/12/06 03:22:34 christos Exp $	 */
 
 /*
@@ -324,6 +324,126 @@ again:
 
 	/* if we squished out the whole block, try again */
 	if (outp == SCARG(uap, buf))
+		goto again;
+	fp->f_offset = off;	/* update the vnode offset */
+
+eof:
+	*retval = SCARG(uap, nbytes) - resid;
+out:
+	VOP_UNLOCK(vp, 0, p);
+	if (cookiebuf)
+		free(cookiebuf, M_TEMP);
+	free(buf, M_TEMP);
+	return error;
+}
+
+int
+svr4_sys_getdents64(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct svr4_sys_getdents64_args *uap = v;
+	register struct dirent *bdp;
+	struct vnode *vp;
+	caddr_t inp, buf;	/* BSD-format */
+	int len, reclen;	/* BSD-format */
+	caddr_t outp;		/* SVR4-format */
+	int resid, svr4_reclen;	/* SVR4-format */
+	struct file *fp;
+	struct uio auio;
+	struct iovec aiov;
+	struct svr4_dirent64 idb;
+	off_t off;		/* true file offset */
+	int buflen, error, eofflag;
+	u_long *cookiebuf = NULL, *cookie;
+	int ncookies = 0;
+
+	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+		return (error);
+
+	if ((fp->f_flag & FREAD) == 0)
+		return (EBADF);
+
+	vp = (struct vnode *)fp->f_data;
+
+	if (vp->v_type != VDIR)	/* XXX  vnode readdir op should do this */
+		return (EINVAL);
+
+	buflen = min(MAXBSIZE, SCARG(uap, nbytes));
+	buf = malloc(buflen, M_TEMP, M_WAITOK);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+	off = fp->f_offset;
+again:
+	aiov.iov_base = buf;
+	aiov.iov_len = buflen;
+	auio.uio_iov = &aiov;
+	auio.uio_iovcnt = 1;
+	auio.uio_rw = UIO_READ;
+	auio.uio_segflg = UIO_SYSSPACE;
+	auio.uio_procp = p;
+	auio.uio_resid = buflen;
+	auio.uio_offset = off;
+	/*
+         * First we read into the malloc'ed buffer, then
+         * we massage it into user space, one record at a time.
+         */
+	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, &ncookies,
+	    &cookiebuf);
+	if (error)
+		goto out;
+
+	if (!error && !cookiebuf && !eofflag) {
+		error = EPERM;
+		goto out;
+	}
+
+	inp = buf;
+	outp = (char *) SCARG(uap, dp);
+	resid = SCARG(uap, nbytes);
+	if ((len = buflen - auio.uio_resid) == 0)
+		goto eof;
+
+	for (cookie = cookiebuf; len > 0; len -= reclen) {
+		bdp = (struct dirent *)inp;
+		reclen = bdp->d_reclen;
+		if (reclen & 3)
+			panic("svr4_getdents64: bad reclen");
+		if (bdp->d_fileno == 0) {
+			inp += reclen;	/* it is a hole; squish it out */
+			off = *cookie++;
+			continue;
+		}
+		svr4_reclen = SVR4_RECLEN(&idb, bdp->d_namlen);
+		if (reclen > len || resid < svr4_reclen) {
+			/* entry too big for buffer, so just stop */
+			outp++;
+			break;
+		}
+		off = *cookie++;	/* each entry points to the next */
+
+		/*
+		 * Massage in place to make a SVR4-shaped dirent (otherwise
+		 * we have to worry about touching user memory outside of
+		 * the copyout() call).
+		 */
+		idb.d_ino = (svr4_ino64_t)bdp->d_fileno;
+		idb.d_off = (svr4_off64_t)off;
+		idb.d_reclen = (u_short)svr4_reclen;
+		strcpy(idb.d_name, bdp->d_name);
+		if ((error = copyout((caddr_t)&idb, outp, svr4_reclen)))
+			goto out;
+
+		/* advance past this real entry */
+		inp += reclen;
+
+		/* advance output past SVR4-shaped entry */
+		outp += svr4_reclen;
+		resid -= svr4_reclen;
+	}
+
+	/* if we squished out the whole block, try again */
+	if (outp == (char *) SCARG(uap, dp))
 		goto again;
 	fp->f_offset = off;	/* update the vnode offset */
 

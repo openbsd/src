@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.27 2000/06/15 05:28:30 brad Exp $
+	$OpenBSD: syscalls.master,v 1.28 2000/06/24 21:00:30 fgsch Exp $
 ;	$NetBSD: syscalls.master,v 1.17 1996/02/10 17:12:51 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -322,10 +322,14 @@
 210	UNIMPL		signotifywait
 211	UNIMPL		lwp_sigredirect
 212	UNIMPL		lwp_alarm
-213	UNIMPL		getdents64
+213	STD		{ int svr4_sys_getdents64(int fd, \
+			    struct svr4_dirent64 *dp, \
+			    int nbytes); }
 214	UNIMPL		mmap64
-215	UNIMPL		stat64
-216	UNIMPL		lstat64
+215	STD		{ int svr4_sys_stat64(const char *path, \
+			    struct svr4_stat64 *sb); }
+216	STD		{ int svr4_sys_lstat64(const char *path, \
+			    struct svr4_stat64 *sb); }
 217	STD		{ int svr4_sys_fstat64(int fd, \
 			    struct svr4_stat64 *sb); }
 218	UNIMPL		statvfs64

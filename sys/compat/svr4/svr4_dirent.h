@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_dirent.h,v 1.2 1996/08/02 20:35:35 niklas Exp $	 */
+/*	$OpenBSD: svr4_dirent.h,v 1.3 2000/06/24 21:00:29 fgsch Exp $	 */
 /*	$NetBSD: svr4_dirent.h,v 1.4 1995/10/07 06:27:37 mycroft Exp $	 */
 
 /*
@@ -36,6 +36,13 @@
 struct svr4_dirent {
 	svr4_ino_t	d_ino;
 	svr4_off_t	d_off;
+	u_short		d_reclen;
+	char		d_name[SVR4_MAXNAMLEN + 1];
+};
+
+struct svr4_dirent64 {
+	svr4_ino64_t	d_ino;
+	svr4_off64_t	d_off;
 	u_short		d_reclen;
 	char		d_name[SVR4_MAXNAMLEN + 1];
 };
