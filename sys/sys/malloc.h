@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.35 2001/02/20 23:35:36 csapuntz Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.36 2001/02/21 08:03:52 csapuntz Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -407,6 +407,7 @@ struct kmembuckets {
 	} else { \
 		(space) = (cast)kbp->kb_next; \
 		kbp->kb_next = *(caddr_t *)(space); \
+		if (flags & M_ZERO) bzero((space),(size)); \
 	} \
 	splx(s); \
 } while (0)
