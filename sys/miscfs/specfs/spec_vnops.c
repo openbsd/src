@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.7 1996/12/05 16:25:08 kstailey Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.8 1996/12/22 16:05:24 kstailey Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -707,19 +707,20 @@ int
 spec_advlock(v)
 	void *v;
 {
-#ifdef FFS
-	extern int ufs_advlock __P((void *v));
+	struct vop_advlock_args /* {
+		struct vnodeop_desc *a_desc;
+		struct vnode *a_vp;
+		caddr_t  a_id;
+		int  a_op;
+		struct flock *a_fl;
+		int  a_flags;
+	} */ *ap = v;
 
-	return (ufs_advlock(v));
-#else
-#ifdef NFSCLIENT
-	extern int nfs_advlock __P((void *v));
+	/* XXX Should call lf_advlock() from here, but no snode. */
+	/* Instead call through non-special file on same filesystem. */
 
-	return (nfs_advlock(v));
-#else
-	return (EOPNOTSUPP);
-#endif /* NFSCLIENT */
-#endif /* FFS */
+	return (VCALL(ap->a_vp->v_mount->mnt_vnodelist.lh_first,
+		      VOFFSET(vop_advlock), ap));
 }
 
 /*
