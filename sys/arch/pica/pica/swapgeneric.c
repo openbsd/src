@@ -64,11 +64,11 @@ int	dmmin, dmmax, dmtext;
 
 #include "sd.h"
 #if NSD > 0
-extern	struct cfdriver sdcd;
+extern	struct cfdriver sd_cd;
 #endif
 #include "fdc.h"
 #if NFDC > 0
-extern	struct cfdriver fdcd;
+extern	struct cfdriver fd_cd;
 #endif
 
 struct	genericconf {
@@ -77,10 +77,10 @@ struct	genericconf {
 	dev_t gc_major;
 } genericconf[] = {
 #if NSD > 0
-	{ &sdcd,  "sd",  0 },
+	{ &sd_cd,  "sd",  0 },
 #endif
 #if NFDC > 0
-	{ &fdcd,  "fd",  7 },
+	{ &fd_cd,  "fd",  7 },
 #endif
 	{ 0 }
 };
