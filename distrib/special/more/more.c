@@ -59,6 +59,7 @@ static const char sccsid[] = "@(#)more.c	5.28 (Berkeley) 3/1/93";
 #include <curses.h>
 #include <errno.h>
 #include <locale.h>
+#include <regex.h>
 #include <setjmp.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -1359,20 +1360,31 @@ search (char *buf, FILE *file, int n)
     register long line3 = startline;
     register int lncount;
     int saveln, rv;
-    char *s;
+    char ebuf[BUFSIZ];
+    static regex_t reg;
+    static int initialized;
 
     context.line = saveln = Currline;
     context.chrctr = startline;
     lncount = 0;
-    if ((s = re_comp (buf)) != 0)
-	error (s);
+    if (buf != NULL && *buf != '\0') {
+	if ((rv = regcomp(&reg, buf, REG_NOSUB)) != 0) {
+	    initialized = 0;
+	    regerror(rv, &reg, ebuf, sizeof(ebuf));
+	    regfree(&reg);
+	    error(ebuf);
+	}
+	initialized = 1;
+    } else if (!initialized) {
+	error("No previous regular expression");
+    }
     while (!feof (file)) {
 	line3 = line2;
 	line2 = line1;
 	line1 = Ftell (file);
 	rdline (file);
 	lncount++;
-	if ((rv = re_exec (Line)) == 1) {
+	if ((rv = regexec(&reg, Line, 0, NULL, 0)) == 0) {
 		if (--n == 0) {
 		    if (lncount > 3 || (lncount > 1 && no_intty))
 		    {
@@ -1406,8 +1418,10 @@ search (char *buf, FILE *file, int n)
 		    }
 		    break;
 		}
-	} else if (rv == -1)
-	    error ("Regular expression botch");
+	} else if (rv != REG_NOMATCH) {
+	    regerror(rv, &reg, ebuf, sizeof(ebuf));
+	    error(ebuf);
+	}
     }
     if (feof (file)) {
 	if (!no_intty) {
