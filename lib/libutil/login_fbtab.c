@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_fbtab.c,v 1.11 2002/06/25 17:42:29 millert Exp $	*/
+/*	$OpenBSD: login_fbtab.c,v 1.12 2004/09/18 19:22:42 deraadt Exp $	*/
 
 /************************************************************************
 * Copyright 1995 by Wietse Venema.  All rights reserved.  Some individual
@@ -84,7 +84,7 @@ void
 login_fbtab(const char *tty, uid_t uid, gid_t gid)
 {
 	FILE	*fp;
-	char	*buf, *toklast, *tbuf, *devname, *cp;
+	char	*buf, *toklast, *tbuf, *devnam, *cp;
 	int	prot;
 	size_t	len;
 
@@ -105,9 +105,9 @@ login_fbtab(const char *tty, uid_t uid, gid_t gid)
 		if ((cp = strchr(buf, '#')))
 			*cp = '\0';	/* strip comment */
 		if (buf[0] == '\0' ||
-		    (cp = devname = strtok_r(buf, WSPACE, &toklast)) == NULL)
+		    (cp = devnam = strtok_r(buf, WSPACE, &toklast)) == NULL)
 			continue;	/* empty or comment */
-		if (strncmp(devname, _PATH_DEV, sizeof(_PATH_DEV) - 1) != 0 ||
+		if (strncmp(devnam, _PATH_DEV, sizeof(_PATH_DEV) - 1) != 0 ||
 		    (cp = strtok_r(NULL, WSPACE, &toklast)) == NULL ||
 		    *cp != '0' ||
 		    sscanf(cp, "%o", &prot) == 0 ||
@@ -118,7 +118,7 @@ login_fbtab(const char *tty, uid_t uid, gid_t gid)
 			    cp ? cp : "(null)");
 			continue;
 		}
-		if (strcmp(devname + sizeof(_PATH_DEV) - 1, tty) == 0) {
+		if (strcmp(devnam + sizeof(_PATH_DEV) - 1, tty) == 0) {
 			for (cp = strtok_r(cp, ":", &toklast); cp != NULL;
 			    cp = strtok_r(NULL, ":", &toklast))
 				login_protect(cp, prot, uid, gid);
