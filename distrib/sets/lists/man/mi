@@ -1680,6 +1680,7 @@
 ./usr/share/man/cat4/yds.0
 ./usr/share/man/cat4/ym.0
 ./usr/share/man/cat4/zaurus
+./usr/share/man/cat4/zaurus/apm.0
 ./usr/share/man/cat4/zaurus/autoconf.0
 ./usr/share/man/cat4/zaurus/intro.0
 ./usr/share/man/cat4/zaurus/kmem.0
@@ -2336,6 +2337,7 @@
 ./usr/share/man/cat8/ypxfr_2perday.0
 ./usr/share/man/cat8/zaurus
 ./usr/share/man/cat8/zaurus/MAKEDEV.0
+./usr/share/man/cat8/zaurus/apm.0
 ./usr/share/man/cat8/zaurus/apmd.0
 ./usr/share/man/cat8/zaurus/fdisk.0
 ./usr/share/man/cat8/zaurus/hotplugd.0
@@ -2343,6 +2345,7 @@
 ./usr/share/man/cat8/zaurus/wsconscfg.0
 ./usr/share/man/cat8/zaurus/wsconsctl.0
 ./usr/share/man/cat8/zaurus/wsfontload.0
+./usr/share/man/cat8/zaurus/zzz.0
 ./usr/share/man/cat8/zdump.0
 ./usr/share/man/cat8/zic.0
 ./usr/share/man/cat9
