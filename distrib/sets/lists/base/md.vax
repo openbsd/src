@@ -1127,7 +1127,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/kcore.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/kernel.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/kgdb.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/sys/kgdb.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/kthread.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/ktrace.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/lkm.ph
@@ -1296,6 +1295,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/ka630.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/ka650.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/ka670.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/vax/ka680.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/ka750.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/ka820.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/limits.ph
