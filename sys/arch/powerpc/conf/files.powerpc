@@ -163,7 +163,7 @@ file arch/powerpc/mac/if_bm.c			bm
 
 device gm: ether, ifnet, ifmedia, mii
 attach gm at pci
-file arch/powerpc/mac/if_gm.c			gm
+file arch/powerpc/mac/if_gm.c			gm needs-flag
 
 device macintr {}
 attach macintr at obio

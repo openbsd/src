@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERICMAC,v 1.7 2000/03/25 15:26:26 rahnds Exp $
+#	$OpenBSD: GENERICMAC,v 1.8 2000/03/31 04:44:39 rahnds Exp $
 #
 # PPC GENERIC config file
 #
@@ -29,6 +29,7 @@ cpu*		at mainbus0
 
 ofroot*		at mainbus0
 mpcpcibr*	at mainbus0	# MPC106 PCI Bridge.
+pchb*		at pci?		# host bridge identifiers
 #isabr*		at pci?		# ISA dev bridge.
 #isabr*		at mainbus0	# ISA dev bridge.
 
