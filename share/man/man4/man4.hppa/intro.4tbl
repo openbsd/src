@@ -1,0 +1,204 @@
+.\"
+.\" Copyright (c) 2001 Paul Weissmann
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by Jonathan Stone.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"
+.Dd March 11, 2001
+.Dt INTRO 4 hppa
+.Os
+.Sh NAME
+.Nm intro
+.Nd introduction to special files and hardware support
+.Sh DESCRIPTION
+This section describes the special files, related driver functions,
+and networking support
+available in the system.
+In this part of the manual, the
+.Tn SYNOPSIS
+section of
+each configurable device gives a sample specification
+for use in constructing a system description for the
+.Xr config 8
+program.
+The
+.Tn DIAGNOSTICS
+section lists messages which may appear on the console
+and/or in the system error log
+.Pa /var/log/messages
+due to errors in device operation;
+see
+.Xr syslogd 8
+for more information.
+.Pp
+This section contains both devices
+which may be configured into the system
+and network related information.
+The networking support is introduced in
+.Xr netintro 4 .
+.Sh DEVICE SUPPORT
+This section describes the hardware supported on the HP-PARISC(HPPA)
+platform.
+Software support for these devices comes in two forms.  A hardware
+device may be supported with a character or block
+.Em device driver ,
+or it may be used within the networking subsystem and have a
+.Em network interface driver .
+Character and block
+devices are accessed through files in the file
+system of a special type; see
+.Xr mknod 8 .
+Network interfaces are indirectly accessed through the interprocess
+communication facilities provided by the system; see
+.Xr socket 2 .
+.Pp
+A hardware device is identified to the system at configuration time
+and the appropriate device or network interface driver is then compiled
+into the system.  When the resultant system is booted, the
+autoconfiguration facilities in the system probe for the device
+and, if found, enable the software support for it.
+If a device does not respond at autoconfiguration
+time it is not accessible at any time afterwards.
+To enable a device which did not autoconfigure,
+the system must be rebooted.
+.Pp
+The autoconfiguration system is described in
+.Xr autoconf 4 .
+A list of the supported devices is given below.
+.Sh SEE ALSO
+.Xr autoconf 4 ,
+.Xr config 8
+.Sh SUPPORTED SYSTEMS
+The following HPPA system architectures and models are supported:
+(bold means "known to be working")
+.Tn HP9000/700
+workstations based on HPPA-processors:
+.in +\n(dIu
+.TS
+tab (:) ;
+l l l
+_ _ _
+l l l .
+Model:Clock:CPU
+705:35MHz:PA7000
+710:50MHz:PA7000
+720:50MHz:PA7000
+730:66MHz:PA7100
+750:66MHz:PA7000
+715:33/50/75MHz:PA7100
+725:50/75MHz:PA7100
+735:100MHz:PA7100
+755:100MHz:PA7100
+735:125MHz:PA7150
+755:125MHz:PA7150
+712:60/80/100MHz:PA7100LC 
+715:64/80/100/100XC:PA7100LC
+725:64/100MHz:PA7100LC
+J200:100MHz:PA7200
+J210:120MHz:PA7200
+C100:100MHz:PA7200
+C110:120MHz:PA7200
+B132L:132MHz:PA7300LC
+B160L:160MHz:PA7300LC
+B180L:180MHz:PA7300LC
+C132L:132MHz:PA7300LC
+C160L:160MHz:PA7300LC
+C180L:180MHz:PA7300LC
+.TE  
+.in -\n(dIu
+.Pp
+OpenBSD/hppa should run on systems similar to these, as long as they're based 
+on the following:
+.Pp
+.Bl -bullet -compact
+.It
+HP-PARISC1.1 processors, dubbed PA7000, PA7100, PA7150, PA7100LC, PA7200, PA 7250, PA7300LC;
+.It
+Viper memory controllers;
+.It
+LASI, ASP and WAX bus/IO controllers -> GSC-bus based machines
+.It
+NCR 53C700, 53C710 and 53C720 SCSI IO-processors -> can be SE or (FW)Differential SCSI
+.It
+Venom, (H)CRX-8 and (H)CRX-24 video controllers
+.It
+i82350(Mongoose) EISA-bus controller w/ attached EISA-bus and devices
+.It
+HIL or PS/2-style keyboard and mouse
+.El
+.Pp
+.Sh LIST OF DEVICES
+The devices listed below are supported in this incarnation of
+the system.  Devices are indicated by their functional interface.
+Not all supported devices are listed.
+.Pp
+.Bl -tag -width le/lebuffer
+.It asp
+The ASP bus/IO controller; found in most of the older machines which
+don't have LASI or WAX.
+Includes GSC-bus controller, to which most of the devices are attached. Most of IO is still on external chips though.
+.It com
+The RS-232 ports.
+.It cpu
+The Central Processor itself, makes sure the machine does something useful.
+.It hil
+Human Interface Loop, sporting several input devices,
+e.g. keyboards, mice, tablets and such.
+.It ie
+i82C5[89]6 LAN-processor. Found in every s700, either included in MBA or on 
+external chip on mainboard.
+.It lasi
+LSI?, found in s712. Integrates most of the bus and IO functions into one chip.
+.It leds
+All s700 except s712  have at least 9 leds somewhere at the front which
+will give you info about the systems status, e.g. NET IO, SCSI IO ...
+.It lpt
+The Centronics printer port.
+.It mongoose
+The
+.Xr eisa 4
+bus controller on most of the s700 machines.
+.It pdc
+The PROM interface, allows to call the routines in the machine's
+PROM for things like intial console output and such.
+.It siop
+mtc
+.It sti
+The system graphics driver.
+.It wax
+The other reincarnation of
+.Xr lasi 4
+used for cheap
+.Tn ASIC
+implementations for add-on devices.
+.El
+.Sh HISTORY
+The
+hppa
+.Nm
+first appeared with
+.Ox 3.1 .
