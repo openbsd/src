@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_vtf.c,v 1.15 2000/04/12 13:20:41 aaron Exp $	*/
+/*	$OpenBSD: pcvt_vtf.c,v 1.16 2000/05/31 23:31:42 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -182,8 +182,7 @@ vt_sgr(struct video_state *svsp)
 			break;
 
 		case 7:		/* reverse */
-			svsp->vtsgr |= VT_INVERSE;
-			if (pcdisp) {
+			if (pcdisp && !(svsp->vtsgr & VT_INVERSE)) {
 				if ((setcolor >> 8) == 0)
 					setcolor = (FG_LIGHTGREY << 8);
 				setcolor = (((setcolor >> 8) & 0x88) |
@@ -191,6 +190,7 @@ vt_sgr(struct video_state *svsp)
 				    ((setcolor >> 8) << 4)) & 0x77)) << 8;
 				colortouched = 1;
 			}
+			svsp->vtsgr |= VT_INVERSE;
 			break;
 
 		case 22:	/* not bold */
@@ -218,13 +218,13 @@ vt_sgr(struct video_state *svsp)
 			break;
 
 		case 27:	/* not reverse */
-			svsp->vtsgr &= ~VT_INVERSE;
-			if (pcdisp) {
+			if (pcdisp && (svsp->vtsgr & VT_INVERSE)) {
 				setcolor = (((setcolor >> 8) & 0x88) |
 				    ((((setcolor >> 8) >> 4) |
 				    ((setcolor >> 8) << 4)) & 0x77)) << 8;
 				colortouched = 1;
 			}
+			svsp->vtsgr &= ~VT_INVERSE;
 			break;
 
 		case 30:	/* foreground colors */
