@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.155 2004/06/22 23:55:23 millert Exp $
+#	$OpenBSD: files.pci,v 1.156 2004/06/26 06:43:14 alex Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -496,3 +496,12 @@ file	dev/pci/if_bce.c		bce
 # ADMtek ADM8211 PCI/Mini-PCI
 attach	atw at pci with atw_pci
 file	dev/pci/if_atw_pci.c		atw_pci
+
+# Sangoma PCI card
+device	san: ifnet, ifmedia
+attach	san at pci
+file dev/pci/if_sandrv.c 	san
+file dev/pci/if_san_common.c 	san
+file dev/pci/if_san_obsd.c 	san
+file dev/pci/if_san_te1.c 	san
+file dev/pci/if_san_xilinx.c 	san
