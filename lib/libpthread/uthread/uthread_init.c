@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_init.c,v 1.24 2002/11/07 03:51:21 marc Exp $	*/
+/*	$OpenBSD: uthread_init.c,v 1.25 2002/11/08 07:53:03 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -186,15 +186,6 @@ _thread_init(void)
 		    _thread_sys_dup2(fd,2) == -1)
 			PANIC("Can't dup2");
 	}
-
-	/*
-	 * initialize the fd table for the stdio files.   This grabs
-	 * the file flags before we start messing with them.
-	 */
-	for (i = 0; i < 3; i++)
-		if (_thread_fd_table_init(i) == -1 && errno != EBADF)
-			PANIC("Cannot get stdio flags");
-
 
 	/*
 	 * Create a pipe that is written to by the signal handler to prevent
