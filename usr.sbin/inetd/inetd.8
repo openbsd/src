@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)inetd.8	6.7 (Berkeley) 3/16/91
-.\"	$Id: inetd.8,v 1.15 2000/04/15 02:15:18 aaron Exp $
+.\"	$Id: inetd.8,v 1.16 2000/06/14 16:06:07 itojun Exp $
 .\"
 .Dd March 16, 1991
 .Dt INETD 8
@@ -335,72 +335,18 @@ creates a file
 .Em /var/run/inetd.pid
 that contains its process identifier.
 .Ss IPv6 TCP/UDP behavior
-If you run servers for IPv4 and IPv6 traffic, you'll need to specify
-.Dq tcp4
-and
-.Dq tcp6
-properly on the
-.Pa inetd.conf
-lines.
-For safety reasons the author recommends you to run
-two separate process for the same server program,
-specified as two separate lines on
+If you wish to run a server for IPv4 and IPv6 traffic,
+you'll need to run two separate process for the same server program,
+specified as two separate lines on 
 .Pa inetd.conf ,
 for
-.Dq tcp6
+.Dq tcp4
 and
-.Dq tcp4 .
-For detailed description please read on.
+.Dq tcp6 .
 .Pp
-The behavior of
-.Dv AF_INET6
-socket is documented in RFC2553.
-Basically, it says as follows:
-.Bl -bullet -compact
-.It
-Specific bind on
-.Dv AF_INET6
-socket
-.Po
-.Xr bind 2
-with address specified
-.Pc
-should accept IPv6 traffic to that address only.
-.It
-If you perform wildcard bind
-on
-.Dv AF_INET6
-socket
-.Po
-.Xr bind 2
-to IPv6 address
-.Li ::
-.Pc ,
-and there is no wildcard bind
-.Dv AF_INET
-socket on that TCP/UDP port, IPv6 traffic as well as IPv4 traffic
-should be routed to that
-.Dv AF_INET6
-socket.
-IPv4 traffic should be seen as if it came from IPv6 address like
-.Li ::ffff:10.1.1.1 .
-This is called IPv4 mapped address.
-.It
-If there are both wildcard bind
-.Dv AF_INET
-socket and wildcard bind
-.Dv AF_INET6
-socket on one TCP/UDP port, they should behave separately.
-IPv4 traffic should be routed to
-.Dv AF_INET
-socket and IPv6 should be routed to
-.Dv AF_INET6
-socket.
-.El
-.Pp
-Because of this,
+Under various combination of IPv4/v6 daemon settings,
 .Nm
-will behave as follows.
+will behave as follows:
 .Bl -bullet -compact
 .It
 If you have only one server on
@@ -419,22 +365,8 @@ and IPv6 traffic will go to server on
 .It
 If you have only one server on
 .Dq tcp6 ,
-Both IPv4 and IPv6 traffic will be routed to the server.
+only IPv6 traffic will be routed to the server.
 .El
-.Pp
-The author do not recommend the third option on the above bullets.
-RFC2553 does not define the constraint between the order of
-.Xr bind 2 ,
-nor how IPv4 TCP/UDP port number and IPv6 TCP/UDP port number
-relate each other
-.Po
-should they be integrated or separated
-.Pc .
-Implemented behavior is very different across kernel to kernel.
-Many of the servers do not properly handle IPv4 mapped address.
-Therefore, it is unwise to rely too much upon the behavior of
-.Dv AF_INET6
-wildcard bind socket.
 .Sh BUGS
 Host address specifiers, while they make conceptual sense for RPC
 services, do not work entirely correctly.
