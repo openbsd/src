@@ -128,6 +128,7 @@ bwtwo*	at sbus? slot ? offset ?
 #bwtwo0	at obio0 addr 0xfd000000 level 4	# 4/260
 #bwtwo0	at obio0 addr 0xfb300000 level 4	# 4/{300/400} ??
 #cgtwo0	at vmes0 addr 0xff400000 level 4 vect 0xa8
+#cgnine0 at vmel0 addr 0x08000000 level 4
 cgthree0 at sbus? slot ? offset ?
 cgthree* at sbus? slot ? offset ?
 cgsix0 at sbus? slot ? offset ?
