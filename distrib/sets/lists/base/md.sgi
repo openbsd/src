@@ -782,7 +782,6 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/ibm561reg.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/ibm561var.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/ics2101reg.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/if_gt.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/if_wi_hostap.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/if_wi_ieee.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/dev/ic/if_wireg.ph
@@ -1529,15 +1528,14 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/disklabel.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/endian.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/exception.ph
+./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/exec.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/float.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/frame.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/ieee.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/ieeefp.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/internal_types.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/kcore.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/kdbparam.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/limits.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/link.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/memconf.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/mips_opcode.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/param.ph
@@ -1546,6 +1544,7 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/pmap.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/proc.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/profile.ph
+./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/pte.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/ptrace.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/reg.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/regdef.ph
@@ -1934,9 +1933,7 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/intr.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/kbdreg.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/kcore.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/kdbparam.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/limits.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/link.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/loadfile_machdep.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/memconf.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/mips_opcode.ph
