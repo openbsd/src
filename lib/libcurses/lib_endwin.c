@@ -51,5 +51,7 @@ endwin(void)
 	if (curscr  &&  (curscr->_attrs != A_NORMAL)) 
 	    vidattr(curscr->_attrs = A_NORMAL);
 
+	fflush(SP->_ofp);
+
 	return(reset_shell_mode());
 }
