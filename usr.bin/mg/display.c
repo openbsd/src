@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.15 2002/07/01 18:01:40 vincent Exp $	*/
+/*	$OpenBSD: display.c,v 1.16 2002/08/22 23:21:20 vincent Exp $	*/
 
 /*
  * The functions in this file handle redisplay. The
@@ -14,6 +14,8 @@
  */
 #include	"def.h"
 #include	"kbd.h"
+
+#include <ctype.h>
 
 /*
  * You can change these back to the types
@@ -302,8 +304,13 @@ vtputc(int c)
 	} else if (ISCTRL(c)) {
 		vtputc('^');
 		vtputc(CCHR(c));
-	} else
+	} else if (isprint(c))
 		vp->v_text[vtcol++] = c;
+	else {
+		char bf[5];
+		snprintf(bf, sizeof bf, "\\%o", c);
+		vtputs(bf);
+	}
 }
 
 /*
