@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.31 1997/10/25 08:23:38 mickey Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.32 1997/10/25 21:46:06 mickey Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.31 1997/10/25 08:23:38 mickey Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.32 1997/10/25 21:46:06 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -133,11 +133,13 @@ int	Aflag, aflag, nflag, wflag;
  */
 #define	CLOCK		0x00000001
 #define	BOOTTIME	0x00000002
-#define	CONSDEV		0x00000004
-#define RNDSTATS	0x00000008
-#define BADDYNAMIC	0x00000010
-#define BIOSGEO		0x00000020
-#define BIOSDEV		0x00000040
+#define	CHRDEV		0x00000004
+#define	BLKDEV		0x00000008
+#define RNDSTATS	0x00000010
+#define BADDYNAMIC	0x00000020
+#define BIOSGEO		0x00000040
+#define BIOSDEV		0x00000080
+#define	MAJ2DEV		0x00000100
 
 /* prototypes */
 void debuginit __P((void));
@@ -401,7 +403,29 @@ parse(string, flags)
 	case CTL_MACHDEP:
 #ifdef CPU_CONSDEV
 		if (mib[1] == CPU_CONSDEV)
-			special |= CONSDEV;
+			special |= CHRDEV;
+#endif
+#ifdef CPU_BLK2CHR
+		if (mib[1] == CPU_BLK2CHR) {
+			if (bufp == NULL)
+				return;
+			mib[2] = makedev(atoi(bufp),0);
+			bufp = NULL;
+			len = 3;
+			special |= CHRDEV;
+			break;
+		}
+#endif
+#ifdef CPU_CHR2BLK
+		if (mib[1] == CPU_CHR2BLK) {
+			if (bufp == NULL)
+				return;
+			mib[2] = makedev(atoi(bufp),0);
+			bufp = NULL;
+			len = 3;
+			special |= BLKDEV;
+			break;
+		}
 #endif
 #ifdef CPU_BIOS
 		if (mib[1] == CPU_BIOS) {
@@ -494,7 +518,17 @@ parse(string, flags)
 			(void)printf("%ld\n", btp->tv_sec);
 		return;
 	}
-	if (special & CONSDEV) {
+	if (special & BLKDEV) {
+		dev_t dev = *(dev_t *)buf;
+
+		if (!nflag)
+			(void)printf("%s = %s\n", string,
+			    devname(dev, S_IFBLK));
+		else
+			(void)printf("0x%x\n", dev);
+		return;
+	}
+	if (special & CHRDEV) {
 		dev_t dev = *(dev_t *)buf;
 
 		if (!nflag)
@@ -753,8 +787,6 @@ sysctl_bios(string, bufpp, mib, flags, typep)
 		return(-1);
 	mib[2] = indx;
 	if (indx == BIOS_DISKINFO) {
-		if (!flags)
-			return(-1);
 		if (*bufpp == NULL) {
 			char name[BUFSIZ];
 
