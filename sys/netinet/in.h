@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.8 1997/02/28 03:44:52 angelos Exp $	*/
+/*	$OpenBSD: in.h,v 1.9 1997/07/02 00:18:55 millert Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -341,8 +341,15 @@ struct ip_mreq {
 	{ "porthilast", CTLTYPE_INT }, \
 }
 
+#ifndef _KERNEL
 
-#ifdef _KERNEL
+#include <sys/cdefs.h>
+
+__BEGIN_DECLS
+int	   bindresvport __P((int, struct sockaddr_in *));
+__END_DECLS
+
+#else
 int	   in_broadcast __P((struct in_addr, struct ifnet *));
 int	   in_canforward __P((struct in_addr));
 int	   in_cksum __P((struct mbuf *, int));
