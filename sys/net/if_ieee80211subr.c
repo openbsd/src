@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ieee80211subr.c,v 1.1 2004/01/07 00:13:22 fgsch Exp $	*/
+/*	$OpenBSD: if_ieee80211subr.c,v 1.2 2004/01/26 03:35:36 fgsch Exp $	*/
 /*	$NetBSD: if_ieee80211subr.c,v 1.43 2003/07/06 20:54:25 dyoung Exp $	*/
 /*	$FreeBSD: src/sys/net/if_ieee80211subr.c,v 1.4 2003/01/21 08:55:59 alfred Exp $	*/
 
@@ -133,6 +133,8 @@ ieee80211_ifattach(struct ifnet *ifp)
 	int i, rate, mword;
 	struct ifmediareq imr;
 
+	bcopy(ic->ic_myaddr, ((struct arpcom *)ifp)->ac_enaddr,
+	    ETHER_ADDR_LEN);
 	ether_ifattach(ifp);
 #if NBPFILTER > 0
 	bpfattach(&ic->ic_rawbpf, ifp, DLT_IEEE802_11,
@@ -385,7 +387,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, int rssi, u_int32_t rstamp)
 			if ((ifp->if_flags & IFF_SIMPLEX) &&
 			    IEEE80211_IS_MULTICAST(wh->i_addr1) &&
 			    IEEE80211_ADDR_EQ(wh->i_addr3,
-			    ic->ic_ac.ac_enaddr)) {
+			    ic->ic_myaddr)) {
 				/*
 				 * In IEEE802.11 network, multicast packet
 				 * sent from me is broadcasted from AP.
@@ -600,7 +602,7 @@ ieee80211_mgmt_output(struct ifnet *ifp, struct ieee80211_node *ni,
 	    htole16(ni->ni_txseq << IEEE80211_SEQ_SEQ_SHIFT);
 	ni->ni_txseq++;
 	IEEE80211_ADDR_COPY(wh->i_addr1, ni->ni_macaddr);
-	IEEE80211_ADDR_COPY(wh->i_addr2, ic->ic_ac.ac_enaddr);
+	IEEE80211_ADDR_COPY(wh->i_addr2, ic->ic_myaddr);
 	IEEE80211_ADDR_COPY(wh->i_addr3, ni->ni_bssid);
 
 	if (ifp->if_flags & IFF_DEBUG) {
@@ -963,7 +965,7 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		case IEEE80211_S_SCAN:
 			if (ic->ic_opmode == IEEE80211_M_HOSTAP)
 				IEEE80211_ADDR_COPY(bssid->i_bssid,
-				    ic->ic_ac.ac_enaddr);
+				    ic->ic_myaddr);
 			else if (ic->ic_flags & IEEE80211_F_DESBSSID)
 				IEEE80211_ADDR_COPY(bssid->i_bssid,
 				    ic->ic_des_bssid);
@@ -1007,10 +1009,10 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		chan = (struct ieee80211_channel *)data;
 		chan->i_channel = ieee80211_get_channel(ic);
 		break;
-	case SIOCGIFGENERIC:
+	case SIOCGWAVELAN:
 		error = ieee80211_cfgget(ifp, cmd, data);
 		break;
-	case SIOCSIFGENERIC:
+	case SIOCSWAVELAN:
 		error = suser(curproc, 0);
 		if (error)
 			break;
@@ -1212,8 +1214,8 @@ ieee80211_create_ibss(struct ieee80211com *ic)
 			ni->ni_rates[ni->ni_nrate++] =
 			    ic->ic_sup_rates[i];
 	}
-	IEEE80211_ADDR_COPY(ni->ni_macaddr, ic->ic_ac.ac_enaddr);
-	IEEE80211_ADDR_COPY(ni->ni_bssid, ic->ic_ac.ac_enaddr);
+	IEEE80211_ADDR_COPY(ni->ni_macaddr, ic->ic_myaddr);
+	IEEE80211_ADDR_COPY(ni->ni_bssid, ic->ic_myaddr);
 	ni->ni_bssid[0] |= 0x02;	/* local bit for IBSS */
 	ni->ni_esslen = ic->ic_des_esslen;
 	memcpy(ni->ni_essid, ic->ic_des_essid, ni->ni_esslen);
@@ -3199,7 +3201,7 @@ ieee80211_cfgget(struct ifnet *ifp, u_long cmd, caddr_t data)
 		wreq.wi_len = 1;
 		break;
 	case WI_RID_MAC_NODE:
-		IEEE80211_ADDR_COPY(wreq.wi_val, ic->ic_ac.ac_enaddr);
+		IEEE80211_ADDR_COPY(wreq.wi_val, ic->ic_myaddr);
 		wreq.wi_len = IEEE80211_ADDR_LEN / 2;
 		break;
 	case WI_RID_TX_RATE:
