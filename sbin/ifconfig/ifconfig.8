@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.51 2001/05/02 06:44:23 itojun Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.52 2001/09/15 18:06:56 mickey Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -266,6 +266,10 @@ Refer to the interfaces' driver specific man page for a complete
 list of available options.
 .It Fl mediaopt Ar opts
 Disable the specified media options on the interface.
+.It Cm mtu Ar value
+Set the MTU for this device to the given
+.Ar value .
+Cloned routes will inherit this value as a default.
 .It Cm instance Ar minst
 Set the media instance to
 .Ar minst .
