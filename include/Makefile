@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.55 1998/09/07 05:50:02 art Exp $
+#	$OpenBSD: Makefile,v 1.56 1998/10/07 02:36:48 deraadt Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -39,7 +39,7 @@ RDIRS=	../lib/libcom_err ../lib/libcompat ../lib/libcurses ../lib/libform \
 	../lib/libpcap ../lib/libutil ../lib/libwrap ../lib/libz \
 	../sys/arch/${MACHINE}
 
-WDIRS=	../gnu/lib/libg++/libg++ ../gnu/lib/libg++/libio \
+WDIRS=	../lib/libssl ../gnu/lib/libg++/libg++ ../gnu/lib/libg++/libio \
 	../gnu/lib/libg++/librx ../gnu/lib/libg++/libstdc++ \
 	../gnu/usr.bin/gcc ../gnu/lib/libgmp
 
