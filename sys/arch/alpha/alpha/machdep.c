@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.19 1997/05/28 22:56:57 niklas Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.20 1997/07/06 16:25:30 niklas Exp $	*/
 /*	$NetBSD: machdep.c,v 1.61 1996/12/07 01:54:49 cgd Exp $	*/
 
 /*
@@ -79,6 +79,13 @@
 #include <machine/rpb.h>
 #include <machine/prom.h>
 #include <machine/cpuconf.h>
+
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_access.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
+#endif
 
 #include <net/netisr.h>
 #include <net/if.h>
@@ -552,6 +559,11 @@ unknown_cputype:
 			boothowto &= ~RB_SINGLE;
 			break;
 
+		case 'b': /* Enter DDB as soon as the console is initialised */
+		case 'B':
+			boothowto |= RB_KDB;
+			break;
+
 		case 'c': /* enter user kernel configuration */
 		case 'C':
 			boothowto |= RB_CONFIG;
@@ -600,9 +612,13 @@ unknown_cputype:
 void
 consinit()
 {
-
 	(*cpu_fn_switch->cons_init)();
 	pmap_unmap_prom();
+#ifdef DDB
+	ddb_init();
+	if (boothowto & RB_KDB)
+		Debugger();
+#endif
 }
 
 void
