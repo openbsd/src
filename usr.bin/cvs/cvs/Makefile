@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.5 2004/07/30 01:49:26 jfb Exp $
+# $Id: Makefile,v 1.6 2004/07/30 17:44:49 jfb Exp $
 
 .PATH:	${.CURDIR}/..
 
@@ -7,7 +7,7 @@ MAN=cvs.1 cvsrc.5
 
 SRCS= cvs.c add.c buf.c checkout.c commit.c diff.c entries.c file.c \
 	getlog.c history.c hist.c init.c lock.c log.c proto.c rcs.c rcsnum.c \
-	root.c server.c sock.c update.c util.c version.c
+	root.c server.c sock.c status.c update.c util.c version.c
 
 BINDIR=/usr/bin
 BINOWN=root
