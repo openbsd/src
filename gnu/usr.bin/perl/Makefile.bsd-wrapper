@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.37 2000/04/12 22:12:15 mickey Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.38 2000/04/21 17:59:53 millert Exp $
 #
 # Build wrapper for Perl 5.6.0
 #
@@ -79,8 +79,8 @@ MANALL=	a2p.cat1 c2ph.cat1 dprofpp.cat1 find2perl.cat1 \
         File::Find.cat3p File::Glob.cat3p File::Path.cat3p File::Spec.cat3p \
         File::Spec::Functions.cat3p File::Spec::Mac.cat3p \
         File::Spec::OS2.cat3p File::Spec::Unix.cat3p File::Spec::VMS.cat3p \
-        File::Spec::Win32.cat3p File::stat.cat3p FileCache.cat3p \
-        FileHandle.cat3p FindBin.cat3p Getopt::Long.cat3p \
+        File::Spec::Win32.cat3p File::stat.cat3p File::Temp.cat3p \
+	FileCache.cat3p FileHandle.cat3p FindBin.cat3p Getopt::Long.cat3p \
         Getopt::Std.cat3p I18N::Collate.cat3p IO.cat3p IO::Dir.cat3p \
         IO::File.cat3p IO::Handle.cat3p IO::Pipe.cat3p IO::Poll.cat3p \
         IO::Seekable.cat3p IO::Select.cat3p IO::Socket.cat3p \
@@ -556,6 +556,8 @@ File::Spec::VMS.cat3p: lib/File/Spec/VMS.pm
 File::Spec::Win32.cat3p: lib/File/Spec/Win32.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 File::stat.cat3p: lib/File/stat.pm
+	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
+File::Temp.cat3p: lib/File/Temp.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}
 FileCache.cat3p: lib/FileCache.pm
 	${POD2MAN} --section=3p --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}

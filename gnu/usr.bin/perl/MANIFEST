@@ -617,6 +617,7 @@ lib/File/Spec/Unix.pm	portable operations on Unix file names
 lib/File/Spec/VMS.pm	portable operations on VMS file names
 lib/File/Spec/Win32.pm	portable operations on Win32 file names
 lib/File/stat.pm	By-name interface to Perl's builtin stat
+lib/File/Temp.pm	Functions for generating temporary files
 lib/FileCache.pm	Keep more files open than the system permits
 lib/FileHandle.pm	Backward-compatible front end to IO extension
 lib/FindBin.pm		Find name of currently executing program
