@@ -1,4 +1,4 @@
-/*	$OpenBSD: readmsg.c,v 1.9 2002/03/14 16:44:25 mpech Exp $	*/
+/*	$OpenBSD: readmsg.c,v 1.10 2002/06/18 00:40:31 ericj Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -36,10 +36,6 @@
 #ifndef lint
 static char sccsid[] = "@(#)readmsg.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
-
-#ifdef sgi
-#ident "$Revision: 1.9 $"
-#endif
 
 #include "globals.h"
 

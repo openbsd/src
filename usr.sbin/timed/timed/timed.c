@@ -1,4 +1,4 @@
-/*	$OpenBSD: timed.c,v 1.14 2002/03/14 16:44:25 mpech Exp $	*/
+/*	$OpenBSD: timed.c,v 1.15 2002/06/18 00:40:31 ericj Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -43,10 +43,6 @@ char copyright[] =
 static char sccsid[] = "@(#)timed.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
-#ifdef sgi
-#ident "$Revision: 1.14 $"
-#endif /* sgi */
-
 #define TSPTYPES
 #include "globals.h"
 #include <net/if.h>
@@ -57,14 +53,7 @@ static char sccsid[] = "@(#)timed.c	5.1 (Berkeley) 5/11/93";
 #include <math.h>
 #include <sys/types.h>
 #include <sys/times.h>
-#ifdef HAVENIS
 #include <netgroup.h>
-#endif /* HAVENIS */
-#ifdef sgi
-#include <unistd.h>
-#include <sys/syssgi.h>
-#include <sys/schedctl.h>
-#endif /* sgi */
 
 int trace = 0;
 int sock, sock_raw = -1;
@@ -109,18 +98,6 @@ static void checkignorednets(void);
 static void pickslavenet(struct netinfo *);
 static void add_good_host(const char*,char);
 
-#ifdef sgi
-char *timetrim_fn;
-char *timetrim_wpat = "long timetrim = %ld;\ndouble tot_adj = %.0f;\ndouble tot_ticks = %.0f;\n/* timed version 2 */\n";
-char *timetrim_rpat = "long timetrim = %ld;\ndouble tot_adj = %lf;\ndouble tot_ticks = %lf;";
-long timetrim;
-double tot_adj, hr_adj;			/* totals in nsec */
-double tot_ticks, hr_ticks;
-
-int bufspace = 60*1024;
-#endif
-
-
 /*
  * The timedaemons synchronize the clocks of hosts in a local area network.
  * One daemon runs as master, all the others as slaves. The master
@@ -158,21 +135,9 @@ main(int argc, char **argv)
 	int c;
 	extern char *optarg;
 	extern int optind, opterr;
-#ifdef sgi
-	FILE *timetrim_st;
-#endif
 
 #define	IN_MSG "timed: -i and -n make no sense together\n"
-#ifdef sgi
-	struct tms tms;
-#define USAGE "timed: [-dtM] [-i net|-n net] [-F host1 host2 ...] [-G netgp] [-P trimfile]\n"
-#else
-#ifdef HAVENIS
 #define USAGE "timed: [-dtM] [-i net|-n net] [-F host1 host2 ...] [-G netgp]\n"
-#else
-#define USAGE "timed: [-dtM] [-i net|-n net] [-F host1 host2 ...]\n"
-#endif /* HAVENIS */
-#endif /* sgi */
 
 	ntip = NULL;
 
@@ -180,16 +145,8 @@ main(int argc, char **argv)
 	nflag = OFF;
 	iflag = OFF;
 
-#ifdef sgi
-	if (0 > syssgi(SGI_GETTIMETRIM, &timetrim)) {
-		perror("timed: syssgi(GETTIMETRIM)");
-		timetrim = 0;
-	}
-	tot_ticks = hr_ticks = times(&tms);
-#endif /* sgi */
-
 	opterr = 0;
-	while ((c = getopt(argc, argv, "Mtdn:i:F:G:P:")) != -1) {
+	while ((c = getopt(argc, argv, "Mtdn:i:F:G:")) != -1) {
 		switch (c) {
 		case 'M':
 			Mflag = 1;
@@ -235,11 +192,6 @@ main(int argc, char **argv)
 			}
 			goodgroup = optarg;
 			break;
-#ifdef sgi
-		case 'P':
-			timetrim_fn = optarg;
-			break;
-#endif /* sgi */
 
 		default:
 			fprintf(stderr, USAGE);
@@ -252,47 +204,8 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-#ifdef sgi
-	if (timetrim_fn == 0) {
-		;
-	} else if (0 == (timetrim_st = fopen(timetrim_fn, "r+"))) {
-		if (errno != ENOENT) {
-			(void)fprintf(stderr,"timed: ");
-			perror(timetrim_fn);
-			timetrim_fn = 0;
-		}
-	} else {
-		int i;
-		long trim;
-		double adj, ticks;
-
-		i = fscanf(timetrim_st, timetrim_rpat,
-			   &trim, &adj, &ticks);
-		if (i < 1
-		    || trim > MAX_TRIM
-		    || trim < -MAX_TRIM
-		    || i == 2
-		    || (i == 3
-			&& trim != rint(adj*CLK_TCK/ticks))) {
-			if (trace && i != EOF)
-				(void)fprintf(stderr,
-		    "timed: unrecognized contents in %s\n",
-					      timetrim_fn);
-		} else {
-			if (0 > syssgi(SGI_SETTIMETRIM,
-				       trim)) {
-			 perror("timed: syssgi(SETTIMETRIM)");
-			} else {
-				timetrim = trim;
-			}
-			if (i == 3)
-				tot_ticks -= ticks;
-		}
-		(void)fclose(timetrim_st);
-	}
-#endif /* sgi */
-
-	/* If we care about which machine is the master, then we must
+	/*
+	 * If we care about which machine is the master, then we must
 	 *	be willing to be a master
 	 */
 	if (0 != goodgroup || 0 != goodhosts)
@@ -338,28 +251,16 @@ main(int argc, char **argv)
 			perror("bind");
 		exit(1);
 	}
-#ifdef sgi
-	/*
-	 * handle many slaves with our buffer
-	 */
-	if (0 > setsockopt(sock, SOL_SOCKET, SO_RCVBUF, (char*)&bufspace,
-			 sizeof(bufspace))) {
-		perror("setsockopt");
-		exit(1);
-	}
-#endif /* sgi */
 
 	/* choose a unique seed for random number generation */
 	(void)gettimeofday(&ntime, 0);
 
 	sequence = arc4random();     /* initial seq number */
 
-#ifndef sgi
 	/* rounds kernel variable time to multiple of 5 ms. */
 	ntime.tv_sec = 0;
 	ntime.tv_usec = -((ntime.tv_usec/1000) % 5) * 1000;
 	(void)adjtime(&ntime, (struct timeval *)0);
-#endif /* sgi */
 
 	for (nt = nets; nt; nt = nt->next) {
 		nentp = getnetbyname(nt->name);
@@ -413,11 +314,7 @@ main(int argc, char **argv)
 	}
 
 	ntp = NULL;
-#ifdef sgi
-#define size(p)	(sizeof(*ifr) - sizeof(ifr->ifr_name))  /* XXX hack. kludge */
-#else
 #define size(p)	max((p).sa_len, sizeof(p))
-#endif
 	cplim = inbuf + ifc.ifc_len; /*skip over if's with big ifr_addr's */
 	for (cp = inbuf; cp < cplim;
 			cp += sizeof (ifr->ifr_name) + size(ifr->ifr_addr)) {
@@ -502,27 +399,15 @@ main(int argc, char **argv)
 	}
 	free(inbuf);
 
-#ifdef sgi
-	(void)schedctl(RENICE,0,10);	   /* run fast to get good time */
-
-	/* ticks to delay before responding to a broadcast */
-	delay1 = casual(0, CLK_TCK/10);
-#else
-
 	/* microseconds to delay before responding to a broadcast */
 	delay1 = casual(1, 100*1000);
-#endif /* sgi */
 
 	/* election timer delay in secs. */
 	delay2 = casual(MINTOUT, MAXTOUT);
 
 
-#ifdef sgi
-	(void)_daemonize(debug ? _DF_NOFORK|_DF_NOCHDIR : 0, sock, -1, -1);
-#else
 	if (!debug)
 		daemon(debug, 0);
-#endif /* sgi */
 
 	if (trace)
 		traceon();
@@ -849,21 +734,12 @@ casual(long inf, long sup)
 char *
 date()
 {
-#ifdef sgi
-	struct	timeval tv;
-	static char tm[32];
-
-	(void)gettimeofday(&tv, (struct timezone *)0);
-	(void)cftime(tm, "%D %T", &tv.tv_sec);
-	return (tm);
-#else
 	struct	timeval tv;
 	time_t t;
 
 	(void)gettimeofday(&tv, (struct timezone *)0);
 	t = tv.tv_sec;
 	return (ctime(&t));
-#endif /* sgi */
 }
 
 void
@@ -916,11 +792,9 @@ get_goodgroup(int force)
 # define NG_DELAY (30*60*CLK_TCK)	/* 30 minutes */
 	static unsigned long last_update = -NG_DELAY;
 	unsigned long new_update;
-#ifdef HAVENIS
 	struct hosttbl *htp;
 	struct goodhost *ghp, **ghpp;
 	const char *mach, *usr, *dom;
-#endif
 	struct tms tm;
 
 
@@ -947,7 +821,6 @@ get_goodgroup(int force)
 		}
 	}
 
-#ifdef HAVENIS
 	/* quit now if we are not one of the trusted masters
 	 */
 	if (!innetgr(goodgroup, &hostname[0], 0,0)) {
@@ -972,7 +845,6 @@ get_goodgroup(int force)
 	for (htp = self.l_fwd; htp != &self; htp = htp->l_fwd) {
 		htp->good = good_host_name(&htp->name[0]);
 	}
-#endif /* HAVENIS */
 }
 
 

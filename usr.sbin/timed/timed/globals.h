@@ -1,4 +1,4 @@
-/*	$OpenBSD: globals.h,v 1.4 2001/11/23 03:45:51 deraadt Exp $	*/
+/*	$OpenBSD: globals.h,v 1.5 2002/06/18 00:40:30 ericj Exp $	*/
 
 /*-
  * Copyright (c) 1985 The Regents of the University of California.
@@ -35,10 +35,6 @@
  *	@(#)globals.h	5.1 (Berkeley) 5/11/93
  */
 
-#ifdef sgi
-#ident "$Revision: 1.4 $"
-#endif
-
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/socket.h>
@@ -57,16 +53,8 @@
 #include <unistd.h>
 
 #include <protocols/timed.h>
-#ifdef sgi
-#include <bstring.h>
-#include <sys/clock.h>
-/* use the constant HZ instead of the function CLK_TCK */
-#undef CLK_TCK
-#define CLK_TCK HZ
-#else
 #define	SECHR	(60*60)
 #define	SECDAY	(24*SECHR)
-#endif /* sgi */
 
 extern int errno;
 extern int sock;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.2 2001/04/07 20:00:16 ho Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.3 2002/06/18 00:40:31 ericj Exp $	*/
 
 /*-
  * Copyright (c) 1985 The Regents of the University of California.
@@ -37,10 +37,5 @@
 
 #include <paths.h>
 
-#ifdef sgi
-#define	_PATH_MASTERLOG	"/var/adm/timed.masterlog"
-#define	_PATH_TIMEDLOG	"/var/adm/timed.log"
-#else
 #define	_PATH_MASTERLOG	"/var/log/timed.masterlog"
 #define	_PATH_TIMEDLOG	"/var/log/timed.log"
-#endif
