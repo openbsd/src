@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.443 2004/02/24 14:28:45 cedric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.444 2004/02/24 20:35:18 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -118,6 +118,8 @@ struct node_icmp {
 enum	{ PF_STATE_OPT_MAX, PF_STATE_OPT_NOSYNC, PF_STATE_OPT_SRCTRACK,
 	    PF_STATE_OPT_MAX_SRC_STATES, PF_STATE_OPT_MAX_SRC_NODES,
 	    PF_STATE_OPT_STATELOCK, PF_STATE_OPT_TIMEOUT };
+
+enum	{ PF_SRCTRACK_NONE, PF_SRCTRACK, PF_SRCTRACK_GLOBAL, PF_SRCTRACK_RULE };
 
 struct node_state_opt {
 	int			 type;
@@ -1482,8 +1484,7 @@ pfrule		: action dir logquick interface route af proto fromto
 						    "multiple definitons");
 						YYERROR;
 					}
-					srctrack = 1;
-					r.rule_flag |=  o->data.src_track;
+					srctrack =  o->data.src_track;
 					break;
 				case PF_STATE_OPT_MAX_SRC_STATES:
 					if (r.max_src_states) {
@@ -1515,7 +1516,8 @@ pfrule		: action dir logquick interface route af proto fromto
 					}
 					r.max_src_nodes =
 					    o->data.max_src_nodes;
-					r.rule_flag |= PFRULE_SRCTRACK;
+					r.rule_flag |= PFRULE_SRCTRACK |
+					    PFRULE_RULESRCTRACK;
 					break;
 				case PF_STATE_OPT_STATELOCK:
 					if (statelock) {
@@ -1539,6 +1541,18 @@ pfrule		: action dir logquick interface route af proto fromto
 				}
 				o = o->next;
 				free(p);
+			}
+			if (srctrack) {
+				if (srctrack == PF_SRCTRACK_GLOBAL &&
+				    r.max_src_nodes) {
+					yyerror("'max-src-nodes' is "
+					    "incompatible with "
+					    "'source-track global'");
+					YYERROR;
+				}
+				r.rule_flag |= PFRULE_SRCTRACK;
+				if (srctrack == PF_SRCTRACK_RULE)
+					r.rule_flag |= PFRULE_RULESRCTRACK;
 			}
 			if (r.keep_state && !statelock)
 				r.rule_flag |= default_statelock;
@@ -2516,15 +2530,9 @@ tos		: TOS STRING			{
 		}
 		;
 
-sourcetrack	: SOURCETRACK {
-			$$ = PFRULE_SRCTRACK;
-		}
-		| SOURCETRACK GLOBAL {
-			$$ = PFRULE_SRCTRACK;
-		}
-		| SOURCETRACK RULE {
-			$$ = PFRULE_SRCTRACK ^ PFRULE_RULESRCTRACK;
-		}
+sourcetrack	: SOURCETRACK		{ $$ = PF_SRCTRACK; }
+		| SOURCETRACK GLOBAL	{ $$ = PF_SRCTRACK_GLOBAL; }
+		| SOURCETRACK RULE	{ $$ = PF_SRCTRACK_RULE; }
 		;
 
 statelock	: IFBOUND {
