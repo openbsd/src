@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.40 2000/12/12 01:46:55 niklas Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.41 2000/12/15 06:34:54 provos Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -1928,7 +1928,7 @@ pf_key_v2_expire (struct pf_key_v2_msg *pmsg)
   struct sadb_sa *ssa;
   struct sadb_address *dst;
   struct sockaddr *dstaddr;
-  struct sadb_lifetime *life;
+  struct sadb_lifetime *life, *lifecurrent;
   struct sa *sa;
   struct pf_key_v2_node *lifenode, *ext;
 
@@ -1957,6 +1957,14 @@ pf_key_v2_expire (struct pf_key_v2_msg *pmsg)
       return;
     }
   life = lifenode->seg;
+
+  lifenode = pf_key_v2_find_ext (pmsg, SADB_EXT_LIFETIME_CURRENT);
+  if (!lifenode)
+    {
+      log_print ("pf_key_v2_expire: no current lifetime extension found");
+      return;
+    }
+  lifecurrent = lifenode->seg;
 
   /* XXX IPv4 specific.  */
   LOG_DBG ((LOG_SYSDEP, 20, "pf_key_v2_expire: %s dst %s SPI %x sproto %d",
@@ -1988,9 +1996,11 @@ pf_key_v2_expire (struct pf_key_v2_msg *pmsg)
   /*
    * If we got a notification, try to renegotiate the SA -- unless of
    * course it has already been replaced by another.
-   * Also, ignore SAs that were not dynamically established.
+   * Also, ignore SAs that were not dynamically established, or that
+   * did not see any use.
    */
-  if (!(sa->flags & SA_FLAG_REPLACED) && (sa->flags & SA_FLAG_ONDEMAND))
+  if (!(sa->flags & SA_FLAG_REPLACED) && (sa->flags & SA_FLAG_ONDEMAND) &&
+      lifecurrent->sadb_lifetime_bytes)
     exchange_establish (sa->name, 0, 0);
 
   if (life->sadb_lifetime_exttype == SADB_EXT_LIFETIME_HARD)
