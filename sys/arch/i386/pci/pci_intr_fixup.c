@@ -1,5 +1,5 @@
-/*	$OpenBSD: pci_intr_fixup.c,v 1.5 2000/08/08 19:12:48 mickey Exp $	*/
-/*	$NetBSD: pci_intr_fixup.c,v 1.9 2000/07/22 17:43:36 soda Exp $	*/
+/*	$OpenBSD: pci_intr_fixup.c,v 1.6 2000/09/07 20:50:38 mickey Exp $	*/
+/*	$NetBSD: pci_intr_fixup.c,v 1.10 2000/08/10 21:18:27 soda Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@ struct pciintr_link_map {
 	SIMPLEQ_ENTRY(pciintr_link_map) list;
 };
 
-pciintr_icu_tag_t pciintr_icu_tag;
+pciintr_icu_tag_t pciintr_icu_tag = NULL;
 pciintr_icu_handle_t pciintr_icu_handle;
 
 #ifdef PCIBIOS_IRQS_HINT
@@ -108,6 +108,7 @@ struct pcibios_intr_routing *pciintr_pir_lookup __P((int, int));
 static int pciintr_bitmap_count_irq __P((int, int *));
 static int pciintr_bitmap_find_lowest_irq __P((int, int *));
 int	pciintr_link_init __P((void));
+int	pciintr_guess_irq __P((void));
 int	pciintr_link_fixup __P((void));
 int	pciintr_link_route __P((u_int16_t *));
 int	pciintr_irq_release __P((u_int16_t *));
@@ -191,39 +192,43 @@ pciintr_link_alloc(pir, pin)
 	int link = pir->linkmap[pin].link, clink, irq;
 	struct pciintr_link_map *l, *lstart;
 
-	/*
-	 * Get the canonical link value for this entry.
-	 */
-	if (pciintr_icu_getclink(pciintr_icu_tag, pciintr_icu_handle, link,
-	    &clink) != 0) {
+	if (pciintr_icu_tag != NULL) {
 		/*
-		 * ICU doesn't understand the link value.
-		 * Just ignore this PIR entry.
+		 * Get the canonical link value for this entry.
 		 */
+		if (pciintr_icu_getclink(pciintr_icu_tag, pciintr_icu_handle,
+		    link, &clink) != 0) {
+			/*
+			 * ICU doesn't understand the link value.
+			 * Just ignore this PIR entry.
+			 */
 #ifdef PCIBIOSVERBOSE
-		printf("pciintr_link_alloc: bus %d device %d: "
-		    "ignoring link 0x%02x\n",
-		    pir->bus, PIR_DEVFUNC_DEVICE(pir->device), link);
+			printf("pciintr_link_alloc: bus %d device %d: "
+			    "ignoring link 0x%02x\n",
+			    pir->bus, PIR_DEVFUNC_DEVICE(pir->device), link);
 #endif
-		return (NULL);
-	}
+			return (NULL);
+		}
 
-	/*
-	 * Check the link value by asking the ICU for the canonical link value.
-	 * Also, determine if this PIRQ is mapped to an IRQ.
-	 */
-	if (pciintr_icu_get_intr(pciintr_icu_tag, pciintr_icu_handle, clink,
-	    &irq) != 0) {
 		/*
-		 * ICU doesn't understand the canonical link value.
-		 * Just ignore this PIR entry.
+		 * Check the link value by asking the ICU for the
+		 * canonical link value.
+		 * Also, determine if this PIRQ is mapped to an IRQ.
 		 */
+		if (pciintr_icu_get_intr(pciintr_icu_tag, pciintr_icu_handle,
+		    clink, &irq) != 0) {
+			/*
+			 * ICU doesn't understand the canonical link value.
+			 * Just ignore this PIR entry.
+			 */
 #ifdef PCIBIOSVERBOSE
-		printf("pciintr_link_alloc: bus %d device %d link 0x%02x: "
-		    "ignoring PIRQ 0x%02x\n",
-		    pir->bus, PIR_DEVFUNC_DEVICE(pir->device), link, clink);
+			printf("pciintr_link_alloc: "
+			    "bus %d device %d link 0x%02x: "
+			    "ignoring PIRQ 0x%02x\n", pir->bus,
+			    PIR_DEVFUNC_DEVICE(pir->device), link, clink);
 #endif
-		return (NULL);
+			return (NULL);
+		}
 	}
 
 	l = malloc(sizeof(*l), M_DEVBUF, M_NOWAIT);
@@ -234,8 +239,13 @@ pciintr_link_alloc(pir, pin)
 
 	l->link = link;
 	l->bitmap = pir->linkmap[pin].bitmap;
-	l->clink = clink;
-	l->irq = irq; /* may be I386_PCI_INTERRUPT_LINE_NO_CONNECTION */
+	if (pciintr_icu_tag != NULL) { /* compatible PCI ICU found */
+		l->clink = clink;
+		l->irq = irq; /* maybe I386_PCI_INTERRUPT_LINE_NO_CONNECTION */
+	} else {
+		l->clink = link; /* only for PCIBIOSVERBOSE diagnostic */
+		l->irq = I386_PCI_INTERRUPT_LINE_NO_CONNECTION;
+	}
 
 	lstart = SIMPLEQ_FIRST(&pciintr_link_map_list);
 	if (lstart == NULL || lstart->link < l->link)
@@ -304,7 +314,7 @@ pciintr_bitmap_find_lowest_irq(irq_bitmap, irqp)
 int
 pciintr_link_init()
 {
-	int entry, pin, error, link;
+	int entry, pin, link;
 	struct pcibios_intr_routing *pir;
 	struct pciintr_link_map *l;
 
@@ -314,7 +324,6 @@ pciintr_link_init()
 		return (1);
 	}
 
-	error = 0;
 	SIMPLEQ_INIT(&pciintr_link_map_list);
 
 	for (entry = 0; entry < pcibios_pir_table_nentries; entry++) {
@@ -353,7 +362,39 @@ pciintr_link_init()
 		}
 	}
 
-	return (error);
+	return (0);
+}
+
+/*
+ * No compatible PCI ICU found.
+ * Hopes the BIOS already setup the ICU.
+ */
+int
+pciintr_guess_irq()
+{
+	struct pciintr_link_map *l;
+	int irq, guessed = 0;
+
+	/*
+	 * Stage 1: If only one IRQ is available for the link, use it.
+	 */
+	for (l = SIMPLEQ_FIRST(&pciintr_link_map_list); l != NULL;
+	     l = SIMPLEQ_NEXT(l, list)) {
+		if (l->irq != I386_PCI_INTERRUPT_LINE_NO_CONNECTION)
+			continue;
+		if (pciintr_bitmap_count_irq(l->bitmap, &irq) == 1) {
+			l->irq = irq;
+			l->fixup_stage = 1;
+#ifdef PCIINTR_DEBUG
+			printf("pciintr_guess_irq (stage 1): "
+			    "guessing PIRQ 0x%02x to be IRQ %d\n",
+			    l->clink, l->irq);
+#endif
+			guessed = 1;
+		}
+	}
+
+	return (guessed ? 0 : -1);
 }
 
 int
@@ -611,7 +652,17 @@ pciintr_do_header_fixup(pc, tag)
 
 	if (l->irq == I386_PCI_INTERRUPT_LINE_NO_CONNECTION) {
 		/* Appropriate interrupt was not found. */
-		PCIBIOS_PRINTV((" WARNING: missing IRQ\n"));
+		if (pciintr_icu_tag == NULL &&
+		    irq != 0 && irq != I386_PCI_INTERRUPT_LINE_NO_CONNECTION) {
+			/*
+			 * Do not print warning,
+			 * if no compatible PCI ICU found,
+			 * but the irq is already assigned by BIOS.
+			 */
+			PCIBIOS_PRINTV(("\n"));
+		} else {
+			PCIBIOS_PRINTV((" WARNING: missing IRQ\n"));
+		}
 		return;
 	}
 
@@ -629,7 +680,7 @@ pciintr_do_header_fixup(pc, tag)
 		/* believe PCI IRQ Routing table */
 		PCIBIOS_PRINTV((" WARNING: overriding irq %d\n", irq));
 #else
-		/* believe PCI Interrupt Configuration Register (default)  */
+		/* believe PCI Interrupt Configuration Register (default) */
 		PCIBIOS_PRINTV((" WARNING: preserving irq %d\n", irq));
 		return;
 #endif
@@ -697,8 +748,21 @@ pci_intr_fixup(pc, iot, pciirq)
 	}
 
 	if (piit == NULL) {
-		printf("pci_intr_fixup: no compatible PCI ICU found\n");
-		return (-1);		/* non-fatal */
+		printf("pci_intr_fixup: no compatible PCI ICU found");
+		if (pcibios_pir_header.signature != 0 && icuid != 0)
+			printf(": ICU vendor 0x%04x product 0x%04x",
+			    PCI_VENDOR(icuid), PCI_PRODUCT(icuid));
+		printf("\n");
+		if (!(pcibios_flags & PCIBIOS_INTR_GUESS)) {
+			if (pciintr_link_init())
+				return (-1);	/* non-fatal */
+			if (pciintr_guess_irq())
+				return (-1);	/* non-fatal */
+			if (pciintr_header_fixup(pc))
+				return (1);	/* fatal */
+			return (0);		/* success! */
+		} else
+			return (-1);		/* non-fatal */
 	}
 
 	/*

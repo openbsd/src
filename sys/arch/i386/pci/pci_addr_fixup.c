@@ -1,4 +1,5 @@
-/*	$NetBSD: pci_addr_fixup.c,v 1.3 2000/05/31 16:38:55 uch Exp $	*/
+/*	$OpenBSD: pci_addr_fixup.c,v 1.2 2000/09/07 20:50:38 mickey Exp $	*/
+/*	$NetBSD: pci_addr_fixup.c,v 1.7 2000/08/03 20:10:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -70,9 +71,9 @@ void	pciaddr_print_devid __P((pci_chipset_tag_t, pcitag_t));
 #define PCIADDR_ISAMEM_RESERVE	(16 * 1024 * 1024)
 
 void
-pci_addr_fixup(pc, bus)
+pci_addr_fixup(pc, maxbus)
 	pci_chipset_tag_t pc;
-	int bus;
+	int maxbus;
 {
 	extern paddr_t avail_end;
 #ifdef PCIBIOSVERBOSE
@@ -96,7 +97,7 @@ pci_addr_fixup(pc, bus)
 	}, *srp;
 	paddr_t start;
 	int error;
-	
+
 	pciaddr.extent_mem = extent_create("PCI I/O memory space",
 					   PCIADDR_MEM_START, 
 					   PCIADDR_MEM_END,
@@ -112,7 +113,7 @@ pci_addr_fixup(pc, bus)
 	 * 1. check & reserve system BIOS setting.
 	 */
 	PCIBIOS_PRINTV((verbose_header, "System BIOS Setting"));
-	pci_device_foreach(pc, bus, pciaddr_resource_reserve);
+	pci_device_foreach(pc, maxbus, pciaddr_resource_reserve);
 	PCIBIOS_PRINTV((verbose_footer, pciaddr.nbogus));
 
 	/* 
@@ -148,7 +149,8 @@ pci_addr_fixup(pc, bus)
 	 */
 	PCIBIOS_PRINTV((verbose_header, "PCIBIOS fixup stage"));
 	pciaddr.nbogus = 0;
-	pci_device_foreach(pc, bus, pciaddr_resource_allocate);
+	/* XXX bus #0 only */
+	pci_device_foreach(pc, 0, pciaddr_resource_allocate);
 	PCIBIOS_PRINTV((verbose_footer, pciaddr.nbogus));
 
 }
@@ -187,7 +189,7 @@ pciaddr_resource_manage(pc, tag, func)
 	pcireg_t val, mask;
 	bus_addr_t addr;
 	bus_size_t size;
-	int error, useport, usemem, mapreg, type, reg_start, reg_end;
+	int error, useport, usemem, mapreg, type, reg_start, reg_end, width;
 
 	val = pci_conf_read(pc, tag, PCI_BHLC_REG);
 	switch (PCI_HDRTYPE_TYPE(val)) {
@@ -210,7 +212,7 @@ pciaddr_resource_manage(pc, tag, func)
 	}
 	error = useport = usemem = 0;
     
-	for (mapreg = reg_start; mapreg < reg_end; mapreg += 4) {
+	for (mapreg = reg_start; mapreg < reg_end; mapreg += width) {
 		/* inquire PCI device bus space requirement */
 		val = pci_conf_read(pc, tag, mapreg);
 		pci_conf_write(pc, tag, mapreg, ~0);
@@ -219,7 +221,21 @@ pciaddr_resource_manage(pc, tag, func)
 		pci_conf_write(pc, tag, mapreg, val);
 	
 		type = PCI_MAPREG_TYPE(val);
+		width = 4;
 		if (type == PCI_MAPREG_TYPE_MEM) {
+			if (PCI_MAPREG_MEM_TYPE(val) == 
+			    PCI_MAPREG_MEM_TYPE_64BIT) {
+				/* XXX We could examine the upper 32 bits
+				 * XXX of the BAR here, but we are totally 
+				 * XXX unprepared to handle a non-zero value, 
+				 * XXX either here or anywhere else in 
+				 * XXX i386-land. 
+				 * XXX So just arrange to not look at the
+				 * XXX upper 32 bits, lest we misinterpret
+				 * XXX it as a 32-bit BAR set to zero. 
+				 */
+			    width = 8;
+			}
 			size = PCI_MAPREG_MEM_SIZE(mask);
 			ex = pciaddr.extent_mem;
 		} else {
@@ -293,17 +309,22 @@ pciaddr_do_resource_allocate(pc, tag, mapreg, ex, type, addr, size)
 	pci_conf_write(pc, tag, mapreg, *addr);
 	/* check */
 #ifdef PCIBIOSVERBOSE
-	if (!pcibiosverbose) {
+	if (!pcibiosverbose)
+#endif 
+	{
 		printf("pci_addr_fixup: ");
 		pciaddr_print_devid(pc, tag);
 	}
-#endif 
+
 	if (pciaddr_ioaddr(pci_conf_read(pc, tag, mapreg)) != *addr) {
 		pci_conf_write(pc, tag, mapreg, 0); /* clear */
 		printf("fixup failed. (new address=%#x)\n", (unsigned)*addr);
 		return (1);
 	}
-	PCIBIOS_PRINTV(("new address 0x%08x\n", (unsigned)*addr));
+#ifdef PCIBIOSVERBOSE
+	if (!pcibiosverbose)
+#endif 
+		printf("new address 0x%08x\n", *addr);
 
 	return (0);
 }

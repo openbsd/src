@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibios.h,v 1.6 2000/09/04 16:58:41 mickey Exp $	*/
+/*	$OpenBSD: pcibios.h,v 1.7 2000/09/07 20:50:39 mickey Exp $	*/
 /*	$NetBSD: pcibios.h,v 1.2 2000/04/28 17:15:16 uch Exp $	*/
 
 /*
@@ -33,6 +33,7 @@
 #define	PCIBIOS_ADDR_FIXUP	0x001
 #define	PCIBIOS_BUS_FIXUP	0x002
 #define	PCIBIOS_INTR_FIXUP	0x004
+#define	PCIBIOS_INTR_GUESS	0x008
 
 /*
  * PCI BIOS return codes.

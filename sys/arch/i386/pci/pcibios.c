@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibios.c,v 1.11 2000/09/05 21:44:14 mickey Exp $	*/
+/*	$OpenBSD: pcibios.c,v 1.12 2000/09/07 20:50:39 mickey Exp $	*/
 /*	$NetBSD: pcibios.c,v 1.5 2000/08/01 05:23:59 uch Exp $	*/
 
 /*
@@ -133,7 +133,7 @@ struct pcibios_softc {
 	struct  device sc_dev;
 };
 
-void	pcibios_pir_init __P((struct pcibios_softc *));
+struct pcibios_intr_routing *pcibios_pir_init __P((struct pcibios_softc *));
 
 int	pcibios_get_status __P((struct pcibios_softc *,
 	    u_int32_t *, u_int32_t *, u_int32_t *,
@@ -216,10 +216,9 @@ pcibiosattach(parent, self, aux)
 	/*
 	 * Find the PCI IRQ Routing table.
 	 */
-	pcibios_pir_init((struct pcibios_softc *)self);
 
 	if (!(pcibios_flags & PCIBIOS_INTR_FIXUP) &&
-	    pcibios_pir_table != NULL) {
+	    pcibios_pir_init((struct pcibios_softc *)self) != NULL) {
 		int rv;
 		u_int16_t pciirq;
 
@@ -256,35 +255,31 @@ pcibiosattach(parent, self, aux)
 		pci_addr_fixup(NULL, pcibios_max_bus);
 }
 
-void
+struct pcibios_intr_routing *
 pcibios_pir_init(sc)
 	struct pcibios_softc *sc;
 {
-	char devinfo[256];
 	paddr_t pa;
-	caddr_t p;
-	unsigned char cksum;
-	u_int16_t tablesize;
-	u_int8_t rev_maj, rev_min;
-	int i;
 
+	pcibios_pir_table = NULL;
 	for (pa = PCI_IRQ_TABLE_START; pa < PCI_IRQ_TABLE_END; pa += 16) {
-		p = (caddr_t)ISA_HOLE_VADDR(pa);
-		if (*(int *)p != BIOS32_MAKESIG('$', 'P', 'I', 'R'))
+		char devinfo[256];
+		u_int8_t *p, cksum;
+		struct pcibios_pir_header *pirh;
+		int i;
+
+		pirh = (struct pcibios_pir_header *)p = ISA_HOLE_VADDR(pa);
+		if (pirh->signature != BIOS32_MAKESIG('$', 'P', 'I', 'R'))
 			continue;
 		
-		rev_min = *(p + 4);
-		rev_maj = *(p + 5);
-		tablesize = *(u_int16_t *)(p + 6);
-
 		cksum = 0;
-		for (i = 0; i < tablesize; i++)
-			cksum += *(unsigned char *)(p + i);
+		for (i = 0; i < pirh->tablesize; i++)
+			cksum += p[i];
 
 		printf("%s: PCI IRQ Routing Table rev. %d.%d found at 0x%lx, "
-		    "size %d bytes (%d entries)\n",
-		    sc->sc_dev.dv_xname, rev_maj, rev_min, pa,
-		    tablesize, (tablesize - 32) / 16);
+		    "size %d bytes (%d entries)\n", sc->sc_dev.dv_xname,
+		    pirh->version >> 8, pirh->version & 0xff, pa,
+		    pirh->tablesize, (pirh->tablesize - 32) / 16);
 
 		if (cksum != 0) {
 			printf("%s: bad IRQ table checksum\n",
@@ -292,13 +287,12 @@ pcibios_pir_init(sc)
 			continue;
 		}
 
-		if (tablesize < 32 || (tablesize % 16) != 0) {
-			printf("%s: bad IRQ table size\n",
-			    sc->sc_dev.dv_xname);
+		if (pirh->tablesize < 32 || (pirh->tablesize % 16) != 0) {
+			printf("%s: bad IRQ table size\n", sc->sc_dev.dv_xname);
 			continue;
 		}
 
-		if (rev_maj != 1 || rev_min != 0) {
+		if (pirh->version != 0x0100) {
 			printf("%s: unsupported IRQ table version\n",
 			    sc->sc_dev.dv_xname);
 			continue;
@@ -307,32 +301,25 @@ pcibios_pir_init(sc)
 		/*
 		 * We can handle this table!  Make a copy of it.
 		 */
-		bcopy(p, &pcibios_pir_header, 32);
-		pcibios_pir_table = malloc(tablesize - 32, M_DEVBUF,
-		    M_NOWAIT);
+		pcibios_pir_header = *pirh;
+		pcibios_pir_table =
+		    malloc(pirh->tablesize - 32, M_DEVBUF, M_NOWAIT);
 		if (pcibios_pir_table == NULL) {
-			printf("%s: no memory for $PIR\n",
-			    sc->sc_dev.dv_xname);
-			return;
+			printf("%s: no memory for $PIR\n", sc->sc_dev.dv_xname);
+			return NULL;
 		}
-		bcopy(p + 32, pcibios_pir_table, tablesize - 32);
-		pcibios_pir_table_nentries = (tablesize - 32) / 16;
+		bcopy(p + 32, pcibios_pir_table, pirh->tablesize - 32);
+		pcibios_pir_table_nentries = (pirh->tablesize - 32) / 16;
 
 		printf("%s: PCI Interrupt Router at %03d:%02d:%01d",
-		    sc->sc_dev.dv_xname, pcibios_pir_header.router_bus,
-		    PIR_DEVFUNC_DEVICE(pcibios_pir_header.router_devfunc),
-		    PIR_DEVFUNC_FUNCTION(pcibios_pir_header.router_devfunc));
-		if (pcibios_pir_header.compat_router != 0) {
-			pci_devinfo(pcibios_pir_header.compat_router, 0, 0,
-			    devinfo);
+		    sc->sc_dev.dv_xname, pirh->router_bus,
+		    PIR_DEVFUNC_DEVICE(pirh->router_devfunc),
+		    PIR_DEVFUNC_FUNCTION(pirh->router_devfunc));
+		if (pirh->compat_router != 0) {
+			pci_devinfo(pirh->compat_router, 0, 0, devinfo);
 			printf(" (%s)", devinfo);
 		}
 		printf("\n");
-		pcibios_print_exclirq(sc);
-#ifdef PCIINTR_DEBUG
-		pcibios_print_pir_table();
-#endif
-		return;
 	}
 
 	/*
@@ -342,30 +329,34 @@ pcibios_pir_init(sc)
 	 * XXX The interface to this call sucks; just allocate enough
 	 * XXX room for 32 entries.
 	 */
-	pcibios_pir_table_nentries = 32;
-	pcibios_pir_table = malloc(pcibios_pir_table_nentries *
-	    sizeof(*pcibios_pir_table), M_DEVBUF, M_NOWAIT);
 	if (pcibios_pir_table == NULL) {
-		printf("%s: no memory for $PIR\n",
-		    sc->sc_dev.dv_xname);
-		return;
+
+		pcibios_pir_table_nentries = 32;
+		pcibios_pir_table = malloc(pcibios_pir_table_nentries *
+		    sizeof(*pcibios_pir_table), M_DEVBUF, M_NOWAIT);
+		if (pcibios_pir_table == NULL) {
+			printf("%s: no memory for $PIR\n", sc->sc_dev.dv_xname);
+			return NULL;
+		}
+		if (pcibios_get_intr_routing(sc, pcibios_pir_table,
+		    &pcibios_pir_table_nentries,
+		    &pcibios_pir_header.exclusive_irq) != PCIBIOS_SUCCESS) {
+			printf("%s: PCI IRQ Routing information unavailable.\n",
+			    sc->sc_dev.dv_xname);
+			free(pcibios_pir_table, M_DEVBUF);
+			pcibios_pir_table = NULL;
+			pcibios_pir_table_nentries = 0;
+			return NULL;
+		}
+		printf("%s: PCI BIOS has %d Interrupt Routing table entries\n",
+		    sc->sc_dev.dv_xname, pcibios_pir_table_nentries);
 	}
-	if (pcibios_get_intr_routing(sc, pcibios_pir_table,
-	    &pcibios_pir_table_nentries,
-	    &pcibios_pir_header.exclusive_irq) != PCIBIOS_SUCCESS) {
-		printf("%s: No PCI IRQ Routing information available.\n",
-		    sc->sc_dev.dv_xname);
-		free(pcibios_pir_table, M_DEVBUF);
-		pcibios_pir_table = NULL;
-		pcibios_pir_table_nentries = 0;
-		return;
-	}
-	printf("%s: PCI BIOS has %d Interrupt Routing table entries\n",
-	    sc->sc_dev.dv_xname, pcibios_pir_table_nentries);
+
 	pcibios_print_exclirq(sc);
 #ifdef PCIINTR_DEBUG
 	pcibios_print_pir_table();
 #endif
+	return pcibios_pir_table;
 }
 
 int
@@ -374,16 +365,16 @@ pcibios_get_status(sc, rev_maj, rev_min, mech1, mech2, scmech1, scmech2, maxbus)
 	u_int32_t *rev_maj, *rev_min, *mech1, *mech2, *scmech1, *scmech2,
 	    *maxbus;
 {
-	u_int16_t ax, bx, cx;
-	u_int32_t edx;
+	u_int32_t ax, bx, cx, edx;
 	int rv;
 
-	__asm __volatile("lcall (%%edi)					; \
-			jc 1f						; \
-			xor %%ah, %%ah					; \
-		1:"
+	__asm __volatile("lcall	(%%edi)\n\t"
+			 "jc	1f\n\t"
+			 "xor	%%ah, %%ah\n"
+		    "1:"
 		: "=a" (ax), "=b" (bx), "=c" (cx), "=d" (edx)
-		: "0" (0xb101), "D" (&pcibios_entry));
+		: "0" (0xb101), "D" (&pcibios_entry)
+		: "cc", "memory");
 
 	rv = pcibios_return_code(sc, ax, "pcibios_get_status");
 	if (rv != PCIBIOS_SUCCESS)
@@ -413,28 +404,31 @@ pcibios_get_intr_routing(sc, table, nentries, exclirq)
 	int *nentries;
 	u_int16_t *exclirq;
 {
-	u_int16_t ax, bx;
+	u_int32_t ax, bx;
 	int rv;
 	struct {
 		u_int16_t size;
-		caddr_t offset;
+		u_int32_t offset;
 		u_int16_t segment;
 	} __attribute__((__packed__)) args;
 
 	args.size = *nentries * sizeof(*table);
-	args.offset = (caddr_t)table;
+	args.offset = (u_int32_t)table;
 	args.segment = GSEL(GDATA_SEL, SEL_KPL);
 
 	memset(table, 0, args.size);
 
-	__asm __volatile("lcall (%%esi)					; \
-			jc 1f						; \
-			xor %%ah, %%ah					; \
-		1:	movw %w2, %%ds					; \
-			movw %w2, %%es"
+	__asm __volatile("pushl	%%ds\n\t"
+			 "pushl	%%es\n\t"
+			 "lcall	(%%esi)\n\t"
+			 "jc	1f\n\t"
+			 "xor	%%ah, %%ah\n"
+		    "1:\n\t"
+			 "popl	%%es\n\t"
+			 "popl	%%ds"
 		: "=a" (ax), "=b" (bx)
-		: "r" GSEL(GDATA_SEL, SEL_KPL), "0" (0xb10e), "1" (0),
-		  "D" (&args), "S" (&pcibios_entry));
+		: "0" (0xb10e), "1" (0), "D" (&args), "S" (&pcibios_entry)
+		: "cc", "memory");
 
 	rv = pcibios_return_code(sc, ax, "pcibios_get_intr_routing");
 	if (rv != PCIBIOS_SUCCESS)
