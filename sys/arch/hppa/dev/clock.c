@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.7 2000/02/09 05:04:22 mickey Exp $	*/
+/*	$OpenBSD: clock.c,v 1.8 2000/02/09 05:51:21 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -61,19 +61,7 @@ cpu_initclocks()
 {
 	extern u_int cpu_hzticks;
 	u_int time_inval;
-#ifdef USELEDS
-	static u_int hbcnt = 0;
 
-	if (!(hbcnt % (hz / 8))) {
-		register u_int r = (hbcnt / (hz / 8)) & 7;
-
-		if (r == 1 || r == 3)
-			ledctl(PALED_HEARTBEAT, 0, 0);
-		else
-			ledctl(0, PALED_HEARTBEAT, 0);
-	}
-	hbcnt++;
-#endif
 	/* Start the interval timer. */
 	mfctl(CR_ITMR, time_inval);
 	mtctl(time_inval + cpu_hzticks, CR_ITMR);
@@ -84,8 +72,13 @@ clock_intr (v)
 	void *v;
 {
 	struct trapframe *frame = v;
+#ifdef USELEDS
+	static u_int hbcnt = 0;
 
-/*	printf ("#"); */
+	if (!(hbcnt % (hz / 8)) && ((hbcnt / (hz / 8)) & 7) < 4)
+		ledctl(0, 0, PALED_HEARTBEAT);
+	hbcnt++;
+#endif
 
 	/* printf ("clock int 0x%x @ 0x%x for %p\n", t,
 	   frame->tf_iioq_head, curproc); */
