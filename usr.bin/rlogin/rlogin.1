@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rlogin.1,v 1.2 1996/06/26 05:38:32 deraadt Exp $
+.\"	$OpenBSD: rlogin.1,v 1.3 1996/07/04 20:55:40 deraadt Exp $
 .\"	$NetBSD: rlogin.1,v 1.4 1995/08/18 15:07:35 pk Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -115,6 +115,13 @@ This may impact response time and
 .Tn CPU
 utilization, but provides
 increased security.
+.It Fl l
+The
+.Fl l
+option specifies a different
+.Ar username
+for the remote login.
+If this option is not specified, your local username will be used.
 .El
 .Pp
 A line of the form ``<escape char>.'' disconnects from the remote host.
