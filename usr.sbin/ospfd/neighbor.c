@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.7 2005/02/09 16:08:06 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.8 2005/02/09 16:14:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -654,7 +654,20 @@ nbr_to_ctl(struct nbr *nbr)
 		nctl.ls_retrans_lst_cnt++;
 
 	nctl.nbr_state = nbr->state;
-	nctl.iface_state = nbr->iface->state;
+
+	/*
+	 * We need to trick a bit to show the remote iface state.
+	 * The idea is to print DR, BDR or DROther dependent on
+	 * the type of the neighbor.
+	 */
+	if (nbr->iface->dr == nbr)
+		nctl.iface_state = IF_STA_DR;
+	else if (nbr->iface->bdr == nbr)
+		nctl.iface_state = IF_STA_BACKUP;
+	else if (nbr->iface->state & IF_STA_MULTI)
+		nctl.iface_state = IF_STA_DROTHER;
+	else
+		nctl.iface_state = nbr->iface->state;
 
 	nctl.state_chng_cnt = nbr->stats.sta_chng;
 
