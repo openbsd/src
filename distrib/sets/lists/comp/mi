@@ -4519,8 +4519,12 @@
 ./usr/share/man/cat3/svc_getargs.0
 ./usr/share/man/cat3/svc_getcaller.0
 ./usr/share/man/cat3/svc_getreq.0
+./usr/share/man/cat3/svc_getreq_common.0
+./usr/share/man/cat3/svc_getreq_poll.0
 ./usr/share/man/cat3/svc_getreqset.0
 ./usr/share/man/cat3/svc_getreqset2.0
+./usr/share/man/cat3/svc_max_pollfd.0
+./usr/share/man/cat3/svc_pollfd.0
 ./usr/share/man/cat3/svc_register.0
 ./usr/share/man/cat3/svc_run.0
 ./usr/share/man/cat3/svc_sendreply.0
