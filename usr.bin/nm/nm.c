@@ -1,4 +1,4 @@
-/*	$OpenBSD: nm.c,v 1.16 2002/02/16 21:27:50 millert Exp $	*/
+/*	$OpenBSD: nm.c,v 1.17 2003/04/05 17:15:06 deraadt Exp $	*/
 /*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)nm.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: nm.c,v 1.16 2002/02/16 21:27:50 millert Exp $";
+static char rcsid[] = "$OpenBSD: nm.c,v 1.17 2003/04/05 17:15:06 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -259,8 +259,10 @@ show_archive(fname, fp)
 		 * on each output line
 		 */
 		p = name;
-		if (print_file_each_line)
-			p += sprintf(p, "%s:", fname);
+		if (print_file_each_line) {
+			snprintf(p, baselen, "%s:", fname);
+			p += strlen(p);
+		}
 #ifdef AR_EFMT1
 		/*
 		 * BSD 4.4 extended AR format: #1/<namelen>, with name as the
