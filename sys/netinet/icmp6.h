@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.h,v 1.17 2001/12/06 03:28:49 itojun Exp $	*/
+/*	$OpenBSD: icmp6.h,v 1.18 2001/12/07 09:33:10 itojun Exp $	*/
 /*	$KAME: icmp6.h,v 1.39 2001/02/06 03:48:06 itojun Exp $	*/
 
 /*
@@ -630,8 +630,6 @@ do {								\
 #define icmp6_ifoutstat_inc(ifp, type, code) \
 do { \
 		icmp6_ifstat_inc(ifp, ifs6_out_msg); \
- 		if (type < ICMP6_INFOMSG_MASK) \
- 			icmp6_ifstat_inc(ifp, ifs6_out_error); \
 		switch(type) { \
 		 case ICMP6_DST_UNREACH: \
 			 icmp6_ifstat_inc(ifp, ifs6_out_dstunreach); \

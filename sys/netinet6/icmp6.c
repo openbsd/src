@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.50 2001/12/07 09:16:07 itojun Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.51 2001/12/07 09:33:10 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -436,6 +436,8 @@ icmp6_input(mp, offp, proto)
 	int icmp6len = m->m_pkthdr.len - *offp;
 	int code, sum, noff;
 
+	icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_msg);
+
 #ifndef PULLDOWN_TEST
 	IP6_EXTHDR_CHECK(m, off, sizeof(struct icmp6_hdr), IPPROTO_DONE);
 	/* m might change if M_LOOP.  So, call mtod after this */
@@ -449,6 +451,7 @@ icmp6_input(mp, offp, proto)
 	ip6 = mtod(m, struct ip6_hdr *);
 	if (icmp6len < sizeof(struct icmp6_hdr)) {
 		icmp6stat.icp6s_tooshort++;
+		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_error);
 		goto freeit;
 	}
 
@@ -461,6 +464,7 @@ icmp6_input(mp, offp, proto)
 	IP6_EXTHDR_GET(icmp6, struct icmp6_hdr *, m, off, sizeof(*icmp6));
 	if (icmp6 == NULL) {
 		icmp6stat.icp6s_tooshort++;
+		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_error);
 		return IPPROTO_DONE;
 	}
 #endif
@@ -471,6 +475,7 @@ icmp6_input(mp, offp, proto)
 		    "ICMP6 checksum error(%d|%x) %s\n",
 		    icmp6->icmp6_type, sum, ip6_sprintf(&ip6->ip6_src)));
 		icmp6stat.icp6s_checksum++;
+		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_error);
 		goto freeit;
 	}
 
@@ -493,9 +498,6 @@ icmp6_input(mp, offp, proto)
 #endif
 
 	icmp6stat.icp6s_inhist[icmp6->icmp6_type]++;
-	icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_msg);
-	if (icmp6->icmp6_type < ICMP6_INFOMSG_MASK)
-		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_error);
 
 	switch (icmp6->icmp6_type) {
 	case ICMP6_DST_UNREACH:
@@ -2172,7 +2174,8 @@ icmp6_reflect(m, off)
 
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 
-	ip6_output(m, NULL, NULL, 0, NULL, &outif);
+	if (ip6_output(m, NULL, NULL, 0, NULL, &outif) != 0 && outif)
+		icmp6_ifstat_inc(outif, ifs6_out_error);
 
 	if (outif)
 		icmp6_ifoutstat_inc(outif, type, code);
@@ -2440,7 +2443,6 @@ icmp6_redirect_output(m0, rt)
 	struct nd_redirect *nd_rd;
 	size_t maxlen;
 	u_char *p;
-	struct ifnet *outif = NULL;
 	struct sockaddr_in6 src_sa;
 
 	icmp6_errcount(&icmp6stat.icp6s_outerrhist, ND_REDIRECT, 0);
@@ -2688,11 +2690,11 @@ noredhdropt:;
 		= in6_cksum(m, IPPROTO_ICMPV6, sizeof(*ip6), ntohs(ip6->ip6_plen));
 
 	/* send the packet to outside... */
-	ip6_output(m, NULL, NULL, 0, NULL, &outif);
-	if (outif) {
-		icmp6_ifstat_inc(outif, ifs6_out_msg);
-		icmp6_ifstat_inc(outif, ifs6_out_redirect);
-	}
+	if (ip6_output(m, NULL, NULL, 0, NULL, NULL) != 0)
+		icmp6_ifstat_inc(ifp, ifs6_out_error);
+
+	icmp6_ifstat_inc(ifp, ifs6_out_msg);
+	icmp6_ifstat_inc(ifp, ifs6_out_redirect);
 	icmp6stat.icp6s_outhist[ND_REDIRECT]++;
 
 	return;
