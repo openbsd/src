@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.9 2003/06/12 22:30:23 pvalchev Exp $	*/
+/* $OpenBSD: utils.c,v 1.10 2003/06/12 23:09:30 deraadt Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -43,332 +43,284 @@
 int
 atoiwi(char *str)
 {
-    int len;
+	int len;
 
-    len = strlen(str);
-    if (len != 0)
-    {
-	if (strncmp(str, "infinity", len) == 0 ||
-	    strncmp(str, "all",      len) == 0 ||
-	    strncmp(str, "maximum",  len) == 0)
-	{
-	    return(Infinity);
+	len = strlen(str);
+	if (len != 0) {
+		if (strncmp(str, "infinity", len) == 0 ||
+		    strncmp(str, "all", len) == 0 ||
+		    strncmp(str, "maximum", len) == 0) {
+			return (Infinity);
+		} else if (str[0] == '-')
+			return (Invalid);
+		else
+			return (atoi(str));
 	}
-	else if (str[0] == '-')
-	{
-	    return(Invalid);
-	}
-	else
-	{
-	    return(atoi(str));
-	}
-    }
-    return(0);
+	return (0);
 }
 
 /*
- *  itoa - convert integer (decimal) to ascii string for positive numbers
- *  	   only (we don't bother with negative numbers since we know we
- *	   don't use them).
+ * itoa - convert integer (decimal) to ascii string for positive numbers
+ * only (we don't bother with negative numbers since we know we
+ * don't use them).
  */
-
-				/*
-				 * How do we know that 16 will suffice?
-				 * Because the biggest number that we will
-				 * ever convert will be 2^32-1, which is 10
-				 * digits.
-				 */
-
 char *
 itoa(int val)
 {
-    char *ptr;
-    static char buffer[16];	/* result is built here */
-    				/* 16 is sufficient since the largest number
-				   we will ever convert will be 2^32-1,
-				   which is 10 digits. */
+	static char buffer[16];	/* result is built here */
+	char *ptr;
 
-    ptr = buffer + sizeof(buffer);
-    *--ptr = '\0';
-    if (val == 0)
-    {
-	*--ptr = '0';
-    }
-    else while (val != 0)
-    {
-	*--ptr = (val % 10) + '0';
-	val /= 10;
-    }
-    return(ptr);
+	/*
+	 * 16 is sufficient since the largest number we will ever convert
+	 * will be 2^32-1, which is 10 digits.
+	 */
+	ptr = buffer + sizeof(buffer);
+	*--ptr = '\0';
+	if (val == 0) {
+		*--ptr = '0';
+	} else {
+		while (val != 0) {
+			*--ptr = (val % 10) + '0';
+			val /= 10;
+		}
+	}
+	return (ptr);
 }
 
 /*
- *  itoa7(val) - like itoa, except the number is right justified in a 7
- *	character field.  This code is a duplication of itoa instead of
- *	a front end to a more general routine for efficiency.
+ * itoa7(val) - like itoa, except the number is right justified in a 7
+ * character field.  This code is a duplication of itoa instead of
+ * a front end to a more general routine for efficiency.
  */
-
 char *
 itoa7(int val)
 {
-    char *ptr;
-    static char buffer[25];	/* result is built here */
+	static char buffer[25];	/* result is built here */
+	char *ptr;
 
-    ptr = buffer + sizeof(buffer);
-    *--ptr = '\0';
-    if (val == 0)
-    {
-	*--ptr = '0';
-    }
-    else while (val != 0)
-    {
-	*--ptr = (val % 10) + '0';
-	val /= 10;
-    }
-    while (ptr > buffer + sizeof(buffer) - 7)
-    {
-	*--ptr = ' ';
-    }
-    return(ptr);
+	ptr = buffer + sizeof(buffer);
+	*--ptr = '\0';
+	if (val == 0) {
+		*--ptr = '0';
+	} else {
+		while (val != 0) {
+			*--ptr = (val % 10) + '0';
+			val /= 10;
+		}
+	}
+	while (ptr > buffer + sizeof(buffer) - 7)
+		*--ptr = ' ';
+	return (ptr);
 }
 
 /*
- *  digits(val) - return number of decimal digits in val.  Only works for
- *	positive numbers.  If val <= 0 then digits(val) == 0.
+ * digits(val) - return number of decimal digits in val.  Only works for
+ * positive numbers.  If val <= 0 then digits(val) == 0.
  */
-
 int
 digits(int val)
 {
-    int cnt = 0;
+	int cnt = 0;
 
-    while (val > 0)
-    {
-	cnt++;
-	val /= 10;
-    }
-    return(cnt);
+	while (val > 0) {
+		cnt++;
+		val /= 10;
+	}
+	return (cnt);
 }
 
 /*
- *  strecpy(to, from) - copy string "from" into "to" and return a pointer
- *	to the END of the string "to".
+ * strecpy(to, from) - copy string "from" into "to" and return a pointer
+ * to the END of the string "to".
  */
-
 char *
 strecpy(char *to, char *from)
 {
-    while ((*to++ = *from++) != '\0');
-    return(--to);
+	while ((*to++ = *from++) != '\0')
+		;
+	return (--to);
 }
 
 /*
  * string_index(string, array) - find string in array and return index
  */
-
 int
 string_index(char *string, char **array)
 {
-    int i = 0;
+	int i = 0;
 
-    while (*array != NULL)
-    {
-	if (strcmp(string, *array) == 0)
-	{
-	    return(i);
+	while (*array != NULL) {
+		if (strcmp(string, *array) == 0)
+			return (i);
+		array++;
+		i++;
 	}
-	array++;
-	i++;
-    }
-    return(-1);
+	return (-1);
 }
 
 /*
  * argparse(line, cntp) - parse arguments in string "line", separating them
- *	out into an argv-like array, and setting *cntp to the number of
- *	arguments encountered.  This is a simple parser that doesn't understand
- *	squat about quotes.
+ * out into an argv-like array, and setting *cntp to the number of
+ * arguments encountered.  This is a simple parser that doesn't understand
+ * squat about quotes.
  */
-
 char **
 argparse(char *line, int *cntp)
 {
-    char *from;
-    char *to;
-    int cnt;
-    int ch;
-    int length;
-    int lastch;
-    char **argv;
-    char **argarray;
-    char *args;
+	char **argv, **argarray, *args, *from, *to;
+	int cnt, ch, length, lastch;
 
-    /* unfortunately, the only real way to do this is to go thru the
-       input string twice. */
+	/*
+	 * unfortunately, the only real way to do this is to go thru the
+	 * input string twice.
+	 */
 
-    /* step thru the string counting the white space sections */
-    from = line;
-    lastch = cnt = length = 0;
-    while ((ch = *from++) != '\0')
-    {
-	length++;
-	if (ch == ' ' && lastch != ' ')
-	{
-	    cnt++;
+	/* step thru the string counting the white space sections */
+	from = line;
+	lastch = cnt = length = 0;
+	while ((ch = *from++) != '\0') {
+		length++;
+		if (ch == ' ' && lastch != ' ')
+			cnt++;
+		lastch = ch;
 	}
-	lastch = ch;
-    }
 
-    /* add three to the count:  one for the initial "dummy" argument,
-       one for the last argument and one for NULL */
-    cnt += 3;
+	/*
+	 * add three to the count:  one for the initial "dummy" argument, one
+	 * for the last argument and one for NULL
+	 */
+	cnt += 3;
 
-    /* allocate a char * array to hold the pointers */
-    argarray = (char **)malloc(cnt * sizeof(char *));
+	/* allocate a char * array to hold the pointers */
+	argarray = (char **) malloc(cnt * sizeof(char *));
 
-    /* allocate another array to hold the strings themselves */
-    args = (char *)malloc(length+2);
+	/* allocate another array to hold the strings themselves */
+	args = (char *) malloc(length + 2);
 
-    /* initialization for main loop */
-    from = line;
-    to = args;
-    argv = argarray;
-    lastch = '\0';
+	/* initialization for main loop */
+	from = line;
+	to = args;
+	argv = argarray;
+	lastch = '\0';
 
-    /* create a dummy argument to keep getopt happy */
-    *argv++ = to;
-    *to++ = '\0';
-    cnt = 2;
+	/* create a dummy argument to keep getopt happy */
+	*argv++ = to;
+	*to++ = '\0';
+	cnt = 2;
 
-    /* now build argv while copying characters */
-    *argv++ = to;
-    while ((ch = *from++) != '\0')
-    {
-	if (ch != ' ')
-	{
-	    if (lastch == ' ')
-	    {
-		*to++ = '\0';
-		*argv++ = to;
-		cnt++;
-	    }
-	    *to++ = ch;
+	/* now build argv while copying characters */
+	*argv++ = to;
+	while ((ch = *from++) != '\0') {
+		if (ch != ' ') {
+			if (lastch == ' ') {
+				*to++ = '\0';
+				*argv++ = to;
+				cnt++;
+			}
+			*to++ = ch;
+		}
+		lastch = ch;
 	}
-	lastch = ch;
-    }
-    *to++ = '\0';
+	*to++ = '\0';
 
-    /* set cntp and return the allocated array */
-    *cntp = cnt;
-    return(argarray);
+	/* set cntp and return the allocated array */
+	*cntp = cnt;
+	return (argarray);
 }
 
 /*
- *  percentages(cnt, out, new, old, diffs) - calculate percentage change
- *	between array "old" and "new", putting the percentages i "out".
- *	"cnt" is size of each array and "diffs" is used for scratch space.
- *	The array "old" is updated on each call.
- *	The routine assumes modulo arithmetic.  This function is especially
- *	useful on BSD mchines for calculating cpu state percentages.
+ * percentages(cnt, out, new, old, diffs) - calculate percentage change
+ * between array "old" and "new", putting the percentages i "out".
+ * "cnt" is size of each array and "diffs" is used for scratch space.
+ * The array "old" is updated on each call.
+ * The routine assumes modulo arithmetic.  This function is especially
+ * useful on BSD mchines for calculating cpu state percentages.
  */
-
 int
 percentages(int cnt, int *out, long *new, long *old, long *diffs)
 {
-    int i;
-    long change;
-    long total_change;
-    long *dp;
-    long half_total;
+	long change, total_change, *dp, half_total;
+	int i;
 
-    /* initialization */
-    total_change = 0;
-    dp = diffs;
+	/* initialization */
+	total_change = 0;
+	dp = diffs;
 
-    /* calculate changes for each state and the overall change */
-    for (i = 0; i < cnt; i++)
-    {
-	if ((change = *new - *old) < 0)
-	{
-	    /* this only happens when the counter wraps */
-	    change = ((unsigned int)*new-(unsigned int)*old);
+	/* calculate changes for each state and the overall change */
+	for (i = 0; i < cnt; i++) {
+		if ((change = *new - *old) < 0) {
+			/* this only happens when the counter wraps */
+			change = ((unsigned int)*new - (unsigned int)*old);
+		}
+		total_change += (*dp++ = change);
+		*old++ = *new++;
 	}
-	total_change += (*dp++ = change);
-	*old++ = *new++;
-    }
 
-    /* avoid divide by zero potential */
-    if (total_change == 0)
-    {
-	total_change = 1;
-    }
+	/* avoid divide by zero potential */
+	if (total_change == 0)
+		total_change = 1;
 
-    /* calculate percentages based on overall change, rounding up */
-    half_total = total_change / 2l;
-    for (i = 0; i < cnt; i++)
-    {
-	*out++ = ((*diffs++ * 1000 + half_total) / total_change);
-    }
+	/* calculate percentages based on overall change, rounding up */
+	half_total = total_change / 2l;
+	for (i = 0; i < cnt; i++)
+		*out++ = ((*diffs++ * 1000 + half_total) / total_change);
 
-    /* return the total in case the caller wants to use it */
-    return(total_change);
+	/* return the total in case the caller wants to use it */
+	return (total_change);
 }
 
-/* format_time(seconds) - format number of seconds into a suitable
- *		display that will fit within 6 characters.  Note that this
- *		routine builds its string in a static area.  If it needs
- *		to be called more than once without overwriting previous data,
- *		then we will need to adopt a technique similar to the
- *		one used for format_k.
+/*
+ * format_time(seconds) - format number of seconds into a suitable display
+ * that will fit within 6 characters.  Note that this routine builds its
+ * string in a static area.  If it needs to be called more than once without
+ * overwriting previous data, then we will need to adopt a technique similar
+ * to the one used for format_k.
  */
 
-/* Explanation:
-   We want to keep the output within 6 characters.  For low values we use
-   the format mm:ss.  For values that exceed 999:59, we switch to a format
-   that displays hours and fractions:  hhh.tH.  For values that exceed
-   999.9, we use hhhh.t and drop the "H" designator.  For values that
-   exceed 9999.9, we use "???".
+/*
+ * Explanation: We want to keep the output within 6 characters.  For low
+ * values we use the format mm:ss.  For values that exceed 999:59, we switch
+ * to a format that displays hours and fractions:  hhh.tH.  For values that
+ * exceed 999.9, we use hhhh.t and drop the "H" designator.  For values that
+ * exceed 9999.9, we use "???".
  */
 
 char *
 format_time(time_t seconds)
 {
-    static char result[10];
+	static char result[10];
 
-    /* sanity protection */
-    if (seconds < 0 || seconds > (99999l * 360l))
-    {
-	strlcpy(result, "   ???", sizeof result);
-    }
-    else if (seconds >= (1000l * 60l))
-    {
-	/* alternate (slow) method displaying hours and tenths */
-	snprintf(result, sizeof(result), "%5.1fH",
-		(double)seconds / (double)(60l * 60l));
+	/* sanity protection */
+	if (seconds < 0 || seconds > (99999l * 360l)) {
+		strlcpy(result, "   ???", sizeof result);
+	} else if (seconds >= (1000l * 60l)) {
+		/* alternate (slow) method displaying hours and tenths */
+		snprintf(result, sizeof(result), "%5.1fH",
+		    (double) seconds / (double) (60l * 60l));
 
-	/* It is possible that the snprintf took more than 6 characters.
-	   If so, then the "H" appears as result[6].  If not, then there
-	   is a \0 in result[6].  Either way, it is safe to step on.
-	 */
-	result[6] = '\0';
-    }
-    else
-    {
-	/* standard method produces MMM:SS */
-	/* we avoid printf as must as possible to make this quick */
-	snprintf(result, sizeof(result), "%3d:%02d", seconds / 60,
-		seconds % 60);
-    }
-    return(result);
+		/*
+		 * It is possible that the snprintf took more than 6
+		 * characters. If so, then the "H" appears as result[6].  If
+		 * not, then there is a \0 in result[6].  Either way, it is
+		 * safe to step on.
+		 */
+		result[6] = '\0';
+	} else {
+		/* standard method produces MMM:SS */
+		/* we avoid printf as must as possible to make this quick */
+		snprintf(result, sizeof(result), "%3d:%02d", seconds / 60,
+		    seconds % 60);
+	}
+	return (result);
 }
 
 /*
  * format_k(amt) - format a kilobyte memory value, returning a string
- *		suitable for display.  Returns a pointer to a static
- *		area that changes each call.  "amt" is converted to a
- *		string with a trailing "K".  If "amt" is 10000 or greater,
- *		then it is formatted as megabytes (rounded) with a
- *		trailing "M".
+ * suitable for display.  Returns a pointer to a static
+ * area that changes each call.  "amt" is converted to a
+ * string with a trailing "K".  If "amt" is 10000 or greater,
+ * then it is formatted as megabytes (rounded) with a
+ * trailing "M".
  */
 
 /*
@@ -390,29 +342,23 @@ format_time(time_t seconds)
 char *
 format_k(int amt)
 {
-    static char retarray[NUM_STRINGS][16];
-    static int index = 0;
-    char *p;
-    char *ret;
-    char tag = 'K';
+	static char retarray[NUM_STRINGS][16];
+	static int  index = 0;
+	char *p, *ret, tag = 'K';
 
-    p = ret = retarray[index];
-    index = (index + 1) % NUM_STRINGS;
+	p = ret = retarray[index];
+	index = (index + 1) % NUM_STRINGS;
 
-    if (amt >= 10000)
-    {
-	amt = (amt + 512) / 1024;
-	tag = 'M';
-	if (amt >= 10000)
-	{
-	    amt = (amt + 512) / 1024;
-	    tag = 'G';
+	if (amt >= 10000) {
+		amt = (amt + 512) / 1024;
+		tag = 'M';
+		if (amt >= 10000) {
+			amt = (amt + 512) / 1024;
+			tag = 'G';
+		}
 	}
-    }
-
-    p = strecpy(p, itoa(amt));
-    *p++ = tag;
-    *p = '\0';
-
-    return(ret);
+	p = strecpy(p, itoa(amt));
+	*p++ = tag;
+	*p = '\0';
+	return (ret);
 }
