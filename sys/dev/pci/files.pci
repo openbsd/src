@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.62 2000/01/10 13:58:16 jason Exp $
+#	$OpenBSD: files.pci,v 1.63 2000/02/07 00:33:03 niklas Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -60,6 +60,11 @@ file	dev/pci/eso.c			eso
 
 attach	opl at eso with opl_eso
 file	dev/pci/opl_eso.c		opl_eso
+
+# ICP Vortex GDT PCI RAID controllers
+# device declaration in sys/conf/files
+attach	gdt at pci with gdt_pci
+file	dev/pci/gdt_pci.c		gdt_pci
 
 # Qlogic ISP 10x0 (PCI) family
 # device declaration in sys/conf/files

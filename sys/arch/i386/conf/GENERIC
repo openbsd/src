@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.156 2000/02/01 17:17:33 fgsch Exp $
+#	$OpenBSD: GENERIC,v 1.157 2000/02/07 00:33:04 niklas Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -150,6 +150,8 @@ scsibus* at ahc?
 dpt*	at pci? dev ? function ?        # DPT SmartCache/SmartRAID PCI
 dpt*	at eisa? slot ?			# DPT SmartCache/SmartRAID EISA
 scsibus* at dpt?
+gdt*	at pci? dev ? function ?	# ICP Vortex GDT RAID controllers
+scsibus* at gdt?
 isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 scsibus* at isp?
 aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI controllers
