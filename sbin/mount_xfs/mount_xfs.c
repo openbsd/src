@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_xfs.c,v 1.3 1998/10/28 18:08:50 art Exp $	*/
+/*	$OpenBSD: mount_xfs.c,v 1.4 1998/12/21 13:45:33 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -71,7 +71,6 @@ int
 main(int argc, char **argv)
 {
 	extern int optreset;
-	int error;
 	int ch;
 	int mntflags = 0;
 
@@ -92,10 +91,12 @@ main(int argc, char **argv)
 	if (argc != 2)
 		usage();
 
-	error = mount("xfs", argv[1], mntflags, argv[0]);
-
-	if (error != 0)
-		err(1, "mount");
+	if (mount("xfs", argv[1], mntflags, argv[0])) {
+		if (errno == EOPNOTSUPP)
+			errx(1, "Filesystem not supported by kernel");
+		else
+			err(1, NULL);
+	}
 
 	return 0;
 }
