@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.9 1998/05/28 16:48:47 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.10 1999/08/04 18:31:26 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/03/19 03:21:38 jtc Exp $	*/
 
 /*
@@ -47,12 +47,13 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	5.5 (Berkeley) 5/24/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.9 1998/05/28 16:48:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.10 1999/08/04 18:31:26 millert Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <fcntl.h>
+#include <paths.h>
 #include <stdlib.h>
 #include <signal.h>
 #include "defs.h"
@@ -65,8 +66,7 @@ char vflag;
 
 char *symbol_prefix;
 char *file_prefix = "y";
-char *myname = "yacc";
-char *temp_form = "yacc.XXXXXXXXXX";
+char *temp_form = "yacc.XXXXXXXXXXX";
 
 int lineno;
 int outline;
@@ -152,7 +152,7 @@ set_signals()
 
 usage()
 {
-    fprintf(stderr, "usage: %s [-dlrtv] [-b file_prefix] [-o outputfile] [-p symbol_prefix] filename\n", myname);
+    fprintf(stderr, "usage: %s [-dlrtv] [-b file_prefix] [-o outputfile] [-p symbol_prefix] filename\n", __progname);
     exit(1);
 }
 
@@ -164,7 +164,6 @@ char *argv[];
     register int i;
     register char *s;
 
-    if (argc > 0) myname = argv[0];
     for (i = 1; i < argc; ++i)
     {
 	s = argv[i];
@@ -293,8 +292,8 @@ create_file_names()
     int i, len;
     char *tmpdir;
 
-    tmpdir = getenv("TMPDIR");
-    if (tmpdir == 0) tmpdir = "/tmp";
+    if (!(tmpdir = getenv("TMPDIR")))
+	tmpdir = _PATH_TMP;
 
     len = strlen(tmpdir);
     i = len + strlen(temp_form) + 1;
@@ -327,10 +326,6 @@ create_file_names()
     action_file_name[len + 5] = 'a';
     text_file_name[len + 5] = 't';
     union_file_name[len + 5] = 'u';
-
-    mktemp(action_file_name);
-    mktemp(text_file_name);
-    mktemp(union_file_name);
 
     len = strlen(file_prefix);
 
@@ -380,7 +375,7 @@ create_file_names()
             } else {
                 fprintf(stderr,"%s: suffix of output file name %s"
                     " not recognized, no -d file generated.\n",
-                    myname, output_file_name);
+                    __progname, output_file_name);
                 dflag = 0;
                 free(defines_file_name);
                 defines_file_name = 0;
@@ -439,12 +434,12 @@ open_files()
 	    open_error(input_file_name);
     }
 
-    action_file = fsopen(action_file_name, "w");
-    if (action_file == 0)
+    fd = mkstemp(action_file_name);
+    if (fd == -1 || (action_file = fdopen(fd, "w")) == NULL)
 	open_error(action_file_name);
 
-    text_file = fsopen(text_file_name, "w");
-    if (text_file == 0)
+    fd = mkstemp(text_file_name);
+    if (fd == -1 || (text_file = fdopen(fd, "w")) == NULL)
 	open_error(text_file_name);
 
     if (vflag)
@@ -459,8 +454,8 @@ open_files()
 	defines_file = fopen(defines_file_name, "w");
 	if (defines_file == 0)
 	    open_error(defines_file_name);
-	union_file = fsopen(union_file_name, "w");
-	if (union_file ==  0)
+	fd = mkstemp(union_file_name);
+	if (fd == -1 || (union_file = fdopen(fd, "w")) == NULL)
 	    open_error(union_file_name);
     }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkpar.c,v 1.4 1996/04/21 23:45:15 deraadt Exp $	*/
+/*	$OpenBSD: mkpar.c,v 1.5 1999/08/04 18:31:26 millert Exp $	*/
 
 /*	$NetBSD: mkpar.c,v 1.4 1996/03/19 03:21:39 jtc Exp $	*/
 
@@ -241,9 +241,10 @@ unused_rules()
 
     if (nunused)
 	if (nunused == 1)
-	    fprintf(stderr, "%s: 1 rule never reduced\n", myname);
+	    fprintf(stderr, "%s: 1 rule never reduced\n", __progname);
 	else
-	    fprintf(stderr, "%s: %d rules never reduced\n", myname, nunused);
+	    fprintf(stderr, "%s: %d rules never reduced\n", __progname,
+		    nunused);
 }
 
 
@@ -328,16 +329,16 @@ total_conflicts()
     if ((SRtotal != SRexpect) || RRtotal)
     {
         if (SRtotal == 1)
-            fprintf(stderr, "%s: 1 shift/reduce conflict\n", myname);
+            fprintf(stderr, "%s: 1 shift/reduce conflict\n", __progname);
         else if (SRtotal > 1)
-            fprintf(stderr, "%s: %d shift/reduce conflicts\n", myname,
+            fprintf(stderr, "%s: %d shift/reduce conflicts\n", __progname,
                     SRtotal);
     }
 
     if (RRtotal == 1)
-        fprintf(stderr, "%s: 1 reduce/reduce conflict\n", myname);
+        fprintf(stderr, "%s: 1 reduce/reduce conflict\n", __progname);
     else if (RRtotal > 1)
-	fprintf(stderr, "%s: %d reduce/reduce conflicts\n", myname,
+	fprintf(stderr, "%s: %d reduce/reduce conflicts\n", __progname,
                 RRtotal);
 }
 

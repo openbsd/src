@@ -1,4 +1,4 @@
-/*	$OpenBSD: error.c,v 1.3 1996/06/26 05:44:36 deraadt Exp $	*/
+/*	$OpenBSD: error.c,v 1.4 1999/08/04 18:31:26 millert Exp $	*/
 /*	$NetBSD: error.c,v 1.4 1996/03/19 03:21:32 jtc Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)error.c	5.3 (Berkeley) 6/1/90";
 #else
-static char rcsid[] = "$OpenBSD: error.c,v 1.3 1996/06/26 05:44:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: error.c,v 1.4 1999/08/04 18:31:26 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,14 +53,14 @@ static char rcsid[] = "$OpenBSD: error.c,v 1.3 1996/06/26 05:44:36 deraadt Exp $
 fatal(msg)
 char *msg;
 {
-    fprintf(stderr, "%s: f - %s\n", myname, msg);
+    fprintf(stderr, "%s: f - %s\n", __progname, msg);
     done(2);
 }
 
 
 no_space()
 {
-    fprintf(stderr, "%s: f - out of space\n", myname);
+    fprintf(stderr, "%s: f - out of space\n", __progname);
     done(2);
 }
 
@@ -68,7 +68,7 @@ no_space()
 open_error(filename)
 char *filename;
 {
-    fprintf(stderr, "%s: f - cannot open \"%s\"\n", myname, filename);
+    fprintf(stderr, "%s: f - cannot open \"%s\"\n", __progname, filename);
     done(2);
 }
 
@@ -76,7 +76,7 @@ char *filename;
 unexpected_EOF()
 {
     fprintf(stderr, "%s: e - line %d of \"%s\", unexpected end-of-file\n",
-	    myname, lineno, input_file_name);
+	    __progname, lineno, input_file_name);
     done(1);
 }
 
@@ -114,7 +114,7 @@ char *st_line;
 char *st_cptr;
 {
     fprintf(stderr, "%s: e - line %d of \"%s\", syntax error\n",
-	    myname, st_lineno, input_file_name);
+	    __progname, st_lineno, input_file_name);
     print_pos(st_line, st_cptr);
     done(1);
 }
@@ -126,7 +126,7 @@ char *c_line;
 char *c_cptr;
 {
     fprintf(stderr, "%s: e - line %d of \"%s\", unmatched /*\n",
-	    myname, c_lineno, input_file_name);
+	    __progname, c_lineno, input_file_name);
     print_pos(c_line, c_cptr);
     done(1);
 }
@@ -138,7 +138,7 @@ char *s_line;
 char *s_cptr;
 {
     fprintf(stderr, "%s: e - line %d of \"%s\", unterminated string\n",
-	    myname, s_lineno, input_file_name);
+	    __progname, s_lineno, input_file_name);
     print_pos(s_line, s_cptr);
     done(1);
 }
@@ -150,7 +150,7 @@ char *t_line;
 char *t_cptr;
 {
     fprintf(stderr, "%s: e - line %d of \"%s\", unmatched %%{\n",
-	    myname, t_lineno, input_file_name);
+	    __progname, t_lineno, input_file_name);
     print_pos(t_line, t_cptr);
     done(1);
 }
@@ -162,7 +162,7 @@ char *u_line;
 char *u_cptr;
 {
     fprintf(stderr, "%s: e - line %d of \"%s\", unterminated %%union \
-declaration\n", myname, u_lineno, input_file_name);
+declaration\n", __progname, u_lineno, input_file_name);
     print_pos(u_line, u_cptr);
     done(1);
 }
@@ -172,7 +172,7 @@ over_unionized(u_cptr)
 char *u_cptr;
 {
     fprintf(stderr, "%s: e - line %d of \"%s\", too many %%union \
-declarations\n", myname, lineno, input_file_name);
+declarations\n", __progname, lineno, input_file_name);
     print_pos(line, u_cptr);
     done(1);
 }
@@ -184,7 +184,7 @@ char *t_line;
 char *t_cptr;
 {
     fprintf(stderr, "%s: e - line %d of \"%s\", illegal tag\n",
-	    myname, t_lineno, input_file_name);
+	    __progname, t_lineno, input_file_name);
     print_pos(t_line, t_cptr);
     done(1);
 }
@@ -194,7 +194,7 @@ illegal_character(c_cptr)
 char *c_cptr;
 {
     fprintf(stderr, "%s: e - line %d of \"%s\", illegal character\n",
-	    myname, lineno, input_file_name);
+	    __progname, lineno, input_file_name);
     print_pos(line, c_cptr);
     done(1);
 }
@@ -204,7 +204,7 @@ used_reserved(s)
 char *s;
 {
     fprintf(stderr, "%s: e - line %d of \"%s\", illegal use of reserved symbol \
-%s\n", myname, lineno, input_file_name, s);
+%s\n", __progname, lineno, input_file_name, s);
     done(1);
 }
 
@@ -213,7 +213,7 @@ tokenized_start(s)
 char *s;
 {
      fprintf(stderr, "%s: e - line %d of \"%s\", the start symbol %s cannot be \
-declared to be a token\n", myname, lineno, input_file_name, s);
+declared to be a token\n", __progname, lineno, input_file_name, s);
      done(1);
 }
 
@@ -222,7 +222,7 @@ retyped_warning(s)
 char *s;
 {
     fprintf(stderr, "%s: w - line %d of \"%s\", the type of %s has been \
-redeclared\n", myname, lineno, input_file_name, s);
+redeclared\n", __progname, lineno, input_file_name, s);
 }
 
 
@@ -230,7 +230,7 @@ reprec_warning(s)
 char *s;
 {
     fprintf(stderr, "%s: w - line %d of \"%s\", the precedence of %s has been \
-redeclared\n", myname, lineno, input_file_name, s);
+redeclared\n", __progname, lineno, input_file_name, s);
 }
 
 
@@ -238,7 +238,7 @@ revalued_warning(s)
 char *s;
 {
     fprintf(stderr, "%s: w - line %d of \"%s\", the value of %s has been \
-redeclared\n", myname, lineno, input_file_name, s);
+redeclared\n", __progname, lineno, input_file_name, s);
 }
 
 
@@ -246,7 +246,7 @@ terminal_start(s)
 char *s;
 {
     fprintf(stderr, "%s: e - line %d of \"%s\", the start symbol %s is a \
-token\n", myname, lineno, input_file_name, s);
+token\n", __progname, lineno, input_file_name, s);
     done(1);
 }
 
@@ -254,14 +254,14 @@ token\n", myname, lineno, input_file_name, s);
 restarted_warning()
 {
     fprintf(stderr, "%s: w - line %d of \"%s\", the start symbol has been \
-redeclared\n", myname, lineno, input_file_name);
+redeclared\n", __progname, lineno, input_file_name);
 }
 
 
 no_grammar()
 {
     fprintf(stderr, "%s: e - line %d of \"%s\", no grammar has been \
-specified\n", myname, lineno, input_file_name);
+specified\n", __progname, lineno, input_file_name);
     done(1);
 }
 
@@ -270,7 +270,7 @@ terminal_lhs(s_lineno)
 int s_lineno;
 {
     fprintf(stderr, "%s: e - line %d of \"%s\", a token appears on the lhs \
-of a production\n", myname, s_lineno, input_file_name);
+of a production\n", __progname, s_lineno, input_file_name);
     done(1);
 }
 
@@ -278,7 +278,7 @@ of a production\n", myname, s_lineno, input_file_name);
 prec_redeclared()
 {
     fprintf(stderr, "%s: w - line %d of  \"%s\", conflicting %%prec \
-specifiers\n", myname, lineno, input_file_name);
+specifiers\n", __progname, lineno, input_file_name);
 }
 
 
@@ -288,7 +288,7 @@ char *a_line;
 char *a_cptr;
 {
     fprintf(stderr, "%s: e - line %d of \"%s\", unterminated action\n",
-	    myname, a_lineno, input_file_name);
+	    __progname, a_lineno, input_file_name);
     print_pos(a_line, a_cptr);
     done(1);
 }
@@ -299,7 +299,7 @@ int a_lineno;
 int i;
 {
     fprintf(stderr, "%s: w - line %d of \"%s\", $%d references beyond the \
-end of the current rule\n", myname, a_lineno, input_file_name, i);
+end of the current rule\n", __progname, a_lineno, input_file_name, i);
 }
 
 
@@ -309,7 +309,7 @@ char *a_line;
 char *a_cptr;
 {
     fprintf(stderr, "%s: e - line %d of \"%s\", illegal $-name\n",
-	    myname, a_lineno, input_file_name);
+	    __progname, a_lineno, input_file_name);
     print_pos(a_line, a_cptr);
     done(1);
 }
@@ -318,7 +318,7 @@ char *a_cptr;
 untyped_lhs()
 {
     fprintf(stderr, "%s: e - line %d of \"%s\", $$ is untyped\n",
-	    myname, lineno, input_file_name);
+	    __progname, lineno, input_file_name);
     done(1);
 }
 
@@ -328,7 +328,7 @@ int i;
 char *s;
 {
     fprintf(stderr, "%s: e - line %d of \"%s\", $%d (%s) is untyped\n",
-	    myname, lineno, input_file_name, i, s);
+	    __progname, lineno, input_file_name, i, s);
     done(1);
 }
 
@@ -337,7 +337,7 @@ unknown_rhs(i)
 int i;
 {
     fprintf(stderr, "%s: e - line %d of \"%s\", $%d is untyped\n",
-	    myname, lineno, input_file_name, i);
+	    __progname, lineno, input_file_name, i);
     done(1);
 }
 
@@ -345,14 +345,14 @@ int i;
 default_action_warning()
 {
     fprintf(stderr, "%s: w - line %d of \"%s\", the default action assigns an \
-undefined value to $$\n", myname, lineno, input_file_name);
+undefined value to $$\n", __progname, lineno, input_file_name);
 }
 
 
 undefined_goal(s)
 char *s;
 {
-    fprintf(stderr, "%s: e - the start symbol %s is undefined\n", myname, s);
+    fprintf(stderr, "%s: e - the start symbol %s is undefined\n", __progname, s);
     done(1);
 }
 
@@ -360,5 +360,5 @@ char *s;
 undefined_symbol_warning(s)
 char *s;
 {
-    fprintf(stderr, "%s: w - the symbol %s is undefined\n", myname, s);
+    fprintf(stderr, "%s: w - the symbol %s is undefined\n", __progname, s);
 }

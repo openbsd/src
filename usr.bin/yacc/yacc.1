@@ -1,4 +1,4 @@
-.\"	$OpenBSD: yacc.1,v 1.6 1999/07/09 13:35:30 aaron Exp $
+.\"	$OpenBSD: yacc.1,v 1.7 1999/08/04 18:31:27 millert Exp $
 .\" Copyright (c) 1989, 1990 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -163,14 +163,14 @@ are created if
 .Dv YYDEBUG
 is defined and non-zero.
 .Sh FILES
-.Bl -tag -width /tmp/yacc.uXXXXXXXX -compact
+.Bl -tag -width /tmp/yacc.uXXXXXXXXXX -compact
 .It Pa y.code.c
 .It Pa y.tab.c
 .It Pa y.tab.h
 .It Pa y.output
-.It Pa /tmp/yacc.aXXXXXX
-.It Pa /tmp/yacc.tXXXXXX
-.It Pa /tmp/yacc.uXXXXXX
+.It Pa /tmp/yacc.aXXXXXXXXXX
+.It Pa /tmp/yacc.tXXXXXXXXXX
+.It Pa /tmp/yacc.uXXXXXXXXXX
 .El
 .Sh DIAGNOSTICS
 If there are rules that are never reduced, the number of such rules is
@@ -179,8 +179,8 @@ If there are any
 .Tn LALR(1)
 conflicts, the number of conflicts is also written
 to the standard error.
-.\" .Sh SEE ALSO
-.\" .Xr yyfix 1
+.Sh SEE ALSO
+.Xr yyfix 1
 .Sh STANDARDS
 The
 .Nm yacc

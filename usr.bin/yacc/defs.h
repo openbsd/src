@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.5 1996/04/21 23:45:06 deraadt Exp $	*/
+/*	$OpenBSD: defs.h,v 1.6 1999/08/04 18:31:25 millert Exp $	*/
 /*	$NetBSD: defs.h,v 1.6 1996/03/19 03:21:30 jtc Exp $	*/
 
 /*
@@ -228,7 +228,6 @@ extern char tflag;
 extern char vflag;
 extern char *symbol_prefix;
 
-extern char *myname;
 extern char *cptr;
 extern char *line;
 extern int lineno;
@@ -322,6 +321,7 @@ extern bucket *make_bucket();
 /* system variables */
 
 extern int errno;
+extern char *__progname;
 
 
 /* system functions */
