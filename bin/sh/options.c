@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.5 1996/11/24 17:43:03 millert Exp $	*/
+/*	$OpenBSD: options.c,v 1.6 1996/11/24 23:18:44 millert Exp $	*/
 /*	$NetBSD: options.c,v 1.19 1996/11/06 01:17:11 christos Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.5 1996/11/24 17:43:03 millert Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.6 1996/11/24 23:18:44 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -423,7 +423,7 @@ getopts(optstr, optvar, optfirst, optnext, optptr)
 		p = **optnext;
 		if (p == NULL || *p != '-' || *++p == '\0') {
 atend:
-			**optnext = NULL;
+			*optnext = NULL;
 			ind = *optnext - optfirst + 1;
 			done = 1;
 			goto out;
