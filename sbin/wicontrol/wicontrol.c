@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.48 2004/03/18 16:16:11 millert Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.49 2004/05/29 17:49:19 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -37,7 +37,6 @@
 #include <sys/types.h>
 #include <sys/cdefs.h>
 #include <sys/param.h>
-#include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 
@@ -69,7 +68,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $OpenBSD: wicontrol.c,v 1.48 2004/03/18 16:16:11 millert Exp $";
+	"@(#) $OpenBSD: wicontrol.c,v 1.49 2004/05/29 17:49:19 millert Exp $";
 #endif
 
 void wi_getval(char *, struct wi_req *);
@@ -114,7 +113,6 @@ wi_getval(char *iface, struct wi_req *wreq)
 	ifr.ifr_data = (caddr_t)wreq;
 
 	s = socket(AF_INET, SOCK_DGRAM, 0);
-
 	if (s == -1)
 		err(1, "socket");
 
@@ -136,7 +134,6 @@ wi_setval(char *iface, struct wi_req *wreq)
 	ifr.ifr_data = (caddr_t)wreq;
 
 	s = socket(AF_INET, SOCK_DGRAM, 0);
-
 	if (s == -1)
 		err(1, "socket");
 
@@ -233,7 +230,6 @@ wi_sethex(char *iface, int code, char *str)
 		errx(1, "must specify address");
 
 	addr = ether_aton(str);
-
 	if (addr == NULL)
 		errx(1, "badly formatted address");
 
@@ -289,7 +285,7 @@ wi_setkeys(char *iface, int idx, char *key)
 
 	wi_getval(iface, &wreq);
 	if (letoh16(wreq.wi_val[0]) == 0)
-		err(1, "no WEP option available on this card");
+		errx(1, "no WEP option available on this card");
 
 	bzero((char *)&wreq, sizeof(wreq));
 	wreq.wi_len = WI_MAX_DATALEN;
@@ -300,16 +296,16 @@ wi_setkeys(char *iface, int idx, char *key)
 
 	if (key[0] == '0' && (key[1] == 'x' || key[1] == 'X')) {
 		if (strlen(key) > 28)
-			err(1, "encryption key must be no "
+			errx(1, "encryption key must be no "
 			    "more than 26 hex digits long");
 	} else {
 		if (strlen(key) > 13)
-			err(1, "encryption key must be no "
+			errx(1, "encryption key must be no "
 			    "more than 13 characters long");
 	}
 
 	if (idx > 3)
-		err(1, "only 4 encryption keys available");
+		errx(1, "only 4 encryption keys available");
 
 	k = &keys->wi_keys[idx];
 	wi_str2key(key, k);
@@ -803,6 +799,7 @@ wi_dumpstations(char *iface)
 			    info->sig_info >> 8, info->sig_info & 0xff);
 		putchar('\n');
 	}
+	close(s);
 }
 
 __dead void
@@ -949,6 +946,7 @@ get_if_flags(int s, const char *name)
 	struct ifreq	ifr;
 	int		flags;
 
+	bzero(&ifr, sizeof(ifr));
 	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)&ifr) == -1)
 		  err(1, "SIOCGIFFLAGS");
@@ -962,12 +960,13 @@ set_if_flags(int s, const char *name, int flags)
 {
 	struct ifreq ifr;
 
+	bzero(&ifr, sizeof(ifr));
 	ifr.ifr_flags = flags;
 	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	if (ioctl(s, SIOCSIFFLAGS, (caddr_t)&ifr) == -1)
 		err(1, "SIOCSIFFLAGS");
 
-	return 0;
+	return (0);
 }
 
 /*
