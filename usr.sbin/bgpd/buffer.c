@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.4 2003/12/21 16:11:33 claudio Exp $ */
+/*	$OpenBSD: buffer.c,v 1.5 2003/12/21 18:04:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -85,12 +85,14 @@ buf_close(struct buf *buf)
 
 	int	n;
 
-	if ((n = buf_write(buf)) == -1)
-		return (-1);
+	if (buf->peer != NULL && buf->peer->queued_writes == 0) {
+		if ((n = buf_write(buf)) == -1)
+			return (-1);
 
-	if (n == 1) {		/* all data written out */
-		buf_free(buf);
-		return (0);
+		if (n == 1) {		/* all data written out */
+			buf_free(buf);
+			return (0);
+		}
 	}
 
 	/* we have to queue */
