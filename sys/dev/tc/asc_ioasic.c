@@ -1,5 +1,5 @@
-/*	$OpenBSD: asc_ioasic.c,v 1.3 1997/11/07 08:07:43 niklas Exp $	*/
-/*	$NetBSD: asc_ioasic.c,v 1.3 1996/10/13 01:38:36 christos Exp $	*/
+/*	$OpenBSD: asc_ioasic.c,v 1.4 1998/05/18 00:25:08 millert Exp $	*/
+/*	$NetBSD: asc_ioasic.c,v 1.12 1998/01/12 09:51:30 thorpej Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -14,6 +14,8 @@
  * express or implied warranty.
  *
  */
+#define USE_CACHED_BUFFER 0
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -21,13 +23,14 @@
 #include <dev/tc/ioasicvar.h>
 #include <machine/autoconf.h>
 
-#include <pmax/dev/device.h>	/* XXX */
-#include <pmax/dev/scsi.h>	/* XXX */
+#include <pmax/dev/device.h>		/* XXX */
+#include <pmax/dev/scsi.h>		/* XXX */
 
-#include <pmax/dev/ascreg.h>	/* XXX */
+#include <pmax/dev/ascreg.h>		/* XXX */
 #include <dev/tc/ascvar.h>
 
-#include <machine/locore.h> /* XXX XXX bus.h needs cache-consistency*/
+#include <machine/cpu.h>
+#include <machine/bus.h>		/* bus, cache consistency, etc  */
 
 /*XXX*/
 #include <pmax/pmax/asic.h>		/* XXX ioasic register defs? */
@@ -35,6 +38,7 @@
 #include <pmax/pmax/pmaxtype.h>
 extern int pmax_boardtype;
 
+extern vm_offset_t kvtophys __P((vm_offset_t));
 
 /*
  * Autoconfiguration data for config.
@@ -46,13 +50,20 @@ struct cfattach asc_ioasic_ca = {
 	sizeof(struct asc_softc), asc_ioasic_match, asc_ioasic_attach
 };
 
+#ifdef notdef
+extern struct cfdriver asc_cd;
+#endif
+
 /*
  * DMA callback declarations
  */
 
+#ifdef ASC_IOASIC_BOUNCE
 extern u_long asc_iomem;
-static void
-asic_dma_start __P((asc_softc_t asc, State *state, caddr_t cp, int flag));
+#endif
+static int
+asic_dma_start __P((asc_softc_t asc, State *state, caddr_t cp, int flag,
+    int len, int off));
 
 static void
 asic_dma_end __P((asc_softc_t asc, State *state, int flag));
@@ -86,12 +97,15 @@ asc_ioasic_attach(parent, self, aux)
 {
 	register struct ioasicdev_attach_args *d = aux;
 	register asc_softc_t asc = (asc_softc_t) self;
-	int bufsiz, speed;
+#ifdef ASC_IOASIC_BOUNCE
+	u_char *buff;
+	int i;
+#endif
 
 	void *ascaddr;
 	int unit;
 
-	ascaddr = (void*)MACH_PHYS_TO_UNCACHED(d->iada_addr);
+	ascaddr = (void*)MIPS_PHYS_TO_KSEG1(d->iada_addr);
 	unit = asc->sc_dev.dv_unit;
 	
 	/*
@@ -105,34 +119,35 @@ asc_ioasic_attach(parent, self, aux)
 	 * (2) timing based on turbochannel frequency
 	 */
 
-	asc->buff = (u_char *)MACH_PHYS_TO_UNCACHED(asc_iomem);
-	bufsiz = 8192;
+#ifdef ASC_IOASIC_BOUNCE
+#if USE_CACHED_BUFFER
+	/* XXX Use cached address for DMA buffer to increase raw read speed */
+	buff = (u_char *)MIPS_PHYS_TO_KSEG0(asc_iomem);
+#else
+	buff = (u_char *)MIPS_PHYS_TO_KSEG1(asc_iomem);
+#endif	/* USE_CACHED_BUFFER */
+	/*
+	 * Statically partition the DMA buffer between targets.
+	 * This way we will eventually be able to attach/detach
+	 * drives on-fly.  And 18k/target is plenty for normal use.
+	 */
+
+	/*
+	 * Give each target its own DMA buffer region.
+	 * We may want to try ping ponging buffers later.
+	 */
+	for (i = 0; i < ASC_NCMD; i++)
+		asc->st[i].dmaBufAddr = buff + 8192 * i;
+
+#endif	/* ASC_IOASIC_BOUNCE */
 	*((volatile int *)IOASIC_REG_SCSI_DMAPTR(ioasic_base)) = -1;
 	*((volatile int *)IOASIC_REG_SCSI_DMANPTR(ioasic_base)) = -1;
 	*((volatile int *)IOASIC_REG_SCSI_SCR(ioasic_base)) = 0;
 	asc->dma_start = asic_dma_start;
 	asc->dma_end = asic_dma_end;
 
-	/*
-	 * Now for timing. The 3max has a 25Mhz tb whereas the 3min and
-	 * maxine are 12.5Mhz.
-	 */
-
-	/*printf(" (bus speed: %d) ", t->ta_busspeed);*/
-	/* XXX don't these run at 25MHz on any ioasic??*/
-	switch (pmax_boardtype) {
-	case DS_3MAX:
-	case DS_3MAXPLUS:
-		speed = ASC_SPEED_25_MHZ;
-		break;
-	case DS_3MIN:
-	case DS_MAXINE:
-	default:
-		speed = ASC_SPEED_12_5_MHZ;
-		break;
-	};
-
-	ascattach(asc, bufsiz, speed);
+	/* digital meters show IOASIC 53c94s are clocked at approx 25MHz */
+	ascattach(asc, ASC_SPEED_25_MHZ);
 
 	/* tie pseudo-slot to device */
 
@@ -145,12 +160,14 @@ asc_ioasic_attach(parent, self, aux)
  * DMA handling routines. For a turbochannel device, just set the dmar.
  * For the I/O ASIC, handle the actual DMA interface.
  */
-static void
-asic_dma_start(asc, state, cp, flag)
+static int
+asic_dma_start(asc, state, cp, flag, len, off)
 	asc_softc_t asc;
 	State *state;
 	caddr_t cp;
 	int flag;
+	int len;
+	int off;
 {
 	register volatile u_int *ssr = (volatile u_int *)
 		IOASIC_REG_CSR(ioasic_base);
@@ -160,12 +177,61 @@ asic_dma_start(asc, state, cp, flag)
 	*ssr &= ~IOASIC_CSR_DMAEN_SCSI;
 	*((volatile int *)IOASIC_REG_SCSI_SCR(ioasic_base)) = 0;
 
-	phys = MACH_CACHED_TO_PHYS(cp);
-	cp = (caddr_t)mips_trunc_page(cp + NBPG);
-	nphys = MACH_CACHED_TO_PHYS(cp);
+#ifndef ASC_IOASIC_BOUNCE
+	/* restrict len to the maximum the IOASIC can transfer */
+	if (len > ((caddr_t)mips_trunc_page(cp + NBPG * 2) - cp))
+		len = (caddr_t)mips_trunc_page(cp + NBPG * 2) - cp;
 
+	/* If R4K, writeback and invalidate  the buffer */
+	if (CPUISMIPS3)
+		mips3_HitFlushDCache((vm_offset_t)cp, len);
+
+	/* Get physical address of buffer start, no next phys addr */
+	phys = (u_int)kvtophys((vm_offset_t)cp);
+	nphys = -1;
+
+	/* Compute 2nd DMA pointer only if next page is part of this I/O */
+	if ((NBPG - (phys & (NBPG - 1))) < len) {
+		cp = (caddr_t)mips_trunc_page(cp + NBPG);
+		nphys = (u_int)kvtophys((vm_offset_t)cp);
+	}
+
+	/* If not R4K, need to invalidate cache lines for both physical segments */
+	if (!CPUISMIPS3 && flag == ASCDMA_READ) {
+		MachFlushDCache(MIPS_PHYS_TO_KSEG0(phys),
+		    nphys == 0xffffffff ?  len : NBPG - (phys & (NBPG - 1)));
+		if (nphys != 0xffffffff)
+			MachFlushDCache(MIPS_PHYS_TO_KSEG0(nphys),
+			    NBPG);	/* XXX */
+	}
+#else	/* ASC_IOASIC_BOUNCE */
+	/* restrict len to the maximum the IOASIC can transfer */
+	if (len > ((caddr_t)mips_trunc_page(state->dmaBufAddr + off + NBPG * 2) - (caddr_t)(state->dmaBufAddr + off)))
+		len = (caddr_t)mips_trunc_page(state->dmaBufAddr + off + NBPG * 2) - (caddr_t)(state->dmaBufAddr + off);
+
+	if (flag == ASCDMA_WRITE)
+		bcopy(cp, state->dmaBufAddr + off, len);
+	cp = state->dmaBufAddr + off;
+#if USE_CACHED_BUFFER
+#ifdef MIPS3
+	/* If R4K, need to writeback the bounce buffer */
+	if (CPUISMIPS3)
+		mips3_HitFlushDCache((vm_offset_t)cp, len);
+#endif /* MIPS3 */
+	phys = MIPS_KSEG0_TO_PHYS(cp);
+	cp = (caddr_t)mips_trunc_page(cp + NBPG);
+	nphys = MIPS_KSEG0_TO_PHYS(cp);
+#else
+	phys = MIPS_KSEG1_TO_PHYS(cp);
+	cp = (caddr_t)mips_trunc_page(cp + NBPG);
+	nphys = MIPS_KSEG1_TO_PHYS(cp);
+#endif	/* USE_CACHED_BUFFER */
+#endif	/* ASC_IOASIC_BOUNCE */
+
+#ifdef notyet
 	asc->dma_next = cp;
 	asc->dma_xfer = state->dmalen - (nphys - phys);
+#endif
 
 	*(volatile int *)IOASIC_REG_SCSI_DMAPTR(ioasic_base) =
 		IOASIC_DMA_ADDR(phys);
@@ -176,6 +242,7 @@ asic_dma_start(asc, state, cp, flag)
 	else
 		*ssr = (*ssr & ~IOASIC_CSR_SCSI_DIR) | IOASIC_CSR_DMAEN_SCSI;
 	wbflush();
+	return (len);
 }
 
 static void
@@ -193,14 +260,28 @@ asic_dma_end(asc, state, flag)
 	int nb;
 
 	*ssr &= ~IOASIC_CSR_DMAEN_SCSI;
-	to = (u_short *)MACH_PHYS_TO_CACHED(*dmap >> 3);
+#if USE_CACHED_BUFFER	/* XXX - Should uncached address always be used? */
+	to = (u_short *)MIPS_PHYS_TO_KSEG0(*dmap >> 3);
+#else
+	to = (u_short *)MIPS_PHYS_TO_KSEG1(*dmap >> 3);
+#endif
 	*dmap = -1;
 	*((volatile int *)IOASIC_REG_SCSI_DMANPTR(ioasic_base)) = -1;
 	wbflush();
 
 	if (flag == ASCDMA_READ) {
-		MachFlushDCache(MACH_PHYS_TO_CACHED(
-		    MACH_UNCACHED_TO_PHYS(state->dmaBufAddr)), state->dmalen);
+#if !defined(ASC_IOASIC_BOUNCE) && USE_CACHED_BUFFER
+		/* Invalidate cache for the buffer */
+#ifdef MIPS3
+		if (CPUISMIPS3)
+			MachFlushDCache(MIPS_KSEG1_TO_PHYS(state->dmaBufAddr),
+			   state->dmalen);
+		else
+#endif /* MIPS3 */
+			MachFlushDCache(MIPS_PHYS_TO_KSEG0(
+			    MIPS_KSEG1_TO_PHYS(state->dmaBufAddr)),
+			    state->dmalen);
+#endif	/* USE_CACHED_BUFFER */
 		if ( (nb = *((int *)IOASIC_REG_SCSI_SCR(ioasic_base))) != 0) {
 			/* pick up last upto6 bytes, sigh. */
 	
@@ -216,6 +297,9 @@ asic_dma_end(asc, state, flag)
 				*to++ = w;
 			}
 		}
+#ifdef ASC_IOASIC_BOUNCE
+		bcopy(state->dmaBufAddr, state->buf, state->dmalen);
+#endif
 	}
 }
 
@@ -236,7 +320,7 @@ asc_dma_intr()
 		*ssr &= ~IOASIC_CSR_DMAEN_SCSI;
 	} else {
 		asc->dma_next += NBPG;
-		next_phys = MACH_CACHED_TO_PHYS(asc->dma_next);
+		next_phys = MIPS_KSEG0_TO_PHYS(asc->dma_next);
 	}
 	*(volatile int *)IOASIC_REG_SCSI_DMANPTR(ioasic_base) =
 		IOASIC_DMA_ADDR(next_phys);

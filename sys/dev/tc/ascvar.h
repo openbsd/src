@@ -1,5 +1,5 @@
-/*	$OpenBSD: ascvar.h,v 1.2 1997/11/07 08:07:45 niklas Exp $	*/
-/*	$NetBSD: ascvar.h,v 1.1 1996/09/25 21:07:56 jonathan Exp $	*/
+/*	$OpenBSD: ascvar.h,v 1.3 1998/05/18 00:25:10 millert Exp $	*/
+/*	$NetBSD: ascvar.h,v 1.4 1997/11/28 18:23:40 mhitch Exp $	*/
 
 
 /*
@@ -12,7 +12,6 @@ typedef struct scsi_state {
 	int	statusByte;	/* status byte returned during STATUS_PHASE */
 	int	error;		/* errno to pass back to device driver */
 	u_char	*dmaBufAddr;	/* DMA buffer address */
-	u_int	dmaBufSize;	/* DMA buffer size */
 	int	dmalen;		/* amount to transfer in this chunk */
 	int	dmaresid;	/* amount not transfered if chunk suspended */
 	int	buflen;		/* total remaining amount of data to transfer */
@@ -30,6 +29,7 @@ typedef struct scsi_state {
 #define DISCONN		0x001	/* true if currently disconnected from bus */
 #define DMA_IN_PROGRESS	0x002	/* true if data DMA started */
 #define DMA_IN		0x004	/* true if reading from SCSI device */
+#define DMA_RESUME	0x08	/* true if DMA was interrupted by disc. */
 #define DMA_OUT		0x010	/* true if writing to SCSI device */
 #define DID_SYNC	0x020	/* true if synchronous offset was negotiated */
 #define TRY_SYNC	0x040	/* true if try neg. synchronous offset */
@@ -45,7 +45,6 @@ struct asc_softc {
 	struct device sc_dev;			/* us as a device */
 	asc_regmap_t	*regs;		/* chip address */
 	volatile int	*dmar;		/* DMA address register address */
-	u_char		*buff;		/* RAM buffer address (uncached) */
 	int		sc_id;		/* SCSI ID of this interface */
 	int		myidmask;	/* ~(1 << myid) */
 	int		state;		/* current SCSI connection state */
@@ -54,9 +53,9 @@ struct asc_softc {
 	ScsiCmd		*cmd[ASC_NCMD];	/* active command indexed by SCSI ID */
 	State		st[ASC_NCMD];	/* state info for each active command */
 	/* Start dma routine */
-	void  (*dma_start) __P((struct asc_softc *asc,
+	int  (*dma_start) __P((struct asc_softc *asc,
 				struct scsi_state *state,
-				caddr_t cp, int flag));
+				caddr_t cp, int flag, int len, int off));
 	/* End dma routine */
 	void	(*dma_end) __P((struct asc_softc *asc,
 				struct scsi_state *state, int flag));
@@ -69,7 +68,7 @@ struct asc_softc {
 	int		timeout_250;	/* 250ms timeout */
 	int		tb_ticks;	/* 4ns. ticks/tb channel ticks */
 #ifdef USE_NEW_SCSI
-	struct scsi_link sc_link;		/* scsi link struct */
+	struct scsi_link sc_link;		/* scsipi link struct */
 #endif
 };
 typedef struct asc_softc *asc_softc_t;
@@ -83,7 +82,7 @@ typedef struct asc_softc *asc_softc_t;
 #define ASC_SPEED_25_MHZ	250
 #define ASC_SPEED_12_5_MHZ	125
 
-void	ascattach __P((struct asc_softc *asc, int dmabufsiz, int bus_speed));
+void	ascattach __P((struct asc_softc *asc, int bus_speed));
 int	asc_intr __P ((void *asc));
 
 /*
