@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.262 2003/07/07 08:42:38 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.263 2003/07/07 09:15:54 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -649,7 +649,7 @@ are
 for Class Based Queueing,
 .Ar priq
 for Priority Queueing and
-.Ar. hfsc
+.Ar hfsc
 for the Hierarchical Fair Service Curve scheduler.
 .It Ar bandwidth <bw>
 The maximum bitrate for all queues on an
@@ -2029,7 +2029,7 @@ Interface fxp0 is the inside interface, and we are running
 listening for outbound ftp sessions captured to port 8021.
 .Bd -literal
 # NAT
-# Translate outgoing packets' source addresses (any protocol). 
+# Translate outgoing packets' source addresses (any protocol).
 # In this case, any address but the gateway's external address is mapped.
 nat on kue0 inet from ! (kue0) to any -> (kue0)
 
