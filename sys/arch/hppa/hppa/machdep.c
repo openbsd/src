@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.112 2003/08/31 00:23:16 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.113 2003/09/04 07:02:37 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -176,6 +176,7 @@ void delay_init(void);
 static __inline void fall(int, int, int, int, int);
 void dumpsys(void);
 void hpmc_dump(void);
+void cpuid(void);
 
 /*
  * wide used hardware params
@@ -184,6 +185,7 @@ struct pdc_hwtlb pdc_hwtlb PDC_ALIGNMENT;
 struct pdc_coproc pdc_coproc PDC_ALIGNMENT;
 struct pdc_coherence pdc_coherence PDC_ALIGNMENT;
 struct pdc_spidb pdc_spidbits PDC_ALIGNMENT;
+struct pdc_model pdc_model PDC_ALIGNMENT;
 
 #ifdef DEBUG
 int sigdebug = 0;
@@ -219,7 +221,7 @@ int desidhash_g(void);
 const struct hppa_cpu_typed {
 	char name[8];
 	enum hppa_cpu_type type;
-	int  arch;
+	int  cpuid;
 	int  features;
 	int (*desidhash)(void);
 	const u_int *itlbh, *itlbnah, *dtlbh, *dtlbnah, *tlbdh;
@@ -231,50 +233,44 @@ const struct hppa_cpu_typed {
 	int (*hptinit)(vaddr_t hpt, vsize_t hptsize);
 } cpu_types[] = {
 #ifdef HP7000_CPU
-	{ "PCXS",   hpcx,  0x10, 0,
+	{ "PCXS",  hpcx,  0, 0,
 	  desidhash_s, itlb_s, itlbna_s, dtlb_s, dtlbna_s, tlbd_s,
 	  ibtlb_g, NULL, pbtlb_g},
 #endif
 #ifdef HP7100_CPU
-	{ "PCXT",  hpcxs, 0x11, HPPA_FTRS_BTLBU,
+	{ "PCXT",  hpcxs, 0, HPPA_FTRS_BTLBU,
 	  desidhash_t, itlb_t, itlbna_t, dtlb_t, dtlbna_t, tlbd_t,
 	  ibtlb_g, NULL, pbtlb_g},
 #endif
 #ifdef HP7200_CPU
-/* these seem to support the cpu model pdc call */
-/* HOW?	{ "PCXT'", hpcxta,0x11, HPPA_FTRS_BTLBU,
+	{ "PCXT'", hpcxta,HPPA_CPU_PCXT2, HPPA_FTRS_BTLBU,
 	  desidhash_t, itlb_t, itlbna_l, dtlb_t, dtlbna_t, tlbd_t,
-	  ibtlb_g, NULL, pbtlb_g}, */
+	  ibtlb_g, NULL, pbtlb_g},
 #endif
 #ifdef HP7100LC_CPU
-	{ "PCXL",  hpcxl, 0x11, HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
+	{ "PCXL",  hpcxl, HPPA_CPU_PCXL, HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
 	  desidhash_l, itlb_l, itlbna_l, dtlb_l, dtlbna_l, tlbd_l,
 	  ibtlb_g, NULL, pbtlb_g, hpti_l},
 #endif
 #ifdef HP7300LC_CPU
-/* HOW?	{ "PCXL2", hpcxl2,0x11, HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
+	{ "PCXL2", hpcxl2,HPPA_CPU_PCXL2, HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
 	  desidhash_l, itlb_l, itlbna_l, dtlb_l, dtlbna_l, tlbd_l,
-	  ibtlb_g, NULL, pbtlb_g, hpti_l}, */
+	  ibtlb_g, NULL, pbtlb_g, hpti_l},
 #endif
 #ifdef HP8000_CPU
-	{ "PCXU",  hpcxu, 0x20, HPPA_FTRS_W32B|HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
+	{ "PCXU",  hpcxu, HPPA_CPU_PCXU, HPPA_FTRS_W32B|HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
 	  desidhash_g, itlb_l, itlbna_l, dtlb_l, dtlbna_l, tlbd_l,
 	  ibtlb_g, NULL, pbtlb_g, hpti_g},
 #endif
 #ifdef HP8200_CPU
-/* HOW?	{ "PCXU2", hpcxu2,0x20, HPPA_FTRS_W32B|HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
+	{ "PCXU+", hpcxu2,HPPA_CPU_PCXUP, HPPA_FTRS_W32B|HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
 	  desidhash_g, itlb_l, itlbna_l, dtlb_l, dtlbna_l, tlbd_l,
-	  ibtlb_g, NULL, pbtlb_g, hpti_g}, */
+	  ibtlb_g, NULL, pbtlb_g, hpti_g},
 #endif
 #ifdef HP8500_CPU
-/* HOW?	{ "PCXW",  hpcxw, 0x20, HPPA_FTRS_W32B|HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
+	{ "PCXW",  hpcxw, HPPA_CPU_PCXW, HPPA_FTRS_W32B|HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
 	  desidhash_g, itlb_l, itlbna_l, dtlb_l, dtlbna_l, tlbd_l,
-	  ibtlb_g, NULL, pbtlb_g, hpti_g}, */
-#endif
-#ifdef HP8600_CPU
-/* HOW?	{ "PCXW+", hpcxw, 0x20, HPPA_FTRS_W32B|HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
-	  desidhash_g, itlb_l, itlbna_l, dtlb_l, dtlbna_l, tlbd_l,
-	  ibtlb_g, NULL, pbtlb_g, hpti_g}, */
+	  ibtlb_g, NULL, pbtlb_g, hpti_g},
 #endif
 	{ "", 0 }
 };
@@ -285,7 +281,7 @@ hppa_init(start)
 {
 	extern int kernel_text;
 	vaddr_t v, v1;
-	int error, cpu_features = 0;
+	int error;
 
 	pdc_init();	/* init PDC iface, so we can call em easy */
 
@@ -354,8 +350,104 @@ hppa_init(start)
 		PAGE0->ivec_mempflen = (hppa_pfr_end - hppa_pfr + 1) * 4;
 	}
 
+	cpuid();
+	ptlball();
+	fcacheall();
+
+	avail_end = trunc_page(PAGE0->imm_max_mem);
+	/*if (avail_end > 32*1024*1024)
+		avail_end = 32*1024*1024;*/
+	totalphysmem = btoc(avail_end);
+	resvmem = btoc(((vaddr_t)&kernel_text));
+
+	/* we hope this won't fail */
+	hppa_ex = extent_create("mem", 0x0, 0xffffffff, M_DEVBUF,
+	    (caddr_t)mem_ex_storage, sizeof(mem_ex_storage),
+	    EX_NOCOALESCE|EX_NOWAIT);
+	if (extent_alloc_region(hppa_ex, 0, (vaddr_t)PAGE0->imm_max_mem,
+	    EX_NOWAIT))
+		panic("cannot reserve main memory");
+
+	/*
+	 * Now allocate kernel dynamic variables
+	 */
+
+	/* buffer cache parameters */
+	if (bufpages == 0)
+		bufpages = totalphysmem / 100 *
+		    (totalphysmem <= 0x1000? 5 : bufcachepercent);
+
+	if (nbuf == 0)
+		nbuf = bufpages < 16? 16 : bufpages;
+
+	/* Restrict to at most 70% filled kvm */
+	if (nbuf * MAXBSIZE >
+	    (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) * 7 / 10)
+		nbuf = (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) /
+		    MAXBSIZE * 7 / 10;
+
+	/* More buffer pages than fits into the buffers is senseless. */
+	if (bufpages > nbuf * MAXBSIZE / PAGE_SIZE)
+		bufpages = nbuf * MAXBSIZE / PAGE_SIZE;
+
+	v1 = v = hppa_round_page(start);
+#define valloc(name, type, num) (name) = (type *)v; v = (vaddr_t)((name)+(num))
+
+	valloc(buf, struct buf, nbuf);
+
+#ifdef SYSVMSG
+	valloc(msgpool, char, msginfo.msgmax);
+	valloc(msgmaps, struct msgmap, msginfo.msgseg);
+	valloc(msghdrs, struct msg, msginfo.msgtql);
+	valloc(msqids, struct msqid_ds, msginfo.msgmni);
+#endif
+#undef valloc
+	v = hppa_round_page(v);
+	bzero ((void *)v1, (v - v1));
+
+	msgbufp = (struct msgbuf *)v;
+	v += round_page(MSGBUFSIZE);
+	bzero(msgbufp, MSGBUFSIZE);
+
+	/* sets physmem */
+	pmap_bootstrap(v);
+
+	msgbufmapped = 1;
+	initmsgbuf((caddr_t)msgbufp, round_page(MSGBUFSIZE));
+
+	/* they say PDC_COPROC might turn fault light on */
+	pdc_call((iodcio_t)pdc, 0, PDC_CHASSIS, PDC_CHASSIS_DISP,
+	    PDC_OSTAT(PDC_OSTAT_RUN) | 0xCEC0);
+
+#ifdef DDB
+	ddb_init();
+#endif
+	fcacheall();
+}
+
+void
+cpuid()
+{
+	/*
+	 * Ptrs to various tlb handlers, to be filled
+	 * based on cpu features.
+	 * from locore.S
+	 */
+	extern u_int trap_ep_T_TLB_DIRTY[];
+	extern u_int trap_ep_T_DTLBMISS[];
+	extern u_int trap_ep_T_DTLBMISSNA[];
+	extern u_int trap_ep_T_ITLBMISS[];
+	extern u_int trap_ep_T_ITLBMISSNA[];
+
+	extern u_int fpu_enable;
+	struct pdc_cpuid pdc_cpuid PDC_ALIGNMENT;
+	const struct hppa_cpu_typed *p = NULL;
+	u_int cpu_features;
+	int error;
+
 	/* may the scientific guessing begin */
 	cpu_features = 0;
+	cpu_type = 0;
 
 	/* identify system type */
 	if ((error = pdc_call((iodcio_t)pdc, 0, PDC_MODEL, PDC_MODEL_INFO,
@@ -364,6 +456,29 @@ hppa_init(start)
 		printf("WARNING: PDC_MODEL error %d\n", error);
 #endif
 		pdc_model.hvers = 0;
+	}
+
+	bzero(&pdc_cpuid, sizeof(pdc_cpuid));
+	if (pdc_call((iodcio_t)pdc, 0, PDC_MODEL, PDC_MODEL_CPUID,
+	    &pdc_cpuid, 0, 0, 0, 0) >= 0) {
+
+		/* patch for old 8200 */
+		if (pdc_cpuid.version == HPPA_CPU_PCXU &&
+		    pdc_cpuid.revision > 0x0d)
+			pdc_cpuid.version = HPPA_CPU_PCXUP;
+
+		cpu_type = pdc_cpuid.version;
+	}
+
+	/* locate coprocessors and SFUs */
+	bzero(&pdc_coproc, sizeof(pdc_coproc));
+	if ((error = pdc_call((iodcio_t)pdc, 0, PDC_COPROC, PDC_COPROC_DFLT,
+	    &pdc_coproc, 0, 0, 0, 0)) < 0)
+		printf("WARNING: PDC_COPROC error %d\n", error);
+	else {
+		printf("pdc_coproc: 0x%x, 0x%x\n", pdc_coproc.ccr_enable,
+		    pdc_coproc.ccr_present);
+		fpu_enable = pdc_coproc.ccr_enable & CCR_MASK;
 	}
 
 	/* BTLB params */
@@ -394,14 +509,6 @@ hppa_init(start)
 			cpu_features |= HPPA_FTRS_BTLBU;
 	}
 
-	ptlball();
-	fcacheall();
-
-	totalphysmem = btoc(PAGE0->imm_max_mem);
-	resvmem = btoc(((vaddr_t)&kernel_text));
-	avail_end = ctob(totalphysmem);
-
-#if defined(HP7100LC_CPU) || defined(HP7300LC_CPU)
 	if (!pdc_call((iodcio_t)pdc, 0, PDC_TLB, PDC_TLB_INFO, &pdc_hwtlb) &&
 	    pdc_hwtlb.min_size && pdc_hwtlb.max_size)
 		cpu_features |= HPPA_FTRS_HVT;
@@ -409,51 +516,35 @@ hppa_init(start)
 		printf("WARNING: no HPT support, fine!\n");
 		pmap_hptsize = 0;
 	}
-#endif
 
-	/*
-	 * Deal w/ CPU now
-	 */
-	{
-		const struct hppa_cpu_typed *p;
-
+	if (cpu_type)
+		for (p = cpu_types; p->name[0] && p->cpuid != cpu_type; p++);
+	else
 		for (p = cpu_types;
-		    p->arch && p->features != cpu_features; p++);
+		    p->name[0] && p->features != cpu_features; p++);
 
-		if (!p->arch) {
-			printf("WARNING: UNKNOWN CPU TYPE; GOOD LUCK (%x)\n",
-			    cpu_features);
-			p = cpu_types;
-		}
+	if (!p->name[0]) {
+		printf("WARNING: UNKNOWN CPU TYPE; GOOD LUCK "
+		    "(type 0x%x, features 0x%x)\n", cpu_type, cpu_features);
+		p = cpu_types;
+	} else if (p->type == hpcxl && !fpu_enable)
+		/* we know PCXL does not exist w/o FPU */
+		fpu_enable = 0xc0;
 
-		{
-			/*
-			 * Ptrs to various tlb handlers, to be filled
-			 * based on cpu features.
-			 * from locore.S
-			 */
-			extern u_int trap_ep_T_TLB_DIRTY[];
-			extern u_int trap_ep_T_DTLBMISS[];
-			extern u_int trap_ep_T_DTLBMISSNA[];
-			extern u_int trap_ep_T_ITLBMISS[];
-			extern u_int trap_ep_T_ITLBMISSNA[];
-
-			cpu_type = p->type;
-			cpu_typename = p->name;
-			cpu_ibtlb_ins = p->ibtlbins;
-			cpu_dbtlb_ins = p->dbtlbins;
-			cpu_hpt_init = p->hptinit;
-			cpu_desidhash = p->desidhash;
+	cpu_type = p->type;
+	cpu_typename = p->name;
+	cpu_ibtlb_ins = p->ibtlbins;
+	cpu_dbtlb_ins = p->dbtlbins;
+	cpu_hpt_init = p->hptinit;
+	cpu_desidhash = p->desidhash;
 
 #define	LDILDO(t,f) ((t)[0] = (f)[0], (t)[1] = (f)[1])
-			LDILDO(trap_ep_T_TLB_DIRTY , p->tlbdh);
-			LDILDO(trap_ep_T_DTLBMISS  , p->dtlbh);
-			LDILDO(trap_ep_T_DTLBMISSNA, p->dtlbnah);
-			LDILDO(trap_ep_T_ITLBMISS  , p->itlbh);
-			LDILDO(trap_ep_T_ITLBMISSNA, p->itlbnah);
+	LDILDO(trap_ep_T_TLB_DIRTY , p->tlbdh);
+	LDILDO(trap_ep_T_DTLBMISS  , p->dtlbh);
+	LDILDO(trap_ep_T_DTLBMISSNA, p->dtlbnah);
+	LDILDO(trap_ep_T_ITLBMISS  , p->itlbh);
+	LDILDO(trap_ep_T_ITLBMISSNA, p->itlbnah);
 #undef LDILDO
-		}
-	}
 
 	{
 		const char *p, *q;
@@ -505,84 +596,6 @@ hppa_init(start)
 		snprintf(cpu_model, sizeof cpu_model,
 		    "HP 9000/%s PA-RISC %s%x", p, q, lev);
 	}
-
-	/* we hope this won't fail */
-	hppa_ex = extent_create("mem", 0x0, 0xffffffff, M_DEVBUF,
-	    (caddr_t)mem_ex_storage, sizeof(mem_ex_storage),
-	    EX_NOCOALESCE|EX_NOWAIT);
-	if (extent_alloc_region(hppa_ex, 0, (vaddr_t)PAGE0->imm_max_mem,
-	    EX_NOWAIT))
-		panic("cannot reserve main memory");
-
-	/*
-	 * Now allocate kernel dynamic variables
-	 */
-
-	/* buffer cache parameters */
-	if (bufpages == 0)
-		bufpages = totalphysmem / 100 *
-		    (totalphysmem <= 0x1000? 5 : bufcachepercent);
-
-	if (nbuf == 0)
-		nbuf = bufpages < 16? 16 : bufpages;
-
-	/* Restrict to at most 70% filled kvm */
-	if (nbuf * MAXBSIZE >
-	    (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) * 7 / 10)
-		nbuf = (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) /
-		    MAXBSIZE * 7 / 10;
-
-	/* More buffer pages than fits into the buffers is senseless. */
-	if (bufpages > nbuf * MAXBSIZE / PAGE_SIZE)
-		bufpages = nbuf * MAXBSIZE / PAGE_SIZE;
-
-	v1 = v = hppa_round_page(start);
-#define valloc(name, type, num) (name) = (type *)v; v = (vaddr_t)((name)+(num))
-
-	valloc(buf, struct buf, nbuf);
-
-#ifdef SYSVMSG
-	valloc(msgpool, char, msginfo.msgmax);
-	valloc(msgmaps, struct msgmap, msginfo.msgseg);
-	valloc(msghdrs, struct msg, msginfo.msgtql);
-	valloc(msqids, struct msqid_ds, msginfo.msgmni);
-#endif
-#undef valloc
-
-	v = hppa_round_page(v);
-	bzero ((void *)v1, (v - v1));
-
-	msgbufp = (struct msgbuf *)v;
-	v += round_page(MSGBUFSIZE);
-	bzero(msgbufp, MSGBUFSIZE);
-
-	/* sets physmem */
-	pmap_bootstrap(v);
-
-	msgbufmapped = 1;
-	initmsgbuf((caddr_t)msgbufp, round_page(MSGBUFSIZE));
-
-	/* locate coprocessors and SFUs */
-	if ((error = pdc_call((iodcio_t)pdc, 0, PDC_COPROC, PDC_COPROC_DFLT,
-	    &pdc_coproc)) < 0)
-		printf("WARNING: PDC_COPROC error %d\n", error);
-	else {
-		extern u_int fpu_enable;
-#ifdef DEBUG
-		printf("pdc_coproc: %x, %x\n", pdc_coproc.ccr_enable,
-		    pdc_coproc.ccr_present);
-#endif
-		fpu_enable = pdc_coproc.ccr_enable & CCR_MASK;
-	}
-
-	/* they say PDC_COPROC might turn fault light on */
-	pdc_call((iodcio_t)pdc, 0, PDC_CHASSIS, PDC_CHASSIS_DISP,
-	    PDC_OSTAT(PDC_OSTAT_RUN) | 0xCEC0);
-
-#ifdef DDB
-	ddb_init();
-#endif
-	fcacheall();
 }
 
 void
