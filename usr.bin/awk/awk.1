@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.17 2003/12/16 11:18:37 jmc Exp $
+.\"	$OpenBSD: awk.1,v 1.18 2003/12/18 20:22:51 jmc Exp $
 .\" EX/EE is a Bd
 .\"
 .\" Copyright (C) Lucent Technologies 1997
@@ -37,7 +37,7 @@
 .Op Fl F Ar fs
 .Oo Fl v Ar var Ns =
 .Ns Ar value Oc
-.Ar prog | Fl f Ar progfile
+.Op Ar prog | Fl f Ar progfile
 .Ar
 .Nm nawk
 .Ar ...
@@ -97,9 +97,7 @@ process creation
 .Pc
 and access to the environment
 .Pf ( Va ENVIRON ;
-see
-.Sx VARIABLES
-below).
+see the section on variables below).
 This is a first
 .Pq and not very reliable
 approximation to a
@@ -123,8 +121,20 @@ any number of
 options may be present.
 .El
 .Pp
+The input is normally made up of input lines
+.Pq records
+separated by newlines, or by the value of
+.Va RS .
+If
+.Va RS
+is null, then any number of blank lines are used as the record separator,
+and newlines are used as field separators
+(in addition to the value of
+.Va FS ) .
+This is convenient when working with multi-line records.
+.Pp
 An input line is normally made up of fields separated by whitespace,
-or by regular expression
+or by the regular expression
 .Va FS .
 The fields are denoted
 .Va $1 , $2 , ... ,
@@ -135,6 +145,27 @@ If
 .Va FS
 is null, the input line is split into one field per character.
 .Pp
+Normally, any number of blanks separate fields.
+In order to set the field separator to a single blank, use the
+.Fl F
+option with a value of
+.Sq [\ \&] .
+If a field separator of
+.Sq t
+is specified,
+.Nm
+treats it as if
+.Sq \et
+had been specified and uses
+.Aq TAB
+as the field separator.
+In order to use a literal
+.Sq t
+as the field separator, use the
+.Fl F
+option with a value of
+.Sq [t] .
+.Pp
 A pattern-action statement has the form
 .Pp
 .D1 Ar pattern Ic \&{ Ar action Ic \&}
@@ -144,6 +175,29 @@ A missing
 means print the line;
 a missing pattern always matches.
 Pattern-action statements are separated by newlines or semicolons.
+.Pp
+Newlines are permitted after a terminating statement or following a comma
+.Pq Sq ,\& ,
+an open brace
+.Pq Sq { ,
+a logical AND
+.Pq Sq && ,
+a logical OR
+.Pq Sq || ,
+after the
+.Sq do
+or
+.Sq else
+keywords,
+or after the closing parenthesis of an
+.Sq if ,
+.Sq for ,
+or
+.Sq while
+statement.
+Additionally, a backslash
+.Pq Sq \e
+can be used to escape a newline between tokens.
 .Pp
 An action is a sequence of statements.
 A statement can be one of the following:
@@ -225,9 +279,7 @@ Multiple subscripts such as
 are permitted; the constituents are concatenated,
 separated by the value of
 .Va SUBSEP
-(see
-.Sx VARIABLES
-below).
+.Pq see the section on variables below ) .
 .Pp
 The
 .Ic print
@@ -251,6 +303,117 @@ The
 statement formats its expression list according to the format
 (see
 .Xr printf 3 ) .
+.Pp
+Patterns are arbitrary Boolean combinations
+(with
+.Ic "\&! || &&" )
+of regular expressions and
+relational expressions.
+Regular expressions are as in
+.Xr egrep 1 .
+Isolated regular expressions
+in a pattern apply to the entire line.
+Regular expressions may also occur in
+relational expressions, using the operators
+.Ic ~
+and
+.Ic !~ .
+.Pf / Ns Ar re Ns /
+is a constant regular expression;
+any string (constant or variable) may be used
+as a regular expression, except in the position of an isolated regular expression
+in a pattern.
+.Pp
+A pattern may consist of two patterns separated by a comma;
+in this case, the action is performed for all lines
+from an occurrence of the first pattern
+through an occurrence of the second.
+.Pp
+A relational expression is one of the following:
+.Bd -unfilled -offset indent
+.Ar expression matchop regular-expression
+.Ar expression relop expression
+.Ar expression Ic in Ar array-name
+.Ic \&( Ns Xo
+.Ar expr , expr , \&... Ns Ic \&) in
+.Ar \& array-name
+.Xc
+.Ed
+.Pp
+where a
+.Ar relop
+is any of the six relational operators in C, and a
+.Ar matchop
+is either
+.Ic ~
+(matches)
+or
+.Ic !~
+(does not match).
+A conditional is an arithmetic expression,
+a relational expression,
+or a Boolean combination
+of these.
+.Pp
+The special patterns
+.Ic BEGIN
+and
+.Ic END
+may be used to capture control before the first input line is read
+and after the last.
+.Ic BEGIN
+and
+.Ic END
+do not combine with other patterns.
+.Pp
+Variable names with special meanings:
+.Pp
+.Bl -tag -width "FILENAME" -compact
+.It Va ARGC
+Argument count, assignable.
+.It Va ARGV
+Argument array, assignable;
+non-null members are taken as filenames.
+.It Va CONVFMT
+Conversion format when converting numbers
+(default
+.Qq Li %.6g ) .
+.It Va ENVIRON
+Array of environment variables; subscripts are names.
+.It Va FILENAME
+The name of the current input file.
+.It Va FNR
+Ordinal number of the current record in the current file.
+.It Va FS
+Regular expression used to separate fields; also settable
+by option
+.Fl F Ar fs .
+.It Va NF
+Number of fields in the current record.
+.Va $NF
+can be used to obtain the value of the last field in the current record.
+.It Va NR
+Ordinal number of the current record.
+.It Va OFMT
+Output format for numbers (default
+.Qq Li %.6g ) .
+.It Va OFS
+Output field separator (default blank).
+.It Va ORS
+Output record separator (default newline).
+.It Va RLENGTH
+The length of the string matched by the
+.Fn match
+function.
+.It Va RS
+Input record separator (default newline).
+.It Va RSTART
+The starting position of the string matched by the
+.Fn match
+function.
+.It Va SUBSEP
+Separates multiple subscripts (default 034).
+.El
 .Sh FUNCTIONS
 The awk language has a variety of built-in functions:
 arithmetic, string, input/output and general.
@@ -512,115 +675,6 @@ functions may be called recursively.
 Parameters are local to the function; all other variables are global.
 Thus local variables may be created by providing excess parameters in
 the function definition.
-.Sh PATTERNS
-Patterns are arbitrary Boolean combinations
-(with
-.Ic "\&! || &&" )
-of regular expressions and
-relational expressions.
-Regular expressions are as in
-.Xr egrep 1 .
-Isolated regular expressions
-in a pattern apply to the entire line.
-Regular expressions may also occur in
-relational expressions, using the operators
-.Ic ~
-and
-.Ic !~ .
-.Pf / Ns Ar re Ns /
-is a constant regular expression;
-any string (constant or variable) may be used
-as a regular expression, except in the position of an isolated regular expression
-in a pattern.
-.Pp
-A pattern may consist of two patterns separated by a comma;
-in this case, the action is performed for all lines
-from an occurrence of the first pattern
-through an occurrence of the second.
-.Pp
-A relational expression is one of the following:
-.Bd -unfilled -offset indent
-.Ar expression matchop regular-expression
-.Ar expression relop expression
-.Ar expression Ic in Ar array-name
-.Ic \&( Ns Xo
-.Ar expr , expr , \&... Ns Ic \&) in
-.Ar \& array-name
-.Xc
-.Ed
-.Pp
-where a
-.Ar relop
-is any of the six relational operators in C, and a
-.Ar matchop
-is either
-.Ic ~
-(matches)
-or
-.Ic !~
-(does not match).
-A conditional is an arithmetic expression,
-a relational expression,
-or a Boolean combination
-of these.
-.Pp
-The special patterns
-.Ic BEGIN
-and
-.Ic END
-may be used to capture control before the first input line is read
-and after the last.
-.Ic BEGIN
-and
-.Ic END
-do not combine with other patterns.
-.Sh VARIABLES
-Variable names with special meanings:
-.Pp
-.Bl -tag -width "FILENAME" -compact
-.It Va ARGC
-Argument count, assignable.
-.It Va ARGV
-Argument array, assignable;
-non-null members are taken as filenames.
-.It Va CONVFMT
-Conversion format used when converting numbers
-(default
-.Qq Li %.6g ) .
-.It Va ENVIRON
-Array of environment variables; subscripts are names.
-.It Va FILENAME
-The name of the current input file.
-.It Va FNR
-Ordinal number of the current record in the current file.
-.It Va FS
-Regular expression used to separate fields; also settable
-by option
-.Fl F Ar fs .
-.It Va NF
-Number of fields in the current record.
-.It Va NR
-Ordinal number of the current record.
-.It Va OFMT
-Output format for numbers (default
-.Qq Li %.6g ) .
-.It Va OFS
-Output field separator (default blank).
-.It Va ORS
-Output record separator (default newline).
-.It Va RLENGTH
-The length of the string matched by the
-.Fn match
-function.
-.It Va RS
-Input record separator (default newline).
-.It Va RSTART
-The starting position of the string matched by the
-.Fn match
-function.
-.It Va SUBSEP
-Separates multiple subscripts (default 034).
-.El
 .Sh EXAMPLES
 Print lines longer than 72 characters:
 .Pp
