@@ -1,20 +1,12 @@
-#	$OpenBSD: Makefile,v 1.1 2001/06/24 23:26:22 hin Exp $
+#	$OpenBSD: Makefile,v 1.2 2001/06/26 05:03:26 hin Exp $
 
 PROG=	login_krb4
-SRCS=	login_krb4.c
+SRCS=	login_krb4.c login.c
 MAN=	${PROG}.8
 DPADD=  ${LIBUTIL}
-LDADD=  -lutil
-
-.include <bsd.own.mk>	# For KERBEROS
-
-CFLAGS+=-Wall
-.if (${KERBEROS:L} == "yes")
-CFLAGS+=-DKERBEROS
-SRCS+= klogin.c
-DPADD+= ${LIBKRB} ${LIBDES}
-LDADD+= -lkrb -ldes
-.endif
+LDADD=  -lutil -lkrb -lcrypto
+CFLAGS+=-DKRB4 -Wall -Werror -I${.CURDIR}/../login_passwd
+.PATH:	${.CURDIR}/../login_passwd
 
 BINOWN=	root
 BINGRP= auth

@@ -1,5 +1,4 @@
-/*	$OpenBSD: login_passwd.c,v 1.3 2001/06/26 05:03:28 hin Exp $	*/
-
+/* $OpenBSD: common.h,v 1.1 2001/06/26 05:03:28 hin Exp $ */
 /*-
  * Copyright (c) 2001 Hans Insulander <hin@openbsd.org>.
  * All rights reserved.
@@ -26,47 +25,43 @@
  * SUCH DAMAGE.
  */
 
-#include "common.h"
+#ifndef _COMMON_H_
+#define _COMMON_H_
 
-int
-pwd_login(char *username, char *password, char *wheel, int lastchance, 
-	  char *class)
-{
-	struct passwd *pwd;
-	char *salt;
+#include <sys/types.h>
+#include <sys/signal.h>
+#include <sys/resource.h>
+#include <sys/param.h>
+
+#include <syslog.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <login_cap.h>
+#include <bsd_auth.h>
+#include <stdio.h>
+#include <string.h>
+#include <pwd.h>
+#include <err.h>
+#include <util.h>
 
 
-	if((wheel != NULL) && strcmp(wheel, "yes") != 0) {
-                fprintf(back, BI_VALUE " errormsg %s\n",
-                    auth_mkvalue("you are not in group wheel"));
-                fprintf(back, BI_REJECT "\n");
-		return AUTH_FAILED;
-	}
+#define MODE_LOGIN 0
+#define MODE_CHALLENGE 1
+#define MODE_RESPONSE 2
 
-	pwd = getpwnam(username);
+#define AUTH_OK 0
+#define AUTH_FAILED -1
 
-	/* Check for empty password */
-	if((pwd != NULL) && (*pwd->pw_passwd == '\0')) {
-		fprintf(back, BI_AUTH "\n");
-		return AUTH_OK;
-	}
+extern FILE *back;
 
-	if(pwd)
-		salt = pwd->pw_passwd;
-	else
-		salt = "xx";
+#ifdef PASSWD
+int pwd_login(char *, char *, char *, int, char *);
+#endif
+#ifdef KRB4
+int krb4_login(char *, char *, char *, int);
+#endif
+#ifdef KRB5
+int krb5_login(char *, char *, char *, int, int);
+#endif
 
-	setpriority(PRIO_PROCESS, 0, -4);
-
-	salt = crypt(password, salt);
-	memset(password, 0, strlen(password));
-	if (!pwd || strcmp(salt, pwd->pw_passwd) != 0)
-		return AUTH_FAILED;
-
-	if(login_check_expire(back, pwd, class, lastchance) == 0)
-		fprintf(back, BI_AUTH "\n");
-	else
-		return AUTH_FAILED;
-
-	return AUTH_OK;
-}
+#endif /* !_COMMON_H_ */
