@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.37 2001/06/09 21:06:23 pvalchev Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.38 2001/06/10 01:24:01 deraadt Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
 #else
-static char rcsid[] = "$OpenBSD: traceroute.c,v 1.37 2001/06/09 21:06:23 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: traceroute.c,v 1.38 2001/06/10 01:24:01 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -247,7 +247,6 @@ static char rcsid[] = "$OpenBSD: traceroute.c,v 1.37 2001/06/09 21:06:23 pvalche
 #include <unistd.h>
 
 #define Fprintf (void)fprintf
-#define Sprintf (void)sprintf
 #define Printf (void)printf
 
 #define	MAX_LSRR	((MAX_IPOPTLEN - 4) / 4)
