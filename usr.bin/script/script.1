@@ -1,4 +1,4 @@
-.\"	$OpenBSD: script.1,v 1.4 1999/06/05 01:21:39 aaron Exp $
+.\"	$OpenBSD: script.1,v 1.5 2000/03/06 13:12:49 aaron Exp $
 .\"	$NetBSD: script.1,v 1.3 1994/12/21 08:55:41 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -61,7 +61,7 @@ saves all dialogue in
 If no file name is given, the typescript is saved in the file
 .Pa typescript  .
 .Pp
-Option:
+The options are as follows:
 .Bl -tag -width Ds
 .It Fl a
 Append the output to
@@ -71,18 +71,17 @@ or
 retaining the prior contents.
 .El
 .Pp
-The script ends when the forked shell exits (a
-.Em control-D
+The script ends when the forked shell exits (a control-D
+.Pq Ql ^D
 to exit
 the Bourne shell
 .Pf ( Xr sh 1 ) ,
 and
-.Em exit ,
-.Em logout
-or
-.Em control-d
+.Ic exit ,
+.Ic logout ,
+or control-D
 (if
-.Em ignoreeof
+.Va ignoreeof
 is not set) for the
 C-shell,
 .Xr csh 1 ) .
@@ -92,26 +91,21 @@ Certain interactive commands, such as
 create garbage in the typescript file.
 .Nm
 works best with commands that do not manipulate the
-screen, the results are meant to emulate a hardcopy
-terminal.
+screen; the results are meant to emulate a hardcopy terminal.
 .Sh ENVIRONMENT
-The following environment variable is utilized by
+The following environment variables are utilized by
 .Nm script :
 .Bl -tag -width SHELL
 .It Ev SHELL
-If the variable
-.Ev SHELL
-exists, the shell forked by
-.Nm
-will be that shell. If
-.Ev SHELL
-is not set, the Bourne shell
-is assumed. (Most shells set this variable automatically.)
+Name of the shell to be forked by
+.Nm script .
+If not set, the Bourne shell is assumed.
+(Most shells set this variable automatically.)
 .El
 .Sh SEE ALSO
 .Xr csh 1
 (for the
-.Em history
+.Sy history
 mechanism)
 .Sh HISTORY
 The
