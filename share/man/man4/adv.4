@@ -1,4 +1,4 @@
-.\"	$OpenBSD: adv.4,v 1.10 2000/11/10 20:02:16 todd Exp $
+.\"	$OpenBSD: adv.4,v 1.11 2001/01/15 18:10:07 krw Exp $
 .\"
 .\" Copyright (c) 1998, Jason Downs.  All rights reserved.
 .\"
@@ -39,8 +39,8 @@
 .Sh DESCRIPTION
 The
 .Nm
-drivers support most AdvanSys PCI SCSI host adapters, as shown
-in this table:
+drivers support most AdvanSys PCI SCSI host adapters, as shown in this
+table:
 .Bl -column "ABP940UWxxxxx" "ASB3940U2W-00" -offset indent
 .It Nm adv	adw
 .It ABP-920	ABP-940UW
@@ -66,6 +66,46 @@ This board has been sold by SIIG as the Fast SCSI Pro PCI.
 This board has been sold by Iomega as a Jaz Jet PCI adapter.
 .El
 .Pp
+The
+.Nm adw
+driver will log some host adapter errors with general messages such as
+.Pp
+.Bd -literal -offset indent
+iha0:0:0: host adapter error 0x12. See adw(4).
+iha0:0:0: host adapter error 0x12, resetting bus. See adw(4).
+.Ed
+.Pp
+Some further information on the meaning of such errors can be obtained
+from the following table derived from the source code provided by
+ConnectCom.
+.Bl -column "Error" "QHSTA_M_SCSI_BUS_RESET_UNSOL"
+.It Em Error	Define Name	Comment
+.Pp
+.It 0x12	QHSTA_M_SXFR_XFR_OFLW	SXFR_STATUS Transfer Overflow
+.It 0x13	QHSTA_M_UNEXPECTED_BUS_FREE
+.It 0x15	QHSTA_M_QUEUE_ABORTED
+.It 0x16	QHSTA_M_SXFR_SDMA_ERR	SXFR_STATUS SCSI DMA Error
+.It 0x17	QHSTA_M_SXFR_SXFR_PERR	SXFR_STATUS SCSI Bus Parity Error
+.It 0x18	QHSTA_M_RDMA_PERR	RISC PCI DMA parity error
+.It 0x19	QHSTA_M_SXFR_OFF_UFLW	SXFR_STATUS Offset Underflow
+.It 0x20	QHSTA_M_SXFR_OFF_OFLW	SXFR_STATUS Offset Overflow
+.It 0x21	QHSTA_M_SXFR_WD_TMO	SXFR_STATUS Watchdog Timeout
+.It 0x22	QHSTA_M_SXFR_DESELECTED	SXFR_STATUS Deselected
+.It 0x24	QHSTA_M_SXFR_XFR_PH_ERR	SXFR_STATUS Transfer Phase Error
+.It 0x25	QHSTA_M_SXFR_UNKNOWN_ERROR	SXFR_STATUS Unknown Error
+.It 0x30	QHSTA_M_SCSI_BUS_RESET	Request aborted from SBR
+.It 0x31	QHSTA_M_SCSI_BUS_RESET_UNSOL	Request aborted from unsolicited SBR
+.It 0x32	QHSTA_M_BUS_DEVICE_RESET	Request aborted from BDR
+.It 0x35	QHSTA_M_DIRECTION_ERR	Data Phase mismatch
+.It 0x36	QHSTA_M_DIRECTION_ERR_HUNG	Data Phase mismatch and bus hang
+.It 0x41	QHSTA_M_WTM_TIMEOUT
+.It 0x42	QHSTA_M_BAD_CMPL_STATUS_IN
+.It 0x43	QHSTA_M_NO_AUTO_REQ_SENSE
+.It 0x44	QHSTA_M_AUTO_REQ_SENSE_FAIL
+.It 0x45	QHSTA_M_INVALID_DEVICE	Bad target ID
+.It 0x46	QHSTA_M_FROZEN_TIDQ	TID Queue frozen
+.It 0x47	QHSTA_M_SGBACKUP_ERROR	Scatter-Gather backup error
+.El
 .Sh SEE ALSO
 .Xr cd 4 ,
 .Xr intro 4 ,
@@ -77,5 +117,6 @@ This board has been sold by Iomega as a Jaz Jet PCI adapter.
 .Sh AUTHORS
 The
 .Nm
-drivers were written by Baldassare Dante Profeta and
-Advanced System Products, Inc.
+drivers were originally written by Baldassare Dante Profeta for
+NetBSD, based on Linux drivers written by Advanced System Products,
+Inc., which is now ConnectCom Solutions, Inc.
