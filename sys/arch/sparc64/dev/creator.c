@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.10 2002/05/22 22:02:08 fgsch Exp $	*/
+/*	$OpenBSD: creator.c,v 1.11 2002/06/03 16:32:04 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -163,6 +163,7 @@ creator_attach(parent, self, aux)
 	long defattr;
 	extern int fbnode;
 	int i, btype, console, nregs;
+	char *model;
 
 	sc->sc_bt = ma->ma_bustag;
 
@@ -170,9 +171,9 @@ creator_attach(parent, self, aux)
 
 	printf(":");
 
-	btype = getpropint(ma->ma_node, "board_type", 0);
-
 	if (strcmp(ma->ma_name, "SUNW,afb") != 0) {
+		btype = getpropint(ma->ma_node, "board_type", 0);
+
 		if ((btype & 7) == 3)
 			printf(" Creator3D");
 		else
@@ -180,16 +181,20 @@ creator_attach(parent, self, aux)
 	} else
 		printf(" Elite3D");
 
-	printf(", type %d\n", btype);
+	model = getpropstring(ma->ma_node, "model");
+	if (model == NULL || strlen(model) == 0)
+		model = "unknown";
 
-	if (nregs < FFB_REG_DFB32) {
-		printf(": no dfb32 regs found\n");
+	printf(", model %s\n", model);
+
+	if (nregs < FFB_REG_DFB24) {
+		printf(": no dfb24 regs found\n");
 		goto fail;
 	}
 
-	if (bus_space_map2(sc->sc_bt, 0, ma->ma_reg[FFB_REG_DFB32].ur_paddr,
-	    ma->ma_reg[FFB_REG_DFB32].ur_len, 0, NULL, &sc->sc_pixel_h)) {
-		printf("%s: failed to map dfb32\n", sc->sc_dv.dv_xname);
+	if (bus_space_map2(sc->sc_bt, 0, ma->ma_reg[FFB_REG_DFB24].ur_paddr,
+	    ma->ma_reg[FFB_REG_DFB24].ur_len, 0, NULL, &sc->sc_pixel_h)) {
+		printf("%s: failed to map dfb24\n", sc->sc_dv.dv_xname);
 		goto fail;
 	}
 
@@ -201,12 +206,12 @@ creator_attach(parent, self, aux)
 
 	console = (fbnode == ma->ma_node);
 
-	sc->sc_depth = 32;
+	sc->sc_depth = 24;
 	sc->sc_linebytes = 8192;
 	sc->sc_height = getpropint(ma->ma_node, "height", 0);
 	sc->sc_width = getpropint(ma->ma_node, "width", 0);
 
-	sc->sc_rasops.ri_depth = sc->sc_depth;
+	sc->sc_rasops.ri_depth = 32;
 	sc->sc_rasops.ri_stride = sc->sc_linebytes;
 	sc->sc_rasops.ri_flg = RI_CENTER;
 	sc->sc_rasops.ri_bits = (void *)bus_space_vaddr(sc->sc_bt,
@@ -250,7 +255,7 @@ creator_attach(parent, self, aux)
 fail:
 	if (sc->sc_pixel_h != 0)
 		bus_space_unmap(sc->sc_bt, sc->sc_pixel_h,
-		    ma->ma_reg[FFB_REG_DFB32].ur_len);
+		    ma->ma_reg[FFB_REG_DFB24].ur_len);
 }
 
 int
@@ -275,8 +280,8 @@ creator_ioctl(v, cmd, data, flags, p)
 		wdf = (void *)data;
 		wdf->height = sc->sc_height;
 		wdf->width  = sc->sc_width;
-		wdf->depth  = sc->sc_depth;
-		wdf->cmsize = 256;/*XXX*/
+		wdf->depth  = 32;
+		wdf->cmsize = 256; /* XXX */
 		break;
 	case WSDISPLAYIO_LINEBYTES:
 		*(u_int *)data = sc->sc_linebytes;
