@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.16 1997/08/29 20:44:24 kstailey Exp $
+	$OpenBSD: syscalls.master,v 1.17 1997/11/13 07:11:12 deraadt Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -463,3 +463,4 @@
 			    unsigned long nfds, int timeout); }
 253	STD		{ int sys_issetugid(void); }
 254	STD		{ int sys_lchown(char *path, int uid, int gid); }
+255	STD		{ int sys_getsid(pid_t pid); }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.10 1997/09/02 08:48:32 downsj Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.11 1997/11/13 07:11:11 deraadt Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -116,6 +116,25 @@ sys_getpgid(p, v, retval)
 		return (ESRCH);
 found:
 	*retval = p->p_pgid;
+	return 0;
+}
+
+int
+sys_getsid(p, v, retval)
+        struct proc *p;
+        void *v;
+        register_t *retval;
+{
+        register struct sys_getsid_args /* {
+                syscallarg(pid_t) pid;
+        } */ *uap = v;
+
+	if (SCARG(uap, pid) == 0)
+		goto found;
+	if ((p == pfind(SCARG(uap, pid))) == 0)
+		return (ESRCH);
+found:
+	*retval = p->p_pgrp->pg_session->s_leader->p_pid;
 	return 0;
 }
 
@@ -289,7 +308,7 @@ sys_setpgid(curp, v, retval)
 		SCARG(uap, pgid) = targp->p_pid;
 	else if (SCARG(uap, pgid) != targp->p_pid)
 		if ((pgrp = pgfind(SCARG(uap, pgid))) == 0 ||
-	            pgrp->pg_session != curp->p_session)
+		    pgrp->pg_session != curp->p_session)
 			return (EPERM);
 	return (enterpgrp(targp, SCARG(uap, pgid), 0));
 }

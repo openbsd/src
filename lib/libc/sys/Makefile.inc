@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.23 1997/05/30 21:53:10 kstailey Exp $
+#	$OpenBSD: Makefile.inc,v 1.24 1997/11/13 07:11:13 deraadt Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -25,6 +25,7 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
 	getfh.o getfsstat.o getgid.o getgroups.o getitimer.o getpeername.o \
 	getpgid.o \
 	getpgrp.o getpid.o getppid.o getpriority.o getrlimit.o getrusage.o \
+	getsid.o \
 	getsockname.o getsockopt.o gettimeofday.o getuid.o issetugid.o \
 	ioctl.o kill.o \
 	ktrace.o lchown.o lfs_bmapv.o lfs_markv.o lfs_segclean.o lfs_segwait.o \
@@ -116,7 +117,7 @@ MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 chflags.2 \
 	execve.2 _exit.2 fcntl.2 flock.2 fork.2 fsync.2 getdirentries.2 \
 	getfh.2 getfsstat.2 \
 	getgid.2 getgroups.2 getitimer.2 getlogin.2 getpeername.2 getpgrp.2 \
-	getpid.2 getpriority.2 getrlimit.2 getrusage.2 getsockname.2 \
+	getpid.2 getpriority.2 getrlimit.2 getrusage.2 getsid.2 getsockname.2 \
 	getsockopt.2 gettimeofday.2 getuid.2 intro.2 issetugid.2 ioctl.2 \
 	kill.2 ktrace.2 link.2 \
 	listen.2 lseek.2 mkdir.2 mkfifo.2 mknod.2 madvise.2 mincore.2 \
