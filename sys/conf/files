@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.95 1998/09/28 02:33:55 jason Exp $
+#	$OpenBSD: files,v 1.96 1998/09/28 02:43:22 jason Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -79,7 +79,7 @@ device	le: ether, ifnet, ifmedia
 file	dev/ic/am7990.c		le
 
 # SMC 91Cxx Ethernet Controller
-device	sm: ether, ifnet
+device	sm: ether, ifnet, ifmedia
 file	dev/ic/smc91cxx.c	sm
 
 # Novell NE2000-compatible Ethernet cards, based on the
