@@ -1,4 +1,4 @@
-/*	$OpenBSD: dz_ibus.c,v 1.8 2001/08/26 18:25:06 hugh Exp $	*/
+/*	$OpenBSD: dz_ibus.c,v 1.9 2001/10/01 13:05:07 hugh Exp $	*/
 /*	$NetBSD: dz_ibus.c,v 1.15 1999/08/27 17:50:42 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
@@ -125,10 +125,11 @@ dz_vsbus_match(parent, cf, aux)
 	struct ss_dz *dzP;
 	short i;
 
-#if VAX53
-	if (vax_boardtype == VAX_BTYP_1303)
+#if VAX53 || VAX49
+	if (vax_boardtype == VAX_BTYP_49 ||
+	    vax_boardtype == VAX_BTYP_1303)
 		if (cf->cf_loc[0] != 0x25000000)
-			return 0; /* Ugly */
+			return 0; /* don't probe unnecessarily */
 #endif
 
 	dzP = (struct ss_dz *)va->va_addr;
