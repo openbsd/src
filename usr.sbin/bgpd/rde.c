@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.17 2003/12/21 23:26:38 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.18 2003/12/21 23:28:39 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -172,7 +172,7 @@ rde_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 	struct rde_peer		*p, *np;
 	u_int32_t		 rid;
 
-	if (get_imsg(ibuf, &imsg) > 0) {
+	if (imsg_get(ibuf, &imsg) > 0) {
 		switch (imsg.hdr.type) {
 		case IMSG_RECONF_CONF:
 			if (idx != PFD_PIPE_MAIN)

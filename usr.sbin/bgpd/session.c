@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.26 2003/12/21 23:26:38 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.27 2003/12/21 23:28:39 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1204,7 +1204,7 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 	struct peer		*p, *next;
 	enum reconf_action	 reconf;
 
-	if (get_imsg(ibuf, &imsg) > 0) {
+	if (imsg_get(ibuf, &imsg) > 0) {
 		switch (imsg.hdr.type) {
 		case IMSG_RECONF_CONF:
 			if (idx != PFD_PIPE_MAIN)

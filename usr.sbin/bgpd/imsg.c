@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.7 2003/12/21 23:26:37 henning Exp $ */
+/*	$OpenBSD: imsg.c,v 1.8 2003/12/21 23:28:39 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -45,7 +45,7 @@ imsg_init(struct imsgbuf *ibuf, int sock)
 }
 
 int
-get_imsg(struct imsgbuf *ibuf, struct imsg *imsg)
+imsg_get(struct imsgbuf *ibuf, struct imsg *imsg)
 {
 	struct imsg_hdr		*hdr;
 	ssize_t			 n, read_total = 0, datalen = 0;
