@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.15 1996/05/25 22:17:49 deraadt Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.16 1996/08/26 06:52:29 deraadt Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.14 1996/05/12 23:06:18 mycroft Exp $	*/
 
 /*-
@@ -117,7 +117,8 @@ int
 isa_nmi()
 {
 
-	log(LOG_CRIT, "NMI port 61 %x, port 70 %x\n", inb(0x61), inb(0x70));
+	/* This is historic garbage; these ports are not readable */
+	log(LOG_CRIT, "No-maskable interrupt, may be parity error\n");
 	return(0);
 }
 
