@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.1 2002/03/15 22:50:05 mickey Exp $	*/
+/*	$OpenBSD: wscons_machdep.c,v 1.2 2002/03/18 00:19:45 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -123,7 +123,11 @@ int
 wscngetc(dev)
 	dev_t dev;
 {
+#if NWSKBD > 0
 	return (wskbd_cngetc(dev));
+#else
+	return (0);
+#endif
 }
 
 void
@@ -131,5 +135,7 @@ wscnpollc(dev, on)
 	dev_t dev;
 	int on;
 {
+#if NWSKBD > 0
 	wskbd_cnpollc(dev, on);
+#endif
 }
