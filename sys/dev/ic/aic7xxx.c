@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.c,v 1.40 2000/01/07 23:08:17 gibbs Exp $
- * $OpenBSD: aic7xxx.c,v 1.21 2000/04/05 04:29:58 smurph Exp $
+ * $OpenBSD: aic7xxx.c,v 1.22 2000/07/03 22:18:36 smurph Exp $
  */
 /*
  * A few notes on features of the driver.
@@ -127,6 +127,10 @@
 #endif
 #include <sys/kernel.h>
 #define offsetof(s, e) ((char *)&((s *)0)->e - (char *)((s *)0))
+
+#ifndef le32toh
+#define le32toh	letoh32  /* to match Free/Net macros */
+#endif
 
 #define	IS_SCSIBUS_B(ahc, sc_link)	\
 	((sc_link)->scsibus == (ahc)->sc_link_b.scsibus)
@@ -324,7 +328,8 @@ STATIC void	ahc_set_width __P((struct ahc_softc *ahc,
 STATIC void	ahc_set_tags __P((struct ahc_softc *ahc,
 				  struct ahc_devinfo *devinfo,int enable));
 STATIC int      ahc_istagged_device __P((struct ahc_softc *ahc,
-					 struct scsi_xfer *xs));
+					 struct scsi_xfer *xs,
+					 int nocmdcheck));
 STATIC void     ahc_check_tags __P((struct ahc_softc *ahc,
 				    struct scsi_xfer *xs));
 STATIC void	ahc_construct_sdtr __P((struct ahc_softc *ahc,
@@ -381,8 +386,9 @@ STATIC INLINE	void   ahc_list_remove __P((struct ahc_softc *ahc,
 					    struct scsi_xfer *xs));
 STATIC INLINE	struct scsi_xfer *ahc_list_next __P((struct ahc_softc *ahc,
 						     struct scsi_xfer *xs));
-
 STATIC int32_t ahc_scsi_cmd __P((struct scsi_xfer *xs));
+static __inline void ahc_swap_hscb __P((struct hardware_scb *));
+static __inline void ahc_swap_sg __P((struct ahc_dma_seg *));
 
 struct cfdriver ahc_cd = {
 	NULL, "ahc", DV_DULL
@@ -404,6 +410,25 @@ static struct scsi_device ahc_dev =
 	NULL, /* have no async handler */
 	NULL, /* Use default 'done' routine */
 };
+
+static __inline void
+ahc_swap_hscb(struct hardware_scb *hscb)
+{
+	hscb->SG_pointer = htole32(hscb->SG_pointer);
+	hscb->data = htole32(hscb->data);
+	hscb->datalen = htole32(hscb->datalen);
+	/*
+	 * No need to swap cmdpointer; it's either 0 or set to
+	 * cmdstore_busaddr, which is already swapped.
+	 */
+}
+
+static __inline void
+ahc_swap_sg(struct ahc_dma_seg *sg)
+{
+	sg->addr = htole32(sg->addr);
+	sg->len = htole32(sg->len);
+}
 
 STATIC void
 ahcminphys(bp)
@@ -767,20 +792,21 @@ ahc_print_scb(scb)
 {
 	struct hardware_scb *hscb = scb->hscb;
 
-	printf("scb:%p control:0x%x tcl:0x%x cmdlen:%d cmdpointer:0x%lx\n",
+	printf("scb:%p tag %x control:0x%x tcl:0x%x cmdlen:%d cmdpointer:0x%lx\n",
 		scb,
+		hscb->tag,
 		hscb->control,
 		hscb->tcl,
 		hscb->cmdlen,
-		hscb->cmdpointer );
-	printf("        datlen:%d data:0x%lx segs:0x%x segp:0x%lx\n",
-		hscb->datalen,
-		hscb->data,
+		(unsigned long)le32toh(hscb->cmdpointer));
+	printf("        datlen:%u data:0x%lx segs:0x%x segp:0x%lx\n",
+		le32toh(hscb->datalen),
+		(unsigned long)(le32toh(hscb->data)),
 		hscb->SG_count,
-		hscb->SG_pointer);
-	printf("	sg_addr:%lx sg_len:%ld\n",
-		scb->sg_list[0].addr,
-		scb->sg_list[0].len);
+		(unsigned long)(le32toh(hscb->SG_pointer)));
+	printf("	sg_addr:%lx sg_len:%lu\n",
+		(unsigned long)(le32toh(scb->sg_list[0].addr)),
+		(unsigned long)(le32toh(scb->sg_list[0].len)));
 	printf("	cdb:%x %x %x %x %x %x %x %x %x %x %x %x\n",
 		hscb->cmdstore[0], hscb->cmdstore[1], hscb->cmdstore[2],
 		hscb->cmdstore[3], hscb->cmdstore[4], hscb->cmdstore[5],
@@ -1471,8 +1497,10 @@ ahc_set_tags(ahc, devinfo, enable)
 				    &tstate);
 	if (enable)
 		tstate->tagenable |= devinfo->target_mask;
-	else
+	else {
 		tstate->tagenable &= ~devinfo->target_mask;
+		tstate->tagdisable |= devinfo->target_mask;
+	}
 }
 
 /*
@@ -1937,6 +1965,8 @@ ahc_handle_seqint(ahc, intstat)
 				hscb->cmdpointer = hscb->cmdstore_busaddr;
 				hscb->cmdlen = sizeof(*sc);
 				scb->sg_count = hscb->SG_count;
+				ahc_swap_hscb(hscb);
+				ahc_swap_sg(scb->sg_list);
 				scb->flags |= SCB_SENSE;
 				/*
 				 * Ensure the target is busy since this
@@ -2100,8 +2130,8 @@ ahc_handle_seqint(ahc, intstat)
 			for (i = 0; i < scb->sg_count; i++) {
 				printf("sg[%d] - Addr 0x%x : Length %d\n",
 				       i,
-				       scb->sg_list[i].addr,
-				       scb->sg_list[i].len);
+				       (unsigned int)le32toh(scb->sg_list[i].addr),
+				       (unsigned int)le32toh(scb->sg_list[i].len));
 			}
 		}
 		/*
@@ -3329,13 +3359,14 @@ ahc_handle_ign_wide_residue(ahc, devinfo)
 			sg_index = scb->sg_count - resid_sgcnt;
 
 			if (sg_index != 0
-			 && (scb->sg_list[sg_index].len < data_cnt)) {
-				u_int sg_addr;
+			 && (le32toh(scb->sg_list[sg_index].len) < data_cnt)) {
+				u_int32_t sg_addr;
 
 				sg_index--;
 				data_cnt = 1;
-				data_addr = scb->sg_list[sg_index].addr
-					  + scb->sg_list[sg_index].len - 1;
+				data_addr = le32toh(scb->sg_list[sg_index].addr)
+					  + le32toh(scb->sg_list[sg_index].len)
+					  - 1;
 				
 				/*
 				 * The physical address base points to the
@@ -3440,7 +3471,8 @@ ahc_done(ahc, scb)
 	 * XXX if we are holding two commands per lun, 
 	 *     send the next command.
 	 */
-	ahc_index_busy_tcl(ahc, scb->hscb->tcl, /*unbusy*/TRUE);
+	if (!(scb->hscb->control & TAG_ENB))
+		ahc_index_busy_tcl(ahc, scb->hscb->tcl, /*unbusy*/TRUE);
 
 	/*
 	 * If the recovery SCB completes, we have to be
@@ -3496,7 +3528,7 @@ ahc_done(ahc, scb)
 		 */
 		bzero(&xs->sense, sizeof(struct scsi_sense));
 		bcopy(&ahc->scb_data->sense[scb->hscb->tag],
-		      &xs->sense, scb->sg_list->len);
+		      &xs->sense, le32toh(scb->sg_list->len));
 		xs->error = XS_SENSE;
 	}
 	if (scb->flags & SCB_FREEZE_QUEUE) {
@@ -3849,6 +3881,7 @@ ahc_init(ahc)
 		tstate->ultraenb = ultraenb;
 		tstate->discenable = discenable;
 		tstate->tagenable = 0; /* Wait until the XPT says its okay */
+		tstate->tagdisable = 0;
 	}
 	ahc->user_discenable = discenable;
 	ahc->user_tagenable = tagenable;
@@ -3929,7 +3962,7 @@ ahc_init(ahc)
 
 	/*
 	 * Setup the allowed SCSI Sequences based on operational mode.
-	 * If we are a target, we'll enalbe select in operations once
+	 * If we are a target, we'll enable select in operations once
 	 * we've had a lun enabled.
 	 */
 	scsiseq_template = ENSELO|ENAUTOATNO|ENAUTOATNP;
@@ -4059,6 +4092,7 @@ ahc_scsi_cmd(xs)
 	struct tmode_tstate *tstate;
 	u_int target_id;
 	u_int our_id;
+	char channel;
 	int s, tcl;
 	u_int16_t mask;
 	int dontqueue = 0, fromqueue = 0;
@@ -4105,7 +4139,7 @@ ahc_scsi_cmd(xs)
 
 	if (ahc->queue_blocked ||
 	    ahc->devqueue_blocked[xs->sc_link->target] ||
-	    (!ahc_istagged_device(ahc, xs) &&
+	    (!ahc_istagged_device(ahc, xs, 0) &&
 	     ahc_index_busy_tcl(ahc, tcl, FALSE) != SCB_LIST_NULL)) {
 		if (dontqueue) {
 			splx(s);
@@ -4181,7 +4215,8 @@ get_scb:
 	tcl = XS_TCL(ahc, xs);
 
 #ifdef DIAGNOSTIC
-	if (ahc_index_busy_tcl(ahc, tcl, FALSE) != SCB_LIST_NULL)
+	if (!ahc_istagged_device(ahc, xs, 0) &&
+	    ahc_index_busy_tcl(ahc, tcl, FALSE) != SCB_LIST_NULL)
 		panic("ahc: queuing for busy target");
 #endif
 	
@@ -4189,13 +4224,24 @@ get_scb:
 	hscb = scb->hscb;
 	hscb->tcl = tcl;
 
-	if (ahc_istagged_device(ahc, xs))
+	if (ahc_istagged_device(ahc, xs, 0))
 		scb->hscb->control |= MSG_SIMPLE_Q_TAG;
 	else
 		ahc_busy_tcl(ahc, scb);
 
 	splx(s);
  
+	channel = SIM_CHANNEL(ahc, xs->sc_link);
+	if (ahc->inited_channels[channel - 'A'] == 0) {
+		if ((channel == 'A' && (ahc->flags & AHC_RESET_BUS_A)) ||
+		    (channel == 'B' && (ahc->flags & AHC_RESET_BUS_B))) {
+			s = splbio();
+			ahc_reset_channel(ahc, channel, TRUE);
+			splx(s);
+		}
+		ahc->inited_channels[channel - 'A'] = 1;
+	}
+
 	/*
 	 * Put all the arguments for the xfer in the scb
 	 */
@@ -4266,6 +4312,7 @@ ahc_execute_scb(arg, dm_segs, nsegments)
 		while (dm_segs < end_seg) {
 			sg->addr = dm_segs->ds_addr;
 			sg->len = dm_segs->ds_len;
+			ahc_swap_sg(sg);
 			sg++;
 			dm_segs++;
 		}
@@ -4292,7 +4339,7 @@ ahc_execute_scb(arg, dm_segs, nsegments)
 	 * be aborted.
 	 */
 	if (xs->flags & ITSDONE) {
-		if (!ahc_istagged_device(ahc, xs))
+		if (!ahc_istagged_device(ahc, xs, 0))
 			ahc_index_busy_tcl(ahc, scb->hscb->tcl, TRUE);
 		if (nsegments != 0)
 			bus_dmamap_unload(ahc->sc_dmat, scb->dmamap);
@@ -4305,6 +4352,8 @@ ahc_execute_scb(arg, dm_segs, nsegments)
 	if (scb->sg_count > 255)
 		panic("ahc bad sg_count");
 #endif
+
+	ahc_swap_hscb(scb->hscb);
 		
 	LIST_INSERT_HEAD(&ahc->pending_scbs, scb, pend_links);
 
@@ -4418,7 +4467,7 @@ ahc_setup_data(ahc, xs, scb)
 			    (xs->flags & SCSI_NOSLEEP) ?
 			    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
 		if (error) {
-			if (!ahc_istagged_device(ahc, xs))
+			if (!ahc_istagged_device(ahc, xs, 0))
 				ahc_index_busy_tcl(ahc, hscb->tcl, TRUE);
 			return (TRY_AGAIN_LATER);	/* XXX fvdl */
 		}
@@ -4514,8 +4563,10 @@ ahcallocscbs(ahc)
 		next_scb->hscb = &scb_data->hscbs[scb_data->numscbs];
 		next_scb->hscb->tag = ahc->scb_data->numscbs;
 		next_scb->hscb->cmdstore_busaddr = 
-			ahc_hscb_busaddr(ahc, next_scb->hscb->tag) + 
-			offsetof(struct hardware_scb, cmdstore);	
+		    ahc_hscb_busaddr(ahc, next_scb->hscb->tag)
+		  + offsetof(struct hardware_scb, cmdstore);
+		next_scb->hscb->cmdstore_busaddr =
+		    htole32(next_scb->hscb->cmdstore_busaddr);
 		SLIST_INSERT_HEAD(&ahc->scb_data->free_scbs, next_scb, links);
 		segs += AHC_NSEG;
 		physaddr += (AHC_NSEG * sizeof(struct ahc_dma_seg));
@@ -4648,6 +4699,8 @@ ahc_download_instr(ahc, instrptr, dconsts)
 	/* Structure copy */
 	instr = *(union ins_formats*)&seqprog[instrptr * 4];
 
+	instr.integer = le32toh(instr.integer);
+
 	fmt1_ins = &instr.format1;
 	fmt3_ins = NULL;
 
@@ -4735,6 +4788,7 @@ ahc_download_instr(ahc, instrptr, dconsts)
 				      |	(fmt1_ins->opcode << 25);
 			}
 		}
+		instr.integer = htole32(instr.integer);
 		ahc_outsb(ahc, SEQRAM, instr.bytes, 4);
 		break;
 	default:
@@ -4854,8 +4908,8 @@ ahc_timeout(void *arg)
 		for (i = 0; i < scb->sg_count; i++) {
 			printf("sg[%d] - Addr 0x%x : Length %d\n",
 			       i,
-			       scb->sg_list[i].addr,
-			       scb->sg_list[i].len);
+			       le32toh(scb->sg_list[i].addr),
+			       le32toh(scb->sg_list[i].len));
 		}
 	}
 #endif
@@ -5609,7 +5663,7 @@ ahc_calc_residual(scb)
 		sg = scb->sg_count - resid_sgs;
 		while (resid_sgs > 0) {
 
-			resid += scb->sg_list[sg].len;
+			resid += le32toh(scb->sg_list[sg].len);
 			sg++;
 			resid_sgs--;
 		}
@@ -5778,13 +5832,26 @@ struct scsi_xfer *xs;
 {
 	struct scsi_inquiry_data *inq;
 	struct ahc_devinfo devinfo;
+	struct tmode_tstate *tstate;
 	int target_id, our_id;
+	char channel;
 
 	if (xs->cmd->opcode != INQUIRY || xs->error != XS_NOERROR)
 		return;
 
+	if (xs->sc_link->quirks & SDEV_NOTAGS)
+		return;
+
 	target_id = xs->sc_link->target;
 	our_id = SIM_SCSI_ID(ahc, xs->sc_link);
+	channel = SIM_CHANNEL(ahc, xs->sc_link);
+
+	(void)ahc_fetch_transinfo(ahc, channel, our_id, target_id, &tstate);
+	ahc_compile_devinfo(&devinfo, our_id, target_id,
+	    xs->sc_link->lun, channel, ROLE_INITIATOR);
+
+	if (tstate->tagdisable & devinfo.target_mask)
+		return;
 
 	/*
 	 * Sneak a look at the results of the SCSI Inquiry
@@ -5792,14 +5859,11 @@ struct scsi_xfer *xs;
 	 * should really be done by the higher level drivers.
 	 */
 	inq = (struct scsi_inquiry_data *)xs->data;
-	if ((inq->flags & SID_CmdQue) && !(ahc_istagged_device(ahc, xs))) {
+	if ((inq->flags & SID_CmdQue) && !(ahc_istagged_device(ahc, xs, 1))) {
 #ifdef AHC_DEBUG 
 		printf("%s: target %d using tagged queuing\n",
 			ahc_name(ahc), xs->sc_link->target);
 #endif 
-		ahc_compile_devinfo(&devinfo,
-		    our_id, target_id, xs->sc_link->lun,	
-		    SIM_CHANNEL(ahc, xs->sc_link), ROLE_INITIATOR);
 		ahc_set_tags(ahc, &devinfo, TRUE);
 
 		if (ahc->scb_data->maxhscbs >= 16 ||
@@ -5821,14 +5885,27 @@ struct scsi_xfer *xs;
 }
 
 STATIC int
-ahc_istagged_device(ahc, xs)
+ahc_istagged_device(ahc, xs, nocmdcheck)
 struct ahc_softc *ahc;
 struct scsi_xfer *xs;
+int nocmdcheck;
 {
 	char channel;
 	u_int our_id, target;
 	struct tmode_tstate *tstate;
 	struct ahc_devinfo devinfo;
+
+	if (xs->sc_link->quirks & SDEV_NOTAGS)
+		return 0;
+
+	/*
+	 * XXX never do these commands with tags. Should really be
+	 * in a higher layer.
+	 */
+	if (!nocmdcheck && (xs->cmd->opcode == INQUIRY ||
+	     xs->cmd->opcode == TEST_UNIT_READY ||
+	     xs->cmd->opcode == REQUEST_SENSE))
+		return 0;
 
 	channel = SIM_CHANNEL(ahc, xs->sc_link);
 	our_id = SIM_SCSI_ID(ahc, xs->sc_link);
