@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.52 2005/03/18 04:00:58 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.53 2005/03/18 04:20:04 pvalchev Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, and G4 Cube, as well
 as PowerBook and iBook machines.
 
@@ -257,6 +257,9 @@ Supported devices {:-include-:}:
 			Gigabyte 7N400 Pro2 Integrated Gigabit Ethernet (8110S) 
 			PLANEX COMMUNICATIONS Inc. GN-1200TC (8169S)
 			Xterasys XN-152 10/100/1000 NIC (8169)
+		VIA Networking VT6122 based PCI adapters, including:
+			ZyXEL GN650-T 64-bit PCI Gigabit Ethernet NIC (ZX1701)
+			ZyXEL GN670-T 32-bit PCI Gigabit Ethernet NIC (ZX1702)
 
 	Wireless Ethernet Adapters
 		PCMCIA Adapters
