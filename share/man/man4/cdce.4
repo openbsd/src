@@ -25,7 +25,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\" 
-.\" $OpenBSD: cdce.4,v 1.1 2004/07/20 20:30:09 dhartmei Exp $
+.\" $OpenBSD: cdce.4,v 1.2 2004/07/20 20:38:52 miod Exp $
 .\"
 .Dd July 20, 2004
 .Dt CDCE 4
@@ -51,10 +51,9 @@ Sharp Zaurus
 .Pp
 The USB bridge appears as a regular network interface on both sides,
 transporting Ethernet frames.
-An IP address can be assigned using
-.Xr ifconfig 8
-or
-.Xr hostname.if 5
+.Pp
+For more information on configuring this device, see
+.Xr ifconfig 8 .
 .Pp
 USB 1.x bridges support speeds of up to 12Mbps, and USB 2.0 speeds of
 up to 480Mbps.
