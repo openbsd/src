@@ -133,6 +133,10 @@ int	safepri = PSL_LOWIPL;
 extern  int   freebufspace;
 extern	u_int lowram;
 
+#ifdef COMPAT_SUNOS
+extern struct emul emul_sunos;
+#endif
+
 /* used in init_main.c */
 char *cpu_type = "m68k";
 /* the following is used externally (sysctl_hw) */
