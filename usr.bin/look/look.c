@@ -1,4 +1,4 @@
-/*	$OpenBSD: look.c,v 1.7 2002/02/16 21:27:48 millert Exp $	*/
+/*	$OpenBSD: look.c,v 1.8 2002/03/01 00:51:08 millert Exp $	*/
 /*	$NetBSD: look.c,v 1.7 1995/08/31 22:41:02 jtc Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)look.c	8.2 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: look.c,v 1.7 2002/02/16 21:27:48 millert Exp $";
+static char rcsid[] = "$OpenBSD: look.c,v 1.8 2002/03/01 00:51:08 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -146,7 +146,7 @@ main(argc, argv)
 	if ((fd = open(file, O_RDONLY, 0)) < 0 || fstat(fd, &sb))
 		err(2, "%s", file);
 	if (sb.st_size > SIZE_T_MAX)
-		err(2, "%s: %s", file, strerror(EFBIG));
+		errx(2, "%s: %s", file, strerror(EFBIG));
 	if ((front = mmap(NULL,
 	    (size_t)sb.st_size, PROT_READ, MAP_PRIVATE, fd, (off_t)0)) == MAP_FAILED)
 		err(2, "%s", file);
