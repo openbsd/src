@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: ssh.c,v 1.35 1999/12/01 13:59:15 markus Exp $");
+RCSID("$Id: ssh.c,v 1.36 1999/12/12 19:20:03 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -728,7 +728,8 @@ main(int ac, char **av)
 		      options.local_forwards[i].host_port);
 		channel_request_local_forwarding(options.local_forwards[i].port,
 					  	 options.local_forwards[i].host,
-						 options.local_forwards[i].host_port);
+						 options.local_forwards[i].host_port,
+						 options.gateway_ports);
 	}
 
 	/* Initiate remote TCP/IP port forwardings. */

@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.73 1999/12/08 23:59:12 markus Exp $");
+RCSID("$Id: sshd.c,v 1.74 1999/12/12 19:20:03 markus Exp $");
 
 #include <poll.h>
 
@@ -1619,7 +1619,7 @@ do_authenticated(struct passwd * pw)
 				screen = packet_get_int();
 			else
 				screen = 0;
-			display = x11_create_display_inet(screen);
+			display = x11_create_display_inet(screen, options.x11_display_offset);
 			if (!display)
 				goto fail;
 
