@@ -1,15 +1,15 @@
-#	$OpenBSD: Makefile,v 1.181 2001/11/14 21:23:09 mickey Exp $
+#	$OpenBSD: Makefile,v 1.182 2001/11/26 16:51:47 mickey Exp $
 
 MAN=	aac.4 ac97.4 addcom.4 adv.4 aha.4 ahb.4 ahc.4 aic.4 ami.4 amphy.4 \
-	an.4 aria.4 ast.4 \
-	atalk.4 atapiscsi.4 audio.4 aue.4 auvia.4 awi.4 bpf.4 bridge.4 \
+	an.4 aria.4 ast.4 atalk.4 atapiscsi.4 \
+	audio.4 aue.4 auich.4 autri.4 auvia.4 awi.4 bpf.4 bridge.4 \
 	bge.4 bmtphy.4 brgphy.4 bt.4 cac.4 cardbus.4 ccd.4 cd.4 \
 	ch.4 clnp.4 clcs.4 clct.4 cltp.4 \
 	cmpci.4 cnw.4 com.4 crypto.4 \
 	cue.4 cy.4 cz.4 dc.4 ddb.4 de.4 dpt.4 drum.4 eap.4 ec.4 \
 	eephy.4 ef.4 eg.4 el.4 emu.4 enc.4 ep.4 esis.4 \
 	eso.4 ess.4 exphy.4 fd.4 fdc.4 fpa.4 \
-	fms.4 fxp.4 gdt.4 gre.4 hifn.4 hsq.4 auich.4 icmp.4 icsphy.4 \
+	fms.4 fxp.4 gdt.4 gre.4 hifn.4 hsq.4 icmp.4 icsphy.4 \
 	idp.4 iha.4 ifmedia.4 \
 	inet.4 inphy.4 iop.4 iopsp.4 ioprbs.4 iophy.4 ip.4 ipcomp.4 ipsec.4 \
 	isa.4 isapnp.4 ises.4 iso.4 isp.4 \
