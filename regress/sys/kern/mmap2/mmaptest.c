@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmaptest.c,v 1.3 2002/02/18 15:24:18 art Exp $	*/
+/*	$OpenBSD: mmaptest.c,v 1.4 2002/09/11 23:41:23 mickey Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org>, 2001 Public Domain
  */
@@ -55,13 +55,13 @@ main()
 	memcpy(v1, MAGIC, sizeof(MAGIC));
 
 	if (memcmp(v2, MAGIC, sizeof(MAGIC)) != 0)
-		err(1, "comparsion 1 failed");
+		errx(1, "comparsion 1 failed");
 
 	if (memcmp(v1, v2, sizeof(MAGIC)) != 0)
-		err(1, "comparsion 2 failed");
+		errx(1, "comparsion 2 failed");
 
 	if (munmap(v1, 2 * page_size) < 0)
-		err(1, "munmap");
+		errx(1, "munmap");
 
 	close(fd);
 
