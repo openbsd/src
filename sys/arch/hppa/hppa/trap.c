@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.44 2002/07/21 11:47:39 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.45 2002/07/25 02:26:17 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -141,16 +141,18 @@ trap(type, frame)
 	u_int opcode;
 	int ret, s, si, trapnum;
 	const char *tts;
+	vm_fault_t fault = VM_FAULT_INVALID;
 
 	trapnum = type & ~T_USER;
 	opcode = frame->tf_iir;
-	if (trapnum == T_ITLBMISS || trapnum == T_ITLBMISSNA) {
+	if (trapnum == T_ITLBMISS) {
 		va = frame->tf_iioq_head;
 		space = frame->tf_iisq_head;
 		vftype = VM_PROT_EXECUTE;
 	} else {
 		va = frame->tf_ior;
 		space = frame->tf_isr;
+		/* what is the vftype for the T_ITLBMISSNA ??? XXX */
 		vftype = inst_store(opcode) ? VM_PROT_WRITE : VM_PROT_READ;
 	}
 
@@ -279,6 +281,7 @@ trap(type, frame)
 		break;
 
 	case T_DATACC:   	case T_USER | T_DATACC:
+		fault = VM_FAULT_PROTECT;
 	case T_ITLBMISS:	case T_USER | T_ITLBMISS:
 	case T_DTLBMISS:	case T_USER | T_DTLBMISS:
 	case T_ITLBMISSNA:	case T_USER | T_ITLBMISSNA:
@@ -317,8 +320,7 @@ trap(type, frame)
 			pmapdebug = 0xffffff;
 		}
 #endif
-
-		ret = uvm_fault(map, va, 0, vftype);
+		ret = uvm_fault(map, va, fault, vftype);
 
 #ifdef TRAPDEBUG
 		if (space == -1) {
