@@ -1,4 +1,4 @@
-/*	$OpenBSD: socks.c,v 1.4 2002/02/19 22:42:04 ericj Exp $	*/
+/*	$OpenBSD: socks.c,v 1.5 2002/02/28 18:05:36 markus Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -42,7 +42,8 @@
 #include <unistd.h>
 
 #define SOCKS_PORT	"1080"
-#define SOCKS_VERSION	5
+#define SOCKS_V5	5
+#define SOCKS_V4	4
 #define SOCKS_NOAUTH	0
 #define SOCKS_NOMETHOD	0xff
 #define SOCKS_CONNECT	1
@@ -84,7 +85,8 @@ decode_port (const char *s)
 
 int
 socks_connect (char *host, char *port, struct addrinfo hints,
-    char *proxyhost, char *proxyport, struct addrinfo proxyhints)
+    char *proxyhost, char *proxyport, struct addrinfo proxyhints,
+    int socksv)
 {
 	int proxyfd;
 	unsigned char buf[SOCKS_MAXCMDSZ];
@@ -103,43 +105,67 @@ socks_connect (char *host, char *port, struct addrinfo hints,
 	serveraddr = decode_addr (host);
 	serverport = decode_port (port);
 
-	/* Version 5, one method: no authentication */
-	buf[0] = SOCKS_VERSION;
-	buf[1] = 1;
-	buf[2] = SOCKS_NOAUTH;
-	cnt = write (proxyfd, buf, 3);
-	if (cnt == -1)
-		err (1, "write failed");
-	if (cnt != 3)
-		errx (1, "short write, %d (expected 3)", cnt);
+	if (socksv == 5) {
+		/* Version 5, one method: no authentication */
+		buf[0] = SOCKS_V5;
+		buf[1] = 1;
+		buf[2] = SOCKS_NOAUTH;
+		cnt = write (proxyfd, buf, 3);
+		if (cnt == -1)
+			err (1, "write failed");
+		if (cnt != 3)
+			errx (1, "short write, %d (expected 3)", cnt);
 
-	read (proxyfd, buf, 2);
-	if (buf[1] == SOCKS_NOMETHOD)
-		errx (1, "authentication method negotiation failed");
+		read (proxyfd, buf, 2);
+		if (buf[1] == SOCKS_NOMETHOD)
+			errx (1, "authentication method negotiation failed");
 
-	/* Version 5, connect: IPv4 address */
-	buf[0] = SOCKS_VERSION;
-	buf[1] = SOCKS_CONNECT;
-	buf[2] = 0;
-	buf[3] = SOCKS_IPV4;
-	memcpy (buf + 4, &serveraddr, sizeof serveraddr);
-	memcpy (buf + 8, &serverport, sizeof serverport);
+		/* Version 5, connect: IPv4 address */
+		buf[0] = SOCKS_V5;
+		buf[1] = SOCKS_CONNECT;
+		buf[2] = 0;
+		buf[3] = SOCKS_IPV4;
+		memcpy (buf + 4, &serveraddr, sizeof serveraddr);
+		memcpy (buf + 8, &serverport, sizeof serverport);
 
-	/* XXX Handle short writes better */
-	cnt = write (proxyfd, buf, 10);
-	if (cnt == -1)
-		err (1, "write failed");
-	if (cnt != 10)
-		errx (1, "short write, %d (expected 10)", cnt);
+		/* XXX Handle short writes better */
+		cnt = write (proxyfd, buf, 10);
+		if (cnt == -1)
+			err (1, "write failed");
+		if (cnt != 10)
+			errx (1, "short write, %d (expected 10)", cnt);
 
-	/* XXX Handle short reads better */
-	cnt = read (proxyfd, buf, sizeof buf);
-	if (cnt == -1)
-		err (1, "read failed");
-	if (cnt != 10)
-		errx (1, "unexpected reply size %d (expected 10)", cnt);
-	if (buf[1] != 0)
-		errx (1, "connection failed, SOCKS error %d", buf[1]);
+		/* XXX Handle short reads better */
+		cnt = read (proxyfd, buf, sizeof buf);
+		if (cnt == -1)
+			err (1, "read failed");
+		if (cnt != 10)
+			errx (1, "unexpected reply size %d (expected 10)", cnt);
+		if (buf[1] != 0)
+			errx (1, "connection failed, SOCKS error %d", buf[1]);
+	} else {
+		/* Version 4 */
+		buf[0] = SOCKS_V4;
+		buf[1] = SOCKS_CONNECT;	/* connect */
+		memcpy (buf + 2, &serverport, sizeof serverport);
+		memcpy (buf + 4, &serveraddr, sizeof serveraddr);
+		buf[8] = 0;	/* empty username */
+
+		cnt = write (proxyfd, buf, 9);
+		if (cnt == -1)
+			err (1, "write failed");
+		if (cnt != 9)
+			errx (1, "short write, %d (expected 9)", cnt);
+
+		/* XXX Handle short reads better */
+		cnt = read (proxyfd, buf, 8);
+		if (cnt == -1)
+			err (1, "read failed");
+		if (cnt != 8)
+			errx (1, "unexpected reply size %d (expected 8)", cnt);
+		if (buf[1] != 90)
+			errx (1, "connection failed, SOCKS error %d", buf[1]);
+	}
 
 	return proxyfd;
 }

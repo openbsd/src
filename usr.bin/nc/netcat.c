@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.45 2002/02/19 22:42:04 ericj Exp $ */
+/* $OpenBSD: netcat.c,v 1.46 2002/02/28 18:05:36 markus Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -78,7 +78,7 @@ int	local_listen(char *, char *, struct addrinfo);
 void	readwrite(int);
 int	remote_connect(char *, char *, struct addrinfo);
 int	socks_connect(char *, char *, struct addrinfo, char *, char *,
-	struct addrinfo);
+	struct addrinfo, int);
 int	udptest(int);
 int	unix_connect(char *);
 int	unix_listen(char *);
@@ -87,7 +87,7 @@ void	usage(int);
 int
 main(int argc, char *argv[])
 {
-	int ch, s, ret;
+	int ch, s, ret, socksv;
 	char *host, *uport, *endp;
 	struct addrinfo hints;
 	struct servent *sv;
@@ -99,12 +99,13 @@ main(int argc, char *argv[])
 
 	ret = 1;
 	s = 0;
+	socksv = 5;
 	host = NULL;
 	uport = NULL;
 	endp = NULL;
 	sv = NULL;
 
-	while ((ch = getopt(argc, argv, "46Uhi:klnp:rs:tuvw:x:z")) != -1) {
+	while ((ch = getopt(argc, argv, "46UX:hi:klnp:rs:tuvw:x:z")) != -1) {
 		switch (ch) {
 		case '4':
 			family = AF_INET;
@@ -114,6 +115,11 @@ main(int argc, char *argv[])
 			break;
 		case 'U':
 			family = AF_UNIX;
+			break;
+		case 'X':
+			socksv = (int)strtoul(optarg, &endp, 10);
+			if ((socksv != 4 && socksv != 5) || *endp != '\0')
+				errx(1, "only SOCKS version 4 and 5 supported");
 			break;
 		case 'h':
 			help();
@@ -306,7 +312,7 @@ main(int argc, char *argv[])
 
 			if (xflag)
 				s = socks_connect(host, portlist[i], hints,
-				    proxyhost, proxyport, proxyhints);
+				    proxyhost, proxyport, proxyhints, socksv);
 			else
 				s = remote_connect(host, portlist[i], hints);
 

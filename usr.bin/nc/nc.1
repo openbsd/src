@@ -1,4 +1,4 @@
-.\"     $OpenBSD: nc.1,v 1.21 2002/02/19 22:45:18 ericj Exp $
+.\"     $OpenBSD: nc.1,v 1.22 2002/02/28 18:05:36 markus Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
 .\" All rights reserved.
@@ -39,6 +39,7 @@
 .Op Fl s Ar source ip address
 .Op Fl x Ar proxy address Op :port
 .Op Fl w Ar timeout
+.Op Fl X Ar socks version
 .Op Ar hostname
 .Op Ar port[s]
 .Sh DESCRIPTION
@@ -133,7 +134,7 @@ Requests that
 .Nm
 should connect to
 .Ar hostname
-using a socks5 proxy at address and port.
+using a SOCKS proxy at address and port.
 If port is not specified, port 1080 is used.
 .It Fl z
 Specifies that
@@ -141,6 +142,12 @@ Specifies that
 should just scan for listening daemons, without sending any data to them.
 .It Fl U
 Specifies to use Unix Domain Sockets.
+.It Fl X Ar version
+Requests that
+.Nm
+should use the specified version of the SOCKS protocol when talking to
+a SOCKS proxy.
+If version is not specified, SOCKS version 5 is used.
 .El
 .Sh EXAMPLES
 .Bl -tag -width x
