@@ -33,7 +33,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.64 2001/03/20 19:35:29 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.65 2001/03/21 11:43:44 markus Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -94,6 +94,9 @@ void	do_exec_no_pty(Session *s, const char *command);
 void	do_login(Session *s, const char *command);
 void	do_child(Session *s, const char *command);
 
+void	do_authenticated1(Authctxt *authctxt);
+void	do_authenticated2(Authctxt *authctxt);
+
 /* import */
 extern ServerOptions options;
 extern char *__progname;
@@ -116,6 +119,34 @@ Session	sessions[MAX_SESSIONS];
 #ifdef HAVE_LOGIN_CAP
 static login_cap_t *lc;
 #endif
+
+void
+do_authenticated(Authctxt *authctxt)
+{
+	/*
+	 * Cancel the alarm we set to limit the time taken for
+	 * authentication.
+	 */
+	alarm(0);
+	if (startup_pipe != -1) {
+		close(startup_pipe);
+		startup_pipe = -1;
+	}
+#ifdef HAVE_LOGIN_CAP
+	if ((lc = login_getclass(authctxt->pw->pw_class)) == NULL) {
+		error("unable to get login class");
+		return;
+	}
+#endif
+	/* setup the channel layer */
+	if (!no_port_forwarding_flag && options.allow_tcp_forwarding)
+		channel_permit_all_opens();
+
+	if (compat20)
+		do_authenticated2(authctxt);
+	else
+		do_authenticated1(authctxt);
+}
 
 /*
  * Remove local Xauthority file.
@@ -166,47 +197,23 @@ pty_cleanup_proc(void *session)
  * are requested, etc.
  */
 void
-do_authenticated(struct passwd * pw)
+do_authenticated1(Authctxt *authctxt)
 {
 	Session *s;
-	int type, fd;
-	int compression_level = 0, enable_compression_after_reply = 0;
-	int have_pty = 0;
 	char *command;
-	int n_bytes;
-	int plen;
+	int success, type, fd, n_bytes, plen, screen_flag, have_pty = 0;
+	int compression_level = 0, enable_compression_after_reply = 0;
 	u_int proto_len, data_len, dlen;
-	int screen_flag;
-
-	/*
-	 * Cancel the alarm we set to limit the time taken for
-	 * authentication.
-	 */
-	alarm(0);
-	if (startup_pipe != -1) {
-		close(startup_pipe);
-		startup_pipe = -1;
-	}
 
 	s = session_new();
-	s->pw = pw;
-
-	if (!no_port_forwarding_flag && options.allow_tcp_forwarding)
-		channel_permit_all_opens();
-
-#ifdef HAVE_LOGIN_CAP
-	if ((lc = login_getclass(pw->pw_class)) == NULL) {
-		error("unable to get login class");
-		return;
-	}
-#endif
+	s->pw = authctxt->pw;
 
 	/*
 	 * We stay in this loop until the client requests to execute a shell
 	 * or a command.
 	 */
 	for (;;) {
-		int success = 0;
+		success = 0;
 
 		/* Get a packet from the client. */
 		type = packet_read(&plen);
@@ -243,7 +250,7 @@ do_authenticated(struct passwd * pw)
 				break;
 			}
 			fatal_add_cleanup(pty_cleanup_proc, (void *)s);
-			pty_setowner(pw, s->tty);
+			pty_setowner(s->pw, s->tty);
 
 			/* Get TERM from the packet.  Note that the value may be of arbitrary length. */
 			s->term = packet_get_string(&dlen);
@@ -318,7 +325,7 @@ do_authenticated(struct passwd * pw)
 			/* Setup to always have a local .Xauthority. */
 			xauthfile = xmalloc(MAXPATHLEN);
 			strlcpy(xauthfile, "/tmp/ssh-XXXXXXXX", MAXPATHLEN);
-			temporarily_use_uid(pw->pw_uid);
+			temporarily_use_uid(s->pw->pw_uid);
 			if (mkdtemp(xauthfile) == NULL) {
 				restore_uid();
 				error("private X11 dir: mkdtemp %s failed: %s",
@@ -343,7 +350,7 @@ do_authenticated(struct passwd * pw)
 				break;
 			}
 			debug("Received authentication agent forwarding request.");
-			success = auth_input_request_forwarding(pw);
+			success = auth_input_request_forwarding(s->pw);
 			break;
 
 		case SSH_CMSG_PORT_FORWARD_REQUEST:
@@ -356,7 +363,7 @@ do_authenticated(struct passwd * pw)
 				break;
 			}
 			debug("Received TCP/IP port forwarding request.");
-			channel_input_port_forward_request(pw->pw_uid == 0, options.gateway_ports);
+			channel_input_port_forward_request(s->pw->pw_uid == 0, options.gateway_ports);
 			success = 1;
 			break;
 
@@ -1685,23 +1692,7 @@ session_proctitle(Session *s)
 void
 do_authenticated2(Authctxt *authctxt)
 {
-	/*
-	 * Cancel the alarm we set to limit the time taken for
-	 * authentication.
-	 */
-	alarm(0);
-	if (startup_pipe != -1) {
-		close(startup_pipe);
-		startup_pipe = -1;
-	}
-	if (!no_port_forwarding_flag && options.allow_tcp_forwarding)
-		channel_permit_all_opens();
-#ifdef HAVE_LOGIN_CAP
-	if ((lc = login_getclass(authctxt->pw->pw_class)) == NULL) {
-		error("unable to get login class");
-		return;
-	}
-#endif
+
 	server_loop2();
 	if (xauthfile)
 		xauthfile_cleanup_proc(NULL);
