@@ -1,9 +1,26 @@
 OpenCVS 0.2 TODO
 
-Missing commands
+Top priority: missing commands
+
+Missing commands (client mode only for now)
 ================
 Implementing the missing commands is mostly a job of copying the code from
 the working commands and changing some of the requests to be sent.
+Put your name next to it if you are working on a particular command.
+
+Missing commands:
+	- add
+	- admin
+	- annotate
+	- commit (jfb)
+	- history?
+	- log
+	- release
+	- remove
+	- status
+	- tag
+	- the 'r' commands (rtag, 
+
 
 Multiple server support
 =======================
@@ -11,13 +28,32 @@ This is close to working but we need to put something like pre- and post-
 recursion handlers for cvs_file_examine() so we can send one command
 per root connection instead of one global command at the end.
 
-Client-daemon protocol
-======================
-I have started working on the code for this but it is far from ready.  Please
-contact me if you want to work on that part.
+Date handling
+=============
+A lot of commands must handle date specs in a whole bunch of different
+formats (through the -D argument).  I assume we will need a good
+chunk of code to support all these formats.
+
+cvsd protocol
+=============
+Our version of 'cvs server' will not actually perform most of the operations
+but it will instead dispatch those to the cvs daemon through a connection
+made on a local socket.  The cvs daemon will then be able to see if the
+operation passes through the ACL and perform any modifications to the
+repository.  The protocol to talk between cvs and the daemon is not yet
+finished.
 
 Entries file caching
 ====================
+Update:
+Caching all the entries on /usr/src ate around 22MB of memory so this is
+obviously not an option.  We have two choices: either we suffer the loss
+of performance and reopen the file every time we have to make a modification
+to it, or we change the way the file hierarchy is loaded and load subparts of
+the tree only when needed instead of doing it all at the beginning.
+
+----
+
 Currently, adding entries in an Entries file involves opening that file,
 adding the entry and closing the file.  This means that on every new entry,
 the file is reparsed and rewritten to disk.  We should add some kind of
