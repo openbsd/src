@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.59 2003/05/30 15:58:24 drahn Exp $ */
+/*	$OpenBSD: loader.c,v 1.60 2003/05/30 16:00:43 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -150,7 +150,7 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	_dl_bindnow = _dl_getenv("LD_BIND_NOW", envp);
 	_dl_traceld = _dl_getenv("LD_TRACE_LOADED_OBJECTS", envp);
 	_dl_debug = _dl_getenv("LD_DEBUG", envp);
-	_dl_norandom =  _dl_getenv("LD_NORANDOM", envp);
+	_dl_norandom = _dl_getenv("LD_NORANDOM", envp);
 
 	/*
 	 * Don't allow someone to change the search paths if he runs
