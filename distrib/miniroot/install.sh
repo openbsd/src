@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.128 2002/12/08 20:24:56 krw Exp $
+#	$OpenBSD: install.sh,v 1.129 2002/12/14 15:33:34 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -387,8 +387,8 @@ hostname > myname
 # Add FQDN to /tmp/hosts entries, changing lines of the form '1.2.3.4 hostname'
 # to '1.2.3.4 hostname.$FQDN hostname'. Leave untouched any lines containing
 # domain information or aliases. The user added those manually.
-_dn=$(get_fqdn) 
-while read _addr _hn _aliases; do 
+_dn=$(get_fqdn)
+while read _addr _hn _aliases; do
 	if [[ -n $_aliases || $_hn != ${_hn%%.*} || -z $_dn ]]; then
 		echo "$_addr $_hn $_aliases"
 	else

@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.284 2002/12/08 20:24:56 krw Exp $
+#	$OpenBSD: install.sub,v 1.285 2002/12/14 15:33:35 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -540,7 +540,7 @@ inet_info () {
 # no IP address or 0.0.0.0 assigned to $1.
 #
 # $1 == interface
-# $2 == hostname (optional). 
+# $2 == hostname (optional).
 dhcp_request () {
 	local _ifs=$1 _hostname=$2
 
@@ -552,7 +552,7 @@ dhcp_request () {
 	else
 		echo "Issuing free-roaming DHCP request for $_ifs."
 	fi
- 
+
 	cat >> /etc/dhclient.conf << __EOT
 request subnet-mask,
 	broadcast-address,
@@ -561,22 +561,22 @@ request subnet-mask,
 	domain-name-servers,
 	host-name;
 __EOT
- 
+
 	cat >> /etc/resolv.conf.tail << __EOT
 lookup file bind
 __EOT
- 
+
 	kill_dhclient
 	dhclient -1 $_ifs
- 
+
 	set -- $(inet_info $_ifs)
- 
+
 	if [[ $1 == UP && $2 == "0.0.0.0" ]]; then
 		ifconfig $_ifs delete down
 		rm /etc/dhclient.conf /etc/resolv.conf.tail
 		return 1
  	fi
- 
+
 	# Move configuration files to where they will be copied to the
 	# installed system. Overwrites configuration information from last
 	# successful dhcp attempt.
@@ -618,7 +618,7 @@ __EOT
  			;;
  		esac
  	fi
- 
+
 	# Get address and mask.
 	_prompt="IP address for ${_ifs}?"
 	[[ -x /sbin/dhclient ]] && _prompt="$_prompt (or 'dhcp')"
@@ -647,7 +647,7 @@ __EOT
 	addhostent $_addr $_name
 	return 0
  }
- 
+
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
 	local _n
@@ -1710,7 +1710,7 @@ donetconfig() {
 		ask "IP address of default route? (or 'none')" "${resp:=none}"
 		[[ $resp == none ]] && break
 		route add default $resp || { resp= ; continue; }
-		# Save default route if DHCP wasn't used. 
+		# Save default route if DHCP wasn't used.
  		[ -f /tmp/dhclient.conf ] || echo $resp > /tmp/mygate
 		break
 	done
@@ -1835,7 +1835,7 @@ if [ -z "$EDITOR" ] ; then
 	export EDITOR
 fi
 
-# umount all filesystems, just in case we are re-running install or upgrade. 
+# umount all filesystems, just in case we are re-running install or upgrade.
 [[ -f /etc/fstab ]] && umount -av 1>/dev/null 2>&1
 umount -v /mnt 1>/dev/null 2>&1
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.15 2002/12/08 20:53:14 krw Exp $
+#	$OpenBSD: install.md,v 1.16 2002/12/14 15:33:34 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@ md_prep_disklabel()
 
 You will now create an OpenBSD disklabel inside the OpenBSD MBR
 partition. The disklabel defines how OpenBSD splits up the MBR partition
-into OpenBSD partitions in which filesystems and swap space are created. 
+into OpenBSD partitions in which filesystems and swap space are created.
 
 The offsets used in the disklabel are ABSOLUTE, i.e. relative to the
 start of the disk, NOT the start of the OpenBSD MBR partition.

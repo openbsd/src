@@ -1,4 +1,4 @@
-dnl	$OpenBSD: packages,v 1.26 2002/10/02 07:17:08 pvalchev Exp $
+dnl	$OpenBSD: packages,v 1.27 2002/12/14 15:33:35 krw Exp $
 As complete as your OpenBSD system is, you may want to add any of several
 excellent third party software applications.  There are several ways to do
 this.  You can:
@@ -46,7 +46,7 @@ Installing applications from the CD-ROM package collection:
     # pkg_add /cdrom/OSREV/packages/MACHINE_ARCH/<package-name>
     # <add more packages if desired>
     # umount /cdrom
-	
+
 	Package names are usually the application name and version
 	with .tgz appended, e.g. emacs-20.7.tgz
 
@@ -995,7 +995,7 @@ Installing applications from the ftp.openbsd.org package collection:
 	zsh-4.0.6-static.tgz                 zsh-4.0.6.tgz
 	zsh-4.1.0dev5-static.tgz             zsh-4.1.0dev5.tgz
 	zsh-zftp-4.0.6.tgz                   zsh-zftp-4.1.0dev5.tgz
-	zsnes-1.36.tgz                       
+	zsnes-1.36.tgz
 
 	Note: these packages may not exist for all architectures; other
 	packages may be added.  Some packages are only available via
