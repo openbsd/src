@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.42 2000/09/19 08:38:58 angelos Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.43 2000/09/20 19:13:16 angelos Exp $ */
 /*
 %%% copyright-nrl-97
 This software is Copyright 1997-1998 by Randall Atkinson, Ronald Lee,
@@ -977,6 +977,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
     struct sadb_spirange *sprng;
     struct sadb_sa *ssa;
     struct sadb_supported *ssup;
+    struct sadb_ident *sid;
 
     /* Verify that we received this over a legitimate pfkeyv2 socket */
     bzero(headers, sizeof(headers));
@@ -1668,7 +1669,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
                     if (!exists)
                       FREE(ipo, M_TDB);
                     else
-		      ipo->ipo_tdb = ktdb; /* Reset */
+		      ipsec_delete_policy(ipo);
 		    rval = ESRCH;
 		    goto splxret;
 		}
@@ -1713,15 +1714,11 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
                     if (!exists)
 		      FREE(ipo, M_TDB);
                     else
-                    {
-                        if (ipo->ipo_tdb)
-		          TAILQ_REMOVE(&ipo->ipo_tdb->tdb_policy_head, ipo,
-                                       ipo_tdb_next);
-                        if (ktdb)
-		          TAILQ_INSERT_HEAD(&ktdb->tdb_policy_head,
-                                            ipo, ipo_tdb_next);
-                        ipo->ipo_tdb = ktdb;
-                    }
+		    {
+			s = spltdb();
+			ipsec_delete_policy(ipo);
+			splx(s);
+		    }
 
 		    rval = EINVAL;
 		    goto ret;
@@ -1746,6 +1743,69 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    }
 
 	    ipo->ipo_sproto = SADB_GETSPROTO(smsg->sadb_msg_satype);
+	    if (ipo->ipo_srcid)
+	      FREE(ipo->ipo_srcid, M_TEMP);
+	    if (ipo->ipo_dstid)
+	      FREE(ipo->ipo_dstid, M_TEMP);
+
+	    if ((sid = headers[SADB_EXT_IDENTITY_SRC]) != NULL)
+	    {
+		MALLOC(ipo->ipo_srcid, u_int8_t *, ipo->ipo_srcid_len,
+		       M_TEMP, M_DONTWAIT);
+		if (ipo->ipo_srcid == NULL)
+		{
+		    if (exists)
+		    {
+			s = spltdb();
+			ipsec_delete_policy(ipo);
+			splx(s);
+		    }
+		    else
+		      FREE(ipo, M_TDB);
+		    rval = ENOBUFS;
+		    goto ret;
+		}
+
+		ipo->ipo_srcid_type = sid->sadb_ident_type;
+		ipo->ipo_srcid_len = sid->sadb_ident_len -
+				     sizeof(struct sadb_ident);
+
+		bcopy(headers[SADB_EXT_IDENTITY_SRC] +
+		      sizeof(struct sadb_ident), ipo->ipo_srcid,
+		      ipo->ipo_srcid_len);
+	    }
+
+	    if ((sid = headers[SADB_EXT_IDENTITY_DST]) != NULL)
+	    {
+		MALLOC(ipo->ipo_dstid, u_int8_t *, ipo->ipo_dstid_len,
+		       M_TEMP, M_DONTWAIT);
+		if (ipo->ipo_dstid == NULL)
+		{
+		    if (exists)
+		    {
+			s = spltdb();
+			ipsec_delete_policy(ipo);
+			splx(s);
+		    }
+		    else
+		    {
+			if (ipo->ipo_srcid)
+			  FREE(ipo->ipo_srcid, M_TEMP);
+			FREE(ipo, M_TDB);
+		    }
+
+		    rval = ENOBUFS;
+		    goto ret;
+		}
+
+		ipo->ipo_dstid_type = sid->sadb_ident_type;
+		ipo->ipo_dstid_len = sid->sadb_ident_len -
+				     sizeof(struct sadb_ident);
+
+		bcopy(headers[SADB_EXT_IDENTITY_SRC] +
+		      sizeof(struct sadb_ident), ipo->ipo_dstid,
+		      ipo->ipo_dstid_len);
+	    }
 
 	    /* Flow type */
 	    if (!exists)
@@ -1766,6 +1826,10 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			splx(s);
 		    }
 
+		    if (ipo->ipo_srcid)
+		      FREE(ipo->ipo_srcid, M_TEMP);
+		    if (ipo->ipo_dstid)
+		      FREE(ipo->ipo_dstid, M_TEMP);
 		    FREE(ipo, M_TDB); /* Free policy entry */
 		    goto ret;
 		}
@@ -1883,6 +1947,7 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
 		union sockaddr_union *laddr)
 {
     void *p, *headers[SADB_EXT_MAX + 1], *buffer = NULL;
+    struct sadb_ident *srcid, *dstid;
     struct sadb_comb *sadb_comb;
     struct sadb_address *sadd;
     struct sadb_prop *sa_prop;
@@ -1902,6 +1967,12 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
                              PADUP(SA_LEN(&ipo->ipo_src.sa))) +
         sizeof(struct sadb_address) + PADUP(SA_LEN(&gw->sa)) +
         sizeof(struct sadb_prop) + 1 * sizeof(struct sadb_comb);
+
+    if (ipo->ipo_srcid)
+      i += sizeof(struct sadb_ident) + PADUP(ipo->ipo_srcid_len);
+
+    if (ipo->ipo_dstid)
+      i += sizeof(struct sadb_ident) + PADUP(ipo->ipo_dstid_len);
 
     /* Allocate */
     if (!(p = malloc(i, M_PFKEY, M_DONTWAIT)))
@@ -1950,6 +2021,32 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
 			      sizeof(uint64_t) - 1) / sizeof(uint64_t);
     bcopy(gw, headers[SADB_EXT_ADDRESS_DST] + sizeof(struct sadb_address),
 	  SA_LEN(&gw->sa));
+
+    if (ipo->ipo_srcid)
+    {
+	headers[SADB_EXT_IDENTITY_SRC] = p;
+	p += sizeof(struct sadb_ident) + PADUP(ipo->ipo_srcid_len);
+	srcid = (struct sadb_ident *) headers[SADB_EXT_IDENTITY_SRC];
+	srcid->sadb_ident_len = (sizeof(struct sadb_ident) +
+				 PADUP(ipo->ipo_srcid_len)) /
+				sizeof(u_int64_t);
+	srcid->sadb_ident_type = ipo->ipo_srcid_type;
+	bcopy(ipo->ipo_srcid, headers[SADB_EXT_IDENTITY_SRC] +
+	      sizeof(struct sadb_ident), ipo->ipo_srcid_len);
+    }
+
+    if (ipo->ipo_dstid)
+    {
+	headers[SADB_EXT_IDENTITY_DST] = p;
+	p += sizeof(struct sadb_ident) + PADUP(ipo->ipo_dstid_len);
+	dstid = (struct sadb_ident *) headers[SADB_EXT_IDENTITY_DST];
+	dstid->sadb_ident_len = (sizeof(struct sadb_ident) +
+				 PADUP(ipo->ipo_dstid_len)) /
+				sizeof(u_int64_t);
+	dstid->sadb_ident_type = ipo->ipo_dstid_type;
+	bcopy(ipo->ipo_dstid, headers[SADB_EXT_IDENTITY_DST] +
+	      sizeof(struct sadb_ident), ipo->ipo_dstid_len);
+    }
 
     headers[SADB_EXT_PROPOSAL] = p;
     p += sizeof(struct sadb_prop);

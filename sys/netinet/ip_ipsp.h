@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.71 2000/09/19 08:38:59 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.72 2000/09/20 19:13:17 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -182,6 +182,14 @@ struct ipsec_policy
     u_int8_t             ipo_sproto;/* ESP, AH; if zero we use system dflts */
 
     struct tdb          *ipo_tdb;   /* Cached entry */
+
+    u_int16_t            ipo_srcid_len;
+    u_int16_t            ipo_dstid_len;
+    u_int16_t            ipo_srcid_type;
+    u_int16_t            ipo_dstid_type;
+
+    u_int8_t            *ipo_srcid;
+    u_int8_t            *ipo_dstid;
 
     TAILQ_ENTRY(ipsec_policy) ipo_tdb_next; /* List of policies on TDB */
     TAILQ_ENTRY(ipsec_policy) ipo_list; /* List of all policy entries */
