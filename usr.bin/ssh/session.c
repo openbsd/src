@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.33 2000/09/04 19:03:40 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.34 2000/09/04 19:06:03 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -83,6 +83,9 @@ extern int startup_pipe;
 
 /* Local Xauthority file. */
 static char *xauthfile;
+
+/* original command from peer. */
+char *original_command = NULL; 
 
 /* data */
 #define MAX_SESSIONS 10
@@ -346,6 +349,7 @@ do_authenticated(struct passwd * pw)
 				packet_integrity_check(plen, 0, type);
 			}
 			if (forced_command != NULL) {
+				original_command = command;
 				command = forced_command;
 				debug("Forced command '%.500s'", forced_command);
 			}
@@ -888,6 +892,9 @@ do_child(const char *command, struct passwd * pw, const char *term,
 		child_set_env(&env, &envsize, "TERM", term);
 	if (display)
 		child_set_env(&env, &envsize, "DISPLAY", display);
+	if (original_command)
+		child_set_env(&env, &envsize, "SSH_ORIGINAL_COMMAND",
+		    original_command);
 
 #ifdef KRB4
 	{
@@ -1365,7 +1372,7 @@ session_exec_req(Session *s)
 	char *command = packet_get_string(&len);
 	packet_done();
 	if (forced_command) {
-		xfree(command);
+		original_command = command;
 		command = forced_command;
 		debug("Forced command '%.500s'", forced_command);
 	}
