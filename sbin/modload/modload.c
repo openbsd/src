@@ -1,4 +1,4 @@
-/* 	$OpenBSD: modload.c,v 1.29 2002/01/08 21:28:38 ericj Exp $	*/
+/* 	$OpenBSD: modload.c,v 1.30 2002/01/08 21:51:50 ericj Exp $	*/
 /*	$NetBSD: modload.c,v 1.30 2001/11/08 15:33:15 christos Exp $	*/
 
 /*
@@ -64,7 +64,7 @@
 int debug = 0;
 int verbose = 0;
 char *out = NULL;
-int symtab = 0;
+int symtab = 1;
 int Sflag;
 
 static	void	cleanup __P((void));
@@ -273,7 +273,7 @@ main(int argc, char **argv)
 			noready = 1;
 			break;
 		case 's':
-			symtab = 1;
+			symtab = 0;
 			break;
 		case 'S':
 			Sflag = 1;
