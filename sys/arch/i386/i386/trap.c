@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.13 1997/01/18 15:17:38 niklas Exp $	*/
+/*	$OpenBSD: trap.c,v 1.14 1997/01/27 22:48:01 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 #undef DEBUG
@@ -282,16 +282,16 @@ trap(frame)
 #endif
 	case T_SEGNPFLT|T_USER:
 	case T_STKFLT|T_USER:
-		trapsignal(p, SIGSEGV, type &~ T_USER);
+		trapsignal(p, SIGSEGV, type &~ T_USER, (caddr_t)rcr2());
 		goto out;
 
 	case T_ALIGNFLT|T_USER:
-		trapsignal(p, SIGBUS, type &~ T_USER);
+		trapsignal(p, SIGBUS, type &~ T_USER, (caddr_t)rcr2());
 		goto out;
 
 	case T_PRIVINFLT|T_USER:	/* privileged instruction fault */
 	case T_FPOPFLT|T_USER:		/* coprocessor operand fault */
-		trapsignal(p, SIGILL, type &~ T_USER);
+		trapsignal(p, SIGILL, type &~ T_USER, (caddr_t)rcr2());
 		goto out;
 
 	case T_ASTFLT|T_USER:		/* Allow process switch */
@@ -310,12 +310,12 @@ trap(frame)
 				goto trace;
 			return;
 		}
-		trapsignal(p, rv, type &~ T_USER);
+		trapsignal(p, rv, type &~ T_USER, (caddr_t)rcr2());
 		goto out;
 #else
 		printf("pid %d killed due to lack of floating point\n",
 		    p->p_pid);
-		trapsignal(p, SIGKILL, type &~ T_USER);
+		trapsignal(p, SIGKILL, type &~ T_USER, (caddr_t)rcr2());
 		goto out;
 #endif
 	}
@@ -323,11 +323,11 @@ trap(frame)
 	case T_BOUND|T_USER:
 	case T_OFLOW|T_USER:
 	case T_DIVIDE|T_USER:
-		trapsignal(p, SIGFPE, type &~ T_USER);
+		trapsignal(p, SIGFPE, type &~ T_USER, (caddr_t)rcr2());
 		goto out;
 
 	case T_ARITHTRAP|T_USER:
-		trapsignal(p, SIGFPE, frame.tf_err);
+		trapsignal(p, SIGFPE, frame.tf_err, (caddr_t)rcr2());
 		goto out;
 
 	case T_PAGEFLT:			/* allow page faults in kernel mode */
@@ -355,8 +355,9 @@ trap(frame)
 		vm_prot_t ftype;
 		extern vm_map_t kernel_map;
 		unsigned nss, v;
+		caddr_t vv = (caddr_t)rcr2();
 
-		va = trunc_page((vm_offset_t)rcr2());
+		va = trunc_page((vm_offset_t)vv);
 		/*
 		 * It is only a kernel address space fault iff:
 		 *	1. (type & T_USER) == 0  and
@@ -426,7 +427,7 @@ trap(frame)
 			    map, va, ftype, rv);
 			goto we_re_toast;
 		}
-		trapsignal(p, SIGSEGV, T_PAGEFLT);
+		trapsignal(p, SIGSEGV, T_PAGEFLT, vv);
 		break;
 	}
 
@@ -442,7 +443,7 @@ trap(frame)
 #if defined(MATH_EMULATE) || defined(GPL_MATH_EMULATE)
 	trace:
 #endif
-		trapsignal(p, SIGTRAP, type &~ T_USER);
+		trapsignal(p, SIGTRAP, type &~ T_USER, (caddr_t)rcr2());
 		break;
 
 #include "isa.h"

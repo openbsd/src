@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.13 1997/01/16 20:43:38 kstailey Exp $ */
+/*	$OpenBSD: machdep.c,v 1.14 1997/01/27 22:48:16 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -633,9 +633,11 @@ struct sigframe {
 	int	sf_signum;		/* signo for handler */
 	int	sf_code;		/* additional info for handler */
 	struct	sigcontext *sf_scp;	/* context ptr for handler */
+	siginfo_t *sf_sip;
 	sig_t	sf_handler;		/* handler addr for u_sigc */
 	struct	sigstate sf_state;	/* state of the hardware */
 	struct	sigcontext sf_sc;	/* actual context */
+	siginfo_t sf_si;
 };
 
 #ifdef COMPAT_HPUX
@@ -680,10 +682,11 @@ int sigpid = 0;
  * Send an interrupt to process.
  */
 void
-sendsig(catcher, sig, mask, code)
+sendsig(catcher, sig, mask, code, addr)
 	sig_t catcher;
 	int sig, mask;
 	u_long code;
+	caddr_t addr;
 {
 	register struct proc *p = curproc;
 	register struct sigframe *fp, *kfp;
@@ -749,6 +752,8 @@ sendsig(catcher, sig, mask, code)
 	kfp->sf_code = code;
 	kfp->sf_scp = &fp->sf_sc;
 	kfp->sf_handler = catcher;
+	kfp->sf_sip = NULL;
+
 	/*
 	 * Save necessary hardware state.  Currently this includes:
 	 *	- general registers
@@ -806,6 +811,22 @@ sendsig(catcher, sig, mask, code)
 	kfp->sf_sc.sc_ap = (int)&fp->sf_state;
 	kfp->sf_sc.sc_pc = frame->f_pc;
 	kfp->sf_sc.sc_ps = frame->f_sr;
+
+	if (psp->ps_siginfo & sigmask(sig)) {
+		kfp->sf_sip = &kfp->sf_si;
+		initsiginfo(kfp->sf_sip, sig);
+		fixsiginfo(kfp->sf_sip, sig, code, addr);
+		if (sig == SIGSEGV) {
+			/* try to be more specific about read or write */
+#if 0
+			if (WRFAULT(frame->f_pad))
+				kfp->sf_si.si_code |= SEGV_ACCERR;
+			else
+				kfp->sf_si.si_code |= SEGV_MAPERR;
+#endif
+		}
+	}
+
 #ifdef COMPAT_HPUX
 	/*
 	 * Create an HP-UX style sigcontext structure and associated goo
@@ -1033,6 +1054,77 @@ sys_sigreturn(p, v, retval)
 		printf("sigreturn(%d): returns\n", p->p_pid);
 #endif
 	return (EJUSTRETURN);
+}
+
+void
+fixsiginfo(si, sig, code, addr)
+	siginfo_t *si;
+	int sig;
+	u_long code;
+	caddr_t addr;
+{
+	si->si_addr = addr;
+
+	switch (code) {
+#if 0
+	case T_PRIVINFLT:
+		si->si_code = ILL_PRVOPC;
+		si->si_trapno = T_PRIVINFLT;
+		break;
+	case T_BREAKPOINT:
+		si->si_code = TRAP_BRKPT;
+		si->si_trapno = T_BREAKPOINT;
+		break;
+	case T_ARITHTRAP:
+		si->si_code = FPE_INTOVF;
+		si->si_trapno = T_DIVIDE;
+		break;
+	case T_PROTFLT:
+		si->si_code = SEGV_ACCERR;
+		si->si_trapno = T_PROTFLT;
+		break;
+	case T_TRCTRAP:
+		si->si_code = TRAP_TRACE;
+		si->si_trapno = T_TRCTRAP;
+		break;
+	case T_PAGEFLT:
+		si->si_code = SEGV_ACCERR;
+		si->si_trapno = T_PAGEFLT;
+		break;
+	case T_ALIGNFLT:
+		si->si_code = BUS_ADRALN;
+		si->si_trapno = T_ALIGNFLT;
+		break;
+	case T_DIVIDE:
+		si->si_code = FPE_FLTDIV;
+		si->si_trapno = T_DIVIDE;
+		break;
+	case T_OFLOW:
+		si->si_code = FPE_FLTOVF;
+		si->si_trapno = T_DIVIDE;
+		break;
+	case T_BOUND:
+		si->si_code = FPE_FLTSUB;
+		si->si_trapno = T_BOUND;
+		break;
+	case T_DNA:
+		si->si_code = FPE_FLTINV;
+		si->si_trapno = T_DNA;
+		break;
+	case T_FPOPFLT:
+		si->si_code = FPE_FLTINV;
+		si->si_trapno = T_FPOPFLT;
+		break;
+	case T_SEGNPFLT:
+		si->si_code = SEGV_MAPERR;
+		si->si_trapno = T_SEGNPFLT;
+		break;
+	case T_STKFLT:
+		si->si_code = ILL_BADSTK;
+		si->si_trapno = T_STKFLT;
+		break;
+#endif
+	}
 }
 
 int	waittime = -1;

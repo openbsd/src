@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.11 1996/11/24 01:39:23 kstailey Exp $	*/
+/*	$OpenBSD: proc.h,v 1.12 1997/01/27 22:48:41 deraadt Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -80,7 +80,7 @@ struct	emul {
 	char	e_name[8];		/* Symbolic name */
 	int	*e_errno;		/* Errno array */
 					/* Signal sending function */
-	void	(*e_sendsig) __P((sig_t, int, int, u_long));
+	void	(*e_sendsig) __P((sig_t, int, int, u_long, caddr_t));
 	int	e_nosys;		/* Offset of the nosys() syscall */
 	int	e_nsysent;		/* Number of system call entries */
 	struct sysent *e_sysent;	/* System call array */

@@ -423,8 +423,12 @@ struct sigframe {
 #else
 	int	sf_xxx;			/* placeholder */
 #endif
-	int	sf_addr;		/* SunOS compat, always 0 for now */
+	union {
+		int	sfu_addr;	/* SunOS compat */
+		siginfo_t *sfu_sip;	/* native */
+	} sf_u;
 	struct	sigcontext sf_sc;	/* actual sigcontext */
+	siginfo_t sf_si;
 };
 
 /*
@@ -456,19 +460,23 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
  * Send an interrupt to process.
  */
 void
-sendsig(catcher, sig, mask, code)
+sendsig(catcher, sig, mask, code, addr)
 	sig_t catcher;
 	int sig, mask;
 	u_long code;
+	caddr_t addr;
 {
 	register struct proc *p = curproc;
 	register struct sigacts *psp = p->p_sigacts;
 	register struct sigframe *fp;
 	register struct trapframe *tf;
-	register int addr, oonstack, oldsp, newsp;
+	register int caddr, oonstack, oldsp, newsp;
 	struct sigframe sf;
 	extern char sigcode[], esigcode[];
 #define	szsigcode	(esigcode - sigcode)
+#ifdef COMPAT_SUNOS
+	extern struct emul emul_sunos;
+#endif
 
 	tf = p->p_md.md_tf;
 	oldsp = tf->tf_out[6];
@@ -498,10 +506,13 @@ sendsig(catcher, sig, mask, code)
 	 */
 	sf.sf_signo = sig;
 	sf.sf_code = code;
+	sf.sf_u.sfu_sip = NULL;
 #ifdef COMPAT_SUNOS
-	sf.sf_scp = &fp->sf_sc;
+	if (p->p_emul == &emul_sunos) {
+		sf.sf_scp = &fp->sf_sc;
+		sf.sf_u.sfu_addr = (u_int)addr;
+	}
 #endif
-	sf.sf_addr = 0;			/* XXX */
 
 	/*
 	 * Build the signal context to be used by sigreturn.
@@ -514,6 +525,21 @@ sendsig(catcher, sig, mask, code)
 	sf.sf_sc.sc_psr = tf->tf_psr;
 	sf.sf_sc.sc_g1 = tf->tf_global[1];
 	sf.sf_sc.sc_o0 = tf->tf_out[0];
+
+	if (psp->ps_siginfo & sigmask(sig)) {
+		sf.sf_u.sfu_sip = &fp->sf_si;
+		initsiginfo(sf.sf_u.sfu_sip, sig);
+		fixsiginfo(sf.sf_u.sfu_sip, sig, code, addr);
+#if 0
+		if (sig == SIGSEGV) {
+			/* try to be more specific about read or write */
+			if (tf->tf_err & PGEX_W)
+				sf.sf_si.si_code = SEGV_ACCERR;
+			else
+				sf.sf_si.si_code = SEGV_MAPERR;
+		}
+#endif
+	}
 
 	/*
 	 * Put the stack in a consistent state before we whack away
@@ -550,15 +576,15 @@ sendsig(catcher, sig, mask, code)
 	 */
 #ifdef COMPAT_SUNOS
 	if (psp->ps_usertramp & sigmask(sig)) {
-		addr = (int)catcher;	/* user does his own trampolining */
+		caddr = (int)catcher;	/* user does his own trampolining */
 	} else
 #endif
 	{
-		addr = (int)PS_STRINGS - szsigcode;
+		caddr = (int)PS_STRINGS - szsigcode;
 		tf->tf_global[1] = (int)catcher;
 	}
-	tf->tf_pc = addr;
-	tf->tf_npc = addr + 4;
+	tf->tf_pc = caddr;
+	tf->tf_npc = caddr + 4;
 	tf->tf_out[6] = newsp;
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
@@ -621,6 +647,77 @@ sys_sigreturn(p, v, retval)
 		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
 	p->p_sigmask = scp->sc_mask & ~sigcantmask;
 	return (EJUSTRETURN);
+}
+
+void
+fixsiginfo(si, sig, code, addr)
+	siginfo_t *si;
+	int sig;
+	u_long code;
+	caddr_t addr;
+{
+	si->si_addr = addr;
+
+#if 0
+	switch (code) {
+	case T_PRIVINFLT:
+		si->si_code = ILL_PRVOPC;
+		si->si_trapno = T_PRIVINFLT;
+		break;
+	case T_BPTFLT:
+		si->si_code = TRAP_BRKPT;
+		si->si_trapno = T_BPTFLT;
+		break;
+	case T_ARITHTRAP:
+		si->si_code = FPE_INTOVF;
+		si->si_trapno = T_DIVIDE;
+		break;
+	case T_PROTFLT:
+		si->si_code = SEGV_ACCERR;
+		si->si_trapno = T_PROTFLT;
+		break;
+	case T_TRCTRAP:
+		si->si_code = TRAP_TRACE;
+		si->si_trapno = T_TRCTRAP;
+		break;
+	case T_PAGEFLT:
+		si->si_code = SEGV_ACCERR;
+		si->si_trapno = T_PAGEFLT;
+		break;
+	case T_ALIGNFLT:
+		si->si_code = BUS_ADRALN;
+		si->si_trapno = T_ALIGNFLT;
+		break;
+	case T_DIVIDE:
+		si->si_code = FPE_FLTDIV;
+		si->si_trapno = T_DIVIDE;
+		break;
+	case T_OFLOW:
+		si->si_code = FPE_FLTOVF;
+		si->si_trapno = T_DIVIDE;
+		break;
+	case T_BOUND:
+		si->si_code = FPE_FLTSUB;
+		si->si_trapno = T_BOUND;
+		break;
+	case T_DNA:
+		si->si_code = FPE_FLTINV;
+		si->si_trapno = T_DNA;
+		break;
+	case T_FPOPFLT:
+		si->si_code = FPE_FLTINV;
+		si->si_trapno = T_FPOPFLT;
+		break;
+	case T_SEGNPFLT:
+		si->si_code = SEGV_MAPERR;
+		si->si_trapno = T_SEGNPFLT;
+		break;
+	case T_STKFLT:
+		si->si_code = ILL_BADSTK;
+		si->si_trapno = T_STKFLT;
+		break;
+	}
+#endif
 }
 
 int	waittime = -1;

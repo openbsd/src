@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.14 1997/01/27 01:15:32 deraadt Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.15 1997/01/27 22:48:36 deraadt Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -519,10 +519,11 @@ pgsignal(pgrp, signum, checkctty)
  * Otherwise, post it normally.
  */
 void
-trapsignal(p, signum, code)
+trapsignal(p, signum, code, addr)
 	struct proc *p;
 	register int signum;
 	u_long code;
+	caddr_t addr;
 {
 	register struct sigacts *ps = p->p_sigacts;
 	int mask;
@@ -537,7 +538,7 @@ trapsignal(p, signum, code)
 				p->p_sigmask, code);
 #endif
 		(*p->p_emul->e_sendsig)(ps->ps_sigact[signum], signum,
-		    p->p_sigmask, code);
+		    p->p_sigmask, code, addr);
 		p->p_sigmask |= ps->ps_catchmask[signum];
 		if ((ps->ps_sigreset & mask) != 0) {
 			p->p_sigcatch &= ~mask;
@@ -1002,7 +1003,7 @@ postsig(signum)
 			code = ps->ps_code;
 			ps->ps_code = 0;
 		}
-		(*p->p_emul->e_sendsig)(action, signum, returnmask, code);
+		(*p->p_emul->e_sendsig)(action, signum, returnmask, code, 0);
 	}
 }
 

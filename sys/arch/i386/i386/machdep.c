@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.35 1997/01/27 01:16:12 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.36 1997/01/27 22:47:59 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
 
 /*-
@@ -565,17 +565,18 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 }
 
 #ifdef COMPAT_IBCS2
-void ibcs2_sendsig __P((sig_t, int, int, u_long));
+void ibcs2_sendsig __P((sig_t, int, int, u_long, caddr_t));
 
 void
-ibcs2_sendsig(catcher, sig, mask, code)
+ibcs2_sendsig(catcher, sig, mask, code, addr)
 	sig_t catcher;
 	int sig, mask;
 	u_long code;
+	caddr_t addr;
 {
 	extern int bsd_to_ibcs2_sig[];
 
-	sendsig(catcher, bsd_to_ibcs2_sig[sig], mask, code);
+	sendsig(catcher, bsd_to_ibcs2_sig[sig], mask, code, addr);
 }
 #endif
 
@@ -590,10 +591,11 @@ ibcs2_sendsig(catcher, sig, mask, code)
  * specified pc, psl.
  */
 void
-sendsig(catcher, sig, mask, code)
+sendsig(catcher, sig, mask, code, addr)
 	sig_t catcher;
 	int sig, mask;
 	u_long code;
+	caddr_t addr;
 {
 	register struct proc *p = curproc;
 	register struct trapframe *tf;
@@ -665,7 +667,7 @@ sendsig(catcher, sig, mask, code)
 	if (psp->ps_siginfo & sigmask(sig)) {
 		frame.sf_sip = &fp->sf_si;
 		initsiginfo(frame.sf_sip, sig);
-		fixsiginfo(frame.sf_sip, sig, code, (caddr_t)rcr2());
+		fixsiginfo(frame.sf_sip, sig, code, addr);
 		if (sig == SIGSEGV) {
 			/* try to be more specific about read or write */
 			if (tf->tf_err & PGEX_W)

@@ -253,7 +253,7 @@ vm86_return(p, retval)
 		sigexit(p, SIGILL);
 		/* NOTREACHED */
 	}
-	trapsignal(p, SIGURG, retval);
+	trapsignal(p, SIGURG, retval, 0);
 }
 
 #define	CLI	0xFA
@@ -369,7 +369,7 @@ vm86_gpfault(p, type)
 	}
 
 	if (trace && tf->tf_eflags & PSL_VM)
-		trapsignal(p, SIGTRAP, T_TRCTRAP);
+		trapsignal(p, SIGTRAP, T_TRCTRAP, 0);
 	return;
 
 bad:

@@ -157,6 +157,6 @@ struct freebsd_ptrace_reg {
 /* sys/i386/include/exec.h */
 #define FREEBSD___LDPGSZ	4096
 
-void freebsd_sendsig __P((sig_t, int, int, u_long));
+void freebsd_sendsig __P((sig_t, int, int, u_long, caddr_t));
 
 #endif /* _FREEBSD_MACHDEP_H */

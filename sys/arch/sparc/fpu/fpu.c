@@ -114,7 +114,7 @@ fpu_cleanup(p, fs)
 		/* XXX missing trap address! */
 		if ((i = fsr & FSR_CX) == 0)
 			panic("fpu ieee trap, but no exception");
-		trapsignal(p, SIGFPE, fpu_codes[i - 1]);
+		trapsignal(p, SIGFPE, fpu_codes[i - 1], 0);
 		break;		/* XXX should return, but queue remains */
 
 	case FSR_TT_UNFIN:
@@ -131,7 +131,7 @@ fpu_cleanup(p, fs)
 		log(LOG_ERR, "fpu hardware error (%s[%d])\n",
 		    p->p_comm, p->p_pid);
 		uprintf("%s[%d]: fpu hardware error\n", p->p_comm, p->p_pid);
-		trapsignal(p, SIGFPE, -1);	/* ??? */
+		trapsignal(p, SIGFPE, -1, 0);	/* ??? */
 		goto out;
 
 	default:
@@ -155,11 +155,11 @@ fpu_cleanup(p, fs)
 
 		case FPE:
 			trapsignal(p, SIGFPE,
-			    fpu_codes[(fs->fs_fsr & FSR_CX) - 1]);
+			    fpu_codes[(fs->fs_fsr & FSR_CX) - 1], 0);
 			break;
 
 		case NOTFPU:
-			trapsignal(p, SIGILL, 0);	/* ??? code?  */
+			trapsignal(p, SIGILL, 0, 0);	/* ??? code?  */
 			break;
 
 		default:

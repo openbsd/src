@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_machdep.c,v 1.8 1996/05/07 07:21:42 deraadt Exp $	*/
+/*	$OpenBSD: linux_machdep.c,v 1.9 1997/01/27 22:47:58 deraadt Exp $	*/
 /*	$NetBSD: linux_machdep.c,v 1.29 1996/05/03 19:42:11 christos Exp $	*/
 
 /*
@@ -104,10 +104,11 @@ int linux_write_ldt __P((struct proc *, struct linux_sys_modify_ldt_args *,
  */
 
 void
-linux_sendsig(catcher, sig, mask, code)
+linux_sendsig(catcher, sig, mask, code, addr)
 	sig_t catcher;
 	int sig, mask;
 	u_long code;
+	caddr_t addr;
 {
 	register struct proc *p = curproc;
 	register struct trapframe *tf;

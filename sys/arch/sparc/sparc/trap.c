@@ -337,7 +337,7 @@ badtrap:
 		/* ... but leave it in until we find anything */
 		printf("%s[%d]: unimplemented software trap 0x%x\n",
 		    p->p_comm, p->p_pid, type);
-		trapsignal(p, SIGILL, type);
+		trapsignal(p, SIGILL, type, (caddr_t)pc);
 		break;
 
 #ifdef COMPAT_SVR4
@@ -357,11 +357,11 @@ badtrap:
 		break;	/* the work is all in userret() */
 
 	case T_ILLINST:
-		trapsignal(p, SIGILL, 0);	/* XXX code?? */
+		trapsignal(p, SIGILL, 0, (caddr_t)pc);	/* XXX code?? */
 		break;
 
 	case T_PRIVINST:
-		trapsignal(p, SIGILL, 0);	/* XXX code?? */
+		trapsignal(p, SIGILL, 0, (caddr_t)pc);	/* XXX code?? */
 		break;
 
 	case T_FPDISABLED: {
@@ -380,7 +380,7 @@ badtrap:
 			fpu_emulate(p, tf, fs);
 			break;
 #else
-			trapsignal(p, SIGFPE, 0);	/* XXX code?? */
+			trapsignal(p, SIGFPE, 0, (caddr_t)pc);	/* XXX code?? */
 			break;
 #endif
 		}
@@ -465,7 +465,7 @@ badtrap:
 		break;
 
 	case T_ALIGN:
-		trapsignal(p, SIGBUS, 0);	/* XXX code?? */
+		trapsignal(p, SIGBUS, 0, (caddr_t)pc);	/* XXX code?? */
 		break;
 
 	case T_FPE:
@@ -490,21 +490,21 @@ badtrap:
 		break;
 
 	case T_TAGOF:
-		trapsignal(p, SIGEMT, 0);	/* XXX code?? */
+		trapsignal(p, SIGEMT, 0, (caddr_t)pc);	/* XXX code?? */
 		break;
 
 	case T_CPDISABLED:
 		uprintf("coprocessor instruction\n");	/* XXX */
-		trapsignal(p, SIGILL, 0);	/* XXX code?? */
+		trapsignal(p, SIGILL, 0, (caddr_t)pc);	/* XXX code?? */
 		break;
 
 	case T_BREAKPOINT:
-		trapsignal(p, SIGTRAP, 0);
+		trapsignal(p, SIGTRAP, 0, (caddr_t)pc);
 		break;
 
 	case T_DIV0:
 		ADVANCE;
-		trapsignal(p, SIGFPE, FPE_INTDIV_TRAP);
+		trapsignal(p, SIGFPE, FPE_INTDIV_TRAP, (caddr_t)pc);
 		break;
 
 	case T_FLUSHWIN:
@@ -524,7 +524,7 @@ badtrap:
 	case T_RANGECHECK:
 		uprintf("T_RANGECHECK\n");	/* XXX */
 		ADVANCE;
-		trapsignal(p, SIGILL, 0);	/* XXX code?? */
+		trapsignal(p, SIGILL, 0, (caddr_t)pc);	/* XXX code?? */
 		break;
 
 	case T_FIXALIGN:
@@ -535,7 +535,7 @@ badtrap:
 	case T_INTOF:
 		uprintf("T_INTOF\n");		/* XXX */
 		ADVANCE;
-		trapsignal(p, SIGFPE, FPE_INTOVF_TRAP);
+		trapsignal(p, SIGFPE, FPE_INTOVF_TRAP, (caddr_t)pc);
 		break;
 	}
 	userret(p, pc, sticks);
@@ -743,7 +743,7 @@ kfault:
 			tf->tf_npc = onfault + 4;
 			return;
 		}
-		trapsignal(p, SIGSEGV, (u_int)v);
+		trapsignal(p, SIGSEGV, (u_int)v, (caddr_t)v);
 	}
 out:
 	if ((psr & PSR_PS) == 0) {
@@ -1015,7 +1015,7 @@ kfault:
 			tf->tf_npc = onfault + 4;
 			return;
 		}
-		trapsignal(p, SIGSEGV, (u_int)sfva);
+		trapsignal(p, SIGSEGV, (u_int)sfva, (caddr_t)sfva);
 	}
 out:
 	if ((psr & PSR_PS) == 0) {

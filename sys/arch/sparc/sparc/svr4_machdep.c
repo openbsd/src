@@ -462,16 +462,17 @@ svr4_getsiginfo(si, sig, code, addr)
  * will return to the user pc, psl.
  */
 void
-svr4_sendsig(catcher, sig, mask, code)
+svr4_sendsig(catcher, sig, mask, code, addr)
 	sig_t catcher;
 	int sig, mask;
 	u_long code;
+	caddr_t addr;
 {
 	register struct proc *p = curproc;
 	register struct trapframe *tf;
 	struct svr4_sigframe *fp, frame;
 	struct sigacts *psp = p->p_sigacts;
-	int oonstack, oldsp, newsp, addr;
+	int oonstack, oldsp, newsp, caddr;
 	extern char svr4_sigcode[], svr4_esigcode[];
 
 
@@ -499,7 +500,7 @@ svr4_sendsig(catcher, sig, mask, code)
 	/*
 	 * Build the argument list for the signal handler.
 	 */
-	svr4_getsiginfo(&frame.sf_si, sig, code, (caddr_t) tf->tf_pc);
+	svr4_getsiginfo(&frame.sf_si, sig, code, addr);
 	svr4_getcontext(p, &frame.sf_uc, mask, oonstack);
 	frame.sf_signum = frame.sf_si.svr4_si_signo;
 	frame.sf_sip = &fp->sf_si;
@@ -534,11 +535,11 @@ svr4_sendsig(catcher, sig, mask, code)
 	/*
 	 * Build context to run handler in.
 	 */
-	addr = (int)PS_STRINGS - (svr4_esigcode - svr4_sigcode);
+	caddr = (int)PS_STRINGS - (svr4_esigcode - svr4_sigcode);
 	tf->tf_global[1] = (int)catcher;
 
-	tf->tf_pc = addr;
-	tf->tf_npc = addr + 4;
+	tf->tf_pc = caddr;
+	tf->tf_npc = caddr + 4;
 	tf->tf_out[6] = newsp;
 }
 

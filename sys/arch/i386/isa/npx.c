@@ -448,7 +448,7 @@ npxintr(arg)
 #else
 		code = 0;	/* XXX */
 #endif
-		trapsignal(p, SIGFPE, code);
+		trapsignal(p, SIGFPE, code, 0);
 	} else {
 		/*
 		 * Nested interrupt.  These losers occur when:
