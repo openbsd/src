@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.57 2004/07/07 17:00:55 deraadt Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.58 2004/08/30 07:43:32 otto Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -617,6 +617,9 @@ dhcpack(struct packet *packet)
 	   because the lease expiry offset is unsigned. */
 	if (ip->client->new->expiry < 0)
 		ip->client->new->expiry = TIME_MAX;
+	/* XXX should be fixed by resetting the client state */
+	if (ip->client->new->expiry < 60)
+		ip->client->new->expiry = 60;
 
 	/* Take the server-provided renewal time if there is one;
 	   otherwise figure it out according to the spec. */
