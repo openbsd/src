@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.67 2003/01/22 15:13:11 ho Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.68 2003/03/13 13:24:48 ho Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
@@ -1091,6 +1091,13 @@ rsa_sig_encode_hash (struct message *msg)
 	}
 
       exchange->sent_keytype = ISAKMP_KEY_RSA;
+    }
+
+  /* Enable RSA blinding.  */
+  if (RSA_blinding_on (exchange->sent_key, NULL) != 1)
+    {
+      log_error ("rsa_sig_encode_hash: RSA_blinding_on () failed.");
+      return -1;
     }
 
   /* XXX hashsize is not necessarily prf->blocksize.  */
