@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.14 1997/12/15 16:52:10 kstailey Exp $
+.\"	$OpenBSD: ftpd.8,v 1.15 1998/08/04 18:00:32 millert Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -78,8 +78,14 @@ from
 .Xr inetd 8
 and is thus useful on busy servers to reduce load.
 .It Fl h
-The server will use data ports in the high port range (normally 40000..44999)
-for passive connections.
+The server will use data ports in the high port range for passive connections.
+This range is defined by the
+.Ev IPPORT_HIFIRSTAUTO
+and
+.Ev IPPORT_HILASTAUTO
+defines in <netinet/in.h>.  In
+.Ox
+they are set to 49152 and 65535 respectively.
 .It Fl l
 Each successful and failed 
 .Xr ftp 1
