@@ -38,7 +38,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: ypdb.h,v 1.1 1995/11/01 16:56:17 deraadt Exp $
+ *	$Id: ypdb.h,v 1.2 1995/12/24 00:41:08 deraadt Exp $
  */
 
 #ifndef _YPDB_H_
@@ -74,4 +74,4 @@ DBM     *ypdb_open __P((const char *, int, int));
 int	 ypdb_store __P((DBM *, datum, datum, int));
 __END_DECLS
 
-#endif /* !_YPDB_H_
+#endif /* !_YPDB_H_ */
