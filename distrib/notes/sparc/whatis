@@ -1,5 +1,5 @@
-NetBSD 1.0 is the first release for the sparc, although numerous
-people have been running "snapshots" for some time.  It has all the
-standard NetBSD features, plus you can also enable SunOS binary
-compatibility in the kernel which will run more than 95% of SunOS
-executables.
+NetBSD 1.1 is the second release for the sparc. Many more sparc
+models and devices are now supported.
+In addition to the SunOS 4.1 compatibility present in NetBSD/sparc 1.0,
+version 1.1 will also run some number of SunOS 5 (SVR4) executables
+in binary emulation mode.

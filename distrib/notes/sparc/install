@@ -8,6 +8,7 @@ a single disk attached. Alternatively, you could use SunOS (booted from
 a local disk) and install NetBSD onto a second disk. For the latter method,
 skip to the section "Installing from SunOS" below.
 
+
 Installing using a diskless setup.
 
 First, you must setup a diskless client configuration on a server. Consult
@@ -16,11 +17,36 @@ Put all the *.tar.gz files you want to install into the root directory
 for your client on the server.
 
 Next, unpack base.tar.gz on the server in the root directory for your machine.
+If you elect to you a separately NFS-mounted filesystem for `/usr' on your
+diskless setup, make sure the "./usr" base files in base.tar.gz end up
+in the correct location. One way to do this is to temporarily use a loopback
+mount on the server, re-routing <root>/usr to your server's exported
+NetBSD "/usr" directory. Also put the kernel into the root directory.
+
 A few configuration files need to be edited:
 
 	<root>/etc/hosts
+		Add the IP addresses of both server and client.
+
 	<root>/etc/myname
+		This files contains the client's hostname; use the same
+		name as in <root>/etc/hosts.
+
 	<root>/etc/fstab
+		Enter the entries for the remotely mounted filesystems.
+		For example:
+			server:/export/root/client       /     nfs  rw 0 0
+			server:/export/exec/sun4.netbsd  /usr  nfs  rw 0 0
+
+Now you must populate the the `/dev' directory for your client. If you server
+runs SunOS 4.x, you can simply change your working directory to `<root>/dev'
+and run the MAKEDEV script: `sh MAKEDEV all'.
+
+On SunOS 5.x systems, MAKEDEV can also be used, but there'll be error
+messages about unknown user and groups. These errors are inconsequential
+for the purpose of installing NetBSD. However, you may want to correct them
+if you plan to the diskless setup regularly. In that case, you may re-run
+MAKEDEV on your NetBSD machine once it has booted.
 
 Boot your workstation from the server by entering the appropriate `boot'
 command at the monitor prompt. Depending on the PROM version in your machine,
@@ -42,12 +68,42 @@ instead of `ok', type:
     ok
 ]]
 
-Start the installation procedure:
+If you use a diskless setup with a separately NFS-mounted /usr filesystem,
+mount /usr by hand now:
+
+netbsd# mount /usr
+
+At this point, it's worth checking the disk label and partition sizes on
+the disk you want to install NetBSD onto. NetBSD understands SunOS-style
+disklabels, so if your disk was previously used by SunOS there will be
+a usable label on it. Use `disklabel -e <disk>' (where <disk> is the
+device name assigned by the NetBSD kernel, e.g. `sd0') to view and
+modify the partition sizes. A comfortable size for the root filesystem
+partition is about 20MB; a good initial size for the swap partition is
+twice the amount of physical memory in your machine (though, unlike
+SunOS 4.x, there are no restrictions on the size of the swap partition
+that would render part of your memory unusable). A full binary installation
+takes about 60MB in `/usr'. Make all your partitions start and end on
+cylinder boundaries.
+
+NOTE: if you are installing on a SCSI disk that does *not* have a SunOS
+or NetBSD label on it, you may still be able to use disklabel(8) but you'll
+have to create all partitions from scratch. If your disk is listed in
+`/etc/disktab', you may use the entry (which in most cases only defines
+a `c' partition to describe the whole disk) to put an initial label on
+the disk.
+
+
+If you are upgrading a NetBSD installation, start the upgrade script:
+
+#netbsd ./upgrade.sh
+
+else, start the installation procedure:
 
 netbsd# ./install.sh
 
 
-This script will do most of the work of transferring the system from the
+These scripts will do most of the work of transferring the system from the
 tar files onto your disk. You will frequently be asked for confirmation
 before the script proceeds with each phase of the installation process.
 Occasionally, you'll have to provide a piece of information such as the

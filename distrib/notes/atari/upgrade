@@ -33,4 +33,4 @@ Once you are done installing the upgrade sets, then reboot:
 Now you can boot your upgraded system as usually, but take the
 new kernel! To finish up, you should rebuild your /dev-directory:
 	cd /dev
-	MAKEDEV all
+	./MAKEDEV all

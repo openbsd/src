@@ -1,4 +1,4 @@
-INSTALLATION NOTES for NetBSD/MACHINE 1.0
+INSTALLATION NOTES for NetBSD/MACHINE 1.1
 
 
 
@@ -72,12 +72,12 @@ Sources of NetBSD:
 
 #include "mirrors"
 
-NetBSD 1.0 Release Contents:
+NetBSD 1.1 Release Contents:
 ------ --- ------- --------
 
-The NetBSD 1.0 release is organized in the following way:
+The NetBSD 1.1 release is organized in the following way:
 
-.../NetBSD-1.0/
+.../NetBSD-1.1/
 		BUGS			Known bugs list (incomplete
 					and out of date).
 
@@ -87,7 +87,7 @@ The NetBSD 1.0 release is organized in the following way:
 		LAST_MINUTE		Last minute changes.
 
 		MIRRORS			A list of sites that mirror
-					the NetBSD 1.0 distribution.
+					the NetBSD 1.1 distribution.
 
 		README.files		README describing the
 					distribution's contents.
@@ -103,7 +103,7 @@ The NetBSD 1.0 release is organized in the following way:
 
 In addition to the files and directories listed above, there is one
 directory per architecture, for each of the architectures that NetBSD
-1.0 has a binary distribution for.  There are also
+1.1 has a binary distribution for.  There are also
 'README.export-control' files sprinkled liberally throughout the
 distribution tree, which point out that there are some portions of the
 distribution (e.g. those containing crypt(3)) that should not be
@@ -117,23 +117,23 @@ not be exported from the U.S.  (Those are contained in each
 architecture's "security" binary distribution set.)  The source
 distribution sets are as follows:
 
-	gsrc10	This set contains the "gnu" sources, including
+	gsrc11	This set contains the "gnu" sources, including
 		the source for the compiler, assembler, groff,
 		and the other GNU utilities in the binary distribution
 		sets.
 		[ 7.7M gzipped, 32.0M uncompressed ]
 
-	ksrc10	This set contains the sources to the NetBSD 1.0
+	ksrc11	This set contains the sources to the NetBSD 1.1
 		kernel, config(8), config.new(8) and dbsym(8).
 		[ 4.5M gzipped, 20.8M uncompressed ]
 
-	ssrc10	This set contains the "share" sources, which include
+	ssrc11	This set contains the "share" sources, which include
 		the sources for the man pages not associated with
 		any particular program, the sources for the
 		typesettable document set, the dictionaries, and more.
 		[ 2.3M gzipped, 8.5M uncompressed ]
 
-	src10	This set contains all of the NetBSD 1.0 sources which
+	src11	This set contains all of the NetBSD 1.1 sources which
 		are not mentioned above.
 		[ 7.1M gzipped, 33.4M uncompressed ]
 
@@ -294,38 +294,44 @@ We are:
 -- ---
 (in alphabetical order)
 
-The NetBSD core team:
-Chris G. Demetriou	<cgd@sun-lamp.cs.berkeley.edu>
-Theo de Raadt		<deraadt@sun-lamp.cs.berkeley.edu>
-Adam Glass		<glass@sun-lamp.cs.berkeley.edu>
-Charles Hannum		<mycroft@sun-lamp.cs.berkeley.edu>
+The NetBSD core group:
+J.T. Conklin		<jtc@NetBSD.ORG>
+Charles Hannum		<mycroft@NetBSD.ORG>
+Paul Kranenburg		<pk@NetBSD.ORG>
 
 The port-masters (and their ports):
-Allen Briggs		<briggs@mail.vt.edu>			(mac68k)
-    (and the rest of the 'Alice' group)
-Theo de Raadt		<deraadt@sun-lamp.cs.berkeley.edu>	(sparc)
-Charles Hannum		<mycroft@sun-lamp.cs.berkeley.edu>	(i386, hp300)
-Chris Hopps		<chopps@sun-lamp.cs.berkeley.edu>	(amiga)
-Adam Glass		<glass@sun-lamp.cs.berkeley.edu>	(pmax)
-Paul Mackerras		<paulus@sun-lamp.cs.berkeley.edu>	(da30)
-Anders Magnusson	<ragge@sun-lamp.cs.berkeley.edu>	(vax)
-Phil Nelson		<phil@sun-lamp.cs.berkeley.edu>		(pc532)
-Gordon Ross		<gwr@sun-lamp.cs.berkeley.edu>		(sun3)
+Allen Briggs		<briggs@mail.vt.edu>		(mac68k)
+Chuck Cranor		<chuck@NetBSD.ORG>		(mvme68k)
+Chris G. Demetriou	<cgd@NetBSD.ORG>		(alpha)
+Charles Hannum		<mycroft@NetBSD.ORG>		(i386)
+Chris Hopps		<chopps@NetBSD.ORG>		(amiga)
+Paul Kranenburg		<pk@NetBSD.ORG>			(sparc)
+Ted Lemon		<mellon@NetBSD.ORG>		(pmax)
+Anders Magnusson	<ragge@NetBSD.ORG>		(vax)
+Phil Nelson		<phil@NetBSD.ORG>		(pc532)
+Gordon Ross		<gwr@NetBSD.ORG>		(sun3)
+Jason Thorpe		<thorpej@NetBSD.ORG>		(hp300)
+Leo Weppelman		<leo@NetBSD.ORG>		(atari)
 
 Supporting cast:
 Steve Allen		<wormey@eskimo.com>
-John Brezak		<brezak@sun-lamp.cs.berkeley.edu>
+John Brezak		<brezak@NetBSD.ORG>
 Dave Burgess		<burgess@cynjut.infonet.net>
-J.T. Conklin		<jtc@sun-lamp.cs.berkeley.edu>
 Hubert Feyrer		<hubert.feyrer@rz.uni-regensburg.de>
 Brad Grantham		<grantham@tenon.com>
+Matthew Green		<mrg@eterna.com.au>
 Lawrence Kesteloot	<kesteloo@cs.unc.edu>
-Paul Kranenburg		<pk@sun-lamp.cs.berkeley.edu>
+John Kohl 		<jtk@NetBSD.ORG>
+Paul Mackerras	 	<paulus@NetBSD.ORG>
+Neil J. McRae		<neil@domino.org>
 Herb Peyerl		<hpeyerl@beer.org>
 Matthias Pfaller	<leo@marco.de>
-Chris Provenzano	<proven@sun-lamp.cs.berkeley.edu>
+Chris Provenzano	<proven@NetBSD.ORG>
+Waldi Ravens		<waldi@moacs.indiv.nl.net>
+Scott Reynolds		<scottr@edsi.org>
 Wolfgang Solfrank	<ws@tools.de>
-
+Frank van der Linden	<fvdl@NetBSD.ORG>
+Christos Zoulas 	<christos@NetBSD.ORG>
 
 Legal Mumbo-jumbo:
 ----- ----- -----

@@ -28,7 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$Id: upgrade.sh,v 1.1.1.1 1995/10/18 08:37:35 deraadt Exp $
+#	$Id: upgrade.sh,v 1.2 1995/11/06 21:27:47 deraadt Exp $
 
 #	NetBSD upgrade script.
 #	In a perfect world, this would be a nice C program, with a reasonable
@@ -38,7 +38,7 @@ DT=/etc/disktab				# /etc/disktab
 FSTABDIR=/mnt/etc			# /mnt/etc
 #DONTDOIT=echo
 
-VERSION=1.0
+VERSION=1.1
 FSTAB=${FSTABDIR}/fstab
 
 getresp() {
@@ -236,7 +236,7 @@ $DONTDOIT cp /tmp/.hdprofile /mnt/.profile
 
 echo	""
 echo	"Mounting remaining partitions..."
-chroot /mnt mount -at ufs > /dev/null 2>&1
+chroot /mnt mount -at ffs > /dev/null 2>&1
 echo	"Done."
 
 echo    ""

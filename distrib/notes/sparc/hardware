@@ -1,6 +1,16 @@
-NetBSD/sparc 1.0 runs on Sun4c class machines only, which includes
-the SS1, SS1+, SS2, IPC, ELC, IPX, and the SLC.  It does not run
-on Sun4, Sun4m, or Sun4d machines.
+NetBSD/sparc 1.1 runs on the following classes of machines:
+	- sun4c (e.g. the SS1, SS1+, SS2, IPC, ELC, IPX, and SLC)
+	- sun4 (e.g. the 4/100, 4/200, and 4/300.   note that support
+		for the 4/400 processor is incomplete)
+
+NetBSD/sparc 1.1 does *not* run on these machines (yet):
+	- sun-4/400 (lacking support for the I/O cache, and has
+			ethernet problems)
+	- sun4m (e.g. sparc classic, 4, 5, 10, and 20)
+	- sun4d (e.g. sparc center 2000)
+
+Work on porting NetBSD/sparc to the sun4m platform is currently in 
+progress, but was not ready in time for the 1.1 release.
 
 The minimal configuration requires 4M of RAM and ~60M of disk space.
 To install the entire system requires much more disk space, and to run
@@ -10,16 +20,36 @@ around 16M of RAM, getting more RAM is more important than getting a
 faster CPU.)
 
 Supported devices include:
-	Video: cgthree, cgsix, and bwtwo frame buffers
-	Serial ports: ttya and ttyb
-	On-board AMD Lance ethernet
-	Some SCSI CD-ROM drives
-	Sun keyboard and mouse
+	sun4c sbus video: 
+		cgsix, cgthree, and bwtwo frame buffers
+	sun4 video (not thoroughly tested?): 
+		P4 on-board bwtwo, and VME cgtwo card
+	serial ports: 
+		ttya and ttyb (can be used as console if needed)
+	ethernet: 
+		on-board AMD Lance ethernet ("le0"), 
+		Sbus AMD Lance ethernet cards, 
+		on-board Intel 82586 ethernet (ie0 on 4/100's and 4/200's), 
+		VME Intel 82586 ethernet cards
+	SCSI: 
+		on-board "esp" SCSI controller (sun4c's, and the 4/300),
+		sbus "esp" SCSI controller, 
+		Sun "SUN-3"/"si" VME SCSI controller (polled mode only, slow),
+		Sun "SCSI Weird"/"sw" on-board controller (4/110 only, polled)
+	VME disks:
+		Xylogics 7053 VME/SMD disk controller ("xd"),
+		Xylogics 450/451 VME disk controller ("xy")
+		[note: VME/IPI disks are not supported]
+	sun floppy disk drive on sun4c's
+	sun keyboard and mouse
+	sun4c audio
+
 
 Hardware the we do NOT currently support, but get many questions
 about:
-	The floppy drive.
+	sun4m, including multiprocessor machines
+	interrupt driven SCSI driver for sun-4/100's and sun-4/200's
 
-The next release will likely run on many more machines.  In
-particular, some Sun4 support will be there, and perhaps even
-Sun4m.
+The next release will hopefully run on many more machines.  In
+particular, some Sun4m support will be there.
+

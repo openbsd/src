@@ -233,7 +233,7 @@ like so:
 Next you need to re-make your devices to get the ownership correct:
 
 	cd /dev
-	MAKEDEV all
+	./MAKEDEV all
 
 Your system is now complete but not completely configured; you
 should adjust the /etc/sendmail.cf file as necessary to suit your

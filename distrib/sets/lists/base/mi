@@ -34,6 +34,7 @@
 ./bin/test
 ./dev
 ./dev/MAKEDEV
+./dev/MAKEDEV.local
 ./dev/fd
 ./etc
 ./etc/disklabels
@@ -150,6 +151,7 @@
 ./usr/bin/dirname
 ./usr/bin/du
 ./usr/bin/egrep
+./usr/bin/eject
 ./usr/bin/env
 ./usr/bin/error
 ./usr/bin/ex
@@ -633,11 +635,13 @@
 ./usr/share/man/cat3f
 ./usr/share/man/cat4
 ./usr/share/man/cat4/amiga
+./usr/share/man/cat4/atari
 ./usr/share/man/cat4/hp300
 ./usr/share/man/cat4/i386
 ./usr/share/man/cat4/mac68k
 ./usr/share/man/cat4/pc532
 ./usr/share/man/cat4/sparc
+./usr/share/man/cat4/sun3
 ./usr/share/man/cat4/tahoe
 ./usr/share/man/cat4/vax
 ./usr/share/man/cat5
@@ -645,11 +649,13 @@
 ./usr/share/man/cat7
 ./usr/share/man/cat8
 ./usr/share/man/cat8/amiga
+./usr/share/man/cat8/atari
 ./usr/share/man/cat8/hp300
 ./usr/share/man/cat8/i386
 ./usr/share/man/cat8/mac68k
 ./usr/share/man/cat8/pc532
 ./usr/share/man/cat8/sparc
+./usr/share/man/cat8/sun3
 ./usr/share/man/cat8/tahoe
 ./usr/share/man/cat8/vax
 ./usr/share/man/makewhatis.sed
@@ -659,6 +665,7 @@
 ./usr/share/man/man3f
 ./usr/share/man/man4
 ./usr/share/man/man4/amiga
+./usr/share/man/man4/atari
 ./usr/share/man/man4/hp300
 ./usr/share/man/man4/i386
 ./usr/share/man/man4/mac68k
@@ -672,6 +679,7 @@
 ./usr/share/man/man7
 ./usr/share/man/man8
 ./usr/share/man/man8/amiga
+./usr/share/man/man8/atari
 ./usr/share/man/man8/hp300
 ./usr/share/man/man8/i386
 ./usr/share/man/man8/mac68k

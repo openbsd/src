@@ -1,12 +1,13 @@
 ./sbin/edlabel
-./usr/lib/libc.so.12.0
+./usr/lib/libc.so.12.3
 ./usr/lib/libcrypt.so.0.0
 ./usr/lib/libcurses.so.2.1
 ./usr/lib/libedit.so.0.0
 ./usr/lib/libg++.so.2.0
 ./usr/lib/libgnumalloc.so.0.0
 ./usr/lib/libkvm.so.4.0
-./usr/lib/libm.so.0.0
+./usr/lib/libm.so.0.1
+./usr/lib/libpcap.so.0.0
 ./usr/lib/libresolv.so.1.0
 ./usr/lib/libskey.so.0.0
 ./usr/lib/libtelnet.so.1.0
@@ -17,6 +18,7 @@
 ./usr/mdec/bootxx
 ./usr/mdec/installboot
 ./usr/mdec/netboot
+./usr/mdec/tapeboot
 ./usr/mdec/ufsboot
 ./usr/sbin/eeprom
 ./usr/sbin/screenblank

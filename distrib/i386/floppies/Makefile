@@ -1,5 +1,5 @@
 #	$Id
 
-SUBDIR= inst kc upgr
+SUBDIR= inst kcadp kcoth upgr
 
 .include <bsd.subdir.mk>

@@ -19,6 +19,8 @@
 ./usr/share/man/cat4/amiga/ser.0
 ./usr/share/man/cat4/amiga/wesc.0
 ./usr/share/man/cat4/amiga/zssc.0
+./usr/share/man/cat4/atari/floppy.0
+./usr/share/man/cat4/atari/ms.0
 ./usr/share/man/cat4/hp300/autoconf.0
 ./usr/share/man/cat4/hp300/cons.0
 ./usr/share/man/cat4/hp300/ct.0
@@ -79,7 +81,6 @@
 ./usr/share/man/cat4/sparc/le.0
 ./usr/share/man/cat4/sparc/mem.0
 ./usr/share/man/cat4/sparc/openprom.0
-./usr/share/man/cat4/sun3
 ./usr/share/man/cat4/sun3/bwtwo.0
 ./usr/share/man/cat4/sun3/cgfour.0
 ./usr/share/man/cat4/sun3/cgtwo.0
@@ -154,6 +155,8 @@
 ./usr/share/man/cat4/vax/vv.0
 ./usr/share/man/cat8/amiga/MAKEDEV.0
 ./usr/share/man/cat8/amiga/makedev.0
+./usr/share/man/cat8/atari/MAKEDEV.0
+./usr/share/man/cat8/atari/makedev.0
 ./usr/share/man/cat8/boot_hp300.0
 ./usr/share/man/cat8/boot_i386.0
 ./usr/share/man/cat8/boot_mac68k.0
@@ -170,7 +173,6 @@
 ./usr/share/man/cat8/i386/makedev.0
 ./usr/share/man/cat8/sparc/MAKEDEV.0
 ./usr/share/man/cat8/sparc/makedev.0
-./usr/share/man/cat8/sun3
 ./usr/share/man/cat8/sun3/MAKEDEV.0
 ./usr/share/man/cat8/sun3/makedev.0
 ./usr/share/man/cat8/tahoe/MAKEDEV.0

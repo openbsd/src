@@ -1,1 +1,83 @@
-Installation is done from SunOS, or a previous NetBSD install.
+Installation is supported from several media types, including:
+	NFS partitions
+	FTP
+	Tape
+
+The steps necessary to prepare the distribution sets
+for installation depend on which method of installation
+you choose.  The various methods are explained below.
+
+To prepare for installing via an NFS partition:
+
+	Since the current NetBSD/sparc installation program uses
+	a diskless setup for your workstation, you will already
+	have prepared an NFS directory for use as a remote
+	root filesystem (see the `install' document for details).
+	The easiest way is to put the NetBSD filesets in this
+	root filesystem on the server where the install program
+	will find them.
+
+	However, you have the option to put the filesets in
+	another directory or even on another NFS server. To do
+	so, follow these guide lines:
+
+	Place the NetBSD software you wish to install into
+	a directory on an NFS server, and make that directory
+	mountable by the machine which you will be installing
+	NetBSD on.  This will probably require modifying the
+	/etc/exports file of the NFS server and resetting
+	mountd, acts which will require superuser privileges.
+	Note the numeric IP address of the NFS server and of
+	the router closest to the the new NetBSD machine,
+	if the NFS server is not on a network which is
+	directly attached to the NetBSD machine.
+
+	Once you have done this, you can proceed to the next
+	step in the installation process, preparing your
+	system for NetBSD installation.
+
+To prepare for installing via FTP:
+
+	NOTE: this method of installation is recommended
+	      only for those already familiar with using
+	      the BSD network-manipulation commands and
+	      interfaces.  If you aren't, this documentation
+	      should help, but is not intended to be
+	      all-encompassing.
+
+	The preparations for this method of installation
+	are easy: all you have to do is make sure that
+	there's some FTP site from which you can retrieve
+	the NetBSD installation when it's time to do
+	the install.  You should know the numeric IP
+	address of that site, the numeric IP address of
+	your nearest router if one is necessary
+
+	Once you have done this, you can proceed to the next
+	step in the installation process, preparing your
+	system for NetBSD installation.
+
+To prepare for installing via a tape:
+
+	To install NetBSD from a tape, you need to somehow
+	get the NetBSD filesets you wish to install on
+	your system on to the appropriate kind of tape,
+	in tar format.
+
+	If you're making the tape on a UN*X system, the easiest
+	way to do so is:
+
+		tar cvf <tape_device> <files>
+
+	where "<tape_device>" is the name of the tape device
+	that describes the tape drive you're using (possibly
+	something like /dev/nrst0, but we make no guarantees 8-).
+	Under SunOS 5.x, this would be something like /dev/rmt/0mbn.
+	Again, your mileage may vary.  If you can't figure it out,
+	ask your system administrator.  "<files>" are the names
+	of the "set_name.nnn" files which you want to be placed
+	on the tape.
+
+	Once you have done this, you can proceed to the next
+	step in the installation process, preparing your 
+	system for NetBSD installation.

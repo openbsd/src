@@ -28,6 +28,7 @@
 ./usr/include/machine/cpufunc.h
 ./usr/include/machine/db_machdep.h
 ./usr/include/machine/disklabel.h
+./usr/include/machine/dvma.h
 ./usr/include/machine/eeprom.h
 ./usr/include/machine/endian.h
 ./usr/include/machine/exec.h
@@ -71,6 +72,7 @@
 ./usr/lib/libgnumalloc_pic.a
 ./usr/lib/libkvm_pic.a
 ./usr/lib/libm_pic.a
+./usr/lib/libpcap_pic.a
 ./usr/lib/libresolv_pic.a
 ./usr/lib/libskey_pic.a
 ./usr/lib/libtelnet_pic.a

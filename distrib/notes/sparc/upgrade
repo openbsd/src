@@ -1,5 +1,6 @@
-Upgrading NetBSD/sparc is not something someone is likely to do,
-since this is the first real distribution.  Since a number of
-critical interfaces have changed quite significantly, your best
-bet is to reinstall completely, perhaps saving a few files in
-/etc and /usr/local.
+To upgrade to NetBSD 1.1 from a previous version follow the instructions
+in the section "Installing NetBSD", but run the script `upgrade.sh'
+in stead of `install.sh'.
+
+The upgrade script will use the existing disk partitions to install the
+new system in, and also preserves the files in `/etc'.
