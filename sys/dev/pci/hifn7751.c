@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.142 2003/09/24 05:23:29 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.143 2003/09/25 15:40:54 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -128,6 +128,7 @@ const struct pci_matchid hifn_devices[] = {
 	{ PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_7811 },
 	{ PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_7951 },
 	{ PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_7955 },
+	{ PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_7956 },
 	{ PCI_VENDOR_NETSEC, PCI_PRODUCT_NETSEC_7751 },
 };
 
@@ -158,7 +159,9 @@ hifn_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pci_tag = pa->pa_tag;
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_HIFN &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7951)
+	   (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7951 ||
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7955 ||
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7956))
 		sc->sc_flags = HIFN_HAS_RNG | HIFN_HAS_PUBLIC;
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_HIFN &&
@@ -275,7 +278,8 @@ hifn_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_HIFN &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7955) {
+	   (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7955 ||
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7956)) {
 		sc->sc_maxses = 125;
 		sc->sc_ramsize = 32 * 1024;
 	} else
@@ -575,6 +579,11 @@ struct pci2id {
 	}, {
 		PCI_VENDOR_HIFN,
 		PCI_PRODUCT_HIFN_7955,
+		{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		  0x00, 0x00, 0x00, 0x00, 0x00 }
+	}, {
+		PCI_VENDOR_HIFN,
+		PCI_PRODUCT_HIFN_7956,
 		{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		  0x00, 0x00, 0x00, 0x00, 0x00 }
 	}, {
