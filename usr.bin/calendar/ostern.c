@@ -1,4 +1,4 @@
-/*	$OpenBSD: ostern.c,v 1.1 1996/12/05 06:04:40 millert Exp $	*/
+/*	$OpenBSD: ostern.c,v 1.2 1998/11/05 04:44:08 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
@@ -25,11 +25,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * 	$Id: ostern.c,v 1.1 1996/12/05 06:04:40 millert Exp $
+ * 	$Id: ostern.c,v 1.2 1998/11/05 04:44:08 pjanzen Exp $
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ostern.c,v 1.1 1996/12/05 06:04:40 millert Exp $";
+static char rcsid[] = "$OpenBSD: ostern.c,v 1.2 1998/11/05 04:44:08 pjanzen Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -47,6 +47,7 @@ int easter (year)
 
     int e_a, e_b, e_c, e_d, e_e,e_f, e_g, e_h, e_i, e_k,
         e_l, e_m, e_n, e_p, e_q;
+    extern int *cumdays;
 
     /* silly, but it works */
     e_a = year % 19;
@@ -66,15 +67,10 @@ int easter (year)
     e_p = (e_h + e_l + 114 - (7 * e_m)) % 31;
     e_p = e_p + 1;
 
-    e_q = 31 + 28;
-
-    if (e_k == 0 && e_c != 0)
-	e_q += 1;
+    e_q = cumdays[3] + 1 + e_p;
 
     if (e_n == 4)
 	e_q += 31;
-
-    e_q += e_p;
 
 #if DEBUG
     printf("%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n", e_a , e_b , e_c , e_d , e_e , e_f , e_g , e_h , e_i , e_k , e_l , e_m , e_n  , e_p , e_q);
