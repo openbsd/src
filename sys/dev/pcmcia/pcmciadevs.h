@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.53 2001/02/14 17:46:56 mickey Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.54 2001/03/13 06:45:36 mickey Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.48 2001/02/14 17:46:29 mickey Exp 
+ *		OpenBSD: pcmciadevs,v 1.49 2001/03/13 06:44:03 mickey Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -381,8 +381,9 @@
 #define	PCMCIA_VENDOR_PLANEX	-1	/* Planex */
 #define	PCMCIA_VENDOR_PREMAX	-1	/* Premax */
 #define	PCMCIA_VENDOR_RPTI	-1	/* RPTI */
-#define	PCMCIA_VENDOR_SVEC	-1	/* SVEC/Hawking */
+#define	PCMCIA_VENDOR_SARAMNCOM	-1	/* SaramNcom Co.,Ltd. */
 #define	PCMCIA_VENDOR_SHUTTLE	-1	/* Shuttle */
+#define	PCMCIA_VENDOR_SVEC	-1	/* SVEC/Hawking */
 #define	PCMCIA_VENDOR_TEAC	-1	/* TEAC */
 #define	PCMCIA_VENDOR_YEDATA	-1	/* Y-E DATA */
 #define	PCMCIA_VENDOR_ZOOM	-1	/* Zoom */
@@ -471,3 +472,5 @@
 #define	PCMCIA_PRODUCT_ZOOM_AIR4000	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_TAMARACK_NE2000	{ "TAMARACK", "Ethernet", NULL, NULL }
 #define	PCMCIA_PRODUCT_TAMARACK_NE2000	PCMCIA_PRODUCT_INVALID
+#define	PCMCIA_CIS_SARAMNCOM_NS_1100M	{ "NANOSPEED", "HFA384x/IEEE", NULL, NULL }
+#define	PCMCIA_PRODUCT_SARAMNCOM_NS_1100M	PCMCIA_PRODUCT_INVALID
