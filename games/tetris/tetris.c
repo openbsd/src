@@ -1,4 +1,4 @@
-/*	$OpenBSD: tetris.c,v 1.18 2003/06/03 03:01:41 millert Exp $	*/
+/*	$OpenBSD: tetris.c,v 1.19 2004/01/10 01:23:20 tedu Exp $	*/
 /*	$NetBSD: tetris.c,v 1.2 1995/04/22 07:42:47 cgd Exp $	*/
 
 /*-
@@ -99,6 +99,7 @@ setup_board()
 static void
 elide()
 {
+	int rows = 0;
 	int i, j, base;
 	cell *p;
 
@@ -108,6 +109,7 @@ elide()
 		for (j = B_COLS - 2; *p++ != 0;) {
 			if (--j <= 0) {
 				/* this row is to be elided */
+				rows++;
 				memset(&board[base], 0, B_COLS - 2);
 				scr_update();
 				tsleep();
@@ -118,6 +120,22 @@ elide()
 				break;
 			}
 		}
+	}
+	switch (rows) {
+	case 1:
+		score += 10;
+		break;
+	case 2:
+		score += 30;
+		break;
+	case 3:
+		score += 70;
+		break;
+	case 4:
+		score += 150;
+		break;
+	default:
+		break;
 	}
 }
 

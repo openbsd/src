@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tetris.6,v 1.12 2003/06/03 03:01:41 millert Exp $
+.\"	$OpenBSD: tetris.6,v 1.13 2004/01/10 01:23:20 tedu Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -121,6 +121,8 @@ When the blocks stack up to the top of the screen, the game is over.
 You get one point for every block you fit into the stack,
 and one point for every space a block falls when you hit the drop key.
 (Dropping the blocks is therefore a good way to increase your score.)
+Completing a row rewards you with a bonus corresponding to the number
+of simultaneous rows completed.
 Your total score is the product of the level of play
 and your accumulated
 .ie t points\(em200
