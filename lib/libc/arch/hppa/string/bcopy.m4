@@ -1,4 +1,4 @@
-define(_rcsid,``$OpenBSD: bcopy.m4,v 1.9 2002/05/20 08:31:35 mickey Exp $'')dnl
+define(_rcsid,``$OpenBSD: bcopy.m4,v 1.10 2002/08/13 05:23:06 mickey Exp $'')dnl
 dnl
 dnl
 dnl  This is the source file for bcopy.S, spcopy.S
@@ -246,10 +246,10 @@ LEAF_ENTRY(spcopy)
 	ldil	L%curproc, r31
 	ldw	R%curproc(r31), r31
 	ldil	L%copy_on_fault, t2
-	ldw	P_ADDR(r31), r31
+	ldw	P_ADDR(r31), t4
 	ldo	R%copy_on_fault(t2), t2
-	ldw	PCB_ONFAULT+U_PCB(r31), r1
-	stw	t2, PCB_ONFAULT+U_PCB(r31)
+	ldw	PCB_ONFAULT+U_PCB(t4), r1
+	stw	t2, PCB_ONFAULT+U_PCB(t4)
 '
 	mfsp	sr2, ret0	/* XXX need this?, sr1 is scratchable */
 	mtsp	arg0, sr1
