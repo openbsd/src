@@ -1,4 +1,4 @@
-.\" $OpenBSD: ifstated.8,v 1.1 2004/02/05 02:26:23 mcbride Exp $
+.\" $OpenBSD: ifstated.8,v 1.2 2004/02/05 09:01:25 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Ryan McBride <mcbride@openbsd.org>
 .\"
@@ -23,7 +23,7 @@
 .Sh SYNOPSIS
 .Nm ifstated
 .Bk -words
-.Op Fl -dhi
+.Op Fl dhin
 .Op Fl D Ar macro=value
 .Op Fl f Ar file
 .Ek
@@ -58,11 +58,13 @@ Do not daemonize and log to
 Specify an alternate location,
 .Ar file ,
 for the configuration file.
+.It Fl h
+Print help message.
+.It Fl i
+Ignore initial interface states.
 .It Fl n
 Config test mode.
 Check config validity, then exit.
-.It Fl i
-Ignore initial interface states.
 .El
 .Sh FILES
 .Bl -tag -width "/etc/ifstated.conf" -compact
@@ -72,7 +74,7 @@ configuration file.
 .El
 .Sh SEE ALSO
 .Xr carp 4 ,
-.Xr pf 4 
+.Xr pf 4
 .Sh HISTORY
 The
 .Nm
