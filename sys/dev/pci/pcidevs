@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.230 2000/03/26 22:38:22 mickey Exp $
+	$OpenBSD: pcidevs,v 1.231 2000/03/27 19:36:04 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -727,6 +727,7 @@ product ATI MACH64_LB		0x4C42  Mach64 LB
 product ATI MACH64_LD		0x4c44  Mach64 LD
 product ATI MACH64_LG		0x4c47  Mach64 LG
 product ATI MACH64_LI		0x4c49  Mach64 LI
+product ATI MOBILITY_1		0x4c4d	Mobility 1
 product ATI MACH64_LP		0x4c50  Mach64 LP
 product ATI RAGE_MAGNUM		0x5246	Rage Magnum
 product ATI MACH64_VT		0x5654	Mach64 VT
