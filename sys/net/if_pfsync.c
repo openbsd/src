@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.39 2004/11/16 20:07:56 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.40 2004/12/06 10:27:53 mpf Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -323,6 +323,7 @@ pfsync_input(struct mbuf *m, ...)
 			RB_FOREACH(st, pf_state_tree_id, &tree_id) {
 				if (st->creatorid == creatorid)
 					st->timeout = PFTM_PURGE;
+					pf_purge_expired_state(st);
 			}
 		} else {
 			kif = pfi_lookup_if(cp->ifname);
