@@ -75,7 +75,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: scp.c,v 1.61 2001/03/15 15:05:59 markus Exp $");
+RCSID("$OpenBSD: scp.c,v 1.62 2001/03/21 12:33:33 markus Exp $");
 
 #include "xmalloc.h"
 #include "atomicio.h"
@@ -530,7 +530,7 @@ syserr:			run_err("%s: %s", name, strerror(errno));
 #define	FILEMODEMASK	(S_ISUID|S_ISGID|S_IRWXU|S_IRWXG|S_IRWXO)
 		snprintf(buf, sizeof buf, "C%04o %lld %s\n",
 		    (u_int) (stb.st_mode & FILEMODEMASK),
-		    stb.st_size, last);
+		    (long long)stb.st_size, last);
 		if (verbose_mode) {
 			fprintf(stderr, "Sending file modes: %s", buf);
 			fflush(stderr);
