@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.97 2002/03/23 13:28:34 espie Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.98 2002/04/16 15:32:59 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.207 1998/07/08 04:39:34 thorpej Exp $	*/
 
 /*
@@ -241,6 +241,7 @@ void	initcpu(void);
 int	cpu_dumpsize(void);
 int	cpu_dump(int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t *);
 void	cpu_init_kcore_hdr(void);
+int	fpu_probe(void);
 
 /* functions called from locore.s */
 void	dumpsys(void);
@@ -2062,73 +2063,73 @@ static romvec_t romvecs[] =
 struct cpu_model_info cpu_models[] = {
 
 /* The first four. */
-	{MACH_MACII, "II ", "", MACH_CLASSII, &romvecs[0]},
-	{MACH_MACIIX, "IIx ", "", MACH_CLASSII, &romvecs[0]},
-	{MACH_MACIICX, "IIcx ", "", MACH_CLASSII, &romvecs[0]},
-	{MACH_MACSE30, "SE/30 ", "", MACH_CLASSII, &romvecs[0]},
+	{MACH_MACII, "II", "", MACH_CLASSII, &romvecs[0]},
+	{MACH_MACIIX, "IIx", "", MACH_CLASSII, &romvecs[0]},
+	{MACH_MACIICX, "IIcx", "", MACH_CLASSII, &romvecs[0]},
+	{MACH_MACSE30, "SE/30", "", MACH_CLASSII, &romvecs[0]},
 
 /* The rest of the II series... */
-	{MACH_MACIICI, "IIci ", "", MACH_CLASSIIci, &romvecs[4]},
-	{MACH_MACIISI, "IIsi ", "", MACH_CLASSIIsi, &romvecs[2]},
-	{MACH_MACIIVI, "IIvi ", "", MACH_CLASSIIvx, &romvecs[2]},
-	{MACH_MACIIVX, "IIvx ", "", MACH_CLASSIIvx, &romvecs[2]},
-	{MACH_MACIIFX, "IIfx ", "", MACH_CLASSIIfx, &romvecs[18]},
+	{MACH_MACIICI, "IIci", "", MACH_CLASSIIci, &romvecs[4]},
+	{MACH_MACIISI, "IIsi", "", MACH_CLASSIIsi, &romvecs[2]},
+	{MACH_MACIIVI, "IIvi", "", MACH_CLASSIIvx, &romvecs[2]},
+	{MACH_MACIIVX, "IIvx", "", MACH_CLASSIIvx, &romvecs[2]},
+	{MACH_MACIIFX, "IIfx", "", MACH_CLASSIIfx, &romvecs[18]},
 
 /* The Centris/Quadra series. */
-	{MACH_MACQ700, "Quadra", " 700 ", MACH_CLASSQ, &romvecs[4]},
-	{MACH_MACQ900, "Quadra", " 900 ", MACH_CLASSQ, &romvecs[6]},
-	{MACH_MACQ950, "Quadra", " 950 ", MACH_CLASSQ, &romvecs[17]},
-	{MACH_MACQ800, "Quadra", " 800 ", MACH_CLASSQ, &romvecs[6]},
-	{MACH_MACQ650, "Quadra", " 650 ", MACH_CLASSQ, &romvecs[6]},
-	{MACH_MACC650, "Centris", " 650 ", MACH_CLASSQ, &romvecs[6]},
-	{MACH_MACQ605, "Quadra", " 605 ", MACH_CLASSQ, &romvecs[9]},
-	{MACH_MACQ605_33, "Quadra", " 605/33 ", MACH_CLASSQ, &romvecs[9]},
-	{MACH_MACC610, "Centris", " 610 ", MACH_CLASSQ, &romvecs[6]},
-	{MACH_MACQ610, "Quadra", " 610 ", MACH_CLASSQ, &romvecs[6]},
-	{MACH_MACQ630, "Quadra", " 630 ", MACH_CLASSQ2, &romvecs[13]},
-	{MACH_MACC660AV, "Centris", " 660AV ", MACH_CLASSAV, &romvecs[7]},
-	{MACH_MACQ840AV, "Quadra", " 840AV ", MACH_CLASSAV, &romvecs[7]},
+	{MACH_MACQ700, "Quadra", " 700", MACH_CLASSQ, &romvecs[4]},
+	{MACH_MACQ900, "Quadra", " 900", MACH_CLASSQ, &romvecs[6]},
+	{MACH_MACQ950, "Quadra", " 950", MACH_CLASSQ, &romvecs[17]},
+	{MACH_MACQ800, "Quadra", " 800", MACH_CLASSQ, &romvecs[6]},
+	{MACH_MACQ650, "Quadra", " 650", MACH_CLASSQ, &romvecs[6]},
+	{MACH_MACC650, "Centris", " 650", MACH_CLASSQ, &romvecs[6]},
+	{MACH_MACQ605, "Quadra", " 605", MACH_CLASSQ, &romvecs[9]},
+	{MACH_MACQ605_33, "Quadra", " 605/33", MACH_CLASSQ, &romvecs[9]},
+	{MACH_MACC610, "Centris", " 610", MACH_CLASSQ, &romvecs[6]},
+	{MACH_MACQ610, "Quadra", " 610", MACH_CLASSQ, &romvecs[6]},
+	{MACH_MACQ630, "Quadra", " 630", MACH_CLASSQ2, &romvecs[13]},
+	{MACH_MACC660AV, "Centris", " 660AV", MACH_CLASSAV, &romvecs[7]},
+	{MACH_MACQ840AV, "Quadra", " 840AV", MACH_CLASSAV, &romvecs[7]},
 
 /* The Powerbooks/Duos... */
-	{MACH_MACPB100, "PowerBook", " 100 ", MACH_CLASSPB, &romvecs[1]},
+	{MACH_MACPB100, "PowerBook", " 100", MACH_CLASSPB, &romvecs[1]},
 	/* PB 100 has no MMU! */
-	{MACH_MACPB140, "PowerBook", " 140 ", MACH_CLASSPB, &romvecs[1]},
-	{MACH_MACPB145, "PowerBook", " 145 ", MACH_CLASSPB, &romvecs[1]},
-	{MACH_MACPB150, "PowerBook", " 150 ", MACH_CLASSDUO, &romvecs[10]},
-	{MACH_MACPB160, "PowerBook", " 160 ", MACH_CLASSPB, &romvecs[5]},
-	{MACH_MACPB165, "PowerBook", " 165 ", MACH_CLASSPB, &romvecs[5]},
-	{MACH_MACPB165C, "PowerBook", " 165c ", MACH_CLASSPB, &romvecs[5]},
-	{MACH_MACPB170, "PowerBook", " 170 ", MACH_CLASSPB, &romvecs[1]},
-	{MACH_MACPB180, "PowerBook", " 180 ", MACH_CLASSPB, &romvecs[5]},
-	{MACH_MACPB180C, "PowerBook", " 180c ", MACH_CLASSPB, &romvecs[5]},
-	{MACH_MACPB500, "PowerBook", " 500 ", MACH_CLASSPB, &romvecs[8]},
+	{MACH_MACPB140, "PowerBook", " 140", MACH_CLASSPB, &romvecs[1]},
+	{MACH_MACPB145, "PowerBook", " 145", MACH_CLASSPB, &romvecs[1]},
+	{MACH_MACPB150, "PowerBook", " 150", MACH_CLASSDUO, &romvecs[10]},
+	{MACH_MACPB160, "PowerBook", " 160", MACH_CLASSPB, &romvecs[5]},
+	{MACH_MACPB165, "PowerBook", " 165", MACH_CLASSPB, &romvecs[5]},
+	{MACH_MACPB165C, "PowerBook", " 165c", MACH_CLASSPB, &romvecs[5]},
+	{MACH_MACPB170, "PowerBook", " 170", MACH_CLASSPB, &romvecs[1]},
+	{MACH_MACPB180, "PowerBook", " 180", MACH_CLASSPB, &romvecs[5]},
+	{MACH_MACPB180C, "PowerBook", " 180c", MACH_CLASSPB, &romvecs[5]},
+	{MACH_MACPB500, "PowerBook", " 500", MACH_CLASSPB, &romvecs[8]},
 
 /* The Duos */
-	{MACH_MACPB210, "PowerBook Duo", " 210 ", MACH_CLASSDUO, &romvecs[5]},
-	{MACH_MACPB230, "PowerBook Duo", " 230 ", MACH_CLASSDUO, &romvecs[5]},
-	{MACH_MACPB250, "PowerBook Duo", " 250 ", MACH_CLASSDUO, &romvecs[5]},
-	{MACH_MACPB270, "PowerBook Duo", " 270C ", MACH_CLASSDUO, &romvecs[5]},
-	{MACH_MACPB280, "PowerBook Duo", " 280 ", MACH_CLASSDUO, &romvecs[5]},
-	{MACH_MACPB280C, "PowerBook Duo", " 280C ", MACH_CLASSDUO, &romvecs[5]},
+	{MACH_MACPB210, "PowerBook Duo", " 210", MACH_CLASSDUO, &romvecs[5]},
+	{MACH_MACPB230, "PowerBook Duo", " 230", MACH_CLASSDUO, &romvecs[5]},
+	{MACH_MACPB250, "PowerBook Duo", " 250", MACH_CLASSDUO, &romvecs[5]},
+	{MACH_MACPB270, "PowerBook Duo", " 270C", MACH_CLASSDUO, &romvecs[5]},
+	{MACH_MACPB280, "PowerBook Duo", " 280", MACH_CLASSDUO, &romvecs[5]},
+	{MACH_MACPB280C, "PowerBook Duo", " 280C", MACH_CLASSDUO, &romvecs[5]},
 
 /* The Performas... */
-	{MACH_MACP600, "Performa", " 600 ", MACH_CLASSIIvx, &romvecs[2]},
-	{MACH_MACP460, "Performa", " 460 ", MACH_CLASSLC, &romvecs[14]},
-	{MACH_MACP550, "Performa", " 550 ", MACH_CLASSLC, &romvecs[11]},
-	{MACH_MACP580, "Performa", " 580 ", MACH_CLASSQ2, &romvecs[19]},
-	{MACH_MACTV,   "TV ",      "",      MACH_CLASSLC, &romvecs[12]},
+	{MACH_MACP600, "Performa", " 600", MACH_CLASSIIvx, &romvecs[2]},
+	{MACH_MACP460, "Performa", " 460", MACH_CLASSLC, &romvecs[14]},
+	{MACH_MACP550, "Performa", " 550", MACH_CLASSLC, &romvecs[11]},
+	{MACH_MACP580, "Performa", " 580", MACH_CLASSQ2, &romvecs[19]},
+	{MACH_MACTV,   "TV",      "",      MACH_CLASSLC, &romvecs[12]},
 
 /* The LCs... */
-	{MACH_MACLCII,  "LC", " II ",  MACH_CLASSLC, &romvecs[3]},
-	{MACH_MACLCIII, "LC", " III ", MACH_CLASSLC, &romvecs[14]},
-	{MACH_MACLC475, "LC", " 475 ", MACH_CLASSQ,  &romvecs[9]},
-	{MACH_MACLC475_33, "LC", " 475/33 ", MACH_CLASSQ,  &romvecs[9]},
-	{MACH_MACLC520, "LC", " 520 ", MACH_CLASSLC, &romvecs[15]},
-	{MACH_MACLC575, "LC", " 575 ", MACH_CLASSQ2, &romvecs[16]},
-	{MACH_MACCCLASSIC, "Color Classic ", "", MACH_CLASSLC, &romvecs[3]},
-	{MACH_MACCCLASSICII, "Color Classic"," II ", MACH_CLASSLC, &romvecs[3]},
+	{MACH_MACLCII,  "LC", " II",  MACH_CLASSLC, &romvecs[3]},
+	{MACH_MACLCIII, "LC", " III", MACH_CLASSLC, &romvecs[14]},
+	{MACH_MACLC475, "LC", " 475", MACH_CLASSQ,  &romvecs[9]},
+	{MACH_MACLC475_33, "LC", " 475/33", MACH_CLASSQ,  &romvecs[9]},
+	{MACH_MACLC520, "LC", " 520", MACH_CLASSLC, &romvecs[15]},
+	{MACH_MACLC575, "LC", " 575", MACH_CLASSQ2, &romvecs[16]},
+	{MACH_MACCCLASSIC, "Color Classic", "", MACH_CLASSLC, &romvecs[3]},
+	{MACH_MACCCLASSICII, "Color Classic"," II", MACH_CLASSLC, &romvecs[3]},
 /* Does this belong here? */
-	{MACH_MACCLASSICII, "Classic", " II ", MACH_CLASSLC, &romvecs[3]},
+	{MACH_MACCLASSICII, "Classic", " II", MACH_CLASSLC, &romvecs[3]},
 
 /* The unknown one and the end... */
 	{0, "Unknown", "", MACH_CLASSII, NULL},
@@ -2194,32 +2195,152 @@ mach_cputype()
 	return (mac68k_machine.mach_processor);
 }
 
-static void
+int
+fpu_probe()
+{
+	/*
+	 * A 68881 idle frame is 28 bytes and a 68882's is 60 bytes.
+	 * We, of course, need to have enough room for either.
+	 */
+	int	fpframe[60 / sizeof(int)];
+	label_t	faultbuf;
+	u_char	b;
+
+	nofault = (int *) &faultbuf;
+	if (setjmp(&faultbuf)) {
+		nofault = (int *) 0;
+		return (FPU_NONE);
+	}
+
+	/*
+	 * Synchronize FPU or cause a fault.
+	 * This should leave the 881/882 in the IDLE state,
+	 * state, so we can determine which we have by
+	 * examining the size of the FP state frame
+	 */
+	asm("fnop");
+
+	nofault = (int *) 0;
+
+	/*
+	 * Presumably, if we're an 040 and did not take exception
+	 * above, we have an FPU.  Don't bother probing.
+	 */
+	if (mmutype == MMU_68040)
+		return (FPU_68040);
+
+	/*
+	 * Presumably, this will not cause a fault--the fnop should
+	 * have if this will.  We save the state in order to get the
+	 * size of the frame.
+	 */
+	asm("movl %0, a0; fsave a0@" : : "a" (fpframe) : "a0" );
+
+	b = *((u_char *) fpframe + 1);
+
+	/*
+	 * Now, restore a NULL state to reset the FPU.
+	 */
+	fpframe[0] = fpframe[1] = 0;
+	m68881_restore((struct fpframe *) fpframe);
+
+	/*
+	 * The size of a 68881 IDLE frame is 0x18
+	 *         and a 68882 frame is 0x38
+	 */
+	if (b == 0x18)
+		return (FPU_68881);
+	if (b == 0x38)
+		return (FPU_68882);
+
+	/*
+	 * If it's not one of the above, we have no clue what it is.
+	 */
+	return (FPU_UNKNOWN);
+}
+
+void
 identifycpu()
 {
+#ifdef DEBUG
 	extern u_int delay_factor;
-	char *mpu;
+#endif
 
+	/*
+	 * Print the machine type...
+	 */
+	sprintf(cpu_model, "Apple Macintosh %s%s",
+	    cpu_models[mac68k_machine.cpu_model_index].model_major,
+	    cpu_models[mac68k_machine.cpu_model_index].model_minor);
+
+	/*
+	 * ... and the CPU type...
+	 */
 	switch (cputype) {
-	case CPU_68020:
-		mpu = ("(68020)");
+	case CPU_68040:
+		strcat(cpu_model, ", 68040 CPU");
 		break;
 	case CPU_68030:
-		mpu = ("(68030)");
+		strcat(cpu_model, ", 68030 CPU");
 		break;
-	case CPU_68040:
-		mpu = ("(68040)");
+	case CPU_68020:
+		strcat(cpu_model, ", 68020 CPU");
 		break;
 	default:
-		mpu = ("(unknown processor)");
+		strcat(cpu_model, ", unknown CPU");
 		break;
 	}
-	sprintf(cpu_model, "Apple Macintosh %s%s %s",
-	    cpu_models[mac68k_machine.cpu_model_index].model_major,
-	    cpu_models[mac68k_machine.cpu_model_index].model_minor,
-	    mpu);
+
+	/*
+	 * ... and the MMU type...
+	 */
+	switch (mmutype) {
+	case MMU_68040:
+	case MMU_68030:
+		strcat(cpu_model, "+MMU");
+		break;
+	case MMU_68851:
+		strcat(cpu_model, ", MC68851 MMU");
+		break;
+	default:
+		printf("%s\n", cpu_model);
+		panic("unknown MMU type %d", mmutype);
+		/* NOTREACHED */
+	}
+
+	/*
+	 * ... and the FPU type...
+	 */
+	fputype = fpu_probe();	/* should eventually move to locore */
+
+	switch (fputype) {
+	case FPU_68040:
+		strcat(cpu_model, "+FPU");
+		break;
+	case FPU_68882:
+		strcat(cpu_model, ", MC6882 FPU");
+		break;
+	case FPU_68881:
+		strcat(cpu_model, ", MC6881 FPU");
+		break;
+	case FPU_UNKNOWN:
+		strcat(cpu_model, ", unknown FPU");
+		break;
+	default:
+		/*strcat(cpu_model, ", no FPU");*/
+		break;
+	}
+
+	/*
+	 * ... and finally, the cache type.
+	 */
+	if (cputype == CPU_68040)
+		strcat(cpu_model, ", 4k on-chip physical I/D caches");
+
 	printf("%s\n", cpu_model);
+#ifdef DEBUG
 	printf("cpu: delay factor %d\n", delay_factor);
+#endif
 }
 
 static void	get_machine_info(void);

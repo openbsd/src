@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERICSBC,v 1.12 2001/06/27 05:46:17 art Exp $
+#	$OpenBSD: GENERICSBC,v 1.13 2002/04/16 15:32:55 miod Exp $
 #	$NetBSD: GENERIC,v 1.52 1997/01/13 23:34:07 scottr Exp $
 #
 # GENERICSBC --- our generic kernel using the SBC SCSI driver
@@ -23,7 +23,6 @@ config		bsd	swap generic
 maxusers	16
 
 mainbus0 at root
-fpu0 at mainbus?
 
 # on-board I/O
 obio0 at mainbus?

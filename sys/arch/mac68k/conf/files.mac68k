@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mac68k,v 1.27 2002/01/10 22:25:38 miod Exp $
+#	$OpenBSD: files.mac68k,v 1.28 2002/04/16 15:32:55 miod Exp $
 #	$NetBSD: files.mac68k,v 1.61 1997/03/01 20:22:16 scottr Exp $
 
 # mac68k-specific configuration info
@@ -95,11 +95,6 @@ device	zstty: tty
 attach	zstty at zsc
 file	arch/mac68k/dev/z8530tty.c	zstty needs-flag
 #file	dev/ic/z8530tty.c		zstty needs-flag
-
-# This one is out of alphabetical order
-device	fpu
-attach	fpu at mainbus
-file	arch/mac68k/mac68k/fpu.c	fpu
 
 file	arch/m68k/m68k/db_memrw.c	ddb
 include "arch/m68k/fpe/files.fpe"
