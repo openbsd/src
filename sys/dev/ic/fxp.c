@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.59 2004/09/28 05:14:44 brad Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.60 2004/11/07 01:13:48 dhartmei Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -1827,7 +1827,7 @@ const u_int32_t fxp_ucode_d101s[] = D101S_RCVBUNDLE_UCODE;
 const u_int32_t fxp_ucode_d102[] = D102_B_RCVBUNDLE_UCODE;
 const u_int32_t fxp_ucode_d102c[] = D102_C_RCVBUNDLE_UCODE;
 
-#define UCODE(x)	sizeof(x), x
+#define UCODE(x)	sizeof(x) / sizeof(u_int32_t), x
 
 struct ucode {
 	u_int16_t	revision;
