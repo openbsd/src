@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.7 1996/06/06 07:39:37 pefo Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.8 1996/06/09 20:47:13 deraadt Exp $	*/
 /*	$NetBSD: exec_elf.c,v 1.6 1996/02/09 18:59:18 christos Exp $	*/
 
 /*
@@ -96,22 +96,22 @@ extern char *syscallnames[];
 #endif
 
 struct emul emul_elf = {
-      "netbsd",
-      NULL,
-      sendsig,
-      SYS_syscall,
-      SYS_MAXSYSCALL,
-      sysent,
+	"native elf",
+	NULL,
+	sendsig,
+	SYS_syscall,
+	SYS_MAXSYSCALL,
+	sysent,
 #ifdef SYSCALL_DEBUG
-      syscallnames,
+	syscallnames,
 #else
-      NULL,
+	NULL,
 #endif
-      sizeof(AuxInfo) * ELF_AUX_ENTRIES,
-      elf_copyargs,
-      setregs,
-      sigcode,
-      esigcode,
+	sizeof(AuxInfo) * ELF_AUX_ENTRIES,
+	elf_copyargs,
+	setregs,
+	sigcode,
+	esigcode,
 };
 
 
@@ -242,8 +242,8 @@ elf_load_psection(vcset, vp, ph, addr, size, prot)
 	long diff, offset;
 
 	/*
-         * If the user specified an address, then we load there.
-         */
+	 * If the user specified an address, then we load there.
+	 */
 	if (*addr != ELF32_NO_ADDR) {
 		if (ph->p_align > 1) {
 			*addr = ELF_ALIGN(*addr + ph->p_align, ph->p_align);
@@ -270,7 +270,7 @@ elf_load_psection(vcset, vp, ph, addr, size, prot)
 	/*
 	 * Because the pagedvn pager can't handle zero fill of the last
 	 * data page if it's not page aligned we map the las page readvn.
-         */
+	 */
 	if(ph->p_flags & PF_W) {
 		psize = trunc_page(*size);
 		NEW_VMCMD(vcset, vmcmd_map_pagedvn, psize, *addr, vp, offset, *prot);
@@ -284,8 +284,8 @@ elf_load_psection(vcset, vp, ph, addr, size, prot)
 	}
 
 	/*
-         * Check if we need to extend the size of the segment
-         */
+	 * Check if we need to extend the size of the segment
+	 */
 	rm = round_page(*addr + msize);
 	rf = round_page(*addr + *size);
 
@@ -316,8 +316,8 @@ elf_read_from(p, vp, off, buf, size)
 			     &resid, p)) != 0)
 		return error;
 	/*
-         * See if we got all of it
-         */
+	 * See if we got all of it
+	 */
 	if (resid != 0)
 		return ENOEXEC;
 	return 0;
@@ -349,10 +349,10 @@ elf_load_file(p, path, vcset, entry, ap, last)
 
 	bp  = path;
 	/*
-         * 1. open file
-         * 2. read filehdr
-         * 3. map text, data, and bss out of it using VM_*
-         */
+	 * 1. open file
+	 * 2. read filehdr
+	 * 3. map text, data, and bss out of it using VM_*
+	 */
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path, p);
 	if ((error = namei(&nd)) != 0) {
 		return error;
@@ -372,8 +372,8 @@ elf_load_file(p, path, vcset, entry, ap, last)
 		goto bad;
 
 	/*
-         * Load all the necessary sections
-         */
+	 * Load all the necessary sections
+	 */
 	for (i = 0; i < eh.e_phnum; i++) {
 		u_long size = 0;
 		int prot = 0;
@@ -439,10 +439,10 @@ exec_elf_makecmds(p, epp)
 		return ENOEXEC;
 
 	/*
-         * check if vnode is in open for writing, because we want to
-         * demand-page out of it.  if it is, don't do it, for various
-         * reasons
-         */
+	 * check if vnode is in open for writing, because we want to
+	 * demand-page out of it.  if it is, don't do it, for various
+	 * reasons
+	 */
 	if (epp->ep_vp->v_writecount != 0) {
 #ifdef DIAGNOSTIC
 		if (epp->ep_vp->v_flag & VTEXT)
@@ -451,9 +451,9 @@ exec_elf_makecmds(p, epp)
 		return ETXTBSY;
 	}
 	/*
-         * Allocate space to hold all the program headers, and read them
-         * from the file
-         */
+	 * Allocate space to hold all the program headers, and read them
+	 * from the file
+	 */
 	phsize = eh->e_phnum * sizeof(Elf32_Phdr);
 	ph = (Elf32_Phdr *) malloc(phsize, M_TEMP, M_WAITOK);
 
@@ -472,7 +472,7 @@ exec_elf_makecmds(p, epp)
 			if (pp->p_filesz >= sizeof(interp))
 				goto bad;
 			if ((error = elf_read_from(p, epp->ep_vp, pp->p_offset,
-				      (caddr_t) interp, pp->p_filesz)) != 0)
+			    (caddr_t) interp, pp->p_filesz)) != 0)
 				goto bad;
 			break;
 		}
@@ -505,8 +505,8 @@ exec_elf_makecmds(p, epp)
 	}
 
 	/*
-         * Load all the necessary sections
-         */
+	 * Load all the necessary sections
+	 */
 	for (i = nload = 0; i < eh->e_phnum; i++) {
 		u_long  addr = ELF32_NO_ADDR, size = 0;
 		int prot = 0;
@@ -571,9 +571,9 @@ exec_elf_makecmds(p, epp)
 #endif
 
 	/*
-         * Check if we found a dynamically linked binary and arrange to load
-         * it's interpreter
-         */
+	 * Check if we found a dynamically linked binary and arrange to load
+	 * it's interpreter
+	 */
 	if (interp[0]) {
 		struct elf_args *ap;
 
