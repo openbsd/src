@@ -1,4 +1,4 @@
-dnl	$OpenBSD: packages,v 1.32 2004/02/13 10:59:24 miod Exp $
+dnl	$OpenBSD: packages,v 1.33 2004/02/27 17:49:14 miod Exp $
 As complete as your OpenBSD system is, you may want to add any of several
 excellent third party software applications.  There are several ways to do
 this.  You can:
@@ -1227,6 +1227,8 @@ define({:-PORTS-:},
 {:-ifelse(
 MACHINE_ARCH,alpha,{:-FreeBSD
 	ports or NetBSD package collection-:},
+MACHINE_ARCH,amd64,{:-FreeBSD
+	ports or NetBSD package collection-:},
 MACHINE_ARCH,arm,{:-NetBSD
 	package collection-:},
 dnl MACHINE_ARCH,hppa,{:-NetBSD
@@ -1242,9 +1244,7 @@ MACHINE_ARCH,sparc,{:-NetBSD
 MACHINE_ARCH,sparc64,{:-FreeBSD
 	ports or NetBSD package collection-:},
 MACHINE_ARCH,vax,{:-NetBSD
-	package collection-:},
-MACHINE_ARCH,x86_64,{:-FreeBSD
-	ports or NetBSD package collection-:})-:})dnl
+	package collection-:})-:})dnl
 dnl
 dnl If this architecture supports FreeBSD or NetBSD emulation by default,
 dnl define text that tells which binary packages you can try to run.

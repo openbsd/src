@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.50 2004/02/14 18:22:45 todd Exp $
+dnl	$OpenBSD: m4.common,v 1.51 2004/02/27 17:49:14 miod Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -19,7 +19,6 @@ dnl
 dnl a simple MACHINE->MACHINE_ARCH converter.
 define(`MACHINE_ARCH',
 `ifelse(
-MACHINE,amd64,x86_64,
 MACHINE,amiga,m68k,
 MACHINE,cats,arm,
 MACHINE,hp300,m68k,
