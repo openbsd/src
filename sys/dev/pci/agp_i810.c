@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.7 2004/01/20 19:30:40 grange Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.8 2005/03/22 18:33:03 sturm Exp $	*/
 /*	$NetBSD: agp_i810.c,v 1.15 2003/01/31 00:07:39 thorpej Exp $	*/
 
 /*-
@@ -548,7 +548,7 @@ agp_i810_bind_memory(struct vga_pci_softc *sc, struct agp_memory *mem,
 	if (mem->am_type != 1)
 		return (agp_generic_bind_memory(sc, mem, offset));
 
-	if (isc->chiptype == CHIP_I830)
+	if (isc->chiptype != CHIP_I810)
 		return (EINVAL);
 
 	for (i = 0; i < mem->am_size; i += AGP_PAGE_SIZE) {
@@ -576,7 +576,7 @@ agp_i810_unbind_memory(struct vga_pci_softc *sc, struct agp_memory *mem)
 	if (mem->am_type != 1)
 		return (agp_generic_unbind_memory(sc, mem));
 
-	if (isc->chiptype == CHIP_I830)
+	if (isc->chiptype != CHIP_I810)
 		return (EINVAL);
 
 	for (i = 0; i < mem->am_size; i += AGP_PAGE_SIZE)
