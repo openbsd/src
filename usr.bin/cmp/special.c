@@ -1,4 +1,4 @@
-/*      $OpenBSD: special.c,v 1.2 1996/06/26 05:32:07 deraadt Exp $      */
+/*      $OpenBSD: special.c,v 1.3 1999/08/03 16:02:44 mickey Exp $      */
 /*      $NetBSD: special.c,v 1.2 1995/09/08 03:23:00 tls Exp $      */
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)special.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: special.c,v 1.2 1996/06/26 05:32:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: special.c,v 1.3 1999/08/03 16:02:44 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,6 +67,7 @@ c_special(fd1, file1, skip1, fd2, file2, skip2)
 	if ((fp2 = fdopen(fd2, "r")) == NULL)
 		err(ERR_EXIT, "%s", file2);
 
+	dfound = 0;
 	while (skip1--)
 		if (getc(fp1) == EOF)
 			goto eof;
@@ -74,19 +75,19 @@ c_special(fd1, file1, skip1, fd2, file2, skip2)
 		if (getc(fp2) == EOF)
 			goto eof;
 
-	dfound = 0;
 	for (byte = line = 1;; ++byte) {
 		ch1 = getc(fp1);
 		ch2 = getc(fp2);
 		if (ch1 == EOF || ch2 == EOF)
 			break;
-		if (ch1 != ch2)
+		if (ch1 != ch2) {
 			if (lflag) {
 				dfound = 1;
 				(void)printf("%6qd %3o %3o\n", byte, ch1, ch2);
 			} else
 				diffmsg(file1, file2, byte, line);
 				/* NOTREACHED */
+		}
 		if (ch1 == '\n')
 			++line;
 	}

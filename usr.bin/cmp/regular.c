@@ -1,4 +1,4 @@
-/*      $OpenBSD: regular.c,v 1.2 1996/06/26 05:32:06 deraadt Exp $      */
+/*      $OpenBSD: regular.c,v 1.3 1999/08/03 16:02:44 mickey Exp $      */
 /*      $NetBSD: regular.c,v 1.2 1995/09/08 03:22:59 tls Exp $      */
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)regular.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: regular.c,v 1.2 1996/06/26 05:32:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: regular.c,v 1.3 1999/08/03 16:02:44 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -78,22 +78,23 @@ c_regular(fd1, file1, skip1, len1, fd2, file2, skip2, len2)
 	if (length > SIZE_T_MAX)
 		return (c_special(fd1, file1, skip1, fd2, file2, skip2));
 
-	if ((p1 = (u_char *)mmap(NULL,
-	    (size_t)length, PROT_READ, 0, fd1, skip1)) == (u_char *)-1)
+	if ((p1 = mmap(NULL, (size_t)length, PROT_READ,
+		       MAP_PRIVATE, fd1, skip1)) == (u_char *)-1)
 		err(ERR_EXIT, "%s", file1);
-	if ((p2 = (u_char *)mmap(NULL,
-	    (size_t)length, PROT_READ, 0, fd2, skip2)) == (u_char *)-1)
+	if ((p2 = mmap(NULL, (size_t)length, PROT_READ,
+		       MAP_PRIVATE, fd2, skip2)) == (u_char *)-1)
 		err(ERR_EXIT, "%s", file2);
 
 	dfound = 0;
 	for (byte = line = 1; length--; ++p1, ++p2, ++byte) {
-		if ((ch = *p1) != *p2)
+		if ((ch = *p1) != *p2) {
 			if (lflag) {
 				dfound = 1;
 				(void)printf("%6qd %3o %3o\n", byte, ch, *p2);
 			} else
 				diffmsg(file1, file2, byte, line);
 				/* NOTREACHED */
+		}
 		if (ch == '\n')
 			++line;
 	}
