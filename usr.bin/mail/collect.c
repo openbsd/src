@@ -1,4 +1,4 @@
-/*	$OpenBSD: collect.c,v 1.3 1997/04/10 15:33:50 deraadt Exp $	*/
+/*	$OpenBSD: collect.c,v 1.4 1997/04/13 20:22:39 deraadt Exp $	*/
 /*	$NetBSD: collect.c,v 1.6 1996/06/08 19:48:16 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: collect.c,v 1.3 1997/04/10 15:33:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: collect.c,v 1.4 1997/04/13 20:22:39 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -156,8 +156,10 @@ cont:
 			fprintf(stderr,
 			"\n(Interrupt -- one more to kill letter)\n");
 		} else {
-			printf("(continue)\n");
-			fflush(stdout);
+			if (isatty(0)) {
+				printf("(continue)\n");
+				fflush(stdout);
+			}
 		}
 	}
 	for (;;) {
