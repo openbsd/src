@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.231 2000/03/27 19:36:04 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.232 2000/03/28 00:02:08 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -4035,6 +4035,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "VT82C598 (Apollo MVP3) Host-PCI",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686,
+	    0,
+	    "VIA",
+	    "VT82C686 PCI-ISA",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C926,
 	    0,
 	    "VIA",
@@ -4507,6 +4513,24 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Yamaha",
 	    "724 Audio",
+	},
+	{
+	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF744,
+	    0,
+	    "Yamaha",
+	    "DS-1S Audio",
+	},
+	{
+	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF724,
+	    0,
+	    "Yamaha",
+	    "DS-1 Audio",
+	},
+	{
+	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF740,
+	    0,
+	    "Yamaha",
+	    "DS-1L Audio",
 	},
 	{
 	    PCI_VENDOR_ZEINET, PCI_PRODUCT_ZEINET_1221,
