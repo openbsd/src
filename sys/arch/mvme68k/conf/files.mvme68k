@@ -1,9 +1,11 @@
-#	$OpenBSD: files.mvme68k,v 1.22 2002/02/22 22:45:30 miod Exp $
+#	$OpenBSD: files.mvme68k,v 1.23 2002/04/21 23:43:18 miod Exp $
 
 # config file for mvme68k
 
 # maxpartitions must be first item in files.${ARCH}
 maxpartitions 16
+
+maxusers 2 8 64
 
 device mainbus { [addr = -1] }
 attach mainbus at root
@@ -71,7 +73,7 @@ file	arch/mvme68k/dev/fooip.c		fooip
 device ssh: scsi
 attach ssh at mc, pcctwo
 file	arch/mvme68k/dev/sshdma.c		ssh
-file	arch/mvme68k/dev/ssh.c		ssh
+file	arch/mvme68k/dev/ssh.c			ssh
 
 device memc
 attach memc at mc, pcctwo
@@ -97,17 +99,17 @@ device lptwo
 attach lptwo at pcctwo
 file	arch/mvme68k/dev/lptwo.c		lptwo needs-count
 
-device xdc {target = -1}
-attach xdc at vmes
-device xd: disk
-attach xd at xdc
-file	arch/mvme68k/dev/xd.c			xd needs-flag
+#device xdc {target = -1}
+#attach xdc at vmes
+#device xd: disk
+#attach xd at xdc
+#file	arch/mvme68k/dev/xd.c			xd needs-flag
 
 major { sd = 4 }
 major { cd = 6 }
 major { vnd = 8 }
 major { rd = 9 }
-major { xd = 10 }
+#major { xd = 10 }
 
 file arch/mvme68k/mvme68k/autoconf.c
 file arch/mvme68k/mvme68k/conf.c
