@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.23 2000/01/06 03:21:43 smurph Exp $ */
+/*	$OpenBSD: trap.c,v 1.24 2000/06/07 15:49:40 art Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -950,7 +950,7 @@ u_int a, d;
 			 num, a, d, f7sz[(s & SSW4_SZMASK) >> 5],
 			 f7tt[(s & SSW4_TTMASK) >> 3], f7tm[s & SSW4_TMMASK]);
 	printf("	       PA ");
-	pa = pmap_extract(&p->p_vmspace->vm_pmap, (vm_offset_t)a);
+	pa = pmap_extract(p->p_vmspace->vm_map.pmap, (vm_offset_t)a);
 	if (pa == 0)
 		printf("<invalid address>");
 	else
