@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.67 2000/01/27 15:48:19 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.68 2000/01/27 17:00:02 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -6938,16 +6938,20 @@ pmap_writetext(dst, ch)
 
 #if defined(SUN4M)
 	if (CPU_ISSUN4M) {
-		pte0 = getpte4m(va);
+		int *ptep;
+
+		ptep = getptep4m(pmap_kernel(), va);
+		pte0 = *ptep;
 		if ((pte0 & SRMMU_TETYPE) != SRMMU_TEPTE) {
 			splx(s);
 			return;
 		}
 		pte = pte0 | PPROT_WRITE;
-		setpte4m(va, pte);
+		tlb_flush_page((vaddr_t)va);
+		setpgt4m(ptep, pte);
 		*dst = (unsigned char)ch;
-		setpte4m(va, pte0);
-
+		tlb_flush_page((vaddr_t)va);
+		setpgt4m(ptep, pte0);
 	}
 #endif
 #if defined(SUN4) || defined(SUN4C)
