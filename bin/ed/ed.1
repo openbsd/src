@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ed.1,v 1.46 2004/01/31 13:00:57 jmc Exp $
+.\"	$OpenBSD: ed.1,v 1.47 2004/02/12 20:46:18 jmc Exp $
 .\"
 .\" Copyright (c) 1993 Andrew Moore, Talke Studio.
 .\" All rights reserved.
@@ -330,7 +330,7 @@ and
 matches itself.
 .It \&.
 Matches any single character.
-.It [ Ns Ar char-class Ns ]
+.It Bq Ar char-class
 Matches any single character in
 .Ar char-class .
 To include a
@@ -380,7 +380,7 @@ is a collating element are interpreted according to
 See
 .Xr regex 3
 for an explanation of these constructs.
-.It [^ Ns Ar char-class Ns ]
+.It Bq ^ Ns Ar char-class
 Matches any single character, other than newline, not in
 .Ar char-class .
 .Ar char-class
@@ -583,7 +583,7 @@ For each matching line, the line is printed, the current address is set,
 and the user is prompted to enter a
 .Ar command-list .
 At the end of the
-.Ic g
+.Ic G
 command, the current address is set to the last line affected by
 .Pq the last
 command-list.
@@ -647,7 +647,7 @@ Prints the addressed lines.
 The current address is set to the last line printed.
 .It Ic P
 Toggles the command prompt on and off.
-Unless a prompt was specified by with command-line option
+Unless a prompt was specified with the command-line option
 .Fl p Ar string ,
 the command prompt is by default turned off.
 .It Ic q
@@ -723,7 +723,7 @@ affected is printed as though the print suffix
 were specified.
 .Pp
 An unescaped
-.Ql \e
+.Ql &
 in
 .Ar replacement
 is replaced by the currently matched text.
