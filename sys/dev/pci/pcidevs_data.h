@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.518 2002/06/06 19:10:56 danh Exp 
+ *		OpenBSD: pcidevs,v 1.519 2002/06/06 19:31:51 niklas Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -4928,11 +4928,11 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x17,
-	    "GDT6117/6517",
+	    "GDT6x17",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x27,
-	    "GDT6127/6527",
+	    "GDT6x27",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6537,
@@ -4940,15 +4940,15 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6557,
-	    "GDT6557/6557-ECC",
+	    "GDT6557",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x15,
-	    "GDT6115/6515",
+	    "GDT6x15",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x25,
-	    "GDT6125/6525",
+	    "GDT6x25",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6535,
@@ -4956,15 +4956,15 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6555,
-	    "GDT6555/6555-ECC",
+	    "GDT6555",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x17RP,
-	    "GDT6[15]17RP",
+	    "GDT6x17RP",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x27RP,
-	    "GDT6[15]27RP",
+	    "GDT6x27RP",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6537RP,
@@ -4976,51 +4976,75 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x11RP,
-	    "GDT6[15]11RP",
+	    "GDT6x11RP",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x21RP,
-	    "GDT6[15]21RP",
+	    "GDT6x21RP",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x17RD,
-	    "GDT6[15]17RD",
+	    "GDT6x17RP1",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x27RD,
-	    "GDT6[5]127RD",
+	    "GDT6x27RP1",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6537RD,
-	    "GDT6537RD",
+	    "GDT6537RP1",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6557RD,
-	    "GDT6557RD",
+	    "GDT6557RP1",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x11RD,
-	    "GDT6[15]11RD",
+	    "GDT6x11RP1",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x21RD,
-	    "GDT6[15]21RD",
+	    "GDT6x21RP1",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x18RD,
-	    "GDT6[156]18RD",
+	    "GDT6x18RD",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x28RD,
-	    "GDT6[156]28RD",
+	    "GDT6x28RD",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x38RD,
-	    "GDT6[56]38RD",
+	    "GDT6x38RD",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x58RD,
-	    "GDT6[56]58RD",
+	    "GDT6x58RD",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x17RP2,
+	    "GDT6x17RP2",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x27RP2,
+	    "GDT6x27RP2",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6537RP2,
+	    "GDT6537RP2",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6557RP2,
+	    "GDT6557RP2",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x11RP2,
+	    "GDT6x11RP2",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x21RP2,
+	    "GDT6x21RP2",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x13RS,
@@ -5072,23 +5096,23 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x18RN,
-	    "GDT7[156]18RN",
+	    "GDT7x18RN",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x28RN,
-	    "GDT7[156]28RN",
+	    "GDT7x28RN",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x38RN,
-	    "GDT7[56]38RN",
+	    "GDT7x38RN",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x58RN,
-	    "GDT7[56]58RN",
+	    "GDT7x58RN",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x43RN,
-	    "GDT7[56]43RN",
+	    "GDT7x43RN",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x53RN,
@@ -5132,19 +5156,23 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x19RD,
-	    "GDT6[56]19RD",
+	    "GDT6x19RD",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x29RD,
-	    "GDT6[56]29RD",
+	    "GDT6x29RD",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x19RN,
-	    "GDT7[56]19RN",
+	    "GDT7x19RN",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x29RN,
-	    "GDT7[56]29RN",
+	    "GDT7x29RN",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_8x22RZ,
+	    "GDT8x22RZ",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_ICP,
