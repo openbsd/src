@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.48 2000/10/25 19:08:57 jason Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.49 2000/11/17 04:10:21 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -95,11 +95,11 @@ transform xf[] = {
     {"blf", SADB_X_EALG_BLF,   XF_ENC |        ESP_NEW},
     {"cast", SADB_X_EALG_CAST, XF_ENC |        ESP_NEW},
     {"skipjack", SADB_X_EALG_SKIPJACK, XF_ENC |        ESP_NEW},
-    {"md5", SADB_AALG_MD5HMAC96,  XF_AUTH|AH_NEW|ESP_NEW},
-    {"sha1", SADB_AALG_SHA1HMAC96,XF_AUTH|AH_NEW|ESP_NEW},
+    {"md5", SADB_AALG_MD5HMAC,  XF_AUTH|AH_NEW|ESP_NEW},
+    {"sha1", SADB_AALG_SHA1HMAC,XF_AUTH|AH_NEW|ESP_NEW},
     {"md5", SADB_X_AALG_MD5,  XF_AUTH|AH_OLD},
     {"sha1", SADB_X_AALG_SHA1,XF_AUTH|AH_OLD},
-    {"rmd160", SADB_X_AALG_RIPEMD160HMAC96, XF_AUTH|AH_NEW|ESP_NEW},
+    {"rmd160", SADB_AALG_RIPEMD160HMAC, XF_AUTH|AH_NEW|ESP_NEW},
 };
 
 #define ROUNDUP(x) (x % 8 ? (x + 8) - (x % 8) : x)

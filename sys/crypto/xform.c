@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.3 2000/10/09 22:17:30 angelos Exp $	*/
+/*	$OpenBSD: xform.c,v 1.4 2000/11/17 04:07:05 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -151,7 +151,7 @@ struct enc_xform enc_xform_rijndael128 =
 /* Authentication instances */
 struct auth_hash auth_hash_hmac_md5_96 =
 {
-    CRYPTO_MD5_HMAC96, "HMAC-MD5-96",
+    CRYPTO_MD5_HMAC, "HMAC-MD5",
     16, 16, 12, sizeof(MD5_CTX),
     (void (*) (void *)) MD5Init, MD5Update_int,
     (void (*) (u_int8_t *, void *)) MD5Final
@@ -159,7 +159,7 @@ struct auth_hash auth_hash_hmac_md5_96 =
 
 struct auth_hash auth_hash_hmac_sha1_96 =
 {
-    CRYPTO_SHA1_HMAC96, "HMAC-SHA1-96",
+    CRYPTO_SHA1_HMAC, "HMAC-SHA1",
     20, 20, 12, sizeof(SHA1_CTX),
     (void (*) (void *)) SHA1Init, SHA1Update_int,
      (void (*) (u_int8_t *, void *)) SHA1Final
@@ -167,7 +167,7 @@ struct auth_hash auth_hash_hmac_sha1_96 =
 
 struct auth_hash auth_hash_hmac_ripemd_160_96 =
 {
-    CRYPTO_RIPEMD160_HMAC96, "HMAC-RIPEMD-160-96",
+    CRYPTO_RIPEMD160_HMAC, "HMAC-RIPEMD-160",
     20, 20, 12, sizeof(RMD160_CTX),
     (void (*)(void *)) RMD160Init, RMD160Update_int,
     (void (*)(u_int8_t *, void *)) RMD160Final

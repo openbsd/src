@@ -52,9 +52,9 @@
 #define CRYPTO_BLF_CBC          3
 #define CRYPTO_CAST_CBC         4
 #define CRYPTO_SKIPJACK_CBC     5
-#define CRYPTO_MD5_HMAC96       6
-#define CRYPTO_SHA1_HMAC96      7
-#define CRYPTO_RIPEMD160_HMAC96 8
+#define CRYPTO_MD5_HMAC         6
+#define CRYPTO_SHA1_HMAC        7
+#define CRYPTO_RIPEMD160_HMAC   8
 #define CRYPTO_MD5_KPDK         9
 #define CRYPTO_SHA1_KPDK        10
 #define CRYPTO_RIJNDAEL128_CBC  11 /* 128 bit blocksize */

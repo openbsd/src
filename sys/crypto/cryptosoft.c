@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptosoft.c,v 1.16 2000/11/09 14:26:24 art Exp $ */
+/* $OpenBSD: cryptosoft.c,v 1.17 2000/11/17 04:07:05 angelos Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -338,9 +338,9 @@ swcr_authcompute(struct cryptodesc *crd, struct swcr_data *sw,
 
     switch (sw->sw_alg)
     {
-	case CRYPTO_MD5_HMAC96:
-	case CRYPTO_SHA1_HMAC96:
-	case CRYPTO_RIPEMD160_HMAC96:
+	case CRYPTO_MD5_HMAC:
+	case CRYPTO_SHA1_HMAC:
+	case CRYPTO_RIPEMD160_HMAC:
 	    if (sw->sw_octx == NULL)
 	      return EINVAL;
 
@@ -481,15 +481,15 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 		get_random_bytes((*swd)->sw_iv, txf->blocksize);
 		break;
 
-	    case CRYPTO_MD5_HMAC96:
+	    case CRYPTO_MD5_HMAC:
 		axf = &auth_hash_hmac_md5_96;
 		goto authcommon;
 
-	    case CRYPTO_SHA1_HMAC96:
+	    case CRYPTO_SHA1_HMAC:
 		axf = &auth_hash_hmac_sha1_96;
 		goto authcommon;
 		
-	    case CRYPTO_RIPEMD160_HMAC96:
+	    case CRYPTO_RIPEMD160_HMAC:
 		axf = &auth_hash_hmac_ripemd_160_96;
 
 	authcommon:
@@ -618,9 +618,9 @@ swcr_freesession(u_int64_t tid)
 		  free(swd->sw_iv, M_XDATA);
 		break;
 
-	    case CRYPTO_MD5_HMAC96:
-	    case CRYPTO_SHA1_HMAC96:
-	    case CRYPTO_RIPEMD160_HMAC96:
+	    case CRYPTO_MD5_HMAC:
+	    case CRYPTO_SHA1_HMAC:
+	    case CRYPTO_RIPEMD160_HMAC:
 		axf = swd->sw_axf;
 
 		if (swd->sw_ictx)
@@ -732,9 +732,9 @@ swcr_process(struct cryptop *crp)
 		  goto done;
 		break;
 
-	    case CRYPTO_MD5_HMAC96:
-	    case CRYPTO_SHA1_HMAC96:
-	    case CRYPTO_RIPEMD160_HMAC96:
+	    case CRYPTO_MD5_HMAC:
+	    case CRYPTO_SHA1_HMAC:
+	    case CRYPTO_RIPEMD160_HMAC:
 	    case CRYPTO_MD5_KPDK:
 	    case CRYPTO_SHA1_KPDK:
 		if ((crp->crp_etype = swcr_authcompute(crd, sw, crp->crp_buf,
@@ -780,9 +780,9 @@ swcr_init(void)
         crypto_register(swcr_id, CRYPTO_BLF_CBC, NULL, NULL, NULL);
         crypto_register(swcr_id, CRYPTO_CAST_CBC, NULL, NULL, NULL);
         crypto_register(swcr_id, CRYPTO_SKIPJACK_CBC, NULL, NULL, NULL);
-        crypto_register(swcr_id, CRYPTO_MD5_HMAC96, NULL, NULL, NULL);
-        crypto_register(swcr_id, CRYPTO_SHA1_HMAC96, NULL, NULL, NULL);
-        crypto_register(swcr_id, CRYPTO_RIPEMD160_HMAC96, NULL, NULL, NULL);
+        crypto_register(swcr_id, CRYPTO_MD5_HMAC, NULL, NULL, NULL);
+        crypto_register(swcr_id, CRYPTO_SHA1_HMAC, NULL, NULL, NULL);
+        crypto_register(swcr_id, CRYPTO_RIPEMD160_HMAC, NULL, NULL, NULL);
         crypto_register(swcr_id, CRYPTO_MD5_KPDK, NULL, NULL, NULL);
         crypto_register(swcr_id, CRYPTO_SHA1_KPDK, NULL, NULL, NULL);
         crypto_register(swcr_id, CRYPTO_RIJNDAEL128_CBC, NULL, NULL, NULL);
