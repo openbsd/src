@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.16 1997/01/16 09:23:16 niklas Exp $	*/
+/*	$OpenBSD: conf.c,v 1.17 1997/05/13 13:24:46 niklas Exp $	*/
 /*	$NetBSD: conf.c,v 1.42 1997/01/07 11:35:03 mrg Exp $	*/
 
 /*-
@@ -60,9 +60,7 @@
 #include "ss.h"
 #include "wd.h"
 #include "acd.h"
-#if 0
 #include "rd.h"
-#endif
 #include "ch.h"
 
 struct bdevsw	bdevsw[] =
@@ -83,9 +81,7 @@ struct bdevsw	bdevsw[] =
 	bdev_lkm_dummy(),		/* 13 */
 	bdev_lkm_dummy(),		/* 14 */
 	bdev_disk_init(NACD,acd),	/* 15: ATAPI CD-ROM */
-#if 0
 	bdev_disk_init(NRD,rd),		/* 16: ram disk driver */
-#endif
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -103,11 +99,6 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 dev_decl(filedesc,open);
 #include "bpfilter.h"
 #include "tun.h"
-#ifdef IPFILTER
-#define NIPF 1
-#else
-#define NIPF 0
-#endif
 #include "com.h"
 #include "lpt.h"
 #include "uk.h"
@@ -149,12 +140,13 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NCOM,com),	/* 32: ISA serial port */
 	cdev_lpt_init(NLPT,lpt),	/* 33: ISA parallel printer */
 	cdev_gen_ipf(NIPF,ipl),		/* 34: IP filter log */
-	cdev_random_init(1,random), /* 35: random data source */
+	cdev_random_init(1,random),	/* 35: random data source */
 	cdev_uk_init(NUK,uk),		/* 36: unknown SCSI */
 	cdev_disk_init(NWD,wd),		/* 37: ST506/ESDI/IDE disk */
 	cdev_disk_init(NACD,acd),	/* 38: ATAPI CD-ROM */
 	cdev_tty_init(NDRCOM,drcom),	/* 39: DraCo com ports */
 	cdev_ch_init(NCH,ch),		/* 40: SCSI autochanger */
+	cdev_disk_init(NRD,rd),		/* 41: RAM disk */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -258,6 +250,7 @@ static int chrtoblktab[] = {
 	/* 38 */	15,		/* acd */
 	/* 39 */	NODEV,
 	/* 40 */	NODEV,
+	/* 41 */	16,		/* rd */
 };
 
 /*
