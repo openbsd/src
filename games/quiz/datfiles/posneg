@@ -8,7 +8,7 @@ hot:cold
 out:in
 heavy|dark:light
 daytime:night[time| time]
-stop|come:go
+stop|come:go|start
 top:bottom
 floor:ceiling
 near:far
@@ -26,7 +26,7 @@ dawn:dusk
 fall down|go to bed:[get|stand|rise] up
 asleep:awake
 up:down
-open[|ed|]:close[d|]
+open[ed|]:close[d|]
 smile:frown|cry
 happy|glad:sad
 hard:soft|easy
@@ -38,13 +38,13 @@ good:bad
 always|sometimes|now:never|sometimes
 beautiful|pretty:ugly
 rough:smooth
-hairy:bald||smooth
+hairy:bald|smooth
 above:below
 yin:yang
 sweet:sour
 if:unless
 from|fro:to
-with[|in|]:without|against
+with[in|]:without|against
 after:before
 together:apart
 plus:minus
