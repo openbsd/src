@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.38 2003/04/17 03:43:18 drahn Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.39 2003/08/08 07:37:28 deraadt Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -85,7 +85,7 @@ static void	usage(void);
 static int	record_block(u_int8_t *, daddr_t, u_int, struct disklabel *);
 
 static void
-usage()
+usage(void)
 {
 	fprintf(stderr, "usage: %s [-n] [-v] [-s sec-per-track] [-h track-per-cyl] "
 	    "boot biosboot device\n", __progname);
@@ -93,9 +93,7 @@ usage()
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int	c;
 	int	devfd;
@@ -251,9 +249,7 @@ main(argc, argv)
 }
 
 char *
-loadprotoblocks(fname, size)
-	char *fname;
-	long *size;
+loadprotoblocks(char *fname, long *size)
 {
 	int	fd;
 	size_t	tdsize;		/* text+data size */
@@ -294,6 +290,7 @@ loadprotoblocks(fname, size)
 		eh.e_ident[EI_MAG0], eh.e_ident[EI_MAG1],
 		eh.e_ident[EI_MAG2], eh.e_ident[EI_MAG3]);
 	}
+
 	/*
 	 * We have to include the exec header in the beginning of
 	 * the buffer, and leave extra space at the end in case
@@ -360,12 +357,7 @@ loadprotoblocks(fname, size)
 }
 
 static void
-devread(fd, buf, blk, size, msg)
-	int	fd;
-	void	*buf;
-	daddr_t	blk;
-	size_t	size;
-	char	*msg;
+devread(int fd, void *buf, daddr_t blk, size_t size, char *msg)
 {
 	if (lseek(fd, dbtob((off_t)blk), SEEK_SET) != dbtob((off_t)blk))
 		err(1, "%s: devread: lseek", msg);
@@ -377,10 +369,7 @@ devread(fd, buf, blk, size, msg)
 static char sblock[SBSIZE];
 
 int
-loadblocknums(boot, devfd, dl)
-	char	*boot;
-	int	devfd;
-	struct disklabel *dl;
+loadblocknums(char *boot, int devfd, struct disklabel *dl)
 {
 	int		i, fd;
 	struct stat	statbuf, sb;
@@ -533,11 +522,7 @@ loadblocknums(boot, devfd, dl)
 }
 
 static int
-record_block(bt, blk, bs, dl)
-	u_int8_t *bt;
-	daddr_t blk;
-	u_int bs;
-	struct disklabel *dl;
+record_block(u_int8_t *bt, daddr_t blk, u_int bs, struct disklabel *dl)
 {
 	static u_int ss = 0, l = 0, i = 0; /* start and len of group */
 	int ret = 0;
