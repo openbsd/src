@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.h,v 1.25 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $OpenBSD: exchange.h,v 1.26 2004/05/03 21:23:51 hshoexer Exp $	 */
 /* $EOM: exchange.h,v 1.28 2000/09/28 12:54:28 niklas Exp $	 */
 
 /*
@@ -71,7 +71,7 @@ struct exchange {
 	 * if the finalization hook is called due to the exchange not running
 	 * to its end normally.
          */
-	void            (*finalize) (struct exchange *, void *, int);
+	void            (*finalize)(struct exchange *, void *, int);
 	void           *finalize_arg;
 
 	/* When several SA's are being negotiated we keep them here.  */
@@ -111,8 +111,8 @@ struct exchange {
 	struct doi     *doi;
 
 	/*
-	 * A "program counter" into the script that validate message contents for
-	 * this exchange.
+	 * A "program counter" into the script that validate message contents
+	 * for this exchange.
          */
 	int16_t        *exch_pc;
 
@@ -123,8 +123,8 @@ struct exchange {
 	struct message *last_sent;
 
 	/*
-	 * If some message is queued up for sending, we want to be able to remove
-	 * it from the queue, when the exchange is deleted.
+	 * If some message is queued up for sending, we want to be able to
+	 * remove it from the queue, when the exchange is deleted.
          */
 	struct message *in_transit;
 
@@ -205,7 +205,7 @@ struct exchange {
 	/* XXX This is no longer necessary, it is covered by policy.  */
 
 	/* Acceptable authorities for cert requests.  */
-	                TAILQ_HEAD(aca_head, certreq_aca) aca_list;
+	TAILQ_HEAD(aca_head, certreq_aca) aca_list;
 
 	/* DOI-specific opaque data.  */
 	void           *data;
@@ -222,29 +222,25 @@ extern int      exchange_add_certs(struct message *);
 extern void     exchange_finalize(struct message *);
 extern void     exchange_free(struct exchange *);
 extern void     exchange_free_aca_list(struct exchange *);
-extern void
-exchange_establish(char *name,
-		   void (*) (struct exchange *, void *, int),
-		   void *);
-	extern void     exchange_establish_p1(struct transport *, u_int8_t, u_int32_t,
-					                      char *, void *,
-		                  void (*) (struct exchange *, void *, int),
-					                      void *);
-	extern void     exchange_establish_p2(struct sa *, u_int8_t, char *, void *,
-		                  void (*) (struct exchange *, void *, int),
-					                      void *);
-	extern int      exchange_gen_nonce(struct message *, size_t);
-	extern void     exchange_init(void);
-	extern struct exchange *exchange_lookup(u_int8_t *, int);
-	extern struct exchange *exchange_lookup_by_name(char *, int);
-	extern struct exchange *exchange_lookup_from_icookie(u_int8_t *);
-	extern void     exchange_report(void);
-	extern void     exchange_run(struct message *);
-	extern int      exchange_save_nonce(struct message *);
-	extern int      exchange_save_certreq(struct message *);
-	extern int16_t *exchange_script(struct exchange *);
-	extern struct exchange *exchange_setup_p1(struct message *, u_int32_t);
-	extern struct exchange *exchange_setup_p2(struct message *, u_int8_t);
-	extern void     exchange_upgrade_p1(struct message *);
+extern void     exchange_establish(char *name, void (*)(struct exchange *,
+		    void *, int), void *);
+extern void	exchange_establish_p1(struct transport *, u_int8_t, u_int32_t,
+		    char *, void *, void (*)(struct exchange *, void *, int),
+		    void *);
+extern void     exchange_establish_p2(struct sa *, u_int8_t, char *, void *,
+		    void (*)(struct exchange *, void *, int), void *);
+extern int      exchange_gen_nonce(struct message *, size_t);
+extern void     exchange_init(void);
+extern struct exchange *exchange_lookup(u_int8_t *, int);
+extern struct exchange *exchange_lookup_by_name(char *, int);
+extern struct exchange *exchange_lookup_from_icookie(u_int8_t *);
+extern void     exchange_report(void);
+extern void     exchange_run(struct message *);
+extern int      exchange_save_nonce(struct message *);
+extern int      exchange_save_certreq(struct message *);
+extern int16_t *exchange_script(struct exchange *);
+extern struct exchange *exchange_setup_p1(struct message *, u_int32_t);
+extern struct exchange *exchange_setup_p2(struct message *, u_int8_t);
+extern void     exchange_upgrade_p1(struct message *);
 
 #endif				/* _EXCHANGE_H_ */
