@@ -2,10 +2,10 @@
 	@if [ ${.CURDIR} != ${.OBJDIR} ]; then ${LNDIR} -s -e obj -e obj.${MACHINE_ARCH} -e Makefile.bsd-wrapper ${.CURDIR}; fi
 
 MAN=pkg_add.1 pkg_info.1 pkg_create.1 pkg_delete.1 pkg.1
-depend:
+depend Makefile:
 	perl ${.CURDIR}/Makefile.PL
 
-all:
+all: Makefile
 	cd ${.OBJDIR} && exec ${MAKE}
 
 install: maninstall
