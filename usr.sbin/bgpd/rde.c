@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.105 2004/04/27 04:38:12 deraadt Exp $ */
+/*	$OpenBSD: rde.c,v 1.106 2004/04/28 02:57:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -63,6 +63,7 @@ void		 peer_remove(struct rde_peer *);
 struct rde_peer	*peer_get(u_int32_t);
 void		 peer_up(u_int32_t, struct session_up *);
 void		 peer_down(u_int32_t);
+void		 peer_dump(u_int32_t, u_int16_t, u_int8_t);
 
 void		 network_init(struct network_head *);
 void		 network_add(struct network_config *);
@@ -213,6 +214,7 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 {
 	struct imsg		 imsg;
 	struct session_up	 sup;
+	struct rrefresh		 r;
 	pid_t			 pid;
 	int			 n;
 
@@ -239,6 +241,14 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 			break;
 		case IMSG_SESSION_DOWN:
 			peer_down(imsg.hdr.peerid);
+			break;
+		case IMSG_REFRESH:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(r)) {
+				log_warnx("rde_dispatch: wrong imsg len");
+				break;
+			}
+			memcpy(&r, imsg.data, sizeof(r));
+			peer_dump(imsg.hdr.peerid, r.afi, r.safi);
 			break;
 		case IMSG_CTL_SHOW_RIB:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE) {
@@ -1015,7 +1025,7 @@ peer_up(u_int32_t id, struct session_up *sup)
 		 */
 		return;
 
-	pt_dump(up_dump_upcall, peer);
+	peer_dump(id, AFI_ALL, SAFI_ALL);
 }
 
 void
@@ -1041,6 +1051,19 @@ peer_down(u_int32_t id)
 	LIST_INIT(&peer->path_h);
 
 	peer_remove(peer);
+}
+
+void
+peer_dump(u_int32_t id, u_int16_t afi, u_int8_t safi)
+{
+	if (afi == AFI_ALL | afi == AFI_IPv4)
+		if (safi == SAFI_ALL || safi == SAFI_UNICAST ||
+		    safi == SAFI_BOTH) {
+			pt_dump(up_dump_upcall, peer);
+			return;
+		}
+
+	log_peer_warnx(&peer->conf, "unsupported AFI, SAFI combination");
 }
 
 /*
