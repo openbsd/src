@@ -54,7 +54,8 @@ int skip_evaluation;
 enum attrs {A_PACKED, A_NOCOMMON, A_COMMON, A_NORETURN, A_CONST, A_T_UNION,
 	    A_NO_CHECK_MEMORY_USAGE, A_NO_INSTRUMENT_FUNCTION,
 	    A_CONSTRUCTOR, A_DESTRUCTOR, A_MODE, A_SECTION, A_ALIGNED,
-	    A_UNUSED, A_FORMAT, A_FORMAT_ARG, A_WEAK, A_ALIAS, A_NONNULL};
+	    A_UNUSED, A_FORMAT, A_FORMAT_ARG, A_WEAK, A_ALIAS, A_NONNULL,
+	    A_SENTINEL };
 
 enum format_type { printf_format_type, scanf_format_type,
 		   strftime_format_type };
@@ -389,6 +390,7 @@ init_attributes ()
   add_attribute (A_FORMAT, "format", 3, 3, 1);
   add_attribute (A_FORMAT_ARG, "format_arg", 1, 1, 1);
   add_attribute (A_NONNULL, "nonnull", 0, -1, 1);
+  add_attribute (A_SENTINEL, "sentinel", 0, 0, 1);
   add_attribute (A_WEAK, "weak", 0, 0, 1);
   add_attribute (A_ALIAS, "alias", 1, 1, 1);
   add_attribute (A_NO_INSTRUMENT_FUNCTION, "no_instrument_function", 0, 0, 1);
@@ -433,6 +435,7 @@ static function_attribute_info *new_function_format
   PROTO((enum format_type, int, int));
 static function_attribute_info *new_international_format PROTO((int));
 static function_attribute_info *new_nonnull_info PROTO((int));
+static function_attribute_info *new_sentinel_info PROTO((int));
 static function_attributes_info *insert_function_attribute
   PROTO((function_attributes_info *, tree, tree, function_attribute_info *));
 
@@ -989,6 +992,42 @@ decl_attributes (node, attributes, prefix_attributes)
 	    }
 	  break;
 
+	case A_SENTINEL:
+	  if (TREE_CODE (decl) != FUNCTION_DECL)
+	    {
+	      error_with_decl (decl,
+		       "sentinel attribute specified for non-function `%s'");
+	      continue;
+	    }
+      
+	  if (args)	  
+	    {
+	      error_with_decl (decl,
+		       "sentinel attribute does not take arguments");
+	      continue;
+	    }
+      	  /* No argument number: assume a full prototype, find ellipsis
+	     location.  */
+	  if (!args)
+	    {
+	      tree argument;
+	      int arg_num;
+
+	      arg_num = 0;
+	      argument = TYPE_ARG_TYPES (type);
+	      if (!argument)
+	        {
+		  error_with_decl (decl, 
+		"sentinel attribute without arguments on a non-prototype `%s'");
+		  continue;
+		}
+	      while (argument)
+	        arg_num++, argument = TREE_CHAIN (argument);
+	      list = insert_function_attribute (list, DECL_NAME (decl),
+	      	DECL_ASSEMBLER_NAME (decl), new_sentinel_info (arg_num));
+	    }
+	  break;
+
 	case A_WEAK:
 	  declare_weak (decl);
 	  break;
@@ -1281,11 +1320,19 @@ typedef struct nonnull_info
   int argument_num;		/* number of non-null argument */
 } nonnull_info;
 
+typedef struct sentinel_info
+{
+  struct function_attribute_info *next;
+  enum attrs type;
+  int argument_num;		/* number of non-null argument */
+} sentinel_info;
+
 static function_attribute_info *find_function_attribute
   PROTO((tree, tree, enum attrs));
 
 static void check_format_info		PROTO((function_format_info *, tree));
 static void check_nonnull_info 		PROTO((nonnull_info *, tree));
+static void check_sentinel_info 	PROTO((sentinel_info *, tree));
 
 /* Helper function for setting up initial attribute for printf-like
    functions, since the format argument is also non-null checked for
@@ -1399,6 +1446,23 @@ new_nonnull_info (argument_num)
   return (function_attribute_info *) (info);
 }
 
+/* Create information record for functions with sentinel parameters
+   ARGUMENT_NUM is the number of the argument to check.  */
+
+static function_attribute_info *
+new_sentinel_info (argument_num)
+      int argument_num;
+{
+  sentinel_info *info;
+
+  info = (sentinel_info *)
+	  xmalloc (sizeof (nonnull_info));
+  info->next = NULL;
+  info->type = A_SENTINEL;
+  info->argument_num = argument_num;
+  return (function_attribute_info *) (info);
+}
+
 /* Record attribute information for the names of function.  Used as:
  * newlist = insert_function_attribute (old, name, asm, new_xxx (...) );
  * In reality, newlist == old if old != NULL, but clients don't need to
@@ -1489,6 +1553,9 @@ check_function_format (name, assembler_name, params)
 		    break;
 		  case A_NONNULL:
 		    check_nonnull_info ((nonnull_info *)ck, params);
+		    break;
+		  case A_SENTINEL:
+		    check_sentinel_info ((sentinel_info *)ck, params);
 		    break;
 		}
 	    }
@@ -1604,6 +1671,44 @@ check_nonnull_info (info, params)
       warning ("null argument #%d", arg_num);
       return;
     }
+}
+
+/* Check the argument list for sentinel values.
+   INFO points to the sentinel_info structure.
+   PARAMS is the list of argument values.  */
+
+static void
+check_sentinel_info (info, params)
+     sentinel_info *info;
+     tree params;
+{
+  tree arg;
+  int arg_num;
+
+  /* Skip to first checked argument.  If the argument isn't available, there's
+     no work for us to do; prototype checking will catch the problem.  */
+  for (arg_num = 1; ; ++arg_num)
+    {
+      if (params == 0)
+	return;
+      if (arg_num == info->argument_num)
+	break;
+      params = TREE_CHAIN (params);
+    }
+
+  while (params != 0)
+    {
+      arg = TREE_VALUE (params);
+      if (arg == 0)
+	break;
+      while (TREE_CODE (arg) == NOP_EXPR)
+	arg = TREE_OPERAND (arg, 0); /* strip coercion */
+      if (POINTER_TYPE_P (TREE_TYPE (arg)) && integer_zerop (arg))
+      	return;
+      params = TREE_CHAIN (params);
+    }
+
+  warning("couldn't find sentinel value starting at %d", arg_num);
 }
 
 /* Check the argument list of a call to printf, scanf, etc.
