@@ -3,11 +3,11 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.alpha/MAKEDEV.md,v 1.5 2002/02/06 01:35:34 art Exp 
+#	OpenBSD: etc.alpha/MAKEDEV.md,v 1.6 2002/02/08 19:42:34 todd Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.22 2002/01/23 08:09:30 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.5 2002/01/23 06:02:19 todd Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.67 2002/02/06 01:36:53 art Exp $
+#	$OpenBSD: MAKEDEV,v 1.68 2002/02/08 19:52:37 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -191,6 +191,7 @@ M() {
 	return 0
 }
 R() {
+[ "$DEBUG" ] && set -x
 for i in "$@"
 do
 U=`unt $i`
@@ -198,7 +199,7 @@ U=`unt $i`
 
 case $i in
 floppy)
-	R std wt0 fd0 wd0 wd1 sd0 sd1 tty00 tty01
+	R std fd0 wd0 wd1 sd0 sd1
 	R st0 cd0 ttyC0 random rd0
 	;;
 
@@ -492,9 +493,9 @@ all)
 	R ttyc6 ttyc7 ttyB0 ttyB1 ttyB2 ttyB3 ttyB4 ttyB5 pf altq tun0
 	R tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8
 	R bpf9 fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C
-	R fd0D fd0E fd0F fd0G fd0H rd0 raid0 raid1 raid2 raid3 wd0 wd1
-	R wd2 wd3 ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 std cd0 cd1
-	R ch0 st0 st1 pty0 pty1 fd sd0 sd1 sd2 sd3 sd4
+	R fd0D fd0E fd0F fd0G fd0H wd0 wd1 wd2 wd3 rd0 raid0 raid1
+	R raid2 raid3 ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 std cd0
+	R cd1 ch0 st0 st1 pty0 pty1 fd sd0 sd1 sd2 sd3 sd4
 	;;
 
 wd*|sd*|raid*|ccd*)
