@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.106 1998/12/17 18:36:59 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.107 1998/12/25 19:04:19 tholo Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -492,6 +492,7 @@
 #define	PCI_VENDOR_ARIEL	0x1220		/* Ariel */
 #define	PCI_VENDOR_AZTECH	0x122d		/* Aztech */
 #define	PCI_VENDOR_3DO	0x1239		/* The 3D0 Company */
+#define	PCI_VENDOR_CCUBE	0x123f		/* C-Cube Microsystems */
 #define	PCI_VENDOR_STALLION	0x124d		/* Stallion Technologies */
 #define	PCI_VENDOR_LINEARSYS	0x1254		/* Linear Systems */
 #define	PCI_VENDOR_AURORA	0x125c		/* Aurora Technologies */
@@ -717,6 +718,7 @@
 #define	PCI_PRODUCT_CIRRUS_CL_GD5464	0x00d4		/* CL-GD6464 */
 #define	PCI_PRODUCT_CIRRUS_CL_PD6729	0x1100		/* CL-PD6729 */
 #define	PCI_PRODUCT_CIRRUS_CL_PD6832	0x1110		/* CL-PD6832 */
+#define	PCI_PRODUCT_CIRRUS_CL_PD6833	0x1111		/* CL-PD6833 */
 #define	PCI_PRODUCT_CIRRUS_CL_GD7542	0x1200		/* CL-GD7542 */
 #define	PCI_PRODUCT_CIRRUS_CL_GD7543	0x1202		/* CL-GD7543 */
 #define	PCI_PRODUCT_CIRRUS_CL_GD7541	0x1204		/* CL-GD7541 */

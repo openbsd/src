@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.106 1998/12/17 18:36:59 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.107 1998/12/25 19:04:19 tholo Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -835,6 +835,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Cirrus Logic",
 	    "CL-PD6832",
+	},
+	{
+	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_PD6833,
+	    0,
+	    "Cirrus Logic",
+	    "CL-PD6833",
 	},
 	{
 	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_GD7542,
@@ -5640,6 +5646,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_3DO, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "The 3D0 Company",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_CCUBE, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "C-Cube Microsystems",
 	    NULL,
 	},
 	{
