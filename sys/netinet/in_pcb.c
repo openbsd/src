@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.5 1996/07/29 02:34:29 downsj Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.6 1996/07/29 04:47:21 downsj Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -181,8 +181,9 @@ in_pcbbind(v, nam)
 		inp->inp_laddr = sin->sin_addr;
 	}
 	if (lport == 0) {
-		ushort first, last;
+		u_int16_t first, last, old;
 		int count;
+		int loopcount = 0;
 
 		if (inp->inp_flags & INP_HIGHPORT) {
 			first = ipport_hifirstauto;	/* sysctl */
@@ -204,15 +205,28 @@ in_pcbbind(v, nam)
 		 * We split the two cases (up and down) so that the direction
 		 * is not being tested on each round of the loop.
 		 */
+
+portloop:
 		if (first > last) {
 			/*
 			 * counting down
 			 */
+			if (loopcount == 0) {	/* only do this once. */
+				old = last;
+				last += (random() % (first - last));
+			}
 			count = first - last;
 
 			do {
-				if (count-- <= 0)	/* completely used? */
+				if (count-- <= 0) {	/* completely used? */
+					if (loopcount == 0) {
+						last = old;
+						loopcount++;
+
+						goto portloop;
+					}
 					return (EADDRNOTAVAIL);
+				}
 				--*lastport;
 				if (*lastport > first || *lastport < last)
 					*lastport = first;
@@ -223,11 +237,23 @@ in_pcbbind(v, nam)
 			/*
 			 * counting up
 			 */
+			if (loopcount == 0) {	/* only do this once. */
+				old = first;
+
+				first += (random() % (last - first));
+			}
 			count = last - first;
 
 			do {
-				if (count-- <= 0)	/* completely used? */
+				if (count-- <= 0) {	/* completely used? */
+					if (loopcount == 0) {
+						first = old;
+						loopcount++;
+
+						goto portloop;
+					}
 					return (EADDRNOTAVAIL);
+				}
 				++*lastport;
 				if (*lastport < first || *lastport > last)
 					*lastport = first;
