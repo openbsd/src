@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.39 2001/12/24 09:21:37 nordin Exp $
+#	$OpenBSD: services,v 1.40 2002/02/26 16:09:12 lebel Exp $
 #
 # Network services, Internet style
 #
@@ -247,6 +247,7 @@ datametrics	1645/udp
 sa-msg-port	1646/udp
 radius		1812/udp		# radius authentication
 radacct		1813/udp		# radius accounting
+cvspserver	2401/tcp		# cvs pserver
 webster		2627/tcp		# Network dictionary
 webster		2627/udp
 mysql		3306/tcp		# MySQL
