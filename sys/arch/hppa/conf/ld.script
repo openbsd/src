@@ -1,4 +1,4 @@
-/* 	$OpenBSD: ld.script,v 1.5 1999/06/22 17:46:37 mickey Exp $	*/
+/* 	$OpenBSD: ld.script,v 1.6 1999/08/14 04:56:28 todd Exp $	*/
 
 OUTPUT_FORMAT("elf32-hppa")
 OUTPUT_ARCH(hppa)
@@ -7,7 +7,7 @@ SECTIONS
 {
 	/* Read-only sections, merged into text segment: */
 	. = + SIZEOF_HEADERS;
-	.text BLOCK(4096) :
+	.text :
 	{
 		kernel_text = . ;
 		*(.text)
@@ -20,10 +20,11 @@ SECTIONS
 		__unwind_start = .;
 		*(.PARISC.unwind)
 		__unwind_end = .;
+		. = ALIGN(4096);
 	} = 0 /* 0x08000240 nop filled, does not work */
 	etext = ABSOLUTE(.);
 
-	.data BLOCK(4096) :
+	.data  :
 	{
 		$global$ = . ;
 		kernel_data = . ;
@@ -38,7 +39,7 @@ SECTIONS
 
 	__bss_start = .;
 	.sbss	: { *(.sbss) *(.scommon) }
-	.bss BLOCK(4096) :
+	.bss :
 	{
 		*(.dynbss) *(.bss)
 		*(COMMON) *($COMMON$)
@@ -46,3 +47,4 @@ SECTIONS
 	}
 	end = ABSOLUTE(.);
 }
+
