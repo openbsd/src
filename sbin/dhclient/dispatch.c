@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.30 2004/09/15 18:15:18 henning Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.31 2004/09/21 04:07:03 david Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -175,7 +175,7 @@ another:
 			 * Figure timeout in milliseconds, and check for
 			 * potential overflow, so we can cram into an
 			 * int for poll, while not polling with a
-			 * negative timeout and blocking indefinetely.
+			 * negative timeout and blocking indefinitely.
 			 */
 			howlong = timeouts->when - cur_time;
 			if (howlong > INT_MAX / 1000)

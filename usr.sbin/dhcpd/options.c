@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.5 2004/09/16 18:35:43 deraadt Exp $	*/
+/*	$OpenBSD: options.c,v 1.6 2004/09/21 04:07:04 david Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -128,7 +128,7 @@ parse_option_buffer(struct packet *packet,
 
 		/*
 		 * If the length is outrageous, silently skip the rest,
-		 * and mark the packet bad. Unfortuntely some crappy
+		 * and mark the packet bad. Unfortunately some crappy
 		 * dhcp servers always seem to give us garbage on the
 		 * end of a packet. so rather than keep refusing, give
 		 * up and try to take one after seeing a few without

@@ -1,4 +1,4 @@
-/*	$OpenBSD: memory.c,v 1.9 2004/09/16 18:35:43 deraadt Exp $ */
+/*	$OpenBSD: memory.c,v 1.10 2004/09/21 04:07:04 david Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
@@ -619,7 +619,7 @@ release_lease(struct lease *lease)
 
 /*
  * Abandon the specified lease for the specified time. sets it's
- * particulars to zero, the end time apropriately and re-hash it as
+ * particulars to zero, the end time appropriately and re-hash it as
  * appropriate. abandons permanently if abtime is 0
  */
 void
