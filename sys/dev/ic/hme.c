@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.11 2001/10/04 20:36:16 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.12 2001/10/09 15:07:20 jason Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -183,6 +183,11 @@ hme_config(sc)
 			goto fail;
 		}
 	}
+	if (bus_dmamap_create(sc->sc_dmatag, MCLBYTES, 1, MCLBYTES, 0,
+	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &sc->sc_rxmap_spare) != 0) {
+		sc->sc_rxmap_spare = NULL;
+		goto fail;
+	}
 
 	/*
 	 * Allocate DMA capable memory
@@ -305,6 +310,8 @@ hme_config(sc)
 	return;
 
 fail:
+	if (sc->sc_rxmap_spare != NULL)
+		bus_dmamap_destroy(sc->sc_dmatag, sc->sc_rxmap_spare);
 	for (i = 0; i < HME_TX_RING_SIZE; i++)
 		if (sc->sc_txd[i].sd_map != NULL)
 			bus_dmamap_destroy(sc->sc_dmatag, sc->sc_txd[i].sd_map);
@@ -1313,6 +1320,7 @@ hme_newbuf(sc, d, freeit)
 	int freeit;
 {
 	struct mbuf *m;
+	bus_dmamap_t map;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
@@ -1332,28 +1340,35 @@ hme_newbuf(sc, d, freeit)
 		d->sd_loaded = 0;
 	}
 
-	if (bus_dmamap_load(sc->sc_dmatag, d->sd_map, mtod(m, caddr_t),
-	    MCLBYTES - HME_RX_OFFSET, NULL, BUS_DMA_NOWAIT) != 0) {
+	if (bus_dmamap_load(sc->sc_dmatag, sc->sc_rxmap_spare,
+	    mtod(m, caddr_t), MCLBYTES - HME_RX_OFFSET, NULL,
+	    BUS_DMA_NOWAIT) != 0) {
 		if (d->sd_mbuf == NULL)
 			return (ENOBUFS);
-
-		/* XXX Reload old mbuf, and return. */
-		bus_dmamap_load(sc->sc_dmatag, d->sd_map,
-		    mtod(d->sd_mbuf, caddr_t), MCLBYTES - HME_RX_OFFSET,
-		    NULL, BUS_DMA_NOWAIT);
-		d->sd_loaded = 1;
-		bus_dmamap_sync(sc->sc_dmatag, d->sd_map,
-		    0, d->sd_map->dm_mapsize, BUS_DMASYNC_PREREAD);
 		m_freem(m);
 		return (ENOBUFS);
 	}
+
+	if (d->sd_loaded) {
+		bus_dmamap_sync(sc->sc_dmatag, d->sd_map, 0,
+		    d->sd_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
+		bus_dmamap_unload(sc->sc_dmatag, d->sd_map);
+		d->sd_loaded = 0;
+	}
+	if ((d->sd_mbuf != NULL) && freeit) {
+		m_freem(d->sd_mbuf);
+		d->sd_mbuf = NULL;
+	}
+
+	map = d->sd_map;
+	d->sd_map = sc->sc_rxmap_spare;
+	sc->sc_rxmap_spare = map;
+
 	d->sd_loaded = 1;
 
 	bus_dmamap_sync(sc->sc_dmatag, d->sd_map, 0, d->sd_map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD);
 
-	if ((d->sd_mbuf != NULL) && freeit)
-		m_freem(d->sd_mbuf);
 	m->m_data += HME_RX_OFFSET;
 	d->sd_mbuf = m;
 	return (0);

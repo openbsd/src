@@ -1,4 +1,4 @@
-/*	$OpenBSD: hmevar.h,v 1.4 2001/10/04 20:36:16 jason Exp $	*/
+/*	$OpenBSD: hmevar.h,v 1.5 2001/10/09 15:07:20 jason Exp $	*/
 /*	$NetBSD: hmevar.h,v 1.6 2000/09/28 10:56:57 tsutsui Exp $	*/
 
 /*-
@@ -39,8 +39,8 @@
 
 #include <sys/timeout.h>
 
-#define	HME_TX_RING_SIZE	128
-#define	HME_RX_RING_SIZE	128
+#define	HME_TX_RING_SIZE	64
+#define	HME_RX_RING_SIZE	64
 #define	HME_RX_RING_MAX		256
 #define	HME_TX_RING_MAX		256
 #define	HME_RX_PKTSIZE		1600
@@ -94,6 +94,7 @@ struct hme_softc {
 	void	(*sc_hwinit) __P((struct hme_softc *));
 
 	struct hme_sxd sc_txd[HME_TX_RING_MAX], sc_rxd[HME_RX_RING_MAX];
+	bus_dmamap_t	sc_rxmap_spare;
 	int	sc_tx_cnt, sc_tx_prod, sc_tx_cons;
 	int	sc_last_rd;
 };
