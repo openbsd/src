@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.134 2002/05/15 21:33:22 jason Exp $
+#	$OpenBSD: files.pci,v 1.135 2002/06/02 18:15:03 jason Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -301,7 +301,7 @@ device	lofn: crypto
 attach	lofn at pci
 file	dev/pci/lofn.c			lofn
 
-# Hi/fn 7751
+# Hi/fn 7751/7811/7951
 device	hifn: crypto
 attach	hifn at pci
 file	dev/pci/hifn7751.c		hifn
@@ -315,6 +315,11 @@ file	dev/pci/nofn.c			nofn
 device	ubsec: crypto
 attach	ubsec at pci
 file	dev/pci/ubsec.c			ubsec
+
+# Netoctave NSP2000
+device	noct: crypto
+attach	noct at pci
+file	dev/pci/noct.c			noct
 
 # Pijnenburg PCC-ISES
 device	ises: crypto
