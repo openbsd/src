@@ -1,4 +1,4 @@
-/* $OpenBSD: util.c,v 1.45 2004/06/23 03:01:53 hshoexer Exp $	 */
+/* $OpenBSD: util.c,v 1.46 2004/06/25 19:42:38 mcbride Exp $	 */
 /* $EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	 */
 
 /*
@@ -242,7 +242,6 @@ hex2raw(char *s, u_int8_t *buf, size_t sz)
 int
 text2sockaddr(char *address, char *port, struct sockaddr **sa)
 {
-#ifdef HAVE_GETNAMEINFO
 	struct addrinfo *ai, hints;
 
 	memset(&hints, 0, sizeof hints);
@@ -264,44 +263,6 @@ text2sockaddr(char *address, char *port, struct sockaddr **sa)
 	memcpy(*sa, ai->ai_addr, sysdep_sa_len(ai->ai_addr));
 	freeaddrinfo(ai);
 	return 0;
-#else
-	int	af = strchr(address, ':') != NULL ? AF_INET6 : AF_INET;
-	size_t	sz = af == AF_INET ? sizeof(struct sockaddr_in) :
-	    sizeof(struct sockaddr_in6);
-	long	lport;
-	struct servent *sp;
-	char	*ep;
-
-	*sa = calloc(1, sz);
-	if (!*sa)
-		return -1;
-
-#ifndef USE_OLD_SOCKADDR
-	(*sa)->sa_len = sz;
-#endif
-	(*sa)->sa_family = af;
-	if (inet_pton(af, address, sockaddr_addrdata(*sa)) != 1) {
-		free(*sa);
-		return -1;
-	}
-	if (!port)
-		return 0;
-	sp = getservbyname(port, "udp");
-	if (!sp) {
-		lport = strtol(port, &ep, 10);
-		if (ep == port || lport < 0 || lport > (long)USHRT_MAX) {
-			free(*sa);
-			return -1;
-		}
-		lport = htons(lport);
-	} else
-		lport = sp->s_port;
-	if ((*sa)->sa_family == AF_INET)
-		((struct sockaddr_in *)*sa)->sin_port = lport;
-	else
-		((struct sockaddr_in6 *)*sa)->sin6_port = lport;
-	return 0;
-#endif
 }
 
 /*
@@ -315,30 +276,9 @@ sockaddr2text(struct sockaddr *sa, char **address, int zflag)
 	int	addrlen, i, j;
 	long	val;
 
-#ifdef HAVE_GETNAMEINFO
 	if (getnameinfo(sa, sysdep_sa_len(sa), buf, sizeof buf, 0, 0,
 			allow_name_lookups ? 0 : NI_NUMERICHOST))
 		return -1;
-#else
-	switch (sa->sa_family) {
-	case AF_INET:
-	case AF_INET6:
-		if (inet_ntop(sa->sa_family, sa->sa_data, buf, NI_MAXHOST - 1)
-		    == NULL) {
-			log_error("sockaddr2text: inet_ntop (%d, %p, %p, %d) "
-			    "failed", sa->sa_family, sa->sa_data, buf,
-			    NI_MAXHOST - 1);
-			return -1;
-		}
-		buf[NI_MAXHOST - 1] = '\0';
-		break;
-
-	default:
-		log_print("sockaddr2text: unsupported protocol family %d\n",
-		    sa->sa_family);
-		return -1;
-	}
-#endif
 
 	if (zflag == 0) {
 		*address = strdup(buf);
