@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdate.8,v 1.16 2002/05/16 20:10:15 stevesk Exp $
+.\"	$OpenBSD: rdate.8,v 1.17 2002/07/27 09:29:50 jakob Exp $
 .\"	$NetBSD: rdate.8,v 1.4 1996/04/08 20:55:17 jtc Exp $
 .\"
 .\" Copyright (c) 1994 Christos Zoulas
@@ -37,7 +37,7 @@
 .Nd set the system's date from a remote host
 .Sh SYNOPSIS
 .Nm rdate
-.Op Fl npsa
+.Op Fl npsav
 .Ar host
 .Sh DESCRIPTION
 .Nm
@@ -64,6 +64,8 @@ Use the
 .Xr adjtime 2
 call to gradually skew the local time to the
 remote time rather than just hopping.
+.It Fl v
+Verbose output.
 .Sh FILES
 .Bl -tag -width /var/log/wtmp -compact
 .It Pa /var/log/wtmp

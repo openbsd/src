@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdate.c,v 1.15 2002/05/16 11:00:53 deraadt Exp $	*/
+/*	$OpenBSD: rdate.c,v 1.16 2002/07/27 09:29:50 jakob Exp $	*/
 /*	$NetBSD: rdate.c,v 1.4 1996/03/16 12:37:45 pk Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 #if 0
 from: static char rcsid[] = "$NetBSD: rdate.c,v 1.3 1996/02/22 06:59:18 thorpej Exp $";
 #else
-static const char rcsid[] = "$OpenBSD: rdate.c,v 1.15 2002/05/16 11:00:53 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: rdate.c,v 1.16 2002/07/27 09:29:50 jakob Exp $";
 #endif
 #endif				/* lint */
 
@@ -70,12 +70,13 @@ usage()
 	(void) fprintf(stderr, "  -p: just print, don't set\n");
 	(void) fprintf(stderr, "  -s: just set, don't print\n");
 	(void) fprintf(stderr, "  -a: use adjtime instead of instant change\n");
+	(void) fprintf(stderr, "  -v: verbose output\n");
 }
 
 int
 main(int argc, char **argv)
 {
-	int             pr = 0, silent = 0, ntp = 0;
+	int             pr = 0, silent = 0, ntp = 0, verbose = 0;
 	int		slidetime = 0;
 	char           *hname;
 	extern int      optind;
@@ -83,7 +84,7 @@ main(int argc, char **argv)
 
 	struct timeval new, adjust;
 
-	while ((c = getopt(argc, argv, "psan")) != -1)
+	while ((c = getopt(argc, argv, "psanv")) != -1)
 		switch (c) {
 		case 'p':
 			pr++;
@@ -99,6 +100,10 @@ main(int argc, char **argv)
 
 		case 'n':
 			ntp++;
+			break;
+
+		case 'v':
+			verbose++;
 			break;
 
 		default:
@@ -141,7 +146,7 @@ main(int argc, char **argv)
 
 		adjsec  = adjust.tv_sec + adjust.tv_usec / 1.0e6;
 
-		if (slidetime) {
+		if (slidetime || verbose) {
 			if (ntp)
 				(void) fprintf(stdout,
 				   "%s: adjust local clock by %.6f seconds\n",
