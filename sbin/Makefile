@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 1996/05/04 09:02:51 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.8 1996/05/16 11:12:23 pefo Exp $
 #	$NetBSD: Makefile,v 1.28 1996/04/05 01:44:24 cgd Exp $
 #	@(#)Makefile	8.5 (Berkeley) 3/31/94
 
@@ -32,6 +32,8 @@ SUBDIR+= bim config_slot edlabel fdisk pcmcia_cntrl
 SUBDIR+= config_slot
 SUBDIR+= fdisk
 SUBDIR+= pcmcia_cntrl
+.elif ${MACHINE} == "pica"
+SUBDIR+= fdisk
 .elif ${MACHINE} == "pc532"
 SUBDIR+= bim
 .elif ${MACHINE} == "sun3"
