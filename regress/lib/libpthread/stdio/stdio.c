@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdio.c,v 1.2 2003/07/31 21:48:06 deraadt Exp $	*/
+/*	$OpenBSD: stdio.c,v 1.3 2004/02/27 19:58:08 deraadt Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -100,8 +100,10 @@ int
 main(int argc, char *argv[])
 {
 
-	CHECKn(fullname = malloc (strlen (dir_name) + strlen (base_name) + 2));
-	sprintf (fullname, "%s/%s", dir_name, base_name);
+	int len = strlen (dir_name) + strlen (base_name) + 2;
+
+	CHECKn(fullname = malloc (len));
+	snprintf(fullname, len, "%s/%s", dir_name, base_name);
 
 	test_1();
 	test_2();
