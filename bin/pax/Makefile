@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 1997/03/11 18:50:56 tholo Exp $
+#	$OpenBSD: Makefile,v 1.7 1997/04/09 02:24:26 kstailey Exp $
 #	$NetBSD: Makefile,v 1.4 1995/03/21 09:07:02 cgd Exp $
 
 # To install on versions prior to BSD 4.4 the following may have to be
@@ -30,6 +30,10 @@ SRCS=	ar_io.c ar_subs.c buf_subs.c cache.c cpio.c file_subs.c ftree.c\
 	gen_subs.c getoldopt.c options.c pat_rep.c pax.c sel_subs.c tables.c\
 	tar.c tty_subs.c
 MAN=	pax.1 tar.1 cpio.1
+.if     (${MACHINE} == "sun3") # tar doesn't work yet; it breaks "make build"
+LINKS=	${BINDIR}/pax ${BINDIR}/cpio
+.else
 LINKS=	${BINDIR}/pax ${BINDIR}/tar ${BINDIR}/pax ${BINDIR}/cpio
+.endif
 
 .include <bsd.prog.mk>
