@@ -1857,6 +1857,7 @@
 ./usr/share/man/cat8/sparc/makedev.0
 ./usr/share/man/cat8/sparc64
 ./usr/share/man/cat8/sparc64/MAKEDEV.0
+./usr/share/man/cat8/sparc64/boot_sparc64.0
 ./usr/share/man/cat8/sparc64/installboot.0
 ./usr/share/man/cat8/sparc64/makedev.0
 ./usr/share/man/cat8/spppcontrol.0
