@@ -1,3 +1,4 @@
+/*	$OpenBSD: promdev.h,v 1.1 1997/09/17 10:46:19 downsj Exp $	*/
 /*	$NetBSD: promdev.h,v 1.3 1995/09/18 21:31:50 pk Exp $ */
 
 /*
@@ -45,7 +46,9 @@ struct promdata {
 };
 
 #define LOADADDR	((caddr_t)0x4000)
-#define DDB_MAGIC	( ('D'<<24) | ('D'<<16) | ('B'<<8) | ('0') )
+#define DDB_MAGIC0	( ('D'<<24) | ('D'<<16) | ('B'<<8) | ('0') )
+#define DDB_MAGIC1	( ('D'<<24) | ('D'<<16) | ('B'<<8) | ('1') )
+#define DDB_MAGIC	DDB_MAGIC0
 
 extern struct promvec	*promvec;
 extern char	*prom_bootdevice;

@@ -1,3 +1,4 @@
+/*	$OpenBSD: promdev.c,v 1.1 1997/09/17 10:46:19 downsj Exp $	*/
 /*	$NetBSD: promdev.c,v 1.16 1995/11/14 15:04:01 pk Exp $ */
 
 /*
@@ -41,11 +42,11 @@
 #include <machine/oldmon.h>
 #include <machine/ctlreg.h>
 
-#include <stand.h>
+#include <lib/libsa/stand.h>
 
-#include "promdev.h"
+#include <sparc/stand/common/promdev.h>
 
-u_long	_randseed = 1;
+/* u_long	_randseed = 1; */
 
 
 int	obp_close __P((struct open_file *));

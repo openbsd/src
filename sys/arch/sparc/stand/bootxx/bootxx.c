@@ -1,4 +1,5 @@
-/*	$NetBSD: bootxx.c,v 1.7 1995/09/27 09:03:13 pk Exp $ */
+/*	$OpenBSD: bootxx.c,v 1.1 1997/09/17 10:46:16 downsj Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.2 1997/09/14 19:28:17 pk Exp $	*/
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -34,8 +35,9 @@
 #include <sys/time.h>
 #include <a.out.h>
 
-#include <stand.h>
-#include "promdev.h"
+#include <lib/libsa/stand.h>
+
+#include <sparc/stand/common/promdev.h>
 
 int debug;
 int netif_debug;
@@ -74,6 +76,7 @@ main()
 	}
 
 	(void)loadboot(&io, LOADADDR);
+	(io.f_dev->dv_close)(&io);
 	(*entry)(cputyp == CPU_SUN4 ? LOADADDR : (caddr_t)promvec);
 	_rtt();
 }

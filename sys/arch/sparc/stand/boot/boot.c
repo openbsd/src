@@ -1,5 +1,5 @@
-/*	$OpenBSD: boot.c,v 1.5 1996/08/11 09:13:22 downsj Exp $	*/
-/*	$NetBSD: boot.c,v 1.13 1995/09/17 00:50:54 pk Exp $ */
+/*	$OpenBSD: boot.c,v 1.1 1997/09/17 10:46:15 downsj Exp $	*/
+/*	$NetBSD: boot.c,v 1.2 1997/09/14 19:27:21 pk Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -39,10 +39,9 @@
 #include <sys/param.h>
 #include <sys/reboot.h>
 #include <a.out.h>
-#include <paths.h>
-#include <stand.h>
+#include <lib/libsa/stand.h>
 
-#include "promdev.h"
+#include <sparc/stand/common/promdev.h>
 
 static void copyunix __P((int, char *));
 static void promsyms __P((int, struct exec *));
@@ -52,6 +51,7 @@ int netif_debug;
 /*
  * Boot device is derived from ROM provided information.
  */
+#define	DEFAULT_KERNEL	"bsd"
 
 extern char		*version;
 unsigned long		esym;
@@ -70,11 +70,11 @@ main()
 
 	prom_init();
 
-	printf(">> OpenBSD BOOT [%s]\n", version);
+	printf(">> OpenBSD BOOT %s\n", version);
 
 	file = prom_bootfile;
 	if (file == 0 || *file == 0)
-		file = _PATH_UNIX;
+		file = DEFAULT_KERNEL;
 
 	for (;;) {
 		if (prom_boothow & RB_ASKNAME) {
@@ -152,7 +152,7 @@ loadfile(io, addr)
 			addr += i;
 		}
 		printf("+%d]", i);
-		esym = KERNBASE +
+		esym = ((u_int)x.a_entry - (u_int)LOADADDR) +
 			(((int)addr + sizeof(int) - 1) & ~(sizeof(int) - 1));
 #if 0
 		/*
@@ -168,7 +168,7 @@ loadfile(io, addr)
 
 	/* Note: args 2-4 not used due to conflicts with SunOS loaders */
 	(*entry)(cputyp == CPU_SUN4 ? LOADADDR : (caddr_t)promvec,
-		 0, 0, 0, esym, DDB_MAGIC);
+		 0, 0, 0, esym, DDB_MAGIC1);
 	return;
 
 shread:

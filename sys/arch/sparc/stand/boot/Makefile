@@ -1,19 +1,26 @@
+#	$OpenBSD: Makefile,v 1.7 1997/09/17 10:46:15 downsj Exp $
 #	$NetBSD: Makefile,v 1.2 1995/09/30 21:43:38 pk Exp $
 
-R=	..
-.PATH:	${.CURDIR}/${R}
-PROG=	boot
-SRCS=	srt0.S boot.c promdev.c dvma.c bootnet.c netif_sun.c conf.c version.c
-INSTALL_STRIP=
-NOMAN=	1
-BINDIR=	/usr/mdec
-LIBS!=	cd ${.CURDIR}/${R}; ${MAKE} libdep
+.PATH:	${.CURDIR}/../common
 
-${PROG}:${OBJS} ${LIBS}
-	${LD} -N -T ${RELOC} -e start ${OBJS} ${LIBS}
+PROG=	boot
+
+NOMAN=	noman
+INSTALL_STRIP=
+
+SRCS=	srt0.S boot.c conf.c dvma.c net.c netif_sun.c promdev.c version.c
+
+CFLAGS=	-O2 -I${.CURDIR}/../common -I${.CURDIR}/../../../../arch \
+	-I${.CURDIR}/../../../.. -I${.CURDIR}/../../../../lib/libsa ${DEFS}
+
+${PROG}: ${OBJS} ${LIBS}
+	${LD} -N -T ${RELOC} -e start ${OBJS} ${LIBSA} ${LIBKERN} ${LIBZ}
 	# convert to Sun magic
 	@size a.out
 	(echo -n 01 | tr 01 '\01\03'; tail +3c a.out) > ${.TARGET}
 	@rm a.out
+
+srt0.o: srt0.S
+	${CC} ${CFLAGS} -D_LOCORE -c ${.IMPSRC}
 
 .include <bsd.prog.mk>

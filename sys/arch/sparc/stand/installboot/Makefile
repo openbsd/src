@@ -1,12 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 1995/09/30 21:43:41 pk Exp $
+#	$OpenBSD: Makefile,v 1.3 1997/09/17 10:46:21 downsj Exp $
 
-.PATH:	${.CURDIR}/..
+BINDIR=	/usr/sbin
+
 PROG=	installboot
 MAN=	installboot.8
-MLINKS= installboot.8 binstall.8
-BINDIR=/usr/sbin
-
-# XXX - prevent sa clutter
-__stand_makefile_inc=1
 
 .include <bsd.prog.mk>
