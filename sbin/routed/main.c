@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.8 1998/07/09 06:12:45 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.9 2001/01/16 03:06:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ char copyright[] =
 #if !defined(lint)
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.8 1998/07/09 06:12:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.9 2001/01/16 03:06:08 deraadt Exp $";
 #endif
 
 #include "defs.h"
@@ -77,7 +77,7 @@ time_t	now_garbage;
 struct timeval next_bcast;		/* next general broadcast */
 struct timeval no_flash = {EPOCH+SUPPLY_INTERVAL};  /* inhibit flash update */
 
-fd_set	fdbits;
+fd_set	*fdbitsp;
 int	sock_max;
 int	rip_sock = -1;			/* RIP socket */
 struct interface *rip_sock_mcast;	/* current multicast interface */
@@ -97,7 +97,7 @@ main(int argc,
 	char *p, *q;
 	struct timeval wtime, t2;
 	time_t dt;
-	fd_set ibits;
+	fd_set *ibitsp = NULL;
 	naddr p_addr, p_mask;
 	struct interface *ifp;
 	struct parm parm;
@@ -456,30 +456,37 @@ usage:
 		/* wait for input or a timer to expire.
 		 */
 		trace_flush();
-		ibits = fdbits;
-		n = select(sock_max, &ibits, 0, 0, &wtime);
+		if (ibitsp)
+			free(ibitsp);
+		ibitsp = (fd_set *)calloc(howmany(sock_max, NFDBITS),
+		    sizeof(fd_mask));
+		if (ibitsp == NULL)
+			err(1, "calloc");
+		memcpy(ibitsp, fdbitsp, howmany(sock_max, NFDBITS) *
+		    sizeof(fd_mask));
+		n = select(sock_max, ibitsp, 0, 0, &wtime);
 		if (n <= 0) {
 			if (n < 0 && errno != EINTR && errno != EAGAIN)
 				BADERR(1,"select");
 			continue;
 		}
 
-		if (FD_ISSET(rt_sock, &ibits)) {
+		if (FD_ISSET(rt_sock, ibitsp)) {
 			read_rt();
 			n--;
 		}
-		if (rdisc_sock >= 0 && FD_ISSET(rdisc_sock, &ibits)) {
+		if (rdisc_sock >= 0 && FD_ISSET(rdisc_sock, ibitsp)) {
 			read_d();
 			n--;
 		}
-		if (rip_sock >= 0 && FD_ISSET(rip_sock, &ibits)) {
+		if (rip_sock >= 0 && FD_ISSET(rip_sock, ibitsp)) {
 			read_rip(rip_sock, 0);
 			n--;
 		}
 
 		for (ifp = ifnet; n > 0 && 0 != ifp; ifp = ifp->int_next) {
 			if (ifp->int_rip_sock >= 0
-			    && FD_ISSET(ifp->int_rip_sock, &ibits)) {
+			    && FD_ISSET(ifp->int_rip_sock, ibitsp)) {
 				read_rip(ifp->int_rip_sock, ifp);
 				n--;
 			}
@@ -514,30 +521,35 @@ fix_select(void)
 {
 	struct interface *ifp;
 
-
-	FD_ZERO(&fdbits);
 	sock_max = 0;
 
-	FD_SET(rt_sock, &fdbits);
 	if (sock_max <= rt_sock)
 		sock_max = rt_sock+1;
-	if (rip_sock >= 0) {
-		FD_SET(rip_sock, &fdbits);
-		if (sock_max <= rip_sock)
-			sock_max = rip_sock+1;
-	}
+	if (rip_sock >= 0 && sock_max <= rip_sock)
+		sock_max = rip_sock+1;
 	for (ifp = ifnet; 0 != ifp; ifp = ifp->int_next) {
-		if (ifp->int_rip_sock >= 0) {
-			FD_SET(ifp->int_rip_sock, &fdbits);
-			if (sock_max <= ifp->int_rip_sock)
-				sock_max = ifp->int_rip_sock+1;
-		}
+		if (ifp->int_rip_sock >= 0 && sock_max <= ifp->int_rip_sock)
+			sock_max = ifp->int_rip_sock+1;
 	}
-	if (rdisc_sock >= 0) {
-		FD_SET(rdisc_sock, &fdbits);
-		if (sock_max <= rdisc_sock)
-			sock_max = rdisc_sock+1;
+	if (rdisc_sock >= 0 && sock_max <= rdisc_sock)
+		sock_max = rdisc_sock+1;
+
+	if (fdbitsp)
+		free(fdbitsp);
+	fdbitsp = (fd_set *)calloc(howmany(sock_max, NFDBITS),
+	    sizeof(fd_mask));
+	if (fdbitsp == NULL)
+		err(1, "calloc");
+
+	FD_SET(rt_sock, fdbitsp);
+	if (rip_sock >= 0)
+		FD_SET(rip_sock, fdbitsp);
+	for (ifp = ifnet; 0 != ifp; ifp = ifp->int_next) {
+		if (ifp->int_rip_sock >= 0)
+			FD_SET(ifp->int_rip_sock, fdbitsp);
 	}
+	if (rdisc_sock >= 0)
+		FD_SET(rdisc_sock, fdbitsp);
 }
 
 
