@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.92 2002/06/08 23:04:53 jasoni Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.93 2002/06/08 23:15:58 jasoni Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -2239,8 +2239,11 @@ dropit:
 #endif /* NPF > 0 */
 
 void
-bridge_fragment(struct bridge_softc *sc, struct ifnet *ifp,
-    struct ether_header *eh, struct mbuf *m)
+bridge_fragment(sc, ifp, eh, m)
+	struct bridge_softc *sc;
+	struct ifnet *ifp;
+	struct ether_header *eh;
+	struct mbuf *m;
 {
 	struct llc llc;
 	struct mbuf *m0 = m;
@@ -2335,7 +2338,10 @@ bridge_fragment(struct bridge_softc *sc, struct ifnet *ifp,
 }
 
 int
-bridge_ifenqueue(struct bridge_softc *sc, struct ifnet *ifp, struct mbuf *m)
+bridge_ifenqueue(sc, ifp, m)
+	struct bridge_softc *sc;
+	struct ifnet *ifp;
+	struct mbuf *m;
 {
 	int error, len;
 	short mflags;
