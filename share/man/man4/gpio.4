@@ -1,0 +1,160 @@
+.\"	$OpenBSD: gpio.4,v 1.1 2004/06/03 18:41:29 grange Exp $
+.\"
+.\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd May 3, 2004
+.Dt GPIO 4
+.Os
+.Sh NAME
+.Nm gpio
+.Nd General Purpose Input/Output
+.Sh SYNOPSIS
+.Cd "gpio* at nsclpcsio?"
+.Cd "gpio* at gscpcib?"
+.Pp
+.Fd #include <sys/types.h>
+.Fd #include <sys/gpio.h>
+.Fd #include <sys/ioctl.h>
+.Sh DESCRIPTION
+The
+.Nm
+device attaches to the
+.Tn GPIO
+controller and provides a uniform programming interface to its pins.
+.Pp
+Each
+.Tn GPIO
+controller with attached
+.Nm
+device has associated device file under the
+.Pa /dev
+directory, e.g.
+.Pa /dev/gpio0 .
+Access from userland is performed through
+.Xr ioctl 2
+calls on these devices.
+.Sh IOCTL INTERFACE
+The following structures and constants are defined in
+.Aq Pa sys/gpio.h 
+header file.
+.Pp
+.Bl -tag -width XXXX -compact
+.It Dv GPIOINFO (struct gpio_info)
+Returns information about the
+.Tn GPIO
+controller in the
+.Fa gpio_info
+structure:
+.Bd -literal
+struct gpio_info {
+	int gpio_npins;		/* total number of pins available */
+};
+.Ed
+.Pp
+.It Dv GPIOPINREAD (struct gpio_pin_op)
+Returns input pin value in the
+.Fa gpio_pin_op
+structure:
+.Bd -literal
+struct gpio_pin_op {
+	int gp_pin;		/* pin number */
+	int gp_value;		/* value */
+};
+.Ed
+.Pp
+The
+.Fa gp_pin
+field must be set before calling.
+.Pp
+.It Dv GPIOPINWRITE (struct gpio_pin_op)
+Writes output value to the pin.
+Value set in the
+.Fa gp_value
+field must be either
+.Dv GPIO_PIN_LOW
+(logical 0) or
+.Dv GPIO_PIN_HIGH
+(logical 1).
+On return
+.Fa gp_value
+field contains old pin state.
+.Pp
+.It Dv GPIOPINTOGGLE (struct gpio_pin_op)
+Toggles pin output value, i.e. changes it to the opposite.
+.Fa gp_value
+field is ignored and on return contains old pin state.
+.Pp
+.It Dv GPIOPINCTL (struct gpio_pin_ctl)
+Changes pin configuration flags with the new ones provided in the
+.Fa gpio_pin_ctl
+structure:
+.Bd -literal
+struct gpio_pin_ctl {
+	int gp_pin;		/* pin number */
+	int gp_caps;		/* pin capabilities (read-only) */
+	int gp_flags;		/* pin configuration flags */
+};
+.Ed
+.Pp
+.Fa gp_flags
+field is a combination of the following flags:
+.Pp
+.Bl -tag -width GPIO_PIN_OPENDRAIN -compact
+.It Dv GPIO_PIN_INPUT
+input direction
+.It Dv GPIO_PIN_OUTPUT
+output direction
+.It Dv GPIO_PIN_INOUT
+bi-directional
+.It Dv GPIO_PIN_OPENDRAIN
+open-drain output
+.It Dv GPIO_PIN_PUSHPULL
+push-pull output
+.It Dv GPIO_PIN_TRISTATE
+output disabled
+.It Dv GPIO_PIN_PULLUP
+internal pull-up enabled
+.El
+.Pp
+Note that the
+.Tn GPIO
+controller
+may not support all these flags.
+On return the
+.Fa gp_caps
+field contains flags that are supported.
+If no flags specified pin configuration stays unchanged.
+.El
+.Sh FILES
+.Bl -tag -width "/dev/gpiou" -compact
+.It /dev/gpio Ns Ar u
+GPIO device unit
+.Ar u
+file.
+.Sh SEE ALSO
+.Xr ioctl 2 ,
+.Xr gscpcib 4 ,
+.Xr nsclpcsio 4
+.Xr gpioctl 8 ,
+.Sh HISTORY
+The
+.Nm
+device first appeared in
+.Ox 3.6 .
+.Sh AUTHORS
+The
+.Nm
+driver was written by
+.An Alexander Yurchenko Aq grange@openbsd.org .
