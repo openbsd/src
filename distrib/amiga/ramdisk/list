@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.4 1998/12/20 23:36:41 millert Exp $
+#	$OpenBSD: list,v 1.5 1998/12/21 03:31:36 millert Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # Amiga extra's
@@ -23,7 +23,7 @@ COPY	${DESTDIR}/dev/MAKEDEV		dev/MAKEDEV
 SPECIAL	cd dev; sh MAKEDEV ramdisk
 
 # and a few useful bits of the termcap file (512K and still growing 8-)
-SPECIAL tic -C ${CURDIR}/../../share/termtypes/termtypes.master | sed -e 's,/usr/share/lib/tabset,/usr/share/tabset,g' -e 's,/usr/lib/tabset,/usr/share/tabset,g' | sed -n -e '/^dumb|/,/:[ 	]*$/p' -e '/^unknown|/,/:[ 	]*$/p' -e '/^vt.*|/,/:[ 	]*$/p' > usr/share/misc/termcap
+SPECIAL tic -C ${CURDIR}/../../share/termtypes/termtypes.master | sed -n -e 's,/usr/share/lib/tabset,/usr/share/tabset,g' -e 's,/usr/lib/tabset,/usr/share/tabset,g' -e '/^dumb|/,/:[ 	]*$/p' -e '/^unknown|/,/:[ 	]*$/p' -e '/^vt.*|/,/:[ 	]*$/p' > usr/share/misc/termcap
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/disktab		etc/disktab.shadow
