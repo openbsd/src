@@ -1,4 +1,4 @@
-#	$OpenBSD: GNUmakefile,v 1.2 2001/01/28 22:38:47 niklas Exp $
+#	$OpenBSD: GNUmakefile,v 1.3 2002/09/03 18:40:18 markus Exp $
 
 #
 # Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -36,7 +36,7 @@
 .CURDIR:=	$(shell pwd)
 
 LIB=		sysdep
-SRCS=		arc4random.c blowfish.c cast.c md5.c sha1.c
+SRCS=		arc4random.c blowfish.c cast.c md5.c sha1.c strlcat.c strlcpy.c
 NOMAN=
 CFLAGS+=	-I${.CURDIR}/.. -I/usr/include/machine
 
