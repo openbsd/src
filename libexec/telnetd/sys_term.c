@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_term.c,v 1.16 1998/07/23 17:55:51 deraadt Exp $	*/
+/*	$OpenBSD: sys_term.c,v 1.17 1998/07/28 20:18:20 marc Exp $	*/
 /*	$NetBSD: sys_term.c,v 1.9 1996/03/20 04:25:53 tls Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: sys_term.c,v 1.8 1996/02/28 20:38:21 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: sys_term.c,v 1.16 1998/07/23 17:55:51 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: sys_term.c,v 1.17 1998/07/28 20:18:20 marc Exp $";
 #endif
 #endif /* not lint */
 
@@ -1560,7 +1560,6 @@ start_login(host, autologin, name)
 	register char **argv;
 	char **addarg();
 	extern char *getenv();
-	extern char *getstr();
 	extern char *gettyname;
 #define	TABBUFSIZ	512
 	char	defent[TABBUFSIZ];
@@ -1781,10 +1780,10 @@ start_login(host, autologin, name)
 	if (pty > 2)
 		close(pty);
 #endif
-	if (getent(defent, gettyname) == 1) {
+	if (gtgetent(defent, gettyname) == 1) {
 		char *cp = defstrs;
 
-		loginprog = getstr("lo", &cp);
+		loginprog = gtgetstr("lo", &cp);
 	}
 	if (loginprog == NULL)
 		loginprog = _PATH_LOGIN;
