@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.24 2002/07/28 21:22:27 fgsch Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.25 2002/07/29 17:45:20 fgsch Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -956,7 +956,7 @@ ext2fs_fhtovp(mp, fhp, vpp)
 	ufhp = (struct ufid *)fhp;
 	fs = VFSTOUFS(mp)->um_e2fs;
 	if ((ufhp->ufid_ino < EXT2_FIRSTINO && ufhp->ufid_ino != EXT2_ROOTINO) ||
-		ufhp->ufid_ino >= fs->e2fs_ncg * fs->e2fs.e2fs_ipg)
+		ufhp->ufid_ino > fs->e2fs_ncg * fs->e2fs.e2fs_ipg)
 		return (ESTALE);
 
 	if ((error = VFS_VGET(mp, ufhp->ufid_ino, &nvp)) != 0) {
