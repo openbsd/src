@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.1 2000/02/25 16:35:28 hin Exp $
+# $OpenBSD: Makefile,v 1.2 2000/08/31 19:44:50 hin Exp $
 
-SUBDIR	= afslog kauth kdestroy kinit klist 
+SUBDIR	= afslog kauth kdestroy kinit klist pagsh
 
 # these are not built: kftp kstring2key
 
