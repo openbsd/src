@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.62 2000/01/10 04:29:29 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.63 2000/01/11 01:03:23 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -139,7 +139,7 @@ ip_output(m0, va_alist)
 	struct sockaddr_encap *ddst, *gw;
 	u_int8_t sa_require, sa_have = 0;
 	int s, protoflag = AF_INET;
-	struct tdb *tdb;
+	struct tdb *tdb, tdb2;
 
 #ifdef INET6
 	struct ip6_hdr *ip6;
@@ -508,13 +508,13 @@ sendit:
 		    ((ntohl(gw->sen_ipsp6_spi) == SPI_LOCAL_USE) &&
 		     (gw->sen_type == SENT_IPSP6))) {
 		    if (tdb == NULL) {
-			/*
-			 * XXX We should construct a TDB from system
-			 * default (which should be tunable via sysctl).
-			 * For now, drop packet and ignore SPD entry.
-			 */
-			splx(s);
-			goto no_encap;
+			/* We will just use system defaults. */
+			tdb = &tdb2;
+			bzero(&tdb2, sizeof(tdb2));
+
+			/* Default entry is for ESP */
+			sa_require = NOTIFY_SATYPE_CONF | NOTIFY_SATYPE_AUTH;
+			tdb2.tdb_satype = sa_require;
 		    } else {
 			if (tdb->tdb_authalgxform)
 			  sa_require = NOTIFY_SATYPE_AUTH;
@@ -523,6 +523,103 @@ sendit:
 			if (tdb->tdb_flags & TDBF_TUNNELING)
 			  sa_require |= NOTIFY_SATYPE_TUNNEL;
 		    }
+
+		    /* Check for PFS */
+		    if (ipsec_require_pfs)
+		      tdb->tdb_flags |= TDBF_PFS;
+		    else
+		      tdb->tdb_flags &= ~TDBF_PFS;
+
+		    /* Initialize expirations */
+		    if (ipsec_soft_allocations > 0) 
+		      tdb->tdb_soft_allocations = ipsec_soft_allocations;
+		    else
+		      tdb->tdb_soft_allocations = 0;
+
+		    if (ipsec_exp_allocations > 0)
+		      tdb->tdb_exp_allocations = ipsec_exp_allocations;
+		    else
+		      tdb->tdb_exp_allocations = 0;
+
+		    if (ipsec_soft_bytes > 0)
+		      tdb->tdb_soft_bytes = ipsec_soft_bytes;
+		    else
+		      tdb->tdb_soft_bytes = 0;
+
+		    if (ipsec_exp_bytes > 0)
+		      tdb->tdb_exp_bytes = ipsec_exp_bytes;
+		    else
+		      tdb->tdb_exp_bytes = 0;
+
+		    if (ipsec_soft_timeout > 0)
+		      tdb->tdb_soft_timeout = ipsec_soft_timeout;
+		    else
+		      tdb->tdb_soft_timeout = 0;
+
+		    if (ipsec_exp_timeout > 0)
+		      tdb->tdb_exp_timeout = ipsec_exp_timeout;
+		    else
+		      tdb->tdb_exp_timeout = 0;
+
+		    if (ipsec_soft_first_use > 0)
+		      tdb->tdb_soft_first_use = ipsec_soft_first_use;
+		    else
+		      tdb->tdb_soft_first_use = 0;
+
+		    if (ipsec_exp_first_use > 0)
+		      tdb->tdb_exp_first_use = ipsec_exp_first_use;
+		    else
+		      tdb->tdb_exp_first_use = 0;
+
+		    /* 
+		     * If we don't have an existing desired encryption
+		     * algorithm, use the default.
+		     */
+		    if ((tdb->tdb_encalgxform == NULL) &&
+			(tdb->tdb_satype & NOTIFY_SATYPE_CONF))
+		    {
+			if (!strncasecmp(ipsec_def_enc, "des", sizeof("des")))
+			  tdb->tdb_encalgxform = &enc_xform_des;
+			else
+			  if (!strncasecmp(ipsec_def_enc, "3des",
+					   sizeof("3des")))
+			    tdb->tdb_encalgxform = &enc_xform_3des;
+			  else
+			    if (!strncasecmp(ipsec_def_enc, "blowfish",
+					     sizeof("blowfish")))
+			      tdb->tdb_encalgxform = &enc_xform_blf;
+			    else
+			      if (!strncasecmp(ipsec_def_enc, "cast128",
+					       sizeof("cast128")))
+				tdb->tdb_encalgxform = &enc_xform_cast5;
+			      else
+				if (!strncasecmp(ipsec_def_enc, "skipjack",
+						 sizeof("skipjack")))
+				  tdb->tdb_encalgxform = &enc_xform_skipjack;
+		    }
+
+		    /*
+		     * If we don't have an existing desired authentication
+		     * algorithm, use the default.
+		     */
+		    if ((tdb->tdb_authalgxform == NULL) && 
+			(tdb->tdb_satype & NOTIFY_SATYPE_AUTH))
+		    {
+			if (!strncasecmp(ipsec_def_auth, "hmac-md5",
+					 sizeof("hmac-md5")))
+			  tdb->tdb_authalgxform = &auth_hash_hmac_md5_96;
+			else
+			  if (!strncasecmp(ipsec_def_auth, "hmac-sha1",
+					   sizeof("hmac-sha1")))
+			    tdb->tdb_authalgxform = &auth_hash_hmac_sha1_96;
+			  else
+			    if (!strncasecmp(ipsec_def_auth, "hmac-ripemd160",
+					     sizeof("hmac_ripemd160")))
+			      tdb->tdb_authalgxform = 
+						 &auth_hash_hmac_ripemd_160_96;
+		    }
+
+		    /* XXX Initialize src_id/dst_id */
 
 		    /* PF_KEYv2 notification message */
 		    if (tdb && tdb->tdb_satype != SADB_X_SATYPE_BYPASS)
