@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.20 1997/11/06 05:58:08 csapuntz Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.21 1998/03/10 17:40:37 millert Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -520,6 +520,7 @@ vndstrategy(bp)
 		nbp->vb_buf.b_dirtyend = bp->b_dirtyend;
 		nbp->vb_buf.b_validoff = bp->b_validoff;
 		nbp->vb_buf.b_validend = bp->b_validend;
+		LIST_INIT(&nbp->vb_buf.b_dep);
 
 		/* save a reference to the old buffer */
 		nbp->vb_obp = bp;
