@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcd.c,v 1.14 1996/06/01 09:35:35 deraadt Exp $ */
+/*	$OpenBSD: mcd.c,v 1.15 1996/06/09 19:40:12 deraadt Exp $ */
 /*	$NetBSD: mcd.c,v 1.49 1996/05/12 23:53:11 mycroft Exp $	*/
 
 /*
@@ -67,6 +67,7 @@
 #include <sys/stat.h>
 #include <sys/uio.h>
 #include <sys/ioctl.h>
+#include <sys/mtio.h>
 #include <sys/cdio.h>
 #include <sys/errno.h>
 #include <sys/disklabel.h>
@@ -632,6 +633,10 @@ mcdioctl(dev, cmd, addr, flag, p)
 		return EINVAL;
 	case CDIOCSTOP:
 		return mcd_stop(sc);
+	case MTIOCTOP:
+		if (((struct mtop *)addr)->mt_op != MTOFFL)
+			return EIO;
+		/* FALLTHROUGH */
 	case CDIOCEJECT: /* FALLTHROUGH */
 	case DIOCEJECT:
 		return mcd_eject(sc);

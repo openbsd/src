@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.16 1996/06/01 09:36:52 deraadt Exp $	*/
+/*	$OpenBSD: fd.c,v 1.17 1996/06/09 19:40:28 deraadt Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -51,6 +51,7 @@
 #include <sys/disk.h>
 #include <sys/buf.h>
 #include <sys/uio.h>
+#include <sys/mtio.h>
 #include <sys/syslog.h>
 #include <sys/queue.h>
 
@@ -1222,6 +1223,10 @@ fdioctl(dev, cmd, addr, flag, p)
 	int error;
 
 	switch (cmd) {
+	case MTIOCTOP:
+		if (((struct mtop *)addr)->mt_op != MTOFFL)
+			return EIO;
+		return (0);
 	case DIOCGDINFO:
 		bzero(&buffer, sizeof(buffer));
 
