@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.92 2001/11/06 19:53:16 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.93 2001/11/22 07:50:10 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -4211,8 +4211,7 @@ pmap_page_protect4_4c(pg, prot)
 	 * away write permission.
 	 */
 	pv = pvhead(atop(pa));
-	if ((pa & (PMAP_TNC_4 & ~PMAP_NC)) ||
-	     !pv || prot & VM_PROT_WRITE)
+	if (!pv || prot & VM_PROT_WRITE)
 		return;
 	write_user_windows();	/* paranoia */
 	if (prot & VM_PROT_READ) {
@@ -5895,15 +5894,15 @@ pmap_clear_modify4_4c(pg)
 	struct vm_page *pg;
 {
 	struct pvlist *pv;
-	paddr_t pa;
-	boolean_t ret = 0;
+	u_int pfn = atop(VM_PAGE_TO_PHYS(pg));
+	boolean_t ret;
 
-	pv = pvhead(atop(pa));
-	if ((pa & (PMAP_TNC_4 & ~PMAP_NC)) == 0 && pv) {
-		(void) pv_syncflags4_4c(pv);
-		ret = pv->pv_flags & PV_MOD;
-		pv->pv_flags &= ~PV_MOD;
-	}
+	if ((pv = pvhead(pfn)) == NULL)
+		return (0);
+
+	(void) pv_syncflags4_4c(pv);
+	ret = pv->pv_flags & PV_MOD;
+	pv->pv_flags &= ~PV_MOD;
 
 	return ret;
 }
@@ -5916,14 +5915,12 @@ pmap_is_modified4_4c(pg)
 	struct vm_page *pg;
 {
 	struct pvlist *pv;
-	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+	u_int pfn = atop(VM_PAGE_TO_PHYS(pg));
 
-	pv = pvhead(atop(pa));
-	if ((pa & (PMAP_TNC_4 & ~PMAP_NC)) == 0 && pv) {
-		if (pv->pv_flags & PV_MOD || pv_syncflags4_4c(pv) & PV_MOD)
-			return (1);
-	}
-	return (0);
+	if ((pv = pvhead(pfn)) == NULL)
+		return (0);
+
+	return (pv->pv_flags & PV_MOD || pv_syncflags4_4c(pv) & PV_MOD);
 }
 
 /*
@@ -5934,15 +5931,15 @@ pmap_clear_reference4_4c(pg)
 	struct vm_page *pg;
 {
 	struct pvlist *pv;
-	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-	boolean_t ret = 0;
+	u_int pfn = atop(VM_PAGE_TO_PHYS(pg));
+	boolean_t ret;
 
-	pv = pvhead(atop(pa));
-	if ((pa & (PMAP_TNC_4 & ~PMAP_NC)) == 0 && pv) {
-		(void) pv_syncflags4_4c(pv);
-		ret = pv->pv_flags & PV_REF;
-		pv->pv_flags &= ~PV_REF;
-	}
+	if ((pv = pvhead(pfn)) == NULL)
+		return (0);
+
+	(void) pv_syncflags4_4c(pv);
+	ret = pv->pv_flags & PV_REF;
+	pv->pv_flags &= ~PV_REF;
 
 	return ret;
 }
@@ -5955,14 +5952,12 @@ pmap_is_referenced4_4c(pg)
 	struct vm_page *pg;
 {
 	struct pvlist *pv;
-	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+	u_int pfn = atop(VM_PAGE_TO_PHYS(pg));
 
-	pv = pvhead(atop(pa));
-	if ((pa & (PMAP_TNC_4 & ~PMAP_NC)) == 0 && pv) {
-		if (pv->pv_flags & PV_REF || pv_syncflags4_4c(pv) & PV_REF)
-			return (1);
-	}
-	return (0);
+	if ((pv = pvhead(pfn)) == NULL)
+		return (0);
+
+	return (pv->pv_flags & PV_REF || pv_syncflags4_4c(pv) & PV_REF);
 }
 #endif /*4,4c*/
 
@@ -5985,15 +5980,15 @@ pmap_clear_modify4m(pg)
 	struct vm_page *pg;
 {
 	struct pvlist *pv;
-	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-	boolean_t ret = 0;
+	u_int pfn = atop(VM_PAGE_TO_PHYS(pg));
+	boolean_t ret;
 
-	pv = pvhead(atop(pa));
-	if ((pa & (PMAP_TNC_SRMMU & ~PMAP_NC)) == 0 && pv) {
-		(void) pv_syncflags4m(pv);
-		ret = pv->pv_flags & PV_MOD4M;
-		pv->pv_flags &= ~PV_MOD4M;
-	}
+	if ((pv = pvhead(pfn)) == NULL)
+		return (0);
+
+	(void) pv_syncflags4m(pv);
+	ret = pv->pv_flags & PV_MOD4M;
+	pv->pv_flags &= ~PV_MOD4M;
 
 	return ret;
 }
@@ -6006,14 +6001,11 @@ pmap_is_modified4m(pg)
 	struct vm_page *pg;
 {
 	struct pvlist *pv;
-	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+	u_int pfn = atop(VM_PAGE_TO_PHYS(pg));
 
-	pv = pvhead(atop(pa));
-	if ((pa & (PMAP_TNC_SRMMU & ~PMAP_NC)) == 0 && pv) {
-		if (pv->pv_flags & PV_MOD4M || pv_syncflags4m(pv) & PV_MOD4M)
-		        return(1);
-	}
-	return (0);
+	if ((pv = pvhead(pfn)) == NULL)
+		return (0);
+	return (pv->pv_flags & PV_MOD4M || pv_syncflags4m(pv) & PV_MOD4M);
 }
 
 /*
@@ -6024,15 +6016,15 @@ pmap_clear_reference4m(pg)
 	struct vm_page *pg;
 {
 	struct pvlist *pv;
-	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-	boolean_t ret = 0;
+	u_int pfn = atop(VM_PAGE_TO_PHYS(pg));
+	boolean_t ret;
 
-	pv = pvhead(atop(pa));
-	if ((pa & (PMAP_TNC_SRMMU & ~PMAP_NC)) == 0 && pv) {
-		(void) pv_syncflags4m(pv);
-		ret = pv->pv_flags & PV_REF4M;
-		pv->pv_flags &= ~PV_REF4M;
-	}
+	if ((pv = pvhead(pfn)) == NULL)
+		return (0);
+
+	(void) pv_syncflags4m(pv);
+	ret = pv->pv_flags & PV_REF4M;
+	pv->pv_flags &= ~PV_REF4M;
 
 	return ret;
 }
@@ -6045,14 +6037,11 @@ pmap_is_referenced4m(pg)
 	struct vm_page *pg;
 {
 	struct pvlist *pv;
-	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+	u_int pfn = atop(VM_PAGE_TO_PHYS(pg));
 
-	pv = pvhead(atop(pa));
-	if ((pa & (PMAP_TNC_SRMMU & ~PMAP_NC)) == 0 && pv) {
-		if (pv->pv_flags & PV_REF4M || pv_syncflags4m(pv) & PV_REF4M)
-		        return(1);
-	}
-	return (0);
+	if ((pv = pvhead(pfn)) == NULL)
+		return (0);
+	return (pv->pv_flags & PV_REF4M || pv_syncflags4m(pv) & PV_REF4M);
 }
 #endif /* 4m */
 
