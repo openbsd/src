@@ -1,4 +1,4 @@
-/*	$OpenBSD: lebuffer.c,v 1.2 1998/03/09 09:33:39 deraadt Exp $	*/
+/*	$OpenBSD: lebuffer.c,v 1.3 1998/07/05 09:24:23 deraadt Exp $	*/
 /*	$NetBSD: lebuffer.c,v 1.3 1997/05/24 20:16:28 pk Exp $ */
 
 /*
@@ -69,7 +69,7 @@ lebufprint(aux, name)
 
 	if (name)
 		printf("[%s at %s]", ca->ca_ra.ra_name, name);
-	printf(" slot 0x%x offset 0x%x", ca->ca_slot, ca->ca_offset);
+	printf(" offset 0x%x", ca->ca_offset);
 	return (UNCONF);
 }
 

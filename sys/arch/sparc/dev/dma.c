@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.11 1998/02/05 19:02:30 jason Exp $	*/
+/*	$OpenBSD: dma.c,v 1.12 1998/07/05 09:24:25 deraadt Exp $	*/
 /*	$NetBSD: dma.c,v 1.46 1997/08/27 11:24:16 bouyer Exp $ */
 
 /*
@@ -98,7 +98,7 @@ dmaprint(aux, name)
 
 	if (name)
 		printf("[%s at %s]", ca->ca_ra.ra_name, name);
-	printf(" slot 0x%x offset 0x%x", ca->ca_slot, ca->ca_offset);
+	printf(" offset 0x%x", ca->ca_offset);
 	return (UNCONF);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: qec.c,v 1.3 1998/07/05 06:50:00 deraadt Exp $	*/
+/*	$OpenBSD: qec.c,v 1.4 1998/07/05 09:24:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt.  All rights reserved.
@@ -66,7 +66,7 @@ qecprint(aux, name)
 
 	if (name)
 		printf("%s at %s", ca->ca_ra.ra_name, name);
-	printf(" slot 0x%x offset 0x%x", ca->ca_slot, ca->ca_offset);
+	printf(" offset 0x%x", ca->ca_offset);
 	return (UNCONF);
 }
 
