@@ -720,6 +720,7 @@ maintainer-clean-recursive:
 	rev=''; list='$(SUBDIRS)'; for subdir in $$list; do \
 	  rev="$$subdir $$rev"; \
 	  test "$$subdir" = "." && dot_seen=yes; \
+	  true; \
 	done; \
 	test "$$dot_seen" = "no" && rev=". $$rev"; \
 	target=`echo $@ | sed s/-recursive//`; \
