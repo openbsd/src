@@ -7,6 +7,7 @@ set timeout { other.first 455, other.single 54, other.multiple 324 }
 set limit { states 4522, frags 43556 }
 set loginterface none
 set loginterface lo0
+set hostid 1
 set optimization normal
 set block-policy drop
 set require-order yes
