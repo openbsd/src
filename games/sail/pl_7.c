@@ -1,4 +1,4 @@
-/*	$OpenBSD: pl_7.c,v 1.6 2002/05/31 05:11:37 pjanzen Exp $	*/
+/*	$OpenBSD: pl_7.c,v 1.7 2002/12/09 11:21:32 deraadt Exp $	*/
 /*	$NetBSD: pl_7.c,v 1.6 1995/04/22 10:37:17 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_7.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: pl_7.c,v 1.6 2002/05/31 05:11:37 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: pl_7.c,v 1.7 2002/12/09 11:21:32 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -171,7 +171,7 @@ Signal(char *fmt, struct ship *ship, ...)
 
 	va_start(ap, ship);
 	if (!done_curses) {
-		va_end(va);
+		va_end(ap);
 		return;
 	}
 	if (*fmt == '\7')
