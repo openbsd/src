@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.5 1997/05/30 07:48:26 deraadt Exp $
+.\"	$OpenBSD: sysctl.3,v 1.6 1997/06/13 13:30:51 deraadt Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -635,6 +635,9 @@ array specifies a value that is unknown.
 An attempt is made to set a read-only value.
 .It Bq Er EPERM
 A process without appropriate privilege attempts to set a value.
+.It Bq Er EPERM
+An attempt to change a value protected by the current kernel security
+level is made.
 .El
 .Sh FILES
 .Bl -tag -width <netinet/icmpXvar.h> -compact
