@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc-ns32k.c,v 1.3 1996/04/23 00:16:04 niklas Exp $	*/
+/*	$OpenBSD: tc-ns32k.c,v 1.4 1996/06/17 00:24:07 deraadt Exp $	*/
 
 /* ns32k.c  -- Assemble on the National Semiconductor 32k series
    Copyright (C) 1987, 1992 Free Software Foundation, Inc.
@@ -1885,7 +1885,7 @@ char ***vecP;
 #ifdef PIC
 	case 'K':
 		got_offset_size = 4;
-		break;
+		/*FALLTHROUGH*/
 	case 'k':
 		got_symbol = symbol_find_or_make("__GLOBAL_OFFSET_TABLE_");
 		break;
