@@ -28,69 +28,68 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getprotoent.c,v 1.5 2003/06/02 20:18:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: getprotoent.c,v 1.6 2004/10/17 20:24:23 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/socket.h>
+
+#include <errno.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#define	MAXALIASES	35
-
-static FILE *protof = NULL;
-static char line[BUFSIZ+1];
-static struct protoent proto;
-static char *proto_aliases[MAXALIASES];
-int _proto_stayopen;
-
 void
-setprotoent(f)
-	int f;
+setprotoent_r(int f, struct protoent_data *pd)
 {
-	if (protof == NULL)
-		protof = fopen(_PATH_PROTOCOLS, "r" );
+	if (pd->fp == NULL)
+		pd->fp = fopen(_PATH_PROTOCOLS, "r" );
 	else
-		rewind(protof);
-	_proto_stayopen |= f;
+		rewind(pd->fp);
+	pd->stayopen |= f;
 }
 
 void
-endprotoent()
+endprotoent_r(struct protoent_data *pd)
 {
-	if (protof) {
-		fclose(protof);
-		protof = NULL;
+	if (pd->fp) {
+		fclose(pd->fp);
+		pd->fp = NULL;
 	}
-	_proto_stayopen = 0;
+	free(pd->aliases);
+	pd->aliases = NULL;
+	pd->maxaliases = 0;
+	free(pd->line);
+	pd->line = NULL;
+	pd->stayopen = 0;
 }
 
 struct protoent *
-getprotoent()
+getprotoent_r(struct protoent *pe, struct protoent_data *pd)
 {
 	char *p, *cp, **q, *endp;
-	long l;
 	size_t len;
+	long l;
+	int serrno;
 
-	if (protof == NULL && (protof = fopen(_PATH_PROTOCOLS, "r" )) == NULL)
+	if (pd->fp == NULL && (pd->fp = fopen(_PATH_PROTOCOLS, "r" )) == NULL)
 		return (NULL);
 again:
-	if ((p = fgetln(protof, &len)) == NULL)
+	if ((p = fgetln(pd->fp, &len)) == NULL)
 		return (NULL);
+	if (len == 0 || *p == '#' || *p == '\n')
+		goto again;
 	if (p[len-1] == '\n')
 		len--;
-	if (len >= sizeof(line) || len == 0)
-		goto again;
-	p = memcpy(line, p, len);
-	line[len] = '\0';
-	if (*p == '#')
-		goto again;
-	if ((cp = strchr(p, '#')) != NULL)
-		*cp = '\0';
-	proto.p_name = p;
-	cp = strpbrk(p, " \t");
+	if ((cp = memchr(p, '#', len)) != NULL)
+		len = cp - p;
+	cp = realloc(pd->line, len + 1);
+	if (cp == NULL)
+		return (NULL);
+	pd->line = pe->p_name = memcpy(cp, p, len);
+	cp[len] = '\0';
+	cp = strpbrk(cp, " \t");
 	if (cp == NULL)
 		goto again;
 	*cp++ = '\0';
@@ -102,8 +101,18 @@ again:
 	l = strtol(cp, &endp, 10);
 	if (endp == cp || *endp != '\0' || l < 0 || l >= INT_MAX)
 		goto again;
-	proto.p_proto = l;
-	q = proto.p_aliases = proto_aliases;
+	pe->p_proto = l;
+	if (pd->aliases == NULL) {
+		pd->maxaliases = 5;
+		pd->aliases = malloc(pd->maxaliases * sizeof(char *));
+		if (pd->aliases == NULL) {
+			serrno = errno;
+			endprotoent_r(pd);
+			errno = serrno;
+			return (NULL);
+		}
+	}
+	q = pe->p_aliases = pd->aliases;
 	if (p != NULL) {
 		cp = p;
 		while (cp && *cp) {
@@ -111,13 +120,47 @@ again:
 				cp++;
 				continue;
 			}
-			if (q < &proto_aliases[MAXALIASES - 1])
-				*q++ = cp;
+			if (q == &pe->p_aliases[pd->maxaliases - 1]) {
+				p = realloc(pe->p_aliases,
+				    2 * pd->maxaliases * sizeof(char *));
+				if (p == NULL) {
+					serrno = errno;
+					endprotoent_r(pd);
+					errno = serrno;
+					return (NULL);
+				}
+				pd->maxaliases *= 2;
+				q = (char **)p + (q - pe->p_aliases);
+				pe->p_aliases = pd->aliases = (char **)p;
+			}
+			*q++ = cp;
 			cp = strpbrk(cp, " \t");
 			if (cp != NULL)
 				*cp++ = '\0';
 		}
 	}
 	*q = NULL;
-	return (&proto);
+	return (pe);
+}
+
+struct protoent_data _protoent_data;	/* shared with getproto{,name}.c */
+
+void
+setprotoent(int f)
+{
+	setprotoent_r(f, &_protoent_data);
+}
+
+void
+endprotoent(void)
+{
+	endprotoent_r(&_protoent_data);
+}
+
+struct protoent *
+getprotoent(void)
+{
+	static struct protoent proto;
+
+	return getprotoent_r(&proto, &_protoent_data);
 }

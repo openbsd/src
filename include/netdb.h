@@ -1,4 +1,4 @@
-/*	$OpenBSD: netdb.h,v 1.19 2004/04/14 07:06:15 itojun Exp $	*/
+/*	$OpenBSD: netdb.h,v 1.20 2004/10/17 20:24:23 millert Exp $	*/
 
 /*
  * ++Copyright++ 1980, 1983, 1988, 1993
@@ -237,11 +237,37 @@ struct rrsetinfo {
 	struct rdatainfo	*rri_sigs;	/* individual signatures */
 };
 
+#ifndef POSIX_SOURCE
+struct __sFILE;
+
+struct servent_data {
+	struct __sFILE *fp;
+	char **aliases;
+	int maxaliases;
+	int stayopen;
+	char *line;
+};
+
+struct protoent_data {
+	struct __sFILE *fp;
+	char **aliases;
+	int maxaliases;
+	int stayopen;
+	char *line;
+};
+#endif
+
 __BEGIN_DECLS
 void		endhostent(void);
 void		endnetent(void);
 void		endprotoent(void);
+#ifndef POSIX_SOURCE
+void		endprotoent_r(struct protoent_data *);
+#endif
 void		endservent(void);
+#ifndef POSIX_SOURCE
+void		endservent_r(struct servent_data *);
+#endif
 struct hostent	*gethostbyaddr(const char *, int, int);
 struct hostent	*gethostbyname(const char *);
 struct hostent	*gethostbyname2(const char *, int);
@@ -252,16 +278,36 @@ struct netent	*getnetent(void);
 struct protoent	*getprotobyname(const char *);
 struct protoent	*getprotobynumber(int);
 struct protoent	*getprotoent(void);
+#ifndef POSIX_SOURCE
+struct protoent	*getprotobyname_r(const char *, struct protoent *,
+		    struct protoent_data *);
+struct protoent	*getprotobynumber_r(int, struct protoent *,
+		    struct protoent_data *);
+struct protoent	*getprotoent_r(struct protoent *, struct protoent_data *);
+#endif
 struct servent	*getservbyname(const char *, const char *);
 struct servent	*getservbyport(int, const char *);
 struct servent	*getservent(void);
+#ifndef POSIX_SOURCE
+struct servent	*getservbyname_r(const char *, const char *, struct servent *,
+		    struct servent_data *);
+struct servent	*getservbyport_r(int, const char *, struct servent *,
+		    struct servent_data *);
+struct servent	*getservent_r(struct servent *, struct servent_data *);
+#endif
 void		herror(const char *);
 const char	*hstrerror(int);
 void		sethostent(int);
 /* void		sethostfile(const char *); */
 void		setnetent(int);
 void		setprotoent(int);
+#ifndef POSIX_SOURCE
+void		setprotoent_r(int, struct protoent_data *);
+#endif
 void		setservent(int);
+#ifndef POSIX_SOURCE
+void		setservent_r(int, struct servent_data *);
+#endif
 
 int		getaddrinfo(const char *, const char *,
 		    const struct addrinfo *, struct addrinfo **);

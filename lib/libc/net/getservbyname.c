@@ -28,27 +28,22 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getservbyname.c,v 1.7 2004/09/16 03:16:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: getservbyname.c,v 1.8 2004/10/17 20:24:23 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <netdb.h>
+#include <stdio.h>
 #include <string.h>
-#include "thread_private.h"
-
-extern int _serv_stayopen;
-
-_THREAD_PRIVATE_MUTEX(getservbyname_r);
 
 struct servent *
 getservbyname_r(const char *name, const char *proto, struct servent *se,
-    char *buf, int buflen)
+    struct servent_data *sd)
 {
 	struct servent *p;
 	char **cp;
 
-	_THREAD_PRIVATE_MUTEX_LOCK(getservbyname_r);
-	setservent(_serv_stayopen);
-	while ((p = getservent())) {
+	setservent_r(sd->stayopen, sd);
+	while ((p = getservent_r(se, sd))) {
 		if (strcmp(name, p->s_name) == 0)
 			goto gotname;
 		for (cp = p->s_aliases; *cp; cp++)
@@ -59,22 +54,18 @@ gotname:
 		if (proto == 0 || strcmp(p->s_proto, proto) == 0)
 			break;
 	}
-	if (!_serv_stayopen)
-		endservent();
-	_THREAD_PRIVATE_MUTEX_UNLOCK(getservbyname_r);
+	if (!sd->stayopen && sd->fp != NULL) {
+		fclose(sd->fp);
+		sd->fp = NULL;
+	}
 	return (p);
 }
 
 struct servent *
 getservbyname(const char *name, const char *proto)
 {
-	_THREAD_PRIVATE_KEY(getservbyname);
-	static char buf[4096];
-	char *bufp = (char*)_THREAD_PRIVATE(getservbyname, buf, NULL);
+	extern struct servent_data _servent_data;
+	static struct servent serv;
 
-	if (bufp == NULL)
-		return (NULL);
-	return getservbyname_r(name, proto, (struct servent*) bufp, 
-	    bufp + sizeof(struct servent), 
-	    sizeof buf - sizeof(struct servent) );
+	return (getservbyname_r(name, proto, &serv, &_servent_data));
 }

@@ -28,24 +28,33 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getproto.c,v 1.4 2003/06/02 20:18:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: getproto.c,v 1.5 2004/10/17 20:24:23 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <netdb.h>
-
-extern int _proto_stayopen;
+#include <stdio.h>
 
 struct protoent *
-getprotobynumber(proto)
-	register int proto;
+getprotobynumber_r(int num, struct protoent *pe, struct protoent_data *pd)
 {
-	register struct protoent *p;
+	struct protoent *p;
 
-	setprotoent(_proto_stayopen);
-	while ((p = getprotoent()))
-		if (p->p_proto == proto)
+	setprotoent_r(pd->stayopen, pd);
+	while ((p = getprotoent_r(pe, pd)))
+		if (p->p_proto == num)
 			break;
-	if (!_proto_stayopen)
-		endprotoent();
+	if (!pd->stayopen && pd->fp != NULL) {
+		(void)fclose(pd->fp);
+		pd->fp = NULL;
+	}
 	return (p);
+}
+
+struct protoent *
+getprotobynumber(int num)
+{
+	extern struct protoent_data _protoent_data;
+	static struct protoent proto;
+
+	return getprotobynumber_r(num, &proto, &_protoent_data);
 }
