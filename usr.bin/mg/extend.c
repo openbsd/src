@@ -1,9 +1,9 @@
-/*	$OpenBSD: extend.c,v 1.19 2002/02/13 03:21:12 vincent Exp $	*/
+/*	$OpenBSD: extend.c,v 1.20 2002/02/14 22:50:43 vincent Exp $	*/
 
 /*
  *	Extended (M-X) commands, rebinding, and	startup file processing.
  */
-
+#include "chrdef.h"
 #include "def.h"
 #include "kbd.h"
 #include "funmap.h"
@@ -715,14 +715,21 @@ excline(line)
 	if (*line != '\0') {
 		*line++ = '\0';
 		line = skipwhite(line);
-		if ((*line >= '0' && *line <= '9') || *line == '-') {
+		if (ISDIGIT(*line) || *line == '-') {
 			argp = line;
 			line = parsetoken(line);
 		}
 	}
 	if (argp != NULL) {
+		char *tmp;
 		f = FFARG;
-		n = atoi(argp);
+		errno = 0;
+		n = strtol(argp, &tmp, 10);
+		if (*tmp != '\0')
+			return FALSE;
+		if ((errno == ERANGE && (n == LONG_MAX || n == LONG_MIN)) ||
+		    (n > INT_MAX || n < INT_MIN))
+			return FALSE;
 	}
 	if ((fp = name_function(funcp)) == NULL) {
 		ewprintf("Unknown function: %s", funcp);
@@ -752,7 +759,8 @@ excline(line)
 		if (*argp != '"') {
 			if (*argp == '\'')
 				++argp;
-			if (!(lp = lalloc((int) (line - argp) + BINDEXT))) {
+			if ((lp = lalloc((int) (line - argp) + BINDEXT)) ==
+			    NULL) {
 				status = FALSE;
 				goto cleanup;
 			}

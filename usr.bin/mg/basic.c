@@ -1,4 +1,4 @@
-/*	$OpenBSD: basic.c,v 1.8 2002/02/13 22:36:58 vincent Exp $	*/
+/*	$OpenBSD: basic.c,v 1.9 2002/02/14 22:50:43 vincent Exp $	*/
 
 /*
  *		Basic cursor motion commands.
@@ -462,9 +462,21 @@ gotoline(f, n)
 	char   buf[32];
 
 	if (!(f & FFARG)) {
+		char *tmp;
+		
 		if ((s = ereply("Goto line: ", buf, sizeof(buf))) != TRUE)
 			return s;
-		n = atoi(buf);
+		errno = 0;
+		n = strtol(buf, &tmp, 10);
+		if (buf[0] == '\0' || *tmp != '\0') {
+			ewprintf("Invalid number");
+			return FALSE;
+		}
+		if ((errno == ERANGE && (n == LONG_MAX || n == LONG_MIN)) ||
+		    (n > INT_MAX || n < INT_MIN)) {
+			ewprintf("Out of range");
+			return FALSE;
+		}
 	}
 	if (n >= 0) {
 		clp = lforw(curbp->b_linep);	/* "clp" is first line */
