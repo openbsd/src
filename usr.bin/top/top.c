@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.10 2001/09/04 23:35:59 millert Exp $	*/
+/*	$OpenBSD: top.c,v 1.11 2001/09/05 06:25:39 deraadt Exp $	*/
 
 const char copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
 
@@ -609,7 +609,7 @@ restart:
 
 		/* set up arguments for select with timeout */
 		FD_ZERO(&readfds);
-		FD_SET(1, &readfds);		/* for standard input */
+		FD_SET(STDIN_FILENO, &readfds);	/* for standard input */
 		timeout.tv_sec  = delay;
 		timeout.tv_usec = 0;
 
@@ -658,7 +658,8 @@ restart:
 		}
 
 		/* wait for either input or the end of the delay period */
-		if (select(32, &readfds, (fd_set *)NULL, (fd_set *)NULL, &timeout) > 0)
+		if (select(STDIN_FILENO + 1, &readfds, (fd_set *)NULL,
+		  (fd_set *)NULL, &timeout) > 0)
 		{
 		    int newval;
 		    char *errmsg;
