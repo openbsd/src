@@ -1,4 +1,4 @@
-/*	$OpenBSD: inout.c,v 1.9 2005/03/15 10:28:38 otto Exp $	*/
+/*	$OpenBSD: inout.c,v 1.10 2005/03/27 18:10:42 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: inout.c,v 1.9 2005/03/15 10:28:38 otto Exp $";
+static const char rcsid[] = "$OpenBSD: inout.c,v 1.10 2005/03/27 18:10:42 otto Exp $";
 #endif /* not lint */
 
 #include <ssl/ssl.h>
@@ -27,7 +27,7 @@ static const char rcsid[] = "$OpenBSD: inout.c,v 1.9 2005/03/15 10:28:38 otto Ex
 
 #include "extern.h"
 
-#define MAX_CHARS_PER_LINE 68
+#define MAX_CHARS_PER_LINE 69
 
 static int	charCount;
 
@@ -155,7 +155,7 @@ static void
 putcharwrap(FILE *f, int ch)
 {
 	putc(ch, f);
-	if (++charCount > MAX_CHARS_PER_LINE) {
+	if (++charCount >= MAX_CHARS_PER_LINE) {
 		charCount = 0;
 		fputs("\\\n", f);
 	}
