@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rayreg.h,v 1.2 2000/10/17 04:24:27 mickey Exp $	*/
+/*	$OpenBSD: if_rayreg.h,v 1.3 2001/06/08 04:32:29 mickey Exp $	*/
 /*	$NetBSD: if_rayreg.h,v 1.3 2000/08/10 11:48:46 ad Exp $	*/
 
 /* 
@@ -31,6 +31,8 @@
  */
 
 #define	RAY_MAXSSIDLEN	32
+
+#pragma pack(1)
 
 /*
  * CCR registers 
@@ -224,7 +226,7 @@ struct ray_startup_params_head {
 /*48*/	u_int8_t	sp_country_code;
 /*49*/	u_int8_t	sp_hop_seq;
 /*4a*/	u_int8_t	sp_hop_seq_len;	/* no longer supported */
-} __attribute__((__packed__));
+};
 
 /* build 5 tail to the startup params */
 struct ray_startup_params_tail_5 {
@@ -257,7 +259,7 @@ struct ray_startup_params_tail_4 {
 	u_int8_t	sp_test_min_chan;
 	u_int8_t	sp_test_max_chan;
 	/* more bytes in build 5 */
-} __attribute__((__packed__));
+};
 
 /*
  * Parameter IDs for the update/report param commands and values if
@@ -410,9 +412,9 @@ struct ray_startup_params_tail_4 {
 #define	RAY_RCCS_LAST	127
 
 struct ray_cmd {
-	u_int8_t	c_status;		/* ccs generic header */
-	u_int8_t	c_cmd;			/* " */
-	u_int8_t	c_link;			/* " */
+	u_int8_t	c_status;	/* ccs generic header */
+	u_int8_t	c_cmd;		/* " */
+	u_int8_t	c_link;		/* " */
 };
 
 #define	RAY_CCS_STATUS_FREE		0x0
@@ -422,9 +424,9 @@ struct ray_cmd {
 
 /* RAY_CMD_UPDATE_PARAMS */
 struct ray_cmd_update {
-	u_int8_t	c_status;		/* ccs generic header */
-	u_int8_t	c_cmd;			/* " */
-	u_int8_t	c_link;			/* " */
+	u_int8_t	c_status;	/* ccs generic header */
+	u_int8_t	c_cmd;		/* " */
+	u_int8_t	c_link;		/* " */
 	u_int8_t	c_paramid;
 	u_int8_t	c_nparam;
 	u_int8_t	c_failcause;
@@ -432,9 +434,9 @@ struct ray_cmd_update {
 
 /* RAY_CMD_REPORT_PARAMS */
 struct ray_cmd_report {
-	u_int8_t	c_status;		/* ccs generic header */
-	u_int8_t	c_cmd;			/* " */
-	u_int8_t	c_link;			/* " */
+	u_int8_t	c_status;	/* ccs generic header */
+	u_int8_t	c_cmd;		/* " */
+	u_int8_t	c_link;		/* " */
 	u_int8_t	c_paramid;
 	u_int8_t	c_nparam;
 	u_int8_t	c_failcause;
@@ -443,25 +445,25 @@ struct ray_cmd_report {
 
 /* RAY_CMD_UPDATE_MCAST */
 struct ray_cmd_update_mcast {
-	u_int8_t	c_status;		/* ccs generic header */
-	u_int8_t	c_cmd;			/* " */
-	u_int8_t	c_link;			/* " */
+	u_int8_t	c_status;	/* ccs generic header */
+	u_int8_t	c_cmd;		/* " */
+	u_int8_t	c_link;		/* " */
 	u_int8_t	c_nmcast;
 };
 
 /* RAY_CMD_UPDATE_APM */
 struct ray_cmd_udpate_apm {
-	u_int8_t	c_status;		/* ccs generic header */
-	u_int8_t	c_cmd;			/* " */
-	u_int8_t	c_link;			/* " */
+	u_int8_t	c_status;	/* ccs generic header */
+	u_int8_t	c_cmd;		/* " */
+	u_int8_t	c_link;		/* " */
 	u_int8_t	c_mode;
 };
 
 /* RAY_CMD_START_NET and RAY_CMD_JOIN_NET */
 struct ray_cmd_net {
-	u_int8_t	c_status;		/* ccs generic header */
-	u_int8_t	c_cmd;			/* " */
-	u_int8_t	c_link;			/* " */
+	u_int8_t	c_status;	/* ccs generic header */
+	u_int8_t	c_cmd;		/* " */
+	u_int8_t	c_link;		/* " */
 	u_int8_t	c_upd_param;
 	u_int8_t	c_bss_id[ETHER_ADDR_LEN];
 	u_int8_t	c_inited;
@@ -479,18 +481,18 @@ struct ray_net_params {
 
 /* RAY_CMD_UPDATE_ASSOC */
 struct ray_cmd_update_assoc {
-	u_int8_t	c_status;		/* ccs generic header */
-	u_int8_t	c_cmd;			/* " */
-	u_int8_t	c_link;			/* " */
+	u_int8_t	c_status;	/* ccs generic header */
+	u_int8_t	c_cmd;		/* " */
+	u_int8_t	c_link;		/* " */
 	u_int8_t	c_astatus;
 	u_int8_t	c_aid[2];
 };
 
 /* RAY_CMD_TX_REQ */
 struct ray_cmd_tx {
-	u_int8_t	c_status;		/* ccs generic header */
-	u_int8_t	c_cmd;			/* " */
-	u_int8_t	c_link;			/* " */
+	u_int8_t	c_status;	/* ccs generic header */
+	u_int8_t	c_cmd;		/* " */
+	u_int8_t	c_link;		/* " */
 	u_int8_t	c_bufp[2];
 	u_int8_t	c_len[2];
 	u_int8_t	c_resv[5];
@@ -502,9 +504,9 @@ struct ray_cmd_tx {
 
 /* RAY_CMD_TX_REQ (for bulid 4) */
 struct ray_cmd_tx_4 {
-	u_int8_t	c_status;		/* ccs generic header */
-	u_int8_t	c_cmd;			/* " */
-	u_int8_t	c_link;			/* " */
+	u_int8_t	c_status;	/* ccs generic header */
+	u_int8_t	c_cmd;		/* " */
+	u_int8_t	c_link;		/* " */
 	u_int8_t	c_bufp[2];
 	u_int8_t	c_len[2];
 	u_int8_t	c_addr[ETHER_ADDR_LEN];
@@ -515,9 +517,9 @@ struct ray_cmd_tx_4 {
 
 /* RAY_CMD_DUMP_MEM */
 struct ray_cmd_dump_mem {
-	u_int8_t	c_status;		/* ccs generic header */
-	u_int8_t	c_cmd;			/* " */
-	u_int8_t	c_link;			/* " */
+	u_int8_t	c_status;	/* ccs generic header */
+	u_int8_t	c_cmd;		/* " */
+	u_int8_t	c_link;		/* " */
 	u_int8_t	c_memtype;
 	u_int8_t	c_memp[2];
 	u_int8_t	c_len;
@@ -525,16 +527,16 @@ struct ray_cmd_dump_mem {
 
 /* RAY_CMD_START_TIMER */
 struct ray_cmd_start_timer {
-	u_int8_t	c_status;		/* ccs generic header */
-	u_int8_t	c_cmd;			/* " */
-	u_int8_t	c_link;			/* " */
+	u_int8_t	c_status;	/* ccs generic header */
+	u_int8_t	c_cmd;		/* " */
+	u_int8_t	c_link;		/* " */
 	u_int8_t	c_duration[2];
 };
 
 struct ray_cmd_rx {
-	u_int8_t	c_status;		/* ccs generic header */
-	u_int8_t	c_cmd;			/* " */
-	u_int8_t	c_link;			/* " */
+	u_int8_t	c_status;	/* ccs generic header */
+	u_int8_t	c_cmd;		/* " */
+	u_int8_t	c_link;		/* " */
 	u_int8_t	c_bufp[2];	/* buffer pointer */
 	u_int8_t	c_len[2];	/* length */
 	u_int8_t	c_siglev;	/* signal level */
@@ -543,6 +545,8 @@ struct ray_cmd_rx {
 	u_int8_t	c_antenna;	/* antenna with best reception */
 	u_int8_t	c_updbss;	/* only 1 for beacon messages */
 };
+
+#pragma pack()
 
 #define	RAY_TX_PHY_SIZE	0x4
 
