@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.policy.5,v 1.20 2001/07/04 22:16:33 angelos Exp $
+.\" $OpenBSD: isakmpd.policy.5,v 1.21 2001/07/05 07:33:08 angelos Exp $
 .\" $EOM: isakmpd.policy.5,v 1.24 2000/11/23 12:55:25 niklas Exp $
 .\"
 .\" Copyright (c) 1999-2001, Angelos D. Keromytis.  All rights reserved.
@@ -150,7 +150,7 @@ characteristics:
 
 * The Licensees field can be an expression of passphrases used for
   authentication of the Main Mode exchanges, and/or public keys
-  (typically, X509 certificates), and/or X509 Canonical names.
+  (typically, X509 certificates), and/or X509 distinguished names.
 
 * The Conditions field contains an expression of attributes from the
   IPsec policy action set (see below as well as the keynote syntax man
@@ -459,11 +459,16 @@ When the corresponding filter_type specifies an address range or
 subnet, these are set to the upper and lower part of the address
 space separated by a dash ('-') character (if the type specifies a
 single address, they are set to that address).
+.Pp
 For FQDN and User FQDN types, these are set to the respective string.
 For Key ID, these are set to the hexadecimal representation of the
 associated byte string (lower-case letters used) if the Key ID payload
 contains non-printable characters.
 Otherwise, they are set to the respective string.
+.Pp
+For ASN1 DN, these are set to the text encoding of the Distinguished
+Name in the payload sent or received.
+The format is the same as that used in the Licensees field.
 .It remote_filter_port, local_filter_port, remote_id_port
 Set to the transport protocol port.
 .It remote_filter_proto, local_filter_proto, remote_id_proto
