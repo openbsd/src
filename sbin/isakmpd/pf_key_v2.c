@@ -1,5 +1,5 @@
-/*	$OpenBSD: pf_key_v2.c,v 1.12 1999/07/02 23:37:32 deraadt Exp $	*/
-/*	$EOM: pf_key_v2.c,v 1.16 1999/05/25 08:06:26 niklas Exp $	*/
+/*	$OpenBSD: pf_key_v2.c,v 1.13 1999/07/07 22:08:10 niklas Exp $	*/
+/*	$EOM: pf_key_v2.c,v 1.17 1999/07/07 19:17:31 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
