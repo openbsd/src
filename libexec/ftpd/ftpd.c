@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.123 2002/03/12 02:22:33 millert Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.124 2002/03/16 19:15:12 millert Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpd.c,v 1.123 2002/03/12 02:22:33 millert Exp $";
+static char rcsid[] = "$OpenBSD: ftpd.c,v 1.124 2002/03/16 19:15:12 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -97,6 +97,7 @@ static char rcsid[] = "$OpenBSD: ftpd.c,v 1.123 2002/03/12 02:22:33 millert Exp 
 #include <arpa/inet.h>
 #include <arpa/telnet.h>
 
+#include <bsd_auth.h>
 #include <ctype.h>
 #include <dirent.h>
 #include <err.h>
@@ -118,7 +119,6 @@ static char rcsid[] = "$OpenBSD: ftpd.c,v 1.123 2002/03/12 02:22:33 millert Exp 
 #include <unistd.h>
 #include <util.h>
 #include <utmp.h>
-#include <bsd_auth.h>
 
 #if defined(TCPWRAPPERS)
 #include <tcpd.h>
@@ -720,6 +720,7 @@ user(name)
 			askpasswd = 1;
 			lc = login_getclass(pw->pw_class);
 			if ((as = auth_open()) == NULL ||
+			    auth_setpwd(as, pw) != 0 ||
 			    auth_setoption(as, "FTPD_HOST", host) < 0) {
 				if (as) {
 					auth_close(as);
@@ -762,6 +763,7 @@ user(name)
 
 	/* Do pre-authentication setup. */
 	if (lc && ((as = auth_open()) == NULL ||
+	    (pw != NULL && auth_setpwd(as, pw) != 0) ||
 	    auth_setitem(as, AUTHV_STYLE, style) < 0 ||
 	    auth_setitem(as, AUTHV_NAME, name) < 0 ||
 	    auth_setitem(as, AUTHV_CLASS, class) < 0 ||
@@ -880,12 +882,14 @@ pass(passwd)
 	askpasswd = 0;
 	if (!guest) {		/* "ftp" is only account allowed no password */
 		authok = 0;
-		if (pw == NULL) {
+		if (pw == NULL || pw->pw_passwd[0] == '\0') {
 			useconds_t us;
 
 			/* Sleep between 1 and 3 seconds to emulate a crypt. */
 			us = arc4random() % 3000000;
 			usleep(us);
+			if (as != NULL)
+				auth_close(as);
 		} else {
 			authok = auth_userresponse(as, passwd, 0);
 			as = NULL;
