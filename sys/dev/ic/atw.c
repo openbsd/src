@@ -1,5 +1,5 @@
-/*	$OpenBSD: atw.c,v 1.2 2004/07/07 19:07:23 millert Exp $	*/
-/*	$NetBSD: atw.c,v 1.33 2004/06/23 08:05:01 dyoung Exp $	*/
+/*	$OpenBSD: atw.c,v 1.3 2004/07/07 19:11:27 millert Exp $	*/
+/*	$NetBSD: atw.c,v 1.35 2004/06/23 09:05:50 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.32 2004/06/06 04:38:33 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.35 2004/06/23 09:05:50 dyoung Exp $");
 #endif
 
 #include "bpfilter.h"
@@ -644,6 +644,10 @@ atw_attach(struct atw_softc *sc)
 		    ATW_BBPCTL_CCA_ACTLO;
 		break;
 	case ATW_BBPTYPE_MARVEL:
+		break;
+	case ATW_C_BBPTYPE_RFMD:
+		printf("%s: ADM8211C MAC/RFMD BBP not supported yet.\n",
+		    sc->sc_dev.dv_xname);
 		break;
 	}
 
