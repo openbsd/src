@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.10 2003/03/13 09:09:27 deraadt Exp $	*/
+/*	$OpenBSD: table.c,v 1.11 2003/04/17 07:39:24 pvalchev Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -1657,7 +1657,7 @@ rtswitch(struct rt_entry *rt,
 	 struct rt_spare *rts)
 {
 	struct rt_spare swap;
-	char label[10];
+	char *label;
 
 
 	/* Do not change permanent routes */
@@ -1675,10 +1675,14 @@ rtswitch(struct rt_entry *rt,
 		return;
 
 	swap = rt->rt_spares[0];
-	(void)snprintf(label, sizeof label, "Use #%d", (int)(rts - rt->rt_spares));
-	rtchange(rt, rt->rt_state & ~(RS_NET_SYN | RS_RDISC),
-		 rts->rts_gate, rts->rts_router, rts->rts_metric,
-		 rts->rts_tag, rts->rts_ifp, rts->rts_time, label);
+	if (asprintf(&label, "Use #%d", (int)(rts - rt->rt_spares)) == -1)
+		msglog("asprintf: cannot allocate memory");
+	else {
+		rtchange(rt, rt->rt_state & ~(RS_NET_SYN | RS_RDISC),
+		    rts->rts_gate, rts->rts_router, rts->rts_metric,
+		    rts->rts_tag, rts->rts_ifp, rts->rts_time, label);
+		free(label);
+	}
 	*rts = swap;
 }
 

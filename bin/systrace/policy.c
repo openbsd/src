@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.24 2003/02/18 13:14:43 jmc Exp $	*/
+/*	$OpenBSD: policy.c,v 1.25 2003/04/17 07:39:24 pvalchev Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -138,7 +138,6 @@ int
 systrace_initpolicy(char *file, char *path)
 {
 	gid_t groups[NGROUPS_MAX];
-	char gidbuf[10];
 	int i;
 
 	SPLAY_INIT(&policyroot);
@@ -155,10 +154,8 @@ systrace_initpolicy(char *file, char *path)
 			if ((groupnames[i] = strdup(gr->gr_name)) == NULL)
 				err(1, "strdup(%s)", gr->gr_name);
 		} else {
-			snprintf(gidbuf, sizeof(gidbuf), "%u",
-			    groups[i]);
-			if ((groupnames[i] = strdup(gidbuf)) == NULL)
-				err(1, "strdup(%s)", gidbuf);
+			if (asprintf(&groupnames[i], "%u", groups[i]) == -1)
+				errx(1, "asprintf: cannot allocate memory");
 		}
 	}
 
