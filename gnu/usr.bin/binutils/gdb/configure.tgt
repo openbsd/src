@@ -19,6 +19,7 @@ hppa*)			gdb_target_cpu=pa ;;
 i[34567]86*)		gdb_target_cpu=i386 ;;
 m68hc11*|m6811*)	gdb_target_cpu=m68hc11 ;;
 m68*)			gdb_target_cpu=m68k ;;
+m88*)			gdb_target_cpu=m88k ;;
 mips*)			gdb_target_cpu=mips ;;
 powerpc*)		gdb_target_cpu=powerpc ;;
 sparc*)			gdb_target_cpu=sparc ;;
@@ -134,6 +135,8 @@ m68*-*-os68k*)		gdb_target=os68k ;;
 # OBSOLETE m68*-*-sysv4*)		gdb_target=m68kv4 ;;
 m68*-*-uclinux*)	gdb_target=monitor ;;
 m68*-*-vxworks*)	gdb_target=vxworks68 ;;
+
+m88*-*-openbsd*)	gdb_target=obsd ;;
 
 mcore*-*-*)		gdb_target=mcore ;;
 
