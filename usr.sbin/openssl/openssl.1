@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.16 2003/10/04 22:38:58 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.17 2003/10/08 08:37:50 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -387,11 +387,11 @@ and
 for input and output passwords, respectively.
 These allow the password to be obtained from a variety of sources.
 Both of these options take a single argument whose format is described below.
-If no password argument is given and a password is required then the user is
-prompted to enter one: this will typically be read from the current
-terminal with echoing turned off.
+If no password argument is given and a password is required,
+then the user is prompted to enter one:
+this will typically be read from the current terminal with echoing turned off.
 .Bl -tag -width "fd:number"
-.It Ar pass Ns : Ns Ar password
+.It Ar pass : Ns Ar password
 The actual password is
 .Ar password .
 Since the password is visible to utilities
@@ -400,7 +400,7 @@ Since the password is visible to utilities
 under
 .Ux )
 this form should only be used where security is not important.
-.It Ar env Ns : Ns Ar var
+.It Ar env : Ns Ar var
 Obtain the password from the environment variable
 .Ar var .
 Since the environment of other processes is visible on certain platforms
@@ -409,7 +409,7 @@ Since the environment of other processes is visible on certain platforms
 under certain
 .Ux
 OSes) this option should be used with caution.
-.It Ar file Ns : Ns Ar pathname
+.It Ar file : Ns Ar pathname
 The first line of
 .Ar pathname
 is the password.
@@ -424,7 +424,7 @@ for the output password.
 .Ar pathname
 need not refer to a regular file:
 it could, for example, refer to a device or named pipe.
-.It Ar fd Ns : Ns Ar number
+.It Ar fd : Ns Ar number
 Read the password from the file descriptor
 .Ar number .
 This can be used to send the data via a pipe for example.
@@ -435,18 +435,18 @@ Read the password from standard input.
 .\" ASN1PARSE
 .\"
 .Sh ASN1PARSE
-.Nm "openssl asn1parse"
+.Nm openssl asn1parse
 .Bk -words
-.Op Fl inform Ar DER | PEM | TXT
-.Op Fl in Ar filename
-.Op Fl out Ar filename
-.Op Fl noout
-.Op Fl offset Ar number
-.Op Fl length Ar number
 .Op Fl i
 .Op Fl dump
+.Op Fl noout
 .Op Fl dlimit Ar number
+.Op Fl in Ar filename
+.Op Fl inform Ar DER | PEM | TXT
+.Op Fl length Ar number
+.Op Fl offset Ar number
 .Op Fl oid Ar filename
+.Op Fl out Ar filename
 .Op Fl strparse Ar offset
 .Ek
 .Pp
@@ -456,50 +456,51 @@ command is a diagnostic utility that can parse ASN.1 structures.
 It can also be used to extract data from ASN.1 formatted data.
 .Pp
 The options are as follows:
-.Bl -tag -width "XXXX"
-.It Fl inform Ar DER | PEM | TXT
-The input format.
-.Ar DER
-is binary format and
-.Ar PEM
-.Pq the default
-is base64 encoded.
-.Ar TXT
-is plain text.
-.It Fl in Ar filename
-The input file; default is standard input.
-.It Fl out Ar filename
-Output file to place the
-.Em DER
-encoded data into.
-If this option is not present then no data will be output.
-This is most useful when combined with the
-.Fl strparse
-option.
-.It Fl noout
-Don't output the parsed version of the input file.
-.It Fl offset Ar number
-Starting offset to begin parsing; default is start of file.
-.It Fl length Ar number
-Number of bytes to parse; default is until end of file.
-.It Fl i
-Indents the output according to the
-.Qq depth
-of the structures.
-.It Fl dump
-Dump unknown data in hex form.
+.Bl -tag -width "-noout"
 .It Fl dlimit Ar number
 Dump the first
 .Ar number
 bytes of unknown data in hex form.
+.It Fl dump
+Dump unknown data in hex form.
+.It Fl i
+Indents the output according to the
+.Qq depth
+of the structures.
+.It Fl in Ar filename
+The input file; default is standard input.
+.It Fl inform Ar DER | PEM | TXT
+The input format.
+.Ar DER
+.Pq Distinguished Encoding Rules
+is binary format and
+.Ar PEM
+.Pq Privacy Enhanced Mail ,
+the default, is base64 encoded.
+.Ar TXT
+is plain text.
+.It Fl length Ar number
+Number of bytes to parse; default is until end of file.
+.It Fl noout
+Don't output the parsed version of the input file.
+.It Fl offset Ar number
+Starting offset to begin parsing; default is start of file.
 .It Fl oid Ar filename
-A file containing additional OBJECT IDENTIFIERs
+A file containing additional object identifiers
 .Pq OIDs .
 The format of this file is described in the
 .Sx ASN1PARSE NOTES
 section below.
+.It Fl out Ar filename
+Output file to place the
+.Em DER
+encoded data into.
+If this option is not present, then no encoded data will be output.
+This is most useful when combined with the
+.Fl strparse
+option.
 .It Fl strparse Ar offset
-Parse the contents octets of the ASN.1 object starting at
+Parse the content octets of the ASN.1 object starting at
 .Ar offset .
 This option can be used multiple times to
 .Qq drill down
@@ -507,21 +508,21 @@ into a nested structure.
 .El
 .Sh ASN1PARSE OUTPUT
 The output will typically contain lines like this:
-.Bd -literal
-  0:d=0  hl=4 l= 681 cons: SEQUENCE
+.Bd -literal -offset 2n
+0:d=0  hl=4 l= 681 cons: SEQUENCE
 
 \&.....
 
-  229:d=3  hl=3 l= 141 prim: BIT STRING
-  373:d=2  hl=3 l= 162 cons: cont [ 3 ]
-  376:d=3  hl=3 l= 159 cons: SEQUENCE
-  379:d=4  hl=2 l=  29 cons: SEQUENCE
-  381:d=5  hl=2 l=   3 prim: OBJECT        :X509v3 Subject Key Identifier
-  386:d=5  hl=2 l=  22 prim: OCTET STRING
-  410:d=4  hl=2 l= 112 cons: SEQUENCE
-  412:d=5  hl=2 l=   3 prim: OBJECT        :X509v3 Authority Key Identifier
-  417:d=5  hl=2 l= 105 prim: OCTET STRING
-  524:d=4  hl=2 l=  12 cons: SEQUENCE
+229:d=3  hl=3 l= 141 prim: BIT STRING
+373:d=2  hl=3 l= 162 cons: cont [ 3 ]
+376:d=3  hl=3 l= 159 cons: SEQUENCE
+379:d=4  hl=2 l=  29 cons: SEQUENCE
+381:d=5  hl=2 l=   3 prim: OBJECT        :X509v3 Subject Key Identifier
+386:d=5  hl=2 l=  22 prim: OCTET STRING
+410:d=4  hl=2 l= 112 cons: SEQUENCE
+412:d=5  hl=2 l=   3 prim: OBJECT        :X509v3 Authority Key Identifier
+417:d=5  hl=2 l= 105 prim: OCTET STRING
+524:d=4  hl=2 l=  12 cons: SEQUENCE
 
 \&.....
 .Ed
@@ -536,7 +537,7 @@ gives the header length
 .Pq tag and length octets
 of the current type.
 .Cm l=XX
-gives the length of the contents octets.
+gives the length of the content octets.
 .Pp
 The
 .Fl i
@@ -544,18 +545,23 @@ option can be used to make the output more readable.
 .Pp
 Some knowledge of the ASN.1 structure is needed to interpret the output.
 .Pp
-In this example the BIT STRING at offset 229 is the certificate public key.
-The contents octets of this will contain the public key information.
+In this example, the BIT STRING at offset 229 is the certificate public key.
+The content octets of this will contain the public key information.
 This can be examined using the option
 .Fl strparse Cm 229
 to yield:
 .Bd -literal
-\&    0:d=0  hl=3 l= 137 cons: SEQUENCE
-\&    3:d=1  hl=3 l= 129 prim: INTEGER           :E5D21E1F5C8D208EA7A2166C7FAF9F6BDF2059669C60876DDB70840F1A5AAFA59699FE471F379F1DD6A487E7D5409AB6A88D4A9746E24B91D8CF55DB3521015460C8EDE44EE8A4189F7A7BE77D6CD3A9AF2696F486855CF58BF0EDF2B4068058C7A947F52548DDF7E15E96B385F86422BEA9064A3EE9E1158A56E4A6F47E5897
-\&  135:d=1  hl=2 l=   3 prim: INTEGER           :010001
+    0:d=0  hl=3 l= 137 cons: SEQUENCE
+    3:d=1  hl=3 l= 129 prim: INTEGER           :E5D21E1F5C8D208EA7A2166C7FA
+F9F6BDF2059669C60876DDB70840F1A5AAFA59699FE471F379F1DD6A487E7D5409AB6A88D4A
+9746E24B91D8CF55DB3521015460C8EDE44EE8A4189F7A7BE77D6CD3A9AF2696F486855CF58
+BF0EDF2B4068058C7A947F52548DDF7E15E96B385F86422BEA9064A3EE9
+  135:d=1  hl=2 l=   3 prim: INTEGER           :010001
 .Ed
 .Sh ASN1PARSE NOTES
-If an OID is not part of
+If an OID
+.Pq object identifier
+is not part of
 .Nm OpenSSL Ns Li 's
 internal table it will be represented in
 numerical form
@@ -563,7 +569,7 @@ numerical form
 The file passed to the
 .Fl oid
 option allows additional OIDs to be included.
-Each line consists of three columns;
+Each line consists of three columns:
 the first column is the OID in numerical format and should be followed by
 whitespace.
 The second column is the
@@ -575,7 +581,7 @@ The final column is the rest of the line and is the
 displays the long name.
 Example:
 .Pp
-.Dl \&"1.2.3.4	shortName	A long name\&"
+.Dl \&"1.2.3.4	shortname	A long name\&"
 .Sh ASN1PARSE BUGS
 There should be options to change the format of input lines.
 The output of some ASN.1 types is not well handled
