@@ -1,5 +1,5 @@
 %{
-/*      $OpenBSD: scan.l,v 1.5 2003/09/28 07:57:57 otto Exp $	*/
+/*      $OpenBSD: scan.l,v 1.6 2003/09/29 03:24:27 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: scan.l,v 1.5 2003/09/28 07:57:57 otto Exp $";
+static const char rcsid[] = "$OpenBSD: scan.l,v 1.6 2003/09/29 03:24:27 otto Exp $";
 #endif /* not lint */
 
 #include <err.h>
@@ -88,15 +88,12 @@ DIGIT		[0-9A-F]
 		}
 	\\\n[ \t]*	lineno++;
 	[^0-9A-F\.]	{
-			if (strcmp(strbuf, ".") == 0) {
-				yyerror("syntax error");
-				BEGIN(INITIAL);
-				REJECT;
-			}
+			BEGIN(INITIAL);
+			unput(yytext[0]);
+			if (strcmp(strbuf, ".") == 0)
+				return DOT;
 			else {
-				BEGIN(INITIAL);
 				yylval.str = strbuf;
-				unput(yytext[0]);
 				return NUMBER;
 			}
 		}

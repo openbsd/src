@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: bc.y,v 1.8 2003/09/28 07:57:57 otto Exp $	*/
+/*	$OpenBSD: bc.y,v 1.9 2003/09/29 03:24:27 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bc.y,v 1.8 2003/09/28 07:57:57 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bc.y,v 1.9 2003/09/29 03:24:27 otto Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -113,8 +113,8 @@ extern char *__progname;
 	const char	*str;
 }
 
-%token COMMA SEMICOLON LPAR RPAR LBRACE RBRACE LBRACKET RBRACKET
-%token ENDOFFILE NEWLINE
+%token COMMA SEMICOLON LPAR RPAR LBRACE RBRACE LBRACKET RBRACKET DOT
+%token NEWLINE
 %token <str> LETTER NUMBER STRING
 %token DEFINE BREAK QUIT LENGTH
 %token RETURN FOR IF WHILE SQRT
@@ -456,6 +456,9 @@ return_expression
 expression	: named_expression
 			{
 				$$ = node($1.load, END_NODE);
+			}
+		| DOT	{
+				$$ = node(cs("l."), END_NODE);
 			}
 		| NUMBER
 			{
