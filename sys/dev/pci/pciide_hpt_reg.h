@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_hpt_reg.h,v 1.5 2003/06/18 20:21:50 grange Exp $	*/
+/*	$OpenBSD: pciide_hpt_reg.h,v 1.6 2003/07/19 20:53:01 grange Exp $	*/
 /*      $NetBSD: pciide_hpt_reg.h,v 1.4 2001/07/23 14:55:27 bouyer Exp $       */
 
 /*
@@ -40,7 +40,7 @@
  */
 
 /*
- * The HPT366, HPT370 and HPT372 have the save vendor/device ID but not the
+ * The HPT366, HPT370 and HPT372 have the same vendor/device ID but not the
  * same revision.
  */
 #define HPT366_REV 0x01
