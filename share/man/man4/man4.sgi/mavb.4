@@ -1,4 +1,4 @@
-.\"   $OpenBSD: mavb.4,v 1.1 2005/01/02 22:05:57 kettenis Exp $
+.\"   $OpenBSD: mavb.4,v 1.2 2005/01/03 00:08:15 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Mark Kettenis
 .\"
@@ -31,8 +31,9 @@ driver provides support for the Moosehead A/V Board found on SGI
 machines.
 .Pp
 The Moosehead A/V Board uses an AD1843 codec that supports 8- and
-16-bit audio sample recording and playback at rates from 5 to 54 khz,
-with 1 Hz resolution.  The
+16-bit audio sample recording and playback at rates from 5 to 54 kHz,
+with 1 Hz resolution.
+The
 .Nm
 driver also makes it possible to control the playback volume by using
 the buttons on the front of the
@@ -52,9 +53,11 @@ The
 driver was written by Mark Kettenis.
 .Sh CAVEATS
 The analog mixer in the AD1843 codec does not provide a master volume
-control.  Therefore, the
+control.
+Therefore, the
 .Tn O2
 volume buttons only control the output volume of the DAC.
 .Sh BUGS
-Currently only sample rates up to 48 kHz are supported.  Recording is
-not implemented yet.  The second DAC on the AD1843 codec sits idle.
+Currently only sample rates up to 48 kHz are supported.
+Recording is not implemented yet.
+The second DAC on the AD1843 codec sits idle.
