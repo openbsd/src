@@ -22,6 +22,142 @@ and this permission notice may be included in translations approved by
 the Free Software Foundation instead of in the original English.
 
 
+File: cvs.info,  Node: Moving a repository,  Next: Remote repositories,  Prev: Backing up,  Up: Repository
+
+Moving a repository
+===================
+
+   Just as backing up the files in the repository is pretty much like
+backing up any other files, if you need to move a repository from one
+place to another it is also pretty much like just moving any other
+collection of files.
+
+   The main thing to consider is that working directories point to the
+repository.  The simplest way to deal with a moved repository is to
+just get a fresh working directory after the move.  Of course, you'll
+want to make sure that the old working directory had been checked in
+before the move, or you figured out some other way to make sure that
+you don't lose any changes.  If you really do want to reuse the existing
+working directory, it should be possible with manual surgery on the
+`CVS/Repository' files.  You can see *Note Working directory storage::,
+for information on the `CVS/Repository' and `CVS/Root' files, but
+unless you are sure you want to bother, it probably isn't worth it.
+
+
+File: cvs.info,  Node: Remote repositories,  Next: Read-only access,  Prev: Moving a repository,  Up: Repository
+
+Remote repositories
+===================
+
+   Your working copy of the sources can be on a different machine than
+the repository.  Using CVS in this manner is known as "client/server"
+operation.  You run CVS on a machine which can mount your working
+directory, known as the "client", and tell it to communicate to a
+machine which can mount the repository, known as the "server".
+Generally, using a remote repository is just like using a local one,
+except that the format of the repository name is:
+
+     :METHOD:USER@HOSTNAME:/path/to/repository
+
+   The details of exactly what needs to be set up depend on how you are
+connecting to the server.
+
+   If METHOD is not specified, and the repository name contains `:',
+then the default is `ext' or `server', depending on your platform; both
+are described in *Note Connecting via rsh::.
+
+* Menu:
+
+* Server requirements::         Memory and other resources for servers
+* Connecting via rsh::          Using the `rsh' program to connect
+* Password authenticated::      Direct connections using passwords
+* Kerberos authenticated::      Direct connections with kerberos
+
+
+File: cvs.info,  Node: Server requirements,  Next: Connecting via rsh,  Up: Remote repositories
+
+Server requirements
+-------------------
+
+   The quick answer to what sort of machine is suitable as a server is
+that requirements are modest--a server with 32M of memory or even less
+can handle a fairly large source tree with a fair amount of activity.
+
+   The real answer, of course, is more complicated.  The CVS server
+consists of two processes for each client that it is serving.  Memory
+consumption on the child process should remain fairly small.  Memory
+consumption on the parent process, particularly if the network
+connection to the client is slow, can be expected to grow to slightly
+more than the size of the sources in a single directory, or two
+megabytes, whichever is larger.
+
+   Multiplying the size of each CVS server by the number of servers
+which you expect to have active at one time should give an idea of
+memory requirements for the server.  For the most part, the memory
+consumed by the parent process probably can be swap space rather than
+physical memory.
+
+   Resource consumption for the client or the non-client/server CVS is
+even more modest--any machine with enough capacity to run the operating
+system in question should have little trouble.
+
+
+File: cvs.info,  Node: Connecting via rsh,  Next: Password authenticated,  Prev: Server requirements,  Up: Remote repositories
+
+Connecting with rsh
+-------------------
+
+   CVS uses the `rsh' protocol to perform these operations, so the
+remote user host needs to have a `.rhosts' file which grants access to
+the local user.
+
+   For example, suppose you are the user `mozart' on the local machine
+`toe.grunge.com', and the server machine is `chainsaw.yard.com'.  On
+chainsaw, put the following line into the file `.rhosts' in `bach''s
+home directory:
+
+     toe.grunge.com  mozart
+
+   Then test that `rsh' is working with
+
+     rsh -l bach chainsaw.yard.com 'echo $PATH'
+
+   Next you have to make sure that `rsh' will be able to find the
+server.  Make sure that the path which `rsh' printed in the above
+example includes the directory containing a program named `cvs' which
+is the server.  You need to set the path in `.bashrc', `.cshrc', etc.,
+not `.login' or `.profile'.  Alternately, you can set the environment
+variable `CVS_SERVER' on the client machine to the filename of the
+server you want to use, for example `/usr/local/bin/cvs-1.6'.
+
+   There is no need to edit `inetd.conf' or start a CVS server daemon.
+
+   There are two access methods that you use in CVSROOT for rsh.
+`:server:' specifies an internal rsh client, which is supported only by
+some CVS ports.  `:ext:' specifies an external rsh program.  By default
+this is `rsh' but you may set the `CVS_RSH' environment variable to
+invoke another program which can access the remote server (for example,
+`remsh' on HP-UX 9 because `rsh' is something different).  It must be a
+program which can transmit data to and from the server without modifying
+it; for example the Windows NT `rsh' is not suitable since it by
+default translates between CRLF and LF.  The OS/2 CVS port has a hack
+to pass `-b' to `rsh' to get around this, but since this could
+potentially cause problems for programs other than the standard `rsh',
+it may change in the future.  If you set `CVS_RSH' to `SSH' or some
+other rsh replacement, the instructions in the rest of this section
+concerning `.rhosts' and so on are likely to be inapplicable; consult
+the documentation for your rsh replacement.
+
+   Continuing our example, supposing you want to access the module
+`foo' in the repository `/usr/local/cvsroot/', on machine
+`chainsaw.yard.com', you are ready to go:
+
+     cvs -d :ext:bach@chainsaw.yard.com:/usr/local/cvsroot checkout foo
+
+   (The `bach@' can be omitted if the username is the same on both the
+local and remote hosts.)
+
+
 File: cvs.info,  Node: Password authenticated,  Next: Kerberos authenticated,  Prev: Connecting via rsh,  Up: Remote repositories
 
 Direct connection with password authentication
@@ -58,11 +194,16 @@ the following (all on a single line in `inetd.conf') should be
 sufficient:
 
      2401  stream  tcp  nowait  root  /usr/local/bin/cvs
-     cvs -b /usr/local/bin pserver
+     cvs -b /usr/local/bin --allow-root=/usr/cvsroot pserver
 
    The `-b' option specifies the directory which contains the RCS
 binaries on the server.  You could also use the `-T' option to specify
 a temporary directory.
+
+   The `--allow-root' option specifies the allowable CVSROOT directory.
+Clients which attempt to use a different CVSROOT directory will not be
+allowed to connect.  If there is more than one CVSROOT directory which
+you want to allow, repeat the option.
 
    If your `inetd' wants a symbolic service name instead of a raw port
 number, then put this in `/etc/services':
@@ -110,9 +251,9 @@ example:
      anyone:1sOp854gDF3DY:spwang
 
    Thus, someone remotely accessing the repository on
-`chainsaw.brickyard.com' with the following command:
+`chainsaw.yard.com' with the following command:
 
-     cvs -d :pserver:cvs@chainsaw.brickyard.com:/usr/local/cvsroot checkout foo
+     cvs -d :pserver:cvs@chainsaw.yard.com:/usr/local/cvsroot checkout foo
 
    would end up running the server under the system identity kfogel,
 assuming successful authentication.  However, the remote user would not
@@ -146,7 +287,7 @@ repository argument or the `CVSROOT' environment variable.
 
    `cvs login' is interactive -- it prompts for a password:
 
-     cvs -d :pserver:bach@chainsaw.brickyard.com:/usr/local/cvsroot login
+     cvs -d :pserver:bach@chainsaw.yard.com:/usr/local/cvsroot login
      CVS password:
 
    The password is checked with the server; if it is correct, the
@@ -156,7 +297,7 @@ incorrect.
    Once you have logged in, you can force CVS to connect directly to
 the server and authenticate with the stored password:
 
-     cvs -d :pserver:bach@chainsaw.brickyard.com:/usr/local/cvsroot checkout foo
+     cvs -d :pserver:bach@chainsaw.yard.com:/usr/local/cvsroot checkout foo
 
    The `:pserver:' is necessary because without it, CVS will assume it
 should use `rsh' to connect with the server (*note Connecting via
@@ -237,13 +378,13 @@ on the client.
 `kinit'); it must be a ticket which allows you to log into the server
 machine.  Then you are ready to go:
 
-     cvs -d :kserver:chainsaw.brickyard.com:/user/local/cvsroot checkout foo
+     cvs -d :kserver:chainsaw.yard.com:/user/local/cvsroot checkout foo
 
    Previous versions of CVS would fall back to a connection via rsh;
 this version will not do so.
 
 
-File: cvs.info,  Node: Read-only access,  Prev: Remote repositories,  Up: Repository
+File: cvs.info,  Node: Read-only access,  Next: Server temporary directory,  Prev: Remote repositories,  Up: Repository
 
 Read-only repository access
 ===========================
@@ -277,17 +418,20 @@ list of users.  Here is a sample `readers' file:
    (Don't forget the newline after the last user.)
 
    "Exclusion" means explicitly listing everyone who has *write*
-access--if the `$CVSROOT/CVSROOT/writers' file exists, then only those
-users listed in it have write access, and everyone else has read-only
-access (of course, even the read-only users still need to be listed in
-the `$CVSROOT/CVSROOT/passwd' file).  The `writers' file has the same
-format as the `readers' file.
+access--if the file
 
-   Note: if your `$CVSROOT/CVSROOT/passwd' file maps cvs users onto
-system users (*note Password authentication server::.), make sure you
-deny or grant read-only access using the *cvs* usernames, not the
-system usernames.  That is, the `readers' and `writers' files contain
-cvs usernames, which may or may not be the same as system usernames.
+     $CVSROOT/CVSROOT/writers
+
+exists, then only those users listed in it have write access, and
+everyone else has read-only access (of course, even the read-only users
+still need to be listed in the CVS `passwd' file).  The `writers' file
+has the same format as the `readers' file.
+
+   Note: if your CVS `passwd' file maps cvs users onto system users
+(*note Password authentication server::.), make sure you deny or grant
+read-only access using the *cvs* usernames, not the system usernames.
+That is, the `readers' and `writers' files contain cvs usernames, which
+may or may not be the same as system usernames.
 
    Here is a complete description of the server's behavior in deciding
 whether to grant read-only or read-write access:
@@ -302,6 +446,40 @@ full read-write access.
 This is resolved in the more conservative way, it being better to
 protect the repository too much than too little: such a user gets
 read-only access.
+
+
+File: cvs.info,  Node: Server temporary directory,  Prev: Read-only access,  Up: Repository
+
+Temporary directories for the server
+====================================
+
+   While running, the CVS server creates temporary directories.  They
+are named
+
+     cvs-servPID
+
+where PID is the process identification number of the server.  They are
+located in the directory specified by the `TMPDIR' environment variable
+(*note Environment variables::.), the `-T' global option (*note Global
+options::.), or failing that `/tmp'.
+
+   In most cases the server will remove the temporary directory when it
+is done, whether it finishes normally or abnormally.  However, there
+are a few cases in which the server does not or cannot remove the
+temporary directory, for example:
+
+   * If the server aborts due to an internal server error, it may
+     preserve the directory to aid in debugging
+
+   * If the server is killed in a way that it has no way of cleaning up
+     (most notably, `kill -KILL' on unix).
+
+   * If the system shuts down without an orderly shutdown, which tells
+     the server to clean up.
+
+   In cases such as this, you will need to manually remove the
+`cvs-servPID' directories.  As long as there is no server running with
+process identification number PID, it is safe to do so.
 
 
 File: cvs.info,  Node: Starting a new project,  Next: Multiple developers,  Prev: Repository,  Up: Top
@@ -583,10 +761,25 @@ revision' which is the revision that the file in the working directory
 derives from, and the `Repository revision' which is the latest
 revision in the repository for the branch in use.
 
-   For information on the options to `status', see *Note status::.  For
+   The options to `status' are listed in *Note Invoking CVS::.  For
 information on its `Sticky tag' and `Sticky date' output, see *Note
 Sticky tags::.  For information on its `Sticky options' output, see the
 `-k' option in *Note update options::.
+
+   You can think of the `status' and `update' commands as somewhat
+complementary.  You use `update' to bring your files up to date, and you
+can use `status' to give you some idea of what an `update' would do (of
+course, the state of the repository might change before you actually run
+`update').  In fact, if you want a command to display file status in a
+more brief format than is displayed by the `status' command, you can
+invoke
+
+     $ cvs -n -q update
+
+   The `-n' option means to not actually do the update, but merely to
+display statuses; the `-q' option avoids printing the name of each
+directory.  For more information on the `update' command, and these
+options, see *Note Invoking CVS::.
 
 
 File: cvs.info,  Node: Updating a file,  Next: Conflicts example,  Prev: File status,  Up: Multiple developers
@@ -858,7 +1051,7 @@ Telling CVS to watch certain files
    To enable the watch features, you first specify that certain files
 are to be watched.
 
- - Command: cvs watch on [`-l'] FILES ...
+ - Command: cvs watch on [`-lR'] FILES ...
      Specify that developers should run `cvs edit' before editing
      FILES.  CVS will create working copies of FILES read-only, to
      remind developers to run the `cvs edit' command before working on
@@ -869,16 +1062,18 @@ are to be watched.
      sets a default for files added in the future; this allows the user
      to set notification policies on a per-directory basis.  The
      contents of the directory are processed recursively, unless the
-     `-l' option is given.
+     `-l' option is given.  The `-R' option can be used to force
+     recursion if the `-l' option is set in `~/.cvsrc' (*note
+     ~/.cvsrc::.).
 
      If FILES is omitted, it defaults to the current directory.
 
 
- - Command: cvs watch off [`-l'] FILES ...
+ - Command: cvs watch off [`-lR'] FILES ...
      Do not provide notification about work on FILES.  CVS will create
      working copies of FILES read-write.
 
-     The FILES and `-l' arguments are processed as for `cvs watch on'.
+     The FILES and options are processed as for `cvs watch on'.
 
 
 
@@ -892,7 +1087,7 @@ various actions taken on a file.  You can do this without using `cvs
 watch on' for the file, but generally you will want to use `cvs watch
 on', so that developers use the `cvs edit' command.
 
- - Command: cvs watch add [`-a' ACTION] [`-l'] FILES ...
+ - Command: cvs watch add [`-a' ACTION] [`-lR'] FILES ...
      Add the current user to the list of people to receive notification
      of work done on FILES.
 
@@ -921,11 +1116,11 @@ on', so that developers use the `cvs edit' command.
      The `-a' option may appear more than once, or not at all.  If
      omitted, the action defaults to `all'.
 
-     The FILES and `-l' option are processed as for the `cvs watch'
+     The FILES and options are processed as for the `cvs watch'
      commands.
 
 
- - Command: cvs watch remove [`-a' ACTION] [`-l'] FILES ...
+ - Command: cvs watch remove [`-a' ACTION] [`-lR'] FILES ...
      Remove a notification request established using `cvs watch add';
      the arguments are the same.  If the `-a' option is present, only
      watches for the specified actions are removed.
@@ -987,7 +1182,7 @@ systems call a "get" or a "fetch".
      `commit'ted.  If the user does not wish to receive notifications,
      she should specify `-a none'.
 
-     The FILES and `-l' option are processed as for the `cvs watch'
+     The FILES and options are processed as for the `cvs watch'
      commands.
 
 
@@ -997,14 +1192,14 @@ files to their usual read-only state.  But if you instead decide to
 abandon your changes, or not to make any changes, you can use the `cvs
 unedit' command.
 
- - Command: cvs unedit [`-l'] FILES ...
+ - Command: cvs unedit [`-lR'] FILES ...
      Abandon work on the working files FILES, and revert them to the
      repository versions on which they are based.  CVS makes those
      FILES read-only for which users have requested notification using
      `cvs watch on'.  CVS notifies users who have requested `unedit'
      notification for any of FILES.
 
-     The FILES and `-l' option are processed as for the `cvs watch'
+     The FILES and options are processed as for the `cvs watch'
      commands.
 
      If watches are not in use, the `unedit' command probably does not
@@ -1025,198 +1220,22 @@ File: cvs.info,  Node: Watch information,  Next: Watches Compatibility,  Prev: E
 Information about who is watching and editing
 ---------------------------------------------
 
- - Command: cvs watchers [`-l'] FILES ...
+ - Command: cvs watchers [`-lR'] FILES ...
      List the users currently watching changes to FILES.  The report
      includes the files being watched, and the mail address of each
      watcher.
 
-     The FILES and `-l' arguments are processed as for the `cvs watch'
+     The FILES and options are processed as for the `cvs watch'
      commands.
 
 
- - Command: cvs editors [`-l'] FILES ...
+ - Command: cvs editors [`-lR'] FILES ...
      List the users currently working on FILES.  The report includes
      the mail address of each user, the time when the user began
      working with the file, and the host and path of the working
      directory containing the file.
 
-     The FILES and `-l' arguments are processed as for the `cvs watch'
+     The FILES and options are processed as for the `cvs watch'
      commands.
 
-
-
-File: cvs.info,  Node: Watches Compatibility,  Prev: Watch information,  Up: Watches
-
-Using watches with old versions of CVS
---------------------------------------
-
-   If you use the watch features on a repository, it creates `CVS'
-directories in the repository and stores the information about watches
-in that directory.  If you attempt to use CVS 1.6 or earlier with the
-repository, you get an error message such as
-
-     cvs update: cannot open CVS/Entries for reading: No such file or directory
-
-   and your operation will likely be aborted.  To use the watch
-features, you must upgrade all copies of CVS which use that repository
-in local or server mode.  If you cannot upgrade, use the `watch off' and
-`watch remove' commands to remove all watches, and that will restore
-the repository to a state which CVS 1.6 can cope with.
-
-
-File: cvs.info,  Node: Choosing a model,  Prev: Watches,  Up: Multiple developers
-
-Choosing between reserved or unreserved checkouts
-=================================================
-
-   Reserved and unreserved checkouts each have pros and cons.  Let it
-be said that a lot of this is a matter of opinion or what works given
-different groups' working styles, but here is a brief description of
-some of the issues.  There are many ways to organize a team of
-developers.  CVS does not try to enforce a certain organization.  It is
-a tool that can be used in several ways.
-
-   Reserved checkouts can be very counter-productive.  If two persons
-want to edit different parts of a file, there may be no reason to
-prevent either of them from doing so.  Also, it is common for someone
-to take out a lock on a file, because they are planning to edit it, but
-then forget to release the lock.
-
-   People, especially people who are familiar with reserved checkouts,
-often wonder how often conflicts occur if unreserved checkouts are
-used, and how difficult they are to resolve.  The experience with many
-groups is that they occur rarely and usually are relatively
-straightforward to resolve.
-
-   The rarity of serious conflicts may be surprising, until one realizes
-that they occur only when two developers disagree on the proper design
-for a given section of code; such a disagreement suggests that the team
-has not been communicating properly in the first place.  In order to
-collaborate under *any* source management regimen, developers must
-agree on the general design of the system; given this agreement,
-overlapping changes are usually straightforward to merge.
-
-   In some cases unreserved checkouts are clearly inappropriate.  If no
-merge tool exists for the kind of file you are managing (for example
-word processor files or files edited by Computer Aided Design
-programs), and it is not desirable to change to a program which uses a
-mergeable data format, then resolving conflicts is going to be
-unpleasant enough that you generally will be better off to simply avoid
-the conflicts instead, by using reserved checkouts.
-
-   The watches features described above in *Note Watches:: can be
-considered to be an intermediate model between reserved checkouts and
-unreserved checkouts.  When you go to edit a file, it is possible to
-find out who else is editing it.  And rather than having the system
-simply forbid both people editing the file, it can tell you what the
-situation is and let you figure out whether it is a problem in that
-particular case or not.  Therefore, for some groups it can be
-considered the best of both the reserved checkout and unreserved
-checkout worlds.
-
-
-File: cvs.info,  Node: Revisions and branches,  Next: Merging,  Prev: Multiple developers,  Up: Top
-
-Revisions and branches
-**********************
-
-   For many uses of CVS, one doesn't need to worry too much about
-revision numbers; CVS assigns numbers such as `1.1', `1.2', and so on,
-and that is all one needs to know.  However, some people prefer to have
-more knowledge and control concerning how CVS assigns revision numbers.
-
-   If one wants to keep track of a set of revisions involving more than
-one file, such as which revisions went into a particular release, one
-uses a "tag", which is a symbolic revision which can be assigned to a
-numeric revision in each file.
-
-   Another useful feature, especially when maintaining several releases
-of a software product at once, is the ability to make branches on the
-revision tree.
-
-* Menu:
-
-* Revision numbers::            The meaning of a revision number
-* Versions revisions releases::  Terminology used in this manual
-* Assigning revisions::         Assigning revisions
-* Tags::                        Tags-Symbolic revisions
-* Branches motivation::         What branches are good for
-* Creating a branch::           Creating a branch
-* Sticky tags::                 Sticky tags
-* Magic branch numbers::        Magic branch numbers
-
-
-File: cvs.info,  Node: Revision numbers,  Next: Versions revisions releases,  Up: Revisions and branches
-
-Revision numbers
-================
-
-   Each version of a file has a unique "revision number".  Revision
-numbers look like `1.1', `1.2', `1.3.2.2' or even `1.3.2.2.4.5'.  A
-revision number always has an even number of period-separated decimal
-integers.  By default revision 1.1 is the first revision of a file.
-Each successive revision is given a new number by increasing the
-rightmost number by one.  The following figure displays a few
-revisions, with newer revisions to the right.
-
-            +-----+    +-----+    +-----+    +-----+    +-----+
-            ! 1.1 !----! 1.2 !----! 1.3 !----! 1.4 !----! 1.5 !
-            +-----+    +-----+    +-----+    +-----+    +-----+
-
-   CVS is not limited to linear development.  The "revision tree" can
-be split into "branches", where each branch is a self-maintained line of
-development.  Changes made on one branch can easily be moved back to
-the main trunk.
-
-   Each branch has a "branch number", consisting of an odd number of
-period-separated decimal integers.  The branch number is created by
-appending an integer to the revision number where the corresponding
-branch forked off.  Having branch numbers allows more than one branch
-to be forked off from a certain revision.
-
-   All revisions on a branch have revision numbers formed by appending
-an ordinal number to the branch number.  The following figure
-illustrates branching with an example.
-
-                                                          +-------------+
-                               Branch 1.2.2.3.2 ->        ! 1.2.2.3.2.1 !
-                                                        / +-------------+
-                                                       /
-                                                      /
-                      +---------+    +---------+    +---------+    +---------+
-     Branch 1.2.2 -> _! 1.2.2.1 !----! 1.2.2.2 !----! 1.2.2.3 !----! 1.2.2.4 !
-                    / +---------+    +---------+    +---------+    +---------+
-                   /
-                  /
-     +-----+    +-----+    +-----+    +-----+    +-----+
-     ! 1.1 !----! 1.2 !----! 1.3 !----! 1.4 !----! 1.5 !      <- The main trunk
-     +-----+    +-----+    +-----+    +-----+    +-----+
-                     !
-                     !
-                     !   +---------+    +---------+    +---------+
-     Branch 1.2.4 -> +---! 1.2.4.1 !----! 1.2.4.2 !----! 1.2.4.3 !
-                         +---------+    +---------+    +---------+
-
-   The exact details of how the branch number is constructed is not
-something you normally need to be concerned about, but here is how it
-works: When CVS creates a branch number it picks the first unused even
-integer, starting with 2.  So when you want to create a branch from
-revision 6.4 it will be numbered 6.4.2.  All branch numbers ending in a
-zero (such as 6.4.0) are used internally by CVS (*note Magic branch
-numbers::.).  The branch 1.1.1 has a special meaning.  *Note Tracking
-sources::.
-
-
-File: cvs.info,  Node: Versions revisions releases,  Next: Assigning revisions,  Prev: Revision numbers,  Up: Revisions and branches
-
-Versions, revisions and releases
-================================
-
-   A file can have several versions, as described above.  Likewise, a
-software product can have several versions.  A software product is
-often given a version number such as `4.1.1'.
-
-   Versions in the first sense are called "revisions" in this document,
-and versions in the second sense are called "releases".  To avoid
-confusion, the word "version" is almost never used in this document.
 

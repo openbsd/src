@@ -9,7 +9,7 @@ CVS Client/Server
 
    This document describes the client/server protocol used by CVS.  It
 does not describe how to use or administer client/server CVS; see the
-regular CVS manual for that.  This is version 1.9.8 of the protocol
+regular CVS manual for that.  This is version 1.9.10 of the protocol
 specification--*Note Introduction::, for more on what this version
 number means.
 
@@ -57,7 +57,7 @@ you are reading now) of this document, `cvsclient.texi', can be found
 at the usual GNU FTP sites, with a filename such as
 `cvs-VERSION.tar.gz'.
 
-   This is version 1.9.8 of the protocol specification.  This version
+   This is version 1.9.10 of the protocol specification.  This version
 number is intended only to aid in distinguishing different versions of
 this specification.  Although the specification is currently maintained
 in conjunction with the CVS implementation, and carries the same
@@ -137,6 +137,15 @@ Notes on the Protocol
      the latest nightly re-sync, then it would read what it needs to
      from the master).
 
+     It isn't clear exactly how this should relate to a more general
+     multisite feature (in which one can modify the local copy even if
+     the network is down between the local and the master, and then
+     they get reconciled by a potentially manual process).  Another
+     variant of a multisite feature would be where version history is
+     cached to speed up operations such as `cvs diff', but in which
+     checkins still must be checked in to all sites, or to a master
+     site.
+
    * The current procedure for `cvs update' is highly sub-optimal if
      there are many modified files.  One possible alternative would be
      to have the client send a first request without the contents of
@@ -147,6 +156,37 @@ Notes on the Protocol
      while waiting for the network.  Perhaps this whole thing is
      irrelevant if client-side repositories are implemented, and the
      rcsmerge is done by the client.
+
+   * The fact that `pserver' requires an extra network turnaround in
+     order to perform authentication would be nice to avoid.  This
+     relates to the issue of reporting errors; probably the clean
+     solution is to defer the error until the client has issued a
+     request which expects a response.  To some extent this might
+     relate to the next item (in terms of how easy it is to skip a
+     whole bunch of requests until we get to one that expects a
+     response).  I know that the kerberos code doesn't wait in this
+     fashion, but that probably can cause network deadlocks and perhaps
+     future problems running over a transport which is more transaction
+     oriented than TCP.  On the other hand I'm not sure it is wise to
+     make the client conduct a lengthy upload only to find there is an
+     authentication failure.
+
+   * The protocol uses an extra network turnaround for protocol
+     negotiation (`valid-requests').  It might be nice to avoid this by
+     having the client be able to send requests and tell the server to
+     ignore them if they are unrecognized (different requests could
+     produce a fatal error if unrecognized).  To do this there should
+     be a standard syntax for requests.  For example, perhaps all
+     future requests should be a single line, with mechanisms analogous
+     to `Argumentx', or several requests working together, to provide
+     greater amounts of information.  Or there might be a standard
+     mechanism for counted data (analogous to that used by `Modified')
+     or continuation lines (like a generalized `Argumentx').  It would
+     be useful to compare what HTTP is planning in this area; last I
+     looked they were contemplating something called Protocol Extension
+     Protocol but I haven't looked at the relevant IETF documents in
+     any detail.  Obviously, we want something as simple as possible
+     (but no simpler).
 
 
 File: cvsclient.info,  Node: Connection and Authentication,  Next: Protocol,  Prev: Protocol Notes,  Up: Top
@@ -198,6 +238,18 @@ pserver
      replaced with `BEGIN VERIFICATION REQUEST', `END AUTH REQUEST' is
      replaced with `END VERIFICATION REQUEST', and upon receipt of `I
      LOVE YOU' the connection is closed rather than continuing.
+
+future possibilities
+     There are a nearly unlimited number of ways to connect and
+     authenticate.  One might want to allow access based on IP address
+     (similar to the usual rsh protocol but with different/no
+     restrictions on ports < 1024), to adopt mechanisms such as the
+     General Security Service (GSS) API or Pluggable Authentication
+     Modules (PAM), to allow users to run their own servers under their
+     own usernames without root access, or any number of other
+     possibilities.  The way to add future mechanisms, for the most
+     part, should be to continue to use port 2401, but to use different
+     strings in place of `BEGIN AUTH REQUEST'.
 
 
 File: cvsclient.info,  Node: Protocol,  Prev: Connection and Authentication,  Up: Top
@@ -466,6 +518,12 @@ capital letter.
      for a date.  The remainder of TAGSPEC contains the actual tag or
      date.
 
+     The server should remember `Static-directory' and `Sticky'
+     requests for a particular directory; the client need not resend
+     them each time it sends a `Directory' request for a given
+     directory.  However, the server is not obliged to remember them
+     beyond the context of a single command.
+
 `Checkin-prog PROGRAM \n'
      Response expected: no.  Tell the server that the directory most
      recently specified with `Directory' has a checkin program PROGRAM.
@@ -511,14 +569,14 @@ capital letter.
      `log', and `annotate'.
 
      For the `status' command, one can send `Is-modified' but if the
-     client is using imperfect mechanisms such a timestamps to determine
-     whether to consider a file modified, then the behavior will be
-     different.  That is, if one sends `Modified', then the server will
-     actually compare the contents of the file sent and the one it
-     derives from to determine whether the file is genuinely modified.
-     But if one sends `Is-modified', then the server takes the client's
-     word for it.  A similar situation exists for `tag', if the `-c'
-     option is specified.
+     client is using imperfect mechanisms such as timestamps to
+     determine whether to consider a file modified, then the behavior
+     will be different.  That is, if one sends `Modified', then the
+     server will actually compare the contents of the file sent and the
+     one it derives from to determine whether the file is genuinely
+     modified.  But if one sends `Is-modified', then the server takes
+     the client's word for it.  A similar situation exists for `tag',
+     if the `-c' option is specified.
 
      Commands for which `Modified' is necessary are `co', `ci',
      `update', and `import'.
@@ -683,7 +741,6 @@ capital letter.
 `tag \n'
 `status \n'
 `log \n'
-`add \n'
 `remove \n'
 `admin \n'
 `export \n'
@@ -739,6 +796,73 @@ capital letter.
      the client knows should be ignored are not sent; the server must
      still process the CVSROOT/cvsignore file unless -I ! is sent).  A
      log message must have been specified with a `-m' argument.
+
+`add \n'
+     Response expected: yes.  Add a file or directory.  This uses any
+     previous `Argument', `Directory', `Entry', or `Modified' requests,
+     if they have been sent.  The last `Directory' sent specifies the
+     working directory at the time of the operation.
+
+     To add a directory, send the directory to be added using
+     `Directory' and `Argument' requests.  For example:
+
+          C: Root /u/cvsroot
+          . . .
+          C: Argument nsdir
+          C: Directory nsdir
+          C: /u/cvsroot/1dir/nsdir
+          C: Directory .
+          C: /u/cvsroot/1dir
+          C: add
+          S: M Directory /u/cvsroot/1dir/nsdir added to the repository
+          S: ok
+
+     You will notice that the server does not signal to the client in
+     any particular way that the directory has been successfully added.
+     The client is supposed to just assume that the directory has been
+     added and update its records accordingly.  Note also that adding a
+     directory is immediate; it does not wait until a `ci' request as
+     files do.
+
+     To add a file, send the file to be added using a `Modified'
+     request.  For example:
+
+          C: Argument nfile
+          C: Directory .
+          C: /u/cvsroot/1dir
+          C: Modified nfile
+          C: u=rw,g=r,o=r
+          C: 6
+          C: hello
+          C: add
+          S: E cvs server: scheduling file `nfile' for addition
+          S: Mode u=rw,g=r,o=r
+          S: Checked-in ./
+          S: /u/cvsroot/1dir/nfile
+          S: /nfile/0///
+          S: E cvs server: use 'cvs commit' to add this file permanently
+          S: ok
+
+     Note that the file has not been added to the repository; the only
+     effect of a successful `add' request, for a file, is to supply the
+     client with a new entries line containing `0' to indicate an added
+     file.  In fact, the client probably could perform this operation
+     without contacting the server, although using `add' does cause the
+     server to perform a few more checks.
+
+     The client sends a subsequent `ci' to actually add the file to the
+     repository.
+
+     Another quirk of the `add' request is that a pathname specified in
+     an `Argument' request cannot contain `/'.  There is no good reason
+     for this restriction, and it could be eliminated if someone took
+     the effort to rewrite the `add' code in the CVS server to not have
+     it.  But in the meantime, the way to comply with it is to ensure
+     that all `Directory' requests for `add' (except those used to add
+     directories, as described above), use `.' for LOCAL-DIRECTORY.
+     Specifying another string for LOCAL-DIRECTORY may not get an
+     error, but it will get you strange `Checked-in' responses, until
+     servers are fixed to send the correct responses.
 
 `watch-on \n'
 `watch-off \n'
@@ -909,22 +1033,49 @@ the response is over.
      thus letting the user clean it up as desired.  But another answer,
      such as until the next commit, might be preferable.
 
-`Patched PATHNAME \n'
+`Rcs-diff PATHNAME \n'
      This is just like `Updated' and takes the same additional data,
      with the one difference that instead of sending a new copy of the
-     file, the server sends a patch.  This patch is produced by `diff
-     -c' for CVS 1.6 and later (see POSIX.2 for a description of this
-     format), or `diff -u' for previous versions of CVS; clients are
-     encouraged to accept either format.  The client must apply this
-     patch to the existing file.  This will only be used when the
-     client has an exact copy of an earlier revision of a file.  This
-     response is only used if the `update' command is given the `-u'
-     argument.
+     file, the server sends an RCS change text.  This change text is
+     produced by `diff -n' (the GNU diff `-a' option may also be used).
+     The client must apply this change text to the existing file.
+     This will only be used when the client has an exact copy of an
+     earlier revision of a file.  This response is only used if the
+     `update' command is given the `-u' argument.
+
+`Patched PATHNAME \n'
+     This is just like `Rcs-diff' and takes the same additional data,
+     except that it sends a standard patch rather than an RCS change
+     text.  The patch is produced by `diff -c' for CVS 1.6 and later
+     (see POSIX.2 for a description of this format), or `diff -u' for
+     previous versions of CVS; clients are encouraged to accept either
+     format.  Like `Rcs-diff', this response is only used if the
+     `update' command is given the `-u' argument.
+
+     The `Patched' response is deprecated in favor of the `Rcs-diff'
+     response.  However, older clients (CVS 1.9 and earlier) only
+     support `Patched'.
 
 `Mode MODE \n'
      This MODE applies to the next file mentioned in `Checked-in'.  It
      does not apply to any request which follows a `Checked-in',
      `New-entry', `Updated', `Merged', or `Patched' response.
+
+`Mod-time TIME \n'
+     Set the modification time of the next file sent to TIME.  Next
+     file sent means sent by `Checked-in', `Created', etc.  The TIME is
+     in the format specified by RFC822 as modified by RFC1123.  The
+     server may specify any timezone it chooses; clients will want to
+     convert that to their own timezone as appropriate.  An example of
+     this format is:
+
+          26 May 1997 13:01:40 -0400
+
+     There is no requirement that the client and server clocks be
+     synchronized.  The server just sends its recommendation for a
+     timestamp (based on its own clock, presumably), and the client
+     should just believe it (this means that the time might be in the
+     future, for example).
 
 `Checksum CHECKSUM\n'
      The CHECKSUM applies to the next file sent over via `Updated',
@@ -940,6 +1091,12 @@ the response is over.
      Additional data: NEWNAME \n.  Copy file PATHNAME to NEWNAME in the
      same directory where it already is.  This does not affect
      `CVS/Entries'.
+
+     This can optionally be implemented as a rename instead of a copy.
+     The only use for it which currently has been identified is prior
+     to a `Merged' response as described under `Merged'.  Clients can
+     probably assume that is how it is being used, if they want to worry
+     about things like how long to keep the NEWNAME file around.
 
 `Removed PATHNAME \n'
      The file has been removed from the repository (this is the case
@@ -1042,7 +1199,7 @@ client sends them or `S: ' to indicate the server sends them.
 protocol negotiation.  In actual practice the lists of valid responses
 and requests would be longer.
 
-     C: Root /home/kingdon/testing/cvsroot
+     C: Root /u/cvsroot
      C: Valid-responses ok error Checked-in M E
      C: valid-requests
      S: Valid-requests Root Directory Entry Modified Argument Argumentx ci co
@@ -1056,7 +1213,7 @@ directory rather than a module.
 
      C: Argument supermunger
      C: Directory .
-     C: /home/kingdon/testing/cvsroot
+     C: /u/cvsroot
      C: expand-modules
 
    The server replies that the `supermunger' module expands to the
@@ -1073,23 +1230,23 @@ directory on the client.
      C: Argument -N
      C: Argument supermunger
      C: Directory .
-     C: /home/kingdon/testing/cvsroot
+     C: /u/cvsroot
      C: co
 
    The server replies with the requested files.  In this example, there
-is only one, `mungeall.c'.  The `Clear-sticky' and
+is only one file, `mungeall.c'.  The `Clear-sticky' and
 `Clear-static-directory' requests are sent by the current
 implementation but they have no effect because the default is for those
 settings to be clear when a directory is newly created.
 
      S: Clear-sticky supermunger/
-     S: /home/kingdon/testing/cvsroot/supermunger/
+     S: /u/cvsroot/supermunger/
      S: Clear-static-directory supermunger/
-     S: /home/kingdon/testing/cvsroot/supermunger/
+     S: /u/cvsroot/supermunger/
      S: E cvs server: Updating supermunger
      S: M U supermunger/mungeall.c
      S: Created supermunger/
-     S: /home/kingdon/testing/cvsroot/supermunger/mungeall.c
+     S: /u/cvsroot/supermunger/mungeall.c
      S: /mungeall.c/1.1///
      S: u=rw,g=r,o=r
      S: 26
@@ -1106,8 +1263,9 @@ back in.  The client sends arguments to specify the log message and file
 to check in:
 
      C: Argument -m
-     C: Argument Well, you see, it took me hours and hours to find this typo and I
-     C: Argumentx searched and searched and eventually had to ask John for help.
+     C: Argument Well, you see, it took me hours and hours to find
+     C: Argumentx this typo and I searched and searched and eventually
+     C: Argumentx had to ask John for help.
      C: Argument mungeall.c
 
    It also sends information about the contents of the working
@@ -1118,7 +1276,7 @@ the server should print filenames in `M' and `E' responses relative to
 that directory.
 
      C: Directory .
-     C: /home/kingdon/testing/cvsroot/supermunger
+     C: /u/cvsroot/supermunger
      C: Entry /mungeall.c/1.1///
      C: Modified mungeall.c
      C: u=rw,g=r,o=r
@@ -1133,12 +1291,12 @@ of the data just sent):
    And the server tells the client that the checkin succeeded:
 
      S: M Checking in mungeall.c;
-     S: E /home/kingdon/testing/cvsroot/supermunger/mungeall.c,v  <--  mungeall.c
+     S: E /u/cvsroot/supermunger/mungeall.c,v  <--  mungeall.c
      S: E new revision: 1.2; previous revision: 1.1
      S: E done
      S: Mode u=rw,g=r,o=r
      S: Checked-in ./
-     S: /home/kingdon/testing/cvsroot/supermunger/mungeall.c
+     S: /u/cvsroot/supermunger/mungeall.c
      S: /mungeall.c/1.2///
      S: ok
 
@@ -1184,20 +1342,20 @@ will send `UseUnchanged' if it is supported.
 
 Tag Table:
 Node: Top117
-Node: Introduction885
-Node: Goals3419
-Node: Protocol Notes5829
-Node: Connection and Authentication7507
-Node: Protocol10302
-Node: Entries Lines10910
-Node: Modes11618
-Node: Filenames13141
-Node: File transmissions14443
-Node: Strings16001
-Node: Requests16687
-Node: Responses38060
-Node: Example49374
-Node: Requirements53301
-Node: Obsolete54209
+Node: Introduction886
+Node: Goals3421
+Node: Protocol Notes5831
+Node: Connection and Authentication9916
+Node: Protocol13388
+Node: Entries Lines13996
+Node: Modes14704
+Node: Filenames16227
+Node: File transmissions17529
+Node: Strings19087
+Node: Requests19773
+Node: Responses44240
+Node: Example57174
+Node: Requirements60953
+Node: Obsolete61861
 
 End Tag Table

@@ -22,6 +22,148 @@ and this permission notice may be included in translations approved by
 the Free Software Foundation instead of in the original English.
 
 
+File: cvs.info,  Node: cvsignore,  Next: history file,  Prev: rcsinfo,  Up: Administrative files
+
+Ignoring files via cvsignore
+============================
+
+   There are certain file names that frequently occur inside your
+working copy, but that you don't want to put under CVS control.
+Examples are all the object files that you get while you compile your
+sources.  Normally, when you run `cvs update', it prints a line for
+each file it encounters that it doesn't know about (*note update
+output::.).
+
+   CVS has a list of files (or sh(1) file name patterns) that it should
+ignore while running `update', `import' and `release'.  This list is
+constructed in the following way.
+
+   * The list is initialized to include certain file name patterns:
+     names associated with CVS administration, or with other common
+     source control systems; common names for patch files, object files,
+     archive files, and editor backup files; and other names that are
+     usually artifacts of assorted utilities.  Currently, the default
+     list of ignored file name patterns is:
+
+              RCS     SCCS    CVS     CVS.adm
+              RCSLOG  cvslog.*
+              tags    TAGS
+              .make.state     .nse_depinfo
+              *~      #*      .#*     ,*      _$*     *$
+              *.old   *.bak   *.BAK   *.orig  *.rej   .del-*
+              *.a     *.olb   *.o     *.obj   *.so    *.exe
+              *.Z     *.elc   *.ln
+              core
+
+   * The per-repository list in `$CVSROOT/CVSROOT/cvsignore' is
+     appended to the list, if that file exists.
+
+   * The per-user list in `.cvsignore' in your home directory is
+     appended to the list, if it exists.
+
+   * Any entries in the environment variable `$CVSIGNORE' is appended
+     to the list.
+
+   * Any `-I' options given to CVS is appended.
+
+   * As CVS traverses through your directories, the contents of any
+     `.cvsignore' will be appended to the list.  The patterns found in
+     `.cvsignore' are only valid for the directory that contains them,
+     not for any sub-directories.
+
+   In any of the 5 places listed above, a single exclamation mark (`!')
+clears the ignore list.  This can be used if you want to store any file
+which normally is ignored by CVS.
+
+   Specifying `-I !' to `cvs import' will import everything, which is
+generally what you want to do if you are importing files from a
+pristine distribution or any other source which is known to not contain
+any extraneous files.  However, looking at the rules above you will see
+there is a fly in the ointment; if the distribution contains any
+`.cvsignore' files, then the patterns from those files will be
+processed even if `-I !' is specified.  The only workaround is to
+remove the `.cvsignore' files in order to do the import.  Because this
+is awkward, in the future `-I !' might be modified to override
+`.cvsignore' files in each directory.
+
+
+File: cvs.info,  Node: history file,  Next: Variables,  Prev: cvsignore,  Up: Administrative files
+
+The history file
+================
+
+   The file `$CVSROOT/CVSROOT/history' is used to log information for
+the `history' command (*note history::.).  This file must be created to
+turn on logging.  This is done automatically if the `cvs init' command
+is used to set up the repository (*note Creating a repository::.).
+
+   The file format of the `history' file is documented only in comments
+in the CVS source code, but generally programs should use the `cvs
+history' command to access it anyway, in case the format changes with
+future releases of CVS.
+
+
+File: cvs.info,  Node: Variables,  Prev: history file,  Up: Administrative files
+
+Expansions in administrative files
+==================================
+
+   Sometimes in writing an administrative file, you might want the file
+to be able to know various things based on environment CVS is running
+in.  There are several mechanisms to do that.
+
+   To find the home directory of the user running CVS (from the `HOME'
+environment variable), use `~' followed by `/' or the end of the line.
+Likewise for the home directory of USER, use `~USER'.  These variables
+are expanded on the server machine, and don't get any resonable
+expansion if pserver (*note Password authenticated::.) is in used;
+therefore user variables (see below) may be a better choice to
+customize behavior based on the user running CVS.
+
+   One may want to know about various pieces of information internal to
+CVS.  A CVS internal variable has the syntax `${VARIABLE}', where
+VARIABLE starts with a letter and consists of alphanumberic characters
+and `_'.  If the character following VARIABLE is a non-alphanumeric
+character other than `_', the `{' and `}' can be omitted.  The CVS
+internal variables are:
+
+`CVSROOT'
+     This is the value of the CVS root in use.  *Note Repository::, for
+     a description of the various ways to specify this.
+
+`RCSBIN'
+     This is the value CVS is using for where to find RCS binaries.
+     *Note Global options::, for a description of how to specify this.
+
+`CVSEDITOR'
+`VISUAL'
+`EDITOR'
+     These all expand to the same value, which is the editor that CVS
+     is using.  *Note Global options::, for how to specify this.
+
+`USER'
+     Username of the user running CVS (on the CVS server machine).
+
+   If you want to pass a value to the administrative files which the
+user that is running CVS can specify, use a user variable.  To expand a
+user variable, the administrative file contains `${=VARIABLE}'.  To set
+a user variable, specify the global option `-s' to CVS, with argument
+`VARIABLE=VALUE'.  It may be particularly useful to specify this option
+via `.cvsrc' (*note ~/.cvsrc::.).
+
+   For example, if you want the administrative file to refer to a test
+directory you might create a user variable `TESTDIR'.  Then if CVS is
+invoked as
+
+     cvs -s TESTDIR=/work/local/tests
+
+and the administrative file contains `sh ${=TESTDIR}/runtests', then
+that string is expanded to `sh /work/local/tests/runtests'.
+
+   All other strings containing `$' are reserved; there is no way to
+quote a `$' character so that `$' represents itself.
+
+
 File: cvs.info,  Node: Environment variables,  Next: Troubleshooting,  Prev: Administrative files,  Up: Top
 
 All environment variables which affect CVS
@@ -42,6 +184,10 @@ All environment variables which affect CVS
      files in your working directory read-only.  When this is not set,
      the default behavior is to permit modification of your working
      files.
+
+`$CVSUMASK'
+     Controls permissions of files in the repository.  See *Note File
+     permissions::.
 
 `$CVSROOT'
      Should contain the full pathname to the root of the CVS source
@@ -159,12 +305,18 @@ File: cvs.info,  Node: Troubleshooting,  Next: Copying,  Prev: Environment varia
 Troubleshooting
 ***************
 
+   If you are having trouble with CVS, this appendix may help.  If
+there is a particular error message which you are seeing, then you can
+look up the message alphabetically.  If not, you can look through the
+section on other problems to see if your problem is mentioned there.
+
 * Menu:
 
 * Error messages::              Partial list of CVS errors
+* Other problems::              Problems not readily listed by error message
 
 
-File: cvs.info,  Node: Error messages,  Up: Troubleshooting
+File: cvs.info,  Node: Error messages,  Next: Other problems,  Up: Troubleshooting
 
 Partial list of error messages
 ==============================
@@ -182,19 +334,30 @@ update: ' is not considered in ordering them.
 CVS (partly because users may not be sure which version of CVS they are
 using at any particular moment).
 
-`cvs [server aborted]: received broken pipe signal'
-     This message seems to be caused by a hard-to-track-down bug in CVS
-     or the systems it runs on (we don't know--we haven't tracked it
-     down yet!).  It seems to happen only after a CVS command has
-     completed, and you should be able to just ignore the message.
-     However, if you have discovered information concerning its cause,
-     please let us know as described in *Note BUGS::.
+`cannot change permissions on temporary directory'
+          Operation not permitted
+     This message has been happening in a non-reproducible, occasional
+     way when we run the client/server testsuite, both on Red Hat Linux
+     3.0.3 and 4.1.  We haven't been able to figure out what causes it,
+     nor is it known whether it is specific to linux (or even to this
+     particular machine!).  If the problem does occur on other unices,
+     `Operation not permitted' would be likely to read `Not owner' or
+     whatever the system in question uses for the unix `EPERM' error.
+     If you have any information to add, please let us know as
+     described in *Note BUGS::.  If you experience this error while
+     using CVS, retrying the operation which produced it should work
+     fine.
 
 `cannot open CVS/Entries for reading: No such file or directory'
      This generally indicates a CVS internal error, and can be handled
      as with other CVS bugs (*note BUGS::.).  Usually there is a
      workaround--the exact nature of which would depend on the
      situation but which hopefully could be figured out.
+
+`cvs [checkout aborted]: cannot rename file FILE to CVS/,,FILE: Invalid argument'
+     This message has been reported as intermittently happening with
+     CVS 1.9 on Solaris 2.5.  The cause is unknown; if you know more
+     about what causes it, let us know as described in *Note BUGS::.
 
 `cvs [update aborted]: could not patch FILE: No such file or directory'
      This means that there was a problem finding the `patch' program.
@@ -237,6 +400,20 @@ using at any particular moment).
      file.  For more information on the `modules' file, see *Note
      modules::.
 
+`rcs error: Unknown option: -x,v/'
+     This message will be followed by a usage message for RCS.  It
+     means that you have an old version of RCS (probably supplied with
+     your operating system).  CVS only works with RCS version 5 and
+     later.
+
+`cvs [server aborted]: received broken pipe signal'
+     This message seems to be caused by a hard-to-track-down bug in CVS
+     or the systems it runs on (we don't know--we haven't tracked it
+     down yet!).  It seems to happen only after a CVS command has
+     completed, and you should be able to just ignore the message.
+     However, if you have discovered information concerning its cause,
+     please let us know as described in *Note BUGS::.
+
 `cvs commit: Up-to-date check failed for `FILE''
      This means that someone else has committed a change to that file
      since the last time that you did a `cvs update'.  So before
@@ -268,6 +445,21 @@ using at any particular moment).
           #!/bin/sh
           vi $*
           exit 0
+
+
+File: cvs.info,  Node: Other problems,  Prev: Error messages,  Up: Troubleshooting
+
+Other common problems
+=====================
+
+   Here is a list of problems which cannot be readily looked up based
+on an error message.  They are in no particular order.
+
+   * If `cvs update' finds a conflict and tries to merge, as described
+     in *Note Conflicts example::, but doesn't tell you there were
+     conflicts, then you may have an old version of RCS.  For more
+     information on how to set this up, see the `INSTALL' file in the
+     CVS source distribution.
 
 
 File: cvs.info,  Node: Copying,  Next: Index,  Prev: Troubleshooting,  Up: Top
@@ -595,7 +787,8 @@ the "copyright" line and a pointer to where the full notice is found.
      
      You should have received a copy of the GNU General Public License
      along with this program; if not, write to the Free Software
-     Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+     Foundation, Inc., 59 Temple Place - Suite 330,
+     Boston, MA 02111-1307, USA.
 
    Also add information on how to contact you by electronic and paper
 mail.

@@ -27,7 +27,7 @@ File: cvs.info,  Node: Top,  Next: Preface,  Up: (dir)
 
 
    This info manual describes how to use and administer CVS version
-1.9.8.
+1.9.10.
 
 * Menu:
 
@@ -90,25 +90,6 @@ suited for such a complex program.
      gathered together.  There is also an extensive index, and a lot of
      cross references.
 
-   This manual was contributed by Signum Support AB in Sweden.  Signum
-is yet another in the growing list of companies that support free
-software.  You are free to copy both this manual and the CVS program.
-*Note Copying::, for the details.  Signum Support offers support
-contracts and binary distribution for many programs, such as CVS, GNU
-Emacs, the GNU C compiler and others.  Write to us for more information.
-
-     Signum Support AB
-     Box 2044
-     S-580 02  Linkoping
-     Sweden
-     
-     Email: info@signum.se
-     Phone: +46 (0)13 - 21 46 00
-     Fax:   +46 (0)13 - 21 47 00
-
-   Another company selling support for CVS is Cyclic Software, web:
-`http://www.cyclic.com/', email: `info@cyclic.com'.
-
 * Menu:
 
 * Checklist::
@@ -148,9 +129,9 @@ Credits
 =======
 
    Roland Pesch, then of Cygnus Support <roland@wrs.com> wrote the
-manual pages which were distributed with CVS 1.3.  Appendix A and B
-contain much text that was extracted from them.  He also read an early
-draft of this manual and contributed many ideas and corrections.
+manual pages which were distributed with CVS 1.3.  Much of their text
+was copied into this manual.  He also read an early draft of this
+manual and contributed many ideas and corrections.
 
    The mailing-list `info-cvs' is sometimes informative. I have
 included information from postings made by the following persons: David
@@ -164,11 +145,19 @@ closest thing there is to a successor (with respect to documenting how
 to use CVS, at least).
 
    In addition, the following persons have helped by telling me about
-mistakes I've made: Roxanne Brunskill <rbrunski@datap.ca>, Kathy Dyer
-<dyer@phoenix.ocf.llnl.gov>, Karl Pingle <pingle@acuson.com>, Thomas A
-Peterson <tap@src.honeywell.com>, Inge Wallin <ingwa@signum.se>, Dirk
-Koschuetzki <koschuet@fmi.uni-passau.de> and Michael Brown
-<brown@wi.extrel.com>.
+mistakes I've made:
+
+     Roxanne Brunskill <rbrunski@datap.ca>,
+     Kathy Dyer <dyer@phoenix.ocf.llnl.gov>,
+     Karl Pingle <pingle@acuson.com>,
+     Thomas A Peterson <tap@src.honeywell.com>,
+     Inge Wallin <ingwa@signum.se>,
+     Dirk Koschuetzki <koschuet@fmi.uni-passau.de>
+     and Michael Brown <brown@wi.extrel.com>.
+
+   The list of contributors here is not comprehensive; for a more
+complete list of who has contributed to this manual see the file
+`doc/ChangeLog' in the CVS source distribution.
 
 
 File: cvs.info,  Node: BUGS,  Prev: Credits,  Up: Preface
@@ -176,32 +165,82 @@ File: cvs.info,  Node: BUGS,  Prev: Credits,  Up: Preface
 BUGS
 ====
 
-   This manual is known to have room for improvement.  Here is a list
-of known deficiencies:
+   Neither CVS nor this manual is perfect, and they probably never will
+be.  If you are having trouble using CVS, or think you have found a
+bug, there are a number of things you can do about it.  Note that if
+the manual is unclear, that can be considered a bug in the manual, so
+these problems are often worth doing something about as well as
+problems with CVS itself.
 
-   * In the examples, the output from CVS is sometimes displayed,
-     sometimes not.
+   * If you want someone to help you and fix bugs that you report,
+     there are companies which will do that for a fee.  Two such
+     companies are:
 
-   * The input that you are supposed to type in the examples should
-     have a different font than the output from the computer.
+          Signum Support AB
+          Box 2044
+          S-580 02  Linkoping
+          Sweden
+          Email: info@signum.se
+          Phone: +46 (0)13 - 21 46 00
+          Fax:   +46 (0)13 - 21 47 00
+          http://www.signum.se/
+          
+          Cyclic Software
+          United States of America
+          http://www.cyclic.com/
+          info@cyclic.com
 
-   * This manual should be clearer about what file permissions you
-     should set up in the repository, and about setuid/setgid.
+   * If you got CVS through a distributor, such as an operating system
+     vendor or a vendor of freeware CD-ROMs, you may wish to see
+     whether the distributor provides support.  Often, they will provide
+     no support or minimal support, but this may vary from distributor
+     to distributor.
 
-   * Some of the chapters are not yet complete.  They are noted by
-     comments in the `cvs.texinfo' file.
+   * If you have the skills and time to do so, you may wish to fix the
+     bug yourself.  If you wish to submit your fix for inclusion in
+     future releases of CVS, see the file HACKING in the CVS source
+     distribution.  It contains much more information on the process of
+     submitting fixes.
 
-   * This list is not complete.  If you notice any error, omission, or
-     something that is unclear, please send mail to
-     bug-cvs@prep.ai.mit.edu.  This is also the address for reporting
-     bugs in CVS.
+   * There may be resources on the net which can help.  Two good places
+     to start are:
 
-   I hope that you will find this manual useful, despite the
-above-mentioned shortcomings.
+          http://www.cyclic.com
+            particularly the Unsupported Resources page
+          http://www.loria.fr/~molli/cvs-index.html
 
+     If you are so inspired, increasing the information available on
+     the net is likely to be appreciated.  For example, before the
+     standard CVS distribution worked on Windows 95, there was a web
+     page with some explanation and patches for running CVS on Windows
+     95, and various people helped out by mentioning this page on
+     mailing lists or newsgroups when the subject came up.
 
-                                                Linkoping, October 1993
-                                                         Per Cederqvist
+   * It is also possible to report bugs to `bug-cvs'.  Note that
+     someone may or may not want to do anything with your bug
+     report--if you need a solution consider one of the options
+     mentioned above.  People probably do want to hear about bugs which
+     are particularly severe in consequences and/or easy to fix,
+     however.  You can also increase your odds by being as clear as
+     possible about the exact nature of the bug and any other relevant
+     information.  The way to report bugs is to send email to
+     `bug-cvs@prep.ai.mit.edu'.  Note that submissions to `bug-cvs' may
+     be distributed under the terms of the GNU Public License, so if
+     you don't like this, don't submit them.  There is usually no
+     justification for sending mail directly to one of the CVS
+     maintainers rather than to `bug-cvs'; those maintainers who want
+     to hear about such bug reports read `bug-cvs'.  Also note that
+     sending a bug report to other mailing lists or newsgroups is *not*
+     a substitute for sending it to `bug-cvs'.  It is fine to discuss
+     CVS bugs on whatever forum you prefer, but there are not
+     necessarily any maintainers reading bug reports sent anywhere
+     except `bug-cvs'.
+
+   People often ask if there is a list of known bugs or whether a
+particular bug is a known one.  The file BUGS in the CVS source
+distribution is one list of known bugs, but it doesn't necessarily try
+to be comprehensive.  Perhaps there will never be a comprehensive,
+detailed list of known bugs.
 
 
 File: cvs.info,  Node: What is CVS?,  Next: A sample session,  Prev: Preface,  Up: Top
@@ -232,10 +271,10 @@ different developers from each other.  Every developer works in his own
 directory, and CVS merges the work when each developer is done.
 
    CVS started out as a bunch of shell scripts written by Dick Grune,
-posted to `comp.sources.unix' in the volume 6 release of December,
-1986.  While no actual code from these shell scripts is present in the
-current version of CVS much of the CVS conflict resolution algorithms
-come from them.
+posted to the newsgroup `comp.sources.unix' in the volume 6 release of
+December, 1986.  While no actual code from these shell scripts is
+present in the current version of CVS much of the CVS conflict
+resolution algorithms come from them.
 
    In April, 1989, Brian Berliner designed and coded CVS.  Jeff Polk
 later helped Brian with the design of the CVS module and vendor branch
@@ -257,14 +296,9 @@ other configuration management systems).  In the future, it might be
 possible to create a `comp.software.config-mgmt.cvs', but probably only
 if there is sufficient CVS traffic on `comp.software.config-mgmt'.
 
-   To report bugs in CVS send mail to `bug-cvs@prep.ai.mit.edu'.  Do
-note that someone may or may not feel like taking care of your bug
-report--if you need a response consider a support contract from Cyclic
-Software (`http://www.cyclic.com' or `info@cyclic.com').  This is also
-the procedure for submitting suggested changes to CVS (see the file
-HACKING in the source distribution for more details).  Note that all
-submitted changes may be distributed under the terms of the GNU Public
-License, so if you don't like this, don't submit them.
+   You can also subscribe to the bug-cvs mailing list, described in
+more detail in *Note BUGS::.  To subscribe send mail to
+bug-cvs-request@prep.ai.mit.edu.
 
 CVS is not...
 =============
@@ -555,11 +589,13 @@ directories which are under version control.
 
    Normally, you never access any of the files in the repository
 directly.  Instead, you use CVS commands to get your own copy of the
-files, and then work on that copy.  When you've finished a set of
-changes, you check (or "commit") them back into the repository.  The
-repository then contains the changes which you have made, as well as
-recording exactly what you changed, when you changed it, and other such
-information.
+files into a "working directory", and then work on that copy.  When
+you've finished a set of changes, you check (or "commit") them back
+into the repository.  The repository then contains the changes which
+you have made, as well as recording exactly what you changed, when you
+changed it, and other such information.  Note that the repository is
+not a subdirectory of the working directory, or vice versa; they should
+be in separate locations.
 
    CVS can access a repository by a variety of means.  It might be on
 the local computer, or it might be on a computer across the room or
@@ -591,8 +627,11 @@ user-defined modules.
 * Intro administrative files::  Defining modules
 * Multiple repositories::       Multiple repositories
 * Creating a repository::       Creating a repository
+* Backing up::                  Backing up a repository
+* Moving a repository::         Moving a repository
 * Remote repositories::         Accessing repositories on remote machines
 * Read-only access::            Granting read-only access to the repository
+* Server temporary directory::  The server creates temporary directories
 
 
 File: cvs.info,  Node: Specifying a repository,  Next: Repository storage,  Up: Repository
@@ -660,8 +699,11 @@ Where files are stored within the repository
 
    The overall structure of the repository is a directory tree
 corresponding to the directories in the working directory.  For
-example, supposing the repository is in `/usr/local/cvsroot', here is a
-possible directory tree (showing only the directories):
+example, supposing the repository is in
+
+     /usr/local/cvsroot
+
+here is a possible directory tree (showing only the directories):
 
      /usr
       |
@@ -868,9 +910,16 @@ expansion.
      `-' followed by a revision for a removed file.  TIMESTAMP is the
      timestamp of the file at the time that CVS created it; if the
      timestamp differs with the actual modification time of the file it
-     means the file has been modified.  CONFLICT indicates that there
-     was a conflict; if it is the same as the actual modification time
-     of the file it means that the user has obviously not resolved the
+     means the file has been modified.  It is in Universal Time (UT),
+     stored in the format used by the ISO C asctime() function (for
+     example, `Sun Apr  7 01:29:26 1996').  One may write a string
+     which is not in that format, for example, `Result of merge', to
+     indicate that the file should always be considered to be modified.
+     This is not a special case; to see whether a file is modified a
+     program should take the timestamp of the file and simply do a
+     string compare with TIMESTAMP.  CONFLICT indicates that there was
+     a conflict; if it is the same as the actual modification time of
+     the file it means that the user has obviously not resolved the
      conflict.  OPTIONS contains sticky options (for example `-kb' for a
      binary file).  TAGDATE contains `T' followed by a tag name, or `D'
      for a date, followed by a sticky tag or date.  Note that if
@@ -896,16 +945,20 @@ expansion.
      `Entries', but it does provide a way to update the information
      without having to rewrite the entire `Entries' file, including the
      ability to preserve the information even if the program writing
-     `Entries' and `Entries.Log' abruptly aborts.  The format of a line
-     in `Entries.Log' is a single character command followed by a space
-     followed by a line in the format specified for a line in
-     `Entries'.  The single character command is `A' to indicate that
-     the entry is being added, `R' to indicate that the entry is being
-     removed, or any other character to indicate that the entire line
-     in `Entries.Log' should be silently ignored (for future
-     expansion).  If the second character of the line in `Entries.Log'
-     is not a space, then it was written by an older version of CVS
-     (not documented here).
+     `Entries' and `Entries.Log' abruptly aborts.  Programs which are
+     reading the `Entries' file should also check for `Entries.Log'.
+     If the latter exists, they should read `Entries' and then apply
+     the changes mentioned in `Entries.Log'.  After applying the
+     changes, the recommended practice is to rewrite `Entries' and then
+     delete `Entries.Log'.  The format of a line in `Entries.Log' is a
+     single character command followed by a space followed by a line in
+     the format specified for a line in `Entries'.  The single
+     character command is `A' to indicate that the entry is being added,
+     `R' to indicate that the entry is being removed, or any other
+     character to indicate that the entire line in `Entries.Log' should
+     be silently ignored (for future expansion).  If the second
+     character of the line in `Entries.Log' is not a space, then it was
+     written by an older version of CVS (not documented here).
 
 `Entries.Backup'
      This is a temporary file.  Recommended usage is to write a new
@@ -1025,7 +1078,7 @@ consider using several directories within the same repository.
    None of the examples in this manual show multiple repositories.
 
 
-File: cvs.info,  Node: Creating a repository,  Next: Remote repositories,  Prev: Multiple repositories,  Up: Repository
+File: cvs.info,  Node: Creating a repository,  Next: Backing up,  Prev: Multiple repositories,  Up: Repository
 
 Creating a repository
 =====================
@@ -1068,116 +1121,41 @@ set-up repository.
 remove the history file after running `cvs init'.  *Note history file::.
 
 
-File: cvs.info,  Node: Remote repositories,  Next: Read-only access,  Prev: Creating a repository,  Up: Repository
+File: cvs.info,  Node: Backing up,  Next: Moving a repository,  Prev: Creating a repository,  Up: Repository
 
-Remote repositories
-===================
+Backing up a repository
+=======================
 
-   Your working copy of the sources can be on a different machine than
-the repository.  Using CVS in this manner is known as "client/server"
-operation.  You run CVS on a machine which can mount your working
-directory, known as the "client", and tell it to communicate to a
-machine which can mount the repository, known as the "server".
-Generally, using a remote repository is just like using a local one,
-except that the format of the repository name is:
+   There is nothing particularly magical about the files in the
+repository; for the most part it is possible to back them up just like
+any other files.  However, there are a few issues to consider.
 
-     :METHOD:USER@HOSTNAME:/path/to/repository
+   The first is that to be paranoid, one should either not use CVS
+during the backup, or have the backup program lock CVS while doing the
+backup.  To not use CVS, you might forbid logins to machines which can
+access the repository, turn off your CVS server, or similar mechanisms.
+The details would depend on your operating system and how you have CVS
+set up.  To lock CVS, you would create `#cvs.rfl' locks in each
+repository directory.  See *Note Concurrency::, for more on CVS locks.
+Having said all this, if you just back up without any of these
+precautions, the results are unlikely to be particularly dire.
+Restoring from backup, the repository might be in an inconsistent
+state, but this would not be particularly hard to fix manually.
 
-   The details of exactly what needs to be set up depend on how you are
-connecting to the server.
+   When you restore a repository from backup, assuming that changes in
+the repository were made after the time of the backup, working
+directories which were not affected by the failure may refer to
+revisions which no longer exist in the repository.  Trying to run CVS
+in such directories will typically produce an error message.  One way
+to get those changes back into the repository is as follows:
 
-   If METHOD is not specified, and the repository name contains `:',
-then the default is `ext' or `server', depending on your platform; both
-are described in *Note Connecting via rsh::.
+   * Get a new working directory.
 
-* Menu:
+   * Copy the files from the working directory from before the failure
+     over to the new working directory (do not copy the contents of the
+     `CVS' directories, of course).
 
-* Server requirements::         Memory and other resources for servers
-* Connecting via rsh::          Using the `rsh' program to connect
-* Password authenticated::      Direct connections using passwords
-* Kerberos authenticated::      Direct connections with kerberos
-
-
-File: cvs.info,  Node: Server requirements,  Next: Connecting via rsh,  Up: Remote repositories
-
-Server requirements
--------------------
-
-   The quick answer to what sort of machine is suitable as a server is
-that requirements are modest--a server with 32M of memory or even less
-can handle a fairly large source tree with a fair amount of activity.
-
-   The real answer, of course, is more complicated.  The CVS server
-consists of two processes for each client that it is serving.  Memory
-consumption on the child process should remain fairly small.  Memory
-consumption on the parent process, particularly if the network
-connection to the client is slow, can be expected to grow to slightly
-more than the size of the sources in a single directory, or two
-megabytes, whichever is larger.
-
-   Multiplying the size of each CVS server by the number of servers
-which you expect to have active at one time should give an idea of
-memory requirements for the server.  For the most part, the memory
-consumed by the parent process probably can be swap space rather than
-physical memory.
-
-   Resource consumption for the client or the non-client/server CVS is
-even more modest--any machine with enough capacity to run the operating
-system in question should have little trouble.
-
-
-File: cvs.info,  Node: Connecting via rsh,  Next: Password authenticated,  Prev: Server requirements,  Up: Remote repositories
-
-Connecting with rsh
--------------------
-
-   CVS uses the `rsh' protocol to perform these operations, so the
-remote user host needs to have a `.rhosts' file which grants access to
-the local user.
-
-   For example, suppose you are the user `mozart' on the local machine
-`anklet.grunge.com', and the server machine is
-`chainsaw.brickyard.com'.  On chainsaw, put the following line into the
-file `.rhosts' in `bach''s home directory:
-
-     anklet.grunge.com  mozart
-
-   Then test that `rsh' is working with
-
-     rsh -l bach chainsaw.brickyard.com 'echo $PATH'
-
-   Next you have to make sure that `rsh' will be able to find the
-server.  Make sure that the path which `rsh' printed in the above
-example includes the directory containing a program named `cvs' which
-is the server.  You need to set the path in `.bashrc', `.cshrc', etc.,
-not `.login' or `.profile'.  Alternately, you can set the environment
-variable `CVS_SERVER' on the client machine to the filename of the
-server you want to use, for example `/usr/local/bin/cvs-1.6'.
-
-   There is no need to edit `inetd.conf' or start a CVS server daemon.
-
-   There are two access methods that you use in CVSROOT for rsh.
-`:server:' specifies an internal rsh client, which is supported only by
-some CVS ports.  `:ext:' specifies an external rsh program.  By default
-this is `rsh' but you may set the `CVS_RSH' environment variable to
-invoke another program which can access the remote server (for example,
-`remsh' on HP-UX 9 because `rsh' is something different).  It must be a
-program which can transmit data to and from the server without modifying
-it; for example the Windows NT `rsh' is not suitable since it by
-default translates between CRLF and LF.  The OS/2 CVS port has a hack
-to pass `-b' to `rsh' to get around this, but since this could
-potentially cause problems for programs other than the standard `rsh',
-it may change in the future.  If you set `CVS_RSH' to `SSH' or some
-other rsh replacement, the instructions in the rest of this section
-concerning `.rhosts' and so on are likely to be inapplicable; consult
-the documentation for your rsh replacement.
-
-   Continuing our example, supposing you want to access the module
-`foo' in the repository `/usr/local/cvsroot/', on machine
-`chainsaw.brickyard.com', you are ready to go:
-
-     cvs -d :ext:bach@chainsaw.brickyard.com:/usr/local/cvsroot checkout foo
-
-   (The `bach@' can be omitted if the username is the same on both the
-local and remote hosts.)
+   * Working in the new working directory, use commands such as `cvs
+     update' and `cvs diff' to figure out what has changed, and then
+     when you are ready, commit the changes into the repository.
 

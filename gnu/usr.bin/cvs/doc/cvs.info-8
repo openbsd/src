@@ -30,7 +30,7 @@ Index
 * Menu:
 
 * -j (merging branches):                Merging a branch.
-* -k (RCS kflags):                      Substitution modes.
+* -k (keyword substitution):            Substitution modes.
 * .# files:                             update output.
 * .bashrc, setting CVSROOT in:          Specifying a repository.
 * .cshrc, setting CVSROOT in:           Specifying a repository.
@@ -66,6 +66,7 @@ Index
 * Author keyword:                       Keyword list.
 * Automatically ignored files:          cvsignore.
 * Avoiding editor invocation:           Common options.
+* Backing up, repository:               Backing up.
 * Base directory, in CVS directory:     Working directory storage.
 * bill of materials:                    Builds.
 * Binary files:                         Binary files.
@@ -79,9 +80,8 @@ Index
 * Branches, copying changes between:    Merging.
 * Branches, sticky:                     Sticky tags.
 * Bringing a file up to date:           Updating a file.
-* Bugs, known in this manual:           BUGS.
-* Bugs, reporting (CVS):                What is CVS?.
-* Bugs, reporting (manual):             BUGS.
+* Bugs in this manual or CVS:           BUGS.
+* Bugs, reporting:                      BUGS.
 * builds:                               Builds.
 * Changes, copying between branches:    Merging.
 * Changing a log message:               admin options.
@@ -115,6 +115,7 @@ Index
 * Conflicts (merge example):            Conflicts example.
 * Contributors (CVS program):           What is CVS?.
 * Contributors (manual):                Credits.
+* copying a repository:                 Moving a repository.
 * Copying changes:                      Merging.
 * Correcting a log message:             admin options.
 * Creating a branch:                    Creating a branch.
@@ -166,6 +167,7 @@ Index
 * CVSWRAPPERS:                          Environment variables.
 * cvswrappers (admin file):             Wrappers.
 * CVSWRAPPERS, environment variable:    Wrappers.
+* Cyclic Software:                      BUGS.
 * Date keyword:                         Keyword list.
 * Dates:                                Common options.
 * dead state:                           Attic.
@@ -205,11 +207,15 @@ Index
 * Entries.Log file, in CVS directory:   Working directory storage.
 * Entries.Static file, in CVS directory: Working directory storage.
 * Environment variables:                Environment variables.
-* Errors, reporting (CVS):              What is CVS?.
-* Errors, reporting (manual):           BUGS.
+* Errors, reporting:                    BUGS.
 * Example of a work-session:            A sample session.
 * Example of merge:                     Conflicts example.
 * Example, branch merge:                Merging a branch.
+* exit status, of commitinfo:           commitinfo.
+* exit status, of CVS:                  Exit status.
+* exit status, of editor:               Error messages.
+* exit status, of taginfo:              user-defined logging.
+* exit status, of verifymsg:            verifymsg.
 * Export (subcommand):                  export.
 * Export program:                       modules.
 * Fetching source:                      Getting the source.
@@ -243,7 +249,7 @@ Index
 * Ignoring files:                       cvsignore.
 * Import (subcommand):                  import.
 * Importing files:                      From files.
-* Importing files, from other version control systesm: From other version control systems.
+* Importing files, from other version control systems: From other version control systems.
 * Importing modules:                    First import.
 * Index:                                Index.
 * Info files (syntax):                  syntax.
@@ -259,7 +265,7 @@ Index
 * Keyword substitution:                 Keyword substitution.
 * Kflag:                                Substitution modes.
 * kinit:                                Kerberos authenticated.
-* Known bugs in this manual:            BUGS.
+* Known bugs in this manual or CVS:     BUGS.
 * Layout of repository:                 Repository.
 * Left-hand options:                    Global options.
 * Linear development:                   Revision numbers.
@@ -306,8 +312,10 @@ Index
 * Modules file:                         Intro administrative files.
 * Modules file, changing:               Defining the module.
 * Motivation for branches:              Branches motivation.
+* moving a repository:                  Moving a repository.
 * Moving directories:                   Moving directories.
 * Moving files:                         Moving files.
+* moving tags:                          tag options.
 * Multiple developers:                  Multiple developers.
 * Multiple repositories:                Multiple repositories.
 * Name keyword:                         Keyword list.
@@ -376,15 +384,17 @@ Index
 * Removing your working copy:           Cleaning up.
 * Renaming directories:                 Moving directories.
 * Renaming files:                       Moving files.
+* renaming tags:                        tag options.
 * Replacing a log message:              admin options.
-* Reporting bugs (CVS):                 What is CVS?.
-* Reporting bugs (manual):              BUGS.
+* Reporting bugs:                       BUGS.
 * Repositories, multiple:               Multiple repositories.
 * Repositories, remote:                 Remote repositories.
 * Repository (intro):                   Repository.
 * Repository file, in CVS directory:    Working directory storage.
+* Repository, backing up:               Backing up.
 * Repository, example:                  Repository.
 * Repository, how data is stored:       Repository storage.
+* repository, moving:                   Moving a repository.
 * Repository, setting up:               Creating a repository.
 * reserved checkouts:                   Multiple developers.
 * Resetting sticky tags:                Sticky tags.
@@ -409,10 +419,11 @@ Index
 * SCCS, importing files from:           From other version control systems.
 * Security:                             File permissions.
 * server, CVS:                          Remote repositories.
+* server, temporary directories:        Server temporary directory.
 * setgid:                               File permissions.
 * Setting up a repository:              Creating a repository.
 * setuid:                               File permissions.
-* Signum Support:                       Preface.
+* Signum Support:                       BUGS.
 * Source keyword:                       Keyword list.
 * Source, getting CVS source:           What is CVS?.
 * Source, getting from CVS:             Getting the source.
@@ -420,7 +431,6 @@ Index
 * Spreading information:                Informing others.
 * Starting a project with CVS:          Starting a new project.
 * State keyword:                        Keyword list.
-* Status (subcommand):                  status.
 * Status of a file:                     File status.
 * Status of a module:                   modules.
 * sticky date:                          Sticky tags.
@@ -430,7 +440,7 @@ Index
 * Storing log messages:                 loginfo.
 * Structure:                            Structure.
 * Subdirectories:                       Recursive behavior.
-* Support, getting CVS support:         Preface.
+* Support, getting CVS support:         BUGS.
 * symbolic link, importing:             import output.
 * Symbolic name (tag):                  Tags.
 * Syntax of info files:                 syntax.
@@ -443,12 +453,14 @@ Index
 * Tag, symbolic name:                   Tags.
 * taginfo:                              user-defined logging.
 * Tags:                                 Tags.
+* tags, renaming:                       tag options.
 * Tags, sticky:                         Sticky tags.
 * tc, Trivial Compiler (example):       A sample session.
 * Team of developers:                   Multiple developers.
 * TEMP:                                 Environment variables.
 * Template file, in CVS directory:      Working directory storage.
 * Template for log message:             rcsinfo.
+* temporary directories, and server:    Server temporary directory.
 * temporary files, location of:         Environment variables.
 * Third-party sources:                  Tracking sources.
 * Time:                                 Common options.
@@ -472,6 +484,7 @@ Index
 * Update (subcommand):                  update.
 * Update program:                       modules.
 * update, introduction:                 Updating a file.
+* update, to display file status:       File status.
 * Update.prog file, in CVS directory:   Working directory storage.
 * Updating a file:                      Updating a file.
 * USER:                                 Environment variables.
