@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.86 2002/03/14 00:42:25 miod Exp $
+#	$OpenBSD: GENERIC,v 1.87 2002/05/16 18:54:21 deraadt Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -40,6 +40,7 @@ option		MFS		# memory file system
 #option		XFS		# xfs filesystem
 
 option		TCP_SACK	# Selective Acknowledgements for TCP
+option		TCP_ECN		# Explicit Congestion Notification for TCP
 #option		TCP_FACK	# Forward Acknowledgements for TCP
 #option		TCP_SIGNATURE	# TCP MD5 Signatures, for BGP routing sessions
 
