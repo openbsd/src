@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.22 2004/03/03 02:19:26 krw Exp $
+#	$OpenBSD: install.md,v 1.23 2004/06/26 20:10:17 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,6 +42,8 @@
 MDFSTYPE=msdos
 MDFSOPTS=-s
 MDXAPERTURE=2
+MDSERIAL="pccom com tty0"
+
 ARCH=ARCH
 
 md_set_term() {

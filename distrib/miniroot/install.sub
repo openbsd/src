@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.342 2004/06/22 20:43:58 krw Exp $
+#	$OpenBSD: install.sub,v 1.343 2004/06/26 20:10:17 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2004 Todd Miller, Theo de Raadt, Ken Westerback
@@ -169,6 +169,22 @@ get_ifdevs() {
 	ifconfig -a \
 	    | egrep -v '^[[:space:]]|(bridge|enc|gif|gre|lo|pflog|pfsync|ppp|sl|tun|vlan)[[:digit:]]+:' \
 	    | sed -ne 's/^\(.*\):.*/\1/p'
+}
+
+# Get the first (lowest unit #) serial device if any, if MDSERIAL is set.
+# NOTE: Only single digit serial devices (<dev>0 -> <dev>9) are looked for.
+get_serialdev() {
+	local _devs _d _bd _td
+
+	[[ -n $MDSERIAL ]] || exit
+	set -- $MDSERIAL
+	_d=$1
+	_bd=$2
+	_td=$3
+	_devs=$(sed -ne "/^${_d}\([0-9]\) .*/s//\1/p" /var/run/dmesg.boot)
+	_devs=$(bsort $_devs)
+	set -- $_devs
+	echo "${_bd}${1} ${_td}${1}"
 }
 
 # Ask for a password, saving the input in $resp.
@@ -397,9 +413,10 @@ __EOT
 makedev() {
 	local _dev=$1 _node=/dev/r${1}c
 
-	# Don't need to make network interface devices nodes. If the device
-	# nodes exist, don't need to create them.
-	if isin $_dev $IFDEVS || [[ -c $_node ]] ; then
+	# Don't need to make network interface device nodes.  If the device is
+	# just a number then ignore it. This is used when selecting a serial
+	# console speed.  If the device node exists, don't need to create it.
+	if isin $_dev $IFDEVS || [[ -c $_node || -z ${_dev##+([0-9])} ]] ; then
 		return 0
 	fi
 
@@ -1638,19 +1655,34 @@ populateusrlocal() {
 }
 
 questions() {
-	ask_yn "Do you wish sshd(8) to be started by default?" yes
+	local _bd _td
+
+	ask_yn "Start sshd(8) by default?" yes
 	if [[ $resp == n ]]; then
 		echo "sshd_flags=NO		# disabled during install" \
 		    > /mnt/etc/rc.conf.local
 	fi
 
-	[[ -n $MDXAPERTURE ]] || return
-
-	ask_yn "Do you expect to run the X Window System?" yes
-	if [[ $resp == y ]]; then
-		sed -e "/^#\(machdep\.allowaperture=${MDXAPERTURE}\)/s//\1	/" \
-		    /mnt/etc/sysctl.conf > /tmp/sysctl.conf
+	if [[ -n $MDXAPERTURE ]]; then
+		ask_yn "Do you expect to run the X Window System?" yes
+		if [[ $resp == y ]]; then
+			sed -e "/^#\(machdep\.allowaperture=${MDXAPERTURE}\)/s//\1	/" \
+			    /mnt/etc/sysctl.conf > /tmp/sysctl.conf
+		fi
 	fi
+
+	[[ -z $SERIALDEV ]] && return
+	set -- $SERIALDEV
+	_bd=$1
+	_td=$2
+	ask_yn "Change the default console to $_bd?"
+	[[ $resp == n ]] && return
+	echo "set tty $_bd" >>/mnt/etc/boot.conf
+	ask_which "speed" "should $_bd use" "9600 19200 38400 57600 115200" 9600
+	[[ $resp == done ]] && return
+	sed	-e "/^${_td}/s/std.9600/std.${resp}/" \
+		-e "/^${_td}/s/unknown/vt220	/" \
+		-e "/${_td}/s/off/on secure/" /mnt/etc/ttys >/tmp/ttys
 }
 
 finish_up() {
@@ -1727,10 +1759,11 @@ done
 # Extract and save one boot's worth of dmesg
 dmesg | sed -ne '/^OpenBSD /h;/^OpenBSD /!H;${g;p;}' > /var/run/dmesg.boot
 
-# Scan /var/run/dmesg.boot for disks and cds
-DKDEVS=`get_dkdevs`
-CDDEVS=`get_cddevs`
-IFDEVS=`get_ifdevs`
+# Scan /var/run/dmesg.boot for interesting devices.
+DKDEVS=$(get_dkdevs)
+CDDEVS=$(get_cddevs)
+IFDEVS=$(get_ifdevs)
+SERIALDEV=$(get_serialdev)
 
 # Devices created with makedev().
 DEVSMADE=

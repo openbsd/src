@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.143 2004/05/28 22:59:34 krw Exp $
+#	$OpenBSD: install.sh,v 1.144 2004/06/26 20:10:17 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2004 Todd Miller, Theo de Raadt, Ken Westerback
@@ -411,7 +411,7 @@ save_comments dhclient.conf
 # Possible files: fstab, kbdtype, myname, mygate, sysctl.conf
 #                 dhclient.conf resolv.conf resolv.conf.tail
 #		  hostname.* hosts
-for _f in fstab kbdtype my* *.conf *.tail host*; do
+for _f in fstab kbdtype my* *.conf *.tail host* ttys; do
 	[[ -f $_f ]] && mv $_f /mnt/etc/.
 done )
 
