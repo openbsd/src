@@ -1,6 +1,6 @@
-/*	$OpenBSD: dtors.c,v 1.2 2002/01/31 16:47:02 art Exp $	*/
+/*	$OpenBSD: dtors.c,v 1.3 2002/02/18 11:09:48 art Exp $	*/
 /*
- * Written by Artur Grabowski <art@openbsd.org> Public Domain.
+ *	Written by Artur Grabowski <art@openbsd.org>, 2002 Public Domain.
  */
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -23,12 +23,24 @@ zap(void)
 }
 
 /*
- * XXX - horrible abuse of exit(), minherit and fork().
+ * XXX - horrible abuse of exit(3), minherit(2) and fork(2).
  */
 int
-main()
+main(int argc, char **argv)
 {
-	int status;
+	int status, ch;
+	int fallthru = 0;
+
+	while ((ch = getopt(argc, argv, "f")) != -1) {
+		switch(ch) {
+		case 'f':
+			fallthru = 1;
+			break;
+		default:
+			fprintf(stderr, "Usage: dtors [-f]\n");
+			exit(1);
+		}
+	}
 
 	destarea = mmap(NULL, getpagesize(), PROT_READ|PROT_WRITE, MAP_ANON,
 	    -1, 0);
@@ -48,7 +60,10 @@ main()
 		 * Yes, it's exit(), not _exit(). We _want_ to run the
 		 * destructors in the child.
 		 */
-		exit(0);
+		if (fallthru)
+			return (0);
+		else
+			exit(0);
 	}
 
 	if (wait(&status) < 0)
