@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.3 1996/08/03 20:16:52 millert Exp $	*/
+/*	$OpenBSD: at.c,v 1.4 1996/10/15 23:22:35 millert Exp $	*/
 /*	$NetBSD: at.c,v 1.4 1995/03/25 18:13:31 glass Exp $	*/
 
 /*
@@ -65,7 +65,7 @@
 
 /* File scope variables */
 #ifndef lint
-static char rcsid[] = "$OpenBSD: at.c,v 1.3 1996/08/03 20:16:52 millert Exp $";
+static char rcsid[] = "$OpenBSD: at.c,v 1.4 1996/10/15 23:22:35 millert Exp $";
 #endif
 
 char *no_export[] =
@@ -212,11 +212,8 @@ writefile(runtimer, queue)
 	alarm(0);
 
 	for (i = 0; i < AT_MAXJOBS; i++) {
-		sprintf(ppos, "%c%8lx.%3x", queue,
+		sprintf(ppos, "%c%08lx.%03x", queue,
 		    (unsigned long) (runtimer / 60), i);
-		for (ap = ppos; *ap != '\0'; ap++)
-			if (*ap == ' ')
-				*ap = '0';
 
 		if (stat(atfile, &statbuf) != 0) {
 			if (errno == ENOENT)
