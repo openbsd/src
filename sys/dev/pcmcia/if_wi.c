@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.5 1999/12/15 21:49:07 angelos Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.6 1999/12/16 04:51:30 angelos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -177,9 +177,9 @@ u_int32_t	widebug = WIDEBUG;
 #if !defined(lint)
 static const char rcsid[] =
 #ifdef __FreeBSD__
-	"$Id: if_wi.c,v 1.5 1999/12/15 21:49:07 angelos Exp $";
+	"$Id: if_wi.c,v 1.6 1999/12/16 04:51:30 angelos Exp $";
 #else	/* !__FreeBSD__ */
-	"$OpenBSD: if_wi.c,v 1.5 1999/12/15 21:49:07 angelos Exp $";
+	"$OpenBSD: if_wi.c,v 1.6 1999/12/16 04:51:30 angelos Exp $";
 #endif	/* __FreeBSD__ */
 #endif	/* lint */
 
@@ -1261,11 +1261,11 @@ STATIC void wi_setdef(sc, wreq)
 
 	switch(wreq->wi_type) {
 	case WI_RID_MAC_NODE:
-		ifa = ifnet_addrs[ifp->if_index - 1];
+		ifa = ifnet_addrs[ifp->if_index];
 		sdl = (struct sockaddr_dl *)ifa->ifa_addr;
 		bcopy((char *)&wreq->wi_val, LLADDR(sdl), ETHER_ADDR_LEN);
 		bcopy((char *)&wreq->wi_val, (char *)&sc->arpcom.ac_enaddr,
-		   ETHER_ADDR_LEN);
+		      ETHER_ADDR_LEN);
 		break;
 	case WI_RID_PORTTYPE:
 		sc->wi_ptype = wreq->wi_val[0];
