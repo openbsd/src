@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ksh.1tbl,v 1.38 2001/02/20 05:47:14 aaron Exp $
+.\"	$OpenBSD: ksh.1tbl,v 1.39 2001/04/12 02:51:09 aaron Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"     The Regents of the University of California.  All rights reserved.
@@ -337,7 +337,7 @@ such as
 .Ic for
 and
 .Ic if
-statements, grouping constructs and function definitions.
+statements, grouping constructs, and function definitions.
 .Pp
 A simple-command consists of some combination of parameter assignments
 (see
@@ -409,7 +409,7 @@ and
 .Ql ||
 have equal precedence which is higher than that of
 .Ql & ,
-.Ql |&
+.Ql |& ,
 and
 .Ql \&; ,
 which also have equal precedence.
@@ -440,7 +440,7 @@ and
 .Ql ||
 operators, while it need not follow
 .Ql & ,
-.Ql |&
+.Ql |& ,
 or
 .Ql \&; .
 The exit status of a list is that of the last command executed, with the
@@ -1635,7 +1635,7 @@ and login names are also delimited by colons.
 The home directory of previously expanded login names are cached and re-used.
 The
 .Ic alias -d
-command may be used to list, change and add to this cache (e.g.,
+command may be used to list, change, and add to this cache (e.g.,
 .Ic alias -d fac=/usr/local/facilities; cd ~fac/bin ) .
 .Ss Brace expansion (alteration)
 Brace expressions, which take the form
@@ -1928,7 +1928,7 @@ Parameter, command, and arithmetic
 substitutions, tilde substitutions, and (if the shell is interactive)
 file name generation are all performed on the
 .Ar file ,
-.Ar marker
+.Ar marker ,
 and
 .Ar fd
 arguments of redirections.
@@ -2349,7 +2349,7 @@ In
 mode, signal names are listed one per line; in
 .Pf non- Tn POSIX
 mode,
-signal numbers, names and descriptions are printed in columns.
+signal numbers, names, and descriptions are printed in columns.
 In future, a new option
 .Po Fl v
 \ perhaps
@@ -2512,7 +2512,7 @@ argument to the
 test may be left out and defaults to 1).
 .El
 .Ss Command execution
-After evaluation of command-line arguments, redirections and parameter
+After evaluation of command-line arguments, redirections, and parameter
 assignments, the type of command is determined: a special built-in, a
 function, a regular built-in, or the name of a file to execute found using the
 .Ev PATH
@@ -4695,7 +4695,7 @@ The next character typed is not treated specially (can be used
 to insert the characters being described here).
 .It Ic ^J ^M
 End of line.
-The current line is read, parsed and executed by the shell.
+The current line is read, parsed, and executed by the shell.
 .It Ic <esc>
 Puts the editor in command mode (see below).
 .It Ic ^E
@@ -4731,7 +4731,7 @@ refers to the position between the cursor and the character preceding the
 cursor.
 A
 .Dq word
-is a sequence of letters, digits and underscore characters or a sequence of
+is a sequence of letters, digits, and underscore characters or a sequence of
 non-letter, non-digit, non-underscore, non-whitespace characters (e.g.,
 .Dq ab2\&*\&&^
 contains two words) and a
@@ -5060,7 +5060,7 @@ Miscellaneous vi commands
 .Pp
 .Bl -tag -width Ds
 .It Ic ^J No and Ic ^M
-The current line is read, parsed and executed by the shell.
+The current line is read, parsed, and executed by the shell.
 .It Ic ^L No and Ic ^R
 Redraw the current line.
 .It Ar n Ns Ic \&.
@@ -5130,7 +5130,7 @@ Please include the version of
 .Ic echo $KSH_VERSION
 shows it
 .Pc ,
-the machine, operating system and compiler you are using and a description of
+the machine, operating system, and compiler you are using and a description of
 how to repeat the bug (a small shell script that demonstrates the bug is best).
 The following, if relevant (if you are not sure, include them), can also be
 helpful: options you are using (both
