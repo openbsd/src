@@ -1,5 +1,5 @@
-/*	$OpenBSD: message.c,v 1.22 1999/08/26 22:27:51 niklas Exp $	*/
-/*	$EOM: message.c,v 1.135 1999/08/18 00:44:56 angelos Exp $	*/
+/*	$OpenBSD: message.c,v 1.23 2000/01/26 15:20:56 niklas Exp $	*/
+/*	$EOM: message.c,v 1.137 1999/12/17 17:10:23 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -184,7 +184,7 @@ message_free (struct message *msg)
   log_debug (LOG_MESSAGE, 20, "message_free: freeing %p", msg);
   if (!msg)
     return;
-  if (msg->orig && msg->orig != msg->iov[0].iov_base)
+  if (msg->orig && msg->orig != (u_int8_t *)msg->iov[0].iov_base)
     free (msg->orig);
   if (msg->iov)
     {
@@ -1700,6 +1700,7 @@ message_negotiate_sa (struct message *msg,
 	       * down one of the offers, can we?  I suggest renaming
 	       * message_drop to something else.
 	       */
+	      log_print ("message_negotiate_sa: no compatible proposal found");
 	      message_drop (msg, ISAKMP_NOTIFY_NO_PROPOSAL_CHOSEN, 0, 1, 0);
 	    }
 	  sa = TAILQ_NEXT (sa, next);
