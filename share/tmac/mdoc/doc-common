@@ -1,4 +1,4 @@
-.\"	$OpenBSD: doc-common,v 1.43 2005/03/07 00:06:00 deraadt Exp $
+.\"	$OpenBSD: doc-common,v 1.44 2005/04/02 17:16:03 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -174,6 +174,7 @@
 .	if "\\$3"cats" .as vT \ (Cats)
 .	if "\\$3"hp300" .as vT \ (HP300)
 .	if "\\$3"hppa" .as vT \ (HPPA)
+.	if "\\$3"hppa64" .as vT \ (HPPA64)
 .	if "\\$3"i386"  .as vT \ (i386)
 .	if "\\$3"luna88k" .as vT \ (Luna88K)
 .	if "\\$3"mac68k" .as vT \ (Mac68K)
