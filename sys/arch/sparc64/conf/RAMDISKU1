@@ -1,4 +1,4 @@
-# 	$OpenBSD: RAMDISKU1,v 1.9 2004/09/16 09:35:37 deraadt Exp $
+# 	$OpenBSD: RAMDISKU1,v 1.10 2004/09/21 19:39:44 drahn Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -33,7 +33,7 @@ mainbus0 at root
 cpu0	at mainbus0
 
 # Bus types found on SPARC systems.
-sbus0	at mainbus0				# Ultra 1
+sbus*	at mainbus0				# Ultra 1
 
 clock*	at sbus?				# Mostek clock
 timer*	at mainbus0				# Timer chip
