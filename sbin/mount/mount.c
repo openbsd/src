@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.29 2002/11/06 14:14:48 gluk Exp $	*/
+/*	$OpenBSD: mount.c,v 1.30 2003/04/20 03:09:55 tedu Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount.c	8.19 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: mount.c,v 1.29 2002/11/06 14:14:48 gluk Exp $";
+static char rcsid[] = "$OpenBSD: mount.c,v 1.30 2003/04/20 03:09:55 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -574,6 +574,8 @@ prmount(struct statfs *sf)
 			(void)printf("%s%s", !f++ ? " (" : ", ", "nowin95");
 		if (msdosfs_args->flags & MSDOSFSMNT_GEMDOSFS)
 			(void)printf("%s%s", !f++ ? " (" : ", ", "gem");
+		if (msdosfs_args->flags & MSDOSFSMNT_ALLOWDIRX)
+			(void)printf("%s%s", !f++ ? " (" : ", ", "direxec");
 	} else if (strcmp(sf->f_fstypename, MOUNT_CD9660) == 0) {
 		struct iso_args *iso_args = &sf->mount_info.iso_args;
 
