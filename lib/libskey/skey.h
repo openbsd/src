@@ -11,7 +11,7 @@
  *
  * Main client header
  *
- * $Id: skey.h,v 1.5 1996/09/30 04:10:45 millert Exp $
+ * $Id: skey.h,v 1.6 1996/10/14 03:09:12 millert Exp $
  */
 
 /* Server-side data structure for reading keys file during login */
@@ -56,6 +56,6 @@ int skey_haskey __P((char *username));
 int getskeyprompt __P((struct skey *mp, char *name, char *prompt));
 int atob8 __P((char *out, char *in));
 int btoa8 __P((char *out, char *in));
-int htoi __P((char c));
+int htoi __P((int c));
 const char * skey_get_algorithm __P((void));
 char * skey_set_algorithm __P((char *new));

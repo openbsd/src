@@ -8,7 +8,7 @@
  *
  * S/KEY verification check, lookups, and authentication.
  * 
- * $Id: skeylogin.c,v 1.8 1996/10/02 03:49:36 millert Exp $
+ * $Id: skeylogin.c,v 1.9 1996/10/14 03:09:13 millert Exp $
  */
 
 #include <sys/param.h>
@@ -21,6 +21,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <ctype.h>
 #include <sys/types.h>
@@ -30,7 +31,9 @@
 
 #include "skey.h"
 
+#ifndef _PATH_KEYFILE
 #define	_PATH_KEYFILE	"/etc/skeykeys"
+#endif
 
 char *skipspace __P((char *));
 int skeylookup __P((struct skey *, char *));
@@ -110,7 +113,7 @@ skeylookup(mp, name)
 {
 	int found = 0;
 	long recstart = 0;
-	char *cp;
+	char *cp, *ht;
 	struct stat statbuf;
 
 	/* See if _PATH_KEYFILE exists, and create it if not */
@@ -129,9 +132,8 @@ skeylookup(mp, name)
 	while (!feof(mp->keyfile)) {
 		recstart = ftell(mp->keyfile);
 		mp->recstart = recstart;
-		if (fgets(mp->buf, sizeof(mp->buf), mp->keyfile) != mp->buf) {
+		if (fgets(mp->buf, sizeof(mp->buf), mp->keyfile) != mp->buf)
 			break;
-		}
 		rip(mp->buf);
 		if (mp->buf[0] == '#')
 			continue;	/* Comment */
@@ -139,17 +141,13 @@ skeylookup(mp, name)
 			continue;
 		if ((cp = strtok(NULL, " \t")) == NULL)
 			continue;
-		/* Set hash type if specified, else use md4 */
+		/* Save hash type if specified, else use md4 */
 		if (isalpha(*cp)) {
-			if (skey_set_algorithm(cp) == NULL)
-				warnx("Unknown hash algorithm %s, using %s",
-				      cp, skey_get_algorithm());
+			ht = cp;
 			if ((cp = strtok(NULL, " \t")) == NULL)
 				continue;
 		} else {
-			if (skey_set_algorithm("md4") == NULL)
-				warnx("Unknown hash algorithm md4, using %s",
-				      skey_get_algorithm());
+			ht = "md4";
 		}
 		mp->n = atoi(cp);
 		if ((mp->seed = strtok(NULL, " \t")) == NULL)
@@ -163,9 +161,15 @@ skeylookup(mp, name)
 	}
 	if (found) {
 		(void)fseek(mp->keyfile, recstart, SEEK_SET);
+		/* Set hash type */
+		if (skey_set_algorithm(ht) == NULL) {
+			warnx("Unknown hash algorithm %s, using %s", ht,
+			      skey_get_algorithm());
+		}
 		return 0;
-	} else
+	} else {
 		return 1;
+	}
 }
 
 /* Verify response to a s/key challenge.
