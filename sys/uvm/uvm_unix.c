@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_unix.c,v 1.20 2001/12/19 08:58:07 art Exp $	*/
+/*	$OpenBSD: uvm_unix.c,v 1.21 2002/08/23 11:26:57 art Exp $	*/
 /*	$NetBSD: uvm_unix.c,v 1.18 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ sys_obreak(p, v, retval)
 	 */
 	if (diff > 0) {
 		rv = uvm_map(&vm->vm_map, &old, diff, NULL, UVM_UNKNOWN_OFFSET,
-		    0, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
+		    0, UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RWX, UVM_INH_COPY,
 		    UVM_ADV_NORMAL, UVM_FLAG_AMAPPAD|UVM_FLAG_FIXED|
 		    UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW));
 		if (rv == KERN_SUCCESS) {
