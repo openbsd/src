@@ -22,6 +22,8 @@ option		COMPAT_43
 option		NATIVE_ELF
 option		FFS
 option		FIFO
+option		CD9660
+option		MSDOSFS
 option		INET
 option		NFSCLIENT
 option		NFSSERVER
