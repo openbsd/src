@@ -1,4 +1,4 @@
-/*	$OpenBSD: nameser.h,v 1.5 2001/07/25 17:05:46 jakob Exp $	*/
+/*	$OpenBSD: nameser.h,v 1.6 2001/07/31 22:02:18 jakob Exp $	*/
 
 /*
  * ++Copyright++ 1983, 1989, 1993
@@ -247,6 +247,11 @@
 #define	MAX_MD5RSA_KEY_BYTES		((MAX_MD5RSA_KEY_PART_BITS+7/8)*2+3)
 					/* Max length of text sig block */
 #define	MAX_KEY_BASE64			(((MAX_MD5RSA_KEY_BYTES+2)/3)*4)
+
+/*
+ * EDNS0 Z-field extended flags
+ */
+#define DNS_MESSAGEEXTFLAG_DO	0x8000U
 
 /*
  * Status return codes for T_UNSPEC conversion routines

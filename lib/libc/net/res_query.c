@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_query.c,v 1.15 2001/06/27 00:58:55 lebel Exp $	*/
+/*	$OpenBSD: res_query.c,v 1.16 2001/07/31 22:02:18 jakob Exp $	*/
 
 /*
  * ++Copyright++ 1988, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_query.c,v 8.9 1996/09/22 00:13:28 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_query.c,v 1.15 2001/06/27 00:58:55 lebel Exp $";
+static char rcsid[] = "$OpenBSD: res_query.c,v 1.16 2001/07/31 22:02:18 jakob Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -123,8 +123,11 @@ res_query(name, class, type, answer, anslen)
 
 	n = res_mkquery(QUERY, name, class, type, NULL, 0, NULL,
 			buf, sizeof(buf));
-	if (n > 0 && (_res.options & RES_USE_EDNS0) != 0)
+	if (n > 0 && ((_res.options & RES_USE_EDNS0) ||
+	    (_res.options & RES_USE_DNSSEC))) {
 		n = res_opt(n, buf, sizeof(buf), anslen);
+	}
+
 	if (n <= 0) {
 #ifdef DEBUG
 		if (_res.options & RES_DEBUG)
