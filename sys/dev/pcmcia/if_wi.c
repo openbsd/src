@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.19 2001/01/11 06:45:25 angelos Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.20 2001/01/14 23:11:10 angelos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -133,7 +133,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.19 2001/01/11 06:45:25 angelos Exp $";
+	"$OpenBSD: if_wi.c,v 1.20 2001/01/14 23:11:10 angelos Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -928,7 +928,7 @@ wi_setmulti(sc)
 	bzero((char *)&mcast, sizeof(mcast));
 
 	mcast.wi_type = WI_RID_MCAST;
-	mcast.wi_len = (3 * 16) + 1;
+	mcast.wi_len = (ETHER_ADDR_LEN * 16) + 1;
 
 	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
 		wi_write_record(sc, (struct wi_ltv_gen *)&mcast);
@@ -1102,8 +1102,8 @@ wi_ioctl(ifp, command, data)
 			    !(ifp->if_flags & IFF_PROMISC) &&
 			    sc->wi_if_flags & IFF_PROMISC) {
 				WI_SETVAL(WI_RID_PROMISC, 0);
-			} else
-				wi_init(sc);
+			}
+			wi_init(sc);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING) {
 				wi_stop(sc);
