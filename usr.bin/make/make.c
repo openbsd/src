@@ -1,5 +1,5 @@
-/*	$OpenBSD: make.c,v 1.2 1996/03/27 19:32:38 niklas Exp $	*/
-/*	$NetBSD: make.c,v 1.8 1996/03/15 21:52:37 christos Exp $	*/
+/*	$OpenBSD: make.c,v 1.3 1996/09/02 16:04:14 briggs Exp $	*/
+/*	$NetBSD: make.c,v 1.9 1996/08/30 23:21:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
 static char sccsid[] = "@(#)make.c	5.3 (Berkeley) 6/1/90";
 static char rcsid[] = "$NetBSD: make.c,v 1.8 1996/03/15 21:52:37 christos Exp $";
 #else
-static char rcsid[] = "$OpenBSD: make.c,v 1.2 1996/03/27 19:32:38 niklas Exp $";
+static char rcsid[] = "$OpenBSD: make.c,v 1.3 1996/09/02 16:04:14 briggs Exp $";
 #endif
 #endif /* not lint */
 
@@ -580,9 +580,16 @@ MakeAddAllSrc (cgnp, pgnp)
     GNode	*pgn = (GNode *) pgnp;
     if ((cgn->type & (OP_EXEC|OP_USE|OP_INVISIBLE)) == 0) {
 	char *child;
-	char *p1;
+	char *p1 = NULL;
 
-	child = Var_Value(TARGET, cgn, &p1);
+	if (OP_NOP(cgn->type)) {
+	    /*
+	     * this node is only source; use the specific pathname for it
+	     */
+	    child = cgn->path ? cgn->path : cgn->name;
+	}
+	else
+	    child = Var_Value(TARGET, cgn, &p1);
 	Var_Append (ALLSRC, child, pgn);
 	if (pgn->type & OP_JOIN) {
 	    if (cgn->made == MADE) {

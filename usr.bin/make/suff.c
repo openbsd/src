@@ -1,5 +1,5 @@
-/*	$OpenBSD: suff.c,v 1.3 1996/06/26 05:36:38 deraadt Exp $	*/
-/*	$NetBSD: suff.c,v 1.11 1995/11/02 23:55:08 christos Exp $	*/
+/*	$OpenBSD: suff.c,v 1.4 1996/09/02 16:04:19 briggs Exp $	*/
+/*	$NetBSD: suff.c,v 1.12 1996/08/13 16:42:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)suff.c	5.6 (Berkeley) 6/1/90";
 #else
-static char rcsid[] = "$OpenBSD: suff.c,v 1.3 1996/06/26 05:36:38 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: suff.c,v 1.4 1996/09/02 16:04:19 briggs Exp $";
 #endif
 #endif /* not lint */
 
@@ -803,7 +803,7 @@ Suff_AddSuffix (str)
     if (ln == NILLNODE) {
 	s = (Suff *) emalloc (sizeof (Suff));
 
-	s->name =   	strdup (str);
+	s->name =   	estrdup (str);
 	s->nameLen = 	strlen (s->name);
 	s->searchPath = Lst_Init (FALSE);
 	s->children = 	Lst_Init (FALSE);
@@ -1010,7 +1010,7 @@ SuffAddSrc (sp, lsp)
 	 * that...
 	 */
 	s2 = (Src *) emalloc (sizeof (Src));
-	s2->file =  	strdup(targ->pref);
+	s2->file =  	estrdup(targ->pref);
 	s2->pref =  	targ->pref;
 	s2->parent = 	targ;
 	s2->node =  	NILGNODE;
@@ -1273,7 +1273,7 @@ SuffFindCmds (targ, slst)
 		     * again (ick)), and return the new structure.
 		     */
 		    ret = (Src *)emalloc (sizeof (Src));
-		    ret->file = strdup(s->name);
+		    ret->file = estrdup(s->name);
 		    ret->pref = targ->pref;
 		    ret->suff = suff;
 		    suff->refCount++;
@@ -1863,7 +1863,7 @@ SuffFindNormalDeps(gn, slst)
 	     * Allocate a Src structure to which things can be transformed
 	     */
 	    targ = (Src *)emalloc(sizeof (Src));
-	    targ->file = strdup(gn->name);
+	    targ->file = estrdup(gn->name);
 	    targ->suff = (Suff *)Lst_Datum(ln);
 	    targ->suff->refCount++;
 	    targ->node = gn;
@@ -1908,13 +1908,13 @@ SuffFindNormalDeps(gn, slst)
 	}
 	
 	targ = (Src *)emalloc(sizeof (Src));
-	targ->file = strdup(gn->name);
+	targ->file = estrdup(gn->name);
 	targ->suff = suffNull;
 	targ->suff->refCount++;
 	targ->node = gn;
 	targ->parent = (Src *)NULL;
 	targ->children = 0;
-	targ->pref = strdup(sopref);
+	targ->pref = estrdup(sopref);
 #ifdef DEBUG_SRC
 	targ->cp = Lst_Init(FALSE);
 #endif
@@ -2053,7 +2053,7 @@ sfnd_abort:
 		gn->suffix->refCount++;
 	    if (gn->path != NULL)
 		free(gn->path);
-	    gn->path = strdup(gn->name);
+	    gn->path = estrdup(gn->name);
 	}
 	
 	goto sfnd_return;
@@ -2154,7 +2154,7 @@ sfnd_abort:
      */
     if (gn->path)
 	free(gn->path);
-    gn->path = strdup(gn->name);
+    gn->path = estrdup(gn->name);
 
     /*
      * Nuke the transformation path and the Src structures left over in the
@@ -2335,7 +2335,7 @@ Suff_Init ()
      */
     emptySuff = suffNull = (Suff *) emalloc (sizeof (Suff));
 
-    suffNull->name =   	    strdup ("");
+    suffNull->name =   	    estrdup ("");
     suffNull->nameLen =     0;
     suffNull->searchPath =  Lst_Init (FALSE);
     Dir_Concat(suffNull->searchPath, dirSearchPath);

@@ -1,5 +1,5 @@
-/*	$OpenBSD: config.h,v 1.4 1996/07/31 00:01:03 niklas Exp $	*/
-/*	$NetBSD: config.h,v 1.5 1996/02/04 20:34:43 christos Exp $	*/
+/*	$OpenBSD: config.h,v 1.5 1996/09/02 16:04:07 briggs Exp $	*/
+/*	$NetBSD: config.h,v 1.6 1996/05/28 23:34:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -81,13 +81,36 @@
  *	re-made, causing later targets to appear up-to-date. On systems
  *	that don't have this problem, you should defined this. Under
  *	NFS you probably should not, unless you aren't exporting jobs.
- *
- * POSIX
- *	If the POSIX standard for Make is to be followed. There are
- *	several areas that I dislike, hence this constant.
  */
 #define	LIBSUFF	".a"
 #define	RECHECK
+
+/*
+ * POSIX
+ *	Adhere to the POSIX 1003.2 draft for the make(1) program.
+ *	- Use MAKEFLAGS instead of MAKE to pick arguments from the
+ *	  environment.
+ *	- Allow empty command lines if starting with tab.
+ */
+#define POSIX
+
+/*
+ * SYSVINCLUDES
+ *	Recognize system V like include directives [include "filename"]
+ * SYSVVARSUB
+ *	Recognize system V like ${VAR:x=y} variable substitutions
+ */
+#define SYSVINCLUDES
+#define SYSVVARSUB
+
+/*
+ * SUNSHCMD
+ *	Recognize SunOS and Solaris:
+ *		VAR :sh= CMD	# Assign VAR to the command substitution of CMD
+ *		${VAR:sh}	# Return the command substitution of the value
+ *				# of ${VAR}
+ */
+#define SUNSHCMD
 
 #if !defined(__svr4__) && !defined(__SVR4) && !defined(__alpha__)
 # ifndef RANLIBMAG

@@ -1,5 +1,5 @@
-/*	$OpenBSD: dir.c,v 1.4 1996/06/26 05:36:29 deraadt Exp $	*/
-/*	$NetBSD: dir.c,v 1.10 1996/02/04 22:20:38 christos Exp $	*/
+/*	$OpenBSD: dir.c,v 1.5 1996/09/02 16:04:09 briggs Exp $	*/
+/*	$NetBSD: dir.c,v 1.11 1996/08/13 16:42:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	5.6 (Berkeley) 12/28/90";
 #else
-static char rcsid[] = "$OpenBSD: dir.c,v 1.4 1996/06/26 05:36:29 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: dir.c,v 1.5 1996/09/02 16:04:09 briggs Exp $";
 #endif
 #endif /* not lint */
 
@@ -355,7 +355,7 @@ DirMatchFiles (pattern, p, expansions)
 	     (pattern[0] == '.')))
 	{
 	    (void)Lst_AtEnd(expansions,
-			    (isDot ? strdup(entry->name) :
+			    (isDot ? estrdup(entry->name) :
 			     str_concat(p->name, entry->name,
 					STR_ADDSLASH)));
 	}
@@ -707,7 +707,7 @@ Dir_FindFile (name, path)
 	    }
 	    hits += 1;
 	    dot->hits += 1;
-	    return (strdup (name));
+	    return (estrdup (name));
     }
     
     if (Lst_Open (path) == FAILURE) {
@@ -818,7 +818,7 @@ Dir_FindFile (name, path)
 		/*
 		 * Checking in dot -- DON'T put a leading ./ on the thing.
 		 */
-		file = strdup(name);
+		file = estrdup(name);
 		checkedDot = TRUE;
 	    }
 	    if (DEBUG(DIR)) {
@@ -914,7 +914,7 @@ Dir_FindFile (name, path)
     }
     
     if (Hash_FindEntry (&p->files, cp) != (Hash_Entry *)NULL) {
-	return (strdup (name));
+	return (estrdup (name));
     } else {
 	return ((char *) NULL);
     }
@@ -929,7 +929,7 @@ Dir_FindFile (name, path)
 	if (DEBUG(DIR)) {
 	    printf("got it (in mtime cache)\n");
 	}
-	return(strdup(name));
+	return(estrdup(name));
     } else if (stat (name, &stb) == 0) {
 	entry = Hash_CreateEntry(&mtimes, name, (Boolean *)NULL);
 	if (DEBUG(DIR)) {
@@ -937,7 +937,7 @@ Dir_FindFile (name, path)
 		    name);
 	}
 	Hash_SetValue(entry, (long)stb.st_mtime);
-	return (strdup (name));
+	return (estrdup (name));
     } else {
 	if (DEBUG(DIR)) {
 	    printf("failed. Returning NULL\n");
@@ -980,7 +980,7 @@ Dir_MTime (gn)
     }
     
     if (fullName == (char *)NULL) {
-	fullName = strdup(gn->name);
+	fullName = estrdup(gn->name);
     }
 
     entry = Hash_FindEntry(&mtimes, fullName);
@@ -1054,7 +1054,7 @@ Dir_AddDir (path, name)
 	
 	if ((d = opendir (name)) != (DIR *) NULL) {
 	    p = (Path *) emalloc (sizeof (Path));
-	    p->name = strdup (name);
+	    p->name = estrdup (name);
 	    p->hits = 0;
 	    p->refCount = 1;
 	    Hash_InitTable (&p->files, -1);
@@ -1138,7 +1138,7 @@ Dir_MakeFlags (flag, path)
     LstNode	  ln;	  /* the node of the current directory */
     Path	  *p;	  /* the structure describing the current directory */
     
-    str = strdup ("");
+    str = estrdup ("");
     
     if (Lst_Open (path) == SUCCESS) {
 	while ((ln = Lst_Next (path)) != NILLNODE) {

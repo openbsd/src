@@ -1,5 +1,5 @@
-/*	$OpenBSD: extern.h,v 1.4 1996/06/26 05:36:35 deraadt Exp $	*/
-/*	$NetBSD: nonints.h,v 1.9 1996/03/31 21:30:07 christos Exp $	*/
+/*	$OpenBSD: extern.h,v 1.5 1996/09/02 16:04:16 briggs Exp $	*/
+/*	$NetBSD: nonints.h,v 1.11 1996/08/13 16:42:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -66,12 +66,14 @@ void For_Run  __P((void));
 /* main.c */
 void Main_ParseArgLine __P((char *));
 int main __P((int, char **));
+char *Cmd_Exec __P((char *, char **));
 void Error __P((char *, ...));
 void Fatal __P((char *, ...));
 void Punt __P((char *, ...));
 void DieHorribly __P((void));
 int PrintAddr __P((ClientData, ClientData));
 void Finish __P((int));
+char *estrdup __P((const char *));
 void *emalloc __P((size_t));
 void *erealloc __P((void *, size_t));
 void enomem __P((void));

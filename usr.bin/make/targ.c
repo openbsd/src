@@ -1,5 +1,5 @@
-/*	$OpenBSD: targ.c,v 1.3 1996/04/21 23:43:28 deraadt Exp $	*/
-/*	$NetBSD: targ.c,v 1.7 1996/04/08 18:57:49 jtc Exp $	*/
+/*	$OpenBSD: targ.c,v 1.4 1996/09/02 16:04:20 briggs Exp $	*/
+/*	$NetBSD: targ.c,v 1.9 1996/08/30 17:59:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)targ.c	5.9 (Berkeley) 3/1/91"; */
-static char *rcsid = "$Id: targ.c,v 1.3 1996/04/21 23:43:28 deraadt Exp $";
+static char *rcsid = "$Id: targ.c,v 1.4 1996/09/02 16:04:20 briggs Exp $";
 #endif /* not lint */
 
 /*-
@@ -162,7 +162,7 @@ Targ_NewGN (name)
     register GNode *gn;
 
     gn = (GNode *) emalloc (sizeof (GNode));
-    gn->name = strdup (name);
+    gn->name = estrdup (name);
     gn->path = (char *) 0;
     if (name[0] == '-' && name[1] == 'l') {
 	gn->type = OP_LIB;

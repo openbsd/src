@@ -1,5 +1,5 @@
-/*	$OpenBSD: arch.c,v 1.5 1996/07/31 00:01:04 niklas Exp $	*/
-/*	$NetBSD: arch.c,v 1.14 1996/03/12 18:04:27 christos Exp $	*/
+/*	$OpenBSD: arch.c,v 1.6 1996/09/02 16:04:07 briggs Exp $	*/
+/*	$NetBSD: arch.c,v 1.16 1996/08/13 16:42:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
 static char sccsid[] = "@(#)arch.c	5.7 (Berkeley) 12/28/90";
 static char rcsid[] = "$NetBSD: arch.c,v 1.14 1996/03/12 18:04:27 christos Exp $";
 #else
-static char rcsid[] = "$OpenBSD: arch.c,v 1.5 1996/07/31 00:01:04 niklas Exp $";
+static char rcsid[] = "$OpenBSD: arch.c,v 1.6 1996/09/02 16:04:07 briggs Exp $";
 #endif
 #endif /* not lint */
 
@@ -102,9 +102,6 @@ static char rcsid[] = "$OpenBSD: arch.c,v 1.5 1996/07/31 00:01:04 niklas Exp $";
 #include    <sys/param.h>
 #include    <ctype.h>
 #include    <ar.h>
-#if !defined(__svr4__) && !defined(__SVR4) && !defined(__alpha__)
-#include    <ranlib.h>
-#endif
 #include    <utime.h>
 #include    <stdio.h>
 #include    <stdlib.h>
@@ -119,12 +116,18 @@ typedef struct Arch {
     char	  *name;      /* Name of archive */
     Hash_Table	  members;    /* All the members of the archive described
 			       * by <name, struct ar_hdr *> key/value pairs */
+    char	  *fnametab;  /* Extended name table strings */
+    size_t	  fnamesize;  /* Size of the string table */
 } Arch;
 
 static int ArchFindArchive __P((ClientData, ClientData));
 static void ArchFree __P((ClientData));
 static struct ar_hdr *ArchStatMember __P((char *, char *, Boolean));
 static FILE *ArchFindMember __P((char *, char *, struct ar_hdr *, char *));
+#if defined(__svr4__) || defined(__SVR4)
+#define SVR4ARCHIVES
+static int ArchSVR4Entry __P((Arch *, char *, size_t, FILE *));
+#endif
 
 /*-
  *-----------------------------------------------------------------------
@@ -154,6 +157,8 @@ ArchFree(ap)
 	free((Address) Hash_GetValue (entry));
 
     free(a->name);
+    if (a->fnametab)
+	free(a->fnametab);
     Hash_DeleteTable(&a->members);
     free((Address) a);
 }
@@ -543,31 +548,56 @@ ArchStatMember (archive, member, hash)
     }
 
     ar = (Arch *)emalloc (sizeof (Arch));
-    ar->name = strdup (archive);
+    ar->name = estrdup (archive);
+    ar->fnametab = NULL;
+    ar->fnamesize = 0;
     Hash_InitTable (&ar->members, -1);
     memName[AR_MAX_NAME_LEN] = '\0';
     
     while (fread ((char *)&arh, sizeof (struct ar_hdr), 1, arch) == 1) {
 	if (strncmp ( arh.ar_fmag, ARFMAG, sizeof (arh.ar_fmag)) != 0) {
-				 /*
-				  * The header is bogus, so the archive is bad
-				  * and there's no way we can recover...
-				  */
-				 fclose (arch);
-				 Hash_DeleteTable (&ar->members);
-				 free ((Address)ar);
-				 return ((struct ar_hdr *) NULL);
+	    /*
+	     * The header is bogus, so the archive is bad
+	     * and there's no way we can recover...
+	     */
+	    goto badarch;
 	} else {
+	    /*
+	     * We need to advance the stream's pointer to the start of the
+	     * next header. Files are padded with newlines to an even-byte
+	     * boundary, so we need to extract the size of the file from the
+	     * 'size' field of the header and round it up during the seek.
+	     */
+	    arh.ar_size[sizeof(arh.ar_size)-1] = '\0';
+	    size = (int) strtol(arh.ar_size, NULL, 10);
+
 	    (void) strncpy (memName, arh.ar_name, sizeof(arh.ar_name));
 	    for (cp = &memName[AR_MAX_NAME_LEN]; *cp == ' '; cp--) {
 		continue;
 	    }
 	    cp[1] = '\0';
 
-#if defined(__svr4__) || defined(__SVR4)
-	    /* svr4 names are slash terminated */
-	    if (cp[0] == '/')
-		cp[0] = '\0';
+#ifdef SVR4ARCHIVES
+	    /*
+	     * svr4 names are slash terminated. Also svr4 extended AR format.
+	     */
+	    if (memName[0] == '/') {
+		/*
+		 * svr4 magic mode; handle it
+		 */
+		switch (ArchSVR4Entry(ar, memName, size, arch)) {
+		case -1:  /* Invalid data */
+		    goto badarch;
+		case 0:	  /* List of files entry */
+		    continue;
+		default:  /* Got the entry */
+		    break;
+		}
+	    }
+	    else {
+		if (cp[0] == '/')
+		    cp[0] = '\0';
+	    }
 #endif
 
 #ifdef AR_EFMT1
@@ -580,18 +610,10 @@ ArchStatMember (archive, member, hash)
 
 		unsigned int elen = atoi(&memName[sizeof(AR_EFMT1)-1]);
 
-		if (elen > MAXPATHLEN) {
-			fclose (arch);
-			Hash_DeleteTable (&ar->members);
-			free ((Address)ar);
-			return ((struct ar_hdr *) NULL);
-		}
-		if (fread (memName, elen, 1, arch) != 1) {
-			fclose (arch);
-			Hash_DeleteTable (&ar->members);
-			free ((Address)ar);
-			return ((struct ar_hdr *) NULL);
-		}
+		if (elen > MAXPATHLEN)
+			goto badarch;
+		if (fread (memName, elen, 1, arch) != 1)
+			goto badarch;
 		memName[elen] = '\0';
 		fseek (arch, -elen, 1);
 		if (DEBUG(ARCH) || DEBUG(MAKE)) {
@@ -605,14 +627,6 @@ ArchStatMember (archive, member, hash)
 	    memcpy ((Address)Hash_GetValue (he), (Address)&arh,
 		sizeof (struct ar_hdr));
 	}
-	/*
-	 * We need to advance the stream's pointer to the start of the
-	 * next header. Files are padded with newlines to an even-byte
-	 * boundary, so we need to extract the size of the file from the
-	 * 'size' field of the header and round it up during the seek.
-	 */
-	arh.ar_size[sizeof(arh.ar_size)-1] = '\0';
-	size = (int) strtol(arh.ar_size, NULL, 10);
 	fseek (arch, (size + 1) & ~1, 1);
     }
 
@@ -631,7 +645,120 @@ ArchStatMember (archive, member, hash)
     } else {
 	return ((struct ar_hdr *) NULL);
     }
+
+badarch:
+    fclose (arch);
+    Hash_DeleteTable (&ar->members);
+    if (ar->fnametab)
+	free(ar->fnametab);
+    free ((Address)ar);
+    return ((struct ar_hdr *) NULL);
 }
+
+#ifdef SVR4ARCHIVES
+/*-
+ *-----------------------------------------------------------------------
+ * ArchSVR4Entry --
+ *	Parse an SVR4 style entry that begins with a slash.
+ *	If it is "//", then load the table of filenames
+ *	If it is "/<offset>", then try to substitute the long file name
+ *	from offset of a table previously read.
+ *
+ * Results:
+ *	-1: Bad data in archive
+ *	 0: A table was loaded from the file
+ *	 1: Name was successfully substituted from table
+ *	 2: Name was not successfully substituted from table
+ *
+ * Side Effects:
+ *	If a table is read, the file pointer is moved to the next archive
+ *	member
+ *
+ *-----------------------------------------------------------------------
+ */
+static int
+ArchSVR4Entry(ar, name, size, arch)
+	Arch *ar;
+	char *name;
+	size_t size;
+	FILE *arch;
+{
+#define ARLONGNAMES1 "//"
+#define ARLONGNAMES2 "/ARFILENAMES"
+    size_t entry;
+    char *ptr, *eptr;
+
+    if (strncmp(name, ARLONGNAMES1, sizeof(ARLONGNAMES1) - 1) == 0 ||
+	strncmp(name, ARLONGNAMES2, sizeof(ARLONGNAMES2) - 1) == 0) {
+
+	if (ar->fnametab != NULL) {
+	    if (DEBUG(ARCH)) {
+		printf("Attempted to redefine an SVR4 name table\n");
+	    }
+	    return -1;
+	}
+
+	/*
+	 * This is a table of archive names, so we build one for
+	 * ourselves
+	 */
+	ar->fnametab = emalloc(size);
+	ar->fnamesize = size;
+
+	if (fread(ar->fnametab, size, 1, arch) != 1) {
+	    if (DEBUG(ARCH)) {
+		printf("Reading an SVR4 name table failed\n");
+	    }
+	    return -1;
+	}
+	eptr = ar->fnametab + size;
+	for (entry = 0, ptr = ar->fnametab; ptr < eptr; ptr++)
+	    switch (*ptr) {
+	    case '/':
+		entry++;
+		*ptr = '\0';
+		break;
+
+	    case '\n':
+		break;
+
+	    default:
+		break;
+	    }
+	if (DEBUG(ARCH)) {
+	    printf("Found svr4 archive name table with %d entries\n", entry);
+	}
+	return 0;
+    }
+
+    if (name[1] == ' ' || name[1] == '\0')
+	return 2;
+
+    entry = (size_t) strtol(&name[1], &eptr, 0);
+    if ((*eptr != ' ' && *eptr != '\0') || eptr == &name[1]) {
+	if (DEBUG(ARCH)) {
+	    printf("Could not parse SVR4 name %s\n", name);
+	}
+	return 2;
+    }
+    if (entry >= ar->fnamesize) {
+	if (DEBUG(ARCH)) {
+	    printf("SVR4 entry offset %s is greater than %d\n",
+		   name, ar->fnamesize);
+	}
+	return 2;
+    }
+
+    if (DEBUG(ARCH)) {
+	printf("Replaced %s with %s\n", name, &ar->fnametab[entry]);
+    }
+
+    (void) strncpy(name, &ar->fnametab[entry], MAXPATHLEN);
+    name[MAXPATHLEN] = '\0';
+    return 1;
+}
+#endif
+
 
 /*-
  *-----------------------------------------------------------------------

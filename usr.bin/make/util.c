@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.3 1996/06/26 05:36:38 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.4 1996/09/02 16:04:21 briggs Exp $	*/
 /*	$NetBSD: util.c,v 1.5 1995/11/22 17:40:17 christos Exp $	*/
 
 /*
@@ -7,7 +7,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.3 1996/06/26 05:36:38 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.4 1996/09/02 16:04:21 briggs Exp $";
 #endif
 
 #include <stdio.h>
@@ -40,7 +40,32 @@ strerror(e)
 }
 #endif
 
-#if defined(sun) || defined(__hpux)
+#ifdef ultrix
+#include <string.h>
+
+/* strdup
+ *
+ * Make a duplicate of a string.
+ * For systems which lack this function.
+ */
+char *
+strdup(str)
+    const char *str;
+{
+    size_t len;
+
+    if (str == NULL)
+	return NULL;
+    len = strlen(str) + 1;
+    if ((p = malloc(len)) == NULL)
+	return NULL;
+
+    return memcpy(p, str, len);
+}
+
+#endif
+
+#if defined(sun) || defined(__hpux) || defined(__sgi)
 
 int
 setenv(name, value, dum)

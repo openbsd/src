@@ -1,5 +1,5 @@
-/*	$OpenBSD: pathnames.h,v 1.4 1996/08/24 18:11:59 imp Exp $	*/
-/*	$NetBSD: pathnames.h,v 1.4 1996/03/06 00:15:26 christos Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.5 1996/09/02 16:04:18 briggs Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.5 1996/08/30 17:59:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
