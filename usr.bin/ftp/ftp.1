@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.44 2005/01/03 13:23:23 jmc Exp $
+.\" 	$OpenBSD: ftp.1,v 1.45 2005/01/03 14:47:52 jmc Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -635,6 +635,7 @@ All other characters are treated literally, and are used to determine the
 .Ic nmap
 .Ar inpattern
 variable values.
+.Pp
 For example, given
 .Ar inpattern
 $1.$2 and the remote file name "mydata.data", $1 would have the value
@@ -656,7 +657,7 @@ is replaced by the original filename.
 Additionally, the sequence
 .Sq Op Ar seq1 , Ar seq2
 is replaced by
-.Op Ar seq1
+.Ar seq1
 if
 .Ar seq1
 is not a null string; otherwise it is replaced by
