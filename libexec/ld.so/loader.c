@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.22 2001/09/25 07:01:39 art Exp $ */
+/*	$OpenBSD: loader.c,v 1.23 2001/09/26 22:58:23 jason Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -298,7 +298,7 @@ _dl_boot(const char **argv, const char **envp, const long loff,
 }
 
 void
-_dl_boot_bind(const long sp, const long loff, Elf_Dyn *dynamicp, long *dl_data)
+_dl_boot_bind(const long sp, long loff, Elf_Dyn *dynamicp, long *dl_data)
 {
 	AuxInfo		*auxstack;
 	long		*stack;
