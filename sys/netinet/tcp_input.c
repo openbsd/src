@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.38 1999/07/03 02:16:51 deraadt Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.39 1999/07/06 20:14:06 cmetz Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -324,7 +324,6 @@ tcp_input(m, va_alist)
 	struct socket *so = NULL;
 	int todrop, acked, ourfinisacked, needoutput = 0;
 	short ostate = 0;
-	struct in_addr laddr;
 	int dropsocket = 0;
 	int iss = 0;
 	u_long tiwin;
@@ -531,14 +530,14 @@ findpcb:
 #endif /* defined(INET) && defined(INET6) */
 #ifdef INET
 	case PF_INET:
-		inp = in_pcbhashlookup(&tcbtable, nhu.ip->ip_src, th->th_sport,
-			nhu.ip->ip_dst, th->th_dport);
+		inp = in_pcbhashlookup(&tcbtable, nhu.ip->ip_src,
+			th->th_sport, nhu.ip->ip_dst, th->th_dport);
 		break;
 #endif /* INET */
 #ifdef INET6
 	case PF_INET6:
-		inp = in6_pcbhashlookup(&tcbtable, nhu.ipv6->ipv6_src,
-			th->th_sport, nhu.ipv6->ipv6_dst, th->th_dport);
+		inp = in6_pcbhashlookup(&tcbtable, &nhu.ipv6->ipv6_src,
+			th->th_sport, &nhu.ipv6->ipv6_dst, th->th_dport);
 		break;
 #endif /* INET6 */
 	}
@@ -978,7 +977,7 @@ findpcb:
 #endif /* INET */
 #ifdef INET6
 		case PF_INET6:
-			if (IN6_IS_ADDR_MULTICAST(nhu.ipv6->ipv6_dst))
+			if (IN6_IS_ADDR_MULTICAST(&nhu.ipv6->ipv6_dst))
 				goto drop;
 			break;
 #endif /* INET6 */
@@ -1002,7 +1001,8 @@ findpcb:
 			 * PF_INET6 sockets causes some overhead here.
 			 */
 			if (inp->inp_flags & INP_IPV6) {
-				struct sockaddr_in6 sin6;
+				struct sockaddr_in6 *sin6;
+				struct in6_addr laddr6;
 
 				if (!(inp->inp_flags & (INP_IPV6_UNDEC |
 						INP_IPV6_MAPPED))) {
@@ -1042,6 +1042,7 @@ findpcb:
 #endif /* INET6 */
 			{
 				struct sockaddr_in *sin;
+				struct in_addr laddr;
 
 				am->m_len = sizeof(struct sockaddr_in);
 				sin = mtod(am, struct sockaddr_in *);
@@ -1066,7 +1067,8 @@ findpcb:
 #ifdef INET6
 		case PF_INET6:
 			{
-				struct sockaddr_in6 sin6;
+				struct sockaddr_in6 *sin6;
+				struct laddr6;
 
 				/*
 			 	 * This is probably the place to set the tp->pf

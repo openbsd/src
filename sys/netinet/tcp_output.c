@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.19 1999/07/03 02:16:51 deraadt Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.20 1999/07/06 20:14:06 cmetz Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -760,7 +760,8 @@ send:
 #endif /* INET */
 #ifdef INET6
 	case AF_INET6:
-  		th->th_sum = in6_cksum(m, IPPROTO_TCP, hdrlen + len);
+  		th->th_sum = in6_cksum(m, IPPROTO_TCP, hdrlen + len,
+			sizeof(struct ipv6));
 		break;
 #endif /* INET6 */
 	}
