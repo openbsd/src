@@ -1,4 +1,4 @@
-.\"	$OpenBSD: skeyinit.1,v 1.19 2000/11/09 17:52:39 aaron Exp $
+.\"	$OpenBSD: skeyinit.1,v 1.20 2001/06/20 22:25:08 millert Exp $
 .\"	$NetBSD: skeyinit.1,v 1.4 1995/07/07 22:24:09 jtc Exp $
 .\"	@(#)skeyinit.1	1.1 	10/28/93
 .\"
@@ -97,16 +97,18 @@ The username to be changed/added.
 By default the current user is operated on.
 .El
 .Sh ERRORS
-.Bl -tag -width "skey disabled"
-.It skey disabled
+.Bl -tag -compact -width "skey disabled"
+.It "skey disabled"
 .Pa /etc/skeykeys
 does not exist.
 It must be created by the superuser in order to use
 .Nm skeyinit .
+.El
 .Sh FILES
 .Bl -tag -width /etc/skeykeys
 .It Pa /etc/skeykeys
 database of information for S/Key system
+.El
 .Sh SEE ALSO
 .Xr skey 1
 .Sh AUTHORS
