@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
-/* $OpenBSD: if_em.c,v 1.39 2005/03/16 11:59:09 markus Exp $ */
+/* $OpenBSD: if_em.c,v 1.40 2005/03/26 23:04:58 brad Exp $ */
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -302,7 +302,7 @@ device_method_t em_methods[] = {
 };
 
 driver_t em_driver = {
-        "em", em_methods, sizeof(struct em_softc ),
+        "em", em_methods, sizeof(struct em_softc),
 };
 
 devclass_t em_devclass;
@@ -439,7 +439,7 @@ em_attach(struct device *parent, struct device *self, void *aux)
 		printf("em: sc structure allocation failed\n");
 		return(ENOMEM);
 	}
-	bzero(sc, sizeof(struct em_softc ));
+	bzero(sc, sizeof(struct em_softc));
 	sc->dev = dev;
 	sc->osdep.dev = dev;
 	sc->sc_dv.dv_xname = device_get_unit(dev);
@@ -713,7 +713,7 @@ em_power(int why, void *arg)
 int
 em_detach(device_t dev)
 {
-        struct em_softc * sc = device_get_softc(dev);
+        struct em_softc *sc = device_get_softc(dev);
         struct ifnet   *ifp = &sc->interface_data.ac_if;
 	EM_LOCK_STATE();
 
@@ -857,7 +857,7 @@ em_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	int		error = 0;
 	struct ifreq   *ifr = (struct ifreq *) data;
-	struct em_softc * sc = ifp->if_softc;
+	struct em_softc *sc = ifp->if_softc;
 	EM_LOCK_STATE();
 
 #ifdef __OpenBSD__
@@ -990,7 +990,7 @@ em_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 void
 em_watchdog(struct ifnet *ifp)
 {
-	struct em_softc * sc;
+	struct em_softc *sc;
 	sc = ifp->if_softc;
 
 	/* If we are in this routine because of pause frames, then
@@ -1001,8 +1001,9 @@ em_watchdog(struct ifnet *ifp)
 		return;
 	}
 
-	if (em_check_for_link(&sc->hw))
-	        printf("%s: watchdog timeout -- resetting\n", sc->sc_dv.dv_xname);
+	em_check_for_link(&sc->hw);
+
+	printf("%s: watchdog timeout -- resetting\n", sc->sc_dv.dv_xname);
 
 	ifp->if_flags &= ~IFF_RUNNING;
 
@@ -1150,7 +1151,7 @@ em_init_locked(struct em_softc *sc)
 void
 em_init(void *arg)
 {
-        struct em_softc * sc = arg;
+        struct em_softc *sc = arg;
 	EM_LOCK_STATE();
 
         EM_LOCK(sc);
@@ -1311,7 +1312,7 @@ em_intr(void *arg)
 void
 em_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
-	struct em_softc * sc= ifp->if_softc;
+	struct em_softc *sc= ifp->if_softc;
 
 	INIT_DEBUGOUT("em_media_status: begin");
 
@@ -1376,7 +1377,7 @@ em_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 int
 em_media_change(struct ifnet *ifp)
 {
-	struct em_softc * sc = ifp->if_softc;
+	struct em_softc *sc = ifp->if_softc;
 	struct ifmedia	*ifm = &sc->media;
 
 	INIT_DEBUGOUT("em_media_change: begin");
@@ -1758,7 +1759,7 @@ em_82547_tx_fifo_reset(struct em_softc *sc)
 }
 
 void
-em_set_promisc(struct em_softc * sc)
+em_set_promisc(struct em_softc *sc)
 {
 
 	u_int32_t	reg_rctl;
@@ -1790,7 +1791,7 @@ em_set_promisc(struct em_softc * sc)
 }
 
 void
-em_disable_promisc(struct em_softc * sc)
+em_disable_promisc(struct em_softc *sc)
 {
 	u_int32_t	reg_rctl;
 
@@ -1813,7 +1814,7 @@ em_disable_promisc(struct em_softc * sc)
  **********************************************************************/
 
 void
-em_set_multi(struct em_softc * sc)
+em_set_multi(struct em_softc *sc)
 {
 	u_int32_t reg_rctl = 0;
 	u_int8_t  mta[MAX_NUM_MULTICAST_ADDRESSES * ETH_LENGTH_OF_ADDRESS];
@@ -1904,7 +1905,7 @@ void
 em_local_timer(void *arg)
 {
 	struct ifnet   *ifp;
-	struct em_softc * sc = arg;
+	struct em_softc *sc = arg;
 	EM_LOCK_STATE();
 
 	ifp = &sc->interface_data.ac_if;
@@ -1931,7 +1932,7 @@ em_local_timer(void *arg)
 }
 
 void
-em_print_link_status(struct em_softc * sc)
+em_print_link_status(struct em_softc *sc)
 {
         if (E1000_READ_REG(&sc->hw, STATUS) & E1000_STATUS_LU) {
                 if (sc->link_active == 0) {
@@ -1959,7 +1960,7 @@ em_print_link_status(struct em_softc * sc)
 }
 
 void
-em_update_link_status(struct em_softc * sc)
+em_update_link_status(struct em_softc *sc)
 {
 	struct ifnet *ifp = &sc->interface_data.ac_if;
         if (E1000_READ_REG(&sc->hw, STATUS) & E1000_STATUS_LU) {
@@ -1997,7 +1998,7 @@ void
 em_stop(void *arg)
 {
 	struct ifnet   *ifp;
-	struct em_softc * sc = arg;
+	struct em_softc *sc = arg;
 	ifp = &sc->interface_data.ac_if;
 
 	mtx_assert(&sc->mtx, MA_OWNED);
@@ -2030,7 +2031,7 @@ em_stop(void *arg)
  *
  **********************************************************************/
 void
-em_identify_hardware(struct em_softc * sc)
+em_identify_hardware(struct em_softc *sc)
 {
 	u_int32_t reg;
 	struct pci_attach_args *pa = &sc->osdep.em_pa;
@@ -2074,7 +2075,7 @@ em_identify_hardware(struct em_softc * sc)
 }
 
 int
-em_allocate_pci_resources(struct em_softc * sc)
+em_allocate_pci_resources(struct em_softc *sc)
 {
 	int		val, rid;
 	pci_intr_handle_t	ih;
@@ -2148,7 +2149,7 @@ em_allocate_pci_resources(struct em_softc * sc)
 }
 
 void
-em_free_pci_resources(struct em_softc* sc)
+em_free_pci_resources(struct em_softc *sc)
 {
 	struct pci_attach_args *pa = &sc->osdep.em_pa;
 	pci_chipset_tag_t	pc = pa->pa_pc;
@@ -2178,7 +2179,7 @@ em_free_pci_resources(struct em_softc* sc)
  *
  **********************************************************************/
 int
-em_hardware_init(struct em_softc * sc)
+em_hardware_init(struct em_softc *sc)
 {
 	INIT_DEBUGOUT("em_hardware_init: begin");
 	/* Issue a global reset */
@@ -2231,10 +2232,10 @@ em_hardware_init(struct em_softc * sc)
  **********************************************************************/
 void
 #ifdef __FreeBSD__
-em_setup_interface(device_t dev, struct em_softc * sc)
+em_setup_interface(device_t dev, struct em_softc *sc)
 #endif
 #ifdef __OpenBSD__
-em_setup_interface(struct em_softc * sc)
+em_setup_interface(struct em_softc *sc)
 #endif
 {
 	struct ifnet   *ifp;
@@ -2496,7 +2497,7 @@ em_dma_free(struct em_softc *sc, struct em_dma_alloc *dma)
  *
  **********************************************************************/
 int
-em_allocate_transmit_structures(struct em_softc * sc)
+em_allocate_transmit_structures(struct em_softc *sc)
 {
 	if (!(sc->tx_buffer_area =
 	      (struct em_buffer *) malloc(sizeof(struct em_buffer) *
@@ -2519,7 +2520,7 @@ em_allocate_transmit_structures(struct em_softc * sc)
  *
  **********************************************************************/
 int
-em_setup_transmit_structures(struct em_softc* sc)
+em_setup_transmit_structures(struct em_softc *sc)
 {
 #ifdef __FreeBSD__
 	/*
@@ -2570,7 +2571,7 @@ em_setup_transmit_structures(struct em_softc* sc)
  *
  **********************************************************************/
 void
-em_initialize_transmit_unit(struct em_softc * sc)
+em_initialize_transmit_unit(struct em_softc *sc)
 {
 	u_int32_t	reg_tctl;
 	u_int32_t	reg_tipg = 0;
@@ -2642,7 +2643,7 @@ em_initialize_transmit_unit(struct em_softc * sc)
  *
  **********************************************************************/
 void
-em_free_transmit_structures(struct em_softc* sc)
+em_free_transmit_structures(struct em_softc *sc)
 {
 	struct em_buffer   *tx_buffer;
 	int		i;
@@ -2680,7 +2681,7 @@ em_free_transmit_structures(struct em_softc* sc)
  **********************************************************************/
 #ifdef __FreeBSD__
 void
-em_transmit_checksum_setup(struct em_softc * sc,
+em_transmit_checksum_setup(struct em_softc *sc,
 			   struct mbuf *mp,
 			   u_int32_t *txd_upper,
 			   u_int32_t *txd_lower) 
@@ -2767,7 +2768,7 @@ em_transmit_checksum_setup(struct em_softc * sc,
  *
  **********************************************************************/
 void
-em_clean_transmit_interrupts(struct em_softc* sc)
+em_clean_transmit_interrupts(struct em_softc *sc)
 {
 	int i, num_avail;
 	struct em_buffer *tx_buffer;
@@ -2900,7 +2901,7 @@ em_get_buf(int i, struct em_softc *sc,
  *
  **********************************************************************/
 int
-em_allocate_receive_structures(struct em_softc* sc)
+em_allocate_receive_structures(struct em_softc *sc)
 {
 	int		i, error;
 	struct em_buffer *rx_buffer;
@@ -2978,7 +2979,7 @@ fail_1:
  *  
  **********************************************************************/
 int
-em_setup_receive_structures(struct em_softc * sc)
+em_setup_receive_structures(struct em_softc *sc)
 {
 	bzero((void *) sc->rx_desc_base,
 	    (sizeof(struct em_rx_desc)) * sc->num_rx_desc);
@@ -2997,7 +2998,7 @@ em_setup_receive_structures(struct em_softc * sc)
  *  
  **********************************************************************/
 void
-em_initialize_receive_unit(struct em_softc * sc)
+em_initialize_receive_unit(struct em_softc *sc)
 {
 	u_int32_t	reg_rctl;
 #ifdef __FreeBSD__
@@ -3093,7 +3094,7 @@ em_initialize_receive_unit(struct em_softc * sc)
  *
  **********************************************************************/
 void
-em_free_receive_structures(struct em_softc * sc)
+em_free_receive_structures(struct em_softc *sc)
 {
 	struct em_buffer   *rx_buffer;
 	int		i;
@@ -3134,7 +3135,7 @@ em_free_receive_structures(struct em_softc * sc)
  *
  *********************************************************************/
 void
-em_process_receive_interrupts(struct em_softc* sc, int count)
+em_process_receive_interrupts(struct em_softc *sc, int count)
 {
 	struct ifnet	    *ifp;
 	struct mbuf	    *mp;
@@ -3437,7 +3438,7 @@ em_receive_checksum(struct em_softc *sc,
 
 
 void
-em_enable_vlans(struct em_softc * sc)
+em_enable_vlans(struct em_softc *sc)
 {
 	uint32_t ctrl;
 
@@ -3451,7 +3452,7 @@ em_enable_vlans(struct em_softc * sc)
 }
 
 void
-em_enable_intr(struct em_softc* sc)
+em_enable_intr(struct em_softc *sc)
 {
 	E1000_WRITE_REG(&sc->hw, IMS, (IMS_ENABLE_MASK));
 	return;
