@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: datalink.c,v 1.37 2001/08/19 23:22:17 brian Exp $
+ *	$OpenBSD: datalink.c,v 1.38 2001/10/24 10:01:12 brian Exp $
  */
 
 #include <sys/param.h>
@@ -97,18 +97,16 @@ datalink_StartDialTimer(struct datalink *dl, int Timeout)
   int result = Timeout;
 
   timer_Stop(&dl->dial.timer);
-  if (Timeout) {
-    if (Timeout < 0)
-      result = (random() % DIAL_TIMEOUT) + 1;
-    dl->dial.timer.load = result * SECTICKS;
-    dl->dial.timer.func = datalink_OpenTimeout;
-    dl->dial.timer.name = "dial";
-    dl->dial.timer.arg = dl;
-    timer_Start(&dl->dial.timer);
-    if (dl->state == DATALINK_OPENING)
-      log_Printf(LogPHASE, "%s: Enter pause (%d) for redialing.\n",
-                dl->name, result);
-  }
+  if (Timeout < 0)
+    result = (random() % DIAL_TIMEOUT) + 1;
+  dl->dial.timer.load = result ? result * SECTICKS : 1;
+  dl->dial.timer.func = datalink_OpenTimeout;
+  dl->dial.timer.name = "dial";
+  dl->dial.timer.arg = dl;
+  timer_Start(&dl->dial.timer);
+  if (dl->state == DATALINK_OPENING)
+    log_Printf(LogPHASE, "%s: Enter pause (%d) for redialing.\n",
+               dl->name, result);
   return result;
 }
 
