@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.9 2004/07/16 18:14:23 deraadt Exp $ */
+/*	$OpenBSD: est.c,v 1.10 2004/10/05 02:13:41 tedu Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -258,6 +258,7 @@ static const struct est_cpu est_cpus[] = {
 static const struct fqlist *est_fqlist;
 
 extern int setperf_prio;
+extern int perflevel;
 
 void
 est_init(const char *cpu_device)
@@ -268,6 +269,7 @@ est_init(const char *cpu_device)
 	char *tag;
 	const struct fqlist *fql;
 	extern char cpu_brandstr[];
+	int low, high;
 
 	if (setperf_prio > 3)
 		return;
@@ -316,6 +318,9 @@ est_init(const char *cpu_device)
 		printf(" (not in table)\n");
 		return;
 	}
+	low = est_fqlist->table[est_fqlist->n - 1].mhz;
+	high = est_fqlist->table[0].mhz;
+	perflevel = (mhz - low) * 100 / (high - low);
 
 	/*
 	 * OK, tell the user the available frequencies.
