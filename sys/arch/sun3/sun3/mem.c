@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.5 1997/01/16 04:04:30 kstailey Exp $	*/
+/*	$OpenBSD: mem.c,v 1.6 1997/02/10 11:53:11 downsj Exp $	*/
 /*	$NetBSD: mem.c,v 1.19 1995/08/08 21:09:01 gwr Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
 
 extern int ledrw __P((struct uio *));
 
-caddr_t zeropage;
+static caddr_t devzeropage;
 
 /*ARGSUSED*/
 int
@@ -210,13 +210,13 @@ mmrw(dev, uio, flags)
 			 * On the first call, allocate and zero a page
 			 * of memory for use with /dev/zero.
 			 */
-			if (zeropage == NULL) {
-				zeropage = (caddr_t)
+			if (devzeropage == NULL) {
+				devzeropage = (caddr_t)
 				    malloc(CLBYTES, M_TEMP, M_WAITOK);
-				bzero(zeropage, CLBYTES);
+				bzero(devzeropage, CLBYTES);
 			}
 			c = min(iov->iov_len, CLBYTES);
-			error = uiomove(zeropage, c, uio);
+			error = uiomove(devzeropage, c, uio);
 			continue;
 
 /* minor device 13 (/dev/leds) accesses the blinkenlights */
