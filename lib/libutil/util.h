@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.6 1997/06/17 10:10:43 niklas Exp $	*/
+/*	$OpenBSD: util.h,v 1.7 1997/11/09 00:29:14 bri Exp $	*/
 /*	$NetBSD: util.h,v 1.2 1996/05/16 07:00:22 thorpej Exp $	*/
 
 /*-
@@ -76,6 +76,18 @@ int	getmaxpartitions __P((void));
 int	getrawpartition __P((void));
 void	login_fbtab __P((char *, uid_t, gid_t));
 char   *readlabelfs __P((char *, int));
+const char *uu_lockerr __P((int _uu_lockresult));
+int     uu_lock __P((const char *_ttyname)); 
+int     uu_unlock __P((const char *_ttyname));
 __END_DECLS
+
+#define UU_LOCK_INUSE (1)
+#define UU_LOCK_OK (0)
+#define UU_LOCK_OPEN_ERR (-1)
+#define UU_LOCK_READ_ERR (-2)
+#define UU_LOCK_CREAT_ERR (-3)
+#define UU_LOCK_WRITE_ERR (-4)
+#define UU_LOCK_LINK_ERR (-5)
+#define UU_LOCK_TRY_ERR (-6)
 
 #endif /* !_UTIL_H_ */
