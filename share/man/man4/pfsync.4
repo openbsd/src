@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pfsync.4,v 1.10 2003/12/16 04:33:30 mcbride Exp $
+.\"	$OpenBSD: pfsync.4,v 1.11 2003/12/16 11:12:58 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Michael Shalayeff
 .\" All rights reserved.
@@ -41,7 +41,7 @@ State changes can be viewed by invoking
 .Xr tcpdump 8
 on the
 .Nm
-interface. 
+interface.
 If configured with a physical synchronisation interface,
 .Nm
 will also send state changes out on that interface using IP multicast,
@@ -64,8 +64,9 @@ for details).
 The
 .Nm
 interface will attempt to collapse multiple updates of the same
-state into one message where possible. The maximum number of times 
-this can be done before the update is sent out is controlled by the
+state into one message where possible.
+The maximum number of times this can be done before the update is sent out
+is controlled by the
 .Ar maxupd
 to ifconfig.
 (see
@@ -90,14 +91,13 @@ struct pfsync_header {
 };
 .Ed
 .Sh NETWORK SYNCHRONISATION
-.Pp
 States can be synchronised between two or more firewalls using this
 interface, by specifying a synchronisation interface using
 .Xr ifconfig 8 .
 For example, the following command sets fxp0 as the synchronisation
 interface.
 .Bd -literal -offset indent
-# ifconfig pfsync0 syncif fxp0 
+# ifconfig pfsync0 syncif fxp0
 .Ed
 .Pp
 State change messages are sent out on the synchronisation
@@ -107,15 +107,15 @@ used is 224.0.0.136.
 .Pp
 It is important that the synchronisation interface be on a trusted
 network as there is no authentication on the protocol and it would
-be trivial to spoof packets which create states, bypassing the pf
-ruleset. Ideally, this is a network dedicated to pfsync messages,
-ie. a crossover cable between two firewalls.
+be trivial to spoof packets which create states, bypassing the pf ruleset.
+Ideally, this is a network dedicated to pfsync messages,
+i.e. a crossover cable between two firewalls.
 .Pp
 There is a one-to-one correspondence between packets seen by
 .Xr bpf 4
 on the
 .Nm
-interface, and packets sent out on the synchronisation interface, i.e.
+interface, and packets sent out on the synchronisation interface, i.e.\&
 a packet with 4 state deletion messages on
 .Nm
 means that the same 4 deletions were sent out on the synchronisation
