@@ -1,4 +1,4 @@
-/*	$OpenBSD: open.c,v 1.6 1997/02/06 02:56:46 downsj Exp $	*/
+/*	$OpenBSD: open.c,v 1.7 1998/09/11 01:41:18 millert Exp $	*/
 /*	$NetBSD: open.c,v 1.12 1996/09/30 16:01:21 ws Exp $	*/
 
 /*-
@@ -120,6 +120,8 @@ fnd:
 			f->f_ops = &file_system[i];
 			return (fd);
 		}
+		if (error == ENOENT || error == ENOTDIR)
+			break;
 	}
 	if (!error)
 		error = ENOENT;
