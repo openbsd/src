@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.4 2003/07/10 17:02:48 millert Exp $	*/
+/*	$OpenBSD: file.c,v 1.5 2003/12/29 21:20:55 canacar Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -72,12 +72,12 @@ gzfgetln(gzFile *f, size_t *len)
 			else
 				errx(2, "%s: %s", fname, gzerrstr);
 		}
-		if (c == '\n')
-			break;
 		if (n >= lnbuflen) {
 			lnbuflen *= 2;
 			lnbuf = grep_realloc(lnbuf, ++lnbuflen);
 		}
+		if (c == '\n')
+			break;
 		lnbuf[n] = c;
 	}
 

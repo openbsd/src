@@ -1,4 +1,4 @@
-/*	$OpenBSD: binary.c,v 1.9 2003/09/18 22:29:30 beck Exp $	*/
+/*	$OpenBSD: binary.c,v 1.10 2003/12/29 21:20:55 canacar Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -37,6 +37,7 @@ bin_file(FILE *f)
 {
 	char		buf[BUFSIZ];
 	int		i, m;
+	int		ret = 0;
 
 	if (fseek(f, 0L, SEEK_SET) == -1)
 		return 0;
@@ -45,11 +46,13 @@ bin_file(FILE *f)
 		return 0;
 
 	for (i = 0; i < m; i++)
-		if (!isprint(buf[i]) && !isspace(buf[i]))
-			return 1;
+		if (!isprint(buf[i]) && !isspace(buf[i])) {
+			ret = 1;
+			break;
+		}
 
 	rewind(f);
-	return 0;
+	return ret;
 }
 
 #ifndef NOZ
@@ -58,6 +61,7 @@ gzbin_file(gzFile *f)
 {
 	char		buf[BUFSIZ];
 	int		i, m;
+	int		ret = 0;
 
 	if (gzseek(f, 0L, SEEK_SET) == -1)
 		return 0;
@@ -66,11 +70,13 @@ gzbin_file(gzFile *f)
 		return 0;
 
 	for (i = 0; i < m; i++)
-		if (!isprint(buf[i]) && !isspace(buf[i]))
-			return 1;
+		if (!isprint(buf[i]) && !isspace(buf[i])) {
+			ret = 1;
+			break;
+		}
 
 	gzrewind(f);
-	return 0;
+	return ret;
 }
 #endif
 
@@ -83,6 +89,5 @@ mmbin_file(mmf_t *f)
 	for (i = 0; i < BUFSIZ && i < f->len; i++)
 		if (!isprint(f->base[i]) && !isspace(f->base[i]))
 			return 1;
-	mmrewind(f);
 	return 0;
 }
