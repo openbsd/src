@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.52 2001/08/23 16:37:46 art Exp $
+#	$OpenBSD: bsd.own.mk,v 1.53 2001/09/02 14:34:14 art Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -113,7 +113,7 @@ NOPIC=
 # don't try to generate PROFILED versions of libraries on machines
 # which don't support profiling.
 # to add this back use the following line
-.if (${MACHINE_ARCH} == "m88k")
+.if (${MACHINE_ARCH} == "m88k") || (${MACHINE_ARCH} == "sparc64")
 #.if 0
 NOPROFILE=
 .endif
