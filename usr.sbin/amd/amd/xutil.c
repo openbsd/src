@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)xutil.c	8.1 (Berkeley) 6/6/93
- *	$Id: xutil.c,v 1.2 1997/01/31 14:42:04 graichen Exp $
+ *	$Id: xutil.c,v 1.3 1999/08/28 13:43:11 millert Exp $
  */
 
 #include "config.h"
@@ -173,10 +173,11 @@ extern struct mallinfo __mallinfo;
 
 /*
  * Take a log format string and expand occurences of %m
- * with the current error code take from errno.
+ * with the current error code taken from errno.  Make sure
+ * 'e' never gets longer than maxlen characters.
  */
 INLINE
-static void expand_error(f, e)
+static void expand_error(f, e, maxlen)
 char *f;
 char *e;
 {
@@ -184,10 +185,11 @@ char *e;
 	extern int sys_nerr;
 	extern char *sys_errlist[];
 #endif
-	char *p;
+	char *p, *q;
 	int error = errno;
+	int len = 0;
 
-	for (p = f; *e = *p; e++, p++) {
+	for (p = f, q = e; (*q = *p) && len < maxlen; len++, q++, p++) {
 		if (p[0] == '%' && p[1] == 'm') {
 			char *errstr;
 #ifdef HAS_STRERROR
@@ -199,13 +201,16 @@ char *e;
 				errstr = sys_errlist[error];
 #endif
 			if (errstr)
-				strcpy(e, errstr);
+				strlcpy(q, errstr, maxlen - (q - e));
 			else
-				sprintf(e, "Error %d", error);
-			e += strlen(e) - 1;
+				snprintf(q, maxlen - (q - e),
+				    "Error %d", error);
+			len += strlen(q) - 1;
+			q += strlen(q) - 1;
 			p++;
 		}
 	}
+	e[maxlen-1] = '\0';		/* null terminate, to be sure */
 }
 
 /*
@@ -269,7 +274,7 @@ char *j, *s, *_, *p, *e, *n, *d, *r, *y;
 {
 	char msg[1024];
 	char efmt[1024];
-	char *ptr = msg;
+	char *ptr;
 
 	if (!(xlog_level & lvl))
 		return;
@@ -278,9 +283,14 @@ char *j, *s, *_, *p, *e, *n, *d, *r, *y;
 	checkup_mem();
 #endif /* DEBUG_MEM */
 
-	expand_error(fmt, efmt);
-	sprintf(ptr, efmt, j,s,_,p,e,n,d,r,y);
-	ptr += strlen(ptr);
+	expand_error(fmt, efmt, sizeof(efmt));
+	/*
+	 * XXX: msg is 1024 bytes long.  It is possible to write into it
+	 * more than 1024 bytes, if efmt is already large, and vargs expand
+	 * as well.
+	 */
+	snprintf(msg, sizeof(msg), efmt, j,s,_,p,e,n,d,r,y);
+	ptr = msg + strlen(msg);
 	if (ptr[-1] == '\n')
 		*--ptr  = '\0';
 #ifdef HAS_SYSLOG
@@ -301,14 +311,12 @@ char *j, *s, *_, *p, *e, *n, *d, *r, *y;
 	}
 #endif /* HAS_SYSLOG */
 
-	*ptr++ = '\n';
-	*ptr = '\0';
-
 	/*
 	 * Mimic syslog header
 	 */
 	show_time_host_and_name(lvl);
 	fwrite(msg, ptr - msg, 1, logfp);
+	fputc('\n', logfp);
 	fflush(logfp);
 }
 
