@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: monitor_mm.c,v 1.1 2002/03/18 17:26:58 provos Exp $");
+RCSID("$OpenBSD: monitor_mm.c,v 1.2 2002/03/19 10:35:39 markus Exp $");
 
 #include <sys/mman.h>
 
@@ -100,7 +100,7 @@ mm_create(struct mm_master *mmalloc, size_t size)
 
 /* Frees either the allocated or the free list */
 
-void
+static void
 mm_freelist(struct mm_master *mmalloc, struct mmtree *head)
 {
 	struct mm_share *mms, *next;
@@ -260,7 +260,7 @@ mm_free(struct mm_master *mm, void *address)
 		mm_free(mm->mmalloc, mms);
 }
 
-void
+static void
 mm_sync_list(struct mmtree *oldtree, struct mmtree *newtree,
     struct mm_master *mm, struct mm_master *mmold)
 {

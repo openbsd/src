@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: monitor.c,v 1.1 2002/03/18 17:28:37 provos Exp $");
+RCSID("$OpenBSD: monitor.c,v 1.2 2002/03/19 10:35:39 markus Exp $");
 
 #include <openssl/dh.h>
 
@@ -90,31 +90,6 @@ struct {
 	u_char *output;
 	u_int olen;
 } child_state;
-
-/* Prototypes for request sending and receiving */
-void mm_request_send(int, enum monitor_reqtype, Buffer *);
-void mm_request_receive(int, Buffer *);
-void mm_request_receive_expect(int, enum monitor_reqtype, Buffer *);
-
-/* Prototypes for authentication functions */
-int bsdauth_query(void *, char **, char **, u_int *, char ***, u_int **);
-int bsdauth_respond(void *, u_int, char **);
-int skey_query(void *, char **, char **, u_int *, char ***, u_int **);
-int skey_respond(void *, u_int, char **);
-
-int auth_rhosts_rsa_key_allowed(struct passwd *, char *, char *, Key *);
-int hostbased_key_allowed(struct passwd *, const char *, char *, Key *);
-int user_key_allowed(struct passwd *, Key *);
-Key *get_hostkey_by_index(int);
-Key *get_hostkey_by_type(int);
-int get_hostkey_index(Key *);
-int ssh1_session_key(BIGNUM *);
-int auth_rsa_key_allowed(struct passwd *, BIGNUM *, Key **);
-int auth_rsa_verify_response(Key *, BIGNUM *, u_char *);
-BIGNUM *auth_rsa_generate_challenge(Key *);
-
-void	session_pty_cleanup2(void *);
-Session	*session_by_tty(char *);
 
 /* Functions on the montior that answer unprivileged requests */
 
@@ -690,7 +665,7 @@ mm_answer_skeyrespond(int socket, Buffer *m)
 }
 #endif
 
-void
+static void
 mm_append_debug(Buffer *m)
 {
 	if (auth_debug_init && buffer_len(&auth_debug)) {
@@ -931,7 +906,7 @@ mm_answer_keyverify(int socket, Buffer *m)
 	return (verified);
 }
 
-void
+static void
 mm_record_login(Session *s, struct passwd *pw)
 {
 	socklen_t fromlen;
@@ -1284,7 +1259,7 @@ monitor_apply_keystate(struct monitor *monitor)
 	xfree(child_state.output);
 }
 
-Kex *
+static Kex *
 mm_get_kex(Buffer *m)
 {
 	Kex *kex;
@@ -1418,7 +1393,7 @@ mm_init_compression(struct mm_master *mm)
 		fatal("fcntl(%d, F_SETFD)", x); \
 } while (0)
 
-void
+static void
 monitor_socketpair(int *pair)
 {   
 	if (socketpair(AF_UNIX, SOCK_STREAM, 0, pair) == -1)

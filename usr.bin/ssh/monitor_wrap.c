@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: monitor_wrap.c,v 1.1 2002/03/18 17:28:37 provos Exp $");
+RCSID("$OpenBSD: monitor_wrap.c,v 1.2 2002/03/19 10:35:39 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/dh.h>
@@ -285,7 +285,7 @@ mm_auth_rhosts_rsa_key_allowed(struct passwd *pw, char *user,
 	return (ret);
 }
 
-void
+static void
 mm_send_debug(Buffer *m)
 {
 	char *msg;
@@ -487,7 +487,7 @@ mm_newkeys_to_blob(int mode, u_char **blobp, u_int *lenp)
 	return len;
 }
 
-void
+static void
 mm_send_kex(Buffer *m, Kex *kex)
 {
 	buffer_put_string(m, kex->session_id, kex->session_id_len);
@@ -665,7 +665,7 @@ mm_ssh1_session_key(BIGNUM *num)
 	return (rsafail);
 }
 
-void
+static void
 mm_chall_setup(char **name, char **infotxt, u_int *numprompts,
     char ***prompts, u_int **echo_on)
 {

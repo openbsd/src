@@ -37,6 +37,7 @@ struct monitor;
 struct mm_master;
 struct passwd;
 struct Authctxt;
+
 DH *mm_choose_dh(int, int, int);
 int mm_key_sign(Key *, u_char **, u_int *, u_char *, u_int);
 void mm_inform_authserv(char *, char *);

@@ -70,4 +70,9 @@ void monitor_child_postauth(struct monitor *);
 struct mon_table;
 int monitor_read(struct monitor*, struct mon_table *, struct mon_table **);
 
+/* Prototypes for request sending and receiving */
+void mm_request_send(int, enum monitor_reqtype, Buffer *);
+void mm_request_receive(int, Buffer *);
+void mm_request_receive_expect(int, enum monitor_reqtype, Buffer *);
+
 #endif /* _MONITOR_H_ */
