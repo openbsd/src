@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.33 2002/07/16 10:32:37 deraadt Exp $	*/
+/*	$OpenBSD: parse.c,v 1.34 2002/07/24 23:11:14 millert Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -43,10 +43,12 @@ check_noident(char *homedir)
 {
 	char   path[MAXPATHLEN];
 	struct stat st;
+	int n;
 
 	if (!homedir)
 		return 0;
-	if (snprintf(path, sizeof path, "%s/.noident", homedir) >= sizeof path)
+	if ((n = snprintf(path, sizeof(path), "%s/.noident", homedir))
+	    >= sizeof(path) || n < 0)
 		return 0;
 	if (stat(path, &st) == 0)
 		return 1;
@@ -61,14 +63,15 @@ int
 getuserident(char *homedir, char *buf, int len)
 {
 	char   path[MAXPATHLEN], *p;
-	int    fd, nread;
+	int    fd, nread, n;
 	struct stat st;
 
 	if (len == 0)
 		return 0;
 	if (!homedir)
 		return 0;
-	if (snprintf(path, sizeof path, "%s/.ident", homedir) >= sizeof(path))
+	if ((n = snprintf(path, sizeof path, "%s/.ident", homedir))
+	    >= sizeof(path) || n < 0)
 		return 0;
 	if ((fd = open(path, O_RDONLY|O_NONBLOCK|O_NOFOLLOW, 0)) < 0)
 		return 0;
@@ -198,8 +201,10 @@ parse(int fd, struct in_addr *laddr, struct in_addr *faddr)
 			syslog(LOG_NOTICE,
 			    n ? "read from %s: %m" : "read from %s: EOF",
 			    gethost4_addr(faddr));
-		n = snprintf(buf, sizeof(buf),
-		    "%d , %d : ERROR : UNKNOWN-ERROR\r\n", lport, fport);
+		if ((n = snprintf(buf, sizeof(buf),
+		    "%d , %d : ERROR : UNKNOWN-ERROR\r\n", lport, fport))
+		    >= sizeof(buf) || n < 0)
+			n = strlen(buf);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost4_addr(faddr));
 			return 1;
@@ -223,8 +228,10 @@ parse(int fd, struct in_addr *laddr, struct in_addr *faddr)
 			syslog(LOG_NOTICE,
 			    "scanf: invalid-port(s): %d , %d from %s",
 			    lport, fport, gethost4_addr(faddr));
-		n = snprintf(buf, sizeof(buf), "%d , %d : ERROR : %s\r\n",
-		    lport, fport, unknown_flag ? "UNKNOWN-ERROR" : "INVALID-PORT");
+		if ((n = snprintf(buf, sizeof(buf), "%d , %d : ERROR : %s\r\n",
+		    lport, fport, unknown_flag ? "UNKNOWN-ERROR" :
+		    "INVALID-PORT")) >= sizeof(buf) || n < 0)
+			n = strlen(buf);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost4_addr(faddr));
 			return 1;
@@ -247,8 +254,10 @@ parse(int fd, struct in_addr *laddr, struct in_addr *faddr)
 		if (syslog_flag)
 			syslog(LOG_DEBUG, "Returning: %d , %d : NO-USER",
 			    lport, fport);
-		n = snprintf(buf, sizeof(buf), "%d , %d : ERROR : %s\r\n",
-		    lport, fport, unknown_flag ? "UNKNOWN-ERROR" : "NO-USER");
+		if ((n = snprintf(buf, sizeof(buf), "%d , %d : ERROR : %s\r\n",
+		    lport, fport, unknown_flag ? "UNKNOWN-ERROR" : "NO-USER"))
+		    >= sizeof(buf) || n < 0)
+			n = strlen(buf);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost4_addr(faddr));
 			return 1;
@@ -264,9 +273,11 @@ parse(int fd, struct in_addr *laddr, struct in_addr *faddr)
 			syslog(LOG_WARNING,
 			    "getpwuid() could not map uid (%u) to name",
 			    uid);
-		n = snprintf(buf, sizeof(buf),
+		if ((n = snprintf(buf, sizeof(buf),
 		    "%d , %d : USERID : %s%s%s :%u\r\n",
-		    lport, fport, opsys_name, charset_sep, charset_name, uid);
+		    lport, fport, opsys_name, charset_sep, charset_name, uid))
+		    >= sizeof(buf) || n < 0)
+			n = strlen(buf);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost4_addr(faddr));
 			return 1;
@@ -283,8 +294,10 @@ parse(int fd, struct in_addr *laddr, struct in_addr *faddr)
 			syslog(LOG_NOTICE,
 			    "user %s requested HIDDEN-USER for host %s: %d, %d",
 			    pw->pw_name, gethost4_addr(faddr), lport, fport);
-		n = snprintf(buf, sizeof(buf),
-		    "%d , %d : ERROR : HIDDEN-USER\r\n", lport, fport);
+		if ((n = snprintf(buf, sizeof(buf),
+		    "%d , %d : ERROR : HIDDEN-USER\r\n", lport, fport))
+		    >= sizeof(buf) || n < 0)
+			n = strlen(buf);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost4_addr(faddr));
 			return 1;
@@ -295,9 +308,11 @@ parse(int fd, struct in_addr *laddr, struct in_addr *faddr)
 	if (userident_flag && getuserident(pw->pw_dir, token, sizeof token)) {
 		syslog(LOG_NOTICE, "token \"%s\" == uid %u (%s)",
 		    token, uid, pw->pw_name);
-		n = snprintf(buf, sizeof(buf),
-		    "%d , %d : USERID : %s%s%s :%s\r\n",
-		    lport, fport, opsys_name, charset_sep, charset_name, token);
+		if ((n = snprintf(buf, sizeof(buf),
+		    "%d , %d : USERID : %s%s%s :%s\r\n", lport, fport,
+		    opsys_name, charset_sep, charset_name, token))
+		    >= sizeof(buf) || n < 0)
+			n = strlen(buf);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost4_addr(faddr));
 			return 1;
@@ -309,9 +324,11 @@ parse(int fd, struct in_addr *laddr, struct in_addr *faddr)
 		gentoken(token, sizeof token);
 		syslog(LOG_NOTICE, "token %s == uid %u (%s)", token, uid,
 		    pw->pw_name);
-		n = snprintf(buf, sizeof(buf),
-		    "%d , %d : USERID : %s%s%s :%s\r\n",
-		    lport, fport, opsys_name, charset_sep, charset_name, token);
+		if ((n = snprintf(buf, sizeof(buf),
+		    "%d , %d : USERID : %s%s%s :%s\r\n", lport, fport,
+		    opsys_name, charset_sep, charset_name, token))
+		    >= sizeof(buf) || n < 0)
+			n = strlen(buf);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost4_addr(faddr));
 			return 1;
@@ -320,17 +337,21 @@ parse(int fd, struct in_addr *laddr, struct in_addr *faddr)
 	}
 
 	if (number_flag) {
-		n = snprintf(buf, sizeof(buf),
+		if ((n = snprintf(buf, sizeof(buf),
 		    "%d , %d : USERID : %s%s%s :%u\r\n",
-		    lport, fport, opsys_name, charset_sep, charset_name, uid);
+		    lport, fport, opsys_name, charset_sep, charset_name, uid))
+		    >= sizeof(buf) || n < 0)
+			n = strlen(buf);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost4_addr(faddr));
 			return 1;
 		}
 		return 0;
 	}
-	n = snprintf(buf, sizeof(buf), "%d , %d : USERID : %s%s%s :%s\r\n",
-	    lport, fport, opsys_name, charset_sep, charset_name, pw->pw_name);
+	if ((n = snprintf(buf, sizeof(buf), "%d , %d : USERID : %s%s%s :%s\r\n",
+	    lport, fport, opsys_name, charset_sep, charset_name, pw->pw_name))
+	    >= sizeof(buf) || n < 0)
+		n = strlen(buf);
 	if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 		syslog(LOG_NOTICE, "write to %s: %m", gethost4_addr(faddr));
 		return 1;
@@ -363,8 +384,10 @@ parse6(int fd, struct sockaddr_in6 *laddr, struct sockaddr_in6 *faddr)
 			syslog(LOG_NOTICE,
 			    n ? "read from %s: %m" : "read from %s: EOF",
 			    gethost6(faddr));
-		n = snprintf(buf, sizeof(buf),
-		    "%d , %d : ERROR : UNKNOWN-ERROR\r\n", lport, fport);
+		if ((n = snprintf(buf, sizeof(buf),
+		    "%d , %d : ERROR : UNKNOWN-ERROR\r\n", lport, fport))
+		    >= sizeof(buf) || n < 0)
+			n = strlen(buf);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost6(faddr));
 			return 1;
@@ -388,8 +411,10 @@ parse6(int fd, struct sockaddr_in6 *laddr, struct sockaddr_in6 *faddr)
 			syslog(LOG_NOTICE,
 			    "scanf: invalid-port(s): %d , %d from %s",
 			    lport, fport, gethost6(faddr));
-		n = snprintf(buf, sizeof(buf), "%d , %d : ERROR : %s\r\n",
-		    lport, fport, unknown_flag ? "UNKNOWN-ERROR" : "INVALID-PORT");
+		if ((n = snprintf(buf, sizeof(buf), "%d , %d : ERROR : %s\r\n",
+		    lport, fport, unknown_flag ? "UNKNOWN-ERROR" :
+		    "INVALID-PORT")) >= sizeof(buf) || n < 0)
+			n = strlen(buf);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost6(faddr));
 			return 1;
@@ -412,8 +437,10 @@ parse6(int fd, struct sockaddr_in6 *laddr, struct sockaddr_in6 *faddr)
 		if (syslog_flag)
 			syslog(LOG_DEBUG, "Returning: %d , %d : NO-USER",
 			    lport, fport);
-		n = snprintf(buf, sizeof(buf), "%d , %d : ERROR : %s\r\n",
-		    lport, fport, unknown_flag ? "UNKNOWN-ERROR" : "NO-USER");
+		if ((n = snprintf(buf, sizeof(buf), "%d , %d : ERROR : %s\r\n",
+		    lport, fport, unknown_flag ? "UNKNOWN-ERROR" : "NO-USER"))
+		    >= sizeof(buf) || n < 0)
+			n = strlen(buf);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost6(faddr));
 			return 1;
@@ -429,9 +456,10 @@ parse6(int fd, struct sockaddr_in6 *laddr, struct sockaddr_in6 *faddr)
 			syslog(LOG_WARNING,
 			    "getpwuid() could not map uid (%u) to name",
 			    uid);
-		n = snprintf(buf, sizeof(buf),
+		if ((n = snprintf(buf, sizeof(buf),
 		    "%d , %d : USERID : %s%s%s :%u\r\n",
-		    lport, fport, opsys_name, charset_sep, charset_name, uid);
+		    lport, fport, opsys_name, charset_sep, charset_name, uid))
+		    >= sizeof(buf) || n < 0)
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost6(faddr));
 			return 1;
@@ -448,8 +476,9 @@ parse6(int fd, struct sockaddr_in6 *laddr, struct sockaddr_in6 *faddr)
 			syslog(LOG_NOTICE,
 			    "user %s requested HIDDEN-USER for host %s: %d, %d",
 			    pw->pw_name, gethost6(faddr), lport, fport);
-		n = snprintf(buf, sizeof(buf),
-		    "%d , %d : ERROR : HIDDEN-USER\r\n", lport, fport);
+		if ((n = snprintf(buf, sizeof(buf),
+		    "%d , %d : ERROR : HIDDEN-USER\r\n", lport, fport))
+		    >= sizeof(buf) || n < 0)
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost6(faddr));
 			return 1;
@@ -460,9 +489,11 @@ parse6(int fd, struct sockaddr_in6 *laddr, struct sockaddr_in6 *faddr)
 	if (userident_flag && getuserident(pw->pw_dir, token, sizeof token)) {
 		syslog(LOG_NOTICE, "token \"%s\" == uid %u (%s)",
 		    token, uid, pw->pw_name);
-		n = snprintf(buf, sizeof(buf),
-		    "%d , %d : USERID : %s%s%s :%s\r\n",
-		    lport, fport, opsys_name, charset_sep, charset_name, token);
+		if ((n = snprintf(buf, sizeof(buf),
+		    "%d , %d : USERID : %s%s%s :%s\r\n", lport, fport,
+		    opsys_name, charset_sep, charset_name, token))
+		    >= sizeof(buf) || n < 0)
+			n = strlen(buf);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost6(faddr));
 			return 1;
@@ -474,9 +505,11 @@ parse6(int fd, struct sockaddr_in6 *laddr, struct sockaddr_in6 *faddr)
 		gentoken(token, sizeof token);
 		syslog(LOG_NOTICE, "token %s == uid %u (%s)", token, uid,
 		    pw->pw_name);
-		n = snprintf(buf, sizeof(buf),
-		    "%d , %d : USERID : %s%s%s :%s\r\n",
-		    lport, fport, opsys_name, charset_sep, charset_name, token);
+		if ((n = snprintf(buf, sizeof(buf),
+		    "%d , %d : USERID : %s%s%s :%s\r\n", lport, fport,
+		    opsys_name, charset_sep, charset_name, token))
+		    >= sizeof(buf))
+			n = strlen(buf);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost6(faddr));
 			return 1;
@@ -485,9 +518,11 @@ parse6(int fd, struct sockaddr_in6 *laddr, struct sockaddr_in6 *faddr)
 	}
 
 	if (number_flag) {
-		n = snprintf(buf, sizeof(buf),
+		if ((n = snprintf(buf, sizeof(buf),
 		    "%d , %d : USERID : %s%s%s :%u\r\n",
-		    lport, fport, opsys_name, charset_sep, charset_name, uid);
+		    lport, fport, opsys_name, charset_sep, charset_name, uid))
+		    >= sizeof(buf) || n < 0)
+			n = strlen(buf);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost6(faddr));
 			return 1;
@@ -495,8 +530,10 @@ parse6(int fd, struct sockaddr_in6 *laddr, struct sockaddr_in6 *faddr)
 		return 0;
 	}
 
-	n = snprintf(buf, sizeof(buf), "%d , %d : USERID : %s%s%s :%s\r\n",
-	    lport, fport, opsys_name, charset_sep, charset_name, pw->pw_name);
+	if ((n = snprintf(buf, sizeof(buf), "%d , %d : USERID : %s%s%s :%s\r\n",
+	    lport, fport, opsys_name, charset_sep, charset_name, pw->pw_name))
+	    >= sizeof(buf) || n < 0)
+		n = strlen(buf);
 	if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 		syslog(LOG_NOTICE, "write to %s: %m", gethost6(faddr));
 		return 1;
