@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.6 1997/10/15 09:08:26 deraadt Exp $
+.\"	$OpenBSD: disklabel.8,v 1.7 1997/10/28 05:22:51 millert Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -56,6 +56,11 @@
 .Oo Ar packid Oc
 .Nm disklabel
 .Fl e
+.Op Fl r
+.Op Fl n
+.Ar disk
+.Nm disklabel
+.Fl E
 .Op Fl r
 .Op Fl n
 .Ar disk
@@ -149,7 +154,7 @@ The second form of the command, with the
 flag, is used to write a standard label on the designated drive.
 The required arguments to
 .Nm disklabel
-are the drive to be labelled (e.g. sd0), and
+are the drive to be labeled (e.g. sd0), and
 the drive type as described in the
 .Xr disktab 5
 file.
@@ -219,51 +224,125 @@ flags for
 explicitly disallow and
 allow, respectively, writing of the pack label area on the selected disk.
 .Pp
+The
+.Fl E
+flag to
+.Nm disklabel
+will drop you into a simple initial label editor.  This mode is
+only intended for new disks as it will move partitions around as
+necessary to maintain a contiguous pool of free blocks.  Some command
+or prompts take an optional unit.  Available units are 'b' for
+bytes, 'c' for cylinders, 'k' for kilobytes, 'm' for megabytes,
+'g' for gigabytes.  Quantities will be rounded to the nearest
+cylinder when units are specified for sizes (or offsets).  Commands
+may be aborted by entering ^D (Control-D).  Entering ^D at the main
+'<' prompt will exit the editor.  At prompts that request a size,
+'*' may be entered to indicate the rest of the available space.
+The editor commands are as follows:
+.Bl -tag -width "p [unit] "
+.It ?
+Display help message with all available commands.  There is (simple)
+context-sensitive help available at most prompts.
+.It M
+Display this manual page.
+.It u
+Undo (or redo) last change.  Undo will reset the disklabel to the
+state before the last command that modified it.
+.\" bad sentence!
+.It p Op unit
+Print the current disk label.  If a
+.Em unit
+is given, the size and offsets are displayed in terms of the
+specified unit.
+.It e
+Edit drive parameters.  This option is used to set the following
+parameters:  bytes/sector, sectors/track, tracks/cylinder,
+sectors/cylinder, number of cylinders, total sectors on the disk,
+rpm, disk type, and a descriptive label string.
+.It b
+Set OpenBSD disk boundaries.  This option tells
+.Nm disklabel
+which parts of the disk it is allow to modify.  This option is
+probably only useful ports with fdisk partition tables where the
+ending sector in the MBR is incorrect.  The user may enter '*' at
+the "Size" prompt to indicate the entire size of the disk (minus
+the starting sector).  This is useful for large disks where the
+fdisk partition table is incapable if storing the real size.
+.\" What is this limit?  [somewhere between 8 and 9 gig]
+.It a Op part
+Add new partition.  This option adds a new BSD partition.  If no
+partition letter is specified (a-p), the user will be prompted for
+one.
+.It c Op part
+Change the size of an existing partition.  If no partition is
+specified, the user will be prompted for one.  The new size may be
+in terms the aforementioned units and may also be prefixed with
+'+' or '-' to change the size by a relative amount.
+.It d Op part
+Delete an existing partition.  If no partition is specified, the
+user will be prompted for one.
+.It m Op part
+Modify parameters for an existing partition.  If no partition is
+specified, the user will be prompted for one.  This option allows
+the user to change the filesystem type, starting offset, partition
+size, block fragment size, block size, and cylinders per group for
+the specified partition (not all parameters are configurable for
+non-BSD partitions).
+.It s Op path
+Save the label to a file in ascii format (suitable for loading via
+the
+.Op -R
+option).  If no path is specified, the user will be prompted for
+one.
+.It w
+Write the label to disk.  This option will commit any changes to
+the label to the on-disk label.
+.It q
+Quit the editor.  If any changes have been made the user will be
+asked whether or not to save the changes to the on-disk label.
+.It x
+Exit the editor without saving any changes to the label.
+.El
+.Pp
 The final three forms of
 .Nm disklabel
-are used to install boostrap code on machines where the bootstrap is part
-of the label.
-The bootstrap code is comprised of one or two boot programs depending on
-the machine.
-The
+are used to install bootstrap code on machines where the bootstrap
+is part of the label.  The bootstrap code is comprised of one or
+two boot programs depending on the machine.  The
 .Fl B
 option is used to denote that bootstrap code is to be installed.
 The
 .Fl r
 flag is implied by
 .Fl B
-and never needs to be specified.
-The name of the boot program(s) to be installed can be selected in a
-variety of ways.
-First, the names can be specified explicitly via the
+and never needs to be specified.  The name of the boot program(s)
+to be installed can be selected in a variety of ways.  First, the
+names can be specified explicitly via the
 .Fl b
 and
 .Fl s
-flags.
-On machines with only a single level of boot program,
+flags.  On machines with only a single level of boot program,
 .Fl b
-is the name of that program.
-For machines with a two-level bootstrap,
+is the name of that program.  For machines with a two-level bootstrap,
 .Fl b
 indicates the primary boot program and
 .Fl s
-the secondary boot program.
-If the names are not explicitly given, standard boot programs will be used.
-The boot programs are located in
+the secondary boot program.  If the names are not explicitly given,
+standard boot programs will be used.  The boot programs are located
+in
 .Pa /usr/mdec .
-The names of the programs are taken from the ``b0'' and ``b1'' parameters
-of the
+The names of the programs are taken from the ``b0'' and ``b1''
+parameters of the
 .Xr disktab 5
 entry for the disk if
 .Ar disktype
 was given and its disktab entry exists and includes those parameters.
-Otherwise, boot program names are derived from the name of the disk.
-These names are of the form
+Otherwise, boot program names are derived from the name of the
+disk.  These names are of the form
 .Pa basename Ns boot
 for the primary (or only) bootstrap, and
 .Pf boot Pa basename
-for the secondary bootstrap;
-for example,
+for the secondary bootstrap; for example,
 .Pa /usr/mdec/sdboot
 and
 .Pa /usr/mdec/bootsd
@@ -271,12 +350,12 @@ if the disk device is
 .Em sd0 .
 .Pp
 The first of the three boot-installation forms is used to install
-bootstrap code without changing the existing label.
-It is essentially a read command with respect to the disk label
-itself and all options are related to the specification of the boot
-program as described previously.
-The final two forms are analogous to the basic write and restore versions
-except that they will install bootstrap code in addition to a new label.
+bootstrap code without changing the existing label.  It is essentially
+a read command with respect to the disk label itself and all options
+are related to the specification of the boot program as described
+previously.  The final two forms are analogous to the basic write
+and restore versions except that they will install bootstrap code
+in addition to a new label.
 .Sh FILES
 .Bl -tag -width Pa -compact
 .It Pa /etc/disktab
@@ -291,18 +370,17 @@ Display the in-core label for sd0 as obtained via
 .Pp
 .Dl disklabel -w -r /dev/rsd0c sd2212 foo
 .Pp
-Create a label for sd0 based on information for ``sd2212'' found in
+Create a label for sd0 based on information for ``sd2212'' found
+in
 .Pa /etc/disktab .
-Any existing bootstrap code will be clobbered.  (Normally you do not
-want to use the -r flag though.)
+Any existing bootstrap code will be clobbered.  (Normally you do
+not want to use the -r flag though.)
 .Pp
 .Dl disklabel -e -r sd0
 .Pp
-Read the on-disk label for sd0, edit it and reinstall in-core as well
-as on-disk.
-(Normally you do not
-want to use the -r flag though.)
-Existing bootstrap code is unaffected.
+Read the on-disk label for sd0, edit it and reinstall in-core as
+well as on-disk.  (Normally you do not want to use the -r flag
+though.) Existing bootstrap code is unaffected.
 .Pp
 .Dl disklabel -R sd0 mylabel
 .Pp
@@ -312,52 +390,47 @@ Existing bootstrap code is unaffected.
 .Pp
 .Dl disklabel -B sd0
 .Pp
-Install a new bootstrap on sd0.
-The boot code comes from
+Install a new bootstrap on sd0.  The boot code comes from
 .Pa /usr/mdec/sdboot
 and possibly
 .Pa /usr/mdec/bootsd .
-On-disk and in-core labels are unchanged, but on some systems other information
-may be destroyed.
-Use with care.
+On-disk and in-core labels are unchanged, but on some systems other
+information may be destroyed.  Use with care.
 .Pp
 .Dl disklabel -w -B /dev/rsd0c -b newboot sd2212
 .Pp
-Install a new label and bootstrap.
-The label is derived from disktab information for ``sd2212'' and
-installed both in-core and on-disk.
-The bootstrap code comes from the file
+Install a new label and bootstrap.  The label is derived from
+disktab information for ``sd2212'' and installed both in-core and
+on-disk.  The bootstrap code comes from the file
 .Pa /usr/mdec/newboot .
 .Sh SEE ALSO
 .Xr disktab 5 ,
 .Xr disklabel 5
 .Sh DIAGNOSTICS
 The kernel device drivers will not allow the size of a disk partition
-to be decreased or the offset of a partition to be changed while it is open.
-Some device drivers create a label containing only a single large partition
-if a disk is unlabeled; thus, the label must be written to the ``a''
-partition of the disk while it is open.
+to be decreased or the offset of a partition to be changed while
+it is open.  Some device drivers create a label containing only a
+single large partition if a disk is unlabeled; thus, the label must
+be written to the ``a'' partition of the disk while it is open.
 This sometimes requires the desired label to be set in two steps,
-the first one creating at least one other partition,
-and the second setting the label on the new partition
-while shrinking the ``a'' partition.
+the first one creating at least one other partition, and the second
+setting the label on the new partition while shrinking the ``a''
+partition.
 .Pp
-On some machines the bootstrap code may not fit entirely in the area
-allocated for it by some filesystems.
-As a result, it may not be possible to have filesystems on some partitions
-of a ``bootable'' disk.
-When installing bootstrap code,
+On some machines the bootstrap code may not fit entirely in the
+area allocated for it by some filesystems.  As a result, it may
+not be possible to have filesystems on some partitions of a
+``bootable'' disk.  When installing bootstrap code,
 .Nm disklabel
-checks for these cases.
-If the installed boot code would overlap a partition of type FS_UNUSED
-it is marked as type FS_BOOT.
-The
+checks for these cases.  If the installed boot code would overlap
+a partition of type FS_UNUSED it is marked as type FS_BOOT.  The
 .Xr newfs 8
 utility will disallow creation of filesystems on FS_BOOT partitions.
-Conversely, if a partition has a type other than FS_UNUSED or FS_BOOT,
+Conversely, if a partition has a type other than FS_UNUSED or
+FS_BOOT,
 .Nm disklabel
 will not install bootstrap code that overlaps it.
 .Sh BUGS
-When a disk name is given without a full pathname,
-the constructed device name uses the ``a'' partition on the tahoe,
-the ``c'' partition on all others.
+When a disk name is given without a full pathname, the constructed
+device name uses the ``a'' partition on the tahoe, the ``c''
+partition on all others.
