@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt.c,v 1.18 2001/11/28 22:01:42 millert Exp $	*/
+/*	$OpenBSD: fmt.c,v 1.19 2001/11/29 00:33:06 millert Exp $	*/
 
 /* Sensible version of fmt
  *
@@ -30,6 +30,8 @@
  *    preceded by a non-blank non-message-header line, is
  *    taken to start a new paragraph, which also contains
  *    any subsequent lines with non-empty leading whitespace.
+ *    Unless the `-n' option is given, lines beginning with
+ *    a . (dot) are not formatted.
  * 3. The "everything else" is split into words; a word
  *    includes its trailing whitespace, and a word at the
  *    end of a line is deemed to be followed by a single
@@ -168,7 +170,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-  "$OpenBSD: fmt.c,v 1.18 2001/11/28 22:01:42 millert Exp $";
+  "$OpenBSD: fmt.c,v 1.19 2001/11/29 00:33:06 millert Exp $";
 static const char copyright[] =
   "Copyright (c) 1997 Gareth McCaughan. All rights reserved.\n";
 #endif /* not lint */
@@ -213,6 +215,7 @@ static int tab_width=8;		/* Number of spaces per tab stop */
 static size_t output_tab_width=0;	/* Ditto, when squashing leading spaces */
 static const char *sentence_enders=".?!";	/* Double-space after these */
 static int grok_mail_headers=0;	/* treat embedded mail headers magically? */
+static int format_troff=0;	/* Format troff? */
 
 static int n_errors=0;		/* Number of failed files. Return on exit. */
 static char *output_buffer=0;	/* Output line will be built here */
@@ -248,7 +251,7 @@ main(int argc, char *argv[]) {
 
   /* 1. Grok parameters. */
 
-  while ((ch = getopt(argc, argv, "0123456789cd:hl:mpst:w:")) != -1)
+  while ((ch = getopt(argc, argv, "0123456789cd:hl:mnpst:w:")) != -1)
   switch(ch) {
     case 'c':
       centerP = 1;
@@ -262,6 +265,9 @@ main(int argc, char *argv[]) {
       continue;
     case 'm':
       grok_mail_headers = 1;
+      continue;
+    case 'n':
+      format_troff = 1;
       continue;
     case 'p':
       allow_indented_paragraphs = 1;
@@ -298,6 +304,7 @@ main(int argc, char *argv[]) {
 "         -d <chars> double-space after <chars> at line end\n"
 "         -l <n> turn each <n> spaces at start of line into a tab\n"
 "         -m     try to make sure mail header lines stay separate\n"
+"         -n     format lines beginning with a dot\n"
 "         -p     allow indented paragraphs\n"
 "         -s     coalesce whitespace inside lines\n"
 "         -t <n> have tabs every <n> columns\n"
@@ -386,6 +393,7 @@ process_stream(FILE *stream, const char *name) {
       }
       /* We need a new paragraph if and only if:
        *   this line is blank,
+       *   OR it's a troff request,
        *   OR it's a mail header,
        *   OR it's not a mail header AND the last line was one,
        *   OR the indentation has changed
@@ -393,6 +401,7 @@ process_stream(FILE *stream, const char *name) {
        *      AND this isn't the second line of an indented paragraph.
        */
       if ( length==0
+           || (line[0]=='.' && !format_troff)
            || header_type==hdr_Header
            || (header_type==hdr_NonHeader && prev_header_type>hdr_NonHeader)
            || (np!=last_indent
@@ -402,6 +411,11 @@ process_stream(FILE *stream, const char *name) {
         para_line_number = 0;
         first_indent = np;
         last_indent = np;
+        /* nroff compatibility */
+        if (length>0 && line[0]=='.' && !format_troff) {
+          printf("%.*s\n", (int)length, line);
+          continue;
+        }
         if (header_type==hdr_Header) last_indent=2;	/* for cont. lines */
         if (length==0) {
           putchar('\n');
@@ -585,11 +599,13 @@ get_line(FILE *stream, size_t *lengthp) {
   size_t len=0;
   int ch;
   size_t spaces_pending=0;
+  int troff=0;
 
   if (buf==NULL) { length=100; buf=XMALLOC(length); }
   while ((ch=getc(stream)) != '\n' && ch != EOF) {
+    if (len+spaces_pending==0 && ch=='.' && !format_troff) troff=1;
     if (ch==' ') ++spaces_pending;
-    else if (!iscntrl(ch)) {
+    else if (troff || !iscntrl(ch)) {
       while (len+spaces_pending >= length) {
         length*=2; buf=xrealloc(buf, length);
       }
