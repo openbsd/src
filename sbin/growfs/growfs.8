@@ -1,4 +1,4 @@
-.\" $OpenBSD: growfs.8,v 1.4 2003/08/05 20:20:48 jmc Exp $
+.\" $OpenBSD: growfs.8,v 1.5 2003/08/06 05:08:01 tedu Exp $
 .\" Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
 .\" Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
 .\" All rights reserved.
@@ -43,7 +43,7 @@
 .Os
 .Sh NAME
 .Nm growfs
-.Nd grow size of an existing ufs file system
+.Nd grow size of an existing ffs file system
 .Sh SYNOPSIS
 .Nm
 .Op Fl Ny
@@ -56,14 +56,9 @@ utility extends the
 .Xr newfs 8
 program.
 Before starting
-.Nm
-the disk must be labeled to a bigger size using
+.Nm growfs ,
+the partition must be set to a larger size using
 .Xr disklabel 8 .
-If you wish to grow a file system beyond the boundary of
-the slice it resides in, you must re-size the slice using
-.Xr fdisk 8
-before running
-.Nm growfs .
 The
 .Nm
 utility extends the size of the file system on the specified special file.
