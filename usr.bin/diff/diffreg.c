@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.3 2003/06/25 03:02:33 tedu Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.4 2003/06/25 03:25:29 tedu Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -132,8 +132,7 @@ struct line {
 } *file[2], line;
 
 int len[2];
-struct line *sfile[2];		/* shortened by pruning common prefix and
-				 * suffix */
+struct line *sfile[2];	/* shortened by pruning common prefix and suffix */
 int slen[2];
 int pref, suff;			/* length of prefix and suffix */
 int *class;			/* will be overlaid on file[0] */
@@ -320,11 +319,11 @@ notsame:
 
 	member = (int *)file[1];
 	equiv(sfile[0], slen[0], sfile[1], slen[1], member);
-	member = ralloc((char *) member, (slen[1] + 2) * sizeof(int));
+	member = ralloc(member, (slen[1] + 2) * sizeof(int));
 
-	class = (int *) file[0];
+	class = (int *)file[0];
 	unsort(sfile[0], slen[0], class);
-	class = ralloc((char *) class, (slen[0] + 2) * sizeof(int));
+	class = ralloc(class, (slen[0] + 2) * sizeof(int));
 
 	klist = talloc((slen[0] + 2) * sizeof(int));
 	clist = talloc(sizeof(cand));
@@ -396,7 +395,7 @@ splice(char *dir, char *file)
 }
 
 static void
-prepare(int i, FILE * fd)
+prepare(int i, FILE *fd)
 {
 	struct line *p;
 	int j, h;
@@ -404,7 +403,7 @@ prepare(int i, FILE * fd)
 	fseek(fd, 0, 0);
 	p = talloc(3 * sizeof(line));
 	for (j = 0; (h = readhash(fd));) {
-		p = (struct line *) ralloc((char *) p, (++j + 3) * sizeof(line));
+		p = ralloc(p, (++j + 3) * sizeof(line));
 		p[j].value = h;
 	}
 	len[i] = j;
@@ -430,7 +429,7 @@ prune(void)
 }
 
 static void
-equiv(struct line * a, int n, struct line * b, int m, int *c)
+equiv(struct line *a, int n, struct line *b, int m, int *c)
 {
 	int i, j;
 	i = j = 1;
@@ -500,7 +499,7 @@ newcand(int x, int y, int pred)
 {
 	struct cand *q;
 
-	clist = (struct cand *) ralloc((char *) clist, ++clen * sizeof(cand));
+	clist = ralloc(clist, ++clen * sizeof(cand));
 	q = clist + clen - 1;
 	q->x = x;
 	q->y = y;
@@ -652,7 +651,7 @@ check(void)
 }
 
 static void
-sort(struct line * a, int n)
+sort(struct line *a, int n)
 {				/* shellsort CACM #201 */
 	struct line w;
 	int j, m = 0;		/* gcc */
@@ -687,7 +686,7 @@ sort(struct line * a, int n)
 }
 
 static void
-unsort(struct line * f, int l, int *b)
+unsort(struct line *f, int l, int *b)
 {
 	int *a;
 	int i;
@@ -880,7 +879,7 @@ range(int a, int b, char *separator)
 }
 
 static void
-fetch(long *f, int a, int b, FILE * lb, char *s, int oldfile)
+fetch(long *f, int a, int b, FILE *lb, char *s, int oldfile)
 {
 	int i, j;
 	int c;
@@ -955,7 +954,7 @@ fetch(long *f, int a, int b, FILE * lb, char *s, int oldfile)
  * summing 1-s complement in 16-bit hunks
  */
 static int
-readhash(FILE * f)
+readhash(FILE *f)
 {
 	long sum;
 	unsigned shift;
@@ -1020,7 +1019,7 @@ readhash(FILE * f)
 }
 
 static int
-asciifile(FILE * f)
+asciifile(FILE *f)
 {
 	char buf[BUFSIZ];
 	int cnt;

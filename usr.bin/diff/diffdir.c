@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffdir.c,v 1.3 2003/06/25 03:02:33 tedu Exp $	*/
+/*	$OpenBSD: diffdir.c,v 1.4 2003/06/25 03:25:29 tedu Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -79,7 +79,7 @@ static void compare(struct dir *);
 static void calldiff(char *);
 static void setfile(char **fpp, char **epp, char *file);
 static int useless(char *);
-static void only(struct dir * dp, int which);
+static void only(struct dir *dp, int which);
 static void scanpr(struct dir *, int, char *, char *, char *, char *, char *);
 
 void
@@ -186,7 +186,7 @@ setfile(char **fpp, char **epp, char *file)
 }
 
 static void
-scanpr(struct dir * dp, int test, char *title, char *file1, char *efile1,
+scanpr(struct dir *dp, int test, char *title, char *file1, char *efile1,
     char *file2, char *efile2)
 {
 	int titled = 0;
@@ -210,7 +210,7 @@ scanpr(struct dir * dp, int test, char *title, char *file1, char *efile1,
 }
 
 void
-only(struct dir * dp, int which)
+only(struct dir *dp, int which)
 {
 	char *file = which == 1 ? file1 : file2;
 	char *efile = which == 1 ? efile1 : efile2;
@@ -246,12 +246,7 @@ setupdir(char *cp)
 			ep->d_entry = talloc(ep->d_namlen + 1);
 			strcpy(ep->d_entry, rp->d_name);
 		}
-		dp = realloc((char *) dp,
-		    (nitems + 1) * sizeof(struct dir));
-		if (dp == 0) {
-			fprintf(stderr, "diff: ran out of memory\n");
-			done();
-		}
+		dp = ralloc(dp, (nitems + 1) * sizeof(struct dir));
 	}
 	dp[nitems].d_entry = 0;	/* delimiter */
 	closedir(dirp);
@@ -260,13 +255,13 @@ setupdir(char *cp)
 }
 
 int
-entcmp(struct dir * d1, struct dir * d2)
+entcmp(struct dir *d1, struct dir *d2)
 {
 	return (strcmp(d1->d_entry, d2->d_entry));
 }
 
 static void
-compare(struct dir * dp)
+compare(struct dir *dp)
 {
 	int i, j;
 	int f1, f2, fmt1, fmt2;
