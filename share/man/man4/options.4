@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.54 2000/07/06 23:58:25 aaron Exp $
+.\"	$OpenBSD: options.4,v 1.55 2000/10/22 15:00:11 aaron Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -212,9 +212,6 @@ with the kernel name as an argument (no core file) and then use the
 .Xr gdb
 command
 .Dq target kcore COREFILE .
-.Pp
-This also turns on
-.Cm option DEBUG .
 .It Cd option DEBUG
 Turns on miscellaneous kernel debugging.
 Since options are turned into preprocessor defines (see above),
