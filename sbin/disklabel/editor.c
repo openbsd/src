@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.12 1997/10/15 22:49:04 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.13 1997/10/16 02:41:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.12 1997/10/15 22:49:04 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.13 1997/10/16 02:41:34 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -129,18 +129,18 @@ editor(lp, f)
 
 		case '?':
 			puts("Available commands:\n");
-			puts("\tp [unit]  - print label.");
-			puts("\te         - edit drive parameters.");
-			puts("\ta [part]  - add new partition.");
-			puts("\tc [part]  - change partition size.");
-			puts("\td [part]  - delete partition.");
-			puts("\tm [part]  - modify existing partition.");
-			puts("\tu         - undo last change.");
-			puts("\ts [path]  - save label to file.");
-			puts("\tw         - write label to disk.");
-			puts("\tq         - quit and save changes.");
-			puts("\tx         - exit without saving changes.");
-			puts("\t?         - this message.\n");
+			puts("\tp [suffix] - print label.");
+			puts("\te          - edit drive parameters.");
+			puts("\ta [part]   - add new partition.");
+			puts("\tc [part]   - change partition size.");
+			puts("\td [part]   - delete partition.");
+			puts("\tm [part]   - modify existing partition.");
+			puts("\tu          - undo last change.");
+			puts("\ts [path]   - save label to file.");
+			puts("\tw          - write label to disk.");
+			puts("\tq          - quit and save changes.");
+			puts("\tx          - exit without saving changes.");
+			puts("\t?          - this message.\n");
 			puts("Numeric parameters may use suffixes to indicate units:\n\t'b' for bytes, 'c' for cylinders, 'k' for kilobytes, 'm' for megabytes,\n\t'g' for gigabytes or no suffix for blocks (usually 512 bytes).\n\tNon-block units will be rounded to the nearest cylinder.\nThe (optional) argument to p[rint] may be one of the aforementioned units.\n");
 			break;
 
