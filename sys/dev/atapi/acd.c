@@ -1,4 +1,4 @@
-/*	$OpenBSD: acd.c,v 1.9 1996/08/08 16:52:25 niklas Exp $	*/
+/*	$OpenBSD: acd.c,v 1.10 1996/08/09 06:57:58 niklas Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -771,8 +771,8 @@ acdioctl(dev, cmd, addr, flag, p)
 		struct cd_sub_channel_info data;
 		int len = args->data_len;
 
-		if (len > sizeof(data) ||
-		    len < sizeof(struct cd_sub_channel_header))
+		if (len > (int)sizeof(data) ||
+		    len < (int)sizeof(struct cd_sub_channel_header))
 			return EINVAL;
 
 		error = acd_read_subchannel(acd, args->address_format,
@@ -808,8 +808,8 @@ acdioctl(dev, cmd, addr, flag, p)
 		int len = te->data_len;
 		int ntracks;
 
-		if (len > sizeof(toc.tab) ||
-		    len < sizeof(struct cd_toc_entry))
+		if (len > (int)sizeof(toc.tab) ||
+		    len < (int)sizeof(struct cd_toc_entry))
 			return EINVAL;
 
 		error = acd_read_toc(acd, te->address_format,
@@ -1299,7 +1299,7 @@ acd_read_subchannel(acd, mode, format, track, data, len)
 	atapi_cmd.opcode = ATAPI_READ_SUBCHANNEL;
 	if (mode == CD_MSF_FORMAT)
 		atapi_cmd.flags[0] |= SUBCHAN_MSF;
-	if (len > sizeof(struct cd_sub_channel_header))
+	if (len > (int)sizeof(struct cd_sub_channel_header))
 		atapi_cmd.flags[1] |= SUBCHAN_SUBQ;
 	atapi_cmd.subchan_format = format;
 	atapi_cmd.track = track;
