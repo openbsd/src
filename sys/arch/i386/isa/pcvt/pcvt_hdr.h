@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_hdr.h,v 1.33 2000/02/27 19:31:05 aaron Exp $	*/
+/*	$OpenBSD: pcvt_hdr.h,v 1.34 2000/03/23 17:09:48 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -83,9 +83,9 @@
 #include <sys/user.h>
 #include <sys/tty.h>
 #include <sys/uio.h>
-#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
+#include <sys/msgbuf.h>
 #include <sys/malloc.h>
 #include <sys/time.h>
 #ifdef DDB
