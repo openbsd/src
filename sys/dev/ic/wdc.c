@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.6 1999/07/23 08:04:27 deraadt Exp $     */
+/*      $OpenBSD: wdc.c,v 1.7 1999/07/23 08:34:15 deraadt Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -825,10 +825,10 @@ wdc_probe_caps(drvp)
 		if (memcmp(&params, &params2, sizeof(struct ataparams)) != 0) {
 			/* Not good. fall back to 16bits */
 			drvp->drive_flags &= ~DRIVE_CAP32;
-		} else {
-			printf("32-bit", drv_dev->dv_xname);
-			sep = ", ";
-		}
+			printf("16-bit");
+		} else
+			printf("32-bit");
+		sep = ", ";
 	}
 #if 0 /* Some ultra-DMA drives claims to only support ATA-3. sigh */
 	if (params.atap_ata_major > 0x01 && 
@@ -1037,7 +1037,7 @@ wdc_downgrade_mode(drvp)
 		return 0;
 
 	wdc->set_modes(chp);
-	/* reset the channel, which will shedule all drives for setup */
+	/* reset the channel, which will schedule all drives for setup */
 	wdc_reset_channel(drvp);
 	return 1;
 }
