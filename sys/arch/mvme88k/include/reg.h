@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.13 2004/01/12 21:33:15 miod Exp $ */
+/*	$OpenBSD: reg.h,v 1.14 2004/01/13 20:05:49 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -35,56 +35,56 @@
 #define _M88K_REG_H_
 
 struct reg {
-	register_t	r[32];  /* 0 - 31 */
-	register_t	epsr;   /* 32 */
-	register_t	fpsr;
-	register_t	fpcr;
-	register_t	sxip;
+	unsigned int	r[32];  /* 0 - 31 */
+	unsigned int	epsr;   /* 32 */
+	unsigned int	fpsr;
+	unsigned int	fpcr;
+	unsigned int	sxip;
 #define exip sxip	/* mc88110 */
-	register_t	snip;
+	unsigned int	snip;
 #define enip snip	/* mc88110 */
-	register_t	sfip;
-	register_t	ssbr;
+	unsigned int	sfip;
+	unsigned int	ssbr;
 #define duap ssbr	/* mc88110 */
-	register_t	dmt0;
+	unsigned int	dmt0;
 #define dsr dmt0	/* mc88110 */
-	register_t	dmd0;
+	unsigned int	dmd0;
 #define dlar dmd0	/* mc88110 */
-	register_t	dma0;
+	unsigned int	dma0;
 #define dpar dma0	/* mc88110 */
-	register_t	dmt1;
+	unsigned int	dmt1;
 #define isr dmt1	/* mc88110 */
-	register_t	dmd1;
+	unsigned int	dmd1;
 #define ilar dmd1	/* mc88110 */
-	register_t	dma1;
+	unsigned int	dma1;
 #define ipar dma1	/* mc88110 */
-	register_t	dmt2;
+	unsigned int	dmt2;
 #define isap dmt2	/* mc88110 */
-	register_t	dmd2;
+	unsigned int	dmd2;
 #define dsap dmd2	/* mc88110 */
-	register_t	dma2;
+	unsigned int	dma2;
 #define iuap dma2	/* mc88110 */
-	register_t	fpecr;
-	register_t	fphs1;
-	register_t	fpls1;
-	register_t	fphs2;
-	register_t	fpls2;
-	register_t	fppt;
-	register_t	fprh;
-	register_t	fprl;
-	register_t	fpit;
+	unsigned int	fpecr;
+	unsigned int	fphs1;
+	unsigned int	fpls1;
+	unsigned int	fphs2;
+	unsigned int	fpls2;
+	unsigned int	fppt;
+	unsigned int	fprh;
+	unsigned int	fprl;
+	unsigned int	fpit;
 };
 
 struct fpreg {
-	register_t	fp_fpecr;
-	register_t	fp_fphs1;
-	register_t	fp_fpls1;
-	register_t	fp_fphs2;
-	register_t	fp_fpls2;
-	register_t	fp_fppt;
-	register_t	fp_fprh;
-	register_t	fp_fprl;
-	register_t	fp_fpit;
+	unsigned int	fp_fpecr;
+	unsigned int	fp_fphs1;
+	unsigned int	fp_fpls1;
+	unsigned int	fp_fphs2;
+	unsigned int	fp_fpls2;
+	unsigned int	fp_fppt;
+	unsigned int	fp_fprh;
+	unsigned int	fp_fprl;
+	unsigned int	fp_fpit;
 };
 
 #endif /* _M88K_REG_H_ */
