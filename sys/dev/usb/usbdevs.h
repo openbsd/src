@@ -1,13 +1,13 @@
-/*	$OpenBSD: usbdevs.h,v 1.7 1999/10/06 12:53:05 fgsch Exp $	*/
+/*	$OpenBSD: usbdevs.h,v 1.8 1999/11/07 21:25:52 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: usbdevs,v 1.7 1999/10/06 12:52:18 fgsch Exp 	
+ *	/*	OpenBSD: usbdevs,v 1.9 1999/11/07 21:24:49 fgsch Exp 	*/
  */
+/*	$NetBSD: usbdevs,v 1.56 1999/10/28 06:41:13 augustss Exp $	*/
 
-/* $NetBSD: usbdevs,v 1.45 1999/09/15 13:57:09 augustss Exp $ */
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,6 +73,7 @@
 #define	USB_VENDOR_EPSON	0x04b8		/* Seiko Epson Corp. */
 #define	USB_VENDOR_3COM	0x04c1		/* U.S. Robotics */
 #define	USB_VENDOR_KONICA	0x04c8		/* Konica Corp. */
+#define	USB_VENDOR_ALTEC	0x04d2		/* Altec Lansing */
 #define	USB_VENDOR_SHUTTLE	0x04e6		/* Shuttle Technology */
 #define	USB_VENDOR_CHICONY	0x04f2		/* Chicony Electronics Co., Ltd. */
 #define	USB_VENDOR_BROTHER	0x04f9		/* Brother Industries Corp. */
@@ -84,6 +85,8 @@
 #define	USB_VENDOR_ANCHOR	0x0547		/* Anchor Chips Inc. */
 #define	USB_VENDOR_VISION	0x0553		/* VLSI Vision Ltd. */
 #define	USB_VENDOR_ATEN	0x0557		/* ATEN International Corp. Ltd. */
+#define	USB_VENDOR_MUSTEK	0x055f		/* Mustek Systems Inc. */
+#define	USB_VENDOR_TELEX	0x0562		/* Telex Communications Inc. */
 #define	USB_VENDOR_PERACOM	0x0565		/* Peracom Networks Inc. */
 #define	USB_VENDOR_WACOM	0x056a		/* WACOM Corp. Ltd. */
 #define	USB_VENDOR_ETEK	0x056c		/* e-TEK Labs */
@@ -101,7 +104,12 @@
 #define	USB_VENDOR_MACALLY	0x0618		/* Macally */
 #define	USB_VENDOR_MULTITECH	0x06e0		/* MultiTech */
 #define	USB_VENDOR_ADS	0x06e1		/* ADS Technologies */
+#define	USB_VENDOR_MIDIMAN	0x0763		/* Midiman */
+#define	USB_VENDOR_SANDISK	0x0781		/* SanDisk Corp */
+#define	USB_VENDOR_SIIG	0x07cc		/* SIIG */
+#define	USB_VENDOR_HANDSPRING	0x082d		/* Handspring Inc. */
 #define	USB_VENDOR_ACTIVEWIRE	0x0854		/* ActiveWire Inc. */
+#define	USB_VENDOR_MOTOROLA	0x1063		/* Motorola */
 #define	USB_VENDOR_PLX	0x10b5		/* PLX */
 #define	USB_VENDOR_INSIDEOUT	0x1608		/* Inside Out Networks */
 #define	USB_VENDOR_ENTREGA	0x1645		/* Entrega */
@@ -121,6 +129,7 @@
 
 /* Kodak products */
 #define	USB_PRODUCT_KODAK_DC260	0x0110		/* Digital Science DC260 */
+#define	USB_PRODUCT_KODAK_DC240	0x0120		/* Digital Science DC240 */
 
 /* CATC products */
 #define	USB_PRODUCT_CATC_ANDROMEDA	0x1237		/* Andromeda hub */
@@ -161,6 +170,7 @@
 #define	USB_PRODUCT_PHILIPS_DSS350	0x0101		/* DSS 350 Digital Speaker System */
 #define	USB_PRODUCT_PHILIPS_DSS	0x0104		/* DSS XXX Digital Speaker System */
 #define	USB_PRODUCT_PHILIPS_HUB	0x0201		/* hub */
+#define	USB_PRODUCT_PHILIPS_DSS150	0x0471		/* DSS XXX Digital Speaker System */
 
 /* Connectix products */
 #define	USB_PRODUCT_CONNECTIX_QUICKCAM	0x0001		/* QuickCam */
@@ -186,6 +196,9 @@
 
 /* Konica Corp. Products */
 #define	USB_PRODUCT_KONICA_CAMERA	0x0720		/* Digital Color Camera */
+
+/* Altec Lansing products */
+#define	USB_PRODUCT_ALTEC_ASC495	0xff05		/* ASC495 Speakers */
 
 /* Shuttle Technology products */
 #define	USB_PRODUCT_SHUTTLE_EUSB	0x0001		/* E-USB Bridge */
@@ -218,6 +231,12 @@
 #define	USB_PRODUCT_ATEN_UC1284	0x2001		/* Parallel printer adapter */
 #define	USB_PRODUCT_ATEN_UC10T	0x2002		/* Ethernet adapter */
 
+/* Mustek products */
+#define	USB_PRODUCT_MUSTEK_MDC800	0xa800		/* MDC-800 digital camera */
+
+/* Telex Communications products */
+#define	USB_PRODUCT_TELEX_MIC1	0x0001		/* Enhanced USB Microphone */
+
 /* Peracom products */
 #define	USB_PRODUCT_PERACOM_SERIAL1	0x0001		/* Serial Converter */
 
@@ -245,6 +264,7 @@
 
 /* In-System products */
 #define	USB_PRODUCT_INSYSTEM_F5U002	0x0002		/* Parallel printer adapter */
+#define	USB_PRODUCT_INSYSTEM_ISD110	0x0200		/* IDE adapter */
 
 /* Qtronix products */
 #define	USB_PRODUCT_QTRONIX_980N	0x2011		/* Scorpion-980N keyboard */
@@ -278,11 +298,27 @@
 #define	USB_PRODUCT_ENTREGA_4S	0x0004		/* 4S serial connector */
 #define	USB_PRODUCT_ENTREGA_CENTRONICS	0x0006		/* Centronics connector */
 #define	USB_PRODUCT_ENTREGA_1S9	0x0093		/* 1S9 serial connector */
+#define	USB_PRODUCT_ENTREGA_EZUSB	0x8000		/* EZ-USB */
 #define	USB_PRODUCT_ENTREGA_SERIAL	0x8001		/* DB25 Serial connector */
+
+/* Midiman products */
+#define	USB_PRODUCT_MIDIMAN_MIDISPORT2X2	0x1001		/* Midisport 2x2 */
+
+/* SanDisk products */
+#define	USB_PRODUCT_SANDISK_IMAGEMATE	0x0001		/* USB ImageMate */
+
+/* SIIG products */
+#define	USB_PRODUCT_SIIG_DIGIFILMREADER	0x0004		/* DigiFilm-Combo Reader */
+
+/* Handspring Inc. */
+#define	USB_PRODUCT_HANDSPRING_VISOR	0x0100		/* Handspring Visor */
 
 /* ActiveWire Inc. products */
 #define	USB_PRODUCT_ACTIVEWIRE_IOBOARD	0x0100		/* I/O Board */
 #define	USB_PRODUCT_ACTIVEWIRE_IOBOARD_FW1	0x0101		/* I/O Board, rev. 1 firmware */
+
+/* Motorola products */
+#define	USB_PRODUCT_MOTOROLA_MC141555	0x1555		/* MC141555 hub controller */
 
 /* PLX products */
 #define	USB_PRODUCT_PLX_TESTBOARD	0x9060		/* test board */
