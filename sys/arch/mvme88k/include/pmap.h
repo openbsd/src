@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.13 2001/08/06 20:48:22 miod Exp $ */
+/*	$OpenBSD: pmap.h,v 1.14 2001/08/12 20:13:07 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1991 Carnegie Mellon University
@@ -18,7 +18,7 @@
 
 #include <machine/psl.h>		/* get standard goodies		*/
 #include <vm/vm_param.h>
-#include <vm/vm_prot.h>			/* vm_prot_t 			*/
+#include <uvm/uvm_extern>h>
 #include <machine/mmu.h>		/* batc_template_t, BATC_MAX, etc.*/
 #include <machine/pcb.h>		/* pcb_t, etc.*/
 
