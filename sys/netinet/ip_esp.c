@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.75 2002/07/30 19:09:36 jason Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.76 2002/11/07 15:16:39 ho Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -274,13 +274,20 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	else
 		alen = 0;
 
+	plen = m->m_pkthdr.len - (skip + hlen + alen);
+	if (plen <= 0) {
+		DPRINTF(("esp_input: invalid payload length\n"));
+		espstat.esps_badilen++;
+		m_freem(m);
+		return EINVAL;
+	}
+
 	if (espx) {
 		/*
 		 * Verify payload length is multiple of encryption algorithm
 		 * block size.
 		 */
-		plen = m->m_pkthdr.len - (skip + hlen + alen);
-		if ((plen & (espx->blocksize - 1)) || (plen <= 0)) {
+		if (plen & (espx->blocksize - 1)) {
 			DPRINTF(("esp_input(): payload of %d octets not a multiple of %d octets, SA %s/%08x\n", plen, espx->blocksize, ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 			espstat.esps_badilen++;
 			m_freem(m);
