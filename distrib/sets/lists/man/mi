@@ -1387,6 +1387,7 @@
 ./usr/share/man/cat5/man.conf.0
 ./usr/share/man/cat5/map3270.0
 ./usr/share/man/cat5/master.passwd.0
+./usr/share/man/cat5/moduli.0
 ./usr/share/man/cat5/motd.0
 ./usr/share/man/cat5/mvme68k
 ./usr/share/man/cat5/mvme88k
@@ -1398,7 +1399,6 @@
 ./usr/share/man/cat5/phones.0
 ./usr/share/man/cat5/pmax
 ./usr/share/man/cat5/powerpc
-./usr/share/man/cat5/primes.0
 ./usr/share/man/cat5/printcap.0
 ./usr/share/man/cat5/protocols.0
 ./usr/share/man/cat5/rcsfile.0

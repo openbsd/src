@@ -328,6 +328,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/cs4281reg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/cy82c693reg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/cy82c693var.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/czreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/esoreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/esovar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/fmsvar.ph
@@ -376,6 +377,8 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/pcireg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/pcivar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/pcscpreg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/plx9060reg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/plx9060var.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/ppbreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/pucvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/siop_pci_common.ph

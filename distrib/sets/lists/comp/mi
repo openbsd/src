@@ -335,6 +335,7 @@
 ./usr/include/dev/pci/cs4281reg.h
 ./usr/include/dev/pci/cy82c693reg.h
 ./usr/include/dev/pci/cy82c693var.h
+./usr/include/dev/pci/czreg.h
 ./usr/include/dev/pci/esoreg.h
 ./usr/include/dev/pci/esovar.h
 ./usr/include/dev/pci/fmsvar.h
@@ -383,6 +384,8 @@
 ./usr/include/dev/pci/pcireg.h
 ./usr/include/dev/pci/pcivar.h
 ./usr/include/dev/pci/pcscpreg.h
+./usr/include/dev/pci/plx9060reg.h
+./usr/include/dev/pci/plx9060var.h
 ./usr/include/dev/pci/ppbreg.h
 ./usr/include/dev/pci/pucvar.h
 ./usr/include/dev/pci/siop_pci_common.h

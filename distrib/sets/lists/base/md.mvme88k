@@ -407,11 +407,14 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/cs4281reg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/cy82c693reg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/cy82c693var.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/czreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/if_ngereg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/if_txpreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/maestro_reg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/pciide_opti_reg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/pcscpreg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/plx9060reg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/plx9060var.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/siop_pci_common.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/tgareg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/tgavar.ph
