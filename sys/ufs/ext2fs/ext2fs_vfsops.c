@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.30 2003/08/25 23:26:55 tedu Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.31 2004/01/20 03:44:06 tedu Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -536,6 +536,7 @@ ext2fs_mountfs(devvp, mp, p)
 	bp = NULL;
 	m_fs = ump->um_e2fs;
 	m_fs->e2fs_ronly = ronly;
+	ump->um_fstype = UM_EXT2FS;
 	if (ronly == 0) {
 		if (m_fs->e2fs.e2fs_state == E2FS_ISCLEAN)
 			m_fs->e2fs.e2fs_state = 0;
@@ -853,6 +854,7 @@ ext2fs_vget(mp, ino, vpp)
 	lockinit(&ip->i_lock, PINOD, "inode", 0, 0);
 	vp->v_data = ip;
 	ip->i_vnode = vp;
+	ip->i_ump = ump;
 	ip->i_e2fs = fs = ump->um_e2fs;
 	ip->i_dev = dev;
 	ip->i_number = ino;
@@ -914,7 +916,6 @@ ext2fs_vget(mp, ino, vpp)
 	/*
 	 * Finish inode initialization now that aliasing has been resolved.
 	 */
-	ip->i_devvp = ump->um_devvp;
 	VREF(ip->i_devvp);
 	/*
 	 * Set up a generation number for this inode if it does not

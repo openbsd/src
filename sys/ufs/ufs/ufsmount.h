@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufsmount.h,v 1.9 2003/06/02 23:28:24 millert Exp $	*/
+/*	$OpenBSD: ufsmount.h,v 1.10 2004/01/20 03:44:06 tedu Exp $	*/
 /*	$NetBSD: ufsmount.h,v 1.4 1994/12/21 20:00:23 mycroft Exp $	*/
 
 /*
@@ -46,6 +46,7 @@ struct ufsmount {
 	struct	mount *um_mountp;		/* filesystem vfs structure */
 	dev_t	um_dev;				/* device mounted */
 	struct	vnode *um_devvp;		/* block device mounted vnode */
+	u_long	um_fstype;			/* type of file system */
 
 	union {					/* pointer to superblock */
 		struct	fs *fs;			/* FFS */
@@ -69,6 +70,14 @@ struct ufsmount {
 	u_int64_t um_savedmaxfilesize;		/* XXX - limit maxfilesize */
 	struct  ufs_extattr_per_mount um_extattr;       /* extended attrs */
 };
+
+/*
+ * Filesystem types
+ */
+#define	UM_UFS1	1
+#define	UM_UFS2	2
+#define	UM_EXT2FS	3
+#define	UM_LFS	4
 
 /*
  * Flags describing the state of quotas.

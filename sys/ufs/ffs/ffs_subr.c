@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_subr.c,v 1.14 2003/06/26 07:58:47 tedu Exp $	*/
+/*	$OpenBSD: ffs_subr.c,v 1.15 2004/01/20 03:44:06 tedu Exp $	*/
 /*	$NetBSD: ffs_subr.c,v 1.6 1996/03/17 02:16:23 christos Exp $	*/
 
 /*
@@ -38,10 +38,15 @@
 #ifdef _KERNEL
 #include <sys/systm.h>
 #include <sys/vnode.h>
+#include <sys/mount.h>
 #include <sys/buf.h>
+
 #include <ufs/ufs/extattr.h>
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
+#include <ufs/ufs/ufsmount.h>
+#include <ufs/ufs/ufs_extern.h>
+
 #include <ufs/ffs/ffs_extern.h>
 
 /*

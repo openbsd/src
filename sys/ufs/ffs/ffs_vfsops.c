@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.62 2004/01/07 20:47:47 tedu Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.63 2004/01/20 03:44:06 tedu Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -666,8 +666,10 @@ ffs_mountfs(devvp, mp, p)
 	if (error)
 		goto out;
 	fs = (struct fs *)bp->b_data;
-	if (fs->fs_magic != FS_MAGIC || fs->fs_bsize > MAXBSIZE ||
+	if (fs->fs_magic != FS_UFS1_MAGIC || fs->fs_bsize > MAXBSIZE ||
 	    fs->fs_bsize < sizeof(struct fs)) {
+		if (fs->fs_magic == FS_UFS2_MAGIC)
+			printf("no UFS2 support\n");
 		error = EFTYPE;		/* Inappropriate format */
 		goto out;
 	}
@@ -706,9 +708,12 @@ ffs_mountfs(devvp, mp, p)
 		goto out;
 	}
 	ump = malloc(sizeof *ump, M_UFSMNT, M_WAITOK);
-	bzero((caddr_t)ump, sizeof *ump);
+	bzero(ump, sizeof *ump);
 	ump->um_fs = malloc((u_long)fs->fs_sbsize, M_UFSMNT,
 	    M_WAITOK);
+	if (fs->fs_magic == FS_UFS1_MAGIC) {
+		ump->um_fstype = UM_UFS1;
+	}
 	bcopy(bp->b_data, ump->um_fs, (u_int)fs->fs_sbsize);
 	if (fs->fs_sbsize < SBSIZE)
 		bp->b_flags |= B_INVAL;
@@ -1162,6 +1167,7 @@ retry:
 	ip = pool_get(&ffs_ino_pool, PR_WAITOK);
 	bzero((caddr_t)ip, sizeof(struct inode));
 	lockinit(&ip->i_lock, PINOD, "inode", 0, 0);
+	ip->i_ump = ump;
 	vp->v_data = ip;
 	ip->i_vnode = vp;
 	ip->i_fs = fs = ump->um_fs;
@@ -1226,7 +1232,6 @@ retry:
 	/*
 	 * Finish inode initialization now that aliasing has been resolved.
 	 */
-	ip->i_devvp = ump->um_devvp;
 	VREF(ip->i_devvp);
 	/*
 	 * Set up a generation number for this inode if it does not

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dinode.h,v 1.8 2003/08/25 23:26:55 tedu Exp $	*/
+/*	$OpenBSD: dinode.h,v 1.9 2004/01/20 03:44:06 tedu Exp $	*/
 /*	$NetBSD: dinode.h,v 1.7 1995/06/15 23:22:48 cgd Exp $	*/
 
 /*
@@ -65,8 +65,14 @@
 
 typedef int32_t ufs_daddr_t;
 typedef int32_t ufs1_daddr_t;
+typedef int64_t ufs2_daddr_t;
+typedef int64_t ufs_lbn_t;
+typedef int64_t ufs_time_t;
+
+#define	NXADDR	2			/* External addresses in inode */
 #define	NDADDR	12			/* Direct addresses in inode. */
 #define	NIADDR	3			/* Indirect addresses in inode. */
+
 
 struct	ufs1_dinode {
 	u_int16_t	di_mode;	/*   0: IFMT, permissions; see below. */
@@ -91,6 +97,33 @@ struct	ufs1_dinode {
 	u_int32_t	di_gid;		/* 116: File group. */
 	int32_t		di_spare[2];	/* 120: Reserved; currently unused */
 };
+
+struct ufs2_dinode {
+	u_int16_t	di_mode;	/*   0: IFMT, permissions; see below. */
+	int16_t		di_nlink;	/*   2: File link count. */
+	u_int32_t	di_uid;		/*   4: File owner. */
+	u_int32_t	di_gid;		/*   8: File group. */
+	u_int32_t	di_blksize;	/*  12: Inode blocksize. */
+	u_int64_t	di_size;	/*  16: File byte count. */
+	u_int64_t	di_blocks;	/*  24: Bytes actually held. */
+	ufs_time_t	di_atime;	/*  32: Last access time. */
+	ufs_time_t	di_mtime;	/*  40: Last modified time. */
+	ufs_time_t	di_ctime;	/*  48: Last inode change time. */
+	ufs_time_t	di_birthtime;	/*  56: Inode creation time. */
+	int32_t		di_mtimensec;	/*  64: Last modified time. */
+	int32_t		di_atimensec;	/*  68: Last access time. */
+	int32_t		di_ctimensec;	/*  72: Last inode change time. */
+	int32_t		di_birthnsec;	/*  76: Inode creation time. */
+	int32_t		di_gen;		/*  80: Generation number. */
+	u_int32_t	di_kernflags;	/*  84: Kernel flags. */
+	u_int32_t	di_flags;	/*  88: Status flags (chflags). */
+	int32_t		di_extsize;	/*  92: External attributes block. */
+	ufs2_daddr_t	di_extb[NXADDR];/*  96: External attributes block. */
+	ufs2_daddr_t	di_db[NDADDR];	/* 112: Direct disk blocks. */
+	ufs2_daddr_t	di_ib[NIADDR];	/* 208: Indirect disk blocks. */
+	int64_t		di_spare[3];	/* 232: Reserved; currently unused */
+};
+
 
 /*
  * The di_db fields may be overlaid with other information for

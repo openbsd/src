@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_inode.c,v 1.20 2003/12/28 17:20:16 tedu Exp $	*/
+/*	$OpenBSD: ufs_inode.c,v 1.21 2004/01/20 03:44:06 tedu Exp $	*/
 /*	$NetBSD: ufs_inode.c,v 1.7 1996/05/11 18:27:52 mycroft Exp $	*/
 
 /*
@@ -147,7 +147,6 @@ ufs_reclaim(vp, p)
 	cache_purge(vp);
 	if (ip->i_devvp) {
 		vrele(ip->i_devvp);
-		ip->i_devvp = 0;
 	}
 #ifdef UFS_DIRHASH
 	if (ip->i_dirhash != NULL)

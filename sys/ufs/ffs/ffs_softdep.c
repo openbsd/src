@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.48 2003/11/19 03:29:31 mickey Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.49 2004/01/20 03:44:06 tedu Exp $	*/
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
  *
@@ -1600,7 +1600,7 @@ handle_workitem_freefrag(freefrag)
 
 	tip.i_vnode = NULL;
 	tip.i_fs = VFSTOUFS(freefrag->ff_mnt)->um_fs;
-	tip.i_devvp = freefrag->ff_devvp;
+	tip.i_ump = VFSTOUFS(freefrag->ff_mnt);
 	tip.i_dev = freefrag->ff_devvp->v_rdev;
 	tip.i_number = freefrag->ff_inum;
 	tip.i_ffs_uid = freefrag->ff_state & ~ONWORKLIST; /* XXX - set above */
@@ -2233,7 +2233,7 @@ handle_workitem_freeblocks(freeblks)
 
 	tip.i_fs = fs = VFSTOUFS(freeblks->fb_mnt)->um_fs;
 	tip.i_number = freeblks->fb_previousinum;
-	tip.i_devvp = freeblks->fb_devvp;
+	tip.i_ump = VFSTOUFS(freeblks->fb_mnt);
 	tip.i_dev = freeblks->fb_devvp->v_rdev;
 	tip.i_ffs_size = freeblks->fb_oldsize;
 	tip.i_ffs_uid = freeblks->fb_uid;
@@ -3026,7 +3026,7 @@ handle_workitem_freefile(freefile)
 	if (error)
 		panic("handle_workitem_freefile: inodedep survived");
 #endif
-	tip.i_devvp = freefile->fx_devvp;
+	tip.i_ump = VFSTOUFS(freefile->fx_mnt);
 	tip.i_dev = freefile->fx_devvp->v_rdev;
 	tip.i_fs = fs;
 	tip.i_vnode = &vp;

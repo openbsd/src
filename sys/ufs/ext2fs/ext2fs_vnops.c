@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.31 2003/09/23 16:51:13 millert Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.32 2004/01/20 03:44:06 tedu Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -1350,7 +1350,6 @@ ext2fs_reclaim(v)
     cache_purge(vp);
     if (ip->i_devvp) {
         vrele(ip->i_devvp);
-        ip->i_devvp = 0;
     }
 
 	FREE(vp->v_data, M_EXT2FSNODE);

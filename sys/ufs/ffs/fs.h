@@ -1,4 +1,4 @@
-/*	$OpenBSD: fs.h,v 1.15 2003/08/26 16:10:57 mickey Exp $	*/
+/*	$OpenBSD: fs.h,v 1.16 2004/01/20 03:44:06 tedu Exp $	*/
 /*	$NetBSD: fs.h,v 1.6 1995/04/12 21:21:02 mycroft Exp $	*/
 
 /*
@@ -62,6 +62,13 @@
 #define	SBOFF		((off_t)(BBOFF + BBSIZE))
 #define	BBLOCK		((daddr_t)(0))
 #define	SBLOCK		((daddr_t)(BBLOCK + BBSIZE / DEV_BSIZE))
+#define	SBLOCK_FLOPPY	0
+#define	SBLOCK_UFS1	8192
+#define	SBLOCK_UFS2	65536
+#define	SBLOCK_PIGGY	262144
+#define	SBLOCKSIZE	8192
+#define	SBLOCKSEARCH \
+	{ SBLOCK_UFS2, SBLOCK_UFS1, SBLOCK_FLOPPY, SBLOCK_PIGGY, -1 }
 
 /*
  * Addresses stored in inodes are capable of addressing fragments
@@ -264,6 +271,8 @@ struct fs {
  * Filesystem identification
  */
 #define	FS_MAGIC	0x011954	/* the fast filesystem magic number */
+#define	FS_UFS1_MAGIC	0x011954	/* the fast filesystem magic number */
+#define	FS_UFS2_MAGIC	0x19540119	/* UFS fast filesystem magic number */
 #define	FS_OKAY		0x7c269d38	/* superblock checksum */
 #define FS_42INODEFMT	-1		/* 4.2BSD inode format */
 #define FS_44INODEFMT	2		/* 4.4BSD inode format */
