@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.145 2003/10/17 08:51:19 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.146 2003/10/29 17:31:11 matthieu Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -2715,7 +2715,6 @@ cmd_channel_map(pa, sc, channel)
 	bus_size_t cmdsize, ctlsize;
 	u_int8_t ctrl = pciide_pci_read(sc->sc_pc, sc->sc_tag, CMD_CTRL);
 	pcireg_t interface;
-	int one_channel;
 
 	/*
 	 * The 0648/0649 can be told to identify as a RAID controller.
@@ -2737,19 +2736,7 @@ cmd_channel_map(pa, sc, channel)
 	cp->wdc_channel.channel = channel;
 	cp->wdc_channel.wdc = &sc->sc_wdcdev;
 
-	/*
-	 * Older CMD64X doesn't have independant channels
-	 */
-	switch (sc->sc_pp->ide_product) {
-	case PCI_PRODUCT_CMDTECH_649:
-		one_channel = 0;
-		break;
-	default:
-		one_channel = 1;
-		break;
-	}
-
-	if (channel > 0 && one_channel) {
+	if (channel > 0) {
 		cp->wdc_channel.ch_queue =
 		    sc->pciide_channels[0].wdc_channel.ch_queue;
 	} else {
