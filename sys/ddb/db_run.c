@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_run.c,v 1.16 2003/02/12 14:41:07 jason Exp $	*/
+/*	$OpenBSD: db_run.c,v 1.17 2005/01/04 21:11:44 espie Exp $	*/
 /*	$NetBSD: db_run.c,v 1.8 1996/02/05 01:57:12 christos Exp $	*/
 
 /* 
@@ -117,15 +117,13 @@ db_stop_at_pc(regs, is_breakpoint)
 #ifdef PC_ADVANCE
 		PC_ADVANCE(regs);
 #else
-		/*
-		 * XXX why on earth is this ifndef'd?  Please explain!
-		 * I believe this was a workaround a bug where singlestep
-		 * breakpoints got deleted before recognized as such.  This
-		 * bug is now gone and probably this #ifndef should go too.
-		 */
-#ifndef m88k
+# ifdef SET_PC_REGS
+		SET_PC_REGS(regs, old_pc);
+# else
+#  ifndef m88k
 		PC_REGS(regs) = old_pc;
-#endif
+#  endif
+# endif
 #endif
 	}
 	db_clear_single_step(regs);
