@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.7 1999/07/04 18:23:51 espie Exp $	*/
+/*	$OpenBSD: perform.c,v 1.8 1999/07/05 09:55:40 espie Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.7 1999/07/04 18:23:51 espie Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.8 1999/07/05 09:55:40 espie Exp $";
 #endif
 
 /*
@@ -137,7 +137,7 @@ pkg_do(char *pkg)
 		    warnx("can't stat package file '%s'", pkg_fullname);
 		    goto bomb;
 		}
-		snprintf(extract_contents, sizeof( extract_comments ),
+		snprintf(extract_contents, sizeof( extract_contents ),
 			 "-q %s", CONTENTS_FNAME);
 		extract = extract_contents;
 	    }
