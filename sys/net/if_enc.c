@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.26 2000/04/10 04:39:41 angelos Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.27 2000/04/10 07:34:53 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -164,8 +164,8 @@ struct ifnet *ifp;
 
     /* If the interface is not setup, flush the queue */
     if ((enc->sc_spi == 0) && (enc->sc_sproto == 0) &&
-	((enc->sc_dst.sa.sa_family == AF_INET) ||
-	 (enc->sc_dst.sa.sa_family == AF_INET6)))
+	(enc->sc_dst.sa.sa_family != AF_INET) &&
+	(enc->sc_dst.sa.sa_family != AF_INET6))
     {
 	DPRINTF(("%s: not initialized with SA\n", ifp->if_xname));
 
@@ -239,6 +239,8 @@ struct ifnet *ifp;
 
 	if (m == NULL) /* Empty queue */
 	  return;
+
+	mp = NULL;
 
 	/* Encapsulate in etherip or ip-in-ip, depending on interface flag */
 	if (ifp->if_flags & IFF_LINK0)
@@ -352,6 +354,10 @@ caddr_t data;
 	case SIOCAIFADDR:
 	case SIOCSIFDSTADDR:
 	case SIOCSIFFLAGS:
+	    if (ifp->if_flags & IFF_UP)
+	      ifp->if_flags |= IFF_RUNNING;
+	    else
+	      ifp->if_flags &= ~IFF_RUNNING;
 	    break;
 
 	case SIOCGENCSA:
