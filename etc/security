@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.27 1998/03/22 03:39:11 marc Exp $
+#	$OpenBSD: security,v 1.28 1998/05/10 18:11:04 todd Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -355,7 +355,7 @@ if [ -s $OUTPUT ] ; then
 fi
 
 # Files that should not be owned by someone else or readable.
-list=".netrc .rhosts .shosts"
+list=".netrc .rhosts .pgp/secring.pgp .shosts .ssh/identity .ssh/random_seed"
 awk -F: '/^[^+-]/ { print $1 " " $6 }' /etc/passwd | \
 while read uid homedir; do
 	for f in $list ; do
@@ -377,8 +377,11 @@ awk '$1 != $5 && $5 != "root" \
 	{ print "user " $1 " " $2 " file is other writeable" }' > $OUTPUT
 
 # Files that should not be owned by someone else or writeable.
-list=".bashrc .cshrc .emacs .exrc .forward .klogin .login .logout \
-      .profile .tcshrc .kshrc .xsession"
+list=".bashrc .bash_profile .bash_login .bash_logout .cshrc \
+      .emacs .exrc .forward .fvwmrc .inputrc .klogin .kshrc .login \
+      .logout .nexrc .profile .screenrc .ssh .ssh/config \
+      .ssh/authorized_keys .ssh/environment .ssh/known_hosts .ssh/rc \
+      .tcshrc .twmrc .xsession .xinitrc .Xdefaults .Xauthority"
 awk -F: '/^[^+-]/ { print $1 " " $6 }' /etc/passwd | \
 while read uid homedir; do
 	for f in $list ; do
