@@ -1,4 +1,4 @@
-/*	$NetBSD: ntohs.c,v 1.5 1995/04/28 23:25:23 jtc Exp $	*/
+/*	$NetBSD: ntohs.c,v 1.5.6.1 1996/05/29 23:28:33 cgd Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
@@ -6,7 +6,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$NetBSD: ntohs.c,v 1.5 1995/04/28 23:25:23 jtc Exp $";
+static char *rcsid = "$NetBSD: ntohs.c,v 1.5.6.1 1996/05/29 23:28:33 cgd Exp $";
 #endif
 
 #include <sys/types.h>
@@ -24,7 +24,7 @@ ntohs(x)
 {
 #if BYTE_ORDER == LITTLE_ENDIAN
 	u_char *s = (u_char *) &x;
-	return s[0] << 8 | s[1];
+	return (u_int16_t)(s[0] << 8 | s[1]);
 #else
 	return x;
 #endif
