@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.336 2000/10/23 20:06:42 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.337 2000/10/26 13:39:28 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -265,6 +265,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "3D Labs",
 	    "GLINT Permedia 2",
+	},
+	{
+	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_OXYGEN_GVX1_CPU,
+	    0,
+	    "3D Labs",
+	    "Oxygen GVX1",
+	},
+	{
+	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_OXYGEN_GVX1,
+	    0,
+	    "3D Labs",
+	    "Oxygen GVX1",
 	},
 	{
 	    PCI_VENDOR_TRIWARE, PCI_PRODUCT_TRIWARE_ESCALADE,

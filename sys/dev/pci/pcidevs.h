@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.336 2000/10/23 20:06:42 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.337 2000/10/26 13:39:28 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -606,6 +606,8 @@
 #define	PCI_PRODUCT_3DLABS_PERMEDIA	0x0004		/* GLINT Permedia */
 #define	PCI_PRODUCT_3DLABS_500MX	0x0006		/* GLINT 500MX */
 #define	PCI_PRODUCT_3DLABS_PERMEDIA2	0x0007		/* GLINT Permedia 2 */
+#define	PCI_PRODUCT_3DLABS_OXYGEN_GVX1_CPU	0x0008		/* Oxygen GVX1 */
+#define	PCI_PRODUCT_3DLABS_OXYGEN_GVX1	0x000a		/* Oxygen GVX1 */
 
 /* 3Ware products */
 #define	PCI_PRODUCT_TRIWARE_ESCALADE	0x1000		/* Escalade IDE RAID */
