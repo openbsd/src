@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.23 2004/06/15 23:36:56 deraadt Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.24 2004/06/25 01:02:53 tom Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -129,6 +129,7 @@
  * feature set for simplicity
  */
 #define CPUID_3DNOW	0x40000000	/* has 3DNow! instructions (AMD) */
+#define CPUID_LONG	0x20000000	/* long mode (AMD64, ext cpuid) */
 
 #define CPUIDECX_PNI	0x00000001	/* Prescott New Instructions */
 #define CPUIDECX_MWAIT	0x00000008	/* Monitor/Mwait */
