@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite.c,v 1.7 1996/11/10 14:29:41 briggs Exp $	*/
+/*	$OpenBSD: ite.c,v 1.8 1997/01/19 03:18:02 briggs Exp $	*/
 /*	$NetBSD: ite.c,v 1.27 1996/11/10 09:35:04 scottr Exp $	*/
 
 /*
@@ -91,7 +91,7 @@
 #define CHARHEIGHT	10
 
 /* Local function prototypes */
-static inline void putpixel1 __P((int, int, int *, int));
+static __inline void putpixel1 __P((int, int, int *, int));
 static void	putpixel2 __P((int, int, int *, int));
 static void	putpixel4 __P((int, int, int *, int));
 static void	putpixel8 __P((int, int, int *, int));
@@ -174,7 +174,7 @@ static void	(*reversepixel) __P((int x, int y, int num));
  * Bitmap handling functions
  */
 
-static inline void 
+static __inline void 
 putpixel1(xx, yy, c, num)
 	int xx, yy;
 	int *c;
