@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.16 1998/03/25 07:37:29 deraadt Exp $	*/
+/*	$OpenBSD: if.c,v 1.17 1998/08/04 20:57:19 millert Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -587,6 +587,14 @@ ifconf(cmd, data)
 	register struct ifaddr *ifa;
 	struct ifreq ifr, *ifrp;
 	int space = ifc->ifc_len, error = 0;
+
+	/* If ifc->ifc_len is 0, fill it in with the needed size and return. */
+	if (space == 0) {
+		for (ifp = ifnet.tqh_first; ifp; ifp = ifp->if_list.tqe_next)
+			space += sizeof (ifr);
+		ifc->ifc_len = space;
+		return(0);
+	}
 
 	ifrp = ifc->ifc_req;
 	for (ifp = ifnet.tqh_first; space >= sizeof (ifr) && ifp != 0;
