@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.50 2002/02/12 13:05:31 art Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.51 2002/02/12 16:38:39 art Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -226,8 +226,7 @@ sys_accept(p, v, retval)
 		so->so_onq = &head->so_q;
 		TAILQ_INSERT_HEAD(so->so_onq, so, so_qe);
 		wakeup_one(&head->so_timeo);
-		splx(s);
-		return (error);
+		goto bad;
 	}
 	*retval = tmpfd;
 
