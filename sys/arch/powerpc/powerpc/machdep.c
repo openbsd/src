@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.36 2000/03/23 09:59:56 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.37 2000/03/31 04:09:31 rahnds Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -1206,6 +1206,33 @@ mapiodev(pa, len)
 	}
 	return (void*) (va+off);
 }
+void 
+unmapiodev(va, size)
+	void *va;
+	psize_t size;
+{
+	vaddr_t vaddr;
+
+	vaddr = trunc_page(va);
+
+#ifdef UVM
+	uvm_km_free_wakeup(phys_map, vaddr, size);
+#else
+	kmem_free_wakeup(phys_map, vaddr, size);
+#endif
+
+	for (; size > 0; size -= NBPG) {
+#if 0
+		pmap_remove(vm_map_pmap(phys_map), vaddr, vaddr+NBPG-1);
+#else
+		pmap_remove(pmap_kernel(), vaddr,  vaddr+NBPG-1);
+#endif
+		vaddr += NBPG;
+	}
+	return;
+}
+
+
 
 /*
  * probably should be ppc_space_copy
