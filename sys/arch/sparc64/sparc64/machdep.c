@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.55 2003/02/17 01:29:20 henric Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.56 2003/02/22 22:50:34 jason Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -2139,6 +2139,10 @@ bus_space_vaddr(bus_space_tag_t t, bus_space_handle_t h)
 void
 bus_space_render_tag(bus_space_tag_t t, char* buf, size_t len)
 {
+	if (t == NULL) {
+		strlcat(buf, "<NULL>", len);
+		return;
+	}
 	buf[0] = '\0';
 	if (t->parent)
 		bus_space_render_tag(t->parent, buf, len);
