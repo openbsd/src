@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: ipcp.c,v 1.5 1997/12/15 22:44:52 brian Exp $
+ * $Id: ipcp.c,v 1.6 1997/12/19 04:50:38 brian Exp $
  *
  *	TODO:
  *		o More RFC1772 backwoard compatibility
@@ -382,7 +382,8 @@ IpcpDecodeConfig(u_char * cp, int plen, int mode_type)
       switch (mode_type) {
       case MODE_REQ:
         if (iplist_isvalid(&DefHisChoice)) {
-          if (iplist_ip2pos(&DefHisChoice, ipaddr) < 0 ||
+          if (ipaddr.s_addr == INADDR_ANY ||
+              iplist_ip2pos(&DefHisChoice, ipaddr) < 0 ||
               OsTrySetIpaddress(DefMyAddress.ipaddr, ipaddr) != 0) {
             LogPrintf(LogIPCP, "%s: Address invalid or already in use\n",
                       inet_ntoa(ipaddr));
