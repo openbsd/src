@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)info_nis.c	8.1 (Berkeley) 6/6/93
- *	$Id: info_nis.c,v 1.4 2001/03/02 06:22:02 deraadt Exp $
+ *	$Id: info_nis.c,v 1.5 2002/07/18 00:50:23 pvalchev Exp $
  */
 
 /*
@@ -97,13 +97,8 @@ struct nis_callback_data {
 /*
  * Callback from yp_all
  */
-static int callback(status, key, kl, val, vl, data)
-int status;
-char *key;
-int kl;
-char *val;
-int vl;
-struct nis_callback_data *data;
+static int callback(int status, char *key, int kl, char *val,
+	int vl, struct nis_callback_data *data)
 {
 	if (status == YP_TRUE) {
 		/*
@@ -139,11 +134,7 @@ struct nis_callback_data *data;
 	}
 }
 
-int nis_reload P((mnt_map *m, char *map, void (*fn)()));
-int nis_reload(m, map, fn)
-mnt_map *m;
-char *map;
-void (*fn)();
+int nis_reload(mnt_map *m, char *map, void (*fn)())
 {
 	struct ypall_callback cbinfo;
 	int error;
@@ -173,13 +164,7 @@ void (*fn)();
 /*
  * Try to locate a key using NIS.
  */
-int nis_search P((mnt_map *m, char *map, char *key, char **val, time_t *tp));
-int nis_search(m, map, key, val, tp)
-mnt_map *m;
-char *map;
-char *key;
-char **val;
-time_t *tp;
+int nis_search(mnt_map *m, char *map, char *key, char **val, time_t *tp)
 {
 	int outlen;
 	int res;
@@ -252,10 +237,7 @@ time_t *tp;
 	}
 }
 
-int nis_init P((char *map, time_t *tp));
-int nis_init(map, tp)
-char *map;
-time_t *tp;
+int nis_init(char *map, time_t *tp)
 {
 	int order;
 	int yp_order_result;

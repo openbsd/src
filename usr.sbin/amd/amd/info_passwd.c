@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)info_passwd.c	8.1 (Berkeley) 6/6/93
- *	$Id: info_passwd.c,v 1.3 2002/06/11 05:29:54 itojun Exp $
+ *	$Id: info_passwd.c,v 1.4 2002/07/18 00:50:23 pvalchev Exp $
  */
 
 /*
@@ -56,10 +56,7 @@
 /*
  * Nothing to probe - check the map name is PASSWD_MAP.
  */
-int passwd_init P((char *map, time_t *tp));
-int passwd_init(map, tp)
-char *map;
-time_t *tp;
+int passwd_init(char *map, time_t *tp)
 {
 	*tp = 0;
 	return strcmp(map, PASSWD_MAP) == 0 ? 0 : ENOENT;
@@ -70,13 +67,7 @@ time_t *tp;
  * Grab the entry via the getpwname routine
  * Modify time is ignored by passwd - XXX
  */
-int passwd_search P((mnt_map *m, char *map, char *key, char **pval, time_t *tp));
-int passwd_search(m, map, key, pval, tp)
-mnt_map *m;
-char *map;
-char *key;
-char **pval;
-time_t *tp;
+int passwd_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp)
 {
 	char *dir = 0;
 	struct passwd *pw;

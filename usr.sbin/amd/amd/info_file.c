@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)info_file.c	8.1 (Berkeley) 6/6/93
- *	$Id: info_file.c,v 1.1.1.1 1995/10/18 08:47:10 deraadt Exp $
+ *	$Id: info_file.c,v 1.2 2002/07/18 00:50:23 pvalchev Exp $
  */
 
 /*
@@ -51,11 +51,7 @@
 
 #define	MAX_LINE_LEN	2048
 
-static int read_line P((char *buf, int size, FILE *fp));
-static int read_line(buf, size, fp)
-char *buf;
-int size;
-FILE *fp;
+static int read_line(char *buf, int size, FILE *fp)
 {
 	int done = 0;
 
@@ -88,14 +84,7 @@ FILE *fp;
 /*
  * Try to locate a key in a file
  */
-static int search_or_reload_file P((FILE *fp, char *map, char *key, char **val, mnt_map *m, void (*fn)(mnt_map *m, char*, char*)));
-static int search_or_reload_file(fp, map, key, val, m, fn)
-FILE *fp;
-char *map;
-char *key;
-char **val;
-mnt_map *m;
-void (*fn) P((mnt_map*, char*, char*));
+static int search_or_reload_file(FILE *fp, char *map, char *key, char **val, mnt_map *m, void (*fn)(mnt_map *m, char*, char*))
 {
 	char key_val[MAX_LINE_LEN];
 	int chuck = 0;
@@ -188,10 +177,7 @@ again:
 	return fn ? 0 : ENOENT;
 }
 
-static FILE *file_open P((char *map, time_t *tp));
-static FILE *file_open(map, tp)
-char *map;
-time_t *tp;
+static FILE *file_open(char *map, time_t *tp)
 {
 	FILE *mapf = fopen(map, "r");
 	if (mapf && tp) {
@@ -204,10 +190,7 @@ time_t *tp;
 	return mapf;
 }
 
-int file_init P((char *map, time_t *tp));
-int file_init(map, tp)
-char *map;
-time_t *tp;
+int file_init(char *map, time_t *tp)
 {
 	FILE *mapf = file_open(map, tp);
 	if (mapf) {
@@ -217,11 +200,7 @@ time_t *tp;
 	return errno;
 }
 
-int file_reload P((mnt_map *m, char *map, void (*fn)()));
-int file_reload(m, map, fn)
-mnt_map *m;
-char *map;
-void (*fn)();
+int file_reload(mnt_map *m, char *map, void (*fn)())
 {
 	FILE *mapf = file_open(map, (time_t *) 0);
 	if (mapf) {
@@ -233,13 +212,7 @@ void (*fn)();
 	return errno;
 }
 
-int file_search P((mnt_map *m, char *map, char *key, char **pval, time_t *tp));
-int file_search(m, map, key, pval, tp)
-mnt_map *m;
-char *map;
-char *key;
-char **pval;
-time_t *tp;
+int file_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp)
 {
 	time_t t;
 	FILE *mapf = file_open(map, &t);
@@ -258,10 +231,7 @@ time_t *tp;
 	return errno;
 }
 
-int file_mtime P((char *map, time_t *tp));
-int file_mtime(map, tp)
-char *map;
-time_t *tp;
+int file_mtime(char *map, time_t *tp)
 {
 	FILE *mapf = file_open(map, tp);
 	if (mapf) {

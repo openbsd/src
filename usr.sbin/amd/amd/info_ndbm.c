@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)info_ndbm.c	8.1 (Berkeley) 6/6/93
- *	$Id: info_ndbm.c,v 1.1.1.1 1995/10/18 08:47:10 deraadt Exp $
+ *	$Id: info_ndbm.c,v 1.2 2002/07/18 00:50:23 pvalchev Exp $
  */
 
 /*
@@ -51,11 +51,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 
-static int search_ndbm P((DBM *db, char *key, char **val));
-static int search_ndbm(db, key, val)
-DBM *db;
-char *key;
-char **val;
+static int search_ndbm(DBM *db, char *key, char **val)
 {
 	datum k, v;
 	k.dptr = key;
@@ -68,13 +64,7 @@ char **val;
 	return ENOENT;
 }
 
-int ndbm_search P((mnt_map *m, char *map, char *key, char **pval, time_t *tp));
-int ndbm_search(m, map, key, pval, tp)
-mnt_map *m;
-char *map;
-char *key;
-char **pval;
-time_t *tp;
+int ndbm_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp)
 {
 	DBM *db;
 
@@ -96,10 +86,7 @@ time_t *tp;
 	return errno;
 }
 
-int ndbm_init P((char *map, time_t *tp));
-int ndbm_init(map, tp)
-char *map;
-time_t *tp;
+int ndbm_init(char *map, time_t *tp)
 {
 	DBM *db;
 

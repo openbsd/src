@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_ops.c,v 1.12 2002/06/11 05:29:54 itojun Exp $	*/
+/*	$OpenBSD: nfs_ops.c,v 1.13 2002/07/18 00:50:23 pvalchev Exp $	*/
 
 /*-
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -40,7 +40,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nfs_ops.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: nfs_ops.c,v 1.12 2002/06/11 05:29:54 itojun Exp $";
+static char *rcsid = "$OpenBSD: nfs_ops.c,v 1.13 2002/07/18 00:50:23 pvalchev Exp $";
 #endif /* not lint */
 
 #include "am.h"
@@ -116,14 +116,11 @@ static int fh_id = 0;
 extern qelem fh_head;
 qelem fh_head = { &fh_head, &fh_head };
 
-static int call_mountd P((fh_cache*, unsigned long, fwd_fun, voidp));
+static int call_mountd(fh_cache*, unsigned long, fwd_fun, voidp);
 
 AUTH *nfs_auth;
 
-static fh_cache *find_nfs_fhandle_cache P((voidp idv, int done));
-static fh_cache *find_nfs_fhandle_cache(idv, done)
-voidp idv;
-int done;
+static fh_cache *find_nfs_fhandle_cache(voidp idv, int done)
 {
 	fh_cache *fp, *fp2 = 0;
 	/* XXX EVIL XXX */
@@ -155,14 +152,8 @@ int done;
 /*
  * Called when a filehandle appears
  */
-static void got_nfs_fh P((voidp pkt, int len, struct sockaddr_in *sa,
-				struct sockaddr_in *ia, voidp idv, int done));
-static void got_nfs_fh(pkt, len, sa, ia, idv, done)
-voidp pkt;
-int len;
-struct sockaddr_in *sa, *ia;
-voidp idv;
-int done;
+static void got_nfs_fh(voidp pkt, int len, struct sockaddr_in *sa,
+	struct sockaddr_in *ia, voidp idv, int done)
 {
 	fh_cache *fp = find_nfs_fhandle_cache(idv, done);
 	if (fp) {
@@ -187,9 +178,7 @@ int done;
 	}
 }
 
-void flush_nfs_fhandle_cache P((fserver *fs));
-void flush_nfs_fhandle_cache(fs)
-fserver *fs;
+void flush_nfs_fhandle_cache(fserver *fs)
 {
 	fh_cache *fp;
 	ITER(fp, fh_cache, &fh_head) {
@@ -200,9 +189,7 @@ fserver *fs;
 	}
 }
 
-static void discard_fh P((fh_cache *fp));
-static void discard_fh(fp)
-fh_cache *fp;
+static void discard_fh(fh_cache *fp)
 {
 	rem_que(&fp->fh_q);
 #ifdef DEBUG
@@ -216,12 +203,7 @@ fh_cache *fp;
 /*
  * Determine the file handle for a node
  */
-static int prime_nfs_fhandle_cache P((char *path, fserver *fs, fhstatus *fhbuf, voidp wchan));
-static int prime_nfs_fhandle_cache(path, fs, fhbuf, wchan)
-char *path;
-fserver *fs;
-fhstatus *fhbuf;
-voidp wchan;
+static int prime_nfs_fhandle_cache(char *path, fserver *fs, fhstatus *fhbuf, voidp wchan)
 {
 	fh_cache *fp, *fp_save = 0;
 	int error;
@@ -340,7 +322,7 @@ voidp wchan;
 	return error;
 }
 
-int make_nfs_auth P((void))
+int make_nfs_auth(void)
 {
 #ifdef HAS_NFS_QUALIFIED_NAMES
 	/*
@@ -359,12 +341,7 @@ int make_nfs_auth P((void))
 	return 0;
 }
 
-static int call_mountd P((fh_cache *fp, u_long proc, fwd_fun f, voidp wchan));
-static int call_mountd(fp, proc, f, wchan)
-fh_cache *fp;
-u_long proc;
-fwd_fun f;
-voidp wchan;
+static int call_mountd(fh_cache *fp, u_long proc, fwd_fun f, voidp wchan)
 {
 	struct rpc_msg mnt_msg;
 	int len;
@@ -420,8 +397,7 @@ voidp wchan;
  * remote hostname.
  * Local filesystem defaults to remote and vice-versa.
  */
-static char *nfs_match(fo)
-am_opts *fo;
+static char *nfs_match(am_opts *fo)
 {
 	char *xmtab;
 	if (fo->opt_fs && !fo->opt_rfs)
@@ -451,8 +427,7 @@ am_opts *fo;
 /*
  * Initialise am structure for nfs
  */
-static int nfs_init(mf)
-mntfs *mf;
+static int nfs_init(mntfs *mf)
 {
 	if (!mf->mf_private) {
 		int error;
@@ -474,13 +449,7 @@ mntfs *mf;
 	return 0;
 }
 
-int mount_nfs_fh P((fhstatus *fhp, char *dir, char *fs_name, char *opts, mntfs *mf));
-int mount_nfs_fh(fhp, dir, fs_name, opts, mf)
-fhstatus *fhp;
-char *dir;
-char *fs_name;
-char *opts;
-mntfs *mf;
+int mount_nfs_fh(fhstatus *fhp, char *dir, char *fs_name, char *opts, mntfs *mf)
 {
 	struct nfs_args nfs_args;
 	struct mntent mnt;
@@ -694,11 +663,7 @@ mntfs *mf;
 	return error;
 }
 
-static int mount_nfs(dir, fs_name, opts, mf)
-char *dir;
-char *fs_name;
-char *opts;
-mntfs *mf;
+static int mount_nfs(char *dir, char *fs_name, char *opts, mntfs *mf)
 {
 #ifdef notdef
 	int error;
@@ -726,8 +691,7 @@ mntfs *mf;
 	return mount_nfs_fh((fhstatus *) mf->mf_private, dir, fs_name, opts, mf);
 }
 
-static int nfs_fmount(mf)
-mntfs *mf;
+static int nfs_fmount(mntfs *mf)
 {
 	int error;
 
@@ -742,8 +706,7 @@ mntfs *mf;
 	return error;
 }
 
-static int nfs_fumount(mf)
-mntfs *mf;
+static int nfs_fumount(mntfs *mf)
 {
 	int error = UMOUNT_FS(mf->mf_mount);
 	if (error)
@@ -752,8 +715,7 @@ mntfs *mf;
 	return 0;
 }
 
-static void nfs_umounted(mp)
-am_node *mp;
+static void nfs_umounted(am_node *mp)
 {
 #ifdef INFORM_MOUNTD
 	/*

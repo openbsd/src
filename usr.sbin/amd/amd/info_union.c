@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)info_union.c	8.1 (Berkeley) 6/6/93
- *	$Id: info_union.c,v 1.3 2002/06/11 05:29:54 itojun Exp $
+ *	$Id: info_union.c,v 1.4 2002/07/18 00:50:23 pvalchev Exp $
  */
 
 /*
@@ -64,22 +64,13 @@
 /*
  * No way to probe - check the map name begins with "union:"
  */
-int union_init P((char *map, time_t *tp));
-int union_init(map, tp)
-char *map;
-time_t *tp;
+int union_init(char *map, time_t *tp)
 {
 	*tp = 0;
 	return strncmp(map, UNION_PREFIX, UNION_PREFLEN) == 0 ? 0 : ENOENT;
 }
 
-int union_search P((mnt_map *m, char *map, char *key, char **pval, time_t *tp));
-int union_search(m, map, key, pval, tp)
-mnt_map *m;
-char *map;
-char *key;
-char **pval;
-time_t *tp;
+int union_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp)
 {
 	char *mapd = strdup(map + UNION_PREFLEN);
 	char **v = strsplit(mapd, ':', '\"');
@@ -93,11 +84,7 @@ time_t *tp;
 	return 0;
 }
 
-int union_reload P((mnt_map *m, char *map, void (*fn)()));
-int union_reload(m, map, fn)
-mnt_map *m;
-char *map;
-void (*fn)();
+int union_reload(mnt_map *m, char *map, void (*fn)())
 {
 	char *mapd = strdup(map + UNION_PREFLEN);
 	char **v = strsplit(mapd, ':', '\"');

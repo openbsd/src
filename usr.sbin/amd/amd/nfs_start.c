@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_start.c	8.1 (Berkeley) 6/6/93
- *	$Id: nfs_start.c,v 1.7 2002/05/26 02:49:50 deraadt Exp $
+ *	$Id: nfs_start.c,v 1.8 2002/07/18 00:50:23 pvalchev Exp $
  */
 
 #include "am.h"
@@ -53,7 +53,7 @@ extern int select_intr_valid;
  * so that we do NFS gatewaying.
  */
 #define	svcudp_create svcudp2_create
-extern SVCXPRT *svcudp2_create P((int));
+extern SVCXPRT *svcudp2_create(int);
 #endif /* HAS_TFS */
 
 extern void nfs_program_2();
@@ -71,12 +71,11 @@ int max_fds = -1;
  */
 static void checkup(P_void)
 {
-
-static int max_fd = 0;
-static char *max_mem = 0;
+	static int max_fd = 0;
+	static char *max_mem = 0;
 
 	int next_fd = dup(0);
-	extern caddr_t sbrk P((int));
+	extern caddr_t sbrk(int);
 	caddr_t next_mem = sbrk(0);
 	close(next_fd);
 
@@ -363,8 +362,7 @@ static serv_state run_rpc(P_void)
 	return amd_state;
 }
 
-static int bindnfs_port(so)
-int so;
+static int bindnfs_port(int so)
 {
 	unsigned short port;
 	int error = bind_resv_port(so, &port);
@@ -381,8 +379,7 @@ void unregister_amq(P_void)
 	(void) pmap_unset(AMQ_PROGRAM, AMQ_VERSION);
 }
 
-int mount_automounter(ppid)
-pid_t ppid;
+int mount_automounter(pid_t ppid)
 {
 	int so = socket(AF_INET, SOCK_DGRAM, 0);
 	SVCXPRT *amqp;
