@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.12 2001/08/25 21:54:26 frantzen Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.13 2001/08/28 08:48:57 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -218,6 +218,14 @@ All of SYN, FIN, RST and ACK must be unset.
 .Ss icmp-type <type> code <code>
 The rule only applies to ICMP packets with the specified type and code.
 This parameter is only valid for rules that cover protocol icmp.
+.Sh MACROS
+.Em pfctl
+supports macro definition and expansion like:
+.Bd -literal
+    if="kue0"
+    pass out on $if from any to any           keep state
+    pass in  on $if from any to any port = 25 keep state
+.Ed
 .Sh STATEFUL INSPECTION
 .Em pf
 is a stateful packet filter, which means it can track the state of
