@@ -1363,6 +1363,7 @@ sw_reg_strategy(sdp, bp, bn)
 		nbp->vb_buf.b_vnbufs.le_next = NOLIST;
 		nbp->vb_buf.b_rcred    = sdp->swd_cred;
 		nbp->vb_buf.b_wcred    = sdp->swd_cred;
+		LIST_INIT(&nbp->vb_buf.b_dep);
 
 		/* 
 		 * set b_dirtyoff/end and b_validoff/end.   this is
@@ -1805,6 +1806,7 @@ uvm_swap_io(pps, startslot, npages, flags)
 	bp->b_vnbufs.le_next = NOLIST;
 	bp->b_data = (caddr_t)kva;
 	bp->b_blkno = startblk;
+	LIST_INIT(&bp->b_dep);
 	s = splbio();
 	VHOLD(swapdev_vp);
 	bp->b_vp = swapdev_vp;
