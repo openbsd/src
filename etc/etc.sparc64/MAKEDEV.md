@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.11 2002/01/28 20:50:07 jason Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.12 2002/01/31 21:34:56 jason Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
@@ -26,6 +26,8 @@ dnl ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 dnl
 dnl
 _TITLE(make)
+__devitem(uperf,uperf,performance counters)dnl
+_mkdev(uperf,uperf,{-M uperf c major_uperf_c 0 664-},664)dnl
 _DEV(all)
 _DEV(floppy)
 _DEV(std)
@@ -92,6 +94,7 @@ _DEV(bppmag,72)
 _DEV(spif,108)
 _DEV(bppsp,109)
 _DEV(cry,75)
+_DEV(uperf,25)
 dnl
 divert(7)dnl
 dnl
