@@ -1,4 +1,4 @@
-/*	$OpenBSD: readlabel.c,v 1.2 1996/12/04 21:25:33 downsj Exp $	*/
+/*	$OpenBSD: readlabel.c,v 1.3 1996/12/23 07:43:42 downsj Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -44,8 +44,9 @@
  * style filesystem type name for the specified partition.
  */
 
-char *readlabelfs(device)
+char *readlabelfs(device, verbose)
 	char *device;
+	int verbose;
 {
 	char rpath[MAXPATHLEN];
 	char part, *type;
@@ -55,7 +56,8 @@ char *readlabelfs(device)
 
 	/* Assuming device is of the form /dev/??p, build a raw partition. */
 	if (stat(device, &sbuf) < 0) {
-		warn("%s", device);
+		if (verbose)
+			warn("%s", device);
 		return(NULL);
 	}
 	switch(sbuf.st_mode & S_IFMT) {
@@ -79,7 +81,8 @@ char *readlabelfs(device)
 			break;
 		}
 	default:
-		warnx("%s: not a device node", device);
+		if (verbose)
+			warnx("%s: not a device node", device);
 		return(NULL);
 	}
 
@@ -91,23 +94,27 @@ char *readlabelfs(device)
 
 			fd = open(rpath, O_RDONLY);
 			if (fd < 0) {
-				warn("%s", rpath);
+				if (verbose)
+					warn("%s", rpath);
 				return(NULL);
 			}
 		} else {
-				warn("%s", rpath);
+				if (verbose)
+					warn("%s", rpath);
 				return(NULL);
 		}
 	}
 	if (ioctl(fd, DIOCGDINFO, &dk) < 0) {
-		warn("%s: couldn't read disklabel", rpath);
+		if (verbose)
+			warn("%s: couldn't read disklabel", rpath);
 		close(fd);
 		return(NULL);
 	}
 	close(fd);
 
 	if (dk.d_partitions[part - 'a'].p_fstype > FSMAXTYPES) {
-		warnx("%s: bad filesystem type in label", rpath);
+		if (verbose)
+			warnx("%s: bad filesystem type in label", rpath);
 		return(NULL);
 	}
 

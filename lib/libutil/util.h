@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.3 1996/12/03 01:05:36 downsj Exp $	*/
+/*	$OpenBSD: util.h,v 1.4 1996/12/23 07:43:42 downsj Exp $	*/
 /*	$NetBSD: util.h,v 1.2 1996/05/16 07:00:22 thorpej Exp $	*/
 
 /*-
@@ -72,7 +72,7 @@ pid_t	forkpty __P((int *, char *, struct termios *, struct winsize *));
 int	getmaxpartitions __P((void));
 int	getrawpartition __P((void));
 void	login_fbtab __P((char *, uid_t, gid_t));
-char   *readlabelfs __P((char *));
+char   *readlabelfs __P((char *, int));
 __END_DECLS
 
 #endif /* !_UTIL_H_ */
