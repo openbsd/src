@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.213 2003/01/03 18:39:58 miod Exp $
+#	$OpenBSD: rc,v 1.214 2003/01/06 20:40:39 marc Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -544,12 +544,16 @@ fi
 
 echo '.'
 
-if [ -f /etc/wsconsctl.conf ]; then
+if [ -x /sbin/wsconsctl -a -f /etc/wsconsctl.conf ]; then
 (
 	# delete comments and blank lines
+	saveIFS=$IFS
+	IFS="
+"
 	set -- `stripcom /etc/wsconsctl.conf`
+	IFS=$save_IFS
 	while [ $# -ge 1 ] ; do
-		wsconsctl -w $1
+		eval /sbin/wsconsctl -w $1
 		shift
 	done
 )
