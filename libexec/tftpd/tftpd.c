@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.9 1997/07/29 02:11:11 deraadt Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.10 1997/10/06 06:07:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: tftpd.c,v 1.9 1997/07/29 02:11:11 deraadt Exp $: tftpd.c,v 1.6 1997/02/16 23:49:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tftpd.c,v 1.10 1997/10/06 06:07:29 deraadt Exp $: tftpd.c,v 1.6 1997/02/16 23:49:21 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -85,8 +85,8 @@ char	ackbuf[PKTSIZE];
 struct	sockaddr_in from;
 int	fromlen;
 
-#define MAXARG	4
-char	*dirs[MAXARG+1];
+int	ndirs;
+char	**dirs;
 
 int	secure = 0;
 int	cancreate = 0;
@@ -129,15 +129,30 @@ main(argc, argv)
 		}
 
 	for (; optind != argc; optind++) {
-		if (!secure) {
-			if (n >= MAXARG) {
-				syslog(LOG_ERR, "too many directories\n");
-				exit(1);
-			} else
-				dirs[n++] = argv[optind];
+		if (dirs)
+			dirs = realloc(dirs, (ndirs+2) * sizeof (char *));
+		else
+			dirs = calloc(ndirs+2, sizeof(char *));
+		if (dirs == NULL) {
+			syslog(LOG_ERR, "malloc: %m\n");
+			exit(1);
+		}			
+		dirs[n++] = argv[optind];
+		dirs[n] = NULL;
+		ndirs++;
+	}
+
+	if (secure) {
+		if (ndirs == 0) {
+			syslog(LOG_ERR, "no -s directory\n");
+			exit(1);
 		}
-		if (chdir(argv[optind])) {
-			syslog(LOG_ERR, "%s: %m\n", argv[optind]);
+		if (ndirs > 1) {
+			syslog(LOG_ERR, "too many -s directories\n");
+			exit(1);
+		}
+		if (chdir(dirs[0])) {
+			syslog(LOG_ERR, "%s: %m\n", dirs[0]);
 			exit(1);
 		}
 	}
