@@ -1,4 +1,4 @@
-/*	$OpenBSD: mailwrapper.c,v 1.15 2003/03/09 01:24:26 millert Exp $	*/
+/*	$OpenBSD: mailwrapper.c,v 1.16 2004/07/06 03:38:14 millert Exp $	*/
 /*	$NetBSD: mailwrapper.c,v 1.2 1999/02/20 22:10:07 thorpej Exp $	*/
 
 /*
@@ -67,20 +67,11 @@ initarg(struct arglist *al)
 static void
 addarg(struct arglist *al, const char *arg, int copy)
 {
-	char **argv2;
-
 	if (al->argc == al->maxc) {
 		al->maxc <<= 1;
-
-		if ((argv2 = realloc(al->argv,
-		    al->maxc * sizeof(char *))) == NULL) {
-			if (al->argv)
-				free(al->argv);
-			al->argv = NULL;
+		al->argv = realloc(al->argv, al->maxc * sizeof(char *));
+		if (al->argv == NULL)
 			err(1, "realloc");
-		} else {
-			al->argv = argv2;
-		}
 	}
 	if (copy) {
 		if ((al->argv[al->argc++] = strdup(arg)) == NULL)
