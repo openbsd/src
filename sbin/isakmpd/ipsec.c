@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.50 2001/06/29 19:08:11 ho Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.51 2001/07/01 14:17:06 ho Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -113,7 +113,7 @@ static int ipsec_initiator (struct message *);
 static void ipsec_proto_init (struct proto *, char *);
 static int ipsec_responder (struct message *);
 static void ipsec_setup_situation (u_int8_t *);
-static void ipsec_set_network (u_int8_t *, u_int8_t *, struct ipsec_sa *);
+static int ipsec_set_network (u_int8_t *, u_int8_t *, struct ipsec_sa *);
 static size_t ipsec_situation_size (void);
 static u_int8_t ipsec_spi_size (u_int8_t);
 static int ipsec_validate_attribute (u_int16_t, u_int8_t *, u_int16_t, void *);
@@ -336,11 +336,25 @@ ipsec_finalize_exchange (struct message *msg)
 	      isa = sa->data;
 
 	      if (exchange->initiator)
+		{
 		/* Initiator is source, responder is destination.  */
-		ipsec_set_network (ie->id_ci, ie->id_cr, isa);
+		  if (ipsec_set_network (ie->id_ci, ie->id_cr, isa))
+		    {
+		      log_error ("ipsec_finalize_exchange: "
+				 "ipsec_set_network failed");
+		      return;
+		    }
+		}
 	      else
-		/* Responder is source, initiator is destination.  */
-		ipsec_set_network (ie->id_cr, ie->id_ci, isa);
+		{
+		  /* Responder is source, initiator is destination.  */
+		  if (ipsec_set_network (ie->id_cr, ie->id_ci, isa))
+		    {
+		      log_error ("ipsec_finalize_exchange: "
+				 "ipsec_set_network failed");
+		      return;
+		    }
+		}
 
 #ifdef USE_DEBUG
 	      if (sockaddr2text (isa->src_net, &addr1, 0))
@@ -354,7 +368,7 @@ ipsec_finalize_exchange (struct message *msg)
 		  
 	      LOG_DBG ((LOG_EXCHANGE, 50,
 			"ipsec_finalize_exchange: "
-			"src %x %x dst %x %x tproto %u sport %u dport %u",
+			"src %s %s dst %s %s tproto %u sport %u dport %u",
 			addr1 ? addr1 : "<???>" , mask1 ? mask1 : "<???>",
 			addr2 ? addr2 : "<???>" , mask2 ? mask2 : "<???>",
 			ntohs (isa->tproto), isa->sport, ntohs (isa->dport)));
@@ -389,7 +403,7 @@ ipsec_finalize_exchange (struct message *msg)
 }
 
 /* Set the client addresses in ISA from SRC_ID and DST_ID.  */
-static void
+static int
 ipsec_set_network (u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
 {
   int id;
@@ -402,12 +416,15 @@ ipsec_set_network (u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
     case IPSEC_ID_IPV4_ADDR_SUBNET:
       isa->src_net = 
 	(struct sockaddr *)calloc (1, sizeof (struct sockaddr_in));
-      /* XXX this may fail ! */
+      if (!isa->src_net)
+	return -1;
       isa->src_net->sa_family = AF_INET;
       isa->src_net->sa_len = sizeof (struct sockaddr_in);
+
       isa->src_mask = 
 	(struct sockaddr *)calloc (1, sizeof (struct sockaddr_in));
-      /* XXX this may fail ! */
+      if (!isa->src_mask)
+	return -1;
       isa->src_mask->sa_family = AF_INET;
       isa->src_mask->sa_len = sizeof (struct sockaddr_in);
       break;
@@ -416,12 +433,15 @@ ipsec_set_network (u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
     case IPSEC_ID_IPV6_ADDR_SUBNET:
       isa->src_net = 
 	(struct sockaddr *)calloc (1, sizeof (struct sockaddr_in6));
-      /* XXX this may fail ! */
+      if (!isa->src_net)
+	return -1;
       isa->src_net->sa_family = AF_INET6;
       isa->src_net->sa_len = sizeof (struct sockaddr_in6);
+
       isa->src_mask = 
 	(struct sockaddr *)calloc (1, sizeof (struct sockaddr_in6));
-      /* XXX this may fail ! */
+      if (!isa->src_mask)
+	return -1;
       isa->src_mask->sa_family = AF_INET6;
       isa->src_mask->sa_len = sizeof (struct sockaddr_in6);
       break;
@@ -459,25 +479,32 @@ ipsec_set_network (u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
     case IPSEC_ID_IPV4_ADDR_SUBNET:
       isa->dst_net = 
 	(struct sockaddr *)calloc (1, sizeof (struct sockaddr_in));
-      /* XXX this may fail ! */
+      if (!isa->dst_net)
+	return -1;
       isa->dst_net->sa_family = AF_INET;
       isa->dst_net->sa_len = sizeof (struct sockaddr_in);
+
       isa->dst_mask = 
 	(struct sockaddr *)calloc (1, sizeof (struct sockaddr_in));
-      /* XXX this may fail ! */
+      if (!isa->dst_mask)
+	return -1;
       isa->dst_mask->sa_family = AF_INET;
       isa->dst_mask->sa_len = sizeof (struct sockaddr_in);
       break;
+
     case IPSEC_ID_IPV6_ADDR:
     case IPSEC_ID_IPV6_ADDR_SUBNET:
       isa->dst_net = 
 	(struct sockaddr *)calloc (1, sizeof (struct sockaddr_in6));
-      /* XXX this may fail ! */
+      if (!isa->dst_net)
+	return -1;
       isa->dst_net->sa_family = AF_INET6;
       isa->dst_net->sa_len = sizeof (struct sockaddr_in6);
+
       isa->dst_mask = 
 	(struct sockaddr *)calloc (1, sizeof (struct sockaddr_in6));
-      /* XXX this may fail ! */
+      if (!isa->dst_mask)
+	return -1;
       isa->dst_mask->sa_family = AF_INET6;
       isa->dst_mask->sa_len = sizeof (struct sockaddr_in6);
       break;
@@ -506,6 +533,7 @@ ipsec_set_network (u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
 	  IPSEC_ID_PROTO_LEN);
   memcpy (&isa->dport, dst_id + ISAKMP_ID_DOI_DATA_OFF + IPSEC_ID_PORT_OFF,
 	  IPSEC_ID_PORT_LEN);
+  return 0;
 }
 
 /* Free the DOI-specific exchange data pointed to by VIE.  */
@@ -1238,7 +1266,7 @@ ipsec_decode_attribute (u_int16_t type, u_int8_t *value, u_int16_t len,
 		  sa->seconds = decode_32 (value);
 		  break;
 		default:
-		  /* XXX Log.  */
+		  log_print ("ipsec_decode_attribute: unreasonable lifetime");
 		}
 	      break;
 	    case IKE_DURATION_KILOBYTES:
@@ -1251,11 +1279,11 @@ ipsec_decode_attribute (u_int16_t type, u_int8_t *value, u_int16_t len,
 		  sa->kilobytes = decode_32 (value);
 		  break;
 		default:
-		  /* XXX Log.  */
+		  log_print ("ipsec_decode_attribute: unreasonable lifetime");
 		}
 	      break;
 	    default:
-	      /* XXX Log!  */
+	      log_print ("ipsec_decode_attribute: unknown lifetime type");
 	    }
 	  break;
 	case IKE_ATTR_PRF:
@@ -1289,7 +1317,7 @@ ipsec_decode_attribute (u_int16_t type, u_int8_t *value, u_int16_t len,
 		  sa->seconds = decode_32 (value);
 		  break;
 		default:
-		  /* XXX Log.  */
+		  log_print ("ipsec_decode_attribute: unreasonable lifetime");
 		}
 	      break;
 	    case IPSEC_DURATION_KILOBYTES:
@@ -1302,11 +1330,11 @@ ipsec_decode_attribute (u_int16_t type, u_int8_t *value, u_int16_t len,
 		  sa->kilobytes = decode_32 (value);
 		  break;
 		default:
-		  /* XXX Log.  */
+		  log_print ("ipsec_decode_attribute: unreasonable lifetime");
 		}
 	      break;
 	    default:
-	      /* XXX Log!  */
+	      log_print ("ipsec_decode_attribute: unknown lifetime type");
 	    }
 	  break;
 	case IPSEC_ATTR_GROUP_DESCRIPTION:
@@ -1791,6 +1819,7 @@ ipsec_decode_id (u_int8_t *buf, int size, u_int8_t *id, size_t id_len,
 {
   int id_type;
   char *addr = 0, *mask = 0;
+  u_int32_t *idp;
 
   if (id)
     {
@@ -1802,6 +1831,7 @@ ipsec_decode_id (u_int8_t *buf, int size, u_int8_t *id, size_t id_len,
 	}
 
       id_type = GET_ISAKMP_ID_TYPE (id);
+      idp = (u_int32_t *)(id + ISAKMP_ID_DATA_OFF);
       switch (id_type)
 	{
 	case IPSEC_ID_IPV4_ADDR:
@@ -1814,11 +1844,20 @@ ipsec_decode_id (u_int8_t *buf, int size, u_int8_t *id, size_t id_len,
 	  util_ntoa (&mask, AF_INET, id + ISAKMP_ID_DATA_OFF + 4);
 	  snprintf (buf, size, "%08x/%08x: %s/%s",
 		    decode_32 (id + ISAKMP_ID_DATA_OFF),
-		    decode_32 (id + ISAKMP_ID_DATA_OFF + 4),
-		    addr, mask);
+		    decode_32 (id + ISAKMP_ID_DATA_OFF + 4), addr, mask);
 	  break;
 	case IPSEC_ID_IPV6_ADDR:
-	  /* XXX */
+	  util_ntoa (&addr, AF_INET6, id + ISAKMP_ID_DATA_OFF);
+	  snprintf (buf, size, "%08x%08x%08x%08x: %s", *idp, *(idp + 1),
+		    *(idp + 2), *(idp + 3), addr);
+	  break;
+	case IPSEC_ID_IPV6_ADDR_SUBNET:
+	  util_ntoa (&addr, AF_INET6, id + ISAKMP_ID_DATA_OFF);
+	  util_ntoa (&addr, AF_INET6, id + ISAKMP_ID_DATA_OFF + 
+		     sizeof (struct in6_addr));
+	  snprintf (buf, size, "%08x%08x%08x%08x/%08x%08x%08x%08x: %s/%s",
+		    *idp, *(idp + 1), *(idp + 2), *(idp + 3), *(idp + 4),
+		    *(idp + 5), *(idp + 6), *(idp + 7), addr, mask);
 	  break;
 
 	case IPSEC_ID_FQDN:
@@ -1830,12 +1869,12 @@ ipsec_decode_id (u_int8_t *buf, int size, u_int8_t *id, size_t id_len,
 	  buf[id_len] = '\0';
 	  break;
 	default:
-	  snprintf (buf, size, "<type unknown: %x>", id_type);
+	  snprintf (buf, size, "<id type unknown: %x>", id_type);
 	  break;
 	}
     }
   else
-    snprintf (buf, size, "<no id>");
+    snprintf (buf, size, "<no ipsec id>");
   if (addr)
     free (addr);
   if (mask)
