@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.31 2002/10/24 12:58:45 itojun Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.32 2003/01/21 08:00:08 itojun Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -982,8 +982,9 @@ send_probe(seq, hops)
 {
 	int i;
 
+	i = hops;
 	if (setsockopt(sndsock, IPPROTO_IPV6, IPV6_UNICAST_HOPS,
-	    (char *)&hops, sizeof(hops)) < 0) {
+	    (char *)&i, sizeof(i)) < 0) {
 		perror("setsockopt IPV6_UNICAST_HOPS");
 	}
 
