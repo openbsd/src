@@ -1,3 +1,5 @@
+/*	$OpenBSD: yppasswdd_proc.c,v 1.5 1997/08/19 07:00:52 niklas Exp $	*/
+
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
  * All rights reserved.
@@ -30,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: yppasswdd_proc.c,v 1.4 1997/07/23 20:36:33 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: yppasswdd_proc.c,v 1.5 1997/08/19 07:00:52 niklas Exp $";
 #endif
 
 #include <sys/types.h>
