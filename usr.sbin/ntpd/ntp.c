@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.39 2004/10/27 10:55:27 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.40 2004/10/27 14:19:12 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -133,7 +133,8 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 	bzero(&conf->status, sizeof(conf->status));
 	conf->status.leap = LI_ALARM;
 	clock_getres(CLOCK_REALTIME, &tp);
-	for (a = 0, b = tp.tv_nsec; b > 0; a--, b >>= 1);
+	b = 1000000000 / tp.tv_nsec;	/* convert to Hz */
+	for (a = 0; b > 1; a--, b >>= 1);
 	conf->status.precision = a;
 	
 
