@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdist.c,v 1.12 2002/02/19 19:39:39 millert Exp $	*/
+/*	$OpenBSD: rdist.c,v 1.13 2002/05/09 19:19:33 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: rdist.c,v 6.65 1995/12/12 00:20:39 mcooper Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: rdist.c,v 1.12 2002/02/19 19:39:39 millert Exp $";
+"$OpenBSD: rdist.c,v 1.13 2002/05/09 19:19:33 millert Exp $";
 #endif
 
 static char sccsid[] = "@(#)main.c	5.1 (Berkeley) 6/6/85";
@@ -290,8 +290,12 @@ main(argc, argv, envp)
 		fatalerr(
 		 "The -n flag and \"verify\" mode may not both be used.");
 
-	if (path_remsh == NULL && (cp = getenv("RSH")) != NULL && *cp != '\0')
-		path_remsh = cp;
+	if (path_remsh == NULL) {
+		if ((cp = getenv("RSH")) != NULL && *cp != '\0')
+			path_remsh = cp;
+		else
+			path_remsh = _PATH_SSH;
+	}
 
 	/*
 	 * Don't fork children for nflag

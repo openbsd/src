@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.5 1998/06/26 21:21:17 millert Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.6 2002/05/09 19:19:33 millert Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -47,3 +47,7 @@
 #if	!defined(_PATH_RDISTD)
 #	define _PATH_RDISTD	"rdistd"		/* Rdist server */
 #endif	/* _PATH_RDISTD */
+
+#if	!defined(_PATH_SSH)
+#	define _PATH_SSH	"ssh"			/* ssh client */
+#endif	/* _PATH_SSH */

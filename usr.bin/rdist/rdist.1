@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdist.1,v 1.12 2000/03/14 21:31:41 aaron Exp $
+.\"	$OpenBSD: rdist.1,v 1.13 2002/05/09 19:19:33 millert Exp $
 .\"
 .\" Copyright (c) 1983 Regents of the University of California.
 .\" All rights reserved.
@@ -161,27 +161,17 @@ If
 is started with the
 .B \-Server
 command line option, it will attempt to exec (run) the old version of
-.I rdist.
-This option will only work if
-.I rdist
-was compiled with the location of the old rdist
-(usually either
-.I /usr/ucb/oldrdist
-or
-.I /usr/old/rdist)
-and that program is available at run time.
+.I rdist,
+.I /usr/bin/oldrdist.
 .PP
 .I Rdist
-can use either the
-.I rcmd(3)
-function call or the
-.I rsh(1c),
-remote shell, command to access each target host.
-The method used is selected at compile-time.
-If the
-.I rsh(1c)
-method is used and
-the target host is the string
+uses a remote shell command to access each target host.
+By default,
+.B ssh
+is used, unless overridden by the
+.I \-P
+option or the RSH environment variable.
+If the target host is the string
 .B localhost
 and
 the remote user name is the same as the local user name,
@@ -200,7 +190,7 @@ run will run the command
 .nf
 .sp
 .RS
-\fBrsh \fIhost\fB -l \fIremuser \fBrdistd -S\fR
+\fBssh \fIhost\fB -l \fIremuser \fBrdistd -S\fR
 .RE
 .sp
 .fi
@@ -211,20 +201,6 @@ is the name of the target host,
 is the name of the user to make the connection as and,
 .I rdistd
 is the rdist server command on the target host as shown below.
-.PP
-If the
-.I rcmd(3)
-method is used, then
-.I rdist
-makes the connection to the target host itself and runs
-the
-.I rdistd
-server program as shown below.
-The default, and preferred method, is to use
-.I rsh(1c)
-to make the connection to target hosts.  This allows
-.I rdist
-to be run without being setuid to ``root''.
 .PP
 On each target host
 .I Rdist
@@ -466,15 +442,15 @@ Set the path where the rdistd server is searched for on the target host.
 .TP
 .B "\-P \fI<rsh-path>\fR"
 Set the path to the
-.I rsh(1c)
+.I ssh(1)
 command.
 The
 .I rsh-path
 may be a colon separated list of possible pathnames.
 In this case, the first component of the path to exist is used.
 i.e.,
-.B "/usr/ucb/rsh:/usr/bin/remsh",
-.B /usr/bsd/rsh.
+.B "/usr/bin/ssh:/usr/bin/rsh",
+.B /usr/bin/ssh.
 .TP
 .B "\-t \fItimeout\fR"
 Set the timeout period (in seconds) for waiting for responses from the remote
@@ -834,7 +810,7 @@ Name of temporary directory to use.  Default is
 .B /tmp.
 .IP RSH
 Name of the default remote shell program to use.  Default is
-.B /usr/bin/rsh.
+.B ssh.
 .SH FILES
 .nf
 .ta \w'/tmp/rdist*    'u
@@ -844,9 +820,10 @@ $TMPDIR/rdist*	\- temporary file for update lists
 .SH "SEE ALSO"
 .B sh(1),
 .B csh(1),
+.B rsh(1),
+.B ssh(1),
 .B stat(2),
-.B rsh(1c),
-.B rcmd(3)
+.B rcmdsh(3)
 .SH DIAGNOSTICS
 .SH NOTES
 .LP
