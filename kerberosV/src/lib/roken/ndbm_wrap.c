@@ -144,11 +144,9 @@ dbm_open (const char *file, int flags, mode_t mode)
 {
     DB *db;
     int myflags = 0;
-    char *fn = malloc(strlen(file) + 4);
-    if(fn == NULL)
+    char *fn;
+    if(asprintf(&fn, "%s.db", file) == -1)
 	return NULL;
-    strcpy(fn, file);
-    strcat(fn, ".db");
 #ifdef HAVE_DB3
     if (flags & O_CREAT)
 	myflags |= DB_CREATE;
