@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: channels.c,v 1.202 2004/05/21 11:33:11 djm Exp $");
+RCSID("$OpenBSD: channels.c,v 1.203 2004/05/26 23:02:39 markus Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -2557,6 +2557,7 @@ x11_create_display_inet(int x11_display_offset, int x11_use_localhost,
 			    ai->ai_protocol);
 			if (sock < 0) {
 				error("socket: %.100s", strerror(errno));
+				freeaddrinfo(aitop);
 				return -1;
 			}
 			if (bind(sock, ai->ai_addr, ai->ai_addrlen) < 0) {
