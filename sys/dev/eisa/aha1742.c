@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha1742.c,v 1.5 1996/04/21 22:20:12 deraadt Exp $	*/
+/*	$OpenBSD: aha1742.c,v 1.6 1996/04/28 04:17:27 tholo Exp $	*/
 /*	$NetBSD: aha1742.c,v 1.59 1996/04/09 22:47:00 cgd Exp $	*/
 
 /*
@@ -510,7 +510,7 @@ ahbattach(parent, self, aux)
 #ifdef NEWCONFIG
 	isa_establish(&ahb->sc_id, &ahb->sc_dev);
 #endif
-	ahb->sc_ih = eisa_intr_establish(ahb->sc_irq, IST_LEVEL, IPL_BIO,
+	ahb->sc_ih = eisa_intr_establish(NULL, ahb->sc_irq, IST_LEVEL, IPL_BIO,
 	    ahbintr, ahb, ahb->sc_dev.dv_xname);
 
 	/*
