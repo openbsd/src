@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.19 1999/05/24 17:18:52 deraadt Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.20 1999/08/04 19:18:13 deraadt Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -810,7 +810,7 @@ sys_poll(p, v, retval)
 {
 	struct sys_poll_args *uap = v;
 	size_t sz;
-	struct pollfd *pl;
+	struct pollfd pfds[4], *pl = pfds;
 	int msec = SCARG(uap, timeout);
 	struct timeval atv;
 	int timo, ncoll, i, s, error, error2;
@@ -821,7 +821,9 @@ sys_poll(p, v, retval)
 		SCARG(uap, nfds) = p->p_fd->fd_nfiles;
 	sz = sizeof(struct pollfd) * SCARG(uap, nfds);
 	
-	pl = (struct pollfd *) malloc(sz, M_TEMP, M_WAITOK);
+	/* optimize for the default case, of a small nfds value */
+	if (sz > sizeof(pfds))
+		pl = (struct pollfd *) malloc(sz, M_TEMP, M_WAITOK);
 
 	if ((error = copyin(SCARG(uap, fds), pl, sz)) != 0)
 		goto bad;
@@ -880,6 +882,7 @@ done:
 	if ((error2 = copyout(pl, SCARG(uap, fds), sz)) != 0)
 		error = error2;
 bad:
-	free((char *) pl, M_TEMP);
+	if (pl != pfds)
+		free((char *) pl, M_TEMP);
 	return (error);
 }
