@@ -1,4 +1,5 @@
-/*	$OpenBSD: conf.h,v 1.4 2002/02/16 21:27:10 millert Exp $	*/
+/*	$OpenBSD: conf.h,v 1.5 2003/06/17 00:36:40 pjanzen Exp $	*/
+/*	David Leonard <d@openbsd.org>, 1999.  Public domain.	*/
 
 /* Configuration option variables for the server: */
 
@@ -52,4 +53,3 @@ extern int conf_simstep;
 
 void config(void);
 void config_arg(char *);
-

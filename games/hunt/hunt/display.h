@@ -1,4 +1,5 @@
-/*	$OpenBSD: display.h,v 1.2 2002/02/16 21:27:10 millert Exp $	*/
+/*	$OpenBSD: display.h,v 1.3 2003/06/17 00:36:36 pjanzen Exp $	*/
+/*	David Leonard <d@openbsd.org>, 1999.  Public domain.	*/
 
 void display_open(void);
 void display_beep(void);
