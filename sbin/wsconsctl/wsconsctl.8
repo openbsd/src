@@ -1,4 +1,4 @@
-.\" $OpenBSD: wsconsctl.8,v 1.4 2001/02/16 17:09:58 aaron Exp $
+.\" $OpenBSD: wsconsctl.8,v 1.5 2001/03/09 16:07:20 aaron Exp $
 .\" $NetBSD: wsconsctl.8,v 1.5 1999/09/12 18:47:11 kleink Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -122,9 +122,10 @@ control and cursor control, which are not applicable to
 all display types, and to text emulation and graphics
 (mapped) modes.
 .Pp
-There are currently keyboard encodings for the following
-countries: user-defined, US, German, Danish, Italian,
-French, British and Japanese.
+Use the
+.Xr kbd 8
+utility to determine which keyboard encodings are available for your
+country.
 .Sh EXAMPLES
 .Cm wsconsctl -w encoding=uk
 .Pp
@@ -178,6 +179,7 @@ keyboard/mouse/display definitions
 .Sh SEE ALSO
 .Xr pckbd 4 ,
 .Xr wscons 4 ,
+.Xr kbd 8 ,
 .Xr wsconscfg 8 ,
 .Xr wsfontload 8
 .Sh HISTORY
