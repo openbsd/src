@@ -108,6 +108,10 @@ available but BOOTP is.   In that case, it may be advantageous to
 arrange with the network administrator for an entry on the BOOTP
 database, so that the host can boot quickly on that network rather
 than cycling through the list of old leases.
+.PP
+DHCP traffic always bypass IPsec, otherwise there can come up situations
+when a server has an IPsec SA for the client, and sends replies over that,
+which a potentially newly booted client cannot grasp.
 .SH COMMAND LINE
 .PP
 The names of the network interfaces that dhclient should attempt to

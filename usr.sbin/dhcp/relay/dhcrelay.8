@@ -132,6 +132,14 @@ should be relayed must be specified on the command line.
 .PP
 .SH SEE ALSO
 dhclient(8), dhcpd(8), RFC2132, RFC2131.
+.SH BUGS
+Relayed DHCP traffic could actually safely be protected by IPsec, but
+like
+.B dhcpd(8)
+and
+.B dhclient(8),
+.B dhcrelay(8)
+will bypass IPsec for all its traffic.
 .SH AUTHOR
 .B dhcrelay(8)
 has been written for the Internet Software Consortium
