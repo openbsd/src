@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.77 2002/01/23 06:45:32 ericj Exp $	*/
+/*	$OpenBSD: com.c,v 1.78 2002/01/23 07:14:41 ericj Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -127,9 +127,9 @@ int	commajor;
 #ifdef KGDB
 #include <sys/kgdb.h>
 
-static int com_kgdb_addr;
-static bus_space_tag_t com_kgdb_iot;
-static bus_space_handle_t com_kgdb_ioh;
+int com_kgdb_addr;
+bus_space_tag_t com_kgdb_iot;
+bus_space_handle_t com_kgdb_ioh;
 
 int    com_kgdb_getc __P((void *));
 void   com_kgdb_putc __P((void *, int));
