@@ -1,3 +1,4 @@
+/*	$OpenBSD: tree.h,v 1.4 2002/03/26 02:47:28 hugh Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
