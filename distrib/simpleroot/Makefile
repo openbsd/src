@@ -39,7 +39,12 @@ all:
 	/usr/mdec/installboot -v ${MOUNT_POINT}/boot ${BOOT_INSTALLBOOT} ${VND}
 .endif
 	cd ${DESTDIR} && tar cf - `cat ${LIST}` | ( cd ${MOUNT_POINT}; \
-	  tar xpf - ) && \
+	  tar xpf - )
+	cp ${.CURDIR}/install.sh ${MOUNT_POINT}/install
+	chmod 755 ${MOUNT_POINT}/install
+	sed "/^VERSION=/s/=.*/=${REV}/" < ${.CURDIR}/install.sub \
+	  > ${MOUNT_POINT}/install.sub
+	cp ${.CURDIR}/../${MACHINE}/install.md ${MOUNT_POINT}/install.md
 	( cd ${MOUNT_POINT} && \
 	tar cf - .??* * | ${GZIP} ${GZIPFLAGS} \
 	  > ${IMAGEDIR}/simpleroot${REV}.tar${GZIPEXT} )
