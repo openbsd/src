@@ -1,4 +1,4 @@
-/*	$OpenBSD: filename.c,v 1.5 2003/04/05 01:03:35 deraadt Exp $	*/
+/*	$OpenBSD: filename.c,v 1.6 2003/04/06 18:42:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
@@ -405,8 +405,8 @@ glob(filename)
 	gfilename = (char *) ecalloc(length, sizeof(char));
 	for (cnt = 0;  list[cnt] != NULL;  cnt++)
 	{
-		strcat(gfilename, list[cnt]);
-	  	strcat(gfilename, " ");
+		strcat(gfilename, list[cnt], length);
+	  	strcat(gfilename, " ", length);
 	}
 	_fnexplodefree(list);
 }

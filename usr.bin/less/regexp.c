@@ -1,4 +1,4 @@
-/*	$OpenBSD: regexp.c,v 1.4 2003/04/05 01:03:35 deraadt Exp $	*/
+/*	$OpenBSD: regexp.c,v 1.5 2003/04/06 18:42:57 deraadt Exp $	*/
 
 /*
  * regcomp and regexec -- regsub and regerror are elsewhere
@@ -1192,7 +1192,7 @@ char *op;
 		break;
 	}
 	if (p != NULL)
-		(void) strcat(buf, p);
+		(void) strlcat(buf, p, sizeof buf);
 	return(buf);
 }
 #endif
