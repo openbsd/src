@@ -638,7 +638,7 @@ fprintlog(f, flags, msg)
 
 	case F_FORW:
 		dprintf(" %s\n", f->f_un.f_forw.f_hname);
-		l = sprintf(line, "<%d>%.15s %s", f->f_prevpri,
+		l = snprintf(line, MAXLINE, "<%d>%.15s %s", f->f_prevpri,
 		    iov[0].iov_base, iov[4].iov_base);
 		if (l > MAXLINE)
 			l = MAXLINE;
