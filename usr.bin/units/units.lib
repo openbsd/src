@@ -1,4 +1,4 @@
-/ $OpenBSD: units.lib,v 1.10 2002/05/31 08:13:44 pjanzen Exp $
+/ $OpenBSD: units.lib,v 1.11 2002/07/17 16:42:12 mickey Exp $
 / $NetBSD: units.lib,v 1.3 1996/04/06 06:01:04 thorpej Exp $
 
 / primitive units
@@ -214,6 +214,37 @@ brpint			1|2 brquart
 brfloz			1|20 brpint
 brpeck			554.84 in3 fuzz
 brbushel		4 brpeck
+
+/ Russian
+berkovets		10 pood
+pood			40 funt
+funt			0.40951 kg
+lot			1|32 funt
+zolotnik		1|3 lot
+dolya			1|96 zolotnik
+rumile			7 verst
+mezhevayaverst		2 verst
+verst			1066.8 m
+sazhen			1|500 verst
+kosayasazhen		1|430.2 verst
+arshin			1|1500 verst
+/ is not exactly defined
+ruell			16.54 in
+liniya			1|10 in
+vershok			1.75 in
+pyad			7 in
+vedro			12.3 liter
+shtoff			1|10 vedro
+vinebottle		1|16 vedro
+vodkabottle		1|20 vedro
+charka			1|100 vedro
+shkalik			1|200 vedro
+desyatina_state		109.3 are
+desyatina_farmery	0.75 desyatina_state
+sqverst			104.2 desyatina_state
+sqarshin		1|21600 desyatina_state
+sqfoot			1|117600 desyatina_state
+
 
 / Energy Work
 
@@ -531,7 +562,6 @@ league			3 mi
 lightyear		c-yr
 ly			lightyear
 line			1|12 in
-liniya			1|10 in
 link			66|100 ft
 longhundredweight	112 lb
 longquarter		28 lb
@@ -646,8 +676,6 @@ tonne			1e+6 gm
 torr			mm hg
 township		36 mi2
 tun			8 barrel
-verst			1066.8 m
-arshin			1|1500 verst
 water			gram g / cc
 / pumps are often in "feet head", assuming feet of water
 head			water
