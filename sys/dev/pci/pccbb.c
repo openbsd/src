@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.13 2000/12/06 17:08:27 aaron Exp $ */
+/*	$OpenBSD: pccbb.c,v 1.14 2001/01/21 02:37:07 mickey Exp $ */
 /*	$NetBSD: pccbb.c,v 1.42 2000/06/16 23:41:35 cgd Exp $	*/
 
 /*
@@ -385,6 +385,8 @@ pccbbattach(parent, self, aux)
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcireg_t busreg, reg, sock_base;
+	pci_intr_handle_t ih;
+	const char *intrstr = NULL;
 	bus_addr_t sockbase;
 	int flags;
 
@@ -441,18 +443,6 @@ pccbbattach(parent, self, aux)
 	sc->sc_mem_start = 0;	       /* XXX */
 	sc->sc_mem_end = 0xffffffff;   /* XXX */
 
-	printf("\n");
-
-	/* 
-	 * When interrupt isn't routed correctly, give up probing cbb and do
-	 * not kill pcic-compatible port.
-	 */
-	if ((0 == pa->pa_intrline) || (255 == pa->pa_intrline)) {
-    		printf("%s: NOT USED because of unconfigured interrupt\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
-
 	/* 
 	 * When bus number isn't set correctly, give up using 32-bit CardBus
 	 * mode.
@@ -460,8 +450,7 @@ pccbbattach(parent, self, aux)
 	busreg = pci_conf_read(pc, pa->pa_tag, PCI_BUSNUM);
 #if notyet
 	if (((busreg >> 8) & 0xff) == 0) {
-    		printf("%s: CardBus support disabled because of unconfigured bus number\n",
-		    sc->sc_dev.dv_xname);
+    		printf(": CardBus support disabled because of unconfigured bus number\n");
 		flags |= PCCBB_PCMCIA_16BITONLY;
 	}
 #endif
@@ -471,7 +460,7 @@ pccbbattach(parent, self, aux)
 #if defined CBB_DEBUG
 	{
 		static char *intrname[5] = { "NON", "A", "B", "C", "D" };
-		printf("%s: intrpin %s, intrtag %d\n", sc->sc_dev.dv_xname,
+		printf(": intrpin %s, intrtag %d\n",
 		    intrname[pa->pa_intrpin], pa->pa_intrline);
 	}
 #endif
@@ -489,6 +478,31 @@ pccbbattach(parent, self, aux)
 	sc->sc_intrpin = pa->pa_intrpin;
 
 	sc->sc_pcmcia_flags = flags;   /* set PCMCIA facility */
+
+	/* Map and establish the interrupt. */
+	if (pci_intr_map(pc, sc->sc_intrtag, sc->sc_intrpin,
+	    sc->sc_intrline, &ih)) {
+		printf(": couldn't map interrupt\n");
+		return;
+	}
+	intrstr = pci_intr_string(pc, ih);
+
+	/*
+	 * XXX pccbbintr should be called under the priority lower
+	 * than any other hard interrputs.
+	 */
+	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, pccbbintr, sc,
+	    sc->sc_dev.dv_xname);
+
+	if (sc->sc_ih == NULL) {
+		printf(": couldn't establish interrupt");
+		if (intrstr != NULL) {
+			printf(" at %s", intrstr);
+		}
+		printf("\n");
+		return;
+	}
+	printf(" %s\n", intrstr);
 
 	shutdownhook_establish(pccbb_shutdown, sc);
 
@@ -544,8 +558,6 @@ pccbb_pci_callback(self)
 	bus_space_tag_t base_memt;
 	bus_space_handle_t base_memh;
 	u_int32_t maskreg;
-	pci_intr_handle_t ih;
-	const char *intrstr = NULL;
 	bus_addr_t sockbase;
 	struct cbslot_attach_args cba;
 	struct pcmciabus_attach_args paa;
@@ -592,32 +604,6 @@ pccbb_pci_callback(self)
 	/* clear data structure for child device interrupt handlers */
 	sc->sc_pil = NULL;
 	sc->sc_pil_intr_enable = 1;
-
-	/* Map and establish the interrupt. */
-	if (pci_intr_map(pc, sc->sc_intrtag, sc->sc_intrpin,
-	    sc->sc_intrline, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
-		return;
-	}
-	intrstr = pci_intr_string(pc, ih);
-
-	/*
-	 * XXX pccbbintr should be called under the priority lower
-	 * than any other hard interrputs.
-	 */
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, pccbbintr, sc,
-	    sc->sc_dev.dv_xname);
-
-	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
-		    sc->sc_dev.dv_xname);
-		if (intrstr != NULL) {
-			printf(" at %s", intrstr);
-		}
-		printf("\n");
-		return;
-	}
-	printf("%s: %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	powerhook_establish(pccbb_powerhook, sc);
 
