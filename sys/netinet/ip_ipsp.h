@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.41 1999/08/10 11:35:26 ho Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.42 1999/09/29 09:11:21 niklas Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -397,9 +397,11 @@ htonq(u_int64_t q)
 
 /*
  * Protects all tdb lists.
- * Must at least be splsoftclock.
+ * Must at least be splsoftnet (note: do not use splsoftclock as it is
+ * special on some architectures, assuming it is always an spl lowering
+ * operation).
  */
-#define spltdb	splsoftclock
+#define spltdb	splsoftnet
 
 extern int encdebug;
 extern int ipsec_in_use;
