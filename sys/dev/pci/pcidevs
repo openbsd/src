@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.122 1999/02/23 22:40:55 deraadt Exp $
+$OpenBSD: pcidevs,v 1.123 1999/02/26 13:56:43 jason Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -937,6 +937,7 @@ product LEADTEK S3_805		0x0000	S3 805
 
 /* Lite-On Communications */
 product LITEON	PNIC		0x0002	PNIC
+product LITEON	PNICII		0xc115	PNIC-II
 
 /* Macronix */
 product MACRONIX MX98713	0x0512	PMAC 98713
