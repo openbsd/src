@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.6 2002/03/14 03:16:01 millert Exp $	*/
+/*	$OpenBSD: boot.c,v 1.7 2003/05/11 20:22:20 mdw Exp $	*/
 /*	$NetBSD: boot.c,v 1.3 2001/05/31 08:55:19 mrg Exp $	*/
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -73,7 +73,6 @@ char *kernels[] = {
 	NULL
 };
 
-char *kernelname;
 char bootdev[128];
 char bootfile[128];
 int boothowto;
@@ -107,7 +106,15 @@ prom2boot(dev)
 }
 #endif
 
-static void
+/*
+ *	parse:
+ *		[kernel-name] [-options]
+ *	leave kernel-name in passed-in string
+ *	put options into *howtop
+ *	return -1 iff syntax error (no - before options)
+ */
+
+static int
 parseargs(str, howtop)
 	char *str;
 	int *howtop;
@@ -115,28 +122,28 @@ parseargs(str, howtop)
 	char *cp;
 	int i;
 
-	/* Allow user to drop back to the PROM. */
-	if (strcmp(str, "exit") == 0 || strcmp(str, "halt") == 0)
-		_rtt();
-
-	/* Insert the kernel name if it is not there. */
-	if (str[0] == 0 || str[0] == '-') {
-		/* Move args down the string */
-		i=0;
-		for (cp = str + strlen(kernelname); str[i]; i++)
-			cp[i] = str[i];
-		/* Copy over kernelname */
-		for (i = 0; kernelname[i]; i++)
-			str[i] = kernelname[i];
-	}
 	*howtop = 0;
-	for (cp = str; *cp; cp++)
-		if (*cp == ' ' || *cp == '-')
-			break;
-	if (!*cp)
-		return;
-	
-	*cp++ = 0;
+	cp = str;
+	while (*cp == ' ')
+		++cp;
+	if (*cp != '-') {
+		while (*cp && *cp != ' ')
+			*str++ = *cp++;
+		while (*cp == ' ')
+			++cp;
+	}
+	*str = 0;
+	switch(*cp) {
+	default:
+		printf ("boot options string <%s> must start with -\n", cp);
+		return -1;
+	case 0:
+		return 0;
+	case '-':
+		break;
+	}
+
+	++cp;
 	while (*cp) {
 		BOOT_FLAG(*cp, *howtop);
 		/* handle specialties */
@@ -147,10 +154,9 @@ parseargs(str, howtop)
 		case 'D':
 			debug = 2;
 			break;
-		default:
-			break;
 		}
 	}
+	return 0;
 }
 
 
@@ -230,7 +236,6 @@ loadfile(fd, args)
 	void *ssym;
 	void *esym;
 
-	rval = 1;
 	ssym = NULL;
 	esym = NULL;
 
@@ -238,8 +243,13 @@ loadfile(fd, args)
 #ifdef DEBUG
 	printf("loadfile: reading header\n");
 #endif
-	if (read(fd, &hdr, sizeof(hdr)) != sizeof(hdr)) {
-		printf("read header: %s\n", strerror(errno));
+	if ((rval = read(fd, &hdr, sizeof(hdr))) != sizeof(hdr)) {
+		if (rval == -1)
+			printf("read header: %s\n", strerror(errno));
+		else
+			printf("read header: short read (only %d of %d)\n",
+				rval, sizeof(hdr));
+		rval = 1;
 		goto err;
 	}
 
@@ -260,6 +270,7 @@ loadfile(fd, args)
 	} else
 #endif
 	{
+		rval = 1;
 		printf("unknown executable format\n");
 	}
 
@@ -533,10 +544,9 @@ main()
 	char bootline[512];		/* Should check size? */
 	char *cp;
 	int i, fd;
+	char **bootlp;
+	char *just_bootline[2];
 	
-	/* Initialize kernelname */
-	kernelname = kernels[0];
-
 	printf(">> %s", version);
 
 	/*
@@ -548,65 +558,82 @@ main()
 		printf("Invalid Openfirmware environment\n");
 		exit();
 	}
-	/*prom2boot(bootdev);*/
-	kernelname = kernels[0];
-	parseargs(bootline, &boothowto);
-	for (i=0;;) {
-		kernelname = kernels[i];
-		if (boothowto & RB_ASKNAME) {
+
+	/*
+	 * case 1:	boot net -a
+	 *			-> gets loop
+	 * case 2:	boot net kernel [options]
+	 *			-> boot kernel, gets loop
+	 * case 3:	boot net [options]
+	 *			-> iterate boot list, gets loop
+	 */
+
+	bootlp = kernels;
+	if (parseargs(bootline, &boothowto) == -1
+			|| (boothowto & RB_ASKNAME)) {
+		bootlp = 0;
+	} else if (*bootline) {
+		just_bootline[0] = bootline;
+		just_bootline[1] = 0;
+		bootlp = just_bootline;
+	}
+	for (;;) {
+		if (bootlp) {
+			cp = *bootlp++;
+			if (!cp) {
+				printf("\n");
+				bootlp = 0;
+				kernels[0] = 0;	/* no more iteration */
+			} else if (cp != bootline) {
+				printf(": trying %s...\n", cp);
+				strcpy(bootline, cp);
+			}
+		}
+		if (!bootlp) {
 			printf("Boot: ");
 			gets(bootline);
-			parseargs(bootline, &boothowto);
+			if (parseargs(bootline, &boothowto) == -1)
+				continue;
+			if (!*bootline) {
+				bootlp = kernels;
+				continue;
+			}
+			if (strcmp(bootline, "exit") == 0
+					|| strcmp(bootline, "halt") == 0) {
+				_rtt();
+			}
 		}
-		if ((fd = open(bootline, 0)) >= 0)
-			break;
-		if (errno)
+		if ((fd = open(bootline, 0)) < 0) {
 			printf("open %s: %s\n", opened_name, strerror(errno));
-		/*
-		 * if we have are not in askname mode, and we aren't using the
-		 * prom bootfile, try the next one (if it exits).  otherwise,
-		 * go into askname mode.
-		 */
-		if ((boothowto & RB_ASKNAME) == 0 &&
-		    i != -1 && kernels[++i]) {
-			printf(": trying %s...\n", kernels[i]);
-		} else {
-			printf("\n");
-			boothowto |= RB_ASKNAME;
+			continue;
 		}
-	}
 #ifdef	__notyet__
-	OF_setprop(chosen, "bootpath", opened_name, strlen(opened_name) + 1);
-	cp = bootline;
+		OF_setprop(chosen, "bootpath", opened_name, strlen(opened_name) + 1);
+		cp = bootline;
 #else
-	strcpy(bootline, opened_name);
-	cp = bootline + strlen(bootline);
-	*cp++ = ' ';
+		strcpy(bootline, opened_name);
+		cp = bootline + strlen(bootline);
+		*cp++ = ' ';
 #endif
-	*cp = '-';
-	if (boothowto & RB_ASKNAME)
-		*++cp = 'a';
-	if (boothowto & RB_SINGLE)
-		*++cp = 's';
-	if (boothowto & RB_KDB)
-		*++cp = 'd';
-	if (*cp == '-')
+		*cp = '-';
+		if (boothowto & RB_ASKNAME)
+			*++cp = 'a';
+		if (boothowto & RB_SINGLE)
+			*++cp = 's';
+		if (boothowto & RB_KDB)
+			*++cp = 'd';
+		if (*cp == '-')
+			*--cp = 0;
+		else
+			*++cp = 0;
 #ifdef	__notyet__
-		*cp = 0;
-#else
-		*--cp = 0;
+		OF_setprop(chosen, "bootargs", bootline, strlen(bootline) + 1);
 #endif
-	else
-		*++cp = 0;
-#ifdef	__notyet__
-	OF_setprop(chosen, "bootargs", bootline, strlen(bootline) + 1);
-#endif
-	/* XXX void, for now */
+		/* XXX void, for now */
 #ifdef DEBUG
-	if (debug)
-		printf("main: Calling loadfile(fd, %s)\n", bootline);
+		if (debug)
+			printf("main: Calling loadfile(fd, %s)\n", bootline);
 #endif
-	(void)loadfile(fd, bootline);
-
-	_rtt();
+		(void)loadfile(fd, bootline);
+	}
 }
