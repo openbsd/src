@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.13 1999/06/22 17:56:05 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.14 1999/06/24 01:19:16 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -1655,8 +1655,8 @@ getbit
 switch_error
 	ldil	L%switch_panic, arg0
 	ldo	R%switch_panic(arg0), arg0
-	ldil    L%panic, arg1
-	ldo     R%panic(arg1), arg1
+	ldil    L%panic, r1
+	ldo     R%panic(r1), r1
 	.call
 	blr     %r0, rp
 	bv,n    %r0(r1)
