@@ -1,4 +1,4 @@
-/*	$OpenBSD: xlreg.h,v 1.10 2002/03/14 01:26:55 millert Exp $	*/
+/*	$OpenBSD: xlreg.h,v 1.11 2002/06/08 23:38:51 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -500,7 +500,7 @@ struct xl_chain_data {
 #define XL_RXSTAT_UDPCKERR	0x08000000	/* 3c905B only */
 #define XL_RXSTAT_BUFEN		0x10000000	/* 3c905B only */
 #define XL_RXSTAT_IPCKOK	0x20000000	/* 3c905B only */
-#define XL_RXSTAT_TCPCOK	0x40000000	/* 3c905B only */
+#define XL_RXSTAT_TCPCKOK	0x40000000	/* 3c905B only */
 #define XL_RXSTAT_UDPCKOK	0x80000000	/* 3c905B only */
 
 #define XL_TXSTAT_LENMASK	0x00001FFF

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.35 2002/03/14 01:26:55 millert Exp $	*/
+/*	$OpenBSD: xl.c,v 1.36 2002/06/08 23:38:51 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1214,8 +1214,8 @@ void xl_rxeof(sc)
         struct mbuf		*m;
         struct ifnet		*ifp;
 	struct xl_chain_onefrag	*cur_rx;
-	int			total_len = 0;
-	u_int16_t		rxstat;
+	int			total_len = 0, sumflags = 0;
+	u_int32_t		rxstat;
 
 	ifp = &sc->arpcom.ac_if;
 
@@ -1278,6 +1278,25 @@ again:
 			bpf_mtap(ifp->if_bpf, m);
 		}
 #endif
+
+		if (sc->xl_type == XL_TYPE_905B) {
+			if (rxstat & XL_RXSTAT_IPCKERR)
+				sumflags |= M_IPV4_CSUM_IN_BAD;
+			else if (rxstat & XL_RXSTAT_IPCKOK)
+				sumflags |= M_IPV4_CSUM_IN_OK;
+
+			if (rxstat & XL_RXSTAT_TCPCKERR)
+				sumflags |= M_TCP_CSUM_IN_BAD;
+			else if (rxstat & XL_RXSTAT_TCPCKOK)
+				sumflags |= M_TCP_CSUM_IN_OK;
+
+			if (rxstat & XL_RXSTAT_UDPCKERR)
+				sumflags |= M_UDP_CSUM_IN_BAD;
+			else if (rxstat & XL_RXSTAT_UDPCKOK)
+				sumflags |= M_UDP_CSUM_IN_OK;
+
+			m->m_pkthdr.csum = sumflags;
+		}
 		ether_input_mbuf(ifp, m);
 	}
 
@@ -1811,6 +1830,13 @@ int xl_encap_90xB(sc, c, m_head)
 	c->xl_mbuf = m_head;
 	c->xl_ptr->xl_frag[frag - 1].xl_len |= XL_LAST_FRAG;
 	c->xl_ptr->xl_status = XL_TXSTAT_RND_DEFEAT;
+
+	if (m_head->m_pkthdr.csum & M_IPV4_CSUM_OUT)
+		c->xl_ptr->xl_status |= XL_TXSTAT_IPCKSUM;
+	if (m_head->m_pkthdr.csum & M_TCPV4_CSUM_OUT)
+		c->xl_ptr->xl_status |= XL_TXSTAT_TCPCKSUM;
+	if (m_head->m_pkthdr.csum & M_UDPV4_CSUM_OUT)
+		c->xl_ptr->xl_status |= XL_TXSTAT_UDPCKSUM;
 
 	return(0);
 }
@@ -2514,9 +2540,11 @@ xl_attach(sc)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = xl_ioctl;
 	ifp->if_output = ether_output;
-	if (sc->xl_type == XL_TYPE_905B)
+	if (sc->xl_type == XL_TYPE_905B) {
 		ifp->if_start = xl_start_90xB;
-	else
+		ifp->if_capabilities = IFCAP_CSUM_IPv4|IFCAP_CSUM_TCPv4|
+		    IFCAP_CSUM_UDPv4;
+	} else
 		ifp->if_start = xl_start;
 	ifp->if_watchdog = xl_watchdog;
 	ifp->if_baudrate = 10000000;
@@ -2526,7 +2554,7 @@ xl_attach(sc)
 
 #if NVLAN > 0
 	if (sc->xl_type == XL_TYPE_905B)
-		ifp->if_capabilities = IFCAP_VLAN_MTU;
+		ifp->if_capabilities |= IFCAP_VLAN_MTU;
 	/*
 	 * XXX
 	 * Do other cards filter large packets or simply pass them through?
