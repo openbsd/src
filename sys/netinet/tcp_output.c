@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.25 1999/12/08 06:50:20 itojun Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.26 1999/12/10 17:51:10 itojun Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -590,7 +590,7 @@ send:
 	 }
 
 #ifdef DIAGNOSTIC
-	if (max_linkhdr + hdrlen > MHLEN)
+	if (max_linkhdr + hdrlen > MCLBYTES)
 		panic("tcphdr too big");
 #endif
 
