@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_init.c,v 1.11 2000/01/06 07:18:26 d Exp $	*/
+/*	$OpenBSD: uthread_init.c,v 1.12 2000/02/26 13:30:49 d Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -252,6 +252,8 @@ _thread_init(void)
 		_thread_initial->poll_data.nfds = 0;
 		_thread_initial->poll_data.fds = NULL;
 		_thread_initial->sig_defer_count = 0;
+		_thread_initial->slice_usec = -1;
+		_thread_initial->sig_saved = 0;
 		_thread_initial->yield_on_sig_undefer = 0;
 		_thread_initial->specific_data = NULL;
 		_thread_initial->cleanup = NULL;
