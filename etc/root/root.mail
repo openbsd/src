@@ -22,7 +22,7 @@ further information regarding configuration in the file /usr/X11R6/README.
 Binary packages of emacs-20.2, bash-2.01.1, tcsh-6.07.02, and pine-3.96 are
 available on most architectures. The files are in the directory
 	ftp://ftp.openbsd.org/pub/OpenBSD/2.3/packages/
-or	CD2:/packages/   (ie. mount /dev/cd0a /mnt; cd /mnt/packages)
+or	CD2:/packages/   (ie. mount /dev/cd0a /cdrom; cd /cdrom/packages)
 Select your architecture and download the tarballs of your choice.  For example
 to install the emacs package for i386, execute
    # pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/2.3/packages/i386/emacs-20.2.tgz
@@ -30,9 +30,9 @@ to install the emacs package for i386, execute
 Other important packages not permitted on the CD (due to patents) are available
 on our FTP servers (as described above).  In particular, we provide the USA and
 international versions of ssh and pgp.  The filenames are ssh-usa-1.2.22.tgz,
-ssh-intl-1.2.22.tgz, pgp-usa-2.6.3.tgz, and pgp-intl-2.6.3.tgz.
-You are strongly urged to install one of the ssh packages and use ssh instead
-of telnet, rlogin, or rsh.
+ssh-intl-1.2.22.tgz, pgp-usa-2.6.3.tgz, and pgp-intl-2.6.3.tgz.  You are
+STRONGLY urged to install one of the ssh packages and use ssh instead of
+telnet, rlogin, or rsh.
 
 Significant efforts were made to centralize all system configuration in the
 /etc directory.  You should be able to find each of the configuration files
