@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ld.1,v 1.11 1998/04/25 02:40:22 d Exp $
+.\"	$OpenBSD: ld.1,v 1.12 1998/05/11 20:23:31 niklas Exp $
 .\"	$NetBSD: ld.1,v 1.14 1998/02/20 03:12:50 jonathan Exp $
 .\"
 .\" Copyright (c) 1993 Paul Kranenburg
@@ -38,7 +38,7 @@
 .Nd link editor
 .Sh SYNOPSIS
 .Nm ld
-.Op Fl MNnprSstXxz
+.Op Fl MNnprSstXxZz
 .Bk -words
 .Op Fl A Ar symbol-file
 .Op Fl assert Ar keyword
@@ -228,7 +228,11 @@ Trace the manipulations inflicted on
 .It Fl z
 Make a
 .Dv ZMAGIC
-output file. This is the default.
+output file.  This is the default.
+.It Fl Z
+Make an old-style
+.Dv ZMAGIC
+output file.  This means no flags and no machine ID in the magic.
 .Sh
 The following long options are exceptions to the normal option syntax
 described above, and are provided for compatibility with later versions of
