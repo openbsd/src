@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.581 2003/01/12 14:08:54 grange Exp $
+	$OpenBSD: pcidevs,v 1.582 2003/01/12 18:04:50 grange Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1057,6 +1057,7 @@ product CMDTECH 650A		0x0650	PCI0650A
 product CMDTECH 670		0x0670	USB0670
 product CMDTECH 673		0x0673	USB0673
 product CMDTECH 680		0x0680	PCI0680
+product CMDTECH 3112		0x3112	SiI3112 SATA
 
 /* Cogent Data Technologies products */
 product COGENT EM110TX		0x1400 EX110TX
