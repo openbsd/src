@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.1 2004/02/01 05:12:54 drahn Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.2 2004/02/11 14:40:52 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.2 2001/09/05 16:17:36 matt Exp $	*/
 
 /*
@@ -59,16 +59,13 @@
 struct device *booted_device;
 int booted_partition;
 
-void isa_intr_init (void);
+void isa_intr_init(void);
 
 struct device *bootdv = NULL;
 
 int findblkmajor(struct device *dv);
 char * findblkname(int maj);
 
-#if 0
-void rootconf(void);
-#endif
 void swapconf(void);
 void rootconf(void);
 void diskconf(void);
@@ -294,10 +291,6 @@ cpu_configure(void)
 
 }
 
-void
-device_register(struct device *dev, void *aux)
-{
-}
 /*
  * Attempt to find the device from which we were booted.
  * If we can do so, and not instructed not to do so,
