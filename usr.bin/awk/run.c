@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.25 2004/12/30 01:52:48 millert Exp $	*/
+/*	$OpenBSD: run.c,v 1.26 2004/12/30 02:08:35 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -94,7 +94,6 @@ Node	*curnode = NULL;	/* the node being executed, for debugging */
 void	stdinit(void);
 void	flush_all(void);
 
-
 /* buffer memory management */
 int adjbuf(char **pbuf, int *psiz, int minlen, int quantum, char **pbptr,
 	const char *whatrtn)
@@ -131,8 +130,6 @@ int adjbuf(char **pbuf, int *psiz, int minlen, int quantum, char **pbptr,
 
 void run(Node *a)	/* execution of parse tree starts here */
 {
-	extern void stdinit(void);
-
 	stdinit();
 	execute(a);
 	closeall();
@@ -1476,7 +1473,6 @@ Cell *bltin(Node **a, int n)	/* builtin functions. a[0] is type, a[1] is arg lis
 	char *p, *buf;
 	Node *nextarg;
 	FILE *fp;
-	void flush_all(void);
 
 	t = ptoi(a[0]);
 	x = execute(a[1]);
