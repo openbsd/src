@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.10 1996/12/14 18:23:56 millert Exp $
+#	$OpenBSD: MAKEDEV,v 1.11 1997/01/18 08:05:19 downsj Exp $
 #	$NetBSD: MAKEDEV,v 1.12 1995/11/05 23:50:22 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -153,7 +153,7 @@ bpf*)
 	;;
 
 ipl)
-	mknod ipl c 31 0
+	mknod ipl c 33 0
 	chown root.wheel ipl
 	;;
 
@@ -328,11 +328,11 @@ pty*)
 	;;
 random|srandom|urandom|prandom|arandom)
         rm -f random urandom srandom prandom arandom
-	mknod  random c 25 0
-	mknod srandom c 25 1
-	mknod urandom c 25 2
-	mknod prandom c 25 3
-	mknod arandom c 25 4
+	mknod  random c 32 0
+	mknod srandom c 32 1
+	mknod urandom c 32 2
+	mknod prandom c 32 3
+	mknod arandom c 32 4
 	chown root.wheel random srandom urandom prandom arandom
 	chmod 644 random srandom urandom prandom arandom
 	;;
