@@ -8,13 +8,16 @@
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: zutil.h,v 1.3 1998/08/08 20:57:34 millert Exp $ */
+/* @(#) $Id: zutil.h,v 1.4 1998/09/08 04:05:19 millert Exp $ */
 
 #ifndef _Z_UTIL_H
 #define _Z_UTIL_H
 
 #include "zlib.h"
 
+#ifdef _STANDALONE
+#include <stand.h>
+#else
 #ifdef STDC
 #  include <stddef.h>
 #  include <string.h>
@@ -24,6 +27,7 @@
     extern int errno;
 #else
 #   include <errno.h>
+#endif
 #endif
 
 #ifndef local
