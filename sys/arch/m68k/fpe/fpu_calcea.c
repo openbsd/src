@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_calcea.c,v 1.4 1997/01/13 11:51:03 niklas Exp $	*/
+/*	$OpenBSD: fpu_calcea.c,v 1.5 1997/02/13 21:49:15 kstailey Exp $	*/
 /*	$NetBSD: fpu_calcea.c,v 1.7 1996/10/16 06:27:05 scottr Exp $	*/
 
 /*
@@ -35,6 +35,7 @@
 #include <sys/param.h>
 #include <sys/signal.h>
 #include <sys/systm.h>
+#include <machine/cpu.h>
 #include <machine/frame.h>
 
 #include "fpu_emulate.h"

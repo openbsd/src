@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_emulate.c,v 1.7 1997/01/13 11:51:04 niklas Exp $	*/
+/*	$OpenBSD: fpu_emulate.c,v 1.8 1997/02/13 21:49:16 kstailey Exp $	*/
 /*	$NetBSD: fpu_emulate.c,v 1.14 1996/12/18 05:44:31 scottr Exp $	*/
 
 /*
@@ -40,6 +40,7 @@
 #include <sys/types.h>
 #include <sys/signal.h>
 #include <sys/systm.h>
+#include <machine/cpu.h>
 #include <machine/frame.h>
 
 #include "fpu_emulate.h"
