@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbox.c,v 1.2 2005/01/15 21:08:37 miod Exp $	*/
+/*	$OpenBSD: rbox.c,v 1.3 2005/01/16 16:14:10 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -228,7 +228,7 @@ rbox_reset(struct diofb *fb, int scode, struct diofbreg *fbr)
 	int rc;
 	int i;
 
-	if ((rc = diofb_fbinquire(fb, scode, fbr, 0x20000)) != 0)
+	if ((rc = diofb_fbinquire(fb, scode, fbr)) != 0)
 		return (rc);
 
 	fb->planes = 8;

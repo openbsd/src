@@ -1,4 +1,4 @@
-/*	$OpenBSD: diofb.c,v 1.1 2005/01/14 22:39:25 miod Exp $	*/
+/*	$OpenBSD: diofb.c,v 1.2 2005/01/16 16:14:09 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -111,15 +111,14 @@ const struct wsdisplay_emulops	diofb_emulops = {
  */
 
 int
-diofb_fbinquire(struct diofb *fb, int scode, struct diofbreg *fbr, int regsize)
+diofb_fbinquire(struct diofb *fb, int scode, struct diofbreg *fbr)
 {
-	int fboff;
+	int fboff, regsize;
 
 	if (ISIIOVA(fbr))
 		fb->regaddr = (caddr_t)IIOP(fbr);
 	else
 		fb->regaddr = dio_scodetopa(scode);
-	fb->regsize = regsize;
 
 	if (fb->fbwidth == 0 || fb->fbheight == 0) {
 		fb->fbwidth = (fbr->fbwmsb << 8) | fbr->fbwlsb;
@@ -137,10 +136,10 @@ diofb_fbinquire(struct diofb *fb, int scode, struct diofbreg *fbr, int regsize)
 		 * of the framebuffer.  Hence it is also implicitly
 		 * the size of the set.
 		 */
-		fb->regsize = (int)fb->fbaddr;
+		regsize = (int)fb->fbaddr;
 		fb->fbaddr += (int)fb->regaddr;
 		fb->regkva = (caddr_t)fbr;
-		fb->fbkva = (caddr_t)fbr + fb->regsize;
+		fb->fbkva = (caddr_t)fbr + regsize;
 	} else {
 		/*
 		 * For DIO space we need to map the separate

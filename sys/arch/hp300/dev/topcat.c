@@ -1,4 +1,4 @@
-/*	$OpenBSD: topcat.c,v 1.2 2005/01/15 21:08:37 miod Exp $	*/
+/*	$OpenBSD: topcat.c,v 1.3 2005/01/16 16:14:10 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat.
@@ -283,7 +283,7 @@ topcat_reset(struct diofb *fb, int scode, struct diofbreg *fbr)
 	volatile struct tcboxfb *tc = (struct tcboxfb *)fbr;
 	int rc;
 
-	if ((rc = diofb_fbinquire(fb, scode, fbr, 0x10000)) != 0)
+	if ((rc = diofb_fbinquire(fb, scode, fbr)) != 0)
 		return (rc);
 
 	fb->planes = tc->num_planes;

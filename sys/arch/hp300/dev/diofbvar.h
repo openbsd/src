@@ -1,4 +1,4 @@
-/*	$OpenBSD: diofbvar.h,v 1.1 2005/01/14 22:39:25 miod Exp $	*/
+/*	$OpenBSD: diofbvar.h,v 1.2 2005/01/16 16:14:10 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -66,8 +66,6 @@ struct diofb {
 	caddr_t	fbkva;			/* KVA of framebuffer */
 
 	caddr_t	regaddr;		/* control registers physaddr */
-	int	regsize;		/* control registers size */
-
 	caddr_t	fbaddr;			/* frame buffer physaddr */
 	int	fbsize;			/* frame buffer size */
 
@@ -116,7 +114,7 @@ struct diofb {
 
 void	diofb_end_attach(void *, struct wsdisplay_accessops *, struct diofb *,
 	    int, int, const char *);
-int	diofb_fbinquire(struct diofb *, int, struct diofbreg *, int);
+int	diofb_fbinquire(struct diofb *, int, struct diofbreg *);
 void	diofb_fbsetup(struct diofb *);
 void	diofb_fontunpack(struct diofb *);
 
