@@ -682,6 +682,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/mii/miidevs.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/mii/miivar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/mii/mtdphyreg.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/mii/nsgphyreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/mii/nsphyreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/mii/nsphyterreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/mii/qsphyreg.ph
@@ -721,6 +722,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_lmc_types.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_lmcioctl.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_lmcvar.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_ngereg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_sfreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_sisreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_skreg.ph

@@ -399,6 +399,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/mii/brgphyreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/mii/eephyreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/mii/mii_bitbang.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/mii/nsgphyreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/mii/xmphyreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/cmpcireg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/cmpcivar.ph
@@ -407,6 +408,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/cs4281reg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/cy82c693reg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/cy82c693var.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/if_ngereg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/if_txpreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/maestro_reg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/pciide_opti_reg.ph

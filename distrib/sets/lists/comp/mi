@@ -307,6 +307,7 @@
 ./usr/include/dev/mii/miidevs.h
 ./usr/include/dev/mii/miivar.h
 ./usr/include/dev/mii/mtdphyreg.h
+./usr/include/dev/mii/nsgphyreg.h
 ./usr/include/dev/mii/nsphyreg.h
 ./usr/include/dev/mii/nsphyterreg.h
 ./usr/include/dev/mii/qsphyreg.h
@@ -346,6 +347,7 @@
 ./usr/include/dev/pci/if_lmc_types.h
 ./usr/include/dev/pci/if_lmcioctl.h
 ./usr/include/dev/pci/if_lmcvar.h
+./usr/include/dev/pci/if_ngereg.h
 ./usr/include/dev/pci/if_sfreg.h
 ./usr/include/dev/pci/if_sisreg.h
 ./usr/include/dev/pci/if_skreg.h
