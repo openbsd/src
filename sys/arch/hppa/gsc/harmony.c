@@ -1,4 +1,4 @@
-/*	$OpenBSD: harmony.c,v 1.20 2003/08/07 19:47:33 mickey Exp $	*/
+/*	$OpenBSD: harmony.c,v 1.21 2003/08/15 13:25:53 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -42,6 +42,7 @@
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
 #include <dev/auconv.h>
+#include <dev/rndvar.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
@@ -117,6 +118,14 @@ void harmony_start_cp(struct harmony_softc *);
 void harmony_tick_pb(void *);
 void harmony_tick_cp(void *);
 void harmony_try_more(struct harmony_softc *);
+
+void harmony_acc_tmo(void *);
+#define	ADD_CLKALLICA(sc) do {						\
+	(sc)->sc_acc <<= 1;						\
+	(sc)->sc_acc |= READ_REG((sc), HARMONY_DIAG) & DIAG_CO;		\
+	if ((sc)->sc_acc_cnt++ && !((sc)->sc_acc_cnt % 32))		\
+		add_true_randomness((sc)->sc_acc_num ^= (sc)->sc_acc);	\
+} while(0)
 
 int
 harmony_match(parent, match, aux)
@@ -256,6 +265,9 @@ harmony_attach(parent, self, aux)
 	    sizeof(sc->sc_audev.config));
 
 	audio_attach_mi(&harmony_sa_hw_if, sc, &sc->sc_dv);
+
+	timeout_set(&sc->sc_acc_tmo, harmony_acc_tmo, sc);
+	sc->sc_acc_num = 0xa5a5a5a5;
 }
 
 void
@@ -274,6 +286,15 @@ harmony_reset_codec(struct harmony_softc *sc)
 	WRITE_REG(sc, HARMONY_RESET, 0);
 }
 
+void
+harmony_acc_tmo(void *v)
+{
+	struct harmony_softc *sc = v;
+
+	ADD_CLKALLICA(sc);
+	timeout_add(&sc->sc_acc_tmo, 1);
+}
+
 /*
  * interrupt handler
  */
@@ -285,6 +306,8 @@ harmony_intr(vsc)
 	struct harmony_channel *c;
 	u_int32_t dstatus;
 	int r = 0;
+
+	ADD_CLKALLICA(sc);
 
 	harmony_intr_disable(sc);
 
@@ -1086,6 +1109,8 @@ harmony_start_cp(struct harmony_softc *sc)
 		SYNC_REG(sc, HARMONY_RNXTADD, BUS_SPACE_BARRIER_WRITE);
 		c->c_lastaddr = nextaddr + togo;
 	}
+
+	timeout_add(&sc->sc_acc_tmo, 1);
 }
 
 int
