@@ -1,8 +1,8 @@
-/*	$NetBSD: localtime.c,v 1.5 1996/01/08 22:50:55 jtc Exp $	*/
+/*	$NetBSD: localtime.c,v 1.6 1996/01/20 02:31:04 jtc Exp $	*/
 
 #ifndef lint
 #ifndef NOID
-static char	elsieid[] = "@(#)localtime.c	7.50";
+static char	elsieid[] = "@(#)localtime.c	7.53";
 #endif /* !defined NOID */
 #endif /* !defined lint */
 
@@ -1178,13 +1178,11 @@ register struct tm * const		tmp;
 	tmp->tm_hour = (int) (rem / SECSPERHOUR);
 	rem = rem % SECSPERHOUR;
 	tmp->tm_min = (int) (rem / SECSPERMIN);
-	tmp->tm_sec = (int) (rem % SECSPERMIN);
-	if (hit)
-		/*
-		** A positive leap second requires a special
-		** representation.  This uses "... ??:59:60" et seq.
-		*/
-		tmp->tm_sec += hit;
+	/*
+	** A positive leap second requires a special
+	** representation.  This uses "... ??:59:60" et seq.
+	*/
+	tmp->tm_sec = (int) (rem % SECSPERMIN) + hit;
 	tmp->tm_wday = (int) ((EPOCH_WDAY + days) % DAYSPERWEEK);
 	if (tmp->tm_wday < 0)
 		tmp->tm_wday += DAYSPERWEEK;
@@ -1357,17 +1355,16 @@ int * const		okayp;
 		yourtm.tm_sec = 0;
 	}
 	/*
-	** Calculate the number of magnitude bits in a time_t
-	** (this works regardless of whether time_t is
-	** signed or unsigned, though lint complains if unsigned).
+	** Divide the search space in half
+	** (this works whether time_t is signed or unsigned).
 	*/
-	for (bits = 0, t = 1; t > 0; ++bits, t <<= 1)
-		continue;
+	bits = TYPE_BIT(time_t) - 1;
 	/*
-	** If time_t is signed, then 0 is the median value,
-	** if time_t is unsigned, then 1 << bits is median.
+	** If time_t is signed, then 0 is just above the median,
+	** assuming two's complement arithmetic.
+	** If time_t is unsigned, then (1 << bits) is just above the median.
 	*/
-	t = (t < 0) ? 0 : ((time_t) 1 << bits);
+	t = TYPE_SIGNED(time_t) ? 0 : (((time_t) 1) << bits);
 	for ( ; ; ) {
 		(*funcp)(&t, offset, &mytm);
 		dir = tmcomp(&mytm, &yourtm);
@@ -1375,10 +1372,10 @@ int * const		okayp;
 			if (bits-- < 0)
 				return WRONG;
 			if (bits < 0)
-				--t;
+				--t; /* may be needed if new t is minimal */
 			else if (dir > 0)
-				t -= (time_t) 1 << bits;
-			else	t += (time_t) 1 << bits;
+				t -= ((time_t) 1) << bits;
+			else	t += ((time_t) 1) << bits;
 			continue;
 		}
 		if (yourtm.tm_isdst < 0 || mytm.tm_isdst == yourtm.tm_isdst)

@@ -1,4 +1,4 @@
-/*	$NetBSD: tzfile.h,v 1.3 1995/03/09 23:41:24 jtc Exp $	*/
+/*	$NetBSD: tzfile.h,v 1.4 1996/01/20 02:31:34 jtc Exp $	*/
 
 #ifndef TZFILE_H
 #define TZFILE_H
@@ -17,7 +17,7 @@
 
 #ifndef lint
 #ifndef NOID
-static char	tzfilehid[] = "@(#)tzfile.h	7.6";
+static char	tzfilehid[] = "@(#)tzfile.h	7.7";
 #endif /* !defined NOID */
 #endif /* !defined lint */
 
@@ -154,7 +154,7 @@ struct tzhead {
 ** that will probably do.
 */
 
-#define isleap(y) ((((y) % 4) == 0 && ((y) % 100) != 0) || ((y) % 400) == 0)
+#define isleap(y) (((y) % 4) == 0 && (((y) % 100) != 0 || ((y) % 400) == 0))
 
 #ifndef USG
 

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ctime.3,v 1.8 1996/01/08 22:50:54 jtc Exp $
+.\"	$NetBSD: ctime.3,v 1.9 1996/01/20 02:29:47 jtc Exp $
 .TH CTIME 3
 .SH NAME
 asctime, ctime, difftime, gmtime, localtime, mktime \- convert date and time to ASCII
@@ -56,13 +56,6 @@ return pointers to ``tm'' structures, described below.
 .I Localtime\^
 corrects for the time zone and any time zone adjustments
 (such as Daylight Saving Time in the U.S.A.).
-Before doing so,
-.I localtime\^
-calls
-.I tzset\^
-(if
-.I tzset\^
-has not been called in the current process).
 After filling in the ``tm'' structure,
 .I localtime
 sets the
@@ -218,4 +211,4 @@ will also be overwritten at the next call
 Avoid using out-of-range values with
 .I mktime
 when setting up lunch with promptness sticklers in Riyadh.
-.\" @(#)newctime.3	7.11
+.\" @(#)newctime.3	7.12
