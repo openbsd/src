@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.6 1998/12/04 06:49:58 fgsch Exp $
+	$OpenBSD: pcmciadevs,v 1.7 1998/12/22 02:43:55 niklas Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -38,18 +38,23 @@
 
 vendor SANDISK			0x0045	Sandisk
 vendor NEWMEDIA			0x0057	NewMedia
+vendor INTEL			0x0089	Intel
 vendor IBM			0x00a4	IBM
 vendor 3COM			0x0101	3Com
 vendor MEGAHERTZ		0x0102	Megahertz
 vendor SOCKET			0x0104	Socket Communications
 vendor TDK			0x0105	TDK
+vendor XIRCOM			0x0105	Xircom
 vendor SMC			0x0108	SMC
 vendor MOTOROLA			0x0109	Motorola
 vendor USROBOTICS		0x0115	US Robotics
 vendor MEGAHERTZ2		0x0128	Megahertz
 vendor ADAPTEC			0x012f	Adaptec
+vendor QUATECH			0x0137	Quatech
+vendor COMPAQ			0x0138	Compaq
 vendor LINKSYS			0x0149	Linksys
 vendor SIMPLETECH		0x014d	Simple Technology
+vendor COMPAQ2			0x0183	Compaq
 vendor DAYNA			0x0194	Dayna
 vendor IODATA			0x01bf	I-O DATA
 vendor HAGIWARASYSCOM		0xc012	Hagiwara SYS-COM
@@ -97,6 +102,9 @@ product MEGAHERTZ XJ5560	0x0034 Megahertz X-JACK 56kbps Modem
 product MEGAHERTZ2 XJEM1144	0x0101 Megahertz XJEM1144 Ethernet
 product MEGAHERTZ2 XJACK	0x0103 Megahertz X-JACK Ethernet
 
+/* Quatech Products */
+product QUATECH DSP_225		0x0008 Quatech Dual Serial Port
+
 /* US Robotics Products */
 product USROBOTICS WORLDPORT144	0x3330 US Robotics WorldPort 14.4 Modem
 
@@ -119,6 +127,9 @@ product NEWMEDIA BASICS		0x0019 NewMedia BASICS Ethernet
 
 /* Standard Microsystems Corporation Products */
 product SMC 8016		0x0105 SMC 8016 EtherCard
+
+/* Xircom Products */
+product XIRCOM REM56G_100	0x110a Xircom RealPort Ethernet 10/100 + 56K Modem
 
 /* Unknown Product */
 product UNKNOWN ECARD		0x0100 NE2000 Compatible
