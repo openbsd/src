@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.15 1997/10/12 23:55:12 mickey Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.16 1997/10/14 01:04:25 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -53,6 +53,15 @@
 #define	BIOSM_HD	0xf8	/* hard drive */
 #define	BIOSM_F144K	0xf0	/* floppy ds/hd 18 spt 3.50" */
 #define	BIOSM_OTHER	0xf0	/* any other */
+
+/*
+ * BIOS memory maps
+ */
+#define	BIOS_MAP_END	0x00	/* End of array XXX - special */
+#define	BIOS_MAP_FREE	0x01	/* Usable memory */
+#define	BIOS_MAP_RES	0x02	/* Reseved memory */
+#define	BIOS_MAP_ACPI	0x03	/* ACPI Reclaim memory */
+#define	BIOS_MAP_NVS	0x04	/* ACPI NVS memory */
 
 /* 
  * CTL_BIOS definitions.
@@ -113,6 +122,12 @@ struct EDD_CB {
 	u_int16_t edd_nblk;  /* # of blocks to transfer */
 	u_int32_t edd_buf;   /* address of buffer */
 	u_int64_t edd_daddr; /* starting block */
+};
+
+struct BIOS_MAP {
+	u_int32_t addr;		/* Beginning of block */
+	u_int32_t size;		/* Size of block */
+	int type;		/* Type of block */
 };
 
 #ifdef _KERNEL
