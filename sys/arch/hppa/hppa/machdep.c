@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.30 2001/03/22 23:40:55 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.31 2001/03/29 00:47:53 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 Michael Shalayeff
@@ -94,7 +94,6 @@
 #endif
 
 #include <hppa/dev/cpudevs.h>
-#include <hppa/dev/cpudevs_data.h>
 
 /*
  * Patchable buffer cache parameters
