@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.263 2003/07/07 09:15:54 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.264 2003/08/21 19:12:59 frantzen Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -431,6 +431,21 @@ disables this enforcement.
 There may be non-trivial and non-obvious implications to an out of
 order ruleset.
 Consider carefully before disabling the order enforcement.
+.It Ar set fingerprints
+Load fingerprints of known operating systems from the given filename.
+By default fingerprints of known operating systems are automatically
+loaded from
+.Xr pf.os 5
+in /etc but can be overridden via this option.
+Setting this option may leave a small period of time where the fingerprints
+referenced by the currently active ruleset are inconsistent until the new
+ruleset finishes loading.
+.Pp
+For example:
+.Bd -literal -offset indent
+set fingerprints "/etc/pf.os.devel"
+.Ed
+.Pp
 .El
 .Sh TRAFFIC NORMALIZATION
 Traffic normalization is used to sanitize packet content in such
@@ -1132,7 +1147,7 @@ For a list of all the protocol name to number mappings used by
 .Xr pfctl 8 ,
 see the file
 .Em /etc/protocols .
-.It Ar from <source> port <source> to <dest> port <dest>
+.It Ar from <source> port <source> os <source> to <dest> port <dest>
 This rule applies only to packets with the specified source and destination
 addresses and ports.
 .Pp
@@ -1204,7 +1219,15 @@ means
 hence ports 1-1999 and 2005-65535.
 .El
 .Pp
-The host and port specifications are optional, as in the following examples:
+The operating system of the source host can be specified in the case of TCP
+rules with the
+.Ar OS
+modifier.
+See the
+.Sx OPERATING SYSTEM FINGERPRINTING
+section for more information.
+.Pp
+The host, port and OS specifications are optional, as in the following examples:
 .Bd -literal -offset indent
 pass in all
 pass in from any to any
@@ -1212,6 +1235,7 @@ pass in proto tcp from any port <= 1024 to any
 pass in proto tcp from any to any port 25
 pass in proto tcp from 10.0.0.0/8 port > 1024 \e
       to ! 10.1.2.3 port != ssh
+pass in proto tcp from any os "OpenBSD" flags S/SA
 .Ed
 .It Ar all
 This is equivalent to "from any to any".
@@ -1713,6 +1737,75 @@ pass in proto tcp from any to any \e
       (max 100, tcp.established 60, tcp.closing 5)
 .Ed
 .El
+.Sh OPERATING SYSTEM FINGERPRINTING
+Passive OS Fingerprinting is a mechanism to inspect nuances of a TCP
+connection's initial SYN packet and guess at the host's operating system.
+Unfortunately these nuaces are easily spoofed by an attacker so the
+fingerprint is not useful in making security decisions.
+But the fingerprint is typically accurate enough to make policy decisions
+upon.
+.Pp
+The fingerprints may be specified by operating system class, by
+version, or by subtype/patchlevel.
+The class of an operating system is typically the vender or genre
+and would be OpenBSD for the
+.Xr pf 4
+firewall itself.
+The version of the oldest available OpenBSD release on the main ftp site
+would be 2.6 and the fingerprint would be written
+.Bd -literal indent
+	"OpenBSD 2.6"
+.Ed
+.Pp
+The subtype of an operating system is typically used to describe the
+patchlevel if that patch led to changes in the TCP stack behavior.
+In the case of OpenBSD, the only subtype is for a fingerprint on the
+loopback interface lo0 since it utilizes a different TCP maximum segment
+size and would be specified like
+.Bd -literal indent
+	"OpenBSD 3.3 lo0"
+.Ed
+.Pp
+Fingerprints for most popular operating systems are provided by
+.Xr pf.os 5 .
+Once 
+.Xr pf 4
+is running, a complete list of known operating system fingerprints may
+be listed by running:
+.Bd -literal -offset indent
+# pfctl -so
+.Ed
+.Pp
+Filter rules can enforce policy at any level of operating system specification
+assuming a fingerprint is present.
+Policy could limit traffic to approved operating systems or even ban traffic
+from hosts that aren't at the latest service pack.
+.Pp
+The
+.Ar unknown
+class can also be used as the fingerprint which will match packets for
+which no operating system fingerprint is known.
+.Pp
+Examples:
+.Bd -literal -offset indent
+pass  out proto tcp from any os OpenBSD keep state
+block out proto tcp from any os Doors
+block out proto tcp from any os "Doors PT"
+block out proto tcp from any os "Doors PT SP3"
+block out from any os "unknown"
+pass on lo0 proto tcp from any os "OpenBSD 3.3 lo0" keep state
+.Ed
+.Pp
+Operating system fingerprinting is limited only to the TCP SYN packet.
+This means that it will not work on other protocols and will not match
+a curretly established connection.
+.Pp
+Caveat: operating system fingerprints are occasionally wrong.
+There are three problems: an attacker can trivially craft his packets to
+appear as any operating system he chooses;
+an operating system patch could change the stack behavior and no fingerprints
+will match it until the database is updated;
+and multiple operating systems may have the same fingerprint.
 .Sh BLOCKING SPOOFED TRAFFIC
 "Spoofing" is the faking of IP addresses, typically for malicious
 purposes.
@@ -2141,6 +2234,11 @@ pass in on $ext_if proto tcp from any to any port { ssh, smtp, domain, \e
 pass in on $ext_if proto tcp from any to 157.161.48.183 port >= 49152 \e
       flags S/SA keep state
 
+# Do not allow Windows 9x SMTP connections since they are typically
+# a viral worm.  Alternately we could limit these OSes to 1 connection each.
+block in on $ext_if proto tcp from any os {"Windows 95", "Windows 98"} \e
+      to any port smtp
+
 # Packet Tagging
 
 # three interfaces: $int_if, $ext_if, and $wifi_if (wireless). NAT is
@@ -2181,7 +2279,8 @@ option         = "set" ( [ "timeout" ( timeout | "{" timeout-list "}" ) ] |
                  [ "limit" ( limit-item | "{" limit-list "}" ) ] |
                  [ "loginterface" ( interface-name | "none" ) ] |
                  [ "block-policy" ( "drop" | "return" ) ] |
-                 [ "require-order" ( "yes" | "no" ) ] )
+                 [ "require-order" ( "yes" | "no" ) ]
+                 [ "fingerprints" filename ] )
 
 pf-rule        = action [ ( "in" | "out" ) ]
                  [ "log" | "log-all" ] [ "quick" ]
@@ -2267,7 +2366,7 @@ proto-list     = ( proto-name | proto-number ) [ [ "," ] proto-list ]
 
 hosts          = "all" |
                  "from" ( "any" | "no-route" | "self" | host |
-                 "{" host-list "}" ) [ port ]
+                 "{" host-list "}" ) [ port ] [ os ]
                  "to"   ( "any" | "no-route" | "self" | host |
                  "{" host-list "}" ) [ port ]
 
@@ -2283,6 +2382,7 @@ routehost-list = routehost [ [ "," ] routehost-list ]
 
 port           = "port" ( unary-op | binary-op | "{" op-list "}" )
 portspec       = "port" ( number | name ) [ ":" ( "*" | number | name ) ]
+os             = "os"  ( os-name | "{" os-list "}" )
 user           = "user" ( unary-op | binary-op | "{" op-list "}" )
 group          = "group" ( unary-op | binary-op | "{" op-list "}" )
 
@@ -2290,6 +2390,9 @@ unary-op       = [ "=" | "!=" | "<" | "<=" | ">" | ">=" ]
                  ( name | number )
 binary-op      = number ( "<>" | "><" | ":" ) number
 op-list        = ( unary-op | binary-op ) [ [ "," ] op-list ]
+
+os-name        = operating-system-name
+os-list        = os-name [ [ "," ] os-list ]
 
 flags          = "flags" [ flag-set ] "/" flag-set
 flag-set       = [ "F" ] [ "S" ] [ "R" ] [ "P" ] [ "A" ] [ "U" ] [ "E" ]

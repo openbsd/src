@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.34 2003/08/11 20:39:38 dhartmei Exp $
+.\"	$OpenBSD: pf.4,v 1.35 2003/08/21 19:12:59 frantzen Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -546,6 +546,83 @@ A valid ticket must also be supplied to pfrio_ticket.
 On exit, pfrio_nadd contains 0 if the table was already defined in the
 inactive list, or 1 if a new table has been created.
 pfrio_naddr contains the number of addresses effectively put in the table.
+.It Dv DIOCFPFLUSH
+Flush the passive OS fingerprint table.
+.It Dv DIOCFPADD Fa "struct pf_osfp_ioctl"
+.Bd -literal
+struct pf_osfp_ioctl {
+	struct pf_osfp_entry {
+		SLIST_ENTRY(pf_osfp_entry) fp_entry;
+		pf_osfp_t		fp_os;
+		char			fp_class_nm[PF_OSFP_LEN];
+		char			fp_version_nm[PF_OSFP_LEN];
+		char			fp_subtype_nm[PF_OSFP_LEN];
+	} 			fp_os;
+	u_int16_t		fp_mss;
+	u_int16_t		fp_wsize;
+	u_int16_t		fp_psize;
+	u_int8_t		fp_ttl;
+	u_int8_t		fp_wscale;
+	u_int8_t		fp_flags;
+	int			fp_getnum;
+};
+.Ed
+.Pp
+Add a passive OS fingerprint to the table.
+Set
+.Va fp_os.fp_os
+to the packed fingerprint,
+.Va fp_os.fp_class_nm
+to the name of the class (Linux, Windows, etc),
+.Va fp_os.fp_version_nm
+to the name of the version (NT, 95, 98), and
+.Va fp_os.fp_subtype_nm
+to the name of the subtype or patchlevel.
+The members
+.Va fp_mss
+.Va fp_wsize
+.Va fp_psize
+.Va fp_ttl
+and
+.Va fp_wscale
+are set to the TCP MSS, the TCP window size, the IP length and the IP TTL of
+the TCP SYN packet respectively.
+The
+.Va fp_flags
+member is filled according to the net/pfvar.h include file PF_OSFP_* defines.
+The
+.Va fp_getnum
+is not used with this ioctl.
+.Pp
+The structure's slack space must be zeroed for correct operation; memset
+the whole structure to zero before filling and sending to the kernel.
+.It Dv DIOCFPGET Fa "struct pf_osfp_ioctl"
+.Bd -literal
+struct pf_osfp_ioctl {
+	struct pf_osfp_entry {
+		SLIST_ENTRY(pf_osfp_entry) fp_entry;
+		pf_osfp_t		fp_os;
+		char			fp_class_nm[PF_OSFP_LEN];
+		char			fp_version_nm[PF_OSFP_LEN];
+		char			fp_subtype_nm[PF_OSFP_LEN];
+	} 			fp_os;
+	u_int16_t		fp_mss;
+	u_int16_t		fp_wsize;
+	u_int16_t		fp_psize;
+	u_int8_t		fp_ttl;
+	u_int8_t		fp_wscale;
+	u_int8_t		fp_flags;
+	int			fp_getnum;
+};
+.Ed
+.Pp
+Get the passive OS fingerprint number
+.Va fp_getnum
+from the kernels fingerprint list.
+The rest of the structure members will come back filled.
+Get the whole list by repeatadly incrementing the
+.Va fp_getnum
+number until the ioctl returns EBUSY.
 .El
 .Sh EXAMPLES
 The following example demonstrates how to use the DIOCNATLOOK command
