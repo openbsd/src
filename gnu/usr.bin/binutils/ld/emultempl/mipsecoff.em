@@ -69,6 +69,11 @@ gld${EMULATION_NAME}_after_open ()
     {
       asection *datasec;
 
+      /* As first-order business, make sure that each input BFD is ECOFF. It
+         better be, as we are directly calling an ECOFF backend function.  */
+      if (bfd_get_flavour (abfd) != bfd_target_ecoff_flavour)
+	einfo ("%F%B: all input objects must be ECOFF for --embedded-relocs\n");
+
       datasec = bfd_get_section_by_name (abfd, ".sdata");
 
       /* Note that we assume that the reloc_count field has already
@@ -113,7 +118,7 @@ check_sections (abfd, sec, sdatasec)
   if ((bfd_get_section_flags (abfd, sec) & SEC_CODE) == 0
       && sec != (asection *) sdatasec
       && sec->reloc_count != 0)
-    einfo ("%P%X: section %s has relocs; can not use --embedded-relocs\n",
+    einfo ("%B%X: section %s has relocs; can not use --embedded-relocs\n",
 	   abfd, bfd_get_section_name (abfd, sec));
 }
 

@@ -192,18 +192,18 @@ h8300_coff_link_hash_table_create (abfd)
   return &ret->root.root;
 }
 
-/* special handling for H8/300 relocs.
+/* Special handling for H8/300 relocs.
    We only come here for pcrel stuff and return normally if not an -r link.
    When doing -r, we can't do any arithmetic for the pcrel stuff, because
    the code in reloc.c assumes that we can manipulate the targets of
    the pcrel branches.  This isn't so, since the H8/300 can do relaxing, 
    which means that the gap after the instruction may not be enough to
-   contain the offset required for the branch, so we have to use the only
-   the addend until the final link */
+   contain the offset required for the branch, so we have to use only
+   the addend until the final link.  */
 
 static bfd_reloc_status_type
 special (abfd, reloc_entry, symbol, data, input_section, output_bfd,
-		 error_message)
+	 error_message)
      bfd *abfd ATTRIBUTE_UNUSED;
      arelent *reloc_entry ATTRIBUTE_UNUSED;
      asymbol *symbol ATTRIBUTE_UNUSED;
@@ -215,6 +215,8 @@ special (abfd, reloc_entry, symbol, data, input_section, output_bfd,
   if (output_bfd == (bfd *) NULL)
     return bfd_reloc_continue;
 
+  /* Adjust the reloc address to that in the output section.  */
+  reloc_entry->address += input_section->output_offset;
   return bfd_reloc_ok;
 }
 
@@ -900,6 +902,11 @@ h8300_reloc16_extra_cases (abfd, link_info, link_order, reloc, data, src_ptr,
 
 	  /* Write it.  */
 	  bfd_put_8 (abfd, tmp, data + dst_address - 2);
+	  break;
+
+	case 0x5c:
+	  /* bsr:16 -> bsr:8 */
+	  bfd_put_8 (abfd, 0x55, data + dst_address - 2);
 	  break;
 
 	default:

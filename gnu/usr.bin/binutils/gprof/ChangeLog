@@ -1,3 +1,8 @@
+2000-10-16  Philip Blundell  <pb@futuretv.com>
+
+	* configure.in: Set version number to 2.10.1.
+	* configure: Regenerate.
+
 2000-06-07  Philippe De Muyter  <phdm@macqel.be>
 
 	* source.c: Remove direct inclusion of sys/stat.h.

@@ -1,3 +1,12 @@
+2000-11-06  Alan Modra  <alan@linuxcare.com.au>
+
+	* ld-elfvsb/main.c (PROTECTED_CHECK): Include stdio.h.
+	(main): Prune unused args.
+
+2000-10-17  Philip Blundell  <pb@futuretv.com>
+
+	* lib/ld-lib.exp, ld-elfvsb: Update from trunk version.
+
 2000-04-12  Alan Modra  <alan@linuxcare.com.au>
 
 	* ld-selective/selective.exp (test4): Delete incorrect foo__1B test.
