@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.10 1999/08/14 03:25:59 mickey Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.11 1999/09/18 20:02:42 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -59,6 +59,7 @@
 #define	need_resched()		{(void)1;}
 #define	need_proftick(p)	{(void)(p);}
 
+#ifndef _LOCORE
 #ifdef _KERNEL
 #define DELAY(x) delay(x)
 void	delay __P((u_int us));
@@ -99,5 +100,6 @@ int	cpu_dump __P((void));
 	{ 0, 0 }, \
 	{ "console_device", CTLTYPE_STRUCT }, \
 }
+#endif
 
 #endif /* _MACHINE_CPU_H_ */
