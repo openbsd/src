@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.21 2001/11/09 02:50:08 art Exp $ */
+/* $OpenBSD: pmap.c,v 1.22 2001/11/09 02:57:03 art Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -3489,6 +3489,9 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		    PG_V | PG_ASM | PG_KRE | PG_KWE | PG_WIRED;
 		va += ALPHA_L2SEG_SIZE;
 	}
+
+	/* Invalidate the L1 PT cache. */
+	pool_cache_invalidate(&pmap_l1pt_cache);
 
 	virtual_end = va;
 
