@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pci.c,v 1.5 1999/08/15 22:34:17 deraadt Exp $	*/
+/*	$OpenBSD: if_ne_pci.c,v 1.6 1999/09/01 21:43:38 deraadt Exp $	*/
 /*	$NetBSD: if_ne_pci.c,v 1.8 1998/07/05 00:51:24 jonathan Exp $	*/
 
 /*-
@@ -238,8 +238,6 @@ ne_pci_attach(parent, self, aux)
 		return;
 	}
 
-	printf("\n");
-
 	dsc->sc_regt = nict;
 	dsc->sc_regh = nich;
 
@@ -268,28 +266,27 @@ ne_pci_attach(parent, self, aux)
 	/* Always fill in init_card; it might be used for non-media stuff. */
 	dsc->init_card = npp->npp_init_card;
 
-	/*
-	 * Do generic NE2000 attach.  This will read the station address
-	 * from the EEPROM.
-	 */
-	ne2000_attach(nsc, NULL, media, nmedia, defmedia);
-
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
 	    pa->pa_intrline, &ih)) {
-		printf("%s: couldn't map interrupt\n", dsc->sc_dev.dv_xname);
+		printf(": couldn't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, dp8390_intr, dsc,
 		dsc->sc_dev.dv_xname);
 	if (psc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
-		    dsc->sc_dev.dv_xname);
+		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
-	printf("%s: %s\n", dsc->sc_dev.dv_xname, intrstr);
+	printf(" %s\n", intrstr);
+
+	/*
+	 * Do generic NE2000 attach.  This will read the station address
+	 * from the EEPROM.
+	 */
+	ne2000_attach(nsc, NULL, media, nmedia, defmedia);
 }
