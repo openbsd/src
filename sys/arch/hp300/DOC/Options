@@ -1,24 +1,18 @@
-$OpenBSD: Options,v 1.8 2001/08/12 23:23:51 miod Exp $
+$OpenBSD: Options,v 1.9 2001/08/19 17:07:02 miod Exp $
 $NetBSD: Options,v 1.7 1997/09/12 08:04:12 mycroft Exp $
 
 Here is a list of hp300 specific kernel compilation options and what they
 mean:
 
-HAVEVAC
-	Compiles in support for virtually addressed cache (VAC) found on
-	hp320 and 350 machines.  Should only be defined when HP320 and/or
-	HP350 is.
-
 HP320
 	Support for old hp320 machines: 16mhz 68020, HP MMU, 16mhz 68881
 	and VAC.  Compiles in support for a VAC, HP MMU, and the 98620A
-	16-bit DMA channel.  Forces the definition of HAVEVAC.
+	16-bit DMA channel.
 
 HP350
 	Support for old hp350 machines: 25mhz 68020, HP MMU, 20mhz 68881
 	and VAC.  Compiles in support for a VAC and the HP MMU.  Differs
 	from HP320 in that it has no support for 16-bit DMA controller.
-	Forces the definition of HAVEVAC.
 
 HP330
 	Support for old hp330 (and 318/319) machines: 16mhz 68020, 68551 PMMU
@@ -51,19 +45,6 @@ USELEDS
 	Twinkle the hp4xx front panel (or hp3xx internal) LEDs in the HP
 	designated way.  Somewhat frivolous, but the heartbeat LED is
 	useful to see if your machine is alive.
-
-PANICBUTTON
-	Compiles in code which will enable a "force-crash" HIL keyboard
-	sequence.  When the Reset key is typed twice in succession (within
-	half a second) the kernel will panic.  Note that the HIL Reset key
-	sends a NMI to the processor which will get the CPUs attention no
-	matter what it is doing (i.e. as long as it isn't halted).  Alas,
-	also note that the NMI is only sent when the keyboard is in "cooked"
-	(ITE) mode.  If it is in "raw" mode (i.e. X-server is running) the
-	Reset key is just another keypress event.  A cheezy substitute in
-	this case is holding down the upper right-most unlabeled key and
-	then pressing the unlabeled key to its left.  Note that this only
-	works if HIL (level 1) interrupts are not masked.
 
 DEBUG
 	Compiles in a variety of consistency checks and debug printfs
