@@ -491,6 +491,7 @@
 ./usr/share/man/cat4/stderr.0
 ./usr/share/man/cat4/stdin.0
 ./usr/share/man/cat4/stdout.0
+./usr/share/man/cat4/svnd.0
 ./usr/share/man/cat4/tb.0
 ./usr/share/man/cat4/tcp.0
 ./usr/share/man/cat4/termios.0
