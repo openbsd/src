@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcp.c,v 1.24 2001/10/01 08:06:28 markus Exp $	*/
+/*	$OpenBSD: rcp.c,v 1.25 2001/11/21 15:35:28 markus Exp $	*/
 /*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
 
 /*
@@ -551,9 +551,9 @@ sink(argc, argv)
 	struct timeval tv[2];
 	enum { YES, NO, DISPLAYED } wrerr;
 	BUF *bp;
-	off_t i, j;
+	off_t i, j, size;
 	int amt, count, exists, first, mask, mode, ofd, omode;
-	int setimes, size, targisdir, wrerrno = 0;
+	int setimes, targisdir, wrerrno = 0;
 	char ch, *cp, *np, *targ, *why, *vect[1], buf[BUFSIZ];
 
 #define	atime	tv[0]
