@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.30 2004/09/28 20:51:15 jmc Exp $	*/
+/*	$OpenBSD: grep.c,v 1.31 2004/10/03 19:23:02 otto Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -97,8 +97,6 @@ enum {
 int	 first;		/* flag whether or not this is our first match */
 int	 tail;		/* lines left to print */
 int	 lead;		/* number of lines in leading context queue */
-int	 boleol;	/* At least one pattern has a bol or eol */
-size_t	 maxPatternLen;	/* Longest length of all patterns */
 
 extern char *__progname;
 
@@ -193,9 +191,6 @@ add_pattern(char *pat, size_t len)
 		pattern[patterns][len] = '\0';
 	}
 	++patterns;
-
-	if (len > maxPatternLen)
-		maxPatternLen = len;
 }
 
 static void

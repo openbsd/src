@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.28 2004/09/16 00:20:32 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.29 2004/10/03 19:23:02 otto Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -292,7 +292,6 @@ fastcomp(fastgrep_t *fg, const char *pattern)
 		eol++;
 		fg->eol = 1;
 		fg->patternLen--;
-		boleol = 1;
 	}
 
 	/* Remove beginning-of-line character ('^'). */
@@ -300,7 +299,6 @@ fastcomp(fastgrep_t *fg, const char *pattern)
 		bol++;
 		fg->bol = 1;
 		fg->patternLen--;
-		boleol = 1;
 	}
 
 	/* Remove enclosing [[:<:]] and [[:>:]] (word match). */
