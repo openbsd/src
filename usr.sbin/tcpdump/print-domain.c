@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-domain.c,v 1.13 2001/03/28 00:47:40 mickey Exp $	*/
+/*	$OpenBSD: print-domain.c,v 1.14 2001/03/28 19:46:11 jakob Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-domain.c,v 1.13 2001/03/28 00:47:40 mickey Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-domain.c,v 1.14 2001/03/28 19:46:11 jakob Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -57,15 +57,15 @@ static const char rcsid[] =
 #include "extract.h"                    /* must come after interface.h */
 
 static char *ns_ops[] = {
-	"", " inv_q", " stat", " op3", " notify", " op5", " op6", " op7",
+	"", " inv_q", " stat", " op3", " notify", " update", " op6", " op7",
 	" op8", " updataA", " updateD", " updateDA",
 	" updateM", " updateMA", " zoneInit", " zoneRef",
 };
 
 static char *ns_resp[] = {
 	"", " FormErr", " ServFail", " NXDomain",
-	" NotImp", " Refused", " Resp6", " Resp7",
-	" Resp8", " Resp9", " Resp10", " Resp11",
+	" NotImp", " Refused", " YXDomain", " YXRRSet",
+	" NXRRSet", " NotAuth", " NotZone", " Resp11",
 	" Resp12", " Resp13", " Resp14", " NoChange",
 };
 
@@ -75,24 +75,26 @@ ns_nskip(register const u_char *cp, register const u_char *bp)
 {
 	register u_char i;
 
+	if (!TTEST2(*cp, 1))
+		return (NULL);
 	if (((i = *cp++) & INDIR_MASK) == INDIR_MASK)
 		return (cp + 1);
-	if (cp >= snapend)
-		return(NULL);
-	while (i && cp < snapend) {
+	while (i) {
 		if ((i & INDIR_MASK) == EDNS0_MASK) {
 			int bitlen, bytelen;
 
 			if ((i & ~INDIR_MASK) != EDNS0_ELT_BITLABEL)
 				return(NULL); /* unknown ELT */
+			if (!TTEST2(*cp, 1))
+				return (NULL);
 			if ((bitlen = *cp++) == 0)
 				bitlen = 256;
 			bytelen = (bitlen + 7) / 8;
 			cp += bytelen;
 		} else
 			cp += i;
-		if (cp >= snapend)
-			return(NULL);
+		if (!TTEST2(*cp, 1))
+			return (NULL);
 		i = *cp++;
 	}
 	return (cp);
@@ -107,7 +109,7 @@ blabel_print(const u_char *cp)
 	const u_char *bitp, *lim;
 	char tc;
 
-	if (cp >= snapend)
+	if (!TTEST2(*cp, 1))
 		return(NULL);
 	if ((bitlen = *cp) == 0)
 		bitlen = 256;
@@ -140,7 +142,7 @@ labellen(const u_char *cp)
 {
 	register u_int i;
 
-	if (cp >= snapend)
+	if (!TTEST2(*cp, 1))
 		return(-1);
 	i = *cp;
 	if ((i & INDIR_MASK) == EDNS0_MASK) {
@@ -148,7 +150,7 @@ labellen(const u_char *cp)
 
 		if ((elt = (i & ~INDIR_MASK)) != EDNS0_ELT_BITLABEL)
 			return(-1);
-		if (cp + 1 >= snapend)
+		if (!TTEST2(*(cp + 1), 1))
 			return(-1);
 		if ((bitlen = *(cp + 1)) == 0)
 			bitlen = 256;
@@ -169,7 +171,7 @@ ns_nprint(register const u_char *cp, register const u_char *bp)
 
 	if ((l = labellen(cp)) < 0)
 		return(NULL);
-	if (cp >= snapend)
+	if (!TTEST2(*cp, 1))
 		return(NULL);
 	chars_processed = 1;
 	if (((i = *cp++) & INDIR_MASK) != INDIR_MASK) {
@@ -184,10 +186,12 @@ ns_nprint(register const u_char *cp, register const u_char *bp)
 					rp = cp + 1;
 					compress = 1;
 				}
-				cp = bp + (((i << 8) | *cp) & 0x3fff);
-				if (cp >= snapend)
+				if (!TTEST2(*cp, 1))
 					return(NULL);
+				cp = bp + (((i << 8) | *cp) & 0x3fff);
 				if ((l = labellen(cp)) < 0)
+					return(NULL);
+				if (!TTEST2(*cp, 1))
 					return(NULL);
 				i = *cp++;
 				chars_processed++;
@@ -208,7 +212,8 @@ ns_nprint(register const u_char *cp, register const u_char *bp)
 				elt = (i & ~INDIR_MASK);
 				switch(elt) {
 				case EDNS0_ELT_BITLABEL:
-					blabel_print(cp);
+					if (blabel_print(cp) == NULL)
+						return (NULL);
 					break;
 				default:
 					/* unknown ELT */
@@ -217,13 +222,15 @@ ns_nprint(register const u_char *cp, register const u_char *bp)
 				}
 			} else {
 				if (fn_printn(cp, l, snapend))
-					break;
+					return(NULL);
 			}
 
 			cp += l;
 			chars_processed += l;
 			putchar('.');
-			if (cp >= snapend || (l = labellen(cp)) < 0)
+			if ((l = labellen(cp)) < 0)
+				return(NULL);
+			if (!TTEST2(*cp, 1))
 				return(NULL);
 			i = *cp++;
 			chars_processed++;
@@ -241,10 +248,11 @@ ns_cprint(register const u_char *cp, register const u_char *bp)
 {
 	register u_int i;
 
-	if (cp >= snapend)
-		return NULL;
+	if (!TTEST2(*cp, 1))
+		return (NULL);
 	i = *cp++;
-	(void)fn_printn(cp, i, snapend);
+	if (fn_printn(cp, i, snapend))
+		return (NULL);
 	return (cp + i);
 }
 
@@ -293,6 +301,9 @@ struct tok ns_type2str[] = {
 	{ T_GID,	"GID" },
 	{ T_UNSPEC,	"UNSPEC" },
 	{ T_UNSPECA,	"UNSPECA" },
+	{ T_TKEY,	"TKEY" },
+	{ T_TSIG,	"TSIG" },
+	{ T_IXFR,	"IXFR" },
 	{ T_AXFR,	"AXFR" },
 	{ T_MAILB,	"MAILB" },
 	{ T_MAILA,	"MAILA" },
@@ -317,7 +328,7 @@ ns_qprint(register const u_char *cp, register const u_char *bp)
 
 	cp = ns_nskip(cp, bp);
 
-	if (cp + 4 > snapend || cp == NULL)
+	if (cp == NULL || !TTEST2(*cp, 4))
 		return(NULL);
 
 	/* print the qtype and qclass (if it's not IN) */
@@ -349,7 +360,7 @@ ns_rprint(register const u_char *cp, register const u_char *bp)
 	} else
 		cp = ns_nskip(cp, bp);
 
-	if (cp + 10 > snapend || cp == NULL)
+	if (cp == NULL || !TTEST2(*cp, 10))
 		return (snapend);
 
 	/* print the type/qtype and class (if it's not IN) */
@@ -374,7 +385,7 @@ ns_rprint(register const u_char *cp, register const u_char *bp)
 
 	switch (typ) {
 	case T_A:
-		if (cp + sizeof(struct in_addr) > snapend)
+		if (!TTEST2(*cp, sizeof(struct in_addr)))
 			return(NULL);
 		printf(" %s", ipaddr_string(cp));
 		break;
@@ -399,7 +410,7 @@ ns_rprint(register const u_char *cp, register const u_char *bp)
 		putchar(' ');
 		if ((cp = ns_nprint(cp, bp)) == NULL)
 			return(NULL);
-		if (cp + 5 * 4 > snapend)
+		if (!TTEST2(*cp, 5 * 4))
 			return(NULL);
 		printf(" %u", EXTRACT_32BITS(cp));
 		cp += 4;
@@ -414,7 +425,7 @@ ns_rprint(register const u_char *cp, register const u_char *bp)
 		break;
 	case T_MX:
 		putchar(' ');
-		if (cp + 2 > snapend)
+		if (!TTEST2(*cp, 2))
 			return(NULL);
 		if (ns_nprint(cp + 2, bp) == NULL)
 			return(NULL);
@@ -428,7 +439,7 @@ ns_rprint(register const u_char *cp, register const u_char *bp)
 
 #ifdef INET6
 	case T_AAAA:
-		if (cp + sizeof(struct in6_addr) > snapend)
+		if (!TTEST2(*cp, sizeof(struct in6_addr)))
 			return(NULL);
 		printf(" %s", ip6addr_string(cp));
 		break;
@@ -438,12 +449,16 @@ ns_rprint(register const u_char *cp, register const u_char *bp)
 		struct in6_addr a;
 		int pbit, pbyte;
 
+		if (!TTEST2(*cp, 1))
+			return(NULL);
 		pbit = *cp;
 		pbyte = (pbit & ~7) / 8;
 		if (pbit > 128) {
 			printf(" %u(bad plen)", pbit);
 			break;
 		} else if (pbit < 128) {
+			if (!TTEST2(*(cp + 1), sizeof(a) - pbyte))
+				return(NULL);
 			memset(&a, 0, sizeof(a));
 			memcpy(&a.s6_addr[pbyte], cp + 1, sizeof(a) - pbyte);
 			printf(" %u %s", pbit, ip6addr_string(&a));
@@ -462,10 +477,43 @@ ns_rprint(register const u_char *cp, register const u_char *bp)
 		break;
 
 	case T_UNSPECA:		/* One long string */
+		if (!TTEST2(*cp, len))
+			return(NULL);
+		if (fn_printn(cp, len, snapend))
+			return(NULL);
+		break;
+
+	case T_TSIG:
+	    {
 		if (cp + len > snapend)
 			return(NULL);
-		fn_printn(cp, len, snapend);
-		break;
+		if (!vflag)
+			break;
+		putchar(' ');
+		if ((cp = ns_nprint(cp, bp)) == NULL)
+			return(NULL);
+		cp += 6;
+		if (!TTEST2(*cp, 2))
+			return(NULL);
+		printf(" fudge=%u", EXTRACT_16BITS(cp));
+		cp += 2;
+		if (!TTEST2(*cp, 2))
+			return(NULL);
+		printf(" maclen=%u", EXTRACT_16BITS(cp));
+		cp += 2 + EXTRACT_16BITS(cp);
+		if (!TTEST2(*cp, 2))
+			return(NULL);
+		printf(" origid=%u", EXTRACT_16BITS(cp));
+		cp += 2;
+		if (!TTEST2(*cp, 2))
+			return(NULL);
+		printf(" error=%u", EXTRACT_16BITS(cp));
+		cp += 2;
+		if (!TTEST2(*cp, 2))
+			return(NULL);
+		printf(" otherlen=%u", EXTRACT_16BITS(cp));
+		cp += 2;
+	    }
 	}
 	return (rp);		/* XXX This isn't always right */
 }
@@ -478,6 +526,7 @@ ns_print(register const u_char *bp, u_int length)
 	register const u_char *cp = NULL;
 
 	np = (const HEADER *)bp;
+	TCHECK(*np);
 	/* get the byte-order right */
 	qdcount = ntohs(np->qdcount);
 	ancount = ntohs(np->ancount);
@@ -495,16 +544,24 @@ ns_print(register const u_char *bp, u_int length)
 			DNS_TC(np)? "|" : "",
 			DNS_CD(np)? "%" : "");
 
-		if (vflag > 1) {
-			fputs(" q:", stdout);
-			if ((cp = ns_qprint((const u_char *)(np + 1), bp))
-			    == NULL)
-				goto trunc;
-		} else {
-			if ((cp = ns_nskip((const u_char *)(np + 1), bp))
-			    == NULL)
-				goto trunc;
-			cp += 4;
+		if (qdcount != 1)
+			printf(" [%dq]", qdcount);
+		/* Print QUESTION section on -vv */
+		cp = (const u_char *)(np + 1);
+		while (qdcount--) {
+			if (qdcount < ntohs(np->qdcount) - 1)
+				putchar(',');
+			if (vflag > 1) {
+				fputs(" q:", stdout);
+				if ((cp = ns_qprint((const u_char *)(np + 1), bp))
+				    == NULL)
+					goto trunc;
+			} else {
+				if ((cp = ns_nskip((const u_char *)(np + 1), bp))
+				    == NULL)
+					goto trunc;
+				cp += 4;	/* skip QTYPE and QCLASS */
+			}
 		}
 		printf(" %d/%d/%d", ancount, nscount, arcount);
 		if (ancount--) {

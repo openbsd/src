@@ -1,4 +1,4 @@
-/* @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/nameser.h,v 1.1 2001/03/05 22:40:10 jakob Exp $ (LBL) */
+/* @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/nameser.h,v 1.2 2001/03/28 19:46:11 jakob Exp $ (LBL) */
 /*
  * Copyright (c) 1983, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -156,6 +156,9 @@
 #define T_UNSPEC	103		/* Unspecified format (binary data) */
 #define T_UNSPECA	104		/* "unspecified ascii". Ugly MIT hack */
 	/* Query type values which do not appear in resource records */
+#define T_TKEY		249		/* Transaction Key [RFC2930] */
+#define T_TSIG		250		/* Transaction Signature [RFC2845] */
+#define T_IXFR		251		/* incremental transfer [RFC1995] */
 #define T_AXFR		252		/* transfer zone of authority */
 #define T_MAILB		253		/* transfer mailbox records */
 #define T_MAILA		254		/* transfer mail agent records */
