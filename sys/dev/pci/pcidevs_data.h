@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.630 2003/05/30 08:45:35 grange Exp 
+ *		OpenBSD: pcidevs,v 1.631 2003/05/31 21:01:27 matthieu Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -4363,6 +4363,30 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Quadro4 GoGL",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4MX440AGP8,
+	    "GeForce4 MX 440 AGP 8x",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4MX440SEAGP8,
+	    "GeForce4 MX 440SE AGP 8x",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4MX420AGP8,
+	    "GeForce 4 MX 420 AGP 8x",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4_580XGL,
+	    "Quadro4 580 XGL",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4NVS,
+	    "Quadro4 NVS",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4_380XGL,
+	    "Quadro4 380 XGL",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE2_11,
 	    "GeForce2 Crush11",
 	},
@@ -4437,6 +4461,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_MEM5,
 	    "nForce2",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4MXNFORCE,
+	    "GeForce4 MX - nForce GPU",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE3,
