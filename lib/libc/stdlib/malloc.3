@@ -34,7 +34,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.21 2001/10/30 17:01:07 tdeval Exp $
+.\"	$OpenBSD: malloc.3,v 1.22 2001/10/30 21:17:44 tdeval Exp $
 .\"
 .Dd August 27, 1996
 .Dt MALLOC 3
@@ -80,7 +80,7 @@ or larger, the memory returned will be page-aligned.
 .Pp
 Allocation of a zero size object returns a pointer to a zero size object.
 This zero size object is access protected, so any access to it will
-generate an exception (SIGSEGV)
+generate an exception (SIGSEGV).
 .Pp
 The
 .Fn calloc
