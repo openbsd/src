@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat.c,v 1.24 2000/04/17 23:54:47 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.25 2000/06/10 01:26:36 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: compat.c,v 1.24 2000/04/17 23:54:47 espie Exp $";
+static char rcsid[] = "$OpenBSD: compat.c,v 1.25 2000/06/10 01:26:36 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -122,7 +122,7 @@ CompatInterrupt (signo)
 	if (signo == SIGINT) {
 	    gn = Targ_FindNode(".INTERRUPT", TARG_NOCREATE);
 	    if (gn != NULL) {
-		Lst_ForEach(gn->commands, CompatRunCommand, gn);
+		Lst_Find(gn->commands, CompatRunCommand, gn);
 	    }
 	}
 
@@ -191,7 +191,7 @@ shellneed (av)
  *	error, the node's made field is set to ERROR and creation stops.
  *
  * Results:
- *	0 if the command succeeded, 1 if an error occurred.
+ *	1 if the command succeeded, 0 if an error occurred.
  *
  * Side Effects:
  *	The node's 'made' field may be set to ERROR.
@@ -245,7 +245,7 @@ CompatRunCommand (cmdp, gnp)
     if (*cmdStart == '\0') {
 	free(cmdStart);
 	Error("%s expands to empty string", cmd);
-	return(0);
+	return 1;
     } else {
 	cmd = cmdStart;
     }
@@ -253,10 +253,10 @@ CompatRunCommand (cmdp, gnp)
 
     if ((gn->type & OP_SAVE_CMDS) && (gn != ENDNode)) {
 	Lst_AtEnd(ENDNode->commands, cmdStart);
-	return(0);
+	return 1;
     } else if (strcmp(cmdStart, "...") == 0) {
 	gn->type |= OP_SAVE_CMDS;
-	return(0);
+	return 1;
     }
 
     while ((*cmd == '@') || (*cmd == '-')) {
@@ -293,9 +293,8 @@ CompatRunCommand (cmdp, gnp)
      * If we're not supposed to execute any commands, this is as far as
      * we go...
      */
-    if (noExecute) {
-	return (0);
-    }
+    if (noExecute)
+	return 1;
 
     if (*cp != '\0') {
 	/*
@@ -321,7 +320,7 @@ CompatRunCommand (cmdp, gnp)
 	case -1: /* handled internally */
 		free(bp);
 		free(av);
-		return 0;
+		return 1;
 	case 1:
 		shargv[1] = (errCheck ? "-ec" : "-c");
 		shargv[2] = cmd;
@@ -416,7 +415,7 @@ CompatRunCommand (cmdp, gnp)
 	}
     }
 
-    return (status);
+    return !status;
 }
 
 /*-
@@ -522,7 +521,7 @@ CompatMake (gnp, pgnp)
 	     */
 	    if (!touchFlag) {
 		curTarg = gn;
-		Lst_ForEach(gn->commands, CompatRunCommand, gn);
+		Lst_Find(gn->commands, CompatRunCommand, gn);
 		curTarg = NULL;
 	    } else {
 		Job_Touch (gn, gn->type & OP_SILENT);
@@ -697,7 +696,7 @@ Compat_Run(targs)
     if (!queryFlag) {
 	gn = Targ_FindNode(".BEGIN", TARG_NOCREATE);
 	if (gn != NULL) {
-	    Lst_ForEach(gn->commands, CompatRunCommand, gn);
+	    Lst_Find(gn->commands, CompatRunCommand, gn);
             if (gn->made == ERROR) {
                 printf("\n\nStop.\n");
                 exit(1);
@@ -731,6 +730,6 @@ Compat_Run(targs)
      * If the user has defined a .END target, run its commands.
      */
     if (errors == 0) {
-	Lst_ForEach(ENDNode->commands, CompatRunCommand, gn);
+	Lst_Find(ENDNode->commands, CompatRunCommand, gn);
     }
 }

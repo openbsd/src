@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.39 2000/04/17 23:54:47 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.40 2000/06/10 01:26:37 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: parse.c,v 1.39 2000/04/17 23:54:47 espie Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.40 2000/06/10 01:26:37 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -457,7 +457,7 @@ ParseLinkSrc (pgnp, cgnp)
  *	operators are incompatible, a major error is taken.
  *
  * Results:
- *	Always 0
+ *	0 if a problem, 1 if ok.
  *
  * Side Effects:
  *	The type field of the node is altered to reflect any new bits in
@@ -478,10 +478,9 @@ ParseDoOp (gnp, opp)
      * the operator actually has some dependency information in it, complain.
      */
     if (((op & OP_OPMASK) != (gn->type & OP_OPMASK)) &&
-	!OP_NOP(gn->type) && !OP_NOP(op))
-    {
-	Parse_Error (PARSE_FATAL, "Inconsistent operator for %s", gn->name);
-	return (1);
+	!OP_NOP(gn->type) && !OP_NOP(op)) {
+	Parse_Error(PARSE_FATAL, "Inconsistent operator for %s", gn->name);
+	return 0;
     }
 
     if ((op == OP_DOUBLEDEP) && ((gn->type & OP_OPMASK) == OP_DOUBLEDEP)) {
@@ -523,7 +522,7 @@ ParseDoOp (gnp, opp)
      */
     gn->type |= op;
 
-    return (0);
+    return 1;
 }
 
 /*-
@@ -534,8 +533,8 @@ ParseDoOp (gnp, opp)
  *	.WAIT directive.
  *
  * Results:
- *	Returns 1 if the two targets need to be ordered, 0 otherwise.
- *	If it returns 1, the search can stop
+ *	Returns 0 if the two targets need to be ordered, 1 otherwise.
+ *	If it returns 0, the search can stop
  *
  * Side Effects:
  *	A dependency can be added between the two nodes.
@@ -558,10 +557,10 @@ ParseAddDep(pp, sp)
 	 */
 	Lst_AtEnd(p->successors, s);
 	Lst_AtEnd(s->preds, p);
-	return 0;
+	return 1;
     }
     else
-	return 1;
+	return 0;
 }
 
 
@@ -596,7 +595,7 @@ ParseDoSrc (tOp, src, allsrc)
 	if (keywd != -1) {
 	    int op = parseKeywords[keywd].op;
 	    if (op != 0) {
-		Lst_ForEach (targets, ParseDoOp, &op);
+		Lst_Find(targets, ParseDoOp, &op);
 		return;
 	    }
 	    if (parseKeywords[keywd].spec == Wait) {
@@ -676,9 +675,8 @@ ParseDoSrc (tOp, src, allsrc)
 
     gn->order = waiting;
     Lst_AtEnd(allsrc, gn);
-    if (waiting) {
-	Lst_ForEach(allsrc, ParseAddDep, gn);
-    }
+    if (waiting)
+	Lst_Find(allsrc, ParseAddDep, gn);
 }
 
 /*-
@@ -689,7 +687,7 @@ ParseDoSrc (tOp, src, allsrc)
  *	yet.
  *
  * Results:
- *	0 if main not found yet, 1 if it is.
+ *	1 if main not found yet, 0 if it is.
  *
  * Side Effects:
  *	mainNode is changed and Targ_SetMain is called.
@@ -705,9 +703,9 @@ ParseFindMain(gnp, dummy)
     if ((gn->type & OP_NOTARGET) == 0) {
 	mainNode = gn;
 	Targ_SetMain(gn);
-	return (dummy ? 1 : 1);
-    } else {
 	return (dummy ? 0 : 0);
+    } else {
+	return (dummy ? 1 : 1);
     }
 }
 
@@ -1120,7 +1118,7 @@ ParseDoDependency (line)
 
     cp++;			/* Advance beyond operator */
 
-    Lst_ForEach (targets, ParseDoOp, &op);
+    Lst_Find(targets, ParseDoOp, &op);
 
     /*
      * Get to the first source
@@ -1303,7 +1301,7 @@ ParseDoDependency (line)
 	 * the first dependency line that is actually a real target
 	 * (i.e. isn't a .USE or .EXEC rule) to be made.
 	 */
-	Lst_ForEach(targets, ParseFindMain, NULL);
+	Lst_Find(targets, ParseFindMain, NULL);
     }
 
     /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: suff.c,v 1.25 2000/03/26 16:21:33 espie Exp $	*/
+/*	$OpenBSD: suff.c,v 1.26 2000/06/10 01:26:37 espie Exp $	*/
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-static char rcsid[] = "$OpenBSD: suff.c,v 1.25 2000/03/26 16:21:33 espie Exp $";
+static char rcsid[] = "$OpenBSD: suff.c,v 1.26 2000/06/10 01:26:37 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -1064,7 +1064,7 @@ SuffAddLevel (l, targ)
  *	Free all src structures in list that don't have a reference count
  *
  * Results:
- *	Ture if an src was removed
+ *	True if an src was removed
  *
  * Side Effects:
  *	The memory is free'd.

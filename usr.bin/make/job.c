@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.25 2000/03/26 16:21:32 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.26 2000/06/10 01:26:36 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: job.c,v 1.25 2000/03/26 16:21:32 espie Exp $";
+static char rcsid[] = "$OpenBSD: job.c,v 1.26 2000/06/10 01:26:36 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -500,7 +500,7 @@ JobCmpRmtID(job, rmtID)
  *	This function is called from JobStart via Lst_ForEach.
  *
  * Results:
- *	Always 0, unless the command was "..."
+ *	Always 1, unless the command was "..."
  *
  * Side Effects:
  *	If the command begins with a '-' and the shell has no error control,
@@ -537,9 +537,9 @@ JobPrintCommand(cmdp, jobp)
 	if ((job->flags & JOB_IGNDOTS) == 0) {
 	    job->tailCmds = Lst_Succ(Lst_Member(job->node->commands,
 						cmd));
-	    return 1;
+	    return 0;
 	}
-	return 0;
+	return 1;
     }
 
 #define DBPRINTF(fmt, arg) if (DEBUG(JOB)) {	\
@@ -654,7 +654,7 @@ JobPrintCommand(cmdp, jobp)
     if (shutUp) {
 	DBPRINTF("%s\n", commandShell->echoOn);
     }
-    return 0;
+    return 1;
 }
 
 /*-
@@ -1763,9 +1763,7 @@ JobStart(gn, flags, previous)
 	    } else {
 		LstNode	ln = Lst_Next(gn->commands);
 
-		if ((ln == NULL) ||
-		    JobPrintCommand(Lst_Datum(ln), job))
-		{
+		if ((ln == NULL) || !JobPrintCommand(Lst_Datum(ln), job)) {
 		    noExec = TRUE;
 		    Lst_Close(gn->commands);
 		}
@@ -1789,7 +1787,7 @@ JobStart(gn, flags, previous)
 	     * We can do all the commands at once. hooray for sanity
 	     */
 	    numCommands = 0;
-	    Lst_ForEach(gn->commands, JobPrintCommand, job);
+	    Lst_Find(gn->commands, JobPrintCommand, job);
 
 	    /*
 	     * If we didn't print out any commands to the shell script,
@@ -1814,9 +1812,8 @@ JobStart(gn, flags, previous)
 	 * not -- just let the user know they're bad and keep going. It
 	 * doesn't do any harm in this case and may do some good.
 	 */
-	if (cmdsOK) {
-	    Lst_ForEach(gn->commands, JobPrintCommand, job);
-	}
+	if (cmdsOK)
+	    Lst_Find(gn->commands, JobPrintCommand, job);
 	/*
 	 * Don't execute the shell, thank you.
 	 */
