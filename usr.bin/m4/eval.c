@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.12 1999/09/06 13:10:48 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.13 1999/09/06 13:20:40 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.12 1999/09/06 13:10:48 espie Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.13 1999/09/06 13:20:40 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,7 @@ static char rcsid[] = "$OpenBSD: eval.c,v 1.12 1999/09/06 13:10:48 espie Exp $";
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stddef.h>
 #include <string.h>
 #include <fcntl.h>
 #include <err.h>
@@ -668,10 +669,13 @@ register int n;
 	if (n < 0 || n >= MAXOUT)
 		n = 0;		       /* bitbucket */
 	if (outfile[n] == NULL) {
-		m4temp[UNIQUE] = n + '0';
-		if ((fd = open(m4temp, O_CREAT|O_EXCL|O_WRONLY, 0600)) < 0 ||
-		    (outfile[n] = fdopen(fd, "w")) == NULL)
-			err(1, "%s: cannot divert", m4temp);
+		char fname[] = _PATH_DIVNAME;
+
+		if ((fd = mkstemp(fname)) < 0 || 
+			(outfile[n] = fdopen(fd, "w+")) == NULL)
+				err(1, "%s: cannot divert", fname);
+		if (unlink(fname) == -1)
+			err(1, "%s: cannot unlink", fname);
 	}
 	active = outfile[n];
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.6 1999/09/06 13:15:33 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.7 1999/09/06 13:20:40 espie Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/01/13 23:25:24 pk Exp $	*/
 
 /*-
@@ -89,7 +89,6 @@ extern char *endest;		/* end of string space */
 extern pbent *endpbb;		/* end of push-back buffer */
 extern char *ep;		/* first free char in strspace */
 extern char lquote[];		/* left quote character (`) */
-extern char *m4temp;		/* filename for diversions */
 extern char *m4wraps;		/* m4wrap string default. */
 extern char *null;		/* as it says.. just a null. */
 extern char rquote[];		/* right quote character (') */

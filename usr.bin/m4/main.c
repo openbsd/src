@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.11 1999/09/06 13:10:48 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.12 1999/09/06 13:20:40 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.11 1999/09/06 13:10:48 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.12 1999/09/06 13:20:40 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,6 @@ int fp; 			/* m4 call frame pointer       */
 FILE *infile[MAXINP];		/* input file stack (0=stdin)  */
 FILE *outfile[MAXOUT];		/* diversion array(0=bitbucket)*/
 FILE *active;			/* active output file pointer  */
-char *m4temp;			/* filename for diversions     */
 int ilevel = 0; 		/* input file stack pointer    */
 int oindex = 0; 		/* diversion index..	       */
 char *null = "";                /* as it says.. just a null..  */
@@ -188,9 +187,6 @@ main(argc,argv)
         argv += optind;
 
 	active = stdout;		/* default active output     */
-					/* filename for diversions   */
-	m4temp = mktemp(xstrdup(_PATH_DIVNAME));
-
 	bbase[0] = bufbase;
         if (!argc) {
  		sp = -1;		/* stack pointer initialized */
@@ -228,12 +224,6 @@ main(argc,argv)
 					/* remove bitbucket if used  */
 	if (outfile[0] != NULL) {
 		(void) fclose(outfile[0]);
-		m4temp[UNIQUE] = '0';
-#ifdef vms
-		(void) remove(m4temp);
-#else
-		(void) unlink(m4temp);
-#endif
 	}
 
 	return 0;
