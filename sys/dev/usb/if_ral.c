@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.9 2005/03/18 19:07:22 damien Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.10 2005/03/18 20:18:57 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -105,6 +105,8 @@ Static uint16_t		ural_txtime(int, int, uint32_t);
 Static uint8_t		ural_plcp_signal(int);
 Static void		ural_setup_tx_desc(struct ural_softc *,
 			    struct ural_tx_desc *, uint32_t, int, int);
+Static int		ural_tx_bcn(struct ural_softc *, struct mbuf *,
+			    struct ieee80211_node *);
 Static int		ural_tx_mgt(struct ural_softc *, struct mbuf *,
 			    struct ieee80211_node *);
 Static int		ural_tx_data(struct ural_softc *, struct mbuf *,
@@ -397,8 +399,9 @@ USB_ATTACH(ural)
 	ic->ic_state = IEEE80211_S_INIT;
 
 	/* set device capabilities */
-	ic->ic_caps = IEEE80211_C_MONITOR | IEEE80211_C_SHPREAMBLE |
-	    IEEE80211_C_PMGT | IEEE80211_C_TXPMGT | IEEE80211_C_WEP;
+	ic->ic_caps = IEEE80211_C_MONITOR | IEEE80211_C_IBSS |
+	    IEEE80211_C_HOSTAP | IEEE80211_C_SHPREAMBLE | IEEE80211_C_PMGT |
+	    IEEE80211_C_TXPMGT | IEEE80211_C_WEP;
 
 	if (sc->rf_rev == RAL_RF_5222) {
 		/* set supported .11a rates */
@@ -671,6 +674,7 @@ ural_task(void *arg)
 	struct ural_softc *sc = arg;
 	struct ieee80211com *ic = &sc->sc_ic;
 	enum ieee80211_state ostate;
+	struct mbuf *m;
 
 	ostate = ic->ic_state;
 
@@ -699,13 +703,35 @@ ural_task(void *arg)
 		break;
 
 	case IEEE80211_S_RUN:
-		if (ic->ic_opmode != IEEE80211_M_MONITOR) {
+		if (ic->ic_opmode != IEEE80211_M_MONITOR &&
+		    ic->ic_opmode != IEEE80211_M_HOSTAP)
 			ural_set_bssid(sc, ic->ic_bss->ni_bssid);
-			ural_enable_tsf_sync(sc);
+
+		if (ic->ic_opmode == IEEE80211_M_HOSTAP ||
+		    ic->ic_opmode == IEEE80211_M_IBSS) {
+			m = ieee80211_beacon_alloc(ic, ic->ic_bss);
+			if (m == NULL) {
+				printf("%s: could not allocate beacon\n",
+				    USBDEVNAME(sc->sc_dev));
+				return;
+			}
+
+			if (ural_tx_bcn(sc, m, ic->ic_bss) != 0) {
+				m_freem(m);
+				printf("%s: could not transmit beacon\n",
+				    USBDEVNAME(sc->sc_dev));
+				return;
+			}
+
+			/* beacon is no longer needed */
+			m_freem(m);
 		}
 
 		/* make tx led blink on tx (controlled by ASIC) */
 		ural_write(sc, RAL_MAC_CSR20, 1);
+
+		if (ic->ic_opmode != IEEE80211_M_MONITOR)
+			ural_enable_tsf_sync(sc);
 		break;
 	}
 
@@ -1029,6 +1055,58 @@ ural_setup_tx_desc(struct ural_softc *sc, struct ural_tx_desc *desc,
 }
 
 #define RAL_TX_TIMEOUT	5000
+
+Static int
+ural_tx_bcn(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
+{
+	struct ural_tx_desc *desc;
+	usbd_xfer_handle xfer;
+	usbd_status error;
+	uint32_t flags = 0;
+	uint8_t cmd = 0;
+	uint8_t *buf;
+	int xferlen, rate;
+
+	rate = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? 12 : 4;
+
+	xfer = usbd_alloc_xfer(sc->sc_udev);
+	if (xfer == NULL)
+		return ENOMEM;
+
+	buf = usbd_alloc_buffer(xfer, RAL_TX_DESC_SIZE + m0->m_pkthdr.len);
+	if (buf == NULL) {
+		usbd_free_xfer(xfer);
+		return ENOMEM;
+	}
+
+	usbd_setup_xfer(xfer, sc->sc_tx_pipeh, NULL, &cmd, sizeof cmd,
+	    USBD_FORCE_SHORT_XFER, RAL_TX_TIMEOUT, NULL);
+
+	error = usbd_sync_transfer(xfer);
+	if (error != 0) {
+		usbd_free_xfer(xfer);
+		return error;
+	}
+
+	desc = (struct ural_tx_desc *)buf;
+
+	m_copydata(m0, 0, m0->m_pkthdr.len, buf + RAL_TX_DESC_SIZE);
+	ural_setup_tx_desc(sc, desc, flags, m0->m_pkthdr.len, rate);
+
+	/* xfer length needs to be a multiple of two! */
+	xferlen = (RAL_TX_DESC_SIZE + m0->m_pkthdr.len + 1) & ~1;
+
+	DPRINTFN(10, ("sending beacon frame len=%u rate=%u xfer len=%u\n",
+	    m0->m_pkthdr.len, rate, xferlen));
+
+	usbd_setup_xfer(xfer, sc->sc_tx_pipeh, NULL, buf, xferlen,
+	    USBD_FORCE_SHORT_XFER | USBD_NO_COPY, RAL_TX_TIMEOUT, NULL);
+
+	error = usbd_sync_transfer(xfer);
+	usbd_free_xfer(xfer);
+
+	return error;
+}
 
 Static int
 ural_tx_mgt(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
@@ -1953,7 +2031,9 @@ ural_init(struct ifnet *ifp)
 	/* kick Rx */
 	tmp = RAL_DROP_PHY | RAL_DROP_CRC;
 	if (ic->ic_opmode != IEEE80211_M_MONITOR) {
-		tmp |= RAL_DROP_CTL | RAL_DROP_TODS | RAL_DROP_BAD_VERSION;
+		tmp |= RAL_DROP_CTL | RAL_DROP_BAD_VERSION;
+		if (ic->ic_opmode != IEEE80211_M_HOSTAP)
+			tmp |= RAL_DROP_TODS;
 		if (!(ifp->if_flags & IFF_PROMISC))
 			tmp |= RAL_DROP_NOT_TO_ME;
 	}
