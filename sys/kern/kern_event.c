@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.12 2002/01/25 04:03:29 art Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.13 2002/02/01 14:24:08 art Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -814,15 +814,14 @@ knote_attach(struct knote *kn, struct filedesc *fdp)
 		size = fdp->fd_knlistsize;
 		while (size <= kn->kn_id)
 			size += KQEXTENT;
-		MALLOC(list, struct klist *,
-		    size * sizeof(struct klist *), M_TEMP, M_WAITOK);
+		list = malloc(size * sizeof(struct klist *), M_TEMP, M_WAITOK);
 		bcopy((caddr_t)fdp->fd_knlist, (caddr_t)list,
 		    fdp->fd_knlistsize * sizeof(struct klist *));
 		bzero((caddr_t)list +
 		    fdp->fd_knlistsize * sizeof(struct klist *),
 		    (size - fdp->fd_knlistsize) * sizeof(struct klist *));
 		if (fdp->fd_knlist != NULL)
-			FREE(fdp->fd_knlist, M_TEMP);
+			free(fdp->fd_knlist, M_TEMP);
 		fdp->fd_knlistsize = size;
 		fdp->fd_knlist = list;
 	}
