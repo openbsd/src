@@ -66,9 +66,7 @@
 #include <machine/autoconf.h>
 #include <machine/pmap.h>
 #include <machine/fbvar.h>
-#if defined(SUN4)
 #include <machine/eeprom.h>
-#endif
 
 #include <machine/cgtworeg.h>
 
@@ -126,16 +124,11 @@ cgtwomatch(parent, vcf, aux)
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
 
-#if defined(SUN4)
-	if (cputyp != CPU_SUN4 || cf->cf_unit != 0)
-		return (0);
-
 	/* XXX - Must do our own mapping at CG2_CTLREG_OFF */
 	bus_untmp();
 	tmp = (caddr_t)bus_tmp(ra->ra_paddr + CG2_CTLREG_OFF, ca->ca_bustype);
 	if (probeget(tmp, 2) != -1)
 		return 1;
-#endif
 	return (0);
 }
 
@@ -151,6 +144,7 @@ cgtwoattach(parent, self, args)
 	register struct confargs *ca = args;
 	register int node = 0, i;
 	register struct cgtwo_all *p;
+	struct eeprom *eep = (struct eeprom *)eeprom_va;
 	int isconsole;
 	char *nam;
 
@@ -173,19 +167,11 @@ cgtwoattach(parent, self, args)
 	 * registers ourselves.  We only need the video RAM if we are
 	 * going to print characters via rconsole.
 	 */
-#if defined(SUN4)
-	if (cputyp == CPU_SUN4) {
-		struct eeprom *eep = (struct eeprom *)eeprom_va;
-		/*
-		 * Assume this is the console if there's no eeprom info
-		 * to be found.
-		 */
-		if (eep == NULL || eep->ee_diag.eed_console == EED_CONS_COLOR)
-			isconsole = (fbconstty != NULL);
-		else
-			isconsole = 0;
-	}
-#endif
+	if (eep == NULL || eep->ee_diag.eed_console == EED_CONS_COLOR)
+		isconsole = (fbconstty != NULL);
+	else
+		isconsole = 0;
+
 	sc->sc_phys = ca->ca_ra.ra_reg[0];
 	sc->sc_bustype = ca->ca_bustype;
 
@@ -209,13 +195,11 @@ cgtwoattach(parent, self, args)
 	if (isconsole) {
 		printf(" (console)\n");
 #ifdef RASTERCONSOLE
-		if (ca->ca_bustype != BUS_PFOUR)
-			fbrcons_init(&sc->sc_fb);
+		fbrcons_init(&sc->sc_fb);
 #endif
 	} else
 		printf("\n");
-	if ((node == fbnode && cputyp != CPU_SUN4) ||
-	    (isconsole && cputyp == CPU_SUN4))
+	if (isconsole)
 		fb_attach(&sc->sc_fb);
 }
 

@@ -65,7 +65,7 @@ file	arch/sparc/dev/esp.c		esp
 device bwtwo at sbus, obio, vmes, vmel, pfour
 file	arch/sparc/dev/bwtwo.c		bwtwo needs-flag
 
-device cgtwo at sbus, obio, vmes
+device cgtwo at vmes
 file	arch/sparc/dev/cgtwo.c		cgtwo needs-flag
 
 device cgthree at sbus
