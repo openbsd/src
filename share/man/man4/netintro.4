@@ -128,11 +128,11 @@ imposes finer and more specific structure, generally renaming
 the variant, which is discussed in the protocol family manual
 page alluded to above.
 .Bd -literal -offset indent
-    struct sockaddr {
+struct sockaddr {
 	u_char	sa_len;
     	u_char	sa_family;
     	char	sa_data[14];
-    };
+};
 .Ed
 .Pp
 The field
@@ -194,15 +194,15 @@ structure as its parameter.  This structure has the form
 .Bd -literal
 struct	ifreq {
 #define    IFNAMSIZ    16
-    char    ifr_name[IFNAMSIZ];         /* if name, e.g. "en0" */
-    union {
-        struct    sockaddr ifru_addr;
-        struct    sockaddr ifru_dstaddr;
-        struct    sockaddr ifru_broadaddr;
-        short     ifru_flags;
-        int       ifru_metric;
-        caddr_t   ifru_data;
-    } ifr_ifru;
+	char    ifr_name[IFNAMSIZ];         /* if name, e.g. "en0" */
+	union {
+	        struct    sockaddr ifru_addr;
+	        struct    sockaddr ifru_dstaddr;
+	        struct    sockaddr ifru_broadaddr;
+	        short     ifru_flags;
+	        int       ifru_metric;
+	        caddr_t   ifru_data;
+	} ifr_ifru;
 #define ifr_addr      ifr_ifru.ifru_addr    /* address */
 #define ifr_dstaddr   ifr_ifru.ifru_dstaddr /* other end of p-to-p link */
 #define ifr_broadaddr ifr_ifru.ifru_broadaddr /* broadcast address */
@@ -324,11 +324,11 @@ struct ifaliasreq {
 * must know all networks accessible).
 */
 struct ifconf {
-    int   ifc_len;		/* size of associated buffer */
-    union {
-        caddr_t    ifcu_buf;
-        struct     ifreq *ifcu_req;
-    } ifc_ifcu;
+	int   ifc_len;		/* size of associated buffer */
+	union {
+		caddr_t    ifcu_buf;
+	        struct     ifreq *ifcu_req;
+	} ifc_ifcu;
 #define ifc_buf ifc_ifcu.ifcu_buf /* buffer address */
 #define ifc_req ifc_ifcu.ifcu_req /* array of structures returned */
 };
