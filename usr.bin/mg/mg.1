@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mg.1,v 1.13 2002/05/10 19:53:18 deraadt Exp $
+.\"	$OpenBSD: mg.1,v 1.14 2002/09/28 01:14:02 deraadt Exp $
 .\"
 .Dd February 25, 2000
 .Dt MG 1
@@ -165,3 +165,9 @@ this buffer goes away the next time you type a real command.
 In
 .Nm mg ,
 you must use "^X-1" to get rid of it.
+.Pp
+The undo feature has a minor difference compared to the same feature in
+Gnu Emacs.  When the end of the undo records list is reached,
+.Nm mg
+will not stop and inform the user for one undo keystroke before continuing.
+
