@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.26 2000/11/28 05:12:18 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.27 2000/11/28 23:14:05 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -1168,7 +1168,7 @@ void
 hme_mii_statchg(self)
 	struct device *self;
 {
-	struct hme_softc *sc = (struct hme_softc *)sc;
+	struct hme_softc *sc = (struct hme_softc *)self;
 	struct hme_cr *cr = sc->sc_cr;
 
 	if (sc->sc_mii.mii_media_active & IFM_FDX)
