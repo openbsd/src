@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.25 1997/08/06 01:45:24 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.26 1998/02/05 04:56:47 millert Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.25 1997/08/06 01:45:24 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.26 1998/02/05 04:56:47 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -469,6 +469,7 @@ main(argc, argv)
 		struct sockaddr_in from;
 		register int cc;
 		int fromlen;
+		sigset_t omask, nmask;
 
 		if (options & F_FLOOD) {
 			pinger();
@@ -488,7 +489,11 @@ main(argc, argv)
 			perror("ping: recvfrom");
 			continue;
 		}
+		sigemptyset(&nmask);
+		sigaddset(&nmask, SIGALRM);
+		sigprocmask(SIG_BLOCK, &nmask, &omask);
 		pr_pack((char *)packet, cc, &from);
+		sigprocmask(SIG_SETMASK, &omask, NULL);
 		if (npackets && nreceived >= npackets)
 			break;
 	}
