@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.19 1999/01/26 04:09:35 millert Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.20 1999/03/03 01:03:51 millert Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #endif
-static char rcsid[] = "$OpenBSD: xinstall.c,v 1.19 1999/01/26 04:09:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: xinstall.c,v 1.20 1999/03/03 01:03:51 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -469,6 +469,7 @@ copy(from_fd, from_name, to_fd, to_name, size, sparse)
 			sz = S_BLKSIZE;
 		else
 			sz = sb.st_blksize;
+		rem = sz;
 
 		while ((nr = read(from_fd, buf, sizeof(buf))) > 0) {
 			if (sparse)
