@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.52 2001/11/05 02:39:56 art Exp $
+#	$OpenBSD: files.alpha,v 1.53 2001/11/05 02:41:01 art Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -205,7 +205,7 @@ file	arch/alpha/pci/cia_bus_mem.c	cia
 file	arch/alpha/pci/cia_bwx_bus_io.c	cia
 file	arch/alpha/pci/cia_bwx_bus_mem.c	cia
 
-device	irongate: pcibus
+device	irongate: pcibus, isadma_bounce
 attach	irongate at mainbus
 file	arch/alpha/pci/irongate.c		irongate
 file	arch/alpha/pci/irongate_bus_io.c	irongate
