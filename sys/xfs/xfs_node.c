@@ -1,4 +1,4 @@
-/*	$OpenBSD: xfs_node.c,v 1.2 1998/08/31 05:13:16 art Exp $	*/
+/*	$OpenBSD: xfs_node.c,v 1.3 1998/09/06 01:48:58 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -44,6 +44,7 @@
 #include <sys/systm.h>
 #include <sys/dirent.h>
 #include <sys/mount.h>
+#include <sys/vnode.h>
 
 #include <xfs/xfs_common.h>
 #include <xfs/xfs_fs.h>
@@ -93,7 +94,7 @@ new_xfs_node(struct xfs *xfsp, struct xfs_msg_node *node,
 
 		bzero(result, sizeof(*result));
 
-		error = getnewvnode(VT_AFS, XFS_TO_VFS(xfsp), xfs_vnodeop_p,
+		error = getnewvnode(VT_XFS, XFS_TO_VFS(xfsp), xfs_vnodeop_p,
 				    &v);
 		if (error) {
 			xfs_free(result, sizeof(*result));

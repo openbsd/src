@@ -1,4 +1,4 @@
-/*	$OpenBSD: xfs_dev.c,v 1.2 1998/08/31 05:13:14 art Exp $	*/
+/*	$OpenBSD: xfs_dev.c,v 1.3 1998/09/06 01:48:58 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -47,6 +47,7 @@
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/fcntl.h>
+#include <sys/vnode.h>
 
 #include <xfs/xfs_common.h>
 #include <xfs/xfs_message.h>
@@ -342,7 +343,6 @@ xfs_devpoll(dev_t dev, int events, struct proc *p)
 
 	return xfs_realselect(dev, p);
 }
-
 #endif
 
 #ifdef USE_SELECT
@@ -356,7 +356,6 @@ xfs_devselect(dev_t dev, int which, struct proc *p)
 
 	return xfs_realselect(dev, p);
 }
-
 #endif
 
 /*
@@ -431,6 +430,7 @@ xfs_message_rpc(int fd, struct xfs_message_header *message, u_int size)
 		return ENOMEM;
 	}
 #endif
+
 	msg = xfs_alloc(size);
 	bcopy(message, msg, size);
 
@@ -442,7 +442,7 @@ xfs_message_rpc(int fd, struct xfs_message_header *message, u_int size)
 	xfs_appendq(&chan->messageq, this_message);
 	xfs_appendq(&chan->sleepq, this_process);
 	if (chan->selecting_proc != 0
-	    && chan->selecting_proc->p_wchan == (caddr_t) & selwait) {
+	    && chan->selecting_proc->p_wchan == (caddr_t) &selwait) {
 		struct selinfo selinfo;
 
 #if defined(__NetBSD__) || defined(__FreeBSD__)
@@ -457,10 +457,17 @@ xfs_message_rpc(int fd, struct xfs_message_header *message, u_int size)
 	}
 	this_process->error_or_size = 0;
 
-	if (tsleep((caddr_t) this_process, (PZERO + 1) | PCATCH, "xfs", 0)) {
+	/*
+	 * We have to check if we have a receiver here too because the
+	 * daemon could have terminated before we sleep. This seems to
+	 * happen sometimes when rebooting.
+	 */
+	if (!(chan->status & CHANNEL_OPENED) ||
+	    tsleep((caddr_t) this_process, (PZERO + 1) | PCATCH, "xfs", 0)) {
 		XFSDEB(XDEBMSG, ("caught signal\n"));
 		this_process->error_or_size = EINTR;
 	}
+
 	/*
 	 * Caught signal, got reply message or device was closed.
 	 * Need to clean up both messageq and sleepq.

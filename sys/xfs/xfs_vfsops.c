@@ -1,4 +1,4 @@
-/*	$OpenBSD: xfs_vfsops.c,v 1.2 1998/08/31 05:13:19 art Exp $	*/
+/*	$OpenBSD: xfs_vfsops.c,v 1.3 1998/09/06 01:48:58 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -45,20 +45,19 @@
 #include <sys/namei.h>
 #include <sys/conf.h>
 #include <sys/proc.h>
-
-#include <xfs/xfs_common.h>
-
-RCSID("$KTH: xfs_vfsops.c,v 1.22 1998/08/13 01:38:49 art Exp $");
-
-/*
- * XFS vfs operations.
- */
+#include <sys/vnode.h>
 
 #include <xfs/xfs_common.h>
 #include <xfs/xfs_message.h>
 #include <xfs/xfs_dev.h>
 #include <xfs/xfs_fs.h>
 #include <xfs/xfs_deb.h>
+
+RCSID("$KTH: xfs_vfsops.c,v 1.22 1998/08/13 01:38:49 art Exp $");
+
+/*
+ * XFS vfs operations.
+ */
 
 static struct vnode *make_dead_vnode(struct mount *mp);
 

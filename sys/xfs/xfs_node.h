@@ -1,4 +1,4 @@
-/*	$OpenBSD: xfs_node.h,v 1.2 1998/08/31 05:13:28 art Exp $	*/
+/*	$OpenBSD: xfs_node.h,v 1.3 1998/09/06 01:48:58 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -42,9 +42,11 @@
 #ifndef _XFS_XFS_NODE_H_
 #define _XFS_XFS_NODE_H_
 
+#if 0
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/vnode.h>
+#endif
 
 #include <xfs/xfs_attr.h>
 #include <xfs/xfs_message.h>

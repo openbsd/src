@@ -1,4 +1,4 @@
-/*	$OpenBSD: xfs_message.c,v 1.2 1998/08/31 05:13:15 art Exp $	*/
+/*	$OpenBSD: xfs_message.c,v 1.3 1998/09/06 01:48:58 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -41,6 +41,8 @@
 #include <sys/uio.h>
 #include <sys/namei.h>
 #include <sys/systm.h>
+#include <sys/time.h>
+#include <sys/vnode.h>
 
 #include <xfs/xfs_common.h>
 #include <xfs/xfs_deb.h>

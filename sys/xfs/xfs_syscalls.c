@@ -1,4 +1,4 @@
-/*	$OpenBSD: xfs_syscalls.c,v 1.3 1998/08/31 05:13:17 art Exp $	*/
+/*	$OpenBSD: xfs_syscalls.c,v 1.4 1998/09/06 01:48:58 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -47,6 +47,7 @@
 #include <sys/syscall.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/vnode.h>
 
 #include <xfs/xfs_common.h>
 
@@ -246,8 +247,8 @@ xfs_pioctl_call(struct proc *p, void *v, int *i)
 
 		vp = nd.ni_vp;
 
-		if (vp->v_tag != VT_AFS) {
-			XFSDEB(XDEBSYS, ("xfs_syscall: %s not in afs\n",
+		if (vp->v_tag != VT_XFS) {
+			XFSDEB(XDEBSYS, ("xfs_syscall: %s not in xfs\n",
 					path));
 			vrele(vp);
 			return EINVAL;
