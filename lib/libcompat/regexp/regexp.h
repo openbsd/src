@@ -1,4 +1,4 @@
-/*	$OpenBSD: regexp.h,v 1.5 2003/06/02 20:18:40 millert Exp $	*/
+/*	$OpenBSD: regexp.h,v 1.6 2004/12/22 00:54:39 david Exp $	*/
 /*	$NetBSD: regexp.h,v 1.3 1994/10/26 00:56:15 cgd Exp $	*/
 
 /*
@@ -72,6 +72,7 @@ regexp *v8_regcomp(const char *);
 int v8_regexec(const  regexp *, const char *);
 void v8_regsub(const  regexp *, const char *, char *);
 void v8_regerror(const char *);
+void v8_setregerror(void (*)(const char *));
 __END_DECLS
 
 #endif /* !_REGEXP_H_ */

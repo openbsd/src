@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.c,v 1.2 2004/04/25 16:28:32 itojun Exp $	*/
+/*	$OpenBSD: radix.c,v 1.3 2004/12/22 00:54:39 david Exp $	*/
 /*	$NetBSD: radix.c,v 1.20 2003/08/07 16:32:56 agc Exp $	*/
 
 /*
@@ -45,6 +45,7 @@
 #include <sys/domain.h>
 #else
 #include <stdlib.h>
+#include <string.h>
 #endif
 #include <sys/syslog.h>
 #include <net/radix.h>

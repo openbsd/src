@@ -1,4 +1,4 @@
-/*	$OpenBSD: ptmget.c,v 1.1 2004/01/18 20:56:22 beck Exp $ */
+/*	$OpenBSD: ptmget.c,v 1.2 2004/12/22 00:54:39 david Exp $ */
 /*
  *	Written by Bob Beck <beck@openbsd.org> 2004 Public Domain.
  *	Basic test to ensure /dev/ptm works, and what it returns
@@ -8,8 +8,10 @@
 #include <fcntl.h>
 #include <grp.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 
+#include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/types.h>
 #include <sys/stat.h>
