@@ -664,6 +664,8 @@
 ./usr/share/man/cat3/mvme88k
 ./usr/share/man/cat3/mvmeppc
 ./usr/share/man/cat3/pegasos
+./usr/share/man/cat3/pthread_stackseg_np.0
+./usr/share/man/cat3/pthread_yield.0
 ./usr/share/man/cat3/sparc
 ./usr/share/man/cat3/sparc64
 ./usr/share/man/cat3/vax

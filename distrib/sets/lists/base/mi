@@ -1806,6 +1806,12 @@
 ./usr/share/calendar/de_DE.ISO_8859-1/calendar.literatur
 ./usr/share/calendar/de_DE.ISO_8859-1/calendar.musik
 ./usr/share/calendar/de_DE.ISO_8859-1/calendar.wissenschaft
+./usr/share/calendar/fr_FR.ISO8859-1
+./usr/share/calendar/fr_FR.ISO8859-1/calendar.all
+./usr/share/calendar/fr_FR.ISO8859-1/calendar.fetes
+./usr/share/calendar/fr_FR.ISO8859-1/calendar.french
+./usr/share/calendar/fr_FR.ISO8859-1/calendar.jferies
+./usr/share/calendar/fr_FR.ISO8859-1/calendar.proverbes
 ./usr/share/calendar/hr_HR.ISO_8859-2
 ./usr/share/calendar/hr_HR.ISO_8859-2/calendar.all
 ./usr/share/calendar/hr_HR.ISO_8859-2/calendar.praznici
