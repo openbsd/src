@@ -1,0 +1,64 @@
+.Dd July 3, 1999
+.Dt NET_ADDRCMP 3
+.Os
+.Sh NAME
+.Nm net_addrcmp
+.Nd compare socket address structures
+.Sh SYNOPSIS
+.Fd #include <netdb.h>
+.Ft int
+.Fn net_addrcmp "struct sockaddr *sa1" "struct sockaddr *sa2"
+.Sh DESCRIPTION
+The
+.Fn net_addrcmp
+function compares two socket address structures,
+.Fa sa1
+and
+.Fa sa2 .
+.Sh RETURN VALUES
+If
+.Fa sa1
+and
+.Fa sa2
+are for the same address,
+.Fn net_addrcmp
+returns 0.
+.Pp
+The
+.Fa sa_len
+fields are compared first. If they do not match,
+.Fn net_addrcmp
+returns \-1 or 1 if
+.Li sa1->sa_len
+is less than or greater than
+.Li sa2->sa_len ,
+respectively.
+.Pp
+Next, the
+.Fa sa_family
+members are compared. If they do not match,
+.Fn net_addrcmp
+returns \-1 or 1 if
+.Li sa1->sa_family
+is less than or greater than
+.Li sa2->sa_family ,
+respectively.
+.Pp
+Lastly, if each socket address structure's
+.Fa sa_len
+and
+.Fa sa_family
+fields match,
+the protocol-specific data (the
+.Fa sa_data
+field) is compared. If there's a match, both
+.Fa sa1
+and
+.Fa sa2
+must refer to the same address, and 0 is returned; otherwise, a value >0
+or <0 is returned.
+.Sh HISTORY
+A
+.Fn net_addrcmp
+function was added in
+.Ox 2.5 .
