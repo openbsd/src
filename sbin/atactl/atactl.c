@@ -1,4 +1,4 @@
-/*	$OpenBSD: atactl.c,v 1.18 2002/07/03 22:32:32 deraadt Exp $	*/
+/*	$OpenBSD: atactl.c,v 1.19 2002/07/06 14:46:57 gluk Exp $	*/
 /*	$NetBSD: atactl.c,v 1.4 1999/02/24 18:49:14 jwise Exp $	*/
 
 /*-
@@ -57,6 +57,7 @@
 #include <dev/ic/wdcreg.h>
 #include <sys/ataio.h>
 
+#include "atasec.h"
 #include "atasmart.h"
 
 struct command {
@@ -93,6 +94,11 @@ void	device_checkpower(int, char *[]);
 void	device_acoustic(int, char *[]);
 void	device_apm(int, char *[]);
 void	device_feature(int, char *[]);
+void	device_sec_setpass(int, char *[]);
+void	device_sec_unlock(int, char *[]);
+void	device_sec_erase(int, char *[]);
+void	device_sec_freeze(int, char *[]);
+void	device_sec_disablepass(int, char *[]);
 void	device_smart_enable(int, char *[]);
 void	device_smart_disable(int, char *[]);
 void	device_smart_status(int, char *[]);
@@ -104,6 +110,8 @@ void	device_attr(int, char *[]);
 
 void	smart_print_errdata(struct smart_log_errdata *);
 int	smart_cksum(u_int8_t *, int);
+
+char 	*sec_getpass(int, int);
 
 struct command commands[] = {
 	{ "dump",               device_dump },
@@ -125,6 +133,11 @@ struct command commands[] = {
 	{ "puisspinup",		device_feature },
 	{ "readaheaddisable",	device_feature },
 	{ "readaheadenable",	device_feature },
+	{ "secsetpass",		device_sec_setpass },
+	{ "secunlock",		device_sec_unlock },
+	{ "secerase",		device_sec_erase },
+	{ "secfreeze",		device_sec_freeze },
+	{ "secdisablepass",	device_sec_disablepass },
 	{ "smartenable", 	device_smart_enable },
 	{ "smartdisable", 	device_smart_disable },
 	{ "smartstatus", 	device_smart_status },
@@ -369,7 +382,7 @@ void
 usage(void)
 {
 
-	fprintf(stderr, "usage: %s device command [arg [...]]\n",
+	fprintf(stderr, "usage: %s <device> <command> [arg [...]]\n",
 	    __progname);
 	exit(1);
 }
@@ -483,7 +496,7 @@ device_identify(int argc, char *argv[])
 {
 	struct ataparams *inqbuf;
 	struct atareq req;
-	char inbuf[512], *s;
+	char inbuf[DEV_BSIZE], *s;
 
 	if (argc != 1)
 		goto usage;
@@ -566,6 +579,12 @@ device_identify(int argc, char *argv[])
 		printf("\n");
 	}
 
+	if ((inqbuf->atap_cmd_set1 & WDC_CMD1_SEC) &&
+	    inqbuf->atap_mpasswd_rev != 0 &&
+	    inqbuf->atap_mpasswd_rev != 0xffff)
+		printf("Master password revision code 0x%04x\n",
+		    inqbuf->atap_mpasswd_rev);
+
 	if (inqbuf->atap_cmd_set1 != 0 && inqbuf->atap_cmd_set1 != 0xffff &&
 	    inqbuf->atap_cmd_set2 != 0 && inqbuf->atap_cmd_set2 != 0xffff) {
 		printf("Device supports the following command sets:\n");
@@ -584,7 +603,7 @@ device_identify(int argc, char *argv[])
 	return;
 
 usage:
-	fprintf(stderr, "usage: %s device %s\n", __progname, argv[0]);
+	fprintf(stderr, "usage: %s <device> %s\n", __progname, argv[0]);
 	exit(1);
 }
 
@@ -616,8 +635,266 @@ device_idle(int argc, char *argv[])
 
 	return;
 usage:
-	fprintf(stderr, "usage: %s device %s\n", __progname, argv[0]);
+	fprintf(stderr, "usage: %s <device> %s\n", __progname, argv[0]);
 	exit(1);
+}
+
+/*
+ * SECURITY SET PASSWORD command
+ */
+void
+device_sec_setpass(int argc, char *argv[])
+{
+	struct atareq req;
+	struct sec_password pwd;
+	char *pass, inbuf[DEV_BSIZE];
+	struct ataparams *inqbuf = (struct ataparams *)inbuf;
+
+	if (argc < 2)
+		goto usage;
+
+	memset(&pwd, 0, sizeof(pwd));
+
+	if (strcmp(argv[1], "user") == 0 && argc == 3)
+		pwd.ctrl |= SEC_PASSWORD_USER;
+	else if (strcmp(argv[1], "master") == 0 && argc == 2)
+		pwd.ctrl |= SEC_PASSWORD_MASTER;
+	else
+		goto usage;
+	if (argc == 3)
+		if (strcmp(argv[2], "high") == 0)
+			pwd.ctrl |= SEC_LEVEL_HIGH;
+		else if (strcmp(argv[2], "maximum") == 0)
+			pwd.ctrl |= SEC_LEVEL_MAX;
+		else
+			goto usage;
+
+	/*
+	 * Issue IDENTIFY command to obtain master password
+	 * revision code and decrement its value.
+	 * The valid revision codes are 0x0001 through 0xfffe.
+	 * If device returnes 0x0000 or 0xffff as a revision
+	 * code then the master password revision code is not
+	 * supported so don't touch it.
+	 */
+	memset(&inbuf, 0, sizeof(inbuf));
+	memset(&req, 0, sizeof(req));
+
+	req.command = WDCC_IDENTIFY;
+	req.timeout = 1000;
+	req.flags = ATACMD_READ;
+	req.databuf = (caddr_t)inbuf;
+	req.datalen = sizeof(inbuf);
+
+	ata_command(&req);
+
+	pwd.revision = inqbuf->atap_mpasswd_rev;
+	if (pwd.revision != 0 && pwd.revision != 0xffff && --pwd.revision == 0)
+		pwd.revision = 0xfffe;
+
+	pass = sec_getpass(pwd.ctrl & SEC_PASSWORD_MASTER, 1);
+	memcpy(pwd.password, pass, strlen(pass));
+
+	memset(&req, 0, sizeof(req));
+
+	req.command = ATA_SEC_SET_PASSWORD;
+	req.timeout = 1000;
+	req.flags = ATACMD_WRITE;
+	req.databuf = (caddr_t)&pwd;
+	req.datalen = sizeof(pwd);
+
+	ata_command(&req);
+
+	return;
+usage:
+	fprintf(stderr, "usage: %s <device> %s user high | maximum\n",
+	    __progname, argv[0]);
+	fprintf(stderr, "usage: %s <device> %s master\n", __progname, argv[0]);
+}
+
+/*
+ * SECURITY UNLOCK command
+ */
+void
+device_sec_unlock(int argc, char *argv[])
+{
+	struct atareq req;
+	struct sec_password pwd;
+	char *pass;
+
+	if (argc != 2)
+		goto usage;
+
+	memset(&pwd, 0, sizeof(pwd));
+
+	if (strcmp(argv[1], "user") == 0)
+		pwd.ctrl |= SEC_PASSWORD_USER;
+	else if (strcmp(argv[1], "master") == 0)
+		pwd.ctrl |= SEC_PASSWORD_MASTER;
+	else
+		goto usage;
+
+	pass = sec_getpass(pwd.ctrl & SEC_PASSWORD_MASTER, 0);
+	memcpy(pwd.password, pass, strlen(pass));
+
+	memset(&req, 0, sizeof(req));
+
+	req.command = ATA_SEC_UNLOCK;
+	req.timeout = 1000;
+	req.flags = ATACMD_WRITE;
+	req.databuf = (caddr_t)&pwd;
+	req.datalen = sizeof(pwd);
+
+	ata_command(&req);
+
+	return;
+usage:
+	fprintf(stderr, "usage: %s <device> %s user | master\n", __progname,
+	    argv[0]);
+}
+
+/*
+ * SECURITY ERASE UNIT command
+ */
+void
+device_sec_erase(int argc, char *argv[])
+{
+	struct atareq req;
+	struct sec_password pwd;
+	char *pass;
+
+	if (argc < 2)
+		goto usage;
+
+	memset(&pwd, 0, sizeof(pwd));
+
+	if (strcmp(argv[1], "user") == 0)
+		pwd.ctrl |= SEC_PASSWORD_USER;
+	else if (strcmp(argv[1], "master") == 0)
+		pwd.ctrl |= SEC_PASSWORD_MASTER;
+	else
+		goto usage;
+	if (argc == 2)
+		pwd.ctrl |= SEC_ERASE_NORMAL;
+	else if (argc == 3 && strcmp(argv[2], "enhanced") == 0)
+		pwd.ctrl |= SEC_ERASE_ENHANCED;
+	else
+		goto usage;
+
+	pass = sec_getpass(pwd.ctrl & SEC_PASSWORD_MASTER, 0);
+	memcpy(pwd.password, pass, strlen(pass));
+
+	 /* Issue SECURITY ERASE PREPARE command before */
+	memset(&req, 0, sizeof(req));
+
+	req.command = ATA_SEC_ERASE_PREPARE;
+	req.timeout = 1000;
+
+	ata_command(&req);
+
+	memset(&req, 0, sizeof(req));
+
+	req.command = ATA_SEC_ERASE_UNIT;
+	req.timeout = 1000;
+	req.flags = ATACMD_WRITE;
+	req.databuf = (caddr_t)&pwd;
+	req.datalen = sizeof(pwd);
+
+	ata_command(&req);
+
+	return;
+usage:
+	fprintf(stderr, "usage: %s <device> %s user | master [enhanced]\n",
+	    __progname, argv[0]);
+}
+
+/*
+ * SECURITY FREEZE LOCK command
+ */
+void
+device_sec_freeze(int argc, char *argv[])
+{
+	struct atareq req;
+
+	if (argc != 1)
+		goto usage;
+
+	memset(&req, 0, sizeof(req));
+
+	req.command = ATA_SEC_FREEZE_LOCK;
+	req.timeout = 1000;
+
+	ata_command(&req);
+
+	return;
+usage:
+	fprintf(stderr, "usage: %s <device> %s\n", __progname, argv[0]);
+}
+
+/*
+ * SECURITY DISABLE PASSWORD command
+ */
+void
+device_sec_disablepass(int argc, char *argv[])
+{
+	struct atareq req;
+	struct sec_password pwd;
+	char *pass;
+
+	if (argc != 2)
+		goto usage;
+
+	memset(&pwd, 0, sizeof(pwd));
+
+	if (strcmp(argv[1], "user") == 0)
+		pwd.ctrl |= SEC_PASSWORD_USER;
+	else if (strcmp(argv[1], "master") == 0)
+		pwd.ctrl |= SEC_PASSWORD_MASTER;
+	else
+		goto usage;
+
+	pass = sec_getpass(pwd.ctrl & SEC_PASSWORD_MASTER, 0);
+	memcpy(pwd.password, pass, strlen(pass));
+
+	memset(&req, 0, sizeof(req));
+
+	req.command = ATA_SEC_DISABLE_PASSWORD;
+	req.timeout = 1000;
+	req.flags = ATACMD_WRITE;
+	req.databuf = (caddr_t)&pwd;
+	req.datalen = sizeof(pwd);
+
+	ata_command(&req);
+
+	return;
+usage:
+	fprintf(stderr, "usage: %s <device> %s user | master\n", __progname,
+	    argv[0]);
+}
+
+char *
+sec_getpass(int ident, int confirm)
+{
+	char *pass;
+
+	if ((pass = getpass(ident ? "Master password:" :
+	    "User password:")) == NULL)
+		err(1, "getpass()");
+	if (strlen(pass) > 32)
+		errx(1, "password too long");
+	if (confirm) {
+		char *pass2;
+
+		pass2 = strdup(pass);
+		if ((pass = getpass(ident ? "Retype master password:" :
+		    "Retype user password:")) == NULL)
+			err(1, "getpass()");
+		if (strcmp(pass, pass2) != 0)
+			errx(1, "password mismatch");
+		free(pass2);
+	}
+
+	return pass;
 }
 
 /*
@@ -642,7 +919,7 @@ device_smart_enable(int argc, char *argv[])
 
 	return;
 usage:
-	fprintf(stderr, "usage: %s device %s\n", __progname, argv[0]);
+	fprintf(stderr, "usage: %s <device> %s\n", __progname, argv[0]);
 	exit(1);
 }
 
@@ -668,7 +945,7 @@ device_smart_disable(int argc, char *argv[])
 
 	return;
 usage:
-	fprintf(stderr, "usage: %s device %s\n", __progname, argv[0]);
+	fprintf(stderr, "usage: %s <device> %s\n", __progname, argv[0]);
 	exit(1);
 }
 
@@ -704,7 +981,7 @@ device_smart_status(int argc, char *argv[])
 
 	return;
 usage:
-	fprintf(stderr, "usage: %s device %s\n", __progname, argv[0]);
+	fprintf(stderr, "usage: %s <device> %s\n", __progname, argv[0]);
 	exit(1);
 }
 
@@ -734,7 +1011,7 @@ device_smart_autosave(int argc, char *argv[])
 
 	return;
 usage:
-	fprintf(stderr, "usage: %s device %s enable | disable\n", __progname,
+	fprintf(stderr, "usage: %s <device> %s enable | disable\n", __progname,
 	    argv[0]);
 	exit(1);
 }
@@ -765,7 +1042,7 @@ device_smart_offline(int argc, char *argv[])
 
 	return;
 usage:
-	fprintf(stderr, "usage: %s device %s subcommand\n", __progname,
+	fprintf(stderr, "usage: %s <device> %s <subcommand>\n", __progname,
 	    argv[0]);
 	exit(1);
 }
@@ -826,7 +1103,7 @@ device_smart_read(int argc, char *argv[])
 
 	return;
 usage:
-	fprintf(stderr, "usage: %s device %s\n", __progname, argv[0]);
+	fprintf(stderr, "usage: %s <device> %s\n", __progname, argv[0]);
 	exit(1);
 }
 
@@ -999,7 +1276,7 @@ device_smart_readlog(int argc, char *argv[])
 
 	return;
 usage:
-	fprintf(stderr, "usage: %s device %s log\n", __progname, argv[0]);
+	fprintf(stderr, "usage: %s <device> %s <log>\n", __progname, argv[0]);
 	exit(1);
 }
 
@@ -1176,7 +1453,7 @@ device_acoustic(int argc, char *argv[])
 	return;
 
 usage:
-	fprintf(stderr, "usage: %s device %s acoustic-management-value\n",
+	fprintf(stderr, "usage: %s <device> %s <acoustic-management-value>\n",
 	    __progname, argv[0]);
 	exit(1);
 }
@@ -1224,7 +1501,7 @@ device_apm(int argc, char *argv[])
 	return;
 
 usage:
-	fprintf(stderr, "usage: %s device %s power-management-level\n",
+	fprintf(stderr, "usage: %s <device> %s <power-management-level>\n",
 	    __progname, argv[0]);
 	exit(1);
 }
@@ -1273,7 +1550,7 @@ device_feature(int argc, char *argv[])
 	return;
 
 usage:
-	fprintf(stderr, "usage: %s device %s\n", __progname,
+	fprintf(stderr, "usage: %s <device> %s\n", __progname,
 	    argv[0]);
 	exit(1);
 }
@@ -1330,7 +1607,7 @@ device_setidle(int argc, char *argv[])
 	return;
 
 usage:
-	fprintf(stderr, "usage: %s device %s idle-time\n", __progname,
+	fprintf(stderr, "usage: %s <device> %s <idle-time>\n", __progname,
 	    argv[0]);
 	exit(1);
 }
@@ -1372,6 +1649,6 @@ device_checkpower(int argc, char *argv[])
 
 	return;
 usage:
-	fprintf(stderr, "usage: %s device %s\n", __progname, argv[0]);
+	fprintf(stderr, "usage: %s <device> %s\n", __progname, argv[0]);
 	exit(1);
 }

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atactl.8,v 1.15 2002/06/09 08:13:05 todd Exp $
+.\"	$OpenBSD: atactl.8,v 1.16 2002/07/06 14:46:57 gluk Exp $
 .\"	$NetBSD: atactl.8,v 1.5 1999/02/24 18:49:14 jwise Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -234,6 +234,107 @@ behaviour in implementing this, so it is
 recommended to issue this command on a disk containing any currently
 mounted filesystems.
 .Pp
+.Cm secsetpass
+.Ar user
+.Ar high | maximum
+.br
+.Cm secsetpass
+.Ar master
+.Pp
+Sets password and security level for the specified device.
+There are two passwords, user and master, and two security levels, high and
+maximum.
+The maximum password length is 32 symbols.
+The security system is enabled by sending a user password to the device with
+this command.
+When the security system is enabled, access to user data on the device is
+denied after a power cycle until the user password is sent to the device with
+the
+.Cm secunlock
+command.
+A master password may be set in a addition to the user password.
+The purpose of the master password is to allow an administrator to establish
+a password that is kept secret from the user, and which may be used to unlock
+the device if the user password is lost.
+Setting the master password does not enable security system.
+Each master password change causes decrement of the master password revision
+code value which is displayed in the
+.Cm identify
+command output if supported.
+After value 0x0001 is reached the next value will be 0xfffe.
+The security level determines device behavior when the master password is used
+to unlock the device.
+When the security level is set to high the device requires the
+.Cm secunlock
+command if the master password is used to unlock.
+When the security level is set to maximum the device requires a
+.Cm secerase
+command if the master password is used to unlock.
+Execution of the
+.Cm secerase
+command erases all user data on the device.
+.Pp
+.Cm secunlock
+.Ar user | master
+.Pp
+Unlocks the specified device with user or master password.
+The device will always unlock if valid user password is received.
+If the security level was set to high during the last
+.Cm secsetpass
+command, the device will unlock if the master password is received.
+If the security level was set to maximum during the last
+.Cm secsetpass
+command, the device won't unlock if the master password is received.
+.Pp
+.Cm secerase
+.Ar user | master
+.Op Ar enhanced
+.Pp
+Erases all user data and unlocks the specified device.
+Execution of this command with master password is the only way to unlock the
+device being locked at maximum security level with
+.Cm secsetpass
+command if user password lost or unknown.
+There are two erase modes: normal and enhanced.
+Default erase mode is normal.
+In the normal erase mode this command will write binary zeroes to
+all user data areas.
+The enhanced erase mode is optional and may not be supported by your device.
+When enhanced erase mode specified, the device will write predetermined
+data patterns to all user data areas.
+In enhanced erase mode, all previously written user data will be overwritten,
+including sectors that are no longer in use due to reallocation.
+This command will disable the device lock mode, however, the master password
+will still be stored internally within the device and may be reactivated later
+when a new user password is set.
+.Pp
+.Cm secfreeze
+.Pp
+Prevents changes to passwords until a following power cycle.
+The purpose of this command is to prevent password setting attacks on the
+security system.
+After command completion any other commands that update the device lock mode
+will be aborted.
+.Pp
+.Cm secdisablepass
+.Ar user | master
+.Pp
+Disables the lock mode for the specified device with user or master password.
+This command won't change the master password.
+The master password will be reactivated when a user password is set.
+.Pp
+Support for the security commands is indicated by the device with
+.Sq Security Mode feature set
+in the output of the
+.Cm identify
+command.
+.Pp
+.Em WARNING
+.br
+Be very carefull while playing with theese commands.
+If you lose user and master passwords the device will be inaccessible at all.
+Don't use it unless the implications are completely understood.
+.Pp
 .Cm smartenable
 .Pp
 Enables SMART (Self-Monitoring, Analysis, and Reporting Technology) on the
@@ -425,6 +526,3 @@ command is rather ugly.
 Disabling read look-head with the
 .Cm readaheaddisable
 might cause problems with mounted filesystems on that device.
-.Pp
-There is no support for the Secure Mode commands (in particular the
-Security Erase Unit).
