@@ -1,4 +1,4 @@
-/*      $OpenBSD: bus_dma.c,v 1.11 2002/10/07 18:35:56 mickey Exp $        */
+/*      $OpenBSD: bus_dma.c,v 1.12 2003/06/02 07:07:25 deraadt Exp $        */
 /*      $NetBSD: bus_dma.c,v 1.2 2001/06/10 02:31:25 briggs Exp $        */
 
 /*-
@@ -330,6 +330,9 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 
         resid = uio->uio_resid;
         iov = uio->uio_iov;
+
+	if (resid > map->_dm_size)
+		return (EINVAL);
 
         if (uio->uio_segflg == UIO_USERSPACE) {
                 p = uio->uio_procp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bussw.c,v 1.6 2002/03/14 01:26:39 millert Exp $ */
+/*	$OpenBSD: bussw.c,v 1.7 2003/06/02 07:06:56 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -11,12 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed under OpenBSD by
- *	Theo de Raadt for Willowglen Singapore.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
