@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpu_isa.c,v 1.1 2002/11/28 23:24:53 mickey Exp $	*/
+/*	$OpenBSD: mpu_isa.c,v 1.2 2003/01/29 20:32:23 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002 Sergey Smitienko. All rights reserved.
@@ -94,18 +94,23 @@ mpu_test (iot, iobase)
 		goto done;
 
 	for (i = 0; i < MPU_MAXWAIT; i++) {
-		if (!(MPU_GETSTATUS(iot, ioh) & MPU_OUTPUT_BUSY))
-			goto done;
-		delay (10);
-	}
-	bus_space_write_1(iot, ioh, MPU_COMMAND, MPU_RESET);
-
-	for (i = 0; i < 2 * MPU_MAXWAIT; i++)
-		if (!(MPU_GETSTATUS(iot, ioh) & MPU_INPUT_EMPTY) &&
-		    bus_space_read_1(iot, ioh, MPU_DATA) == MPU_ACK) {
+		if (!MPU_GETSTATUS(iot, ioh) & MPU_OUTPUT_BUSY)) {
 			rc = 1;
 			break;
 		}
+		delay (10);
+	}
+	
+	if (rc == 1) {	
+		bus_space_write_1(iot, ioh, MPU_COMMAND, MPU_RESET);
+		rc = 0;
+		for (i = 0; i < 2 * MPU_MAXWAIT; i++)
+			if (!(MPU_GETSTATUS(iot, ioh) & MPU_INPUT_EMPTY) &&
+			    bus_space_read_1(iot, ioh, MPU_DATA) == MPU_ACK) {
+				rc = 1;
+				break;
+			}
+	}
 done:
 	bus_space_unmap(iot, ioh, MPU401_NPORT);
 
