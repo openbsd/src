@@ -7,7 +7,7 @@
     <title>Apache ディレクティブ</title>
 
   </head>
-  <!-- English revision: 1.71 -->
+  <!-- English revision: 1.74 -->
   <!-- Background white, links blue (unvisited), navy (visited), red (active) -->
   <body bgcolor="#ffffff" text="#000000" link="#0000ff"
   vlink="#000080" alink="#ff0000">
@@ -188,6 +188,8 @@
 
       <li><a href="core.html#contentdigest">ContentDigest</a></li>
 
+      <li><a href="mod_usertrack.html#cookiedomain">CookieDomain</a></li>
+
       <li><a href="mod_usertrack.html#cookieexpires"
       >CookieExpires</a></li>
 
@@ -196,6 +198,8 @@
 
       <li><a href="mod_log_config.html#cookielog">CookieLog</a>
       (mod_log_config)</li>
+
+      <li><a href="mod_usertrack.html#cookiestyle">CookieStyle</a></li>
 
       <li><a href="mod_usertrack.html#cookietracking"
       >CookieTracking</a></li>
@@ -254,6 +258,8 @@
       <li><a href="mod_autoindex.html#fancyindexing"
       >FancyIndexing</a></li>
 
+      <li><a href="core.html#fileetag">FileETag</a></li>
+
       <li><a href="core.html#files">&lt;Files&gt;</a></li>
 
       <li><a href="core.html#filesmatch"
@@ -269,7 +275,7 @@
       >HeaderName</a></li>
 
       <li><a href="core.html#hostnamelookups"
-      >HostNameLookups</a></li>
+      >HostnameLookups</a></li>
 
       <li><a href="core.html#identitycheck">IdentityCheck</a></li>
 

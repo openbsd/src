@@ -171,7 +171,7 @@ static enum byterange_token
     }
 
     if (ap_isdigit(*r->range))
-	*start = strtol(r->range, (char **)&r->range, 10);
+	*start = ap_strtol(r->range, (char **)&r->range, 10);
     else
 	*start = -1;
 
@@ -186,7 +186,7 @@ static enum byterange_token
         ++r->range;
 
     if (ap_isdigit(*r->range))
-	*end = strtol(r->range, (char **)&r->range, 10);
+	*end = ap_strtol(r->range, (char **)&r->range, 10);
     else
 	*end = -1;
 
@@ -857,13 +857,13 @@ API_EXPORT(int) ap_method_number_of(const char *method)
  *       then the actual input line exceeded the buffer length,
  *       and it would be a good idea for the caller to puke 400 or 414.
  */
-static int getline(char *s, int n, BUFF *in, int fold)
+API_EXPORT(int) ap_getline(char *s, int n, BUFF *in, int fold)
 {
     char *pos, next;
     int retval;
     int total = 0;
 #ifdef CHARSET_EBCDIC
-    /* When getline() is called, the HTTP protocol is in a state
+    /* When ap_getline() is called, the HTTP protocol is in a state
      * where we MUST be reading "plain text" protocol stuff,
      * (Request line, MIME headers, Chunk sizes) regardless of
      * the MIME type and conversion setting of the document itself.
@@ -978,12 +978,12 @@ CORE_EXPORT(void) ap_parse_uri(request_rec *r, const char *uri)
 
 static int read_request_line(request_rec *r)
 {
-    char l[DEFAULT_LIMIT_REQUEST_LINE + 2]; /* getline's two extra for \n\0 */
+    char l[DEFAULT_LIMIT_REQUEST_LINE + 2]; /* ap_getline's two extra for \n\0 */
     const char *ll = l;
     const char *uri;
     conn_rec *conn = r->connection;
     unsigned int major = 1, minor = 0;   /* Assume HTTP/1.0 if non-"HTTP" protocol */
-    int len;
+    int len, n;
 
     /* Read past empty lines until we get a real request line,
      * a read error, the connection closes (EOF), or we timeout.
@@ -1000,7 +1000,7 @@ static int read_request_line(request_rec *r)
      * have to block during a read.
      */
     ap_bsetflag(conn->client, B_SAFEREAD, 1);
-    while ((len = getline(l, sizeof(l), conn->client, 0)) <= 0) {
+    while ((len = ap_getline(l, sizeof(l), conn->client, 0)) <= 0) {
         if ((len < 0) || ap_bgetflag(conn->client, B_EOF)) {
             ap_bsetflag(conn->client, B_SAFEREAD, 0);
 	    /* this is a hack to make sure that request time is set,
@@ -1031,7 +1031,7 @@ static int read_request_line(request_rec *r)
 
     ap_parse_uri(r, uri);
 
-    /* getline returns (size of max buffer - 1) if it fills up the
+    /* ap_getline returns (size of max buffer - 1) if it fills up the
      * buffer before finding the end-of-line.  This is only going to
      * happen if it exceeds the configured limit for a request-line.
      */
@@ -1045,18 +1045,34 @@ static int read_request_line(request_rec *r)
     r->assbackwards = (ll[0] == '\0');
     r->protocol = ap_pstrdup(r->pool, ll[0] ? ll : "HTTP/0.9");
 
-    if (2 == sscanf(r->protocol, "HTTP/%u.%u", &major, &minor)
+    if (2 == sscanf(r->protocol, "HTTP/%u.%u%n", &major, &minor, &n)
       && minor < HTTP_VERSION(1,0))	/* don't allow HTTP/0.1000 */
 	r->proto_num = HTTP_VERSION(major, minor);
-    else
+    else {
 	r->proto_num = HTTP_VERSION(1,0);
+	n = 0;
+    }
+
+    /* Check for a valid protocol, and disallow everything but whitespace
+     * after the protocol string */
+    while (ap_isspace(r->protocol[n]))
+        ++n;
+    if (r->protocol[n] != '\0') {
+        r->status    = HTTP_BAD_REQUEST;
+        r->proto_num = HTTP_VERSION(1,0);
+        r->protocol  = ap_pstrdup(r->pool, "HTTP/1.0");
+        ap_table_setn(r->notes, "error-notes",
+                      "The request line contained invalid characters "
+                      "following the protocol string.<P>\n");
+        return 0;
+    }
 
     return 1;
 }
 
 static void get_mime_headers(request_rec *r)
 {
-    char field[DEFAULT_LIMIT_REQUEST_FIELDSIZE + 2]; /* getline's two extra */
+    char field[DEFAULT_LIMIT_REQUEST_FIELDSIZE + 2]; /* ap_getline's two extra */
     conn_rec *c = r->connection;
     char *value;
     char *copy;
@@ -1071,7 +1087,7 @@ static void get_mime_headers(request_rec *r)
      * Read header lines until we get the empty separator line, a read error,
      * the connection closes (EOF), reach the server limit, or we timeout.
      */
-    while ((len = getline(field, sizeof(field), c->client, 1)) > 0) {
+    while ((len = ap_getline(field, sizeof(field), c->client, 1)) > 0) {
 
         if (r->server->limit_req_fields &&
             (++fields_read > r->server->limit_req_fields)) {
@@ -1081,7 +1097,7 @@ static void get_mime_headers(request_rec *r)
                           "this server's limit.<P>\n");
             return;
         }
-        /* getline returns (size of max buffer - 1) if it fills up the
+        /* ap_getline returns (size of max buffer - 1) if it fills up the
          * buffer before finding the end-of-line.  This is only going to
          * happen if it exceeds the configured limit for a field size.
          */
@@ -1169,6 +1185,14 @@ API_EXPORT(request_rec *) ap_read_request(conn_rec *conn)
 
             ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r,
                          "request failed: URI too long");
+            ap_send_error_response(r, 0);
+            ap_log_transaction(r);
+            return r;
+        }
+        else if (r->status == HTTP_BAD_REQUEST) {
+            ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r,
+                         "request failed: erroneous characters after protocol string: %s",
+			 ap_escape_logitem(r->pool, r->the_request));
             ap_send_error_response(r, 0);
             ap_log_transaction(r);
             return r;
@@ -1522,7 +1546,6 @@ API_EXPORT_NONSTD(int) ap_send_header_field(request_rec *r,
 API_EXPORT(void) ap_basic_http_header(request_rec *r)
 {
     char *protocol;
-    const char *server;
 
     if (r->assbackwards)
         return;
@@ -1551,10 +1574,13 @@ API_EXPORT(void) ap_basic_http_header(request_rec *r)
     /* output the date header */
     ap_send_header_field(r, "Date", ap_gm_timestr_822(r->pool, r->request_time));
 
-    /* keep a previously set server header (possible from proxy), otherwise
+    /* keep the set-by-proxy server header, otherwise
      * generate a new server header */
-    if (server = ap_table_get(r->headers_out, "Server")) {
-        ap_send_header_field(r, "Server", server);
+    if (r->proxyreq) {
+        const char *server = ap_table_get(r->headers_out, "Server");
+        if (server) {
+            ap_send_header_field(r, "Server", server);
+        }
     }
     else {
         ap_send_header_field(r, "Server", ap_get_server_version());
@@ -1967,16 +1993,25 @@ API_EXPORT(int) ap_setup_client_block(request_rec *r, int read_policy)
     }
     else if (lenp) {
         const char *pos = lenp;
+        int conversion_error = 0;
 
         while (ap_isdigit(*pos) || ap_isspace(*pos))
             ++pos;
-        if (*pos != '\0') {
-            ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r,
-                        "Invalid Content-Length %s", lenp);
-            return HTTP_BAD_REQUEST;
+
+        if (*pos == '\0') {
+            char *endstr;
+            errno = 0;
+            r->remaining = ap_strtol(lenp, &endstr, 10);
+            if (errno || (endstr && *endstr)) {
+                conversion_error = 1;
+            }
         }
 
-        r->remaining = atol(lenp);
+        if (*pos != '\0' || conversion_error) {
+            ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r,
+                        "Invalid Content-Length");
+            return HTTP_BAD_REQUEST;
+        }
     }
 
     if ((r->read_body == REQUEST_NO_BODY) &&
@@ -2025,7 +2060,7 @@ API_EXPORT(int) ap_should_client_block(request_rec *r)
     return 1;
 }
 
-static long get_chunk_size(char *b)
+API_EXPORT(long) ap_get_chunk_size(char *b)
 {
     long chunksize = 0;
     long chunkbits = sizeof(long) * 8;
@@ -2120,14 +2155,14 @@ API_EXPORT(long) ap_get_client_block(request_rec *r, char *buffer, int bufsiz)
 
     if (r->remaining == 0) {    /* Start of new chunk */
 
-        chunk_start = getline(buffer, bufsiz, r->connection->client, 0);
+        chunk_start = ap_getline(buffer, bufsiz, r->connection->client, 0);
         if ((chunk_start <= 0) || (chunk_start >= (bufsiz - 1))
             || !ap_isxdigit(*buffer)) {
             r->connection->keepalive = -1;
             return -1;
         }
 
-        len_to_read = get_chunk_size(buffer);
+        len_to_read = ap_get_chunk_size(buffer);
 
         if (len_to_read == 0) { /* Last chunk indicated, get footers */
             if (r->read_body == REQUEST_CHUNKED_DECHUNK) {
@@ -2165,7 +2200,7 @@ API_EXPORT(long) ap_get_client_block(request_rec *r, char *buffer, int bufsiz)
         len_read = chunk_start;
 
         while ((bufsiz > 1) && ((len_read =
-                  getline(buffer, bufsiz, r->connection->client, 1)) > 0)) {
+                  ap_getline(buffer, bufsiz, r->connection->client, 1)) > 0)) {
 
             if (len_read != (bufsiz - 1)) {
                 buffer[len_read++] = CR;        /* Restore footer line end  */

@@ -231,6 +231,13 @@
     otherwise it must be omitted. Note that the status must be
     known to the Apache code (see the function
     <code>send_error_response</code> in http_protocol.c).</p>
+
+    <p>Example:</p>
+
+    <pre>
+    Redirect permanent /one http://example.com/two<br />
+    Redirect 303 /two http://example.com/other
+    </pre>
     <hr />
 
     <h2><a id="redirectmatch"

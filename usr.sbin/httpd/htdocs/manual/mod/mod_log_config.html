@@ -305,8 +305,8 @@
     <p>Environment variables can be set on a <em>per</em>-request
     basis using the <a href="mod_setenvif.html">mod_setenvif</a>
     and/or <a href="mod_rewrite.html">mod_rewrite</a> modules. For
-    example, if you don't want to record requests for all GIF
-    images on your server in a separate logfile but not your main
+    example, if you want to record requests for all GIF
+    images on your server in a separate logfile but not in your main
     log, you can use:</p>
 <pre>
     SetEnvIf Request_URI \.gif$ gif-image
@@ -360,6 +360,11 @@
     nickname, it doesn't actually apply the format and make it the
     default. Therefore, it will not affect subsequent <a
     href="#transferlog">TransferLog</a> directives.</p>
+
+    <p>For example:</p>
+
+    <code>LogFormat "%v %h %l %u %t \"%r\" %&gt;s %b" vhost_common</code>
+
     <hr />
 
     <h2><a id="transferlog" name="transferlog">TransferLog</a>

@@ -1446,6 +1446,81 @@ API_EXPORT(int) ap_find_last_token(pool *p, const char *line, const char *tok)
     return (strncasecmp(&line[lidx], tok, tlen) == 0);
 }
 
+/* c2x takes an unsigned, and expects the caller has guaranteed that
+ * 0 <= what < 256... which usually means that you have to cast to
+ * unsigned char first, because (unsigned)(char)(x) first goes through
+ * signed extension to an int before the unsigned cast.
+ *
+ * The reason for this assumption is to assist gcc code generation --
+ * the unsigned char -> unsigned extension is already done earlier in
+ * both uses of this code, so there's no need to waste time doing it
+ * again.
+ */
+static const char c2x_table[] = "0123456789abcdef";
+
+static ap_inline unsigned char *c2x(unsigned what, unsigned char *where)
+{
+#ifdef CHARSET_EBCDIC
+    what = os_toascii[what];
+#endif /*CHARSET_EBCDIC*/
+    *where++ = '%';
+    *where++ = c2x_table[what >> 4];
+    *where++ = c2x_table[what & 0xf];
+    return where;
+}
+
+/* escape a string for logging */
+API_EXPORT(char *) ap_escape_logitem(pool *p, const char *str)
+{
+    char *ret;
+    unsigned char *d;
+    const unsigned char *s;
+
+    if (str == NULL)
+        return NULL;
+
+    ret = ap_palloc(p, 4 * strlen(str) + 1);	/* Be safe */
+    d = (unsigned char *)ret;
+    s = (const unsigned char *)str;
+    for (; *s; ++s) {
+
+	if (TEST_CHAR(*s, T_ESCAPE_LOGITEM)) {
+	    *d++ = '\\';
+            switch(*s) {
+            case '\b':
+                *d++ = 'b';
+	        break;
+            case '\n':
+                *d++ = 'n';
+	        break;
+            case '\r':
+                *d++ = 'r';
+	        break;
+            case '\t':
+                *d++ = 't';
+	        break;
+            case '\v':
+                *d++ = 'v';
+	        break;
+            case '\\':
+            case '"':
+                *d++ = *s;
+	        break;
+	    default:
+                c2x(*s, d);
+	        *d = 'x';
+		d += 3;
+	    }
+	}
+	else
+            *d++ = *s;
+    }
+    *d = '\0';
+
+    return ret;
+}
+
+
 API_EXPORT(char *) ap_escape_shell_cmd(pool *p, const char *str)
 {
     char *cmd;
@@ -1494,7 +1569,7 @@ static char x2c(const char *what)
     xstr[2]=what[0];
     xstr[3]=what[1];
     xstr[4]='\0';
-    digit = os_toebcdic[0xFF & strtol(xstr, NULL, 16)];
+    digit = os_toebcdic[0xFF & ap_strtol(xstr, NULL, 16)];
 #endif /*CHARSET_EBCDIC*/
     return (digit);
 }
@@ -1548,29 +1623,6 @@ API_EXPORT(char *) ap_construct_server(pool *p, const char *hostname,
     else {
 	return ap_psprintf(p, "%s:%u", hostname, port);
     }
-}
-
-/* c2x takes an unsigned, and expects the caller has guaranteed that
- * 0 <= what < 256... which usually means that you have to cast to
- * unsigned char first, because (unsigned)(char)(x) first goes through
- * signed extension to an int before the unsigned cast.
- *
- * The reason for this assumption is to assist gcc code generation --
- * the unsigned char -> unsigned extension is already done earlier in
- * both uses of this code, so there's no need to waste time doing it
- * again.
- */
-static const char c2x_table[] = "0123456789abcdef";
-
-static ap_inline unsigned char *c2x(unsigned what, unsigned char *where)
-{
-#ifdef CHARSET_EBCDIC
-    what = os_toascii[what];
-#endif /*CHARSET_EBCDIC*/
-    *where++ = '%';
-    *where++ = c2x_table[what >> 4];
-    *where++ = c2x_table[what & 0xf];
-    return where;
 }
 
 /*

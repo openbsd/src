@@ -101,7 +101,11 @@ int ssl_rand_seed(server_rec *s, pool *p, ssl_rsctx_t nCtx, char *prefix)
                 /*
                  * seed in contents of an external file
                  */
+#ifdef WIN32
+                if ((fp = ap_pfopen(p, pRandSeed->cpPath, "rb")) == NULL)
+#else
                 if ((fp = ap_pfopen(p, pRandSeed->cpPath, "r")) == NULL)
+#endif
                     continue;
                 nDone += ssl_rand_feedfp(p, fp, pRandSeed->nBytes);
                 ap_pfclose(p, fp);
@@ -155,7 +159,8 @@ int ssl_rand_seed(server_rec *s, pool *p, ssl_rsctx_t nCtx, char *prefix)
                  * seed in extract data from the current scoreboard
                  */
                 if (ap_scoreboard_image != NULL && SCOREBOARD_SIZE > 16) {
-                    m = ((SCOREBOARD_SIZE / 2) - 1);
+                    if ((m = ((SCOREBOARD_SIZE / 2) - 1)) > 1024)
+                        m = 1024;
                     n = ssl_rand_choosenum(0, m);
                     RAND_seed(((unsigned char *)ap_scoreboard_image)+n, m);
                     nDone += m;
@@ -167,7 +172,7 @@ int ssl_rand_seed(server_rec *s, pool *p, ssl_rsctx_t nCtx, char *prefix)
 
 #if SSL_LIBRARY_VERSION >= 0x00905100
     if (RAND_status() == 0)
-        ssl_log(s, SSL_LOG_WARN, "%sPRNG still contains not sufficient entropy!", prefix);
+        ssl_log(s, SSL_LOG_WARN, "%sPRNG still contains insufficient entropy!", prefix);
 #endif
     return nDone;
 }

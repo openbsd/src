@@ -315,6 +315,11 @@
           <li><a href="#codered">Why do I have weird entries in my
           logs asking for <code>default.ida</code> and
           <code>cmd.exe</code>?</a></li>
+
+          <li><a href="#restart">Why am I getting server restart
+          messages periodically, when I did not restart the
+          server?</a></li>
+
         </ol>
       </li>
       
@@ -534,6 +539,10 @@
 
           <li><a href="#prompted-twice">Why does Apache ask for my
           password twice before serving a file?</a></li>
+
+          <li><a href="#image-theft">How can I prevent people from
+          "stealing" the images from my web site?</a></li>
+
         </ol>
       </li>
       
@@ -1267,10 +1276,9 @@
         with Perl. We implement a simple subset of Perl's regex
         support, but it's still a good way to learn what they mean.
         You can start by going to the <a
-        href="http://www.perl.com/CPAN-local/doc/manual/html/pod/perlre.html#Regular_Expressions">
-        CPAN page on regular expressions</a>, and branching out
-        from there.</p>
-        <hr />
+        href="http://www.perl.com/doc/manual/html/pod/perlre.html">CPAN
+        page on regular expressions</a>, and branching out from
+        there.</p> <hr />
       </li>
 
       <li>
@@ -1885,6 +1893,23 @@
           href="http://www.apacheweek.com/features/codered">article</a>
           with more information.</p>
      </li>
+
+    <li<a id="restart" name="restart"><b>Why am I getting server restart
+    messages periodically, when I did not restart the server?</b></a>
+
+          <p>Problem: You are noticing restart messages in your error log,
+          periodically, when you know you did not restart the server
+          yourself:</p>
+
+<pre>
+[Thu Jun  6 04:02:01 2002] [notice] SIGHUP received.  Attempting to restart
+[Thu Jun  6 04:02:02 2002] [notice] Apache configured -- resuming normal operations
+</pre>
+
+          <p>Check your cron jobs to see when/if your server logs are being
+          rotated. Compare the time of rotation to the error menage time.
+          If they are the same, you can somewhat safely assume that the 
+          restart is due to your server logs being rotated.</p>
 
     </ol>
     
@@ -2989,6 +3014,10 @@ Options Includes ExecCGI<br />
             </dl>
           </li>
         </ol>
+        <p>If you are using suexec, the first technique will not work
+        because CGI scripts must be stored under the <code>public_html</code>
+        directory.</p>
+
         <hr />
       </li>
     </ol>
@@ -3307,6 +3336,44 @@ Options Includes ExecCGI<br />
         </ol>
         <hr />
       </li>
+
+      <li>
+        <a id="image-theft" name="image-theft"><strong>How can I prevent
+        people from "stealing" the images from my web site?</strong></a> 
+
+        <p>The goal here is to prevent people from inlining your images
+        directly from their web site, but accessing them only if they
+        appear inline in your pages.<p>
+
+        <p>This can be accomplished with a combination of SetEnvIf and
+        the Deny and Allow directives. However, it is important to 
+        understand that any access restriction based on the REFERER
+        header is intrinsically problematic due to the fact that 
+        browsers can send an incorrect REFERER, either because they 
+        want to circumvent your restriction or simply because they don't
+        send the right thing (or anything at all).</p>
+
+        <p>The following configuration will produce the desired effect
+        if the browser passes correct REFERER headers.</p>
+
+<pre>
+SetEnvIf REFERER "www\.mydomain\.com" linked_from_here
+SetEnvIf REFERER "^$" linked_from_here
+
+&lt;Directory /www/images&gt;
+    Order deny,allow
+    Deny from all
+    Allow from env=linked_from_here
+&lt;/Directory&gt;
+</pre>
+
+<p>Further examples can be found in the <a 
+href="../env.html#examples">Environment Variables</a> documentation.</p>
+
+        <hr />
+      </li>
+
+
     </ol>
     
     
@@ -3631,7 +3698,7 @@ Options Includes ExecCGI<br />
          A more sophisticated solution of a logfile rotation
         utility is available under the name <code>cronolog</code>
         from Andrew Ford's site at <a
-        href="http://www.ford-mason.co.uk/resources/cronolog/">http://www.ford-mason.co.uk/resources/cronolog/</a>.
+        href="http://www.cronolog.org/">http://www.cronolog.org/</a>.
         It can automatically create logfile subdirectories based on
         time and date, and can have a constant symlink point to the
         rotating logfiles. (As of version 1.6.1, cronolog is

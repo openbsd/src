@@ -91,7 +91,7 @@
       (<code>Anonymous_LogEmail</code>)</li>
     </ul>
 
-    <p>Excerpt of access.conf:</p>
+    <p>Excerpt of httpd.conf:</p>
 
     <blockquote>
 <pre>
@@ -204,7 +204,16 @@ Require valid-user
 
     <p>When set 'on', the default, the 'password' entered (which
     hopefully contains a sensible email address) is logged in the
-    error log.</p>
+    error log. The message is logged at a level of <code>info</code>,
+    and so you must have <a href="core.html#loglevel">LogLevel</a> set
+    to at least <code>info</code> in order to see this message.</p>
+
+    <p>Log entries will look like the following example:</p>
+
+    <pre>
+[Fri Apr 26 14:49:50 2002] [info] [client 192.168.1.105] Anonymous: Passwd <user@example.com> Accepted
+</pre>
+
     <hr />
 
     <h2><a id="MustGiveEmail"

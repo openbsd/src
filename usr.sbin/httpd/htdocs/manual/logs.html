@@ -52,7 +52,7 @@
 
       <li><a href="#piped">Piped Logs</a></li>
 
-      <li><a href="#virtualhosts">VirtualHosts</a></li>
+      <li><a href="#virtualhosts">Virtual Hosts</a></li>
 
       <li>
         <a href="#other">Other Log Files</a> 
@@ -109,7 +109,7 @@
     <code>error_log</code> on unix systems and
     <code>error.log</code> on Windows and OS/2). On unix systems it
     is also possible to have the server send errors to
-    <code>syslog</code> or <a href="#pipe">pipe them to a
+    <code>syslog</code> or <a href="#piped">pipe them to a
     program</a>.</p>
 
     <p>The format of the error log is relatively free-form and
@@ -346,7 +346,7 @@
       error caused by the client (codes beginning in 4), or an
       error in the server (codes beginning in 5). The full list of
       possible status codes can be found in the <a
-      href="http://www.w3.org/Protocols/rfc2616/rfc2616.txt">HTTP
+      href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html">HTTP
       specification</a> (RFC2616 section 10).</dd>
 
       <dt><code>2326</code> (<code>%b</code>)</dt>
@@ -552,8 +552,7 @@
     </blockquote>
 
     <p>A similar, but much more flexible log rotation program
-    called <a
-    href="http://www.ford-mason.co.uk/resources/cronolog/">cronolog</a>
+    called <a href="http://www.cronolog.org/">cronolog</a>
     is available at an external site.</p>
 
     <p>As with conditional logging, piped logs are a very powerful

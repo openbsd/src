@@ -297,7 +297,7 @@ char *ap_proxy_canon_netloc(pool *p, char **const urlp, char **userp,
                          char **passwordp, char **hostp, int *port);
 const char *ap_proxy_date_canon(pool *p, const char *x);
 table *ap_proxy_read_headers(request_rec *r, char *buffer, int size, BUFF *f);
-long int ap_proxy_send_fb(BUFF *f, request_rec *r, cache_req *c, off_t len, int nowrite, size_t recv_buffer_size);
+long int ap_proxy_send_fb(BUFF *f, request_rec *r, cache_req *c, off_t len, int nowrite, int chunked, size_t recv_buffer_size);
 void ap_proxy_write_headers(cache_req *c, const char *respline, table *t);
 int ap_proxy_liststr(const char *list, const char *key, char **val);
 void ap_proxy_hash(const char *it, char *val, int ndepth, int nlength);
@@ -321,6 +321,7 @@ BUFF *ap_proxy_create_cachefile(request_rec *r, char *filename);
 void ap_proxy_clear_connection(pool *p, table *headers);
 int ap_proxy_table_replace(table *base, table *overlay);
 void ap_proxy_table_unmerge(pool *p, table *t, char *key);
+int ap_proxy_read_response_line(BUFF *f, request_rec *r, char *buffer, int size, int *backasswards, int *major, int *minor);
 
 /* WARNING - PRIVATE DEFINITION BELOW */
 

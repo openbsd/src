@@ -95,7 +95,7 @@
    **    - Fixed serious int overflow issues which would cause realistic (longer
    **      than a few minutes) run's to have wrong (but believable) results. Added
    **	   trapping of connection errors which influenced measurements.
-   **	   Contributed by Sander Temme - <sctemme@covalent.net>, Early 2001
+   **	   Contributed by Sander Temme - Early 2001
    **
  */
  /*
@@ -161,7 +161,7 @@
 #endif				/* NO_APACHE_INCLUDES */
 
 #ifdef	USE_SSL
-#if ((!(RSAREF)) && (!(SYSSSL)))
+#if ((!defined(RSAREF)) && (!defined(SYSSSL)))
 /* Libraries on most systems.. */
 #include <openssl/rsa.h>
 #include <openssl/crypto.h>
@@ -255,6 +255,7 @@ char *gnuplot;			/* GNUplot file */
 char *csvperc;			/* CSV Percentile file */
 char url[1024];
 char fullurl[1024];
+char colonport[1024];
 int postlen = 0;		/* length of data to be POSTed */
 char content_type[1024];	/* content type to put in POST header */
 char cookie[1024],		/* optional cookie line */
@@ -288,7 +289,7 @@ int err_response = 0;
 struct timeval start, endtime;
 
 /* global request (and its length) */
-char request[512];
+char request[1024];
 int reqlen;
 
 /* one global throw-away buffer to read stuff into */
@@ -311,8 +312,9 @@ struct sockaddr_in server;	/* server addr structure */
 #endif
 
 static void close_connection(struct connection * c);
-#if NO_WRITEV || USE_SSL
-static void s_write(struct connection * c, char *buff, int len);
+#if (defined(NO_WRITEV) || defined(USE_SSL))
+#define USE_S_WRITE
+static int s_write(struct connection * c, char *buff, int len);
 #endif
 
 /* --------------------------------------------------------- */
@@ -342,12 +344,13 @@ static void write_request(struct connection * c)
 /* XXX this sucks - SSL mode and writev() do not mix
  *     another artificial difference.
  */
-#if !NO_WRITEV && !USE_SSL
+#ifndef USE_S_WRITE
     struct iovec out[2];
     int outcnt = 1;
 #endif
+    int snd = 0;
     gettimeofday(&c->connect, 0);
-#if !NO_WRITEV && !USE_SSL
+#ifndef USE_S_WRITE
     out[0].iov_base = request;
     out[0].iov_len = reqlen;
 
@@ -357,18 +360,28 @@ static void write_request(struct connection * c)
 	outcnt = 2;
 	totalposted += (reqlen + postlen);
     }
-    writev(c->fd, out, outcnt);
+    snd = writev(c->fd, out, outcnt);
 #else
-    s_write(c, request, reqlen);
+    snd = s_write(c, request, reqlen);
     if (posting > 0) {
-	s_write(c, postdata, postlen);
-	totalposted += (reqlen + postlen);
+        snd += s_write(c, postdata, postlen);
+        totalposted += (reqlen + postlen);
     }
 #endif
-
-    c->state = STATE_READ;
+    if (snd < 0) {
+	bad++; 
+	err_conn++;
+        close_connection(c);
+	return;
+    } else
+    if (snd != (reqlen + postlen)) {
+	/* We cannot cope with this. */
+	fprintf(stderr,"The entire post RQ could not be transmitted to the socket.\n");
+	exit(1);
+    }
     FD_SET(c->fd, &readbits);
     FD_CLR(c->fd, &writebits);
+    c->state = STATE_READ;
     gettimeofday(&c->endwrite, 0);
 }
 
@@ -376,17 +389,18 @@ static void write_request(struct connection * c)
 
 /*  Do actual data writing */
 
-#if NO_WRITEV || USE_SSL
-static void s_write(struct connection * c, char *buff, int len)
+#ifdef USE_S_WRITE
+static int s_write(struct connection * c, char *buff, int len)
 {
+	int left = len;
     do {
 	int n;
-#if USE_SSL
+#ifdef USE_SSL
 	if (ssl) {
-	    n = SSL_write(c->ssl, buff, len);
+	    n = SSL_write(c->ssl, buff, left);
 	    if (n < 0) {
 		int e = SSL_get_error(c->ssl, n);
-		/* XXXX propably wrong !!! */
+		/* XXXX probably wrong !!! */
 		if ((e != SSL_ERROR_WANT_READ) && (e != SSL_ERROR_WANT_WRITE))
 		    n = -1;
 		else
@@ -395,7 +409,7 @@ static void s_write(struct connection * c, char *buff, int len)
 	}
 	else
 #endif
-	    n = ab_write(c->fd, buff, len);
+    n = ab_write(c->fd, buff, left);
 
 	if (n < 0) {
 	    switch (errno) {
@@ -405,9 +419,9 @@ static void s_write(struct connection * c, char *buff, int len)
 		/* We've tried to write to a broken pipe. */
 		epipe++;
 		close_connection(c);
-		return;
+		return len-left;
 	    default:
-#if USE_SSL
+#ifdef USE_SSL
 		if (ssl) {
 			fprintf(stderr,"Error writing: ");
 	    		ERR_print_errors_fp(stderr);
@@ -419,11 +433,13 @@ static void s_write(struct connection * c, char *buff, int len)
 	}
 	else if (n) {
 	    if (verbosity >= 3)
-		printf(" --> write(%x) %d (%d)\n", (unsigned char) buff[0], n, len);
+		printf(" --> write(%x) %d (%d)\n", (unsigned char) buff[0], n, left);
 	    buff += n;
-	    len -= n;
+	    left -= n;
 	};
-    } while (len > 0);
+    } while (left > 0);
+    
+	return len - left;
 }
 #endif
 
@@ -623,7 +639,7 @@ static void output_results(void)
 	/*
 	 * XXX: what is better; this hideous cast of the copare function; or
 	 * the four warnings during compile ? dirkx just does not know and
-	 * hates both/
+	 * hates both
 	 */
 	qsort(stats, requests, sizeof(struct data),
 	      (int (*) (const void *, const void *)) compradre);
@@ -865,12 +881,12 @@ static void start_connect(struct connection * c)
     c->fd = socket(AF_INET, SOCK_STREAM, 0);
     if (c->fd < 0) {
 	what = "SOCKET";
-	goto bad;
+	goto _bad;
     };
 
-#if USE_SSL
+#ifdef USE_SSL
     /*
-     * XXXX move nonblocker - so that measnurement needs to have its OWN
+     * XXX move nonblocker - so that measnurement needs to have its OWN
      * state engine OR cannot be compared to http.
      */
     if (!ssl)
@@ -880,23 +896,17 @@ static void start_connect(struct connection * c)
 again:
     gettimeofday(&c->start, 0);
     if (connect(c->fd, (struct sockaddr *) & server, sizeof(server)) < 0) {
-	if (errno == EINPROGRESS) {
-	    c->state = STATE_CONNECTING;
-	}
-	else {
+	if (errno != EINPROGRESS) {
 	    what = "CONNECT";
-	    goto bad;
+	    goto _bad;
 	};
     }
-    else {
-	/* connected first time */
-	c->state = STATE_CONNECTING;
-    }
+    c->state = STATE_CONNECTING;
 
 #ifdef USE_SSL
-    /* XX no proper freeing in error's */
+    /* XXX no proper freeing in error's */
     /*
-     * XXXX no proper choise of completely new connection or one which reuses
+     * XXX no proper choise of completely new connection or one which reuses
      * (older) session keys. Fundamentally unrealistic.
      */
     if (ssl) {
@@ -904,34 +914,35 @@ again:
 	if (!(c->ssl = SSL_new(ctx))) {
 	    fprintf(stderr, "Failed to set up new SSL context ");
 	    ERR_print_errors_fp(stderr);
-	    goto bad;
+	    goto _bad;
 	};
 	SSL_set_connect_state(c->ssl);
 	if ((e = SSL_set_fd(c->ssl, c->fd)) == -1) {
 	    fprintf(stderr, "SSL fd init failed ");
 	    ERR_print_errors_fp(stderr);
-	    goto bad;
+	    goto _bad;
 	};
 	if ((e = SSL_connect(c->ssl)) == -1) {
 	    fprintf(stderr, "SSL connect failed ");
 	    ERR_print_errors_fp(stderr);
-	    goto bad;
+	    goto _bad;
 	};
 	if (verbosity >= 1)
 	    fprintf(stderr, "SSL connection OK: %s\n", SSL_get_cipher(c->ssl));
     }
 #endif
-#if USE_SSL
+#ifdef USE_SSL
     if (ssl)
 	nonblock(c->fd);
 #endif
     FD_SET(c->fd, &writebits);
     return;
 
-bad:
+_bad:
     ab_close(c->fd);
     err_conn++;
-    if (bad++ > 10) {
+    bad++;
+    if (bad > 10) {
 	err("\nTest aborted after 10 failures\n\n");
     }
     goto again;
@@ -995,10 +1006,10 @@ static void read_connection(struct connection * c)
     char respcode[4];		/* 3 digits and null */
 
     gettimeofday(&c->beginread, 0);
-#if USE_SSL
+#ifdef USE_SSL
     if (ssl) {
 	r = SSL_read(c->ssl, buffer, sizeof(buffer));
-	/* XXX fundamwentally worng .. */
+	/* XXX fundamentally worng .. */
 	if (r < 0 && SSL_get_error(c->ssl, r) == SSL_ERROR_WANT_READ) {
 	    r = -1;
 	    errno = EAGAIN;
@@ -1172,7 +1183,8 @@ static void test(void)
     fd_set sel_read, sel_except, sel_write;
     long i;
     int connectport;
-    char * url_on_request, * host;
+    char * connecthost;
+    char * url_on_request;
 
     /* There are four hostname's involved:
      * The 'hostname' from the URL, the
@@ -1182,11 +1194,15 @@ static void test(void)
      */
     if (isproxy) {
 	/* Connect to proxyhost:proxyport
-         * And set Host: to the hostname of
-         * the proxy - whistl quoting the
-	 * full URL in the GET/POST line.
+         * And set Host: to the hostname and
+	 * if not default :port of the URL.
+	 * See RFC2616 - $14.23. But then in
+	 * $5.2.1 it says that the Host: field
+	 * when passed on MUST be ignored. So	
+	 * perhaps we should NOT send any
+	 * when we are proxying.
 	 */
-	host  = proxyhost;
+	connecthost  = proxyhost;
 	connectport = proxyport;
     	url_on_request = fullurl;
     }
@@ -1197,11 +1213,11 @@ static void test(void)
 	 * header; and do not quote a full
 	 * URL in the GET/POST line.
 	 */
-	host  = hostname;
+	connecthost  = hostname;
 	connectport = port;
     	url_on_request = path;
     }
-
+    
     if (!use_html) {
 	printf("Benchmarking %s (be patient)%s",
 	       hostname, (heartbeatres ? "\n" : "..."));
@@ -1210,10 +1226,11 @@ static void test(void)
     {
 	/* get server information */
 	struct hostent *he;
-	he = gethostbyname(host);
+	he = gethostbyname(connecthost);
 	if (!he) {
 	    char theerror[1024];
-	    sprintf(theerror, "Bad hostname: %s\n", host);
+	    ap_snprintf(theerror, sizeof(theerror),
+                        "Bad hostname: %s\n", connecthost);
 	    err(theerror);
 	}
 	server.sin_family = he->h_addrtype;
@@ -1231,35 +1248,37 @@ static void test(void)
 
     /* setup request */
     if (posting <= 0) {
-	sprintf(request, "%s %s HTTP/1.0\r\n"
-		"User-Agent: ApacheBench/%s\r\n"
-		"%s" "%s" "%s"
-		"Host: %s\r\n"
-		"Accept: */*\r\n"
-		"%s" "\r\n",
-		(posting == 0) ? "GET" : "HEAD",
-		url_on_request,
-		VERSION,
-		keepalive ? "Connection: Keep-Alive\r\n" : "",
-		cookie, auth, 
-		host, hdrs);
+	ap_snprintf(request, sizeof(request), 
+                    "%s %s HTTP/1.0\r\n"
+                    "User-Agent: ApacheBench/%s\r\n"
+                    "%s" "%s" "%s"
+                    "Host: %s%s\r\n"
+                    "Accept: */*\r\n"
+                    "%s" "\r\n",
+                    (posting == 0) ? "GET" : "HEAD",
+                    url_on_request,
+                    VERSION,
+                    keepalive ? "Connection: Keep-Alive\r\n" : "",
+                    cookie, auth, 
+                    hostname,colonport, hdrs);
     }
     else {
-	sprintf(request, "POST %s HTTP/1.0\r\n"
-		"User-Agent: ApacheBench/%s\r\n"
-		"%s" "%s" "%s"
-		"Host: %s\r\n"
-		"Accept: */*\r\n"
-		"Content-length: %d\r\n"
-		"Content-type: %s\r\n"
-		"%s"
-		"\r\n",
-		url_on_request,
-		VERSION,
-		keepalive ? "Connection: Keep-Alive\r\n" : "",
-		cookie, auth,
-		host, postlen,
-		(content_type[0]) ? content_type : "text/plain", hdrs);
+        ap_snprintf(request, sizeof(request),
+                    "POST %s HTTP/1.0\r\n"
+                    "User-Agent: ApacheBench/%s\r\n"
+                    "%s" "%s" "%s"
+                    "Host: %s%s\r\n"
+                    "Accept: */*\r\n"
+                    "Content-length: %d\r\n"
+                    "Content-type: %s\r\n"
+                    "%s"
+                    "\r\n",
+                    url_on_request,
+                    VERSION,
+                    keepalive ? "Connection: Keep-Alive\r\n" : "",
+                    cookie, auth,
+                    hostname, colonport, postlen,
+                    (content_type[0]) ? content_type : "text/plain", hdrs);
     }
 
     if (verbosity >= 2)
@@ -1332,14 +1351,14 @@ static void test(void)
 static void copyright(void)
 {
     if (!use_html) {
-	printf("This is ApacheBench, Version %s\n", VERSION " <$Revision: 1.8 $> apache-1.3");
+	printf("This is ApacheBench, Version %s\n", VERSION " <$Revision: 1.9 $> apache-1.3");
 	printf("Copyright (c) 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/\n");
 	printf("Copyright (c) 1998-2002 The Apache Software Foundation, http://www.apache.org/\n");
 	printf("\n");
     }
     else {
 	printf("<p>\n");
-	printf(" This is ApacheBench, Version %s <i>&lt;%s&gt;</i> apache-1.3<br>\n", VERSION, "$Revision: 1.8 $");
+	printf(" This is ApacheBench, Version %s <i>&lt;%s&gt;</i> apache-1.3<br>\n", VERSION, "$Revision: 1.9 $");
 	printf(" Copyright (c) 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/<br>\n");
 	printf(" Copyright (c) 1998-2002 The Apache Software Foundation, http://www.apache.org/<br>\n");
 	printf("</p>\n<p>\n");
@@ -1350,7 +1369,7 @@ static void copyright(void)
 static void usage(char *progname)
 {
     fprintf(stderr, "Usage: %s [options] [http"
-#if USE_SSL
+#ifdef USE_SSL
 	    "[s]"
 #endif
 	    "://]hostname[:port]/path\n", progname);
@@ -1380,7 +1399,7 @@ static void usage(char *progname)
     fprintf(stderr, "    -S              Do not show confidence estimators and warnings.\n");
     fprintf(stderr, "    -g filename     Output collected data to gnuplot format file.\n");
     fprintf(stderr, "    -e filename     Output CSV file with percentages served\n");
-#if USE_SSL
+#ifdef USE_SSL
     fprintf(stderr, "    -s              Use httpS instead of HTTP (SSL)\n");
 #endif
     fprintf(stderr, "    -h              Display usage information (this message)\n");
@@ -1400,7 +1419,7 @@ static int parse_url(char * purl)
     if (strlen(purl) > 7 && strncmp(purl, "http://", 7) == 0)
 	purl += 7;
     else
-#if USE_SSL
+#ifdef USE_SSL
     if (strlen(purl) > 8 && strncmp(purl, "https://", 8) == 0) {
 	purl += 8;
 	ssl = 1;
@@ -1426,7 +1445,18 @@ static int parse_url(char * purl)
     strcpy(hostname, h);
     if (p != NULL)
 	port = atoi(p);
-    return 0;
+
+    if ((
+#ifdef USE_SSL
+	(ssl != 0) && (port != 443)) || ((ssl == 0) && 
+#endif
+	(port != 80))) 
+   {
+	ap_snprintf(colonport,sizeof(colonport),":%d",port);
+   } else {
+	colonport[0] = '\0';
+   }
+   return 0;
 }
 
 /* ------------------------------------------------------- */
@@ -1479,12 +1509,12 @@ int main(int argc, char **argv)
     proxyhost[0] = '\0';
     optind = 1;
     while ((c = getopt(argc, argv, "n:c:t:T:p:v:kVhwix:y:z:C:H:P:A:g:X:de:Sq"
-#if USE_SSL
+#ifdef USE_SSL
 		       "s"
 #endif
 		       )) > 0) {
 	switch (c) {
-#if USE_SSL
+#ifdef USE_SSL
 	case 's':
 	    ssl = 1;
 	    break;

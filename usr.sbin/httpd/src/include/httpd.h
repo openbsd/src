@@ -175,15 +175,6 @@ extern "C" {
 #define DEFAULT_GROUP "#-1"
 #endif
 
-/* The name of the log files */
-#ifndef DEFAULT_XFERLOG
-#if defined(OS2) || defined(WIN32)
-#define DEFAULT_XFERLOG "logs/access.log"
-#else
-#define DEFAULT_XFERLOG "logs/access_log"
-#endif
-#endif /* DEFAULT_XFERLOG */
-
 #ifndef DEFAULT_ERRORLOG
 #if defined(OS2) || defined(WIN32)
 #define DEFAULT_ERRORLOG "logs/error.log"
@@ -466,7 +457,7 @@ extern "C" {
 
 #define SERVER_BASEVENDOR   "Apache Group"
 #define SERVER_BASEPRODUCT  "Apache"
-#define SERVER_BASEREVISION "1.3.24"
+#define SERVER_BASEREVISION "1.3.26"
 #define SERVER_BASEVERSION  SERVER_BASEPRODUCT "/" SERVER_BASEREVISION
 
 #define SERVER_PRODUCT  SERVER_BASEPRODUCT
@@ -490,7 +481,7 @@ API_EXPORT(void) ap_add_config_define(const char *define);
  * Always increases along the same track as the source branch.
  * For example, Apache 1.4.2 would be '10402100', 2.5b7 would be '20500007'.
  */
-#define APACHE_RELEASE 10324100
+#define APACHE_RELEASE 10326100
 
 #define SERVER_PROTOCOL "HTTP/1.1"
 #ifndef SERVER_SUPPORT
@@ -1076,6 +1067,7 @@ API_EXPORT(char *) ap_os_escape_path(pool *p, const char *path, int partial);
 API_EXPORT(char *) ap_escape_html(pool *p, const char *s);
 API_EXPORT(char *) ap_construct_server(pool *p, const char *hostname,
 				    unsigned port, const request_rec *r);
+API_EXPORT(char *) ap_escape_logitem(pool *p, const char *str);
 API_EXPORT(char *) ap_escape_shell_cmd(pool *p, const char *s);
 
 API_EXPORT(int) ap_count_dirs(const char *path);

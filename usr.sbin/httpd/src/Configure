@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: Configure,v 1.19 2002/03/29 02:08:05 beck Exp $
+# $OpenBSD: Configure,v 1.20 2002/07/19 21:31:15 henning Exp $
 ## ====================================================================
 ## The Apache Software License, Version 1.1
 ##
@@ -2005,7 +2005,7 @@ if [ "x$using_shlib" = "x1" ] ; then
 	#    select the special subtarget for shared core generation
 	SUBTARGET=target_shared
 	#    determine additional suffixes for libhttpd.so
-	V=1 R=3 P=24
+	V=1 R=3 P=26
 	if [ "x$SHLIB_SUFFIX_DEPTH" = "x0" ]; then
 	    SHLIB_SUFFIX_LIST=""
 	fi
@@ -2546,8 +2546,8 @@ all clean distclean depend ::
 	  if [ "x\$\$i" != "x" ]; then \\
 	    echo "===> \$(SDP)modules/\$\$i"; \\
 		case "x\$(OS)" in \\
-		  xOS390 | xTPF) (cd \$\$i && \$(MAKE) SDP='\$(SDP)' \$@) || exit 1;; \\
-		              *) (cd \$\$i && \$(MAKE) \$(MFLAGS_STATIC) SDP='\$(SDP)' CC='\$(CC)' AUX_CFLAGS='\$(CFLAGS)' RANLIB='\$(RANLIB)' \$@) || exit 1;; \\
+		  xOS390 | xTPF) (cd \$\$i && \$(MAKE) SDP='\$(SDP)' OPTIM='\$(OPTIM)' \$@) || exit 1;; \\
+		              *) (cd \$\$i && \$(MAKE) \$(MFLAGS_STATIC) SDP='\$(SDP)' CC='\$(CC)' AUX_CFLAGS='\$(CFLAGS)' RANLIB='\$(RANLIB)' OPTIM='\$(OPTIM)' \$@) || exit 1;; \\
 		esac; \\
 		echo "<=== \$(SDP)modules/\$\$i"; \\
 	  fi; \\

@@ -84,6 +84,9 @@
       <li><a href="#inst">Configuring and Installing Apache for
       Cygwin</a></li>
 
+		<li><a href="#winsock">Using Win32 native socket implementation
+		instead</a></li>
+
       <li><a href="#run">Running Apache for Cygwin</a></li>
 
       <li><a href="#serv">Running Apache for Cygwin as a
@@ -178,7 +181,7 @@
   DocumentRoot "/usr/local/apache/htdocs"
 </pre>
 
-    <p><strong>What about performance?</strong><br />
+    <p><strong>What about performance?</strong><br/>
      Apache for Cygwin is not as high-performance as Apache for
     Windows on the same hardware.</p>
 
@@ -197,15 +200,16 @@
     networking must be installed.</p>
 
     <p>Cygwin 1.x is required to compile and run this version.
-    Cygwin 1.1.8 and 1.3.2 have been tested and approved on both
-    supported OSes.</p>
+    Cygwin 1.3.9 and 1.3.10 have been tested and approved on both
+    supported OSes. We suggest to use Cygwin 1.3.9-2 and higher.</p> 
 
     <p><strong>Note:</strong>If you want to compile shared DLL
     modules using <a
-    href="programs/apxs.html"><code>apxs</code></a> you will need a
-    patched version of <code>ld.exe</code> with
-    <code>--auto-import</code> support, which can be found at <a
-    href="http://sourceforge.net/projects/kde-cygwin/">http://sourceforge.net/projects/kde-cygwin/</a>.</p>
+    href="programs/apxs.html"><code>apxs</code></a> you will need 
+	 Cygwin 1.3.9-2 or higher version, which includes a version of 
+	 <code>ld.exe</code> with <code>--auto-import</code> support.
+	 </p>
+
 
     <h2><a id="down" name="down">Downloading Apache for
     Cygwin</a></h2>
@@ -218,11 +222,19 @@
     The site lists the current release, any more recent development
     versions, and information on any mirror sites.</p>
 
+	 <p><strong>What about Cygwin Net Distribution binaries?</strong><br/>
+    Apache for Cygwin is also available as pre-compiled binary 
+	 package for the Cygwin Net Distribution available at 
+	 <href="http://www.cygwin.com">http://www.cygwin.com</a> and it's 
+	 <a href="http://www.cygwin.com/setup.exe"><code>setup.exe</code></a>
+	 installation process.</p>
+
+
     <h2><a id="inst" name="inst">Configuring and Installing Apache
     for Cygwin</a></h2>
 
     <p>Apache on Cygwin is configured and compiled the same way as
-    on Unix systems. Refer to the general <a
+    on most Unix systems. Refer to the general <a
     href="configuring.html">configuration</a> and <a
     href="install.html">installation</a> documents for details.</p>
 
@@ -266,34 +278,36 @@
         files which hold all static linked code. Then
         <code>dllwrap</code> and <code>dlltool</code> will export
         all of those (including any additional module code) to the
-        shared <code>libhttpd.dll</code> and create the
+        shared <code>cyghttpd.dll</code> and create the
         <code>libhttpd.a</code> import library which is required
         for linking <code>httpd.exe</code>.</p>
 
         <p><strong>Note:</strong> After <code>make install</code>
         is performed you will find the resulting core DLL module
-        <code>libhttpd.dll</code> within
+        <code>cyghttpd.dll</code> within
         <code>/usr/local/apache/libexec</code>. This is due to the
         installation process. Please move the file to Apache's
         <code>bin</code> directory, i.e.</p>
 <pre>
-  $ mv /usr/local/apache/libexec/libhttpd.dll /usr/local/apache/bin
+  $ mv /usr/local/apache/libexec/cyghttpd.dll /usr/local/apache/bin
 </pre>
-        The core DLL module <code>libhttpd.dll</code> is the
+        <p>or to an other place inside your <code>$PATH</code>, i.e.
+		  <code>/usr/bin</code> is used in the Cygwin Net Distribution
+		  layout. The core DLL module <code>cyghttpd.dll</code> is the
         <i>only</i> file that should reside in
         <code>/usr/local/apache/bin</code> directory. All other
         shared DLL modules <code>mod_foo.dll</code> should be
-        located in <code>/usr/local/apache/libexec</code>.
+        located in <code>/usr/local/apache/libexec</code>.</p>
       </li>
 
       <li>
         <strong>Shared DLL modules linked version</strong> 
 
-        <p>This method is currently <strong>ONLY</strong> supported
-        using a patched version of <code>ld.exe</code> which
-        support the <code>--auto-import</code> option. Please see
-        the <a href="#req">requirements</a> section for where to
-        get that version.</p>
+        <p>This method is <strong>ONLY</strong> supported using a 
+		  version of <code>ld.exe</code> which supports the 
+		  <code>--auto-import</code> option. Please see the 
+		  <a href="#req">requirements</a> section for more 
+		  information.</p>
 
         <p>To build a dynamic loadable DLL version of
         <code>httpd</code> which can load DLL modules on the fly
@@ -312,13 +326,13 @@
 
             <p>You will notice that there is a warning message
             shown which lets you know that the shared core DLL
-            library <code>src/libhttpd.dll</code> is missing while
+            library <code>src/cyghttpd.dll</code> is missing while
             trying to link the shared DLL modules
             <code>mod_foo.dll</code>.</p>
 
             <p>Unfortunatly while Apache's build process the shared
             modules are linked before the shared core import
-            library <code>src/libhttpd.dll</code> has been made.
+            library <code>src/cyghttpd.dll</code> has been made.
             The shared modules depend on this import library, so
             they can not link for the first time you run
             <code>make</code>.</p>
@@ -335,13 +349,14 @@
 
             <p>All shared modules are placed into
             <code>libexec</code>, including the shared core DLL
-            <code>libhttpd.dll</code>. When Apache's
+            <code>cyghttpd.dll</code>. When Apache's
             <code>/bin/httpd</code> is started it has to dynamicly
-            link <code>libhttpd.dll</code> while runtime. That is
+            link <code>cyghttpd.dll</code> while runtime. That is
             why you have to place the shared core DLL
-            <code>libhttpd.dll</code> to the same direcotry where
+            <code>cyghttpd.dll</code> to the same direcotry where
             <code>httpd.exe</code> resides, i.e.
-            <code>/usr/local/apache/bin</code>.</p>
+            <code>/usr/local/apache/bin</code> or an other place
+				in your <code>$PATH</code>.</p>
           </li>
 
           <li>
@@ -360,7 +375,7 @@
       </li>
 
       <li>
-        <strong>Using apxs to create shared DLL modules</strong> 
+        <strong>Using <code>apxs</code> to create shared DLL modules</strong> 
 
         <p>To make the extending <code>httpd</code> with shared DLL
         modules easier, you can use <a
@@ -369,7 +384,7 @@
         <p>Make sure you have configured
         <code>$CFG_LDFLAGS_SHLIB</code> within <code>apxs</code> to
         include the <code>--shared</code> directive and the path to
-        the shared code DLL <code>libhttpd.dll</code>.</p>
+        the shared code DLL <code>cyghttpd.dll</code>.</p>
 
         <p>After performing <code>make install</code> you will
         probably have the following lines within your
@@ -389,7 +404,7 @@
   [...]
   my $CFG_LD_SHLIB      = q(gcc);          # substituted via Makefile.tmpl
   my $CFG_LDFLAGS_SHLIB = q(-g --shared); # substituted via Makefile.tmpl 
-  my $CFG_LIBS_SHLIB    = q(<i>/path/to/libhttpd.dll</i>);        # substituted via Makefile.tmpl 
+  my $CFG_LIBS_SHLIB    = q(<i>/path/to/cyghttpd.dll</i>);        # substituted via Makefile.tmpl 
   [...]
 </pre>
 
@@ -404,12 +419,32 @@
         it at runtime.
       </li>
     </ul>
+	 
+    
+	 <h2><a id="inst" name="inst">Using Win32 native socket 
+	 implementation instead</a></h2>
+
+    <p>Apache for Cygwin supports an option to use the Win32 native 
+	 socket calls instead of Cygwin's POSIX wrappers internally. To
+	 use the Win32 native socket calls configure Apache for Cygwin
+	 with the <code>CYGWIN_WINSOCK</code> configuration rule flag
+	 as follows:</p>
+<pre>
+  $ cd apache_1.3.x
+  $ ./configure --enable-rule=CYGWIN_WINSOCK [...]
+  $ make
+</pre>
+    <p>Using Win32 native socket calls is intended for performance
+	 reasons and as a hybrid way to interact with the underlying 
+	 native socket implementation.</p> 
+
+
 
     <h2><a id="run" name="run">Running Apache for Cygwin</a></h2>
 
     <p>Apache on Cygwin can be started and stopped in the same
     manner as on Unix systems. You may also use the <a
-    href="programs/apachctl.html"><code>apachectl</code></a> tool
+    href="programs/apachectl.html"><code>apachectl</code></a> tool
     for starting and stopping Apache.</p>
 
     <ul>
@@ -530,7 +565,8 @@
     <p>Any additional contributions to this document and the Cygwin
     support for Apache are highly welcome. Please send them to
     Stipe Tolj <a
-    href="mailto:tolj@wapme-systems.de">&lt;tolj@wapme-systems.de&gt;</a>.</p>
+    href="mailto:tolj&#64;wapme-systems.de">&lt;tolj&#64;wapme-systems.de&gt;</a>.</p>
+
         <hr />
 
     <h3 align="CENTER">Apache HTTP Server</h3>

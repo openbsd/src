@@ -1,12 +1,122 @@
+Changes with Apache 1.3.26
+
+  *) Potential NULL referencing fixed in the CGI module. It had
+     been there for 5 years. [Justin Erenkrantz]
+
+  *) Ensure that we set the result value in ap_strtol before
+     we return it. [The whole gang again]
+
+Changes with Apache 1.3.25
+
+  *) Code changes required to address and close the security
+     issues in CAN-2002-0392 (mitre.org) [CERT VU#944335].
+     To support this, we utilize the ANSI functionality of
+     strtol, and provide ap_strtol for completeness.
+     [The whole gang]
+     
+  *) PORT: With OpenBSD 3.1 and up, allow modules to work on their
+     ELF-based architectures. [Brad <brad@openbsd.org>]
+
+  *) Add X-Forwarded-Host and X-Forwarded-Server to X-Forwarded-For
+     to the proxy. [Thomas Eibner <thomas@stderr.net>]
+
+  *) Fix a problem in mod_proxy: it would not set the number of bytes
+     transferred, so other modules could not access the value from
+     the request_rec->bytes_sent field.
+     [Anthony Howe <achowe at snert.com>] PR#6841
+
+  *) Fix a problem in mod_rewrite which would lead to 400 Bad Request
+     responses for rewriting rules which resulted in a local path.
+     Note: This will also reject invalid requests like
+     "HEAD /roaming/martin/IMAP localhost HTTP/1.0" as issued by
+     Netscape-4.x Roaming Profiles (on a DAV-enabled server)
+     [Martin Kraemer]
+
+  *) Disallow anything but whitespace on the request line after the
+     HTTP/x.y protocol string. That prevents arbitrary user input
+     from ending up in the access_log and error_log. Also, special
+     characters (especially control characters) are escaped in the
+     log file now, to make a clear distinction between client-supplied
+     strings (with special characters) and server-side strings.
+     [Martin Kraemer]
+
+  *) Get rid of DEFAULT_XFERLOG as it is not used anywhere. It was
+     preserved by the build system, printed with "httpd -V", but
+     apart from that completely ignored: the default transfer log
+     is to not produce any transfer log.
+     [Martin Kraemer]
+
+  *) Fixed sending of binary files under Cygwin.  PR 9185.
+     [Cliff Woolley]
+
+  *) Added Cygwin directory layout to config.layout file.
+     [Stipe Tolj, <tolj@wapme-systems.de>]
+
+  *) Added a '-F' flag; which causes the mother/supervisor process to
+     no longer fork down and detach. But instead stays attached to
+     the tty - thus making live for automatic restart and exit checking
+     code easier. [ Contributed by Michael Handler <handler@grendel.net>,
+     Jos Backus <jos@catnook.com> [ Dirk-Willem van Gulik ]].
+
+  *) Make apxs.pl more flexible (file extensions like .so or .dll are
+     no longer hardcoded). [Stipe Tolj <tolj@wapme-systems.de>]
+
+  *) Add an intelligent error message should no proxy submodules be
+     valid to handle a request. PR 8407 [Graham Leggett]
+
+  *) Allow child processes sufficient time for cleanups but making
+     ap_select in reclaim_child_processes more "resistant" to
+     signal interupts. Bugz# 8176
+     [David Winterbourne <davidw@financenter.com>, Jim Jagielski]
+
+  *) Recognize platform specific root directories (other than 
+     leading slash) in mod_rewrite for filename rewrite rules.
+     Bugz# 7492  [William Rowe]
+
+  *) For supported versions of Darwin, place dynamically loaded
+     Apache extensions' public symbols into the global symbol
+     table. This allows dynamically loaded PHP extensions.
+     [Marko Karppinen <markonen@php.net>]
+
+  *) Correct proxy to be able to handle the unexpected 100-continue
+     reponses sent during PUT or POST requests. [Graham Leggett]
+
+  *) Correct a timeout problem within proxy which would force long
+     or slow POST requests to close after 300 seconds.
+     [Martin Lichtin <martin@lichtin.net>, Brian Bothwell
+     <brian.bothwell@wisdomtools.com>]
+
+  *) Add support for dechunking chunked responses in proxy.
+     [Graham Leggett]
+
+  *) Made AB's use of the Host: header rfc2616 compliant
+     by Taisuke Yamada <tai@iij.ad.jp> [Dirl-Willem van Gulik].
+     
+  *) Update the Red Hat Layout to match Red Hat Linux version 7. 
+     PR BZ-7422 [Joe Orton] 
+
+  *) Add some popular types to the mime magic file.  PR 7730.
+     [Linus Walleij <triad@df.lth.se>, Justin Erenkrantz]
+
+  *) Tighten up the overridden-Server-header bugfix in the proxy, by
+     only overriding if the request is a proxy request. It has been
+     pointed out that the previous fix allows CGIs and modules to
+     override the Server header, which is change to previous behavior.
+     [Graham Leggett, Joshua Slive]
+
+  *) Another fix for the multiple-cookie header bug in proxy. With some
+     luck this bug is actually now dead. [Graham Leggett]
+
 Changes with Apache 1.3.24
 
   *) Fixed a segfault in mod_include when #if, #elif, #else, or #endif
      directives were improperly terminated.  [Cliff Woolley]
 
-  *) Introduce proper escaping of command.com and cmd.exe for Win32.
+  *) Win32 Security: CAN-2002-0061
+     Introduce proper escaping of command.com and cmd.exe for Win32.
      These patches close vulnerability CAN-2002-0061, identified and
      reported by Ory Segal <ory.segal@sanctuminc>, by which any CGI
-     invocation of .bat or .cmd files could comprimize the system 
+     invocation of .bat or .cmd files could compromise the system 
      when the .bat or .cmd was parsed the query args as an argument 
      to either cmd.exe /c or command.com /c.  [William Rowe]
 
@@ -574,7 +684,7 @@ Changes with Apache 1.3.21
      to make results more true to what is measured. The upshot of this it
      turns out that 'ab' has often underreported the true performance of
      apache. Often by a order of magnitude :-) See talk/paper of Sander 
-     Temme <sctemme@covalent.net> at April ApacheCon 2001 for details.
+     Temme at April ApacheCon 2001 for details.
      [Dirk-Willem van Gulik]
 
 Changes with Apache 1.3.20
@@ -582,7 +692,7 @@ Changes with Apache 1.3.20
   *) Autodetect if platforms have isnan() and/or isinf() for use in
      ap_snprintf.c. [Jim Jagielski]
 
-  *) Correct a vulnerability in the Win32 and OS2 ports, by which a 
+  *) Security/DoS: Correct a vulnerability in the Win32 and OS2 ports, by which a 
      client submitting a carefully constructed URI could cause a GP
      (segment) fault in the child process, which would have to be
      cleared by the operator to resume operation.  This vulnerability
@@ -722,7 +832,7 @@ Changes with Apache 1.3.18 [not released]
   *) SECURITY: The default installation could lead to mod_negotiation
      and mod_dir/mod_autoindex displaying a directory listing instead of
      the index.html.* files, if a very long path was created artificially
-     by using many slashes. Now a 403 FORBIDDEN is returned.
+     by using many slashes. Now a 403 FORBIDDEN is returned. CAN-2001-0925.
      [Martin Kraemer]
      
   *) Trailing slashes (if they exist) are now removed from ServerRoot,
@@ -991,7 +1101,7 @@ Changes with Apache 1.3.13 [not released]
      tree, and other minor MPE tweaks.  
      [Mark Bixby <mark_bixby@hp.com>]
 
-  *) Tighten up the syntax checking of Host: headers to fix a
+  *) Security: Tighten up the syntax checking of Host: headers to fix a
      security bug in some mass virtual hosting configurations
      that can allow a remote attacker to retrieve some files
      on the system that should be inaccessible. [Tony Finch]
@@ -1004,7 +1114,8 @@ Changes with Apache 1.3.13 [not released]
      SHA1 and plaintext password encodings.  Make feature tests a
      bit more flexible.  [William Rowe]
 
-  *) Fix a security problem that affects some configurations of
+  *) Security: CVE-2000-0913
+     Fix a security problem that affects some configurations of
      mod_rewrite. If the result of a RewriteRule is a filename that
      contains expansion specifiers, especially regexp backreferences
      $0..$9 and %0..%9, then it may have been possible for an attacker
@@ -1239,7 +1350,7 @@ Changes with Apache 1.3.13 [not released]
 
   *) [EBCDIC] Update mod_mmap_static so that an ebcdic box can use 
      MMapFile for files that shouldn't be converted from ebcdic->ascii.
-     [Greg Ames <gregames@us.ibm.com>]
+     [Greg Ames]
 
   *) Revamp the Win32 make environment. Apache.dsw created to bring 
      together all the pieces. Create new file os/win32/BaseAddr.ref 
@@ -4323,7 +4434,7 @@ Changes with Apache 1.3b7
 
   *) Just having APACI's localstatedir is too general and not enough for most
      of the systems. 1.3b6 again required manual APACI patches by package
-     maintainers from RedHat and FreeBSD because for their filesystem layout a
+     maintainers from Red Hat and FreeBSD because for their filesystem layout a
      little bit more flexibility in configuring the paths is needed. Hence we
      provide three additional configure options (--runtimedir, --logfiledir,
      --proxycachedir) which now can be used for more granular adjustments if
@@ -4333,7 +4444,7 @@ Changes with Apache 1.3b7
 
   *) Make the install root for "make install" in APACI's Makefile overrideable
      by package authors.  This way we are even more friendly to package
-     maintainers (especially Debian and RedHat) who build for the real prefix
+     maintainers (especially Debian and Red Hat) who build for the real prefix
      via "configure --prefix=/<real>" but use a different local prefix via
      "make root=/tmp/apache install" for rolling the package without bristling
      the target location on their system. 

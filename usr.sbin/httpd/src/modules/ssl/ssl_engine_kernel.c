@@ -957,17 +957,28 @@ int ssl_hook_Access(request_rec *r)
             /* perform just a manual re-verification of the peer */
             ssl_log(r->server, SSL_LOG_TRACE,
                     "Performing quick renegotiation: just re-verifying the peer");
-            certstore = SSL_CTX_get_cert_store(ctx);
-            if (certstore == NULL) {
-                ssl_log(r->server, SSL_LOG_ERROR, "Cannot find certificate storage");
-                return FORBIDDEN;
-            }
             certstack = SSL_get_peer_cert_chain(ssl);
+            cert = SSL_get_peer_certificate(ssl);
+            if (certstack == NULL && cert != NULL) {
+                /* client cert is in the session cache, but there is
+                   no chain, since ssl3_get_client_certificate()
+                   sk_X509_shift'ed the peer cert out of the chain.
+                   So we put it back here for the purpose of quick
+                   renegotiation.  */
+                certstack = sk_new_null();
+                sk_X509_push(certstack, cert);
+            }
             if (certstack == NULL || sk_X509_num(certstack) == 0) {
                 ssl_log(r->server, SSL_LOG_ERROR, "Cannot find peer certificate chain");
                 return FORBIDDEN;
             }
-            cert = sk_X509_value(certstack, 0);
+            if (cert == NULL)
+                cert = sk_X509_value(certstack, 0);
+
+            if ((certstore = SSL_CTX_get_cert_store(ctx)) == NULL) {
+                ssl_log(r->server, SSL_LOG_ERROR, "Cannot find certificate storage");
+                return FORBIDDEN;
+            }
             X509_STORE_CTX_init(&certstorectx, certstore, cert, certstack);
             depth = SSL_get_verify_depth(ssl);
             if (depth >= 0)
@@ -979,6 +990,10 @@ int ssl_hook_Access(request_rec *r)
                         "Re-negotiation verification step failed");
             SSL_set_verify_result(ssl, certstorectx.error);
             X509_STORE_CTX_cleanup(&certstorectx);
+            if (SSL_get_peer_cert_chain(ssl) != certstack) {
+                /* created by us, so free it */
+                sk_X509_pop_free(certstack, X509_free);
+            }
         }
         else {
             /* do a full renegotiation */
@@ -1132,15 +1147,19 @@ int ssl_hook_Auth(request_rec *r)
      * ("/XX=YYY/XX=YYY/..") as the username and "password" as the
      * password.
      */
-    if ((cpAL = ap_table_get(r->headers_in, "Authorization")) != NULL) {
+    if (   ap_is_initial_req(r)
+        && (cpAL = ap_table_get(r->headers_in, "Authorization")) != NULL) {
         if (strcEQ(ap_getword(r->pool, &cpAL, ' '), "Basic")) {
             while (*cpAL == ' ' || *cpAL == '\t')
                 cpAL++;
             cpAL = ap_pbase64decode(r->pool, cpAL);
             cpUN = ap_getword_nulls(r->pool, &cpAL, ':');
             cpPW = cpAL;
-            if (cpUN[0] == '/' && strEQ(cpPW, "password"))
+            if (cpUN[0] == '/' && strEQ(cpPW, "password")) {
+                ssl_log(r->server, SSL_LOG_WARN, 
+                        "real Basic Authentication with DN \"%s\" and fake password attempted", cpUN);
                 return FORBIDDEN;
+            }
         }
     }
 

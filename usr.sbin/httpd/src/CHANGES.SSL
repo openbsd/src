@@ -23,6 +23,35 @@
       / __/ | (_) |
   __ |_____(_)___/ ___________________________________________
               
+  Changes with mod_ssl 2.8.10 (19-Jun-2002 to 24-Jun-2002)
+
+   *) Fixed off-by-one buffer overflow bug in the compatibility
+      functionality (mapping of old directives to new ones).
+
+   *) Fixed memory leak in processing of CA certificates.
+  
+   *) In case there is actually a certificate chain in the session cache, 
+      we now use the value of SSL_get_peer_certificate(ssl) to verify as
+      it will have been removed from the chain before it was put in the
+      cache.
+
+   *) Seed the PRNG with a maximum of 1K from the internal scoreboard.
+
+  Changes with mod_ssl 2.8.9 (27-Mar-2002 to 19-Jun-2002)
+
+   *) Upgraded to Apache 1.3.26.
+
+   *) Support for OpenSSL 0.9.7.
+
+   *) Open random files in binary mode under Win32 to not
+      stop on EOS characters.
+
+   *) Additional internal consistency check on vhost sanity checking
+      in case no DNS entries are found for virtual hosts.
+
+   *) Fixed detection of a faked "Faked Basic Auth" situation for
+      internal redirection situations.
+
   Changes with mod_ssl 2.8.8 (23-Feb-2002 to 27-Mar-2002)
 
    *) Upgraded to Apache 1.3.24
