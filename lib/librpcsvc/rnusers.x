@@ -35,7 +35,7 @@
 %#ifndef lint
 %/*static char sccsid[] = "from: @(#)rnusers.x 1.2 87/09/20 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: @(#)rnusers.x	2.1 88/08/01 4.0 RPCSRC";*/
-%static char rcsid[] = "$Id: rnusers.x,v 1.4 1996/09/22 08:39:59 tholo Exp $";
+%static char rcsid[] = "$Id: rnusers.x,v 1.5 1997/08/01 19:29:44 millert Exp $";
 %#endif /* not lint */
 #endif
 
@@ -63,7 +63,7 @@
 %	char	*ut_line;		/* tty name */
 %	char	*ut_name;		/* user id */
 %	char	*ut_host;		/* host name, if remote */
-%	long	ut_time;		/* time on */
+%	int	ut_time;		/* time on */
 %};
 %typedef struct ru_utmp rutmp;
 %
@@ -123,7 +123,7 @@
 %	if (!xdr_bytes(xdrs, &objp->ut_host, &size, RNUSERS_MAXHOSTLEN)) {
 %		return (FALSE);
 %	}
-%	if (!xdr_long(xdrs, &objp->ut_time)) {
+%	if (!xdr_int(xdrs, &objp->ut_time)) {
 %		return (FALSE);
 %	}
 %	return (TRUE);
