@@ -1,0 +1,148 @@
+.\" $OpenBSD: ffs_softupdates.4,v 1.1 1998/03/15 22:10:15 millert Exp $
+.\"
+.\" Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by Todd C. Miller.
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+.\" INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+.\" AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
+.\" THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+.\" EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+.\" PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+.\" OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+.\" WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+.\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+.\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd March 15, 1998
+.Dt FFS_SOFTUPDATES 4
+.Os
+.Sh NAME
+.Nm ffs_softupdates
+.Sh DESCRIPTION
+The
+.Nm FFS_SOFTUPDATES
+kernel config option enables a scheme that uses partial ordering of
+buffer cache operations to allow metadata updates in the fast filesystem
+to happen asynchronously, increasing write performance significantly.
+Normally, the
+.Em ffs
+filesystem writes metadata updates synchronously which exacts
+a performance penalty in favor of filesystem integrity.
+With
+.Em soft updates ,
+you gain the performance of asynchronous writes while retaining the safety
+of synchronous metadata updates.
+.Pp
+.Em Soft Updates
+must be enabled on a per-filesystem basis.  To do this, boot into
+single user mode and run
+.Dq tunefs -s enable special
+on each character special disk device you want to enable
+.Em soft updates
+on, then run
+.Dq reboot -n .
+.Sh CAVEATS
+Soft updates should be considered experimental at this time.
+.br
+There should be a
+.Xr mount 2
+option to enable
+.Em soft updates .
+.br
+The current license for
+.Nm
+is more restrictive than the rest of the
+.Ox
+kernel; this will be changed at a future date.
+.Sh AUTHOR
+Marshall Kirk McKusick
+.Sh LICENSE
+The following are the copyrights and redistribution conditions that
+apply to this copy of the soft update software. For a license
+to use, redistribute or sell the soft update software under
+conditions other than those described here, please contact the
+author at one of the following addresses:
+.Bd -literal -offset indent
+Marshall Kirk McKusick          mckusick@mckusick.com
+1614 Oxford Street              +1-510-843-9542
+Berkeley, CA 94709-1608
+USA
+.Ed
+.Pp
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+.Bl -tag -width XXX
+.It 1.
+Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+.It 2.
+Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+.It 3.
+None of the names of McKusick, Ganger, Patt, or the University of
+Michigan may be used to endorse or promote products derived from
+this software without specific prior written permission.
+.It 4.
+Redistributions in any form must be accompanied by information on
+how to obtain complete source code for any accompanying software
+that uses this software. This source code must either be included
+in the distribution or be available for no more than the cost of
+distribution plus a nominal fee, and must be freely redistributable
+under reasonable conditions. For an executable file, complete
+source code means the source code for all modules it contains.
+It does not mean source code for modules or files that typically
+accompany the operating system on which the executable file runs,
+e.g., standard library modules or system header files.
+.El
+.Pp
+THIS SOFTWARE IS PROVIDED BY MARSHALL KIRK MCKUSICK ``AS IS'' AND ANY
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED.  IN NO EVENT SHALL MARSHALL KIRK MCKUSICK BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGE.
+.Sh SEE ALSO
+.Xr fs 5 ,
+.Xr config 8 ,
+.Xr sysctl 8 ,
+.Xr tunefs 8 .
+.Rs
+.%T "A Fast Filesystem for UNIX"
+.%A Marshall Kirk McKusick
+.%A William N. Joy
+.%A Samuel J. Leffler
+.%A Robert S. Fabry
+.%C Computer Science Research Group
+.Re
+.Pp
+.Rs
+.%T "Soft Updates: A Solution to the Metadata Update Problem in File Systems"
+.%A Gregory R. Ganger
+.%A Yale N. Patt
+.%R CSE-TR-254-95
+.%C "University of Michigan, Ann Arbor"
+.Re
+.br
+.Li http://www.ece.cmu.edu/~ganger/papers/CSE-TR-254-95/
