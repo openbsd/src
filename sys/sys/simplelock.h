@@ -1,4 +1,4 @@
-/*	$OpenBSD: simplelock.h,v 1.4 1997/11/07 10:25:42 niklas Exp $	*/
+/*	$OpenBSD: simplelock.h,v 1.5 1997/11/14 23:40:03 csapuntz Exp $	*/
 
 #ifndef _SIMPLELOCK_H_
 #define _SIMPLELOCK_H_
@@ -14,6 +14,8 @@
 struct simplelock {
 	int	lock_data;
 };
+
+#ifdef _KERNEL
 
 #ifndef NCPUS
 #define NCPUS 1
@@ -84,5 +86,7 @@ simple_unlock(lkp)
 	lkp->lock_data = 0;
 }
 #endif /* NCPUS > 1 */
+
+#endif /* _KERNEL */
 
 #endif /* !_SIMPLELOCK_H_ */
