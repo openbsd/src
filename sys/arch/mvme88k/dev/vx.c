@@ -1,4 +1,4 @@
-/*	$OpenBSD: vx.c,v 1.33 2004/05/26 21:16:10 miod Exp $ */
+/*	$OpenBSD: vx.c,v 1.34 2004/07/02 11:19:43 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -73,8 +73,7 @@ struct vxsoftc {
 	char              channel_number;
 	struct packet     sc_bppwait_pkt;
 	void              *sc_bppwait_pktp;
-	struct intrhand   sc_ih_c;
-	struct intrhand   sc_ih_s;
+	struct intrhand   sc_ih;
 	int               sc_vec;
 	struct envelope   *elist_head, *elist_tail;
 	struct packet     *plist_head, *plist_tail;
@@ -222,12 +221,12 @@ vxattach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* enable interrupts */
-	sc->sc_ih_c.ih_fn = vx_intr;
-	sc->sc_ih_c.ih_arg = sc;
-	sc->sc_ih_c.ih_wantframe = 0;
-	sc->sc_ih_c.ih_ipl = IPL_TTY;
+	sc->sc_ih.ih_fn = vx_intr;
+	sc->sc_ih.ih_arg = sc;
+	sc->sc_ih.ih_wantframe = 0;
+	sc->sc_ih.ih_ipl = IPL_TTY;
 
-	vmeintr_establish(ca->ca_vec, &sc->sc_ih_c);
+	vmeintr_establish(ca->ca_vec, &sc->sc_ih);
 	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
 }
 
