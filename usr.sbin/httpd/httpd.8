@@ -1,4 +1,4 @@
-.TH httpd 8 "February 1999"
+.\"	$OpenBSD: httpd.8,v 1.6 2002/07/09 16:59:40 deraadt Exp $
 .\" Copyright (c) 1995-1997 David Robinson. All rights reserved.
 .\" Copyright (c) 1997-1999 The Apache Group. All rights reserved.
 .\" Copyright (c) 1998-1999 Bob Beck. All rights reserved.
@@ -49,154 +49,179 @@
 .\" Supercomputing Applications, University of Illinois, Urbana-Champaign.
 .\" For more information on the Apache Group and the Apache HTTP server
 .\" project, please see <http://www.apache.org/>.
-.SH NAME
-httpd \- Apache hypertext transfer protocol server
-.SH SYNOPSIS
-.B httpd
-[
-.B \-X
-] [
-.BI \-R " libexecdir"
-] [
-.BI \-d " serverroot"
-] [
-.BI \-f " config"
-] [
-.BI \-C " directive"
-] [
-.BI \-c " directive"
-] [
-.BI \-D " parameter"
-]
-
-.B httpd
-[
-.B \-h
-]
-[
-.B \-l
-]
-[
-.B \-L
-]
-[
-.B \-v
-]
-[
-.B \-V
-]
-[
-.B \-S
-]
-
-.SH DESCRIPTION
-.B httpd
+.Dd Feb 1, 1999
+.Dt HTTPD 1
+.Os
+.Sh NAME
+.Nm httpd
+.Nd Apache hypertext transfer protocol server
+.Sh SYNOPSIS
+.Nm httpd
+.Op Fl hlLSvuVX
+.Op Fl d Ar serverroot
+.Op Fl f Ar config
+.Op Fl c Ar directive
+.Op Fl C Ar directive
+.Op Fl D Ar parameter
+.Op Fl R Ar libexecdir
+.Sh DESCRIPTION
+.Nm
 is the Apache HyperText Transfer Protocol (HTTP) server program. It is
 designed to be run as a standalone daemon process. When used like this
 is will create a pool of child processes to handle requests. To stop
 it, send a TERM signal to the initial (parent) process. The PID of
 this process is written to a file as given in the configuration file.
 Alternatively
-.B httpd
+.Nm
 may be invoked by the Internet daemon inetd(8) each
-time a connection to the HTTP service is made. Normally this service
-can be enabled for startup on OpenBSD by editing \fB/etc/rc.conf\fP.
-.PP
+time a connection to the HTTP service is made.
+.Pp
+Normally this service can be enabled for startup on OpenBSD
+by editing
+.Pa /etc/rc.conf .
+The
+.Fl u
+option is of particular importance.
+.Pp
 This manual page only lists the command line arguments. For details
 of the directives necessary to configure httpd see the Apache manual,
 which is part of the Apache distribution or can be found at
-http://www.apache.org/, or in \fB/var/www/htdocs/manual\fP.
-Paths in this manual page  reflect those
+.Pa http://www.apache.org/ ,
+or in
+.Pa /var/www/htdocs/manual .
+Paths in this manual page reflect those
 compiled into httpd by default with OpenBSD.
-.SH OPTIONS
-.TP 12
-.BI \-R " libexecdir"
-This option is only available if Apache was built with
-the
-.I SHARED_CORE
-rule enabled which forces the Apache core code to be
-placed into a dynamic shared object (DSO) file. This file
+.Sh OPTIONS
+.Bl -tag -width Ds
+.It Fl u
+By default
+.Nm
+will
+.Xr chroot 2
+to the
+.Va serverroot
+path.
+The
+.Fl u
+option disabled this behaviour, and returns
+.Nm
+to the expanded "unsecure" behaviour.
+.Pp
+As a result of the default secure behaviour,
+.Nm
+cannot access any objects outside
+.Va ServerRoot
+-- this security measure is taken in case
+.Nm
+is compromised.
+This is not without drawbacks, though:
+.Pp
+CGI programs may fail due to the limited environment available inside
+this chroot space.
+UserDir, of course, cannot access files outside the directory space.
+Other modules will also have issues.
+DocumentRoot directories or any other files needed must be inside
+.Va ServerRoot .
+For this to work, pathnames inside the
+.Va config
+file do not need adjustment relative to
+.Va ServerRoot .
+For this option to remain secure, it is important that no files or directories
+writeable by user
+.Ar www
+or group
+.Ar www
+are created inside the
+.Va ServerRoot .
+.It Fl R Ar libexecdir
+This option is only available if
+.Nm
+was built with the
+.Dv SHARED_CORE
+rule enabled which forces the
+.Nm
+core code to be placed into a dynamic shared object (DSO) file. This file
 is searched in a hardcoded path under ServerRoot per default. Use this
-option if you want to override it.
-.TP 12
-.BI \-d " serverroot"
-Set the initial value for the ServerRoot directive to \fIserverroot\fP. This
-can be overridden by the ServerRoot command in the configuration file. The
-default is \fB/var/www\fP.
-.TP
-.BI \-f " config"
-Execute the commands in the file \fIconfig\fP on startup. If \fIconfig\fP
+option to override.
+.It Fl d Ar serverroot
+Set the initial value for the ServerRoot directive to
+.Va serverroot .
+This can be overridden by the ServerRoot command in the configuration
+file.
+The default is
+.Pa /var/www .
+.It Fl f Ar config
+Execute the commands in the file
+.Va config
+on startup.
+If
+.Va config
 does not begin with a /, then it is taken to be a path relative to
-the ServerRoot. The default is \fBconf/httpd.conf\fP.
-.TP
-.BI \-C " directive"
-Process the configuration \fIdirective\fP before reading config files.
-.TP
-.BI \-c " directive"
-Process the configuration \fIdirective\fP after reading config files.
-.TP
-.BI \-D " parameter"
-Sets a configuration \fIparameter\fP which can be used with
+the ServerRoot. The default is
+.Pa conf/httpd.conf .
+.It Fl C Ar directive
+Process the configuration 
+.Va directive
+before reading config files.
+.It Fl c Ar directive
+Process the configuration 
+.Va directive
+after reading config files.
+.It Fl D Ar parameter
+Sets a configuration 
+.Va parameter
+which can be used with
 <IfDefine>...</IfDefine> sections in the configuration files
 to conditionally skip or process commands.
-.TP
-.B \-h
+.It Fl h
 Output a short summary of available command line options.
-.TP
-.B \-l
+.It Fl l
 Output a list of modules compiled into the server.
-.TP
-.B \-L
+.It Fl L
 Output a list of directives together with expected arguments and
 places where the directive is valid.
-.TP
-.B \-S
+.It Fl S
 Show the settings as parsed from the config file (currently only shows the
 virtualhost settings).
-.TP
-.B \-t
+.It Fl t
 Run syntax tests for configuration files only. The program immediately exits
 after these syntax parsing with either a return code of 0 (Syntax OK) or
 return code not equal to 0 (Syntax Error).
-.TP
-.B \-X
+.It Fl X
 Run in single-process mode, for internal debugging purposes only; the daemon
 does not detach from the terminal or fork any children. Do NOT use this mode
 to provide ordinary web service.
-.TP
-.B \-v
+.It Fl v
 Print the version of
-.B httpd
-, and then exit.
-.TP
-.B \-V
+.Nm Ns ,
+and then exit.
+.It Fl V
 Print the version and build parameters of
-.B httpd
-, and then exit.
-.PP
+.Nm Ns ,
+and then exit.
+.El
+.Pp
 The documents served by 
-.B httpd
+.Nm
 should not be owned by the user which 
-.B httpd 
-is running as (usually \fIwww\fP).
+.Nm
+is running as (usually user
+.Va www
+and group
+.Va www Ns ).
 They must, however, be readable by this user.
-.SH FILES
-.PD 0
-.B /var/www/conf/httpd.conf
-.br
-.B /var/www/conf/srm.conf
-.br
-.B /var/www/conf/access.conf
-.br
-.B /var/www/conf/mime.types
-.br
-.B /var/www/logs/error_log
-.br
-.B /var/www/logs/access_log
-.br
-.B /var/www/logs/httpd.pid
-.br
-.B /etc/rc.conf
-.PD
-.SH SEE ALSO
-.BR inetd (8).
+.Sh FILES
+.Bl -tag -width /etc/passwd -compact
+.It Pa /var/www/conf/httpd.conf
+.It Pa /var/www/conf/srm.conf
+.It Pa /var/www/conf/access.conf
+.It Pa /var/www/conf/mime.types
+.It Pa /var/www/logs/error_log
+.It Pa /var/www/logs/access_log
+.It Pa /var/www/logs/httpd.pid
+.It Pa /etc/rc.conf
+.El
+.Sh SEE ALSO
+.Xr chroot 2 ,
+.Xr inetd 8 ,
+.Xr rc 8
