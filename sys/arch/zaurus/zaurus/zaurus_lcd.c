@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_lcd.c,v 1.8 2005/01/06 23:47:22 miod Exp $	*/
+/*	$OpenBSD: zaurus_lcd.c,v 1.9 2005/01/13 17:43:31 drahn Exp $	*/
 /* $NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp $ */
 
 /*
@@ -197,6 +197,7 @@ lcd_attach(struct device *parent, struct device *self, void *aux)
 void
 lcd_burner(void *v, u_int on, u_int flags)
 {
+#if 0
 	struct obio_softc *osc = 
 	    (struct obio_softc *)((struct device *)v)->dv_parent;
 	uint16_t reg;
@@ -209,6 +210,7 @@ lcd_burner(void *v, u_int on, u_int flags)
 		reg &= ~MISCWR_LCDDISP;
 	bus_space_write_2(osc->sc_iot, osc->sc_obioreg_ioh,
 	    LUBBOCK_MISCWR, reg);
+#endif
 }
 
 int
