@@ -1,5 +1,5 @@
-/*	$OpenBSD: isakmpd.c,v 1.22 2000/05/02 14:36:30 niklas Exp $	*/
-/*	$EOM: isakmpd.c,v 1.49 2000/04/27 17:39:17 niklas Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.23 2000/05/03 13:47:27 niklas Exp $	*/
+/*	$EOM: isakmpd.c,v 1.51 2000/05/03 13:22:20 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -37,6 +37,8 @@
 
 #include <errno.h>
 #include <sys/param.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -244,8 +246,12 @@ sighup (int sig)
 static void
 report (void)
 {
-  FILE *report = fopen (report_file, "w");
-  FILE *old;
+  FILE *report, *old;
+  mode_t old_umask;
+	
+  old_umask = umask (S_IRWXG | S_IRWXO);
+  report = fopen (report_file, "w");
+  umask (old_umask);
 
   if (!report)
     {
