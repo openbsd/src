@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.26 1999/02/28 05:53:13 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.27 1999/11/07 17:39:15 provos Exp $	*/
 
 /*-
  * Copyright (c) 1995 John T. Kohl.  All rights reserved.
@@ -155,8 +155,9 @@ STATIC const char *apm_err_translate __P((int code));
 
 #define	apm_get_powstat(r) apmcall(APM_POWER_STATUS, APM_DEV_ALLDEVS, &r)
 #define	apm_get_event(r) apmcall(APM_GET_PM_EVENT, 0, &r)
-#define	apm_suspend() apm_set_powstate(APM_DEV_ALLDEVS, APM_SYS_SUSPEND)
-#define	apm_standby() apm_set_powstate(APM_DEV_ALLDEVS, APM_SYS_STANDBY)
+STATIC void	apm_standby __P((void));
+STATIC void	apm_suspend __P((void));
+STATIC void	apm_resume __P((struct apm_softc *, struct apmregs *));
 
 STATIC const char *
 apm_err_translate(code)
@@ -282,6 +283,32 @@ apm_power_print (sc, regs)
 
 	printf("\n");
 #endif
+}
+
+STATIC void
+apm_suspend()
+{
+	dopowerhooks(PWR_SUSPEND);
+
+	(void)apm_set_powstate(APM_DEV_ALLDEVS, APM_SYS_SUSPEND);
+}
+
+STATIC void
+apm_standby()
+{
+	dopowerhooks(PWR_STANDBY);
+
+	(void)apm_set_powstate(APM_DEV_ALLDEVS, APM_SYS_STANDBY);
+}
+
+STATIC void
+apm_resume(sc, regs)
+	struct apm_softc *sc;
+	struct apmregs *regs;
+{
+	inittodr(time.tv_sec);
+	dopowerhooks(PWR_RESUME);
+	apm_record_event(sc, regs->bx);
 }
 
 /*
@@ -411,23 +438,19 @@ apm_event_handle(sc, regs)
 		break;
 	case APM_NORMAL_RESUME:
 		DPRINTF(("system resumed\n"));
-		inittodr(time.tv_sec);
-		apm_record_event(sc, regs->bx);
+		apm_resume(sc, regs);
 		break;
 	case APM_CRIT_RESUME:
 		DPRINTF(("system resumed without us!\n"));
-		inittodr(time.tv_sec);
-		apm_record_event(sc, regs->bx);
+		apm_resume(sc, regs);
 		break;
 	case APM_SYS_STANDBY_RESUME:
 		DPRINTF(("system standby resume\n"));
-		inittodr(time.tv_sec);
-		apm_record_event(sc, regs->bx);
+		apm_resume(sc, regs);
 		break;
 	case APM_UPDATE_TIME:
 		DPRINTF(("update time, please\n"));
-		inittodr(time.tv_sec);
-		apm_record_event(sc, regs->bx);
+		apm_resume(sc, regs);
 		break;
 	case APM_CRIT_SUSPEND_REQ:
 		DPRINTF(("suspend required immediately\n"));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.32 1999/09/12 19:44:04 weingart Exp $	*/
+/*	$OpenBSD: systm.h,v 1.33 1999/11/07 17:39:14 provos Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -235,6 +235,16 @@ void	setstatclockrate __P((int));
 void	*shutdownhook_establish __P((void (*)(void *), void *));
 void	shutdownhook_disestablish __P((void *));
 void	doshutdownhooks __P((void));
+
+/*
+ * Power managment hooks.
+ */
+void	*powerhook_establish __P((void (*)(int, void *), void *));
+void	powerhook_disestablish __P((void *));
+void	dopowerhooks __P((int));
+#define PWR_RESUME 0
+#define PWR_SUSPEND 1
+#define PWR_STANDBY 2
 
 struct uio;
 int	uiomove __P((caddr_t, int, struct uio *));
