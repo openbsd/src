@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.72 2001/05/14 14:55:48 art Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.73 2001/05/14 15:11:15 art Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1016,7 +1016,6 @@ sys_fhopen(p, v, retval)
 	struct mount *mp;
 	struct ucred *cred = p->p_ucred;
 	int flags;
-	struct file *nfp;
 	int type, indx, error=0;
 	struct flock lf;
 	struct vattr va;
@@ -1034,9 +1033,9 @@ sys_fhopen(p, v, retval)
 	if ((flags & O_CREAT))
 		return (EINVAL);
 
-	if ((error = falloc(p, &nfp, &indx)) != 0)
+	if ((error = falloc(p, &fp, &indx)) != 0)
 		return (error);
-	fp = nfp;
+
 	if ((error = copyin(SCARG(uap, fhp), &fh, sizeof(fhandle_t))) != 0)
 		goto bad;
 
