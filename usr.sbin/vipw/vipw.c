@@ -83,7 +83,7 @@ main(argc, argv)
 	pw_init();
 	tfd = pw_lock(0);
 	if (tfd < 0)
-		errx(1, "the passwd file is busy.");
+		errx(1, "the passwd file is busy or you cannot lock.");
 	pfd = open(_PATH_MASTERPASSWD, O_RDONLY, 0);
 	if (pfd < 0)
 		pw_error(_PATH_MASTERPASSWD, 1, 1);
