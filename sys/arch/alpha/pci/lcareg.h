@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcareg.h,v 1.5 1997/01/24 19:57:45 niklas Exp $	*/
+/*	$OpenBSD: lcareg.h,v 1.6 2001/02/16 05:17:32 jason Exp $	*/
 /*	$NetBSD: lcareg.h,v 1.4 1996/11/23 06:41:00 cgd Exp $	*/
 
 /*
@@ -49,8 +49,23 @@
 #define	IOC_HAE_RSVSD	0xffffffff07ffffffUL
 
 #define LCA_IOC_CONF	(LCA_IOC_BASE + 0x020)	/* Configuration Cycle Type */
+
 #define LCA_IOC_STAT0	(LCA_IOC_BASE + 0x040)	/* Status 0 */
+#define IOC_STAT0_CMD	0x000000000000000fUL	/* PCI command mask */
+#define IOC_STAT0_ERR	0x0000000000000010UL	/* IOC error indicator R/W1C */
+#define IOC_STAT0_LOST	0x0000000000000020UL	/* IOC lose error info R/W1C */
+#define IOC_STAT0_THIT	0x0000000000000040UL	/* test hit */
+#define IOC_STAT0_TREF	0x0000000000000080UL	/* test reference */
+#define IOC_STAT0_CODE	0x0000000000000700UL	/* code mask */
+#define IOC_STAT0_CODESHIFT 8
+#define IOC_STAT0_P_NBR	0x00000000ffffe000UL	/* page number mask */
+
 #define LCA_IOC_STAT1	(LCA_IOC_BASE + 0x060)	/* Status 1 */
+#define IOC_STAT1_ADDR	0x00000000ffffffffUL	/* PCI address mask */
+
+#define LCA_IOC_TBIA	(LCA_IOC_BASE + 0x080)	/* TLB Invalidate All */
+#define LCA_IOC_TB_ENA	(LCA_IOC_BASE + 0x0a0)	/* TLB Enable */
+#define IOC_TB_ENA_TEN	0x0000000000000080UL
 
 #define LCA_IOC_W_BASE0	(LCA_IOC_BASE + 0x100)	/* Window Base */
 #define LCA_IOC_W_MASK0	(LCA_IOC_BASE + 0x140)	/* Window Mask */
@@ -59,3 +74,23 @@
 #define LCA_IOC_W_BASE1	(LCA_IOC_BASE + 0x120)	/* Window Base */
 #define LCA_IOC_W_MASK1	(LCA_IOC_BASE + 0x160)	/* Window Mask */
 #define LCA_IOC_W_T_BASE1 (LCA_IOC_BASE + 0x1a0) /* Translated Base */
+
+#define IOC_W_BASE_W_BASE 0x00000000fff00000UL	/* Window base value */
+#define IOC_W_BASE_SG	  0x0000000100000000UL	/* Window uses SGMAPs */
+#define IOC_W_BASE_WEN	  0x0000000200000000UL	/* Window enable */
+
+#define IOC_W_MASK_1M	0x0000000000000000UL	/* 1MB window */
+#define IOC_W_MASK_2M	0x0000000000100000UL	/* 2MB window */
+#define IOC_W_MASK_4M	0x0000000000300000UL	/* 4MB window */
+#define IOC_W_MASK_8M	0x0000000000700000UL	/* 8MB window */
+#define IOC_W_MASK_16M	0x0000000000f00000UL	/* 16MB window */
+#define IOC_W_MASK_32M	0x0000000001f00000UL	/* 32MB window */
+#define IOC_W_MASK_64M	0x0000000003f00000UL	/* 64MB window */
+#define IOC_W_MASK_128M	0x0000000007f00000UL	/* 128M window */
+#define IOC_W_MASK_256M	0x000000000ff00000UL	/* 256M window */
+#define IOC_W_MASK_512M	0x000000001ff00000UL	/* 512M window */
+#define IOC_W_MASK_1G	0x000000003ff00000UL	/* 1GB window */
+#define IOC_W_MASK_2G	0x000000007ff00000UL	/* 2GB window */
+#define IOC_W_MASK_4G	0x00000000fff00000UL	/* 4GB window */
+
+#define	IOC_W_T_BASE	0x00000000fffffc00UL	/* page table base */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcavar.h,v 1.6 1997/01/24 19:57:46 niklas Exp $	*/
+/*	$OpenBSD: lcavar.h,v 1.7 2001/02/16 05:17:32 jason Exp $	*/
 /*	$NetBSD: lcavar.h,v 1.5 1996/11/25 03:49:38 cgd Exp $	*/
 
 /*
@@ -30,6 +30,7 @@
 
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
+#include <alpha/pci/pci_sgmap_pte64.h>
 
 /*
  * LCA chipset's configuration.
@@ -42,6 +43,11 @@ struct lca_config {
 
 	bus_space_tag_t lc_iot, lc_memt;
 	struct alpha_pci_chipset lc_pc;
+
+	struct alpha_bus_dma_tag lc_dmat_direct;
+	struct alpha_bus_dma_tag lc_dmat_sgmap;
+
+	struct alpha_sgmap lc_sgmap;
 
 	bus_addr_t lc_s_mem_w2_masked_base;
 
@@ -57,6 +63,7 @@ struct lca_softc {
 
 void	lca_init __P((struct lca_config *, int));
 void	lca_pci_init __P((pci_chipset_tag_t, void *));
+void	lca_dma_init __P((struct lca_config *));
 
 bus_space_tag_t lca_bus_io_init __P((void *));
 bus_space_tag_t lca_bus_mem_init __P((void *));

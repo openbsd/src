@@ -1,4 +1,4 @@
-/*	$OpenBSD: apecs.c,v 1.9 2000/11/08 16:01:16 art Exp $	*/
+/*	$OpenBSD: apecs.c,v 1.10 2001/02/16 05:17:31 jason Exp $	*/
 /*	$NetBSD: apecs.c,v 1.16 1996/12/05 01:39:34 cgd Exp $	*/
 
 /*
@@ -45,15 +45,11 @@
 #include <dev/pci/pcivar.h>
 #include <alpha/pci/apecsreg.h>
 #include <alpha/pci/apecsvar.h>
-#if defined(DEC_2100_A50)
+#ifdef DEC_2100_A50
 #include <alpha/pci/pci_2100_a50.h>
 #endif
 
-#ifdef __BROKEN_INDIRECT_CONFIG
 int	apecsmatch __P((struct device *, void *, void *));
-#else
-int	apecsmatch __P((struct device *, struct cfdata *, void *));
-#endif
 void	apecsattach __P((struct device *, struct device *, void *));
 
 struct cfattach apecs_ca = {
@@ -73,11 +69,7 @@ struct apecs_config apecs_configuration;
 int
 apecsmatch(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
 	void *match;
-#else
-	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct mainbus_attach_args *ma = aux;
@@ -110,11 +102,6 @@ apecs_init(acp, mallocsafe)
 	acp->ac_haxr1 = REGVAL(EPIC_HAXR1);
 	acp->ac_haxr2 = REGVAL(EPIC_HAXR2);
 
-	/*
-	 * Can't set up SGMAP data here; can be called before malloc().
-	 * XXX THIS COMMENT NO LONGER MAKES SENSE.
-	 */
-
 	if (!acp->ac_initted) {
 		/* don't do these twice since they set up extents */
 		acp->ac_iot = apecs_bus_io_init(acp);
@@ -123,19 +110,6 @@ apecs_init(acp, mallocsafe)
 	acp->ac_mallocsafe = mallocsafe;
 
 	apecs_pci_init(&acp->ac_pc, acp);
-
-	/* Turn off DMA window enables in PCI Base Reg 1. */
-	REGVAL(EPIC_PCI_BASE_1) = 0;
-	alpha_mb();
-
-	/* XXX SGMAP? */
-
-	/* XXX XXX BEGIN XXX XXX */
-	{							/* XXX */
-		extern vm_offset_t alpha_XXX_dmamap_or;		/* XXX */
-		alpha_XXX_dmamap_or = 0x40000000;		/* XXX */
-	}							/* XXX */
-	/* XXX XXX END XXX XXX */
 
 	acp->ac_initted = 1;
 }
@@ -159,7 +133,7 @@ apecsattach(parent, self, aux)
 	acp = sc->sc_acp = &apecs_configuration;
 	apecs_init(acp, 1);
 
-	/* XXX SGMAP FOO */
+	apecs_dma_init(acp);
 
 	printf(": DECchip %s Core Logic chipset\n",
 	    acp->ac_memwidth == 128 ? "21072" : "21071");
@@ -173,7 +147,7 @@ apecsattach(parent, self, aux)
 		printf("WARNING: 21071-DA NOT PASS2... NO BETS...\n");
 
 	switch (hwrpb->rpb_type) {
-#if defined(DEC_2100_A50)
+#ifdef DEC_2100_A50
 	case ST_DEC_2100_A50:
 		pci_2100_a50_pickintr(acp);
 		break;
@@ -186,8 +160,14 @@ apecsattach(parent, self, aux)
 	pba.pba_busname = "pci";
 	pba.pba_iot = acp->ac_iot;
 	pba.pba_memt = acp->ac_memt;
+	pba.pba_dmat =
+	    alphabus_dma_get_tag(&acp->ac_dmat_direct, ALPHA_BUS_PCI);
 	pba.pba_pc = &acp->ac_pc;
 	pba.pba_bus = 0;
+#ifdef notyet
+	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
+	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
+#endif
 	config_found(self, &pba, apecsprint);
 }
 

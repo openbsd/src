@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.42 2001/02/01 17:25:07 art Exp $
+#	$OpenBSD: files.alpha,v 1.43 2001/02/16 05:17:31 jason Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -164,6 +164,7 @@ file	arch/alpha/pci/apecs.c		apecs
 file	arch/alpha/pci/apecs_bus_io.c	apecs
 file	arch/alpha/pci/apecs_bus_mem.c	apecs
 file	arch/alpha/pci/apecs_pci.c	apecs
+file	arch/alpha/pci/apecs_dma.c	apecs
 
 device	lca: pcibus
 attach	lca at mainbus
@@ -171,6 +172,7 @@ file	arch/alpha/pci/lca.c		lca
 file	arch/alpha/pci/lca_bus_io.c	lca
 file	arch/alpha/pci/lca_bus_mem.c	lca
 file	arch/alpha/pci/lca_pci.c	lca
+file	arch/alpha/pci/lca_dma.c	lca
 
 device	cia: pcibus, alpha_sgmap, alpha_pci_sgmap_pte64
 attach	cia at mainbus
