@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: md.c,v 1.2 1996/09/30 22:29:29 deraadt Exp $
+ *	$Id: md.c,v 1.3 1997/02/02 03:28:41 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -266,6 +266,8 @@ struct exec *hp;
 		return 1;
 #if 0
 	return (((md_swap_long(hp->a_midmag)&0x00ff0000) >> 16) == MID_SUN020);
+#else
+	return (0);
 #endif
 }
 #endif /* RTLD */
