@@ -1,0 +1,183 @@
+.\"	$NetBSD: sleep.9,v 1.11 1999/03/24 06:15:12 mycroft Exp $
+.\"
+.\" Copyright (c) 1996 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Paul Kranenburg.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd June 23, 1996
+.Dt SLEEP 9
+.Os
+.Sh NAME
+.Nm sleep ,
+.Nm tsleep ,
+.Nm wakeup
+.Nd process context sleep and wakeup
+.Sh SYNOPSIS
+.Fd #include <sys/types.h>
+.Fd #include <sys/proc.h>
+.Ft int
+.Fn "tsleep" "void *ident" "int priority" "const char *wmesg" "int timo"
+.Ft void
+.Fn "sleep" "void *ident" "int priority"
+.Ft void
+.Fn "wakeup" "void *ident"
+.Sh DESCRIPTION
+These functions implement voluntary context switching.
+.Fn tsleep
+and
+.Fn sleep
+are used throughout the kernel whenever processing in the current context
+can not continue for any of the following reasons:
+.Bl -bullet -offset indent
+.It
+The current process needs to await the results of a pending I/O operation.
+.It
+The current process needs resources
+.Pq e.g. memory
+which are temporarily unavailable.
+.It
+The current process wants access to data structures which are locked by
+other processes.
+.El
+.Pp
+The function
+.Fn wakeup
+is used to notify sleeping processes of possible changes to the condition
+that caused them to go to sleep.
+Typically, an awakened process will -- after it has acquired a context
+again -- retry the action that blocked its operation to see if the
+.Dq blocking
+condition has cleared.
+.Pp
+The
+.Va bpendsleep
+label can be used as a break-point to debug a process coming back from
+.Fn tsleep .
+.Pp
+The
+.Fn tsleep
+function takes the following arguments:
+.Bl -tag -width priority
+.It Fa ident
+An identifier of the
+.Dq wait channel
+representing the resource for which the current process needs to wait.
+This typically is the virtual address of some kernel data structure related
+to the resource for which the process is contending.
+The same identifier must be used in a call to
+.Fn wakeup
+to get the process going again.
+.Fa ident
+should not be
+.Dv NULL .
+.It Fa priority
+The process priority to be used when the process is awakened and put on
+the queue of runnable processes.
+This mechanism is used to optimize
+.Dq throughput
+of processes executing in kernel mode.
+If the flag
+.Dv PCATCH
+is OR'ed into
+.Fa priority
+the process checks for posted signals before and after sleeping.
+.It Fa wmesg
+A pointer to a character string indicating the reason a process is sleeping.
+The kernel does not use the string, but makes it available
+.Pq through the process structure field Li p_wmesg
+for user level utilities such as
+.Xr ps 1 .
+.It Fa timo
+If non-zero, the process will sleep for at most
+.Li timo/hz
+seconds.
+If this amount of time elapses and no
+.Fn wakeup "ident"
+has occurred, and no signal
+.Pq if Dv PCATCH No was set
+was posted,
+.Fn tsleep
+will return
+.Er EWOULDBLOCK .
+.El
+.Pp
+The
+.Fn sleep
+function puts the process in an uninterruptible sleep.
+It is functionally equivalent to:
+.Bd -literal -offset indent
+tsleep(ident, priority & PRIMASK, 0, 0)
+.Ed
+.Pp
+The
+.Fn wakeup
+function will mark all processes which are currently sleeping on the identifier
+.Fa ident
+as runnable.
+Eventually, each of the processes will resume execution in the kernel
+context, causing a return from
+.Fn [t]sleep .
+Note that processes returning from sleep should always re-evaluate the
+conditions that blocked them, since a call to
+.Fn wakeup
+merely signals a
+.Em possible
+change to the blocking conditions.
+For example, when two or more processes are waiting for an exclusive lock,
+only one of them will succeed in acquiring the lock when it is released.
+All others will have to go back to sleep and wait for the next opportunity.
+.Sh RETURN VALUES
+.Fn tsleep
+returns 0 if it returns as a result of a
+.Fn wakeup .
+If a
+.Fn tsleep
+returns as a result of a signal, the return value is
+.Er ERESTART
+if the signal has the
+.Dv SA_RESTART
+property
+.Pq see Xr sigaction 2 ,
+and
+.Er EINTR
+otherwise.
+If
+.Fn tsleep
+returns as a result of a timeout, the return value is
+.Er EWOULDBLOCK .
+.Sh CODE REFERENCES
+These functions are implemented in the file
+.Pa sys/kern/kern_synch.c .
+.Sh SEE ALSO
+.Xr hz 9 ,
+.Xr timeout 9
