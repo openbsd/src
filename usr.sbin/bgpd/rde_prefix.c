@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.10 2004/02/09 01:56:18 henning Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.11 2004/03/02 19:29:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -182,22 +182,24 @@ pt_remove(struct pt_entry *pte)
 struct pt_entry *
 pt_lookup(struct bgpd_addr *prefix)
 {
+	struct bgpd_addr pmasked;
 	struct pt_entry	*p;
+	u_int32_t	 addr_hbo;
 	int		 i;
 
 	PT_STAT(pt_lookup);
+	bzero(&pmasked, sizeof(pmasked));
+	pmasked.af = AF_INET;
+	addr_hbo = ntohl(prefix->v4.s_addr);
 	for (i = MAX_PREFIX; i >= MIN_PREFIX; i--) {
-		p = pt_get(prefix, i);
+		pmasked.v4.s_addr = htonl(addr_hbo & (0xffffffff << (32 - i)));
+		p = pt_get(&pmasked, i);
 		if (p != NULL)
-			return p;
+			return (p);
 	}
-	return NULL;
+	return (NULL);
 }
 
-/*
- * XXX We need a redblack tree to get an ordered output.
- * XXX A nicer upcall interface wouldn't be luxus too.
- */
 void
 pt_dump(void (*upcall)(struct pt_entry *, void *), void *arg)
 {

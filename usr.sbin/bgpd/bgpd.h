@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.102 2004/03/01 16:02:01 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.103 2004/03/02 19:29:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -57,6 +57,7 @@
 #define	F_NEXTHOP		0x08
 #define	F_DOWN			0x10
 #define	F_STATIC		0x20
+#define	F_LONGER		0x40
 
 enum {
 	PROC_MAIN,
