@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751reg.h,v 1.24 2001/06/23 20:20:33 jason Exp $	*/
+/*	$OpenBSD: hifn7751reg.h,v 1.25 2001/06/25 22:03:08 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -193,7 +193,7 @@ typedef struct hifn_desc {
 #define	HIFN_1_PUB_OPLEN	0x304	/* Public Operand Length */
 #define	HIFN_1_PUB_OP		0x308	/* Public Operand */
 #define	HIFN_1_PUB_STATUS	0x30c	/* Public Status */
-#define	HIFN_1_PUB_IEN		0x310	/* Public Interrupt Enable */
+#define	HIFN_1_PUB_IEN		0x310	/* Public Interrupt nable */
 #define	HIFN_1_RNG_CONFIG	0x314	/* RNG config */
 #define	HIFN_1_RNG_DATA		0x318	/* RNG data */
 #define	HIFN_1_PUB_MEM		0x400	/* start of Public key memory */
@@ -275,8 +275,8 @@ typedef struct hifn_desc {
 #define	HIFN_PUBRST_RESET	0x00000001	/* reset public/rng unit */
 
 /* Public operation register (HIFN_1_PUB_OP) */
-#define	HIFN_PUBOP_AOFFSET	0x0000007e	/* A offset */
-#define	HIFN_PUBOP_BOFFSET	0x00000f80	/* B offset */
+#define	HIFN_PUBOP_AOFFSET	0x0000003e	/* A offset */
+#define	HIFN_PUBOP_BOFFSET	0x00000fc0	/* B offset */
 #define	HIFN_PUBOP_MOFFSET	0x0003f000	/* M offset */
 #define	HIFN_PUBOP_OP_MASK	0x003c0000	/* Opcode: */
 #define	HIFN_PUBOP_OP_NOP	0x00000000	/*  NOP */
@@ -292,6 +292,11 @@ typedef struct hifn_desc {
 #define	HIFN_PUBOP_OP_MODMULT	0x00280000	/*  Modular MULT */
 #define	HIFN_PUBOP_OP_MODRED	0x002c0000	/*  Modular Red */
 #define	HIFN_PUBOP_OP_MODEXP	0x00300000	/*  Modular Exp */
+
+/* Public operand length register (HIFN_1_PUB_OPLEN) */
+#define	HIFN_PUBOPLEN_MODLEN	0x0000007f
+#define	HIFN_PUBOPLEN_EXPLEN	0x0003ff80
+#define	HIFN_PUBOPLEN_REDLEN	0x003c0000
 
 /* Public status register (HIFN_1_PUB_STATUS) */
 #define	HIFN_PUBSTS_DONE	0x00000001	/* operation done */
