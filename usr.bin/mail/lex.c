@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.20 2000/06/30 16:00:19 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.21 2000/07/06 06:24:21 deraadt Exp $	*/
 /*	$NetBSD: lex.c,v 1.10 1997/05/17 19:55:13 pk Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: lex.c,v 1.20 2000/06/30 16:00:19 millert Exp $";
+static char rcsid[] = "$OpenBSD: lex.c,v 1.21 2000/07/06 06:24:21 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -238,7 +238,7 @@ commands()
 			if ((value("autoinc") != NULL) && (incfile() > 0))
 				puts("New mail has arrived.");
 			reset_on_stop = 1;
-			printf(prompt);
+			printf("%s", prompt);
 		}
 		fflush(stdout);
 		sreset();
