@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.4 2002/05/21 18:31:31 jason Exp $	*/
+/*	$OpenBSD: creator.c,v 1.5 2002/05/21 18:49:00 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -87,7 +87,7 @@ struct wsscreen_descr creator_stdscreen = {
 
 const struct wsscreen_descr *creator_scrlist[] = {
 	&creator_stdscreen,
-	/* XXX other formaces? */
+	/* XXX other formats? */
 };
 
 struct wsscreen_list creator_screenlist = {
@@ -122,7 +122,7 @@ struct creator_softc {
 	bus_addr_t sc_addrs[FFB_NREGS];
 	bus_size_t sc_sizes[FFB_NREGS];
 	int sc_height, sc_width, sc_linebytes, sc_depth;
-	int sc_nscreens, sc_nregs;
+	int sc_nscreens, sc_nreg;
 	struct rasops_info sc_rasops;
 };
 
@@ -186,10 +186,7 @@ creator_attach(parent, self, aux)
 		}
 		sc->sc_addrs[i] = ma->ma_reg[i].ur_paddr;
 		sc->sc_sizes[i] = ma->ma_reg[i].ur_len;
-		printf(" reg %d: addr %llx len %llx\n", i,
-		    (unsigned long long)sc->sc_addrs[i],
-		    (unsigned long long)sc->sc_sizes[i]);
-		sc->sc_nregs = i + 1;
+		sc->sc_nreg = i + 1;
 	}
 
 	console = (fbnode == ma->ma_node);
@@ -199,8 +196,8 @@ creator_attach(parent, self, aux)
 	sc->sc_height = getpropint(ma->ma_node, "height", 0);
 	sc->sc_width = getpropint(ma->ma_node, "width", 0);
 
-	sc->sc_rasops.ri_depth = 32;
-	sc->sc_rasops.ri_stride = 8192;
+	sc->sc_rasops.ri_depth = sc->sc_depth;
+	sc->sc_rasops.ri_stride = sc->sc_linebytes;
 	sc->sc_rasops.ri_flg = RI_CENTER;
 	sc->sc_rasops.ri_bits = (void *)bus_space_vaddr(sc->sc_bt,
 	    sc->sc_regs[FFB_REG_DFB32]);
@@ -240,7 +237,7 @@ creator_attach(parent, self, aux)
 	return;
 
 fail:
-	for (i = 0; i < ma->ma_nreg; i++)
+	for (i = 0; i < sc->sc_nreg; i++)
 		if (sc->sc_regs[i] != 0)
 			bus_space_unmap(sc->sc_bt, sc->sc_regs[i],
 			    ma->ma_reg[i].ur_len);
@@ -266,7 +263,7 @@ creator_ioctl(v, cmd, data, flags, p)
 		wdf->height = sc->sc_height;
 		wdf->width  = sc->sc_width;
 		wdf->depth  = sc->sc_depth;
-		wdf->cmsize = 256;
+		wdf->cmsize = 256;/*XXX*/
 		break;
 	case WSDISPLAYIO_LINEBYTES:
 		*(u_int *)data = sc->sc_linebytes;
@@ -343,7 +340,7 @@ creator_mmap(vsc, off, prot)
 	struct creator_softc *sc = vsc;
 	int i;
 
-	for (i = 0; i < sc->sc_nregs; i++) {
+	for (i = 0; i < sc->sc_nreg; i++) {
 		/* Before this set? */
 		if (off < sc->sc_addrs[i])
 			continue;
