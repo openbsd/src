@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.2 2005/03/08 14:55:41 deraadt Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.3 2005/03/09 11:43:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@vantronix.net>
@@ -126,21 +126,20 @@ ieee80211_hdr(struct ieee80211_frame *wh)
 void
 ieee80211_print_element(u_int8_t *data, u_int len)
 {
-	int i;
 	u_int8_t *p;
+	int i;
 
 	printf(" 0x");
-	for (i = 0, p = data; i < len; i++, p++) {
+	for (i = 0, p = data; i < len; i++, p++)
 		printf("%02x", *p);
-	}
 }
 
 /* Caller checks len */
 void
 ieee80211_print_essid(u_int8_t *essid, u_int len)
 {
-	int i;
 	u_int8_t *p;
+	int i;
 
 	if (len > IEEE80211_NWID_LEN)
 		len = IEEE80211_NWID_LEN;
@@ -155,9 +154,8 @@ ieee80211_print_essid(u_int8_t *essid, u_int len)
 		for (i = 0, p = essid; i < len; i++, p++)
 			putchar(*p);
 		putchar(')');
-	} else {
+	} else
 		ieee80211_print_element(essid, len);
-	}
 }
 
 int
@@ -190,7 +188,7 @@ ieee80211_elements(struct ieee80211_frame *wh, u_int flen)
 
 	if (vflag)
 		printb(", caps", letoh16(*(u_int16_t *)capinfo),
-			IEEE80211_CAPINFO_BITS);
+		    IEEE80211_CAPINFO_BITS);
 
 	while (TTEST2(*frm, 2)) {
 		u_int len = frm[1];
@@ -432,8 +430,6 @@ ieee802_11_if_print(u_char *user, const struct pcap_pkthdr *h,
 		default_print(p, (u_int)h->caplen);
 
 	putchar('\n');
-
-	return;
 }
 
 void
@@ -611,7 +607,6 @@ ieee802_11_radio_if_print(u_char *user, const struct pcap_pkthdr *h,
 #undef RADIOTAP
 
 	putchar('>');
-
 	goto out;
 
  trunc:
@@ -621,8 +616,5 @@ ieee802_11_radio_if_print(u_char *user, const struct pcap_pkthdr *h,
  out:
 	if (xflag)
 		default_print(p, h->caplen);
-
 	putchar('\n');
-
-	return;
 }
