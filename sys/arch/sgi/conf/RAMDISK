@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.9 2004/09/17 11:32:53 msf Exp $
+#	$OpenBSD: RAMDISK,v 1.10 2004/10/20 12:49:15 pefo Exp $
 #
 
 machine		sgi mips64
@@ -8,6 +8,7 @@ option		TIMEZONE=0	# minutes west of GMT (for)
 option		DST=0		# use daylight savings rules
 
 # Make options
+makeoption	LINK_ADDRESS="0xffffffff80100000"
 
 # Standard system options
 option		SWAPPAGER	# swap pager (anonymous and swap space)
@@ -47,6 +48,10 @@ option		RAMDISK_HOOKS
 
 # Define what targets to support
 option		TGT_O2
+
+# Control certain other stuff
+option		AHC_CTRL_ID=0	# SGI have scsi controllers at 0.
+
 
 # Specify storage configuration using ramdisk
 config		bsd	root on rd0a swap on rd0b

@@ -1,4 +1,4 @@
-/*	$OpenBSD: macepcibridge.c,v 1.5 2004/09/24 14:22:49 deraadt Exp $ */
+/*	$OpenBSD: macepcibridge.c,v 1.6 2004/10/20 12:49:15 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB (www.opsycon.se)
@@ -27,7 +27,7 @@
  */
 
 /*
- * Machine dependent PCI BUS Bridge driver.
+ * Machine dependent PCI BUS Bridge driver on Mace (O2).
  */
 
 #include <sys/param.h>
@@ -58,28 +58,28 @@ extern void macebus_intr_disestablish(void *, void *);
 extern void pciaddr_remap(pci_chipset_tag_t);
 
 /**/
-int	 pcibrmatch(struct device *, void *, void *);
-void	 pcibrattach(struct device *, struct device *, void *);
-void	 pcibr_attach_hook(struct device *, struct device *,
+int	 mace_pcibrmatch(struct device *, void *, void *);
+void	 mace_pcibrattach(struct device *, struct device *, void *);
+void	 mace_pcibr_attach_hook(struct device *, struct device *,
 				struct pcibus_attach_args *);
-int	 pcibr_errintr(void *);
+int	 mace_pcibr_errintr(void *);
 
-pcitag_t pcibr_make_tag(void *, int, int, int);
-void	 pcibr_decompose_tag(void *, pcitag_t, int *, int *, int *);
+pcitag_t mace_pcibr_make_tag(void *, int, int, int);
+void	 mace_pcibr_decompose_tag(void *, pcitag_t, int *, int *, int *);
 
-int	 pcibr_bus_maxdevs(void *, int);
-pcireg_t pcibr_conf_read(void *, pcitag_t, int);
-void	 pcibr_conf_write(void *, pcitag_t, int, pcireg_t);
+int	 mace_pcibr_bus_maxdevs(void *, int);
+pcireg_t mace_pcibr_conf_read(void *, pcitag_t, int);
+void	 mace_pcibr_conf_write(void *, pcitag_t, int, pcireg_t);
 
-int      pcibr_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
-const char *pcibr_intr_string(void *, pci_intr_handle_t);
-void     *pcibr_intr_establish(void *, pci_intr_handle_t,
+int      mace_pcibr_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+const char *mace_pcibr_intr_string(void *, pci_intr_handle_t);
+void     *mace_pcibr_intr_establish(void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *, char *);
-void     pcibr_intr_disestablish(void *, void *);
+void     mace_pcibr_intr_disestablish(void *, void *);
 
 
 struct cfattach macepcibr_ca = {
-	sizeof(struct pcibr_softc), pcibrmatch, pcibrattach,
+	sizeof(struct mace_pcibr_softc), mace_pcibrmatch, mace_pcibrattach,
 };
 
 struct cfdriver macepcibr_cd = {
@@ -89,28 +89,28 @@ struct cfdriver macepcibr_cd = {
 long pci_io_ext_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof (long)];
 long pci_mem_ext_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof (long)];
 
-bus_space_t pcibbus_mem_tag = {
+bus_space_t mace_pcibbus_mem_tag = {
 	NULL,
 	(bus_addr_t)MACE_PCI_MEM_BASE,
 	NULL,
 	0,
-	pcib_read_1, pcib_write_1,
-	pcib_read_2, pcib_write_2,
-	pcib_read_4, pcib_write_4,
-	pcib_read_8, pcib_write_8,
-	pcib_space_map, pcib_space_unmap, pcib_space_region,
+	mace_pcib_read_1, mace_pcib_write_1,
+	mace_pcib_read_2, mace_pcib_write_2,
+	mace_pcib_read_4, mace_pcib_write_4,
+	mace_pcib_read_8, mace_pcib_write_8,
+	mace_pcib_space_map, mace_pcib_space_unmap, mace_pcib_space_region,
 };
 
-bus_space_t pcibbus_io_tag = {
+bus_space_t mace_pcibbus_io_tag = {
 	NULL,
 	(bus_addr_t)MACE_PCI_IO_BASE,
 	NULL,
 	0,
-	pcib_read_1, pcib_write_1,
-	pcib_read_2, pcib_write_2,
-	pcib_read_4, pcib_write_4,
-	pcib_read_8, pcib_write_8,
-	pcib_space_map, pcib_space_unmap, pcib_space_region,
+	mace_pcib_read_1, mace_pcib_write_1,
+	mace_pcib_read_2, mace_pcib_write_2,
+	mace_pcib_read_4, mace_pcib_write_4,
+	mace_pcib_read_8, mace_pcib_write_8,
+	mace_pcib_space_map, mace_pcib_space_unmap, mace_pcib_space_region,
 };
 
 /*
@@ -156,11 +156,11 @@ struct _perr_map {
 };
 
 
-static int      pcibrprint __P((void *, const char *pnp));
+static int      mace_pcibrprint __P((void *, const char *pnp));
 
 
 int
-pcibrmatch(struct device *parent, void *match, void *aux)
+mace_pcibrmatch(struct device *parent, void *match, void *aux)
 {
 	switch(sys_config.system_type) {
 	case SGI_O2:
@@ -170,9 +170,9 @@ pcibrmatch(struct device *parent, void *match, void *aux)
 }
 
 void
-pcibrattach(struct device *parent, struct device *self, void *aux)
+mace_pcibrattach(struct device *parent, struct device *self, void *aux)
 {
-	struct pcibr_softc *sc = (struct pcibr_softc *)self;
+	struct mace_pcibr_softc *sc = (struct mace_pcibr_softc *)self;
 	struct pcibus_attach_args pba;
 	struct confargs *ca = aux;
 	pcireg_t pcireg;
@@ -181,27 +181,27 @@ pcibrattach(struct device *parent, struct device *self, void *aux)
 	 *  Common to all bridge chips.
 	 */
 	sc->sc_pc.pc_conf_v = sc;
-	sc->sc_pc.pc_attach_hook = pcibr_attach_hook;
-	sc->sc_pc.pc_make_tag = pcibr_make_tag;
-	sc->sc_pc.pc_decompose_tag = pcibr_decompose_tag;
+	sc->sc_pc.pc_attach_hook = mace_pcibr_attach_hook;
+	sc->sc_pc.pc_make_tag = mace_pcibr_make_tag;
+	sc->sc_pc.pc_decompose_tag = mace_pcibr_decompose_tag;
 	sc->sc_pc.pc_sync_cache = sys_config._IOSyncDCache;
 
 	/* Create extents for PCI mappings */
-	pcibbus_io_tag.bus_extent = extent_create("pci_io",
+	mace_pcibbus_io_tag.bus_extent = extent_create("pci_io",
 		MACE_PCI_IO_BASE, MACE_PCI_IO_BASE + MACE_PCI_IO_SIZE - 1,
 		M_DEVBUF, (caddr_t)pci_io_ext_storage,
 		sizeof(pci_io_ext_storage), EX_NOCOALESCE|EX_NOWAIT);
 
-	pcibbus_mem_tag.bus_extent = extent_create("pci_mem",
+	mace_pcibbus_mem_tag.bus_extent = extent_create("pci_mem",
 		MACE_PCI_MEM_BASE, MACE_PCI_MEM_BASE + MACE_PCI_MEM_SIZE - 1,
 		M_DEVBUF, (caddr_t)pci_mem_ext_storage,
 		sizeof(pci_mem_ext_storage), EX_NOCOALESCE|EX_NOWAIT);
 
 	/* local -> PCI MEM mapping offset */
-	sc->sc_mem_bus_space = &pcibbus_mem_tag;
+	sc->sc_mem_bus_space = &mace_pcibbus_mem_tag;
 
 	/* local -> PCI IO mapping offset */
-	sc->sc_io_bus_space = &pcibbus_io_tag;
+	sc->sc_io_bus_space = &mace_pcibbus_io_tag;
 
 	/* Map in PCI control registers */
 	sc->sc_memt = ca->ca_memt;
@@ -215,17 +215,17 @@ pcibrattach(struct device *parent, struct device *self, void *aux)
 
 	/* Register the PCI ERROR interrupt handler */
 	BUS_INTR_ESTABLISH(ca, NULL, 8, IST_LEVEL, IPL_HIGH,
-	    pcibr_errintr, (void *)sc, sc->sc_dev.dv_xname);
+	    mace_pcibr_errintr, (void *)sc, sc->sc_dev.dv_xname);
 
-	sc->sc_pc.pc_bus_maxdevs = pcibr_bus_maxdevs;
-	sc->sc_pc.pc_conf_read = pcibr_conf_read;
-	sc->sc_pc.pc_conf_write = pcibr_conf_write;
+	sc->sc_pc.pc_bus_maxdevs = mace_pcibr_bus_maxdevs;
+	sc->sc_pc.pc_conf_read = mace_pcibr_conf_read;
+	sc->sc_pc.pc_conf_write = mace_pcibr_conf_write;
 
 	sc->sc_pc.pc_intr_v = NULL;
-	sc->sc_pc.pc_intr_map = pcibr_intr_map;
-	sc->sc_pc.pc_intr_string = pcibr_intr_string;
-	sc->sc_pc.pc_intr_establish = pcibr_intr_establish;
-	sc->sc_pc.pc_intr_disestablish = pcibr_intr_disestablish;
+	sc->sc_pc.pc_intr_map = mace_pcibr_intr_map;
+	sc->sc_pc.pc_intr_string = mace_pcibr_intr_string;
+	sc->sc_pc.pc_intr_establish = mace_pcibr_intr_establish;
+	sc->sc_pc.pc_intr_disestablish = mace_pcibr_intr_disestablish;
 
 	/*
 	 *  Firmware sucks. Remap PCI BAR registers. (sigh)
@@ -243,7 +243,7 @@ pcibrattach(struct device *parent, struct device *self, void *aux)
 	*pba.pba_dmat = pci_bus_dma_tag;
 	pba.pba_pc = &sc->sc_pc;
 	pba.pba_bus = sc->sc_dev.dv_unit;
-	config_found(self, &pba, pcibrprint);
+	config_found(self, &pba, mace_pcibrprint);
 
 	/* Clear PCI errors and set up error interrupt */
 	bus_space_write_4(sc->sc_memt, sc->sc_memh, MACE_PCI_ERROR_FLAGS, 0);
@@ -253,7 +253,7 @@ pcibrattach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-pcibrprint(aux, pnp)
+mace_pcibrprint(aux, pnp)
 	void *aux;
 	const char *pnp;
 {
@@ -266,16 +266,16 @@ pcibrprint(aux, pnp)
 }
 
 void
-pcibr_attach_hook(parent, self, pba)
+mace_pcibr_attach_hook(parent, self, pba)
 	struct device *parent, *self;
 	struct pcibus_attach_args *pba;
 {
 }
 
 int
-pcibr_errintr(void *v)
+mace_pcibr_errintr(void *v)
 {
-	struct pcibr_softc *sc = v;
+	struct mace_pcibr_softc *sc = v;
 	bus_space_tag_t memt = sc->sc_memt;
 	bus_space_handle_t memh = sc->sc_memh;
 	struct _perr_map *emap = perr_map;
@@ -302,7 +302,7 @@ pcibr_errintr(void *v)
  */
 
 pcitag_t
-pcibr_make_tag(cpv, bus, dev, fnc)
+mace_pcibr_make_tag(cpv, bus, dev, fnc)
 	void *cpv;
 	int bus, dev, fnc;
 {
@@ -310,7 +310,7 @@ pcibr_make_tag(cpv, bus, dev, fnc)
 }
 
 void
-pcibr_decompose_tag(cpv, tag, busp, devp, fncp)
+mace_pcibr_decompose_tag(cpv, tag, busp, devp, fncp)
 	void *cpv;
 	pcitag_t tag;
 	int *busp, *devp, *fncp;
@@ -324,7 +324,7 @@ pcibr_decompose_tag(cpv, tag, busp, devp, fncp)
 }
 
 int
-pcibr_bus_maxdevs(cpv, busno)
+mace_pcibr_bus_maxdevs(cpv, busno)
 	void *cpv;
 	int busno;
 {
@@ -332,12 +332,12 @@ pcibr_bus_maxdevs(cpv, busno)
 }
 
 pcireg_t
-pcibr_conf_read(cpv, tag, offset)
+mace_pcibr_conf_read(cpv, tag, offset)
 	void *cpv;
 	pcitag_t tag;
 	int offset;
 {
-	struct pcibr_softc *sc = cpv;
+	struct mace_pcibr_softc *sc = cpv;
 	bus_space_tag_t memt = sc->sc_memt;
 	bus_space_handle_t memh = sc->sc_memh;
 	pcireg_t data, stat;
@@ -364,13 +364,13 @@ pcibr_conf_read(cpv, tag, offset)
 }
 
 void
-pcibr_conf_write(cpv, tag, offset, data)
+mace_pcibr_conf_write(cpv, tag, offset, data)
 	void *cpv;
 	pcitag_t tag;
 	int offset;
 	pcireg_t data;
 {
-	struct pcibr_softc *sc = cpv;
+	struct mace_pcibr_softc *sc = cpv;
 	pcireg_t addr;
 	int s;
 
@@ -385,7 +385,7 @@ pcibr_conf_write(cpv, tag, offset, data)
 }
 
 int
-pcibr_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+mace_pcibr_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	int bus, device, pirq;
 
@@ -396,11 +396,11 @@ pcibr_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		return 1;
 	}
 	if (pa->pa_intrpin > 4) {
-		printf("pcibr_intr_map: bad interrupt pin %d\n", pa->pa_intrpin);
+		printf("mace_pcibr_intr_map: bad interrupt pin %d\n", pa->pa_intrpin);
 		return 1;
 	}
 
-	pcibr_decompose_tag((void *)NULL, pa->pa_tag, &bus, &device, NULL);
+	mace_pcibr_decompose_tag((void *)NULL, pa->pa_tag, &bus, &device, NULL);
 
 	if (sys_config.system_type == SGI_O2) {
 		pirq = -1;
@@ -422,7 +422,7 @@ pcibr_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 }
 
 const char *
-pcibr_intr_string(lcv, ih)
+mace_pcibr_intr_string(lcv, ih)
 	void *lcv;
 	pci_intr_handle_t ih;
 {
@@ -433,7 +433,7 @@ pcibr_intr_string(lcv, ih)
 }
 
 void *
-pcibr_intr_establish(lcv, ih, level, func, arg, name)
+mace_pcibr_intr_establish(lcv, ih, level, func, arg, name)
 	void *lcv;
 	pci_intr_handle_t ih;
 	int level;
@@ -445,7 +445,7 @@ pcibr_intr_establish(lcv, ih, level, func, arg, name)
 }
 
 void
-pcibr_intr_disestablish(lcv, cookie)
+mace_pcibr_intr_disestablish(lcv, cookie)
 	void *lcv, *cookie;
 {
 	macebus_intr_disestablish(lcv, cookie);
@@ -457,55 +457,55 @@ pcibr_intr_disestablish(lcv, cookie)
  */
 
 u_int8_t
-pcib_read_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
+mace_pcib_read_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
 	return *(volatile u_int8_t *)(h + (o | 3) - (o & 3));
 }
 
 u_int16_t
-pcib_read_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
+mace_pcib_read_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
 	return *(volatile u_int16_t *)(h + (o | 2) - (o & 3));
 }
 
 u_int32_t
-pcib_read_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
+mace_pcib_read_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
 	return *(volatile u_int32_t *)(h + o);
 }
 
 u_int64_t
-pcib_read_8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
+mace_pcib_read_8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
 	return *(volatile u_int64_t *)(h + o);
 }
 
 void
-pcib_write_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int8_t v)
+mace_pcib_write_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int8_t v)
 {
 	*(volatile u_int8_t *)(h + (o | 3) - (o & 3)) = v;
 }
 
 void
-pcib_write_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int16_t v)
+mace_pcib_write_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int16_t v)
 {
 	*(volatile u_int16_t *)(h + (o | 2) - (o & 3)) = v;
 }
 
 void
-pcib_write_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int32_t v)
+mace_pcib_write_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int32_t v)
 {
 	*(volatile u_int32_t *)(h + o) = v;
 }
 
 void
-pcib_write_8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int64_t v)
+mace_pcib_write_8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int64_t v)
 {
 	*(volatile u_int64_t *)(h + o) = v;
 }
 
 int
-pcib_space_map(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
+mace_pcib_space_map(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
 	int cacheable, bus_space_handle_t *bshp)
 {
 	bus_addr_t bpa;
@@ -528,7 +528,7 @@ pcib_space_map(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
 }
 
 void
-pcib_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
+mace_pcib_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 {
 	bus_addr_t sva;
 	bus_size_t off, len;
@@ -558,7 +558,7 @@ pcib_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 }
 
 int
-pcib_space_region(bus_space_tag_t t, bus_space_handle_t bsh,
+mace_pcib_space_region(bus_space_tag_t t, bus_space_handle_t bsh,
 	bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp)
 {
 	*nbshp = bsh + offset;

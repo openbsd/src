@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.1 2004/09/20 20:03:18 miod Exp $	*/
+/*	$OpenBSD: pte.h,v 1.2 2004/10/20 12:49:15 pefo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,11 +51,11 @@
  * Structure defining an tlb entry data set.
  */
 
-struct tlb {
-	int	tlb_mask;
-	int	tlb_hi;
-	int	tlb_lo0;
-	int	tlb_lo1;
+struct tlb_entry {
+	u_int64_t	tlb_mask;
+	u_int64_t	tlb_hi;
+	u_int64_t	tlb_lo0;
+	u_int64_t	tlb_lo1;
 };
 
 typedef union pt_entry {
@@ -78,11 +78,18 @@ typedef union pt_entry {
 #define	PG_M		0x00000004
 #define	PG_ATTR		0x0000003f
 #define	PG_UNCACHED	0x00000010
-#define	PG_CACHED	0x00000018
+#define	PG_CACHED_NC	0x00000018	/* Cached, non coherent */
+#define	PG_CACHED_CE	0x00000020	/* Cached, coherent exclusive */
+#define	PG_CACHED_CEW	0x00000028	/* Cached, coherent exclusive write */
 #define	PG_CACHEMODE	0x00000038
+#ifdef TGT_COHERENT
+#define	PG_CACHED	PG_CACHED_CE
+#else
+#define	PG_CACHED	PG_CACHED_NC
+#endif
 #define	PG_ROPAGE	(PG_V | PG_RO | PG_CACHED) /* Write protected */
-#define	PG_RWPAGE	(PG_V | PG_M | PG_CACHED)  /* Not wr-prot not clean */
-#define	PG_CWPAGE	(PG_V | PG_CACHED)	   /* Not wr-prot but clean */
+#define	PG_RWPAGE	(PG_V | PG_M | PG_CACHED)  /* Not w-prot not clean */
+#define	PG_CWPAGE	(PG_V | PG_CACHED)	   /* Not w-prot but clean */
 #define	PG_IOPAGE	(PG_G | PG_V | PG_M | PG_UNCACHED)
 #define	PG_FRAME	0x3fffffc0
 #define PG_SHIFT	6

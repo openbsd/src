@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_float.S,v 1.7 2004/09/27 19:16:06 pefo Exp $ */
+/*	$OpenBSD: lcore_float.S,v 1.8 2004/10/20 12:49:15 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -468,7 +468,7 @@ NON_LEAF(MipsFPTrap, FRAMESZ(CF_SZ), ra)
  */
 1:
 	lw	a0, 0(a2)			# a0 = coproc instruction
-	addu	v0, a2, 4			# v0 = next pc
+	PTR_ADDU v0, a2, 4			# v0 = next pc
 2:
 	PTR_L	a3, curprocpaddr		# first arg is ptr to CPU regs
 	PTR_S	v0, U_PCB_REGS+(PC * REGSZ)(a3)	# save new pc

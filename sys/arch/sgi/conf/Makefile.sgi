@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sgi,v 1.8 2004/10/08 07:11:04 grange Exp $
+#	$OpenBSD: Makefile.sgi,v 1.9 2004/10/20 12:49:15 pefo Exp $
 
 # Makefile for OpenBSD
 #
@@ -102,9 +102,9 @@ SYSTEM_LD=	-@if [ X${DEBUG} = X-g ]; \
 		else strip=-x; \
 		fi; \
 		echo ${LD} $$strip -o $@ -e start -T ../../conf/ld.script \
-			'$${SYSTEM_OBJ}' vers.o; \
+			-Ttext=${LINK_ADDRESS} '$${SYSTEM_OBJ}' vers.o; \
 		${LD} $$strip -o $@ -e start -T ../../conf/ld.script \
-			${SYSTEM_OBJ} vers.o
+			-Ttext=${LINK_ADDRESS} ${SYSTEM_OBJ} vers.o
 #
 SYSTEM_LD_TAIL=	chmod 755 $@; \
 		${SIZE} $@

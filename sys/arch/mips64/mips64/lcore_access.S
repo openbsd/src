@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_access.S,v 1.7 2004/09/27 19:16:06 pefo Exp $ */
+/*	$OpenBSD: lcore_access.S,v 1.8 2004/10/20 12:49:15 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -212,10 +212,10 @@ END(fillw)
 LEAF(mem_zero_page, 0)
 	LI	v0, NBPG
 1:
-	dsubu	v0, 8
+	PTR_SUBU v0, 8
 	sd	zero, 0(a0)
 	bne	zero, v0, 1b
-	daddu	a0, 8
+	PTR_ADDU a0, 8
 	jr	ra
 	nop
 END(mem_zero_page)

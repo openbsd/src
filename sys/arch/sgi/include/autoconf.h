@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.8 2004/09/20 10:31:16 pefo Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.9 2004/10/20 12:49:15 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -42,7 +42,7 @@
 
 struct sys_rec {
 	int	system_type;
-	struct {
+	struct cpuinfo {
 		u_int16_t type;
 		u_int8_t  vers_maj;
 		u_int8_t  vers_min;

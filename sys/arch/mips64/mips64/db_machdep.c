@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.6 2004/09/15 16:05:18 pefo Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.7 2004/10/20 12:49:15 pefo Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -562,9 +562,9 @@ void
 db_dump_tlb_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *m)
 {
 	int tlbno, last, check, pid;
-	struct tlb tlb, tlbp;
+	struct tlb_entry tlb, tlbp;
 char *attr[] = {
-	"CWTNA", "CWTA ", "UCBL ", "CWB  ", "RES  ", "RES  ", "UCNB ", "BPASS"
+	"WTNA", "WTA ", "UCBL", "CWB ", "RES ", "RES ", "UCNB", "BPAS"
 };
 
 	pid = -1;
@@ -609,23 +609,23 @@ if ((tlbp.tlb_hi == tlb.tlb_hi && (tlb.tlb_lo0 & PG_V || tlb.tlb_lo1 & PG_V)) ||
 			continue;
 
 		if (tlb.tlb_lo0 & PG_V || tlb.tlb_lo1 & PG_V) {
-			printf("%2d v=0x%08x", tlbno, tlb.tlb_hi & ~0xff);
+			printf("%2d v=%16llx", tlbno, tlb.tlb_hi & (long)~0xff);
 			printf("/%02x ", tlb.tlb_hi & 0xff);
 
 			if (tlb.tlb_lo0 & PG_V) {
-				printf("0x%08x ", pfn_to_pad(tlb.tlb_lo0));
+				printf("%16llx ", pfn_to_pad(tlb.tlb_lo0));
 				printf("%c", tlb.tlb_lo0 & PG_M ? 'M' : ' ');
 				printf("%c", tlb.tlb_lo0 & PG_G ? 'G' : ' ');
-				printf(" %s ", attr[(tlb.tlb_lo0 >> 3) & 7]);
+				printf("%s ", attr[(tlb.tlb_lo0 >> 3) & 7]);
 			} else {
 				printf("invalid             ");
 			}
 
 			if (tlb.tlb_lo1 & PG_V) {
-				printf("0x%08x ", pfn_to_pad(tlb.tlb_lo1));
+				printf("%16llx ", pfn_to_pad(tlb.tlb_lo1));
 				printf("%c", tlb.tlb_lo1 & PG_M ? 'M' : ' ');
 				printf("%c", tlb.tlb_lo1 & PG_G ? 'G' : ' ');
-				printf(" %s ", attr[(tlb.tlb_lo1 >> 3) & 7]);
+				printf("%s ", attr[(tlb.tlb_lo1 >> 3) & 7]);
 			} else {
 				printf("invalid             ");
 			}

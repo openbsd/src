@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.3 2004/09/16 18:54:48 pefo Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.4 2004/10/20 12:49:15 pefo Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -33,8 +33,6 @@
 #include <stand.h>
 
 #define	USE_SGI_PARTITIONS	1
-
-arc_param_blk_t *bios_base = ArcBiosBase;
 
 void bios_configure_memory(void);
 int bios_get_system_type(void);
@@ -175,8 +173,8 @@ bios_get_system_type()
 	arc_sid_t	*sid;
 	int		i;
 
-	if ((bios_base->magic != ARC_PARAM_BLK_MAGIC) &&
-	    (bios_base->magic != ARC_PARAM_BLK_MAGIC_BUG)) {
+	if ((ArcBiosBase32->magic != ARC_PARAM_BLK_MAGIC) &&
+	    (ArcBiosBase32->magic != ARC_PARAM_BLK_MAGIC_BUG)) {
 		return(-1);	/* This is not an ARC system */
 	}
 

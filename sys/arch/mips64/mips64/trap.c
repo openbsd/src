@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.13 2004/10/08 07:45:15 grange Exp $	*/
+/*	$OpenBSD: trap.c,v 1.14 2004/10/20 12:49:15 pefo Exp $	*/
 /* tracked to 1.23 */
 
 /*
@@ -849,27 +849,29 @@ void
 trapDump(msg)
 	char *msg;
 {
+	struct trapdebug *ptrp;
 	int i;
 	int s;
 
 	s = splhigh();
+	ptrp = trp;
 	printf("trapDump(%s)\n", msg);
 	for (i = 0; i < TRAPSIZE; i++) {
-		if (trp == trapdebug) {
-			trp = &trapdebug[TRAPSIZE - 1];
+		if (ptrp == trapdebug) {
+			ptrp = &trapdebug[TRAPSIZE - 1];
 		}
 		else {
-			trp--;
+			ptrp--;
 		}
 
-		if (trp->cause == 0)
+		if (ptrp->cause == 0)
 			break;
 
 		printf("%s: PC %p CR 0x%x SR 0x%x\n",
-		    trap_type[(trp->cause & CR_EXC_CODE) >> CR_EXC_CODE_SHIFT],
-		    trp->pc, trp->cause, trp->status);
+		    trap_type[(ptrp->cause & CR_EXC_CODE) >> CR_EXC_CODE_SHIFT],
+		    ptrp->pc, ptrp->cause, ptrp->status);
 
-		printf("  RA %p SP %p ADR %p\n", trp->ra, trp->sp, trp->vadr);
+		printf(" RA %p SP %p ADR %p\n", ptrp->ra, ptrp->sp, ptrp->vadr);
 	}
 
 #ifdef TLBTRACE

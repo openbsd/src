@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.h,v 1.5 2004/09/09 22:21:41 pefo Exp $	*/
+/*	$OpenBSD: arcbios.h,v 1.6 2004/10/20 12:49:15 pefo Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  *
@@ -320,37 +320,61 @@ typedef struct arc_calls
 #define ARC_PARAM_BLK_MAGIC	0x53435241
 #define ARC_PARAM_BLK_MAGIC_BUG	0x41524353	/* This is wrong... but req */
 
-typedef struct arc_param_blk
+typedef struct arc_param_blk_32
 {
 	u_int32_t	magic;		/* Magic Number */
 	u_int32_t	length;		/* Length of parameter block */
 	u_int16_t	version;	/* ?? */
 	u_int16_t	revision;	/* ?? */
-/**/	caddr_t		restart_block;	/* ?? */
-/**/	caddr_t		debug_block;	/* Debugging info -- unused */
-/**/	caddr_t		general_exp_vect; /* ?? */
-/**/	caddr_t		tlb_miss_exp_vect; /* ?? */
+	u_int32_t	restart_block;	/* ?? */
+	u_int32_t	debug_block;	/* Debugging info -- unused */
+	u_int32_t	general_exp_vect; /* ?? */
+	u_int32_t	tlb_miss_exp_vect; /* ?? */
 	u_int32_t	firmware_length; /* Size of Firmware jumptable in bytes */
-	arc_calls_t	*firmware_vect;	/* Firmware jumptable */
+	u_int32_t	*firmware_vect;	/* Firmware jumptable */
 	u_int32_t	vendor_length;	/* Size of Vendor specific jumptable */
-/**/	caddr_t		vendor_vect;	/* Vendor specific jumptable */
+	u_int32_t	vendor_vect;	/* Vendor specific jumptable */
 	u_int32_t	adapter_count;	/* ?? */
 	u_int32_t	adapter0_type;	/* ?? */
 	u_int32_t	adapter0_length; /* ?? */
-/**/	caddr_t		adapter0_vect;	/* ?? */
-} arc_param_blk_t;
+	u_int32_t	adapter0_vect;	/* ?? */
+} arc_param_blk_32_t;
+
+typedef struct arc_param_blk_64
+{
+	u_int64_t	magic;		/* Magic Number */
+	u_int64_t	length;		/* Length of parameter block */
+	u_int16_t	version;	/* ?? */
+	u_int16_t	revision;	/* ?? */
+	u_int64_t	restart_block;	/* ?? */
+	u_int64_t	debug_block;	/* Debugging info -- unused */
+	u_int64_t	general_exp_vect; /* ?? */
+	u_int64_t	tlb_miss_exp_vect; /* ?? */
+	u_int64_t	firmware_length; /* Size of Firmware jumptable in bytes */
+	u_int64_t	*firmware_vect;	/* Firmware jumptable */
+	u_int64_t	vendor_length;	/* Size of Vendor specific jumptable */
+	u_int64_t	vendor_vect;	/* Vendor specific jumptable */
+	u_int64_t	adapter_count;	/* ?? */
+	u_int64_t	adapter0_type;	/* ?? */
+	u_int64_t	adapter0_length; /* ?? */
+	u_int64_t	adapter0_vect;	/* ?? */
+} arc_param_blk_64_t;
 
 #ifdef _LP64
-#define ArcBiosBase ((arc_param_blk_t *) 0xffffffff80001000)
+#define ArcBiosBase32	((arc_param_blk_32_t *) 0xffffffff80001000)
+#define ArcBiosBase64	((arc_param_blk_64_t *) 0xffffffff80001000)
 #else
-#define ArcBiosBase ((arc_param_blk_t *) 0x80001000)
+#define ArcBiosBase32	((arc_param_blk_32_t *) 0x80001000)
+#define ArcBiosBase64	((arc_param_blk_64_t *) 0x80001000)
 #endif
 #define ArcBios (ArcBiosBase->firmware_vect)
 
+extern int bios_is_32bit;
 
-int  bios_getchar __P((void));
+int  bios_getchar(void);
 void bios_putchar(char);
 void bios_putstring(char *);
+void bios_printf(const char *, ...);
 void bios_ident(void);
 void bios_display_info(int *, int *, int *, int *);
 

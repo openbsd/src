@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.6 2004/09/22 08:01:58 pefo Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.7 2004/10/20 12:49:15 pefo Exp $	*/
 /*
  * Copyright (c) 1996 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -68,8 +68,9 @@ static int findblkmajor(struct device *);
 static struct device * getdisk(char *, int, int, dev_t *);
 struct device *getdevunit(char *, int);
 struct devmap *boot_findtype(char *);
-void makebootdev(const char *, int);
+int makebootdev(const char *, int);
 const char *boot_get_path_component(const char *, char *, int *);
+const char *boot_getnr(const char *, int *);
 
 /* Struct translating from ARCS to bsd. */
 struct devmap {
@@ -476,9 +477,11 @@ boot_findtype(char *s)
 
 /*
  * Look at the string 'bp' and decode the boot device.
- * Boot names look like: 'scsi()disk(n)rdisk()partition(0)/bsd'
+ * Boot devices look like: 'scsi()disk(n)rdisk()partition(0)'
+ *	 		  or
+ *			   'dksc(0,1,0)'
  */
-void
+int
 makebootdev(const char *bp, int offs)
 {
 	char namebuf[256];
@@ -486,33 +489,52 @@ makebootdev(const char *bp, int offs)
 	int	i, unit, partition;
 	struct devmap *dp;
 
+	if (bp == NULL)
+		return -1;
+
 	ecp = cp = bp;
 	unit = partition = 0;
 	devname = NULL;
 
-	while ((ncp = boot_get_path_component(cp, namebuf, &i)) != NULL) {
-		if ((dp = boot_findtype(namebuf)) != NULL) {
-			switch(dp->what) {
-			case DEVMAP_TYPE:
-				devname = dp->dev;
-				break;
-			case DEVMAP_UNIT:
-				unit = i - 1 + offs;
-				break;
-			case DEVMAP_PART:
+	if (strncmp(cp, "dksc(", 5) == 0) {
+		devname = "sd";
+		cp += 5;
+		cp = boot_getnr(cp, &i);
+		if (*cp == ',') {
+			cp = boot_getnr(cp, &i);
+			unit = i - 1;
+			if (*cp == ',') {
+				cp = boot_getnr(cp, &i);
 				partition = i;
-				break;
 			}
 		}
-		cp = ncp;
+	} else {
+		ncp = boot_get_path_component(cp, namebuf, &i);
+		while (ncp != NULL) {
+			if ((dp = boot_findtype(namebuf)) != NULL) {
+				switch(dp->what) {
+				case DEVMAP_TYPE:
+					devname = dp->dev;
+					break;
+				case DEVMAP_UNIT:
+					unit = i - 1 + offs;
+					break;
+			case DEVMAP_PART:
+					partition = i;
+					break;
+				}
+			}
+			cp = ncp;
+			ncp = boot_get_path_component(cp, namebuf, &i);
+		}
 	}
 
 	if (devname == NULL) {
-		printf("Warning: boot device unrecognized: %s\n", bp);
-		return;
+		return -1;
 	}
 
 	snprintf(bootdev, sizeof(bootdev), "%s%d%c", devname, unit, 'a');
+	return 0;
 }
 
 const char *
@@ -537,3 +559,11 @@ boot_get_path_component(const char *p, char *comp, int *no)
 	return ++p;
 }
 
+const char *
+boot_getnr(const char *p, int *no)
+{
+	*no = 0;
+	while (*p >= '0' && *p <= '9')
+		*no = *no * 10 + *p++ - '0';
+	return p;
+}

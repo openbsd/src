@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_lbus.c,v 1.3 2004/08/11 15:13:35 deraadt Exp $ */
+/*	$OpenBSD: com_lbus.c,v 1.4 2004/10/20 12:49:15 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -48,6 +48,10 @@ struct cfattach com_localbus_ca = {
 	sizeof(struct com_softc), com_localbus_probe, com_localbus_attach
 };
 
+struct cfattach com_xbow_ca = {
+	sizeof(struct com_softc), com_localbus_probe, com_localbus_attach
+};
+
 extern void com_raisedtr(void *);
 extern struct timeout compoll_to;
 
@@ -60,7 +64,7 @@ com_localbus_probe(parent, match, aux)
 	bus_space_handle_t ioh;
 	struct cfdata *cf = match;
 	struct confargs *ca = aux;
-	int iobase, rv = 0;
+	bus_addr_t iobase, rv = 0;
 
 	/*
 	 *  Check if this is our com. If low nibble is 0 match
@@ -92,7 +96,8 @@ com_localbus_attach(parent, self, aux)
 	void *aux;
 {
 	struct com_softc *sc = (void *)self;
-	int iobase, intr;
+	int intr;
+	bus_addr_t iobase;
 	bus_space_handle_t ioh;
 	struct confargs *ca = aux;
 

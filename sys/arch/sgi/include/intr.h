@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.9 2004/09/27 19:20:49 pefo Exp $ */
+/*	$OpenBSD: intr.h,v 1.10 2004/10/20 12:49:15 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -119,7 +119,8 @@ void	splinit(void);
  *  Schedule prioritys for base interrupts (cpu)
  */
 #define	INTPRI_CLOCK	1
-#define	INTPRI_MACEIO	2
+#define	INTPRI_MACEIO	2	/* O2 I/O interrupt */
+#define	INTPRI_XBOWMUX	2	/* Origin 200/2000 I/O interrupt */
 #define	INTPRI_MACEAUX	3
 
 /*

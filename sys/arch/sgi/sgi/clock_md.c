@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock_md.c,v 1.6 2004/09/16 09:24:52 pefo Exp $ */
+/*	$OpenBSD: clock_md.c,v 1.7 2004/10/20 12:49:15 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -39,11 +39,21 @@
 
 #include <sgi/localbus/macebus.h>
 
+extern int clockmatch(struct device *, void *, void *);
+extern void clockattach(struct device *, struct device *, void *);
 extern void clock_int5_init(struct clock_softc *);
 extern int clock_started;
 
 #define FROMBCD(x)	(((x) >> 4) * 10 + ((x) & 0xf))
 #define TOBCD(x)	(((x) / 10 * 16) + ((x) % 10))
+
+struct cfattach clock_macebus_ca = {
+        sizeof(struct clock_softc), clockmatch, clockattach
+};
+struct cfattach clock_xbowmux_ca = {
+        sizeof(struct clock_softc), clockmatch, clockattach
+};
+
 
 void	md_clk_attach(struct device *parent, struct device *self, void *aux);
 
@@ -74,6 +84,14 @@ md_clk_attach(parent, self, aux)
 		    &sc->sc_clk_h))
 			printf("UH!? Can't map clock device!\n");
 		printf(": TOD with DS1687,");
+		break;
+
+	case SGI_O200:
+		sc->sc_clock.clk_init = clock_int5_init;
+		sc->sc_clock.clk_hz = 100;
+		sc->sc_clock.clk_profhz = 100;
+		sc->sc_clock.clk_stathz = 0;	/* XXX no stat clock yet */
+		printf("TODO set up clock.");
 		break;
 
 	default:

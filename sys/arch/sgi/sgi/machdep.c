@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.16 2004/09/27 18:51:18 pefo Exp $ */
+/*	$OpenBSD: machdep.c,v 1.17 2004/10/20 12:49:15 pefo Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -71,6 +71,9 @@
 #include <machine/autoconf.h>
 #include <machine/memconf.h>
 #include <machine/regnum.h>
+#if defined(TGT_ORIGIN200) | defined(TGT_ORIGIN2000)
+#include <machine/mnode.h>
+#endif
 
 #include <machine/rm7000.h>
 
@@ -81,11 +84,14 @@
 #include <machine/bus.h>
 
 #include <sgi/localbus/macebus.h>
+#include <sgi/localbus/xbowmux.h>
 
 extern struct consdev *cn_tab;
 extern char kernel_text[];
-extern void makebootdev(const char *, int);
+extern int makebootdev(const char *, int);
 extern void stacktrace(void);
+
+void dump_tlb(void);
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* machine "architecture" */
@@ -136,13 +142,15 @@ caddr_t	ekern;
 
 struct phys_mem_desc mem_layout[MAXMEMSEGS];
 
-caddr_t mips_init(int, int32_t *);
+caddr_t mips_init(int, void *);
 void initcpu(void);
 void dumpsys(void);
 void dumpconf(void);
 caddr_t allocsys(caddr_t);
 
-static void dobootopts(int, int32_t *);
+void db_command_loop(void);
+
+static void dobootopts(int, void *);
 static int atoi(const char *, int, const char **);
 
 #if BYTE_ORDER == BIG_ENDIAN
@@ -158,7 +166,7 @@ int	my_endian = 0;
  */
 
 caddr_t
-mips_init(int argc, int32_t *argv)
+mips_init(int argc, void *argv)
 {
 	char *cp;
 	int i;
@@ -166,14 +174,10 @@ mips_init(int argc, int32_t *argv)
 	caddr_t sd;
 	extern char start[], edata[], end[];
 	extern char tlb_miss[], e_tlb_miss[];
+	extern char xtlb_miss[], e_xtlb_miss[];
 	extern char tlb_miss_tramp[], e_tlb_miss_tramp[];
 	extern char xtlb_miss_tramp[], e_xtlb_miss_tramp[];
 	extern char exception[], e_exception[];
-
-	/*
-	 *  Clean up any mess.
-	 */
-	Bios_FlushAllCaches();
 
 	/*
 	 * Clear the compiled BSS segment in OpenBSD code
@@ -197,31 +201,35 @@ mips_init(int argc, int32_t *argv)
 
 	/*
 	 *  Initialize the system type and set up memory layout
+	 *  Note that some systems have more complex memory setup.
 	 */
 	bios_ident();
+
+bios_printf("SR=%08x\n", getsr());
 
 	/*
 	 * Determine system type and set up configuration record data.
 	 */
-	if (sys_config.system_type == SGI_O2) {
-		bios_putstring("Found SGI-IP32, setting up.\n");
-		strlcpy(cpu_model, "SGI O2", sizeof(cpu_model));
+	switch (sys_config.system_type) {
+#if defined(TGT_O2)
+	case SGI_O2:
+		bios_printf("Found SGI-IP32, setting up.\n");
+		strlcpy(cpu_model, "SGI-O2 (IP32)", sizeof(cpu_model));
 		sys_config.cons_ioaddr[0] = 0x00390000;	/*XXX*/
 		sys_config.cons_ioaddr[1] = 0x00398000;	/*XXX*/
 		sys_config.cons_baudclk = 1843200;		/*XXX*/
 		sys_config.cons_iot = &macebus_tag;
 		sys_config.local.bus_base = 0x0;		/*XXX*/
-#if defined(_LP64)
 		sys_config.pci_io[0].bus_base = 0xffffffff00000000;/*XXX*/
 		sys_config.pci_mem[0].bus_base = 0xffffffff00000000;/*XXX*/
-#else
-		sys_config.pci_io[0].bus_base = 0x00000000;/*XXX*/
-		sys_config.pci_mem[0].bus_base = 0x00000000;/*XXX*/
-#endif
 		sys_config.pci_mem[0].bus_base_dma = 0x00000000;/*XXX*/
 		sys_config.pci_mem[0].bus_reverse = my_endian;
 		sys_config.cpu[0].tlbwired = 2;
+
 		sys_config.cpu[0].clock = 180000000;  /* Reasonable default */
+		cp = Bios_GetEnvironmentVariable("cpufreq");
+		if (cp && atoi(cp, 10, NULL) > 100)
+			sys_config.cpu[0].clock = atoi(cp, 10, NULL) * 1000000;
 
 		/* R1xK O2's are one disk slot machines. Offset slotno */
 		switch ((cp0_get_prid() >> 8) & 0xff) {
@@ -237,20 +245,57 @@ mips_init(int argc, int32_t *argv)
 			setsr(SR_DSD);
 			break;
 		}
-	} else {
-		bios_putstring("Unsupported system!!!\n");
+		break;
+#endif
+
+#if defined(TGT_ORIGIN200) | defined(TGT_ORIGIN2000)
+	case SGI_O200:
+		bios_printf("Found SGI-IP27, setting up.\n");
+		strlcpy(cpu_model, "SGI- Origin200 (IP27)", sizeof(cpu_model));
+
+		kl_scan_config(0);
+
+		sys_config.cons_ioaddr[0] = kl_get_console_base();
+		sys_config.cons_ioaddr[1] = kl_get_console_base() - 8;
+		sys_config.cons_baudclk = 22000000 / 3;	/*XXX*/
+		sys_config.cons_iot = &xbowmux_tag;
+		sys_config.local.bus_base = 0x0;		/*XXX*/
+		sys_config.pci_io[0].bus_base = 0xffffffff00000000;/*XXX*/
+		sys_config.pci_mem[0].bus_base = 0xffffffff00000000;/*XXX*/
+		sys_config.pci_mem[0].bus_base_dma = 0x00000000;/*XXX*/
+		sys_config.pci_mem[0].bus_reverse = my_endian;
+		sys_config.cpu[0].tlbwired = 2;
+		break;
+#endif
+
+	default:
+		bios_printf("Kernel doesn't support this system type!\n");
+		bios_printf("Halting system.\n");
+		Bios_Halt();
 		while(1);
 	}
 
 	/*
-	 *  Use cpufrequency from bios to start with.
+	 * Look at arguments passed to us and compute boothowto.
+	 * Default to SINGLE and ASKNAME if no args or
+	 * SINGLE and DFLTROOT if this is a ramdisk kernel.
 	 */
-	cp = Bios_GetEnvironmentVariable("cpufreq");
-	if (cp) {
-		i = atoi(cp, 10, NULL);
-		if (i > 100)
-			sys_config.cpu[0].clock = i * 1000000;
-	}
+#ifdef RAMDISK_HOOKS
+	boothowto = RB_SINGLE | RB_DFLTROOT;
+#else
+	boothowto = RB_SINGLE | RB_ASKNAME;
+#endif /* RAMDISK_HOOKS */
+
+	dobootopts(argc, argv);
+
+	/*
+	 *  Figure out where we was booted from.
+	 */
+	cp = Bios_GetEnvironmentVariable("OSLoadPartition");
+	if (cp == NULL)
+		cp = "unknown";
+	if (makebootdev(cp, bootdriveoffs))
+		bios_printf("Boot device unrecognized: '%s'\n", cp);
 
 	/*
 	 *  Set pagesize to enable use of page macros and functions.
@@ -276,7 +321,7 @@ mips_init(int argc, int32_t *argv)
 			continue;	/* Outside kernel */
 		}
 
-		if (fp > firstkernpage)
+		if (fp >= firstkernpage)
 			fp = lastkernpage + 1;
 		else if (lp < lastkernpage)
 			lp = firstkernpage - 1;
@@ -289,63 +334,43 @@ mips_init(int argc, int32_t *argv)
 			uvm_page_physload(fp, lp, fp, lp, VM_FREELIST_DEFAULT);
 	}
 
-	/*
-	 *  Figure out where we was booted from.
-	 */
-	cp = Bios_GetEnvironmentVariable("OSLoadPartition");
-	if (cp == NULL)
-		cp = "unknown";
-	makebootdev(cp, bootdriveoffs);
 
-	/*
-	 * Look at arguments passed to us and compute boothowto.
-	 * Default to SINGLE and ASKNAME if no args or
-	 * SINGLE and DFLTROOT if this is a ramdisk kernel.
-	 */
-#ifdef RAMDISK_HOOKS
-	boothowto = RB_SINGLE | RB_DFLTROOT;
-#else
-	boothowto = RB_SINGLE | RB_ASKNAME;
-#endif /* RAMDISK_HOOKS */
+	switch (sys_config.system_type) {
+#if defined(TGT_O2)
+	case SGI_O2:
+		sys_config.cpu[0].type = (cp0_get_prid() >> 8) & 0xff;
+		sys_config.cpu[0].vers_maj = (cp0_get_prid() >> 4) & 0x0f;
+		sys_config.cpu[0].vers_min = cp0_get_prid() & 0x0f;
+		sys_config.cpu[0].fptype = (cp1_get_prid() >> 8) & 0xff;
+		sys_config.cpu[0].fpvers_maj = (cp1_get_prid() >> 4) & 0x0f;
+		sys_config.cpu[0].fpvers_min = cp1_get_prid() & 0x0f;
 
-	dobootopts(argc, argv);
+		/*
+		 *  Configure TLB.
+		 */
+		switch(sys_config.cpu[0].type) {
+		case MIPS_RM7000:
+			/* Rev A (version >= 2) CPU's have 64 TLB entries. */
+			if (sys_config.cpu[0].vers_maj < 2) {
+				sys_config.cpu[0].tlbsize = 48;
+			} else {
+				sys_config.cpu[0].tlbsize = 64;
+			}
+			break;
 
-	/* Check l3cache size and disable (hard) if non present. */
-	if (Bios_GetEnvironmentVariable("l3cache") != 0) {
-		i = atoi(Bios_GetEnvironmentVariable("l3cache"), 10, NULL);
-		CpuTertiaryCacheSize = 1024 * 1024 * i;
-	} else {
-		CpuTertiaryCacheSize = 0;
-	}
-
-	sys_config.cpu[0].type = (cp0_get_prid() >> 8) & 0xff;
-	sys_config.cpu[0].vers_maj = (cp0_get_prid() >> 4) & 0x0f;
-	sys_config.cpu[0].vers_min = cp0_get_prid() & 0x0f;
-	sys_config.cpu[0].fptype = (cp1_get_prid() >> 8) & 0xff;
-	sys_config.cpu[0].fpvers_maj = (cp1_get_prid() >> 4) & 0x0f;
-	sys_config.cpu[0].fpvers_min = cp1_get_prid() & 0x0f;
-
-	/*
-	 *  Configure TLB.
-	 */
-	switch(sys_config.cpu[0].type) {
-	case MIPS_RM7000:
-		/* Rev A (version >= 2) CPU's have 64 TLB entries. */
-		if (sys_config.cpu[0].vers_maj < 2) {
-			sys_config.cpu[0].tlbsize = 48;
-		} else {
+		case MIPS_R10000:
+		case MIPS_R12000:
+		case MIPS_R14000:
 			sys_config.cpu[0].tlbsize = 64;
+			break;
+
+		default:
+			sys_config.cpu[0].tlbsize = 48;
+			break;
 		}
 		break;
-
-	case MIPS_R10000:
-	case MIPS_R12000:
-	case MIPS_R14000:
-		sys_config.cpu[0].tlbsize = 64;
-		break;
-
+#endif
 	default:
-		sys_config.cpu[0].tlbsize = 48;
 		break;
 	}
 
@@ -378,6 +403,12 @@ mips_init(int argc, int32_t *argv)
 		break;
 	}
 
+	/*
+	 *  Last chance to call the bios. Wiping the TLB means
+	 *  bios data areas are demapped on most systems.
+	 *  O2's are OK. Does not have mapped bios text or data.
+	 */
+	delay(20*1000);		/* Let any uart fifo drain... */
 	tlb_set_wired(0);
 	tlb_flush(sys_config.cpu[0].tlbsize);
 	tlb_set_wired(sys_config.cpu[0].tlbwired);
@@ -416,11 +447,21 @@ mips_init(int argc, int32_t *argv)
 /* XXX */
 #endif
 
+#if defined(TGT_ORIGIN200) | defined(TGT_ORIGIN2000)
+	/*
+	 *  If an IP27 system set up Node 0's HUB.
+	 */
+	if (sys_config.system_type == SGI_O200) {
+		IP27_LHUB_S(PI_REGION_PRESENT, 1);
+		IP27_LHUB_S(PI_CALIAS_SIZE, PI_CALIAS_SIZE_0);
+	}
+#endif
+
 	/*
 	 *  Get a console, very early but after initial mapping setup.
 	 */
-	bios_putstring("Initial setup done, switching console.\n\n");
 	consinit();
+	printf("Initial setup done, switching console.\n");
 
 	/*
 	 * Init message buffer.
@@ -449,11 +490,13 @@ mips_init(int argc, int32_t *argv)
 	 */
 	pmap_bootstrap();
 
+
 	/*
 	 * Copy down exception vector code. If code is to large
 	 * copy down trampolines instead of doing a panic.
 	 */
 	if (e_tlb_miss - tlb_miss > 0x80) {
+		printf("NOTE: TLB code to large, using trampolines\n");
 		bcopy(tlb_miss_tramp, (char *)TLB_MISS_EXC_VEC,
 		    e_tlb_miss_tramp - tlb_miss_tramp);
 		bcopy(xtlb_miss_tramp, (char *)XTLB_MISS_EXC_VEC,
@@ -461,21 +504,28 @@ mips_init(int argc, int32_t *argv)
 	} else {
 		bcopy(tlb_miss, (char *)TLB_MISS_EXC_VEC,
 		    e_tlb_miss - tlb_miss);
+		bcopy(xtlb_miss, (char *)XTLB_MISS_EXC_VEC,
+		    e_xtlb_miss - xtlb_miss);
 	}
 
 	bcopy(exception, (char *)CACHE_ERR_EXC_VEC, e_exception - exception);
 	bcopy(exception, (char *)GEN_EXC_VEC, e_exception - exception);
+
+	/*
+	 *  Turn off bootstrap exception vectors.
+	 */
+	setsr(getsr() & ~SR_BOOT_EXC_VEC);
+
+	/*
+	 * Clear out the I and D caches.
+	 */
+	Mips_SyncCache();
 
 #ifdef DDB
 	db_machine_init();
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
-
-	/*
-	 * Clear out the I and D caches.
-	 */
-	Mips_SyncCache();
 
 	/*
 	 *  Return new stack pointer.
@@ -544,14 +594,17 @@ allocsys(caddr_t v)
  *  Decode boot options.
  */
 static void
-dobootopts(int argc, int32_t *argv)
+dobootopts(int argc, void *argv)
 {
 	char *cp;
 	int i;
 
 	/* XXX Should this be done differently, eg env vs. args? */
 	for (i = 1; i < argc; i++) {
-		cp = (char *)(long)argv[i];
+		if (bios_is_32bit)
+			cp = (char *)(long)((int32_t *)argv)[i];
+		else
+			cp = ((char **)argv)[i];
 		if (cp != NULL && strncmp(cp, "OSLoadOptions=", 14) == 0) {
 			if (strcmp(&cp[14], "auto") == 0)
 					boothowto &= ~(RB_SINGLE|RB_ASKNAME);
@@ -562,6 +615,7 @@ dobootopts(int argc, int32_t *argv)
 		}
 	}
 
+	/* Catch serial consoles on O2's */
 	cp = Bios_GetEnvironmentVariable("ConsoleOut");
 	if (cp != NULL && strncmp(cp, "serial", 6) == 0)
 		boothowto |= RB_SERCONS;
@@ -1069,4 +1123,52 @@ rm7k_watchintr(trapframe)
 	struct trap_frame *trapframe;
 {
 	return(0);
+}
+
+/*
+ *	Dump TLB contents.
+ */
+void
+dump_tlb()
+{
+char *attr[] = {
+	"CWTNA", "CWTA ", "UCBL ", "CWB  ", "RES  ", "RES  ", "UCNB ", "BPASS"
+};
+
+	int tlbno, last;
+	struct tlb_entry tlb;
+
+	last = 64;
+
+	for (tlbno = 0; tlbno < last; tlbno++) {
+		tlb_read(tlbno, &tlb);
+
+		if (tlb.tlb_lo0 & PG_V || tlb.tlb_lo1 & PG_V) {
+			bios_printf("%2d v=%p", tlbno, tlb.tlb_hi & 0xffffffffffffff00);
+			bios_printf("/%02x ", tlb.tlb_hi & 0xff);
+
+			if (tlb.tlb_lo0 & PG_V) {
+				bios_printf("0x%09x ", pfn_to_pad(tlb.tlb_lo0));
+				bios_printf("%c", tlb.tlb_lo0 & PG_M ? 'M' : ' ');
+				bios_printf("%c", tlb.tlb_lo0 & PG_G ? 'G' : ' ');
+				bios_printf(" %s ", attr[(tlb.tlb_lo0 >> 3) & 7]);
+			} else {
+				bios_printf("invalid             ");
+			}
+
+			if (tlb.tlb_lo1 & PG_V) {
+				bios_printf("0x%08x ", pfn_to_pad(tlb.tlb_lo1));
+				bios_printf("%c", tlb.tlb_lo1 & PG_M ? 'M' : ' ');
+				bios_printf("%c", tlb.tlb_lo1 & PG_G ? 'G' : ' ');
+				bios_printf(" %s ", attr[(tlb.tlb_lo1 >> 3) & 7]);
+			} else {
+				bios_printf("invalid             ");
+			}
+			bios_printf(" sz=%x", tlb.tlb_mask);
+		}
+		else {
+			bios_printf("%2d v=invalid    ", tlbno);
+		}
+		bios_printf("\n");
+	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.16 2004/09/30 07:25:54 pefo Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.17 2004/10/20 12:49:15 pefo Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -111,7 +111,7 @@ struct {
 		printf printdata;
 
 #define stat_count(what)	(what)++
-int pmapdebug = 0x0;
+int pmapdebug = PDB_ENTER|PDB_FOLLOW;
 
 #else
 

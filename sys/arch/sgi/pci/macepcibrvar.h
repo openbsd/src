@@ -1,4 +1,4 @@
-/*	$OpenBSD: macepcibrvar.h,v 1.2 2004/08/10 19:16:18 deraadt Exp $ */
+/*	$OpenBSD: macepcibrvar.h,v 1.3 2004/10/20 12:49:15 pefo Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB (www.opsycon.se)
@@ -34,7 +34,7 @@
 #define	MACE_PCI_MEM_BASE	0x1a000000
 #define	MACE_PCI_MEM_SIZE	0x02000000
 
-struct pcibr_softc {
+struct mace_pcibr_softc {
 	struct device	sc_dev;
 	struct mips_bus_space *sc_mem_bus_space;
 	struct mips_bus_space *sc_io_bus_space;
@@ -43,18 +43,24 @@ struct pcibr_softc {
 	bus_space_handle_t sc_memh;
 };
 
-u_int8_t pcib_read_1(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-u_int16_t pcib_read_2(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-u_int32_t pcib_read_4(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-u_int64_t pcib_read_8(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+u_int8_t mace_pcib_read_1(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+u_int16_t mace_pcib_read_2(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+u_int32_t mace_pcib_read_4(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+u_int64_t mace_pcib_read_8(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
-void pcib_write_1(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int8_t);
-void pcib_write_2(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int16_t);
-void pcib_write_4(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t);
-void pcib_write_8(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int64_t);
+void mace_pcib_write_1(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	u_int8_t);
+void mace_pcib_write_2(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	u_int16_t);
+void mace_pcib_write_4(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	u_int32_t);
+void mace_pcib_write_8(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	u_int64_t);
 
-int pcib_space_map(bus_space_tag_t, bus_addr_t, bus_size_t, int, bus_space_handle_t *);
-void pcib_space_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-int pcib_space_region(bus_space_tag_t, bus_space_handle_t, bus_size_t, bus_size_t, bus_space_handle_t *);
+int mace_pcib_space_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
+	bus_space_handle_t *);
+void mace_pcib_space_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+int mace_pcib_space_region(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	bus_size_t, bus_space_handle_t *);
 
 #endif

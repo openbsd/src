@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.8 2004/09/24 14:22:49 deraadt Exp $ */
+/*	$OpenBSD: clock.c,v 1.9 2004/10/20 12:49:15 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -103,6 +103,7 @@ clockattach(struct device *parent, struct device *self, void *aux)
 	case GALILEO_EV64240:
 	case SGI_INDY:
 	case SGI_O2:
+	case SGI_O200:
 		printf(" ticker on int5 using count register.");
 		set_intr(INTPRI_CLOCK, CR_INT_5, clock_int5);
 		ticktime = sys_config.cpu[0].clock / 2000;
@@ -110,7 +111,6 @@ clockattach(struct device *parent, struct device *self, void *aux)
 
 	default:
 		panic("clockattach: it didn't get here.  really.");
-		clock_int5(0,(struct trap_frame *)NULL);
 	}
 
 	printf("\n");
@@ -176,6 +176,13 @@ clock_int5( intrmask_t mask, struct trap_frame *tf)
 	}
 
 	cp0_set_compare(cpu_counter_last);
+	/* Make sure that next clock tick has not passed */
+	clkdiff = cp0_get_count() - cpu_counter_last;
+	if (clkdiff > 0) {
+		cpu_counter_last += cpu_counter_interval;
+		pendingticks++;
+		cp0_set_compare(cpu_counter_last);
+	}
 
 	if ((tf->cpl & SPL_CLOCKMASK) == 0) {
 		while (pendingticks) {

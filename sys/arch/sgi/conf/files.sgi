@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sgi,v 1.5 2004/10/08 13:04:36 grange Exp $
+#	$OpenBSD: files.sgi,v 1.6 2004/10/20 12:49:15 pefo Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -11,6 +11,7 @@ maxusers 2 8 64
 file	arch/sgi/sgi/autoconf.c
 file	arch/sgi/sgi/conf.c
 file	arch/sgi/sgi/machdep.c
+file	arch/sgi/sgi/sginode.c		tgt_origin200 | tgt_origin2000
 file	arch/sgi/dev/wscons_machdep.c	wsdisplay
 
 #
@@ -37,7 +38,7 @@ device	cpu
 attach	cpu at mainbus
 
 #
-#	MACE localbus autoconfiguration devices
+#	O2 MACE localbus autoconfiguration devices
 #
 define	macebus { [sys = - 1], [base = -1 ], [irq = -1] }
 device	macebus
@@ -46,12 +47,24 @@ file	arch/sgi/localbus/macebus.c		macebus
 file	arch/sgi/localbus/macectrl.S		macebus
 
 #
+#	Origin200/Origin2000 XBOW mux bridge
+#
+define	xbowmux { [sys = - 1], [base = -1 ], [irq = -1] }
+device	xbowmux
+attach	xbowmux at mainbus
+file	arch/sgi/localbus/xbowmux.c		xbowmux
+
+#
 #	PCI Bus bridges
 #
 device	macepcibr {} : pcibus
 attach	macepcibr at macebus
 file	arch/sgi/pci/macepcibridge.c		macepcibr needs-flag
 file	arch/sgi/pci/macepcimap.c		macepcibr
+
+device	xiopcibr {} : pcibus
+attach	xiopcibr at xbowmux
+file	arch/sgi/pci/xiopcibridge.c		xiopcibr needs-flag
 
 #	Use machine independent SCSI driver routines
 include	"scsi/files.scsi"
@@ -64,12 +77,14 @@ include "dev/pci/files.pci"
 
 # Clock device
 device	clock
-attach	clock at macebus
+attach	clock at macebus with clock_macebus
+attach	clock at xbowmux with clock_xbowmux
 file	arch/sgi/sgi/clock_md.c			clock
 
 # 16[45]50-based "com" ports on localbus
+attach	com at xbowmux with com_xbow
 attach	com at macebus with com_localbus
-file	arch/sgi/localbus/com_lbus.c		com_localbus
+file	arch/sgi/localbus/com_lbus.c		com_localbus | com_xbow
 
 # PC parallel ports (XXX what chip?)
 attach	lpt at macebus with lpt_localbus

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.8 2004/09/27 19:20:49 pefo Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.9 2004/10/20 12:49:15 pefo Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -422,7 +422,7 @@ extern u_int	CpuStatusRegister;
 extern u_int	CpuExternalCacheOn;	/* R5K, RM7K */
 extern u_int	CpuOnboardCacheOn;	/* RM7K */
 
-struct tlb;
+struct tlb_entry;
 struct user;
 
 void	tlb_set_wired(int);
@@ -469,9 +469,9 @@ void	Mips10k_HitInvalidateDCache(vaddr_t, int);
 
 void	tlb_flush(int);
 void	tlb_flush_addr(vaddr_t);
-void	tlb_write_indexed(int, struct tlb *);
+void	tlb_write_indexed(int, struct tlb_entry *);
 int	tlb_update(vaddr_t, unsigned);
-void	tlb_read(int, struct tlb *);
+void	tlb_read(int, struct tlb_entry *);
 
 void	wbflush(void);
 void	savectx(struct user *, int);
@@ -500,6 +500,7 @@ u_int32_t enableintr(void);
 u_int32_t disableintr(void);
 u_int32_t updateimask(intrmask_t);
 void setsr(u_int32_t);
+u_int32_t getsr(void);
 
 #endif /* _KERNEL */
 #endif /* !_MIPS_CPU_H_ */

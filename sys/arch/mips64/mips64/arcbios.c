@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.6 2004/09/09 22:11:38 pefo Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.7 2004/10/20 12:49:15 pefo Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -37,7 +37,11 @@
 #include <mips64/arcbios.h>
 #include <mips64/archtype.h>
 
-arc_param_blk_t *bios_base = ArcBiosBase;
+#if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000)
+#include <machine/mnode.h>
+#endif
+
+int bios_is_32bit = 1;
 
 extern int	physmem;		/* Total physical memory size */
 extern int	rsvdmem;		/* Total reserved memory size */
@@ -65,6 +69,7 @@ static struct systypes {
     { NULL,		"SGI-IP22",			SGI_INDY },
     { NULL,		"SGI-IP25",			SGI_POWER10 },
     { NULL,		"SGI-IP26",			SGI_POWERI },
+    { NULL,		"SGI-IP27",			SGI_O200 },
     { NULL,		"SGI-IP32",			SGI_O2 },
 };
 
@@ -81,8 +86,16 @@ __asm__("\n"			\
 "	.set	noreorder\n"	\
 "	.globl	" #Name "\n"	\
 #Name":\n"			\
-"	lw	$2, 0xffffffff80001020\n"\
-"	lw	$2," #Offset "($2)\n"\
+"	lw	$2, bios_is_32bit\n"\
+"	beqz	$2, 1f\n"	\
+"	nop\n"			\
+"       lw      $2, 0xffffffff80001020\n"\
+"       lw      $2," #Offset "($2)\n"\
+"	jr	$2\n"		\
+"	nop\n"			\
+"1:\n"				\
+"       ld      $2, 0xffffffff80001040\n"\
+"	ld	$2, 2*" #Offset "($2)\n"\
 "	jr	$2\n"		\
 "	nop\n"			\
 "	.end	" #Name "\n"	);
@@ -170,6 +183,17 @@ char *s;
 	}
 }
 
+void
+bios_printf(const char *fmt, ...)
+{
+	va_list ap;
+	char buf[1024];
+
+	va_start(ap, fmt);
+	vsnprintf(buf, sizeof(buf), fmt, ap);
+	bios_putstring(buf);
+}
+
 /*
  * Get memory descriptor for the memory configuration and
  * create a layout database used by pmap init to set up
@@ -240,12 +264,10 @@ bios_configure_memory()
 
 #ifdef DEBUG_MEM_LAYOUT
 	for ( i = 0; i < MAXMEMSEGS; i++) {
-		char str[100];
 		if (mem_layout[i].mem_first_page) {
-			snprintf(str, sizeof(str), "MEM %d, 0x%x to  0x%x\n",i,
+			bios_printf("MEM %d, 0x%x to  0x%x\n",i,
 				mem_layout[i].mem_first_page * 4096,
 				mem_layout[i].mem_last_page * 4096);
-			bios_putstring(str);
 	    }
 	}
 #endif
@@ -261,12 +283,25 @@ bios_get_system_type()
 	arc_sid_t	*sid;
 	int		i;
 
-	if ((bios_base->magic != ARC_PARAM_BLK_MAGIC) &&
-	    (bios_base->magic != ARC_PARAM_BLK_MAGIC_BUG)) {
-		return(-1);	/* This is not an ARC system */
+	/*
+	 *  Figure out if this is an ARC Bios machine and if its 32 or 64 bits.
+	 */
+	if ((ArcBiosBase32->magic == ARC_PARAM_BLK_MAGIC) ||
+	    (ArcBiosBase32->magic == ARC_PARAM_BLK_MAGIC_BUG)) {
+		bios_is_32bit = 1;
+		bios_printf("ARCS32 Firmware Version %d.%d\n",
+		    ArcBiosBase32->version, ArcBiosBase32->revision);
+	} else if ((ArcBiosBase64->magic == ARC_PARAM_BLK_MAGIC) ||
+	    (ArcBiosBase64->magic == ARC_PARAM_BLK_MAGIC_BUG)) {
+		bios_is_32bit = 0;
+		bios_printf("ARCS64 Firmware Version %d.%d\n",
+		    ArcBiosBase64->version, ArcBiosBase64->revision);
+	} else {
+		return -1;	/* XXX BAD BAD BAD!!! */
 	}
 
 	sid = (arc_sid_t *)Bios_GetSystemId();
+
 	cf = (arc_config_t *)Bios_GetChild(NULL);
 	if (cf) {
 		for (i = 0; i < KNOWNSYSTEMS; i++) {
@@ -277,18 +312,21 @@ bios_get_system_type()
 				continue;
 			return (sys_types[i].sys_type);	/* Found it. */
 		}
+#if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000)
+	} else if (IP27_KLD_KLCONFIG(0)->magic == IP27_KLDIR_MAGIC) {
+		/* If we find a kldir assume IP27 */
+		return SGI_O200;
+#endif
 	}
 
-	bios_putstring("UNIDENTIFIED SYSTEM `");
-	if (cf)
-		bios_putstring((char *)(long)cf->id);
-	else
-		bios_putstring("????????");
-	bios_putstring("' VENDOR `");
 	sid->vendor[8] = 0;
-	bios_putstring(sid->vendor);
-	bios_putstring("'. Please contact OpenBSD (www.openbsd.org).\n");
-	bios_putstring("Reset system to restart!\n");
+	sid->prodid[8] = 0;
+	bios_printf("UNRECOGNIZED SYSTEM '%s' VENDOR '%s' PRODUCT '%s'\n",
+		cf ? (char *)(long)cf->id : "??", sid->vendor, sid->prodid);
+	bios_printf("See the www.openbsd.org for further information.\n");
+	bios_printf("Halting system!\n");
+	Bios_Halt();
+	bios_printf("Halting failed, use manual reset!\n");
 	while(1);
 }
 
@@ -299,9 +337,10 @@ void
 bios_ident()
 {
 	sys_config.system_type = bios_get_system_type();
-	if (sys_config.system_type < 0) {
+	if (sys_config.system_type < 0 || sys_config.system_type == SGI_O200) {
 		return;
 	}
+	/* If not an IP27 platform, get memory configuration from bios */
 	bios_configure_memory();
 #ifdef __arc__
 	displayinfo = *(arc_dsp_stat_t *)Bios_GetDisplayStatus(1);

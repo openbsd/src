@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.10 2004/10/08 17:52:08 mcbride Exp $
+#	$OpenBSD: GENERIC,v 1.11 2004/10/20 12:49:15 pefo Exp $
 #
 
 machine		sgi mips64
@@ -8,8 +8,7 @@ include "../../../conf/GENERIC"
 maxusers	32
 
 # Make options
-#makeoption	ABI="-mabi=64"
-#makeoption	ENDIAN="-EB"
+makeoption	LINK_ADDRESS="0xffffffff80100000"
 
 # MD options
 option		ARCBIOS		# We use arcbios for FW comminication.
@@ -27,11 +26,10 @@ option		USBVERBOSE
 #option		SYSCALL_DEBUG
 
 # Define what targets to support
-#option		TGT_INDY
-#option		TGT_INDIGO
-#option		TGT_ORIGIN200
 option		TGT_O2
-#option		TGT_OCTANE
+
+# Control certain other stuff
+option		AHC_CTRL_ID=0	# SGI have scsi controllers at 0.
 
 # Specify storage configuration (its a joke..)
 config		bsd	swap generic
