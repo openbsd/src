@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.11 1999/09/26 14:04:58 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.12 1999/09/26 17:35:49 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.11 1999/09/26 14:04:58 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.12 1999/09/26 17:35:49 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -354,7 +354,7 @@ compress(in, out, method, bits)
 	if ((ifd = open(in, O_RDONLY)) >= 0 &&
 	    (cookie = (*method->open)(ofd, "w", bits)) != NULL) {
 
-		while ((nr = read(ifd, buf, sizeof(buf))) != -1 && nr != 0)
+		while ((nr = read(ifd, buf, sizeof(buf))) > 0)
 			if ((method->write)(cookie, buf, nr) != nr) {
 				if (verbose >= 0)
 					warn("%s", out);
@@ -363,7 +363,7 @@ compress(in, out, method, bits)
 			}
 	}
 
-	if (ifd < 0 || close(ifd) || nr == -1) {
+	if (ifd < 0 || close(ifd) || nr < 0) {
 		if (!error && verbose >= 0)
 			warn("%s", in);
 		error++;
@@ -438,7 +438,7 @@ decompress(in, out, method, bits)
 	if ((ofd = open(out, O_WRONLY|O_CREAT, S_IWUSR)) >= 0 &&
 	    (cookie = (*method->open)(ifd, "r", bits)) != NULL) {
 
-		while ((nr = (method->read)(cookie, buf, sizeof(buf))) != -1 && nr != 0)
+		while ((nr = (method->read)(cookie, buf, sizeof(buf))) > 0)
 			if (write(ofd, buf, nr) != nr) {
 				if (verbose >= 0)
 					warn("%s", out);
@@ -453,7 +453,7 @@ decompress(in, out, method, bits)
 		error++;
 	}
 
-	if (cookie == NULL || (method->close)(cookie) || nr == -1) {
+	if (cookie == NULL || (method->close)(cookie) || nr < 0) {
 		if (!error && verbose >= 0)
 			warn("%s", in);
 		error++;
