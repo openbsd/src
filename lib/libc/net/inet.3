@@ -1,4 +1,5 @@
-.\"	$OpenBSD: inet.3,v 1.3 1997/04/05 21:13:10 millert Exp $
+.\"	$OpenBSD: inet.3,v 1.4 1997/06/23 04:01:11 millert Exp $
+.\"	$NetBSD: inet.3,v 1.7 1997/06/18 02:25:24 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,36 +32,44 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd June 4, 1993
+.\"     @(#)inet.3	8.1 (Berkeley) 6/4/93
+.\"
+.Dd June 18, 1997
 .Dt INET 3
 .Os BSD 4.2
 .Sh NAME
-.Nm inet_aton ,
 .Nm inet_addr ,
+.Nm inet_aton ,
+.Nm inet_lnaof ,
+.Nm inet_makeaddr ,
+.Nm inet_netof ,
 .Nm inet_network ,
 .Nm inet_ntoa ,
-.Nm inet_makeaddr ,
-.Nm inet_lnaof ,
-.Nm inet_netof
+.Nm inet_ntop ,
+.Nm inet_pton
 .Nd Internet address manipulation routines
 .Sh SYNOPSIS
 .Fd #include <sys/socket.h>
 .Fd #include <netinet/in.h>
 .Fd #include <arpa/inet.h>
-.Ft int 
-.Fn inet_aton "const char *cp" "struct in_addr *pin"
-.Ft in_addr_t 
+.Ft in_addr_t
 .Fn inet_addr "const char *cp"
-.Ft in_addr_t 
+.Ft int
+.Fn inet_aton "const char *cp" "struct in_addr *addr"
+.Ft in_addr_t
+.Fn inet_lnaof "struct in_addr in"
+.Ft struct in_addr
+.Fn inet_makeaddr "unsigned long net" "unsigned long lna"
+.Ft in_addr_t
+.Fn inet_netof "struct in_addr in"
+.Ft in_addr_t
 .Fn inet_network "const char *cp"
 .Ft char *
 .Fn inet_ntoa "struct in_addr in"
-.Ft struct in_addr 
-.Fn inet_makeaddr "int net" "int lna"
-.Ft in_addr_t 
-.Fn inet_lnaof "struct in_addr in"
-.Ft in_addr_t 
-.Fn inet_netof "struct in_addr in"
+.Ft const char *
+.Fn inet_ntop "int af" "const void *src" "char *dst" "size_t size"
+.Ft int
+.Fn inet_pton "int af" "const char *src" "void *dst"
 .Sh DESCRIPTION
 The routines
 .Fn inet_aton ,
@@ -72,6 +81,17 @@ numbers expressed in the Internet standard
 .Ql \&.
 notation.
 The
+.Fn inet_pton
+function converts a presentation format address (that is, printable form
+as held in a character string) to network format (usually a
+.Ft struct in_addr
+or some other internal binary representation, in network byte order).  It
+returns 1 if the address was valid for the specified address family, or
+0 if the address wasn't parseable in the specified address family, or -1
+if some system error occurred (in which case
+.Va errno
+will have been set).  This function is presently valid for AF_INET and
+AF_INET6.  The
 .Fn inet_aton
 routine interprets the specified character string as an Internet address,
 placing the address into the structure provided.
@@ -84,6 +104,16 @@ and
 functions return numbers suitable for use
 as Internet addresses and Internet network
 numbers, respectively.
+.Pp
+The function
+.Fn inet_ntop
+converts an address from network format (usually a
+.Ft struct in_addr
+or some other binary form, in network byte order) to presentation format
+(suitable for external display purposes).  It returns NULL if a system
+error occurs (in which case,
+.Va errno
+will have been set), or it returns a pointer to the destination string.
 The routine
 .Fn inet_ntoa
 takes an Internet address and returns an
@@ -106,7 +136,7 @@ All Internet addresses are returned in network
 order (bytes ordered from left to right).
 All network numbers and local address parts are
 returned as machine format integer values.
-.Sh INTERNET ADDRESSES
+.Sh INTERNET ADDRESSES (IP VERSION 4)
 Values specified using the
 .Ql \&.
 notation take one
@@ -122,15 +152,14 @@ When four parts are specified, each is interpreted
 as a byte of data and assigned, from left to right,
 to the four bytes of an Internet address.  Note
 that when an Internet address is viewed as a 32-bit
-integer quantity on the
-.Tn VAX
-the bytes referred to
-above appear as
+integer quantity on a system that uses little-endian
+byte order (such as the 
+.Tn Intel 386, 486
+and
+.Tn Pentium
+processors) the bytes referred to above appear as
 .Dq Li d.c.b.a .
-That is,
-.Tn VAX
-bytes are
-ordered from right to left.
+That is, little-endian bytes are ordered from right to left.
 .Pp
 When a three part address is specified, the last
 part is interpreted as a 16-bit quantity and placed
@@ -159,6 +188,68 @@ may be decimal, octal, or hexadecimal, as specified
 in the C language (i.e., a leading 0x or 0X implies
 hexadecimal; otherwise, a leading 0 implies octal;
 otherwise, the number is interpreted as decimal).
+.Sh INTERNET ADDRESSES (IP VERSION 6)
+The presentation format of an IPv6 address is given in [RFC1884 2.2]:
+.Pp
+There are three conventional forms for representing IPv6 addresses as
+text strings:
+.Bl -enum
+.It
+The preferred form is x:x:x:x:x:x:x:x, where the 'x's are the
+hexadecimal values of the eight 16-bit pieces of the address.
+Examples:
+.Bd -literal -offset indent
+FEDC:BA98:7654:3210:FEDC:BA98:7654:3210
+1080:0:0:0:8:800:200C:417A
+.Ed
+.Pp
+Note that it is not necessary to write the leading zeros in an
+individual field, but there must be at least one numeral in
+every field (except for the case described in 2.).
+.It
+Due to the method of allocating certain styles of IPv6
+addresses, it will be common for addresses to contain long
+strings of zero bits.  In order to make writing addresses
+.Pp
+containing zero bits easier a special syntax is available to
+compress the zeros.  The use of ``::'' indicates multiple groups
+of 16-bits of zeros.  The ``::'' can only appear once in an
+address.  The ``::'' can also be used to compress the leading
+and/or trailing zeros in an address.
+.Pp
+For example the following addresses:
+.Bd -literal -offset indent
+1080:0:0:0:8:800:200C:417A  a unicast address
+FF01:0:0:0:0:0:0:43         a multicast address
+0:0:0:0:0:0:0:1             the loopback address
+0:0:0:0:0:0:0:0             the unspecified addresses
+.Ed
+.Pp
+may be represented as:
+.Bd -literal -offset indent
+1080::8:800:200C:417A       a unicast address
+FF01::43                    a multicast address
+::1                         the loopback address
+::                          the unspecified addresses
+.Ed
+.It
+An alternative form that is sometimes more convenient when
+dealing with a mixed environment of IPv4 and IPv6 nodes is
+x:x:x:x:x:x:d.d.d.d, where the 'x's are the hexadecimal values
+of the six high-order 16-bit pieces of the address, and the 'd's
+are the decimal values of the four low-order 8-bit pieces of the
+address (standard IPv4 representation).  Examples:
+.Bd -literal -offset indent
+0:0:0:0:0:0:13.1.68.3
+0:0:0:0:0:FFFF:129.144.52.38
+.Ed
+.Pp
+or in compressed form:
+.Bd -literal -offset indent
+::13.1.68.3
+::FFFF:129.144.52.38
+.Ed
+.El
 .Sh DIAGNOSTICS
 The constant
 .Dv INADDR_NONE
@@ -168,14 +259,44 @@ and
 .Fn inet_network
 for malformed requests.
 .Sh SEE ALSO
+.Xr byteorder 3 ,
 .Xr gethostbyname 3 ,
 .Xr getnetent 3 ,
+.Xr inet_net 3 ,
 .Xr hosts 5 ,
-.Xr networks 5 ,
+.Xr networks 5
+.Sh STANDARDS
+The
+.Nm inet_ntop
+and
+.Nm inet_pton
+functions conforms to the IETF IPng BSD API and address formatting
+specifications.  Note that
+.Nm inet_pton
+does not accept 1-, 2-, or 3-part  dotted addresses; all four parts
+must be specified.  This is a narrower input set than that accepted by
+.Nm inet_aton .
 .Sh HISTORY
-These
-functions appeared in 
+The 
+.Nm inet_addr ,
+.Nm inet_network ,
+.Nm inet_makeaddr ,
+.Nm inet_lnaof
+and
+.Nm inet_netof
+functions appeared in
 .Bx 4.2 .
+The
+.Nm inet_aton
+and
+.Nm inet_ntoa
+functions appeared in
+.Bx 4.3 .
+The
+.Nm inet_pton
+and
+.Nm inet_ntop
+functions appeared in BIND 4.9.4.
 .Sh BUGS
 The value
 .Dv INADDR_NONE
@@ -185,11 +306,14 @@ cannot return that value without indicating failure.
 The newer
 .Fn inet_aton
 function does not share this problem.
+.Pp
 The problem of host byte ordering versus network byte ordering is
 confusing.
+.Pp
 The string returned by
 .Fn inet_ntoa
 resides in a static memory area.
 .Pp
-Inet_addr should return a
-.Fa struct in_addr .
+.Fn inet_addr
+should return a
+.Fa "struct in_addr" .
