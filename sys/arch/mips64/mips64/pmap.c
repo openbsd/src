@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.15 2004/09/29 17:39:20 pefo Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.16 2004/09/30 07:25:54 pefo Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -1276,8 +1276,10 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, vm_page_t pg, u_int *npte)
 			 * to be mapped uncached.
 			 */
 			if (((pv->pv_va ^ va) & CpuCacheAliasMask) != 0) {
+#ifdef PMAP_DEBUG
 				printf("pmap_enter: VAC for pa %p, %p !=  %p\n",
 				    VM_PAGE_TO_PHYS(pg), npv->pv_va, va);
+#endif
 				pmap_page_cache(pg, PV_UNCACHED);
 				Mips_SyncCache();
 				*npte = (*npte & ~PG_CACHEMODE) | PG_UNCACHED;
