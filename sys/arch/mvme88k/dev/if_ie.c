@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.22 2002/03/14 01:26:39 millert Exp $ */
+/*	$OpenBSD: if_ie.c,v 1.23 2003/01/28 01:37:52 jason Exp $ */
 
 /*-
  * Copyright (c) 1998 Steve Murphree, Jr. 
@@ -1265,7 +1265,13 @@ iestart(ifp)
 		  printf("%s: tbuf overflow\n", sc->sc_dev.dv_xname);
 
 		m_freem(m0);
-		len = max(len, ETHER_MIN_LEN);
+
+		if (len < ETHER_MIN_LEN - ETHER_CRC_LEN) {
+			bzero(buffer, ETHER_MIN_LEN - ETHER_CRC_LEN - len);
+			len = ETHER_MIN_LEN - ETHER_CRC_LEN;
+			buffer += ETHER_MIN_LEN - ETHER_CRC_LEN;
+		}
+
 		sc->xmit_buffs[sc->xchead]->ie_xmit_flags = len;
 
 		sc->xmit_free--;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.9 2002/03/14 01:26:38 millert Exp $ */
+/*	$OpenBSD: if_ie.c,v 1.10 2003/01/28 01:37:52 jason Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -39,6 +39,7 @@
 
 #define ETHER_MIN_LEN   64
 #define ETHER_MAX_LEN   1518
+#define ETHER_CRC_LEN	4
 
 #define NTXBUF	1
 #define NRXBUF	16
@@ -381,7 +382,11 @@ ie_put(desc, pkt, len)
 	/* copy data */
 	bcopy(p, (void *)&iem->im_txbuf[xx], len);
 
-	len = MAX(len, ETHER_MIN_LEN);
+	if (len < ETHER_MIN_LEN - ETHER_CRC_LEN) {
+		bzero((char *)&iem->im_txbuf[xx] + len,
+		    ETHER_MIN_LEN - ETHER_CRC_LEN - len);
+		len = ETHER_MIN_LEN - ETHER_CRC_LEN;
+	}
 
 	/* build transmit descriptor */
 	iem->im_xd[xx].ie_xmit_flags = len | IE_XMIT_LAST;
