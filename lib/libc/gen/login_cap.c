@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.c,v 1.23 2004/08/10 15:53:31 millert Exp $	*/
+/*	$OpenBSD: login_cap.c,v 1.24 2004/09/16 06:24:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -815,7 +815,7 @@ static
 u_quad_t
 strtosize(char *str, char **endptr, int radix)
 {
-	u_quad_t num, num2, t;
+	u_quad_t num, num2;
 	char *expr, *expr2;
 
 	errno = 0;
@@ -856,7 +856,6 @@ strtosize(char *str, char **endptr, int radix)
 	switch(*expr) {
 	case '*':			/* Backward compatible. */
 	case 'x':
-		t = num;
 		num2 = strtosize(expr+1, &expr2, radix);
 		if (errno) {
 			expr = expr2;
