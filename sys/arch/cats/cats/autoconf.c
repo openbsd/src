@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.2 2004/02/11 14:40:52 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.3 2004/02/12 02:32:34 drahn Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.2 2001/09/05 16:17:36 matt Exp $	*/
 
 /*
@@ -72,7 +72,7 @@ void diskconf(void);
 
 static struct device * getdisk(char *str, int len, int defpart, dev_t *devp);
 struct  device *parsedisk(char *, int, int, dev_t *);
-dev_t	bootdev = 0;
+extern char *boot_file;
 
 #include "wd.h"
 #if NWD > 0  
@@ -333,14 +333,12 @@ rootconf()
 		bootdv = getdisk(buf, len, part, &rootdev);
 	}
 
-#if 0
 	/* Lookup boot device from boot if not set by configuration */
 	if(bootdv == NULL) {
-		bootdv = parsedisk(bootdev, strlen(bootdev), 0, &temp);
+		bootdv = parsedisk(boot_file, strlen(boot_file), 0, &temp);
 	}
-#endif
 	if(bootdv == NULL) {
-		printf("boot device: lookup '%s' failed.\n", bootdev);
+		printf("boot device: lookup '%s' failed.\n", boot_file);
 		boothowto |= RB_ASKNAME; /* Don't Panic :-) */
 		/* boothowto |= RB_SINGLE; */
 	} else

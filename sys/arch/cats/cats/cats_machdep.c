@@ -1,4 +1,4 @@
-/*	$OpenBSD: cats_machdep.c,v 1.2 2004/02/11 22:07:51 miod Exp $	*/
+/*	$OpenBSD: cats_machdep.c,v 1.3 2004/02/12 02:32:34 drahn Exp $	*/
 /*	$NetBSD: cats_machdep.c,v 1.50 2003/10/04 14:28:28 chris Exp $	*/
 
 /*
@@ -205,9 +205,8 @@ extern void configure(void);
 #endif
 #endif
 
-#define CONSDEVNAME "fcom"
 #ifndef CONSDEVNAME
-#define CONSDEVNAME "vga"
+#define CONSDEVNAME "fcom"
 #endif
 
 #define CONSPEED B38400
@@ -901,6 +900,8 @@ debugledaddr = (void*)(DC21285_PCI_IO_VBASE+DEBUG_LED_OFFSET);
 	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
 }
 
+char *console = CONSDEVNAME;
+
 static void
 process_kernel_args(args)
 	char *args;
@@ -914,17 +915,47 @@ process_kernel_args(args)
 	args = bootargs;
 	boot_file = bootargs;
 
+again:
 	/* Skip the kernel image filename */
 	while (*args != ' ' && *args != 0)
 		++args;
 
 	if (*args != 0)
 		*args++ = 0;
+	if (0 == strcmp(boot_file, "setargs")) {
+		boot_file = args;
+		goto again;
+	}
 
 	while (*args == ' ')
 		++args;
-
 	boot_args = args;
+
+	while (*args) {
+		switch (*args++) {
+		case 'a':
+			boothowto |= RB_ASKNAME;
+			break;
+		case 's':
+			boothowto |= RB_SINGLE;
+			break;
+		case 'd':
+			boothowto |= RB_KDB;
+			break;
+		case 'c':
+			boothowto |= RB_CONFIG;
+			break;
+		case 'v':
+			console = "vga";
+			break;
+		case 'f':
+			console = "fcom";
+			break;
+		default:
+			break;
+		}
+	}
+
 
 	printf("bootfile: %s\n", boot_file);
 	printf("bootargs: %s\n", boot_args);
@@ -942,7 +973,6 @@ void
 consinit(void)
 {
 	static int consinit_called = 0;
-	char *console = CONSDEVNAME;
 
 	if (consinit_called != 0)
 		return;
