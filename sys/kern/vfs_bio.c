@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.27 2000/06/23 02:14:38 mickey Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.28 2001/02/13 19:51:49 art Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -678,7 +678,7 @@ allocbuf(bp, size)
 		binshash(nbp, &invalhash);
 
 		/* and steal its pages, up to the amount we need */
-		amt = min(nbp->b_bufsize, (desired_size - bp->b_bufsize));
+		amt = MIN(nbp->b_bufsize, (desired_size - bp->b_bufsize));
 		pagemove((nbp->b_data + nbp->b_bufsize - amt),
 			 bp->b_data + bp->b_bufsize, amt);
 		bp->b_bufsize += amt;
