@@ -1,4 +1,4 @@
-.\"	$OpenBSD: insque.3,v 1.6 2002/05/01 08:03:30 mpech Exp $
+.\"	$OpenBSD: insque.3,v 1.1 2003/05/08 23:26:30 millert Exp $
 .\" Copyright (c) 1993 John Brezak
 .\" All rights reserved.
 .\"
@@ -35,33 +35,66 @@
 .Nd insert/remove element from a queue
 .Sh SYNOPSIS
 .Fd #include <search.h>
-.Ft struct qelem {
-.br
-.Ft 	struct qelem *q_forw;
-.br
-.Ft 	struct qelem *q_back;
-.br
-.Ft 	char q_data[];
-.br
-.Ft };
-.br
-.br
 .Ft void
-.Fn insque "struct qelem *elem" "struct qelem *pred"
+.Fn insque "void *elem" "void *pred"
 .Ft void
-.Fn remque "struct qelem *elem"
+.Fn remque "void *elem"
 .Sh DESCRIPTION
 .Bf -symbolic
-These interfaces are available from the compatibility library, libcompat.
+These interfaces have been superceded by the
+.Xr queue 3
+macros and are provided for compatibility with legacy code.
 .Ef
 .Pp
 .Fn insque
 and
 .Fn remque
 manipulate queues built from doubly linked lists.
-Each element in the queue
-must begin with a "struct qelem".
+The queue can be either circular or linear.
+Each element in the queue must be of the following form:
+.Bd -literal
+struct qelem {
+    struct qelem   *q_forw;
+    struct qelem   *q_back;
+    char            q_data[];
+};
+.Ed
+.Pp
+The first two elements in the struct must be pointers of the
+same type that point to the previous and next elements in
+the queue respectively.
+Any subsequent data in the struct is application-dependent.
+.Pp
+The
+.Fn insque
+function inserts
+.Fa elem
+into a queue immediately after
+.Fa pred .
+.Pp
+The
+.Fn remque
+function removes
+.Fa elem
+from the queue.
 .Sh DIAGNOSTICS
 These functions are not atomic unless that machine architecture allows it.
+.Sh SEE ALSO
+.Xr queue 3
+.Sh STANDARDS
+The
+.Fn lsearch 
+and
+.Fn lfind
+functions conform to the
+.St -p1003.1-01
+and 
+.St -xpg4.3 .   
+specifications.
 .Sh HISTORY
-These are derived from the insque and remque instructions on a VAX.
+The
+.Fn insque
+and
+.Fn remque
+functions are derived from the insque and remque instructions on a
+.Tn VAX .
