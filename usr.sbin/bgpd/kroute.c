@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.118 2005/03/26 23:04:34 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.119 2005/03/28 14:40:04 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -398,8 +398,10 @@ kr_show_route(struct imsg *imsg)
 			memcpy(&snh.addr, &h->nexthop, sizeof(snh.addr));
 			if (h->kroute != NULL) {
 				snh.valid = kroute_validate(&h->kroute->r);
-				if ((kif = kif_find(h->kroute->r.ifindex)) != NULL)
-					memcpy(&snh.kif, &kif->k, sizeof(snh.kif));
+				if ((kif = kif_find(h->kroute->r.ifindex)) !=
+				    NULL)
+					memcpy(&snh.kif, &kif->k,
+					    sizeof(snh.kif));
 			}
 			send_imsg_session(IMSG_CTL_SHOW_NEXTHOP, imsg->hdr.pid,
 			    &snh, sizeof(snh));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.29 2005/03/23 11:36:35 henning Exp $ */
+/*	$OpenBSD: buffer.c,v 1.30 2005/03/28 14:40:04 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -185,7 +185,7 @@ msgbuf_write(struct msgbuf *msgbuf)
 		close(buf->fd);
 		buf->fd = -1;
 	}
-	
+
 	for (buf = TAILQ_FIRST(&msgbuf->bufs); buf != NULL && n > 0;
 	    buf = next) {
 		next = TAILQ_NEXT(buf, entry);
