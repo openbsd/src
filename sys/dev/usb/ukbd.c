@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.8 2001/10/25 14:36:11 drahn Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.9 2001/10/25 15:20:07 drahn Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.66 2001/04/06 22:54:15 augustss Exp $        */
 
 /*
@@ -547,7 +547,7 @@ ukbd_intr(xfer, addr, status)
 		return;
 	}
 
-	if (sc->sc_debounce) {
+	if (sc->sc_debounce && !sc->sc_polling) {
 		/*
 		 * Some keyboards have a peculiar quirk.  They sometimes
 		 * generate a key up followed by a key down for the same
@@ -560,6 +560,20 @@ ukbd_intr(xfer, addr, status)
 #else
 		callout_reset(&sc->sc_delay, hz / 50, ukbd_delayed_decode, sc);
 #endif
+	} else if (sc->sc_console_keyboard && !sc->sc_polling) {
+		/* 
+		 * For the console keyboard we can't deliver CTL-ALT-ESC
+		 * from the interrupt routine. Doing so would start
+		 * polling from iside the interrupt routine and that
+		 * loses bigtime.
+		 */
+		sc->sc_data = *ud;
+#if defined(__OpenBSD__)
+		timeout_add(&sc->sc_delay, 1);  /* NOT an immediate timeout */
+#else
+		callout_reset(&sc->sc_delay, 0, ukbd_delayed_decode, sc);
+#endif
+
 	} else {
 		ukbd_decode(sc, ud);
 	}
