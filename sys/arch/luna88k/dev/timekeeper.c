@@ -1,4 +1,4 @@
-/* $OpenBSD: timekeeper.c,v 1.2 2004/05/07 14:11:05 aoyama Exp $ */
+/* $OpenBSD: timekeeper.c,v 1.3 2004/08/18 13:29:46 aoyama Exp $ */
 /* $NetBSD: timekeeper.c,v 1.1 2000/01/05 08:48:56 nisimura Exp $ */
 
 /*-
@@ -41,6 +41,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
+#include <sys/evcount.h>
 
 #include <machine/autoconf.h>
 #include <machine/board.h>	/* machtype value */
@@ -58,6 +59,7 @@ struct timekeeper_softc {
 	struct device sc_dev;
 	void *sc_clock, *sc_nvram;
 	int sc_nvramsize;
+	struct evcount sc_count;
 };
 
 /*
@@ -130,7 +132,10 @@ clock_attach(parent, self, aux)
 		printf(": DS1397\n");
 		break;
 	}
-	clockattach(&sc->sc_dev, clockwork);
+
+	evcount_attach(&sc->sc_count, self->dv_xname, (void *)&ma->ma_ilvl, &evcount_intr);
+
+	clockattach(&sc->sc_dev, clockwork, &sc->sc_count);
 }
 
 /*

@@ -1,4 +1,4 @@
-/* $OpenBSD: clock.c,v 1.1.1.1 2004/04/21 15:23:58 aoyama Exp $ */
+/* $OpenBSD: clock.c,v 1.2 2004/08/18 13:29:46 aoyama Exp $ */
 /* $NetBSD: clock.c,v 1.2 2000/01/11 10:29:35 nisimura Exp $ */
 
 /*
@@ -49,25 +49,24 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
+#include <sys/evcount.h>
 
 #include <machine/cpu.h>
+#include <machine/cpu_number.h>
 
 #include <dev/clock_subr.h>
 #include <luna88k/luna88k/clockvar.h>
 
-#if 0 /* aoyama */
-#define CLOCK_LEVEL 5
-#include <luna68k/luna68k/isr.h>
-#endif /* aoyama */
-
 struct device *clockdev;
 const struct clockfns *clockfns;
+struct evcount *clockevc;
 int clockinitted;
 
 void
-clockattach(dev, fns)
+clockattach(dev, fns, evc)
 	struct device *dev;
 	const struct clockfns *fns;
+	struct evcount *evc;
 {
 	/*
 	 * Just bookkeeping.
@@ -76,6 +75,7 @@ clockattach(dev, fns)
 		panic("clockattach: multiple clocks");
 	clockdev = dev;
 	clockfns = fns;
+	clockevc = evc;
 }
 
 /*
@@ -215,4 +215,21 @@ resettodr()
 		return;
 	clock_secs_to_ymdhms(time.tv_sec, &dt);
 	(*clockfns->cf_set)(clockdev, &dt);
+}
+
+/*
+ * Clock interrupt routine
+ */
+int
+clockintr(void *eframe)
+{
+	extern unsigned int *clock_reg[];
+	int cpu = cpu_number();
+
+	intrcnt[M88K_CLK_IRQ]++;
+	clockevc->ec_count++;
+
+	*clock_reg[cpu] = 0xffffffff;
+	hardclock(eframe);
+	return 1;
 }

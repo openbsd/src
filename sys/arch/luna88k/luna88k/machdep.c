@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.8 2004/07/28 12:28:48 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.9 2004/08/18 13:29:46 aoyama Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -122,6 +122,7 @@ void get_fuse_rom_data(void);
 void get_nvram_data(void);
 char *nvram_by_symbol(char *);
 void get_autoboot_device(void);			/* in disksubr.c */
+int clockintr(void *);				/* in clock.c */
 
 /*
  * *int_mask_reg[CPU]
@@ -1284,16 +1285,7 @@ luna88k_ext_int(u_int v, struct trapframe *eframe)
 
 		switch(cur_int) {
 		case CLOCK_INT_LEVEL:
-			/* increment intr counter */
-			intrcnt[M88K_CLK_IRQ]++;
-
-			*clock_reg[cpu] = 0xFFFFFFFFU;  /* reset clock */
-
-			/*
-			if (clock_enabled[cpu])
-				sys_clock_interrupt(USERMODE(eframe[EF_EPSR]));
-			*/
-			hardclock((void *)eframe);
+			clockintr((void *)eframe);
 			break;
 		case 5:
 		case 4:

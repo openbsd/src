@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.3 2004/08/10 17:07:20 aoyama Exp $ */
+/* $OpenBSD: mainbus.c,v 1.4 2004/08/18 13:29:46 aoyama Exp $ */
 /* $NetBSD: mainbus.c,v 1.2 2000/01/07 05:13:08 nisimura Exp $ */
 
 /*-
@@ -47,7 +47,7 @@
 #include <machine/cpu.h>
 
 static const struct mainbus_attach_args devs[] = {
-	{ "clock", 0x45000000, -1, LUNA_88K|LUNA_88K2 }, /* Mostek/Dallas TimeKeeper */
+	{ "clock", 0x45000000, 6,  LUNA_88K|LUNA_88K2 }, /* Mostek/Dallas TimeKeeper */
 	{ "le",	   0xf1000000, 4,  LUNA_88K|LUNA_88K2 }, /* Am7990 */
 	{ "sio",   0x51000000, 5,  LUNA_88K|LUNA_88K2 }, /* uPD7201A */
 	{ "fb",	   0xc1100000, -1, LUNA_88K|LUNA_88K2 }, /* BrookTree RAMDAC */
