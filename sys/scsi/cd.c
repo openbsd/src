@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.60 2002/03/14 03:16:12 millert Exp $	*/
+/*	$OpenBSD: cd.c,v 1.61 2002/05/23 20:29:07 csapuntz Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1302,7 +1302,7 @@ cdgetdisklabel(dev, cd, lp, clp, spoofonly)
 	if (i < MAXPARTITIONS)
 		bzero(&lp->d_partitions[i], sizeof(lp->d_partitions[i]));
 
-	lp->d_npartitions = max(RAW_PART, i - 1) + 1;
+	lp->d_npartitions = max((RAW_PART + 1), i);
 
 done:
 	if (toc)
