@@ -1,4 +1,4 @@
-/*      $OpenBSD: neo.c,v 1.8 2001/08/25 10:13:30 art Exp $       */
+/*      $OpenBSD: neo.c,v 1.9 2001/09/16 18:32:34 art Exp $       */
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -22,9 +22,9 @@
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHERIN CONTRACT, STRICT
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THEPOSSIBILITY OF
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
  * $FreeBSD: src/sys/dev/sound/pci/neomagic.c,v 1.8 2000/03/20 15:30:50 cg Exp $
@@ -73,7 +73,7 @@
  *
  * The Neomagic 256 AV/ZX have 2 PCI I/O region descriptors. Both of
  * them describe a memory region. The frame buffer is the first region
- * and the register set is the secodn region.
+ * and the register set is the second region.
  *
  * The register manipulation logic is taken from the Linux driver,
  * which is in the public domain.
