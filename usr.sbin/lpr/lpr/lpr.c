@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpr.c,v 1.15 1997/06/23 23:13:58 kstailey Exp $ */
+/*	$OpenBSD: lpr.c,v 1.16 1997/07/08 18:25:42 millert Exp $ */
 /*	$NetBSD: lpr.c,v 1.10 1996/03/21 18:12:25 jtc Exp $	*/
 
 /*
@@ -50,7 +50,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: lpr.c,v 1.15 1997/06/23 23:13:58 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: lpr.c,v 1.16 1997/07/08 18:25:42 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -465,13 +465,13 @@ linked(file)
 	register char *file;
 {
 	register char *cp;
-	static char buf[BUFSIZ];
+	static char nfile[MAXPATHLEN];
 	register int ret;
 
 	if (*file != '/') {
-		if (getcwd(buf, BUFSIZ) == NULL) {
+		if (getcwd(nfile, sizeof(nfile)) == NULL)
 			return(NULL);
-		}
+
 		while (file[0] == '.') {
 			switch (file[1]) {
 			case '/':
@@ -479,7 +479,7 @@ linked(file)
 				continue;
 			case '.':
 				if (file[2] == '/') {
-					if ((cp = strrchr(buf, '/')) != NULL)
+					if ((cp = strrchr(nfile, '/')) != NULL)
 						*cp = '\0';
 					file += 3;
 					continue;
@@ -487,9 +487,9 @@ linked(file)
 			}
 			break;
 		}
-		strcat(buf, "/");
-		strcat(buf, file);
-		file = buf;
+		strncat(nfile, "/", sizeof(nfile) - strlen(nfile));
+		strncat(nfile, file, sizeof(nfile) - strlen(nfile));
+		file = nfile;
 	}
 	seteuid(euid);
 	ret = symlink(file, dfname);
