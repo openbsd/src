@@ -60,7 +60,6 @@ option		KTRACE			# ktrace(1) support
 #option		UMAPFS			# uid/gid remapping filesystem
 #option		NULLFS			# null layer filesystem
 #option	        UNION			# union filesystem
-#option		LFS			# log-based filesystem (experimental)
 #option		PORTAL			# portal filesystem (experimental)
 # other networking options
 #option		"TCP_COMPAT_42"		# compatibility with 4.2BSD tcp/ip
