@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat.h,v 1.4 1996/10/18 03:00:08 tholo Exp $	*/
+/*	$OpenBSD: stat.h,v 1.5 1997/11/16 01:01:23 deraadt Exp $	*/
 /*	$NetBSD: stat.h,v 1.20 1996/05/16 22:17:49 cgd Exp $	*/
 
 /*-
@@ -197,6 +197,7 @@ struct stat {
 __BEGIN_DECLS
 int	chmod __P((const char *, mode_t));
 int	fstat __P((int, struct stat *));
+int	mknod __P((const char *, mode_t, dev_t));
 int	mkdir __P((const char *, mode_t));
 int	mkfifo __P((const char *, mode_t));
 int	stat __P((const char *, struct stat *));
