@@ -1,4 +1,4 @@
-/*	$OpenBSD: isr.c,v 1.10 1999/12/08 06:50:17 itojun Exp $	*/
+/*	$OpenBSD: isr.c,v 1.11 2000/08/28 22:05:26 miod Exp $	*/
 /*	$NetBSD: isr.c,v 1.25 1996/11/20 18:57:32 gwr Exp $	*/
 
 /*-
@@ -177,7 +177,7 @@ isr_autovec(evec)
 	vec = (evec & 0xFFF) >> 2;
 	if ((vec < AUTOVEC_BASE) || (vec >= (AUTOVEC_BASE+8)))
 		panic("isr_autovec: bad vec");
-	ipl = vec - 0x18;
+	ipl = vec - AUTOVEC_BASE;
 
 	n = intrcnt[ipl];
 	intrcnt[ipl] = n+1;
