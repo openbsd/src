@@ -1,4 +1,4 @@
-/*	$OpenBSD: kuser_locl.h,v 1.3 1998/02/18 11:53:37 art Exp $	*/
+/*	$OpenBSD: kuser_locl.h,v 1.4 1998/11/28 23:41:01 art Exp $	*/
 /*      $KTH: kuser_locl.h,v 1.10 1997/05/20 18:40:43 bg Exp $          */
 
 
@@ -63,7 +63,7 @@
 #include <kerberosIV/krb.h>
 #include <kerberosIV/krb_db.h>
 #include <kerberosIV/kadm.h>
-#include <prot.h>
+#include <kerberosIV/prot.h>
 
 
 

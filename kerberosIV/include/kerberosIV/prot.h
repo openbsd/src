@@ -1,4 +1,4 @@
-/*	$OpenBSD: prot.h,v 1.5 1998/02/25 15:50:38 art Exp $	*/
+/*	$OpenBSD: prot.h,v 1.1 1998/11/28 23:41:01 art Exp $	*/
 /* $KTH: prot.h,v 1.7 1997/03/23 03:52:27 joda Exp $ */
 
 /*

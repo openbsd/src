@@ -1,4 +1,4 @@
-/*      $OpenBSD: kpropd.c,v 1.6 1998/02/18 13:30:18 art Exp $  */
+/*      $OpenBSD: kpropd.c,v 1.7 1998/11/28 23:41:02 art Exp $  */
 /* $KTH: kpropd.c,v 2.24 1997/12/05 01:34:57 assar Exp $ */
 
 /*
@@ -64,7 +64,7 @@
 #include <kerberosIV/krb.h>
 #include <kerberosIV/krb_db.h>
 #include <klog.h>
-#include <prot.h>
+#include <kerberosIV/prot.h>
 #include <kdc.h>
 
 #include <krb_log.h>
