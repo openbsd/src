@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.14 1998/09/26 07:16:23 millert Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.15 1998/10/28 23:20:01 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)nlist.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: nlist.c,v 1.14 1998/09/26 07:16:23 millert Exp $";
+static char *rcsid = "$OpenBSD: nlist.c,v 1.15 1998/10/28 23:20:01 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -96,7 +96,7 @@ __aout_knlist(fd, db)
 	int nr, strsize;
 	size_t len;
 	u_long kerntextoff;
-	size_t snamesize;
+	size_t snamesize = 0;
 	char *strtab, buf[1024], *sname, *p;
 
 	/* Read in exec structure. */
