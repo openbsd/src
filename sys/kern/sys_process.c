@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.19 2002/03/11 15:39:27 art Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.20 2002/03/12 11:57:12 art Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -283,6 +283,11 @@ sys_ptrace(p, v, retval)
 			return (EINVAL);
 
 		PHOLD(t);
+		/* If the address paramter is not (int *)1, set the pc. */
+		if ((int *)SCARG(uap, addr) != (int *)1)
+			if ((error = process_set_pc(t, SCARG(uap, addr))) != 0)
+				goto relebad;
+
 #ifdef PT_STEP
 		/*
 		 * Arrange for a single-step, if that's requested and possible.
@@ -291,11 +296,6 @@ sys_ptrace(p, v, retval)
 		if (error)
 			goto relebad;
 #endif
-
-		/* If the address paramter is not (int *)1, set the pc. */
-		if ((int *)SCARG(uap, addr) != (int *)1)
-			if ((error = process_set_pc(t, SCARG(uap, addr))) != 0)
-				goto relebad;
 		PRELE(t);
 		goto sendsig;
 
