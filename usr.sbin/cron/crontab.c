@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.24 2001/11/17 19:48:40 deraadt Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.25 2001/12/07 22:33:09 deraadt Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: crontab.c,v 1.24 2001/11/17 19:48:40 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: crontab.c,v 1.25 2001/12/07 22:33:09 deraadt Exp $";
 #endif
 
 /* crontab - install and manage per-user crontab files
@@ -111,7 +111,7 @@ main(int argc, char *argv[]) {
 			exitstatus = ERROR_EXIT;
 		break;
 	default:
-		abort();
+		exit(1);
 	}
 	exit(0);
 	/*NOTREACHED*/
