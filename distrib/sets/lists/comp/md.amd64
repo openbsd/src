@@ -337,3 +337,4 @@
 ./usr/libdata/ldscripts/elf_x86_64.xs
 ./usr/libdata/ldscripts/elf_x86_64.xu
 ./usr/libdata/ldscripts/elf_x86_64.xz
+./usr/share/man/cat1/objcopy.0

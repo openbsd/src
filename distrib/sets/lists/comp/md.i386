@@ -301,3 +301,4 @@
 ./usr/libdata/ldscripts/elf_i386.xs
 ./usr/libdata/ldscripts/elf_i386.xu
 ./usr/libdata/ldscripts/elf_i386.xz
+./usr/share/man/cat1/objcopy.0
