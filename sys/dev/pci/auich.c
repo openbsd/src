@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.48 2005/04/05 01:41:44 mickey Exp $	*/
+/*	$OpenBSD: auich.c,v 1.49 2005/04/05 17:19:01 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -137,6 +137,9 @@
 #define	AUICH_CAS		0x34	/* 1/8 bit */
 #define	AUICH_SEMATIMO		1000	/* us */
 #define	AUICH_RESETIMO		500000	/* us */
+
+#define	ICH_SIS_NV_CTL	0x4c	/* some SiS/nVidia register.  From Linux */
+#define		ICH_SIS_CTL_UNMUTE	0x01	/* un-mute the output */
 
 /*
  * according to the dev/audiovar.h AU_RING_SIZE is 2^16, what fits
@@ -347,16 +350,6 @@ auich_attach(parent, self, aux)
 	u_int32_t status;
 	int i;
 
-	/* SiS 7012 needs special handling */
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SIS &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SIS_7012_ACA) {
-		sc->sc_sts_reg = AUICH_PICB;
-		sc->sc_sample_size = 1;
-	} else {
-		sc->sc_sts_reg = AUICH_STS;
-		sc->sc_sample_size = 2;
-	}
-
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL &&
 	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801DB_ACA ||
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801EB_ACA ||
@@ -440,6 +433,20 @@ auich_attach(parent, self, aux)
 		sizeof sc->sc_audev.config);
 
 	printf(": %s, %s\n", intrstr, sc->sc_audev.name);
+
+	/* SiS 7012 needs special handling */
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SIS &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SIS_7012_ACA) {
+		sc->sc_sts_reg = AUICH_PICB;
+		sc->sc_sample_size = 1;
+		/* un-mute output */
+		bus_space_write_4(sc->iot, sc->aud_ioh, ICH_SIS_NV_CTL,
+		    bus_space_read_4(sc->iot, sc->aud_ioh, ICH_SIS_NV_CTL) |
+		    ICH_SIS_CTL_UNMUTE);
+	} else {
+		sc->sc_sts_reg = AUICH_STS;
+		sc->sc_sample_size = 2;
+	}
 
 	/* allocate dma lists */
 #define	a(a)	(void *)(((u_long)(a) + sizeof(*(a)) - 1) & ~(sizeof(*(a))-1))
