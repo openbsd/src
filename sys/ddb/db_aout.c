@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_aout.c,v 1.9 1996/08/13 00:41:33 niklas Exp $	*/
+/*	$OpenBSD: db_aout.c,v 1.10 1996/08/16 10:12:35 mickey Exp $	*/
 /*	$NetBSD: db_aout.c,v 1.14 1996/02/27 20:54:43 gwr Exp $	*/
 
 /* 
@@ -129,7 +129,7 @@ X_db_sym_init(symtab, esymtab, name)
 	}
 
 	if (db_add_symbol_table((char *)sym_start, (char *)sym_end, name,
-	    (char *)symtab) !=  -1) {
+	    (char *)symtab, esymtab) !=  -1) {
 #ifndef	SYMTAB_SPACE
                 db_printf("[ preserving %d bytes of %s symbol table ]\n",
                           esymtab - (char *)symtab, name);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sym.h,v 1.8 1996/08/16 06:13:03 mickey Exp $	*/
+/*	$OpenBSD: db_sym.h,v 1.9 1996/08/16 10:12:38 mickey Exp $	*/
 /*	$NetBSD: db_sym.h,v 1.7 1996/02/05 01:57:16 christos Exp $	*/
 
 /* 
@@ -44,7 +44,8 @@ typedef struct db_symtab {
 	char		*name;		/* symtab name */
 	u_int		id;		/* id */
 	char		*start;		/* symtab location */
-	char		*end;
+	char		*end;		/* end of symtab */
+	char		*rend;		/* real end (as it passed) */
 	char		*private;	/* optional machdep pointer */
 }	*db_symtab_t;
 
@@ -80,7 +81,7 @@ extern boolean_t	db_qualify_ambiguous_names;
  * Functions exported by the symtable module
  */
 void db_sym_init __P((void));
-int db_add_symbol_table __P((char *, char *, char *, char *));
+int db_add_symbol_table __P((char *, char *, char *, char *, char *));
 					/* extend the list of symbol tables */
 
 void db_del_symbol_table __P((char *));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sym.c,v 1.14 1996/08/16 06:13:02 mickey Exp $	*/
+/*	$OpenBSD: db_sym.c,v 1.15 1996/08/16 10:12:37 mickey Exp $	*/
 /*	$NetBSD: db_sym.c,v 1.12 1996/02/05 01:57:15 christos Exp $	*/
 
 /* 
@@ -61,11 +61,12 @@ db_sym_init(void)
  * Add symbol table, with given name, to list of symbol tables.
  */
 int
-db_add_symbol_table(start, end, name, ref)
+db_add_symbol_table(start, end, name, ref, rend)
 	char *start;
 	char *end;
 	char *name;
 	char *ref;
+	char *rend;
 {
 	db_symtab_t	new = db_nsymtabs? NULL : &db_sym_kernel;
 
@@ -75,6 +76,7 @@ db_add_symbol_table(start, end, name, ref)
 
 	new->start = start;
 	new->end = end;
+	new->rend = rend;
 	new->name = name;
 	new->private = ref;
 	new->id = db_nsymtabs;
