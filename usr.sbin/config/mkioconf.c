@@ -1,3 +1,6 @@
+/*	$OpenBSD: mkioconf.c,v 1.2 1996/03/25 15:55:08 niklas Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.36 1996/03/03 17:28:23 thorpej Exp $	*/
+
 /* 
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,7 +43,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mkioconf.c	8.1 (Berkeley) 6/6/93
- *	$Id: mkioconf.c,v 1.1.1.1 1995/10/18 08:48:34 deraadt Exp $
  */
 
 #include <sys/param.h>

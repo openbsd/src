@@ -1,3 +1,6 @@
+/*	$OpenBSD: pstat.c,v 1.3 1996/03/25 15:56:06 niklas Exp $	*/
+/*	$NetBSD: pstat.c,v 1.17 1996/02/21 02:27:57 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1980, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,8 +41,12 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94"; */
-static char *rcsid = "$Id: pstat.c,v 1.2 1995/11/06 21:19:02 deraadt Exp $";
+#if 0
+from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
+from: static char *rcsid = "$NetBSD: pstat.c,v 1.17 1996/02/21 02:27:57 cgd Exp $";
+#else
+static char *rcsid = "$OpenBSD: pstat.c,v 1.3 1996/03/25 15:56:06 niklas Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -56,6 +63,8 @@ static char *rcsid = "$Id: pstat.c,v 1.2 1995/11/06 21:19:02 deraadt Exp $";
 #undef NFS
 #undef _KERNEL
 #include <sys/stat.h>
+#include <nfs/nfsproto.h>
+#include <nfs/rpcv2.h>
 #include <nfs/nfsnode.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>

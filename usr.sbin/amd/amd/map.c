@@ -1,3 +1,5 @@
+/*	$OpenBSD: map.c,v 1.2 1996/03/25 15:54:48 niklas Exp $	*/
+
 /*-
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
@@ -38,7 +40,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)map.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: map.c,v 1.1.1.1 1995/10/18 08:47:10 deraadt Exp $";
+static char *rcsid = "$OpenBSD: map.c,v 1.2 1996/03/25 15:54:48 niklas Exp $";
 #endif /* not lint */
 
 #include "am.h"
@@ -283,10 +285,10 @@ am_node *mp;
 	mp->am_ttl += mp->am_timeo;	/* sun's -tl option */
 }
 
-void mk_fattr P((am_node *mp, ftype vntype));
+void mk_fattr P((am_node *mp, int vntype));
 void mk_fattr(mp, vntype)
 am_node *mp;
-ftype vntype;
+int vntype;
 {
 	switch (vntype) {
 	case NFDIR:

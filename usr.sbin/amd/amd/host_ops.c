@@ -1,3 +1,5 @@
+/*	$OpenBSD: host_ops.c,v 1.2 1996/03/25 15:54:46 niklas Exp $	*/
+
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
@@ -36,7 +38,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)host_ops.c	8.1 (Berkeley) 6/6/93
- *	$Id: host_ops.c,v 1.1.1.1 1995/10/18 08:47:10 deraadt Exp $
  */
 
 #include "am.h"
@@ -185,6 +186,9 @@ fhstatus *fhp;
 	 * Call the mount daemon on the remote host to
 	 * get the filehandle.
 	 */
+#if NFS_PROTOCOL_VERSION >= 3
+	fhp->fhs_vers = MOUNTVERS;
+#endif
 	clnt_stat = clnt_call(client, MOUNTPROC_MNT, xdr_dirpath, &dir, xdr_fhstatus, fhp, tv);
 	if (clnt_stat != RPC_SUCCESS) {
 		extern char *clnt_sperrno();
@@ -195,12 +199,12 @@ fhstatus *fhp;
 	/*
 	 * Check status of filehandle
 	 */
-	if (fhp->fhs_status) {
+	if (fhp->fhs_stat) {
 #ifdef DEBUG
-		errno = fhp->fhs_status;
+		errno = fhp->fhs_stat;
 		dlog("fhandle fetch failed: %m");
 #endif /* DEBUG */
-		return fhp->fhs_status;
+		return fhp->fhs_stat;
 	}
 	return 0;
 }

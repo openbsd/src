@@ -1,3 +1,5 @@
+/*	$OpenBSD: pppstats.c,v 1.2 1996/03/25 15:56:05 niklas Exp $	*/
+
 /*
  * print PPP statistics:
  * 	pppstats [-v] [-r] [-z] [-c count] [-w wait] [interface]
@@ -28,7 +30,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: pppstats.c,v 1.1.1.1 1995/10/18 08:48:01 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: pppstats.c,v 1.2 1996/03/25 15:56:05 niklas Exp $";
 #endif
 
 #include <stdio.h>
@@ -39,6 +41,8 @@ static char rcsid[] = "$Id: pppstats.c,v 1.1.1.1 1995/10/18 08:48:01 deraadt Exp
 #include <errno.h>
 #include <signal.h>
 #include <fcntl.h>
+#include <err.h>
+#include <unistd.h>
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -48,6 +52,7 @@ static char rcsid[] = "$Id: pppstats.c,v 1.1.1.1 1995/10/18 08:48:01 deraadt Exp
 #include <net/if_ppp.h>
 
 int	vflag, rflag, zflag;	/* select type of display */
+int	aflag;			/* print absolute values, not deltas */
 int	interval, count;
 int	infinite;
 int	unit;
@@ -59,7 +64,7 @@ char	interface[IFNAMSIZ];
 void
 usage()
 {
-	fprintf(stderr, "Usage: %s [-v|-r|-z] [-c count] [-w wait] [interface]\n",
+	fprintf(stderr, "Usage: %s [-v|-r|-z] [-a] [-c count] [-w wait] [interface]\n",
 		progname);
 	exit(1);
 }
@@ -93,6 +98,7 @@ get_ppp_stats(curp)
 		err(1, "couldn't get PPP statistics");
 }
 
+void
 get_ppp_cstats(csp)
     struct ppp_comp_stats *csp;
 {
@@ -116,9 +122,8 @@ get_ppp_cstats(csp)
 #define V(offset)	(cur.offset - old.offset)
 #define W(offset)	(ccs.offset - ocs.offset)
 
-#define CRATE(x)	((x).unc_bytes == 0? 0.0: \
-			 1.0 - ((double)((x).comp_bytes + (x).inc_bytes) \
-				/ (x).unc_bytes))
+#define RATIO(c, i, u)	((c) == 0? 1.0: (u) / ((double)(c) + (i)))
+#define CRATE(x)	RATIO(W(x.comp_bytes), W(x.inc_bytes), W(x.unc_bytes))
 
 /*
  * Print a running summary of interface statistics.
@@ -130,7 +135,7 @@ void
 intpr()
 {
 	register int line = 0;
-	sigset_t oldmask, mask;
+	sigset_t oldmask;
 	struct ppp_stats cur, old;
 	struct ppp_comp_stats ccs, ocs;
 
@@ -153,47 +158,53 @@ intpr()
 				printf("    BYTE   PACK     BYTE   PACK  RATIO | ");
 				printf("    BYTE   PACK     BYTE   PACK  RATIO");
 			} else {
-				printf("%8.8s %6.6s %6.6s %6.6s %6.6s",
-					"IN", "PACK", "VJCOMP", "VJUNC", "VJERR");
+				printf("%8.8s %6.6s %6.6s",
+					"IN", "PACK", "VJCOMP");
+
+				if (!rflag)
+					printf(" %6.6s %6.6s", "VJUNC", "VJERR");
 				if (vflag)
 					printf(" %6.6s %6.6s", "VJTOSS", "NON-VJ");
 				if (rflag)
 					printf(" %6.6s %6.6s", "RATIO", "UBYTE");
-				printf("  | %8.8s %6.6s %6.6s %6.6s %6.6s",
-					"OUT", "PACK", "VJCOMP", "VJUNC", "NON-VJ");
+				printf("  | %8.8s %6.6s %6.6s",
+					"OUT", "PACK", "VJCOMP");
+
+				if (!rflag)
+					printf(" %6.6s %6.6s", "VJUNC", "NON-VJ");
 				if (vflag)
 					printf(" %6.6s %6.6s", "VJSRCH", "VJMISS");
-				if(rflag)
+				if (rflag)
 					printf(" %6.6s %6.6s", "RATIO", "UBYTE");
 			}
 			putchar('\n');
 		}
-	
+
 		if (zflag) {
 			printf("%8u %6u %8u %6u %6.2f",
 			       W(d.comp_bytes),
 			       W(d.comp_packets),
 			       W(d.inc_bytes),
 			       W(d.inc_packets),
-			       ccs.d.ratio == 0? 0.0:
-			        1 - 1.0 / ccs.d.ratio * 256.0);
+			       ccs.d.ratio * 256.0);
 
 			printf(" | %8u %6u %8u %6u %6.2f",
 			       W(c.comp_bytes),
 			       W(c.comp_packets),
 			       W(c.inc_bytes),
 			       W(c.inc_packets),
-			       ccs.c.ratio == 0? 0.0:
-			        1 - 1.0 / ccs.c.ratio * 256.0);
+			       ccs.c.ratio * 256.0);
 	
 		} else {
 
-			printf("%8u %6u %6u %6u %6u",
+			printf("%8u %6u %6u",
 			       V(p.ppp_ibytes),
 			       V(p.ppp_ipackets),
-			       V(vj.vjs_compressedin),
-			       V(vj.vjs_uncompressedin),
-			       V(vj.vjs_errorin));
+			       V(vj.vjs_compressedin));
+			if (!rflag)
+				printf(" %6u %6u",
+				       V(vj.vjs_uncompressedin),
+				       V(vj.vjs_errorin));
 			if (vflag)
 				printf(" %6u %6u",
 				       V(vj.vjs_tossed),
@@ -203,14 +214,16 @@ intpr()
 				       V(vj.vjs_errorin));
 			if (rflag)
 				printf(" %6.2f %6u",
-				       CRATE(ccs.d),
+				       CRATE(d),
 				       W(d.unc_bytes));
-			printf("  | %8u %6u %6u %6u %6u",
+			printf("  | %8u %6u %6u",
 			       V(p.ppp_obytes),
 			       V(p.ppp_opackets),
-			       V(vj.vjs_compressed),
-			       V(vj.vjs_packets) - V(vj.vjs_compressed),
-			       V(p.ppp_opackets) - V(vj.vjs_packets));
+			       V(vj.vjs_compressed));
+			if (!rflag)
+				printf(" %6u %6u",
+				       V(vj.vjs_packets) - V(vj.vjs_compressed),
+				       V(p.ppp_opackets) - V(vj.vjs_packets));
 			if (vflag)
 				printf(" %6u %6u",
 				       V(vj.vjs_searches),
@@ -218,7 +231,7 @@ intpr()
 
 			if (rflag)
 				printf(" %6.2f %6u",
-				       CRATE(ccs.c),
+				       CRATE(c),
 				       W(c.unc_bytes));
 	    
 		}
@@ -237,8 +250,10 @@ intpr()
 		sigsetmask(oldmask);
 		signalled = 0;
 		(void)alarm(interval);
-		old = cur;
-		ocs = ccs;
+		if (!aflag) {
+			old = cur;
+			ocs = ccs;
+		}
 	}
 }
 
@@ -256,8 +271,11 @@ main(argc, argv)
 	else
 		++progname;
 
-	while ((c = getopt(argc, argv, "vrzc:w:")) != -1) {
+	while ((c = getopt(argc, argv, "avrzc:w:")) != -1) {
 		switch (c) {
+		case 'a':
+			++aflag;
+			break;
 		case 'v':
 			++vflag;
 			break;

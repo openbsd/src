@@ -1,3 +1,5 @@
+/*	$OpenBSD: lcp.h,v 1.2 1996/03/25 15:55:47 niklas Exp $	*/
+
 /*
  * lcp.h - Link Control Protocol definitions.
  *
@@ -15,8 +17,6 @@
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- *
- * $Id: lcp.h,v 1.1.1.1 1995/10/18 08:47:59 deraadt Exp $
  */
 
 /*
@@ -74,7 +74,7 @@ extern u_int32_t xmit_accm[][8];
 
 void lcp_init __P((int));
 void lcp_open __P((int));
-void lcp_close __P((int));
+void lcp_close __P((int, char *));
 void lcp_lowerup __P((int));
 void lcp_lowerdown __P((int));
 void lcp_input __P((int, u_char *, int));
@@ -82,6 +82,8 @@ void lcp_protrej __P((int));
 void lcp_sprotrej __P((int, u_char *, int));
 int  lcp_printpkt __P((u_char *, int,
 		       void (*) __P((void *, char *, ...)), void *));
+
+extern struct protent lcp_protent;
 
 /* Default number of times we receive our magic number from the peer
    before deciding the link is looped-back. */

@@ -1,3 +1,6 @@
+/*	$OpenBSD: config.h,v 1.2 1996/03/25 15:55:02 niklas Exp $	*/
+/*	$NetBSD: config.h,v 1.19 1996/03/03 17:28:08 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,7 +43,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)config.h	8.1 (Berkeley) 6/6/93
- *	$Id: config.h,v 1.1.1.1 1995/10/18 08:48:33 deraadt Exp $
  */
 
 /*

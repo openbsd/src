@@ -1,3 +1,5 @@
+/*	$OpenBSD: mount.h,v 1.2 1996/03/25 15:54:56 niklas Exp $	*/
+
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
@@ -36,25 +38,33 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mount.h	8.1 (Berkeley) 6/6/93
- *	$Id: mount.h,v 1.1.1.1 1995/10/18 08:47:23 deraadt Exp $
- *
  */
 
 #define MNTPATHLEN 1024
 #define MNTNAMLEN 255
-#define FHSIZE 32
 
+#if NFS_PROTOCOL_VERSION < 3
+#define FHSIZE 32
 typedef char fhandle[FHSIZE];
+typedef struct fhstatus {
+	u_int fhs_stat;
+	fhandle fhs_fhandle;
+} fhstatus;
+#else
+#define FHSIZE NFSX_V3FHMAX
+typedef char fhandle[NFSX_V3FHMAX];
+typedef struct fhstatus {
+	u_long		fhs_stat;
+ 	long		fhs_vers;
+	long		fhs_auth;
+	long		fhs_size;
+	fhandle		fhs_fhandle;
+} fhstatus;
+#endif
+
 bool_t xdr_fhandle();
 
 
-struct fhstatus {
-	u_int fhs_status;
-	union {
-		fhandle fhs_fhandle;
-	} fhstatus_u;
-};
-typedef struct fhstatus fhstatus;
 bool_t xdr_fhstatus();
 
 

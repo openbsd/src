@@ -1,3 +1,5 @@
+/*	$OpenBSD: mount_xdr.c,v 1.2 1996/03/25 15:54:57 niklas Exp $	*/
+
 /*
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
@@ -36,14 +38,13 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mount_xdr.c	8.1 (Berkeley) 6/6/93
- *	$Id: mount_xdr.c,v 1.1.1.1 1995/10/18 08:47:23 deraadt Exp $
- *
  */
 
 #include "am.h"
 #include "mount.h"
 
 
+#if NFS_PROTOCOL_VERSION < 3
 bool_t
 xdr_fhandle(xdrs, objp)
 	XDR *xdrs;
@@ -55,26 +56,72 @@ xdr_fhandle(xdrs, objp)
 	return (TRUE);
 }
 
-
-
-
 bool_t
 xdr_fhstatus(xdrs, objp)
 	XDR *xdrs;
 	fhstatus *objp;
 {
-	if (!xdr_u_int(xdrs, &objp->fhs_status)) {
+	if (!xdr_u_int(xdrs, &objp->fhs_stat)) {
 		return (FALSE);
 	}
-	switch (objp->fhs_status) {
+	switch (objp->fhs_stat) {
 	case 0:
-		if (!xdr_fhandle(xdrs, objp->fhstatus_u.fhs_fhandle)) {
+		if (!xdr_fhandle(xdrs, objp->fhs_fhandle)) {
 			return (FALSE);
 		}
 		break;
 	}
 	return (TRUE);
 }
+
+#else
+#include <nfs/rpcv2.h>
+
+int
+xdr_fhstatus(xdrsp, objp)
+	XDR *xdrsp;
+	fhstatus *objp;
+{
+	register int i;
+	long auth, authcnt, authfnd = 0;
+
+
+	if (!xdr_u_long(xdrsp, &objp->fhs_stat))
+		return (0);
+	if (objp->fhs_stat)
+		return (1);
+	switch (objp->fhs_vers) {
+	case 1:
+		objp->fhs_size = NFSX_V2FH;
+		return (xdr_opaque(xdrsp, (caddr_t)objp->fhs_fhandle, NFSX_V2FH));
+	case 3:
+		if (!xdr_long(xdrsp, &objp->fhs_size))
+			return (0);
+		if (objp->fhs_size <= 0 || objp->fhs_size > NFSX_V3FHMAX)
+			return (0);
+		if (!xdr_opaque(xdrsp, (caddr_t)objp->fhs_fhandle, objp->fhs_size))
+			return (0);
+		if (!xdr_long(xdrsp, &authcnt))
+			return (0);
+		for (i = 0; i < authcnt; i++) {
+			if (!xdr_long(xdrsp, &auth))
+				return (0);
+			if (auth == objp->fhs_auth)
+				authfnd++;
+		}
+		/*
+		 * Some servers, such as DEC's OSF/1 return a nil authenticator
+		 * list to indicate RPCAUTH_UNIX.
+		 */
+		if (!authfnd && (authcnt > 0 || objp->fhs_auth != RPCAUTH_UNIX))
+			objp->fhs_stat = EAUTH;
+		return (1);
+	default:
+		return (0);
+	};
+}
+#endif
+
 
 
 

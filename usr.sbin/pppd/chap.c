@@ -1,3 +1,5 @@
+/*	$OpenBSD: chap.c,v 1.2 1996/03/25 15:55:35 niklas Exp $	*/
+
 /*
  * chap.c - Crytographic Handshake Authentication Protocol.
  *
@@ -19,7 +21,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: chap.c,v 1.1.1.1 1995/10/18 08:47:58 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: chap.c,v 1.2 1996/03/25 15:55:35 niklas Exp $";
 #endif
 
 /*
@@ -35,6 +37,12 @@ static char rcsid[] = "$Id: chap.c,v 1.1.1.1 1995/10/18 08:47:58 deraadt Exp $";
 #include "pppd.h"
 #include "chap.h"
 #include "md5.h"
+
+struct protent chap_protent = {
+    PPP_CHAP, ChapInit, ChapInput, ChapProtocolReject,
+    ChapLowerUp, ChapLowerDown, NULL, NULL,
+    ChapPrintPkt, NULL, 1, "CHAP", NULL, NULL
+};
 
 chap_state chap[NUM_PPP];		/* CHAP state; one for each unit */
 
@@ -424,9 +432,7 @@ ChapReceiveResponse(cstate, inp, id, len)
     int secret_len, old_state;
     int code;
     char rhostname[256];
-    u_char buf[256];
     MD5_CTX mdContext;
-    u_char msg[256];
     char secret[MAXSECRETLEN];
 
     CHAPDEBUG((LOG_INFO, "ChapReceiveResponse: Rcvd id %d.", id));
@@ -578,9 +584,6 @@ ChapReceiveFailure(cstate, inp, id, len)
     u_char id;
     int len;
 {
-    u_char msglen;
-    u_char *msg;
-  
     CHAPDEBUG((LOG_INFO, "ChapReceiveFailure: Rcvd id %d.", id));
 
     if (cstate->clientstate != CHAPCS_RESPONSE) {

@@ -1,3 +1,5 @@
+/*	$OpenBSD: lcp.c,v 1.2 1996/03/25 15:55:46 niklas Exp $	*/
+
 /*
  * lcp.c - PPP Link Control Protocol.
  *
@@ -18,7 +20,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: lcp.c,v 1.1.1.1 1995/10/18 08:47:58 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: lcp.c,v 1.2 1996/03/25 15:55:46 niklas Exp $";
 #endif
 
 /*
@@ -38,15 +40,8 @@ static char rcsid[] = "$Id: lcp.c,v 1.1.1.1 1995/10/18 08:47:58 deraadt Exp $";
 #include "pppd.h"
 #include "fsm.h"
 #include "lcp.h"
-#include "magic.h"
 #include "chap.h"
-#include "upap.h"
-#include "ipcp.h"
-
-#ifdef _linux_		/* Needs ppp ioctls */
-#include <net/if.h>
-#include <linux/if_ppp.h>
-#endif
+#include "magic.h"
 
 /* global vars */
 fsm lcp_fsm[NUM_PPP];			/* LCP fsm structure (global)*/
@@ -61,11 +56,6 @@ static u_int32_t lcp_echo_number   = 0;	/* ID number of next echo frame */
 static u_int32_t lcp_echo_timer_running = 0;  /* TRUE if a timer is running */
 
 static u_char nak_buffer[PPP_MRU];	/* where we construct a nak packet */
-
-#ifdef _linux_
-u_int32_t idle_timer_running = 0;
-extern int idle_time_limit;
-#endif
 
 /*
  * Callbacks for fsm code.  (CI = Configuration Information)
@@ -111,6 +101,12 @@ static fsm_callbacks lcp_callbacks = {	/* LCP callback routines */
     NULL,			/* Retransmission is necessary */
     lcp_extcode,		/* Called to handle LCP-specific codes */
     "LCP"			/* String name of protocol */
+};
+
+struct protent lcp_protent = {
+    PPP_LCP, lcp_init, lcp_input, lcp_protrej,
+    lcp_lowerup, lcp_lowerdown, lcp_open, lcp_close,
+    lcp_printpkt, NULL, 1, "LCP", NULL, NULL
 };
 
 int lcp_loopbackfail = DEFLOOPBACKFAIL;
@@ -201,8 +197,9 @@ lcp_open(unit)
  * lcp_close - Take LCP down.
  */
 void
-lcp_close(unit)
+lcp_close(unit, reason)
     int unit;
+    char *reason;
 {
     fsm *f = &lcp_fsm[unit];
 
@@ -210,68 +207,16 @@ lcp_close(unit)
 	/*
 	 * This action is not strictly according to the FSM in RFC1548,
 	 * but it does mean that the program terminates if you do a
-	 * lcp_close(0) in passive/silent mode when a connection hasn't
+	 * lcp_close() in passive/silent mode when a connection hasn't
 	 * been established.
 	 */
 	f->state = CLOSED;
 	lcp_finished(f);
 
     } else
-	fsm_close(&lcp_fsm[unit]);
+	fsm_close(&lcp_fsm[unit], reason);
 }
 
-#ifdef _linux_
-static void IdleTimeCheck __P((caddr_t));
-
-/*
- * Timer expired for the LCP echo requests from this process.
- */
-
-static void
-RestartIdleTimer (f)
-    fsm *f;
-{
-    u_long             delta;
-    struct ppp_idle    ddinfo;
-/*
- * Read the time since the last packet was received.
- */
-    if (ioctl (fd, PPPIOCGIDLE, &ddinfo) < 0) {
-        syslog (LOG_ERR, "ioctl(PPPIOCGIDLE): %m");
-        die (1);
-    }
-/*
- * Compute the time since the last packet was received. If the timer
- *  has expired then disconnect the line.
- */
-    delta = idle_time_limit - (u_long) ddinfo.recv_idle;
-    if (((int) delta <= 0L) && (f->state == OPENED)) {
-        syslog (LOG_NOTICE, "No IP frames received within idle time limit");
-	lcp_close(f->unit);		/* Reset connection */
-	phase = PHASE_TERMINATE;	/* Mark it down */
-    } else {
-        if ((int) delta <= 0L)
-	    delta = (u_long) idle_time_limit;
-        assert (idle_timer_running==0);
-        TIMEOUT (IdleTimeCheck, (caddr_t) f, delta);
-        idle_timer_running = 1;
-    }
-}
-
-/*
- * IdleTimeCheck - Timer expired on the IDLE detection for IP frames
- */
-
-static void
-IdleTimeCheck (arg)
-    caddr_t arg;
-{
-    if (idle_timer_running != 0) {
-        idle_timer_running = 0;
-        RestartIdleTimer ((fsm *) arg);
-    }
-}
-#endif
 
 /*
  * lcp_lowerup - The lower layer is up.
@@ -280,10 +225,17 @@ void
 lcp_lowerup(unit)
     int unit;
 {
-    sifdown(unit);
+    lcp_options *wo = &lcp_wantoptions[unit];
+
+    /*
+     * Don't use A/C or protocol compression on transmission,
+     * but accept A/C and protocol compressed packets
+     * if we are going to ask for A/C and protocol compression.
+     */
     ppp_set_xaccm(unit, xmit_accm[unit]);
     ppp_send_config(unit, PPP_MRU, 0xffffffff, 0, 0);
-    ppp_recv_config(unit, PPP_MRU, 0x00000000, 0, 0);
+    ppp_recv_config(unit, PPP_MRU, 0x00000000,
+		    wo->neg_pcompression, wo->neg_accompression);
     peer_mru[unit] = PPP_MRU;
     lcp_allowoptions[unit].asyncmap = xmit_accm[unit][0];
 
@@ -311,23 +263,9 @@ lcp_input(unit, p, len)
     u_char *p;
     int len;
 {
-    int oldstate;
     fsm *f = &lcp_fsm[unit];
-    lcp_options *go = &lcp_gotoptions[f->unit];
 
-    oldstate = f->state;
     fsm_input(f, p, len);
-    if (oldstate == REQSENT && f->state == ACKSENT) {
-	/*
-	 * The peer will probably send us an ack soon and then
-	 * immediately start sending packets with the negotiated
-	 * options.  So as to be ready when that happens, we set
-	 * our receive side to accept packets as negotiated now.
-	 */
-	ppp_recv_config(f->unit, PPP_MRU,
-			go->neg_asyncmap? go->asyncmap: 0x00000000,
-			go->neg_pcompression, go->neg_accompression);
-    }
 }
 
 
@@ -382,6 +320,8 @@ lcp_rprotrej(f, inp, len)
     u_char *inp;
     int len;
 {
+    int i;
+    struct protent *protp;
     u_short prot;
 
     LCPDEBUG((LOG_INFO, "lcp_rprotrej."));
@@ -408,7 +348,17 @@ lcp_rprotrej(f, inp, len)
 	return;
     }
 
-    DEMUXPROTREJ(f->unit, prot);	/* Inform protocol */
+    /*
+     * Upcall the proper Protocol-Reject routine.
+     */
+    for (i = 0; (protp = protocols[i]) != NULL; ++i)
+	if (protp->protocol == prot && protp->enabled_flag) {
+	    (*protp->protrej)(f->unit);
+	    return;
+	}
+
+    syslog(LOG_WARNING, "Protocol-Reject for unsupported protocol 0x%x",
+	   prot);
 }
 
 
@@ -454,8 +404,8 @@ lcp_sprotrej(unit, p, len)
  * lcp_resetci - Reset our CI.
  */
 static void
-  lcp_resetci(f)
-fsm *f;
+lcp_resetci(f)
+    fsm *f;
 {
     lcp_wantoptions[f->unit].magicnumber = magic();
     lcp_wantoptions[f->unit].numloops = 0;
@@ -473,17 +423,17 @@ lcp_cilen(f)
 {
     lcp_options *go = &lcp_gotoptions[f->unit];
 
-#define LENCIVOID(neg)	(neg ? CILEN_VOID : 0)
-#define LENCICHAP(neg)	(neg ? CILEN_CHAP : 0)
-#define LENCISHORT(neg)	(neg ? CILEN_SHORT : 0)
-#define LENCILONG(neg)	(neg ? CILEN_LONG : 0)
-#define LENCILQR(neg)	(neg ? CILEN_LQR: 0)
+#define LENCIVOID(neg)	((neg) ? CILEN_VOID : 0)
+#define LENCICHAP(neg)	((neg) ? CILEN_CHAP : 0)
+#define LENCISHORT(neg)	((neg) ? CILEN_SHORT : 0)
+#define LENCILONG(neg)	((neg) ? CILEN_LONG : 0)
+#define LENCILQR(neg)	((neg) ? CILEN_LQR: 0)
     /*
      * NB: we only ask for one of CHAP and UPAP, even if we will
      * accept either.
      */
-    return (LENCISHORT(go->neg_mru) +
-	    LENCILONG(go->neg_asyncmap) +
+    return (LENCISHORT(go->neg_mru && go->mru != DEFMRU) +
+	    LENCILONG(go->neg_asyncmap && go->asyncmap != 0xFFFFFFFF) +
 	    LENCICHAP(go->neg_chap) +
 	    LENCISHORT(!go->neg_chap && go->neg_upap) +
 	    LENCILQR(go->neg_lqr) +
@@ -537,8 +487,9 @@ lcp_addci(f, ucp, lenp)
 	PUTLONG(val, ucp); \
     }
 
-    ADDCISHORT(CI_MRU, go->neg_mru, go->mru);
-    ADDCILONG(CI_ASYNCMAP, go->neg_asyncmap, go->asyncmap);
+    ADDCISHORT(CI_MRU, go->neg_mru && go->mru != DEFMRU, go->mru);
+    ADDCILONG(CI_ASYNCMAP, go->neg_asyncmap && go->asyncmap != 0xFFFFFFFF,
+	      go->asyncmap);
     ADDCICHAP(CI_AUTHTYPE, go->neg_chap, PPP_CHAP, go->chap_mdtype);
     ADDCISHORT(CI_AUTHTYPE, !go->neg_chap && go->neg_upap, PPP_PAP);
     ADDCILQR(CI_QUALITY, go->neg_lqr, go->lqr_period);
@@ -646,8 +597,9 @@ lcp_ackci(f, p, len)
 	  goto bad; \
     }
 
-    ACKCISHORT(CI_MRU, go->neg_mru, go->mru);
-    ACKCILONG(CI_ASYNCMAP, go->neg_asyncmap, go->asyncmap);
+    ACKCISHORT(CI_MRU, go->neg_mru && go->mru != DEFMRU, go->mru);
+    ACKCILONG(CI_ASYNCMAP, go->neg_asyncmap && go->asyncmap != 0xFFFFFFFF,
+	      go->asyncmap);
     ACKCICHAP(CI_AUTHTYPE, go->neg_chap, PPP_CHAP, go->chap_mdtype);
     ACKCISHORT(CI_AUTHTYPE, !go->neg_chap && go->neg_upap, PPP_PAP);
     ACKCILQR(CI_QUALITY, go->neg_lqr, go->lqr_period);
@@ -764,17 +716,21 @@ lcp_nakci(f, p, len)
      * If they send us a bigger MRU than what we asked, accept it, up to
      * the limit of the default MRU we'd get if we didn't negotiate.
      */
-    NAKCISHORT(CI_MRU, neg_mru,
-	       if (cishort <= wo->mru || cishort < DEFMRU)
-		   try.mru = cishort;
-	       );
+    if (go->neg_mru && go->mru != DEFMRU) {
+	NAKCISHORT(CI_MRU, neg_mru,
+		   if (cishort <= wo->mru || cishort < DEFMRU)
+		       try.mru = cishort;
+		   );
+    }
 
     /*
      * Add any characters they want to our (receive-side) asyncmap.
      */
-    NAKCILONG(CI_ASYNCMAP, neg_asyncmap,
-	      try.asyncmap = go->asyncmap | cilong;
-	      );
+    if (go->neg_asyncmap && go->asyncmap != 0xFFFFFFFF) {
+	NAKCILONG(CI_ASYNCMAP, neg_asyncmap,
+		  try.asyncmap = go->asyncmap | cilong;
+		  );
+    }
 
     /*
      * If they've nak'd our authentication-protocol, check whether
@@ -890,11 +846,16 @@ lcp_nakci(f, p, len)
 
 	switch (citype) {
 	case CI_MRU:
-	    if (go->neg_mru || no.neg_mru || cilen != CILEN_SHORT)
+	    if (go->neg_mru && go->mru != DEFMRU
+		|| no.neg_mru || cilen != CILEN_SHORT)
 		goto bad;
+	    GETSHORT(cishort, p);
+	    if (cishort < DEFMRU)
+		try.mru = cishort;
 	    break;
 	case CI_ASYNCMAP:
-	    if (go->neg_asyncmap || no.neg_asyncmap || cilen != CILEN_LONG)
+	    if (go->neg_asyncmap && go->asyncmap != 0xFFFFFFFF
+		|| no.neg_asyncmap || cilen != CILEN_LONG)
 		goto bad;
 	    break;
 	case CI_AUTHTYPE:
@@ -935,7 +896,7 @@ lcp_nakci(f, p, len)
 	if (looped_back) {
 	    if (++try.numloops >= lcp_loopbackfail) {
 		syslog(LOG_NOTICE, "Serial line is looped back.");
-		lcp_close(f->unit);
+		lcp_close(f->unit, "Loopback detected");
 	    }
 	} else
 	    try.numloops = 0;
@@ -969,8 +930,6 @@ lcp_rejci(f, p, len)
     u_char cichar;
     u_short cishort;
     u_int32_t cilong;
-    u_char *start = p;
-    int plen = len;
     lcp_options try;		/* options to request next time */
 
     try = *go;
@@ -1075,8 +1034,6 @@ lcp_rejci(f, p, len)
 
 bad:
     LCPDEBUG((LOG_WARNING, "lcp_rejci: received bad Reject!"));
-    LCPDEBUG((LOG_WARNING, "lcp_rejci: plen %d len %d off %d",
-	      plen, len, p - start));
     return 0;
 }
 
@@ -1130,6 +1087,7 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
 	    orc = CONFREJ;		/* Reject bad CI */
 	    cilen = l;			/* Reject till end of packet */
 	    l = 0;			/* Don't loop again */
+	    citype = 0;
 	    goto endswitch;
 	}
 	GETCHAR(citype, p);		/* Parse CI type */
@@ -1412,8 +1370,6 @@ endswitch:
 
 /*
  * lcp_up - LCP has come UP.
- *
- * Start UPAP, IPCP, etc.
  */
 static void
 lcp_up(f)
@@ -1450,10 +1406,6 @@ lcp_up(f)
     if (ho->neg_mru)
 	peer_mru[f->unit] = ho->mru;
 
-    ChapLowerUp(f->unit);	/* Enable CHAP */
-    upap_lowerup(f->unit);	/* Enable UPAP */
-    ipcp_lowerup(f->unit);	/* Enable IPCP */
-    ccp_lowerup(f->unit);	/* Enable CCP */
     lcp_echo_lowerup(f->unit);  /* Enable echo messages */
 
     link_established(f->unit);
@@ -1469,18 +1421,17 @@ static void
 lcp_down(f)
     fsm *f;
 {
-    lcp_echo_lowerdown(f->unit);
-    ccp_lowerdown(f->unit);
-    ipcp_lowerdown(f->unit);
-    ChapLowerDown(f->unit);
-    upap_lowerdown(f->unit);
+    lcp_options *go = &lcp_gotoptions[f->unit];
 
-    sifdown(f->unit);
-    ppp_send_config(f->unit, PPP_MRU, 0xffffffff, 0, 0);
-    ppp_recv_config(f->unit, PPP_MRU, 0x00000000, 0, 0);
-    peer_mru[f->unit] = PPP_MRU;
+    lcp_echo_lowerdown(f->unit);
 
     link_down(f->unit);
+
+    ppp_send_config(f->unit, PPP_MRU, 0xffffffff, 0, 0);
+    ppp_recv_config(f->unit, PPP_MRU,
+		    (go->neg_asyncmap? go->asyncmap: 0x00000000),
+		    go->neg_pcompression, go->neg_accompression);
+    peer_mru[f->unit] = PPP_MRU;
 }
 
 
@@ -1580,7 +1531,7 @@ lcp_printpkt(p, plen, printer, arg)
 		    GETSHORT(cishort, p);
 		    switch (cishort) {
 		    case PPP_PAP:
-			printer(arg, "upap");
+			printer(arg, "pap");
 			break;
 		    case PPP_CHAP:
 			printer(arg, "chap");
@@ -1651,8 +1602,10 @@ void LcpLinkFailure (f)
     fsm *f;
 {
     if (f->state == OPENED) {
-        syslog (LOG_NOTICE, "Excessive lack of response to LCP echo frames.");
-        lcp_close(f->unit);		/* Reset connection */
+	syslog(LOG_INFO, "No response to %d echo-requests", lcp_echos_pending);
+        syslog(LOG_NOTICE, "Serial link appears to be disconnected.");
+        lcp_close(f->unit, "Peer not responding");
+	phase = PHASE_TERMINATE;
     }
 }
 
@@ -1664,36 +1617,13 @@ static void
 LcpEchoCheck (f)
     fsm *f;
 {
-    long int delta;
-#ifdef __linux__
-    struct ppp_idle    ddinfo;
-/*
- * Read the time since the last packet was received.
- */
-    if (ioctl (fd, PPPIOCGIDLE, &ddinfo) < 0) {
-        syslog (LOG_ERR, "ioctl(PPPIOCGIDLE): %m");
-        die (1);
-    }
-/*
- * Compute the time since the last packet was received. If the timer
- *  has expired then send the echo request and reset the timer to maximum.
- */
-    delta = (long int) lcp_echo_interval - (long int) ddinfo.recv_idle;
-    if (delta < 0L) {
-        LcpSendEchoRequest (f);
-        delta = (int) lcp_echo_interval;
-    }
-
-#else /* Other implementations do not have ability to find delta */
     LcpSendEchoRequest (f);
-    delta = (int) lcp_echo_interval;
-#endif
 
-/*
- * Start the timer for the next interval.
- */
+    /*
+     * Start the timer for the next interval.
+     */
     assert (lcp_echo_timer_running==0);
-    TIMEOUT (LcpEchoTimeout, (caddr_t) f, (u_int32_t) delta);
+    TIMEOUT (LcpEchoTimeout, (caddr_t) f, lcp_echo_interval);
     lcp_echo_timer_running = 1;
 }
 
@@ -1749,27 +1679,24 @@ LcpSendEchoRequest (f)
     u_int32_t lcp_magic;
     u_char pkt[4], *pktp;
 
-/*
- * Detect the failure of the peer at this point.
- */
+    /*
+     * Detect the failure of the peer at this point.
+     */
     if (lcp_echo_fails != 0) {
         if (lcp_echos_pending++ >= lcp_echo_fails) {
             LcpLinkFailure(f);
 	    lcp_echos_pending = 0;
 	}
     }
-/*
- * Make and send the echo request frame.
- */
+
+    /*
+     * Make and send the echo request frame.
+     */
     if (f->state == OPENED) {
-        lcp_magic = lcp_gotoptions[f->unit].neg_magicnumber
-	            ? lcp_gotoptions[f->unit].magicnumber
-	            : 0L;
+        lcp_magic = lcp_gotoptions[f->unit].magicnumber;
 	pktp = pkt;
 	PUTLONG(lcp_magic, pktp);
-      
-        fsm_sdata(f, ECHOREQ,
-		  lcp_echo_number++ & 0xFF, pkt, pktp - pkt);
+        fsm_sdata(f, ECHOREQ, lcp_echo_number++ & 0xFF, pkt, pktp - pkt);
     }
 }
 
@@ -1791,11 +1718,6 @@ lcp_echo_lowerup (unit)
     /* If a timeout interval is specified then start the timer */
     if (lcp_echo_interval != 0)
         LcpEchoCheck (f);
-#ifdef _linux_
-    /* If a idle time limit is given then start it */
-    if (idle_time_limit != 0)
-        RestartIdleTimer (f);
-#endif
 }
 
 /*
@@ -1812,11 +1734,4 @@ lcp_echo_lowerdown (unit)
         UNTIMEOUT (LcpEchoTimeout, (caddr_t) f);
         lcp_echo_timer_running = 0;
     }
-#ifdef _linux_  
-    /* If a idle time limit is running then stop it */
-    if (idle_timer_running != 0) {
-        UNTIMEOUT (IdleTimeCheck, (caddr_t) f);
-        idle_timer_running = 0;
-    }
-#endif
 }

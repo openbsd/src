@@ -1,4 +1,5 @@
-/*	$NetBSD: inetd.c,v 1.10 1995/06/02 15:02:18 pk Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.2 1996/03/25 15:55:24 niklas Exp $	*/
+/*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
  * All rights reserved.
@@ -40,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$Id: inetd.c,v 1.1.1.1 1995/10/18 08:47:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.2 1996/03/25 15:55:24 niklas Exp $";
 #endif /* not lint */
 
 /*
@@ -561,14 +562,10 @@ config()
 			if (cp->se_bi == 0 && 
 			    (sep->se_wait == 1 || cp->se_wait == 0))
 				sep->se_wait = cp->se_wait;
-			if (cp->se_max != sep->se_max)
-				SWAP(int, cp->se_max, sep->se_max);
-			if (cp->se_user)
-				SWAP(char *, sep->se_user, cp->se_user);
-			if (cp->se_group)
-				SWAP(char *, sep->se_group, cp->se_group);
-			if (cp->se_server)
-				SWAP(char *, sep->se_server, cp->se_server);
+			SWAP(int, cp->se_max, sep->se_max);
+			SWAP(char *, sep->se_user, cp->se_user);
+			SWAP(char *, sep->se_group, cp->se_group);
+			SWAP(char *, sep->se_server, cp->se_server);
 			for (i = 0; i < MAXARGV; i++)
 				SWAP(char *, sep->se_argv[i], cp->se_argv[i]);
 #undef SWAP

@@ -1,3 +1,5 @@
+/*	$OpenBSD: upap.h,v 1.2 1996/03/25 15:55:59 niklas Exp $	*/
+
 /*
  * upap.h - User/Password Authentication Protocol definitions.
  *
@@ -15,8 +17,6 @@
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- *
- * $Id: upap.h,v 1.1.1.1 1995/10/18 08:48:00 deraadt Exp $
  */
 
 /*
@@ -91,3 +91,5 @@ void upap_input __P((int, u_char *, int));
 void upap_protrej __P((int));
 int  upap_printpkt __P((u_char *, int,
 			void (*) __P((void *, char *, ...)), void *));
+
+extern struct protent pap_protent;

@@ -1,4 +1,4 @@
-.\"	@(#) $Header: /home/cvs/src/usr.sbin/pppd/pppstats/pppstats.8,v 1.1.1.1 1995/10/18 08:48:01 deraadt Exp $ (LBL)
+.\" $OpenBSD: pppstats.8,v 1.2 1996/03/25 15:56:04 niklas Exp $
 .Dd November 15, 1994
 .Dt PPPSTATS 8
 .Sh NAME
@@ -9,6 +9,7 @@
 .Op Fl v
 .Op Fl r
 .Op Fl z
+.Op Fl a
 .Op Fl c Ar count
 .Op Fl w Ar wait
 .Op Ar interface
@@ -27,17 +28,27 @@ into input and output sections containing columns of statistics
 describing the properties and volume of packets received and
 transmitted by the interface.
 .Pp
-The first report will consist of a snapshot of the interface's
-statistics.  Further output, if any, will describe activity between
-report intervals.
-.Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl a
+Display absolute values rather than deltas.  If this option is
+specified with the
+.Fl c
+and/or
+.Fl w
+options, the second and subsequent reports (as well as the first) will
+show statistics for the time since the link was initiated.
 .It Fl c Ar count
 Repeat the display
 .Ar count
-times. The first display is for the time since a reboot and each
-subsequent report is for the time period since the last display.
+times. The first display is for the time since the link was initiated
+(that is, since the corresponding
+.Xr pppd 8
+was started), and each
+subsequent report is for the time period since the last display
+(unless the
+.Fl a
+option is specified).
 If this option is not specified, the default repeat
 .Ar count
 is 1 if the
@@ -73,8 +84,14 @@ The total number of packets received by this interface.
 The number of compressed TCP packets received by this interface.
 .It Li VJUNC
 The number of uncompressed TCP packets received by this interface.
+Not reported when the
+.Fl r
+option is specified.
 .It Li VJERR
-The number of corrupted or bogus packets received by this interface.
+The number of corrupted or bogus TCP packets received by this interface.
+Not reported when the
+.Fl r
+option is specified.
 .It Li VJTOSS
 The number of VJ header-compressed TCP packets dropped on reception by
 this interface.  Only reported when the
@@ -86,11 +103,10 @@ reported when the
 .Fl v
 option is specified.
 .It Li RATIO
-The overall compression ratio achieved for received packets by the
-packet compression scheme in use, as a number between 0.0 and 1.0,
-representing the average proportionate reduction in the size of the
-packets achieved by the use of packet compression (thus 0.0 indicates
-that the data is incompressible).  Only reported when the
+The compression ratio achieved for received packets by the
+packet compression scheme in use, defined as the uncompressed size
+divided by the compressed size.
+Only reported when the
 .Fl r
 option is specified.
 .It Li UBYTE
@@ -112,8 +128,14 @@ VJ-compressed TCP headers.
 .It Li VJUNC
 The number of TCP packets transmitted from this interface with
 VJ-uncompressed TCP headers.
+Not reported when the
+.Fl r
+option is specified.
 .It Li NON-VJ
 The total number of non-TCP packets transmitted from this interface.
+Not reported when the
+.Fl r
+option is specified.
 .It Li VJSRCH
 The number of searches for the cached header entry for a VJ header
 compressed TCP packet.  Only reported when the
@@ -125,15 +147,16 @@ VJ header compressed TCP packet.  Only reported when the
 .Fl v
 option is specified.
 .It Li RATIO
-The overall compression ratio achieved for transmitted packets by the
-packet compression scheme in use, as a number between 0.0 and 1.0.
+The compression ratio achieved for transmitted packets by the
+packet compression scheme in use, defined as the size
+before compression divided by the compressed size.
 Only reported when the
 .Fl r
 option is specified.
 .It Li UBYTE
 The total number of bytes to be transmitted, before packet compression
 is applied.  Only reported when the
-.Fl v
+.Fl r
 option is specified.
 .El
 .Pp
@@ -156,8 +179,9 @@ were transmitted in uncompressed form) received.
 .It Li INCOMPRESSIBLE PACK
 The number of incompressible packets received.
 .It Li COMP RATIO
-The recent compression ratio for incoming packets, as a number between
-0.0 and 1.0.
+The recent compression ratio for incoming packets, defined as the
+uncompressed size divided by the compressed size (including both
+compressible and incompressible packets).
 .El
 .Pp
 The fields displayed on the output side are:
@@ -172,8 +196,7 @@ those which were transmitted in uncompressed form).
 .It Li INCOMPRESSIBLE PACK
 The number of incompressible packets transmitted.
 .It Li COMP RATIO
-The recent compression ratio for outgoing packets, as a number between
-0.0 and 1.0.
+The recent compression ratio for outgoing packets.
 .El
 .Sh SEE ALSO
 .Xr pppd 8

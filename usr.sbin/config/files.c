@@ -1,3 +1,6 @@
+/*	$OpenBSD: files.c,v 1.3 1996/03/25 15:55:03 niklas Exp $	*/
+/*	$NetBSD: files.c,v 1.3 1996/03/03 17:28:10 thorpej Exp $	*/
+
 /* 
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,7 +43,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)files.c	8.1 (Berkeley) 6/6/93
- *	$Id: files.c,v 1.2 1996/02/22 00:32:55 niklas Exp $
  */
 
 #include <sys/param.h>

@@ -1,3 +1,5 @@
+/*	$OpenBSD: fsm.h,v 1.2 1996/03/25 15:55:39 niklas Exp $	*/
+
 /*
  * fsm.h - {Link, IP} Control Protocol Finite State Machine definitions.
  *
@@ -15,8 +17,6 @@
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- *
- * $Id: fsm.h,v 1.1.1.1 1995/10/18 08:47:58 deraadt Exp $
  */
 
 /*
@@ -74,6 +74,8 @@ typedef struct fsm {
     int nakloops;		/* Number of nak loops since last ack */
     int maxnakloops;		/* Maximum number of nak loops tolerated */
     fsm_callbacks *callbacks;	/* Callback routines */
+    char *term_reason;		/* Reason for closing protocol */
+    int term_reason_len;	/* Length of term_reason */
 } fsm;
 
 
@@ -116,7 +118,7 @@ void fsm_init __P((fsm *));
 void fsm_lowerup __P((fsm *));
 void fsm_lowerdown __P((fsm *));
 void fsm_open __P((fsm *));
-void fsm_close __P((fsm *));
+void fsm_close __P((fsm *, char *));
 void fsm_input __P((fsm *, u_char *, int));
 void fsm_protreject __P((fsm *));
 void fsm_sdata __P((fsm *, int, int, u_char *, int));

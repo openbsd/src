@@ -1,3 +1,5 @@
+/*	$OpenBSD: nfs_prot.h,v 1.2 1996/03/25 15:54:58 niklas Exp $	*/
+
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
@@ -36,15 +38,19 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_prot.h	8.1 (Berkeley) 6/6/93
- *	$Id: nfs_prot.h,v 1.1.1.1 1995/10/18 08:47:23 deraadt Exp $
- *
  */
+
+#if NFS_PROTOCOL_VERSION >= 3
+#include <nfs/nfsproto.h>
+#endif
 
 #define	xdr_nfsstat xdr_enum
 #define	xdr_ftype xdr_enum
 
 #define NFS_PORT 2049
+#ifndef NFS_MAXDATA
 #define NFS_MAXDATA 8192
+#endif
 #define NFS_MAXPATHLEN 1024
 #define NFS_MAXNAMLEN 255
 #define NFS_FHSIZE 32
@@ -59,6 +65,7 @@
 #define NFSMODE_SOCK 0140000
 #define NFSMODE_FIFO 0010000
 
+#if NFS_PROTOCOL_VERSION < 3
 enum nfsstat {
 	NFS_OK = 0,
 	NFSERR_PERM = 1,
@@ -80,9 +87,14 @@ enum nfsstat {
 	NFSERR_WFLUSH = 99
 };
 typedef enum nfsstat nfsstat;
+#else
+typedef int nfsstat;
+#endif
+
 bool_t xdr_nfsstat();
 
 
+#if NFS_PROTOCOL_VERSION < 3
 enum ftype {
 	NFNON = 0,
 	NFREG = 1,
@@ -95,6 +107,10 @@ enum ftype {
 	NFFIFO = 8
 };
 typedef enum ftype ftype;
+#else
+typedef int ftype;
+#endif
+
 /* static bool_t xdr_ftype(); */
 
 
@@ -349,40 +365,60 @@ bool_t xdr_statfsres();
 
 #define NFS_PROGRAM ((u_long)100003)
 #define NFS_VERSION ((u_long)2)
-#define NFSPROC_NULL ((u_long)0)
-extern voidp nfsproc_null_2();
-#define NFSPROC_GETATTR ((u_long)1)
-extern attrstat *nfsproc_getattr_2();
-#define NFSPROC_SETATTR ((u_long)2)
-extern attrstat *nfsproc_setattr_2();
-#define NFSPROC_ROOT ((u_long)3)
-extern voidp nfsproc_root_2();
-#define NFSPROC_LOOKUP ((u_long)4)
-extern diropres *nfsproc_lookup_2();
-#define NFSPROC_READLINK ((u_long)5)
-extern readlinkres *nfsproc_readlink_2();
-#define NFSPROC_READ ((u_long)6)
-extern readres *nfsproc_read_2();
-#define NFSPROC_WRITECACHE ((u_long)7)
-extern voidp nfsproc_writecache_2();
-#define NFSPROC_WRITE ((u_long)8)
-extern attrstat *nfsproc_write_2();
-#define NFSPROC_CREATE ((u_long)9)
-extern diropres *nfsproc_create_2();
-#define NFSPROC_REMOVE ((u_long)10)
-extern nfsstat *nfsproc_remove_2();
-#define NFSPROC_RENAME ((u_long)11)
-extern nfsstat *nfsproc_rename_2();
-#define NFSPROC_LINK ((u_long)12)
-extern nfsstat *nfsproc_link_2();
-#define NFSPROC_SYMLINK ((u_long)13)
-extern nfsstat *nfsproc_symlink_2();
-#define NFSPROC_MKDIR ((u_long)14)
-extern diropres *nfsproc_mkdir_2();
-#define NFSPROC_RMDIR ((u_long)15)
-extern nfsstat *nfsproc_rmdir_2();
-#define NFSPROC_READDIR ((u_long)16)
-extern readdirres *nfsproc_readdir_2();
-#define NFSPROC_STATFS ((u_long)17)
-extern statfsres *nfsproc_statfs_2();
 
+/* Undef the version 3 ones, and define the v2 ones */
+#undef NFSPROC_NULL
+#define NFSPROC_NULL ((u_long)0)
+#undef NFSPROC_GETATTR
+#define NFSPROC_GETATTR ((u_long)1)
+#undef NFSPROC_SETATTR
+#define NFSPROC_SETATTR ((u_long)2)
+#undef NFSPROC_ROOT
+#define NFSPROC_ROOT ((u_long)3)
+#undef NFSPROC_LOOKUP
+#define NFSPROC_LOOKUP ((u_long)4)
+#undef NFSPROC_READLINK
+#define NFSPROC_READLINK ((u_long)5)
+#undef NFSPROC_READ
+#define NFSPROC_READ ((u_long)6)
+#undef NFSPROC_WRITECACHE
+#define NFSPROC_WRITECACHE ((u_long)7)
+#undef NFSPROC_WRITE
+#define NFSPROC_WRITE ((u_long)8)
+#undef NFSPROC_CREATE
+#define NFSPROC_CREATE ((u_long)9)
+#undef NFSPROC_REMOVE
+#define NFSPROC_REMOVE ((u_long)10)
+#undef NFSPROC_RENAME
+#define NFSPROC_RENAME ((u_long)11)
+#undef NFSPROC_LINK
+#define NFSPROC_LINK ((u_long)12)
+#undef NFSPROC_SYMLINK
+#define NFSPROC_SYMLINK ((u_long)13)
+#undef NFSPROC_MKDIR
+#define NFSPROC_MKDIR ((u_long)14)
+#undef NFSPROC_RMDIR
+#define NFSPROC_RMDIR ((u_long)15)
+#undef NFSPROC_READDIR
+#define NFSPROC_READDIR ((u_long)16)
+#undef NFSPROC_STATFS
+#define NFSPROC_STATFS ((u_long)17)
+
+extern voidp nfsproc_null_2();
+extern attrstat *nfsproc_getattr_2();
+extern attrstat *nfsproc_setattr_2();
+extern voidp nfsproc_root_2();
+extern diropres *nfsproc_lookup_2();
+extern readlinkres *nfsproc_readlink_2();
+extern readres *nfsproc_read_2();
+extern voidp nfsproc_writecache_2();
+extern attrstat *nfsproc_write_2();
+extern diropres *nfsproc_create_2();
+extern nfsstat *nfsproc_remove_2();
+extern nfsstat *nfsproc_rename_2();
+extern nfsstat *nfsproc_link_2();
+extern nfsstat *nfsproc_symlink_2();
+extern diropres *nfsproc_mkdir_2();
+extern nfsstat *nfsproc_rmdir_2();
+extern readdirres *nfsproc_readdir_2();
+extern statfsres *nfsproc_statfs_2();

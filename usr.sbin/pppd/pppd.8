@@ -1,5 +1,5 @@
+.\" $OpenBSD: pppd.8,v 1.3 1996/03/25 15:55:54 niklas Exp $
 .\" manual page [] for pppd 2.0
-.\" $Id: pppd.8,v 1.2 1996/02/22 00:12:46 niklas Exp $
 .\" SH section heading
 .\" SS subsection heading
 .\" LP paragraph
@@ -167,6 +167,20 @@ options are given, respectively.
 Disable Address/Control compression negotiation (use default, i.e.
 address/control field compression disabled).
 .TP
+.B active-filter \fIfilter-expression
+Specifies a packet filter to be applied to data packets to determine
+which packets are to be regarded as link activity, and therefore reset
+the idle timer, or cause the link to be brought up in demand-dialling
+mode.  This option is useful in conjunction with the
+\fBidle\fR option if there are packets being sent or received
+regularly over the link (for example, routing information packets)
+which would otherwise prevent the link from ever appearing to be idle.
+The \fIfilter-expression\fR syntax is as described for tcpdump(1),
+except that qualifiers which are inappropriate for a PPP link, such as
+\fBether\fR and \fBarp\fR, are not permitted.  Generally the filter
+expression should be enclosed in single-quotes to prevent whitespace
+in the expression from being interpreted by the shell.
+.TP
 .B -all
 Don't request or allow negotiation of any options for LCP and IPCP (use
 default values).
@@ -191,8 +205,8 @@ Alternatively, a value of 0 for \fInr\fR or \fInt\fR disables
 compression in the corresponding direction.
 .TP
 .B \-bsdcomp
-Disables compression; \fBpppd\fR will not request or agree to compress
-packets using the BSD-Compress scheme.
+Disables BSD-Compress compression; \fBpppd\fR will not request or
+agree to compress packets using the BSD-Compress scheme.
 .TP
 .B +chap
 Require the peer to authenticate itself using CHAP [Cryptographic
@@ -225,17 +239,44 @@ Increase debugging level (same as the \fBdebug\fR option).
 .TP
 .B debug
 Increase debugging level (same as \fB\-d\fR).
-If this
-option is given, \fIpppd\fR will log the contents of all control
-packets sent or received in a readable form.  The packets are logged
-through syslog with facility \fIdaemon\fR and level \fIdebug\fR.  This
-information can be directed to a file by setting up /etc/syslog.conf
-appropriately (see syslog.conf(5)).
+If this option is given, \fIpppd\fR will log the contents of all
+control packets sent or received in a readable form.  The packets are
+logged through syslog with facility \fIdaemon\fR and level
+\fIdebug\fR.  This information can be directed to a file by setting up
+/etc/syslog.conf appropriately (see syslog.conf(5)).
 .TP
 .B \-defaultroute
 Disable the \fBdefaultroute\fR option.  The system administrator who
 wishes to prevent users from creating default routes with \fIpppd\fR
 can do so by placing this option in the /etc/ppp/options file.
+.TP
+.B deflate \fInr,nt
+Request that the peer compress packets that it sends, using the
+Deflate scheme, with a maximum window size of \fI2**nr\fR bits, and
+agree to compress packets sent to the peer with a maximum window size of
+\fI2**nt\fR bits.  If \fInt\fR is not specified, it defaults to the value
+given for \fInr\fR.  Values in the range 8 to 15 may be used for
+\fInr\fR and \fInt\fR; larger values give better compression but
+consume more kernel memory for compression dictionaries.
+Alternatively, a value of 0 for \fInr\fR or \fInt\fR disables
+compression in the corresponding direction.  (Note: \fBpppd\fR
+requests Deflate compression in preference to BSD-Compress
+if the peer can do either.)
+.TP
+.B \-deflate
+Disables Deflate compression; \fBpppd\fR will not request or agree to
+compress packets using the Deflate scheme.
+.TP
+.B demand
+Initiate the link only on demand, i.e. when data traffic is present.
+With this option, the remote IP address must be specific by the user
+on the command line or in an options file.  \fBpppd\fR will initially
+configure the interface and enable it for IP traffic without
+connecting to the peer.  When traffic is available, \fBpppd\fR will
+connect to the peer and perform negotiation, authentication, etc.
+When this is completed, \fBpppd\fR will commence passing data packets
+(i.e., IP packets) across the link.  The persist, idle and holdoff
+options are often useful in conjuction with this option.
 .TP
 .B -detach
 Don't fork to become a background process (otherwise
@@ -243,16 +284,41 @@ Don't fork to become a background process (otherwise
 will do so if a serial device other than its controlling terminal is
 specified).
 .TP
+.B ms-dns \fI<addr>
+If
+.I pppd
+is acting as a server for Microsoft Windows clients, this option
+allows
+.I pppd
+to supply one or two DNS (Domain Name Server) addresses to the
+clients.  The first instance of this option specifies the primary DNS
+address; the second instance (if given) specifies the secondary DNS
+address.
+.TP
 .B domain \fI<d>
 Append the domain name <d> to the local host name for authentication
 purposes.  For example, if gethostname() returns the name porsche, but the
 fully qualified domain name is porsche.Quotron.COM, you would use the
 domain option to set the domain name to Quotron.COM.
 .TP
+.B holdoff \fI<n>
+Specifies how many seconds to wait before re-initiating the link after
+it terminates.  This option only has effect if the persist option is
+used.
+.TP
+.B idle \fI<n>
+Specifies that \fBpppd\fR should disconnect if it is idle for
+\fI<n>\fR seconds.  The link is idle when no data packets (i.e. IP
+packets) are being sent or received.  If the \fBactive-filter\fR
+option is given, data packets which are rejected by the specified
+activity filter also count as the link being idle.
+.TP
 .B -ip
-Disable IP address negotiation.  If this option is used, the remote IP
-address must be specified with an option on the command line or in an
-options file.
+Disable IPCP negotiation and IP communication.  This option should
+only be required if the peer is buggy and gets confused by requests
+from
+.I pppd
+for IPCP negotiation.
 .TP
 .B ipcp-accept-local
 With this option,
@@ -400,6 +466,20 @@ Set the maximum time that
 .I pppd
 will wait for the peer to authenticate itself with PAP to
 <n> seconds (0 means no limit).
+.TP
+.B pass-filter \fIfilter-expression
+Specifies a packet filter to applied to data packets being sent or
+received to determine which packets should be allowed to pass.
+Packets which are rejected by the filter are silently discarded.  This
+option can be used to provide protection against IP address spoofing
+and other attacks.
+The \fIfilter-expression\fR syntax is as described for tcpdump(1),
+except that qualifiers which are inappropriate for a PPP link, such as
+\fBether\fR and \fBarp\fR, are not permitted.  Generally the filter
+expression should be enclosed in single-quotes to prevent whitespace
+in the expression from being interpreted by the shell.  Note that it
+is possible to apply different constraints to incoming and outgoing
+packets using the \fBinbound\fR and \fBoutbound\fR qualifiers.
 .TP
 .B -pc
 Disable protocol field compression negotiation (use default, i.e.
@@ -733,38 +813,41 @@ User default options, read before command-line options.
 .TP
 .B /etc/ppp/options.\fIttyname
 System default options for the serial port being used, read after
-command-line options.
+command-line options.  In forming the \fIttyname\fR part of this
+filename, an initial /dev/ is stripped from the port name (if
+present), and any slashes in the remaining part are converted to
+dots.
 .SH SEE ALSO
 .TP
 .B RFC1144
 Jacobson, V.
 .I Compressing TCP/IP headers for low-speed serial links.
-1990 February.
+February 1990.
 .TP
 .B RFC1321
 Rivest, R.
 .I The MD5 Message-Digest Algorithm.
-1992 April.
+April 1992.
 .TP
 .B RFC1332
 McGregor, G.
 .I PPP Internet Protocol Control Protocol (IPCP).
-1992 May.
+May 1992.
 .TP
 .B RFC1334
 Lloyd, B.; Simpson, W.A.
 .I PPP authentication protocols.
-1992 October.
+October 1992.
 .TP
-.B RFC1548
+.B RFC1661
 Simpson, W.A.
 .I The Point\-to\-Point Protocol (PPP).
-1993 December.
+July 1994.
 .TP
-.B RFC1549
+.B RFC1662
 Simpson, W.A.
-.I PPP in HDLC Framing.
-1993 December
+.I PPP in HDLC-like Framing.
+July 1994.
 .SH NOTES
 The following signals have the specified effect when sent to the
 .I pppd
@@ -791,9 +874,10 @@ decompression errors generally indicate a bug in one or other
 implementation.
 
 .SH AUTHORS
+Paul Mackerras (paulus@cs.anu.edu.au), based on earlier work by
 Drew Perkins,
 Brad Clements,
 Karl Fox,
 Greg Christy,
-Brad Parker,
-Paul Mackerras (paulus@cs.anu.edu.au).
+and
+Brad Parker.

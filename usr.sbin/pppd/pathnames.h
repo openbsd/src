@@ -1,7 +1,7 @@
+/*	$OpenBSD: pathnames.h,v 1.2 1996/03/25 15:55:53 niklas Exp $	*/
+
 /*
  * define path names
- *
- * $Id: pathnames.h,v 1.1.1.1 1995/10/18 08:47:59 deraadt Exp $
  */
 
 #ifdef HAVE_PATHS_H
@@ -20,3 +20,8 @@
 #define _PATH_TTYOPT	"/etc/ppp/options."
 #define _PATH_CONNERRS	"/etc/ppp/connect-errors"
 #define _PATH_USEROPT	".ppprc"
+
+#ifdef IPX_CHANGE
+#define _PATH_IPXUP	"/etc/ppp/ipx-up"
+#define _PATH_IPXDOWN	"/etc/ppp/ipx-down"
+#endif /* IPX_CHANGE */

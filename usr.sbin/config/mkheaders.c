@@ -1,3 +1,6 @@
+/*	$OpenBSD: mkheaders.c,v 1.2 1996/03/25 15:55:07 niklas Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.8 1996/03/03 17:28:20 thorpej Exp $	*/
+
 /* 
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,7 +43,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mkheaders.c	8.1 (Berkeley) 6/6/93
- *	$Id: mkheaders.c,v 1.1.1.1 1995/10/18 08:48:33 deraadt Exp $
  */
 
 #include <sys/param.h>

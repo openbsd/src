@@ -1,3 +1,5 @@
+/*	$OpenBSD: afs_ops.c,v 1.2 1996/03/25 15:54:43 niklas Exp $	*/
+
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
@@ -36,7 +38,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)afs_ops.c	8.1 (Berkeley) 6/6/93
- *	$Id: afs_ops.c,v 1.1.1.1 1995/10/18 08:47:09 deraadt Exp $
  */
 
 #include "am.h"
@@ -51,7 +52,6 @@ typedef nfs_fh fhandle_t;
 #ifdef NFS_HDR
 #include NFS_HDR
 #endif /* NFS_HDR */
-#include <sys/mount.h>
 #include "mount.h"
 
 /*
@@ -141,6 +141,10 @@ char *opts;
 		return EINVAL;
 	}
 
+#if NFS_PROTOCOL_VERSION >= 3
+	nfs_args.fhsize = NFSX_V2FH;
+	nfs_args.version = NFS_ARGSVERSION;
+#endif
 	NFS_FH_DREF(nfs_args.fh, (NFS_FH_TYPE) fhp);
 
 	/*

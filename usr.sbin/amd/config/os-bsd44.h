@@ -1,3 +1,5 @@
+/*	$OpenBSD: os-bsd44.h,v 1.4 1996/03/25 15:54:53 niklas Exp $	*/
+
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
@@ -36,7 +38,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)os-bsd44.h	8.1 (Berkeley) 6/6/93
- *	$Id: os-bsd44.h,v 1.3 1996/02/17 02:55:22 dm Exp $
  *
  * 4.4 BSD definitions for Amd (automounter)
  */
@@ -177,7 +178,9 @@ struct mntent {
  * Type of a file handle
  */
 #undef NFS_FH_TYPE
-#define	NFS_FH_TYPE	nfsv2fh_t *
+#if __NetBSD__
+#define NFS_FH_TYPE void *
+#endif
 
 /*
  * How to get a mount list

@@ -1,3 +1,5 @@
+/*	$OpenBSD: chap.h,v 1.2 1996/03/25 15:55:36 niklas Exp $	*/
+
 /*
  * chap.h - Cryptographic Handshake Authentication Protocol definitions.
  *
@@ -14,8 +16,6 @@
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- *
- * $Id: chap.h,v 1.1.1.1 1995/10/18 08:47:58 deraadt Exp $
  */
 
 #ifndef __CHAP_INCLUDE__
@@ -107,6 +107,8 @@ void ChapInput __P((int, u_char *, int));
 void ChapProtocolReject __P((int));
 int  ChapPrintPkt __P((u_char *, int,
 		       void (*) __P((void *, char *, ...)), void *));
+
+extern struct protent chap_protent;
 
 #define __CHAP_INCLUDE__
 #endif /* __CHAP_INCLUDE__ */
