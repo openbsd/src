@@ -1,4 +1,4 @@
-/*	$OpenBSD: socks.c,v 1.1 2001/09/02 18:45:41 jakob Exp $	*/
+*	$OpenBSD: socks.c,v 1.2 2001/10/28 19:45:17 jakob Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -84,7 +84,6 @@ int
 socks_connect (char *host, char *port, struct addrinfo hints,
     char *proxyhost, char *proxyport, struct addrinfo proxyhints)
 {
-	char *proxyport_default;
 	int proxyfd;
 	unsigned char buf[SOCKS_MAXCMDSZ];
 	ssize_t cnt;
